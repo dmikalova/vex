@@ -83,9 +83,11 @@ never import `engine` directly.
 Four types carry the whole engine:
 
 - **`GameState`** (`state.go`) — the complete mutable state as a flat value:
-  fixed `[maxCards]CardCore` for per-card in-play state, and `[2]CardList` zones
+  fixed `[maxCards]CardCore` for per-card in-play state, and per-player zone lists
   (battleline, hand, deck, discard, artifacts, archives, purge) plus pools, keys,
-  and turn flags. `GameState.FastCopy()` is a plain value copy. No pointers/slices/
+  and turn flags. Each zone is sized to its own bound — deck-bounded zones hold 36
+  cards, zones that can hold both decks (battle line, artifact row, archives) hold
+  72. `GameState.FastCopy()` is a plain value copy. No pointers/slices/
   maps live here — that constraint is load-bearing (see `internal/engine/AGENTS.md`).
 - **`LocalID`** (`uint8`) — a card's identity within one match. Everything in
   `GameState` refers to cards by `LocalID`, never by pointer.

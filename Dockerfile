@@ -9,10 +9,11 @@ RUN go mod download
 
 COPY . .
 
-# WebAssembly client bundle served at /web/app.wasm by go-app.
-RUN GOOS=js GOARCH=wasm go build -o web/app.wasm ./cmd/web
+# WebAssembly client bundle served at /web/app.wasm by go-app. -trimpath makes
+# the build reproducible; -ldflags="-s -w" drops debug info to shrink the bundle.
+RUN GOOS=js GOARCH=wasm go build -trimpath -ldflags="-s -w" -o web/app.wasm ./cmd/web
 # Native server binary.
-RUN CGO_ENABLED=0 go build -o /vactrol-web ./cmd/web
+RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /vactrol-web ./cmd/web
 
 FROM gcr.io/distroless/static-debian12:nonroot
 WORKDIR /app

@@ -7,6 +7,10 @@ Shared test helpers live in the sibling `cardtest/` package — it is a test
 helper (stdlib `httptest`/`iotest` convention), not a set, so it sits outside
 `sets/`.
 
+The repo's general coding style (composition, naming, KeyForge vernacular,
+comments, safety) lives in [docs/style-guide.md](../../docs/style-guide.md); this
+file covers only the card-authoring specifics on top of it.
+
 ## Rules reference
 
 When a rules question isn't settled by the vactrol implementation itself or by
@@ -36,7 +40,7 @@ disagree.
   `internal/cards/provenance`. Optional and repeatable; omit for wholly original
   cards.
 
-## Style
+## Doc comments and authoring layout
 
 The doc comment above each card is **generated, not hand-written** — run
 `mage generateComments` (it rewrites every card's comment from its definition,

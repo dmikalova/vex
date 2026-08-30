@@ -62,6 +62,8 @@ type StateReader interface {
 	TypeOf(id LocalID) CardType
 	// HasTrait reports whether a card has a trait.
 	HasTrait(id LocalID, trait Trait) bool
+	// HasKeyword reports whether a creature has a keyword (printed or granted).
+	HasKeyword(id LocalID, k Keyword) bool
 	// House returns a card's house.
 	House(id LocalID) House
 	// ActiveHouse returns the house chosen for the current turn.
@@ -207,6 +209,9 @@ type ZoneResolver interface {
 	// DiscardCardFromHand moves a specific card from a player's hand to their discard
 	// zone.
 	DiscardCardFromHand(owner int, id LocalID)
+	// DiscardRandomFromHand discards one uniformly random card from a player's hand,
+	// doing nothing if the hand is empty.
+	DiscardRandomFromHand(owner int)
 }
 
 // TurnResolver installs turn-scoped and lasting effects: restrictions and grants
@@ -266,6 +271,9 @@ func (g *Game) Owner(id LocalID) int { return g.owner(id) }
 
 // HasTrait reports whether a card has a trait.
 func (g *Game) HasTrait(id LocalID, trait Trait) bool { return g.cat.def(id).hasTrait(trait) }
+
+// HasKeyword reports whether a creature has a keyword, printed or granted.
+func (g *Game) HasKeyword(id LocalID, k Keyword) bool { return g.hasKeyword(id, k) }
 
 // ForgeKey has a player forge one key at its current cost, if affordable.
 func (g *Game) ForgeKey(player int) { g.forgeKey(player) }

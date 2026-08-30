@@ -56,6 +56,11 @@ var ExceptMostPowerful = engine.ExceptMostPowerful
 // card.Target.EachCreature.Selector(card.SamePowerAsChosen) (Dance of Doom).
 var SamePowerAsChosen = engine.SamePowerAsChosen
 
+// LeastPowerful is a Selector that keeps only the single least powerful creature
+// of a set, e.g. card.Target.EachCreature.Selector(card.LeastPowerful) (Horseman
+// of Famine). When several tie the controller chooses which one to keep.
+var LeastPowerful = engine.LeastPowerful
+
 // Stunned is the set of stunned creatures, used as a fight restriction: pass it to
 // card.WithFightRestriction to limit a creature to fighting only stunned creatures
 // (Bigtwig).

@@ -257,10 +257,10 @@ func (h *Harness) placeSide(player int, s Side) {
 		h.bind(e, h.g.AddToDeck(e.def, player))
 	}
 	for _, e := range s.Discard {
-		h.bind(e, h.addToZone(&h.g.State.Discard[player], e.def, player))
+		h.bind(e, h.g.AddToDiscard(e.def, player))
 	}
 	for _, e := range s.Archives {
-		h.bind(e, h.addToZone(&h.g.State.Archives[player], e.def, player))
+		h.bind(e, h.g.AddToArchives(e.def, player))
 	}
 	if s.Amber != 0 {
 		h.g.State.Aember[player] = s.Amber
@@ -295,22 +295,11 @@ func (h *Harness) bind(e Entry, id engine.LocalID) {
 	}
 }
 
-// addToZone registers a card for a player and appends it to a zone directly (for
-// zones without a public Add helper, such as discard and archives).
-func (h *Harness) addToZone(z *engine.CardList, def engine.CardDefinition, player int) engine.LocalID {
-	id := h.g.Register(def, player)
-	z.IDs[z.Count] = id
-	z.Count++
-	return id
-}
-
 // attach attaches an upgrade to a host creature and refreshes its armor.
 func (h *Harness) attach(host engine.LocalID, up engine.CardDefinition) Card {
 	id := h.g.Register(up, h.ownerOf(host))
-	core := &h.g.State.Cards[host]
-	core.Upgrades[core.UpgradeCount] = id
-	core.UpgradeCount++
-	core.ArmorRemaining = int16(h.g.Armor(host))
+	h.g.AttachUpgrade(host, id)
+	h.g.State.Cards[host].ArmorRemaining = int16(h.g.Armor(host))
 	return Card{h: h, id: id, set: true}
 }
 

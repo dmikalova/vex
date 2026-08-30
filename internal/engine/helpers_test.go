@@ -100,7 +100,5 @@ func (orderAllChooser) OrderCreatures(_, _ string, ids []LocalID) []LocalID {
 // attachUpgrade registers an upgrade and attaches it to a host creature.
 func attachUpgrade(g *Game, host LocalID, def CardDefinition) {
 	up := g.Register(def, g.owner(host))
-	core := &g.State.Cards[host]
-	core.Upgrades[core.UpgradeCount] = up
-	core.UpgradeCount++
+	g.AttachUpgrade(host, up)
 }

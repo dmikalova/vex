@@ -25,3 +25,13 @@ func Missing(setSlug string) error {
 func Coverage() error {
 	return sh.RunV("go", "run", "./magefiles/cardlookup", "coverage")
 }
+
+// Stub generates a build-excluded (`//go:build todo`) stub file for every
+// unimplemented card in a set, each carrying the card's printed text and a TODO
+// marker. Excluded stubs do not compile or register, so the card database and
+// coverage numbers stay honest until a card is actually implemented; to implement
+// one, remove the build tag and write the real ability. Pass a set slug, e.g.
+// `mage stub callofthearchons`.
+func Stub(setSlug string) error {
+	return sh.RunV("go", "run", "./magefiles/cardlookup", "stub", setSlug)
+}

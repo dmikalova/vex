@@ -65,9 +65,8 @@ func (g *Game) removeFromPlay(id LocalID) {
 // A card that leaves play — destroyed or relocated — sheds its upgrades this way;
 // they do not follow it to hand, deck, or archives.
 func (g *Game) discardUpgrades(id LocalID) {
-	core := &g.State.Cards[id]
-	for i := 0; i < int(core.UpgradeCount); i++ {
-		up := core.Upgrades[i]
+	for _, up := range g.upgradesOf(id) {
+		g.detachUpgrade(up)
 		g.releaseControlHeldBy(up)
 		g.State.Discard[g.owner(up)].add(up)
 	}
@@ -97,9 +96,7 @@ func (g *Game) applyDestructionReplacement(controller int, id LocalID) bool {
 // destructionReplacement finds the first attached Upgrade whose StaticModifier
 // replaces this creature's destruction, returning the Upgrade and its replacement.
 func (g *Game) destructionReplacement(id LocalID) (LocalID, Replace, bool) {
-	core := &g.State.Cards[id]
-	for i := 0; i < int(core.UpgradeCount); i++ {
-		up := core.Upgrades[i]
+	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
 		if r := g.cat.def(up).Static.Replaces; r.valid() && r.When == EventCreatureDestroyed {
 			return up, r, true
 		}
@@ -107,51 +104,18 @@ func (g *Game) destructionReplacement(id LocalID) (LocalID, Replace, bool) {
 	return 0, Replace{}, false
 }
 
-// hostOf returns the creature an attached Upgrade is on, or ok=false when the id is
-// not attached to any creature in play.
-func (g *Game) hostOf(upgrade LocalID) (LocalID, bool) {
-	for p := 0; p < 2; p++ {
-		for _, host := range g.Battleline(p) {
-			core := &g.State.Cards[host]
-			for i := 0; i < int(core.UpgradeCount); i++ {
-				if core.Upgrades[i] == upgrade {
-					return host, true
-				}
-			}
-		}
-	}
-	return 0, false
-}
-
 // destroyAttachedUpgrade detaches an Upgrade from its host and discards it — an
-// Upgrade destroying itself through its own effect (Armageddon Cloak).
+// Upgrade destroying itself through its own effect (Armageddon Cloak). Detaching
+// stitches the host's remaining upgrades back together, so destroying one in the
+// middle of a chain leaves the others attached.
 func (g *Game) destroyAttachedUpgrade(upgrade LocalID) {
-	host, ok := g.hostOf(upgrade)
-	if !ok {
+	if _, ok := g.detachUpgrade(upgrade); !ok {
 		return
 	}
-	core := &g.State.Cards[host]
-	for i := 0; i < int(core.UpgradeCount); i++ {
-		if core.Upgrades[i] == upgrade {
-			g.logf("%s is destroyed", g.Name(upgrade))
-			g.discardAttachedUpgradeAt(host, i)
-			return
-		}
-	}
-}
-
-// discardAttachedUpgradeAt detaches one Upgrade from a host and puts that Upgrade
-// into its owner's discard pile, preserving the order of the remaining upgrades.
-func (g *Game) discardAttachedUpgradeAt(host LocalID, i int) {
-	core := &g.State.Cards[host]
-	up := core.Upgrades[i]
-	count := int(core.UpgradeCount)
-	copy(core.Upgrades[i:], core.Upgrades[i+1:count])
-	core.UpgradeCount--
-	core.Upgrades[count-1] = 0
-	g.releaseControlHeldBy(up)
-	g.resetCore(up)
-	g.State.Discard[g.owner(up)].add(up)
+	g.logf("%s is destroyed", g.Name(upgrade))
+	g.releaseControlHeldBy(upgrade)
+	g.resetCore(upgrade)
+	g.State.Discard[g.owner(upgrade)].add(upgrade)
 }
 
 // applyDestructionReplacements removes creatures whose destruction was replaced

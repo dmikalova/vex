@@ -17,6 +17,9 @@ pieces fit together.
   (`ct.Play`), one per card, reading like a game.
 - **Shared setup / cross-cutting logic (e.g. `match`)?** Write an ordinary
   package test.
+- **Hunting bugs no one thought to test?** Let the **whole-game simulator**
+  (`internal/sim`) play random legal games and check invariants — run continuously
+  in `mage test`, deeply with `mage fuzz`, and at volume with `mage soak`.
 - **Frontend glue (`tui`, `web`)?** Largely untested by design (TTY/DOM-bound);
   push logic worth testing down into the engine or `match`.
 
@@ -169,7 +172,78 @@ has a trait). Use internal (`package match`) tests when you want to cover
 unexported helpers, and an external (`package <pkg>_test`) test when you only need
 the public surface. Seed any RNG so results are reproducible (`match.New(..., seed)`).
 
-## Conventions that apply everywhere
+## Option 4 — Whole-game simulation, fuzzing, and soak (`internal/sim`)
+
+Unit and card tests pin behavior we _thought_ of. The `internal/sim` package plays
+**whole random legal games** to catch the ones we didn't — a card that leaks Æmber,
+a move-between-zones path that duplicates or drops a card, a turn that corrupts the
+flat state. It is the property/simulation tier: instead of asserting a specific
+outcome, it asserts that **invariants never break, whatever is played**.
+
+**How it works.** Everything decodes from a single byte _script_:
+
+- `sim.Simulate(script []byte) error` seeds a real `match.New` game (first 8 bytes),
+  installs a `scriptChooser` for both players, then plays turn by turn. Each byte
+  drives one decision — which house to choose, which legal card to play, whether to
+  reap/fight/use, which target the chooser picks. When the script runs out, every
+  read returns zero, players stop acting, and the game winds down to a natural end.
+- After setup and after **every** action it calls `engine.Game.InvariantError()` —
+  the one true statement of the flat-state invariants (non-negative Æmber, keys in
+  range, `Winner` in {−1,0,1}, and **card conservation**: every registered card sits
+  in exactly one zone or on exactly one creature as an upgrade). A violation is
+  returned as an error naming the turn, step, and offending script.
+- Because a game is a **pure function of its script**, any failure replays exactly.
+  Persist the _script_, never a seed — seeds are version-fragile and carry no
+  locality; a script is the actual sequence of decisions.
+
+**Bounds.** Every game terminates: `maxTurns = 100` (50 per player) and
+`maxDecisionsPerTurn = 100`. Those are deliberately far above a real game — a
+marathon is well under them — so hitting a cap means a game that would never end,
+which is itself a finding.
+
+**Three entry points, one `Simulate`:**
+
+- **`FuzzPlay`** (`go test -fuzz`) — coverage-guided mutation turns the byte script
+  into a smart explorer of the game tree. Go stores the evolving corpus as tiny
+  _inputs_ (not game states) in the build cache under `$GOCACHE/fuzz`
+  (machine-local; reset with `go clean -fuzzcache`). A discovered failure is
+  automatically **minimized and committed** to `internal/sim/testdata/fuzz/FuzzPlay`,
+  where it then runs as an ordinary unit test forever after.
+- **`TestSimulateSeeds`** — a fixed-seed batch of ~300 random games, fast enough to
+  run inside `mage test` on every suite run. This is the property test that shakes
+  the engine continuously; a regression prints the exact script to reproduce.
+- **`TestSoak`** — the same games on a time budget, skipped unless `SOAK_DURATION`
+  is set. It runs across `GOMAXPROCS` workers (many games per second), and where
+  fuzzing hunts _new_ coverage and stops when it plateaus, the soak just runs
+  _volume_ for a fixed wall-clock budget (nightly/CI). It does **not** stop at the
+  first failure: every failing script is written into `testdata/fuzz/FuzzPlay` in
+  Go's fuzz-corpus format, so a soak find becomes a permanent `FuzzPlay` regression
+  exactly like a fuzz find, and the soak keeps hunting for more.
+
+**The `assert` build tag (heavy checks in soak/fuzz, free in production).** The
+engine carries a build-tag seam: `assertInvariants()` is a **no-op in the normal
+build** (`assert_off.go`) and, in an **`-tags assert` build** (`assert_on.go`),
+runs `InvariantError()` at every turn boundary and panics on the first violation.
+So soak and fuzz builds (which pass `-tags assert`) validate the engine from the
+inside as it plays — and the future MCTS AI, built with the tag, inherits the same
+checks during rollouts — while production compiles them away to nothing
+(`engine.DebugAssert` is a constant, so the calls dead-code-eliminate). `Simulate`
+recovers those panics into errors, so an assert-build violation surfaces as a
+reportable failing script rather than a crash.
+
+**Promoting a failure.** Both fuzzing and the soak save a failing script under
+`testdata/fuzz/FuzzPlay` automatically, so it re-runs as a plain regression on every
+`go test ./internal/sim`. A crash is reported with its **stack trace** (`Simulate`
+recovers the panic and attaches `debug.Stack()`), which points straight at the
+engine line that broke. Once diagnosed, write a focused **engine or card test** for
+the specific rule — the simulation finds the bug, the unit test pins the fix — and
+keep or delete the corpus entry as you prefer.
+
+**Where the coverage gate does _not_ apply.** `internal/sim` is intentionally
+outside the 100% engine gate: it drives the engine through its public API and the
+real card database (which the engine may not import). The only engine-side addition
+it relies on — `InvariantError` and the empty `assertInvariants` no-op — is covered
+by `invariants_test.go` like any other engine code.
 
 - **describe / it via `t.Run`.** Model behavior as subtests: `func TestFoo` is the
   "describe", each `t.Run("does X", ...)` is an "it", and a `setup := func(t){…}`
@@ -186,11 +260,15 @@ the public surface. Seed any RNG so results are reproducible (`match.New(..., se
 ## Running tests
 
 ```sh
-mage test         # go test ./...  (whole suite)
+mage test         # go test ./...  (whole suite, incl. the fixed-seed simulator)
 mage cover        # engine coverage, must print 100%
 mage check        # the full gate: fmt, build, vet, lint, test, cover
+
+mage fuzz         # coverage-guided whole-game fuzzing (-tags assert); FUZZTIME=…
+mage soak         # volume soak of random games (-tags assert); SOAK_DURATION=…
 
 # focused runs while iterating:
 go test ./internal/engine/ -run TestHeal
 go test ./internal/cards/sets/callofthearchons/ -run TestAmmoniaClouds
+go clean -fuzzcache   # reset the local fuzz corpus if it gets stale
 ```

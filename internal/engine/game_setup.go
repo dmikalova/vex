@@ -37,3 +37,17 @@ func (g *Game) AddArtifact(def CardDefinition, owner int) LocalID {
 	g.State.Artifacts[owner].add(id)
 	return id
 }
+
+// AddToDiscard registers a card and places it in a player's discard pile.
+func (g *Game) AddToDiscard(def CardDefinition, owner int) LocalID {
+	id := g.Register(def, owner)
+	g.State.Discard[owner].add(id)
+	return id
+}
+
+// AddToArchives registers a card and places it in a player's archives.
+func (g *Game) AddToArchives(def CardDefinition, owner int) LocalID {
+	id := g.Register(def, owner)
+	g.State.Archives[owner].add(id)
+	return id
+}

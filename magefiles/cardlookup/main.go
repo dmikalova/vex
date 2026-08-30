@@ -18,6 +18,12 @@
 //
 //	coverage             Print, per source set, how many of its cards are covered
 //	                     by an implemented card's provenance Ref.
+//
+//	stub <setSlug>       Generate a build-excluded (`//go:build todo`) stub file
+//	                     for every unimplemented card in a set, each carrying the
+//	                     printed text and a TODO marker. Excluded stubs do not
+//	                     compile or register, so the database and coverage stay
+//	                     honest until a card is actually implemented.
 package main
 
 import (
@@ -49,13 +55,15 @@ func run(args []string) error {
 		return missing(args[1:])
 	case "coverage":
 		return coverage()
+	case "stub":
+		return stub(args[1:])
 	default:
 		return usage()
 	}
 }
 
 func usage() error {
-	return fmt.Errorf("usage: cardlookup <lookup <query> | missing [setSlug] | coverage>")
+	return fmt.Errorf("usage: cardlookup <lookup <query> | missing [setSlug] | coverage | stub <setSlug>>")
 }
 
 // lookup prints every source card whose name contains the query substring.
@@ -87,6 +95,21 @@ func printCard(set provenance.SourceSet, c provenance.Card) {
 	fmt.Printf("  House:  %s\n", c.House)
 	fmt.Printf("  Type:   %s\n", c.Type)
 	fmt.Printf("  Rarity: %s\n", c.Rarity)
+	if strings.EqualFold(c.Type, "creature") {
+		fmt.Printf("  Power:  %d\n", c.Power)
+		if c.Armor > 0 {
+			fmt.Printf("  Armor:  %d\n", c.Armor)
+		}
+	}
+	if c.Amber > 0 {
+		fmt.Printf("  Æmber:  %d\n", c.Amber)
+	}
+	if len(c.Traits) > 0 {
+		fmt.Printf("  Traits: %s\n", strings.Join(c.Traits, " • "))
+	}
+	if len(c.Keywords) > 0 {
+		fmt.Printf("  Keywords: %s\n", strings.Join(c.Keywords, " • "))
+	}
 	if c.Text != "" {
 		fmt.Printf("  Text:   %s\n", strings.ReplaceAll(c.Text, "\n", "\n          "))
 	}

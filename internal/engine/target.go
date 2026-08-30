@@ -82,8 +82,15 @@ type Target struct {
 	contextualHouse bool
 	maxPower        int
 	hasMaxPower     bool
+	minPower        int
+	hasMinPower     bool
+	exactPower      int
+	hasExactPower   bool
 	damaged         bool
+	undamaged       bool
 	stunned         bool
+	withAember      bool
+	keyword         Keyword
 	onFlank         bool
 	notOnFlank      bool
 	neighboring     bool
@@ -149,9 +156,45 @@ func (t Target) PowerAtMost(maxPower int) Target {
 	return t
 }
 
+// PowerAtLeast narrows the target to creatures whose power is minPower or higher,
+// e.g. Target{Kind: TargetEachCreature}.PowerAtLeast(3).
+func (t Target) PowerAtLeast(minPower int) Target {
+	t.minPower = minPower
+	t.hasMinPower = true
+	return t
+}
+
+// PowerExactly narrows the target to creatures whose power is exactly power,
+// e.g. Target{Kind: TargetChosenCreature}.PowerExactly(1).
+func (t Target) PowerExactly(power int) Target {
+	t.exactPower = power
+	t.hasExactPower = true
+	return t
+}
+
 // Damaged narrows the target to creatures that currently have damage on them.
 func (t Target) Damaged() Target {
 	t.damaged = true
+	return t
+}
+
+// Undamaged narrows the target to creatures that currently have no damage on them.
+func (t Target) Undamaged() Target {
+	t.undamaged = true
+	return t
+}
+
+// WithAember narrows the target to creatures that have Æmber on them, rendering
+// " with Æmber on it", e.g. "each creature with Æmber on it".
+func (t Target) WithAember() Target {
+	t.withAember = true
+	return t
+}
+
+// Keyword narrows the target to creatures that have the given keyword (e.g.
+// Elusive), rendering it as an adjective: "each elusive creature".
+func (t Target) Keyword(k Keyword) Target {
+	t.keyword = k
 	return t
 }
 
@@ -255,15 +298,25 @@ func (t Target) Text() string {
 	if t.damaged {
 		noun = "damaged " + noun
 	}
+	if t.undamaged {
+		noun = "undamaged " + noun
+	}
 	if t.stunned {
 		noun = "stunned " + noun
+	}
+	if t.keyword != "" {
+		noun = strings.ToLower(string(t.keyword)) + " " + noun
 	}
 	var phrase string
 	switch t.Kind {
 	case TargetEachInPlay:
 		phrase = "each card in play"
 	case TargetEachCreature, TargetEachArtifact:
-		phrase = "each " + noun
+		if t.other {
+			phrase = "each other " + noun
+		} else {
+			phrase = "each " + noun
+		}
 	case TargetEachFriendlyCreature:
 		phrase = "each friendly " + noun
 	case TargetEachFriendlyInPlay:
@@ -289,6 +342,15 @@ func (t Target) Text() string {
 	}
 	if t.hasMaxPower {
 		phrase += fmt.Sprintf(" with power %d or lower", t.maxPower)
+	}
+	if t.hasMinPower {
+		phrase += fmt.Sprintf(" with power %d or higher", t.minPower)
+	}
+	if t.hasExactPower {
+		phrase += fmt.Sprintf(" with power %d", t.exactPower)
+	}
+	if t.withAember {
+		phrase += " with \u00c6mber on it"
 	}
 	if t.notOnFlank {
 		phrase += " that is not on a flank"
@@ -437,6 +499,47 @@ func (samePowerAsChosen) refine(ctx *EffectContext, ids []LocalID) []LocalID {
 	return out
 }
 
+// LeastPowerful is a Selector that keeps only the single least powerful creature
+// of a set, e.g. card.Target.EachCreature.Selector(card.LeastPowerful) (Horseman
+// of Famine). When several tie for least powerful the controller chooses which.
+var LeastPowerful Selector = leastPowerful{}
+
+// leastPowerful implements the LeastPowerful selector.
+type leastPowerful struct{}
+
+// clause renders "the least powerful <noun>", e.g. "each creature" -> "the least
+// powerful creature".
+func (leastPowerful) clause(phrase string) string {
+	return "the least powerful " + strings.TrimPrefix(phrase, "each ")
+}
+
+// refine returns the single least powerful creature, letting the controller
+// choose which to keep when several tie. An empty set selects nothing.
+func (leastPowerful) refine(ctx *EffectContext, ids []LocalID) []LocalID {
+	if len(ids) == 0 {
+		return nil
+	}
+	lowest := ctx.Resolver.Power(ids[0])
+	for _, id := range ids[1:] {
+		if p := ctx.Resolver.Power(id); p < lowest {
+			lowest = p
+		}
+	}
+	tied := make([]LocalID, 0, len(ids))
+	for _, id := range ids {
+		if ctx.Resolver.Power(id) == lowest {
+			tied = append(tied, id)
+		}
+	}
+	pick := tied[0]
+	if len(tied) > 1 {
+		if chosen, ok := ctx.ChooseCreature("Choose the least powerful creature", tied); ok {
+			pick = chosen
+		}
+	}
+	return []LocalID{pick}
+}
+
 // isChosen reports whether the Kind resolves to a single player-chosen creature.
 func (t Target) isChosen() bool {
 	return t.Kind == TargetChosenCreature || t.Kind == TargetChosenEnemyCreature ||
@@ -454,8 +557,13 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 		!t.chosenHouse &&
 		!t.contextualHouse &&
 		!t.hasMaxPower &&
+		!t.hasMinPower &&
+		!t.hasExactPower &&
 		!t.damaged &&
+		!t.undamaged &&
 		!t.stunned &&
+		!t.withAember &&
+		t.keyword == "" &&
 		!t.onFlank &&
 		!t.notOnFlank &&
 		!t.neighboring &&
@@ -485,7 +593,22 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 		if t.hasMaxPower && ctx.Resolver.Power(id) > t.maxPower {
 			continue
 		}
+		if t.hasMinPower && ctx.Resolver.Power(id) < t.minPower {
+			continue
+		}
+		if t.hasExactPower && ctx.Resolver.Power(id) != t.exactPower {
+			continue
+		}
 		if t.damaged && ctx.Resolver.Damage(id) == 0 {
+			continue
+		}
+		if t.undamaged && ctx.Resolver.Damage(id) != 0 {
+			continue
+		}
+		if t.withAember && ctx.Resolver.AmberOn(id) == 0 {
+			continue
+		}
+		if t.keyword != "" && !ctx.Resolver.HasKeyword(id, t.keyword) {
 			continue
 		}
 		if t.stunned && !ctx.Resolver.Stunned(id) {

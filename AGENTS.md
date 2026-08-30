@@ -19,6 +19,13 @@ comment/rulebook generation, gofmt), so use them:
 - `mage check` — the full green gate (fmt-check, build, vet, test, coverage);
   run this before considering work done. It must print `ALL GREEN`.
 
+When you add or update a mage target that writes a binary, keep the output in an
+ignored location (for example `./bin`) or update `.gitignore` accordingly.
+Generated binaries should not be committed.
+
+When editing Markdown (including `AGENTS.md` and skill docs), keep files
+markdownlint-clean.
+
 Card research (so you never need a throwaway grep/JSON script):
 
 - `mage lookup "<name>"` — print every source card whose name contains the
@@ -29,6 +36,13 @@ Card research (so you never need a throwaway grep/JSON script):
   `internal/cards/provenance` minus `.json` (e.g. `callofthearchons`).
 - `mage coverage` — per-source-set count of cards covered by an implemented
   card's provenance Ref.
+
+- `mage stub "<setSlug>"` — scaffold a build-excluded (`//go:build todo`) stub
+  file for every unimplemented card in a set, each carrying the printed text and a
+  TODO marker. Excluded stubs do not compile or register, so the card database and
+  coverage stay honest until a card is actually implemented; to implement one,
+  remove the build tag and write the real ability. See the `implement-cards` skill
+  (`.agents/skills/implement-cards`) for the full workflow.
 
 Run `mage -l` to see every target.
 
@@ -55,77 +69,26 @@ a symbol you never touched, an in-progress edit that doesn't yet compile — ass
 another agent is mid-change. Wait a little and try again rather than "fixing" or
 reverting their work. Only act on failures that stem from your own changes.
 
-## Interpreting requests
+## Style and design live in `docs/style-guide.md`
 
-Read every request through the lens of **idiomatic, maintainable, composable,
-well-written Go that will keep being extended** as more of the game is
-implemented. When a request is ambiguous or underspecified, choose the option a
-senior Go engineer would find clearest and easiest to build on later — not merely
-the shortest path to a passing build.
+The repo's coding style — how to interpret a request, when to refactor, how to
+design for composition, naming and KeyForge vernacular, safety, comments, and
+formatting — lives in one place: [docs/style-guide.md](docs/style-guide.md).
+Read it before writing or reshaping code. The load-bearing summary:
 
-## Refactoring is welcome
+- Read every request as **idiomatic, composable Go that will keep being
+  extended**; when a request is ambiguous, pick what a senior Go engineer would
+  find easiest to build on, not the shortest path to green.
+- **Implement the mechanic, not the card** — decompose fused effects,
+  parameterize over enums, reuse the shared vocabularies (`Target`, events,
+  strategies), and treat a one-off name as a smell.
+- **Refactoring is welcome and preferred over working around code**; keep it
+  focused, keep everything green (including 100% `internal/engine` coverage), and
+  lean on the tests to catch regressions.
 
-Do **not** contort a new feature to fit the current implementation. If a mechanic
-lands more cleanly after reshaping existing code — renaming, splitting, or
-generalizing a type, effect, or seam — prefer the refactor. A good fit for the
-new feature (and the features that will follow it) matters more than preserving
-today's shape. Keep such refactors focused, keep everything green (including 100%
-`internal/engine` coverage), and leave the design better than you found it.
+The sections below stay here because they are structural facts about *where
+things go*, not style.
 
-## Design for composition, not for the card in front of you
-
-Every card is an instance of a more general mechanic. Implement the **mechanic**,
-not the card. Before adding a type, ask: what is the smallest orthogonal piece
-this card needs, and how would the *next* card reuse it? Prefer many small pieces
-that snap together over one bespoke effect that does everything a single card
-happens to want.
-
-Concretely:
-
-- **Decompose fused effects.** A card that "does A, then B if C" is a
-  `Sequence` of an effect, a `Conditional`, and a condition — not one
-  `DoAThenBIfC` effect. Bonkers Killing Machine is `DiscardTopOfEachDeck` →
-  `DestroyOfEachDiscardedHouse` → `Conditional{CardsDestroyedFewerThan, Destroy}`,
-  not a single `DiscardAndDestroyByHouse`.
-- **Thread state through the context, don't fuse producers and consumers.** When
-  one step produces a value a later step consumes (cards revealed, houses
-  discarded, creatures healed, a card put in focus as `ctx.It`), record it on the
-  `EffectContext` and let any following effect/condition read it. This is how
-  `Heal` + `CreaturesHealed`, `RevealTopOfDeck` + `ItIsOfHouse` + `PlayRevealedCard`
-  compose without a combined type.
-- **Parameterize over enums, not new types.** A new "at least N of a house"
-  wants a reusable `CardsPlayed{House, Amount}` count, not a
-  `CardsPlayedOfHouseAtLeast`. A new lifetime wants a `Duration` field
-  (`EndOfTurn`, `UntilThisLeavesPlay`), not a `…ForRemainderOfTurn` variant. A new
-  "which house" wants a `HouseChoice`/reference, not a `…OfChosenHouse` /
-  `…OfActiveHouse` pair.
-- **Reuse the shared vocabularies.** `Target` already filters by house, trait,
-  type, chosen/active house, and set-relative selectors — reach for it (or extend
-  it) before inventing a parallel filter. Events (`EventCreaturePlayed`,
-  `EventReap`, `EventCreatureDestroyed`, …) with a subject already drive triggers,
-  lasting reactions (`ForRemainderOfTurn`), and replacements (`Instead`, `Replace`)
-  — extend that spine rather than adding a one-off flag on `CardDefinition`.
-- **Self-reference through existing seams.** "Destroy this Upgrade" is
-  `Destroy{Target: This}` (the destroy path detaches an attached upgrade), not a
-  `DestroyThisUpgrade`. "This creature captures the Æmber" is a replacement of the
-  add-to-pool event, not a `CapturesOpponentAember` bool.
-
-A one-off is a smell: if a name encodes a specific card's whole sentence
-(`ReadyAndBelongToHouseAfterYouPlayCreature`, `PlayTopOfDeckOfChosenHouse`), it is
-hiding reusable pieces. Split it. The cost of a slightly larger card definition is
-worth an engine other cards can build on. When a card genuinely needs something new,
-add the smallest general primitive and one card that uses it — never speculative,
-but always shaped so the next card can reach for it.
-
-**Prefer refactoring cards to improve composability over working around them.**
-When a new card almost fits an existing primitive but not quite, reshape the
-primitive (and re-express the cards already using it) rather than bolting on a
-special case or a parallel one-off. A card whose text shifts slightly to share a
-cleaner mechanic is a better outcome than two near-duplicate effects. The tests
-are what make this safe: they pin each card's behavior (and rendered text), so a
-refactor that breaks something surfaces immediately. Lean on them — refactor
-freely, keep everything green, and let the suite catch regressions instead of
-avoiding the change.
 
 ## Engine design patterns and constraints
 
@@ -242,18 +205,11 @@ to its discard pile. Never implement this kind of card as a global override in
 
 ## KeyForge vernacular
 
-Names — types, methods, fields, effects, targets, everything — must stay within
-KeyForge's own vocabulary rather than generic gaming terms. Say
+Names must stay within KeyForge's own vocabulary, not generic gaming terms —
 `ExceptMostPowerfulCreature`, not `ExceptStrongest`; `CannotFight`, not
-`PreventFight`. When you need the right word, source it in this order:
-
-1. The **provenance files** (`internal/cards/provenance`) and the original card
-   text they point at — the canonical wording.
-2. **Existing implementations** in this repo — reuse an established term instead
-   of coining a synonym.
-
-If neither has a term for the concept, pick the phrasing closest to how KeyForge
-cards are actually written, and flag it for the user.
+`PreventFight`. The full sourcing order (provenance files → existing
+implementations → closest KeyForge phrasing) is in the naming section of
+[docs/style-guide.md](docs/style-guide.md).
 
 ## Writing abilities (card authoring)
 

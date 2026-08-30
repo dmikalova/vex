@@ -335,9 +335,8 @@ func (g *Game) triggerAbilities(src LocalID, trigger Trigger, it LocalID, hasIt 
 	for _, ab := range def.Abilities {
 		fire(ab)
 	}
-	core := &g.State.Cards[src]
-	for i := 0; i < int(core.UpgradeCount); i++ {
-		for _, ab := range g.cat.def(core.Upgrades[i]).Static.Granted {
+	for up, ok := g.firstUpgrade(src); ok; up, ok = g.nextUpgrade(up) {
+		for _, ab := range g.cat.def(up).Static.Granted {
 			fire(ab)
 		}
 	}

@@ -191,6 +191,9 @@ type ConstantAbility struct {
 	PowerBonus int
 	ArmorBonus int
 	Target     Target
+	// Keywords are keywords the card grants to every creature its Target reaches,
+	// for as long as it stays in play — Round Table grants friendly Knights taunt.
+	Keywords []Keyword
 	// Granted are triggered abilities the card grants to every creature its Target
 	// reaches, for as long as the card stays in play — Annihilation Ritual grants
 	// each creature a "Destroyed: purge this creature." The reached creatures fire

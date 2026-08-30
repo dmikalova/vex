@@ -1,5 +1,7 @@
 package engine
 
+import "fmt"
+
 // Exhaust turns a creature sideways so it cannot be used again until it readies.
 // Like Stun and Unstun it is a simple "verb the target" effect, so it folds
 // together with a neighbouring status change on the same target when they share a
@@ -32,6 +34,58 @@ func (e Exhaust) Text() string { return e.verb() + " " + e.targetText() }
 func (e Exhaust) Resolve(ctx *EffectContext) {
 	for _, id := range e.Target.Select(ctx) {
 		ctx.Resolver.SetExhausted(id, true)
+	}
+}
+
+// ExhaustCreatures exhausts up to Max creatures the controller chooses one at a
+// time from the Target pool — Nocturnal Maneuver's "exhaust up to 3 creatures".
+// Already-exhausted creatures are not offered.
+type ExhaustCreatures struct {
+	Max    int
+	Target Target
+}
+
+// validate requires a target and a positive maximum.
+func (e ExhaustCreatures) validate() error {
+	if !e.Target.valid() {
+		return errUnsetTarget("ExhaustCreatures")
+	}
+	if e.Max < 1 {
+		return fmt.Errorf("ExhaustCreatures: Max must be positive")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "exhaust up to 3 creatures".
+func (e ExhaustCreatures) Text() string {
+	return fmt.Sprintf("exhaust up to %d %s", e.Max, singularNoun(e.Target.Text())+"s")
+}
+
+// Resolve exhausts up to Max ready creatures from the pool, one at a time, letting
+// the controller stop early.
+func (e ExhaustCreatures) Resolve(ctx *EffectContext) {
+	const done = "Done"
+	for i := 0; i < e.Max; i++ {
+		var cands []LocalID
+		for _, id := range e.Target.Select(ctx) {
+			if !ctx.Resolver.Exhausted(id) {
+				cands = append(cands, id)
+			}
+		}
+		if len(cands) == 0 {
+			return
+		}
+		options := make([]string, 0, len(cands)+1)
+		for _, id := range cands {
+			options = append(options, ctx.Resolver.Name(id))
+		}
+		options = append(options, done)
+		choice := ctx.ChooseOption("Choose a creature to exhaust", options)
+		if choice >= len(cands) {
+			return
+		}
+		ctx.Resolver.SetExhausted(cands[choice], true)
+		ctx.Resolver.Logf("%s is exhausted", ctx.Resolver.Name(cands[choice]))
 	}
 }
 

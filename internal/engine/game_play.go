@@ -248,9 +248,7 @@ func (g *Game) playActionCard(player int, id LocalID) {
 // after the upgrade has been removed from its previous zone.
 func (g *Game) playUpgradeCard(player int, id, host LocalID, def *CardDefinition) {
 	g.applyAemberBonus(id)
-	hostCore := &g.State.Cards[host]
-	hostCore.Upgrades[hostCore.UpgradeCount] = id
-	hostCore.UpgradeCount++
+	g.AttachUpgrade(host, id)
 	g.logf("%s attaches %s to %s", g.names[player], g.Name(id), g.Name(host))
 	g.fireUpgradePlay(host, id, def)
 }
@@ -267,6 +265,16 @@ func (g *Game) DiscardCardFromHand(owner int, id LocalID) {
 	hand.removeAt(i)
 	g.State.Discard[owner].add(id)
 	g.logf("%s discards %s", g.names[owner], g.Name(id))
+}
+
+// DiscardRandomFromHand discards one uniformly random card from a player's hand,
+// doing nothing if the hand is empty.
+func (g *Game) DiscardRandomFromHand(owner int) {
+	hand := &g.State.Hand[owner]
+	if hand.Count == 0 {
+		return
+	}
+	g.DiscardCardFromHand(owner, hand.IDs[g.rng.Intn(int(hand.Count))])
 }
 
 // inActiveHouse reports whether a card of the given definition matches the

@@ -2,6 +2,69 @@ package engine
 
 import "testing"
 
+func TestDamageIfDestroyed(t *testing.T) {
+	t.Run("runs the follow-up only when the damage destroys the creature", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		weak := g.AddToBattleline(testCreature("weak", 2), 1)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+
+		e := DamageIfDestroyed{Amount: 3, Target: Target{Kind: TargetChosenEnemyCreature}, Then: GainAember{Player: Controller, Amount: 1}}
+		if e.Text() != "deal 3 damage to an enemy creature. If this damage destroys that creature, gain 1 Æmber" {
+			t.Errorf("text = %q", e.Text())
+		}
+		e.Resolve(ctx)
+		if resolverInPlay(ctx, weak) {
+			t.Error("weak creature should be destroyed")
+		}
+		if g.State.Aember[0] != 1 {
+			t.Errorf("aember = %d, want 1 (follow-up ran)", g.State.Aember[0])
+		}
+	})
+
+	t.Run("does nothing extra when the creature survives", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		tough := g.AddToBattleline(testCreature("tough", 6), 1)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+
+		DamageIfDestroyed{Amount: 2, Target: Target{Kind: TargetChosenEnemyCreature}, Then: GainAember{Player: Controller, Amount: 1}}.Resolve(ctx)
+		if !resolverInPlay(ctx, tough) {
+			t.Error("tough creature should survive")
+		}
+		if g.State.Aember[0] != 0 {
+			t.Errorf("aember = %d, want 0 (follow-up did not run)", g.State.Aember[0])
+		}
+	})
+
+	t.Run("purges the destroyed creature via PurgeCreature", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		weak := g.AddToBattleline(testCreature("weak", 1), 1)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+
+		DamageIfDestroyed{Amount: 3, Target: Target{Kind: TargetChosenEnemyCreature}, Then: PurgeCreature{Target: Target{Kind: TargetTriggeringCreature}}}.Resolve(ctx)
+		if g.State.Discard[1].contains(weak) {
+			t.Error("the destroyed creature should be purged out of the discard pile")
+		}
+	})
+
+	t.Run("no target is a no-op", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+		DamageIfDestroyed{Amount: 3, Target: Target{Kind: TargetChosenEnemyCreature}, Then: GainAember{Player: Controller, Amount: 1}}.Resolve(ctx)
+		if g.State.Aember[0] != 0 {
+			t.Error("no target should not run the follow-up")
+		}
+	})
+
+	t.Run("validate", func(t *testing.T) {
+		if (DamageIfDestroyed{Then: GainAember{Player: Controller, Amount: 1}}).validate() == nil {
+			t.Error("unset target should be invalid")
+		}
+		if (DamageIfDestroyed{Target: Target{Kind: TargetChosenCreature}, Then: GainAember{}}).validate() == nil {
+			t.Error("invalid follow-up should surface")
+		}
+	})
+}
+
 func TestDealDamagePerCount(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	// Three friendly creatures multiply the 1 base damage to 3.

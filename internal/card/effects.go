@@ -28,6 +28,7 @@ type (
 // Damage and combat.
 type (
 	DealDamage          = engine.DealDamage
+	DamageIfDestroyed   = engine.DamageIfDestroyed
 	SplashDamage        = engine.SplashDamage
 	RedirectFightDamage = engine.RedirectFightDamage
 	Heal                = engine.Heal
@@ -43,13 +44,14 @@ type (
 
 // Creature state (stun, exhaust, power counters).
 type (
-	Stun            = engine.Stun
-	Unstun          = engine.Unstun
-	Exhaust         = engine.Exhaust
-	Ready           = engine.Ready
-	ReadyIfFirstUse = engine.ReadyIfFirstUse
-	ReadyCreatures  = engine.ReadyCreatures
-	AddPowerCounter = engine.AddPowerCounter
+	Stun             = engine.Stun
+	Unstun           = engine.Unstun
+	Exhaust          = engine.Exhaust
+	ExhaustCreatures = engine.ExhaustCreatures
+	Ready            = engine.Ready
+	ReadyIfFirstUse  = engine.ReadyIfFirstUse
+	ReadyCreatures   = engine.ReadyCreatures
+	AddPowerCounter  = engine.AddPowerCounter
 )
 
 // Drawing, moving, and revealing cards between zones.
@@ -66,6 +68,7 @@ type (
 	ArchiveFromPlay      = engine.ArchiveFromPlay
 	DiscardArchives      = engine.DiscardArchives
 	DiscardHand          = engine.DiscardHand
+	DiscardRandom        = engine.DiscardRandom
 	DiscardTopOfDeck     = engine.DiscardTopOfDeck
 	DiscardTopOfEachDeck = engine.DiscardTopOfEachDeck
 	ForEachDiscarded     = engine.ForEachDiscarded
@@ -107,6 +110,7 @@ type (
 	OpponentAemberExactly     = engine.OpponentAemberExactly
 	OpponentAemberMoreThanYou = engine.OpponentAemberMoreThanYou
 	CardsDestroyedFewerThan   = engine.CardsDestroyedFewerThan
+	ControlsMoreCreatures     = engine.ControlsMoreCreatures
 	ItIsOfHouse               = engine.ItIsOfHouse
 	ItIs                      = engine.ItIs
 )

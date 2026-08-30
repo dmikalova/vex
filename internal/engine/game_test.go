@@ -114,9 +114,7 @@ func TestVersatileIgnoresActiveHouse(t *testing.T) {
 	// Versatile granted by an attached upgrade also relaxes using the host.
 	mantle := g.AddToHand(NewCard("Mantle", Sanctum, Upgrade, Rare,
 		WithStatic(StaticModifier{Keywords: []Keyword{Versatile}})), 0)
-	core := &g.State.Cards[dis]
-	core.Upgrades[core.UpgradeCount] = mantle
-	core.UpgradeCount++
+	g.AttachUpgrade(dis, mantle)
 	if !g.usableInActiveHouse(dis) {
 		t.Error("granted Versatile should let the host be used out of house")
 	}

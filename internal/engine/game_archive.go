@@ -19,7 +19,7 @@ func (g *Game) offerArchives(player int) {
 	for _, id := range arc.slice() {
 		g.State.Hand[player].add(id)
 	}
-	*arc = CardList{}
+	*arc = wideList{}
 	g.logf("%s takes %d card(s) from their archives into hand", g.names[player], n)
 }
 
@@ -59,7 +59,7 @@ func (g *Game) discardArchives(owner int) {
 	} else {
 		g.rng.Shuffle(len(ids), func(i, j int) { ids[i], ids[j] = ids[j], ids[i] })
 	}
-	*arc = CardList{}
+	*arc = wideList{}
 	for _, id := range ids {
 		g.State.Discard[owner].add(id)
 	}

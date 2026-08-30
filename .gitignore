@@ -13,6 +13,7 @@
 /bin/
 /gencomments
 /genprovenance
+/cardlookup
 
 # Test binary, built with `go test -c`
 *.test

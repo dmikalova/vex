@@ -32,6 +32,23 @@ var (
 			engine.WithAbility(engine.TriggerAfterFight, e)(d)
 		})
 	}
+	// WithPlayReap adds effect as both a Play and a Reap ability; the two print as
+	// one "Play/Reap:" line.
+	WithPlayReap = func(e Effect) Option {
+		return gameplay(func(d *engine.CardDefinition) {
+			engine.WithAbility(engine.TriggerAfterPlay, e)(d)
+			engine.WithAbility(engine.TriggerAfterReap, e)(d)
+		})
+	}
+	// WithPlayFightReap adds effect as a Play, a Fight, and a Reap ability; the
+	// three print as one "Play/Fight/Reap:" line.
+	WithPlayFightReap = func(e Effect) Option {
+		return gameplay(func(d *engine.CardDefinition) {
+			engine.WithAbility(engine.TriggerAfterPlay, e)(d)
+			engine.WithAbility(engine.TriggerAfterFight, e)(d)
+			engine.WithAbility(engine.TriggerAfterReap, e)(d)
+		})
+	}
 )
 
 // FightOrReap grants effect as both a Fight and a Reap ability, so a creature

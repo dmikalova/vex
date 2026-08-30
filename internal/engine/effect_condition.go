@@ -59,6 +59,20 @@ func (OpponentAemberMoreThanYou) Met(ctx *EffectContext) bool {
 	return ctx.Resolver.Aember(ctx.Opponent()) > ctx.Resolver.Aember(ctx.Controller)
 }
 
+// ControlsMoreCreatures is met while the controller has more creatures in play
+// than the opponent.
+type ControlsMoreCreatures struct{}
+
+// CondText renders the condition.
+func (ControlsMoreCreatures) CondText() string {
+	return "if you control more creatures than your opponent"
+}
+
+// Met reports whether the controller has more creatures in play than the opponent.
+func (ControlsMoreCreatures) Met(ctx *EffectContext) bool {
+	return len(ctx.Resolver.Battleline(ctx.Controller)) > len(ctx.Resolver.Battleline(ctx.Opponent()))
+}
+
 // CardsDestroyedFewerThan is met when fewer than Amount cards were destroyed this
 // way — the tally a preceding effect records on the context. Bonkers Killing
 // Machine destroys itself when its house-driven destruction removed fewer than two.

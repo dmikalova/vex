@@ -27,6 +27,27 @@ func TestMoveFromDiscardToHand(t *testing.T) {
 	}
 }
 
+func TestPutFromDiscardByTrait(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	horseman := g.Register(NewCard("Rider", Sanctum, Creature, Common, WithPower(5), WithTraits("Horseman")), 0)
+	other := g.Register(NewCard("Squire", Sanctum, Creature, Common, WithPower(3), WithTraits("Human")), 0)
+	g.State.Discard[0].add(horseman)
+	g.State.Discard[0].add(other)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	e := PutFromDiscard{Type: Creature, Trait: "Horseman", All: true, Destination: ToHand}
+	if e.Text() != "put each Horseman trait creature from your discard pile into your hand" {
+		t.Errorf("text = %q", e.Text())
+	}
+	e.Resolve(ctx)
+	if !g.State.Hand[0].contains(horseman) {
+		t.Error("the Horseman creature should return to hand")
+	}
+	if g.State.Hand[0].contains(other) {
+		t.Error("the non-Horseman creature should stay in the discard pile")
+	}
+}
+
 func TestMoveFromDiscardAll(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	dis1 := g.Register(NewCard("d1", Dis, Creature, Common, WithPower(2)), 0)
@@ -114,5 +135,46 @@ func TestDiscardHand(t *testing.T) {
 	g.DiscardCardFromHand(1, marsCreature)
 	if n := g.State.Discard[1].Count; n != 1 {
 		t.Errorf("discard count = %d, want 1 (no double-discard)", n)
+	}
+}
+
+func TestDiscardRandom(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	a := g.AddToHand(NewCard("a", Mars, Tactic, Common), 1)
+	b := g.AddToHand(NewCard("b", Mars, Tactic, Common), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	e := DiscardRandom{Player: Opponent}
+	if e.Text() != "your opponent discards a random card from their hand" {
+		t.Errorf("text = %q", e.Text())
+	}
+	if self := (DiscardRandom{Player: Controller}).Text(); self != "discard a random card from your hand" {
+		t.Errorf("self text = %q", self)
+	}
+	if (DiscardRandom{}).validate() == nil {
+		t.Error("unset player should be invalid")
+	}
+	if (DiscardRandom{Player: Opponent}).validate() != nil {
+		t.Error("set player should be valid")
+	}
+
+	e.Resolve(ctx)
+	if g.State.Hand[1].Count != 1 {
+		t.Errorf("hand count = %d, want 1 after one discard", g.State.Hand[1].Count)
+	}
+	if g.State.Discard[1].Count != 1 {
+		t.Errorf("discard count = %d, want 1", g.State.Discard[1].Count)
+	}
+	// The discarded card is one of the two; the other remains.
+	if got := g.State.Hand[1].contains(a) == g.State.Hand[1].contains(b); got {
+		t.Error("exactly one of the two cards should remain in hand")
+	}
+
+	// An empty hand is a no-op.
+	g.DiscardRandomFromHand(1)
+	g.DiscardRandomFromHand(1) // hand now empty
+	g.DiscardRandomFromHand(1)
+	if g.State.Discard[1].Count != 2 {
+		t.Errorf("discard count = %d, want 2 (empty-hand discards are no-ops)", g.State.Discard[1].Count)
 	}
 }

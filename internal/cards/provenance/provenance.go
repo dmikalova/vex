@@ -34,12 +34,17 @@ type Ref struct {
 
 // Card is one original card as recorded in a source catalog.
 type Card struct {
-	Number int
-	Name   string
-	House  string
-	Type   string
-	Rarity string
-	Text   string
+	Number   int
+	Name     string
+	House    string
+	Type     string
+	Rarity   string
+	Text     string
+	Traits   []string
+	Keywords []string
+	Power    int
+	Armor    int
+	Amber    int
 }
 
 // Set is a source set together with all of its cards.
@@ -86,12 +91,17 @@ func load() {
 			continue // a set without a catalog is simply skipped
 		}
 		var raw []struct {
-			Number string `json:"number"`
-			Name   string `json:"name"`
-			House  string `json:"house"`
-			Type   string `json:"type"`
-			Rarity string `json:"rarity"`
-			Text   string `json:"text"`
+			Number   string   `json:"number"`
+			Name     string   `json:"name"`
+			House    string   `json:"house"`
+			Type     string   `json:"type"`
+			Rarity   string   `json:"rarity"`
+			Text     string   `json:"text"`
+			Traits   []string `json:"traits"`
+			Keywords []string `json:"keywords"`
+			Power    int      `json:"power"`
+			Armor    int      `json:"armor"`
+			Amber    int      `json:"amber"`
 		}
 		if err := json.Unmarshal(data, &raw); err != nil {
 			continue
@@ -102,6 +112,8 @@ func load() {
 			cards = append(cards, Card{
 				Number: n, Name: r.Name, House: r.House,
 				Type: r.Type, Rarity: r.Rarity, Text: r.Text,
+				Traits: r.Traits, Keywords: r.Keywords,
+				Power: r.Power, Armor: r.Armor, Amber: r.Amber,
 			})
 		}
 		sort.Slice(cards, func(i, j int) bool { return cards[i].Number < cards[j].Number })

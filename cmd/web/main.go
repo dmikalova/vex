@@ -5,11 +5,13 @@
 package main
 
 import (
+	"compress/gzip"
 	"crypto/sha256"
 	"encoding/hex"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/dmikalova/vactrol/internal/web"
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
@@ -48,9 +50,51 @@ func main() {
 	}
 	addr := ":" + port
 	log.Printf("Vactrol web client on http://localhost%s", addr)
-	if err := http.ListenAndServe(addr, nil); err != nil {
+	if err := http.ListenAndServe(addr, gzipHandler(http.DefaultServeMux)); err != nil {
 		log.Fatal(err)
 	}
+}
+
+// gzipHandler wraps h to gzip-encode responses for clients that accept it. The
+// biggest asset is app.wasm, which compresses to roughly half its size, so this
+// is the largest lever on first-load download time.
+func gzipHandler(h http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+			h.ServeHTTP(w, r)
+			return
+		}
+		w.Header().Set("Content-Encoding", "gzip")
+		w.Header().Add("Vary", "Accept-Encoding")
+		gz := gzip.NewWriter(w)
+		defer func() { _ = gz.Close() }()
+		h.ServeHTTP(&gzipResponseWriter{ResponseWriter: w, gz: gz}, r)
+	})
+}
+
+// gzipResponseWriter streams a handler's output through a gzip.Writer. It drops
+// Content-Length (the compressed length differs) on the first write so the
+// server falls back to chunked transfer encoding.
+type gzipResponseWriter struct {
+	http.ResponseWriter
+	gz          *gzip.Writer
+	wroteHeader bool
+}
+
+func (g *gzipResponseWriter) WriteHeader(status int) {
+	if g.wroteHeader {
+		return
+	}
+	g.wroteHeader = true
+	g.Header().Del("Content-Length")
+	g.ResponseWriter.WriteHeader(status)
+}
+
+func (g *gzipResponseWriter) Write(b []byte) (int, error) {
+	if !g.wroteHeader {
+		g.WriteHeader(http.StatusOK)
+	}
+	return g.gz.Write(b)
 }
 
 // resourceVersion hashes the served static assets so the go-app Handler version

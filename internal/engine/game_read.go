@@ -48,8 +48,8 @@ func (g *Game) ActiveHouse() House { return g.State.ActiveHouse }
 func (g *Game) Power(id LocalID) int {
 	core := &g.State.Cards[id]
 	p := g.cat.def(id).Power
-	for i := 0; i < int(core.UpgradeCount); i++ {
-		p += g.cat.def(core.Upgrades[i]).Static.PowerBonus
+	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
+		p += g.cat.def(up).Static.PowerBonus
 	}
 	p += int(core.PowerCounters)
 	p += g.constantBonus(id, func(c ConstantAbility) int { return c.PowerBonus })
@@ -58,10 +58,9 @@ func (g *Game) Power(id LocalID) int {
 
 // armor returns a creature's armor value including attached upgrades.
 func (g *Game) armor(id LocalID) int {
-	core := &g.State.Cards[id]
 	a := g.cat.def(id).Armor
-	for i := 0; i < int(core.UpgradeCount); i++ {
-		a += g.cat.def(core.Upgrades[i]).Static.ArmorBonus
+	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
+		a += g.cat.def(up).Static.ArmorBonus
 	}
 	a += g.constantBonus(id, func(c ConstantAbility) int { return c.ArmorBonus })
 	return a
@@ -101,35 +100,42 @@ func (g *Game) constantAffects(src LocalID, c ConstantAbility, id LocalID) bool 
 
 // assault returns a creature's Assault value including attached upgrades.
 func (g *Game) assault(id LocalID) int {
-	core := &g.State.Cards[id]
 	a := g.cat.def(id).Assault
-	for i := 0; i < int(core.UpgradeCount); i++ {
-		a += g.cat.def(core.Upgrades[i]).Static.AssaultBonus
+	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
+		a += g.cat.def(up).Static.AssaultBonus
 	}
 	return a
 }
 
 // hazardous returns a creature's Hazardous value including attached upgrades.
 func (g *Game) hazardous(id LocalID) int {
-	core := &g.State.Cards[id]
 	h := g.cat.def(id).Hazardous
-	for i := 0; i < int(core.UpgradeCount); i++ {
-		h += g.cat.def(core.Upgrades[i]).Static.HazardousBonus
+	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
+		h += g.cat.def(up).Static.HazardousBonus
 	}
 	return h
 }
 
-// hasKeyword reports whether a creature has a keyword, either printed on it or
-// granted by an attached upgrade.
+// hasKeyword reports whether a creature has a keyword, either printed on it,
+// granted by an attached upgrade, or granted by a card's constant ability.
 func (g *Game) hasKeyword(id LocalID, k Keyword) bool {
 	if g.cat.def(id).hasKeyword(k) {
 		return true
 	}
-	core := &g.State.Cards[id]
-	for i := 0; i < int(core.UpgradeCount); i++ {
-		for _, kw := range g.cat.def(core.Upgrades[i]).Static.Keywords {
+	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
+		for _, kw := range g.cat.def(up).Static.Keywords {
 			if kw == k {
 				return true
+			}
+		}
+	}
+	for p := 0; p < 2; p++ {
+		for _, src := range g.allInPlay(p) {
+			c := g.cat.def(src).Constant
+			for _, kw := range c.Keywords {
+				if kw == k && g.constantAffects(src, c, id) {
+					return true
+				}
 			}
 		}
 	}
@@ -205,12 +211,7 @@ func (g *Game) Artifacts(player int) []LocalID { return cloneIDs(g.State.Artifac
 
 // Upgrades returns the ids of upgrades attached to a creature, in attach order.
 func (g *Game) Upgrades(id LocalID) []LocalID {
-	core := &g.State.Cards[id]
-	out := make([]LocalID, core.UpgradeCount)
-	for i := range out {
-		out[i] = core.Upgrades[i]
-	}
-	return out
+	return g.upgradesOf(id)
 }
 
 // inPlay reports whether an id is in either player's battleline or artifact row.
@@ -274,9 +275,8 @@ func (g *Game) keyCostChangeFor(id LocalID, controller, target int) int {
 	if kc := g.cat.def(id).KeyCostChange; kc.affects(controller, target) {
 		total += kc.amount
 	}
-	core := &g.State.Cards[id]
-	for i := 0; i < int(core.UpgradeCount); i++ {
-		if kc := g.cat.def(core.Upgrades[i]).Static.KeyCostChange; kc.affects(controller, target) {
+	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
+		if kc := g.cat.def(up).Static.KeyCostChange; kc.affects(controller, target) {
 			total += kc.amount
 		}
 	}

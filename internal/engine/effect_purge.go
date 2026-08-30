@@ -198,9 +198,21 @@ func (e PurgeCreature) validate() error {
 // Text renders the effect, e.g. "purge this creature".
 func (e PurgeCreature) Text() string { return "purge " + e.Target.Text() }
 
-// Resolve purges each selected creature from play.
+// Resolve purges each selected creature — from play if it is still there, or from
+// its owner's discard pile if it has just been destroyed (Yxilo Bolter purges the
+// creature its damage killed). A creature that is in neither zone is left alone.
 func (e PurgeCreature) Resolve(ctx *EffectContext) {
 	for _, id := range e.Target.Select(ctx) {
-		ctx.Resolver.PurgeFromPlay(id)
+		if resolverInPlay(ctx, id) {
+			ctx.Resolver.PurgeFromPlay(id)
+			continue
+		}
+		owner := ctx.Resolver.Owner(id)
+		for _, d := range ctx.Resolver.Discard(owner) {
+			if d == id {
+				ctx.Resolver.PurgeFromDiscard(owner, id)
+				break
+			}
+		}
 	}
 }

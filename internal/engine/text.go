@@ -90,9 +90,10 @@ func abilityTextWithNames(line, self, upgrade string) string {
 
 // abilityLines renders a card's triggered abilities, one printed line each,
 // resolving self-references to the card's name (or "this creature" for an
-// upgrade's own abilities). A creature's adjacent Reap and Fight abilities with
-// the same effect — the pair card.WithFightOrReap adds — merge into one
-// "Fight/Reap:" line, the KeyForge shorthand.
+// upgrade's own abilities). Adjacent abilities that share one effect and fire on
+// distinct action triggers — the pairs/triples WithFightOrReap, WithPlayReap, and
+// WithPlayFightReap add — merge into one "Fight/Reap:" / "Play/Reap:" /
+// "Play/Fight/Reap:" line, the KeyForge shorthand.
 func abilityLines(def *CardDefinition) []string {
 	self := def.Name
 	if def.Type == Upgrade {
@@ -100,17 +101,58 @@ func abilityLines(def *CardDefinition) []string {
 	}
 	abs := def.Abilities
 	lines := make([]string, 0, len(abs))
-	for i := 0; i < len(abs); i++ {
-		ab := abs[i]
-		if i+1 < len(abs) && isFightReapPair(ab, abs[i+1]) {
-			body := capitalizeFirst(abilityTextWithNames(ab.Effect.Text(), self, def.Name))
-			lines = append(lines, "Fight/Reap: "+body+".")
-			i++ // the partner prints as part of this line
+	for i := 0; i < len(abs); {
+		if label, run := actionTriggerRun(abs, i); run > 1 {
+			body := capitalizeFirst(abilityTextWithNames(abs[i].Effect.Text(), self, def.Name))
+			lines = append(lines, label+": "+punctuate(body))
+			i += run
 			continue
 		}
-		lines = append(lines, abilityTextWithNames(RenderAbility(ab), self, def.Name))
+		lines = append(lines, abilityTextWithNames(RenderAbility(abs[i]), self, def.Name))
+		i++
 	}
 	return lines
+}
+
+// actionTriggerRun finds the run of consecutive abilities starting at i that
+// share one effect and each fire on a distinct action trigger (Play, Fight, or
+// Reap). It returns the combined label ("Play/Fight/Reap") in canonical order and
+// the run length; a run of one is left for the normal per-trigger rendering.
+func actionTriggerRun(abs []Ability, i int) (string, int) {
+	text := abs[i].Effect.Text()
+	var play, fight, reap bool
+	n := 0
+	for j := i; j < len(abs) && abs[j].Effect.Text() == text; j++ {
+		switch t := abs[j].Trigger; {
+		case t == TriggerAfterPlay && !play:
+			play = true
+		case t == TriggerAfterFight && !fight:
+			fight = true
+		case t == TriggerAfterReap && !reap:
+			reap = true
+		default:
+			// Stop: not an action trigger, or a repeated one.
+			return canonicalTriggerLabel(play, fight, reap), n
+		}
+		n++
+	}
+	return canonicalTriggerLabel(play, fight, reap), n
+}
+
+// canonicalTriggerLabel joins the present action-trigger labels in the fixed
+// order Play, Fight, Reap.
+func canonicalTriggerLabel(play, fight, reap bool) string {
+	var parts []string
+	if play {
+		parts = append(parts, "Play")
+	}
+	if fight {
+		parts = append(parts, "Fight")
+	}
+	if reap {
+		parts = append(parts, "Reap")
+	}
+	return strings.Join(parts, "/")
 }
 
 // isFightReapPair reports whether two adjacent abilities are a Fight and a Reap
@@ -342,6 +384,9 @@ func constantText(def *CardDefinition) string {
 	}
 	if c.ArmorBonus != 0 {
 		parts = append(parts, fmt.Sprintf("%+d armor", c.ArmorBonus))
+	}
+	for _, k := range c.Keywords {
+		parts = append(parts, strings.ToLower(string(k)))
 	}
 	if len(parts) == 0 {
 		return ""

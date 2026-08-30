@@ -165,9 +165,7 @@ func TestTriggerWindowPicksUpNewlyGrantedAbility(t *testing.T) {
 	attach := gameEffect{fn: func() {
 		up := g.Register(NewCard("boost", Brobnar, Upgrade, Common,
 			WithStatic(StaticModifier{Granted: []Ability{{Trigger: TriggerAfterReap, Effect: GainAember{Player: Controller, Amount: 3}}}})), 0)
-		core := &g.State.Cards[a]
-		core.Upgrades[core.UpgradeCount] = up
-		core.UpgradeCount++
+		g.AttachUpgrade(a, up)
 	}}
 	a = g.AddToBattleline(NewCard("A", Brobnar, Creature, Common, WithPower(2),
 		WithAbility(TriggerAfterReap, attach)), 0)

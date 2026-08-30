@@ -38,6 +38,24 @@ func TestConditionalEffect(t *testing.T) {
 	}
 }
 
+func TestControlsMoreCreatures(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	c := ControlsMoreCreatures{}
+	if c.CondText() != "if you control more creatures than your opponent" {
+		t.Errorf("CondText = %q", c.CondText())
+	}
+	g.AddToBattleline(testCreature("mine", 1), 0)
+	if !c.Met(ctx) {
+		t.Error("1 vs 0 should be met")
+	}
+	g.AddToBattleline(testCreature("theirs", 1), 1)
+	if c.Met(ctx) {
+		t.Error("1 vs 1 should not be met")
+	}
+}
+
 func TestCardsPlayed(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}

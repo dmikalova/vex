@@ -10,10 +10,13 @@ type LocalID uint8
 const (
 	// maxCards is the LocalID space for one match.
 	maxCards = 128
-	// zoneCap is the capacity of a single zone (deck is the largest zone).
-	zoneCap = 40
-	// maxUpgrades is the most upgrades that can be stacked on one creature.
-	maxUpgrades = 6
+	// deckCap bounds a zone that can only ever hold a player's own deck: deck, hand,
+	// discard, and purge only receive their owner's cards, and a KeyForge deck is 36.
+	deckCap = 36
+	// wideCap bounds a zone that can hold cards from both decks at once: a player can
+	// control an opponent's creatures and artifacts (battle line, artifact row) and
+	// archive cards from either deck (archives), so up to both 36-card decks combined.
+	wideCap = 72
 )
 
 // CardCore is the mutable per-match state of a single card, stored purely by
@@ -40,8 +43,17 @@ type CardCore struct {
 	// (rather than only until end of turn). HouseNone means none. It is cleared by
 	// resetCore when the card leaves play.
 	LastingHouse House
-	UpgradeCount uint8
-	Upgrades     [maxUpgrades]LocalID
+	// Upgrades attached to a creature form an intrusive singly-linked list threaded
+	// through these three bytes, so a creature carries any number of upgrades with no
+	// per-card fixed array — KeyForge sets no limit on how many upgrades a creature
+	// may hold. All three use +1 encoding (0 means "none") like ControlPlus, so the
+	// zero value is cleanly "unattached": FirstUpgradePlus is the head of a host's
+	// chain, NextUpgradePlus is the next upgrade on the same host, and HostPlus is the
+	// creature an upgrade is attached to — a back-link that makes detaching and
+	// "which creature am I on?" O(1).
+	FirstUpgradePlus uint8
+	NextUpgradePlus  uint8
+	HostPlus         uint8
 	// ControlPlus is a temporary control override: 0 means the owner controls the
 	// card, otherwise the controller is ControlPlus-1. Ownership never changes.
 	ControlPlus uint8
@@ -51,61 +63,81 @@ type CardCore struct {
 	ControlSource LocalID
 }
 
-// CardList is an ordered, fixed-capacity collection of card ids (hand, deck, battle
-// line, etc.). It is a value type: copying a CardList copies its contents.
-type CardList struct {
-	IDs   [zoneCap]LocalID
+// A zone is an ordered, fixed-capacity collection of card ids (hand, deck, battle
+// line, etc.), stored purely by value so copying it copies its contents. There are
+// two sizes — deckList for zones bounded by a single deck, wideList for zones that
+// can hold cards from both decks — because Go generics cannot slice a type parameter
+// whose array sizes differ, so the shared logic lives in the list* free functions
+// below and each type is a thin wrapper over them.
+type deckList struct {
+	IDs   [deckCap]LocalID
 	Count uint8
 }
 
-// slice returns the live ids as a slice header into the underlying array. The
-// result must be treated as read-only and not retained across mutations.
-func (z *CardList) slice() []LocalID { return z.IDs[:z.Count] }
-
-// add appends an id to the end of the zone.
-func (z *CardList) add(id LocalID) {
-	z.IDs[z.Count] = id
-	z.Count++
+type wideList struct {
+	IDs   [wideCap]LocalID
+	Count uint8
 }
 
-// addFront inserts an id at the front of the zone (the left flank / top of deck).
-func (z *CardList) addFront(id LocalID) {
-	copy(z.IDs[1:z.Count+1], z.IDs[:z.Count])
-	z.IDs[0] = id
-	z.Count++
+// listSlice returns the live ids as a read-only slice header into the backing array.
+func listSlice(ids []LocalID, count uint8) []LocalID { return ids[:count] }
+
+// listAdd appends an id at the end of the zone.
+func listAdd(ids []LocalID, count *uint8, id LocalID) {
+	ids[*count] = id
+	*count++
 }
 
-// indexOf returns the position of id, or -1 if absent.
-func (z *CardList) indexOf(id LocalID) int {
-	for i := 0; i < int(z.Count); i++ {
-		if z.IDs[i] == id {
+// listAddFront inserts an id at the front (the left flank / top of deck).
+func listAddFront(ids []LocalID, count *uint8, id LocalID) {
+	copy(ids[1:*count+1], ids[:*count])
+	ids[0] = id
+	*count++
+}
+
+// listIndexOf returns the position of id, or -1 if absent.
+func listIndexOf(ids []LocalID, count uint8, id LocalID) int {
+	for i := 0; i < int(count); i++ {
+		if ids[i] == id {
 			return i
 		}
 	}
 	return -1
 }
 
-// contains reports whether the zone holds id.
-func (z *CardList) contains(id LocalID) bool { return z.indexOf(id) >= 0 }
-
-// removeAt removes the id at position i, preserving order, and returns it.
-func (z *CardList) removeAt(i int) LocalID {
-	id := z.IDs[i]
-	copy(z.IDs[i:], z.IDs[i+1:z.Count])
-	z.Count--
-	z.IDs[z.Count] = 0
+// listRemoveAt removes the id at position i, preserving order, and returns it.
+func listRemoveAt(ids []LocalID, count *uint8, i int) LocalID {
+	id := ids[i]
+	copy(ids[i:], ids[i+1:*count])
+	*count--
+	ids[*count] = 0
 	return id
 }
 
-// remove deletes id from the zone if present, reporting whether it was found.
-func (z *CardList) remove(id LocalID) bool {
-	i := z.indexOf(id)
+// listRemove deletes id if present, reporting whether it was found.
+func listRemove(ids []LocalID, count *uint8, id LocalID) bool {
+	i := listIndexOf(ids, *count, id)
 	if i < 0 {
 		return false
 	}
-	z.removeAt(i)
+	listRemoveAt(ids, count, i)
 	return true
 }
+
+func (z *deckList) slice() []LocalID         { return listSlice(z.IDs[:], z.Count) }
+func (z *deckList) add(id LocalID)           { listAdd(z.IDs[:], &z.Count, id) }
+func (z *deckList) addFront(id LocalID)      { listAddFront(z.IDs[:], &z.Count, id) }
+func (z *deckList) indexOf(id LocalID) int   { return listIndexOf(z.IDs[:], z.Count, id) }
+func (z *deckList) contains(id LocalID) bool { return z.indexOf(id) >= 0 }
+func (z *deckList) removeAt(i int) LocalID   { return listRemoveAt(z.IDs[:], &z.Count, i) }
+func (z *deckList) remove(id LocalID) bool   { return listRemove(z.IDs[:], &z.Count, id) }
+
+func (z *wideList) slice() []LocalID         { return listSlice(z.IDs[:], z.Count) }
+func (z *wideList) add(id LocalID)           { listAdd(z.IDs[:], &z.Count, id) }
+func (z *wideList) addFront(id LocalID)      { listAddFront(z.IDs[:], &z.Count, id) }
+func (z *wideList) indexOf(id LocalID) int   { return listIndexOf(z.IDs[:], z.Count, id) }
+func (z *wideList) contains(id LocalID) bool { return z.indexOf(id) >= 0 }
+func (z *wideList) remove(id LocalID) bool   { return listRemove(z.IDs[:], &z.Count, id) }
 
 // GameState is the complete mutable state of a match, laid out as a flat value.
 // It contains no pointers, slices, or maps, so a copy is a pure value copy with
@@ -113,14 +145,14 @@ func (z *CardList) remove(id LocalID) bool {
 // depend on. Read-only card definitions live in the separate catalog.
 type GameState struct {
 	Cards      [maxCards]CardCore
-	Battleline [2]CardList
-	Hand       [2]CardList
-	Deck       [2]CardList
-	Discard    [2]CardList
-	Artifacts  [2]CardList
-	Archives   [2]CardList
+	Battleline [2]wideList
+	Hand       [2]deckList
+	Deck       [2]deckList
+	Discard    [2]deckList
+	Artifacts  [2]wideList
+	Archives   [2]wideList
 	// Purge holds cards set aside out of the game ("purged"); they never return.
-	Purge [2]CardList
+	Purge [2]deckList
 
 	Aember [2]int
 	Keys   [2]int

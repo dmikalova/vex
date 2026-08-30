@@ -49,6 +49,7 @@ func (g *Game) BeginTurn(player int) {
 	g.State.ForcedHouseNext[player] = HouseNone
 	g.logf("--- %s begins turn %d ---", g.names[player], g.State.Turn)
 	g.forgeKey(player)
+	g.assertInvariants()
 }
 
 // Choose a house: pick one of your deck's three houses to be your active house
@@ -115,6 +116,7 @@ func (g *Game) EndTurn(player int) {
 	g.clearLasting(player)
 	g.drawStep(player)
 	g.logf("%s ends their turn", g.names[player])
+	g.assertInvariants()
 }
 
 // drawStep draws the player back up to their hand size, reduced by their chains,

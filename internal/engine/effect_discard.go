@@ -15,6 +15,8 @@ type PutFromDiscard struct {
 	// Type restricts the choice to cards of that type; the zero value (an unset
 	// CardType) allows any card.
 	Type CardType
+	// Trait restricts the choice to cards with that trait; the zero value allows any.
+	Trait Trait
 	// Destination is where the card goes: ToHand or ToTopOfDeck.
 	Destination Destination
 	// All moves every matching card instead of one chosen card (Arise! returning
@@ -28,10 +30,14 @@ type PutFromDiscard struct {
 // noun renders the kind of card the effect moves — the lowercased card type when
 // Type is set (e.g. "creature"), otherwise the generic "card".
 func (e PutFromDiscard) noun() string {
+	base := "card"
 	if e.Type != "" {
-		return strings.ToLower(string(e.Type))
+		base = strings.ToLower(string(e.Type))
 	}
-	return "card"
+	if e.Trait != "" {
+		base = string(e.Trait) + " trait " + base
+	}
+	return base
 }
 
 // destPhrase renders where the card goes, e.g. "into your hand".
@@ -82,6 +88,9 @@ func (e PutFromDiscard) Resolve(ctx *EffectContext) {
 			if e.Type != "" && ctx.Resolver.TypeOf(id) != e.Type {
 				continue
 			}
+			if e.Trait != "" && !ctx.Resolver.HasTrait(id, e.Trait) {
+				continue
+			}
 			if e.OfChosenHouse && ctx.Resolver.House(id) != ctx.ChosenHouse {
 				continue
 			}
@@ -91,12 +100,16 @@ func (e PutFromDiscard) Resolve(ctx *EffectContext) {
 	}
 	discard := ctx.Resolver.Discard(ctx.Controller)
 	candidates := discard
-	if e.Type != "" {
+	if e.Type != "" || e.Trait != "" {
 		candidates = nil
 		for _, id := range discard {
-			if ctx.Resolver.TypeOf(id) == e.Type {
-				candidates = append(candidates, id)
+			if e.Type != "" && ctx.Resolver.TypeOf(id) != e.Type {
+				continue
 			}
+			if e.Trait != "" && !ctx.Resolver.HasTrait(id, e.Trait) {
+				continue
+			}
+			candidates = append(candidates, id)
 		}
 	}
 	id, ok := ctx.ChooseCreature("Choose a "+e.noun()+" from your discard pile", candidates)
@@ -153,4 +166,33 @@ func (e DiscardHand) Resolve(ctx *EffectContext) {
 		}
 		ctx.Resolver.DiscardCardFromHand(owner, id)
 	}
+}
+
+// DiscardRandom discards one uniformly random card from a player's hand — the
+// "discard a random card" effect on cards like Mind Barb and Tocsin, where the
+// discarding player does not choose which card leaves a hidden hand.
+type DiscardRandom struct {
+	Player Player
+}
+
+// validate rejects a DiscardRandom whose player was left unset.
+func (e DiscardRandom) validate() error {
+	if !e.Player.valid() {
+		return errUnsetPlayer("DiscardRandom")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "your opponent discards a random card from their
+// hand".
+func (e DiscardRandom) Text() string {
+	if e.Player == Opponent {
+		return "your opponent discards a random card from their hand"
+	}
+	return "discard a random card from your hand"
+}
+
+// Resolve discards one random card from the chosen player's hand.
+func (e DiscardRandom) Resolve(ctx *EffectContext) {
+	ctx.Resolver.DiscardRandomFromHand(ctx.PlayerFor(e.Player))
 }

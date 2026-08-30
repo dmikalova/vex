@@ -115,6 +115,103 @@ func TestTargetText(t *testing.T) {
 	}
 }
 
+func TestTargetPowerFilters(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	p2 := g.AddToBattleline(testCreature("p2", 2), 0)
+	p4 := g.AddToBattleline(testCreature("p4", 4), 0)
+	p6 := g.AddToBattleline(testCreature("p6", 6), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	if ids := (Target{Kind: TargetEachCreature}).PowerAtMost(3).Select(ctx); len(ids) != 1 || ids[0] != p2 {
+		t.Errorf("PowerAtMost(3) = %v, want [%d]", ids, p2)
+	}
+	if ids := (Target{Kind: TargetEachCreature}).PowerAtLeast(5).Select(ctx); len(ids) != 1 || ids[0] != p6 {
+		t.Errorf("PowerAtLeast(5) = %v, want [%d]", ids, p6)
+	}
+	if ids := (Target{Kind: TargetEachCreature}).PowerExactly(4).Select(ctx); len(ids) != 1 || ids[0] != p4 {
+		t.Errorf("PowerExactly(4) = %v, want [%d]", ids, p4)
+	}
+
+	if got := (Target{Kind: TargetChosenCreature}).PowerAtLeast(5).Text(); got != "a creature with power 5 or higher" {
+		t.Errorf("PowerAtLeast text = %q", got)
+	}
+	if got := (Target{Kind: TargetChosenCreature}).PowerExactly(1).Text(); got != "a creature with power 1" {
+		t.Errorf("PowerExactly text = %q", got)
+	}
+}
+
+func TestTargetUndamagedAndOther(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("src", 3), 0)
+	hurt := g.AddToBattleline(testCreature("hurt", 3), 0)
+	g.State.Cards[hurt].Damage = 1
+	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+
+	if ids := (Target{Kind: TargetEachCreature}).Undamaged().Select(ctx); len(ids) != 1 || ids[0] != src {
+		t.Errorf("Undamaged filter = %v, want [%d]", ids, src)
+	}
+	if ids := (Target{Kind: TargetEachCreature}).Other().Select(ctx); len(ids) != 1 || ids[0] != hurt {
+		t.Errorf("Other filter = %v, want [%d]", ids, hurt)
+	}
+	if got := (Target{Kind: TargetEachCreature}).Other().Undamaged().Text(); got != "each other undamaged creature" {
+		t.Errorf("other+undamaged text = %q", got)
+	}
+}
+
+func TestTargetWithAemberAndLeastPowerful(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	rich := g.AddToBattleline(testCreature("rich", 5), 0)
+	g.State.Cards[rich].Amber = 2
+	weak := g.AddToBattleline(testCreature("weak", 1), 1)
+	g.AddToBattleline(testCreature("mid", 3), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	if ids := (Target{Kind: TargetEachCreature}).WithAember().Select(ctx); len(ids) != 1 || ids[0] != rich {
+		t.Errorf("WithAember = %v, want [%d]", ids, rich)
+	}
+	if got := (Target{Kind: TargetEachCreature}).WithAember().Text(); got != "each creature with Æmber on it" {
+		t.Errorf("WithAember text = %q", got)
+	}
+	if ids := (Target{Kind: TargetEachCreature}).Selector(LeastPowerful).Select(ctx); len(ids) != 1 || ids[0] != weak {
+		t.Errorf("LeastPowerful = %v, want [%d]", ids, weak)
+	}
+	if got := (Target{Kind: TargetEachCreature}).Selector(LeastPowerful).Text(); got != "the least powerful creature" {
+		t.Errorf("LeastPowerful text = %q", got)
+	}
+	// An empty set selects nothing.
+	empty := &EffectContext{Resolver: NewGame("A", "B", 1), Controller: 0}
+	if ids := (Target{Kind: TargetEachCreature}).Selector(LeastPowerful).Select(empty); ids != nil {
+		t.Errorf("LeastPowerful empty = %v, want nil", ids)
+	}
+}
+
+func TestLeastPowerfulTieChoice(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	a := g.AddToBattleline(testCreature("a", 2), 1)
+	b := g.AddToBattleline(testCreature("b", 2), 1)
+	g.AddToBattleline(testCreature("big", 5), 1)
+	g.SetChooser(0, idChooser{id: b})
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ids := (Target{Kind: TargetEachEnemyCreature}).Selector(LeastPowerful).Select(ctx)
+	if len(ids) != 1 || ids[0] != b {
+		t.Errorf("tie choice = %v, want [%d]; a=%d", ids, b, a)
+	}
+}
+
+func TestTargetKeyword(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	elusive := g.AddToBattleline(NewCard("elu", Brobnar, Creature, Common, WithKeywords(Elusive)), 0)
+	g.AddToBattleline(testCreature("plain", 3), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	if ids := (Target{Kind: TargetEachCreature}).Keyword(Elusive).Select(ctx); len(ids) != 1 || ids[0] != elusive {
+		t.Errorf("Keyword(Elusive) = %v, want [%d]", ids, elusive)
+	}
+	if got := (Target{Kind: TargetEachCreature}).Keyword(Elusive).Text(); got != "each elusive creature" {
+		t.Errorf("keyword text = %q", got)
+	}
+}
+
 func TestTargetOfHouse(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	mars := g.AddToBattleline(NewCard("m", Mars, Creature, Common, WithPower(3)), 0)

@@ -36,6 +36,12 @@ type Config struct {
 
 	// Interval is the file-polling period. Defaults to 500ms.
 	Interval time.Duration
+
+	// Settle is a debounce/quiet period: once a change is detected, the watcher
+	// waits until the tree has been quiet (no further changes) for this long
+	// before rebuilding, so a rapid burst of edits collapses into a single
+	// rebuild. Zero (the default) rebuilds immediately on the first change.
+	Settle time.Duration
 }
 
 // skipDirs are directories never worth walking for source changes.
@@ -68,7 +74,7 @@ func Serve(cfg Config) error {
 		if !t.After(last) {
 			continue
 		}
-		last = t
+		last = cfg.settle(t)
 		fmt.Println("hotreload: change detected, rebuilding…")
 		if err := cfg.Build(); err != nil {
 			fmt.Println("hotreload: build failed:", err)
@@ -78,6 +84,23 @@ func Serve(cfg Config) error {
 		server = cfg.start()
 	}
 	return nil
+}
+
+// settle waits out the debounce window: it keeps polling until the tree has been
+// quiet for cfg.Settle, so a burst of rapid edits triggers one rebuild instead of
+// many. It returns the newest mod time observed once things are stable. With
+// Settle == 0 it returns immediately, rebuilding on the first change.
+func (cfg *Config) settle(t time.Time) time.Time {
+	for cfg.Settle > 0 {
+		time.Sleep(cfg.Settle)
+		newer := cfg.newestModTime()
+		if !newer.After(t) {
+			break // no change during the quiet window: settled
+		}
+		fmt.Println("hotreload: still changing, waiting to settle…")
+		t = newer
+	}
+	return t
 }
 
 func (cfg *Config) applyDefaults() {

@@ -7,9 +7,9 @@ engine: the patterns it is built from, where each belongs, and the deliberate
 tradeoffs — including the ones that look like smells but are forced by a
 constraint, and how to handle them so the next mechanic still lands cleanly.
 
-Read this alongside the root `AGENTS.md` ("Design for composition, not for the
-card in front of you") and the file-organization rules there. This guide is the
-_why_; those are the _what goes where_.
+Read this alongside [docs/style-guide.md](../../docs/style-guide.md) ("Composition
+and design") and the file-organization rules in the root `AGENTS.md`. This guide is
+the _why_; those are the _what goes where_.
 
 ## Two hard constraints shape everything
 

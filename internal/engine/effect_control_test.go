@@ -37,12 +37,10 @@ func TestControlRevertsWhenTakingUpgradeLeaves(t *testing.T) {
 	g := started(t)
 	host := g.AddToBattleline(testCreature("host", 3), 1)
 	collar := g.Register(NewCard("collar", Dis, Upgrade, Rare), 0)
-	core := &g.State.Cards[host]
-	core.Upgrades[0] = collar
-	core.UpgradeCount = 1
+	g.AttachUpgrade(host, collar)
 	g.takeControl(host, 0, collar)
 
-	g.discardAttachedUpgradeAt(host, 0)
+	g.destroyAttachedUpgrade(collar)
 
 	if g.controller(host) != 1 {
 		t.Fatalf("controller = %d, want owner P2", g.controller(host))
@@ -59,9 +57,7 @@ func TestControlledCreatureLeavesForOwner(t *testing.T) {
 	g := started(t)
 	host := g.AddToBattleline(testCreature("host", 3), 1)
 	collar := g.Register(NewCard("collar", Dis, Upgrade, Rare), 0)
-	core := &g.State.Cards[host]
-	core.Upgrades[0] = collar
-	core.UpgradeCount = 1
+	g.AttachUpgrade(host, collar)
 	g.takeControl(host, 0, collar)
 
 	g.DealDamage(0, []DamageTarget{{ID: host, Amount: 3}})

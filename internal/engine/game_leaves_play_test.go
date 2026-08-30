@@ -106,8 +106,8 @@ func TestUpgradeCanPreventHostDestructionOnce(t *testing.T) {
 	if g.Damage(host) != 0 {
 		t.Errorf("host damage = %d, want fully healed", g.Damage(host))
 	}
-	if g.State.Cards[host].UpgradeCount != 0 {
-		t.Errorf("host upgrade count = %d, want the shield consumed", g.State.Cards[host].UpgradeCount)
+	if got := len(g.Upgrades(host)); got != 0 {
+		t.Errorf("host upgrade count = %d, want the shield consumed", got)
 	}
 	if got := g.Discard(0); len(got) != 1 || got[0] != upgrade {
 		t.Errorf("discard = %v, want only the consumed upgrade", got)

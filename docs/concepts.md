@@ -12,6 +12,7 @@ This document outlines the core concepts of Vactrol, a KeyForge-style card game.
     - Common - about 18 per deck - these establish the flavor of the set and faction
     - Uncommon - about 12 per deck - these give specific flavor to the deck
     - Rare - about 6 per deck - these are cards that do unique things
+    - Special - very rare, 1 in 12 decks
     - Legacy - about 6 per deck - these are cards from other sets
     - Maverick - about 3 per deck - these are cards from other factions
     - Legacy Mavericks - the odds of this are maverick crossed with legacy

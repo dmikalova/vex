@@ -105,6 +105,27 @@ func TestHasTriggerFromConstantAbility(t *testing.T) {
 	}
 }
 
+func TestHasKeywordFromConstantAbility(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(NewCard("Grantor", Untamed, Creature, Common, WithPower(3),
+		WithConstantAbility(ConstantAbility{
+			Target:   Target{Kind: TargetEachFriendlyCreature},
+			Keywords: []Keyword{Skirmish},
+		})), 0)
+	friend := g.AddToBattleline(testCreature("friend", 3), 0)
+	enemy := g.AddToBattleline(testCreature("enemy", 3), 1)
+
+	if !g.hasKeyword(friend, Skirmish) {
+		t.Error("a friendly creature should gain the granted keyword")
+	}
+	if g.hasKeyword(friend, Poison) {
+		t.Error("only the granted keyword is gained")
+	}
+	if g.hasKeyword(enemy, Skirmish) {
+		t.Error("an enemy creature is not reached by the friendly constant ability")
+	}
+}
+
 func TestConstantText(t *testing.T) {
 	banner := NewCard("Banner", Brobnar, Artifact, Rare,
 		WithConstantAbility(ConstantAbility{PowerBonus: 1, Target: Target{Kind: TargetEachFriendlyCreature}}))
@@ -125,6 +146,17 @@ func TestConstantText(t *testing.T) {
 		WithConstantAbility(ConstantAbility{PowerBonus: 1}))
 	if got := constantText(&all); got != "Each card in play gains +1 power." {
 		t.Errorf("untargeted constant text = %q", got)
+	}
+
+	table := NewCard("Table", Sanctum, Artifact, Rare,
+		WithConstantAbility(ConstantAbility{PowerBonus: 1, Keywords: []Keyword{Taunt}, Target: Target{Kind: TargetEachFriendlyCreature}}))
+	if got := constantText(&table); got != "Each friendly creature gains +1 power and taunt." {
+		t.Errorf("keyword constant text = %q", got)
+	}
+	kwOnly := NewCard("Halo", Untamed, Creature, Common, WithPower(4),
+		WithConstantAbility(ConstantAbility{Keywords: []Keyword{Skirmish}, Target: Target{Kind: TargetEachFriendlyCreature}}))
+	if got := constantText(&kwOnly); got != "Each friendly creature gains skirmish." {
+		t.Errorf("keyword-only constant text = %q", got)
 	}
 
 	plain := NewCard("Plain", Brobnar, Creature, Common, WithPower(3))

@@ -3,7 +3,7 @@ package engine
 import "testing"
 
 func TestCardList(t *testing.T) {
-	var z CardList
+	var z deckList
 	z.add(1)
 	z.add(2)
 	z.add(3)

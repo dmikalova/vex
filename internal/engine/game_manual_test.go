@@ -130,9 +130,7 @@ func TestManualMoveFromPlayResetsAndShedsUpgrades(t *testing.T) {
 	g.State.Cards[host].Exhausted = true
 	g.State.Cards[host].Damage = 2
 	up := g.Register(exBruteStrength(), 0)
-	core := &g.State.Cards[host]
-	core.Upgrades[0] = up
-	core.UpgradeCount = 1
+	g.AttachUpgrade(host, up)
 
 	g.ManualMove(host, ManualHand)
 

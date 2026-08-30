@@ -46,6 +46,47 @@ func (e DealDamage) Resolve(ctx *EffectContext) {
 	ctx.Resolver.DealDamage(ctx.Controller, targets)
 }
 
+// DamageIfDestroyed deals damage to one chosen creature and, only if that damage
+// destroys it, resolves a follow-up effect with the destroyed creature in context
+// (ctx.It) — Seeker Needle's "deal 1 damage to a creature. If this damage destroys
+// that creature, gain 1 Æmber."
+type DamageIfDestroyed struct {
+	Amount int
+	Target Target
+	Then   Effect
+}
+
+// validate requires a target and a well-formed follow-up effect.
+func (e DamageIfDestroyed) validate() error {
+	if !e.Target.valid() {
+		return errUnsetTarget("DamageIfDestroyed")
+	}
+	return validateEffect(e.Then)
+}
+
+// Text renders the effect, e.g. "deal 2 damage to a creature. If this damage
+// destroys that creature, steal 1 Æmber".
+func (e DamageIfDestroyed) Text() string {
+	return fmt.Sprintf("deal %d damage to %s. If this damage destroys that creature, %s",
+		e.Amount, e.Target.Text(), e.Then.Text())
+}
+
+// Resolve deals the damage to the chosen creature, then runs Then only if the
+// creature has left play. The destroyed creature is placed in context (ctx.It) so
+// Then can refer to it ("purge it").
+func (e DamageIfDestroyed) Resolve(ctx *EffectContext) {
+	ids := e.Target.Select(ctx)
+	if len(ids) == 0 {
+		return
+	}
+	id := ids[0]
+	ctx.Resolver.DealDamage(ctx.Controller, []DamageTarget{{ID: id, Amount: e.Amount}})
+	if !resolverInPlay(ctx, id) {
+		ctx.It, ctx.HasIt = id, true
+		e.Then.Resolve(ctx)
+	}
+}
+
 // SplashDamage deals damage to one chosen creature that is not on a flank and a
 // smaller "splash" amount to each of that creature's neighbors, all at once. The
 // not-on-a-flank restriction guarantees the chosen creature has two neighbors.
