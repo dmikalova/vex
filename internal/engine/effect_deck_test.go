@@ -214,9 +214,13 @@ func TestForEachDiscardedAndContextualHouse(t *testing.T) {
 func TestResolverInPlay(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	live := g.AddToBattleline(testCreature("live", 3), 0)
+	art := g.AddArtifact(NewCard("Relic", Logos, Artifact, Common), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 	if !resolverInPlay(ctx, live) {
 		t.Error("a battleline creature should read in play")
+	}
+	if !resolverInPlay(ctx, art) {
+		t.Error("an artifact should read in play")
 	}
 	if resolverInPlay(ctx, LocalID(200)) {
 		t.Error("an absent id should not read in play")

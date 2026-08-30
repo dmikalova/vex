@@ -5,6 +5,7 @@ package engine
 // keys is a distinct colour. KeyColorNone is the zero value (an unforged slot).
 type KeyColor uint8
 
+// The key colours a player can forge; KeyColorNone is the unforged zero value.
 const (
 	KeyColorNone KeyColor = iota
 	KeyColorRed

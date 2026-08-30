@@ -156,3 +156,12 @@ func TestNewCardRejectsInvalidReplaces(t *testing.T) {
 	}()
 	NewCard("bad", Mars, Creature, Uncommon, WithReplaces(Instead{Of: EventCreaturePlayed, With: Capture}))
 }
+
+func TestNewCardRejectsInvalidPlayPermission(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Error("NewCard should panic on a granted PlayPermission with no count")
+		}
+	}()
+	NewCard("bad", Untamed, Creature, Rare, WithPlayPermission(PlayPermission{House: Untamed}))
+}

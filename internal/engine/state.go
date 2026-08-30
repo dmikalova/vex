@@ -181,14 +181,6 @@ type GameState struct {
 	ForcedHouse     [2]House
 	ForcedHouseNext [2]House
 
-	// KeyForgeAemberGive[p] means that after player p forges a key this turn, they
-	// give their remaining Æmber to KeyForgeAemberGiveBeneficiary[p]. The Next fields
-	// arm that delayed transfer for p's next turn (Interdimensional Graft).
-	KeyForgeAemberGive                [2]bool
-	KeyForgeAemberGiveNext            [2]bool
-	KeyForgeAemberGiveBeneficiary     [2]int8
-	KeyForgeAemberGiveBeneficiaryNext [2]int8
-
 	// FightDamageRedirect is the creature a "Before Fight" ability chose to receive
 	// the attacker's fight damage instead of the defender (Gabos Longarms). It is
 	// set during the fight in progress and read and cleared by the combat step; 0

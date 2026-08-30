@@ -34,7 +34,7 @@ _Whether lone specimens or entire cultures, the beings brought_ to the Crucible 
 
 _As an Archon, you have gathered followers in your journeys_ throughout the Crucible, allies who find value in your ageless _wisdom and your ability to speak to all creatures. With the aid of these allies, you seek out Vaults hidden throughout the Crucible by the cryptic Architects. Each Vault can only be unlocked by Æmber-forged keys. Once open, a Vault's contents—the power and knowledge of the Architects—can be consumed by only a single Archon._
 
-_When two Archons discover a Vault, only one can gain its knowledge. Only one can move one step closer to the secret of the Crucible…_
+_When two Archons discover a Vault, only one can gain its knowledge. Only one can move one step closer to the secret of the Crucible..._
 
 _KeyForge_ is a two-player card game in which each player takes the role of an Archon, and leads that Archon's deck against their opponent.
 
@@ -165,7 +165,7 @@ When a player's turn ends, if that player has enough Æmber in their pool to aff
 15. Archon Image
 16. Deck Registration Code
 
-![](keyforge-master-rulebook-images/_page_5_Picture_5.jpeg)
+![Card anatomy diagram](keyforge-master-rulebook-images/_page_5_Picture_5.jpeg)
 
 _Card anatomy — the numbers correspond to the list above._
 
@@ -397,7 +397,7 @@ Some card abilities cause a player to gain one or more chains. If a player gains
 
 If the active player has at least one chain when refilling their hand during step 5 of their turn and would draw cards based on the number of remaining cards in their hand, they draw fewer cards according to the chart below. After chains prevent a player from drawing one or more cards, that player sheds a chain by reducing the number on their chain tracker by one.
 
-![](keyforge-master-rulebook-images/_page_9_Picture_51.jpeg)
+![Chain tracker showing four chains](keyforge-master-rulebook-images/_page_9_Picture_51.jpeg)
 
 _A chain tracker currently showing a player has 4 chains._
 
@@ -656,9 +656,7 @@ The active player may use any ready creature they control of the active house to
 
 1. Choose one friendly, ready creature and exhaust it. This is the attacking creature.
 2. Choose one eligible enemy creature to be fought. Taunt and other card abilities may affect this choice. The creature chosen to be fought is the "attacked creature."
-3. Resolve any "Before Fight" effects, Assault X effects on the attacking creature, and any Hazardous X effects on the
-
-enemy creature. If any of these effects cause one or both creatures to be destroyed, the fight does not occur.
+3. Resolve any "Before Fight" effects, Assault X effects on the attacking creature, and any Hazardous X effects on the enemy creature. If any of these effects cause one or both creatures to be destroyed, the fight does not occur.
 
 4. Both creatures deal pending damage to each other equal to their power and are considered "fighting" for the purposes of card effects. If the attacking creature has Splash-attack X, it also resolves now. Note that elusive, Skirmish, and other card abilities may affect the resolution of this step.
 5. If the attacking creature survived the fight, all "After Fight:" abilities on the attacking creature resolve. If _either_ creature in a fight has a constant ability referencing the end of the fight, the creature must survive the fight to resolve the ability.
@@ -1041,9 +1039,9 @@ The active player may play cards of the active house during step 3 of their turn
 1. Reveal the card being played and confirm it is eligible to be played.
 2. If the card is an action, continue to step 3. If the card is an artifact, a creature, or an upgrade, it enters play and is placed in the appropriate play area:
 
-- If the card is a creature, it enters play exhausted on either flank of the controlling player's battleline.
-- If the card is an artifact, it enters play exhausted in a row below the controlling player's battleline.
-- If the card is an upgrade, it enters play attached to a creature chosen by the active player. An upgrade can be attached to a creature controlled by either player. The upgrade is controlled by the player who played it, even if the creature to which the upgrade is attached is controlled by the opponent.
+   - If the card is a creature, it enters play exhausted on either flank of the controlling player's battleline.
+   - If the card is an artifact, it enters play exhausted in a row below the controlling player's battleline.
+   - If the card is an upgrade, it enters play attached to a creature chosen by the active player. An upgrade can be attached to a creature controlled by either player. The upgrade is controlled by the player who played it, even if the creature to which the upgrade is attached is controlled by the opponent.
 
 3. The card is considered "played". Resolve bonus icons (if any) from top to bottom, one at a time.
 4. Resolve "Play:" abilities, "after a card is played" abilities, and "after a card enters play" abilities in the order of the active player's choosing.
@@ -1119,13 +1117,13 @@ If an effect puts a card into your discard pile, the card has not been "discarde
 
 Cards that are in play exist in one of two states: ready and exhausted.
 
-![](keyforge-master-rulebook-images/_page_20_Picture_4.jpeg)
+![Ready card orientation](keyforge-master-rulebook-images/_page_20_Picture_4.jpeg)
 
-_Ready_
+_A ready card._
 
-![](keyforge-master-rulebook-images/_page_20_Picture_5.jpeg)
+![Exhausted card orientation](keyforge-master-rulebook-images/_page_20_Picture_5.jpeg)
 
-_Exhausted_
+_An exhausted card._
 
 Ready cards are oriented upright so that their text may be read from left to right. A ready card can be used during a player's turn, causing it to exhaust.
 
@@ -1576,9 +1574,9 @@ Hypnobeam's lasting effect acts as a constant ability while it is in effect. As 
 ## Creatures Played as Upgrades
 
 > Can I play Explo-rover 297 as an upgrade if my opponent sacrificed Lifeward 077 on a previous turn?
-
+>
 > If I have Matter Maker 349 in play, can I play Explo-rover 297 as an upgrade when Star Alliance is not my active house?
-
+>
 > If my opponent has Kaupe 341 in play, and I've already played a creature, can I still play Explo-rover 297 as an upgrade?
 
 Yes to all three. Explo-rover's ability allows it to be played as an upgrade anytime an upgrade could be played.
@@ -2081,7 +2079,7 @@ Note that you are still limited by the rule of six, so while you could make seve
 
 Animator's ability creates a lasting effect that expires at the end of the turn, which is after Fangtooth Cavern's "end of turn" effect resolves.
 
-## Exterminate! Exterminate!
+## Exterminate! Exterminate! 180
 
 > How do you resolve the "Play:" ability on Exterminate! Exterminate! 180?
 
@@ -2245,15 +2243,10 @@ The creature takes 5 damage total: 1 from the initial damage, 2 from the first L
 
 When you play Wild Wormhole after playing a Library Access the following happens in this order:
 
-1. You gain 1 Æmber from Wild Wormhole's Æmber bonus. 2. Library Access's effect and Wild Wormhole's play effect are simultaneous, so you may resolve them in either order.
-
-2. You gain Æmber from any Æmber bonus on the card played
-
-from the top of your deck.
-
-4. If there are any play effects on the card played from the top of your deck, they are simultaneous with Library Access's effect. You
-
-may resolve them in either order.
+1. You gain 1 Æmber from Wild Wormhole's Æmber bonus.
+2. Library Access's effect and Wild Wormhole's play effect are simultaneous, so you may resolve them in either order.
+3. You gain Æmber from any Æmber bonus on the card played from the top of your deck.
+4. If there are any play effects on the card played from the top of your deck, they are simultaneous with Library Access's effect. You may resolve them in either order.
 
 ## Lightsmith Clariel
 

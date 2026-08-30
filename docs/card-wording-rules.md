@@ -301,8 +301,8 @@ ability line is unchanged.
 ## Deliberate rule changes (not just wording)
 
 A few cards were changed in ways that affect the rules, not just phrasing — to
-**simplify** the card down to base rules text, to make it **slightly more
-interesting**, or to bring it in line with **modern errata**:
+**simplify** the card down to base rules text, to make it
+**slightly more interesting**, or to bring it in line with **modern errata**:
 
 - **Charge!** buffs all creatures, not just ones played this turn (dropped
   `you play`).

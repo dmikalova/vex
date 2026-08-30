@@ -141,10 +141,10 @@ func (t Target) OfContextualHouse() Target {
 	return t
 }
 
-// PowerAtMost narrows the target to creatures whose power is max or lower, e.g.
-// Target{Kind: TargetEachCreature}.PowerAtMost(3).
-func (t Target) PowerAtMost(max int) Target {
-	t.maxPower = max
+// PowerAtMost narrows the target to creatures whose power is maxPower or lower,
+// e.g. Target{Kind: TargetEachCreature}.PowerAtMost(3).
+func (t Target) PowerAtMost(maxPower int) Target {
+	t.maxPower = maxPower
 	t.hasMaxPower = true
 	return t
 }
@@ -376,15 +376,15 @@ func (exceptMostPowerful) refine(ctx *EffectContext, ids []LocalID) []LocalID {
 	if len(ids) <= 1 {
 		return nil
 	}
-	max := ctx.Resolver.Power(ids[0])
+	highest := ctx.Resolver.Power(ids[0])
 	for _, id := range ids[1:] {
-		if p := ctx.Resolver.Power(id); p > max {
-			max = p
+		if p := ctx.Resolver.Power(id); p > highest {
+			highest = p
 		}
 	}
 	mostPowerful := make([]LocalID, 0, len(ids))
 	for _, id := range ids {
-		if ctx.Resolver.Power(id) == max {
+		if ctx.Resolver.Power(id) == highest {
 			mostPowerful = append(mostPowerful, id)
 		}
 	}

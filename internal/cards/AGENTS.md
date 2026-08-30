@@ -46,21 +46,21 @@ the same details the TUI card box shows via `engine.RenderCardText`). Write the
 ```go
 // Ammonia Clouds
 //
-//	House:  Mars
-//	Type:   Action
-//	Rarity: Common
+//  House:  Mars
+//  Type:   Action
+//  Rarity: Common
 //
-//	Play: Deal 3 damage to each creature.
+//  Play: Deal 3 damage to each creature.
 var AmmoniaClouds = card.New(
-	"Ammonia Clouds",
-	card.House.Mars,
-	card.Type.Action,
-	card.Rarity.Common,
-	card.WithAbility(
-		card.Trigger.Play, card.DealDamage{
-			Amount: 3,
-			Target: card.Target.EachCreature,
-		}),
+  "Ammonia Clouds",
+  card.House.Mars,
+  card.Type.Action,
+  card.Rarity.Common,
+  card.WithAbility(
+    card.Trigger.Play, card.DealDamage{
+      Amount: 3,
+      Target: card.Target.EachCreature,
+    }),
 )
 ```
 

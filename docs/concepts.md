@@ -106,6 +106,6 @@ This document outlines the core concepts of Vactrol, a KeyForge-style card game.
 - Not sure what to do with bonus icons. Distortion covers a lot of their ground, but having bonus aember still seems like a good thing.
 - Action type cards, and the Action: ability need to be renamed so they're not the same word.
 
-## Keeping from KeyForge:
+## Keeping from KeyForge
 
 - Decide everything on your turn without interrupts

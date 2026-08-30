@@ -6,5 +6,12 @@ blanks-around-fences = "off" # Allow fenced code blocks without blank lines arou
 blanks-around-lists = "off" # Disable blanks-around-lists - too strict for loose lists with spacing
 emphasis-style = "off" # Disable emphasis style consistency - allow both * and _
 fenced-code-language = "off" # Don't require language specifier in fenced code blocks
+first-line-heading = "off" # docs/rulebook/*.md are prose fragments genrules splices into rulebook.md; they intentionally have no top-level heading
 line-length = "off" # Disable line length - let editors handle wrapping
 no-inline-html = "off" # Allow inline HTML (common in GitHub READMEs, badges)
+
+[linters.settings.no-duplicate-heading]
+# keyforge-master-rulebook.md faithfully reproduces the official rulebook, which
+# repeats step/section names across the rules body, the glossary, and the
+# timing-chart appendix (each under a different parent heading).
+siblings_only = true

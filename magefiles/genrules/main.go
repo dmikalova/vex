@@ -243,7 +243,12 @@ func render(byKey map[string][]entry) (string, error) {
 			b.WriteString("\n\n")
 		}
 		for _, gr := range groupByTitle(entries) {
-			fmt.Fprintf(&b, "### %s\n\n", gr.title)
+			// An entry whose title matches its section (e.g. Combat) would render a
+			// heading identical to the section's, so emit its body directly under
+			// the section instead of repeating the heading.
+			if !strings.EqualFold(gr.title, sec.title) {
+				fmt.Fprintf(&b, "### %s\n\n", gr.title)
+			}
 			// Untitled parts render first as the heading's own body; subheaded
 			// parts follow, ordered by subheading (number them to control order).
 			var subbed []entry

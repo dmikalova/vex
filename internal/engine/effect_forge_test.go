@@ -59,12 +59,12 @@ func TestGiveRemainingAemberAfterOpponentForgeKey(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.BeginTurn(0)
 	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
-	if !g.State.KeyForgeAemberGiveNext[1] {
-		t.Fatal("opponent's next-turn key-forge transfer was not armed")
+	if g.State.LastingCount != 1 || g.State.Lasting[0].Controller != 1 || g.State.Lasting[0].On != EventForgeKey {
+		t.Fatal("opponent's next-turn key-forge reaction was not armed")
 	}
 
 	g.State.Aember[1] = KeyCost + 4
-	g.EndTurn(0)
+	g.EndTurn(0) // the opponent-owned reaction survives the controller's turn end
 	g.BeginTurn(1)
 
 	if g.Keys(1) != 1 {
@@ -76,8 +76,8 @@ func TestGiveRemainingAemberAfterOpponentForgeKey(t *testing.T) {
 	if g.Aember(0) != 4 {
 		t.Errorf("controller aember = %d, want 4", g.Aember(0))
 	}
-	if g.State.KeyForgeAemberGive[1] {
-		t.Error("transfer should clear after the opponent forges")
+	if g.State.LastingCount != 0 {
+		t.Error("reaction should self-remove after the opponent forges")
 	}
 }
 
@@ -94,8 +94,8 @@ func TestGiveRemainingAemberAfterOpponentForgeKeyExpiresIfNoForge(t *testing.T) 
 	}
 
 	g.EndTurn(1)
-	if g.State.KeyForgeAemberGive[1] {
-		t.Error("transfer should expire at the end of the opponent's next turn")
+	if g.State.LastingCount != 0 {
+		t.Error("reaction should expire at the end of the opponent's next turn")
 	}
 
 	g.State.Aember[1] = KeyCost + 2
@@ -123,5 +123,14 @@ func TestGiveRemainingAemberAfterOpponentForgeKeyAppliesToCardForge(t *testing.T
 	}
 	if g.Aember(0) != 3 {
 		t.Errorf("controller aember = %d, want 3", g.Aember(0))
+	}
+}
+
+func TestForgeKeyLastingText(t *testing.T) {
+	if got := EventForgeKey.clause(); got != "after forging a key" {
+		t.Errorf("clause = %q", got)
+	}
+	if got := actGiveRemainingAember.describe(); got != "give remaining Æmber" {
+		t.Errorf("describe = %q", got)
 	}
 }

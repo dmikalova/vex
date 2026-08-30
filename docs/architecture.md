@@ -1,9 +1,9 @@
 # Vactrol architecture
 
-This document explains how the Vactrol codebase fits together — first at a **high
-level** (the big pieces and why they are shaped the way they are), then at a
-**medium level** (per-area responsibilities, the key types, and how a turn and an
-ability actually flow through the code).
+This document explains how the Vactrol codebase fits together — first at a
+**high level** (the big pieces and why they are shaped the way they are), then
+at a **medium level** (per-area responsibilities, the key types, and how a turn
+and an ability actually flow through the code).
 
 It is the human-facing companion to three other kinds of docs:
 

@@ -41,7 +41,7 @@ func TestBonkersKillingMachine(t *testing.T) {
 		})
 
 		h.P1.UseAction(BonkersKillingMachine)
-		h.P1.ExpectPrompt("Choose a Mars creature or artifact").Source("Bonkers Killing Machine")
+		h.P1.ExpectPrompt("Choose a creature or artifact of that card's house").Source("Bonkers Killing Machine")
 		h.P1.ClickCard(marsArtifact)
 
 		h.Expect(p1Top).At(ct.Discard)

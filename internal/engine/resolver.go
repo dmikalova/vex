@@ -229,9 +229,6 @@ type TurnResolver interface {
 	// ForceActiveHouseNextTurn makes a player have to choose the given house as their
 	// active house on their next turn.
 	ForceActiveHouseNextTurn(player int, house House)
-	// GiveRemainingAemberAfterKeyForgeNextTurn makes a player give their remaining
-	// Æmber to another player after forging a key during their next turn.
-	GiveRemainingAemberAfterKeyForgeNextTurn(forger, beneficiary int)
 }
 
 // ChoiceResolver asks a player to make a decision — ordering a set of cards, or

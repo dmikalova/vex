@@ -9,9 +9,10 @@ concepts and named techniques **bolded** so they can be researched further later
 
 ## 1. Lock the game design & theme
 
-Vactrol keeps KeyForge's core loop but swaps humanoid creatures for **abstract object
-constructs** so that art can be procedurally generated at scale. Each **House** is a
-distinct visual/mechanical architecture — **Alchemia** (volatile liquid chemists / vials),
+Vactrol keeps KeyForge's core loop but swaps humanoid creatures for
+**abstract object constructs** so that art can be procedurally generated at
+scale. Each **House** is a distinct visual/mechanical architecture —
+**Alchemia** (volatile liquid chemists / vials),
 **Mechanica** (clockwork gears with adjacency synergy), and **Geometria** (crystalline
 prisms with line-of-sight effects). A single **unified vocabulary** is shared across all
 houses so interactions stay instantly readable: **Flux** (the resource, replacing Æmber),
@@ -30,17 +31,19 @@ are needed. This keeps definitions declarative, type-safe, and instantly readabl
 developer, and it sidesteps the error-handling and non-idiomatic pitfalls of pointer-receiver
 method chaining (the fluent/builder style common in TypeScript). Under the hood each
 definition builds an **Abstract Syntax Tree (AST)** of intents/conditions/targets that acts
-as the single source of truth. Two interpreters walk the same tree: the **game-engine
-interpreter** (mutates live state) and the **text/localization interpreter** (emits the
-English card face). This guarantees **zero desync** between what a card says and what it
+as the single source of truth. Two interpreters walk the same tree: the
+**game-engine interpreter** (mutates live state) and the
+**text/localization interpreter** (emits the English card face). This guarantees
+**zero desync** between what a card says and what it
 does, and makes translation a matter of adding a new text backend.
 
 ## 3. Build the core engine — deterministic & pointerless
 
 The engine must be **deterministic** (seed in → identical game out) and built for speed.
 Separate a **Card Blueprint** (parameterized generative template) from a **Card Instance**
-(a concrete card in a match). Runtime state lives in a flat, **pointerless `GameState`
-struct** using **fixed-capacity arrays** (e.g. `[2][10]CardInstance`) so it can be copied
+(a concrete card in a match). Runtime state lives in a flat,
+**pointerless `GameState` struct** using **fixed-capacity arrays**
+(e.g. `[2][10]CardInstance`) so it can be copied
 by value in nanoseconds with **zero heap allocation / no GC pressure** — critical for later
 simulation work. Dynamic/temporary effects (e.g. "gains a trigger until end of turn") are
 handled by a **Modifier system** layered over the static definition plus an end-of-turn
@@ -53,9 +56,10 @@ Layer a **Curated Randomizer / Director pattern** on top of the card constructor
 generated cards stay coherent. The director rolls parameters within **safety rails** (a
 keyword from a pool, a damage value from a range) and passes them through the same struct
 literals / functional options, so variants are always valid and type-checked. Every modifier
-contributes to a **Balance Score / power budget**, which
-maps to an **Appearance Weight** so stronger rolls become exponentially rarer. A **print-run
-generator** (CLI) can sample thousands of rolls and emit a manifest of each variant with its
+contributes to a **Balance Score / power budget**, which maps to an
+**Appearance Weight** so stronger rolls become exponentially rarer. A
+**print-run generator** (CLI) can sample thousands of rolls and emit a manifest
+of each variant with its
 `powerScore` and `spawnChance`.
 
 ## 5. Build the procedural art pipeline
@@ -63,8 +67,9 @@ generator** (CLI) can sample thousands of rolls and emit a manifest of each vari
 Avoid AI art and per-card commissions by **compositing layered SVG assets** driven by the
 card's own data. Art is a back-to-front **layer stack** (background/biome → action → target
 → frame), where each mechanic contributes a visual element (e.g. `dealDamage` stamps an
-energy asset that scales with the amount). Cohesion comes from three rules: **abstract vector
-shapes**, an **algorithmic anchor/layout grid**, and **dynamic palettization** (assets drawn
+energy asset that scales with the amount). Cohesion comes from three rules:
+**abstract vector shapes**, an **algorithmic anchor/layout grid**, and
+**dynamic palettization** (assets drawn
 in grayscale, colors injected at runtime from card traits). A realistic budget path is a
 **modular vector asset kit** (~60 grayscale components) rather than 50 illustrations —
 roughly $3k–$7k, kept low by delivering a grey-box layout and grayscale specs to the artist.
@@ -87,8 +92,8 @@ A **release set** (Magic/Pokémon/KeyForge sense, not the math sense) is ~400 bl
 blueprints across ~50 **action primitives**, yielding tens of thousands of possible cards —
 which is a storage problem, not a compute problem (blueprints compile to only a few MB).
 Bootstrap by **cloning an existing, already-balanced KeyForge set** to skip the cold-start
-problem, then let simulation estimate baseline values from there. Get a **minimum playable
-set of cards** working end-to-end before scaling.
+problem, then let simulation estimate baseline values from there. Get a
+**minimum playable set of cards** working end-to-end before scaling.
 
 ## 8. Build the MCTS / ISMCTS engine
 
@@ -143,9 +148,10 @@ Tune those weights automatically with **evolutionary algorithms** — a proven, 
 approach demonstrated in games like Hearthstone via **competitive coevolution**. A basic
 **Genetic Algorithm** loop (tournament fitness → selection → crossover → mutation) works;
 **CMA-ES** (Covariance Matrix Adaptation Evolution Strategy) is the state-of-the-art
-continuous optimizer if faster convergence is needed. Critically, **personality lives in the
-weights, not the deck** — so to grow *distinct* archetypes simultaneously, use **Quality
-Diversity**, specifically **MAP-Elites**: define a **behavior space** grid (e.g. game length
+continuous optimizer if faster convergence is needed. Critically,
+**personality lives in the weights, not the deck** — so to grow *distinct*
+archetypes simultaneously, use **Quality Diversity**, specifically
+**MAP-Elites**: define a **behavior space** grid (e.g. game length
 × unspent Flux) and keep the single best-performing **elite** per niche. One run then yields
 the best Aggro, Control, and Combo bots at once, usable as fixed **sparring partners**.
 
@@ -163,12 +169,14 @@ of full random-vs-random matrices.
 
 ## 14. Keep sets aligned & continuously rebalanced
 
-Avoid an O(N²) set-vs-set explosion using a **Historical Gauntlet** and the **transitive
-property**: measure every new set against the same frozen gauntlet; if Set 5 and Set 1 each
+Avoid an O(N²) set-vs-set explosion using a **Historical Gauntlet** and the
+**transitive property**: measure every new set against the same frozen gauntlet;
+if Set 5 and Set 1 each
 sit at ~50% vs the gauntlet, they're balanced against each other without ever playing
 directly. Each release only needs ~1.5–2M sims (internal draft balance + global constructed
-alignment). For ongoing tweaks, treat balance like **CI/CD**: compute a change's **blast
-radius** (only re-sim decks that use the changed card), run **differential/regression tests**
+alignment). For ongoing tweaks, treat balance like **CI/CD**: compute a change's
+**blast radius** (only re-sim decks that use the changed card), run
+**differential/regression tests**
 with small sample gates that escalate on variance, apply **Bayesian updating** with the prior
 run as the statistical prior, and **version the meta** (Gauntlet v4, etc.) so old sets don't
 shift underfoot. Store only compact win/loss telemetry (~100–200 bytes/game) and reconstruct

@@ -36,7 +36,9 @@ func (GiveRemainingAemberAfterOpponentForgeKey) Text() string {
 	return "if an opponent forges a key on their next turn, they must give you their remaining Æmber"
 }
 
-// Resolve arms the transfer for the opponent's next turn.
+// Resolve arms the transfer for the opponent's next turn by registering a one-shot
+// reaction to the opponent's forge, owned by the opponent so it survives this turn
+// and fires during theirs.
 func (GiveRemainingAemberAfterOpponentForgeKey) Resolve(ctx *EffectContext) {
-	ctx.Resolver.GiveRemainingAemberAfterKeyForgeNextTurn(ctx.Opponent(), ctx.Controller)
+	ctx.Resolver.AddLastingOnce(EventForgeKey, actGiveRemainingAember, ctx.Opponent(), 0, HouseNone)
 }

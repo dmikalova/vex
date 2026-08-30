@@ -44,19 +44,31 @@ const (
 	// intercepts the incoming gain, so the pool's owner keeps the Æmber they already
 	// have.
 	EventAemberAddedToPool
+	// EventForgeKey fires after a player forges a key (a reaction point). A reaction
+	// owned by that player fires during their turn; because the registry clears a
+	// player's own entries at their EndTurn, a reaction armed on an opponent (owned
+	// by the forger) survives the arming turn and fires during the forger's next
+	// turn — the "during your opponent's next turn" window (Interdimensional Graft).
+	EventForgeKey
 )
 
 // isReaction reports whether the event is a reaction point (fired after) rather
 // than a replacement point (queried during).
-func (e Event) isReaction() bool { return e == EventCreaturePlayed || e == EventReap }
+func (e Event) isReaction() bool {
+	return e == EventCreaturePlayed || e == EventReap || e == EventForgeKey
+}
 
 // clause renders the "when" phrase for a reaction, e.g. "each time you play a
 // creature".
 func (e Event) clause() string {
-	if e == EventReap {
+	switch e {
+	case EventReap:
 		return "after a creature reaps"
+	case EventForgeKey:
+		return "after forging a key"
+	default:
+		return "each time you play a creature"
 	}
-	return "each time you play a creature"
 }
 
 // gerund renders the "instead of ..." phrase for a replacement, e.g. "gaining
@@ -73,6 +85,7 @@ const (
 	actDealDamage
 	actSteal
 	actReadyPlayed
+	actGiveRemainingAember
 )
 
 // describe is a short label for a reaction, used when the controller orders several
@@ -83,6 +96,8 @@ func (a lastingAction) describe() string {
 		return "deal damage"
 	case actReadyPlayed:
 		return "ready the creature"
+	case actGiveRemainingAember:
+		return "give remaining Æmber"
 	default:
 		return "gain Æmber"
 	}
@@ -212,6 +227,12 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 	case actReadyPlayed:
 		g.State.Cards[subject].Exhausted = false
 		g.logf("%s is readied", g.Name(subject))
+	case actGiveRemainingAember:
+		beneficiary := 1 - actor
+		amount := g.State.Aember[actor]
+		g.State.Aember[actor] = 0
+		g.State.Aember[beneficiary] += amount
+		g.logf("%s gives %d Æmber to %s after forging a key", g.names[actor], amount, g.names[beneficiary])
 	default: // actGainAember
 		if capturer, ok := g.gainAember(actor, int(le.Amount)); ok {
 			g.logf("%s captures %d Æmber instead of %s gaining it (%s)", g.Name(capturer), le.Amount, g.names[actor], le.On.clause())

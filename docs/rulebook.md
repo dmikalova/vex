@@ -59,8 +59,6 @@ here too.
 
 ## Combat
 
-### Combat
-
 Combat: use one of your ready creatures to fight an enemy creature. Both deal
 damage equal to their power at the same time; armor reduces the damage a
 creature takes, and a Skirmish attacker takes no damage back. A creature with
