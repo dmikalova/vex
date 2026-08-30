@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Action
 //	Rarity: Rare
 //
-//	Play: Discard the top card of your opponent's deck and reveal their hand. You gain 1 Æmber for each card of the discarded card's house revealed this way. Your opponent repeats the preceding effect on you.
+//	Play: Discard the top card of your opponent's deck and reveal their hand. You gain 1 Æmber for each card of the discarded card's house revealed this way. Discard the top card of your deck and reveal your hand. Your opponent gains 1 Æmber for each card of the discarded card's house revealed this way.
 var AFairGame = card.New(
 	"A Fair Game",
 	card.House.Dis,

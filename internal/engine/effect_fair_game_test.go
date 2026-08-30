@@ -34,10 +34,13 @@ func TestDiscardTopOfDeckAndRevealHandForAember(t *testing.T) {
 	}
 }
 
-func TestDiscardTopOfDeckAndRevealHandForAemberRepeatText(t *testing.T) {
+func TestDiscardTopOfDeckAndRevealHandForAemberReciprocalText(t *testing.T) {
+	// The reciprocal half spells its own effect out rather than pointing back at
+	// the preceding one, so each half reads on its own terms.
 	e := DiscardTopOfDeckAndRevealHandForAember{Player: Controller, Gainer: Opponent}
-	if got := e.Text(); got != "your opponent repeats the preceding effect on you" {
-		t.Errorf("repeat text = %q", got)
+	want := "discard the top card of your deck and reveal your hand. Your opponent gains 1 Æmber for each card of the discarded card's house revealed this way."
+	if got := e.Text(); got != want {
+		t.Errorf("reciprocal text = %q, want %q", got, want)
 	}
 }
 

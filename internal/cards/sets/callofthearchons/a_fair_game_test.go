@@ -13,7 +13,7 @@ import (
 //	Type:   Action
 //	Rarity: Rare
 //
-//	Play: Discard the top card of your opponent's deck and reveal their hand. You gain 1 Æmber for each card of the discarded card's house revealed this way. Your opponent repeats the preceding effect on you.
+//	Play: Discard the top card of your opponent's deck and reveal their hand. You gain 1 Æmber for each card of the discarded card's house revealed this way. Discard the top card of your deck and reveal your hand. Your opponent gains 1 Æmber for each card of the discarded card's house revealed this way.
 func TestAFairGame(t *testing.T) {
 	t.Run("gains Æmber for each hand card matching the discarded card's house for both players", func(t *testing.T) {
 		var opponentTop, opponentNext, yourTop, yourNext ct.Card

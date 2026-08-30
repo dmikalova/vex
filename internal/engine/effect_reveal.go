@@ -84,22 +84,19 @@ func (e DiscardTopOfDeckAndRevealHandForAember) validate() error {
 	return nil
 }
 
-// Text renders the linked discard, reveal, and reward. The reciprocal form is how
-// A Fair Game prints its second half: "Your opponent repeats the preceding effect
-// on you."
+// Text renders the linked discard, reveal, and reward. Every half spells its own
+// effect out from the same template rather than pointing back at a preceding one,
+// so A Fair Game's second half prints as "Discard the top card of your deck and
+// reveal your hand. Your opponent gains 1 Æmber for each card of the discarded
+// card's house revealed this way."
 func (e DiscardTopOfDeckAndRevealHandForAember) Text() string {
+	deck, hand := "your deck", "your hand"
+	if e.Player == Opponent {
+		deck, hand = "your opponent's deck", "their hand"
+	}
 	gain := "You gain"
 	if e.Gainer == Opponent {
 		gain = "Your opponent gains"
-	}
-	if e.Player == Controller && e.Gainer == Opponent {
-		return "your opponent repeats the preceding effect on you"
-	}
-	deck := "your deck"
-	hand := "your hand"
-	if e.Player == Opponent {
-		deck = "your opponent's deck"
-		hand = "their hand"
 	}
 	return "discard the top card of " + deck + " and reveal " + hand + ". " +
 		gain + " 1 Æmber for each card of the discarded card's house revealed this way."

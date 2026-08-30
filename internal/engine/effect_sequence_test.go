@@ -24,7 +24,7 @@ func TestSequenceContinuesAfterCompleteSentence(t *testing.T) {
 		DiscardTopOfDeckAndRevealHandForAember{Player: Opponent, Gainer: Controller},
 		DiscardTopOfDeckAndRevealHandForAember{Player: Controller, Gainer: Opponent},
 	}}
-	want := "discard the top card of your opponent's deck and reveal their hand. You gain 1 Æmber for each card of the discarded card's house revealed this way. Your opponent repeats the preceding effect on you"
+	want := "discard the top card of your opponent's deck and reveal their hand. You gain 1 Æmber for each card of the discarded card's house revealed this way. Discard the top card of your deck and reveal your hand. Your opponent gains 1 Æmber for each card of the discarded card's house revealed this way."
 	if got := seq.Text(); got != want {
 		t.Errorf("sequence text = %q, want %q", got, want)
 	}
