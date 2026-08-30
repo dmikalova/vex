@@ -26,7 +26,7 @@ func TestDeepProbe(t *testing.T) {
 			P2: ct.Side{
 				Hand: ct.Cards(
 					ct.Bind(&marsCreature, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(2))),
-					ct.Bind(&marsAction, ct.Action(ct.OfHouse(card.House.Mars))),
+					ct.Bind(&marsAction, ct.Tactic(ct.OfHouse(card.House.Mars))),
 					ct.Bind(&sanctumCreature, ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Power(2))),
 				),
 			},

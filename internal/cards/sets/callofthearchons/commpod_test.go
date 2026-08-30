@@ -27,8 +27,8 @@ func TestCommpod(t *testing.T) {
 					ct.Bind(&b, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3))),
 				),
 				Hand: ct.Cards(
-					ct.Action(ct.OfHouse(card.House.Mars)),
-					ct.Action(ct.OfHouse(card.House.Mars)),
+					ct.Tactic(ct.OfHouse(card.House.Mars)),
+					ct.Tactic(ct.OfHouse(card.House.Mars)),
 				),
 			},
 		})
@@ -51,7 +51,7 @@ func TestCommpod(t *testing.T) {
 					Commpod,
 					ct.Bind(&a, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3))),
 				),
-				Hand: ct.Cards(ct.Action(ct.OfHouse(card.House.Untamed))),
+				Hand: ct.Cards(ct.Tactic(ct.OfHouse(card.House.Untamed))),
 			},
 		})
 		a.Exhaust()

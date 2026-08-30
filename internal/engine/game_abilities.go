@@ -141,17 +141,24 @@ func (g *Game) useActionOf(id LocalID) {
 }
 
 // Fight uses attacker to fight the enemy creature defender.
+// fightErrorForgiven reports whether a canUse error may be forgiven for a fight.
+// A grant such as Brothers in Battle lets a creature of a chosen house fight out
+// of the active house, so a wrong-house error is excused when the grant covers
+// this attacker; every other check still applies.
+func (g *Game) fightErrorForgiven(err error, attacker LocalID) bool {
+	return err == ErrWrongHouse && g.mayFightOutOfHouse(attacker)
+}
+
+// Fight uses a creature to fight an enemy creature: it validates the attacker and
+// the target, then resolves simultaneous combat. It returns an error when the
+// attacker cannot be used (readiness, or wrong house unless a grant forgives it)
+// or the target is not a legal enemy creature.
 func (g *Game) Fight(player int, attacker, defender LocalID) error {
 	if g.cannotFight(player) {
 		return ErrCannotFight
 	}
-	if err := g.canUse(player, attacker); err != nil {
-		// A grant such as Brothers in Battle lets a creature of a chosen house fight
-		// out of the active house, so a wrong-house error is forgiven when the grant
-		// covers this attacker; every other check still applies.
-		if !(err == ErrWrongHouse && g.mayFightOutOfHouse(attacker)) {
-			return err
-		}
+	if err := g.canUse(player, attacker); err != nil && !g.fightErrorForgiven(err, attacker) {
+		return err
 	}
 	if g.cat.def(defender).Type != Creature ||
 		g.controller(defender) == player ||
@@ -211,8 +218,7 @@ func (g *Game) FightTargets(player int, attacker LocalID) []LocalID {
 	if g.cannotFight(player) {
 		return nil
 	}
-	if err := g.canUse(player, attacker); err != nil &&
-		!(err == ErrWrongHouse && g.mayFightOutOfHouse(attacker)) {
+	if err := g.canUse(player, attacker); err != nil && !g.fightErrorForgiven(err, attacker) {
 		return nil
 	}
 	fr := g.cat.def(attacker).FightRestriction

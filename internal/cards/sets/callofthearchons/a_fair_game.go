@@ -22,14 +22,14 @@ var AFairGame = card.New(
 			card.Sentence{Effect: card.GainAember{
 				Player: card.Controller,
 				Amount: 1,
-				Per:    card.CardsRevealedOfItsHouse{Player: card.Opponent},
+				Per:    card.CardsInHand{Player: card.Opponent, House: card.TheContextualHouse},
 			}},
 			card.Sentence{Effect: card.DiscardTopOfDeck{Player: card.Controller}},
 			card.Sentence{Effect: card.Reveal{Player: card.Controller}},
 			card.Sentence{Effect: card.GainAember{
 				Player: card.Opponent,
 				Amount: 1,
-				Per:    card.CardsRevealedOfItsHouse{Player: card.Controller},
+				Per:    card.CardsInHand{Player: card.Controller, House: card.TheContextualHouse},
 			}},
 		}}),
 )

@@ -39,8 +39,7 @@ func (e CannotFight) Text() string {
 
 // Resolve applies the timed bar to the chosen player.
 func (e CannotFight) Resolve(ctx *EffectContext) {
-	switch e.Duration {
-	case NextTurn:
+	if e.Duration == NextTurn {
 		ctx.Resolver.CannotFightNextTurn(ctx.PlayerFor(e.Player))
 	}
 }

@@ -81,6 +81,10 @@ func TestUseStopsWhenNoneUsable(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
 	Use{Max: 1, Target: Target{Kind: TargetEachFriendlyInPlay}.OfHouse(Mars).Other()}.Resolve(ctx)
+
+	if g.TimesUsedThisTurn(src) != 0 {
+		t.Errorf("Use must not use its own source; used %d times", g.TimesUsedThisTurn(src))
+	}
 }
 
 func TestSentenceEffect(t *testing.T) {

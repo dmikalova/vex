@@ -362,7 +362,7 @@
   },
   {
     "number": "033",
-    "name": "The Grand Gord",
+    "name": "The Grand Gourd",
     "house": "brobnar",
     "traits": [
       "giant"
@@ -3542,11 +3542,11 @@
   },
   {
     "number": "314",
-    "name": "FOF Transponder",
+    "name": "FOR Transponder",
     "house": "staralliance",
     "type": "upgrade",
     "rarity": "Uncommon",
-    "text": "This creature gains, \"Destroyed: Make a token creature. Attach FOF Transponder to that creature.\""
+    "text": "This creature gains, \"Destroyed: Make a token creature. Attach FOR Transponder to that creature.\""
   },
   {
     "number": "315",

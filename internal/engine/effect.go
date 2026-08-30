@@ -76,19 +76,32 @@ type EffectContext struct {
 	// ChosenHouse is a house picked by a ChooseHouseThen, read by
 	// Target.OfChosenHouse targets nested inside it.
 	ChosenHouse House
+	// Produced holds the "... this way" tallies an effect records for a following
+	// effect in the same resolution to read.
+	Produced Produced
+}
+
+// Produced holds the tallies one effect records for a following effect in the
+// same resolution to consume — the KeyForge "... this way" counts (creatures
+// healed, cards revealed, cards destroyed, houses discarded). Each ability
+// resolves with a fresh EffectContext, so these never leak between abilities;
+// grouping them keeps this producer/consumer channel in one place as new "this
+// way" effects are added (add the tally here, set it in the producer, read it in
+// the consuming Count/Condition).
+type Produced struct {
 	// Healed is how many creatures the most recent Heal healed, read by a
 	// CreaturesHealed count in a following effect of the same resolution.
 	Healed int
 	// Revealed is how many cards the most recent Reveal showed, read by a
 	// CardsRevealed count in a following effect of the same resolution.
 	Revealed int
-	// DiscardedHouses holds the houses of the cards a DiscardTopOfEachDeck discarded,
-	// read by a following effect that acts on each discarded card's house (Bonkers
-	// Killing Machine destroys a creature or artifact of each).
-	DiscardedHouses []House
 	// Destroyed is how many cards the most recent context-driven destruction removed,
 	// read by a CardsDestroyedFewerThan condition later in the same resolution.
 	Destroyed int
+	// Discarded holds the cards a DiscardTopOfEachDeck discarded, read by a
+	// following ForEachDiscarded that acts on each (Bonkers Killing Machine
+	// destroys a creature or artifact of each discarded card's house).
+	Discarded []LocalID
 }
 
 // Opponent returns the absolute index of the controller's opponent.

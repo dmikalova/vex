@@ -58,7 +58,7 @@
   },
   {
     "number": "007",
-    "name": "Grat Tattuu",
+    "name": "Great Tattuu",
     "house": "brobnar",
     "traits": [
       "giant"
@@ -640,7 +640,7 @@
   },
   {
     "number": "059",
-    "name": "Lok the Corruptor",
+    "name": "Look the Corruptor",
     "house": "dis",
     "traits": [
       "human",
@@ -3447,7 +3447,7 @@
   },
   {
     "number": "304",
-    "name": "Controling Expertise",
+    "name": "Controlling Expertise",
     "house": "archonpower",
     "type": "archon power",
     "rarity": "Special",

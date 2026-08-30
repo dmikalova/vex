@@ -74,7 +74,7 @@ func (c CardsDestroyedFewerThan) CondText() string {
 
 // Met reports whether fewer than Amount cards were destroyed this way.
 func (c CardsDestroyedFewerThan) Met(ctx *EffectContext) bool {
-	return ctx.Destroyed < c.Amount
+	return ctx.Produced.Destroyed < c.Amount
 }
 
 // HouseChoice names a house a condition compares against by reference rather than
@@ -89,7 +89,26 @@ const (
 	TheChosenHouse
 	// TheActiveHouse is the player's active house this turn.
 	TheActiveHouse
+	// TheContextualHouse is the house of the card in context (ctx.It) — e.g. a
+	// just-discarded deck card, for "of the discarded card's house".
+	TheContextualHouse
 )
+
+// resolveHouse turns a HouseChoice into the concrete house it names in the current
+// context (HouseNone when it names a card in context and none is present).
+func (h HouseChoice) resolveHouse(ctx *EffectContext) House {
+	switch h {
+	case TheActiveHouse:
+		return ctx.Resolver.ActiveHouse()
+	case TheContextualHouse:
+		if ctx.HasIt {
+			return ctx.Resolver.House(ctx.It)
+		}
+		return HouseNone
+	default:
+		return ctx.ChosenHouse
+	}
+}
 
 // ItIsOfHouse is met when the card in context (ctx.It — a revealed, discarded, or
 // triggering card) belongs to a referenced house. It replaces the one-off

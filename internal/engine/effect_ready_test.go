@@ -42,7 +42,7 @@ func TestReadyCreatures(t *testing.T) {
 	b := g.AddToBattleline(NewCard("b", Mars, Creature, Common, WithPower(3)), 0)
 	g.State.Cards[a].Exhausted = true
 	g.State.Cards[b].Exhausted = true
-	ctx := &EffectContext{Resolver: g, Controller: 0, Revealed: 2}
+	ctx := &EffectContext{Resolver: g, Controller: 0, Produced: Produced{Revealed: 2}}
 	e.Resolve(ctx)
 	if g.Exhausted(a) || g.Exhausted(b) {
 		t.Errorf("both should be readied: a=%v b=%v", g.Exhausted(a), g.Exhausted(b))
@@ -63,7 +63,7 @@ func TestReadyCreatures(t *testing.T) {
 	// No exhausted candidate: nothing happens.
 	g3 := NewGame("A", "B", 1)
 	g3.AddToBattleline(NewCard("e", Mars, Creature, Common, WithPower(3)), 0) // ready
-	ctx3 := &EffectContext{Resolver: g3, Controller: 0, Revealed: 1}
+	ctx3 := &EffectContext{Resolver: g3, Controller: 0, Produced: Produced{Revealed: 1}}
 	e.Resolve(ctx3) // no panic, no-op
 
 	// Declining the choice readies nothing (two candidates so the chooser is asked).
@@ -73,7 +73,7 @@ func TestReadyCreatures(t *testing.T) {
 	g4.State.Cards[f].Exhausted = true
 	g4.State.Cards[h].Exhausted = true
 	g4.SetChooser(0, orderRejectChooser{}) // ChooseCreature declines
-	ctx4 := &EffectContext{Resolver: g4, Controller: 0, Revealed: 1}
+	ctx4 := &EffectContext{Resolver: g4, Controller: 0, Produced: Produced{Revealed: 1}}
 	e.Resolve(ctx4)
 	if !g4.Exhausted(f) || !g4.Exhausted(h) {
 		t.Error("declining should ready nothing")

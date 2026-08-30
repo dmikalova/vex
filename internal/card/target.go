@@ -20,6 +20,7 @@ var Target = targets{
 	EachOtherFriendlyCreature: engine.Target{Kind: engine.TargetEachOtherFriendlyCreature},
 	OtherFriendlyCreature:     engine.Target{Kind: engine.TargetChosenOtherFriendlyCreature},
 	TheOtherCreature:          engine.Target{Kind: engine.TargetTheOtherCreature},
+	ChosenInPlay:              engine.Target{Kind: engine.TargetChosenInPlay},
 	Artifact:                  engine.Target{Kind: engine.TargetChosenArtifact},
 }
 
@@ -37,6 +38,7 @@ type targets struct {
 	EachOtherFriendlyCreature,
 	OtherFriendlyCreature,
 	TheOtherCreature,
+	ChosenInPlay,
 	Artifact engine.Target
 }
 
@@ -48,6 +50,11 @@ type Selector = engine.Selector
 // from a set, e.g. card.Target.EachEnemyCreature.Selector(card.ExceptMostPowerful).
 // When several tie for most powerful the controller chooses which one to keep.
 var ExceptMostPowerful = engine.ExceptMostPowerful
+
+// SamePowerAsChosen is a Selector that keeps every creature sharing the power of
+// one the controller chooses, e.g.
+// card.Target.EachCreature.Selector(card.SamePowerAsChosen) (Dance of Doom).
+var SamePowerAsChosen = engine.SamePowerAsChosen
 
 // Stunned is the set of stunned creatures, used as a fight restriction: pass it to
 // card.WithFightRestriction to limit a creature to fighting only stunned creatures

@@ -53,55 +53,89 @@ func (e PutFromPlay) validate() error {
 // Resolve moves each selected card from play to the destination. Cards headed to
 // the top of the deck are stacked in an order the controller chooses.
 func (e PutFromPlay) Resolve(ctx *EffectContext) {
-	switch e.Destination {
-	case ToTopOfDeck:
-		for _, id := range ctx.OrderByChoice("Choose the next card to put on top of the deck", e.Target.Select(ctx)) {
-			ctx.Resolver.PutOnTopOfDeck(id)
-		}
-	case ToArchives:
-		for _, id := range e.Target.Select(ctx) {
-			ctx.Resolver.PutIntoArchives(id)
-		}
-	case ToDeckShuffled:
-		for _, id := range e.Target.Select(ctx) {
-			ctx.Resolver.PutIntoDeckShuffled(id)
-		}
-	default:
-		for _, id := range e.Target.Select(ctx) {
-			ctx.Resolver.PutIntoHand(id)
-		}
+	ids := e.Target.Select(ctx)
+	if e.Destination == ToTopOfDeck {
+		ids = ctx.OrderByChoice("Choose the next card to put on top of the deck", ids)
+	}
+	for _, id := range ids {
+		moveFromPlayTo(ctx, id, e.Destination)
 	}
 }
 
-// PutArtifactsIntoHand puts up to Max artifacts (either player's) into their
-// owners' hands. The controller chooses them one at a time and may stop early,
-// so it is "up to" rather than exactly Max.
-type PutArtifactsIntoHand struct {
-	Max int
+// moveFromPlayTo puts one card from play into a destination zone.
+func moveFromPlayTo(ctx *EffectContext, id LocalID, d Destination) {
+	switch d {
+	case ToTopOfDeck:
+		ctx.Resolver.PutOnTopOfDeck(id)
+	case ToArchives:
+		ctx.Resolver.PutIntoArchives(id)
+	case ToDeckShuffled:
+		ctx.Resolver.PutIntoDeckShuffled(id)
+	default:
+		ctx.Resolver.PutIntoHand(id)
+	}
+}
+
+// PutUpTo moves up to Max cards the controller chooses from Target's pool into a
+// destination zone, one at a time, stopping early when they choose Done — Grasping
+// Vines returns up to 3 artifacts to their owners' hands. It is the bounded-choice
+// counterpart to PutFromPlay, which moves every card the Target selects.
+type PutUpTo struct {
+	Max         int
+	Target      Target
+	Destination Destination
+}
+
+// validate requires a target, a positive maximum, and a supported destination.
+func (e PutUpTo) validate() error {
+	if !e.Target.valid() {
+		return errUnsetTarget("PutUpTo")
+	}
+	if e.Max <= 0 {
+		return fmt.Errorf("PutUpTo: Max must be positive")
+	}
+	switch e.Destination {
+	case ToHand, ToTopOfDeck, ToDeckShuffled, ToArchives:
+		return nil
+	default:
+		return fmt.Errorf("PutUpTo: unsupported destination %d", e.Destination)
+	}
 }
 
 // Text renders the effect, e.g. "put up to 3 artifacts into their owners' hands".
-func (e PutArtifactsIntoHand) Text() string {
-	return fmt.Sprintf("put up to %d artifacts into their owners' hands", e.Max)
+func (e PutUpTo) Text() string {
+	noun := singularNoun(e.Target.Text()) + "s"
+	switch e.Destination {
+	case ToTopOfDeck:
+		return fmt.Sprintf("put up to %d %s on top of their owners' decks", e.Max, noun)
+	case ToDeckShuffled:
+		return fmt.Sprintf("shuffle up to %d %s into their owners' decks", e.Max, noun)
+	case ToArchives:
+		return fmt.Sprintf("put up to %d %s into their owners' archives", e.Max, noun)
+	default:
+		return fmt.Sprintf("put up to %d %s into their owners' hands", e.Max, noun)
+	}
 }
 
-// Resolve returns artifacts to hand one at a time, up to Max. Each step offers the
-// artifacts in play plus a "Done" option to stop early; when no artifacts remain,
-// "Done" is the only option and is chosen automatically.
-func (e PutArtifactsIntoHand) Resolve(ctx *EffectContext) {
+// Resolve moves up to Max cards one at a time. Each step offers the current pool
+// plus a "Done" option to stop early; when the pool is empty it stops.
+func (e PutUpTo) Resolve(ctx *EffectContext) {
 	const done = "Done"
 	for i := 0; i < e.Max; i++ {
-		cands := append(ctx.Resolver.Artifacts(ctx.Controller), ctx.Resolver.Artifacts(ctx.Opponent())...)
+		cands := e.Target.Select(ctx)
+		if len(cands) == 0 {
+			return
+		}
 		options := make([]string, 0, len(cands)+1)
 		for _, id := range cands {
 			options = append(options, ctx.Resolver.Name(id))
 		}
 		options = append(options, done)
-		choice := ctx.ChooseOption("Choose an artifact to return to hand", options)
+		choice := ctx.ChooseOption("Choose a card to move", options)
 		if choice >= len(cands) {
 			return // "Done" (the last option), or an out-of-range choice
 		}
-		ctx.Resolver.PutIntoHand(cands[choice])
+		moveFromPlayTo(ctx, cands[choice], e.Destination)
 	}
 }
 
@@ -127,7 +161,7 @@ func (e ReturnNamedToHand) Text() string {
 // zone it is in.
 func (e ReturnNamedToHand) Resolve(ctx *EffectContext) {
 	inPlay := nameMatches(ctx, ctx.Resolver.Battleline(ctx.Controller), e.Name)
-	candidates := append(inPlay, nameMatches(ctx, ctx.Resolver.Discard(ctx.Controller), e.Name)...)
+	candidates := slices.Concat(inPlay, nameMatches(ctx, ctx.Resolver.Discard(ctx.Controller), e.Name))
 	id, ok := ctx.ChooseCreature("Choose "+indefinite(e.Name)+" to put into your hand", candidates)
 	if !ok {
 		return

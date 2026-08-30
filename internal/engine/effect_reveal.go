@@ -46,7 +46,7 @@ func (e Reveal) Resolve(ctx *EffectContext) {
 			names = append(names, ctx.Resolver.Name(id))
 		}
 	}
-	ctx.Revealed = len(names)
+	ctx.Produced.Revealed = len(names)
 	if len(names) > 0 {
 		ctx.Resolver.Logf("%s reveals %s", ctx.Resolver.PlayerName(owner), strings.Join(names, ", "))
 	}
@@ -58,37 +58,7 @@ func (e Reveal) Resolve(ctx *EffectContext) {
 type CardsRevealed struct{}
 
 // Value returns how many cards the preceding Reveal showed.
-func (CardsRevealed) Value(ctx *EffectContext) int { return ctx.Revealed }
+func (CardsRevealed) Value(ctx *EffectContext) int { return ctx.Produced.Revealed }
 
 // CountText renders the singular noun the "for each" clause repeats.
 func (CardsRevealed) CountText() string { return "card revealed this way" }
-
-// CardsRevealedOfItsHouse counts, among a player's revealed hand, the cards
-// sharing the house of the card in context (ctx.It — the just-discarded deck
-// card). It renders the "for each card of the discarded card's house revealed
-// this way" clause: A Fair Game pairs a DiscardTopOfDeck (which discards the top
-// card and puts it in context) and a Reveal (which shows the whole hand) with a
-// GainAember carrying this count, so each side's Æmber scales with how much of
-// the revealed hand matches the discard. With no card in context — an empty deck
-// established no house — it counts zero.
-type CardsRevealedOfItsHouse struct{ Player Player }
-
-// Value counts the player's hand cards matching the contextual card's house.
-func (e CardsRevealedOfItsHouse) Value(ctx *EffectContext) int {
-	if !ctx.HasIt {
-		return 0
-	}
-	house := ctx.Resolver.House(ctx.It)
-	n := 0
-	for _, id := range ctx.Resolver.Hand(ctx.PlayerFor(e.Player)) {
-		if ctx.Resolver.House(id) == house {
-			n++
-		}
-	}
-	return n
-}
-
-// CountText renders the singular noun the "for each" clause repeats.
-func (CardsRevealedOfItsHouse) CountText() string {
-	return "card of the discarded card's house revealed this way"
-}

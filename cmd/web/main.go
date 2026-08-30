@@ -14,7 +14,7 @@ import (
 )
 
 func main() {
-	app.Route("/", func() app.Composer { return web.NewGame() })
+	app.Route("/", web.NewGame)
 	app.RunWhenOnBrowser()
 
 	http.Handle("/", &app.Handler{

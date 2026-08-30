@@ -30,7 +30,7 @@ func TestDrawPer(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.AddToDeck(testCreature("d1", 1), 0)
 	g.AddToDeck(testCreature("d2", 1), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0, Revealed: 2}
+	ctx := &EffectContext{Resolver: g, Controller: 0, Produced: Produced{Revealed: 2}}
 
 	e := Draw{Amount: 1, Per: CardsRevealed{}}
 	if e.Text() != "for each card revealed this way, draw a card" {

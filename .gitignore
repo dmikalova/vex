@@ -8,6 +8,12 @@
 *.so
 *.dylib
 
+# Compiled dev-tool binaries. The mage targets run these via `go run`, so nothing
+# is committed; build them ad hoc into ./bin (ignored) if you want a binary.
+/bin/
+/gencomments
+/genprovenance
+
 # Test binary, built with `go test -c`
 *.test
 

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <title>Redo</title>
+  <!-- Lucide "redo-2" (ISC License, https://lucide.dev) -->
+  <g fill="none" stroke="#f7f1ff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="m15 14 5-5-5-5"/>
+    <path d="M20 9H9.5A5.5 5.5 0 0 0 4 14.5 5.5 5.5 0 0 0 9.5 20H13"/>
+  </g>
+</svg>

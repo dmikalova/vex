@@ -39,7 +39,7 @@ func (e Heal) Resolve(ctx *EffectContext) {
 			ctx.Resolver.SetDamage(id, ctx.Resolver.Damage(id)-e.Amount)
 		}
 	}
-	ctx.Healed = healed
+	ctx.Produced.Healed = healed
 }
 
 // validate rejects a Heal that sets both a fixed Amount and Fully, since the two
@@ -62,7 +62,7 @@ func (e Heal) validate() error {
 type CreaturesHealed struct{}
 
 // Value returns how many creatures the preceding Heal healed.
-func (CreaturesHealed) Value(ctx *EffectContext) int { return ctx.Healed }
+func (CreaturesHealed) Value(ctx *EffectContext) int { return ctx.Produced.Healed }
 
 // CountText renders the singular noun the "for each" clause repeats.
 func (CreaturesHealed) CountText() string { return "creature healed this way" }

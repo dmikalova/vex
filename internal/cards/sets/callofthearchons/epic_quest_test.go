@@ -43,13 +43,13 @@ func TestEpicQuest(t *testing.T) {
 
 	t.Run("forges a key for free after seven Sanctum cards have been played this turn", func(t *testing.T) {
 		var quest ct.Card
-		a1 := ct.Action(ct.OfHouse(card.House.Sanctum))
-		a2 := ct.Action(ct.OfHouse(card.House.Sanctum))
-		a3 := ct.Action(ct.OfHouse(card.House.Sanctum))
-		a4 := ct.Action(ct.OfHouse(card.House.Sanctum))
-		a5 := ct.Action(ct.OfHouse(card.House.Sanctum))
-		a6 := ct.Action(ct.OfHouse(card.House.Sanctum))
-		a7 := ct.Action(ct.OfHouse(card.House.Sanctum))
+		a1 := ct.Tactic(ct.OfHouse(card.House.Sanctum))
+		a2 := ct.Tactic(ct.OfHouse(card.House.Sanctum))
+		a3 := ct.Tactic(ct.OfHouse(card.House.Sanctum))
+		a4 := ct.Tactic(ct.OfHouse(card.House.Sanctum))
+		a5 := ct.Tactic(ct.OfHouse(card.House.Sanctum))
+		a6 := ct.Tactic(ct.OfHouse(card.House.Sanctum))
+		a7 := ct.Tactic(ct.OfHouse(card.House.Sanctum))
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
 				House:  card.House.Sanctum,
@@ -75,12 +75,12 @@ func TestEpicQuest(t *testing.T) {
 
 	t.Run("does not forge or destroy itself before seven Sanctum cards", func(t *testing.T) {
 		var quest ct.Card
-		a1 := ct.Action(ct.OfHouse(card.House.Sanctum))
-		a2 := ct.Action(ct.OfHouse(card.House.Sanctum))
-		a3 := ct.Action(ct.OfHouse(card.House.Sanctum))
-		a4 := ct.Action(ct.OfHouse(card.House.Sanctum))
-		a5 := ct.Action(ct.OfHouse(card.House.Sanctum))
-		a6 := ct.Action(ct.OfHouse(card.House.Sanctum))
+		a1 := ct.Tactic(ct.OfHouse(card.House.Sanctum))
+		a2 := ct.Tactic(ct.OfHouse(card.House.Sanctum))
+		a3 := ct.Tactic(ct.OfHouse(card.House.Sanctum))
+		a4 := ct.Tactic(ct.OfHouse(card.House.Sanctum))
+		a5 := ct.Tactic(ct.OfHouse(card.House.Sanctum))
+		a6 := ct.Tactic(ct.OfHouse(card.House.Sanctum))
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
 				House:  card.House.Sanctum,

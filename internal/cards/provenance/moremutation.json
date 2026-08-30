@@ -2695,7 +2695,7 @@
   },
   {
     "number": "206",
-    "name": "Optio Gorkus",
+    "name": "Option Gorkus",
     "house": "saurian",
     "keywords": [
       "elusive"
@@ -2708,7 +2708,7 @@
     "rarity": "Rare",
     "armor": 3,
     "power": 3,
-    "text": "Elusive.\nEach of Optio Gorkus's neighbors gains, \"Destroyed: Move each Aember on this creature to a neighboring Optio Gorkus.\""
+    "text": "Elusive.\nEach of Option Gorkus's neighbors gains, \"Destroyed: Move each Aember on this creature to a neighboring Option Gorkus.\""
   },
   {
     "number": "207",
@@ -4633,7 +4633,7 @@
   },
   {
     "number": "362",
-    "name": "Observ-u-Max",
+    "name": "Observe-u-Max",
     "house": "staralliance",
     "type": "upgrade",
     "rarity": "Common",

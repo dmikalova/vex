@@ -45,15 +45,19 @@ func (g *game) brandBar() app.UI {
 			return app.Span().Class("badge-error").Text(g.status)
 		}),
 		app.Div().Class("spacer"),
-		app.Button().Class("btn-nav").Text("Undo").
+		app.Button().Class("btn-nav btn-icon").Title("Undo").
+			Body(icon("undo", "icon-nav")).
 			Disabled(!g.canUndo()).OnClick(g.undoAction),
-		app.Button().Class("btn-nav").Text("Redo").
+		app.Button().Class("btn-nav btn-icon").Title("Redo").
+			Body(icon("redo", "icon-nav")).
 			Disabled(!g.canRedo()).OnClick(g.redoAction),
-		app.Button().Class(cx("btn-nav", ifCls(g.g.Manual(), "btn-nav-on"))).
-			Text("Manual").
+		app.Button().Class(cx("btn-nav", "btn-icon", ifCls(g.g.Manual(), "btn-nav-on"))).
+			Title("Manual mode").
+			Body(icon("wrench", "icon-nav")).
 			Disabled(g.busy || g.choosing || g.choosingOption).
 			OnClick(g.toggleManual),
-		app.Button().Class("btn-nav").Text("New game").
+		app.Button().Class("btn-nav btn-icon").Title("New game").
+			Body(icon("restart", "icon-nav")).
 			Disabled(g.busy || g.choosing || g.choosingOption).
 			OnClick(g.restart),
 	)
@@ -796,22 +800,28 @@ type logGroupView struct {
 	newest bool
 }
 
-// logGroupViews splits the flat log into per-action bubbles using logGroups; any
-// lines before the first action form a leading setup bubble.
-func (g *game) logGroupViews() []logGroupView {
+// logSeg is one root action's slice of the log (half-open [start, end)) and whose
+// turn recorded it (-1 for the leading setup lines).
+type logSeg struct {
+	start, end, player int
+}
+
+// actionSegments returns the log ranges of each root action (from logGroups) plus
+// a leading setup range, each clamped to the current log length.
+func (g *game) actionSegments() []logSeg {
 	log := g.g.Log
-	var out []logGroupView
+	var segs []logSeg
 	first := len(log)
-	if len(g.logGroups) > 0 && g.logGroups[0].start < first {
-		first = g.logGroups[0].start
+	if len(g.logGroups) > 0 && g.logGroups[0].Start < first {
+		first = g.logGroups[0].Start
 	}
 	if first > 0 {
-		out = append(out, logGroupView{lines: log[:first], player: -1})
+		segs = append(segs, logSeg{0, first, -1})
 	}
 	for i, m := range g.logGroups {
-		start, end := m.start, len(log)
+		start, end := m.Start, len(log)
 		if i+1 < len(g.logGroups) {
-			end = g.logGroups[i+1].start
+			end = g.logGroups[i+1].Start
 		}
 		if start < 0 {
 			start = 0
@@ -819,10 +829,52 @@ func (g *game) logGroupViews() []logGroupView {
 		if end > len(log) {
 			end = len(log)
 		}
-		if start >= end {
-			continue
+		if start < end {
+			segs = append(segs, logSeg{start, end, m.Player})
 		}
-		out = append(out, logGroupView{lines: log[start:end], player: m.player})
+	}
+	return segs
+}
+
+// turnBeginPlayer returns the player a "--- X begins turn N ---" line announces,
+// or -1 if the line is not a turn header.
+func (g *game) turnBeginPlayer(line string) int {
+	if !strings.HasPrefix(line, "--- ") || !strings.Contains(line, "begins turn") {
+		return -1
+	}
+	for p := 0; p < 2; p++ {
+		if strings.Contains(line, g.g.PlayerName(p)+" begins turn") {
+			return p
+		}
+	}
+	return -1
+}
+
+// logGroupViews splits the flat log into per-action bubbles using logGroups, then
+// further splits each bubble so a "begins turn" line starts a fresh bubble tinted
+// for the new player. Lines before the first action form a leading setup bubble.
+func (g *game) logGroupViews() []logGroupView {
+	log := g.g.Log
+	var out []logGroupView
+	emit := func(lines []string, player int) {
+		if len(lines) > 0 {
+			out = append(out, logGroupView{lines: lines, player: player})
+		}
+	}
+	for _, seg := range g.actionSegments() {
+		player, lineStart := seg.player, seg.start
+		for i := seg.start; i < seg.end; i++ {
+			p := g.turnBeginPlayer(log[i])
+			if p < 0 {
+				continue
+			}
+			if i > lineStart { // the turn header opens a new bubble
+				emit(log[lineStart:i], player)
+				lineStart = i
+			}
+			player = p
+		}
+		emit(log[lineStart:seg.end], player)
 	}
 	if len(out) > 0 {
 		out[len(out)-1].newest = true

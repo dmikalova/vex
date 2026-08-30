@@ -1623,7 +1623,7 @@ Not usually. If Jargogle was destroyed during your Step 3 you may not play or us
 
 Just the 6-Power creature will be destroyed. Soulkeeper's "Destroyed:" ability resolves before the creatures that are tagged for destruction leave play, so it will try to tag the 6-power creature for destruction even though it has already been tagged.
 
-> I have Optio Gorkus 226 in play upgraded with Imperial Scutum 185. Then I play a card that destroys all creatures. Can I use the "Destroyed:" effect on Optio Gorkus's neighbors to move all Æmber on them to Optio Gorkus before I use the "Destroyed:" effect granted by Imperial Scutum to return all that Æmber to the common supply, keeping the Æmber out of my opponent's hands?
+> I have Option Gorkus 226 in play upgraded with Imperial Scutum 185. Then I play a card that destroys all creatures. Can I use the "Destroyed:" effect on Option Gorkus's neighbors to move all Æmber on them to Option Gorkus before I use the "Destroyed:" effect granted by Imperial Scutum to return all that Æmber to the common supply, keeping the Æmber out of my opponent's hands?
 
 Yes. The active player chooses the order of "Destroyed:" effects. If the creatures are being destroyed on your turn, you can send the Æmber from your destroyed creatures to the common supply, but if the creature are being destroyed on your opponent's turn, they could choose the opposite order so that they get the Æmber from those destroyed creatures instead.
 

@@ -9,7 +9,7 @@ constraint, and how to handle them so the next mechanic still lands cleanly.
 
 Read this alongside the root `AGENTS.md` ("Design for composition, not for the
 card in front of you") and the file-organization rules there. This guide is the
-*why*; those are the *what goes where*.
+_why_; those are the _what goes where_.
 
 ## Two hard constraints shape everything
 
@@ -66,13 +66,13 @@ it plugs into the AST without desync:
 
 - **`Chooser` (`game.go`) is the decision strategy**, swapped per frontend:
   `FirstChooser` (bot/tests, deterministic), `teaChooser` (TUI), `webChooser`
-  (web), `bridgeChooser` (test harness). The engine never knows *how* a decision
+  (web), `bridgeChooser` (test harness). The engine never knows _how_ a decision
   is made. Extend a chooser's capability with an **optional capability
   interface** discovered by type assertion — `OptionChooser`, `Orderer` — with a
   graceful fallback when unimplemented. That is the idiomatic-Go form of Strategy
   (cf. `io.WriterTo`, `http.Flusher`); prefer it over widening the base `Chooser`.
 - **`Selector` (`target.go`)** is a set-relative refinement (`refine` + `clause`)
-  such as `ExceptMostPowerful`. It narrows the ids *and* contributes a phrase, so
+  such as `ExceptMostPowerful`. It narrows the ids _and_ contributes a phrase, so
   niche "compare candidates to each other" rules compose onto any `Target`
   **without a field per rule**. When you are tempted to add another `Target` bool
   for a whole-set rule, add a `Selector` instead.
@@ -186,7 +186,7 @@ regression of a constraint.
 - **`panic` in `EffectContext.PlayerFor` on `playerUnset`.** Tradeoff: a
   belt-and-suspenders guard for a programmer error. It is acceptable **only**
   because `NewCard` runs `validate()` at init, so a real card can never reach it —
-  the panic fires at authoring time, not mid-game. Never let a *computed* `Player`
+  the panic fires at authoring time, not mid-game. Never let a _computed_ `Player`
   reach `PlayerFor`; reject unset at the boundary (`validate()`), reserve the
   panic for the impossible case.
 - **`Game` as a large type implementing all of `Resolver`.** Tradeoff: a single
@@ -199,7 +199,7 @@ regression of a constraint.
 
 1. Can an existing `Effect` express it by changing a `Target`, `Count`,
    `Condition`, or `Selector`? Prefer that — no new type.
-2. Is it a new *node*? Add an `Effect` (or `Condition`/`Count`/`Selector`) in the
+2. Is it a new _node_? Add an `Effect` (or `Condition`/`Count`/`Selector`) in the
    matching `effect_*.go` / `target.go`, with `Text()` + `Resolve()` (+ `validate()`
    if it has an illegal field combo), and a facade alias in `internal/card`.
 3. Does it need a new engine capability? Add the method to the right `Resolver`

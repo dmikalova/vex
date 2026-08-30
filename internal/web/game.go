@@ -203,12 +203,13 @@ type undoEntry struct {
 
 // logMark records where one root action's log lines begin and whose turn it was.
 type logMark struct {
-	start  int
-	player int
+	Start  int
+	Player int
 }
 
-// persistKey names the session-storage slot holding the in-progress match, so a
-// hot-reload of the wasm can resume it instead of dealing a new game.
+// persistKey names the local-storage slot holding the in-progress match, so a
+// hot-reload of the wasm — or leaving the page and coming back — resumes it
+// instead of dealing a new game.
 const persistKey = "vactrol.match"
 
 // snapshotVersion tags persisted state; bump it when an engine change makes older
@@ -222,6 +223,10 @@ type snapshot struct {
 	Version int
 	Seed    int64
 	State   engine.GameState
+	// Log and Groups persist the game log and its per-action bubbling so a
+	// hot-reload does not lose the history.
+	Log    []string
+	Groups []logMark
 }
 
 // OnMount resumes the saved match if there is one, else deals a fresh game. It
@@ -331,16 +336,19 @@ func (g *game) OnAppUpdate(ctx app.Context) {
 	ctx.Reload()
 }
 
-// save writes the current match to session storage. It runs after every action
-// and before a hot-reload, so a reload resumes from the latest state.
+// save writes the current match to local storage. It runs after every action and
+// before a hot-reload, so a reload or a later visit resumes from the latest
+// state.
 func (g *game) save(ctx app.Context) {
 	if g.g == nil {
 		return
 	}
-	_ = ctx.SessionStorage().Set(persistKey, snapshot{
+	_ = ctx.LocalStorage().Set(persistKey, snapshot{
 		Version: snapshotVersion,
 		Seed:    g.seed,
 		State:   g.g.State,
+		Log:     g.g.Log,
+		Groups:  g.logGroups,
 	})
 }
 
@@ -350,7 +358,7 @@ func (g *game) save(ctx app.Context) {
 // seed is deterministic, so the rebuilt catalog and card ids match the saved
 // state exactly; any residual mismatch (an older card pool) is caught before use.
 func (g *game) resume(ctx app.Context) (ok bool) {
-	store := ctx.SessionStorage()
+	store := ctx.LocalStorage()
 	if !store.Contains(persistKey) {
 		return false
 	}
@@ -376,6 +384,12 @@ func (g *game) resume(ctx app.Context) (ok bool) {
 	if !g.stateReadsCleanly() {
 		store.Del(persistKey)
 		return false
+	}
+	// Restore the saved log (a real match always has at least the turn-1 header, so
+	// an empty one means a pre-log snapshot — keep what install produced).
+	if len(snap.Log) > 0 {
+		g.g.Log = snap.Log
+		g.logGroups = snap.Groups
 	}
 	g.settlePhase()
 	g.clearSelection()
@@ -525,7 +539,7 @@ func (g *game) beginAction() {
 		g.undo = g.undo[len(g.undo)-maxUndo:]
 	}
 	g.redo = nil
-	g.logGroups = append(g.logGroups, logMark{start: len(g.g.Log), player: g.g.State.ActivePlayer})
+	g.logGroups = append(g.logGroups, logMark{Start: len(g.g.Log), Player: g.g.State.ActivePlayer})
 }
 
 // restore installs a snapshot and resets transient UI.
@@ -716,12 +730,13 @@ func (g *game) discard(ctx app.Context, _ app.Event) {
 // ---- drag and drop (hand → board) ----
 
 // startHandDrag begins dragging a playable hand card. It selects the card so the
-// detail panel and the drop share the same target, and marks a drag in progress
-// so the board shows as a drop zone.
+// drop shares the same target, marks a drag in progress so the board shows as a
+// drop zone, and hides the hover preview (mouseleave does not fire during drag).
 func (g *game) startHandDrag(ctx app.Context, id engine.LocalID) {
 	if g.busy || g.choosing || g.choosingOption || g.phase != phaseMain {
 		return
 	}
+	g.hoverID, g.hoverDef = 0, nil
 	g.selectHandID(ctx, id)
 	g.dragging = true
 }
@@ -730,6 +745,7 @@ func (g *game) startHandDrag(ctx app.Context, id engine.LocalID) {
 // the card landed on the board.
 func (g *game) endHandDrag(_ app.Context, _ engine.LocalID) {
 	g.dragging = false
+	g.hoverID, g.hoverDef = 0, nil
 }
 
 // dropOnBoard plays the dragged hand card when it is released over the play area,
@@ -774,7 +790,7 @@ func (g *game) useAction(ctx app.Context, _ app.Event) {
 // startFight enters fight-target selection for the selected creature, after
 // checking it can actually be used (so the player is not left picking a target
 // for an exhausted or out-of-house attacker).
-func (g *game) startFight(ctx app.Context, _ app.Event) {
+func (g *game) startFight(_ app.Context, _ app.Event) {
 	if g.busy || g.choosing || g.phase != phaseMain || g.selKind != selYourCreature {
 		return
 	}
@@ -795,7 +811,7 @@ func (g *game) fightTargetID(ctx app.Context, defender engine.LocalID) {
 	g.runAction(ctx, func() error { return g.g.Fight(p, att, defender) })
 }
 
-func (g *game) cancelTargeting(ctx app.Context, _ app.Event) {
+func (g *game) cancelTargeting(_ app.Context, _ app.Event) {
 	g.phase = phaseMain
 	g.attacker = 0
 }

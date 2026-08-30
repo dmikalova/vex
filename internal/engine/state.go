@@ -213,8 +213,14 @@ type catalog struct {
 	owners []uint8
 }
 
-// add registers a definition for an owner and returns its assigned LocalID.
+// add registers a definition for an owner and returns its assigned LocalID. It
+// panics if the match exceeds maxCards, turning a silent LocalID overflow (and the
+// cryptic out-of-range access into GameState.Cards that follows) into a clear
+// diagnostic at setup.
 func (c *catalog) add(def *CardDefinition, owner int) LocalID {
+	if len(c.defs) >= maxCards {
+		panic("engine: too many cards registered for one match (maxCards exceeded)")
+	}
 	id := LocalID(len(c.defs))
 	c.defs = append(c.defs, def)
 	c.owners = append(c.owners, uint8(owner))

@@ -21,7 +21,9 @@ var BonkersKillingMachine = card.New(
 		card.Trigger.Action, card.Sequence{
 			Effects: []card.Effect{
 				card.Sentence{Effect: card.DiscardTopOfEachDeck{}},
-				card.Sentence{Effect: card.DestroyOfEachDiscardedHouse{}},
+				card.Sentence{Effect: card.ForEachDiscarded{
+					Do: card.Destroy{Target: card.Target.ChosenInPlay.OfContextualHouse()},
+				}},
 				card.Conditional{
 					Cond: card.CardsDestroyedFewerThan{Amount: 2},
 					Then: card.Destroy{Target: card.Target.This},

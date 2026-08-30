@@ -35,11 +35,10 @@ type (
 
 // Destruction and purging.
 type (
-	Destroy          = engine.Destroy
-	DestroySamePower = engine.DestroySamePower
-	Purge            = engine.Purge
-	PurgeFromHand    = engine.PurgeFromHand
-	PurgeCreature    = engine.PurgeCreature
+	Destroy       = engine.Destroy
+	Purge         = engine.Purge
+	PurgeFromHand = engine.PurgeFromHand
+	PurgeCreature = engine.PurgeCreature
 )
 
 // Creature state (stun, exhaust, power counters).
@@ -55,25 +54,25 @@ type (
 
 // Drawing, moving, and revealing cards between zones.
 type (
-	Draw                        = engine.Draw
-	PutFromPlay                 = engine.PutFromPlay
-	PutArtifactsIntoHand        = engine.PutArtifactsIntoHand
-	PutFromDiscard              = engine.PutFromDiscard
-	ReturnNamedToHand           = engine.ReturnNamedToHand
-	SearchForName               = engine.SearchForName
-	ShuffleDiscard              = engine.ShuffleDiscard
-	ArchiveFromHand             = engine.ArchiveFromHand
-	ArchiveTopOfDeck            = engine.ArchiveTopOfDeck
-	ArchiveFromPlay             = engine.ArchiveFromPlay
-	DiscardArchives             = engine.DiscardArchives
-	DiscardHand                 = engine.DiscardHand
-	DiscardTopOfDeck            = engine.DiscardTopOfDeck
-	DiscardTopOfEachDeck        = engine.DiscardTopOfEachDeck
-	DestroyOfEachDiscardedHouse = engine.DestroyOfEachDiscardedHouse
-	RevealTopOfDeck             = engine.RevealTopOfDeck
-	PlayRevealedCard            = engine.PlayRevealedCard
-	CancelFight                 = engine.CancelFight
-	Reveal                      = engine.Reveal
+	Draw                 = engine.Draw
+	PutFromPlay          = engine.PutFromPlay
+	PutUpTo              = engine.PutUpTo
+	PutFromDiscard       = engine.PutFromDiscard
+	ReturnNamedToHand    = engine.ReturnNamedToHand
+	SearchForName        = engine.SearchForName
+	ShuffleDiscard       = engine.ShuffleDiscard
+	ArchiveFromHand      = engine.ArchiveFromHand
+	ArchiveTopOfDeck     = engine.ArchiveTopOfDeck
+	ArchiveFromPlay      = engine.ArchiveFromPlay
+	DiscardArchives      = engine.DiscardArchives
+	DiscardHand          = engine.DiscardHand
+	DiscardTopOfDeck     = engine.DiscardTopOfDeck
+	DiscardTopOfEachDeck = engine.DiscardTopOfEachDeck
+	ForEachDiscarded     = engine.ForEachDiscarded
+	RevealTopOfDeck      = engine.RevealTopOfDeck
+	PlayRevealedCard     = engine.PlayRevealedCard
+	CancelFight          = engine.CancelFight
+	Reveal               = engine.Reveal
 )
 
 // Using and choosing creatures.
@@ -114,20 +113,21 @@ type (
 
 // House references for conditions that compare a card's house dynamically.
 var (
-	TheChosenHouse = engine.TheChosenHouse
-	TheActiveHouse = engine.TheActiveHouse
+	TheChosenHouse     = engine.TheChosenHouse
+	TheActiveHouse     = engine.TheActiveHouse
+	TheContextualHouse = engine.TheContextualHouse
 )
 
 // Counts feed an effect's Per, scaling it by a board quantity; InPlay doubles as
 // a Condition.
 type (
-	InPlay                  = engine.InPlay
-	CardsPlayed             = engine.CardsPlayed
-	OpponentForgedKeys      = engine.OpponentForgedKeys
-	CardsInArchives         = engine.CardsInArchives
-	CardsRevealed           = engine.CardsRevealed
-	CardsRevealedOfItsHouse = engine.CardsRevealedOfItsHouse
-	CreaturesHealed         = engine.CreaturesHealed
+	InPlay             = engine.InPlay
+	CardsPlayed        = engine.CardsPlayed
+	OpponentForgedKeys = engine.OpponentForgedKeys
+	CardsInArchives    = engine.CardsInArchives
+	CardsRevealed      = engine.CardsRevealed
+	CardsInHand        = engine.CardsInHand
+	CreaturesHealed    = engine.CreaturesHealed
 )
 
 // Lasting "for the remainder of the turn" effects.

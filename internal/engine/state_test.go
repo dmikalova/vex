@@ -32,6 +32,20 @@ func TestCardList(t *testing.T) {
 	}
 }
 
+func TestCatalogAddPanicsOverCapacity(t *testing.T) {
+	g := NewGame("Alice", "Bob", 1)
+	def := testCreature("Filler", 1)
+	for range maxCards {
+		g.Register(def, 0)
+	}
+	defer func() {
+		if recover() == nil {
+			t.Error("Register past maxCards should panic")
+		}
+	}()
+	g.Register(def, 0)
+}
+
 func TestFastCopyIsIndependent(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	def := NewCard("c", Brobnar, Creature, Common, WithPower(5))

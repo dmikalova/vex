@@ -49,9 +49,9 @@ func Tidy() error {
 	return sh.RunV("go", "mod", "tidy")
 }
 
-// Check is the full green gate: fmt-check, build, vet, test, coverage.
+// Check is the full green gate: fmt-check, build, vet, lint, test, coverage.
 func Check() error {
-	mg.Deps(FmtCheck, Build, Vet, Test, Cover)
+	mg.Deps(FmtCheck, Build, Vet, Lint, Test, Cover)
 	fmt.Println("ALL GREEN")
 	return nil
 }

@@ -175,18 +175,41 @@ func TestMoveFromPlayValidate(t *testing.T) {
 	}
 }
 
-func TestMoveArtifactsToHand(t *testing.T) {
+func TestPutUpTo(t *testing.T) {
+	eachArt := Target{Kind: TargetEachArtifact}
+	// Text renders "up to N" with the plural noun for each destination.
+	cases := map[Destination]string{
+		ToHand:         "put up to 3 artifacts into their owners' hands",
+		ToTopOfDeck:    "put up to 3 artifacts on top of their owners' decks",
+		ToDeckShuffled: "shuffle up to 3 artifacts into their owners' decks",
+		ToArchives:     "put up to 3 artifacts into their owners' archives",
+	}
+	for dest, want := range cases {
+		if got := (PutUpTo{Max: 3, Target: eachArt, Destination: dest}).Text(); got != want {
+			t.Errorf("text(%d) = %q, want %q", dest, got, want)
+		}
+	}
+
+	// validate rejects an unset target, a non-positive Max, and a bad destination.
+	if err := (PutUpTo{Max: 3, Destination: ToHand}).validate(); err == nil {
+		t.Error("unset target should be rejected")
+	}
+	if err := (PutUpTo{Target: eachArt, Destination: ToHand}).validate(); err == nil {
+		t.Error("non-positive Max should be rejected")
+	}
+	if err := (PutUpTo{Max: 1, Target: eachArt, Destination: ToBottomOfDeck}).validate(); err == nil {
+		t.Error("unsupported destination should be rejected")
+	}
+	if err := (PutUpTo{Max: 3, Target: eachArt, Destination: ToHand}).validate(); err != nil {
+		t.Errorf("valid PutUpTo = %v", err)
+	}
+
 	g := NewGame("A", "B", 1)
 	a1 := g.AddArtifact(exAutocannon(), 0)
 	a2 := g.AddArtifact(exAutocannon(), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-
-	e := PutArtifactsIntoHand{Max: 3}
-	if e.Text() != "put up to 3 artifacts into their owners' hands" {
-		t.Errorf("text = %q", e.Text())
-	}
 	// Only two artifacts exist, so the loop stops when none remain (below Max).
-	e.Resolve(ctx)
+	PutUpTo{Max: 3, Target: eachArt, Destination: ToHand}.Resolve(ctx)
 	if g.inPlay(a1) || g.inPlay(a2) {
 		t.Error("both artifacts should have left play")
 	}
@@ -198,7 +221,7 @@ func TestMoveArtifactsToHand(t *testing.T) {
 	g2 := NewGame("A", "B", 1)
 	art := g2.AddArtifact(exAutocannon(), 0)
 	g2.SetChooser(0, optionPicker{idx: 1}) // index 0 is the artifact, 1 is "Done"
-	PutArtifactsIntoHand{Max: 3}.Resolve(&EffectContext{Resolver: g2, Controller: 0})
+	PutUpTo{Max: 3, Target: eachArt, Destination: ToHand}.Resolve(&EffectContext{Resolver: g2, Controller: 0})
 	if !g2.inPlay(art) {
 		t.Error("choosing Done should leave the artifact in play")
 	}

@@ -1,0 +1,17 @@
+# Typos configuration
+# https://github.com/crate-ci/typos
+
+[default.extend-words]
+# "mis-scripted" (as in a deliberately wrong test script) is intentional.
+mis = "mis"
+
+[files]
+extend-exclude = [
+  # Card-database provenance holds official card names (proper nouns like
+  # "Bosun Creen", "Narl Gibbus", "Frane") that must not be "corrected".
+  "internal/cards/provenance/**",
+  # Binary assets and generated binaries typos should not scan.
+  "docs/keyforge-master-rulebook-images/**",
+  "gencomments",
+  "genprovenance",
+]

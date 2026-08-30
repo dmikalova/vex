@@ -67,8 +67,8 @@ func TestHealCountsCreaturesHealed(t *testing.T) {
 	if g.Damage(healthy) != 0 {
 		t.Errorf("undamaged creature should stay at 0, got %d", g.Damage(healthy))
 	}
-	if ctx.Healed != 2 {
-		t.Errorf("ctx.Healed = %d, want 2", ctx.Healed)
+	if ctx.Produced.Healed != 2 {
+		t.Errorf("ctx.Produced.Healed = %d, want 2", ctx.Produced.Healed)
 	}
 
 	// CreaturesHealed reads that tally and renders the "for each" clause.
@@ -85,8 +85,8 @@ func TestHealCountsCreaturesHealed(t *testing.T) {
 	g2.AddToBattleline(testCreature("c", 5), 0)
 	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
 	Heal{Amount: 1, Target: Target{Kind: TargetEachCreature}}.Resolve(ctx2)
-	if ctx2.Healed != 0 {
-		t.Errorf("ctx.Healed = %d, want 0 (nothing to heal)", ctx2.Healed)
+	if ctx2.Produced.Healed != 0 {
+		t.Errorf("ctx.Produced.Healed = %d, want 0 (nothing to heal)", ctx2.Produced.Healed)
 	}
 }
 
@@ -113,14 +113,14 @@ func TestHealedContextIsolatedAcrossNestedAbilities(t *testing.T) {
 
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 	seq := Sequence{Effects: []Effect{
-		Heal{Amount: 1, Target: Target{Kind: TargetEachFriendlyCreature}},                 // heals a, b -> ctx.Healed = 2
+		Heal{Amount: 1, Target: Target{Kind: TargetEachFriendlyCreature}},                 // heals a, b -> ctx.Produced.Healed = 2
 		gameEffect{fn: func() { g.triggerAbilities(nested, TriggerAfterPlay, 0, false) }}, // nested heals enemy on its OWN context (Healed = 1)
 		GainAember{Player: Controller, Amount: 1, Per: CreaturesHealed{}},                 // reads THIS context's 2, not the nested 1
 	}}
 	seq.Resolve(ctx)
 
-	if ctx.Healed != 2 {
-		t.Errorf("outer ctx.Healed = %d, want 2 (a nested ability must not overwrite it)", ctx.Healed)
+	if ctx.Produced.Healed != 2 {
+		t.Errorf("outer ctx.Produced.Healed = %d, want 2 (a nested ability must not overwrite it)", ctx.Produced.Healed)
 	}
 	if g.Aember(0) != 2 {
 		t.Errorf("gained %d Æmber, want 2 (outer Heal's count, not the nested 1)", g.Aember(0))

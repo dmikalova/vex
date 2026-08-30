@@ -27,7 +27,7 @@ func TestBonkersKillingMachine(t *testing.T) {
 					ct.Bind(&shadowsCreature, ct.Creature(ct.OfHouse(card.House.Shadows), ct.Power(4))),
 				),
 				Deck: ct.Cards(
-					ct.Bind(&p1Top, ct.Action(ct.OfHouse(card.House.Mars))),
+					ct.Bind(&p1Top, ct.Tactic(ct.OfHouse(card.House.Mars))),
 				),
 			},
 			P2: ct.Side{
@@ -35,7 +35,7 @@ func TestBonkersKillingMachine(t *testing.T) {
 					ct.Bind(&marsArtifact, ct.Artifact(ct.OfHouse(card.House.Mars))),
 				),
 				Deck: ct.Cards(
-					ct.Bind(&p2Top, ct.Action(ct.OfHouse(card.House.Shadows))),
+					ct.Bind(&p2Top, ct.Tactic(ct.OfHouse(card.House.Shadows))),
 				),
 			},
 		})
@@ -59,13 +59,13 @@ func TestBonkersKillingMachine(t *testing.T) {
 				House:  card.House.Logos,
 				InPlay: ct.Cards(BonkersKillingMachine),
 				Deck: ct.Cards(
-					ct.Bind(&p1Top, ct.Action(ct.OfHouse(card.House.Mars))),
+					ct.Bind(&p1Top, ct.Tactic(ct.OfHouse(card.House.Mars))),
 				),
 			},
 			P2: ct.Side{
 				InPlay: ct.Cards(ct.Bind(&bystander, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(4)))),
 				Deck: ct.Cards(
-					ct.Bind(&p2Top, ct.Action(ct.OfHouse(card.House.Dis))),
+					ct.Bind(&p2Top, ct.Tactic(ct.OfHouse(card.House.Dis))),
 				),
 			},
 		})

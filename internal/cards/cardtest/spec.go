@@ -28,7 +28,7 @@ type spec struct {
 	static      engine.StaticModifier
 }
 
-// Option configures a vanilla card built by Creature, Artifact, Action, or
+// Option configures a vanilla card built by Creature, Artifact, Tactic, or
 // Upgrade. Options are small, composable, and read left to right, e.g.
 // ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(6)).
 type Option func(*spec)
@@ -96,10 +96,10 @@ func Artifact(opts ...Option) engine.CardDefinition {
 	return build("Artifact", engine.Artifact, 0, opts)
 }
 
-// Action builds a plain vanilla action (no abilities). It does nothing when
+// Tactic builds a plain vanilla tactic (no abilities). It does nothing when
 // played beyond leaving the hand, useful as filler or an Æmber-pip source.
-func Action(opts ...Option) engine.CardDefinition {
-	return build("Action", engine.Tactic, 0, opts)
+func Tactic(opts ...Option) engine.CardDefinition {
+	return build("Tactic", engine.Tactic, 0, opts)
 }
 
 // Upgrade builds a plain vanilla upgrade. Use PowerBonus/ArmorBonus to give it a

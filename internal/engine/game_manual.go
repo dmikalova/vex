@@ -10,6 +10,7 @@ package engine
 // ManualZone names a resting zone a manual move can send a card to.
 type ManualZone uint8
 
+// The manual resting zones a card can be moved to.
 const (
 	ManualHand ManualZone = iota
 	ManualDeckTop

@@ -22,24 +22,24 @@ func TestAFairGame(t *testing.T) {
 				House: card.House.Dis,
 				Hand: ct.Cards(
 					AFairGame,
-					ct.Action(ct.OfHouse(card.House.Dis)),
-					ct.Action(ct.OfHouse(card.House.Mars)),
+					ct.Tactic(ct.OfHouse(card.House.Dis)),
+					ct.Tactic(ct.OfHouse(card.House.Mars)),
 					ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Power(2)),
 				),
 				Deck: ct.Cards(
-					ct.Bind(&yourTop, ct.Action(ct.OfHouse(card.House.Dis))),
-					ct.Bind(&yourNext, ct.Action(ct.OfHouse(card.House.Logos))),
+					ct.Bind(&yourTop, ct.Tactic(ct.OfHouse(card.House.Dis))),
+					ct.Bind(&yourNext, ct.Tactic(ct.OfHouse(card.House.Logos))),
 				),
 			},
 			P2: ct.Side{
 				Hand: ct.Cards(
-					ct.Action(ct.OfHouse(card.House.Mars)),
+					ct.Tactic(ct.OfHouse(card.House.Mars)),
 					ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(2)),
-					ct.Action(ct.OfHouse(card.House.Dis)),
+					ct.Tactic(ct.OfHouse(card.House.Dis)),
 				),
 				Deck: ct.Cards(
-					ct.Bind(&opponentTop, ct.Action(ct.OfHouse(card.House.Mars))),
-					ct.Bind(&opponentNext, ct.Action(ct.OfHouse(card.House.Logos))),
+					ct.Bind(&opponentTop, ct.Tactic(ct.OfHouse(card.House.Mars))),
+					ct.Bind(&opponentNext, ct.Tactic(ct.OfHouse(card.House.Logos))),
 				),
 			},
 		})

@@ -74,10 +74,9 @@ func (e DiscardTopOfDeck) Resolve(ctx *EffectContext) {
 }
 
 // DiscardTopOfEachDeck discards the top card of each player's deck — the
-// controller's first, then the opponent's — and records each discarded card's
-// house on the context so a following effect can act on it. An empty deck
-// contributes no card and no house. Bonkers Killing Machine pairs it with
-// DestroyOfEachDiscardedHouse.
+// controller's first, then the opponent's — and records each discarded card on
+// the context so a following ForEachDiscarded can act on it. An empty deck
+// contributes no card. Bonkers Killing Machine pairs it with ForEachDiscarded.
 type DiscardTopOfEachDeck struct{}
 
 // Text renders the effect.
@@ -86,39 +85,37 @@ func (DiscardTopOfEachDeck) Text() string {
 }
 
 // Resolve discards the controller's top deck card, then the opponent's, recording
-// the discarded cards' houses on the context.
+// the discarded cards on the context.
 func (DiscardTopOfEachDeck) Resolve(ctx *EffectContext) {
-	ctx.DiscardedHouses = nil
+	ctx.Produced.Discarded = nil
 	for _, player := range []int{ctx.Controller, ctx.Opponent()} {
 		if discarded, ok := ctx.Resolver.DiscardTopOfDeck(player); ok {
-			ctx.DiscardedHouses = append(ctx.DiscardedHouses, ctx.Resolver.House(discarded))
+			ctx.Produced.Discarded = append(ctx.Produced.Discarded, discarded)
 		}
 	}
 }
 
-// DestroyOfEachDiscardedHouse destroys, for each house a preceding
-// DiscardTopOfEachDeck recorded on the context, one creature or artifact of that
-// house that the controller chooses, tallying how many were destroyed on the
-// context (read by CardsDestroyedFewerThan). It is the second half of Bonkers
-// Killing Machine.
-type DestroyOfEachDiscardedHouse struct{}
-
-// Text renders the effect.
-func (DestroyOfEachDiscardedHouse) Text() string {
-	return "for each card discarded this way, destroy a creature or artifact of that card's house"
+// ForEachDiscarded resolves Do once for each card a preceding DiscardTopOfEachDeck
+// discarded, putting that card in context (ctx.It) so Do can refer to it — Bonkers
+// Killing Machine destroys a creature or artifact of each discarded card's house
+// (Do targets Target.OfContextualHouse).
+type ForEachDiscarded struct {
+	Do Effect
 }
 
-// Resolve destroys one creature or artifact of each recorded house, counting the
-// destructions on the context.
-func (DestroyOfEachDiscardedHouse) Resolve(ctx *EffectContext) {
-	for _, house := range ctx.DiscardedHouses {
-		chosen, ok := ctx.ChooseCreature("Choose a "+house.String()+" creature or artifact", inPlayOfHouse(ctx, house))
-		if !ok {
-			continue
-		}
-		if destroyAndReport(ctx, chosen) {
-			ctx.Destroyed++
-		}
+// validate surfaces a configuration error from Do.
+func (e ForEachDiscarded) validate() error { return validateEffect(e.Do) }
+
+// Text renders the effect, leading with the iteration clause.
+func (e ForEachDiscarded) Text() string {
+	return "for each card discarded this way, " + e.Do.Text()
+}
+
+// Resolve runs Do for each discarded card, in context as ctx.It.
+func (e ForEachDiscarded) Resolve(ctx *EffectContext) {
+	for _, id := range ctx.Produced.Discarded {
+		ctx.It, ctx.HasIt = id, true
+		e.Do.Resolve(ctx)
 	}
 }
 
@@ -133,30 +130,6 @@ func (CancelFight) Text() string { return "the fight does not occur" }
 
 // Resolve cancels the current fight.
 func (CancelFight) Resolve(ctx *EffectContext) { ctx.Resolver.CancelCurrentFight() }
-
-// inPlayOfHouse returns every creature and artifact in play of house, from the
-// controller's point of view: friendly battleline, enemy battleline, friendly
-// artifacts, then enemy artifacts.
-func inPlayOfHouse(ctx *EffectContext, house House) []LocalID {
-	ids := ctx.Resolver.Battleline(ctx.Controller)
-	ids = append(ids, ctx.Resolver.Battleline(ctx.Opponent())...)
-	ids = append(ids, ctx.Resolver.Artifacts(ctx.Controller)...)
-	ids = append(ids, ctx.Resolver.Artifacts(ctx.Opponent())...)
-	var out []LocalID
-	for _, id := range ids {
-		if ctx.Resolver.House(id) == house {
-			out = append(out, id)
-		}
-	}
-	return out
-}
-
-// destroyAndReport destroys id and reports whether it actually left play.
-func destroyAndReport(ctx *EffectContext, id LocalID) bool {
-	before := resolverInPlay(ctx, id)
-	ctx.Resolver.DestroyEach(ctx.Controller, []LocalID{id})
-	return before && !resolverInPlay(ctx, id)
-}
 
 // resolverInPlay reports whether id appears in either player's battleline or
 // artifact row using only Resolver reads.

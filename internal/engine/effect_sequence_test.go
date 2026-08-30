@@ -23,7 +23,7 @@ func TestSequenceContinuesAfterCompleteSentence(t *testing.T) {
 	seq := Sequence{Effects: []Effect{
 		Sentence{Effect: DiscardTopOfDeck{Player: Opponent}},
 		Sentence{Effect: Reveal{Player: Opponent}},
-		Sentence{Effect: GainAember{Player: Controller, Amount: 1, Per: CardsRevealedOfItsHouse{Player: Opponent}}},
+		Sentence{Effect: GainAember{Player: Controller, Amount: 1, Per: CardsInHand{Player: Opponent, House: TheContextualHouse}}},
 	}}
 	want := "discard the top card of your opponent's deck. Reveal your opponent's hand. For each card of the discarded card's house revealed this way, gain 1 Æmber."
 	if got := seq.Text(); got != want {

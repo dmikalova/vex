@@ -24,48 +24,31 @@ func (e Destroy) validate() error {
 func (e Destroy) verb() string       { return "destroy" }
 func (e Destroy) targetText() string { return e.Target.Text() }
 
-// Text renders the effect, e.g. "destroy each creature with power 3 or lower".
+// Text renders the effect, e.g. "destroy each creature with power 3 or lower", or
+// "choose a creature - destroy …" when the target's selector leads with a choice.
 func (e Destroy) Text() string {
-	return e.verb() + " " + e.targetText()
+	body := e.verb() + " " + e.targetText()
+	if lead, ok := e.Target.leadIn(); ok {
+		return lead + " - " + body
+	}
+	return body
 }
 
 // Resolve destroys each selected creature, letting the controller order them.
 func (e Destroy) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 
-// resolveGate destroys the selected creatures and reports whether any were, so
-// Destroy can be the first half of a Then ("destroy a creature -> ...").
+// resolveGate destroys the selected creatures simultaneously and reports whether
+// any were, so Destroy can be the first half of a Then ("destroy a creature ->
+// ..."). It tallies how many actually left play on the context (read by
+// CardsDestroyedFewerThan), counting after the batch so a save (Armageddon Cloak)
+// is not counted.
 func (e Destroy) resolveGate(ctx *EffectContext) bool {
 	ids := e.Target.Select(ctx)
 	ctx.Resolver.DestroyEach(ctx.Controller, ids)
-	return len(ids) > 0
-}
-
-// Choosing a creature and then destroying every creature that shares its power
-// wipes out an entire power bracket at once — the chosen creature included. The
-// choice fixes the power to match; the destruction then reaches both sides of the
-// battle.
-//
-//rulebook:effect Destroy by Matching Power
-type DestroySamePower struct{}
-
-// Text renders the effect, binding the choice to its consequence with a dash.
-func (DestroySamePower) Text() string {
-	return "choose a creature - destroy each creature with the same power as the chosen creature"
-}
-
-// Resolve picks a creature, then destroys every creature whose power matches it.
-func (DestroySamePower) Resolve(ctx *EffectContext) {
-	all := append(ctx.Resolver.Battleline(ctx.Controller), ctx.Resolver.Battleline(ctx.Opponent())...)
-	chosen, ok := ctx.ChooseCreature("Choose a creature", all)
-	if !ok {
-		return
-	}
-	power := ctx.Resolver.Power(chosen)
-	dying := make([]LocalID, 0, len(all))
-	for _, id := range all {
-		if ctx.Resolver.Power(id) == power {
-			dying = append(dying, id)
+	for _, id := range ids {
+		if !resolverInPlay(ctx, id) {
+			ctx.Produced.Destroyed++
 		}
 	}
-	ctx.Resolver.DestroyEach(ctx.Controller, dying)
+	return len(ids) > 0
 }

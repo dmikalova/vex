@@ -41,9 +41,17 @@ func TestDiscardTopOfDeckEmpty(t *testing.T) {
 	}
 }
 
-func TestCardsRevealedOfItsHouse(t *testing.T) {
-	if got := (CardsRevealedOfItsHouse{}).CountText(); got != "card of the discarded card's house revealed this way" {
-		t.Errorf("count text = %q", got)
+func TestCardsInHand(t *testing.T) {
+	// CountText renders per referenced house.
+	cases := map[HouseChoice]string{
+		TheContextualHouse: "card of the discarded card's house revealed this way",
+		TheActiveHouse:     "card of the active house in their hand",
+		TheChosenHouse:     "card of the chosen house in their hand",
+	}
+	for h, want := range cases {
+		if got := (CardsInHand{House: h}).CountText(); got != want {
+			t.Errorf("count text(%d) = %q, want %q", h, got, want)
+		}
 	}
 
 	g := NewGame("Alice", "Bob", 1)
@@ -53,17 +61,27 @@ func TestCardsRevealedOfItsHouse(t *testing.T) {
 	g.AddToHand(NewCard("Dis Action", Dis, Tactic, Common), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	// With no card in context an empty deck established no house — count zero.
-	if got := (CardsRevealedOfItsHouse{Player: Opponent}).Value(ctx); got != 0 {
+	// The contextual house with no card in context resolves to none — count zero.
+	if got := (CardsInHand{Player: Opponent, House: TheContextualHouse}).Value(ctx); got != 0 {
 		t.Errorf("no-context value = %d, want 0", got)
 	}
 
-	// Discard sets the context card, so the count matches the Mars hand cards.
+	// Discard sets the context card, so the count matches the opponent's Mars cards.
 	DiscardTopOfDeck{Player: Opponent}.Resolve(ctx)
 	if ctx.It != discarded {
 		t.Fatalf("context card = %d, want %d", ctx.It, discarded)
 	}
-	if got := (CardsRevealedOfItsHouse{Player: Opponent}).Value(ctx); got != 2 {
-		t.Errorf("value = %d, want 2 Mars cards", got)
+	if got := (CardsInHand{Player: Opponent, House: TheContextualHouse}).Value(ctx); got != 2 {
+		t.Errorf("contextual-house value = %d, want 2 Mars cards", got)
+	}
+
+	// The chosen house reads ctx.ChosenHouse; the active house reads the game's.
+	ctx.ChosenHouse = Dis
+	if got := (CardsInHand{Player: Opponent, House: TheChosenHouse}).Value(ctx); got != 1 {
+		t.Errorf("chosen-house value = %d, want 1 Dis card", got)
+	}
+	g.State.ActiveHouse = Mars
+	if got := (CardsInHand{Player: Opponent, House: TheActiveHouse}).Value(ctx); got != 2 {
+		t.Errorf("active-house value = %d, want 2 Mars cards", got)
 	}
 }

@@ -24,9 +24,9 @@ func TestEmberImp(t *testing.T) {
 			P1: ct.Side{
 				House: card.House.Brobnar,
 				Hand: ct.Cards(
-					ct.Bind(&a, ct.Action(ct.OfHouse(card.House.Brobnar))),
-					ct.Bind(&b, ct.Action(ct.OfHouse(card.House.Brobnar))),
-					ct.Bind(&c, ct.Action(ct.OfHouse(card.House.Brobnar))),
+					ct.Bind(&a, ct.Tactic(ct.OfHouse(card.House.Brobnar))),
+					ct.Bind(&b, ct.Tactic(ct.OfHouse(card.House.Brobnar))),
+					ct.Bind(&c, ct.Tactic(ct.OfHouse(card.House.Brobnar))),
 				),
 			},
 			P2: ct.Side{InPlay: ct.Cards(EmberImp)},

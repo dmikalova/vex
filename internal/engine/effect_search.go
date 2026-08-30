@@ -24,7 +24,7 @@ func (e SearchForName) Text() string {
 // choose one, reveals it, and moves it to their hand from whichever zone it is in.
 func (e SearchForName) Resolve(ctx *EffectContext) {
 	inDeck := nameMatches(ctx, ctx.Resolver.Deck(ctx.Controller), e.Name)
-	candidates := append(inDeck, nameMatches(ctx, ctx.Resolver.Discard(ctx.Controller), e.Name)...)
+	candidates := slices.Concat(inDeck, nameMatches(ctx, ctx.Resolver.Discard(ctx.Controller), e.Name))
 	id, ok := ctx.ChooseCreature("Choose "+indefinite(e.Name)+" to put into your hand", candidates)
 	if !ok {
 		return

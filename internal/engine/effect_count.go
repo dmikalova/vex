@@ -49,6 +49,42 @@ func (e CardsInArchives) CountText() string {
 	return "card in your archives"
 }
 
+// CardsInHand counts the cards in a player's hand of a referenced house — the
+// house chosen this turn, the active house, or the house of the card in context
+// (A Fair Game counts the opponent's hand cards sharing its just-discarded deck
+// card's house). A referenced house that resolves to none counts zero.
+type CardsInHand struct {
+	Player Player
+	House  HouseChoice
+}
+
+// Value counts the player's hand cards matching the referenced house.
+func (e CardsInHand) Value(ctx *EffectContext) int {
+	house := e.House.resolveHouse(ctx)
+	if house == HouseNone {
+		return 0
+	}
+	n := 0
+	for _, id := range ctx.Resolver.Hand(ctx.PlayerFor(e.Player)) {
+		if ctx.Resolver.House(id) == house {
+			n++
+		}
+	}
+	return n
+}
+
+// CountText renders the singular noun the "for each" clause repeats.
+func (e CardsInHand) CountText() string {
+	switch e.House {
+	case TheContextualHouse:
+		return "card of the discarded card's house revealed this way"
+	case TheActiveHouse:
+		return "card of the active house in their hand"
+	default:
+		return "card of the chosen house in their hand"
+	}
+}
+
 // InPlay selects the cards a player has in play that match its filters — of a
 // given type and house — and serves two roles from one description. As a Count (a
 // Per clause) it yields the match count and renders the repeated "for each ..."

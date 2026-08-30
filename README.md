@@ -36,11 +36,45 @@ The web UI ships today; further frontends (e.g. an MCTS bot) and a lobby server
 are planned as their own `cmd/…` binaries and `internal/…` packages on the same
 engine.
 
+For how the pieces fit together — the pointerless state, the card-effect AST, and
+how a turn and an ability flow through the code — see
+[`docs/architecture.md`](docs/architecture.md). For the testing options and what
+to test at each layer, see [`docs/testing.md`](docs/testing.md).
+
 ## Development
 
 `mage -l` lists the available targets: `run`, `web`, `webWasm`, `build`, `test`,
-`cover`, `vet`, `fmt`, `tidy`, `gen`. Card-authoring conventions live in
+`cover`, `vet`, `fmt`, `lint`, `check`, `tidy`, `gen`. `mage check` is the full
+green gate (fmt-check, build, vet, lint, test, coverage) and is what CI runs.
+Card-authoring conventions live in
 [`internal/cards/AGENTS.md`](internal/cards/AGENTS.md).
+
+Commit hooks are managed by [lefthook](https://github.com/evilmartians/lefthook),
+extending the shared base config in
+[`dmikalova/github-meta`](https://github.com/dmikalova/github-meta). Install the
+tooling once (`lefthook`, `commitlint`, `gitleaks`, `typos`, `quickmark`, `mage`),
+then run `lefthook install`. Commits follow
+[Conventional Commits](https://www.conventionalcommits.org/) (enforced by
+commitlint), which also drives semantic-release versioning on deploy.
+
+## Deployment
+
+Vactrol runs on Google Cloud Run at
+[vactrol.mklv.tech](https://vactrol.mklv.tech), served by the `cmd/web` binary
+(the native build serves the WebAssembly client). The container listens on
+`$PORT`, which Cloud Run injects.
+
+CI/CD is a thin caller in
+[`.github/workflows/cicd.yaml`](.github/workflows/cicd.yaml) that invokes the
+reusable `go-cloudrun.yaml` workflow in
+[`dmikalova/github-meta`](https://github.com/dmikalova/github-meta). On a push to
+`main` it runs `mage check`, then semantic-release cuts a version, buildah builds
+[`Dockerfile`](Dockerfile) into an image, pushes it to GHCR (mirrored to Artifact
+Registry), and `gcloud run deploy` rolls it out. Pull requests run `mage check`
+only. The infrastructure itself — the Cloud Run service, the `vactrol.mklv.tech`
+domain mapping, DNS, and CI deploy permissions — is defined as a Terramate stack
+in the [`infrastructure`](https://github.com/dmikalova/infrastructure) repo under
+`gcp/apps/vactrol`.
 
 ## License
 

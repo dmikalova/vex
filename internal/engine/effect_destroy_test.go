@@ -63,7 +63,7 @@ func TestDestroySamePower(t *testing.T) {
 	c := g.AddToBattleline(testCreature("c", 3), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := DestroySamePower{}
+	e := Destroy{Target: Target{Kind: TargetEachCreature}.Selector(SamePowerAsChosen)}
 	if e.Text() != "choose a creature - destroy each creature with the same power as the chosen creature" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -80,7 +80,7 @@ func TestDestroySamePower(t *testing.T) {
 	// since a sole candidate would be auto-selected).
 	g.AddToBattleline(testCreature("strong2", 5), 1)
 	g.SetChooser(0, orderRejectChooser{})
-	DestroySamePower{}.Resolve(ctx)
+	e.Resolve(ctx)
 	if !g.inPlay(strong) {
 		t.Error("rejecting the choice should destroy nothing")
 	}

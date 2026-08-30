@@ -244,13 +244,6 @@ only then does each creature still in play move to the discard pile, along with
 its upgrades. A destroy effect can target every creature or only those matching
 a filter, such as "each creature with power 3 or lower".
 
-### Destroy by Matching Power
-
-Choosing a creature and then destroying every creature that shares its power
-wipes out an entire power bracket at once — the chosen creature included. The
-choice fixes the power to match; the destruction then reaches both sides of the
-battle.
-
 ### Draw
 
 Drawing puts the top card of your deck into your hand. If your deck is empty

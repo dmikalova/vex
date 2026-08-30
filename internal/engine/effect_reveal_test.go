@@ -21,8 +21,8 @@ func TestReveal(t *testing.T) {
 
 	// Revealing your Mars cards counts and logs both; the Brobnar card is untouched.
 	Reveal{Player: Controller, House: Mars}.Resolve(ctx)
-	if ctx.Revealed != 2 {
-		t.Errorf("revealed = %d, want 2", ctx.Revealed)
+	if ctx.Produced.Revealed != 2 {
+		t.Errorf("revealed = %d, want 2", ctx.Produced.Revealed)
 	}
 	if cnt := (CardsRevealed{}); cnt.Value(ctx) != 2 || cnt.CountText() != "card revealed this way" {
 		t.Errorf("CardsRevealed = %d / %q", cnt.Value(ctx), cnt.CountText())
@@ -41,8 +41,8 @@ func TestReveal(t *testing.T) {
 	g2.AddToHand(NewCard("y", Brobnar, Tactic, Common), 1)
 	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
 	Reveal{Player: Opponent}.Resolve(ctx2)
-	if ctx2.Revealed != 2 {
-		t.Errorf("whole-hand revealed = %d, want 2", ctx2.Revealed)
+	if ctx2.Produced.Revealed != 2 {
+		t.Errorf("whole-hand revealed = %d, want 2", ctx2.Produced.Revealed)
 	}
 
 	// Revealing nothing counts zero and writes no log line.
@@ -50,8 +50,8 @@ func TestReveal(t *testing.T) {
 	ctx3 := &EffectContext{Resolver: g3, Controller: 0}
 	before := len(g3.Log)
 	Reveal{Player: Controller, House: Mars}.Resolve(ctx3)
-	if ctx3.Revealed != 0 {
-		t.Errorf("revealed = %d, want 0", ctx3.Revealed)
+	if ctx3.Produced.Revealed != 0 {
+		t.Errorf("revealed = %d, want 0", ctx3.Produced.Revealed)
 	}
 	if len(g3.Log) != before {
 		t.Error("revealing nothing should not log")

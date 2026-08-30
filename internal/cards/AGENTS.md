@@ -166,7 +166,7 @@ comment) and the engine tests (the `Text()` assertions live in
   - `ct.Play(t, ct.Setup{P1, P2})` builds the game with player 1's house chosen.
     Each `ct.Side` sets `House`, the zones `InPlay`/`Hand`/`Deck`/`Discard`/
     `Archives` (via `ct.Cards(...)`), and `Amber`/`Keys`.
-  - `ct.Creature/Artifact/Action/Upgrade(...)` build vanilla cards — a "body with
+  - `ct.Creature/Artifact/Tactic/Upgrade(...)` build vanilla cards — a "body with
     no baggage" for isolating a mechanic — with options `ct.OfHouse`, `ct.Power`,
     `ct.Armor`, `ct.Keywords`, `ct.PowerBonus`, … (default house Brobnar).
   - `ct.Bind(&handle, def)` names a placed card so you can reference it later;

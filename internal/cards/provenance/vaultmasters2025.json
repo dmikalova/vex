@@ -1203,7 +1203,7 @@
   },
   {
     "number": "107",
-    "name": "Rm-Foler",
+    "name": "Rm-Folder",
     "house": "logos",
     "traits": [
       "ai",
@@ -2052,7 +2052,7 @@
   },
   {
     "number": "181",
-    "name": "Optio Gorkus",
+    "name": "Option Gorkus",
     "house": "saurian",
     "keywords": [
       "elusive"
@@ -2065,7 +2065,7 @@
     "rarity": "Rare",
     "armor": 3,
     "power": 3,
-    "text": "Elusive.\nEach of Optio Gorkus's neighbors gains, \"Destroyed: Move each Aember on this creature to a neighboring Optio Gorkus.\""
+    "text": "Elusive.\nEach of Option Gorkus's neighbors gains, \"Destroyed: Move each Aember on this creature to a neighboring Option Gorkus.\""
   },
   {
     "number": "182",

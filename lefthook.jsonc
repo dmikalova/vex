@@ -1,0 +1,21 @@
+{
+  // Extend the shared base config from github-meta (generic hooks plus the
+  // language-agnostic go-fmt/go-vet/go-test Go hooks).
+  "remotes": [
+    {
+      "configs": ["lefthook.jsonc"],
+      "git_url": "https://github.com/dmikalova/github-meta",
+      "ref": "main",
+      "refetch": true,
+    },
+  ],
+
+  // golangci-lint runs through mage so the pinned version stays in one place.
+  "pre-commit": {
+    "commands": {
+      "go-lint": {
+        "run": "mage lint",
+      },
+    },
+  },
+}

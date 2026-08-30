@@ -194,7 +194,7 @@
         "house": "dis",
         "type": "action",
         "rarity": "Rare",
-        "text": "Play: Choose a creature. Destroy each creature with the same power as the chosen creature.",
+        "text": "Play: Choose a creature - destroy each creature with the same power as the chosen creature.",
       },
       {
         "name": "Fear",

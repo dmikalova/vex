@@ -9,6 +9,7 @@ import "strings"
 // live inside the flat, value-copyable GameState without introducing pointers.
 type House uint8
 
+// The houses a card can belong to, in canonical order.
 const (
 	// HouseNone means no house is chosen/assigned.
 	HouseNone House = iota
@@ -52,6 +53,7 @@ func ParseHouse(name string) (House, bool) {
 // ever lives in the read-only card catalog, so a string is fine here.
 type Rarity string
 
+// The card rarities.
 const (
 	Common   Rarity = "Common"
 	Uncommon Rarity = "Uncommon"

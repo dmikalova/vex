@@ -1,0 +1,34 @@
+version: "2"
+
+linters:
+  default: standard # errcheck, govet, ineffassign, staticcheck, unused
+  enable:
+    - bodyclose
+    - gocritic
+    - misspell
+    - revive
+    - unconvert
+  exclusions:
+    rules:
+      # Invalid-zero enum sentinels (…Unset) are intentionally unreferenced: the
+      # zero value must be a named-but-unused placeholder so an omitted enum field
+      # is caught rather than silently defaulting. This matches only those consts
+      # by name, leaving `unused` fully active for everything else.
+      - linters:
+          - unused
+        text: "const \\w+Unset is unused"
+      # The engine and card facade deliberately use rulebook-first / imperative doc
+      # comments (e.g. "// stun a creature ...", "// A Before Fight ability
+      # resolves ...") and section-grouped type aliases, rather than the Go-doc
+      # "Name ..." form — it feeds docs/rulebook.md via genrules and reads like the
+      # printed cards. Drop revive's comment-form check; the presence check
+      # ("should have comment") stays active.
+      - linters:
+          - revive
+        text: "should be of the form"
+      # Set packages carry no package doc comment by design — each holds only
+      # self-registering card vars.
+      - linters:
+          - revive
+        path: internal/cards/sets/
+        text: "should have a package comment"

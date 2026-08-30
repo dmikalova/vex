@@ -122,7 +122,7 @@ on clients.
 
 Turn simulation output into an automated rating system analogous to KeyForge's community
 **AERC** (base traits like expected Flux, board control, effective power) and **SAS**
-(**S**ynergy **A**nd antisynergy **S**ystem). The engine measures each card's contribution
+(**S**ynergy **A**and antisynergy **S**ystem). The engine measures each card's contribution
 to the win rate to assign base trait values, then mines for **synergy pairs** (positive
 multipliers) and **antisynergies** (negative modifiers) that feed back into deck generation
 (step 6). The headline metric is **Drawn Win Rate (DWR)** — win rate when a card is drawn

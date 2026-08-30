@@ -62,6 +62,9 @@ const (
 	// creature". Transposition Sandals swaps with another creature, then uses the
 	// other creature.
 	TargetTheOtherCreature
+	// TargetChosenInPlay selects a single creature or artifact the controller
+	// chooses from all in play (either player's), rendered "a creature or artifact".
+	TargetChosenInPlay
 )
 
 // Target describes which cards an effect applies to. Kind picks the base set;
@@ -74,13 +77,16 @@ type Target struct {
 	house       House
 	exceptHouse House
 	chosenHouse bool
-	maxPower    int
-	hasMaxPower bool
-	damaged     bool
-	stunned     bool
-	onFlank     bool
-	notOnFlank  bool
-	neighboring bool
+	// contextualHouse narrows the target to cards sharing the house of the card in
+	// context (ctx.It), rendering "of that card's house" — ForEachDiscarded's Do.
+	contextualHouse bool
+	maxPower        int
+	hasMaxPower     bool
+	damaged         bool
+	stunned         bool
+	onFlank         bool
+	notOnFlank      bool
+	neighboring     bool
 	// other excludes the source card from the selected set ("other" cards).
 	other bool
 	// selector is a set-relative refinement applied after the per-card filters. It
@@ -124,6 +130,14 @@ func (t Target) ExceptHouse(h House) Target {
 // ChooseHouseThen (read from the effect context at selection time).
 func (t Target) OfChosenHouse() Target {
 	t.chosenHouse = true
+	return t
+}
+
+// OfContextualHouse narrows the target to cards sharing the house of the card in
+// context (ctx.It) — the discarded card ForEachDiscarded puts in focus — rendering
+// "of that card's house".
+func (t Target) OfContextualHouse() Target {
+	t.contextualHouse = true
 	return t
 }
 
@@ -217,6 +231,9 @@ func (t Target) Text() string {
 	if t.Kind == TargetEachFriendlyInPlay {
 		noun = "card"
 	}
+	if t.Kind == TargetChosenInPlay {
+		noun = "creature or artifact"
+	}
 	if t.exceptHouse != HouseNone {
 		noun = "non-" + t.exceptHouse.String() + " " + noun
 	}
@@ -279,6 +296,9 @@ func (t Target) Text() string {
 	if t.chosenHouse {
 		phrase += " of the chosen house"
 	}
+	if t.contextualHouse {
+		phrase += " of that card's house"
+	}
 	if t.selector != nil {
 		phrase = t.selector.clause(phrase)
 	}
@@ -314,6 +334,24 @@ func (t Target) Select(ctx *EffectContext) []LocalID {
 type Selector interface {
 	refine(ctx *EffectContext, ids []LocalID) []LocalID
 	clause(phrase string) string
+}
+
+// leadingSelector is the optional capability of a Selector whose choice reads
+// before the effect's verb, so the phrase runs left to right — the choice stated
+// first, then its consequence (SamePowerAsChosen's "choose a creature - destroy
+// …"). A Selector without it contributes only a trailing clause.
+type leadingSelector interface {
+	lead() string
+}
+
+// leadIn returns the leading clause a Selector contributes ahead of the effect's
+// verb, and whether the target has one — so an effect can render "choose a
+// creature - destroy …" left to right instead of burying the choice.
+func (t Target) leadIn() (string, bool) {
+	if l, ok := t.selector.(leadingSelector); ok {
+		return l.lead(), true
+	}
+	return "", false
 }
 
 // ExceptMostPowerful is a Selector that drops the single most powerful creature
@@ -365,11 +403,45 @@ func (exceptMostPowerful) refine(ctx *EffectContext, ids []LocalID) []LocalID {
 	return out
 }
 
+// SamePowerAsChosen is a Selector that keeps every creature sharing the power of
+// one the controller chooses from the set — the chosen creature included — so a
+// Destroy paired with it wipes out a whole power bracket (Dance of Doom). A
+// declined choice selects nothing. It leads with "choose a creature" so the
+// printed phrase reads left to right, the choice before its consequence.
+var SamePowerAsChosen Selector = samePowerAsChosen{}
+
+// samePowerAsChosen implements the SamePowerAsChosen selector.
+type samePowerAsChosen struct{}
+
+// lead renders the choice ahead of the effect's verb.
+func (samePowerAsChosen) lead() string { return "choose a creature" }
+
+// clause renders "<phrase> with the same power as the chosen creature".
+func (samePowerAsChosen) clause(phrase string) string {
+	return phrase + " with the same power as the chosen creature"
+}
+
+// refine picks a creature and keeps every one in the set with matching power.
+func (samePowerAsChosen) refine(ctx *EffectContext, ids []LocalID) []LocalID {
+	chosen, ok := ctx.ChooseCreature("Choose a creature", ids)
+	if !ok {
+		return nil
+	}
+	power := ctx.Resolver.Power(chosen)
+	out := make([]LocalID, 0, len(ids))
+	for _, id := range ids {
+		if ctx.Resolver.Power(id) == power {
+			out = append(out, id)
+		}
+	}
+	return out
+}
+
 // isChosen reports whether the Kind resolves to a single player-chosen creature.
 func (t Target) isChosen() bool {
 	return t.Kind == TargetChosenCreature || t.Kind == TargetChosenEnemyCreature ||
 		t.Kind == TargetChosenFriendlyCreature || t.Kind == TargetChosenOtherFriendlyCreature ||
-		t.Kind == TargetChosenArtifact
+		t.Kind == TargetChosenArtifact || t.Kind == TargetChosenInPlay
 }
 
 // filter narrows ids to those matching the target's trait, power, damaged, and
@@ -380,6 +452,7 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 		t.house == HouseNone &&
 		t.exceptHouse == HouseNone &&
 		!t.chosenHouse &&
+		!t.contextualHouse &&
 		!t.hasMaxPower &&
 		!t.damaged &&
 		!t.stunned &&
@@ -404,6 +477,9 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 			continue
 		}
 		if t.chosenHouse && ctx.Resolver.House(id) != ctx.ChosenHouse {
+			continue
+		}
+		if t.contextualHouse && (!ctx.HasIt || ctx.Resolver.House(id) != ctx.Resolver.House(ctx.It)) {
 			continue
 		}
 		if t.hasMaxPower && ctx.Resolver.Power(id) > t.maxPower {
@@ -500,7 +576,7 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 		return nil
 	case TargetEachArtifact, TargetChosenArtifact:
 		return append(ctx.Resolver.Artifacts(ctx.Controller), ctx.Resolver.Artifacts(ctx.Opponent())...)
-	case TargetEachInPlay:
+	case TargetEachInPlay, TargetChosenInPlay:
 		ids := ctx.Resolver.Battleline(ctx.Controller)
 		ids = append(ids, ctx.Resolver.Battleline(ctx.Opponent())...)
 		ids = append(ids, ctx.Resolver.Artifacts(ctx.Controller)...)

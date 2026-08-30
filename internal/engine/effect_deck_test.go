@@ -143,7 +143,7 @@ func TestBonkersComposition(t *testing.T) {
 
 	effect := Sequence{Effects: []Effect{
 		Sentence{Effect: DiscardTopOfEachDeck{}},
-		Sentence{Effect: DestroyOfEachDiscardedHouse{}},
+		Sentence{Effect: ForEachDiscarded{Do: Destroy{Target: Target{Kind: TargetChosenInPlay}.OfContextualHouse()}}},
 		Conditional{Cond: CardsDestroyedFewerThan{Amount: 2}, Then: Destroy{Target: Target{Kind: TargetThisCreature}}},
 	}}
 	if got := effect.Text(); got != "discard the top card of each player's deck. For each card discarded this way, destroy a creature or artifact of that card's house. If fewer than 2 cards are destroyed this way, destroy {self}" {
@@ -175,7 +175,7 @@ func TestBonkersCompositionSelfDestructs(t *testing.T) {
 
 	Sequence{Effects: []Effect{
 		Sentence{Effect: DiscardTopOfEachDeck{}},
-		Sentence{Effect: DestroyOfEachDiscardedHouse{}},
+		Sentence{Effect: ForEachDiscarded{Do: Destroy{Target: Target{Kind: TargetChosenInPlay}.OfContextualHouse()}}},
 		Conditional{Cond: CardsDestroyedFewerThan{Amount: 2}, Then: Destroy{Target: Target{Kind: TargetThisCreature}}},
 	}}.Resolve(ctx)
 
@@ -184,6 +184,42 @@ func TestBonkersCompositionSelfDestructs(t *testing.T) {
 	}
 	if !g.inPlay(bystander) {
 		t.Error("off-house bystander should stay in play")
+	}
+}
+
+func TestForEachDiscardedAndContextualHouse(t *testing.T) {
+	// validate surfaces a bad Do.
+	if err := validateEffect(ForEachDiscarded{Do: Destroy{}}); err == nil {
+		t.Error("ForEachDiscarded should reject a Do with no target")
+	}
+	if err := validateEffect(ForEachDiscarded{Do: Destroy{Target: Target{Kind: TargetChosenInPlay}.OfContextualHouse()}}); err != nil {
+		t.Errorf("valid ForEachDiscarded = %v", err)
+	}
+
+	// Text renders the chosen-in-play noun and the contextual-house clause.
+	target := Target{Kind: TargetChosenInPlay}.OfContextualHouse()
+	if got := target.Text(); got != "a creature or artifact of that card's house" {
+		t.Errorf("target text = %q", got)
+	}
+
+	// With no card in context, the contextual-house filter selects nothing.
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(testCreature("c", 3), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	if got := target.Select(ctx); got != nil {
+		t.Errorf("no-context select = %v, want nil", got)
+	}
+}
+
+func TestResolverInPlay(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	live := g.AddToBattleline(testCreature("live", 3), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	if !resolverInPlay(ctx, live) {
+		t.Error("a battleline creature should read in play")
+	}
+	if resolverInPlay(ctx, LocalID(200)) {
+		t.Error("an absent id should not read in play")
 	}
 }
 
