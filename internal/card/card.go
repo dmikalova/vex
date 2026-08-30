@@ -40,6 +40,10 @@ type (
 	// Toll is Æmber a card makes its controller's opponent pay to play or use an
 	// artifact; use it as card.Restrictions{Toll: card.Toll{Action: card.TollOn.PlayArtifact, Amount: 1}}.
 	Toll = engine.Toll
+	// PlayPermission is a continuous grant letting a card's controller play cards of
+	// a house off-turn; use it as card.WithPlayPermission(card.PlayPermission{House:
+	// card.House.Untamed}).
+	PlayPermission = engine.PlayPermission
 	// TollAction names the action a Toll charges for; the ready-made values live in
 	// card.TollOn.
 	TollAction = engine.TollAction

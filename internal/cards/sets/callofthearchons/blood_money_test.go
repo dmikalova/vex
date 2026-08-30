@@ -10,7 +10,7 @@ import (
 // Blood Money
 //
 //	House:  Brobnar
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Uncommon
 //
 //	Play: Exalt an enemy creature 2 times.

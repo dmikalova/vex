@@ -11,7 +11,7 @@ import (
 // Control the Weak
 //
 //	House:  Dis
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Common
 //	Æmber:  1
 //

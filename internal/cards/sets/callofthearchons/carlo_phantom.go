@@ -21,5 +21,8 @@ var CarloPhantom = card.New(
 	card.WithPower(1),
 	card.WithTraits("Elf", "Thief"),
 	card.WithKeywords(card.Keyword.Elusive, card.Keyword.Skirmish),
-	card.WithAbility(card.Trigger.AfterArtifactPlayed, card.StealAember{Amount: 1}),
+	card.WithAbility(card.Trigger.AfterCardPlayed, card.Conditional{
+		Cond: card.ItIs{Type: card.Type.Artifact},
+		Then: card.StealAember{Amount: 1},
+	}),
 )

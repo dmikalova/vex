@@ -16,8 +16,10 @@ var Target = targets{
 	EachFriendlyCreature:      engine.Target{Kind: engine.TargetEachFriendlyCreature},
 	EachEnemyCreature:         engine.Target{Kind: engine.TargetEachEnemyCreature},
 	EachArtifact:              engine.Target{Kind: engine.TargetEachArtifact},
+	EachFriendlyInPlay:        engine.Target{Kind: engine.TargetEachFriendlyInPlay},
 	EachOtherFriendlyCreature: engine.Target{Kind: engine.TargetEachOtherFriendlyCreature},
 	OtherFriendlyCreature:     engine.Target{Kind: engine.TargetChosenOtherFriendlyCreature},
+	TheOtherCreature:          engine.Target{Kind: engine.TargetTheOtherCreature},
 	Artifact:                  engine.Target{Kind: engine.TargetChosenArtifact},
 }
 
@@ -31,8 +33,10 @@ type targets struct {
 	EachFriendlyCreature,
 	EachEnemyCreature,
 	EachArtifact,
+	EachFriendlyInPlay,
 	EachOtherFriendlyCreature,
 	OtherFriendlyCreature,
+	TheOtherCreature,
 	Artifact engine.Target
 }
 

@@ -10,7 +10,7 @@ import (
 // Barehanded
 //
 //	House:  Brobnar
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //

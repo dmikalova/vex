@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Doorstep to Heaven
 //
 //	House:  Sanctum
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  1
 //
@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var DoorstepToHeaven = card.New(
 	"Doorstep to Heaven",
 	card.House.Sanctum,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 217),
 	card.WithAemberBonus(1),

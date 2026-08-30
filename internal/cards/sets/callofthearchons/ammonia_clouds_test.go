@@ -10,7 +10,7 @@ import (
 // Ammonia Clouds
 //
 //	House:  Mars
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Common
 //
 //	Play: Deal 3 damage to each creature.

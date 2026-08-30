@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Ghostly Hand
 //
 //	House:  Shadows
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Common
 //	Æmber:  2
 //
@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var GhostlyHand = card.New(
 	"Ghostly Hand",
 	card.House.Shadows,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 270),
 	card.WithAemberBonus(2),

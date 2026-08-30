@@ -10,7 +10,7 @@ import (
 // Hidden Stash
 //
 //	House:  Shadows
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  1
 //

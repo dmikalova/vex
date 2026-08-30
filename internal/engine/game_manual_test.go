@@ -33,6 +33,69 @@ func TestManualModeLiftsHouse(t *testing.T) {
 	}
 }
 
+func TestManualAddAmber(t *testing.T) {
+	g := started(t)
+	g.ManualAddAmber(0, 3)
+	if g.Aember(0) != 3 {
+		t.Errorf("amber = %d, want 3", g.Aember(0))
+	}
+	g.ManualAddAmber(0, -5) // clamps at zero
+	if g.Aember(0) != 0 {
+		t.Errorf("amber = %d, want 0 (clamped)", g.Aember(0))
+	}
+}
+
+func TestManualAddChains(t *testing.T) {
+	g := started(t)
+	g.ManualAddChains(0, 4)
+	if g.State.Chains[0] != 4 {
+		t.Errorf("chains = %d, want 4", g.State.Chains[0])
+	}
+	g.ManualAddChains(0, -9) // clamps at zero
+	if g.State.Chains[0] != 0 {
+		t.Errorf("chains = %d, want 0 (clamped)", g.State.Chains[0])
+	}
+}
+
+func TestManualSetActiveHouse(t *testing.T) {
+	g := started(t)
+	g.ManualSetActiveHouse(Dis)
+	if g.State.ActiveHouse != Dis {
+		t.Errorf("active house = %v, want Dis", g.State.ActiveHouse)
+	}
+}
+
+func TestManualForgeAndUnforgeKey(t *testing.T) {
+	g := started(t)
+	g.ManualUnforgeKey(0) // no-op with no keys forged
+	if g.Keys(0) != 0 {
+		t.Fatalf("keys = %d, want 0", g.Keys(0))
+	}
+	for i := 1; i <= KeysToWin; i++ {
+		g.ManualForgeKey(0)
+		if g.Keys(0) != i {
+			t.Fatalf("after forge %d: keys = %d", i, g.Keys(0))
+		}
+	}
+	g.ManualForgeKey(0)                   // no-op: no colours remain
+	g.ManualForgeKeyColor(0, KeyColorRed) // no-op: already at KeysToWin
+	if g.Keys(0) != KeysToWin {
+		t.Errorf("keys = %d, want %d (capped)", g.Keys(0), KeysToWin)
+	}
+	if got := len(g.KeyColors(0)); got != KeysToWin {
+		t.Errorf("colors = %d, want %d", got, KeysToWin)
+	}
+	g.ManualUnforgeKey(0)
+	if g.Keys(0) != KeysToWin-1 || len(g.KeyColors(0)) != KeysToWin-1 {
+		t.Errorf("after unforge: keys = %d, colors = %d", g.Keys(0), len(g.KeyColors(0)))
+	}
+	// A specific colour can be chosen for the freed slot.
+	g.ManualForgeKeyColor(0, KeyColorYellow)
+	if got := g.KeyColors(0); got[len(got)-1] != KeyColorYellow {
+		t.Errorf("last key = %v, want Yellow", got[len(got)-1])
+	}
+}
+
 func TestManualMoveToEachZone(t *testing.T) {
 	g := started(t)
 	moves := []struct {
@@ -104,7 +167,7 @@ func TestManualSetExhausted(t *testing.T) {
 func TestManualAddCard(t *testing.T) {
 	g := started(t)
 	before := len(g.Hand(0))
-	id := g.ManualAddCard(NewCard("Import", Logos, Action, Common), 0)
+	id := g.ManualAddCard(NewCard("Import", Logos, Tactic, Common), 0)
 	if len(g.Hand(0)) != before+1 {
 		t.Errorf("hand size = %d, want %d", len(g.Hand(0)), before+1)
 	}

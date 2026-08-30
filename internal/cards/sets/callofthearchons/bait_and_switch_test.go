@@ -10,7 +10,7 @@ import (
 // Bait and Switch
 //
 //	House:  Shadows
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Common
 //
 //	Play: If your opponent has more Æmber than you, steal 1 Æmber -> repeat this effect.

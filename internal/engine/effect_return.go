@@ -5,7 +5,7 @@ import (
 	"slices"
 )
 
-// MoveFromPlay takes each card its Target selects out of play and puts it in a
+// PutFromPlay takes each card its Target selects out of play and puts it in a
 // destination zone — the top of its owner's deck, their hand, or their archives —
 // shedding the per-match state the card built up in play (damage, spent armor,
 // Æmber on it, upgrades). The destination is required. Moving a card out of play
@@ -14,15 +14,15 @@ import (
 // pile. When several cards move to the top of the deck at once the controller
 // chooses the order they stack.
 //
-//rulebook:effect Move from Play
-type MoveFromPlay struct {
+//rulebook:effect Put from Play
+type PutFromPlay struct {
 	Target      Target
 	Destination Destination
 }
 
 // Text renders the effect, e.g. "put each artifact on top of its owner's deck" or
 // "put this creature into its owner's hand".
-func (e MoveFromPlay) Text() string {
+func (e PutFromPlay) Text() string {
 	switch e.Destination {
 	case ToTopOfDeck:
 		return fmt.Sprintf("put %s on top of its owner's deck", e.Target.Text())
@@ -38,57 +38,57 @@ func (e MoveFromPlay) Text() string {
 // validate rejects a destination this effect cannot move a card to; only the hand,
 // the top of the deck, and the archives are supported, and the destination must be
 // named.
-func (e MoveFromPlay) validate() error {
+func (e PutFromPlay) validate() error {
 	if !e.Target.valid() {
-		return errUnsetTarget("MoveFromPlay")
+		return errUnsetTarget("PutFromPlay")
 	}
 	switch e.Destination {
 	case ToHand, ToTopOfDeck, ToDeckShuffled, ToArchives:
 		return nil
 	default:
-		return fmt.Errorf("MoveFromPlay: unsupported destination %d", e.Destination)
+		return fmt.Errorf("PutFromPlay: unsupported destination %d", e.Destination)
 	}
 }
 
 // Resolve moves each selected card from play to the destination. Cards headed to
 // the top of the deck are stacked in an order the controller chooses.
-func (e MoveFromPlay) Resolve(ctx *EffectContext) {
+func (e PutFromPlay) Resolve(ctx *EffectContext) {
 	switch e.Destination {
 	case ToTopOfDeck:
 		for _, id := range ctx.OrderByChoice("Choose the next card to put on top of the deck", e.Target.Select(ctx)) {
-			ctx.Resolver.MoveToTopOfDeck(id)
+			ctx.Resolver.PutOnTopOfDeck(id)
 		}
 	case ToArchives:
 		for _, id := range e.Target.Select(ctx) {
-			ctx.Resolver.MoveToArchives(id)
+			ctx.Resolver.PutIntoArchives(id)
 		}
 	case ToDeckShuffled:
 		for _, id := range e.Target.Select(ctx) {
-			ctx.Resolver.MoveToDeckShuffled(id)
+			ctx.Resolver.PutIntoDeckShuffled(id)
 		}
 	default:
 		for _, id := range e.Target.Select(ctx) {
-			ctx.Resolver.MoveToHand(id)
+			ctx.Resolver.PutIntoHand(id)
 		}
 	}
 }
 
-// MoveArtifactsToHand puts up to Max artifacts (either player's) into their
+// PutArtifactsIntoHand puts up to Max artifacts (either player's) into their
 // owners' hands. The controller chooses them one at a time and may stop early,
 // so it is "up to" rather than exactly Max.
-type MoveArtifactsToHand struct {
+type PutArtifactsIntoHand struct {
 	Max int
 }
 
 // Text renders the effect, e.g. "put up to 3 artifacts into their owners' hands".
-func (e MoveArtifactsToHand) Text() string {
+func (e PutArtifactsIntoHand) Text() string {
 	return fmt.Sprintf("put up to %d artifacts into their owners' hands", e.Max)
 }
 
 // Resolve returns artifacts to hand one at a time, up to Max. Each step offers the
 // artifacts in play plus a "Done" option to stop early; when no artifacts remain,
 // "Done" is the only option and is chosen automatically.
-func (e MoveArtifactsToHand) Resolve(ctx *EffectContext) {
+func (e PutArtifactsIntoHand) Resolve(ctx *EffectContext) {
 	const done = "Done"
 	for i := 0; i < e.Max; i++ {
 		cands := append(ctx.Resolver.Artifacts(ctx.Controller), ctx.Resolver.Artifacts(ctx.Opponent())...)
@@ -101,7 +101,7 @@ func (e MoveArtifactsToHand) Resolve(ctx *EffectContext) {
 		if choice >= len(cands) {
 			return // "Done" (the last option), or an out-of-range choice
 		}
-		ctx.Resolver.MoveToHand(cands[choice])
+		ctx.Resolver.PutIntoHand(cands[choice])
 	}
 }
 
@@ -133,9 +133,9 @@ func (e ReturnNamedToHand) Resolve(ctx *EffectContext) {
 		return
 	}
 	if slices.Contains(inPlay, id) {
-		ctx.Resolver.MoveToHand(id)
+		ctx.Resolver.PutIntoHand(id)
 	} else {
-		ctx.Resolver.MoveFromDiscardToHand(id)
+		ctx.Resolver.PutFromDiscardIntoHand(id)
 	}
 }
 

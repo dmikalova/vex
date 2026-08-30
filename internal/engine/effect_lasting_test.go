@@ -123,6 +123,15 @@ func TestInstead(t *testing.T) {
 	if err := (Instead{Of: EventCreaturePlayed, With: Steal}).validate(); err == nil {
 		t.Error("a reaction event should fail as a replacement")
 	}
+	if err := (Instead{Of: EventReapAember}).validate(); err == nil {
+		t.Error("an unset replacement should fail")
+	}
+	if err := (Instead{Of: EventAemberAddedToPool, With: Capture}).validate(); err == nil {
+		t.Error("a pool event without a Player should fail")
+	}
+	if err := (Instead{Of: EventAemberAddedToPool, With: Capture, Player: Opponent}).validate(); err != nil {
+		t.Errorf("a scoped pool replacement should pass: %v", err)
+	}
 
 	// Reaping steals instead of gaining.
 	g := started(t)

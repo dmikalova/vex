@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Deep Probe
 //
 //	House:  Mars
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  1
 //
@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var DeepProbe = card.New(
 	"Deep Probe",
 	card.House.Mars,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 162),
 	card.WithAemberBonus(1),

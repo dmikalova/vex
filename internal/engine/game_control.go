@@ -1,9 +1,11 @@
 package engine
 
 // takeControl moves a creature into controller's battleline without changing its
-// owner. Ownership is immutable in KeyForge and still decides the out-of-play zone
-// the card returns to; control is the battleline/current-player relationship.
-func (g *Game) takeControl(id LocalID, controller int) {
+// owner, recording source as the card whose lasting effect holds the control so it
+// can be reverted when that source leaves play. Ownership is immutable in KeyForge
+// and still decides the out-of-play zone the card returns to; control is the
+// battleline/current-player relationship.
+func (g *Game) takeControl(id LocalID, controller int, source LocalID) {
 	if g.inPlay(id) && g.cat.def(id).Type == Creature {
 		g.removeFromPlay(id)
 		controlPlus := uint8(0)
@@ -11,21 +13,29 @@ func (g *Game) takeControl(id LocalID, controller int) {
 			controlPlus = uint8(controller + 1)
 		}
 		g.State.Cards[id].ControlPlus = controlPlus
+		g.State.Cards[id].ControlSource = source
 		g.State.Battleline[controller].add(id)
 		g.logf("%s takes control of %s", g.names[controller], g.Name(id))
 	}
 }
 
-// revertControlFromUpgrade restores a controlled host to its owner's battleline
-// when the Upgrade that took control of it leaves play. If the host has already
-// left play, its resetCore call will clear the override instead.
-func (g *Game) revertControlFromUpgrade(host, upgrade LocalID) {
-	if g.cat.def(upgrade).Static.TakesControl && g.inPlay(host) &&
-		g.State.Cards[host].ControlPlus != 0 && g.controller(host) == g.owner(upgrade) {
-		owner := g.owner(host)
-		g.removeFromPlay(host)
-		g.State.Cards[host].ControlPlus = 0
-		g.State.Battleline[owner].add(host)
-		g.logf("%s returns to %s's control", g.Name(host), g.names[owner])
+// releaseControlHeldBy reverts every creature whose control was taken "until source
+// leaves play" back to its owner's battleline, called when source leaves play. It is
+// the leave-play half of the UntilThisLeavesPlay duration: the control lasts exactly
+// as long as its source card stays in play.
+func (g *Game) releaseControlHeldBy(source LocalID) {
+	for p := 0; p < 2; p++ {
+		for _, id := range g.battlelineCopy(p) {
+			core := &g.State.Cards[id]
+			if core.ControlPlus == 0 || core.ControlSource != source {
+				continue
+			}
+			owner := g.owner(id)
+			g.removeFromPlay(id)
+			core.ControlPlus = 0
+			core.ControlSource = 0
+			g.State.Battleline[owner].add(id)
+			g.logf("%s returns to %s's control", g.Name(id), g.names[owner])
+		}
 	}
 }

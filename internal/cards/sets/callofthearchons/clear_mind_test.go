@@ -10,7 +10,7 @@ import (
 // Clear Mind
 //
 //	House:  Sanctum
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //

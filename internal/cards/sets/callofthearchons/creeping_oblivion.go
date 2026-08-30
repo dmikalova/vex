@@ -5,14 +5,14 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Creeping Oblivion
 //
 //	House:  Dis
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //
 //	Play: Purge up to 2 cards from a discard pile.
 var CreepingOblivion = card.New(
 	"Creeping Oblivion",
 	card.House.Dis,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 56),
 	card.WithAbility(

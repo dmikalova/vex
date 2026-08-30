@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Help from Future Self
 //
 //	House:  Logos
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: FIXED
 //	Æmber:  1
 //
@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var HelpFromFutureSelf = card.New(
 	"Help from Future Self",
 	card.House.Logos,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Fixed,
 	card.Provenance(card.CotA, 111),
 	card.WithAemberBonus(1),

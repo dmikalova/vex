@@ -21,11 +21,11 @@ func TestEffectValidation(t *testing.T) {
 	if err := (Conditional{Then: GainAember{Player: Controller, Amount: 1}}).validate(); err != nil {
 		t.Errorf("conditional with a valid effect should pass, got %v", err)
 	}
-	if err := validateEffect(MoveFromDiscard{Destination: ToBottomOfDeck}); err == nil {
-		t.Error("MoveFromDiscard to an unsupported destination should be rejected")
+	if err := validateEffect(PutFromDiscard{Destination: ToBottomOfDeck}); err == nil {
+		t.Error("PutFromDiscard to an unsupported destination should be rejected")
 	}
-	if err := validateEffect(MoveFromDiscard{Destination: ToTopOfDeck}); err != nil {
-		t.Errorf("MoveFromDiscard to the top of the deck should pass, got %v", err)
+	if err := validateEffect(PutFromDiscard{Destination: ToTopOfDeck}); err != nil {
+		t.Errorf("PutFromDiscard to the top of the deck should pass, got %v", err)
 	}
 	// Purge must name the zone it pulls from.
 	if err := validateEffect(Purge{}); err == nil {
@@ -123,7 +123,7 @@ func TestNewCardRejectsUnsetTrigger(t *testing.T) {
 			t.Error("NewCard should reject an ability whose trigger is unset")
 		}
 	}()
-	NewCard("Bad", Brobnar, Action, Common,
+	NewCard("Bad", Brobnar, Tactic, Common,
 		WithAbility(triggerUnset, GainAember{Player: Controller, Amount: 1}))
 }
 
@@ -135,4 +135,24 @@ func TestNewCardRejectsConflictingHeal(t *testing.T) {
 	}()
 	NewCard("bad", Sanctum, Creature, Common,
 		WithAbility(TriggerAfterPlay, Heal{Amount: 2, Fully: true, Target: Target{Kind: TargetThisCreature}}))
+}
+
+func TestNewCardRejectsInvalidReplace(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Error("NewCard should panic on a StaticModifier.Replaces with a bad effect")
+		}
+	}()
+	NewCard("bad", Sanctum, Upgrade, Rare, WithStatic(StaticModifier{
+		Replaces: Replace{When: EventCreatureDestroyed, With: Heal{Amount: 2, Fully: true, Target: Target{Kind: TargetTriggeringCreature}}},
+	}))
+}
+
+func TestNewCardRejectsInvalidReplaces(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Error("NewCard should panic on a continuous Replaces using a reaction event")
+		}
+	}()
+	NewCard("bad", Mars, Creature, Uncommon, WithReplaces(Instead{Of: EventCreaturePlayed, With: Capture}))
 }

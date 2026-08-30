@@ -1,0 +1,7 @@
+{
+  "name": "vactrol",
+  "entrypoint": "cmd/web/main.go",
+  "runtime": {
+    "port": 8080
+  }
+}

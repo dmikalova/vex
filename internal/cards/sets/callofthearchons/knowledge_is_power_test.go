@@ -10,7 +10,7 @@ import (
 // Knowledge is Power
 //
 //	House:  Logos
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //
 //	Play: Choose one:

@@ -96,3 +96,59 @@ func (g *Game) ManualAddCard(def CardDefinition, player int) LocalID {
 	g.logf("%s manually adds %s to hand", g.names[player], g.Name(id))
 	return id
 }
+
+// ManualAddAmber adjusts player's Æmber pool by delta (clamped at zero), so a
+// sandbox can dial each player's Æmber up or down.
+func (g *Game) ManualAddAmber(player, delta int) {
+	n := g.State.Aember[player] + delta
+	if n < 0 {
+		n = 0
+	}
+	g.State.Aember[player] = n
+	g.logf("%s now has %d Æmber (manual)", g.names[player], n)
+}
+
+// ManualAddChains adjusts player's chain count by delta (clamped at zero).
+func (g *Game) ManualAddChains(player, delta int) {
+	n := g.State.Chains[player] + delta
+	if n < 0 {
+		n = 0
+	}
+	g.State.Chains[player] = n
+	g.logf("%s now has %d %s (manual)", g.names[player], n, chainNoun(n))
+}
+
+// ManualSetActiveHouse sets the active player's active house directly, so a
+// sandbox can switch houses mid-turn.
+func (g *Game) ManualSetActiveHouse(h House) {
+	g.State.ActiveHouse = h
+	g.logf("%s manually chooses %s as their active house", g.names[g.State.ActivePlayer], h)
+}
+
+// ManualForgeKey forges one more key for player using the next unused colour.
+func (g *Game) ManualForgeKey(player int) {
+	if remaining := g.remainingKeyColors(player); len(remaining) > 0 {
+		g.ManualForgeKeyColor(player, remaining[0])
+	}
+}
+
+// ManualForgeKeyColor forges one more key of colour c for player, up to
+// KeysToWin — no cost and no forge triggers.
+func (g *Game) ManualForgeKeyColor(player int, c KeyColor) {
+	if g.State.Keys[player] >= KeysToWin {
+		return
+	}
+	g.State.KeyColors[player][g.State.Keys[player]] = c
+	g.State.Keys[player]++
+	g.logf("%s manually forges a %s key (%d/%d)", g.names[player], c, g.State.Keys[player], KeysToWin)
+}
+
+// ManualUnforgeKey removes player's most recently forged key, if any.
+func (g *Game) ManualUnforgeKey(player int) {
+	if g.State.Keys[player] <= 0 {
+		return
+	}
+	g.State.Keys[player]--
+	g.State.KeyColors[player][g.State.Keys[player]] = KeyColorNone
+	g.logf("%s manually unforges a key (%d/%d)", g.names[player], g.State.Keys[player], KeysToWin)
+}

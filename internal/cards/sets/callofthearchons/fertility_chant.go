@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Fertility Chant
 //
 //	House:  Untamed
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  4
 //
@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var FertilityChant = card.New(
 	"Fertility Chant",
 	card.House.Untamed,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 321),
 	card.WithAemberBonus(4),

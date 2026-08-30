@@ -15,7 +15,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains +2 hazardous and, "If this creature would be destroyed, instead fully heal it and destroy Armageddon Cloak."
+//	This creature gains +2 hazardous and, "If this creature would be destroyed, instead fully heal it, and destroy Armageddon Cloak."
 func TestArmageddonCloak(t *testing.T) {
 	t.Run("fully heals its host and destroys itself instead of the host once", func(t *testing.T) {
 		var host, cloak ct.Card

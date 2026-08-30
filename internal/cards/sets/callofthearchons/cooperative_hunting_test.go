@@ -10,7 +10,7 @@ import (
 // Cooperative Hunting
 //
 //	House:  Untamed
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Common
 //
 //	Play: For each friendly creature in play, deal 1 damage to a creature.

@@ -21,15 +21,29 @@ package engine
 type Event uint8
 
 const (
+	// eventUnset is the zero value. A real reaction or replacement always names one
+	// of the points below, so an unset Event marks "no event" — used to tell a
+	// StaticModifier that carries no replacement from one that does.
+	eventUnset Event = iota
 	// EventCreaturePlayed fires after the controller plays a creature (a reaction
 	// point). Full Moon and Charge! attach here.
-	EventCreaturePlayed Event = iota
+	EventCreaturePlayed
 	// EventReap fires after one of the controller's creatures reaps (a reaction
 	// point). Crystal Hive attaches here.
 	EventReap
 	// EventReapAember is the Æmber a reap grants (a replacement point). Dimension
 	// Door replaces it.
 	EventReapAember
+	// EventCreatureDestroyed is a creature about to be destroyed (a replacement
+	// point). An attached Upgrade that replaces its host's destruction — Armageddon
+	// Cloak — is queried here.
+	EventCreatureDestroyed
+	// EventAemberAddedToPool is Æmber about to be added to a player's pool from the
+	// common supply (a replacement point). A creature that captures such Æmber before
+	// it lands — Ether Spider, scoped to its opponent's pool — is queried here. It
+	// intercepts the incoming gain, so the pool's owner keeps the Æmber they already
+	// have.
+	EventAemberAddedToPool
 )
 
 // isReaction reports whether the event is a reaction point (fired after) rather

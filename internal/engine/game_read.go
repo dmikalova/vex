@@ -34,6 +34,9 @@ func (g *Game) House(id LocalID) House {
 		if h := g.State.Cards[id].TempHouse; h != HouseNone {
 			return h
 		}
+		if h := g.State.Cards[id].LastingHouse; h != HouseNone {
+			return h
+		}
 	}
 	return g.cat.def(id).House
 }
@@ -291,6 +294,10 @@ func (g *Game) keyCost(target int) int {
 	}
 	return cost
 }
+
+// CurrentKeyCost is the exported view of keyCost: the Æmber a player must spend
+// to forge one key right now.
+func (g *Game) CurrentKeyCost(player int) int { return g.keyCost(player) }
 
 // battlelineCopy returns a fresh slice of a player's battleline ids, safe to hold
 // across state mutations (e.g. while dealing damage to each creature).

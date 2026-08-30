@@ -10,7 +10,7 @@ import (
 // Begone!
 //
 //	House:  Sanctum
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //
 //	Play: Choose one:

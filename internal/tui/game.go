@@ -572,7 +572,7 @@ func (m gameModel) playSlot(sl slot) (gameModel, tea.Cmd) {
 	switch def.Type {
 	case engine.Artifact:
 		fn = func() error { _, err := g.PlayArtifact(player, idx); return err }
-	case engine.Action:
+	case engine.Tactic:
 		fn = func() error { return g.PlayAction(player, idx) }
 	case engine.Upgrade:
 		fn = func() error { _, err := g.PlayUpgrade(player, idx); return err }

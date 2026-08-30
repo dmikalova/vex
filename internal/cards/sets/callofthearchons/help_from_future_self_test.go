@@ -10,7 +10,7 @@ import (
 // Help from Future Self
 //
 //	House:  Logos
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: FIXED
 //	Æmber:  1
 //

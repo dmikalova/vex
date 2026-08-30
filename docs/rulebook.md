@@ -73,11 +73,6 @@ other deals.
 Every card is one of the following four types. A card's type determines where it
 goes when played and how it is used.
 
-### Action
-
-An action is a one-shot card: its effect resolves as you play it, and it
-then goes straight to your discard pile.
-
 ### Artifact
 
 An artifact is a permanent card you play alongside your creatures. It stays
@@ -88,6 +83,12 @@ ability.
 
 A creature is a unit you play into your battleline. Once it is ready, it can
 reap for Æmber, fight an enemy creature, or use an "Action:" ability.
+
+### Tactic
+
+A tactic (KeyForge's "action" card type, renamed to free the word "Action"
+for the ability) is a one-shot card: its effect resolves as you play it, and
+it then goes straight to your discard pile.
 
 ### Upgrade
 
@@ -155,9 +156,12 @@ combatant was destroyed; the destroyed creature is the one referred to as
 
 This ability resolves after its controller forges a key.
 
-### After You Play an Artifact
+### After You Play a Card
 
-This ability resolves after its controller plays an artifact.
+This ability resolves after its controller plays a card — a creature,
+artifact, or action — from hand. Putting a card into play by another effect is
+not "playing" it and does not fire this (that is TriggerAfterCreatureEnters).
+AfterCardPlayed narrows it to a house and/or type.
 
 ### Before Fight
 
@@ -200,11 +204,11 @@ aside.
 
 ### Belong to House
 
-ReadyAndBelongToHouseAfterYouPlayCreature is the effect granted by Brain Stem
-Antenna. The generic after-creature-enters trigger fires for both players and
-every house; this effect narrows it to a creature of House played by the
-controller, then readies the source creature and changes the house it belongs to
-for the rest of that controller's turn.
+BelongToHouse makes each creature its Target selects belong to House for the
+given Duration, overriding the house it counts as for active-house checks (Brain
+Stem Antenna's host counts as Mars for the rest of the turn). The change is
+per-match state, dropped when the creature leaves play; EndOfTurn also drops it at
+end of turn, while UntilThisLeavesPlay keeps it until the creature leaves play.
 
 ### Capture Æmber
 
@@ -302,9 +306,9 @@ X>", where passing is always allowed even when a legal target exists — the
 distinction that keeps Chuff Ape's "you may destroy another friendly creature"
 from ever being forced.
 
-### Move from Play
+### Put from Play
 
-MoveFromPlay takes each card its Target selects out of play and puts it in a
+PutFromPlay takes each card its Target selects out of play and puts it in a
 destination zone — the top of its owner's deck, their hand, or their archives —
 shedding the per-match state the card built up in play (damage, spent armor,
 Æmber on it, upgrades). The destination is required. Moving a card out of play
@@ -312,11 +316,6 @@ this way is how a "Destroyed:" ability can save its own creature: the creature
 leaves for the named zone as it is destroyed, so it never reaches the discard
 pile. When several cards move to the top of the deck at once the controller
 chooses the order they stack.
-
-### Play Top of Deck
-
-Playing from the top of your deck reveals that card first, then turns it into a
-normal card play only when it matches the required house.
 
 ### Ready
 
@@ -339,6 +338,13 @@ into their hand, taken either from a friendly creature in play or from their
 discard pile — Faygin recovering an Urchin. The controller chooses among both
 zones at once; an in-play creature returns to hand (shedding its in-play state)
 and a discard card is recovered.
+
+### Reveal Top of Deck
+
+RevealTopOfDeck reveals the top card of the controller's deck — logging it and
+putting it in context (ctx.It) so a following effect can inspect or play it (Chaos
+Portal plays it when it is of the chosen house). Revealing does not move the card;
+an empty deck reveals nothing.
 
 ### Search for Named Card
 

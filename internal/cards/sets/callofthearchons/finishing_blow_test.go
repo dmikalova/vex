@@ -10,7 +10,7 @@ import (
 // Finishing Blow
 //
 //	House:  Shadows
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //

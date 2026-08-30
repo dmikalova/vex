@@ -7,6 +7,16 @@ Shared test helpers live in the sibling `cardtest/` package — it is a test
 helper (stdlib `httptest`/`iotest` convention), not a set, so it sits outside
 `sets/`.
 
+## Rules reference
+
+When a rules question isn't settled by the vactrol implementation itself or by
+[docs/rulebook.md](../../docs/rulebook.md), the converted KeyForge Master Rulebook
+at [docs/keyforge-master-rulebook.md](../../docs/keyforge-master-rulebook.md) is
+available for reference. Take it with a grain of salt: it is a converted PDF, and
+while much of it matches how vactrol behaves, some nuances have been intentionally
+simplified — so the implementation and this repo's own docs win where they
+disagree.
+
 ## File layout
 
 - One card per file, named `snake_case.go` after the card (e.g. `dust_imp.go`,
@@ -104,7 +114,9 @@ source; capital `Damage` only where dealt; self-reference by name; etc.).
 When adding or reviewing a card, read its generated comment against those rules.
 **Call out any line that violates a rule**, and **auto-apply the fix when it is
 obvious** — because the text is generated from the AST, a wording fix means
-changing the effect rendering, not hand-editing the comment:
+changing the effect rendering, not hand-editing the comment (see
+[../engine/AGENTS.md](../engine/AGENTS.md) for how effects render their own text,
+and prefer reshaping a `Target`/`Count`/`Selector` over adding a new effect):
 
 - If a whole family of cards renders wrong (e.g. a `for each` clause appearing at
   the end instead of the front), fix it once in the effect's `Text()` in

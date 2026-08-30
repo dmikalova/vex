@@ -5,25 +5,31 @@ import "github.com/dmikalova/vactrol/internal/card"
 // A Fair Game
 //
 //	House:  Dis
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Discard the top card of your opponent's deck and reveal their hand. You gain 1 Æmber for each card of the discarded card's house revealed this way. Discard the top card of your deck and reveal your hand. Your opponent gains 1 Æmber for each card of the discarded card's house revealed this way.
+//	Play: Discard the top card of your opponent's deck. Reveal your opponent's hand. For each card of the discarded card's house revealed this way, gain 1 Æmber. Discard the top card of your deck. Reveal your hand. For each card of the discarded card's house revealed this way, your opponent gains 1 Æmber.
 var AFairGame = card.New(
 	"A Fair Game",
 	card.House.Dis,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 53),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-			card.DiscardTopOfDeckAndRevealHandForAember{
-				Player: card.Opponent,
-				Gainer: card.Controller,
-			},
-			card.DiscardTopOfDeckAndRevealHandForAember{
+			card.Sentence{Effect: card.DiscardTopOfDeck{Player: card.Opponent}},
+			card.Sentence{Effect: card.Reveal{Player: card.Opponent}},
+			card.Sentence{Effect: card.GainAember{
 				Player: card.Controller,
-				Gainer: card.Opponent,
-			},
+				Amount: 1,
+				Per:    card.CardsRevealedOfItsHouse{Player: card.Opponent},
+			}},
+			card.Sentence{Effect: card.DiscardTopOfDeck{Player: card.Controller}},
+			card.Sentence{Effect: card.Reveal{Player: card.Controller}},
+			card.Sentence{Effect: card.GainAember{
+				Player: card.Opponent,
+				Amount: 1,
+				Per:    card.CardsRevealedOfItsHouse{Player: card.Controller},
+			}},
 		}}),
 )

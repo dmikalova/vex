@@ -10,7 +10,7 @@ import (
 // Irradiated Aember
 //
 //	House:  Mars
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //

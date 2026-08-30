@@ -21,10 +21,11 @@ func TestSequenceEffect(t *testing.T) {
 
 func TestSequenceContinuesAfterCompleteSentence(t *testing.T) {
 	seq := Sequence{Effects: []Effect{
-		DiscardTopOfDeckAndRevealHandForAember{Player: Opponent, Gainer: Controller},
-		DiscardTopOfDeckAndRevealHandForAember{Player: Controller, Gainer: Opponent},
+		Sentence{Effect: DiscardTopOfDeck{Player: Opponent}},
+		Sentence{Effect: Reveal{Player: Opponent}},
+		Sentence{Effect: GainAember{Player: Controller, Amount: 1, Per: CardsRevealedOfItsHouse{Player: Opponent}}},
 	}}
-	want := "discard the top card of your opponent's deck and reveal their hand. You gain 1 Æmber for each card of the discarded card's house revealed this way. Discard the top card of your deck and reveal your hand. Your opponent gains 1 Æmber for each card of the discarded card's house revealed this way."
+	want := "discard the top card of your opponent's deck. Reveal your opponent's hand. For each card of the discarded card's house revealed this way, gain 1 Æmber."
 	if got := seq.Text(); got != want {
 		t.Errorf("sequence text = %q, want %q", got, want)
 	}

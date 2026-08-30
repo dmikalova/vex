@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Grasping Vines
 //
 //	House:  Untamed
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  1
 //
@@ -13,10 +13,10 @@ import "github.com/dmikalova/vactrol/internal/card"
 var GraspingVines = card.New(
 	"Grasping Vines",
 	card.House.Untamed,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 324),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.MoveArtifactsToHand{Max: 3}),
+		card.Trigger.Play, card.PutArtifactsIntoHand{Max: 3}),
 )

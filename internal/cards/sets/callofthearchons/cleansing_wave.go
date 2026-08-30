@@ -5,14 +5,14 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Cleansing Wave
 //
 //	House:  Sanctum
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Common
 //
 //	Play: Heal 1 damage from each creature, and for each creature healed this way, gain 1 Æmber.
 var CleansingWave = card.New(
 	"Cleansing Wave",
 	card.House.Sanctum,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 215),
 	card.WithAbility(

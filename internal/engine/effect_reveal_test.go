@@ -15,7 +15,7 @@ func TestReveal(t *testing.T) {
 
 	g := NewGame("Alice", "Bob", 1)
 	g.AddToHand(NewCard("Marauder", Mars, Creature, Common, WithPower(1)), 0)
-	g.AddToHand(NewCard("Missile", Mars, Action, Common), 0)
+	g.AddToHand(NewCard("Missile", Mars, Tactic, Common), 0)
 	g.AddToHand(NewCard("Brute", Brobnar, Creature, Common, WithPower(1)), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
@@ -37,8 +37,8 @@ func TestReveal(t *testing.T) {
 
 	// A whole-hand reveal (no house filter) shows every card, of any house.
 	g2 := NewGame("A", "B", 1)
-	g2.AddToHand(NewCard("x", Mars, Action, Common), 1)
-	g2.AddToHand(NewCard("y", Brobnar, Action, Common), 1)
+	g2.AddToHand(NewCard("x", Mars, Tactic, Common), 1)
+	g2.AddToHand(NewCard("y", Brobnar, Tactic, Common), 1)
 	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
 	Reveal{Player: Opponent}.Resolve(ctx2)
 	if ctx2.Revealed != 2 {

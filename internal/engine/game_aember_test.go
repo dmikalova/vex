@@ -5,7 +5,7 @@ import "testing"
 func testEtherSpider() CardDefinition {
 	return NewCard("Ether Spider", Mars, Creature, Uncommon,
 		WithPower(7),
-		WithCaptureOpponentAember())
+		WithReplaces(Instead{Of: EventAemberAddedToPool, Player: Opponent, With: Capture}))
 }
 
 func TestCaptureOpponentAemberReplacement(t *testing.T) {
@@ -21,6 +21,19 @@ func TestCaptureOpponentAemberReplacement(t *testing.T) {
 		}
 		if g.AmberOn(spider) != 2 {
 			t.Errorf("spider Æmber = %d, want 2", g.AmberOn(spider))
+		}
+	})
+
+	t.Run("only the incoming gain is captured; the pool owner keeps existing Æmber", func(t *testing.T) {
+		g := started(t)
+		src := g.AddToBattleline(testCreature("src", 1), 0)
+		g.AddToBattleline(testEtherSpider(), 1)
+		g.State.Aember[0] = 5 // Æmber the player already holds
+
+		GainAember{Player: Controller, Amount: 2}.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+
+		if g.Aember(0) != 5 {
+			t.Errorf("player Æmber = %d, want 5 (existing pool untouched, only the gain captured)", g.Aember(0))
 		}
 	})
 
@@ -42,7 +55,7 @@ func TestCaptureOpponentAemberReplacement(t *testing.T) {
 	t.Run("captures Æmber bonus instead of adding it to the opponent pool", func(t *testing.T) {
 		g := started(t)
 		spider := g.AddToBattleline(testEtherSpider(), 1)
-		g.AddToHand(NewCard("Bonus", Brobnar, Action, Common, WithAemberBonus(2)), 0)
+		g.AddToHand(NewCard("Bonus", Brobnar, Tactic, Common, WithAemberBonus(2)), 0)
 
 		if err := g.PlayAction(0, handIdx(g, 0, "Bonus")); err != nil {
 			t.Fatalf("PlayAction: %v", err)

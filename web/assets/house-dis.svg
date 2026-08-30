@@ -1,8 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
   <title>Dis</title>
   <g fill="none" stroke="#cc4657" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M6 5v3a6 6 0 0 0 12 0V5"/>
-    <path d="M12 3v18"/>
-    <path d="M6 5 4.5 3M18 5l1.5-2M12 3l0-1"/>
+    <path d="M7 9 Q12 5 17 9 L12 20 Z"/>
+    <path d="M8 8 C6 7 4.5 6 4 3"/>
+    <path d="M16 8 C18 7 19.5 6 20 3"/>
+    <path d="M9 12 L11 13"/>
+    <path d="M15 12 L13 13"/>
   </g>
 </svg>

@@ -9,9 +9,9 @@ import (
 // RenderAbility renders a single triggered ability to its printed card line,
 // e.g. "After you forge a key, deal 2 damage to each enemy creature."
 func RenderAbility(a Ability) string {
-	if e, ok := a.Effect.(abilityTextOverride); ok {
-		if text, ok := e.abilityText(a.Trigger); ok {
-			return punctuate(capitalizeFirst(text))
+	if a.Trigger == TriggerAfterCardPlayed {
+		if s, ok := afterYouPlayText(a.Effect); ok {
+			return punctuate(capitalizeFirst(s))
 		}
 	}
 	if a.Trigger == TriggerEntersPlay {
@@ -25,11 +25,22 @@ func RenderAbility(a Ability) string {
 	return prefix + punctuate(body)
 }
 
-// abilityTextOverride is implemented by effects whose printed text includes their
-// own trigger wording because they narrow a broad engine event into a printed
-// trigger.
-type abilityTextOverride interface {
-	abilityText(trigger Trigger) (string, bool)
+// afterYouPlayText folds an "after you play a card" ability whose effect only
+// gates on the played card's shape — a Conditional{ItIs} — into the natural
+// "after you play a <shape>, <then>" wording (Carlo Phantom's "after you play an
+// artifact, steal 1 Æmber"), rather than the literal "after you play a card, if
+// it is a <shape>, ...". Any other effect renders with the broad prefix, so an
+// unconditional or state-gated reaction still reads "After you play a card, ...".
+func afterYouPlayText(e Effect) (string, bool) {
+	cond, ok := e.(Conditional)
+	if !ok {
+		return "", false
+	}
+	it, ok := cond.Cond.(ItIs)
+	if !ok {
+		return "", false
+	}
+	return "after you play " + indefinite(houseTypeNoun(it.House, it.Type)) + ", " + cond.Then.Text(), true
 }
 
 // enterStateWord renders the state an "enters play" ability leaves its creature in,
@@ -91,12 +102,10 @@ func abilityLines(def *CardDefinition) []string {
 	lines := make([]string, 0, len(abs))
 	for i := 0; i < len(abs); i++ {
 		ab := abs[i]
-		if ab.Trigger == TriggerAfterReap && i+1 < len(abs) &&
-			abs[i+1].Trigger == TriggerAfterFight &&
-			abs[i+1].Effect.Text() == ab.Effect.Text() {
+		if i+1 < len(abs) && isFightReapPair(ab, abs[i+1]) {
 			body := capitalizeFirst(abilityTextWithNames(ab.Effect.Text(), self, def.Name))
 			lines = append(lines, "Fight/Reap: "+body+".")
-			i++ // the Fight partner prints as part of this line
+			i++ // the partner prints as part of this line
 			continue
 		}
 		lines = append(lines, abilityTextWithNames(RenderAbility(ab), self, def.Name))
@@ -104,17 +113,43 @@ func abilityLines(def *CardDefinition) []string {
 	return lines
 }
 
+// isFightReapPair reports whether two adjacent abilities are a Fight and a Reap
+// (in either order) that share one effect — the pair FightOrReap and
+// WithFightOrReap add. It prints as a single "Fight/Reap:" line regardless of
+// which of the two is listed first.
+func isFightReapPair(a, b Ability) bool {
+	if a.Effect.Text() != b.Effect.Text() {
+		return false
+	}
+	return (a.Trigger == TriggerAfterReap && b.Trigger == TriggerAfterFight) ||
+		(a.Trigger == TriggerAfterFight && b.Trigger == TriggerAfterReap)
+}
+
 // RenderCardText renders a card's details as labeled, colon-aligned lines
 // (House, Type, Rarity, stats, Æmber, Traits), followed by the card's rules text
 // (keywords, upgrade modifier, and ability lines). Labels are padded by rune
 // width so the multi-byte "Æmber" label still aligns.
 func RenderCardText(def *CardDefinition) string {
+	return renderCardText(def, false)
+}
+
+// RenderCardDetail is RenderCardText with the card's name as an initial
+// "Name:" line, for a detail pane that shows a card on its own.
+func RenderCardDetail(def *CardDefinition) string {
+	return renderCardText(def, true)
+}
+
+func renderCardText(def *CardDefinition, withName bool) string {
 	type field struct{ label, value string }
-	fields := []field{
-		{"House", def.House.String()},
-		{"Type", string(def.Type)},
-		{"Rarity", string(def.Rarity)},
+	var fields []field
+	if withName {
+		fields = append(fields, field{"Name", def.Name})
 	}
+	fields = append(fields,
+		field{"House", def.House.String()},
+		field{"Type", string(def.Type)},
+		field{"Rarity", string(def.Rarity)},
+	)
 	if def.Type == Creature {
 		fields = append(fields, field{"Power", fmt.Sprintf("%d", def.Power)})
 		if def.Armor > 0 {
@@ -185,7 +220,7 @@ func cardRules(def *CardDefinition) []string {
 	if s := keyCostText(def.KeyCostChange); s != "" {
 		rules = append(rules, s)
 	}
-	if s := offHousePlayGrantText(def.OffHousePlayGrant); s != "" {
+	if s := playPermissionText(def.PlayPermission); s != "" {
 		rules = append(rules, s)
 	}
 	if s := captureOpponentAemberText(def); s != "" {
@@ -265,10 +300,11 @@ func upgradeStaticLines(def *CardDefinition) []string {
 // destructionReplacementText renders an Upgrade-granted replacement for its host
 // being destroyed, naming the Upgrade that is destroyed instead.
 func destructionReplacementText(def *CardDefinition) string {
-	if !def.Static.PreventsDestruction {
+	r := def.Static.Replaces
+	if !r.valid() || r.When != EventCreatureDestroyed {
 		return ""
 	}
-	return "If this creature would be destroyed, instead fully heal it and destroy " + def.Name
+	return "If this creature would be destroyed, instead " + strings.ReplaceAll(r.With.Text(), SelfName, def.Name)
 }
 
 // grantedText renders the triggered abilities an Upgrade grants its host,
@@ -279,12 +315,10 @@ func grantedText(m StaticModifier) []string {
 	lines := make([]string, 0, len(m.Granted))
 	for i := 0; i < len(m.Granted); i++ {
 		ab := m.Granted[i]
-		if ab.Trigger == TriggerAfterReap && i+1 < len(m.Granted) &&
-			m.Granted[i+1].Trigger == TriggerAfterFight &&
-			m.Granted[i+1].Effect.Text() == ab.Effect.Text() {
+		if i+1 < len(m.Granted) && isFightReapPair(ab, m.Granted[i+1]) {
 			body := capitalizeFirst(abilityTextWithNames(ab.Effect.Text(), "this creature", "this upgrade"))
 			lines = append(lines, `This creature gains, "Fight/Reap: `+body+`."`)
-			i++ // the Fight partner prints as part of this line
+			i++ // the partner prints as part of this line
 			continue
 		}
 		body := abilityTextWithNames(RenderAbility(ab), "this creature", "this upgrade")
@@ -356,7 +390,7 @@ func restrictionText(r Restrictions) []string {
 		lines = append(lines, fmt.Sprintf("%s cannot play more than %d cards each turn.", who, l.Amount))
 	}
 	if t := r.Toll; t.Amount > 0 {
-		lines = append(lines, fmt.Sprintf("Your opponent must pay you %d Æmber in order to %s.", t.Amount, t.Action.phrase()))
+		lines = append(lines, fmt.Sprintf("Your opponent must give you %d Æmber in order to %s.", t.Amount, t.Action.phrase()))
 	}
 	return lines
 }
@@ -379,23 +413,41 @@ func keyCostText(kc KeyCostChange) string {
 	return fmt.Sprintf("%s keys cost %+d Æmber.", whose, kc.amount)
 }
 
-// offHousePlayGrantText renders a continuous permission to play one card of a
-// house while that house is not active, e.g. Witch of the Wilds.
-func offHousePlayGrantText(house House) string {
-	if house == HouseNone {
+// playPermissionText renders a continuous permission to play cards of a house
+// while that house is not active, e.g. Witch of the Wilds.
+func playPermissionText(p PlayPermission) string {
+	if !p.granted() {
 		return ""
 	}
-	return fmt.Sprintf("During each turn in which %s is not your active house, you may play one %s card.", house, house)
+	noun := p.House.String() + " card"
+	if p.count() != 1 {
+		noun += "s"
+	}
+	return fmt.Sprintf("During each turn in which %s is not your active house, you may play %s %s.", p.House, countWord(p.count()), noun)
 }
 
-// captureOpponentAemberText renders a static replacement that captures opponent
-// gains, e.g. "If Æmber would be added to your opponent's pool, instead Ether
-// Spider captures it."
+// countWord renders a small count as an English word ("one") for the common
+// single-card grant, falling back to the numeral for larger counts.
+func countWord(n int) string {
+	if n == 1 {
+		return "one"
+	}
+	return fmt.Sprintf("%d", n)
+}
+
+// captureOpponentAemberText renders a continuous replacement that captures Æmber
+// added to a pool, e.g. "If Æmber would be added to your opponent's pool, instead
+// Ether Spider captures it."
 func captureOpponentAemberText(def *CardDefinition) string {
-	if !def.CapturesOpponentAember {
+	r := def.Replaces
+	if r.Of != EventAemberAddedToPool || r.With != Capture {
 		return ""
 	}
-	return "If Æmber would be added to your opponent's pool, instead " + def.Name + " captures it."
+	whose := "your"
+	if r.Player == Opponent {
+		whose = "your opponent's"
+	}
+	return "If Æmber would be added to " + whose + " pool, instead " + def.Name + " captures it."
 }
 
 // keywordText renders a card's keywords as a single leading line, e.g.

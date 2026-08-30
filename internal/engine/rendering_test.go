@@ -42,11 +42,49 @@ func TestTriggerPrefixDefault(t *testing.T) {
 	}
 }
 
+func TestAfterYouPlayFolding(t *testing.T) {
+	// A Conditional{ItIs} folds into the natural "after you play a <shape>" wording.
+	folded := RenderAbility(Ability{Trigger: TriggerAfterCardPlayed, Effect: Conditional{Cond: ItIs{Type: Artifact}, Then: StealAember{Amount: 1}}})
+	if want := "After you play an artifact, steal 1 Æmber."; folded != want {
+		t.Errorf("folded = %q, want %q", folded, want)
+	}
+	// A non-Conditional reaction keeps the broad prefix.
+	plain := RenderAbility(Ability{Trigger: TriggerAfterCardPlayed, Effect: GainAember{Player: Controller, Amount: 1}})
+	if want := "After you play a card, gain 1 Æmber."; plain != want {
+		t.Errorf("plain = %q, want %q", plain, want)
+	}
+	// A Conditional on something other than the played card's shape stays literal.
+	stateGated := RenderAbility(Ability{Trigger: TriggerAfterCardPlayed, Effect: Conditional{Cond: OpponentAemberAtLeast{Amount: 1}, Then: GainAember{Player: Controller, Amount: 1}}})
+	if want := "After you play a card, if your opponent has 1 Æmber or more, gain 1 Æmber."; stateGated != want {
+		t.Errorf("state-gated = %q, want %q", stateGated, want)
+	}
+}
+
+func TestIsFightReapPair(t *testing.T) {
+	ready := ReadyIfFirstUse{Target: Target{Kind: TargetThisCreature}}
+	reap := Ability{Trigger: TriggerAfterReap, Effect: ready}
+	fight := Ability{Trigger: TriggerAfterFight, Effect: ready}
+	if !isFightReapPair(reap, fight) {
+		t.Error("Reap+Fight sharing one effect should pair")
+	}
+	if !isFightReapPair(fight, reap) {
+		t.Error("Fight+Reap (reversed order) should also pair")
+	}
+	if isFightReapPair(reap, Ability{Trigger: TriggerAfterReap, Effect: ready}) {
+		t.Error("Reap+Reap is not a Fight/Reap pair")
+	}
+	if isFightReapPair(reap, Ability{Trigger: TriggerAfterFight, Effect: StealAember{Amount: 1}}) {
+		t.Error("differing effects should not pair")
+	}
+}
+
 func TestTargetTextDefault(t *testing.T) {
 	cases := map[TargetKind]string{
 		TargetThisCreature:       SelfName,
 		TargetTriggeringCreature: "it",
+		TargetTheOtherCreature:   "the other creature",
 		TargetEachEnemyCreature:  "each enemy creature",
+		TargetEachFriendlyInPlay: "each friendly card",
 		TargetKind(99):           "a creature",
 	}
 	for kind, want := range cases {
@@ -67,7 +105,7 @@ func TestAllTriggerPrefixes(t *testing.T) {
 		TriggerAfterForgeKey:          "After you forge a key, gain 1 Æmber.",
 		TriggerAfterCreatureEnters:    "After a creature enters play, gain 1 Æmber.",
 		TriggerAfterDestroyedFighting: "After a creature is destroyed fighting {self}, gain 1 Æmber.",
-		TriggerAfterArtifactPlayed:    "After you play an artifact, gain 1 Æmber.",
+		TriggerAfterCardPlayed:        "After you play a card, gain 1 Æmber.",
 	}
 	for tr, want := range cases {
 		got := RenderAbility(Ability{Trigger: tr, Effect: GainAember{Player: Controller, Amount: 1}})
@@ -84,7 +122,7 @@ func TestGeneratedCardText(t *testing.T) {
 	}{
 		{exGiant(), "House:  Brobnar\nType:   Creature\nRarity: Rare\nPower:  5\nTraits: Giant\n\nAfter you forge a key, deal 2 damage to each enemy creature."},
 		{exBruteStrength(), "House:  Brobnar\nType:   Upgrade\nRarity: Uncommon\nÆmber:  1\n\nThis creature gains +5 power."},
-		{exBattleFury(), "House:  Brobnar\nType:   Action\nRarity: Common\nÆmber:  1\n\nPlay: Ready and fight with a friendly creature."},
+		{exBattleFury(), "House:  Brobnar\nType:   Tactic\nRarity: Common\nÆmber:  1\n\nPlay: Ready and fight with a friendly creature."},
 		{exAutocannon(), "House:  Brobnar\nType:   Artifact\nRarity: Rare\nÆmber:  1\nTraits: Weapon\n\nAfter a creature enters play, deal 1 damage to it."},
 		{NewCard("Asp", Shadows, Creature, Uncommon, WithPower(3), WithKeywords(Skirmish, Poison)), "House:  Shadows\nType:   Creature\nRarity: Uncommon\nPower:  3\n\nSkirmish. Poison."},
 		{NewCard("Anaphiel", Sanctum, Creature, Common, WithPower(6), WithArmor(1), WithTraits("Knight"), WithKeywords(Taunt)), "House:  Sanctum\nType:   Creature\nRarity: Common\nPower:  6\nArmor:  1\nTraits: Knight\n\nTaunt."},
@@ -93,7 +131,7 @@ func TestGeneratedCardText(t *testing.T) {
 		{NewCard("Grub", Untamed, Creature, Rare, WithPower(2), WithHazardous(5)), "House:  Untamed\nType:   Creature\nRarity: Rare\nPower:  2\n\nHazardous 5."},
 		{NewCard("Valdr", Brobnar, Creature, Common, WithPower(6), WithTraits("Giant"), WithAttackDamage(AttackDamage{Amount: 2, FlankOnly: true})), "House:  Brobnar\nType:   Creature\nRarity: Common\nPower:  6\nTraits: Giant\n\nValdr deals +2 Damage while attacking an enemy creature on the flank."},
 		{NewCard("Spider", Mars, Creature, Common, WithPower(7), WithAttackDamage(AttackDamage{Fixed: true, Amount: 0})), "House:  Mars\nType:   Creature\nRarity: Common\nPower:  7\n\nSpider deals no damage when fighting."},
-		{NewCard("Ether Spider", Mars, Creature, Uncommon, WithPower(7), WithAttackDamage(AttackDamage{Fixed: true, Amount: 0}), WithCaptureOpponentAember()), "House:  Mars\nType:   Creature\nRarity: Uncommon\nPower:  7\n\nEther Spider deals no damage when fighting.\nIf Æmber would be added to your opponent's pool, instead Ether Spider captures it."},
+		{NewCard("Ether Spider", Mars, Creature, Uncommon, WithPower(7), WithAttackDamage(AttackDamage{Fixed: true, Amount: 0}), WithReplaces(Instead{Of: EventAemberAddedToPool, Player: Opponent, With: Capture})), "House:  Mars\nType:   Creature\nRarity: Uncommon\nPower:  7\n\nEther Spider deals no damage when fighting.\nIf Æmber would be added to your opponent's pool, instead Ether Spider captures it."},
 		{NewCard("Bruiser", Brobnar, Creature, Common, WithPower(8), WithAttackDamage(AttackDamage{Fixed: true, Amount: 5})), "House:  Brobnar\nType:   Creature\nRarity: Common\nPower:  8\n\nBruiser deals 5 damage when fighting."},
 		{NewCard("Basher", Brobnar, Creature, Common, WithPower(4), WithAttackDamage(AttackDamage{Amount: 2})), "House:  Brobnar\nType:   Creature\nRarity: Common\nPower:  4\n\nBasher deals +2 Damage when fighting."},
 		{NewCard("Runner", Shadows, Upgrade, Uncommon, WithStatic(StaticModifier{Granted: []Ability{{Trigger: TriggerAfterReap, Effect: StealAember{Amount: 1}}}})), "House:  Shadows\nType:   Upgrade\nRarity: Uncommon\n\nThis creature gains, \"Reap: Steal 1 Æmber.\""},
@@ -101,13 +139,14 @@ func TestGeneratedCardText(t *testing.T) {
 		{NewCard("Boots", Logos, Upgrade, Uncommon, WithStatic(StaticModifier{Keywords: []Keyword{Versatile}}), WithAbility(TriggerAfterPlay, Sequence{Effects: []Effect{Stun{Target: Target{Kind: TargetThisCreature}}, Exhaust{Target: Target{Kind: TargetThisCreature}}}})), "House:  Logos\nType:   Upgrade\nRarity: Uncommon\n\nThis creature gains versatile.\nPlay: Stun and exhaust this creature."},
 		{NewCard("Jammer", Mars, Creature, Common, WithPower(4), WithArmor(1), WithTraits("Robot"), WithKeyCost(NewKeyCostChange(Opponent, 1)), WithAbility(TriggerAfterReap, CaptureAember{Amount: 1, Target: Target{Kind: TargetThisCreature}, Source: Opponent}), WithAbility(TriggerAfterFight, CaptureAember{Amount: 1, Target: Target{Kind: TargetThisCreature}, Source: Opponent})), "House:  Mars\nType:   Creature\nRarity: Common\nPower:  4\nArmor:  1\nTraits: Robot\n\nYour opponent's keys cost +1 Æmber.\nFight/Reap: Jammer captures 1 Æmber from your opponent."},
 		{NewCard("Pack", Mars, Upgrade, Uncommon, WithAemberBonus(1), WithStatic(StaticModifier{KeyCostChange: NewKeyCostChange(Opponent, 2)})), "House:  Mars\nType:   Upgrade\nRarity: Uncommon\nÆmber:  1\n\nThis creature gains, \"Your opponent's keys cost +2 Æmber.\""},
-		{NewCard("Shield", Sanctum, Upgrade, Rare, WithStatic(StaticModifier{PreventsDestruction: true})), "House:  Sanctum\nType:   Upgrade\nRarity: Rare\n\nThis creature gains, \"If this creature would be destroyed, instead fully heal it and destroy Shield.\""},
-		{NewCard("Cloak", Sanctum, Upgrade, Rare, WithStatic(StaticModifier{HazardousBonus: 2, PreventsDestruction: true})), "House:  Sanctum\nType:   Upgrade\nRarity: Rare\n\nThis creature gains +2 hazardous and, \"If this creature would be destroyed, instead fully heal it and destroy Cloak.\""},
-		{NewCard("Antenna", Mars, Upgrade, Rare, WithStatic(StaticModifier{Granted: []Ability{{Trigger: TriggerAfterCreatureEnters, Effect: ReadyAndBelongToHouseAfterYouPlayCreature{House: Mars}}}})), "House:  Mars\nType:   Upgrade\nRarity: Rare\n\nThis creature gains, \"After you play a Mars creature, ready this creature and for the remainder of the turn it belongs to house Mars.\""},
+		{NewCard("Shield", Sanctum, Upgrade, Rare, WithStatic(StaticModifier{Replaces: Replace{When: EventCreatureDestroyed, With: Sequence{Effects: []Effect{Heal{Fully: true, Target: Target{Kind: TargetTriggeringCreature}}, Destroy{Target: Target{Kind: TargetThisCreature}}}}}})), "House:  Sanctum\nType:   Upgrade\nRarity: Rare\n\nThis creature gains, \"If this creature would be destroyed, instead fully heal it, and destroy Shield.\""},
+		{NewCard("Cloak", Sanctum, Upgrade, Rare, WithStatic(StaticModifier{HazardousBonus: 2, Replaces: Replace{When: EventCreatureDestroyed, With: Sequence{Effects: []Effect{Heal{Fully: true, Target: Target{Kind: TargetTriggeringCreature}}, Destroy{Target: Target{Kind: TargetThisCreature}}}}}})), "House:  Sanctum\nType:   Upgrade\nRarity: Rare\n\nThis creature gains +2 hazardous and, \"If this creature would be destroyed, instead fully heal it, and destroy Cloak.\""},
+		{NewCard("Antenna", Mars, Upgrade, Rare, WithStatic(StaticModifier{Granted: []Ability{{Trigger: TriggerAfterCardPlayed, Effect: Conditional{Cond: ItIs{House: Mars, Type: Creature}, Then: Sequence{Effects: []Effect{Ready{Target: Target{Kind: TargetThisCreature}}, BelongToHouse{Target: Target{Kind: TargetThisCreature}, House: Mars, Duration: EndOfTurn}}}}}}})), "House:  Mars\nType:   Upgrade\nRarity: Rare\n\nThis creature gains, \"After you play a Mars creature, ready this creature, and for the remainder of the turn this creature belongs to house Mars.\""},
 		{NewCard("SelfTax", Mars, Creature, Common, WithPower(3), WithKeyCost(NewKeyCostChange(Controller, 1))), "House:  Mars\nType:   Creature\nRarity: Common\nPower:  3\n\nYour keys cost +1 Æmber."},
 		{NewCard("Tax", Mars, Creature, Common, WithPower(3), WithKeyCost(NewKeyCostChange(EachPlayer, 1))), "House:  Mars\nType:   Creature\nRarity: Common\nPower:  3\n\nEach player's keys cost +1 Æmber."},
 		{NewCard("Imp", Dis, Creature, Common, WithPower(2), WithTraits("Imp"), WithRestrictions(Restrictions{PlayCardLimit: PlayCardLimit{Player: Opponent, Amount: 2}})), "House:  Dis\nType:   Creature\nRarity: Common\nPower:  2\nTraits: Imp\n\nYour opponent cannot play more than 2 cards each turn."},
-		{NewCard("Witch", Untamed, Creature, Rare, WithPower(4), WithOffHousePlayGrant(Untamed)), "House:  Untamed\nType:   Creature\nRarity: Rare\nPower:  4\n\nDuring each turn in which Untamed is not your active house, you may play one Untamed card."},
+		{NewCard("Witch", Untamed, Creature, Rare, WithPower(4), WithPlayPermission(PlayPermission{House: Untamed, Count: 1})), "House:  Untamed\nType:   Creature\nRarity: Rare\nPower:  4\n\nDuring each turn in which Untamed is not your active house, you may play one Untamed card."},
+		{NewCard("Witch2", Untamed, Creature, Rare, WithPower(4), WithPlayPermission(PlayPermission{House: Untamed, Count: 2})), "House:  Untamed\nType:   Creature\nRarity: Rare\nPower:  4\n\nDuring each turn in which Untamed is not your active house, you may play 2 Untamed cards."},
 		{NewCard("Twig", Untamed, Creature, Common, WithPower(7), WithTraits("Beast"), WithFightRestriction(Target{Kind: TargetEachCreature}.Stunned())), "House:  Untamed\nType:   Creature\nRarity: Common\nPower:  7\nTraits: Beast\n\nTwig can only fight stunned creatures."},
 		{NewCard("Ritual", Dis, Artifact, Rare, WithTraits("Power"), WithConstantAbility(ConstantAbility{Target: Target{Kind: TargetEachCreature}, Granted: []Ability{{Trigger: TriggerDestroyed, Effect: PurgeCreature{Target: Target{Kind: TargetThisCreature}}}}})), "House:  Dis\nType:   Artifact\nRarity: Rare\nTraits: Power\n\nEach creature gains, \"Destroyed: Purge this creature.\""},
 	}
@@ -115,6 +154,14 @@ func TestGeneratedCardText(t *testing.T) {
 		if got := RenderCardText(&tc.def); got != tc.want {
 			t.Errorf("%s text mismatch:\n got:\n%s\nwant:\n%s", tc.def.Name, got, tc.want)
 		}
+	}
+}
+
+func TestRenderCardDetail(t *testing.T) {
+	def := NewCard("Dr. Escotera", Logos, Creature, Rare, WithPower(4))
+	want := "Name:   Dr. Escotera\nHouse:  Logos\nType:   Creature\nRarity: Rare\nPower:  4"
+	if got := RenderCardDetail(&def); got != want {
+		t.Errorf("detail mismatch:\n got:\n%s\nwant:\n%s", got, want)
 	}
 }
 

@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Upgrade
 //	Rarity: Rare
 //
-//	This creature gains, "After you play a Mars creature, ready this creature and for the remainder of the turn it belongs to house Mars."
+//	This creature gains, "After you play a Mars creature, ready this creature, and for the remainder of the turn this creature belongs to house Mars."
 var BrainStemAntenna = card.New(
 	"Brain Stem Antenna",
 	card.House.Mars,
@@ -17,7 +17,19 @@ var BrainStemAntenna = card.New(
 	card.Provenance(card.CotA, 209),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{
-			{Trigger: card.Trigger.AfterCreatureEnters, Effect: card.ReadyAndBelongToHouseAfterYouPlayCreature{House: card.House.Mars}},
+			{Trigger: card.Trigger.AfterCardPlayed, Effect: card.Conditional{
+				Cond: card.ItIs{House: card.House.Mars, Type: card.Type.Creature},
+				Then: card.Sequence{
+					Effects: []card.Effect{
+						card.Ready{Target: card.Target.This},
+						card.BelongToHouse{
+							Target:   card.Target.This,
+							House:    card.House.Mars,
+							Duration: card.Duration.EndOfTurn,
+						},
+					},
+				},
+			}},
 		},
 	}),
 )

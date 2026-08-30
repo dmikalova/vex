@@ -10,7 +10,7 @@ import (
 // Burn the Stockpile
 //
 //	House:  Brobnar
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Uncommon
 //
 //	Play: If your opponent has 7 Æmber or more, your opponent loses 4 Æmber.

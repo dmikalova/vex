@@ -99,7 +99,7 @@ func Artifact(opts ...Option) engine.CardDefinition {
 // Action builds a plain vanilla action (no abilities). It does nothing when
 // played beyond leaving the hand, useful as filler or an Æmber-pip source.
 func Action(opts ...Option) engine.CardDefinition {
-	return build("Action", engine.Action, 0, opts)
+	return build("Action", engine.Tactic, 0, opts)
 }
 
 // Upgrade builds a plain vanilla upgrade. Use PowerBonus/ArmorBonus to give it a

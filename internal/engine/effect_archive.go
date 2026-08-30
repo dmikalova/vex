@@ -83,7 +83,7 @@ func (e ArchiveFromPlay) Text() string {
 // Resolve archives each selected in-play card.
 func (e ArchiveFromPlay) Resolve(ctx *EffectContext) {
 	for _, id := range e.Target.Select(ctx) {
-		ctx.Resolver.MoveToArchives(id)
+		ctx.Resolver.PutIntoArchives(id)
 	}
 }
 

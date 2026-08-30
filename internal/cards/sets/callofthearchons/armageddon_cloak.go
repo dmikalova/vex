@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains +2 hazardous and, "If this creature would be destroyed, instead fully heal it and destroy Armageddon Cloak."
+//	This creature gains +2 hazardous and, "If this creature would be destroyed, instead fully heal it, and destroy Armageddon Cloak."
 var ArmageddonCloak = card.New(
 	"Armageddon Cloak",
 	card.House.Sanctum,
@@ -18,7 +18,15 @@ var ArmageddonCloak = card.New(
 	card.Provenance(card.CotA, 263),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
-		HazardousBonus:      2,
-		PreventsDestruction: true,
+		HazardousBonus: 2,
+		Replaces: card.Replace{
+			When: card.Event.Destroyed,
+			With: card.Sequence{
+				Effects: []card.Effect{
+					card.Heal{Fully: true, Target: card.Target.Triggering},
+					card.Destroy{Target: card.Target.This},
+				},
+			},
+		},
 	}),
 )

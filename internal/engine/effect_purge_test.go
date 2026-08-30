@@ -62,7 +62,7 @@ func TestPurge(t *testing.T) {
 	// Type filter: a creature is purged and a non-creature is left; reports success.
 	g4 := NewGame("A", "B", 1)
 	crea := g4.Register(testCreature("crea", 3), 1)
-	act := g4.Register(NewCard("act", Dis, Action, Common), 1)
+	act := g4.Register(NewCard("act", Dis, Tactic, Common), 1)
 	g4.State.Discard[1].add(act)
 	g4.State.Discard[1].add(crea)
 	ctx4 := &EffectContext{Resolver: g4, Controller: 0}
@@ -78,7 +78,7 @@ func TestPurge(t *testing.T) {
 
 	// No matching card: nothing is purged and it reports failure.
 	g5 := NewGame("A", "B", 1)
-	g5.State.Discard[0].add(g5.Register(NewCard("act2", Dis, Action, Common), 0))
+	g5.State.Discard[0].add(g5.Register(NewCard("act2", Dis, Tactic, Common), 0))
 	ctx5 := &EffectContext{Resolver: g5, Controller: 0}
 	if (Purge{Zone: Discard, Type: Creature}).resolveGate(ctx5) {
 		t.Error("no creature to purge should report failure")

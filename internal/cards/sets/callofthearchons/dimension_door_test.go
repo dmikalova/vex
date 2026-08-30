@@ -10,7 +10,7 @@ import (
 // Dimension Door
 //
 //	House:  Logos
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Uncommon
 //
 //	Play: For the remainder of the turn, instead of gaining Æmber from reaping, steal the same amount.

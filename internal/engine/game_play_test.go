@@ -89,7 +89,7 @@ func TestCardsPlayedByHouseThisTurn(t *testing.T) {
 	g.BeginTurn(0)
 	creature := g.AddToHand(NewCard("brobnar creature", Brobnar, Creature, Common, WithPower(3)), 0)
 	artifact := g.AddToHand(NewCard("sanctum artifact", Sanctum, Artifact, Common), 0)
-	action := g.AddToHand(NewCard("sanctum action", Sanctum, Action, Common), 0)
+	action := g.AddToHand(NewCard("sanctum action", Sanctum, Tactic, Common), 0)
 	upgrade := g.AddToHand(NewCard("mars upgrade", Mars, Upgrade, Common), 0)
 
 	if _, err := g.PlayCreature(0, handIdxByID(g, 0, creature), false); err != nil {
@@ -131,7 +131,7 @@ func TestCardsPlayedByHouseThisTurn(t *testing.T) {
 }
 
 func TestOffHousePlayGrant(t *testing.T) {
-	witch := NewCard("Witch", Untamed, Creature, Rare, WithPower(4), WithOffHousePlayGrant(Untamed))
+	witch := NewCard("Witch", Untamed, Creature, Rare, WithPower(4), WithPlayPermission(PlayPermission{House: Untamed, Count: 1}))
 
 	t.Run("allows one off-house play and consumes it", func(t *testing.T) {
 		g := started(t)
@@ -142,13 +142,13 @@ func TestOffHousePlayGrant(t *testing.T) {
 		if err := g.CanPlay(0, first); err != nil {
 			t.Fatalf("CanPlay first off-house Untamed = %v, want nil", err)
 		}
-		if got := g.State.OffHousePlaysUsedThisTurn[0][Untamed]; got != 0 {
+		if got := g.State.PlayPermissionsUsedThisTurn[0][Untamed]; got != 0 {
 			t.Fatalf("CanPlay consumed off-house grant: used = %d, want 0", got)
 		}
 		if _, err := g.PlayCreature(0, handIdxByID(g, 0, first), false); err != nil {
 			t.Fatalf("first off-house play: %v", err)
 		}
-		if got := g.State.OffHousePlaysUsedThisTurn[0][Untamed]; got != 1 {
+		if got := g.State.PlayPermissionsUsedThisTurn[0][Untamed]; got != 1 {
 			t.Fatalf("off-house plays used = %d, want 1", got)
 		}
 		if err := g.CanPlay(0, second); err != ErrWrongHouse {
@@ -184,7 +184,7 @@ func TestOffHousePlayGrant(t *testing.T) {
 		if _, err := g.PlayCreature(0, handIdxByID(g, 0, second), false); err != nil {
 			t.Fatalf("second active-house play: %v", err)
 		}
-		if got := g.State.OffHousePlaysUsedThisTurn[0][Untamed]; got != 0 {
+		if got := g.State.PlayPermissionsUsedThisTurn[0][Untamed]; got != 0 {
 			t.Fatalf("active-house plays used off-house grant: got %d, want 0", got)
 		}
 	})

@@ -5,8 +5,12 @@ import (
 	"testing"
 )
 
-func TestPlayTopOfDeckOfChosenHouse(t *testing.T) {
-	if got := (PlayTopOfDeckOfChosenHouse{}).Text(); got != "reveal the top card of your deck. If it is of the chosen house, play it" {
+func TestChaosPortalComposition(t *testing.T) {
+	effect := ChooseHouseThen{Then: Sequence{Effects: []Effect{
+		Sentence{Effect: RevealTopOfDeck{}},
+		Conditional{Cond: ItIsOfHouse{House: TheChosenHouse}, Then: PlayRevealedCard{}},
+	}}}
+	if got := effect.Text(); got != "choose a house - reveal the top card of your deck. If it is of the chosen house, play it" {
 		t.Errorf("text = %q", got)
 	}
 
@@ -14,7 +18,7 @@ func TestPlayTopOfDeckOfChosenHouse(t *testing.T) {
 	top := g.AddToDeck(NewCard("Portal Scout", Logos, Creature, Common, WithPower(2)), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0, ChosenHouse: Logos}
 
-	(PlayTopOfDeckOfChosenHouse{}).Resolve(ctx)
+	Sequence{Effects: []Effect{RevealTopOfDeck{}, Conditional{Cond: ItIsOfHouse{House: TheChosenHouse}, Then: PlayRevealedCard{}}}}.Resolve(ctx)
 
 	if g.State.Deck[0].Count != 0 {
 		t.Errorf("deck count = %d, want 0", g.State.Deck[0].Count)
@@ -34,10 +38,11 @@ func TestPlayTopOfDeckOfChosenHouse(t *testing.T) {
 	}
 }
 
-func TestPlayTopOfDeckOfChosenHouseMissesAndGuards(t *testing.T) {
+func TestChaosPortalMissesAndGuards(t *testing.T) {
 	g := started(t)
-	top := g.AddToDeck(NewCard("Wrong House", Dis, Action, Common), 0)
-	(PlayTopOfDeckOfChosenHouse{}).Resolve(&EffectContext{Resolver: g, Controller: 0, ChosenHouse: Logos})
+	top := g.AddToDeck(NewCard("Wrong House", Dis, Tactic, Common), 0)
+	reveal := Sequence{Effects: []Effect{RevealTopOfDeck{}, Conditional{Cond: ItIsOfHouse{House: TheChosenHouse}, Then: PlayRevealedCard{}}}}
+	reveal.Resolve(&EffectContext{Resolver: g, Controller: 0, ChosenHouse: Logos})
 	if g.State.Deck[0].Count != 1 || g.State.Deck[0].IDs[0] != top {
 		t.Errorf("non-matching top card moved: deck = %v, want [%d]", g.State.Deck[0].slice(), top)
 	}
@@ -45,15 +50,10 @@ func TestPlayTopOfDeckOfChosenHouseMissesAndGuards(t *testing.T) {
 		t.Errorf("non-matching card should not count as played, got %d", g.State.CardsPlayedThisTurn[0])
 	}
 
-	before := len(g.Log)
-	(PlayTopOfDeckOfChosenHouse{}).Resolve(&EffectContext{Resolver: g, Controller: 0})
-	if len(g.Log) != before {
-		t.Error("without a chosen house, the top card should not be revealed")
-	}
-
+	// An empty deck reveals nothing and plays nothing.
 	g2 := started(t)
-	before = len(g2.Log)
-	g2.PlayTopOfDeckIfHouse(0, Logos)
+	before := len(g2.Log)
+	reveal.Resolve(&EffectContext{Resolver: g2, Controller: 0, ChosenHouse: Logos})
 	if len(g2.Log) != before {
 		t.Error("an empty deck should not reveal anything")
 	}
@@ -131,22 +131,26 @@ func TestPlayTopOfDeckLeavesUnplayableCardOnTop(t *testing.T) {
 	})
 }
 
-func TestDiscardTopOfEachDeckAndDestroyByHouse(t *testing.T) {
+func TestBonkersComposition(t *testing.T) {
 	g := started(t)
 	source := g.AddArtifact(NewCard("Bonkers Killing Machine", Logos, Artifact, Rare), 0)
-	p1Top := g.AddToDeck(NewCard("Mars Top", Mars, Action, Common), 0)
-	p2Top := g.AddToDeck(NewCard("Dis Top", Dis, Action, Common), 1)
+	p1Top := g.AddToDeck(NewCard("Mars Top", Mars, Tactic, Common), 0)
+	p2Top := g.AddToDeck(NewCard("Dis Top", Dis, Tactic, Common), 1)
 	marsCreature := g.AddToBattleline(NewCard("Mars Creature", Mars, Creature, Common, WithPower(4)), 0)
 	disArtifact := g.AddArtifact(NewCard("Dis Artifact", Dis, Artifact, Common), 1)
 	bystander := g.AddToBattleline(testCreature("bystander", 4), 1)
 	ctx := &EffectContext{Resolver: g, Source: source, Controller: 0}
 
-	e := DiscardTopOfEachDeckAndDestroyByHouse{}
-	if got := e.Text(); got != "discard the top card of each player's deck. For each card discarded this way, destroy a creature or artifact of that card's house. If fewer than 2 cards are destroyed this way, destroy {self}" {
+	effect := Sequence{Effects: []Effect{
+		Sentence{Effect: DiscardTopOfEachDeck{}},
+		Sentence{Effect: DestroyOfEachDiscardedHouse{}},
+		Conditional{Cond: CardsDestroyedFewerThan{Amount: 2}, Then: Destroy{Target: Target{Kind: TargetThisCreature}}},
+	}}
+	if got := effect.Text(); got != "discard the top card of each player's deck. For each card discarded this way, destroy a creature or artifact of that card's house. If fewer than 2 cards are destroyed this way, destroy {self}" {
 		t.Errorf("text = %q", got)
 	}
 
-	e.Resolve(ctx)
+	effect.Resolve(ctx)
 
 	if discard := g.Discard(0); len(discard) != 2 || discard[0] != p1Top || discard[1] != marsCreature {
 		t.Errorf("controller discard = %v, want top card then Mars creature", discard)
@@ -162,14 +166,18 @@ func TestDiscardTopOfEachDeckAndDestroyByHouse(t *testing.T) {
 	}
 }
 
-func TestDiscardTopOfEachDeckAndDestroyByHouseSelfDestructs(t *testing.T) {
+func TestBonkersCompositionSelfDestructs(t *testing.T) {
 	g := started(t)
 	source := g.AddArtifact(NewCard("Bonkers Killing Machine", Logos, Artifact, Rare), 0)
-	top := g.AddToDeck(NewCard("Mars Top", Mars, Action, Common), 0)
+	top := g.AddToDeck(NewCard("Mars Top", Mars, Tactic, Common), 0)
 	bystander := g.AddToBattleline(testCreature("bystander", 4), 1)
 	ctx := &EffectContext{Resolver: g, Source: source, Controller: 0}
 
-	DiscardTopOfEachDeckAndDestroyByHouse{}.Resolve(ctx)
+	Sequence{Effects: []Effect{
+		Sentence{Effect: DiscardTopOfEachDeck{}},
+		Sentence{Effect: DestroyOfEachDiscardedHouse{}},
+		Conditional{Cond: CardsDestroyedFewerThan{Amount: 2}, Then: Destroy{Target: Target{Kind: TargetThisCreature}}},
+	}}.Resolve(ctx)
 
 	if discard := g.Discard(0); len(discard) != 2 || discard[0] != top || discard[1] != source {
 		t.Errorf("controller discard = %v, want discarded top card then source", discard)
@@ -179,14 +187,17 @@ func TestDiscardTopOfEachDeckAndDestroyByHouseSelfDestructs(t *testing.T) {
 	}
 }
 
-func TestDiscardTopOfDeckAndCancelFightIfActiveHouse(t *testing.T) {
+func TestEvasionSigilComposition(t *testing.T) {
 	g := started(t) // Brobnar is active
 	src := g.AddToBattleline(testCreature("attacker", 5), 0)
-	top := g.AddToDeck(NewCard("Brobnar Top", Brobnar, Action, Common), 0)
+	top := g.AddToDeck(NewCard("Brobnar Top", Brobnar, Tactic, Common), 0)
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
-	e := DiscardTopOfDeckAndCancelFightIfActiveHouse{}
-	if got := e.Text(); got != "discard the top card of its controller's deck. If the discarded card is of the active house, the fight does not occur" {
+	e := Sequence{Effects: []Effect{
+		Sentence{Effect: DiscardTopOfDeck{}},
+		Conditional{Cond: ItIsOfHouse{House: TheActiveHouse}, Then: CancelFight{}},
+	}}
+	if got := e.Text(); got != "discard the top card of its controller's deck. If it is of the active house, the fight does not occur" {
 		t.Errorf("text = %q", got)
 	}
 
@@ -200,18 +211,31 @@ func TestDiscardTopOfDeckAndCancelFightIfActiveHouse(t *testing.T) {
 	}
 }
 
-func TestDiscardTopOfDeckAndCancelFightIfActiveHouseMiss(t *testing.T) {
+func TestEvasionSigilCompositionMiss(t *testing.T) {
 	g := started(t) // Brobnar is active
 	src := g.AddToBattleline(testCreature("attacker", 5), 0)
-	top := g.AddToDeck(NewCard("Mars Top", Mars, Action, Common), 0)
+	top := g.AddToDeck(NewCard("Mars Top", Mars, Tactic, Common), 0)
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
-	DiscardTopOfDeckAndCancelFightIfActiveHouse{}.Resolve(ctx)
+	Sequence{Effects: []Effect{
+		DiscardTopOfDeck{},
+		Conditional{Cond: ItIsOfHouse{House: TheActiveHouse}, Then: CancelFight{}},
+	}}.Resolve(ctx)
 
 	if discard := g.Discard(0); len(discard) != 1 || discard[0] != top {
 		t.Errorf("discard = %v, want top card %d", discard, top)
 	}
 	if g.State.FightCancelled {
 		t.Error("off-house discard should not cancel the current fight")
+	}
+	// An empty deck puts no card in context, so the fight is not cancelled.
+	g2 := started(t)
+	src2 := g2.AddToBattleline(testCreature("attacker", 5), 0)
+	Sequence{Effects: []Effect{
+		DiscardTopOfDeck{},
+		Conditional{Cond: ItIsOfHouse{House: TheActiveHouse}, Then: CancelFight{}},
+	}}.Resolve(&EffectContext{Resolver: g2, Source: src2, Controller: 0})
+	if g2.State.FightCancelled {
+		t.Error("an empty deck should not cancel the fight")
 	}
 }

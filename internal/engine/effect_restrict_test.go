@@ -114,7 +114,7 @@ func TestCannotPlayCreatures(t *testing.T) {
 		t.Errorf("PlayCreature = %v, want ErrCannotPlayCreature", err)
 	}
 	// Non-creature plays are unaffected.
-	g.AddToHand(NewCard("act", Brobnar, Action, Common), 0)
+	g.AddToHand(NewCard("act", Brobnar, Tactic, Common), 0)
 	if err := g.PlayAction(0, handIdx(g, 0, "act")); err != nil {
 		t.Errorf("actions should still be playable: %v", err)
 	}
@@ -123,11 +123,11 @@ func TestCannotPlayCreatures(t *testing.T) {
 func TestToll(t *testing.T) {
 	// Text renders for both actions a toll can charge for.
 	if got := restrictionText(Restrictions{Toll: Toll{Action: TollPlayArtifact, Amount: 1}}); len(got) != 1 ||
-		got[0] != "Your opponent must pay you 1 Æmber in order to play an artifact." {
+		got[0] != "Your opponent must give you 1 Æmber in order to play an artifact." {
 		t.Errorf("play-toll text = %v", got)
 	}
 	if got := restrictionText(Restrictions{Toll: Toll{Action: TollUseArtifact, Amount: 2}}); len(got) != 1 ||
-		got[0] != "Your opponent must pay you 2 Æmber in order to use an artifact." {
+		got[0] != "Your opponent must give you 2 Æmber in order to use an artifact." {
 		t.Errorf("use-toll text = %v", got)
 	}
 

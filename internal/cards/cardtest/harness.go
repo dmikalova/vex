@@ -132,7 +132,7 @@ func (p *Player) Play(card any) {
 		p.h.run("Play "+name, func() error { _, err := p.h.g.PlayCreature(p.index, idx, false); return err })
 	case engine.Artifact:
 		p.h.run("Play "+name, func() error { _, err := p.h.g.PlayArtifact(p.index, idx); return err })
-	case engine.Action:
+	case engine.Tactic:
 		p.h.run("Play "+name, func() error { return p.h.g.PlayAction(p.index, idx) })
 	case engine.Upgrade:
 		p.h.run("Play "+name, func() error { _, err := p.h.g.PlayUpgrade(p.index, idx); return err })

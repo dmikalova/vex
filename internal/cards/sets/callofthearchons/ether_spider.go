@@ -24,5 +24,9 @@ var EtherSpider = card.New(
 		Amount: 0,
 		Fixed:  true,
 	}),
-	card.WithCaptureOpponentAember(),
+	card.WithReplaces(card.Instead{
+		Of:     card.Event.AemberAddedToPool,
+		Player: card.Opponent,
+		With:   card.Capture,
+	}),
 )

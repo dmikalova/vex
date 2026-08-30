@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Charge!
 //
 //	House:  Sanctum
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //
@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var Charge = card.New(
 	"Charge!",
 	card.House.Sanctum,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 214),
 	card.WithAemberBonus(1),

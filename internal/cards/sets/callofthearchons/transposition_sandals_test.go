@@ -16,7 +16,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains, "Action: Swap this creature with another friendly creature in your battleline. Use that other creature this turn."
+//	This creature gains, "Action: Swap this creature with another friendly creature in your battleline. Use the other creature."
 func TestTranspositionSandals(t *testing.T) {
 	t.Run("swaps the host with another friendly creature and uses that creature", func(t *testing.T) {
 		var left, host, other, right ct.Card

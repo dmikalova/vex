@@ -68,36 +68,76 @@ func (g *Game) discardUpgrades(id LocalID) {
 	core := &g.State.Cards[id]
 	for i := 0; i < int(core.UpgradeCount); i++ {
 		up := core.Upgrades[i]
-		g.revertControlFromUpgrade(id, up)
+		g.releaseControlHeldBy(up)
 		g.State.Discard[g.owner(up)].add(up)
 	}
 }
 
-// preventDestructionWithUpgrade applies the first attached Upgrade that replaces
-// its host's destruction: the host stays in play, is fully healed, and that single
-// Upgrade is destroyed instead. It reports whether the destruction was replaced.
-func (g *Game) preventDestructionWithUpgrade(id LocalID) bool {
-	i, up, ok := g.creatureHasDestructionShield(id)
+// applyDestructionReplacement runs the first attached Upgrade that replaces its
+// host's destruction (Armageddon Cloak). The Upgrade's replacement effect resolves
+// with the host as "it" and the Upgrade as its source, so a Sequence of "fully heal
+// it" and "destroy this Upgrade" saves the host and consumes the Upgrade. It reports
+// whether the destruction was replaced.
+func (g *Game) applyDestructionReplacement(controller int, id LocalID) bool {
+	up, r, ok := g.destructionReplacement(id)
 	if !ok {
 		return false
 	}
-	g.State.Cards[id].Damage = 0
-	g.discardAttachedUpgradeAt(id, i)
-	g.logf("%s would be destroyed, so %s fully heals it and is destroyed", g.Name(id), g.Name(up))
+	g.logf("%s would be destroyed, so %s replaces its destruction", g.Name(id), g.Name(up))
+	r.With.Resolve(&EffectContext{
+		Resolver:   g,
+		Source:     up,
+		It:         id,
+		HasIt:      true,
+		Controller: controller,
+	})
 	return true
 }
 
-// creatureHasDestructionShield finds the first attached Upgrade that can replace
-// this creature's destruction.
-func (g *Game) creatureHasDestructionShield(id LocalID) (int, LocalID, bool) {
+// destructionReplacement finds the first attached Upgrade whose StaticModifier
+// replaces this creature's destruction, returning the Upgrade and its replacement.
+func (g *Game) destructionReplacement(id LocalID) (LocalID, Replace, bool) {
 	core := &g.State.Cards[id]
 	for i := 0; i < int(core.UpgradeCount); i++ {
 		up := core.Upgrades[i]
-		if g.cat.def(up).Static.PreventsDestruction {
-			return i, up, true
+		if r := g.cat.def(up).Static.Replaces; r.valid() && r.When == EventCreatureDestroyed {
+			return up, r, true
 		}
 	}
-	return 0, 0, false
+	return 0, Replace{}, false
+}
+
+// hostOf returns the creature an attached Upgrade is on, or ok=false when the id is
+// not attached to any creature in play.
+func (g *Game) hostOf(upgrade LocalID) (LocalID, bool) {
+	for p := 0; p < 2; p++ {
+		for _, host := range g.Battleline(p) {
+			core := &g.State.Cards[host]
+			for i := 0; i < int(core.UpgradeCount); i++ {
+				if core.Upgrades[i] == upgrade {
+					return host, true
+				}
+			}
+		}
+	}
+	return 0, false
+}
+
+// destroyAttachedUpgrade detaches an Upgrade from its host and discards it — an
+// Upgrade destroying itself through its own effect (Armageddon Cloak).
+func (g *Game) destroyAttachedUpgrade(upgrade LocalID) {
+	host, ok := g.hostOf(upgrade)
+	if !ok {
+		return
+	}
+	core := &g.State.Cards[host]
+	for i := 0; i < int(core.UpgradeCount); i++ {
+		if core.Upgrades[i] == upgrade {
+			g.logf("%s is destroyed", g.Name(upgrade))
+			g.discardAttachedUpgradeAt(host, i)
+			return
+		}
+	}
 }
 
 // discardAttachedUpgradeAt detaches one Upgrade from a host and puts that Upgrade
@@ -109,17 +149,17 @@ func (g *Game) discardAttachedUpgradeAt(host LocalID, i int) {
 	copy(core.Upgrades[i:], core.Upgrades[i+1:count])
 	core.UpgradeCount--
 	core.Upgrades[count-1] = 0
-	g.revertControlFromUpgrade(host, up)
+	g.releaseControlHeldBy(up)
 	g.resetCore(up)
 	g.State.Discard[g.owner(up)].add(up)
 }
 
-// replacePreventedDestructions removes creatures whose destruction was replaced
+// applyDestructionReplacements removes creatures whose destruction was replaced
 // from the pending destruction set before any Destroyed abilities are collected.
-func (g *Game) replacePreventedDestructions(ids []LocalID) []LocalID {
+func (g *Game) applyDestructionReplacements(controller int, ids []LocalID) []LocalID {
 	var out []LocalID
 	for _, id := range ids {
-		if g.preventDestructionWithUpgrade(id) {
+		if g.applyDestructionReplacement(controller, id) {
 			continue
 		}
 		out = append(out, id)
@@ -136,7 +176,7 @@ func (g *Game) replacePreventedDestructions(ids []LocalID) []LocalID {
 // Ritual purges it) cannot resolve any of its remaining abilities. Then every
 // creature still in play goes to its discard pile.
 func (g *Game) destroyTogether(controller int, ids []LocalID) {
-	ids = g.replacePreventedDestructions(ids)
+	ids = g.applyDestructionReplacements(controller, ids)
 	for _, id := range ids {
 		g.logf("%s is destroyed", g.Name(id))
 	}
@@ -220,16 +260,26 @@ func (g *Game) pickDestroyedAbility(controller int, pending []triggeredAbility, 
 	return idxs[g.chooseOption(controller, "", "Choose which Destroyed ability resolves", labels)]
 }
 
-// destroyEach destroys each creature in ids simultaneously (KeyForge's shared
-// Destroyed timing), letting the controller order how their "Destroyed:" abilities
-// resolve. Callers pass a snapshot of distinct ids, so each is destroyed once.
+// destroyEach destroys each id simultaneously (KeyForge's shared Destroyed
+// timing), letting the controller order how their "Destroyed:" abilities resolve.
+// An id that is an attached Upgrade is detached and discarded instead — that is how
+// "destroy this Upgrade" (Armageddon Cloak destroying itself) resolves through the
+// ordinary Destroy effect. Callers pass a snapshot of distinct ids.
 func (g *Game) destroyEach(controller int, ids []LocalID) {
-	g.destroyTogether(controller, ids)
+	var creatures []LocalID
+	for _, id := range ids {
+		if _, ok := g.hostOf(id); ok {
+			g.destroyAttachedUpgrade(id)
+			continue
+		}
+		creatures = append(creatures, id)
+	}
+	g.destroyTogether(controller, creatures)
 }
 
-// moveToTopOfDeck removes a card from play and places it on top of its owner's
+// putOnTopOfDeck removes a card from play and places it on top of its owner's
 // deck, clearing the per-match state it accrued while in play.
-func (g *Game) moveToTopOfDeck(id LocalID) {
+func (g *Game) putOnTopOfDeck(id LocalID) {
 	o := g.owner(id)
 	g.removeFromPlay(id)
 	g.discardUpgrades(id)
@@ -238,9 +288,9 @@ func (g *Game) moveToTopOfDeck(id LocalID) {
 	g.logf("%s is put on top of %s's deck", g.Name(id), g.names[o])
 }
 
-// moveToHand removes a card from play and places it into its owner's hand,
+// putIntoHand removes a card from play and places it into its owner's hand,
 // clearing the per-match state it accrued while in play.
-func (g *Game) moveToHand(id LocalID) {
+func (g *Game) putIntoHand(id LocalID) {
 	o := g.owner(id)
 	g.removeFromPlay(id)
 	g.discardUpgrades(id)
@@ -249,9 +299,9 @@ func (g *Game) moveToHand(id LocalID) {
 	g.logf("%s is returned to %s's hand", g.Name(id), g.names[o])
 }
 
-// moveToArchives removes a card from play and places it into its owner's
+// putIntoArchives removes a card from play and places it into its owner's
 // archives, clearing the per-match state it accrued while in play.
-func (g *Game) moveToArchives(id LocalID) {
+func (g *Game) putIntoArchives(id LocalID) {
 	o := g.owner(id)
 	g.removeFromPlay(id)
 	g.discardUpgrades(id)
@@ -260,9 +310,9 @@ func (g *Game) moveToArchives(id LocalID) {
 	g.logf("%s is put into %s's archives", g.Name(id), g.names[o])
 }
 
-// moveToDeckShuffled removes a card from play and shuffles it into its owner's
+// putIntoDeckShuffled removes a card from play and shuffles it into its owner's
 // deck, clearing the per-match state it accrued while in play.
-func (g *Game) moveToDeckShuffled(id LocalID) {
+func (g *Game) putIntoDeckShuffled(id LocalID) {
 	o := g.owner(id)
 	g.removeFromPlay(id)
 	g.discardUpgrades(id)

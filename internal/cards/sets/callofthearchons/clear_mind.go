@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Clear Mind
 //
 //	House:  Sanctum
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //
@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var ClearMind = card.New(
 	"Clear Mind",
 	card.House.Sanctum,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 216),
 	card.WithAemberBonus(1),

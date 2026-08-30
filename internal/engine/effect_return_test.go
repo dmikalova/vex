@@ -17,7 +17,7 @@ func TestReturnNamedToHand(t *testing.T) {
 		src := g.AddToBattleline(testCreature("faygin", 3), 0)
 		urch := g.AddToBattleline(NewCard("Urchin", Shadows, Creature, Common, WithPower(1), WithTraits("Elf", "Thief")), 0)
 		g.AddToBattleline(testCreature("other", 4), 0)                              // different name: filtered out
-		g.State.Discard[0].add(g.Register(NewCard("junk", Dis, Action, Common), 0)) // different name in discard: filtered out
+		g.State.Discard[0].add(g.Register(NewCard("junk", Dis, Tactic, Common), 0)) // different name in discard: filtered out
 		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
 		e.Resolve(ctx) // the sole Urchin candidate is auto-chosen
@@ -68,7 +68,7 @@ func TestMoveFromPlayToDeck(t *testing.T) {
 	g.State.Cards[myArt].Exhausted = true
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
-	e := MoveFromPlay{Target: Target{Kind: TargetEachArtifact}, Destination: ToTopOfDeck}
+	e := PutFromPlay{Target: Target{Kind: TargetEachArtifact}, Destination: ToTopOfDeck}
 	if e.Text() != "put each artifact on top of its owner's deck" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -94,7 +94,7 @@ func TestMoveFromPlayToHand(t *testing.T) {
 	g.State.Cards[src].Damage = 2
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
-	e := MoveFromPlay{Target: Target{Kind: TargetThisCreature}, Destination: ToHand}
+	e := PutFromPlay{Target: Target{Kind: TargetThisCreature}, Destination: ToHand}
 	if e.Text() != "put "+SelfName+" into its owner's hand" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -119,7 +119,7 @@ func TestMoveFromPlayToArchives(t *testing.T) {
 	g.State.Cards[src].Damage = 1
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
-	e := MoveFromPlay{Target: Target{Kind: TargetThisCreature}, Destination: ToArchives}
+	e := PutFromPlay{Target: Target{Kind: TargetThisCreature}, Destination: ToArchives}
 	if e.Text() != "put "+SelfName+" into its owner's archives" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -144,7 +144,7 @@ func TestMoveFromPlayToDeckShuffled(t *testing.T) {
 	src := g.AddToBattleline(testCreature("chrono", 2), 0)
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
-	e := MoveFromPlay{Target: Target{Kind: TargetThisCreature}, Destination: ToDeckShuffled}
+	e := PutFromPlay{Target: Target{Kind: TargetThisCreature}, Destination: ToDeckShuffled}
 	if e.Text() != "shuffle {self} into its owner's deck" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -160,17 +160,17 @@ func TestMoveFromPlayToDeckShuffled(t *testing.T) {
 func TestMoveFromPlayValidate(t *testing.T) {
 	this := Target{Kind: TargetThisCreature}
 	for _, d := range []Destination{ToHand, ToTopOfDeck, ToDeckShuffled, ToArchives} {
-		if err := (MoveFromPlay{Target: this, Destination: d}).validate(); err != nil {
+		if err := (PutFromPlay{Target: this, Destination: d}).validate(); err != nil {
 			t.Errorf("destination %d should be valid, got %v", d, err)
 		}
 	}
-	if err := (MoveFromPlay{Target: this}).validate(); err == nil {
+	if err := (PutFromPlay{Target: this}).validate(); err == nil {
 		t.Error("an unset destination should be rejected")
 	}
-	if err := (MoveFromPlay{Target: this, Destination: ToBottomOfDeck}).validate(); err == nil {
+	if err := (PutFromPlay{Target: this, Destination: ToBottomOfDeck}).validate(); err == nil {
 		t.Error("an unsupported destination should be rejected")
 	}
-	if err := (MoveFromPlay{Destination: ToHand}).validate(); err == nil {
+	if err := (PutFromPlay{Destination: ToHand}).validate(); err == nil {
 		t.Error("an unset target should be rejected")
 	}
 }
@@ -181,7 +181,7 @@ func TestMoveArtifactsToHand(t *testing.T) {
 	a2 := g.AddArtifact(exAutocannon(), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := MoveArtifactsToHand{Max: 3}
+	e := PutArtifactsIntoHand{Max: 3}
 	if e.Text() != "put up to 3 artifacts into their owners' hands" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -198,7 +198,7 @@ func TestMoveArtifactsToHand(t *testing.T) {
 	g2 := NewGame("A", "B", 1)
 	art := g2.AddArtifact(exAutocannon(), 0)
 	g2.SetChooser(0, optionPicker{idx: 1}) // index 0 is the artifact, 1 is "Done"
-	MoveArtifactsToHand{Max: 3}.Resolve(&EffectContext{Resolver: g2, Controller: 0})
+	PutArtifactsIntoHand{Max: 3}.Resolve(&EffectContext{Resolver: g2, Controller: 0})
 	if !g2.inPlay(art) {
 		t.Error("choosing Done should leave the artifact in play")
 	}

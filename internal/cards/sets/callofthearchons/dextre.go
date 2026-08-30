@@ -27,7 +27,7 @@ var Dextre = card.New(
 			Source: card.Opponent,
 		}),
 	card.WithAbility(
-		card.Trigger.Destroyed, card.MoveFromPlay{
+		card.Trigger.Destroyed, card.PutFromPlay{
 			Target:      card.Target.This,
 			Destination: card.To.TopOfDeck,
 		}),

@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Irradiated Aember
 //
 //	House:  Mars
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //
@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var IrradiatedAember = card.New(
 	"Irradiated Aember",
 	card.House.Mars,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 165),
 	card.WithAemberBonus(1),

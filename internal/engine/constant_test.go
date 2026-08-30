@@ -84,6 +84,27 @@ func TestConstantAbilityReachesArtifacts(t *testing.T) {
 	}
 }
 
+// A constant ability that grants a trigger gives it only to the creatures its
+// Target reaches: hasTrigger sees it on a reached creature and skips a creature
+// the grantor does not affect.
+func TestHasTriggerFromConstantAbility(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(NewCard("Grantor", Brobnar, Creature, Common, WithPower(3),
+		WithConstantAbility(ConstantAbility{
+			Target:  Target{Kind: TargetEachFriendlyCreature},
+			Granted: []Ability{{Trigger: TriggerAfterReap, Effect: GainAember{Player: Controller, Amount: 1}}},
+		})), 0)
+	friend := g.AddToBattleline(testCreature("friend", 3), 0)
+	enemy := g.AddToBattleline(testCreature("enemy", 3), 1)
+
+	if !g.hasTrigger(friend, TriggerAfterReap) {
+		t.Error("a friendly creature should gain the granted Reap trigger")
+	}
+	if g.hasTrigger(enemy, TriggerAfterReap) {
+		t.Error("an enemy creature is not reached by the friendly constant ability")
+	}
+}
+
 func TestConstantText(t *testing.T) {
 	banner := NewCard("Banner", Brobnar, Artifact, Rare,
 		WithConstantAbility(ConstantAbility{PowerBonus: 1, Target: Target{Kind: TargetEachFriendlyCreature}}))

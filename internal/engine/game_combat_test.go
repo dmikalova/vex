@@ -266,11 +266,14 @@ func TestFightDamageRedirect(t *testing.T) {
 
 func TestBeforeFightCanCancelFight(t *testing.T) {
 	g := started(t) // Brobnar is active
-	top := g.AddToDeck(NewCard("Brobnar Top", Brobnar, Action, Common), 0)
+	top := g.AddToDeck(NewCard("Brobnar Top", Brobnar, Tactic, Common), 0)
 	attacker := g.AddToBattleline(NewCard("evader", Brobnar, Creature, Common,
 		WithPower(5),
 		WithAssault(2),
-		WithAbility(TriggerBeforeFight, DiscardTopOfDeckAndCancelFightIfActiveHouse{}),
+		WithAbility(TriggerBeforeFight, Sequence{Effects: []Effect{
+			DiscardTopOfDeck{},
+			Conditional{Cond: ItIsOfHouse{House: TheActiveHouse}, Then: CancelFight{}},
+		}}),
 		WithAbility(TriggerAfterFight, GainAember{Player: Controller, Amount: 1}),
 	), 0)
 	defender := g.AddToBattleline(NewCard("hazard", Brobnar, Creature, Common, WithPower(8), WithHazardous(3)), 1)
@@ -301,10 +304,13 @@ func TestBeforeFightCanCancelFight(t *testing.T) {
 
 func TestBeforeFightCancelMissStillFights(t *testing.T) {
 	g := started(t) // Brobnar is active
-	top := g.AddToDeck(NewCard("Mars Top", Mars, Action, Common), 0)
+	top := g.AddToDeck(NewCard("Mars Top", Mars, Tactic, Common), 0)
 	attacker := g.AddToBattleline(NewCard("evader", Brobnar, Creature, Common,
 		WithPower(9),
-		WithAbility(TriggerBeforeFight, DiscardTopOfDeckAndCancelFightIfActiveHouse{}),
+		WithAbility(TriggerBeforeFight, Sequence{Effects: []Effect{
+			DiscardTopOfDeck{},
+			Conditional{Cond: ItIsOfHouse{House: TheActiveHouse}, Then: CancelFight{}},
+		}}),
 		WithAbility(TriggerAfterFight, GainAember{Player: Controller, Amount: 1}),
 	), 0)
 	defender := g.AddToBattleline(testCreature("defender", 8), 1)

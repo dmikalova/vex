@@ -150,3 +150,42 @@ func (e InPlay) CondText() string {
 	}
 	return fmt.Sprintf("if there is a %s in play", e.noun())
 }
+
+// CardsPlayed counts the cards of a house a player has played this turn. Like
+// InPlay it serves two roles from one description: as a Count it yields the tally
+// and renders a "for each ... you have played this turn" noun; as a Condition it is
+// met once Amount have been played (Epic Quest fires after seven), defaulting to
+// one. This replaces a bespoke "played at least N of a house" condition.
+type CardsPlayed struct {
+	Player Player
+	House  House
+	// Amount is the minimum the Condition role requires; zero means at least one.
+	Amount int
+}
+
+// Value counts the player's cards of the house played this turn.
+func (e CardsPlayed) Value(ctx *EffectContext) int {
+	return ctx.Resolver.CardsPlayedOfHouseThisTurn(ctx.PlayerFor(e.Player), e.House)
+}
+
+// Met reports whether at least Amount (default one) matching cards were played.
+func (e CardsPlayed) Met(ctx *EffectContext) bool { return e.Value(ctx) >= e.threshold() }
+
+// threshold is the Condition's required count, defaulting to one.
+func (e CardsPlayed) threshold() int {
+	if e.Amount < 1 {
+		return 1
+	}
+	return e.Amount
+}
+
+// CountText renders the singular noun the "for each" clause repeats.
+func (e CardsPlayed) CountText() string {
+	return fmt.Sprintf("%s card you have played this turn", e.House)
+}
+
+// CondText renders the condition, e.g. "if you have played 7 or more Sanctum cards
+// this turn".
+func (e CardsPlayed) CondText() string {
+	return fmt.Sprintf("if you have played %d or more %s cards this turn", e.threshold(), e.House)
+}

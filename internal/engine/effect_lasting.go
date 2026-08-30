@@ -60,9 +60,19 @@ func lastingActionOf(e Effect) (lastingAction, int, bool) {
 type Replacement uint8
 
 const (
+	// replacementUnset is the invalid zero value: an Instead must name its
+	// replacement rather than leave it unset.
+	replacementUnset Replacement = iota
 	// Steal replaces gaining Æmber with stealing that much from the opponent.
-	Steal Replacement = iota
+	Steal
+	// Capture replaces adding Æmber to a pool with the source creature capturing it
+	// (Ether Spider). It is applied continuously at the add-to-pool site, not through
+	// the turn-scoped lasting registry, so it has no lastingAction.
+	Capture
 )
+
+// valid reports whether r names a real replacement (not the unset zero value).
+func (r Replacement) valid() bool { return r != replacementUnset }
 
 // action maps the replacement to the flat action stored in the registry.
 func (Replacement) action() lastingAction { return actSteal }
@@ -70,18 +80,59 @@ func (Replacement) action() lastingAction { return actSteal }
 // text renders the replacement clause, e.g. "steal the same amount".
 func (Replacement) text() string { return "steal the same amount" }
 
-// Instead installs a replacement that, for the rest of the controller's turn,
-// changes the outcome of the event Of before it happens — Dimension Door replaces
-// gaining Æmber from reaping with stealing it.
-type Instead struct {
-	Of   Event
-	With Replacement
+// Replace is a continuous replacement an Upgrade applies to a game event for its
+// host while attached: when the event When would happen to the host, the effect
+// With resolves in its place. Unlike the turn-scoped Instead — a flat outcome swap
+// kept in the pointerless game state — a Replace lives in the card definition, so
+// its With is a full effect tree. Armageddon Cloak replaces its host's destruction
+// (EventCreatureDestroyed) with "fully heal it and destroy Armageddon Cloak", the
+// self-destruction spelled out as an effect rather than implied by the event site.
+type Replace struct {
+	When Event
+	With Effect
 }
 
-// validate rejects an Of that is not a replacement event.
+// valid reports whether a replacement is set, distinguishing a StaticModifier that
+// carries a Replace from the zero value that carries none.
+func (r Replace) valid() bool { return r.When != eventUnset }
+
+// validate surfaces a configuration error in the replacement effect, ignoring the
+// zero value (a StaticModifier with no replacement).
+func (r Replace) validate() error {
+	if !r.valid() {
+		return nil
+	}
+	return validateEffect(r.With)
+}
+
+// Instead installs a replacement that, for the rest of the controller's turn,
+// changes the outcome of the event Of before it happens — Dimension Door replaces
+// gaining Æmber from reaping with stealing it. As a plain {Of, With} value it also
+// describes a continuous replacement a card applies while in play (CardDefinition.Replaces,
+// Ether Spider capturing Æmber added to its opponent's pool); in that use it is read,
+// never resolved. Player scopes an event that names a pool — which player's pool the
+// replacement watches (Ether Spider watches its Opponent's).
+type Instead struct {
+	Of     Event
+	With   Replacement
+	Player Player
+}
+
+// valid reports whether a replacement is set, distinguishing a card that carries a
+// continuous Instead from the zero value that carries none.
+func (e Instead) valid() bool { return e.Of != eventUnset }
+
+// validate rejects an Of that is not a replacement event or an unset With, and
+// requires the pool-scoping Player when Of names a pool.
 func (e Instead) validate() error {
 	if e.Of.isReaction() {
 		return fmt.Errorf("Instead: Of must be a replacement event")
+	}
+	if !e.With.valid() {
+		return fmt.Errorf("Instead: replacement must be set")
+	}
+	if e.Of == EventAemberAddedToPool && !e.Player.valid() {
+		return fmt.Errorf("Instead: a pool event needs a Player to scope it")
 	}
 	return nil
 }

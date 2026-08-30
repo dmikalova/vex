@@ -10,7 +10,7 @@ import (
 // Labwork
 //
 //	House:  Logos
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Common
 //	Æmber:  1
 //

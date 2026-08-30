@@ -291,6 +291,9 @@ func TestKeyCost(t *testing.T) {
 	if c := g.keyCost(0); c != KeyCost {
 		t.Errorf("base keyCost = %d, want %d", c, KeyCost)
 	}
+	if c := g.CurrentKeyCost(0); c != KeyCost {
+		t.Errorf("CurrentKeyCost = %d, want %d", c, KeyCost)
+	}
 
 	// An opponent-affecting change on player 1's card raises player 0's key cost,
 	// not player 1's own.

@@ -10,7 +10,7 @@ import (
 // Radiant Truth
 //
 //	House:  Sanctum
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  1
 //

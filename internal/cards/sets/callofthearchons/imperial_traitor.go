@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Imperial Traitor
 //
 //	House:  Shadows
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //
@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var ImperialTraitor = card.New(
 	"Imperial Traitor",
 	card.House.Shadows,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 272),
 	card.WithAemberBonus(1),

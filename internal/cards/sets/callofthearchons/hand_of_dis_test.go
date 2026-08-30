@@ -10,7 +10,7 @@ import (
 // Hand of Dis
 //
 //	House:  Dis
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Common
 //
 //	Play: Destroy a creature that is not on a flank.

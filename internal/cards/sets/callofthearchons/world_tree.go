@@ -18,7 +18,7 @@ var WorldTree = card.New(
 	card.Provenance(card.CotA, 344),
 	card.WithTraits("Location"),
 	card.WithAbility(
-		card.Trigger.Action, card.MoveFromDiscard{
+		card.Trigger.Action, card.PutFromDiscard{
 			Type:        card.Type.Creature,
 			Destination: card.To.TopOfDeck,
 		}),

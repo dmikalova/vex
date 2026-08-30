@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Interdimensional Graft
 //
 //	House:  Logos
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  1
 //
@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var InterdimensionalGraft = card.New(
 	"Interdimensional Graft",
 	card.House.Logos,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 112),
 	card.WithAemberBonus(1),

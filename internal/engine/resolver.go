@@ -3,13 +3,30 @@ package engine
 // Resolver is the complete interface an effect uses to inspect and change the
 // game. Effects hold only a Resolver (through EffectContext) — never the *Game or
 // its GameState — so every change a card is able to make goes through one of
-// these methods. The list below is therefore the full, explicit catalogue of
-// what an effect is allowed to do; *Game implements it. The surface is
-// deliberately wide: each new mechanic adds a method here, which surfaces the
-// engine's effect-facing capability (and any gaps worth refactoring) in one place.
+// these methods, the full explicit catalogue of what an effect may do; *Game
+// implements it.
+//
+// The catalogue is deliberately wide, so it is composed from the focused role
+// interfaces below (reads, economy, creature state, combat, zones, turn-scoped
+// grants, choices, logging). An effect or a test double can depend on just the
+// role it needs, and each new mechanic adds its method to the matching role —
+// which keeps the capability clusters, and any gaps worth refactoring, visible in
+// one place. Add a method to the role it belongs to, not to a flat list.
 type Resolver interface {
-	// ---- reads ----
+	StateReader
+	EconomyResolver
+	CreatureResolver
+	CombatResolver
+	ZoneResolver
+	TurnResolver
+	ChoiceResolver
+	Logger
+}
 
+// StateReader is the read-only view an effect inspects: pools, card stats and
+// status, zone contents, and the turn's house and play counts. None of its
+// methods change the game.
+type StateReader interface {
 	// Aember returns a player's Æmber pool.
 	Aember(player int) int
 	// AmberOn returns the Æmber sitting on a card (from capture, exalt, ...).
@@ -51,65 +68,108 @@ type Resolver interface {
 	ActiveHouse() House
 	// Keys returns the number of keys a player has forged.
 	Keys(player int) int
-	// ForgeKey has a player forge one key at the current cost, if affordable.
-	ForgeKey(player int)
-	// ForgeKeyFree has a player forge one key without paying its current cost.
-	ForgeKeyFree(player int)
 	// CardsPlayedOfHouseThisTurn returns the house-specific play count for this turn.
 	CardsPlayedOfHouseThisTurn(player int, house House) int
+	// TopOfDeck returns the top card of a player's deck without moving it,
+	// reporting whether the deck holds a card.
+	TopOfDeck(player int) (LocalID, bool)
+	// HasAction reports whether a card has an "Action:" ability.
+	HasAction(id LocalID) bool
+	// Exhausted reports whether a creature is exhausted.
+	Exhausted(id LocalID) bool
+	// Stunned reports whether a creature is stunned.
+	Stunned(id LocalID) bool
+	// TimesUsedThisTurn reports how many times a creature has been used this turn.
+	TimesUsedThisTurn(id LocalID) int
+}
 
-	// ---- single-card / pool changes ----
-
+// EconomyResolver changes the scoring economy: Æmber pools, forged keys, and
+// chains.
+type EconomyResolver interface {
 	// SetAember sets a player's Æmber pool (never below zero).
 	SetAember(player, amount int)
 	// GainAember adds Æmber from the common supply to a player's pool, allowing
 	// in-play replacements such as Ether Spider to capture it instead. It returns
 	// the capturer and true when the gain was replaced.
 	GainAember(player, amount int) (LocalID, bool)
+	// ForgeKey has a player forge one key at the current cost, if affordable.
+	ForgeKey(player int)
+	// ForgeKeyFree has a player forge one key without paying its current cost.
+	ForgeKeyFree(player int)
+	// GainChains adds chains to a player, penalizing their future draws.
+	GainChains(controller, amount int)
+}
+
+// CreatureResolver changes the in-play state carried on a single card — its
+// damage, status, Æmber, counters, house, controller, and battleline position.
+type CreatureResolver interface {
 	// SetDamage sets the damage on a creature (never below zero).
 	SetDamage(id LocalID, amount int)
 	// SetStunned sets a creature's stun status.
 	SetStunned(id LocalID, stunned bool)
 	// SetExhausted sets a creature's exhausted status.
 	SetExhausted(id LocalID, exhausted bool)
+	// AddAmberOn changes the Æmber sitting on a card.
+	AddAmberOn(id LocalID, delta int)
+	// AddPowerCounter changes the net power counters on a creature, adjusting its
+	// power for as long as it stays in play.
+	AddPowerCounter(id LocalID, delta int)
 	// BelongToHouseForRemainderOfTurn makes a card belong to house until its
 	// controller's turn ends.
 	BelongToHouseForRemainderOfTurn(id LocalID, house House)
+	// SetLastingHouse makes a card belong to house until it leaves play.
+	SetLastingHouse(id LocalID, house House)
+	// TakeControl moves a creature into controller's battleline without changing
+	// ownership; when it later leaves play it still goes to its owner's zone. source
+	// is the card whose lasting effect holds the control (reverted when it leaves play).
+	TakeControl(id LocalID, controller int, source LocalID)
+	// SwapBattlelinePositions exchanges two creatures' positions in the same
+	// battleline without moving any state between the creatures.
+	SwapBattlelinePositions(a, b LocalID)
+}
+
+// CombatResolver resolves damage, destruction, and the fights, reaps, and actions
+// an ability drives directly, including the mid-fight adjustments a Before Fight
+// ability makes.
+type CombatResolver interface {
+	// DealDamage deals damage to each target simultaneously, then resolves
+	// destruction (see the internal dealDamage).
+	DealDamage(controller int, targets []DamageTarget)
+	// DestroyEach destroys the given creatures as one simultaneous event.
+	DestroyEach(controller int, ids []LocalID)
 	// SetFightDamageRedirect redirects the attacker's fight damage in the fight in
 	// progress to another creature (Gabos Longarms), read and cleared by combat.
 	SetFightDamageRedirect(id LocalID)
 	// CancelCurrentFight makes the fight in progress not occur. Combat reads and
 	// clears it after Before Fight abilities resolve.
 	CancelCurrentFight()
-	// AddAmberOn changes the Æmber sitting on a card.
-	AddAmberOn(id LocalID, delta int)
-	// AddPowerCounter changes the net power counters on a creature, adjusting its
-	// power for as long as it stays in play.
-	AddPowerCounter(id LocalID, delta int)
+	// FightWith makes attacker fight defender (ability-driven, ignoring active
+	// player and house). A creature can only be used while ready, so an exhausted
+	// attacker may be chosen but does nothing.
+	FightWith(attacker, defender LocalID)
+	// ReapWith reaps with a creature (ability-driven, ignoring active player and
+	// house). A creature can only be used while ready, so an exhausted creature may
+	// be chosen but does nothing.
+	ReapWith(id LocalID)
+	// UseActionOf fires a card's "Action:" ability (ability-driven, ignoring active
+	// player and house). A card can only be used while ready, so an exhausted card
+	// may be chosen but does nothing.
+	UseActionOf(id LocalID)
+}
 
-	// ---- compound actions the engine coordinates ----
-
-	// DealDamage deals damage to each target simultaneously, then resolves
-	// destruction (see the internal dealDamage).
-	DealDamage(controller int, targets []DamageTarget)
-	// DestroyEach destroys the given creatures as one simultaneous event.
-	DestroyEach(controller int, ids []LocalID)
-	// TakeControl moves a creature into controller's battleline without changing
-	// ownership; when it later leaves play it still goes to its owner's zone.
-	TakeControl(id LocalID, controller int)
-	// SwapBattlelinePositions exchanges two creatures' positions in the same
-	// battleline without moving any state between the creatures.
-	SwapBattlelinePositions(a, b LocalID)
+// ZoneResolver moves cards between zones — drawing, and shuffling a card between
+// play, hand, deck, discard, archives, and purge.
+type ZoneResolver interface {
 	// Draw makes a player draw count cards.
 	Draw(controller, count int)
-	// MoveToTopOfDeck moves a card from play to the top of its owner's deck.
-	MoveToTopOfDeck(id LocalID)
-	// MoveToHand moves a card from play to its owner's hand.
-	MoveToHand(id LocalID)
-	// MoveToArchives moves a card from play to its owner's archives.
-	MoveToArchives(id LocalID)
-	// MoveToDeckShuffled moves a card from play into its owner's deck and shuffles.
-	MoveToDeckShuffled(id LocalID)
+	// PutOnTopOfDeck moves a card from play to the top of its owner's deck.
+	PutOnTopOfDeck(id LocalID)
+	// PutIntoHand moves a card from play to its owner's hand.
+	PutIntoHand(id LocalID)
+	// PutIntoArchives moves a card from play to its owner's archives.
+	PutIntoArchives(id LocalID)
+	// PutIntoDeckShuffled moves a card from play into its owner's deck and shuffles.
+	PutIntoDeckShuffled(id LocalID)
 	// ArchiveFromHand moves a card from its owner's hand to their archives.
 	ArchiveFromHand(id LocalID)
 	// ArchiveTopOfDeck moves the top card of a player's deck to their archives,
@@ -131,13 +191,13 @@ type Resolver interface {
 	// PurgeFromPlay moves a card from play to its owner's purge pile (set aside out
 	// of the game).
 	PurgeFromPlay(id LocalID)
-	// MoveFromDiscardToHand moves a card from its owner's discard to their hand.
-	MoveFromDiscardToHand(id LocalID)
+	// PutFromDiscardIntoHand moves a card from its owner's discard to their hand.
+	PutFromDiscardIntoHand(id LocalID)
 	// MoveFromDeckToHand moves a card from its owner's deck to their hand.
 	MoveFromDeckToHand(id LocalID)
-	// PlayTopOfDeckIfHouse reveals a player's top deck card and plays it if it is
-	// of the named house.
-	PlayTopOfDeckIfHouse(player int, house House)
+	// PlayFromDeck plays a specific card from a player's deck, removing it from the
+	// deck as it is played (Chaos Portal plays the card it revealed).
+	PlayFromDeck(player int, id LocalID)
 	// ShuffleDiscardIntoDeck moves a player's whole discard pile into their deck
 	// and shuffles it.
 	ShuffleDiscardIntoDeck(player int)
@@ -147,8 +207,12 @@ type Resolver interface {
 	// DiscardCardFromHand moves a specific card from a player's hand to their discard
 	// zone.
 	DiscardCardFromHand(owner int, id LocalID)
-	// GainChains adds chains to a player, penalizing their future draws.
-	GainChains(controller, amount int)
+}
+
+// TurnResolver installs turn-scoped and lasting effects: restrictions and grants
+// for this or the next turn, and the "remainder of the turn" reaction/replacement
+// registry that keeps such behavior out of the play and reap paths.
+type TurnResolver interface {
 	// CannotFightNextTurn bars a player from using creatures to fight throughout
 	// their next turn.
 	CannotFightNextTurn(player int)
@@ -168,6 +232,12 @@ type Resolver interface {
 	// GiveRemainingAemberAfterKeyForgeNextTurn makes a player give their remaining
 	// Æmber to another player after forging a key during their next turn.
 	GiveRemainingAemberAfterKeyForgeNextTurn(forger, beneficiary int)
+}
+
+// ChoiceResolver asks a player to make a decision — ordering a set of cards, or
+// picking a creature, card, or labeled option — so an effect can branch on the
+// answer. A sole candidate is taken automatically.
+type ChoiceResolver interface {
 	// OrderByChoice lets a player arrange ids into a resolution order.
 	OrderByChoice(controller int, prompt string, ids []LocalID) []LocalID
 	// ChooseCreature asks a player to pick one creature from candidates; a sole
@@ -182,26 +252,10 @@ type Resolver interface {
 	// its index (0 when the player's chooser expresses no preference). source is the
 	// card whose ability is asking (usually ctx.Source), for prompt attribution.
 	ChooseOption(player int, source LocalID, prompt string, options []string) int
-	// FightWith makes attacker fight defender (ability-driven, ignoring active
-	// player and house). A creature can only be used while ready, so an exhausted
-	// attacker may be chosen but does nothing.
-	FightWith(attacker, defender LocalID)
-	// ReapWith reaps with a creature (ability-driven, ignoring active player and
-	// house). A creature can only be used while ready, so an exhausted creature may
-	// be chosen but does nothing.
-	ReapWith(id LocalID)
-	// UseActionOf fires a card's "Action:" ability (ability-driven, ignoring active
-	// player and house). A card can only be used while ready, so an exhausted card
-	// may be chosen but does nothing.
-	UseActionOf(id LocalID)
-	// HasAction reports whether a card has an "Action:" ability.
-	HasAction(id LocalID) bool
-	// Exhausted reports whether a creature is exhausted.
-	Exhausted(id LocalID) bool
-	// Stunned reports whether a creature is stunned.
-	Stunned(id LocalID) bool
-	// TimesUsedThisTurn reports how many times a creature has been used this turn.
-	TimesUsedThisTurn(id LocalID) int
+}
+
+// Logger writes to the game log.
+type Logger interface {
 	// Logf writes a line to the game log.
 	Logf(format string, args ...any)
 }
@@ -256,6 +310,11 @@ func (g *Game) BelongToHouseForRemainderOfTurn(id LocalID, house House) {
 	g.State.Cards[id].TempHouse = house
 }
 
+// SetLastingHouse makes a card belong to house until it leaves play.
+func (g *Game) SetLastingHouse(id LocalID, house House) {
+	g.State.Cards[id].LastingHouse = house
+}
+
 // SetFightDamageRedirect redirects the attacker's fight damage in the current
 // fight to another creature; the combat step reads and clears it.
 func (g *Game) SetFightDamageRedirect(id LocalID) { g.State.FightDamageRedirect = id }
@@ -276,22 +335,24 @@ func (g *Game) DealDamage(controller int, targets []DamageTarget) {
 func (g *Game) DestroyEach(controller int, ids []LocalID) { g.destroyEach(controller, ids) }
 
 // TakeControl is the Resolver entry point for takeControl.
-func (g *Game) TakeControl(id LocalID, controller int) { g.takeControl(id, controller) }
+func (g *Game) TakeControl(id LocalID, controller int, source LocalID) {
+	g.takeControl(id, controller, source)
+}
 
 // Draw is the Resolver entry point for the internal draw.
 func (g *Game) Draw(controller, count int) { g.draw(controller, count) }
 
-// MoveToTopOfDeck is the Resolver entry point for moveToTopOfDeck.
-func (g *Game) MoveToTopOfDeck(id LocalID) { g.moveToTopOfDeck(id) }
+// PutOnTopOfDeck is the Resolver entry point for putOnTopOfDeck.
+func (g *Game) PutOnTopOfDeck(id LocalID) { g.putOnTopOfDeck(id) }
 
-// MoveToHand is the Resolver entry point for moveToHand.
-func (g *Game) MoveToHand(id LocalID) { g.moveToHand(id) }
+// PutIntoHand is the Resolver entry point for putIntoHand.
+func (g *Game) PutIntoHand(id LocalID) { g.putIntoHand(id) }
 
-// MoveToArchives is the Resolver entry point for moveToArchives.
-func (g *Game) MoveToArchives(id LocalID) { g.moveToArchives(id) }
+// PutIntoArchives is the Resolver entry point for putIntoArchives.
+func (g *Game) PutIntoArchives(id LocalID) { g.putIntoArchives(id) }
 
-// MoveToDeckShuffled is the Resolver entry point for moveToDeckShuffled.
-func (g *Game) MoveToDeckShuffled(id LocalID) { g.moveToDeckShuffled(id) }
+// PutIntoDeckShuffled is the Resolver entry point for putIntoDeckShuffled.
+func (g *Game) PutIntoDeckShuffled(id LocalID) { g.putIntoDeckShuffled(id) }
 
 // ArchiveFromHand moves a card from its owner's hand to their archives.
 func (g *Game) ArchiveFromHand(id LocalID) { g.archiveFromHand(g.owner(id), id) }
@@ -316,8 +377,8 @@ func (g *Game) AddPowerCounter(id LocalID, delta int) {
 	g.State.Cards[id].PowerCounters += int16(delta)
 }
 
-// MoveFromDiscardToHand moves a card from its owner's discard pile to their hand.
-func (g *Game) MoveFromDiscardToHand(id LocalID) {
+// PutFromDiscardIntoHand moves a card from its owner's discard pile to their hand.
+func (g *Game) PutFromDiscardIntoHand(id LocalID) {
 	o := g.owner(id)
 	g.State.Discard[o].remove(id)
 	g.State.Hand[o].add(id)

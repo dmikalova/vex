@@ -7,6 +7,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"github.com/dmikalova/vactrol/internal/web"
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
@@ -34,7 +35,12 @@ func main() {
 		RawHeaders: []string{bootStyle, boardScript, devReloadScript},
 	})
 
-	const addr = ":8000"
+	// Cloud Run injects PORT; fall back to 8000 for local `mage web`.
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8000"
+	}
+	addr := ":" + port
 	log.Printf("Vactrol web client on http://localhost%s", addr)
 	if err := http.ListenAndServe(addr, nil); err != nil {
 		log.Fatal(err)
@@ -61,9 +67,17 @@ const boardScript = `<script>
       e.preventDefault();
     }
   }, { passive: false });
+  // Keep the log pinned to the newest entry only while the player is already at
+  // the bottom; if they scroll up, leave their position alone.
+  var stick = true;
+  document.addEventListener('scroll', function (e) {
+    var log = e.target;
+    if (!log || log.id !== 'gamelog') { return; }
+    stick = (log.scrollTop + log.clientHeight) >= (log.scrollHeight - 4);
+  }, true);
   new MutationObserver(function () {
     var log = document.getElementById('gamelog');
-    if (log) { log.scrollTop = log.scrollHeight; }
+    if (log && stick) { log.scrollTop = log.scrollHeight; }
   }).observe(document.documentElement, { childList: true, subtree: true });
 
   // Drag hand cards onto the board: seed the drag (Firefox needs data on it) and

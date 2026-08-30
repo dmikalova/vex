@@ -10,7 +10,7 @@ import (
 // Full Moon
 //
 //	House:  Untamed
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Common
 //
 //	Play: For the remainder of the turn, each time you play a creature, gain 1 Æmber.

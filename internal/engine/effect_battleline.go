@@ -1,25 +1,36 @@
 package engine
 
-// SwapWithFriendlyCreatureAndUse swaps this creature with another friendly
-// creature in its controller's battleline, then uses that other creature.
-//
-// Battleline order matters for flanks and neighbors, so the swap is purely
-// positional: no damage, upgrades, status, control, or other card state moves
-// between the creatures. The chosen creature is then used normally, so if it is
-// exhausted the use has no effect.
-type SwapWithFriendlyCreatureAndUse struct{}
-
-// Text renders Transposition Sandals' granted Action ability.
-func (SwapWithFriendlyCreatureAndUse) Text() string {
-	return "swap this creature with another friendly creature in your battleline. Use that other creature this turn"
+// Swap exchanges this creature's battleline position with the creature its With
+// target selects, then puts that creature in context (ctx.It) so a following
+// effect can act on it — Transposition Sandals swaps with another friendly
+// creature and then uses it. Only positions move: no damage, upgrades, status,
+// control, or other card state travels between the two creatures, since battleline
+// order is all that matters for flanks and neighbors. A With target that selects
+// nothing leaves the battleline unchanged. With is a full Target, so a later card
+// can swap with an enemy creature rather than a friendly one.
+type Swap struct {
+	With Target
 }
 
-// Resolve chooses another friendly creature, swaps its position with this
-// creature, then uses the chosen creature.
-func (SwapWithFriendlyCreatureAndUse) Resolve(ctx *EffectContext) {
-	target := Target{Kind: TargetChosenOtherFriendlyCreature}
-	for _, other := range target.Select(ctx) {
+// validate requires the creature to swap with.
+func (e Swap) validate() error {
+	if !e.With.valid() {
+		return errUnsetTarget("Swap")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "swap this creature with another friendly creature
+// in your battleline".
+func (e Swap) Text() string {
+	return "swap this creature with " + e.With.Text() + " in your battleline"
+}
+
+// Resolve swaps this creature's position with the selected creature and puts that
+// creature in context.
+func (e Swap) Resolve(ctx *EffectContext) {
+	for _, other := range e.With.Select(ctx) {
 		ctx.Resolver.SwapBattlelinePositions(ctx.Source, other)
-		UseVerb{}.Apply(ctx, other)
+		ctx.It, ctx.HasIt = other, true
 	}
 }

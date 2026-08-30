@@ -23,7 +23,7 @@ var Timetraveller = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Draw{Amount: 2}),
 	card.WithAbility(
-		card.Trigger.Action, card.MoveFromPlay{
+		card.Trigger.Action, card.PutFromPlay{
 			Target:      card.Target.This,
 			Destination: card.To.DeckShuffled,
 		}),

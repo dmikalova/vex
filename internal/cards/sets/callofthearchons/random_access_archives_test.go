@@ -10,7 +10,7 @@ import (
 // Random Access Archives
 //
 //	House:  Logos
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //

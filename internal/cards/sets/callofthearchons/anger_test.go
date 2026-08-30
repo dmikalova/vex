@@ -10,7 +10,7 @@ import (
 // Anger
 //
 //	House:  Brobnar
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Common
 //	Æmber:  1
 //

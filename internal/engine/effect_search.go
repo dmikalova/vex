@@ -33,6 +33,6 @@ func (e SearchForName) Resolve(ctx *EffectContext) {
 	if slices.Contains(inDeck, id) {
 		ctx.Resolver.MoveFromDeckToHand(id)
 	} else {
-		ctx.Resolver.MoveFromDiscardToHand(id)
+		ctx.Resolver.PutFromDiscardIntoHand(id)
 	}
 }

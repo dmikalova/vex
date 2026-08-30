@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Blinding Light
 //
 //	House:  Sanctum
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Common
 //	Æmber:  1
 //
@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var BlindingLight = card.New(
 	"Blinding Light",
 	card.House.Sanctum,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 213),
 	card.WithAemberBonus(1),

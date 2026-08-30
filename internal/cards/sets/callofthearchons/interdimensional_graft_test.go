@@ -10,7 +10,7 @@ import (
 // Interdimensional Graft
 //
 //	House:  Logos
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  1
 //

@@ -10,7 +10,7 @@ import (
 // Effervescent Principle
 //
 //	House:  Logos
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Common
 //
 //	Play: Each player loses half of their Æmber, rounded down, and gain 1 chain.

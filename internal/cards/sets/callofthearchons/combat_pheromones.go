@@ -24,10 +24,9 @@ var CombatPheromones = card.New(
 	card.WithAbility(
 		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
 			card.Sentence{Effect: card.Destroy{Target: card.Target.This}},
-			card.UseFriendlyCardsOfHouse{
-				House: card.House.Mars,
-				Count: 2,
-				Other: true,
+			card.Use{
+				Max:    2,
+				Target: card.Target.EachFriendlyInPlay.OfHouse(card.House.Mars).Other(),
 			},
 		}}),
 )

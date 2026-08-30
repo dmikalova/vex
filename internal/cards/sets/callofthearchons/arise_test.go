@@ -10,7 +10,7 @@ import (
 // Arise!
 //
 //	House:  Dis
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Common
 //
 //	Play: Choose a house - put each creature of the chosen house from your discard pile into your hand, and gain 1 chain.

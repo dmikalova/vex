@@ -10,7 +10,7 @@ import (
 // Ghostly Hand
 //
 //	House:  Shadows
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Common
 //	Æmber:  2
 //

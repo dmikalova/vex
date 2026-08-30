@@ -32,6 +32,21 @@ Card research (so you never need a throwaway grep/JSON script):
 
 Run `mage -l` to see every target.
 
+## Long shell commands may span multiple lines
+
+A long `&&`/`||` command chain does not have to be one physical line. A line that
+ends with `&&`, `||`, or `|` continues on the next line, so a multi-step command
+can be written as, e.g.:
+
+```sh
+mage gen &&
+  mage cover &&
+  mage check
+```
+
+Prefer this layout over one unreadable line when chaining several build/test
+steps.
+
 ## Multiple agents may be running
 
 More than one agent can be working in this repo at the same time. If the build,
@@ -56,6 +71,94 @@ generalizing a type, effect, or seam — prefer the refactor. A good fit for the
 new feature (and the features that will follow it) matters more than preserving
 today's shape. Keep such refactors focused, keep everything green (including 100%
 `internal/engine` coverage), and leave the design better than you found it.
+
+## Design for composition, not for the card in front of you
+
+Every card is an instance of a more general mechanic. Implement the **mechanic**,
+not the card. Before adding a type, ask: what is the smallest orthogonal piece
+this card needs, and how would the *next* card reuse it? Prefer many small pieces
+that snap together over one bespoke effect that does everything a single card
+happens to want.
+
+Concretely:
+
+- **Decompose fused effects.** A card that "does A, then B if C" is a
+  `Sequence` of an effect, a `Conditional`, and a condition — not one
+  `DoAThenBIfC` effect. Bonkers Killing Machine is `DiscardTopOfEachDeck` →
+  `DestroyOfEachDiscardedHouse` → `Conditional{CardsDestroyedFewerThan, Destroy}`,
+  not a single `DiscardAndDestroyByHouse`.
+- **Thread state through the context, don't fuse producers and consumers.** When
+  one step produces a value a later step consumes (cards revealed, houses
+  discarded, creatures healed, a card put in focus as `ctx.It`), record it on the
+  `EffectContext` and let any following effect/condition read it. This is how
+  `Heal` + `CreaturesHealed`, `RevealTopOfDeck` + `ItIsOfHouse` + `PlayRevealedCard`
+  compose without a combined type.
+- **Parameterize over enums, not new types.** A new "at least N of a house"
+  wants a reusable `CardsPlayed{House, Amount}` count, not a
+  `CardsPlayedOfHouseAtLeast`. A new lifetime wants a `Duration` field
+  (`EndOfTurn`, `UntilThisLeavesPlay`), not a `…ForRemainderOfTurn` variant. A new
+  "which house" wants a `HouseChoice`/reference, not a `…OfChosenHouse` /
+  `…OfActiveHouse` pair.
+- **Reuse the shared vocabularies.** `Target` already filters by house, trait,
+  type, chosen/active house, and set-relative selectors — reach for it (or extend
+  it) before inventing a parallel filter. Events (`EventCreaturePlayed`,
+  `EventReap`, `EventCreatureDestroyed`, …) with a subject already drive triggers,
+  lasting reactions (`ForRemainderOfTurn`), and replacements (`Instead`, `Replace`)
+  — extend that spine rather than adding a one-off flag on `CardDefinition`.
+- **Self-reference through existing seams.** "Destroy this Upgrade" is
+  `Destroy{Target: This}` (the destroy path detaches an attached upgrade), not a
+  `DestroyThisUpgrade`. "This creature captures the Æmber" is a replacement of the
+  add-to-pool event, not a `CapturesOpponentAember` bool.
+
+A one-off is a smell: if a name encodes a specific card's whole sentence
+(`ReadyAndBelongToHouseAfterYouPlayCreature`, `PlayTopOfDeckOfChosenHouse`), it is
+hiding reusable pieces. Split it. The cost of a slightly larger card definition is
+worth an engine other cards can build on. When a card genuinely needs something new,
+add the smallest general primitive and one card that uses it — never speculative,
+but always shaped so the next card can reach for it.
+
+**Prefer refactoring cards to improve composability over working around them.**
+When a new card almost fits an existing primitive but not quite, reshape the
+primitive (and re-express the cards already using it) rather than bolting on a
+special case or a parallel one-off. A card whose text shifts slightly to share a
+cleaner mechanic is a better outcome than two near-duplicate effects. The tests
+are what make this safe: they pin each card's behavior (and rendered text), so a
+refactor that breaks something surfaces immediately. Lean on them — refactor
+freely, keep everything green, and let the suite catch regressions instead of
+avoiding the change.
+
+
+## Engine design patterns and constraints
+
+The full design ideal for `internal/engine` — the patterns it is built from, the
+two hard constraints that shape it, and the deliberate tradeoffs (with how to
+handle each) — lives in `internal/engine/AGENTS.md`. Read it before reshaping an
+engine seam. The load-bearing rules that affect how you add anything:
+
+- **Effects are an Interpreter AST.** Every `Effect` renders its own text
+  (`Text()`) and carries itself out (`Resolve()`), so printed card text can never
+  desync from behavior. A new mechanic is almost always a new node in
+  `effect_<mechanic>.go`, not a new branch in the `Game` runtime.
+- **Vary behavior with a Strategy that also renders its own text.** When behavior
+  changes along an axis, model the axis as a small strategy — a `Chooser` (or its
+  optional-capability interfaces `OptionChooser`/`Orderer`), a `Selector`, a
+  `Count`, or a `Condition` — each of which carries both its behavior and its text
+  fragment. Reach for this before adding another `Target` field or a `bool`.
+- **The `Resolver` port is segregated into role interfaces** (`StateReader`,
+  `EconomyResolver`, `CreatureResolver`, `CombatResolver`, `ZoneResolver`,
+  `TurnResolver`, `ChoiceResolver`, `Logger`). A new engine capability is a method
+  added to the role it belongs to, not to a flat list.
+- **New whole-tree operations that are not part of a card's identity** (AI/MCTS
+  scoring, static analysis, serialization) are a standalone type-switch function
+  over `Effect` in one file — the Go-idiomatic Visitor — **never** a third method
+  on every node. `Text()`/`Resolve()` are intrinsic; heuristics are not.
+- **Flat, pointerless, comparable state is non-negotiable.** State holds no
+  closures, so "do X later" is flat enum-tagged data (the lasting registry), and
+  values compared against state (e.g. `Target`) stay comparable — which is why
+  `Target` is a flag struct with paired `x`/`hasX` fields rather than slices or
+  pointers. Do not introduce a pointer/slice/map into `GameState` or a
+  state-compared value type.
+
 
 ## File organization
 

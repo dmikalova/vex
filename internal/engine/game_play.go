@@ -16,8 +16,8 @@ func (g *Game) PlayCreature(player, handIndex int, flankLeft bool) (LocalID, err
 	}
 	def := g.cat.def(id)
 	return g.playCardFromZone(player, id, func() { g.State.Hand[player].removeAt(handIndex) }, playCardOptions{
-		flankLeft:                flankLeft,
-		consumeOffHousePlayGrant: g.usesOffHousePlayGrant(player, def),
+		flankLeft:             flankLeft,
+		consumePlayPermission: g.usesPlayPermission(player, def),
 	})
 }
 
@@ -31,7 +31,7 @@ func (g *Game) PlayArtifact(player, handIndex int) (LocalID, error) {
 	}
 	def := g.cat.def(id)
 	return g.playCardFromZone(player, id, func() { g.State.Hand[player].removeAt(handIndex) }, playCardOptions{
-		consumeOffHousePlayGrant: g.usesOffHousePlayGrant(player, def),
+		consumePlayPermission: g.usesPlayPermission(player, def),
 	})
 }
 
@@ -62,13 +62,13 @@ func (g *Game) chargeToll(player int, action TollAction) error {
 // PlayAction plays an action card: its Æmber bonus and "Play:" abilities resolve,
 // then it goes to the discard pile.
 func (g *Game) PlayAction(player, handIndex int) error {
-	id, err := g.validateHandPlay(player, handIndex, Action)
+	id, err := g.validateHandPlay(player, handIndex, Tactic)
 	if err != nil {
 		return err
 	}
 	def := g.cat.def(id)
 	_, err = g.playCardFromZone(player, id, func() { g.State.Hand[player].removeAt(handIndex) }, playCardOptions{
-		consumeOffHousePlayGrant: g.usesOffHousePlayGrant(player, def),
+		consumePlayPermission: g.usesPlayPermission(player, def),
 	})
 	return err
 }
@@ -121,28 +121,36 @@ func (g *Game) PlayUpgrade(player, handIndex int) (LocalID, error) {
 		return 0, ErrWrongHouse
 	}
 	return g.playCardFromZone(player, id, func() { hand.removeAt(handIndex) }, playCardOptions{
-		consumeOffHousePlayGrant: g.usesOffHousePlayGrant(player, def),
+		consumePlayPermission: g.usesPlayPermission(player, def),
 	})
 }
 
-// PlayTopOfDeckIfHouse reveals the controller's top deck card and, when it
-// belongs to house, plays it from the deck. A non-matching card stays on top.
-func (g *Game) PlayTopOfDeckIfHouse(player int, house House) {
+// TopOfDeck returns the top card of a player's deck without moving it, reporting
+// whether the deck holds a card.
+func (g *Game) TopOfDeck(player int) (LocalID, bool) {
 	deck := &g.State.Deck[player]
 	if deck.Count == 0 {
-		return
+		return 0, false
 	}
-	id := deck.IDs[0]
-	g.logf("%s reveals %s", g.names[player], g.Name(id))
-	if g.cat.def(id).House != house {
-		return
+	return deck.IDs[0], true
+}
+
+// PlayFromDeck plays a specific card from a player's deck, removing it from the
+// deck as it is played (Chaos Portal plays the card it revealed). It does nothing
+// when the card is not in that deck.
+func (g *Game) PlayFromDeck(player int, id LocalID) {
+	deck := &g.State.Deck[player]
+	for i := 0; i < int(deck.Count); i++ {
+		if deck.IDs[i] == id {
+			_, _ = g.playCardFromZone(player, id, func() { deck.removeAt(i) }, playCardOptions{})
+			return
+		}
 	}
-	_, _ = g.playCardFromZone(player, id, func() { deck.removeAt(0) }, playCardOptions{})
 }
 
 type playCardOptions struct {
-	flankLeft                bool
-	consumeOffHousePlayGrant bool
+	flankLeft             bool
+	consumePlayPermission bool
 }
 
 // playCardFromZone resolves a card play after the source zone has identified the
@@ -176,7 +184,7 @@ func (g *Game) playCardFromZone(player int, id LocalID, remove func(), opts play
 		remove()
 		g.playArtifactCard(player, id)
 		return id, nil
-	case Action:
+	case Tactic:
 		g.recordCardPlayed(player, def, opts)
 		remove()
 		g.playActionCard(player, id)
@@ -211,6 +219,7 @@ func (g *Game) playCreatureCard(player int, id LocalID, flankLeft bool) {
 	g.applyAemberBonus(id)
 	g.triggerAbilities(id, TriggerAfterPlay, 0, false)
 	g.fireCreatureEnters(id)
+	g.fireCardPlayed(player, id)
 	g.fireLasting(EventCreaturePlayed, player, id)
 }
 
@@ -222,7 +231,7 @@ func (g *Game) playArtifactCard(player int, id LocalID) {
 	g.logf("%s plays artifact %s", g.names[player], g.Name(id))
 	g.applyAemberBonus(id)
 	g.triggerAbilities(id, TriggerAfterPlay, 0, false)
-	g.fireArtifactPlayed(player, id)
+	g.fireCardPlayed(player, id)
 }
 
 // playActionCard resolves and discards an action already removed from its previous
@@ -231,6 +240,7 @@ func (g *Game) playActionCard(player int, id LocalID) {
 	g.logf("%s plays action %s", g.names[player], g.Name(id))
 	g.applyAemberBonus(id)
 	g.triggerAbilities(id, TriggerAfterPlay, 0, false)
+	g.fireCardPlayed(player, id)
 	g.State.Discard[player].add(id)
 }
 
@@ -265,7 +275,9 @@ func (g *Game) DiscardCardFromHand(owner int, id LocalID) {
 // (sandbox) mode lifts the restriction. Versatile does not apply here — it only
 // relaxes using a card already in play (see usableInActiveHouse).
 func (g *Game) inActiveHouse(def *CardDefinition) bool {
-	return g.manual || g.State.ActiveHouse == HouseNone || def.House == g.State.ActiveHouse
+	return g.manual ||
+		g.State.ActiveHouse == HouseNone ||
+		def.House == g.State.ActiveHouse
 }
 
 // mayPlayFromHand reports whether player may play a hand card now by active-house
@@ -274,29 +286,29 @@ func (g *Game) mayPlayFromHand(player int, def *CardDefinition) bool {
 	if g.inActiveHouse(def) {
 		return true
 	}
-	return g.offHousePlayGrantRemaining(player, def.House) > 0
+	return g.playPermissionRemaining(player, def.House) > 0
 }
 
-// usesOffHousePlayGrant reports whether playing def from hand would spend one of
+// usesPlayPermission reports whether playing def from hand would spend one of
 // player's continuous off-house permissions instead of matching the active house.
-func (g *Game) usesOffHousePlayGrant(player int, def *CardDefinition) bool {
-	return !g.inActiveHouse(def) && g.offHousePlayGrantRemaining(player, def.House) > 0
+func (g *Game) usesPlayPermission(player int, def *CardDefinition) bool {
+	return !g.inActiveHouse(def) && g.playPermissionRemaining(player, def.House) > 0
 }
 
-// offHousePlayGrantRemaining returns how many unspent permissions player controls
+// playPermissionRemaining returns how many unspent permissions player controls
 // for playing a card of house while house is not their active house.
-func (g *Game) offHousePlayGrantRemaining(player int, house House) int {
+func (g *Game) playPermissionRemaining(player int, house House) int {
 	limit := 0
 	if g.State.ActiveHouse != house {
 		for _, id := range g.allInPlay(player) {
-			if grant := g.cat.def(id).OffHousePlayGrant; grant != HouseNone && grant == house {
-				limit++
+			if p := g.cat.def(id).PlayPermission; p.granted() && p.House == house {
+				limit += p.count()
 			}
 		}
 	}
 	used := 0
 	if int(house) < NumHouses {
-		used = g.State.OffHousePlaysUsedThisTurn[player][house]
+		used = g.State.PlayPermissionsUsedThisTurn[player][house]
 	}
 	if used >= limit {
 		return 0
@@ -307,8 +319,8 @@ func (g *Game) offHousePlayGrantRemaining(player int, house House) int {
 // recordCardPlayed updates the per-turn card-play counters, including an off-house
 // grant if the hand play was legal only because of that continuous permission.
 func (g *Game) recordCardPlayed(player int, def *CardDefinition, opts playCardOptions) {
-	if opts.consumeOffHousePlayGrant {
-		g.State.OffHousePlaysUsedThisTurn[player][def.House]++
+	if opts.consumePlayPermission {
+		g.State.PlayPermissionsUsedThisTurn[player][def.House]++
 	}
 	g.State.CardsPlayedThisTurn[player]++
 	g.State.CardsPlayedByHouseThisTurn[player][def.House]++

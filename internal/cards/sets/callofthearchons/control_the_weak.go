@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Control the Weak
 //
 //	House:  Dis
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Common
 //	Æmber:  1
 //
@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var ControlTheWeak = card.New(
 	"Control the Weak",
 	card.House.Dis,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 55),
 	card.WithAemberBonus(1),

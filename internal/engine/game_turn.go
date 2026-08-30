@@ -33,7 +33,7 @@ func (g *Game) BeginTurn(player int) {
 	g.State.Turn++
 	g.State.CardsPlayedThisTurn[player] = 0
 	g.State.CardsPlayedByHouseThisTurn[player] = [NumHouses]int{}
-	g.State.OffHousePlaysUsedThisTurn[player] = [NumHouses]int{}
+	g.State.PlayPermissionsUsedThisTurn[player] = [NumHouses]int{}
 	for p := 0; p < 2; p++ {
 		for _, id := range g.State.Battleline[p].slice() {
 			g.State.Cards[id].TimesUsedThisTurn = 0
@@ -71,7 +71,9 @@ func (g *Game) ChooseHouse(player int, house House) error {
 	}
 	// A forced house (Control the Weak) only binds when the player actually has it;
 	// if they cannot choose it, cannot overrides must and any house is allowed.
-	if fh := g.State.ForcedHouse[player]; fh != HouseNone && house != fh && g.playerHasHouse(player, fh) {
+	if fh := g.State.ForcedHouse[player]; fh != HouseNone &&
+		house != fh &&
+		g.playerHasHouse(player, fh) {
 		return ErrMustChooseForcedHouse
 	}
 	g.State.ActiveHouse = house
@@ -136,7 +138,9 @@ func (g *Game) drawStep(player int) {
 	g.drawTo(player, target)
 	// The reduction blocked a draw only when it left the player below a full hand
 	// with cards still available to draw.
-	if chains > 0 && int(g.State.Hand[player].Count) < HandSize && g.canDraw(player) {
+	if chains > 0 &&
+		int(g.State.Hand[player].Count) < HandSize &&
+		g.canDraw(player) {
 		g.State.Chains[player]--
 		g.logf("%s sheds a chain (%d remaining)", g.names[player], g.State.Chains[player])
 	}

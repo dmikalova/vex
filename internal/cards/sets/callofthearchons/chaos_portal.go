@@ -19,6 +19,14 @@ var ChaosPortal = card.New(
 	card.WithTraits("Location"),
 	card.WithAbility(
 		card.Trigger.Action, card.ChooseHouseThen{
-			Then: card.PlayTopOfDeckOfChosenHouse{},
+			Then: card.Sequence{
+				Effects: []card.Effect{
+					card.Sentence{Effect: card.RevealTopOfDeck{}},
+					card.Conditional{
+						Cond: card.ItIsOfHouse{House: card.TheChosenHouse},
+						Then: card.PlayRevealedCard{},
+					},
+				},
+			},
 		}),
 )

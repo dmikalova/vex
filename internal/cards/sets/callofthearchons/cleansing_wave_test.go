@@ -10,7 +10,7 @@ import (
 // Cleansing Wave
 //
 //	House:  Sanctum
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Common
 //
 //	Play: Heal 1 damage from each creature, and for each creature healed this way, gain 1 Æmber.

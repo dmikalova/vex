@@ -22,10 +22,11 @@ func (g *game) Render() app.UI {
 		app.Div().Class("board-area").Body(g.boardArea()...),
 		app.Div().Class("sidebar").Body(
 			g.brandBar(),
+			g.turnHud(),
 			g.logPanel(),
-			g.detailPanel(),
 			g.controls(),
 		),
+		app.If(g.hoverID != 0 || g.hoverDef != nil, func() app.UI { return g.hoverPreview() }),
 		app.If(g.zonesPlayer >= 0, func() app.UI { return g.zonesOverlay() }),
 		app.If(g.pickerOpen, func() app.UI { return g.cardPicker() }),
 		app.If(g.phase == phaseOver, func() app.UI { return g.overBanner() }),
@@ -44,6 +45,10 @@ func (g *game) brandBar() app.UI {
 			return app.Span().Class("badge-error").Text(g.status)
 		}),
 		app.Div().Class("spacer"),
+		app.Button().Class("btn-nav").Text("Undo").
+			Disabled(!g.canUndo()).OnClick(g.undoAction),
+		app.Button().Class("btn-nav").Text("Redo").
+			Disabled(!g.canRedo()).OnClick(g.redoAction),
 		app.Button().Class(cx("btn-nav", ifCls(g.g.Manual(), "btn-nav-on"))).
 			Text("Manual").
 			Disabled(g.busy || g.choosing || g.choosingOption).
@@ -81,63 +86,229 @@ func (g *game) boardArea() []app.UI {
 	}
 }
 
+// turnHud is a slim status line: the turn number, whose turn it is, the current
+// step, and the active house.
+func (g *game) turnHud() app.UI {
+	p := g.active()
+	steps := map[phase]string{
+		phaseHouse:       "Choose a house",
+		phaseMain:        "Play, use, discard",
+		phaseFlank:       "Placing a creature",
+		phaseFightTarget: "Choosing a fight target",
+		phaseOver:        "Game over",
+	}
+	items := []app.UI{
+		app.Span().Class("hud-turn").Text(fmt.Sprintf("Turn %d", g.g.State.Turn)),
+		app.Span().Class("hud-player").Text(g.g.PlayerName(p)),
+		app.Span().Class("hud-step").Text(steps[g.phase]),
+	}
+	if h := g.g.State.ActiveHouse; h != engine.HouseNone {
+		items = append(items, app.Span().Class(cx("hud-house", houseAccent(h))).Body(
+			houseIcon(h, "icon-inline"), app.Text(h.String()),
+		))
+	}
+	return app.Div().Class("hud").Body(items...)
+}
+
 func (g *game) scorePill(player int) app.UI {
 	active := player == g.active()
 	detail := []app.UI{
-		app.Span().Class("stat-seg").Body(
-			app.Text(strconv.Itoa(g.g.Aember(player))),
-			icon("aember", "icon-stat"),
-		),
+		app.Text(" • "),
+		g.aemberSeg(player),
 		app.Text(" • "),
 		g.keysDisplay(player),
+		app.Text(" • "),
+		g.keyCostSeg(player),
 	}
-	if active && g.g.State.ActiveHouse != engine.HouseNone {
-		h := g.g.State.ActiveHouse
-		detail = append(detail,
-			app.Text(" • "),
-			houseIcon(h, "icon-inline"),
-			app.Span().Class(cx("score-house", houseAccent(h))).Text(h.String()),
-		)
+	if houses := g.deckHouses[player]; len(houses) > 0 {
+		detail = append(detail, app.Text(" • "), g.houseStrip(player, houses))
+	}
+	if g.g.State.Chains[player] > 0 || g.g.Manual() {
+		detail = append(detail, app.Text(" • "), g.chainsSeg(player))
 	}
 	zones := fmt.Sprintf("deck %d • discard %d • archives %d • purge %d",
 		len(g.g.Deck(player)), len(g.g.Discard(player)),
 		len(g.g.Archives(player)), len(g.g.Purge(player)))
 	cls := cx("score-pill", ifCls(active, "score-pill-active"), ifCls(!active, "score-pill-idle"))
 	return app.Div().Class(cls).
-		DataSet("player", strconv.Itoa(player)).
-		OnClick(g.onScorePillClick).
 		Body(
 			app.Span().Class("score-name").Text(g.g.PlayerName(player)),
 			app.Span().Class("score-detail").Body(detail...),
-			app.Span().Class("score-zones").Text(zones),
+			// Only the zone counts open the viewer, so misclicking a key or stepper
+			// in the detail does not.
+			app.Span().Class("score-zones").
+				DataSet("player", strconv.Itoa(player)).
+				OnClick(g.onScorePillClick).
+				Text(zones),
 		)
 }
 
+// keyCostSeg shows the Æmber a player must spend to forge their next key.
+func (g *game) keyCostSeg(player int) app.UI {
+	return app.Span().Class("stat-seg").Body(
+		app.Text("forge "),
+		app.Text(strconv.Itoa(g.g.CurrentKeyCost(player))),
+		icon("aember", "icon-stat"),
+	)
+}
+
+// hoverPreview renders the hovered card enlarged: a live board/hand card over the
+// log, or a printed card (from a log mention) just left of the log.
+func (g *game) hoverPreview() app.UI {
+	var card app.UI
+	switch {
+	case g.hoverID != 0:
+		def := g.g.Def(g.hoverID)
+		card = &cardView{
+			Title:    def.Name,
+			HouseCls: houseClasses(def.House),
+			Emblem:   houseIconName(def.House),
+			TypeIcon: typeIconName(def.Type),
+			Stat:     g.statLine(g.hoverID),
+			Rules:    g.faceRules(g.hoverID),
+			Kind:     string(def.Type),
+			Stunned:  g.g.Stunned(g.hoverID),
+		}
+	case g.hoverDef != nil:
+		def := g.hoverDef
+		card = &cardView{
+			Title:    def.Name,
+			HouseCls: houseClasses(def.House),
+			Emblem:   houseIconName(def.House),
+			TypeIcon: typeIconName(def.Type),
+			Stat:     handStat(def),
+			Rules:    engine.RenderCardRules(def),
+			Kind:     string(def.Type),
+		}
+	default:
+		return app.Div()
+	}
+	pos := "card-preview--board"
+	if g.hoverInLog {
+		pos = "card-preview--log"
+	}
+	return app.Div().Class(cx("card-preview", pos)).Body(card)
+}
+
+// houseStrip shows the player's three deck houses in their score pill. Once that
+// player has chosen an active house, the other houses are lowlighted.
+func (g *game) houseStrip(player int, houses []engine.House) app.UI {
+	active := engine.HouseNone
+	if player == g.active() {
+		active = g.g.State.ActiveHouse
+	}
+	// In sandbox mode the active player can switch their active house by clicking.
+	clickable := g.g.Manual() && player == g.active()
+	items := make([]app.UI, 0, len(houses))
+	for _, h := range houses {
+		dim := active != engine.HouseNone && h != active
+		cls := cx("score-house", houseAccent(h), ifCls(dim, "score-house-dim"))
+		if clickable {
+			items = append(items, app.Button().Class(cx(cls, "score-house-btn")).
+				OnClick(g.manualSetHouse(h)).
+				Body(houseIcon(h, "icon-inline"), app.Text(h.String())))
+		} else {
+			items = append(items, app.Span().Class(cls).
+				Body(houseIcon(h, "icon-inline"), app.Text(h.String())))
+		}
+	}
+	return app.Span().Class("score-houses").Body(items...)
+}
+
+// aemberSeg shows a player's Æmber; in sandbox mode it flanks the count with
+// minus/plus buttons that adjust it (usable on both players from one seat).
+func (g *game) aemberSeg(player int) app.UI {
+	count := app.Text(strconv.Itoa(g.g.Aember(player)))
+	ic := icon("aember", "icon-stat")
+	if !g.g.Manual() {
+		return app.Span().Class("stat-seg").Body(count, ic)
+	}
+	return app.Span().Class("stat-seg amber-manual").Body(
+		g.stepBtn(g.manualAmberDelta(player, -1), false),
+		count, ic,
+		g.stepBtn(g.manualAmberDelta(player, 1), true),
+	)
+}
+
+// chainsSeg shows a player's chains; in sandbox mode it always shows (even at 0)
+// with minus/plus steppers.
+func (g *game) chainsSeg(player int) app.UI {
+	count := app.Text(strconv.Itoa(g.g.State.Chains[player]))
+	ic := icon("chains", "icon-stat")
+	if !g.g.Manual() {
+		return app.Span().Class("stat-seg").Body(count, ic)
+	}
+	return app.Span().Class("stat-seg amber-manual").Body(
+		g.stepBtn(g.manualChainsDelta(player, -1), false),
+		count, ic,
+		g.stepBtn(g.manualChainsDelta(player, 1), true),
+	)
+}
+
+// stepBtn is a green plus or red minus stepper for the sandbox Æmber/chains
+// adjusters.
+func (g *game) stepBtn(onClick app.EventHandler, plus bool) app.UI {
+	label, cls := "−", "amber-btn amber-btn-minus"
+	if plus {
+		label, cls = "+", "amber-btn amber-btn-plus"
+	}
+	return app.Button().Class(cls).Text(label).OnClick(onClick)
+}
+
+// keyForgePanel is the sandbox key-forge picker, shown inline in the controls
+// space: pick a colour for the new key, or cancel. Once a choice is made
+// forgingKey resets, so controls() falls back to the previous buttons on its own.
+func (g *game) keyForgePanel() app.UI {
+	player := g.forgingKey
+	remaining := g.remainingKeyColors(player)
+	return app.Div().Class("btn-col").Body(
+		app.Div().Class("section-title").Text("Forge a key for "+g.g.PlayerName(player)),
+		app.Range(remaining).Slice(func(i int) app.UI {
+			c := remaining[i]
+			return app.Button().Class("house-btn").OnClick(g.pickForgeColor(c)).Body(
+				icon(keyColorIconName(c), "icon-inline"), app.Text(c.String()),
+			)
+		}),
+		btn("Cancel", g.cancelForgeKey, "btn-secondary"),
+	)
+}
+
 // keysDisplay shows a player's three key slots: a coloured key icon for each key
-// forged (in forge order), and a dimmed key for each still to forge.
+// forged (in forge order), and a dimmed key for each still to forge. In sandbox
+// mode each slot is a button that forges or unforges that key.
 func (g *game) keysDisplay(player int) app.UI {
 	colors := g.g.KeyColors(player)
+	manual := g.g.Manual()
 	slots := make([]app.UI, 0, engine.KeysToWin)
 	for _, c := range colors {
 		// A forged key with no recorded colour (e.g. a legacy snapshot) still counts,
 		// so show the neutral key rather than a broken image from an empty icon name.
-		if name := keyColorIconName(c); name != "" {
-			slots = append(slots, icon(name, "icon-stat"))
-		} else {
-			slots = append(slots, icon("key", "icon-stat"))
+		name := keyColorIconName(c)
+		if name == "" {
+			name = "key"
 		}
+		slots = append(slots, g.keySlot(icon(name, "icon-stat"), manual, g.manualUnforgeKey(player)))
 	}
 	for i := len(colors); i < engine.KeysToWin; i++ {
-		slots = append(slots, icon("key", "icon-stat", "key-unforged"))
+		slots = append(slots, g.keySlot(icon("key", "icon-stat", "key-unforged"), manual, g.manualForgeKey(player)))
 	}
 	return app.Span().Class("score-keys").Body(slots...)
+}
+
+// keySlot renders a key icon as a clickable forge/unforge button in sandbox mode,
+// or a plain icon otherwise.
+func (g *game) keySlot(ic app.UI, manual bool, onClick app.EventHandler) app.UI {
+	if !manual {
+		return ic
+	}
+	return app.Button().Class("key-btn").OnClick(onClick).Body(ic)
 }
 
 func (g *game) renderRow(label string, ids []engine.LocalID, boardKind selKind) app.UI {
 	// The row always reserves card height (board-row--fill) so playing or losing a
 	// card does not resize the row and shift the rest of the board.
 	return app.Div().Class("board-row board-row--fill").Body(
-		app.Div().Class("row-label").Text(label),
+		app.Div().Class("row-label").Text(fmt.Sprintf("%s (%d)", label, len(ids))),
 		app.If(len(ids) == 0, func() app.UI {
 			return app.Div().Class("row-empty").Text("—")
 		}).Else(func() app.UI {
@@ -165,6 +336,8 @@ func (g *game) renderCard(id engine.LocalID, boardKind selKind) app.UI {
 		Targetable: targetable,
 		Dimmed:     dimmed,
 		OnActivate: activate,
+		OnHover:    g.hoverCard,
+		OnHoverOut: g.hoverClear,
 	}
 }
 
@@ -227,7 +400,7 @@ func (g *game) renderHand() app.UI {
 	ids := g.sortedHand(p)
 	cls := "board-row board-row--fill"
 	return app.Div().Class(cls).Body(
-		app.Div().Class("row-label").Text(g.g.PlayerName(p)+"'s hand"),
+		app.Div().Class("row-label").Text(fmt.Sprintf("%s (%d)", g.g.PlayerName(p)+"'s hand", len(ids))),
 		app.Div().Class("card-strip").Body(
 			app.Range(ids).Slice(func(i int) app.UI { return g.renderHandCard(ids[i]) }),
 		),
@@ -281,26 +454,48 @@ func (g *game) renderHandCard(id engine.LocalID) app.UI {
 		Draggable:   draggable,
 		OnDragStart: g.startHandDrag,
 		OnDragEnd:   g.endHandDrag,
+		OnHover:     g.hoverCard,
+		OnHoverOut:  g.hoverClear,
 	}
 }
 
 // ---- sidebar controls ----
 
+// promptSourceHeader names the card driving the current prompt, shown above the
+// prompt's buttons so the player knows which card they are resolving.
+func (g *game) promptSourceHeader() app.UI {
+	return app.If(g.promptSource != "", func() app.UI {
+		return app.Div().Class("prompt-source").Text(g.promptSource)
+	})
+}
+
 // controls is the bottom of the sidebar: the contextual controls (house picker or
 // action bar) plus End turn. House selection has no End turn — a house must be
 // chosen first.
 func (g *game) controls() app.UI {
+	// A pending sandbox key forge takes over the controls until a colour is picked
+	// or cancelled; once forgingKey resets, the previous buttons return on their own.
+	if g.forgingKey >= 0 {
+		return app.Div().Class("controls").Body(g.keyForgePanel())
+	}
 	// A labeled option prompt (e.g. "take archives?") shows its choices as buttons.
 	if g.choosingOption {
-		return app.Div().Class("controls").Body(g.optionChooser())
+		return app.Div().Class("controls").Body(g.promptSourceHeader(), g.optionChooser())
 	}
 	// While an engine chooser waits, the controls become the prompt itself: a
 	// green call to action to click one of the highlighted cards. The choice is
 	// mandatory, so there is no cancel.
 	if g.choosing {
-		return app.Div().Class("controls").Body(
+		body := []app.UI{
+			g.promptSourceHeader(),
 			app.Div().Class("prompt").Text(g.chooserPrompt),
-		)
+		}
+		// A mandatory chooser has no cancel; in sandbox mode add one so the player
+		// can escape a prompt with no clickable candidate.
+		if g.g.Manual() {
+			body = append(body, btn("Cancel", g.cancelChooser, "btn-secondary"))
+		}
+		return app.Div().Class("controls").Body(body...)
 	}
 	if g.phase == phaseHouse {
 		if g.g.Manual() {
@@ -381,9 +576,6 @@ func (g *game) cardPicker() app.UI {
 	for _, d := range g.allDefs {
 		if q == "" || strings.Contains(strings.ToLower(d.Name), q) {
 			matches = append(matches, d)
-			if len(matches) >= 50 {
-				break
-			}
 		}
 	}
 	return app.Div().Class("over-backdrop").OnClick(g.closePicker).Body(
@@ -574,51 +766,68 @@ func (g *game) artifactActions() app.UI {
 	return app.Div().Class("btn-col").Body(items...)
 }
 
-func (g *game) detailPanel() app.UI {
-	body := []app.UI{app.Div().Class("panel-label").Text("Card detail")}
-	switch {
-	case g.detailDef != nil:
-		// A card referenced from the log: its printed text, without live state.
-		body = append(body, app.Div().Class("detail-text").Text(engine.RenderCardText(g.detailDef)))
-	case g.hasSel:
-		body = append(body, app.Div().Class("detail-text").Text(engine.RenderCardText(g.g.Def(g.sel))))
-		if a := g.g.AmberOn(g.sel); a > 0 {
-			body = append(body, app.Div().Class("detail-amber").Body(
-				app.Text("Captured "),
-				icon("aember", "icon-inline"),
-				app.Text(" "+strconv.Itoa(a)),
-			))
-		}
-		if g.g.Stunned(g.sel) {
-			body = append(body, app.Div().Class("detail-status").Body(
-				icon("stun", "icon-inline"),
-				app.Text(" Stunned"),
-			))
-		}
-		// Show attached upgrades so their effect is visible from the creature they
-		// are on (upgrades are not separately clickable).
-		for _, up := range g.g.Upgrades(g.sel) {
-			updef := g.g.Def(up)
-			body = append(body,
-				app.Div().Class("detail-sub").Text("↳ "+updef.Name),
-				app.Div().Class("detail-text").Text(engine.RenderCardText(updef)),
-			)
-		}
-	default:
-		body = append(body, app.Div().Class("detail-empty").Text("No card selected."))
-	}
-	return app.Div().Class("details").Body(body...)
-}
-
 func (g *game) logPanel() app.UI {
+	groups := g.logGroupViews()
 	return app.Div().Class("log").Body(
 		app.Div().Class("panel-label").Text("Log"),
 		app.Div().Class("log-list").ID("gamelog").Body(
-			app.Range(g.g.Log).Slice(func(i int) app.UI {
-				return app.Div().Body(g.logSegments(g.g.Log[i])...)
+			app.Range(groups).Slice(func(i int) app.UI {
+				grp := groups[i]
+				cls := cx("log-group",
+					ifCls(grp.player == 0, "log-group--p0"),
+					ifCls(grp.player == 1, "log-group--p1"),
+					ifCls(grp.newest, "log-group--new"),
+				)
+				return app.Div().Class(cls).Body(
+					app.Range(grp.lines).Slice(func(j int) app.UI {
+						return app.Div().Class("log-line").Body(g.logSegments(grp.lines[j])...)
+					}),
+				)
 			}),
 		),
 	)
+}
+
+// logGroupView is one rendered log bubble: the lines of a single root action, the
+// player whose turn produced it (-1 for setup), and whether it is the newest.
+type logGroupView struct {
+	lines  []string
+	player int
+	newest bool
+}
+
+// logGroupViews splits the flat log into per-action bubbles using logGroups; any
+// lines before the first action form a leading setup bubble.
+func (g *game) logGroupViews() []logGroupView {
+	log := g.g.Log
+	var out []logGroupView
+	first := len(log)
+	if len(g.logGroups) > 0 && g.logGroups[0].start < first {
+		first = g.logGroups[0].start
+	}
+	if first > 0 {
+		out = append(out, logGroupView{lines: log[:first], player: -1})
+	}
+	for i, m := range g.logGroups {
+		start, end := m.start, len(log)
+		if i+1 < len(g.logGroups) {
+			end = g.logGroups[i+1].start
+		}
+		if start < 0 {
+			start = 0
+		}
+		if end > len(log) {
+			end = len(log)
+		}
+		if start >= end {
+			continue
+		}
+		out = append(out, logGroupView{lines: log[start:end], player: m.player})
+	}
+	if len(out) > 0 {
+		out[len(out)-1].newest = true
+	}
+	return out
 }
 
 // logSegments splits a log line into plain text and clickable spans for the card
@@ -639,7 +848,8 @@ func (g *game) logSegments(line string) []app.UI {
 			out = append(out, app.Span().
 				Class("log-card").
 				DataSet("card", name).
-				OnClick(g.onLogCardClick).
+				OnMouseEnter(g.onLogCardHover).
+				OnMouseLeave(g.onCardHoverOut).
 				Text(name))
 			i += len(name)
 			continue
@@ -768,9 +978,9 @@ func (g *game) statLine(id engine.LocalID) []app.UI {
 	if a := g.g.AmberOn(id); a > 0 {
 		segs = append(segs, statSeg(a, "aember"))
 	}
-	// Stun shows as a token on the face (see cardView); exhaustion stays a tag here.
+	// Stun shows as a token on the face (see cardView); exhaustion shows as an icon.
 	if g.g.Exhausted(id) {
-		segs = append(segs, app.Span().Class("stat-tag").Text("exhausted"))
+		segs = append(segs, icon("exhausted", "icon-stat"))
 	}
 	return segs
 }

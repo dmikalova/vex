@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Fogbank
 //
 //	House:  Untamed
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  1
 //
@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var Fogbank = card.New(
 	"Fogbank",
 	card.House.Untamed,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 110),
 	card.Provenance(card.CotA, 322),

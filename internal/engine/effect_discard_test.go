@@ -8,7 +8,7 @@ func TestMoveFromDiscardToHand(t *testing.T) {
 	g.State.Discard[0].add(c)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := MoveFromDiscard{Destination: ToHand}
+	e := PutFromDiscard{Destination: ToHand}
 	if e.Text() != "put a card from your discard pile into your hand" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -32,13 +32,13 @@ func TestMoveFromDiscardAll(t *testing.T) {
 	dis1 := g.Register(NewCard("d1", Dis, Creature, Common, WithPower(2)), 0)
 	dis2 := g.Register(NewCard("d2", Dis, Creature, Common, WithPower(2)), 0)
 	sanc := g.Register(NewCard("s", Sanctum, Creature, Common, WithPower(2)), 0)
-	act := g.Register(NewCard("a", Dis, Action, Common), 0) // Dis but not a creature
+	act := g.Register(NewCard("a", Dis, Tactic, Common), 0) // Dis but not a creature
 	for _, id := range []LocalID{dis1, dis2, sanc, act} {
 		g.State.Discard[0].add(id)
 	}
 	ctx := &EffectContext{Resolver: g, Controller: 0, ChosenHouse: Dis}
 
-	e := MoveFromDiscard{Type: Creature, Destination: ToHand, All: true, OfChosenHouse: true}
+	e := PutFromDiscard{Type: Creature, Destination: ToHand, All: true, OfChosenHouse: true}
 	if e.Text() != "put each creature of the chosen house from your discard pile into your hand" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -60,13 +60,13 @@ func TestMoveFromDiscardAll(t *testing.T) {
 
 func TestReturnCreatureFromDiscardToDeck(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	act := g.Register(NewCard("act", Brobnar, Action, Common), 0) // non-creature
+	act := g.Register(NewCard("act", Brobnar, Tactic, Common), 0) // non-creature
 	g.State.Discard[0].add(act)
 	crea := g.Register(testCreature("crea", 3), 0)
 	g.State.Discard[0].add(crea)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := MoveFromDiscard{Type: Creature, Destination: ToTopOfDeck}
+	e := PutFromDiscard{Type: Creature, Destination: ToTopOfDeck}
 	if e.Text() != "put a creature from your discard pile on top of your deck" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -84,7 +84,7 @@ func TestDiscardHand(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	// Opponent (player 1) hand: a Mars creature, a Mars action, a Sanctum creature.
 	marsCreature := g.AddToHand(NewCard("mc", Mars, Creature, Common, WithPower(2)), 1)
-	marsAction := g.AddToHand(NewCard("ma", Mars, Action, Common), 1)
+	marsAction := g.AddToHand(NewCard("ma", Mars, Tactic, Common), 1)
 	sanctumCreature := g.AddToHand(NewCard("sc", Sanctum, Creature, Common, WithPower(2)), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0, ChosenHouse: Mars}
 

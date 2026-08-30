@@ -10,7 +10,7 @@ import (
 // Hypnotic Command
 //
 //	House:  Mars
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //
 //	Play: For each friendly Mars creature, an enemy creature captures 1 Æmber from their own side.

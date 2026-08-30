@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Hidden Stash
 //
 //	House:  Shadows
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  1
 //
@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var HiddenStash = card.New(
 	"Hidden Stash",
 	card.House.Shadows,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 271),
 	card.WithAemberBonus(1),

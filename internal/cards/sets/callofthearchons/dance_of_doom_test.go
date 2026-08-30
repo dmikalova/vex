@@ -10,7 +10,7 @@ import (
 // Dance of Doom
 //
 //	House:  Dis
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //
 //	Play: Choose a creature - destroy each creature with the same power as the chosen creature.

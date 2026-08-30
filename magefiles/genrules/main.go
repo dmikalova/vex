@@ -111,7 +111,9 @@ func harvest(root string, byKey map[string][]entry) error {
 		if err != nil {
 			return err
 		}
-		if d.IsDir() || filepath.Ext(path) != ".go" || isTestFile(path) {
+		if d.IsDir() ||
+			filepath.Ext(path) != ".go" ||
+			isTestFile(path) {
 			return nil
 		}
 		fset := token.NewFileSet()

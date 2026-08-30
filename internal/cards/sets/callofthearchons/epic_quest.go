@@ -26,7 +26,8 @@ var EpicQuest = card.New(
 		}),
 	card.WithAbility(
 		card.Trigger.Action, card.Conditional{
-			Cond: card.CardsPlayedOfHouseAtLeast{
+			Cond: card.CardsPlayed{
+				Player: card.Controller,
 				House:  card.House.Sanctum,
 				Amount: 7,
 			},

@@ -36,6 +36,9 @@ const (
 	// TargetEachInPlay selects every card in play — every creature and artifact,
 	// both players' — including the source card itself.
 	TargetEachInPlay
+	// TargetEachFriendlyInPlay selects the controller's cards in play — their
+	// creatures and artifacts.
+	TargetEachFriendlyInPlay
 	// TargetEachOtherFriendlyCreature selects the controller's creatures except
 	// the source card.
 	TargetEachOtherFriendlyCreature
@@ -54,6 +57,11 @@ const (
 	// TargetChosenArtifact selects a single artifact the controller chooses from
 	// all artifacts in play (either player's).
 	TargetChosenArtifact
+	// TargetTheOtherCreature selects the creature in context (ctx.It) — the one a
+	// preceding effect chose as "another" creature — and renders it as "the other
+	// creature". Transposition Sandals swaps with another creature, then uses the
+	// other creature.
+	TargetTheOtherCreature
 )
 
 // Target describes which cards an effect applies to. Kind picks the base set;
@@ -73,6 +81,8 @@ type Target struct {
 	onFlank     bool
 	notOnFlank  bool
 	neighboring bool
+	// other excludes the source card from the selected set ("other" cards).
+	other bool
 	// selector is a set-relative refinement applied after the per-card filters. It
 	// can compare the candidates to each other (e.g. "except the most powerful")
 	// and contributes a clause to the printed phrase. nil for targets that select
@@ -165,6 +175,13 @@ func (t Target) Neighboring() Target {
 	return t
 }
 
+// Other excludes the source card from the selected set, rendering the "other"
+// qualifier ("each other friendly card").
+func (t Target) Other() Target {
+	t.other = true
+	return t
+}
+
 // Selector refines the target with a set-relative rule applied after the per-card
 // filters, e.g. Target{...}.Selector(ExceptMostPowerful). The Selector both picks
 // the final subset and describes itself for the printed phrase, so a niche
@@ -190,10 +207,15 @@ func (t Target) Text() string {
 		return SelfName
 	case TargetTriggeringCreature:
 		return "it"
+	case TargetTheOtherCreature:
+		return "the other creature"
 	}
 	noun := "creature"
 	if t.Kind == TargetEachArtifact || t.Kind == TargetChosenArtifact {
 		noun = "artifact"
+	}
+	if t.Kind == TargetEachFriendlyInPlay {
+		noun = "card"
 	}
 	if t.exceptHouse != HouseNone {
 		noun = "non-" + t.exceptHouse.String() + " " + noun
@@ -227,6 +249,12 @@ func (t Target) Text() string {
 		phrase = "each " + noun
 	case TargetEachFriendlyCreature:
 		phrase = "each friendly " + noun
+	case TargetEachFriendlyInPlay:
+		if t.other {
+			phrase = "each other friendly " + noun
+		} else {
+			phrase = "each friendly " + noun
+		}
 	case TargetEachEnemyCreature:
 		phrase = "each enemy " + noun
 	case TargetEachOtherFriendlyCreature:
@@ -347,7 +375,18 @@ func (t Target) isChosen() bool {
 // filter narrows ids to those matching the target's trait, power, damaged, and
 // flank filters.
 func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
-	if t.trait == "" && t.exceptTrait == "" && t.house == HouseNone && t.exceptHouse == HouseNone && !t.chosenHouse && !t.hasMaxPower && !t.damaged && !t.stunned && !t.onFlank && !t.notOnFlank && !t.neighboring {
+	if t.trait == "" &&
+		t.exceptTrait == "" &&
+		t.house == HouseNone &&
+		t.exceptHouse == HouseNone &&
+		!t.chosenHouse &&
+		!t.hasMaxPower &&
+		!t.damaged &&
+		!t.stunned &&
+		!t.onFlank &&
+		!t.notOnFlank &&
+		!t.neighboring &&
+		!t.other {
 		return ids
 	}
 	out := make([]LocalID, 0, len(ids))
@@ -385,6 +424,9 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 		if t.neighboring && !isNeighbor(ctx, ctx.Source, id) {
 			continue
 		}
+		if t.other && id == ctx.Source {
+			continue
+		}
 		out = append(out, id)
 	}
 	return out
@@ -394,7 +436,8 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 // leftmost or rightmost creature).
 func onFlank(ctx *EffectContext, id LocalID) bool {
 	bl := battlelineContaining(ctx, id)
-	return len(bl) > 0 && (bl[0] == id || bl[len(bl)-1] == id)
+	return len(bl) > 0 &&
+		(bl[0] == id || bl[len(bl)-1] == id)
 }
 
 // isNeighbor reports whether id is one of src's battleline neighbors.
@@ -450,7 +493,7 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 	switch t.Kind {
 	case TargetThisCreature:
 		return []LocalID{ctx.Source}
-	case TargetTriggeringCreature:
+	case TargetTriggeringCreature, TargetTheOtherCreature:
 		if ctx.HasIt {
 			return []LocalID{ctx.It}
 		}
@@ -463,6 +506,8 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 		ids = append(ids, ctx.Resolver.Artifacts(ctx.Controller)...)
 		ids = append(ids, ctx.Resolver.Artifacts(ctx.Opponent())...)
 		return ids
+	case TargetEachFriendlyInPlay:
+		return append(ctx.Resolver.Battleline(ctx.Controller), ctx.Resolver.Artifacts(ctx.Controller)...)
 	case TargetEachCreature, TargetChosenCreature:
 		return append(ctx.Resolver.Battleline(ctx.Controller), ctx.Resolver.Battleline(ctx.Opponent())...)
 	case TargetEachFriendlyCreature, TargetChosenFriendlyCreature:

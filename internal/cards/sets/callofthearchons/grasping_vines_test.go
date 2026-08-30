@@ -10,7 +10,7 @@ import (
 // Grasping Vines
 //
 //	House:  Untamed
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  1
 //

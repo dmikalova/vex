@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // EMP Blast
 //
 //	House:  Mars
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  1
 //
@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var EMPBlast = card.New(
 	"EMP Blast",
 	card.House.Mars,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 163),
 	card.WithAemberBonus(1),

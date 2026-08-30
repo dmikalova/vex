@@ -10,7 +10,7 @@ import (
 // Curiosity
 //
 //	House:  Untamed
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //

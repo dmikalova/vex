@@ -127,15 +127,15 @@ func TestCanUseErrors(t *testing.T) {
 	}
 }
 
-func TestAfterArtifactPlayedTrigger(t *testing.T) {
+func TestAfterCardPlayedTrigger(t *testing.T) {
 	g := started(t)
-	g.AddToBattleline(testCreature("watcher", 3, WithAbility(TriggerAfterArtifactPlayed, GainAember{Player: Controller, Amount: 1})), 0)
+	g.AddToBattleline(testCreature("watcher", 3, WithAbility(TriggerAfterCardPlayed, GainAember{Player: Controller, Amount: 1})), 0)
 	g.AddToHand(NewCard("relic", Brobnar, Artifact, Common), 0)
 	if _, err := g.PlayArtifact(0, 0); err != nil {
 		t.Fatalf("PlayArtifact: %v", err)
 	}
 	if g.Aember(0) != 1 {
-		t.Errorf("aember = %d, want 1 (watcher triggered on artifact play)", g.Aember(0))
+		t.Errorf("aember = %d, want 1 (watcher triggered on card play)", g.Aember(0))
 	}
 }
 

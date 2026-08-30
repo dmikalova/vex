@@ -19,7 +19,7 @@ var BiomatrixBackup = card.New(
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{
-			{Trigger: card.Trigger.Destroyed, Effect: card.MoveFromPlay{
+			{Trigger: card.Trigger.Destroyed, Effect: card.PutFromPlay{
 				Target:      card.Target.This,
 				Destination: card.To.Archives,
 			}},

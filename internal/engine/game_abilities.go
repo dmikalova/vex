@@ -12,7 +12,10 @@ package engine
 // Versatile only relaxes using: a Versatile card is still played from hand only
 // when its own house is active.
 func (g *Game) usableInActiveHouse(id LocalID) bool {
-	return g.manual || g.State.ActiveHouse == HouseNone || g.House(id) == g.State.ActiveHouse || g.hasKeyword(id, Versatile)
+	return g.manual ||
+		g.State.ActiveHouse == HouseNone ||
+		g.House(id) == g.State.ActiveHouse ||
+		g.hasKeyword(id, Versatile)
 }
 
 // usable runs the checks shared by reaping, fighting, and using an action
@@ -150,7 +153,9 @@ func (g *Game) Fight(player int, attacker, defender LocalID) error {
 			return err
 		}
 	}
-	if g.cat.def(defender).Type != Creature || g.controller(defender) == player || !g.inPlay(defender) {
+	if g.cat.def(defender).Type != Creature ||
+		g.controller(defender) == player ||
+		!g.inPlay(defender) {
 		return ErrNoTarget
 	}
 	if fr := g.cat.def(attacker).FightRestriction; fr != (Target{}) &&
@@ -262,6 +267,7 @@ func (g *Game) fireUpgradePlay(host, upgrade LocalID, up *CardDefinition) {
 		ab.Effect.Resolve(&EffectContext{
 			Resolver:   g,
 			Source:     host,
+			Upgrade:    upgrade,
 			Controller: g.owner(upgrade),
 		})
 	}
@@ -283,14 +289,16 @@ func (g *Game) fireCreatureEnters(entered LocalID) {
 	}
 }
 
-// fireArtifactPlayed fires "after you play an artifact" abilities on the playing
-// player's other in-play cards, with the played artifact as "it".
-func (g *Game) fireArtifactPlayed(player int, artifact LocalID) {
+// fireCardPlayed fires "after you play a card" abilities on the playing player's
+// other in-play cards, with the played card as "it". Only an actual play from hand
+// fires it; a card put into play by another effect enters (fireCreatureEnters) but
+// is not played.
+func (g *Game) fireCardPlayed(player int, played LocalID) {
 	for _, id := range g.allInPlay(player) {
-		if id == artifact {
+		if id == played {
 			continue
 		}
-		g.triggerAbilities(id, TriggerAfterArtifactPlayed, artifact, true)
+		g.triggerAbilities(id, TriggerAfterCardPlayed, played, true)
 	}
 }
 
@@ -305,7 +313,8 @@ func (g *Game) triggerAbilities(src LocalID, trigger Trigger, it LocalID, hasIt 
 	fire := func(ab Ability) {
 		// A Play ability on an action resolves while its source is between hand and
 		// discard, so only Destroyed abilities require their source to remain in play.
-		if ab.Trigger != trigger || (trigger == TriggerDestroyed && !g.inPlay(src)) {
+		if ab.Trigger != trigger ||
+			(trigger == TriggerDestroyed && !g.inPlay(src)) {
 			return
 		}
 		g.logf("%s: %s", def.Name, renderAbilityLine(def, ab))

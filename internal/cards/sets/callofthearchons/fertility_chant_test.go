@@ -10,7 +10,7 @@ import (
 // Fertility Chant
 //
 //	House:  Untamed
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  4
 //

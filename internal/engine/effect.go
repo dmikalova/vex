@@ -63,8 +63,16 @@ type EffectContext struct {
 	Resolver   Resolver
 	Source     LocalID // the card whose ability is resolving
 	Controller int     // the player who controls the ability
-	It         LocalID // the triggering creature, for "it"-style targets
-	HasIt      bool    // whether It is set
+	// It is the card in context: the creature that fired a trigger, or a card an
+	// earlier effect in this resolution put in focus (a revealed or discarded top
+	// card). HasIt reports whether one is set.
+	It    LocalID
+	HasIt bool
+	// Upgrade is the attached Upgrade whose own ability is resolving, when one is —
+	// an Upgrade's "Play:" fires with Source set to its host creature, so Upgrade
+	// lets that effect still refer to the Upgrade itself (e.g. as the source of a
+	// control change that lasts until the Upgrade leaves play).
+	Upgrade LocalID
 	// ChosenHouse is a house picked by a ChooseHouseThen, read by
 	// Target.OfChosenHouse targets nested inside it.
 	ChosenHouse House
@@ -74,6 +82,13 @@ type EffectContext struct {
 	// Revealed is how many cards the most recent Reveal showed, read by a
 	// CardsRevealed count in a following effect of the same resolution.
 	Revealed int
+	// DiscardedHouses holds the houses of the cards a DiscardTopOfEachDeck discarded,
+	// read by a following effect that acts on each discarded card's house (Bonkers
+	// Killing Machine destroys a creature or artifact of each).
+	DiscardedHouses []House
+	// Destroyed is how many cards the most recent context-driven destruction removed,
+	// read by a CardsDestroyedFewerThan condition later in the same resolution.
+	Destroyed int
 }
 
 // Opponent returns the absolute index of the controller's opponent.

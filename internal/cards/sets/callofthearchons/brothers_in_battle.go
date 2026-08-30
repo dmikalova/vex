@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Brothers in Battle
 //
 //	House:  Brobnar
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //
@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var BrothersInBattle = card.New(
 	"Brothers in Battle",
 	card.House.Brobnar,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 4),
 	card.WithAemberBonus(1),

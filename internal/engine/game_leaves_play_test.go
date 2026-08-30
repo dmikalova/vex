@@ -54,7 +54,7 @@ func TestDestroyedRelocationSkipsDiscard(t *testing.T) {
 	g := started(t)
 	// A creature whose "Destroyed:" ability returns it to the top of its deck
 	// leaves play during the event, so it is not also moved to the discard.
-	c := g.AddToBattleline(testCreature("wanderer", 3, WithAbility(TriggerDestroyed, MoveFromPlay{Target: Target{Kind: TargetThisCreature}, Destination: ToTopOfDeck})), 0)
+	c := g.AddToBattleline(testCreature("wanderer", 3, WithAbility(TriggerDestroyed, PutFromPlay{Target: Target{Kind: TargetThisCreature}, Destination: ToTopOfDeck})), 0)
 	g.DestroyEach(0, []LocalID{c})
 
 	if g.inPlay(c) {
@@ -88,7 +88,10 @@ func TestDestroyMovesUpgradesToDiscard(t *testing.T) {
 func TestUpgradeCanPreventHostDestructionOnce(t *testing.T) {
 	g := started(t)
 	shield := NewCard("Shield", Sanctum, Upgrade, Rare,
-		WithStatic(StaticModifier{PreventsDestruction: true}))
+		WithStatic(StaticModifier{Replaces: Replace{When: EventCreatureDestroyed, With: Sequence{Effects: []Effect{
+			Heal{Fully: true, Target: Target{Kind: TargetTriggeringCreature}},
+			Destroy{Target: Target{Kind: TargetThisCreature}},
+		}}}}))
 	host := g.AddToBattleline(testCreature("host", 3,
 		WithAbility(TriggerDestroyed, GainAember{Player: Controller, Amount: 1})), 0)
 	attachUpgrade(g, host, shield)
@@ -120,6 +123,16 @@ func TestUpgradeCanPreventHostDestructionOnce(t *testing.T) {
 	}
 	if got := g.Discard(0); len(got) != 2 || got[1] != host {
 		t.Errorf("discard = %v, want consumed upgrade then host", got)
+	}
+}
+
+func TestDestroyAttachedUpgradeIgnoresUnattached(t *testing.T) {
+	g := started(t)
+	up := g.Register(NewCard("Loose", Sanctum, Upgrade, Rare), 0)
+	// An id that is not attached to any creature is a no-op, not a crash.
+	g.destroyAttachedUpgrade(up)
+	if _, ok := g.hostOf(up); ok {
+		t.Error("an unattached upgrade should have no host")
 	}
 }
 

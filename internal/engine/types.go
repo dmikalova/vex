@@ -71,11 +71,12 @@ const (
 	//
 	//rulebook:cardtype Creature
 	Creature CardType = "Creature"
-	// An action is a one-shot card: its effect resolves as you play it, and it
-	// then goes straight to your discard pile.
+	// A tactic (KeyForge's "action" card type, renamed to free the word "Action"
+	// for the ability) is a one-shot card: its effect resolves as you play it, and
+	// it then goes straight to your discard pile.
 	//
-	//rulebook:cardtype Action
-	Action CardType = "Action"
+	//rulebook:cardtype Tactic
+	Tactic CardType = "Tactic"
 	// An artifact is a permanent card you play alongside your creatures. It stays
 	// in play until something removes it and is typically used for its "Action:"
 	// ability.
@@ -173,10 +174,13 @@ const (
 	//
 	//rulebook:ability After a Creature Is Destroyed Fighting
 	TriggerAfterDestroyedFighting
-	// This ability resolves after its controller plays an artifact.
+	// This ability resolves after its controller plays a card — a creature,
+	// artifact, or action — from hand. Putting a card into play by another effect is
+	// not "playing" it and does not fire this (that is TriggerAfterCreatureEnters).
+	// AfterCardPlayed narrows it to a house and/or type.
 	//
-	//rulebook:ability After You Play an Artifact
-	TriggerAfterArtifactPlayed
+	//rulebook:ability After You Play a Card
+	TriggerAfterCardPlayed
 	// An Enters Play ability resolves on a creature as it enters play, whatever
 	// brought it in — the creature's own reaction to arriving, such as Chuff Ape
 	// entering stunned. It is fired on the entering creature by the enter-play event
@@ -211,8 +215,8 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return "After a creature enters play, ", false
 	case TriggerAfterDestroyedFighting:
 		return "After a creature is destroyed fighting " + SelfName + ", ", false
-	case TriggerAfterArtifactPlayed:
-		return "After you play an artifact, ", false
+	case TriggerAfterCardPlayed:
+		return "After you play a card, ", false
 	default:
 		return "", true
 	}

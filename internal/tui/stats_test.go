@@ -25,7 +25,7 @@ func TestRenderSetStats(t *testing.T) {
 		Name: "Test Set",
 		Cards: []engine.CardDefinition{
 			engine.NewCard("A", engine.Brobnar, engine.Creature, engine.Common),
-			engine.NewCard("B", engine.Brobnar, engine.Action, engine.Common),
+			engine.NewCard("B", engine.Brobnar, engine.Tactic, engine.Common),
 			engine.NewCard("C", engine.Brobnar, engine.Artifact, engine.Common),
 			engine.NewCard("D", engine.Logos, engine.Creature, engine.Common),
 		},

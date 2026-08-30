@@ -13,7 +13,7 @@ import (
 //	Type:   Upgrade
 //	Rarity: Rare
 //
-//	This creature gains, "After you play a Mars creature, ready this creature and for the remainder of the turn it belongs to house Mars."
+//	This creature gains, "After you play a Mars creature, ready this creature, and for the remainder of the turn this creature belongs to house Mars."
 func TestBrainStemAntenna(t *testing.T) {
 	t.Run("readies the host and makes it Mars after you play a Mars creature", func(t *testing.T) {
 		var host, martian ct.Card

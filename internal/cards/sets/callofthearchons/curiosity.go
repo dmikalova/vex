@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Curiosity
 //
 //	House:  Untamed
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //
@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var Curiosity = card.New(
 	"Curiosity",
 	card.House.Untamed,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 320),
 	card.WithAemberBonus(1),

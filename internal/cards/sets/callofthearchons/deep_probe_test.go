@@ -10,7 +10,7 @@ import (
 // Deep Probe
 //
 //	House:  Mars
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  1
 //

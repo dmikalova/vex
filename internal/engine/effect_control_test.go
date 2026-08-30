@@ -3,20 +3,30 @@ package engine
 import "testing"
 
 func TestTakeControl(t *testing.T) {
-	if got := (TakeControl{}).Text(); got != "take control of this creature until {upgrade} leaves play" {
+	if got := (TakeControl{Duration: UntilThisLeavesPlay}).Text(); got != "take control of this creature until {upgrade} leaves play" {
 		t.Fatalf("TakeControl text = %q", got)
+	}
+	if err := (TakeControl{}).validate(); err == nil {
+		t.Fatal("TakeControl without a duration should be rejected")
+	}
+	if err := (TakeControl{Duration: UntilThisLeavesPlay}).validate(); err != nil {
+		t.Fatalf("valid TakeControl = %v", err)
 	}
 
 	g := started(t)
 	host := g.AddToBattleline(testCreature("host", 3), 1)
+	collar := g.Register(NewCard("collar", Dis, Upgrade, Rare), 0)
 
-	(TakeControl{}).Resolve(&EffectContext{Resolver: g, Source: host, Controller: 0})
+	(TakeControl{Duration: UntilThisLeavesPlay}).Resolve(&EffectContext{Resolver: g, Source: host, Upgrade: collar, Controller: 0})
 
 	if g.owner(host) != 1 {
 		t.Fatalf("owner = %d, want unchanged P2", g.owner(host))
 	}
 	if g.controller(host) != 0 {
 		t.Fatalf("controller = %d, want P1", g.controller(host))
+	}
+	if g.State.Cards[host].ControlSource != collar {
+		t.Fatalf("control source = %d, want the collar %d", g.State.Cards[host].ControlSource, collar)
 	}
 	if !g.State.Battleline[0].contains(host) || g.State.Battleline[1].contains(host) {
 		t.Fatalf("battlelines = %v/%v, want host only under P1", g.Battleline(0), g.Battleline(1))
@@ -26,11 +36,11 @@ func TestTakeControl(t *testing.T) {
 func TestControlRevertsWhenTakingUpgradeLeaves(t *testing.T) {
 	g := started(t)
 	host := g.AddToBattleline(testCreature("host", 3), 1)
-	collar := g.Register(NewCard("collar", Dis, Upgrade, Rare, WithStatic(StaticModifier{TakesControl: true})), 0)
+	collar := g.Register(NewCard("collar", Dis, Upgrade, Rare), 0)
 	core := &g.State.Cards[host]
 	core.Upgrades[0] = collar
 	core.UpgradeCount = 1
-	g.takeControl(host, 0)
+	g.takeControl(host, 0, collar)
 
 	g.discardAttachedUpgradeAt(host, 0)
 
@@ -48,11 +58,11 @@ func TestControlRevertsWhenTakingUpgradeLeaves(t *testing.T) {
 func TestControlledCreatureLeavesForOwner(t *testing.T) {
 	g := started(t)
 	host := g.AddToBattleline(testCreature("host", 3), 1)
-	collar := g.Register(NewCard("collar", Dis, Upgrade, Rare, WithStatic(StaticModifier{TakesControl: true})), 0)
+	collar := g.Register(NewCard("collar", Dis, Upgrade, Rare), 0)
 	core := &g.State.Cards[host]
 	core.Upgrades[0] = collar
 	core.UpgradeCount = 1
-	g.takeControl(host, 0)
+	g.takeControl(host, 0, collar)
 
 	g.DealDamage(0, []DamageTarget{{ID: host, Amount: 3}})
 

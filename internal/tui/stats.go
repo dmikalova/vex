@@ -37,7 +37,7 @@ func (m statsModel) Update(msg tea.Msg) (statsModel, tea.Cmd) {
 }
 
 // statsTypes is the fixed column order for the per-type breakdown.
-var statsTypes = []engine.CardType{engine.Creature, engine.Action, engine.Artifact, engine.Upgrade}
+var statsTypes = []engine.CardType{engine.Creature, engine.Tactic, engine.Artifact, engine.Upgrade}
 
 func (m statsModel) View() string {
 	var b strings.Builder

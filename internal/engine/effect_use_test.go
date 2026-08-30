@@ -2,25 +2,23 @@ package engine
 
 import "testing"
 
-func TestUseFriendlyCardsOfHouseTextAndValidation(t *testing.T) {
-	if got := (UseFriendlyCardsOfHouse{House: Mars, Count: 2, Other: true}).Text(); got != "use 2 other Mars cards, one at a time" {
+func TestUseTextAndValidation(t *testing.T) {
+	pool := Target{Kind: TargetEachFriendlyInPlay}.OfHouse(Mars).Other()
+	if got := (Use{Max: 2, Target: pool}).Text(); got != "use 2 other Mars cards, one at a time" {
 		t.Errorf("text = %q", got)
 	}
-	if got := (UseFriendlyCardsOfHouse{House: Logos, Count: 1}).Text(); got != "use a Logos card, one at a time" {
-		t.Errorf("singular text = %q", got)
+	if err := (Use{Max: 2}).validate(); err == nil {
+		t.Error("unset target should be rejected")
 	}
-	if err := (UseFriendlyCardsOfHouse{Count: 1}).validate(); err == nil {
-		t.Error("unset house should be rejected")
+	if err := (Use{Target: pool}).validate(); err == nil {
+		t.Error("non-positive max should be rejected")
 	}
-	if err := (UseFriendlyCardsOfHouse{House: Mars}).validate(); err == nil {
-		t.Error("non-positive count should be rejected")
-	}
-	if err := (UseFriendlyCardsOfHouse{House: Mars, Count: 1}).validate(); err != nil {
+	if err := (Use{Max: 2, Target: pool}).validate(); err != nil {
 		t.Errorf("valid effect should pass, got %v", err)
 	}
 }
 
-func TestUseFriendlyCardsOfHouseUsesCreaturesSequentially(t *testing.T) {
+func TestUseUsesCreaturesSequentially(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddArtifact(NewCard("source", Mars, Artifact, Uncommon), 0)
 	first := g.AddToBattleline(NewCard("first", Mars, Creature, Common, WithPower(3)), 0)
@@ -31,7 +29,7 @@ func TestUseFriendlyCardsOfHouseUsesCreaturesSequentially(t *testing.T) {
 	g.SetChooser(0, idChooser{id: second})
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
-	UseFriendlyCardsOfHouse{House: Mars, Count: 2, Other: true}.Resolve(ctx)
+	Use{Max: 2, Target: Target{Kind: TargetEachFriendlyInPlay}.OfHouse(Mars).Other()}.Resolve(ctx)
 
 	if g.Aember(0) != 2 {
 		t.Errorf("aember = %d, want 2", g.Aember(0))
@@ -44,7 +42,7 @@ func TestUseFriendlyCardsOfHouseUsesCreaturesSequentially(t *testing.T) {
 	}
 }
 
-func TestUseFriendlyCardsOfHouseUsesArtifactAction(t *testing.T) {
+func TestUseUsesArtifactAction(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddArtifact(NewCard("source", Mars, Artifact, Uncommon), 0)
 	actionArtifact := g.AddArtifact(NewCard("action artifact", Mars, Artifact, Common,
@@ -52,7 +50,7 @@ func TestUseFriendlyCardsOfHouseUsesArtifactAction(t *testing.T) {
 	g.AddArtifact(NewCard("blank artifact", Mars, Artifact, Common), 0)
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
-	UseFriendlyCardsOfHouse{House: Mars, Count: 1, Other: true}.Resolve(ctx)
+	Use{Max: 1, Target: Target{Kind: TargetEachFriendlyInPlay}.OfHouse(Mars).Other()}.Resolve(ctx)
 
 	if g.Aember(0) != 3 {
 		t.Errorf("aember = %d, want 3", g.Aember(0))
@@ -62,7 +60,7 @@ func TestUseFriendlyCardsOfHouseUsesArtifactAction(t *testing.T) {
 	}
 }
 
-func TestUseFriendlyCardsOfHouseStopsWhenNoChoice(t *testing.T) {
+func TestUseStopsWhenNoChoice(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddArtifact(NewCard("source", Mars, Artifact, Uncommon), 0)
 	c := g.AddToBattleline(NewCard("c", Mars, Creature, Common, WithPower(3)), 0)
@@ -70,19 +68,19 @@ func TestUseFriendlyCardsOfHouseStopsWhenNoChoice(t *testing.T) {
 	g.SetChooser(0, orderRejectChooser{})
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
-	UseFriendlyCardsOfHouse{House: Mars, Count: 1, Other: true}.Resolve(ctx)
+	Use{Max: 1, Target: Target{Kind: TargetEachFriendlyInPlay}.OfHouse(Mars).Other()}.Resolve(ctx)
 
 	if g.Exhausted(c) || g.Exhausted(other) {
 		t.Error("a rejected choice should not use the card")
 	}
 }
 
-func TestUseFriendlyCardsOfHouseStopsWhenNoneUsable(t *testing.T) {
+func TestUseStopsWhenNoneUsable(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddArtifact(NewCard("source", Mars, Artifact, Uncommon), 0)
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
-	UseFriendlyCardsOfHouse{House: Mars, Count: 1, Other: true}.Resolve(ctx)
+	Use{Max: 1, Target: Target{Kind: TargetEachFriendlyInPlay}.OfHouse(Mars).Other()}.Resolve(ctx)
 }
 
 func TestSentenceEffect(t *testing.T) {
@@ -104,7 +102,7 @@ func TestSentenceEffect(t *testing.T) {
 
 	seq := Sequence{Effects: []Effect{
 		Sentence{Effect: Destroy{Target: Target{Kind: TargetThisCreature}}},
-		UseFriendlyCardsOfHouse{House: Mars, Count: 2, Other: true},
+		Use{Max: 2, Target: Target{Kind: TargetEachFriendlyInPlay}.OfHouse(Mars).Other()},
 	}}
 	if got := seq.Text(); got != "destroy "+SelfName+". Use 2 other Mars cards, one at a time" {
 		t.Errorf("sequence text = %q", got)

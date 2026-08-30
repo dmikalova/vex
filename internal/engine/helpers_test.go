@@ -36,7 +36,7 @@ func exBruteStrength() CardDefinition {
 }
 
 func exBattleFury() CardDefinition {
-	return NewCard("Battle Fury", Brobnar, Action, Common,
+	return NewCard("Battle Fury", Brobnar, Tactic, Common,
 		WithAemberBonus(1),
 		WithAbility(TriggerAfterPlay, OnChooseCreature{Target: Target{Kind: TargetChosenFriendlyCreature}, Verbs: []CreatureVerb{ReadyVerb{}, FightVerb{}}}))
 }

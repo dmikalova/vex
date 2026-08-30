@@ -29,27 +29,30 @@ func TestSwapBattlelinePositions(t *testing.T) {
 	}
 }
 
-func TestSwapWithFriendlyCreatureAndUse(t *testing.T) {
+func TestSwap(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	host := g.AddToBattleline(testCreature("host", 2), 0)
 	other := g.AddToBattleline(testCreature("other", 2), 0)
 	right := g.AddToBattleline(testCreature("right", 2), 0)
 	ctx := &EffectContext{Resolver: g, Source: host, Controller: 0}
-	e := SwapWithFriendlyCreatureAndUse{}
+	e := Swap{With: Target{Kind: TargetChosenOtherFriendlyCreature}}
 
-	if got, want := e.Text(), "swap this creature with another friendly creature in your battleline. Use that other creature this turn"; got != want {
+	if err := (Swap{}).validate(); err == nil {
+		t.Fatal("an unset target should be rejected")
+	}
+	if err := validateEffect(e); err != nil {
+		t.Fatalf("validate = %v", err)
+	}
+	if got, want := e.Text(), "swap this creature with another friendly creature in your battleline"; got != want {
 		t.Fatalf("text = %q, want %q", got, want)
 	}
 
 	e.Resolve(ctx)
 
 	if got, want := g.Battleline(0), []LocalID{other, host, right}; !slices.Equal(got, want) {
-		t.Fatalf("battleline after effect = %v, want %v", got, want)
+		t.Fatalf("battleline after swap = %v, want %v", got, want)
 	}
-	if g.Aember(0) != 1 {
-		t.Fatalf("aember after using the other creature = %d, want 1", g.Aember(0))
-	}
-	if !g.Exhausted(other) {
-		t.Fatal("the other creature should have been exhausted by its use")
+	if !ctx.HasIt || ctx.It != other {
+		t.Fatalf("context card = %d (has %v), want swapped creature %d", ctx.It, ctx.HasIt, other)
 	}
 }

@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Begone!
 //
 //	House:  Sanctum
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //
 //	Play: Choose one:
@@ -14,7 +14,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var Begone = card.New(
 	"Begone!",
 	card.House.Sanctum,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 212),
 	card.WithAbility(

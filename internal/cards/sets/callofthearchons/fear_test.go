@@ -10,7 +10,7 @@ import (
 // Fear
 //
 //	House:  Dis
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Common
 //
 //	Play: Put an enemy creature into its owner's hand.

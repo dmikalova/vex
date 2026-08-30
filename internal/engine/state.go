@@ -35,12 +35,20 @@ type CardCore struct {
 	PowerCounters int16
 	// TempHouse is the house this in-play card belongs to until its controller's
 	// turn ends. HouseNone means it belongs to its printed house.
-	TempHouse    House
+	TempHouse House
+	// LastingHouse is the house this in-play card belongs to until it leaves play
+	// (rather than only until end of turn). HouseNone means none. It is cleared by
+	// resetCore when the card leaves play.
+	LastingHouse House
 	UpgradeCount uint8
 	Upgrades     [maxUpgrades]LocalID
 	// ControlPlus is a temporary control override: 0 means the owner controls the
 	// card, otherwise the controller is ControlPlus-1. Ownership never changes.
 	ControlPlus uint8
+	// ControlSource is the card whose lasting effect took control of this creature
+	// "until it leaves play" (Collar of Subordination). When that source leaves
+	// play, the control override is reverted. 0 means no such source.
+	ControlSource LocalID
 }
 
 // CardList is an ordered, fixed-capacity collection of card ids (hand, deck, battle
@@ -162,9 +170,9 @@ type GameState struct {
 	// played this turn. It resets with CardsPlayedThisTurn and backs conditions such
 	// as Epic Quest's "7 or more Sanctum cards this turn."
 	CardsPlayedByHouseThisTurn [2][NumHouses]int
-	// OffHousePlaysUsedThisTurn[p][h] counts how many off-house play permissions for
+	// PlayPermissionsUsedThisTurn[p][h] counts how many off-house play permissions for
 	// house h player p has spent this turn (Witch of the Wilds). BeginTurn resets it.
-	OffHousePlaysUsedThisTurn [2][NumHouses]int
+	PlayPermissionsUsedThisTurn [2][NumHouses]int
 
 	// ForcedHouse[p] is the house player p must choose as their active house this
 	// turn (Control the Weak); ForcedHouseNext[p] arms that for p's next turn.

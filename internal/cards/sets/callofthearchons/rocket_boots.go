@@ -16,9 +16,6 @@ var RocketBoots = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 158),
 	card.WithStatic(card.StaticModifier{
-		Granted: []card.Ability{
-			{Trigger: card.Trigger.Reap, Effect: card.ReadyIfFirstUse{Target: card.Target.This}},
-			{Trigger: card.Trigger.Fight, Effect: card.ReadyIfFirstUse{Target: card.Target.This}},
-		},
+		Granted: card.FightOrReap(card.ReadyIfFirstUse{Target: card.Target.This}),
 	}),
 )

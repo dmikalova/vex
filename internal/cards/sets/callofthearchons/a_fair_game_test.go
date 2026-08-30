@@ -10,10 +10,10 @@ import (
 // A Fair Game
 //
 //	House:  Dis
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Discard the top card of your opponent's deck and reveal their hand. You gain 1 Æmber for each card of the discarded card's house revealed this way. Discard the top card of your deck and reveal your hand. Your opponent gains 1 Æmber for each card of the discarded card's house revealed this way.
+//	Play: Discard the top card of your opponent's deck. Reveal your opponent's hand. For each card of the discarded card's house revealed this way, gain 1 Æmber. Discard the top card of your deck. Reveal your hand. For each card of the discarded card's house revealed this way, your opponent gains 1 Æmber.
 func TestAFairGame(t *testing.T) {
 	t.Run("gains Æmber for each hand card matching the discarded card's house for both players", func(t *testing.T) {
 		var opponentTop, opponentNext, yourTop, yourNext ct.Card

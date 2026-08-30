@@ -10,7 +10,7 @@ import (
 // Creeping Oblivion
 //
 //	House:  Dis
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //
 //	Play: Purge up to 2 cards from a discard pile.

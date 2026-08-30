@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Random Access Archives
 //
 //	House:  Logos
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //
@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var RandomAccessArchives = card.New(
 	"Random Access Archives",
 	card.House.Logos,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 119),
 	card.WithAemberBonus(1),

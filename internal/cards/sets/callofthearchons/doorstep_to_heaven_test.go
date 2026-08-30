@@ -10,7 +10,7 @@ import (
 // Doorstep to Heaven
 //
 //	House:  Sanctum
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  1
 //

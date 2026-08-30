@@ -5,14 +5,14 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Cooperative Hunting
 //
 //	House:  Untamed
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Common
 //
 //	Play: For each friendly creature in play, deal 1 damage to a creature.
 var CooperativeHunting = card.New(
 	"Cooperative Hunting",
 	card.House.Untamed,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 319),
 	card.WithAbility(

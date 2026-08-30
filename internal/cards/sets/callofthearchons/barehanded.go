@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Barehanded
 //
 //	House:  Brobnar
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //
@@ -13,12 +13,12 @@ import "github.com/dmikalova/vactrol/internal/card"
 var Barehanded = card.New(
 	"Barehanded",
 	card.House.Brobnar,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 2),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.MoveFromPlay{
+		card.Trigger.Play, card.PutFromPlay{
 			Target:      card.Target.EachArtifact,
 			Destination: card.To.TopOfDeck,
 		}),

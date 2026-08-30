@@ -9,10 +9,17 @@ const (
 	// durationUnset is the invalid zero value: a timed effect must name its
 	// duration rather than leave it unset.
 	durationUnset Duration = iota
+	// EndOfTurn lasts through the rest of the current turn, then lifts at end of
+	// turn (Brain Stem Antenna's host belongs to Mars for the remainder of the turn).
+	EndOfTurn
 	// NextTurn lasts through the affected player's next turn, then lifts. It waits
 	// for that player's next turn however many turns intervene, so an extra turn
 	// taken by someone else never consumes it.
 	NextTurn
+	// UntilThisLeavesPlay lasts until the card whose effect established it leaves
+	// play (Collar of Subordination's control change), rather than expiring at a
+	// turn boundary. The leave-play teardown honors it.
+	UntilThisLeavesPlay
 )
 
 // valid reports whether d names a real duration (not the unset zero value).

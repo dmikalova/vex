@@ -10,7 +10,7 @@ import (
 // Blinding Light
 //
 //	House:  Sanctum
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Common
 //	Æmber:  1
 //

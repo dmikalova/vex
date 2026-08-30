@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Knowledge is Power
 //
 //	House:  Logos
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //
 //	Play: Choose one:
@@ -14,7 +14,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var KnowledgeIsPower = card.New(
 	"Knowledge is Power",
 	card.House.Logos,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 113),
 	card.WithAbility(

@@ -10,7 +10,7 @@ import (
 // Booby Trap
 //
 //	House:  Shadows
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  1
 //

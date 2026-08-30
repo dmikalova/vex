@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Anger
 //
 //	House:  Brobnar
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Common
 //	Æmber:  1
 //
@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var Anger = card.New(
 	"Anger",
 	card.House.Brobnar,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 1),
 	card.WithAemberBonus(1),

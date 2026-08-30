@@ -10,7 +10,7 @@ import (
 // Brothers in Battle
 //
 //	House:  Brobnar
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //

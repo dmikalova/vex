@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Finishing Blow
 //
 //	House:  Shadows
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //
@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var FinishingBlow = card.New(
 	"Finishing Blow",
 	card.House.Shadows,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 269),
 	card.WithAemberBonus(1),

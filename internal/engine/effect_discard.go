@@ -5,13 +5,13 @@ import (
 	"strings"
 )
 
-// MoveFromDiscard moves a card the controller chooses from their own discard pile
+// PutFromDiscard moves a card the controller chooses from their own discard pile
 // to a destination — their hand or the top of their deck. Type restricts the
 // choice to cards of that type; the zero value allows any card. With All it moves
 // every matching card instead of one chosen card (Arise! returning each creature
 // of a house). This is how cards recur from the discard pile, e.g. "Put a creature
 // from your discard pile on top of your deck." The destination is required.
-type MoveFromDiscard struct {
+type PutFromDiscard struct {
 	// Type restricts the choice to cards of that type; the zero value (an unset
 	// CardType) allows any card.
 	Type CardType
@@ -27,7 +27,7 @@ type MoveFromDiscard struct {
 
 // noun renders the kind of card the effect moves — the lowercased card type when
 // Type is set (e.g. "creature"), otherwise the generic "card".
-func (e MoveFromDiscard) noun() string {
+func (e PutFromDiscard) noun() string {
 	if e.Type != "" {
 		return strings.ToLower(string(e.Type))
 	}
@@ -35,7 +35,7 @@ func (e MoveFromDiscard) noun() string {
 }
 
 // destPhrase renders where the card goes, e.g. "into your hand".
-func (e MoveFromDiscard) destPhrase() string {
+func (e PutFromDiscard) destPhrase() string {
 	if e.Destination == ToTopOfDeck {
 		return "on top of your deck"
 	}
@@ -44,16 +44,16 @@ func (e MoveFromDiscard) destPhrase() string {
 
 // validate rejects a destination this effect cannot move a card to; only the hand
 // and the top of the deck are supported, and the destination must be named.
-func (e MoveFromDiscard) validate() error {
+func (e PutFromDiscard) validate() error {
 	if e.Destination != ToHand && e.Destination != ToTopOfDeck {
-		return fmt.Errorf("MoveFromDiscard: unsupported destination %d", e.Destination)
+		return fmt.Errorf("PutFromDiscard: unsupported destination %d", e.Destination)
 	}
 	return nil
 }
 
 // Text renders the effect, e.g. "put a card from your discard pile into your hand"
 // or "put each creature of the chosen house from your discard pile into your hand".
-func (e MoveFromDiscard) Text() string {
+func (e PutFromDiscard) Text() string {
 	if e.All {
 		what := "each " + e.noun()
 		if e.OfChosenHouse {
@@ -65,18 +65,18 @@ func (e MoveFromDiscard) Text() string {
 }
 
 // moveTo moves one card from the discard pile to the destination.
-func (e MoveFromDiscard) moveTo(ctx *EffectContext, id LocalID) {
+func (e PutFromDiscard) moveTo(ctx *EffectContext, id LocalID) {
 	if e.Destination == ToTopOfDeck {
 		ctx.Resolver.MoveFromDiscardToTopOfDeck(id)
 	} else {
-		ctx.Resolver.MoveFromDiscardToHand(id)
+		ctx.Resolver.PutFromDiscardIntoHand(id)
 	}
 }
 
 // Resolve moves a card from the controller's discard pile to the destination. With
 // All it moves every matching card; otherwise the controller chooses one, and
 // nothing happens if there is no candidate or the choice is declined.
-func (e MoveFromDiscard) Resolve(ctx *EffectContext) {
+func (e PutFromDiscard) Resolve(ctx *EffectContext) {
 	if e.All {
 		for _, id := range ctx.Resolver.Discard(ctx.Controller) {
 			if e.Type != "" && ctx.Resolver.TypeOf(id) != e.Type {

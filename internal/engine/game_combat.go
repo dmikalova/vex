@@ -91,7 +91,8 @@ func (g *Game) fight(attacker, defender LocalID) {
 // creature) of its controller's battleline.
 func (g *Game) onFlankOf(id LocalID) bool {
 	bl := g.State.Battleline[g.controller(id)].slice()
-	return len(bl) > 0 && (bl[0] == id || bl[len(bl)-1] == id)
+	return len(bl) > 0 &&
+		(bl[0] == id || bl[len(bl)-1] == id)
 }
 
 // fightDamage returns the damage an attacker deals to the defender it fights: its
@@ -165,5 +166,7 @@ func (g *Game) shouldDestroy(id LocalID) bool {
 	}
 	core := &g.State.Cards[id]
 	poisoned := g.hasKeyword(id, Poison) && core.Damage > 0
-	return int(core.Damage) >= g.Power(id) || g.Power(id) <= 0 || poisoned
+	return int(core.Damage) >= g.Power(id) ||
+		g.Power(id) <= 0 ||
+		poisoned
 }

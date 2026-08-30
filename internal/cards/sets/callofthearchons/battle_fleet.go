@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 // Battle Fleet
 //
 //	House:  Mars
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  1
 //
@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var BattleFleet = card.New(
 	"Battle Fleet",
 	card.House.Mars,
-	card.Type.Action,
+	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 161),
 	card.WithAemberBonus(1),

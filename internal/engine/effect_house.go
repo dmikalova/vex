@@ -2,49 +2,49 @@ package engine
 
 import "fmt"
 
-// ReadyAndBelongToHouseAfterYouPlayCreature is the effect granted by Brain Stem
-// Antenna. The generic after-creature-enters trigger fires for both players and
-// every house; this effect narrows it to a creature of House played by the
-// controller, then readies the source creature and changes the house it belongs to
-// for the rest of that controller's turn.
+// BelongToHouse makes each creature its Target selects belong to House for the
+// given Duration, overriding the house it counts as for active-house checks (Brain
+// Stem Antenna's host counts as Mars for the rest of the turn). The change is
+// per-match state, dropped when the creature leaves play; EndOfTurn also drops it at
+// end of turn, while UntilThisLeavesPlay keeps it until the creature leaves play.
 //
 //rulebook:effect Belong to House
-type ReadyAndBelongToHouseAfterYouPlayCreature struct {
-	// House is both the house the triggering creature must belong to and the house
-	// the source creature belongs to for the remainder of the turn.
-	House House
+type BelongToHouse struct {
+	Target   Target
+	House    House
+	Duration Duration
 }
 
-// validate requires the house named by the ability.
-func (e ReadyAndBelongToHouseAfterYouPlayCreature) validate() error {
+// validate requires a target, a house, and a duration this effect supports.
+func (e BelongToHouse) validate() error {
+	if !e.Target.valid() {
+		return errUnsetTarget("BelongToHouse")
+	}
 	if e.House == HouseNone {
-		return fmt.Errorf("ReadyAndBelongToHouseAfterYouPlayCreature: house must be set")
+		return fmt.Errorf("BelongToHouse: house must be set")
+	}
+	if e.Duration != EndOfTurn && e.Duration != UntilThisLeavesPlay {
+		return fmt.Errorf("BelongToHouse: duration must be EndOfTurn or UntilThisLeavesPlay")
 	}
 	return nil
 }
 
-// Text renders Brain Stem Antenna's granted ability text.
-func (e ReadyAndBelongToHouseAfterYouPlayCreature) Text() string {
-	return fmt.Sprintf("after you play a %s creature, ready %s and for the remainder of the turn it belongs to house %s", e.House, SelfName, e.House)
+// Text renders the effect, e.g. "for the remainder of the turn this creature
+// belongs to house Mars".
+func (e BelongToHouse) Text() string {
+	if e.Duration == UntilThisLeavesPlay {
+		return e.Target.Text() + " belongs to house " + e.House.String() + " until it leaves play"
+	}
+	return "for the remainder of the turn " + e.Target.Text() + " belongs to house " + e.House.String()
 }
 
-// abilityText lets this effect supply the whole triggered ability line instead of
-// inheriting TriggerAfterCreatureEnters' broader "After a creature enters play"
-// prefix.
-func (e ReadyAndBelongToHouseAfterYouPlayCreature) abilityText(trigger Trigger) (string, bool) {
-	if trigger != TriggerAfterCreatureEnters {
-		return "", false
+// Resolve makes each selected creature belong to House for the Duration.
+func (e BelongToHouse) Resolve(ctx *EffectContext) {
+	for _, id := range e.Target.Select(ctx) {
+		if e.Duration == UntilThisLeavesPlay {
+			ctx.Resolver.SetLastingHouse(id, e.House)
+		} else {
+			ctx.Resolver.BelongToHouseForRemainderOfTurn(id, e.House)
+		}
 	}
-	return e.Text(), true
-}
-
-// Resolve ignores off-house creatures and creatures the opponent played. When the
-// trigger matches, it readies the source creature and changes the house it belongs
-// to until its controller's turn ends.
-func (e ReadyAndBelongToHouseAfterYouPlayCreature) Resolve(ctx *EffectContext) {
-	if !ctx.HasIt || ctx.Resolver.Owner(ctx.It) != ctx.Controller || ctx.Resolver.House(ctx.It) != e.House {
-		return
-	}
-	ctx.Resolver.SetExhausted(ctx.Source, false)
-	ctx.Resolver.BelongToHouseForRemainderOfTurn(ctx.Source, e.House)
 }

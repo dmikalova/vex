@@ -15,6 +15,8 @@ body {
   margin: 0;
   background-color: #1c1c1b;
   color: #f7f1ff;
+  /* tabular figures so counters keep a fixed width and don't shift (e.g. 0 -> 1) */
+  font-variant-numeric: tabular-nums;
   font-family:
     ui-sans-serif,
     system-ui,
@@ -111,6 +113,37 @@ body {
   color: #fc618d;
 }
 
+/* turn/phase status line under the brand bar */
+.hud {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  border-bottom: 1px solid #363537;
+  font-size: 0.8125rem;
+  color: #a8a5ac;
+}
+.hud-turn {
+  font-weight: 700;
+  color: #d8d5cd;
+}
+.hud-player {
+  font-weight: 600;
+  color: #fce566;
+}
+.hud-step {
+  color: #8b888f;
+}
+.hud-house {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-left: auto;
+  color: var(--nm);
+  font-weight: 600;
+}
+
 .log {
   display: flex;
   flex: 1 1 0%;
@@ -138,6 +171,63 @@ body {
 .log-card:hover {
   color: #96e3a6;
   text-decoration: underline;
+}
+/* one bubble per root action, tinted by whose turn produced it */
+.log-group {
+  padding: 0.25rem 0.375rem;
+  border-radius: 0.2rem;
+  border-left: 2px solid transparent;
+}
+.log-group--p0 {
+  background-color: rgb(123 216 143 / 0.05);
+  border-left-color: rgb(123 216 143 / 0.4);
+}
+.log-group--p1 {
+  background-color: rgb(252 229 102 / 0.05);
+  border-left-color: rgb(252 229 102 / 0.4);
+}
+/* the newest bubble flashes and fades over 5s (overlay leaves the tint intact) */
+.log-group--new {
+  animation: logHighlight 5s ease-out forwards;
+}
+@keyframes logHighlight {
+  from {
+    box-shadow: inset 0 0 0 999px rgb(252 229 102 / 0.18);
+  }
+  to {
+    box-shadow: inset 0 0 0 999px rgb(252 229 102 / 0);
+  }
+}
+.log-line {
+  padding: 0.0625rem 0;
+}
+/* hover card preview: an enlarged card floating by the log (board hover) or just
+   left of the log (a log mention) */
+.card-preview {
+  position: fixed;
+  top: 4.25rem;
+  z-index: 40;
+  width: 13rem;
+  height: 18rem;
+  pointer-events: none;
+  filter: drop-shadow(0 10px 22px rgb(0 0 0 / 0.6));
+}
+.card-preview--board {
+  right: 0.75rem;
+}
+.card-preview--log {
+  right: calc(20rem + 0.75rem);
+}
+.card-preview .card {
+  width: 100%;
+  height: 100%;
+  max-height: none;
+}
+.card-preview .card-rules {
+  font-size: 12px;
+}
+.card-preview .card-name-text {
+  font-size: 13px;
 }
 
 .details {
@@ -430,10 +520,6 @@ button:disabled {
   border-radius: 0.25rem;
   padding: 0.25rem 0.75rem;
   font-size: 0.875rem;
-  cursor: pointer;
-}
-.score-pill:hover {
-  box-shadow: 0 0 0 1px rgb(252 229 102 / 0.55);
 }
 .score-pill-idle {
   background-color: #262625;
@@ -448,14 +534,78 @@ button:disabled {
 .score-detail {
   color: #8b888f;
 }
+.score-houses {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
 .score-house {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
   color: var(--nm);
   font-weight: 600;
+}
+.score-house-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  cursor: pointer;
+}
+.score-house-dim {
+  opacity: 0.4;
+  filter: grayscale(0.55);
+  font-weight: 400;
 }
 .score-zones {
   margin-left: auto;
   color: #6f6c73;
   font-size: 0.8125rem;
+  cursor: pointer;
+}
+.score-zones:hover {
+  color: #a8a5ac;
+}
+/* sandbox Æmber steppers and clickable key slots in the score pill */
+.amber-manual {
+  gap: 0.25rem;
+}
+.amber-btn {
+  width: 1.15rem;
+  height: 1.15rem;
+  border: none;
+  border-radius: 0.2rem;
+  background-color: #333230;
+  color: #d8d5cd;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+}
+.amber-btn-minus {
+  background-color: #7a2f33;
+  color: #f4dcde;
+}
+.amber-btn-plus {
+  background-color: #2f6b28;
+  color: #dcefd9;
+}
+.key-btn {
+  display: inline-flex;
+  padding: 0.25rem;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+.amber-btn:hover,
+.key-btn:hover {
+  filter: brightness(1.35);
+}
+/* the card being resolved, named above a prompt's buttons */
+.prompt-source {
+  font-weight: 700;
+  color: #d8d5cd;
+  padding-bottom: 0.25rem;
 }
 
 /* ---- overlays ---- */
@@ -703,8 +853,12 @@ button:disabled {
   flex: 0 0 auto;
 }
 /* a 1px black outline traced on every side (hard shadows, no blur) so a house
-   emblem stays legible on any background — an outline, not a blob beneath */
+   emblem stays legible on any background — an outline, not a blob beneath. The
+   padding reserves room for that outline so it isn't clipped when the art fills
+   the icon (e.g. tall house emblems, type icons). */
 .icon-outline {
+  box-sizing: border-box;
+  padding: 1.5px;
   filter: drop-shadow(1px 0 0 rgb(0 0 0 / 0.85))
     drop-shadow(-1px 0 0 rgb(0 0 0 / 0.85))
     drop-shadow(0 1px 0 rgb(0 0 0 / 0.85))

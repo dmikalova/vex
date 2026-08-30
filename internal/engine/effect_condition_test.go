@@ -38,20 +38,27 @@ func TestConditionalEffect(t *testing.T) {
 	}
 }
 
-func TestCardsPlayedOfHouseAtLeastCondition(t *testing.T) {
+func TestCardsPlayed(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-	cond := CardsPlayedOfHouseAtLeast{House: Sanctum, Amount: 7}
+	cond := CardsPlayed{Player: Controller, House: Sanctum, Amount: 7}
 	if cond.CondText() != "if you have played 7 or more Sanctum cards this turn" {
-		t.Errorf("text = %q", cond.CondText())
+		t.Errorf("cond text = %q", cond.CondText())
+	}
+	if cond.CountText() != "Sanctum card you have played this turn" {
+		t.Errorf("count text = %q", cond.CountText())
 	}
 	g.State.CardsPlayedByHouseThisTurn[0][Sanctum] = 6
-	if cond.Met(ctx) {
-		t.Error("six Sanctum cards should not satisfy a seven-card condition")
+	if cond.Met(ctx) || cond.Value(ctx) != 6 {
+		t.Errorf("six Sanctum cards: met=%v value=%d, want false/6", cond.Met(ctx), cond.Value(ctx))
 	}
 	g.State.CardsPlayedByHouseThisTurn[0][Sanctum] = 7
 	if !cond.Met(ctx) {
 		t.Error("seven Sanctum cards should satisfy the condition")
+	}
+	// The default threshold is one played card.
+	if (CardsPlayed{Player: Controller, House: Mars}).Met(ctx) {
+		t.Error("no Mars cards played should not meet the default threshold")
 	}
 }
 
@@ -110,5 +117,39 @@ func TestMayRepeat(t *testing.T) {
 
 	if err := validateEffect(MayRepeat{Cond: InPlay{Player: Controller, Type: Creature}, Do: StealAember{Amount: 1}}); err != nil {
 		t.Errorf("validate = %v", err)
+	}
+}
+
+func TestItIs(t *testing.T) {
+	// CondText renders the filtered noun with the right article.
+	cases := map[string]ItIs{
+		"if it is a Mars creature": {House: Mars, Type: Creature},
+		"if it is an artifact":     {Type: Artifact},
+		"if it is a Mars card":     {House: Mars},
+		"if it is a card":          {},
+	}
+	for want, e := range cases {
+		if got := e.CondText(); got != want {
+			t.Errorf("CondText() = %q, want %q", got, want)
+		}
+	}
+
+	g := NewGame("Alice", "Bob", 1)
+	mars := g.AddToDeck(NewCard("Martian", Mars, Creature, Common, WithPower(1)), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	// No card in context is never met.
+	if (ItIs{Type: Creature}).Met(ctx) {
+		t.Error("Met with no context card should be false")
+	}
+	ctx.It, ctx.HasIt = mars, true
+	if !(ItIs{House: Mars, Type: Creature}).Met(ctx) {
+		t.Error("a Mars creature should match a Mars-creature filter")
+	}
+	if (ItIs{House: Logos}).Met(ctx) {
+		t.Error("a Mars creature should not match a Logos filter")
+	}
+	if (ItIs{Type: Artifact}).Met(ctx) {
+		t.Error("a creature should not match an artifact filter")
 	}
 }

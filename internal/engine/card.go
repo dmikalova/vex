@@ -62,17 +62,17 @@ type CardDefinition struct {
 	// keys cost +1 Æmber"). The zero value changes nothing.
 	KeyCostChange KeyCostChange
 
-	// OffHousePlayGrant is a continuous play permission this card grants while in
-	// play: its controller may play one card of that house on a turn where that
-	// house is not their active house. HouseNone grants nothing.
-	OffHousePlayGrant House
+	// PlayPermission is a continuous grant this card makes while in play, letting
+	// its controller play cards of a house on turns where that house is not their
+	// active house (Witch of the Wilds). The zero value grants nothing.
+	PlayPermission PlayPermission
 
-	// CapturesOpponentAember is a continuous replacement this creature applies
-	// while it is in play: each Æmber that would be added to its opponent's pool is
-	// captured by this creature instead. It replaces gains from the common supply;
-	// pool-to-pool moves such as stealing, capturing, and returning captured Æmber
-	// are not gains and do not use it.
-	CapturesOpponentAember bool
+	// Replaces is a continuous replacement this card applies to a game event's
+	// outcome while it is in play — Ether Spider replaces Æmber being added to its
+	// opponent's pool (EventAemberAddedToPool, scoped by Player) with capturing it.
+	// The zero value carries no replacement. (An Upgrade grants a replacement to its
+	// host through StaticModifier.Replaces instead.)
+	Replaces Instead
 
 	// Abilities are the triggered abilities on the card.
 	Abilities []Ability
@@ -174,14 +174,11 @@ type StaticModifier struct {
 	// the host imposes it (e.g. "Your opponent's keys cost +2 Æmber").
 	KeyCostChange KeyCostChange
 
-	// PreventsDestruction replaces the host creature's destruction by fully healing
-	// that creature and destroying this Upgrade instead.
-	PreventsDestruction bool
-
-	// TakesControl marks an Upgrade whose presence controls its host. When that
-	// Upgrade leaves play while the host remains in play, control reverts to the
-	// host's owner.
-	TakesControl bool
+	// Replaces is a continuous replacement the Upgrade applies to a game event's
+	// outcome for its host while attached — Armageddon Cloak replaces the host's
+	// destruction (EventCreatureDestroyed) with an effect that fully heals it and
+	// destroys the Upgrade. The zero value carries no replacement.
+	Replaces Replace
 }
 
 // ConstantAbility is a continuous stat modifier a card in play applies to
@@ -270,6 +267,17 @@ func NewCard(name string, house House, ct CardType, rarity Rarity, opts ...CardO
 			panic(fmt.Sprintf("card %q: %v", name, err))
 		}
 	}
+	if err := c.Static.Replaces.validate(); err != nil {
+		panic(fmt.Sprintf("card %q: %v", name, err))
+	}
+	if c.Replaces.valid() {
+		if err := c.Replaces.validate(); err != nil {
+			panic(fmt.Sprintf("card %q: %v", name, err))
+		}
+	}
+	if err := c.PlayPermission.validate(); err != nil {
+		panic(fmt.Sprintf("card %q: %v", name, err))
+	}
 	return c
 }
 
@@ -355,16 +363,10 @@ func WithKeyCost(kc KeyCostChange) CardOption {
 	return func(c *CardDefinition) { c.KeyCostChange = kc }
 }
 
-// WithOffHousePlayGrant makes the card, while in play, let its controller play
-// one card of house on a turn where house is not their active house.
-func WithOffHousePlayGrant(house House) CardOption {
-	return func(c *CardDefinition) { c.OffHousePlayGrant = house }
-}
-
-// WithCaptureOpponentAember makes this creature capture each Æmber that would be
-// added to its opponent's pool while this creature is in play.
-func WithCaptureOpponentAember() CardOption {
-	return func(c *CardDefinition) { c.CapturesOpponentAember = true }
+// WithReplaces sets a continuous replacement the card applies to a game event's
+// outcome while in play (Ether Spider capturing Æmber added to its opponent's pool).
+func WithReplaces(r Instead) CardOption {
+	return func(c *CardDefinition) { c.Replaces = r }
 }
 
 // WithAbility appends a triggered ability to the card.

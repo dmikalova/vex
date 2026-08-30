@@ -10,7 +10,7 @@ import (
 // Bouncing Deathquark
 //
 //	House:  Logos
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Uncommon
 //
 //	Play: Destroy an enemy creature and a friendly creature -> if there is a friendly creature in play, you may repeat this effect.

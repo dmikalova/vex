@@ -10,7 +10,7 @@ import (
 // Imperial Traitor
 //
 //	House:  Shadows
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //

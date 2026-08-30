@@ -59,22 +59,111 @@ func (OpponentAemberMoreThanYou) Met(ctx *EffectContext) bool {
 	return ctx.Resolver.Aember(ctx.Opponent()) > ctx.Resolver.Aember(ctx.Controller)
 }
 
-// CardsPlayedOfHouseAtLeast is met when the controller has played at least Amount
-// cards of House this turn.
-type CardsPlayedOfHouseAtLeast struct {
-	House  House
+// CardsDestroyedFewerThan is met when fewer than Amount cards were destroyed this
+// way — the tally a preceding effect records on the context. Bonkers Killing
+// Machine destroys itself when its house-driven destruction removed fewer than two.
+type CardsDestroyedFewerThan struct {
 	Amount int
 }
 
-// CondText renders the condition, e.g. "if you have played 7 or more Sanctum
-// cards this turn".
-func (c CardsPlayedOfHouseAtLeast) CondText() string {
-	return fmt.Sprintf("if you have played %d or more %s cards this turn", c.Amount, c.House)
+// CondText renders the condition, e.g. "if fewer than 2 cards are destroyed this
+// way".
+func (c CardsDestroyedFewerThan) CondText() string {
+	return fmt.Sprintf("if fewer than %d cards are destroyed this way", c.Amount)
 }
 
-// Met reports whether the controller's house-specific play count reaches Amount.
-func (c CardsPlayedOfHouseAtLeast) Met(ctx *EffectContext) bool {
-	return ctx.Resolver.CardsPlayedOfHouseThisTurn(ctx.Controller, c.House) >= c.Amount
+// Met reports whether fewer than Amount cards were destroyed this way.
+func (c CardsDestroyedFewerThan) Met(ctx *EffectContext) bool {
+	return ctx.Destroyed < c.Amount
+}
+
+// HouseChoice names a house a condition compares against by reference rather than
+// by a fixed value — the house chosen this turn, or the active house — so one
+// condition works wherever such a house is meaningful.
+type HouseChoice uint8
+
+const (
+	// houseChoiceUnset is the invalid zero value.
+	houseChoiceUnset HouseChoice = iota
+	// TheChosenHouse is the house picked by an enclosing ChooseHouseThen.
+	TheChosenHouse
+	// TheActiveHouse is the player's active house this turn.
+	TheActiveHouse
+)
+
+// ItIsOfHouse is met when the card in context (ctx.It — a revealed, discarded, or
+// triggering card) belongs to a referenced house. It replaces the one-off
+// "revealed card of the chosen house" (Chaos Portal) and "discarded card of the
+// active house" (Evasion Sigil) with a single filter on the contextual card.
+type ItIsOfHouse struct {
+	House HouseChoice
+}
+
+// CondText renders the condition, e.g. "if it is of the chosen house".
+func (e ItIsOfHouse) CondText() string {
+	if e.House == TheActiveHouse {
+		return "if it is of the active house"
+	}
+	return "if it is of the chosen house"
+}
+
+// Met reports whether a card is in context and belongs to the referenced house.
+func (e ItIsOfHouse) Met(ctx *EffectContext) bool {
+	if !ctx.HasIt {
+		return false
+	}
+	house := ctx.Resolver.House(ctx.It)
+	if e.House == TheActiveHouse {
+		return house == ctx.Resolver.ActiveHouse()
+	}
+	return house == ctx.ChosenHouse
+}
+
+// ItIs is met when the card in context (ctx.It — a just-played, revealed, or
+// discarded card) matches a concrete House and/or Type filter, e.g. "if it is a
+// Mars creature" (Brain Stem Antenna reacting to a played card) or "if it is an
+// artifact" (Carlo Phantom). Either filter may be left unset to match any. It is
+// the concrete-value counterpart to ItIsOfHouse, which names the house by
+// reference (the chosen or active house).
+type ItIs struct {
+	House House
+	Type  CardType
+}
+
+// CondText renders the condition, e.g. "if it is a Mars creature" or "if it is an
+// artifact".
+func (e ItIs) CondText() string {
+	return "if it is " + indefinite(houseTypeNoun(e.House, e.Type))
+}
+
+// Met reports whether a card is in context and matches the house and type filters.
+func (e ItIs) Met(ctx *EffectContext) bool {
+	if !ctx.HasIt {
+		return false
+	}
+	if e.House != HouseNone && ctx.Resolver.House(ctx.It) != e.House {
+		return false
+	}
+	if e.Type != "" && ctx.Resolver.TypeOf(ctx.It) != e.Type {
+		return false
+	}
+	return true
+}
+
+// houseTypeNoun renders a card filtered by house and type as a noun, e.g. "Mars
+// creature", "artifact", or the bare "card" when neither is set.
+func houseTypeNoun(house House, typ CardType) string {
+	n := "card"
+	switch typ {
+	case Creature:
+		n = "creature"
+	case Artifact:
+		n = "artifact"
+	}
+	if house != HouseNone {
+		n = house.String() + " " + n
+	}
+	return n
 }
 
 // Conditional resolves Then only when Cond is met. It renders as "<cond>, <then>",

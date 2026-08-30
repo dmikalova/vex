@@ -36,6 +36,10 @@ type cardView struct {
 	Draggable   bool
 	OnDragStart func(app.Context, engine.LocalID)
 	OnDragEnd   func(app.Context, engine.LocalID)
+	// OnHover fires with ID when the pointer enters the card, OnHoverOut when it
+	// leaves — they drive the hover card preview.
+	OnHover    func(app.Context, engine.LocalID)
+	OnHoverOut func(app.Context)
 }
 
 // onClick is a stable method (unlike a per-card closure) so go-app keeps it bound
@@ -59,6 +63,18 @@ func (c *cardView) onDragEnd(ctx app.Context, _ app.Event) {
 	}
 }
 
+func (c *cardView) onMouseEnter(ctx app.Context, _ app.Event) {
+	if c.OnHover != nil {
+		c.OnHover(ctx, c.ID)
+	}
+}
+
+func (c *cardView) onMouseLeave(ctx app.Context, _ app.Event) {
+	if c.OnHoverOut != nil {
+		c.OnHoverOut(ctx)
+	}
+}
+
 func (c *cardView) Render() app.UI {
 	clickable := c.OnActivate != nil
 	cls := cx(
@@ -77,6 +93,9 @@ func (c *cardView) Render() app.UI {
 	if clickable {
 		div = div.OnClick(c.onClick)
 	}
+	if c.OnHover != nil {
+		div = div.OnMouseEnter(c.onMouseEnter).OnMouseLeave(c.onMouseLeave)
+	}
 
 	return div.Body(
 		app.Div().Class("card-name").Body(
@@ -93,7 +112,7 @@ func (c *cardView) Render() app.UI {
 			}),
 		),
 		app.Div().Class("card-kind").Body(
-			app.If(c.TypeIcon != "", func() app.UI { return icon(c.TypeIcon, "icon-kind") }),
+			app.If(c.TypeIcon != "", func() app.UI { return icon(c.TypeIcon, "icon-kind", "icon-outline") }),
 			app.Span().Text(c.Kind),
 		),
 	)

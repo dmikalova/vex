@@ -15,7 +15,8 @@ var CollarOfSubordination = card.New(
 	card.Type.Upgrade,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 105),
-	card.WithStatic(card.StaticModifier{TakesControl: true}),
 	card.WithAbility(
-		card.Trigger.Play, card.TakeControl{}),
+		card.Trigger.Play, card.TakeControl{
+			Duration: card.Duration.UntilThisLeavesPlay,
+		}),
 )

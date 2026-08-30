@@ -265,6 +265,37 @@ Applies to archiving (`from your hand`, `the top card of your deck`) and any
 future zone-to-zone movement (hand, deck, discard, archives). `Archive` alone
 never implies the hand.
 
+## 18. Æmber a player owes another player is `give`, never `pay`
+
+One verb covers Æmber changing hands between players: **`give`**. `pay` (the
+printed wording on toll cards) is retired so every player-to-player transfer reads
+the same way, matching Interdimensional Graft's "they must give you their
+remaining Æmber".
+
+| Original                                                          | Curated                                                          |
+| ----------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `Your opponent must pay you 1 Aember in order to play an artifact.` | `Your opponent must give you 1 Aember in order to play an artifact.` |
+| `…they must pay you their remaining Aember.`                      | `…they must give you their remaining Aember.`                    |
+
+The engine keeps the mechanic named `Toll` (the thing a card charges), but its
+rendered text says `give`. (Affected: Customs Office, Tentacus,
+Interdimensional Graft.)
+
+## 19. The `action` card type is renamed `Tactic`
+
+KeyForge overloads "Action": it is both a **card type** (a one-shot card you play
+from hand) and an **ability** (`Action:` on a ready creature or artifact). To keep
+the two distinct, the card **type** is renamed **`Tactic`** (rendered `Type:
+Tactic`), while the **`Action:` ability** keeps its printed wording untouched.
+
+| Context                              | Wording           |
+| ------------------------------------ | ----------------- |
+| Card type (was "action")             | `Tactic`          |
+| Ability on a creature/artifact       | `Action:` (kept)  |
+
+This is a naming choice, not a text rewrite: the `Action:` prefix on every card's
+ability line is unchanged.
+
 ---
 
 ## Deliberate rule changes (not just wording)

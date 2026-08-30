@@ -4,7 +4,7 @@ import "github.com/dmikalova/vactrol/internal/engine"
 
 // The enum-like card categories, re-exported as grouped namespaces so related
 // values stay together and read unambiguously — card.House.Brobnar is plainly a
-// house, card.Type.Action plainly a card type. This mirrors the engine's
+// house, card.Type.Tactic plainly a card type. This mirrors the engine's
 // types.go. Treat these package-level vars as read-only.
 
 // Trait and Player are the loose value types authors name directly (Player as an
@@ -34,13 +34,13 @@ type houses struct {
 // Type groups the card-type values, e.g. card.Type.Creature.
 var Type = cardTypes{
 	Creature: engine.Creature,
-	Action:   engine.Action,
+	Tactic:   engine.Tactic,
 	Artifact: engine.Artifact,
 	Upgrade:  engine.Upgrade,
 }
 
 type cardTypes struct {
-	Creature, Action, Artifact, Upgrade engine.CardType
+	Creature, Tactic, Artifact, Upgrade engine.CardType
 }
 
 // Rarity groups the rarity values, e.g. card.Rarity.Common.
@@ -87,7 +87,7 @@ var Trigger = triggers{
 	AfterCreatureEnters:    engine.TriggerAfterCreatureEnters,
 	Destroyed:              engine.TriggerDestroyed,
 	AfterDestroyedFighting: engine.TriggerAfterDestroyedFighting,
-	AfterArtifactPlayed:    engine.TriggerAfterArtifactPlayed,
+	AfterCardPlayed:        engine.TriggerAfterCardPlayed,
 }
 
 type triggers struct {
@@ -100,7 +100,7 @@ type triggers struct {
 	AfterCreatureEnters,
 	Destroyed,
 	AfterDestroyedFighting,
-	AfterArtifactPlayed engine.Trigger
+	AfterCardPlayed engine.Trigger
 }
 
 // Controller and Opponent are the two players an effect can target, relative to
