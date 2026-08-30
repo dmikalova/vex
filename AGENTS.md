@@ -127,7 +127,6 @@ refactor that breaks something surfaces immediately. Lean on them — refactor
 freely, keep everything green, and let the suite catch regressions instead of
 avoiding the change.
 
-
 ## Engine design patterns and constraints
 
 The full design ideal for `internal/engine` — the patterns it is built from, the
@@ -158,7 +157,6 @@ engine seam. The load-bearing rules that affect how you add anything:
   `Target` is a flag struct with paired `x`/`hasX` fields rather than slices or
   pointers. Do not introduce a pointer/slice/map into `GameState` or a
   state-compared value type.
-
 
 ## File organization
 
@@ -266,10 +264,10 @@ than one (single-field effects stay inline):
 
 ```go
 card.WithAbility(
-	card.Trigger.Play, card.CannotFight{
-		Player:   card.Opponent,
-		Duration: card.Duration.NextTurn,
-	}),
+  card.Trigger.Play, card.CannotFight{
+    Player:   card.Opponent,
+    Duration: card.Duration.NextTurn,
+  }),
 ```
 
 See `internal/cards/AGENTS.md` for the full card-authoring guide (file layout,

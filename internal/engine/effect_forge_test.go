@@ -59,8 +59,8 @@ func TestGiveRemainingAemberAfterOpponentForgeKey(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.BeginTurn(0)
 	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
-	if g.State.LastingCount != 1 || g.State.Lasting[0].Controller != 1 || g.State.Lasting[0].On != EventForgeKey {
-		t.Fatal("opponent's next-turn key-forge reaction was not armed")
+	if g.State.LastingCount != 1 || g.State.Lasting[0].Controller != 1 || g.State.Lasting[0].On != EventForgeKey || g.State.Lasting[0].Once {
+		t.Fatal("opponent's next-turn key-forge reaction was not armed as a durable reaction")
 	}
 
 	g.State.Aember[1] = KeyCost + 4
@@ -76,8 +76,35 @@ func TestGiveRemainingAemberAfterOpponentForgeKey(t *testing.T) {
 	if g.Aember(0) != 4 {
 		t.Errorf("controller aember = %d, want 4", g.Aember(0))
 	}
+	if g.State.LastingCount != 1 {
+		t.Error("reaction should persist so further forges this turn also transfer")
+	}
+
+	g.EndTurn(1)
 	if g.State.LastingCount != 0 {
-		t.Error("reaction should self-remove after the opponent forges")
+		t.Error("reaction should clear at the end of the opponent's next turn")
+	}
+}
+
+func TestGiveRemainingAemberAfterOpponentForgeKeyEveryForge(t *testing.T) {
+	// A key cheat can forge more than one key in a turn; the opponent must give
+	// their remaining Æmber each time.
+	g := NewGame("A", "B", 1)
+	g.BeginTurn(0)
+	GiveRemainingAemberAfterOpponentForgeKey{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	g.EndTurn(0)
+	g.BeginTurn(1) // the start-of-turn forge is skipped (no Æmber), reaction still armed
+
+	g.State.Aember[1] = 5
+	ForgeKey{FreeOfCost: true}.Resolve(&EffectContext{Resolver: g, Controller: 1})
+	if g.Aember(1) != 0 || g.Aember(0) != 5 {
+		t.Fatalf("first forge: opponent=%d controller=%d, want 0/5", g.Aember(1), g.Aember(0))
+	}
+
+	g.State.Aember[1] = 3
+	ForgeKey{FreeOfCost: true}.Resolve(&EffectContext{Resolver: g, Controller: 1})
+	if g.Aember(1) != 0 || g.Aember(0) != 8 {
+		t.Fatalf("second forge: opponent=%d controller=%d, want 0/8", g.Aember(1), g.Aember(0))
 	}
 }
 

@@ -5,6 +5,8 @@
 package main
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"log"
 	"net/http"
 	"os"
@@ -33,6 +35,10 @@ func main() {
 		// applies changes with the server left running (no restart).
 		Styles:     []string{"/web/app.css"},
 		RawHeaders: []string{bootStyle, boardScript, devReloadScript},
+		// Version keys go-app's service-worker cache. Left empty it defaults to the
+		// app.wasm hash, so a CSS-only edit (wasm unchanged) would keep serving the
+		// cached stylesheet. Hashing app.css too makes every asset edit bump it.
+		Version: resourceVersion(),
 	})
 
 	// Cloud Run injects PORT; fall back to 8000 for local `mage web`.
@@ -45,6 +51,21 @@ func main() {
 	if err := http.ListenAndServe(addr, nil); err != nil {
 		log.Fatal(err)
 	}
+}
+
+// resourceVersion hashes the served static assets so the go-app Handler version
+// changes whenever the wasm bundle or the stylesheet does, busting the service
+// worker's precache on every edit.
+func resourceVersion() string {
+	h := sha256.New()
+	for _, p := range []string{"web/app.wasm", "web/app.css"} {
+		b, err := os.ReadFile(p)
+		if err != nil {
+			continue
+		}
+		h.Write(b)
+	}
+	return hex.EncodeToString(h.Sum(nil))[:12]
 }
 
 // bootStyle is an inline <head> stylesheet that paints the dark background

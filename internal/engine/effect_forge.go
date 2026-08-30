@@ -26,9 +26,10 @@ func (e ForgeKey) Resolve(ctx *EffectContext) {
 }
 
 // GiveRemainingAemberAfterOpponentForgeKey arms Interdimensional Graft's delayed
-// forge penalty: if the opponent forges a key during their next turn, they give
-// their remaining Æmber to the controller. It is durable across this turn's end,
-// but expires at the end of that opponent's next turn if they did not forge.
+// forge penalty: each time the opponent forges a key during their next turn, they
+// give their remaining Æmber to the controller. It is durable across this turn's
+// end and fires on every forge that turn (a key cheat can forge more than one), then
+// expires at the end of that opponent's next turn.
 type GiveRemainingAemberAfterOpponentForgeKey struct{}
 
 // Text renders the effect.
@@ -36,9 +37,9 @@ func (GiveRemainingAemberAfterOpponentForgeKey) Text() string {
 	return "if an opponent forges a key on their next turn, they must give you their remaining Æmber"
 }
 
-// Resolve arms the transfer for the opponent's next turn by registering a one-shot
-// reaction to the opponent's forge, owned by the opponent so it survives this turn
-// and fires during theirs.
+// Resolve arms the transfer for the opponent's next turn by registering a reaction
+// to the opponent's forge, owned by the opponent so it survives this turn, fires on
+// each forge during theirs, and clears at the end of their turn.
 func (GiveRemainingAemberAfterOpponentForgeKey) Resolve(ctx *EffectContext) {
-	ctx.Resolver.AddLastingOnce(EventForgeKey, actGiveRemainingAember, ctx.Opponent(), 0, HouseNone)
+	ctx.Resolver.AddLasting(EventForgeKey, actGiveRemainingAember, ctx.Opponent(), 0)
 }

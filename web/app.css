@@ -223,6 +223,7 @@ body {
   width: 100%;
   height: 100%;
   max-height: none;
+  --card-full-h: 18rem;
 }
 .card-preview .card-rules {
   font-size: 12px;
@@ -733,7 +734,11 @@ button:disabled {
      band (--tp) is the base, and the ::before overlay paints the name banner
      (--nm) over the upper-left, masked so their border sweeps in an S with
      horizontal tips instead of a straight diagonal. The mask stretches to the
-     card via preserveAspectRatio=none. */
+     card width but is pinned to the card's *full* height (--card-full-h) rather
+     than the current height, so as the card squishes the S curve slides off the
+     bottom and flattens to a solid name banner — keeping a squished title legible
+     instead of two-toned. At full height it is indistinguishable from a stretch. */
+  --card-full-h: 12rem;
   --card-frame-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none' viewBox='0 0 100 100'%3E%3Cpath d='M0 0 L100 0 L100 30 C25 30 75 70 0 70 Z' fill='white'/%3E%3C/svg%3E");
   background: var(--tp, #2a2a29);
   font-size: 0.75rem;
@@ -749,8 +754,8 @@ button:disabled {
   inset: -10px;
   z-index: 0;
   background: var(--nm, #3a3a38);
-  -webkit-mask: var(--card-frame-mask) center / 100% 100% no-repeat;
-  mask: var(--card-frame-mask) center / 100% 100% no-repeat;
+  -webkit-mask: var(--card-frame-mask) left top / 100% var(--card-full-h) no-repeat;
+  mask: var(--card-frame-mask) left top / 100% var(--card-full-h) no-repeat;
   filter: blur(6px);
 }
 /* keep the card's contents above the ::before frame overlay */
@@ -842,6 +847,10 @@ button:disabled {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.1em;
+  /* paint the type band's own solid colour so the S overlay behind it can never
+     bleed in and split it two-toned when the card squishes and the curve's tip
+     reaches this far down */
+  background: var(--tp, #2a2a29);
   color: var(--tp-fg, #8b888f);
 }
 
