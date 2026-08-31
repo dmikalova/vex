@@ -218,9 +218,40 @@ func (g *Game) playCreatureCard(player int, id LocalID, flankLeft bool) {
 	g.logf("%s plays %s to the battleline", g.names[player], g.Name(id))
 	g.applyAemberBonus(id)
 	g.triggerAbilities(id, TriggerAfterPlay, 0, false)
-	g.fireCreatureEnters(id)
-	g.fireCardPlayed(player, id)
-	g.fireLasting(EventCreaturePlayed, player, id)
+	g.emitCreatureEnters(id)
+	g.emitCardPlayed(player, id)
+	g.emitLasting(EventCreaturePlayed, player, id)
+}
+
+// putIntoPlay puts a card into play under controller's control without playing
+// it: the card is removed from wherever it rests and enters directly — a creature
+// onto the right flank of controller's battleline, an artifact into controller's
+// artifact row. Because it is not played, its bonus icons and Play: abilities do
+// not resolve; only "enters play" reactions fire. Ownership is unchanged, so the
+// card still returns to its owner's zone when it later leaves play. Control is
+// held permanently: the card is its own control source, and releaseControlHeldBy
+// only ever reverts control anchored to a leaving upgrade, never to the card.
+func (g *Game) putIntoPlay(id LocalID, controller int) {
+	if g.inPlay(id) {
+		return
+	}
+	g.removeFromAnyZone(id)
+	core := &g.State.Cards[id]
+	if controller != g.owner(id) {
+		core.ControlPlus = uint8(controller + 1)
+	}
+	core.ControlSource = id
+	switch g.cat.def(id).Type {
+	case Creature:
+		core.Exhausted = true
+		core.ArmorRemaining = int16(g.armor(id))
+		g.State.Battleline[controller].add(id)
+		g.logf("%s puts %s into play under their control", g.names[controller], g.Name(id))
+		g.emitCreatureEnters(id)
+	case Artifact:
+		g.State.Artifacts[controller].add(id)
+		g.logf("%s puts %s into play under their control", g.names[controller], g.Name(id))
+	}
 }
 
 // playArtifactCard places an artifact and fires the standard play sequence for an
@@ -231,7 +262,7 @@ func (g *Game) playArtifactCard(player int, id LocalID) {
 	g.logf("%s plays artifact %s", g.names[player], g.Name(id))
 	g.applyAemberBonus(id)
 	g.triggerAbilities(id, TriggerAfterPlay, 0, false)
-	g.fireCardPlayed(player, id)
+	g.emitCardPlayed(player, id)
 }
 
 // playActionCard resolves and discards an action already removed from its previous
@@ -240,7 +271,7 @@ func (g *Game) playActionCard(player int, id LocalID) {
 	g.logf("%s plays action %s", g.names[player], g.Name(id))
 	g.applyAemberBonus(id)
 	g.triggerAbilities(id, TriggerAfterPlay, 0, false)
-	g.fireCardPlayed(player, id)
+	g.emitCardPlayed(player, id)
 	g.State.Discard[player].add(id)
 }
 
@@ -250,7 +281,7 @@ func (g *Game) playUpgradeCard(player int, id, host LocalID, def *CardDefinition
 	g.applyAemberBonus(id)
 	g.AttachUpgrade(host, id)
 	g.logf("%s attaches %s to %s", g.names[player], g.Name(id), g.Name(host))
-	g.fireUpgradePlay(host, id, def)
+	g.resolveUpgradePlay(host, id, def)
 }
 
 // DiscardCardFromHand moves a specific card from a player's hand to their discard
@@ -356,6 +387,9 @@ func (g *Game) validateHandPlay(player, handIndex int, want CardType) (LocalID, 
 	def := g.cat.def(id)
 	if def.Type != want {
 		return 0, ErrWrongType
+	}
+	if g.State.CannotPlayTypeThis[player] == want {
+		return 0, ErrCannotPlayType
 	}
 	if !g.mayPlayFromHand(player, def) {
 		return 0, ErrWrongHouse

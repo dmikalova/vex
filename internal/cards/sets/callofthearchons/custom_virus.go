@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// CustomVirus
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Custom Virus
 //
 //	House:  Mars
 //	Type:   Artifact
@@ -15,7 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Weapon
 //
-//	Omni: Sacrifice Custom Virus. Purge a creature from your hand. Destroy each creature that shares a trait with the purged creature.
+//	Versatile.
+//	Action: Destroy Custom Virus. Purge a creature from your hand. Destroy each creature that shares a trait with the purged creature.
 var CustomVirus = card.New(
 	"Custom Virus",
 	card.House.Mars,
@@ -24,5 +20,10 @@ var CustomVirus = card.New(
 	card.Provenance(card.CotA, 183),
 	card.WithAemberBonus(1),
 	card.WithTraits("Weapon"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Versatile),
+	card.WithAbility(
+		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
+			card.Sentence{Effect: card.Destroy{Target: card.Target.This}},
+			card.PurgeHandThenDestroyShared{},
+		}}),
 )

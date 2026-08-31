@@ -14,6 +14,11 @@ func RenderAbility(a Ability) string {
 			return punctuate(capitalizeFirst(s))
 		}
 	}
+	if a.Trigger == TriggerAfterChooseHouse {
+		if s, ok := afterChooseHouseText(a.Effect); ok {
+			return punctuate(capitalizeFirst(s))
+		}
+	}
 	if a.Trigger == TriggerEntersPlay {
 		return SelfName + " enters play " + enterStateWord(a.Effect) + "."
 	}
@@ -41,6 +46,24 @@ func afterYouPlayText(e Effect) (string, bool) {
 		return "", false
 	}
 	return "after you play " + indefinite(houseTypeNoun(it.House, it.Type)) + ", " + cond.Then.Text(), true
+}
+
+// afterChooseHouseText folds an AfterChooseHouse ability, whose effect is a
+// Conditional gated on the chosen house (a ChoseHouse condition), into the
+// natural "after you choose <House> as your active house, <then>" wording (Jehu
+// the Bureaucrat's "after you choose Sanctum as your active house, gain 2
+// Æmber"). Any other effect shape reports false and renders with the ordinary
+// prefix.
+func afterChooseHouseText(e Effect) (string, bool) {
+	cond, ok := e.(Conditional)
+	if !ok {
+		return "", false
+	}
+	ch, ok := cond.Cond.(ChoseHouse)
+	if !ok {
+		return "", false
+	}
+	return "after you choose " + ch.House.String() + " as your active house, " + cond.Then.Text(), true
 }
 
 // enterStateWord renders the state an "enters play" ability leaves its creature in,
@@ -259,7 +282,13 @@ func cardRules(def *CardDefinition) []string {
 		rules = append(rules, def.Name+" can only fight "+singularNoun(fr.Text())+"s.")
 	}
 	rules = append(rules, restrictionText(def.Restricts)...)
+	if def.ProtectsAember {
+		rules = append(rules, "Your Æmber cannot be stolen.")
+	}
 	if s := keyCostText(def.KeyCostChange); s != "" {
+		rules = append(rules, s)
+	}
+	if s := drawModifierText(def.DrawModifier); s != "" {
 		rules = append(rules, s)
 	}
 	if s := playPermissionText(def.PlayPermission); s != "" {
@@ -295,6 +324,31 @@ func CardDocComment(def *CardDefinition) string {
 		}
 	}
 	return strings.TrimRight(b.String(), "\n")
+}
+
+// drawModifierText renders a card's continuous change to a player's end-of-turn
+// hand refill, e.g. `During your "draw cards" step, refill your hand to 1
+// additional card.` Returns "" when the modifier is zero.
+func drawModifierText(m DrawModifier) string {
+	if m.Amount == 0 {
+		return ""
+	}
+	word, n := "additional", m.Amount
+	if n < 0 {
+		word, n = "less", -n
+	}
+	noun := "card"
+	if n != 1 {
+		noun = "cards"
+	}
+	switch m.Player {
+	case Controller:
+		return fmt.Sprintf("During your %q step, refill your hand to %d %s %s.", "draw cards", n, word, noun)
+	case Opponent:
+		return fmt.Sprintf("During their %q step, your opponent refills their hand to %d %s %s.", "draw cards", n, word, noun)
+	default: // EachPlayer
+		return fmt.Sprintf("During their %q step, each player refills their hand to %d %s %s.", "draw cards", n, word, noun)
+	}
 }
 
 // staticText renders an Upgrade's continuous modifier, e.g.
@@ -392,7 +446,11 @@ func constantText(def *CardDefinition) string {
 		return ""
 	}
 	who := capitalizeFirst(c.target().Text())
-	line := who + " gains " + strings.Join(parts, " and ") + "."
+	line := who + " gains " + strings.Join(parts, " and ")
+	if tgt := c.target(); tgt.Kind == TargetThisCreature && tgt.onFlank {
+		line += " while it is on a flank"
+	}
+	line += "."
 	return strings.ReplaceAll(line, SelfName, def.Name)
 }
 

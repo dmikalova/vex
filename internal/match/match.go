@@ -39,13 +39,7 @@ func SetupDecks(g *engine.Game, seed int64) [2][]engine.House {
 	for player := 0; player < 2; player++ {
 		r := rand.New(rand.NewSource(seed + int64(player) + 1))
 		houses[player] = pickHouses(available, r, DeckHouseCount)
-		deckPool := cardsOfHouses(pool, houses[player])
-		defs := make([]engine.CardDefinition, 0, DeckSize)
-		for len(defs) < DeckSize {
-			defs = append(defs, deckPool...)
-		}
-		defs = defs[:DeckSize]
-		r.Shuffle(len(defs), func(i, j int) { defs[i], defs[j] = defs[j], defs[i] })
+		defs := dealDeck(pool, houses[player], r)
 		for i, d := range defs {
 			if i < engine.HandSize {
 				g.AddToHand(d, player)
@@ -55,6 +49,37 @@ func SetupDecks(g *engine.Game, seed int64) [2][]engine.House {
 		}
 	}
 	return houses
+}
+
+// dealDeck builds a DeckSize deck split evenly across the chosen houses (KeyForge
+// deals a fixed share from each of three houses), drawing each house's share from
+// its own cards — shuffled, and repeating a house's pool only if it has fewer
+// cards than its share. The assembled deck is then shuffled so the opening hand is
+// not house-blocked. Drawing per house is what keeps every chosen house present:
+// a single house's cards now exceed DeckSize, so filling from one house-ordered
+// list and truncating would yield a single-house deck.
+func dealDeck(pool []engine.CardDefinition, hs []engine.House, r *rand.Rand) []engine.CardDefinition {
+	defs := make([]engine.CardDefinition, 0, DeckSize)
+	n := len(hs)
+	if n == 0 {
+		return defs
+	}
+	for i, h := range hs {
+		share := DeckSize / n
+		if i < DeckSize%n { // spread any remainder across the first houses
+			share++
+		}
+		hCards := cardsOfHouses(pool, []engine.House{h})
+		if len(hCards) == 0 {
+			continue
+		}
+		r.Shuffle(len(hCards), func(a, b int) { hCards[a], hCards[b] = hCards[b], hCards[a] })
+		for c := 0; c < share; c++ {
+			defs = append(defs, hCards[c%len(hCards)])
+		}
+	}
+	r.Shuffle(len(defs), func(i, j int) { defs[i], defs[j] = defs[j], defs[i] })
+	return defs
 }
 
 // poolHouses returns the distinct houses present in the card pool, sorted by name.

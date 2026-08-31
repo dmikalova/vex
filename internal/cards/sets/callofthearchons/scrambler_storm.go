@@ -1,20 +1,15 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ScramblerStorm
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Scrambler Storm
 //
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Your opponent cannot play action cards on their next turn.
+//	Play: Your opponent cannot play action cards during their next turn.
 var ScramblerStorm = card.New(
 	"Scrambler Storm",
 	card.House.Logos,
@@ -22,5 +17,8 @@ var ScramblerStorm = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 122),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.Play, card.CannotPlayNextTurn{
+		Player: card.Opponent,
+		Type:   card.Type.Tactic,
+	}),
 )

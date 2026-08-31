@@ -21,7 +21,7 @@ var Shooler = card.New(
 	card.WithTraits("Demon"),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
-			Cond: card.OpponentAemberAtLeast{Amount: 4},
+			Cond: card.OpponentAember{Is: card.AtLeast, Amount: 4},
 			Then: card.StealAember{Amount: 1},
 		}),
 )

@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// NovuArchaeologist
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Novu Archaeologist
 //
 //	House:  Logos
 //	Type:   Creature
@@ -24,5 +19,5 @@ var NovuArchaeologist = card.New(
 	card.Provenance(card.CotA, 147),
 	card.WithPower(4),
 	card.WithTraits("Cyborg", "Scientist"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.Action, card.ArchiveFromDiscard{}),
 )

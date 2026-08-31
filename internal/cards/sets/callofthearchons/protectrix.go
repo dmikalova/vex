@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Protectrix
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Sanctum
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Knight • Spirit
 //
-//	Reap: You may fully heal a creature. If you do, that creature cannot be dealt damage for the remainder of the turn.
+//	Reap: You may fully heal a creature -> for the remainder of the turn, it cannot be dealt damage.
 var Protectrix = card.New(
 	"Protectrix",
 	card.House.Sanctum,
@@ -24,5 +19,10 @@ var Protectrix = card.New(
 	card.Provenance(card.CotA, 254),
 	card.WithPower(5),
 	card.WithTraits("Knight", "Spirit"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.Reap, card.May{
+		Do: card.Then{
+			First:  card.Heal{Fully: true, Target: card.Target.Creature},
+			Result: card.PreventDamage{Target: card.Target.Triggering},
+		},
+	}),
 )

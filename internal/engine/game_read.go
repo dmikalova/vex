@@ -56,6 +56,13 @@ func (g *Game) Power(id LocalID) int {
 	return p
 }
 
+// Armor absorbs damage. A creature with armor prevents that much of the damage it
+// would be dealt: each point of armor stops 1 damage, and armor spent this way does
+// not come back until the creature's controller readies at the end of their turn.
+// Armor never reduces a creature's power, and healing does not restore spent armor.
+//
+//rulebook:combat Armor
+
 // armor returns a creature's armor value including attached upgrades.
 func (g *Game) armor(id LocalID) int {
 	a := g.cat.def(id).Armor
@@ -163,6 +170,9 @@ func (g *Game) TimesUsedThisTurn(id LocalID) int {
 // Aember returns a player's Æmber pool.
 func (g *Game) Aember(player int) int { return g.State.Aember[player] }
 
+// AemberProtected is the Resolver entry point for aemberProtected.
+func (g *Game) AemberProtected(player int) bool { return g.aemberProtected(player) }
+
 // Keys returns a player's forged key count.
 func (g *Game) Keys(player int) int { return g.State.Keys[player] }
 
@@ -243,6 +253,8 @@ func (g *Game) cannotFight(player int) bool {
 
 // cannotPlayCreatures reports whether a player is barred from playing creatures by
 // a constant Restrictions.CannotPlay rule on a card they control in play.
+// cannotPlayCreatures reports whether player is barred from playing creatures by a
+// constant "cannot play" rule on a card in play.
 func (g *Game) cannotPlayCreatures(player int) bool {
 	for _, id := range g.allInPlay(player) {
 		if g.cat.def(id).Restricts.CannotPlay == Creature {
@@ -262,6 +274,17 @@ func (g *Game) cannotPlayCard(player int) bool {
 				g.State.CardsPlayedThisTurn[player] >= limit.Amount {
 				return true
 			}
+		}
+	}
+	return false
+}
+
+// aemberProtected reports whether a card player controls makes their Æmber immune
+// to being stolen (The Vaultkeeper).
+func (g *Game) aemberProtected(player int) bool {
+	for _, id := range g.allInPlay(player) {
+		if g.cat.def(id).ProtectsAember {
+			return true
 		}
 	}
 	return false

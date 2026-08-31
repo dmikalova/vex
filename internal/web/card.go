@@ -14,15 +14,24 @@ import (
 type cardView struct {
 	app.Compo
 
-	ID         engine.LocalID
-	Title      string
-	HouseCls   string   // house-derived border/background classes
-	Emblem     string   // house emblem asset stem ("" for none)
-	TypeIcon   string   // card-type icon asset stem
-	Stat       []app.UI // compact stat nodes (power, damage, Æmber… with icons)
-	Rules      string   // rules/ability text for the face
-	Kind       string   // card type label shown at the foot
-	Stunned    bool     // shows a stun token on the face
+	ID       engine.LocalID
+	Title    string
+	HouseCls string // house-derived border/background classes
+	Emblem   string // house emblem asset stem ("" for none)
+	// HouseChanged marks that the card's current house differs from its printed
+	// house (a control/"belongs to house" effect); the emblem is highlighted.
+	HouseChanged bool
+	TypeIcon     string   // card-type icon asset stem
+	Stat         []app.UI // compact stat nodes (power, damage, Æmber… with icons)
+	Rules        string   // rules/ability text for the face
+	Kind         string   // card type label shown at the foot
+	Stunned      bool     // shows a stun token on the face
+	// Enter pulses the whole card as it comes into play; StunFlash pulses the stun
+	// token as it is first applied. FlashOdd alternates their animation class each
+	// time so the CSS animation replays even on back-to-back triggers.
+	Enter      bool
+	StunFlash  bool
+	FlashOdd   bool
 	Selected   bool
 	Targetable bool
 	Dimmed     bool
@@ -84,6 +93,8 @@ func (c *cardView) Render() app.UI {
 		ifCls(c.Targetable, "card--targetable"),
 		ifCls(c.Dimmed, "card--dimmed"),
 		ifCls(clickable && !c.Targetable, "card--clickable"),
+		ifCls(c.Enter && !c.FlashOdd, "card--enter-a"),
+		ifCls(c.Enter && c.FlashOdd, "card--enter-b"),
 	)
 
 	div := app.Div().Class(cls)
@@ -99,9 +110,15 @@ func (c *cardView) Render() app.UI {
 
 	return div.Body(
 		app.Div().Class("card-name").Body(
-			app.If(c.Emblem != "", func() app.UI { return icon(c.Emblem, "icon-house", "icon-outline") }),
+			app.If(c.Emblem != "", func() app.UI {
+				return icon(c.Emblem, "icon-house", "icon-outline", ifCls(c.HouseChanged, "icon-house--changed"))
+			}),
 			app.Span().Class("card-name-text").Text(c.Title),
-			app.If(c.Stunned, func() app.UI { return icon("stun", "icon-token") }),
+			app.If(c.Stunned, func() app.UI {
+				return icon("stun", "icon-token",
+					ifCls(c.StunFlash && !c.FlashOdd, "icon--pulse-a"),
+					ifCls(c.StunFlash && c.FlashOdd, "icon--pulse-b"))
+			}),
 		),
 		app.Div().Class("card-body").Body(
 			app.If(len(c.Stat) > 0, func() app.UI {

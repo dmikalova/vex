@@ -21,7 +21,9 @@ var Target = targets{
 	OtherFriendlyCreature:     engine.Target{Kind: engine.TargetChosenOtherFriendlyCreature},
 	TheOtherCreature:          engine.Target{Kind: engine.TargetTheOtherCreature},
 	ChosenInPlay:              engine.Target{Kind: engine.TargetChosenInPlay},
+	FriendlyInPlay:            engine.Target{Kind: engine.TargetChosenFriendlyInPlay},
 	Artifact:                  engine.Target{Kind: engine.TargetChosenArtifact},
+	EnemyArtifact:             engine.Target{Kind: engine.TargetChosenEnemyArtifact},
 }
 
 type targets struct {
@@ -39,7 +41,9 @@ type targets struct {
 	OtherFriendlyCreature,
 	TheOtherCreature,
 	ChosenInPlay,
-	Artifact engine.Target
+	FriendlyInPlay,
+	Artifact,
+	EnemyArtifact engine.Target
 }
 
 // Selector refines a Target relative to the whole selected set (see
@@ -60,6 +64,11 @@ var SamePowerAsChosen = engine.SamePowerAsChosen
 // of a set, e.g. card.Target.EachCreature.Selector(card.LeastPowerful) (Horseman
 // of Famine). When several tie the controller chooses which one to keep.
 var LeastPowerful = engine.LeastPowerful
+
+// MostPowerful returns a Selector that keeps the n most powerful creatures of a
+// set, e.g. card.Target.EachCreature.Selector(card.MostPowerful(3)) (Three Fates).
+// When more tie at the cutoff than there are slots, the controller chooses which.
+var MostPowerful = engine.MostPowerful
 
 // Stunned is the set of stunned creatures, used as a fight restriction: pass it to
 // card.WithFightRestriction to limit a creature to fighting only stunned creatures

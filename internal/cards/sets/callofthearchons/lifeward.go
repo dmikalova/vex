@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Lifeward
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Dis
 //	Type:   Artifact
@@ -15,14 +10,22 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Power
 //
-//	Omni: Sacrifice Lifeward. Your opponent cannot play creatures on their next turn.
+//	Versatile.
+//	Action: Destroy Lifeward. Your opponent cannot play creatures during their next turn.
 var Lifeward = card.New(
 	"Lifeward",
 	card.House.Dis,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 77),
-	card.WithAemberBonus(1),
 	card.WithTraits("Power"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAemberBonus(1),
+	card.WithKeywords(card.Keyword.Versatile),
+	card.WithAbility(card.Trigger.Action, card.Sequence{Effects: []card.Effect{
+		card.Sentence{Effect: card.Destroy{Target: card.Target.This}},
+		card.Sentence{Effect: card.CannotPlayNextTurn{
+			Player: card.Opponent,
+			Type:   card.Type.Creature,
+		}},
+	}}),
 )

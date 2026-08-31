@@ -228,6 +228,7 @@ func render(byKey map[string][]entry) (string, error) {
 		b.WriteString("\n\n")
 	}
 
+	var index []indexEntry
 	for _, sec := range sections {
 		entries := byKey[sec.key]
 		intro, err := readProse(sec.key)
@@ -242,13 +243,14 @@ func render(byKey map[string][]entry) (string, error) {
 			b.WriteString(intro)
 			b.WriteString("\n\n")
 		}
-		for _, gr := range groupByTitle(entries) {
+		for _, gr := range sectionLead(groupByTitle(entries), sec.title) {
 			// An entry whose title matches its section (e.g. Combat) would render a
 			// heading identical to the section's, so emit its body directly under
 			// the section instead of repeating the heading.
 			if !strings.EqualFold(gr.title, sec.title) {
 				fmt.Fprintf(&b, "### %s\n\n", gr.title)
 			}
+			index = append(index, indexEntry{gr.title, anchor(gr.title)})
 			// Untitled parts render first as the heading's own body; subheaded
 			// parts follow, ordered by subheading (number them to control order).
 			var subbed []entry
@@ -264,12 +266,53 @@ func render(byKey map[string][]entry) (string, error) {
 			})
 			for _, p := range subbed {
 				fmt.Fprintf(&b, "#### %s\n\n", p.subtitle)
+				index = append(index, indexEntry{p.subtitle, anchor(p.subtitle)})
 				writeBody(&b, p.body)
 			}
 		}
 	}
 
+	writeIndex(&b, index)
+
 	return strings.TrimRight(b.String(), "\n") + "\n", nil
+}
+
+// indexEntry is one term in the trailing alphabetical index: the heading text and
+// the GitHub-style anchor slug that links to it.
+type indexEntry struct {
+	title  string
+	anchor string
+}
+
+// writeIndex appends the alphabetical index of every term heading, each linking
+// back to its section. It is emitted once, after all sections.
+func writeIndex(b *strings.Builder, index []indexEntry) {
+	if len(index) == 0 {
+		return
+	}
+	sort.SliceStable(index, func(i, j int) bool {
+		return strings.ToLower(index[i].title) < strings.ToLower(index[j].title)
+	})
+	b.WriteString("## Index\n\n")
+	for _, e := range index {
+		fmt.Fprintf(b, "- [%s](#%s)\n", e.title, e.anchor)
+	}
+	b.WriteString("\n")
+}
+
+// anchor renders a term title as a GitHub-style heading slug: lowercased, with
+// spaces and hyphens collapsed to hyphens and every other character dropped.
+func anchor(title string) string {
+	var b strings.Builder
+	for _, r := range strings.ToLower(title) {
+		switch {
+		case r >= 'a' && r <= 'z', r >= '0' && r <= '9':
+			b.WriteRune(r)
+		case r == ' ' || r == '-':
+			b.WriteByte('-')
+		}
+	}
+	return b.String()
 }
 
 // titleGroup gathers every entry sharing a title so several code sites can feed
@@ -282,8 +325,8 @@ type titleGroup struct {
 // groupByTitle merges entries that share a title and returns the groups sorted
 // alphabetically by title, each keeping its parts in harvest order.
 func groupByTitle(entries []entry) []titleGroup {
-	index := map[string]int{}
 	var groups []titleGroup
+	index := map[string]int{}
 	for _, e := range entries {
 		i, ok := index[e.title]
 		if !ok {
@@ -295,6 +338,16 @@ func groupByTitle(entries []entry) []titleGroup {
 	}
 	sort.SliceStable(groups, func(i, j int) bool {
 		return strings.ToLower(groups[i].title) < strings.ToLower(groups[j].title)
+	})
+	return groups
+}
+
+// sectionLead reorders groups so the entry whose title equals the section (its
+// overview, rendered without a repeated heading) leads, ahead of the ### terms.
+func sectionLead(groups []titleGroup, section string) []titleGroup {
+	sort.SliceStable(groups, func(i, j int) bool {
+		return strings.EqualFold(groups[i].title, section) &&
+			!strings.EqualFold(groups[j].title, section)
 	})
 	return groups
 }

@@ -75,7 +75,7 @@ func TestCaptureOpponentAemberReplacement(t *testing.T) {
 		spider := g.AddToBattleline(testEtherSpider(), 1)
 		g.AddLasting(EventCreaturePlayed, actGainAember, 0, 2)
 
-		g.fireLasting(EventCreaturePlayed, 0, played)
+		g.emitLasting(EventCreaturePlayed, 0, played)
 
 		if g.Aember(0) != 0 {
 			t.Errorf("player Æmber = %d, want 0", g.Aember(0))

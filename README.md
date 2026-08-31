@@ -39,7 +39,8 @@ engine.
 For how the pieces fit together — the pointerless state, the card-effect AST, and
 how a turn and an ability flow through the code — see
 [`docs/architecture.md`](docs/architecture.md). For the testing options and what
-to test at each layer, see [`docs/testing.md`](docs/testing.md).
+to test at each layer, see [`docs/testing.md`](docs/testing.md). A full index of
+every doc is in [`docs/README.md`](docs/README.md).
 
 ## Development
 

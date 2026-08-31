@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ShieldOfJustice
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Shield of Justice
 //
 //	House:  Sanctum
 //	Type:   Tactic
@@ -22,5 +17,6 @@ var ShieldOfJustice = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 225),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.PreventDamage{Target: card.Target.EachFriendlyCreature}),
 )

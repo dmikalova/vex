@@ -19,6 +19,26 @@ func (g *Game) takeControl(id LocalID, controller int, source LocalID) {
 	}
 }
 
+// takeControlOfArtifact moves an artifact into controller's artifact row without
+// changing its owner, giving that player control of it for good. Unlike creature
+// control there is no reverting source: releaseControlHeldBy only scans
+// battlelines, so a controlled artifact is never handed back until it leaves
+// play. Ownership stays fixed and still decides the zone it returns to.
+func (g *Game) takeControlOfArtifact(id LocalID, controller int) {
+	if !g.inPlay(id) || g.cat.def(id).Type != Artifact {
+		return
+	}
+	g.removeFromPlay(id)
+	controlPlus := uint8(0)
+	if controller != g.owner(id) {
+		controlPlus = uint8(controller + 1)
+	}
+	g.State.Cards[id].ControlPlus = controlPlus
+	g.State.Cards[id].ControlSource = 0
+	g.State.Artifacts[controller].add(id)
+	g.logf("%s takes control of %s", g.names[controller], g.Name(id))
+}
+
 // releaseControlHeldBy reverts every creature whose control was taken "until source
 // leaves play" back to its owner's battleline, called when source leaves play. It is
 // the leave-play half of the UntilThisLeavesPlay duration: the control lasts exactly

@@ -1,20 +1,15 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// TakeThatSmartypants
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Take that, Smartypants
 //
 //	House:  Brobnar
 //	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Steal 2 Aember if your opponent has 3 or more Logos cards in play.
+//	Play: If there are 3 enemy Logos cards in play, steal 2 Æmber.
 var TakeThatSmartypants = card.New(
 	"Take that, Smartypants",
 	card.House.Brobnar,
@@ -22,5 +17,12 @@ var TakeThatSmartypants = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 11),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.Play, card.Conditional{
+		Cond: card.InPlay{
+			Player: card.Opponent,
+			House:  card.House.Logos,
+			Amount: 3,
+		},
+		Then: card.StealAember{Amount: 2},
+	}),
 )

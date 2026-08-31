@@ -69,7 +69,7 @@ type CardType string
 
 const (
 	// A creature is a unit you play into your battleline. Once it is ready, it can
-	// reap for Æmber, fight an enemy creature, or use an "Action:" ability.
+	// reap for Aember, fight an enemy creature, or use an "Action:" ability.
 	//
 	//rulebook:cardtype Creature
 	Creature CardType = "Creature"
@@ -137,7 +137,7 @@ const (
 	//rulebook:ability Play
 	TriggerAfterPlay
 	// A Reap ability resolves after you use a ready creature to reap. Reaping gains
-	// you 1 Æmber and exhausts the creature; the ability resolves in addition.
+	// you 1 Aember and exhausts the creature; the ability resolves in addition.
 	//
 	//rulebook:ability Reap
 	TriggerAfterReap
@@ -186,9 +186,24 @@ const (
 	// An Enters Play ability resolves on a creature as it enters play, whatever
 	// brought it in — the creature's own reaction to arriving, such as Chuff Ape
 	// entering stunned. It is fired on the entering creature by the enter-play event
-	// (Game.fireCreatureEnters), so a new "as it enters play" behavior is just
+	// (Game.emitCreatureEnters), so a new "as it enters play" behavior is just
 	// another ability rather than a special case in the play path.
 	TriggerEntersPlay
+	// An End of Turn ability resolves during the end of its controller's turn,
+	// before cards ready and the controller draws (Shaffles drains the opponent at
+	// each turn's end).
+	TriggerEndOfTurn
+	// This ability resolves after its controller chooses their active house at the
+	// start of the turn — the only "choose a house" step it watches. Changing houses
+	// mid-turn by another effect is not this start-of-turn choice and does not fire
+	// it. The ability names the house it cares about (Jehu the Bureaucrat gains Æmber
+	// only when Sanctum is chosen), which need not be the card's own house.
+	TriggerAfterChooseHouse
+	// This ability resolves each time an enemy creature is destroyed during its
+	// controller's turn — Pile of Skulls has a friendly creature capture Æmber
+	// whenever an enemy creature is destroyed on your turn. It is a persistent
+	// reaction on an in-play card, fired only for the active player's cards.
+	TriggerAfterEnemyCreatureDestroyed
 )
 
 // prefix returns the printed text prefix for a trigger and whether the effect
@@ -217,8 +232,12 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return "After a creature enters play, ", false
 	case TriggerAfterDestroyedFighting:
 		return "After a creature is destroyed fighting " + SelfName + ", ", false
+	case TriggerAfterEnemyCreatureDestroyed:
+		return "Each time an enemy creature is destroyed during your turn, ", false
 	case TriggerAfterCardPlayed:
 		return "After you play a card, ", false
+	case TriggerEndOfTurn:
+		return "At the end of your turn, ", false
 	default:
 		return "", true
 	}

@@ -31,6 +31,13 @@ func (g *Game) archiveFromHand(player int, id LocalID) {
 	}
 }
 
+func (g *Game) archiveFromDiscard(player int, id LocalID) {
+	if g.State.Discard[player].remove(id) {
+		g.State.Archives[player].add(id)
+		g.logf("%s archives a card from their discard pile", g.names[player])
+	}
+}
+
 // archiveTopOfDeck moves the top card of a player's deck to their archives,
 // reporting whether a card was available to archive.
 func (g *Game) archiveTopOfDeck(player int) bool {

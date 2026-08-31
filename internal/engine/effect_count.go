@@ -33,6 +33,20 @@ func (OpponentForgedKeys) Value(ctx *EffectContext) int {
 // CountText renders the singular noun the "for each" clause repeats.
 func (OpponentForgedKeys) CountText() string { return "key your opponent has forged" }
 
+// OpponentExcessCreatures counts how many more creatures the controller's opponent
+// controls than the controller does (never below zero) — Glorious Few.
+type OpponentExcessCreatures struct{}
+
+// Value returns the opponent's creature count minus the controller's, floored at 0.
+func (OpponentExcessCreatures) Value(ctx *EffectContext) int {
+	return max(0, len(ctx.Resolver.Battleline(ctx.Opponent()))-len(ctx.Resolver.Battleline(ctx.Controller)))
+}
+
+// CountText renders the singular noun the "for each" clause repeats.
+func (OpponentExcessCreatures) CountText() string {
+	return "creature your opponent controls in excess of you"
+}
+
 // CardsInArchives counts the cards in a player's archives.
 type CardsInArchives struct{ Player Player }
 
@@ -121,7 +135,12 @@ func (e InPlay) Met(ctx *EffectContext) bool {
 // set returns the player's in-play ids the type filter considers: the battleline
 // for creatures, the artifact row for artifacts, or both when the type is unset.
 func (e InPlay) set(ctx *EffectContext) []LocalID {
-	p := ctx.PlayerFor(e.Player)
+	if e.Player == EachPlayer {
+		return append(e.playerSet(ctx, 0), e.playerSet(ctx, 1)...)
+	}
+	return e.playerSet(ctx, ctx.PlayerFor(e.Player))
+}
+func (e InPlay) playerSet(ctx *EffectContext, p int) []LocalID {
 	switch e.Type {
 	case Creature:
 		return ctx.Resolver.Battleline(p)
@@ -142,10 +161,14 @@ func (e InPlay) threshold() int {
 
 // who renders the controlling side as "friendly" or "enemy".
 func (e InPlay) who() string {
-	if e.Player == Opponent {
+	switch e.Player {
+	case Opponent:
 		return "enemy"
+	case EachPlayer:
+		return ""
+	default:
+		return "friendly"
 	}
-	return "friendly"
 }
 
 // typeNoun renders the filtered type as a noun.
@@ -162,17 +185,24 @@ func (e InPlay) typeNoun() string {
 
 // noun renders the "<side> [house ]<type>" phrase the text roles share.
 func (e InPlay) noun() string {
+	who := e.who()
 	if e.House != HouseNone {
-		return fmt.Sprintf("%s %s %s", e.who(), e.House, e.typeNoun())
+		if who == "" {
+			return fmt.Sprintf("%s %s", e.House, e.typeNoun())
+		}
+		return fmt.Sprintf("%s %s %s", who, e.House, e.typeNoun())
 	}
-	return fmt.Sprintf("%s %s", e.who(), e.typeNoun())
+	if who == "" {
+		return e.typeNoun()
+	}
+	return fmt.Sprintf("%s %s", who, e.typeNoun())
 }
 
 // CountText renders the singular noun the "for each" clause repeats. A
 // house-filtered count reads "friendly Mars creature"; an unfiltered one adds "in
 // play" to distinguish it from cards in hand.
 func (e InPlay) CountText() string {
-	if e.House != HouseNone {
+	if e.House != HouseNone && e.Player != EachPlayer {
 		return e.noun()
 	}
 	return e.noun() + " in play"

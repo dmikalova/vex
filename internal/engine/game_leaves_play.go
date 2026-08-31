@@ -144,6 +144,12 @@ func (g *Game) destroyTogether(controller int, ids []LocalID) {
 	for _, id := range ids {
 		g.logf("%s is destroyed", g.Name(id))
 	}
+	// "Each time an enemy creature is destroyed": the destroyed creature's controller
+	// is the enemy of whoever watches, so the reaction fires for that opponent.
+	for _, id := range ids {
+		g.emitLasting(EventEnemyCreatureDestroyed, 1-g.controller(id), id)
+		g.emitEnemyDestroyed(id)
+	}
 	pending := g.destroyedAbilities(ids)
 	for {
 		// Drop abilities whose source has left play (e.g. an earlier Destroyed

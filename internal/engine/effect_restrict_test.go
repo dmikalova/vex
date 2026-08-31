@@ -2,6 +2,43 @@ package engine
 
 import "testing"
 
+func TestCannotPlayNextTurn(t *testing.T) {
+	if got := (CannotPlayNextTurn{Player: Opponent, Type: Creature}).Text(); got != "your opponent cannot play creatures during their next turn" {
+		t.Errorf("creature text = %q", got)
+	}
+	if got := (CannotPlayNextTurn{Player: Controller, Type: Tactic}).Text(); got != "you cannot play action cards during your next turn" {
+		t.Errorf("tactic text = %q", got)
+	}
+	if (CannotPlayNextTurn{Type: Creature}).validate() == nil {
+		t.Error("unset player should be invalid")
+	}
+	if (CannotPlayNextTurn{Player: Opponent}).validate() == nil {
+		t.Error("unset card type should be invalid")
+	}
+	if (CannotPlayNextTurn{Player: Opponent, Type: Creature}).validate() != nil {
+		t.Error("a fully set effect should be valid")
+	}
+
+	g := NewGame("A", "B", 1)
+	g.BeginTurn(0)
+	if err := g.ChooseHouse(0, Brobnar); err != nil {
+		t.Fatal(err)
+	}
+	// Resolve arms the opponent's next turn.
+	CannotPlayNextTurn{Player: Opponent, Type: Creature}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if g.State.CannotPlayTypeNext[1] != Creature {
+		t.Fatal("the bar should arm the opponent's next turn")
+	}
+
+	// Activate the bar and confirm the play path rejects a barred creature.
+	g.State.CannotPlayTypeThis[0] = Creature
+	idx := int(g.State.Hand[0].Count)
+	g.AddToHand(NewCard("beast", Brobnar, Creature, Common, WithPower(3)), 0)
+	if _, err := g.PlayCreature(0, idx, false); err != ErrCannotPlayType {
+		t.Errorf("playing a barred creature = %v, want ErrCannotPlayType", err)
+	}
+}
+
 func TestGrantFightForChosenHouse(t *testing.T) {
 	if got := (GrantFightForChosenHouse{}).Text(); got != "for the remainder of the turn, each friendly creature of the chosen house may fight" {
 		t.Errorf("text = %q", got)

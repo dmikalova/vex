@@ -159,6 +159,12 @@ func TestConstantText(t *testing.T) {
 		t.Errorf("keyword-only constant text = %q", got)
 	}
 
+	flank := NewCard("Staunch Knight", Sanctum, Creature, Common, WithPower(4),
+		WithConstantAbility(ConstantAbility{PowerBonus: 2, Target: Target{Kind: TargetThisCreature}.OnFlank()}))
+	if got := constantText(&flank); got != "Staunch Knight gains +2 power while it is on a flank." {
+		t.Errorf("flank self constant text = %q", got)
+	}
+
 	plain := NewCard("Plain", Brobnar, Creature, Common, WithPower(3))
 	if got := constantText(&plain); got != "" {
 		t.Errorf("no-constant text = %q, want empty", got)

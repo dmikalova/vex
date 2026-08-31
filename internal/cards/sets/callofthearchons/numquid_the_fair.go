@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// NumquidTheFair
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Numquid the Fair
 //
 //	House:  Sanctum
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Human
 //
-//	Play: Destroy an enemy creature. Repeat this card's effect if your opponent still controls more creatures than you.
+//	Play: Destroy an enemy creature -> if you are overwhelmed, repeat this effect.
 var NumquidTheFair = card.New(
 	"Numquid the Fair",
 	card.House.Sanctum,
@@ -24,5 +19,8 @@ var NumquidTheFair = card.New(
 	card.Provenance(card.CotA, 253),
 	card.WithPower(3),
 	card.WithTraits("Human"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.Play, card.RepeatOnCondition{
+		Do:   card.Destroy{Target: card.Target.EnemyCreature},
+		Cond: card.Overwhelmed{},
+	}),
 )

@@ -5,6 +5,11 @@ import "github.com/dmikalova/vactrol/internal/cards/provenance"
 // Provenance tags a card as derived from an original source card (set + collector
 // number), for coverage tracking. Optional and repeatable — a card may draw from
 // more than one original — e.g. card.Provenance(card.CotA, 1).
+//
+// It is purely a bookkeeping tag: it records which original KeyForge card an
+// implementation is based on, so the author can confirm every original is
+// eventually covered (see `mage missing`/`mage coverage`). Nothing in the engine
+// or in deck generation ever reads it, and a card's behavior never depends on it.
 func Provenance(set provenance.SourceSet, number int) Option {
 	return func(b *builder) { b.prov = append(b.prov, provenance.Ref{Set: set, Number: number}) }
 }

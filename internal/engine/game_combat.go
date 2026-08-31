@@ -4,12 +4,15 @@ package engine
 // armor, Skirmish, Assault, and Hazardous), and deciding which creatures the
 // damage destroys. The destruction itself is carried out in game_destroy.go.
 
-// Combat: use one of your ready creatures to fight an enemy creature. Both deal
-// damage equal to their power at the same time; armor reduces the damage a
-// creature takes, and a Skirmish attacker takes no damage back. A creature with
-// damage equal to or greater than its power is destroyed, and both deaths are
-// resolved together, so neither fighter's destruction changes the damage the
-// other deals.
+// Combat: use one of your ready creatures to fight an enemy creature. Using it to
+// fight exhausts it. First, any "Before Fight" abilities and the Assault and
+// Hazardous keywords resolve; if these destroy either creature, the fight does not
+// occur. Otherwise both creatures deal damage equal to their power at the same
+// time — armor reduces the damage a creature takes, and a Skirmish attacker takes
+// no damage back. A creature with damage equal to or greater than its power is
+// destroyed, and both deaths are resolved together, so neither fighter's
+// destruction changes the damage the other deals. Finally, if the attacker
+// survived, its "Fight" abilities resolve.
 //
 //rulebook:combat Combat
 
@@ -85,6 +88,7 @@ func (g *Game) fight(attacker, defender LocalID) {
 	if attackerDead && !defenderDead {
 		g.triggerAbilities(defender, TriggerAfterDestroyedFighting, attacker, true)
 	}
+	g.emitLasting(EventFight, g.controller(attacker), attacker)
 }
 
 // onFlankOf reports whether a creature sits on a flank (the leftmost or rightmost
@@ -113,16 +117,21 @@ func (g *Game) fightDamage(attacker, defender LocalID) int {
 // applyRawDamage records damage on a creature, letting armor absorb it first. It
 // only updates the damage counters; destruction is resolved by dealDamage, of
 // which this is the per-creature step.
-func (g *Game) applyRawDamage(id LocalID, amount int) {
+func (g *Game) applyRawDamage(id LocalID, amount int, ignoreArmor bool) {
 	if amount <= 0 {
 		return
 	}
 	core := &g.State.Cards[id]
-	absorbed := min(int(core.ArmorRemaining), amount)
-	if absorbed > 0 {
-		core.ArmorRemaining -= int16(absorbed)
-		amount -= absorbed
-		g.logf("%s's armor absorbs %d damage", g.Name(id), absorbed)
+	if core.DamageImmune {
+		g.logf("%s cannot be dealt damage", g.Name(id))
+		return
+	}
+	if !ignoreArmor {
+		if absorbed := min(int(core.ArmorRemaining), amount); absorbed > 0 {
+			core.ArmorRemaining -= int16(absorbed)
+			amount -= absorbed
+			g.logf("%s's armor absorbs %d damage", g.Name(id), absorbed)
+		}
 	}
 	if amount > 0 {
 		core.Damage += int16(amount)
@@ -136,6 +145,8 @@ func (g *Game) applyRawDamage(id LocalID, amount int) {
 type DamageTarget struct {
 	ID     LocalID
 	Amount int
+	// IgnoreArmor makes this instance of damage bypass the creature's armor.
+	IgnoreArmor bool
 }
 
 // dealDamage deals damage to every target simultaneously: each creature takes its
@@ -145,7 +156,7 @@ type DamageTarget struct {
 // returns the dead creatures are already in the discard.
 func (g *Game) dealDamage(controller int, targets ...DamageTarget) {
 	for _, t := range targets {
-		g.applyRawDamage(t.ID, t.Amount)
+		g.applyRawDamage(t.ID, t.Amount, t.IgnoreArmor)
 	}
 	var dying []LocalID
 	for _, t := range targets {

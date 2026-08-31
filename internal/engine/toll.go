@@ -1,5 +1,13 @@
 package engine
 
+// A toll is Aember a card in play makes its controller's opponent give in order to
+// take an action with an artifact — playing an artifact, or using an artifact's
+// ability. The opponent cannot take the action unless they can pay the toll, and
+// the Aember they give goes to the toll card's controller. (The mechanic keeps the
+// name Toll, but its printed text always reads "give", never "pay".)
+//
+//rulebook:effect Toll
+
 // A Toll is Æmber a card, while in play, makes its controller's opponent pay in
 // order to take an action with an artifact — Customs Office's "pay 1 Æmber to
 // play an artifact", Tentacus's "pay 1 Æmber to use an artifact". The opponent

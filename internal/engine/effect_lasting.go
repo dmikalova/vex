@@ -52,6 +52,8 @@ func lastingActionOf(e Effect) (lastingAction, int, bool) {
 		return actGainAember, d.Amount, true
 	case DealDamage:
 		return actDealDamage, d.Amount, true
+	case CaptureAember:
+		return actCapture, d.Amount, true
 	}
 	return 0, 0, false
 }

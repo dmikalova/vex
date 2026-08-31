@@ -23,15 +23,22 @@ type (
 	CaptureAember = engine.CaptureAember
 	Exalt         = engine.Exalt
 	Loss          = engine.Loss
+
+	MoveAemberToPool = engine.MoveAemberToPool
 )
 
 // Damage and combat.
 type (
-	DealDamage          = engine.DealDamage
-	DamageIfDestroyed   = engine.DamageIfDestroyed
-	SplashDamage        = engine.SplashDamage
-	RedirectFightDamage = engine.RedirectFightDamage
-	Heal                = engine.Heal
+	DealDamage                = engine.DealDamage
+	DamageIfDestroyed         = engine.DamageIfDestroyed
+	DamageIfSurvives          = engine.DamageIfSurvives
+	DamageCreatureAndNeighbor = engine.DamageCreatureAndNeighbor
+	SplashDamage              = engine.SplashDamage
+	DamageDifferent           = engine.DamageDifferent
+	FlankWalkDamage           = engine.FlankWalkDamage
+	RedirectFightDamage       = engine.RedirectFightDamage
+	Heal                      = engine.Heal
+	HealThenDamage            = engine.HealThenDamage
 )
 
 // Destruction and purging.
@@ -40,6 +47,8 @@ type (
 	Purge         = engine.Purge
 	PurgeFromHand = engine.PurgeFromHand
 	PurgeCreature = engine.PurgeCreature
+
+	PurgeHandThenDestroyShared = engine.PurgeHandThenDestroyShared
 )
 
 // Creature state (stun, exhaust, power counters).
@@ -56,26 +65,30 @@ type (
 
 // Drawing, moving, and revealing cards between zones.
 type (
-	Draw                 = engine.Draw
-	PutFromPlay          = engine.PutFromPlay
-	PutUpTo              = engine.PutUpTo
-	PutFromDiscard       = engine.PutFromDiscard
-	ReturnNamedToHand    = engine.ReturnNamedToHand
-	SearchForName        = engine.SearchForName
-	ShuffleDiscard       = engine.ShuffleDiscard
-	ArchiveFromHand      = engine.ArchiveFromHand
-	ArchiveTopOfDeck     = engine.ArchiveTopOfDeck
-	ArchiveFromPlay      = engine.ArchiveFromPlay
-	DiscardArchives      = engine.DiscardArchives
-	DiscardHand          = engine.DiscardHand
-	DiscardRandom        = engine.DiscardRandom
-	DiscardTopOfDeck     = engine.DiscardTopOfDeck
-	DiscardTopOfEachDeck = engine.DiscardTopOfEachDeck
-	ForEachDiscarded     = engine.ForEachDiscarded
-	RevealTopOfDeck      = engine.RevealTopOfDeck
-	PlayRevealedCard     = engine.PlayRevealedCard
-	CancelFight          = engine.CancelFight
-	Reveal               = engine.Reveal
+	Draw                  = engine.Draw
+	PutFromPlay           = engine.PutFromPlay
+	PutUpTo               = engine.PutUpTo
+	PutFromDiscard        = engine.PutFromDiscard
+	ReturnNamedToHand     = engine.ReturnNamedToHand
+	SearchForName         = engine.SearchForName
+	ShuffleDiscard        = engine.ShuffleDiscard
+	ShuffleHandAndDiscard = engine.ShuffleHandAndDiscard
+	ArchiveFromHand       = engine.ArchiveFromHand
+	ArchiveFromDiscard    = engine.ArchiveFromDiscard
+	ArchiveTopOfDeck      = engine.ArchiveTopOfDeck
+	ArchiveFromPlay       = engine.ArchiveFromPlay
+	DiscardArchives       = engine.DiscardArchives
+	DiscardHand           = engine.DiscardHand
+	DiscardFromHand       = engine.DiscardFromHand
+	DiscardRandomFromHand = engine.DiscardRandomFromHand
+	DiscardTopOfDeck      = engine.DiscardTopOfDeck
+	DiscardTopOfEachDeck  = engine.DiscardTopOfEachDeck
+	ForEachDiscarded      = engine.ForEachDiscarded
+	RevealTopOfDeck       = engine.RevealTopOfDeck
+	PlayRevealedCard      = engine.PlayRevealedCard
+	PlayTopOfDeck         = engine.PlayTopOfDeck
+	CancelFight           = engine.CancelFight
+	Reveal                = engine.Reveal
 )
 
 // Using and choosing creatures.
@@ -88,31 +101,40 @@ type (
 	ExhaustVerb      = engine.ExhaustVerb
 	Use              = engine.Use
 	TakeControl      = engine.TakeControl
+	PutIntoPlay      = engine.PutIntoPlay
 	Swap             = engine.Swap
 )
 
 // Composites and control flow.
 type (
-	Sequence        = engine.Sequence
-	Sentence        = engine.Sentence
-	ChooseOne       = engine.ChooseOne
-	ChooseHouseThen = engine.ChooseHouseThen
-	Conditional     = engine.Conditional
-	RepeatWhile     = engine.RepeatWhile
-	MayRepeat       = engine.MayRepeat
-	May             = engine.May
-	Then            = engine.Then
+	Sequence          = engine.Sequence
+	Sentence          = engine.Sentence
+	ChooseOne         = engine.ChooseOne
+	ChooseHouseThen   = engine.ChooseHouseThen
+	Conditional       = engine.Conditional
+	RepeatWhile       = engine.RepeatWhile
+	RepeatOnCondition = engine.RepeatOnCondition
+	MayRepeat         = engine.MayRepeat
+	May               = engine.May
+	Then              = engine.Then
 )
 
 // Conditions gate a Conditional, RepeatWhile, or MayRepeat.
 type (
-	OpponentAemberAtLeast     = engine.OpponentAemberAtLeast
-	OpponentAemberExactly     = engine.OpponentAemberExactly
-	OpponentAemberMoreThanYou = engine.OpponentAemberMoreThanYou
-	CardsDestroyedFewerThan   = engine.CardsDestroyedFewerThan
-	ControlsMoreCreatures     = engine.ControlsMoreCreatures
-	ItIsOfHouse               = engine.ItIsOfHouse
-	ItIs                      = engine.ItIs
+	OpponentAember          = engine.OpponentAember
+	CardsDestroyedFewerThan = engine.CardsDestroyedFewerThan
+	ControlsMoreCreatures   = engine.ControlsMoreCreatures
+	Overwhelmed             = engine.Overwhelmed
+	ItIsOfHouse             = engine.ItIsOfHouse
+	ItIs                    = engine.ItIs
+	ChoseHouse              = engine.ChoseHouse
+)
+
+// Æmber-pool comparisons for card.OpponentAember{Is: ..., Amount: n}.
+var (
+	AtLeast     = engine.AtLeast
+	Exactly     = engine.Exactly
+	MoreThanYou = engine.MoreThanYou
 )
 
 // House references for conditions that compare a card's house dynamically.
@@ -125,13 +147,14 @@ var (
 // Counts feed an effect's Per, scaling it by a board quantity; InPlay doubles as
 // a Condition.
 type (
-	InPlay             = engine.InPlay
-	CardsPlayed        = engine.CardsPlayed
-	OpponentForgedKeys = engine.OpponentForgedKeys
-	CardsInArchives    = engine.CardsInArchives
-	CardsRevealed      = engine.CardsRevealed
-	CardsInHand        = engine.CardsInHand
-	CreaturesHealed    = engine.CreaturesHealed
+	InPlay                  = engine.InPlay
+	CardsPlayed             = engine.CardsPlayed
+	OpponentForgedKeys      = engine.OpponentForgedKeys
+	OpponentExcessCreatures = engine.OpponentExcessCreatures
+	CardsInArchives         = engine.CardsInArchives
+	CardsRevealed           = engine.CardsRevealed
+	CardsInHand             = engine.CardsInHand
+	CreaturesHealed         = engine.CreaturesHealed
 )
 
 // Lasting "for the remainder of the turn" effects.
@@ -145,8 +168,13 @@ type (
 // Houses, keys, chains, and restrictions.
 type (
 	CannotFight                              = engine.CannotFight
+	CannotPlayNextTurn                       = engine.CannotPlayNextTurn
+	SkipForgeStep                            = engine.SkipForgeStep
+	PreventDamage                            = engine.PreventDamage
+	MayUseFriendlyHouse                      = engine.MayUseFriendlyHouse
 	GrantFightForChosenHouse                 = engine.GrantFightForChosenHouse
 	BelongToHouse                            = engine.BelongToHouse
+	BelongToHouseIfOffIdentity               = engine.BelongToHouseIfOffIdentity
 	ForceOpponentActiveHouse                 = engine.ForceOpponentActiveHouse
 	ForgeKey                                 = engine.ForgeKey
 	GiveRemainingAemberAfterOpponentForgeKey = engine.GiveRemainingAemberAfterOpponentForgeKey
@@ -157,16 +185,20 @@ type (
 // attaches to (see ForRemainderOfTurn and Instead), e.g.
 // card.ForRemainderOfTurn{On: card.Event.CreaturePlayed, Do: card.GainAember{...}}.
 var Event = events{
-	CreaturePlayed:    engine.EventCreaturePlayed,
-	Reap:              engine.EventReap,
-	ReapAember:        engine.EventReapAember,
-	Destroyed:         engine.EventCreatureDestroyed,
-	AemberAddedToPool: engine.EventAemberAddedToPool,
+	CreaturePlayed:         engine.EventCreaturePlayed,
+	Reap:                   engine.EventReap,
+	Fight:                  engine.EventFight,
+	EnemyCreatureDestroyed: engine.EventEnemyCreatureDestroyed,
+	ReapAember:             engine.EventReapAember,
+	Destroyed:              engine.EventCreatureDestroyed,
+	AemberAddedToPool:      engine.EventAemberAddedToPool,
 }
 
 type events struct {
 	CreaturePlayed,
 	Reap,
+	Fight,
+	EnemyCreatureDestroyed,
 	ReapAember,
 	Destroyed,
 	AemberAddedToPool engine.Event

@@ -10,7 +10,9 @@ It is the human-facing companion to three other kinds of docs:
 - **`AGENTS.md` files** (root, `internal/engine`, `internal/cards`) are the
   contributor/agent rules — the conventions to follow when changing code.
 - **`docs/rulebook.md`** (generated) is the _game_ rules the engine implements.
-- **`docs/concepts.md` / `docs/roadmap.md`** cover terminology and direction.
+- **`CONTEXT.md`** is the glossary; **`docs/roadmap.md`** and **`docs/todo.md`**
+  cover long-term direction and planning. See **`docs/README.md`** for a full
+  index of the documentation.
 
 When this doc and an `AGENTS.md` overlap, the `AGENTS.md` is authoritative for
 "how to write the code"; this doc is authoritative for "how the system is laid

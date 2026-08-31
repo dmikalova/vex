@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// QyxxlyxPlagueMaster
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Qyxxlyx Plague Master
 //
 //	House:  Mars
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Martian • Scientist
 //
-//	Fight/Reap: Deal 3 Damage to each Human creature. This damage cannot be prevented by armor.
+//	Fight/Reap: Deal 3 damage to each Human trait creature, ignoring armor.
 var QyxxlyxPlagueMaster = card.New(
 	"Qyxxlyx Plague Master",
 	card.House.Mars,
@@ -24,5 +19,9 @@ var QyxxlyxPlagueMaster = card.New(
 	card.Provenance(card.CotA, 198),
 	card.WithPower(3),
 	card.WithTraits("Martian", "Scientist"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithFightOrReap(card.DealDamage{
+		Amount:      3,
+		Target:      card.Target.EachCreature.WithTrait("Human"),
+		IgnoreArmor: true,
+	}),
 )

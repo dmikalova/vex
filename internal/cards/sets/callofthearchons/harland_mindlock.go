@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// HarlandMindlock
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Harland Mindlock
 //
 //	House:  Logos
 //	Type:   Creature
@@ -24,5 +19,8 @@ var HarlandMindlock = card.New(
 	card.Provenance(card.CotA, 143),
 	card.WithPower(1),
 	card.WithTraits("Cyborg", "Scientist"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.Play, card.TakeControl{
+		Target:   card.Target.EnemyCreature.OnFlank(),
+		Duration: card.Duration.UntilThisLeavesPlay,
+	}),
 )

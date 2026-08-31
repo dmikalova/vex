@@ -65,3 +65,24 @@ func TestInPlay(t *testing.T) {
 		t.Error("threshold 4 should not be met with 3 creatures")
 	}
 }
+
+func TestInPlayEachPlayer(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(testCreature("f", 5), 0)
+	g.AddToBattleline(testCreature("e", 5), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	// EachPlayer counts both players' matching cards, with no friendly/enemy
+	// qualifier in the rendered noun.
+	byHouse := InPlay{Player: EachPlayer, Type: Creature, House: Brobnar}
+	if got := byHouse.CountText(); got != "Brobnar creature in play" {
+		t.Errorf("count text = %q, want %q", got, "Brobnar creature in play")
+	}
+	if got := byHouse.Value(ctx); got != 2 {
+		t.Errorf("value = %d, want 2 (one creature per player)", got)
+	}
+
+	if got := (InPlay{Player: EachPlayer, Type: Creature}).CountText(); got != "creature in play" {
+		t.Errorf("no-house count text = %q, want %q", got, "creature in play")
+	}
+}

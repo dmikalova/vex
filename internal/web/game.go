@@ -5,6 +5,8 @@
 package web
 
 import (
+	"errors"
+	"fmt"
 	"sort"
 	"strconv"
 	"time"
@@ -171,6 +173,19 @@ type game struct {
 	// drop zone. It is cleared when the drag ends or the card is dropped.
 	dragging bool
 
+	// sidebarCollapsed hides the whole sidebar so the board area has more space; a
+	// floating button reopens it.
+	sidebarCollapsed bool
+
+	// confirmRestart shows the restart confirmation in the controls area instead of
+	// restarting immediately.
+	confirmRestart bool
+
+	// confirmEndTurn is armed when the player asks to end the turn while they could
+	// still act; a second end-turn (e/y or the button) confirms. Any other action
+	// (via beginAction) or an undo/redo disarms it.
+	confirmEndTurn bool
+
 	// defByName maps every card's name to its definition, for log-mention lookups.
 	defByName map[string]*engine.CardDefinition
 
@@ -191,6 +206,40 @@ type game struct {
 	hoverID    engine.LocalID
 	hoverDef   *engine.CardDefinition
 	hoverInLog bool
+
+	// flashes queues one-shot board animations computed after each action: which
+	// cards took damage, gained Æmber, changed power counters, were stunned or
+	// exhausted, or entered play, so their faces pulse. flashParity keeps a per-card
+	// parity that flips on every flash so the CSS animation replays even on
+	// back-to-back hits — go-app patches the persistent card element, and a CSS
+	// animation only restarts when its animation-name changes. poolFlash/poolParity
+	// and keyFlash/keyParity do the same for a player gaining pool Æmber or forging a
+	// key. inPlayPrev is the set of in-play card ids after the previous action, used
+	// to detect a card entering play.
+	flashes     map[engine.LocalID]cardFlash
+	flashParity map[engine.LocalID]bool
+	inPlayPrev  map[engine.LocalID]bool
+	poolFlash   [2]bool
+	poolParity  [2]bool
+	keyFlash    [2]bool
+	keyParity   [2]bool
+
+	// statusGen tags the current status message so a scheduled auto-clear only
+	// clears the message it was armed for, not a newer one.
+	statusGen int
+}
+
+// cardFlash is a queued one-shot face animation for a card after an action. A
+// single odd bit alternates all of the card's pulses at once (a card flashes at
+// most once per action) so the CSS animations restart on repeats.
+type cardFlash struct {
+	damage  bool // took new damage
+	amber   bool // gained Æmber on the card
+	power   bool // power counters changed
+	exhaust bool // became exhausted
+	stun    bool // became stunned
+	enter   bool // entered play this action
+	odd     bool // alternates each flash to restart the CSS animation
 }
 
 // undoEntry is a restorable snapshot: the flat GameState (a pure value copy), the
@@ -236,6 +285,7 @@ func (g *game) OnMount(ctx app.Context) {
 	if !g.resume(ctx) {
 		g.newMatch()
 	}
+	g.inPlayPrev = g.inPlaySet()
 	g.save(ctx)
 	g.installKeyShortcuts()
 }
@@ -324,6 +374,13 @@ func (g *game) onKey(ctx app.Context, key string) {
 			g.playFlank(false)(ctx, app.Event{})
 		} else {
 			g.reap(ctx, app.Event{})
+		}
+	case "e":
+		g.endTurn(ctx, app.Event{})
+	case "y":
+		// y confirms a pending end-turn; on its own it does nothing.
+		if g.confirmEndTurn {
+			g.endTurn(ctx, app.Event{})
 		}
 	}
 }
@@ -511,10 +568,29 @@ func (g *game) runAction(ctx app.Context, fn func() error) {
 		g.dispatch(func(ctx app.Context) {
 			g.busy = false
 			if err != nil {
-				g.status = err.Error()
+				g.setStatus(err.Error())
 			}
 			g.afterAction()
 			g.save(ctx)
+		})
+	})
+}
+
+// setStatus shows a transient message in the controls area and arms a 5s
+// auto-clear. statusGen guards the timer so a newer message is not wiped by an
+// older one's timer.
+func (g *game) setStatus(msg string) {
+	g.status = msg
+	if msg == "" {
+		return
+	}
+	g.statusGen++
+	gen := g.statusGen
+	time.AfterFunc(5*time.Second, func() {
+		g.dispatch(func(app.Context) {
+			if g.statusGen == gen {
+				g.status = ""
+			}
 		})
 	})
 }
@@ -534,6 +610,10 @@ func (g *game) snapshot() undoEntry {
 // action about to run. Every root action (an engine mutation via runAction or a
 // manual edit) calls it, so undo steps and log bubbles align with player intent.
 func (g *game) beginAction() {
+	g.confirmEndTurn = false
+	g.flashes = nil
+	g.poolFlash = [2]bool{}
+	g.keyFlash = [2]bool{}
 	g.undo = append(g.undo, g.snapshot())
 	if len(g.undo) > maxUndo {
 		g.undo = g.undo[len(g.undo)-maxUndo:]
@@ -544,9 +624,14 @@ func (g *game) beginAction() {
 
 // restore installs a snapshot and resets transient UI.
 func (g *game) restore(e undoEntry) {
+	g.confirmEndTurn = false
+	g.flashes = nil
+	g.poolFlash = [2]bool{}
+	g.keyFlash = [2]bool{}
 	g.g.State = e.state
 	g.g.Log = e.log
 	g.logGroups = e.groups
+	g.inPlayPrev = g.inPlaySet()
 	g.clearSelection()
 	g.forgingKey = -1
 	g.settlePhase()
@@ -587,8 +672,89 @@ func (g *game) redoAction(ctx app.Context, _ app.Event) {
 // afterAction settles the phase after an engine mutation: the game may be won,
 // the active house may have been cleared (a new turn began), or play continues.
 func (g *game) afterAction() {
+	g.computeFlashes()
 	g.clearSelection()
 	g.settlePhase()
+}
+
+// computeFlashes diffs the pre-action snapshot against the resolved state to queue
+// one-shot animations: a card that took damage, gained on-card Æmber, changed
+// power counters, was stunned or exhausted, or entered play pulses; a player who
+// gained pool Æmber or forged a key pulses their score. The parity maps flip on
+// each flash so the animation replays on repeats (see the flashes field).
+func (g *game) computeFlashes() {
+	if len(g.undo) == 0 {
+		return
+	}
+	prev := &g.undo[len(g.undo)-1].state
+	if g.flashParity == nil {
+		g.flashParity = map[engine.LocalID]bool{}
+	}
+	flashes := map[engine.LocalID]cardFlash{}
+	inPlayNow := map[engine.LocalID]bool{}
+	for p := 0; p < 2; p++ {
+		for _, id := range g.g.Battleline(p) {
+			inPlayNow[id] = true
+			g.cardFlags(id, prev, flashes)
+		}
+		for _, id := range g.g.Artifacts(p) {
+			inPlayNow[id] = true
+			g.cardFlags(id, prev, flashes)
+		}
+		if g.g.State.Aember[p] > prev.Aember[p] {
+			g.poolParity[p] = !g.poolParity[p]
+			g.poolFlash[p] = true
+		}
+		if g.g.State.Keys[p] > prev.Keys[p] {
+			g.keyParity[p] = !g.keyParity[p]
+			g.keyFlash[p] = true
+		}
+	}
+	for id := range inPlayNow {
+		if !g.inPlayPrev[id] {
+			f := flashes[id]
+			f.enter = true
+			flashes[id] = f
+		}
+	}
+	// One parity flip per flashing card drives all its pulses at once.
+	for id, f := range flashes {
+		g.flashParity[id] = !g.flashParity[id]
+		f.odd = g.flashParity[id]
+		flashes[id] = f
+	}
+	g.flashes = flashes
+	g.inPlayPrev = inPlayNow
+}
+
+// cardFlags records which state of one card changed this action (except entering
+// play, handled by the caller). It leaves odd unset; computeFlashes finalizes it.
+func (g *game) cardFlags(id engine.LocalID, prev *engine.GameState, out map[engine.LocalID]cardFlash) {
+	now, was := g.g.State.Cards[id], prev.Cards[id]
+	f := out[id]
+	f.damage = f.damage || now.Damage > was.Damage
+	f.amber = f.amber || now.Amber > was.Amber
+	f.power = f.power || now.PowerCounters != was.PowerCounters
+	f.exhaust = f.exhaust || (now.Exhausted && !was.Exhausted)
+	f.stun = f.stun || (now.Stunned && !was.Stunned)
+	if f.damage || f.amber || f.power || f.exhaust || f.stun {
+		out[id] = f
+	}
+}
+
+// inPlaySet returns the ids currently in play, so restore/newMatch can seed
+// inPlayPrev and avoid flagging the restored board as freshly entered.
+func (g *game) inPlaySet() map[engine.LocalID]bool {
+	set := map[engine.LocalID]bool{}
+	for p := 0; p < 2; p++ {
+		for _, id := range g.g.Battleline(p) {
+			set[id] = true
+		}
+		for _, id := range g.g.Artifacts(p) {
+			set[id] = true
+		}
+	}
+	return set
 }
 
 // settlePhase picks the resting interaction phase from the engine state: the game
@@ -666,9 +832,21 @@ func (g *game) pickHouse(h engine.House) app.EventHandler {
 }
 
 func (g *game) endTurn(ctx app.Context, _ app.Event) {
-	if g.busy || g.choosing {
+	if g.busy || g.choosing || g.choosingOption {
 		return
 	}
+	// Only end from the resting main phase; mid-action phases have their own flow.
+	if g.phase != phaseMain {
+		return
+	}
+	// If the player could still act, arm a confirm and wait for a second end-turn.
+	if !g.confirmEndTurn && g.hasMoves() {
+		g.confirmEndTurn = true
+		g.setStatus("You can still act this turn — press E again to end it.")
+		return
+	}
+	g.confirmEndTurn = false
+	g.status = ""
 	p := g.active()
 	g.runAction(ctx, func() error {
 		turn := g.g.State.Turn
@@ -684,6 +862,29 @@ func (g *game) endTurn(ctx app.Context, _ app.Event) {
 	})
 }
 
+// hasMoves reports whether the active player could still act this turn: a playable
+// hand card, a usable creature, or a usable artifact. It drives the end-turn
+// confirmation — with nothing left to do, ending needs no confirm.
+func (g *game) hasMoves() bool {
+	p := g.active()
+	for _, id := range g.g.Hand(p) {
+		if g.g.CanPlay(p, id) == nil {
+			return true
+		}
+	}
+	for _, id := range g.g.Battleline(p) {
+		if g.actionable(id, selYourCreature) {
+			return true
+		}
+	}
+	for _, id := range g.g.Artifacts(p) {
+		if g.actionable(id, selYourArtifact) {
+			return true
+		}
+	}
+	return false
+}
+
 // play resolves the selected hand card. Creatures ask for a flank first (unless
 // the battleline is empty); everything else plays immediately.
 func (g *game) play(ctx app.Context, _ app.Event) {
@@ -696,17 +897,26 @@ func (g *game) play(ctx app.Context, _ app.Event) {
 	switch def.Type {
 	case engine.Creature:
 		if len(g.g.Battleline(p)) == 0 {
-			g.runAction(ctx, func() error { _, err := g.g.PlayCreature(p, idx, false); return err })
+			g.runAction(ctx, func() error { _, err := g.g.PlayCreature(p, idx, false); return playTypeError(err, def.Type) })
 			return
 		}
 		g.phase = phaseFlank
 	case engine.Artifact:
-		g.runAction(ctx, func() error { _, err := g.g.PlayArtifact(p, idx); return err })
+		g.runAction(ctx, func() error { _, err := g.g.PlayArtifact(p, idx); return playTypeError(err, def.Type) })
 	case engine.Tactic:
-		g.runAction(ctx, func() error { return g.g.PlayAction(p, idx) })
+		g.runAction(ctx, func() error { return playTypeError(g.g.PlayAction(p, idx), def.Type) })
 	case engine.Upgrade:
-		g.runAction(ctx, func() error { _, err := g.g.PlayUpgrade(p, idx); return err })
+		g.runAction(ctx, func() error { _, err := g.g.PlayUpgrade(p, idx); return playTypeError(err, def.Type) })
 	}
+}
+
+// playTypeError makes the generic "cannot play this type" restriction explicit
+// about which card type is barred (e.g. "Tactic cards cannot be played").
+func playTypeError(err error, t engine.CardType) error {
+	if errors.Is(err, engine.ErrCannotPlayType) {
+		return fmt.Errorf("%s cards cannot be played", t)
+	}
+	return err
 }
 
 func (g *game) playFlank(left bool) app.EventHandler {
@@ -715,7 +925,7 @@ func (g *game) playFlank(left bool) app.EventHandler {
 			return
 		}
 		p, idx := g.active(), g.selHand
-		g.runAction(ctx, func() error { _, err := g.g.PlayCreature(p, idx, left); return err })
+		g.runAction(ctx, func() error { _, err := g.g.PlayCreature(p, idx, left); return playTypeError(err, engine.Creature) })
 	}
 }
 
@@ -795,7 +1005,7 @@ func (g *game) startFight(_ app.Context, _ app.Event) {
 		return
 	}
 	if err := g.g.CanUse(g.active(), g.sel); err != nil {
-		g.status = err.Error()
+		g.setStatus(err.Error())
 		return
 	}
 	g.attacker = g.sel
@@ -1089,6 +1299,27 @@ func (g *game) restart(ctx app.Context, _ app.Event) {
 	if g.busy || g.choosing {
 		return
 	}
+	g.confirmRestart = false
 	g.newMatch()
 	g.save(ctx)
+}
+
+// askRestart opens the restart confirmation in the controls area rather than
+// restarting immediately.
+func (g *game) askRestart(_ app.Context, _ app.Event) {
+	if g.busy || g.choosing || g.choosingOption {
+		return
+	}
+	g.confirmRestart = true
+}
+
+// cancelRestart dismisses the restart confirmation, leaving the game running.
+func (g *game) cancelRestart(_ app.Context, _ app.Event) {
+	g.confirmRestart = false
+}
+
+// toggleSidebar hides or shows the whole sidebar so the board area can use the
+// full width.
+func (g *game) toggleSidebar(_ app.Context, _ app.Event) {
+	g.sidebarCollapsed = !g.sidebarCollapsed
 }

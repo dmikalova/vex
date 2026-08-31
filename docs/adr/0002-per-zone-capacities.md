@@ -5,7 +5,7 @@
 Each per-player zone (`Hand`, `Deck`, `Battleline`, `Discard`, `Artifacts`,
 `Archives`, `Purge`) is a fixed-capacity `LocalID` array plus a count, held by
 value in `GameState` so a position copies with no allocation — the invariant
-behind cheap cloning for AI search. The zones originally shared one `zoneCap = 40`
+behind cheap cloning for the search bot (ADR 0005). The zones originally shared one `zoneCap = 40`
 constant. That was wrong in two directions at once: it over-allocated the zones
 that can only ever hold a single 36-card deck, and it _under_-allocated the zones
 that can hold cards from both decks (a player can control an opponent's creatures

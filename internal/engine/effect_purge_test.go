@@ -137,3 +137,52 @@ func TestPurgeFromHand(t *testing.T) {
 		t.Error("no matching card should purge nothing")
 	}
 }
+
+func TestPurgeHandThenDestroyShared(t *testing.T) {
+	e := PurgeHandThenDestroyShared{}
+	if e.Text() != "purge a creature from your hand. Destroy each creature that shares a trait with the purged creature" {
+		t.Errorf("text = %q", e.Text())
+	}
+
+	t.Run("purges a hand creature and destroys creatures sharing a trait", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		kin := g.AddToHand(testCreature("kin", 3, WithTraits("Beast")), 0)
+		prey := g.AddToBattleline(testCreature("prey", 5, WithTraits("Beast")), 1)
+		spared := g.AddToBattleline(testCreature("spared", 5, WithTraits("Robot")), 1)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+
+		e.Resolve(ctx)
+
+		if !g.State.Purge[0].contains(kin) {
+			t.Error("the chosen creature should be purged from hand")
+		}
+		if resolverInPlay(ctx, prey) {
+			t.Error("a creature sharing a trait should be destroyed")
+		}
+		if !resolverInPlay(ctx, spared) {
+			t.Error("a creature sharing no trait should survive")
+		}
+	})
+
+	t.Run("with no creature in hand, does nothing", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.AddToHand(NewCard("Action", Brobnar, Tactic, Common), 0) // not a creature
+		prey := g.AddToBattleline(testCreature("prey", 5, WithTraits("Beast")), 1)
+		e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if !g.inPlay(prey) {
+			t.Error("nothing should be destroyed when no creature is in hand")
+		}
+	})
+
+	t.Run("a declined choice purges nothing", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.AddToHand(testCreature("kin1", 3, WithTraits("Beast")), 0)
+		g.AddToHand(testCreature("kin2", 3, WithTraits("Beast")), 0)
+		prey := g.AddToBattleline(testCreature("prey", 5, WithTraits("Beast")), 1)
+		g.SetChooser(0, orderRejectChooser{})
+		e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if !g.inPlay(prey) {
+			t.Error("declining should destroy nothing")
+		}
+	})
+}

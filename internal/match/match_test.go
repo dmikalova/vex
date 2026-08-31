@@ -73,6 +73,22 @@ func TestDealtCardsBelongToChosenHouses(t *testing.T) {
 	}
 }
 
+func TestDealSpansAllChosenHouses(t *testing.T) {
+	g, houses := New("Alice", "Bob", 7)
+	for p := range 2 {
+		seen := map[engine.House]bool{}
+		deck := g.State.Deck[p]
+		ids := append(append([]engine.LocalID{}, g.Hand(p)...), deck.IDs[:deck.Count]...)
+		for _, id := range ids {
+			seen[g.House(id)] = true
+		}
+		if len(seen) != len(houses[p]) {
+			t.Errorf("player %d deck spans %d houses, want all %d (%v)",
+				p, len(seen), len(houses[p]), houses[p])
+		}
+	}
+}
+
 func TestPoolHousesDistinctAndSorted(t *testing.T) {
 	hs := poolHouses(cards.All())
 	if len(hs) == 0 {

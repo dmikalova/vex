@@ -35,6 +35,21 @@ func (PlayRevealedCard) Resolve(ctx *EffectContext) {
 	}
 }
 
+// PlayTopOfDeck plays the top card of the controller's deck outright (Wild
+// Wormhole), resolving that card's own play effect. It does nothing when the deck
+// is empty.
+type PlayTopOfDeck struct{}
+
+// Text renders the effect.
+func (PlayTopOfDeck) Text() string { return "play the top card of your deck" }
+
+// Resolve plays the top card of the controller's deck, if any.
+func (PlayTopOfDeck) Resolve(ctx *EffectContext) {
+	if id, ok := ctx.Resolver.TopOfDeck(ctx.Controller); ok {
+		ctx.Resolver.PlayFromDeck(ctx.Controller, id)
+	}
+}
+
 // DiscardTopOfDeck discards the top card of a deck and puts it in context (ctx.It)
 // so a following effect can react to it — Evasion Sigil cancels the fight when it
 // is of the active house; A Fair Game gains Æmber for hand cards of its house.

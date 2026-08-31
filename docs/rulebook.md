@@ -6,7 +6,7 @@
 
 Vactrol is a two-player card game — a clone of **KeyForge** — in which rival
 players race to unlock a shared vault. On each of your turns you channel a single
-**house**, marshal its creatures and artifacts, and gather **Æmber**: the raw
+**house**, marshal its creatures and artifacts, and gather **Aember**: the raw
 resource that forges keys. The first player to forge three keys wins.
 
 This rulebook is generated directly from the game engine's source. Every keyword,
@@ -15,14 +15,14 @@ implements it, so what you read here is always what the game actually does.
 
 ## Core concepts
 
-- **Æmber** is the resource players collect. It sits in a player's pool until it
+- **Aember** is the resource players collect. It sits in a player's pool until it
   is spent forging a key, stolen by the opponent, or captured onto a creature.
 - **Keys** are the win condition. At the start of your turn, if you have at least
-  six Æmber you forge a key, spending that Æmber. Forge three keys to win.
+  six Aember you forge a key, spending that Aember. Forge three keys to win.
 - **Houses** are the factions a card belongs to. Your deck draws on three houses,
   but each turn you may act with the cards of only one **active house** you choose
   that turn.
-- **Cards** come in four types — creatures, actions, artifacts, and upgrades (see
+- **Cards** come in four types — creatures, tactics, artifacts, and upgrades (see
   _Card Types_).
 - **Exhaustion** gates a creature's activity. Using a creature to reap, fight, or
   take an action exhausts it; creatures and artifacts also enter play exhausted.
@@ -32,7 +32,7 @@ implements it, so what you read here is always what the game actually does.
 
 Each turn runs in a fixed order. You forge any keys you can afford, choose the one
 house you will act with, then play and use that house's cards as you like —
-playing from hand, reaping for Æmber, and fighting with your creatures — before
+playing from hand, reaping for Aember, and fighting with your creatures — before
 readying your cards and drawing back up to a full hand.
 
 ### Turn structure
@@ -40,7 +40,7 @@ readying your cards and drawing back up to a full hand.
 #### 1. Forge a key
 
 Forge a key: at the start of your turn you forge a single key if you can pay
-its current cost — 6 Æmber by default. A player forges at most one key per turn.
+its current cost — 6 Aember by default. A player forges at most one key per turn.
 Keys are the win condition — forge your third key and you win the game.
 
 #### 2. Choose a house
@@ -59,17 +59,33 @@ here too.
 
 ## Combat
 
-Combat: use one of your ready creatures to fight an enemy creature. Both deal
-damage equal to their power at the same time; armor reduces the damage a
-creature takes, and a Skirmish attacker takes no damage back. A creature with
-damage equal to or greater than its power is destroyed, and both deaths are
-resolved together, so neither fighter's destruction changes the damage the
-other deals.
+Combat: use one of your ready creatures to fight an enemy creature. Using it to
+fight exhausts it. First, any "Before Fight" abilities and the Assault and
+Hazardous keywords resolve; if these destroy either creature, the fight does not
+occur. Otherwise both creatures deal damage equal to their power at the same
+time — armor reduces the damage a creature takes, and a Skirmish attacker takes
+no damage back. A creature with damage equal to or greater than its power is
+destroyed, and both deaths are resolved together, so neither fighter's
+destruction changes the damage the other deals. Finally, if the attacker
+survived, its "Fight" abilities resolve.
+
+### Armor
+
+Armor absorbs damage. A creature with armor prevents that much of the damage it
+would be dealt: each point of armor stops 1 damage, and armor spent this way does
+not come back until the creature's controller readies at the end of their turn.
+Armor never reduces a creature's power, and healing does not restore spent armor.
 
 ## Card Types
 
 Every card is one of the following four types. A card's type determines where it
 goes when played and how it is used.
+
+Every card also shows the same anatomy: a **house** icon in the upper-left corner
+(the faction it belongs to), the card **name**, its **type**, any **traits**
+(flavor labels such as _Knight_ or _Robot_ that other cards reference but that
+carry no rules of their own), and its rules text. Creatures additionally show a
+**power** value and, sometimes, an **armor** value.
 
 ### Artifact
 
@@ -80,7 +96,7 @@ ability.
 ### Creature
 
 A creature is a unit you play into your battleline. Once it is ready, it can
-reap for Æmber, fight an enemy creature, or use an "Action:" ability.
+reap for Aember, fight an enemy creature, or use an "Action:" ability.
 
 ### Tactic
 
@@ -166,6 +182,14 @@ AfterCardPlayed narrows it to a house and/or type.
 A Before Fight ability resolves when a creature is used to fight, before any
 combat damage is dealt.
 
+### Constant Ability
+
+A constant ability is a continuous rule a card applies while it stays in play,
+with no trigger of its own — "Each friendly creature gains +1 power", or a card
+that grants every creature a keyword or a "Destroyed:" ability. Its effect
+applies for as long as the source card remains in play and stops the moment it
+leaves; applying it is not "using" the card and never exhausts it.
+
 ### Destroyed
 
 A Destroyed ability resolves as the card is destroyed, before it reaches the
@@ -185,7 +209,7 @@ card's one-shot effect.
 ### Reap
 
 A Reap ability resolves after you use a ready creature to reap. Reaping gains
-you 1 Æmber and exhausts the creature; the ability resolves in addition.
+you 1 Aember and exhausts the creature; the ability resolves in addition.
 
 ## Effects
 
@@ -208,13 +232,13 @@ Stem Antenna's host counts as Mars for the rest of the turn). The change is
 per-match state, dropped when the creature leaves play; EndOfTurn also drops it at
 end of turn, while UntilThisLeavesPlay keeps it until the creature leaves play.
 
-### Capture Æmber
+### Capture Aember
 
-Capturing Æmber moves it from a player's pool onto a capturing creature, where
+Capturing Aember moves it from a player's pool onto a capturing creature, where
 it counts for no player until that creature leaves play, at which point it goes
 to the pool of the capturing creature's controller's opponent. A creature can
 only capture what the Source pool holds. Target is the creature that captures
-(this creature by default); Source is the pool the Æmber comes from; Per repeats
+(this creature by default); Source is the pool the Aember comes from; Per repeats
 the capture, choosing a fresh Target each time (Hypnotic Command captures once
 for each friendly Mars creature).
 
@@ -223,14 +247,23 @@ for each friendly Mars creature).
 A "choose one" ability offers its controller a set of alternative effects and
 resolves only the one they pick; the options not chosen do nothing.
 
+### Conditional
+
+A conditional gates an effect behind a check on the current game state — the
+"If ..." clause a card opens with, e.g. "If your opponent has 7 or more Aember,
+they lose 4 Aember." The effect resolves only when the condition is met. Unlike
+a result gate (A -> B), which turns on an action succeeding, a conditional turns
+on a fact about the board.
+
 ### Deal Damage
 
-Dealing damage places that many damage tokens on each creature the effect
-targets; armor reduces each separate instance of damage before it lands. A
-creature whose damage reaches or exceeds its power is destroyed. When one
-ability deals damage to several creatures they are damaged simultaneously and
-any that died are destroyed together, so no creature's destruction changes
-another's.
+Dealing damage puts that much pending damage on each creature the effect
+targets. Armor prevents pending damage first — each point stops 1, and armor
+spent this way stays spent for the rest of the turn — and whatever is not
+prevented lands as damage tokens. A creature whose total damage reaches or
+exceeds its power is destroyed. When one ability deals damage to several
+creatures they are damaged simultaneously and any that died are destroyed
+together, so no creature's destruction changes another's.
 
 ### Destroy
 
@@ -250,16 +283,22 @@ you only fail to draw when both deck and discard are empty.
 
 ### Exalt
 
-To exalt a creature is to place 1 Æmber from the common supply onto a chosen
-friendly or enemy creature. The Æmber sits on the creature, belonging to no
+To exalt a creature is to place 1 Aember from the common supply onto a chosen
+friendly or enemy creature. The Aember sits on the creature, belonging to no
 pool, until it leaves play, then goes to the owner's opponent's pool. Exalting
-N times places N Æmber.
+N times places N Aember.
 
 ### Exhaust
 
 Exhausting a creature turns it sideways so it cannot be used again until it
 readies at the end of its controller's turn. It exhausts each creature the
 effect targets.
+
+### Gain Aember
+
+To gain Aember, a player moves that many Aember from the common supply into
+their pool — the ability's controller by default, or their opponent when the
+card says so. A "for each" clause multiplies the amount by a running count.
 
 ### Gain Chains
 
@@ -269,22 +308,16 @@ chains are shed, one on each turn the reduction blocks a draw. Gaining a chain i
 the cost some strong effects charge, so a card's power is paid for by a slower
 hand refill (see Game.drawStep).
 
-### Gain Æmber
-
-To gain Æmber, a player moves that many Æmber from the common supply into
-their pool — the ability's controller by default, or their opponent when the
-card says so. A "for each" clause multiplies the amount by a running count.
-
 ### Heal
 
 Healing takes damage tokens off a creature — a fixed amount, or all of them at
 once. It can never remove more damage than is on the creature (a creature with
 no damage is unaffected), and it never changes a creature's power.
 
-### Lose Æmber
+### Lose Aember
 
-To lose Æmber, a player returns that many Æmber from their pool to the common
-supply. A pool can never go below zero, so a player told to lose more Æmber than
+To lose Aember, a player returns that many Aember from their pool to the common
+supply. A pool can never go below zero, so a player told to lose more Aember than
 they have simply loses all of it. Player may be EachPlayer, so both players lose.
 The amount lost is either a fixed Amount or a By loss of the pool (By: Half,
 By: AllBut(5)) — set one, not both.
@@ -297,12 +330,25 @@ X>", where passing is always allowed even when a legal target exists — the
 distinction that keeps Chuff Ape's "you may destroy another friendly creature"
 from ever being forced.
 
+### Power Counter
+
+A +1 power counter is a permanent token placed on a creature that raises its
+power by one for as long as it stays in play; a -1 power counter lowers it. A
+creature can hold any number of counters, and they are shed when it leaves play.
+
+### Purge
+
+Purging a card sets it aside out of the game entirely, in the purge pile, where
+no ability can reach it unless that ability names the purge pile. It is the most
+permanent way a card leaves play: a purged card never enters a discard pile and
+can never be drawn, played, or destroyed again.
+
 ### Put from Play
 
 PutFromPlay takes each card its Target selects out of play and puts it in a
 destination zone — the top of its owner's deck, their hand, or their archives —
 shedding the per-match state the card built up in play (damage, spent armor,
-Æmber on it, upgrades). The destination is required. Moving a card out of play
+Aember on it, upgrades). The destination is required. Moving a card out of play
 this way is how a "Destroyed:" ability can save its own creature: the creature
 leaves for the named zone as it is destroyed, so it never reaches the discard
 pile. When several cards move to the top of the deck at once the controller
@@ -321,6 +367,24 @@ creature instead of to the creature it is fighting (Gabos Longarms). It only
 redirects the attacker's outgoing fight damage — the attacker still takes
 damage back from the creature it fights. The chosen creature is stored on the
 game state for the fight in progress; the combat step reads and clears it.
+
+### Restriction
+
+A restriction forbids a player some action for a stretch of the game — "cannot
+use creatures to fight", "cannot play creatures" — rather than changing the board
+directly. A restriction can be a timed effect that lasts through a player's next
+turn, or a constant rule printed on a card in play; while it is active the
+forbidden action simply cannot be taken. When one effect says a player "cannot"
+and another says they "must" or "may" do the same thing, "cannot" wins.
+
+### Result Gate
+
+A result gate resolves one action and then a follow-up, but only when the first
+action actually happened — written A -> B (destroy a creature -> steal 1 Aember;
+purge a creature -> give a +1 power counter). The follow-up never runs when the
+gate does nothing: no valid target, an empty zone, or a declined choice. It is
+distinct from a conditional, which turns on a fact about the board rather than an
+action succeeding.
 
 ### Return Named Card to Hand
 
@@ -348,20 +412,88 @@ Self tutoring a Timetraveller. Nothing happens if no matching card is found.
 ShuffleDiscard shuffles the controller's discard pile into their deck (Help from
 Future Self, after tutoring).
 
-### Steal Æmber
+### Steal Aember
 
-Stealing Æmber moves it from the opponent's pool into your own. You can only
-steal as much Æmber as the opponent actually has.
+Stealing Aember moves it from the opponent's pool into your own. You can only
+steal as much Aember as the opponent actually has.
 
 ### Stun
 
 A stun is a status placed on a creature. A stunned creature must shake off the
 stun before it can do anything else: the next time it is used to reap, fight,
 or use an "Action:" ability, it is exhausted and the stun is removed instead of
-that action happening. Stunning applies this status to each creature the effect
-targets.
+that action happening. Its constant abilities and any effect that does not
+require using it keep working while it is stunned. Stunning applies this status
+to each creature the effect targets.
+
+### Toll
+
+A toll is Aember a card in play makes its controller's opponent give in order to
+take an action with an artifact — playing an artifact, or using an artifact's
+ability. The opponent cannot take the action unless they can pay the toll, and
+the Aember they give goes to the toll card's controller. (The mechanic keeps the
+name Toll, but its printed text always reads "give", never "pay".)
 
 ### Unstun
 
 Unstunning a creature removes the stun status from each creature the effect
 targets, freeing it to act normally instead of having to shake the stun off.
+
+## Index
+
+- [1. Forge a key](#1-forge-a-key)
+- [2. Choose a house](#2-choose-a-house)
+- [3. Ready and draw](#3-ready-and-draw)
+- [Action](#action)
+- [After a Creature Enters Play](#after-a-creature-enters-play)
+- [After a Creature Is Destroyed Fighting](#after-a-creature-is-destroyed-fighting)
+- [After You Forge a Key](#after-you-forge-a-key)
+- [After You Play a Card](#after-you-play-a-card)
+- [Archive](#archive)
+- [Armor](#armor)
+- [Artifact](#artifact)
+- [Assault](#assault)
+- [Before Fight](#before-fight)
+- [Belong to House](#belong-to-house)
+- [Capture Aember](#capture-aember)
+- [Choose One](#choose-one)
+- [Combat](#combat)
+- [Conditional](#conditional)
+- [Constant Ability](#constant-ability)
+- [Creature](#creature)
+- [Deal Damage](#deal-damage)
+- [Destroy](#destroy)
+- [Destroyed](#destroyed)
+- [Draw](#draw)
+- [Exalt](#exalt)
+- [Exhaust](#exhaust)
+- [Fight](#fight)
+- [Gain Aember](#gain-aember)
+- [Gain Chains](#gain-chains)
+- [Hazardous](#hazardous)
+- [Heal](#heal)
+- [Lose Aember](#lose-aember)
+- [May](#may)
+- [Play](#play)
+- [Poison](#poison)
+- [Power Counter](#power-counter)
+- [Purge](#purge)
+- [Put from Play](#put-from-play)
+- [Ready](#ready)
+- [Reap](#reap)
+- [Redirect Fight Damage](#redirect-fight-damage)
+- [Restriction](#restriction)
+- [Result Gate](#result-gate)
+- [Return Named Card to Hand](#return-named-card-to-hand)
+- [Reveal Top of Deck](#reveal-top-of-deck)
+- [Search for Named Card](#search-for-named-card)
+- [Shuffle Discard](#shuffle-discard)
+- [Skirmish](#skirmish)
+- [Steal Aember](#steal-aember)
+- [Stun](#stun)
+- [Tactic](#tactic)
+- [Toll](#toll)
+- [Turn structure](#turn-structure)
+- [Unstun](#unstun)
+- [Upgrade](#upgrade)
+- [Versatile](#versatile)

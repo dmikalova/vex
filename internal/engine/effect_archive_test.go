@@ -47,6 +47,45 @@ func TestArchiveEffectDeclined(t *testing.T) {
 	}
 }
 
+func TestArchiveFromDiscardEffect(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	buried := g.AddToDiscard(testCreature("buried", 1), 0)
+	g.AddToDiscard(testCreature("other", 1), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	if (ArchiveFromDiscard{}).Text() != "archive a card from your discard pile" {
+		t.Errorf("text = %q", (ArchiveFromDiscard{}).Text())
+	}
+
+	// The default chooser archives the first discard card.
+	(ArchiveFromDiscard{}).Resolve(ctx)
+	if g.State.Archives[0].Count != 1 || g.State.Archives[0].IDs[0] != buried {
+		t.Errorf("archives = %v, want [%d]", g.State.Archives[0].slice(), buried)
+	}
+	if len(g.Discard(0)) != 1 {
+		t.Errorf("discard = %v, want one card left", g.Discard(0))
+	}
+
+	// An empty discard pile archives nothing.
+	empty := &EffectContext{Resolver: g, Controller: 1}
+	(ArchiveFromDiscard{}).Resolve(empty)
+	if g.State.Archives[1].Count != 0 {
+		t.Error("archiving from an empty discard pile should do nothing")
+	}
+}
+
+func TestArchiveFromDiscardDeclined(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.AddToDiscard(testCreature("c", 1), 0)
+	g.AddToDiscard(testCreature("d", 1), 0)
+	g.SetChooser(0, orderRejectChooser{})
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	(ArchiveFromDiscard{}).Resolve(ctx)
+	if g.State.Archives[0].Count != 0 {
+		t.Error("a declined archive choice should archive nothing")
+	}
+}
+
 func TestArchiveTopOfDeckEffect(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	top := g.AddToDeck(testCreature("top", 1), 0)
@@ -103,6 +142,23 @@ func TestArchiveFromPlayEffect(t *testing.T) {
 	}
 	if err := validateEffect(ArchiveFromPlay{}); err == nil {
 		t.Error("unset target should be rejected")
+	}
+}
+
+func TestArchiveFromPlayFriendlyInPlay(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	art := g.AddArtifact(NewCard("relic", Mars, Artifact, Common), 0)
+	g.AddToBattleline(NewCard("enemy", Mars, Creature, Common, WithPower(3)), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	e := ArchiveFromPlay{Target: Target{Kind: TargetChosenFriendlyInPlay}}
+	if e.Text() != "archive a friendly creature or artifact from play" {
+		t.Errorf("text = %q", e.Text())
+	}
+	// The friendly artifact is the sole candidate, so it is archived automatically.
+	e.Resolve(ctx)
+	if g.inPlay(art) || !g.State.Archives[0].contains(art) {
+		t.Error("friendly artifact should be archived")
 	}
 }
 

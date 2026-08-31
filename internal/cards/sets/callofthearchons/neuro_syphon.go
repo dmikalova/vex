@@ -19,7 +19,7 @@ var NeuroSyphon = card.New(
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
-			Cond: card.OpponentAemberMoreThanYou{},
+			Cond: card.OpponentAember{Is: card.MoreThanYou},
 			Then: card.Sequence{
 				Effects: []card.Effect{
 					card.StealAember{Amount: 1},

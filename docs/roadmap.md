@@ -1,8 +1,8 @@
 # Vactrol — Development Roadmap
 
 Vactrol is a digital card game written in **Go**, designed as a clone of **KeyForge**
-(complexity roughly between Magic and Pokémon). This document is the high-level path
-distilled from [outline.md](outline.md). Each step is a phase of work with the critical
+(complexity roughly between Magic and Pokémon). This document is the high-level path,
+each step a phase of work with the critical
 concepts and named techniques **bolded** so they can be researched further later.
 
 ---

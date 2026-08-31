@@ -18,5 +18,5 @@ var SubtleMaul = card.New(
 	card.Provenance(card.CotA, 294),
 	card.WithTraits("Weapon"),
 	card.WithAbility(
-		card.Trigger.Action, card.DiscardRandom{Player: card.Opponent}),
+		card.Trigger.Action, card.DiscardRandomFromHand{Player: card.Opponent}),
 )

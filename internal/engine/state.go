@@ -24,6 +24,9 @@ const (
 type CardCore struct {
 	Exhausted bool
 	Stunned   bool
+	// DamageImmune, while set, prevents any damage from being dealt to this creature.
+	// It lasts until end of turn (EndTurn clears it) — Shield of Justice, Protectrix.
+	DamageImmune bool
 	// TimesUsedThisTurn counts how many times this creature has been USED this
 	// turn — to reap, fight, or use an Action: ability. BeginTurn clears every
 	// creature's count; leaving play clears it through resetCore.
@@ -181,11 +184,29 @@ type GameState struct {
 	CannotFight     [2]bool
 	CannotFightNext [2]bool
 
+	// Play-type bars. CannotPlayTypeThis[p] blocks player p from playing cards of
+	// that type this turn; CannotPlayTypeNext[p] arms that block for p's next turn
+	// (Lifeward bars creatures, Scrambler Storm bars action cards). The zero value
+	// (an unset CardType) bars nothing. Like the fight bar, an effect arms it and
+	// BeginTurn promotes it to that player's own next turn.
+	CannotPlayTypeThis [2]CardType
+	CannotPlayTypeNext [2]CardType
+
+	// SkipForgeNext[p] makes player p skip their "forge a key" step at the start of
+	// their next turn (Miasma). BeginTurn consumes it, so it lands on that player's
+	// own next turn.
+	SkipForgeNext [2]bool
+
 	// MayFightHouse[p] is a house whose creatures player p may use to fight this
 	// turn even when it is not the active house — Brothers in Battle's "each
 	// friendly creature of that house may fight." HouseNone (the zero value) grants
 	// nothing. EndTurn clears it, so the grant lasts only the turn it was made.
 	MayFightHouse [2]House
+
+	// MayUseHouse[p] is a house whose creatures player p may fully use this turn
+	// (fight, reap, or Action:) even when it is not the active house — Sigil of
+	// Brotherhood, Ritual of the Hunt. HouseNone grants nothing; EndTurn clears it.
+	MayUseHouse [2]House
 
 	// Lasting holds the "for the remainder of the turn" effects active now (Full
 	// Moon, Charge!, Crystal Hive reactions; Dimension Door's replacement), fired or

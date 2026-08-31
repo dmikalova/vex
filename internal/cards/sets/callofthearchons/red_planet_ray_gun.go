@@ -1,20 +1,15 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// RedPlanetRayGun
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Red Planet Ray Gun
 //
 //	House:  Mars
 //	Type:   Upgrade
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains, "Reap: Choose a creature. Deal 1 Damage to that creature for each Mars creature in play."
+//	This creature gains, "Reap: For each Mars creature in play, deal 1 damage to a creature."
 var RedPlanetRayGun = card.New(
 	"Red Planet Ray Gun",
 	card.House.Mars,
@@ -22,5 +17,14 @@ var RedPlanetRayGun = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 211),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithStatic(card.StaticModifier{
+		Granted: []card.Ability{{
+			Trigger: card.Trigger.Reap,
+			Effect: card.DealDamage{
+				Amount: 1,
+				Target: card.Target.Creature,
+				Per:    card.InPlay{Player: card.EachPlayer, Type: card.Type.Creature, House: card.House.Mars},
+			},
+		}},
+	}),
 )

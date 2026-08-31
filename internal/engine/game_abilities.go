@@ -15,7 +15,8 @@ func (g *Game) usableInActiveHouse(id LocalID) bool {
 	return g.manual ||
 		g.State.ActiveHouse == HouseNone ||
 		g.House(id) == g.State.ActiveHouse ||
-		g.hasKeyword(id, Versatile)
+		g.hasKeyword(id, Versatile) ||
+		(g.State.MayUseHouse[g.controller(id)] != HouseNone && g.House(id) == g.State.MayUseHouse[g.controller(id)])
 }
 
 // usable runs the checks shared by reaping, fighting, and using an action
@@ -88,7 +89,7 @@ func (g *Game) reapWith(id LocalID) {
 	g.State.Cards[id].Exhausted = true
 	g.gainReapAember(p, id)
 	g.triggerAbilities(id, TriggerAfterReap, 0, false)
-	g.fireLasting(EventReap, p, id)
+	g.emitLasting(EventReap, p, id)
 }
 
 // gainReapAember pays out the Æmber a reap grants to player p, applying any lasting
@@ -260,11 +261,11 @@ func (g *Game) readyToUse(id LocalID) bool {
 	return true
 }
 
-// fireUpgradePlay resolves an upgrade's own "Play:" abilities when it is attached,
+// resolveUpgradePlay resolves an upgrade's own "Play:" abilities when it is attached,
 // acting on its host creature. The upgrade is the card that was played, but its
 // ability speaks of "this creature" — the host — so the host is the effect source
 // that self-references resolve to.
-func (g *Game) fireUpgradePlay(host, upgrade LocalID, up *CardDefinition) {
+func (g *Game) resolveUpgradePlay(host, upgrade LocalID, up *CardDefinition) {
 	for _, ab := range up.Abilities {
 		if ab.Trigger != TriggerAfterPlay {
 			continue
@@ -279,11 +280,11 @@ func (g *Game) fireUpgradePlay(host, upgrade LocalID, up *CardDefinition) {
 	}
 }
 
-// fireCreatureEnters is the enter-play event for a creature. It first resolves the
+// emitCreatureEnters is the enter-play event for a creature. It first resolves the
 // entering creature's own "enters play" abilities (Chuff Ape entering stunned),
 // then fires "after a creature enters play" abilities on every other in-play card,
 // with the entering creature as the trigger target ("it").
-func (g *Game) fireCreatureEnters(entered LocalID) {
+func (g *Game) emitCreatureEnters(entered LocalID) {
 	g.triggerAbilities(entered, TriggerEntersPlay, 0, false)
 	for player := 0; player < 2; player++ {
 		for _, id := range g.allInPlay(player) {
@@ -295,11 +296,26 @@ func (g *Game) fireCreatureEnters(entered LocalID) {
 	}
 }
 
-// fireCardPlayed fires "after you play a card" abilities on the playing player's
+// emitEnemyDestroyed fires the persistent "each time an enemy creature is
+// destroyed during your turn" reaction (Pile of Skulls) on the active player's
+// in-play cards. It fires only for the active player, and only when the destroyed
+// creature is one of their enemies, so the reaction is naturally limited to your
+// own turn and to enemy creatures.
+func (g *Game) emitEnemyDestroyed(destroyed LocalID) {
+	active := g.State.ActivePlayer
+	if g.controller(destroyed) == active {
+		return
+	}
+	for _, id := range g.allInPlay(active) {
+		g.triggerAbilities(id, TriggerAfterEnemyCreatureDestroyed, destroyed, true)
+	}
+}
+
+// emitCardPlayed fires "after you play a card" abilities on the playing player's
 // other in-play cards, with the played card as "it". Only an actual play from hand
-// fires it; a card put into play by another effect enters (fireCreatureEnters) but
+// fires it; a card put into play by another effect enters (emitCreatureEnters) but
 // is not played.
-func (g *Game) fireCardPlayed(player int, played LocalID) {
+func (g *Game) emitCardPlayed(player int, played LocalID) {
 	for _, id := range g.allInPlay(player) {
 		if id == played {
 			continue

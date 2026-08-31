@@ -20,5 +20,5 @@ var Tocsin = card.New(
 	card.WithPower(3),
 	card.WithTraits("Demon"),
 	card.WithAbility(
-		card.Trigger.Reap, card.DiscardRandom{Player: card.Opponent}),
+		card.Trigger.Reap, card.DiscardRandomFromHand{Player: card.Opponent}),
 )

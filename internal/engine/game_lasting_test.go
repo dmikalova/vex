@@ -2,7 +2,7 @@ package engine
 
 import "testing"
 
-func TestFireLastingOrders(t *testing.T) {
+func TestEmitLastingOrders(t *testing.T) {
 	g := started(t) // player 0 active, Brobnar
 	foe := g.AddToBattleline(testCreature("foe", 5), 1)
 	// Two reactions fire on the same event; the controller orders them.
@@ -72,7 +72,7 @@ func TestLastingOnceReadiesMatchingHouseAndSelfRemoves(t *testing.T) {
 	g.AddLastingOnce(EventCreaturePlayed, actReadyPlayed, 0, 0, Mars)
 
 	// A non-Mars subject is filtered out: not readied, and the entry stays armed.
-	g.fireLasting(EventCreaturePlayed, 0, sanc)
+	g.emitLasting(EventCreaturePlayed, 0, sanc)
 	if !g.State.Cards[sanc].Exhausted {
 		t.Error("a non-Mars creature should not be readied")
 	}
@@ -81,7 +81,7 @@ func TestLastingOnceReadiesMatchingHouseAndSelfRemoves(t *testing.T) {
 	}
 
 	// A Mars subject is readied, and the one-shot entry removes itself.
-	g.fireLasting(EventCreaturePlayed, 0, mars)
+	g.emitLasting(EventCreaturePlayed, 0, mars)
 	if g.State.Cards[mars].Exhausted {
 		t.Error("the next Mars creature should enter ready")
 	}
@@ -101,7 +101,7 @@ func TestLastingOnceOrdersWithPersistentReaction(t *testing.T) {
 	g.AddLastingOnce(EventCreaturePlayed, actReadyPlayed, 0, 0, Mars)
 	g.AddLasting(EventCreaturePlayed, actGainAember, 0, 1)
 
-	g.fireLasting(EventCreaturePlayed, 0, mars) // three reactions fire; ordering path runs
+	g.emitLasting(EventCreaturePlayed, 0, mars) // three reactions fire; ordering path runs
 
 	if g.Aember(0) != 2 {
 		t.Errorf("aember = %d, want 2", g.Aember(0))

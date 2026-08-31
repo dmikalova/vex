@@ -115,6 +115,13 @@ The generated comment is the card's printed text, produced by the effect AST's
 `Put` not `Return`; result gates `A -> B`; `Aember` not `Æmber` in curated
 source; capital `Damage` only where dealt; self-reference by name; etc.).
 
+Two conventions change a card's **structure**, not just its wording, so watch for
+them: `Sacrifice <self>` is authored as `Destroy <self>` (there is one destruction
+verb), and an **`Omni:` ability is authored as `Versatile` plus a `Trigger.Action`
+ability** — `card.WithKeywords(card.Keyword.Versatile)` alongside
+`card.WithAbility(card.Trigger.Action, …)`. The engine has no Omni trigger; see
+rule 12 of [docs/card-wording-rules.md](../../docs/card-wording-rules.md).
+
 When adding or reviewing a card, read its generated comment against those rules.
 **Call out any line that violates a rule**, and **auto-apply the fix when it is
 obvious** — because the text is generated from the AST, a wording fix means

@@ -74,8 +74,39 @@ type CardDefinition struct {
 	// host through StaticModifier.Replaces instead.)
 	Replaces Instead
 
+	// DrawModifier is a continuous change this card makes to a player's end-of-turn
+	// hand-refill size while in play — Mother refills its controller to one more
+	// card, Succubus refills the opponent to one fewer. The zero value changes
+	// nothing.
+	DrawModifier DrawModifier
+
+	// ProtectsAember, while the card is in play, makes its controller's Æmber
+	// impossible for the opponent to steal (The Vaultkeeper).
+	ProtectsAember bool
+
 	// Abilities are the triggered abilities on the card.
 	Abilities []Ability
+}
+
+// DrawModifier is a continuous change a card in play makes to how many cards a
+// player draws back up to during their "draw cards" step. Player is relative to
+// the card's controller (Controller, Opponent, or EachPlayer), and Amount is added
+// to the normal hand size (+1 for Mother and The Howling Pit, -1 for Succubus).
+type DrawModifier struct {
+	Player Player
+	Amount int
+}
+
+// affects reports whether a draw modifier owned by owner applies to target's draw.
+func (m DrawModifier) affects(owner, target int) bool {
+	switch m.Player {
+	case Controller:
+		return target == owner
+	case Opponent:
+		return target != owner
+	default: // EachPlayer
+		return true
+	}
 }
 
 // Restrictions are the continuous "cannot" rules a card imposes while it stays in
@@ -180,6 +211,14 @@ type StaticModifier struct {
 	// destroys the Upgrade. The zero value carries no replacement.
 	Replaces Replace
 }
+
+// A constant ability is a continuous rule a card applies while it stays in play,
+// with no trigger of its own — "Each friendly creature gains +1 power", or a card
+// that grants every creature a keyword or a "Destroyed:" ability. Its effect
+// applies for as long as the source card remains in play and stops the moment it
+// leaves; applying it is not "using" the card and never exhausts it.
+//
+//rulebook:ability Constant Ability
 
 // ConstantAbility is a continuous stat modifier a card in play applies to
 // creatures — "Each friendly creature gains +1 power" — lasting only while the
@@ -370,6 +409,19 @@ func WithKeyCost(kc KeyCostChange) CardOption {
 // outcome while in play (Ether Spider capturing Æmber added to its opponent's pool).
 func WithReplaces(r Instead) CardOption {
 	return func(c *CardDefinition) { c.Replaces = r }
+}
+
+// WithDrawModifier makes the card, while in play, change a player's end-of-turn
+// hand-refill size by amount (Mother +1 for its controller, Succubus -1 for the
+// opponent, The Howling Pit +1 for each player).
+func WithDrawModifier(player Player, amount int) CardOption {
+	return func(c *CardDefinition) { c.DrawModifier = DrawModifier{Player: player, Amount: amount} }
+}
+
+// WithAemberTheftImmunity makes the card, while in play, protect its controller's
+// Æmber from being stolen (The Vaultkeeper).
+func WithAemberTheftImmunity() CardOption {
+	return func(c *CardDefinition) { c.ProtectsAember = true }
 }
 
 // WithAbility appends a triggered ability to the card.

@@ -75,8 +75,9 @@ func keyColorByName(name string) engine.KeyColor {
 }
 
 // statSeg is a stat value followed by its icon (e.g. "3" + the power icon).
-func statSeg(n int, iconName string) app.UI {
-	return app.Span().Class("stat-seg").Body(
+// extra adds modifier classes (e.g. a one-shot pulse animation).
+func statSeg(n int, iconName string, extra ...string) app.UI {
+	return app.Span().Class(cx(append([]string{"stat-seg"}, extra...)...)).Body(
 		app.Text(strconv.Itoa(n)),
 		icon(iconName, "icon-stat"),
 	)

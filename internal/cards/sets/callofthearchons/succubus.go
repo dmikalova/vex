@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Succubus
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Dis
 //	Type:   Creature
@@ -24,5 +19,5 @@ var Succubus = card.New(
 	card.Provenance(card.CotA, 99),
 	card.WithPower(3),
 	card.WithTraits("Demon"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithDrawModifier(card.Opponent, -1),
 )

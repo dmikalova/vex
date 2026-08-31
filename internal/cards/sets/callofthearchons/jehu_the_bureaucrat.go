@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// JehuTheBureaucrat
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Jehu the Bureaucrat
 //
 //	House:  Sanctum
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Human
 //
-//	After you choose Sanctum as your active house, gain 2 Aember.
+//	After you choose Sanctum as your active house, gain 2 Æmber.
 var JehuTheBureaucrat = card.New(
 	"Jehu the Bureaucrat",
 	card.House.Sanctum,
@@ -24,5 +19,9 @@ var JehuTheBureaucrat = card.New(
 	card.Provenance(card.CotA, 250),
 	card.WithPower(3),
 	card.WithTraits("Human"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.AfterChooseHouse, card.Conditional{
+			Cond: card.ChoseHouse{House: card.House.Sanctum},
+			Then: card.GainAember{Player: card.Controller, Amount: 2},
+		}),
 )

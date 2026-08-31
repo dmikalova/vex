@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// GuardianDemon
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Guardian Demon
 //
 //	House:  Dis
 //	Type:   Creature
@@ -24,5 +19,5 @@ var GuardianDemon = card.New(
 	card.Provenance(card.CotA, 88),
 	card.WithPower(4),
 	card.WithTraits("Demon"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithPlayFightReap(card.HealThenDamage{Amount: 2}),
 )

@@ -1,20 +1,15 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// PositronBolt
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Positron Bolt
 //
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Deal 3 Damage to a flank creature. Deal 2 Damage to its neighbor. Deal 1 Damage to the second creature's other neighbor.
+//	Play: Choose a flank creature. Deal 3 damage to it, 2 damage to its neighbor, and 1 damage to the neighbor's other neighbor.
 var PositronBolt = card.New(
 	"Positron Bolt",
 	card.House.Logos,
@@ -22,5 +17,8 @@ var PositronBolt = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 118),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.FlankWalkDamage{
+			Amounts: []int{3, 2, 1},
+		}),
 )

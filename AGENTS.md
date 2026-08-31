@@ -97,25 +97,25 @@ two hard constraints that shape it, and the deliberate tradeoffs (with how to
 handle each) — lives in `internal/engine/AGENTS.md`. Read it before reshaping an
 engine seam. The load-bearing rules that affect how you add anything:
 
-- **Effects are an Interpreter AST.** Every `Effect` renders its own text
-  (`Text()`) and carries itself out (`Resolve()`), so printed card text can never
-  desync from behavior. A new mechanic is almost always a new node in
+- **Effects are an Interpreter AST** (ADR 0006). Every `Effect` renders its own
+  text (`Text()`) and carries itself out (`Resolve()`), so printed card text can
+  never desync from behavior. A new mechanic is almost always a new node in
   `effect_<mechanic>.go`, not a new branch in the `Game` runtime.
 - **Vary behavior with a Strategy that also renders its own text.** When behavior
   changes along an axis, model the axis as a small strategy — a `Chooser` (or its
   optional-capability interfaces `OptionChooser`/`Orderer`), a `Selector`, a
   `Count`, or a `Condition` — each of which carries both its behavior and its text
   fragment. Reach for this before adding another `Target` field or a `bool`.
-- **The `Resolver` port is segregated into role interfaces** (`StateReader`,
-  `EconomyResolver`, `CreatureResolver`, `CombatResolver`, `ZoneResolver`,
-  `TurnResolver`, `ChoiceResolver`, `Logger`). A new engine capability is a method
-  added to the role it belongs to, not to a flat list.
+- **The `Resolver` port is segregated into role interfaces** (ADR 0008)
+  (`StateReader`, `EconomyResolver`, `CreatureResolver`, `CombatResolver`,
+  `ZoneResolver`, `TurnResolver`, `ChoiceResolver`, `Logger`). A new engine
+  capability is a method added to the role it belongs to, not to a flat list.
 - **New whole-tree operations that are not part of a card's identity** (AI/MCTS
   scoring, static analysis, serialization) are a standalone type-switch function
   over `Effect` in one file — the Go-idiomatic Visitor — **never** a third method
   on every node. `Text()`/`Resolve()` are intrinsic; heuristics are not.
-- **Flat, pointerless, comparable state is non-negotiable.** State holds no
-  closures, so "do X later" is flat enum-tagged data (the lasting registry), and
+- **Flat, pointerless, comparable state is non-negotiable** (ADR 0005). State
+  holds no closures, so "do X later" is flat enum-tagged data (the lasting registry), and
   values compared against state (e.g. `Target`) stay comparable — which is why
   `Target` is a flag struct with paired `x`/`hasX` fields rather than slices or
   pointers. Do not introduce a pointer/slice/map into `GameState` or a
@@ -152,6 +152,7 @@ block to the play or reap path (`PlayCreature`, `reapWith`) for each of these �
 hardcodes every effect into the hot path and makes effects sharing a timing window
 impossible to order. Instead, everything routes through the flat registry in
 `game_lasting.go` (`AddLasting(on Event, do lastingAction, controller, amount)`).
+See ADR 0007 for the decision and its rationale.
 Because the state is a flat, pointerless value it cannot hold effect closures, so a
 lasting effect is a small enum-tagged record `LastingEffect{On Event, Do
 lastingAction, Controller, Amount}`.
@@ -159,7 +160,7 @@ lastingAction, Controller, Amount}`.
 There are two flavors:
 
 - A **reaction** runs *after* an event. The event site emits **one** dispatch —
-  `g.fireLasting(EventCreaturePlayed, actor, subject)` / `g.fireLasting(EventReap,
+  `g.emitLasting(EventCreaturePlayed, actor, subject)` / `g.emitLasting(EventReap,
   …)` — which gathers every reaction the actor owns for that event and, when several
   fire at once, lets the controller **order** them (KeyForge lets the active player
   order simultaneous triggers), resolving each via `resolveReaction`. So "gain Æmber
@@ -174,7 +175,7 @@ There are two flavors:
   With: card.Steal}`.
 
 Adding a reaction on an existing event = supporting its `Do` in `lastingActionOf` +
-`resolveReaction`; a new event = an `Event` value, one `fireLasting`/
+`resolveReaction`; a new event = an `Event` value, one `emitLasting`/
 `lastingReplacement` call at that site, and the `clause`/`gerund` text. You never
 touch the play/reap path's structure. `EndTurn` drops a player's entries via
 `clearLasting`.
@@ -227,4 +228,9 @@ card.WithAbility(
 ```
 
 See `internal/cards/AGENTS.md` for the full card-authoring guide (file layout,
-generated doc comments, wording rules, and tests).
+generated doc comments, wording rules, and tests). Every card's printed text must
+obey the curated wording conventions in
+[docs/card-wording-rules.md](docs/card-wording-rules.md) — most load-bearing:
+`Sacrifice <self>` is written `Destroy <self>`, and an **`Omni:` ability is
+authored as `Versatile` (a keyword on the card) plus a `Trigger.Action` ability**,
+never a bespoke Omni trigger (the engine has none; ADR 0009).

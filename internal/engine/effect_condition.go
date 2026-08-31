@@ -2,10 +2,13 @@ package engine
 
 import "fmt"
 
-// A Conditional gates an effect behind a check on the current game state — the
-// "If ..." clause many cards open with, e.g. "If your opponent has 7 or more
-// Æmber, they lose 4 Æmber." The Condition renders its own English (CondText) and
-// evaluates itself (Met), so the printed text always matches what is checked.
+// A conditional gates an effect behind a check on the current game state — the
+// "If ..." clause a card opens with, e.g. "If your opponent has 7 or more Aember,
+// they lose 4 Aember." The effect resolves only when the condition is met. Unlike
+// a result gate (A -> B), which turns on an action succeeding, a conditional turns
+// on a fact about the board.
+//
+//rulebook:effect Conditional
 
 // Condition is a boolean predicate on the live game, used by Conditional.
 type Condition interface {
@@ -13,50 +16,75 @@ type Condition interface {
 	Met(ctx *EffectContext) bool
 }
 
-// OpponentAemberAtLeast is met when the opponent's pool holds at least Amount
-// Æmber.
-type OpponentAemberAtLeast struct {
+// AemberComparison selects how OpponentAember compares the opponent's pool to a
+// threshold. It has no valid zero value: an OpponentAember must name one, so an
+// unset comparison is caught at init rather than silently reading as "0 or more".
+type AemberComparison int
+
+const (
+	aemberComparisonUnset AemberComparison = iota
+	// AtLeast is met when the opponent's pool holds at least Amount Æmber.
+	AtLeast
+	// Exactly is met when the opponent's pool holds exactly Amount Æmber (which is
+	// why the comparison is named separately from the amount: Exactly with Amount 0
+	// is a real check that a bare integer field could not tell from "unset").
+	Exactly
+	// MoreThanYou is met when the opponent's pool holds strictly more Æmber than the
+	// controller's; it ignores Amount.
+	MoreThanYou
+)
+
+// OpponentAember gates on the opponent's Æmber pool: Is names the comparison and
+// Amount the threshold it compares against (unused by MoreThanYou). It replaces
+// the separate at-least / exactly / more-than-you conditions with one node.
+type OpponentAember struct {
+	Is     AemberComparison
 	Amount int
+}
+
+// validate requires a comparison to be named (its zero value is invalid).
+func (c OpponentAember) validate() error {
+	switch c.Is {
+	case AtLeast, Exactly, MoreThanYou:
+		return nil
+	default:
+		return fmt.Errorf("OpponentAember: Is must be AtLeast, Exactly, or MoreThanYou")
+	}
 }
 
 // CondText renders the condition, e.g. "if your opponent has 7 Æmber or more".
-func (c OpponentAemberAtLeast) CondText() string {
-	return fmt.Sprintf("if your opponent has %d Æmber or more", c.Amount)
+func (c OpponentAember) CondText() string {
+	switch c.Is {
+	case Exactly:
+		return fmt.Sprintf("if your opponent has exactly %d Æmber", c.Amount)
+	case MoreThanYou:
+		return "if your opponent has more Æmber than you"
+	default:
+		return fmt.Sprintf("if your opponent has %d Æmber or more", c.Amount)
+	}
 }
 
-// Met reports whether the opponent has at least Amount Æmber.
-func (c OpponentAemberAtLeast) Met(ctx *EffectContext) bool {
-	return ctx.Resolver.Aember(ctx.Opponent()) >= c.Amount
+// Met reports whether the opponent's pool satisfies the comparison.
+func (c OpponentAember) Met(ctx *EffectContext) bool {
+	opp := ctx.Resolver.Aember(ctx.Opponent())
+	switch c.Is {
+	case Exactly:
+		return opp == c.Amount
+	case MoreThanYou:
+		return opp > ctx.Resolver.Aember(ctx.Controller)
+	default:
+		return opp >= c.Amount
+	}
 }
 
-// OpponentAemberExactly is met when the opponent's pool holds exactly Amount
-// Æmber.
-type OpponentAemberExactly struct {
-	Amount int
-}
-
-// CondText renders the condition, e.g. "if your opponent has exactly 1 Æmber".
-func (c OpponentAemberExactly) CondText() string {
-	return fmt.Sprintf("if your opponent has exactly %d Æmber", c.Amount)
-}
-
-// Met reports whether the opponent has exactly Amount Æmber.
-func (c OpponentAemberExactly) Met(ctx *EffectContext) bool {
-	return ctx.Resolver.Aember(ctx.Opponent()) == c.Amount
-}
-
-// OpponentAemberMoreThanYou is met while the opponent's pool holds strictly more
-// Æmber than the controller's.
-type OpponentAemberMoreThanYou struct{}
-
-// CondText renders the condition.
-func (OpponentAemberMoreThanYou) CondText() string {
-	return "if your opponent has more Æmber than you"
-}
-
-// Met reports whether the opponent has more Æmber than the controller.
-func (OpponentAemberMoreThanYou) Met(ctx *EffectContext) bool {
-	return ctx.Resolver.Aember(ctx.Opponent()) > ctx.Resolver.Aember(ctx.Controller)
+// validateCondition returns any configuration error a condition reports (an unset
+// OpponentAember comparison, say). Conditions that cannot be misconfigured
+// implement no validator and pass.
+func validateCondition(c Condition) error {
+	if v, ok := c.(validator); ok {
+		return v.validate()
+	}
+	return nil
 }
 
 // ControlsMoreCreatures is met while the controller has more creatures in play
@@ -218,16 +246,22 @@ func (e Conditional) Resolve(ctx *EffectContext) {
 
 // validate checks the gated effect for configuration errors.
 func (e Conditional) validate() error {
+	if err := validateCondition(e.Cond); err != nil {
+		return err
+	}
 	return validateEffect(e.Then)
 }
 
 // RepeatWhile resolves Do again and again for as long as Cond holds, re-checking
 // after each pass — a self-looping effect such as "if your opponent has more
-// Æmber than you, steal 1 Æmber -> repeat this effect". Do must make progress
-// toward ending the loop (each pass changes the state Cond checks).
+// Æmber than you, steal 1 Æmber -> repeat this effect". The loop also stops the
+// moment Do makes no progress (its gate reports it did nothing), so an action that
+// is prevented — a steal against a protected pool — ends the loop instead of
+// spinning even though Cond still holds. Do is a GatingEffect for exactly that
+// reason: the repeat gates on the action completing, not only on Cond.
 type RepeatWhile struct {
 	Cond Condition
-	Do   Effect
+	Do   GatingEffect
 }
 
 // Text renders the loop, leading with the condition and closing with the
@@ -236,16 +270,64 @@ func (e RepeatWhile) Text() string {
 	return e.Cond.CondText() + ", " + e.Do.Text() + " -> repeat this effect"
 }
 
-// Resolve runs Do while Cond is met.
+// Resolve runs Do while Cond is met, stopping as soon as Do does nothing.
 func (e RepeatWhile) Resolve(ctx *EffectContext) {
 	for e.Cond.Met(ctx) {
-		e.Do.Resolve(ctx)
+		if !e.Do.resolveGate(ctx) {
+			return
+		}
 	}
 }
 
 // validate checks the looped effect for configuration errors.
 func (e RepeatWhile) validate() error {
 	return validateEffect(e.Do)
+}
+
+// Overwhelmed reports whether the controller is overwhelmed — their opponent
+// controls more creatures than they do. "Overwhelmed" is the keyword form of that
+// board state; Numquid the Fair repeats its destruction while overwhelmed.
+type Overwhelmed struct{}
+
+// CondText renders the condition.
+func (Overwhelmed) CondText() string { return "if you are overwhelmed" }
+
+// Met reports whether the opponent controls more creatures than the controller.
+func (Overwhelmed) Met(ctx *EffectContext) bool {
+	return len(ctx.Resolver.Battleline(ctx.Opponent())) > len(ctx.Resolver.Battleline(ctx.Controller))
+}
+
+// RepeatOnCondition performs a gating effect and repeats it while the effect keeps
+// succeeding and a condition holds — Numquid the Fair's "destroy an enemy creature
+// -> if you are overwhelmed, repeat this effect." Do runs at least once; the loop
+// stops as soon as Do does nothing (its gate is false) or Cond is not met. Do is a
+// GatingEffect so an empty board ends the loop instead of spinning.
+type RepeatOnCondition struct {
+	Do   GatingEffect
+	Cond Condition
+}
+
+// validate checks the repeated effect.
+func (e RepeatOnCondition) validate() error {
+	return validateEffect(e.Do)
+}
+
+// Text renders the effect, e.g. "destroy an enemy creature -> if you are
+// overwhelmed, repeat this effect".
+func (e RepeatOnCondition) Text() string {
+	return e.Do.Text() + " -> " + e.Cond.CondText() + ", repeat this effect"
+}
+
+// Resolve runs Do, repeating while it keeps doing something and Cond holds.
+func (e RepeatOnCondition) Resolve(ctx *EffectContext) {
+	for {
+		if !e.Do.resolveGate(ctx) {
+			return
+		}
+		if !e.Cond.Met(ctx) {
+			return
+		}
+	}
 }
 
 // MayRepeat resolves Do once, then offers the controller the choice to resolve it
@@ -277,4 +359,23 @@ func (e MayRepeat) Resolve(ctx *EffectContext) {
 // validate checks the repeated effect for configuration errors.
 func (e MayRepeat) validate() error {
 	return validateEffect(e.Do)
+}
+
+// ChoseHouse is met when the controller's active house is House. It is the
+// condition behind an "After you choose <House> as your active house, ..."
+// ability (Jehu the Bureaucrat): the AfterChooseHouse trigger fires for the
+// active player as they pick their house, and this checks whether they picked
+// the house the ability watches for.
+type ChoseHouse struct {
+	House House
+}
+
+// CondText renders the condition clause.
+func (c ChoseHouse) CondText() string {
+	return "you choose " + c.House.String() + " as your active house"
+}
+
+// Met reports whether the active house is the one the ability watches for.
+func (c ChoseHouse) Met(ctx *EffectContext) bool {
+	return ctx.Resolver.ActiveHouse() == c.House
 }

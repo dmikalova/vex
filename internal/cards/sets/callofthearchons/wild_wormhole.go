@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// WildWormhole
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Wild Wormhole
 //
 //	House:  Logos
 //	Type:   Tactic
@@ -22,5 +17,5 @@ var WildWormhole = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 125),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.Play, card.PlayTopOfDeck{}),
 )

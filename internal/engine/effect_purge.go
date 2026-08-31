@@ -5,6 +5,13 @@ import (
 	"strings"
 )
 
+// Purging a card sets it aside out of the game entirely, in the purge pile, where
+// no ability can reach it unless that ability names the purge pile. It is the most
+// permanent way a card leaves play: a purged card never enters a discard pile and
+// can never be drawn, played, or destroyed again.
+//
+//rulebook:effect Purge
+
 // Purge sets cards aside out of the game, taken from a zone the controller picks.
 // It serves both as a standalone effect (Creeping Oblivion purges up to 2 cards)
 // and as the first half of a Then ("purge a creature -> give a +1 power counter"),
@@ -215,4 +222,46 @@ func (e PurgeCreature) Resolve(ctx *EffectContext) {
 			}
 		}
 	}
+}
+
+// PurgeHandThenDestroyShared purges a chosen creature from the controller's hand
+// and then destroys every creature in play — either player's — that shares at
+// least one trait with it. It is Custom Virus's "purge a creature from your
+// hand, destroy each creature that shares a trait with the purged creature." The
+// purged creature is out of play but its traits still decide what is destroyed;
+// with no creature in hand nothing is purged and nothing is destroyed.
+type PurgeHandThenDestroyShared struct{}
+
+// Text renders the effect.
+func (PurgeHandThenDestroyShared) Text() string {
+	return "purge a creature from your hand. Destroy each creature that shares a trait with the purged creature"
+}
+
+// Resolve purges a chosen creature from the controller's hand, then destroys
+// every creature in play sharing a trait with it, all at once.
+func (e PurgeHandThenDestroyShared) Resolve(ctx *EffectContext) {
+	var inHand []LocalID
+	for _, id := range ctx.Resolver.Hand(ctx.Controller) {
+		if ctx.Resolver.IsCreature(id) {
+			inHand = append(inHand, id)
+		}
+	}
+	if len(inHand) == 0 {
+		return
+	}
+	purged, ok := ctx.ChooseCreature("Choose a creature to purge from your hand", inHand)
+	if !ok {
+		return
+	}
+	ctx.Resolver.PurgeFromHand(ctx.Controller, purged)
+
+	var dying []LocalID
+	for p := 0; p < 2; p++ {
+		for _, id := range ctx.Resolver.Battleline(p) {
+			if ctx.Resolver.SharesTrait(purged, id) {
+				dying = append(dying, id)
+			}
+		}
+	}
+	ctx.Resolver.DestroyEach(ctx.Controller, dying)
 }

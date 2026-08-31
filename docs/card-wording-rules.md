@@ -165,12 +165,12 @@ Counting and iteration clauses lead the sentence, so a card reads **forward**:
 the subject (what you count) first, then the effect it drives — the reader never
 has to run to the end for the multiplier and jump back.
 
-| Original                                                          | Curated                                                             |
-| ----------------------------------------------------------------- | ------------------------------------------------------------------- |
-| `Gain 1 Aember for each forged key your opponent has.`            | `For each forged key your opponent has, gain 1 Aember.`             |
-| `gain 1 Aember each time you play a creature.`                    | `each time you play a creature, gain 1 Aember.`                     |
-| `Gain 1 Aember for each creature healed this way.`                | `For each creature healed this way, gain 1 Aember.`                 |
-| `Deal 1 Damage to a creature for each friendly creature in play.` | `For each friendly creature in play, deal 1 damage to a creature.`  |
+| Original                                                          | Curated                                                            |
+| ----------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `Gain 1 Aember for each forged key your opponent has.`            | `For each forged key your opponent has, gain 1 Aember.`            |
+| `gain 1 Aember each time you play a creature.`                    | `each time you play a creature, gain 1 Aember.`                    |
+| `Gain 1 Aember for each creature healed this way.`                | `For each creature healed this way, gain 1 Aember.`                |
+| `Deal 1 Damage to a creature for each friendly creature in play.` | `For each friendly creature in play, deal 1 damage to a creature.` |
 
 The loop header precedes the body, matching `ForEach{source, body}`. In the
 engine this is the `Count` interface: any effect carrying a `Per Count` renders
@@ -208,11 +208,30 @@ Longhand descriptions are replaced by the canonical keyword/verb.
 | `This creature belongs to all houses.`                                                    | `This creature gains versatile.`                                    | versatile        |
 | `Omni: Destroy Gorm of Omm. Destroy an artifact.`                                         | `Versatile.`<br>`Action: Destroy Gorm of Omm. Destroy an artifact.` | Omni → versatile |
 
-**Omni** abilities are re-expressed as **Versatile** plus an `Action:` ability.
-Under the simplified rule, Omni just means _usable on your turn regardless of the
-active house_ — exactly what Versatile grants — so the card gains `Versatile` and
-its ability is written as `Action:`. (Affected: Key to Dis, Combat Pheromones,
-Epic Quest, Gorm of Omm, Deipno Spymaster, Longfused Mines, Nepenthe Seed.)
+**Omni → Versatile + `Action:`.** This is the one keyword swap that changes a
+card's _structure_, so it is worth spelling out. An `Omni:` ability may be used on
+your turn **whether or not the card is in your active house**; a plain `Action:`
+ability may only be used when the card **is** in the active house. **Versatile** is
+exactly the keyword that lets a card be used as if it belonged to the active house.
+So an Omni card is re-expressed as two pieces:
+
+1. the card **gains `Versatile`** (a keyword on the card), and
+2. its `Omni:` ability is rewritten verbatim as an `Action:` ability.
+
+For almost every card these two are behaviorally identical — using the card
+exhausts it, and the Versatile grant removes the active-house restriction — so the
+engine has **no separate Omni trigger**. Author it with
+`card.WithKeywords(card.Keyword.Versatile)` plus a `card.WithAbility(card.Trigger.Action, …)`.
+
+Concretely, `Omni: Destroy Gorm of Omm. Destroy an artifact.` becomes:
+
+```text
+Versatile.
+Action: Destroy Gorm of Omm. Destroy an artifact.
+```
+
+(Affected: Key to Dis, Combat Pheromones, Epic Quest, Gorm of Omm, Deipno
+Spymaster, Longfused Mines, Nepenthe Seed.)
 
 ## 13. Cancellation primitive: `the fight does not occur`
 
@@ -272,10 +291,10 @@ printed wording on toll cards) is retired so every player-to-player transfer rea
 the same way, matching Interdimensional Graft's "they must give you their
 remaining Æmber".
 
-| Original                                                          | Curated                                                          |
-| ----------------------------------------------------------------- | ---------------------------------------------------------------- |
+| Original                                                            | Curated                                                              |
+| ------------------------------------------------------------------- | -------------------------------------------------------------------- |
 | `Your opponent must pay you 1 Aember in order to play an artifact.` | `Your opponent must give you 1 Aember in order to play an artifact.` |
-| `…they must pay you their remaining Aember.`                      | `…they must give you their remaining Aember.`                    |
+| `…they must pay you their remaining Aember.`                        | `…they must give you their remaining Aember.`                        |
 
 The engine keeps the mechanic named `Toll` (the thing a card charges), but its
 rendered text says `give`. (Affected: Customs Office, Tentacus,
@@ -288,13 +307,31 @@ from hand) and an **ability** (`Action:` on a ready creature or artifact). To ke
 the two distinct, the card **type** is renamed **`Tactic`** (rendered `Type:
 Tactic`), while the **`Action:` ability** keeps its printed wording untouched.
 
-| Context                              | Wording           |
-| ------------------------------------ | ----------------- |
-| Card type (was "action")             | `Tactic`          |
-| Ability on a creature/artifact       | `Action:` (kept)  |
+| Context                        | Wording          |
+| ------------------------------ | ---------------- |
+| Card type (was "action")       | `Tactic`         |
+| Ability on a creature/artifact | `Action:` (kept) |
 
 This is a naming choice, not a text rewrite: the `Action:` prefix on every card's
 ability line is unchanged.
+
+## 20. One-time house reassignment, not `while under your control`
+
+A few cards take control of a card and then say it belongs to a house for as long
+as you control it — e.g. Sneklifter's printed _"Take control of an enemy artifact.
+While under your control, if it does not belong to one of your three houses, it is
+considered to be of house Shadows."_ The `while under your control` clause is
+**dropped** in favor of a one-time reassignment, **evaluated once, when the effect resolves**:
+
+> Take control of an enemy artifact. If it does not belong to a house on your
+> identity then it belongs to house Shadows.
+
+The continuous "while under your control" form needs a kind of dynamic memory that
+re-checks the card's houses every time control changes; the one-time form does not.
+It is also **slightly more interesting**: the reassignment sticks with the card
+(until it leaves play), so if an opponent later takes it back they can be stuck
+with a card of a house they may not have. "A house on your identity" is one of the
+controller's three deck houses. (Affected: Sneklifter.)
 
 ---
 

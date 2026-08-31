@@ -7,11 +7,11 @@ import "fmt"
 // it is captured or placed on a creature, where it belongs to no one until that
 // creature leaves play.
 
-// To gain Æmber, a player moves that many Æmber from the common supply into
+// To gain Aember, a player moves that many Aember from the common supply into
 // their pool — the ability's controller by default, or their opponent when the
 // card says so. A "for each" clause multiplies the amount by a running count.
 //
-//rulebook:effect Gain Æmber
+//rulebook:effect Gain Aember
 type GainAember struct {
 	Player Player
 	Amount int
@@ -86,13 +86,13 @@ func (a allBut) lose(pool int) int    { return max(0, pool-a.keep) }
 func (a allBut) object(string) string { return fmt.Sprintf("all but %d Æmber", a.keep) }
 func (a allBut) qualifier() string    { return fmt.Sprintf("with %d Æmber or more", a.keep+1) }
 
-// To lose Æmber, a player returns that many Æmber from their pool to the common
-// supply. A pool can never go below zero, so a player told to lose more Æmber than
+// To lose Aember, a player returns that many Aember from their pool to the common
+// supply. A pool can never go below zero, so a player told to lose more Aember than
 // they have simply loses all of it. Player may be EachPlayer, so both players lose.
 // The amount lost is either a fixed Amount or a By loss of the pool (By: Half,
 // By: AllBut(5)) — set one, not both.
 //
-//rulebook:effect Lose Æmber
+//rulebook:effect Lose Aember
 type LoseAember struct {
 	Player Player
 	Amount int
@@ -139,12 +139,21 @@ func (e LoseAember) Text() string {
 
 // Resolve removes the Æmber from each affected player's pool, never taking a pool
 // below zero.
-func (e LoseAember) Resolve(ctx *EffectContext) {
+func (e LoseAember) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
+
+// resolveGate removes the Aember and reports whether any actually left a pool, so a
+// LoseAember can gate a Then — Key Charge only forges if Æmber was lost.
+func (e LoseAember) resolveGate(ctx *EffectContext) bool {
+	moved := false
 	for _, p := range e.losers(ctx) {
 		lost := min(e.amountFor(ctx, p), ctx.Resolver.Aember(p))
+		if lost > 0 {
+			moved = true
+		}
 		ctx.Resolver.SetAember(p, ctx.Resolver.Aember(p)-lost)
 		ctx.Resolver.Logf("%s loses %d Æmber", ctx.Resolver.PlayerName(p), lost)
 	}
+	return moved
 }
 
 // losers returns the players who lose Æmber — both for EachPlayer, otherwise the

@@ -2,10 +2,10 @@ package engine
 
 import "fmt"
 
-// To exalt a creature is to place 1 Æmber from the common supply onto a chosen
-// friendly or enemy creature. The Æmber sits on the creature, belonging to no
+// To exalt a creature is to place 1 Aember from the common supply onto a chosen
+// friendly or enemy creature. The Aember sits on the creature, belonging to no
 // pool, until it leaves play, then goes to the owner's opponent's pool. Exalting
-// N times places N Æmber.
+// N times places N Aember.
 //
 //rulebook:effect Exalt
 type Exalt struct {

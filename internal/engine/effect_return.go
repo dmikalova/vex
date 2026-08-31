@@ -8,7 +8,7 @@ import (
 // PutFromPlay takes each card its Target selects out of play and puts it in a
 // destination zone — the top of its owner's deck, their hand, or their archives —
 // shedding the per-match state the card built up in play (damage, spent armor,
-// Æmber on it, upgrades). The destination is required. Moving a card out of play
+// Aember on it, upgrades). The destination is required. Moving a card out of play
 // this way is how a "Destroyed:" ability can save its own creature: the creature
 // leaves for the named zone as it is destroyed, so it never reaches the discard
 // pile. When several cards move to the top of the deck at once the controller

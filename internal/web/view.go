@@ -18,14 +18,21 @@ func (g *game) Render() app.UI {
 		return app.Div().Class("loading").Text("Loading Vactrol…")
 	}
 
-	return app.Div().Class("app").Body(
+	return app.Div().Class(cx("app", ifCls(g.sidebarCollapsed, "app--sidebar-collapsed"))).Body(
 		app.Div().Class("board-area").Body(g.boardArea()...),
-		app.Div().Class("sidebar").Body(
-			g.brandBar(),
-			g.turnHud(),
-			g.logPanel(),
-			g.controls(),
-		),
+		app.If(!g.sidebarCollapsed, func() app.UI {
+			return app.Div().Class("sidebar").Body(
+				g.brandBar(),
+				g.turnHud(),
+				g.logPanel(),
+				app.If(g.status != "", func() app.UI { return g.statusBanner() }),
+				g.controls(),
+			)
+		}),
+		app.If(g.sidebarCollapsed, func() app.UI {
+			return app.Button().Class("sidebar-reveal").Title("Show sidebar").
+				Text("«").OnClick(g.toggleSidebar)
+		}),
 		app.If(g.hoverID != 0 || g.hoverDef != nil, func() app.UI { return g.hoverPreview() }),
 		app.If(g.zonesPlayer >= 0, func() app.UI { return g.zonesOverlay() }),
 		app.If(g.pickerOpen, func() app.UI { return g.cardPicker() }),
@@ -33,16 +40,13 @@ func (g *game) Render() app.UI {
 	)
 }
 
-// brandBar is the slim top of the sidebar: the title, a transient status, and the
-// New game button.
+// brandBar is the slim top of the sidebar: the title, a busy badge, and the
+// navigation buttons (undo/redo, sandbox, new game).
 func (g *game) brandBar() app.UI {
 	return app.Div().Class("brandbar").Body(
 		app.Span().Class("brand-title").Text("Vactrol"),
 		app.If(g.busy && !g.choosing && !g.choosingOption, func() app.UI {
 			return app.Span().Class("badge-busy").Text("resolving…")
-		}),
-		app.If(g.status != "", func() app.UI {
-			return app.Span().Class("badge-error").Text(g.status)
 		}),
 		app.Div().Class("spacer"),
 		app.Button().Class("btn-nav btn-icon").Title("Undo").
@@ -59,8 +63,22 @@ func (g *game) brandBar() app.UI {
 		app.Button().Class("btn-nav btn-icon").Title("New game").
 			Body(icon("restart", "icon-nav")).
 			Disabled(g.busy || g.choosing || g.choosingOption).
-			OnClick(g.restart),
+			OnClick(g.askRestart),
+		app.Button().Class("btn-nav btn-icon").Title("Hide sidebar").
+			Text("»").OnClick(g.toggleSidebar),
 	)
+}
+
+// statusBanner shows the transient status (usually a play error) as a red pill in
+// the controls area. It fades out over 5s (setStatus also clears the message after
+// 5s); statusGen parity alternates the class so the fade replays when a new error
+// arrives while one is still showing.
+func (g *game) statusBanner() app.UI {
+	cls := cx("status-banner",
+		ifCls(g.statusGen%2 == 0, "status-banner--a"),
+		ifCls(g.statusGen%2 == 1, "status-banner--b"),
+	)
+	return app.Div().Class(cls).Text(g.status)
 }
 
 // ---- board ----
@@ -224,10 +242,15 @@ func (g *game) houseStrip(player int, houses []engine.House) app.UI {
 func (g *game) aemberSeg(player int) app.UI {
 	count := app.Text(strconv.Itoa(g.g.Aember(player)))
 	ic := icon("aember", "icon-stat")
+	// A pool gain pulses the segment; the -a/-b pair alternates so it replays.
+	gain := cx(
+		ifCls(g.poolFlash[player] && !g.poolParity[player], "stat-seg--gain-a"),
+		ifCls(g.poolFlash[player] && g.poolParity[player], "stat-seg--gain-b"),
+	)
 	if !g.g.Manual() {
-		return app.Span().Class("stat-seg").Body(count, ic)
+		return app.Span().Class(cx("stat-seg", gain)).Body(count, ic)
 	}
-	return app.Span().Class("stat-seg amber-manual").Body(
+	return app.Span().Class(cx("stat-seg", "amber-manual", gain)).Body(
 		g.stepBtn(g.manualAmberDelta(player, -1), false),
 		count, ic,
 		g.stepBtn(g.manualAmberDelta(player, 1), true),
@@ -296,7 +319,11 @@ func (g *game) keysDisplay(player int) app.UI {
 	for i := len(colors); i < engine.KeysToWin; i++ {
 		slots = append(slots, g.keySlot(icon("key", "icon-stat", "key-unforged"), manual, g.manualForgeKey(player)))
 	}
-	return app.Span().Class("score-keys").Body(slots...)
+	gain := cx(
+		ifCls(g.keyFlash[player] && !g.keyParity[player], "stat-seg--gain-a"),
+		ifCls(g.keyFlash[player] && g.keyParity[player], "stat-seg--gain-b"),
+	)
+	return app.Span().Class(cx("score-keys", gain)).Body(slots...)
 }
 
 // keySlot renders a key icon as a clickable forge/unforge button in sandbox mode,
@@ -326,22 +353,28 @@ func (g *game) renderRow(label string, ids []engine.LocalID, boardKind selKind) 
 func (g *game) renderCard(id engine.LocalID, boardKind selKind) app.UI {
 	def := g.g.Def(id)
 	activate, targetable, dimmed := g.cardVisual(id, boardKind)
+	house := g.g.House(id) // effective house: a control/"belongs to house" effect may override the printed one
+	flash := g.flashes[id]
 	return &cardView{
-		ID:         id,
-		Title:      def.Name,
-		HouseCls:   houseClasses(def.House),
-		Emblem:     houseIconName(def.House),
-		TypeIcon:   typeIconName(def.Type),
-		Stat:       g.statLine(id),
-		Rules:      g.faceRules(id),
-		Kind:       string(def.Type),
-		Stunned:    g.g.Stunned(id),
-		Selected:   g.hasSel && g.sel == id,
-		Targetable: targetable,
-		Dimmed:     dimmed,
-		OnActivate: activate,
-		OnHover:    g.hoverCard,
-		OnHoverOut: g.hoverClear,
+		ID:           id,
+		Title:        def.Name,
+		HouseCls:     houseClasses(house),
+		Emblem:       houseIconName(house),
+		HouseChanged: house != def.House,
+		TypeIcon:     typeIconName(def.Type),
+		Stat:         g.statLine(id),
+		Rules:        g.faceRules(id),
+		Kind:         string(def.Type),
+		Stunned:      g.g.Stunned(id),
+		Enter:        flash.enter,
+		StunFlash:    flash.stun,
+		FlashOdd:     flash.odd,
+		Selected:     g.hasSel && g.sel == id,
+		Targetable:   targetable,
+		Dimmed:       dimmed,
+		OnActivate:   activate,
+		OnHover:      g.hoverCard,
+		OnHoverOut:   g.hoverClear,
 	}
 }
 
@@ -473,10 +506,31 @@ func (g *game) promptSourceHeader() app.UI {
 	})
 }
 
+// endTurnButton is the End turn control. Once a confirm is armed (the player could
+// still act this turn) it becomes a red "Confirm end turn" that ends on the next
+// click, mirroring pressing E/Y a second time.
+func (g *game) endTurnButton() app.UI {
+	if g.confirmEndTurn {
+		return btn("Confirm end turn", g.endTurn, "btn-danger")
+	}
+	return btn("End turn", g.endTurn, "btn-secondary")
+}
+
 // controls is the bottom of the sidebar: the contextual controls (house picker or
 // action bar) plus End turn. House selection has no End turn — a house must be
 // chosen first.
 func (g *game) controls() app.UI {
+	// A pending restart takes over the controls until confirmed or cancelled.
+	if g.confirmRestart {
+		return app.Div().Class("controls").Body(
+			app.Div().Class("btn-col").Body(
+				app.Div().Class("section-title").Text("Restart game?"),
+				app.Div().Class("hint").Text("This ends the current game and deals a new one."),
+				btn("Restart", g.restart, "btn-danger"),
+				btn("Cancel", g.cancelRestart, "btn-secondary"),
+			),
+		)
+	}
 	// A pending sandbox key forge takes over the controls until a colour is picked
 	// or cancelled; once forgingKey resets, the previous buttons return on their own.
 	if g.forgingKey >= 0 {
@@ -518,12 +572,12 @@ func (g *game) controls() app.UI {
 		return app.Div().Class("controls").Body(
 			g.manualPanel(),
 			g.actionBar(),
-			btn("End turn", g.endTurn, "btn-secondary"),
+			g.endTurnButton(),
 		)
 	}
 	return app.Div().Class("controls").Body(
 		g.actionBar(),
-		btn("End turn", g.endTurn, "btn-secondary"),
+		g.endTurnButton(),
 	)
 }
 
@@ -967,10 +1021,12 @@ func (g *game) zonesOverlay() app.UI {
 				app.Button().Class("zones-close").Text("✕").OnClick(g.closeZones),
 				app.Div().Class("over-title").Text(g.g.PlayerName(p)+"'s Zones"),
 			),
-			g.zoneRow("Deck", g.sortByHouseTypeName(g.g.Deck(p))),
-			g.zoneRow("Discard", g.g.Discard(p)),
-			g.zoneRow("Archives", g.g.Archives(p)),
-			g.zoneRow("Purge", g.g.Purge(p)),
+			app.Div().Class("zones-body").Body(
+				g.zoneRow("Deck", g.sortByHouseTypeName(g.g.Deck(p))),
+				g.zoneRow("Discard", g.g.Discard(p)),
+				g.zoneRow("Archives", g.g.Archives(p)),
+				g.zoneRow("Purge", g.g.Purge(p)),
+			),
 		),
 	)
 }
@@ -1017,24 +1073,41 @@ func btn(label string, h app.EventHandler, class string) app.UI {
 
 func (g *game) statLine(id engine.LocalID) []app.UI {
 	def := g.g.Def(id)
+	f := g.flashes[id]
 	var segs []app.UI
 	if def.Type == engine.Creature {
-		segs = append(segs, statSeg(g.g.Power(id), "power"))
+		segs = append(segs, statSeg(g.g.Power(id), "power", pulseClass(f.power, f.odd, "pow")))
 		if d := g.g.Damage(id); d > 0 {
-			segs = append(segs, statSeg(d, "damage"))
+			segs = append(segs, statSeg(d, "damage", pulseClass(f.damage, f.odd, "dmg")))
 		}
 		if a := g.g.Armor(id); a > 0 {
 			segs = append(segs, statSeg(a, "shield"))
 		}
 	}
 	if a := g.g.AmberOn(id); a > 0 {
-		segs = append(segs, statSeg(a, "aember"))
+		segs = append(segs, statSeg(a, "aember", pulseClass(f.amber, f.odd, "gain")))
 	}
 	// Stun shows as a token on the face (see cardView); exhaustion shows as an icon.
 	if g.g.Exhausted(id) {
-		segs = append(segs, icon("exhausted", "icon-stat"))
+		segs = append(segs, icon("exhausted", "icon-stat",
+			ifCls(f.exhaust && !f.odd, "icon--pulse-a"),
+			ifCls(f.exhaust && f.odd, "icon--pulse-b")))
 	}
 	return segs
+}
+
+// pulseClass returns the alternating one-shot animation class for a stat segment
+// (or "" when it is not flashing). kind selects the colour: dmg (red), pow (cyan),
+// gain (gold). The -a/-b pair alternates so the animation replays on repeats.
+func pulseClass(on, odd bool, kind string) string {
+	switch {
+	case !on:
+		return ""
+	case odd:
+		return "stat-seg--" + kind + "-b"
+	default:
+		return "stat-seg--" + kind + "-a"
+	}
 }
 
 func handStat(def *engine.CardDefinition) []app.UI {

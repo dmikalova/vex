@@ -4,7 +4,7 @@
 
 `GameState` is a flat, pointerless, comparable value (a struct of fixed-size
 arrays) so a position copies with no allocation — the load-bearing invariant
-behind cheap cloning for AI search. Because state holds no slices, maps, or
+behind cheap cloning for the search bot (ADR 0005). Because state holds no slices, maps, or
 pointers, any "a card owns a variable number of other cards" relationship has to
 be represented some other way. The first cut modelled attached upgrades as a
 fixed `[6]LocalID` array plus a count on each card. A soak/fuzz run then played a

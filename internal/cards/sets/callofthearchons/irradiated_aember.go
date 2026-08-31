@@ -19,7 +19,7 @@ var IrradiatedAember = card.New(
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
-			Cond: card.OpponentAemberAtLeast{Amount: 6},
+			Cond: card.OpponentAember{Is: card.AtLeast, Amount: 6},
 			Then: card.DealDamage{
 				Amount: 3,
 				Target: card.Target.EachEnemyCreature,

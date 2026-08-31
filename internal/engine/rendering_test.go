@@ -42,6 +42,13 @@ func TestTriggerPrefixDefault(t *testing.T) {
 	}
 }
 
+func TestEndOfTurnAbilityText(t *testing.T) {
+	got := RenderAbility(Ability{Trigger: TriggerEndOfTurn, Effect: LoseAember{Player: Opponent, Amount: 1}})
+	if want := "At the end of your turn, your opponent loses 1 Æmber."; got != want {
+		t.Errorf("end-of-turn text = %q, want %q", got, want)
+	}
+}
+
 func TestAfterYouPlayFolding(t *testing.T) {
 	// A Conditional{ItIs} folds into the natural "after you play a <shape>" wording.
 	folded := RenderAbility(Ability{Trigger: TriggerAfterCardPlayed, Effect: Conditional{Cond: ItIs{Type: Artifact}, Then: StealAember{Amount: 1}}})
@@ -54,7 +61,7 @@ func TestAfterYouPlayFolding(t *testing.T) {
 		t.Errorf("plain = %q, want %q", plain, want)
 	}
 	// A Conditional on something other than the played card's shape stays literal.
-	stateGated := RenderAbility(Ability{Trigger: TriggerAfterCardPlayed, Effect: Conditional{Cond: OpponentAemberAtLeast{Amount: 1}, Then: GainAember{Player: Controller, Amount: 1}}})
+	stateGated := RenderAbility(Ability{Trigger: TriggerAfterCardPlayed, Effect: Conditional{Cond: OpponentAember{Is: AtLeast, Amount: 1}, Then: GainAember{Player: Controller, Amount: 1}}})
 	if want := "After you play a card, if your opponent has 1 Æmber or more, gain 1 Æmber."; stateGated != want {
 		t.Errorf("state-gated = %q, want %q", stateGated, want)
 	}

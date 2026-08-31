@@ -13,6 +13,7 @@ var (
 	ErrGameOver              = errors.New("the game is already over")
 	ErrCannotFight           = errors.New("cannot use creatures to fight this turn")
 	ErrCannotPlayCreature    = errors.New("cannot play creatures")
+	ErrCannotPlayType        = errors.New("cannot play cards of this type this turn")
 	ErrCardPlayLimit         = errors.New("card-play limit reached this turn")
 	ErrCannotPayToll         = errors.New("cannot pay the toll for this action")
 	ErrMustChooseForcedHouse = errors.New("must choose the forced active house this turn")
@@ -44,11 +45,19 @@ func (g *Game) BeginTurn(player int) {
 		g.State.CannotFight[player] = true
 		g.State.CannotFightNext[player] = false
 	}
+	// A play-type bar armed on a previous turn becomes active for this player now.
+	g.State.CannotPlayTypeThis[player] = g.State.CannotPlayTypeNext[player]
+	g.State.CannotPlayTypeNext[player] = ""
 	// A forced active house armed on a previous turn takes effect for this player now.
 	g.State.ForcedHouse[player] = g.State.ForcedHouseNext[player]
 	g.State.ForcedHouseNext[player] = HouseNone
 	g.logf("--- %s begins turn %d ---", g.names[player], g.State.Turn)
-	g.forgeKey(player)
+	if g.State.SkipForgeNext[player] {
+		g.State.SkipForgeNext[player] = false
+		g.logf("%s skips their forge a key step", g.names[player])
+	} else {
+		g.forgeKey(player)
+	}
 	g.assertInvariants()
 }
 
@@ -75,6 +84,9 @@ func (g *Game) ChooseHouse(player int, house House) error {
 	g.State.ActiveHouse = house
 	g.logf("%s chooses house %s", g.names[player], house)
 	g.offerArchives(player)
+	for _, id := range g.allInPlay(player) {
+		g.triggerAbilities(id, TriggerAfterChooseHouse, 0, false)
+	}
 	return nil
 }
 
@@ -104,6 +116,9 @@ func (g *Game) playerHasHouse(player int, house House) bool {
 // armor for the new turn, and draws up to HandSize.
 func (g *Game) EndTurn(player int) {
 	for _, id := range g.allInPlay(player) {
+		g.triggerAbilities(id, TriggerEndOfTurn, 0, false)
+	}
+	for _, id := range g.allInPlay(player) {
 		core := &g.State.Cards[id]
 		core.Exhausted = false
 		core.TempHouse = HouseNone
@@ -111,8 +126,14 @@ func (g *Game) EndTurn(player int) {
 			core.ArmorRemaining = int16(g.armor(id))
 		}
 	}
+	// "Cannot be dealt damage" lasts only the turn, so clear it on every creature,
+	// including any enemy one an effect protected (Protectrix).
+	for _, id := range append(g.allInPlay(player), g.allInPlay(1-player)...) {
+		g.State.Cards[id].DamageImmune = false
+	}
 	g.State.CannotFight[player] = false
 	g.State.MayFightHouse[player] = HouseNone
+	g.State.MayUseHouse[player] = HouseNone
 	g.clearLasting(player)
 	g.drawStep(player)
 	g.logf("%s ends their turn", g.names[player])
@@ -126,7 +147,7 @@ func (g *Game) EndTurn(player int) {
 // draw kept them from taking a card they could otherwise have drawn.
 func (g *Game) drawStep(player int) {
 	chains := g.State.Chains[player]
-	target := HandSize - (chains+5)/6
+	target := HandSize + g.drawModifier(player) - (chains+5)/6
 	if target < 0 {
 		target = 0
 	}
@@ -134,11 +155,26 @@ func (g *Game) drawStep(player int) {
 	// The reduction blocked a draw only when it left the player below a full hand
 	// with cards still available to draw.
 	if chains > 0 &&
-		int(g.State.Hand[player].Count) < HandSize &&
+		int(g.State.Hand[player].Count) < HandSize+g.drawModifier(player) &&
 		g.canDraw(player) {
 		g.State.Chains[player]--
 		g.logf("%s sheds a chain (%d remaining)", g.names[player], g.State.Chains[player])
 	}
+}
+
+// drawModifier sums the end-of-turn hand-refill changes that cards in play impose
+// on player, so a full hand becomes HandSize + drawModifier (Mother, Succubus, The
+// Howling Pit).
+func (g *Game) drawModifier(player int) int {
+	total := 0
+	for owner := 0; owner < 2; owner++ {
+		for _, id := range g.allInPlay(owner) {
+			if m := g.cat.def(id).DrawModifier; m.Amount != 0 && m.affects(owner, player) {
+				total += m.Amount
+			}
+		}
+	}
+	return total
 }
 
 // CannotFightNextTurn arms a fight bar on a player for their next turn.
@@ -146,11 +182,29 @@ func (g *Game) CannotFightNextTurn(player int) {
 	g.State.CannotFightNext[player] = true
 }
 
+// CannotPlayTypeNextTurn arms a play-type bar on a player for their next turn.
+func (g *Game) CannotPlayTypeNextTurn(player int, t CardType) {
+	g.State.CannotPlayTypeNext[player] = t
+}
+
+// SkipForgeStepNextTurn makes a player skip their forge-a-key step at the start of
+// their next turn.
+func (g *Game) SkipForgeStepNextTurn(player int) {
+	g.State.SkipForgeNext[player] = true
+}
+
 // GrantFightForHouse lets a player use creatures of house h to fight this turn
 // even when h is not the active house. EndTurn clears the grant.
 func (g *Game) GrantFightForHouse(player int, h House) {
 	g.State.MayFightHouse[player] = h
 	g.logf("%s's %s creatures may fight this turn", g.names[player], h)
+}
+
+// GrantUseForHouse lets a player fully use (fight, reap, or Action:) creatures of
+// house h this turn even when h is not the active house. EndTurn clears the grant.
+func (g *Game) GrantUseForHouse(player int, h House) {
+	g.State.MayUseHouse[player] = h
+	g.logf("%s may use %s creatures this turn", g.names[player], h)
 }
 
 // ForceActiveHouseNextTurn makes a player have to choose house h as their active
@@ -161,7 +215,7 @@ func (g *Game) ForceActiveHouseNextTurn(player int, h House) {
 }
 
 // Forge a key: at the start of your turn you forge a single key if you can pay
-// its current cost — 6 Æmber by default. A player forges at most one key per turn.
+// its current cost — 6 Aember by default. A player forges at most one key per turn.
 // Keys are the win condition — forge your third key and you win the game.
 //
 //rulebook:turn Turn structure / 1. Forge a key
@@ -192,7 +246,7 @@ func (g *Game) finishForgeKey(player int) {
 	for _, id := range g.allInPlay(player) {
 		g.triggerAbilities(id, TriggerAfterForgeKey, 0, false)
 	}
-	g.fireLasting(EventForgeKey, player, 0)
+	g.emitLasting(EventForgeKey, player, 0)
 	if g.State.Keys[player] >= KeysToWin {
 		g.State.Winner = player
 		g.logf("%s wins the game!", g.names[player])

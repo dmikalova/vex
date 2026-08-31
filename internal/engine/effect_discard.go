@@ -168,31 +168,91 @@ func (e DiscardHand) Resolve(ctx *EffectContext) {
 	}
 }
 
-// DiscardRandom discards one uniformly random card from a player's hand — the
+// DiscardRandomFromHand discards one uniformly random card from a player's hand — the
 // "discard a random card" effect on cards like Mind Barb and Tocsin, where the
 // discarding player does not choose which card leaves a hidden hand.
-type DiscardRandom struct {
+type DiscardRandomFromHand struct {
 	Player Player
 }
 
-// validate rejects a DiscardRandom whose player was left unset.
-func (e DiscardRandom) validate() error {
+// validate rejects a DiscardRandomFromHand whose player was left unset.
+func (e DiscardRandomFromHand) validate() error {
 	if !e.Player.valid() {
-		return errUnsetPlayer("DiscardRandom")
+		return errUnsetPlayer("DiscardRandomFromHand")
 	}
 	return nil
 }
 
 // Text renders the effect, e.g. "your opponent discards a random card from their
 // hand".
-func (e DiscardRandom) Text() string {
-	if e.Player == Opponent {
+func (e DiscardRandomFromHand) Text() string {
+	switch e.Player {
+	case Opponent:
 		return "your opponent discards a random card from their hand"
+	case ItsOwner:
+		return "its owner discards a random card from their hand"
+	default:
+		return "discard a random card from your hand"
 	}
-	return "discard a random card from your hand"
 }
 
 // Resolve discards one random card from the chosen player's hand.
-func (e DiscardRandom) Resolve(ctx *EffectContext) {
+func (e DiscardRandomFromHand) Resolve(ctx *EffectContext) {
 	ctx.Resolver.DiscardRandomFromHand(ctx.PlayerFor(e.Player))
+}
+
+// DiscardFromHand has the controller choose and discard Count cards from their own
+// hand — the "discard a card" effect where the player picks which card leaves
+// (Sloppy Labwork), distinct from DiscardHand (which discards every matching card)
+// and DiscardRandomFromHand (which the player does not choose). CreaturesOnly limits the
+// choice to creatures (Feeding Pit's "discard a creature from your hand").
+type DiscardFromHand struct {
+	Count         int
+	CreaturesOnly bool
+}
+
+// Text renders the effect, e.g. "discard a card from your hand", naming the source
+// zone explicitly (rule 17).
+func (e DiscardFromHand) Text() string {
+	noun := "card"
+	if e.CreaturesOnly {
+		noun = "creature"
+	}
+	if e.Count == 1 {
+		return "discard a " + noun + " from your hand"
+	}
+	return fmt.Sprintf("discard %d %ss from your hand", e.Count, noun)
+}
+
+// Resolve has the controller choose and discard Count cards from their hand,
+// stopping early if the hand runs out or the choice is declined.
+func (e DiscardFromHand) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
+
+// resolveGate performs the discards and reports whether any card was discarded, so
+// DiscardFromHand can gate a Then — Feeding Pit only gains Æmber if a creature was
+// discarded.
+func (e DiscardFromHand) resolveGate(ctx *EffectContext) bool {
+	moved := false
+	for i := 0; i < e.Count; i++ {
+		candidates := ctx.Resolver.Hand(ctx.Controller)
+		if e.CreaturesOnly {
+			creatures := make([]LocalID, 0, len(candidates))
+			for _, id := range candidates {
+				if ctx.Resolver.IsCreature(id) {
+					creatures = append(creatures, id)
+				}
+			}
+			candidates = creatures
+		}
+		if len(candidates) == 0 {
+			return moved
+		}
+		id, ok := ctx.ChooseCreature("Choose a card to discard", candidates)
+		if !ok {
+			return moved
+		}
+		ctx.Resolver.DiscardCardFromHand(ctx.Controller, id)
+		moved = true
+	}
+	return moved
 }

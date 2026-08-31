@@ -78,16 +78,19 @@ func Keywords(k ...engine.Keyword) []engine.Keyword { return k }
 // Trigger groups the ability triggers, e.g. card.Trigger.Play or
 // card.Trigger.AfterForgeKey.
 var Trigger = triggers{
-	Play:                   engine.TriggerAfterPlay,
-	Reap:                   engine.TriggerAfterReap,
-	Fight:                  engine.TriggerAfterFight,
-	BeforeFight:            engine.TriggerBeforeFight,
-	Action:                 engine.TriggerAction,
-	AfterForgeKey:          engine.TriggerAfterForgeKey,
-	AfterCreatureEnters:    engine.TriggerAfterCreatureEnters,
-	Destroyed:              engine.TriggerDestroyed,
-	AfterDestroyedFighting: engine.TriggerAfterDestroyedFighting,
-	AfterCardPlayed:        engine.TriggerAfterCardPlayed,
+	Play:                        engine.TriggerAfterPlay,
+	Reap:                        engine.TriggerAfterReap,
+	Fight:                       engine.TriggerAfterFight,
+	BeforeFight:                 engine.TriggerBeforeFight,
+	Action:                      engine.TriggerAction,
+	AfterForgeKey:               engine.TriggerAfterForgeKey,
+	AfterCreatureEnters:         engine.TriggerAfterCreatureEnters,
+	Destroyed:                   engine.TriggerDestroyed,
+	AfterDestroyedFighting:      engine.TriggerAfterDestroyedFighting,
+	AfterCardPlayed:             engine.TriggerAfterCardPlayed,
+	EndOfTurn:                   engine.TriggerEndOfTurn,
+	AfterChooseHouse:            engine.TriggerAfterChooseHouse,
+	AfterEnemyCreatureDestroyed: engine.TriggerAfterEnemyCreatureDestroyed,
 }
 
 type triggers struct {
@@ -100,7 +103,10 @@ type triggers struct {
 	AfterCreatureEnters,
 	Destroyed,
 	AfterDestroyedFighting,
-	AfterCardPlayed engine.Trigger
+	AfterCardPlayed,
+	EndOfTurn,
+	AfterChooseHouse,
+	AfterEnemyCreatureDestroyed engine.Trigger
 }
 
 // Controller and Opponent are the two players an effect can target, relative to
@@ -111,4 +117,5 @@ var (
 	Controller = engine.Controller
 	Opponent   = engine.Opponent
 	EachPlayer = engine.EachPlayer
+	ItsOwner   = engine.ItsOwner
 )

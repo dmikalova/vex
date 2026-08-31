@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Mother
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Logos
 //	Type:   Creature
@@ -24,5 +19,5 @@ var Mother = card.New(
 	card.Provenance(card.CotA, 145),
 	card.WithPower(5),
 	card.WithTraits("Robot", "Scientist"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithDrawModifier(card.Controller, 1),
 )

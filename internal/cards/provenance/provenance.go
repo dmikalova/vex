@@ -5,6 +5,11 @@
 // originals, so a card's
 // provenance is an explicit, stable pointer (set + collector number) rather than
 // anything derived from its current name.
+//
+// Provenance is bookkeeping only. It exists so the author can track which original
+// KeyForge card each implementation is based on and confirm that every original is
+// eventually covered. It is never consulted by the engine or by deck generation,
+// and no card behavior, deck-generation rule, or set membership depends on it.
 package provenance
 
 import (

@@ -21,7 +21,7 @@ var TheTerror = card.New(
 	card.WithTraits("Demon", "Knight"),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
-			Cond: card.OpponentAemberExactly{Amount: 0},
+			Cond: card.OpponentAember{Is: card.Exactly, Amount: 0},
 			Then: card.GainAember{
 				Player: card.Controller,
 				Amount: 2,

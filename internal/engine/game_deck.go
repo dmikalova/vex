@@ -30,6 +30,17 @@ func (g *Game) shuffleDiscardIntoDeck(player int) {
 	g.Shuffle(player)
 }
 
+func (g *Game) shuffleHandAndDiscardIntoDeck(player int) {
+	deck, hand, discard := &g.State.Deck[player], &g.State.Hand[player], &g.State.Discard[player]
+	for hand.Count > 0 {
+		deck.add(hand.removeAt(0))
+	}
+	for discard.Count > 0 {
+		deck.add(discard.removeAt(0))
+	}
+	g.Shuffle(player)
+}
+
 // draw draws count cards into the player's hand, stopping early only when the
 // deck and discard are both exhausted.
 func (g *Game) draw(player, count int) {

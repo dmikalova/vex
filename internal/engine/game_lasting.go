@@ -5,7 +5,7 @@ package engine
 //
 //   - a REACTION runs after an event (Full Moon gains Æmber after you play a
 //     creature, Charge! deals damage after you play a creature, Crystal Hive gains
-//     Æmber after a creature reaps). Reactions are fired by fireLasting, which
+//     Æmber after a creature reaps). Reactions are fired by emitLasting, which
 //     gathers every reaction responding to an event and lets the controller order
 //     them when several fire at once.
 //   - a REPLACEMENT changes an event's own outcome before it happens (Dimension
@@ -31,6 +31,13 @@ const (
 	// EventReap fires after one of the controller's creatures reaps (a reaction
 	// point). Crystal Hive attaches here.
 	EventReap
+	// EventFight fires after one of the controller's creatures fights (a reaction
+	// point). Warsong attaches here.
+	EventFight
+	// EventEnemyCreatureDestroyed fires, for a player, each time a creature their
+	// opponent controls is destroyed (a reaction point). Loot the Bodies attaches
+	// here; it is dispatched to the opponent of the destroyed creature's controller.
+	EventEnemyCreatureDestroyed
 	// EventReapAember is the Æmber a reap grants (a replacement point). Dimension
 	// Door replaces it.
 	EventReapAember
@@ -55,7 +62,8 @@ const (
 // isReaction reports whether the event is a reaction point (fired after) rather
 // than a replacement point (queried during).
 func (e Event) isReaction() bool {
-	return e == EventCreaturePlayed || e == EventReap || e == EventForgeKey
+	return e == EventCreaturePlayed || e == EventReap || e == EventFight ||
+		e == EventEnemyCreatureDestroyed || e == EventForgeKey
 }
 
 // clause renders the "when" phrase for a reaction, e.g. "each time you play a
@@ -64,6 +72,10 @@ func (e Event) clause() string {
 	switch e {
 	case EventReap:
 		return "after a creature reaps"
+	case EventFight:
+		return "each time a friendly creature fights"
+	case EventEnemyCreatureDestroyed:
+		return "each time an enemy creature is destroyed"
 	case EventForgeKey:
 		return "after forging a key"
 	default:
@@ -86,6 +98,7 @@ const (
 	actSteal
 	actReadyPlayed
 	actGiveRemainingAember
+	actCapture
 )
 
 // describe is a short label for a reaction, used when the controller orders several
@@ -96,6 +109,8 @@ func (a lastingAction) describe() string {
 		return "deal damage"
 	case actReadyPlayed:
 		return "ready the creature"
+	case actCapture:
+		return "capture Æmber"
 	case actGiveRemainingAember:
 		return "give remaining Æmber"
 	default:
@@ -164,11 +179,11 @@ func (g *Game) clearLasting(player int) {
 	g.State.LastingCount = uint8(n)
 }
 
-// fireLasting resolves every reaction actor owns that responds to event. When
+// emitLasting resolves every reaction actor owns that responds to event. When
 // several fire at once the controller chooses the order (KeyForge lets the active
 // player order simultaneous triggers). subject is the card that caused the event —
 // the played creature — for reactions that need a source.
-func (g *Game) fireLasting(event Event, actor int, subject LocalID) {
+func (g *Game) emitLasting(event Event, actor int, subject LocalID) {
 	var pending []LastingEffect
 	for i := 0; i < int(g.State.LastingCount); i++ {
 		le := g.State.Lasting[i]
@@ -227,6 +242,14 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 	case actReadyPlayed:
 		g.State.Cards[subject].Exhausted = false
 		g.logf("%s is readied", g.Name(subject))
+	case actCapture:
+		CaptureAember{Amount: int(le.Amount), Target: Target{Kind: TargetTriggeringCreature}, Source: Opponent}.Resolve(&EffectContext{
+			Resolver:   g,
+			Source:     subject,
+			Controller: actor,
+			It:         subject,
+			HasIt:      true,
+		})
 	case actGiveRemainingAember:
 		beneficiary := 1 - actor
 		amount := g.State.Aember[actor]

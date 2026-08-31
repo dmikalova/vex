@@ -198,6 +198,56 @@ func TestLeastPowerfulTieChoice(t *testing.T) {
 	}
 }
 
+func TestMostPowerful(t *testing.T) {
+	// Text pluralizes the noun.
+	if got := (Target{Kind: TargetEachCreature}).Selector(MostPowerful(3)).Text(); got != "the 3 most powerful creatures" {
+		t.Errorf("text = %q", got)
+	}
+
+	// Fewer creatures than n keeps them all.
+	g0 := NewGame("A", "B", 1)
+	g0.AddToBattleline(testCreature("only", 3), 1)
+	ids := (Target{Kind: TargetEachEnemyCreature}).Selector(MostPowerful(3)).Select(&EffectContext{Resolver: g0, Controller: 0})
+	if len(ids) != 1 {
+		t.Errorf("MostPowerful(3) of one creature = %v, want the single creature", ids)
+	}
+
+	// A clean cutoff: the tied group exactly fills the last slot.
+	g1 := NewGame("A", "B", 1)
+	a := g1.AddToBattleline(testCreature("a", 5), 1)
+	b := g1.AddToBattleline(testCreature("b", 4), 1)
+	c := g1.AddToBattleline(testCreature("c", 3), 1)
+	g1.AddToBattleline(testCreature("d", 2), 1)
+	got := (Target{Kind: TargetEachEnemyCreature}).Selector(MostPowerful(3)).Select(&EffectContext{Resolver: g1, Controller: 0})
+	if len(got) != 3 || !containsID(got, a) || !containsID(got, b) || !containsID(got, c) {
+		t.Errorf("MostPowerful(3) = %v, want the top three [%d %d %d]", got, a, b, c)
+	}
+
+	// A tie at the cutoff: the controller chooses which tied creature to include.
+	g2 := NewGame("A", "B", 1)
+	top := g2.AddToBattleline(testCreature("top", 5), 1)
+	t1 := g2.AddToBattleline(testCreature("t1", 3), 1)
+	t2 := g2.AddToBattleline(testCreature("t2", 3), 1)
+	g2.AddToBattleline(testCreature("t3", 3), 1)
+	g2.SetChooser(0, idChooser{id: t2})
+	chosen := (Target{Kind: TargetEachEnemyCreature}).Selector(MostPowerful(2)).Select(&EffectContext{Resolver: g2, Controller: 0})
+	if len(chosen) != 2 || !containsID(chosen, top) || !containsID(chosen, t2) {
+		t.Errorf("MostPowerful(2) tie = %v, want [%d %d]; t1=%d", chosen, top, t2, t1)
+	}
+
+	// A declined tie choice falls back to the first tied creature.
+	g3 := NewGame("A", "B", 1)
+	hi := g3.AddToBattleline(testCreature("hi", 5), 1)
+	lo1 := g3.AddToBattleline(testCreature("lo1", 3), 1)
+	g3.AddToBattleline(testCreature("lo2", 3), 1)
+	g3.AddToBattleline(testCreature("lo3", 3), 1)
+	g3.SetChooser(0, orderRejectChooser{})
+	fallback := (Target{Kind: TargetEachEnemyCreature}).Selector(MostPowerful(2)).Select(&EffectContext{Resolver: g3, Controller: 0})
+	if len(fallback) != 2 || !containsID(fallback, hi) || !containsID(fallback, lo1) {
+		t.Errorf("declined tie = %v, want [%d %d]", fallback, hi, lo1)
+	}
+}
+
 func TestTargetKeyword(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	elusive := g.AddToBattleline(NewCard("elu", Brobnar, Creature, Common, WithKeywords(Elusive)), 0)

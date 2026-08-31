@@ -1,20 +1,15 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// PileOfSkulls
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Pile of Skulls
 //
 //	House:  Brobnar
 //	Type:   Artifact
 //	Rarity: Rare
 //	Traits: Location
 //
-//	Each time an enemy creature is destroyed during your turn, a friendly creature captures 1 Aember.
+//	Each time an enemy creature is destroyed during your turn, a friendly creature captures 1 Æmber from your opponent.
 var PileOfSkulls = card.New(
 	"Pile of Skulls",
 	card.House.Brobnar,
@@ -22,5 +17,10 @@ var PileOfSkulls = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 25),
 	card.WithTraits("Location"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.AfterEnemyCreatureDestroyed, card.CaptureAember{
+			Amount: 1,
+			Target: card.Target.FriendlyCreature,
+			Source: card.Opponent,
+		}),
 )

@@ -114,3 +114,105 @@ func TestSplashDamage(t *testing.T) {
 		t.Errorf("no legal target should deal no damage, got %d", g2.Damage(a))
 	}
 }
+
+func TestDealDamageIgnoreArmor(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	armored := g.AddToBattleline(testCreature("armored", 5, WithArmor(2)), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	e := DealDamage{Amount: 3, Target: Target{Kind: TargetEachEnemyCreature}, IgnoreArmor: true}
+	if e.Text() != "deal 3 damage to each enemy creature, ignoring armor" {
+		t.Errorf("text = %q", e.Text())
+	}
+	e.Resolve(ctx)
+	if g.Damage(armored) != 3 {
+		t.Errorf("damage = %d, want 3 (armor ignored)", g.Damage(armored))
+	}
+}
+
+func TestDamageDifferent(t *testing.T) {
+	t.Run("damages two different creatures", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		a := g.AddToBattleline(testCreature("a", 5), 1)
+		b := g.AddToBattleline(testCreature("b", 5), 1)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+
+		e := DamageDifferent{First: 2, Second: 2}
+		if e.Text() != "deal 2 damage to a creature and deal 2 damage to a different creature" {
+			t.Errorf("text = %q", e.Text())
+		}
+		e.Resolve(ctx)
+		if g.Damage(a) != 2 || g.Damage(b) != 2 {
+			t.Errorf("damage = %d/%d, want 2/2", g.Damage(a), g.Damage(b))
+		}
+	})
+
+	t.Run("with only one creature, damages just it", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		a := g.AddToBattleline(testCreature("a", 5), 1)
+		DamageDifferent{First: 2, Second: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if g.Damage(a) != 2 {
+			t.Errorf("damage = %d, want 2", g.Damage(a))
+		}
+	})
+
+	t.Run("with no creatures, does nothing", func(_ *testing.T) {
+		g := NewGame("A", "B", 1)
+		DamageDifferent{First: 2, Second: 2}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	})
+}
+
+func TestFlankWalkDamage(t *testing.T) {
+	t.Run("walks inward from the first flank dealing decreasing damage", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		left := g.AddToBattleline(testCreature("left", 9), 1)
+		mid := g.AddToBattleline(testCreature("mid", 9), 1)
+		right := g.AddToBattleline(testCreature("right", 9), 1)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+
+		e := FlankWalkDamage{Amounts: []int{3, 2, 1}}
+		if e.Text() != "choose a flank creature. Deal 3 damage to it, 2 damage to its neighbor, and 1 damage to the neighbor's other neighbor" {
+			t.Errorf("text = %q", e.Text())
+		}
+		e.Resolve(ctx)
+		if g.Damage(left) != 3 || g.Damage(mid) != 2 || g.Damage(right) != 1 {
+			t.Errorf("damage = %d/%d/%d, want 3/2/1", g.Damage(left), g.Damage(mid), g.Damage(right))
+		}
+	})
+
+	t.Run("walks the other direction from the far flank", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		left := g.AddToBattleline(testCreature("left", 9), 1)
+		mid := g.AddToBattleline(testCreature("mid", 9), 1)
+		right := g.AddToBattleline(testCreature("right", 9), 1)
+		g.SetChooser(0, &idQueueChooser{ids: []LocalID{right}})
+		FlankWalkDamage{Amounts: []int{3, 2, 1}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if g.Damage(right) != 3 || g.Damage(mid) != 2 || g.Damage(left) != 1 {
+			t.Errorf("damage = %d/%d/%d, want 3/2/1", g.Damage(right), g.Damage(mid), g.Damage(left))
+		}
+	})
+
+	t.Run("stops at the far flank when the line is shorter than the amounts", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		a := g.AddToBattleline(testCreature("a", 9), 1)
+		b := g.AddToBattleline(testCreature("b", 9), 1)
+		FlankWalkDamage{Amounts: []int{3, 2, 1}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if g.Damage(a) != 3 || g.Damage(b) != 2 {
+			t.Errorf("damage = %d/%d, want 3/2", g.Damage(a), g.Damage(b))
+		}
+	})
+
+	t.Run("with no flank creature, does nothing", func(_ *testing.T) {
+		g := NewGame("A", "B", 1)
+		FlankWalkDamage{Amounts: []int{3}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	})
+
+	t.Run("validate", func(t *testing.T) {
+		if (FlankWalkDamage{}).validate() == nil {
+			t.Error("empty amounts should be invalid")
+		}
+		if (FlankWalkDamage{Amounts: []int{1}}).validate() != nil {
+			t.Error("a non-empty amounts list should be valid")
+		}
+	})
+}

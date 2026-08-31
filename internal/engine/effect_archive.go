@@ -60,6 +60,29 @@ func (e ArchiveTopOfDeck) Resolve(ctx *EffectContext) {
 	}
 }
 
+// ArchiveFromDiscard moves a card the controller chooses from their discard pile
+// into their archives.
+type ArchiveFromDiscard struct{}
+
+// Text renders the effect, naming the source zone explicitly.
+func (e ArchiveFromDiscard) Text() string {
+	return "archive a card from your discard pile"
+}
+
+// Resolve has the controller choose one card from their discard pile and archive
+// it, doing nothing when the discard pile is empty or the choice is declined.
+func (e ArchiveFromDiscard) Resolve(ctx *EffectContext) {
+	discard := ctx.Resolver.Discard(ctx.Controller)
+	if len(discard) == 0 {
+		return
+	}
+	id, ok := ctx.ChooseCreature("Choose a card to archive", discard)
+	if !ok {
+		return
+	}
+	ctx.Resolver.ArchiveFromDiscard(ctx.Controller, id)
+}
+
 // ArchiveFromPlay moves each in-play card its Target selects into its owner's
 // archives, shedding damage, armor, upgrades, and other in-play state.
 type ArchiveFromPlay struct {

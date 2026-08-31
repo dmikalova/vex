@@ -20,6 +20,9 @@ const (
 	// play (Collar of Subordination's control change), rather than expiring at a
 	// turn boundary. The leave-play teardown honors it.
 	UntilThisLeavesPlay
+	// Permanent never lifts: the effect it establishes lasts for the rest of the
+	// game (Sneklifter's control of a seized artifact). It registers no teardown.
+	Permanent
 )
 
 // valid reports whether d names a real duration (not the unset zero value).

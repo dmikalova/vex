@@ -126,3 +126,64 @@ func TestHealedContextIsolatedAcrossNestedAbilities(t *testing.T) {
 		t.Errorf("gained %d Æmber, want 2 (outer Heal's count, not the nested 1)", g.Aember(0))
 	}
 }
+
+func TestHealThenDamage(t *testing.T) {
+	t.Run("heals a creature then deals the healed amount to another", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		wounded := g.AddToBattleline(testCreature("wounded", 5), 0)
+		foe := g.AddToBattleline(testCreature("foe", 5), 1)
+		g.State.Cards[wounded].Damage = 3
+		g.SetChooser(0, &idQueueChooser{ids: []LocalID{wounded, foe}})
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+
+		e := HealThenDamage{Amount: 2}
+		if e.Text() != "heal up to 2 damage from a creature. Deal that amount of damage to another creature" {
+			t.Errorf("text = %q", e.Text())
+		}
+		e.Resolve(ctx)
+		if g.Damage(wounded) != 1 {
+			t.Errorf("wounded damage = %d, want 1 (healed 2)", g.Damage(wounded))
+		}
+		if g.Damage(foe) != 2 {
+			t.Errorf("foe damage = %d, want 2", g.Damage(foe))
+		}
+	})
+
+	t.Run("heals and deals only as much as the creature's damage", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		wounded := g.AddToBattleline(testCreature("wounded", 5), 0)
+		foe := g.AddToBattleline(testCreature("foe", 5), 1)
+		g.State.Cards[wounded].Damage = 1
+		g.SetChooser(0, &idQueueChooser{ids: []LocalID{wounded, foe}})
+		HealThenDamage{Amount: 2}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if g.Damage(wounded) != 0 || g.Damage(foe) != 1 {
+			t.Errorf("damage = %d/%d, want 0/1", g.Damage(wounded), g.Damage(foe))
+		}
+	})
+
+	t.Run("healing nothing deals nothing", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		healthy := g.AddToBattleline(testCreature("healthy", 5), 0)
+		foe := g.AddToBattleline(testCreature("foe", 5), 1)
+		g.SetChooser(0, &idQueueChooser{ids: []LocalID{healthy}})
+		HealThenDamage{Amount: 2}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if g.Damage(foe) != 0 {
+			t.Errorf("foe damage = %d, want 0 (nothing healed)", g.Damage(foe))
+		}
+	})
+
+	t.Run("with no other creature to damage, only heals", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		wounded := g.AddToBattleline(testCreature("wounded", 5), 0)
+		g.State.Cards[wounded].Damage = 2
+		HealThenDamage{Amount: 2}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if g.Damage(wounded) != 0 {
+			t.Errorf("wounded damage = %d, want 0 (healed)", g.Damage(wounded))
+		}
+	})
+
+	t.Run("with no creatures, does nothing", func(_ *testing.T) {
+		g := NewGame("A", "B", 1)
+		HealThenDamage{Amount: 2}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	})
+}

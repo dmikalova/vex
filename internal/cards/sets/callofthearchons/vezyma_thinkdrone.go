@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// VezymaThinkdrone
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Vezyma Thinkdrone
 //
 //	House:  Mars
 //	Type:   Creature
@@ -24,5 +19,8 @@ var VezymaThinkdrone = card.New(
 	card.Provenance(card.CotA, 202),
 	card.WithPower(3),
 	card.WithTraits("Martian", "Scientist"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Reap, card.May{
+			Do: card.ArchiveFromPlay{Target: card.Target.FriendlyInPlay},
+		}),
 )

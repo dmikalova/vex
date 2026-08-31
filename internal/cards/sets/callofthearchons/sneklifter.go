@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Sneklifter
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Shadows
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Elf • Thief
 //
-//	Play: Take control of an enemy artifact. While under your control, if it does not belong to one of your three houses, it is considered to be of house Shadows.
+//	Play: Take control of an enemy artifact. If it does not belong to a house on your identity then it belongs to house Shadows.
 var Sneklifter = card.New(
 	"Sneklifter",
 	card.House.Shadows,
@@ -24,5 +19,12 @@ var Sneklifter = card.New(
 	card.Provenance(card.CotA, 313),
 	card.WithPower(2),
 	card.WithTraits("Elf", "Thief"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
+			card.Sentence{Effect: card.TakeControl{
+				Target:   card.Target.EnemyArtifact,
+				Duration: card.Duration.Permanent,
+			}},
+			card.BelongToHouseIfOffIdentity{House: card.House.Shadows},
+		}}),
 )

@@ -1,8 +1,8 @@
 package engine
 
-// KeyColor is the colour of a forged key. KeyForge keys are all alike, but Vactrol
-// lets a player pick a colour as they forge, so each of a player's up-to-three
-// keys is a distinct colour. KeyColorNone is the zero value (an unforged slot).
+// KeyColor is the colour of a forged key. The colours are Red, Blue, and Yellow,
+// as in KeyForge.
+// KeyColorNone is the zero value (an unforged slot).
 type KeyColor uint8
 
 // The key colours a player can forge; KeyColorNone is the unforged zero value.

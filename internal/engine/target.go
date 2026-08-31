@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 )
 
@@ -57,6 +58,9 @@ const (
 	// TargetChosenArtifact selects a single artifact the controller chooses from
 	// all artifacts in play (either player's).
 	TargetChosenArtifact
+	// TargetChosenEnemyArtifact selects a single enemy artifact the controller
+	// chooses (Sneklifter seizes one).
+	TargetChosenEnemyArtifact
 	// TargetTheOtherCreature selects the creature in context (ctx.It) — the one a
 	// preceding effect chose as "another" creature — and renders it as "the other
 	// creature". Transposition Sandals swaps with another creature, then uses the
@@ -65,6 +69,9 @@ const (
 	// TargetChosenInPlay selects a single creature or artifact the controller
 	// chooses from all in play (either player's), rendered "a creature or artifact".
 	TargetChosenInPlay
+	// TargetChosenFriendlyInPlay selects a single friendly creature or artifact the
+	// controller chooses, rendered "a friendly creature or artifact".
+	TargetChosenFriendlyInPlay
 )
 
 // Target describes which cards an effect applies to. Kind picks the base set;
@@ -94,6 +101,9 @@ type Target struct {
 	onFlank         bool
 	notOnFlank      bool
 	neighboring     bool
+	// withNeighbors expands a single chosen creature to include its battleline
+	// neighbors (Tremor stuns a creature and each of its neighbors).
+	withNeighbors bool
 	// other excludes the source card from the selected set ("other" cards).
 	other bool
 	// selector is a set-relative refinement applied after the per-card filters. It
@@ -232,6 +242,14 @@ func (t Target) Neighboring() Target {
 	return t
 }
 
+// AndNeighbors expands a single chosen creature to also include its battleline
+// neighbors, so an effect applies to the chosen creature and each of its
+// neighbors (Tremor). It is meaningful only on a chosen-creature target.
+func (t Target) AndNeighbors() Target {
+	t.withNeighbors = true
+	return t
+}
+
 // Other excludes the source card from the selected set, rendering the "other"
 // qualifier ("each other friendly card").
 func (t Target) Other() Target {
@@ -268,13 +286,13 @@ func (t Target) Text() string {
 		return "the other creature"
 	}
 	noun := "creature"
-	if t.Kind == TargetEachArtifact || t.Kind == TargetChosenArtifact {
+	if t.Kind == TargetEachArtifact || t.Kind == TargetChosenArtifact || t.Kind == TargetChosenEnemyArtifact {
 		noun = "artifact"
 	}
 	if t.Kind == TargetEachFriendlyInPlay {
 		noun = "card"
 	}
-	if t.Kind == TargetChosenInPlay {
+	if t.Kind == TargetChosenInPlay || t.Kind == TargetChosenFriendlyInPlay {
 		noun = "creature or artifact"
 	}
 	if t.exceptHouse != HouseNone {
@@ -331,12 +349,14 @@ func (t Target) Text() string {
 		phrase = "each other friendly " + noun
 	case TargetChosenEnemyCreature:
 		phrase = "an enemy " + noun
-	case TargetChosenFriendlyCreature:
+	case TargetChosenFriendlyCreature, TargetChosenFriendlyInPlay:
 		phrase = "a friendly " + noun
 	case TargetChosenOtherFriendlyCreature:
 		phrase = "another friendly " + noun
 	case TargetChosenArtifact:
 		phrase = "an " + noun
+	case TargetChosenEnemyArtifact:
+		phrase = "an enemy " + noun
 	default:
 		phrase = "a " + noun
 	}
@@ -364,6 +384,9 @@ func (t Target) Text() string {
 	if t.selector != nil {
 		phrase = t.selector.clause(phrase)
 	}
+	if t.withNeighbors {
+		phrase += " and each of its neighbors"
+	}
 	return phrase
 }
 
@@ -384,6 +407,9 @@ func (t Target) Select(ctx *EffectContext) []LocalID {
 	id, ok := ctx.ChooseCreature("Choose "+t.Text(), ids)
 	if !ok {
 		return nil
+	}
+	if t.withNeighbors {
+		return append([]LocalID{id}, neighbors(ctx, id)...)
 	}
 	return []LocalID{id}
 }
@@ -540,11 +566,67 @@ func (leastPowerful) refine(ctx *EffectContext, ids []LocalID) []LocalID {
 	return []LocalID{pick}
 }
 
+// MostPowerful returns a Selector that keeps the n most powerful creatures of a
+// set, e.g. card.Target.EachCreature.Selector(card.MostPowerful(3)) (Three Fates).
+// When more creatures tie at the cutoff than there are remaining slots, the
+// controller chooses which of the tied creatures to include.
+func MostPowerful(n int) Selector { return mostPowerfulN{n: n} }
+
+// mostPowerfulN implements the MostPowerful selector.
+type mostPowerfulN struct{ n int }
+
+// clause renders "the N most powerful <noun>s", e.g. "the 3 most powerful creatures".
+func (m mostPowerfulN) clause(phrase string) string {
+	return fmt.Sprintf("the %d most powerful %ss", m.n, strings.TrimPrefix(phrase, "each "))
+}
+
+// refine keeps the n highest-power creatures, letting the controller break ties
+// at the cutoff. A set no larger than n keeps all of it.
+func (m mostPowerfulN) refine(ctx *EffectContext, ids []LocalID) []LocalID {
+	if len(ids) <= m.n {
+		return ids
+	}
+	sorted := append([]LocalID(nil), ids...)
+	sort.SliceStable(sorted, func(i, j int) bool {
+		return ctx.Resolver.Power(sorted[i]) > ctx.Resolver.Power(sorted[j])
+	})
+	threshold := ctx.Resolver.Power(sorted[m.n-1])
+	chosen := make([]LocalID, 0, m.n)
+	tied := make([]LocalID, 0)
+	for _, id := range sorted {
+		switch p := ctx.Resolver.Power(id); {
+		case p > threshold:
+			chosen = append(chosen, id)
+		case p == threshold:
+			tied = append(tied, id)
+		}
+	}
+	for slots := m.n - len(chosen); slots > 0 && len(tied) > 0; slots-- {
+		if len(tied) == slots {
+			chosen = append(chosen, tied...)
+			break
+		}
+		pick := tied[0]
+		if c, ok := ctx.ChooseCreature("Choose one of the most powerful creatures", tied); ok {
+			pick = c
+		}
+		chosen = append(chosen, pick)
+		for i, id := range tied {
+			if id == pick {
+				tied = append(tied[:i], tied[i+1:]...)
+				break
+			}
+		}
+	}
+	return chosen
+}
+
 // isChosen reports whether the Kind resolves to a single player-chosen creature.
 func (t Target) isChosen() bool {
 	return t.Kind == TargetChosenCreature || t.Kind == TargetChosenEnemyCreature ||
 		t.Kind == TargetChosenFriendlyCreature || t.Kind == TargetChosenOtherFriendlyCreature ||
-		t.Kind == TargetChosenArtifact || t.Kind == TargetChosenInPlay
+		t.Kind == TargetChosenArtifact || t.Kind == TargetChosenEnemyArtifact || t.Kind == TargetChosenInPlay ||
+		t.Kind == TargetChosenFriendlyInPlay
 }
 
 // filter narrows ids to those matching the target's trait, power, damaged, and
@@ -674,6 +756,21 @@ func neighbors(ctx *EffectContext, id LocalID) []LocalID {
 	return out
 }
 
+// creaturesExcept returns every creature in play except one, walking both
+// players' battlelines in order. It backs effects that target "a different
+// creature" or "another creature" than one already chosen.
+func creaturesExcept(ctx *EffectContext, exclude LocalID) []LocalID {
+	var out []LocalID
+	for p := 0; p < 2; p++ {
+		for _, id := range ctx.Resolver.Battleline(p) {
+			if id != exclude {
+				out = append(out, id)
+			}
+		}
+	}
+	return out
+}
+
 func battlelineContaining(ctx *EffectContext, id LocalID) []LocalID {
 	for p := 0; p < 2; p++ {
 		bl := ctx.Resolver.Battleline(p)
@@ -699,13 +796,15 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 		return nil
 	case TargetEachArtifact, TargetChosenArtifact:
 		return append(ctx.Resolver.Artifacts(ctx.Controller), ctx.Resolver.Artifacts(ctx.Opponent())...)
+	case TargetChosenEnemyArtifact:
+		return ctx.Resolver.Artifacts(ctx.Opponent())
 	case TargetEachInPlay, TargetChosenInPlay:
 		ids := ctx.Resolver.Battleline(ctx.Controller)
 		ids = append(ids, ctx.Resolver.Battleline(ctx.Opponent())...)
 		ids = append(ids, ctx.Resolver.Artifacts(ctx.Controller)...)
 		ids = append(ids, ctx.Resolver.Artifacts(ctx.Opponent())...)
 		return ids
-	case TargetEachFriendlyInPlay:
+	case TargetEachFriendlyInPlay, TargetChosenFriendlyInPlay:
 		return append(ctx.Resolver.Battleline(ctx.Controller), ctx.Resolver.Artifacts(ctx.Controller)...)
 	case TargetEachCreature, TargetChosenCreature:
 		return append(ctx.Resolver.Battleline(ctx.Controller), ctx.Resolver.Battleline(ctx.Opponent())...)

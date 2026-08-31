@@ -81,6 +81,19 @@ func (orderRejectChooser) ChooseCreature(_, _ string, _ []LocalID) (LocalID, boo
 	return 0, false
 }
 
+// idQueueChooser pops the next scripted id for each choice, falling back to the
+// first candidate once the queue empties.
+type idQueueChooser struct{ ids []LocalID }
+
+func (c *idQueueChooser) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) {
+	if len(c.ids) > 0 {
+		id := c.ids[0]
+		c.ids = c.ids[1:]
+		return id, true
+	}
+	return cands[0], true
+}
+
 // orderAllChooser implements Orderer, arranging ids in a single call (reversing
 // them) instead of being asked to pick the next id repeatedly.
 type orderAllChooser struct{}

@@ -7,7 +7,7 @@ func TestConditionalEffect(t *testing.T) {
 	src := g.AddToBattleline(testCreature("src", 1), 0)
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
-	atLeast := Conditional{Cond: OpponentAemberAtLeast{Amount: 7}, Then: LoseAember{Player: Opponent, Amount: 4}}
+	atLeast := Conditional{Cond: OpponentAember{Is: AtLeast, Amount: 7}, Then: LoseAember{Player: Opponent, Amount: 4}}
 	if atLeast.Text() != "if your opponent has 7 Æmber or more, your opponent loses 4 Æmber" {
 		t.Errorf("at-least text = %q", atLeast.Text())
 	}
@@ -22,7 +22,7 @@ func TestConditionalEffect(t *testing.T) {
 		t.Errorf("met condition should apply; opp = %d, want 4", g.State.Aember[1])
 	}
 
-	exact := Conditional{Cond: OpponentAemberExactly{Amount: 1}, Then: StealAember{Amount: 1}}
+	exact := Conditional{Cond: OpponentAember{Is: Exactly, Amount: 1}, Then: StealAember{Amount: 1}}
 	if exact.Text() != "if your opponent has exactly 1 Æmber, steal 1 Æmber" {
 		t.Errorf("exact text = %q", exact.Text())
 	}
@@ -85,7 +85,7 @@ func TestRepeatWhile(t *testing.T) {
 	g.State.Aember[0], g.State.Aember[1] = 0, 5 // opponent leads
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := RepeatWhile{Cond: OpponentAemberMoreThanYou{}, Do: StealAember{Amount: 1}}
+	e := RepeatWhile{Cond: OpponentAember{Is: MoreThanYou}, Do: StealAember{Amount: 1}}
 	if e.Text() != "if your opponent has more Æmber than you, steal 1 Æmber -> repeat this effect" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -108,8 +108,23 @@ func TestRepeatWhile(t *testing.T) {
 	}
 }
 
+func TestRepeatWhileStopsWhenActionPrevented(t *testing.T) {
+	// The opponent leads on Æmber but their pool is protected, so the steal moves
+	// nothing. The condition stays true forever, so the loop must stop on the
+	// action making no progress rather than spin.
+	g := NewGame("A", "B", 1)
+	g.State.Aember[0], g.State.Aember[1] = 0, 5
+	g.AddToBattleline(NewCard("keeper", Sanctum, Creature, Rare, WithPower(4), WithAemberTheftImmunity()), 1)
+
+	e := RepeatWhile{Cond: OpponentAember{Is: MoreThanYou}, Do: StealAember{Amount: 1}}
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if g.Aember(0) != 0 || g.Aember(1) != 5 {
+		t.Errorf("protected pool: you=%d opp=%d, want 0/5 (nothing stolen)", g.Aember(0), g.Aember(1))
+	}
+}
+
 func TestMayRepeat(t *testing.T) {
-	e := MayRepeat{Cond: OpponentAemberMoreThanYou{}, Do: StealAember{Amount: 1}}
+	e := MayRepeat{Cond: OpponentAember{Is: MoreThanYou}, Do: StealAember{Amount: 1}}
 	if got := e.Text(); got != "steal 1 Æmber -> if your opponent has more Æmber than you, you may repeat this effect" {
 		t.Errorf("text = %q", got)
 	}
@@ -169,5 +184,114 @@ func TestItIs(t *testing.T) {
 	}
 	if (ItIs{Type: Artifact}).Met(ctx) {
 		t.Error("a creature should not match an artifact filter")
+	}
+}
+
+func TestChoseHouse(t *testing.T) {
+	if got := (ChoseHouse{House: Sanctum}).CondText(); got != "you choose Sanctum as your active house" {
+		t.Errorf("cond text = %q", got)
+	}
+
+	g := started(t) // active house Brobnar
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	if (ChoseHouse{House: Sanctum}).Met(ctx) {
+		t.Error("Sanctum should not be met while Brobnar is active")
+	}
+	if !(ChoseHouse{House: Brobnar}).Met(ctx) {
+		t.Error("Brobnar should be met while Brobnar is active")
+	}
+}
+
+func TestAfterChooseHouseTrigger(t *testing.T) {
+	def := NewCard("Bureaucrat", Sanctum, Creature, Rare, WithPower(3),
+		WithAbility(TriggerAfterChooseHouse, Conditional{
+			Cond: ChoseHouse{House: Sanctum},
+			Then: GainAember{Player: Controller, Amount: 2},
+		}))
+
+	t.Run("gains when the watched house is chosen", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.BeginTurn(0)
+		g.AddToBattleline(def, 0)
+		if err := g.ChooseHouse(0, Sanctum); err != nil {
+			t.Fatalf("ChooseHouse: %v", err)
+		}
+		if g.Aember(0) != 2 {
+			t.Errorf("aember = %d, want 2", g.Aember(0))
+		}
+	})
+
+	t.Run("does nothing when a different house is chosen", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.BeginTurn(0)
+		g.AddToBattleline(def, 0)
+		if err := g.ChooseHouse(0, Logos); err != nil {
+			t.Fatalf("ChooseHouse: %v", err)
+		}
+		if g.Aember(0) != 0 {
+			t.Errorf("aember = %d, want 0", g.Aember(0))
+		}
+	})
+}
+
+func TestAfterChooseHouseRendering(t *testing.T) {
+	a := Ability{Trigger: TriggerAfterChooseHouse, Effect: Conditional{
+		Cond: ChoseHouse{House: Sanctum},
+		Then: GainAember{Player: Controller, Amount: 2},
+	}}
+	if got := RenderAbility(a); got != "After you choose Sanctum as your active house, gain 2 Æmber." {
+		t.Errorf("render = %q", got)
+	}
+
+	// Effect shapes that are not a Conditional{ChoseHouse} do not fold.
+	if _, ok := afterChooseHouseText(GainAember{Player: Controller, Amount: 1}); ok {
+		t.Error("a non-conditional effect should not fold")
+	}
+	if _, ok := afterChooseHouseText(Conditional{Cond: ControlsMoreCreatures{}, Then: GainAember{Player: Controller, Amount: 1}}); ok {
+		t.Error("a conditional without ChoseHouse should not fold")
+	}
+}
+
+func TestOpponentAember(t *testing.T) {
+	if (OpponentAember{}).validate() == nil {
+		t.Error("an unset comparison should be invalid")
+	}
+	for _, is := range []AemberComparison{AtLeast, Exactly, MoreThanYou} {
+		if (OpponentAember{Is: is}).validate() != nil {
+			t.Errorf("comparison %d should validate", is)
+		}
+	}
+
+	if got := (OpponentAember{Is: AtLeast, Amount: 7}).CondText(); got != "if your opponent has 7 Æmber or more" {
+		t.Errorf("at-least text = %q", got)
+	}
+	if got := (OpponentAember{Is: Exactly, Amount: 1}).CondText(); got != "if your opponent has exactly 1 Æmber" {
+		t.Errorf("exact text = %q", got)
+	}
+	if got := (OpponentAember{Is: MoreThanYou}).CondText(); got != "if your opponent has more Æmber than you" {
+		t.Errorf("more-than-you text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	g.State.Aember[0] = 2 // controller
+	g.State.Aember[1] = 3 // opponent
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	if !(OpponentAember{Is: AtLeast, Amount: 3}).Met(ctx) || (OpponentAember{Is: AtLeast, Amount: 4}).Met(ctx) {
+		t.Error("AtLeast comparison wrong")
+	}
+	if !(OpponentAember{Is: Exactly, Amount: 3}).Met(ctx) || (OpponentAember{Is: Exactly, Amount: 2}).Met(ctx) {
+		t.Error("Exactly comparison wrong")
+	}
+	if !(OpponentAember{Is: MoreThanYou}).Met(ctx) {
+		t.Error("MoreThanYou should hold when 3 > 2")
+	}
+	g.State.Aember[0] = 3
+	if (OpponentAember{Is: MoreThanYou}).Met(ctx) {
+		t.Error("MoreThanYou should not hold when 3 == 3")
+	}
+
+	// Conditional surfaces an unset condition at validation time.
+	if (Conditional{Cond: OpponentAember{}, Then: GainAember{Player: Controller, Amount: 1}}).validate() == nil {
+		t.Error("Conditional should surface an invalid condition")
 	}
 }

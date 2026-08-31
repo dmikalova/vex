@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ScreamingCave
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Screaming Cave
 //
 //	House:  Dis
 //	Type:   Artifact
@@ -22,5 +17,5 @@ var ScreamingCave = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 79),
 	card.WithTraits("Location"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.Action, card.ShuffleHandAndDiscard{}),
 )

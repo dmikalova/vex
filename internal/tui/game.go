@@ -936,9 +936,9 @@ func (m gameModel) scoreLine(player int, tag string) string {
 
 // renderCardLine colors a card row by house — green for the turn's active
 // house, blue for every other — and reverses the selected row so it stands out.
-func (m gameModel) renderCardLine(def *engine.CardDefinition, sel bool, line string) string {
+func (m gameModel) renderCardLine(house engine.House, sel bool, line string) string {
 	st := otherHouseStyle
-	if h := m.g.State.ActiveHouse; h != engine.HouseNone && def.House == h {
+	if h := m.g.State.ActiveHouse; h != engine.HouseNone && house == h {
 		st = activeHouseStyle
 	}
 	if sel {
@@ -1001,8 +1001,13 @@ func (m gameModel) renderCreatures(player int, selID engine.LocalID, hasSel bool
 			kw = " [" + strings.Join(parts, ", ") + "]"
 		}
 		sel := hasSel && id == selID
-		line := fmt.Sprintf("%s%-*s %-7s %d power (%s%s%s)%s", cursor(sel), w, def.Name, def.House.String(), m.g.Power(id), state, dmg, amber, kw)
-		line = m.renderCardLine(def, sel, line)
+		house := m.g.House(id)
+		hs := house.String()
+		if house != def.House { // not its natural house: mark the change
+			hs += "*"
+		}
+		line := fmt.Sprintf("%s%-*s %-8s %d power (%s%s%s)%s", cursor(sel), w, def.Name, hs, m.g.Power(id), state, dmg, amber, kw)
+		line = m.renderCardLine(house, sel, line)
 		b.WriteString(line + "\n")
 		for _, up := range m.g.Upgrades(id) {
 			upLine := "      \u21b3 " + m.g.Def(up).Name + " (upgrade)"
@@ -1028,8 +1033,13 @@ func (m gameModel) renderArtifacts(player int, selID engine.LocalID, hasSel bool
 		}
 		sel := hasSel && id == selID
 		def := m.g.Def(id)
-		line := fmt.Sprintf("%s%-*s %-7s artifact (%s)", cursor(sel), w, def.Name, def.House.String(), state)
-		line = m.renderCardLine(def, sel, line)
+		house := m.g.House(id)
+		hs := house.String()
+		if house != def.House { // not its natural house: mark the change
+			hs += "*"
+		}
+		line := fmt.Sprintf("%s%-*s %-8s artifact (%s)", cursor(sel), w, def.Name, hs, state)
+		line = m.renderCardLine(house, sel, line)
 		b.WriteString(line + "\n")
 	}
 	return b.String()
@@ -1046,7 +1056,7 @@ func (m gameModel) renderHand(selHandIdx int) string {
 		def := m.g.Def(sl.id)
 		sel := sl.handIdx == selHandIdx
 		line := fmt.Sprintf("%s%-*s %-7s · %s", cursor(sel), w, def.Name, def.House.String(), def.Type)
-		line = m.renderCardLine(def, sel, line)
+		line = m.renderCardLine(def.House, sel, line)
 		b.WriteString(line + "\n")
 	}
 	return b.String()

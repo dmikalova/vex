@@ -55,6 +55,12 @@ func errUnsetDuration(effect string) error {
 	return fmt.Errorf("%s: duration must be set", effect)
 }
 
+// errUnsetCardType is the configuration error a card-type-taking effect returns
+// when its Type was left as the invalid zero value.
+func errUnsetCardType(effect string) error {
+	return fmt.Errorf("%s: card type must be set", effect)
+}
+
 // EffectContext carries the state an effect needs while resolving. It exposes the
 // game only through a Resolver, so an effect can inspect and change the game only
 // via that interface — never by reaching into the state directly. Cards are
@@ -116,6 +122,8 @@ func (ctx *EffectContext) PlayerFor(p Player) int {
 		return ctx.Opponent()
 	case Controller, EachPlayer:
 		return ctx.Controller
+	case ItsOwner:
+		return ctx.Resolver.Owner(ctx.It)
 	default:
 		panic("engine: effect has no player set (playerUnset)")
 	}
@@ -167,6 +175,10 @@ const (
 	// everyone at once (e.g. a KeyCostChange on "each player's keys"); the
 	// single-target effects use only Controller and Opponent.
 	EachPlayer
+	// ItsOwner is the owner of the creature currently in context (ctx.It) — the
+	// "its owner" referent, for an effect that acts on the owner of a creature a
+	// preceding clause touched (Gongoozle's damaged creature).
+	ItsOwner
 )
 
 // valid reports whether p names a real player (not the unset zero value).

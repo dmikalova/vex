@@ -1,20 +1,15 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// SloppyLabwork
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Sloppy Labwork
 //
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Archive a card. Discard a card.
+//	Play: Archive a card from your hand. Discard a card from your hand.
 var SloppyLabwork = card.New(
 	"Sloppy Labwork",
 	card.House.Logos,
@@ -22,5 +17,10 @@ var SloppyLabwork = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 123),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.Play, card.Sequence{
+		Effects: []card.Effect{
+			card.Sentence{Effect: card.ArchiveFromHand{Count: 1}},
+			card.Sentence{Effect: card.DiscardFromHand{Count: 1}},
+		},
+	}),
 )

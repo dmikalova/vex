@@ -25,22 +25,69 @@ type Resolver interface {
 
 // StateReader is the read-only view an effect inspects: pools, card stats and
 // status, zone contents, and the turn's house and play counts. None of its
-// methods change the game.
+// methods change the game. It is the read model, composed from the same domain
+// axes as the mutating roles below (economy, per-card creature state, zones,
+// turn), so a consumer or test double can depend on just the reads it needs.
 type StateReader interface {
-	// Aember returns a player's Æmber pool.
-	Aember(player int) int
-	// AmberOn returns the Æmber sitting on a card (from capture, exalt, ...).
-	AmberOn(id LocalID) int
-	// Damage returns the damage currently on a creature.
-	Damage(id LocalID) int
-	// Power returns a creature's current power (including upgrades).
-	Power(id LocalID) int
-	// Name returns a card's printed name.
-	Name(id LocalID) string
+	EconomyReader
+	CreatureReader
+	ZoneReader
+	TurnReader
 	// PlayerName returns a player's display name.
 	PlayerName(player int) string
+	// PlayerHasHouse reports whether house is one of the player's identity houses.
+	PlayerHasHouse(player int, house House) bool
+}
+
+// EconomyReader reads the scoring economy: Æmber pools and forged keys. It mirrors
+// EconomyResolver.
+type EconomyReader interface {
+	// Aember returns a player's Æmber pool.
+	Aember(player int) int
+	// AemberProtected reports whether a card the player controls makes their Æmber
+	// immune to being stolen (The Vaultkeeper).
+	AemberProtected(player int) bool
+	// Keys returns the number of keys a player has forged.
+	Keys(player int) int
+}
+
+// CreatureReader reads the in-play state carried on a single card — its stats,
+// status, Æmber, house, owner, type, and traits. It mirrors CreatureResolver.
+type CreatureReader interface {
+	// Name returns a card's printed name.
+	Name(id LocalID) string
 	// Owner returns the player who owns a card.
 	Owner(id LocalID) int
+	// Power returns a creature's current power (including upgrades).
+	Power(id LocalID) int
+	// Damage returns the damage currently on a creature.
+	Damage(id LocalID) int
+	// AmberOn returns the Æmber sitting on a card (from capture, exalt, ...).
+	AmberOn(id LocalID) int
+	// Exhausted reports whether a creature is exhausted.
+	Exhausted(id LocalID) bool
+	// Stunned reports whether a creature is stunned.
+	Stunned(id LocalID) bool
+	// TimesUsedThisTurn reports how many times a creature has been used this turn.
+	TimesUsedThisTurn(id LocalID) int
+	// IsCreature reports whether a card is a creature.
+	IsCreature(id LocalID) bool
+	// TypeOf returns a card's type.
+	TypeOf(id LocalID) CardType
+	// HasTrait reports whether a card has a trait.
+	HasTrait(id LocalID, trait Trait) bool
+	// SharesTrait reports whether two cards share at least one trait.
+	SharesTrait(a, b LocalID) bool
+	// HasKeyword reports whether a creature has a keyword (printed or granted).
+	HasKeyword(id LocalID, k Keyword) bool
+	// HasAction reports whether a card has an "Action:" ability.
+	HasAction(id LocalID) bool
+	// House returns a card's house.
+	House(id LocalID) House
+}
+
+// ZoneReader reads the contents of a player's zones. It mirrors ZoneResolver.
+type ZoneReader interface {
 	// Battleline returns a copy of a player's creatures, safe to hold across
 	// mutations.
 	Battleline(player int) []LocalID
@@ -56,33 +103,18 @@ type StateReader interface {
 	Archives(player int) []LocalID
 	// Purge returns a copy of a player's purged cards.
 	Purge(player int) []LocalID
-	// IsCreature reports whether a card is a creature.
-	IsCreature(id LocalID) bool
-	// TypeOf returns a card's type.
-	TypeOf(id LocalID) CardType
-	// HasTrait reports whether a card has a trait.
-	HasTrait(id LocalID, trait Trait) bool
-	// HasKeyword reports whether a creature has a keyword (printed or granted).
-	HasKeyword(id LocalID, k Keyword) bool
-	// House returns a card's house.
-	House(id LocalID) House
-	// ActiveHouse returns the house chosen for the current turn.
-	ActiveHouse() House
-	// Keys returns the number of keys a player has forged.
-	Keys(player int) int
-	// CardsPlayedOfHouseThisTurn returns the house-specific play count for this turn.
-	CardsPlayedOfHouseThisTurn(player int, house House) int
 	// TopOfDeck returns the top card of a player's deck without moving it,
 	// reporting whether the deck holds a card.
 	TopOfDeck(player int) (LocalID, bool)
-	// HasAction reports whether a card has an "Action:" ability.
-	HasAction(id LocalID) bool
-	// Exhausted reports whether a creature is exhausted.
-	Exhausted(id LocalID) bool
-	// Stunned reports whether a creature is stunned.
-	Stunned(id LocalID) bool
-	// TimesUsedThisTurn reports how many times a creature has been used this turn.
-	TimesUsedThisTurn(id LocalID) int
+}
+
+// TurnReader reads turn-scoped state: the active house and per-house play counts.
+// It mirrors TurnResolver.
+type TurnReader interface {
+	// ActiveHouse returns the house chosen for the current turn.
+	ActiveHouse() House
+	// CardsPlayedOfHouseThisTurn returns the house-specific play count for this turn.
+	CardsPlayedOfHouseThisTurn(player int, house House) int
 }
 
 // EconomyResolver changes the scoring economy: Æmber pools, forged keys, and
@@ -109,6 +141,8 @@ type CreatureResolver interface {
 	SetDamage(id LocalID, amount int)
 	// SetStunned sets a creature's stun status.
 	SetStunned(id LocalID, stunned bool)
+	// PreventDamage marks a creature immune to damage for the remainder of the turn.
+	PreventDamage(id LocalID)
 	// SetExhausted sets a creature's exhausted status.
 	SetExhausted(id LocalID, exhausted bool)
 	// AddAmberOn changes the Æmber sitting on a card.
@@ -125,6 +159,9 @@ type CreatureResolver interface {
 	// ownership; when it later leaves play it still goes to its owner's zone. source
 	// is the card whose lasting effect holds the control (reverted when it leaves play).
 	TakeControl(id LocalID, controller int, source LocalID)
+	// TakeControlOfArtifact moves an artifact into controller's artifact row for
+	// good, without changing ownership. There is no reverting source.
+	TakeControlOfArtifact(id LocalID, controller int)
 	// SwapBattlelinePositions exchanges two creatures' positions in the same
 	// battleline without moving any state between the creatures.
 	SwapBattlelinePositions(a, b LocalID)
@@ -174,6 +211,8 @@ type ZoneResolver interface {
 	PutIntoDeckShuffled(id LocalID)
 	// ArchiveFromHand moves a card from its owner's hand to their archives.
 	ArchiveFromHand(id LocalID)
+	// ArchiveFromDiscard moves a card from a player's discard pile to their archives.
+	ArchiveFromDiscard(owner int, id LocalID)
 	// ArchiveTopOfDeck moves the top card of a player's deck to their archives,
 	// reporting whether a card was available.
 	ArchiveTopOfDeck(player int) bool
@@ -193,6 +232,9 @@ type ZoneResolver interface {
 	// PurgeFromPlay moves a card from play to its owner's purge pile (set aside out
 	// of the game).
 	PurgeFromPlay(id LocalID)
+	// PutIntoPlay puts a card into play under controller's control without playing
+	// it — no bonus icons and no Play: abilities resolve.
+	PutIntoPlay(id LocalID, controller int)
 	// PutFromDiscardIntoHand moves a card from its owner's discard to their hand.
 	PutFromDiscardIntoHand(id LocalID)
 	// MoveFromDeckToHand moves a card from its owner's deck to their hand.
@@ -203,6 +245,9 @@ type ZoneResolver interface {
 	// ShuffleDiscardIntoDeck moves a player's whole discard pile into their deck
 	// and shuffles it.
 	ShuffleDiscardIntoDeck(player int)
+	// ShuffleHandAndDiscardIntoDeck moves a player's whole hand and discard pile into
+	// their deck and shuffles it.
+	ShuffleHandAndDiscardIntoDeck(player int)
 	// MoveFromDiscardToTopOfDeck moves a card from its owner's discard to the top
 	// of their deck.
 	MoveFromDiscardToTopOfDeck(id LocalID)
@@ -221,9 +266,18 @@ type TurnResolver interface {
 	// CannotFightNextTurn bars a player from using creatures to fight throughout
 	// their next turn.
 	CannotFightNextTurn(player int)
+	// CannotPlayTypeNextTurn bars a player from playing cards of the given type
+	// throughout their next turn (Lifeward, Scrambler Storm).
+	CannotPlayTypeNextTurn(player int, t CardType)
+	// SkipForgeStepNextTurn makes a player skip their "forge a key" step at the start
+	// of their next turn (Miasma).
+	SkipForgeStepNextTurn(player int)
 	// GrantFightForHouse lets a player use creatures of the given house to fight
 	// this turn even out of the active house.
 	GrantFightForHouse(player int, house House)
+	// GrantUseForHouse lets a player fully use (fight, reap, or Action:) creatures of
+	// the given house this turn even out of the active house.
+	GrantUseForHouse(player int, house House)
 	// AddLasting registers a "for the remainder of the turn" effect (Full Moon,
 	// Charge!, Crystal Hive reactions; Dimension Door's replacement) on a game event,
 	// instead of the effect hardcoding itself into the play or reap path.
@@ -272,6 +326,17 @@ func (g *Game) Owner(id LocalID) int { return g.owner(id) }
 // HasTrait reports whether a card has a trait.
 func (g *Game) HasTrait(id LocalID, trait Trait) bool { return g.cat.def(id).hasTrait(trait) }
 
+// SharesTrait reports whether two cards have at least one trait in common.
+func (g *Game) SharesTrait(a, b LocalID) bool {
+	other := g.cat.def(b)
+	for _, tr := range g.cat.def(a).Traits {
+		if other.hasTrait(tr) {
+			return true
+		}
+	}
+	return false
+}
+
 // HasKeyword reports whether a creature has a keyword, printed or granted.
 func (g *Game) HasKeyword(id LocalID, k Keyword) bool { return g.hasKeyword(id, k) }
 
@@ -305,6 +370,9 @@ func (g *Game) SetDamage(id LocalID, amount int) {
 
 // SetStunned sets a creature's stun status.
 func (g *Game) SetStunned(id LocalID, stunned bool) { g.State.Cards[id].Stunned = stunned }
+
+// PreventDamage marks a creature immune to damage for the remainder of the turn.
+func (g *Game) PreventDamage(id LocalID) { g.State.Cards[id].DamageImmune = true }
 
 // SetExhausted sets a creature's exhausted status.
 func (g *Game) SetExhausted(id LocalID, exhausted bool) { g.State.Cards[id].Exhausted = exhausted }
@@ -344,6 +412,21 @@ func (g *Game) TakeControl(id LocalID, controller int, source LocalID) {
 	g.takeControl(id, controller, source)
 }
 
+// TakeControlOfArtifact is the Resolver entry point for takeControlOfArtifact.
+func (g *Game) TakeControlOfArtifact(id LocalID, controller int) {
+	g.takeControlOfArtifact(id, controller)
+}
+
+// PutIntoPlay is the Resolver entry point for putIntoPlay.
+func (g *Game) PutIntoPlay(id LocalID, controller int) {
+	g.putIntoPlay(id, controller)
+}
+
+// PlayerHasHouse reports whether house is one of the player's identity houses.
+func (g *Game) PlayerHasHouse(player int, house House) bool {
+	return g.playerHasHouse(player, house)
+}
+
 // Draw is the Resolver entry point for the internal draw.
 func (g *Game) Draw(controller, count int) { g.draw(controller, count) }
 
@@ -361,6 +444,9 @@ func (g *Game) PutIntoDeckShuffled(id LocalID) { g.putIntoDeckShuffled(id) }
 
 // ArchiveFromHand moves a card from its owner's hand to their archives.
 func (g *Game) ArchiveFromHand(id LocalID) { g.archiveFromHand(g.owner(id), id) }
+
+// ArchiveFromDiscard moves a card from a player's discard pile to their archives.
+func (g *Game) ArchiveFromDiscard(owner int, id LocalID) { g.archiveFromDiscard(owner, id) }
 
 // ArchiveTopOfDeck moves the top card of a player's deck to their archives.
 func (g *Game) ArchiveTopOfDeck(player int) bool { return g.archiveTopOfDeck(player) }
@@ -401,6 +487,10 @@ func (g *Game) MoveFromDeckToHand(id LocalID) {
 // ShuffleDiscardIntoDeck moves a player's whole discard pile into their deck and
 // shuffles it.
 func (g *Game) ShuffleDiscardIntoDeck(player int) { g.shuffleDiscardIntoDeck(player) }
+
+// ShuffleHandAndDiscardIntoDeck moves a player's whole hand and discard pile into
+// their deck and shuffles it.
+func (g *Game) ShuffleHandAndDiscardIntoDeck(player int) { g.shuffleHandAndDiscardIntoDeck(player) }
 
 // MoveFromDiscardToTopOfDeck moves a card from its owner's discard pile to the
 // top of their deck.

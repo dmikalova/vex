@@ -8,8 +8,9 @@ package engine
 // A stun is a status placed on a creature. A stunned creature must shake off the
 // stun before it can do anything else: the next time it is used to reap, fight,
 // or use an "Action:" ability, it is exhausted and the stun is removed instead of
-// that action happening. Stunning applies this status to each creature the effect
-// targets.
+// that action happening. Its constant abilities and any effect that does not
+// require using it keep working while it is stunned. Stunning applies this status
+// to each creature the effect targets.
 //
 //rulebook:effect Stun
 type Stun struct {

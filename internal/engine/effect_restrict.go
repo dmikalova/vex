@@ -1,5 +1,19 @@
 package engine
 
+import (
+	"fmt"
+	"strings"
+)
+
+// A restriction forbids a player some action for a stretch of the game — "cannot
+// use creatures to fight", "cannot play creatures" — rather than changing the board
+// directly. A restriction can be a timed effect that lasts through a player's next
+// turn, or a constant rule printed on a card in play; while it is active the
+// forbidden action simply cannot be taken. When one effect says a player "cannot"
+// and another says they "must" or "may" do the same thing, "cannot" wins.
+//
+//rulebook:effect Restriction
+
 // Restriction effects forbid a player some action for a stretch of the game,
 // rather than changing the board directly. A "cannot" rule can arrive two ways:
 // as a timed effect (this file) or as a constant rule printed on a card in play
@@ -44,6 +58,72 @@ func (e CannotFight) Resolve(ctx *EffectContext) {
 	}
 }
 
+// CannotPlayNextTurn bars a player from playing cards of a type throughout their
+// next turn — Lifeward stops creatures, Scrambler Storm stops action cards.
+type CannotPlayNextTurn struct {
+	Player Player
+	Type   CardType
+}
+
+// validate rejects a CannotPlayNextTurn whose player or type was left unset.
+func (e CannotPlayNextTurn) validate() error {
+	if !e.Player.valid() {
+		return errUnsetPlayer("CannotPlayNextTurn")
+	}
+	if e.Type == "" {
+		return errUnsetCardType("CannotPlayNextTurn")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "your opponent cannot play creatures during their
+// next turn". The Tactic type prints as "action cards" (rule 19).
+func (e CannotPlayNextTurn) Text() string {
+	who, whose := "you", "your"
+	if e.Player == Opponent {
+		who, whose = "your opponent", "their"
+	}
+	noun := strings.ToLower(string(e.Type)) + "s"
+	if e.Type == Tactic {
+		noun = "action cards"
+	}
+	return who + " cannot play " + noun + " during " + whose + " next turn"
+}
+
+// Resolve arms the play-type bar on the chosen player for their next turn.
+func (e CannotPlayNextTurn) Resolve(ctx *EffectContext) {
+	ctx.Resolver.CannotPlayTypeNextTurn(ctx.PlayerFor(e.Player), e.Type)
+}
+
+// SkipForgeStep makes a player skip their "forge a key" step at the start of their
+// next turn (Miasma).
+type SkipForgeStep struct {
+	Player Player
+}
+
+// validate rejects a SkipForgeStep whose player was left unset.
+func (e SkipForgeStep) validate() error {
+	if !e.Player.valid() {
+		return errUnsetPlayer("SkipForgeStep")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. `your opponent skips the "forge a key" step during
+// their next turn`.
+func (e SkipForgeStep) Text() string {
+	who, whose, verb := "you", "your", "skip"
+	if e.Player == Opponent {
+		who, whose, verb = "your opponent", "their", "skips"
+	}
+	return fmt.Sprintf("%s %s the %q step during %s next turn", who, verb, "forge a key", whose)
+}
+
+// Resolve arms the skip on the chosen player's next turn.
+func (e SkipForgeStep) Resolve(ctx *EffectContext) {
+	ctx.Resolver.SkipForgeStepNextTurn(ctx.PlayerFor(e.Player))
+}
+
 // GrantFightForChosenHouse lets the controller's creatures of the house picked by
 // an enclosing ChooseHouseThen fight this turn even out of the active house —
 // Brothers in Battle's "each friendly creature of that house may fight." The
@@ -59,6 +139,32 @@ func (GrantFightForChosenHouse) Text() string {
 // turn.
 func (GrantFightForChosenHouse) Resolve(ctx *EffectContext) {
 	ctx.Resolver.GrantFightForHouse(ctx.Controller, ctx.ChosenHouse)
+}
+
+// MayUseFriendlyHouse lets the controller fully use (fight, reap, or Action:) their
+// creatures of House this turn even out of the active house — Sigil of Brotherhood,
+// Ritual of the Hunt. The grant lasts only the current turn (EndTurn clears it).
+type MayUseFriendlyHouse struct {
+	House House
+}
+
+// validate rejects a MayUseFriendlyHouse whose house was left unset.
+func (e MayUseFriendlyHouse) validate() error {
+	if e.House == HouseNone {
+		return fmt.Errorf("MayUseFriendlyHouse: house must be set")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "for the remainder of the turn, you may use friendly
+// Sanctum creatures".
+func (e MayUseFriendlyHouse) Text() string {
+	return fmt.Sprintf("for the remainder of the turn, you may use friendly %s creatures", e.House)
+}
+
+// Resolve grants the controller full use of their House creatures this turn.
+func (e MayUseFriendlyHouse) Resolve(ctx *EffectContext) {
+	ctx.Resolver.GrantUseForHouse(ctx.Controller, e.House)
 }
 
 // ForceOpponentActiveHouse makes the opponent choose the house picked by an

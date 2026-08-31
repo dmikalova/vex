@@ -31,6 +31,28 @@ func TestStunEffects(t *testing.T) {
 	}
 }
 
+func TestStunAndNeighbors(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	left := g.AddToBattleline(testCreature("left", 3), 1)
+	mid := g.AddToBattleline(testCreature("mid", 3), 1)
+	right := g.AddToBattleline(testCreature("right", 3), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	e := Stun{Target: Target{Kind: TargetChosenCreature}.AndNeighbors()}
+	if e.Text() != "stun a creature and each of its neighbors" {
+		t.Errorf("text = %q", e.Text())
+	}
+	// The default chooser picks the first candidate (left); it stuns left and its
+	// only neighbor, mid, but not right.
+	e.Resolve(ctx)
+	if !g.Stunned(left) || !g.Stunned(mid) {
+		t.Error("the chosen creature and its neighbor should be stunned")
+	}
+	if g.Stunned(right) {
+		t.Error("a non-neighbor should not be stunned")
+	}
+}
+
 func TestExhaust(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("src", 3), 0)

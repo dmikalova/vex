@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// StaunchKnight
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Staunch Knight
 //
 //	House:  Sanctum
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  2
 //	Traits: Human • Knight
 //
-//	Staunch Knight gets +2 power while it is on a flank.
+//	Staunch Knight gains +2 power while it is on a flank.
 var StaunchKnight = card.New(
 	"Staunch Knight",
 	card.House.Sanctum,
@@ -26,5 +21,8 @@ var StaunchKnight = card.New(
 	card.WithPower(4),
 	card.WithArmor(2),
 	card.WithTraits("Human", "Knight"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithConstantAbility(card.ConstantAbility{
+		PowerBonus: 2,
+		Target:     card.Target.This.OnFlank(),
+	}),
 )

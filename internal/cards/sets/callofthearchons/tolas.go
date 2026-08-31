@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Tolas
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Dis
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  1
 //	Traits: Imp
 //
-//	Elusive. (The first time this creature is attacked each turn, no damage is dealt.)
-//	Each time a creature is destroyed, its opponent gains 1 Aember.
+//	Elusive.
+//	Each creature gains, "Destroyed: Your opponent gains 1 Æmber."
 var Tolas = card.New(
 	"Tolas",
 	card.House.Dis,
@@ -25,5 +20,15 @@ var Tolas = card.New(
 	card.Provenance(card.CotA, 103),
 	card.WithPower(1),
 	card.WithTraits("Imp"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithConstantAbility(card.ConstantAbility{
+		Target: card.Target.EachCreature,
+		Granted: []card.Ability{{
+			Trigger: card.Trigger.Destroyed,
+			Effect: card.GainAember{
+				Player: card.Opponent,
+				Amount: 1,
+			},
+		}},
+	}),
 )

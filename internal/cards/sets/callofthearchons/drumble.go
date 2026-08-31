@@ -23,7 +23,7 @@ var Drumble = card.New(
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
-			Cond: card.OpponentAemberAtLeast{Amount: 7},
+			Cond: card.OpponentAember{Is: card.AtLeast, Amount: 7},
 			Then: card.CaptureAember{
 				All:    true,
 				Target: card.Target.This,

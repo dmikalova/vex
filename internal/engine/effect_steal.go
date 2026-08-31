@@ -2,10 +2,10 @@ package engine
 
 import "fmt"
 
-// Stealing Æmber moves it from the opponent's pool into your own. You can only
-// steal as much Æmber as the opponent actually has.
+// Stealing Aember moves it from the opponent's pool into your own. You can only
+// steal as much Aember as the opponent actually has.
 //
-//rulebook:effect Steal Æmber
+//rulebook:effect Steal Aember
 type StealAember struct {
 	Amount int
 }
@@ -20,6 +20,9 @@ func (e StealAember) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 // it can gate a following effect (Nerve Blast's "steal 1 -> deal 2 damage").
 func (e StealAember) resolveGate(ctx *EffectContext) bool {
 	opp := ctx.Opponent()
+	if ctx.Resolver.AemberProtected(opp) {
+		return false
+	}
 	amt := min(e.Amount, ctx.Resolver.Aember(opp))
 	ctx.Resolver.SetAember(opp, ctx.Resolver.Aember(opp)-amt)
 	ctx.Resolver.SetAember(ctx.Controller, ctx.Resolver.Aember(ctx.Controller)+amt)

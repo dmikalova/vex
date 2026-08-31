@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// StrangeGizmo
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Strange Gizmo
 //
 //	House:  Logos
 //	Type:   Artifact
@@ -15,14 +10,17 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Item
 //
-//	After you forge a key, destroy each creature and artifact.
+//	After you forge a key, destroy each creature and each artifact.
 var StrangeGizmo = card.New(
 	"Strange Gizmo",
 	card.House.Logos,
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 134),
-	card.WithAemberBonus(1),
 	card.WithTraits("Item"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAemberBonus(1),
+	card.WithAbility(card.Trigger.AfterForgeKey, card.Sequence{Effects: []card.Effect{
+		card.Destroy{Target: card.Target.EachCreature},
+		card.Destroy{Target: card.Target.EachArtifact},
+	}}),
 )

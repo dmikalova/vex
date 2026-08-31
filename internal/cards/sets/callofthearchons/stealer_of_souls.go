@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// StealerOfSouls
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Stealer of Souls
 //
 //	House:  Dis
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  6
 //	Traits: Demon
 //
-//	After an enemy creature is destroyed fighting Stealer of Souls, purge that creature and gain 1 Aember.
+//	After a creature is destroyed fighting Stealer of Souls, purge it, and gain 1 Æmber.
 var StealerOfSouls = card.New(
 	"Stealer of Souls",
 	card.House.Dis,
@@ -24,5 +19,11 @@ var StealerOfSouls = card.New(
 	card.Provenance(card.CotA, 98),
 	card.WithPower(6),
 	card.WithTraits("Demon"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.AfterDestroyedFighting, card.Sequence{Effects: []card.Effect{
+		card.PurgeCreature{Target: card.Target.Triggering},
+		card.GainAember{
+			Player: card.Controller,
+			Amount: 1,
+		},
+	}}),
 )
