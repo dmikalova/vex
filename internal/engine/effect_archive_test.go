@@ -117,9 +117,18 @@ func TestArchiveTopOfDeckEffect(t *testing.T) {
 func TestArchiveFromPlayEffect(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddArtifact(NewCard("quest", Sanctum, Artifact, Rare), 0)
-	knight := g.AddToBattleline(NewCard("knight", Sanctum, Creature, Common, WithPower(4), WithTraits("Knight")), 0)
-	nonKnight := g.AddToBattleline(NewCard("cleric", Sanctum, Creature, Common, WithPower(4), WithTraits("Cleric")), 0)
-	enemyKnight := g.AddToBattleline(NewCard("enemy", Sanctum, Creature, Common, WithPower(4), WithTraits("Knight")), 1)
+	knight := g.AddToBattleline(
+		NewCard("knight", Sanctum, Creature, Common, WithPower(4), WithTraits("Knight")),
+		0,
+	)
+	nonKnight := g.AddToBattleline(
+		NewCard("cleric", Sanctum, Creature, Common, WithPower(4), WithTraits("Cleric")),
+		0,
+	)
+	enemyKnight := g.AddToBattleline(
+		NewCard("enemy", Sanctum, Creature, Common, WithPower(4), WithTraits("Knight")),
+		1,
+	)
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
 	e := ArchiveFromPlay{Target: Target{Kind: TargetEachFriendlyCreature}.WithTrait("Knight")}

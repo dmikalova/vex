@@ -22,8 +22,10 @@ func TestKrump(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(Krump)},
 			P2: ct.Side{
-				Amber:  3,
-				InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(1)))),
+				Amber: 3,
+				InPlay: ct.Cards(
+					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(1))),
+				),
 			},
 		})
 

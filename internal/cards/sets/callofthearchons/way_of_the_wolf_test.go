@@ -22,14 +22,24 @@ func TestWayOfTheWolf(t *testing.T) {
 			P1: ct.Side{
 				House: card.House.Untamed,
 				InPlay: ct.Cards(
-					ct.Upgraded(ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Untamed), ct.Power(4))), WayOfTheWolf),
+					ct.Upgraded(
+						ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Untamed), ct.Power(4))),
+						WayOfTheWolf,
+					),
 				),
 			},
-			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&wall, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(10))))},
+			P2: ct.Side{
+				InPlay: ct.Cards(
+					ct.Bind(&wall, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(10))),
+				),
+			},
 		})
 
 		h.P1.Fight(host, wall)
 
-		h.Expect(host).Damage(0).At(ct.PlayArea) // skirmish: no return damage from the 10-power wall
+		h.Expect(host).
+			Damage(0).
+			At(ct.PlayArea)
+		// skirmish: no return damage from the 10-power wall
 	})
 }

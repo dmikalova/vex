@@ -18,5 +18,7 @@ var ThreeFates = card.New(
 	card.Provenance(card.CotA, 71),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.Destroy{Target: card.Target.EachCreature.Selector(card.MostPowerful(3))}),
+		card.Trigger.Play,
+		card.Destroy{Target: card.Target.EachCreature.Selector(card.MostPowerful(3))},
+	),
 )

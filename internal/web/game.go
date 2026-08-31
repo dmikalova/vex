@@ -60,7 +60,10 @@ type webChooser struct {
 
 // ChooseCreature posts a chooser request to the UI and waits for the player's
 // pick. It returns false when there are no candidates or the player cancels.
-func (c *webChooser) ChooseCreature(source, prompt string, candidates []engine.LocalID) (engine.LocalID, bool) {
+func (c *webChooser) ChooseCreature(
+	source, prompt string,
+	candidates []engine.LocalID,
+) (engine.LocalID, bool) {
 	if len(candidates) == 0 {
 		return 0, false
 	}
@@ -757,7 +760,11 @@ func (g *game) computeFlashes() {
 
 // cardFlags records which state of one card changed this action (except entering
 // play, handled by the caller). It leaves odd unset; computeFlashes finalizes it.
-func (g *game) cardFlags(id engine.LocalID, prev *engine.GameState, out map[engine.LocalID]cardFlash) {
+func (g *game) cardFlags(
+	id engine.LocalID,
+	prev *engine.GameState,
+	out map[engine.LocalID]cardFlash,
+) {
 	now, was := g.g.State.Cards[id], prev.Cards[id]
 	f := out[id]
 	f.damage = f.damage || now.Damage > was.Damage
@@ -883,8 +890,16 @@ func (g *game) endTurn(ctx app.Context, _ app.Event) {
 		// A neutral end-of-turn snapshot for both players (no "Check!" — just facts).
 		g.g.Logf("%s ends turn %d — %d Æmber, %d/%d keys, %d in hand",
 			g.g.PlayerName(p), turn, g.g.Aember(p), g.g.Keys(p), engine.KeysToWin, len(g.g.Hand(p)))
-		g.g.Logf("%s stands at %d Æmber, %d/%d keys, %d in hand",
-			g.g.PlayerName(opp), g.g.Aember(opp), g.g.Keys(opp), engine.KeysToWin, len(g.g.Hand(opp)))
+		g.g.Logf(
+			"%s stands at %d Æmber, %d/%d keys, %d in hand",
+			g.g.PlayerName(
+				opp,
+			),
+			g.g.Aember(opp),
+			g.g.Keys(opp),
+			engine.KeysToWin,
+			len(g.g.Hand(opp)),
+		)
 		g.g.BeginTurn(opp) // forge + start-of-turn triggers for the next player
 		return nil
 	})
@@ -925,16 +940,25 @@ func (g *game) play(ctx app.Context, _ app.Event) {
 	switch def.Type {
 	case engine.Creature:
 		if len(g.g.Battleline(p)) == 0 {
-			g.runAction(ctx, func() error { _, err := g.g.PlayCreature(p, idx, false); return playTypeError(err, def.Type) })
+			g.runAction(
+				ctx,
+				func() error { _, err := g.g.PlayCreature(p, idx, false); return playTypeError(err, def.Type) },
+			)
 			return
 		}
 		g.phase = phaseFlank
 	case engine.Artifact:
-		g.runAction(ctx, func() error { _, err := g.g.PlayArtifact(p, idx); return playTypeError(err, def.Type) })
+		g.runAction(
+			ctx,
+			func() error { _, err := g.g.PlayArtifact(p, idx); return playTypeError(err, def.Type) },
+		)
 	case engine.Tactic:
 		g.runAction(ctx, func() error { return playTypeError(g.g.PlayAction(p, idx), def.Type) })
 	case engine.Upgrade:
-		g.runAction(ctx, func() error { _, err := g.g.PlayUpgrade(p, idx); return playTypeError(err, def.Type) })
+		g.runAction(
+			ctx,
+			func() error { _, err := g.g.PlayUpgrade(p, idx); return playTypeError(err, def.Type) },
+		)
 	}
 }
 
@@ -953,7 +977,10 @@ func (g *game) playFlank(left bool) app.EventHandler {
 			return
 		}
 		p, idx := g.active(), g.selHand
-		g.runAction(ctx, func() error { _, err := g.g.PlayCreature(p, idx, left); return playTypeError(err, engine.Creature) })
+		g.runAction(
+			ctx,
+			func() error { _, err := g.g.PlayCreature(p, idx, left); return playTypeError(err, engine.Creature) },
+		)
 	}
 }
 

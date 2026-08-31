@@ -20,12 +20,17 @@ func TestFlameWreathed(t *testing.T) {
 		var enemy, attacker ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.Dis,
-				InPlay: ct.Cards(ct.Bind(&attacker, ct.Creature(ct.OfHouse(card.House.Dis), ct.Power(1)))),
+				House: card.House.Dis,
+				InPlay: ct.Cards(
+					ct.Bind(&attacker, ct.Creature(ct.OfHouse(card.House.Dis), ct.Power(1))),
+				),
 			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
-					ct.Upgraded(ct.Bind(&enemy, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(4))), FlameWreathed),
+					ct.Upgraded(
+						ct.Bind(&enemy, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(4))),
+						FlameWreathed,
+					),
 				),
 			},
 		})

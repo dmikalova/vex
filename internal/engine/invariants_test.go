@@ -25,7 +25,11 @@ func TestInvariantErrorEconomy(t *testing.T) {
 		want string
 	}{
 		{"negative aember", func(g *Game) { g.State.Aember[0] = -1 }, "negative Æmber"},
-		{"too many keys", func(g *Game) { g.State.Keys[1] = KeysToWin + 1 }, "out-of-range key count"},
+		{
+			"too many keys",
+			func(g *Game) { g.State.Keys[1] = KeysToWin + 1 },
+			"out-of-range key count",
+		},
 		{"negative chains", func(g *Game) { g.State.Chains[0] = -1 }, "negative chains"},
 		{"winner out of range", func(g *Game) { g.State.Winner = 2 }, "winner is out of range"},
 	}

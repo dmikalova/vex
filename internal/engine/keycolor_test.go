@@ -57,7 +57,11 @@ func TestForgeBeyondKeysLeavesColorsUntouched(t *testing.T) {
 	for i := 0; i < 4; i++ {
 		g.forgeKey(0)
 	}
-	if got := g.State.KeyColors[0]; got != [KeysToWin]KeyColor{KeyColorRed, KeyColorBlue, KeyColorYellow} {
+	if got := g.State.KeyColors[0]; got != [KeysToWin]KeyColor{
+		KeyColorRed,
+		KeyColorBlue,
+		KeyColorYellow,
+	} {
 		t.Errorf("key colours after 4 forges = %v, want [Red Blue Yellow]", got)
 	}
 }

@@ -22,8 +22,11 @@ func TestSanctumGuardian(t *testing.T) {
 		var ally ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.Sanctum,
-				InPlay: ct.Cards(SanctumGuardian, ct.Bind(&ally, ct.Creature(ct.OfHouse(card.House.Sanctum)))),
+				House: card.House.Sanctum,
+				InPlay: ct.Cards(
+					SanctumGuardian,
+					ct.Bind(&ally, ct.Creature(ct.OfHouse(card.House.Sanctum))),
+				),
 			},
 		})
 

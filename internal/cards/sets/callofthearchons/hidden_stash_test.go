@@ -21,7 +21,10 @@ func TestHiddenStash(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
 				House: card.House.Shadows,
-				Hand:  ct.Cards(HiddenStash, ct.Bind(&spare, ct.Creature(ct.OfHouse(card.House.Shadows), ct.Power(2)))),
+				Hand: ct.Cards(
+					HiddenStash,
+					ct.Bind(&spare, ct.Creature(ct.OfHouse(card.House.Shadows), ct.Power(2))),
+				),
 			},
 		})
 

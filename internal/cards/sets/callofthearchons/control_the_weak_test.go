@@ -33,7 +33,8 @@ func TestControlTheWeak(t *testing.T) {
 
 		h.P1.EndTurn() // the opponent's turn begins, promoting the forced house
 
-		if err := h.Game().ChooseHouse(1, card.House.Sanctum); err != engine.ErrMustChooseForcedHouse {
+		if err := h.Game().
+			ChooseHouse(1, card.House.Sanctum); err != engine.ErrMustChooseForcedHouse {
 			t.Errorf("wrong house = %v, want ErrMustChooseForcedHouse", err)
 		}
 		h.P2.ChooseHouse(card.House.Mars) // the forced house is allowed

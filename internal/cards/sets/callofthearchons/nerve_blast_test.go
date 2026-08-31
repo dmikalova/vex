@@ -20,8 +20,10 @@ func TestNerveBlast(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(NerveBlast)},
 			P2: ct.Side{
-				Amber:  3,
-				InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5)))),
+				Amber: 3,
+				InPlay: ct.Cards(
+					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5))),
+				),
 			},
 		})
 
@@ -37,8 +39,10 @@ func TestNerveBlast(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(NerveBlast)},
 			P2: ct.Side{
-				Amber:  0,
-				InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5)))),
+				Amber: 0,
+				InPlay: ct.Cards(
+					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5))),
+				),
 			},
 		})
 

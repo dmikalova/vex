@@ -22,7 +22,10 @@ func TestPerilousWild(t *testing.T) {
 			P1: ct.Side{House: card.House.Untamed, Hand: ct.Cards(PerilousWild)},
 			P2: ct.Side{
 				InPlay: ct.Cards(
-					ct.Bind(&elusive, ct.Creature(ct.OfHouse(card.House.Mars), ct.Keywords(card.Keyword.Elusive))),
+					ct.Bind(
+						&elusive,
+						ct.Creature(ct.OfHouse(card.House.Mars), ct.Keywords(card.Keyword.Elusive)),
+					),
 					ct.Bind(&plain, ct.Creature(ct.OfHouse(card.House.Mars))),
 				),
 			},

@@ -19,12 +19,16 @@ func TestBouncingDeathquark(t *testing.T) {
 		var friend, foe ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.Logos,
-				InPlay: ct.Cards(ct.Bind(&friend, ct.Creature(ct.OfHouse(card.House.Logos), ct.Power(3)))),
-				Hand:   ct.Cards(BouncingDeathquark),
+				House: card.House.Logos,
+				InPlay: ct.Cards(
+					ct.Bind(&friend, ct.Creature(ct.OfHouse(card.House.Logos), ct.Power(3))),
+				),
+				Hand: ct.Cards(BouncingDeathquark),
 			},
 			P2: ct.Side{
-				InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Logos), ct.Power(3)))),
+				InPlay: ct.Cards(
+					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Logos), ct.Power(3))),
+				),
 			},
 		})
 

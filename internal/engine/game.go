@@ -128,7 +128,11 @@ func (g *Game) chooserFor(player int) Chooser {
 // is available the choice is forced, so it is taken automatically without
 // consulting the chooser; otherwise the player's chooser decides (and may
 // decline). Callers guard the empty case before calling.
-func (g *Game) pickCreature(player int, source, prompt string, candidates []LocalID) (LocalID, bool) {
+func (g *Game) pickCreature(
+	player int,
+	source, prompt string,
+	candidates []LocalID,
+) (LocalID, bool) {
 	if len(candidates) == 1 {
 		return candidates[0], true
 	}

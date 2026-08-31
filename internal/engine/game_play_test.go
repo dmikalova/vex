@@ -40,8 +40,16 @@ func TestCanPlayRestrictions(t *testing.T) {
 
 	// Card-play limit reached this turn.
 	g2 := started(t)
-	g2.AddToBattleline(NewCard("Imp", Brobnar, Creature, Common, WithPower(1),
-		WithRestrictions(Restrictions{PlayCardLimit: PlayCardLimit{Player: Controller, Amount: 2}})), 0)
+	g2.AddToBattleline(NewCard(
+		"Imp",
+		Brobnar,
+		Creature,
+		Common,
+		WithPower(1),
+		WithRestrictions(
+			Restrictions{PlayCardLimit: PlayCardLimit{Player: Controller, Amount: 2}},
+		),
+	), 0)
 	g2.State.CardsPlayedThisTurn[0] = 2
 	c2 := g2.AddToHand(testCreature("c2", 3), 0)
 	if err := g2.CanPlay(0, c2); err != ErrCardPlayLimit {
@@ -52,8 +60,16 @@ func TestCanPlayRestrictions(t *testing.T) {
 func TestCardPlayLimit(t *testing.T) {
 	g := started(t) // player 0 active, Brobnar
 	// Player 1 controls an Ember-Imp-like card limiting player 0 to two plays.
-	g.AddToBattleline(NewCard("imp", Dis, Creature, Common, WithPower(2),
-		WithRestrictions(Restrictions{PlayCardLimit: PlayCardLimit{Player: Opponent, Amount: 2}})), 1)
+	g.AddToBattleline(NewCard(
+		"imp",
+		Dis,
+		Creature,
+		Common,
+		WithPower(2),
+		WithRestrictions(
+			Restrictions{PlayCardLimit: PlayCardLimit{Player: Opponent, Amount: 2}},
+		),
+	), 1)
 	g.AddToHand(testCreature("c0", 3), 0)
 	g.AddToHand(testCreature("c1", 3), 0)
 	g.AddToHand(testCreature("c2", 3), 0)
@@ -131,7 +147,14 @@ func TestCardsPlayedByHouseThisTurn(t *testing.T) {
 }
 
 func TestOffHousePlayGrant(t *testing.T) {
-	witch := NewCard("Witch", Untamed, Creature, Rare, WithPower(4), WithPlayPermission(PlayPermission{House: Untamed, Count: 1}))
+	witch := NewCard(
+		"Witch",
+		Untamed,
+		Creature,
+		Rare,
+		WithPower(4),
+		WithPlayPermission(PlayPermission{House: Untamed, Count: 1}),
+	)
 
 	t.Run("allows one off-house play and consumes it", func(t *testing.T) {
 		g := started(t)
@@ -235,8 +258,16 @@ func TestPlayCardLimitTargets(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			g := started(t)
-			g.AddToBattleline(NewCard("limit", Brobnar, Creature, Common, WithPower(1),
-				WithRestrictions(Restrictions{PlayCardLimit: PlayCardLimit{Player: tc.player, Amount: 2}})), 0)
+			g.AddToBattleline(NewCard(
+				"limit",
+				Brobnar,
+				Creature,
+				Common,
+				WithPower(1),
+				WithRestrictions(
+					Restrictions{PlayCardLimit: PlayCardLimit{Player: tc.player, Amount: 2}},
+				),
+			), 0)
 			g.State.CardsPlayedThisTurn[tc.limited] = 2
 			if !g.cannotPlayCard(tc.limited) {
 				t.Errorf("player %d should be limited", tc.limited)

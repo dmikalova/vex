@@ -69,7 +69,7 @@ var AmmoniaClouds = card.New(
 ```
 
 The generated comment (tab-indented so godoc renders the block preformatted;
-`gofmt` requires the blank `//` line after the title) is:
+`golines`/`gofmt` requires the blank `//` line after the title) is:
 
 1. `// <Card Name>` — the card's display name.
 2. A labeled, colon-aligned block: `House`, `Type`, `Rarity`, then `Power` and
@@ -104,7 +104,7 @@ to seed it. `card.New(...)`:
 - Slice elements that are themselves single-field or empty structs stay inline
   within the slice (e.g. `Verbs: []card.CreatureVerb{card.ReadyVerb{}, card.FightVerb{}}`).
 
-Run `gofmt -w .` after editing (it aligns the fields; it does not add the line
+Run `mage fmt` after editing (golines aligns the fields; it does not add the line
 breaks, so the one-field-per-line layout above is the author's responsibility).
 
 ## Wording rules

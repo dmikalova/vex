@@ -22,11 +22,16 @@ func TestSilentDagger(t *testing.T) {
 			P1: ct.Side{
 				House: card.House.Shadows,
 				InPlay: ct.Cards(
-					ct.Upgraded(ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Shadows), ct.Power(3))), SilentDagger),
+					ct.Upgraded(
+						ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Shadows), ct.Power(3))),
+						SilentDagger,
+					),
 				),
 			},
 			P2: ct.Side{
-				InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5)))),
+				InPlay: ct.Cards(
+					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5))),
+				),
 			},
 		})
 

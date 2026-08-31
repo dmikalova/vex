@@ -23,7 +23,10 @@ func TestBiomatrixBackup(t *testing.T) {
 			P1: ct.Side{
 				House: card.House.Mars,
 				InPlay: ct.Cards(
-					ct.Upgraded(ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3))), BiomatrixBackup),
+					ct.Upgraded(
+						ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3))),
+						BiomatrixBackup,
+					),
 				),
 			},
 		})

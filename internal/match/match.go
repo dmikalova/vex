@@ -58,7 +58,11 @@ func SetupDecks(g *engine.Game, seed int64) [2][]engine.House {
 // not house-blocked. Drawing per house is what keeps every chosen house present:
 // a single house's cards now exceed DeckSize, so filling from one house-ordered
 // list and truncating would yield a single-house deck.
-func dealDeck(pool []engine.CardDefinition, hs []engine.House, r *rand.Rand) []engine.CardDefinition {
+func dealDeck(
+	pool []engine.CardDefinition,
+	hs []engine.House,
+	r *rand.Rand,
+) []engine.CardDefinition {
 	defs := make([]engine.CardDefinition, 0, DeckSize)
 	n := len(hs)
 	if n == 0 {

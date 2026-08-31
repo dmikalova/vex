@@ -9,7 +9,17 @@ func TestSearchForName(t *testing.T) {
 	}
 
 	newTT := func(g *Game, player int) LocalID {
-		return g.Register(NewCard("Timetraveller", Logos, Creature, Common, WithPower(2), WithTraits("Human", "Scientist")), player)
+		return g.Register(
+			NewCard(
+				"Timetraveller",
+				Logos,
+				Creature,
+				Common,
+				WithPower(2),
+				WithTraits("Human", "Scientist"),
+			),
+			player,
+		)
 	}
 
 	t.Run("from deck", func(t *testing.T) {
@@ -17,8 +27,12 @@ func TestSearchForName(t *testing.T) {
 		src := g.AddToBattleline(testCreature("helper", 1), 0)
 		tt := newTT(g, 0)
 		g.State.Deck[0].add(tt)
-		g.State.Deck[0].add(g.Register(NewCard("plain", Logos, Creature, Common, WithPower(1)), 0)) // non-match in deck
-		g.State.Discard[0].add(g.Register(NewCard("junk", Dis, Tactic, Common), 0))                 // non-match in discard
+		g.State.Deck[0].add(
+			g.Register(NewCard("plain", Logos, Creature, Common, WithPower(1)), 0),
+		) // non-match in deck
+		g.State.Discard[0].add(
+			g.Register(NewCard("junk", Dis, Tactic, Common), 0),
+		) // non-match in discard
 		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
 		e.Resolve(ctx) // the sole Timetraveller is auto-chosen

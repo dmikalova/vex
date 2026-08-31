@@ -14,21 +14,24 @@ import (
 //	Rarity: Rare
 //	Traits: Location
 //
-//	Each time an enemy creature is destroyed during your turn, a friendly creature captures 1 Æmber from your opponent.
+//	After an enemy creature is destroyed during your turn, a friendly creature captures 1 Æmber from your opponent.
 func TestPileOfSkulls(t *testing.T) {
-	t.Run("a friendly creature captures 1 when an enemy creature is destroyed on your turn", func(t *testing.T) {
-		var fighter, victim ct.Card
-		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(
-				PileOfSkulls,
-				ct.Bind(&fighter, ct.Creature(ct.Power(5))),
-			)},
-			P2: ct.Side{Amber: 3, InPlay: ct.Cards(ct.Bind(&victim, ct.Creature(ct.Power(2))))},
-		})
+	t.Run(
+		"a friendly creature captures 1 when an enemy creature is destroyed on your turn",
+		func(t *testing.T) {
+			var fighter, victim ct.Card
+			h := ct.Play(t, ct.Setup{
+				P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(
+					PileOfSkulls,
+					ct.Bind(&fighter, ct.Creature(ct.Power(5))),
+				)},
+				P2: ct.Side{Amber: 3, InPlay: ct.Cards(ct.Bind(&victim, ct.Creature(ct.Power(2))))},
+			})
 
-		h.P1.Fight(fighter, victim)
+			h.P1.Fight(fighter, victim)
 
-		h.Expect(fighter).AmberOn(1) // the sole friendly creature captures
-		h.P2.ExpectAmber(2)          // 1 taken from the opponent's pool
-	})
+			h.Expect(fighter).AmberOn(1) // the sole friendly creature captures
+			h.P2.ExpectAmber(2)          // 1 taken from the opponent's pool
+		},
+	)
 }

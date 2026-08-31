@@ -21,8 +21,10 @@ func TestFinishingBlow(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(FinishingBlow)},
 			P2: ct.Side{
-				Amber:  3,
-				InPlay: ct.Cards(ct.Bind(&dmg, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5)))),
+				Amber: 3,
+				InPlay: ct.Cards(
+					ct.Bind(&dmg, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5))),
+				),
 			},
 		})
 		dmg.Damaged(2)

@@ -217,7 +217,11 @@ func (g *Game) Archives(player int) []LocalID { return cloneIDs(g.State.Archives
 func (g *Game) Purge(player int) []LocalID { return cloneIDs(g.State.Purge[player].slice()) }
 
 // Artifacts returns a copy of the ids in a player's artifact row.
-func (g *Game) Artifacts(player int) []LocalID { return cloneIDs(g.State.Artifacts[player].slice()) }
+func (g *Game) Artifacts(
+	player int,
+) []LocalID {
+	return cloneIDs(g.State.Artifacts[player].slice())
+}
 
 // Upgrades returns the ids of upgrades attached to a creature, in attach order.
 func (g *Game) Upgrades(id LocalID) []LocalID {

@@ -25,9 +25,19 @@ func testCreature(name string, power int, opts ...CardOption) CardDefinition {
 // any dependency on the card packages that import it.
 
 func exGiant() CardDefinition {
-	return NewCard("Brobnar Giant", Brobnar, Creature, Rare,
-		WithPower(5), WithArmor(0), WithTraits("Giant"),
-		WithAbility(TriggerAfterForgeKey, DealDamage{Amount: 2, Target: Target{Kind: TargetEachEnemyCreature}}))
+	return NewCard(
+		"Brobnar Giant",
+		Brobnar,
+		Creature,
+		Rare,
+		WithPower(5),
+		WithArmor(0),
+		WithTraits("Giant"),
+		WithAbility(
+			TriggerAfterForgeKey,
+			DealDamage{Amount: 2, Target: Target{Kind: TargetEachEnemyCreature}},
+		),
+	)
 }
 
 func exBruteStrength() CardDefinition {
@@ -36,15 +46,35 @@ func exBruteStrength() CardDefinition {
 }
 
 func exBattleFury() CardDefinition {
-	return NewCard("Battle Fury", Brobnar, Tactic, Common,
+	return NewCard(
+		"Battle Fury",
+		Brobnar,
+		Tactic,
+		Common,
 		WithAemberBonus(1),
-		WithAbility(TriggerAfterPlay, OnChooseCreature{Target: Target{Kind: TargetChosenFriendlyCreature}, Verbs: []CreatureVerb{ReadyVerb{}, FightVerb{}}}))
+		WithAbility(
+			TriggerAfterPlay,
+			OnChooseCreature{
+				Target: Target{Kind: TargetChosenFriendlyCreature},
+				Verbs:  []CreatureVerb{ReadyVerb{}, FightVerb{}},
+			},
+		),
+	)
 }
 
 func exAutocannon() CardDefinition {
-	return NewCard("Autocannon", Brobnar, Artifact, Rare,
-		WithAemberBonus(1), WithTraits("Weapon"),
-		WithAbility(TriggerAfterCreatureEnters, DealDamage{Amount: 1, Target: Target{Kind: TargetTriggeringCreature}}))
+	return NewCard(
+		"Autocannon",
+		Brobnar,
+		Artifact,
+		Rare,
+		WithAemberBonus(1),
+		WithTraits("Weapon"),
+		WithAbility(
+			TriggerAfterCreatureEnters,
+			DealDamage{Amount: 1, Target: Target{Kind: TargetTriggeringCreature}},
+		),
+	)
 }
 
 // ---- small test-only lookups ----

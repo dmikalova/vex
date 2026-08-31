@@ -172,7 +172,11 @@ func (e NextCreaturePlayed) validate() error {
 // Text renders the effect, e.g. "the next Mars creature you play this turn enters
 // play ready".
 func (e NextCreaturePlayed) Text() string {
-	return fmt.Sprintf("the next %s creature you play this turn enters play %s", e.Of, enterStateWord(e.EntersPlay))
+	return fmt.Sprintf(
+		"the next %s creature you play this turn enters play %s",
+		e.Of,
+		enterStateWord(e.EntersPlay),
+	)
 }
 
 // Resolve registers the one-shot enter-play reaction on the controller.

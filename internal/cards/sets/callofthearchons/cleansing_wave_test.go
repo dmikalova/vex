@@ -27,7 +27,9 @@ func TestCleansingWave(t *testing.T) {
 				),
 			},
 			P2: ct.Side{
-				InPlay: ct.Cards(ct.Bind(&b, ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Power(5)))),
+				InPlay: ct.Cards(
+					ct.Bind(&b, ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Power(5))),
+				),
 			},
 		})
 		a.Damaged(3)

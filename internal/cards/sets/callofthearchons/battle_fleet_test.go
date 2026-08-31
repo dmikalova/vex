@@ -25,7 +25,10 @@ func TestBattleFleet(t *testing.T) {
 					BattleFleet,
 					ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(2)),
 					ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(2)),
-					ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(2)), // non-Mars, not counted
+					ct.Creature(
+						ct.OfHouse(card.House.Brobnar),
+						ct.Power(2),
+					), // non-Mars, not counted
 				),
 				Deck: ct.Cards(
 					ct.Bind(&d1, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(1))),

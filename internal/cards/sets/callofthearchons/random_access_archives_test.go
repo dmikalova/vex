@@ -22,7 +22,9 @@ func TestRandomAccessArchives(t *testing.T) {
 			P1: ct.Side{
 				House: card.House.Logos,
 				Hand:  ct.Cards(RandomAccessArchives),
-				Deck:  ct.Cards(ct.Bind(&top, ct.Creature(ct.OfHouse(card.House.Logos), ct.Power(2)))),
+				Deck: ct.Cards(
+					ct.Bind(&top, ct.Creature(ct.OfHouse(card.House.Logos), ct.Power(2))),
+				),
 			},
 		})
 

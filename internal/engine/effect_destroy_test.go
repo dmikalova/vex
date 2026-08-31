@@ -22,7 +22,10 @@ func TestDestroyEffect(t *testing.T) {
 		t.Error("power>3 creatures should survive")
 	}
 
-	sci := g.AddToBattleline(NewCard("sci", Logos, Creature, Common, WithPower(6), WithTraits("Scientist")), 1)
+	sci := g.AddToBattleline(
+		NewCard("sci", Logos, Creature, Common, WithPower(6), WithTraits("Scientist")),
+		1,
+	)
 	byTrait := Destroy{Target: Target{Kind: TargetEachCreature}.WithTrait("Scientist")}
 	if byTrait.Text() != "destroy each Scientist trait creature" {
 		t.Errorf("trait text = %q", byTrait.Text())

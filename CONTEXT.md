@@ -80,6 +80,14 @@ Justice, Protectrix). It lasts until end of turn. In the engine this is the
 `Invulnerable` flag on a card's state.
 _Avoid_: damage-immune, damage immunity.
 
+**Take control** / **latest ability wins**:
+Taking control moves a card to your play area and makes you its controller;
+ownership never changes and still decides where the card returns when it leaves
+play. When two effects change the same thing on a card (its controller, its
+house), the most recently applied one wins. A `Forever` control (Sneklifter's
+seized artifact) lasts the rest of the game; if a later, timed effect overrides
+it, the `Forever` effect governs again once that timed effect expires.
+
 ## Cards and sets
 
 **House**:

@@ -98,7 +98,11 @@ func (ControlsMoreCreatures) CondText() string {
 
 // Met reports whether the controller has more creatures in play than the opponent.
 func (ControlsMoreCreatures) Met(ctx *EffectContext) bool {
-	return len(ctx.Resolver.Battleline(ctx.Controller)) > len(ctx.Resolver.Battleline(ctx.Opponent()))
+	return len(
+		ctx.Resolver.Battleline(ctx.Controller),
+	) > len(
+		ctx.Resolver.Battleline(ctx.Opponent()),
+	)
 }
 
 // CardsDestroyedFewerThan is met when fewer than Amount cards were destroyed this
@@ -211,6 +215,24 @@ func (e ItIs) Met(ctx *EffectContext) bool {
 	return true
 }
 
+// ItIsOffIdentity is met when the card in context (ctx.It) belongs to none of the
+// controller's identity houses — the three houses of their deck. Sneklifter uses
+// it to reassign a seized enemy artifact to Shadows only when it is off your
+// identity; KeyForge phrases the check negatively ("if it does not belong to one
+// of your three houses").
+type ItIsOffIdentity struct{}
+
+// CondText renders the condition.
+func (ItIsOffIdentity) CondText() string {
+	return "if it does not belong to a house on your identity"
+}
+
+// Met reports whether a card is in context and belongs to none of the controller's
+// identity houses.
+func (ItIsOffIdentity) Met(ctx *EffectContext) bool {
+	return ctx.HasIt && !ctx.Resolver.PlayerHasHouse(ctx.Controller, ctx.Resolver.House(ctx.It))
+}
+
 // houseTypeNoun renders a card filtered by house and type as a noun, e.g. "Mars
 // creature", "artifact", or the bare "card" when neither is set.
 func houseTypeNoun(house House, typ CardType) string {
@@ -294,7 +316,11 @@ func (Overwhelmed) CondText() string { return "if you are overwhelmed" }
 
 // Met reports whether the opponent controls more creatures than the controller.
 func (Overwhelmed) Met(ctx *EffectContext) bool {
-	return len(ctx.Resolver.Battleline(ctx.Opponent())) > len(ctx.Resolver.Battleline(ctx.Controller))
+	return len(
+		ctx.Resolver.Battleline(ctx.Opponent()),
+	) > len(
+		ctx.Resolver.Battleline(ctx.Controller),
+	)
 }
 
 // RepeatOnCondition performs a gating effect and repeats it while the effect keeps

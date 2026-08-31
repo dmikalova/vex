@@ -12,7 +12,12 @@ import (
 
 // Cover runs tests and reports engine coverage, failing if it drops below 100%.
 func Cover() error {
-	if err := sh.RunV("go", "test", "./internal/engine/", "-coverprofile=coverage.out"); err != nil {
+	if err := sh.RunV(
+		"go",
+		"test",
+		"./internal/engine/",
+		"-coverprofile=coverage.out",
+	); err != nil {
 		return err
 	}
 	out, err := sh.Output("go", "tool", "cover", "-func=coverage.out")

@@ -20,8 +20,10 @@ func TestLibraryOfTheDamned(t *testing.T) {
 		var spare ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.Dis,
-				Hand:   ct.Cards(ct.Bind(&spare, ct.Creature(ct.OfHouse(card.House.Dis), ct.Power(2)))),
+				House: card.House.Dis,
+				Hand: ct.Cards(
+					ct.Bind(&spare, ct.Creature(ct.OfHouse(card.House.Dis), ct.Power(2))),
+				),
 				InPlay: ct.Cards(LibraryOfTheDamned),
 			},
 		})

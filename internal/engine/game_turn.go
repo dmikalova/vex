@@ -268,7 +268,13 @@ func (g *Game) chooseKeyColor(player int) {
 		for i, c := range remaining {
 			labels[i] = c.String()
 		}
-		if idx := g.chooseOption(player, "", KeyColorPrompt, labels); idx >= 0 && idx < len(remaining) {
+		if idx := g.chooseOption(
+			player,
+			"",
+			KeyColorPrompt,
+			labels,
+		); idx >= 0 &&
+			idx < len(remaining) {
 			choice = remaining[idx]
 		}
 	}

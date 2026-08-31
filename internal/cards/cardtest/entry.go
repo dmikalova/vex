@@ -60,7 +60,12 @@ func toEntry(x any) Entry {
 	case engine.CardDefinition:
 		return Entry{def: v}
 	default:
-		panic(fmt.Sprintf("cardtest: cannot use %T as a card entry (want a card definition or ct.Bind/ct.Upgraded)", x))
+		panic(
+			fmt.Sprintf(
+				"cardtest: cannot use %T as a card entry (want a card definition or ct.Bind/ct.Upgraded)",
+				x,
+			),
+		)
 	}
 }
 
@@ -72,6 +77,11 @@ func toUpgrade(x any) upgrade {
 	case engine.CardDefinition:
 		return upgrade{def: v}
 	default:
-		panic(fmt.Sprintf("cardtest: cannot use %T as an upgrade (want a card definition or ct.Bind)", x))
+		panic(
+			fmt.Sprintf(
+				"cardtest: cannot use %T as an upgrade (want a card definition or ct.Bind)",
+				x,
+			),
+		)
 	}
 }

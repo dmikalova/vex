@@ -23,7 +23,9 @@ func TestKindrithLongshot(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{House: card.House.Untamed, InPlay: ct.Cards(KindrithLongshot)},
 			P2: ct.Side{
-				InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5)))),
+				InPlay: ct.Cards(
+					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5))),
+				),
 			},
 		})
 

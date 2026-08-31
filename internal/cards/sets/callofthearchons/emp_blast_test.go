@@ -23,7 +23,10 @@ func TestEMPBlast(t *testing.T) {
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&marsGuy, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3))),
-					ct.Bind(&robot, ct.Creature(ct.OfHouse(card.House.Logos), ct.Power(3), ct.Traits("Robot"))),
+					ct.Bind(
+						&robot,
+						ct.Creature(ct.OfHouse(card.House.Logos), ct.Power(3), ct.Traits("Robot")),
+					),
 					ct.Bind(&other, ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Power(3))),
 					Cannon,
 				),

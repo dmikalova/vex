@@ -45,7 +45,9 @@ func afterYouPlayText(e Effect) (string, bool) {
 	if !ok {
 		return "", false
 	}
-	return "after you play " + indefinite(houseTypeNoun(it.House, it.Type)) + ", " + cond.Then.Text(), true
+	return "after you play " + indefinite(
+		houseTypeNoun(it.House, it.Type),
+	) + ", " + cond.Then.Text(), true
 }
 
 // afterChooseHouseText folds an AfterChooseHouse ability, whose effect is a
@@ -343,11 +345,29 @@ func drawModifierText(m DrawModifier) string {
 	}
 	switch m.Player {
 	case Controller:
-		return fmt.Sprintf("During your %q step, refill your hand to %d %s %s.", "draw cards", n, word, noun)
+		return fmt.Sprintf(
+			"During your %q step, refill your hand to %d %s %s.",
+			"draw cards",
+			n,
+			word,
+			noun,
+		)
 	case Opponent:
-		return fmt.Sprintf("During their %q step, your opponent refills their hand to %d %s %s.", "draw cards", n, word, noun)
+		return fmt.Sprintf(
+			"During their %q step, your opponent refills their hand to %d %s %s.",
+			"draw cards",
+			n,
+			word,
+			noun,
+		)
 	default: // EachPlayer
-		return fmt.Sprintf("During their %q step, each player refills their hand to %d %s %s.", "draw cards", n, word, noun)
+		return fmt.Sprintf(
+			"During their %q step, each player refills their hand to %d %s %s.",
+			"draw cards",
+			n,
+			word,
+			noun,
+		)
 	}
 }
 
@@ -400,7 +420,11 @@ func destructionReplacementText(def *CardDefinition) string {
 	if !r.valid() || r.When != EventCreatureDestroyed {
 		return ""
 	}
-	return "If this creature would be destroyed, instead " + strings.ReplaceAll(r.With.Text(), SelfName, def.Name)
+	return "If this creature would be destroyed, instead " + strings.ReplaceAll(
+		r.With.Text(),
+		SelfName,
+		def.Name,
+	)
 }
 
 // grantedText renders the triggered abilities an Upgrade grants its host,
@@ -412,7 +436,9 @@ func grantedText(m StaticModifier) []string {
 	for i := 0; i < len(m.Granted); i++ {
 		ab := m.Granted[i]
 		if i+1 < len(m.Granted) && isFightReapPair(ab, m.Granted[i+1]) {
-			body := capitalizeFirst(abilityTextWithNames(ab.Effect.Text(), "this creature", "this upgrade"))
+			body := capitalizeFirst(
+				abilityTextWithNames(ab.Effect.Text(), "this creature", "this upgrade"),
+			)
 			lines = append(lines, `This creature gains, "Fight/Reap: `+body+`."`)
 			i++ // the partner prints as part of this line
 			continue
@@ -490,10 +516,20 @@ func restrictionText(r Restrictions) []string {
 		case EachPlayer:
 			who = "Each player"
 		}
-		lines = append(lines, fmt.Sprintf("%s cannot play more than %d cards each turn.", who, l.Amount))
+		lines = append(
+			lines,
+			fmt.Sprintf("%s cannot play more than %d cards each turn.", who, l.Amount),
+		)
 	}
 	if t := r.Toll; t.Amount > 0 {
-		lines = append(lines, fmt.Sprintf("Your opponent must give you %d Æmber in order to %s.", t.Amount, t.Action.phrase()))
+		lines = append(
+			lines,
+			fmt.Sprintf(
+				"Your opponent must give you %d Æmber in order to %s.",
+				t.Amount,
+				t.Action.phrase(),
+			),
+		)
 	}
 	return lines
 }
@@ -526,7 +562,12 @@ func playPermissionText(p PlayPermission) string {
 	if p.count() != 1 {
 		noun += "s"
 	}
-	return fmt.Sprintf("During each turn in which %s is not your active house, you may play %s %s.", p.House, countWord(p.count()), noun)
+	return fmt.Sprintf(
+		"During each turn in which %s is not your active house, you may play %s %s.",
+		p.House,
+		countWord(p.count()),
+		noun,
+	)
 }
 
 // countWord renders a small count as an English word ("one") for the common
@@ -583,7 +624,11 @@ func attackDamageText(def *CardDefinition) string {
 	case ad.Fixed:
 		return fmt.Sprintf("%s deals %d damage when fighting.", def.Name, ad.Amount)
 	case ad.Amount != 0 && ad.FlankOnly:
-		return fmt.Sprintf("%s deals +%d Damage while attacking an enemy creature on the flank.", def.Name, ad.Amount)
+		return fmt.Sprintf(
+			"%s deals +%d Damage while attacking an enemy creature on the flank.",
+			def.Name,
+			ad.Amount,
+		)
 	case ad.Amount != 0:
 		return fmt.Sprintf("%s deals +%d Damage when fighting.", def.Name, ad.Amount)
 	default:

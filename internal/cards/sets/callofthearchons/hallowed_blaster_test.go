@@ -20,8 +20,11 @@ func TestHallowedBlaster(t *testing.T) {
 		var wounded ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.Sanctum,
-				InPlay: ct.Cards(HallowedBlaster, ct.Bind(&wounded, ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Power(6)))),
+				House: card.House.Sanctum,
+				InPlay: ct.Cards(
+					HallowedBlaster,
+					ct.Bind(&wounded, ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Power(6))),
+				),
 			},
 		})
 		wounded.Damaged(4)

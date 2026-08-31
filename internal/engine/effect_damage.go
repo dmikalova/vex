@@ -181,7 +181,11 @@ type SplashDamage struct {
 
 // Text renders the effect.
 func (e SplashDamage) Text() string {
-	return fmt.Sprintf("deal %d damage to a creature that is not on a flank and %d damage to each of its neighbors", e.Amount, e.Splash)
+	return fmt.Sprintf(
+		"deal %d damage to a creature that is not on a flank and %d damage to each of its neighbors",
+		e.Amount,
+		e.Splash,
+	)
 }
 
 // Resolve chooses a non-flank creature, then damages it and its neighbors as one

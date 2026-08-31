@@ -22,7 +22,10 @@ func TestBloodOfTitans(t *testing.T) {
 			P1: ct.Side{
 				House: card.House.Brobnar,
 				InPlay: ct.Cards(
-					ct.Upgraded(ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(4))), BloodOfTitans),
+					ct.Upgraded(
+						ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(4))),
+						BloodOfTitans,
+					),
 				),
 			},
 		})

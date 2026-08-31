@@ -6,7 +6,17 @@ import "testing"
 
 func TestPlayCreatureEntersStunned(t *testing.T) {
 	g := started(t)
-	g.AddToHand(NewCard("Stunner", Brobnar, Creature, Common, WithPower(3), WithEntersPlay(Stun{Target: Target{Kind: TargetThisCreature}})), 0)
+	g.AddToHand(
+		NewCard(
+			"Stunner",
+			Brobnar,
+			Creature,
+			Common,
+			WithPower(3),
+			WithEntersPlay(Stun{Target: Target{Kind: TargetThisCreature}}),
+		),
+		0,
+	)
 	id, err := g.PlayCreature(0, handIdx(g, 0, "Stunner"), false)
 	if err != nil {
 		t.Fatalf("PlayCreature: %v", err)
@@ -301,7 +311,11 @@ func TestKeyCost(t *testing.T) {
 		t.Errorf("keyCost(0) = %d, want %d", c, KeyCost+1)
 	}
 	if c := g.keyCost(1); c != KeyCost {
-		t.Errorf("keyCost(1) = %d, want %d (opponent-only change spares its controller)", c, KeyCost)
+		t.Errorf(
+			"keyCost(1) = %d, want %d (opponent-only change spares its controller)",
+			c,
+			KeyCost,
+		)
 	}
 
 	// An upgrade granting the change on player 1's creature stacks with it.
@@ -317,12 +331,23 @@ func TestKeyCost(t *testing.T) {
 	g2.AddToBattleline(NewCard("Toll", Dis, Creature, Common, WithPower(3),
 		WithKeyCost(NewKeyCostChange(EachPlayer, 1))), 0)
 	if g2.keyCost(0) != KeyCost+1 || g2.keyCost(1) != KeyCost+1 {
-		t.Errorf("each-player change = %d/%d, want %d each", g2.keyCost(0), g2.keyCost(1), KeyCost+1)
+		t.Errorf(
+			"each-player change = %d/%d, want %d each",
+			g2.keyCost(0),
+			g2.keyCost(1),
+			KeyCost+1,
+		)
 	}
 	g2.AddToBattleline(NewCard("SelfTax", Dis, Creature, Common, WithPower(3),
 		WithKeyCost(NewKeyCostChange(Controller, 2))), 1) // Controller = the card's owner
 	if g2.keyCost(1) != KeyCost+1+2 || g2.keyCost(0) != KeyCost+1 {
-		t.Errorf("unset (controller) change = %d/%d, want %d/%d", g2.keyCost(0), g2.keyCost(1), KeyCost+1, KeyCost+3)
+		t.Errorf(
+			"unset (controller) change = %d/%d, want %d/%d",
+			g2.keyCost(0),
+			g2.keyCost(1),
+			KeyCost+1,
+			KeyCost+3,
+		)
 	}
 
 	// Forging respects the raised cost: one Æmber short forges nothing.
@@ -379,7 +404,10 @@ func TestEndTurnReadyDrawAndArmorRefresh(t *testing.T) {
 	g := started(t)
 	// A creature with an armor upgrade, exhausted and damaged; plus an artifact.
 	host := g.AddToBattleline(testCreature("host", 5, WithArmor(1)), 0)
-	g.AddToHand(NewCard("Plating", Brobnar, Upgrade, Common, WithStatic(StaticModifier{ArmorBonus: 2})), 0)
+	g.AddToHand(
+		NewCard("Plating", Brobnar, Upgrade, Common, WithStatic(StaticModifier{ArmorBonus: 2})),
+		0,
+	)
 	if _, err := g.PlayUpgrade(0, handIdx(g, 0, "Plating")); err != nil {
 		t.Fatal(err)
 	}

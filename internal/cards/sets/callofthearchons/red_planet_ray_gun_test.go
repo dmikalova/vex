@@ -22,7 +22,10 @@ func TestRedPlanetRayGun(t *testing.T) {
 			P1: ct.Side{
 				House: card.House.Mars,
 				InPlay: ct.Cards(
-					ct.Upgraded(ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5))), RedPlanetRayGun),
+					ct.Upgraded(
+						ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5))),
+						RedPlanetRayGun,
+					),
 					ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5)),
 				),
 			},

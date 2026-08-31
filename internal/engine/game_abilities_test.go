@@ -10,7 +10,11 @@ import "testing"
 
 func TestReapAndActionAbility(t *testing.T) {
 	g := started(t)
-	reaper := testCreature("reaper", 2, WithAbility(TriggerAfterReap, GainAember{Player: Controller, Amount: 1}))
+	reaper := testCreature(
+		"reaper",
+		2,
+		WithAbility(TriggerAfterReap, GainAember{Player: Controller, Amount: 1}),
+	)
 	id := g.AddToBattleline(reaper, 0)
 	if err := g.Reap(0, id); err != nil {
 		t.Fatalf("Reap: %v", err)
@@ -24,7 +28,11 @@ func TestReapAndActionAbility(t *testing.T) {
 	}
 
 	// Action ability.
-	actor := testCreature("actor", 2, WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 3}))
+	actor := testCreature(
+		"actor",
+		2,
+		WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 3}),
+	)
 	aid := g.AddToBattleline(actor, 0)
 	if err := g.UseAction(0, aid); err != nil {
 		t.Fatalf("UseAction: %v", err)
@@ -45,7 +53,14 @@ func TestReapAndActionAbility(t *testing.T) {
 
 func TestTimesUsedThisTurn(t *testing.T) {
 	g := started(t)
-	user := g.AddToBattleline(testCreature("user", 6, WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 1})), 0)
+	user := g.AddToBattleline(
+		testCreature(
+			"user",
+			6,
+			WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 1}),
+		),
+		0,
+	)
 	defender := g.AddToBattleline(testCreature("defender", 1), 1)
 
 	if err := g.Reap(0, user); err != nil {
@@ -129,7 +144,14 @@ func TestCanUseErrors(t *testing.T) {
 
 func TestAfterCardPlayedTrigger(t *testing.T) {
 	g := started(t)
-	g.AddToBattleline(testCreature("watcher", 3, WithAbility(TriggerAfterCardPlayed, GainAember{Player: Controller, Amount: 1})), 0)
+	g.AddToBattleline(
+		testCreature(
+			"watcher",
+			3,
+			WithAbility(TriggerAfterCardPlayed, GainAember{Player: Controller, Amount: 1}),
+		),
+		0,
+	)
 	g.AddToHand(NewCard("relic", Brobnar, Artifact, Common), 0)
 	if _, err := g.PlayArtifact(0, 0); err != nil {
 		t.Fatalf("PlayArtifact: %v", err)
@@ -198,7 +220,14 @@ func TestStunBehavior(t *testing.T) {
 	}
 
 	// Action: a stunned creature recovers instead of using its action ability.
-	act := g.AddToBattleline(testCreature("stunact", 3, WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 5})), 0)
+	act := g.AddToBattleline(
+		testCreature(
+			"stunact",
+			3,
+			WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 5}),
+		),
+		0,
+	)
 	g.State.Cards[act].Stunned = true
 	before = g.State.Aember[0]
 	if err := g.UseAction(0, act); err != nil {

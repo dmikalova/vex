@@ -26,7 +26,11 @@ func TestQuixoTheAdventurer(t *testing.T) {
 				InPlay: ct.Cards(QuixoTheAdventurer),
 				Deck:   ct.Cards(ct.Bind(&top, ct.Creature(ct.OfHouse(card.House.Logos)))),
 			},
-			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(1))))},
+			P2: ct.Side{
+				InPlay: ct.Cards(
+					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(1))),
+				),
+			},
 		})
 
 		h.P1.Fight(QuixoTheAdventurer, foe)

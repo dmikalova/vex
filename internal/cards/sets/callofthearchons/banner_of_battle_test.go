@@ -20,12 +20,16 @@ func TestBannerOfBattle(t *testing.T) {
 		var friend, enemy ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.Brobnar,
-				Hand:   ct.Cards(BannerOfBattle),
-				InPlay: ct.Cards(ct.Bind(&friend, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(3)))),
+				House: card.House.Brobnar,
+				Hand:  ct.Cards(BannerOfBattle),
+				InPlay: ct.Cards(
+					ct.Bind(&friend, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(3))),
+				),
 			},
 			P2: ct.Side{
-				InPlay: ct.Cards(ct.Bind(&enemy, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(3)))),
+				InPlay: ct.Cards(
+					ct.Bind(&enemy, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(3))),
+				),
 			},
 		})
 

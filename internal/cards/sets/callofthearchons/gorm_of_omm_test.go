@@ -25,7 +25,9 @@ func TestGormOfOmm(t *testing.T) {
 				InPlay: ct.Cards(GormOfOmm),
 			},
 			P2: ct.Side{
-				InPlay: ct.Cards(ct.Bind(&cannon, Cannon)), // the only other artifact, so it is the forced choice
+				InPlay: ct.Cards(
+					ct.Bind(&cannon, Cannon),
+				), // the only other artifact, so it is the forced choice
 			},
 		})
 

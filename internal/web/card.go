@@ -111,7 +111,12 @@ func (c *cardView) Render() app.UI {
 	return div.Body(
 		app.Div().Class("card-name").Body(
 			app.If(c.Emblem != "", func() app.UI {
-				return icon(c.Emblem, "icon-house", "icon-outline", ifCls(c.HouseChanged, "icon-house--changed"))
+				return icon(
+					c.Emblem,
+					"icon-house",
+					"icon-outline",
+					ifCls(c.HouseChanged, "icon-house--changed"),
+				)
 			}),
 			app.Span().Class("card-name-text").Text(c.Title),
 			app.If(c.Stunned, func() app.UI {

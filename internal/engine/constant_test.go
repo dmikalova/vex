@@ -9,8 +9,15 @@ import (
 // and no enemy, and the buff vanishes the moment the source card leaves play.
 func TestConstantAbilityFriendlyTarget(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	banner := g.Register(NewCard("Banner", Brobnar, Artifact, Rare,
-		WithConstantAbility(ConstantAbility{PowerBonus: 1, Target: Target{Kind: TargetEachFriendlyCreature}})), 0)
+	banner := g.Register(NewCard(
+		"Banner",
+		Brobnar,
+		Artifact,
+		Rare,
+		WithConstantAbility(
+			ConstantAbility{PowerBonus: 1, Target: Target{Kind: TargetEachFriendlyCreature}},
+		),
+	), 0)
 	g.State.Artifacts[0].add(banner)
 	friend := g.AddToBattleline(testCreature("friend", 3), 0)
 	enemy := g.AddToBattleline(testCreature("enemy", 3), 1)
@@ -32,8 +39,17 @@ func TestConstantAbilityFriendlyTarget(t *testing.T) {
 // battleline neighbors.
 func TestConstantAbilityNeighboringTarget(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	bulwark := NewCard("Bulwark", Sanctum, Creature, Common, WithPower(4), WithArmor(2),
-		WithConstantAbility(ConstantAbility{ArmorBonus: 2, Target: Target{Kind: TargetEachCreature}.Neighboring()}))
+	bulwark := NewCard(
+		"Bulwark",
+		Sanctum,
+		Creature,
+		Common,
+		WithPower(4),
+		WithArmor(2),
+		WithConstantAbility(
+			ConstantAbility{ArmorBonus: 2, Target: Target{Kind: TargetEachCreature}.Neighboring()},
+		),
+	)
 	left := g.AddToBattleline(testCreature("left", 3), 0)
 	g.AddToBattleline(bulwark, 0)
 	right := g.AddToBattleline(testCreature("right", 3), 0)
@@ -91,8 +107,10 @@ func TestHasTriggerFromConstantAbility(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.AddToBattleline(NewCard("Grantor", Brobnar, Creature, Common, WithPower(3),
 		WithConstantAbility(ConstantAbility{
-			Target:  Target{Kind: TargetEachFriendlyCreature},
-			Granted: []Ability{{Trigger: TriggerAfterReap, Effect: GainAember{Player: Controller, Amount: 1}}},
+			Target: Target{Kind: TargetEachFriendlyCreature},
+			Granted: []Ability{
+				{Trigger: TriggerAfterReap, Effect: GainAember{Player: Controller, Amount: 1}},
+			},
 		})), 0)
 	friend := g.AddToBattleline(testCreature("friend", 3), 0)
 	enemy := g.AddToBattleline(testCreature("enemy", 3), 1)
@@ -127,8 +145,15 @@ func TestHasKeywordFromConstantAbility(t *testing.T) {
 }
 
 func TestConstantText(t *testing.T) {
-	banner := NewCard("Banner", Brobnar, Artifact, Rare,
-		WithConstantAbility(ConstantAbility{PowerBonus: 1, Target: Target{Kind: TargetEachFriendlyCreature}}))
+	banner := NewCard(
+		"Banner",
+		Brobnar,
+		Artifact,
+		Rare,
+		WithConstantAbility(
+			ConstantAbility{PowerBonus: 1, Target: Target{Kind: TargetEachFriendlyCreature}},
+		),
+	)
 	if got := constantText(&banner); got != "Each friendly creature gains +1 power." {
 		t.Errorf("friendly constant text = %q", got)
 	}
@@ -136,8 +161,16 @@ func TestConstantText(t *testing.T) {
 		t.Error("RenderCardText should include the constant-ability line")
 	}
 
-	bulwark := NewCard("Bulwark", Sanctum, Creature, Common, WithPower(4),
-		WithConstantAbility(ConstantAbility{ArmorBonus: 2, Target: Target{Kind: TargetEachCreature}.Neighboring()}))
+	bulwark := NewCard(
+		"Bulwark",
+		Sanctum,
+		Creature,
+		Common,
+		WithPower(4),
+		WithConstantAbility(
+			ConstantAbility{ArmorBonus: 2, Target: Target{Kind: TargetEachCreature}.Neighboring()},
+		),
+	)
 	if got := constantText(&bulwark); got != "Each neighboring creature gains +2 armor." {
 		t.Errorf("neighboring constant text = %q", got)
 	}
@@ -148,19 +181,49 @@ func TestConstantText(t *testing.T) {
 		t.Errorf("untargeted constant text = %q", got)
 	}
 
-	table := NewCard("Table", Sanctum, Artifact, Rare,
-		WithConstantAbility(ConstantAbility{PowerBonus: 1, Keywords: []Keyword{Taunt}, Target: Target{Kind: TargetEachFriendlyCreature}}))
+	table := NewCard(
+		"Table",
+		Sanctum,
+		Artifact,
+		Rare,
+		WithConstantAbility(
+			ConstantAbility{
+				PowerBonus: 1,
+				Keywords:   []Keyword{Taunt},
+				Target:     Target{Kind: TargetEachFriendlyCreature},
+			},
+		),
+	)
 	if got := constantText(&table); got != "Each friendly creature gains +1 power and taunt." {
 		t.Errorf("keyword constant text = %q", got)
 	}
-	kwOnly := NewCard("Halo", Untamed, Creature, Common, WithPower(4),
-		WithConstantAbility(ConstantAbility{Keywords: []Keyword{Skirmish}, Target: Target{Kind: TargetEachFriendlyCreature}}))
+	kwOnly := NewCard(
+		"Halo",
+		Untamed,
+		Creature,
+		Common,
+		WithPower(4),
+		WithConstantAbility(
+			ConstantAbility{
+				Keywords: []Keyword{Skirmish},
+				Target:   Target{Kind: TargetEachFriendlyCreature},
+			},
+		),
+	)
 	if got := constantText(&kwOnly); got != "Each friendly creature gains skirmish." {
 		t.Errorf("keyword-only constant text = %q", got)
 	}
 
-	flank := NewCard("Staunch Knight", Sanctum, Creature, Common, WithPower(4),
-		WithConstantAbility(ConstantAbility{PowerBonus: 2, Target: Target{Kind: TargetThisCreature}.OnFlank()}))
+	flank := NewCard(
+		"Staunch Knight",
+		Sanctum,
+		Creature,
+		Common,
+		WithPower(4),
+		WithConstantAbility(
+			ConstantAbility{PowerBonus: 2, Target: Target{Kind: TargetThisCreature}.OnFlank()},
+		),
+	)
 	if got := constantText(&flank); got != "Staunch Knight gains +2 power while it is on a flank." {
 		t.Errorf("flank self constant text = %q", got)
 	}

@@ -21,12 +21,16 @@ func TestEarthshaker(t *testing.T) {
 		var weak, strong ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.Brobnar,
-				Hand:   ct.Cards(Earthshaker),
-				InPlay: ct.Cards(ct.Bind(&weak, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(2)))),
+				House: card.House.Brobnar,
+				Hand:  ct.Cards(Earthshaker),
+				InPlay: ct.Cards(
+					ct.Bind(&weak, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(2))),
+				),
 			},
 			P2: ct.Side{
-				InPlay: ct.Cards(ct.Bind(&strong, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(5)))),
+				InPlay: ct.Cards(
+					ct.Bind(&strong, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(5))),
+				),
 			},
 		})
 

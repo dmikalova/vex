@@ -8,7 +8,11 @@ func TestDamageIfDestroyed(t *testing.T) {
 		weak := g.AddToBattleline(testCreature("weak", 2), 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 
-		e := DamageIfDestroyed{Amount: 3, Target: Target{Kind: TargetChosenEnemyCreature}, Then: GainAember{Player: Controller, Amount: 1}}
+		e := DamageIfDestroyed{
+			Amount: 3,
+			Target: Target{Kind: TargetChosenEnemyCreature},
+			Then:   GainAember{Player: Controller, Amount: 1},
+		}
 		if e.Text() != "deal 3 damage to an enemy creature. If this damage destroys that creature, gain 1 Æmber" {
 			t.Errorf("text = %q", e.Text())
 		}
@@ -26,7 +30,13 @@ func TestDamageIfDestroyed(t *testing.T) {
 		tough := g.AddToBattleline(testCreature("tough", 6), 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 
-		DamageIfDestroyed{Amount: 2, Target: Target{Kind: TargetChosenEnemyCreature}, Then: GainAember{Player: Controller, Amount: 1}}.Resolve(ctx)
+		DamageIfDestroyed{
+			Amount: 2,
+			Target: Target{Kind: TargetChosenEnemyCreature},
+			Then:   GainAember{Player: Controller, Amount: 1},
+		}.Resolve(
+			ctx,
+		)
 		if !resolverInPlay(ctx, tough) {
 			t.Error("tough creature should survive")
 		}
@@ -40,7 +50,13 @@ func TestDamageIfDestroyed(t *testing.T) {
 		weak := g.AddToBattleline(testCreature("weak", 1), 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 
-		DamageIfDestroyed{Amount: 3, Target: Target{Kind: TargetChosenEnemyCreature}, Then: PurgeCreature{Target: Target{Kind: TargetTriggeringCreature}}}.Resolve(ctx)
+		DamageIfDestroyed{
+			Amount: 3,
+			Target: Target{Kind: TargetChosenEnemyCreature},
+			Then:   PurgeCreature{Target: Target{Kind: TargetTriggeringCreature}},
+		}.Resolve(
+			ctx,
+		)
 		if g.State.Discard[1].contains(weak) {
 			t.Error("the destroyed creature should be purged out of the discard pile")
 		}
@@ -49,7 +65,13 @@ func TestDamageIfDestroyed(t *testing.T) {
 	t.Run("no target is a no-op", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
-		DamageIfDestroyed{Amount: 3, Target: Target{Kind: TargetChosenEnemyCreature}, Then: GainAember{Player: Controller, Amount: 1}}.Resolve(ctx)
+		DamageIfDestroyed{
+			Amount: 3,
+			Target: Target{Kind: TargetChosenEnemyCreature},
+			Then:   GainAember{Player: Controller, Amount: 1},
+		}.Resolve(
+			ctx,
+		)
 		if g.State.Aember[0] != 0 {
 			t.Error("no target should not run the follow-up")
 		}
@@ -74,7 +96,11 @@ func TestDealDamagePerCount(t *testing.T) {
 	victim := g.AddToBattleline(testCreature("victim", 10), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := DealDamage{Amount: 1, Per: InPlay{Player: Controller, Type: Creature}, Target: Target{Kind: TargetEachEnemyCreature}}
+	e := DealDamage{
+		Amount: 1,
+		Per:    InPlay{Player: Controller, Type: Creature},
+		Target: Target{Kind: TargetEachEnemyCreature},
+	}
 	if e.Text() != "for each friendly creature in play, deal 1 damage to each enemy creature" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -176,7 +202,12 @@ func TestFlankWalkDamage(t *testing.T) {
 		}
 		e.Resolve(ctx)
 		if g.Damage(left) != 3 || g.Damage(mid) != 2 || g.Damage(right) != 1 {
-			t.Errorf("damage = %d/%d/%d, want 3/2/1", g.Damage(left), g.Damage(mid), g.Damage(right))
+			t.Errorf(
+				"damage = %d/%d/%d, want 3/2/1",
+				g.Damage(left),
+				g.Damage(mid),
+				g.Damage(right),
+			)
 		}
 	})
 
@@ -188,7 +219,12 @@ func TestFlankWalkDamage(t *testing.T) {
 		g.SetChooser(0, &idQueueChooser{ids: []LocalID{right}})
 		FlankWalkDamage{Amounts: []int{3, 2, 1}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 		if g.Damage(right) != 3 || g.Damage(mid) != 2 || g.Damage(left) != 1 {
-			t.Errorf("damage = %d/%d/%d, want 3/2/1", g.Damage(right), g.Damage(mid), g.Damage(left))
+			t.Errorf(
+				"damage = %d/%d/%d, want 3/2/1",
+				g.Damage(right),
+				g.Damage(mid),
+				g.Damage(left),
+			)
 		}
 	})
 

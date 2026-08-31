@@ -21,7 +21,10 @@ func TestDuskrunner(t *testing.T) {
 			P1: ct.Side{
 				House: card.House.Shadows,
 				InPlay: ct.Cards(
-					ct.Upgraded(ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Shadows), ct.Power(3))), Duskrunner),
+					ct.Upgraded(
+						ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Shadows), ct.Power(3))),
+						Duskrunner,
+					),
 				),
 			},
 			P2: ct.Side{Amber: 2},

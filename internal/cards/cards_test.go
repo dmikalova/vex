@@ -43,7 +43,11 @@ func TestEveryCreatureAndArtifactHasTrait(t *testing.T) {
 			continue
 		}
 		if len(c.Traits) == 0 {
-			t.Errorf("%s (%s) has no trait; every creature and artifact needs at least one", c.Name, c.Type)
+			t.Errorf(
+				"%s (%s) has no trait; every creature and artifact needs at least one",
+				c.Name,
+				c.Type,
+			)
 		}
 	}
 }

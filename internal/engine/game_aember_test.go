@@ -14,7 +14,12 @@ func TestCaptureOpponentAemberReplacement(t *testing.T) {
 		src := g.AddToBattleline(testCreature("src", 1), 0)
 		spider := g.AddToBattleline(testEtherSpider(), 1)
 
-		GainAember{Player: Controller, Amount: 2}.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+		GainAember{
+			Player: Controller,
+			Amount: 2,
+		}.Resolve(
+			&EffectContext{Resolver: g, Source: src, Controller: 0},
+		)
 
 		if g.Aember(0) != 0 {
 			t.Errorf("player Æmber = %d, want 0", g.Aember(0))
@@ -24,18 +29,29 @@ func TestCaptureOpponentAemberReplacement(t *testing.T) {
 		}
 	})
 
-	t.Run("only the incoming gain is captured; the pool owner keeps existing Æmber", func(t *testing.T) {
-		g := started(t)
-		src := g.AddToBattleline(testCreature("src", 1), 0)
-		g.AddToBattleline(testEtherSpider(), 1)
-		g.State.Aember[0] = 5 // Æmber the player already holds
+	t.Run(
+		"only the incoming gain is captured; the pool owner keeps existing Æmber",
+		func(t *testing.T) {
+			g := started(t)
+			src := g.AddToBattleline(testCreature("src", 1), 0)
+			g.AddToBattleline(testEtherSpider(), 1)
+			g.State.Aember[0] = 5 // Æmber the player already holds
 
-		GainAember{Player: Controller, Amount: 2}.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+			GainAember{
+				Player: Controller,
+				Amount: 2,
+			}.Resolve(
+				&EffectContext{Resolver: g, Source: src, Controller: 0},
+			)
 
-		if g.Aember(0) != 5 {
-			t.Errorf("player Æmber = %d, want 5 (existing pool untouched, only the gain captured)", g.Aember(0))
-		}
-	})
+			if g.Aember(0) != 5 {
+				t.Errorf(
+					"player Æmber = %d, want 5 (existing pool untouched, only the gain captured)",
+					g.Aember(0),
+				)
+			}
+		},
+	)
 
 	t.Run("captures reap Æmber instead of adding it to the opponent pool", func(t *testing.T) {
 		g := started(t)
@@ -69,21 +85,24 @@ func TestCaptureOpponentAemberReplacement(t *testing.T) {
 		}
 	})
 
-	t.Run("captures lasting reaction gains instead of adding them to the opponent pool", func(t *testing.T) {
-		g := started(t)
-		played := g.AddToBattleline(testCreature("played", 2), 0)
-		spider := g.AddToBattleline(testEtherSpider(), 1)
-		g.AddLasting(EventCreaturePlayed, actGainAember, 0, 2)
+	t.Run(
+		"captures lasting reaction gains instead of adding them to the opponent pool",
+		func(t *testing.T) {
+			g := started(t)
+			played := g.AddToBattleline(testCreature("played", 2), 0)
+			spider := g.AddToBattleline(testEtherSpider(), 1)
+			g.AddLasting(EventCreaturePlayed, actGainAember, 0, 2)
 
-		g.emitLasting(EventCreaturePlayed, 0, played)
+			g.emitLasting(EventCreaturePlayed, 0, played)
 
-		if g.Aember(0) != 0 {
-			t.Errorf("player Æmber = %d, want 0", g.Aember(0))
-		}
-		if g.AmberOn(spider) != 2 {
-			t.Errorf("spider Æmber = %d, want 2", g.AmberOn(spider))
-		}
-	})
+			if g.Aember(0) != 0 {
+				t.Errorf("player Æmber = %d, want 0", g.Aember(0))
+			}
+			if g.AmberOn(spider) != 2 {
+				t.Errorf("spider Æmber = %d, want 2", g.AmberOn(spider))
+			}
+		},
+	)
 
 	t.Run("does not redirect steal or capture movements", func(t *testing.T) {
 		g := started(t)

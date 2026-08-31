@@ -24,7 +24,14 @@ func TestHorsemanOfPestilence(t *testing.T) {
 			P2: ct.Side{
 				InPlay: ct.Cards(
 					ct.Bind(&normal, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3))),
-					ct.Bind(&horseman, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3), ct.Traits("Horseman"))),
+					ct.Bind(
+						&horseman,
+						ct.Creature(
+							ct.OfHouse(card.House.Mars),
+							ct.Power(3),
+							ct.Traits("Horseman"),
+						),
+					),
 				),
 			},
 		})

@@ -19,9 +19,12 @@ func TestScreamingCave(t *testing.T) {
 	t.Run("shuffles hand and discard pile into the deck", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:   card.House.Dis,
-				InPlay:  ct.Cards(ScreamingCave),
-				Hand:    ct.Cards(ct.Creature(ct.OfHouse(card.House.Dis)), ct.Creature(ct.OfHouse(card.House.Dis))),
+				House:  card.House.Dis,
+				InPlay: ct.Cards(ScreamingCave),
+				Hand: ct.Cards(
+					ct.Creature(ct.OfHouse(card.House.Dis)),
+					ct.Creature(ct.OfHouse(card.House.Dis)),
+				),
 				Discard: ct.Cards(ct.Creature(ct.OfHouse(card.House.Dis))),
 			},
 		})

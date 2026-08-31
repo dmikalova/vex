@@ -23,7 +23,10 @@ func TestCommanderRemiel(t *testing.T) {
 				House: card.House.Sanctum,
 				InPlay: ct.Cards(
 					CommanderRemiel,
-					ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3)), // the only non-Sanctum friendly
+					ct.Creature(
+						ct.OfHouse(card.House.Mars),
+						ct.Power(3),
+					), // the only non-Sanctum friendly
 				),
 			},
 		})

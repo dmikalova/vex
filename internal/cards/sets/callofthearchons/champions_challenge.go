@@ -18,7 +18,9 @@ var ChampionsChallenge = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.Destroy{Target: card.Target.EachEnemyCreature.Selector(card.ExceptMostPowerful)},
-			card.Destroy{Target: card.Target.EachFriendlyCreature.Selector(card.ExceptMostPowerful)},
+			card.Destroy{
+				Target: card.Target.EachFriendlyCreature.Selector(card.ExceptMostPowerful),
+			},
 			card.OnChooseCreature{
 				Target: card.Target.FriendlyCreature,
 				Verbs:  []card.CreatureVerb{card.ReadyVerb{}, card.FightVerb{}},

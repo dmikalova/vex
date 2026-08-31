@@ -24,8 +24,14 @@ func TestHorsemanOfDeath(t *testing.T) {
 				House: card.House.Sanctum,
 				Hand:  ct.Cards(HorsemanOfDeath),
 				Discard: ct.Cards(
-					ct.Bind(&rider, ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Traits("Horseman"))),
-					ct.Bind(&other, ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Traits("Human"))),
+					ct.Bind(
+						&rider,
+						ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Traits("Horseman")),
+					),
+					ct.Bind(
+						&other,
+						ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Traits("Human")),
+					),
 				),
 			},
 		})

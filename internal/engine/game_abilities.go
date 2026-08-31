@@ -106,7 +106,12 @@ func (g *Game) gainReapAember(p int, source LocalID) {
 		return
 	}
 	if capturer, ok := g.gainAember(p, 1); ok {
-		g.logf("%s reaps with %s, but %s captures the Æmber", g.names[p], g.Name(source), g.Name(capturer))
+		g.logf(
+			"%s reaps with %s, but %s captures the Æmber",
+			g.names[p],
+			g.Name(source),
+			g.Name(capturer),
+		)
 		return
 	}
 	g.logf("%s reaps with %s (+1 Æmber)", g.names[p], g.Name(source))
@@ -296,9 +301,9 @@ func (g *Game) emitCreatureEnters(entered LocalID) {
 	}
 }
 
-// emitEnemyDestroyed fires the persistent "each time an enemy creature is
-// destroyed during your turn" reaction (Pile of Skulls) on the active player's
-// in-play cards. It fires only for the active player, and only when the destroyed
+// emitEnemyDestroyed fires the persistent "after an enemy creature is destroyed
+// during your turn" reaction (Pile of Skulls) on the active player's in-play
+// cards. It fires only for the active player, and only when the destroyed
 // creature is one of their enemies, so the reaction is naturally limited to your
 // own turn and to enemy creatures.
 func (g *Game) emitEnemyDestroyed(destroyed LocalID) {

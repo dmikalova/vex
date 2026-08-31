@@ -24,11 +24,13 @@ func TestReveal(t *testing.T) {
 	if ctx.Produced.Revealed != 2 {
 		t.Errorf("revealed = %d, want 2", ctx.Produced.Revealed)
 	}
-	if cnt := (CardsRevealed{}); cnt.Value(ctx) != 2 || cnt.CountText() != "card revealed this way" {
+	if cnt := (CardsRevealed{}); cnt.Value(ctx) != 2 ||
+		cnt.CountText() != "card revealed this way" {
 		t.Errorf("CardsRevealed = %d / %q", cnt.Value(ctx), cnt.CountText())
 	}
 	line := g.Log[len(g.Log)-1]
-	if !strings.Contains(line, "Alice reveals") || !strings.Contains(line, "Marauder") || !strings.Contains(line, "Missile") {
+	if !strings.Contains(line, "Alice reveals") || !strings.Contains(line, "Marauder") ||
+		!strings.Contains(line, "Missile") {
 		t.Errorf("log = %q, want the revealed Mars cards", line)
 	}
 	if strings.Contains(line, "Brute") {

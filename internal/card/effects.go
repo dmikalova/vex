@@ -127,6 +127,7 @@ type (
 	Overwhelmed             = engine.Overwhelmed
 	ItIsOfHouse             = engine.ItIsOfHouse
 	ItIs                    = engine.ItIs
+	ItIsOffIdentity         = engine.ItIsOffIdentity
 	ChoseHouse              = engine.ChoseHouse
 )
 
@@ -174,7 +175,6 @@ type (
 	MayUseFriendlyHouse                      = engine.MayUseFriendlyHouse
 	GrantFightForChosenHouse                 = engine.GrantFightForChosenHouse
 	BelongToHouse                            = engine.BelongToHouse
-	BelongToHouseIfOffIdentity               = engine.BelongToHouseIfOffIdentity
 	ForceOpponentActiveHouse                 = engine.ForceOpponentActiveHouse
 	ForgeKey                                 = engine.ForgeKey
 	GiveRemainingAemberAfterOpponentForgeKey = engine.GiveRemainingAemberAfterOpponentForgeKey

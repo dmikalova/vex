@@ -27,7 +27,9 @@ func TestGauntletOfCommand(t *testing.T) {
 				),
 			},
 			P2: ct.Side{
-				InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(2)))),
+				InPlay: ct.Cards(
+					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(2))),
+				),
 			},
 		})
 

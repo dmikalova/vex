@@ -20,9 +20,11 @@ func TestPoisonWave(t *testing.T) {
 		var ally, foe, weakFoe ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.Shadows,
-				Hand:   ct.Cards(PoisonWave),
-				InPlay: ct.Cards(ct.Bind(&ally, ct.Creature(ct.OfHouse(card.House.Shadows), ct.Power(4)))),
+				House: card.House.Shadows,
+				Hand:  ct.Cards(PoisonWave),
+				InPlay: ct.Cards(
+					ct.Bind(&ally, ct.Creature(ct.OfHouse(card.House.Shadows), ct.Power(4))),
+				),
 			},
 			P2: ct.Side{
 				InPlay: ct.Cards(

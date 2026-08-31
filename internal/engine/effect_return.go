@@ -153,7 +153,10 @@ type ReturnNamedToHand struct {
 // Text renders the effect, e.g. "put an Urchin from play or from your discard pile
 // into your hand".
 func (e ReturnNamedToHand) Text() string {
-	return fmt.Sprintf("put %s from play or from your discard pile into your hand", indefinite(e.Name))
+	return fmt.Sprintf(
+		"put %s from play or from your discard pile into your hand",
+		indefinite(e.Name),
+	)
 }
 
 // Resolve gathers every friendly in-play creature and discard-pile card with the
@@ -161,7 +164,10 @@ func (e ReturnNamedToHand) Text() string {
 // zone it is in.
 func (e ReturnNamedToHand) Resolve(ctx *EffectContext) {
 	inPlay := nameMatches(ctx, ctx.Resolver.Battleline(ctx.Controller), e.Name)
-	candidates := slices.Concat(inPlay, nameMatches(ctx, ctx.Resolver.Discard(ctx.Controller), e.Name))
+	candidates := slices.Concat(
+		inPlay,
+		nameMatches(ctx, ctx.Resolver.Discard(ctx.Controller), e.Name),
+	)
 	id, ok := ctx.ChooseCreature("Choose "+indefinite(e.Name)+" to put into your hand", candidates)
 	if !ok {
 		return

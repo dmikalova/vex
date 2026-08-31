@@ -150,7 +150,16 @@ func (g *Game) AddLasting(on Event, do lastingAction, controller, amount int) {
 // occurs — and, when house is set, only for a subject of that house — then removes
 // itself (Blypyp readying the next Mars creature you play).
 func (g *Game) AddLastingOnce(on Event, do lastingAction, controller, amount int, house House) {
-	g.addLasting(LastingEffect{On: on, Do: do, Controller: int8(controller), Amount: int8(amount), House: house, Once: true})
+	g.addLasting(
+		LastingEffect{
+			On:         on,
+			Do:         do,
+			Controller: int8(controller),
+			Amount:     int8(amount),
+			House:      house,
+			Once:       true,
+		},
+	)
 }
 
 // addLasting appends a lasting record, dropping it silently when the registry is
@@ -234,31 +243,53 @@ func (g *Game) removeLasting(target LastingEffect) {
 func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 	switch le.Do {
 	case actDealDamage:
-		DealDamage{Amount: int(le.Amount), Target: Target{Kind: TargetChosenEnemyCreature}}.Resolve(&EffectContext{
-			Resolver:   g,
-			Source:     subject,
-			Controller: actor,
-		})
+		DealDamage{
+			Amount: int(le.Amount),
+			Target: Target{Kind: TargetChosenEnemyCreature},
+		}.Resolve(
+			&EffectContext{
+				Resolver:   g,
+				Source:     subject,
+				Controller: actor,
+			},
+		)
 	case actReadyPlayed:
 		g.State.Cards[subject].Exhausted = false
 		g.logf("%s is readied", g.Name(subject))
 	case actCapture:
-		CaptureAember{Amount: int(le.Amount), Target: Target{Kind: TargetTriggeringCreature}, Source: Opponent}.Resolve(&EffectContext{
-			Resolver:   g,
-			Source:     subject,
-			Controller: actor,
-			It:         subject,
-			HasIt:      true,
-		})
+		CaptureAember{
+			Amount: int(le.Amount),
+			Target: Target{Kind: TargetTriggeringCreature},
+			Source: Opponent,
+		}.Resolve(
+			&EffectContext{
+				Resolver:   g,
+				Source:     subject,
+				Controller: actor,
+				It:         subject,
+				HasIt:      true,
+			},
+		)
 	case actGiveRemainingAember:
 		beneficiary := 1 - actor
 		amount := g.State.Aember[actor]
 		g.State.Aember[actor] = 0
 		g.State.Aember[beneficiary] += amount
-		g.logf("%s gives %d Æmber to %s after forging a key", g.names[actor], amount, g.names[beneficiary])
+		g.logf(
+			"%s gives %d Æmber to %s after forging a key",
+			g.names[actor],
+			amount,
+			g.names[beneficiary],
+		)
 	default: // actGainAember
 		if capturer, ok := g.gainAember(actor, int(le.Amount)); ok {
-			g.logf("%s captures %d Æmber instead of %s gaining it (%s)", g.Name(capturer), le.Amount, g.names[actor], le.On.clause())
+			g.logf(
+				"%s captures %d Æmber instead of %s gaining it (%s)",
+				g.Name(capturer),
+				le.Amount,
+				g.names[actor],
+				le.On.clause(),
+			)
 			return
 		}
 		g.logf("%s gains %d Æmber (%s)", g.names[actor], le.Amount, le.On.clause())

@@ -16,7 +16,11 @@ func (g *Game) gainAember(player, amount int) (LocalID, bool) {
 }
 
 // GainAember is the Resolver entry point for gainAember.
-func (g *Game) GainAember(player, amount int) (LocalID, bool) { return g.gainAember(player, amount) }
+func (g *Game) GainAember(
+	player, amount int,
+) (LocalID, bool) {
+	return g.gainAember(player, amount)
+}
 
 // aemberCaptorFor returns the first in-play creature whose continuous replacement
 // captures Æmber that would be added to player's pool, or ok=false when none does.

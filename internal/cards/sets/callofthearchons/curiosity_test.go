@@ -22,8 +22,22 @@ func TestCuriosity(t *testing.T) {
 			P1: ct.Side{House: card.House.Untamed, Hand: ct.Cards(Curiosity)},
 			P2: ct.Side{
 				InPlay: ct.Cards(
-					ct.Bind(&sci, ct.Creature(ct.OfHouse(card.House.Logos), ct.Power(3), ct.Traits("Scientist"))),
-					ct.Bind(&beast, ct.Creature(ct.OfHouse(card.House.Untamed), ct.Power(3), ct.Traits("Beast"))),
+					ct.Bind(
+						&sci,
+						ct.Creature(
+							ct.OfHouse(card.House.Logos),
+							ct.Power(3),
+							ct.Traits("Scientist"),
+						),
+					),
+					ct.Bind(
+						&beast,
+						ct.Creature(
+							ct.OfHouse(card.House.Untamed),
+							ct.Power(3),
+							ct.Traits("Beast"),
+						),
+					),
 				),
 			},
 		})

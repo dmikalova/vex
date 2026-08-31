@@ -25,7 +25,9 @@ func TestCollarOfSubordination(t *testing.T) {
 				Hand:  ct.Cards(CollarOfSubordination),
 			},
 			P2: ct.Side{
-				InPlay: ct.Cards(ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Dis), ct.Power(3)))),
+				InPlay: ct.Cards(
+					ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Dis), ct.Power(3))),
+				),
 			},
 		})
 
@@ -50,7 +52,9 @@ func TestCollarOfSubordination(t *testing.T) {
 				Hand:  ct.Cards(CollarOfSubordination),
 			},
 			P2: ct.Side{
-				InPlay: ct.Cards(ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(3)))),
+				InPlay: ct.Cards(
+					ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(3))),
+				),
 			},
 		})
 
@@ -59,7 +63,11 @@ func TestCollarOfSubordination(t *testing.T) {
 
 		h.Expect(host).At(ct.Discard)
 		if !slices.Contains(h.Game().Discard(1), host.ID()) {
-			t.Fatalf("controlled host went to discard %v/%v, want P2 discard", h.Game().Discard(0), h.Game().Discard(1))
+			t.Fatalf(
+				"controlled host went to discard %v/%v, want P2 discard",
+				h.Game().Discard(0),
+				h.Game().Discard(1),
+			)
 		}
 	})
 }
@@ -67,7 +75,13 @@ func TestCollarOfSubordination(t *testing.T) {
 func expectControlledBy(t *testing.T, g *engine.Game, id engine.LocalID, player int) {
 	t.Helper()
 	if !slices.Contains(g.Battleline(player), id) {
-		t.Fatalf("%s is in battlelines %v/%v, want P%d", g.Name(id), g.Battleline(0), g.Battleline(1), player+1)
+		t.Fatalf(
+			"%s is in battlelines %v/%v, want P%d",
+			g.Name(id),
+			g.Battleline(0),
+			g.Battleline(1),
+			player+1,
+		)
 	}
 	if slices.Contains(g.Battleline(1-player), id) {
 		t.Fatalf("%s is also in P%d battleline", g.Name(id), 2-player)

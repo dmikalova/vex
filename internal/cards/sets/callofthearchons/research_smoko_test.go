@@ -25,7 +25,11 @@ func TestResearchSmoko(t *testing.T) {
 				InPlay: ct.Cards(ct.Bind(&smoko, ResearchSmoko)),
 				Deck:   ct.Cards(ct.Bind(&top, ct.Creature(ct.OfHouse(card.House.Logos)))),
 			},
-			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5))))},
+			P2: ct.Side{
+				InPlay: ct.Cards(
+					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5))),
+				),
+			},
 		})
 
 		h.P1.Fight(smoko, foe)

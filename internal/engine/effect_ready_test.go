@@ -27,7 +27,10 @@ func TestReadyIfFirstUse(t *testing.T) {
 
 func TestReadyCreatures(t *testing.T) {
 	// Text: leads with the Max count and renders the bare singular noun.
-	e := ReadyCreatures{Max: CardsRevealed{}, Target: Target{Kind: TargetEachFriendlyCreature}.OfHouse(Mars)}
+	e := ReadyCreatures{
+		Max:    CardsRevealed{},
+		Target: Target{Kind: TargetEachFriendlyCreature}.OfHouse(Mars),
+	}
 	if got := e.Text(); got != "for each card revealed this way, ready a Mars creature" {
 		t.Errorf("text = %q", got)
 	}

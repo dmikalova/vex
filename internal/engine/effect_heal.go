@@ -57,7 +57,10 @@ func (e Heal) validate() error {
 		return errUnsetTarget("Heal")
 	}
 	if e.Fully && e.Amount != 0 {
-		return fmt.Errorf("heal: set Amount or Fully, not both (got Amount=%d, Fully=true)", e.Amount)
+		return fmt.Errorf(
+			"heal: set Amount or Fully, not both (got Amount=%d, Fully=true)",
+			e.Amount,
+		)
 	}
 	return nil
 }
@@ -86,7 +89,10 @@ type HealThenDamage struct {
 
 // Text renders the effect.
 func (e HealThenDamage) Text() string {
-	return fmt.Sprintf("heal up to %d damage from a creature. Deal that amount of damage to another creature", e.Amount)
+	return fmt.Sprintf(
+		"heal up to %d damage from a creature. Deal that amount of damage to another creature",
+		e.Amount,
+	)
 }
 
 // Resolve heals the first chosen creature (capped by its damage), then deals the

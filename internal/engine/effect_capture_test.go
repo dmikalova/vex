@@ -48,11 +48,31 @@ func TestCaptureAemberText(t *testing.T) {
 		e    CaptureAember
 		want string
 	}{
-		{"friendly from opponent", CaptureAember{Amount: 1, Target: this, Source: Opponent}, "{self} captures 1 Æmber from your opponent"},
-		{"friendly from own side", CaptureAember{Amount: 1, Target: this, Source: Controller}, "{self} captures 1 Æmber from your own side"},
-		{"enemy from their own side", CaptureAember{Amount: 1, Target: enemy, Source: Opponent}, "an enemy creature captures 1 Æmber from their own side"},
-		{"enemy from your pool", CaptureAember{Amount: 1, Target: enemy, Source: Controller}, "an enemy creature captures 1 Æmber from you"},
-		{"all from own pool", CaptureAember{All: true, Target: this, Source: Controller}, "{self} captures all your Æmber"},
+		{
+			"friendly from opponent",
+			CaptureAember{Amount: 1, Target: this, Source: Opponent},
+			"{self} captures 1 Æmber from your opponent",
+		},
+		{
+			"friendly from own side",
+			CaptureAember{Amount: 1, Target: this, Source: Controller},
+			"{self} captures 1 Æmber from your own side",
+		},
+		{
+			"enemy from their own side",
+			CaptureAember{Amount: 1, Target: enemy, Source: Opponent},
+			"an enemy creature captures 1 Æmber from their own side",
+		},
+		{
+			"enemy from your pool",
+			CaptureAember{Amount: 1, Target: enemy, Source: Controller},
+			"an enemy creature captures 1 Æmber from you",
+		},
+		{
+			"all from own pool",
+			CaptureAember{All: true, Target: this, Source: Controller},
+			"{self} captures all your Æmber",
+		},
 	}
 	for _, tc := range cases {
 		if got := tc.e.Text(); got != tc.want {

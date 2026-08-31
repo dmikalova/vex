@@ -504,7 +504,13 @@ func (g *Game) MoveFromDiscardToTopOfDeck(id LocalID) {
 // GainChains adds chains to a player, which reduce their draws until shed.
 func (g *Game) GainChains(controller, amount int) {
 	g.State.Chains[controller] += amount
-	g.logf("%s gains %d %s (%d total)", g.names[controller], amount, chainNoun(amount), g.State.Chains[controller])
+	g.logf(
+		"%s gains %d %s (%d total)",
+		g.names[controller],
+		amount,
+		chainNoun(amount),
+		g.State.Chains[controller],
+	)
 }
 
 // OrderByChoice is the Resolver entry point for orderByChoice.
@@ -514,13 +520,23 @@ func (g *Game) OrderByChoice(controller int, prompt string, ids []LocalID) []Loc
 
 // ChooseCreature asks a player to choose one creature from candidates, attributing
 // the prompt to the source card. A sole candidate is taken automatically.
-func (g *Game) ChooseCreature(player int, source LocalID, prompt string, candidates []LocalID) (LocalID, bool) {
+func (g *Game) ChooseCreature(
+	player int,
+	source LocalID,
+	prompt string,
+	candidates []LocalID,
+) (LocalID, bool) {
 	return g.pickCreature(player, g.sourceName(source), prompt, candidates)
 }
 
 // ChooseCard asks a player to choose one card from candidates, attributing the
 // prompt to the source card. A sole candidate is taken automatically.
-func (g *Game) ChooseCard(player int, source LocalID, prompt string, candidates []LocalID) (LocalID, bool) {
+func (g *Game) ChooseCard(
+	player int,
+	source LocalID,
+	prompt string,
+	candidates []LocalID,
+) (LocalID, bool) {
 	return g.pickCard(player, g.sourceName(source), prompt, candidates)
 }
 

@@ -23,7 +23,11 @@ var RedPlanetRayGun = card.New(
 			Effect: card.DealDamage{
 				Amount: 1,
 				Target: card.Target.Creature,
-				Per:    card.InPlay{Player: card.EachPlayer, Type: card.Type.Creature, House: card.House.Mars},
+				Per: card.InPlay{
+					Player: card.EachPlayer,
+					Type:   card.Type.Creature,
+					House:  card.House.Mars,
+				},
 			},
 		}},
 	}),

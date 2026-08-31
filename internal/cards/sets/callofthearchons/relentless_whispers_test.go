@@ -21,8 +21,10 @@ func TestRelentlessWhispers(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(RelentlessWhispers)},
 			P2: ct.Side{
-				Amber:  3,
-				InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(2)))),
+				Amber: 3,
+				InPlay: ct.Cards(
+					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(2))),
+				),
 			},
 		})
 

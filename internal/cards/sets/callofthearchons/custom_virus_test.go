@@ -16,7 +16,7 @@ import (
 //	Traits: Weapon
 //
 //	Versatile.
-//	Action: Destroy Custom Virus. Purge a creature from your hand. Destroy each creature that shares a trait with the purged creature.
+//	Action: Destroy Custom Virus. Purge a creature from your hand. Destroy each creature that shares a trait with it.
 func TestCustomVirus(t *testing.T) {
 	t.Run("purges a hand creature and destroys creatures sharing its trait", func(t *testing.T) {
 		var virus, purged, prey, spared ct.Card

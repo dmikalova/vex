@@ -45,7 +45,10 @@ type teaChooser struct {
 	optionReply chan int
 }
 
-func (c *teaChooser) ChooseCreature(_, prompt string, candidates []engine.LocalID) (engine.LocalID, bool) {
+func (c *teaChooser) ChooseCreature(
+	_, prompt string,
+	candidates []engine.LocalID,
+) (engine.LocalID, bool) {
 	if len(candidates) == 0 {
 		return 0, false
 	}
@@ -560,7 +563,9 @@ func (m gameModel) playSlot(sl slot) (gameModel, tea.Cmd) {
 		// spot, so play immediately instead of prompting for a flank.
 		if len(m.g.Battleline(m.player)) == 0 {
 			g, player, idx := m.g, m.player, sl.handIdx
-			return m.runAction(func() error { _, err := g.PlayCreature(player, idx, false); return err })
+			return m.runAction(
+				func() error { _, err := g.PlayCreature(player, idx, false); return err },
+			)
 		}
 		m.pendingHand = sl.handIdx
 		m.phase = phaseFlank
@@ -789,7 +794,9 @@ func (m gameModel) boardView() string {
 	var b strings.Builder
 
 	b.WriteString(titleStyle.Render("VACTROL") + "  " +
-		faintStyle.Render(fmt.Sprintf("turn %d — %s to act", g.State.Turn, g.PlayerName(m.player))) + "\n")
+		faintStyle.Render(
+			fmt.Sprintf("turn %d — %s to act", g.State.Turn, g.PlayerName(m.player)),
+		) + "\n")
 	b.WriteString("\n")
 	b.WriteString(m.scoreLine(opp, "opponent") + "\n")
 	b.WriteString(headerStyle.Render(g.PlayerName(opp)+"'s board") +
@@ -907,12 +914,16 @@ func (m gameModel) mainHelp() string {
 	}
 	switch sl.kind {
 	case slotHand:
-		return helpStyle.Render("↑/↓ move · enter play · d discard · v discards · e end turn · esc menu")
+		return helpStyle.Render(
+			"↑/↓ move · enter play · d discard · v discards · e end turn · esc menu",
+		)
 	case slotYourCreature:
 		return helpStyle.Render("↑/↓ move · enter/r/f/a use · v discards · e end turn · esc menu")
 	case slotYourArtifact:
 		if m.hasActionAbility(sl.id) {
-			return helpStyle.Render("↑/↓ move · enter/a use action · v discards · e end turn · esc menu")
+			return helpStyle.Render(
+				"↑/↓ move · enter/a use action · v discards · e end turn · esc menu",
+			)
 		}
 		return helpStyle.Render("↑/↓ move · (read-only) · v discards · e end turn · esc menu")
 	default:
@@ -1006,7 +1017,18 @@ func (m gameModel) renderCreatures(player int, selID engine.LocalID, hasSel bool
 		if house != def.House { // not its natural house: mark the change
 			hs += "*"
 		}
-		line := fmt.Sprintf("%s%-*s %-8s %d power (%s%s%s)%s", cursor(sel), w, def.Name, hs, m.g.Power(id), state, dmg, amber, kw)
+		line := fmt.Sprintf(
+			"%s%-*s %-8s %d power (%s%s%s)%s",
+			cursor(sel),
+			w,
+			def.Name,
+			hs,
+			m.g.Power(id),
+			state,
+			dmg,
+			amber,
+			kw,
+		)
 		line = m.renderCardLine(house, sel, line)
 		b.WriteString(line + "\n")
 		for _, up := range m.g.Upgrades(id) {
@@ -1055,7 +1077,14 @@ func (m gameModel) renderHand(selHandIdx int) string {
 	for _, sl := range slots {
 		def := m.g.Def(sl.id)
 		sel := sl.handIdx == selHandIdx
-		line := fmt.Sprintf("%s%-*s %-7s · %s", cursor(sel), w, def.Name, def.House.String(), def.Type)
+		line := fmt.Sprintf(
+			"%s%-*s %-7s · %s",
+			cursor(sel),
+			w,
+			def.Name,
+			def.House.String(),
+			def.Type,
+		)
 		line = m.renderCardLine(def.House, sel, line)
 		b.WriteString(line + "\n")
 	}

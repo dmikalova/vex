@@ -63,7 +63,9 @@ func run(args []string) error {
 }
 
 func usage() error {
-	return fmt.Errorf("usage: cardlookup <lookup <query> | missing [setSlug] | coverage | stub <setSlug>>")
+	return fmt.Errorf(
+		"usage: cardlookup <lookup <query> | missing [setSlug] | coverage | stub <setSlug>>",
+	)
 }
 
 // lookup prints every source card whose name contains the query substring.

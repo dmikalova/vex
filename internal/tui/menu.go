@@ -21,9 +21,21 @@ func newMenuModel() menuModel {
 	return menuModel{
 		choices: []menuChoice{
 			{label: "Play game", desc: "two-player hotseat match", to: screenGame},
-			{label: "Card explorer", desc: "browse every card and read its text", to: screenExplorer},
-			{label: "Card statistics", desc: "cards per house by set, in total and by type", to: screenStats},
-			{label: "Provenance", desc: "how many original cards are implemented, by set", to: screenProvenance},
+			{
+				label: "Card explorer",
+				desc:  "browse every card and read its text",
+				to:    screenExplorer,
+			},
+			{
+				label: "Card statistics",
+				desc:  "cards per house by set, in total and by type",
+				to:    screenStats,
+			},
+			{
+				label: "Provenance",
+				desc:  "how many original cards are implemented, by set",
+				to:    screenProvenance,
+			},
 			{label: "Quit", desc: "exit vactrol", quit: true},
 		},
 	}
@@ -58,10 +70,18 @@ func (m menuModel) Update(msg tea.Msg) (menuModel, tea.Cmd) {
 }
 
 func (m menuModel) View() string {
-	s := titleStyle.Render("VACTROL") + "\n" + faintStyle.Render("a KeyForge-like card game") + "\n\n"
+	s := titleStyle.Render(
+		"VACTROL",
+	) + "\n" + faintStyle.Render(
+		"a KeyForge-like card game",
+	) + "\n\n"
 	for i, c := range m.choices {
 		if i == m.cursor {
-			s += selectedStyle.Render(cursor(true)+c.label) + "  " + faintStyle.Render(c.desc) + "\n"
+			s += selectedStyle.Render(
+				cursor(true)+c.label,
+			) + "  " + faintStyle.Render(
+				c.desc,
+			) + "\n"
 		} else {
 			s += cursor(false) + c.label + "\n"
 		}

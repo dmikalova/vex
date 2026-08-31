@@ -43,7 +43,12 @@ func (FightVerb) VerbText() string { return "fight with" }
 func (FightVerb) Apply(ctx *EffectContext, target LocalID) {
 	owner := ctx.Resolver.Owner(target)
 	enemies := ctx.Resolver.Battleline(1 - owner)
-	victim, ok := ctx.Resolver.ChooseCreature(owner, ctx.Source, "Choose a creature to fight", enemies)
+	victim, ok := ctx.Resolver.ChooseCreature(
+		owner,
+		ctx.Source,
+		"Choose a creature to fight",
+		enemies,
+	)
 	if !ok {
 		ctx.Resolver.Logf("%s has no creature to fight", ctx.Resolver.Name(target))
 		return
@@ -112,7 +117,12 @@ func (UseVerb) Apply(ctx *EffectContext, target LocalID) {
 		labels = append(labels, "use its action")
 		uses = append(uses, func() { ctx.Resolver.UseActionOf(target) })
 	}
-	idx := ctx.Resolver.ChooseOption(owner, ctx.Source, "Choose how to use "+ctx.Resolver.Name(target), labels)
+	idx := ctx.Resolver.ChooseOption(
+		owner,
+		ctx.Source,
+		"Choose how to use "+ctx.Resolver.Name(target),
+		labels,
+	)
 	if idx < 0 || idx >= len(uses) {
 		return
 	}

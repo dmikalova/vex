@@ -21,9 +21,11 @@ func TestYoMamaMastery(t *testing.T) {
 		var host ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.Brobnar,
-				Hand:   ct.Cards(YoMamaMastery),
-				InPlay: ct.Cards(ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(5)))),
+				House: card.House.Brobnar,
+				Hand:  ct.Cards(YoMamaMastery),
+				InPlay: ct.Cards(
+					ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(5))),
+				),
 			},
 		})
 		host.Damaged(4)

@@ -19,11 +19,17 @@ func TestWarsong(t *testing.T) {
 		var ally, foe ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.Brobnar,
-				Hand:   ct.Cards(Warsong),
-				InPlay: ct.Cards(ct.Bind(&ally, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(5)))),
+				House: card.House.Brobnar,
+				Hand:  ct.Cards(Warsong),
+				InPlay: ct.Cards(
+					ct.Bind(&ally, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(5))),
+				),
 			},
-			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(2))))},
+			P2: ct.Side{
+				InPlay: ct.Cards(
+					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(2))),
+				),
+			},
 		})
 
 		h.P1.Play(Warsong)

@@ -74,7 +74,11 @@ func TestFightSimultaneousDestruction(t *testing.T) {
 		t.Fatalf("Fight: %v", err)
 	}
 	if len(g.Battleline(0)) != 0 || len(g.Battleline(1)) != 0 {
-		t.Errorf("both fighters should be destroyed: friendly=%v enemy=%v", g.Battleline(0), g.Battleline(1))
+		t.Errorf(
+			"both fighters should be destroyed: friendly=%v enemy=%v",
+			g.Battleline(0),
+			g.Battleline(1),
+		)
 	}
 }
 
@@ -165,7 +169,10 @@ func TestAfterDestroyedFightingTrigger(t *testing.T) {
 
 	// The attacker survives and destroys the defender: its ability fires.
 	g := started(t)
-	hunter := g.AddToBattleline(testCreature("hunter", 6, WithAbility(TriggerAfterDestroyedFighting, gain)), 0)
+	hunter := g.AddToBattleline(
+		testCreature("hunter", 6, WithAbility(TriggerAfterDestroyedFighting, gain)),
+		0,
+	)
 	prey := g.AddToBattleline(testCreature("prey", 1), 1)
 	before := g.Aember(0)
 	if err := g.Fight(0, hunter, prey); err != nil {
@@ -197,7 +204,15 @@ func TestAfterDestroyedFightingTrigger(t *testing.T) {
 
 	// Both combatants survive (Skirmish attacker, tougher defender): no ability.
 	g3 := started(t)
-	brawler := g3.AddToBattleline(testCreature("brawler", 3, WithKeywords(Skirmish), WithAbility(TriggerAfterDestroyedFighting, gain)), 0)
+	brawler := g3.AddToBattleline(
+		testCreature(
+			"brawler",
+			3,
+			WithKeywords(Skirmish),
+			WithAbility(TriggerAfterDestroyedFighting, gain),
+		),
+		0,
+	)
 	wall := g3.AddToBattleline(testCreature("wall", 10), 1)
 	before3 := g3.Aember(0)
 	if err := g3.Fight(0, brawler, wall); err != nil {
@@ -242,7 +257,17 @@ func TestSkirmishAndArmorAndPoison(t *testing.T) {
 func TestFightDamageRedirect(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.SetChooser(0, orderLastChooser{}) // the Before Fight choice picks the last candidate
-	gabos := g.AddToBattleline(testCreature("gabos", 5, WithAbility(TriggerBeforeFight, RedirectFightDamage{Target: Target{Kind: TargetChosenCreature}})), 0)
+	gabos := g.AddToBattleline(
+		testCreature(
+			"gabos",
+			5,
+			WithAbility(
+				TriggerBeforeFight,
+				RedirectFightDamage{Target: Target{Kind: TargetChosenCreature}},
+			),
+		),
+		0,
+	)
 	def := g.AddToBattleline(testCreature("defender", 3), 1)
 	bystander := g.AddToBattleline(testCreature("bystander", 2), 1)
 
@@ -276,7 +301,10 @@ func TestBeforeFightCanCancelFight(t *testing.T) {
 		}}),
 		WithAbility(TriggerAfterFight, GainAember{Player: Controller, Amount: 1}),
 	), 0)
-	defender := g.AddToBattleline(NewCard("hazard", Brobnar, Creature, Common, WithPower(8), WithHazardous(3)), 1)
+	defender := g.AddToBattleline(
+		NewCard("hazard", Brobnar, Creature, Common, WithPower(8), WithHazardous(3)),
+		1,
+	)
 
 	if err := g.Fight(0, attacker, defender); err != nil {
 		t.Fatalf("Fight: %v", err)
@@ -292,7 +320,10 @@ func TestBeforeFightCanCancelFight(t *testing.T) {
 		t.Errorf("attacker damage = %d, want 0 (Hazardous skipped)", g.Damage(attacker))
 	}
 	if g.Damage(defender) != 0 {
-		t.Errorf("defender damage = %d, want 0 (Assault and fight damage skipped)", g.Damage(defender))
+		t.Errorf(
+			"defender damage = %d, want 0 (Assault and fight damage skipped)",
+			g.Damage(defender),
+		)
 	}
 	if g.Aember(0) != 0 {
 		t.Errorf("after-fight ability fired: Æmber = %d, want 0", g.Aember(0))
@@ -336,7 +367,10 @@ func TestBeforeFightCancelMissStillFights(t *testing.T) {
 func TestAssaultAndHazardous(t *testing.T) {
 	// Assault: the attacker deals its Assault to the defender before fight damage.
 	g := NewGame("A", "B", 1)
-	att := g.AddToBattleline(NewCard("assailant", Brobnar, Creature, Common, WithPower(3), WithAssault(2)), 0)
+	att := g.AddToBattleline(
+		NewCard("assailant", Brobnar, Creature, Common, WithPower(3), WithAssault(2)),
+		0,
+	)
 	def := g.AddToBattleline(testCreature("beefy", 10), 1)
 	g.fight(att, def)
 	if g.Damage(def) != 5 { // 2 assault + 3 fight
@@ -346,7 +380,10 @@ func TestAssaultAndHazardous(t *testing.T) {
 	// Hazardous can destroy the attacker before any combat damage is exchanged.
 	g2 := NewGame("A", "B", 1)
 	frail := g2.AddToBattleline(testCreature("frail", 4), 0)
-	thorns := g2.AddToBattleline(NewCard("thorns", Untamed, Creature, Common, WithPower(6), WithHazardous(5)), 1)
+	thorns := g2.AddToBattleline(
+		NewCard("thorns", Untamed, Creature, Common, WithPower(6), WithHazardous(5)),
+		1,
+	)
 	g2.fight(frail, thorns)
 	if g2.inPlay(frail) {
 		t.Error("hazardous should destroy the frail attacker before combat")
@@ -359,7 +396,11 @@ func TestAssaultAndHazardous(t *testing.T) {
 	g3 := NewGame("A", "B", 1)
 	host := g3.AddToBattleline(testCreature("host", 3), 0)
 	wall := g3.AddToBattleline(testCreature("wall", 10), 1)
-	attachUpgrade(g3, host, NewCard("bearway", Untamed, Upgrade, Common, WithStatic(StaticModifier{AssaultBonus: 2})))
+	attachUpgrade(
+		g3,
+		host,
+		NewCard("bearway", Untamed, Upgrade, Common, WithStatic(StaticModifier{AssaultBonus: 2})),
+	)
 	g3.fight(host, wall)
 	if g3.Damage(wall) != 5 {
 		t.Errorf("upgraded assault: wall damage = %d, want 5", g3.Damage(wall))
@@ -369,7 +410,11 @@ func TestAssaultAndHazardous(t *testing.T) {
 	g4 := NewGame("A", "B", 1)
 	weak := g4.AddToBattleline(testCreature("weak", 1), 0)
 	guard := g4.AddToBattleline(testCreature("guard", 6), 1)
-	attachUpgrade(g4, guard, NewCard("flames", Dis, Upgrade, Common, WithStatic(StaticModifier{HazardousBonus: 2})))
+	attachUpgrade(
+		g4,
+		guard,
+		NewCard("flames", Dis, Upgrade, Common, WithStatic(StaticModifier{HazardousBonus: 2})),
+	)
 	g4.fight(weak, guard)
 	if g4.inPlay(weak) {
 		t.Error("upgraded hazardous should destroy the weak attacker")
@@ -379,7 +424,10 @@ func TestAssaultAndHazardous(t *testing.T) {
 func TestFightRestriction(t *testing.T) {
 	g := started(t) // Brobnar active
 	stunnedOnly := Target{Kind: TargetEachCreature}.Stunned()
-	att := g.AddToBattleline(NewCard("twig", Brobnar, Creature, Common, WithPower(7), WithFightRestriction(stunnedOnly)), 0)
+	att := g.AddToBattleline(
+		NewCard("twig", Brobnar, Creature, Common, WithPower(7), WithFightRestriction(stunnedOnly)),
+		0,
+	)
 	def := g.AddToBattleline(testCreature("def", 3), 1)
 
 	// An unstunned enemy is not a legal target.
@@ -444,6 +492,11 @@ func TestFightTargets(t *testing.T) {
 	g5.State.Cards[stunned].Stunned = true
 	got := g5.FightTargets(0, picky)
 	if len(got) != 1 || got[0] != stunned {
-		t.Errorf("restricted FightTargets = %v, want [%d] (only the stunned enemy, not %d)", got, stunned, awake)
+		t.Errorf(
+			"restricted FightTargets = %v, want [%d] (only the stunned enemy, not %d)",
+			got,
+			stunned,
+			awake,
+		)
 	}
 }

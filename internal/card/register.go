@@ -27,7 +27,13 @@ var registry []RegisteredCard
 //
 // For a throwaway card that should not join the database (tests, scripted demos)
 // use the engine's engine.NewCard directly.
-func New(name string, house engine.House, ct engine.CardType, rarity engine.Rarity, opts ...Option) Definition {
+func New(
+	name string,
+	house engine.House,
+	ct engine.CardType,
+	rarity engine.Rarity,
+	opts ...Option,
+) Definition {
 	var b builder
 	for _, o := range opts {
 		o(&b)

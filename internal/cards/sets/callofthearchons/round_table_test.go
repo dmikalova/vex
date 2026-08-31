@@ -24,8 +24,22 @@ func TestRoundTable(t *testing.T) {
 				House: card.House.Sanctum,
 				InPlay: ct.Cards(
 					RoundTable,
-					ct.Bind(&knight, ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Power(4), ct.Traits("Knight"))),
-					ct.Bind(&other, ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Power(4), ct.Traits("Human"))),
+					ct.Bind(
+						&knight,
+						ct.Creature(
+							ct.OfHouse(card.House.Sanctum),
+							ct.Power(4),
+							ct.Traits("Knight"),
+						),
+					),
+					ct.Bind(
+						&other,
+						ct.Creature(
+							ct.OfHouse(card.House.Sanctum),
+							ct.Power(4),
+							ct.Traits("Human"),
+						),
+					),
 				),
 			},
 		})

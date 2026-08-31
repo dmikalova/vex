@@ -27,7 +27,9 @@ func TestDanceOfDoom(t *testing.T) {
 				Hand: ct.Cards(DanceOfDoom),
 			},
 			P2: ct.Side{
-				InPlay: ct.Cards(ct.Bind(&enemy, ct.Creature(ct.OfHouse(card.House.Dis), ct.Power(3)))),
+				InPlay: ct.Cards(
+					ct.Bind(&enemy, ct.Creature(ct.OfHouse(card.House.Dis), ct.Power(3))),
+				),
 			},
 		})
 

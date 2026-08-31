@@ -9,7 +9,7 @@ import "fmt"
 // battleline and its control reverts when the source card leaves play (Harland
 // Mindlock); an artifact enters the controller's artifact row permanently
 // (Sneklifter). The Duration says which — UntilThisLeavesPlay pairs with creatures,
-// Permanent with artifacts — and drives the rendered "until ... leaves play"
+// Forever with artifacts — and drives the rendered "until ... leaves play"
 // clause. Ownership stays fixed and still decides which pile the card returns to
 // when it leaves play. The last card taken is left in context (ctx.It) so a
 // following effect can act on it.
@@ -23,20 +23,20 @@ type TakeControl struct {
 // validate requires one of the supported durations.
 func (e TakeControl) validate() error {
 	switch e.Duration {
-	case UntilThisLeavesPlay, Permanent:
+	case UntilThisLeavesPlay, Forever:
 		return nil
 	default:
-		return fmt.Errorf("TakeControl: duration must be UntilThisLeavesPlay or Permanent")
+		return fmt.Errorf("TakeControl: duration must be UntilThisLeavesPlay or Forever")
 	}
 }
 
 // Text renders the control change. A reverting form names the card whose leaving
-// play reverts it; a Permanent form omits the "until ... leaves play" clause.
+// play reverts it; a Forever form omits the "until ... leaves play" clause.
 func (e TakeControl) Text() string {
 	if !e.Target.valid() {
 		return "take control of this creature until " + UpgradeName + " leaves play"
 	}
-	if e.Duration == Permanent {
+	if e.Duration == Forever {
 		return "take control of " + e.Target.Text()
 	}
 	return "take control of " + e.Target.Text() + " until " + SelfName + " leaves play"

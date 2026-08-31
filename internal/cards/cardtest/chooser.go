@@ -40,7 +40,10 @@ type bridgeChooser struct {
 }
 
 // ChooseCreature forwards a creature choice to the test and waits for the click.
-func (b bridgeChooser) ChooseCreature(source, prompt string, candidates []engine.LocalID) (engine.LocalID, bool) {
+func (b bridgeChooser) ChooseCreature(
+	source, prompt string,
+	candidates []engine.LocalID,
+) (engine.LocalID, bool) {
 	if len(candidates) == 0 {
 		return 0, false
 	}
@@ -151,8 +154,12 @@ func (h *Harness) click(player int, target any) {
 	h.t.Helper()
 	req := h.requirePrompt(player)
 	if req.isOption {
-		h.t.Fatalf("ClickCard: the pending prompt %q for %s expects an option — use ClickOption(%v)",
-			req.text, playerName(player), req.options)
+		h.t.Fatalf(
+			"ClickCard: the pending prompt %q for %s expects an option — use ClickOption(%v)",
+			req.text,
+			playerName(player),
+			req.options,
+		)
 	}
 	id, ok := h.matchCandidate(target, req.candidates)
 	if !ok {
@@ -192,7 +199,13 @@ func (h *Harness) clickOption(player int, label string) {
 		return
 	}
 	if n > 1 {
-		h.t.Fatalf("ClickOption(%q): matches %d options for %q\noptions: %v", label, n, req.text, req.options)
+		h.t.Fatalf(
+			"ClickOption(%q): matches %d options for %q\noptions: %v",
+			label,
+			n,
+			req.text,
+			req.options,
+		)
 	}
 	h.t.Fatalf("ClickOption(%q): not an option for %q\noptions: %v", label, req.text, req.options)
 }
@@ -225,7 +238,11 @@ func (h *Harness) matchCandidate(target any, candidates []engine.LocalID) (engin
 			return found, true
 		}
 		if n > 1 {
-			h.t.Fatalf("ClickCard(%s): %d matching targets — use ct.Bind to name the copy you mean", v.Name, n)
+			h.t.Fatalf(
+				"ClickCard(%s): %d matching targets — use ct.Bind to name the copy you mean",
+				v.Name,
+				n,
+			)
 		}
 		return 0, false
 	default:

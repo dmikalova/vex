@@ -23,10 +23,14 @@ func TestBrainEater(t *testing.T) {
 			P1: ct.Side{
 				House:  card.House.Logos,
 				InPlay: ct.Cards(BrainEater),
-				Deck:   ct.Cards(ct.Bind(&drawn, ct.Creature(ct.OfHouse(card.House.Logos), ct.Power(1)))),
+				Deck: ct.Cards(
+					ct.Bind(&drawn, ct.Creature(ct.OfHouse(card.House.Logos), ct.Power(1))),
+				),
 			},
 			P2: ct.Side{
-				InPlay: ct.Cards(ct.Bind(&prey, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(1)))),
+				InPlay: ct.Cards(
+					ct.Bind(&prey, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(1))),
+				),
 			},
 		})
 

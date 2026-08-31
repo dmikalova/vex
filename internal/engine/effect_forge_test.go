@@ -59,7 +59,9 @@ func TestGiveRemainingAemberAfterOpponentForgeKey(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.BeginTurn(0)
 	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
-	if g.State.LastingCount != 1 || g.State.Lasting[0].Controller != 1 || g.State.Lasting[0].On != EventForgeKey || g.State.Lasting[0].Once {
+	if g.State.LastingCount != 1 || g.State.Lasting[0].Controller != 1 ||
+		g.State.Lasting[0].On != EventForgeKey ||
+		g.State.Lasting[0].Once {
 		t.Fatal("opponent's next-turn key-forge reaction was not armed as a durable reaction")
 	}
 

@@ -18,7 +18,14 @@ func TestChaosPortalComposition(t *testing.T) {
 	top := g.AddToDeck(NewCard("Portal Scout", Logos, Creature, Common, WithPower(2)), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0, ChosenHouse: Logos}
 
-	Sequence{Effects: []Effect{RevealTopOfDeck{}, Conditional{Cond: ItIsOfHouse{House: TheChosenHouse}, Then: PlayRevealedCard{}}}}.Resolve(ctx)
+	Sequence{
+		Effects: []Effect{
+			RevealTopOfDeck{},
+			Conditional{Cond: ItIsOfHouse{House: TheChosenHouse}, Then: PlayRevealedCard{}},
+		},
+	}.Resolve(
+		ctx,
+	)
 
 	if g.State.Deck[0].Count != 0 {
 		t.Errorf("deck count = %d, want 0", g.State.Deck[0].Count)
@@ -41,13 +48,21 @@ func TestChaosPortalComposition(t *testing.T) {
 func TestChaosPortalMissesAndGuards(t *testing.T) {
 	g := started(t)
 	top := g.AddToDeck(NewCard("Wrong House", Dis, Tactic, Common), 0)
-	reveal := Sequence{Effects: []Effect{RevealTopOfDeck{}, Conditional{Cond: ItIsOfHouse{House: TheChosenHouse}, Then: PlayRevealedCard{}}}}
+	reveal := Sequence{
+		Effects: []Effect{
+			RevealTopOfDeck{},
+			Conditional{Cond: ItIsOfHouse{House: TheChosenHouse}, Then: PlayRevealedCard{}},
+		},
+	}
 	reveal.Resolve(&EffectContext{Resolver: g, Controller: 0, ChosenHouse: Logos})
 	if g.State.Deck[0].Count != 1 || g.State.Deck[0].IDs[0] != top {
 		t.Errorf("non-matching top card moved: deck = %v, want [%d]", g.State.Deck[0].slice(), top)
 	}
 	if g.State.CardsPlayedThisTurn[0] != 0 {
-		t.Errorf("non-matching card should not count as played, got %d", g.State.CardsPlayedThisTurn[0])
+		t.Errorf(
+			"non-matching card should not count as played, got %d",
+			g.State.CardsPlayedThisTurn[0],
+		)
 	}
 
 	// An empty deck reveals nothing and plays nothing.
@@ -83,8 +98,18 @@ func TestPlayTopOfDeckLeavesUnplayableCardOnTop(t *testing.T) {
 			{
 				name: "card play limit",
 				setup: func(g *Game) {
-					g.AddToBattleline(NewCard("Imp", Brobnar, Creature, Common, WithPower(1),
-						WithRestrictions(Restrictions{PlayCardLimit: PlayCardLimit{Player: Controller, Amount: 1}})), 0)
+					g.AddToBattleline(NewCard(
+						"Imp",
+						Brobnar,
+						Creature,
+						Common,
+						WithPower(1),
+						WithRestrictions(
+							Restrictions{
+								PlayCardLimit: PlayCardLimit{Player: Controller, Amount: 1},
+							},
+						),
+					), 0)
 					g.State.CardsPlayedThisTurn[0] = 1
 				},
 				err: ErrCardPlayLimit,
@@ -93,13 +118,24 @@ func TestPlayTopOfDeckLeavesUnplayableCardOnTop(t *testing.T) {
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
 				g := started(t)
-				top := g.AddToDeck(NewCard("Portal Scout", Logos, Creature, Common, WithPower(2)), 0)
+				top := g.AddToDeck(
+					NewCard("Portal Scout", Logos, Creature, Common, WithPower(2)),
+					0,
+				)
 				tc.setup(g)
-				if _, err := g.playCardFromZone(0, top, func() { g.State.Deck[0].removeAt(0) }, playCardOptions{}); err != tc.err {
+				if _, err := g.playCardFromZone(
+					0,
+					top,
+					func() { g.State.Deck[0].removeAt(0) },
+					playCardOptions{},
+				); err != tc.err {
 					t.Fatalf("playCardFromZone err = %v, want %v", err, tc.err)
 				}
 				if g.State.Deck[0].Count != 1 || g.State.Deck[0].IDs[0] != top {
-					t.Errorf("guarded play should leave top card in deck, got %v", g.State.Deck[0].slice())
+					t.Errorf(
+						"guarded play should leave top card in deck, got %v",
+						g.State.Deck[0].slice(),
+					)
 				}
 			})
 		}
@@ -111,7 +147,12 @@ func TestPlayTopOfDeckLeavesUnplayableCardOnTop(t *testing.T) {
 		g.AddToBattleline(NewCard("Blocker", Brobnar, Creature, Common, WithPower(1),
 			WithRestrictions(Restrictions{CannotPlay: Creature})), 0)
 		top := g.AddToDeck(NewCard("Portal Scout", Logos, Creature, Common, WithPower(2)), 0)
-		if _, err := g.playCardFromZone(0, top, func() { g.State.Deck[0].removeAt(0) }, playCardOptions{}); err != ErrCannotPlayCreature {
+		if _, err := g.playCardFromZone(
+			0,
+			top,
+			func() { g.State.Deck[0].removeAt(0) },
+			playCardOptions{},
+		); err != ErrCannotPlayCreature {
 			t.Fatalf("playCardFromZone err = %v, want %v", err, ErrCannotPlayCreature)
 		}
 		if g.State.Deck[0].Count != 1 || g.State.Deck[0].IDs[0] != top {
@@ -122,7 +163,12 @@ func TestPlayTopOfDeckLeavesUnplayableCardOnTop(t *testing.T) {
 	t.Run("unknown card type", func(t *testing.T) {
 		g := started(t)
 		top := g.AddToDeck(NewCard("Mystery", Logos, CardType("Mystery"), Common), 0)
-		if _, err := g.playCardFromZone(0, top, func() { g.State.Deck[0].removeAt(0) }, playCardOptions{}); err != ErrWrongType {
+		if _, err := g.playCardFromZone(
+			0,
+			top,
+			func() { g.State.Deck[0].removeAt(0) },
+			playCardOptions{},
+		); err != ErrWrongType {
 			t.Fatalf("playCardFromZone err = %v, want %v", err, ErrWrongType)
 		}
 		if g.State.Deck[0].Count != 1 || g.State.Deck[0].IDs[0] != top {
@@ -136,15 +182,25 @@ func TestBonkersComposition(t *testing.T) {
 	source := g.AddArtifact(NewCard("Bonkers Killing Machine", Logos, Artifact, Rare), 0)
 	p1Top := g.AddToDeck(NewCard("Mars Top", Mars, Tactic, Common), 0)
 	p2Top := g.AddToDeck(NewCard("Dis Top", Dis, Tactic, Common), 1)
-	marsCreature := g.AddToBattleline(NewCard("Mars Creature", Mars, Creature, Common, WithPower(4)), 0)
+	marsCreature := g.AddToBattleline(
+		NewCard("Mars Creature", Mars, Creature, Common, WithPower(4)),
+		0,
+	)
 	disArtifact := g.AddArtifact(NewCard("Dis Artifact", Dis, Artifact, Common), 1)
 	bystander := g.AddToBattleline(testCreature("bystander", 4), 1)
 	ctx := &EffectContext{Resolver: g, Source: source, Controller: 0}
 
 	effect := Sequence{Effects: []Effect{
 		Sentence{Effect: DiscardTopOfEachDeck{}},
-		Sentence{Effect: ForEachDiscarded{Do: Destroy{Target: Target{Kind: TargetChosenInPlay}.OfContextualHouse()}}},
-		Conditional{Cond: CardsDestroyedFewerThan{Amount: 2}, Then: Destroy{Target: Target{Kind: TargetThisCreature}}},
+		Sentence{
+			Effect: ForEachDiscarded{
+				Do: Destroy{Target: Target{Kind: TargetChosenInPlay}.OfContextualHouse()},
+			},
+		},
+		Conditional{
+			Cond: CardsDestroyedFewerThan{Amount: 2},
+			Then: Destroy{Target: Target{Kind: TargetThisCreature}},
+		},
 	}}
 	if got := effect.Text(); got != "discard the top card of each player's deck. For each card discarded this way, destroy a creature or artifact of that card's house. If fewer than 2 cards are destroyed this way, destroy {self}" {
 		t.Errorf("text = %q", got)
@@ -152,10 +208,16 @@ func TestBonkersComposition(t *testing.T) {
 
 	effect.Resolve(ctx)
 
-	if discard := g.Discard(0); len(discard) != 2 || discard[0] != p1Top || discard[1] != marsCreature {
+	if discard := g.Discard(
+		0,
+	); len(discard) != 2 || discard[0] != p1Top ||
+		discard[1] != marsCreature {
 		t.Errorf("controller discard = %v, want top card then Mars creature", discard)
 	}
-	if discard := g.Discard(1); len(discard) != 2 || discard[0] != p2Top || discard[1] != disArtifact {
+	if discard := g.Discard(
+		1,
+	); len(discard) != 2 || discard[0] != p2Top ||
+		discard[1] != disArtifact {
 		t.Errorf("opponent discard = %v, want top card then Dis artifact", discard)
 	}
 	if !g.inPlay(source) {
@@ -175,8 +237,15 @@ func TestBonkersCompositionSelfDestructs(t *testing.T) {
 
 	Sequence{Effects: []Effect{
 		Sentence{Effect: DiscardTopOfEachDeck{}},
-		Sentence{Effect: ForEachDiscarded{Do: Destroy{Target: Target{Kind: TargetChosenInPlay}.OfContextualHouse()}}},
-		Conditional{Cond: CardsDestroyedFewerThan{Amount: 2}, Then: Destroy{Target: Target{Kind: TargetThisCreature}}},
+		Sentence{
+			Effect: ForEachDiscarded{
+				Do: Destroy{Target: Target{Kind: TargetChosenInPlay}.OfContextualHouse()},
+			},
+		},
+		Conditional{
+			Cond: CardsDestroyedFewerThan{Amount: 2},
+			Then: Destroy{Target: Target{Kind: TargetThisCreature}},
+		},
 	}}.Resolve(ctx)
 
 	if discard := g.Discard(0); len(discard) != 2 || discard[0] != top || discard[1] != source {
@@ -192,7 +261,9 @@ func TestForEachDiscardedAndContextualHouse(t *testing.T) {
 	if err := validateEffect(ForEachDiscarded{Do: Destroy{}}); err == nil {
 		t.Error("ForEachDiscarded should reject a Do with no target")
 	}
-	if err := validateEffect(ForEachDiscarded{Do: Destroy{Target: Target{Kind: TargetChosenInPlay}.OfContextualHouse()}}); err != nil {
+	if err := validateEffect(
+		ForEachDiscarded{Do: Destroy{Target: Target{Kind: TargetChosenInPlay}.OfContextualHouse()}},
+	); err != nil {
 		t.Errorf("valid ForEachDiscarded = %v", err)
 	}
 

@@ -22,8 +22,19 @@ func TestQyxxlyxPlagueMaster(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{House: card.House.Mars, InPlay: ct.Cards(QyxxlyxPlagueMaster)},
 			P2: ct.Side{InPlay: ct.Cards(
-				ct.Bind(&human, ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Power(5), ct.Armor(2), ct.Traits("Human"))),
-				ct.Bind(&beast, ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Power(5), ct.Traits("Beast"))),
+				ct.Bind(
+					&human,
+					ct.Creature(
+						ct.OfHouse(card.House.Sanctum),
+						ct.Power(5),
+						ct.Armor(2),
+						ct.Traits("Human"),
+					),
+				),
+				ct.Bind(
+					&beast,
+					ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Power(5), ct.Traits("Beast")),
+				),
 			)},
 		})
 

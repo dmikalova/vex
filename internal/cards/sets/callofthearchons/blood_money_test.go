@@ -19,7 +19,11 @@ func TestBloodMoney(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{House: card.House.Brobnar, Hand: ct.Cards(BloodMoney)},
-			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(4))))},
+			P2: ct.Side{
+				InPlay: ct.Cards(
+					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(4))),
+				),
+			},
 		})
 
 		h.P1.Play(BloodMoney)

@@ -199,7 +199,7 @@ const (
 	// it. The ability names the house it cares about (Jehu the Bureaucrat gains Æmber
 	// only when Sanctum is chosen), which need not be the card's own house.
 	TriggerAfterChooseHouse
-	// This ability resolves each time an enemy creature is destroyed during its
+	// This ability resolves after an enemy creature is destroyed during its
 	// controller's turn — Pile of Skulls has a friendly creature capture Æmber
 	// whenever an enemy creature is destroyed on your turn. It is a persistent
 	// reaction on an in-play card, fired only for the active player's cards.
@@ -233,7 +233,7 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 	case TriggerAfterDestroyedFighting:
 		return "After a creature is destroyed fighting " + SelfName + ", ", false
 	case TriggerAfterEnemyCreatureDestroyed:
-		return "Each time an enemy creature is destroyed during your turn, ", false
+		return "After an enemy creature is destroyed during your turn, ", false
 	case TriggerAfterCardPlayed:
 		return "After you play a card, ", false
 	case TriggerEndOfTurn:

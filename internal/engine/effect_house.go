@@ -48,38 +48,3 @@ func (e BelongToHouse) Resolve(ctx *EffectContext) {
 		}
 	}
 }
-
-// BelongToHouseIfOffIdentity makes the card in context (ctx.It) belong to House
-// until it leaves play, but only when it does not already belong to one of the
-// controller's identity houses — the second half of Sneklifter's "take control of
-// an enemy artifact. If it does not belong to a house on your identity then it
-// belongs to house Shadows." The reassignment is evaluated once, when it resolves,
-// so a later owner keeps the reassigned house until the card leaves play.
-type BelongToHouseIfOffIdentity struct {
-	House House
-}
-
-// validate requires a house.
-func (e BelongToHouseIfOffIdentity) validate() error {
-	if e.House == HouseNone {
-		return fmt.Errorf("BelongToHouseIfOffIdentity: house must be set")
-	}
-	return nil
-}
-
-// Text renders the conditional reassignment.
-func (e BelongToHouseIfOffIdentity) Text() string {
-	return "if it does not belong to a house on your identity then it belongs to house " + e.House.String()
-}
-
-// Resolve reassigns the card in context to House when its current house is not one
-// of the controller's identity houses.
-func (e BelongToHouseIfOffIdentity) Resolve(ctx *EffectContext) {
-	if !ctx.HasIt {
-		return
-	}
-	if ctx.Resolver.PlayerHasHouse(ctx.Controller, ctx.Resolver.House(ctx.It)) {
-		return
-	}
-	ctx.Resolver.SetLastingHouse(ctx.It, e.House)
-}

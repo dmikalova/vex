@@ -37,13 +37,23 @@ func TestDestroyTogetherResolvesBeforeDiscard(t *testing.T) {
 	// it fires. KeyForge tags both for destruction and resolves the Destroyed
 	// abilities before moving anything to the discard, so B is still present.
 	var enemiesWhenADied int
-	a := g.AddToBattleline(testCreature("a", 3, WithAbility(TriggerDestroyed, recordEnemyCount{got: &enemiesWhenADied})), 0)
+	a := g.AddToBattleline(
+		testCreature(
+			"a",
+			3,
+			WithAbility(TriggerDestroyed, recordEnemyCount{got: &enemiesWhenADied}),
+		),
+		0,
+	)
 	b := g.AddToBattleline(testCreature("b", 3), 1)
 
 	g.DestroyEach(0, []LocalID{a, b})
 
 	if enemiesWhenADied != 1 {
-		t.Errorf("A's Destroyed ability saw %d enemy creatures; want 1 (still in play until discard)", enemiesWhenADied)
+		t.Errorf(
+			"A's Destroyed ability saw %d enemy creatures; want 1 (still in play until discard)",
+			enemiesWhenADied,
+		)
 	}
 	if g.inPlay(a) || g.inPlay(b) {
 		t.Error("both creatures should be in the discard after the event")
@@ -54,7 +64,17 @@ func TestDestroyedRelocationSkipsDiscard(t *testing.T) {
 	g := started(t)
 	// A creature whose "Destroyed:" ability returns it to the top of its deck
 	// leaves play during the event, so it is not also moved to the discard.
-	c := g.AddToBattleline(testCreature("wanderer", 3, WithAbility(TriggerDestroyed, PutFromPlay{Target: Target{Kind: TargetThisCreature}, Destination: ToTopOfDeck})), 0)
+	c := g.AddToBattleline(
+		testCreature(
+			"wanderer",
+			3,
+			WithAbility(
+				TriggerDestroyed,
+				PutFromPlay{Target: Target{Kind: TargetThisCreature}, Destination: ToTopOfDeck},
+			),
+		),
+		0,
+	)
 	g.DestroyEach(0, []LocalID{c})
 
 	if g.inPlay(c) {
@@ -87,11 +107,20 @@ func TestDestroyMovesUpgradesToDiscard(t *testing.T) {
 
 func TestUpgradeCanPreventHostDestructionOnce(t *testing.T) {
 	g := started(t)
-	shield := NewCard("Shield", Sanctum, Upgrade, Rare,
-		WithStatic(StaticModifier{Replaces: Replace{When: EventCreatureDestroyed, With: Sequence{Effects: []Effect{
-			Heal{Fully: true, Target: Target{Kind: TargetTriggeringCreature}},
-			Destroy{Target: Target{Kind: TargetThisCreature}},
-		}}}}))
+	shield := NewCard(
+		"Shield",
+		Sanctum,
+		Upgrade,
+		Rare,
+		WithStatic(
+			StaticModifier{
+				Replaces: Replace{When: EventCreatureDestroyed, With: Sequence{Effects: []Effect{
+					Heal{Fully: true, Target: Target{Kind: TargetTriggeringCreature}},
+					Destroy{Target: Target{Kind: TargetThisCreature}},
+				}}},
+			},
+		),
+	)
 	host := g.AddToBattleline(testCreature("host", 3,
 		WithAbility(TriggerDestroyed, GainAember{Player: Controller, Amount: 1})), 0)
 	attachUpgrade(g, host, shield)
@@ -156,8 +185,13 @@ func TestDestroyGivesAmberToOpponent(t *testing.T) {
 func TestPurgesDestroyed(t *testing.T) {
 	g := started(t)
 	g.AddArtifact(NewCard("ritual", Dis, Artifact, Rare, WithConstantAbility(ConstantAbility{
-		Target:  Target{Kind: TargetEachCreature},
-		Granted: []Ability{{Trigger: TriggerDestroyed, Effect: PurgeCreature{Target: Target{Kind: TargetThisCreature}}}},
+		Target: Target{Kind: TargetEachCreature},
+		Granted: []Ability{
+			{
+				Trigger: TriggerDestroyed,
+				Effect:  PurgeCreature{Target: Target{Kind: TargetThisCreature}},
+			},
+		},
 	})), 0)
 	victim := g.AddToBattleline(NewCard("v", Brobnar, Creature, Common, WithPower(3),
 		WithAbility(TriggerDestroyed, GainAember{Player: Controller, Amount: 1})), 1)
@@ -196,8 +230,10 @@ func TestDestroyedAbilitiesCollectEverySource(t *testing.T) {
 		},
 	})), 1)
 	g.AddArtifact(NewCard("other", Dis, Artifact, Rare, WithConstantAbility(ConstantAbility{
-		Target:  Target{Kind: TargetEachFriendlyCreature},
-		Granted: []Ability{{Trigger: TriggerDestroyed, Effect: GainAember{Player: Controller, Amount: 1}}},
+		Target: Target{Kind: TargetEachFriendlyCreature},
+		Granted: []Ability{
+			{Trigger: TriggerDestroyed, Effect: GainAember{Player: Controller, Amount: 1}},
+		},
 	})), 1)
 
 	if got := g.destroyedAbilities([]LocalID{victim}); len(got) != 3 {

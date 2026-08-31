@@ -3,7 +3,10 @@ package engine
 import "testing"
 
 func TestNextCreaturePlayed(t *testing.T) {
-	e := NextCreaturePlayed{Of: Mars, EntersPlay: Ready{Target: Target{Kind: TargetTriggeringCreature}}}
+	e := NextCreaturePlayed{
+		Of:         Mars,
+		EntersPlay: Ready{Target: Target{Kind: TargetTriggeringCreature}},
+	}
 	if e.Text() != "the next Mars creature you play this turn enters play ready" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -12,8 +15,14 @@ func TestNextCreaturePlayed(t *testing.T) {
 	}
 	g := NewGame("A", "B", 1)
 	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
-	if le := g.State.Lasting[0]; g.State.LastingCount != 1 || le.Do != actReadyPlayed || le.House != Mars || !le.Once {
-		t.Errorf("resolve should register a one-shot Mars ready reaction; got %+v (count %d)", le, g.State.LastingCount)
+	if le := g.State.Lasting[0]; g.State.LastingCount != 1 || le.Do != actReadyPlayed ||
+		le.House != Mars ||
+		!le.Once {
+		t.Errorf(
+			"resolve should register a one-shot Mars ready reaction; got %+v (count %d)",
+			le,
+			g.State.LastingCount,
+		)
 	}
 
 	// An EntersPlay effect the flat registry cannot carry is rejected.
@@ -28,7 +37,10 @@ func TestForRemainderOfTurnText(t *testing.T) {
 		want string
 	}{
 		{
-			ForRemainderOfTurn{On: EventCreaturePlayed, Do: GainAember{Player: Controller, Amount: 1}},
+			ForRemainderOfTurn{
+				On: EventCreaturePlayed,
+				Do: GainAember{Player: Controller, Amount: 1},
+			},
 			"for the remainder of the turn, each time you play a creature, gain 1 Æmber",
 		},
 		{
@@ -36,7 +48,10 @@ func TestForRemainderOfTurnText(t *testing.T) {
 			"for the remainder of the turn, after a creature reaps, gain 1 Æmber",
 		},
 		{
-			ForRemainderOfTurn{On: EventCreaturePlayed, Do: DealDamage{Amount: 2, Target: Target{Kind: TargetChosenEnemyCreature}}},
+			ForRemainderOfTurn{
+				On: EventCreaturePlayed,
+				Do: DealDamage{Amount: 2, Target: Target{Kind: TargetChosenEnemyCreature}},
+			},
 			"for the remainder of the turn, each time you play a creature, deal 2 damage to an enemy creature",
 		},
 	}
@@ -102,8 +117,13 @@ func TestForRemainderOfTurnGainsOnReap(t *testing.T) {
 func TestForRemainderOfTurnDamageOnPlay(t *testing.T) {
 	g := started(t)
 	foe := g.AddToBattleline(testCreature("foe", 5), 1)
-	ForRemainderOfTurn{On: EventCreaturePlayed, Do: DealDamage{Amount: 2, Target: Target{Kind: TargetChosenEnemyCreature}}}.
-		Resolve(&EffectContext{Resolver: g, Controller: 0})
+	ForRemainderOfTurn{
+		On: EventCreaturePlayed,
+		Do: DealDamage{Amount: 2, Target: Target{Kind: TargetChosenEnemyCreature}},
+	}.
+		Resolve(
+			&EffectContext{Resolver: g, Controller: 0},
+		)
 	g.AddToHand(testCreature("minion", 4), 0)
 	if _, err := g.PlayCreature(0, handIdx(g, 0, "minion"), false); err != nil {
 		t.Fatalf("PlayCreature: %v", err)

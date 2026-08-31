@@ -21,11 +21,17 @@ func TestGangerChieftain(t *testing.T) {
 		var neighbor, foe ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.Brobnar,
-				InPlay: ct.Cards(ct.Bind(&neighbor, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(4)))),
-				Hand:   ct.Cards(GangerChieftain),
+				House: card.House.Brobnar,
+				InPlay: ct.Cards(
+					ct.Bind(&neighbor, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(4))),
+				),
+				Hand: ct.Cards(GangerChieftain),
 			},
-			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(1))))},
+			P2: ct.Side{
+				InPlay: ct.Cards(
+					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(1))),
+				),
+			},
 		})
 
 		h.P1.Play(GangerChieftain)

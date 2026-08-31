@@ -21,7 +21,10 @@ func TestRocketBoots(t *testing.T) {
 			P1: ct.Side{
 				House: card.House.Logos,
 				InPlay: ct.Cards(
-					ct.Upgraded(ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Logos), ct.Power(5))), RocketBoots),
+					ct.Upgraded(
+						ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Logos), ct.Power(5))),
+						RocketBoots,
+					),
 				),
 			},
 			P2: ct.Side{

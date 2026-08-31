@@ -23,8 +23,10 @@ func TestBatdrone(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{House: card.House.Logos, InPlay: ct.Cards(Batdrone)},
 			P2: ct.Side{
-				InPlay: ct.Cards(ct.Bind(&enemy, ct.Creature(ct.OfHouse(card.House.Logos), ct.Power(3)))),
-				Amber:  2,
+				InPlay: ct.Cards(
+					ct.Bind(&enemy, ct.Creature(ct.OfHouse(card.House.Logos), ct.Power(3))),
+				),
+				Amber: 2,
 			},
 		})
 

@@ -21,8 +21,10 @@ func TestGanymedeArchivist(t *testing.T) {
 		var spare ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.Logos,
-				Hand:   ct.Cards(ct.Bind(&spare, ct.Creature(ct.OfHouse(card.House.Logos), ct.Power(2)))),
+				House: card.House.Logos,
+				Hand: ct.Cards(
+					ct.Bind(&spare, ct.Creature(ct.OfHouse(card.House.Logos), ct.Power(2))),
+				),
 				InPlay: ct.Cards(GanymedeArchivist),
 			},
 		})

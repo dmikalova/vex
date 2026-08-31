@@ -9,9 +9,18 @@ import "testing"
 func TestUpgradeChainStitchesWhenMiddleLeaves(t *testing.T) {
 	g := started(t)
 	host := g.AddToBattleline(testCreature("host", 3), 0)
-	up1 := g.Register(NewCard("up1", Brobnar, Upgrade, Common, WithStatic(StaticModifier{PowerBonus: 1})), 0)
-	up2 := g.Register(NewCard("up2", Brobnar, Upgrade, Common, WithStatic(StaticModifier{PowerBonus: 2})), 0)
-	up3 := g.Register(NewCard("up3", Brobnar, Upgrade, Common, WithStatic(StaticModifier{PowerBonus: 4})), 0)
+	up1 := g.Register(
+		NewCard("up1", Brobnar, Upgrade, Common, WithStatic(StaticModifier{PowerBonus: 1})),
+		0,
+	)
+	up2 := g.Register(
+		NewCard("up2", Brobnar, Upgrade, Common, WithStatic(StaticModifier{PowerBonus: 2})),
+		0,
+	)
+	up3 := g.Register(
+		NewCard("up3", Brobnar, Upgrade, Common, WithStatic(StaticModifier{PowerBonus: 4})),
+		0,
+	)
 	g.AttachUpgrade(host, up1)
 	g.AttachUpgrade(host, up2)
 	g.AttachUpgrade(host, up3)

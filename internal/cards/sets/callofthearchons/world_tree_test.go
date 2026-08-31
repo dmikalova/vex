@@ -20,9 +20,11 @@ func TestWorldTree(t *testing.T) {
 		var ghost ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:   card.House.Untamed,
-				InPlay:  ct.Cards(WorldTree),
-				Discard: ct.Cards(ct.Bind(&ghost, ct.Creature(ct.OfHouse(card.House.Untamed), ct.Power(4)))),
+				House:  card.House.Untamed,
+				InPlay: ct.Cards(WorldTree),
+				Discard: ct.Cards(
+					ct.Bind(&ghost, ct.Creature(ct.OfHouse(card.House.Untamed), ct.Power(4))),
+				),
 			},
 		})
 

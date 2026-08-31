@@ -9,7 +9,10 @@ func TestOnChooseCreatureEnemyAndNoTarget(t *testing.T) {
 	g.State.Cards[enemy].Exhausted = true
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
-	onEnemy := OnChooseCreature{Target: Target{Kind: TargetChosenEnemyCreature}, Verbs: []CreatureVerb{ReadyVerb{}}}
+	onEnemy := OnChooseCreature{
+		Target: Target{Kind: TargetChosenEnemyCreature},
+		Verbs:  []CreatureVerb{ReadyVerb{}},
+	}
 	if onEnemy.Text() != "ready an enemy creature" {
 		t.Errorf("text = %q", onEnemy.Text())
 	}
@@ -109,7 +112,10 @@ func TestOnChooseCreatureExcludeHouse(t *testing.T) {
 	g.State.Cards[mars].Exhausted = true
 	ctx := &EffectContext{Resolver: g, Source: sanc, Controller: 0}
 
-	e := OnChooseCreature{Target: Target{Kind: TargetChosenFriendlyCreature}.ExceptHouse(Sanctum), Verbs: []CreatureVerb{ReadyVerb{}}}
+	e := OnChooseCreature{
+		Target: Target{Kind: TargetChosenFriendlyCreature}.ExceptHouse(Sanctum),
+		Verbs:  []CreatureVerb{ReadyVerb{}},
+	}
 	if e.Text() != "ready a friendly non-Sanctum creature" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -138,8 +144,20 @@ func (c idChooser) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) 
 func TestUseVerbNesting(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	// A's "Reap:" uses a friendly creature; B is the one it uses (to reap).
-	a := g.AddToBattleline(NewCard("A", Brobnar, Creature, Common, WithPower(3),
-		WithAbility(TriggerAfterReap, OnChooseCreature{Target: Target{Kind: TargetChosenFriendlyCreature}, Verbs: []CreatureVerb{UseVerb{}}})), 0)
+	a := g.AddToBattleline(NewCard(
+		"A",
+		Brobnar,
+		Creature,
+		Common,
+		WithPower(3),
+		WithAbility(
+			TriggerAfterReap,
+			OnChooseCreature{
+				Target: Target{Kind: TargetChosenFriendlyCreature},
+				Verbs:  []CreatureVerb{UseVerb{}},
+			},
+		),
+	), 0)
 	b := g.AddToBattleline(testCreature("B", 3), 0)
 	g.SetChooser(0, idChooser{id: b}) // use B, not A itself
 
@@ -163,8 +181,22 @@ func TestTriggerWindowPicksUpNewlyGrantedAbility(t *testing.T) {
 	// "Reap: gain 3 Æmber". Because A is still inside its reap window, the newly
 	// granted ability fires in the same window.
 	attach := gameEffect{fn: func() {
-		up := g.Register(NewCard("boost", Brobnar, Upgrade, Common,
-			WithStatic(StaticModifier{Granted: []Ability{{Trigger: TriggerAfterReap, Effect: GainAember{Player: Controller, Amount: 3}}}})), 0)
+		up := g.Register(NewCard(
+			"boost",
+			Brobnar,
+			Upgrade,
+			Common,
+			WithStatic(
+				StaticModifier{
+					Granted: []Ability{
+						{
+							Trigger: TriggerAfterReap,
+							Effect:  GainAember{Player: Controller, Amount: 3},
+						},
+					},
+				},
+			),
+		), 0)
 		g.AttachUpgrade(a, up)
 	}}
 	a = g.AddToBattleline(NewCard("A", Brobnar, Creature, Common, WithPower(2),
@@ -185,7 +217,10 @@ func TestOnChooseCreatureNeighbors(t *testing.T) {
 	foe := g.AddToBattleline(testCreature("foe", 10), 1)
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
-	e := OnChooseCreature{Target: Target{Kind: TargetChosenCreature}.Neighboring(), Verbs: []CreatureVerb{ReadyVerb{}, FightVerb{}}}
+	e := OnChooseCreature{
+		Target: Target{Kind: TargetChosenCreature}.Neighboring(),
+		Verbs:  []CreatureVerb{ReadyVerb{}, FightVerb{}},
+	}
 	if e.Text() != "ready and fight with a neighboring creature" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -210,6 +245,10 @@ func TestStunExhaustVerbs(t *testing.T) {
 	StunVerb{}.Apply(ctx, id)
 	ExhaustVerb{}.Apply(ctx, id)
 	if !g.State.Cards[id].Stunned || !g.State.Cards[id].Exhausted {
-		t.Errorf("verbs did not apply: stunned=%v exhausted=%v", g.State.Cards[id].Stunned, g.State.Cards[id].Exhausted)
+		t.Errorf(
+			"verbs did not apply: stunned=%v exhausted=%v",
+			g.State.Cards[id].Stunned,
+			g.State.Cards[id].Exhausted,
+		)
 	}
 }

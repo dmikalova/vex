@@ -17,16 +17,28 @@ func TestTargetSelect(t *testing.T) {
 		t.Errorf("triggering-creature without It should be nil, got %v", ids)
 	}
 	ctx.HasIt, ctx.It = true, enemy
-	if ids := (Target{Kind: TargetTriggeringCreature}).Select(ctx); len(ids) != 1 || ids[0] != enemy {
+	if ids := (Target{Kind: TargetTriggeringCreature}).Select(
+		ctx,
+	); len(ids) != 1 ||
+		ids[0] != enemy {
 		t.Errorf("triggering-creature select = %v", ids)
 	}
-	if ids := (Target{Kind: TargetEachEnemyCreature}).Select(ctx); len(ids) != 1 || ids[0] != enemy {
+	if ids := (Target{Kind: TargetEachEnemyCreature}).Select(
+		ctx,
+	); len(ids) != 1 ||
+		ids[0] != enemy {
 		t.Errorf("each-enemy select = %v", ids)
 	}
-	if ids := (Target{Kind: TargetEachCreature}).Select(ctx); len(ids) != 2 || ids[0] != src || ids[1] != enemy {
+	if ids := (Target{Kind: TargetEachCreature}).Select(
+		ctx,
+	); len(ids) != 2 || ids[0] != src ||
+		ids[1] != enemy {
 		t.Errorf("each-creature select = %v", ids)
 	}
-	if ids := (Target{Kind: TargetEachArtifact}).Select(ctx); len(ids) != 2 || ids[0] != myArt || ids[1] != enemyArt {
+	if ids := (Target{Kind: TargetEachArtifact}).Select(
+		ctx,
+	); len(ids) != 2 || ids[0] != myArt ||
+		ids[1] != enemyArt {
 		t.Errorf("each-artifact select = %v", ids)
 	}
 	if ids := (Target{Kind: TargetKind(99)}).Select(ctx); ids != nil {
@@ -50,7 +62,10 @@ func TestTargetSelect(t *testing.T) {
 	// the choice is forced and taken automatically — a chooser that would decline
 	// is never consulted.
 	g.SetChooser(0, orderRejectChooser{})
-	if ids := (Target{Kind: TargetChosenEnemyCreature}).Select(ctx); len(ids) != 1 || ids[0] != enemy {
+	if ids := (Target{Kind: TargetChosenEnemyCreature}).Select(
+		ctx,
+	); len(ids) != 1 ||
+		ids[0] != enemy {
 		t.Errorf("single-candidate chosen-enemy = %v, want [%d] (auto-selected)", ids, enemy)
 	}
 	// With two enemies the chooser decides, and may decline.
@@ -62,7 +77,9 @@ func TestTargetSelect(t *testing.T) {
 
 	// Damaged filter keeps only creatures with damage on them.
 	g.State.Cards[src].Damage = 1
-	if ids := (Target{Kind: TargetEachCreature}).Damaged().Select(ctx); len(ids) != 1 || ids[0] != src {
+	if ids := (Target{Kind: TargetEachCreature}).Damaged().
+		Select(ctx); len(ids) != 1 ||
+		ids[0] != src {
 		t.Errorf("damaged filter = %v, want [%d]", ids, src)
 	}
 	g.State.Cards[src].Damage = 0
@@ -71,11 +88,15 @@ func TestTargetSelect(t *testing.T) {
 	mid := g.AddToBattleline(testCreature("mid", 1), 0)
 	right := g.AddToBattleline(testCreature("right", 1), 0)
 	// Player 0's battleline is now [src, mid, right]; only src and right are flanks.
-	if ids := (Target{Kind: TargetEachFriendlyCreature}).OnFlank().Select(ctx); len(ids) != 2 || ids[0] != src || ids[1] != right {
+	if ids := (Target{Kind: TargetEachFriendlyCreature}).OnFlank().
+		Select(ctx); len(ids) != 2 || ids[0] != src ||
+		ids[1] != right {
 		t.Errorf("flank filter = %v, want [%d %d]", ids, src, right)
 	}
 	// NotOnFlank keeps only the interior creatures (here, just mid).
-	if ids := (Target{Kind: TargetEachFriendlyCreature}).NotOnFlank().Select(ctx); len(ids) != 1 || ids[0] != mid {
+	if ids := (Target{Kind: TargetEachFriendlyCreature}).NotOnFlank().
+		Select(ctx); len(ids) != 1 ||
+		ids[0] != mid {
 		t.Errorf("not-on-flank filter = %v, want [%d]", ids, mid)
 	}
 }
@@ -104,10 +125,12 @@ func TestTargetText(t *testing.T) {
 	if got := (Target{Kind: TargetChosenCreature}).OnFlank().Text(); got != "a flank creature" {
 		t.Errorf("flank text = %q", got)
 	}
-	if got := (Target{Kind: TargetChosenCreature}).NotOnFlank().Text(); got != "a creature that is not on a flank" {
+	if got := (Target{Kind: TargetChosenCreature}).NotOnFlank().
+		Text(); got != "a creature that is not on a flank" {
 		t.Errorf("not-on-flank text = %q", got)
 	}
-	if got := (Target{Kind: TargetEachEnemyCreature}).NotOnFlank().Text(); got != "each enemy creature that is not on a flank" {
+	if got := (Target{Kind: TargetEachEnemyCreature}).NotOnFlank().
+		Text(); got != "each enemy creature that is not on a flank" {
 		t.Errorf("not-on-flank each text = %q", got)
 	}
 	if got := (Target{Kind: TargetChosenArtifact}).Text(); got != "an artifact" {
@@ -116,7 +139,8 @@ func TestTargetText(t *testing.T) {
 }
 
 func TestTargetSharingTrait(t *testing.T) {
-	if got := (Target{Kind: TargetEachCreature}).SharingTrait("the purged creature").Text(); got != "each creature that shares a trait with the purged creature" {
+	if got := (Target{Kind: TargetEachCreature}).SharingTrait().
+		Text(); got != "each creature that shares a trait with it" {
 		t.Errorf("shares-trait text = %q", got)
 	}
 
@@ -124,7 +148,7 @@ func TestTargetSharingTrait(t *testing.T) {
 	kin := g.AddToBattleline(testCreature("kin", 3, WithTraits("Beast")), 0)
 	prey := g.AddToBattleline(testCreature("prey", 5, WithTraits("Beast")), 1)
 	g.AddToBattleline(testCreature("spared", 5, WithTraits("Robot")), 1)
-	target := Target{Kind: TargetEachCreature}.SharingTrait("it")
+	target := Target{Kind: TargetEachCreature}.SharingTrait()
 
 	// Without a context card the filter matches nothing.
 	noIt := &EffectContext{Resolver: g, Controller: 0}
@@ -147,20 +171,28 @@ func TestTargetPowerFilters(t *testing.T) {
 	p6 := g.AddToBattleline(testCreature("p6", 6), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	if ids := (Target{Kind: TargetEachCreature}).PowerAtMost(3).Select(ctx); len(ids) != 1 || ids[0] != p2 {
+	if ids := (Target{Kind: TargetEachCreature}).PowerAtMost(3).
+		Select(ctx); len(ids) != 1 ||
+		ids[0] != p2 {
 		t.Errorf("PowerAtMost(3) = %v, want [%d]", ids, p2)
 	}
-	if ids := (Target{Kind: TargetEachCreature}).PowerAtLeast(5).Select(ctx); len(ids) != 1 || ids[0] != p6 {
+	if ids := (Target{Kind: TargetEachCreature}).PowerAtLeast(5).
+		Select(ctx); len(ids) != 1 ||
+		ids[0] != p6 {
 		t.Errorf("PowerAtLeast(5) = %v, want [%d]", ids, p6)
 	}
-	if ids := (Target{Kind: TargetEachCreature}).PowerExactly(4).Select(ctx); len(ids) != 1 || ids[0] != p4 {
+	if ids := (Target{Kind: TargetEachCreature}).PowerExactly(4).
+		Select(ctx); len(ids) != 1 ||
+		ids[0] != p4 {
 		t.Errorf("PowerExactly(4) = %v, want [%d]", ids, p4)
 	}
 
-	if got := (Target{Kind: TargetChosenCreature}).PowerAtLeast(5).Text(); got != "a creature with power 5 or higher" {
+	if got := (Target{Kind: TargetChosenCreature}).PowerAtLeast(5).
+		Text(); got != "a creature with power 5 or higher" {
 		t.Errorf("PowerAtLeast text = %q", got)
 	}
-	if got := (Target{Kind: TargetChosenCreature}).PowerExactly(1).Text(); got != "a creature with power 1" {
+	if got := (Target{Kind: TargetChosenCreature}).PowerExactly(1).
+		Text(); got != "a creature with power 1" {
 		t.Errorf("PowerExactly text = %q", got)
 	}
 }
@@ -172,13 +204,19 @@ func TestTargetUndamagedAndOther(t *testing.T) {
 	g.State.Cards[hurt].Damage = 1
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
-	if ids := (Target{Kind: TargetEachCreature}).Undamaged().Select(ctx); len(ids) != 1 || ids[0] != src {
+	if ids := (Target{Kind: TargetEachCreature}).Undamaged().
+		Select(ctx); len(ids) != 1 ||
+		ids[0] != src {
 		t.Errorf("Undamaged filter = %v, want [%d]", ids, src)
 	}
-	if ids := (Target{Kind: TargetEachCreature}).Other().Select(ctx); len(ids) != 1 || ids[0] != hurt {
+	if ids := (Target{Kind: TargetEachCreature}).Other().
+		Select(ctx); len(ids) != 1 ||
+		ids[0] != hurt {
 		t.Errorf("Other filter = %v, want [%d]", ids, hurt)
 	}
-	if got := (Target{Kind: TargetEachCreature}).Other().Undamaged().Text(); got != "each other undamaged creature" {
+	if got := (Target{Kind: TargetEachCreature}).Other().
+		Undamaged().
+		Text(); got != "each other undamaged creature" {
 		t.Errorf("other+undamaged text = %q", got)
 	}
 }
@@ -191,16 +229,22 @@ func TestTargetWithAemberAndLeastPowerful(t *testing.T) {
 	g.AddToBattleline(testCreature("mid", 3), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	if ids := (Target{Kind: TargetEachCreature}).WithAember().Select(ctx); len(ids) != 1 || ids[0] != rich {
+	if ids := (Target{Kind: TargetEachCreature}).WithAember().
+		Select(ctx); len(ids) != 1 ||
+		ids[0] != rich {
 		t.Errorf("WithAember = %v, want [%d]", ids, rich)
 	}
-	if got := (Target{Kind: TargetEachCreature}).WithAember().Text(); got != "each creature with Æmber on it" {
+	if got := (Target{Kind: TargetEachCreature}).WithAember().
+		Text(); got != "each creature with Æmber on it" {
 		t.Errorf("WithAember text = %q", got)
 	}
-	if ids := (Target{Kind: TargetEachCreature}).Selector(LeastPowerful).Select(ctx); len(ids) != 1 || ids[0] != weak {
+	if ids := (Target{Kind: TargetEachCreature}).Selector(LeastPowerful).
+		Select(ctx); len(ids) != 1 ||
+		ids[0] != weak {
 		t.Errorf("LeastPowerful = %v, want [%d]", ids, weak)
 	}
-	if got := (Target{Kind: TargetEachCreature}).Selector(LeastPowerful).Text(); got != "the least powerful creature" {
+	if got := (Target{Kind: TargetEachCreature}).Selector(LeastPowerful).
+		Text(); got != "the least powerful creature" {
 		t.Errorf("LeastPowerful text = %q", got)
 	}
 	// An empty set selects nothing.
@@ -225,14 +269,16 @@ func TestLeastPowerfulTieChoice(t *testing.T) {
 
 func TestMostPowerful(t *testing.T) {
 	// Text pluralizes the noun.
-	if got := (Target{Kind: TargetEachCreature}).Selector(MostPowerful(3)).Text(); got != "the 3 most powerful creatures" {
+	if got := (Target{Kind: TargetEachCreature}).Selector(MostPowerful(3)).
+		Text(); got != "the 3 most powerful creatures" {
 		t.Errorf("text = %q", got)
 	}
 
 	// Fewer creatures than n keeps them all.
 	g0 := NewGame("A", "B", 1)
 	g0.AddToBattleline(testCreature("only", 3), 1)
-	ids := (Target{Kind: TargetEachEnemyCreature}).Selector(MostPowerful(3)).Select(&EffectContext{Resolver: g0, Controller: 0})
+	ids := (Target{Kind: TargetEachEnemyCreature}).Selector(MostPowerful(3)).
+		Select(&EffectContext{Resolver: g0, Controller: 0})
 	if len(ids) != 1 {
 		t.Errorf("MostPowerful(3) of one creature = %v, want the single creature", ids)
 	}
@@ -243,7 +289,8 @@ func TestMostPowerful(t *testing.T) {
 	b := g1.AddToBattleline(testCreature("b", 4), 1)
 	c := g1.AddToBattleline(testCreature("c", 3), 1)
 	g1.AddToBattleline(testCreature("d", 2), 1)
-	got := (Target{Kind: TargetEachEnemyCreature}).Selector(MostPowerful(3)).Select(&EffectContext{Resolver: g1, Controller: 0})
+	got := (Target{Kind: TargetEachEnemyCreature}).Selector(MostPowerful(3)).
+		Select(&EffectContext{Resolver: g1, Controller: 0})
 	if len(got) != 3 || !containsID(got, a) || !containsID(got, b) || !containsID(got, c) {
 		t.Errorf("MostPowerful(3) = %v, want the top three [%d %d %d]", got, a, b, c)
 	}
@@ -255,7 +302,8 @@ func TestMostPowerful(t *testing.T) {
 	t2 := g2.AddToBattleline(testCreature("t2", 3), 1)
 	g2.AddToBattleline(testCreature("t3", 3), 1)
 	g2.SetChooser(0, idChooser{id: t2})
-	chosen := (Target{Kind: TargetEachEnemyCreature}).Selector(MostPowerful(2)).Select(&EffectContext{Resolver: g2, Controller: 0})
+	chosen := (Target{Kind: TargetEachEnemyCreature}).Selector(MostPowerful(2)).
+		Select(&EffectContext{Resolver: g2, Controller: 0})
 	if len(chosen) != 2 || !containsID(chosen, top) || !containsID(chosen, t2) {
 		t.Errorf("MostPowerful(2) tie = %v, want [%d %d]; t1=%d", chosen, top, t2, t1)
 	}
@@ -267,7 +315,8 @@ func TestMostPowerful(t *testing.T) {
 	g3.AddToBattleline(testCreature("lo2", 3), 1)
 	g3.AddToBattleline(testCreature("lo3", 3), 1)
 	g3.SetChooser(0, orderRejectChooser{})
-	fallback := (Target{Kind: TargetEachEnemyCreature}).Selector(MostPowerful(2)).Select(&EffectContext{Resolver: g3, Controller: 0})
+	fallback := (Target{Kind: TargetEachEnemyCreature}).Selector(MostPowerful(2)).
+		Select(&EffectContext{Resolver: g3, Controller: 0})
 	if len(fallback) != 2 || !containsID(fallback, hi) || !containsID(fallback, lo1) {
 		t.Errorf("declined tie = %v, want [%d %d]", fallback, hi, lo1)
 	}
@@ -275,14 +324,20 @@ func TestMostPowerful(t *testing.T) {
 
 func TestTargetKeyword(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	elusive := g.AddToBattleline(NewCard("elu", Brobnar, Creature, Common, WithKeywords(Elusive)), 0)
+	elusive := g.AddToBattleline(
+		NewCard("elu", Brobnar, Creature, Common, WithKeywords(Elusive)),
+		0,
+	)
 	g.AddToBattleline(testCreature("plain", 3), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	if ids := (Target{Kind: TargetEachCreature}).Keyword(Elusive).Select(ctx); len(ids) != 1 || ids[0] != elusive {
+	if ids := (Target{Kind: TargetEachCreature}).Keyword(Elusive).
+		Select(ctx); len(ids) != 1 ||
+		ids[0] != elusive {
 		t.Errorf("Keyword(Elusive) = %v, want [%d]", ids, elusive)
 	}
-	if got := (Target{Kind: TargetEachCreature}).Keyword(Elusive).Text(); got != "each elusive creature" {
+	if got := (Target{Kind: TargetEachCreature}).Keyword(Elusive).
+		Text(); got != "each elusive creature" {
 		t.Errorf("keyword text = %q", got)
 	}
 }
@@ -304,15 +359,23 @@ func TestTargetOfHouse(t *testing.T) {
 
 func TestTargetExceptTrait(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	agent := g.AddToBattleline(NewCard("a", Mars, Creature, Common, WithPower(3), WithTraits("Agent")), 0)
-	martian := g.AddToBattleline(NewCard("m", Mars, Creature, Common, WithPower(3), WithTraits("Martian")), 0)
+	agent := g.AddToBattleline(
+		NewCard("a", Mars, Creature, Common, WithPower(3), WithTraits("Agent")),
+		0,
+	)
+	martian := g.AddToBattleline(
+		NewCard("m", Mars, Creature, Common, WithPower(3), WithTraits("Martian")),
+		0,
+	)
 	ctx := &EffectContext{Resolver: g, Source: agent, Controller: 0}
 
 	ids := (Target{Kind: TargetEachCreature}).OfHouse(Mars).ExceptTrait("Agent").Select(ctx)
 	if len(ids) != 1 || ids[0] != martian {
 		t.Errorf("ExceptTrait(Agent) = %v, want [%d] (Agent filtered out)", ids, martian)
 	}
-	if got := (Target{Kind: TargetChosenCreature}).OfHouse(Mars).ExceptTrait("Agent").Text(); got != "a non-Agent trait Mars creature" {
+	if got := (Target{Kind: TargetChosenCreature}).OfHouse(Mars).
+		ExceptTrait("Agent").
+		Text(); got != "a non-Agent trait Mars creature" {
 		t.Errorf("ExceptTrait text = %q", got)
 	}
 }
@@ -365,10 +428,14 @@ func TestTargetExceptMostPowerful(t *testing.T) {
 	g2 := NewGame("A", "B", 1)
 	g2.AddToBattleline(testCreature("lone", 3), 0)
 	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
-	if got := (Target{Kind: TargetEachFriendlyCreature}.Selector(ExceptMostPowerful)).Select(ctx2); got != nil {
+	if got := (Target{Kind: TargetEachFriendlyCreature}.Selector(ExceptMostPowerful)).Select(
+		ctx2,
+	); got != nil {
 		t.Errorf("lone select = %v, want nil", got)
 	}
-	if got := (Target{Kind: TargetEachEnemyCreature}.Selector(ExceptMostPowerful)).Select(ctx2); got != nil {
+	if got := (Target{Kind: TargetEachEnemyCreature}.Selector(ExceptMostPowerful)).Select(
+		ctx2,
+	); got != nil {
 		t.Errorf("empty select = %v, want nil", got)
 	}
 
@@ -418,7 +485,10 @@ func TestTargetChosenOtherFriendly(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
 	// The source is excluded, leaving one candidate that is auto-selected.
-	if ids := (Target{Kind: TargetChosenOtherFriendlyCreature}).Select(ctx); len(ids) != 1 || ids[0] != other {
+	if ids := (Target{Kind: TargetChosenOtherFriendlyCreature}).Select(
+		ctx,
+	); len(ids) != 1 ||
+		ids[0] != other {
 		t.Errorf("chosen-other-friendly = %v, want [%d]", ids, other)
 	}
 

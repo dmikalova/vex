@@ -17,7 +17,9 @@ func TestTakeControl(t *testing.T) {
 	host := g.AddToBattleline(testCreature("host", 3), 1)
 	collar := g.Register(NewCard("collar", Dis, Upgrade, Rare), 0)
 
-	(TakeControl{Duration: UntilThisLeavesPlay}).Resolve(&EffectContext{Resolver: g, Source: host, Upgrade: collar, Controller: 0})
+	(TakeControl{Duration: UntilThisLeavesPlay}).Resolve(
+		&EffectContext{Resolver: g, Source: host, Upgrade: collar, Controller: 0},
+	)
 
 	if g.owner(host) != 1 {
 		t.Fatalf("owner = %d, want unchanged P2", g.owner(host))
@@ -26,7 +28,11 @@ func TestTakeControl(t *testing.T) {
 		t.Fatalf("controller = %d, want P1", g.controller(host))
 	}
 	if g.State.Cards[host].ControlSource != collar {
-		t.Fatalf("control source = %d, want the collar %d", g.State.Cards[host].ControlSource, collar)
+		t.Fatalf(
+			"control source = %d, want the collar %d",
+			g.State.Cards[host].ControlSource,
+			collar,
+		)
 	}
 	if !g.State.Battleline[0].contains(host) || g.State.Battleline[1].contains(host) {
 		t.Fatalf("battlelines = %v/%v, want host only under P1", g.Battleline(0), g.Battleline(1))
@@ -74,12 +80,12 @@ func TestControlledCreatureLeavesForOwner(t *testing.T) {
 }
 
 func TestTakeControlArtifact(t *testing.T) {
-	permArt := TakeControl{Target: Target{Kind: TargetChosenEnemyArtifact}, Duration: Permanent}
+	permArt := TakeControl{Target: Target{Kind: TargetChosenEnemyArtifact}, Duration: Forever}
 	if got := permArt.Text(); got != "take control of an enemy artifact" {
 		t.Errorf("permanent artifact text = %q", got)
 	}
-	if (TakeControl{Duration: Permanent}).validate() != nil {
-		t.Error("Permanent should be a valid duration")
+	if (TakeControl{Duration: Forever}).validate() != nil {
+		t.Error("Forever should be a valid duration")
 	}
 	if got := (TakeControl{Target: Target{Kind: TargetChosenEnemyCreature}, Duration: UntilThisLeavesPlay}).Text(); got != "take control of an enemy creature until "+SelfName+" leaves play" {
 		t.Errorf("targeted reverting text = %q", got)
@@ -103,7 +109,12 @@ func TestTakeControlArtifact(t *testing.T) {
 		src := g.AddToBattleline(testCreature("src", 3), 0)
 		foe := g.AddToBattleline(testCreature("foe", 3), 1)
 		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
-		TakeControl{Target: Target{Kind: TargetChosenEnemyCreature}, Duration: UntilThisLeavesPlay}.Resolve(ctx)
+		TakeControl{
+			Target:   Target{Kind: TargetChosenEnemyCreature},
+			Duration: UntilThisLeavesPlay,
+		}.Resolve(
+			ctx,
+		)
 		if g.controller(foe) != 0 {
 			t.Errorf("controller = %d, want 0", g.controller(foe))
 		}
@@ -113,42 +124,26 @@ func TestTakeControlArtifact(t *testing.T) {
 	})
 }
 
-func TestBelongToHouseIfOffIdentity(t *testing.T) {
-	e := BelongToHouseIfOffIdentity{House: Shadows}
-	if e.Text() != "if it does not belong to a house on your identity then it belongs to house Shadows" {
-		t.Errorf("text = %q", e.Text())
-	}
-	if (BelongToHouseIfOffIdentity{}).validate() == nil {
-		t.Error("a missing house should be invalid")
-	}
-	if e.validate() != nil {
-		t.Error("a set house should validate")
+func TestItIsOffIdentity(t *testing.T) {
+	c := ItIsOffIdentity{}
+	if c.CondText() != "if it does not belong to a house on your identity" {
+		t.Errorf("text = %q", c.CondText())
 	}
 
-	t.Run("reassigns an off-identity card", func(t *testing.T) {
-		g := NewGame("A", "B", 1)
-		g.SetPlayerHouses(0, []House{Shadows, Logos, Sanctum})
-		art := g.AddArtifact(NewCard("Gizmo", Untamed, Artifact, Common), 0)
-		e.Resolve(&EffectContext{Resolver: g, Controller: 0, It: art, HasIt: true})
-		if g.House(art) != Shadows {
-			t.Errorf("house = %v, want Shadows", g.House(art))
-		}
-	})
+	g := NewGame("A", "B", 1)
+	g.SetPlayerHouses(0, []House{Shadows, Logos, Sanctum})
+	off := g.AddArtifact(NewCard("Gizmo", Untamed, Artifact, Common), 0)
+	on := g.AddArtifact(NewCard("Relic", Logos, Artifact, Common), 0)
 
-	t.Run("leaves an on-identity card unchanged", func(t *testing.T) {
-		g := NewGame("A", "B", 1)
-		g.SetPlayerHouses(0, []House{Shadows, Mars, Sanctum})
-		art := g.AddArtifact(NewCard("Gizmo", Mars, Artifact, Common), 0)
-		e.Resolve(&EffectContext{Resolver: g, Controller: 0, It: art, HasIt: true})
-		if g.House(art) != Mars {
-			t.Errorf("house = %v, want Mars (unchanged)", g.House(art))
-		}
-	})
-
-	t.Run("does nothing without a card in context", func(_ *testing.T) {
-		g := NewGame("A", "B", 1)
-		e.Resolve(&EffectContext{Resolver: g, Controller: 0})
-	})
+	if !c.Met(&EffectContext{Resolver: g, Controller: 0, It: off, HasIt: true}) {
+		t.Error("an off-identity card should meet the condition")
+	}
+	if c.Met(&EffectContext{Resolver: g, Controller: 0, It: on, HasIt: true}) {
+		t.Error("an on-identity card should not meet the condition")
+	}
+	if c.Met(&EffectContext{Resolver: g, Controller: 0}) {
+		t.Error("no card in context should not meet the condition")
+	}
 }
 
 func TestTakeControlOfArtifactGuard(t *testing.T) {

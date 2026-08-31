@@ -28,7 +28,13 @@ func TestCannotPlay(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Resolve arms the opponent's next turn.
-	CannotPlay{Player: Opponent, Type: Creature, Duration: NextTurn}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	CannotPlay{
+		Player:   Opponent,
+		Type:     Creature,
+		Duration: NextTurn,
+	}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0},
+	)
 	if g.State.CannotPlayTypeNext[1] != Creature {
 		t.Fatal("the bar should arm the opponent's next turn")
 	}
@@ -47,7 +53,9 @@ func TestGrantFightForChosenHouse(t *testing.T) {
 		t.Errorf("text = %q", got)
 	}
 	g := NewGame("A", "B", 1)
-	GrantFightForChosenHouse{}.Resolve(&EffectContext{Resolver: g, Controller: 0, ChosenHouse: Untamed})
+	GrantFightForChosenHouse{}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0, ChosenHouse: Untamed},
+	)
 	if g.State.MayFightHouse[0] != Untamed {
 		t.Errorf("MayFightHouse[0] = %v, want Untamed", g.State.MayFightHouse[0])
 	}
@@ -70,7 +78,12 @@ func TestCannotFight(t *testing.T) {
 	def := g.AddToBattleline(testCreature("def", 4), 1)
 
 	// Player 0 arms the bar on the opponent during player 0's own turn.
-	CannotFight{Player: Opponent, Duration: NextTurn}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	CannotFight{
+		Player:   Opponent,
+		Duration: NextTurn,
+	}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0},
+	)
 	if !g.State.CannotFightNext[1] {
 		t.Fatal("CannotFight should arm the opponent's next turn")
 	}
@@ -118,7 +131,17 @@ func TestCannotFightConstant(t *testing.T) {
 		t.Fatal("no restriction yet")
 	}
 	// A card in play with a constant Fighting restriction bars its controller.
-	g.AddToBattleline(NewCard("Curse", Brobnar, Creature, Common, WithPower(1), WithRestrictions(Restrictions{Fighting: true})), 0)
+	g.AddToBattleline(
+		NewCard(
+			"Curse",
+			Brobnar,
+			Creature,
+			Common,
+			WithPower(1),
+			WithRestrictions(Restrictions{Fighting: true}),
+		),
+		0,
+	)
 	if !g.cannotFight(0) {
 		t.Error("a constant Fighting restriction should bar the controller")
 	}
@@ -132,11 +155,19 @@ func TestCannotPlayCreatures(t *testing.T) {
 		got[0] != "You cannot use creatures to fight." || got[1] != "You cannot play creatures." {
 		t.Errorf("restrictionText = %v", got)
 	}
-	if got := restrictionText(Restrictions{PlayCardLimit: PlayCardLimit{Player: Controller, Amount: 1}}); len(got) != 1 ||
+	if got := restrictionText(
+		Restrictions{PlayCardLimit: PlayCardLimit{Player: Controller, Amount: 1}},
+	); len(
+		got,
+	) != 1 ||
 		got[0] != "You cannot play more than 1 cards each turn." {
 		t.Errorf("controller card limit text = %v", got)
 	}
-	if got := restrictionText(Restrictions{PlayCardLimit: PlayCardLimit{Player: EachPlayer, Amount: 1}}); len(got) != 1 ||
+	if got := restrictionText(
+		Restrictions{PlayCardLimit: PlayCardLimit{Player: EachPlayer, Amount: 1}},
+	); len(
+		got,
+	) != 1 ||
 		got[0] != "Each player cannot play more than 1 cards each turn." {
 		t.Errorf("each-player card limit text = %v", got)
 	}
@@ -145,7 +176,17 @@ func TestCannotPlayCreatures(t *testing.T) {
 	if g.cannotPlayCreatures(0) {
 		t.Fatal("no restriction yet")
 	}
-	g.AddToBattleline(NewCard("Blocker", Brobnar, Creature, Common, WithPower(1), WithRestrictions(Restrictions{CannotPlay: Creature})), 0)
+	g.AddToBattleline(
+		NewCard(
+			"Blocker",
+			Brobnar,
+			Creature,
+			Common,
+			WithPower(1),
+			WithRestrictions(Restrictions{CannotPlay: Creature}),
+		),
+		0,
+	)
 	if !g.cannotPlayCreatures(0) {
 		t.Fatal("the restriction should bar creature plays")
 	}
@@ -162,11 +203,19 @@ func TestCannotPlayCreatures(t *testing.T) {
 
 func TestToll(t *testing.T) {
 	// Text renders for both actions a toll can charge for.
-	if got := restrictionText(Restrictions{Toll: Toll{Action: TollPlayArtifact, Amount: 1}}); len(got) != 1 ||
+	if got := restrictionText(
+		Restrictions{Toll: Toll{Action: TollPlayArtifact, Amount: 1}},
+	); len(
+		got,
+	) != 1 ||
 		got[0] != "Your opponent must give you 1 Æmber in order to play an artifact." {
 		t.Errorf("play-toll text = %v", got)
 	}
-	if got := restrictionText(Restrictions{Toll: Toll{Action: TollUseArtifact, Amount: 2}}); len(got) != 1 ||
+	if got := restrictionText(
+		Restrictions{Toll: Toll{Action: TollUseArtifact, Amount: 2}},
+	); len(
+		got,
+	) != 1 ||
 		got[0] != "Your opponent must give you 2 Æmber in order to use an artifact." {
 		t.Errorf("use-toll text = %v", got)
 	}
@@ -232,7 +281,9 @@ func TestForceActiveHouseNextTurn(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ForceOpponentActiveHouse{}.Resolve(&EffectContext{Resolver: g, Controller: 0, ChosenHouse: Mars})
+	ForceOpponentActiveHouse{}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0, ChosenHouse: Mars},
+	)
 	if g.State.ForcedHouseNext[1] != Mars {
 		t.Fatalf("armed = %v, want Mars", g.State.ForcedHouseNext[1])
 	}

@@ -27,7 +27,11 @@ func TestMothergun(t *testing.T) {
 					ct.Creature(ct.OfHouse(card.House.Mars)),
 				),
 			},
-			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(5))))},
+			P2: ct.Side{
+				InPlay: ct.Cards(
+					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(5))),
+				),
+			},
 		})
 
 		h.P1.UseAction(Mothergun)

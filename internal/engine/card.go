@@ -291,7 +291,13 @@ type CardOption func(*CardDefinition)
 
 // NewCard builds a CardDefinition. Required fields (including rarity) are
 // positional; everything optional is supplied via options.
-func NewCard(name string, house House, ct CardType, rarity Rarity, opts ...CardOption) CardDefinition {
+func NewCard(
+	name string,
+	house House,
+	ct CardType,
+	rarity Rarity,
+	opts ...CardOption,
+) CardDefinition {
 	c := CardDefinition{
 		Name:   name,
 		House:  house,

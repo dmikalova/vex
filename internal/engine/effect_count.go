@@ -39,7 +39,10 @@ type OpponentExcessCreatures struct{}
 
 // Value returns the opponent's creature count minus the controller's, floored at 0.
 func (OpponentExcessCreatures) Value(ctx *EffectContext) int {
-	return max(0, len(ctx.Resolver.Battleline(ctx.Opponent()))-len(ctx.Resolver.Battleline(ctx.Controller)))
+	return max(
+		0,
+		len(ctx.Resolver.Battleline(ctx.Opponent()))-len(ctx.Resolver.Battleline(ctx.Controller)),
+	)
 }
 
 // CountText renders the singular noun the "for each" clause repeats.

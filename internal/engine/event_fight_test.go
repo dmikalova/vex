@@ -12,7 +12,10 @@ func TestFightFiresLasting(t *testing.T) {
 		t.Fatalf("Fight: %v", err)
 	}
 	if g.State.Aember[0] != 1 {
-		t.Errorf("controller Æmber = %d, want 1 after a Warsong-style fight reaction", g.State.Aember[0])
+		t.Errorf(
+			"controller Æmber = %d, want 1 after a Warsong-style fight reaction",
+			g.State.Aember[0],
+		)
 	}
 }
 

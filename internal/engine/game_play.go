@@ -15,10 +15,15 @@ func (g *Game) PlayCreature(player, handIndex int, flankLeft bool) (LocalID, err
 		return 0, err
 	}
 	def := g.cat.def(id)
-	return g.playCardFromZone(player, id, func() { g.State.Hand[player].removeAt(handIndex) }, playCardOptions{
-		flankLeft:             flankLeft,
-		consumePlayPermission: g.usesPlayPermission(player, def),
-	})
+	return g.playCardFromZone(
+		player,
+		id,
+		func() { g.State.Hand[player].removeAt(handIndex) },
+		playCardOptions{
+			flankLeft:             flankLeft,
+			consumePlayPermission: g.usesPlayPermission(player, def),
+		},
+	)
 }
 
 // PlayArtifact plays an artifact from hand into the artifact row. If the opponent
@@ -30,9 +35,14 @@ func (g *Game) PlayArtifact(player, handIndex int) (LocalID, error) {
 		return 0, err
 	}
 	def := g.cat.def(id)
-	return g.playCardFromZone(player, id, func() { g.State.Hand[player].removeAt(handIndex) }, playCardOptions{
-		consumePlayPermission: g.usesPlayPermission(player, def),
-	})
+	return g.playCardFromZone(
+		player,
+		id,
+		func() { g.State.Hand[player].removeAt(handIndex) },
+		playCardOptions{
+			consumePlayPermission: g.usesPlayPermission(player, def),
+		},
+	)
 }
 
 // chargeToll makes player pay every toll an opponent's in-play card imposes for
@@ -67,9 +77,14 @@ func (g *Game) PlayAction(player, handIndex int) error {
 		return err
 	}
 	def := g.cat.def(id)
-	_, err = g.playCardFromZone(player, id, func() { g.State.Hand[player].removeAt(handIndex) }, playCardOptions{
-		consumePlayPermission: g.usesPlayPermission(player, def),
-	})
+	_, err = g.playCardFromZone(
+		player,
+		id,
+		func() { g.State.Hand[player].removeAt(handIndex) },
+		playCardOptions{
+			consumePlayPermission: g.usesPlayPermission(player, def),
+		},
+	)
 	return err
 }
 
@@ -156,7 +171,12 @@ type playCardOptions struct {
 // playCardFromZone resolves a card play after the source zone has identified the
 // card. It performs the shared play gates, removes the card only once it can be
 // played, records the play, then dispatches to the card-type-specific placement.
-func (g *Game) playCardFromZone(player int, id LocalID, remove func(), opts playCardOptions) (LocalID, error) {
+func (g *Game) playCardFromZone(
+	player int,
+	id LocalID,
+	remove func(),
+	opts playCardOptions,
+) (LocalID, error) {
 	if g.State.Winner >= 0 {
 		return 0, ErrGameOver
 	}
@@ -419,7 +439,9 @@ func (g *Game) CanPlay(player int, id LocalID) error {
 		return ErrWrongHouse
 	}
 	if def.Type == Upgrade &&
-		len(g.State.Battleline[player].slice()) == 0 && len(g.State.Battleline[1-player].slice()) == 0 {
+		len(
+			g.State.Battleline[player].slice(),
+		) == 0 && len(g.State.Battleline[1-player].slice()) == 0 {
 		return ErrNoTarget
 	}
 	return nil
@@ -431,7 +453,12 @@ func (g *Game) applyAemberBonus(id LocalID) {
 	if def.AemberBonus > 0 {
 		o := g.owner(id)
 		if capturer, ok := g.gainAember(o, def.AemberBonus); ok {
-			g.logf("%s captures %d Æmber from %s's bonus", g.Name(capturer), def.AemberBonus, def.Name)
+			g.logf(
+				"%s captures %d Æmber from %s's bonus",
+				g.Name(capturer),
+				def.AemberBonus,
+				def.Name,
+			)
 			return
 		}
 		g.logf("%s gains %d Æmber from %s", g.names[o], def.AemberBonus, def.Name)

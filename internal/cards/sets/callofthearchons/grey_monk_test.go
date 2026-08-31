@@ -22,8 +22,11 @@ func TestGreyMonk(t *testing.T) {
 		var ally ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.Sanctum,
-				InPlay: ct.Cards(GreyMonk, ct.Bind(&ally, ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Armor(0)))),
+				House: card.House.Sanctum,
+				InPlay: ct.Cards(
+					GreyMonk,
+					ct.Bind(&ally, ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Armor(0))),
+				),
 			},
 		})
 
@@ -34,8 +37,11 @@ func TestGreyMonk(t *testing.T) {
 		var ally ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.Sanctum,
-				InPlay: ct.Cards(GreyMonk, ct.Bind(&ally, ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Power(5)))),
+				House: card.House.Sanctum,
+				InPlay: ct.Cards(
+					GreyMonk,
+					ct.Bind(&ally, ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Power(5))),
+				),
 			},
 		})
 

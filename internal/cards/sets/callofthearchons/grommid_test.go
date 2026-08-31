@@ -27,8 +27,10 @@ func TestGrommid(t *testing.T) {
 				Hand:   ct.Cards(ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(2))),
 			},
 			P2: ct.Side{
-				InPlay: ct.Cards(ct.Bind(&enemy, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3)))),
-				Amber:  3,
+				InPlay: ct.Cards(
+					ct.Bind(&enemy, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3))),
+				),
+				Amber: 3,
 			},
 		})
 		return h, grommid, enemy

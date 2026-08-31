@@ -27,7 +27,9 @@ func TestCharge(t *testing.T) {
 				),
 			},
 			P2: ct.Side{
-				InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Untamed), ct.Power(5)))),
+				InPlay: ct.Cards(
+					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Untamed), ct.Power(5))),
+				),
 			},
 		})
 

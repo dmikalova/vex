@@ -22,11 +22,16 @@ func TestWayOfTheBear(t *testing.T) {
 			P1: ct.Side{
 				House: card.House.Untamed,
 				InPlay: ct.Cards(
-					ct.Upgraded(ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Untamed), ct.Power(3))), WayOfTheBear),
+					ct.Upgraded(
+						ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Untamed), ct.Power(3))),
+						WayOfTheBear,
+					),
 				),
 			},
 			P2: ct.Side{
-				InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(10)))),
+				InPlay: ct.Cards(
+					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(10))),
+				),
 			},
 		})
 

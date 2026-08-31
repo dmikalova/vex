@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Elf • Thief
 //
-//	Play: Take control of an enemy artifact. If it does not belong to a house on your identity then it belongs to house Shadows.
+//	Play: Take control of an enemy artifact. If it does not belong to a house on your identity, it belongs to house Shadows until it leaves play.
 var Sneklifter = card.New(
 	"Sneklifter",
 	card.House.Shadows,
@@ -23,8 +23,15 @@ var Sneklifter = card.New(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.Sentence{Effect: card.TakeControl{
 				Target:   card.Target.EnemyArtifact,
-				Duration: card.Duration.Permanent,
+				Duration: card.Duration.Forever,
 			}},
-			card.BelongToHouseIfOffIdentity{House: card.House.Shadows},
+			card.Conditional{
+				Cond: card.ItIsOffIdentity{},
+				Then: card.BelongToHouse{
+					Target:   card.Target.Triggering,
+					House:    card.House.Shadows,
+					Duration: card.Duration.UntilThisLeavesPlay,
+				},
+			},
 		}}),
 )

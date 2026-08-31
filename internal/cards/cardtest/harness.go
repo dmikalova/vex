@@ -129,13 +129,22 @@ func (p *Player) Play(card any) {
 	name := def.Name
 	switch def.Type {
 	case engine.Creature:
-		p.h.run("Play "+name, func() error { _, err := p.h.g.PlayCreature(p.index, idx, false); return err })
+		p.h.run(
+			"Play "+name,
+			func() error { _, err := p.h.g.PlayCreature(p.index, idx, false); return err },
+		)
 	case engine.Artifact:
-		p.h.run("Play "+name, func() error { _, err := p.h.g.PlayArtifact(p.index, idx); return err })
+		p.h.run(
+			"Play "+name,
+			func() error { _, err := p.h.g.PlayArtifact(p.index, idx); return err },
+		)
 	case engine.Tactic:
 		p.h.run("Play "+name, func() error { return p.h.g.PlayAction(p.index, idx) })
 	case engine.Upgrade:
-		p.h.run("Play "+name, func() error { _, err := p.h.g.PlayUpgrade(p.index, idx); return err })
+		p.h.run(
+			"Play "+name,
+			func() error { _, err := p.h.g.PlayUpgrade(p.index, idx); return err },
+		)
 	default:
 		p.h.t.Fatalf("Play: %s has an unknown type %q", name, def.Type)
 	}
@@ -329,7 +338,12 @@ func (h *Harness) findInHand(player int, card any) (int, engine.LocalID) {
 			return idx, id
 		}
 		if n > 1 {
-			h.t.Fatalf("Play(%s): %d copies in %s's hand — use ct.Bind to name one", v.Name, n, playerName(player))
+			h.t.Fatalf(
+				"Play(%s): %d copies in %s's hand — use ct.Bind to name one",
+				v.Name,
+				n,
+				playerName(player),
+			)
 		}
 		h.t.Fatalf("Play(%s): not in %s's hand", v.Name, playerName(player))
 	default:
@@ -369,7 +383,8 @@ func (h *Harness) resolve(card any, ids []engine.LocalID, ctx string) engine.Loc
 // ownerOf reports which player currently holds a card, scanning play and hand.
 func (h *Harness) ownerOf(id engine.LocalID) int {
 	for p := 0; p < 2; p++ {
-		if containsID(h.g.Battleline(p), id) || containsID(h.g.Artifacts(p), id) || containsID(h.g.Hand(p), id) {
+		if containsID(h.g.Battleline(p), id) || containsID(h.g.Artifacts(p), id) ||
+			containsID(h.g.Hand(p), id) {
 			return p
 		}
 	}

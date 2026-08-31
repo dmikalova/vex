@@ -20,10 +20,17 @@ func TestSoulSnatcher(t *testing.T) {
 		var attacker, foe ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.Dis,
-				InPlay: ct.Cards(SoulSnatcher, ct.Bind(&attacker, ct.Creature(ct.OfHouse(card.House.Dis), ct.Power(5)))),
+				House: card.House.Dis,
+				InPlay: ct.Cards(
+					SoulSnatcher,
+					ct.Bind(&attacker, ct.Creature(ct.OfHouse(card.House.Dis), ct.Power(5))),
+				),
 			},
-			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(2))))},
+			P2: ct.Side{
+				InPlay: ct.Cards(
+					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(2))),
+				),
+			},
 		})
 
 		h.P1.Fight(attacker, foe)

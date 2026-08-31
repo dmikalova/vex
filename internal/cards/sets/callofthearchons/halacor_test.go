@@ -21,10 +21,17 @@ func TestHalacor(t *testing.T) {
 		var ally, foe ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.Untamed,
-				InPlay: ct.Cards(Halacor, ct.Bind(&ally, ct.Creature(ct.OfHouse(card.House.Untamed), ct.Power(4)))),
+				House: card.House.Untamed,
+				InPlay: ct.Cards(
+					Halacor,
+					ct.Bind(&ally, ct.Creature(ct.OfHouse(card.House.Untamed), ct.Power(4))),
+				),
 			},
-			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3))))},
+			P2: ct.Side{
+				InPlay: ct.Cards(
+					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3))),
+				),
+			},
 		})
 
 		h.P1.Fight(ally, foe)

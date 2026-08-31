@@ -16,7 +16,11 @@ func (RevealTopOfDeck) Resolve(ctx *EffectContext) {
 	id, ok := ctx.Resolver.TopOfDeck(ctx.Controller)
 	ctx.It, ctx.HasIt = id, ok
 	if ok {
-		ctx.Resolver.Logf("%s reveals %s", ctx.Resolver.PlayerName(ctx.Controller), ctx.Resolver.Name(id))
+		ctx.Resolver.Logf(
+			"%s reveals %s",
+			ctx.Resolver.PlayerName(ctx.Controller),
+			ctx.Resolver.Name(id),
+		)
 	}
 }
 

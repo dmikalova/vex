@@ -21,8 +21,10 @@ func TestBriarGrubbling(t *testing.T) {
 		var attacker ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.Mars,
-				InPlay: ct.Cards(ct.Bind(&attacker, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(4)))),
+				House: card.House.Mars,
+				InPlay: ct.Cards(
+					ct.Bind(&attacker, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(4))),
+				),
 			},
 			P2: ct.Side{InPlay: ct.Cards(BriarGrubbling)},
 		})

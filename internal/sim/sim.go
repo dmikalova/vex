@@ -63,7 +63,12 @@ func Simulate(script []byte) (err error) {
 		player := turn % 2
 		g.BeginTurn(player)
 		if e := g.InvariantError(); e != nil {
-			return fmt.Errorf("invariant violated after BeginTurn (turn %d, player %d): %w", turn, player, e)
+			return fmt.Errorf(
+				"invariant violated after BeginTurn (turn %d, player %d): %w",
+				turn,
+				player,
+				e,
+			)
 		}
 		if g.Winner() >= 0 {
 			break
@@ -73,7 +78,12 @@ func Simulate(script []byte) (err error) {
 		}
 		g.EndTurn(player)
 		if e := g.InvariantError(); e != nil {
-			return fmt.Errorf("invariant violated after EndTurn (turn %d, player %d): %w", turn, player, e)
+			return fmt.Errorf(
+				"invariant violated after EndTurn (turn %d, player %d): %w",
+				turn,
+				player,
+				e,
+			)
 		}
 	}
 	return nil
@@ -95,7 +105,12 @@ func playTurn(g *engine.Game, player int, houses []engine.House, d *decoder) err
 			return nil
 		}
 		if e := g.InvariantError(); e != nil {
-			return fmt.Errorf("invariant violated after action (player %d, step %d): %w", player, step, e)
+			return fmt.Errorf(
+				"invariant violated after action (player %d, step %d): %w",
+				player,
+				step,
+				e,
+			)
 		}
 	}
 	return nil

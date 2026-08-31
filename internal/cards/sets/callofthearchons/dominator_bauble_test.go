@@ -19,8 +19,11 @@ func TestDominatorBauble(t *testing.T) {
 	t.Run("uses the only friendly creature to reap for 1 Æmber", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.Dis,
-				InPlay: ct.Cards(DominatorBauble, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3))),
+				House: card.House.Dis,
+				InPlay: ct.Cards(
+					DominatorBauble,
+					ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3)),
+				),
 			},
 		})
 

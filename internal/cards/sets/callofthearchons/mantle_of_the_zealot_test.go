@@ -21,7 +21,10 @@ func TestMantleOfTheZealot(t *testing.T) {
 			P1: ct.Side{
 				House: card.House.Sanctum,
 				InPlay: ct.Cards(
-					ct.Upgraded(ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Dis), ct.Power(3))), MantleOfTheZealot),
+					ct.Upgraded(
+						ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Dis), ct.Power(3))),
+						MantleOfTheZealot,
+					),
 				),
 			},
 		})

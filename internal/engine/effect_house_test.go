@@ -37,7 +37,11 @@ func TestBelongToHouseEndOfTurn(t *testing.T) {
 func TestBelongToHouseUntilLeavesPlay(t *testing.T) {
 	g := started(t)
 	host := g.AddToBattleline(NewCard("Host", Brobnar, Creature, Common, WithPower(3)), 0)
-	e := BelongToHouse{Target: Target{Kind: TargetThisCreature}, House: Mars, Duration: UntilThisLeavesPlay}
+	e := BelongToHouse{
+		Target:   Target{Kind: TargetThisCreature},
+		House:    Mars,
+		Duration: UntilThisLeavesPlay,
+	}
 	if got := e.Text(); got != "{self} belongs to house Mars until it leaves play" {
 		t.Errorf("text = %q", got)
 	}
@@ -47,7 +51,10 @@ func TestBelongToHouseUntilLeavesPlay(t *testing.T) {
 	}
 	g.EndTurn(0)
 	if g.House(host) != Mars {
-		t.Fatalf("house after end of turn = %s, want still Mars (lasts until it leaves play)", g.House(host))
+		t.Fatalf(
+			"house after end of turn = %s, want still Mars (lasts until it leaves play)",
+			g.House(host),
+		)
 	}
 	g.State.Battleline[0].remove(host)
 	g.resetCore(host)

@@ -26,8 +26,10 @@ func TestFrancus(t *testing.T) {
 				InPlay: ct.Cards(Francus),
 			},
 			P2: ct.Side{
-				InPlay: ct.Cards(ct.Bind(&prey, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(1)))),
-				Amber:  3,
+				InPlay: ct.Cards(
+					ct.Bind(&prey, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(1))),
+				),
+				Amber: 3,
 			},
 		})
 

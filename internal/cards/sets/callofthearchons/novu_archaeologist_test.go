@@ -21,9 +21,12 @@ func TestNovuArchaeologist(t *testing.T) {
 		var buried, other ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:   card.House.Logos,
-				InPlay:  ct.Cards(NovuArchaeologist),
-				Discard: ct.Cards(ct.Bind(&buried, ct.Creature(ct.OfHouse(card.House.Logos))), ct.Bind(&other, ct.Creature(ct.OfHouse(card.House.Logos)))),
+				House:  card.House.Logos,
+				InPlay: ct.Cards(NovuArchaeologist),
+				Discard: ct.Cards(
+					ct.Bind(&buried, ct.Creature(ct.OfHouse(card.House.Logos))),
+					ct.Bind(&other, ct.Creature(ct.OfHouse(card.House.Logos))),
+				),
 			},
 		})
 

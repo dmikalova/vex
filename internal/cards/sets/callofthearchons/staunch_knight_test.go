@@ -21,8 +21,11 @@ func TestStaunchKnight(t *testing.T) {
 	t.Run("gains +2 power while on a flank", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.Sanctum,
-				InPlay: ct.Cards(StaunchKnight, ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Power(3))),
+				House: card.House.Sanctum,
+				InPlay: ct.Cards(
+					StaunchKnight,
+					ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Power(3)),
+				),
 			},
 		})
 

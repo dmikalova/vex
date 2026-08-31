@@ -262,19 +262,20 @@ avoiding per-turn allocation on hot paths.
 ## Formatting and tooling by the numbers
 
 - **Run everything through `mage`, never raw `go`.** The mage targets wrap the
-  project's conventions (coverage gate, comment/rulebook generation, gofmt). The
+  project's conventions (coverage gate, comment/rulebook generation, golines). The
   gate is `mage check` (fmt-check, build, vet, lint, test, coverage); it must
   print `ALL GREEN` before work is considered done. `mage fmt` formats;
   `mage cover` keeps `internal/engine` at 100%. See the root
   [AGENTS.md](../AGENTS.md) for the full target list.
-- **Let `gofmt` own formatting.** Indentation, alignment, and wrapping are not
-  matters of taste here — `gofmt` (via `mage fmt`) decides them. Do not fight it.
+- **Let `golines` own formatting.** Indentation, alignment, and wrapping are not
+  matters of taste here — `golines` (via `mage fmt`) decides them: it applies
+  `gofmt` and additionally shortens code lines over 100 columns. Do not fight it.
 - **Keep functions short enough to see at once.** There is a real
   discontinuity between a function that fits on screen and one you must scroll to
   read; aim to keep functions within roughly 70 lines, splitting by pushing `if`s
   up and `for`s down. This is a guideline, not a gate.
-- **Keep lines to a readable measure.** For Go, gofmt does not wrap code lines, so
-  keep them short by construction; wrap markdown and comment prose at roughly 80
+- **Keep lines to a readable measure.** `golines` shortens over-long Go code
+  lines automatically (100 columns); wrap markdown and comment prose at roughly 80
   columns to match the existing docs.
 - **Brace `if` statements** unless the whole statement fits on one line, as
   defense against "goto fail"-style bugs (Go's `gofmt` and `go vet` largely

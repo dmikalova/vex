@@ -7,7 +7,7 @@ card-authoring specifics.
 
 Run all build/test/format/coverage tasks through `mage`, not raw `go`
 commands. The targets wrap the project's conventions (engine coverage gate,
-comment/rulebook generation, gofmt), so use them:
+comment/rulebook generation, golines), so use them:
 
 - `mage build` — build all packages.
 - `mage test` — run all tests.

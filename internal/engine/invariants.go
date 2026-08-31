@@ -14,7 +14,12 @@ func (g *Game) InvariantError() error {
 			return fmt.Errorf("player %d has negative Æmber (%d)", p, a)
 		}
 		if k := g.State.Keys[p]; k < 0 || k > KeysToWin {
-			return fmt.Errorf("player %d has out-of-range key count (%d, want 0..%d)", p, k, KeysToWin)
+			return fmt.Errorf(
+				"player %d has out-of-range key count (%d, want 0..%d)",
+				p,
+				k,
+				KeysToWin,
+			)
 		}
 		if c := g.State.Chains[p]; c < 0 {
 			return fmt.Errorf("player %d has negative chains (%d)", p, c)
@@ -47,12 +52,21 @@ func (g *Game) InvariantError() error {
 				count[up]++
 				attached[up] = true
 				if t := g.cat.def(up).Type; t != Upgrade {
-					return fmt.Errorf("card %d (%s) is in %s's upgrade chain but is a %s, not an Upgrade",
-						up, g.cat.def(up).Name, g.Name(id), t)
+					return fmt.Errorf(
+						"card %d (%s) is in %s's upgrade chain but is a %s, not an Upgrade",
+						up,
+						g.cat.def(up).Name,
+						g.Name(id),
+						t,
+					)
 				}
 				if g.State.Cards[up].HostPlus != upgradePlus(id) {
-					return fmt.Errorf("upgrade %d (%s) is in %s's chain but its host back-link disagrees",
-						up, g.cat.def(up).Name, g.Name(id))
+					return fmt.Errorf(
+						"upgrade %d (%s) is in %s's chain but its host back-link disagrees",
+						up,
+						g.cat.def(up).Name,
+						g.Name(id),
+					)
 				}
 			}
 		}
@@ -65,8 +79,11 @@ func (g *Game) InvariantError() error {
 		// An upgrade in play must be attached: a card that thinks it has a host but
 		// no creature holds it in a chain is a dangling attachment.
 		if g.State.Cards[id].HostPlus != 0 && !attached[id] {
-			return fmt.Errorf("card %d (%s) has a host back-link but no creature holds it (dangling upgrade)",
-				id, g.cat.def(LocalID(id)).Name)
+			return fmt.Errorf(
+				"card %d (%s) has a host back-link but no creature holds it (dangling upgrade)",
+				id,
+				g.cat.def(LocalID(id)).Name,
+			)
 		}
 	}
 	return nil

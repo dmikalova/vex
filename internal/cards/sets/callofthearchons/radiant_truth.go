@@ -17,5 +17,8 @@ var RadiantTruth = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 224),
 	card.WithAemberBonus(1),
-	card.WithAbility(card.Trigger.Play, card.Stun{Target: card.Target.EachEnemyCreature.NotOnFlank()}),
+	card.WithAbility(
+		card.Trigger.Play,
+		card.Stun{Target: card.Target.EachEnemyCreature.NotOnFlank()},
+	),
 )

@@ -9,15 +9,26 @@ func TestReturnNamedToHand(t *testing.T) {
 	}
 
 	urchin := func(g *Game, player int) LocalID {
-		return g.Register(NewCard("Urchin", Shadows, Creature, Common, WithPower(1), WithTraits("Elf", "Thief")), player)
+		return g.Register(
+			NewCard("Urchin", Shadows, Creature, Common, WithPower(1), WithTraits("Elf", "Thief")),
+			player,
+		)
 	}
 
 	t.Run("from play", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		src := g.AddToBattleline(testCreature("faygin", 3), 0)
-		urch := g.AddToBattleline(NewCard("Urchin", Shadows, Creature, Common, WithPower(1), WithTraits("Elf", "Thief")), 0)
-		g.AddToBattleline(testCreature("other", 4), 0)                              // different name: filtered out
-		g.State.Discard[0].add(g.Register(NewCard("junk", Dis, Tactic, Common), 0)) // different name in discard: filtered out
+		urch := g.AddToBattleline(
+			NewCard("Urchin", Shadows, Creature, Common, WithPower(1), WithTraits("Elf", "Thief")),
+			0,
+		)
+		g.AddToBattleline(
+			testCreature("other", 4),
+			0,
+		) // different name: filtered out
+		g.State.Discard[0].add(
+			g.Register(NewCard("junk", Dis, Tactic, Common), 0),
+		) // different name in discard: filtered out
 		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
 		e.Resolve(ctx) // the sole Urchin candidate is auto-chosen
@@ -48,8 +59,14 @@ func TestReturnNamedToHand(t *testing.T) {
 	t.Run("declined", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		src := g.AddToBattleline(testCreature("faygin", 3), 0)
-		u1 := g.AddToBattleline(NewCard("Urchin", Shadows, Creature, Common, WithPower(1), WithTraits("Elf", "Thief")), 0)
-		g.AddToBattleline(NewCard("Urchin", Shadows, Creature, Common, WithPower(1), WithTraits("Elf", "Thief")), 0)
+		u1 := g.AddToBattleline(
+			NewCard("Urchin", Shadows, Creature, Common, WithPower(1), WithTraits("Elf", "Thief")),
+			0,
+		)
+		g.AddToBattleline(
+			NewCard("Urchin", Shadows, Creature, Common, WithPower(1), WithTraits("Elf", "Thief")),
+			0,
+		)
 		g.SetChooser(0, orderRejectChooser{})
 		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
@@ -75,7 +92,11 @@ func TestMoveFromPlayToDeck(t *testing.T) {
 	e.Resolve(ctx)
 
 	if g.State.Artifacts[0].Count != 0 || g.State.Artifacts[1].Count != 0 {
-		t.Errorf("artifact rows not cleared: %d %d", g.State.Artifacts[0].Count, g.State.Artifacts[1].Count)
+		t.Errorf(
+			"artifact rows not cleared: %d %d",
+			g.State.Artifacts[0].Count,
+			g.State.Artifacts[1].Count,
+		)
 	}
 	if g.State.Deck[0].Count != 1 || g.State.Deck[0].IDs[0] != myArt {
 		t.Errorf("player 0 deck top = %v, want %d", g.State.Deck[0].IDs[0], myArt)
@@ -104,7 +125,12 @@ func TestMoveFromPlayToHand(t *testing.T) {
 		t.Errorf("battleline not cleared: %d", g.State.Battleline[0].Count)
 	}
 	if g.State.Hand[0].Count != 1 || g.State.Hand[0].IDs[0] != src {
-		t.Errorf("hand = count %d id %v, want 1 / %d", g.State.Hand[0].Count, g.State.Hand[0].IDs[0], src)
+		t.Errorf(
+			"hand = count %d id %v, want 1 / %d",
+			g.State.Hand[0].Count,
+			g.State.Hand[0].IDs[0],
+			src,
+		)
 	}
 	// Moving to hand clears the per-match state the card accrued in play.
 	if g.State.Cards[src].Damage != 0 {
@@ -129,7 +155,10 @@ func TestMoveFromPlayToArchives(t *testing.T) {
 		t.Error("the creature should have left play")
 	}
 	if g.State.Archives[0].Count != 1 || g.State.Archives[0].IDs[0] != src {
-		t.Errorf("creature should be archived, got %v", g.State.Archives[0].IDs[:g.State.Archives[0].Count])
+		t.Errorf(
+			"creature should be archived, got %v",
+			g.State.Archives[0].IDs[:g.State.Archives[0].Count],
+		)
 	}
 	if len(g.Discard(0)) != 1 { // the upgrade sheds to the discard pile
 		t.Errorf("upgrade should be discarded; discard = %v", g.Discard(0))
@@ -214,14 +243,24 @@ func TestPutUpTo(t *testing.T) {
 		t.Error("both artifacts should have left play")
 	}
 	if g.State.Hand[0].Count != 1 || g.State.Hand[1].Count != 1 {
-		t.Errorf("hands = %d/%d, want 1/1 (each returned to its owner)", g.State.Hand[0].Count, g.State.Hand[1].Count)
+		t.Errorf(
+			"hands = %d/%d, want 1/1 (each returned to its owner)",
+			g.State.Hand[0].Count,
+			g.State.Hand[1].Count,
+		)
 	}
 
 	// Choosing "Done" (the option past the sole artifact) stops early, leaving it.
 	g2 := NewGame("A", "B", 1)
 	art := g2.AddArtifact(exAutocannon(), 0)
 	g2.SetChooser(0, optionPicker{idx: 1}) // index 0 is the artifact, 1 is "Done"
-	PutUpTo{Max: 3, Target: eachArt, Destination: ToHand}.Resolve(&EffectContext{Resolver: g2, Controller: 0})
+	PutUpTo{
+		Max:         3,
+		Target:      eachArt,
+		Destination: ToHand,
+	}.Resolve(
+		&EffectContext{Resolver: g2, Controller: 0},
+	)
 	if !g2.inPlay(art) {
 		t.Error("choosing Done should leave the artifact in play")
 	}

@@ -22,7 +22,9 @@ func TestWildWormhole(t *testing.T) {
 			P1: ct.Side{
 				House: card.House.Logos,
 				Hand:  ct.Cards(WildWormhole),
-				Deck:  ct.Cards(ct.Bind(&top, ct.Creature(ct.OfHouse(card.House.Logos), ct.Power(3)))),
+				Deck: ct.Cards(
+					ct.Bind(&top, ct.Creature(ct.OfHouse(card.House.Logos), ct.Power(3))),
+				),
 			},
 		})
 

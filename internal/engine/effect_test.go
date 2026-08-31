@@ -35,13 +35,23 @@ func TestEffectValidation(t *testing.T) {
 		t.Errorf("a Purge naming its zone should pass, got %v", err)
 	}
 	// A result gate surfaces a bad first action or a bad follow-up.
-	if err := validateEffect(Then{First: Purge{}, Result: AddPowerCounter{Target: Target{Kind: TargetThisCreature}, Amount: 1}}); err == nil {
+	if err := validateEffect(
+		Then{
+			First:  Purge{},
+			Result: AddPowerCounter{Target: Target{Kind: TargetThisCreature}, Amount: 1},
+		},
+	); err == nil {
 		t.Error("result gate should surface a bad first action")
 	}
 	if err := validateEffect(Then{First: Purge{Zone: Discard}, Result: bad}); err == nil {
 		t.Error("result gate should surface a bad follow-up")
 	}
-	if err := validateEffect(Then{First: Purge{Zone: Discard, Type: Creature}, Result: AddPowerCounter{Target: Target{Kind: TargetThisCreature}, Amount: 1}}); err != nil {
+	if err := validateEffect(
+		Then{
+			First:  Purge{Zone: Discard, Type: Creature},
+			Result: AddPowerCounter{Target: Target{Kind: TargetThisCreature}, Amount: 1},
+		},
+	); err != nil {
 		t.Errorf("result gate with valid halves should pass, got %v", err)
 	}
 }
@@ -133,8 +143,16 @@ func TestNewCardRejectsConflictingHeal(t *testing.T) {
 			t.Error("NewCard should panic on a Heal with both Amount and Fully")
 		}
 	}()
-	NewCard("bad", Sanctum, Creature, Common,
-		WithAbility(TriggerAfterPlay, Heal{Amount: 2, Fully: true, Target: Target{Kind: TargetThisCreature}}))
+	NewCard(
+		"bad",
+		Sanctum,
+		Creature,
+		Common,
+		WithAbility(
+			TriggerAfterPlay,
+			Heal{Amount: 2, Fully: true, Target: Target{Kind: TargetThisCreature}},
+		),
+	)
 }
 
 func TestNewCardRejectsInvalidReplace(t *testing.T) {
@@ -144,7 +162,10 @@ func TestNewCardRejectsInvalidReplace(t *testing.T) {
 		}
 	}()
 	NewCard("bad", Sanctum, Upgrade, Rare, WithStatic(StaticModifier{
-		Replaces: Replace{When: EventCreatureDestroyed, With: Heal{Amount: 2, Fully: true, Target: Target{Kind: TargetTriggeringCreature}}},
+		Replaces: Replace{
+			When: EventCreatureDestroyed,
+			With: Heal{Amount: 2, Fully: true, Target: Target{Kind: TargetTriggeringCreature}},
+		},
 	}))
 }
 
@@ -154,7 +175,13 @@ func TestNewCardRejectsInvalidReplaces(t *testing.T) {
 			t.Error("NewCard should panic on a continuous Replaces using a reaction event")
 		}
 	}()
-	NewCard("bad", Mars, Creature, Uncommon, WithReplaces(Instead{Of: EventCreaturePlayed, With: Capture}))
+	NewCard(
+		"bad",
+		Mars,
+		Creature,
+		Uncommon,
+		WithReplaces(Instead{Of: EventCreaturePlayed, With: Capture}),
+	)
 }
 
 func TestNewCardRejectsInvalidPlayPermission(t *testing.T) {

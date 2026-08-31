@@ -33,7 +33,10 @@ func TestLastingOnceExpiresAtEndOfTurn(t *testing.T) {
 	g.EndTurn(0)
 
 	if g.State.LastingCount != 0 {
-		t.Errorf("a one-shot reaction that never fired should be cleared at end of turn, count = %d", g.State.LastingCount)
+		t.Errorf(
+			"a one-shot reaction that never fired should be cleared at end of turn, count = %d",
+			g.State.LastingCount,
+		)
 	}
 }
 

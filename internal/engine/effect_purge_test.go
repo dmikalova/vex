@@ -155,7 +155,12 @@ func TestPurgeCreatureFromHand(t *testing.T) {
 			t.Error("the chosen creature should be purged from hand")
 		}
 		if !ctx.HasIt || ctx.It != kin {
-			t.Errorf("context card = %d (has %v), want the purged creature %d", ctx.It, ctx.HasIt, kin)
+			t.Errorf(
+				"context card = %d (has %v), want the purged creature %d",
+				ctx.It,
+				ctx.HasIt,
+				kin,
+			)
 		}
 	})
 

@@ -28,5 +28,9 @@ func (MoveAemberToPool) Resolve(ctx *EffectContext) {
 	}
 	ctx.Resolver.AddAmberOn(id, -1)
 	ctx.Resolver.SetAember(ctx.Controller, ctx.Resolver.Aember(ctx.Controller)+1)
-	ctx.Resolver.Logf("%s moves 1 Æmber from %s to their pool", ctx.Resolver.PlayerName(ctx.Controller), ctx.Resolver.Name(id))
+	ctx.Resolver.Logf(
+		"%s moves 1 Æmber from %s to their pool",
+		ctx.Resolver.PlayerName(ctx.Controller),
+		ctx.Resolver.Name(id),
+	)
 }

@@ -12,7 +12,12 @@ func (g *Game) offerArchives(player int) {
 	if arc.Count == 0 {
 		return
 	}
-	if g.chooseOption(player, "", "Take your archived cards into your hand?", []string{"Take them", "Leave them archived"}) != 0 {
+	if g.chooseOption(
+		player,
+		"",
+		"Take your archived cards into your hand?",
+		[]string{"Take them", "Leave them archived"},
+	) != 0 {
 		return
 	}
 	n := arc.Count

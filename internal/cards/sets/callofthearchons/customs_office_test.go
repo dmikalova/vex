@@ -21,7 +21,11 @@ func TestCustomsOffice(t *testing.T) {
 		var toll ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{House: card.House.Shadows, InPlay: ct.Cards(CustomsOffice)},
-			P2: ct.Side{House: card.House.Brobnar, Hand: ct.Cards(ct.Bind(&toll, ct.Artifact())), Amber: 2},
+			P2: ct.Side{
+				House: card.House.Brobnar,
+				Hand:  ct.Cards(ct.Bind(&toll, ct.Artifact())),
+				Amber: 2,
+			},
 		})
 
 		h.P1.EndTurn() // pass to the opponent
@@ -37,7 +41,11 @@ func TestCustomsOffice(t *testing.T) {
 		var toll ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{House: card.House.Shadows, InPlay: ct.Cards(CustomsOffice)},
-			P2: ct.Side{House: card.House.Brobnar, Hand: ct.Cards(ct.Bind(&toll, ct.Artifact())), Amber: 0},
+			P2: ct.Side{
+				House: card.House.Brobnar,
+				Hand:  ct.Cards(ct.Bind(&toll, ct.Artifact())),
+				Amber: 0,
+			},
 		})
 
 		h.P1.EndTurn()

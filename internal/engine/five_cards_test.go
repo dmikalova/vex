@@ -25,7 +25,11 @@ func TestDamageIfSurvives(t *testing.T) {
 	g.AddToHand(testCreature("h2", 1), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := DamageIfSurvives{Amount: 3, Target: Target{Kind: TargetChosenCreature}, Then: DiscardRandomFromHand{Player: ItsOwner}}
+	e := DamageIfSurvives{
+		Amount: 3,
+		Target: Target{Kind: TargetChosenCreature},
+		Then:   DiscardRandomFromHand{Player: ItsOwner},
+	}
 	if e.Text() != "deal 3 damage to a creature. If it is not destroyed, its owner discards a random card from their hand" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -48,7 +52,9 @@ func TestDamageIfSurvives(t *testing.T) {
 	g2 := NewGame("A", "B", 1)
 	dead := g2.AddToBattleline(testCreature("d", 2), 1)
 	g2.AddToHand(testCreature("keep", 1), 1)
-	(DamageIfSurvives{Amount: 3, Target: Target{Kind: TargetChosenCreature}, Then: DiscardRandomFromHand{Player: ItsOwner}}).Resolve(&EffectContext{Resolver: g2, Controller: 0})
+	(DamageIfSurvives{Amount: 3, Target: Target{Kind: TargetChosenCreature}, Then: DiscardRandomFromHand{Player: ItsOwner}}).Resolve(
+		&EffectContext{Resolver: g2, Controller: 0},
+	)
 	if g2.inPlay(dead) {
 		t.Error("the creature should have been destroyed")
 	}
@@ -58,7 +64,9 @@ func TestDamageIfSurvives(t *testing.T) {
 
 	// No creature to target: nothing happens.
 	g3 := NewGame("A", "B", 1)
-	(DamageIfSurvives{Amount: 3, Target: Target{Kind: TargetChosenCreature}, Then: DiscardRandomFromHand{Player: ItsOwner}}).Resolve(&EffectContext{Resolver: g3, Controller: 0})
+	(DamageIfSurvives{Amount: 3, Target: Target{Kind: TargetChosenCreature}, Then: DiscardRandomFromHand{Player: ItsOwner}}).Resolve(
+		&EffectContext{Resolver: g3, Controller: 0},
+	)
 }
 
 func TestDamageCreatureAndNeighbor(t *testing.T) {
@@ -85,7 +93,12 @@ func TestDamageCreatureAndNeighbor(t *testing.T) {
 	g2.SetChooser(0, midThenFirst{mid: m2})
 	e.Resolve(&EffectContext{Resolver: g2, Controller: 0})
 	if g2.Damage(m2) != 3 || g2.Damage(l2) != 3 || g2.Damage(r2) != 0 {
-		t.Errorf("damage = %d/%d/%d, want mid 3 + one neighbor 3", g2.Damage(l2), g2.Damage(m2), g2.Damage(r2))
+		t.Errorf(
+			"damage = %d/%d/%d, want mid 3 + one neighbor 3",
+			g2.Damage(l2),
+			g2.Damage(m2),
+			g2.Damage(r2),
+		)
 	}
 
 	// No creatures: nothing happens.
@@ -112,7 +125,10 @@ func TestOverwhelmed(t *testing.T) {
 }
 
 func TestRepeatOnCondition(t *testing.T) {
-	e := RepeatOnCondition{Do: Destroy{Target: Target{Kind: TargetEachEnemyCreature}.Selector(LeastPowerful)}, Cond: Overwhelmed{}}
+	e := RepeatOnCondition{
+		Do:   Destroy{Target: Target{Kind: TargetEachEnemyCreature}.Selector(LeastPowerful)},
+		Cond: Overwhelmed{},
+	}
 	if e.Text() != "destroy the least powerful enemy creature -> if you are overwhelmed, repeat this effect" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -126,7 +142,12 @@ func TestRepeatOnCondition(t *testing.T) {
 	g.AddToBattleline(testCreature("o2", 2), 1)
 	g.AddToBattleline(testCreature("o3", 2), 1)
 	g.AddToBattleline(testCreature("m1", 2), 0)
-	RepeatOnCondition{Do: Destroy{Target: Target{Kind: TargetChosenEnemyCreature}}, Cond: Overwhelmed{}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	RepeatOnCondition{
+		Do:   Destroy{Target: Target{Kind: TargetChosenEnemyCreature}},
+		Cond: Overwhelmed{},
+	}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0},
+	)
 	if len(g.Battleline(1)) != 1 {
 		t.Errorf("opponent creatures = %d, want 1 (destroyed down to parity)", len(g.Battleline(1)))
 	}
@@ -134,14 +155,22 @@ func TestRepeatOnCondition(t *testing.T) {
 	// No enemy creatures: the gate stops the loop immediately.
 	g2 := NewGame("A", "B", 1)
 	g2.AddToBattleline(testCreature("m", 2), 0)
-	RepeatOnCondition{Do: Destroy{Target: Target{Kind: TargetChosenEnemyCreature}}, Cond: Overwhelmed{}}.Resolve(&EffectContext{Resolver: g2, Controller: 0})
+	RepeatOnCondition{
+		Do:   Destroy{Target: Target{Kind: TargetChosenEnemyCreature}},
+		Cond: Overwhelmed{},
+	}.Resolve(
+		&EffectContext{Resolver: g2, Controller: 0},
+	)
 }
 
 func TestTakeControlTargeted(t *testing.T) {
 	if got := (TakeControl{Duration: UntilThisLeavesPlay}).Text(); got != "take control of this creature until "+UpgradeName+" leaves play" {
 		t.Errorf("host text = %q", got)
 	}
-	tgt := TakeControl{Target: Target{Kind: TargetChosenEnemyCreature}.OnFlank(), Duration: UntilThisLeavesPlay}
+	tgt := TakeControl{
+		Target:   Target{Kind: TargetChosenEnemyCreature}.OnFlank(),
+		Duration: UntilThisLeavesPlay,
+	}
 	if got := tgt.Text(); got != "take control of an enemy flank creature until "+SelfName+" leaves play" {
 		t.Errorf("targeted text = %q", got)
 	}
@@ -171,6 +200,9 @@ func TestEnemyCreatureDestroyedReaction(t *testing.T) {
 	foe := g.AddToBattleline(testCreature("foe", 3), 1)
 	g.destroyEach(0, []LocalID{foe})
 	if g.State.Aember[0] != 1 {
-		t.Errorf("controller Æmber = %d, want 1 after an enemy creature was destroyed", g.State.Aember[0])
+		t.Errorf(
+			"controller Æmber = %d, want 1 after an enemy creature was destroyed",
+			g.State.Aember[0],
+		)
 	}
 }

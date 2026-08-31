@@ -44,7 +44,10 @@ type scriptChooser struct{ d *decoder }
 
 // ChooseCreature picks a candidate by script byte; declining only when there are no
 // candidates. Always committing to a target keeps optional effects legal and simple.
-func (c *scriptChooser) ChooseCreature(_, _ string, candidates []engine.LocalID) (engine.LocalID, bool) {
+func (c *scriptChooser) ChooseCreature(
+	_, _ string,
+	candidates []engine.LocalID,
+) (engine.LocalID, bool) {
 	if len(candidates) == 0 {
 		return 0, false
 	}

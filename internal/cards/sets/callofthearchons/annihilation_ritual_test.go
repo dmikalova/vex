@@ -28,7 +28,9 @@ func TestAnnihilationRitual(t *testing.T) {
 				),
 			},
 			P2: ct.Side{
-				InPlay: ct.Cards(ct.Bind(&victim, ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Power(3)))),
+				InPlay: ct.Cards(
+					ct.Bind(&victim, ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Power(3))),
+				),
 			},
 		})
 

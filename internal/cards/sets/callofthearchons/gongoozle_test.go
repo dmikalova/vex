@@ -21,8 +21,13 @@ func TestGongoozle(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(Gongoozle)},
 			P2: ct.Side{
-				InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5)))),
-				Hand:   ct.Cards(ct.Creature(ct.OfHouse(card.House.Mars)), ct.Creature(ct.OfHouse(card.House.Mars))),
+				InPlay: ct.Cards(
+					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5))),
+				),
+				Hand: ct.Cards(
+					ct.Creature(ct.OfHouse(card.House.Mars)),
+					ct.Creature(ct.OfHouse(card.House.Mars)),
+				),
 			},
 		})
 

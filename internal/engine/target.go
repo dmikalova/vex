@@ -88,24 +88,22 @@ type Target struct {
 	// context (ctx.It), rendering "of that card's house" — ForEachDiscarded's Do.
 	contextualHouse bool
 	// sharesTrait narrows the target to cards sharing at least one trait with the
-	// card in context (ctx.It); sharesTraitWith is how that card reads in the
-	// printed phrase — "the purged creature" for Custom Virus, or "it".
-	sharesTrait     bool
-	sharesTraitWith string
-	maxPower        int
-	hasMaxPower     bool
-	minPower        int
-	hasMinPower     bool
-	exactPower      int
-	hasExactPower   bool
-	damaged         bool
-	undamaged       bool
-	stunned         bool
-	withAember      bool
-	keyword         Keyword
-	onFlank         bool
-	notOnFlank      bool
-	neighboring     bool
+	// card in context (ctx.It), rendering "that shares a trait with it".
+	sharesTrait   bool
+	maxPower      int
+	hasMaxPower   bool
+	minPower      int
+	hasMinPower   bool
+	exactPower    int
+	hasExactPower bool
+	damaged       bool
+	undamaged     bool
+	stunned       bool
+	withAember    bool
+	keyword       Keyword
+	onFlank       bool
+	notOnFlank    bool
+	neighboring   bool
 	// withNeighbors expands a single chosen creature to include its battleline
 	// neighbors (Tremor stuns a creature and each of its neighbors).
 	withNeighbors bool
@@ -164,12 +162,11 @@ func (t Target) OfContextualHouse() Target {
 }
 
 // SharingTrait narrows the target to cards that share at least one trait with the
-// card in context (ctx.It), rendering "that shares a trait with <with>". with
-// names the context card in the printed phrase — "the purged creature" after
-// PurgeCreatureFromHand (Custom Virus), or "it" when a chosen creature set it.
-func (t Target) SharingTrait(with string) Target {
+// card in context (ctx.It), rendering "that shares a trait with it" — the purged
+// creature after PurgeCreatureFromHand (Custom Virus), or whatever an earlier
+// effect put in context.
+func (t Target) SharingTrait() Target {
 	t.sharesTrait = true
-	t.sharesTraitWith = with
 	return t
 }
 
@@ -301,7 +298,8 @@ func (t Target) Text() string {
 		return "the other creature"
 	}
 	noun := "creature"
-	if t.Kind == TargetEachArtifact || t.Kind == TargetChosenArtifact || t.Kind == TargetChosenEnemyArtifact {
+	if t.Kind == TargetEachArtifact || t.Kind == TargetChosenArtifact ||
+		t.Kind == TargetChosenEnemyArtifact {
 		noun = "artifact"
 	}
 	if t.Kind == TargetEachFriendlyInPlay {
@@ -397,7 +395,7 @@ func (t Target) Text() string {
 		phrase += " of that card's house"
 	}
 	if t.sharesTrait {
-		phrase += " that shares a trait with " + t.sharesTraitWith
+		phrase += " that shares a trait with it"
 	}
 	if t.selector != nil {
 		phrase = t.selector.clause(phrase)
@@ -496,7 +494,10 @@ func (exceptMostPowerful) refine(ctx *EffectContext, ids []LocalID) []LocalID {
 	}
 	spared := mostPowerful[0]
 	if len(mostPowerful) > 1 {
-		if chosen, ok := ctx.ChooseCreature("Choose the most powerful creature to keep", mostPowerful); ok {
+		if chosen, ok := ctx.ChooseCreature(
+			"Choose the most powerful creature to keep",
+			mostPowerful,
+		); ok {
 			spared = chosen
 		}
 	}
@@ -688,7 +689,8 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 		if t.chosenHouse && ctx.Resolver.House(id) != ctx.ChosenHouse {
 			continue
 		}
-		if t.contextualHouse && (!ctx.HasIt || ctx.Resolver.House(id) != ctx.Resolver.House(ctx.It)) {
+		if t.contextualHouse &&
+			(!ctx.HasIt || ctx.Resolver.House(id) != ctx.Resolver.House(ctx.It)) {
 			continue
 		}
 		if t.sharesTrait && (!ctx.HasIt || !ctx.Resolver.SharesTrait(ctx.It, id)) {
@@ -817,7 +819,9 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 		}
 		return nil
 	case TargetEachArtifact, TargetChosenArtifact:
-		return append(ctx.Resolver.Artifacts(ctx.Controller), ctx.Resolver.Artifacts(ctx.Opponent())...)
+		return append(
+			ctx.Resolver.Artifacts(ctx.Controller),
+			ctx.Resolver.Artifacts(ctx.Opponent())...)
 	case TargetChosenEnemyArtifact:
 		return ctx.Resolver.Artifacts(ctx.Opponent())
 	case TargetEachInPlay, TargetChosenInPlay:
@@ -827,9 +831,13 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 		ids = append(ids, ctx.Resolver.Artifacts(ctx.Opponent())...)
 		return ids
 	case TargetEachFriendlyInPlay, TargetChosenFriendlyInPlay:
-		return append(ctx.Resolver.Battleline(ctx.Controller), ctx.Resolver.Artifacts(ctx.Controller)...)
+		return append(
+			ctx.Resolver.Battleline(ctx.Controller),
+			ctx.Resolver.Artifacts(ctx.Controller)...)
 	case TargetEachCreature, TargetChosenCreature:
-		return append(ctx.Resolver.Battleline(ctx.Controller), ctx.Resolver.Battleline(ctx.Opponent())...)
+		return append(
+			ctx.Resolver.Battleline(ctx.Controller),
+			ctx.Resolver.Battleline(ctx.Opponent())...)
 	case TargetEachFriendlyCreature, TargetChosenFriendlyCreature:
 		return ctx.Resolver.Battleline(ctx.Controller)
 	case TargetEachEnemyCreature, TargetChosenEnemyCreature:

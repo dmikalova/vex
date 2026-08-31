@@ -22,8 +22,10 @@ func TestGrenadeSnib(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(ct.Bind(&snib, GrenadeSnib))},
 			P2: ct.Side{
-				Amber:  3,
-				InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5)))),
+				Amber: 3,
+				InPlay: ct.Cards(
+					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5))),
+				),
 			},
 		})
 

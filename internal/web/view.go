@@ -314,10 +314,16 @@ func (g *game) keysDisplay(player int) app.UI {
 		if name == "" {
 			name = "key"
 		}
-		slots = append(slots, g.keySlot(icon(name, "icon-stat"), manual, g.manualUnforgeKey(player)))
+		slots = append(
+			slots,
+			g.keySlot(icon(name, "icon-stat"), manual, g.manualUnforgeKey(player)),
+		)
 	}
 	for i := len(colors); i < engine.KeysToWin; i++ {
-		slots = append(slots, g.keySlot(icon("key", "icon-stat", "key-unforged"), manual, g.manualForgeKey(player)))
+		slots = append(
+			slots,
+			g.keySlot(icon("key", "icon-stat", "key-unforged"), manual, g.manualForgeKey(player)),
+		)
 	}
 	gain := cx(
 		ifCls(g.keyFlash[player] && !g.keyParity[player], "stat-seg--gain-a"),
@@ -353,7 +359,9 @@ func (g *game) renderRow(label string, ids []engine.LocalID, boardKind selKind) 
 func (g *game) renderCard(id engine.LocalID, boardKind selKind) app.UI {
 	def := g.g.Def(id)
 	activate, targetable, dimmed := g.cardVisual(id, boardKind)
-	house := g.g.House(id) // effective house: a control/"belongs to house" effect may override the printed one
+	house := g.g.House(
+		id,
+	) // effective house: a control/"belongs to house" effect may override the printed one
 	flash := g.flashes[id]
 	return &cardView{
 		ID:           id,
@@ -386,7 +394,10 @@ func (g *game) renderCard(id engine.LocalID, boardKind selKind) app.UI {
 // play, cards the active player cannot act with (wrong house, exhausted, or
 // unplayable from hand) and the opponent's read-only cards are dimmed so the
 // usable ones stand out.
-func (g *game) cardVisual(id engine.LocalID, kind selKind) (activate func(app.Context, engine.LocalID), targetable, dimmed bool) {
+func (g *game) cardVisual(
+	id engine.LocalID,
+	kind selKind,
+) (activate func(app.Context, engine.LocalID), targetable, dimmed bool) {
 	switch {
 	case g.choosing:
 		// A chooser runs on a background goroutine, so g.busy is also set; the
@@ -437,7 +448,9 @@ func (g *game) renderHand() app.UI {
 	ids := g.sortedHand(p)
 	cls := "board-row board-row--fill"
 	return app.Div().Class(cls).Body(
-		app.Div().Class("row-label").Text(fmt.Sprintf("%s (%d)", g.g.PlayerName(p)+"'s hand", len(ids))),
+		app.Div().
+			Class("row-label").
+			Text(fmt.Sprintf("%s (%d)", g.g.PlayerName(p)+"'s hand", len(ids))),
 		app.Div().Class("card-strip").Body(
 			app.Range(ids).Slice(func(i int) app.UI { return g.renderHandCard(ids[i]) }),
 		),

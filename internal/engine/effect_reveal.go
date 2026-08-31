@@ -48,7 +48,11 @@ func (e Reveal) Resolve(ctx *EffectContext) {
 	}
 	ctx.Produced.Revealed = len(names)
 	if len(names) > 0 {
-		ctx.Resolver.Logf("%s reveals %s", ctx.Resolver.PlayerName(owner), strings.Join(names, ", "))
+		ctx.Resolver.Logf(
+			"%s reveals %s",
+			ctx.Resolver.PlayerName(owner),
+			strings.Join(names, ", "),
+		)
 	}
 }
 

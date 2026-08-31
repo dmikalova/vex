@@ -21,9 +21,14 @@ func TestBrainStemAntenna(t *testing.T) {
 			P1: ct.Side{
 				House: card.House.Mars,
 				InPlay: ct.Cards(
-					ct.Upgraded(ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(4))), BrainStemAntenna),
+					ct.Upgraded(
+						ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(4))),
+						BrainStemAntenna,
+					),
 				),
-				Hand: ct.Cards(ct.Bind(&martian, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(2)))),
+				Hand: ct.Cards(
+					ct.Bind(&martian, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(2))),
+				),
 			},
 		})
 		host.Exhaust()
@@ -50,9 +55,14 @@ func TestBrainStemAntenna(t *testing.T) {
 			P1: ct.Side{
 				House: card.House.Logos,
 				InPlay: ct.Cards(
-					ct.Upgraded(ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(4))), BrainStemAntenna),
+					ct.Upgraded(
+						ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(4))),
+						BrainStemAntenna,
+					),
 				),
-				Hand: ct.Cards(ct.Bind(&logosCreature, ct.Creature(ct.OfHouse(card.House.Logos), ct.Power(2)))),
+				Hand: ct.Cards(
+					ct.Bind(&logosCreature, ct.Creature(ct.OfHouse(card.House.Logos), ct.Power(2))),
+				),
 			},
 		})
 		host.Exhaust()
@@ -71,11 +81,16 @@ func TestBrainStemAntenna(t *testing.T) {
 			P1: ct.Side{
 				House: card.House.Brobnar,
 				InPlay: ct.Cards(
-					ct.Upgraded(ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(4))), BrainStemAntenna),
+					ct.Upgraded(
+						ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(4))),
+						BrainStemAntenna,
+					),
 				),
 			},
 			P2: ct.Side{
-				Hand: ct.Cards(ct.Bind(&enemyMartian, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(2)))),
+				Hand: ct.Cards(
+					ct.Bind(&enemyMartian, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(2))),
+				),
 			},
 		})
 

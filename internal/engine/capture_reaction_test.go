@@ -12,8 +12,17 @@ func TestCaptureReactionOnFight(t *testing.T) {
 
 	// Register the lasting the way Take Hostages authors it, to exercise the
 	// CaptureAember -> actCapture mapping and validation.
-	ForRemainderOfTurn{On: EventFight, Do: CaptureAember{Amount: 1, Target: Target{Kind: TargetTriggeringCreature}, Source: Opponent}}.
-		Resolve(&EffectContext{Resolver: g, Controller: 0})
+	ForRemainderOfTurn{
+		On: EventFight,
+		Do: CaptureAember{
+			Amount: 1,
+			Target: Target{Kind: TargetTriggeringCreature},
+			Source: Opponent,
+		},
+	}.
+		Resolve(
+			&EffectContext{Resolver: g, Controller: 0},
+		)
 
 	att := g.AddToBattleline(NewCard("att", Brobnar, Creature, Common, WithPower(4)), 0)
 	def := g.AddToBattleline(testCreature("def", 2), 1)

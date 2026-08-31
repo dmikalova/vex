@@ -8,12 +8,12 @@ var Duration = durations{
 	EndOfTurn:           engine.EndOfTurn,
 	NextTurn:            engine.NextTurn,
 	UntilThisLeavesPlay: engine.UntilThisLeavesPlay,
-	Permanent:           engine.Permanent,
+	Forever:             engine.Forever,
 }
 
 type durations struct {
 	EndOfTurn           engine.Duration
 	NextTurn            engine.Duration
 	UntilThisLeavesPlay engine.Duration
-	Permanent           engine.Duration
+	Forever             engine.Duration
 }

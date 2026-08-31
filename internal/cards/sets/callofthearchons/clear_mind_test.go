@@ -27,7 +27,11 @@ func TestClearMind(t *testing.T) {
 				),
 				Hand: ct.Cards(ClearMind),
 			},
-			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Dis), ct.Power(3))))},
+			P2: ct.Side{
+				InPlay: ct.Cards(
+					ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Dis), ct.Power(3))),
+				),
+			},
 		})
 		ally1.Stun()
 		ally2.Stun()

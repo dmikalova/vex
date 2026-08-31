@@ -20,9 +20,18 @@ const (
 	// play (Collar of Subordination's control change), rather than expiring at a
 	// turn boundary. The leave-play teardown honors it.
 	UntilThisLeavesPlay
-	// Permanent never lifts: the effect it establishes lasts for the rest of the
+	// Forever never lifts: the effect it establishes lasts for the rest of the
 	// game (Sneklifter's control of a seized artifact). It registers no teardown.
-	Permanent
+	//
+	// Design rule — "the latest ability wins": when two effects change the same
+	// thing on the same card (control, house), the most recently applied one is in
+	// force. Control is a single last-write-wins field, so a later take-control
+	// simply overrides a Forever one. If a *timed* override is ever layered over a
+	// Forever effect, its expiry must fall back to the Forever effect rather than to
+	// the owner's default — the Forever effect still governs once the timed one
+	// lifts. (Today artifact control is only ever Forever, so no such timed override
+	// exists yet; this rule is the invariant to preserve when one is added.)
+	Forever
 )
 
 // valid reports whether d names a real duration (not the unset zero value).

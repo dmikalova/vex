@@ -20,12 +20,23 @@ func TestTroopCall(t *testing.T) {
 		var buried, inPlay, other ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:   card.House.Untamed,
-				Hand:    ct.Cards(TroopCall),
-				Discard: ct.Cards(ct.Bind(&buried, ct.Creature(ct.OfHouse(card.House.Untamed), ct.Traits("Niffle")))),
+				House: card.House.Untamed,
+				Hand:  ct.Cards(TroopCall),
+				Discard: ct.Cards(
+					ct.Bind(
+						&buried,
+						ct.Creature(ct.OfHouse(card.House.Untamed), ct.Traits("Niffle")),
+					),
+				),
 				InPlay: ct.Cards(
-					ct.Bind(&inPlay, ct.Creature(ct.OfHouse(card.House.Untamed), ct.Traits("Niffle"))),
-					ct.Bind(&other, ct.Creature(ct.OfHouse(card.House.Untamed), ct.Traits("Beast"))),
+					ct.Bind(
+						&inPlay,
+						ct.Creature(ct.OfHouse(card.House.Untamed), ct.Traits("Niffle")),
+					),
+					ct.Bind(
+						&other,
+						ct.Creature(ct.OfHouse(card.House.Untamed), ct.Traits("Beast")),
+					),
 				),
 			},
 		})

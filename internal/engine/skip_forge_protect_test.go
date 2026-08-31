@@ -44,7 +44,10 @@ func TestSkipForgeStep(t *testing.T) {
 func TestAemberProtection(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.State.Aember[1] = 3
-	g.AddToBattleline(NewCard("keeper", Sanctum, Creature, Rare, WithPower(4), WithAemberTheftImmunity()), 1)
+	g.AddToBattleline(
+		NewCard("keeper", Sanctum, Creature, Rare, WithPower(4), WithAemberTheftImmunity()),
+		1,
+	)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	if (StealAember{Amount: 2}).resolveGate(ctx) {

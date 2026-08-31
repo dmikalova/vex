@@ -23,7 +23,9 @@ func TestDocBookton(t *testing.T) {
 			P1: ct.Side{
 				House:  card.House.Logos,
 				InPlay: ct.Cards(ct.Bind(&doc, DocBookton)),
-				Deck:   ct.Cards(ct.Bind(&drawn, ct.Creature(ct.OfHouse(card.House.Logos), ct.Power(1)))),
+				Deck: ct.Cards(
+					ct.Bind(&drawn, ct.Creature(ct.OfHouse(card.House.Logos), ct.Power(1))),
+				),
 			},
 		})
 

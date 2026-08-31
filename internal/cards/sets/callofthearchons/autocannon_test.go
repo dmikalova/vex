@@ -23,7 +23,9 @@ func TestAutocannon(t *testing.T) {
 			P1: ct.Side{
 				House:  card.House.Brobnar,
 				InPlay: ct.Cards(Autocannon),
-				Hand:   ct.Cards(ct.Bind(&newcomer, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(3)))),
+				Hand: ct.Cards(
+					ct.Bind(&newcomer, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(3))),
+				),
 			},
 		})
 

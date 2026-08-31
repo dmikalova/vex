@@ -20,7 +20,14 @@ const (
 	ManualPurge
 )
 
-var manualZoneNames = [...]string{"hand", "top of deck", "bottom of deck", "discard", "archives", "purge"}
+var manualZoneNames = [...]string{
+	"hand",
+	"top of deck",
+	"bottom of deck",
+	"discard",
+	"archives",
+	"purge",
+}
 
 // String returns the printed zone name.
 func (z ManualZone) String() string {
@@ -141,7 +148,13 @@ func (g *Game) ManualForgeKeyColor(player int, c KeyColor) {
 	}
 	g.State.KeyColors[player][g.State.Keys[player]] = c
 	g.State.Keys[player]++
-	g.logf("%s manually forges a %s key (%d/%d)", g.names[player], c, g.State.Keys[player], KeysToWin)
+	g.logf(
+		"%s manually forges a %s key (%d/%d)",
+		g.names[player],
+		c,
+		g.State.Keys[player],
+		KeysToWin,
+	)
 }
 
 // ManualUnforgeKey removes player's most recently forged key, if any.

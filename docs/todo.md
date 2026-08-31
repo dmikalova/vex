@@ -14,6 +14,7 @@ long-term vision in [roadmap.md](roadmap.md).
 - More keyword icons - how much is too much?
 - Elusive. Skirmish. Why. Periods.
 - Why so much card.Sentence - can we just do this at the right place at the right time.
+- The logging prints what the card does, but not necessarily what happened. Fix that up.
 
 ## Design directions (deliberate divergences from KeyForge)
 

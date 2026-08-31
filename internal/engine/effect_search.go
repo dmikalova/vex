@@ -17,14 +17,20 @@ type SearchForName struct {
 // Text renders the effect, e.g. "search your deck and discard pile for a
 // Timetraveller, reveal it, and put it into your hand".
 func (e SearchForName) Text() string {
-	return fmt.Sprintf("search your deck and discard pile for %s, reveal it, and put it into your hand", indefinite(e.Name))
+	return fmt.Sprintf(
+		"search your deck and discard pile for %s, reveal it, and put it into your hand",
+		indefinite(e.Name),
+	)
 }
 
 // Resolve gathers the deck and discard cards with the name, lets the controller
 // choose one, reveals it, and moves it to their hand from whichever zone it is in.
 func (e SearchForName) Resolve(ctx *EffectContext) {
 	inDeck := nameMatches(ctx, ctx.Resolver.Deck(ctx.Controller), e.Name)
-	candidates := slices.Concat(inDeck, nameMatches(ctx, ctx.Resolver.Discard(ctx.Controller), e.Name))
+	candidates := slices.Concat(
+		inDeck,
+		nameMatches(ctx, ctx.Resolver.Discard(ctx.Controller), e.Name),
+	)
 	id, ok := ctx.ChooseCreature("Choose "+indefinite(e.Name)+" to put into your hand", candidates)
 	if !ok {
 		return

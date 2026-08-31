@@ -97,7 +97,10 @@ func (m explorerModel) refilter() explorerModel {
 				matches = append(matches, scored{d, s})
 			}
 		}
-		sort.SliceStable(matches, func(i, j int) bool { return matches[i].score > matches[j].score })
+		sort.SliceStable(
+			matches,
+			func(i, j int) bool { return matches[i].score > matches[j].score },
+		)
 		m.filtered = make([]engine.CardDefinition, len(matches))
 		for i, s := range matches {
 			m.filtered[i] = s.def
@@ -146,7 +149,15 @@ func (m explorerModel) View() string {
 	detail = detailStyle.Render(detail)
 
 	b.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, list, detail))
-	b.WriteString("\n\n" + helpStyle.Render(fmt.Sprintf("%d/%d · ↑/↓ move · type to search · esc clear/menu", m.cursor+1, len(m.filtered))))
+	b.WriteString(
+		"\n\n" + helpStyle.Render(
+			fmt.Sprintf(
+				"%d/%d · ↑/↓ move · type to search · esc clear/menu",
+				m.cursor+1,
+				len(m.filtered),
+			),
+		),
+	)
 	return b.String()
 }
 

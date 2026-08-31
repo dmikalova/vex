@@ -29,7 +29,9 @@ func TestEvasionSigil(t *testing.T) {
 				Deck: ct.Cards(ct.Bind(&top, ct.Tactic(ct.OfHouse(card.House.Shadows)))),
 			},
 			P2: ct.Side{
-				InPlay: ct.Cards(ct.Bind(&defender, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(6)))),
+				InPlay: ct.Cards(
+					ct.Bind(&defender, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(6))),
+				),
 			},
 		})
 
@@ -52,7 +54,9 @@ func TestEvasionSigil(t *testing.T) {
 				Deck: ct.Cards(ct.Bind(&top, ct.Tactic(ct.OfHouse(card.House.Brobnar)))),
 			},
 			P2: ct.Side{
-				InPlay: ct.Cards(ct.Bind(&defender, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(6)))),
+				InPlay: ct.Cards(
+					ct.Bind(&defender, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(6))),
+				),
 			},
 		})
 

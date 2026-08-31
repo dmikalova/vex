@@ -22,11 +22,16 @@ func TestRingOfInvisibility(t *testing.T) {
 			P1: ct.Side{
 				House: card.House.Shadows,
 				InPlay: ct.Cards(
-					ct.Upgraded(ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Shadows), ct.Power(4))), RingOfInvisibility),
+					ct.Upgraded(
+						ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Shadows), ct.Power(4))),
+						RingOfInvisibility,
+					),
 				),
 			},
 			P2: ct.Side{
-				InPlay: ct.Cards(ct.Bind(&wall, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(10)))),
+				InPlay: ct.Cards(
+					ct.Bind(&wall, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(10))),
+				),
 			},
 		})
 

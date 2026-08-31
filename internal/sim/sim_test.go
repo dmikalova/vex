@@ -82,7 +82,12 @@ func TestSoak(t *testing.T) {
 					failures.Add(1)
 					mu.Lock()
 					if name, saveErr := saveCorpus(script); saveErr != nil {
-						t.Errorf("script %x failed: %v (could not save corpus: %v)", script, err, saveErr)
+						t.Errorf(
+							"script %x failed: %v (could not save corpus: %v)",
+							script,
+							err,
+							saveErr,
+						)
 					} else {
 						t.Errorf("script failed: %v\n  saved to %s", err, name)
 					}

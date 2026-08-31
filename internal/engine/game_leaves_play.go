@@ -164,14 +164,21 @@ func (g *Game) destroyTogether(controller int, ids []LocalID) {
 		sources := distinctSources(pending)
 		src := sources[0]
 		if len(sources) > 1 {
-			if chosen, ok := g.pickCreature(controller, "", "Choose the next creature whose Destroyed ability resolves", sources); ok {
+			if chosen, ok := g.pickCreature(
+				controller,
+				"",
+				"Choose the next creature whose Destroyed ability resolves",
+				sources,
+			); ok {
 				src = chosen
 			}
 		}
 		pick := g.pickDestroyedAbility(controller, pending, src)
 		ab := pending[pick]
 		g.logf("%s: %s", g.Name(ab.source), renderAbilityLine(g.cat.def(ab.source), ab.ability))
-		ab.ability.Effect.Resolve(&EffectContext{Resolver: g, Source: ab.source, Controller: g.controller(ab.source)})
+		ab.ability.Effect.Resolve(
+			&EffectContext{Resolver: g, Source: ab.source, Controller: g.controller(ab.source)},
+		)
 		pending = append(pending[:pick], pending[pick+1:]...)
 	}
 	for _, id := range ids {

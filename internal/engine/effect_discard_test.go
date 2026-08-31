@@ -29,8 +29,14 @@ func TestMoveFromDiscardToHand(t *testing.T) {
 
 func TestPutFromDiscardByTrait(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	horseman := g.Register(NewCard("Rider", Sanctum, Creature, Common, WithPower(5), WithTraits("Horseman")), 0)
-	other := g.Register(NewCard("Squire", Sanctum, Creature, Common, WithPower(3), WithTraits("Human")), 0)
+	horseman := g.Register(
+		NewCard("Rider", Sanctum, Creature, Common, WithPower(5), WithTraits("Horseman")),
+		0,
+	)
+	other := g.Register(
+		NewCard("Squire", Sanctum, Creature, Common, WithPower(3), WithTraits("Human")),
+		0,
+	)
 	g.State.Discard[0].add(horseman)
 	g.State.Discard[0].add(other)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
@@ -94,7 +100,11 @@ func TestReturnCreatureFromDiscardToDeck(t *testing.T) {
 	e.Resolve(ctx)
 	// The action is skipped (not a creature); the creature goes to the deck top.
 	if g.State.Deck[0].Count != 1 || g.State.Deck[0].IDs[0] != crea {
-		t.Errorf("deck top = %v, want the creature %d", g.State.Deck[0].IDs[:g.State.Deck[0].Count], crea)
+		t.Errorf(
+			"deck top = %v, want the creature %d",
+			g.State.Deck[0].IDs[:g.State.Deck[0].Count],
+			crea,
+		)
 	}
 	if d := g.Discard(0); len(d) != 1 || d[0] != act {
 		t.Errorf("discard = %v, want just the action %d", d, act)
@@ -175,7 +185,10 @@ func TestDiscardRandomFromHand(t *testing.T) {
 	g.DiscardRandomFromHand(1) // hand now empty
 	g.DiscardRandomFromHand(1)
 	if g.State.Discard[1].Count != 2 {
-		t.Errorf("discard count = %d, want 2 (empty-hand discards are no-ops)", g.State.Discard[1].Count)
+		t.Errorf(
+			"discard count = %d, want 2 (empty-hand discards are no-ops)",
+			g.State.Discard[1].Count,
+		)
 	}
 }
 

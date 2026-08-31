@@ -20,7 +20,11 @@ func TestCannon(t *testing.T) {
 		var target ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(Cannon)},
-			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&target, ct.Creature(ct.OfHouse(card.House.Untamed), ct.Power(5))))},
+			P2: ct.Side{
+				InPlay: ct.Cards(
+					ct.Bind(&target, ct.Creature(ct.OfHouse(card.House.Untamed), ct.Power(5))),
+				),
+			},
 		})
 
 		h.P1.UseAction(Cannon)

@@ -40,8 +40,10 @@ func TestIrradiatedAember(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{House: card.House.Mars, Hand: ct.Cards(IrradiatedAember)},
 			P2: ct.Side{
-				Amber:  5,
-				InPlay: ct.Cards(ct.Bind(&survivor, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(2)))),
+				Amber: 5,
+				InPlay: ct.Cards(
+					ct.Bind(&survivor, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(2))),
+				),
 			},
 		})
 

@@ -13,7 +13,12 @@ func (o optionPicker) ChooseOption(_, _ string, _ []string) int { return o.idx }
 func TestChooseOne(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-	e := ChooseOne{Options: []Effect{GainAember{Player: Controller, Amount: 1}, GainAember{Player: Controller, Amount: 5}}}
+	e := ChooseOne{
+		Options: []Effect{
+			GainAember{Player: Controller, Amount: 1},
+			GainAember{Player: Controller, Amount: 5},
+		},
+	}
 	if e.Text() != "choose one:\n- Gain 1 Æmber\n- Gain 5 Æmber" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -40,7 +45,9 @@ func TestChooseOne(t *testing.T) {
 }
 
 func TestChooseOneValidate(t *testing.T) {
-	bad := ChooseOne{Options: []Effect{Heal{Fully: true, Amount: 1, Target: Target{Kind: TargetThisCreature}}}}
+	bad := ChooseOne{
+		Options: []Effect{Heal{Fully: true, Amount: 1, Target: Target{Kind: TargetThisCreature}}},
+	}
 	if validateEffect(bad) == nil {
 		t.Error("ChooseOne with an invalid option should fail validation")
 	}
@@ -78,12 +85,18 @@ func TestChooseHouseThenGuardsAndValidate(t *testing.T) {
 
 	// An out-of-range house choice resolves nothing.
 	g.SetChooser(0, optionPicker{idx: 99})
-	ChooseHouseThen{Then: Stun{Target: Target{Kind: TargetEachCreature}.OfChosenHouse()}}.Resolve(ctx)
+	ChooseHouseThen{
+		Then: Stun{Target: Target{Kind: TargetEachCreature}.OfChosenHouse()},
+	}.Resolve(
+		ctx,
+	)
 	if g.State.Cards[mars].Stunned {
 		t.Error("an out-of-range house choice should stun nothing")
 	}
 
-	bad := ChooseHouseThen{Then: Heal{Fully: true, Amount: 1, Target: Target{Kind: TargetThisCreature}}}
+	bad := ChooseHouseThen{
+		Then: Heal{Fully: true, Amount: 1, Target: Target{Kind: TargetThisCreature}},
+	}
 	if validateEffect(bad) == nil {
 		t.Error("ChooseHouseThen should surface an invalid Then via validate")
 	}

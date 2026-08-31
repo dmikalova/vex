@@ -23,8 +23,10 @@ func TestChampionTabris(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{House: card.House.Sanctum, InPlay: ct.Cards(ChampionTabris)},
 			P2: ct.Side{
-				InPlay: ct.Cards(ct.Bind(&enemy, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(3)))),
-				Amber:  2,
+				InPlay: ct.Cards(
+					ct.Bind(&enemy, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(3))),
+				),
+				Amber: 2,
 			},
 		})
 

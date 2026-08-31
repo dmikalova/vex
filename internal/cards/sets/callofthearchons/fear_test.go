@@ -20,7 +20,9 @@ func TestFear(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(Fear)},
 			P2: ct.Side{
-				InPlay: ct.Cards(ct.Bind(&enemy, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3)))),
+				InPlay: ct.Cards(
+					ct.Bind(&enemy, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3))),
+				),
 			},
 		})
 

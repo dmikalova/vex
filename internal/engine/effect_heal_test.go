@@ -18,7 +18,9 @@ func TestHealEffect(t *testing.T) {
 	if g.State.Cards[src].Damage != 1 {
 		t.Errorf("partial heal: src damage = %d, want 1", g.State.Cards[src].Damage)
 	}
-	(Heal{Amount: 5, Target: Target{Kind: TargetThisCreature}}).Resolve(ctx) // over-heal floors at 0
+	(Heal{Amount: 5, Target: Target{Kind: TargetThisCreature}}).Resolve(
+		ctx,
+	) // over-heal floors at 0
 	if g.State.Cards[src].Damage != 0 {
 		t.Errorf("over-heal should floor at 0, got %d", g.State.Cards[src].Damage)
 	}
@@ -108,19 +110,37 @@ func TestHealedContextIsolatedAcrossNestedAbilities(t *testing.T) {
 	// A separate friendly creature whose Play ability heals the enemy side. Firing
 	// it mid-sequence heals one creature, so its own context tallies 1 — a value
 	// that must not leak into the outer ability's count of 2.
-	nested := g.AddToBattleline(testCreature("nested", 5,
-		WithAbility(TriggerAfterPlay, Heal{Amount: 1, Target: Target{Kind: TargetEachEnemyCreature}})), 0)
+	nested := g.AddToBattleline(testCreature(
+		"nested",
+		5,
+		WithAbility(
+			TriggerAfterPlay,
+			Heal{Amount: 1, Target: Target{Kind: TargetEachEnemyCreature}},
+		),
+	), 0)
 
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 	seq := Sequence{Effects: []Effect{
-		Heal{Amount: 1, Target: Target{Kind: TargetEachFriendlyCreature}},                 // heals a, b -> ctx.Produced.Healed = 2
-		gameEffect{fn: func() { g.triggerAbilities(nested, TriggerAfterPlay, 0, false) }}, // nested heals enemy on its OWN context (Healed = 1)
-		GainAember{Player: Controller, Amount: 1, Per: CreaturesHealed{}},                 // reads THIS context's 2, not the nested 1
+		Heal{
+			Amount: 1,
+			Target: Target{Kind: TargetEachFriendlyCreature},
+		}, // heals a, b -> ctx.Produced.Healed = 2
+		gameEffect{
+			fn: func() { g.triggerAbilities(nested, TriggerAfterPlay, 0, false) },
+		}, // nested heals enemy on its OWN context (Healed = 1)
+		GainAember{
+			Player: Controller,
+			Amount: 1,
+			Per:    CreaturesHealed{},
+		}, // reads THIS context's 2, not the nested 1
 	}}
 	seq.Resolve(ctx)
 
 	if ctx.Produced.Healed != 2 {
-		t.Errorf("outer ctx.Produced.Healed = %d, want 2 (a nested ability must not overwrite it)", ctx.Produced.Healed)
+		t.Errorf(
+			"outer ctx.Produced.Healed = %d, want 2 (a nested ability must not overwrite it)",
+			ctx.Produced.Healed,
+		)
 	}
 	if g.Aember(0) != 2 {
 		t.Errorf("gained %d Æmber, want 2 (outer Heal's count, not the nested 1)", g.Aember(0))
