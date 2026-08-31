@@ -74,6 +74,10 @@ func TestDamageCreatureAndNeighbor(t *testing.T) {
 	if e.Text() != "deal 3 damage to a creature and 3 damage to a neighbor of that creature" {
 		t.Errorf("text = %q", e.Text())
 	}
+	// A spread that cannot be misconfigured validates cleanly.
+	if err := e.validate(); err != nil {
+		t.Errorf("validate() = %v, want nil", err)
+	}
 
 	// The default chooser picks the left flank; its only neighbor is the middle.
 	g := NewGame("A", "B", 1)

@@ -16,6 +16,9 @@ func TestInvariantErrorSound(t *testing.T) {
 	if err := g.InvariantError(); err != nil {
 		t.Fatalf("sound state reported an invariant error: %v", err)
 	}
+	// The normal-build no-op runs at every turn boundary; call it directly so the
+	// empty body is exercised without an -tags assert build.
+	g.assertInvariants()
 }
 
 func TestInvariantErrorEconomy(t *testing.T) {
