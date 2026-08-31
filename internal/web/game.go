@@ -564,9 +564,23 @@ func (g *game) runAction(ctx app.Context, fn func() error) {
 	// any Dispatch whose source element is no longer mounted — which would leave
 	// the UI stuck on "resolving…" after a chooser.
 	ctx.Async(func() {
-		err := fn()
+		crashed, err := runSafely(fn)
 		g.dispatch(func(ctx app.Context) {
 			g.busy = false
+			if crashed {
+				// A corrupt engine state can panic mid-action (e.g. an
+				// out-of-range card id). Roll back to the snapshot beginAction
+				// recorded so the board stays consistent, then surface the
+				// failure instead of freezing the UI on "resolving…".
+				if n := len(g.undo); n > 0 {
+					last := g.undo[n-1]
+					g.undo = g.undo[:n-1]
+					g.restore(last)
+				}
+				g.setStatus(err.Error())
+				g.save(ctx)
+				return
+			}
 			if err != nil {
 				g.setStatus(err.Error())
 			}
@@ -574,6 +588,20 @@ func (g *game) runAction(ctx app.Context, fn func() error) {
 			g.save(ctx)
 		})
 	})
+}
+
+// runSafely runs a root action, converting a panic from a corrupt engine state
+// into an error (crashed == true) instead of letting it kill the WASM goroutine
+// and freeze the UI. A returned error with crashed == false is an ordinary
+// illegal-move rejection.
+func runSafely(fn func() error) (crashed bool, err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("the game hit an unexpected error and rolled back: %v", r)
+			crashed = true
+		}
+	}()
+	return false, fn()
 }
 
 // setStatus shows a transient message in the controls area and arms a 5s

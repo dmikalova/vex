@@ -27,12 +27,12 @@ func TestPreventDamage(t *testing.T) {
 
 	// Protect an enemy creature too, then confirm end of turn clears both.
 	PreventDamage{Target: Target{Kind: TargetEachEnemyCreature}}.Resolve(ctx)
-	if !g.State.Cards[foe].DamageImmune {
+	if !g.State.Cards[foe].Invulnerable {
 		t.Fatal("enemy creature should be protected")
 	}
 	g.BeginTurn(0)
 	g.EndTurn(0)
-	if g.State.Cards[friend].DamageImmune || g.State.Cards[foe].DamageImmune {
+	if g.State.Cards[friend].Invulnerable || g.State.Cards[foe].Invulnerable {
 		t.Error("end of turn should clear damage immunity on both players' creatures")
 	}
 }

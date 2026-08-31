@@ -129,7 +129,7 @@ func (g *Game) EndTurn(player int) {
 	// "Cannot be dealt damage" lasts only the turn, so clear it on every creature,
 	// including any enemy one an effect protected (Protectrix).
 	for _, id := range append(g.allInPlay(player), g.allInPlay(1-player)...) {
-		g.State.Cards[id].DamageImmune = false
+		g.State.Cards[id].Invulnerable = false
 	}
 	g.State.CannotFight[player] = false
 	g.State.MayFightHouse[player] = HouseNone

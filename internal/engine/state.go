@@ -24,9 +24,9 @@ const (
 type CardCore struct {
 	Exhausted bool
 	Stunned   bool
-	// DamageImmune, while set, prevents any damage from being dealt to this creature.
+	// Invulnerable, while set, prevents any damage from being dealt to this creature.
 	// It lasts until end of turn (EndTurn clears it) — Shield of Justice, Protectrix.
-	DamageImmune bool
+	Invulnerable bool
 	// TimesUsedThisTurn counts how many times this creature has been USED this
 	// turn — to reap, fight, or use an Action: ability. BeginTurn clears every
 	// creature's count; leaving play clears it through resetCore.

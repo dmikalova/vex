@@ -23,9 +23,10 @@ var Lifeward = card.New(
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(card.Trigger.Action, card.Sequence{Effects: []card.Effect{
 		card.Sentence{Effect: card.Destroy{Target: card.Target.This}},
-		card.Sentence{Effect: card.CannotPlayNextTurn{
-			Player: card.Opponent,
-			Type:   card.Type.Creature,
+		card.Sentence{Effect: card.CannotPlay{
+			Player:   card.Opponent,
+			Type:     card.Type.Creature,
+			Duration: card.Duration.NextTurn,
 		}},
 	}}),
 )

@@ -58,27 +58,33 @@ func (e CannotFight) Resolve(ctx *EffectContext) {
 	}
 }
 
-// CannotPlayNextTurn bars a player from playing cards of a type throughout their
-// next turn — Lifeward stops creatures, Scrambler Storm stops action cards.
-type CannotPlayNextTurn struct {
-	Player Player
-	Type   CardType
+// CannotPlay bars a player from playing cards of a type for the Duration —
+// Lifeward stops creatures, Scrambler Storm stops action cards, each through the
+// affected player's next turn. It mirrors CannotFight: a Player, a Duration, and
+// here the card Type that is barred.
+type CannotPlay struct {
+	Player   Player
+	Type     CardType
+	Duration Duration
 }
 
-// validate rejects a CannotPlayNextTurn whose player or type was left unset.
-func (e CannotPlayNextTurn) validate() error {
+// validate rejects a CannotPlay whose player, type, or duration was left unset.
+func (e CannotPlay) validate() error {
 	if !e.Player.valid() {
-		return errUnsetPlayer("CannotPlayNextTurn")
+		return errUnsetPlayer("CannotPlay")
 	}
 	if e.Type == "" {
-		return errUnsetCardType("CannotPlayNextTurn")
+		return errUnsetCardType("CannotPlay")
+	}
+	if !e.Duration.valid() {
+		return errUnsetDuration("CannotPlay")
 	}
 	return nil
 }
 
 // Text renders the effect, e.g. "your opponent cannot play creatures during their
 // next turn". The Tactic type prints as "action cards" (rule 19).
-func (e CannotPlayNextTurn) Text() string {
+func (e CannotPlay) Text() string {
 	who, whose := "you", "your"
 	if e.Player == Opponent {
 		who, whose = "your opponent", "their"
@@ -90,9 +96,11 @@ func (e CannotPlayNextTurn) Text() string {
 	return who + " cannot play " + noun + " during " + whose + " next turn"
 }
 
-// Resolve arms the play-type bar on the chosen player for their next turn.
-func (e CannotPlayNextTurn) Resolve(ctx *EffectContext) {
-	ctx.Resolver.CannotPlayTypeNextTurn(ctx.PlayerFor(e.Player), e.Type)
+// Resolve arms the play-type bar on the chosen player for the Duration.
+func (e CannotPlay) Resolve(ctx *EffectContext) {
+	if e.Duration == NextTurn {
+		ctx.Resolver.CannotPlayTypeNextTurn(ctx.PlayerFor(e.Player), e.Type)
+	}
 }
 
 // SkipForgeStep makes a player skip their "forge a key" step at the start of their

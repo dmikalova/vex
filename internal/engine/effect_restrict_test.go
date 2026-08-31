@@ -2,20 +2,23 @@ package engine
 
 import "testing"
 
-func TestCannotPlayNextTurn(t *testing.T) {
-	if got := (CannotPlayNextTurn{Player: Opponent, Type: Creature}).Text(); got != "your opponent cannot play creatures during their next turn" {
+func TestCannotPlay(t *testing.T) {
+	if got := (CannotPlay{Player: Opponent, Type: Creature, Duration: NextTurn}).Text(); got != "your opponent cannot play creatures during their next turn" {
 		t.Errorf("creature text = %q", got)
 	}
-	if got := (CannotPlayNextTurn{Player: Controller, Type: Tactic}).Text(); got != "you cannot play action cards during your next turn" {
+	if got := (CannotPlay{Player: Controller, Type: Tactic, Duration: NextTurn}).Text(); got != "you cannot play action cards during your next turn" {
 		t.Errorf("tactic text = %q", got)
 	}
-	if (CannotPlayNextTurn{Type: Creature}).validate() == nil {
+	if (CannotPlay{Type: Creature, Duration: NextTurn}).validate() == nil {
 		t.Error("unset player should be invalid")
 	}
-	if (CannotPlayNextTurn{Player: Opponent}).validate() == nil {
+	if (CannotPlay{Player: Opponent, Duration: NextTurn}).validate() == nil {
 		t.Error("unset card type should be invalid")
 	}
-	if (CannotPlayNextTurn{Player: Opponent, Type: Creature}).validate() != nil {
+	if (CannotPlay{Player: Opponent, Type: Creature}).validate() == nil {
+		t.Error("unset duration should be invalid")
+	}
+	if (CannotPlay{Player: Opponent, Type: Creature, Duration: NextTurn}).validate() != nil {
 		t.Error("a fully set effect should be valid")
 	}
 
@@ -25,7 +28,7 @@ func TestCannotPlayNextTurn(t *testing.T) {
 		t.Fatal(err)
 	}
 	// Resolve arms the opponent's next turn.
-	CannotPlayNextTurn{Player: Opponent, Type: Creature}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	CannotPlay{Player: Opponent, Type: Creature, Duration: NextTurn}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 	if g.State.CannotPlayTypeNext[1] != Creature {
 		t.Fatal("the bar should arm the opponent's next turn")
 	}

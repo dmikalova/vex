@@ -115,6 +115,31 @@ func TestTargetText(t *testing.T) {
 	}
 }
 
+func TestTargetSharingTrait(t *testing.T) {
+	if got := (Target{Kind: TargetEachCreature}).SharingTrait("the purged creature").Text(); got != "each creature that shares a trait with the purged creature" {
+		t.Errorf("shares-trait text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	kin := g.AddToBattleline(testCreature("kin", 3, WithTraits("Beast")), 0)
+	prey := g.AddToBattleline(testCreature("prey", 5, WithTraits("Beast")), 1)
+	g.AddToBattleline(testCreature("spared", 5, WithTraits("Robot")), 1)
+	target := Target{Kind: TargetEachCreature}.SharingTrait("it")
+
+	// Without a context card the filter matches nothing.
+	noIt := &EffectContext{Resolver: g, Controller: 0}
+	if ids := target.Select(noIt); len(ids) != 0 {
+		t.Errorf("shares-trait without It = %v, want empty", ids)
+	}
+
+	// With the Beast in context, only trait-sharing creatures pass.
+	ctx := &EffectContext{Resolver: g, Controller: 0, It: kin, HasIt: true}
+	ids := target.Select(ctx)
+	if len(ids) != 2 || ids[0] != kin || ids[1] != prey {
+		t.Errorf("shares-trait select = %v, want [%d %d]", ids, kin, prey)
+	}
+}
+
 func TestTargetPowerFilters(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	p2 := g.AddToBattleline(testCreature("p2", 2), 0)

@@ -224,22 +224,24 @@ func (e PurgeCreature) Resolve(ctx *EffectContext) {
 	}
 }
 
-// PurgeHandThenDestroyShared purges a chosen creature from the controller's hand
-// and then destroys every creature in play — either player's — that shares at
-// least one trait with it. It is Custom Virus's "purge a creature from your
-// hand, destroy each creature that shares a trait with the purged creature." The
-// purged creature is out of play but its traits still decide what is destroyed;
-// with no creature in hand nothing is purged and nothing is destroyed.
-type PurgeHandThenDestroyShared struct{}
+// PurgeCreatureFromHand purges a creature the controller chooses from their hand
+// and puts it in context (ctx.It) for a following effect to act on. It is the
+// first half of Custom Virus's "purge a creature from your hand, destroy each
+// creature that shares a trait with the purged creature": the purge here, the
+// destruction a Destroy whose Target is EachCreature.SharingTrait. The purged
+// creature is out of play but its traits still decide what a later effect selects;
+// with no creature in hand, or the choice declined, nothing is purged and It stays
+// unset (so the following effect finds nothing).
+type PurgeCreatureFromHand struct{}
 
 // Text renders the effect.
-func (PurgeHandThenDestroyShared) Text() string {
-	return "purge a creature from your hand. Destroy each creature that shares a trait with the purged creature"
+func (PurgeCreatureFromHand) Text() string {
+	return "purge a creature from your hand"
 }
 
-// Resolve purges a chosen creature from the controller's hand, then destroys
-// every creature in play sharing a trait with it, all at once.
-func (e PurgeHandThenDestroyShared) Resolve(ctx *EffectContext) {
+// Resolve purges a chosen creature from the controller's hand and sets it as the
+// context card.
+func (PurgeCreatureFromHand) Resolve(ctx *EffectContext) {
 	var inHand []LocalID
 	for _, id := range ctx.Resolver.Hand(ctx.Controller) {
 		if ctx.Resolver.IsCreature(id) {
@@ -254,14 +256,5 @@ func (e PurgeHandThenDestroyShared) Resolve(ctx *EffectContext) {
 		return
 	}
 	ctx.Resolver.PurgeFromHand(ctx.Controller, purged)
-
-	var dying []LocalID
-	for p := 0; p < 2; p++ {
-		for _, id := range ctx.Resolver.Battleline(p) {
-			if ctx.Resolver.SharesTrait(purged, id) {
-				dying = append(dying, id)
-			}
-		}
-	}
-	ctx.Resolver.DestroyEach(ctx.Controller, dying)
+	ctx.It, ctx.HasIt = purged, true
 }

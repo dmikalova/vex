@@ -372,7 +372,7 @@ func (g *Game) SetDamage(id LocalID, amount int) {
 func (g *Game) SetStunned(id LocalID, stunned bool) { g.State.Cards[id].Stunned = stunned }
 
 // PreventDamage marks a creature immune to damage for the remainder of the turn.
-func (g *Game) PreventDamage(id LocalID) { g.State.Cards[id].DamageImmune = true }
+func (g *Game) PreventDamage(id LocalID) { g.State.Cards[id].Invulnerable = true }
 
 // SetExhausted sets a creature's exhausted status.
 func (g *Game) SetExhausted(id LocalID, exhausted bool) { g.State.Cards[id].Exhausted = exhausted }

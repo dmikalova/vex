@@ -74,6 +74,12 @@ supply onto a card.
 Æmber the opponent must pay a card's controller in order to play or use an
 artifact.
 
+**Invulnerable**:
+A creature status that prevents any damage from being dealt to it (Shield of
+Justice, Protectrix). It lasts until end of turn. In the engine this is the
+`Invulnerable` flag on a card's state.
+_Avoid_: damage-immune, damage immunity.
+
 ## Cards and sets
 
 **House**:

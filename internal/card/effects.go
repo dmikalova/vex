@@ -48,7 +48,7 @@ type (
 	PurgeFromHand = engine.PurgeFromHand
 	PurgeCreature = engine.PurgeCreature
 
-	PurgeHandThenDestroyShared = engine.PurgeHandThenDestroyShared
+	PurgeCreatureFromHand = engine.PurgeCreatureFromHand
 )
 
 // Creature state (stun, exhaust, power counters).
@@ -168,7 +168,7 @@ type (
 // Houses, keys, chains, and restrictions.
 type (
 	CannotFight                              = engine.CannotFight
-	CannotPlayNextTurn                       = engine.CannotPlayNextTurn
+	CannotPlay                               = engine.CannotPlay
 	SkipForgeStep                            = engine.SkipForgeStep
 	PreventDamage                            = engine.PreventDamage
 	MayUseFriendlyHouse                      = engine.MayUseFriendlyHouse

@@ -87,6 +87,11 @@ type Target struct {
 	// contextualHouse narrows the target to cards sharing the house of the card in
 	// context (ctx.It), rendering "of that card's house" — ForEachDiscarded's Do.
 	contextualHouse bool
+	// sharesTrait narrows the target to cards sharing at least one trait with the
+	// card in context (ctx.It); sharesTraitWith is how that card reads in the
+	// printed phrase — "the purged creature" for Custom Virus, or "it".
+	sharesTrait     bool
+	sharesTraitWith string
 	maxPower        int
 	hasMaxPower     bool
 	minPower        int
@@ -155,6 +160,16 @@ func (t Target) OfChosenHouse() Target {
 // "of that card's house".
 func (t Target) OfContextualHouse() Target {
 	t.contextualHouse = true
+	return t
+}
+
+// SharingTrait narrows the target to cards that share at least one trait with the
+// card in context (ctx.It), rendering "that shares a trait with <with>". with
+// names the context card in the printed phrase — "the purged creature" after
+// PurgeCreatureFromHand (Custom Virus), or "it" when a chosen creature set it.
+func (t Target) SharingTrait(with string) Target {
+	t.sharesTrait = true
+	t.sharesTraitWith = with
 	return t
 }
 
@@ -380,6 +395,9 @@ func (t Target) Text() string {
 	}
 	if t.contextualHouse {
 		phrase += " of that card's house"
+	}
+	if t.sharesTrait {
+		phrase += " that shares a trait with " + t.sharesTraitWith
 	}
 	if t.selector != nil {
 		phrase = t.selector.clause(phrase)
@@ -638,6 +656,7 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 		t.exceptHouse == HouseNone &&
 		!t.chosenHouse &&
 		!t.contextualHouse &&
+		!t.sharesTrait &&
 		!t.hasMaxPower &&
 		!t.hasMinPower &&
 		!t.hasExactPower &&
@@ -670,6 +689,9 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 			continue
 		}
 		if t.contextualHouse && (!ctx.HasIt || ctx.Resolver.House(id) != ctx.Resolver.House(ctx.It)) {
+			continue
+		}
+		if t.sharesTrait && (!ctx.HasIt || !ctx.Resolver.SharesTrait(ctx.It, id)) {
 			continue
 		}
 		if t.hasMaxPower && ctx.Resolver.Power(id) > t.maxPower {

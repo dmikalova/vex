@@ -17,8 +17,9 @@ var ScramblerStorm = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 122),
 	card.WithAemberBonus(1),
-	card.WithAbility(card.Trigger.Play, card.CannotPlayNextTurn{
-		Player: card.Opponent,
-		Type:   card.Type.Tactic,
+	card.WithAbility(card.Trigger.Play, card.CannotPlay{
+		Player:   card.Opponent,
+		Type:     card.Type.Tactic,
+		Duration: card.Duration.NextTurn,
 	}),
 )
