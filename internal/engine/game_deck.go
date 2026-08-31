@@ -30,13 +30,29 @@ func (g *Game) shuffleDiscardIntoDeck(player int) {
 	g.Shuffle(player)
 }
 
-func (g *Game) shuffleHandAndDiscardIntoDeck(player int) {
-	deck, hand, discard := &g.State.Deck[player], &g.State.Hand[player], &g.State.Discard[player]
-	for hand.Count > 0 {
-		deck.add(hand.removeAt(0))
-	}
-	for discard.Count > 0 {
-		deck.add(discard.removeAt(0))
+func (g *Game) shuffleZonesIntoDeck(player int, zones []Zone) {
+	deck := &g.State.Deck[player]
+	for _, z := range zones {
+		switch z {
+		case Hand:
+			hand := &g.State.Hand[player]
+			for _, id := range hand.slice() {
+				deck.add(id)
+			}
+			*hand = deckList{}
+		case Archives:
+			arc := &g.State.Archives[player]
+			for _, id := range arc.slice() {
+				deck.add(id)
+			}
+			*arc = wideList{}
+		default: // Discard
+			discard := &g.State.Discard[player]
+			for _, id := range discard.slice() {
+				deck.add(id)
+			}
+			*discard = deckList{}
+		}
 	}
 	g.Shuffle(player)
 }

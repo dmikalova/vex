@@ -8,15 +8,18 @@ func TestPreventDamage(t *testing.T) {
 	foe := g.AddToBattleline(testCreature("foe", 5), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := PreventDamage{Target: Target{Kind: TargetEachFriendlyCreature}}
+	e := PreventDamage{Target: Target{Kind: TargetEachFriendlyCreature}, Duration: EndOfTurn}
 	if e.Text() != "for the remainder of the turn, each friendly creature cannot be dealt damage" {
 		t.Errorf("text = %q", e.Text())
 	}
-	if (PreventDamage{}).validate() == nil {
+	if (PreventDamage{Duration: EndOfTurn}).validate() == nil {
 		t.Error("unset target should be invalid")
 	}
+	if (PreventDamage{Target: Target{Kind: TargetEachFriendlyCreature}}).validate() == nil {
+		t.Error("unset duration should be invalid")
+	}
 	if e.validate() != nil {
-		t.Error("a set target should be valid")
+		t.Error("a set target and duration should be valid")
 	}
 
 	e.Resolve(ctx)
@@ -26,49 +29,97 @@ func TestPreventDamage(t *testing.T) {
 	}
 
 	// Protect an enemy creature too, then confirm end of turn clears both.
-	PreventDamage{Target: Target{Kind: TargetEachEnemyCreature}}.Resolve(ctx)
-	if !g.State.Cards[foe].Invulnerable {
+	PreventDamage{Target: Target{Kind: TargetEachEnemyCreature}, Duration: EndOfTurn}.Resolve(ctx)
+	if !g.State.Cards[foe].DamageImmune {
 		t.Fatal("enemy creature should be protected")
 	}
 	g.BeginTurn(0)
 	g.EndTurn(0)
-	if g.State.Cards[friend].Invulnerable || g.State.Cards[foe].Invulnerable {
+	if g.State.Cards[friend].DamageImmune || g.State.Cards[foe].DamageImmune {
 		t.Error("end of turn should clear damage immunity on both players' creatures")
 	}
 }
 
-func TestMoveAemberToPool(t *testing.T) {
+func TestMoveAember(t *testing.T) {
+	friendly := Target{Kind: TargetChosenFriendlyInPlay}
+
+	// Text: pool destination and card destination.
+	toPool := MoveAember{Amount: 1, From: friendly, To: Controller}
+	if got := toPool.Text(); got != "move 1 \u00c6mber from a friendly creature or artifact to your pool" {
+		t.Errorf("pool text = %q", got)
+	}
+	toOpp := MoveAember{Amount: 2, From: friendly, To: Opponent}
+	if got := toOpp.Text(); got != "move 2 \u00c6mber from a friendly creature or artifact to your opponent's pool" {
+		t.Errorf("opponent-pool text = %q", got)
+	}
+	toCard := MoveAember{From: friendly, Onto: Target{Kind: TargetChosenEnemyCreature}}
+	if got := toCard.Text(); got != "move 1 \u00c6mber from a friendly creature or artifact to an enemy creature" {
+		t.Errorf("card text = %q", got)
+	}
+
+	// validate: source and exactly one destination.
+	if (MoveAember{To: Controller}).validate() == nil {
+		t.Error("unset source should be invalid")
+	}
+	if (MoveAember{From: friendly}).validate() == nil {
+		t.Error("no destination should be invalid")
+	}
+	if (MoveAember{From: friendly, To: Controller, Onto: friendly}).validate() == nil {
+		t.Error("two destinations should be invalid")
+	}
+	if toPool.validate() != nil || toCard.validate() != nil {
+		t.Error("one destination should be valid")
+	}
+
+	// Resolve into a pool, capping the move at what the source holds.
 	g := NewGame("A", "B", 1)
 	c := g.AddToBattleline(testCreature("c", 3), 0)
 	g.AddAmberOn(c, 2)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-
-	if got := (MoveAemberToPool{}).Text(); got != "move 1 \u00c6mber from one of your cards to your pool" {
-		t.Errorf("text = %q", got)
+	MoveAember{Amount: 3, From: friendly, To: Controller}.Resolve(ctx)
+	if g.AmberOn(c) != 0 || g.Aember(0) != 2 {
+		t.Errorf("after capped move: card=%d pool=%d, want 0/2", g.AmberOn(c), g.Aember(0))
 	}
 
-	(MoveAemberToPool{}).Resolve(ctx)
-	if g.AmberOn(c) != 1 || g.Aember(0) != 1 {
-		t.Errorf("after move: card Æmber=%d pool=%d, want 1/1", g.AmberOn(c), g.Aember(0))
-	}
-
-	// No card carries Æmber: nothing happens.
+	// Resolve onto another card.
 	g2 := NewGame("A", "B", 1)
-	g2.AddToBattleline(testCreature("bare", 3), 0)
-	(MoveAemberToPool{}).Resolve(&EffectContext{Resolver: g2, Controller: 0})
-	if g2.Aember(0) != 0 {
+	src := g2.AddToBattleline(testCreature("src", 3), 0)
+	dst := g2.AddToBattleline(testCreature("dst", 3), 1)
+	g2.AddAmberOn(src, 2)
+	MoveAember{Amount: 1, From: friendly, Onto: Target{Kind: TargetChosenEnemyCreature}}.
+		Resolve(&EffectContext{Resolver: g2, Controller: 0})
+	if g2.AmberOn(src) != 1 || g2.AmberOn(dst) != 1 {
+		t.Errorf("after card move: src=%d dst=%d, want 1/1", g2.AmberOn(src), g2.AmberOn(dst))
+	}
+
+	// No source carries Æmber: nothing happens.
+	g3 := NewGame("A", "B", 1)
+	g3.AddToBattleline(testCreature("bare", 3), 0)
+	MoveAember{From: friendly, To: Controller}.Resolve(&EffectContext{Resolver: g3, Controller: 0})
+	if g3.Aember(0) != 0 {
 		t.Error("moving with no Æmber-bearing card should do nothing")
+	}
+
+	// A card destination with no candidate card: nothing moves.
+	g4 := NewGame("A", "B", 1)
+	only := g4.AddToBattleline(testCreature("only", 3), 0)
+	g4.AddAmberOn(only, 1)
+	MoveAember{From: friendly, Onto: Target{Kind: TargetChosenEnemyCreature}}.
+		Resolve(&EffectContext{Resolver: g4, Controller: 0})
+	if g4.AmberOn(only) != 1 {
+		t.Error("a move with no destination card should move nothing")
 	}
 }
 
-func TestMoveAemberToPoolDeclined(t *testing.T) {
+func TestMoveAemberDeclined(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	a := g.AddToBattleline(testCreature("a", 3), 0)
 	b := g.AddToBattleline(testCreature("b", 3), 0)
 	g.AddAmberOn(a, 1)
 	g.AddAmberOn(b, 1)
 	g.SetChooser(0, orderRejectChooser{})
-	(MoveAemberToPool{}).Resolve(&EffectContext{Resolver: g, Controller: 0})
+	MoveAember{From: Target{Kind: TargetChosenFriendlyInPlay}, To: Controller}.
+		Resolve(&EffectContext{Resolver: g, Controller: 0})
 	if g.Aember(0) != 0 {
 		t.Error("a declined move should move nothing")
 	}

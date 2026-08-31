@@ -11,10 +11,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/maxence-charriere/go-app/v11/pkg/app"
+
 	"github.com/dmikalova/vactrol/internal/cards"
 	"github.com/dmikalova/vactrol/internal/engine"
 	"github.com/dmikalova/vactrol/internal/match"
-	"github.com/maxence-charriere/go-app/v11/pkg/app"
 )
 
 // phase is the interaction state of the client, distinct from the engine's own

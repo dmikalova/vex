@@ -28,7 +28,20 @@ var House = houses{
 }
 
 type houses struct {
-	Brobnar, Dis, Logos, Mars, Sanctum, Shadows, Untamed engine.House
+	// Brobnar is the house of giants and brawlers.
+	Brobnar engine.House
+	// Dis is the house of demons.
+	Dis engine.House
+	// Logos is the house of scientists and invention.
+	Logos engine.House
+	// Mars is the house of the martians.
+	Mars engine.House
+	// Sanctum is the house of knights and spirits.
+	Sanctum engine.House
+	// Shadows is the house of thieves and elves.
+	Shadows engine.House
+	// Untamed is the house of nature and beasts.
+	Untamed engine.House
 }
 
 // Type groups the card-type values, e.g. card.Type.Creature.
@@ -40,7 +53,14 @@ var Type = cardTypes{
 }
 
 type cardTypes struct {
-	Creature, Tactic, Artifact, Upgrade engine.CardType
+	// Creature is a creature card.
+	Creature engine.CardType
+	// Tactic is an action card (KeyForge's "action" type; card-wording rule 19).
+	Tactic engine.CardType
+	// Artifact is an artifact card.
+	Artifact engine.CardType
+	// Upgrade is an upgrade card that attaches to a creature.
+	Upgrade engine.CardType
 }
 
 // Rarity groups the rarity values, e.g. card.Rarity.Common.
@@ -53,7 +73,16 @@ var Rarity = rarities{
 }
 
 type rarities struct {
-	Common, Uncommon, Rare, Special, Fixed engine.Rarity
+	// Common is the common rarity.
+	Common engine.Rarity
+	// Uncommon is the uncommon rarity.
+	Uncommon engine.Rarity
+	// Rare is the rare rarity.
+	Rare engine.Rarity
+	// Special is the special rarity.
+	Special engine.Rarity
+	// Fixed is the fixed rarity (reference/token-style cards).
+	Fixed engine.Rarity
 }
 
 // Keyword groups the keyword values, e.g. card.Keyword.Skirmish.
@@ -66,7 +95,16 @@ var Keyword = keywords{
 }
 
 type keywords struct {
-	Skirmish, Poison, Elusive, Taunt, Versatile engine.Keyword
+	// Skirmish: this creature deals no retaliation damage when it fights.
+	Skirmish engine.Keyword
+	// Poison: any damage this creature deals to a creature destroys it.
+	Poison engine.Keyword
+	// Elusive: the first time this creature is attacked each turn, no damage is dealt.
+	Elusive engine.Keyword
+	// Taunt: neighboring non-Taunt creatures cannot be attacked or fought.
+	Taunt engine.Keyword
+	// Versatile: this card may be played from any house (its Action: is an Omni).
+	Versatile engine.Keyword
 }
 
 // Keywords builds the keyword slice for an upgrade's granted keywords, e.g.
@@ -74,6 +112,12 @@ type keywords struct {
 // because card.Keyword is the value namespace, so a []card.Keyword literal can't
 // be written directly.
 func Keywords(k ...engine.Keyword) []engine.Keyword { return k }
+
+// Types builds the card-type slice for a Types filter, e.g.
+// card.DiscardFromHand{Types: card.Types(card.Type.Creature)}. Like Keywords, it
+// exists because card.Type is the value namespace, so a []card.CardType literal
+// can't be written directly.
+func Types(t ...engine.CardType) []engine.CardType { return t }
 
 // Trigger groups the ability triggers, e.g. card.Trigger.Play or
 // card.Trigger.AfterForgeKey.
@@ -94,18 +138,31 @@ var Trigger = triggers{
 }
 
 type triggers struct {
-	Play,
-	Reap,
-	Fight,
-	BeforeFight,
-	Action,
-	AfterForgeKey,
-	AfterCreatureEnters,
-	Destroyed,
-	AfterDestroyedFighting,
-	AfterCardPlayed,
-	EndOfTurn,
-	AfterChooseHouse,
+	// Play fires when the card is played ("Play:").
+	Play engine.Trigger
+	// Reap fires after this creature reaps ("Reap:").
+	Reap engine.Trigger
+	// Fight fires after this creature fights ("Fight:").
+	Fight engine.Trigger
+	// BeforeFight fires before this creature's fight resolves ("Before Fight:").
+	BeforeFight engine.Trigger
+	// Action is an ability the controller activates on their turn ("Action:").
+	Action engine.Trigger
+	// AfterForgeKey fires after the controller forges a key.
+	AfterForgeKey engine.Trigger
+	// AfterCreatureEnters fires after another creature enters play.
+	AfterCreatureEnters engine.Trigger
+	// Destroyed fires when this creature is destroyed ("Destroyed:").
+	Destroyed engine.Trigger
+	// AfterDestroyedFighting fires when a creature is destroyed fighting this one.
+	AfterDestroyedFighting engine.Trigger
+	// AfterCardPlayed fires after the controller plays a card.
+	AfterCardPlayed engine.Trigger
+	// EndOfTurn fires at the end of the controller's turn.
+	EndOfTurn engine.Trigger
+	// AfterChooseHouse fires after the controller chooses their active house.
+	AfterChooseHouse engine.Trigger
+	// AfterEnemyCreatureDestroyed fires after an enemy creature is destroyed during your turn.
 	AfterEnemyCreatureDestroyed engine.Trigger
 }
 
@@ -114,8 +171,12 @@ type triggers struct {
 // card.Opponent (their opponent). card.EachPlayer means both, for effects that
 // reach everyone at once (e.g. a key-cost change on each player's keys).
 var (
+	// Controller is the player who controls the card whose ability is resolving.
 	Controller = engine.Controller
-	Opponent   = engine.Opponent
+	// Opponent is the controller's opponent.
+	Opponent = engine.Opponent
+	// EachPlayer means both players, for effects that reach everyone at once.
 	EachPlayer = engine.EachPlayer
-	ItsOwner   = engine.ItsOwner
+	// ItsOwner is the owner of the card in context (ctx.It).
+	ItsOwner = engine.ItsOwner
 )

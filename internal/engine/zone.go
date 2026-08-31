@@ -10,6 +10,10 @@ const (
 	zoneUnset Zone = iota
 	// Discard is a player's discard pile.
 	Discard
+	// Hand is a player's hand.
+	Hand
+	// Archives is a player's archives.
+	Archives
 )
 
 // valid reports whether the zone is a real one (not the unset zero value).

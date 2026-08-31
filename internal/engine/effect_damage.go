@@ -18,12 +18,33 @@ type DealDamage struct {
 	// IgnoreArmor makes the damage bypass armor (Qyxxlyx Plague Master's "this
 	// damage cannot be prevented by armor").
 	IgnoreArmor bool
+	// AmountFrom, when set, sources the damage from a produced quantity instead of
+	// Amount, rendering "deal that amount of damage" — Guardian Demon deals the
+	// damage it just healed. It is distinct from Per, which multiplies Amount "for
+	// each"; set one or the other, not both.
+	AmountFrom Count
+	// Spread, when set, deals a simultaneous batch of damage to several related
+	// creatures the controller chooses (a creature and a neighbor, a flank walk),
+	// each with its own amount. It replaces Amount/Per/AmountFrom/Target — the
+	// spread carries its own targets and amounts and renders its own phrase.
+	Spread Spread
 }
 
-// validate requires an explicit target.
+// validate requires an explicit target, or a Spread that supplies its own.
 func (e DealDamage) validate() error {
+	if e.Spread != nil {
+		if e.Target.valid() || e.Amount != 0 || e.Per != nil || e.AmountFrom != nil {
+			return fmt.Errorf(
+				"DealDamage: Spread cannot combine with Target, Amount, Per, or AmountFrom",
+			)
+		}
+		return validateSpread(e.Spread)
+	}
 	if !e.Target.valid() {
 		return errUnsetTarget("DealDamage")
+	}
+	if e.AmountFrom != nil && e.Per != nil {
+		return fmt.Errorf("DealDamage: set AmountFrom or Per, not both")
 	}
 	return nil
 }
@@ -32,7 +53,14 @@ func (e DealDamage) validate() error {
 // each" count leads the sentence (rule 9), e.g. "for each friendly creature in
 // play, deal 1 damage to a creature". Armor-ignoring damage adds a trailing clause.
 func (e DealDamage) Text() string {
-	body := fmt.Sprintf("deal %d damage to %s", e.Amount, e.Target.Text())
+	if e.Spread != nil {
+		return e.Spread.spreadText()
+	}
+	amount := fmt.Sprintf("%d damage", e.Amount)
+	if e.AmountFrom != nil {
+		amount = "that amount of damage"
+	}
+	body := fmt.Sprintf("deal %s to %s", amount, e.Target.Text())
 	if e.IgnoreArmor {
 		body += ", ignoring armor"
 	}
@@ -40,10 +68,20 @@ func (e DealDamage) Text() string {
 }
 
 // Resolve deals the damage to every selected creature simultaneously, resolving
-// destruction as part of it. A Per count multiplies the amount dealt.
+// destruction as part of it. A Per count multiplies the amount dealt; an AmountFrom
+// count sources the amount directly; a Spread deals its own related batch of hits.
 func (e DealDamage) Resolve(ctx *EffectContext) {
+	if e.Spread != nil {
+		if hits := e.Spread.hits(ctx); len(hits) > 0 {
+			ctx.Resolver.DealDamage(ctx.Controller, hits)
+		}
+		return
+	}
 	amount := e.Amount
-	if e.Per != nil {
+	switch {
+	case e.AmountFrom != nil:
+		amount = e.AmountFrom.Value(ctx)
+	case e.Per != nil:
 		amount *= e.Per.Value(ctx)
 	}
 	ids := e.Target.Select(ctx)
@@ -137,28 +175,45 @@ func (e DamageIfSurvives) Resolve(ctx *EffectContext) {
 	}
 }
 
-// DamageCreatureAndNeighbor deals damage to a chosen creature and damage to one of
-// its battleline neighbors (the controller picks when it has two, the sole one
-// otherwise), all at once — Mighty Lance's "deal 3 damage to a creature and 3
-// damage to a neighbor of that creature."
-type DamageCreatureAndNeighbor struct {
+// Spread turns the controller's choices into a simultaneous batch of damage hits
+// and renders its own phrase — the shape a DealDamage takes when it strikes
+// several related creatures at once (a chosen creature and a neighbor, an inward
+// flank walk). Each renders its clause so text and behavior stay in sync.
+type Spread interface {
+	hits(ctx *EffectContext) []DamageTarget
+	spreadText() string
+}
+
+// validateSpread returns any configuration error a spread reports (FlankWalk needs
+// at least one amount); spreads that cannot be misconfigured pass.
+func validateSpread(s Spread) error {
+	if v, ok := s.(validator); ok {
+		return v.validate()
+	}
+	return nil
+}
+
+// CreatureAndNeighbor deals Amount to a chosen creature and NeighborAmount to one
+// of its battleline neighbors (the controller picks when it has two), all at once
+// — Mighty Lance. A DealDamage Spread.
+type CreatureAndNeighbor struct {
 	Amount         int
 	NeighborAmount int
 }
 
-// Text renders the effect.
-func (e DamageCreatureAndNeighbor) Text() string {
+// spreadText renders the clause.
+func (s CreatureAndNeighbor) spreadText() string {
 	return fmt.Sprintf("deal %d damage to a creature and %d damage to a neighbor of that creature",
-		e.Amount, e.NeighborAmount)
+		s.Amount, s.NeighborAmount)
 }
 
-// Resolve chooses a creature, then damages it and one chosen neighbor together.
-func (e DamageCreatureAndNeighbor) Resolve(ctx *EffectContext) {
+// hits chooses a creature and one chosen neighbor.
+func (s CreatureAndNeighbor) hits(ctx *EffectContext) []DamageTarget {
 	chosen := (Target{Kind: TargetChosenCreature}).Select(ctx)
 	if len(chosen) == 0 {
-		return
+		return nil
 	}
-	targets := []DamageTarget{{ID: chosen[0], Amount: e.Amount}}
+	out := []DamageTarget{{ID: chosen[0], Amount: s.Amount}}
 	if ns := neighbors(ctx, chosen[0]); len(ns) > 0 {
 		n := ns[0]
 		if len(ns) > 1 {
@@ -166,79 +221,76 @@ func (e DamageCreatureAndNeighbor) Resolve(ctx *EffectContext) {
 				n = pick
 			}
 		}
-		targets = append(targets, DamageTarget{ID: n, Amount: e.NeighborAmount})
+		out = append(out, DamageTarget{ID: n, Amount: s.NeighborAmount})
 	}
-	ctx.Resolver.DealDamage(ctx.Controller, targets)
+	return out
 }
 
-// SplashDamage deals damage to one chosen creature that is not on a flank and a
-// smaller "splash" amount to each of that creature's neighbors, all at once. The
-// not-on-a-flank restriction guarantees the chosen creature has two neighbors.
-type SplashDamage struct {
+// CreatureAndNeighbors deals Amount to a chosen creature that is not on a flank
+// and Splash to each of that creature's neighbors, all at once — Lava Ball. The
+// not-on-a-flank choice guarantees the chosen creature has two neighbors. A
+// DealDamage Spread.
+type CreatureAndNeighbors struct {
 	Amount int
 	Splash int
 }
 
-// Text renders the effect.
-func (e SplashDamage) Text() string {
+// spreadText renders the clause.
+func (s CreatureAndNeighbors) spreadText() string {
 	return fmt.Sprintf(
 		"deal %d damage to a creature that is not on a flank and %d damage to each of its neighbors",
-		e.Amount,
-		e.Splash,
+		s.Amount,
+		s.Splash,
 	)
 }
 
-// Resolve chooses a non-flank creature, then damages it and its neighbors as one
-// simultaneous batch.
-func (e SplashDamage) Resolve(ctx *EffectContext) {
+// hits chooses a non-flank creature, then hits it and its neighbors.
+func (s CreatureAndNeighbors) hits(ctx *EffectContext) []DamageTarget {
 	chosen := Target{Kind: TargetChosenCreature}.NotOnFlank().Select(ctx)
 	if len(chosen) == 0 {
-		return
+		return nil
 	}
-	targets := []DamageTarget{{ID: chosen[0], Amount: e.Amount}}
+	out := []DamageTarget{{ID: chosen[0], Amount: s.Amount}}
 	for _, n := range neighbors(ctx, chosen[0]) {
-		targets = append(targets, DamageTarget{ID: n, Amount: e.Splash})
+		out = append(out, DamageTarget{ID: n, Amount: s.Splash})
 	}
-	ctx.Resolver.DealDamage(ctx.Controller, targets)
+	return out
 }
 
-// DamageDifferent deals damage to a chosen creature and damage to a second,
-// different chosen creature, all at once — Twin Bolt Emission's "deal 2 damage
-// to a creature and deal 2 damage to a different creature."
-type DamageDifferent struct {
+// DifferentCreatures deals First to a chosen creature and Second to a second,
+// different chosen creature, all at once — Twin Bolt Emission. A DealDamage Spread.
+type DifferentCreatures struct {
 	First  int
 	Second int
 }
 
-// Text renders the effect.
-func (e DamageDifferent) Text() string {
+// spreadText renders the clause.
+func (s DifferentCreatures) spreadText() string {
 	return fmt.Sprintf("deal %d damage to a creature and deal %d damage to a different creature",
-		e.First, e.Second)
+		s.First, s.Second)
 }
 
-// Resolve chooses a creature and a different creature, damaging both together.
-// When only one creature is in play, the second, different creature cannot be
-// chosen and only the first is damaged.
-func (e DamageDifferent) Resolve(ctx *EffectContext) {
+// hits chooses a creature and a different creature. With only one creature in
+// play, the different creature cannot be chosen and only the first is hit.
+func (s DifferentCreatures) hits(ctx *EffectContext) []DamageTarget {
 	chosen := (Target{Kind: TargetChosenCreature}).Select(ctx)
 	if len(chosen) == 0 {
-		return
+		return nil
 	}
-	targets := []DamageTarget{{ID: chosen[0], Amount: e.First}}
+	out := []DamageTarget{{ID: chosen[0], Amount: s.First}}
 	if others := creaturesExcept(ctx, chosen[0]); len(others) > 0 {
 		if id, ok := ctx.ChooseCreature("Choose a different creature", others); ok {
-			targets = append(targets, DamageTarget{ID: id, Amount: e.Second})
+			out = append(out, DamageTarget{ID: id, Amount: s.Second})
 		}
 	}
-	ctx.Resolver.DealDamage(ctx.Controller, targets)
+	return out
 }
 
-// FlankWalkDamage chooses a flank creature and deals decreasing damage inward
-// along its battleline: Amounts[0] to the chosen flank creature, Amounts[1] to
-// its neighbor, Amounts[2] to that neighbor's other neighbor, and so on. Positron
-// Bolt is Amounts{3, 2, 1}. The walk stops at the far flank if the battleline is
-// shorter than the list of amounts.
-type FlankWalkDamage struct {
+// FlankWalk chooses a flank creature and deals decreasing damage inward along its
+// battleline: Amounts[0] to the chosen flank creature, Amounts[1] to its neighbor,
+// and so on — Positron Bolt (Amounts{3, 2, 1}). The walk stops at the far flank if
+// the battleline is shorter than the list of amounts. A DealDamage Spread.
+type FlankWalk struct {
 	Amounts []int
 }
 
@@ -254,11 +306,11 @@ func flankWalkPhrase(i int) string {
 	}
 }
 
-// Text renders the effect, e.g. "choose a flank creature. Deal 3 damage to it, 2
-// damage to its neighbor, and 1 damage to the neighbor's other neighbor."
-func (e FlankWalkDamage) Text() string {
-	parts := make([]string, len(e.Amounts))
-	for i, a := range e.Amounts {
+// spreadText renders the clause, e.g. "choose a flank creature. Deal 3 damage to
+// it, 2 damage to its neighbor, and 1 damage to the neighbor's other neighbor."
+func (s FlankWalk) spreadText() string {
+	parts := make([]string, len(s.Amounts))
+	for i, a := range s.Amounts {
 		parts[i] = fmt.Sprintf("%d damage to %s", a, flankWalkPhrase(i))
 	}
 	joined := parts[0]
@@ -273,18 +325,18 @@ func (e FlankWalkDamage) Text() string {
 }
 
 // validate requires at least one amount to deal.
-func (e FlankWalkDamage) validate() error {
-	if len(e.Amounts) == 0 {
-		return fmt.Errorf("FlankWalkDamage: needs at least one amount")
+func (s FlankWalk) validate() error {
+	if len(s.Amounts) == 0 {
+		return fmt.Errorf("FlankWalk: needs at least one amount")
 	}
 	return nil
 }
 
-// Resolve chooses a flank creature and deals the amounts inward, all at once.
-func (e FlankWalkDamage) Resolve(ctx *EffectContext) {
+// hits chooses a flank creature and walks the amounts inward, all at once.
+func (s FlankWalk) hits(ctx *EffectContext) []DamageTarget {
 	chosen := (Target{Kind: TargetChosenCreature}).OnFlank().Select(ctx)
 	if len(chosen) == 0 {
-		return
+		return nil
 	}
 	bl := battlelineContaining(ctx, chosen[0])
 	idx := -1
@@ -298,13 +350,13 @@ func (e FlankWalkDamage) Resolve(ctx *EffectContext) {
 	if idx == len(bl)-1 {
 		step = -1
 	}
-	var targets []DamageTarget
-	for k, amt := range e.Amounts {
+	var out []DamageTarget
+	for k, amt := range s.Amounts {
 		pos := idx + k*step
 		if pos < 0 || pos >= len(bl) {
 			break
 		}
-		targets = append(targets, DamageTarget{ID: bl[pos], Amount: amt})
+		out = append(out, DamageTarget{ID: bl[pos], Amount: amt})
 	}
-	ctx.Resolver.DealDamage(ctx.Controller, targets)
+	return out
 }

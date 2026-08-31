@@ -147,63 +147,72 @@ func TestHealedContextIsolatedAcrossNestedAbilities(t *testing.T) {
 	}
 }
 
-func TestHealThenDamage(t *testing.T) {
-	t.Run("heals a creature then deals the healed amount to another", func(t *testing.T) {
-		g := NewGame("A", "B", 1)
-		wounded := g.AddToBattleline(testCreature("wounded", 5), 0)
-		foe := g.AddToBattleline(testCreature("foe", 5), 1)
-		g.State.Cards[wounded].Damage = 3
-		g.SetChooser(0, &idQueueChooser{ids: []LocalID{wounded, foe}})
-		ctx := &EffectContext{Resolver: g, Controller: 0}
+func TestDealDamageAmountFrom(t *testing.T) {
+	// Text and validate for the "deal that amount of damage" mode.
+	e := DealDamage{AmountFrom: DamageHealed{}, Target: Target{Kind: TargetChosenOtherCreature}}
+	if got := e.Text(); got != "deal that amount of damage to another creature" {
+		t.Errorf("text = %q", got)
+	}
+	if (DealDamage{Target: Target{Kind: TargetEachCreature}, AmountFrom: DamageHealed{}, Per: DamageHealed{}}).validate() == nil {
+		t.Error("AmountFrom + Per together should be invalid")
+	}
+	if (DamageHealed{}).CountText() != "damage healed this way" {
+		t.Errorf("count text = %q", (DamageHealed{}).CountText())
+	}
 
-		e := HealThenDamage{Amount: 2}
-		if e.Text() != "heal up to 2 damage from a creature. Deal that amount of damage to another creature" {
-			t.Errorf("text = %q", e.Text())
-		}
-		e.Resolve(ctx)
-		if g.Damage(wounded) != 1 {
-			t.Errorf("wounded damage = %d, want 1 (healed 2)", g.Damage(wounded))
-		}
-		if g.Damage(foe) != 2 {
-			t.Errorf("foe damage = %d, want 2", g.Damage(foe))
-		}
-	})
+	// Guardian Demon's composition: heal a creature (records the amount), then deal
+	// that much to another creature. A fixed Heal of 2 caps at the creature's damage.
+	g := NewGame("A", "B", 1)
+	wounded := g.AddToBattleline(testCreature("wounded", 5), 0)
+	foe := g.AddToBattleline(testCreature("foe", 5), 1)
+	g.State.Cards[wounded].Damage = 3
+	g.SetChooser(0, &idQueueChooser{ids: []LocalID{wounded, foe}})
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	Heal{Amount: 2, Target: Target{Kind: TargetChosenCreature}}.Resolve(ctx)
+	if g.Damage(wounded) != 1 || ctx.Produced.DamageHealed != 2 {
+		t.Errorf(
+			"after heal: damage=%d healed=%d, want 1/2",
+			g.Damage(wounded),
+			ctx.Produced.DamageHealed,
+		)
+	}
+	e.Resolve(ctx) // ctx.It = wounded, so OtherCreature offers foe
+	if g.Damage(foe) != 2 {
+		t.Errorf("foe damage = %d, want 2 (that amount)", g.Damage(foe))
+	}
 
-	t.Run("heals and deals only as much as the creature's damage", func(t *testing.T) {
-		g := NewGame("A", "B", 1)
-		wounded := g.AddToBattleline(testCreature("wounded", 5), 0)
-		foe := g.AddToBattleline(testCreature("foe", 5), 1)
-		g.State.Cards[wounded].Damage = 1
-		g.SetChooser(0, &idQueueChooser{ids: []LocalID{wounded, foe}})
-		HealThenDamage{Amount: 2}.Resolve(&EffectContext{Resolver: g, Controller: 0})
-		if g.Damage(wounded) != 0 || g.Damage(foe) != 1 {
-			t.Errorf("damage = %d/%d, want 0/1", g.Damage(wounded), g.Damage(foe))
-		}
-	})
+	// A fixed Heal heals only as much damage as the creature has (clamped).
+	g2 := NewGame("A", "B", 1)
+	c := g2.AddToBattleline(testCreature("c", 5), 0)
+	g2.State.Cards[c].Damage = 1
+	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
+	Heal{Amount: 2, Target: Target{Kind: TargetEachFriendlyCreature}}.Resolve(ctx2)
+	if g2.Damage(c) != 0 || ctx2.Produced.DamageHealed != 1 {
+		t.Errorf(
+			"clamped heal: damage=%d healed=%d, want 0/1",
+			g2.Damage(c),
+			ctx2.Produced.DamageHealed,
+		)
+	}
 
-	t.Run("healing nothing deals nothing", func(t *testing.T) {
-		g := NewGame("A", "B", 1)
-		healthy := g.AddToBattleline(testCreature("healthy", 5), 0)
-		foe := g.AddToBattleline(testCreature("foe", 5), 1)
-		g.SetChooser(0, &idQueueChooser{ids: []LocalID{healthy}})
-		HealThenDamage{Amount: 2}.Resolve(&EffectContext{Resolver: g, Controller: 0})
-		if g.Damage(foe) != 0 {
-			t.Errorf("foe damage = %d, want 0 (nothing healed)", g.Damage(foe))
-		}
-	})
+	// Without a context creature, OtherCreature offers every creature.
+	g3 := NewGame("A", "B", 1)
+	a := g3.AddToBattleline(testCreature("a", 3), 0)
+	g3.AddToBattleline(testCreature("b", 3), 1)
+	g3.SetChooser(0, &idQueueChooser{ids: []LocalID{a}})
+	if ids := (Target{Kind: TargetChosenOtherCreature}).Select(
+		&EffectContext{Resolver: g3, Controller: 0},
+	); len(ids) != 1 ||
+		ids[0] != a {
+		t.Errorf("no-context other-creature select = %v, want [%d]", ids, a)
+	}
+}
 
-	t.Run("with no other creature to damage, only heals", func(t *testing.T) {
-		g := NewGame("A", "B", 1)
-		wounded := g.AddToBattleline(testCreature("wounded", 5), 0)
-		g.State.Cards[wounded].Damage = 2
-		HealThenDamage{Amount: 2}.Resolve(&EffectContext{Resolver: g, Controller: 0})
-		if g.Damage(wounded) != 0 {
-			t.Errorf("wounded damage = %d, want 0 (healed)", g.Damage(wounded))
-		}
-	})
-
-	t.Run("with no creatures, does nothing", func(_ *testing.T) {
-		g := NewGame("A", "B", 1)
-		HealThenDamage{Amount: 2}.Resolve(&EffectContext{Resolver: g, Controller: 0})
-	})
+func TestSetDamageClampsNegative(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	c := g.AddToBattleline(testCreature("c", 5), 0)
+	g.SetDamage(c, -3)
+	if g.Damage(c) != 0 {
+		t.Errorf("damage = %d, want 0 (clamped)", g.Damage(c))
+	}
 }

@@ -11,13 +11,13 @@ import "strings"
 // A House narrows the reveal to cards of that house (the wording "reveal any
 // number of Mars cards"): a player would only ever reveal cards that help them,
 // so every matching card is revealed. An unset House reveals the whole hand.
-type Reveal struct {
+type RevealHand struct {
 	Player Player
 	House  House
 }
 
 // validate rejects a Reveal whose player was left unset.
-func (e Reveal) validate() error {
+func (e RevealHand) validate() error {
 	if !e.Player.valid() {
 		return errUnsetPlayer("Reveal")
 	}
@@ -26,7 +26,7 @@ func (e Reveal) validate() error {
 
 // Text renders the effect, e.g. "reveal any number of Mars cards from your hand"
 // or "reveal your opponent's hand".
-func (e Reveal) Text() string {
+func (e RevealHand) Text() string {
 	whose := "your"
 	if e.Player == Opponent {
 		whose = "your opponent's"
@@ -38,7 +38,7 @@ func (e Reveal) Text() string {
 }
 
 // Resolve shows the matching cards, logs them, and records how many were revealed.
-func (e Reveal) Resolve(ctx *EffectContext) {
+func (e RevealHand) Resolve(ctx *EffectContext) {
 	owner := ctx.PlayerFor(e.Player)
 	var names []string
 	for _, id := range ctx.Resolver.Hand(owner) {

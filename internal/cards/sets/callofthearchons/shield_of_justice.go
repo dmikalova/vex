@@ -18,5 +18,8 @@ var ShieldOfJustice = card.New(
 	card.Provenance(card.CotA, 225),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.PreventDamage{Target: card.Target.EachFriendlyCreature}),
+		card.Trigger.Play, card.PreventDamage{
+			Target:   card.Target.EachFriendlyCreature,
+			Duration: card.Duration.EndOfTurn,
+		}),
 )

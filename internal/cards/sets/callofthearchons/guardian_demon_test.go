@@ -15,7 +15,7 @@ import (
 //	Power:  4
 //	Traits: Demon
 //
-//	Play/Fight/Reap: Heal up to 2 damage from a creature. Deal that amount of damage to another creature.
+//	Play/Fight/Reap: Heal 2 damage from a creature. Deal that amount of damage to another creature.
 func TestGuardianDemon(t *testing.T) {
 	t.Run("heals a creature and deals the healed amount to another", func(t *testing.T) {
 		var wounded, foe ct.Card

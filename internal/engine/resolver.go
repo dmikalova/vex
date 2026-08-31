@@ -242,12 +242,9 @@ type ZoneResolver interface {
 	// PlayFromDeck plays a specific card from a player's deck, removing it from the
 	// deck as it is played (Chaos Portal plays the card it revealed).
 	PlayFromDeck(player int, id LocalID)
-	// ShuffleDiscardIntoDeck moves a player's whole discard pile into their deck
-	// and shuffles it.
-	ShuffleDiscardIntoDeck(player int)
-	// ShuffleHandAndDiscardIntoDeck moves a player's whole hand and discard pile into
-	// their deck and shuffles it.
-	ShuffleHandAndDiscardIntoDeck(player int)
+	// ShuffleZonesIntoDeck moves each named zone's cards into a player's deck and
+	// shuffles once (discard, hand, archives).
+	ShuffleZonesIntoDeck(player int, zones []Zone)
 	// MoveFromDiscardToTopOfDeck moves a card from its owner's discard to the top
 	// of their deck.
 	MoveFromDiscardToTopOfDeck(id LocalID)
@@ -372,7 +369,7 @@ func (g *Game) SetDamage(id LocalID, amount int) {
 func (g *Game) SetStunned(id LocalID, stunned bool) { g.State.Cards[id].Stunned = stunned }
 
 // PreventDamage marks a creature immune to damage for the remainder of the turn.
-func (g *Game) PreventDamage(id LocalID) { g.State.Cards[id].Invulnerable = true }
+func (g *Game) PreventDamage(id LocalID) { g.State.Cards[id].DamageImmune = true }
 
 // SetExhausted sets a creature's exhausted status.
 func (g *Game) SetExhausted(id LocalID, exhausted bool) { g.State.Cards[id].Exhausted = exhausted }
@@ -484,13 +481,11 @@ func (g *Game) MoveFromDeckToHand(id LocalID) {
 	g.logf("%s puts %s from their deck into hand", g.names[o], g.Name(id))
 }
 
-// ShuffleDiscardIntoDeck moves a player's whole discard pile into their deck and
-// shuffles it.
-func (g *Game) ShuffleDiscardIntoDeck(player int) { g.shuffleDiscardIntoDeck(player) }
-
-// ShuffleHandAndDiscardIntoDeck moves a player's whole hand and discard pile into
-// their deck and shuffles it.
-func (g *Game) ShuffleHandAndDiscardIntoDeck(player int) { g.shuffleHandAndDiscardIntoDeck(player) }
+// ShuffleZonesIntoDeck moves each named zone's cards into a player's deck and
+// shuffles once.
+func (g *Game) ShuffleZonesIntoDeck(player int, zones []Zone) {
+	g.shuffleZonesIntoDeck(player, zones)
+}
 
 // MoveFromDiscardToTopOfDeck moves a card from its owner's discard pile to the
 // top of their deck.

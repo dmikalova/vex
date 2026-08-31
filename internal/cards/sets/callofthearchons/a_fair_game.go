@@ -18,14 +18,14 @@ var AFairGame = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.Sentence{Effect: card.DiscardTopOfDeck{Player: card.Opponent}},
-			card.Sentence{Effect: card.Reveal{Player: card.Opponent}},
+			card.Sentence{Effect: card.RevealHand{Player: card.Opponent}},
 			card.Sentence{Effect: card.GainAember{
 				Player: card.Controller,
 				Amount: 1,
 				Per:    card.CardsInHand{Player: card.Opponent, House: card.TheContextualHouse},
 			}},
 			card.Sentence{Effect: card.DiscardTopOfDeck{Player: card.Controller}},
-			card.Sentence{Effect: card.Reveal{Player: card.Controller}},
+			card.Sentence{Effect: card.RevealHand{Player: card.Controller}},
 			card.Sentence{Effect: card.GainAember{
 				Player: card.Opponent,
 				Amount: 1,

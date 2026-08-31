@@ -6,10 +6,10 @@ import (
 )
 
 func TestReveal(t *testing.T) {
-	if got := (Reveal{Player: Controller, House: Mars}).Text(); got != "reveal any number of Mars cards from your hand" {
+	if got := (RevealHand{Player: Controller, House: Mars}).Text(); got != "reveal any number of Mars cards from your hand" {
 		t.Errorf("house text = %q", got)
 	}
-	if got := (Reveal{Player: Opponent}).Text(); got != "reveal your opponent's hand" {
+	if got := (RevealHand{Player: Opponent}).Text(); got != "reveal your opponent's hand" {
 		t.Errorf("whole-hand text = %q", got)
 	}
 
@@ -20,7 +20,7 @@ func TestReveal(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	// Revealing your Mars cards counts and logs both; the Brobnar card is untouched.
-	Reveal{Player: Controller, House: Mars}.Resolve(ctx)
+	RevealHand{Player: Controller, House: Mars}.Resolve(ctx)
 	if ctx.Produced.Revealed != 2 {
 		t.Errorf("revealed = %d, want 2", ctx.Produced.Revealed)
 	}
@@ -42,7 +42,7 @@ func TestReveal(t *testing.T) {
 	g2.AddToHand(NewCard("x", Mars, Tactic, Common), 1)
 	g2.AddToHand(NewCard("y", Brobnar, Tactic, Common), 1)
 	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
-	Reveal{Player: Opponent}.Resolve(ctx2)
+	RevealHand{Player: Opponent}.Resolve(ctx2)
 	if ctx2.Produced.Revealed != 2 {
 		t.Errorf("whole-hand revealed = %d, want 2", ctx2.Produced.Revealed)
 	}
@@ -51,7 +51,7 @@ func TestReveal(t *testing.T) {
 	g3 := NewGame("A", "B", 1)
 	ctx3 := &EffectContext{Resolver: g3, Controller: 0}
 	before := len(g3.Log)
-	Reveal{Player: Controller, House: Mars}.Resolve(ctx3)
+	RevealHand{Player: Controller, House: Mars}.Resolve(ctx3)
 	if ctx3.Produced.Revealed != 0 {
 		t.Errorf("revealed = %d, want 0", ctx3.Produced.Revealed)
 	}

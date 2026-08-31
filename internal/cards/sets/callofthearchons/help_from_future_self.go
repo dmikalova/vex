@@ -21,7 +21,7 @@ var HelpFromFutureSelf = card.New(
 		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{
 				card.SearchForName{Name: "Timetraveller"},
-				card.ShuffleDiscard{},
+				card.ShuffleIntoDeck{Zones: []card.Zone{card.Discard}},
 			},
 		}),
 )

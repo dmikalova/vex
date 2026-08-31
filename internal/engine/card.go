@@ -80,9 +80,9 @@ type CardDefinition struct {
 	// nothing.
 	DrawModifier DrawModifier
 
-	// ProtectsAember, while the card is in play, makes its controller's Æmber
+	// PreventSteal, while the card is in play, makes its controller's Æmber
 	// impossible for the opponent to steal (The Vaultkeeper).
-	ProtectsAember bool
+	PreventSteal bool
 
 	// Abilities are the triggered abilities on the card.
 	Abilities []Ability
@@ -427,7 +427,7 @@ func WithDrawModifier(player Player, amount int) CardOption {
 // WithAemberTheftImmunity makes the card, while in play, protect its controller's
 // Æmber from being stolen (The Vaultkeeper).
 func WithAemberTheftImmunity() CardOption {
-	return func(c *CardDefinition) { c.ProtectsAember = true }
+	return func(c *CardDefinition) { c.PreventSteal = true }
 }
 
 // WithAbility appends a triggered ability to the card.

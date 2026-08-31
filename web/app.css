@@ -48,6 +48,21 @@ body {
   overflow: hidden;
   background-color: #1c1c1b;
   color: #f7f1ff;
+  /* The interactive board is non-selectable, so tapping a card is a clean action
+     and never triggers the mobile text-selection / "define" popup. Card text stays
+     selectable in the detail preview and the log (see .card-preview, .log). */
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Re-enable selection where copying text is the point: the hover/tap card detail
+   and the game log. */
+.card-preview,
+.log {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
 }
 .loading {
   display: flex;

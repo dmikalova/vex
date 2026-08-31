@@ -20,7 +20,7 @@ var Commpod = card.New(
 	card.WithAbility(
 		card.Trigger.Action, card.Sequence{
 			Effects: []card.Effect{
-				card.Reveal{
+				card.RevealHand{
 					Player: card.Controller,
 					House:  card.House.Mars,
 				},

@@ -124,8 +124,9 @@ func (e PutFromDiscard) Resolve(ctx *EffectContext) {
 // ChooseHouseThen. It models "discard each creature of the chosen house from your
 // opponent's hand."
 type DiscardHand struct {
-	Player        Player
-	CreaturesOnly bool
+	Player Player
+	// Types restricts the discard to cards of the listed types; empty discards any card.
+	Types         []CardType
 	OfChosenHouse bool
 }
 
@@ -140,10 +141,7 @@ func (e DiscardHand) validate() error {
 // Text renders the effect, e.g. "discard each creature of the chosen house from
 // your opponent's hand".
 func (e DiscardHand) Text() string {
-	what := "each card"
-	if e.CreaturesOnly {
-		what = "each creature"
-	}
+	what := "each " + typeNoun(e.Types)
 	if e.OfChosenHouse {
 		what += " of the chosen house"
 	}
@@ -158,7 +156,7 @@ func (e DiscardHand) Text() string {
 func (e DiscardHand) Resolve(ctx *EffectContext) {
 	owner := ctx.PlayerFor(e.Player)
 	for _, id := range ctx.Resolver.Hand(owner) {
-		if e.CreaturesOnly && !ctx.Resolver.IsCreature(id) {
+		if !matchesTypes(e.Types, ctx.Resolver.TypeOf(id)) {
 			continue
 		}
 		if e.OfChosenHouse && ctx.Resolver.House(id) != ctx.ChosenHouse {
@@ -204,20 +202,18 @@ func (e DiscardRandomFromHand) Resolve(ctx *EffectContext) {
 // DiscardFromHand has the controller choose and discard Count cards from their own
 // hand — the "discard a card" effect where the player picks which card leaves
 // (Sloppy Labwork), distinct from DiscardHand (which discards every matching card)
-// and DiscardRandomFromHand (which the player does not choose). CreaturesOnly limits the
-// choice to creatures (Feeding Pit's "discard a creature from your hand").
+// and DiscardRandomFromHand (which the player does not choose). Types limits the
+// choice to the listed card types (Feeding Pit's "discard a creature from your
+// hand"); an empty Types allows any card.
 type DiscardFromHand struct {
-	Count         int
-	CreaturesOnly bool
+	Count int
+	Types []CardType
 }
 
 // Text renders the effect, e.g. "discard a card from your hand", naming the source
 // zone explicitly (rule 17).
 func (e DiscardFromHand) Text() string {
-	noun := "card"
-	if e.CreaturesOnly {
-		noun = "creature"
-	}
+	noun := typeNoun(e.Types)
 	if e.Count == 1 {
 		return "discard a " + noun + " from your hand"
 	}
@@ -234,15 +230,11 @@ func (e DiscardFromHand) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 func (e DiscardFromHand) resolveGate(ctx *EffectContext) bool {
 	moved := false
 	for i := 0; i < e.Count; i++ {
-		candidates := ctx.Resolver.Hand(ctx.Controller)
-		if e.CreaturesOnly {
-			creatures := make([]LocalID, 0, len(candidates))
-			for _, id := range candidates {
-				if ctx.Resolver.IsCreature(id) {
-					creatures = append(creatures, id)
-				}
+		var candidates []LocalID
+		for _, id := range ctx.Resolver.Hand(ctx.Controller) {
+			if matchesTypes(e.Types, ctx.Resolver.TypeOf(id)) {
+				candidates = append(candidates, id)
 			}
-			candidates = creatures
 		}
 		if len(candidates) == 0 {
 			return moved
@@ -255,4 +247,43 @@ func (e DiscardFromHand) resolveGate(ctx *EffectContext) bool {
 		moved = true
 	}
 	return moved
+}
+
+// matchesTypes reports whether a card of type t passes a type filter: an empty
+// filter allows any card, otherwise t must be one of the listed types.
+func matchesTypes(types []CardType, t CardType) bool {
+	if len(types) == 0 {
+		return true
+	}
+	for _, want := range types {
+		if want == t {
+			return true
+		}
+	}
+	return false
+}
+
+// typeNoun renders a card-type filter as a noun for discard text — the type nouns
+// joined with "or" ("creature", "creature or artifact"), or "card" for no filter.
+func typeNoun(types []CardType) string {
+	if len(types) == 0 {
+		return "card"
+	}
+	nouns := make([]string, len(types))
+	for i, t := range types {
+		nouns[i] = cardTypeNoun(t)
+	}
+	return strings.Join(nouns, " or ")
+}
+
+// cardTypeNoun renders a single card type as its discard noun.
+func cardTypeNoun(t CardType) string {
+	switch t {
+	case Artifact:
+		return "artifact"
+	case Creature:
+		return "creature"
+	default:
+		return "card"
+	}
 }

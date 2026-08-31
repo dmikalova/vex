@@ -6,25 +6,44 @@ import "github.com/dmikalova/vactrol/internal/engine"
 // an authoring Option that appends its engine option to the builder. New (in
 // register.go) applies them and enrolls the card.
 var (
-	WithPower               = func(p int) Option { return gameplay(engine.WithPower(p)) }
-	WithArmor               = func(a int) Option { return gameplay(engine.WithArmor(a)) }
-	WithTraits              = func(t ...Trait) Option { return gameplay(engine.WithTraits(t...)) }
-	WithKeywords            = func(k ...engine.Keyword) Option { return gameplay(engine.WithKeywords(k...)) }
-	WithAssault             = func(n int) Option { return gameplay(engine.WithAssault(n)) }
-	WithHazardous           = func(n int) Option { return gameplay(engine.WithHazardous(n)) }
-	WithAttackDamage        = func(ad engine.AttackDamage) Option { return gameplay(engine.WithAttackDamage(ad)) }
-	WithFightRestriction    = func(t engine.Target) Option { return gameplay(engine.WithFightRestriction(t)) }
-	WithEntersPlay          = func(e Effect) Option { return gameplay(engine.WithEntersPlay(e)) }
-	WithAemberBonus         = func(n int) Option { return gameplay(engine.WithAemberBonus(n)) }
-	WithStatic              = func(m StaticModifier) Option { return gameplay(engine.WithStatic(m)) }
-	WithConstantAbility     = func(c ConstantAbility) Option { return gameplay(engine.WithConstantAbility(c)) }
-	WithRestrictions        = func(r Restrictions) Option { return gameplay(engine.WithRestrictions(r)) }
-	WithKeyCost             = func(kc engine.KeyCostChange) Option { return gameplay(engine.WithKeyCost(kc)) }
-	WithPlayPermission      = func(p engine.PlayPermission) Option { return gameplay(engine.WithPlayPermission(p)) }
-	WithReplaces            = func(r Instead) Option { return gameplay(engine.WithReplaces(r)) }
-	WithDrawModifier        = func(p Player, amount int) Option { return gameplay(engine.WithDrawModifier(p, amount)) }
+	// WithPower sets a creature's power.
+	WithPower = func(p int) Option { return gameplay(engine.WithPower(p)) }
+	// WithArmor sets a creature's armor.
+	WithArmor = func(a int) Option { return gameplay(engine.WithArmor(a)) }
+	// WithTraits sets a card's traits (e.g. "Beast", "Item").
+	WithTraits = func(t ...Trait) Option { return gameplay(engine.WithTraits(t...)) }
+	// WithKeywords gives a card keywords (Skirmish, Elusive, ...).
+	WithKeywords = func(k ...engine.Keyword) Option { return gameplay(engine.WithKeywords(k...)) }
+	// WithAssault gives a creature Assault N — it deals N damage to a creature it fights, first.
+	WithAssault = func(n int) Option { return gameplay(engine.WithAssault(n)) }
+	// WithHazardous gives a creature Hazardous N — it deals N damage to a creature that fights it, first.
+	WithHazardous = func(n int) Option { return gameplay(engine.WithHazardous(n)) }
+	// WithAttackDamage overrides how much fight damage a creature deals.
+	WithAttackDamage = func(ad engine.AttackDamage) Option { return gameplay(engine.WithAttackDamage(ad)) }
+	// WithFightRestriction restricts which creatures this creature may fight.
+	WithFightRestriction = func(t engine.Target) Option { return gameplay(engine.WithFightRestriction(t)) }
+	// WithEntersPlay adds an effect that resolves as the creature enters play.
+	WithEntersPlay = func(e Effect) Option { return gameplay(engine.WithEntersPlay(e)) }
+	// WithAemberBonus sets a card's Æmber bonus (the pips gained when it is played).
+	WithAemberBonus = func(n int) Option { return gameplay(engine.WithAemberBonus(n)) }
+	// WithStatic adds a static modifier (an upgrade's granted stats and abilities).
+	WithStatic = func(m StaticModifier) Option { return gameplay(engine.WithStatic(m)) }
+	// WithConstant adds an ability that applies to the board while the card is in play.
+	WithConstant = func(c ConstantAbility) Option { return gameplay(engine.WithConstantAbility(c)) }
+	// WithRestrictions adds constant restrictions (cannot fight, cannot reap, ...).
+	WithRestrictions = func(r Restrictions) Option { return gameplay(engine.WithRestrictions(r)) }
+	// WithKeyCost adds a change to the cost of forging a key.
+	WithKeyCost = func(kc engine.KeyCostChange) Option { return gameplay(engine.WithKeyCost(kc)) }
+	// WithPlayPermission sets the conditions under which the card may be played.
+	WithPlayPermission = func(p engine.PlayPermission) Option { return gameplay(engine.WithPlayPermission(p)) }
+	// WithReplaces adds a replacement effect (Instead) the card applies while in play.
+	WithReplaces = func(r Instead) Option { return gameplay(engine.WithReplaces(r)) }
+	// WithDrawModifier changes how many cards a player draws.
+	WithDrawModifier = func(p Player, amount int) Option { return gameplay(engine.WithDrawModifier(p, amount)) }
+	// WithAemberTheftImmunity makes Æmber on this card immune to theft.
 	WithAemberTheftImmunity = func() Option { return gameplay(engine.WithAemberTheftImmunity()) }
-	WithAbility             = func(t engine.Trigger, e Effect) Option { return gameplay(engine.WithAbility(t, e)) }
+	// WithAbility adds an ability that resolves an effect on a trigger.
+	WithAbility = func(t engine.Trigger, e Effect) Option { return gameplay(engine.WithAbility(t, e)) }
 	// WithFightOrReap adds effect as both a Fight and a Reap ability, so it resolves
 	// whenever the creature is used to fight or to reap; the two print as one
 	// "Fight/Reap:" line.

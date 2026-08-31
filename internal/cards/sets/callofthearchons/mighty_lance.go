@@ -15,8 +15,8 @@ var MightyLance = card.New(
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 221),
-	card.WithAbility(card.Trigger.Play, card.DamageCreatureAndNeighbor{
+	card.WithAbility(card.Trigger.Play, card.DealDamage{Spread: card.CreatureAndNeighbor{
 		Amount:         3,
 		NeighborAmount: 3,
-	}),
+	}}),
 )

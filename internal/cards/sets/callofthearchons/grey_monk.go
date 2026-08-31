@@ -20,7 +20,7 @@ var GreyMonk = card.New(
 	card.Provenance(card.CotA, 244),
 	card.WithPower(3),
 	card.WithTraits("Human", "Priest"),
-	card.WithConstantAbility(card.ConstantAbility{
+	card.WithConstant(card.ConstantAbility{
 		ArmorBonus: 1,
 		Target:     card.Target.EachFriendlyCreature,
 	}),

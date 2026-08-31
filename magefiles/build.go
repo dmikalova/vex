@@ -33,6 +33,11 @@ func Vet() error {
 // long lines.
 const golinesVersion = "v0.15.0"
 
+// gciVersion pins the import organizer (also run via `go run`). gci groups imports
+// into standard, third-party, then local-module sections — something gofmt/golines
+// do not do.
+const gciVersion = "v0.14.0"
+
 // golinesCmd builds the `go run golines` invocation. gofmt is pinned as the base
 // formatter so the result is identical whether or not goimports is on PATH.
 func golinesCmd(extra ...string) []string {
@@ -42,19 +47,40 @@ func golinesCmd(extra ...string) []string {
 	}, extra...)
 }
 
-// Fmt formats all Go files with golines (gofmt plus long-line shortening).
-func Fmt() error {
-	return sh.RunV("go", golinesCmd("-w", ".")...)
+// gciCmd builds a `go run gci <sub>` invocation grouping imports as standard →
+// third-party → local module. localmodule auto-detects the path from go.mod, so
+// there is nothing to keep in sync.
+func gciCmd(sub string) []string {
+	return []string{
+		"run", "github.com/daixiang0/gci@" + gciVersion, sub,
+		"--skip-generated",
+		"-s", "standard", "-s", "default", "-s", "localmodule", "--custom-order",
+		".",
+	}
 }
 
-// FmtCheck fails if any Go file is not golines-clean (does not modify files).
+// Fmt formats all Go files: golines (gofmt plus long-line shortening) then gci to
+// organize imports.
+func Fmt() error {
+	if err := sh.RunV("go", golinesCmd("-w", ".")...); err != nil {
+		return err
+	}
+	return sh.RunV("go", gciCmd("write")...)
+}
+
+// FmtCheck fails, without modifying files, if any Go file is not golines-clean or
+// has unorganized imports. Each tool lists the files it would change.
 func FmtCheck() error {
-	out, err := sh.Output("go", golinesCmd("--dry-run", ".")...)
+	golOut, err := sh.Output("go", golinesCmd("-l", ".")...)
 	if err != nil {
 		return err
 	}
-	if strings.TrimSpace(out) != "" {
-		return fmt.Errorf("golines needed:\n%s", out)
+	gciOut, err := sh.Output("go", gciCmd("list")...)
+	if err != nil {
+		return err
+	}
+	if strings.TrimSpace(golOut) != "" || strings.TrimSpace(gciOut) != "" {
+		return fmt.Errorf("formatting needed:\n%s", strings.TrimSpace(golOut+"\n"+gciOut))
 	}
 	return nil
 }

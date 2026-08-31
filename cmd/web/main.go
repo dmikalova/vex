@@ -13,13 +13,19 @@ import (
 	"os"
 	"strings"
 
-	"github.com/dmikalova/vactrol/internal/web"
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
+
+	"github.com/dmikalova/vactrol/internal/web"
 )
 
 func main() {
 	app.Route("/", web.NewGame)
 	app.RunWhenOnBrowser()
+
+	// Serve a fullscreen web app manifest at go-app's manifest path. go-app
+	// hardcodes display "standalone"; overriding the route makes an installed PWA
+	// launch immersively, hiding the Android status and navigation bars.
+	http.HandleFunc("/manifest.webmanifest", serveManifest)
 
 	http.Handle("/", &app.Handler{
 		Name:            "Vactrol",
@@ -111,6 +117,31 @@ func resourceVersion() string {
 	}
 	return hex.EncodeToString(h.Sum(nil))[:12]
 }
+
+// serveManifest writes a fullscreen web app manifest, overriding the one go-app
+// generates (which hardcodes display "standalone"). ServeMux routes this exact
+// path here rather than to the go-app handler registered at "/".
+func serveManifest(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/manifest+json")
+	_, _ = w.Write([]byte(webManifest))
+}
+
+// webManifest mirrors the Handler's name, colors, and icon but sets display to
+// fullscreen so an installed PWA takes the whole screen.
+const webManifest = `{
+  "short_name": "Vactrol",
+  "name": "Vactrol",
+  "description": "Vactrol — a KeyForge-style card game, playable in the browser.",
+  "scope": "/",
+  "start_url": "/",
+  "background_color": "#1c1c1b",
+  "theme_color": "#1c1c1b",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "icons": [
+    { "src": "/web/assets/favicon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "any" }
+  ]
+}`
 
 // bootStyle is an inline <head> stylesheet that paints the dark background
 // immediately, before the external app.css link finishes loading. Without it a

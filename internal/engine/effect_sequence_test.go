@@ -27,7 +27,7 @@ func TestSequenceEffect(t *testing.T) {
 func TestSequenceContinuesAfterCompleteSentence(t *testing.T) {
 	seq := Sequence{Effects: []Effect{
 		Sentence{Effect: DiscardTopOfDeck{Player: Opponent}},
-		Sentence{Effect: Reveal{Player: Opponent}},
+		Sentence{Effect: RevealHand{Player: Opponent}},
 		Sentence{
 			Effect: GainAember{
 				Player: Controller,

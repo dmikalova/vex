@@ -28,27 +28,27 @@ func TestEffectValidation(t *testing.T) {
 		t.Errorf("PutFromDiscard to the top of the deck should pass, got %v", err)
 	}
 	// Purge must name the zone it pulls from.
-	if err := validateEffect(Purge{}); err == nil {
+	if err := validateEffect(PurgeCard{}); err == nil {
 		t.Error("a Purge with no zone should be rejected")
 	}
-	if err := validateEffect(Purge{Zone: Discard, Type: Creature}); err != nil {
+	if err := validateEffect(PurgeCard{Zone: Discard, Type: Creature}); err != nil {
 		t.Errorf("a Purge naming its zone should pass, got %v", err)
 	}
 	// A result gate surfaces a bad first action or a bad follow-up.
 	if err := validateEffect(
 		Then{
-			First:  Purge{},
+			First:  PurgeCard{},
 			Result: AddPowerCounter{Target: Target{Kind: TargetThisCreature}, Amount: 1},
 		},
 	); err == nil {
 		t.Error("result gate should surface a bad first action")
 	}
-	if err := validateEffect(Then{First: Purge{Zone: Discard}, Result: bad}); err == nil {
+	if err := validateEffect(Then{First: PurgeCard{Zone: Discard}, Result: bad}); err == nil {
 		t.Error("result gate should surface a bad follow-up")
 	}
 	if err := validateEffect(
 		Then{
-			First:  Purge{Zone: Discard, Type: Creature},
+			First:  PurgeCard{Zone: Discard, Type: Creature},
 			Result: AddPowerCounter{Target: Target{Kind: TargetThisCreature}, Amount: 1},
 		},
 	); err != nil {
@@ -66,7 +66,7 @@ func TestRequiredTargetValidation(t *testing.T) {
 		{"LoseAember", LoseAember{Amount: 1}, LoseAember{Player: Controller, Amount: 1}},
 		{"DiscardArchives", DiscardArchives{}, DiscardArchives{Player: Controller}},
 		{"DiscardHand", DiscardHand{}, DiscardHand{Player: Controller}},
-		{"Reveal", Reveal{}, Reveal{Player: Controller}},
+		{"Reveal", RevealHand{}, RevealHand{Player: Controller}},
 	}
 	for _, tc := range cases {
 		if err := validateEffect(tc.unset); err == nil {

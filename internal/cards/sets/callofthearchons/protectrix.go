@@ -21,8 +21,11 @@ var Protectrix = card.New(
 	card.WithTraits("Knight", "Spirit"),
 	card.WithAbility(card.Trigger.Reap, card.May{
 		Do: card.Then{
-			First:  card.Heal{Fully: true, Target: card.Target.Creature},
-			Result: card.PreventDamage{Target: card.Target.Triggering},
+			First: card.Heal{Fully: true, Target: card.Target.Creature},
+			Result: card.PreventDamage{
+				Target:   card.Target.Triggering,
+				Duration: card.Duration.EndOfTurn,
+			},
 		},
 	}),
 )

@@ -14,10 +14,15 @@ var To = destinations{
 }
 
 type destinations struct {
-	Hand,
-	TopOfDeck,
-	BottomOfDeck,
-	DeckShuffled,
+	// Hand puts the card into its owner's hand.
+	Hand engine.Destination
+	// TopOfDeck puts the card on top of its owner's deck.
+	TopOfDeck engine.Destination
+	// BottomOfDeck puts the card on the bottom of its owner's deck.
+	BottomOfDeck engine.Destination
+	// DeckShuffled puts the card into its owner's deck, then shuffles.
+	DeckShuffled engine.Destination
+	// Archives puts the card into its owner's archives.
 	Archives engine.Destination
 }
 

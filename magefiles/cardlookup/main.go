@@ -130,18 +130,43 @@ func provCodeVar(set provenance.SourceSet) string {
 }
 
 // coveredNumbers returns, per source-set slug, the set of collector numbers that
-// an implemented card tags with a provenance Ref.
+// count as implemented. A number is covered when an implemented card either tags
+// it with a provenance Ref, or shares the source card's name — a reprint of an
+// already-implemented card is itself already implemented, so it is not "missing"
+// and does not need a stub. (KeyForge card names identify the card: the same name
+// in another set is the same card.)
 func coveredNumbers() map[string]map[int]bool {
 	covered := map[string]map[int]bool{}
+	mark := func(slug string, number int) {
+		if covered[slug] == nil {
+			covered[slug] = map[int]bool{}
+		}
+		covered[slug][number] = true
+	}
+
+	implemented := map[string]bool{}
 	for _, rc := range card.Cards() {
+		implemented[normalizeName(rc.Def.Name)] = true
 		for _, ref := range rc.Provenance {
-			if covered[ref.Set.Slug] == nil {
-				covered[ref.Set.Slug] = map[int]bool{}
+			mark(ref.Set.Slug, ref.Number)
+		}
+	}
+	// A source card whose name is already implemented (a reprint) is covered in
+	// whichever set it appears, even without an explicit Ref to that printing.
+	for _, set := range provenance.Sets() {
+		for _, c := range set.Cards {
+			if implemented[normalizeName(c.Name)] {
+				mark(set.Slug, c.Number)
 			}
-			covered[ref.Set.Slug][ref.Number] = true
 		}
 	}
 	return covered
+}
+
+// normalizeName folds a card name to a case- and space-insensitive key so an
+// implemented card matches its reprints across sets.
+func normalizeName(name string) string {
+	return strings.ToLower(strings.TrimSpace(name))
 }
 
 // missing lists the source cards in a set not yet covered by any implemented card.

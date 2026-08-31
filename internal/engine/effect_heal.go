@@ -34,19 +34,23 @@ func (e Heal) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 // following effect can act on "that creature".
 func (e Heal) resolveGate(ctx *EffectContext) bool {
 	healed := 0
+	damageHealed := 0
 	for _, id := range e.Target.Select(ctx) {
-		if ctx.Resolver.Damage(id) == 0 {
+		before := ctx.Resolver.Damage(id)
+		if before == 0 {
 			continue
 		}
 		healed++
 		ctx.It, ctx.HasIt = id, true
-		if e.Fully {
-			ctx.Resolver.SetDamage(id, 0)
-		} else {
-			ctx.Resolver.SetDamage(id, ctx.Resolver.Damage(id)-e.Amount)
+		removed := before
+		if !e.Fully && e.Amount < before {
+			removed = e.Amount
 		}
+		ctx.Resolver.SetDamage(id, before-removed)
+		damageHealed += removed
 	}
 	ctx.Produced.Healed = healed
+	ctx.Produced.DamageHealed = damageHealed
 	return healed > 0
 }
 
@@ -78,41 +82,12 @@ func (CreaturesHealed) Value(ctx *EffectContext) int { return ctx.Produced.Heale
 // CountText renders the singular noun the "for each" clause repeats.
 func (CreaturesHealed) CountText() string { return "creature healed this way" }
 
-// HealThenDamage heals up to Amount damage from a chosen creature, then deals the
-// amount actually healed to another chosen creature — Guardian Demon's "heal up
-// to 2 damage from a creature. Deal that amount of damage to another creature."
-// A creature with less damage than Amount is fully healed and only that much is
-// dealt on.
-type HealThenDamage struct {
-	Amount int
-}
+// DamageHealed is the amount of damage the most recent Heal removed — the "that
+// amount of damage" a following DealDamage.AmountFrom deals on (Guardian Demon).
+type DamageHealed struct{}
 
-// Text renders the effect.
-func (e HealThenDamage) Text() string {
-	return fmt.Sprintf(
-		"heal up to %d damage from a creature. Deal that amount of damage to another creature",
-		e.Amount,
-	)
-}
+// Value returns how much damage the preceding Heal removed.
+func (DamageHealed) Value(ctx *EffectContext) int { return ctx.Produced.DamageHealed }
 
-// Resolve heals the first chosen creature (capped by its damage), then deals the
-// healed amount to a second, different creature. Healing nothing deals nothing.
-func (e HealThenDamage) Resolve(ctx *EffectContext) {
-	chosen := (Target{Kind: TargetChosenCreature}).Select(ctx)
-	if len(chosen) == 0 {
-		return
-	}
-	first := chosen[0]
-	healed := min(e.Amount, ctx.Resolver.Damage(first))
-	if healed <= 0 {
-		return
-	}
-	ctx.Resolver.SetDamage(first, ctx.Resolver.Damage(first)-healed)
-	others := creaturesExcept(ctx, first)
-	if len(others) == 0 {
-		return
-	}
-	if id, ok := ctx.ChooseCreature("Choose another creature", others); ok {
-		ctx.Resolver.DealDamage(ctx.Controller, []DamageTarget{{ID: id, Amount: healed}})
-	}
-}
+// CountText renders the singular noun a "for each" clause would repeat.
+func (DamageHealed) CountText() string { return "damage healed this way" }

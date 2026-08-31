@@ -284,7 +284,7 @@ func cardRules(def *CardDefinition) []string {
 		rules = append(rules, def.Name+" can only fight "+singularNoun(fr.Text())+"s.")
 	}
 	rules = append(rules, restrictionText(def.Restricts)...)
-	if def.ProtectsAember {
+	if def.PreventSteal {
 		rules = append(rules, "Your Æmber cannot be stolen.")
 	}
 	if s := keyCostText(def.KeyCostChange); s != "" {

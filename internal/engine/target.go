@@ -55,6 +55,11 @@ const (
 	// TargetChosenOtherFriendlyCreature selects a single friendly creature the
 	// controller chooses, excluding the source card ("another friendly creature").
 	TargetChosenOtherFriendlyCreature
+	// TargetChosenOtherCreature selects a single creature the controller chooses
+	// from all in play, excluding the creature in context (ctx.It) — "another
+	// creature" than the one a preceding effect put in focus (Guardian Demon deals
+	// to another creature than the one it healed).
+	TargetChosenOtherCreature
 	// TargetChosenArtifact selects a single artifact the controller chooses from
 	// all artifacts in play (either player's).
 	TargetChosenArtifact
@@ -366,6 +371,8 @@ func (t Target) Text() string {
 		phrase = "a friendly " + noun
 	case TargetChosenOtherFriendlyCreature:
 		phrase = "another friendly " + noun
+	case TargetChosenOtherCreature:
+		phrase = "another " + noun
 	case TargetChosenArtifact:
 		phrase = "an " + noun
 	case TargetChosenEnemyArtifact:
@@ -644,6 +651,7 @@ func (m mostPowerfulN) refine(ctx *EffectContext, ids []LocalID) []LocalID {
 func (t Target) isChosen() bool {
 	return t.Kind == TargetChosenCreature || t.Kind == TargetChosenEnemyCreature ||
 		t.Kind == TargetChosenFriendlyCreature || t.Kind == TargetChosenOtherFriendlyCreature ||
+		t.Kind == TargetChosenOtherCreature ||
 		t.Kind == TargetChosenArtifact || t.Kind == TargetChosenEnemyArtifact || t.Kind == TargetChosenInPlay ||
 		t.Kind == TargetChosenFriendlyInPlay
 }
@@ -850,6 +858,13 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 			}
 		}
 		return out
+	case TargetChosenOtherCreature:
+		if !ctx.HasIt {
+			return append(
+				ctx.Resolver.Battleline(ctx.Controller),
+				ctx.Resolver.Battleline(ctx.Opponent())...)
+		}
+		return creaturesExcept(ctx, ctx.It)
 	default:
 		return nil
 	}

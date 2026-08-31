@@ -98,6 +98,10 @@ type Produced struct {
 	// Healed is how many creatures the most recent Heal healed, read by a
 	// CreaturesHealed count in a following effect of the same resolution.
 	Healed int
+	// DamageHealed is how much damage the most recent Heal actually removed, read by
+	// a DamageHealed count in a following effect of the same resolution (Guardian
+	// Demon deals that much damage on).
+	DamageHealed int
 	// Revealed is how many cards the most recent Reveal showed, read by a
 	// CardsRevealed count in a following effect of the same resolution.
 	Revealed int

@@ -119,7 +119,7 @@ func TestDiscardHand(t *testing.T) {
 	sanctumCreature := g.AddToHand(NewCard("sc", Sanctum, Creature, Common, WithPower(2)), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0, ChosenHouse: Mars}
 
-	e := DiscardHand{Player: Opponent, CreaturesOnly: true, OfChosenHouse: true}
+	e := DiscardHand{Player: Opponent, Types: []CardType{Creature}, OfChosenHouse: true}
 	if e.Text() != "discard each creature of the chosen house from your opponent's hand" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -236,12 +236,19 @@ func TestDiscardFromHandCreaturesOnlyGate(t *testing.T) {
 	g.AddToHand(NewCard("tactic", Mars, Tactic, Common), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := DiscardFromHand{Count: 1, CreaturesOnly: true}
+	e := DiscardFromHand{Count: 1, Types: []CardType{Creature}}
 	if e.Text() != "discard a creature from your hand" {
 		t.Errorf("text = %q", e.Text())
 	}
-	if plural := (DiscardFromHand{Count: 2, CreaturesOnly: true}).Text(); plural != "discard 2 creatures from your hand" {
+	if plural := (DiscardFromHand{Count: 2, Types: []CardType{Creature}}).Text(); plural != "discard 2 creatures from your hand" {
 		t.Errorf("plural text = %q", plural)
+	}
+	// Type-filter rendering: multiple types join with "or"; other types read "card".
+	if got := (DiscardFromHand{Count: 1, Types: []CardType{Creature, Artifact}}).Text(); got != "discard a creature or artifact from your hand" {
+		t.Errorf("multi-type text = %q", got)
+	}
+	if got := (DiscardFromHand{Count: 1, Types: []CardType{Upgrade}}).Text(); got != "discard a card from your hand" {
+		t.Errorf("other-type text = %q", got)
 	}
 
 	// Only the creature is a candidate, so it is discarded and the gate reports true.

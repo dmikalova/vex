@@ -17,168 +17,277 @@ type (
 
 // Æmber effects.
 type (
-	GainAember    = engine.GainAember
-	LoseAember    = engine.LoseAember
-	StealAember   = engine.StealAember
+	// GainAember moves Æmber from the common supply into a player's pool.
+	GainAember = engine.GainAember
+	// LoseAember returns Æmber from a player's pool to the supply (see By: Half, AllBut).
+	LoseAember = engine.LoseAember
+	// StealAember moves Æmber from the opponent's pool into yours.
+	StealAember = engine.StealAember
+	// CaptureAember moves Æmber from a pool onto a capturing creature.
 	CaptureAember = engine.CaptureAember
-	Exalt         = engine.Exalt
-	Loss          = engine.Loss
-
-	MoveAemberToPool = engine.MoveAemberToPool
+	// Exalt places Æmber from the common supply onto a chosen card.
+	Exalt = engine.Exalt
+	// Loss says how much Æmber a LoseAember removes (Half, AllBut).
+	Loss = engine.Loss
+	// MoveAember moves Æmber off a card into a pool or onto another card.
+	MoveAember = engine.MoveAember
 )
 
 // Damage and combat.
 type (
-	DealDamage                = engine.DealDamage
-	DamageIfDestroyed         = engine.DamageIfDestroyed
-	DamageIfSurvives          = engine.DamageIfSurvives
-	DamageCreatureAndNeighbor = engine.DamageCreatureAndNeighbor
-	SplashDamage              = engine.SplashDamage
-	DamageDifferent           = engine.DamageDifferent
-	FlankWalkDamage           = engine.FlankWalkDamage
-	RedirectFightDamage       = engine.RedirectFightDamage
-	Heal                      = engine.Heal
-	HealThenDamage            = engine.HealThenDamage
+	// DealDamage deals damage to each creature its Target selects.
+	DealDamage = engine.DealDamage
+	// DamageIfDestroyed deals damage, then runs Then only if the creature left play.
+	DamageIfDestroyed = engine.DamageIfDestroyed
+	// DamageIfSurvives deals damage, then runs Then only if the creature survives.
+	DamageIfSurvives = engine.DamageIfSurvives
+	// Spread is a DealDamage strategy that hits several related creatures at once.
+	Spread = engine.Spread
+	// CreatureAndNeighbor (a Spread) damages a chosen creature and one of its neighbors.
+	CreatureAndNeighbor = engine.CreatureAndNeighbor
+	// CreatureAndNeighbors (a Spread) damages a chosen non-flank creature and each of its neighbors.
+	CreatureAndNeighbors = engine.CreatureAndNeighbors
+	// DifferentCreatures (a Spread) damages a chosen creature and a different chosen creature.
+	DifferentCreatures = engine.DifferentCreatures
+	// FlankWalk (a Spread) deals decreasing damage inward from a chosen flank creature.
+	FlankWalk = engine.FlankWalk
+	// RedirectFightDamage is a Before Fight effect redirecting this creature's fight damage.
+	RedirectFightDamage = engine.RedirectFightDamage
+	// Heal takes damage tokens off a creature — a fixed amount or all of them.
+	Heal = engine.Heal
 )
 
 // Destruction and purging.
 type (
-	Destroy       = engine.Destroy
-	Purge         = engine.Purge
+	// Destroy removes the creatures its Target selects from play.
+	Destroy = engine.Destroy
+	// PurgeCard sets cards aside out of the game, from a named zone.
+	PurgeCard = engine.PurgeCard
+	// PurgeFromHand purges one card the controller chooses from a player's hand.
 	PurgeFromHand = engine.PurgeFromHand
+	// PurgeCreature purges each creature its Target selects from play.
 	PurgeCreature = engine.PurgeCreature
-
+	// PurgeCreatureFromHand purges a chosen creature from your hand and puts it in context.
 	PurgeCreatureFromHand = engine.PurgeCreatureFromHand
 )
 
 // Creature state (stun, exhaust, power counters).
 type (
-	Stun             = engine.Stun
-	Unstun           = engine.Unstun
-	Exhaust          = engine.Exhaust
+	// Stun places a stun on the creatures its Target selects.
+	Stun = engine.Stun
+	// Unstun removes the stun from each creature its Target selects.
+	Unstun = engine.Unstun
+	// Exhaust turns the targeted creatures sideways so they cannot be used.
+	Exhaust = engine.Exhaust
+	// ExhaustCreatures exhausts up to Max creatures the controller chooses.
 	ExhaustCreatures = engine.ExhaustCreatures
-	Ready            = engine.Ready
-	ReadyIfFirstUse  = engine.ReadyIfFirstUse
-	ReadyCreatures   = engine.ReadyCreatures
-	AddPowerCounter  = engine.AddPowerCounter
+	// Ready turns the targeted creatures upright so they can be used again.
+	Ready = engine.Ready
+	// ReadyIfFirstUse readies a creature only when the current use is its first this turn.
+	ReadyIfFirstUse = engine.ReadyIfFirstUse
+	// ReadyCreatures readies up to Max creatures the controller chooses.
+	ReadyCreatures = engine.ReadyCreatures
+	// AddPowerCounter places permanent +1/-1 power counters on a creature.
+	AddPowerCounter = engine.AddPowerCounter
 )
 
 // Drawing, moving, and revealing cards between zones.
 type (
-	Draw                  = engine.Draw
-	PutFromPlay           = engine.PutFromPlay
-	PutUpTo               = engine.PutUpTo
-	PutFromDiscard        = engine.PutFromDiscard
-	ReturnNamedToHand     = engine.ReturnNamedToHand
-	SearchForName         = engine.SearchForName
-	ShuffleDiscard        = engine.ShuffleDiscard
-	ShuffleHandAndDiscard = engine.ShuffleHandAndDiscard
-	ArchiveFromHand       = engine.ArchiveFromHand
-	ArchiveFromDiscard    = engine.ArchiveFromDiscard
-	ArchiveTopOfDeck      = engine.ArchiveTopOfDeck
-	ArchiveFromPlay       = engine.ArchiveFromPlay
-	DiscardArchives       = engine.DiscardArchives
-	DiscardHand           = engine.DiscardHand
-	DiscardFromHand       = engine.DiscardFromHand
+	// Draw puts the top Amount cards of your deck into your hand.
+	Draw = engine.Draw
+	// PutFromPlay takes each targeted card out of play into a chosen Destination.
+	PutFromPlay = engine.PutFromPlay
+	// PutUpTo moves up to Max cards the controller chooses into a Destination.
+	PutUpTo = engine.PutUpTo
+	// PutFromDiscard moves a chosen card from your discard pile to a Destination.
+	PutFromDiscard = engine.PutFromDiscard
+	// ReturnNamedToHand returns a chosen card of a given name to its owner's hand.
+	ReturnNamedToHand = engine.ReturnNamedToHand
+	// SearchForName searches your deck and discard pile for a named card.
+	SearchForName = engine.SearchForName
+	// ShuffleIntoDeck shuffles the controller's named zones (hand, discard, archives) into their deck.
+	ShuffleIntoDeck = engine.ShuffleIntoDeck
+	// ArchiveFromHand moves cards from a hand into the controller's archives.
+	ArchiveFromHand = engine.ArchiveFromHand
+	// ArchiveFromDiscard moves a chosen card from the discard pile into archives.
+	ArchiveFromDiscard = engine.ArchiveFromDiscard
+	// ArchiveTopOfDeck moves the top Count cards of your deck into archives.
+	ArchiveTopOfDeck = engine.ArchiveTopOfDeck
+	// ArchiveFromPlay moves each targeted in-play card into its owner's archives.
+	ArchiveFromPlay = engine.ArchiveFromPlay
+	// DiscardArchives moves all of a player's archived cards into their discard pile.
+	DiscardArchives = engine.DiscardArchives
+	// DiscardHand discards cards from a player's hand.
+	DiscardHand = engine.DiscardHand
+	// DiscardFromHand has the controller choose and discard Count cards.
+	DiscardFromHand = engine.DiscardFromHand
+	// DiscardRandomFromHand discards one uniformly random card from a player's hand.
 	DiscardRandomFromHand = engine.DiscardRandomFromHand
-	DiscardTopOfDeck      = engine.DiscardTopOfDeck
-	DiscardTopOfEachDeck  = engine.DiscardTopOfEachDeck
-	ForEachDiscarded      = engine.ForEachDiscarded
-	RevealTopOfDeck       = engine.RevealTopOfDeck
-	PlayRevealedCard      = engine.PlayRevealedCard
-	PlayTopOfDeck         = engine.PlayTopOfDeck
-	CancelFight           = engine.CancelFight
-	Reveal                = engine.Reveal
+	// DiscardTopOfDeck discards the top card of a deck and puts it in context.
+	DiscardTopOfDeck = engine.DiscardTopOfDeck
+	// DiscardTopOfEachDeck discards the top card of each player's deck.
+	DiscardTopOfEachDeck = engine.DiscardTopOfEachDeck
+	// ForEachDiscarded resolves Do once for each card a preceding discard removed.
+	ForEachDiscarded = engine.ForEachDiscarded
+	// RevealTopOfDeck reveals the top card of the controller's deck.
+	RevealTopOfDeck = engine.RevealTopOfDeck
+	// PlayRevealedCard plays the card a preceding reveal put in context.
+	PlayRevealedCard = engine.PlayRevealedCard
+	// PlayTopOfDeck plays the top card of the controller's deck outright.
+	PlayTopOfDeck = engine.PlayTopOfDeck
+	// CancelFight makes the fight in progress not occur (a Before Fight effect).
+	CancelFight = engine.CancelFight
+	// RevealHand shows the cards in a player's hand to both players and records them.
+	RevealHand = engine.RevealHand
 )
 
 // Using and choosing creatures.
 type (
+	// OnChooseCreature picks a creature named by its Target and applies Verbs to it.
 	OnChooseCreature = engine.OnChooseCreature
-	ReadyVerb        = engine.ReadyVerb
-	FightVerb        = engine.FightVerb
-	UseVerb          = engine.UseVerb
-	StunVerb         = engine.StunVerb
-	ExhaustVerb      = engine.ExhaustVerb
-	Use              = engine.Use
-	TakeControl      = engine.TakeControl
-	PutIntoPlay      = engine.PutIntoPlay
-	Swap             = engine.Swap
+	// ReadyVerb readies the chosen creature.
+	ReadyVerb = engine.ReadyVerb
+	// FightVerb makes the chosen creature fight an enemy creature.
+	FightVerb = engine.FightVerb
+	// UseVerb uses the chosen creature (reap, fight, or Action:).
+	UseVerb = engine.UseVerb
+	// StunVerb stuns the chosen creature.
+	StunVerb = engine.StunVerb
+	// ExhaustVerb exhausts the chosen creature.
+	ExhaustVerb = engine.ExhaustVerb
+	// Use uses up to Max cards the controller chooses from Target.
+	Use = engine.Use
+	// TakeControl moves a card to the controller's play area and makes them its controller.
+	TakeControl = engine.TakeControl
+	// PutIntoPlay puts each targeted card into play without playing it.
+	PutIntoPlay = engine.PutIntoPlay
+	// Swap exchanges this creature's battleline position with another.
+	Swap = engine.Swap
 )
 
 // Composites and control flow.
 type (
-	Sequence          = engine.Sequence
-	Sentence          = engine.Sentence
-	ChooseOne         = engine.ChooseOne
-	ChooseHouseThen   = engine.ChooseHouseThen
-	Conditional       = engine.Conditional
-	RepeatWhile       = engine.RepeatWhile
+	// Sequence resolves several effects in order.
+	Sequence = engine.Sequence
+	// Sentence renders its child as a complete sentence within a Sequence.
+	Sentence = engine.Sentence
+	// ChooseOne offers the controller a set of alternative effects to pick from.
+	ChooseOne = engine.ChooseOne
+	// ChooseHouseThen asks the controller to choose a house, then resolves Then.
+	ChooseHouseThen = engine.ChooseHouseThen
+	// Conditional resolves Then only when Cond is met.
+	Conditional = engine.Conditional
+	// RepeatWhile resolves Do again and again while Cond holds.
+	RepeatWhile = engine.RepeatWhile
+	// RepeatOnCondition resolves Do and repeats it while it succeeds and Cond holds.
 	RepeatOnCondition = engine.RepeatOnCondition
-	MayRepeat         = engine.MayRepeat
-	May               = engine.May
-	Then              = engine.Then
+	// MayRepeat resolves Do, then lets the controller repeat it.
+	MayRepeat = engine.MayRepeat
+	// May makes an effect optional — the controller chooses whether to resolve it.
+	May = engine.May
+	// Then is the A -> B result gate: resolves Result only when First did something.
+	Then = engine.Then
 )
 
 // Conditions gate a Conditional, RepeatWhile, or MayRepeat.
 type (
-	OpponentAember          = engine.OpponentAember
+	// OpponentAember gates on the opponent's Æmber pool (Is + Amount).
+	OpponentAember = engine.OpponentAember
+	// CardsDestroyedFewerThan is met when fewer than Amount cards were destroyed this way.
 	CardsDestroyedFewerThan = engine.CardsDestroyedFewerThan
-	ControlsMoreCreatures   = engine.ControlsMoreCreatures
-	Overwhelmed             = engine.Overwhelmed
-	ItIsOfHouse             = engine.ItIsOfHouse
-	ItIs                    = engine.ItIs
-	ItIsOffIdentity         = engine.ItIsOffIdentity
-	ChoseHouse              = engine.ChoseHouse
+	// ControlsMoreCreatures is met while you control more creatures than the opponent.
+	ControlsMoreCreatures = engine.ControlsMoreCreatures
+	// Overwhelmed is met while the opponent controls more creatures than you.
+	Overwhelmed = engine.Overwhelmed
+	// ItIsOfHouse is met when the card in context belongs to a referenced house.
+	ItIsOfHouse = engine.ItIsOfHouse
+	// ItIs is met when the card in context matches a concrete House and/or Type.
+	ItIs = engine.ItIs
+	// ItIsOffIdentity is met when the card in context is off your identity houses.
+	ItIsOffIdentity = engine.ItIsOffIdentity
+	// ChoseHouse is met when the controller's active house is House.
+	ChoseHouse = engine.ChoseHouse
 )
 
 // Æmber-pool comparisons for card.OpponentAember{Is: ..., Amount: n}.
 var (
-	AtLeast     = engine.AtLeast
-	Exactly     = engine.Exactly
+	// AtLeast is met when the opponent's pool holds at least Amount Æmber.
+	AtLeast = engine.AtLeast
+	// Exactly is met when the opponent's pool holds exactly Amount Æmber.
+	Exactly = engine.Exactly
+	// MoreThanYou is met when the opponent's pool holds more Æmber than yours.
 	MoreThanYou = engine.MoreThanYou
 )
 
 // House references for conditions that compare a card's house dynamically.
 var (
-	TheChosenHouse     = engine.TheChosenHouse
-	TheActiveHouse     = engine.TheActiveHouse
+	// TheChosenHouse is the house picked by an enclosing ChooseHouseThen.
+	TheChosenHouse = engine.TheChosenHouse
+	// TheActiveHouse is the player's active house this turn.
+	TheActiveHouse = engine.TheActiveHouse
+	// TheContextualHouse is the house of the card in context (ctx.It).
 	TheContextualHouse = engine.TheContextualHouse
 )
 
 // Counts feed an effect's Per, scaling it by a board quantity; InPlay doubles as
 // a Condition.
 type (
-	InPlay                  = engine.InPlay
-	CardsPlayed             = engine.CardsPlayed
-	OpponentForgedKeys      = engine.OpponentForgedKeys
+	// InPlay counts (or gates on) the cards a player has in play matching its filters.
+	InPlay = engine.InPlay
+	// CardsPlayed counts the cards of a house a player has played this turn.
+	CardsPlayed = engine.CardsPlayed
+	// OpponentForgedKeys counts the keys the opponent has forged.
+	OpponentForgedKeys = engine.OpponentForgedKeys
+	// OpponentExcessCreatures counts how many more creatures the opponent controls.
 	OpponentExcessCreatures = engine.OpponentExcessCreatures
-	CardsInArchives         = engine.CardsInArchives
-	CardsRevealed           = engine.CardsRevealed
-	CardsInHand             = engine.CardsInHand
-	CreaturesHealed         = engine.CreaturesHealed
+	// CardsInArchives counts the cards in a player's archives.
+	CardsInArchives = engine.CardsInArchives
+	// CardsRevealed counts the cards the most recent Reveal showed.
+	CardsRevealed = engine.CardsRevealed
+	// CardsInHand counts the cards in a player's hand of a referenced house.
+	CardsInHand = engine.CardsInHand
+	// CreaturesHealed counts the creatures the most recent Heal healed.
+	CreaturesHealed = engine.CreaturesHealed
+	// DamageHealed counts the damage the most recent Heal removed (for DealDamage.AmountFrom).
+	DamageHealed = engine.DamageHealed
 )
 
 // Lasting "for the remainder of the turn" effects.
 type (
+	// ForRemainderOfTurn installs a reaction that runs for the rest of your turn.
 	ForRemainderOfTurn = engine.ForRemainderOfTurn
-	Instead            = engine.Instead
-	Replace            = engine.Replace
+	// Instead installs a replacement that changes an event's outcome for the turn.
+	Instead = engine.Instead
+	// Replace is a continuous replacement an Upgrade applies to a game event.
+	Replace = engine.Replace
+	// NextCreaturePlayed makes the next creature of a house you play do something.
 	NextCreaturePlayed = engine.NextCreaturePlayed
 )
 
 // Houses, keys, chains, and restrictions.
 type (
-	CannotFight                              = engine.CannotFight
-	CannotPlay                               = engine.CannotPlay
-	SkipForgeStep                            = engine.SkipForgeStep
-	PreventDamage                            = engine.PreventDamage
-	MayUseFriendlyHouse                      = engine.MayUseFriendlyHouse
-	GrantFightForChosenHouse                 = engine.GrantFightForChosenHouse
-	BelongToHouse                            = engine.BelongToHouse
-	ForceOpponentActiveHouse                 = engine.ForceOpponentActiveHouse
-	ForgeKey                                 = engine.ForgeKey
+	// CannotFight bars a player from using creatures to fight for a Duration.
+	CannotFight = engine.CannotFight
+	// CannotPlay bars a player from playing cards of a Type for a Duration.
+	CannotPlay = engine.CannotPlay
+	// SkipForgeStep makes a player skip their forge-a-key step next turn.
+	SkipForgeStep = engine.SkipForgeStep
+	// PreventDamage marks the targeted creatures immune to damage for a Duration.
+	PreventDamage = engine.PreventDamage
+	// MayUseFriendlyHouse lets the controller use their House creatures this turn.
+	MayUseFriendlyHouse = engine.MayUseFriendlyHouse
+	// GrantFightForChosenHouse lets your chosen-house creatures fight this turn.
+	GrantFightForChosenHouse = engine.GrantFightForChosenHouse
+	// BelongToHouse makes the targeted creatures belong to a House for a Duration.
+	BelongToHouse = engine.BelongToHouse
+	// ForceOpponentActiveHouse forces the opponent's active house next turn.
+	ForceOpponentActiveHouse = engine.ForceOpponentActiveHouse
+	// ForgeKey has the controller forge a key outside the normal step.
+	ForgeKey = engine.ForgeKey
+	// GiveRemainingAemberAfterOpponentForgeKey arms Interdimensional Graft's delayed gift.
 	GiveRemainingAemberAfterOpponentForgeKey = engine.GiveRemainingAemberAfterOpponentForgeKey
-	GainChains                               = engine.GainChains
+	// GainChains gives a player chains (a draw penalty).
+	GainChains = engine.GainChains
 )
 
 // Event groups the game events a lasting "for the remainder of the turn" effect

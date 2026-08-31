@@ -7,8 +7,9 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/dmikalova/vactrol/internal/hotreload"
 	"github.com/magefile/mage/sh"
+
+	"github.com/dmikalova/vactrol/internal/hotreload"
 )
 
 // Tui launches the vactrol TUI (card explorer / play a hotseat game).

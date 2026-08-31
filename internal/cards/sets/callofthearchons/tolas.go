@@ -21,7 +21,7 @@ var Tolas = card.New(
 	card.WithPower(1),
 	card.WithTraits("Imp"),
 	card.WithKeywords(card.Keyword.Elusive),
-	card.WithConstantAbility(card.ConstantAbility{
+	card.WithConstant(card.ConstantAbility{
 		Target: card.Target.EachCreature,
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Destroyed,

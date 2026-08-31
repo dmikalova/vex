@@ -7,6 +7,7 @@ import (
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
+
 	"github.com/dmikalova/vactrol/internal/engine"
 	"github.com/dmikalova/vactrol/internal/match"
 )

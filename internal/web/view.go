@@ -6,8 +6,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/dmikalova/vactrol/internal/engine"
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
+
+	"github.com/dmikalova/vactrol/internal/engine"
 )
 
 // Render draws the whole client. It runs on both the server (prerender) and the

@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Elf • Thief
 //
-//	Fight/Reap: Move 1 Æmber from one of your cards to your pool.
+//	Fight/Reap: Move 1 Æmber from a friendly creature or artifact to your pool.
 func TestSelwynTheFence(t *testing.T) {
 	t.Run("moves 1 Æmber from a friendly card to the pool on reap", func(t *testing.T) {
 		var vault ct.Card

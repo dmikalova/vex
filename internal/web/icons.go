@@ -3,8 +3,9 @@ package web
 import (
 	"strconv"
 
-	"github.com/dmikalova/vactrol/internal/engine"
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
+
+	"github.com/dmikalova/vactrol/internal/engine"
 )
 
 // assetBase is the URL prefix the dev server maps to web/assets on disk.

@@ -287,7 +287,7 @@ func (g *Game) cannotPlayCard(player int) bool {
 // to being stolen (The Vaultkeeper).
 func (g *Game) aemberProtected(player int) bool {
 	for _, id := range g.allInPlay(player) {
-		if g.cat.def(id).ProtectsAember {
+		if g.cat.def(id).PreventSteal {
 			return true
 		}
 	}

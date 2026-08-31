@@ -17,7 +17,7 @@ var BannerOfBattle = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 20),
 	card.WithTraits("Item"),
-	card.WithConstantAbility(card.ConstantAbility{
+	card.WithConstant(card.ConstantAbility{
 		PowerBonus: 1,
 		Target:     card.Target.EachFriendlyCreature,
 	}),

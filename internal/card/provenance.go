@@ -16,19 +16,34 @@ func Provenance(set provenance.SourceSet, number int) Option {
 
 // Source sets to tag a card's Provenance with, e.g. card.Provenance(card.CotA, 1).
 var (
+	// CotA is Call of the Archons.
 	CotA = provenance.CallOfTheArchons
-	AoA  = provenance.AgeOfAscension
-	WC   = provenance.WorldsCollide
-	MM   = provenance.MassMutation
-	DT   = provenance.DarkTidings
-	WoE  = provenance.WindsOfExchange
-	GR   = provenance.GrimReminders
-	AS   = provenance.AemberSkies
-	ToC  = provenance.TokensOfChange
-	MoM  = provenance.MoreMutation
-	Men  = provenance.Menagerie
-	VM   = provenance.VaultMasters2025
-	PV   = provenance.PropheticVisions
-	CC   = provenance.CrucibleClash
-	DM   = provenance.DraconianMeasures
+	// AoA is Age of Ascension.
+	AoA = provenance.AgeOfAscension
+	// WC is Worlds Collide.
+	WC = provenance.WorldsCollide
+	// MM is Mass Mutation.
+	MM = provenance.MassMutation
+	// DT is Dark Tidings.
+	DT = provenance.DarkTidings
+	// WoE is Winds of Exchange.
+	WoE = provenance.WindsOfExchange
+	// GR is Grim Reminders.
+	GR = provenance.GrimReminders
+	// AS is Æmber Skies.
+	AS = provenance.AemberSkies
+	// ToC is Tokens of Change.
+	ToC = provenance.TokensOfChange
+	// MoM is More Mutation.
+	MoM = provenance.MoreMutation
+	// Men is Menagerie.
+	Men = provenance.Menagerie
+	// VM is Vault Masters 2025.
+	VM = provenance.VaultMasters2025
+	// PV is Prophetic Visions.
+	PV = provenance.PropheticVisions
+	// CC is Crucible Clash.
+	CC = provenance.CrucibleClash
+	// DM is Draconian Measures.
+	DM = provenance.DraconianMeasures
 )

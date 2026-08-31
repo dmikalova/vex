@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Demon
 //
-//	Play/Fight/Reap: Heal up to 2 damage from a creature. Deal that amount of damage to another creature.
+//	Play/Fight/Reap: Heal 2 damage from a creature. Deal that amount of damage to another creature.
 var GuardianDemon = card.New(
 	"Guardian Demon",
 	card.House.Dis,
@@ -19,5 +19,8 @@ var GuardianDemon = card.New(
 	card.Provenance(card.CotA, 88),
 	card.WithPower(4),
 	card.WithTraits("Demon"),
-	card.WithPlayFightReap(card.HealThenDamage{Amount: 2}),
+	card.WithPlayFightReap(card.Sequence{Effects: []card.Effect{
+		card.Sentence{Effect: card.Heal{Amount: 2, Target: card.Target.Creature}},
+		card.DealDamage{AmountFrom: card.DamageHealed{}, Target: card.Target.OtherCreature},
+	}}),
 )

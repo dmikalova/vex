@@ -20,7 +20,7 @@ var ImperialTraitor = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{
-				card.Reveal{Player: card.Opponent},
+				card.RevealHand{Player: card.Opponent},
 				card.PurgeFromHand{
 					Player: card.Opponent,
 					House:  card.House.Sanctum,

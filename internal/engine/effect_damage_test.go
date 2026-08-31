@@ -110,7 +110,7 @@ func TestDealDamagePerCount(t *testing.T) {
 	}
 }
 
-func TestSplashDamage(t *testing.T) {
+func TestSpreadCreatureAndNeighbors(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	// left and right are on flanks; only mid is a legal (non-flank) target.
 	left := g.AddToBattleline(testCreature("left", 10), 1)
@@ -118,7 +118,7 @@ func TestSplashDamage(t *testing.T) {
 	right := g.AddToBattleline(testCreature("right", 10), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := SplashDamage{Amount: 4, Splash: 2}
+	e := DealDamage{Spread: CreatureAndNeighbors{Amount: 4, Splash: 2}}
 	if e.Text() != "deal 4 damage to a creature that is not on a flank and 2 damage to each of its neighbors" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -135,7 +135,7 @@ func TestSplashDamage(t *testing.T) {
 	g2 := NewGame("A", "B", 1)
 	a := g2.AddToBattleline(testCreature("a", 5), 1)
 	g2.AddToBattleline(testCreature("b", 5), 1)
-	SplashDamage{Amount: 4, Splash: 2}.Resolve(&EffectContext{Resolver: g2, Controller: 0})
+	DealDamage{Spread: CreatureAndNeighbors{Amount: 4, Splash: 2}}.Resolve(&EffectContext{Resolver: g2, Controller: 0})
 	if g2.Damage(a) != 0 {
 		t.Errorf("no legal target should deal no damage, got %d", g2.Damage(a))
 	}
@@ -156,14 +156,14 @@ func TestDealDamageIgnoreArmor(t *testing.T) {
 	}
 }
 
-func TestDamageDifferent(t *testing.T) {
+func TestSpreadDifferentCreatures(t *testing.T) {
 	t.Run("damages two different creatures", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		a := g.AddToBattleline(testCreature("a", 5), 1)
 		b := g.AddToBattleline(testCreature("b", 5), 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 
-		e := DamageDifferent{First: 2, Second: 2}
+		e := DealDamage{Spread: DifferentCreatures{First: 2, Second: 2}}
 		if e.Text() != "deal 2 damage to a creature and deal 2 damage to a different creature" {
 			t.Errorf("text = %q", e.Text())
 		}
@@ -176,7 +176,7 @@ func TestDamageDifferent(t *testing.T) {
 	t.Run("with only one creature, damages just it", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		a := g.AddToBattleline(testCreature("a", 5), 1)
-		DamageDifferent{First: 2, Second: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		DealDamage{Spread: DifferentCreatures{First: 2, Second: 3}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 		if g.Damage(a) != 2 {
 			t.Errorf("damage = %d, want 2", g.Damage(a))
 		}
@@ -184,11 +184,17 @@ func TestDamageDifferent(t *testing.T) {
 
 	t.Run("with no creatures, does nothing", func(_ *testing.T) {
 		g := NewGame("A", "B", 1)
-		DamageDifferent{First: 2, Second: 2}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		DealDamage{Spread: DifferentCreatures{First: 2, Second: 2}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	})
+
+	t.Run("validate rejects combining a Spread with a plain target", func(t *testing.T) {
+		if (DealDamage{Spread: DifferentCreatures{First: 1, Second: 1}, Target: Target{Kind: TargetEachCreature}}).validate() == nil {
+			t.Error("Spread + Target should be invalid")
+		}
 	})
 }
 
-func TestFlankWalkDamage(t *testing.T) {
+func TestSpreadFlankWalk(t *testing.T) {
 	t.Run("walks inward from the first flank dealing decreasing damage", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		left := g.AddToBattleline(testCreature("left", 9), 1)
@@ -196,7 +202,7 @@ func TestFlankWalkDamage(t *testing.T) {
 		right := g.AddToBattleline(testCreature("right", 9), 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 
-		e := FlankWalkDamage{Amounts: []int{3, 2, 1}}
+		e := DealDamage{Spread: FlankWalk{Amounts: []int{3, 2, 1}}}
 		if e.Text() != "choose a flank creature. Deal 3 damage to it, 2 damage to its neighbor, and 1 damage to the neighbor's other neighbor" {
 			t.Errorf("text = %q", e.Text())
 		}
@@ -217,7 +223,7 @@ func TestFlankWalkDamage(t *testing.T) {
 		mid := g.AddToBattleline(testCreature("mid", 9), 1)
 		right := g.AddToBattleline(testCreature("right", 9), 1)
 		g.SetChooser(0, &idQueueChooser{ids: []LocalID{right}})
-		FlankWalkDamage{Amounts: []int{3, 2, 1}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		DealDamage{Spread: FlankWalk{Amounts: []int{3, 2, 1}}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 		if g.Damage(right) != 3 || g.Damage(mid) != 2 || g.Damage(left) != 1 {
 			t.Errorf(
 				"damage = %d/%d/%d, want 3/2/1",
@@ -232,7 +238,7 @@ func TestFlankWalkDamage(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		a := g.AddToBattleline(testCreature("a", 9), 1)
 		b := g.AddToBattleline(testCreature("b", 9), 1)
-		FlankWalkDamage{Amounts: []int{3, 2, 1}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		DealDamage{Spread: FlankWalk{Amounts: []int{3, 2, 1}}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 		if g.Damage(a) != 3 || g.Damage(b) != 2 {
 			t.Errorf("damage = %d/%d, want 3/2", g.Damage(a), g.Damage(b))
 		}
@@ -240,14 +246,14 @@ func TestFlankWalkDamage(t *testing.T) {
 
 	t.Run("with no flank creature, does nothing", func(_ *testing.T) {
 		g := NewGame("A", "B", 1)
-		FlankWalkDamage{Amounts: []int{3}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		DealDamage{Spread: FlankWalk{Amounts: []int{3}}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 	})
 
 	t.Run("validate", func(t *testing.T) {
-		if (FlankWalkDamage{}).validate() == nil {
+		if (DealDamage{Spread: FlankWalk{}}).validate() == nil {
 			t.Error("empty amounts should be invalid")
 		}
-		if (FlankWalkDamage{Amounts: []int{1}}).validate() != nil {
+		if (DealDamage{Spread: FlankWalk{Amounts: []int{1}}}).validate() != nil {
 			t.Error("a non-empty amounts list should be valid")
 		}
 	})

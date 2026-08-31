@@ -407,10 +407,12 @@ SearchForName lets the controller search their deck and discard pile for a card
 with a specific name, reveal it, and put it into their hand — Help from Future
 Self tutoring a Timetraveller. Nothing happens if no matching card is found.
 
-### Shuffle Discard
+### Shuffle Into Deck
 
-ShuffleDiscard shuffles the controller's discard pile into their deck (Help from
-Future Self, after tutoring).
+ShuffleIntoDeck shuffles the controller's named Zones into their deck — the
+discard pile (Help from Future Self), the hand and discard pile (Screaming
+Cave), or the archives and discard pile. It moves every named zone's cards into
+the deck, then shuffles once.
 
 ### Steal Aember
 
@@ -487,7 +489,7 @@ targets, freeing it to act normally instead of having to shake the stun off.
 - [Return Named Card to Hand](#return-named-card-to-hand)
 - [Reveal Top of Deck](#reveal-top-of-deck)
 - [Search for Named Card](#search-for-named-card)
-- [Shuffle Discard](#shuffle-discard)
+- [Shuffle Into Deck](#shuffle-into-deck)
 - [Skirmish](#skirmish)
 - [Steal Aember](#steal-aember)
 - [Stun](#stun)

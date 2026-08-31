@@ -75,10 +75,11 @@ supply onto a card.
 artifact.
 
 **Invulnerable**:
-A creature status that prevents any damage from being dealt to it (Shield of
-Justice, Protectrix). It lasts until end of turn. In the engine this is the
-`Invulnerable` flag on a card's state.
-_Avoid_: damage-immune, damage immunity.
+A KeyForge keyword: an invulnerable creature cannot be destroyed or dealt damage.
+The engine does not model the full keyword yet — only the damage-prevention half,
+as the `DamageImmune` flag set by the `PreventDamage` effect ("cannot be dealt
+damage this turn"; Shield of Justice, Protectrix). Those cards prevent damage
+only, so they are not truly invulnerable.
 
 **Take control** / **latest ability wins**:
 Taking control moves a card to your play area and makes you its controller;

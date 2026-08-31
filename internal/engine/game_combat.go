@@ -122,7 +122,7 @@ func (g *Game) applyRawDamage(id LocalID, amount int, ignoreArmor bool) {
 		return
 	}
 	core := &g.State.Cards[id]
-	if core.Invulnerable {
+	if core.DamageImmune {
 		g.logf("%s cannot be dealt damage", g.Name(id))
 		return
 	}

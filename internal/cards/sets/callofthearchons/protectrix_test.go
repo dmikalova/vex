@@ -36,7 +36,7 @@ func TestProtectrix(t *testing.T) {
 		h.P1.ClickCard(ally)
 
 		h.Expect(ally).Damage(0)
-		if !h.Game().State.Cards[ally.ID()].Invulnerable {
+		if !h.Game().State.Cards[ally.ID()].DamageImmune {
 			t.Error("the healed creature should be protected from damage")
 		}
 	})

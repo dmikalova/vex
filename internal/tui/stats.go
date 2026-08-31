@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+
 	"github.com/dmikalova/vactrol/internal/cards"
 	"github.com/dmikalova/vactrol/internal/engine"
 )

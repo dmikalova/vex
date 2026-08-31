@@ -10,7 +10,6 @@ package cards
 
 import (
 	"github.com/dmikalova/vactrol/internal/card"
-
 	// Blank-imported so each set's cards self-register through its package init.
 	_ "github.com/dmikalova/vactrol/internal/cards/sets/callofthearchons"
 )

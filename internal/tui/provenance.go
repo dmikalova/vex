@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	tea "github.com/charmbracelet/bubbletea"
+
 	"github.com/dmikalova/vactrol/internal/card"
 	"github.com/dmikalova/vactrol/internal/cards/provenance"
 )

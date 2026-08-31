@@ -19,6 +19,7 @@ var Target = targets{
 	EachFriendlyInPlay:        engine.Target{Kind: engine.TargetEachFriendlyInPlay},
 	EachOtherFriendlyCreature: engine.Target{Kind: engine.TargetEachOtherFriendlyCreature},
 	OtherFriendlyCreature:     engine.Target{Kind: engine.TargetChosenOtherFriendlyCreature},
+	OtherCreature:             engine.Target{Kind: engine.TargetChosenOtherCreature},
 	TheOtherCreature:          engine.Target{Kind: engine.TargetTheOtherCreature},
 	ChosenInPlay:              engine.Target{Kind: engine.TargetChosenInPlay},
 	FriendlyInPlay:            engine.Target{Kind: engine.TargetChosenFriendlyInPlay},
@@ -27,22 +28,41 @@ var Target = targets{
 }
 
 type targets struct {
-	This,
-	Triggering,
-	Creature,
-	FriendlyCreature,
-	EnemyCreature,
-	EachCreature,
-	EachFriendlyCreature,
-	EachEnemyCreature,
-	EachArtifact,
-	EachFriendlyInPlay,
-	EachOtherFriendlyCreature,
-	OtherFriendlyCreature,
-	TheOtherCreature,
-	ChosenInPlay,
-	FriendlyInPlay,
-	Artifact,
+	// This selects the source card itself.
+	This engine.Target
+	// Triggering selects the creature that fired the trigger ("it").
+	Triggering engine.Target
+	// Creature is a single creature the controller chooses, either side.
+	Creature engine.Target
+	// FriendlyCreature is a single friendly creature the controller chooses.
+	FriendlyCreature engine.Target
+	// EnemyCreature is a single enemy creature the controller chooses.
+	EnemyCreature engine.Target
+	// EachCreature selects every creature in play.
+	EachCreature engine.Target
+	// EachFriendlyCreature selects every friendly creature.
+	EachFriendlyCreature engine.Target
+	// EachEnemyCreature selects every enemy creature.
+	EachEnemyCreature engine.Target
+	// EachArtifact selects every artifact in play.
+	EachArtifact engine.Target
+	// EachFriendlyInPlay selects the controller's creatures and artifacts.
+	EachFriendlyInPlay engine.Target
+	// EachOtherFriendlyCreature selects the controller's creatures except the source.
+	EachOtherFriendlyCreature engine.Target
+	// OtherFriendlyCreature is a friendly creature the controller chooses except the source.
+	OtherFriendlyCreature engine.Target
+	// OtherCreature is a creature the controller chooses except the one in context (ctx.It).
+	OtherCreature engine.Target
+	// TheOtherCreature selects the creature in context (ctx.It), "the other creature".
+	TheOtherCreature engine.Target
+	// ChosenInPlay is a creature or artifact the controller chooses, either side.
+	ChosenInPlay engine.Target
+	// FriendlyInPlay is a friendly creature or artifact the controller chooses.
+	FriendlyInPlay engine.Target
+	// Artifact is a single artifact the controller chooses, either side.
+	Artifact engine.Target
+	// EnemyArtifact is a single enemy artifact the controller chooses.
 	EnemyArtifact engine.Target
 }
 

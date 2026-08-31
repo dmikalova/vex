@@ -24,3 +24,5 @@ var MasterOf1 = card.New(
 			Do: card.Destroy{Target: card.Target.Creature.PowerExactly(1)},
 		}),
 )
+
+// TODO: make this a templated card in deckgen for master of 1 to 5

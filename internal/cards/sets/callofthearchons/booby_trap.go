@@ -18,8 +18,8 @@ var BoobyTrap = card.New(
 	card.Provenance(card.CotA, 268),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.SplashDamage{
+		card.Trigger.Play, card.DealDamage{Spread: card.CreatureAndNeighbors{
 			Amount: 4,
 			Splash: 2,
-		}),
+		}}),
 )

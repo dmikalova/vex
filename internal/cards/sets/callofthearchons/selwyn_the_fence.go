@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Elf • Thief
 //
-//	Fight/Reap: Move 1 Æmber from one of your cards to your pool.
+//	Fight/Reap: Move 1 Æmber from a friendly creature or artifact to your pool.
 var SelwynTheFence = card.New(
 	"Selwyn the Fence",
 	card.House.Shadows,
@@ -19,5 +19,9 @@ var SelwynTheFence = card.New(
 	card.Provenance(card.CotA, 309),
 	card.WithPower(3),
 	card.WithTraits("Elf", "Thief"),
-	card.WithFightOrReap(card.MoveAemberToPool{}),
+	card.WithFightOrReap(card.MoveAember{
+		Amount: 1,
+		From:   card.Target.FriendlyInPlay,
+		To:     card.Controller,
+	}),
 )

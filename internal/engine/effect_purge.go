@@ -12,11 +12,12 @@ import (
 //
 //rulebook:effect Purge
 
-// Purge sets cards aside out of the game, taken from a zone the controller picks.
+// PurgeCard sets cards aside out of the game, taken from a zone the controller
+// picks.
 // It serves both as a standalone effect (Creeping Oblivion purges up to 2 cards)
 // and as the first half of a Then ("purge a creature -> give a +1 power counter"),
 // so it reports whether it purged anything.
-type Purge struct {
+type PurgeCard struct {
 	// Zone is the pile the purge pulls from. It has no default: a Purge must name
 	// where it purges from. Only the discard pile is supported today.
 	Zone Zone
@@ -31,7 +32,7 @@ type Purge struct {
 }
 
 // validate rejects a Purge that does not name the zone it pulls from.
-func (e Purge) validate() error {
+func (e PurgeCard) validate() error {
 	if !e.Zone.valid() {
 		return fmt.Errorf("Purge: zone must be set")
 	}
@@ -39,7 +40,7 @@ func (e Purge) validate() error {
 }
 
 // count is Count with the zero value treated as one.
-func (e Purge) count() int {
+func (e PurgeCard) count() int {
 	if e.Count < 1 {
 		return 1
 	}
@@ -47,7 +48,7 @@ func (e Purge) count() int {
 }
 
 // noun renders the kind of card purged: the lowercased type when set, else "card".
-func (e Purge) noun() string {
+func (e PurgeCard) noun() string {
 	if e.Type != "" {
 		return strings.ToLower(string(e.Type))
 	}
@@ -56,7 +57,7 @@ func (e Purge) noun() string {
 
 // Text renders the effect, e.g. "purge a creature from a discard pile" or "purge
 // up to 2 cards from a discard pile".
-func (e Purge) Text() string {
+func (e PurgeCard) Text() string {
 	switch {
 	case e.UpTo:
 		return fmt.Sprintf("purge up to %d %ss from a discard pile", e.count(), e.noun())
@@ -68,12 +69,12 @@ func (e Purge) Text() string {
 }
 
 // Resolve purges the cards, ignoring the report used when Purge gates a Then.
-func (e Purge) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
+func (e PurgeCard) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 
 // resolveGate purges up to count matching cards from one discard pile the
 // controller picks — the cards one at a time, with a "Done" opt-out when UpTo —
 // and reports whether any card was purged.
-func (e Purge) resolveGate(ctx *EffectContext) bool {
+func (e PurgeCard) resolveGate(ctx *EffectContext) bool {
 	matches := func(id LocalID) bool {
 		return e.Type == "" || ctx.Resolver.TypeOf(id) == e.Type
 	}

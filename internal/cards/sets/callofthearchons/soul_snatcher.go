@@ -17,7 +17,7 @@ var SoulSnatcher = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 80),
 	card.WithTraits("Vehicle"),
-	card.WithConstantAbility(card.ConstantAbility{
+	card.WithConstant(card.ConstantAbility{
 		Target: card.Target.EachCreature,
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Destroyed,
