@@ -20,6 +20,7 @@ func (g *game) Render() app.UI {
 	}
 
 	return app.Div().Class(cx("app", ifCls(g.sidebarCollapsed, "app--sidebar-collapsed"))).Body(
+		app.Raw(iconOutlineFilter),
 		app.Div().Class("board-area").Body(g.boardArea()...),
 		app.If(!g.sidebarCollapsed, func() app.UI {
 			return app.Div().Class("sidebar").Body(

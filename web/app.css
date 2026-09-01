@@ -1126,17 +1126,13 @@ button:disabled {
   outline: 1.5px solid rgb(252 229 102 / 0.9);
   box-shadow: 0 0 5px 1px rgb(252 229 102 / 0.75);
 }
-/* a 1px black outline traced on every side (hard shadows, no blur) so a house
-   emblem stays legible on any background — an outline, not a blob beneath. The
-   padding reserves room for that outline so it isn't clipped when the art fills
-   the icon (e.g. tall house emblems, type icons). */
+/* outline the icon's actual silhouette (its alpha shape), not its square box, so
+   a house emblem or type glyph stays legible on any background. An SVG
+   feMorphology dilate filter (see iconOutlineFilter in icons.go) grows the shape
+   uniformly and inks the grown edge black — a single even ring that follows the
+   geometry, where stacked drop-shadows compounded into a thick, blobby border. */
 .icon-outline {
-  box-sizing: border-box;
-  padding: 1.5px;
-  filter: drop-shadow(1px 0 0 rgb(0 0 0 / 0.85))
-    drop-shadow(-1px 0 0 rgb(0 0 0 / 0.85))
-    drop-shadow(0 1px 0 rgb(0 0 0 / 0.85))
-    drop-shadow(0 -1px 0 rgb(0 0 0 / 0.85));
+  filter: url(#icon-outline);
 }
 .icon-kind {
   width: 1.2em;

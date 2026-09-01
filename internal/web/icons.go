@@ -11,6 +11,20 @@ import (
 // assetBase is the URL prefix the dev server maps to web/assets on disk.
 const assetBase = "/web/assets/"
 
+// iconOutlineFilter is a hidden inline SVG filter, injected once into the page,
+// that the .icon-outline CSS rule references by id. feMorphology dilates the
+// icon's alpha silhouette outward, floods that grown shape black, and lays the
+// original icon back on top — a single uniform ring that hugs the real shape,
+// unlike stacked drop-shadows which compound and blob at corners. radius sets the
+// ring thickness in CSS pixels.
+const iconOutlineFilter = `<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">` +
+	`<filter id="icon-outline" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">` +
+	`<feMorphology in="SourceAlpha" operator="dilate" radius="0.75" result="grown"/>` +
+	`<feFlood flood-color="#000000" flood-opacity="0.85" result="ink"/>` +
+	`<feComposite in="ink" in2="grown" operator="in" result="ring"/>` +
+	`<feMerge><feMergeNode in="ring"/><feMergeNode in="SourceGraphic"/></feMerge>` +
+	`</filter></svg>`
+
 // icon renders a static SVG asset (by file stem under web/assets) as a small
 // inline <img>. extra adds modifier classes for sizing/placement.
 func icon(name string, extra ...string) app.UI {
