@@ -16,7 +16,7 @@ import (
 // placeholder is shown.
 func (g *game) Render() app.UI {
 	if g.g == nil {
-		return app.Div().Class("loading").Text("Loading Vactrol…")
+		return app.Div().Class("")
 	}
 
 	return app.Div().Class(cx("app", ifCls(g.sidebarCollapsed, "app--sidebar-collapsed"))).Body(

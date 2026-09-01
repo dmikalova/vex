@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
@@ -43,6 +44,9 @@ func main() {
 		// applies changes with the server left running (no restart).
 		Styles:     []string{"/web/app.css"},
 		RawHeaders: []string{bootStyle, boardScript, devReloadScript},
+		// Byte size of app.wasm so go-app's loader accurately computes loading
+		// progress even when serving gzip-compressed / chunked responses.
+		WasmContentLength: wasmContentLength(),
 		// Version keys go-app's service-worker cache. Left empty it defaults to the
 		// app.wasm hash, so a CSS-only edit (wasm unchanged) would keep serving the
 		// cached stylesheet. Hashing app.css too makes every asset edit bump it.
@@ -116,6 +120,16 @@ func resourceVersion() string {
 		h.Write(b)
 	}
 	return hex.EncodeToString(h.Sum(nil))[:12]
+}
+
+// wasmContentLength returns the uncompressed byte size of web/app.wasm as a string
+// so go-app can calculate download progress when serving responses with gzip.
+func wasmContentLength() string {
+	info, err := os.Stat("web/app.wasm")
+	if err != nil {
+		return ""
+	}
+	return strconv.FormatInt(info.Size(), 10)
 }
 
 // serveManifest writes a fullscreen web app manifest, overriding the one go-app
