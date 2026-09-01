@@ -17,6 +17,7 @@ var (
 	ErrCardPlayLimit         = errors.New("card-play limit reached this turn")
 	ErrCannotPayToll         = errors.New("cannot pay the toll for this action")
 	ErrMustChooseForcedHouse = errors.New("must choose the forced active house this turn")
+	ErrCannotUse             = errors.New("card's use condition is not met")
 )
 
 // This file holds the turn lifecycle — begin (with the forge step), choose the
@@ -32,8 +33,8 @@ func (g *Game) BeginTurn(player int) {
 	g.State.ActivePlayer = player
 	g.State.ActiveHouse = HouseNone
 	g.State.Turn++
-	g.State.CardsPlayedThisTurn[player] = 0
-	g.State.CardsPlayedByHouseThisTurn[player] = [NumHouses]int{}
+	g.State.PlayedThisTurn[player].reset()
+	g.State.DiscardedThisTurn[player].reset()
 	g.State.PlayPermissionsUsedThisTurn[player] = [NumHouses]int{}
 	for p := 0; p < 2; p++ {
 		for _, id := range g.State.Battleline[p].slice() {

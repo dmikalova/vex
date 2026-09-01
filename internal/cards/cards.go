@@ -12,11 +12,28 @@ import (
 	"github.com/dmikalova/vactrol/internal/card"
 	// Blank-imported so each set's cards self-register through its package init.
 	_ "github.com/dmikalova/vactrol/internal/cards/sets/callofthearchons"
+	"github.com/dmikalova/vactrol/internal/deckgen"
 )
 
 // All returns every registered card across every imported set.
 func All() []card.Definition {
 	return card.Registered()
+}
+
+// DeckSet assembles the deck-generation Set from the registered cards, carrying
+// each card's generation profile and template materializer. With a single
+// released set every card belongs to it; when a second set is added this will
+// build one deckgen.Set per set package.
+func DeckSet() deckgen.Set {
+	regs := card.Cards()
+	cs := make([]deckgen.Card, 0, len(regs))
+	for _, rc := range regs {
+		cs = append(
+			cs,
+			deckgen.Card{Def: rc.Def, Profile: rc.Profile, Materializer: rc.Materializer},
+		)
+	}
+	return deckgen.NewSet("Call of the Archons", cs, deckgen.DefaultTuning())
 }
 
 // Set is a named group of cards, used for reporting such as the Card statistics

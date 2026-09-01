@@ -48,10 +48,10 @@ type CardDefinition struct {
 	// Static is a continuous modifier an Upgrade applies to its host creature.
 	Static StaticModifier
 
-	// Constant is a constant ability this card applies to creatures in play for as
+	// ConstantAbilities are constant abilities this card applies to creatures in play for as
 	// long as it stays in play (see Game.constantBonus). Unlike Static (an Upgrade
-	// buffing its own host), a constant ability reaches a whole Target of creatures.
-	Constant ConstantAbility
+	// buffing its own host), constant abilities reach whole Targets of creatures.
+	ConstantAbilities []ConstantAbility
 
 	// Restricts holds the continuous "cannot" rules the card imposes on its
 	// controller while it is in play (e.g. Grommid's "You cannot play creatures").
@@ -126,6 +126,8 @@ type Restrictions struct {
 	// Toll is Æmber the controller's opponent must pay the controller to play or
 	// use an artifact (Customs Office, Tentacus). Its zero value imposes no toll.
 	Toll Toll
+	// UseCondition is a Condition that must be met for the controller to use this card (Giant Sloth).
+	UseCondition Condition
 }
 
 // PlayCardLimit caps how many cards Player may play in a turn while its source
@@ -326,6 +328,11 @@ func NewCard(
 	if err := c.PlayPermission.validate(); err != nil {
 		panic(fmt.Sprintf("card %q: %v", name, err))
 	}
+	if uc := c.Restricts.UseCondition; uc != nil {
+		if err := validateCondition(uc); err != nil {
+			panic(fmt.Sprintf("card %q: %v", name, err))
+		}
+	}
 	return c
 }
 
@@ -393,10 +400,10 @@ func WithAemberBonus(n int) CardOption { return func(c *CardDefinition) { c.Aemb
 // WithStatic sets the continuous modifier an Upgrade applies to its host.
 func WithStatic(m StaticModifier) CardOption { return func(c *CardDefinition) { c.Static = m } }
 
-// WithConstantAbility sets the constant ability this card applies to creatures
+// WithConstantAbility appends a constant ability this card applies to creatures
 // while it is in play.
 func WithConstantAbility(c ConstantAbility) CardOption {
-	return func(d *CardDefinition) { d.Constant = c }
+	return func(d *CardDefinition) { d.ConstantAbilities = append(d.ConstantAbilities, c) }
 }
 
 // WithRestrictions sets the continuous "cannot" rules a card imposes on its

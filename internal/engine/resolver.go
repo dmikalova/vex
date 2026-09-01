@@ -108,13 +108,18 @@ type ZoneReader interface {
 	TopOfDeck(player int) (LocalID, bool)
 }
 
-// TurnReader reads turn-scoped state: the active house and per-house play counts.
-// It mirrors TurnResolver.
+// TurnReader reads turn-scoped state: the active house and the cards played and
+// discarded so far this turn. It mirrors TurnResolver.
 type TurnReader interface {
 	// ActiveHouse returns the house chosen for the current turn.
 	ActiveHouse() House
-	// CardsPlayedOfHouseThisTurn returns the house-specific play count for this turn.
-	CardsPlayedOfHouseThisTurn(player int, house House) int
+	// PlayedThisTurn returns the cards a player has played this turn, in play order.
+	// Callers filter it themselves — by house, trait, or type — so the engine keeps
+	// one record rather than a tally per axis.
+	PlayedThisTurn(player int) []LocalID
+	// DiscardedThisTurn returns the cards a player has discarded from hand this turn,
+	// in discard order.
+	DiscardedThisTurn(player int) []LocalID
 }
 
 // EconomyResolver changes the scoring economy: Æmber pools, forged keys, and

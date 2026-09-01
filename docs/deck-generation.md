@@ -159,6 +159,16 @@ repeats until nothing is unsatisfied and nothing was overwritten. By default
 connections stay in-pod; a rare cross-pod maverick connection is a tunable, off in
 the first version.
 
+_Implemented (v1)._ A pulled card carries `card.Rarity.Connected`, so it never
+rolls on its own — `NewSet` keeps Connected cards out of the pool and only indexes
+them by name. The puller declares its links with `card.Connects("Partner", …)`,
+and after a pod is filled the fixpoint loop pulls **one of each** named partner
+into an unprotected slot, in-house, skipping a maverick puller. Timetraveller
+(`card.Connects("Help from Future Self")`) and Horseman of Pestilence
+(`card.Connects("Horseman of Death", "Horseman of Famine", "Horseman of War")`) are
+the first users. Duplicate counts (Plague Rat), distinct-from-a-pool sins, and
+cross-pod maverick connections are the deferred axes.
+
 **Deadlock.** Constraints can genuinely conflict — too many protected slots, or
 mutually exclusive requirements. Rather than backtracking, the loop is capped at a
 few repair attempts; on non-convergence the pod (or deck) is discarded and re-rolled

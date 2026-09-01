@@ -236,6 +236,8 @@ type (
 	InPlay = engine.InPlay
 	// CardsPlayed counts the cards of a house a player has played this turn.
 	CardsPlayed = engine.CardsPlayed
+	// CardsDiscarded is a Condition met when a player has discarded cards of a house this turn.
+	CardsDiscarded = engine.CardsDiscarded
 	// OpponentForgedKeys counts the keys the opponent has forged.
 	OpponentForgedKeys = engine.OpponentForgedKeys
 	// OpponentExcessCreatures counts how many more creatures the opponent controls.

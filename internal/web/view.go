@@ -25,8 +25,8 @@ func (g *game) Render() app.UI {
 		app.If(!g.sidebarCollapsed, func() app.UI {
 			return app.Div().Class("sidebar").Body(
 				g.brandBar(),
-				g.turnHud(),
 				g.logPanel(),
+				g.turnHud(),
 				app.If(g.status != "", func() app.UI { return g.statusBanner() }),
 				g.controls(),
 			)
@@ -96,11 +96,11 @@ func (g *game) boardArea() []app.UI {
 		Class(cx("play-zone", ifCls(g.dragging, "play-zone--drop"))).
 		OnDrop(g.dropOnBoard).
 		Body(
-			g.renderRow(g.g.PlayerName(opp)+"'s artifacts", g.g.Artifacts(opp), selOther),
-			g.renderRow(g.g.PlayerName(opp)+"'s creatures", g.g.Battleline(opp), selOther),
+			g.renderRow(g.g.PlayerName(opp)+" artifacts", g.g.Artifacts(opp), selOther),
+			g.renderRow(g.g.PlayerName(opp)+" battleline", g.g.Battleline(opp), selOther),
 			app.Div().Class("midline"),
-			g.renderRow(g.g.PlayerName(p)+"'s creatures", g.g.Battleline(p), selYourCreature),
-			g.renderRow(g.g.PlayerName(p)+"'s artifacts", g.g.Artifacts(p), selYourArtifact),
+			g.renderRow(g.g.PlayerName(p)+" battleline", g.g.Battleline(p), selYourCreature),
+			g.renderRow(g.g.PlayerName(p)+" artifacts", g.g.Artifacts(p), selYourArtifact),
 		)
 	return []app.UI{
 		g.scorePill(opp),
@@ -139,10 +139,10 @@ func (g *game) scorePill(player int) app.UI {
 	detail := []app.UI{
 		app.Text(" • "),
 		g.aemberSeg(player),
+		app.Text(" / "),
+		g.keyCostSeg(player),
 		app.Text(" • "),
 		g.keysDisplay(player),
-		app.Text(" • "),
-		g.keyCostSeg(player),
 	}
 	if houses := g.deckHouses[player]; len(houses) > 0 {
 		detail = append(detail, app.Text(" • "), g.houseStrip(player, houses))
@@ -167,12 +167,12 @@ func (g *game) scorePill(player int) app.UI {
 		)
 }
 
-// keyCostSeg shows the Æmber a player must spend to forge their next key.
+// keyCostSeg shows the Æmber a player must spend to forge their next key: the
+// cost followed by the forge icon.
 func (g *game) keyCostSeg(player int) app.UI {
 	return app.Span().Class("stat-seg").Body(
-		app.Text("forge "),
 		app.Text(strconv.Itoa(g.g.CurrentKeyCost(player))),
-		icon("aember", "icon-stat"),
+		icon("forge", "icon-stat"),
 	)
 }
 
@@ -190,7 +190,10 @@ func (g *game) hoverPreview() app.UI {
 			TypeIcon: typeIconName(def.Type),
 			Stat:     g.statLine(g.hoverID),
 			Rules:    g.faceRules(g.hoverID),
-			Kind:     string(def.Type),
+			Kind:     kindLabel(def),
+			Trait:    traitLabel(def),
+			Rarity:   rarityMarkOf(def.Rarity),
+			Maverick: g.isMaverick(g.hoverID),
 			Stunned:  g.g.Stunned(g.hoverID),
 		}
 	case g.hoverDef != nil:
@@ -202,7 +205,9 @@ func (g *game) hoverPreview() app.UI {
 			TypeIcon: typeIconName(def.Type),
 			Stat:     handStat(def),
 			Rules:    engine.RenderCardRules(def),
-			Kind:     string(def.Type),
+			Kind:     kindLabel(def),
+			Trait:    traitLabel(def),
+			Rarity:   rarityMarkOf(def.Rarity),
 		}
 	default:
 		return app.Div()
@@ -374,7 +379,10 @@ func (g *game) renderCard(id engine.LocalID, boardKind selKind) app.UI {
 		TypeIcon:     typeIconName(def.Type),
 		Stat:         g.statLine(id),
 		Rules:        g.faceRules(id),
-		Kind:         string(def.Type),
+		Kind:         kindLabel(def),
+		Trait:        traitLabel(def),
+		Rarity:       rarityMarkOf(def.Rarity),
+		Maverick:     g.isMaverick(id),
 		Stunned:      g.g.Stunned(id),
 		Enter:        flash.enter,
 		StunFlash:    flash.stun,
@@ -498,7 +506,10 @@ func (g *game) renderHandCard(id engine.LocalID) app.UI {
 		TypeIcon:    typeIconName(def.Type),
 		Stat:        handStat(def),
 		Rules:       engine.RenderCardRules(def),
-		Kind:        string(def.Type),
+		Kind:        kindLabel(def),
+		Trait:       traitLabel(def),
+		Rarity:      rarityMarkOf(def.Rarity),
+		Maverick:    g.isMaverick(id),
 		Selected:    g.hasSel && g.sel == id,
 		Targetable:  targetable,
 		Dimmed:      dimmed,
@@ -842,7 +853,6 @@ func (g *game) artifactActions() app.UI {
 func (g *game) logPanel() app.UI {
 	groups := g.logGroupViews()
 	return app.Div().Class("log").Body(
-		app.Div().Class("panel-label").Text("Log"),
 		app.Div().Class("log-list").ID("gamelog").Body(
 			app.Range(groups).Slice(func(i int) app.UI {
 				grp := groups[i]
@@ -898,8 +908,18 @@ func (g *game) actionSegments() []logSeg {
 		if end > len(log) {
 			end = len(log)
 		}
+		// Never re-cover lines an earlier segment already emitted: clamp the start
+		// forward to the previous segment's end. Guards against non-monotonic marks,
+		// which would otherwise overlap and duplicate log lines on screen.
+		if start < first {
+			start = first
+		}
+		if end < start {
+			end = start
+		}
 		if start < end {
 			segs = append(segs, logSeg{start, end, m.Player})
+			first = end
 		}
 	}
 	return segs
@@ -1075,7 +1095,10 @@ func (g *game) renderZoneCard(id engine.LocalID) app.UI {
 		TypeIcon:   typeIconName(def.Type),
 		Stat:       handStat(def),
 		Rules:      engine.RenderCardRules(def),
-		Kind:       string(def.Type),
+		Kind:       kindLabel(def),
+		Trait:      traitLabel(def),
+		Rarity:     rarityMarkOf(def.Rarity),
+		Maverick:   g.isMaverick(id),
 		OnActivate: activate,
 	}
 }
@@ -1084,6 +1107,23 @@ func (g *game) renderZoneCard(id engine.LocalID) app.UI {
 
 func btn(label string, h app.EventHandler, class string) app.UI {
 	return app.Button().Class(class).Text(label).OnClick(h)
+}
+
+// kindLabel is a card's foot label: its type (e.g. "Creature"). The CSS
+// uppercases it. Traits render separately as their own body line (traitLabel).
+func kindLabel(def *engine.CardDefinition) string {
+	return string(def.Type)
+}
+
+// traitLabel renders a card's traits in KeyForge order (e.g. "Human • Knight"),
+// or "" when it has none. It is shown as its own line in the card body, under the
+// stat line and above the rules text.
+func traitLabel(def *engine.CardDefinition) string {
+	parts := make([]string, 0, len(def.Traits))
+	for _, t := range def.Traits {
+		parts = append(parts, string(t))
+	}
+	return strings.Join(parts, " • ")
 }
 
 func (g *game) statLine(id engine.LocalID) []app.UI {

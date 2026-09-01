@@ -68,3 +68,20 @@ func TestFastCopyIsIndependent(t *testing.T) {
 		t.Errorf("original battleline mutated: count %d", g.State.Battleline[0].Count)
 	}
 }
+
+func TestTurnLogSaturates(t *testing.T) {
+	var log turnLog
+	for i := range turnLogCap + 5 {
+		log.add(LocalID(i%100 + 1))
+	}
+	if int(log.Count) != turnLogCap {
+		t.Errorf("count = %d, want %d", log.Count, turnLogCap)
+	}
+	if got := len(log.slice()); got != turnLogCap {
+		t.Errorf("slice length = %d, want %d", got, turnLogCap)
+	}
+	log.reset()
+	if log.Count != 0 {
+		t.Errorf("count after reset = %d, want 0", log.Count)
+	}
+}

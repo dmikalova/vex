@@ -95,7 +95,7 @@ func TestConstantAbilityReachesArtifacts(t *testing.T) {
 		WithConstantAbility(ConstantAbility{PowerBonus: 1})), 0)
 	art := g.AddArtifact(exAutocannon(), 1)
 
-	if !g.constantAffects(src, g.cat.def(src).Constant, art) {
+	if !g.constantAffects(src, g.cat.def(src).ConstantAbilities[0], art) {
 		t.Error("an untargeted constant ability should reach artifacts in play")
 	}
 }

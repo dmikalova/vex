@@ -95,7 +95,23 @@ not.
   program start, not mid-game. Sentinels like `playerUnset` / `targetUnset` /
   `durationUnset` / `eventUnset` turn an omitted required field into an
   init-time error rather than a silent zero-value default. Add these guards when
-  you add a required field.
+  you add a required field. A required _numeric_ field follows the same rule: do
+  not silently coerce a meaningless zero into a working default (e.g.
+  `CardsDiscarded.Amount` rejects `< 1` in `validate()` rather than treating `0`
+  as `1`, because "discarded 0 or more cards" is always true). Make the author
+  state the value; fail at registration if they don't.
+- **Never silently or gracefully absorb bad data or an internal error.** A
+  quietly dropped part is a bug that hides until someone notices it is missing —
+  usually much later, and never through a test. Fail loudly at the boundary
+  (`validate()`, a sentinel, a `panic` at registration) so the gap is impossible
+  to miss. For example, a connected card (one whose behavior references another
+  card that must exist) must **not** paper over a missing piece: if a connected
+  part is not yet implemented, do not silently omit it from the connecting card,
+  and do not have the connecting card gracefully tolerate the absent part.
+  Instead leave the whole connecting card unimplemented until every part is in
+  place, so its `TODO` stub marks it as outstanding and it is trivial to find.
+  Half-wiring a card so it "works" with pieces missing trades a loud, findable
+  gap for a silent, forgettable one.
 - **`panic` only for the truly impossible.** A `panic` (e.g. `PlayerFor` on
   `playerUnset`) is acceptable only because `validate()` guarantees a real card
   can never reach it — it fires at authoring time, never in a live match. Never
@@ -117,6 +133,15 @@ not.
 - **Always say why.** Never forget to motivate a non-obvious decision. Explaining
   the rationale increases understanding, invites correction, and shares the
   criteria by which the decision can be re-evaluated later.
+- **No sentinel values or magic numbers — name a distinct state with `iota`.**
+  When a value stands for a distinct state ("no rarity mark", "Connected", "unset
+  player"), do not overload a number with a magic meaning (e.g. `-1` for
+  Connected, `0` for none). Model the axis as an `iota` enum whose members name
+  each state, and derive any count from the enum rather than hard-coding it. This
+  matches the invalid-zero sentinels above: the zero value is the "unset/none"
+  member, and the remaining members are ordered so ordinal arithmetic replaces
+  literals where it reads naturally (e.g. the rarity marks run `rarityCommon…
+  raritySpecial`, so a mark's ordinal *is* its diamond count).
 
 ## Composition and design
 

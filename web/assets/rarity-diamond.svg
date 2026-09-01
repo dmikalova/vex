@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <title>Rarity</title>
+  <path d="M12 2 21 9 12 22 3 9Z" fill="#cfd6e6" stroke="#5b6478" stroke-width="1.5" stroke-linejoin="round"/>
+  <path d="M12 2 21 9H3Z" fill="#eef1f8"/>
+  <path d="M12 2 12 22 3 9Z" fill="#000" opacity="0.08"/>
+</svg>

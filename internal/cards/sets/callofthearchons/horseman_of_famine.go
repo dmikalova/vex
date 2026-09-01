@@ -15,7 +15,7 @@ var HorsemanOfFamine = card.New(
 	"Horseman of Famine",
 	card.House.Sanctum,
 	card.Type.Creature,
-	card.Rarity.Fixed,
+	card.Rarity.Connected,
 	card.Provenance(card.CotA, 247),
 	card.WithPower(5),
 	card.WithTraits("Horseman", "Spirit"),

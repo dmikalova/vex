@@ -311,3 +311,37 @@ func TestForceActiveHouseNextTurn(t *testing.T) {
 		t.Errorf("free choice = %v, want nil", err)
 	}
 }
+
+func TestUseConditionRestriction(t *testing.T) {
+	cond := CardsDiscarded{Player: Controller, House: Untamed, Amount: 1}
+	want := "You cannot use this card unless you have discarded an Untamed card " +
+		"from your hand this turn."
+	if got := restrictionText(Restrictions{UseCondition: cond}); len(got) != 1 || got[0] != want {
+		t.Errorf("restrictionText = %v", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	g.BeginTurn(0)
+	if err := g.ChooseHouse(0, Untamed); err != nil {
+		t.Fatalf("ChooseHouse: %v", err)
+	}
+	sloth := g.AddToBattleline(NewCard(
+		"Giant Sloth",
+		Untamed,
+		Creature,
+		Rare,
+		WithPower(6),
+		WithRestrictions(Restrictions{UseCondition: cond}),
+		WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 3}),
+	), 0)
+	g.State.Cards[sloth].Exhausted = false
+	if err := g.CanUse(0, sloth); err != ErrCannotUse {
+		t.Errorf("unmet use condition = %v, want ErrCannotUse", err)
+	}
+
+	discarded := g.AddToHand(NewCard("Untamed Action", Untamed, Tactic, Common), 0)
+	g.DiscardCardFromHand(0, discarded)
+	if err := g.CanUse(0, sloth); err != nil {
+		t.Errorf("met use condition = %v, want nil", err)
+	}
+}

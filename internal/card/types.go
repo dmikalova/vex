@@ -65,11 +65,11 @@ type cardTypes struct {
 
 // Rarity groups the rarity values, e.g. card.Rarity.Common.
 var Rarity = rarities{
-	Common:   engine.Common,
-	Uncommon: engine.Uncommon,
-	Rare:     engine.Rare,
-	Special:  engine.Special,
-	Fixed:    engine.Fixed,
+	Common:    engine.Common,
+	Uncommon:  engine.Uncommon,
+	Rare:      engine.Rare,
+	Special:   engine.Special,
+	Connected: engine.Connected,
 }
 
 type rarities struct {
@@ -81,8 +81,9 @@ type rarities struct {
 	Rare engine.Rarity
 	// Special is the special rarity.
 	Special engine.Rarity
-	// Fixed is the fixed rarity (reference/token-style cards).
-	Fixed engine.Rarity
+	// Connected is the rarity of a card that only enters a deck through another
+	// card's connection (see card.Connects).
+	Connected engine.Rarity
 }
 
 // Keyword groups the keyword values, e.g. card.Keyword.Skirmish.

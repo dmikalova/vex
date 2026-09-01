@@ -128,6 +128,9 @@ type game struct {
 	chooser    *webChooser
 	seed       int64             // deal seed; persisted so a hot-reload can rebuild the match
 	deckHouses [2][]engine.House // each player's three deck houses (house choices)
+	// mavericks holds the LocalID of every Maverick card dealt this match (a card
+	// played out of its printed house), so its face shows the maverick emblem.
+	mavericks map[engine.LocalID]bool
 
 	// dispatch schedules a mutation on the UI goroutine (captured from a Context).
 	// It lets the background chooser update fields safely.
@@ -439,8 +442,8 @@ func (g *game) resume(ctx app.Context) (ok bool) {
 	}()
 
 	g.seed = snap.Seed
-	eg, houses := match.New("Player 1", "Player 2", snap.Seed)
-	g.install(eg, houses)
+	eg, houses, mavericks := match.NewWithMavericks("Player 1", "Player 2", snap.Seed)
+	g.install(eg, houses, mavericks)
 	g.g.State = snap.State
 	if !g.stateReadsCleanly() {
 		store.Del(persistKey)
@@ -486,8 +489,15 @@ func (g *game) stateReadsCleanly() (ok bool) {
 // deals random decks. Both sides are driven by the same person (hotseat).
 func (g *game) newMatch() {
 	g.seed = time.Now().UnixNano()
-	eg, houses := match.New("Player 1", "Player 2", g.seed)
-	g.install(eg, houses)
+	eg, houses, mavericks := match.NewWithMavericks("Player 1", "Player 2", g.seed)
+	g.install(eg, houses, mavericks)
+	// Clear the previous game's log grouping and undo/redo history. newMatch resets
+	// the engine log to a single turn-1 header, so stale marks (with larger Start
+	// indices from the old, longer log) would go non-monotonic against the fresh
+	// short log and make actionSegments emit overlapping, duplicated log ranges.
+	g.logGroups = nil
+	g.undo = nil
+	g.redo = nil
 	g.g.BeginTurn(0) // no Æmber yet, so the opening forge step is a no-op
 	g.phase = phaseHouse
 	g.clearSelection()
@@ -496,9 +506,13 @@ func (g *game) newMatch() {
 }
 
 // install wires a freshly built engine game into the component: it attaches the
-// shared human chooser to both players and records the harness and its deck
-// houses. The caller sets the starting phase.
-func (g *game) install(eg *engine.Game, houses [2][]engine.House) {
+// shared human chooser to both players and records the harness, its deck houses,
+// and which dealt cards are Mavericks. The caller sets the starting phase.
+func (g *game) install(
+	eg *engine.Game,
+	houses [2][]engine.House,
+	mavericks [2][]engine.LocalID,
+) {
 	ch := &webChooser{g: g, reply: make(chan chooseReply, 1), optionReply: make(chan int, 1)}
 	eg.SetChooser(0, ch)
 	eg.SetChooser(1, ch)
@@ -509,6 +523,12 @@ func (g *game) install(eg *engine.Game, houses [2][]engine.House) {
 	g.g = eg
 	g.chooser = ch
 	g.deckHouses = houses
+	g.mavericks = make(map[engine.LocalID]bool)
+	for _, ids := range mavericks {
+		for _, id := range ids {
+			g.mavericks[id] = true
+		}
+	}
 	if g.defByName == nil {
 		g.defByName = cardsByName()
 	}
@@ -524,6 +544,12 @@ func (g *game) install(eg *engine.Game, houses [2][]engine.House) {
 			return a.Name < b.Name
 		})
 	}
+}
+
+// isMaverick reports whether the dealt card with this LocalID is a Maverick (a
+// card played out of its printed house), so its face can show the emblem.
+func (g *game) isMaverick(id engine.LocalID) bool {
+	return g.mavericks[id]
 }
 
 // cardsByName indexes every registered card's definition by its display name so

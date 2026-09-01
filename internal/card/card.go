@@ -13,6 +13,7 @@ package card
 
 import (
 	"github.com/dmikalova/vactrol/internal/cards/provenance"
+	"github.com/dmikalova/vactrol/internal/deckgen"
 	"github.com/dmikalova/vactrol/internal/engine"
 )
 
@@ -79,8 +80,10 @@ type Option func(*builder)
 
 // builder accumulates the pieces New assembles into a registered card.
 type builder struct {
-	opts []engine.CardOption
-	prov []provenance.Ref
+	opts         []engine.CardOption
+	prov         []provenance.Ref
+	profile      deckgen.GenerationProfile
+	materializer deckgen.Materializer
 }
 
 func gameplay(o engine.CardOption) Option { return func(b *builder) { b.opts = append(b.opts, o) } }

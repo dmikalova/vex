@@ -192,7 +192,7 @@ func (g *Game) playCardFromZone(
 		if g.cannotPlayCreatures(player) {
 			return 0, ErrCannotPlayCreature
 		}
-		g.recordCardPlayed(player, def, opts)
+		g.recordCardPlayed(player, id, opts)
 		remove()
 		g.playCreatureCard(player, id, opts.flankLeft)
 		return id, nil
@@ -200,12 +200,12 @@ func (g *Game) playCardFromZone(
 		if err := g.chargeToll(player, TollPlayArtifact); err != nil {
 			return 0, err
 		}
-		g.recordCardPlayed(player, def, opts)
+		g.recordCardPlayed(player, id, opts)
 		remove()
 		g.playArtifactCard(player, id)
 		return id, nil
 	case Tactic:
-		g.recordCardPlayed(player, def, opts)
+		g.recordCardPlayed(player, id, opts)
 		remove()
 		g.playActionCard(player, id)
 		return id, nil
@@ -215,7 +215,7 @@ func (g *Game) playCardFromZone(
 		if !ok {
 			return 0, ErrNoTarget
 		}
-		g.recordCardPlayed(player, def, opts)
+		g.recordCardPlayed(player, id, opts)
 		remove()
 		g.playUpgradeCard(player, id, host, def)
 		return host, nil
@@ -315,6 +315,7 @@ func (g *Game) DiscardCardFromHand(owner int, id LocalID) {
 	}
 	hand.removeAt(i)
 	g.State.Discard[owner].add(id)
+	g.State.DiscardedThisTurn[owner].add(id)
 	g.logf("%s discards %s", g.names[owner], g.Name(id))
 }
 
@@ -375,14 +376,13 @@ func (g *Game) playPermissionRemaining(player int, house House) int {
 	return limit - used
 }
 
-// recordCardPlayed updates the per-turn card-play counters, including an off-house
-// grant if the hand play was legal only because of that continuous permission.
-func (g *Game) recordCardPlayed(player int, def *CardDefinition, opts playCardOptions) {
+// recordCardPlayed logs the play for the turn, including an off-house grant if
+// the hand play was legal only because of that continuous permission.
+func (g *Game) recordCardPlayed(player int, id LocalID, opts playCardOptions) {
 	if opts.consumePlayPermission {
-		g.State.PlayPermissionsUsedThisTurn[player][def.House]++
+		g.State.PlayPermissionsUsedThisTurn[player][g.cat.def(id).House]++
 	}
-	g.State.CardsPlayedThisTurn[player]++
-	g.State.CardsPlayedByHouseThisTurn[player][def.House]++
+	g.State.PlayedThisTurn[player].add(id)
 }
 
 // validateHandPlay runs the read-only checks that a hand card may be played —

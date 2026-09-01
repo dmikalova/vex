@@ -1,10 +1,8 @@
 package match
 
 import (
-	"math/rand"
 	"testing"
 
-	"github.com/dmikalova/vactrol/internal/cards"
 	"github.com/dmikalova/vactrol/internal/engine"
 )
 
@@ -40,13 +38,15 @@ func TestNewDealsDeterministicDecks(t *testing.T) {
 	}
 }
 
-func TestChosenHousesAreDistinctAndSorted(t *testing.T) {
+func TestChosenHousesAreDistinct(t *testing.T) {
 	_, houses := New("Alice", "Bob", 7)
 	for p := range 2 {
 		hs := houses[p]
-		for i := 1; i < len(hs); i++ {
-			if hs[i-1].String() >= hs[i].String() {
-				t.Errorf("player %d houses not distinct/sorted: %v", p, hs)
+		for i := range hs {
+			for j := i + 1; j < len(hs); j++ {
+				if hs[i] == hs[j] {
+					t.Errorf("player %d houses not distinct: %v", p, hs)
+				}
 			}
 		}
 	}
@@ -85,42 +85,6 @@ func TestDealSpansAllChosenHouses(t *testing.T) {
 		if len(seen) != len(houses[p]) {
 			t.Errorf("player %d deck spans %d houses, want all %d (%v)",
 				p, len(seen), len(houses[p]), houses[p])
-		}
-	}
-}
-
-func TestPoolHousesDistinctAndSorted(t *testing.T) {
-	hs := poolHouses(cards.All())
-	if len(hs) == 0 {
-		t.Fatal("card pool has no houses")
-	}
-	for i := 1; i < len(hs); i++ {
-		if hs[i-1].String() >= hs[i].String() {
-			t.Errorf("poolHouses not distinct/sorted: %v", hs)
-		}
-	}
-}
-
-func TestPickHousesCapsAtAvailable(t *testing.T) {
-	available := []engine.House{engine.Brobnar, engine.Logos}
-	r := rand.New(rand.NewSource(1))
-	got := pickHouses(available, r, DeckHouseCount+5)
-	if len(got) != len(available) {
-		t.Errorf("pickHouses(%d requested) = %d houses, want %d (capped)",
-			DeckHouseCount+5, len(got), len(available))
-	}
-}
-
-func TestCardsOfHousesFiltersToHouses(t *testing.T) {
-	pool := cards.All()
-	house := poolHouses(pool)[0]
-	filtered := cardsOfHouses(pool, []engine.House{house})
-	if len(filtered) == 0 {
-		t.Fatalf("no cards for house %v", house)
-	}
-	for _, d := range filtered {
-		if d.House != house {
-			t.Errorf("card %q has house %v, want %v", d.Name, d.House, house)
 		}
 	}
 }

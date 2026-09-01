@@ -36,9 +36,8 @@ func TestChaosPortalComposition(t *testing.T) {
 	if !g.State.Cards[top].Exhausted {
 		t.Error("played creature should enter exhausted")
 	}
-	if g.State.CardsPlayedThisTurn[0] != 1 || g.State.CardsPlayedByHouseThisTurn[0][Logos] != 1 {
-		t.Errorf("play counts = %d/%d, want 1/1",
-			g.State.CardsPlayedThisTurn[0], g.State.CardsPlayedByHouseThisTurn[0][Logos])
+	if played := g.PlayedThisTurn(0); len(played) != 1 || g.House(played[0]) != Logos {
+		t.Errorf("played this turn = %v, want one Logos card", played)
 	}
 	if len(g.Log) == 0 || !strings.Contains(g.Log[len(g.Log)-1], "Portal Scout") {
 		t.Errorf("log = %v, want the top card revealed and played", g.Log)
@@ -58,10 +57,10 @@ func TestChaosPortalMissesAndGuards(t *testing.T) {
 	if g.State.Deck[0].Count != 1 || g.State.Deck[0].IDs[0] != top {
 		t.Errorf("non-matching top card moved: deck = %v, want [%d]", g.State.Deck[0].slice(), top)
 	}
-	if g.State.CardsPlayedThisTurn[0] != 0 {
+	if len(g.PlayedThisTurn(0)) != 0 {
 		t.Errorf(
 			"non-matching card should not count as played, got %d",
-			g.State.CardsPlayedThisTurn[0],
+			len(g.PlayedThisTurn(0)),
 		)
 	}
 
@@ -110,7 +109,7 @@ func TestPlayTopOfDeckLeavesUnplayableCardOnTop(t *testing.T) {
 							},
 						),
 					), 0)
-					g.State.CardsPlayedThisTurn[0] = 1
+					g.State.PlayedThisTurn[0].Count = 1
 				},
 				err: ErrCardPlayLimit,
 			},

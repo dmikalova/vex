@@ -280,5 +280,8 @@ func TestSpreadFlankWalk(t *testing.T) {
 		if (DealDamage{Spread: FlankWalk{Amounts: []int{1}}}).validate() != nil {
 			t.Error("a non-empty amounts list should be valid")
 		}
+		if (DealDamage{Spread: CreatureAndNeighbors{}}).validate() != nil {
+			t.Error("a spread that cannot be misconfigured should be valid")
+		}
 	})
 }

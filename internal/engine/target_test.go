@@ -195,6 +195,10 @@ func TestTargetPowerFilters(t *testing.T) {
 		Text(); got != "a creature with power 1" {
 		t.Errorf("PowerExactly text = %q", got)
 	}
+	if got := (Target{Kind: TargetChosenCreature}).PowerVariable().
+		Text(); got != "a creature with power X" {
+		t.Errorf("PowerVariable text = %q", got)
+	}
 }
 
 func TestTargetUndamagedAndOther(t *testing.T) {

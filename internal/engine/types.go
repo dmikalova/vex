@@ -59,9 +59,9 @@ const (
 	Uncommon Rarity = "Uncommon"
 	Rare     Rarity = "Rare"
 	Special  Rarity = "Special"
-	// Fixed is the rarity of a card that always appears in a fixed slot of its
-	// house's decks (rendered "FIXED", as KeyForge prints it).
-	Fixed Rarity = "FIXED"
+	// Connected is the rarity of a card that never rolls on its own; it enters a
+	// deck only when another card's connection pulls it into the same pod.
+	Connected Rarity = "Connected"
 )
 
 // CardType is one of the four Vactrol/KeyForge card types.

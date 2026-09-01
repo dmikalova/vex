@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <title>Forge</title>
+  <g fill="none" stroke-width="2.4" stroke-linecap="round">
+    <circle cx="12" cy="12" r="9.2" stroke="#e0555f" stroke-dasharray="14.5 43.5" transform="rotate(-90 12 12)"/>
+    <circle cx="12" cy="12" r="9.2" stroke="#5a8fe0" stroke-dasharray="14.5 43.5" transform="rotate(30 12 12)"/>
+    <circle cx="12" cy="12" r="9.2" stroke="#f0c020" stroke-dasharray="14.5 43.5" transform="rotate(150 12 12)"/>
+  </g>
+  <path d="M12 5.6 18.4 10.4 12 18.4 5.6 10.4Z" fill="#f0b429" stroke="#a9791a" stroke-width="0.8" stroke-linejoin="round"/>
+  <path d="M12 5.6 18.4 10.4 5.6 10.4Z" fill="#ffd469"/>
+</svg>
+

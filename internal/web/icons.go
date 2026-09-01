@@ -63,6 +63,62 @@ func typeIconName(t engine.CardType) string {
 	return ""
 }
 
+// rarityMark is how a card's rarity renders at its foot. The diamond marks are
+// ordered so a mark's ordinal position is its diamond count (rarityCommon is 1
+// … raritySpecial is 4); rarityConnected instead shows a single "+", and
+// rarityNone (Fixed and the rest) shows nothing.
+type rarityMark int
+
+const (
+	rarityNone rarityMark = iota
+	rarityCommon
+	rarityUncommon
+	rarityRare
+	raritySpecial
+	rarityConnected
+)
+
+// rarityMarkOf maps a card's rarity to the mark shown at its foot.
+func rarityMarkOf(r engine.Rarity) rarityMark {
+	switch r {
+	case engine.Common:
+		return rarityCommon
+	case engine.Uncommon:
+		return rarityUncommon
+	case engine.Rare:
+		return rarityRare
+	case engine.Special:
+		return raritySpecial
+	case engine.Connected:
+		return rarityConnected
+	}
+	return rarityNone
+}
+
+// diamonds is how many rarity diamonds the mark shows. The diamond marks are
+// consecutive from rarityCommon (1) to raritySpecial (4), so a mark in that
+// range is its own count; every other mark shows no diamonds.
+func (m rarityMark) diamonds() int {
+	if m >= rarityCommon && m <= raritySpecial {
+		return int(m)
+	}
+	return 0
+}
+
+// isConnected reports whether the mark is a Connected card's single "+".
+func (m rarityMark) isConnected() bool { return m == rarityConnected }
+
+// rarityDiamonds renders n identical rarity diamonds; the count is the rarity
+// (one for Common up to four for Special). Each carries the hard outline so the
+// diamonds read against any card art.
+func rarityDiamonds(n int) []app.UI {
+	out := make([]app.UI, 0, n)
+	for i := 0; i < n; i++ {
+		out = append(out, icon("rarity-diamond", "icon-mark", "icon-outline"))
+	}
+	return out
+}
+
 // keyColorIconName is the asset stem for a forged key's colour.
 func keyColorIconName(c engine.KeyColor) string {
 	switch c {

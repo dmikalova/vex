@@ -234,7 +234,19 @@ type CardsPlayed struct {
 
 // Value counts the player's cards of the house played this turn.
 func (e CardsPlayed) Value(ctx *EffectContext) int {
-	return ctx.Resolver.CardsPlayedOfHouseThisTurn(ctx.PlayerFor(e.Player), e.House)
+	return countOfHouse(ctx, ctx.Resolver.PlayedThisTurn(ctx.PlayerFor(e.Player)), e.House)
+}
+
+// countOfHouse counts how many of the ids belong to a house — the filter a
+// turn-log Count applies to the unfiltered record the engine keeps.
+func countOfHouse(ctx *EffectContext, ids []LocalID, house House) int {
+	n := 0
+	for _, id := range ids {
+		if ctx.Resolver.House(id) == house {
+			n++
+		}
+	}
+	return n
 }
 
 // Met reports whether at least Amount (default one) matching cards were played.

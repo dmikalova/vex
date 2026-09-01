@@ -84,9 +84,10 @@ func (g *Game) constantBonus(id LocalID, pick func(ConstantAbility) int) int {
 	sum := 0
 	for p := 0; p < 2; p++ {
 		for _, src := range g.allInPlay(p) {
-			c := g.cat.def(src).Constant
-			if b := pick(c); b != 0 && g.constantAffects(src, c, id) {
-				sum += b
+			for _, c := range g.cat.def(src).ConstantAbilities {
+				if b := pick(c); b != 0 && g.constantAffects(src, c, id) {
+					sum += b
+				}
 			}
 		}
 	}
@@ -138,10 +139,11 @@ func (g *Game) hasKeyword(id LocalID, k Keyword) bool {
 	}
 	for p := 0; p < 2; p++ {
 		for _, src := range g.allInPlay(p) {
-			c := g.cat.def(src).Constant
-			for _, kw := range c.Keywords {
-				if kw == k && g.constantAffects(src, c, id) {
-					return true
+			for _, c := range g.cat.def(src).ConstantAbilities {
+				for _, kw := range c.Keywords {
+					if kw == k && g.constantAffects(src, c, id) {
+						return true
+					}
 				}
 			}
 		}
@@ -176,13 +178,15 @@ func (g *Game) AemberProtected(player int) bool { return g.aemberProtected(playe
 // Keys returns a player's forged key count.
 func (g *Game) Keys(player int) int { return g.State.Keys[player] }
 
-// CardsPlayedOfHouseThisTurn returns how many cards of a house a player has
-// played this turn.
-func (g *Game) CardsPlayedOfHouseThisTurn(player int, house House) int {
-	if int(house) >= NumHouses {
-		return 0
-	}
-	return g.State.CardsPlayedByHouseThisTurn[player][house]
+// PlayedThisTurn returns the cards a player has played this turn, in play order.
+func (g *Game) PlayedThisTurn(player int) []LocalID {
+	return cloneIDs(g.State.PlayedThisTurn[player].slice())
+}
+
+// DiscardedThisTurn returns the cards a player has discarded from hand this turn,
+// in discard order.
+func (g *Game) DiscardedThisTurn(player int) []LocalID {
+	return cloneIDs(g.State.DiscardedThisTurn[player].slice())
 }
 
 // KeyColors returns the colours of the keys a player has forged, in forge order.
@@ -275,7 +279,7 @@ func (g *Game) cannotPlayCard(player int) bool {
 		for _, id := range g.allInPlay(controller) {
 			limit := g.cat.def(id).Restricts.PlayCardLimit
 			if limit.Amount > 0 && limit.affects(controller, player) &&
-				g.State.CardsPlayedThisTurn[player] >= limit.Amount {
+				int(g.State.PlayedThisTurn[player].Count) >= limit.Amount {
 				return true
 			}
 		}

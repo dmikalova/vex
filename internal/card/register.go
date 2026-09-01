@@ -4,14 +4,17 @@ import (
 	"sort"
 
 	"github.com/dmikalova/vactrol/internal/cards/provenance"
+	"github.com/dmikalova/vactrol/internal/deckgen"
 	"github.com/dmikalova/vactrol/internal/engine"
 )
 
-// RegisteredCard is a built card together with the provenance tags it was
-// declared with (see Provenance).
+// RegisteredCard is a built card together with the provenance tags and
+// deck-generation metadata it was declared with (see Provenance, Template).
 type RegisteredCard struct {
-	Def        Definition
-	Provenance []provenance.Ref
+	Def          Definition
+	Provenance   []provenance.Ref
+	Profile      deckgen.GenerationProfile
+	Materializer deckgen.Materializer
 }
 
 // registry holds every card built with New. A set package declares each card as
@@ -39,8 +42,30 @@ func New(
 		o(&b)
 	}
 	d := engine.NewCard(name, house, ct, rarity, b.opts...)
-	registry = append(registry, RegisteredCard{Def: d, Provenance: b.prov})
+	registry = append(registry, RegisteredCard{
+		Def:          d,
+		Provenance:   b.prov,
+		Profile:      b.profile,
+		Materializer: b.materializer,
+	})
 	return d
+}
+
+// Build assembles a card Definition WITHOUT registering it, for a template's
+// Materializer to produce concrete variants at deck-generation time. It applies
+// only the gameplay options; provenance and generation options are ignored.
+func Build(
+	name string,
+	house engine.House,
+	ct engine.CardType,
+	rarity engine.Rarity,
+	opts ...Option,
+) Definition {
+	var b builder
+	for _, o := range opts {
+		o(&b)
+	}
+	return engine.NewCard(name, house, ct, rarity, b.opts...)
 }
 
 // Registered returns a copy of every registered card definition, sorted by house

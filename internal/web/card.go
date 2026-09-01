@@ -25,8 +25,16 @@ type cardView struct {
 	TypeIcon     string   // card-type icon asset stem
 	Stat         []app.UI // compact stat nodes (power, damage, Æmber… with icons)
 	Rules        string   // rules/ability text for the face
-	Kind         string   // card type label shown at the foot
-	Stunned      bool     // shows a stun token on the face
+	// Trait is the card's trait line (e.g. "Human • Knight"), shown in the body
+	// under the stat line and above the rules; "" when the card has no traits.
+	Trait string
+	Kind  string // card type label shown at the foot
+	// Rarity is the card's rarity mark at the foot: diamonds for Common…Special, a
+	// "+" for Connected, nothing for Fixed/none. Maverick shows the maverick emblem
+	// beside it (a card rehoused off its printed house).
+	Rarity   rarityMark
+	Maverick bool
+	Stunned  bool // shows a stun token on the face
 	// Enter pulses the whole card as it comes into play; StunFlash pulses the stun
 	// token as it is first applied. FlashOdd alternates their animation class each
 	// time so the CSS animation replays even on back-to-back triggers.
@@ -130,6 +138,9 @@ func (c *cardView) Render() app.UI {
 			app.If(len(c.Stat) > 0, func() app.UI {
 				return app.Div().Class("card-stat").Body(c.Stat...)
 			}),
+			app.If(c.Trait != "", func() app.UI {
+				return app.Div().Class("card-traits").Text(c.Trait)
+			}),
 			app.If(c.Rules != "", func() app.UI {
 				return app.Div().Class("card-rules").Text(c.Rules)
 			}),
@@ -137,6 +148,19 @@ func (c *cardView) Render() app.UI {
 		app.Div().Class("card-kind").Body(
 			app.If(c.TypeIcon != "", func() app.UI { return icon(c.TypeIcon, "icon-kind", "icon-outline") }),
 			app.Span().Text(c.Kind),
+			app.If(c.Maverick || c.Rarity != rarityNone, func() app.UI {
+				return app.Div().Class("card-marks").Body(
+					app.If(c.Maverick, func() app.UI { return icon("maverick", "icon-mark", "icon-outline") }),
+					app.If(c.Rarity.diamonds() > 0, func() app.UI {
+						return app.Div().
+							Class("rarity-diamonds").
+							Body(rarityDiamonds(c.Rarity.diamonds())...)
+					}),
+					app.If(c.Rarity.isConnected(), func() app.UI {
+						return app.Span().Class("rarity-plus").Text("+")
+					}),
+				)
+			}),
 		),
 	)
 }

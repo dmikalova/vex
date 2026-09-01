@@ -17,6 +17,10 @@ const (
 	// control an opponent's creatures and artifacts (battle line, artifact row) and
 	// archive cards from either deck (archives), so up to both 36-card decks combined.
 	wideCap = 72
+	// turnLogCap bounds one turn's play or discard log. A card can be played more
+	// than once in a turn (returned to hand and replayed), so this is not bounded by
+	// the deck; it sits well past any real turn and the log saturates there.
+	turnLogCap = 64
 )
 
 // CardCore is the mutable per-match state of a single card, stored purely by
@@ -80,6 +84,27 @@ type deckList struct {
 type wideList struct {
 	IDs   [wideCap]LocalID
 	Count uint8
+}
+
+// A turnLog records, in order, the cards a player played or discarded this turn.
+// Cards filter it themselves (by house, trait, type, …) rather than the engine
+// keeping a separate tally per axis. Unlike a zone the same card can appear more
+// than once, so it has its own cap and saturates instead of overflowing.
+type turnLog struct {
+	IDs   [turnLogCap]LocalID
+	Count uint8
+}
+
+func (l *turnLog) slice() []LocalID { return listSlice(l.IDs[:], l.Count) }
+func (l *turnLog) reset()           { *l = turnLog{} }
+
+// add appends an id, dropping it once the log is full — a turn past turnLogCap
+// cards is beyond anything a card counts.
+func (l *turnLog) add(id LocalID) {
+	if int(l.Count) == turnLogCap {
+		return
+	}
+	listAdd(l.IDs[:], &l.Count, id)
 }
 
 // listSlice returns the live ids as a read-only slice header into the backing array.
@@ -215,14 +240,13 @@ type GameState struct {
 	Lasting      [maxLasting]LastingEffect
 	LastingCount uint8
 
-	// CardsPlayedThisTurn[p] counts the cards player p has played this turn, reset by
-	// BeginTurn. It backs card-play limits such as Ember Imp's "your opponent cannot
-	// play more than 2 cards each turn."
-	CardsPlayedThisTurn [2]int
-	// CardsPlayedByHouseThisTurn[p][h] counts how many cards of house h player p has
-	// played this turn. It resets with CardsPlayedThisTurn and backs conditions such
-	// as Epic Quest's "7 or more Sanctum cards this turn."
-	CardsPlayedByHouseThisTurn [2][NumHouses]int
+	// PlayedThisTurn[p] and DiscardedThisTurn[p] record, in order, the cards player p
+	// has played and discarded this turn; BeginTurn clears both. Cards filter them
+	// themselves — by house for Epic Quest's "7 or more Sanctum cards this turn" and
+	// Giant Sloth — and the play log's length is the limit Ember Imp reads. Only hand
+	// discards are logged: rule "a player discarding a card" means from their hand.
+	PlayedThisTurn    [2]turnLog
+	DiscardedThisTurn [2]turnLog
 	// PlayPermissionsUsedThisTurn[p][h] counts how many off-house play permissions for
 	// house h player p has spent this turn (Witch of the Wilds). BeginTurn resets it.
 	PlayPermissionsUsedThisTurn [2][NumHouses]int

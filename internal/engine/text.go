@@ -457,27 +457,33 @@ func grantedText(m StaticModifier) []string {
 // the constant ability's Target ("each creature" when unset). Returns "" when the
 // card has no constant ability.
 func constantText(def *CardDefinition) string {
-	c := def.Constant
-	var parts []string
-	if c.PowerBonus != 0 {
-		parts = append(parts, fmt.Sprintf("%+d power", c.PowerBonus))
-	}
-	if c.ArmorBonus != 0 {
-		parts = append(parts, fmt.Sprintf("%+d armor", c.ArmorBonus))
-	}
-	for _, k := range c.Keywords {
-		parts = append(parts, strings.ToLower(string(k)))
-	}
-	if len(parts) == 0 {
+	if len(def.ConstantAbilities) == 0 {
 		return ""
 	}
-	who := capitalizeFirst(c.target().Text())
-	line := who + " gains " + strings.Join(parts, " and ")
-	if tgt := c.target(); tgt.Kind == TargetThisCreature && tgt.onFlank {
-		line += " while it is on a flank"
+	var lines []string
+	for _, c := range def.ConstantAbilities {
+		var parts []string
+		if c.PowerBonus != 0 {
+			parts = append(parts, fmt.Sprintf("%+d power", c.PowerBonus))
+		}
+		if c.ArmorBonus != 0 {
+			parts = append(parts, fmt.Sprintf("%+d armor", c.ArmorBonus))
+		}
+		for _, k := range c.Keywords {
+			parts = append(parts, strings.ToLower(string(k)))
+		}
+		if len(parts) == 0 {
+			continue
+		}
+		who := capitalizeFirst(c.target().Text())
+		line := who + " gains " + strings.Join(parts, " and ")
+		if tgt := c.target(); tgt.Kind == TargetThisCreature && tgt.onFlank {
+			line += " while it is on a flank"
+		}
+		line += "."
+		lines = append(lines, strings.ReplaceAll(line, SelfName, def.Name))
 	}
-	line += "."
-	return strings.ReplaceAll(line, SelfName, def.Name)
+	return strings.Join(lines, "\n")
 }
 
 // constantGrantedText renders the triggered abilities a card's constant ability
@@ -485,15 +491,19 @@ func constantText(def *CardDefinition) string {
 // `Each creature gains, "Destroyed: purge this creature."`. Self-references in the
 // granted ability resolve to "this creature", the creature that gains it.
 func constantGrantedText(def *CardDefinition) []string {
-	c := def.Constant
-	if len(c.Granted) == 0 {
+	if len(def.ConstantAbilities) == 0 {
 		return nil
 	}
-	subject := capitalizeFirst(c.target().Text())
-	lines := make([]string, 0, len(c.Granted))
-	for _, ab := range c.Granted {
-		body := abilityTextWithNames(RenderAbility(ab), "this creature", def.Name)
-		lines = append(lines, subject+` gains, "`+body+`"`)
+	var lines []string
+	for _, c := range def.ConstantAbilities {
+		if len(c.Granted) == 0 {
+			continue
+		}
+		subject := capitalizeFirst(c.target().Text())
+		for _, ab := range c.Granted {
+			body := abilityTextWithNames(RenderAbility(ab), "this creature", def.Name)
+			lines = append(lines, subject+` gains, "`+body+`"`)
+		}
 	}
 	return lines
 }
@@ -502,6 +512,12 @@ func constantGrantedText(def *CardDefinition) []string {
 // "You cannot play creatures." Returns nil when the card imposes none.
 func restrictionText(r Restrictions) []string {
 	var lines []string
+	if c := r.UseCondition; c != nil {
+		lines = append(
+			lines,
+			"You cannot use this card unless "+strings.TrimPrefix(c.CondText(), "if ")+".",
+		)
+	}
 	if r.Fighting {
 		lines = append(lines, "You cannot use creatures to fight.")
 	}

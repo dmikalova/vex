@@ -14,7 +14,7 @@ var HelpFromFutureSelf = card.New(
 	"Help from Future Self",
 	card.House.Logos,
 	card.Type.Tactic,
-	card.Rarity.Fixed,
+	card.Rarity.Connected,
 	card.Provenance(card.CotA, 111),
 	card.WithAemberBonus(1),
 	card.WithAbility(

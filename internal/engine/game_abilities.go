@@ -39,6 +39,13 @@ func (g *Game) usable(player int, id LocalID) error {
 	if !g.usableInActiveHouse(id) {
 		return ErrWrongHouse
 	}
+	def := g.cat.def(id)
+	if def.Restricts.UseCondition != nil {
+		ctx := &EffectContext{Resolver: g, Source: id, Controller: player}
+		if !def.Restricts.UseCondition.Met(ctx) {
+			return ErrCannotUse
+		}
+	}
 	return nil
 }
 
@@ -194,13 +201,14 @@ func (g *Game) hasTrigger(id LocalID, trigger Trigger) bool {
 	}
 	for player := 0; player < 2; player++ {
 		for _, grantor := range g.allInPlay(player) {
-			c := g.cat.def(grantor).Constant
-			if !g.constantAffects(grantor, c, id) {
-				continue
-			}
-			for _, ab := range c.Granted {
-				if ab.Trigger == trigger {
-					return true
+			for _, c := range g.cat.def(grantor).ConstantAbilities {
+				if !g.constantAffects(grantor, c, id) {
+					continue
+				}
+				for _, ab := range c.Granted {
+					if ab.Trigger == trigger {
+						return true
+					}
 				}
 			}
 		}
@@ -363,12 +371,13 @@ func (g *Game) triggerAbilities(src LocalID, trigger Trigger, it LocalID, hasIt 
 	}
 	for player := 0; player < 2; player++ {
 		for _, srcCard := range g.allInPlay(player) {
-			c := g.cat.def(srcCard).Constant
-			if len(c.Granted) == 0 || !g.constantAffects(srcCard, c, src) {
-				continue
-			}
-			for _, ab := range c.Granted {
-				fire(ab)
+			for _, c := range g.cat.def(srcCard).ConstantAbilities {
+				if len(c.Granted) == 0 || !g.constantAffects(srcCard, c, src) {
+					continue
+				}
+				for _, ab := range c.Granted {
+					fire(ab)
+				}
 			}
 		}
 	}
@@ -404,13 +413,14 @@ func (g *Game) destroyedAbilities(ids []LocalID) []triggeredAbility {
 		}
 		for player := 0; player < 2; player++ {
 			for _, grantor := range g.allInPlay(player) {
-				c := g.cat.def(grantor).Constant
-				if !g.constantAffects(grantor, c, id) {
-					continue
-				}
-				for _, ab := range c.Granted {
-					if ab.Trigger == TriggerDestroyed {
-						pending = append(pending, triggeredAbility{source: id, ability: ab})
+				for _, c := range g.cat.def(grantor).ConstantAbilities {
+					if !g.constantAffects(grantor, c, id) {
+						continue
+					}
+					for _, ab := range c.Granted {
+						if ab.Trigger == TriggerDestroyed {
+							pending = append(pending, triggeredAbility{source: id, ability: ab})
+						}
 					}
 				}
 			}

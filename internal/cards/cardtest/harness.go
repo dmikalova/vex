@@ -150,6 +150,27 @@ func (p *Player) Play(card any) {
 	}
 }
 
+// Discard discards a card from this player's hand, the turn action that sits
+// alongside playing and using a card.
+func (p *Player) Discard(card any) {
+	p.h.t.Helper()
+	_, id := p.h.findInHand(p.index, card)
+	p.h.run("Discard "+p.h.g.Name(id), func() error {
+		p.h.g.DiscardCardFromHand(p.index, id)
+		return nil
+	})
+}
+
+// ExpectCannotUse asserts that one of this player's cards may not be used right
+// now — the assertion for cards that gate their own use, such as Giant Sloth.
+func (p *Player) ExpectCannotUse(card any) {
+	p.h.t.Helper()
+	id := p.h.resolve(card, p.h.inPlayIDs(), "ExpectCannotUse")
+	if err := p.h.g.CanUse(p.index, id); err == nil {
+		p.h.t.Fatalf("%s may be used, want it blocked", p.h.g.Name(id))
+	}
+}
+
 // Reap reaps with one of this player's creatures.
 func (p *Player) Reap(card any) {
 	p.h.t.Helper()

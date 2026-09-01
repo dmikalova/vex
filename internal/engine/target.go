@@ -101,6 +101,9 @@ type Target struct {
 	hasMinPower   bool
 	exactPower    int
 	hasExactPower bool
+	// variablePower renders an exact-power qualifier as the placeholder "X" — a
+	// template face whose concrete variants each fix the number (Master of X).
+	variablePower bool
 	damaged       bool
 	undamaged     bool
 	stunned       bool
@@ -196,6 +199,15 @@ func (t Target) PowerAtLeast(minPower int) Target {
 func (t Target) PowerExactly(power int) Target {
 	t.exactPower = power
 	t.hasExactPower = true
+	return t
+}
+
+// PowerVariable narrows the target to a power the card fills in per instance,
+// rendering the placeholder "X" (the Master of X template face) until a concrete
+// variant sets the number with PowerExactly.
+func (t Target) PowerVariable() Target {
+	t.hasExactPower = true
+	t.variablePower = true
 	return t
 }
 
@@ -387,7 +399,11 @@ func (t Target) Text() string {
 		phrase += fmt.Sprintf(" with power %d or higher", t.minPower)
 	}
 	if t.hasExactPower {
-		phrase += fmt.Sprintf(" with power %d", t.exactPower)
+		if t.variablePower {
+			phrase += " with power X"
+		} else {
+			phrase += fmt.Sprintf(" with power %d", t.exactPower)
+		}
 	}
 	if t.withAember {
 		phrase += " with \u00c6mber on it"

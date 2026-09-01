@@ -50,7 +50,7 @@ func TestCanPlayRestrictions(t *testing.T) {
 			Restrictions{PlayCardLimit: PlayCardLimit{Player: Controller, Amount: 2}},
 		),
 	), 0)
-	g2.State.CardsPlayedThisTurn[0] = 2
+	g2.State.PlayedThisTurn[0].Count = 2
 	c2 := g2.AddToHand(testCreature("c2", 3), 0)
 	if err := g2.CanPlay(0, c2); err != ErrCardPlayLimit {
 		t.Errorf("limit reached = %v, want ErrCardPlayLimit", err)
@@ -100,7 +100,7 @@ func TestCardPlayLimit(t *testing.T) {
 	}
 }
 
-func TestCardsPlayedByHouseThisTurn(t *testing.T) {
+func TestPlayedThisTurn(t *testing.T) {
 	g := NewGame("Alice", "Bob", 1)
 	g.BeginTurn(0)
 	creature := g.AddToHand(NewCard("brobnar creature", Brobnar, Creature, Common, WithPower(3)), 0)
@@ -121,27 +121,33 @@ func TestCardsPlayedByHouseThisTurn(t *testing.T) {
 		t.Fatalf("PlayUpgrade: %v", err)
 	}
 
-	if got := g.CardsPlayedOfHouseThisTurn(0, Brobnar); got != 1 {
+	playsOf := func(house House) int {
+		n := 0
+		for _, id := range g.PlayedThisTurn(0) {
+			if g.House(id) == house {
+				n++
+			}
+		}
+		return n
+	}
+	if got := playsOf(Brobnar); got != 1 {
 		t.Errorf("Brobnar plays = %d, want 1", got)
 	}
-	if got := g.CardsPlayedOfHouseThisTurn(0, Sanctum); got != 2 {
+	if got := playsOf(Sanctum); got != 2 {
 		t.Errorf("Sanctum plays = %d, want 2", got)
 	}
-	if got := g.CardsPlayedOfHouseThisTurn(0, Mars); got != 1 {
+	if got := playsOf(Mars); got != 1 {
 		t.Errorf("Mars plays = %d, want 1", got)
 	}
-	if got := g.CardsPlayedOfHouseThisTurn(0, House(99)); got != 0 {
-		t.Errorf("unknown-house plays = %d, want 0", got)
-	}
-	if got := g.State.CardsPlayedThisTurn[0]; got != 4 {
+	if got := len(g.PlayedThisTurn(0)); got != 4 {
 		t.Errorf("total plays = %d, want 4", got)
 	}
 
 	g.BeginTurn(0)
-	if got := g.CardsPlayedOfHouseThisTurn(0, Sanctum); got != 0 {
+	if got := playsOf(Sanctum); got != 0 {
 		t.Errorf("Sanctum plays after reset = %d, want 0", got)
 	}
-	if got := g.State.CardsPlayedThisTurn[0]; got != 0 {
+	if got := len(g.PlayedThisTurn(0)); got != 0 {
 		t.Errorf("total plays after reset = %d, want 0", got)
 	}
 }
@@ -268,7 +274,7 @@ func TestPlayCardLimitTargets(t *testing.T) {
 					Restrictions{PlayCardLimit: PlayCardLimit{Player: tc.player, Amount: 2}},
 				),
 			), 0)
-			g.State.CardsPlayedThisTurn[tc.limited] = 2
+			g.State.PlayedThisTurn[tc.limited].Count = 2
 			if !g.cannotPlayCard(tc.limited) {
 				t.Errorf("player %d should be limited", tc.limited)
 			}

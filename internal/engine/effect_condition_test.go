@@ -69,11 +69,19 @@ func TestCardsPlayed(t *testing.T) {
 	if cond.CountText() != "Sanctum card you have played this turn" {
 		t.Errorf("count text = %q", cond.CountText())
 	}
-	g.State.CardsPlayedByHouseThisTurn[0][Sanctum] = 6
+	playSanctum := func(n int) {
+		g.State.PlayedThisTurn[0].reset()
+		for range n {
+			g.State.PlayedThisTurn[0].add(
+				g.AddToHand(NewCard("sanctum card", Sanctum, Tactic, Common), 0),
+			)
+		}
+	}
+	playSanctum(6)
 	if cond.Met(ctx) || cond.Value(ctx) != 6 {
 		t.Errorf("six Sanctum cards: met=%v value=%d, want false/6", cond.Met(ctx), cond.Value(ctx))
 	}
-	g.State.CardsPlayedByHouseThisTurn[0][Sanctum] = 7
+	playSanctum(7)
 	if !cond.Met(ctx) {
 		t.Error("seven Sanctum cards should satisfy the condition")
 	}

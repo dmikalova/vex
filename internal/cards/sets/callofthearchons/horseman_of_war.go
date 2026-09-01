@@ -20,7 +20,7 @@ var HorsemanOfWar = card.New(
 	"Horseman of War",
 	card.House.Sanctum,
 	card.Type.Creature,
-	card.Rarity.FIXED,
+	card.Rarity.Connected,
 	card.Provenance(card.CotA, 249),
 	card.WithPower(5),
 	card.WithTraits("Horseman", "Spirit"),

@@ -15,7 +15,7 @@ var HorsemanOfDeath = card.New(
 	"Horseman of Death",
 	card.House.Sanctum,
 	card.Type.Creature,
-	card.Rarity.Fixed,
+	card.Rarity.Connected,
 	card.Provenance(card.CotA, 246),
 	card.WithPower(5),
 	card.WithTraits("Horseman", "Spirit"),

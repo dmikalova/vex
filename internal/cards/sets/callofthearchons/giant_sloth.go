@@ -1,13 +1,10 @@
-//go:build todo
-
 package callofthearchons
 
-import "github.com/dmikalova/vactrol/internal/card"
+import (
+	"github.com/dmikalova/vactrol/internal/card"
+)
 
-// GiantSloth
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Giant Sloth
 //
 //	House:  Untamed
 //	Type:   Creature
@@ -16,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	You cannot use this card unless you have discarded an Untamed card from your hand this turn.
-//	Action: Gain 3 Aember.
+//	Action: Gain 3 Æmber.
 var GiantSloth = card.New(
 	"Giant Sloth",
 	card.House.Untamed,
@@ -25,5 +22,16 @@ var GiantSloth = card.New(
 	card.Provenance(card.CotA, 354),
 	card.WithPower(6),
 	card.WithTraits("Beast"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithRestrictions(card.Restrictions{
+		UseCondition: card.CardsDiscarded{
+			Player: card.Controller,
+			House:  card.House.Untamed,
+			Amount: 1,
+		},
+	}),
+	card.WithAbility(
+		card.Trigger.Action, card.GainAember{
+			Player: card.Controller,
+			Amount: 3,
+		}),
 )
