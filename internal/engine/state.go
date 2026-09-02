@@ -31,6 +31,10 @@ type CardCore struct {
 	// DamageImmune, while set, prevents any damage from being dealt to this creature.
 	// It lasts until end of turn (EndTurn clears it) — Shield of Justice, Protectrix.
 	DamageImmune bool
+	// ElusiveUsedThisTurn records that this creature has already been chosen to be
+	// fought this turn, so its Elusive keyword no longer stops pending fight damage.
+	// BeginTurn clears it for every creature in play.
+	ElusiveUsedThisTurn bool
 	// TimesUsedThisTurn counts how many times this creature has been USED this
 	// turn — to reap, fight, or use an Action: ability. BeginTurn clears every
 	// creature's count; leaving play clears it through resetCore.
@@ -187,7 +191,7 @@ type GameState struct {
 
 	// KeyColors[p] holds the colour of each key player p has forged, in forge order;
 	// entries [0:Keys[p]] are set, the rest are KeyColorNone. A player picks the
-	// colour as they forge (see chooseKeyColor).
+	// colour as they forge (see pickKeyColor).
 	KeyColors [2][KeysToWin]KeyColor
 
 	// Chains[p] is player p's chain count. Chains penalize a player by reducing how
@@ -206,21 +210,29 @@ type GameState struct {
 	// effect (Fogbank) arms the bar, BeginTurn promotes it to active for the
 	// affected player, and EndTurn lifts it — so it always lands on that player's
 	// own next turn, whoever plays in between.
-	CannotFight     [2]bool
-	CannotFightNext [2]bool
+	CannotFight     [2]Bar[bool]
+	CannotFightNext [2]Bar[bool]
 
 	// Play-type bars. CannotPlayTypeThis[p] blocks player p from playing cards of
 	// that type this turn; CannotPlayTypeNext[p] arms that block for p's next turn
 	// (Lifeward bars creatures, Scrambler Storm bars action cards). The zero value
 	// (an unset CardType) bars nothing. Like the fight bar, an effect arms it and
 	// BeginTurn promotes it to that player's own next turn.
-	CannotPlayTypeThis [2]CardType
-	CannotPlayTypeNext [2]CardType
+	CannotPlayTypeThis [2]Bar[CardType]
+	CannotPlayTypeNext [2]Bar[CardType]
 
-	// SkipForgeNext[p] makes player p skip their "forge a key" step at the start of
-	// their next turn (Miasma). BeginTurn consumes it, so it lands on that player's
-	// own next turn.
-	SkipForgeNext [2]bool
+	// Use bars. CannotUse[p] blocks player p from using any card this turn — reaping,
+	// fighting, or an "Action:" ability (Skippy Timehog); playing and discarding are
+	// untouched. CannotUseNext[p] arms that block for p's next turn, and like the
+	// fight bar BeginTurn promotes it and EndTurn lifts it.
+	CannotUse     [2]Bar[bool]
+	CannotUseNext [2]Bar[bool]
+
+	// SkipForge bars. SkipForgeNext[p] makes player p skip their "forge a key" step
+	// at the start of their next turn (Miasma); BeginTurn promotes it to SkipForge[p]
+	// and forges accordingly, so it lands on that player's own next turn.
+	SkipForge     [2]Bar[bool]
+	SkipForgeNext [2]Bar[bool]
 
 	// MayFightHouse[p] is a house whose creatures player p may use to fight this
 	// turn even when it is not the active house — Brothers in Battle's "each
@@ -228,10 +240,31 @@ type GameState struct {
 	// nothing. EndTurn clears it, so the grant lasts only the turn it was made.
 	MayFightHouse [2]House
 
+	// MayFightAny[p] lets every creature player p controls fight this turn whatever
+	// its house — Follow the Leader, Horseman of War, the unrestricted form of the
+	// MayFightHouse grant. EndTurn clears it.
+	MayFightAny [2]bool
+
 	// MayUseHouse[p] is a house whose creatures player p may fully use this turn
 	// (fight, reap, or Action:) even when it is not the active house — Sigil of
 	// Brotherhood, Ritual of the Hunt. HouseNone grants nothing; EndTurn clears it.
 	MayUseHouse [2]House
+
+	// TurnHistory holds the small tallies of what each player did during a turn —
+	// several cards ask that rather than what is on the board ("if your opponent
+	// forged a key on their previous turn", "for each enemy creature destroyed in a
+	// fight this turn"). Keeping them as one array indexed by TurnStat leaves the
+	// state flat and comparable, and makes a new tally one more enum value rather
+	// than another pair of fields. EndTurn rolls each "this turn" tally into its
+	// "last turn" twin, so "their previous turn" always means that player's own last
+	// completed turn.
+	TurnHistory [2][turnStatCount]int8
+
+	// KeywordsLost is the set of keywords every creature in play has lost for the
+	// remainder of the turn — Sniffer takes elusive away from each creature. It is a
+	// bitmask over keywordBit so the state stays flat and comparable; EndTurn clears
+	// it.
+	KeywordsLost uint8
 
 	// Lasting holds the "for the remainder of the turn" effects active now (Full
 	// Moon, Charge!, Crystal Hive reactions; Dimension Door's replacement), fired or
@@ -255,8 +288,8 @@ type GameState struct {
 	// turn (Control the Weak); ForcedHouseNext[p] arms that for p's next turn.
 	// BeginTurn promotes the armed house to active for the player, so it lands on
 	// their own next turn. HouseNone means no house is forced.
-	ForcedHouse     [2]House
-	ForcedHouseNext [2]House
+	ForcedHouse     [2]Bar[House]
+	ForcedHouseNext [2]Bar[House]
 
 	// FightDamageRedirect is the creature a "Before Fight" ability chose to receive
 	// the attacker's fight damage instead of the defender (Gabos Longarms). It is
@@ -295,6 +328,9 @@ func (c *catalog) add(def *CardDefinition, owner int) LocalID {
 	c.owners = append(c.owners, uint8(owner))
 	return id
 }
+
+// hasRoom reports whether another card can still be registered in this match.
+func (c *catalog) hasRoom() bool { return len(c.defs) < maxCards }
 
 // def returns the definition for an id.
 func (c *catalog) def(id LocalID) *CardDefinition { return c.defs[id] }

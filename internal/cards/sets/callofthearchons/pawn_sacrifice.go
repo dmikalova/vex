@@ -1,20 +1,15 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// PawnSacrifice
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Pawn Sacrifice
 //
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Sacrifice a friendly creature. If you do, deal 3 Damage each to 2 creatures.
+//	Play: Destroy a friendly creature -> deal 3 damage to a creature and deal 3 damage to a different creature.
 var PawnSacrifice = card.New(
 	"Pawn Sacrifice",
 	card.House.Shadows,
@@ -22,5 +17,14 @@ var PawnSacrifice = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 279),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Then{
+			First: card.Destroy{Target: card.Target.FriendlyCreature},
+			Result: card.DealDamage{
+				Spread: card.DifferentCreatures{
+					First:  3,
+					Second: 3,
+				},
+			},
+		}),
 )

@@ -1,20 +1,16 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// IncubationChamber
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Incubation Chamber
 //
 //	House:  Mars
 //	Type:   Artifact
 //	Rarity: Rare
 //	Traits: Location
 //
-//	Omni: Reveal a Mars creature from your hand. If you do, archive it.
+//	Versatile.
+//	Action: Reveal a Mars creature from your hand and archive it.
 var IncubationChamber = card.New(
 	"Incubation Chamber",
 	card.House.Mars,
@@ -22,5 +18,12 @@ var IncubationChamber = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 186),
 	card.WithTraits("Location"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Versatile),
+	card.WithAbility(
+		card.Trigger.Action, card.ArchiveFromHand{
+			Count:    1,
+			Type:     card.Type.Creature,
+			House:    card.House.Mars,
+			Revealed: true,
+		}),
 )

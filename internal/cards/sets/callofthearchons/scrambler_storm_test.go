@@ -24,7 +24,7 @@ func TestScramblerStorm(t *testing.T) {
 
 		h.P1.Play(ScramblerStorm)
 
-		if got := h.Game().State.CannotPlayTypeNext[1]; got != engine.Tactic {
+		if got := h.Game().State.CannotPlayTypeNext[1].Value; got != engine.Tactic {
 			t.Errorf("opponent's armed play bar = %q, want Tactic", got)
 		}
 	})

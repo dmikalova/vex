@@ -2,6 +2,7 @@ package web
 
 import (
 	"strings"
+	"unicode/utf8"
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
@@ -15,7 +16,10 @@ import (
 type cardView struct {
 	app.Compo
 
-	ID       engine.LocalID
+	ID engine.LocalID
+	// DOMID names the card's element so a later render can find it in the page (the
+	// play animation measures where the card landed); "" leaves it unnamed.
+	DOMID    string
 	Title    string
 	HouseCls string // house-derived border/background classes
 	Emblem   string // house emblem asset stem ("" for none)
@@ -35,15 +39,30 @@ type cardView struct {
 	Rarity   rarityMark
 	Maverick bool
 	Stunned  bool // shows a stun token on the face
-	// Enter pulses the whole card as it comes into play; StunFlash pulses the stun
-	// token as it is first applied. FlashOdd alternates their animation class each
-	// time so the CSS animation replays even on back-to-back triggers.
-	Enter      bool
-	StunFlash  bool
-	FlashOdd   bool
-	Selected   bool
-	Targetable bool
-	Dimmed     bool
+	// Exhausted shows an exhausted token on the face. Rotating the card the way a
+	// physical one turns would break the strip's grid, so the token stands in.
+	Exhausted bool
+	// Bar lists the keywords that get a coloured stripe along the card's top edge
+	// (Taunt, Elusive, Hazardous…), since those change how the card can be attacked
+	// and are worth seeing without reading the rules text.
+	Bar []engine.Keyword
+	// Enter pulses the whole card as it comes into play; Fight shakes it as it
+	// attacks or is attacked; Hit washes it red as it takes damage; StunFlash and
+	// ExhaustFlash pulse their token as it is first applied. FlashOdd alternates
+	// their animation class each time so the CSS animation replays even on
+	// back-to-back triggers.
+	Enter bool
+	Fight bool
+	Hit   bool
+	// FightDown lunges the fight animation downward instead of up, for the cards in
+	// the top battleline, so the two combatants move towards each other.
+	FightDown    bool
+	StunFlash    bool
+	ExhaustFlash bool
+	FlashOdd     bool
+	Selected     bool
+	Targetable   bool
+	Dimmed       bool
 	// OnActivate is called with ID when the card is clicked; nil means the card is
 	// not clickable. The id is passed rather than captured in the handler because
 	// go-app compares event handlers by function pointer and would not refresh a
@@ -104,9 +123,17 @@ func (c *cardView) Render() app.UI {
 		ifCls(clickable && !c.Targetable, "card--clickable"),
 		ifCls(c.Enter && !c.FlashOdd, "card--enter-a"),
 		ifCls(c.Enter && c.FlashOdd, "card--enter-b"),
+		ifCls(c.Fight && !c.FlashOdd, "card--fight-a"),
+		ifCls(c.Fight && c.FlashOdd, "card--fight-b"),
+		ifCls(c.Fight && c.FightDown, "card--fight-down"),
+		ifCls(c.Hit && !c.FlashOdd, "card--hit-a"),
+		ifCls(c.Hit && c.FlashOdd, "card--hit-b"),
 	)
 
 	div := app.Div().Class(cls)
+	if c.DOMID != "" {
+		div = div.ID(c.DOMID)
+	}
 	if c.Draggable {
 		div = div.Draggable(true).OnDragStart(c.onDragStart).OnDragEnd(c.onDragEnd)
 	}
@@ -118,6 +145,16 @@ func (c *cardView) Render() app.UI {
 	}
 
 	return div.Body(
+		app.If(len(c.Bar) > 0, func() app.UI {
+			return app.Div().Class("card-keybar").Body(
+				app.Range(c.Bar).Slice(func(i int) app.UI {
+					kw := string(c.Bar[i])
+					return app.Div().
+						Class("card-keybar-seg card-keybar--" + strings.ToLower(kw)).
+						Title(kw)
+				}),
+			)
+		}),
 		app.Div().Class("card-name").Body(
 			app.If(c.Emblem != "", func() app.UI {
 				return icon(
@@ -127,16 +164,29 @@ func (c *cardView) Render() app.UI {
 					ifCls(c.HouseChanged, "icon-house--changed"),
 				)
 			}),
-			app.Span().Class("card-name-text").Text(c.Title),
-			app.If(c.Stunned, func() app.UI {
-				return icon("stun", "icon-token",
-					ifCls(c.StunFlash && !c.FlashOdd, "icon--pulse-a"),
-					ifCls(c.StunFlash && c.FlashOdd, "icon--pulse-b"))
-			}),
+			app.Span().Class(cx("card-name-text", squeezeClass(c.Title))).Text(c.Title),
 		),
 		app.Div().Class("card-body").Body(
-			app.If(len(c.Stat) > 0, func() app.UI {
-				return app.Div().Class("card-stat").Body(c.Stat...)
+			app.If(len(c.Stat) > 0 || c.Stunned || c.Exhausted, func() app.UI {
+				return app.Div().Class("card-stat").Body(
+					app.Range(c.Stat).Slice(func(i int) app.UI { return c.Stat[i] }),
+					// Stun and exhaustion read as more of the card's current condition, so
+					// they sit at the end of the stat line rather than in its name banner.
+					app.If(c.Stunned || c.Exhausted, func() app.UI {
+						return app.Div().Class("card-tokens").Body(
+							app.If(c.Stunned, func() app.UI {
+								return icon("stun", "icon-token", "icon-outline",
+									ifCls(c.StunFlash && !c.FlashOdd, "icon--pulse-a"),
+									ifCls(c.StunFlash && c.FlashOdd, "icon--pulse-b"))
+							}),
+							app.If(c.Exhausted, func() app.UI {
+								return icon("exhausted", "icon-token", "icon-outline",
+									ifCls(c.ExhaustFlash && !c.FlashOdd, "icon--pulse-a"),
+									ifCls(c.ExhaustFlash && c.FlashOdd, "icon--pulse-b"))
+							}),
+						)
+					}),
+				)
 			}),
 			app.If(c.Trait != "", func() app.UI {
 				return app.Div().Class("card-traits").Text(c.Trait)
@@ -163,6 +213,22 @@ func (c *cardView) Render() app.UI {
 			}),
 		),
 	)
+}
+
+// squeezeClass picks how hard to condense a title that would otherwise be cut
+// off. The banner is a fixed width, so the step is chosen from the title's length
+// rather than measured — close enough at these few sizes, and it costs no layout
+// read per card.
+func squeezeClass(title string) string {
+	switch n := utf8.RuneCountInString(title); {
+	case n > 26:
+		return "card-name-text--squeeze-3"
+	case n > 22:
+		return "card-name-text--squeeze-2"
+	case n > 18:
+		return "card-name-text--squeeze-1"
+	}
+	return ""
 }
 
 // cx joins non-empty class fragments with spaces.

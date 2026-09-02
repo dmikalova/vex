@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Cyborg • Scientist
 //
-//	Play: For each key your opponent has forged, gain 1 Æmber.
+//	Play: For each forged key your opponent has, gain 1 Æmber.
 var DrEscotera = card.New(
 	"Dr. Escotera",
 	card.House.Logos,

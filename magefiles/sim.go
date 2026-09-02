@@ -15,7 +15,7 @@ import (
 //
 // Set FUZZTIME to bound the run (a Go duration or an "Nx" count); it defaults to
 // 60s. The generated corpus lives in the Go build cache, not the repo — run
-// `go clean -fuzzcache` to reset it.
+// `mage fuzzClean` to reset it.
 func Fuzz() error {
 	fuzztime := os.Getenv("FUZZTIME")
 	if fuzztime == "" {
@@ -24,6 +24,13 @@ func Fuzz() error {
 	return sh.RunV("go", "test", "-tags", "assert",
 		"-run", "^$", "-fuzz", "^FuzzPlay$", "-fuzztime", fuzztime,
 		"./internal/sim")
+}
+
+// FuzzClean discards the generated fuzz corpus in the Go build cache, for when a
+// stale corpus keeps steering the fuzzer down the same paths. The checked-in seed
+// corpus under internal/sim/testdata is untouched.
+func FuzzClean() error {
+	return sh.RunV("go", "clean", "-fuzzcache")
 }
 
 // Soak runs the long-running game soak (internal/sim.TestSoak) with the assert

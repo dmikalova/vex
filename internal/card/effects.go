@@ -19,6 +19,8 @@ type (
 type (
 	// GainAember moves Æmber from the common supply into a player's pool.
 	GainAember = engine.GainAember
+	// MoveAemberFromPool banks Æmber out of your pool onto a card.
+	MoveAemberFromPool = engine.MoveAemberFromPool
 	// LoseAember returns Æmber from a player's pool to the supply (see By: Half, AllBut).
 	LoseAember = engine.LoseAember
 	// StealAember moves Æmber from the opponent's pool into yours.
@@ -67,6 +69,8 @@ type (
 	PurgeFromHand = engine.PurgeFromHand
 	// PurgeCreature purges each creature its Target selects from play.
 	PurgeCreature = engine.PurgeCreature
+	// LoseKeyword takes a keyword from each creature for the remainder of the turn.
+	LoseKeyword = engine.LoseKeyword
 	// PurgeCreatureFromHand purges a chosen creature from your hand and puts it in context.
 	PurgeCreatureFromHand = engine.PurgeCreatureFromHand
 )
@@ -125,6 +129,12 @@ type (
 	DiscardRandomFromHand = engine.DiscardRandomFromHand
 	// DiscardTopOfDeck discards the top card of a deck and puts it in context.
 	DiscardTopOfDeck = engine.DiscardTopOfDeck
+	// DiscardDeckUntil discards from the top of your deck until it turns up a
+	// card the filters admit, putting that card in context.
+	DiscardDeckUntil = engine.DiscardDeckUntil
+	// PutDiscardedIntoHand puts the card in context from the discard pile into
+	// its owner's hand.
+	PutDiscardedIntoHand = engine.PutDiscardedIntoHand
 	// DiscardTopOfEachDeck discards the top card of each player's deck.
 	DiscardTopOfEachDeck = engine.DiscardTopOfEachDeck
 	// ForEachDiscarded resolves Do once for each card a preceding discard removed.
@@ -169,6 +179,9 @@ type (
 type (
 	// Sequence resolves several effects in order.
 	Sequence = engine.Sequence
+	// Repeat resolves an effect once for each of a running count, choosing
+	// afresh each time.
+	Repeat = engine.Repeat
 	// Sentence renders its child as a complete sentence within a Sequence.
 	Sentence = engine.Sentence
 	// ChooseOne offers the controller a set of alternative effects to pick from.
@@ -195,6 +208,8 @@ type (
 	OpponentAember = engine.OpponentAember
 	// CardsDestroyedFewerThan is met when fewer than Amount cards were destroyed this way.
 	CardsDestroyedFewerThan = engine.CardsDestroyedFewerThan
+	// CountIs gates on any Count compared against a threshold (Count + Is + Amount).
+	CountIs = engine.CountIs
 	// ControlsMoreCreatures is met while you control more creatures than the opponent.
 	ControlsMoreCreatures = engine.ControlsMoreCreatures
 	// Overwhelmed is met while the opponent controls more creatures than you.
@@ -211,9 +226,9 @@ type (
 
 // Æmber-pool comparisons for card.OpponentAember{Is: ..., Amount: n}.
 var (
-	// AtLeast is met when the opponent's pool holds at least Amount Æmber.
+	// AtLeast is met when the quantity is at least Amount.
 	AtLeast = engine.AtLeast
-	// Exactly is met when the opponent's pool holds exactly Amount Æmber.
+	// Exactly is met when the quantity is exactly Amount.
 	Exactly = engine.Exactly
 	// MoreThanYou is met when the opponent's pool holds more Æmber than yours.
 	MoreThanYou = engine.MoreThanYou
@@ -236,22 +251,38 @@ type (
 	InPlay = engine.InPlay
 	// CardsPlayed counts the cards of a house a player has played this turn.
 	CardsPlayed = engine.CardsPlayed
+	// CreaturesUsed counts the creatures a player has used this turn.
+	CreaturesUsed = engine.CreaturesUsed
 	// CardsDiscarded is a Condition met when a player has discarded cards of a house this turn.
 	CardsDiscarded = engine.CardsDiscarded
 	// OpponentForgedKeys counts the keys the opponent has forged.
 	OpponentForgedKeys = engine.OpponentForgedKeys
+	// TurnCount counts one of the engine's turn-history tallies (Player + Of).
+	TurnCount = engine.TurnCount
+	// ForgedKey gates on whether a player forged a key this turn or their previous one.
+	ForgedKey = engine.ForgedKey
 	// OpponentExcessCreatures counts how many more creatures the opponent controls.
 	OpponentExcessCreatures = engine.OpponentExcessCreatures
 	// CardsInArchives counts the cards in a player's archives.
 	CardsInArchives = engine.CardsInArchives
 	// CardsRevealed counts the cards the most recent Reveal showed.
 	CardsRevealed = engine.CardsRevealed
+	// CardsDestroyed counts the cards the most recent destruction removed "this way".
+	CardsDestroyed = engine.CardsDestroyed
+	// CardsPurged counts the creatures the most recent purge removed "this way".
+	CardsPurged = engine.CardsPurged
 	// CardsInHand counts the cards in a player's hand of a referenced house.
 	CardsInHand = engine.CardsInHand
 	// CreaturesHealed counts the creatures the most recent Heal healed.
 	CreaturesHealed = engine.CreaturesHealed
 	// DamageHealed counts the damage the most recent Heal removed (for DealDamage.AmountFrom).
 	DamageHealed = engine.DamageHealed
+	// UnforgedKeys counts the keys a player has still to forge.
+	UnforgedKeys = engine.UnforgedKeys
+	// AemberOnThis counts the Æmber sitting on the source card.
+	AemberOnThis = engine.AemberOnThis
+	// CopiesInDiscard counts the copies of this card in your discard pile.
+	CopiesInDiscard = engine.CopiesInDiscard
 )
 
 // Lasting "for the remainder of the turn" effects.
@@ -272,6 +303,8 @@ type (
 	CannotFight = engine.CannotFight
 	// CannotPlay bars a player from playing cards of a Type for a Duration.
 	CannotPlay = engine.CannotPlay
+	// CannotUse bars a player from reaping, fighting, or using Action: abilities.
+	CannotUse = engine.CannotUse
 	// SkipForgeStep makes a player skip their forge-a-key step next turn.
 	SkipForgeStep = engine.SkipForgeStep
 	// PreventDamage marks the targeted creatures immune to damage for a Duration.
@@ -280,12 +313,16 @@ type (
 	MayUseFriendlyHouse = engine.MayUseFriendlyHouse
 	// GrantFightForChosenHouse lets your chosen-house creatures fight this turn.
 	GrantFightForChosenHouse = engine.GrantFightForChosenHouse
+	// GrantFightAnyHouse lets every friendly creature fight this turn.
+	GrantFightAnyHouse = engine.GrantFightAnyHouse
 	// BelongToHouse makes the targeted creatures belong to a House for a Duration.
 	BelongToHouse = engine.BelongToHouse
 	// ForceOpponentActiveHouse forces the opponent's active house next turn.
 	ForceOpponentActiveHouse = engine.ForceOpponentActiveHouse
 	// ForgeKey has the controller forge a key outside the normal step.
 	ForgeKey = engine.ForgeKey
+	// UnforgeKey takes a forged key back off a player (Key Hammer).
+	UnforgeKey = engine.UnforgeKey
 	// GiveRemainingAemberAfterOpponentForgeKey arms Interdimensional Graft's delayed gift.
 	GiveRemainingAemberAfterOpponentForgeKey = engine.GiveRemainingAemberAfterOpponentForgeKey
 	// GainChains gives a player chains (a draw penalty).

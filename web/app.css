@@ -43,6 +43,14 @@ body {
 
 /* ---- app shell: full-width board on the left, fixed sidebar on the right ---- */
 .app {
+  /* one gap for every pair of cards, and for a card against whatever is next to
+     it — a player bar, a row label, the board's edge */
+  --board-gap: 0.5rem;
+  /* room for the 2px selection ring, absorbed again by the card strip's negative
+     margins so it does not widen the gap it sits in */
+  --ring: 3px;
+  /* the tallest a card is drawn, and so the tallest a board row grows */
+  --card-h: 12rem;
   display: flex;
   height: 100vh; /* fallback for browsers without dvh */
   height: 100dvh;
@@ -74,23 +82,31 @@ body {
   color: #8b888f;
 }
 .board-area {
-  display: flex;
+  display: grid;
+  /* a player bar, four play rows (the midline between the battlelines), the other
+     player bar, and the hand. The five card rows are one shared set of tracks, so
+     a squeezed board shrinks a hand card exactly as much as a board card. They
+     stop growing at the card's own height, so spare height collects once around
+     the whole board (align-content) instead of as slack inside every row */
+  grid-template-rows:
+    auto minmax(0, var(--card-h)) minmax(0, var(--card-h)) auto
+    minmax(0, var(--card-h)) minmax(0, var(--card-h))
+    auto minmax(0, var(--card-h));
+  align-content: center;
   flex: 1 1 0%;
   min-width: 0;
-  flex-direction: column;
-  gap: 0.25rem;
+  gap: var(--board-gap);
   overflow: hidden;
   padding: 0.75rem;
 }
 /* The play rows between the two score pills; also the drop zone for hand cards.
-   flex-grow matches its four card rows so each is the same height as the single
-   hand row (flex-grow 1) below. */
+   It takes its four card rows and the midline from the board's own tracks, so
+   its rows line up with the hand row rather than being divided up separately. */
 .play-zone {
-  display: flex;
-  flex: 4 1 0%;
+  display: grid;
+  grid-row: 2 / span 5;
+  grid-template-rows: subgrid;
   min-height: 0;
-  flex-direction: column;
-  gap: 0.25rem;
 }
 .play-zone--drop {
   outline: 2px dashed rgb(252 229 102 / 0.5);
@@ -107,32 +123,31 @@ body {
   border-left: 1px solid #363537;
   background-color: #1f1f1e;
 }
-/* floating button to reopen the sidebar once it is collapsed */
+/* floating button to reopen the sidebar once it is collapsed. It wears the same
+   .btn-nav .btn-icon box as the hide button it replaces, so the pair are the same
+   size, and lines up with the top player bar: same top edge, same inset from the
+   right as the bars have from the board's edge. */
 .sidebar-reveal {
   position: fixed;
-  top: 0.5rem;
-  right: 0.5rem;
+  top: 0.75rem;
+  right: 0.75rem;
   z-index: 20;
-  border: 0;
-  border-radius: 0.25rem;
-  padding: 0.375rem 0.55rem;
-  font-size: 1rem;
-  line-height: 1;
-  cursor: pointer;
-  background-color: #363537;
-  color: #f7f1ff;
 }
-.sidebar-reveal:hover {
-  background-color: #525053;
+/* the reveal button floats over the top-right corner, so the top player bar
+   gives way to it rather than running underneath */
+.app--sidebar-collapsed .board-area > .score-pill:first-child {
+  margin-right: 2.5rem;
 }
 
 /* ---- sidebar: brand, log (grows), details, controls ---- */
+/* the top padding matches the board's, so the brand bar's buttons start on the
+   same line as the top player bar across the sidebar's edge */
 .brandbar {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 0.3rem;
-  padding: 0.5rem 0.6rem;
+  padding: 0.75rem 0.6rem 0.5rem;
   border-bottom: 1px solid #363537;
 }
 .brand-title {
@@ -140,6 +155,10 @@ body {
   font-weight: 700;
   letter-spacing: -0.025em;
   color: #7bd88f;
+}
+.brand-version {
+  font-size: 0.6875rem;
+  color: #69676c;
 }
 /* the build tag beside the title: small, faint, monospace so it reads as a hash */
 .brand-version {
@@ -197,12 +216,18 @@ body {
 .hud {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
   gap: 0.5rem;
   padding: 0.375rem 0.75rem;
-  border-bottom: 1px solid #363537;
+  border: 1px solid transparent;
+  border-bottom-color: #363537;
   font-size: 0.8125rem;
   color: #a8a5ac;
+  white-space: nowrap;
+}
+/* while a house is active the whole line wears its colour */
+.hud--house {
+  border-color: var(--nm);
+  background-color: color-mix(in srgb, var(--nm) 16%, transparent);
 }
 .hud-turn {
   font-weight: 700;
@@ -213,15 +238,21 @@ body {
   color: #fce566;
 }
 .hud-step {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: #8b888f;
 }
 .hud-house {
   display: inline-flex;
   align-items: center;
-  gap: 0.2rem;
+  flex: 0 0 auto;
   margin-left: auto;
   color: var(--nm);
-  font-weight: 600;
+}
+.hud-house .icon {
+  width: 1.3em;
+  height: 1.3em;
 }
 
 .log {
@@ -237,7 +268,6 @@ body {
   flex: 1 1 0%;
   min-height: 0;
   flex-direction: column;
-  gap: 0.125rem;
   overflow-y: auto;
   font-size: 0.75rem;
   color: #8b888f;
@@ -253,7 +283,9 @@ body {
 }
 /* the log is a flat list of lines; each carries its action group's tint and the
    spacing that used to come from a wrapping bubble, so already-logged lines never
-   change structure (only new lines append) and go-app cannot leave stale nodes. */
+   change structure (only new lines append) and go-app cannot leave stale nodes.
+   Lines within a group touch, so an action reads as a single bubble; only the
+   group's first and last line carry the gap and the rounded edges. */
 .log-line {
   padding: 0.0625rem 0.375rem;
   border-left: 2px solid transparent;
@@ -273,6 +305,7 @@ body {
   border-top-right-radius: 0.2rem;
 }
 .log-line--group-end {
+  margin-bottom: 0.25rem;
   padding-bottom: 0.2rem;
   border-bottom-left-radius: 0.2rem;
   border-bottom-right-radius: 0.2rem;
@@ -406,6 +439,43 @@ body {
 .btn-primary:hover {
   background-color: #96e3a6;
 }
+/* the flank buttons point the way the card would go, so which end of the
+   battleline each one means is read from the shape. Each is one clipped polygon
+   rather than a rectangle plus a rotated square: the diagonal edges are then a
+   single antialiased path, with no seam where a head met a body. */
+.btn-flank {
+  /* how far the head reaches back from the tip */
+  --flank-head: 1.1rem;
+  border-radius: 0;
+  padding-block: 0.35rem;
+}
+.btn-flank--left {
+  clip-path: polygon(
+    0 50%,
+    var(--flank-head) 0,
+    100% 0,
+    100% 100%,
+    var(--flank-head) 100%
+  );
+  padding-inline-start: calc(var(--flank-head) + 0.3rem);
+}
+.btn-flank--right {
+  clip-path: polygon(
+    0 0,
+    calc(100% - var(--flank-head)) 0,
+    100% 50%,
+    calc(100% - var(--flank-head)) 100%,
+    0 100%
+  );
+  padding-inline-end: calc(var(--flank-head) + 0.3rem);
+}
+/* a clip-path cuts an outline off, and a green ring would be lost on a green
+   button anyway, so the Tab cursor on a flank button is a lit-up arrow instead */
+.btn-flank.btn-cursor {
+  outline: none;
+  background-color: #d8f5e0;
+  filter: drop-shadow(0 0 0.4rem #7bd88f);
+}
 .btn-secondary {
   background-color: #363537;
   color: #f7f1ff;
@@ -451,17 +521,18 @@ body {
   width: 1.15em;
   height: 1.15em;
 }
-/* the Manual toggle when sandbox mode is on */
+/* a nav toggle that is currently on (manual mode, the open menu) wears the brand
+   green, so "this is switched on" reads the same everywhere */
 .btn-nav-on {
-  background-color: #fce566;
-  color: #1c1c1b;
+  background-color: #7bd88f;
+  color: #12100f;
 }
-/* the light icon needs darkening on the yellow active toggle */
+/* the light icon needs darkening on the green active toggle */
 .btn-nav-on .icon-nav {
   filter: brightness(0);
 }
 .btn-nav-on:hover {
-  background-color: #fdee8f;
+  background-color: #96e3a6;
 }
 /* ---- manual (sandbox) controls ---- */
 .manual-panel {
@@ -557,7 +628,7 @@ button:disabled {
   justify-content: center;
   gap: 0.375rem;
   width: 100%;
-  border: 1px solid var(--edge, #363537);
+  border: none;
   border-radius: 0.25rem;
   padding: 0.375rem 0.75rem;
   text-align: center;
@@ -570,16 +641,164 @@ button:disabled {
 .house-btn:hover {
   filter: brightness(1.2);
 }
+/* the button Tab has stepped to: ringed like a selected card, so the keyboard's
+   place in a prompt is visible before Enter presses it */
+.btn-cursor {
+  outline: 2px solid #7bd88f;
+  outline-offset: 1px;
+}
 
-/* ---- board: rows squeeze vertically; each strip scrolls horizontally ---- */
+/* ---- key colour choice: the button is the colour it forges ---- */
+.key-choice {
+  color: #12100f;
+  text-shadow: 0 1px 0 rgb(255 255 255 / 0.25);
+}
+.key-choice--red {
+  background-color: #e0555f;
+}
+.key-choice--blue {
+  background-color: #4d94e8;
+}
+.key-choice--yellow {
+  background-color: #f0c94a;
+}
+/* the key icon reads as the same ink as the label on every colour */
+.key-choice .icon-inline {
+  width: 1.1em;
+  height: 1.1em;
+  filter: brightness(0);
+}
+/* the key on a colour button glints: two small sparks orbiting opposite corners,
+   so a forge reads as an event rather than another list item */
+.key-sparkle {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.key-sparkle::before,
+.key-sparkle::after {
+  content: "";
+  position: absolute;
+  width: 0.28em;
+  height: 0.28em;
+  border-radius: 50%;
+  background-color: #fffbe6;
+  box-shadow: 0 0 0.25em 0.05em rgb(255 251 230 / 0.9);
+  opacity: 0;
+  animation: key-spark 1.8s ease-in-out infinite;
+}
+.key-sparkle::before {
+  top: -0.15em;
+  right: -0.2em;
+}
+.key-sparkle::after {
+  bottom: -0.1em;
+  left: -0.25em;
+  animation-delay: 0.9s;
+}
+@keyframes key-spark {
+  0%,
+  70%,
+  100% {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+  15% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  40% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .key-sparkle::before,
+  .key-sparkle::after {
+    animation: none;
+  }
+}
+
+/* ---- the sidebar's hamburger menu ---- */
+.menu {
+  position: relative;
+  display: inline-flex;
+}
+/* a full-page transparent sheet so the next click anywhere closes the menu */
+.menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+}
+.menu-panel {
+  position: absolute;
+  top: 2.1rem;
+  right: 0.6rem;
+  display: flex;
+  flex-direction: column;
+  min-width: 12rem;
+  padding: 0.25rem;
+  border: 1px solid #363537;
+  border-radius: 0.5rem;
+  background-color: #1f1f1e;
+  box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 0.45);
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 0;
+  border-radius: 0.25rem;
+  padding: 0.4rem 0.5rem;
+  text-align: left;
+  font-size: 0.875rem;
+  cursor: pointer;
+  background-color: transparent;
+  color: #f7f1ff;
+}
+.menu-item:hover:not(:disabled) {
+  background-color: #2a2a29;
+}
+/* a mode that is currently on (manual) wears the brand green */
+.menu-item-on {
+  background-color: #7bd88f;
+  color: #12100f;
+}
+.menu-item-on .icon-nav {
+  filter: brightness(0);
+}
+.menu-item-on:hover:not(:disabled) {
+  background-color: #96e3a6;
+}
+.menu-glyph {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.15em;
+  font-weight: 700;
+}
+.menu-label {
+  flex: 1 1 auto;
+}
+
+/* ---- board: rows squeeze vertically; each strip scrolls horizontally ----
+   The row label sits on the left edge, rotated, so it costs width (of which there
+   is plenty) instead of the height the card strips are competing for. */
 .board-row {
   display: flex;
   min-height: 0;
-  flex-direction: column;
-  gap: 0.25rem;
+  flex-direction: row;
+  align-items: stretch;
+  gap: var(--board-gap);
+  /* the row is the query container for its own label: how much of the label fits
+     depends on this row's height, not the window's */
+  container-type: size;
 }
-.board-row--fill {
-  flex: 1 1 0%;
+/* the opposing rows hang from their bottom edge, mirroring the board about the
+   midline: the two battlelines then sit the same distance from it, and each
+   player's artifacts the same distance from their own score pill */
+.board-row--opposing .card-strip {
+  align-items: flex-end;
 }
 .row-label {
   font-size: 10px;
@@ -588,30 +807,64 @@ button:disabled {
   letter-spacing: 0.1em;
   color: #69676c;
 }
-.row-empty {
-  font-size: 0.75rem;
-  font-style: italic;
-  color: #55535a;
+.board-row > .row-label {
+  flex: 0 0 auto;
+  align-self: center;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-height: 100%;
+}
+.row-label-icon {
+  display: none;
+  width: 0.75rem;
+  height: 0.75rem;
+  opacity: 0.6;
+  /* the label reads bottom-up, its glyphs turned on their side; the icon turns
+     with them so it is not the one upright thing in the column */
+  transform: rotate(90deg);
+}
+/* a short row has no room for the spelled-out label: the zone word gives way to
+   its icon first, and the player name goes next, leaving icon and count. The
+   thresholds are the lengths of the vertical text, so a word is dropped just
+   before it would have to be truncated */
+@container (max-height: 11rem) {
+  .board-row > .row-label .row-label-zone {
+    display: none;
+  }
+  .board-row > .row-label .row-label-icon {
+    display: inline-block;
+  }
+}
+@container (max-height: 6.5rem) {
+  .board-row > .row-label .row-label-name {
+    display: none;
+  }
 }
 .card-strip {
   display: flex;
   flex: 1 1 0%;
+  min-width: 0;
   min-height: 0;
   align-items: flex-start;
-  gap: 0.5rem;
+  gap: var(--board-gap);
   overflow-x: auto;
   overflow-y: hidden;
-  /* room so the 2px selection/targeting ring is not clipped by overflow */
-  padding: 3px 2px 5px;
+  /* the ring allowance is padding inside and negative margin outside, so a card's
+     own edge still lands exactly on the row's edge */
+  padding: var(--ring);
+  margin: calc(var(--ring) * -1);
 }
 .midline {
-  margin: 0.25rem 0;
   border-top: 1px dashed #363537;
 }
 
 .score-pill {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.5rem;
   border-radius: 0.25rem;
   padding: 0.25rem 0.75rem;
@@ -622,12 +875,39 @@ button:disabled {
 }
 .score-pill-active {
   background-color: #333230;
-  box-shadow: 0 0 0 1px rgb(252 229 102 / 0.4);
+}
+/* each player's bar is ringed in the colour their log lines carry, so bar and
+   log read as one player; the active player's ring is the brighter one */
+.score-pill--p0 {
+  box-shadow: 0 0 0 1px rgb(123 216 143 / 0.25);
+}
+.score-pill--p1 {
+  box-shadow: 0 0 0 1px rgb(252 229 102 / 0.25);
+}
+.score-pill-active.score-pill--p0 {
+  box-shadow: 0 0 0 1px rgb(123 216 143 / 0.7);
+}
+.score-pill-active.score-pill--p1 {
+  box-shadow: 0 0 0 1px rgb(252 229 102 / 0.7);
+}
+/* name plus stats: one unbroken line, so only the zone counts move when the bar
+   runs out of width */
+.score-main {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  white-space: nowrap;
 }
 .score-name {
+  flex: 0 0 auto;
+  white-space: nowrap;
   font-weight: 600;
 }
 .score-detail {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
   color: #8b888f;
 }
 .score-houses {
@@ -642,6 +922,12 @@ button:disabled {
   color: var(--nm);
   font-weight: 600;
 }
+/* the house emblem is the only thing naming the house here, so it is drawn a
+   little larger than a stat icon */
+.score-house .icon {
+  width: 1.35em;
+  height: 1.35em;
+}
 .score-house-btn {
   background: none;
   border: none;
@@ -655,42 +941,97 @@ button:disabled {
   font-weight: 400;
 }
 .score-zones {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
   margin-left: auto;
   color: #6f6c73;
   font-size: 0.8125rem;
   cursor: pointer;
 }
+.zone-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+/* an unlabelled icon names itself on hover: a CSS bubble rather than title= so it
+   appears immediately. The label is the element's data-tip. */
+.tip {
+  position: relative;
+}
+.tip::after {
+  content: attr(data-tip);
+  position: absolute;
+  bottom: calc(100% + 0.25rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  padding: 0.1rem 0.35rem;
+  border-radius: 0.25rem;
+  background: #2a2a28;
+  border: 1px solid #4a4a46;
+  color: #f7f1ff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+}
+.tip:hover::after {
+  opacity: 1;
+}
+/* the top bar has nothing above it, so its tips drop below instead of being
+   clipped off the top of the board */
+.board-area > .score-pill:first-child .tip::after {
+  top: calc(100% + 0.25rem);
+  bottom: auto;
+}
 .score-zones:hover {
   color: #a8a5ac;
 }
-/* sandbox Æmber steppers and clickable key slots in the score pill */
+/* manual-mode Æmber/chains steppers and clickable key slots in the score pill */
 .amber-manual {
   gap: 0.25rem;
 }
+/* round, bordered, and no taller than the line of text beside them, so turning
+   manual mode on does not make the player bar grow */
 .amber-btn {
-  width: 1.15rem;
-  height: 1.15rem;
-  border: none;
-  border-radius: 0.2rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 1rem;
+  height: 1rem;
+  padding: 0;
+  border: 1px solid #4a4846;
+  border-radius: 50%;
   background-color: #333230;
   color: #d8d5cd;
+  font-size: 0.7rem;
   font-weight: 700;
   line-height: 1;
   cursor: pointer;
 }
 .amber-btn-minus {
+  border-color: #a2494e;
   background-color: #7a2f33;
   color: #f4dcde;
 }
 .amber-btn-plus {
+  border-color: #439139;
   background-color: #2f6b28;
   color: #dcefd9;
 }
+/* the key slots are buttons in manual mode: the same size as the icons they
+   replace, so switching modes does not make the player bar grow */
 .key-btn {
   display: inline-flex;
-  padding: 0.25rem;
+  align-items: center;
+  padding: 0;
   border: none;
   background: none;
+  line-height: 1;
   cursor: pointer;
 }
 .amber-btn:hover,
@@ -702,6 +1043,40 @@ button:disabled {
   font-weight: 700;
   color: #d8d5cd;
   padding-bottom: 0.25rem;
+}
+/* the source card's face beneath its name, so the ability being resolved can be
+   read without finding the card on the board */
+.prompt-card {
+  display: flex;
+  justify-content: center;
+  padding-bottom: 0.5rem;
+}
+.prompt-card .card {
+  width: 8rem;
+  height: 11rem;
+  max-height: 11rem;
+  --card-full-h: 11rem;
+}
+/* the cards restricting the active player, named above the controls */
+.restrictions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.35rem 0.75rem;
+  border-top: 1px solid #363537;
+}
+.restriction {
+  font-size: 0.75rem;
+  line-height: 1.35;
+}
+.restriction::before {
+  content: "⚠ ";
+  color: #fce566;
+}
+/* the end-of-game result, shown where the controls were */
+.over-panel .section-title {
+  font-size: 1rem;
+  color: #fce566;
 }
 
 /* ---- overlays ---- */
@@ -816,6 +1191,45 @@ button:disabled {
 .zones-close:hover {
   color: #ff6b7d;
 }
+
+/* ---- keyboard shortcut sheet ---- */
+.keys-panel {
+  position: relative;
+  box-sizing: border-box;
+  width: min(92vw, 34rem);
+  max-height: 85vh;
+  overflow-y: auto;
+  border: 1px solid #363537;
+  border-radius: 0.75rem;
+  background-color: #1f1f1e;
+}
+.keys-grid {
+  display: flex;
+  flex-direction: column;
+  padding: 0.75rem 1.25rem 1.25rem;
+}
+.keys-line {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  border-radius: 0.25rem;
+  padding: 0.2rem 0.4rem;
+  font-size: 0.85rem;
+}
+/* alternating bands instead of rules: the eye tracks a row across to its
+   description without the table needing lines */
+.keys-line:nth-child(even) {
+  background-color: #262625;
+}
+.keys-key {
+  flex: 0 0 8rem;
+  color: #fce566;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-weight: 700;
+}
+.keys-what {
+  color: #b8b5b0;
+}
 .zones-player {
   display: flex;
   flex-direction: column;
@@ -850,7 +1264,7 @@ button:disabled {
   display: flex;
   width: 9rem;
   height: 100%;
-  max-height: 12rem;
+  max-height: var(--card-h);
   min-height: 0;
   flex-shrink: 0;
   flex-direction: column;
@@ -900,6 +1314,39 @@ button:disabled {
 .card--dimmed {
   opacity: 0.45;
 }
+/* dimming is a state change, not an event, so it eases rather than snaps: a card
+   entering a lowlighted board fades down instead of appearing already grey */
+.card {
+  transition:
+    opacity 0.18s ease-out,
+    filter 0.18s ease-out;
+}
+/* combat keywords as a colour stripe along the card's top edge, so how a creature
+   can be attacked is legible without reading its rules text */
+.card-keybar {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  z-index: 2;
+  display: flex;
+  height: 3px;
+}
+.card-keybar-seg {
+  flex: 1 1 0%;
+}
+.card-keybar--taunt {
+  background-color: #7295d6;
+}
+.card-keybar--elusive {
+  background-color: #7bd88f;
+}
+.card-keybar--skirmish {
+  background-color: #fce566;
+}
+.card-keybar--poison {
+  background-color: #b58ee0;
+}
 .card--clickable {
   cursor: pointer;
 }
@@ -913,33 +1360,190 @@ button:disabled {
 
 /* a card entering play scales and fades in with a brief glow */
 .card--enter-a {
-  animation: cardEnterA 0.35s ease-out;
+  animation: cardEnterA 0.45s cubic-bezier(0.2, 0.9, 0.3, 1);
 }
 .card--enter-b {
-  animation: cardEnterB 0.35s ease-out;
+  animation: cardEnterB 0.45s cubic-bezier(0.2, 0.9, 0.3, 1);
 }
+/* a card arriving on the board swings up into its slot rather than just pulsing,
+   so play reads as the same kind of movement as a card leaving (.card-flight) */
 @keyframes cardEnterA {
   0% {
-    opacity: 0.2;
-    transform: scale(0.82);
-    filter: drop-shadow(0 0 8px rgb(123 216 143 / 0.8));
+    opacity: 0;
+    transform: translate(-14%, 55%) scale(0.45) rotate(-9deg);
+    filter: drop-shadow(0 0 10px rgb(123 216 143 / 0.9));
+  }
+  55% {
+    opacity: 1;
+    transform: translate(3%, -6%) scale(1.06) rotate(3deg);
   }
   100% {
     opacity: 1;
-    transform: scale(1);
+    transform: translate(0, 0) scale(1) rotate(0deg);
     filter: drop-shadow(0 0 0 rgb(123 216 143 / 0));
   }
 }
 @keyframes cardEnterB {
   0% {
-    opacity: 0.2;
-    transform: scale(0.82);
-    filter: drop-shadow(0 0 8px rgb(123 216 143 / 0.8));
+    opacity: 0;
+    transform: translate(-14%, 55%) scale(0.45) rotate(-9deg);
+    filter: drop-shadow(0 0 10px rgb(123 216 143 / 0.9));
+  }
+  55% {
+    opacity: 1;
+    transform: translate(3%, -6%) scale(1.06) rotate(3deg);
   }
   100% {
     opacity: 1;
-    transform: scale(1);
+    transform: translate(0, 0) scale(1) rotate(0deg);
     filter: drop-shadow(0 0 0 rgb(123 216 143 / 0));
+  }
+}
+
+/* a card leaving play flies into the zone pill it landed in: it is parented to
+   that pill and shrinks onto it, so the arc always ends where the count is. The
+   ghost is inert — it exists only for the length of the animation. */
+.card-flight {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  z-index: 25;
+  width: 9rem;
+  height: 12rem;
+  transform-origin: 50% 100%;
+  pointer-events: none;
+}
+.card-flight .card {
+  height: 100%;
+  max-height: none;
+}
+.card-flight--a {
+  animation: cardFlightA 0.55s ease-in both;
+}
+.card-flight--b {
+  animation: cardFlightB 0.55s ease-in both;
+}
+/* several cards leaving at once are fanned and staggered, so a simultaneous
+   destruction reads as several cards flying off rather than one */
+.card-flight:nth-of-type(2) {
+  left: calc(50% + 1.25rem);
+  animation-delay: 0.08s;
+}
+.card-flight:nth-of-type(3) {
+  left: calc(50% - 1.25rem);
+  animation-delay: 0.16s;
+}
+.card-flight:nth-of-type(4) {
+  left: calc(50% + 2.5rem);
+  animation-delay: 0.24s;
+}
+.card-flight:nth-of-type(n + 5) {
+  left: calc(50% - 2.5rem);
+  animation-delay: 0.32s;
+}
+@keyframes cardFlightA {
+  0% {
+    opacity: 0;
+    transform: translate(-170%, -290%) scale(1) rotate(-10deg);
+  }
+  15% {
+    opacity: 1;
+  }
+  55% {
+    transform: translate(-25%, -155%) scale(0.6) rotate(9deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 0) scale(0.05) rotate(22deg);
+  }
+}
+@keyframes cardFlightB {
+  0% {
+    opacity: 0;
+    transform: translate(-170%, -290%) scale(1) rotate(-10deg);
+  }
+  15% {
+    opacity: 1;
+  }
+  55% {
+    transform: translate(-25%, -155%) scale(0.6) rotate(9deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 0) scale(0.05) rotate(22deg);
+  }
+}
+
+/* two creatures clashing: a quick recoil, on both combatants. The lunge is up by
+   default and down for the top battleline (card--fight-down), so the two
+   combatants move towards each other across the midline. */
+.card--fight-a {
+  animation: cardFightA 0.4s ease-out;
+}
+.card--fight-b {
+  animation: cardFightB 0.4s ease-out;
+}
+.card--fight-down {
+  --lunge: 6px;
+}
+@keyframes cardFightA {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  30% {
+    transform: translateY(var(--lunge, -6px)) scale(1.04);
+  }
+  60% {
+    transform: translateY(calc(var(--lunge, -6px) * -0.5)) scale(0.98);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+@keyframes cardFightB {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  30% {
+    transform: translateY(var(--lunge, -6px)) scale(1.04);
+  }
+  60% {
+    transform: translateY(calc(var(--lunge, -6px) * -0.5)) scale(0.98);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* taking a hit (damage, or being in a fight): the card washes red. The ring is
+   drawn inside the card as well as out, because the row clips anything that
+   spills past a card's own box. */
+.card--hit-a {
+  animation: cardHitA 0.45s ease-out;
+}
+.card--hit-b {
+  animation: cardHitB 0.45s ease-out;
+}
+@keyframes cardHitA {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 0 rgb(252 86 86 / 0);
+  }
+  30% {
+    box-shadow:
+      inset 0 0 14px 4px rgb(252 86 86 / 0.75),
+      0 0 10px rgb(252 86 86 / 0.7);
+  }
+}
+@keyframes cardHitB {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 0 rgb(252 86 86 / 0);
+  }
+  30% {
+    box-shadow:
+      inset 0 0 14px 4px rgb(252 86 86 / 0.75),
+      0 0 10px rgb(252 86 86 / 0.7);
   }
 }
 
@@ -1046,7 +1650,9 @@ button:disabled {
   }
 }
 
-/* a plain icon pulse (exhausted, stun): swell with a soft white glow */
+/* a plain icon pulse (exhausted, stun): swell with a soft white glow. The
+   keyframes carry the outline filter too, so an outlined token does not shed its
+   ring for the length of the animation. */
 .icon--pulse-a {
   animation: iconPulseA 0.5s ease-out;
 }
@@ -1057,22 +1663,22 @@ button:disabled {
   0%,
   100% {
     transform: scale(1);
-    filter: drop-shadow(0 0 0 rgb(255 255 255 / 0));
+    filter: url("#icon-outline") drop-shadow(0 0 0 rgb(255 255 255 / 0));
   }
   35% {
     transform: scale(1.4);
-    filter: drop-shadow(0 0 6px rgb(255 255 255 / 0.9));
+    filter: url("#icon-outline") drop-shadow(0 0 6px rgb(255 255 255 / 0.9));
   }
 }
 @keyframes iconPulseB {
   0%,
   100% {
     transform: scale(1);
-    filter: drop-shadow(0 0 0 rgb(255 255 255 / 0));
+    filter: url("#icon-outline") drop-shadow(0 0 0 rgb(255 255 255 / 0));
   }
   35% {
     transform: scale(1.4);
-    filter: drop-shadow(0 0 6px rgb(255 255 255 / 0.9));
+    filter: url("#icon-outline") drop-shadow(0 0 6px rgb(255 255 255 / 0.9));
   }
 }
 .card-name {
@@ -1090,6 +1696,24 @@ button:disabled {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+/* a long title is condensed horizontally rather than cut off, so the whole name
+   stays readable. scaleX only, so every title keeps the same cap height and the
+   banner never changes size; the ellipsis stays as the last resort. */
+.card-name-text--squeeze-1 {
+  transform: scaleX(0.9);
+  transform-origin: left center;
+  width: 111%;
+}
+.card-name-text--squeeze-2 {
+  transform: scaleX(0.8);
+  transform-origin: left center;
+  width: 125%;
+}
+.card-name-text--squeeze-3 {
+  transform: scaleX(0.7);
+  transform-origin: left center;
+  width: 143%;
 }
 /* dark inner body, inset left/right so the gradient frame shows as side borders */
 .card-body {
@@ -1112,6 +1736,14 @@ button:disabled {
   font-weight: 700;
   color: #d8d5cd;
 }
+/* stun/exhaust ride the end of the stat line, so a card's condition reads in one
+   place */
+.card-tokens {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-left: auto;
+}
 .stat-seg {
   display: inline-flex;
   align-items: center;
@@ -1123,15 +1755,13 @@ button:disabled {
   font-size: 9px;
   color: #8b888f;
 }
-/* trait line: sits under the stat line and above the rules, italic and muted
-   like the printed card's trait bar */
+/* trait line: sits under the stat line and above the rules, muted so it reads as
+   secondary to the rules text without shouting */
 .card-traits {
   padding: 0.125rem 0.5rem 0;
   font-size: 9px;
-  font-style: italic;
   font-weight: 700;
   letter-spacing: 0.04em;
-  text-transform: uppercase;
   color: #a8a5ad;
 }
 .card-rules {
@@ -1165,7 +1795,7 @@ button:disabled {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: 0.2rem;
+  gap: 0.05em;
 }
 .icon-mark {
   width: 1.15em;
@@ -1227,11 +1857,14 @@ button:disabled {
   box-shadow: 0 0 5px 1px rgb(252 229 102 / 0.75);
 }
 /* outline the icon's actual silhouette (its alpha shape), not its square box, so
-   a house emblem or type glyph stays legible on any background. An SVG
-   feMorphology dilate filter (see iconOutlineFilter in icons.go) grows the shape
-   uniformly and inks the grown edge black — a single even ring that follows the
-   geometry, where stacked drop-shadows compounded into a thick, blobby border. */
+   a house emblem or type glyph stays legible on any background. A blur-and-
+   threshold SVG filter (see iconOutlineFilter in icons.go) grows the shape evenly
+   in every direction and inks the grown edge black. The image is inset by the
+   ring's own thickness — object-fit draws it in the content box — so the ring is
+   part of what the icon's box accounts for and cannot be clipped off its edges. */
 .icon-outline {
+  box-sizing: border-box;
+  padding: 0.09em;
   filter: url(#icon-outline);
 }
 .icon-kind {
@@ -1300,11 +1933,11 @@ button:disabled {
   --edge: #aeb4bb;
 }
 .card-untamed {
-  --nm: #b5661f;
-  --nm-fg: #fbeee0;
+  --nm: #f2ab2b;
+  --nm-fg: #2a1c05;
   --tp: #2f6b39;
   --tp-fg: #e8f4ea;
-  --edge: #b5661f;
+  --edge: #f2ab2b;
 }
 .card-none {
   --nm: #3a3a38;

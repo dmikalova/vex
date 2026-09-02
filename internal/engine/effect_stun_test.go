@@ -53,6 +53,30 @@ func TestStunAndNeighbors(t *testing.T) {
 	}
 }
 
+// TestNeighborsOfCreatureFought covers the Before Fight pairing: the creature
+// being fought is in context, and NeighborsOf reaches past it to its neighbors
+// without touching it.
+func TestNeighborsOfCreatureFought(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	left := g.AddToBattleline(testCreature("left", 3), 1)
+	mid := g.AddToBattleline(testCreature("mid", 3), 1)
+	right := g.AddToBattleline(testCreature("right", 3), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0, It: mid, HasIt: true}
+
+	e := Stun{Target: Target{Kind: TargetCreatureFought}.NeighborsOf()}
+	want := "stun each neighbor of the creature " + SelfName + " fights"
+	if e.Text() != want {
+		t.Errorf("text = %q, want %q", e.Text(), want)
+	}
+	e.Resolve(ctx)
+	if !g.Stunned(left) || !g.Stunned(right) {
+		t.Error("both neighbors of the creature fought should be stunned")
+	}
+	if g.Stunned(mid) {
+		t.Error("the creature fought should not itself be stunned")
+	}
+}
+
 func TestExhaust(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("src", 3), 0)

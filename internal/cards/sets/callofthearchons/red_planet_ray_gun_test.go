@@ -17,7 +17,7 @@ import (
 //	This creature gains, "Reap: For each Mars creature in play, deal 1 damage to a creature."
 func TestRedPlanetRayGun(t *testing.T) {
 	t.Run("deals 1 damage per Mars creature in play, counting both players", func(t *testing.T) {
-		var host, victim ct.Card
+		var host, enemy ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
 				House: card.House.Mars,
@@ -31,13 +31,13 @@ func TestRedPlanetRayGun(t *testing.T) {
 			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(5)),
-				ct.Bind(&victim, ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Power(6))),
+				ct.Bind(&enemy, ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Power(6))),
 			)},
 		})
 
 		h.P1.Reap(host)
-		h.P1.ClickCard(victim)
+		h.P1.ClickCard(enemy)
 
-		h.Expect(victim).Damage(3) // three Mars creatures in play
+		h.Expect(enemy).Damage(3) // three Mars creatures in play
 	})
 }

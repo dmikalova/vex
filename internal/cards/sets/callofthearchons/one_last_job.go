@@ -1,20 +1,15 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// OneLastJob
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// One Last Job
 //
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Purge each friendly Shadows creature. Steal 1 Aember for each creature purged this way.
+//	Play: Purge each friendly Shadows creature. For each creature purged this way, steal 1 Æmber.
 var OneLastJob = card.New(
 	"One Last Job",
 	card.House.Shadows,
@@ -22,5 +17,14 @@ var OneLastJob = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 277),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
+			card.Sentence{Effect: card.PurgeCreature{
+				Target: card.Target.EachFriendlyCreature.OfHouse(card.House.Shadows),
+			}},
+			card.Sentence{Effect: card.StealAember{
+				Amount: 1,
+				Per:    card.CardsPurged{},
+			}},
+		}}),
 )

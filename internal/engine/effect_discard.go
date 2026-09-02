@@ -52,7 +52,7 @@ func (e PutFromDiscard) destPhrase() string {
 // and the top of the deck are supported, and the destination must be named.
 func (e PutFromDiscard) validate() error {
 	if e.Destination != ToHand && e.Destination != ToTopOfDeck {
-		return fmt.Errorf("PutFromDiscard: unsupported destination %d", e.Destination)
+		return fmt.Errorf("PutFromDiscard: unsupported destination %d", e.Destination.zone)
 	}
 	return nil
 }

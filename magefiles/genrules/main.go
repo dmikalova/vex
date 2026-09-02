@@ -29,6 +29,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"unicode"
 )
 
 const (
@@ -302,11 +303,12 @@ func writeIndex(b *strings.Builder, index []indexEntry) {
 
 // anchor renders a term title as a GitHub-style heading slug: lowercased, with
 // spaces and hyphens collapsed to hyphens and every other character dropped.
+// Letters outside ASCII are kept — GitHub slugs "Æmber" as "æmber".
 func anchor(title string) string {
 	var b strings.Builder
 	for _, r := range strings.ToLower(title) {
 		switch {
-		case r >= 'a' && r <= 'z', r >= '0' && r <= '9':
+		case unicode.IsLetter(r) || unicode.IsDigit(r):
 			b.WriteRune(r)
 		case r == ' ' || r == '-':
 			b.WriteByte('-')

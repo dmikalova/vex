@@ -116,7 +116,7 @@ runs in the browser. The architecture is a **hybrid server-authoritative "thick 
 the **authoritative server** holds full state, validates committed action batches through
 its own copy of the engine, and broadcasts **state deltas scrubbed of hidden info** over
 **WebSockets** (consider **Protocol Buffers** for compact payloads). The client runs the
-engine locally for **instant legality checks**, **turn staging / sandboxing with undo**, and
+engine locally for **instant legality checks**, **turn staging with undo**, and
 **free client-side ISMCTS suggestions** in a **Web Worker** (zero server compute). Reject
 **peer-to-peer** play: hidden-info P2P requires **Mental Poker** cryptography (verifiable
 shuffles, threshold key exchange) that clashes with a fast simulation engine and breaks on

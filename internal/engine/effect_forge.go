@@ -43,3 +43,32 @@ func (GiveRemainingAemberAfterOpponentForgeKey) Text() string {
 func (GiveRemainingAemberAfterOpponentForgeKey) Resolve(ctx *EffectContext) {
 	ctx.Resolver.AddLasting(EventForgeKey, actGiveRemainingAember, ctx.Opponent(), 0)
 }
+
+// UnforgeKey takes a forged key back off a player (Key Hammer). It is the one
+// effect that lowers a key count, so it is a node of its own rather than a
+// negative ForgeKey: nothing is paid, nothing is refunded, and no "after you
+// forge a key" ability fires.
+type UnforgeKey struct {
+	Player Player
+}
+
+// validate rejects an UnforgeKey whose player was left unset.
+func (e UnforgeKey) validate() error {
+	if !e.Player.valid() {
+		return errUnsetPlayer("UnforgeKey")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "unforge one of your opponent's keys".
+func (e UnforgeKey) Text() string {
+	if e.Player == Opponent {
+		return "unforge one of your opponent's keys"
+	}
+	return "unforge one of your keys"
+}
+
+// Resolve takes one key back off the named player.
+func (e UnforgeKey) Resolve(ctx *EffectContext) {
+	ctx.Resolver.UnforgeKey(ctx.PlayerFor(e.Player))
+}

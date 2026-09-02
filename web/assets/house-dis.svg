@@ -1,10 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
   <title>Dis</title>
-  <g fill="none" stroke="#cc4657" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M7 9 Q12 5 17 9 L12 20 Z"/>
-    <path d="M8 8 C6 7 4.5 6 4 3"/>
-    <path d="M16 8 C18 7 19.5 6 20 3"/>
-    <path d="M9 12 L11 13"/>
-    <path d="M15 12 L13 13"/>
+  <g fill="none" stroke="#cc4657" stroke-width="2.4" stroke-linecap="round">
+    <path d="M9.4 7.6C8 4.8 5.8 3.2 4.2 4.2 2.4 5.3 2.4 8.2 4.3 9.9"/>
+    <path d="M14.6 7.6c1.4-2.8 3.6-4.4 5.2-3.4 1.8 1.1 1.8 4-.1 5.7"/>
+  </g>
+  <g fill="#cc4657">
+    <path d="M12 7.1c3.2 0 5.3 1.9 5.3 4.6 0 1.7-.5 3.1-1.4 4.1-.6.8-.9 1.6-1 2.4-.2 1.2-1.2 1.9-2.9 1.9s-2.7-.7-2.9-1.9c-.1-.8-.4-1.6-1-2.4-.9-1-1.4-2.4-1.4-4.1 0-2.7 2.1-4.6 5.3-4.6Z"/>
+    <path d="M11.2 19.6h1.6c0 1.5-.3 2.4-.8 2.9-.5-.5-.8-1.4-.8-2.9Z"/>
+  </g>
+  <g fill="none" stroke="#46283f" stroke-width=".9" stroke-linecap="round">
+    <path d="m7.8 6.4 1-1.2"/>
+    <path d="m5.7 5.3.9-1.1"/>
+    <path d="M2.4 6.9h1.5"/>
+    <path d="m16.2 6.4-1-1.2"/>
+    <path d="m18.3 5.3-.9-1.1"/>
+    <path d="M21.6 6.9h-1.5"/>
+    <path d="M11.1 17.1h1.8"/>
+  </g>
+  <g fill="#46283f">
+    <rect x="8.5" y="11.7" width="2.4" height="1" rx=".5"/>
+    <rect x="13.1" y="11.7" width="2.4" height="1" rx=".5"/>
   </g>
 </svg>

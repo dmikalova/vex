@@ -43,7 +43,25 @@ func (e Destroy) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 // CardsDestroyedFewerThan), counting after the batch so a save (Armageddon Cloak)
 // is not counted.
 func (e Destroy) resolveGate(ctx *EffectContext) bool {
-	ids := e.Target.Select(ctx)
+	return e.destroy(ctx, e.Target.Select(ctx))
+}
+
+// declinable reports that the destruction is a single clickable creature.
+func (e Destroy) declinable() bool { return e.Target.isChosen() }
+
+// vacuous reports that there is nothing here to destroy, so a "you may" wrapping
+// it need not ask.
+func (e Destroy) vacuous(ctx *EffectContext) bool { return e.Target.empty(ctx) }
+
+// resolveOptional is resolveGate under a May: the creature is asked declinably, so
+// "you may destroy another friendly creature" is answered by clicking that
+// creature rather than by a separate Yes/No.
+func (e Destroy) resolveOptional(ctx *EffectContext) bool {
+	return e.destroy(ctx, e.Target.SelectOptional(ctx))
+}
+
+// destroy carries out the destruction of an already-selected set.
+func (e Destroy) destroy(ctx *EffectContext, ids []LocalID) bool {
 	ctx.Resolver.DestroyEach(ctx.Controller, ids)
 	for _, id := range ids {
 		if !resolverInPlay(ctx, id) {

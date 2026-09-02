@@ -9,8 +9,9 @@ import "strings"
 // is careful about which cards are shown.
 //
 // A House narrows the reveal to cards of that house (the wording "reveal any
-// number of Mars cards"): a player would only ever reveal cards that help them,
-// so every matching card is revealed. An unset House reveals the whole hand.
+// number of Mars cards"): the player picks which of them to show, one at a time,
+// until they are done — "any number" includes none. An unset House reveals the
+// whole hand, which is not a choice.
 type RevealHand struct {
 	Player Player
 	House  House
@@ -41,10 +42,8 @@ func (e RevealHand) Text() string {
 func (e RevealHand) Resolve(ctx *EffectContext) {
 	owner := ctx.PlayerFor(e.Player)
 	var names []string
-	for _, id := range ctx.Resolver.Hand(owner) {
-		if e.House == HouseNone || ctx.Resolver.House(id) == e.House {
-			names = append(names, ctx.Resolver.Name(id))
-		}
+	for _, id := range e.reveal(ctx, owner) {
+		names = append(names, ctx.Resolver.Name(id))
 	}
 	ctx.Produced.Revealed = len(names)
 	if len(names) > 0 {
@@ -54,6 +53,32 @@ func (e RevealHand) Resolve(ctx *EffectContext) {
 			strings.Join(names, ", "),
 		)
 	}
+}
+
+// reveal returns the cards actually shown: the whole hand for an unrestricted
+// reveal, or the subset the controller picks out of the matching cards when the
+// reveal is "any number of <house> cards".
+func (e RevealHand) reveal(ctx *EffectContext, owner int) []LocalID {
+	hand := ctx.Resolver.Hand(owner)
+	if e.House == HouseNone {
+		return hand
+	}
+	var remaining []LocalID
+	for _, id := range hand {
+		if ctx.Resolver.House(id) == e.House {
+			remaining = append(remaining, id)
+		}
+	}
+	var shown []LocalID
+	for len(remaining) > 0 {
+		chosen, ok := ctx.ChooseCardOptional("Choose a card to reveal", remaining)
+		if !ok {
+			break
+		}
+		shown = append(shown, chosen)
+		remaining = withoutID(remaining, chosen)
+	}
+	return shown
 }
 
 // CardsRevealed counts the cards the most recent Reveal showed — the "for each

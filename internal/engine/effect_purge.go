@@ -107,18 +107,17 @@ func (e PurgeCard) resolveGate(ctx *EffectContext) bool {
 		if len(cands) == 0 {
 			break
 		}
-		options := make([]string, len(cands))
-		for j, id := range cands {
-			options[j] = ctx.Resolver.Name(id)
-		}
+		var chosen LocalID
+		var ok bool
 		if e.UpTo {
-			options = append(options, "Done")
+			chosen, ok = ctx.ChooseCardOptional("Choose a card to purge", cands)
+		} else {
+			chosen, ok = ctx.ChooseCard("Choose a card to purge", cands)
 		}
-		choice := ctx.ChooseOption("Choose a card to purge", options)
-		if choice >= len(cands) {
+		if !ok {
 			break
 		}
-		ctx.Resolver.PurgeFromDiscard(pile, cands[choice])
+		ctx.Resolver.PurgeFromDiscard(pile, chosen)
 		purged++
 	}
 	return purged > 0
@@ -162,9 +161,9 @@ func (e PurgeFromHand) Text() string {
 	return "you may purge a " + e.noun() + " from " + whose
 }
 
-// Resolve offers the matching cards in the player's hand plus a "Done" pass, then
-// purges the chosen one. It does nothing when no card matches or the controller
-// declines.
+// Resolve offers the matching cards in the player's hand as a declinable choice,
+// then purges the chosen one. It does nothing when no card matches or the
+// controller declines.
 func (e PurgeFromHand) Resolve(ctx *EffectContext) {
 	owner := ctx.PlayerFor(e.Player)
 	var cands []LocalID
@@ -173,19 +172,11 @@ func (e PurgeFromHand) Resolve(ctx *EffectContext) {
 			cands = append(cands, id)
 		}
 	}
-	if len(cands) == 0 {
+	chosen, ok := ctx.ChooseCardOptional("Choose a card to purge", cands)
+	if !ok {
 		return
 	}
-	options := make([]string, len(cands)+1)
-	for i, id := range cands {
-		options[i] = ctx.Resolver.Name(id)
-	}
-	options[len(cands)] = "Done"
-	choice := ctx.ChooseOption("Choose a card to purge", options)
-	if choice >= len(cands) {
-		return
-	}
-	ctx.Resolver.PurgeFromHand(owner, cands[choice])
+	ctx.Resolver.PurgeFromHand(owner, chosen)
 }
 
 // PurgeCreature purges each creature its Target selects from play into its owner's
@@ -209,21 +200,38 @@ func (e PurgeCreature) Text() string { return "purge " + e.Target.Text() }
 // Resolve purges each selected creature — from play if it is still there, or from
 // its owner's discard pile if it has just been destroyed (Yxilo Bolter purges the
 // creature its damage killed). A creature that is in neither zone is left alone.
+// The tally is recorded on the context, so a following effect can scale with how
+// many were actually purged (see CardsPurged).
 func (e PurgeCreature) Resolve(ctx *EffectContext) {
+	purged := 0
 	for _, id := range e.Target.Select(ctx) {
 		if resolverInPlay(ctx, id) {
 			ctx.Resolver.PurgeFromPlay(id)
+			purged++
 			continue
 		}
 		owner := ctx.Resolver.Owner(id)
 		for _, d := range ctx.Resolver.Discard(owner) {
 			if d == id {
 				ctx.Resolver.PurgeFromDiscard(owner, id)
+				purged++
 				break
 			}
 		}
 	}
+	ctx.Produced.Purged = purged
 }
+
+// CardsPurged counts the cards the most recent purge in this resolution removed —
+// the "for each creature purged this way" tally (One Last Job steals 1 Æmber for
+// each creature it purged).
+type CardsPurged struct{}
+
+// Value reads the tally the preceding purge recorded.
+func (CardsPurged) Value(ctx *EffectContext) int { return ctx.Produced.Purged }
+
+// CountText renders the singular noun the "for each" clause repeats.
+func (CardsPurged) CountText() string { return "creature purged this way" }
 
 // PurgeCreatureFromHand purges a creature the controller chooses from their hand
 // and puts it in context (ctx.It) for a following effect to act on. It is the

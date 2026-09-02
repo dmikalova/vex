@@ -22,7 +22,8 @@ type destinations struct {
 	BottomOfDeck engine.Destination
 	// DeckShuffled puts the card into its owner's deck, then shuffles.
 	DeckShuffled engine.Destination
-	// Archives puts the card into its owner's archives.
+	// Archives puts the card into its owner's archives. Call Yours() on it for an
+	// abduction into the archives of the player resolving the effect.
 	Archives engine.Destination
 }
 

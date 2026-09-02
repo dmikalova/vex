@@ -38,6 +38,12 @@ together and **CONTEXT** for what the words mean.
     as Versatile + Action
   - [0010](adr/0010-invalid-zero-validated-at-init.md) — invalid-zero sentinels
     validated at card init
+  - [0011](adr/0011-logs-narrate-resolved-outcomes.md) — the game log narrates
+    resolved outcomes, not card text
+  - [0012](adr/0012-first-class-turn-phases.md) — turn phases are first-class
+    engine state
+  - [0013](adr/0013-end-of-turn-last-and-ordered-triggers.md) — end-of-turn
+    abilities resolve last; simultaneous triggers are ordered
 
 ## Rules
 

@@ -3,6 +3,7 @@ package engine
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 )
 
 // This file holds the Game object itself — the live match harness that bundles
@@ -51,6 +52,20 @@ type OptionChooser interface {
 	ChooseOption(source, prompt string, options []string) int
 }
 
+// DeclinableChooser is an optional Chooser capability: an optional card choice
+// the player may pass on — the "you may purge a card" and "up to 3 creatures" of
+// a card's text. It is separate from ChooseCreature because declining is itself
+// an answer, so a sole candidate must still be offered rather than forced.
+// A Chooser that does not implement it is asked through the OptionChooser channel
+// with the candidate names plus a trailing DoneOption.
+type DeclinableChooser interface {
+	ChooseCardOrDecline(source, prompt string, candidates []LocalID) (LocalID, bool)
+}
+
+// DoneOption labels the pass entry appended to a declinable prompt's fallback
+// option list.
+const DoneOption = "Done"
+
 // Orderer is an optional Chooser capability: arranging ids into a resolution
 // order in a single call, instead of being asked to pick the next id repeatedly.
 // A Chooser that implements it takes full control of ordering (see
@@ -77,7 +92,7 @@ type Game struct {
 	// forced house (Control the Weak) that the player lacks is ignored: cannot
 	// overrides must.
 	houses [2][]House
-	// manual turns on sandbox mode: house restrictions on playing and using cards
+	// manual turns on manual mode: house restrictions on playing and using cards
 	// are lifted so a UI can rearrange the game freely. See game_manual.go.
 	manual bool
 }
@@ -124,6 +139,16 @@ func (g *Game) chooserFor(player int) Chooser {
 	return FirstChooser{}
 }
 
+// renderPrompt resolves the SelfName placeholder in a prompt to the name of the
+// card asking, so a runtime prompt reads like the card's printed text ("fully
+// heal Chuff Ape", not "fully heal {self}"). An unattributed prompt is left as is.
+func renderPrompt(source, prompt string) string {
+	if source == "" {
+		return prompt
+	}
+	return strings.ReplaceAll(prompt, SelfName, source)
+}
+
 // pickCreature resolves a "choose one creature" prompt. When only one candidate
 // is available the choice is forced, so it is taken automatically without
 // consulting the chooser; otherwise the player's chooser decides (and may
@@ -136,7 +161,7 @@ func (g *Game) pickCreature(
 	if len(candidates) == 1 {
 		return candidates[0], true
 	}
-	return g.chooserFor(player).ChooseCreature(source, prompt, candidates)
+	return g.chooserFor(player).ChooseCreature(source, renderPrompt(source, prompt), candidates)
 }
 
 // pickCard resolves a "choose one card" prompt. It uses the same chooser channel
@@ -146,7 +171,35 @@ func (g *Game) pickCard(player int, source, prompt string, candidates []LocalID)
 	if len(candidates) == 1 {
 		return candidates[0], true
 	}
-	return g.chooserFor(player).ChooseCreature(source, prompt, candidates)
+	return g.chooserFor(player).ChooseCreature(source, renderPrompt(source, prompt), candidates)
+}
+
+// pickOptional resolves a "choose a card, or stop" prompt: the player may take one
+// of candidates or decline. Unlike pickCreature it never short-circuits a sole
+// candidate — passing is a legal answer, so forcing the last card would take the
+// choice away. A chooser that cannot express a decline (no DeclinableChooser) is
+// asked through the option channel with the candidate names plus DoneOption, which
+// is the shape every optional prompt used to have.
+func (g *Game) pickOptional(
+	player int,
+	source, prompt string,
+	candidates []LocalID,
+) (LocalID, bool) {
+	if len(candidates) == 0 {
+		return 0, false
+	}
+	if dc, ok := g.chooserFor(player).(DeclinableChooser); ok {
+		return dc.ChooseCardOrDecline(source, renderPrompt(source, prompt), candidates)
+	}
+	options := make([]string, len(candidates)+1)
+	for i, id := range candidates {
+		options[i] = g.Name(id)
+	}
+	options[len(candidates)] = DoneOption
+	if i := g.chooseOption(player, source, prompt, options); i < len(candidates) {
+		return candidates[i], true
+	}
+	return 0, false
 }
 
 // orderByChoice asks controller to arrange ids into a resolution order by picking

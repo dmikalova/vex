@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// RockHurlingGiant
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Rock-Hurling Giant
 //
 //	House:  Brobnar
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  6
 //	Traits: Giant
 //
-//	During your turn, each time you discard a Brobnar card from your hand, you may deal 4 Damage to a creature.
+//	After you discard a card from your hand, if it is a Brobnar card, you may deal 4 damage to a creature.
 var RockHurlingGiant = card.New(
 	"Rock-Hurling Giant",
 	card.House.Brobnar,
@@ -24,5 +19,13 @@ var RockHurlingGiant = card.New(
 	card.Provenance(card.CotA, 44),
 	card.WithPower(6),
 	card.WithTraits("Giant"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.AfterDiscardFromHand, card.Conditional{
+		Cond: card.ItIs{House: card.House.Brobnar},
+		Then: card.May{
+			Do: card.DealDamage{
+				Target: card.Target.Creature,
+				Amount: 4,
+			},
+		},
+	}),
 )

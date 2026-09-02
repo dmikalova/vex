@@ -93,7 +93,7 @@ func TestDealDamagePerCount(t *testing.T) {
 	g.AddToBattleline(testCreature("f1", 5), 0)
 	g.AddToBattleline(testCreature("f2", 5), 0)
 	g.AddToBattleline(testCreature("f3", 5), 0)
-	victim := g.AddToBattleline(testCreature("victim", 10), 1)
+	enemy := g.AddToBattleline(testCreature("enemy", 10), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	e := DealDamage{
@@ -105,8 +105,8 @@ func TestDealDamagePerCount(t *testing.T) {
 		t.Errorf("text = %q", e.Text())
 	}
 	e.Resolve(ctx)
-	if g.Damage(victim) != 3 {
-		t.Errorf("victim damage = %d, want 3 (1 × 3 friendly creatures)", g.Damage(victim))
+	if g.Damage(enemy) != 3 {
+		t.Errorf("enemy damage = %d, want 3 (1 × 3 friendly creatures)", g.Damage(enemy))
 	}
 }
 

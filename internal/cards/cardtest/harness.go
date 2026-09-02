@@ -161,6 +161,17 @@ func (p *Player) Discard(card any) {
 	})
 }
 
+// ExpectCannotPlay asserts that a card in this player's hand may not be played
+// right now — the assertion for cards that gate their own play, such as Kelifi
+// Dragon's Æmber threshold.
+func (p *Player) ExpectCannotPlay(card any) {
+	p.h.t.Helper()
+	_, id := p.h.findInHand(p.index, card)
+	if err := p.h.g.CanPlay(p.index, id); err == nil {
+		p.h.t.Fatalf("%s may be played, want it blocked", p.h.g.Name(id))
+	}
+}
+
 // ExpectCannotUse asserts that one of this player's cards may not be used right
 // now — the assertion for cards that gate their own use, such as Giant Sloth.
 func (p *Player) ExpectCannotUse(card any) {
@@ -216,6 +227,10 @@ func (p *Player) ClickCard(target any) { p.h.t.Helper(); p.h.click(p.index, targ
 
 // ClickOption answers the pending option prompt for this player by label.
 func (p *Player) ClickOption(label string) { p.h.t.Helper(); p.h.clickOption(p.index, label) }
+
+// ClickDone declines the pending optional card prompt for this player — the Done
+// button a "you may" or "up to N" choice offers alongside the clickable cards.
+func (p *Player) ClickDone() { p.h.t.Helper(); p.h.clickDone(p.index) }
 
 // Order sets the resolution order for this player's next multi-target ordering
 // (e.g. which creature an area effect damages first). Cards are matched by handle

@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Zorg
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Mars
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Zorg enters play stunned.
-//	Before Fight: Stun the creature Zorg fights and each of that creature's neighbors.
+//	Before Fight: Stun the creature Zorg fights and each of its neighbors.
 var Zorg = card.New(
 	"Zorg",
 	card.House.Mars,
@@ -25,5 +20,8 @@ var Zorg = card.New(
 	card.Provenance(card.CotA, 206),
 	card.WithPower(7),
 	card.WithTraits("Beast"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithEntersPlay(card.Stun{Target: card.Target.This}),
+	card.WithAbility(
+		card.Trigger.BeforeFight,
+		card.Stun{Target: card.Target.CreatureFought.AndNeighbors()}),
 )

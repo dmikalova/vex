@@ -91,11 +91,12 @@ func (e ReadyCreatures) Resolve(ctx *EffectContext) {
 	}
 }
 
-// singularNoun turns a Target's collective phrase into the bare singular noun the
-// "ready a <noun>" clause needs, e.g. "each friendly Mars creature" into "Mars
-// creature".
+// singularNoun strips the leading article or quantifier from a Target's phrase,
+// leaving the bare noun a "ready a <noun>" or "up to 3 <noun>s" clause needs. The
+// adjectives stay: "an enemy damaged creature" becomes "enemy damaged creature",
+// which pluralizes correctly and keeps the "enemy" the card is scoped to.
 func singularNoun(phrase string) string {
-	for _, p := range []string{"each friendly ", "each enemy ", "each other friendly ", "each ", "a friendly ", "an enemy ", "a ", "an "} {
+	for _, p := range []string{"each other ", "each ", "an ", "a "} {
 		if strings.HasPrefix(phrase, p) {
 			return strings.TrimPrefix(phrase, p)
 		}

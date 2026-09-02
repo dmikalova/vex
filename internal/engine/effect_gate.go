@@ -37,6 +37,24 @@ func (e Then) Resolve(ctx *EffectContext) {
 	}
 }
 
+// declinable reports whether the gate's first half is itself one card choice; only
+// then can the whole gate be answered by clicking a card.
+func (e Then) declinable() bool {
+	d, ok := e.First.(declinableEffect)
+	return ok && d.declinable()
+}
+
+// resolveOptional runs the gate under a May: when First can be declined by card
+// click it is asked that way, so "you may destroy another friendly creature ->
+// fully heal Chuff Ape" is one click, and Result still hangs off First happening.
+func (e Then) resolveOptional(ctx *EffectContext) bool {
+	if !e.First.(declinableEffect).resolveOptional(ctx) {
+		return false
+	}
+	e.Result.Resolve(ctx)
+	return true
+}
+
 // validate surfaces a configuration error in either half of the gate.
 func (e Then) validate() error {
 	if err := validateEffect(e.First); err != nil {

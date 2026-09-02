@@ -27,8 +27,8 @@ func TestNocturnalManeuver(t *testing.T) {
 		})
 
 		h.P1.Play(NocturnalManeuver)
-		h.P1.ClickOption(a.Name())
-		h.P1.ClickOption(b.Name())
+		h.P1.ClickCard(a)
+		h.P1.ClickCard(b)
 
 		h.Expect(a).Exhausted()
 		h.Expect(b).Exhausted()

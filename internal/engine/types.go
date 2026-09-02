@@ -92,6 +92,12 @@ const (
 	Upgrade CardType = "Upgrade"
 )
 
+// AnyType is the wildcard a type-scoped effect uses to mean "every card type"
+// rather than one of them — Treasure Map bars playing cards outright, not cards of
+// a particular type. No card is ever of this type; it exists so a bar can say "all"
+// while staying one comparable CardType, and the zero value keeps meaning "unset".
+const AnyType CardType = "Card"
+
 // Trait is a flavor/type label printed on a card (e.g. "Giant", "Weapon").
 // Traits carry no inherent rules meaning on their own; other cards reference them.
 type Trait string
@@ -110,9 +116,11 @@ const (
 	//
 	//rulebook:keyword Poison
 	Poison Keyword = "Poison"
-	// Elusive: defined for completeness; behavior not yet implemented.
+	// Elusive: the first time this creature is chosen to be fought each turn, no
+	// pending fight damage is dealt by or to it.
 	Elusive Keyword = "Elusive"
-	// Taunt: defined for completeness; behavior not yet implemented.
+	// Taunt: this creature's neighbors cannot be chosen to be fought unless they
+	// have taunt themselves.
 	Taunt Keyword = "Taunt"
 	// A card with Versatile may, once in play, be used (reap/fight/action) as if
 	// it belonged to the active house. It does not relax playing from hand — a
@@ -122,6 +130,18 @@ const (
 	//rulebook:keyword Versatile
 	Versatile Keyword = "Versatile"
 )
+
+// keywordBit is the bit each keyword occupies in GameState.KeywordsLost, so a
+// "for the remainder of the turn, each creature loses <keyword>" effect can be
+// held as one flat comparable value. A keyword absent from the map cannot be
+// taken away.
+var keywordBit = map[Keyword]uint8{
+	Skirmish:  1 << 0,
+	Poison:    1 << 1,
+	Elusive:   1 << 2,
+	Taunt:     1 << 3,
+	Versatile: 1 << 4,
+}
 
 // Trigger identifies when an ability's effect resolves.
 type Trigger int
@@ -204,6 +224,26 @@ const (
 	// whenever an enemy creature is destroyed on your turn. It is a persistent
 	// reaction on an in-play card, fired only for the active player's cards.
 	TriggerAfterEnemyCreatureDestroyed
+	// This ability resolves after the opponent of the card's controller plays a card
+	// — Teliga gains its controller Æmber whenever the opponent plays a creature. It is
+	// the mirror of TriggerAfterCardPlayed, fired on the watching player's in-play
+	// cards rather than the player who did the playing.
+	TriggerAfterEnemyCardPlayed
+	// This ability resolves after its controller uses a card — reaps or fights with a
+	// creature, or fires an "Action:" — with the used card as "it" (Veylan Analyst
+	// gains Æmber whenever you use an artifact).
+	TriggerAfterUse
+	// This ability resolves after its controller discards a card from their hand,
+	// with the discarded card as "it" (Rock-Hurling Giant). Discarding from anywhere
+	// else — the top of a deck, the archives — is not this.
+	TriggerAfterDiscardFromHand
+	// A Leaves Play ability resolves as the card leaves play by any route — destroyed,
+	// purged, returned to hand, archived, or shuffled away. It fires before the card's
+	// teardown, so the card is still on the board when it resolves. TriggerDestroyed is
+	// the narrower "only when destroyed" version.
+	//
+	//rulebook:ability Leaves Play
+	TriggerLeavesPlay
 )
 
 // prefix returns the printed text prefix for a trigger and whether the effect
@@ -236,6 +276,14 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return "After an enemy creature is destroyed during your turn, ", false
 	case TriggerAfterCardPlayed:
 		return "After you play a card, ", false
+	case TriggerAfterEnemyCardPlayed:
+		return "After your opponent plays a card, ", false
+	case TriggerAfterUse:
+		return "After you use a card, ", false
+	case TriggerAfterDiscardFromHand:
+		return "After you discard a card from your hand, ", false
+	case TriggerLeavesPlay:
+		return "Leaves Play: ", true
 	case TriggerEndOfTurn:
 		return "At the end of your turn, ", false
 	default:

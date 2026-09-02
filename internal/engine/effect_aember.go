@@ -1,6 +1,9 @@
 package engine
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
 
 // This file gathers the Æmber-economy effects. Æmber is the resource players
 // spend to forge keys (the way to win). It lives in a player's pool, except when
@@ -102,6 +105,9 @@ type LoseAember struct {
 	Player Player
 	Amount int
 	By     Loss
+	// Per scales a fixed Amount by a running count, the way GainAember does
+	// — Phylyx the Disintegrator drains 1 per other friendly Mars creature.
+	Per Count
 }
 
 // validate rejects a LoseAember with no player, or one that sets both a fixed
@@ -137,9 +143,9 @@ func (e LoseAember) Text() string {
 		}
 	}
 	if subject == "" {
-		return verb + " " + object
+		return forEach(e.Per, verb+" "+object)
 	}
-	return subject + qualifier + " " + verb + " " + object
+	return forEach(e.Per, subject+qualifier+" "+verb+" "+object)
 }
 
 // Resolve removes the Æmber from each affected player's pool, never taking a pool
@@ -176,5 +182,48 @@ func (e LoseAember) amountFor(ctx *EffectContext, p int) int {
 	if e.By != nil {
 		return e.By.lose(ctx.Resolver.Aember(p))
 	}
+	if e.Per != nil {
+		return e.Amount * e.Per.Value(ctx)
+	}
 	return e.Amount
+}
+
+// MoveAemberFromPool banks Æmber out of your pool onto a card, where it sits
+// until something takes it off again. Safe Place and Pocket Universe pair it with
+// WithSpendableAember, which is what makes the bank worth filling.
+//
+//rulebook:effect Æmber
+type MoveAemberFromPool struct {
+	Amount int
+	// Target names the card the Æmber moves onto.
+	Target Target
+}
+
+// Text renders the effect, e.g. "move 1 Æmber from your pool to Safe Place".
+func (e MoveAemberFromPool) Text() string {
+	return fmt.Sprintf("move %d Æmber from your pool to %s", e.Amount, e.Target.Text())
+}
+
+// Resolve moves as much of the amount as the pool holds onto each target card.
+func (e MoveAemberFromPool) Resolve(ctx *EffectContext) {
+	for _, id := range e.Target.Select(ctx) {
+		pool := ctx.Resolver.Aember(ctx.Controller)
+		moved := min(e.Amount, pool)
+		if moved == 0 {
+			return
+		}
+		ctx.Resolver.SetAember(ctx.Controller, pool-moved)
+		ctx.Resolver.AddAmberOn(id, moved)
+	}
+}
+
+// validate rejects a move with no destination or nothing to move.
+func (e MoveAemberFromPool) validate() error {
+	if e.Amount <= 0 {
+		return errors.New("MoveAemberFromPool needs a positive Amount")
+	}
+	if e.Target == (Target{}) {
+		return errors.New("MoveAemberFromPool needs a Target")
+	}
+	return nil
 }

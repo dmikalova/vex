@@ -41,6 +41,11 @@ type CardDefinition struct {
 	// The zero Target imposes no restriction.
 	FightRestriction Target
 
+	// AttackIgnores are the defensive keywords this creature ignores while it is
+	// attacking — Niffle Ape ignores taunt and elusive, so it may be used to fight a
+	// creature its neighbors' taunt shields and no elusive stops the damage.
+	AttackIgnores []Keyword
+
 	// AemberBonus is the number of Æmber "pips" printed on the card; the
 	// controller gains this much Æmber when the card is played.
 	AemberBonus int
@@ -83,6 +88,14 @@ type CardDefinition struct {
 	// PreventSteal, while the card is in play, makes its controller's Æmber
 	// impossible for the opponent to steal (The Vaultkeeper).
 	PreventSteal bool
+
+	// SpendableAember lets the Æmber sitting on this card be put toward a key,
+	// so it is a private vault its controller can bank into (Safe Place).
+	SpendableAember bool
+
+	// PlayRequirement is the Æmber the controller must have — and, when the
+	// requirement spends, gives up — to play this card from hand.
+	PlayRequirement PlayRequirement
 
 	// Abilities are the triggered abilities on the card.
 	Abilities []Ability
@@ -164,6 +177,25 @@ func (l PlayCardLimit) affects(controller, target int) bool {
 type KeyCostChange struct {
 	amount int
 	player Player
+	// per scales the amount by a running count read from the source card's point of
+	// view — Iron Obelisk charges +1 per friendly damaged Brobnar creature.
+	per Count
+	// whileOnFlank suspends the change unless the source card holds a flank of its
+	// controller's battleline (Titan Mechanic).
+	whileOnFlank bool
+}
+
+// Per scales the change by a running count, so a card can charge per creature it
+// sees rather than a flat amount.
+func (kc KeyCostChange) Per(c Count) KeyCostChange {
+	kc.per = c
+	return kc
+}
+
+// WhileOnFlank applies the change only while the source card is on a flank.
+func (kc KeyCostChange) WhileOnFlank() KeyCostChange {
+	kc.whileOnFlank = true
+	return kc
 }
 
 // NewKeyCostChange builds a key-cost change of amount Æmber on the keys of player —
@@ -212,6 +244,11 @@ type StaticModifier struct {
 	// destruction (EventCreatureDestroyed) with an effect that fully heals it and
 	// destroys the Upgrade. The zero value carries no replacement.
 	Replaces Replace
+
+	// WhileOnFlank suspends the whole modifier unless the host creature holds a
+	// flank of its controller's battleline — Shoulder Armor only armors a creature
+	// standing at the edge of the line.
+	WhileOnFlank bool
 }
 
 // A constant ability is a continuous rule a card applies while it stays in play,
@@ -232,6 +269,9 @@ type ConstantAbility struct {
 	PowerBonus int
 	ArmorBonus int
 	Target     Target
+	// Per scales the bonuses by a running count read from the source's point of
+	// view — Mushroom Man gets +3 power for each unforged key its controller has.
+	Per Count
 	// Keywords are keywords the card grants to every creature its Target reaches,
 	// for as long as it stays in play — Round Table grants friendly Knights taunt.
 	Keywords []Keyword
@@ -246,7 +286,7 @@ type ConstantAbility struct {
 // every card in play (creatures and artifacts, including the source).
 func (c ConstantAbility) target() Target {
 	if c.Target == (Target{}) {
-		return Target{Kind: TargetEachInPlay}
+		return Target{Kind: TargetEachCardInPlay}
 	}
 	return c.Target
 }
@@ -386,6 +426,12 @@ func WithFightRestriction(t Target) CardOption {
 	return func(c *CardDefinition) { c.FightRestriction = t }
 }
 
+// WithAttackIgnores makes a creature ignore defensive keywords while it attacks
+// (Niffle Ape ignores taunt and elusive).
+func WithAttackIgnores(kws ...Keyword) CardOption {
+	return func(c *CardDefinition) { c.AttackIgnores = kws }
+}
+
 // WithEntersPlay makes a creature apply an effect to itself as it enters play
 // (Chuff Ape stunning itself with Stun) by giving it that effect as an Enters Play
 // ability — an ability the enter-play event fires, so the play path needs no
@@ -435,6 +481,18 @@ func WithDrawModifier(player Player, amount int) CardOption {
 // Æmber from being stolen (The Vaultkeeper).
 func WithAemberTheftImmunity() CardOption {
 	return func(c *CardDefinition) { c.PreventSteal = true }
+}
+
+// WithSpendableAember lets the Æmber banked on the card be spent when its
+// controller forges a key (Safe Place, Pocket Universe).
+func WithSpendableAember() CardOption {
+	return func(c *CardDefinition) { c.SpendableAember = true }
+}
+
+// WithPlayRequirement puts an Æmber requirement on playing the card, either a
+// threshold it only checks (Kelifi Dragon) or a cost it charges (Truebaru).
+func WithPlayRequirement(r PlayRequirement) CardOption {
+	return func(c *CardDefinition) { c.PlayRequirement = r }
 }
 
 // WithAbility appends a triggered ability to the card.

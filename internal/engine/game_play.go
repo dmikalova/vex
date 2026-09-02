@@ -187,6 +187,9 @@ func (g *Game) playCardFromZone(
 		return 0, ErrCardPlayLimit
 	}
 	def := g.cat.def(id)
+	if !def.PlayRequirement.met(g.State.Aember[player]) {
+		return 0, ErrPlayRequirement
+	}
 	switch def.Type {
 	case Creature:
 		if g.cannotPlayCreatures(player) {
@@ -211,7 +214,12 @@ func (g *Game) playCardFromZone(
 		return id, nil
 	case Upgrade:
 		candidates := append(g.battlelineCopy(player), g.battlelineCopy(1-player)...)
-		host, ok := g.pickCreature(player, g.Name(id), "Choose a creature to upgrade", candidates)
+		host, ok := g.pickCreature(
+			player,
+			g.Name(id),
+			"Choose a creature to attach "+SelfName+" to",
+			candidates,
+		)
 		if !ok {
 			return 0, ErrNoTarget
 		}
@@ -317,6 +325,9 @@ func (g *Game) DiscardCardFromHand(owner int, id LocalID) {
 	g.State.Discard[owner].add(id)
 	g.State.DiscardedThisTurn[owner].add(id)
 	g.logf("%s discards %s", g.names[owner], g.Name(id))
+	for _, watcher := range g.allInPlay(owner) {
+		g.triggerAbilities(watcher, TriggerAfterDiscardFromHand, id, true)
+	}
 }
 
 // DiscardRandomFromHand discards one uniformly random card from a player's hand,
@@ -332,7 +343,7 @@ func (g *Game) DiscardRandomFromHand(owner int) {
 // inActiveHouse reports whether a card of the given definition matches the
 // active house for the purpose of PLAYING or discarding it from hand: true when
 // no house has been chosen or the card's own house is the active house. Manual
-// (sandbox) mode lifts the restriction. Versatile does not apply here — it only
+// mode lifts the restriction. Versatile does not apply here — it only
 // relaxes using a card already in play (see usableInActiveHouse).
 func (g *Game) inActiveHouse(def *CardDefinition) bool {
 	return g.manual ||
@@ -376,9 +387,15 @@ func (g *Game) playPermissionRemaining(player int, house House) int {
 	return limit - used
 }
 
-// recordCardPlayed logs the play for the turn, including an off-house grant if
-// the hand play was legal only because of that continuous permission.
+// recordCardPlayed logs the play for the turn, charges any Æmber the card's play
+// requirement spends, and includes an off-house grant if the hand play was legal
+// only because of that continuous permission.
 func (g *Game) recordCardPlayed(player int, id LocalID, opts playCardOptions) {
+	def := g.cat.def(id)
+	if r := def.PlayRequirement; r.Spend && r.required() {
+		g.State.Aember[player] -= r.Aember
+		g.logf("%s loses %d Æmber to play %s", g.names[player], r.Aember, def.Name)
+	}
 	if opts.consumePlayPermission {
 		g.State.PlayPermissionsUsedThisTurn[player][g.cat.def(id).House]++
 	}
@@ -408,7 +425,7 @@ func (g *Game) validateHandPlay(player, handIndex int, want CardType) (LocalID, 
 	if def.Type != want {
 		return 0, ErrWrongType
 	}
-	if g.State.CannotPlayTypeThis[player] == want {
+	if g.barredFromPlaying(player, want) {
 		return 0, ErrCannotPlayType
 	}
 	if !g.mayPlayFromHand(player, def) {
@@ -432,11 +449,17 @@ func (g *Game) CanPlay(player int, id LocalID) error {
 	if def.Type == Creature && g.cannotPlayCreatures(player) {
 		return ErrCannotPlayCreature
 	}
+	if g.barredFromPlaying(player, def.Type) {
+		return ErrCannotPlayType
+	}
 	if g.cannotPlayCard(player) {
 		return ErrCardPlayLimit
 	}
 	if !g.mayPlayFromHand(player, def) {
 		return ErrWrongHouse
+	}
+	if !def.PlayRequirement.met(g.State.Aember[player]) {
+		return ErrPlayRequirement
 	}
 	if def.Type == Upgrade &&
 		len(

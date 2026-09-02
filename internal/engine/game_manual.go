@@ -1,6 +1,6 @@
 package engine
 
-// This file holds manual (sandbox) mode: unrestricted operations a UI exposes so
+// This file holds manual mode: unrestricted operations a UI exposes so
 // the player can rearrange the game outside the normal rules — moving cards
 // between zones, readying or exhausting cards, adding an arbitrary card, and
 // (via the manual flag) playing and using cards regardless of house. These
@@ -37,10 +37,10 @@ func (z ManualZone) String() string {
 	return "unknown"
 }
 
-// Manual reports whether sandbox mode is on.
+// Manual reports whether manual mode is on.
 func (g *Game) Manual() bool { return g.manual }
 
-// SetManual turns sandbox mode on or off. While on, active-house checks on
+// SetManual turns manual mode on or off. While on, active-house checks on
 // playing and using cards are lifted (see inActiveHouse).
 func (g *Game) SetManual(on bool) { g.manual = on }
 
@@ -97,16 +97,22 @@ func (g *Game) ManualSetExhausted(id LocalID, exhausted bool) {
 }
 
 // ManualAddCard registers def as a new card owned by player and places it in
-// their hand, returning its id — so a sandbox can pull any card from the pool.
-func (g *Game) ManualAddCard(def CardDefinition, player int) LocalID {
+// their hand, returning its id — so manual mode can pull any card from the pool.
+// A match's LocalID space is finite, so it reports false and adds nothing once it
+// is exhausted rather than panicking mid-game.
+func (g *Game) ManualAddCard(def CardDefinition, player int) (LocalID, bool) {
+	if !g.cat.hasRoom() {
+		g.logf("%s cannot add a card: this match is full", g.names[player])
+		return 0, false
+	}
 	id := g.Register(def, player)
 	g.State.Hand[player].add(id)
 	g.logf("%s manually adds %s to hand", g.names[player], g.Name(id))
-	return id
+	return id, true
 }
 
-// ManualAddAmber adjusts player's Æmber pool by delta (clamped at zero), so a
-// sandbox can dial each player's Æmber up or down.
+// ManualAddAmber adjusts player's Æmber pool by delta (clamped at zero), so
+// manual mode can dial each player's Æmber up or down.
 func (g *Game) ManualAddAmber(player, delta int) {
 	n := g.State.Aember[player] + delta
 	if n < 0 {
@@ -126,8 +132,8 @@ func (g *Game) ManualAddChains(player, delta int) {
 	g.logf("%s now has %d %s (manual)", g.names[player], n, chainNoun(n))
 }
 
-// ManualSetActiveHouse sets the active player's active house directly, so a
-// sandbox can switch houses mid-turn.
+// ManualSetActiveHouse sets the active player's active house directly, so
+// manual mode can switch houses mid-turn.
 func (g *Game) ManualSetActiveHouse(h House) {
 	g.State.ActiveHouse = h
 	g.logf("%s manually chooses %s as their active house", g.names[g.State.ActivePlayer], h)

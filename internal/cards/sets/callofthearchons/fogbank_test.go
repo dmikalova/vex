@@ -23,10 +23,10 @@ func TestFogbank(t *testing.T) {
 
 		h.P1.Play(Fogbank)
 
-		if !h.Game().State.CannotFightNext[1] {
+		if !h.Game().State.CannotFightNext[1].Value {
 			t.Error("Fogbank should arm the opponent's next turn")
 		}
-		if h.Game().State.CannotFightNext[0] {
+		if h.Game().State.CannotFightNext[0].Value {
 			t.Error("Fogbank should not restrict the caster")
 		}
 	})

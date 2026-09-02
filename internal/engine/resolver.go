@@ -1,5 +1,7 @@
 package engine
 
+import "strings"
+
 // Resolver is the complete interface an effect uses to inspect and change the
 // game. Effects hold only a Resolver (through EffectContext) — never the *Game or
 // its GameState — so every change a card is able to make goes through one of
@@ -49,6 +51,7 @@ type EconomyReader interface {
 	AemberProtected(player int) bool
 	// Keys returns the number of keys a player has forged.
 	Keys(player int) int
+	TurnHistory(player int, of TurnStat) int
 }
 
 // CreatureReader reads the in-play state carried on a single card — its stats,
@@ -135,6 +138,7 @@ type EconomyResolver interface {
 	ForgeKey(player int)
 	// ForgeKeyFree has a player forge one key without paying its current cost.
 	ForgeKeyFree(player int)
+	UnforgeKey(player int)
 	// GainChains adds chains to a player, penalizing their future draws.
 	GainChains(controller, amount int)
 }
@@ -170,6 +174,9 @@ type CreatureResolver interface {
 	// SwapBattlelinePositions exchanges two creatures' positions in the same
 	// battleline without moving any state between the creatures.
 	SwapBattlelinePositions(a, b LocalID)
+	// LoseKeyword takes a keyword away from every creature in play for the
+	// remainder of the turn.
+	LoseKeyword(k Keyword)
 }
 
 // CombatResolver resolves damage, destruction, and the fights, reaps, and actions
@@ -195,10 +202,11 @@ type CombatResolver interface {
 	// house). A creature can only be used while ready, so an exhausted creature may
 	// be chosen but does nothing.
 	ReapWith(id LocalID)
-	// UseActionOf fires a card's "Action:" ability (ability-driven, ignoring active
-	// player and house). A card can only be used while ready, so an exhausted card
-	// may be chosen but does nothing.
-	UseActionOf(id LocalID)
+	// UseActionOf fires a card's "Action:" ability on behalf of actor (ability-driven,
+	// ignoring active player and house), so a card can be used "as if it were yours".
+	// A card can only be used while ready, so an exhausted card may be chosen but
+	// does nothing.
+	UseActionOf(actor int, id LocalID)
 }
 
 // ZoneResolver moves cards between zones — drawing, and shuffling a card between
@@ -212,6 +220,9 @@ type ZoneResolver interface {
 	PutIntoHand(id LocalID)
 	// PutIntoArchives moves a card from play to its owner's archives.
 	PutIntoArchives(id LocalID)
+	// PutIntoYourArchives moves a card from play into player's own archives, which
+	// may hold an enemy card (an abduction).
+	PutIntoYourArchives(id LocalID, player int)
 	// PutIntoDeckShuffled moves a card from play into its owner's deck and shuffles.
 	PutIntoDeckShuffled(id LocalID)
 	// ArchiveFromHand moves a card from its owner's hand to their archives.
@@ -266,17 +277,27 @@ type ZoneResolver interface {
 // registry that keeps such behavior out of the play and reap paths.
 type TurnResolver interface {
 	// CannotFightNextTurn bars a player from using creatures to fight throughout
-	// their next turn.
-	CannotFightNextTurn(player int)
+	// their next turn. source is the card imposing the bar, recorded so a frontend
+	// can name it.
+	CannotFightNextTurn(player int, source LocalID)
 	// CannotPlayTypeNextTurn bars a player from playing cards of the given type
 	// throughout their next turn (Lifeward, Scrambler Storm).
-	CannotPlayTypeNextTurn(player int, t CardType)
+	CannotPlayTypeNextTurn(player int, t CardType, source LocalID)
+	// CannotPlayTypeThisTurn bars a player from playing cards of the given type for
+	// the rest of the current turn (Treasure Map, with the AnyType wildcard).
+	CannotPlayTypeThisTurn(player int, t CardType, source LocalID)
+	// CannotUseNextTurn bars a player from reaping, fighting, or using an "Action:"
+	// ability throughout their next turn (Skippy Timehog).
+	CannotUseNextTurn(player int, source LocalID)
 	// SkipForgeStepNextTurn makes a player skip their "forge a key" step at the start
 	// of their next turn (Miasma).
-	SkipForgeStepNextTurn(player int)
+	SkipForgeStepNextTurn(player int, source LocalID)
 	// GrantFightForHouse lets a player use creatures of the given house to fight
 	// this turn even out of the active house.
 	GrantFightForHouse(player int, house House)
+	// GrantFightAnyHouse lets every creature a player controls fight this turn,
+	// whatever its house (Follow the Leader).
+	GrantFightAnyHouse(player int)
 	// GrantUseForHouse lets a player fully use (fight, reap, or Action:) creatures of
 	// the given house this turn even out of the active house.
 	GrantUseForHouse(player int, house House)
@@ -289,7 +310,7 @@ type TurnResolver interface {
 	AddLastingOnce(on Event, do lastingAction, controller, amount int, house House)
 	// ForceActiveHouseNextTurn makes a player have to choose the given house as their
 	// active house on their next turn.
-	ForceActiveHouseNextTurn(player int, house House)
+	ForceActiveHouseNextTurn(player int, house House, source LocalID)
 }
 
 // ChoiceResolver asks a player to make a decision — ordering a set of cards, or
@@ -306,6 +327,16 @@ type ChoiceResolver interface {
 	// is taken automatically. source is the card whose ability is asking (usually
 	// ctx.Source), for prompt attribution.
 	ChooseCard(player int, source LocalID, prompt string, candidates []LocalID) (LocalID, bool)
+	// ChooseCardOptional asks a player to pick one card from candidates or to
+	// decline. Unlike ChooseCard a sole candidate is still offered, because passing
+	// is a legal answer. source is the card whose ability is asking (usually
+	// ctx.Source), for prompt attribution.
+	ChooseCardOptional(
+		player int,
+		source LocalID,
+		prompt string,
+		candidates []LocalID,
+	) (LocalID, bool)
 	// ChooseOption asks a player to pick one of several labeled options, returning
 	// its index (0 when the player's chooser expresses no preference). source is the
 	// card whose ability is asking (usually ctx.Source), for prompt attribution.
@@ -341,6 +372,13 @@ func (g *Game) SharesTrait(a, b LocalID) bool {
 
 // HasKeyword reports whether a creature has a keyword, printed or granted.
 func (g *Game) HasKeyword(id LocalID, k Keyword) bool { return g.hasKeyword(id, k) }
+
+// LoseKeyword takes a keyword away from every creature in play for the remainder
+// of the turn (Sniffer).
+func (g *Game) LoseKeyword(k Keyword) {
+	g.State.KeywordsLost |= keywordBit[k]
+	g.logf("each creature loses %s for the remainder of the turn", strings.ToLower(string(k)))
+}
 
 // ForgeKey has a player forge one key at its current cost, if affordable.
 func (g *Game) ForgeKey(player int) { g.forgeKey(player) }
@@ -540,8 +578,19 @@ func (g *Game) ChooseCard(
 	return g.pickCard(player, g.sourceName(source), prompt, candidates)
 }
 
+// ChooseCardOptional asks a player to choose one card from candidates or to
+// decline, attributing the prompt to the source card. A sole candidate is still
+// offered rather than forced, because declining is a legal answer.
+func (g *Game) ChooseCardOptional(
+	player int,
+	source LocalID,
+	prompt string,
+	candidates []LocalID,
+) (LocalID, bool) {
+	return g.pickOptional(player, g.sourceName(source), prompt, candidates)
+}
+
 // ChooseOption asks a player to choose one of several labeled options, attributing
-// the prompt to the source card. If the player's chooser expresses no preference
 // (does not implement OptionChooser), the first option is taken.
 func (g *Game) ChooseOption(player int, source LocalID, prompt string, options []string) int {
 	return g.chooseOption(player, g.sourceName(source), prompt, options)
@@ -556,7 +605,7 @@ func (g *Game) chooseOption(player int, source, prompt string, options []string)
 		return 0
 	}
 	if oc, ok := g.chooserFor(player).(OptionChooser); ok {
-		return oc.ChooseOption(source, prompt, options)
+		return oc.ChooseOption(source, renderPrompt(source, prompt), options)
 	}
 	return 0
 }
@@ -588,12 +637,12 @@ func (g *Game) ReapWith(id LocalID) {
 	}
 }
 
-// UseActionOf fires a card's "Action:" ability, ability-driven (ignoring active
-// player and house). A card can only be used while ready, so an exhausted card
-// does nothing.
-func (g *Game) UseActionOf(id LocalID) {
+// UseActionOf fires a card's "Action:" ability on behalf of actor, ability-driven
+// (ignoring active player and house). A card can only be used while ready, so an
+// exhausted card does nothing.
+func (g *Game) UseActionOf(actor int, id LocalID) {
 	if g.readyToUse(id) {
-		g.useActionOf(id)
+		g.useActionOf(actor, id)
 	}
 }
 

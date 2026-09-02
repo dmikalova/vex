@@ -41,7 +41,7 @@ func TestPreventDamage(t *testing.T) {
 }
 
 func TestMoveAember(t *testing.T) {
-	friendly := Target{Kind: TargetChosenFriendlyInPlay}
+	friendly := Target{Kind: TargetChosenFriendlyCreatureOrArtifact}
 
 	// Text: pool destination and card destination.
 	toPool := MoveAember{Amount: 1, From: friendly, To: Controller}
@@ -118,7 +118,7 @@ func TestMoveAemberDeclined(t *testing.T) {
 	g.AddAmberOn(a, 1)
 	g.AddAmberOn(b, 1)
 	g.SetChooser(0, orderRejectChooser{})
-	MoveAember{From: Target{Kind: TargetChosenFriendlyInPlay}, To: Controller}.
+	MoveAember{From: Target{Kind: TargetChosenFriendlyCreatureOrArtifact}, To: Controller}.
 		Resolve(&EffectContext{Resolver: g, Controller: 0})
 	if g.Aember(0) != 0 {
 		t.Error("a declined move should move nothing")

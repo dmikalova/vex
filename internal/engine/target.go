@@ -26,6 +26,10 @@ const (
 	TargetThisCreature
 	// TargetTriggeringCreature selects the creature that caused the trigger ("it").
 	TargetTriggeringCreature
+	// TargetCreatureFought selects the creature the source is fighting, named in
+	// full ("the creature <self> fights") so a Before Fight ability that reaches
+	// past it — Lord Golgotha damaging its neighbors — reads unambiguously.
+	TargetCreatureFought
 	// TargetEachCreature selects every creature in play.
 	TargetEachCreature
 	// TargetEachFriendlyCreature selects every creature the controller controls.
@@ -34,12 +38,16 @@ const (
 	TargetEachEnemyCreature
 	// TargetEachArtifact selects every artifact in play, both players'.
 	TargetEachArtifact
-	// TargetEachInPlay selects every card in play — every creature and artifact,
+	// TargetEachFriendlyArtifact selects every artifact the controller controls.
+	TargetEachFriendlyArtifact
+	// TargetEachEnemyArtifact selects every artifact the opponent controls.
+	TargetEachEnemyArtifact
+	// TargetEachCardInPlay selects every card in play — every creature and artifact,
 	// both players' — including the source card itself.
-	TargetEachInPlay
-	// TargetEachFriendlyInPlay selects the controller's cards in play — their
+	TargetEachCardInPlay
+	// TargetEachFriendlyCardInPlay selects the controller's cards in play — their
 	// creatures and artifacts.
-	TargetEachFriendlyInPlay
+	TargetEachFriendlyCardInPlay
 	// TargetEachOtherFriendlyCreature selects the controller's creatures except
 	// the source card.
 	TargetEachOtherFriendlyCreature
@@ -71,12 +79,12 @@ const (
 	// creature". Transposition Sandals swaps with another creature, then uses the
 	// other creature.
 	TargetTheOtherCreature
-	// TargetChosenInPlay selects a single creature or artifact the controller
+	// TargetChosenCreatureOrArtifact selects a single creature or artifact the controller
 	// chooses from all in play (either player's), rendered "a creature or artifact".
-	TargetChosenInPlay
-	// TargetChosenFriendlyInPlay selects a single friendly creature or artifact the
+	TargetChosenCreatureOrArtifact
+	// TargetChosenFriendlyCreatureOrArtifact selects a single friendly creature or artifact the
 	// controller chooses, rendered "a friendly creature or artifact".
-	TargetChosenFriendlyInPlay
+	TargetChosenFriendlyCreatureOrArtifact
 )
 
 // Target describes which cards an effect applies to. Kind picks the base set;
@@ -115,6 +123,9 @@ type Target struct {
 	// withNeighbors expands a single chosen creature to include its battleline
 	// neighbors (Tremor stuns a creature and each of its neighbors).
 	withNeighbors bool
+	// neighborsOf narrows the selection to the battleline neighbors of what it
+	// selects, dropping the selected creature itself.
+	neighborsOf bool
 	// other excludes the source card from the selected set ("other" cards).
 	other bool
 	// selector is a set-relative refinement applied after the per-card filters. It
@@ -251,7 +262,9 @@ func (t Target) allows(ctx *EffectContext, id LocalID) bool {
 }
 
 // OnFlank narrows the target to creatures on a flank of their battleline (its
-// leftmost or rightmost creature).
+// leftmost or rightmost creature). A flank is a battleline position, so the
+// filter only constrains creatures: on a target that also reaches artifacts
+// ("an artifact or flank creature", Snudge) an artifact passes it untouched.
 func (t Target) OnFlank() Target {
 	t.onFlank = true
 	return t
@@ -276,6 +289,14 @@ func (t Target) Neighboring() Target {
 // neighbors (Tremor). It is meaningful only on a chosen-creature target.
 func (t Target) AndNeighbors() Target {
 	t.withNeighbors = true
+	return t
+}
+
+// NeighborsOf narrows a target to the battleline neighbors of what it selects,
+// dropping the selected creature itself — Lord Golgotha damages each neighbor of
+// the creature it fights, but not that creature.
+func (t Target) NeighborsOf() Target {
+	t.neighborsOf = true
 	return t
 }
 
@@ -310,19 +331,24 @@ func (t Target) Text() string {
 	case TargetThisCreature:
 		return SelfName
 	case TargetTriggeringCreature:
-		return "it"
+		return t.decorateNeighbors("it")
+	case TargetCreatureFought:
+		return t.decorateNeighbors("the creature " + SelfName + " fights")
 	case TargetTheOtherCreature:
 		return "the other creature"
 	}
 	noun := "creature"
 	if t.Kind == TargetEachArtifact || t.Kind == TargetChosenArtifact ||
-		t.Kind == TargetChosenEnemyArtifact {
+		t.Kind == TargetChosenEnemyArtifact || t.Kind == TargetEachFriendlyArtifact ||
+		t.Kind == TargetEachEnemyArtifact {
 		noun = "artifact"
 	}
-	if t.Kind == TargetEachFriendlyInPlay {
+	if t.Kind == TargetEachFriendlyCardInPlay {
 		noun = "card"
 	}
-	if t.Kind == TargetChosenInPlay || t.Kind == TargetChosenFriendlyInPlay {
+	orArtifact := t.Kind == TargetChosenCreatureOrArtifact ||
+		t.Kind == TargetChosenFriendlyCreatureOrArtifact
+	if orArtifact {
 		noun = "creature or artifact"
 	}
 	if t.exceptHouse != HouseNone {
@@ -338,7 +364,14 @@ func (t Target) Text() string {
 		noun = "non-" + string(t.exceptTrait) + " trait " + noun
 	}
 	if t.onFlank {
-		noun = "flank " + noun
+		// A flank is a battleline position, so on a target that also reaches artifacts
+		// the qualifier binds to the creature half alone — which the printed phrase
+		// says by naming the artifact first (Snudge).
+		if orArtifact {
+			noun = strings.Replace(noun, "creature or artifact", "artifact or flank creature", 1)
+		} else {
+			noun = "flank " + noun
+		}
 	}
 	if t.neighboring {
 		noun = "neighboring " + noun
@@ -357,7 +390,7 @@ func (t Target) Text() string {
 	}
 	var phrase string
 	switch t.Kind {
-	case TargetEachInPlay:
+	case TargetEachCardInPlay:
 		phrase = "each card in play"
 	case TargetEachCreature, TargetEachArtifact:
 		if t.other {
@@ -367,7 +400,11 @@ func (t Target) Text() string {
 		}
 	case TargetEachFriendlyCreature:
 		phrase = "each friendly " + noun
-	case TargetEachFriendlyInPlay:
+	case TargetEachFriendlyArtifact:
+		phrase = "each friendly " + noun
+	case TargetEachEnemyArtifact:
+		phrase = "each enemy " + noun
+	case TargetEachFriendlyCardInPlay:
 		if t.other {
 			phrase = "each other friendly " + noun
 		} else {
@@ -379,7 +416,7 @@ func (t Target) Text() string {
 		phrase = "each other friendly " + noun
 	case TargetChosenEnemyCreature:
 		phrase = "an enemy " + noun
-	case TargetChosenFriendlyCreature, TargetChosenFriendlyInPlay:
+	case TargetChosenFriendlyCreature, TargetChosenFriendlyCreatureOrArtifact:
 		phrase = "a friendly " + noun
 	case TargetChosenOtherFriendlyCreature:
 		phrase = "another friendly " + noun
@@ -390,7 +427,7 @@ func (t Target) Text() string {
 	case TargetChosenEnemyArtifact:
 		phrase = "an enemy " + noun
 	default:
-		phrase = "a " + noun
+		phrase = indefinite(noun)
 	}
 	if t.hasMaxPower {
 		phrase += fmt.Sprintf(" with power %d or lower", t.maxPower)
@@ -423,8 +460,18 @@ func (t Target) Text() string {
 	if t.selector != nil {
 		phrase = t.selector.clause(phrase)
 	}
+	return t.decorateNeighbors(phrase)
+}
+
+// decorateNeighbors wraps a rendered noun phrase with the neighbour builders:
+// AndNeighbors reads "<phrase> and each of its neighbors", NeighborsOf reads
+// "each neighbor of <phrase>".
+func (t Target) decorateNeighbors(phrase string) string {
 	if t.withNeighbors {
 		phrase += " and each of its neighbors"
+	}
+	if t.neighborsOf {
+		phrase = "each neighbor of " + phrase
 	}
 	return phrase
 }
@@ -433,24 +480,81 @@ func (t Target) Text() string {
 // chosen kind it asks the controller to pick one of the filtered candidates
 // (returning nil when there are none or the choice is declined).
 func (t Target) Select(ctx *EffectContext) []LocalID {
+	return t.selectWith(ctx, false, nil)
+}
+
+// SelectOptional is Select inside a "you may": a chosen target is asked
+// declinably, so the controller clicks the card they mean or passes, instead of
+// answering a Yes/No and then being handed a pick they can no longer refuse. A
+// target that chooses nothing has no decision to decline and behaves like Select.
+func (t Target) SelectOptional(ctx *EffectContext) []LocalID {
+	return t.selectWith(ctx, true, nil)
+}
+
+// empty reports that nothing matches this target, reading only the candidates a
+// selector would narrow: with nothing to narrow there is nothing to select, and
+// unlike Select it asks the controller nothing.
+func (t Target) empty(ctx *EffectContext) bool {
+	return len(t.filter(ctx, t.selectBase(ctx))) == 0
+}
+
+// selectWith is the shared selection path; optional switches the chosen-kind
+// prompt between a forced pick and a declinable one, and keep (when set) drops
+// candidates the calling effect could not act on.
+func (t Target) selectWith(
+	ctx *EffectContext,
+	optional bool,
+	keep func(LocalID) bool,
+) []LocalID {
 	ids := t.filter(ctx, t.selectBase(ctx))
+	if keep != nil {
+		kept := ids[:0:0]
+		for _, id := range ids {
+			if keep(id) {
+				kept = append(kept, id)
+			}
+		}
+		ids = kept
+	}
 	if t.selector != nil {
 		ids = t.selector.refine(ctx, ids)
 	}
 	if !t.isChosen() {
-		return ids
+		return t.expandNeighbors(ctx, ids)
 	}
 	if len(ids) == 0 {
 		return nil
 	}
-	id, ok := ctx.ChooseCreature("Choose "+t.Text(), ids)
+	prompt := "Choose " + t.Text()
+	var id LocalID
+	var ok bool
+	if optional {
+		id, ok = ctx.ChooseCardOptional(prompt, ids)
+	} else {
+		id, ok = ctx.ChooseCreature(prompt, ids)
+	}
 	if !ok {
 		return nil
 	}
-	if t.withNeighbors {
-		return append([]LocalID{id}, neighbors(ctx, id)...)
+	return t.expandNeighbors(ctx, []LocalID{id})
+}
+
+// expandNeighbors applies the neighbour builders to an already-selected set:
+// AndNeighbors keeps each selected creature and adds its battleline neighbors,
+// NeighborsOf replaces the selection with them (Lord Golgotha hits the neighbors
+// of the creature it fights, not that creature).
+func (t Target) expandNeighbors(ctx *EffectContext, ids []LocalID) []LocalID {
+	if !t.withNeighbors && !t.neighborsOf {
+		return ids
 	}
-	return []LocalID{id}
+	out := ids[:0:0]
+	for _, id := range ids {
+		if t.withNeighbors {
+			out = append(out, id)
+		}
+		out = append(out, neighbors(ctx, id)...)
+	}
+	return out
 }
 
 // A Selector refines a Target's selected set relative to the whole set — a rule
@@ -668,8 +772,8 @@ func (t Target) isChosen() bool {
 	return t.Kind == TargetChosenCreature || t.Kind == TargetChosenEnemyCreature ||
 		t.Kind == TargetChosenFriendlyCreature || t.Kind == TargetChosenOtherFriendlyCreature ||
 		t.Kind == TargetChosenOtherCreature ||
-		t.Kind == TargetChosenArtifact || t.Kind == TargetChosenEnemyArtifact || t.Kind == TargetChosenInPlay ||
-		t.Kind == TargetChosenFriendlyInPlay
+		t.Kind == TargetChosenArtifact || t.Kind == TargetChosenEnemyArtifact || t.Kind == TargetChosenCreatureOrArtifact ||
+		t.Kind == TargetChosenFriendlyCreatureOrArtifact
 }
 
 // filter narrows ids to those matching the target's trait, power, damaged, and
@@ -744,7 +848,7 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 		if t.stunned && !ctx.Resolver.Stunned(id) {
 			continue
 		}
-		if t.onFlank && !onFlank(ctx, id) {
+		if t.onFlank && ctx.Resolver.IsCreature(id) && !onFlank(ctx, id) {
 			continue
 		}
 		if t.notOnFlank && onFlank(ctx, id) {
@@ -837,7 +941,7 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 	switch t.Kind {
 	case TargetThisCreature:
 		return []LocalID{ctx.Source}
-	case TargetTriggeringCreature, TargetTheOtherCreature:
+	case TargetTriggeringCreature, TargetTheOtherCreature, TargetCreatureFought:
 		if ctx.HasIt {
 			return []LocalID{ctx.It}
 		}
@@ -848,13 +952,17 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 			ctx.Resolver.Artifacts(ctx.Opponent())...)
 	case TargetChosenEnemyArtifact:
 		return ctx.Resolver.Artifacts(ctx.Opponent())
-	case TargetEachInPlay, TargetChosenInPlay:
+	case TargetEachEnemyArtifact:
+		return ctx.Resolver.Artifacts(ctx.Opponent())
+	case TargetEachFriendlyArtifact:
+		return ctx.Resolver.Artifacts(ctx.Controller)
+	case TargetEachCardInPlay, TargetChosenCreatureOrArtifact:
 		ids := ctx.Resolver.Battleline(ctx.Controller)
 		ids = append(ids, ctx.Resolver.Battleline(ctx.Opponent())...)
 		ids = append(ids, ctx.Resolver.Artifacts(ctx.Controller)...)
 		ids = append(ids, ctx.Resolver.Artifacts(ctx.Opponent())...)
 		return ids
-	case TargetEachFriendlyInPlay, TargetChosenFriendlyInPlay:
+	case TargetEachFriendlyCardInPlay, TargetChosenFriendlyCreatureOrArtifact:
 		return append(
 			ctx.Resolver.Battleline(ctx.Controller),
 			ctx.Resolver.Artifacts(ctx.Controller)...)

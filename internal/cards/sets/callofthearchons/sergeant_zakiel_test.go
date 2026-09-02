@@ -35,7 +35,7 @@ func TestSergeantZakiel(t *testing.T) {
 		})
 
 		h.P1.Play(SergeantZakiel)
-		h.P1.ClickOption("Yes")
+		h.P1.ClickCard(neighbor)
 
 		h.Expect(foe).At(ct.Discard)
 		h.Expect(neighbor).Exhausted()

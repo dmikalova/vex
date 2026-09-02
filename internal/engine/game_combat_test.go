@@ -421,6 +421,80 @@ func TestAssaultAndHazardous(t *testing.T) {
 	}
 }
 
+func TestElusive(t *testing.T) {
+	// The first fight against an elusive creature deals no fight damage either way.
+	g := NewGame("A", "B", 1)
+	att := g.AddToBattleline(testCreature("att", 5), 0)
+	ghost := g.AddToBattleline(
+		NewCard("ghost", Shadows, Creature, Common, WithPower(3), WithKeywords(Elusive)),
+		1,
+	)
+	g.fight(att, ghost)
+	if g.Damage(ghost) != 0 {
+		t.Errorf("elusive defender damage = %d, want 0", g.Damage(ghost))
+	}
+	if g.Damage(att) != 0 {
+		t.Errorf("attacker damage = %d, want 0 (no fight damage at all)", g.Damage(att))
+	}
+
+	// Elusive is spent for the turn: a second fight resolves normally.
+	att2 := g.AddToBattleline(testCreature("att2", 5), 0)
+	g.fight(att2, ghost)
+	if g.inPlay(ghost) {
+		t.Error("second fight should destroy the no-longer-elusive defender")
+	}
+	if g.Damage(att2) != 3 {
+		t.Errorf("second attacker damage = %d, want 3", g.Damage(att2))
+	}
+
+	// BeginTurn refreshes it.
+	g2 := NewGame("A", "B", 1)
+	a1 := g2.AddToBattleline(testCreature("a1", 5), 0)
+	dodger := g2.AddToBattleline(
+		NewCard("dodger", Shadows, Creature, Common, WithPower(3), WithKeywords(Elusive)),
+		1,
+	)
+	g2.fight(a1, dodger)
+	g2.BeginTurn(1)
+	g2.BeginTurn(0)
+	a2 := g2.AddToBattleline(testCreature("a2", 5), 0)
+	g2.fight(a2, dodger)
+	if g2.Damage(dodger) != 0 {
+		t.Errorf("after BeginTurn, elusive damage = %d, want 0 (refreshed)", g2.Damage(dodger))
+	}
+
+	// Elusive stops only fight damage: Hazardous still hits the attacker, and the
+	// keyword is spent even though the fight never happens.
+	g3 := NewGame("A", "B", 1)
+	frail := g3.AddToBattleline(testCreature("frail", 2), 0)
+	thorns := g3.AddToBattleline(
+		NewCard("thorns", Untamed, Creature, Common,
+			WithPower(6), WithHazardous(5), WithKeywords(Elusive)),
+		1,
+	)
+	g3.fight(frail, thorns)
+	if g3.inPlay(frail) {
+		t.Error("hazardous should still destroy the attacker of an elusive creature")
+	}
+	if !g3.State.Cards[thorns].ElusiveUsedThisTurn {
+		t.Error("elusive should be spent even when the fight never happens")
+	}
+
+	// A fight that never gets past "Before Fight" does not spend Elusive: the
+	// keyword replaces the fight, and there was no fight to replace.
+	g4 := NewGame("A", "B", 1)
+	sigil := g4.AddToBattleline(NewCard("sigil", Sanctum, Creature, Common,
+		WithPower(3), WithAbility(TriggerBeforeFight, CancelFight{})), 0)
+	ghoul := g4.AddToBattleline(
+		NewCard("ghoul", Shadows, Creature, Common, WithPower(3), WithKeywords(Elusive)),
+		1,
+	)
+	g4.fight(sigil, ghoul)
+	if g4.State.Cards[ghoul].ElusiveUsedThisTurn {
+		t.Error("a cancelled fight should not spend elusive")
+	}
+}
+
 func TestFightRestriction(t *testing.T) {
 	g := started(t) // Brobnar active
 	stunnedOnly := Target{Kind: TargetEachCreature}.Stunned()
@@ -463,7 +537,7 @@ func TestFightTargets(t *testing.T) {
 	g3 := started(t)
 	barred := g3.AddToBattleline(testCreature("barred", 3), 0)
 	g3.AddToBattleline(testCreature("foe", 3), 1)
-	g3.State.CannotFight[0] = true
+	g3.State.CannotFight[0].Value = true
 	if got := g3.FightTargets(0, barred); got != nil {
 		t.Errorf("barred FightTargets = %v, want nil", got)
 	}
@@ -498,5 +572,42 @@ func TestFightTargets(t *testing.T) {
 			stunned,
 			awake,
 		)
+	}
+}
+
+func TestTauntProtectsNeighbors(t *testing.T) {
+	g := started(t)
+	att := g.AddToBattleline(testCreature("att", 3), 0)
+	left := g.AddToBattleline(testCreature("left", 3), 1)
+	taunter := g.AddToBattleline(
+		NewCard("taunter", Brobnar, Creature, Common, WithPower(3), WithKeywords(Taunt)), 1)
+	right := g.AddToBattleline(testCreature("right", 3), 1)
+	far := g.AddToBattleline(testCreature("far", 3), 1)
+
+	if got := g.FightTargets(0, att); len(got) != 2 || got[0] != taunter || got[1] != far {
+		t.Errorf("FightTargets = %v, want [%d %d]", got, taunter, far)
+	}
+	if err := g.Fight(0, att, left); err != ErrNoTarget {
+		t.Errorf("fighting a taunt neighbor: err = %v, want ErrNoTarget", err)
+	}
+	if err := g.Fight(0, att, right); err != ErrNoTarget {
+		t.Errorf("fighting a taunt neighbor: err = %v, want ErrNoTarget", err)
+	}
+	if err := g.Fight(0, att, taunter); err != nil {
+		t.Fatalf("fighting the taunt creature itself: %v", err)
+	}
+}
+
+// A creature with taunt of its own is not shielded by a taunt neighbor.
+func TestTauntDoesNotProtectTauntNeighbors(t *testing.T) {
+	g := started(t)
+	att := g.AddToBattleline(testCreature("att", 3), 0)
+	taunt := func(name string) CardDefinition {
+		return NewCard(name, Brobnar, Creature, Common, WithPower(3), WithKeywords(Taunt))
+	}
+	a := g.AddToBattleline(taunt("a"), 1)
+	b := g.AddToBattleline(taunt("b"), 1)
+	if got := g.FightTargets(0, att); len(got) != 2 || got[0] != a || got[1] != b {
+		t.Errorf("FightTargets = %v, want [%d %d]", got, a, b)
 	}
 }

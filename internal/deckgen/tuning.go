@@ -34,8 +34,8 @@ type Tuning struct {
 }
 
 // DefaultTuning returns the calibrated baseline: ~18 common / 12 uncommon /
-// 6 rare per deck, ~3 mavericks, a special about one deck in twelve, and a couple
-// of duplicates.
+// 6 rare per deck, ~3 mavericks, a special about one deck in twelve, and no
+// duplicates.
 func DefaultTuning() Tuning {
 	return Tuning{
 		RarityWeights: map[engine.Rarity]float64{
@@ -46,10 +46,13 @@ func DefaultTuning() Tuning {
 		SpecialRate:  0.0024,
 		MaverickRate: 1.0 / 12.0,
 		LegacyRate:   1.0 / 6.0,
+		// Duplicate-pull is off by default: with the implemented card pool still
+		// small, real decks came out with noticeably more repeats than they should.
+		// The mechanic stays wired up — raise these rates on a Set to turn it back on.
 		DuplicateRate: map[engine.Rarity]float64{
-			engine.Common:   0.10,
-			engine.Uncommon: 0.07,
-			engine.Rare:     0.04,
+			engine.Common:   0,
+			engine.Uncommon: 0,
+			engine.Rare:     0,
 		},
 	}
 }

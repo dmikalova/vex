@@ -31,11 +31,11 @@ func TestReadyCreatures(t *testing.T) {
 		Max:    CardsRevealed{},
 		Target: Target{Kind: TargetEachFriendlyCreature}.OfHouse(Mars),
 	}
-	if got := e.Text(); got != "for each card revealed this way, ready a Mars creature" {
+	if got := e.Text(); got != "for each card revealed this way, ready a friendly Mars creature" {
 		t.Errorf("text = %q", got)
 	}
 	// Text with no Max renders a single ready with no "for each" clause.
-	if got := (ReadyCreatures{Target: Target{Kind: TargetEachFriendlyCreature}}).Text(); got != "ready a creature" {
+	if got := (ReadyCreatures{Target: Target{Kind: TargetEachFriendlyCreature}}).Text(); got != "ready a friendly creature" {
 		t.Errorf("no-max text = %q", got)
 	}
 
@@ -84,13 +84,17 @@ func TestReadyCreatures(t *testing.T) {
 }
 
 func TestSingularNoun(t *testing.T) {
+	// singularNoun now strips only the leading article or quantifier and keeps the
+	// adjectives. Dropping "enemy"/"friendly" silently widened the scope a card
+	// prints — "put up to 3 enemy damaged creatures into your archives" (Mass
+	// Abduction) read as "3 damaged creatures", which is a different card.
 	cases := map[string]string{
-		"each friendly Mars creature":  "Mars creature",
-		"each enemy creature":          "creature",
-		"each other friendly creature": "creature",
+		"each friendly Mars creature":  "friendly Mars creature",
+		"each enemy creature":          "enemy creature",
+		"each other friendly creature": "friendly creature",
 		"each creature":                "creature",
-		"a friendly creature":          "creature",
-		"an enemy creature":            "creature",
+		"a friendly creature":          "friendly creature",
+		"an enemy creature":            "enemy creature",
 		"a creature":                   "creature",
 		"an artifact":                  "artifact",
 		"it":                           "it", // no known prefix, unchanged

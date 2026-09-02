@@ -16,21 +16,21 @@ type Condition interface {
 	Met(ctx *EffectContext) bool
 }
 
-// AemberComparison selects how OpponentAember compares the opponent's pool to a
-// threshold. It has no valid zero value: an OpponentAember must name one, so an
-// unset comparison is caught at init rather than silently reading as "0 or more".
-type AemberComparison int
+// Comparison selects how a condition compares a quantity to a threshold. It has
+// no valid zero value: a condition must name one, so an unset comparison is
+// caught at init rather than silently reading as "0 or more".
+type Comparison int
 
 const (
-	aemberComparisonUnset AemberComparison = iota
-	// AtLeast is met when the opponent's pool holds at least Amount Æmber.
+	comparisonUnset Comparison = iota
+	// AtLeast is met when the quantity is at least Amount.
 	AtLeast
-	// Exactly is met when the opponent's pool holds exactly Amount Æmber (which is
-	// why the comparison is named separately from the amount: Exactly with Amount 0
-	// is a real check that a bare integer field could not tell from "unset").
+	// Exactly is met when the quantity is exactly Amount (which is why the
+	// comparison is named separately from the amount: Exactly with Amount 0 is a
+	// real check that a bare integer field could not tell from "unset").
 	Exactly
 	// MoreThanYou is met when the opponent's pool holds strictly more Æmber than the
-	// controller's; it ignores Amount.
+	// controller's; it ignores Amount and applies only to OpponentAember.
 	MoreThanYou
 )
 
@@ -38,7 +38,7 @@ const (
 // Amount the threshold it compares against (unused by MoreThanYou). It replaces
 // the separate at-least / exactly / more-than-you conditions with one node.
 type OpponentAember struct {
-	Is     AemberComparison
+	Is     Comparison
 	Amount int
 }
 
@@ -274,6 +274,12 @@ func (e Conditional) validate() error {
 	return validateEffect(e.Then)
 }
 
+// RuleOfSix is the most times a card can be played, used, or made to resolve
+// again in one turn. A self-repeating effect is bounded by it: Bait and Switch's
+// "steal 1 Æmber -> repeat this effect" resolves the initial steal plus at most
+// five repeats, so it steals six at most however far ahead the opponent is.
+const RuleOfSix = 6
+
 // RepeatWhile resolves Do again and again for as long as Cond holds, re-checking
 // after each pass — a self-looping effect such as "if your opponent has more
 // Æmber than you, steal 1 Æmber -> repeat this effect". The loop also stops the
@@ -292,10 +298,11 @@ func (e RepeatWhile) Text() string {
 	return e.Cond.CondText() + ", " + e.Do.Text() + " -> repeat this effect"
 }
 
-// Resolve runs Do while Cond is met, stopping as soon as Do does nothing.
+// Resolve runs Do while Cond is met, stopping as soon as Do does nothing or the
+// Rule of Six is reached.
 func (e RepeatWhile) Resolve(ctx *EffectContext) {
-	for e.Cond.Met(ctx) {
-		if !e.Do.resolveGate(ctx) {
+	for range RuleOfSix {
+		if !e.Cond.Met(ctx) || !e.Do.resolveGate(ctx) {
 			return
 		}
 	}
@@ -344,13 +351,11 @@ func (e RepeatOnCondition) Text() string {
 	return e.Do.Text() + " -> " + e.Cond.CondText() + ", repeat this effect"
 }
 
-// Resolve runs Do, repeating while it keeps doing something and Cond holds.
+// Resolve runs Do, repeating while it keeps doing something, Cond holds, and the
+// Rule of Six allows another pass.
 func (e RepeatOnCondition) Resolve(ctx *EffectContext) {
-	for {
-		if !e.Do.resolveGate(ctx) {
-			return
-		}
-		if !e.Cond.Met(ctx) {
+	for range RuleOfSix {
+		if !e.Do.resolveGate(ctx) || !e.Cond.Met(ctx) {
 			return
 		}
 	}
@@ -370,12 +375,13 @@ func (e MayRepeat) Text() string {
 	return e.Do.Text() + " -> " + e.Cond.CondText() + ", you may repeat this effect"
 }
 
-// Resolve runs Do once, then repeats it while Cond holds and the controller keeps
-// choosing to repeat.
+// Resolve runs Do once, then repeats it while Cond holds, the controller keeps
+// choosing to repeat, and the Rule of Six allows another pass.
 func (e MayRepeat) Resolve(ctx *EffectContext) {
 	e.Do.Resolve(ctx)
-	for e.Cond.Met(ctx) {
-		if ctx.ChooseOption("Repeat this effect?", []string{"Yes", "No"}) != 0 {
+	for range RuleOfSix - 1 {
+		if !e.Cond.Met(ctx) ||
+			ctx.ChooseOption("Repeat this effect?", []string{"Yes", "No"}) != 0 {
 			return
 		}
 		e.Do.Resolve(ctx)
@@ -404,4 +410,101 @@ func (c ChoseHouse) CondText() string {
 // Met reports whether the active house is the one the ability watches for.
 func (c ChoseHouse) Met(ctx *EffectContext) bool {
 	return ctx.Resolver.ActiveHouse() == c.House
+}
+
+// CountIs gates on any Count: Is names the comparison and Amount the threshold
+// it compares the count's value against. It is the general "if <something>
+// happened N times" condition, so a card that checks a quantity reuses the Count
+// vocabulary instead of adding a bespoke condition — Stampede checks the
+// creatures used this turn, Vigor checks the damage it just healed.
+type CountIs struct {
+	Count  Count
+	Is     Comparison
+	Amount int
+}
+
+// validate requires a Count that can render its own "if" clause and a comparison
+// the count can answer (MoreThanYou compares two Æmber pools and means nothing
+// here).
+func (c CountIs) validate() error {
+	if _, ok := c.Count.(countClauser); !ok {
+		return fmt.Errorf("CountIs: Count must be set and render a CountClause")
+	}
+	switch c.Is {
+	case AtLeast, Exactly:
+		return nil
+	default:
+		return fmt.Errorf("CountIs: Is must be AtLeast or Exactly")
+	}
+}
+
+// CondText renders the condition, e.g. "if you used 3 or more creatures this
+// turn", asking the Count for the clause that reads naturally after "if".
+func (c CountIs) CondText() string {
+	quantity := fmt.Sprintf("%d or more", c.Amount)
+	if c.Is == Exactly {
+		quantity = fmt.Sprintf("exactly %d", c.Amount)
+	}
+	return "if " + c.Count.(countClauser).CountClause(quantity, c.Amount != 1 || c.Is != Exactly)
+}
+
+// Met compares the count's current value against the threshold.
+func (c CountIs) Met(ctx *EffectContext) bool {
+	if c.Is == Exactly {
+		return c.Count.Value(ctx) == c.Amount
+	}
+	return c.Count.Value(ctx) >= c.Amount
+}
+
+// countClauser is the optional capability a Count implements to render the "if
+// ..." clause CountIs needs. A Count's CountText is a noun ("card destroyed this
+// way") that reads well after "for each" but not after "if"; a Count that has a
+// natural verb phrase supplies it here, given the rendered quantity ("3 or more",
+// "exactly 1") and whether that quantity takes a plural noun.
+type countClauser interface {
+	CountClause(quantity string, plural bool) string
+}
+
+// ForgedKey is the condition on whether a player forged a key in a given window —
+// this turn (Smiling Ruth) or on their own previous turn (Tendrils of Pain, Key
+// Hammer). It reads the turn history rather than the running key total, so a key
+// forged several turns ago does not keep the condition true.
+type ForgedKey struct {
+	Player   Player
+	Previous bool
+}
+
+// validate requires the condition to name whose key it asks about.
+func (c ForgedKey) validate() error {
+	if !c.Player.valid() {
+		return fmt.Errorf("ForgedKey: Player must be set")
+	}
+	return nil
+}
+
+// CondText renders the clause, e.g. "if your opponent forged a key on their
+// previous turn".
+func (c ForgedKey) CondText() string {
+	subject, possessive := "you", "your"
+	if c.Player == Opponent {
+		subject, possessive = "your opponent", "their"
+	}
+	when := "this turn"
+	if c.Previous {
+		when = "on " + possessive + " previous turn"
+	}
+	return fmt.Sprintf("if %s forged a key %s", subject, when)
+}
+
+// Met reports whether the named player forged at least one key in the window.
+func (c ForgedKey) Met(ctx *EffectContext) bool {
+	return ctx.Resolver.TurnHistory(ctx.PlayerFor(c.Player), c.stat()) > 0
+}
+
+// stat picks the tally the window corresponds to.
+func (c ForgedKey) stat() TurnStat {
+	if c.Previous {
+		return KeysForgedLastTurn
+	}
+	return KeysForgedThisTurn
 }

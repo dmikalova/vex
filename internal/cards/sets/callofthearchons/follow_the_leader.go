@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// FollowTheLeader
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Follow the Leader
 //
 //	House:  Brobnar
 //	Type:   Tactic
@@ -20,5 +15,5 @@ var FollowTheLeader = card.New(
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 8),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.Play, card.GrantFightAnyHouse{}),
 )

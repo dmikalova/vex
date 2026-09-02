@@ -43,7 +43,7 @@ func TestChuffApe(t *testing.T) {
 		chuff.Damaged(6)
 
 		h.P1.Reap(chuff)
-		h.P1.ClickOption("Yes")
+		h.P1.ClickCard(friend)
 
 		h.Expect(friend).At(ct.Discard)
 		h.Expect(chuff).Damage(0)
@@ -63,7 +63,7 @@ func TestChuffApe(t *testing.T) {
 		chuff.Damaged(6)
 
 		h.P1.Reap(chuff)
-		h.P1.ClickOption("No")
+		h.P1.ClickDone()
 
 		h.Expect(friend).At(ct.PlayArea)
 		h.Expect(chuff).Damage(6)

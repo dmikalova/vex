@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// YxiliMarauder
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Yxili Marauder
 //
 //	House:  Mars
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Martian • Soldier
 //
-//	Yxili Marauder gets +1 power for each Aember on it.
-//	Play: Capture 1 Aember for each friendly ready Mars creature.
+//	Yxili Marauder gains +1 power for each Æmber on it.
+//	Play: For each friendly ready Mars creature, Yxili Marauder captures 1 Æmber from your opponent.
 var YxiliMarauder = card.New(
 	"Yxili Marauder",
 	card.House.Mars,
@@ -25,5 +20,21 @@ var YxiliMarauder = card.New(
 	card.Provenance(card.CotA, 203),
 	card.WithPower(2),
 	card.WithTraits("Martian", "Soldier"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithConstant(card.ConstantAbility{
+		Target:     card.Target.This,
+		PowerBonus: 1,
+		Per:        card.AemberOnThis{},
+	}),
+	card.WithAbility(
+		card.Trigger.Play, card.CaptureAember{
+			Amount: 1,
+			Target: card.Target.This,
+			Source: card.Opponent,
+			Per: card.InPlay{
+				Player: card.Controller,
+				Type:   card.Type.Creature,
+				House:  card.House.Mars,
+				Ready:  true,
+			},
+		}),
 )

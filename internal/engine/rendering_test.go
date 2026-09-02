@@ -2,6 +2,17 @@ package engine
 
 import "testing"
 
+func TestRenderPrompt(t *testing.T) {
+	prompt := "fully heal " + SelfName
+	if got := renderPrompt("Chuff Ape", prompt); got != "fully heal Chuff Ape" {
+		t.Errorf("renderPrompt = %q, want %q", got, "fully heal Chuff Ape")
+	}
+	// An unattributed prompt has no name to substitute, so it is left as it is.
+	if got := renderPrompt("", prompt); got != prompt {
+		t.Errorf("unattributed renderPrompt = %q, want %q", got, prompt)
+	}
+}
+
 func TestEntersStunnedText(t *testing.T) {
 	def := NewCard(
 		"Chuff",
@@ -13,13 +24,13 @@ func TestEntersStunnedText(t *testing.T) {
 	)
 	want := "Chuff enters play stunned."
 	found := false
-	for _, line := range cardRules(&def) {
+	for _, line := range cardRules(&def, false) {
 		if line == want {
 			found = true
 		}
 	}
 	if !found {
-		t.Errorf("cardRules missing %q; got %v", want, cardRules(&def))
+		t.Errorf("cardRules missing %q; got %v", want, cardRules(&def, false))
 	}
 }
 
@@ -122,12 +133,12 @@ func TestIsFightReapPair(t *testing.T) {
 
 func TestTargetTextDefault(t *testing.T) {
 	cases := map[TargetKind]string{
-		TargetThisCreature:       SelfName,
-		TargetTriggeringCreature: "it",
-		TargetTheOtherCreature:   "the other creature",
-		TargetEachEnemyCreature:  "each enemy creature",
-		TargetEachFriendlyInPlay: "each friendly card",
-		TargetKind(99):           "a creature",
+		TargetThisCreature:           SelfName,
+		TargetTriggeringCreature:     "it",
+		TargetTheOtherCreature:       "the other creature",
+		TargetEachEnemyCreature:      "each enemy creature",
+		TargetEachFriendlyCardInPlay: "each friendly card",
+		TargetKind(99):               "a creature",
 	}
 	for kind, want := range cases {
 		if got := (Target{Kind: kind}).Text(); got != want {
@@ -630,6 +641,92 @@ func TestRenderCardRules(t *testing.T) {
 	}
 }
 
+func TestRenderUpgradeOnCreature(t *testing.T) {
+	cases := []struct {
+		def  CardDefinition
+		want string
+	}{
+		// A static bonus reads as the bonus itself; the creature is already there.
+		{exBruteStrength(), "+5 power."},
+		// A granted ability loses the "This creature gains" quoting.
+		{
+			NewCard(
+				"Runner",
+				Shadows,
+				Upgrade,
+				Uncommon,
+				WithStatic(
+					StaticModifier{
+						Granted: []Ability{
+							{Trigger: TriggerAfterReap, Effect: StealAember{Amount: 1}},
+						},
+					},
+				),
+			),
+			"Reap: Steal 1 Æmber.",
+		},
+		// A Fight/Reap pair keeps its shorthand, unquoted.
+		{
+			NewCard(
+				"Boots",
+				Logos,
+				Upgrade,
+				Uncommon,
+				WithStatic(
+					StaticModifier{
+						Granted: []Ability{
+							{
+								Trigger: TriggerAfterReap,
+								Effect:  ReadyIfFirstUse{Target: Target{Kind: TargetThisCreature}},
+							},
+							{
+								Trigger: TriggerAfterFight,
+								Effect:  ReadyIfFirstUse{Target: Target{Kind: TargetThisCreature}},
+							},
+						},
+					},
+				),
+			),
+			"Fight/Reap: If this is the first time this creature was used this turn, ready it.",
+		},
+		// A granted key-cost change too.
+		{
+			NewCard(
+				"Pack",
+				Mars,
+				Upgrade,
+				Uncommon,
+				WithStatic(StaticModifier{KeyCostChange: NewKeyCostChange(Opponent, 2)}),
+			),
+			"Your opponent's keys cost +2 Æmber.",
+		},
+		// A bonus and a destruction replacement each stand on their own line.
+		{
+			NewCard(
+				"Cloak",
+				Sanctum,
+				Upgrade,
+				Rare,
+				WithStatic(
+					StaticModifier{
+						HazardousBonus: 2,
+						Replaces: Replace{
+							When: EventCreatureDestroyed,
+							With: Destroy{Target: Target{Kind: TargetThisCreature}},
+						},
+					},
+				),
+			),
+			"+2 hazardous.\nIf this creature would be destroyed, instead destroy Cloak.",
+		},
+	}
+	for _, tc := range cases {
+		if got := RenderUpgradeOnCreature(&tc.def); got != tc.want {
+			t.Errorf("%s hosted rules mismatch:\n got:  %q\n want: %q", tc.def.Name, got, tc.want)
+		}
+	}
+}
+
 func TestCardDocComment(t *testing.T) {
 	cases := []struct {
 		def  CardDefinition
@@ -727,6 +824,21 @@ func TestPunctuate(t *testing.T) {
 	for in, want := range cases {
 		if got := punctuate(in); got != want {
 			t.Errorf("punctuate(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+// TestNewTriggerPrefixes covers the printed prefix of each persistent reaction
+// trigger added for Teliga, Veylan Analyst, Rock-Hurling Giant, and Magda the Rat.
+func TestNewTriggerPrefixes(t *testing.T) {
+	for trigger, want := range map[Trigger]string{
+		TriggerAfterEnemyCardPlayed: "After your opponent plays a card, ",
+		TriggerAfterUse:             "After you use a card, ",
+		TriggerAfterDiscardFromHand: "After you discard a card from your hand, ",
+		TriggerLeavesPlay:           "Leaves Play: ",
+	} {
+		if got, _ := trigger.prefix(); got != want {
+			t.Errorf("prefix(%v) = %q, want %q", trigger, got, want)
 		}
 	}
 }

@@ -39,7 +39,7 @@ func FuzzPlay(f *testing.F) {
 // regression here is reproducible from the printed script.
 func TestSimulateSeeds(t *testing.T) {
 	r := rand.New(rand.NewSource(1))
-	for i := 0; i < 300; i++ {
+	for i := 0; i < 1000; i++ {
 		script := make([]byte, 8+r.Intn(400))
 		r.Read(script)
 		if err := Simulate(script); err != nil {

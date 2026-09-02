@@ -1,20 +1,15 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// OathOfPoverty
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Oath of Poverty
 //
 //	House:  Sanctum
 //	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Destroy each of your artifacts. Gain 2 Aember for each artifact destroyed this way.
+//	Play: Destroy each friendly artifact. For each card destroyed this way, gain 2 Æmber.
 var OathOfPoverty = card.New(
 	"Oath of Poverty",
 	card.House.Sanctum,
@@ -22,5 +17,12 @@ var OathOfPoverty = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 222),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.Play, card.Sequence{Effects: []card.Effect{
+		card.Sentence{Effect: card.Destroy{Target: card.Target.EachFriendlyArtifact}},
+		card.Sentence{Effect: card.GainAember{
+			Player: card.Controller,
+			Amount: 2,
+			Per:    card.CardsDestroyed{},
+		}},
+	}}),
 )

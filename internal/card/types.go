@@ -136,6 +136,10 @@ var Trigger = triggers{
 	EndOfTurn:                   engine.TriggerEndOfTurn,
 	AfterChooseHouse:            engine.TriggerAfterChooseHouse,
 	AfterEnemyCreatureDestroyed: engine.TriggerAfterEnemyCreatureDestroyed,
+	AfterEnemyCardPlayed:        engine.TriggerAfterEnemyCardPlayed,
+	AfterUse:                    engine.TriggerAfterUse,
+	AfterDiscardFromHand:        engine.TriggerAfterDiscardFromHand,
+	LeavesPlay:                  engine.TriggerLeavesPlay,
 }
 
 type triggers struct {
@@ -165,6 +169,14 @@ type triggers struct {
 	AfterChooseHouse engine.Trigger
 	// AfterEnemyCreatureDestroyed fires after an enemy creature is destroyed during your turn.
 	AfterEnemyCreatureDestroyed engine.Trigger
+	// AfterEnemyCardPlayed fires after the opponent plays a card.
+	AfterEnemyCardPlayed engine.Trigger
+	// AfterUse fires after the controller uses a card (reap, fight, or Action:).
+	AfterUse engine.Trigger
+	// AfterDiscardFromHand fires after the controller discards a card from hand.
+	AfterDiscardFromHand engine.Trigger
+	// LeavesPlay fires as this card leaves play by any route ("Leaves Play:").
+	LeavesPlay engine.Trigger
 }
 
 // Controller and Opponent are the two players an effect can target, relative to

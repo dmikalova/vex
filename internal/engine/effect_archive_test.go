@@ -160,7 +160,7 @@ func TestArchiveFromPlayFriendlyInPlay(t *testing.T) {
 	g.AddToBattleline(NewCard("enemy", Mars, Creature, Common, WithPower(3)), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := ArchiveFromPlay{Target: Target{Kind: TargetChosenFriendlyInPlay}}
+	e := ArchiveFromPlay{Target: Target{Kind: TargetChosenFriendlyCreatureOrArtifact}}
 	if e.Text() != "archive a friendly creature or artifact from play" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -212,5 +212,41 @@ func TestArchivesDeclinedOnChooseHouse(t *testing.T) {
 	}
 	if len(g.Hand(0)) != 0 {
 		t.Errorf("hand = %v, want empty (offer declined)", g.Hand(0))
+	}
+}
+
+// TestArchiveFromHandFiltered covers the filtered, revealed archive: only cards
+// matching the type and house filters are offered, the effect reports whether it
+// archived anything, and the text reads as the reveal it is.
+func TestArchiveFromHandFiltered(t *testing.T) {
+	e := ArchiveFromHand{Count: 1, Type: Creature, House: Mars, Revealed: true}
+	want := "reveal a Mars creature from your hand and archive it"
+	if e.Text() != want {
+		t.Errorf("text = %q, want %q", e.Text(), want)
+	}
+	if got := (ArchiveFromHand{Count: 2}).Text(); got != "archive 2 cards from your hand" {
+		t.Errorf("plain plural text = %q", got)
+	}
+	if got := (ArchiveFromHand{Count: 1, Type: Artifact}).Text(); got != "archive an artifact from your hand" {
+		t.Errorf("artifact text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	tactic := g.AddToHand(NewCard("Trick", Mars, Tactic, Common), 0)
+	offHouse := g.AddToHand(testCreature("Logos One", 3), 0)
+	martian := g.AddToHand(NewCard("Martian", Mars, Creature, Common, WithPower(3)), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	if !e.resolveGate(ctx) {
+		t.Fatal("archiving a matching creature should report success")
+	}
+	if g.State.Archives[0].Count != 1 || g.State.Archives[0].IDs[0] != martian {
+		t.Errorf("archives = %v, want [%d]", g.State.Archives[0].slice(), martian)
+	}
+	if len(g.Hand(0)) != 2 || g.Hand(0)[0] != tactic || g.Hand(0)[1] != offHouse {
+		t.Errorf("hand = %v, want the filtered-out cards", g.Hand(0))
+	}
+	if e.resolveGate(ctx) {
+		t.Error("with no matching card left the gate should report nothing archived")
 	}
 }

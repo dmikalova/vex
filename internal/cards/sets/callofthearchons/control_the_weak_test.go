@@ -27,7 +27,7 @@ func TestControlTheWeak(t *testing.T) {
 		h.P1.ExpectPrompt("Choose a house").Source("Control the Weak")
 		h.P1.ClickOption("Mars")
 
-		if got := h.Game().State.ForcedHouseNext[1]; got != card.House.Mars {
+		if got := h.Game().State.ForcedHouseNext[1].Value; got != card.House.Mars {
 			t.Fatalf("armed house = %v, want Mars", got)
 		}
 

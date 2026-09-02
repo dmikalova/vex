@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Teliga
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Untamed
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Human • Witch
 //
-//	Each time your opponent plays a creature, gain 1 Aember.
+//	After your opponent plays a card, if it is a creature, gain 1 Æmber.
 var Teliga = card.New(
 	"Teliga",
 	card.House.Untamed,
@@ -24,5 +19,11 @@ var Teliga = card.New(
 	card.Provenance(card.CotA, 366),
 	card.WithPower(3),
 	card.WithTraits("Human", "Witch"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.AfterEnemyCardPlayed, card.Conditional{
+		Cond: card.ItIs{Type: card.Type.Creature},
+		Then: card.GainAember{
+			Player: card.Controller,
+			Amount: 1,
+		},
+	}),
 )

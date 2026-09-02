@@ -17,7 +17,7 @@ import (
 //	Action: Reveal any number of Mars cards from your hand, and for each card revealed this way, ready a Mars creature.
 func TestCommpod(t *testing.T) {
 	t.Run("readies a Mars creature for each Mars card revealed", func(t *testing.T) {
-		var a, b ct.Card
+		var a, b, t1, t2 ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
 				House: card.House.Mars,
@@ -27,8 +27,8 @@ func TestCommpod(t *testing.T) {
 					ct.Bind(&b, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3))),
 				),
 				Hand: ct.Cards(
-					ct.Tactic(ct.OfHouse(card.House.Mars)),
-					ct.Tactic(ct.OfHouse(card.House.Mars)),
+					ct.Bind(&t1, ct.Tactic(ct.OfHouse(card.House.Mars))),
+					ct.Bind(&t2, ct.Tactic(ct.OfHouse(card.House.Mars))),
 				),
 			},
 		})
@@ -36,6 +36,8 @@ func TestCommpod(t *testing.T) {
 		b.Exhaust()
 
 		h.P1.UseAction(Commpod)
+		h.P1.ClickCard(t1) // reveal both Mars cards from hand
+		h.P1.ClickCard(t2)
 		h.P1.ClickCard(a) // then the second ready has a lone candidate and auto-resolves
 
 		h.Expect(a).Ready()

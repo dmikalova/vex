@@ -23,7 +23,7 @@ func TestMiasma(t *testing.T) {
 
 		h.P1.Play(Miasma)
 
-		if !h.Game().State.SkipForgeNext[1] {
+		if !h.Game().State.SkipForgeNext[1].Value {
 			t.Error("the opponent should be set to skip their next forge step")
 		}
 	})

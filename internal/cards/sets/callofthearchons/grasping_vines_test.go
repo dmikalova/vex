@@ -30,8 +30,8 @@ func TestGraspingVines(t *testing.T) {
 		})
 
 		h.P1.Play(GraspingVines)
-		h.P1.ClickOption(a1.Name())
-		h.P1.ClickOption(a2.Name())
+		h.P1.ClickCard(a1)
+		h.P1.ClickCard(a2)
 
 		h.Expect(a1).At(ct.Hand)
 		h.Expect(a2).At(ct.Hand)

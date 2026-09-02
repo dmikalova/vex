@@ -95,7 +95,7 @@ func TestUsingExhaustedCreatureDoesNothing(t *testing.T) {
 
 	g.ReapWith(c)
 	g.FightWith(c, foe)
-	g.UseActionOf(c)
+	g.UseActionOf(0, c)
 
 	if g.Aember(0) != 0 {
 		t.Errorf("aember = %d, want 0 (an exhausted creature cannot be used)", g.Aember(0))
@@ -103,6 +103,55 @@ func TestUsingExhaustedCreatureDoesNothing(t *testing.T) {
 	if g.Damage(foe) != 0 {
 		t.Errorf("foe damage = %d, want 0 (an exhausted creature cannot fight)", g.Damage(foe))
 	}
+}
+
+// "Use a friendly creature" offers only ready creatures: with every friendly
+// creature exhausted there is no decision to make, so nothing is asked.
+func TestUseVerbOffersOnlyReadyCreatures(t *testing.T) {
+	e := OnChooseCreature{
+		Target: Target{Kind: TargetChosenFriendlyCreature},
+		Verbs:  []CreatureVerb{UseVerb{}},
+	}
+
+	g := NewGame("A", "B", 1)
+	spent := g.AddToBattleline(testCreature("spent", 3), 0)
+	ready := g.AddToBattleline(testCreature("ready", 3), 0)
+	g.State.Cards[spent].Exhausted = true
+	src := g.AddToBattleline(testCreature("src", 3), 0)
+	g.SetChooser(0, FirstChooser{}) // takes the first candidate offered
+	e.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+	if !g.Exhausted(ready) || g.Aember(0) != 1 {
+		t.Errorf("the ready creature should have been the one used (aember = %d)", g.Aember(0))
+	}
+
+	// All exhausted: nothing to use, and nothing is asked.
+	g2 := NewGame("A", "B", 1)
+	only := g2.AddToBattleline(testCreature("only", 3), 0)
+	g2.State.Cards[only].Exhausted = true
+	src2 := g2.AddToBattleline(testCreature("src", 3), 0)
+	g2.State.Cards[src2].Exhausted = true
+	asked := &promptRecorder{}
+	g2.SetChooser(0, asked)
+	e.Resolve(&EffectContext{Resolver: g2, Source: src2, Controller: 0})
+	if asked.asked != 0 || g2.Aember(0) != 0 {
+		t.Errorf("nothing to use should ask nothing, asked %d times", asked.asked)
+	}
+}
+
+// promptRecorder counts every question put to the player.
+type promptRecorder struct {
+	FirstChooser
+	asked int
+}
+
+func (p *promptRecorder) ChooseCreature(a, b string, cands []LocalID) (LocalID, bool) {
+	p.asked++
+	return p.FirstChooser.ChooseCreature(a, b, cands)
+}
+
+func (p *promptRecorder) ChooseOption(_, _ string, _ []string) int {
+	p.asked++
+	return 0
 }
 
 func TestOnChooseCreatureExcludeHouse(t *testing.T) {

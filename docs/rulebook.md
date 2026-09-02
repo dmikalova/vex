@@ -200,6 +200,13 @@ discard pile, so it can still act on the board it is leaving.
 A Fight ability resolves after a creature you used to fight has dealt and
 taken its combat damage and any resulting destruction has been carried out.
 
+### Leaves Play
+
+A Leaves Play ability resolves as the card leaves play by any route — destroyed,
+purged, returned to hand, archived, or shuffled away. It fires before the card's
+teardown, so the card is still on the board when it resolves. TriggerDestroyed is
+the narrower "only when destroyed" version.
+
 ### Play
 
 A Play ability resolves right after you play the card from your hand. On a
@@ -216,6 +223,15 @@ you 1 Aember and exhausts the creature; the ability resolves in addition.
 An effect is the actual change an ability makes to the game when it resolves.
 Card text is built by composing the effects below; each one both prints its own
 rules text and carries itself out, so a card always does exactly what it says.
+
+### Abduct
+
+Only three zones of yours may hold a card your opponent owns: your battleline,
+your artifact line, and your archives. A card that would move to any other zone
+of yours — your hand, your discard pile, your deck — goes to its owner's
+matching zone instead. So an enemy creature abducted into your archives goes to
+your opponent's hand when you take your archives up, and to their discard pile
+if those archives are discarded.
 
 ### Archive
 
@@ -274,6 +290,14 @@ order the controller chooses, so each ability sees the others still present;
 only then does each creature still in play move to the discard pile, along with
 its upgrades. A destroy effect can target every creature or only those matching
 a filter, such as "each creature with power 3 or lower".
+
+### Discard
+
+DiscardDeckUntil digs through the top of your deck, discarding as it goes,
+until it turns up a card the filters admit or the deck runs out. The card it
+finds stays in the discard pile and goes into context (ctx.It), so what happens
+to it is a separate effect gated on the dig succeeding — Sound the Horns and
+Invasion Portal both pair it with PutDiscardedIntoHand.
 
 ### Draw
 
@@ -386,6 +410,12 @@ gate does nothing: no valid target, an empty zone, or a declined choice. It is
 distinct from a conditional, which turns on a fact about the board rather than an
 action succeeding.
 
+### Return
+
+PutDiscardedIntoHand takes the card in context out of the discard pile and
+into its owner's hand. It is the tail of a dig through the deck, where the
+card was just discarded and "it" is unambiguous.
+
 ### Return Named Card to Hand
 
 ReturnNamedToHand puts a card with a specific name that the controller chooses
@@ -417,7 +447,9 @@ the deck, then shuffles once.
 ### Steal Aember
 
 Stealing Aember moves it from the opponent's pool into your own. You can only
-steal as much Aember as the opponent actually has.
+steal as much Aember as the opponent actually has. How much is stolen is either
+a fixed Amount — optionally multiplied by a Per count — or a By share of the
+opponent's pool (By: AllBut(6) leaves them exactly six).
 
 ### Stun
 
@@ -441,11 +473,18 @@ name Toll, but its printed text always reads "give", never "pay".)
 Unstunning a creature removes the stun status from each creature the effect
 targets, freeing it to act normally instead of having to shake the stun off.
 
+### Æmber
+
+MoveAemberFromPool banks Æmber out of your pool onto a card, where it sits
+until something takes it off again. Safe Place and Pocket Universe pair it with
+WithSpendableAember, which is what makes the bank worth filling.
+
 ## Index
 
 - [1. Forge a key](#1-forge-a-key)
 - [2. Choose a house](#2-choose-a-house)
 - [3. Ready and draw](#3-ready-and-draw)
+- [Abduct](#abduct)
 - [Action](#action)
 - [After a Creature Enters Play](#after-a-creature-enters-play)
 - [After a Creature Is Destroyed Fighting](#after-a-creature-is-destroyed-fighting)
@@ -466,6 +505,7 @@ targets, freeing it to act normally instead of having to shake the stun off.
 - [Deal Damage](#deal-damage)
 - [Destroy](#destroy)
 - [Destroyed](#destroyed)
+- [Discard](#discard)
 - [Draw](#draw)
 - [Exalt](#exalt)
 - [Exhaust](#exhaust)
@@ -474,6 +514,7 @@ targets, freeing it to act normally instead of having to shake the stun off.
 - [Gain Chains](#gain-chains)
 - [Hazardous](#hazardous)
 - [Heal](#heal)
+- [Leaves Play](#leaves-play)
 - [Lose Aember](#lose-aember)
 - [May](#may)
 - [Play](#play)
@@ -486,6 +527,7 @@ targets, freeing it to act normally instead of having to shake the stun off.
 - [Redirect Fight Damage](#redirect-fight-damage)
 - [Restriction](#restriction)
 - [Result Gate](#result-gate)
+- [Return](#return)
 - [Return Named Card to Hand](#return-named-card-to-hand)
 - [Reveal Top of Deck](#reveal-top-of-deck)
 - [Search for Named Card](#search-for-named-card)
@@ -499,3 +541,4 @@ targets, freeing it to act normally instead of having to shake the stun off.
 - [Unstun](#unstun)
 - [Upgrade](#upgrade)
 - [Versatile](#versatile)
+- [Æmber](#æmber)

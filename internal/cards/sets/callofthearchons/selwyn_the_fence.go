@@ -21,7 +21,7 @@ var SelwynTheFence = card.New(
 	card.WithTraits("Elf", "Thief"),
 	card.WithFightOrReap(card.MoveAember{
 		Amount: 1,
-		From:   card.Target.FriendlyInPlay,
+		From:   card.Target.FriendlyCreatureOrArtifact,
 		To:     card.Controller,
 	}),
 )

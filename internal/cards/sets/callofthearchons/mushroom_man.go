@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// MushroomMan
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Mushroom Man
 //
 //	House:  Untamed
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Fungus • Human
 //
-//	Mushroom Man gets +3 power for each unforged key you have.
+//	Mushroom Man gains +3 power for each unforged key you have.
 var MushroomMan = card.New(
 	"Mushroom Man",
 	card.House.Untamed,
@@ -24,5 +19,9 @@ var MushroomMan = card.New(
 	card.Provenance(card.CotA, 362),
 	card.WithPower(2),
 	card.WithTraits("Fungus", "Human"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithConstant(card.ConstantAbility{
+		Target:     card.Target.This,
+		PowerBonus: 3,
+		Per:        card.UnforgedKeys{Player: card.Controller},
+	}),
 )

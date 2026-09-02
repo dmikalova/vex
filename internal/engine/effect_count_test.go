@@ -86,3 +86,49 @@ func TestInPlayEachPlayer(t *testing.T) {
 		t.Errorf("no-house count text = %q, want %q", got, "creature in play")
 	}
 }
+
+func TestInPlayReady(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	spent := g.AddToBattleline(marsCreature("spent", 3), 0)
+	g.AddToBattleline(marsCreature("fresh", 3), 0)
+	g.SetExhausted(spent, true)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	ready := InPlay{Player: Controller, Type: Creature, House: Mars, Ready: true}
+	if got := ready.CountText(); got != "friendly ready Mars creature" {
+		t.Errorf("count text = %q, want %q", got, "friendly ready Mars creature")
+	}
+	if got := ready.Value(ctx); got != 1 {
+		t.Errorf("value = %d, want 1 (the exhausted creature does not count)", got)
+	}
+}
+
+func TestCardsDestroyedCount(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx.Produced.Destroyed = 2
+
+	c := CardsDestroyed{}
+	if got := c.CountText(); got != "card destroyed this way" {
+		t.Errorf("count text = %q", got)
+	}
+	if got := c.Value(ctx); got != 2 {
+		t.Errorf("value = %d, want 2", got)
+	}
+}
+
+func TestEachFriendlyArtifactTarget(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	mine := g.AddArtifact(NewCard("mine", Brobnar, Artifact, Common), 0)
+	g.AddArtifact(NewCard("theirs", Brobnar, Artifact, Common), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	target := Target{Kind: TargetEachFriendlyArtifact}
+	if got := target.Text(); got != "each friendly artifact" {
+		t.Errorf("text = %q", got)
+	}
+	got := target.Select(ctx)
+	if len(got) != 1 || got[0] != mine {
+		t.Errorf("selected = %v, want [%v]", got, mine)
+	}
+}

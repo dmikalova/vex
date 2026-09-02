@@ -12,14 +12,18 @@ import (
 const assetBase = "/web/assets/"
 
 // iconOutlineFilter is a hidden inline SVG filter, injected once into the page,
-// that the .icon-outline CSS rule references by id. feMorphology dilates the
-// icon's alpha silhouette outward, floods that grown shape black, and lays the
-// original icon back on top — a single uniform ring that hugs the real shape,
-// unlike stacked drop-shadows which compound and blob at corners. radius sets the
-// ring thickness in CSS pixels.
+// that the .icon-outline CSS rule references by id. It blurs the icon's alpha
+// silhouette and then drives that blur back up to solid, which grows the shape by
+// the same amount in every direction — a Gaussian is round, where feMorphology's
+// square kernel came out √2 thicker on diagonals and curves. The grown shape is
+// flooded black and the icon laid back on top, so the ring hugs the real geometry
+// instead of the icon's box.
 const iconOutlineFilter = `<svg width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute">` +
-	`<filter id="icon-outline" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">` +
-	`<feMorphology in="SourceAlpha" operator="dilate" radius="0.75" result="grown"/>` +
+	`<filter id="icon-outline" x="-25%" y="-25%" width="150%" height="150%" color-interpolation-filters="sRGB">` +
+	`<feGaussianBlur in="SourceAlpha" stdDeviation="0.5" result="blur"/>` +
+	`<feComponentTransfer in="blur" result="grown">` +
+	`<feFuncA type="linear" slope="5"/>` +
+	`</feComponentTransfer>` +
 	`<feFlood flood-color="#000000" flood-opacity="0.85" result="ink"/>` +
 	`<feComposite in="ink" in2="grown" operator="in" result="ring"/>` +
 	`<feMerge><feMergeNode in="ring"/><feMergeNode in="SourceGraphic"/></feMerge>` +
@@ -130,6 +134,38 @@ func keyColorIconName(c engine.KeyColor) string {
 		return "key-yellow"
 	}
 	return ""
+}
+
+// keyColorClass is the modifier class that paints a control in a key's colour,
+// so choosing a key colour is done by clicking that colour rather than by
+// reading its name.
+func keyColorClass(c engine.KeyColor) string {
+	switch c {
+	case engine.KeyColorRed:
+		return "key-choice--red"
+	case engine.KeyColorBlue:
+		return "key-choice--blue"
+	case engine.KeyColorYellow:
+		return "key-choice--yellow"
+	}
+	return ""
+}
+
+// keyChoiceButton is one key colour offered as a choice: a button in that
+// colour, its key icon sparkling, labelled with the colour's name.
+func keyChoiceButton(
+	c engine.KeyColor,
+	label string,
+	cursor bool,
+	onClick app.EventHandler,
+) app.UI {
+	return app.Button().
+		Class(cx("house-btn", "key-choice", keyColorClass(c), ifCls(cursor, "btn-cursor"))).
+		OnClick(onClick).
+		Body(
+			app.Span().Class("key-sparkle").Body(icon(keyColorIconName(c), "icon-inline")),
+			app.Text(label),
+		)
 }
 
 // keyColorByName resolves a key-colour label to its value, or KeyColorNone.

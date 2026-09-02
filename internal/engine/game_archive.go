@@ -15,14 +15,16 @@ func (g *Game) offerArchives(player int) {
 	if g.chooseOption(
 		player,
 		"",
-		"Take your archived cards into your hand?",
-		[]string{"Take them", "Leave them archived"},
+		"Take all the cards from your archives and put them in your hand?",
+		[]string{"Yes", "No"},
 	) != 0 {
 		return
 	}
 	n := arc.Count
 	for _, id := range arc.slice() {
-		g.State.Hand[player].add(id)
+		// Your archives may hold an enemy card, but your hand may not: an abducted card
+		// goes to the hand of whoever owns it.
+		g.State.Hand[g.owner(id)].add(id)
 	}
 	*arc = wideList{}
 	g.logf("%s takes %d card(s) from their archives into hand", g.names[player], n)
@@ -73,7 +75,9 @@ func (g *Game) discardArchives(owner int) {
 	}
 	*arc = wideList{}
 	for _, id := range ids {
-		g.State.Discard[owner].add(id)
+		// A discard pile only ever holds its own player's cards, so an abducted card
+		// discarded out of these archives goes to its owner's pile.
+		g.State.Discard[g.owner(id)].add(id)
 	}
 	g.logf("%s discards %d archived card(s)", g.names[owner], len(ids))
 }

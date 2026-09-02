@@ -250,7 +250,7 @@ func renderCardText(def *CardDefinition, withName bool) string {
 
 	// Rules text (keywords, upgrade modifier, abilities) follows the labeled
 	// header, separated by a blank line.
-	if rules := cardRules(def); len(rules) > 0 {
+	if rules := cardRules(def, false); len(rules) > 0 {
 		lines = append(lines, "")
 		lines = append(lines, rules...)
 	}
@@ -264,15 +264,25 @@ func renderCardText(def *CardDefinition, withName bool) string {
 // per line with no header. It is the text drawn on the compact card face, so an
 // upgrade shows its granted keywords and abilities there too.
 func RenderCardRules(def *CardDefinition) string {
-	return strings.Join(cardRules(def), "\n")
+	return strings.Join(cardRules(def, false), "\n")
+}
+
+// RenderUpgradeOnCreature renders an Upgrade's rules as they read once it is
+// attached. Printed on its own an Upgrade has to say who it is talking about —
+// `This creature gains, "Reap: Steal 1 Æmber."` — but drawn on the host's face
+// that creature is right there, so the framing is dropped and the line reads as
+// if it were printed on the creature: `Reap: Steal 1 Æmber.`
+func RenderUpgradeOnCreature(def *CardDefinition) string {
+	return strings.Join(cardRules(def, true), "\n")
 }
 
 // cardRules assembles a card's rules lines in printed order: keywords, "cannot"
 // restrictions, key-cost, an upgrade's static modifier, a constant ability, the
 // abilities an upgrade grants its host, and finally the card's own triggered
 // abilities. An upgrade's own abilities name their host "this creature" since it
-// is unknown at print time.
-func cardRules(def *CardDefinition) []string {
+// is unknown at print time; hosted drops that framing for a face already showing
+// the creature (see RenderUpgradeOnCreature).
+func cardRules(def *CardDefinition, hosted bool) []string {
 	var rules []string
 	if s := keywordText(def); s != "" {
 		rules = append(rules, s)
@@ -283,12 +293,21 @@ func cardRules(def *CardDefinition) []string {
 	if fr := def.FightRestriction; fr != (Target{}) {
 		rules = append(rules, def.Name+" can only fight "+singularNoun(fr.Text())+"s.")
 	}
+	if s := attackIgnoresText(def); s != "" {
+		rules = append(rules, s)
+	}
 	rules = append(rules, restrictionText(def.Restricts)...)
 	if def.PreventSteal {
 		rules = append(rules, "Your Æmber cannot be stolen.")
 	}
+	if def.SpendableAember {
+		rules = append(rules, "You may spend Æmber on "+def.Name+" when forging keys.")
+	}
+	if s := def.PlayRequirement.text(); s != "" {
+		rules = append(rules, strings.ReplaceAll(s, SelfName, def.Name))
+	}
 	if s := keyCostText(def.KeyCostChange); s != "" {
-		rules = append(rules, s)
+		rules = append(rules, strings.ReplaceAll(s, SelfName, def.Name))
 	}
 	if s := drawModifierText(def.DrawModifier); s != "" {
 		rules = append(rules, s)
@@ -299,12 +318,12 @@ func cardRules(def *CardDefinition) []string {
 	if s := captureOpponentAemberText(def); s != "" {
 		rules = append(rules, s)
 	}
-	rules = append(rules, upgradeStaticLines(def)...)
+	rules = append(rules, upgradeStaticLines(def, hosted)...)
 	if s := constantText(def); s != "" {
 		rules = append(rules, s)
 	}
 	rules = append(rules, constantGrantedText(def)...)
-	rules = append(rules, grantedText(def.Static)...)
+	rules = append(rules, grantedText(def.Static, hosted)...)
 	rules = append(rules, abilityLines(def)...)
 	return rules
 }
@@ -374,6 +393,20 @@ func drawModifierText(m DrawModifier) string {
 // staticText renders an Upgrade's continuous modifier, e.g.
 // "This creature gains +5 power."
 func staticText(m StaticModifier) string {
+	s := staticBonuses(m)
+	if s == "" {
+		return ""
+	}
+	if m.WhileOnFlank {
+		return "While this creature is on a flank, it gains " + s + "."
+	}
+	return "This creature gains " + s + "."
+}
+
+// staticBonuses lists what an Upgrade's continuous modifier adds, without the
+// "This creature gains" framing — e.g. "+5 power and elusive". Empty when the
+// modifier adds nothing.
+func staticBonuses(m StaticModifier) string {
 	var parts []string
 	if m.PowerBonus != 0 {
 		parts = append(parts, fmt.Sprintf("%+d power", m.PowerBonus))
@@ -390,17 +423,28 @@ func staticText(m StaticModifier) string {
 	for _, kw := range m.Keywords {
 		parts = append(parts, strings.ToLower(string(kw)))
 	}
-	if len(parts) == 0 {
-		return ""
-	}
-	return "This creature gains " + strings.Join(parts, " and ") + "."
+	return strings.Join(parts, " and ")
 }
 
 // upgradeStaticLines renders an Upgrade's continuous modifier and replacement
-// text, combining them when both are printed on the same Upgrade.
-func upgradeStaticLines(def *CardDefinition) []string {
+// text, combining them when both are printed on the same Upgrade. On a host's
+// face (hosted) each stands on its own line, unframed.
+func upgradeStaticLines(def *CardDefinition, hosted bool) []string {
 	static := staticText(def.Static)
 	replacement := destructionReplacementText(def)
+	if hosted {
+		var lines []string
+		if s := staticBonuses(def.Static); s != "" {
+			if def.Static.WhileOnFlank {
+				s = "while on a flank, " + s
+			}
+			lines = append(lines, capitalizeFirst(s)+".")
+		}
+		if replacement != "" {
+			lines = append(lines, capitalizeFirst(replacement)+".")
+		}
+		return lines
+	}
 	switch {
 	case static != "" && replacement != "":
 		return []string{strings.TrimSuffix(static, ".") + ` and, "` + replacement + `."`}
@@ -430,8 +474,15 @@ func destructionReplacementText(def *CardDefinition) string {
 // grantedText renders the triggered abilities an Upgrade grants its host,
 // combining matching Reap/Fight pairs into the printed "Fight/Reap:" shorthand,
 // e.g. `This creature gains, "Reap: Steal 1 Æmber."`. Self-references resolve to
-// "this creature" since the host is unknown when the Upgrade prints.
-func grantedText(m StaticModifier) []string {
+// "this creature" since the host is unknown when the Upgrade prints; hosted drops
+// the framing so the line reads as if printed on the creature.
+func grantedText(m StaticModifier, hosted bool) []string {
+	frame := func(body string) string {
+		if hosted {
+			return body
+		}
+		return `This creature gains, "` + body + `"`
+	}
 	lines := make([]string, 0, len(m.Granted))
 	for i := 0; i < len(m.Granted); i++ {
 		ab := m.Granted[i]
@@ -439,15 +490,15 @@ func grantedText(m StaticModifier) []string {
 			body := capitalizeFirst(
 				abilityTextWithNames(ab.Effect.Text(), "this creature", "this upgrade"),
 			)
-			lines = append(lines, `This creature gains, "Fight/Reap: `+body+`."`)
+			lines = append(lines, frame(`Fight/Reap: `+body+`.`))
 			i++ // the partner prints as part of this line
 			continue
 		}
 		body := abilityTextWithNames(RenderAbility(ab), "this creature", "this upgrade")
-		lines = append(lines, `This creature gains, "`+body+`"`)
+		lines = append(lines, frame(body))
 	}
 	if s := keyCostText(m.KeyCostChange); s != "" {
-		lines = append(lines, `This creature gains, "`+s+`"`)
+		lines = append(lines, frame(s))
 	}
 	return lines
 }
@@ -477,6 +528,9 @@ func constantText(def *CardDefinition) string {
 		}
 		who := capitalizeFirst(c.target().Text())
 		line := who + " gains " + strings.Join(parts, " and ")
+		if c.Per != nil {
+			line += " for each " + c.Per.CountText()
+		}
 		if tgt := c.target(); tgt.Kind == TargetThisCreature && tgt.onFlank {
 			line += " while it is on a flank"
 		}
@@ -558,14 +612,21 @@ func keyCostText(kc KeyCostChange) string {
 	if kc.amount == 0 {
 		return ""
 	}
-	whose := "Your"
+	whose := "your"
 	switch kc.player {
 	case Opponent:
-		whose = "Your opponent's"
+		whose = "your opponent's"
 	case EachPlayer:
-		whose = "Each player's"
+		whose = "each player's"
 	}
-	return fmt.Sprintf("%s keys cost %+d Æmber.", whose, kc.amount)
+	sentence := fmt.Sprintf("%s keys cost %+d Æmber", whose, kc.amount)
+	if kc.per != nil {
+		sentence += " for each " + kc.per.CountText()
+	}
+	if kc.whileOnFlank {
+		return "While " + SelfName + " is on a flank, " + sentence + "."
+	}
+	return capitalizeFirst(sentence) + "."
 }
 
 // playPermissionText renders a continuous permission to play cards of a house
@@ -650,6 +711,23 @@ func attackDamageText(def *CardDefinition) string {
 	default:
 		return ""
 	}
+}
+
+// attackIgnoresText renders the defensive keywords a creature ignores while it is
+// attacking, e.g. "While Niffle Ape is attacking, ignore taunt and elusive."
+func attackIgnoresText(def *CardDefinition) string {
+	if len(def.AttackIgnores) == 0 {
+		return ""
+	}
+	words := make([]string, len(def.AttackIgnores))
+	for i, kw := range def.AttackIgnores {
+		words[i] = strings.ToLower(string(kw))
+	}
+	return fmt.Sprintf(
+		"While %s is attacking, ignore %s.",
+		def.Name,
+		strings.Join(words, " and "),
+	)
 }
 
 // capitalizeFirst upper-cases the first rune of s.

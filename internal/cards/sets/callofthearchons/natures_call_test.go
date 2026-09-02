@@ -30,8 +30,8 @@ func TestNaturesCall(t *testing.T) {
 		})
 
 		h.P1.Play(NaturesCall)
-		h.P1.ClickOption(ally.Name())
-		h.P1.ClickOption(foe.Name())
+		h.P1.ClickCard(ally)
+		h.P1.ClickCard(foe)
 
 		h.Expect(ally).At(ct.Hand)
 		h.Expect(foe).At(ct.Hand)

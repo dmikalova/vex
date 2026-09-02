@@ -55,12 +55,6 @@ func errUnsetDuration(effect string) error {
 	return fmt.Errorf("%s: duration must be set", effect)
 }
 
-// errUnsetCardType is the configuration error a card-type-taking effect returns
-// when its Type was left as the invalid zero value.
-func errUnsetCardType(effect string) error {
-	return fmt.Errorf("%s: card type must be set", effect)
-}
-
 // EffectContext carries the state an effect needs while resolving. It exposes the
 // game only through a Resolver, so an effect can inspect and change the game only
 // via that interface — never by reaching into the state directly. Cards are
@@ -108,6 +102,10 @@ type Produced struct {
 	// Destroyed is how many cards the most recent context-driven destruction removed,
 	// read by a CardsDestroyedFewerThan condition later in the same resolution.
 	Destroyed int
+	// Purged is how many cards the most recent purge removed, read by a CardsPurged
+	// count in a following effect of the same resolution (One Last Job steals for
+	// each creature it purged).
+	Purged int
 	// Discarded holds the cards a DiscardTopOfEachDeck discarded, read by a
 	// following ForEachDiscarded that acts on each (Bonkers Killing Machine
 	// destroys a creature or artifact of each discarded card's house).
@@ -153,6 +151,17 @@ func (ctx *EffectContext) ChooseCard(prompt string, candidates []LocalID) (Local
 // the prompt to this ability's source card.
 func (ctx *EffectContext) ChooseOption(prompt string, options []string) int {
 	return ctx.Resolver.ChooseOption(ctx.Controller, ctx.Source, prompt, options)
+}
+
+// ChooseCardOptional asks the controlling player to pick one card from candidates
+// or to decline, attributing the prompt to this ability's source card. Use it for
+// every "you may" and "up to N" choice so the player picks a card rather than a
+// name off a list; a sole candidate is offered, not forced.
+func (ctx *EffectContext) ChooseCardOptional(
+	prompt string,
+	candidates []LocalID,
+) (LocalID, bool) {
+	return ctx.Resolver.ChooseCardOptional(ctx.Controller, ctx.Source, prompt, candidates)
 }
 
 // OrderByChoice asks the controlling player to arrange ids into a resolution order.

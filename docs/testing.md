@@ -268,7 +268,7 @@ mage fuzz         # coverage-guided whole-game fuzzing (-tags assert); FUZZTIME=
 mage soak         # volume soak of random games (-tags assert); SOAK_DURATION=…
 
 # focused runs while iterating:
-go test ./internal/engine/ -run TestHeal
-go test ./internal/cards/sets/callofthearchons/ -run TestAmmoniaClouds
-go clean -fuzzcache   # reset the local fuzz corpus if it gets stale
+mage testRun TestHeal
+mage testRun 'TestHeal|TestAmmoniaClouds'
+mage fuzzClean    # reset the local fuzz corpus if it gets stale
 ```

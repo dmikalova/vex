@@ -55,10 +55,18 @@ func (g *Game) leavePlayDestroyed(id LocalID) int {
 // player's battleline while ownership stays fixed, so leave-play teardown must
 // scan both players' rows.
 func (g *Game) removeFromPlay(id LocalID) {
+	g.emitLeavesPlay(id)
 	for p := 0; p < 2; p++ {
 		g.State.Battleline[p].remove(id)
 		g.State.Artifacts[p].remove(id)
 	}
+}
+
+// emitLeavesPlay fires a card's "Leaves Play:" abilities while it is still on the
+// board. Every exit — destroyed, purged, returned to hand, archived, shuffled away
+// — funnels through removeFromPlay, so this one call covers them all.
+func (g *Game) emitLeavesPlay(id LocalID) {
+	g.triggerAbilities(id, TriggerLeavesPlay, 0, false)
 }
 
 // discardUpgrades moves a card's attached upgrades to their owner's discard pile.
@@ -297,4 +305,27 @@ func (g *Game) putIntoDeckShuffled(id LocalID) {
 	g.State.Deck[o].add(id)
 	g.Shuffle(o)
 	g.logf("%s is shuffled into %s's deck", g.Name(id), g.names[o])
+}
+
+// Only three zones of yours may hold a card your opponent owns: your battleline,
+// your artifact line, and your archives. A card that would move to any other zone
+// of yours — your hand, your discard pile, your deck — goes to its owner's
+// matching zone instead. So an enemy creature abducted into your archives goes to
+// your opponent's hand when you take your archives up, and to their discard pile
+// if those archives are discarded.
+//
+//rulebook:effect Abduct
+
+// PutIntoYourArchives removes a creature from play into the archives of the player
+// who took it rather than its owner's — Mass Abduction, Sample Collection, and
+// Uxlyx the Zookeeper all abduct this way. Nothing is marked on the card: the
+// ownership rule above sends it home the moment it leaves those archives.
+func (g *Game) PutIntoYourArchives(id LocalID, player int) {
+	o := g.owner(id)
+	g.removeFromPlay(id)
+	g.discardUpgrades(id)
+	g.resetCore(id)
+	g.State.Archives[player].add(id)
+	g.logf("%s abducts %s (owned by %s) into their archives",
+		g.names[player], g.Name(id), g.names[o])
 }

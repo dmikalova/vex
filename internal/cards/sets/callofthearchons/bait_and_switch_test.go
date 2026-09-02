@@ -27,4 +27,17 @@ func TestBaitAndSwitch(t *testing.T) {
 		h.P1.ExpectAmber(3)
 		h.P2.ExpectAmber(2)
 	})
+
+	t.Run("steals at most 6 Æmber, the Rule of 6 bound on repeats", func(t *testing.T) {
+		h := ct.Play(t, ct.Setup{
+			P1: ct.Side{House: card.House.Shadows, Hand: ct.Cards(BaitAndSwitch)},
+			P2: ct.Side{Amber: 20},
+		})
+
+		h.P1.Play(BaitAndSwitch)
+
+		// The play steals once and repeats five more times, not until the lead is gone.
+		h.P1.ExpectAmber(6)
+		h.P2.ExpectAmber(14)
+	})
 }

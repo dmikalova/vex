@@ -35,6 +35,20 @@ turns.
 The single House a player chooses at the start of their turn; only cards of the
 active House may be played or used that turn, barring specific grants.
 
+**Phase**:
+One of the eight ordered parts of a turn: start of turn, forge, choose a house,
+archives, play, ready, draw, end of turn. Each phase is entered and left
+explicitly, and abilities that resolve "at the start of your turn" or "at the end
+of your turn" belong to the phase of that name. An effect may end the current
+phase early, skipping whatever remained in it. KeyForge's rulebook calls these
+divisions "steps"; Vactrol calls them phases everywhere — engine, rulebook, card
+text, and game log.
+_Avoid_: step, turn step, main phase.
+
+**Reveal**:
+To make a card in a hidden zone publicly known. Revealing is the only way a card
+in a hidden zone is ever named — to the opponent, and in the game log.
+
 **Reap**:
 Using a ready creature to gain 1 Æmber, exhausting it.
 
@@ -74,12 +88,29 @@ supply onto a card.
 Æmber the opponent must pay a card's controller in order to play or use an
 artifact.
 
+**Rule of 6**:
+A player cannot play and/or use the same card — or other copies of that card _by
+name_ — more than six times during a given turn. The count is keyed by card name
+across the whole turn, **regardless of who owns or controls the card**: six plays
+or uses of "Bumpsy" in a turn, not six per copy and not six per player. Only the
+active player can play or use cards during a turn, so there is no opponent
+contribution to track; keying by name rather than by player is what stops a stolen
+or seized copy from buying a seventh use. A self-repeating effect is bounded by
+the same six: Bait and Switch resolves its steal once and repeats it at most five
+more times, so one copy steals six Æmber at most. The count resets when the turn
+does. It exists to stop an unbounded loop from hanging the game.
+
 **Invulnerable**:
 A KeyForge keyword: an invulnerable creature cannot be destroyed or dealt damage.
 The engine does not model the full keyword yet — only the damage-prevention half,
 as the `DamageImmune` flag set by the `PreventDamage` effect ("cannot be dealt
 damage this turn"; Shield of Justice, Protectrix). Those cards prevent damage
 only, so they are not truly invulnerable.
+
+**Hidden zone** / **Public zone**:
+A zone whose contents are not known to both players (deck, hand, archives) versus
+one whose contents are (play, discard, purged). The distinction decides whether a
+card can be named.
 
 **Take control** / **latest ability wins**:
 Taking control moves a card to your play area and makes you its controller;
@@ -88,6 +119,31 @@ play. When two effects change the same thing on a card (its controller, its
 house), the most recently applied one wins. A `Forever` control (Sneklifter's
 seized artifact) lasts the rest of the game; if a later, timed effect overrides
 it, the `Forever` effect governs again once that timed effect expires.
+
+## The game log
+
+**Game log**:
+The running account of what has happened in a match. It records outcomes — the
+state changes that actually occurred — never a card's printed text, never what an
+effect attempted, and never a hint about what a player may do next. It is
+identical for both players and names no card held in a hidden zone, so a card is
+named only once it has been revealed or has reached a public zone.
+_Avoid_: chat, message, narration.
+
+**Log entry**:
+One line of the game log: one thing that happened, under one attribution. An
+entry knows how to render itself, the same way an effect renders its own card
+text; the two share a vocabulary of phrasings but neither is derived from the
+other (ADR 0011).
+_Avoid_: message, narration record.
+
+**Frame**:
+The scope a log entry was emitted inside, carrying who acted, which card the
+ability came from, which ability category it was, and which card granted it.
+Frames nest — playing a creature opens a frame, its Play ability opens a child
+frame — and entries inherit their attribution from the frame they sit in. The
+client groups a top-level frame's entries into one visual bubble.
+_Avoid_: use, useId, bubble (as a code term), log group, log mark.
 
 ## Cards and sets
 
@@ -234,3 +290,99 @@ Home-house references. The engine only ever sees materialized cards.
 A template parameter for a card that references its own House in its text or
 effect. Bound at generation to the Slot's House, so a Maverick reads and plays
 correctly.
+
+## The client
+
+The names of the screen's regions, so a request or a bug report can point at one.
+Both the browser client and the TUI present the same regions; these names are the
+shared ones.
+
+**Board area**:
+Everything but the Sidebar: the two Player bars, the Play zone between them, and
+the Hand row at the bottom.
+
+**Player bar**:
+One player's summary strip — their name, Æmber, key cost, keys, deck Houses,
+chains, and Zone counts. The opponent's is at the top of the Board area, the
+active player's below the Play zone.
+_Avoid_: score pill (the older name, still the CSS class), status bar.
+
+**Zone counts**:
+The out-of-play card counts at the right end of a Player bar — hand, deck,
+discard, archives, purge — which open the Zone viewer.
+
+**House strip**:
+The three deck Houses shown in a Player bar, with the non-active ones lowlighted.
+
+**Play zone**:
+The four Board rows of cards in play, artifacts outside and battlelines inside,
+split by the Midline. It is also the drop target for a card dragged from hand.
+
+**Board row**:
+One zone of one player rendered as a Row label and a strip of cards: an
+_artifact row_, a _battleline row_, or the _Hand row_.
+
+**Row label**:
+The rotated caption on the left of a Board row — owner, zone, and count. It drops
+the zone word for its icon, then the owner's name, as the row gets shorter.
+
+**Midline**:
+The dashed rule between the two battlelines; the board is a mirror about it.
+
+**Sidebar**:
+The right-hand column: Brand bar, Game log, Turn HUD, Prompt, and Action bar.
+It can be collapsed to give the Board area the whole window.
+
+**Brand bar**:
+The title row at the top of the Sidebar, with the navigation buttons: undo,
+redo, manual mode, new game, and hiding the Sidebar.
+
+**Game log**:
+The running record of the match. A _log line_ is one entry; a _log group_ is the
+lines of a single action, drawn as one bubble; a _card mention_ is a card name in
+a line, hoverable for its Card preview.
+
+**Turn HUD**:
+The at-a-glance state of the current turn above the Prompt — whose turn it is,
+the turn number, the step they are in, and their active House.
+
+**Prompt**:
+A question the engine is waiting on, shown with the card that asked it (the
+_prompt source_) and its answers as option buttons.
+
+**Action bar**:
+The buttons for what the selected card can do right now — play, discard, reap,
+use, fight, end turn.
+
+**Flank buttons**:
+The arrow-headed buttons that place a played creature on the left or right flank.
+
+**Manual panel**:
+The Sidebar's manual controls, available only in manual mode: stat steppers,
+moves between zones, and the Card picker.
+
+**Card picker**:
+The searchable list of every card in the database, for putting one into play or
+hand in manual mode.
+
+**Zone viewer**:
+The overlay listing a player's out-of-play zones as rows of cards.
+
+**Card preview**:
+The enlarged face of the card under the cursor, whether on the board, in hand, or
+named in the Game log.
+
+**Result panel**:
+The end-of-game result, shown in the Action bar's place once a player has forged
+their third key.
+
+**Status banner**:
+The transient message, usually a rejected play, that fades in above the Action
+bar.
+
+**Flash** / **Flight**:
+The two feedback animations. A _flash_ pulses a card or counter that just
+changed; a _flight_ is a card that left play arcing into the zone it went to.
+
+**Tip**:
+The small label a bare icon shows on hover.

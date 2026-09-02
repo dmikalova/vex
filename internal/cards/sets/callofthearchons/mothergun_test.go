@@ -17,14 +17,14 @@ import (
 //	Action: Reveal any number of Mars cards from your hand, and for each card revealed this way, deal 1 damage to a creature.
 func TestMothergun(t *testing.T) {
 	t.Run("deals damage equal to the number of Mars cards revealed", func(t *testing.T) {
-		var foe ct.Card
+		var foe, m1, m2 ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
 				House:  card.House.Mars,
 				InPlay: ct.Cards(Mothergun),
 				Hand: ct.Cards(
-					ct.Creature(ct.OfHouse(card.House.Mars)),
-					ct.Creature(ct.OfHouse(card.House.Mars)),
+					ct.Bind(&m1, ct.Creature(ct.OfHouse(card.House.Mars))),
+					ct.Bind(&m2, ct.Creature(ct.OfHouse(card.House.Mars))),
 				),
 			},
 			P2: ct.Side{
@@ -35,6 +35,8 @@ func TestMothergun(t *testing.T) {
 		})
 
 		h.P1.UseAction(Mothergun)
+		h.P1.ClickCard(m1)
+		h.P1.ClickCard(m2)
 
 		h.Expect(foe).At(ct.PlayArea).Damage(2)
 	})

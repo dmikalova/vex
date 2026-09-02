@@ -26,14 +26,14 @@ func TestSkipForgeStep(t *testing.T) {
 	}
 	g.State.Aember[1] = 6 // enough for player 1 to forge on their turn
 	SkipForgeStep{Player: Opponent}.Resolve(&EffectContext{Resolver: g, Controller: 0})
-	if !g.State.SkipForgeNext[1] {
+	if !g.State.SkipForgeNext[1].Value {
 		t.Fatal("the skip should arm the opponent's next turn")
 	}
 	g.EndTurn(0)
 
 	keysBefore := g.State.Keys[1]
 	g.BeginTurn(1)
-	if g.State.SkipForgeNext[1] {
+	if g.State.SkipForgeNext[1].Value {
 		t.Error("the skip should be consumed when the turn begins")
 	}
 	if g.State.Keys[1] != keysBefore {

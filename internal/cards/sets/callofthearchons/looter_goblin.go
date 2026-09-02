@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// LooterGoblin
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Looter Goblin
 //
 //	House:  Brobnar
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Goblin
 //
-//	Elusive. (The first time this creature is attacked each turn, no damage is dealt.)
-//	Reap: For the remainder of the turn, gain 1 Aember each time an enemy creature is destroyed.
+//	Elusive.
+//	Reap: For the remainder of the turn, each time an enemy creature is destroyed, gain 1 Æmber.
 var LooterGoblin = card.New(
 	"Looter Goblin",
 	card.House.Brobnar,
@@ -25,5 +20,13 @@ var LooterGoblin = card.New(
 	card.Provenance(card.CotA, 41),
 	card.WithPower(2),
 	card.WithTraits("Goblin"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithAbility(
+		card.Trigger.Reap, card.ForRemainderOfTurn{
+			On: card.Event.EnemyCreatureDestroyed,
+			Do: card.GainAember{
+				Player: card.Controller,
+				Amount: 1,
+			},
+		}),
 )

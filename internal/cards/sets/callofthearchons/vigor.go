@@ -1,20 +1,15 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Vigor
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Heal up to 3 damage from a creature. If you healed 3 damage, gain 1 Aember.
+//	Play: Heal 3 damage from a creature. If you healed exactly 3 damage, gain 1 Æmber.
 var Vigor = card.New(
 	"Vigor",
 	card.House.Untamed,
@@ -22,5 +17,22 @@ var Vigor = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 338),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
+			card.Sentence{Effect: card.Heal{
+				Amount: 3,
+				Target: card.Target.Creature,
+			}},
+			card.Sentence{Effect: card.Conditional{
+				Cond: card.CountIs{
+					Count:  card.DamageHealed{},
+					Is:     card.Exactly,
+					Amount: 3,
+				},
+				Then: card.GainAember{
+					Player: card.Controller,
+					Amount: 1,
+				},
+			}},
+		}}),
 )

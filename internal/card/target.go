@@ -7,24 +7,29 @@ import "github.com/dmikalova/vactrol/internal/engine"
 // Selector, ...) chain off them:
 // card.Target.EachEnemyCreature.Selector(card.ExceptMostPowerful).
 var Target = targets{
-	This:                      engine.Target{Kind: engine.TargetThisCreature},
-	Triggering:                engine.Target{Kind: engine.TargetTriggeringCreature},
-	Creature:                  engine.Target{Kind: engine.TargetChosenCreature},
-	FriendlyCreature:          engine.Target{Kind: engine.TargetChosenFriendlyCreature},
-	EnemyCreature:             engine.Target{Kind: engine.TargetChosenEnemyCreature},
-	EachCreature:              engine.Target{Kind: engine.TargetEachCreature},
-	EachFriendlyCreature:      engine.Target{Kind: engine.TargetEachFriendlyCreature},
-	EachEnemyCreature:         engine.Target{Kind: engine.TargetEachEnemyCreature},
-	EachArtifact:              engine.Target{Kind: engine.TargetEachArtifact},
-	EachFriendlyInPlay:        engine.Target{Kind: engine.TargetEachFriendlyInPlay},
-	EachOtherFriendlyCreature: engine.Target{Kind: engine.TargetEachOtherFriendlyCreature},
-	OtherFriendlyCreature:     engine.Target{Kind: engine.TargetChosenOtherFriendlyCreature},
-	OtherCreature:             engine.Target{Kind: engine.TargetChosenOtherCreature},
-	TheOtherCreature:          engine.Target{Kind: engine.TargetTheOtherCreature},
-	ChosenInPlay:              engine.Target{Kind: engine.TargetChosenInPlay},
-	FriendlyInPlay:            engine.Target{Kind: engine.TargetChosenFriendlyInPlay},
-	Artifact:                  engine.Target{Kind: engine.TargetChosenArtifact},
-	EnemyArtifact:             engine.Target{Kind: engine.TargetChosenEnemyArtifact},
+	This:                 engine.Target{Kind: engine.TargetThisCreature},
+	Triggering:           engine.Target{Kind: engine.TargetTriggeringCreature},
+	Creature:             engine.Target{Kind: engine.TargetChosenCreature},
+	FriendlyCreature:     engine.Target{Kind: engine.TargetChosenFriendlyCreature},
+	EnemyCreature:        engine.Target{Kind: engine.TargetChosenEnemyCreature},
+	EachCreature:         engine.Target{Kind: engine.TargetEachCreature},
+	EachFriendlyCreature: engine.Target{Kind: engine.TargetEachFriendlyCreature},
+	EachEnemyCreature:    engine.Target{Kind: engine.TargetEachEnemyCreature},
+	EachArtifact:         engine.Target{Kind: engine.TargetEachArtifact},
+	EachFriendlyArtifact: engine.Target{
+		Kind: engine.TargetEachFriendlyArtifact,
+	},
+	EachEnemyArtifact:          engine.Target{Kind: engine.TargetEachEnemyArtifact},
+	EachFriendlyCardInPlay:     engine.Target{Kind: engine.TargetEachFriendlyCardInPlay},
+	EachOtherFriendlyCreature:  engine.Target{Kind: engine.TargetEachOtherFriendlyCreature},
+	OtherFriendlyCreature:      engine.Target{Kind: engine.TargetChosenOtherFriendlyCreature},
+	OtherCreature:              engine.Target{Kind: engine.TargetChosenOtherCreature},
+	TheOtherCreature:           engine.Target{Kind: engine.TargetTheOtherCreature},
+	CreatureFought:             engine.Target{Kind: engine.TargetCreatureFought},
+	CreatureOrArtifact:         engine.Target{Kind: engine.TargetChosenCreatureOrArtifact},
+	FriendlyCreatureOrArtifact: engine.Target{Kind: engine.TargetChosenFriendlyCreatureOrArtifact},
+	Artifact:                   engine.Target{Kind: engine.TargetChosenArtifact},
+	EnemyArtifact:              engine.Target{Kind: engine.TargetChosenEnemyArtifact},
 }
 
 type targets struct {
@@ -32,6 +37,9 @@ type targets struct {
 	This engine.Target
 	// Triggering selects the creature that fired the trigger ("it").
 	Triggering engine.Target
+	// CreatureFought selects the creature the source is fighting, for a Before
+	// Fight ability that names it in full.
+	CreatureFought engine.Target
 	// Creature is a single creature the controller chooses, either side.
 	Creature engine.Target
 	// FriendlyCreature is a single friendly creature the controller chooses.
@@ -46,8 +54,12 @@ type targets struct {
 	EachEnemyCreature engine.Target
 	// EachArtifact selects every artifact in play.
 	EachArtifact engine.Target
-	// EachFriendlyInPlay selects the controller's creatures and artifacts.
-	EachFriendlyInPlay engine.Target
+	// EachFriendlyArtifact selects every artifact the controller controls.
+	EachFriendlyArtifact engine.Target
+	// EachEnemyArtifact selects every artifact the opponent controls.
+	EachEnemyArtifact engine.Target
+	// EachFriendlyCardInPlay selects the controller's creatures and artifacts.
+	EachFriendlyCardInPlay engine.Target
 	// EachOtherFriendlyCreature selects the controller's creatures except the source.
 	EachOtherFriendlyCreature engine.Target
 	// OtherFriendlyCreature is a friendly creature the controller chooses except the source.
@@ -56,10 +68,10 @@ type targets struct {
 	OtherCreature engine.Target
 	// TheOtherCreature selects the creature in context (ctx.It), "the other creature".
 	TheOtherCreature engine.Target
-	// ChosenInPlay is a creature or artifact the controller chooses, either side.
-	ChosenInPlay engine.Target
-	// FriendlyInPlay is a friendly creature or artifact the controller chooses.
-	FriendlyInPlay engine.Target
+	// CreatureOrArtifact is a creature or artifact the controller chooses, either side.
+	CreatureOrArtifact engine.Target
+	// FriendlyCreatureOrArtifact is a friendly creature or artifact the controller chooses.
+	FriendlyCreatureOrArtifact engine.Target
 	// Artifact is a single artifact the controller chooses, either side.
 	Artifact engine.Target
 	// EnemyArtifact is a single enemy artifact the controller chooses.

@@ -29,7 +29,7 @@ func TestMasterOf1(t *testing.T) {
 		})
 
 		h.P1.Reap(MasterOf1)
-		h.P1.ClickOption("Yes")
+		h.P1.ClickCard(foe)
 
 		h.Expect(foe).At(ct.Discard)
 	})

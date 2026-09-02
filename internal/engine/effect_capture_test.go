@@ -40,6 +40,25 @@ func TestCaptureAllAember(t *testing.T) {
 	}
 }
 
+func TestCaptureAemberBy(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("gate", 5), 0)
+	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	g.State.Aember[1] = 9
+
+	e := CaptureAember{By: AllBut(5), Target: Target{Kind: TargetThisCreature}, Source: Opponent}
+	if want := "{self} captures all but 5 Æmber from your opponent"; e.Text() != want {
+		t.Errorf("text = %q, want %q", e.Text(), want)
+	}
+	e.Resolve(ctx)
+	if g.AmberOn(src) != 4 {
+		t.Errorf("captured = %d, want 4", g.AmberOn(src))
+	}
+	if g.Aember(1) != 5 {
+		t.Errorf("opponent aember = %d, want 5", g.Aember(1))
+	}
+}
+
 func TestCaptureAemberText(t *testing.T) {
 	this := Target{Kind: TargetThisCreature}
 	enemy := Target{Kind: TargetChosenEnemyCreature}
@@ -91,6 +110,10 @@ func TestCaptureAemberValidate(t *testing.T) {
 	}
 	if err := validateEffect(CaptureAember{Amount: 1, Target: this, Source: Opponent}); err != nil {
 		t.Errorf("valid: %v, want nil", err)
+	}
+	both := CaptureAember{Amount: 1, By: AllBut(5), Target: this, Source: Opponent}
+	if err := validateEffect(both); err == nil {
+		t.Error("setting both Amount and By should fail validation")
 	}
 }
 

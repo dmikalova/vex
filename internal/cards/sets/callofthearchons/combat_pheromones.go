@@ -26,7 +26,7 @@ var CombatPheromones = card.New(
 			card.Sentence{Effect: card.Destroy{Target: card.Target.This}},
 			card.Use{
 				Max:    2,
-				Target: card.Target.EachFriendlyInPlay.OfHouse(card.House.Mars).Other(),
+				Target: card.Target.EachFriendlyCardInPlay.OfHouse(card.House.Mars).Other(),
 			},
 		}}),
 )

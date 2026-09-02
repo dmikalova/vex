@@ -114,6 +114,7 @@ func TestPlayTopOfDeckLeavesUnplayableCardOnTop(t *testing.T) {
 				err: ErrCardPlayLimit,
 			},
 		}
+
 		for _, tc := range cases {
 			t.Run(tc.name, func(t *testing.T) {
 				g := started(t)
@@ -159,6 +160,18 @@ func TestPlayTopOfDeckLeavesUnplayableCardOnTop(t *testing.T) {
 		}
 	})
 
+	t.Run("unmet play requirement", func(t *testing.T) {
+		g := started(t)
+		g.State.Aember[0] = 6
+		top := g.AddToDeck(NewCard("Kelifi Dragon", Brobnar, Creature, Rare,
+			WithPower(12), WithPlayRequirement(AemberThreshold(7))), 0)
+		PlayTopOfDeck{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if g.State.Deck[0].Count != 1 || g.State.Deck[0].IDs[0] != top {
+			t.Errorf("a card whose Æmber threshold is unmet should stay on top of the deck, got %v",
+				g.State.Deck[0].slice())
+		}
+	})
+
 	t.Run("unknown card type", func(t *testing.T) {
 		g := started(t)
 		top := g.AddToDeck(NewCard("Mystery", Logos, CardType("Mystery"), Common), 0)
@@ -193,7 +206,9 @@ func TestBonkersComposition(t *testing.T) {
 		Sentence{Effect: DiscardTopOfEachDeck{}},
 		Sentence{
 			Effect: ForEachDiscarded{
-				Do: Destroy{Target: Target{Kind: TargetChosenInPlay}.OfContextualHouse()},
+				Do: Destroy{
+					Target: Target{Kind: TargetChosenCreatureOrArtifact}.OfContextualHouse(),
+				},
 			},
 		},
 		Conditional{
@@ -238,7 +253,9 @@ func TestBonkersCompositionSelfDestructs(t *testing.T) {
 		Sentence{Effect: DiscardTopOfEachDeck{}},
 		Sentence{
 			Effect: ForEachDiscarded{
-				Do: Destroy{Target: Target{Kind: TargetChosenInPlay}.OfContextualHouse()},
+				Do: Destroy{
+					Target: Target{Kind: TargetChosenCreatureOrArtifact}.OfContextualHouse(),
+				},
 			},
 		},
 		Conditional{
@@ -261,13 +278,15 @@ func TestForEachDiscardedAndContextualHouse(t *testing.T) {
 		t.Error("ForEachDiscarded should reject a Do with no target")
 	}
 	if err := validateEffect(
-		ForEachDiscarded{Do: Destroy{Target: Target{Kind: TargetChosenInPlay}.OfContextualHouse()}},
+		ForEachDiscarded{
+			Do: Destroy{Target: Target{Kind: TargetChosenCreatureOrArtifact}.OfContextualHouse()},
+		},
 	); err != nil {
 		t.Errorf("valid ForEachDiscarded = %v", err)
 	}
 
 	// Text renders the chosen-in-play noun and the contextual-house clause.
-	target := Target{Kind: TargetChosenInPlay}.OfContextualHouse()
+	target := Target{Kind: TargetChosenCreatureOrArtifact}.OfContextualHouse()
 	if got := target.Text(); got != "a creature or artifact of that card's house" {
 		t.Errorf("target text = %q", got)
 	}
@@ -348,4 +367,56 @@ func TestEvasionSigilCompositionMiss(t *testing.T) {
 	if g2.State.FightCancelled {
 		t.Error("an empty deck should not cancel the fight")
 	}
+}
+
+// TestDiscardDeckUntil covers the dig through the top of the deck: it stops at a
+// card the filters admit, reports success so a Then can follow, and runs the deck
+// out when nothing matches.
+func TestDiscardDeckUntil(t *testing.T) {
+	e := DiscardDeckUntil{Type: Creature, House: Brobnar}
+	want := "discard cards from the top of your deck until you discard a Brobnar creature or run out of cards"
+	if e.Text() != want {
+		t.Errorf("text = %q, want %q", e.Text(), want)
+	}
+	if got := (DiscardDeckUntil{Type: Artifact}).Text(); got !=
+		"discard cards from the top of your deck until you discard an artifact or run out of cards" {
+		t.Errorf("artifact text = %q", got)
+	}
+	if got := (DiscardDeckUntil{}).Text(); got !=
+		"discard cards from the top of your deck until you discard a card or run out of cards" {
+		t.Errorf("plain text = %q", got)
+	}
+
+	if got := (PutDiscardedIntoHand{}).Text(); got != "put it into your hand" {
+		t.Errorf("tail text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	skipped := g.AddToDeck(NewCard("Trick", Brobnar, Tactic, Common), 0)
+	brute := g.AddToDeck(NewCard("Brute", Brobnar, Creature, Common, WithPower(5)), 0)
+	buried := g.AddToDeck(NewCard("Buried", Brobnar, Creature, Common, WithPower(5)), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	Then{First: e, Result: PutDiscardedIntoHand{}}.Resolve(ctx)
+	if len(g.Hand(0)) != 1 || g.Hand(0)[0] != brute {
+		t.Errorf("hand = %v, want [%d]", g.Hand(0), brute)
+	}
+	if len(g.Discard(0)) != 1 || g.Discard(0)[0] != skipped {
+		t.Errorf("discard = %v, want [%d]", g.Discard(0), skipped)
+	}
+	if len(g.Deck(0)) != 1 || g.Deck(0)[0] != buried {
+		t.Errorf("deck = %v, want [%d]", g.Deck(0), buried)
+	}
+
+	// Nothing matching left: the dig empties the deck and the tail does nothing.
+	Then{First: DiscardDeckUntil{Type: Artifact}, Result: PutDiscardedIntoHand{}}.Resolve(ctx)
+	if len(g.Deck(0)) != 0 {
+		t.Errorf("deck should be empty, got %v", g.Deck(0))
+	}
+	if len(g.Hand(0)) != 1 {
+		t.Errorf("hand should be untouched, got %v", g.Hand(0))
+	}
+	// Resolved bare, the dig still runs; it just has no tail to gate.
+	DiscardDeckUntil{Type: Artifact}.Resolve(ctx)
+	PutDiscardedIntoHand{}.Resolve(ctx)
 }

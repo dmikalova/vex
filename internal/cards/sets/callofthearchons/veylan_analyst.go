@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// VeylanAnalyst
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Veylan Analyst
 //
 //	House:  Logos
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Cyborg • Scientist
 //
-//	Each time you use an artifact, gain 1 Aember.
+//	After you use a card, if it is an artifact, gain 1 Æmber.
 var VeylanAnalyst = card.New(
 	"Veylan Analyst",
 	card.House.Logos,
@@ -24,5 +19,11 @@ var VeylanAnalyst = card.New(
 	card.Provenance(card.CotA, 156),
 	card.WithPower(2),
 	card.WithTraits("Cyborg", "Scientist"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.AfterUse, card.Conditional{
+		Cond: card.ItIs{Type: card.Type.Artifact},
+		Then: card.GainAember{
+			Player: card.Controller,
+			Amount: 1,
+		},
+	}),
 )

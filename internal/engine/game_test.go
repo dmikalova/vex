@@ -379,7 +379,7 @@ func TestChooseHouseForcedBindsWhenAvailable(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.SetPlayerHouses(0, []House{Mars, Logos, Untamed})
 	g.State.ActivePlayer = 0
-	g.State.ForcedHouse[0] = Mars
+	g.State.ForcedHouse[0].Value = Mars
 	if err := g.ChooseHouse(0, Logos); err != ErrMustChooseForcedHouse {
 		t.Errorf("choosing a different house = %v, want ErrMustChooseForcedHouse", err)
 	}
@@ -394,7 +394,7 @@ func TestChooseHouseForcedIgnoredWhenUnavailable(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.SetPlayerHouses(0, []House{Brobnar, Logos, Untamed})
 	g.State.ActivePlayer = 0
-	g.State.ForcedHouse[0] = Mars // a house player 0 does not have
+	g.State.ForcedHouse[0].Value = Mars // a house player 0 does not have
 	if err := g.ChooseHouse(0, Brobnar); err != nil {
 		t.Errorf("cannot-overrides-must: an available house = %v, want nil", err)
 	}
@@ -561,5 +561,53 @@ func TestOrderByChoice(t *testing.T) {
 	g.SetChooser(0, orderAllChooser{})
 	if got := g.OrderByChoice(0, "p", ids); !eq(got, []LocalID{30, 20, 10}) {
 		t.Errorf("orderer order = %v", got)
+	}
+}
+
+// TestKeyCostChangePerAndFlank covers the two refinements a key-cost change can
+// carry: a count that scales it, and a flank condition that suspends it.
+func TestKeyCostChangePerAndFlank(t *testing.T) {
+	obelisk := NewCard("Iron Obelisk", Brobnar, Artifact, Rare,
+		WithKeyCost(NewKeyCostChange(Opponent, 1).Per(InPlay{
+			Player:  Controller,
+			Type:    Creature,
+			House:   Brobnar,
+			Damaged: true,
+		})))
+	want := "Your opponent's keys cost +1 Æmber for each friendly damaged Brobnar creature."
+	if got := keyCostText(obelisk.KeyCostChange); got != want {
+		t.Errorf("per text = %q, want %q", got, want)
+	}
+
+	g := NewGame("A", "B", 1)
+	g.AddArtifact(obelisk, 0)
+	hurt := g.AddToBattleline(NewCard("Brute", Brobnar, Creature, Common, WithPower(9)), 0)
+	if got := g.CurrentKeyCost(1); got != KeyCost {
+		t.Errorf("key cost with no damaged creature = %d, want %d", got, KeyCost)
+	}
+	g.State.Cards[hurt].Damage = 1
+	if got := g.CurrentKeyCost(1); got != KeyCost+1 {
+		t.Errorf("key cost with one damaged creature = %d, want %d", got, KeyCost+1)
+	}
+
+	mechanic := NewCard("Titan Mechanic", Logos, Creature, Common, WithPower(6),
+		WithKeyCost(NewKeyCostChange(EachPlayer, -1).WhileOnFlank()))
+	wantFlank := "While " + SelfName + " is on a flank, each player's keys cost -1 Æmber."
+	if got := keyCostText(mechanic.KeyCostChange); got != wantFlank {
+		t.Errorf("flank text = %q, want %q", got, wantFlank)
+	}
+
+	f := NewGame("A", "B", 1)
+	f.AddToBattleline(mechanic, 0)
+	if got := f.CurrentKeyCost(0); got != KeyCost-1 {
+		t.Errorf("key cost on a flank = %d, want %d", got, KeyCost-1)
+	}
+
+	mid := NewGame("A", "B", 1)
+	mid.AddToBattleline(testCreature("left", 3), 0)
+	mid.AddToBattleline(mechanic, 0)
+	mid.AddToBattleline(testCreature("right", 3), 0)
+	if got := mid.CurrentKeyCost(0); got != KeyCost {
+		t.Errorf("key cost off the flanks = %d, want %d", got, KeyCost)
 	}
 }

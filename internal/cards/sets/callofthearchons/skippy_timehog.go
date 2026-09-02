@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// SkippyTimehog
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Skippy Timehog
 //
 //	House:  Logos
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  1
 //	Traits: Mutant
 //
-//	Play: Your opponent cannot use any cards next turn. (Cards can still be played and discarded.)
+//	Play: Your opponent cannot use any cards during their next turn.
 var SkippyTimehog = card.New(
 	"Skippy Timehog",
 	card.House.Logos,
@@ -24,5 +19,9 @@ var SkippyTimehog = card.New(
 	card.Provenance(card.CotA, 152),
 	card.WithPower(1),
 	card.WithTraits("Mutant"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.CannotUse{
+			Player:   card.Opponent,
+			Duration: card.Duration.NextTurn,
+		}),
 )

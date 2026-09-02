@@ -280,7 +280,7 @@ func TestOpponentAember(t *testing.T) {
 	if (OpponentAember{}).validate() == nil {
 		t.Error("an unset comparison should be invalid")
 	}
-	for _, is := range []AemberComparison{AtLeast, Exactly, MoreThanYou} {
+	for _, is := range []Comparison{AtLeast, Exactly, MoreThanYou} {
 		if (OpponentAember{Is: is}).validate() != nil {
 			t.Errorf("comparison %d should validate", is)
 		}
@@ -319,5 +319,91 @@ func TestOpponentAember(t *testing.T) {
 	// Conditional surfaces an unset condition at validation time.
 	if (Conditional{Cond: OpponentAember{}, Then: GainAember{Player: Controller, Amount: 1}}).validate() == nil {
 		t.Error("Conditional should surface an invalid condition")
+	}
+}
+
+func TestCountIs(t *testing.T) {
+	cases := []struct {
+		name string
+		cond CountIs
+		want string
+	}{{
+		name: "at least, plural",
+		cond: CountIs{Count: CreaturesUsed{Player: Controller}, Is: AtLeast, Amount: 3},
+		want: "if you used 3 or more creatures this turn",
+	}, {
+		name: "exactly one, singular",
+		cond: CountIs{Count: CardsPlayed{Player: Controller}, Is: Exactly, Amount: 1},
+		want: "if you played exactly 1 card this turn",
+	}, {
+		name: "house-filtered",
+		cond: CountIs{Count: CardsPlayed{Player: Controller, House: Mars}, Is: Exactly, Amount: 2},
+		want: "if you played exactly 2 Mars cards this turn",
+	}, {
+		name: "mass noun ignores plurality",
+		cond: CountIs{Count: DamageHealed{}, Is: Exactly, Amount: 3},
+		want: "if you healed exactly 3 damage",
+	}}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := tc.cond.CondText(); got != tc.want {
+				t.Errorf("text = %q, want %q", got, tc.want)
+			}
+			if err := tc.cond.validate(); err != nil {
+				t.Errorf("valid condition rejected: %v", err)
+			}
+		})
+	}
+
+	if err := (CountIs{Is: AtLeast, Amount: 1}).validate(); err == nil {
+		t.Error("a missing Count should be rejected")
+	}
+	if err := (CountIs{Count: CardsDestroyed{}, Is: AtLeast}).validate(); err == nil {
+		t.Error("a Count with no clause should be rejected")
+	}
+	if err := (CountIs{Count: DamageHealed{}, Is: MoreThanYou}).validate(); err == nil {
+		t.Error("MoreThanYou should be rejected: it compares two Æmber pools")
+	}
+}
+
+func TestCountIsMet(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("src", 3), 0)
+	used := g.AddToBattleline(testCreature("used", 3), 0)
+	g.AddToBattleline(testCreature("idle", 3), 0)
+	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+
+	atLeastOne := CountIs{Count: CreaturesUsed{Player: Controller}, Is: AtLeast, Amount: 1}
+	if atLeastOne.Met(ctx) {
+		t.Error("no creature has been used yet")
+	}
+	g.ReapWith(used)
+	if !atLeastOne.Met(ctx) {
+		t.Error("the reaped creature should count as used")
+	}
+
+	exactlyOne := CountIs{Count: CreaturesUsed{Player: Controller}, Is: Exactly, Amount: 1}
+	if !exactlyOne.Met(ctx) {
+		t.Error("exactly one creature has been used")
+	}
+	if got := (CreaturesUsed{Player: Controller}).CountText(); got != "creature you used this turn" {
+		t.Errorf("count text = %q", got)
+	}
+}
+
+func TestCardsPlayedCountsEveryHouseWhenUnset(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("src", 3), 0)
+	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	g.State.PlayedThisTurn[0].add(g.AddToHand(testCreature("brobnar", 3), 0))
+	g.State.PlayedThisTurn[0].add(
+		g.AddToHand(NewCard("logos", Logos, Creature, Common, WithPower(3)), 0),
+	)
+
+	if got := (CardsPlayed{Player: Controller}).Value(ctx); got != 2 {
+		t.Errorf("unfiltered value = %d, want 2 (every house counts)", got)
+	}
+	if got := (CardsPlayed{Player: Controller, House: Logos}).Value(ctx); got != 1 {
+		t.Errorf("house-filtered value = %d, want 1", got)
 	}
 }

@@ -49,7 +49,7 @@ func (g *Game) Power(id LocalID) int {
 	core := &g.State.Cards[id]
 	p := g.cat.def(id).Power
 	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
-		p += g.cat.def(up).Static.PowerBonus
+		p += g.staticOn(id, up).PowerBonus
 	}
 	p += int(core.PowerCounters)
 	p += g.constantBonus(id, func(c ConstantAbility) int { return c.PowerBonus })
@@ -67,7 +67,7 @@ func (g *Game) Power(id LocalID) int {
 func (g *Game) armor(id LocalID) int {
 	a := g.cat.def(id).Armor
 	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
-		a += g.cat.def(up).Static.ArmorBonus
+		a += g.staticOn(id, up).ArmorBonus
 	}
 	a += g.constantBonus(id, func(c ConstantAbility) int { return c.ArmorBonus })
 	return a
@@ -85,19 +85,30 @@ func (g *Game) constantBonus(id LocalID, pick func(ConstantAbility) int) int {
 	for p := 0; p < 2; p++ {
 		for _, src := range g.allInPlay(p) {
 			for _, c := range g.cat.def(src).ConstantAbilities {
-				if b := pick(c); b != 0 && g.constantAffects(src, c, id) {
-					sum += b
+				b := pick(c)
+				if b == 0 || !g.constantAffects(src, c, id) {
+					continue
 				}
+				if c.Per != nil {
+					b *= c.Per.Value(g.constantContext(src))
+				}
+				sum += b
 			}
 		}
 	}
 	return sum
 }
 
+// constantContext is the resolution context a constant ability reads from: its
+// own source card, seen by that card's controller.
+func (g *Game) constantContext(src LocalID) *EffectContext {
+	return &EffectContext{Resolver: g, Source: src, Controller: g.controller(src)}
+}
+
 // constantAffects reports whether the constant ability c on source src reaches
 // creature id, resolving c's Target from src's point of view.
 func (g *Game) constantAffects(src LocalID, c ConstantAbility, id LocalID) bool {
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: g.controller(src)}
+	ctx := g.constantContext(src)
 	for _, t := range c.target().Select(ctx) {
 		if t == id {
 			return true
@@ -127,11 +138,14 @@ func (g *Game) hazardous(id LocalID) int {
 // hasKeyword reports whether a creature has a keyword, either printed on it,
 // granted by an attached upgrade, or granted by a card's constant ability.
 func (g *Game) hasKeyword(id LocalID, k Keyword) bool {
+	if g.State.KeywordsLost&keywordBit[k] != 0 {
+		return false
+	}
 	if g.cat.def(id).hasKeyword(k) {
 		return true
 	}
 	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
-		for _, kw := range g.cat.def(up).Static.Keywords {
+		for _, kw := range g.staticOn(id, up).Keywords {
 			if kw == k {
 				return true
 			}
@@ -149,6 +163,17 @@ func (g *Game) hasKeyword(id LocalID, k Keyword) bool {
 		}
 	}
 	return false
+}
+
+// staticOn returns the continuous modifier an attached upgrade currently applies
+// to its host, which is the zero modifier while the upgrade's condition is unmet —
+// Shoulder Armor gives nothing to a creature that has left the flank.
+func (g *Game) staticOn(host, upgrade LocalID) StaticModifier {
+	m := g.cat.def(upgrade).Static
+	if m.WhileOnFlank && !g.onFlankOf(host) {
+		return StaticModifier{}
+	}
+	return m
 }
 
 // Damage returns the damage currently on a creature.
@@ -177,6 +202,13 @@ func (g *Game) AemberProtected(player int) bool { return g.aemberProtected(playe
 
 // Keys returns a player's forged key count.
 func (g *Game) Keys(player int) int { return g.State.Keys[player] }
+
+// TurnHistory reads one of the tallies the engine keeps about what a player did
+// during a turn — keys forged, creatures played, enemies killed fighting. See
+// TurnStat for what each one means and when it rolls over.
+func (g *Game) TurnHistory(player int, of TurnStat) int {
+	return int(g.State.TurnHistory[player][of])
+}
 
 // PlayedThisTurn returns the cards a player has played this turn, in play order.
 func (g *Game) PlayedThisTurn(player int) []LocalID {
@@ -248,7 +280,7 @@ func (g *Game) inPlay(id LocalID) bool {
 // by a timed bar (Fogbank) or a constant Restrictions.Fighting rule on a card
 // they control in play.
 func (g *Game) cannotFight(player int) bool {
-	if g.State.CannotFight[player] {
+	if g.State.CannotFight[player].Value {
 		return true
 	}
 	for _, id := range g.allInPlay(player) {
@@ -257,6 +289,26 @@ func (g *Game) cannotFight(player int) bool {
 		}
 	}
 	return false
+}
+
+// creaturesPlayedThisTurn counts how many of the cards a player played this turn
+// were creatures — the tally EndTurn freezes so the next player can ask how many
+// creatures their opponent played on their previous turn (Lifeweb).
+func (g *Game) creaturesPlayedThisTurn(player int) int {
+	n := 0
+	for _, id := range g.PlayedThisTurn(player) {
+		if g.cat.def(id).Type == Creature {
+			n++
+		}
+	}
+	return n
+}
+
+// barredFromPlaying reports whether the timed play bar in force on a player covers
+// the card type t, either by naming it or by being the AnyType blanket bar.
+func (g *Game) barredFromPlaying(player int, t CardType) bool {
+	barred := g.State.CannotPlayTypeThis[player].Value
+	return barred == t || barred == AnyType
 }
 
 // cannotPlayCreatures reports whether a player is barred from playing creatures by
@@ -304,14 +356,26 @@ func (g *Game) aemberProtected(player int) bool {
 func (g *Game) keyCostChangeFor(id LocalID, controller, target int) int {
 	total := 0
 	if kc := g.cat.def(id).KeyCostChange; kc.affects(controller, target) {
-		total += kc.amount
+		total += g.keyCostAmount(id, kc)
 	}
 	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
 		if kc := g.cat.def(up).Static.KeyCostChange; kc.affects(controller, target) {
-			total += kc.amount
+			total += g.keyCostAmount(id, kc)
 		}
 	}
 	return total
+}
+
+// keyCostAmount resolves what a key-cost change on src is currently worth: zero
+// while its flank condition is unmet, and scaled by its count when it has one.
+func (g *Game) keyCostAmount(src LocalID, kc KeyCostChange) int {
+	if kc.whileOnFlank && !onFlank(g.constantContext(src), src) {
+		return 0
+	}
+	if kc.per == nil {
+		return kc.amount
+	}
+	return kc.amount * kc.per.Value(g.constantContext(src))
 }
 
 // keyCost returns what a player currently pays to forge one key: the base KeyCost
@@ -350,5 +414,17 @@ func (g *Game) allInPlay(player int) []LocalID {
 func cloneIDs(src []LocalID) []LocalID {
 	out := make([]LocalID, len(src))
 	copy(out, src)
+	return out
+}
+
+// withoutID returns src with one id dropped, for whittling a candidate list down
+// as a repeated choice consumes it.
+func withoutID(src []LocalID, drop LocalID) []LocalID {
+	out := make([]LocalID, 0, len(src))
+	for _, id := range src {
+		if id != drop {
+			out = append(out, id)
+		}
+	}
 	return out
 }

@@ -1,20 +1,15 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// MassAbduction
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Mass Abduction
 //
 //	House:  Mars
 //	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Put up to 3 damaged enemy creatures into your archives. If any of these creatures leave your archives, they are put into their owner's hand instead.
+//	Play: Put up to 3 enemy damaged creatures into your archives.
 var MassAbduction = card.New(
 	"Mass Abduction",
 	card.House.Mars,
@@ -22,5 +17,10 @@ var MassAbduction = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 169),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.PutUpTo{
+			Max:         3,
+			Target:      card.Target.EachEnemyCreature.Damaged(),
+			Destination: card.To.Archives.Yours(),
+		}),
 )

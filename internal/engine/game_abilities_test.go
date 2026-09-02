@@ -207,7 +207,7 @@ func TestStunBehavior(t *testing.T) {
 
 	// Fight: a stunned attacker recovers instead of fighting (defender unharmed).
 	a := g.AddToBattleline(testCreature("stunfight", 5), 0)
-	d := g.AddToBattleline(testCreature("victim", 4), 1)
+	d := g.AddToBattleline(testCreature("enemy", 4), 1)
 	g.State.Cards[a].Stunned = true
 	if err := g.Fight(0, a, d); err != nil {
 		t.Fatalf("Fight: %v", err)

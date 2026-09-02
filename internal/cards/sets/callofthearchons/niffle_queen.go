@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// NiffleQueen
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Niffle Queen
 //
 //	House:  Untamed
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  6
 //	Traits: Beast • Niffle
 //
-//	Each other friendly Beast creature gets +1 power.
-//	Each other friendly Niffle creature gets +1 power.
+//	Each other friendly Beast trait creature gains +1 power.
+//	Each other friendly Niffle trait creature gains +1 power.
 var NiffleQueen = card.New(
 	"Niffle Queen",
 	card.House.Untamed,
@@ -25,5 +20,12 @@ var NiffleQueen = card.New(
 	card.Provenance(card.CotA, 364),
 	card.WithPower(6),
 	card.WithTraits("Beast", "Niffle"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithConstant(card.ConstantAbility{
+		Target:     card.Target.EachOtherFriendlyCreature.WithTrait("Beast"),
+		PowerBonus: 1,
+	}),
+	card.WithConstant(card.ConstantAbility{
+		Target:     card.Target.EachOtherFriendlyCreature.WithTrait("Niffle"),
+		PowerBonus: 1,
+	}),
 )

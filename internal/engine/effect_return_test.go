@@ -190,7 +190,7 @@ func TestMoveFromPlayValidate(t *testing.T) {
 	this := Target{Kind: TargetThisCreature}
 	for _, d := range []Destination{ToHand, ToTopOfDeck, ToDeckShuffled, ToArchives} {
 		if err := (PutFromPlay{Target: this, Destination: d}).validate(); err != nil {
-			t.Errorf("destination %d should be valid, got %v", d, err)
+			t.Errorf("destination %d should be valid, got %v", d.zone, err)
 		}
 	}
 	if err := (PutFromPlay{Target: this}).validate(); err == nil {
@@ -215,7 +215,7 @@ func TestPutUpTo(t *testing.T) {
 	}
 	for dest, want := range cases {
 		if got := (PutUpTo{Max: 3, Target: eachArt, Destination: dest}).Text(); got != want {
-			t.Errorf("text(%d) = %q, want %q", dest, got, want)
+			t.Errorf("text(%d) = %q, want %q", dest.zone, got, want)
 		}
 	}
 

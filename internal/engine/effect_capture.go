@@ -15,6 +15,9 @@ type CaptureAember struct {
 	Amount int
 	// All captures the whole Source pool instead of a fixed Amount.
 	All bool
+	// By captures a share of the Source pool instead of a fixed Amount
+	// (By: AllBut(5) leaves the pool at exactly five).
+	By Loss
 	// Target is the creature that captures; the zero value is this creature.
 	Target Target
 	// Source is the pool the Æmber is taken from.
@@ -31,6 +34,9 @@ func (e CaptureAember) validate() error {
 	if e.Source == playerUnset {
 		return errUnsetPlayer("CaptureAember")
 	}
+	if e.Amount != 0 && e.By != nil {
+		return fmt.Errorf("CaptureAember: set Amount or By, not both (got Amount=%d)", e.Amount)
+	}
 	return nil
 }
 
@@ -43,9 +49,17 @@ func (e CaptureAember) Text() string {
 		capturer = e.Target.Text()
 	}
 	var body string
-	if e.All {
+	switch {
+	case e.All:
 		body = fmt.Sprintf("%s captures all %s Æmber", capturer, e.poolPossessive())
-	} else {
+	case e.By != nil:
+		body = fmt.Sprintf(
+			"%s captures %s from %s",
+			capturer,
+			e.By.object(e.poolPossessive()),
+			e.fromText(),
+		)
+	default:
 		body = fmt.Sprintf("%s captures %d Æmber from %s", capturer, e.Amount, e.fromText())
 	}
 	return forEach(e.Per, body)
@@ -94,8 +108,11 @@ func (e CaptureAember) Resolve(ctx *EffectContext) {
 		}
 		for _, id := range ids {
 			amt := e.Amount
-			if e.All {
+			switch {
+			case e.All:
 				amt = ctx.Resolver.Aember(pool)
+			case e.By != nil:
+				amt = e.By.lose(ctx.Resolver.Aember(pool))
 			}
 			amt = min(amt, ctx.Resolver.Aember(pool))
 			ctx.Resolver.SetAember(pool, ctx.Resolver.Aember(pool)-amt)

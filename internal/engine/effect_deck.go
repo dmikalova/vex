@@ -167,3 +167,82 @@ func resolverInPlay(ctx *EffectContext, id LocalID) bool {
 	}
 	return false
 }
+
+// DiscardDeckUntil digs through the top of your deck, discarding as it goes,
+// until it turns up a card the filters admit or the deck runs out. The card it
+// finds stays in the discard pile and goes into context (ctx.It), so what happens
+// to it is a separate effect gated on the dig succeeding — Sound the Horns and
+// Invasion Portal both pair it with PutDiscardedIntoHand.
+//
+//rulebook:effect Discard
+type DiscardDeckUntil struct {
+	// Type filters what ends the dig; the zero value stops at any card.
+	Type CardType
+	// House filters what ends the dig; HouseNone stops at any house.
+	House House
+}
+
+// Text renders the dig and names both ways it can end, as the cards do.
+func (e DiscardDeckUntil) Text() string {
+	return "discard cards from the top of your deck until you discard " +
+		indefinite(e.noun()) + " or run out of cards"
+}
+
+// noun names the cards the filters admit, e.g. "card" or "Brobnar creature".
+func (e DiscardDeckUntil) noun() string {
+	noun := "card"
+	switch e.Type {
+	case Creature:
+		noun = "creature"
+	case Artifact:
+		noun = "artifact"
+	}
+	if e.House != HouseNone {
+		noun = e.House.String() + " " + noun
+	}
+	return noun
+}
+
+// matches reports whether a discarded card is the one the dig was looking for.
+func (e DiscardDeckUntil) matches(ctx *EffectContext, id LocalID) bool {
+	if e.Type != "" && ctx.Resolver.TypeOf(id) != e.Type {
+		return false
+	}
+	return e.House == HouseNone || ctx.Resolver.House(id) == e.House
+}
+
+// Resolve digs, leaving the found card in context.
+func (e DiscardDeckUntil) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
+
+// resolveGate digs and reports whether it found a matching card, so a Then can
+// hang "put it into your hand" off the dig succeeding.
+func (e DiscardDeckUntil) resolveGate(ctx *EffectContext) bool {
+	ctx.It, ctx.HasIt = 0, false
+	for {
+		id, ok := ctx.Resolver.DiscardTopOfDeck(ctx.Controller)
+		if !ok {
+			return false
+		}
+		if e.matches(ctx, id) {
+			ctx.It, ctx.HasIt = id, true
+			return true
+		}
+	}
+}
+
+// PutDiscardedIntoHand takes the card in context out of the discard pile and
+// into its owner's hand. It is the tail of a dig through the deck, where the
+// card was just discarded and "it" is unambiguous.
+//
+//rulebook:effect Return
+type PutDiscardedIntoHand struct{}
+
+// Text renders the effect.
+func (PutDiscardedIntoHand) Text() string { return "put it into your hand" }
+
+// Resolve moves the contextual card from the discard pile to hand.
+func (PutDiscardedIntoHand) Resolve(ctx *EffectContext) {
+	if ctx.HasIt {
+		ctx.Resolver.PutFromDiscardIntoHand(ctx.It)
+	}
+}

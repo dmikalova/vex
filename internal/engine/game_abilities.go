@@ -33,6 +33,9 @@ func (g *Game) usable(player int, id LocalID) error {
 	if g.controller(id) != player || !g.inPlay(id) {
 		return ErrWrongType
 	}
+	if g.State.CannotUse[player].Value {
+		return ErrCannotUse
+	}
 	if g.State.Cards[id].Exhausted {
 		return ErrCardExhausted
 	}
@@ -96,6 +99,7 @@ func (g *Game) reapWith(id LocalID) {
 	g.State.Cards[id].Exhausted = true
 	g.gainReapAember(p, id)
 	g.triggerAbilities(id, TriggerAfterReap, 0, false)
+	g.emitCardUsed(p, id)
 	g.emitLasting(EventReap, p, id)
 }
 
@@ -137,20 +141,24 @@ func (g *Game) UseAction(player int, id LocalID) error {
 			return err
 		}
 	}
-	g.useActionOf(id)
+	g.useActionOf(player, id)
 	return nil
 }
 
-// useActionOf fires a card's "Action:" ability, driven by a rule or ability: a
-// stunned card recovers instead; otherwise it exhausts and its "Action:" fires.
-func (g *Game) useActionOf(id LocalID) {
+// useActionOf fires a card's "Action:" ability on behalf of actor, driven by a
+// rule or ability: a stunned card recovers instead; otherwise it exhausts and its
+// "Action:" fires. actor is normally the card's own controller, but an ability
+// that uses a card "as if it were yours" (Remote Access) passes itself instead,
+// so the Action resolves for the user rather than the card's controller.
+func (g *Game) useActionOf(actor int, id LocalID) {
 	g.recordUse(id)
 	if g.recoverFromStun(id) {
 		return
 	}
 	g.State.Cards[id].Exhausted = true
-	g.logf("%s uses %s's action ability", g.names[g.controller(id)], g.Name(id))
-	g.triggerAbilities(id, TriggerAction, 0, false)
+	g.logf("%s uses %s's action ability", g.names[actor], g.Name(id))
+	g.triggerAbilitiesAs(actor, id, TriggerAction, 0, false)
+	g.emitCardUsed(actor, id)
 }
 
 // Fight uses attacker to fight the enemy creature defender.
@@ -175,7 +183,8 @@ func (g *Game) Fight(player int, attacker, defender LocalID) error {
 	}
 	if g.cat.def(defender).Type != Creature ||
 		g.controller(defender) == player ||
-		!g.inPlay(defender) {
+		!g.inPlay(defender) ||
+		g.protectedByTaunt(attacker, defender) {
 		return ErrNoTarget
 	}
 	if fr := g.cat.def(attacker).FightRestriction; fr != (Target{}) &&
@@ -219,7 +228,11 @@ func (g *Game) hasTrigger(id LocalID, trigger Trigger) bool {
 // mayFightOutOfHouse reports whether a fight grant (Brothers in Battle) lets the
 // attacker fight this turn despite not being in the active house.
 func (g *Game) mayFightOutOfHouse(attacker LocalID) bool {
-	h := g.State.MayFightHouse[g.controller(attacker)]
+	p := g.controller(attacker)
+	if g.State.MayFightAny[p] {
+		return true
+	}
+	h := g.State.MayFightHouse[p]
 	return h != HouseNone && g.House(attacker) == h
 }
 
@@ -238,6 +251,9 @@ func (g *Game) FightTargets(player int, attacker LocalID) []LocalID {
 	fr := g.cat.def(attacker).FightRestriction
 	var targets []LocalID
 	for _, def := range g.State.Battleline[1-player].slice() {
+		if g.protectedByTaunt(attacker, def) {
+			continue
+		}
 		if fr != (Target{}) &&
 			!fr.allows(&EffectContext{Resolver: g, Source: attacker, Controller: player}, def) {
 			continue
@@ -335,6 +351,22 @@ func (g *Game) emitCardPlayed(player int, played LocalID) {
 		}
 		g.triggerAbilities(id, TriggerAfterCardPlayed, played, true)
 	}
+	for _, id := range g.allInPlay(1 - player) {
+		g.triggerAbilities(id, TriggerAfterEnemyCardPlayed, played, true)
+	}
+}
+
+// emitCardUsed fires "after you use a card" abilities on the user's other in-play
+// cards, with the used card as "it". Every route to using a card — reaping,
+// fighting, or an "Action:" — ends here, so a reaction to using never has to be
+// wired into each verb separately.
+func (g *Game) emitCardUsed(player int, used LocalID) {
+	for _, id := range g.allInPlay(player) {
+		if id == used {
+			continue
+		}
+		g.triggerAbilities(id, TriggerAfterUse, used, true)
+	}
 }
 
 // triggerAbilities resolves every ability matching the trigger that the card
@@ -344,6 +376,18 @@ func (g *Game) emitCardPlayed(player int, played LocalID) {
 // return to hand); once it does, the remaining abilities are skipped, since the
 // card is no longer there to fire them.
 func (g *Game) triggerAbilities(src LocalID, trigger Trigger, it LocalID, hasIt bool) {
+	g.triggerAbilitiesAs(g.controller(src), src, trigger, it, hasIt)
+}
+
+// triggerAbilitiesAs is triggerAbilities with the resolving controller named
+// explicitly, for an ability used on behalf of someone other than its controller.
+func (g *Game) triggerAbilitiesAs(
+	actor int,
+	src LocalID,
+	trigger Trigger,
+	it LocalID,
+	hasIt bool,
+) {
 	def := g.cat.def(src)
 	fire := func(ab Ability) {
 		// A Play ability on an action resolves while its source is between hand and
@@ -356,7 +400,7 @@ func (g *Game) triggerAbilities(src LocalID, trigger Trigger, it LocalID, hasIt 
 		ab.Effect.Resolve(&EffectContext{
 			Resolver:   g,
 			Source:     src,
-			Controller: g.controller(src),
+			Controller: actor,
 			It:         it,
 			HasIt:      hasIt,
 		})

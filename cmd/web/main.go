@@ -23,6 +23,8 @@ func main() {
 	app.Route("/", web.NewGame)
 	app.RunWhenOnBrowser()
 
+	version := resourceVersion()
+
 	// Serve a fullscreen web app manifest at go-app's manifest path. go-app
 	// hardcodes display "standalone"; overriding the route makes an installed PWA
 	// launch immersively, hiding the Android status and navigation bars.
@@ -50,7 +52,10 @@ func main() {
 		// Version keys go-app's service-worker cache. Left empty it defaults to the
 		// app.wasm hash, so a CSS-only edit (wasm unchanged) would keep serving the
 		// cached stylesheet. Hashing app.css too makes every asset edit bump it.
-		Version: resourceVersion(),
+		Version: version,
+		// The short build id the client shows, so a page and the server that built
+		// it can be matched by eye.
+		Env: map[string]string{"VACTROL_BUILD": buildID(version)},
 	})
 
 	// Cloud Run injects PORT; fall back to 8000 for local `mage web`.
@@ -59,7 +64,7 @@ func main() {
 		port = "8000"
 	}
 	addr := ":" + port
-	log.Printf("Vactrol web client on http://localhost%s", addr)
+	log.Printf("Vactrol web client on http://localhost%s (build %s)", addr, buildID(version))
 	if err := http.ListenAndServe(addr, gzipHandler(http.DefaultServeMux)); err != nil {
 		log.Fatal(err)
 	}
@@ -110,6 +115,15 @@ func (g *gzipResponseWriter) Write(b []byte) (int, error) {
 // resourceVersion hashes the served static assets so the go-app Handler version
 // changes whenever the wasm bundle or the stylesheet does, busting the service
 // worker's precache on every edit.
+// buildID shortens a resource version to the few characters a human needs to
+// tell one build from the next.
+func buildID(version string) string {
+	if len(version) <= 4 {
+		return version
+	}
+	return version[:4]
+}
+
 func resourceVersion() string {
 	h := sha256.New()
 	for _, p := range []string{"web/app.wasm", "web/app.css"} {

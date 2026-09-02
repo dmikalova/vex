@@ -193,16 +193,16 @@ func TestPurgesDestroyed(t *testing.T) {
 			},
 		},
 	})), 0)
-	victim := g.AddToBattleline(NewCard("v", Brobnar, Creature, Common, WithPower(3),
+	enemy := g.AddToBattleline(NewCard("v", Brobnar, Creature, Common, WithPower(3),
 		WithAbility(TriggerDestroyed, GainAember{Player: Controller, Amount: 1})), 1)
-	// The active player orders the ritual's granted ability before the victim's
-	// printed one. Purging the victim stops its remaining Destroyed abilities.
+	// The active player orders the ritual's granted ability before the creature's
+	// printed one. Purging the creature stops its remaining Destroyed abilities.
 	g.SetChooser(0, optionPicker{idx: 1})
 
-	g.DestroyEach(0, []LocalID{victim})
+	g.DestroyEach(0, []LocalID{enemy})
 
-	if got := g.Purge(1); len(got) != 1 || got[0] != victim {
-		t.Errorf("purge = %v, want [victim]", got)
+	if got := g.Purge(1); len(got) != 1 || got[0] != enemy {
+		t.Errorf("purge = %v, want [enemy]", got)
 	}
 	if len(g.Discard(1)) != 0 {
 		t.Error("a purged creature must not be in the discard pile")
@@ -214,10 +214,10 @@ func TestPurgesDestroyed(t *testing.T) {
 
 func TestDestroyedAbilitiesCollectEverySource(t *testing.T) {
 	g := started(t)
-	victim := g.AddToBattleline(NewCard("v", Brobnar, Creature, Common, WithPower(3),
+	enemy := g.AddToBattleline(NewCard("v", Brobnar, Creature, Common, WithPower(3),
 		WithAbility(TriggerDestroyed, GainAember{Player: Controller, Amount: 1}),
 		WithAbility(TriggerAfterReap, GainAember{Player: Controller, Amount: 1})), 0)
-	attachUpgrade(g, victim, NewCard("upgrade", Brobnar, Upgrade, Common,
+	attachUpgrade(g, enemy, NewCard("upgrade", Brobnar, Upgrade, Common,
 		WithStatic(StaticModifier{Granted: []Ability{
 			{Trigger: TriggerDestroyed, Effect: GainAember{Player: Controller, Amount: 1}},
 			{Trigger: TriggerAfterReap, Effect: GainAember{Player: Controller, Amount: 1}},
@@ -236,7 +236,7 @@ func TestDestroyedAbilitiesCollectEverySource(t *testing.T) {
 		},
 	})), 1)
 
-	if got := g.destroyedAbilities([]LocalID{victim}); len(got) != 3 {
+	if got := g.destroyedAbilities([]LocalID{enemy}); len(got) != 3 {
 		t.Errorf("destroyed abilities = %d, want printed + upgrade + constant = 3", len(got))
 	}
 }

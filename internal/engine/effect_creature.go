@@ -14,6 +14,15 @@ type CreatureVerb interface {
 	Apply(ctx *EffectContext, target LocalID)
 }
 
+// A narrowingVerb can only act on some of the creatures its target names, and
+// so narrows the choice offered without changing the printed text: "use a
+// friendly creature" never meant an exhausted one, since using it would do
+// nothing at all.
+type narrowingVerb interface {
+	CreatureVerb
+	canApplyTo(ctx *EffectContext, target LocalID) bool
+}
+
 // ReadyVerb readies the chosen creature.
 //
 // Readying an exhausted creature stands it back up so it can be used again this
@@ -43,7 +52,7 @@ func (FightVerb) VerbText() string { return "fight with" }
 func (FightVerb) Apply(ctx *EffectContext, target LocalID) {
 	owner := ctx.Resolver.Owner(target)
 	enemies := ctx.Resolver.Battleline(1 - owner)
-	victim, ok := ctx.Resolver.ChooseCreature(
+	enemy, ok := ctx.Resolver.ChooseCreature(
 		owner,
 		ctx.Source,
 		"Choose a creature to fight",
@@ -53,7 +62,7 @@ func (FightVerb) Apply(ctx *EffectContext, target LocalID) {
 		ctx.Resolver.Logf("%s has no creature to fight", ctx.Resolver.Name(target))
 		return
 	}
-	ctx.Resolver.FightWith(target, victim)
+	ctx.Resolver.FightWith(target, enemy)
 }
 
 // OnChooseCreature picks a single creature named by its Target and applies one or
@@ -86,22 +95,74 @@ func (e OnChooseCreature) Text() string {
 // to it. A Target that selects nothing (no candidate or a declined choice) simply
 // applies no verbs.
 func (e OnChooseCreature) Resolve(ctx *EffectContext) {
-	for _, id := range e.Target.Select(ctx) {
+	e.applyTo(ctx, e.Target.selectWith(ctx, false, e.actionable(ctx)))
+}
+
+// actionable is the predicate that drops the creatures no verb could act on, or
+// nil when every verb takes any creature. Verbs apply in order, so a readying
+// verb answers the readiness a later verb wants: "ready and use a friendly
+// creature" may perfectly well pick an exhausted one.
+func (e OnChooseCreature) actionable(ctx *EffectContext) func(LocalID) bool {
+	var narrowing []narrowingVerb
+	readied := false
+	for _, v := range e.Verbs {
+		if _, ok := v.(ReadyVerb); ok {
+			readied = true
+			continue
+		}
+		if n, ok := v.(narrowingVerb); ok && !readied {
+			narrowing = append(narrowing, n)
+		}
+	}
+	if len(narrowing) == 0 {
+		return nil
+	}
+	return func(id LocalID) bool {
+		for _, n := range narrowing {
+			if !n.canApplyTo(ctx, id) {
+				return false
+			}
+		}
+		return true
+	}
+}
+
+// declinable reports that the verbs hang off a single clickable creature.
+func (e OnChooseCreature) declinable() bool { return e.Target.isChosen() }
+
+// resolveOptional is Resolve under a May: the creature is asked declinably, so
+// "you may ready and fight with a neighboring creature" is answered by clicking
+// that neighbor rather than by a separate Yes/No.
+func (e OnChooseCreature) resolveOptional(ctx *EffectContext) bool {
+	return e.applyTo(ctx, e.Target.selectWith(ctx, true, e.actionable(ctx)))
+}
+
+// applyTo runs every verb over each selected creature and reports whether any
+// creature was acted on.
+func (e OnChooseCreature) applyTo(ctx *EffectContext, ids []LocalID) bool {
+	for _, id := range ids {
 		for _, v := range e.Verbs {
 			v.Apply(ctx, id)
 		}
 	}
+	return len(ids) > 0
 }
 
 // UseVerb uses the chosen creature. The controller picks how to use it — reap,
 // fight, or its "Action:" ability — and that use resolves completely, nesting any
 // further uses it triggers, before control returns. This is "Use a friendly
-// creature": a creature can only be used while ready, so an already-exhausted
-// creature may be chosen but nothing happens when it is used.
+// creature": a creature can only be used while ready, so only ready creatures are
+// offered and an ability with none to offer asks nothing.
 type UseVerb struct{}
 
 // VerbText returns the verb phrase.
 func (UseVerb) VerbText() string { return "use" }
+
+// canApplyTo offers only ready creatures: a creature can only be used while
+// ready, so choosing an exhausted one would spend the ability on nothing.
+func (UseVerb) canApplyTo(ctx *EffectContext, target LocalID) bool {
+	return !ctx.Resolver.Exhausted(target)
+}
 
 // Apply offers the controller the target's available uses and resolves the chosen
 // one.
@@ -115,7 +176,7 @@ func (UseVerb) Apply(ctx *EffectContext, target LocalID) {
 	}
 	if ctx.Resolver.HasAction(target) {
 		labels = append(labels, "use its action")
-		uses = append(uses, func() { ctx.Resolver.UseActionOf(target) })
+		uses = append(uses, func() { ctx.Resolver.UseActionOf(ctx.Controller, target) })
 	}
 	idx := ctx.Resolver.ChooseOption(
 		owner,

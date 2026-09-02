@@ -1,6 +1,9 @@
 package engine
 
-import "errors"
+import (
+	"errors"
+	"slices"
+)
 
 // Engine action errors.
 var (
@@ -16,6 +19,7 @@ var (
 	ErrCannotPlayType        = errors.New("cannot play cards of this type this turn")
 	ErrCardPlayLimit         = errors.New("card-play limit reached this turn")
 	ErrCannotPayToll         = errors.New("cannot pay the toll for this action")
+	ErrPlayRequirement       = errors.New("not enough Æmber to play this card")
 	ErrMustChooseForcedHouse = errors.New("must choose the forced active house this turn")
 	ErrCannotUse             = errors.New("card's use condition is not met")
 )
@@ -39,22 +43,23 @@ func (g *Game) BeginTurn(player int) {
 	for p := 0; p < 2; p++ {
 		for _, id := range g.State.Battleline[p].slice() {
 			g.State.Cards[id].TimesUsedThisTurn = 0
+			g.State.Cards[id].ElusiveUsedThisTurn = false
 		}
 	}
-	// A fight bar armed on a previous turn becomes active for this player now.
-	if g.State.CannotFightNext[player] {
-		g.State.CannotFight[player] = true
-		g.State.CannotFightNext[player] = false
-	}
-	// A play-type bar armed on a previous turn becomes active for this player now.
+	// Each bar armed on a previous turn becomes active for this player now, taking
+	// the card that imposed it along so a reminder can name the reason.
+	g.State.CannotFight[player] = g.State.CannotFightNext[player]
+	g.State.CannotFightNext[player] = Bar[bool]{}
 	g.State.CannotPlayTypeThis[player] = g.State.CannotPlayTypeNext[player]
-	g.State.CannotPlayTypeNext[player] = ""
-	// A forced active house armed on a previous turn takes effect for this player now.
+	g.State.CannotPlayTypeNext[player] = Bar[CardType]{}
+	g.State.CannotUse[player] = g.State.CannotUseNext[player]
+	g.State.CannotUseNext[player] = Bar[bool]{}
 	g.State.ForcedHouse[player] = g.State.ForcedHouseNext[player]
-	g.State.ForcedHouseNext[player] = HouseNone
+	g.State.ForcedHouseNext[player] = Bar[House]{}
+	g.State.SkipForge[player] = g.State.SkipForgeNext[player]
+	g.State.SkipForgeNext[player] = Bar[bool]{}
 	g.logf("--- %s begins turn %d ---", g.names[player], g.State.Turn)
-	if g.State.SkipForgeNext[player] {
-		g.State.SkipForgeNext[player] = false
+	if g.State.SkipForge[player].Value {
 		g.logf("%s skips their forge a key step", g.names[player])
 	} else {
 		g.forgeKey(player)
@@ -77,7 +82,7 @@ func (g *Game) ChooseHouse(player int, house House) error {
 	}
 	// A forced house (Control the Weak) only binds when the player actually has it;
 	// if they cannot choose it, cannot overrides must and any house is allowed.
-	if fh := g.State.ForcedHouse[player]; fh != HouseNone &&
+	if fh := g.State.ForcedHouse[player].Value; fh != HouseNone &&
 		house != fh &&
 		g.playerHasHouse(player, fh) {
 		return ErrMustChooseForcedHouse
@@ -132,9 +137,21 @@ func (g *Game) EndTurn(player int) {
 	for _, id := range append(g.allInPlay(player), g.allInPlay(1-player)...) {
 		g.State.Cards[id].DamageImmune = false
 	}
-	g.State.CannotFight[player] = false
+	g.State.CannotFight[player] = Bar[bool]{}
+	g.State.CannotUse[player] = Bar[bool]{}
+	g.State.CannotPlayTypeThis[player] = Bar[CardType]{}
+	// Roll this turn's history into "last turn" so the next player can ask what their
+	// opponent just did.
+	h := &g.State.TurnHistory
+	h[player][KeysForgedLastTurn] = h[player][KeysForgedThisTurn]
+	h[player][KeysForgedThisTurn] = 0
+	h[player][CreaturesPlayedLastTurn] = int8(g.creaturesPlayedThisTurn(player))
+	h[0][EnemyCreaturesFightKilled] = 0
+	h[1][EnemyCreaturesFightKilled] = 0
 	g.State.MayFightHouse[player] = HouseNone
+	g.State.MayFightAny[player] = false
 	g.State.MayUseHouse[player] = HouseNone
+	g.State.KeywordsLost = 0
 	g.clearLasting(player)
 	g.drawStep(player)
 	g.logf("%s ends their turn", g.names[player])
@@ -179,19 +196,31 @@ func (g *Game) drawModifier(player int) int {
 }
 
 // CannotFightNextTurn arms a fight bar on a player for their next turn.
-func (g *Game) CannotFightNextTurn(player int) {
-	g.State.CannotFightNext[player] = true
+func (g *Game) CannotFightNextTurn(player int, source LocalID) {
+	g.State.CannotFightNext[player] = Bar[bool]{Value: true, Source: source}
 }
 
 // CannotPlayTypeNextTurn arms a play-type bar on a player for their next turn.
-func (g *Game) CannotPlayTypeNextTurn(player int, t CardType) {
-	g.State.CannotPlayTypeNext[player] = t
+func (g *Game) CannotPlayTypeNextTurn(player int, t CardType, source LocalID) {
+	g.State.CannotPlayTypeNext[player] = Bar[CardType]{Value: t, Source: source}
+}
+
+// CannotPlayTypeThisTurn bars a player from playing cards of the given type for
+// the rest of the current turn (Treasure Map bars every type once it pays out).
+func (g *Game) CannotPlayTypeThisTurn(player int, t CardType, source LocalID) {
+	g.State.CannotPlayTypeThis[player] = Bar[CardType]{Value: t, Source: source}
+}
+
+// CannotUseNextTurn arms a use bar on a player for their next turn, stopping them
+// reaping, fighting, or using an "Action:" ability (Skippy Timehog).
+func (g *Game) CannotUseNextTurn(player int, source LocalID) {
+	g.State.CannotUseNext[player] = Bar[bool]{Value: true, Source: source}
 }
 
 // SkipForgeStepNextTurn makes a player skip their forge-a-key step at the start of
 // their next turn.
-func (g *Game) SkipForgeStepNextTurn(player int) {
-	g.State.SkipForgeNext[player] = true
+func (g *Game) SkipForgeStepNextTurn(player int, source LocalID) {
+	g.State.SkipForgeNext[player] = Bar[bool]{Value: true, Source: source}
 }
 
 // GrantFightForHouse lets a player use creatures of house h to fight this turn
@@ -199,6 +228,13 @@ func (g *Game) SkipForgeStepNextTurn(player int) {
 func (g *Game) GrantFightForHouse(player int, h House) {
 	g.State.MayFightHouse[player] = h
 	g.logf("%s's %s creatures may fight this turn", g.names[player], h)
+}
+
+// GrantFightAnyHouse lets every creature a player controls fight this turn, whatever
+// its house (Follow the Leader). EndTurn clears the grant.
+func (g *Game) GrantFightAnyHouse(player int) {
+	g.State.MayFightAny[player] = true
+	g.logf("%s's creatures may all fight this turn", g.names[player])
 }
 
 // GrantUseForHouse lets a player fully use (fight, reap, or Action:) creatures of
@@ -210,9 +246,35 @@ func (g *Game) GrantUseForHouse(player int, h House) {
 
 // ForceActiveHouseNextTurn makes a player have to choose house h as their active
 // house on their next turn (Control the Weak). BeginTurn promotes the armed house.
-func (g *Game) ForceActiveHouseNextTurn(player int, h House) {
-	g.State.ForcedHouseNext[player] = h
+func (g *Game) ForceActiveHouseNextTurn(player int, h House, source LocalID) {
+	g.State.ForcedHouseNext[player] = Bar[House]{Value: h, Source: source}
 	g.logf("%s must choose house %s next turn", g.names[player], h)
+}
+
+// RestrictionSources returns the cards imposing a turn-scoped restriction on a
+// player right now, so a frontend can remind them which cards are binding them.
+// It reads the bars themselves, so a bar that has been lifted stops naming its
+// card, and one card imposing two bars is named once.
+func (g *Game) RestrictionSources(player int) []LocalID {
+	var out []LocalID
+	name := func(id LocalID) {
+		if !slices.Contains(out, id) {
+			out = append(out, id)
+		}
+	}
+	if g.State.CannotFight[player].Value {
+		name(g.State.CannotFight[player].Source)
+	}
+	if g.State.CannotPlayTypeThis[player].Value != "" {
+		name(g.State.CannotPlayTypeThis[player].Source)
+	}
+	if g.State.ForcedHouse[player].Value != HouseNone {
+		name(g.State.ForcedHouse[player].Source)
+	}
+	if g.State.SkipForge[player].Value {
+		name(g.State.SkipForge[player].Source)
+	}
+	return out
 }
 
 // Forge a key: at the start of your turn you forge a single key if you can pay
@@ -226,23 +288,70 @@ func (g *Game) ForceActiveHouseNextTurn(player int, h House) {
 // key at the start of a turn; cards may forge one more via the ForgeKey effect.
 func (g *Game) forgeKey(player int) {
 	cost := g.keyCost(player)
-	if g.State.Aember[player] < cost {
+	if g.spendableAember(player) < cost {
 		return
 	}
-	g.State.Aember[player] -= cost
-	g.finishForgeKey(player)
+	// The colour is settled before the Æmber leaves the pool, so a forge is one
+	// step: a player looking at the colour prompt has not paid for anything yet.
+	color, ok := g.pickKeyColor(player)
+	g.payKeyCost(player, cost)
+	g.finishForgeKey(player, color, ok)
+}
+
+// spendableAember is everything a player can put toward a key: their pool plus
+// the Æmber banked on cards that let it be spent when forging (Safe Place).
+func (g *Game) spendableAember(player int) int {
+	total := g.State.Aember[player]
+	for _, id := range g.vaults(player) {
+		total += g.AmberOn(id)
+	}
+	return total
+}
+
+// payKeyCost takes the cost out of the player's pool first, falling back to the
+// Æmber banked on their vault cards — pool Æmber is the more exposed of the two,
+// so spending it first is what a player wants.
+func (g *Game) payKeyCost(player, cost int) {
+	fromPool := min(cost, g.State.Aember[player])
+	g.State.Aember[player] -= fromPool
+	cost -= fromPool
+	for _, id := range g.vaults(player) {
+		if cost == 0 {
+			return
+		}
+		taken := min(cost, g.AmberOn(id))
+		g.AddAmberOn(id, -taken)
+		cost -= taken
+	}
+}
+
+// vaults returns the player's in-play cards whose Æmber may be spent on a key.
+func (g *Game) vaults(player int) []LocalID {
+	var out []LocalID
+	for _, id := range g.allInPlay(player) {
+		if g.cat.def(id).SpendableAember {
+			out = append(out, id)
+		}
+	}
+	return out
 }
 
 // forgeKeyFree forges one key without paying its current cost.
 func (g *Game) forgeKeyFree(player int) {
-	g.finishForgeKey(player)
+	color, ok := g.pickKeyColor(player)
+	g.finishForgeKey(player, color, ok)
 }
 
-// finishForgeKey records a newly forged key, lets the player choose its colour,
-// fires "after you forge a key" abilities, and checks for the win.
-func (g *Game) finishForgeKey(player int) {
+// finishForgeKey records a newly forged key in the colour already picked, fires
+// "after you forge a key" abilities, and checks for the win. hasColor is false
+// only when every colour is already spent, which leaves the key colourless.
+func (g *Game) finishForgeKey(player int, color KeyColor, hasColor bool) {
 	g.State.Keys[player]++
-	g.chooseKeyColor(player)
+	g.State.TurnHistory[player][KeysForgedThisTurn]++
+	if hasColor {
+		g.State.KeyColors[player][g.State.Keys[player]-1] = color
+		g.logf("%s forges a %s key", g.names[player], color)
+	}
 	g.logf("%s forges a key (%d/%d)", g.names[player], g.State.Keys[player], KeysToWin)
 	for _, id := range g.allInPlay(player) {
 		g.triggerAbilities(id, TriggerAfterForgeKey, 0, false)
@@ -254,14 +363,15 @@ func (g *Game) finishForgeKey(player int) {
 	}
 }
 
-// chooseKeyColor asks the player which colour the key they just forged should be,
-// choosing among the colours they have not forged yet, and stores it. The final
-// key's colour is forced (only one remains), so it is set without a prompt. There
-// is no default: every UI is asked whenever more than one colour is available.
-func (g *Game) chooseKeyColor(player int) {
+// pickKeyColor asks the player which colour the key they are forging should be,
+// choosing among the colours they have not forged yet, and reports whether one
+// was available. The final key's colour is forced (only one remains), so it is
+// taken without a prompt. There is no default: every UI is asked whenever more
+// than one colour is available.
+func (g *Game) pickKeyColor(player int) (KeyColor, bool) {
 	remaining := g.remainingKeyColors(player)
 	if len(remaining) == 0 {
-		return
+		return 0, false
 	}
 	choice := remaining[0]
 	if len(remaining) > 1 {
@@ -279,15 +389,14 @@ func (g *Game) chooseKeyColor(player int) {
 			choice = remaining[idx]
 		}
 	}
-	g.State.KeyColors[player][g.State.Keys[player]-1] = choice
-	g.logf("%s forges a %s key", g.names[player], choice)
+	return choice, true
 }
 
 // remainingKeyColors lists the key colours the player has not yet forged, in
 // canonical order.
 func (g *Game) remainingKeyColors(player int) []KeyColor {
 	var used [4]bool
-	for i := 0; i < g.State.Keys[player]-1; i++ {
+	for i := 0; i < g.State.Keys[player]; i++ {
 		used[g.State.KeyColors[player][i]] = true
 	}
 	var out []KeyColor
@@ -297,4 +406,15 @@ func (g *Game) remainingKeyColors(player int) []KeyColor {
 		}
 	}
 	return out
+}
+
+// UnforgeKey takes one forged key back off a player (Key Hammer). Unlike a forge
+// it is silent: no cost is refunded and no forge abilities fire.
+func (g *Game) UnforgeKey(player int) {
+	if g.State.Keys[player] == 0 {
+		return
+	}
+	g.State.Keys[player]--
+	g.State.KeyColors[player][g.State.Keys[player]] = KeyColor(0)
+	g.logf("%s unforges a key (%d/%d)", g.names[player], g.State.Keys[player], KeysToWin)
 }

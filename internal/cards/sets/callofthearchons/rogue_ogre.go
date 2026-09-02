@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// RogueOgre
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Rogue Ogre
 //
 //	House:  Brobnar
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  6
 //	Traits: Giant • Mutant
 //
-//	At the end of your turn, if you played exactly one card this turn, Rogue Ogre heals 2 damage and captures 1 Aember.
+//	At the end of your turn, if you played exactly 1 card this turn, heal 2 damage from Rogue Ogre, and Rogue Ogre captures 1 Æmber from your opponent.
 var RogueOgre = card.New(
 	"Rogue Ogre",
 	card.House.Brobnar,
@@ -24,5 +19,23 @@ var RogueOgre = card.New(
 	card.Provenance(card.CotA, 45),
 	card.WithPower(6),
 	card.WithTraits("Giant", "Mutant"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.EndOfTurn, card.Conditional{
+			Cond: card.CountIs{
+				Count:  card.CardsPlayed{Player: card.Controller},
+				Is:     card.Exactly,
+				Amount: 1,
+			},
+			Then: card.Sequence{Effects: []card.Effect{
+				card.Heal{
+					Amount: 2,
+					Target: card.Target.This,
+				},
+				card.CaptureAember{
+					Amount: 1,
+					Target: card.Target.This,
+					Source: card.Opponent,
+				},
+			}},
+		}),
 )

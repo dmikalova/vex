@@ -64,7 +64,6 @@ func (e ExhaustCreatures) Text() string {
 // Resolve exhausts up to Max ready creatures from the pool, one at a time, letting
 // the controller stop early.
 func (e ExhaustCreatures) Resolve(ctx *EffectContext) {
-	const done = "Done"
 	for i := 0; i < e.Max; i++ {
 		var cands []LocalID
 		for _, id := range e.Target.Select(ctx) {
@@ -72,20 +71,12 @@ func (e ExhaustCreatures) Resolve(ctx *EffectContext) {
 				cands = append(cands, id)
 			}
 		}
-		if len(cands) == 0 {
+		chosen, ok := ctx.ChooseCardOptional("Choose a creature to exhaust", cands)
+		if !ok {
 			return
 		}
-		options := make([]string, 0, len(cands)+1)
-		for _, id := range cands {
-			options = append(options, ctx.Resolver.Name(id))
-		}
-		options = append(options, done)
-		choice := ctx.ChooseOption("Choose a creature to exhaust", options)
-		if choice >= len(cands) {
-			return
-		}
-		ctx.Resolver.SetExhausted(cands[choice], true)
-		ctx.Resolver.Logf("%s is exhausted", ctx.Resolver.Name(cands[choice]))
+		ctx.Resolver.SetExhausted(chosen, true)
+		ctx.Resolver.Logf("%s is exhausted", ctx.Resolver.Name(chosen))
 	}
 }
 

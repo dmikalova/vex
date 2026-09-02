@@ -3,7 +3,7 @@ package engine
 import "testing"
 
 func TestUseTextAndValidation(t *testing.T) {
-	pool := Target{Kind: TargetEachFriendlyInPlay}.OfHouse(Mars).Other()
+	pool := Target{Kind: TargetEachFriendlyCardInPlay}.OfHouse(Mars).Other()
 	if got := (Use{Max: 2, Target: pool}).Text(); got != "use 2 other Mars cards, one at a time" {
 		t.Errorf("text = %q", got)
 	}
@@ -29,7 +29,12 @@ func TestUseUsesCreaturesSequentially(t *testing.T) {
 	g.SetChooser(0, idChooser{id: second})
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
-	Use{Max: 2, Target: Target{Kind: TargetEachFriendlyInPlay}.OfHouse(Mars).Other()}.Resolve(ctx)
+	Use{
+		Max:    2,
+		Target: Target{Kind: TargetEachFriendlyCardInPlay}.OfHouse(Mars).Other(),
+	}.Resolve(
+		ctx,
+	)
 
 	if g.Aember(0) != 2 {
 		t.Errorf("aember = %d, want 2", g.Aember(0))
@@ -50,7 +55,12 @@ func TestUseUsesArtifactAction(t *testing.T) {
 	g.AddArtifact(NewCard("blank artifact", Mars, Artifact, Common), 0)
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
-	Use{Max: 1, Target: Target{Kind: TargetEachFriendlyInPlay}.OfHouse(Mars).Other()}.Resolve(ctx)
+	Use{
+		Max:    1,
+		Target: Target{Kind: TargetEachFriendlyCardInPlay}.OfHouse(Mars).Other(),
+	}.Resolve(
+		ctx,
+	)
 
 	if g.Aember(0) != 3 {
 		t.Errorf("aember = %d, want 3", g.Aember(0))
@@ -68,7 +78,12 @@ func TestUseStopsWhenNoChoice(t *testing.T) {
 	g.SetChooser(0, orderRejectChooser{})
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
-	Use{Max: 1, Target: Target{Kind: TargetEachFriendlyInPlay}.OfHouse(Mars).Other()}.Resolve(ctx)
+	Use{
+		Max:    1,
+		Target: Target{Kind: TargetEachFriendlyCardInPlay}.OfHouse(Mars).Other(),
+	}.Resolve(
+		ctx,
+	)
 
 	if g.Exhausted(c) || g.Exhausted(other) {
 		t.Error("a rejected choice should not use the card")
@@ -80,10 +95,41 @@ func TestUseStopsWhenNoneUsable(t *testing.T) {
 	src := g.AddArtifact(NewCard("source", Mars, Artifact, Uncommon), 0)
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
-	Use{Max: 1, Target: Target{Kind: TargetEachFriendlyInPlay}.OfHouse(Mars).Other()}.Resolve(ctx)
+	Use{
+		Max:    1,
+		Target: Target{Kind: TargetEachFriendlyCardInPlay}.OfHouse(Mars).Other(),
+	}.Resolve(
+		ctx,
+	)
 
 	if g.TimesUsedThisTurn(src) != 0 {
 		t.Errorf("Use must not use its own source; used %d times", g.TimesUsedThisTurn(src))
+	}
+}
+
+func TestUseEnemyArtifact(t *testing.T) {
+	pool := Target{Kind: TargetEachEnemyArtifact}
+	if got := (Use{Max: 1, Target: pool}).Text(); got != "use an enemy artifact" {
+		t.Errorf("text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("src", 3), 0)
+	foreign := g.AddArtifact(NewCard("foreign", Logos, Artifact, Common,
+		WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 3})), 1)
+	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+
+	Use{Max: 1, Target: pool}.Resolve(ctx)
+
+	if g.Aember(0) != 3 || g.Aember(1) != 0 {
+		t.Errorf("aember = %d/%d, want 3/0 (the Action resolves for the user)",
+			g.Aember(0), g.Aember(1))
+	}
+	if !g.Exhausted(foreign) {
+		t.Error("the used artifact should be exhausted")
+	}
+	if !ctx.HasIt || ctx.It != foreign {
+		t.Errorf("it = %v/%v, want the used artifact %v", ctx.It, ctx.HasIt, foreign)
 	}
 }
 
@@ -106,7 +152,7 @@ func TestSentenceEffect(t *testing.T) {
 
 	seq := Sequence{Effects: []Effect{
 		Sentence{Effect: Destroy{Target: Target{Kind: TargetThisCreature}}},
-		Use{Max: 2, Target: Target{Kind: TargetEachFriendlyInPlay}.OfHouse(Mars).Other()},
+		Use{Max: 2, Target: Target{Kind: TargetEachFriendlyCardInPlay}.OfHouse(Mars).Other()},
 	}}
 	if got := seq.Text(); got != "destroy "+SelfName+". Use 2 other Mars cards, one at a time" {
 		t.Errorf("sequence text = %q", got)

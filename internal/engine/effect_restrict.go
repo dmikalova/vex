@@ -54,27 +54,35 @@ func (e CannotFight) Text() string {
 // Resolve applies the timed bar to the chosen player.
 func (e CannotFight) Resolve(ctx *EffectContext) {
 	if e.Duration == NextTurn {
-		ctx.Resolver.CannotFightNextTurn(ctx.PlayerFor(e.Player))
+		ctx.Resolver.CannotFightNextTurn(ctx.PlayerFor(e.Player), ctx.Source)
 	}
 }
 
-// CannotPlay bars a player from playing cards of a type for the Duration —
-// Lifeward stops creatures, Scrambler Storm stops action cards, each through the
-// affected player's next turn. It mirrors CannotFight: a Player, a Duration, and
-// here the card Type that is barred.
+// CannotPlay bars a player from playing cards for the Duration — Lifeward stops
+// creatures and Scrambler Storm stops action cards through the affected player's
+// next turn, while Treasure Map stops every card for the rest of the current turn.
+// It mirrors CannotFight: a Player, a Duration, and here the card Type that is
+// barred, which when left unset bars every type.
 type CannotPlay struct {
 	Player   Player
 	Type     CardType
 	Duration Duration
 }
 
-// validate rejects a CannotPlay whose player, type, or duration was left unset.
+// barred is the type this bar installs: the named one, or the AnyType wildcard
+// when the author left Type unset to bar everything.
+func (e CannotPlay) barred() CardType {
+	if e.Type == "" {
+		return AnyType
+	}
+	return e.Type
+}
+
+// validate rejects a CannotPlay whose player or duration was left unset. An unset
+// Type is allowed and means every type.
 func (e CannotPlay) validate() error {
 	if !e.Player.valid() {
 		return errUnsetPlayer("CannotPlay")
-	}
-	if e.Type == "" {
-		return errUnsetCardType("CannotPlay")
 	}
 	if !e.Duration.valid() {
 		return errUnsetDuration("CannotPlay")
@@ -89,17 +97,61 @@ func (e CannotPlay) Text() string {
 	if e.Player == Opponent {
 		who, whose = "your opponent", "their"
 	}
-	noun := strings.ToLower(string(e.Type)) + "s"
+	noun := strings.ToLower(string(e.barred())) + "s"
 	if e.Type == Tactic {
 		noun = "action cards"
 	}
-	return who + " cannot play " + noun + " during " + whose + " next turn"
+	when := "during " + whose + " next turn"
+	if e.Duration == EndOfTurn {
+		when = "for the remainder of the turn"
+	}
+	return who + " cannot play " + noun + " " + when
 }
 
 // Resolve arms the play-type bar on the chosen player for the Duration.
 func (e CannotPlay) Resolve(ctx *EffectContext) {
+	switch e.Duration {
+	case NextTurn:
+		ctx.Resolver.CannotPlayTypeNextTurn(ctx.PlayerFor(e.Player), e.barred(), ctx.Source)
+	case EndOfTurn:
+		ctx.Resolver.CannotPlayTypeThisTurn(ctx.PlayerFor(e.Player), e.barred(), ctx.Source)
+	}
+}
+
+// CannotUse bars a player from using any card — reaping, fighting, or an "Action:"
+// ability — for the Duration (Skippy Timehog). It is the broadest of the bars:
+// where CannotFight stops one verb and CannotPlay stops cards leaving hand, this
+// stops every use of what is already in play. Playing and discarding still work.
+type CannotUse struct {
+	Player   Player
+	Duration Duration
+}
+
+// validate rejects a CannotUse whose player or duration was left unset.
+func (e CannotUse) validate() error {
+	if !e.Player.valid() {
+		return errUnsetPlayer("CannotUse")
+	}
+	if !e.Duration.valid() {
+		return errUnsetDuration("CannotUse")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "your opponent cannot use any cards during their
+// next turn".
+func (e CannotUse) Text() string {
+	who, whose := "you", "your"
+	if e.Player == Opponent {
+		who, whose = "your opponent", "their"
+	}
+	return who + " cannot use any cards during " + whose + " next turn"
+}
+
+// Resolve arms the use bar on the chosen player.
+func (e CannotUse) Resolve(ctx *EffectContext) {
 	if e.Duration == NextTurn {
-		ctx.Resolver.CannotPlayTypeNextTurn(ctx.PlayerFor(e.Player), e.Type)
+		ctx.Resolver.CannotUseNextTurn(ctx.PlayerFor(e.Player), ctx.Source)
 	}
 }
 
@@ -129,7 +181,7 @@ func (e SkipForgeStep) Text() string {
 
 // Resolve arms the skip on the chosen player's next turn.
 func (e SkipForgeStep) Resolve(ctx *EffectContext) {
-	ctx.Resolver.SkipForgeStepNextTurn(ctx.PlayerFor(e.Player))
+	ctx.Resolver.SkipForgeStepNextTurn(ctx.PlayerFor(e.Player), ctx.Source)
 }
 
 // GrantFightForChosenHouse lets the controller's creatures of the house picked by
@@ -147,6 +199,22 @@ func (GrantFightForChosenHouse) Text() string {
 // turn.
 func (GrantFightForChosenHouse) Resolve(ctx *EffectContext) {
 	ctx.Resolver.GrantFightForHouse(ctx.Controller, ctx.ChosenHouse)
+}
+
+// GrantFightAnyHouse lets every creature the controller has fight this turn, whatever
+// its house — Follow the Leader's "each friendly creature may fight", and Horseman
+// of War's longer wording for the same rule. It is GrantFightForChosenHouse with the
+// house filter dropped. The grant lasts only the current turn (EndTurn clears it).
+type GrantFightAnyHouse struct{}
+
+// Text renders the effect.
+func (GrantFightAnyHouse) Text() string {
+	return "for the remainder of the turn, each friendly creature may fight"
+}
+
+// Resolve grants the controller's creatures the right to fight this turn.
+func (GrantFightAnyHouse) Resolve(ctx *EffectContext) {
+	ctx.Resolver.GrantFightAnyHouse(ctx.Controller)
 }
 
 // MayUseFriendlyHouse lets the controller fully use (fight, reap, or Action:) their
@@ -188,5 +256,5 @@ func (ForceOpponentActiveHouse) Text() string {
 
 // Resolve arms the forced house on the opponent's next turn.
 func (ForceOpponentActiveHouse) Resolve(ctx *EffectContext) {
-	ctx.Resolver.ForceActiveHouseNextTurn(ctx.Opponent(), ctx.ChosenHouse)
+	ctx.Resolver.ForceActiveHouseNextTurn(ctx.Opponent(), ctx.ChosenHouse, ctx.Source)
 }

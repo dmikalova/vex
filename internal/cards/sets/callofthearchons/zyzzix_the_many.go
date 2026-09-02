@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ZyzzixTheMany
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Zyzzix the Many
 //
 //	House:  Mars
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Martian • Soldier
 //
-//	Fight/Reap: You may reveal a creature from your hand. If you do, archive it and Zyzzix the Many gets three +1 power counters.
+//	Fight/Reap: You may reveal a creature from your hand and archive it -> give Zyzzix the Many a +3 power counter.
 var ZyzzixTheMany = card.New(
 	"Zyzzix the Many",
 	card.House.Mars,
@@ -24,5 +19,17 @@ var ZyzzixTheMany = card.New(
 	card.Provenance(card.CotA, 207),
 	card.WithPower(3),
 	card.WithTraits("Martian", "Soldier"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithFightOrReap(card.May{
+		Do: card.Then{
+			First: card.ArchiveFromHand{
+				Count:    1,
+				Type:     card.Type.Creature,
+				Revealed: true,
+			},
+			Result: card.AddPowerCounter{
+				Target: card.Target.This,
+				Amount: 3,
+			},
+		},
+	}),
 )

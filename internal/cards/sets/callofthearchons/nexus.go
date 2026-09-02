@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Nexus
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Shadows
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Cyborg • Thief
 //
-//	Elusive. (The first time this creature is attacked each turn, no damage is dealt.)
-//	Reap: Use an opponent's artifact as if it were yours.
+//	Elusive.
+//	Reap: Use an enemy artifact.
 var Nexus = card.New(
 	"Nexus",
 	card.House.Shadows,
@@ -25,5 +20,10 @@ var Nexus = card.New(
 	card.Provenance(card.CotA, 305),
 	card.WithPower(3),
 	card.WithTraits("Cyborg", "Thief"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithAbility(
+		card.Trigger.Reap, card.Use{
+			Max:    1,
+			Target: card.Target.EachEnemyArtifact,
+		}),
 )

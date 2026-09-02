@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// LordGolgotha
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Lord Golgotha
 //
 //	House:  Sanctum
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  2
 //	Traits: Knight • Spirit
 //
-//	Before Fight: Deal 3 Damage to each neighbor of the creature Lord Golgotha fights.
+//	Before Fight: Deal 3 damage to each neighbor of the creature Lord Golgotha fights.
 var LordGolgotha = card.New(
 	"Lord Golgotha",
 	card.House.Sanctum,
@@ -26,5 +21,9 @@ var LordGolgotha = card.New(
 	card.WithPower(5),
 	card.WithArmor(2),
 	card.WithTraits("Knight", "Spirit"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.BeforeFight, card.DealDamage{
+			Target: card.Target.CreatureFought.NeighborsOf(),
+			Amount: 3,
+		}),
 )

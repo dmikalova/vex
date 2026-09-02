@@ -20,13 +20,17 @@ package engine
 // to their power simultaneously; Skirmish prevents the attacker taking damage back.
 func (g *Game) fight(attacker, defender LocalID) {
 	g.recordUse(attacker)
+	// Read both controllers before combat, which may take either creature off the
+	// board and with it the controller the fight-kill tally is recorded against.
+	attackerSide, defenderSide := g.controller(attacker), g.controller(defender)
 	if g.recoverFromStun(attacker) {
 		return
 	}
 	// Using a creature to fight exhausts it before anything else resolves, so a
-	// "Before Fight" ability already sees the attacker exhausted.
+	// "Before Fight" ability already sees the attacker exhausted. The defender is
+	// put in context, so an ability can act on "the creature this fights".
 	g.State.Cards[attacker].Exhausted = true
-	g.triggerAbilities(attacker, TriggerBeforeFight, 0, false)
+	g.triggerAbilities(attacker, TriggerBeforeFight, defender, true)
 
 	// A "Before Fight" ability may redirect the attacker's fight damage to another
 	// creature (Gabos Longarms) or make the fight not occur (Evasion Sigil). Read
@@ -57,24 +61,34 @@ func (g *Game) fight(attacker, defender LocalID) {
 		}
 	}
 
+	// Elusive replaces the fight itself, so it is read only once the whole pre-fight
+	// sequence — "Before Fight" abilities, Assault, Hazardous — has resolved. It is
+	// still spent when that sequence leaves a fighter dead and no damage is
+	// exchanged: the creature was attacked.
+	elusive := g.spendElusive(attacker, defender)
+
 	// Combat damage is exchanged only while both fighters are still in play (a
 	// "Before Fight" effect, Assault, or Hazardous can remove one first).
 	if g.inPlay(attacker) && g.inPlay(defender) {
 		ap, dp := g.Power(attacker), g.Power(defender)
 		g.logf("%s (%d power) fights %s (%d power)", g.Name(attacker), ap, g.Name(defender), dp)
-		// Both fighters take their damage simultaneously, then destruction is
-		// resolved together as part of dealing it — so each dying creature is
-		// already in the discard before the other's "Destroyed:" ability (or the
-		// attacker's "After Fight") fires, and neither death changes the other's.
-		dmgTarget := defender
-		if redirect != 0 {
-			dmgTarget = redirect
+		if elusive {
+			g.logf("%s is elusive — no fight damage is dealt", g.Name(defender))
+		} else {
+			// Both fighters take their damage simultaneously, then destruction is
+			// resolved together as part of dealing it — so each dying creature is
+			// already in the discard before the other's "Destroyed:" ability (or the
+			// attacker's "After Fight") fires, and neither death changes the other's.
+			dmgTarget := defender
+			if redirect != 0 {
+				dmgTarget = redirect
+			}
+			targets := []DamageTarget{{ID: dmgTarget, Amount: g.fightDamage(attacker, defender)}}
+			if !g.hasKeyword(attacker, Skirmish) {
+				targets = append(targets, DamageTarget{ID: attacker, Amount: dp})
+			}
+			g.dealDamage(g.controller(attacker), targets...)
 		}
-		targets := []DamageTarget{{ID: dmgTarget, Amount: g.fightDamage(attacker, defender)}}
-		if !g.hasKeyword(attacker, Skirmish) {
-			targets = append(targets, DamageTarget{ID: attacker, Amount: dp})
-		}
-		g.dealDamage(g.controller(attacker), targets...)
 	}
 	g.triggerAbilities(attacker, TriggerAfterFight, 0, false)
 
@@ -82,13 +96,63 @@ func (g *Game) fight(attacker, defender LocalID) {
 	// removed by the fight, the survivor's ability fires with the destroyed
 	// creature as `it`.
 	attackerDead, defenderDead := !g.inPlay(attacker), !g.inPlay(defender)
+	// A creature destroyed in a fight is an enemy kill from the other side's point of
+	// view, which is the tally The Warchest is paid for.
+	if attackerDead {
+		g.State.TurnHistory[1-attackerSide][EnemyCreaturesFightKilled]++
+	}
+	if defenderDead {
+		g.State.TurnHistory[1-defenderSide][EnemyCreaturesFightKilled]++
+	}
 	if defenderDead && !attackerDead {
 		g.triggerAbilities(attacker, TriggerAfterDestroyedFighting, defender, true)
 	}
 	if attackerDead && !defenderDead {
 		g.triggerAbilities(defender, TriggerAfterDestroyedFighting, attacker, true)
 	}
+	g.emitCardUsed(g.controller(attacker), attacker)
 	g.emitLasting(EventFight, g.controller(attacker), attacker)
+}
+
+// spendElusive reports whether the defender's Elusive keyword stops the pending
+// fight damage of this fight, marking it spent for the turn. Elusive applies the
+// first time an elusive creature is attacked each turn, and is read after the
+// pre-fight sequence so a "Before Fight" ability, Assault, or Hazardous resolves
+// against the creature normally. Damage from keywords and abilities is unaffected.
+func (g *Game) spendElusive(attacker, defender LocalID) bool {
+	if g.attackIgnores(attacker, Elusive) ||
+		!g.hasKeyword(defender, Elusive) ||
+		g.State.Cards[defender].ElusiveUsedThisTurn {
+		return false
+	}
+	g.State.Cards[defender].ElusiveUsedThisTurn = true
+	return true
+}
+
+// attackIgnores reports whether an attacking creature ignores a defensive keyword
+// while it attacks — Niffle Ape ignores taunt and elusive.
+func (g *Game) attackIgnores(attacker LocalID, k Keyword) bool {
+	for _, kw := range g.cat.def(attacker).AttackIgnores {
+		if kw == k {
+			return true
+		}
+	}
+	return false
+}
+
+// protectedByTaunt reports whether a creature cannot be chosen to be fought by an
+// attacker: a taunter shields its neighbors, so a neighbor of one is out of reach
+// unless it has taunt itself or the attacker ignores taunt.
+func (g *Game) protectedByTaunt(attacker, target LocalID) bool {
+	if g.attackIgnores(attacker, Taunt) || g.hasKeyword(target, Taunt) {
+		return false
+	}
+	for _, neighbor := range neighbors(&EffectContext{Resolver: g}, target) {
+		if g.hasKeyword(neighbor, Taunt) {
+			return true
+		}
+	}
+	return false
 }
 
 // onFlankOf reports whether a creature sits on a flank (the leftmost or rightmost

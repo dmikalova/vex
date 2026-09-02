@@ -26,8 +26,8 @@ func TestCreepingOblivion(t *testing.T) {
 		})
 
 		h.P1.Play(CreepingOblivion)
-		h.P1.ClickOption(a.Name())
-		h.P1.ClickOption(b.Name())
+		h.P1.ClickCard(a)
+		h.P1.ClickCard(b)
 
 		h.Expect(a).At(ct.Purge)
 		h.Expect(b).At(ct.Purge)

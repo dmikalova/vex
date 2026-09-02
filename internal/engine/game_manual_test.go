@@ -165,11 +165,25 @@ func TestManualSetExhausted(t *testing.T) {
 func TestManualAddCard(t *testing.T) {
 	g := started(t)
 	before := len(g.Hand(0))
-	id := g.ManualAddCard(NewCard("Import", Logos, Tactic, Common), 0)
+	id, ok := g.ManualAddCard(NewCard("Import", Logos, Tactic, Common), 0)
+	if !ok {
+		t.Fatal("ManualAddCard should succeed in a fresh match")
+	}
 	if len(g.Hand(0)) != before+1 {
 		t.Errorf("hand size = %d, want %d", len(g.Hand(0)), before+1)
 	}
 	if g.Def(id).Name != "Import" {
 		t.Errorf("added card name = %q, want Import", g.Def(id).Name)
+	}
+
+	for g.cat.hasRoom() {
+		g.Register(NewCard("Filler", Logos, Tactic, Common), 0)
+	}
+	full := len(g.Hand(0))
+	if _, ok := g.ManualAddCard(NewCard("Overflow", Logos, Tactic, Common), 0); ok {
+		t.Error("ManualAddCard should refuse once the match is full")
+	}
+	if len(g.Hand(0)) != full {
+		t.Errorf("refused add changed the hand: %d, want %d", len(g.Hand(0)), full)
 	}
 }

@@ -29,7 +29,7 @@ func TestLifeward(t *testing.T) {
 			h.P1.UseAction(Lifeward)
 
 			h.Expect(Lifeward).At(ct.Discard)
-			if got := h.Game().State.CannotPlayTypeNext[1]; got != engine.Creature {
+			if got := h.Game().State.CannotPlayTypeNext[1].Value; got != engine.Creature {
 				t.Errorf("opponent's armed play bar = %q, want Creature", got)
 			}
 		},

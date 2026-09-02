@@ -15,7 +15,7 @@ import (
 //	Power:  4
 //	Traits: Cyborg • Scientist
 //
-//	Play: For each key your opponent has forged, gain 1 Æmber.
+//	Play: For each forged key your opponent has, gain 1 Æmber.
 func TestDrEscotera(t *testing.T) {
 	t.Run("gains 1 Æmber for each key the opponent has forged", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

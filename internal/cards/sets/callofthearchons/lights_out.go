@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Put up to 2 creatures into their owners' hands.
+//	Play: Put up to 2 enemy creatures into their owners' hands.
 var LightsOut = card.New(
 	"Lights Out",
 	card.House.Shadows,

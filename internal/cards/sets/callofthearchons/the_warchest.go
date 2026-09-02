@@ -1,20 +1,15 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// TheWarchest
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// The Warchest
 //
 //	House:  Brobnar
 //	Type:   Artifact
 //	Rarity: Uncommon
 //	Traits: Item
 //
-//	Action: Gain 1 Aember for each enemy creature that was destroyed in a fight this turn.
+//	Action: For each enemy creature that was destroyed in a fight this turn, gain 1 Æmber.
 var TheWarchest = card.New(
 	"The Warchest",
 	card.House.Brobnar,
@@ -22,5 +17,13 @@ var TheWarchest = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 27),
 	card.WithTraits("Item"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Action, card.GainAember{
+			Player: card.Controller,
+			Amount: 1,
+			Per: card.TurnCount{
+				Player: card.Controller,
+				Of:     card.TurnStat.EnemyCreaturesFightKilled,
+			},
+		}),
 )

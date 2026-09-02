@@ -1,20 +1,15 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Poltergeist
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Use an artifact controlled by any player as if it were yours. Destroy that artifact.
+//	Play: Use an artifact. Destroy it.
 var Poltergeist = card.New(
 	"Poltergeist",
 	card.House.Dis,
@@ -22,5 +17,12 @@ var Poltergeist = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 69),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
+			card.Sentence{Effect: card.Use{
+				Max:    1,
+				Target: card.Target.EachArtifact,
+			}},
+			card.Sentence{Effect: card.Destroy{Target: card.Target.Triggering}},
+		}}),
 )

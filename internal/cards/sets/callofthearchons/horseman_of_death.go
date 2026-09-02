@@ -6,7 +6,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Sanctum
 //	Type:   Creature
-//	Rarity: FIXED
+//	Rarity: Connected
 //	Power:  5
 //	Traits: Horseman • Spirit
 //

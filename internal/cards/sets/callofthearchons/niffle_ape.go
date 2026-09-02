@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// NiffleApe
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Niffle Ape
 //
 //	House:  Untamed
 //	Type:   Creature
@@ -24,5 +19,5 @@ var NiffleApe = card.New(
 	card.Provenance(card.CotA, 363),
 	card.WithPower(3),
 	card.WithTraits("Beast", "Niffle"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAttackIgnores(card.Keyword.Taunt, card.Keyword.Elusive),
 )

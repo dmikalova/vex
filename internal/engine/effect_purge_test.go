@@ -192,3 +192,23 @@ func TestPurgeCreatureFromHand(t *testing.T) {
 		}
 	})
 }
+
+func TestCardsPurgedCount(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("src", 3), 0)
+	g.AddToBattleline(NewCard("a", Shadows, Creature, Common, WithPower(3)), 0)
+	g.AddToBattleline(NewCard("b", Shadows, Creature, Common, WithPower(3)), 0)
+	g.AddToBattleline(NewCard("off-house", Mars, Creature, Common, WithPower(3)), 0)
+	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+
+	if got := (CardsPurged{}).CountText(); got != "creature purged this way" {
+		t.Errorf("count text = %q", got)
+	}
+	PurgeCreature{
+		Target: Target{Kind: TargetEachFriendlyCreature}.OfHouse(Shadows),
+	}.Resolve(ctx)
+
+	if got := (CardsPurged{}).Value(ctx); got != 2 {
+		t.Errorf("purged = %d, want 2", got)
+	}
+}

@@ -23,16 +23,7 @@ type PutFromPlay struct {
 // Text renders the effect, e.g. "put each artifact on top of its owner's deck" or
 // "put this creature into its owner's hand".
 func (e PutFromPlay) Text() string {
-	switch e.Destination {
-	case ToTopOfDeck:
-		return fmt.Sprintf("put %s on top of its owner's deck", e.Target.Text())
-	case ToDeckShuffled:
-		return fmt.Sprintf("shuffle %s into its owner's deck", e.Target.Text())
-	case ToArchives:
-		return fmt.Sprintf("put %s into its owner's archives", e.Target.Text())
-	default:
-		return fmt.Sprintf("put %s into its owner's hand", e.Target.Text())
-	}
+	return e.Destination.clause(e.Target.Text(), false)
 }
 
 // validate rejects a destination this effect cannot move a card to; only the hand,
@@ -42,12 +33,10 @@ func (e PutFromPlay) validate() error {
 	if !e.Target.valid() {
 		return errUnsetTarget("PutFromPlay")
 	}
-	switch e.Destination {
-	case ToHand, ToTopOfDeck, ToDeckShuffled, ToArchives:
-		return nil
-	default:
-		return fmt.Errorf("PutFromPlay: unsupported destination %d", e.Destination)
+	if !e.Destination.movable() {
+		return fmt.Errorf("PutFromPlay: unsupported destination %d", e.Destination.zone)
 	}
+	return nil
 }
 
 // Resolve moves each selected card from play to the destination. Cards headed to
@@ -58,21 +47,7 @@ func (e PutFromPlay) Resolve(ctx *EffectContext) {
 		ids = ctx.OrderByChoice("Choose the next card to put on top of the deck", ids)
 	}
 	for _, id := range ids {
-		moveFromPlayTo(ctx, id, e.Destination)
-	}
-}
-
-// moveFromPlayTo puts one card from play into a destination zone.
-func moveFromPlayTo(ctx *EffectContext, id LocalID, d Destination) {
-	switch d {
-	case ToTopOfDeck:
-		ctx.Resolver.PutOnTopOfDeck(id)
-	case ToArchives:
-		ctx.Resolver.PutIntoArchives(id)
-	case ToDeckShuffled:
-		ctx.Resolver.PutIntoDeckShuffled(id)
-	default:
-		ctx.Resolver.PutIntoHand(id)
+		e.Destination.move(ctx, id)
 	}
 }
 
@@ -94,48 +69,28 @@ func (e PutUpTo) validate() error {
 	if e.Max <= 0 {
 		return fmt.Errorf("PutUpTo: Max must be positive")
 	}
-	switch e.Destination {
-	case ToHand, ToTopOfDeck, ToDeckShuffled, ToArchives:
-		return nil
-	default:
-		return fmt.Errorf("PutUpTo: unsupported destination %d", e.Destination)
+	if !e.Destination.movable() {
+		return fmt.Errorf("PutUpTo: unsupported destination %d", e.Destination.zone)
 	}
+	return nil
 }
 
 // Text renders the effect, e.g. "put up to 3 artifacts into their owners' hands".
 func (e PutUpTo) Text() string {
 	noun := singularNoun(e.Target.Text()) + "s"
-	switch e.Destination {
-	case ToTopOfDeck:
-		return fmt.Sprintf("put up to %d %s on top of their owners' decks", e.Max, noun)
-	case ToDeckShuffled:
-		return fmt.Sprintf("shuffle up to %d %s into their owners' decks", e.Max, noun)
-	case ToArchives:
-		return fmt.Sprintf("put up to %d %s into their owners' archives", e.Max, noun)
-	default:
-		return fmt.Sprintf("put up to %d %s into their owners' hands", e.Max, noun)
-	}
+	return e.Destination.clause(fmt.Sprintf("up to %d %s", e.Max, noun), true)
 }
 
 // Resolve moves up to Max cards one at a time. Each step offers the current pool
-// plus a "Done" option to stop early; when the pool is empty it stops.
+// as a declinable choice so the controller can stop early; when the pool is empty
+// it stops.
 func (e PutUpTo) Resolve(ctx *EffectContext) {
-	const done = "Done"
 	for i := 0; i < e.Max; i++ {
-		cands := e.Target.Select(ctx)
-		if len(cands) == 0 {
+		chosen, ok := ctx.ChooseCardOptional("Choose a card to move", e.Target.Select(ctx))
+		if !ok {
 			return
 		}
-		options := make([]string, 0, len(cands)+1)
-		for _, id := range cands {
-			options = append(options, ctx.Resolver.Name(id))
-		}
-		options = append(options, done)
-		choice := ctx.ChooseOption("Choose a card to move", options)
-		if choice >= len(cands) {
-			return // "Done" (the last option), or an out-of-range choice
-		}
-		moveFromPlayTo(ctx, cands[choice], e.Destination)
+		e.Destination.move(ctx, chosen)
 	}
 }
 

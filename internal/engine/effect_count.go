@@ -1,6 +1,9 @@
 package engine
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // Count computes a number from live game state, for effects whose magnitude
 // scales with the board — e.g. "for each key your opponent has forged, gain 1
@@ -31,7 +34,7 @@ func (OpponentForgedKeys) Value(ctx *EffectContext) int {
 }
 
 // CountText renders the singular noun the "for each" clause repeats.
-func (OpponentForgedKeys) CountText() string { return "key your opponent has forged" }
+func (OpponentForgedKeys) CountText() string { return "forged key your opponent has" }
 
 // OpponentExcessCreatures counts how many more creatures the controller's opponent
 // controls than the controller does (never below zero) — Glorious Few.
@@ -49,6 +52,17 @@ func (OpponentExcessCreatures) Value(ctx *EffectContext) int {
 func (OpponentExcessCreatures) CountText() string {
 	return "creature your opponent controls in excess of you"
 }
+
+// CardsDestroyed counts the cards the most recent destruction in this resolution
+// removed from play — the "for each card destroyed this way" tally (Oath of
+// Poverty gains 2 Æmber for each artifact it destroyed).
+type CardsDestroyed struct{}
+
+// Value returns how many cards the preceding Destroy actually removed.
+func (CardsDestroyed) Value(ctx *EffectContext) int { return ctx.Produced.Destroyed }
+
+// CountText renders the singular noun the "for each" clause repeats.
+func (CardsDestroyed) CountText() string { return "card destroyed this way" }
 
 // CardsInArchives counts the cards in a player's archives.
 type CardsInArchives struct{ Player Player }
@@ -115,6 +129,13 @@ type InPlay struct {
 	Type CardType
 	// House filters by house; the zero value (HouseNone) counts any house.
 	House House
+	// Ready counts only cards that are ready (not exhausted).
+	Ready bool
+	// Damaged counts only creatures that have damage on them.
+	Damaged bool
+	// Other leaves the source card itself out of the count, which is how a card
+	// counts its companions (Phylyx the Disintegrator).
+	Other bool
 	// Amount is the minimum the Condition role requires; zero means at least one.
 	Amount int
 }
@@ -123,9 +144,19 @@ type InPlay struct {
 func (e InPlay) Value(ctx *EffectContext) int {
 	n := 0
 	for _, id := range e.set(ctx) {
-		if e.House == HouseNone || ctx.Resolver.House(id) == e.House {
-			n++
+		if e.House != HouseNone && ctx.Resolver.House(id) != e.House {
+			continue
 		}
+		if e.Ready && ctx.Resolver.Exhausted(id) {
+			continue
+		}
+		if e.Damaged && ctx.Resolver.Damage(id) == 0 {
+			continue
+		}
+		if e.Other && id == ctx.Source {
+			continue
+		}
+		n++
 	}
 	return n
 }
@@ -186,19 +217,25 @@ func (e InPlay) typeNoun() string {
 	}
 }
 
-// noun renders the "<side> [house ]<type>" phrase the text roles share.
+// noun renders the "<side> [ready ][house ]<type>" phrase the text roles share.
 func (e InPlay) noun() string {
-	who := e.who()
+	parts := []string{}
+	if e.Other {
+		parts = append(parts, "other")
+	}
+	if who := e.who(); who != "" {
+		parts = append(parts, who)
+	}
+	if e.Ready {
+		parts = append(parts, "ready")
+	}
+	if e.Damaged {
+		parts = append(parts, "damaged")
+	}
 	if e.House != HouseNone {
-		if who == "" {
-			return fmt.Sprintf("%s %s", e.House, e.typeNoun())
-		}
-		return fmt.Sprintf("%s %s %s", who, e.House, e.typeNoun())
+		parts = append(parts, e.House.String())
 	}
-	if who == "" {
-		return e.typeNoun()
-	}
-	return fmt.Sprintf("%s %s", who, e.typeNoun())
+	return strings.Join(append(parts, e.typeNoun()), " ")
 }
 
 // CountText renders the singular noun the "for each" clause repeats. A
@@ -238,8 +275,13 @@ func (e CardsPlayed) Value(ctx *EffectContext) int {
 }
 
 // countOfHouse counts how many of the ids belong to a house — the filter a
-// turn-log Count applies to the unfiltered record the engine keeps.
+// turn-log Count applies to the unfiltered record the engine keeps. An unset
+// house counts every card, so a Count can ask "how many cards" as well as "how
+// many Sanctum cards".
 func countOfHouse(ctx *EffectContext, ids []LocalID, house House) int {
+	if house == HouseNone {
+		return len(ids)
+	}
 	n := 0
 	for _, id := range ids {
 		if ctx.Resolver.House(id) == house {
@@ -262,11 +304,143 @@ func (e CardsPlayed) threshold() int {
 
 // CountText renders the singular noun the "for each" clause repeats.
 func (e CardsPlayed) CountText() string {
-	return fmt.Sprintf("%s card you have played this turn", e.House)
+	return e.cardNoun() + " you have played this turn"
+}
+
+// cardNoun is the noun the count repeats, house-qualified when the count filters
+// by house and a plain "card" when it counts every card played.
+func (e CardsPlayed) cardNoun() string {
+	if e.House == HouseNone {
+		return "card"
+	}
+	return e.House.String() + " card"
 }
 
 // CondText renders the condition, e.g. "if you have played 7 or more Sanctum cards
 // this turn".
 func (e CardsPlayed) CondText() string {
-	return fmt.Sprintf("if you have played %d or more %s cards this turn", e.threshold(), e.House)
+	return fmt.Sprintf("if you have played %d or more %ss this turn", e.threshold(), e.cardNoun())
+}
+
+// CountClause renders the clause CountIs puts after "if", e.g. "you played
+// exactly 1 card this turn".
+func (e CardsPlayed) CountClause(quantity string, plural bool) string {
+	noun := e.cardNoun()
+	if plural {
+		noun += "s"
+	}
+	return fmt.Sprintf("you played %s %s this turn", quantity, noun)
+}
+
+// CreaturesUsed counts the creatures a player has used this turn — reaped,
+// fought, or fired an "Action:" with. It reads the per-creature use tally the
+// engine already keeps, so only creatures still in play are counted.
+type CreaturesUsed struct {
+	Player Player
+}
+
+// Value counts the player's creatures in play that have been used this turn.
+func (e CreaturesUsed) Value(ctx *EffectContext) int {
+	n := 0
+	for _, id := range ctx.Resolver.Battleline(ctx.PlayerFor(e.Player)) {
+		if ctx.Resolver.TimesUsedThisTurn(id) > 0 {
+			n++
+		}
+	}
+	return n
+}
+
+// CountText renders the singular noun the "for each" clause repeats.
+func (e CreaturesUsed) CountText() string { return "creature you used this turn" }
+
+// CountClause renders the clause CountIs puts after "if", e.g. "you used 3 or
+// more creatures this turn".
+func (e CreaturesUsed) CountClause(quantity string, plural bool) string {
+	noun := "creature"
+	if plural {
+		noun += "s"
+	}
+	return fmt.Sprintf("you used %s %s this turn", quantity, noun)
+}
+
+// UnforgedKeys counts the keys a player still has to forge — the measure of how
+// far they are from winning, which Mushroom Man grows on.
+type UnforgedKeys struct{ Player Player }
+
+// Value returns how many of the player's keys are still unforged.
+func (e UnforgedKeys) Value(ctx *EffectContext) int {
+	return KeysToWin - ctx.Resolver.Keys(ctx.PlayerFor(e.Player))
+}
+
+// CountText renders the singular noun the "for each" clause repeats.
+func (e UnforgedKeys) CountText() string {
+	if e.Player == Opponent {
+		return "unforged key your opponent has"
+	}
+	return "unforged key you have"
+}
+
+// AemberOnThis counts the Æmber sitting on the source card, so a card can grow
+// with what it captures (Yxili Marauder).
+type AemberOnThis struct{}
+
+// Value returns the Æmber on the source card.
+func (AemberOnThis) Value(ctx *EffectContext) int { return ctx.Resolver.AmberOn(ctx.Source) }
+
+// CountText renders the singular noun the "for each" clause repeats.
+func (AemberOnThis) CountText() string { return "Æmber on it" }
+
+// CopiesInDiscard counts the cards in the controller's discard pile sharing the
+// source card's name — a card that pays off for having been played before
+// (Routine Job). The card being resolved is not in the discard pile yet, so it
+// never counts itself.
+type CopiesInDiscard struct{}
+
+// Value counts the copies of the source card in the controller's discard pile.
+func (CopiesInDiscard) Value(ctx *EffectContext) int {
+	name := ctx.Resolver.Name(ctx.Source)
+	n := 0
+	for _, id := range ctx.Resolver.Discard(ctx.Controller) {
+		if ctx.Resolver.Name(id) == name {
+			n++
+		}
+	}
+	return n
+}
+
+// CountText renders the singular noun the "for each" clause repeats.
+func (CopiesInDiscard) CountText() string {
+	return "copy of " + SelfName + " in your discard pile"
+}
+
+// TurnCount counts one of the engine's turn-history tallies for a player — the
+// creatures they played on their previous turn (Lifeweb), the enemy creatures
+// destroyed in a fight this turn (The Warchest). One Count over a TurnStat rather
+// than a node per tally, so asking a new question about a turn is a new enum
+// value and its noun.
+type TurnCount struct {
+	Player Player
+	Of     TurnStat
+}
+
+// Value reads the tally for the player the count names.
+func (c TurnCount) Value(ctx *EffectContext) int {
+	return ctx.Resolver.TurnHistory(ctx.PlayerFor(c.Player), c.Of)
+}
+
+// CountText renders the singular noun the "for each" clause repeats.
+func (c TurnCount) CountText() string { return turnStatNoun[c.Of] }
+
+// CountClause renders the "if ..." clause CountIs needs, e.g. "if your opponent
+// played 3 or more creatures on their previous turn".
+func (c TurnCount) CountClause(quantity string, plural bool) string {
+	subject, possessive := "you played", "your"
+	if c.Player == Opponent {
+		subject, possessive = "your opponent played", "their"
+	}
+	noun := "creature"
+	if plural {
+		noun = "creatures"
+	}
+	return fmt.Sprintf("%s %s %s on %s previous turn", subject, quantity, noun, possessive)
 }

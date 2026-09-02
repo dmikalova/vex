@@ -169,7 +169,29 @@ Reserve the domain word *"fire"* for prose ("a trigger fires", "an ability
 fires"): it is what an ability does in response to an emitted event, never the name
 of a method that does the emitting.
 
-## Tradeoffs that look like smells (and how to handle them)
+## Prompts: name the card, and let the player click a target
+
+Every prompt the engine raises reaches a human, so write it as the card's own
+sentence and route it through the channel a UI can render as a board interaction.
+
+- **Ask through `pickCreature`/`pickCard`, not `ChooseOption`, whenever the answer
+  is a card.** A card choice is made by clicking the card, so a frontend
+  highlights the candidates and takes a click. A list of card *names* as buttons is
+  a fallback, not the design; only use `ChooseOption` when the options are not
+  cards (a house, a key colour, "yes"/"no").
+- **Refer to the source card with `SelfName`, never a literal name.** The engine
+  substitutes the asking card's name into the prompt (`renderPrompt`), so
+  `"fully heal "+SelfName` reads as "fully heal Chuff Ape" at runtime and matches
+  the printed text. Hard-coding a name in a prompt is a one-off smell.
+- **Phrase the prompt as the card's instruction**, lowercase and imperative
+  ("choose a creature to attach {self} to"), so the prompt and the printed text
+  are the same sentence.
+- **When the choice is optional ("may", "up to N"), the player must be able to
+  stop**: the prompt is declinable, and a frontend shows a *Done* button beside
+  the highlighted candidates. An optional choice must therefore **not** be
+  short-circuited when only one candidate remains — that would take the choice
+  away. `pickCreature` auto-takes a sole candidate precisely because it models a
+  *mandatory* choice; an optional one needs its own path.
 
 These are conscious tradeoffs; the "why" is in the linked ADRs. Handle them as
 described; do not "fix" them into a regression of a constraint.

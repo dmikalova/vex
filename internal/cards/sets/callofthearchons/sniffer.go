@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Sniffer
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Mars
 //	Type:   Artifact
@@ -24,5 +19,6 @@ var Sniffer = card.New(
 	card.Provenance(card.CotA, 188),
 	card.WithAemberBonus(1),
 	card.WithTraits("Ally"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Action, card.LoseKeyword{Keyword: card.Keyword.Elusive}),
 )

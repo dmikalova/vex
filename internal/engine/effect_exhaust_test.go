@@ -11,7 +11,7 @@ func TestExhaustCreatures(t *testing.T) {
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 
 		e := ExhaustCreatures{Max: 3, Target: Target{Kind: TargetEachFriendlyCreature}}
-		if e.Text() != "exhaust up to 3 creatures" {
+		if e.Text() != "exhaust up to 3 friendly creatures" {
 			t.Errorf("text = %q", e.Text())
 		}
 		e.Resolve(ctx)

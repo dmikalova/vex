@@ -1,20 +1,15 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// KeyHammer
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Key Hammer
 //
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: If your opponent forged a key on their previous turn, unforge it. Your opponent gains 6 Aember.
+//	Play: If your opponent forged a key on their previous turn, unforge one of your opponent's keys, and your opponent gains 6 Æmber.
 var KeyHammer = card.New(
 	"Key Hammer",
 	card.House.Dis,
@@ -22,5 +17,18 @@ var KeyHammer = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 66),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
+			card.Conditional{
+				Cond: card.ForgedKey{
+					Player:   card.Opponent,
+					Previous: true,
+				},
+				Then: card.UnforgeKey{Player: card.Opponent},
+			},
+			card.GainAember{
+				Player: card.Opponent,
+				Amount: 6,
+			},
+		}}),
 )

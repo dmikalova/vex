@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
   <title>Sanctum</title>
   <path d="M12 2 20 5v6c0 5-3.5 9-8 11-4.5-2-8-6-8-11V5Z" fill="#1c6adb" stroke="#154fa3" stroke-width="1" stroke-linejoin="round"/>
-  <path d="M12 6.5v9M7.5 11h9" stroke="#eaf0ff" stroke-width="2" stroke-linecap="round"/>
+  <path d="M12 3.5v16M5 11h14" stroke="#e8b420" stroke-width="2" stroke-linecap="round"/>
 </svg>

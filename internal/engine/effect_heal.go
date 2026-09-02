@@ -91,3 +91,10 @@ func (DamageHealed) Value(ctx *EffectContext) int { return ctx.Produced.DamageHe
 
 // CountText renders the singular noun a "for each" clause would repeat.
 func (DamageHealed) CountText() string { return "damage healed this way" }
+
+// CountClause renders the clause CountIs puts after "if", e.g. "you healed
+// exactly 3 damage" — Vigor's bonus turns on having healed the full amount.
+// Damage is a mass noun, so the plural flag does not change it.
+func (DamageHealed) CountClause(quantity string, _ bool) string {
+	return "you healed " + quantity + " damage"
+}

@@ -12,14 +12,26 @@ import (
 	"github.com/magefile/mage/sh"
 )
 
-// Build builds all packages.
+// Build builds all packages, for the host and then for the browser. `go build
+// ./...` compiles the web client for the host, which misses anything that only
+// breaks under js/wasm, so WebWasm compiles it again for the target it ships to.
 func Build() error {
-	return sh.RunV("go", "build", "./...")
+	if err := sh.RunV("go", "build", "./..."); err != nil {
+		return err
+	}
+	return WebWasm()
 }
 
 // Test runs all tests.
 func Test() error {
 	return sh.RunV("go", "test", "./...")
+}
+
+// TestRun runs only the tests whose name matches a pattern, across every package
+// — `mage testRun TestHeal`. The pattern is a Go regexp, so `mage testRun
+// 'TestBumpsy|TestUrchin'` works too.
+func TestRun(pattern string) error {
+	return sh.RunV("go", "test", "./...", "-run", pattern)
 }
 
 // Vet runs go vet.

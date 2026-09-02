@@ -27,9 +27,14 @@ func (e Use) validate() error {
 	return nil
 }
 
-// Text renders the effect, e.g. "use 2 other Mars cards, one at a time".
+// Text renders the effect, e.g. "use an enemy artifact" for a single use, or
+// "use 2 other Mars cards, one at a time" for several.
 func (e Use) Text() string {
-	return fmt.Sprintf("use %d %ss, one at a time", e.Max, useNoun(e.Target.Text()))
+	noun := useNoun(e.Target.Text())
+	if e.Max == 1 {
+		return "use " + indefinite(noun)
+	}
+	return fmt.Sprintf("use %d %ss, one at a time", e.Max, noun)
 }
 
 // useNoun turns a Target's collective phrase into the singular noun the "use N ..."
@@ -43,7 +48,9 @@ func useNoun(phrase string) string {
 }
 
 // Resolve chooses and uses up to Max cards from the pool, one at a time. Each use
-// fully resolves before the next choice, so an exhausted card drops out.
+// fully resolves before the next choice, so an exhausted card drops out. The card
+// used most recently is left in context, so a following effect can act on it
+// (Poltergeist destroys the artifact it just used).
 func (e Use) Resolve(ctx *EffectContext) {
 	for i := 0; i < e.Max; i++ {
 		cands := usableCards(ctx, e.Target.Select(ctx))
@@ -54,6 +61,7 @@ func (e Use) Resolve(ctx *EffectContext) {
 		if !ok {
 			return
 		}
+		ctx.It, ctx.HasIt = id, true
 		useCard(ctx, id)
 	}
 }
@@ -79,10 +87,12 @@ func usableCards(ctx *EffectContext, ids []LocalID) []LocalID {
 }
 
 // useCard resolves a chosen card's use — an artifact fires its Action, a creature
-// is used by choosing how (reap, fight, or Action).
+// is used by choosing how (reap, fight, or Action). Either way the ability
+// resolves for the effect's controller, so a card they do not control is used as
+// if it were theirs.
 func useCard(ctx *EffectContext, id LocalID) {
 	if ctx.Resolver.TypeOf(id) == Artifact {
-		ctx.Resolver.UseActionOf(id)
+		ctx.Resolver.UseActionOf(ctx.Controller, id)
 		return
 	}
 	UseVerb{}.Apply(ctx, id)

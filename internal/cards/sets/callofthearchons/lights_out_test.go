@@ -29,8 +29,8 @@ func TestLightsOut(t *testing.T) {
 		})
 
 		h.P1.Play(LightsOut)
-		h.P1.ClickOption(a.Name())
-		h.P1.ClickOption(b.Name())
+		h.P1.ClickCard(a)
+		h.P1.ClickCard(b)
 
 		h.Expect(a).At(ct.Hand)
 		h.Expect(b).At(ct.Hand)

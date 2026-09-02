@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Traits: Item
 //
-//	Action: Reveal any number of Mars cards from your hand, and for each card revealed this way, ready a Mars creature.
+//	Action: Reveal any number of Mars cards from your hand, and for each card revealed this way, ready a friendly Mars creature.
 var Commpod = card.New(
 	"Commpod",
 	card.House.Mars,

@@ -17,10 +17,13 @@ const actionTimeout = 5 * time.Second
 // goroutine to the test goroutine. reply is how the test answers: a creature id,
 // an option index, or -1 to decline.
 type promptReq struct {
-	player     int
-	source     string // name of the card whose ability raised the prompt, or ""
-	text       string
-	isOption   bool
+	player   int
+	source   string // name of the card whose ability raised the prompt, or ""
+	text     string
+	isOption bool
+	// declinable marks a card prompt the player may pass on, answered with
+	// Player.ClickDone. A forced card prompt has no Done to click.
+	declinable bool
 	candidates []engine.LocalID
 	options    []string
 	reply      chan int
@@ -55,6 +58,32 @@ func (b bridgeChooser) ChooseCreature(
 		player:     b.player,
 		source:     source,
 		text:       prompt,
+		candidates: append([]engine.LocalID(nil), candidates...),
+		reply:      reply,
+	}
+	r := <-reply
+	if r < 0 {
+		return 0, false
+	}
+	return engine.LocalID(r), true
+}
+
+// ChooseCardOrDecline forwards an optional card choice to the test and waits for
+// the click. Unlike ChooseCreature a sole candidate is still offered, because
+// declining it is a legal answer the test must be able to script.
+func (b bridgeChooser) ChooseCardOrDecline(
+	source, prompt string,
+	candidates []engine.LocalID,
+) (engine.LocalID, bool) {
+	if len(candidates) == 0 {
+		return 0, false
+	}
+	reply := make(chan int)
+	b.h.prompt <- promptReq{
+		player:     b.player,
+		source:     source,
+		text:       prompt,
+		declinable: true,
 		candidates: append([]engine.LocalID(nil), candidates...),
 		reply:      reply,
 	}
@@ -214,6 +243,20 @@ func (h *Harness) clickOption(player int, label string) {
 func (h *Harness) answerOption(req promptReq, i int) {
 	h.current = nil
 	req.reply <- i
+	h.advance()
+}
+
+// clickDone declines a pending declinable card prompt — the Done button next to
+// the highlighted cards. A forced prompt has no Done, so declining one fails.
+func (h *Harness) clickDone(player int) {
+	h.t.Helper()
+	req := h.requirePrompt(player)
+	if !req.declinable {
+		h.t.Fatalf("ClickDone: the pending prompt %q for %s cannot be declined",
+			req.text, playerName(player))
+	}
+	h.current = nil
+	req.reply <- -1
 	h.advance()
 }
 

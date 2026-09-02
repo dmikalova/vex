@@ -27,7 +27,7 @@ func TestImperialTraitor(t *testing.T) {
 		})
 
 		h.P1.Play(ImperialTraitor)
-		h.P1.ClickOption(sanctum.Name())
+		h.P1.ClickCard(sanctum)
 
 		h.Expect(sanctum).At(ct.Purge)
 		h.Expect(shadows).At(ct.Hand) // non-Sanctum cards are not eligible

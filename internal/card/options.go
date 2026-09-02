@@ -22,6 +22,8 @@ var (
 	WithAttackDamage = func(ad engine.AttackDamage) Option { return gameplay(engine.WithAttackDamage(ad)) }
 	// WithFightRestriction restricts which creatures this creature may fight.
 	WithFightRestriction = func(t engine.Target) Option { return gameplay(engine.WithFightRestriction(t)) }
+	// WithAttackIgnores makes a creature ignore defensive keywords while attacking.
+	WithAttackIgnores = func(kws ...engine.Keyword) Option { return gameplay(engine.WithAttackIgnores(kws...)) }
 	// WithEntersPlay adds an effect that resolves as the creature enters play.
 	WithEntersPlay = func(e Effect) Option { return gameplay(engine.WithEntersPlay(e)) }
 	// WithAemberBonus sets a card's Æmber bonus (the pips gained when it is played).
@@ -42,6 +44,16 @@ var (
 	WithDrawModifier = func(p Player, amount int) Option { return gameplay(engine.WithDrawModifier(p, amount)) }
 	// WithAemberTheftImmunity makes Æmber on this card immune to theft.
 	WithAemberTheftImmunity = func() Option { return gameplay(engine.WithAemberTheftImmunity()) }
+	// WithSpendableAember lets Æmber banked on this card be spent when forging.
+	WithSpendableAember = func() Option { return gameplay(engine.WithSpendableAember()) }
+	// WithAemberThreshold requires a pool of at least n to play this card.
+	WithAemberThreshold = func(n int) Option {
+		return gameplay(engine.WithPlayRequirement(engine.AemberThreshold(n)))
+	}
+	// WithAemberCost requires — and spends — n Æmber to play this card.
+	WithAemberCost = func(n int) Option {
+		return gameplay(engine.WithPlayRequirement(engine.AemberCost(n)))
+	}
 	// WithAbility adds an ability that resolves an effect on a trigger.
 	WithAbility = func(t engine.Trigger, e Effect) Option { return gameplay(engine.WithAbility(t, e)) }
 	// WithFightOrReap adds effect as both a Fight and a Reap ability, so it resolves

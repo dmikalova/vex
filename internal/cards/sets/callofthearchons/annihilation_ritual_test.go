@@ -18,7 +18,7 @@ import (
 //	Each creature gains, "Destroyed: Purge this creature."
 func TestAnnihilationRitual(t *testing.T) {
 	t.Run("destroyed creatures are purged instead of discarded", func(t *testing.T) {
-		var attacker, victim ct.Card
+		var attacker, enemy ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
 				House: card.House.Dis,
@@ -29,13 +29,13 @@ func TestAnnihilationRitual(t *testing.T) {
 			},
 			P2: ct.Side{
 				InPlay: ct.Cards(
-					ct.Bind(&victim, ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Power(3))),
+					ct.Bind(&enemy, ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Power(3))),
 				),
 			},
 		})
 
-		h.P1.Fight(attacker, victim)
+		h.P1.Fight(attacker, enemy)
 
-		h.Expect(victim).At(ct.Purge)
+		h.Expect(enemy).At(ct.Purge)
 	})
 }

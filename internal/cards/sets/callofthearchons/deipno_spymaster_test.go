@@ -26,12 +26,15 @@ func TestDeipnoSpymaster(t *testing.T) {
 				InPlay: ct.Cards(
 					DeipnoSpymaster,
 					ct.Bind(&worker, ct.Creature(ct.OfHouse(card.House.Shadows), ct.Power(3))),
+					// A second ready creature, so which creature is used is a real choice:
+					// only ready creatures are offered, and Deipno exhausts to use its action.
+					ct.Creature(ct.OfHouse(card.House.Shadows), ct.Power(3)),
 				),
 			},
 		})
 
 		h.P1.UseAction(DeipnoSpymaster)
-		h.P1.ClickCard(worker) // use Worker, not Deipno itself
+		h.P1.ClickCard(worker) // use Worker, not the other creature
 
 		h.P1.ExpectAmber(1) // Worker reaped for 1 Æmber
 	})

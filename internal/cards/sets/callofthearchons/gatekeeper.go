@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Gatekeeper
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Sanctum
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Knight • Spirit
 //
-//	Play: If your opponent has 7 or more Aember, capture all but 5 of it.
+//	Play: If your opponent has 7 Æmber or more, Gatekeeper captures all but 5 Æmber from your opponent.
 var Gatekeeper = card.New(
 	"Gatekeeper",
 	card.House.Sanctum,
@@ -26,5 +21,16 @@ var Gatekeeper = card.New(
 	card.WithPower(5),
 	card.WithArmor(1),
 	card.WithTraits("Knight", "Spirit"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Conditional{
+			Cond: card.OpponentAember{
+				Is:     card.AtLeast,
+				Amount: 7,
+			},
+			Then: card.CaptureAember{
+				By:     card.AllBut(5),
+				Target: card.Target.This,
+				Source: card.Opponent,
+			},
+		}),
 )

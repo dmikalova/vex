@@ -233,3 +233,47 @@ func TestConstantText(t *testing.T) {
 		t.Errorf("no-constant text = %q, want empty", got)
 	}
 }
+
+// TestConstantPerCount covers a constant ability whose bonus scales with a
+// running count, both in its printed text and in the power it produces.
+func TestConstantPerCount(t *testing.T) {
+	def := NewCard(
+		"Mushroom Man",
+		Untamed,
+		Creature,
+		Uncommon,
+		WithPower(2),
+		WithConstantAbility(ConstantAbility{
+			PowerBonus: 3,
+			Target:     Target{Kind: TargetThisCreature},
+			Per:        UnforgedKeys{Player: Controller},
+		}),
+	)
+	want := "Mushroom Man gains +3 power for each unforged key you have."
+	if got := constantText(&def); got != want {
+		t.Errorf("constant text = %q, want %q", got, want)
+	}
+	if got := (UnforgedKeys{Player: Opponent}).CountText(); got != "unforged key your opponent has" {
+		t.Errorf("opponent count text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	id := g.AddToBattleline(def, 0)
+	if got := g.Power(id); got != 11 {
+		t.Errorf("power with no keys forged = %d, want 11", got)
+	}
+	g.ManualForgeKey(0)
+	if got := g.Power(id); got != 8 {
+		t.Errorf("power with one key forged = %d, want 8", got)
+	}
+
+	// AemberOnThis reads the Æmber sitting on the source card.
+	onThis := AemberOnThis{}
+	if got := onThis.CountText(); got != "Æmber on it" {
+		t.Errorf("AemberOnThis count text = %q", got)
+	}
+	g.AddAmberOn(id, 2)
+	if got := onThis.Value(&EffectContext{Resolver: g, Source: id, Controller: 0}); got != 2 {
+		t.Errorf("AemberOnThis value = %d, want 2", got)
+	}
+}
