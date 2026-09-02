@@ -20,8 +20,15 @@ const (
 	Sanctum
 	Shadows
 	Untamed
-	// NumHouses is the number of house enum slots, including HouseNone, so house-
-	// indexed state arrays can use a flat fixed size.
+	// SelfHouse is the sentinel a card uses to name its own house instead of
+	// spelling it out: Battle Fleet, a Mars card, reveals SelfHouse cards. NewCard
+	// substitutes the card's house for it when the definition is built (see
+	// self_house.go), so the sentinel never reaches text, resolution, or state —
+	// and the printed house can never drift from the house on the card.
+	SelfHouse
+	// NumHouses is the number of house slots a card can actually occupy: HouseNone
+	// through Untamed, but not SelfHouse, which is resolved away when the card is
+	// built and so never indexes state.
 	NumHouses = int(Untamed) + 1
 )
 
@@ -32,6 +39,9 @@ var houseNames = [...]string{
 
 // String returns the printed house name.
 func (h House) String() string {
+	if h == SelfHouse {
+		return "this card's house"
+	}
 	if int(h) < len(houseNames) {
 		return houseNames[h]
 	}
@@ -114,6 +124,21 @@ var cardTypeNames = map[CardType]string{
 
 // String renders the type as its printed word.
 func (t CardType) String() string { return cardTypeNames[t] }
+
+// reacts reports whether a filter of this type matches a card of type other.
+// TypeUnset matches everything, AnyType matches the two types that stay in play
+// under their own name (a creature or an artifact), and a named type matches only
+// itself.
+func (t CardType) reacts(other CardType) bool {
+	switch t {
+	case TypeUnset:
+		return true
+	case AnyType:
+		return other == Creature || other == Artifact
+	default:
+		return other == t
+	}
+}
 
 // Trait is a flavor/type label printed on a card (e.g. "Giant", "Weapon").
 // Traits carry no inherent rules meaning on their own; other cards reference them.

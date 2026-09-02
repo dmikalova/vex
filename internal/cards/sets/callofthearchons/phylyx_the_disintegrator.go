@@ -25,7 +25,7 @@ var PhylyxTheDisintegrator = card.New("Phylyx the Disintegrator",
 			Per: card.InPlay{
 				Player: card.Controller,
 				Type:   card.Type.Creature,
-				House:  card.House.Mars,
+				House:  card.House.Self,
 				Other:  true,
 			},
 		}),

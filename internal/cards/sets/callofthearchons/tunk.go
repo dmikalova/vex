@@ -21,7 +21,7 @@ var Tunk = card.New(
 	card.WithTraits("Robot"),
 	card.WithAbility(card.Trigger.AfterCardPlayed, card.Conditional{
 		Cond: card.ItIs{
-			House: card.House.Mars,
+			House: card.House.Self,
 			Type:  card.Type.Creature,
 		},
 		Then: card.Heal{

@@ -26,7 +26,7 @@ var RedPlanetRayGun = card.New(
 				Per: card.InPlay{
 					Player: card.EachPlayer,
 					Type:   card.Type.Creature,
-					House:  card.House.Mars,
+					House:  card.House.Self,
 				},
 			},
 		}},

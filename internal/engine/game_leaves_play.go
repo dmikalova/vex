@@ -60,6 +60,8 @@ func (g *Game) removeFromPlay(id LocalID) {
 		g.State.Battleline[p].remove(id)
 		g.State.Artifacts[p].remove(id)
 	}
+	// The card may have been buffing the power of what it leaves behind.
+	g.settleDestroyed(g.State.ActivePlayer)
 }
 
 // emitLeavesPlay fires a card's "Leaves Play:" abilities while it is still on the
@@ -249,8 +251,20 @@ func (g *Game) pickDestroyedAbility(controller int, pending []triggeredAbility, 
 // timing), letting the controller order how their "Destroyed:" abilities resolve.
 // An id that is an attached Upgrade is detached and discarded instead — that is how
 // "destroy this Upgrade" (Armageddon Cloak destroying itself) resolves through the
-// ordinary Destroy effect. Callers pass a snapshot of distinct ids.
+// ordinary Destroy effect. Callers pass a snapshot of distinct ids. Once the batch
+// is done the board is settled, since the dead may have been buffing the living.
 func (g *Game) destroyEach(controller int, ids []LocalID) {
+	g.destroyBatch(controller, ids)
+	g.settleDestroyed(controller)
+}
+
+// destroyBatch is one simultaneous destruction, with no state-based sweep after
+// it. It holds the settling flag for its duration so the leave-play of each card
+// in the batch does not trigger a sweep mid-batch.
+func (g *Game) destroyBatch(controller int, ids []LocalID) {
+	was := g.settling
+	g.settling = true
+	defer func() { g.settling = was }()
 	var creatures []LocalID
 	for _, id := range ids {
 		if _, ok := g.hostOf(id); ok {

@@ -1,6 +1,10 @@
 package engine
 
-import "strings"
+import (
+	"fmt"
+	"slices"
+	"strings"
+)
 
 // Some abilities have you choose a single creature and then do one or more things
 // to it — "Ready and fight with a friendly creature." OnChooseCreature models
@@ -148,6 +152,21 @@ func (e OnChooseCreature) applyTo(ctx *EffectContext, ids []LocalID) bool {
 	return len(ids) > 0
 }
 
+// applyToChosen is one declinable pass that skips the creatures already spent,
+// returning the ones it acted on. It is how OneAtATime keeps each pass on a
+// different creature without the Target itself having to know about the others.
+func (e OnChooseCreature) applyToChosen(ctx *EffectContext, spent []LocalID) []LocalID {
+	actionable := e.actionable(ctx)
+	ids := e.Target.selectWith(ctx, true, func(id LocalID) bool {
+		if slices.Contains(spent, id) {
+			return false
+		}
+		return actionable == nil || actionable(id)
+	})
+	e.applyTo(ctx, ids)
+	return ids
+}
+
 // UseVerb uses the chosen creature. The controller picks how to use it — reap,
 // fight, or its "Action:" ability — and that use resolves completely, nesting any
 // further uses it triggers, before control returns. This is "Use a friendly
@@ -213,4 +232,62 @@ func (ExhaustVerb) VerbText() string { return "exhaust" }
 // Apply exhausts the creature.
 func (ExhaustVerb) Apply(ctx *EffectContext, target LocalID) {
 	ctx.Resolver.SetExhausted(target, true)
+}
+
+// OneAtATime repeats a chosen-creature action several passes over, each pass on
+// a creature no earlier pass took — Relentless Assault readies and fights with
+// up to 3 different friendly creatures, one at a time. Each pass resolves fully
+// (including any fight it triggers) before the next choice is offered, which is
+// what "one at a time" means: the controller sees the board each pass and may
+// stop early by declining.
+type OneAtATime struct {
+	// Times is how many passes the controller may take at most.
+	Times  int
+	Target Target
+	Verbs  []CreatureVerb
+}
+
+// validate requires an explicit target and a positive number of passes.
+func (e OneAtATime) validate() error {
+	if !e.Target.valid() {
+		return errUnsetTarget("OneAtATime")
+	}
+	if e.Times <= 0 {
+		return fmt.Errorf("OneAtATime: Times must be positive")
+	}
+	return nil
+}
+
+// each is the single pass this effect repeats.
+func (e OneAtATime) each() OnChooseCreature {
+	return OnChooseCreature{Target: e.Target, Verbs: e.Verbs}
+}
+
+// Text renders the effect, e.g.
+// "ready and fight with up to 3 different friendly creatures, one at a time".
+func (e OneAtATime) Text() string {
+	verbs := make([]string, 0, len(e.Verbs))
+	for _, v := range e.Verbs {
+		verbs = append(verbs, v.VerbText())
+	}
+	return fmt.Sprintf(
+		"%s up to %d different %ss, one at a time",
+		strings.Join(verbs, " and "),
+		e.Times,
+		singularNoun(e.Target.Text()),
+	)
+}
+
+// Resolve takes up to Times passes, stopping as soon as a pass acts on nobody —
+// the pool ran dry or the controller declined.
+func (e OneAtATime) Resolve(ctx *EffectContext) {
+	pass := e.each()
+	var used []LocalID
+	for range e.Times {
+		chosen := pass.applyToChosen(ctx, used)
+		if len(chosen) == 0 {
+			return
+		}
+		used = append(used, chosen...)
+	}
 }

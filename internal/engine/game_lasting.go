@@ -57,13 +57,19 @@ const (
 	// by the forger) survives the arming turn and fires during the forger's next
 	// turn — the "during your opponent's next turn" window (Interdimensional Graft).
 	EventForgeKey
+	// EventCardEntersPlay fires after the controller plays a card that stays in play
+	// under its own name — a creature or an artifact (a reaction point). It is the
+	// window "the next creature/artifact you play" effects arm, so they can reach an
+	// artifact too, which EventCreaturePlayed cannot.
+	EventCardEntersPlay
 )
 
 // isReaction reports whether the event is a reaction point (fired after) rather
 // than a replacement point (queried during).
 func (e Event) isReaction() bool {
 	return e == EventCreaturePlayed || e == EventReap || e == EventFight ||
-		e == EventEnemyCreatureDestroyed || e == EventForgeKey
+		e == EventEnemyCreatureDestroyed || e == EventForgeKey ||
+		e == EventCardEntersPlay
 }
 
 // clause renders the "when" phrase for a reaction, e.g. "each time you play a
@@ -129,6 +135,11 @@ type LastingEffect struct {
 	// House, when set, limits a reaction to a subject of that house (Blypyp readies
 	// only Mars creatures). HouseNone (the zero value) reacts to any subject.
 	House House
+	// Type, when set, limits a reaction to a subject of that card type (Soft Landing
+	// readies the next creature or artifact, not the next upgrade). TypeUnset (the
+	// zero value) reacts to any type, and AnyType means "creature or artifact" — the
+	// two types that stay in play under their own name.
+	Type CardType
 	// Once removes the record after it fires a single time — "the next" rather than
 	// "each time".
 	Once bool
@@ -147,9 +158,11 @@ func (g *Game) AddLasting(on Event, do lastingAction, controller, amount int) {
 }
 
 // AddLastingOnce registers a one-shot reaction that fires the next time its event
-// occurs — and, when house is set, only for a subject of that house — then removes
-// itself (Blypyp readying the next Mars creature you play).
-func (g *Game) AddLastingOnce(on Event, do lastingAction, controller, amount int, house House) {
+// occurs — and, when house or cardType is set, only for a subject matching them —
+// then removes itself (Blypyp readying the next Mars creature you play).
+func (g *Game) AddLastingOnce(
+	on Event, do lastingAction, controller, amount int, house House, cardType CardType,
+) {
 	g.addLasting(
 		LastingEffect{
 			On:         on,
@@ -157,6 +170,7 @@ func (g *Game) AddLastingOnce(on Event, do lastingAction, controller, amount int
 			Controller: int8(controller),
 			Amount:     int8(amount),
 			House:      house,
+			Type:       cardType,
 			Once:       true,
 		},
 	)
@@ -200,6 +214,9 @@ func (g *Game) emitLasting(event Event, actor int, subject LocalID) {
 			continue
 		}
 		if le.House != HouseNone && g.cat.def(subject).House != le.House {
+			continue
+		}
+		if le.Type != TypeUnset && !le.Type.reacts(g.cat.def(subject).Type) {
 			continue
 		}
 		pending = append(pending, le)

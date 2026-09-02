@@ -354,6 +354,26 @@ X>", where passing is always allowed even when a legal target exists — the
 distinction that keeps Chuff Ape's "you may destroy another friendly creature"
 from ever being forced.
 
+### Name a House
+
+NameHouse remembers the house a surrounding ChooseHouseThen picked on the source
+card, where it stays for as long as that card is in play. It is the writer half
+of a HouseLock whose house is not printed but named: Restringuntus chooses a
+house on play and bars its opponent from it until it leaves play. Player names
+whose choice the lock will constrain, and must match the card's HouseLock.
+
+### Play a Card from Hand
+
+PlayFromHand has the controller play a card from their own hand right now,
+ignoring the active-house gate — Phase Shift's off-house card. House and Type
+narrow which cards may be chosen; Except inverts the house filter, so House names
+the house that may *not* be played ("a non-Logos card").
+
+KeyForge prints this as a permission held open for the rest of the turn ("you may
+play one non-Logos card this turn"); it is rendered and resolved as an immediate
+play instead, which needs no turn-scoped memory of an unspent allowance (see
+card-wording-rules.md rule 21). With no legal card in hand it does nothing.
+
 ### Power Counter
 
 A +1 power counter is a permanent token placed on a creature that raises its
@@ -517,7 +537,9 @@ WithSpendableAember, which is what makes the bank worth filling.
 - [Leaves Play](#leaves-play)
 - [Lose Aember](#lose-aember)
 - [May](#may)
+- [Name a House](#name-a-house)
 - [Play](#play)
+- [Play a Card from Hand](#play-a-card-from-hand)
 - [Poison](#poison)
 - [Power Counter](#power-counter)
 - [Purge](#purge)

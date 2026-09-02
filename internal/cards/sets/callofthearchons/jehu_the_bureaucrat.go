@@ -21,7 +21,7 @@ var JehuTheBureaucrat = card.New(
 	card.WithTraits("Human"),
 	card.WithAbility(
 		card.Trigger.AfterChooseHouse, card.Conditional{
-			Cond: card.ChoseHouse{House: card.House.Sanctum},
+			Cond: card.ChoseHouse{House: card.House.Self},
 			Then: card.GainAember{Player: card.Controller, Amount: 2},
 		}),
 )

@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// RelentlessAssault
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Relentless Assault
 //
 //	House:  Brobnar
 //	Type:   Tactic
@@ -20,5 +15,10 @@ var RelentlessAssault = card.New(
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 13),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.OneAtATime{
+			Times:  3,
+			Target: card.Target.FriendlyCreature,
+			Verbs:  []card.CreatureVerb{card.ReadyVerb{}, card.FightVerb{}},
+		}),
 )

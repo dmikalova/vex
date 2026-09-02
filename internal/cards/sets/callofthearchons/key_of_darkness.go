@@ -1,24 +1,27 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// KeyOfDarkness
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Key of Darkness
 //
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Forge a key at +6 Aember current cost. If your opponent has no Aember, forge a key at +2 Aember current cost instead.
+//	Play: Forge a key at +6 Æmber current cost. If your opponent has no Æmber, forge a key at +2 Æmber current cost instead.
 var KeyOfDarkness = card.New(
 	"Key of Darkness",
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 273),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Conditional{
+			Cond: card.OpponentAember{
+				Is:     card.Exactly,
+				Amount: 0,
+			},
+			Then: card.ForgeKey{Extra: 2},
+			Else: card.ForgeKey{Extra: 6},
+		}),
 )

@@ -407,3 +407,37 @@ func TestCardsPlayedCountsEveryHouseWhenUnset(t *testing.T) {
 		t.Errorf("house-filtered value = %d, want 1", got)
 	}
 }
+
+func TestFirstCreaturePlayedThisTurn(t *testing.T) {
+	cond := FirstCreaturePlayedThisTurn{}
+	if got := cond.CondText(); got != "if it is the first creature played this turn" {
+		t.Errorf("text = %q", got)
+	}
+
+	g := started(t)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	if cond.Met(ctx) {
+		t.Error("with no card in context the condition should not be met")
+	}
+
+	first := g.AddToHand(NewCard("First", Brobnar, Creature, Common, WithPower(2)), 0)
+	second := g.AddToHand(NewCard("Second", Brobnar, Creature, Common, WithPower(2)), 0)
+	tactic := g.AddToHand(NewCard("Warm Up", Brobnar, Tactic, Common), 0)
+
+	if err := g.PlayAction(0, handIdxByID(g, 0, tactic)); err != nil {
+		t.Fatalf("play tactic: %v", err)
+	}
+	if cond.Met(&EffectContext{Resolver: g, Controller: 0, It: first, HasIt: true}) {
+		t.Error("a creature that was not played should not meet the condition")
+	}
+
+	if _, err := g.PlayCreature(0, handIdxByID(g, 0, first), false); err != nil {
+		t.Fatalf("play first: %v", err)
+	}
+	if !cond.Met(&EffectContext{Resolver: g, Controller: 0, It: first, HasIt: true}) {
+		t.Error("the first creature played should meet the condition")
+	}
+	if cond.Met(&EffectContext{Resolver: g, Controller: 0, It: second, HasIt: true}) {
+		t.Error("a later creature should not meet the condition")
+	}
+}

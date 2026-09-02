@@ -333,6 +333,26 @@ It is also **slightly more interesting**: the reassignment sticks with the card
 with a card of a house they may not have. "A house on your identity" is one of the
 controller's three deck houses. (Affected: Sneklifter.)
 
+## 21. A deferred play permission becomes an immediate play
+
+Several cards grant a play that may be taken any time later in the turn — e.g.
+Phase Shift's printed _"Play: You may play one non-Logos card this turn."_ The
+`this turn` window is **dropped** and the play happens **immediately, as part of
+resolving the card**:
+
+> Play: Play a non-Logos card.
+
+The deferred form needs turn-scoped memory of an unused permission — a counter
+that must be armed, spent by an unrelated later play, and cleared at end of turn —
+plus a prompt on every subsequent play asking which allowance to spend. The
+immediate form needs none of that: the effect resolves, the player picks a card
+from hand, and it is played there and then.
+
+The general rule: **`... you may play an X card this turn` renders as `Play an X
+card`.** Both `you may` and `this turn` go — a play with no legal card in hand
+simply does nothing, so the permission needs no explicit opt-out. (Affected: Phase
+Shift, Kirby.)
+
 ---
 
 ## Deliberate rule changes (not just wording)
@@ -347,3 +367,5 @@ A few cards were changed in ways that affect the rules, not just phrasing — to
 - **Ganger Chieftain** / **Biomatrix Backup** made mandatory (dropped `you may`).
 - **Hypnotic Command** leans on the base rule that the **active player makes all
   decisions**, so `an enemy creature captures …` needs no explicit `choose`.
+- **Phase Shift** / **Kirby** play their off-house card **immediately** rather
+  than granting a permission for later in the turn (rule 21).

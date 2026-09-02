@@ -25,7 +25,7 @@ func TestEmitLastingOrders(t *testing.T) {
 
 func TestLastingOnceExpiresAtEndOfTurn(t *testing.T) {
 	g := started(t)
-	g.AddLastingOnce(EventCreaturePlayed, actReadyPlayed, 0, 0, Mars)
+	g.AddLastingOnce(EventCreaturePlayed, actReadyPlayed, 0, 0, Mars, Creature)
 	if g.State.LastingCount != 1 {
 		t.Fatalf("setup: lasting count = %d, want 1", g.State.LastingCount)
 	}
@@ -72,7 +72,7 @@ func TestLastingOnceReadiesMatchingHouseAndSelfRemoves(t *testing.T) {
 	g.State.Cards[mars].Exhausted = true
 	g.State.Cards[sanc].Exhausted = true
 
-	g.AddLastingOnce(EventCreaturePlayed, actReadyPlayed, 0, 0, Mars)
+	g.AddLastingOnce(EventCreaturePlayed, actReadyPlayed, 0, 0, Mars, Creature)
 
 	// A non-Mars subject is filtered out: not readied, and the entry stays armed.
 	g.emitLasting(EventCreaturePlayed, 0, sanc)
@@ -93,6 +93,32 @@ func TestLastingOnceReadiesMatchingHouseAndSelfRemoves(t *testing.T) {
 	}
 }
 
+// TestLastingOnceFiltersByCardType covers the type filter a "next creature or
+// artifact" entry carries (Soft Landing): an upgrade play is passed over, while a
+// creature and an artifact both satisfy it.
+func TestLastingOnceFiltersByCardType(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	up := g.Register(NewCard("u", Mars, Upgrade, Common), 0)
+	artifact := g.Register(NewCard("a", Mars, Artifact, Common), 0)
+	g.State.Artifacts[0].add(artifact)
+	g.State.Cards[artifact].Exhausted = true
+
+	g.AddLastingOnce(EventCardEntersPlay, actReadyPlayed, 0, 0, HouseNone, AnyType)
+
+	g.emitLasting(EventCardEntersPlay, 0, up)
+	if g.State.LastingCount != 1 {
+		t.Errorf("an upgrade should not satisfy the entry, count = %d", g.State.LastingCount)
+	}
+
+	g.emitLasting(EventCardEntersPlay, 0, artifact)
+	if g.State.Cards[artifact].Exhausted {
+		t.Error("the artifact should enter ready")
+	}
+	if g.State.LastingCount != 0 {
+		t.Errorf("the one-shot entry should be removed, count = %d", g.State.LastingCount)
+	}
+}
+
 func TestLastingOnceOrdersWithPersistentReaction(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	mars := g.AddToBattleline(NewCard("m", Mars, Creature, Common, WithPower(2)), 0)
@@ -101,7 +127,7 @@ func TestLastingOnceOrdersWithPersistentReaction(t *testing.T) {
 	// The one-shot sits between two persistent reactions, so removing it scans past
 	// the first and shifts the last down.
 	g.AddLasting(EventCreaturePlayed, actGainAember, 0, 1)
-	g.AddLastingOnce(EventCreaturePlayed, actReadyPlayed, 0, 0, Mars)
+	g.AddLastingOnce(EventCreaturePlayed, actReadyPlayed, 0, 0, Mars, Creature)
 	g.AddLasting(EventCreaturePlayed, actGainAember, 0, 1)
 
 	g.emitLasting(EventCreaturePlayed, 0, mars) // three reactions fire; ordering path runs

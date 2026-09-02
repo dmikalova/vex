@@ -33,7 +33,7 @@ var YxiliMarauder = card.New(
 			Per: card.InPlay{
 				Player: card.Controller,
 				Type:   card.Type.Creature,
-				House:  card.House.Mars,
+				House:  card.House.Self,
 				Ready:  true,
 			},
 		}),

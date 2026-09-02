@@ -21,6 +21,7 @@ var (
 	ErrCannotPayToll         = errors.New("cannot pay the toll for this action")
 	ErrPlayRequirement       = errors.New("not enough Æmber to play this card")
 	ErrMustChooseForcedHouse = errors.New("must choose the forced active house this turn")
+	ErrHouseLocked           = errors.New("a card in play locks the active house choice")
 	ErrCannotUse             = errors.New("card's use condition is not met")
 )
 
@@ -58,6 +59,8 @@ func (g *Game) BeginTurn(player int) {
 	g.State.ForcedHouseNext[player] = Bar[House]{}
 	g.State.SkipForge[player] = g.State.SkipForgeNext[player]
 	g.State.SkipForgeNext[player] = Bar[bool]{}
+	g.State.KeyCostBump[player] = g.State.KeyCostBumpNext[player]
+	g.State.KeyCostBumpNext[player] = Bar[int]{}
 	g.logf("--- %s begins turn %d ---", g.names[player], g.State.Turn)
 	if g.State.SkipForge[player].Value {
 		g.logf("%s skips their forge a key step", g.names[player])
@@ -86,6 +89,9 @@ func (g *Game) ChooseHouse(player int, house House) error {
 		house != fh &&
 		g.playerHasHouse(player, fh) {
 		return ErrMustChooseForcedHouse
+	}
+	if !g.houseLockAllows(player, house) {
+		return ErrHouseLocked
 	}
 	g.State.ActiveHouse = house
 	g.logf("%s chooses house %s", g.names[player], house)
@@ -151,8 +157,11 @@ func (g *Game) EndTurn(player int) {
 	g.State.MayFightHouse[player] = HouseNone
 	g.State.MayFightAny[player] = false
 	g.State.MayUseHouse[player] = HouseNone
+	g.State.KeyCostBump[player] = Bar[int]{}
 	g.State.KeywordsLost = 0
 	g.clearLasting(player)
+	// A power buff that lasted only the turn has just expired.
+	g.settleDestroyed(player)
 	g.drawStep(player)
 	g.logf("%s ends their turn", g.names[player])
 	g.assertInvariants()
@@ -223,6 +232,24 @@ func (g *Game) SkipForgeStepNextTurn(player int, source LocalID) {
 	g.State.SkipForgeNext[player] = Bar[bool]{Value: true, Source: source}
 }
 
+// RaiseKeyCostNextTurn raises what a player's keys cost throughout their next turn
+// (Lash of Broken Dreams). Successive raises stack.
+func (g *Game) RaiseKeyCostNextTurn(player, amount int, source LocalID) {
+	g.State.KeyCostBumpNext[player] = Bar[int]{
+		Value:  g.State.KeyCostBumpNext[player].Value + amount,
+		Source: source,
+	}
+}
+
+// RaiseKeyCostThisTurn raises what a player's keys cost for the remainder of the
+// current turn. Successive raises stack.
+func (g *Game) RaiseKeyCostThisTurn(player, amount int, source LocalID) {
+	g.State.KeyCostBump[player] = Bar[int]{
+		Value:  g.State.KeyCostBump[player].Value + amount,
+		Source: source,
+	}
+}
+
 // GrantFightForHouse lets a player use creatures of house h to fight this turn
 // even when h is not the active house. EndTurn clears the grant.
 func (g *Game) GrantFightForHouse(player int, h House) {
@@ -274,6 +301,9 @@ func (g *Game) RestrictionSources(player int) []LocalID {
 	if g.State.SkipForge[player].Value {
 		name(g.State.SkipForge[player].Source)
 	}
+	if g.State.KeyCostBump[player].Value != 0 {
+		name(g.State.KeyCostBump[player].Source)
+	}
 	return out
 }
 
@@ -287,7 +317,13 @@ func (g *Game) RestrictionSources(player int) []LocalID {
 // it and firing "after you forge a key" abilities. BeginTurn forges at most one
 // key at the start of a turn; cards may forge one more via the ForgeKey effect.
 func (g *Game) forgeKey(player int) {
-	cost := g.keyCost(player)
+	g.forgeKeyAtExtraCost(player, 0)
+}
+
+// forgeKeyAtExtraCost forges one key at the current cost plus a surcharge for
+// this forge alone, doing nothing when the player cannot afford the total.
+func (g *Game) forgeKeyAtExtraCost(player, extra int) {
+	cost := g.keyCost(player) + extra
 	if g.spendableAember(player) < cost {
 		return
 	}
@@ -357,6 +393,8 @@ func (g *Game) finishForgeKey(player int, color KeyColor, hasColor bool) {
 		g.triggerAbilities(id, TriggerAfterForgeKey, 0, false)
 	}
 	g.emitLasting(EventForgeKey, player, 0)
+	// Forging changes the unforged-key count some creatures draw their power from.
+	g.settleDestroyed(player)
 	if g.State.Keys[player] >= KeysToWin {
 		g.State.Winner = player
 		g.logf("%s wins the game!", g.names[player])

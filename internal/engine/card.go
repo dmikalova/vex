@@ -67,6 +67,11 @@ type CardDefinition struct {
 	// keys cost +1 Æmber"). The zero value changes nothing.
 	KeyCostChange KeyCostChange
 
+	// HouseLock is a continuous constraint this card, while in play, puts on a
+	// player's active-house choice — Pitlord's "you must choose Dis", Restringuntus'
+	// bar on the house it named. The zero value constrains nobody.
+	HouseLock HouseLock
+
 	// PlayPermission is a continuous grant this card makes while in play, letting
 	// its controller play cards of a house on turns where that house is not their
 	// active house (Witch of the Wilds). The zero value grants nothing.
@@ -195,6 +200,17 @@ func (kc KeyCostChange) Per(c Count) KeyCostChange {
 // WhileOnFlank applies the change only while the source card is on a flank.
 func (kc KeyCostChange) WhileOnFlank() KeyCostChange {
 	kc.whileOnFlank = true
+	return kc
+}
+
+// selfHouseResolved fills the card's own house in for any SelfHouse sentinel the
+// scaling count names (Iron Obelisk counts its own house's damaged creatures). A
+// key-cost change keeps that count unexported, so it resolves itself rather than
+// being rewritten by reflection (see self_house.go).
+func (kc KeyCostChange) selfHouseResolved(house House) any {
+	if kc.per != nil {
+		kc.per = resolvedIn(kc.per, house)
+	}
 	return kc
 }
 
@@ -349,6 +365,7 @@ func NewCard(
 	for _, opt := range opts {
 		opt(&c)
 	}
+	c = resolveSelfHouse(c)
 	for _, ab := range c.Abilities {
 		if !ab.Trigger.valid() {
 			panic(fmt.Sprintf("card %q: an ability has no trigger set", name))
@@ -456,6 +473,12 @@ func WithConstantAbility(c ConstantAbility) CardOption {
 // controller while it is in play.
 func WithRestrictions(r Restrictions) CardOption {
 	return func(c *CardDefinition) { c.Restricts = r }
+}
+
+// WithHouseLock sets the continuous constraint a card puts on a player's
+// active-house choice while it is in play.
+func WithHouseLock(l HouseLock) CardOption {
+	return func(c *CardDefinition) { c.HouseLock = l }
 }
 
 // WithKeyCost makes the card, while in play, impose the given key-cost change (who

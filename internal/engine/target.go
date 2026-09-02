@@ -180,6 +180,22 @@ func (t Target) OfContextualHouse() Target {
 	return t
 }
 
+// selfHouseResolved fills the card's own house in for any SelfHouse sentinel the
+// target narrows on. A Target keeps its houses and selector unexported, so it
+// resolves itself rather than being rewritten by reflection (see self_house.go).
+func (t Target) selfHouseResolved(house House) any {
+	if t.house == SelfHouse {
+		t.house = house
+	}
+	if t.exceptHouse == SelfHouse {
+		t.exceptHouse = house
+	}
+	if t.selector != nil {
+		t.selector = resolvedIn(t.selector, house)
+	}
+	return t
+}
+
 // SharingTrait narrows the target to cards that share at least one trait with the
 // card in context (ctx.It), rendering "that shares a trait with it" — the purged
 // creature after PurgeCreatureFromHand (Custom Virus), or whatever an earlier

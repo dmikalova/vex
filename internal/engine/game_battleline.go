@@ -13,6 +13,8 @@ func (g *Game) SwapBattlelinePositions(a, b LocalID) {
 		}
 		line.IDs[ai], line.IDs[bi] = line.IDs[bi], line.IDs[ai]
 		g.logf("%s swaps positions with %s", g.Name(a), g.Name(b))
+		// A power bonus that only reaches a flank may have moved off one of them.
+		g.settleDestroyed(player)
 		return
 	}
 }

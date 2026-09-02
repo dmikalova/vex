@@ -22,7 +22,7 @@ var Mothergun = card.New(
 			Effects: []card.Effect{
 				card.RevealHand{
 					Player: card.Controller,
-					House:  card.House.Mars,
+					House:  card.House.Self,
 				},
 				card.DealDamage{
 					Amount: 1,

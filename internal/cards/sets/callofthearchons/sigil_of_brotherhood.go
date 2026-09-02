@@ -23,6 +23,6 @@ var SigilOfBrotherhood = card.New(
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(card.Trigger.Action, card.Sequence{Effects: []card.Effect{
 		card.Sentence{Effect: card.Destroy{Target: card.Target.This}},
-		card.Sentence{Effect: card.MayUseFriendlyHouse{House: card.House.Sanctum}},
+		card.Sentence{Effect: card.MayUseFriendlyHouse{House: card.House.Self}},
 	}}),
 )

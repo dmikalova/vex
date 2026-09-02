@@ -99,9 +99,11 @@ type Produced struct {
 	// Revealed is how many cards the most recent Reveal showed, read by a
 	// CardsRevealed count in a following effect of the same resolution.
 	Revealed int
-	// Destroyed is how many cards the most recent context-driven destruction removed,
-	// read by a CardsDestroyedFewerThan condition later in the same resolution.
-	Destroyed int
+	// Destroyed[p] is how many cards player p controlled that this resolution has
+	// destroyed, read whole by CardsDestroyed / CardsDestroyedFewerThan and per
+	// side by CreaturesDestroyedThisWay (Hecatomb pays each player for their
+	// own dead).
+	Destroyed [2]int
 	// Purged is how many cards the most recent purge removed, read by a CardsPurged
 	// count in a following effect of the same resolution (One Last Job steals for
 	// each creature it purged).
@@ -110,7 +112,15 @@ type Produced struct {
 	// following ForEachDiscarded that acts on each (Bonkers Killing Machine
 	// destroys a creature or artifact of each discarded card's house).
 	Discarded []LocalID
+	// Moved[p] is how many cards player p controlled that a PutFromPlay took out of
+	// play — sent home rather than destroyed — this resolution, read by
+	// CreaturesShuffledIntoDeckThisWay (Mating Season).
+	Moved [2]int
 }
+
+// TotalDestroyed is how many cards this resolution has destroyed, both sides
+// together.
+func (p Produced) TotalDestroyed() int { return p.Destroyed[0] + p.Destroyed[1] }
 
 // Opponent returns the absolute index of the controller's opponent.
 func (ctx *EffectContext) Opponent() int { return 1 - ctx.Controller }

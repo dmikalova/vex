@@ -19,6 +19,15 @@ comment/rulebook generation, golines), so use them:
 - `mage gen` — regenerate card comments and the rulebook.
 - `mage check` — the full green gate (fmt-check, build, vet, test, coverage);
   run this before considering work done. It must print `ALL GREEN`.
+- `mage debug` — replay a simulated game with the game log on and print the log
+  tail next to the invariant violation that ended it. With no `SCRIPT` it finds
+  the first failing game in the fixed-seed property batch `mage test` plays; set
+  `SCRIPT` to the hex a failure printed to replay that one, and `TAIL` to widen
+  the log.
+- `mage corpusPrune` — replay every entry in `FuzzPlay`'s seed corpus and rewrite
+  it as one minimized entry per bug that still reproduces, dropping the entries
+  whose bug is fixed. The corpus is the list of open findings, not an archive of
+  every script a soak ever saw; run this after fixing a soak or fuzz find.
 
 When you add or update a mage target that writes a binary, keep the output in an
 ignored location (for example `./bin`) or update `.gitignore` accordingly.
@@ -69,6 +78,16 @@ vet, or tests fail because of a change you did **not** make — an unfamiliar fi
 a symbol you never touched, an in-progress edit that doesn't yet compile — assume
 another agent is mid-change. Wait a little and try again rather than "fixing" or
 reverting their work. Only act on failures that stem from your own changes.
+
+## Leave git alone
+
+Do not perform or propose git operations. Do not stage, commit, amend, branch,
+tag, push, or pull, and do not end a reply by offering to commit or asking
+whether the work should be committed — the human handles all of that. The only
+exception is when you are explicitly asked to run a specific git command.
+
+Read-only inspection (`git status`, `git diff`, `git log`) is fine when you
+genuinely need it to answer a question.
 
 ## Never delete a failing test to get to green
 

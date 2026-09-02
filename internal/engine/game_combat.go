@@ -90,7 +90,11 @@ func (g *Game) fight(attacker, defender LocalID) {
 			g.dealDamage(g.controller(attacker), targets...)
 		}
 	}
-	g.triggerAbilities(attacker, TriggerAfterFight, 0, false)
+	// A creature the fight destroyed has left play, so its "After Fight:" ability
+	// does not resolve — and must not, since its per-match state is already gone.
+	if g.inPlay(attacker) {
+		g.triggerAbilities(attacker, TriggerAfterFight, 0, false)
+	}
 
 	// "After a creature is destroyed fighting X": when exactly one combatant is
 	// removed by the fight, the survivor's ability fires with the destroyed
@@ -125,7 +129,12 @@ func (g *Game) spendElusive(attacker, defender LocalID) bool {
 		g.State.Cards[defender].ElusiveUsedThisTurn {
 		return false
 	}
-	g.State.Cards[defender].ElusiveUsedThisTurn = true
+	// The pre-fight sequence may already have removed the defender, and a card out
+	// of play has had its per-match state zeroed — marking it would strand the flag
+	// there and make the creature arrive back in play with its elusive spent.
+	if g.inPlay(defender) {
+		g.State.Cards[defender].ElusiveUsedThisTurn = true
+	}
 	return true
 }
 
@@ -183,6 +192,11 @@ func (g *Game) fightDamage(attacker, defender LocalID) int {
 // which this is the per-creature step.
 func (g *Game) applyRawDamage(id LocalID, amount int, ignoreArmor bool) {
 	if amount <= 0 {
+		return
+	}
+	// A creature an earlier step already removed can still be named by a batch or by
+	// a trigger's "it", and damage dealt to it now would sit on a card in hand.
+	if !g.inPlay(id) {
 		return
 	}
 	core := &g.State.Cards[id]

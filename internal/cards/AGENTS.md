@@ -107,6 +107,37 @@ to seed it. `card.New(...)`:
 Run `mage fmt` after editing (golines aligns the fields; it does not add the line
 breaks, so the one-field-per-line layout above is the author's responsibility).
 
+## A card that names its own house writes `card.House.Self`
+
+Most cards that name a house name their own: Battle Fleet (Mars) reveals Mars
+cards, Pitlord (Dis) locks you into Dis, Witch of the Wilds (Untamed) lets you
+play an Untamed card off-house. Spelling that house out a second time lets the
+two drift and doesn't work for Mavericks, so the ability names `card.House.Self`
+and `card.New` fills the card's own house in when the definition is built:
+
+```go
+var WitchOfTheWilds = card.New(
+  "Witch of the Wilds",
+  card.House.Untamed,
+  ...
+  card.WithPlayPermission(card.PlayPermission{House: card.House.Self, Count: 1}),
+)
+```
+
+The sentinel never survives past `card.New`, so the printed text, resolution, and
+state all see the concrete house — the generated comment still reads "one Untamed
+card".
+
+The test is what the card is _about_, not which house it happens to print. Take
+That, Smarty Pants names Logos because it is about Logos creatures, whichever
+house the card itself belongs to — that house is written out. So:
+
+- **Named house == the card's own house?** Use `card.House.Self`.
+- **Named house is a different house** (or the card would still say "Logos" if it
+  were reprinted in another house)? Write the house out.
+
+When you touch a card that hardcodes its own house, convert it.
+
 ## Wording rules
 
 The generated comment is the card's printed text, produced by the effect AST's

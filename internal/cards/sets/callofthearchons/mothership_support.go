@@ -19,7 +19,7 @@ var MothershipSupport = card.New("Mothership Support",
 			Times: card.InPlay{
 				Player: card.Controller,
 				Type:   card.Type.Creature,
-				House:  card.House.Mars,
+				House:  card.House.Self,
 				Ready:  true,
 			},
 			Do: card.DealDamage{

@@ -166,7 +166,7 @@ func (g *game) keyCostSeg(player int) app.UI {
 func (g *game) hoverPreview() app.UI {
 	var card app.UI
 	switch {
-	case g.hasHover:
+	case g.hoverLive():
 		def := g.g.Def(g.hoverID)
 		house := g.g.House(g.hoverID)
 		card = &cardView{

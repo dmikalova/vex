@@ -18,13 +18,13 @@ var BrainStemAntenna = card.New(
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{
 			{Trigger: card.Trigger.AfterCardPlayed, Effect: card.Conditional{
-				Cond: card.ItIs{House: card.House.Mars, Type: card.Type.Creature},
+				Cond: card.ItIs{House: card.House.Self, Type: card.Type.Creature},
 				Then: card.Sequence{
 					Effects: []card.Effect{
 						card.Ready{Target: card.Target.This},
 						card.BelongToHouse{
 							Target:   card.Target.This,
-							House:    card.House.Mars,
+							House:    card.House.Self,
 							Duration: card.Duration.EndOfTurn,
 						},
 					},

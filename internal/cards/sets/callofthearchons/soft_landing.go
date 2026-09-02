@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// SoftLanding
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Soft Landing
 //
 //	House:  Mars
 //	Type:   Tactic
@@ -20,5 +15,9 @@ var SoftLanding = card.New(
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 177),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.NextPlayed{
+			Type:       card.Type.Any,
+			EntersPlay: card.Ready{Target: card.Target.Triggering},
+		}),
 )

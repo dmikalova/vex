@@ -106,7 +106,7 @@ func TestInPlayReady(t *testing.T) {
 func TestCardsDestroyedCount(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-	ctx.Produced.Destroyed = 2
+	ctx.Produced.Destroyed = [2]int{2, 0}
 
 	c := CardsDestroyed{}
 	if got := c.CountText(); got != "card destroyed this way" {

@@ -145,6 +145,9 @@ type (
 	PlayRevealedCard = engine.PlayRevealedCard
 	// PlayTopOfDeck plays the top card of the controller's deck outright.
 	PlayTopOfDeck = engine.PlayTopOfDeck
+	// PlayFromHand plays a card the controller chooses from their hand, ignoring the
+	// active house. Set Except to make House the house that may not be played.
+	PlayFromHand = engine.PlayFromHand
 	// CancelFight makes the fight in progress not occur (a Before Fight effect).
 	CancelFight = engine.CancelFight
 	// RevealHand shows the cards in a player's hand to both players and records them.
@@ -155,6 +158,9 @@ type (
 type (
 	// OnChooseCreature picks a creature named by its Target and applies Verbs to it.
 	OnChooseCreature = engine.OnChooseCreature
+	// OneAtATime repeats a chosen-creature action over several different creatures,
+	// resolving each pass fully before offering the next choice.
+	OneAtATime = engine.OneAtATime
 	// ReadyVerb readies the chosen creature.
 	ReadyVerb = engine.ReadyVerb
 	// FightVerb makes the chosen creature fight an enemy creature.
@@ -212,6 +218,9 @@ type (
 	CountIs = engine.CountIs
 	// ControlsMoreCreatures is met while you control more creatures than the opponent.
 	ControlsMoreCreatures = engine.ControlsMoreCreatures
+	// FirstCreaturePlayedThisTurn is met when the card in context is the first
+	// creature played this turn — a once-per-turn charge (Speed Sigil).
+	FirstCreaturePlayedThisTurn = engine.FirstCreaturePlayedThisTurn
 	// Overwhelmed is met while the opponent controls more creatures than you.
 	Overwhelmed = engine.Overwhelmed
 	// ItIsOfHouse is met when the card in context belongs to a referenced house.
@@ -242,6 +251,8 @@ var (
 	TheActiveHouse = engine.TheActiveHouse
 	// TheContextualHouse is the house of the card in context (ctx.It).
 	TheContextualHouse = engine.TheContextualHouse
+	// AnyHouse applies no house filter at all.
+	AnyHouse = engine.AnyHouse
 )
 
 // Counts feed an effect's Per, scaling it by a board quantity; InPlay doubles as
@@ -271,6 +282,16 @@ type (
 	CardsDestroyed = engine.CardsDestroyed
 	// CardsPurged counts the creatures the most recent purge removed "this way".
 	CardsPurged = engine.CardsPurged
+
+	// CreaturesDestroyedThisWay counts the creatures its Player controlled that an
+	// earlier effect in this resolution destroyed. Under an EachPlayer effect,
+	// Player: Controller is each player's own dead; use CardsDestroyed for the
+	// whole tally.
+	CreaturesDestroyedThisWay = engine.CreaturesDestroyedThisWay
+
+	// CreaturesShuffledIntoDeckThisWay counts the creatures its Player controlled
+	// that an earlier effect in this resolution put back into a deck.
+	CreaturesShuffledIntoDeckThisWay = engine.CreaturesShuffledIntoDeckThisWay
 	// CardsInHand counts the cards in a player's hand of a referenced house.
 	CardsInHand = engine.CardsInHand
 	// CreaturesHealed counts the creatures the most recent Heal healed.
@@ -293,8 +314,8 @@ type (
 	Instead = engine.Instead
 	// Replace is a continuous replacement an Upgrade applies to a game event.
 	Replace = engine.Replace
-	// NextCreaturePlayed makes the next creature of a house you play do something.
-	NextCreaturePlayed = engine.NextCreaturePlayed
+	// NextPlayed makes the next creature of a house you play do something.
+	NextPlayed = engine.NextPlayed
 )
 
 // Houses, keys, chains, and restrictions.
@@ -317,12 +338,17 @@ type (
 	GrantFightAnyHouse = engine.GrantFightAnyHouse
 	// BelongToHouse makes the targeted creatures belong to a House for a Duration.
 	BelongToHouse = engine.BelongToHouse
+	// NameHouse remembers the house an enclosing ChooseHouseThen picked on this card,
+	// feeding the card's HouseLock for as long as it stays in play.
+	NameHouse = engine.NameHouse
 	// ForceOpponentActiveHouse forces the opponent's active house next turn.
 	ForceOpponentActiveHouse = engine.ForceOpponentActiveHouse
 	// ForgeKey has the controller forge a key outside the normal step.
 	ForgeKey = engine.ForgeKey
 	// UnforgeKey takes a forged key back off a player (Key Hammer).
 	UnforgeKey = engine.UnforgeKey
+	// RaiseKeyCost makes keys cost more throughout a player's next turn.
+	RaiseKeyCost = engine.RaiseKeyCost
 	// GiveRemainingAemberAfterOpponentForgeKey arms Interdimensional Graft's delayed gift.
 	GiveRemainingAemberAfterOpponentForgeKey = engine.GiveRemainingAemberAfterOpponentForgeKey
 	// GainChains gives a player chains (a draw penalty).

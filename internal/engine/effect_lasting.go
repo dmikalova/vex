@@ -1,6 +1,9 @@
 package engine
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // This file holds the authoring effects for lasting "for the remainder of the
 // turn" behavior: ForRemainderOfTurn installs a reaction (do something after an
@@ -150,39 +153,55 @@ func (e Instead) Resolve(ctx *EffectContext) {
 	ctx.Resolver.AddLasting(e.Of, e.With.action(), ctx.Controller, 0)
 }
 
-// NextCreaturePlayed makes the next creature of house Of its controller plays this
-// turn enter play with EntersPlay applied to it — Blypyp readying the next Mars
-// creature. It registers a one-shot reaction that applies the effect to that
-// creature and then removes itself; the turn's end clears it if no such creature is
-// played. EntersPlay must be an enter-play effect the flat registry can carry
-// (Ready).
-type NextCreaturePlayed struct {
+// NextPlayed makes the next card its controller plays this turn that matches its
+// filters enter play with EntersPlay applied to it — Blypyp readying the next Mars
+// creature, Soft Landing readying the next creature or artifact. It registers a
+// one-shot reaction that applies the effect to that card and then removes itself;
+// the turn's end clears it if no matching card is played. EntersPlay must be an
+// enter-play effect the flat registry can carry (Ready).
+//
+// Of narrows the card to one house, and is optional. Type narrows it to one card
+// type; AnyType means "creature or artifact", the two types that stay in play.
+type NextPlayed struct {
 	Of         House
+	Type       CardType
 	EntersPlay Effect
 }
 
-// validate rejects an EntersPlay effect the registry cannot carry.
-func (e NextCreaturePlayed) validate() error {
+// validate requires a card type and rejects an EntersPlay effect the registry
+// cannot carry.
+func (e NextPlayed) validate() error {
+	if e.Type == TypeUnset {
+		return fmt.Errorf("NextPlayed: type must be set")
+	}
 	if _, ok := enterActionOf(e.EntersPlay); !ok {
-		return fmt.Errorf("NextCreaturePlayed: unsupported EntersPlay %T", e.EntersPlay)
+		return fmt.Errorf("NextPlayed: unsupported EntersPlay %T", e.EntersPlay)
 	}
 	return validateEffect(e.EntersPlay)
 }
 
 // Text renders the effect, e.g. "the next Mars creature you play this turn enters
-// play ready".
-func (e NextCreaturePlayed) Text() string {
+// play ready" or "the next creature or artifact you play this turn enters play
+// ready".
+func (e NextPlayed) Text() string {
+	noun := "creature or artifact"
+	if e.Type != AnyType {
+		noun = strings.ToLower(e.Type.String())
+	}
+	if e.Of != HouseNone {
+		noun = e.Of.String() + " " + noun
+	}
 	return fmt.Sprintf(
-		"the next %s creature you play this turn enters play %s",
-		e.Of,
+		"the next %s you play this turn enters play %s",
+		noun,
 		enterStateWord(e.EntersPlay),
 	)
 }
 
 // Resolve registers the one-shot enter-play reaction on the controller.
-func (e NextCreaturePlayed) Resolve(ctx *EffectContext) {
+func (e NextPlayed) Resolve(ctx *EffectContext) {
 	action, _ := enterActionOf(e.EntersPlay)
-	ctx.Resolver.AddLastingOnce(EventCreaturePlayed, action, ctx.Controller, 0, e.Of)
+	ctx.Resolver.AddLastingOnce(EventCardEntersPlay, action, ctx.Controller, 0, e.Of, e.Type)
 }
 
 // enterActionOf maps an enter-play effect to the flat lasting action that applies

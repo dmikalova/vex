@@ -2,9 +2,10 @@ package engine
 
 import "testing"
 
-func TestNextCreaturePlayed(t *testing.T) {
-	e := NextCreaturePlayed{
+func TestNextPlayed(t *testing.T) {
+	e := NextPlayed{
 		Of:         Mars,
+		Type:       Creature,
 		EntersPlay: Ready{Target: Target{Kind: TargetTriggeringCreature}},
 	}
 	if e.Text() != "the next Mars creature you play this turn enters play ready" {
@@ -17,6 +18,7 @@ func TestNextCreaturePlayed(t *testing.T) {
 	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
 	if le := g.State.Lasting[0]; g.State.LastingCount != 1 || le.Do != actReadyPlayed ||
 		le.House != Mars ||
+		le.Type != Creature ||
 		!le.Once {
 		t.Errorf(
 			"resolve should register a one-shot Mars ready reaction; got %+v (count %d)",
@@ -25,8 +27,27 @@ func TestNextCreaturePlayed(t *testing.T) {
 		)
 	}
 
+	// AnyType covers both types that stay in play, and needs no house.
+	anyCard := NextPlayed{
+		Type:       AnyType,
+		EntersPlay: Ready{Target: Target{Kind: TargetTriggeringCreature}},
+	}
+	want := "the next creature or artifact you play this turn enters play ready"
+	if got := anyCard.Text(); got != want {
+		t.Errorf("text = %q, want %q", got, want)
+	}
+
+	// A card type is required: the effect must say what it is waiting for.
+	if (NextPlayed{EntersPlay: Ready{Target: Target{Kind: TargetTriggeringCreature}}}).
+		validate() == nil {
+		t.Error("an unset card type should be rejected")
+	}
 	// An EntersPlay effect the flat registry cannot carry is rejected.
-	if (NextCreaturePlayed{Of: Mars, EntersPlay: GainAember{Player: Controller, Amount: 1}}).validate() == nil {
+	if (NextPlayed{
+		Of:         Mars,
+		Type:       Creature,
+		EntersPlay: GainAember{Player: Controller, Amount: 1},
+	}).validate() == nil {
 		t.Error("an unsupported EntersPlay effect should be rejected")
 	}
 }

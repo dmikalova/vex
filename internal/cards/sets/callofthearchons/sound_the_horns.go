@@ -18,7 +18,7 @@ var SoundTheHorns = card.New("Sound the Horns",
 		card.Trigger.Play, card.Then{
 			First: card.DiscardDeckUntil{
 				Type:  card.Type.Creature,
-				House: card.House.Brobnar,
+				House: card.House.Self,
 			},
 			Result: card.PutDiscardedIntoHand{},
 		}),

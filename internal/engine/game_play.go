@@ -163,6 +163,20 @@ func (g *Game) PlayFromDeck(player int, id LocalID) {
 	}
 }
 
+// PlayFromHand plays a specific card out of a player's hand, bypassing the
+// active-house gate — an effect that plays a card has already decided it may be
+// played (Phase Shift's off-house card). It does nothing when the card is not in
+// that hand.
+func (g *Game) PlayFromHand(player int, id LocalID) {
+	hand := &g.State.Hand[player]
+	for i := 0; i < int(hand.Count); i++ {
+		if hand.IDs[i] == id {
+			_, _ = g.playCardFromZone(player, id, func() { hand.removeAt(i) }, playCardOptions{})
+			return
+		}
+	}
+}
+
 type playCardOptions struct {
 	flankLeft             bool
 	consumePlayPermission bool
@@ -249,6 +263,9 @@ func (g *Game) playCreatureCard(player int, id LocalID, flankLeft bool) {
 	g.emitCreatureEnters(id)
 	g.emitCardPlayed(player, id)
 	g.emitLasting(EventCreaturePlayed, player, id)
+	g.emitLasting(EventCardEntersPlay, player, id)
+	// The arrival may have walked into a power-reducing aura, or been one.
+	g.settleDestroyed(player)
 }
 
 // putIntoPlay puts a card into play under controller's control without playing
@@ -280,6 +297,7 @@ func (g *Game) putIntoPlay(id LocalID, controller int) {
 		g.State.Artifacts[controller].add(id)
 		g.logf("%s puts %s into play under their control", g.names[controller], g.Name(id))
 	}
+	g.settleDestroyed(controller)
 }
 
 // playArtifactCard places an artifact and fires the standard play sequence for an
@@ -291,6 +309,8 @@ func (g *Game) playArtifactCard(player int, id LocalID) {
 	g.applyAemberBonus(id)
 	g.triggerAbilities(id, TriggerAfterPlay, 0, false)
 	g.emitCardPlayed(player, id)
+	g.emitLasting(EventCardEntersPlay, player, id)
+	g.settleDestroyed(player)
 }
 
 // playActionCard resolves and discards an action already removed from its previous
@@ -310,6 +330,7 @@ func (g *Game) playUpgradeCard(player int, id, host LocalID, def *CardDefinition
 	g.AttachUpgrade(host, id)
 	g.logf("%s attaches %s to %s", g.names[player], g.Name(id), g.Name(host))
 	g.resolveUpgradePlay(host, id, def)
+	g.settleDestroyed(player)
 }
 
 // DiscardCardFromHand moves a specific card from a player's hand to their discard

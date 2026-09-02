@@ -61,6 +61,9 @@ type CreatureReader interface {
 	Name(id LocalID) string
 	// Owner returns the player who owns a card.
 	Owner(id LocalID) int
+	// Controller returns the player a card in play currently answers to, which is
+	// its owner unless an effect took control of it.
+	Controller(id LocalID) int
 	// Power returns a creature's current power (including upgrades).
 	Power(id LocalID) int
 	// Damage returns the damage currently on a creature.
@@ -116,6 +119,10 @@ type ZoneReader interface {
 type TurnReader interface {
 	// ActiveHouse returns the house chosen for the current turn.
 	ActiveHouse() House
+	// ActivePlayer returns the player whose turn it is — the only player who can be
+	// playing a card, so it is who an effect asks about "the cards played this turn"
+	// when the effect belongs to neither player in particular.
+	ActivePlayer() int
 	// PlayedThisTurn returns the cards a player has played this turn, in play order.
 	// Callers filter it themselves — by house, trait, or type — so the engine keeps
 	// one record rather than a tally per axis.
@@ -134,8 +141,16 @@ type EconomyResolver interface {
 	// in-play replacements such as Ether Spider to capture it instead. It returns
 	// the capturer and true when the gain was replaced.
 	GainAember(player, amount int) (LocalID, bool)
-	// ForgeKey has a player forge one key at the current cost, if affordable.
-	ForgeKey(player int)
+	// ForgeKeyAtExtraCost has a player forge one key at the current cost plus a
+	// surcharge for this forge only, if affordable (Key of Darkness forges at +6, an
+	// unmodified forge at +0).
+	ForgeKeyAtExtraCost(player, extra int)
+	// RaiseKeyCostNextTurn raises what a player's keys cost throughout their next
+	// turn (Lash of Broken Dreams).
+	RaiseKeyCostNextTurn(player, amount int, source LocalID)
+	// RaiseKeyCostThisTurn raises what a player's keys cost for the remainder of
+	// the current turn, biting immediately rather than waiting for a turn boundary.
+	RaiseKeyCostThisTurn(player, amount int, source LocalID)
 	// ForgeKeyFree has a player forge one key without paying its current cost.
 	ForgeKeyFree(player int)
 	UnforgeKey(player int)
@@ -164,6 +179,9 @@ type CreatureResolver interface {
 	BelongToHouseForRemainderOfTurn(id LocalID, house House)
 	// SetLastingHouse makes a card belong to house until it leaves play.
 	SetLastingHouse(id LocalID, house House)
+	// SetNamedHouse records the house a card named as it entered play, which its
+	// HouseLock then constrains for as long as the card stays in play.
+	SetNamedHouse(id LocalID, house House)
 	// TakeControl moves a creature into controller's battleline without changing
 	// ownership; when it later leaves play it still goes to its owner's zone. source
 	// is the card whose lasting effect holds the control (reverted when it leaves play).
@@ -258,6 +276,9 @@ type ZoneResolver interface {
 	// PlayFromDeck plays a specific card from a player's deck, removing it from the
 	// deck as it is played (Chaos Portal plays the card it revealed).
 	PlayFromDeck(player int, id LocalID)
+	// PlayFromHand plays a specific card from a player's hand, bypassing the
+	// active-house gate (Phase Shift's off-house card).
+	PlayFromHand(player int, id LocalID)
 	// ShuffleZonesIntoDeck moves each named zone's cards into a player's deck and
 	// shuffles once (discard, hand, archives).
 	ShuffleZonesIntoDeck(player int, zones []Zone)
@@ -307,7 +328,9 @@ type TurnResolver interface {
 	AddLasting(on Event, do lastingAction, controller, amount int)
 	// AddLastingOnce registers a one-shot reaction that fires (and self-removes) the
 	// next time its event occurs for a subject of the given house (Blypyp).
-	AddLastingOnce(on Event, do lastingAction, controller, amount int, house House)
+	AddLastingOnce(
+		on Event, do lastingAction, controller, amount int, house House, cardType CardType,
+	)
 	// ForceActiveHouseNextTurn makes a player have to choose the given house as their
 	// active house on their next turn.
 	ForceActiveHouseNextTurn(player int, house House, source LocalID)
@@ -356,6 +379,9 @@ type Logger interface {
 // Owner returns the player who owns a card.
 func (g *Game) Owner(id LocalID) int { return g.owner(id) }
 
+// Controller returns the player a card in play currently answers to.
+func (g *Game) Controller(id LocalID) int { return g.controller(id) }
+
 // HasTrait reports whether a card has a trait.
 func (g *Game) HasTrait(id LocalID, trait Trait) bool { return g.cat.def(id).hasTrait(trait) }
 
@@ -380,8 +406,8 @@ func (g *Game) LoseKeyword(k Keyword) {
 	g.logf("each creature loses %s for the remainder of the turn", strings.ToLower(string(k)))
 }
 
-// ForgeKey has a player forge one key at its current cost, if affordable.
-func (g *Game) ForgeKey(player int) { g.forgeKey(player) }
+// ForgeKeyAtExtraCost has a player forge one key at its current cost plus extra.
+func (g *Game) ForgeKeyAtExtraCost(player, extra int) { g.forgeKeyAtExtraCost(player, extra) }
 
 // ForgeKeyFree has a player forge one key without paying its current cost.
 func (g *Game) ForgeKeyFree(player int) { g.forgeKeyFree(player) }
@@ -426,6 +452,12 @@ func (g *Game) BelongToHouseForRemainderOfTurn(id LocalID, house House) {
 // SetLastingHouse makes a card belong to house until it leaves play.
 func (g *Game) SetLastingHouse(id LocalID, house House) {
 	g.State.Cards[id].LastingHouse = house
+}
+
+// SetNamedHouse records the house a card named as it entered play, which its
+// HouseLock then constrains for as long as the card stays in play.
+func (g *Game) SetNamedHouse(id LocalID, house House) {
+	g.State.Cards[id].NamedHouse = house
 }
 
 // SetFightDamageRedirect redirects the attacker's fight damage in the current

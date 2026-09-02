@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Demon • Knight
 //
-//	Play: If your opponent has exactly 0 Æmber, gain 2 Æmber.
+//	Play: If your opponent has no Æmber, gain 2 Æmber.
 var TheTerror = card.New(
 	"The Terror",
 	card.House.Dis,

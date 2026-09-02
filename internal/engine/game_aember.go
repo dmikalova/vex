@@ -20,6 +20,8 @@ func (g *Game) addAmberOn(id LocalID, delta int) {
 		total = maxCardAember
 	}
 	g.State.Cards[id].Amber = int16(total)
+	// A creature can draw its power from the Æmber sitting on it (Yxili Marauder).
+	g.settleDestroyed(g.controller(id))
 }
 
 // gainAember adds Æmber from the common supply to a player's pool. It is the

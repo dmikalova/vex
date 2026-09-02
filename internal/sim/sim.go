@@ -37,10 +37,19 @@ const (
 // enough context to reproduce, or nil when the game played out cleanly. The whole
 // game is a pure function of script, so a returned failure replays deterministically
 // from the same bytes.
-func Simulate(script []byte) (err error) {
+func Simulate(script []byte) error {
+	_, err := simulate(script, false)
+	return err
+}
+
+// simulate is Simulate with the played-out game handed back, so a debug replay can
+// read the game log that led to a failure. With verbose set the game records that
+// log, which a soak or fuzz run does not want to pay for.
+func simulate(script []byte, verbose bool) (g *engine.Game, err error) {
 	d := &decoder{script: script}
 	seed := int64(d.uint64())
 	g, houses := match.New("P0", "P1", seed)
+	g.Verbose = verbose
 	ch := &scriptChooser{d: d}
 	g.SetChooser(0, ch)
 	g.SetChooser(1, ch)
@@ -56,14 +65,14 @@ func Simulate(script []byte) (err error) {
 	}()
 
 	if e := g.InvariantError(); e != nil {
-		return fmt.Errorf("invariant violated at setup: %w", e)
+		return g, fmt.Errorf("invariant violated at setup: %w", e)
 	}
 
 	for turn := 0; turn < maxTurns && g.Winner() < 0; turn++ {
 		player := turn % 2
 		g.BeginTurn(player)
 		if e := g.InvariantError(); e != nil {
-			return fmt.Errorf(
+			return g, fmt.Errorf(
 				"invariant violated after BeginTurn (turn %d, player %d): %w",
 				turn,
 				player,
@@ -74,11 +83,11 @@ func Simulate(script []byte) (err error) {
 			break
 		}
 		if e := playTurn(g, player, houses[player], d); e != nil {
-			return e
+			return g, e
 		}
 		g.EndTurn(player)
 		if e := g.InvariantError(); e != nil {
-			return fmt.Errorf(
+			return g, fmt.Errorf(
 				"invariant violated after EndTurn (turn %d, player %d): %w",
 				turn,
 				player,
@@ -86,7 +95,7 @@ func Simulate(script []byte) (err error) {
 			)
 		}
 	}
-	return nil
+	return g, nil
 }
 
 // playTurn chooses the active house, then applies up to maxDecisionsPerTurn script-

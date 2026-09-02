@@ -33,6 +33,30 @@ func FuzzClean() error {
 	return sh.RunV("go", "clean", "-fuzzcache")
 }
 
+// CorpusPrune rewrites FuzzPlay's seed corpus as one minimized entry per bug that
+// still reproduces. The soak saves every failing script verbatim, so a single bug
+// can leave hundreds of near-identical multi-kilobyte entries; this replays them
+// all, drops the ones whose bug is fixed, and shrinks what remains.
+func CorpusPrune() error {
+	return sh.RunV("go", "run", "./magefiles/simcorpus")
+}
+
+// Debug replays one simulated game with the game log on and prints the log tail
+// next to the invariant violation that ended it, turning a soak, fuzz, or
+// property-test find into a readable sequence of plays.
+//
+// With no SCRIPT it searches the fixed-seed property batch that `mage test` plays
+// and replays the first failure; set SCRIPT to the hex script a failure printed to
+// replay that one instead. TAIL widens the log tail (default 60 lines).
+//
+//	mage debug
+//	SCRIPT=00ff1a... mage debug
+//	TAIL=200 mage debug
+func Debug() error {
+	return sh.RunV("go", "run", "./magefiles/simdebug",
+		os.Getenv("SCRIPT"), os.Getenv("TAIL"))
+}
+
 // Soak runs the long-running game soak (internal/sim.TestSoak) with the assert
 // build tag, churning fresh random games across GOMAXPROCS workers until the time
 // budget elapses. It does not stop at the first failure: every failing script is

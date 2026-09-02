@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// SpeedSigil
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Speed Sigil
 //
 //	House:  Shadows
 //	Type:   Artifact
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Power
 //
-//	The first creature played each turn enters play ready.
+//	After a creature enters play, if it is the first creature played this turn, ready it.
 var SpeedSigil = card.New(
 	"Speed Sigil",
 	card.House.Shadows,
@@ -24,5 +19,9 @@ var SpeedSigil = card.New(
 	card.Provenance(card.CotA, 293),
 	card.WithAemberBonus(1),
 	card.WithTraits("Power"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.AfterCreatureEnters, card.Conditional{
+			Cond: card.FirstCreaturePlayedThisTurn{},
+			Then: card.Ready{Target: card.Target.Triggering},
+		}),
 )

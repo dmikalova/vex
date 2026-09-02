@@ -1,12 +1,8 @@
 package sim
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"fmt"
 	"math/rand"
 	"os"
-	"path/filepath"
 	"runtime"
 	"sync"
 	"sync/atomic"
@@ -38,10 +34,7 @@ func FuzzPlay(f *testing.F) {
 // engine, while staying fast enough for the gate. Because the seed is fixed, a
 // regression here is reproducible from the printed script.
 func TestSimulateSeeds(t *testing.T) {
-	r := rand.New(rand.NewSource(1))
-	for i := 0; i < 1000; i++ {
-		script := make([]byte, 8+r.Intn(400))
-		r.Read(script)
+	for i, script := range SeedScripts(1000) {
 		if err := Simulate(script); err != nil {
 			t.Fatalf("batch %d, script %x failed: %v", i, script, err)
 		}
@@ -52,7 +45,7 @@ func TestSimulateSeeds(t *testing.T) {
 // `mage soak`). It churns fresh random games across GOMAXPROCS workers until the
 // time budget runs out, and — unlike the fixed-seed property test — it does not
 // stop at the first failure: every failing script is saved into the FuzzPlay
-// corpus (see saveCorpus) so a soak find becomes a permanent regression, then the
+// corpus (see SaveCorpus) so a soak find becomes a permanent regression, then the
 // soak keeps hunting. Build with -tags assert to run the in-engine checks too.
 func TestSoak(t *testing.T) {
 	budget := os.Getenv("SOAK_DURATION")
@@ -81,7 +74,7 @@ func TestSoak(t *testing.T) {
 				if err := Simulate(script); err != nil {
 					failures.Add(1)
 					mu.Lock()
-					if name, saveErr := saveCorpus(script); saveErr != nil {
+					if name, saveErr := SaveCorpus(CorpusDir, script, err); saveErr != nil {
 						t.Errorf(
 							"script %x failed: %v (could not save corpus: %v)",
 							script,
@@ -99,22 +92,4 @@ func TestSoak(t *testing.T) {
 	wg.Wait()
 	t.Logf("soak completed %d games across %d workers in %s (%d failures)",
 		games.Load(), workers, dur, failures.Load())
-}
-
-// saveCorpus writes a failing script into the FuzzPlay seed corpus in Go's fuzz
-// file format, so a soak find is replayed forever after by `go test ./internal/sim`
-// exactly like a fuzzer find. The filename is the script's SHA-256, so identical
-// scripts collapse to a single corpus entry.
-func saveCorpus(script []byte) (string, error) {
-	dir := filepath.Join("testdata", "fuzz", "FuzzPlay")
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		return "", err
-	}
-	sum := sha256.Sum256(script)
-	name := filepath.Join(dir, hex.EncodeToString(sum[:]))
-	body := fmt.Sprintf("go test fuzz v1\n[]byte(%q)\n", script)
-	if err := os.WriteFile(name, []byte(body), 0o644); err != nil {
-		return "", err
-	}
-	return name, nil
 }

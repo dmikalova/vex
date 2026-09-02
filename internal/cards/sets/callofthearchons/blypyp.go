@@ -20,8 +20,9 @@ var Blypyp = card.New(
 	card.WithPower(2),
 	card.WithTraits("Martian", "Scientist"),
 	card.WithAbility(
-		card.Trigger.Reap, card.NextCreaturePlayed{
+		card.Trigger.Reap, card.NextPlayed{
 			Of:         card.House.Mars,
+			Type:       card.Type.Creature,
 			EntersPlay: card.Ready{Target: card.Target.Triggering},
 		}),
 )

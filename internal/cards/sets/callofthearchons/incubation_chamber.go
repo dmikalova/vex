@@ -23,7 +23,7 @@ var IncubationChamber = card.New(
 		card.Trigger.Action, card.ArchiveFromHand{
 			Count:    1,
 			Type:     card.Type.Creature,
-			House:    card.House.Mars,
+			House:    card.House.Self,
 			Revealed: true,
 		}),
 )

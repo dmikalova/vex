@@ -127,3 +127,33 @@ func TestInvariantErrorUpgradeBackLinkDisagrees(t *testing.T) {
 		t.Fatalf("error %q does not describe a back-link mismatch", err)
 	}
 }
+
+// A creature whose damage has caught up with its power has no business sitting in
+// the battleline: some state-based sweep failed to notice it.
+func TestInvariantErrorDamagedCreatureStillInPlay(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	id := g.AddToBattleline(testCreature("Oak", 3), 0)
+	g.State.Cards[id].Damage = 3
+	err := g.InvariantError()
+	if err == nil {
+		t.Fatalf("expected an invariant error for a creature at or below its damage, got nil")
+	}
+	if !strings.Contains(err.Error(), "want power above damage") {
+		t.Fatalf("error %q does not describe damage catching up with power", err)
+	}
+}
+
+// Per-match state belongs to cards in play, so a card in hand still carrying
+// damage means a leave-play path forgot to reset it.
+func TestInvariantErrorOutOfPlayCardKeepsItsState(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	id := g.AddToHand(testCreature("Oak", 3), 0)
+	g.State.Cards[id].Damage = 1
+	err := g.InvariantError()
+	if err == nil {
+		t.Fatalf("expected an invariant error for stranded in-play state, got nil")
+	}
+	if !strings.Contains(err.Error(), "still carries in-play state") {
+		t.Fatalf("error %q does not describe stranded in-play state", err)
+	}
+}

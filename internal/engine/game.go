@@ -95,6 +95,9 @@ type Game struct {
 	// manual turns on manual mode: house restrictions on playing and using cards
 	// are lifted so a UI can rearrange the game freely. See game_manual.go.
 	manual bool
+	// settling is true while a destruction batch or a state-based sweep is running,
+	// so the sweep does not re-enter and split a batch's simultaneous timing.
+	settling bool
 }
 
 // NewGame creates a new two-player game seeded for deterministic play.

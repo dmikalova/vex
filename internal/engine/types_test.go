@@ -25,3 +25,26 @@ func TestParseHouse(t *testing.T) {
 		t.Errorf("ParseHouse(nonsense) = %v, %v; want HouseNone, false", h, ok)
 	}
 }
+
+// TestCardTypeReacts covers the three filter modes a lasting entry's card type
+// has: unset matches anything, AnyType means creature-or-artifact, and a named
+// type matches only itself.
+func TestCardTypeReacts(t *testing.T) {
+	cases := []struct {
+		filter, subject CardType
+		want            bool
+	}{
+		{TypeUnset, Upgrade, true},
+		{AnyType, Creature, true},
+		{AnyType, Artifact, true},
+		{AnyType, Upgrade, false},
+		{AnyType, Tactic, false},
+		{Creature, Creature, true},
+		{Creature, Artifact, false},
+	}
+	for _, c := range cases {
+		if got := c.filter.reacts(c.subject); got != c.want {
+			t.Errorf("%v.reacts(%v) = %v, want %v", c.filter, c.subject, got, c.want)
+		}
+	}
+}

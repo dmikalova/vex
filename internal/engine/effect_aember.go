@@ -34,15 +34,34 @@ func (e GainAember) validate() error {
 // has forged, gain 1 Æmber".
 func (e GainAember) Text() string {
 	phrase := fmt.Sprintf("gain %d Æmber", e.Amount)
-	if e.Player == Opponent {
+	switch e.Player {
+	case Opponent:
 		phrase = fmt.Sprintf("your opponent gains %d Æmber", e.Amount)
+	case EachPlayer:
+		phrase = fmt.Sprintf("each player gains %d Æmber", e.Amount)
 	}
 	return forEach(e.Per, phrase)
 }
 
-// Resolve adds the Æmber to the selected player's pool.
+// Resolve adds the Æmber to the selected player's pool. EachPlayer pays both
+// players in turn, each from their own point of view, so a Per count reading a
+// "this way" tally scales each player's gain by what they themselves lost
+// (Hecatomb, Mating Season).
 func (e GainAember) Resolve(ctx *EffectContext) {
-	p := ctx.PlayerFor(e.Player)
+	if e.Player == EachPlayer {
+		for _, p := range [2]int{ctx.Controller, ctx.Opponent()} {
+			fromTheirSide := *ctx
+			fromTheirSide.Controller = p
+			e.gain(&fromTheirSide, p)
+		}
+		return
+	}
+	e.gain(ctx, ctx.PlayerFor(e.Player))
+}
+
+// gain hands p the Æmber this effect is worth as seen from ctx, honouring a
+// capture that replaces the gain.
+func (e GainAember) gain(ctx *EffectContext, p int) {
 	amount := e.Amount
 	if e.Per != nil {
 		amount *= e.Per.Value(ctx)

@@ -29,7 +29,7 @@ var Sneklifter = card.New(
 				Cond: card.ItIsOffIdentity{},
 				Then: card.BelongToHouse{
 					Target:   card.Target.Triggering,
-					House:    card.House.Shadows,
+					House:    card.House.Self,
 					Duration: card.Duration.UntilThisLeavesPlay,
 				},
 			},

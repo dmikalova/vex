@@ -54,6 +54,11 @@ type CardCore struct {
 	// (rather than only until end of turn). HouseNone means none. It is cleared by
 	// resetCore when the card leaves play.
 	LastingHouse House
+	// NamedHouse is a house this card named as it entered play and holds for as long
+	// as it stays there, for a HouseLock that constrains that house rather than one
+	// printed on the card — Restringuntus bars the house it named. It is the card's
+	// choice, not the house the card belongs to.
+	NamedHouse House
 	// Upgrades attached to a creature form an intrusive singly-linked list threaded
 	// through these three bytes, so a creature carries any number of upgrades with no
 	// per-card fixed array — KeyForge sets no limit on how many upgrades a creature
@@ -233,6 +238,14 @@ type GameState struct {
 	// and forges accordingly, so it lands on that player's own next turn.
 	SkipForge     [2]Bar[bool]
 	SkipForgeNext [2]Bar[bool]
+
+	// Key surcharges. KeyCostBump[p] raises player p's key cost for the current turn;
+	// KeyCostBumpNext[p] arms that raise for p's next turn (Lash of Broken Dreams
+	// makes keys cost +3 during the opponent's next turn). Unlike a card's
+	// KeyCostChange, which lives as long as the card is in play, this is a one-turn
+	// surcharge, promoted by BeginTurn and lifted by EndTurn like the other bars.
+	KeyCostBump     [2]Bar[int]
+	KeyCostBumpNext [2]Bar[int]
 
 	// MayFightHouse[p] is a house whose creatures player p may use to fight this
 	// turn even when it is not the active house — Brothers in Battle's "each

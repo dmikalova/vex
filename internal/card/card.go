@@ -35,6 +35,11 @@ type (
 	// Restrictions are the continuous "cannot" rules a card imposes on its
 	// controller while in play (e.g. card.Restrictions{CannotPlay: card.Type.Creature}).
 	Restrictions = engine.Restrictions
+	// HouseLock is the continuous constraint a card in play puts on a player's
+	// active-house choice, e.g. card.HouseLock{Player: card.Controller, House:
+	// card.House.Dis}. Leave House unset when the card names one on play with
+	// card.NameHouse.
+	HouseLock = engine.HouseLock
 	// PlayCardLimit caps cards a relative player may play in a turn; use it as
 	// card.Restrictions{PlayCardLimit: card.PlayCardLimit{Player: card.Opponent, Amount: 2}}.
 	PlayCardLimit = engine.PlayCardLimit

@@ -309,6 +309,9 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 	if s := keyCostText(def.KeyCostChange); s != "" {
 		rules = append(rules, strings.ReplaceAll(s, SelfName, def.Name))
 	}
+	if s := def.HouseLock.text(); s != "" {
+		rules = append(rules, strings.ReplaceAll(s, SelfName, def.Name))
+	}
 	if s := drawModifierText(def.DrawModifier); s != "" {
 		rules = append(rules, s)
 	}

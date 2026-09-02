@@ -18,7 +18,7 @@ var InvasionPortal = card.New("Invasion Portal",
 		card.Trigger.Action, card.Then{
 			First: card.DiscardDeckUntil{
 				Type:  card.Type.Creature,
-				House: card.House.Mars,
+				House: card.House.Self,
 			},
 			Result: card.PutDiscardedIntoHand{},
 		}),

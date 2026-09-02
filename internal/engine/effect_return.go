@@ -40,14 +40,21 @@ func (e PutFromPlay) validate() error {
 }
 
 // Resolve moves each selected card from play to the destination. Cards headed to
-// the top of the deck are stacked in an order the controller chooses.
+// the top of the deck are stacked in an order the controller chooses. A card an
+// earlier move already took out of play — a "Leaves Play:" ability can destroy
+// one still on the list — is skipped rather than moved and counted twice.
 func (e PutFromPlay) Resolve(ctx *EffectContext) {
 	ids := e.Target.Select(ctx)
 	if e.Destination == ToTopOfDeck {
 		ids = ctx.OrderByChoice("Choose the next card to put on top of the deck", ids)
 	}
 	for _, id := range ids {
+		if !resolverInPlay(ctx, id) {
+			continue
+		}
+		controller := ctx.Resolver.Controller(id)
 		e.Destination.move(ctx, id)
+		ctx.Produced.Moved[controller]++
 	}
 }
 

@@ -59,7 +59,7 @@ func (OpponentExcessCreatures) CountText() string {
 type CardsDestroyed struct{}
 
 // Value returns how many cards the preceding Destroy actually removed.
-func (CardsDestroyed) Value(ctx *EffectContext) int { return ctx.Produced.Destroyed }
+func (CardsDestroyed) Value(ctx *EffectContext) int { return ctx.Produced.TotalDestroyed() }
 
 // CountText renders the singular noun the "for each" clause repeats.
 func (CardsDestroyed) CountText() string { return "card destroyed this way" }
@@ -91,12 +91,16 @@ type CardsInHand struct {
 
 // Value counts the player's hand cards matching the referenced house.
 func (e CardsInHand) Value(ctx *EffectContext) int {
+	hand := ctx.Resolver.Hand(ctx.PlayerFor(e.Player))
+	if e.House == AnyHouse {
+		return len(hand)
+	}
 	house := e.House.resolveHouse(ctx)
 	if house == HouseNone {
 		return 0
 	}
 	n := 0
-	for _, id := range ctx.Resolver.Hand(ctx.PlayerFor(e.Player)) {
+	for _, id := range hand {
 		if ctx.Resolver.House(id) == house {
 			n++
 		}
@@ -107,6 +111,11 @@ func (e CardsInHand) Value(ctx *EffectContext) int {
 // CountText renders the singular noun the "for each" clause repeats.
 func (e CardsInHand) CountText() string {
 	switch e.House {
+	case AnyHouse:
+		if e.Player == Opponent {
+			return "card in your opponent's hand"
+		}
+		return "card in your hand"
 	case TheContextualHouse:
 		return "card of the discarded card's house revealed this way"
 	case TheActiveHouse:
@@ -443,4 +452,47 @@ func (c TurnCount) CountClause(quantity string, plural bool) string {
 		noun = "creatures"
 	}
 	return fmt.Sprintf("%s %s %s on %s previous turn", subject, quantity, noun, possessive)
+}
+
+// The two "... this way" counts below read one player's share of a tally rather
+// than the whole of it, and Player names whose. Under a GainAember{Player:
+// EachPlayer} — the only place they are used — the context flips to each player
+// in turn, so Controller means each player counting their own losses.
+
+// CreaturesDestroyedThisWay counts the creatures Player controlled that an
+// earlier effect in this resolution destroyed. Use CardsDestroyed for the whole
+// tally, both sides together.
+type CreaturesDestroyedThisWay struct{ Player Player }
+
+// Value reads that player's share of the destruction tally.
+func (c CreaturesDestroyedThisWay) Value(ctx *EffectContext) int {
+	return ctx.Produced.Destroyed[ctx.PlayerFor(c.Player)]
+}
+
+// CountText renders the singular noun the "for each" clause repeats.
+func (c CreaturesDestroyedThisWay) CountText() string {
+	who := "they"
+	if c.Player == Opponent {
+		who = "your opponent"
+	}
+	return "creature " + who + " controlled that was destroyed this way"
+}
+
+// CreaturesShuffledIntoDeckThisWay counts the creatures Player controlled that
+// an earlier effect in this resolution put back into a deck — Mating Season pays
+// each player for the creatures that went home.
+type CreaturesShuffledIntoDeckThisWay struct{ Player Player }
+
+// Value reads that player's share of the put-from-play tally.
+func (c CreaturesShuffledIntoDeckThisWay) Value(ctx *EffectContext) int {
+	return ctx.Produced.Moved[ctx.PlayerFor(c.Player)]
+}
+
+// CountText renders the singular noun the "for each" clause repeats.
+func (c CreaturesShuffledIntoDeckThisWay) CountText() string {
+	whose := "their"
+	if c.Player == Opponent {
+		whose = "your opponent's"
+	}
+	return "creature shuffled into " + whose + " deck this way"
 }

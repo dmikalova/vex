@@ -90,5 +90,39 @@ func (g *Game) InvariantError() error {
 			)
 		}
 	}
+
+	// A creature whose damage has caught up with its power is destroyed, so one can
+	// never be sitting in play in that state — this catches a power change (a buff
+	// leaving) that no state-based sweep noticed.
+	for p := 0; p < 2; p++ {
+		for _, id := range g.State.Battleline[p].slice() {
+			if power := g.Power(id); power <= int(g.State.Cards[id].Damage) {
+				return fmt.Errorf(
+					"creature %d (%s) is in play with %d power and %d damage, want power above damage",
+					id,
+					g.cat.def(id).Name,
+					power,
+					g.State.Cards[id].Damage,
+				)
+			}
+		}
+	}
+
+	// Per-match state belongs to cards in play. Leaving play zeroes the whole
+	// CardCore, so any card outside play (and not attached as an upgrade) carrying
+	// damage, Æmber, a stun, counters, or a host link is a leave-play path that
+	// forgot to reset it.
+	for id := 0; id < len(g.cat.defs); id++ {
+		lid := LocalID(id)
+		if g.inPlay(lid) || attached[id] {
+			continue
+		}
+		if core := g.State.Cards[id]; core != (CardCore{}) {
+			return fmt.Errorf(
+				"card %d (%s) is not in play but still carries in-play state (%+v)",
+				id, g.cat.def(lid).Name, core,
+			)
+		}
+	}
 	return nil
 }

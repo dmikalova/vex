@@ -44,6 +44,9 @@ func (g *Game) House(id LocalID) House {
 // ActiveHouse returns the house chosen for the current turn.
 func (g *Game) ActiveHouse() House { return g.State.ActiveHouse }
 
+// ActivePlayer returns the player whose turn it is.
+func (g *Game) ActivePlayer() int { return g.State.ActivePlayer }
+
 // Power returns a creature's current power including attached upgrades.
 func (g *Game) Power(id LocalID) int {
 	core := &g.State.Cards[id]
@@ -350,6 +353,41 @@ func (g *Game) aemberProtected(player int) bool {
 	return false
 }
 
+// houseLockAllows reports whether player may choose house as their active house,
+// given every house lock a card in play holds over them (Pitlord requires Dis of
+// its controller, Restringuntus bars its opponent from the house it named). A
+// "must" lock only binds when the player actually has that house, matching how a
+// forced house yields when it cannot be obeyed; a "cannot" lock always binds.
+func (g *Game) houseLockAllows(player int, house House) bool {
+	for controller := 0; controller < 2; controller++ {
+		for _, id := range g.allInPlay(controller) {
+			lock := g.cat.def(id).HouseLock
+			if !lock.set() {
+				continue
+			}
+			constrained := controller
+			if lock.Player == Opponent {
+				constrained = 1 - controller
+			}
+			if constrained != player {
+				continue
+			}
+			locked := lock.locked(g.State.Cards[id].NamedHouse)
+			if locked == HouseNone {
+				continue
+			}
+			if lock.Bars {
+				if house == locked {
+					return false
+				}
+			} else if house != locked && g.playerHasHouse(player, locked) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
 // keyCostChangeFor returns how much a single in-play card (controlled by
 // controller) changes target's key cost — its own change plus any granted by
 // attached upgrades.
@@ -381,7 +419,7 @@ func (g *Game) keyCostAmount(src LocalID, kc KeyCostChange) int {
 // keyCost returns what a player currently pays to forge one key: the base KeyCost
 // plus every key-cost change on a card in play that affects that player.
 func (g *Game) keyCost(target int) int {
-	cost := KeyCost
+	cost := KeyCost + g.State.KeyCostBump[target].Value
 	for controller := 0; controller < 2; controller++ {
 		for _, id := range g.allInPlay(controller) {
 			cost += g.keyCostChangeFor(id, controller, target)

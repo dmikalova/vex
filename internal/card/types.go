@@ -25,6 +25,7 @@ var House = houses{
 	Sanctum: engine.Sanctum,
 	Shadows: engine.Shadows,
 	Untamed: engine.Untamed,
+	Self:    engine.SelfHouse,
 }
 
 type houses struct {
@@ -42,6 +43,11 @@ type houses struct {
 	Shadows engine.House
 	// Untamed is the house of nature and beasts.
 	Untamed engine.House
+	// Self is the card's own house, filled in when the card is built. Use it
+	// whenever an ability names the house the card itself belongs to — Battle
+	// Fleet reveals card.House.Self cards — so the two can never drift apart.
+	// A card that names a *different* house names it outright.
+	Self engine.House
 }
 
 // Type groups the card-type values, e.g. card.Type.Creature.
@@ -50,6 +56,7 @@ var Type = cardTypes{
 	Tactic:   engine.Tactic,
 	Artifact: engine.Artifact,
 	Upgrade:  engine.Upgrade,
+	Any:      engine.AnyType,
 }
 
 type cardTypes struct {
@@ -61,6 +68,9 @@ type cardTypes struct {
 	Artifact engine.CardType
 	// Upgrade is an upgrade card that attaches to a creature.
 	Upgrade engine.CardType
+	// Any is the wildcard type, printed as "card". Where an effect waits for a card
+	// to enter play it means "creature or artifact" — the two types that stay there.
+	Any engine.CardType
 }
 
 // Rarity groups the rarity values, e.g. card.Rarity.Common.

@@ -54,10 +54,12 @@ func (c OpponentAember) validate() error {
 
 // CondText renders the condition, e.g. "if your opponent has 7 Æmber or more".
 func (c OpponentAember) CondText() string {
-	switch c.Is {
-	case Exactly:
+	switch {
+	case c.Is == Exactly && c.Amount == 0:
+		return "if your opponent has no Æmber"
+	case c.Is == Exactly:
 		return fmt.Sprintf("if your opponent has exactly %d Æmber", c.Amount)
-	case MoreThanYou:
+	case c.Is == MoreThanYou:
 		return "if your opponent has more Æmber than you"
 	default:
 		return fmt.Sprintf("if your opponent has %d Æmber or more", c.Amount)
@@ -105,6 +107,35 @@ func (ControlsMoreCreatures) Met(ctx *EffectContext) bool {
 	)
 }
 
+// FirstCreaturePlayedThisTurn is met when the card in context (ctx.It, the
+// creature that fired the trigger) is the first creature its player played this
+// turn — Speed Sigil readies it. It is a once-per-turn charge that needs no state
+// of its own: the turn's play record already says whether the charge is spent, and
+// the record is cleared when the next turn begins.
+//
+// A creature put into play by an effect rather than played never matches, so it
+// neither benefits nor spends the charge.
+type FirstCreaturePlayedThisTurn struct{}
+
+// CondText renders the condition.
+func (FirstCreaturePlayedThisTurn) CondText() string {
+	return "if it is the first creature played this turn"
+}
+
+// Met reports whether the context card is the earliest creature in the active
+// player's plays this turn.
+func (FirstCreaturePlayedThisTurn) Met(ctx *EffectContext) bool {
+	if !ctx.HasIt {
+		return false
+	}
+	for _, id := range ctx.Resolver.PlayedThisTurn(ctx.Resolver.ActivePlayer()) {
+		if ctx.Resolver.TypeOf(id) == Creature {
+			return id == ctx.It
+		}
+	}
+	return false
+}
+
 // CardsDestroyedFewerThan is met when fewer than Amount cards were destroyed this
 // way — the tally a preceding effect records on the context. Bonkers Killing
 // Machine destroys itself when its house-driven destruction removed fewer than two.
@@ -120,7 +151,7 @@ func (c CardsDestroyedFewerThan) CondText() string {
 
 // Met reports whether fewer than Amount cards were destroyed this way.
 func (c CardsDestroyedFewerThan) Met(ctx *EffectContext) bool {
-	return ctx.Produced.Destroyed < c.Amount
+	return ctx.Produced.TotalDestroyed() < c.Amount
 }
 
 // HouseChoice names a house a condition compares against by reference rather than
@@ -138,6 +169,9 @@ const (
 	// TheContextualHouse is the house of the card in context (ctx.It) — e.g. a
 	// just-discarded deck card, for "of the discarded card's house".
 	TheContextualHouse
+	// AnyHouse names no house at all, so a count or condition using it applies no
+	// house filter — Key Abduction counts every card in hand, whatever its house.
+	AnyHouse
 )
 
 // resolveHouse turns a HouseChoice into the concrete house it names in the current
@@ -251,18 +285,33 @@ func houseTypeNoun(house House, typ CardType) string {
 
 // Conditional resolves Then only when Cond is met. It renders as "<cond>, <then>",
 // e.g. "if your opponent has 7 Æmber or more, your opponent loses 4 Æmber".
+//
+// Else, when set, resolves instead when Cond is not met, and leads the sentence so
+// the common case reads first: "<else>. <Cond>, <then> instead." Key of Darkness
+// forges at +6, or at +2 when the opponent has no Æmber.
 type Conditional struct {
 	Cond Condition
 	Then Effect
+	Else Effect
 }
 
 // Text joins the condition and the gated effect.
-func (e Conditional) Text() string { return e.Cond.CondText() + ", " + e.Then.Text() }
+func (e Conditional) Text() string {
+	if e.Else != nil {
+		return e.Else.Text() + ". " + capitalizeFirst(e.Cond.CondText()) + ", " +
+			e.Then.Text() + " instead"
+	}
+	return e.Cond.CondText() + ", " + e.Then.Text()
+}
 
-// Resolve runs Then only if Cond is met.
+// Resolve runs Then when Cond is met, otherwise Else if one is set.
 func (e Conditional) Resolve(ctx *EffectContext) {
 	if e.Cond.Met(ctx) {
 		e.Then.Resolve(ctx)
+		return
+	}
+	if e.Else != nil {
+		e.Else.Resolve(ctx)
 	}
 }
 
@@ -271,7 +320,13 @@ func (e Conditional) validate() error {
 	if err := validateCondition(e.Cond); err != nil {
 		return err
 	}
-	return validateEffect(e.Then)
+	if err := validateEffect(e.Then); err != nil {
+		return err
+	}
+	if e.Else == nil {
+		return nil
+	}
+	return validateEffect(e.Else)
 }
 
 // RuleOfSix is the most times a card can be played, used, or made to resolve

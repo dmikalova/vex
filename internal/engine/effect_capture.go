@@ -107,6 +107,11 @@ func (e CaptureAember) Resolve(ctx *EffectContext) {
 			return
 		}
 		for _, id := range ids {
+			// A creature the fight (or an earlier step) destroyed cannot capture: the
+			// Æmber would sit on a card in a discard pile.
+			if !resolverInPlay(ctx, id) {
+				continue
+			}
 			amt := e.Amount
 			switch {
 			case e.All:

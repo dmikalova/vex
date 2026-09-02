@@ -94,7 +94,10 @@ the round has a visible bound.
    `var Name = card.New("Name", card.House.X, card.Type.Y, card.Rarity.Z,
    card.Provenance(card.<Set>, n), With*...)`. The card TYPE "action" is
    `card.Type.Tactic` (wording rule 19). Follow the one-field-per-line struct style
-   in `internal/cards/AGENTS.md`.
+   in `internal/cards/AGENTS.md`. When an ability names the card's **own** house,
+   write `card.House.Self` rather than repeating the house — but a card naming a
+   *different* house (Take That, Smarty Pants is about Logos creatures) spells that
+   house out.
 3. Write `<snake>_test.go` with the `ct.Play` harness — a `func Test<Name>` with
    `t.Run` subtests. A sole target auto-resolves; with 2+ candidates answer via
    `h.P1.ClickCard(handle)` / `h.P1.ClickOption(name)`. Set up a damaged creature
@@ -103,6 +106,12 @@ the round has a visible bound.
    the definition. Read the generated text against `docs/card-wording-rules.md`.
    A wording fix means changing the effect's `Text()` in
    `internal/engine/effect_*.go`, never hand-editing the comment.
+5. If a card's printed text is deliberately reworded — to dodge a mechanic that
+   is not worth the state it would cost, or to simplify — add the rule to
+   `docs/card-wording-rules.md` as a numbered section, stated as a **general**
+   rule with the affected cards listed, not as a one-card exception. That file is
+   the only record of why the rendered text differs from the printed card, and
+   also serves as a guide for implementing similar cards correctly.
 
 Watch the `create_file` dup-first-line bug: after creating `.go` files, check
 `line1 == line2` and drop the dup

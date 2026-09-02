@@ -34,6 +34,8 @@ var (
 	WithConstant = func(c ConstantAbility) Option { return gameplay(engine.WithConstantAbility(c)) }
 	// WithRestrictions adds constant restrictions (cannot fight, cannot reap, ...).
 	WithRestrictions = func(r Restrictions) Option { return gameplay(engine.WithRestrictions(r)) }
+	// WithHouseLock constrains a player's active-house choice while this card is in play.
+	WithHouseLock = func(l HouseLock) Option { return gameplay(engine.WithHouseLock(l)) }
 	// WithKeyCost adds a change to the cost of forging a key.
 	WithKeyCost = func(kc engine.KeyCostChange) Option { return gameplay(engine.WithKeyCost(kc)) }
 	// WithPlayPermission sets the conditions under which the card may be played.

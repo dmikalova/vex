@@ -62,10 +62,14 @@ func (e Destroy) resolveOptional(ctx *EffectContext) bool {
 
 // destroy carries out the destruction of an already-selected set.
 func (e Destroy) destroy(ctx *EffectContext, ids []LocalID) bool {
+	controllers := make(map[LocalID]int, len(ids))
+	for _, id := range ids {
+		controllers[id] = ctx.Resolver.Controller(id)
+	}
 	ctx.Resolver.DestroyEach(ctx.Controller, ids)
 	for _, id := range ids {
 		if !resolverInPlay(ctx, id) {
-			ctx.Produced.Destroyed++
+			ctx.Produced.Destroyed[controllers[id]]++
 		}
 	}
 	return len(ids) > 0

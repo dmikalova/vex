@@ -33,7 +33,7 @@ func (g *game) Render() app.UI {
 			return app.Button().Class("btn-nav btn-icon sidebar-reveal").Title("Show sidebar").
 				Text("«").OnClick(g.toggleSidebar)
 		}),
-		app.If(g.hasHover || g.hoverDef != nil, func() app.UI { return g.hoverPreview() }),
+		app.If(g.hoverLive() || g.hoverDef != nil, func() app.UI { return g.hoverPreview() }),
 		app.If(g.zonesPlayer >= 0, func() app.UI { return g.zonesOverlay() }),
 		app.If(g.pickerOpen, func() app.UI { return g.cardPicker() }),
 		app.If(g.keysOpen, func() app.UI { return g.keysOverlay() }),

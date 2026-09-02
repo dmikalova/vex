@@ -17,6 +17,14 @@ func (g *game) hoverCard(_ app.Context, id engine.LocalID) {
 // hoverClear hides the hover preview (a card leave).
 func (g *game) hoverClear(_ app.Context) { g.hasHover, g.hoverDef = false, nil }
 
+// hoverLive reports whether the hovered live card is still somewhere the client
+// draws it. A card that leaves play (destroyed, purged, put into hand) vanishes
+// from the DOM without firing a leave, so the preview has to drop it itself.
+func (g *game) hoverLive() bool {
+	return g.hasHover &&
+		(g.isInPlay(g.hoverID) || containsID(g.g.Hand(g.active()), g.hoverID))
+}
+
 // onLogCardHover previews the printed card named by a log mention, to the left of
 // the log.
 func (g *game) onLogCardHover(ctx app.Context, _ app.Event) {

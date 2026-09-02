@@ -48,3 +48,39 @@ func (e BelongToHouse) Resolve(ctx *EffectContext) {
 		}
 	}
 }
+
+// NameHouse remembers the house a surrounding ChooseHouseThen picked on the source
+// card, where it stays for as long as that card is in play. It is the writer half
+// of a HouseLock whose house is not printed but named: Restringuntus chooses a
+// house on play and bars its opponent from it until it leaves play. Player names
+// whose choice the lock will constrain, and must match the card's HouseLock.
+//
+//rulebook:effect Name a House
+type NameHouse struct {
+	Player Player
+}
+
+// validate requires the player whose house choice the named house will constrain.
+func (e NameHouse) validate() error {
+	if !e.Player.valid() {
+		return errUnsetPlayer("NameHouse")
+	}
+	return nil
+}
+
+// Text renders the lock the named house creates, e.g. "your opponent cannot choose
+// that house as their active house until {self} leaves play". The house itself is
+// named by the enclosing ChooseHouseThen.
+func (e NameHouse) Text() string {
+	who, possessive := "you", "your"
+	if e.Player == Opponent {
+		who, possessive = "your opponent", "their"
+	}
+	return who + " cannot choose that house as " + possessive +
+		" active house until " + SelfName + " leaves play"
+}
+
+// Resolve stores the chosen house on the source card.
+func (NameHouse) Resolve(ctx *EffectContext) {
+	ctx.Resolver.SetNamedHouse(ctx.Source, ctx.ChosenHouse)
+}

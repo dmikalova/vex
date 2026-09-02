@@ -20,7 +20,7 @@ var IronObelisk = card.New(
 	card.WithKeyCost(card.KeyCostChange(card.Opponent, 1).Per(card.InPlay{
 		Player:  card.Controller,
 		Type:    card.Type.Creature,
-		House:   card.House.Brobnar,
+		House:   card.House.Self,
 		Damaged: true,
 	})),
 )

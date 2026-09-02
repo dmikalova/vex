@@ -28,7 +28,7 @@ var EpicQuest = card.New(
 		card.Trigger.Action, card.Conditional{
 			Cond: card.CardsPlayed{
 				Player: card.Controller,
-				House:  card.House.Sanctum,
+				House:  card.House.Self,
 				Amount: 7,
 			},
 			Then: card.Sequence{Effects: []card.Effect{
