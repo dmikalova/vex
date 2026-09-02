@@ -72,7 +72,7 @@ type CannotPlay struct {
 // barred is the type this bar installs: the named one, or the AnyType wildcard
 // when the author left Type unset to bar everything.
 func (e CannotPlay) barred() CardType {
-	if e.Type == "" {
+	if e.Type == TypeUnset {
 		return AnyType
 	}
 	return e.Type
@@ -97,7 +97,7 @@ func (e CannotPlay) Text() string {
 	if e.Player == Opponent {
 		who, whose = "your opponent", "their"
 	}
-	noun := strings.ToLower(string(e.barred())) + "s"
+	noun := strings.ToLower(e.barred().String()) + "s"
 	if e.Type == Tactic {
 		noun = "action cards"
 	}

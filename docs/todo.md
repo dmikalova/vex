@@ -100,3 +100,12 @@ are planned.
 - drag and drop creature directly into battleline flank (or deploy, with dynamic moving as you go across), upgrade onto creature, artifact into artifact line
 - For things like steal, capture - they both have an amount, By, Max, etc, similar structure. Is it possible to reuse these interfaces eg for Economy types, and other types?
 - Skill to iterate on implementation repeatedly
+- Re-run the GameState layout check once the later sets land. Adding at least
+  four more card types will widen `CardType`, `Bar[CardType]`, and anything else
+  keyed by type, and new mechanics tend to add fields. Measure with
+  `unsafe.Sizeof(GameState{})` and a `reflect` field/offset dump, then re-decide
+  the two levers left on the table: `maxCards = 128` (68% of the state, but the
+  headroom is load-bearing for the sandbox's `game_manual.go` card creation) and
+  packing `CardCore`'s four bools into a bitfield (~512 bytes, at the cost of
+  read-modify-write bugs and debuggability). History: 4232 -> 4112 (per-turn play
+  permissions to uint8) -> 4024 (CardType string to enum).

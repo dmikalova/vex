@@ -64,39 +64,56 @@ const (
 	Connected Rarity = "Connected"
 )
 
-// CardType is one of the four Vactrol/KeyForge card types.
-type CardType string
+// CardType is one of the four Vactrol/KeyForge card types. It is a small enum
+// rather than a string so a type-scoped bar stays a couple of bytes of flat state
+// instead of a string header (see GameState.CannotPlayTypeThis).
+type CardType uint8
 
 const (
+	// TypeUnset is the zero value: a type-scoped effect that names no type matches
+	// every card rather than none.
+	TypeUnset CardType = iota
 	// A creature is a unit you play into your battleline. Once it is ready, it can
 	// reap for Aember, fight an enemy creature, or use an "Action:" ability.
 	//
 	//rulebook:cardtype Creature
-	Creature CardType = "Creature"
+	Creature
 	// A tactic (KeyForge's "action" card type, renamed to free the word "Action"
 	// for the ability) is a one-shot card: its effect resolves as you play it, and
 	// it then goes straight to your discard pile.
 	//
 	//rulebook:cardtype Tactic
-	Tactic CardType = "Tactic"
+	Tactic
 	// An artifact is a permanent card you play alongside your creatures. It stays
 	// in play until something removes it and is typically used for its "Action:"
 	// ability.
 	//
 	//rulebook:cardtype Artifact
-	Artifact CardType = "Artifact"
+	Artifact
 	// An upgrade attaches to a creature as you play it, changing that creature's
 	// stats or granting it keywords and abilities for as long as it stays attached.
 	//
 	//rulebook:cardtype Upgrade
-	Upgrade CardType = "Upgrade"
+	Upgrade
+	// AnyType is the wildcard a type-scoped effect uses to mean "every card type"
+	// rather than one of them — Treasure Map bars playing cards outright, not cards
+	// of a particular type. No card is ever of this type; it exists so a bar can say
+	// "all" while staying one comparable CardType.
+	AnyType
 )
 
-// AnyType is the wildcard a type-scoped effect uses to mean "every card type"
-// rather than one of them — Treasure Map bars playing cards outright, not cards of
-// a particular type. No card is ever of this type; it exists so a bar can say "all"
-// while staying one comparable CardType, and the zero value keeps meaning "unset".
-const AnyType CardType = "Card"
+// cardTypeNames is the printed word for each type; the unset zero renders empty,
+// which is what the "names no type" callers expect.
+var cardTypeNames = map[CardType]string{
+	Creature: "Creature",
+	Tactic:   "Tactic",
+	Artifact: "Artifact",
+	Upgrade:  "Upgrade",
+	AnyType:  "Card",
+}
+
+// String renders the type as its printed word.
+func (t CardType) String() string { return cardTypeNames[t] }
 
 // Trait is a flavor/type label printed on a card (e.g. "Giant", "Weapon").
 // Traits carry no inherent rules meaning on their own; other cards reference them.

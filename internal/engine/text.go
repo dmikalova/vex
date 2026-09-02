@@ -214,7 +214,7 @@ func renderCardText(def *CardDefinition, withName bool) string {
 	}
 	fields = append(fields,
 		field{"House", def.House.String()},
-		field{"Type", string(def.Type)},
+		field{"Type", def.Type.String()},
 		field{"Rarity", string(def.Rarity)},
 	)
 	if def.Type == Creature {
@@ -575,8 +575,8 @@ func restrictionText(r Restrictions) []string {
 	if r.Fighting {
 		lines = append(lines, "You cannot use creatures to fight.")
 	}
-	if r.CannotPlay != "" {
-		lines = append(lines, "You cannot play "+strings.ToLower(string(r.CannotPlay))+"s.")
+	if r.CannotPlay != TypeUnset {
+		lines = append(lines, "You cannot play "+strings.ToLower(r.CannotPlay.String())+"s.")
 	}
 	if l := r.PlayCardLimit; l.Amount > 0 {
 		who := "You"

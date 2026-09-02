@@ -174,7 +174,7 @@ func TestPlayTopOfDeckLeavesUnplayableCardOnTop(t *testing.T) {
 
 	t.Run("unknown card type", func(t *testing.T) {
 		g := started(t)
-		top := g.AddToDeck(NewCard("Mystery", Logos, CardType("Mystery"), Common), 0)
+		top := g.AddToDeck(NewCard("Mystery", Logos, AnyType, Common), 0)
 		if _, err := g.playCardFromZone(
 			0,
 			top,

@@ -405,7 +405,7 @@ func TestCannotPlayBlanketThisTurn(t *testing.T) {
 	}
 
 	g.EndTurn(0)
-	if g.State.CannotPlayTypeThis[0].Value != "" {
+	if g.State.CannotPlayTypeThis[0].Value != TypeUnset {
 		t.Error("the blanket bar should lift at end of turn")
 	}
 }

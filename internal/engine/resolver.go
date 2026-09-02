@@ -437,7 +437,7 @@ func (g *Game) SetFightDamageRedirect(id LocalID) { g.State.FightDamageRedirect 
 func (g *Game) CancelCurrentFight() { g.State.FightCancelled = true }
 
 // AddAmberOn changes the Æmber sitting on a card.
-func (g *Game) AddAmberOn(id LocalID, delta int) { g.State.Cards[id].Amber += int16(delta) }
+func (g *Game) AddAmberOn(id LocalID, delta int) { g.addAmberOn(id, delta) }
 
 // DealDamage is the Resolver entry point for the internal dealDamage.
 func (g *Game) DealDamage(controller int, targets []DamageTarget) {

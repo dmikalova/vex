@@ -26,7 +26,7 @@ func btn(label string, h app.EventHandler, class string) app.UI {
 // kindLabel is a card's foot label: its type (e.g. "Creature"). The CSS
 // uppercases it. Traits render separately as their own body line (traitLabel).
 func kindLabel(def *engine.CardDefinition) string {
-	return string(def.Type)
+	return def.Type.String()
 }
 
 // traitLabel renders a card's traits in KeyForge order (e.g. "Human • Knight"),

@@ -31,8 +31,8 @@ type PutFromDiscard struct {
 // Type is set (e.g. "creature"), otherwise the generic "card".
 func (e PutFromDiscard) noun() string {
 	base := "card"
-	if e.Type != "" {
-		base = strings.ToLower(string(e.Type))
+	if e.Type != TypeUnset {
+		base = strings.ToLower(e.Type.String())
 	}
 	if e.Trait != "" {
 		base = string(e.Trait) + " trait " + base
@@ -85,7 +85,7 @@ func (e PutFromDiscard) moveTo(ctx *EffectContext, id LocalID) {
 func (e PutFromDiscard) Resolve(ctx *EffectContext) {
 	if e.All {
 		for _, id := range ctx.Resolver.Discard(ctx.Controller) {
-			if e.Type != "" && ctx.Resolver.TypeOf(id) != e.Type {
+			if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
 				continue
 			}
 			if e.Trait != "" && !ctx.Resolver.HasTrait(id, e.Trait) {
@@ -100,10 +100,10 @@ func (e PutFromDiscard) Resolve(ctx *EffectContext) {
 	}
 	discard := ctx.Resolver.Discard(ctx.Controller)
 	candidates := discard
-	if e.Type != "" || e.Trait != "" {
+	if e.Type != TypeUnset || e.Trait != "" {
 		candidates = nil
 		for _, id := range discard {
-			if e.Type != "" && ctx.Resolver.TypeOf(id) != e.Type {
+			if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
 				continue
 			}
 			if e.Trait != "" && !ctx.Resolver.HasTrait(id, e.Trait) {

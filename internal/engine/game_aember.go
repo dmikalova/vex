@@ -1,5 +1,27 @@
 package engine
 
+import "math"
+
+// maxCardAember is the most Æmber one card can hold — the range of CardCore.Amber,
+// which is narrower than a pool's int because it is paid for 128 times over in the
+// flat state. A doubling chain (Binate Rupture) can grow a pool past it, so a
+// capture of the whole pool is saturated at this ceiling rather than wrapped.
+const maxCardAember = math.MaxInt16
+
+// addAmberOn changes the Æmber sitting on a card, saturating at maxCardAember. It
+// clamps only the top: wrapping there would turn a huge pile into negative Æmber
+// that later leaks back into a pool when the card leaves play. Going below zero is
+// a real bug, so it is left to InvariantError to catch rather than hidden here.
+func (g *Game) addAmberOn(id LocalID, delta int) {
+	total := int(g.State.Cards[id].Amber) + delta
+	if total > maxCardAember {
+		g.logf("%s can hold no more Æmber; %d is lost to the ceiling",
+			g.Name(id), total-maxCardAember)
+		total = maxCardAember
+	}
+	g.State.Cards[id].Amber = int16(total)
+}
+
 // gainAember adds Æmber from the common supply to a player's pool. It is the
 // single seam for pool gains: before the Æmber reaches the pool, a continuous
 // replacement such as Ether Spider may capture the incoming Æmber instead, so the
@@ -8,7 +30,7 @@ package engine
 // intentionally bypass this helper.
 func (g *Game) gainAember(player, amount int) (LocalID, bool) {
 	if capturer, ok := g.aemberCaptorFor(player); ok {
-		g.State.Cards[capturer].Amber += int16(amount)
+		g.addAmberOn(capturer, amount)
 		return capturer, true
 	}
 	g.State.Aember[player] += amount

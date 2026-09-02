@@ -39,7 +39,7 @@ func (g *Game) BeginTurn(player int) {
 	g.State.Turn++
 	g.State.PlayedThisTurn[player].reset()
 	g.State.DiscardedThisTurn[player].reset()
-	g.State.PlayPermissionsUsedThisTurn[player] = [NumHouses]int{}
+	g.State.PlayPermissionsUsedThisTurn[player] = [NumHouses]uint8{}
 	for p := 0; p < 2; p++ {
 		for _, id := range g.State.Battleline[p].slice() {
 			g.State.Cards[id].TimesUsedThisTurn = 0
@@ -265,7 +265,7 @@ func (g *Game) RestrictionSources(player int) []LocalID {
 	if g.State.CannotFight[player].Value {
 		name(g.State.CannotFight[player].Source)
 	}
-	if g.State.CannotPlayTypeThis[player].Value != "" {
+	if g.State.CannotPlayTypeThis[player].Value != TypeUnset {
 		name(g.State.CannotPlayTypeThis[player].Source)
 	}
 	if g.State.ForcedHouse[player].Value != HouseNone {

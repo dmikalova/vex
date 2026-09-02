@@ -282,7 +282,8 @@ type GameState struct {
 	DiscardedThisTurn [2]turnLog
 	// PlayPermissionsUsedThisTurn[p][h] counts how many off-house play permissions for
 	// house h player p has spent this turn (Witch of the Wilds). BeginTurn resets it.
-	PlayPermissionsUsedThisTurn [2][NumHouses]int
+	// A turn cannot spend more than a hand's worth, so a byte per house is ample.
+	PlayPermissionsUsedThisTurn [2][NumHouses]uint8
 
 	// ForcedHouse[p] is the house player p must choose as their active house this
 	// turn (Control the Weak); ForcedHouseNext[p] arms that for p's next turn.

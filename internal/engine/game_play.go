@@ -379,7 +379,7 @@ func (g *Game) playPermissionRemaining(player int, house House) int {
 	}
 	used := 0
 	if int(house) < NumHouses {
-		used = g.State.PlayPermissionsUsedThisTurn[player][house]
+		used = int(g.State.PlayPermissionsUsedThisTurn[player][house])
 	}
 	if used >= limit {
 		return 0

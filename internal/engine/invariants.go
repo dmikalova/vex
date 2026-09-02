@@ -76,6 +76,10 @@ func (g *Game) InvariantError() error {
 			return fmt.Errorf("card %d (%s) is in %d places, want exactly 1",
 				id, g.cat.def(LocalID(id)).Name, count[id])
 		}
+		if a := g.State.Cards[id].Amber; a < 0 {
+			return fmt.Errorf("card %d (%s) has negative Æmber on it (%d)",
+				id, g.cat.def(LocalID(id)).Name, a)
+		}
 		// An upgrade in play must be attached: a card that thinks it has a host but
 		// no creature holds it in a chain is a dangling attachment.
 		if g.State.Cards[id].HostPlus != 0 && !attached[id] {

@@ -49,8 +49,8 @@ func (e PurgeCard) count() int {
 
 // noun renders the kind of card purged: the lowercased type when set, else "card".
 func (e PurgeCard) noun() string {
-	if e.Type != "" {
-		return strings.ToLower(string(e.Type))
+	if e.Type != TypeUnset {
+		return strings.ToLower(e.Type.String())
 	}
 	return "card"
 }
@@ -76,7 +76,7 @@ func (e PurgeCard) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 // and reports whether any card was purged.
 func (e PurgeCard) resolveGate(ctx *EffectContext) bool {
 	matches := func(id LocalID) bool {
-		return e.Type == "" || ctx.Resolver.TypeOf(id) == e.Type
+		return e.Type == TypeUnset || ctx.Resolver.TypeOf(id) == e.Type
 	}
 	// The discard piles holding at least one matching card.
 	var piles []int

@@ -209,7 +209,7 @@ func (e ItIs) Met(ctx *EffectContext) bool {
 	if e.House != HouseNone && ctx.Resolver.House(ctx.It) != e.House {
 		return false
 	}
-	if e.Type != "" && ctx.Resolver.TypeOf(ctx.It) != e.Type {
+	if e.Type != TypeUnset && ctx.Resolver.TypeOf(ctx.It) != e.Type {
 		return false
 	}
 	return true

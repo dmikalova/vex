@@ -24,7 +24,7 @@ func TestAllIsAValidDatabase(t *testing.T) {
 			t.Errorf("%q has no house", c.Name)
 		case c.Rarity == "":
 			t.Errorf("%q has no rarity", c.Name)
-		case c.Type == "":
+		case c.Type == engine.TypeUnset:
 			t.Errorf("%q has no card type", c.Name)
 		}
 		if seen[c.Name] {

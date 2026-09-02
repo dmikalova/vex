@@ -205,7 +205,7 @@ func (e DiscardDeckUntil) noun() string {
 
 // matches reports whether a discarded card is the one the dig was looking for.
 func (e DiscardDeckUntil) matches(ctx *EffectContext, id LocalID) bool {
-	if e.Type != "" && ctx.Resolver.TypeOf(id) != e.Type {
+	if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
 		return false
 	}
 	return e.House == HouseNone || ctx.Resolver.House(id) == e.House

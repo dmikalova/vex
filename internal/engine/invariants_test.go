@@ -51,6 +51,21 @@ func TestInvariantErrorEconomy(t *testing.T) {
 	}
 }
 
+// Æmber on a card is a saturating counter: it may never go negative, which would
+// otherwise leak into a pool when the card leaves play.
+func TestInvariantErrorNegativeAmberOnCard(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	id := g.AddToHand(testCreature("Ghost", 4), 0)
+	g.State.Cards[id].Amber = -1
+	err := g.InvariantError()
+	if err == nil {
+		t.Fatal("expected an invariant error for negative Æmber on a card, got nil")
+	}
+	if !strings.Contains(err.Error(), "negative Æmber on it") {
+		t.Fatalf("error %q does not mention negative Æmber on a card", err)
+	}
+}
+
 // A card sitting in two zones at once breaks conservation.
 func TestInvariantErrorCardDuplicated(t *testing.T) {
 	g := NewGame("A", "B", 1)

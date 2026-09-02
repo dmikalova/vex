@@ -199,7 +199,7 @@ func (g *game) cardPicker() app.UI {
 						Body(
 							houseIcon(d.House, "icon-inline"),
 							app.Span().Class("picker-name").Text(d.Name),
-							app.Span().Class("picker-kind").Text(string(d.Type)),
+							app.Span().Class("picker-kind").Text(d.Type.String()),
 						)
 				}),
 			),

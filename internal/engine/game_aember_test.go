@@ -128,3 +128,24 @@ func TestCaptureOpponentAemberReplacement(t *testing.T) {
 		}
 	})
 }
+
+// A pool doubled past int16 (Binate Rupture, repeatedly) can be captured whole, so
+// the card's counter saturates instead of wrapping into negative Æmber.
+func TestAddAmberOnSaturates(t *testing.T) {
+	g := started(t)
+	id := g.AddToBattleline(testCreature("vault", 1), 0)
+
+	g.AddAmberOn(id, maxCardAember-1)
+	g.AddAmberOn(id, 100)
+	if got := g.State.Cards[id].Amber; got != maxCardAember {
+		t.Fatalf("Æmber on card = %d, want the %d ceiling", got, maxCardAember)
+	}
+	if err := g.InvariantError(); err != nil {
+		t.Fatalf("saturating should keep the state sound, got %v", err)
+	}
+
+	g.AddAmberOn(id, -maxCardAember)
+	if got := g.State.Cards[id].Amber; got != 0 {
+		t.Fatalf("Æmber on card = %d, want 0", got)
+	}
+}

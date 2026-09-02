@@ -52,7 +52,7 @@ func (e ArchiveFromHand) handNoun() string {
 func (e ArchiveFromHand) candidates(ctx *EffectContext) []LocalID {
 	var out []LocalID
 	for _, id := range ctx.Resolver.Hand(ctx.Controller) {
-		if e.Type != "" && ctx.Resolver.TypeOf(id) != e.Type {
+		if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
 			continue
 		}
 		if e.House != HouseNone && ctx.Resolver.House(id) != e.House {
