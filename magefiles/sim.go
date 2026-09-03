@@ -128,7 +128,7 @@ func Soak(duration, d *time.Duration) error {
 // soakTimeout gives go test a panic timeout past the soak's own budget. The soak
 // stops itself at the budget, so the timeout is only there to catch a genuine
 // hang — but go test defaults it to 10m, which kills a soak of 10m or longer
-// mid-run and reports the budget elapsing as a timeout panic. An unparseable
+// mid-run and reports the budget elapsing as a timeout panic. An unparsable
 // budget gets no timeout at all; the soak itself fails on it with a better
 // message than a goroutine dump.
 func soakTimeout(budget string) string {
