@@ -158,12 +158,19 @@ func doAction(g *engine.Game, player int, d *decoder) (bool, error) {
 		}
 	}
 
-	choice := d.pick(len(playable) + len(usable))
+	total := len(playable) + len(usable)
+	if total == 0 {
+		// Out of plays and uses, the turn is over. Ending it here rather than leaving
+		// it to the rare stop roll also stops a hand of unplayable active-house cards
+		// from keeping a dead turn alive as a run of discards.
+		return false, nil
+	}
+	choice := d.pick(total, stopOneIn)
 	if choice < 0 {
-		// The rare branch splits between the two ways a turn winds down. Discarding
-		// shares it rather than sitting in the uniform pool because nearly every
-		// active-house card in hand is discardable, so an even slot would spend most
-		// hands on the discard pile instead of the board.
+		// The rare branch splits between the two ways a player walks away from moves
+		// they still have. Discarding shares it rather than sitting in the uniform
+		// pool because nearly every active-house card in hand is discardable, so an
+		// even slot would spend most hands on the discard pile instead of the board.
 		if len(discardable) > 0 && d.bool() {
 			return true, discardCard(g, player, discardable[int(d.byte())%len(discardable)])
 		}

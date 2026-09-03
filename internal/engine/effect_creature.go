@@ -150,14 +150,22 @@ func (e OnChooseCreature) resolveOptional(ctx *EffectContext) bool {
 }
 
 // applyTo runs every verb over each selected creature and reports whether any
-// creature was acted on.
+// creature was acted on. A creature that has left play takes no more verbs: an
+// earlier sentence can destroy the very creature a later one names (Transposition
+// Sandals swaps a creature off the flank that was keeping it alive, then says to
+// use it), and a verb can destroy the creature the next verb would act on.
 func (e OnChooseCreature) applyTo(ctx *EffectContext, ids []LocalID) bool {
+	acted := false
 	for _, id := range ids {
 		for _, v := range e.Verbs {
+			if !ctx.Resolver.InPlay(id) {
+				break
+			}
 			v.Apply(ctx, id)
+			acted = true
 		}
 	}
-	return len(ids) > 0
+	return acted
 }
 
 // applyToChosen is one declinable pass that skips the creatures already spent,

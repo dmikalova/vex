@@ -238,13 +238,20 @@ func TestToll(t *testing.T) {
 	g.AddToHand(NewCard("Widget", Brobnar, Artifact, Common, WithTraits("Item")), 1)
 	idx := handIdx(g, 1, "Widget")
 
-	// Too poor to pay the toll: the play is rejected and the card stays in hand.
+	// Too poor to pay the toll: the play is rejected and the card stays in hand, and
+	// CanPlay says so up front rather than letting the caller find out on the click.
+	if err := g.CanPlay(1, g.Hand(1)[idx]); err != ErrCannotPayToll {
+		t.Fatalf("CanPlay (broke) = %v, want ErrCannotPayToll", err)
+	}
 	if _, err := g.PlayArtifact(1, idx); err != ErrCannotPayToll {
 		t.Fatalf("PlayArtifact (broke) = %v, want ErrCannotPayToll", err)
 	}
 
 	// With Æmber to spare, the toll transfers to the toll card's owner.
 	g.State.Aember[1] = 2
+	if err := g.CanPlay(1, g.Hand(1)[idx]); err != nil {
+		t.Fatalf("CanPlay (funded) = %v, want nil", err)
+	}
 	if _, err := g.PlayArtifact(1, idx); err != nil {
 		t.Fatalf("PlayArtifact: %v", err)
 	}

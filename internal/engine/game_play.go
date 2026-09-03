@@ -182,13 +182,7 @@ func (g *Game) TopOfDeck(player int) (LocalID, bool) {
 // deck as it is played (Chaos Portal plays the card it revealed). It does nothing
 // when the card is not in that deck.
 func (g *Game) PlayFromDeck(player int, id LocalID) {
-	deck := &g.State.Deck[player]
-	for i := 0; i < int(deck.Count); i++ {
-		if deck.IDs[i] == id {
-			_, _ = g.playCardFromZone(player, id, func() { deck.removeAt(i) }, playCardOptions{})
-			return
-		}
-	}
+	g.playFromPile(player, id, &g.State.Deck[player])
 }
 
 // PlayFromHand plays a specific card out of a player's hand, bypassing the
@@ -196,13 +190,26 @@ func (g *Game) PlayFromDeck(player int, id LocalID) {
 // played (Phase Shift's off-house card). It does nothing when the card is not in
 // that hand.
 func (g *Game) PlayFromHand(player int, id LocalID) {
-	hand := &g.State.Hand[player]
-	for i := 0; i < int(hand.Count); i++ {
-		if hand.IDs[i] == id {
-			_, _ = g.playCardFromZone(player, id, func() { hand.removeAt(i) }, playCardOptions{})
-			return
-		}
+	g.playFromPile(player, id, &g.State.Hand[player])
+}
+
+// PlayFromDiscard plays a specific card out of a player's discard pile, the way
+// Sacrificial Altar brings a creature back. It does nothing when the card is not
+// in that discard pile.
+func (g *Game) PlayFromDiscard(player int, id LocalID) {
+	g.playFromPile(player, id, &g.State.Discard[player])
+}
+
+// playFromPile plays a card out of one of a player's face-down piles. Where the
+// card comes from is the only thing that differs between playing from deck, hand,
+// and discard pile — every gate, the log, and the card's Play: ability are the
+// shared playCardFromZone — so the zone is a parameter rather than three bodies.
+func (g *Game) playFromPile(player int, id LocalID, pile *deckList) {
+	i := pile.indexOf(id)
+	if i < 0 {
+		return
 	}
+	_, _ = g.playCardFromZone(player, id, func() { pile.removeAt(i) }, playCardOptions{})
 }
 
 type playCardOptions struct {
@@ -292,7 +299,7 @@ func (g *Game) playCreatureCard(player int, id LocalID, flankLeft bool) {
 	g.emitCardPlayed(player, id)
 	g.emitLasting(EventCreaturePlayed, player, id)
 	g.emitLasting(EventCardEntersPlay, player, id)
-	// The arrival may have walked into a power-reducing aura, or been one.
+	// The arrival may have walked into a power-reducing constant ability, or been one.
 	g.settleDestroyed(player)
 }
 

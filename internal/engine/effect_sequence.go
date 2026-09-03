@@ -40,22 +40,14 @@ func (e Sequence) Text() string {
 	return joinSequenceParts(parts)
 }
 
-// joinSequenceParts preserves the usual ", and" flow for phrase effects, but lets
-// a child effect that already rendered a full sentence continue with the next
-// effect as a new sentence.
+// joinSequenceParts joins a Sequence's rendered children into one compound
+// instruction: "a, and b, and c". A card whose rules are separate statements
+// wants Sentences instead, which punctuates each child rather than conjoining.
 func joinSequenceParts(parts []string) string {
 	if len(parts) == 0 {
 		return ""
 	}
-	text := parts[0]
-	for _, part := range parts[1:] {
-		if strings.HasSuffix(text, ".") {
-			text += " " + capitalizeFirst(part)
-			continue
-		}
-		text += ", and " + part
-	}
-	return text
+	return strings.Join(parts, ", and ")
 }
 
 // foldCombinable folds the run of combinables starting at i into one phrase and
@@ -111,6 +103,48 @@ func (e Sequence) Resolve(ctx *EffectContext) {
 
 // validate surfaces the first configuration error among the child effects.
 func (e Sequence) validate() error {
+	for _, child := range e.Effects {
+		if err := validateEffect(child); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// Sentences resolves several effects in order exactly as a Sequence does, but
+// renders each as its own sentence instead of joining them with ", and". It is
+// the shape a card takes when its rules are separate statements rather than one
+// compound instruction: Sigil of Brotherhood reads "Destroy Sigil of Brotherhood.
+// Until the end of the turn, you may use friendly Sanctum creatures", not
+// "destroy Sigil of Brotherhood, and until the end of the turn ...". Nest a
+// Sequence inside one child to conjoin just that part.
+type Sentences struct {
+	Effects []Effect
+}
+
+// Text renders each child as its own sentence. The first is left uncapitalized
+// because whatever precedes it — a trigger prefix, an enclosing clause — decides
+// its case; every later child opens a sentence, so it is capitalized here.
+func (e Sentences) Text() string {
+	if len(e.Effects) == 0 {
+		return ""
+	}
+	text := punctuate(e.Effects[0].Text())
+	for _, child := range e.Effects[1:] {
+		text += " " + punctuate(capitalizeFirst(child.Text()))
+	}
+	return text
+}
+
+// Resolve resolves each child effect in order.
+func (e Sentences) Resolve(ctx *EffectContext) {
+	for _, child := range e.Effects {
+		child.Resolve(ctx)
+	}
+}
+
+// validate surfaces the first configuration error among the child effects.
+func (e Sentences) validate() error {
 	for _, child := range e.Effects {
 		if err := validateEffect(child); err != nil {
 			return err

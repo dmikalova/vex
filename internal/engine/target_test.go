@@ -511,3 +511,21 @@ func TestTargetChosenOtherFriendly(t *testing.T) {
 		t.Errorf("lone source chosen-other-friendly = %v, want nil", ids)
 	}
 }
+
+func TestTargetNamed(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	bear := g.Register(NewCard("Ancient Bear", Untamed, Creature, Common, WithPower(6)), 0)
+	g.State.Battleline[0].add(bear)
+	other := g.AddToBattleline(testCreature("Chuff Ape", 6), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	tgt := Target{Kind: TargetEachFriendlyCreature}.Named("Ancient Bear")
+	// A named card needs no describing, so the name replaces the noun outright.
+	if want := "each friendly Ancient Bear"; tgt.Text() != want {
+		t.Errorf("text = %q, want %q", tgt.Text(), want)
+	}
+	got := tgt.Select(ctx)
+	if len(got) != 1 || got[0] != bear {
+		t.Errorf("selected %v, want just the bear (not %v)", got, other)
+	}
+}

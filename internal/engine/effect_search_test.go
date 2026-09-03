@@ -126,3 +126,33 @@ func TestShuffleIntoDeck(t *testing.T) {
 		t.Errorf("deck should hold the 4 shuffled cards, count = %d", g2.State.Deck[0].Count)
 	}
 }
+
+func TestSearchForNameAll(t *testing.T) {
+	e := SearchForName{Name: "Ancient Bear", All: true}
+	want := "search your deck and discard pile and put each Ancient Bear from them into your hand"
+	if e.Text() != want {
+		t.Errorf("text = %q, want %q", e.Text(), want)
+	}
+
+	newBear := func(g *Game, player int) LocalID {
+		return g.Register(NewCard("Ancient Bear", Untamed, Creature, Common, WithPower(6)), player)
+	}
+
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("flute", 1), 0)
+	inDeck, inDiscard := newBear(g, 0), newBear(g, 0)
+	g.State.Deck[0].add(inDeck)
+	g.State.Discard[0].add(inDiscard)
+	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+
+	if !e.resolveGate(ctx) {
+		t.Error("resolveGate reported finding nothing")
+	}
+	if !g.State.Hand[0].contains(inDeck) || !g.State.Hand[0].contains(inDiscard) {
+		t.Error("both copies should be in hand, from the deck and the discard pile")
+	}
+
+	if e.resolveGate(ctx) {
+		t.Error("resolveGate reported a find with no copies left")
+	}
+}

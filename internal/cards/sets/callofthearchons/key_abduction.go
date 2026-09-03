@@ -18,17 +18,17 @@ var KeyAbduction = card.New(
 	card.Provenance(card.CotA, 166),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-			card.Sentence{Effect: card.PutFromPlay{
+		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+			card.PutFromPlay{
 				Target:      card.Target.EachCreature.OfHouse(card.House.Mars),
 				Destination: card.To.Hand,
-			}},
-			card.Sentence{Effect: card.ForgeKey{
+			},
+			card.ForgeKey{
 				Extra: 9,
 				ReducedBy: card.CardsInHand{
 					Player: card.Controller,
 					House:  card.AnyHouse,
 				},
-			}},
+			},
 		}}),
 )

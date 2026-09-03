@@ -18,12 +18,12 @@ var BonkersKillingMachine = card.New(
 	card.Provenance(card.CotA, 128),
 	card.WithTraits("Weapon"),
 	card.WithAbility(
-		card.Trigger.Action, card.Sequence{
+		card.Trigger.Action, card.Sentences{
 			Effects: []card.Effect{
-				card.Sentence{Effect: card.DiscardTopOfEachDeck{}},
-				card.Sentence{Effect: card.ForEachDiscarded{
+				card.DiscardTopOfEachDeck{},
+				card.ForEachDiscarded{
 					Do: card.Destroy{Target: card.Target.CreatureOrArtifact.OfContextualHouse()},
-				}},
+				},
 				card.Conditional{
 					Cond: card.CardsDestroyedFewerThan{Amount: 2},
 					Then: card.Destroy{Target: card.Target.This},

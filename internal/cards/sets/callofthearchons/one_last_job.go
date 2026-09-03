@@ -18,13 +18,13 @@ var OneLastJob = card.New(
 	card.Provenance(card.CotA, 277),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-			card.Sentence{Effect: card.PurgeCreature{
+		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+			card.PurgeCreature{
 				Target: card.Target.EachFriendlyCreature.OfHouse(card.House.Shadows),
-			}},
-			card.Sentence{Effect: card.StealAember{
+			},
+			card.StealAember{
 				Amount: 1,
 				Per:    card.CardsPurged{},
-			}},
+			},
 		}}),
 )

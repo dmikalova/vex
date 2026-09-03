@@ -18,14 +18,14 @@ var Hecatomb = card.New(
 	card.Provenance(card.CotA, 63),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-			card.Sentence{Effect: card.Destroy{
+		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+			card.Destroy{
 				Target: card.Target.EachCreature.OfHouse(card.House.Dis),
-			}},
-			card.Sentence{Effect: card.GainAember{
+			},
+			card.GainAember{
 				Player: card.EachPlayer,
 				Amount: 1,
 				Per:    card.CreaturesDestroyedThisWay{Player: card.Controller},
-			}},
+			},
 		}}),
 )

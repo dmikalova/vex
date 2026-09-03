@@ -42,6 +42,11 @@ type CardCore struct {
 	TimesUsedThisTurn int16
 	Damage            int16
 	ArmorRemaining    int16
+	// ArmorStripped is how much armor an effect took off this creature, as opposed
+	// to how much it spent absorbing damage — the "for each point of armor it lost
+	// this way" tally (Red-Hot Armor). The controller's ready phase clears it along
+	// with refreshing ArmorRemaining.
+	ArmorStripped int16
 	// Amber is Æmber sitting on the card (e.g. placed by exalt or capture). It
 	// belongs to no player's pool while it stays here.
 	Amber int16

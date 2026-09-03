@@ -60,11 +60,11 @@ func (e PurgeCard) noun() string {
 func (e PurgeCard) Text() string {
 	switch {
 	case e.UpTo:
-		return fmt.Sprintf("purge up to %d %ss from a discard pile", e.count(), e.noun())
+		return "purge up to " + countNoun(e.count(), e.noun()) + " from a discard pile"
 	case e.count() == 1:
-		return "purge a " + e.noun() + " from a discard pile"
+		return "purge " + indefinite(e.noun()) + " from a discard pile"
 	default:
-		return fmt.Sprintf("purge %d %ss from a discard pile", e.count(), e.noun())
+		return "purge " + countNoun(e.count(), e.noun()) + " from a discard pile"
 	}
 }
 
@@ -158,7 +158,7 @@ func (e PurgeFromHand) Text() string {
 	if e.Player == Opponent {
 		whose = "your opponent's hand"
 	}
-	return "you may purge a " + e.noun() + " from " + whose
+	return "you may purge " + indefinite(e.noun()) + " from " + whose
 }
 
 // Resolve offers the matching cards in the player's hand as a declinable choice,
@@ -263,7 +263,12 @@ func (e PurgeCreature) Text() string { return "purge " + e.Target.Text() }
 // creature its damage killed). A creature that is in neither zone is left alone.
 // The tally is recorded on the context, so a following effect can scale with how
 // many were actually purged (see CardsPurged).
-func (e PurgeCreature) Resolve(ctx *EffectContext) {
+func (e PurgeCreature) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
+
+// resolveGate purges and reports whether anything was actually purged, so a Then
+// can hang a follow-up off it (Sacrificial Altar only reaches into the discard
+// pile if there was a Human to purge).
+func (e PurgeCreature) resolveGate(ctx *EffectContext) bool {
 	purged := 0
 	for _, id := range e.Target.Select(ctx) {
 		if resolverInPlay(ctx, id) {
@@ -281,6 +286,7 @@ func (e PurgeCreature) Resolve(ctx *EffectContext) {
 		}
 	}
 	ctx.Produced.Purged = purged
+	return purged > 0
 }
 
 // CardsPurged counts the cards the most recent purge in this resolution removed —

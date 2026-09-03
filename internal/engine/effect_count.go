@@ -149,6 +149,13 @@ type InPlay struct {
 	// Other leaves the source card itself out of the count, which is how a card
 	// counts its companions (Phylyx the Disintegrator).
 	Other bool
+	// Name filters by printed card name, and replaces the rendered noun with it:
+	// "if there are no Ancient Bears in play" (Bear Flute).
+	Name string
+	// None inverts the Condition role: it is met when nothing matches. It reads as
+	// its own word rather than as Amount 0 because "if there are no X" is a
+	// different sentence from "if there are N X", not the N = 0 case of it.
+	None bool
 	// Amount is the minimum the Condition role requires; zero means at least one.
 	Amount int
 }
@@ -169,13 +176,20 @@ func (e InPlay) Value(ctx *EffectContext) int {
 		if e.Other && id == ctx.Source {
 			continue
 		}
+		if e.Name != "" && ctx.Resolver.Name(id) != e.Name {
+			continue
+		}
 		n++
 	}
 	return n
 }
 
-// Met reports whether at least Amount (default one) matching cards are in play.
+// Met reports whether at least Amount (default one) matching cards are in play,
+// or, under None, that none are.
 func (e InPlay) Met(ctx *EffectContext) bool {
+	if e.None {
+		return e.Value(ctx) == 0
+	}
 	return e.Value(ctx) >= e.threshold()
 }
 
@@ -232,6 +246,9 @@ func (e InPlay) typeNoun() string {
 
 // noun renders the "<side> [ready ][house ]<type>" phrase the text roles share.
 func (e InPlay) noun() string {
+	if e.Name != "" {
+		return e.Name
+	}
 	parts := []string{}
 	if e.Other {
 		parts = append(parts, "other")
@@ -264,10 +281,13 @@ func (e InPlay) CountText() string {
 // CondText renders the condition, e.g. "if there is a friendly creature in play"
 // or "if there are 2 friendly creatures in play".
 func (e InPlay) CondText() string {
-	if n := e.threshold(); n > 1 {
-		return fmt.Sprintf("if there are %d %ss in play", n, e.noun())
+	if e.None {
+		return fmt.Sprintf("if there are no %s in play", plural(0, e.noun()))
 	}
-	return fmt.Sprintf("if there is a %s in play", e.noun())
+	if n := e.threshold(); n > 1 {
+		return fmt.Sprintf("if there are %d %s in play", n, plural(n, e.noun()))
+	}
+	return fmt.Sprintf("if there is %s in play", indefinite(e.noun()))
 }
 
 // CardsPlayed counts the cards of a house a player has played this turn. Like

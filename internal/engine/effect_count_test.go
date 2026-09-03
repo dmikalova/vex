@@ -166,3 +166,34 @@ func TestExcessCreatures(t *testing.T) {
 		t.Errorf("own excess = %d, want 1 (you 3, opponent 2)", got)
 	}
 }
+
+func TestInPlayByName(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	bear := g.Register(NewCard("Ancient Bear", Untamed, Creature, Common, WithPower(6)), 0)
+	g.AddToBattleline(testCreature("other", 3), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	none := InPlay{Player: EachPlayer, Type: Creature, Name: "Ancient Bear", None: true}
+	if want := "if there are no Ancient Bears in play"; none.CondText() != want {
+		t.Errorf("cond text = %q, want %q", none.CondText(), want)
+	}
+	if !none.Met(ctx) {
+		t.Error("None should be met while no Ancient Bear is in play")
+	}
+
+	g.State.Battleline[0].add(bear)
+	if none.Met(ctx) {
+		t.Error("None should not be met once an Ancient Bear is in play")
+	}
+	some := InPlay{Player: EachPlayer, Type: Creature, Name: "Ancient Bear"}
+	if n := some.Value(ctx); n != 1 {
+		t.Errorf("value = %d, want 1 (only the named card counts)", n)
+	}
+	if want := "if there is an Ancient Bear in play"; some.CondText() != want {
+		t.Errorf("cond text = %q, want %q", some.CondText(), want)
+	}
+	two := InPlay{Player: EachPlayer, Type: Creature, Name: "Ancient Bear", Amount: 2}
+	if want := "if there are 2 Ancient Bears in play"; two.CondText() != want {
+		t.Errorf("cond text = %q, want %q", two.CondText(), want)
+	}
+}

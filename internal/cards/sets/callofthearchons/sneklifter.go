@@ -20,11 +20,11 @@ var Sneklifter = card.New(
 	card.WithPower(2),
 	card.WithTraits("Elf", "Thief"),
 	card.WithAbility(
-		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-			card.Sentence{Effect: card.TakeControl{
+		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+			card.TakeControl{
 				Target:   card.Target.EnemyArtifact,
 				Duration: card.Duration.Forever,
-			}},
+			},
 			card.Conditional{
 				Cond: card.ItIsOffIdentity{},
 				Then: card.BelongToHouse{

@@ -213,8 +213,9 @@ which is itself a finding.
   run inside `mage test` on every suite run. This is the property test that shakes
   the engine continuously; a regression prints the exact script to reproduce.
 - **`TestSoak`** — the same games on a time budget, skipped unless `SOAK_DURATION`
-  is set. It runs across `GOMAXPROCS` workers (many games per second), and where
-  fuzzing hunts _new_ coverage and stops when it plateaus, the soak just runs
+  is set (`mage soak` sets it). It runs across `GOMAXPROCS` workers (many games
+  per second), and where fuzzing hunts _new_ coverage and stops when it
+  plateaus, the soak just runs
   _volume_ for a fixed wall-clock budget (nightly/CI). It does **not** stop at the
   first failure: every failing script is written into `testdata/fuzz/FuzzPlay` in
   Go's fuzz-corpus format, so a soak find becomes a permanent `FuzzPlay` regression
@@ -264,8 +265,13 @@ mage test         # go test ./...  (whole suite, incl. the fixed-seed simulator)
 mage cover        # engine coverage, must print 100%
 mage check        # the full gate: fmt, build, vet, lint, test, cover
 
-mage fuzz         # coverage-guided whole-game fuzzing (-tags assert); FUZZTIME=…
-mage soak         # volume soak of random games (-tags assert); SOAK_DURATION=…
+mage fuzz         # coverage-guided whole-game fuzzing (-tags assert), 60s
+mage soak         # volume soak of random games (-tags assert), 30s
+
+# both take a time budget; mage wants -name=value, so no space after the flag:
+mage fuzz -duration=5m      # -d=5m is the same flag
+mage soak -duration=5m      # -d=5m is the same flag
+FUZZTIME=10000x mage fuzz   # env still takes fuzzing's "Nx" execution count
 
 # focused runs while iterating:
 mage testRun TestHeal

@@ -16,20 +16,20 @@ var AFairGame = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 53),
 	card.WithAbility(
-		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-			card.Sentence{Effect: card.DiscardTopOfDeck{Player: card.Opponent}},
-			card.Sentence{Effect: card.RevealHand{Player: card.Opponent}},
-			card.Sentence{Effect: card.GainAember{
+		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+			card.DiscardTopOfDeck{Player: card.Opponent},
+			card.RevealHand{Player: card.Opponent},
+			card.GainAember{
 				Player: card.Controller,
 				Amount: 1,
 				Per:    card.CardsInHand{Player: card.Opponent, House: card.TheContextualHouse},
-			}},
-			card.Sentence{Effect: card.DiscardTopOfDeck{Player: card.Controller}},
-			card.Sentence{Effect: card.RevealHand{Player: card.Controller}},
-			card.Sentence{Effect: card.GainAember{
+			},
+			card.DiscardTopOfDeck{Player: card.Controller},
+			card.RevealHand{Player: card.Controller},
+			card.GainAember{
 				Player: card.Opponent,
 				Amount: 1,
 				Per:    card.CardsInHand{Player: card.Controller, House: card.TheContextualHouse},
-			}},
+			},
 		}}),
 )

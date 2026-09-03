@@ -346,6 +346,13 @@ they have simply loses all of it. Player may be EachPlayer, so both players lose
 The amount lost is either a fixed Amount or a By loss of the pool (By: Half,
 By: AllBut(5)) — set one, not both.
 
+### Lose Armor
+
+LoseArmor takes all the remaining armor off each creature its Target selects,
+and tallies what it took so a following effect can scale with it (Red-Hot Armor
+strips armor, then deals damage for each point stripped). The armor comes back
+when its controller readies, the same way armor spent absorbing damage does.
+
 ### May
 
 A "you may" effect is optional: it offers the controller the choice to resolve
@@ -362,17 +369,19 @@ of a HouseLock whose house is not printed but named: Restringuntus chooses a
 house on play and bars its opponent from it until it leaves play. Player names
 whose choice the lock will constrain, and must match the card's HouseLock.
 
-### Play a Card from Hand
+### Play a Card from Hand or Discard Pile
 
-PlayFromHand has the controller play a card from their own hand right now,
-ignoring the active-house gate — Phase Shift's off-house card. House and Type
-narrow which cards may be chosen; Except inverts the house filter, so House names
-the house that may *not* be played ("a non-Logos card").
+PlayFrom has the controller play a card out of their own hand or discard pile
+right now, ignoring the active-house gate — Phase Shift's off-house card,
+Sacrificial Altar's creature back from the discard pile. From names the source
+pile; House and Type narrow which cards may be chosen; Except inverts the house
+filter, so House names the house that may *not* be played ("a non-Logos card").
 
-KeyForge prints this as a permission held open for the rest of the turn ("you may
-play one non-Logos card this turn"); it is rendered and resolved as an immediate
-play instead, which needs no turn-scoped memory of an unspent allowance (see
-card-wording-rules.md rule 21). With no legal card in hand it does nothing.
+KeyForge prints the from-hand form as a permission held open for the rest of the
+turn ("you may play one non-Logos card this turn"); it is rendered and resolved
+as an immediate play instead, which needs no turn-scoped memory of an unspent
+allowance (see card-wording-rules.md rule 21). With no legal card in the source
+pile it does nothing.
 
 ### Power Counter
 
@@ -541,10 +550,11 @@ WithSpendableAember, which is what makes the bank worth filling.
 - [Heal](#heal)
 - [Leaves Play](#leaves-play)
 - [Lose Aember](#lose-aember)
+- [Lose Armor](#lose-armor)
 - [May](#may)
 - [Name a House](#name-a-house)
 - [Play](#play)
-- [Play a Card from Hand](#play-a-card-from-hand)
+- [Play a Card from Hand or Discard Pile](#play-a-card-from-hand-or-discard-pile)
 - [Poison](#poison)
 - [Power Counter](#power-counter)
 - [Purge](#purge)

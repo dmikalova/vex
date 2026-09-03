@@ -58,7 +58,7 @@ type KeywordLostByAll struct{ Keyword Keyword }
 // Text renders the keyword every creature lost for the turn.
 func (e KeywordLostByAll) Text(Namer) string {
 	return fmt.Sprintf("each creature loses %s for the remainder of the turn",
-		strings.ToLower(string(e.Keyword)))
+		strings.ToLower(e.Keyword.String()))
 }
 
 // ChainsGained narrates chains being put on a player.

@@ -23,7 +23,7 @@ func TestLogEntryText(t *testing.T) {
 	}{
 		// Turn shape.
 		{TurnBegan{Player: 0, Turn: 3}, "P0 begins turn 3"},
-		{PhaseBegan{Player: 1, Phase: PhaseReady}, "P1: ready phase"},
+		{PhaseBegan{Player: 1, Phase: PhaseReady}, "Ready phase"},
 		{CardsReadied{Player: 0, Cards: []LocalID{4, 7}}, "P0 readies Card4, Card7"},
 		{CardsDrawn{Player: 1, Count: 3, Hand: 6}, "P1 draws 3 cards, up to 6 in hand"},
 		{CardsDrawn{Player: 1, Count: 1, Hand: 6}, "P1 draws 1 card, up to 6 in hand"},
@@ -97,7 +97,7 @@ func TestLogEntryText(t *testing.T) {
 		// Zones.
 		{
 			ArchivesTakenIntoHand{Player: 0, Count: 2},
-			"P0 takes 2 card(s) from their archives into hand",
+			"P0 takes 2 cards from their archives into hand",
 		},
 		{CardArchivedFromHand{Player: 0, Card: 6}, "P0 archives a card"},
 		{
@@ -105,7 +105,7 @@ func TestLogEntryText(t *testing.T) {
 			"P1 archives Card6 from their discard pile",
 		},
 		{TopOfDeckArchived{Player: 0, Card: 6}, "P0 archives a card from the top of their deck"},
-		{ArchivesDiscarded{Player: 1, Count: 3}, "P1 discards 3 archived card(s)"},
+		{ArchivesDiscarded{Player: 1, Count: 3}, "P1 discards 3 archived cards"},
 		{
 			TopOfDeckDiscarded{Player: 0, Card: 6},
 			"P0 discards Card6 from the top of their deck",
@@ -125,7 +125,7 @@ func TestLogEntryText(t *testing.T) {
 		},
 		{
 			CardReturnedFromDiscardToHand{Player: 0, Card: 6},
-			"P0 returns Card6 from their discard to hand",
+			"P0 returns Card6 from their discard pile to hand",
 		},
 		{
 			CardPutFromDeckIntoHand{Player: 1, Card: 6},
@@ -133,7 +133,7 @@ func TestLogEntryText(t *testing.T) {
 		},
 		{
 			CardPutFromDiscardOnTopOfDeck{Player: 0, Card: 6},
-			"P0 puts Card6 from their discard on top of their deck",
+			"P0 puts Card6 from their discard pile on top of their deck",
 		},
 
 		// Playing and using.
@@ -181,7 +181,7 @@ func TestLogEntryText(t *testing.T) {
 		},
 		{
 			LastingDraw{Player: 1, Amount: 2, On: EventFight},
-			"P1 draws 2 card(s) (each time a friendly creature fights)",
+			"P1 draws 2 cards (each time a friendly creature fights)",
 		},
 		{
 			AemberGivenAfterForging{Player: 0, To: 1, Amount: 3},

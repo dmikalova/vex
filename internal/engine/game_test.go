@@ -256,6 +256,32 @@ func TestDiscardFromHand(t *testing.T) {
 	}
 }
 
+// TestCanDiscard checks that CanDiscard reports exactly what DiscardFromHand
+// enforces, so a caller can list the legal discards without replaying the rule.
+func TestCanDiscard(t *testing.T) {
+	g := started(t)
+	dis := g.AddToHand(NewCard("Dis", Dis, Creature, Common, WithPower(2)), 0)
+	brob := g.AddToHand(testCreature("brob", 3), 0)
+
+	if err := g.CanDiscard(0, dis); err != ErrWrongHouse {
+		t.Errorf("wrong house = %v, want ErrWrongHouse", err)
+	}
+	if err := g.CanDiscard(1, brob); err != ErrNotActivePlayer {
+		t.Errorf("inactive player = %v, want ErrNotActivePlayer", err)
+	}
+	if err := g.CanDiscard(0, brob+99); err != ErrCardNotInHand {
+		t.Errorf("absent card = %v, want ErrCardNotInHand", err)
+	}
+	if err := g.CanDiscard(0, brob); err != nil {
+		t.Errorf("active-house card = %v, want nil", err)
+	}
+
+	g.State.Winner = 0
+	if err := g.CanDiscard(0, brob); err != ErrGameOver {
+		t.Errorf("game over = %v, want ErrGameOver", err)
+	}
+}
+
 // ---- turn flow ----
 
 func TestForgeKeyWins(t *testing.T) {

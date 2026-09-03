@@ -18,12 +18,12 @@ var Vigor = card.New(
 	card.Provenance(card.CotA, 338),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-			card.Sentence{Effect: card.Heal{
+		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+			card.Heal{
 				Amount: 3,
 				Target: card.Target.Creature,
-			}},
-			card.Sentence{Effect: card.Conditional{
+			},
+			card.Conditional{
 				Cond: card.CountIs{
 					Count:  card.DamageHealed{},
 					Is:     card.Exactly,
@@ -33,6 +33,6 @@ var Vigor = card.New(
 					Player: card.Controller,
 					Amount: 1,
 				},
-			}},
+			},
 		}}),
 )

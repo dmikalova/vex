@@ -205,4 +205,7 @@ var (
 	EachPlayer = engine.EachPlayer
 	// ItsOwner is the owner of the card in context (ctx.It).
 	ItsOwner = engine.ItsOwner
+	// ItsOpponent is the opponent of the card in context — for a capture, of the
+	// capturing creature, so each side's creatures draw from a different pool.
+	ItsOpponent = engine.ItsOpponent
 )

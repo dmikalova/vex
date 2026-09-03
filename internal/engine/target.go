@@ -116,10 +116,14 @@ type Target struct {
 	undamaged     bool
 	stunned       bool
 	withAember    bool
-	keyword       Keyword
-	onFlank       bool
-	notOnFlank    bool
-	neighboring   bool
+	// withArmor narrows the target to creatures that have armor at all, rendering
+	// " with armor". It reads the creature's armor value, not what is left of it, so
+	// a creature that has already spent its armor absorbing damage still has armor.
+	withArmor   bool
+	keyword     Keyword
+	onFlank     bool
+	notOnFlank  bool
+	neighboring bool
 	// withNeighbors expands a single chosen creature to include its battleline
 	// neighbors (Tremor stuns a creature and each of its neighbors).
 	withNeighbors bool
@@ -128,6 +132,10 @@ type Target struct {
 	neighborsOf bool
 	// other excludes the source card from the selected set ("other" cards).
 	other bool
+	// named narrows the target to cards with this printed name, and replaces the
+	// rendered noun with it: a card that names another card outright says "an
+	// Ancient Bear", not "an Ancient Bear creature".
+	named string
 	// selector is a set-relative refinement applied after the per-card filters. It
 	// can compare the candidates to each other (e.g. "except the most powerful")
 	// and contributes a clause to the printed phrase. nil for targets that select
@@ -250,10 +258,24 @@ func (t Target) Undamaged() Target {
 	return t
 }
 
+// Named narrows the target to cards with the given printed name, e.g.
+// Target{Kind: TargetChosenCreature}.Named("Ancient Bear").
+func (t Target) Named(name string) Target {
+	t.named = name
+	return t
+}
+
 // WithAember narrows the target to creatures that have Æmber on them, rendering
 // " with Æmber on it", e.g. "each creature with Æmber on it".
 func (t Target) WithAember() Target {
 	t.withAember = true
+	return t
+}
+
+// WithArmor narrows the target to creatures that have armor, rendering " with
+// armor", e.g. "each enemy creature with armor".
+func (t Target) WithArmor() Target {
+	t.withArmor = true
 	return t
 }
 
@@ -367,6 +389,9 @@ func (t Target) Text() string {
 	if orArtifact {
 		noun = "creature or artifact"
 	}
+	if t.named != "" {
+		noun = t.named
+	}
 	if t.exceptHouse != HouseNone {
 		noun = "non-" + t.exceptHouse.String() + " " + noun
 	}
@@ -401,8 +426,8 @@ func (t Target) Text() string {
 	if t.stunned {
 		noun = "stunned " + noun
 	}
-	if t.keyword != "" {
-		noun = strings.ToLower(string(t.keyword)) + " " + noun
+	if t.keyword.valid() {
+		noun = strings.ToLower(t.keyword.String()) + " " + noun
 	}
 	var phrase string
 	switch t.Kind {
@@ -460,6 +485,9 @@ func (t Target) Text() string {
 	}
 	if t.withAember {
 		phrase += " with \u00c6mber on it"
+	}
+	if t.withArmor {
+		phrase += " with armor"
 	}
 	if t.notOnFlank {
 		phrase += " that is not on a flank"
@@ -809,11 +837,13 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 		!t.undamaged &&
 		!t.stunned &&
 		!t.withAember &&
-		t.keyword == "" &&
+		!t.withArmor &&
+		t.keyword == keywordUnset &&
 		!t.onFlank &&
 		!t.notOnFlank &&
 		!t.neighboring &&
-		!t.other {
+		!t.other &&
+		t.named == "" {
 		return ids
 	}
 	out := make([]LocalID, 0, len(ids))
@@ -858,7 +888,10 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 		if t.withAember && ctx.Resolver.AmberOn(id) == 0 {
 			continue
 		}
-		if t.keyword != "" && !ctx.Resolver.HasKeyword(id, t.keyword) {
+		if t.withArmor && ctx.Resolver.Armor(id) == 0 {
+			continue
+		}
+		if t.keyword.valid() && !ctx.Resolver.HasKeyword(id, t.keyword) {
 			continue
 		}
 		if t.stunned && !ctx.Resolver.Stunned(id) {
@@ -874,6 +907,9 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 			continue
 		}
 		if t.other && id == ctx.Source {
+			continue
+		}
+		if t.named != "" && ctx.Resolver.Name(id) != t.named {
 			continue
 		}
 		out = append(out, id)

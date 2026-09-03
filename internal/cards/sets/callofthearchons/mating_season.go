@@ -18,15 +18,15 @@ var MatingSeason = card.New(
 	card.Provenance(card.CotA, 170),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-			card.Sentence{Effect: card.PutFromPlay{
+		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+			card.PutFromPlay{
 				Target:      card.Target.EachCreature.OfHouse(card.House.Mars),
 				Destination: card.To.DeckShuffled,
-			}},
-			card.Sentence{Effect: card.GainAember{
+			},
+			card.GainAember{
 				Player: card.EachPlayer,
 				Amount: 1,
 				Per:    card.CreaturesShuffledIntoDeckThisWay{Player: card.Controller},
-			}},
+			},
 		}}),
 )

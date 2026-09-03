@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"strings"
 )
 
 // This file holds the log entries that narrate what happens to a creature or
@@ -45,11 +44,7 @@ type CardsRevealedToAll struct {
 
 // Text renders the cards a player revealed, each by name.
 func (e CardsRevealedToAll) Text(n Namer) string {
-	names := make([]string, len(e.Cards))
-	for i, id := range e.Cards {
-		names[i] = n.Name(id)
-	}
-	return fmt.Sprintf("%s reveals %s", n.PlayerName(e.Player), strings.Join(names, ", "))
+	return fmt.Sprintf("%s reveals %s", n.PlayerName(e.Player), namedCards(n, e.Cards))
 }
 
 // PositionsSwapped narrates two creatures trading places in a battleline.

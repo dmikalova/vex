@@ -22,9 +22,9 @@ var CustomVirus = card.New(
 	card.WithTraits("Weapon"),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(
-		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
-			card.Sentence{Effect: card.Destroy{Target: card.Target.This}},
-			card.Sentence{Effect: card.PurgeCreatureFromHand{}},
+		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+			card.Destroy{Target: card.Target.This},
+			card.PurgeCreatureFromHand{},
 			card.Destroy{Target: card.Target.EachCreature.SharingTrait()},
 		}}),
 )

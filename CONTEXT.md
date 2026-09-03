@@ -112,6 +112,14 @@ A zone whose contents are not known to both players (deck, hand, archives) versu
 one whose contents are (play, discard, purged). The distinction decides whether a
 card can be named.
 
+**Constant ability**:
+An ability with no boldfaced trigger, which applies continuously while its card
+stays in play — the power and armor bonuses one card hands its neighbors, a
+keyword or quoted ability it grants every creature, a restriction it imposes.
+It is not a triggered ability and applying it does not exhaust the card. This is
+the only continuous-effect concept in the engine; there is no separate notion of
+an "aura".
+
 **Take control** / **latest ability wins**:
 Taking control moves a card to your play area and makes you its controller;
 ownership never changes and still decides where the card returns when it leaves
@@ -386,3 +394,16 @@ changed; a _flight_ is a card that left play arcing into the zone it went to.
 
 **Tip**:
 The small label a bare icon shows on hover.
+
+**Style gallery**:
+The page at `/style` showing every piece of the client's visual vocabulary at
+once — color tokens, icons, fonts, card faces, a Player bar, and the animations.
+It is a development surface, served only by `mage web`, and is not part of a
+game. Its regions:
+
+- **Specimen**: one displayed example, captioned with what selected it.
+- **House grid**: the specimens laid out as House by Card type, whose gaps show
+  which combinations the implemented sets have no card for.
+- **Font compare**: the strip that renders one specimen once per loaded font, to
+  choose between faces for the same House.
+- **Style header**: the sticky controls for the fonts in use.

@@ -4,6 +4,7 @@ package main
 
 import (
 	"os"
+	"time"
 
 	"github.com/magefile/mage/sh"
 )
@@ -13,10 +14,21 @@ import (
 // coverage-guided mutation, and saves any minimized failing script under
 // internal/sim/testdata/fuzz/FuzzPlay.
 //
-// Set FUZZTIME to bound the run (a Go duration or an "Nx" count); it defaults to
-// 60s. The generated corpus lives in the Go build cache, not the repo — run
+// The budget defaults to 60s. Pass a Go duration to change it, either as a mage
+// flag or through FUZZTIME, which also takes an "Nx" execution count that a
+// duration cannot express:
+//
+//	mage fuzz
+//	mage fuzz -duration=5m
+//	mage fuzz -d=5m
+//	FUZZTIME=10000x mage fuzz
+//
+// The generated corpus lives in the Go build cache, not the repo — run
 // `mage fuzzClean` to reset it.
-func Fuzz() error {
+func Fuzz(duration, d *time.Duration) error {
+	if budget := firstSet(duration, d); budget != "" {
+		os.Setenv("FUZZTIME", budget)
+	}
 	fuzztime := os.Getenv("FUZZTIME")
 	if fuzztime == "" {
 		fuzztime = "60s"
@@ -24,6 +36,19 @@ func Fuzz() error {
 	return sh.RunV("go", "test", "-tags", "assert",
 		"-run", "^$", "-fuzz", "^FuzzPlay$", "-fuzztime", fuzztime,
 		"./internal/sim")
+}
+
+// firstSet returns the first duration flag the caller actually passed, so a
+// target can offer both a spelled-out name and a one-letter alias. mage derives
+// each flag from a parameter name and has no alias mechanism, so the alias has to
+// be a second parameter.
+func firstSet(flags ...*time.Duration) string {
+	for _, f := range flags {
+		if f != nil {
+			return f.String()
+		}
+	}
+	return ""
 }
 
 // FuzzClean discards the generated fuzz corpus. It lives in the Go build cache.
@@ -80,11 +105,36 @@ func Trace() error {
 // games across GOMAXPROCS workers until the time budget elapses. It does not stop
 // at the first failure: every failing script is saved into
 // internal/sim/testdata/fuzz/FuzzPlay as a permanent FuzzPlay regression.
-// Set SOAK_DURATION to a Go duration (e.g. SOAK_DURATION=5m); it defaults to 30s.
-func Soak() error {
+//
+// The budget defaults to 30s. Pass a Go duration to change it, either as a mage
+// flag or through SOAK_DURATION:
+//
+//	mage soak
+//	mage soak -duration=5m
+//	mage soak -d=5m
+//	SOAK_DURATION=5m mage soak
+func Soak(duration, d *time.Duration) error {
+	if budget := firstSet(duration, d); budget != "" {
+		os.Setenv("SOAK_DURATION", budget)
+	}
 	if os.Getenv("SOAK_DURATION") == "" {
 		os.Setenv("SOAK_DURATION", "30s")
 	}
 	return sh.RunV("go", "test", "-tags", "assert",
+		"-timeout", soakTimeout(os.Getenv("SOAK_DURATION")),
 		"-run", "^TestSoak$", "-count", "1", "-v", "./internal/sim")
+}
+
+// soakTimeout gives go test a panic timeout past the soak's own budget. The soak
+// stops itself at the budget, so the timeout is only there to catch a genuine
+// hang — but go test defaults it to 10m, which kills a soak of 10m or longer
+// mid-run and reports the budget elapsing as a timeout panic. An unparseable
+// budget gets no timeout at all; the soak itself fails on it with a better
+// message than a goroutine dump.
+func soakTimeout(budget string) string {
+	d, err := time.ParseDuration(budget)
+	if err != nil {
+		return "0"
+	}
+	return (d + 5*time.Minute).String()
 }

@@ -29,13 +29,14 @@ func (e BelongToHouse) validate() error {
 	return nil
 }
 
-// Text renders the effect, e.g. "for the remainder of the turn this creature
+// Text renders the effect, e.g. "for the remainder of the turn, this creature
 // belongs to house Mars".
 func (e BelongToHouse) Text() string {
 	if e.Duration == UntilThisLeavesPlay {
 		return e.Target.Text() + " belongs to house " + e.House.String() + " until it leaves play"
 	}
-	return "for the remainder of the turn " + e.Target.Text() + " belongs to house " + e.House.String()
+	return "for the remainder of the turn, " + e.Target.Text() +
+		" belongs to house " + e.House.String()
 }
 
 // Resolve makes each selected creature belong to House for the Duration.

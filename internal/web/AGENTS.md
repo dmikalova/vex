@@ -159,6 +159,11 @@ The in-progress match is stored in local storage under `persistKey`, tagged with
 older persisted state unloadable** — a stale snapshot is dropped rather than
 restored into a mismatched engine.
 
+That includes rewording a log entry. The log persists as the prose each entry was
+narrated with (a typed entry does not survive JSON), so an old snapshot keeps
+restoring the old wording long after the engine stopped producing it, and the
+change looks like it did not take.
+
 ## CSS conventions (`web/app.css`)
 
 - BEM-ish: a block (`.card`), and modifiers as `--modifier` classes
@@ -167,3 +172,15 @@ restored into a mismatched engine.
   `.card-<house>` class from `palette.go`; markup only ever carries class names.
 - Keep every animation's `-a`/`-b` pair in sync — they must have identical
   keyframes.
+
+## Never shout: no all-caps
+
+Nothing in the client is set in capitals. No `text-transform: uppercase`, no
+`font-variant-caps: all-small-caps`, and no string typed in caps in Go to be
+read as a label. Card types, row labels, zone names, and log headers all render
+in the casing they are written in. Size, weight, and colour already separate a
+label from prose; capitals only make it harder to read and louder than what it
+labels.
+
+The wide `letter-spacing` that usually accompanies caps goes with them — it
+exists to make capitals legible and is vestigial without them.

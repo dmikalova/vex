@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Human • Ranger
 //
-//	Elusive. Skirmish.
+//	Elusive, Skirmish.
 //	Reap: Deal 2 damage to a creature.
 var KindrithLongshot = card.New(
 	"Kindrith Longshot",

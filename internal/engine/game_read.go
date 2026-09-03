@@ -80,6 +80,11 @@ func (g *Game) armor(id LocalID) int {
 // any constant abilities reaching it.
 func (g *Game) Armor(id LocalID) int { return g.armor(id) }
 
+// ArmorStripped returns how much armor an effect has taken off a creature this
+// turn. It is not the armor the creature spent absorbing damage: only a strip
+// counts, so "for each point of armor it lost this way" measures just this way.
+func (g *Game) ArmorStripped(id LocalID) int { return int(g.State.Cards[id].ArmorStripped) }
+
 // constantBonus sums the constant-ability contributions to creature id from every
 // card in play, using pick to read the relevant bonus (power or armor) from each
 // source's constant ability.
@@ -141,7 +146,7 @@ func (g *Game) hazardous(id LocalID) int {
 // hasKeyword reports whether a creature has a keyword, either printed on it,
 // granted by an attached upgrade, or granted by a card's constant ability.
 func (g *Game) hasKeyword(id LocalID, k Keyword) bool {
-	if g.State.KeywordsLost&keywordBit[k] != 0 {
+	if g.State.KeywordsLost&k.bit() != 0 {
 		return false
 	}
 	if g.cat.def(id).hasKeyword(k) {
@@ -187,6 +192,9 @@ func (g *Game) AmberOn(id LocalID) int { return int(g.State.Cards[id].Amber) }
 
 // Exhausted reports whether a card is exhausted.
 func (g *Game) Exhausted(id LocalID) bool { return g.State.Cards[id].Exhausted }
+
+// InPlay reports whether a card is still on the board.
+func (g *Game) InPlay(id LocalID) bool { return g.inPlay(id) }
 
 // Stunned reports whether a creature is stunned.
 func (g *Game) Stunned(id LocalID) bool { return g.State.Cards[id].Stunned }

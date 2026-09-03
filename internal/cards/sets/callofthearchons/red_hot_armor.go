@@ -1,20 +1,15 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// RedHotArmor
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Red-Hot Armor
 //
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Each enemy creature with armor loses all of its armor until the end of the turn and is dealt 1 Damage for each point of armor it lost this way.
+//	Play: Each enemy creature with armor loses all of its armor. Deal 1 damage to each enemy creature with armor for each point of armor it lost this way.
 var RedHotArmor = card.New(
 	"Red-Hot Armor",
 	card.House.Dis,
@@ -22,5 +17,13 @@ var RedHotArmor = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 70),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+			card.LoseArmor{Target: card.Target.EachEnemyCreature.WithArmor()},
+			card.DealDamage{
+				Target:    card.Target.EachEnemyCreature.WithArmor(),
+				Amount:    1,
+				PerTarget: card.ArmorLostThisWay,
+			},
+		}}),
 )

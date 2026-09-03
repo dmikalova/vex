@@ -1008,7 +1008,7 @@ func (m gameModel) renderCreatures(player int, selID engine.LocalID, hasSel bool
 		if len(def.Keywords) > 0 {
 			parts := make([]string, len(def.Keywords))
 			for j, k := range def.Keywords {
-				parts[j] = string(k)
+				parts[j] = k.String()
 			}
 			kw = " [" + strings.Join(parts, ", ") + "]"
 		}

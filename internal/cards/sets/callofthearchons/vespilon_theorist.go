@@ -23,9 +23,9 @@ var VespilonTheorist = card.New(
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
 		card.Trigger.Reap, card.ChooseHouseThen{
-			Then: card.Sequence{
+			Then: card.Sentences{
 				Effects: []card.Effect{
-					card.Sentence{Effect: card.RevealTopOfDeck{}},
+					card.RevealTopOfDeck{},
 					card.Conditional{
 						Cond: card.ItIsOfHouse{House: card.TheChosenHouse},
 						Then: card.Sequence{

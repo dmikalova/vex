@@ -1,6 +1,9 @@
 package engine
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // This file holds the game log's spine (ADR 0011): the LogEntry interface every
 // narrated outcome implements, the attribution frame entries inherit, and the
@@ -43,6 +46,21 @@ func nameMoved(n Namer, id LocalID, from, to Zone) string {
 		return n.Name(id)
 	}
 	return "a card"
+}
+
+// namedCards lists several cards by name, for an entry that narrates a group.
+func namedCards(n Namer, ids []LocalID) string {
+	names := make([]string, len(ids))
+	for i, id := range ids {
+		names[i] = n.Name(id)
+	}
+	return strings.Join(names, ", ")
+}
+
+// because appends the event a lasting reaction fired on, so a lasting entry
+// reads as its plain outcome plus what triggered it and the two never drift.
+func because(text string, on Event) string {
+	return text + " (" + on.clause() + ")"
 }
 
 // Frame is the attribution a run of entries shares: who acted, which card they

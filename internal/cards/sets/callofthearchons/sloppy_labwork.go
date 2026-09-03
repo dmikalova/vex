@@ -17,10 +17,10 @@ var SloppyLabwork = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 123),
 	card.WithAemberBonus(1),
-	card.WithAbility(card.Trigger.Play, card.Sequence{
+	card.WithAbility(card.Trigger.Play, card.Sentences{
 		Effects: []card.Effect{
-			card.Sentence{Effect: card.ArchiveFromHand{Count: 1}},
-			card.Sentence{Effect: card.DiscardFromHand{Count: 1}},
+			card.ArchiveFromHand{Count: 1},
+			card.DiscardFromHand{Count: 1},
 		},
 	}),
 )

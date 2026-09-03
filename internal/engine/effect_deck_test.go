@@ -6,11 +6,11 @@ import (
 )
 
 func TestChaosPortalComposition(t *testing.T) {
-	effect := ChooseHouseThen{Then: Sequence{Effects: []Effect{
-		Sentence{Effect: RevealTopOfDeck{}},
+	effect := ChooseHouseThen{Then: Sentences{Effects: []Effect{
+		RevealTopOfDeck{},
 		Conditional{Cond: ItIsOfHouse{House: TheChosenHouse}, Then: PlayRevealedCard{}},
 	}}}
-	if got := effect.Text(); got != "choose a house - reveal the top card of your deck. If it is of the chosen house, play it" {
+	if got := effect.Text(); got != "choose a house - reveal the top card of your deck. If it is of the chosen house, play it." {
 		t.Errorf("text = %q", got)
 	}
 
@@ -202,13 +202,11 @@ func TestBonkersComposition(t *testing.T) {
 	bystander := g.AddToBattleline(testCreature("bystander", 4), 1)
 	ctx := &EffectContext{Resolver: g, Source: source, Controller: 0}
 
-	effect := Sequence{Effects: []Effect{
-		Sentence{Effect: DiscardTopOfEachDeck{}},
-		Sentence{
-			Effect: ForEachDiscarded{
-				Do: Destroy{
-					Target: Target{Kind: TargetChosenCreatureOrArtifact}.OfContextualHouse(),
-				},
+	effect := Sentences{Effects: []Effect{
+		DiscardTopOfEachDeck{},
+		ForEachDiscarded{
+			Do: Destroy{
+				Target: Target{Kind: TargetChosenCreatureOrArtifact}.OfContextualHouse(),
 			},
 		},
 		Conditional{
@@ -216,7 +214,7 @@ func TestBonkersComposition(t *testing.T) {
 			Then: Destroy{Target: Target{Kind: TargetThisCreature}},
 		},
 	}}
-	if got := effect.Text(); got != "discard the top card of each player's deck. For each card discarded this way, destroy a creature or artifact of that card's house. If fewer than 2 cards are destroyed this way, destroy {self}" {
+	if got := effect.Text(); got != "discard the top card of each player's deck. For each card discarded this way, destroy a creature or artifact of that card's house. If fewer than 2 cards are destroyed this way, destroy {self}." {
 		t.Errorf("text = %q", got)
 	}
 
@@ -249,13 +247,11 @@ func TestBonkersCompositionSelfDestructs(t *testing.T) {
 	bystander := g.AddToBattleline(testCreature("bystander", 4), 1)
 	ctx := &EffectContext{Resolver: g, Source: source, Controller: 0}
 
-	Sequence{Effects: []Effect{
-		Sentence{Effect: DiscardTopOfEachDeck{}},
-		Sentence{
-			Effect: ForEachDiscarded{
-				Do: Destroy{
-					Target: Target{Kind: TargetChosenCreatureOrArtifact}.OfContextualHouse(),
-				},
+	Sentences{Effects: []Effect{
+		DiscardTopOfEachDeck{},
+		ForEachDiscarded{
+			Do: Destroy{
+				Target: Target{Kind: TargetChosenCreatureOrArtifact}.OfContextualHouse(),
 			},
 		},
 		Conditional{
@@ -322,11 +318,11 @@ func TestEvasionSigilComposition(t *testing.T) {
 	top := g.AddToDeck(NewCard("Brobnar Top", Brobnar, Tactic, Common), 0)
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
-	e := Sequence{Effects: []Effect{
-		Sentence{Effect: DiscardTopOfDeck{}},
+	e := Sentences{Effects: []Effect{
+		DiscardTopOfDeck{},
 		Conditional{Cond: ItIsOfHouse{House: TheActiveHouse}, Then: CancelFight{}},
 	}}
-	if got := e.Text(); got != "discard the top card of its controller's deck. If it is of the active house, the fight does not occur" {
+	if got := e.Text(); got != "discard the top card of its controller's deck. If it is of the active house, the fight does not occur." {
 		t.Errorf("text = %q", got)
 	}
 

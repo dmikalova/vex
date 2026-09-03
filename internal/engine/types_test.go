@@ -48,3 +48,33 @@ func TestCardTypeReacts(t *testing.T) {
 		}
 	}
 }
+
+// TestKeywords pins the enum's three derived views against each other: every
+// keyword Keywords() lists must name itself and claim a distinct bit, and the
+// unset zero must render empty and claim no bit rather than shifting negatively.
+func TestKeywords(t *testing.T) {
+	if keywordUnset.String() != "" {
+		t.Errorf("keywordUnset.String() = %q, want empty", keywordUnset.String())
+	}
+	if keywordUnset.bit() != 0 {
+		t.Errorf("keywordUnset.bit() = %d, want 0", keywordUnset.bit())
+	}
+
+	all := Keywords()
+	if len(all) != int(keywordCount)-1 {
+		t.Fatalf("Keywords() has %d entries, want %d", len(all), keywordCount-1)
+	}
+	var seen uint8
+	for _, k := range all {
+		if k.String() == "" {
+			t.Errorf("keyword %d renders empty", k)
+		}
+		if seen&k.bit() != 0 {
+			t.Errorf("%v reuses a bit already taken", k)
+		}
+		seen |= k.bit()
+	}
+	if all[0] != Skirmish || all[len(all)-1] != Versatile {
+		t.Errorf("Keywords() = %v, want Skirmish first and Versatile last", all)
+	}
+}

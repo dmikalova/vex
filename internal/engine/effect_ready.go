@@ -1,7 +1,5 @@
 package engine
 
-import "strings"
-
 // ReadyIfFirstUse readies a creature only while the current use is its first use
 // this turn. A creature is USED when it reaps, fights, or uses an Action: ability;
 // the use count is advanced before Fight:/Reap: abilities resolve, so the first
@@ -89,17 +87,4 @@ func (e ReadyCreatures) Resolve(ctx *EffectContext) {
 		ctx.Resolver.SetExhausted(id, false)
 		ctx.Resolver.Record(CreatureReadied{Creature: id})
 	}
-}
-
-// singularNoun strips the leading article or quantifier from a Target's phrase,
-// leaving the bare noun a "ready a <noun>" or "up to 3 <noun>s" clause needs. The
-// adjectives stay: "an enemy damaged creature" becomes "enemy damaged creature",
-// which pluralizes correctly and keeps the "enemy" the card is scoped to.
-func singularNoun(phrase string) string {
-	for _, p := range []string{"each other ", "each ", "an ", "a "} {
-		if strings.HasPrefix(phrase, p) {
-			return strings.TrimPrefix(phrase, p)
-		}
-	}
-	return phrase
 }

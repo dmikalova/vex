@@ -1,20 +1,15 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// BearFlute
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Bear Flute
 //
 //	House:  Untamed
 //	Type:   Artifact
 //	Rarity: Rare
 //	Traits: Item
 //
-//	Action: Fully heal an Ancient Bear. If there are no Ancient Bears in play, search your deck and discard pile and put each Ancient Bear from them into your hand. If you do, shuffle your discard pile into your deck.
+//	Action: Fully heal an Ancient Bear. If there are no Ancient Bears in play, search your deck and discard pile and put each Ancient Bear from them into your hand -> shuffle your discard pile into your deck.
 var BearFlute = card.New(
 	"Bear Flute",
 	card.House.Untamed,
@@ -22,5 +17,23 @@ var BearFlute = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 340),
 	card.WithTraits("Item"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+			card.Heal{
+				Fully:  true,
+				Target: card.Target.Creature.Named("Ancient Bear"),
+			},
+			card.Conditional{
+				Cond: card.InPlay{
+					Player: card.EachPlayer,
+					Type:   card.Type.Creature,
+					Name:   "Ancient Bear",
+					None:   true,
+				},
+				Then: card.Then{
+					First:  card.SearchForName{Name: "Ancient Bear", All: true},
+					Result: card.ShuffleIntoDeck{Zones: []card.Zone{card.Discard}},
+				},
+			},
+		}}),
 )

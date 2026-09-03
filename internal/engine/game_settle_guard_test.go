@@ -62,9 +62,9 @@ func TestAemberOnACreatureFeedsItsPower(t *testing.T) {
 	}
 }
 
-// TestEnteringPlayUnderAPowerAuraIsDestroyed checks a creature that arrives into
-// an aura leaving it at 0 power is destroyed on arrival.
-func TestEnteringPlayUnderAPowerAuraIsDestroyed(t *testing.T) {
+// TestEnteringPlayUnderAPowerPenaltyIsDestroyed checks a creature that arrives
+// into a constant ability leaving it at 0 power is destroyed on arrival.
+func TestEnteringPlayUnderAPowerPenaltyIsDestroyed(t *testing.T) {
 	g := started(t)
 	g.AddToBattleline(
 		NewCard("Crag King", Brobnar, Creature, Common, WithPower(8),
@@ -80,7 +80,7 @@ func TestEnteringPlayUnderAPowerAuraIsDestroyed(t *testing.T) {
 	g.PlayFromHand(0, id)
 
 	if g.inPlay(id) {
-		t.Errorf("a 2-power creature entering a -2 aura should be destroyed")
+		t.Errorf("a 2-power creature entering a -2 power penalty should be destroyed")
 	}
 }
 

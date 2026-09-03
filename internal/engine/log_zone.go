@@ -15,8 +15,8 @@ type ArchivesTakenIntoHand struct {
 
 // Text renders how many archived cards a player took into hand.
 func (e ArchivesTakenIntoHand) Text(n Namer) string {
-	return fmt.Sprintf("%s takes %d card(s) from their archives into hand",
-		n.PlayerName(e.Player), e.Count)
+	return fmt.Sprintf("%s takes %s from their archives into hand",
+		n.PlayerName(e.Player), countNoun(e.Count, "card"))
 }
 
 // CardArchivedFromHand narrates a card going from hand to archives.
@@ -65,7 +65,8 @@ type ArchivesDiscarded struct {
 
 // Text renders how many archived cards were discarded.
 func (e ArchivesDiscarded) Text(n Namer) string {
-	return fmt.Sprintf("%s discards %d archived card(s)", n.PlayerName(e.Player), e.Count)
+	return fmt.Sprintf("%s discards %s",
+		n.PlayerName(e.Player), countNoun(e.Count, "archived card"))
 }
 
 // TopOfDeckDiscarded narrates the top card of a deck going to the discard pile.
@@ -206,7 +207,7 @@ type CardReturnedFromDiscardToHand struct {
 
 // Text renders the card recovered from a discard pile to hand.
 func (e CardReturnedFromDiscardToHand) Text(n Namer) string {
-	return fmt.Sprintf("%s returns %s from their discard to hand",
+	return fmt.Sprintf("%s returns %s from their discard pile to hand",
 		n.PlayerName(e.Player), nameMoved(n, e.Card, Discard, Hand))
 }
 
@@ -232,6 +233,6 @@ type CardPutFromDiscardOnTopOfDeck struct {
 
 // Text renders the card set from a discard pile back on the deck.
 func (e CardPutFromDiscardOnTopOfDeck) Text(n Namer) string {
-	return fmt.Sprintf("%s puts %s from their discard on top of their deck",
+	return fmt.Sprintf("%s puts %s from their discard pile on top of their deck",
 		n.PlayerName(e.Player), nameMoved(n, e.Card, Discard, deck))
 }

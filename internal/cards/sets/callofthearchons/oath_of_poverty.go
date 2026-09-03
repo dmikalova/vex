@@ -17,12 +17,12 @@ var OathOfPoverty = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 222),
 	card.WithAemberBonus(1),
-	card.WithAbility(card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-		card.Sentence{Effect: card.Destroy{Target: card.Target.EachFriendlyArtifact}},
-		card.Sentence{Effect: card.GainAember{
+	card.WithAbility(card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Destroy{Target: card.Target.EachFriendlyArtifact},
+		card.GainAember{
 			Player: card.Controller,
 			Amount: 2,
 			Per:    card.CardsDestroyed{},
-		}},
+		},
 	}}),
 )

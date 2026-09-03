@@ -23,8 +23,8 @@ func btn(label string, h app.EventHandler, class string) app.UI {
 	return app.Button().Class(class).Text(label).OnClick(h)
 }
 
-// kindLabel is a card's foot label: its type (e.g. "Creature"). The CSS
-// uppercases it. Traits render separately as their own body line (traitLabel).
+// kindLabel is a card's foot label: its type (e.g. "Creature"). Traits render
+// separately as their own body line (traitLabel).
 func kindLabel(def *engine.CardDefinition) string {
 	return def.Type.String()
 }

@@ -233,3 +233,50 @@ func TestCaptureAemberByEnemyDeclined(t *testing.T) {
 		t.Errorf("opponent pool = %d, want 2 (choice declined)", g.Aember(1))
 	}
 }
+
+func TestCaptureAemberFromItsOpponent(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	mine := g.AddToBattleline(testCreature("mine", 3), 0)
+	theirs := g.AddToBattleline(testCreature("theirs", 3), 1)
+	ctx := &EffectContext{Resolver: g, Source: mine, Controller: 0}
+	g.State.Aember[0] = 4
+	g.State.Aember[1] = 4
+
+	e := CaptureAember{
+		Amount: 1,
+		Target: Target{Kind: TargetEachCreature},
+		Source: ItsOpponent,
+	}
+	if want := "each creature captures 1 Æmber from its opponent"; e.Text() != want {
+		t.Errorf("text = %q, want %q", e.Text(), want)
+	}
+	e.Resolve(ctx)
+
+	// Each creature drains the pool across from it, so both pools drop.
+	if g.AmberOn(mine) != 1 || g.AmberOn(theirs) != 1 {
+		t.Errorf("captured = %d/%d, want 1/1", g.AmberOn(mine), g.AmberOn(theirs))
+	}
+	if g.Aember(0) != 3 || g.Aember(1) != 3 {
+		t.Errorf("pools = %d/%d, want 3/3", g.Aember(0), g.Aember(1))
+	}
+}
+
+func TestCaptureAemberFromItsOpponentRejectsAShare(t *testing.T) {
+	e := CaptureAember{
+		All:    true,
+		Target: Target{Kind: TargetEachCreature},
+		Source: ItsOpponent,
+	}
+	if e.validate() == nil {
+		t.Error("validate accepted a share of a per-capturer pool")
+	}
+}
+
+func TestPlayerForItsOpponent(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	theirs := g.AddToBattleline(testCreature("theirs", 3), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0, It: theirs}
+	if got := ctx.PlayerFor(ItsOpponent); got != 0 {
+		t.Errorf("PlayerFor(ItsOpponent) = %d, want 0", got)
+	}
+}

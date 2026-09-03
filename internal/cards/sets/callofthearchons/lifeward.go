@@ -21,12 +21,12 @@ var Lifeward = card.New(
 	card.WithTraits("Power"),
 	card.WithAemberBonus(1),
 	card.WithKeywords(card.Keyword.Versatile),
-	card.WithAbility(card.Trigger.Action, card.Sequence{Effects: []card.Effect{
-		card.Sentence{Effect: card.Destroy{Target: card.Target.This}},
-		card.Sentence{Effect: card.CannotPlay{
+	card.WithAbility(card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+		card.Destroy{Target: card.Target.This},
+		card.CannotPlay{
 			Player:   card.Opponent,
 			Type:     card.Type.Creature,
 			Duration: card.Duration.NextTurn,
-		}},
+		},
 	}}),
 )

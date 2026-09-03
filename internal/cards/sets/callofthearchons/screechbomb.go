@@ -20,13 +20,13 @@ var Screechbomb = card.New(
 	card.WithTraits("Weapon"),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(
-		card.Trigger.Action, card.Sequence{
+		card.Trigger.Action, card.Sentences{
 			Effects: []card.Effect{
-				card.Sentence{Effect: card.Destroy{Target: card.Target.This}},
-				card.Sentence{Effect: card.LoseAember{
+				card.Destroy{Target: card.Target.This},
+				card.LoseAember{
 					Player: card.Opponent,
 					Amount: 2,
-				}},
+				},
 			},
 		}),
 )

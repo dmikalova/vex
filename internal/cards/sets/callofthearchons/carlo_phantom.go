@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  1
 //	Traits: Elf • Thief
 //
-//	Elusive. Skirmish.
+//	Elusive, Skirmish.
 //	After you play an artifact, steal 1 Æmber.
 var CarloPhantom = card.New(
 	"Carlo Phantom",

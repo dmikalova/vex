@@ -93,6 +93,7 @@ func (g *Game) readyPhase(player int) {
 		core.TempHouse = HouseNone
 		if g.cat.def(id).Type == Creature {
 			core.ArmorRemaining = int16(g.armor(id))
+			core.ArmorStripped = 0
 		}
 	}
 	if len(readied) > 0 {

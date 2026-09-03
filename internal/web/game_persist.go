@@ -48,7 +48,36 @@ func (g *game) save(ctx app.Context) {
 		Log:     saved,
 		Groups:  groups,
 		Manual:  g.manualAdds,
+		UI:      g.savedUI(),
 	})
+}
+
+// savedUI captures the view state to carry across a reload.
+func (g *game) savedUI() savedUI {
+	ui := savedUI{
+		SidebarCollapsed: g.sidebarCollapsed,
+		ZonesPlayer:      g.zonesPlayer,
+		KeysOpen:         g.keysOpen,
+		PickerOpen:       g.pickerOpen,
+	}
+	// A viewer a prompt opened belongs to that prompt, and the prompt does not
+	// survive the reload, so it comes back closed.
+	if g.promptZone != "" {
+		ui.ZonesPlayer = -1
+	}
+	return ui
+}
+
+// restoreUI puts back the view a reload would otherwise throw away. The viewer's
+// player is range-checked because a snapshot is outside data.
+func (g *game) restoreUI(ui savedUI) {
+	g.sidebarCollapsed = ui.SidebarCollapsed
+	g.keysOpen = ui.KeysOpen
+	g.pickerOpen = ui.PickerOpen && g.g.Manual()
+	g.zonesPlayer = -1
+	if ui.ZonesPlayer == 0 || ui.ZonesPlayer == 1 {
+		g.zonesPlayer = ui.ZonesPlayer
+	}
 }
 
 // resume rebuilds the match from a saved snapshot, reporting whether it restored
@@ -108,7 +137,7 @@ func (g *game) resume(ctx app.Context) (ok bool) {
 	}
 	g.settlePhase()
 	g.clearSelection()
-	g.zonesPlayer = -1
+	g.restoreUI(snap.UI)
 	g.status = ""
 	return true
 }

@@ -140,6 +140,8 @@ func (ctx *EffectContext) PlayerFor(p Player) int {
 		return ctx.Controller
 	case ItsOwner:
 		return ctx.Resolver.Owner(ctx.It)
+	case ItsOpponent:
+		return 1 - ctx.Resolver.Controller(ctx.It)
 	default:
 		panic("engine: effect has no player set (playerUnset)")
 	}
@@ -206,6 +208,11 @@ const (
 	// "its owner" referent, for an effect that acts on the owner of a creature a
 	// preceding clause touched (Gongoozle's damaged creature).
 	ItsOwner
+	// ItsOpponent is the opponent of the creature currently in context (ctx.It).
+	// It is how one effect can reach a different pool for each side's creatures:
+	// Pandemonium's "each undamaged creature captures 1 Æmber from its opponent"
+	// takes from your pool for the enemy's creatures and from theirs for yours.
+	ItsOpponent
 )
 
 // valid reports whether p names a real player (not the unset zero value).

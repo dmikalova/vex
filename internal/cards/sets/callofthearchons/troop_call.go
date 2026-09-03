@@ -22,18 +22,18 @@ var TroopCall = card.New(
 		card.PullSometimes(NiffleQueen, 0.15),
 	),
 	card.WithAbility(
-		card.Trigger.Play, card.Sequence{
+		card.Trigger.Play, card.Sentences{
 			Effects: []card.Effect{
-				card.Sentence{Effect: card.PutFromDiscard{
+				card.PutFromDiscard{
 					Type:        card.Type.Creature,
 					Trait:       "Niffle",
 					All:         true,
 					Destination: card.To.Hand,
-				}},
-				card.Sentence{Effect: card.PutFromPlay{
+				},
+				card.PutFromPlay{
 					Target:      card.Target.EachFriendlyCreature.WithTrait("Niffle"),
 					Destination: card.To.Hand,
-				}},
+				},
 			},
 		}),
 )

@@ -418,7 +418,7 @@ func staticBonuses(m StaticModifier) string {
 		parts = append(parts, fmt.Sprintf("%+d hazardous", m.HazardousBonus))
 	}
 	for _, kw := range m.Keywords {
-		parts = append(parts, strings.ToLower(string(kw)))
+		parts = append(parts, strings.ToLower(kw.String()))
 	}
 	return strings.Join(parts, " and ")
 }
@@ -518,7 +518,7 @@ func constantText(def *CardDefinition) string {
 			parts = append(parts, fmt.Sprintf("%+d armor", c.ArmorBonus))
 		}
 		for _, k := range c.Keywords {
-			parts = append(parts, strings.ToLower(string(k)))
+			parts = append(parts, strings.ToLower(k.String()))
 		}
 		if len(parts) == 0 {
 			continue
@@ -668,23 +668,23 @@ func captureOpponentAemberText(def *CardDefinition) string {
 	return "If Æmber would be added to " + whose + " pool, instead " + def.Name + " captures it."
 }
 
-// keywordText renders a card's keywords as a single leading line, e.g.
-// "Skirmish. Poison." or "Assault 2.". Returns "" when the card has none.
+// keywordText renders a card's keywords as a single leading sentence, e.g.
+// "Skirmish, Poison." or "Assault 2.". Returns "" when the card has none.
 func keywordText(def *CardDefinition) string {
 	var parts []string
 	for _, k := range def.Keywords {
-		parts = append(parts, string(k)+".")
+		parts = append(parts, k.String())
 	}
 	if def.Assault > 0 {
-		parts = append(parts, fmt.Sprintf("Assault %d.", def.Assault))
+		parts = append(parts, fmt.Sprintf("Assault %d", def.Assault))
 	}
 	if def.Hazardous > 0 {
-		parts = append(parts, fmt.Sprintf("Hazardous %d.", def.Hazardous))
+		parts = append(parts, fmt.Sprintf("Hazardous %d", def.Hazardous))
 	}
 	if len(parts) == 0 {
 		return ""
 	}
-	return strings.Join(parts, " ")
+	return strings.Join(parts, ", ") + "."
 }
 
 // attackDamageText renders a creature's custom fight damage, e.g. "Valdr deals +2
@@ -696,7 +696,7 @@ func attackDamageText(def *CardDefinition) string {
 	case ad.Fixed && ad.Amount == 0:
 		return def.Name + " deals no damage when fighting."
 	case ad.Fixed:
-		return fmt.Sprintf("%s deals %d damage when fighting.", def.Name, ad.Amount)
+		return fmt.Sprintf("%s deals %d Damage when fighting.", def.Name, ad.Amount)
 	case ad.Amount != 0 && ad.FlankOnly:
 		return fmt.Sprintf(
 			"%s deals +%d Damage while attacking an enemy creature on the flank.",
@@ -718,7 +718,7 @@ func attackIgnoresText(def *CardDefinition) string {
 	}
 	words := make([]string, len(def.AttackIgnores))
 	for i, kw := range def.AttackIgnores {
-		words[i] = strings.ToLower(string(kw))
+		words[i] = strings.ToLower(kw.String())
 	}
 	return fmt.Sprintf(
 		"While %s is attacking, ignore %s.",
@@ -749,4 +749,31 @@ func indefinite(noun string) string {
 	default:
 		return "a " + noun
 	}
+}
+
+// plural gives a noun the form a count of n calls for: "card" for one, "cards"
+// for any other number, including zero.
+func plural(n int, noun string) string {
+	if n == 1 {
+		return noun
+	}
+	return noun + "s"
+}
+
+// countNoun renders a quantity and the noun it counts, e.g. "1 card", "3 cards".
+func countNoun(n int, noun string) string {
+	return fmt.Sprintf("%d %s", n, plural(n, noun))
+}
+
+// singularNoun strips the leading article or quantifier from a Target's phrase,
+// leaving the bare noun a "ready a <noun>" or "up to 3 <noun>s" clause needs. The
+// adjectives stay: "an enemy damaged creature" becomes "enemy damaged creature",
+// which pluralizes correctly and keeps the "enemy" the card is scoped to.
+func singularNoun(phrase string) string {
+	for _, p := range []string{"each other ", "each ", "an ", "a "} {
+		if strings.HasPrefix(phrase, p) {
+			return strings.TrimPrefix(phrase, p)
+		}
+	}
+	return phrase
 }

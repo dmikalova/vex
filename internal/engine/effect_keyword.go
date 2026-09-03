@@ -15,8 +15,8 @@ type LoseKeyword struct {
 
 // validate rejects a keyword that cannot be taken away.
 func (e LoseKeyword) validate() error {
-	if keywordBit[e.Keyword] == 0 {
-		return fmt.Errorf("LoseKeyword: unsupported keyword %q", e.Keyword)
+	if !e.Keyword.valid() {
+		return fmt.Errorf("LoseKeyword: unset keyword")
 	}
 	return nil
 }
@@ -25,7 +25,7 @@ func (e LoseKeyword) validate() error {
 // loses elusive".
 func (e LoseKeyword) Text() string {
 	return "for the remainder of the turn, each creature loses " +
-		strings.ToLower(string(e.Keyword))
+		strings.ToLower(e.Keyword.String())
 }
 
 // Resolve records the loss for the rest of the turn.

@@ -144,45 +144,83 @@ func (t CardType) reacts(other CardType) bool {
 // Traits carry no inherent rules meaning on their own; other cards reference them.
 type Trait string
 
-// Keyword is a rules shorthand a card can have (e.g. Skirmish, Poison).
-type Keyword string
+// Keyword is a rules shorthand a card can have (e.g. Skirmish, Poison). Unlike
+// Trait, which any card may coin, the keywords are a closed set the rulebook
+// defines, so this is an enum: a keyword that does not exist cannot be written.
+type Keyword int
 
 const (
+	// keywordUnset is the invalid zero value: an effect that names a keyword must
+	// say which one rather than leave it unset.
+	keywordUnset Keyword = iota
 	// A creature with Skirmish takes no damage when it is used to fight: it deals
 	// its power to the enemy creature but takes none back.
 	//
 	//rulebook:keyword Skirmish
-	Skirmish Keyword = "Skirmish"
+	Skirmish
 	// Any amount of damage dealt to a creature with Poison destroys it, however
 	// much power it has left.
 	//
 	//rulebook:keyword Poison
-	Poison Keyword = "Poison"
+	Poison
 	// Elusive: the first time this creature is chosen to be fought each turn, no
 	// pending fight damage is dealt by or to it.
-	Elusive Keyword = "Elusive"
+	Elusive
 	// Taunt: this creature's neighbors cannot be chosen to be fought unless they
 	// have taunt themselves.
-	Taunt Keyword = "Taunt"
+	Taunt
 	// A card with Versatile may, once in play, be used (reap/fight/action) as if
 	// it belonged to the active house. It does not relax playing from hand — a
 	// Versatile card is still played only when its own house is the one chosen
 	// this turn.
 	//
 	//rulebook:keyword Versatile
-	Versatile Keyword = "Versatile"
+	Versatile
+	// keywordCount bounds the enum; it is not a keyword.
+	keywordCount
 )
 
-// keywordBit is the bit each keyword occupies in GameState.KeywordsLost, so a
-// "for the remainder of the turn, each creature loses <keyword>" effect can be
-// held as one flat comparable value. A keyword absent from the map cannot be
-// taken away.
-var keywordBit = map[Keyword]uint8{
-	Skirmish:  1 << 0,
-	Poison:    1 << 1,
-	Elusive:   1 << 2,
-	Taunt:     1 << 3,
-	Versatile: 1 << 4,
+// keywordNames is the printed word for each keyword; the unset zero renders
+// empty.
+var keywordNames = [keywordCount]string{
+	Skirmish:  "Skirmish",
+	Poison:    "Poison",
+	Elusive:   "Elusive",
+	Taunt:     "Taunt",
+	Versatile: "Versatile",
+}
+
+// String returns the keyword's printed word, capitalized as a card prints it.
+func (k Keyword) String() string {
+	if !k.valid() {
+		return ""
+	}
+	return keywordNames[k]
+}
+
+// valid reports whether k names a real keyword (not the unset zero value).
+func (k Keyword) valid() bool { return k > keywordUnset && k < keywordCount }
+
+// bit is the bit k occupies in GameState.KeywordsLost, so a "for the remainder of
+// the turn, each creature loses <keyword>" effect can be held as one flat
+// comparable value. Being derived from the enum, it cannot fall out of step with
+// it the way a hand-maintained table could.
+func (k Keyword) bit() uint8 {
+	if !k.valid() {
+		return 0
+	}
+	return 1 << (k - 1)
+}
+
+// Keywords lists every keyword in rulebook order. It is the canonical
+// enumeration: anything that must cover all keywords ranges over this, so a
+// keyword added above cannot be silently missed.
+func Keywords() []Keyword {
+	all := make([]Keyword, 0, keywordCount-1)
+	for k := keywordUnset + 1; k < keywordCount; k++ {
+		all = append(all, k)
+	}
+	return all
 }
 
 // Trigger identifies when an ability's effect resolves.

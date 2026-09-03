@@ -16,7 +16,8 @@ var PhaseShift = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 117),
 	card.WithAbility(
-		card.Trigger.Play, card.PlayFromHand{
+		card.Trigger.Play, card.PlayFrom{
+			From:   card.Hand,
 			House:  card.House.Self,
 			Except: true,
 		}),

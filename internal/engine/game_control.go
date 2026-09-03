@@ -16,6 +16,12 @@ func (g *Game) takeControl(id LocalID, controller int, source LocalID) {
 		g.State.Cards[id].ControlSource = source
 		g.State.Battleline[controller].add(id)
 		g.record(ControlTaken{Player: controller, Card: id})
+		// Switching sides re-aims every constant ability that reads "friendly" or
+		// "enemy", so the creature can land already dead: a damaged creature that was
+		// only alive on the +power its old side gave it, or one whose new side is
+		// under a power-reducing constant ability. removeFromPlay settled the board
+		// it left, not this one.
+		g.settleDestroyed(g.State.ActivePlayer)
 	}
 }
 
@@ -37,6 +43,9 @@ func (g *Game) takeControlOfArtifact(id LocalID, controller int) {
 	g.State.Cards[id].ControlSource = 0
 	g.State.Artifacts[controller].add(id)
 	g.record(ControlTaken{Player: controller, Card: id})
+	// An artifact's constant abilities change sides with it, so creatures on its new
+	// enemy side can drop to lethal the moment it arrives.
+	g.settleDestroyed(g.State.ActivePlayer)
 }
 
 // releaseControlHeldBy reverts every creature whose control was taken "until source
@@ -58,4 +67,7 @@ func (g *Game) releaseControlHeldBy(source LocalID) {
 			g.record(ControlReturned{Card: id, Owner: owner})
 		}
 	}
+	// Handing creatures back swaps which side's constant abilities reach them, so
+	// settle once the whole batch has moved.
+	g.settleDestroyed(g.State.ActivePlayer)
 }

@@ -194,6 +194,14 @@ would find easiest to build on — not the shortest path to a passing build.
   next card can build on. When a card genuinely needs something new, add the
   smallest general primitive and one card that uses it — never speculative, but
   always shaped so the next card can reach for it.
+- **A phrasing helper belongs in the shared vocabulary, not beside its first
+  caller.** `indefinite`, `plural`, `countNoun`, `singularNoun` and friends live
+  in `internal/engine/text.go`; the log's equivalents (`namedCards`, `because`,
+  `nameMoved`) live in `log.go`. A helper left in the `effect_*.go` that first
+  needed it is invisible to the next author, who then writes a second copy — that
+  is how `"a " + noun`, `noun + "s"` and `card(s)` all ended up hand-rolled in
+  five places each. When you find yourself formatting English, look in the shared
+  file first, and put anything new there.
 
 The engine's structural realization of these principles — the effect AST, the
 `Resolver` port, the strategy families, the lasting registry — is documented in

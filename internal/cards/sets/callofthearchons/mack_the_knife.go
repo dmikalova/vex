@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Elf • Thief
 //
-//	Elusive. Versatile.
+//	Elusive, Versatile.
 //	Action: Deal 1 damage to a creature. If this damage destroys that creature, gain 1 Æmber.
 var MackTheKnife = card.New(
 	"Mack the Knife",

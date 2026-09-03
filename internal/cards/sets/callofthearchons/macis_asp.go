@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Beast
 //
-//	Skirmish. Poison.
+//	Skirmish, Poison.
 var MacisAsp = card.New(
 	"Macis Asp",
 	card.House.Shadows,

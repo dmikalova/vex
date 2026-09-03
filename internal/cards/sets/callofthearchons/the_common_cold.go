@@ -18,15 +18,15 @@ var TheCommonCold = card.New(
 	card.Provenance(card.CotA, 336),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.Sequence{
+		card.Trigger.Play, card.Sentences{
 			Effects: []card.Effect{
-				card.Sentence{Effect: card.DealDamage{
+				card.DealDamage{
 					Amount: 1,
 					Target: card.Target.EachCreature,
-				}},
-				card.Sentence{Effect: card.May{
+				},
+				card.May{
 					Do: card.Destroy{Target: card.Target.EachCreature.OfHouse(card.House.Mars)},
-				}},
+				},
 			},
 		}),
 )

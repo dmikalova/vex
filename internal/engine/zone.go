@@ -28,6 +28,20 @@ const (
 // valid reports whether the zone is a real one (not the unset zero value).
 func (z Zone) valid() bool { return z != zoneUnset }
 
+// noun names the zone as printed card text says it, so every effect that has to
+// name a zone ("shuffle your discard pile into your deck", "play a creature from
+// your discard pile") phrases it the same way.
+func (z Zone) noun() string {
+	switch z {
+	case Hand:
+		return "hand"
+	case Archives:
+		return "archives"
+	default: // Discard
+		return "discard pile"
+	}
+}
+
 // public reports whether both players can see a card sitting in the zone. The
 // log names a card only where it is public (ADR 0011): a discard pile, the board,
 // and the purged pile are open, while a hand, archives, and deck are not, so a

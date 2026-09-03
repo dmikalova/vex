@@ -418,19 +418,35 @@ func (g *game) renderCard(id engine.LocalID, boardKind selKind, opposing bool) a
 	}
 }
 
-// barKeywords lists the keywords a card in play shows as a coloured stripe on one
-// of its edges. Only the combat keywords are included — they decide whether a
-// fight is legal and what it costs, so they must be readable without stopping to
-// read the rules text.
+// barKeywordOrder is the keywords a card shows as a coloured stripe on one of
+// its edges, in the order the stripe stacks them. Only the combat keywords are
+// included — they decide whether a fight is legal and what it costs, so they
+// must be readable without stopping to read the rules text.
+var barKeywordOrder = []engine.Keyword{
+	engine.Taunt,
+	engine.Elusive,
+	engine.Skirmish,
+	engine.Poison,
+}
+
+// barKeywords lists the stripe keywords a card in play currently has, granted
+// ones included.
 func (g *game) barKeywords(id engine.LocalID) []engine.Keyword {
 	var out []engine.Keyword
-	for _, k := range []engine.Keyword{
-		engine.Taunt,
-		engine.Elusive,
-		engine.Skirmish,
-		engine.Poison,
-	} {
+	for _, k := range barKeywordOrder {
 		if g.g.HasKeyword(id, k) {
+			out = append(out, k)
+		}
+	}
+	return out
+}
+
+// barKeywordsOf lists the stripe keywords a definition prints, for a card face
+// built without a board behind it.
+func barKeywordsOf(def *engine.CardDefinition) []engine.Keyword {
+	var out []engine.Keyword
+	for _, k := range barKeywordOrder {
+		if hasKeyword(def, k) {
 			out = append(out, k)
 		}
 	}

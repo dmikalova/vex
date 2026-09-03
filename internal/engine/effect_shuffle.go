@@ -32,7 +32,7 @@ func (e ShuffleIntoDeck) validate() error {
 func (e ShuffleIntoDeck) Text() string {
 	nouns := make([]string, len(e.Zones))
 	for i, z := range e.Zones {
-		nouns[i] = shuffleZoneNoun(z)
+		nouns[i] = z.noun()
 	}
 	return "shuffle your " + strings.Join(nouns, " and ") + " into your deck"
 }
@@ -63,16 +63,4 @@ func (e SwapDeckAndDiscard) Resolve(ctx *EffectContext) {
 // shuffleableZone reports whether a zone can be shuffled into the deck.
 func shuffleableZone(z Zone) bool {
 	return z == Discard || z == Hand || z == Archives
-}
-
-// shuffleZoneNoun names a zone for the shuffle phrase.
-func shuffleZoneNoun(z Zone) string {
-	switch z {
-	case Hand:
-		return "hand"
-	case Archives:
-		return "archives"
-	default: // Discard
-		return "discard pile"
-	}
 }

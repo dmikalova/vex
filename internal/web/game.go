@@ -277,8 +277,10 @@ type logMark struct {
 const persistKey = "vactrol.match"
 
 // snapshotVersion tags persisted state; bump it when an engine change makes older
-// snapshots invalid so a stale one is flushed instead of restored.
-const snapshotVersion = 6
+// snapshots invalid so a stale one is flushed instead of restored. A log entry is
+// saved as the prose it was narrated with, so rewording an entry dates every
+// snapshot holding the old wording and counts as such a change.
+const snapshotVersion = 8
 
 // snapshot is the persisted match. The seed deterministically rebuilds the
 // catalog and card ids; the flat GameState carries everything mutable. All other
@@ -297,6 +299,19 @@ type snapshot struct {
 	// Manual replays the cards manual mode added, in registration order, so the
 	// rebuilt catalog holds the same ids the state refers to.
 	Manual []manualAdd
+	// UI carries the view across the reload with the match.
+	UI savedUI
+}
+
+// savedUI is the view state a reload should put back rather than throw away:
+// whether the sidebar was hidden, and which overlay was open over the board.
+type savedUI struct {
+	SidebarCollapsed bool
+	// ZonesPlayer is the zone viewer's player, or -1 for closed, as the field it
+	// restores means it.
+	ZonesPlayer int
+	KeysOpen    bool
+	PickerOpen  bool
 }
 
 // savedLine is one persisted log entry: the attribution it was recorded under,

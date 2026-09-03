@@ -42,9 +42,15 @@ recorded as ADRs — read them for the full rationale and the rejected alternati
   printed card text can never desync from behavior. A new mechanic is almost always
   a new `Effect` node in `effect_<mechanic>.go`, not a new branch in the `Game`
   runtime.
-- **Composite — `Sequence`, `Conditional`, `ChooseHouseThen`, `MayRepeat`, …**
-  compose child `Effect`s and recurse `validateEffect` into them. Prefer composing
-  small nodes over one fused node (root `AGENTS.md`: "decompose fused effects").
+- **Composite — `Sequence`, `Sentences`, `Conditional`, `ChooseHouseThen`,
+  `MayRepeat`, …** compose child `Effect`s and recurse `validateEffect` into them.
+  Prefer composing small nodes over one fused node (root `AGENTS.md`: "decompose
+  fused effects"). The two ordered composites differ only in how they *read*:
+  `Sequence` conjoins its children into one compound instruction ("a, and b"),
+  `Sentences` renders each child as its own sentence ("A. B."). Pick by how the
+  printed card reads. Do **not** wrap individual children to change their
+  punctuation — there is no per-child sentence wrapper, and a genuinely mixed card
+  nests instead: `Sentences{A, Sequence{B, C}}` reads "A. B, and C."
 - **Strategy — the `Chooser` family, and the `Selector` / `Count` / `Condition`
   trio.** See the next section; this is used heavily and should keep being the
   first tool reached for when behavior varies along an axis.
@@ -189,6 +195,14 @@ no `Logf`: the engine cannot write a sentence into the log at all.
 - **Whole-tree passes over an entry are extrinsic**, the same Visitor rule as
   effects: `RenderEntry` splits a rendered entry into card-linkable segments from
   the outside, in `log_render.go`. Do not add a second method to every entry.
+- **A `Text` method reuses the shared phrasing, it does not re-roll it.**
+  `log.go` holds the helpers every entry draws on — `namedCards` for a list of card
+  names, `because(text, on)` to suffix an event clause, `nameMoved` for a card
+  crossing zones — and `text.go` holds `countNoun`/`plural` for "1 card" vs
+  "3 cards" and `indefinite` for "a"/"an". Never hand-roll a `card(s)` placeholder,
+  a `noun + "s"` plural, or a bare `"a " + noun`. When an entry is another entry
+  plus context, build the base entry and render it: `LastingAemberGained.Text` is
+  `because(AemberGained{…}.Text(n), e.On)`.
 - **Whether a card may be named is decided by its zones, not by the entry.**
   `Zone.public()` says which zones both players can see (discard pile, the board,
   the purged pile — not a hand, archives, or a deck), and `nameMoved(n, id, from,

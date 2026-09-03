@@ -34,7 +34,7 @@ func (e Use) Text() string {
 	if e.Max == 1 {
 		return "use " + indefinite(noun)
 	}
-	return fmt.Sprintf("use %d %ss, one at a time", e.Max, noun)
+	return "use " + countNoun(e.Max, noun) + ", one at a time"
 }
 
 // useNoun turns a Target's collective phrase into the singular noun the "use N ..."
@@ -97,18 +97,3 @@ func useCard(ctx *EffectContext, id LocalID) {
 	}
 	UseVerb{}.Apply(ctx, id)
 }
-
-// Sentence resolves its child normally but renders it as a complete sentence, so a
-// following Sequence child starts a new sentence instead of joining with ", and".
-type Sentence struct {
-	Effect Effect
-}
-
-// Text renders the child as a punctuated sentence.
-func (e Sentence) Text() string { return punctuate(e.Effect.Text()) }
-
-// Resolve resolves the child effect.
-func (e Sentence) Resolve(ctx *EffectContext) { e.Effect.Resolve(ctx) }
-
-// validate surfaces a configuration error from the child effect.
-func (e Sentence) validate() error { return validateEffect(e.Effect) }

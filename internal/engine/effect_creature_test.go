@@ -296,6 +296,9 @@ func TestStunExhaustVerbs(t *testing.T) {
 	if got := (ExhaustVerb{}).VerbText(); got != "exhaust" {
 		t.Errorf("ExhaustVerb text = %q", got)
 	}
+	if got := (UseVerb{}).VerbText(); got != "use" {
+		t.Errorf("UseVerb text = %q", got)
+	}
 	g := started(t)
 	id := g.AddToBattleline(testCreature("c", 3), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
@@ -307,5 +310,22 @@ func TestStunExhaustVerbs(t *testing.T) {
 			g.State.Cards[id].Stunned,
 			g.State.Cards[id].Exhausted,
 		)
+	}
+}
+
+// An earlier sentence can destroy the very creature a later one names —
+// Transposition Sandals swaps a creature off the flank that was keeping it alive,
+// then says to use it — so a creature that has left play takes no verbs.
+func TestOnChooseCreatureSkipsCreatureThatLeftPlay(t *testing.T) {
+	g := started(t)
+	gone := g.Register(testCreature("gone", 3), 0)
+	g.State.Discard[0].add(gone)
+
+	e := OnChooseCreature{Verbs: []CreatureVerb{ReadyVerb{}, StunVerb{}}}
+	if e.applyTo(&EffectContext{Resolver: g, Controller: 0}, []LocalID{gone}) {
+		t.Error("applyTo acted on a creature that has left play")
+	}
+	if core := g.State.Cards[gone]; core != (CardCore{}) {
+		t.Errorf("core = %+v, want zero", core)
 	}
 }

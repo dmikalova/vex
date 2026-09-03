@@ -17,8 +17,8 @@ var TotalRecall = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 179),
 	card.WithAemberBonus(1),
-	card.WithAbility(card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-		card.Sentence{Effect: card.GainAember{
+	card.WithAbility(card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.GainAember{
 			Player: card.Controller,
 			Amount: 1,
 			Per: card.InPlay{
@@ -26,10 +26,10 @@ var TotalRecall = card.New(
 				Type:   card.Type.Creature,
 				Ready:  true,
 			},
-		}},
-		card.Sentence{Effect: card.PutFromPlay{
+		},
+		card.PutFromPlay{
 			Target:      card.Target.EachFriendlyCreature,
 			Destination: card.To.Hand,
-		}},
+		},
 	}}),
 )

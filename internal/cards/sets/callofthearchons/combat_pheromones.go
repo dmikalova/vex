@@ -22,8 +22,8 @@ var CombatPheromones = card.New(
 	card.WithTraits("Item"),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(
-		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
-			card.Sentence{Effect: card.Destroy{Target: card.Target.This}},
+		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+			card.Destroy{Target: card.Target.This},
 			card.Use{
 				Max:    2,
 				Target: card.Target.EachFriendlyCardInPlay.OfHouse(card.House.Mars).Other(),

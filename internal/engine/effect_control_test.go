@@ -154,3 +154,27 @@ func TestTakeControlOfArtifactGuard(t *testing.T) {
 		t.Error("a non-artifact should not be seized")
 	}
 }
+
+// A creature kept alive only by its own side's +power aura is destroyed the moment
+// it changes sides, because the aura no longer reaches it and the damage already
+// marked on it becomes lethal.
+func TestTakeControlDestroysNewlyLethalCreature(t *testing.T) {
+	g := started(t)
+	g.AddArtifact(NewCard("Banner", Brobnar, Artifact, Rare, WithConstantAbility(
+		ConstantAbility{PowerBonus: 2, Target: Target{Kind: TargetEachFriendlyCreature}},
+	)), 1)
+	ape := g.AddToBattleline(testCreature("ape", 3), 1)
+	g.State.Cards[ape].Damage = 3
+	if got := g.Power(ape); got != 5 {
+		t.Fatalf("power under its own side = %d, want 5 (3 + banner)", got)
+	}
+
+	g.takeControl(ape, 0, 0)
+
+	if g.inPlay(ape) {
+		t.Fatalf("ape is still in play at %d power with 3 damage", g.Power(ape))
+	}
+	if !containsID(g.Discard(1), ape) {
+		t.Errorf("discard = %v, want the ape in its owner's pile", g.Discard(1))
+	}
+}

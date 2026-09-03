@@ -19,12 +19,12 @@ var TranspositionSandals = card.New(
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{
-			{Trigger: card.Trigger.Action, Effect: card.Sequence{Effects: []card.Effect{
-				card.Sentence{Effect: card.Swap{With: card.Target.OtherFriendlyCreature}},
-				card.Sentence{Effect: card.OnChooseCreature{
+			{Trigger: card.Trigger.Action, Effect: card.Sentences{Effects: []card.Effect{
+				card.Swap{With: card.Target.OtherFriendlyCreature},
+				card.OnChooseCreature{
 					Target: card.Target.TheOtherCreature,
 					Verbs:  []card.CreatureVerb{card.UseVerb{}},
-				}},
+				},
 			}}},
 		},
 	}),

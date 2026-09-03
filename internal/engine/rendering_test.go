@@ -200,7 +200,7 @@ func TestGeneratedCardText(t *testing.T) {
 				WithPower(3),
 				WithKeywords(Skirmish, Poison),
 			),
-			"House:  Shadows\nType:   Creature\nRarity: Uncommon\nPower:  3\n\nSkirmish. Poison.",
+			"House:  Shadows\nType:   Creature\nRarity: Uncommon\nPower:  3\n\nSkirmish, Poison.",
 		},
 		{
 			NewCard(
@@ -293,7 +293,7 @@ func TestGeneratedCardText(t *testing.T) {
 				WithPower(8),
 				WithAttackDamage(AttackDamage{Fixed: true, Amount: 5}),
 			),
-			"House:  Brobnar\nType:   Creature\nRarity: Common\nPower:  8\n\nBruiser deals 5 damage when fighting.",
+			"House:  Brobnar\nType:   Creature\nRarity: Common\nPower:  8\n\nBruiser deals 5 Damage when fighting.",
 		},
 		{
 			NewCard(
@@ -484,7 +484,7 @@ func TestGeneratedCardText(t *testing.T) {
 					},
 				),
 			),
-			"House:  Mars\nType:   Upgrade\nRarity: Rare\n\nThis creature gains, \"After you play a Mars creature, ready this creature, and for the remainder of the turn this creature belongs to house Mars.\"",
+			"House:  Mars\nType:   Upgrade\nRarity: Rare\n\nThis creature gains, \"After you play a Mars creature, ready this creature, and for the remainder of the turn, this creature belongs to house Mars.\"",
 		},
 		{
 			NewCard(
@@ -610,7 +610,7 @@ func TestRenderCardRules(t *testing.T) {
 				WithPower(3),
 				WithKeywords(Skirmish, Poison),
 			),
-			"Skirmish. Poison.",
+			"Skirmish, Poison.",
 		},
 		// Upgrade static modifier (no own ability): the face still shows its text.
 		{exBruteStrength(), "This creature gains +5 power."},
@@ -745,7 +745,7 @@ func TestCardDocComment(t *testing.T) {
 				WithPower(3),
 				WithKeywords(Skirmish, Poison),
 			),
-			"// Asp\n//\n//\tHouse:  Shadows\n//\tType:   Creature\n//\tRarity: Uncommon\n//\tPower:  3\n//\n//\tSkirmish. Poison.",
+			"// Asp\n//\n//\tHouse:  Shadows\n//\tType:   Creature\n//\tRarity: Uncommon\n//\tPower:  3\n//\n//\tSkirmish, Poison.",
 		},
 	}
 	for _, tc := range cases {

@@ -70,6 +70,15 @@ type CreatureReader interface {
 	AmberOn(id LocalID) int
 	// Exhausted reports whether a creature is exhausted.
 	Exhausted(id LocalID) bool
+	// InPlay reports whether a card is still on the board, as opposed to having been
+	// destroyed, returned, or purged partway through an effect that is still
+	// resolving.
+	InPlay(id LocalID) bool
+	// Armor is a creature's armor value, before any of it is spent or stripped.
+	Armor(id LocalID) int
+	// ArmorStripped is how much armor an effect has taken off a creature this turn,
+	// as opposed to how much it spent absorbing damage.
+	ArmorStripped(id LocalID) int
 	// Stunned reports whether a creature is stunned.
 	Stunned(id LocalID) bool
 	// TimesUsedThisTurn reports how many times a creature has been used this turn.
@@ -161,6 +170,9 @@ type EconomyResolver interface {
 type CreatureResolver interface {
 	// SetDamage sets the damage on a creature (never below zero).
 	SetDamage(id LocalID, amount int)
+	// StripArmor takes all of a creature's remaining armor away and records how much
+	// was taken, so a following effect can scale with it (Red-Hot Armor).
+	StripArmor(id LocalID)
 	// SetStunned sets a creature's stun status.
 	SetStunned(id LocalID, stunned bool)
 	// PreventDamage marks a creature immune to damage for the remainder of the turn.
@@ -274,6 +286,10 @@ type ZoneResolver interface {
 	// PlayFromDeck plays a specific card from a player's deck, removing it from the
 	// deck as it is played (Chaos Portal plays the card it revealed).
 	PlayFromDeck(player int, id LocalID)
+	// PlayFromDiscard plays a specific card from a player's discard pile, bypassing
+	// the active-house gate (Sacrificial Altar). It does nothing when the card is
+	// not in that discard pile.
+	PlayFromDiscard(player int, id LocalID)
 	// PlayFromHand plays a specific card from a player's hand, bypassing the
 	// active-house gate (Phase Shift's off-house card).
 	PlayFromHand(player int, id LocalID)
@@ -402,7 +418,7 @@ func (g *Game) HasKeyword(id LocalID, k Keyword) bool { return g.hasKeyword(id, 
 // LoseKeyword takes a keyword away from every creature in play for the remainder
 // of the turn (Sniffer).
 func (g *Game) LoseKeyword(k Keyword) {
-	g.State.KeywordsLost |= keywordBit[k]
+	g.State.KeywordsLost |= k.bit()
 	g.record(KeywordLostByAll{Keyword: k})
 }
 
@@ -426,38 +442,83 @@ func (g *Game) SetAember(player, amount int) {
 	g.State.Aember[player] = amount
 }
 
+// stateOf returns a card's mutable in-play state, or nil once it has left play.
+// An ability keeps resolving after its source or target dies — Zyzzix the Many
+// adds power counters to itself after its own upgrade's damage destroyed it — and
+// KeyForge lets the rest of it resolve, so the parts that need a card on the board
+// have to land on nothing. Writing anyway leaves a card in the discard pile
+// carrying counters or a stun that nothing will ever clear.
+func (g *Game) stateOf(id LocalID) *CardCore {
+	if !g.inPlay(id) {
+		return nil
+	}
+	return &g.State.Cards[id]
+}
+
 // SetDamage sets the damage on a creature, clamped at zero.
 func (g *Game) SetDamage(id LocalID, amount int) {
 	if amount < 0 {
 		amount = 0
 	}
-	g.State.Cards[id].Damage = int16(amount)
+	if c := g.stateOf(id); c != nil {
+		c.Damage = int16(amount)
+	}
+}
+
+// StripArmor empties a creature's remaining armor and tallies what was taken, so
+// a following effect can scale with it. It adds to any earlier strip this turn
+// rather than replacing it, so two effects that each strip armor both count.
+func (g *Game) StripArmor(id LocalID) {
+	c := g.stateOf(id)
+	if c == nil {
+		return
+	}
+	c.ArmorStripped += c.ArmorRemaining
+	c.ArmorRemaining = 0
 }
 
 // SetStunned sets a creature's stun status.
-func (g *Game) SetStunned(id LocalID, stunned bool) { g.State.Cards[id].Stunned = stunned }
+func (g *Game) SetStunned(id LocalID, stunned bool) {
+	if c := g.stateOf(id); c != nil {
+		c.Stunned = stunned
+	}
+}
 
 // PreventDamage marks a creature immune to damage for the remainder of the turn.
-func (g *Game) PreventDamage(id LocalID) { g.State.Cards[id].DamageImmune = true }
+func (g *Game) PreventDamage(id LocalID) {
+	if c := g.stateOf(id); c != nil {
+		c.DamageImmune = true
+	}
+}
 
 // SetExhausted sets a creature's exhausted status.
-func (g *Game) SetExhausted(id LocalID, exhausted bool) { g.State.Cards[id].Exhausted = exhausted }
+func (g *Game) SetExhausted(id LocalID, exhausted bool) {
+	if c := g.stateOf(id); c != nil {
+		c.Exhausted = exhausted
+	}
+}
 
 // BelongToHouseForRemainderOfTurn makes a card belong to house until its
 // controller's turn ends.
 func (g *Game) BelongToHouseForRemainderOfTurn(id LocalID, house House) {
-	g.State.Cards[id].TempHouse = house
+	if c := g.stateOf(id); c != nil {
+		c.TempHouse = house
+	}
 }
 
 // SetLastingHouse makes a card belong to house until it leaves play.
 func (g *Game) SetLastingHouse(id LocalID, house House) {
-	g.State.Cards[id].LastingHouse = house
+	if c := g.stateOf(id); c != nil {
+		c.LastingHouse = house
+	}
 }
 
 // SetNamedHouse records the house a card named as it entered play, which its
 // HouseLock then constrains for as long as the card stays in play.
 func (g *Game) SetNamedHouse(id LocalID, house House) {
-	g.State.Cards[id].NamedHouse = house
+	if c := g.stateOf(id); c != nil {
+		c.NamedHouse = house
+	}
 }
 
 // SetFightDamageRedirect redirects the attacker's fight damage in the current
@@ -537,7 +598,9 @@ func (g *Game) PurgeFromPlay(id LocalID) { g.purgeFromPlay(id) }
 
 // AddPowerCounter changes the net power counters on a creature.
 func (g *Game) AddPowerCounter(id LocalID, delta int) {
-	g.State.Cards[id].PowerCounters += int16(delta)
+	if c := g.stateOf(id); c != nil {
+		c.PowerCounters += int16(delta)
+	}
 }
 
 // PutFromDiscardIntoHand moves a card from its owner's discard pile to their hand.

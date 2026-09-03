@@ -22,13 +22,13 @@ var MightyJavelin = card.New(
 	card.WithTraits("Weapon"),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(
-		card.Trigger.Action, card.Sequence{
+		card.Trigger.Action, card.Sentences{
 			Effects: []card.Effect{
-				card.Sentence{Effect: card.Destroy{Target: card.Target.This}},
-				card.Sentence{Effect: card.DealDamage{
+				card.Destroy{Target: card.Target.This},
+				card.DealDamage{
 					Amount: 4,
 					Target: card.Target.Creature,
-				}},
+				},
 			},
 		}),
 )

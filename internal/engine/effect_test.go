@@ -12,6 +12,12 @@ func TestEffectValidation(t *testing.T) {
 	if err := (Sequence{Effects: []Effect{good, bad}}).validate(); err == nil {
 		t.Error("sequence should surface a bad child")
 	}
+	if err := (Sentences{Effects: []Effect{good, bad}}).validate(); err == nil {
+		t.Error("sentences should surface a bad child")
+	}
+	if err := (Sentences{Effects: []Effect{good}}).validate(); err != nil {
+		t.Errorf("sentences of valid effects should pass, got %v", err)
+	}
 	if err := (Sequence{Effects: []Effect{good, GainAember{Player: Controller, Amount: 1}}}).validate(); err != nil {
 		t.Errorf("sequence of valid effects should pass, got %v", err)
 	}

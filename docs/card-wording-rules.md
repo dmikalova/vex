@@ -34,9 +34,32 @@ Parenthetical reminder text is stripped; the keyword is the whole statement.
 
 Reminder text is a rendering concern (a keyword glossary), not part of the
 ability tree. Keywords are modeled as flags/ratings on the card, so their meaning
-lives in the engine, not the string. (Affected: Drumble, Batdrone, "John Smyth",
-Bulleteye, Deipno Spymaster, Faygin, Macis Asp, Dew Faerie, Chuff Ape, Champion
-Anaphiel, Ancient Bear, Briar Grubbling, Way of the Bear, Way of the Wolf.)
+lives in the engine, not the string. Several keywords on one card render as a
+single comma-separated sentence — `Skirmish, Poison.`, not `Skirmish. Poison.` —
+because they are one list of properties, not a sequence of statements.
+(Affected: Drumble, Batdrone, "John Smyth", Bulleteye, Deipno Spymaster, Faygin,
+Macis Asp, Dew Faerie, Chuff Ape, Champion Anaphiel, Ancient Bear, Briar
+Grubbling, Way of the Bear, Way of the Wolf.)
+
+### Articles in front of a computed noun
+
+Whenever the noun in a phrase comes from a helper — `typeNoun(e.Types)`,
+`e.noun()`, a `Target`'s noun form — build the article with `indefinite(noun)`
+rather than concatenating `"a " + noun`. The card types include _artifact_ and
+_action_, so a hardcoded `"a "` prints "a artifact" the moment someone points an
+existing effect at a new type. `indefinite` is in `internal/engine/text.go`
+alongside `plural` and `countNoun`, which exist for the same reason on the
+number axis: never write `noun + "s"` or a `card(s)` placeholder by hand.
+
+### Two wordings that are standardized, not left to the printed card
+
+- **A leading duration clause takes a comma**: "for the remainder of the turn,
+  this creature belongs to house Mars". The printed cards are split on this —
+  Brain Stem Antenna omits the comma mid-sentence — so we always include it
+  rather than making punctuation depend on sentence position.
+- **`Damage` casing follows rule 15, not the individual card**: a number of
+  damage dealt is always capitalized (`deals 5 Damage`, `deals +2 Damage`), and
+  `deals no damage` stays lowercase because no icon is printed there.
 
 ## 2. `gains` for everything grantable — retire `gets`
 
@@ -260,6 +283,10 @@ use is lowercase.
 | ----------------------------- | -------- | -------------------------------------------------------- |
 | Dealing damage (icon)         | `Damage` | `Deal 3 Damage to each creature.`                        |
 | Healing / referring to damage | `damage` | `Heal 3 damage from a creature.` / `a damaged creature.` |
+
+The number is what carries the icon, so a creature's fight damage is capitalized
+when it names one (`Bruiser deals 5 Damage when fighting.`) and lowercase when it
+does not (`Spider deals no damage when fighting.`).
 
 ## 16. Spelling, qualifiers, and referents
 

@@ -21,7 +21,7 @@ func TestBelongToHouseEndOfTurn(t *testing.T) {
 	g := started(t)
 	host := g.AddToBattleline(NewCard("Host", Brobnar, Creature, Common, WithPower(3)), 0)
 	e := BelongToHouse{Target: Target{Kind: TargetThisCreature}, House: Mars, Duration: EndOfTurn}
-	if got := e.Text(); got != "for the remainder of the turn {self} belongs to house Mars" {
+	if got := e.Text(); got != "for the remainder of the turn, {self} belongs to house Mars" {
 		t.Errorf("text = %q", got)
 	}
 	e.Resolve(&EffectContext{Resolver: g, Source: host, Controller: 0})

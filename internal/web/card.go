@@ -153,7 +153,7 @@ func (c *cardView) Render() app.UI {
 				Class(cx("card-keybar", ifCls(c.BarBottom, "card-keybar--bottom"))).
 				Body(
 					app.Range(c.Bar).Slice(func(i int) app.UI {
-						kw := string(c.Bar[i])
+						kw := c.Bar[i].String()
 						return app.Div().
 							Class("card-keybar-seg card-keybar--" + strings.ToLower(kw)).
 							Title(kw)

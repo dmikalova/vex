@@ -94,9 +94,18 @@ func (g *game) renderZoneCard(id engine.LocalID) app.UI {
 // printedCard is a read-only face built from a card's printed definition, for a
 // card that is not on the board — one in a pile, or one in flight out of play.
 func (g *game) printedCard(id engine.LocalID) *cardView {
-	def := g.g.Def(id)
+	c := printedFace(g.g.Def(id))
+	c.ID = id
+	c.Maverick = g.isMaverick(id)
+	return c
+}
+
+// printedFace builds a card face from a definition alone, with no game around
+// it. It is what a card looks like before anything has happened to it, which is
+// both what a pile shows and the only face the Style gallery can build — the
+// gallery goes through here so a change to the printed face reaches both.
+func printedFace(def *engine.CardDefinition) *cardView {
 	return &cardView{
-		ID:       id,
 		Title:    def.Name,
 		HouseCls: houseClasses(def.House),
 		Emblem:   houseIconName(def.House),
@@ -106,7 +115,6 @@ func (g *game) printedCard(id engine.LocalID) *cardView {
 		Kind:     kindLabel(def),
 		Trait:    traitLabel(def),
 		Rarity:   rarityMarkOf(def.Rarity),
-		Maverick: g.isMaverick(id),
 	}
 }
 
@@ -132,8 +140,8 @@ var shortcuts = []struct{ keys, what string }{
 	{"z", "Cycle the out-of-play zone viewer"},
 	{"h", "Hide or show the sidebar"},
 	{"m", "Toggle manual mode"},
-	{"⌘/Ctrl+Z", "Undo"},
-	{"⇧⌘/Ctrl+Z", "Redo"},
+	{"Cmd/Ctrl+Z", "Undo"},
+	{"Shift+Cmd/Ctrl+Z", "Redo"},
 	{"?", "Open or close this sheet"},
 }
 

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  1
 //	Traits: Elf • Thief
 //
-//	Skirmish. Poison.
+//	Skirmish, Poison.
 //	Fight: Steal 1 Æmber.
 var Mooncurser = card.New(
 	"Mooncurser",

@@ -133,28 +133,18 @@ func TestUseEnemyArtifact(t *testing.T) {
 	}
 }
 
-func TestSentenceEffect(t *testing.T) {
-	g := NewGame("A", "B", 1)
-	src := g.AddToBattleline(testCreature("src", 1), 0)
-	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
-	e := Sentence{Effect: GainAember{Player: Controller, Amount: 1}}
-
-	if got := e.Text(); got != "gain 1 Æmber." {
-		t.Errorf("text = %q", got)
-	}
-	e.Resolve(ctx)
-	if g.Aember(0) != 1 {
-		t.Errorf("aember = %d, want 1", g.Aember(0))
-	}
-	if err := (Sentence{Effect: Destroy{}}).validate(); err == nil {
-		t.Error("sentence should surface child validation")
-	}
-
-	seq := Sequence{Effects: []Effect{
-		Sentence{Effect: Destroy{Target: Target{Kind: TargetThisCreature}}},
+func TestUseInSentences(t *testing.T) {
+	seq := Sentences{Effects: []Effect{
+		Destroy{Target: Target{Kind: TargetThisCreature}},
 		Use{Max: 2, Target: Target{Kind: TargetEachFriendlyCardInPlay}.OfHouse(Mars).Other()},
 	}}
-	if got := seq.Text(); got != "destroy "+SelfName+". Use 2 other Mars cards, one at a time" {
+	if got := seq.Text(); got != "destroy "+SelfName+". Use 2 other Mars cards, one at a time." {
 		t.Errorf("sequence text = %q", got)
+	}
+	// A single use renders through UseVerb's verb phrase rather than the
+	// "N ..., one at a time" wording above.
+	one := Use{Max: 1, Target: Target{Kind: TargetEachFriendlyCreature}}
+	if got := one.Text(); got != "use a creature" {
+		t.Errorf("single use text = %q", got)
 	}
 }

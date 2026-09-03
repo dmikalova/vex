@@ -21,8 +21,8 @@ var RitualOfTheHunt = card.New(
 	card.WithTraits("Power"),
 	card.WithAemberBonus(1),
 	card.WithKeywords(card.Keyword.Versatile),
-	card.WithAbility(card.Trigger.Action, card.Sequence{Effects: []card.Effect{
-		card.Sentence{Effect: card.Destroy{Target: card.Target.This}},
-		card.Sentence{Effect: card.MayUseFriendlyHouse{House: card.House.Self}},
+	card.WithAbility(card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+		card.Destroy{Target: card.Target.This},
+		card.MayUseFriendlyHouse{House: card.House.Self},
 	}}),
 )

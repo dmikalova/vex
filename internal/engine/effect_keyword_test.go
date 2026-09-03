@@ -13,8 +13,10 @@ func TestLoseKeyword(t *testing.T) {
 	if err := e.validate(); err != nil {
 		t.Errorf("validate: %v", err)
 	}
-	if err := (LoseKeyword{Keyword: "Nonsense"}).validate(); err == nil {
-		t.Error("an unknown keyword should not be losable")
+	// A keyword outside the rulebook's set is now a compile error, so the only
+	// unlosable keyword left to reject is the unset zero value.
+	if err := (LoseKeyword{}).validate(); err == nil {
+		t.Error("an unset keyword should not be losable")
 	}
 
 	g := started(t)

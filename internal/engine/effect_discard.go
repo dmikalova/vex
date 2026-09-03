@@ -67,7 +67,7 @@ func (e PutFromDiscard) Text() string {
 		}
 		return "put " + what + " from your discard pile " + e.destPhrase()
 	}
-	return "put a " + e.noun() + " from your discard pile " + e.destPhrase()
+	return "put " + indefinite(e.noun()) + " from your discard pile " + e.destPhrase()
 }
 
 // moveTo moves one card from the discard pile to the destination.
@@ -215,9 +215,9 @@ type DiscardFromHand struct {
 func (e DiscardFromHand) Text() string {
 	noun := typeNoun(e.Types)
 	if e.Count == 1 {
-		return "discard a " + noun + " from your hand"
+		return "discard " + indefinite(noun) + " from your hand"
 	}
-	return fmt.Sprintf("discard %d %ss from your hand", e.Count, noun)
+	return "discard " + countNoun(e.Count, noun) + " from your hand"
 }
 
 // Resolve has the controller choose and discard Count cards from their hand,

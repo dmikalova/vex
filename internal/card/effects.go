@@ -59,6 +59,9 @@ type (
 	RedirectFightDamage = engine.RedirectFightDamage
 	// Heal takes damage tokens off a creature — a fixed amount or all of them.
 	Heal = engine.Heal
+	// LoseArmor takes all the remaining armor off each creature it targets, and
+	// tallies it for a following ArmorLostThisWay.
+	LoseArmor = engine.LoseArmor
 )
 
 // Destruction and purging.
@@ -153,9 +156,10 @@ type (
 	PlayRevealedCard = engine.PlayRevealedCard
 	// PlayTopOfDeck plays the top card of the controller's deck outright.
 	PlayTopOfDeck = engine.PlayTopOfDeck
-	// PlayFromHand plays a card the controller chooses from their hand, ignoring the
-	// active house. Set Except to make House the house that may not be played.
-	PlayFromHand = engine.PlayFromHand
+	// PlayFrom plays a card the controller chooses from their hand or discard pile
+	// (From), ignoring the active house. Set Except to make House the house that
+	// may not be played.
+	PlayFrom = engine.PlayFrom
 	// CancelFight makes the fight in progress not occur (a Before Fight effect).
 	CancelFight = engine.CancelFight
 	// RevealHand shows the cards in a player's hand to both players and records them.
@@ -199,8 +203,9 @@ type (
 	// Repeat resolves an effect once for each of a running count, choosing
 	// afresh each time.
 	Repeat = engine.Repeat
-	// Sentence renders its child as a complete sentence within a Sequence.
-	Sentence = engine.Sentence
+	// Sentences resolves several effects in order, each rendered as its own
+	// sentence rather than joined with ", and".
+	Sentences = engine.Sentences
 	// ChooseOne offers the controller a set of alternative effects to pick from.
 	ChooseOne = engine.ChooseOne
 	// ChooseHouseThen asks the controller to choose a house, then resolves Then.
@@ -418,3 +423,7 @@ var AllAember = engine.AllAember
 // AemberOnIt is the PerTarget that scales damage by the Æmber on each creature
 // hit: card.DealDamage{Amount: 1, Target: ..., PerTarget: card.AemberOnIt}.
 var AemberOnIt = engine.AemberOnIt
+
+// ArmorLostThisWay is the PerTarget that scales damage by the armor an effect has
+// stripped off each creature hit (Red-Hot Armor).
+var ArmorLostThisWay = engine.ArmorLostThisWay

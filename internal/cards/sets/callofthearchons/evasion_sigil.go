@@ -23,9 +23,9 @@ var EvasionSigil = card.New(
 		Target: card.Target.EachCreature,
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.BeforeFight,
-			Effect: card.Sequence{
+			Effect: card.Sentences{
 				Effects: []card.Effect{
-					card.Sentence{Effect: card.DiscardTopOfDeck{}},
+					card.DiscardTopOfDeck{},
 					card.Conditional{
 						Cond: card.ItIsOfHouse{House: card.TheActiveHouse},
 						Then: card.CancelFight{},

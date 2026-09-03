@@ -47,6 +47,11 @@ func (e CaptureAember) validate() error {
 	if e.Distinct && e.Per == nil {
 		return fmt.Errorf("CaptureAember: Distinct is meaningless without a Per to repeat")
 	}
+	if e.Source == ItsOpponent && (e.All || e.By != nil) {
+		return fmt.Errorf(
+			"CaptureAember: ItsOpponent captures a fixed Amount, since a share of " +
+				"\"its opponent's\" pool names a different pool for each capturer")
+	}
 	return nil
 }
 
@@ -95,6 +100,9 @@ func (e CaptureAember) poolPossessive() string {
 // friendly creature captures the opponent's pool, or "their own side" when an
 // enemy creature captures the opponent's (its own) pool.
 func (e CaptureAember) fromText() string {
+	if e.Source == ItsOpponent {
+		return "its opponent"
+	}
 	enemyCapturer := e.Target.Kind == TargetChosenEnemyCreature
 	poolIsControllers := e.Source == Controller
 	if enemyCapturer != poolIsControllers { // the capturer captures its own pool
@@ -113,7 +121,6 @@ func (e CaptureAember) fromText() string {
 // Per times and choosing a fresh Target each time. Capturing stops early if the
 // Target selects nothing (no eligible creature, or the choice is declined).
 func (e CaptureAember) Resolve(ctx *EffectContext) {
-	pool := ctx.PlayerFor(e.Source)
 	reps := 1
 	if e.Per != nil {
 		reps = e.Per.Value(ctx)
@@ -131,6 +138,7 @@ func (e CaptureAember) Resolve(ctx *EffectContext) {
 				continue
 			}
 			captured = append(captured, id)
+			pool := e.sourcePool(ctx, id)
 			amt := e.Amount
 			switch {
 			case e.All:
@@ -154,4 +162,14 @@ func (e CaptureAember) eligible(captured []LocalID) func(LocalID) bool {
 		return nil
 	}
 	return func(id LocalID) bool { return !slices.Contains(captured, id) }
+}
+
+// sourcePool names the pool one capture draws from. It is per capturer rather
+// than per effect because ItsOpponent is relative to the capturing creature, so
+// a single effect reaching every creature on the board takes from both pools.
+func (e CaptureAember) sourcePool(ctx *EffectContext, capturer LocalID) int {
+	if e.Source == ItsOpponent {
+		return 1 - ctx.Resolver.Controller(capturer)
+	}
+	return ctx.PlayerFor(e.Source)
 }

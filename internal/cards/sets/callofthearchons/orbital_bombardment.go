@@ -18,12 +18,12 @@ var OrbitalBombardment = card.New(
 	card.Provenance(card.CotA, 172),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.Sequence{
+		card.Trigger.Play, card.Sentences{
 			Effects: []card.Effect{
-				card.Sentence{Effect: card.RevealHand{
+				card.RevealHand{
 					Player: card.Controller,
 					House:  card.House.Self,
-				}},
+				},
 				card.Repeat{
 					Times: card.CardsRevealed{},
 					Do: card.DealDamage{

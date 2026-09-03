@@ -36,25 +36,30 @@ func (d *decoder) uint64() uint64 {
 	return v
 }
 
-// stopOneIn weights the answers that shorten a game — ending a turn, discarding a
-// card away, declining an optional target — at roughly one script byte in this
-// many, instead of letting them share the options' uniform odds. As one uniform
-// slot among a handful of legal moves, stopping ends most turns after an action or
-// two, so neither player ever banks enough Æmber to forge and every game runs out
-// the turn limit without a winner.
-const stopOneIn = 8
+// The odds of the answers that cut a game short, as one script byte in this many.
+// They are weighted rather than sharing the options' uniform odds because as one
+// slot among a handful of legal moves they fire constantly: turns end after an
+// action or two, so neither player banks enough Æmber to forge and every game runs
+// out the turn limit without a winner. Ending a turn while moves remain and
+// throwing a card away are the rarest — a turn normally ends by running out of
+// legal moves, which doAction handles directly.
+const (
+	stopOneIn    = 64
+	declineOneIn = 8
+)
 
 // pick returns a script-driven index into n options, or -1 for the rare "stop"
-// answer (see stopOneIn). n of 0 always stops.
-func (d *decoder) pick(n int) int {
+// answer at odds of one byte in oneIn. n of 0 always stops.
+func (d *decoder) pick(n, oneIn int) int {
 	b := int(d.byte())
-	if n == 0 || b%stopOneIn == 0 {
+	if n == 0 || b%oneIn == 0 {
 		return -1
 	}
-	// Index by the quotient, not the remainder: the stop test already claimed every
-	// byte divisible by stopOneIn, so a remainder would leave option 0 unreachable
-	// whenever n divides stopOneIn.
-	return b / stopOneIn % n
+	// The stop test already claimed every byte divisible by oneIn, so fold the
+	// survivors back onto a dense range before indexing. Taking b%n directly would
+	// leave option 0 unreachable whenever n divides oneIn, and b/oneIn would leave
+	// every option past the 256/oneIn'th unreachable.
+	return (b - b/oneIn - 1) % n
 }
 
 // scriptChooser answers the engine's target/option choices from the script,
@@ -82,7 +87,7 @@ func (c *scriptChooser) ChooseCardOrDecline(
 	_, _ string,
 	candidates []engine.LocalID,
 ) (engine.LocalID, bool) {
-	i := c.d.pick(len(candidates))
+	i := c.d.pick(len(candidates), declineOneIn)
 	if i < 0 {
 		return 0, false
 	}

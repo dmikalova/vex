@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"strings"
 )
 
 // This file holds the log entries that narrate a turn's shape (ADR 0011): its
@@ -30,9 +29,11 @@ type PhaseBegan struct {
 	Phase  Phase
 }
 
-// Text renders the phase of a turn a player has entered.
-func (e PhaseBegan) Text(n Namer) string {
-	return fmt.Sprintf("%s: %s phase", n.PlayerName(e.Player), e.Phase)
+// Text renders the phase that has been entered. It leaves the player unsaid: a
+// phase sits inside a turn the log already opened by name, so repeating it on
+// every phase says nothing the turn header did not.
+func (e PhaseBegan) Text(Namer) string {
+	return capitalizeFirst(e.Phase.String()) + " phase"
 }
 
 // CardsReadied narrates the ready phase, naming the cards that were turned back
@@ -44,11 +45,7 @@ type CardsReadied struct {
 
 // Text renders the cards a player readied, each by name.
 func (e CardsReadied) Text(n Namer) string {
-	names := make([]string, len(e.Cards))
-	for i, id := range e.Cards {
-		names[i] = n.Name(id)
-	}
-	return fmt.Sprintf("%s readies %s", n.PlayerName(e.Player), strings.Join(names, ", "))
+	return fmt.Sprintf("%s readies %s", n.PlayerName(e.Player), namedCards(n, e.Cards))
 }
 
 // CardsDrawn narrates the end-of-turn refill: how many cards the player took and
@@ -65,12 +62,8 @@ func (e CardsDrawn) Text(n Namer) string {
 	if e.Count == 0 {
 		return fmt.Sprintf("%s draws nothing, holding %d", n.PlayerName(e.Player), e.Hand)
 	}
-	cards := "cards"
-	if e.Count == 1 {
-		cards = "card"
-	}
-	return fmt.Sprintf("%s draws %d %s, up to %d in hand",
-		n.PlayerName(e.Player), e.Count, cards, e.Hand)
+	return fmt.Sprintf("%s draws %s, up to %d in hand",
+		n.PlayerName(e.Player), countNoun(e.Count, "card"), e.Hand)
 }
 
 // HouseChosen narrates the active house a player picked for the turn.
