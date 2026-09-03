@@ -285,3 +285,64 @@ func TestSpreadFlankWalk(t *testing.T) {
 		}
 	})
 }
+
+// TestDealDamagePerTarget checks the damage is scaled by a quantity read off
+// each creature separately, so one batch can hit for different amounts.
+func TestDealDamagePerTarget(t *testing.T) {
+	e := DealDamage{
+		Amount:    1,
+		Target:    Target{Kind: TargetEachEnemyCreature},
+		PerTarget: AemberOnIt,
+	}
+	want := "deal 1 damage to each enemy creature for each Æmber on it"
+	if got := e.Text(); got != want {
+		t.Errorf("Text = %q, want %q", got, want)
+	}
+	if err := e.validate(); err != nil {
+		t.Errorf("validate = %v, want nil", err)
+	}
+	withPer := e
+	withPer.Per = CardsDestroyed{}
+	if withPer.validate() == nil {
+		t.Error("PerTarget combined with Per should not validate")
+	}
+
+	g := NewGame("A", "B", 1)
+	laden := g.AddToBattleline(testCreature("laden", 9), 1)
+	bare := g.AddToBattleline(testCreature("bare", 9), 1)
+	g.AddAmberOn(laden, 2)
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+
+	if got := g.Damage(laden); got != 2 {
+		t.Errorf("damage on the laden creature = %d, want 2", got)
+	}
+	if got := g.Damage(bare); got != 0 {
+		t.Errorf("damage on the bare creature = %d, want 0", got)
+	}
+}
+
+// damageChooserTrap fails the test if the engine asks it anything: dealing zero
+// damage must not reach a prompt at all.
+type damageChooserTrap struct{ t *testing.T }
+
+func (c damageChooserTrap) ChooseCreature(_, prompt string, _ []LocalID) (LocalID, bool) {
+	c.t.Errorf("unexpected prompt %q: dealing 0 damage should ask nothing", prompt)
+	return 0, false
+}
+
+// TestDealDamageZeroAmountAsksNothing pins that a computed amount of zero skips
+// the effect entirely rather than prompting for a target it cannot hurt — the
+// second half of Guardian Demon when its heal removed no damage.
+func TestDealDamageZeroAmountAsksNothing(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(testCreature("e1", 5), 1)
+	g.AddToBattleline(testCreature("e2", 5), 1)
+	g.SetChooser(0, damageChooserTrap{t})
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	// Produced.DamageHealed is 0: nothing was healed, so nothing is dealt.
+	DealDamage{
+		AmountFrom: DamageHealed{},
+		Target:     Target{Kind: TargetChosenEnemyCreature},
+	}.Resolve(ctx)
+}

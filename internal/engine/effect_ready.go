@@ -87,7 +87,7 @@ func (e ReadyCreatures) Resolve(ctx *EffectContext) {
 			return
 		}
 		ctx.Resolver.SetExhausted(id, false)
-		ctx.Resolver.Logf("%s is readied", ctx.Resolver.Name(id))
+		ctx.Resolver.Record(CreatureReadied{Creature: id})
 	}
 }
 

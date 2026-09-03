@@ -21,7 +21,7 @@ func (g *game) save(ctx app.Context) {
 	if g.g == nil {
 		return
 	}
-	state, logLines, groups := g.g.State, g.g.Log, g.logGroups
+	state, log, groups := g.g.State, g.g.Log, g.logGroups
 	// A half-resolved action cannot be persisted: the rest of it lives in a
 	// goroutine that a reload kills, so the Æmber it already spent and the card it
 	// already took from hand would be lost with no prompt left to finish them.
@@ -29,13 +29,23 @@ func (g *game) save(ctx app.Context) {
 	// take the action again.
 	if g.busy && len(g.undo) > 0 {
 		e := g.undo[len(g.undo)-1]
-		state, logLines, groups = e.state, e.log, e.groups
+		state, log, groups = e.state, e.log, e.groups
+	}
+	saved := make([]savedLine, len(log))
+	for i, rec := range log {
+		rule, player := ruleOf(rec)
+		saved[i] = savedLine{
+			Frame:  rec.Frame,
+			Text:   rec.Text(g.g),
+			Rule:   rule,
+			Player: player,
+		}
 	}
 	_ = ctx.LocalStorage().Set(persistKey, snapshot{
 		Version: snapshotVersion,
 		Seed:    g.seed,
 		State:   state,
-		Log:     logLines,
+		Log:     saved,
 		Groups:  groups,
 		Manual:  g.manualAdds,
 	})
@@ -81,7 +91,19 @@ func (g *game) resume(ctx app.Context) (ok bool) {
 	// Restore the saved log (a real match always has at least the turn-1 header, so
 	// an empty one means a pre-log snapshot — keep what install produced).
 	if len(snap.Log) > 0 {
-		g.g.Log = snap.Log
+		restored := make([]engine.Record, len(snap.Log))
+		for i, line := range snap.Log {
+			entry := engine.RestoredEntry{Line: line.Text}
+			restored[i] = engine.Record{Frame: line.Frame, Entry: entry}
+			if line.Rule != ruleNone {
+				restored[i].Entry = restoredRule{
+					RestoredEntry: entry,
+					Rule:          line.Rule,
+					Player:        line.Player,
+				}
+			}
+		}
+		g.g.Restore(restored)
 		g.logGroups = snap.Groups
 	}
 	g.settlePhase()
@@ -138,13 +160,13 @@ func (g *game) newMatch() {
 	g.install(eg, houses, mavericks)
 	// Clear the previous game's log grouping and undo/redo history. newMatch resets
 	// the engine log to a single turn-1 header, so stale marks (with larger Start
-	// indices from the old, longer log) would go non-monotonic against the fresh
-	// short log and make actionSegments emit overlapping, duplicated log ranges.
+	// indices from the old, longer log) would bubble the fresh log at the wrong
+	// places.
 	g.logGroups = nil
 	g.undo = nil
 	g.redo = nil
 	g.manualAdds = nil
-	g.g.BeginTurn(0) // no Æmber yet, so the opening forge step is a no-op
+	g.g.StartTurn(0) // no Æmber yet, so the opening forge step is a no-op
 	// The new deal shares no board with the old one, so the animation baseline is
 	// reset too: otherwise the next action diffs against the previous game's cards
 	// and flies them all off to the discard.

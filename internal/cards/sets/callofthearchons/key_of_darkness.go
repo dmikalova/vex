@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Forge a key at +6 Æmber current cost. If your opponent has no Æmber, forge a key at +2 Æmber current cost instead.
+//	Play: If your opponent has no Æmber, forge a key at +2 Æmber current cost. Otherwise, forge a key at +6 Æmber current cost.
 var KeyOfDarkness = card.New(
 	"Key of Darkness",
 	card.House.Shadows,

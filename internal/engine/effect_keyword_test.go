@@ -26,7 +26,7 @@ func TestLoseKeyword(t *testing.T) {
 	if g.HasKeyword(hider, Elusive) {
 		t.Error("elusive should be lost for the remainder of the turn")
 	}
-	g.EndTurn(0)
+	g.EndPlayPhase(0)
 	if !g.HasKeyword(hider, Elusive) {
 		t.Error("elusive should come back when the turn ends")
 	}

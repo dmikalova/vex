@@ -4,7 +4,7 @@ import "testing"
 
 func TestFightFiresLasting(t *testing.T) {
 	g := started(t)
-	g.AddLasting(EventFight, actGainAember, 0, 1)
+	g.AddLasting(LastingEffect{On: EventFight, Do: actGainAember, Controller: 0, Amount: 1})
 	att := g.AddToBattleline(NewCard("att", Brobnar, Creature, Common, WithPower(4)), 0)
 	def := g.AddToBattleline(testCreature("def", 2), 1)
 

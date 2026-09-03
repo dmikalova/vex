@@ -223,12 +223,13 @@ type gameEffect struct{ fn func() }
 func (gameEffect) Text() string             { return "test" }
 func (e gameEffect) Resolve(*EffectContext) { e.fn() }
 
-func TestTriggerWindowPicksUpNewlyGrantedAbility(t *testing.T) {
+func TestTriggerWindowIsFixedWhenTheEventHappens(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	var a LocalID
 	// A's printed Reap ability attaches an upgrade to A that grants a NEW
-	// "Reap: gain 3 Æmber". Because A is still inside its reap window, the newly
-	// granted ability fires in the same window.
+	// "Reap: gain 3 Æmber". That ability did not trigger on this reap: a window's
+	// abilities are collected when the event happens, before any of them resolves,
+	// which is what lets the active player order the whole window (ADR 0013).
 	attach := gameEffect{fn: func() {
 		up := g.Register(NewCard(
 			"boost",
@@ -252,8 +253,15 @@ func TestTriggerWindowPicksUpNewlyGrantedAbility(t *testing.T) {
 		WithAbility(TriggerAfterReap, attach)), 0)
 
 	g.reapWith(a)
-	if g.Aember(0) != 4 { // 1 (reap) + 3 (newly granted after-reap)
-		t.Errorf("aember = %d, want 4 (reap + newly granted after-reap)", g.Aember(0))
+	if g.Aember(0) != 1 { // the reap itself; the newly granted ability waits for the next one
+		t.Errorf("aember = %d, want 1 (reap only)", g.Aember(0))
+	}
+
+	// It does fire on the next reap, once it is in play when the event happens.
+	g.State.Cards[a].Exhausted = false
+	g.reapWith(a)
+	if g.Aember(0) != 5 { // 1 + (1 reap + 3 granted)
+		t.Errorf("aember = %d, want 5 (granted ability fires on the next reap)", g.Aember(0))
 	}
 }
 

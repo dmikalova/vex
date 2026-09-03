@@ -832,10 +832,25 @@ func TestPunctuate(t *testing.T) {
 // trigger added for Teliga, Veylan Analyst, Rock-Hurling Giant, and Magda the Rat.
 func TestNewTriggerPrefixes(t *testing.T) {
 	for trigger, want := range map[Trigger]string{
-		TriggerAfterEnemyCardPlayed: "After your opponent plays a card, ",
-		TriggerAfterUse:             "After you use a card, ",
-		TriggerAfterDiscardFromHand: "After you discard a card from your hand, ",
-		TriggerLeavesPlay:           "Leaves Play: ",
+		TriggerAfterEnemyCardPlayed:        "After your opponent plays a card, ",
+		TriggerAfterEnemyCreatureDestroyed: "After an enemy creature is destroyed during your turn, ",
+		TriggerAfterUse:                    "After you use a card, ",
+		TriggerAfterDiscardFromHand:        "After you discard a card from your hand, ",
+		TriggerLeavesPlay:                  "Leaves Play: ",
+	} {
+		if got, _ := trigger.prefix(); got != want {
+			t.Errorf("prefix(%v) = %q, want %q", trigger, got, want)
+		}
+	}
+}
+
+// TestTurnBoundaryTriggerPrefixes covers the two triggers that bracket a turn.
+// Start of turn is its own phase (ADR 0012), and its printed prefix mirrors the
+// end-of-turn one.
+func TestTurnBoundaryTriggerPrefixes(t *testing.T) {
+	for trigger, want := range map[Trigger]string{
+		TriggerStartOfTurn: "At the start of your turn, ",
+		TriggerEndOfTurn:   "At the end of your turn, ",
 	} {
 		if got, _ := trigger.prefix(); got != want {
 			t.Errorf("prefix(%v) = %q, want %q", trigger, got, want)

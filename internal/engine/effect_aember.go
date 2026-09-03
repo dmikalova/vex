@@ -67,15 +67,14 @@ func (e GainAember) gain(ctx *EffectContext, p int) {
 		amount *= e.Per.Value(ctx)
 	}
 	if capturer, ok := ctx.Resolver.GainAember(p, amount); ok {
-		ctx.Resolver.Logf(
-			"%s captures %d Æmber instead of %s gaining it",
-			ctx.Resolver.Name(capturer),
-			amount,
-			ctx.Resolver.PlayerName(p),
-		)
+		ctx.Resolver.Record(AemberCapturedInsteadOfGain{
+			Creature: capturer,
+			Player:   p,
+			Amount:   amount,
+		})
 		return
 	}
-	ctx.Resolver.Logf("%s gains %d Æmber", ctx.Resolver.PlayerName(p), amount)
+	ctx.Resolver.Record(AemberGained{Player: p, Amount: amount})
 }
 
 // A Loss says how much Æmber to remove from a pool when the amount depends on the
@@ -102,6 +101,18 @@ func (half) object(possessive string) string {
 	return "half of " + possessive + " Æmber, rounded down"
 }
 func (half) qualifier() string { return "" }
+
+// AllAember empties a pool entirely, whatever its size — Shatter Storm's "lose
+// all your Æmber".
+var AllAember Loss = allAember{}
+
+type allAember struct{}
+
+func (allAember) lose(pool int) int { return pool }
+func (allAember) object(possessive string) string {
+	return "all " + possessive + " Æmber"
+}
+func (allAember) qualifier() string { return "" }
 
 // AllBut removes everything above keep, leaving a pool of exactly keep; a pool
 // already at or below keep is untouched.
@@ -180,8 +191,9 @@ func (e LoseAember) resolveGate(ctx *EffectContext) bool {
 		if lost > 0 {
 			moved = true
 		}
+		ctx.Produced.AemberLost[p] += lost
 		ctx.Resolver.SetAember(p, ctx.Resolver.Aember(p)-lost)
-		ctx.Resolver.Logf("%s loses %d Æmber", ctx.Resolver.PlayerName(p), lost)
+		ctx.Resolver.Record(AemberLost{Player: p, Amount: lost})
 	}
 	return moved
 }

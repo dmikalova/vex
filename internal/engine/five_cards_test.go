@@ -200,7 +200,9 @@ func TestEnemyCreatureDestroyedReaction(t *testing.T) {
 	}
 
 	g := NewGame("A", "B", 1)
-	g.AddLasting(EventEnemyCreatureDestroyed, actGainAember, 0, 1)
+	g.AddLasting(
+		LastingEffect{On: EventEnemyCreatureDestroyed, Do: actGainAember, Controller: 0, Amount: 1},
+	)
 	foe := g.AddToBattleline(testCreature("foe", 3), 1)
 	g.destroyEach(0, []LocalID{foe})
 	if g.State.Aember[0] != 1 {

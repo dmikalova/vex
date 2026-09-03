@@ -11,6 +11,9 @@ type MoveAember struct {
 	// Amount of Æmber to move from the chosen source; 0 reads as 1. When the source
 	// holds fewer, all of it moves.
 	Amount int
+	// All moves everything each source carries instead of a fixed Amount — Word of
+	// Returning moves all the Æmber off every enemy creature at once.
+	All bool
 	// From selects the eligible source cards; the chosen source must carry Æmber.
 	From Target
 	// To is the destination pool — Controller's or Opponent's. Leave unset (and set
@@ -37,6 +40,9 @@ func (e MoveAember) validate() error {
 	if !e.From.valid() {
 		return errUnsetTarget("MoveAember")
 	}
+	if e.All && e.Amount != 0 {
+		return fmt.Errorf("MoveAember: set All or Amount, not both (got Amount=%d)", e.Amount)
+	}
 	if e.toPool() == e.Onto.valid() {
 		return fmt.Errorf("MoveAember: set exactly one destination (To pool or Onto card)")
 	}
@@ -55,9 +61,13 @@ func (e MoveAember) destText() string {
 }
 
 // Text renders the effect, e.g. "move 1 Æmber from a friendly creature or artifact
-// to your pool".
+// to your pool", or "move all Æmber from each enemy creature to your pool".
 func (e MoveAember) Text() string {
-	return fmt.Sprintf("move %d \u00c6mber from %s to %s", e.amount(), e.From.Text(), e.destText())
+	amount := fmt.Sprintf("%d", e.amount())
+	if e.All {
+		amount = "all"
+	}
+	return fmt.Sprintf("move %s \u00c6mber from %s to %s", amount, e.From.Text(), e.destText())
 }
 
 // Resolve moves Æmber from the chosen source(s) to the destination. The source
@@ -78,21 +88,27 @@ func (e MoveAember) Resolve(ctx *EffectContext) {
 	}
 	for _, from := range sources {
 		moved := e.amount()
-		if have := ctx.Resolver.AmberOn(from); moved > have {
+		if have := ctx.Resolver.AmberOn(from); e.All || moved > have {
 			moved = have
 		}
 		ctx.Resolver.AddAmberOn(from, -moved)
 		if e.toPool() {
 			p := ctx.PlayerFor(e.To)
 			ctx.Resolver.SetAember(p, ctx.Resolver.Aember(p)+moved)
-			ctx.Resolver.Logf("%s moves %d Æmber from %s to %s's pool",
-				ctx.Resolver.PlayerName(ctx.Controller), moved,
-				ctx.Resolver.Name(from), ctx.Resolver.PlayerName(p))
+			ctx.Resolver.Record(AemberMovedToPool{
+				Player: ctx.Controller,
+				From:   from,
+				To:     p,
+				Amount: moved,
+			})
 			continue
 		}
 		ctx.Resolver.AddAmberOn(onto, moved)
-		ctx.Resolver.Logf("%s moves %d Æmber from %s to %s",
-			ctx.Resolver.PlayerName(ctx.Controller), moved,
-			ctx.Resolver.Name(from), ctx.Resolver.Name(onto))
+		ctx.Resolver.Record(AemberMovedToCard{
+			Player: ctx.Controller,
+			From:   from,
+			To:     onto,
+			Amount: moved,
+		})
 	}
 }

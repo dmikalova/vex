@@ -115,6 +115,49 @@ func TestCaptureAemberValidate(t *testing.T) {
 	if err := validateEffect(both); err == nil {
 		t.Error("setting both Amount and By should fail validation")
 	}
+	lone := CaptureAember{Amount: 1, Target: this, Source: Opponent, Distinct: true}
+	if err := validateEffect(lone); err == nil {
+		t.Error("Distinct without a Per should fail validation")
+	}
+}
+
+// TestCaptureAemberDistinct covers Unguarded Camp: a repeated capture spreads
+// across different creatures, and stops early once every eligible creature has
+// already captured.
+func TestCaptureAemberDistinct(t *testing.T) {
+	spread := CaptureAember{
+		Amount:   1,
+		Target:   Target{Kind: TargetChosenFriendlyCreature},
+		Source:   Opponent,
+		Per:      ExcessCreatures{Player: Controller},
+		Distinct: true,
+	}
+	want := "for each creature you have in excess of your opponent, a friendly " +
+		"creature captures 1 Æmber from your opponent. Each creature cannot " +
+		"capture more than 1 Æmber this way"
+	if got := spread.Text(); got != want {
+		t.Errorf("text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	a := g.AddToBattleline(testCreature("a", 3), 0)
+	b := g.AddToBattleline(testCreature("b", 3), 0)
+	c := g.AddToBattleline(testCreature("c", 3), 0)
+	g.SetAember(1, 5)
+	// The chooser always takes the first candidate offered, so without Distinct
+	// every capture would pile onto a.
+	g.SetChooser(0, &idQueueChooser{})
+
+	spread.Resolve(&EffectContext{Resolver: g, Controller: 0})
+
+	for _, id := range []LocalID{a, b, c} {
+		if got := g.AmberOn(id); got != 1 {
+			t.Errorf("creature %d captured %d, want 1 each", id, got)
+		}
+	}
+	if got := g.Aember(1); got != 2 {
+		t.Errorf("opponent pool = %d, want 2", got)
+	}
 }
 
 func marsCreature(name string, power int) CardDefinition {

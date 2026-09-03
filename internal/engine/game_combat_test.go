@@ -56,11 +56,11 @@ func TestGrantFightForHouse(t *testing.T) {
 		t.Errorf("other-house attacker: err = %v, want ErrWrongHouse", err)
 	}
 
-	// EndTurn clears the grant.
-	g.EndTurn(0)
+	// The ready phase clears the grant.
+	g.EndPlayPhase(0)
 	def3 := g.AddToBattleline(testCreature("def3", 3), 1)
 	if err := g.Fight(0, att, def3); err != ErrWrongHouse {
-		t.Errorf("after EndTurn: err = %v, want ErrWrongHouse (grant cleared)", err)
+		t.Errorf("after EndPlayPhase: err = %v, want ErrWrongHouse (grant cleared)", err)
 	}
 }
 
@@ -447,7 +447,7 @@ func TestElusive(t *testing.T) {
 		t.Errorf("second attacker damage = %d, want 3", g.Damage(att2))
 	}
 
-	// BeginTurn refreshes it.
+	// StartTurn refreshes it.
 	g2 := NewGame("A", "B", 1)
 	a1 := g2.AddToBattleline(testCreature("a1", 5), 0)
 	dodger := g2.AddToBattleline(
@@ -455,12 +455,12 @@ func TestElusive(t *testing.T) {
 		1,
 	)
 	g2.fight(a1, dodger)
-	g2.BeginTurn(1)
-	g2.BeginTurn(0)
+	g2.StartTurn(1)
+	g2.StartTurn(0)
 	a2 := g2.AddToBattleline(testCreature("a2", 5), 0)
 	g2.fight(a2, dodger)
 	if g2.Damage(dodger) != 0 {
-		t.Errorf("after BeginTurn, elusive damage = %d, want 0 (refreshed)", g2.Damage(dodger))
+		t.Errorf("after StartTurn, elusive damage = %d, want 0 (refreshed)", g2.Damage(dodger))
 	}
 
 	// Elusive stops only fight damage: Hazardous still hits the attacker, and the

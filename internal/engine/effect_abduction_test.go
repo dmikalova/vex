@@ -15,8 +15,9 @@ func TestAbductionText(t *testing.T) {
 		t.Errorf("text = %q", got)
 	}
 
-	many := PutUpTo{
-		Max:         3,
+	many := PutChosen{
+		Count:       3,
+		UpTo:        true,
 		Target:      Target{Kind: TargetEachEnemyCreature},
 		Destination: ToArchives.Yours(),
 	}

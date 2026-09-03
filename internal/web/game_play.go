@@ -151,23 +151,9 @@ func (g *game) endTurn(ctx app.Context, _ app.Event) {
 	g.status = ""
 	p := g.active()
 	g.runAction(ctx, func() error {
-		turn := g.g.State.Turn
 		opp := 1 - p
-		g.g.EndTurn(p)
-		// A neutral end-of-turn snapshot for both players (no "Check!" — just facts).
-		g.g.Logf("%s ends turn %d — %d Æmber, %d/%d keys, %d in hand",
-			g.g.PlayerName(p), turn, g.g.Aember(p), g.g.Keys(p), engine.KeysToWin, len(g.g.Hand(p)))
-		g.g.Logf(
-			"%s stands at %d Æmber, %d/%d keys, %d in hand",
-			g.g.PlayerName(
-				opp,
-			),
-			g.g.Aember(opp),
-			g.g.Keys(opp),
-			engine.KeysToWin,
-			len(g.g.Hand(opp)),
-		)
-		g.g.BeginTurn(opp) // forge + start-of-turn triggers for the next player
+		g.g.EndPlayPhase(p) // the end-of-turn phase narrates where both players stand
+		g.g.StartTurn(opp)  // forge + start-of-turn triggers for the next player
 		return nil
 	})
 }

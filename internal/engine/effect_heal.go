@@ -32,10 +32,16 @@ func (e Heal) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 // healed, so Heal can gate a Then — Protectrix protects a creature only if it
 // healed damage. The last creature healed is left in context (ctx.It) so a
 // following effect can act on "that creature".
+//
+// Undamaged creatures are dropped before the prompt, not after it: healing one
+// does nothing, so offering it is a vacuous choice (Guardian Demon asked for a
+// creature to heal even with no damage anywhere on the board). Neighbours pulled
+// in after the choice can still be undamaged, so the loop skips them too.
 func (e Heal) resolveGate(ctx *EffectContext) bool {
 	healed := 0
 	damageHealed := 0
-	for _, id := range e.Target.Select(ctx) {
+	damagedOnly := func(id LocalID) bool { return ctx.Resolver.Damage(id) > 0 }
+	for _, id := range e.Target.selectWith(ctx, false, damagedOnly) {
 		before := ctx.Resolver.Damage(id)
 		if before == 0 {
 			continue

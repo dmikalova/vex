@@ -1,5 +1,7 @@
 package engine
 
+import "slices"
+
 // This file holds playing a card: creatures, artifacts, actions, and upgrades,
 // plus discarding from hand and the shared checks (house match, taking a card of
 // the right type, granting its Æmber pips).
@@ -50,23 +52,29 @@ func (g *Game) PlayArtifact(player, handIndex int) (LocalID, error) {
 // single cost gate the play and use sites share: it changes nothing and returns
 // ErrCannotPayToll when player cannot pay the full amount owed.
 func (g *Game) chargeToll(player int, action TollAction) error {
-	payee := 1 - player
-	owed := 0
-	for _, id := range g.allInPlay(payee) {
-		if t := g.cat.def(id).Restricts.Toll; t.Amount > 0 && t.Action == action {
-			owed += t.Amount
-		}
-	}
+	owed := g.tollOwed(player, action)
 	if owed == 0 {
 		return nil
 	}
 	if g.State.Aember[player] < owed {
 		return ErrCannotPayToll
 	}
+	payee := 1 - player
 	g.State.Aember[player] -= owed
 	g.State.Aember[payee] += owed
-	g.logf("%s pays %d Æmber to %s to %s", g.names[player], owed, g.names[payee], action.phrase())
+	g.record(TollPaid{Player: player, Payee: payee, Amount: owed, Action: action})
 	return nil
+}
+
+// tollOwed totals the Æmber player must hand the opponent to take action.
+func (g *Game) tollOwed(player int, action TollAction) int {
+	owed := 0
+	for _, id := range g.allInPlay(1 - player) {
+		if t := g.cat.def(id).Restricts.Toll; t.Amount > 0 && t.Action == action {
+			owed += t.Amount
+		}
+	}
+	return owed
 }
 
 // PlayAction plays an action card: its Æmber bonus and "Play:" abilities resolve,
@@ -107,7 +115,27 @@ func (g *Game) DiscardFromHand(player, handIndex int) error {
 	}
 	hand.removeAt(handIndex)
 	g.State.Discard[player].add(id)
-	g.logf("%s discards %s", g.names[player], g.Name(id))
+	g.record(CardDiscarded{Player: player, Card: id})
+	return nil
+}
+
+// CanDiscard reports whether the player can discard the given hand card right now:
+// nil if discardable, otherwise the reason. It mirrors the checks DiscardFromHand
+// enforces, the way CanPlay mirrors the PlayX methods, so a caller can list the
+// legal discards without duplicating the rule.
+func (g *Game) CanDiscard(player int, id LocalID) error {
+	if g.State.Winner >= 0 {
+		return ErrGameOver
+	}
+	if g.State.ActivePlayer != player {
+		return ErrNotActivePlayer
+	}
+	if !slices.Contains(g.State.Hand[player].slice(), id) {
+		return ErrCardNotInHand
+	}
+	if !g.inActiveHouse(g.cat.def(id)) {
+		return ErrWrongHouse
+	}
 	return nil
 }
 
@@ -257,7 +285,7 @@ func (g *Game) playCreatureCard(player int, id LocalID, flankLeft bool) {
 	} else {
 		g.State.Battleline[player].add(id)
 	}
-	g.logf("%s plays %s to the battleline", g.names[player], g.Name(id))
+	g.record(CardPlayedToBattleline{Player: player, Card: id})
 	g.applyAemberBonus(id)
 	g.triggerAbilities(id, TriggerAfterPlay, 0, false)
 	g.emitCreatureEnters(id)
@@ -291,11 +319,11 @@ func (g *Game) putIntoPlay(id LocalID, controller int) {
 		core.Exhausted = true
 		core.ArmorRemaining = int16(g.armor(id))
 		g.State.Battleline[controller].add(id)
-		g.logf("%s puts %s into play under their control", g.names[controller], g.Name(id))
+		g.record(CardPutIntoPlay{Player: controller, Card: id})
 		g.emitCreatureEnters(id)
 	case Artifact:
 		g.State.Artifacts[controller].add(id)
-		g.logf("%s puts %s into play under their control", g.names[controller], g.Name(id))
+		g.record(CardPutIntoPlay{Player: controller, Card: id})
 	}
 	g.settleDestroyed(controller)
 }
@@ -305,7 +333,7 @@ func (g *Game) putIntoPlay(id LocalID, controller int) {
 func (g *Game) playArtifactCard(player int, id LocalID) {
 	g.State.Cards[id].Exhausted = true // enters play exhausted; readies during the end-of-turn ready step
 	g.State.Artifacts[player].add(id)
-	g.logf("%s plays artifact %s", g.names[player], g.Name(id))
+	g.record(ArtifactPlayed{Player: player, Card: id})
 	g.applyAemberBonus(id)
 	g.triggerAbilities(id, TriggerAfterPlay, 0, false)
 	g.emitCardPlayed(player, id)
@@ -316,7 +344,7 @@ func (g *Game) playArtifactCard(player int, id LocalID) {
 // playActionCard resolves and discards an action already removed from its previous
 // zone.
 func (g *Game) playActionCard(player int, id LocalID) {
-	g.logf("%s plays action %s", g.names[player], g.Name(id))
+	g.record(ActionPlayed{Player: player, Card: id})
 	g.applyAemberBonus(id)
 	g.triggerAbilities(id, TriggerAfterPlay, 0, false)
 	g.emitCardPlayed(player, id)
@@ -328,7 +356,7 @@ func (g *Game) playActionCard(player int, id LocalID) {
 func (g *Game) playUpgradeCard(player int, id, host LocalID, def *CardDefinition) {
 	g.applyAemberBonus(id)
 	g.AttachUpgrade(host, id)
-	g.logf("%s attaches %s to %s", g.names[player], g.Name(id), g.Name(host))
+	g.record(UpgradeAttached{Player: player, Upgrade: id, Host: host})
 	g.resolveUpgradePlay(host, id, def)
 	g.settleDestroyed(player)
 }
@@ -345,7 +373,7 @@ func (g *Game) DiscardCardFromHand(owner int, id LocalID) {
 	hand.removeAt(i)
 	g.State.Discard[owner].add(id)
 	g.State.DiscardedThisTurn[owner].add(id)
-	g.logf("%s discards %s", g.names[owner], g.Name(id))
+	g.record(CardDiscarded{Player: owner, Card: id})
 	for _, watcher := range g.allInPlay(owner) {
 		g.triggerAbilities(watcher, TriggerAfterDiscardFromHand, id, true)
 	}
@@ -415,7 +443,7 @@ func (g *Game) recordCardPlayed(player int, id LocalID, opts playCardOptions) {
 	def := g.cat.def(id)
 	if r := def.PlayRequirement; r.Spend && r.required() {
 		g.State.Aember[player] -= r.Aember
-		g.logf("%s loses %d Æmber to play %s", g.names[player], r.Aember, def.Name)
+		g.record(AemberSpentToPlay{Player: player, Card: id, Amount: r.Aember})
 	}
 	if opts.consumePlayPermission {
 		g.State.PlayPermissionsUsedThisTurn[player][g.cat.def(id).House]++
@@ -482,6 +510,10 @@ func (g *Game) CanPlay(player int, id LocalID) error {
 	if !def.PlayRequirement.met(g.State.Aember[player]) {
 		return ErrPlayRequirement
 	}
+	if def.Type == Artifact &&
+		g.State.Aember[player] < g.tollOwed(player, TollPlayArtifact) {
+		return ErrCannotPayToll
+	}
 	if def.Type == Upgrade &&
 		len(
 			g.State.Battleline[player].slice(),
@@ -497,14 +529,13 @@ func (g *Game) applyAemberBonus(id LocalID) {
 	if def.AemberBonus > 0 {
 		o := g.owner(id)
 		if capturer, ok := g.gainAember(o, def.AemberBonus); ok {
-			g.logf(
-				"%s captures %d Æmber from %s's bonus",
-				g.Name(capturer),
-				def.AemberBonus,
-				def.Name,
-			)
+			g.record(AemberBonusCaptured{
+				Creature: capturer,
+				Card:     id,
+				Amount:   def.AemberBonus,
+			})
 			return
 		}
-		g.logf("%s gains %d Æmber from %s", g.names[o], def.AemberBonus, def.Name)
+		g.record(AemberBonusGained{Player: o, Card: id, Amount: def.AemberBonus})
 	}
 }

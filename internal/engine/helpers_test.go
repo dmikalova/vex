@@ -8,7 +8,7 @@ import "testing"
 func started(t *testing.T) *Game {
 	t.Helper()
 	g := NewGame("Alice", "Bob", 1)
-	g.BeginTurn(0)
+	g.StartTurn(0)
 	if err := g.ChooseHouse(0, Brobnar); err != nil {
 		t.Fatalf("ChooseHouse: %v", err)
 	}

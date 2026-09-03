@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// OneStoodAgainstMany
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// One Stood Against Many
 //
 //	House:  Sanctum
 //	Type:   Tactic
@@ -22,5 +17,9 @@ var OneStoodAgainstMany = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 223),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.RepeatedFight{
+			Times:  3,
+			Target: card.Target.FriendlyCreature,
+		}),
 )

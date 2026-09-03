@@ -246,12 +246,14 @@ func containsHouse(houses []engine.House, h engine.House) bool {
 }
 
 // optionChooser renders a labeled multiple-choice prompt. When every option is a
-// house or a key colour, it shows themed icon buttons; otherwise plain primary
-// buttons.
+// key colour it shows themed key buttons; when every option is a house it shows a
+// grid of house emblems — a house prompt can offer all seven, and seven full-width
+// rows push the rest of the controls off the screen where a grid does not.
+// Anything else falls back to plain primary buttons.
 func (g *game) optionChooser() app.UI {
 	if g.keyColorOptions() {
 		return app.Div().Class("btn-col").Body(
-			app.Div().Class("section-title").Text("Choose a key colour:"),
+			app.Div().Class("section-title").Text("Forge a key:"),
 			app.Range(g.optionLabels).Slice(func(i int) app.UI {
 				c := keyColorByName(g.optionLabels[i])
 				return keyChoiceButton(
@@ -266,13 +268,17 @@ func (g *game) optionChooser() app.UI {
 	if g.houseOptions() {
 		return app.Div().Class("btn-col").Body(
 			app.Div().Class("section-title").Text("Choose a house:"),
-			app.Range(g.optionLabels).Slice(func(i int) app.UI {
-				h, _ := engine.ParseHouse(g.optionLabels[i])
-				return app.Button().
-					Class(cx("house-btn", houseAccent(h), ifCls(g.isButtonCursor(i), "btn-cursor"))).
-					OnClick(g.chooseOptionIdx(i)).
-					Body(houseIcon(h, "icon-inline"), app.Text(g.optionLabels[i]))
-			}),
+			app.Div().Class("house-grid").Body(
+				app.Range(g.optionLabels).Slice(func(i int) app.UI {
+					h, _ := engine.ParseHouse(g.optionLabels[i])
+					return app.Button().
+						Class(cx("house-btn", "house-btn--icon", houseAccent(h),
+							ifCls(g.isButtonCursor(i), "btn-cursor"))).
+						Title(g.optionLabels[i]).
+						OnClick(g.chooseOptionIdx(i)).
+						Body(houseIcon(h, "icon-house"))
+				}),
+			),
 		)
 	}
 	return app.Div().Class("btn-col").Body(
@@ -333,7 +339,9 @@ func (g *game) actionBar() app.UI {
 			btn("Cancel", g.cancelTargeting, "btn-secondary"),
 		)
 	case !g.hasSel:
-		return app.Div().Class("hint").Text("Select a card to inspect it and choose an action.")
+		// Nothing is selected, so there is nothing to act on: the action bar stays
+		// empty rather than spending a line telling the player to click a card.
+		return app.Div()
 	}
 
 	switch g.selKind {

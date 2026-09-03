@@ -1,20 +1,15 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// WordOfReturning
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Word of Returning
 //
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Deal 1 Damage to each enemy creature for each Aember on it. Return all Aember from those creatures to your pool.
+//	Play: Deal 1 damage to each enemy creature for each Æmber on it, and move all Æmber from each enemy creature to your pool.
 var WordOfReturning = card.New(
 	"Word of Returning",
 	card.House.Untamed,
@@ -22,5 +17,17 @@ var WordOfReturning = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 339),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
+			card.DealDamage{
+				Amount:    1,
+				Target:    card.Target.EachEnemyCreature,
+				PerTarget: card.AemberOnIt,
+			},
+			card.MoveAember{
+				All:  true,
+				From: card.Target.EachEnemyCreature,
+				To:   card.Controller,
+			},
+		}}),
 )

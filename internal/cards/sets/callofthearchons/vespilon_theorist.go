@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// VespilonTheorist
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Vespilon Theorist
 //
 //	House:  Logos
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Cyborg • Scientist
 //
-//	Elusive. (The first time this creature is attacked each turn, no damage is dealt.)
-//	Reap: Choose a house. Reveal the top card of your deck. If it is of that house, archive it and gain 1 Aember. Otherwise, discard it.
+//	Elusive.
+//	Reap: Choose a house - reveal the top card of your deck. If it is of the chosen house, archive the top card of your deck, and gain 1 Æmber. Otherwise, discard the top card of your deck.
 var VespilonTheorist = card.New(
 	"Vespilon Theorist",
 	card.House.Logos,
@@ -25,5 +20,26 @@ var VespilonTheorist = card.New(
 	card.Provenance(card.CotA, 155),
 	card.WithPower(2),
 	card.WithTraits("Cyborg", "Scientist"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithAbility(
+		card.Trigger.Reap, card.ChooseHouseThen{
+			Then: card.Sequence{
+				Effects: []card.Effect{
+					card.Sentence{Effect: card.RevealTopOfDeck{}},
+					card.Conditional{
+						Cond: card.ItIsOfHouse{House: card.TheChosenHouse},
+						Then: card.Sequence{
+							Effects: []card.Effect{
+								card.ArchiveTopOfDeck{Count: 1},
+								card.GainAember{
+									Player: card.Controller,
+									Amount: 1,
+								},
+							},
+						},
+						Else: card.DiscardTopOfDeck{Player: card.Controller},
+					},
+				},
+			},
+		}),
 )

@@ -35,7 +35,7 @@ func TestBilgumAvalanche(t *testing.T) {
 				},
 			})
 
-			h.Game().BeginTurn(0) // forge a key with the seeded Æmber
+			h.Game().StartTurn(0) // forge a key with the seeded Æmber
 
 			h.Expect(foe).Damage(2)
 		},

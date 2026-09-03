@@ -45,6 +45,8 @@ type (
 	DamageIfSurvives = engine.DamageIfSurvives
 	// Spread is a DealDamage strategy that hits several related creatures at once.
 	Spread = engine.Spread
+	// PerTarget is a DealDamage strategy scaling the damage per creature hit.
+	PerTarget = engine.PerTarget
 	// CreatureAndNeighbor (a Spread) damages a chosen creature and one of its neighbors.
 	CreatureAndNeighbor = engine.CreatureAndNeighbor
 	// CreatureAndNeighbors (a Spread) damages a chosen non-flank creature and each of its neighbors.
@@ -67,6 +69,8 @@ type (
 	PurgeCard = engine.PurgeCard
 	// PurgeFromHand purges one card the controller chooses from a player's hand.
 	PurgeFromHand = engine.PurgeFromHand
+	// PurgeEachFromHand purges every matching card from a player's hand.
+	PurgeEachFromHand = engine.PurgeEachFromHand
 	// PurgeCreature purges each creature its Target selects from play.
 	PurgeCreature = engine.PurgeCreature
 	// LoseKeyword takes a keyword from each creature for the remainder of the turn.
@@ -101,8 +105,9 @@ type (
 	Draw = engine.Draw
 	// PutFromPlay takes each targeted card out of play into a chosen Destination.
 	PutFromPlay = engine.PutFromPlay
-	// PutUpTo moves up to Max cards the controller chooses into a Destination.
-	PutUpTo = engine.PutUpTo
+	// PutChosen moves Count cards the controller chooses into a Destination,
+	// declinably when UpTo is set.
+	PutChosen = engine.PutChosen
 	// PutFromDiscard moves a chosen card from your discard pile to a Destination.
 	PutFromDiscard = engine.PutFromDiscard
 	// ReturnNamedToHand returns a chosen card of a given name to its owner's hand.
@@ -111,6 +116,9 @@ type (
 	SearchForName = engine.SearchForName
 	// ShuffleIntoDeck shuffles the controller's named zones (hand, discard, archives) into their deck.
 	ShuffleIntoDeck = engine.ShuffleIntoDeck
+	// SwapDeckAndDiscard exchanges the controller's deck with their discard pile,
+	// then shuffles.
+	SwapDeckAndDiscard = engine.SwapDeckAndDiscard
 	// ArchiveFromHand moves cards from a hand into the controller's archives.
 	ArchiveFromHand = engine.ArchiveFromHand
 	// ArchiveFromDiscard moves a chosen card from the discard pile into archives.
@@ -161,6 +169,9 @@ type (
 	// OneAtATime repeats a chosen-creature action over several different creatures,
 	// resolving each pass fully before offering the next choice.
 	OneAtATime = engine.OneAtATime
+	// RepeatedFight readies and fights with a creature several times, each fight
+	// against a different enemy creature.
+	RepeatedFight = engine.RepeatedFight
 	// ReadyVerb readies the chosen creature.
 	ReadyVerb = engine.ReadyVerb
 	// FightVerb makes the chosen creature fight an enemy creature.
@@ -272,8 +283,8 @@ type (
 	TurnCount = engine.TurnCount
 	// ForgedKey gates on whether a player forged a key this turn or their previous one.
 	ForgedKey = engine.ForgedKey
-	// OpponentExcessCreatures counts how many more creatures the opponent controls.
-	OpponentExcessCreatures = engine.OpponentExcessCreatures
+	// ExcessCreatures counts how many more creatures one player controls than the other.
+	ExcessCreatures = engine.ExcessCreatures
 	// CardsInArchives counts the cards in a player's archives.
 	CardsInArchives = engine.CardsInArchives
 	// CardsRevealed counts the cards the most recent Reveal showed.
@@ -292,6 +303,10 @@ type (
 	// CreaturesShuffledIntoDeckThisWay counts the creatures its Player controlled
 	// that an earlier effect in this resolution put back into a deck.
 	CreaturesShuffledIntoDeckThisWay = engine.CreaturesShuffledIntoDeckThisWay
+
+	// AemberLostThisWay counts the Æmber an earlier LoseAember in the same
+	// resolution took from its Player's pool.
+	AemberLostThisWay = engine.AemberLostThisWay
 	// CardsInHand counts the cards in a player's hand of a referenced house.
 	CardsInHand = engine.CardsInHand
 	// CreaturesHealed counts the creatures the most recent Heal healed.
@@ -366,6 +381,7 @@ var Event = events{
 	ReapAember:             engine.EventReapAember,
 	Destroyed:              engine.EventCreatureDestroyed,
 	AemberAddedToPool:      engine.EventAemberAddedToPool,
+	CardPlayed:             engine.EventCardPlayed,
 }
 
 type events struct {
@@ -375,7 +391,8 @@ type events struct {
 	EnemyCreatureDestroyed,
 	ReapAember,
 	Destroyed,
-	AemberAddedToPool engine.Event
+	AemberAddedToPool,
+	CardPlayed engine.Event
 }
 
 // Steal is the replacement that makes gaining Æmber steal it from the opponent
@@ -393,3 +410,11 @@ var Half = engine.Half
 // AllBut is the Loss that makes a LoseAember reduce a pool to keep, removing
 // everything above it: card.LoseAember{Player: card.EachPlayer, By: card.AllBut(5)}.
 var AllBut = engine.AllBut
+
+// AllAember is the Loss that makes a LoseAember empty a pool entirely:
+// card.LoseAember{Player: card.Controller, By: card.AllAember}.
+var AllAember = engine.AllAember
+
+// AemberOnIt is the PerTarget that scales damage by the Æmber on each creature
+// hit: card.DealDamage{Amount: 1, Target: ..., PerTarget: card.AemberOnIt}.
+var AemberOnIt = engine.AemberOnIt

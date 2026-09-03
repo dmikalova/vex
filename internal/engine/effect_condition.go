@@ -286,9 +286,9 @@ func houseTypeNoun(house House, typ CardType) string {
 // Conditional resolves Then only when Cond is met. It renders as "<cond>, <then>",
 // e.g. "if your opponent has 7 Æmber or more, your opponent loses 4 Æmber".
 //
-// Else, when set, resolves instead when Cond is not met, and leads the sentence so
-// the common case reads first: "<else>. <Cond>, <then> instead." Key of Darkness
-// forges at +6, or at +2 when the opponent has no Æmber.
+// Else, when set, resolves when Cond is not met and renders as the second
+// sentence the cards use for a two-way branch: "<cond>, <then>. Otherwise,
+// <else>." (Vespilon Theorist archives the revealed card or discards it).
 type Conditional struct {
 	Cond Condition
 	Then Effect
@@ -297,11 +297,11 @@ type Conditional struct {
 
 // Text joins the condition and the gated effect.
 func (e Conditional) Text() string {
-	if e.Else != nil {
-		return e.Else.Text() + ". " + capitalizeFirst(e.Cond.CondText()) + ", " +
-			e.Then.Text() + " instead"
+	body := e.Cond.CondText() + ", " + e.Then.Text()
+	if e.Else == nil {
+		return body
 	}
-	return e.Cond.CondText() + ", " + e.Then.Text()
+	return body + ". Otherwise, " + e.Else.Text()
 }
 
 // Resolve runs Then when Cond is met, otherwise Else if one is set.

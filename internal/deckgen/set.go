@@ -76,15 +76,28 @@ func NewSet(name string, cards []Card, tuning Tuning) Set {
 }
 
 // validateConnections fails loudly if any card connects to a card absent from the
-// set: a connection to a card that does not exist is an authoring error, never a
-// link to silently drop at generation time.
+// set, or pulls it an impossible number of times or at an impossible rate: a
+// connection to a card that does not exist is an authoring error, never a link to
+// silently drop at generation time.
 func (s Set) validateConnections() {
 	for _, cards := range s.byName {
-		for _, name := range cards.Profile.Connection.Cards {
-			if _, ok := s.byName[name]; !ok {
+		for _, cc := range cards.Profile.Connection.Cards {
+			if _, ok := s.byName[cc.Name]; !ok {
 				panic(fmt.Sprintf(
 					"deckgen: card %q connects to %q, which is not in set %q",
-					cards.Def.Name, name, s.Name,
+					cards.Def.Name, cc.Name, s.Name,
+				))
+			}
+			if cc.Copies < 1 {
+				panic(fmt.Sprintf(
+					"deckgen: card %q pulls %d copies of %q; a connection pulls at least one",
+					cards.Def.Name, cc.Copies, cc.Name,
+				))
+			}
+			if cc.Chance <= 0 || cc.Chance > 1 {
+				panic(fmt.Sprintf(
+					"deckgen: card %q pulls %q at chance %v; a connection fires in (0, 1]",
+					cards.Def.Name, cc.Name, cc.Chance,
 				))
 			}
 		}

@@ -67,12 +67,7 @@ func (e StealAember) resolveGate(ctx *EffectContext) bool {
 	amt := min(e.amount(ctx, opponent), ctx.Resolver.Aember(opponent))
 	ctx.Resolver.SetAember(opponent, ctx.Resolver.Aember(opponent)-amt)
 	ctx.Resolver.SetAember(player, ctx.Resolver.Aember(player)+amt)
-	ctx.Resolver.Logf(
-		"%s steals %d Æmber from %s",
-		ctx.Resolver.PlayerName(player),
-		amt,
-		ctx.Resolver.PlayerName(opponent),
-	)
+	ctx.Resolver.Record(AemberStolen{Player: player, From: opponent, Amount: amt})
 	return amt > 0
 }
 

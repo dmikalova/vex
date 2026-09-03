@@ -15,7 +15,7 @@ func (g *Game) takeControl(id LocalID, controller int, source LocalID) {
 		g.State.Cards[id].ControlPlus = controlPlus
 		g.State.Cards[id].ControlSource = source
 		g.State.Battleline[controller].add(id)
-		g.logf("%s takes control of %s", g.names[controller], g.Name(id))
+		g.record(ControlTaken{Player: controller, Card: id})
 	}
 }
 
@@ -36,7 +36,7 @@ func (g *Game) takeControlOfArtifact(id LocalID, controller int) {
 	g.State.Cards[id].ControlPlus = controlPlus
 	g.State.Cards[id].ControlSource = 0
 	g.State.Artifacts[controller].add(id)
-	g.logf("%s takes control of %s", g.names[controller], g.Name(id))
+	g.record(ControlTaken{Player: controller, Card: id})
 }
 
 // releaseControlHeldBy reverts every creature whose control was taken "until source
@@ -55,7 +55,7 @@ func (g *Game) releaseControlHeldBy(source LocalID) {
 			core.ControlPlus = 0
 			core.ControlSource = 0
 			g.State.Battleline[owner].add(id)
-			g.logf("%s returns to %s's control", g.Name(id), g.names[owner])
+			g.record(ControlReturned{Card: id, Owner: owner})
 		}
 	}
 }

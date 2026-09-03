@@ -187,7 +187,7 @@ func (e SkipForgeStep) Resolve(ctx *EffectContext) {
 // GrantFightForChosenHouse lets the controller's creatures of the house picked by
 // an enclosing ChooseHouseThen fight this turn even out of the active house —
 // Brothers in Battle's "each friendly creature of that house may fight." The
-// grant lasts only the current turn (EndTurn clears it).
+// grant lasts only the current turn (the ready phase clears it).
 type GrantFightForChosenHouse struct{}
 
 // Text renders the effect.
@@ -204,7 +204,8 @@ func (GrantFightForChosenHouse) Resolve(ctx *EffectContext) {
 // GrantFightAnyHouse lets every creature the controller has fight this turn, whatever
 // its house — Follow the Leader's "each friendly creature may fight", and Horseman
 // of War's longer wording for the same rule. It is GrantFightForChosenHouse with the
-// house filter dropped. The grant lasts only the current turn (EndTurn clears it).
+// house filter dropped. The grant lasts only the current turn (the ready phase
+// clears it).
 type GrantFightAnyHouse struct{}
 
 // Text renders the effect.
@@ -219,7 +220,8 @@ func (GrantFightAnyHouse) Resolve(ctx *EffectContext) {
 
 // MayUseFriendlyHouse lets the controller fully use (fight, reap, or Action:) their
 // creatures of House this turn even out of the active house — Sigil of Brotherhood,
-// Ritual of the Hunt. The grant lasts only the current turn (EndTurn clears it).
+// Ritual of the Hunt. The grant lasts only the current turn (the ready phase
+// clears it).
 type MayUseFriendlyHouse struct {
 	House House
 }

@@ -28,7 +28,7 @@ func TestReveal(t *testing.T) {
 		cnt.CountText() != "card revealed this way" {
 		t.Errorf("CardsRevealed = %d / %q", cnt.Value(ctx), cnt.CountText())
 	}
-	line := g.Log[len(g.Log)-1]
+	line := g.Log[len(g.Log)-1].Text(g)
 	if !strings.Contains(line, "Alice reveals") || !strings.Contains(line, "Marauder") ||
 		!strings.Contains(line, "Missile") {
 		t.Errorf("log = %q, want the revealed Mars cards", line)
@@ -57,5 +57,20 @@ func TestReveal(t *testing.T) {
 	}
 	if len(g3.Log) != before {
 		t.Error("revealing nothing should not log")
+	}
+
+	// "Any number" includes none: declining stops the reveal where it stands.
+	g4 := NewGame("A", "B", 1)
+	g4.AddToHand(NewCard("Marauder", Mars, Creature, Common, WithPower(1)), 0)
+	g4.AddToHand(NewCard("Missile", Mars, Tactic, Common), 0)
+	g4.SetChooser(0, &cardDecliner{decline: true})
+	ctx4 := &EffectContext{Resolver: g4, Controller: 0}
+	before4 := len(g4.Log)
+	RevealHand{Player: Controller, House: Mars}.Resolve(ctx4)
+	if ctx4.Produced.Revealed != 0 {
+		t.Errorf("declined reveal = %d, want 0", ctx4.Produced.Revealed)
+	}
+	if len(g4.Log) != before4 {
+		t.Error("a declined reveal should not log")
 	}
 }

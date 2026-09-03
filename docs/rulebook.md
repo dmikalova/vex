@@ -464,6 +464,11 @@ discard pile (Help from Future Self), the hand and discard pile (Screaming
 Cave), or the archives and discard pile. It moves every named zone's cards into
 the deck, then shuffles once.
 
+SwapDeckAndDiscard exchanges the controller's deck with their discard pile and
+shuffles the new deck — Reverse Time turns a spent deck back into a fresh one.
+It differs from ShuffleIntoDeck{Discard} in that the old deck goes away into
+the discard pile rather than surviving underneath it.
+
 ### Steal Aember
 
 Stealing Aember moves it from the opponent's pool into your own. You can only

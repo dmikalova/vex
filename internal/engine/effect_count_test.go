@@ -132,3 +132,37 @@ func TestEachFriendlyArtifactTarget(t *testing.T) {
 		t.Errorf("selected = %v, want [%v]", got, mine)
 	}
 }
+
+func TestExcessCreatures(t *testing.T) {
+	opponents := ExcessCreatures{Player: Opponent}
+	mine := ExcessCreatures{Player: Controller}
+	if opponents.CountText() != "creature your opponent controls in excess of you" {
+		t.Errorf("count text = %q", opponents.CountText())
+	}
+	if mine.CountText() != "creature you have in excess of your opponent" {
+		t.Errorf("count text = %q", mine.CountText())
+	}
+
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(testCreature("o1", 3), 1)
+	g.AddToBattleline(testCreature("o2", 3), 1)
+	g.AddToBattleline(testCreature("m1", 3), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	if got := opponents.Value(ctx); got != 1 {
+		t.Errorf("excess = %d, want 1 (opponent 2, you 1)", got)
+	}
+	if got := mine.Value(ctx); got != 0 {
+		t.Errorf("own excess = %d, want 0 when your opponent controls more", got)
+	}
+
+	// When the controller controls at least as many, the opponent's excess floors
+	// at zero and the controller's own excess starts counting up.
+	g.AddToBattleline(testCreature("m2", 3), 0)
+	g.AddToBattleline(testCreature("m3", 3), 0)
+	if got := opponents.Value(ctx); got != 0 {
+		t.Errorf("excess = %d, want 0 when you control more", got)
+	}
+	if got := mine.Value(ctx); got != 1 {
+		t.Errorf("own excess = %d, want 1 (you 3, opponent 2)", got)
+	}
+}

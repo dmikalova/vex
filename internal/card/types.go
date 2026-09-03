@@ -144,6 +144,7 @@ var Trigger = triggers{
 	AfterDestroyedFighting:      engine.TriggerAfterDestroyedFighting,
 	AfterCardPlayed:             engine.TriggerAfterCardPlayed,
 	EndOfTurn:                   engine.TriggerEndOfTurn,
+	StartOfTurn:                 engine.TriggerStartOfTurn,
 	AfterChooseHouse:            engine.TriggerAfterChooseHouse,
 	AfterEnemyCreatureDestroyed: engine.TriggerAfterEnemyCreatureDestroyed,
 	AfterEnemyCardPlayed:        engine.TriggerAfterEnemyCardPlayed,
@@ -175,6 +176,8 @@ type triggers struct {
 	AfterCardPlayed engine.Trigger
 	// EndOfTurn fires at the end of the controller's turn.
 	EndOfTurn engine.Trigger
+	// StartOfTurn fires at the start of the controller's turn, before they forge.
+	StartOfTurn engine.Trigger
 	// AfterChooseHouse fires after the controller chooses their active house.
 	AfterChooseHouse engine.Trigger
 	// AfterEnemyCreatureDestroyed fires after an enemy creature is destroyed during your turn.

@@ -40,11 +40,11 @@ func TestGrabberJammer(t *testing.T) {
 
 		g := h.Game()
 		g.State.Aember[1] = engine.KeyCost
-		g.BeginTurn(1)
+		g.StartTurn(1)
 		h.P2.ExpectKeys(0) // one Æmber short of the raised cost
 
 		g.State.Aember[1] = engine.KeyCost + 1
-		g.BeginTurn(1)
+		g.StartTurn(1)
 		h.P2.ExpectKeys(1)
 		h.P2.ExpectAmber(0) // paid the raised cost
 	})

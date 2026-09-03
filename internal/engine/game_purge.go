@@ -10,7 +10,7 @@ package engine
 func (g *Game) purgeFromDiscard(owner int, id LocalID) {
 	g.State.Discard[owner].remove(id)
 	g.State.Purge[owner].add(id)
-	g.logf("%s purges %s from a discard pile", g.names[g.State.ActivePlayer], g.Name(id))
+	g.record(CardPurgedFromDiscard{Player: g.State.ActivePlayer, Card: id})
 }
 
 // purgeFromHand moves a card from a player's hand to their purge pile. Callers
@@ -18,5 +18,5 @@ func (g *Game) purgeFromDiscard(owner int, id LocalID) {
 func (g *Game) purgeFromHand(owner int, id LocalID) {
 	g.State.Hand[owner].remove(id)
 	g.State.Purge[owner].add(id)
-	g.logf("%s purges %s from a hand", g.names[g.State.ActivePlayer], g.Name(id))
+	g.record(CardPurgedFromHand{Player: g.State.ActivePlayer, Card: id})
 }

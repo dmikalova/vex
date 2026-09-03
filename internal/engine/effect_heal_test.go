@@ -216,3 +216,71 @@ func TestSetDamageClampsNegative(t *testing.T) {
 		t.Errorf("damage = %d, want 0 (clamped)", g.Damage(c))
 	}
 }
+
+// TestHealSkipsUndamagedNeighbor pins the one way an undamaged creature still
+// reaches the healing loop: the chosen creature's neighbours are pulled in after
+// the keep-filter has already dropped everything with no damage on it.
+func TestHealSkipsUndamagedNeighbor(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	wounded := g.AddToBattleline(testCreature("wounded", 5), 0)
+	healthy := g.AddToBattleline(testCreature("healthy", 5), 0)
+	g.State.Cards[wounded].Damage = 2
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	e := Heal{Amount: 2, Target: Target{Kind: TargetChosenFriendlyCreature}.AndNeighbors()}
+	e.Resolve(ctx)
+
+	if g.Damage(wounded) != 0 {
+		t.Errorf("wounded damage = %d, want 0", g.Damage(wounded))
+	}
+	if ctx.Produced.Healed != 1 {
+		t.Errorf("healed = %d, want 1 (the undamaged neighbor does not count)", ctx.Produced.Healed)
+	}
+	if g.Damage(healthy) != 0 {
+		t.Errorf("healthy damage = %d, want 0", g.Damage(healthy))
+	}
+}
+
+// healChooserTrap fails the test if the engine asks it anything: healing an
+// undamaged board must not reach a prompt at all.
+type healChooserTrap struct{ t *testing.T }
+
+func (c healChooserTrap) ChooseCreature(_, prompt string, _ []LocalID) (LocalID, bool) {
+	c.t.Errorf("unexpected prompt %q: healing an undamaged board should ask nothing", prompt)
+	return 0, false
+}
+
+// TestHealAsksNothingWhenNothingIsDamaged pins that a chosen heal with no damaged
+// candidate never reaches the chooser — on an undamaged board the prompt is a
+// choice that cannot change anything (Guardian Demon).
+func TestHealAsksNothingWhenNothingIsDamaged(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(testCreature("a", 5), 0)
+	g.AddToBattleline(testCreature("b", 5), 0)
+	g.SetChooser(0, healChooserTrap{t})
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	if (Heal{Amount: 2, Target: Target{Kind: TargetChosenFriendlyCreature}}).resolveGate(ctx) {
+		t.Error("healing an undamaged board should report nothing healed")
+	}
+}
+
+func TestHealGate(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	c := g.AddToBattleline(testCreature("c", 5), 0)
+	g.State.Cards[c].Damage = 3
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	if !(Heal{Fully: true, Target: Target{Kind: TargetChosenFriendlyCreature}}).resolveGate(ctx) {
+		t.Error("healing a damaged creature should report a heal")
+	}
+	if !ctx.HasIt || ctx.It != c {
+		t.Errorf("the healed creature should be left in context, got %d", ctx.It)
+	}
+
+	// Now undamaged: the gate reports nothing healed.
+	ctx2 := &EffectContext{Resolver: g, Controller: 0}
+	if (Heal{Fully: true, Target: Target{Kind: TargetChosenFriendlyCreature}}).resolveGate(ctx2) {
+		t.Error("healing an undamaged creature should report no heal")
+	}
+}

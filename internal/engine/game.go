@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"fmt"
 	"math/rand"
 	"strings"
 )
@@ -80,7 +79,16 @@ type Orderer interface {
 type Game struct {
 	State   GameState
 	Verbose bool
-	Log     []string
+	// Log is the public narration of the match — the same for both players, naming
+	// no card in a hidden zone (ADR 0011). It lives on Game, not GameState, because
+	// entries are interface values and so cannot satisfy the flat, pointerless,
+	// comparable state ADR 0005 requires.
+	Log []Record
+	// frames is the stack of open attribution frames; see Game.openFrame.
+	frames []Frame
+	// recording is whether outcomes are narrated at all. NewGame turns it on; a bot
+	// exploring cloned positions turns it off so the log costs nothing.
+	recording bool
 
 	names    [2]string
 	choosers [2]Chooser
@@ -103,10 +111,11 @@ type Game struct {
 // NewGame creates a new two-player game seeded for deterministic play.
 func NewGame(p0Name, p1Name string, seed int64) *Game {
 	g := &Game{
-		names:    [2]string{p0Name, p1Name},
-		choosers: [2]Chooser{FirstChooser{}, FirstChooser{}},
-		cat:      &catalog{},
-		rng:      rand.New(rand.NewSource(seed)),
+		names:     [2]string{p0Name, p1Name},
+		choosers:  [2]Chooser{FirstChooser{}, FirstChooser{}},
+		cat:       &catalog{},
+		rng:       rand.New(rand.NewSource(seed)),
+		recording: true,
 	}
 	g.State.Winner = -1
 	return g
@@ -124,15 +133,6 @@ func (g *Game) SetPlayerHouses(player int, houses []House) {
 
 // PlayerName returns a player's display name.
 func (g *Game) PlayerName(player int) string { return g.names[player] }
-
-// logf appends a line to the game log (and prints it when Verbose).
-func (g *Game) logf(format string, args ...any) {
-	line := fmt.Sprintf(format, args...)
-	g.Log = append(g.Log, line)
-	if g.Verbose {
-		fmt.Println(line)
-	}
-}
 
 // chooserFor returns the chooser for a player, defaulting to FirstChooser.
 func (g *Game) chooserFor(player int) Chooser {

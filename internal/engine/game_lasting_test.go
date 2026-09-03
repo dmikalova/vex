@@ -2,12 +2,31 @@ package engine
 
 import "testing"
 
+// TestLastingActionDescriptions pins the short labels the ordering prompt shows
+// when several reactions fire at once (ADR 0013).
+func TestLastingActionDescriptions(t *testing.T) {
+	for act, want := range map[lastingAction]string{
+		actGainAember:  "gain Æmber",
+		actDealDamage:  "deal damage",
+		actReadyPlayed: "ready the creature",
+		actDraw:        "draw a card",
+	} {
+		if got := act.describe(); got != want {
+			t.Errorf("describe(%d) = %q, want %q", act, got, want)
+		}
+	}
+}
+
 func TestEmitLastingOrders(t *testing.T) {
 	g := started(t) // player 0 active, Brobnar
 	foe := g.AddToBattleline(testCreature("foe", 5), 1)
 	// Two reactions fire on the same event; the controller orders them.
-	g.AddLasting(EventCreaturePlayed, actGainAember, 0, 1)
-	g.AddLasting(EventCreaturePlayed, actDealDamage, 0, 2)
+	g.AddLasting(
+		LastingEffect{On: EventCreaturePlayed, Do: actGainAember, Controller: 0, Amount: 1},
+	)
+	g.AddLasting(
+		LastingEffect{On: EventCreaturePlayed, Do: actDealDamage, Controller: 0, Amount: 2},
+	)
 	g.SetChooser(0, optionPicker{idx: 1}) // resolve "deal damage" first
 
 	g.AddToHand(testCreature("minion", 4), 0)
@@ -25,12 +44,22 @@ func TestEmitLastingOrders(t *testing.T) {
 
 func TestLastingOnceExpiresAtEndOfTurn(t *testing.T) {
 	g := started(t)
-	g.AddLastingOnce(EventCreaturePlayed, actReadyPlayed, 0, 0, Mars, Creature)
+	g.AddLasting(
+		LastingEffect{
+			On:         EventCreaturePlayed,
+			Do:         actReadyPlayed,
+			Controller: 0,
+			Amount:     0,
+			House:      Mars,
+			Type:       Creature,
+			Once:       true,
+		},
+	)
 	if g.State.LastingCount != 1 {
 		t.Fatalf("setup: lasting count = %d, want 1", g.State.LastingCount)
 	}
 
-	g.EndTurn(0)
+	g.EndPlayPhase(0)
 
 	if g.State.LastingCount != 0 {
 		t.Errorf(
@@ -42,8 +71,12 @@ func TestLastingOnceExpiresAtEndOfTurn(t *testing.T) {
 
 func TestClearLastingKeepsOtherPlayer(t *testing.T) {
 	g := started(t)
-	g.AddLasting(EventCreaturePlayed, actGainAember, 0, 1)
-	g.AddLasting(EventCreaturePlayed, actGainAember, 1, 1) // the opponent's reaction
+	g.AddLasting(
+		LastingEffect{On: EventCreaturePlayed, Do: actGainAember, Controller: 0, Amount: 1},
+	)
+	g.AddLasting(
+		LastingEffect{On: EventCreaturePlayed, Do: actGainAember, Controller: 1, Amount: 1},
+	) // the opponent's reaction
 
 	g.clearLasting(0)
 
@@ -58,7 +91,9 @@ func TestClearLastingKeepsOtherPlayer(t *testing.T) {
 func TestAddLastingCap(t *testing.T) {
 	g := started(t)
 	for i := 0; i < maxLasting+3; i++ {
-		g.AddLasting(EventCreaturePlayed, actGainAember, 0, 1)
+		g.AddLasting(
+			LastingEffect{On: EventCreaturePlayed, Do: actGainAember, Controller: 0, Amount: 1},
+		)
 	}
 	if int(g.State.LastingCount) != maxLasting {
 		t.Errorf("lasting count = %d, want %d (capped)", g.State.LastingCount, maxLasting)
@@ -72,7 +107,17 @@ func TestLastingOnceReadiesMatchingHouseAndSelfRemoves(t *testing.T) {
 	g.State.Cards[mars].Exhausted = true
 	g.State.Cards[sanc].Exhausted = true
 
-	g.AddLastingOnce(EventCreaturePlayed, actReadyPlayed, 0, 0, Mars, Creature)
+	g.AddLasting(
+		LastingEffect{
+			On:         EventCreaturePlayed,
+			Do:         actReadyPlayed,
+			Controller: 0,
+			Amount:     0,
+			House:      Mars,
+			Type:       Creature,
+			Once:       true,
+		},
+	)
 
 	// A non-Mars subject is filtered out: not readied, and the entry stays armed.
 	g.emitLasting(EventCreaturePlayed, 0, sanc)
@@ -103,7 +148,17 @@ func TestLastingOnceFiltersByCardType(t *testing.T) {
 	g.State.Artifacts[0].add(artifact)
 	g.State.Cards[artifact].Exhausted = true
 
-	g.AddLastingOnce(EventCardEntersPlay, actReadyPlayed, 0, 0, HouseNone, AnyType)
+	g.AddLasting(
+		LastingEffect{
+			On:         EventCardEntersPlay,
+			Do:         actReadyPlayed,
+			Controller: 0,
+			Amount:     0,
+			House:      HouseNone,
+			Type:       AnyType,
+			Once:       true,
+		},
+	)
 
 	g.emitLasting(EventCardEntersPlay, 0, up)
 	if g.State.LastingCount != 1 {
@@ -126,9 +181,23 @@ func TestLastingOnceOrdersWithPersistentReaction(t *testing.T) {
 
 	// The one-shot sits between two persistent reactions, so removing it scans past
 	// the first and shifts the last down.
-	g.AddLasting(EventCreaturePlayed, actGainAember, 0, 1)
-	g.AddLastingOnce(EventCreaturePlayed, actReadyPlayed, 0, 0, Mars, Creature)
-	g.AddLasting(EventCreaturePlayed, actGainAember, 0, 1)
+	g.AddLasting(
+		LastingEffect{On: EventCreaturePlayed, Do: actGainAember, Controller: 0, Amount: 1},
+	)
+	g.AddLasting(
+		LastingEffect{
+			On:         EventCreaturePlayed,
+			Do:         actReadyPlayed,
+			Controller: 0,
+			Amount:     0,
+			House:      Mars,
+			Type:       Creature,
+			Once:       true,
+		},
+	)
+	g.AddLasting(
+		LastingEffect{On: EventCreaturePlayed, Do: actGainAember, Controller: 0, Amount: 1},
+	)
 
 	g.emitLasting(EventCreaturePlayed, 0, mars) // three reactions fire; ordering path runs
 

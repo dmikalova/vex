@@ -19,6 +19,9 @@ type (
 	// Connection is the set of connected cards a puller card brings into its pod;
 	// build one with card.Connects.
 	Connection = deckgen.Connection
+	// ConnectedCard is one card a connection pulls; build one with card.Pull or
+	// card.PullSometimes.
+	ConnectedCard = deckgen.ConnectedCard
 )
 
 // MaterializeFunc adapts a plain function to a Materializer, so a template can be
@@ -37,15 +40,32 @@ func Template(f MaterializeFunc) Option { return func(b *builder) { b.materializ
 func OneCopyPerDeck() Option { return func(b *builder) { b.profile.OneCopyPerDeck = true } }
 
 // Connects marks the card as a connection puller: when it is placed in a pod,
-// deck generation pulls one copy of each given card into that pod. The connected
-// cards are named by their own definition symbols (e.g. card.Connects(
-// HelpFromFutureSelf)), so a connection to a card that does not exist is a
-// compile error, never a silently dropped link. Each connected card must be
-// authored with card.Rarity.Connected so it never rolls on its own.
-func Connects(cards ...Definition) Option {
-	names := make([]string, len(cards))
-	for i, c := range cards {
-		names[i] = c.Name
-	}
-	return func(b *builder) { b.profile.Connection = deckgen.Connection{Cards: names} }
+// deck generation pulls the given cards into that pod. Each pull is built with
+// card.Pull or card.PullSometimes, which name the connected card by its own
+// definition symbol, so a connection to a card that does not exist is a compile
+// error rather than a silently dropped link.
+//
+//	card.Connects(
+//	  card.Pull(NiffleApe, 2),
+//	  card.PullSometimes(NiffleQueen, 0.15),
+//	)
+//
+// A card that should never roll without its puller is additionally authored with
+// card.Rarity.Connected, which keeps it out of the pool; an ordinary card can be
+// pulled too, and still rolls on its own.
+func Connects(cards ...ConnectedCard) Option {
+	return func(b *builder) { b.profile.Connection = deckgen.Connection{Cards: cards} }
+}
+
+// Pull is one connected card brought into the pod every time, in the given number
+// of copies.
+func Pull(c Definition, copies int) ConnectedCard {
+	return ConnectedCard{Name: c.Name, Copies: copies, Chance: 1}
+}
+
+// PullSometimes is one connected card brought into the pod with the given
+// probability, rolled once per pod. It is how a card guarantees a flourish
+// without guaranteeing it every deck.
+func PullSometimes(c Definition, chance float64) ConnectedCard {
+	return ConnectedCard{Name: c.Name, Copies: 1, Chance: chance}
 }

@@ -28,7 +28,32 @@ type DealDamage struct {
 	// each with its own amount. It replaces Amount/Per/AmountFrom/Target — the
 	// spread carries its own targets and amounts and renders its own phrase.
 	Spread Spread
+	// PerTarget multiplies Amount by a quantity read off each target separately,
+	// which Per cannot do — Word of Returning deals 1 damage to each enemy creature
+	// "for each Æmber on it", a different amount per creature.
+	PerTarget PerTarget
 }
+
+// PerTarget is the axis along which an amount varies from one target to the next.
+// A Count is evaluated once for the whole effect; a PerTarget is evaluated again
+// for every creature the effect lands on.
+type PerTarget interface {
+	// perTargetValue is the multiplier for one target.
+	perTargetValue(ctx *EffectContext, id LocalID) int
+	// perTargetText is the noun the "for each" clause repeats.
+	perTargetText() string
+}
+
+// AemberOnIt scales per target by the Æmber sitting on that target.
+var AemberOnIt PerTarget = aemberOnIt{}
+
+type aemberOnIt struct{}
+
+func (aemberOnIt) perTargetValue(ctx *EffectContext, id LocalID) int {
+	return ctx.Resolver.AmberOn(id)
+}
+
+func (aemberOnIt) perTargetText() string { return "\u00c6mber on it" }
 
 // validate requires an explicit target, or a Spread that supplies its own.
 func (e DealDamage) validate() error {
@@ -46,6 +71,9 @@ func (e DealDamage) validate() error {
 	if e.AmountFrom != nil && e.Per != nil {
 		return fmt.Errorf("DealDamage: set AmountFrom or Per, not both")
 	}
+	if e.PerTarget != nil && (e.AmountFrom != nil || e.Per != nil) {
+		return fmt.Errorf("DealDamage: PerTarget cannot combine with Per or AmountFrom")
+	}
 	return nil
 }
 
@@ -61,6 +89,9 @@ func (e DealDamage) Text() string {
 		amount = "that amount of damage"
 	}
 	body := fmt.Sprintf("deal %s to %s", amount, e.Target.Text())
+	if e.PerTarget != nil {
+		body += " for each " + e.PerTarget.perTargetText()
+	}
 	if e.IgnoreArmor {
 		body += ", ignoring armor"
 	}
@@ -70,6 +101,9 @@ func (e DealDamage) Text() string {
 // Resolve deals the damage to every selected creature simultaneously, resolving
 // destruction as part of it. A Per count multiplies the amount dealt; an AmountFrom
 // count sources the amount directly; a Spread deals its own related batch of hits.
+// A computed amount of zero deals nothing, so the target is never selected — a
+// chosen one would otherwise be a vacuous prompt (Guardian Demon's follow-up when
+// its heal removed no damage).
 func (e DealDamage) Resolve(ctx *EffectContext) {
 	if e.Spread != nil {
 		if hits := e.Spread.hits(ctx); len(hits) > 0 {
@@ -84,10 +118,17 @@ func (e DealDamage) Resolve(ctx *EffectContext) {
 	case e.Per != nil:
 		amount *= e.Per.Value(ctx)
 	}
+	if amount <= 0 {
+		return
+	}
 	ids := e.Target.Select(ctx)
 	targets := make([]DamageTarget, len(ids))
 	for i, id := range ids {
-		targets[i] = DamageTarget{ID: id, Amount: amount, IgnoreArmor: e.IgnoreArmor}
+		hit := amount
+		if e.PerTarget != nil {
+			hit *= e.PerTarget.perTargetValue(ctx, id)
+		}
+		targets[i] = DamageTarget{ID: id, Amount: hit, IgnoreArmor: e.IgnoreArmor}
 	}
 	ctx.Resolver.DealDamage(ctx.Controller, targets)
 }

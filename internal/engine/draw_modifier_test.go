@@ -63,8 +63,8 @@ func TestDrawStepModifier(t *testing.T) {
 		0,
 	)
 
-	g.BeginTurn(0)
-	g.EndTurn(0)
+	g.StartTurn(0)
+	g.EndPlayPhase(0)
 
 	if got := int(g.State.Hand[0].Count); got != HandSize+1 {
 		t.Errorf("hand after draw = %d, want %d (one additional card)", got, HandSize+1)

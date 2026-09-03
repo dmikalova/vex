@@ -21,7 +21,7 @@ const DeckHouseCount = deckgen.PodCount
 
 // New creates a two-player game seeded for deterministic play, deals each player
 // a procedurally generated three-house deck, and returns the game together with
-// each player's three houses. The caller installs choosers and calls BeginTurn to
+// each player's three houses. The caller installs choosers and calls StartTurn to
 // start play, so each frontend can wire in its own interaction model first.
 func New(p0Name, p1Name string, seed int64) (*engine.Game, [2][]engine.House) {
 	g, houses, _ := NewWithMavericks(p0Name, p1Name, seed)

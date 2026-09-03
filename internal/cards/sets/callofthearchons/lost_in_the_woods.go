@@ -1,20 +1,15 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// LostInTheWoods
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Lost in the Woods
 //
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Choose 2 friendly creatures and 2 enemy creatures. Shuffle each chosen creature into its owner's deck.
+//	Play: Shuffle 2 friendly creatures into their owners' decks, and shuffle 2 enemy creatures into their owners' decks.
 var LostInTheWoods = card.New(
 	"Lost in the Woods",
 	card.House.Untamed,
@@ -22,5 +17,17 @@ var LostInTheWoods = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 327),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
+			card.PutChosen{
+				Count:       2,
+				Target:      card.Target.EachFriendlyCreature,
+				Destination: card.To.DeckShuffled,
+			},
+			card.PutChosen{
+				Count:       2,
+				Target:      card.Target.EachEnemyCreature,
+				Destination: card.To.DeckShuffled,
+			},
+		}}),
 )

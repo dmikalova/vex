@@ -138,7 +138,7 @@ const maxUndo = 100
 func (g *game) snapshot() undoEntry {
 	return undoEntry{
 		state:  g.g.State.FastCopy(),
-		log:    append([]string(nil), g.g.Log...),
+		log:    append([]engine.Record(nil), g.g.Log...),
 		groups: append([]logMark(nil), g.logGroups...),
 	}
 }
@@ -174,7 +174,7 @@ func (g *game) restore(e undoEntry) {
 	g.confirmEndTurn = false
 	g.clearFlashes()
 	g.g.State = e.state
-	g.g.Log = e.log
+	g.g.Restore(e.log)
 	g.logGroups = e.groups
 	g.inPlayPrev = g.inPlaySet()
 	g.clearSelection()

@@ -12,7 +12,7 @@ import (
 	"github.com/dmikalova/vactrol/internal/hotreload"
 )
 
-// Tui launches the vactrol TUI (card explorer / play a hotseat game).
+// Tui launches the vactrol TUI. It is a card explorer and a hotseat game.
 func Tui() error {
 	return sh.RunV("go", "run", "./cmd/tui")
 }
@@ -26,8 +26,9 @@ func WebWasm() error {
 	)
 }
 
-// Web builds the wasm client and serves it at http://localhost:8000, rebuilding
-// and restarting on any Go or CSS change so edits show up live. Each restart
+// Web serves the wasm client with live rebuilds. It listens on
+// http://localhost:8000 and rebuilds and restarts on any Go or CSS change so edits
+// show up live. Each restart
 // bumps go-app's version; the browser polls for it (see cmd/web devReload),
 // reloads, and OnMount resumes the in-progress match. No external watcher needed;
 // press Ctrl-C to stop.

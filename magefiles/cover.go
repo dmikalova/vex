@@ -10,7 +10,8 @@ import (
 	"github.com/magefile/mage/sh"
 )
 
-// Cover runs tests and reports engine coverage, failing if it drops below 100%.
+// Cover runs the engine tests and reports coverage. It fails if coverage drops
+// below 100%.
 func Cover() error {
 	if err := sh.RunV(
 		"go",

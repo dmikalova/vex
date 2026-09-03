@@ -1,20 +1,15 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// OrbitalBombardment
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Orbital Bombardment
 //
 //	House:  Mars
 //	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Reveal any number of Mars cards from your hand. For each card revealed this way, deal 2 Damage to a creature. (You may choose a different creature each time.)
+//	Play: Reveal any number of Mars cards from your hand. For each card revealed this way, deal 2 damage to a creature.
 var OrbitalBombardment = card.New(
 	"Orbital Bombardment",
 	card.House.Mars,
@@ -22,5 +17,20 @@ var OrbitalBombardment = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 172),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Sequence{
+			Effects: []card.Effect{
+				card.Sentence{Effect: card.RevealHand{
+					Player: card.Controller,
+					House:  card.House.Self,
+				}},
+				card.Repeat{
+					Times: card.CardsRevealed{},
+					Do: card.DealDamage{
+						Target: card.Target.Creature,
+						Amount: 2,
+					},
+				},
+			},
+		}),
 )

@@ -1,7 +1,5 @@
 package engine
 
-import "strings"
-
 // Revealing cards shows them from a hand to both players and records them in the
 // log, turning hidden information public. A card reveals cards so that what
 // follows can be trusted — you reveal the Mars cards you are drawing for, or an
@@ -41,17 +39,10 @@ func (e RevealHand) Text() string {
 // Resolve shows the matching cards, logs them, and records how many were revealed.
 func (e RevealHand) Resolve(ctx *EffectContext) {
 	owner := ctx.PlayerFor(e.Player)
-	var names []string
-	for _, id := range e.reveal(ctx, owner) {
-		names = append(names, ctx.Resolver.Name(id))
-	}
-	ctx.Produced.Revealed = len(names)
-	if len(names) > 0 {
-		ctx.Resolver.Logf(
-			"%s reveals %s",
-			ctx.Resolver.PlayerName(owner),
-			strings.Join(names, ", "),
-		)
+	revealed := e.reveal(ctx, owner)
+	ctx.Produced.Revealed = len(revealed)
+	if len(revealed) > 0 {
+		ctx.Resolver.Record(CardsRevealedToAll{Player: owner, Cards: revealed})
 	}
 }
 

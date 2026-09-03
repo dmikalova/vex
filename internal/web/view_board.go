@@ -401,6 +401,7 @@ func (g *game) renderCard(id engine.LocalID, boardKind selKind, opposing bool) a
 		Stunned:      g.g.Stunned(id),
 		Exhausted:    g.g.Exhausted(id),
 		Bar:          g.barKeywords(id),
+		BarBottom:    opposing,
 		Enter:        flash.enter,
 		Fight:        flash.fight,
 		FightDown:    opposing,
@@ -417,10 +418,10 @@ func (g *game) renderCard(id engine.LocalID, boardKind selKind, opposing bool) a
 	}
 }
 
-// barKeywords lists the keywords a card in play shows as a coloured stripe on its
-// top edge. Only the combat keywords are included — they decide whether a fight
-// is legal and what it costs, so they must be readable without stopping to read
-// the rules text.
+// barKeywords lists the keywords a card in play shows as a coloured stripe on one
+// of its edges. Only the combat keywords are included — they decide whether a
+// fight is legal and what it costs, so they must be readable without stopping to
+// read the rules text.
 func (g *game) barKeywords(id engine.LocalID) []engine.Keyword {
 	var out []engine.Keyword
 	for _, k := range []engine.Keyword{

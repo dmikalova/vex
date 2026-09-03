@@ -47,6 +47,54 @@ func TestCreaturesRemovedThisWayCounts(t *testing.T) {
 	}
 }
 
+// TestAemberLostThisWayCount covers the Æmber-lost tally LoseAember fills and
+// AemberLostThisWay reads (Shatter Storm).
+func TestAemberLostThisWayCount(t *testing.T) {
+	if got := (AemberLostThisWay{Player: Controller}).CountText(); got != "Æmber you lost this way" {
+		t.Errorf("CountText = %q", got)
+	}
+	want := "Æmber your opponent lost this way"
+	if got := (AemberLostThisWay{Player: Opponent}).CountText(); got != want {
+		t.Errorf("opponent CountText = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	g.SetAember(0, 3)
+	g.SetAember(1, 10)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	// Losing everything fills the tally, which the next loss triples.
+	LoseAember{Player: Controller, By: AllAember}.Resolve(ctx)
+	if got := (AemberLostThisWay{Player: Controller}).Value(ctx); got != 3 {
+		t.Errorf("tally = %d, want 3", got)
+	}
+	LoseAember{
+		Player: Opponent,
+		Amount: 3,
+		Per:    AemberLostThisWay{Player: Controller},
+	}.Resolve(ctx)
+	if got := g.Aember(1); got != 1 {
+		t.Errorf("opponent pool = %d, want 1", got)
+	}
+}
+
+// TestAllAemberLoss covers the Loss that empties a pool whatever its size.
+func TestAllAemberLoss(t *testing.T) {
+	e := LoseAember{Player: Controller, By: AllAember}
+	if got := e.Text(); got != "lose all your Æmber" {
+		t.Errorf("text = %q", got)
+	}
+	if got := (LoseAember{Player: Opponent, By: AllAember}).Text(); got != "your opponent loses all their Æmber" {
+		t.Errorf("opponent text = %q", got)
+	}
+	if got := AllAember.lose(7); got != 7 {
+		t.Errorf("lose(7) = %d, want 7", got)
+	}
+	if got := AllAember.qualifier(); got != "" {
+		t.Errorf("qualifier = %q, want empty (every pool is affected)", got)
+	}
+}
+
 // TestDestroyTalliesPerController checks Destroy splits its "this way"
 // tally by the controller of each creature that actually left play.
 func TestDestroyTalliesRemovalsPerController(t *testing.T) {

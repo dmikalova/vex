@@ -15,8 +15,7 @@ const maxCardAember = math.MaxInt16
 func (g *Game) addAmberOn(id LocalID, delta int) {
 	total := int(g.State.Cards[id].Amber) + delta
 	if total > maxCardAember {
-		g.logf("%s can hold no more Æmber; %d is lost to the ceiling",
-			g.Name(id), total-maxCardAember)
+		g.record(AemberLostToCeiling{Card: id, Amount: total - maxCardAember})
 		total = maxCardAember
 	}
 	g.State.Cards[id].Amber = int16(total)

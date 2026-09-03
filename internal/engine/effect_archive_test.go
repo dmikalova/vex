@@ -47,6 +47,35 @@ func TestArchiveEffectDeclined(t *testing.T) {
 	}
 }
 
+// TestArchiveFromHandUpTo covers Mobius Scroll's "up to 2 cards": the controller
+// archives one and stops, leaving the rest in hand.
+func TestArchiveFromHandUpTo(t *testing.T) {
+	e := ArchiveFromHand{Count: 2, UpTo: true}
+	if got := e.Text(); got != "archive up to 2 cards from your hand" {
+		t.Errorf("text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	g.AddToHand(testCreature("c", 1), 0)
+	g.AddToHand(testCreature("d", 1), 0)
+	g.SetChooser(0, &cardDecliner{})
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	e.Resolve(ctx)
+	if g.State.Archives[0].Count != 2 {
+		t.Errorf("archives = %d, want 2", g.State.Archives[0].Count)
+	}
+
+	g2 := NewGame("A", "B", 1)
+	g2.AddToHand(testCreature("c", 1), 0)
+	g2.AddToHand(testCreature("d", 1), 0)
+	g2.SetChooser(0, &cardDecliner{decline: true})
+	e.Resolve(&EffectContext{Resolver: g2, Controller: 0})
+	if g2.State.Archives[0].Count != 0 {
+		t.Error("declining the up-to archive should archive nothing")
+	}
+}
+
 func TestArchiveFromDiscardEffect(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	buried := g.AddToDiscard(testCreature("buried", 1), 0)
@@ -180,7 +209,7 @@ func TestArchivesOfferedOnChooseHouse(t *testing.T) {
 	}
 
 	// The archives are NOT taken at the start of the turn.
-	g.BeginTurn(0)
+	g.StartTurn(0)
 	if g.State.Archives[0].Count != 1 {
 		t.Error("archives should not return before the house is chosen")
 	}
@@ -203,7 +232,7 @@ func TestArchivesDeclinedOnChooseHouse(t *testing.T) {
 	(ArchiveFromHand{Count: 1}).Resolve(&EffectContext{Resolver: g, Controller: 0})
 	g.SetChooser(0, optionPicker{idx: 1}) // decline the offer
 
-	g.BeginTurn(0)
+	g.StartTurn(0)
 	if err := g.ChooseHouse(0, Logos); err != nil {
 		t.Fatalf("ChooseHouse: %v", err)
 	}

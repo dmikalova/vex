@@ -17,6 +17,10 @@ var TroopCall = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 337),
 	card.WithAemberBonus(1),
+	card.Connects(
+		card.Pull(NiffleApe, 2),
+		card.PullSometimes(NiffleQueen, 0.15),
+	),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{

@@ -99,12 +99,6 @@ func punctuate(body string) string {
 	return body + "."
 }
 
-// renderAbilityLine renders an ability with its source card's self-references
-// (the SelfName placeholder) resolved to the card's name.
-func renderAbilityLine(def *CardDefinition, a Ability) string {
-	return abilityTextWithNames(RenderAbility(a), def.Name, def.Name)
-}
-
 // abilityTextWithNames resolves the two placeholders an ability line may use: the
 // card/creature named by "this", and, for an Upgrade resolving on its host, the
 // Upgrade's own name.

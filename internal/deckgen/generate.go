@@ -48,16 +48,18 @@ func (g *generator) fillPod(house engine.House) HousePod {
 }
 
 // expandConnections resolves a pod's connections: every non-maverick puller card
-// ensures its connected partners are present, overwriting other (unprotected)
-// slots with them. Puller and partner slots are protected, and the pass repeats
-// to a fixpoint so a pulled partner's own connection also resolves. Cross-house
-// (maverick) connections are off for v1, so a maverick puller is skipped. The
-// loop always terminates: each productive pass consumes one of the finitely many
-// unprotected slots, so placePartners eventually places nothing.
+// ensures its connected partners are present at their copy counts, overwriting
+// other (unprotected) slots with them. Puller and partner slots are protected,
+// and the pass repeats to a fixpoint so a pulled partner's own connection also
+// resolves. Cross-house (maverick) connections are off for v1, so a maverick
+// puller is skipped. A chancy pull is rolled once per pod and remembered, so a
+// later pass cannot re-roll it. The loop always terminates: each productive pass
+// consumes one of the finitely many unprotected slots, so placePartners
+// eventually places nothing.
 func (g *generator) expandConnections(pod HousePod) HousePod {
 	protected := make([]bool, PodSize)
+	wanted := map[string]int{}
 	for {
-		required := map[string]bool{}
 		var order []string
 		for i := 0; i < PodSize; i++ {
 			if pod.Slots[i].Maverick {
@@ -68,27 +70,39 @@ func (g *generator) expandConnections(pod HousePod) HousePod {
 				continue
 			}
 			protected[i] = true
-			for _, name := range c.Profile.Connection.Cards {
-				if !required[name] {
-					required[name] = true
-					order = append(order, name)
+			for _, cc := range c.Profile.Connection.Cards {
+				if _, rolled := wanted[cc.Name]; !rolled {
+					wanted[cc.Name] = g.pullCopies(cc)
+					if wanted[cc.Name] > 0 {
+						order = append(order, cc.Name)
+					}
 				}
 			}
 		}
 		if len(order) == 0 {
 			return pod
 		}
-		present := map[string]bool{}
+		present := map[string]int{}
 		for i := 0; i < PodSize; i++ {
-			if required[pod.Slots[i].Card.Name] {
-				present[pod.Slots[i].Card.Name] = true
+			name := pod.Slots[i].Card.Name
+			if present[name] < wanted[name] {
+				present[name]++
 				protected[i] = true
 			}
 		}
-		if !g.placePartners(&pod, order, present, protected) {
+		if !g.placePartners(&pod, order, wanted, present, protected) {
 			return pod
 		}
 	}
+}
+
+// pullCopies decides how many copies of a connected card a pod pulls: its full
+// count when the pull fires, none when its chance does not come up.
+func (g *generator) pullCopies(c ConnectedCard) int {
+	if c.Chance < 1 && !g.chance(c.Chance) {
+		return 0
+	}
+	return c.Copies
 }
 
 // placePartners overwrites unprotected slots with the missing connected partners,
@@ -97,23 +111,23 @@ func (g *generator) expandConnections(pod HousePod) HousePod {
 func (g *generator) placePartners(
 	pod *HousePod,
 	order []string,
-	present map[string]bool,
+	wanted, present map[string]int,
 	protected []bool,
 ) bool {
 	placed := false
 	for _, name := range order {
-		if present[name] {
-			continue
+		for present[name] < wanted[name] {
+			partner := g.set.byName[name]
+			slot := freeSlot(protected)
+			if slot < 0 {
+				return placed
+			}
+			def := g.materialize(partner, SlotContext{House: pod.House, Rarity: partner.Def.Rarity})
+			pod.Slots[slot] = Slot{Rarity: partner.Def.Rarity, Card: def}
+			protected[slot] = true
+			present[name]++
+			placed = true
 		}
-		partner := g.set.byName[name]
-		slot := freeSlot(protected)
-		if slot < 0 {
-			break
-		}
-		def := g.materialize(partner, SlotContext{House: pod.House, Rarity: partner.Def.Rarity})
-		pod.Slots[slot] = Slot{Rarity: partner.Def.Rarity, Card: def}
-		protected[slot] = true
-		placed = true
 	}
 	return placed
 }

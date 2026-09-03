@@ -14,8 +14,11 @@ import (
 // ForRemainderOfTurn installs a reaction that runs for the rest of the controller's
 // turn each time On occurs — Full Moon (gain Æmber when you play a creature),
 // Charge! (deal damage when you play a creature), Crystal Hive (gain Æmber after a
-// creature reaps). Do is the effect that runs each time; the supported effects are
-// GainAember (crediting the controller) and DealDamage to an enemy creature.
+// creature reaps), Library Access (draw a card each time you play another card).
+// Do is the effect that runs each time; the supported effects are GainAember
+// (crediting the controller), DealDamage to an enemy creature, CaptureAember, and
+// Draw. The card that installs the reaction never triggers it itself, so an event
+// phrased as "another card" excludes the play that armed it.
 type ForRemainderOfTurn struct {
 	On Event
 	Do Effect
@@ -41,10 +44,19 @@ func (e ForRemainderOfTurn) Text() string {
 	return "for the remainder of the turn, " + e.On.clause() + ", " + e.Do.Text()
 }
 
-// Resolve registers the reaction on the controller for the rest of the turn.
+// Resolve registers the reaction on the controller for the rest of the turn. On
+// EventCardPlayed the installing card is excepted, so "each time you play another
+// card" does not count the play that armed it.
 func (e ForRemainderOfTurn) Resolve(ctx *EffectContext) {
 	action, amount, _ := lastingActionOf(e.Do)
-	ctx.Resolver.AddLasting(e.On, action, ctx.Controller, amount)
+	ctx.Resolver.AddLasting(LastingEffect{
+		On:         e.On,
+		Do:         action,
+		Controller: int8(ctx.Controller),
+		Amount:     int8(amount),
+		Except:     ctx.Source,
+		HasExcept:  e.On == EventCardPlayed,
+	})
 }
 
 // lastingActionOf maps a reaction's Do effect to the flat action and amount stored
@@ -57,6 +69,8 @@ func lastingActionOf(e Effect) (lastingAction, int, bool) {
 		return actDealDamage, d.Amount, true
 	case CaptureAember:
 		return actCapture, d.Amount, true
+	case Draw:
+		return actDraw, d.Amount, true
 	}
 	return 0, 0, false
 }
@@ -150,7 +164,11 @@ func (e Instead) Text() string {
 
 // Resolve registers the replacement on the controller for the rest of the turn.
 func (e Instead) Resolve(ctx *EffectContext) {
-	ctx.Resolver.AddLasting(e.Of, e.With.action(), ctx.Controller, 0)
+	ctx.Resolver.AddLasting(LastingEffect{
+		On:         e.Of,
+		Do:         e.With.action(),
+		Controller: int8(ctx.Controller),
+	})
 }
 
 // NextPlayed makes the next card its controller plays this turn that matches its
@@ -201,7 +219,14 @@ func (e NextPlayed) Text() string {
 // Resolve registers the one-shot enter-play reaction on the controller.
 func (e NextPlayed) Resolve(ctx *EffectContext) {
 	action, _ := enterActionOf(e.EntersPlay)
-	ctx.Resolver.AddLastingOnce(EventCardEntersPlay, action, ctx.Controller, 0, e.Of, e.Type)
+	ctx.Resolver.AddLasting(LastingEffect{
+		On:         EventCardEntersPlay,
+		Do:         action,
+		Controller: int8(ctx.Controller),
+		House:      e.Of,
+		Type:       e.Type,
+		Once:       true,
+	})
 }
 
 // enterActionOf maps an enter-play effect to the flat lasting action that applies

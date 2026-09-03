@@ -76,7 +76,7 @@ func (e ExhaustCreatures) Resolve(ctx *EffectContext) {
 			return
 		}
 		ctx.Resolver.SetExhausted(chosen, true)
-		ctx.Resolver.Logf("%s is exhausted", ctx.Resolver.Name(chosen))
+		ctx.Resolver.Record(CreatureExhausted{Creature: chosen})
 	}
 }
 

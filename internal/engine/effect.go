@@ -116,6 +116,10 @@ type Produced struct {
 	// play — sent home rather than destroyed — this resolution, read by
 	// CreaturesShuffledIntoDeckThisWay (Mating Season).
 	Moved [2]int
+	// AemberLost[p] is how much Æmber a LoseAember has taken from player p's pool
+	// this resolution, read by AemberLostThisWay (Shatter Storm drains the opponent
+	// for triple what its controller lost).
+	AemberLost [2]int
 }
 
 // TotalDestroyed is how many cards this resolution has destroyed, both sides

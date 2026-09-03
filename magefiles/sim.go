@@ -8,10 +8,10 @@ import (
 	"github.com/magefile/mage/sh"
 )
 
-// Fuzz runs the whole-game fuzzer (internal/sim.FuzzPlay) with the engine's
-// in-game invariant checks turned on via the assert build tag. It explores the
-// game tree with coverage-guided mutation and saves any minimized failing script
-// under internal/sim/testdata/fuzz/FuzzPlay.
+// Fuzz runs the whole-game fuzzer with assertions on. It drives
+// internal/sim.FuzzPlay under the assert build tag, explores the game tree with
+// coverage-guided mutation, and saves any minimized failing script under
+// internal/sim/testdata/fuzz/FuzzPlay.
 //
 // Set FUZZTIME to bound the run (a Go duration or an "Nx" count); it defaults to
 // 60s. The generated corpus lives in the Go build cache, not the repo — run
@@ -26,24 +26,25 @@ func Fuzz() error {
 		"./internal/sim")
 }
 
-// FuzzClean discards the generated fuzz corpus in the Go build cache, for when a
-// stale corpus keeps steering the fuzzer down the same paths. The checked-in seed
-// corpus under internal/sim/testdata is untouched.
+// FuzzClean discards the generated fuzz corpus. It lives in the Go build cache.
+// Reach for this when a stale corpus keeps steering the fuzzer down the same
+// paths. The checked-in seed corpus under internal/sim/testdata is untouched.
 func FuzzClean() error {
 	return sh.RunV("go", "clean", "-fuzzcache")
 }
 
-// CorpusPrune rewrites FuzzPlay's seed corpus as one minimized entry per bug that
-// still reproduces. The soak saves every failing script verbatim, so a single bug
-// can leave hundreds of near-identical multi-kilobyte entries; this replays them
-// all, drops the ones whose bug is fixed, and shrinks what remains.
+// CorpusPrune prunes FuzzPlay's seed corpus of fixed bugs. Each bug that still
+// reproduces is left as one minimized entry. The soak saves every failing
+// script verbatim, so a single bug can leave hundreds of near-identical
+// multi-kilobyte entries; this replays them all, drops the ones whose bug is
+// fixed, and shrinks what remains.
 func CorpusPrune() error {
 	return sh.RunV("go", "run", "./magefiles/simcorpus")
 }
 
-// Debug replays one simulated game with the game log on and prints the log tail
-// next to the invariant violation that ended it, turning a soak, fuzz, or
-// property-test find into a readable sequence of plays.
+// Debug replays a failing simulated game with the game log on. It prints the log
+// tail next to the invariant violation that ended the game, turning a soak, fuzz,
+// or property-test find into a readable sequence of plays.
 //
 // With no SCRIPT it searches the fixed-seed property batch that `mage test` plays
 // and replays the first failure; set SCRIPT to the hex script a failure printed to
@@ -57,10 +58,28 @@ func Debug() error {
 		os.Getenv("SCRIPT"), os.Getenv("TAIL"))
 }
 
-// Soak runs the long-running game soak (internal/sim.TestSoak) with the assert
-// build tag, churning fresh random games across GOMAXPROCS workers until the time
-// budget elapses. It does not stop at the first failure: every failing script is
-// saved into internal/sim/testdata/fuzz/FuzzPlay as a permanent FuzzPlay regression.
+// Trace writes a full game log to a file, end to end. It plays the fixed-seed
+// property games once with the log turned on, so a whole game can be read at once
+// instead of one prompt at a time. Unlike `mage debug`, which shows the tail of a
+// game that broke, a trace is the full log of games that pass.
+//
+// COUNT sets how many of the property batch's games to play (default 1) and OUT
+// the destination; it defaults to tmp/sim/trace.log, under the repo's gitignored
+// scratch directory.
+//
+//	mage trace
+//	COUNT=25 mage trace
+//	OUT=tmp/sim/mine.log mage trace
+func Trace() error {
+	return sh.RunV("go", "run", "./magefiles/simtrace",
+		os.Getenv("COUNT"), os.Getenv("OUT"))
+}
+
+// Soak runs the long-running game soak with assertions on. It
+// drives internal/sim.TestSoak under the assert build tag, churning fresh random
+// games across GOMAXPROCS workers until the time budget elapses. It does not stop
+// at the first failure: every failing script is saved into
+// internal/sim/testdata/fuzz/FuzzPlay as a permanent FuzzPlay regression.
 // Set SOAK_DURATION to a Go duration (e.g. SOAK_DURATION=5m); it defaults to 30s.
 func Soak() error {
 	if os.Getenv("SOAK_DURATION") == "" {

@@ -13,7 +13,12 @@ import "fmt"
 // it leaves. AddPowerCounter places counters on each creature its Target selects.
 type AddPowerCounter struct {
 	Target Target
+	// Amount is the total power the counters add, placed as that many +1 (or -1)
+	// counters — Amount: 2 is "two +1 power counters", not one +2 counter.
 	Amount int
+	// Per scales the counters by a board quantity, choosing the target only once
+	// (Martian Hounds counts the damaged creatures).
+	Per Count
 }
 
 // validate requires an explicit target.
@@ -26,12 +31,29 @@ func (e AddPowerCounter) validate() error {
 
 // Text renders the effect, e.g. "give Eater of the Dead a +1 power counter".
 func (e AddPowerCounter) Text() string {
-	return fmt.Sprintf("give %s a %+d power counter", e.Target.Text(), e.Amount)
+	return forEach(e.Per, fmt.Sprintf("give %s %s", e.Target.Text(), e.counters()))
 }
 
-// Resolve places the counters on each selected creature.
+// counters renders the tokens placed, e.g. "a +1 power counter" or "2 +1 power
+// counters": a larger Amount is that many single counters.
+func (e AddPowerCounter) counters() string {
+	unit := 1
+	if e.Amount < 0 {
+		unit = -1
+	}
+	if n := e.Amount * unit; n != 1 {
+		return fmt.Sprintf("%d %+d power counters", n, unit)
+	}
+	return fmt.Sprintf("a %+d power counter", unit)
+}
+
+// Resolve places the counters on each selected creature, scaled by Per.
 func (e AddPowerCounter) Resolve(ctx *EffectContext) {
+	amount := e.Amount
+	if e.Per != nil {
+		amount *= e.Per.Value(ctx)
+	}
 	for _, id := range e.Target.Select(ctx) {
-		ctx.Resolver.AddPowerCounter(id, e.Amount)
+		ctx.Resolver.AddPowerCounter(id, amount)
 	}
 }

@@ -42,10 +42,13 @@ type cardView struct {
 	// Exhausted shows an exhausted token on the face. Rotating the card the way a
 	// physical one turns would break the strip's grid, so the token stands in.
 	Exhausted bool
-	// Bar lists the keywords that get a coloured stripe along the card's top edge
+	// Bar lists the keywords that get a coloured stripe along the card's edge
 	// (Taunt, Elusive, Hazardous…), since those change how the card can be attacked
-	// and are worth seeing without reading the rules text.
-	Bar []engine.Keyword
+	// and are worth seeing without reading the rules text. BarBottom moves the
+	// stripe to the bottom edge, for the rows facing the active player across the
+	// midline.
+	Bar       []engine.Keyword
+	BarBottom bool
 	// Enter pulses the whole card as it comes into play; Fight shakes it as it
 	// attacks or is attacked; Hit washes it red as it takes damage; StunFlash and
 	// ExhaustFlash pulse their token as it is first applied. FlashOdd alternates
@@ -146,14 +149,16 @@ func (c *cardView) Render() app.UI {
 
 	return div.Body(
 		app.If(len(c.Bar) > 0, func() app.UI {
-			return app.Div().Class("card-keybar").Body(
-				app.Range(c.Bar).Slice(func(i int) app.UI {
-					kw := string(c.Bar[i])
-					return app.Div().
-						Class("card-keybar-seg card-keybar--" + strings.ToLower(kw)).
-						Title(kw)
-				}),
-			)
+			return app.Div().
+				Class(cx("card-keybar", ifCls(c.BarBottom, "card-keybar--bottom"))).
+				Body(
+					app.Range(c.Bar).Slice(func(i int) app.UI {
+						kw := string(c.Bar[i])
+						return app.Div().
+							Class("card-keybar-seg card-keybar--" + strings.ToLower(kw)).
+							Title(kw)
+					}),
+				)
 		}),
 		app.Div().Class("card-name").Body(
 			app.If(c.Emblem != "", func() app.UI {

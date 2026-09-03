@@ -6,18 +6,19 @@ long-term vision in [roadmap.md](roadmap.md).
 
 ## UI / gameplay to build
 
+- decklists
 - Drag and drop to flank or deploy
 - When sidebar is collapsed, can still access button actions
 - Display multiple houses
-- Turn steps
 - Start of game setup
 - More keyword icons - how much is too much?
 - Elusive. Skirmish. Why. Periods.
 - Why so much card.Sentence - can we just do this at the right place at the right time.
-- The logging prints what the card does, but not necessarily what happened. Fix that up.
 - custom keyboard shortcuts saved to player profiles
 - manual mode needs to prompt for confirmation
 - resolution zone
+- set your own primary/secondary player color
+- What icons to print in the logs
 
 ## Open wording questions
 
@@ -87,7 +88,6 @@ are planned.
 - Asynchronous matches
 - minimize main page load to base css, icon, and wasm load by hash. index.html has no cache. wasm has json manifest of everything that caches for a while
 - The action panel (context.md could have wording for this) could be the actual card and text, and then play/reap/ etc buttons within
-- Upgrades could add the text that they add to the card
 - No way to see upgrade visually... adding card top/bottom takes up valuable space, maybe right/left
 - Squeeze text onto card title
 - If low on vertical space, creatures and artifacts could shrink their bottom label while in play. Want to be able to see status most of all
@@ -95,8 +95,6 @@ are planned.
 - in mobile, have the action bar under all the cards - or on the card preview?
 - stadiums
 - future/ancient cards set like evil twins
-- Establish full turn phases - start of turn, forge, house, archives, general play, ready, draw, end of turn
-- Redo logging like the planned TCO logging
 - drag and drop creature directly into battleline flank (or deploy, with dynamic moving as you go across), upgrade onto creature, artifact into artifact line
 - For things like steal, capture - they both have an amount, By, Max, etc, similar structure. Is it possible to reuse these interfaces eg for Economy types, and other types?
 - Skill to iterate on implementation repeatedly
@@ -109,3 +107,33 @@ are planned.
   packing `CardCore`'s four bools into a bitfield (~512 bytes, at the cost of
   read-modify-write bugs and debuggability). History: 4232 -> 4112 (per-turn play
   permissions to uint8) -> 4024 (CardType string to enum).
+- single player mode (current) and vs bot mode
+- alliance
+- custom deck builder
+- Change enters play ready/stunned/enraged to Play: Stun X
+- Simplify/minimize all the Sentence{}s
+- Replace the term aura
+- MM mutants - have a common, uncommon, and rare variant
+- rockatiel - the concept of really good cards that mean you have to hold answers against them for archon, vs not having complete blowout surprises that you have to hold against in sealed
+- profiling - eg running property tests and outputting the profiled usage for hot paths, and then optimizing those paths as a skill
+- Monte Carlo Tree Search, minimax, reinforcement learning
+- Method B: Surrogate Regression (The Recommended Approach)
+You let a state-of-the-art Deep RL agent (or an AlphaZero-style hybrid of RL + MCTS) play hundreds of thousands of matches to generate a massive dataset of deck compositions and their actual win rates.
+
+Once you have this raw data, you apply a standard, human-readable machine learning algorithm (like Ridge or Lasso Regression) over the dataset to predict the RL agent's win rates.
+
+This regression will naturally spit out the coefficients for individual cards and pairwise interactions. This effectively reverse-engineers the RL’s "black box" brain into a highly accurate, DoK-style spreadsheet.
+
+Which should you use for parameter tuning?
+
+If you are currently tuning parameters by using MCTS as an evaluator (e.g., MCTS plays 1,000 games -> outputs win rate -> you adjust synergy weights -> repeat), you are likely facing a massive computational bottleneck. MCTS is simply too slow to run the millions of simulations required to tune an exhaustive matrix of CCG synergies.
+
+The ideal pipeline: Use an AlphaZero-style architecture. Use a neural network to evaluate board states, and use a lightweight MCTS to look just 1-2 turns ahead to choose the actual play. Let this AI play millions of games to generate a dataset of deck match-ups, and run a linear regression on those match-ups to extract your human-readable synergy and anti-synergy parameters.
+
+- base58 for deck IDs - should deck ids also be the seed?
+- using property testing to find unused code paths and then force specific tests there
+- [building a rating engine with alphazero](https://gemini.google.com/app/24b5499fc76c5fc1)
+- Should be able to transfer the rating system to a KF rating system as long as I don't drastically change the rules - eg prophecies or the tide :/
+- Is there a skew for P1 vs P2, what about mulligan? What is the line for mulliganing?
+- Does property based testing weigh end turn/discard equally as other actions?
+- mage command to export full log of a game.

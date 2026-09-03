@@ -27,7 +27,7 @@ func TestChainsReduceDrawAndShed(t *testing.T) {
 	}
 	g.State.Chains[0] = 7 // 7 chains: draw two fewer
 
-	g.EndTurn(0)
+	g.EndPlayPhase(0)
 
 	if got := len(g.Hand(0)); got != HandSize-2 {
 		t.Errorf("hand = %d, want %d (draw reduced by 2 at 7 chains)", got, HandSize-2)
@@ -46,7 +46,7 @@ func TestChainsShedOnlyWhenBlocked(t *testing.T) {
 	g.AddToDeck(testCreature("d", 1), 0)
 	g.State.Chains[0] = 3
 
-	g.EndTurn(0)
+	g.EndPlayPhase(0)
 
 	if got := len(g.Hand(0)); got != HandSize {
 		t.Errorf("hand = %d, want %d (already full)", got, HandSize)
@@ -62,7 +62,7 @@ func TestChainsNotShedWhenNothingToDraw(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.State.Chains[0] = 2
 
-	g.EndTurn(0)
+	g.EndPlayPhase(0)
 
 	if got := len(g.Hand(0)); got != 0 {
 		t.Errorf("hand = %d, want 0", got)
@@ -79,7 +79,7 @@ func TestChainsClampDrawAtZero(t *testing.T) {
 	}
 	g.State.Chains[0] = 40 // 40 chains: draw seven fewer, clamped to zero
 
-	g.EndTurn(0)
+	g.EndPlayPhase(0)
 
 	if got := len(g.Hand(0)); got != 0 {
 		t.Errorf("hand = %d, want 0 (reduction exceeds hand size)", got)

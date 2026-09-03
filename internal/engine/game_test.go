@@ -266,7 +266,7 @@ func TestForgeKeyWins(t *testing.T) {
 
 	// Only one key is forged at the start of a turn, even with Æmber to spare.
 	g.State.Aember[0] = 3 * KeyCost
-	g.BeginTurn(0)
+	g.StartTurn(0)
 	if g.Keys(0) != 1 {
 		t.Errorf("keys = %d, want 1 (one key forged per turn)", g.Keys(0))
 	}
@@ -286,11 +286,11 @@ func TestForgeKeyWins(t *testing.T) {
 		t.Errorf("keys = %d, winner = %d, want %d and 0", g.Keys(0), g.Winner(), KeysToWin)
 	}
 
-	// BeginTurn after a win is a no-op.
+	// StartTurn after a win is a no-op.
 	turn := g.State.Turn
-	g.BeginTurn(1)
+	g.StartTurn(1)
 	if g.State.Turn != turn {
-		t.Error("BeginTurn should be a no-op once the game is over")
+		t.Error("StartTurn should be a no-op once the game is over")
 	}
 }
 
@@ -369,7 +369,7 @@ func TestKeyCost(t *testing.T) {
 
 func TestChooseHouseWrongPlayer(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	g.BeginTurn(0)
+	g.StartTurn(0)
 	if err := g.ChooseHouse(1, Brobnar); err != ErrNotActivePlayer {
 		t.Errorf("err = %v, want ErrNotActivePlayer", err)
 	}
@@ -421,7 +421,7 @@ func TestEndTurnReadyDrawAndArmorRefresh(t *testing.T) {
 	}
 	g.Shuffle(0)
 
-	g.EndTurn(0)
+	g.EndPlayPhase(0)
 
 	if g.Exhausted(host) {
 		t.Error("host should be readied")
@@ -476,9 +476,16 @@ func TestAccessorsAndChooser(t *testing.T) {
 func TestVerboseLogging(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.Verbose = true
-	g.Logf("hello %d", 1)
-	if len(g.Log) != 1 || g.Log[0] != "hello 1" {
-		t.Errorf("log = %v", g.Log)
+	g.Record(TurnBegan{Player: 0, Turn: 1})
+	if got := g.LogText(); len(got) != 1 || got[0] != "A begins turn 1" {
+		t.Errorf("log = %v", got)
+	}
+	// With recording off the entry is dropped rather than stored, so a bot
+	// exploring cloned positions pays nothing for narration it never reads.
+	g.SetRecording(false)
+	g.Record(TurnBegan{Player: 0, Turn: 2})
+	if len(g.Log) != 1 {
+		t.Errorf("log = %v, want recording off to drop the entry", g.LogText())
 	}
 }
 

@@ -25,13 +25,15 @@ var (
 	ErrCannotUse             = errors.New("card's use condition is not met")
 )
 
-// This file holds the turn lifecycle — begin (with the forge step), choose the
-// active house, and end (ready cards, refresh armor, draw back up) — together
-// with the key-forging step that decides the game.
+// This file holds the turn lifecycle entry points — the three points at which a
+// turn waits for a player and then resumes: begin the turn, choose the active
+// house, end the turn. Each resets what it owns and hands back to the phase loop
+// in game_phase.go. The key-forging step that decides the game lives here too.
 
-// BeginTurn starts a player's turn: it becomes the active player, the active
-// house is cleared, and the forge step runs (keys are forged if affordable).
-func (g *Game) BeginTurn(player int) {
+// StartTurn starts a player's turn: it becomes the active player, the active
+// house is cleared, and the phase loop runs from the start-of-turn phase through
+// the forge phase, stopping when it needs the player's house choice.
+func (g *Game) StartTurn(player int) {
 	if g.State.Winner >= 0 {
 		return
 	}
@@ -61,12 +63,9 @@ func (g *Game) BeginTurn(player int) {
 	g.State.SkipForgeNext[player] = Bar[bool]{}
 	g.State.KeyCostBump[player] = g.State.KeyCostBumpNext[player]
 	g.State.KeyCostBumpNext[player] = Bar[int]{}
-	g.logf("--- %s begins turn %d ---", g.names[player], g.State.Turn)
-	if g.State.SkipForge[player].Value {
-		g.logf("%s skips their forge a key step", g.names[player])
-	} else {
-		g.forgeKey(player)
-	}
+	g.record(TurnBegan{Player: player, Turn: g.State.Turn})
+	g.enterPhase(PhaseStartOfTurn)
+	g.runPhases()
 	g.assertInvariants()
 }
 
@@ -77,8 +76,9 @@ func (g *Game) BeginTurn(player int) {
 //
 //rulebook:turn Turn structure / 2. Choose a house
 
-// ChooseHouse sets ActiveHouse, then offers to draw the player's archived cards
-// into hand now that a house is locked in.
+// ChooseHouse sets ActiveHouse, then hands back to the phase loop, which offers
+// the player's archived cards into hand now that a house is locked in and settles
+// on the play phase.
 func (g *Game) ChooseHouse(player int, house House) error {
 	if g.State.ActivePlayer != player {
 		return ErrNotActivePlayer
@@ -94,11 +94,12 @@ func (g *Game) ChooseHouse(player int, house House) error {
 		return ErrHouseLocked
 	}
 	g.State.ActiveHouse = house
-	g.logf("%s chooses house %s", g.names[player], house)
-	g.offerArchives(player)
+	g.record(HouseChosen{Player: player, House: house})
 	for _, id := range g.allInPlay(player) {
 		g.triggerAbilities(id, TriggerAfterChooseHouse, 0, false)
 	}
+	g.enterPhase(PhaseArchives)
+	g.runPhases()
 	return nil
 }
 
@@ -124,47 +125,16 @@ func (g *Game) playerHasHouse(player int, house House) bool {
 //
 //rulebook:turn Turn structure / 3. Ready and draw
 
-// EndTurn clears Exhausted on the player's in-play cards, refreshes creature
-// armor for the new turn, and draws up to HandSize.
-func (g *Game) EndTurn(player int) {
-	for _, id := range g.allInPlay(player) {
-		g.triggerAbilities(id, TriggerEndOfTurn, 0, false)
-	}
-	for _, id := range g.allInPlay(player) {
-		core := &g.State.Cards[id]
-		core.Exhausted = false
-		core.TempHouse = HouseNone
-		if g.cat.def(id).Type == Creature {
-			core.ArmorRemaining = int16(g.armor(id))
-		}
-	}
-	// "Cannot be dealt damage" lasts only the turn, so clear it on every creature,
-	// including any enemy one an effect protected (Protectrix).
-	for _, id := range append(g.allInPlay(player), g.allInPlay(1-player)...) {
-		g.State.Cards[id].DamageImmune = false
-	}
-	g.State.CannotFight[player] = Bar[bool]{}
-	g.State.CannotUse[player] = Bar[bool]{}
-	g.State.CannotPlayTypeThis[player] = Bar[CardType]{}
-	// Roll this turn's history into "last turn" so the next player can ask what their
-	// opponent just did.
-	h := &g.State.TurnHistory
-	h[player][KeysForgedLastTurn] = h[player][KeysForgedThisTurn]
-	h[player][KeysForgedThisTurn] = 0
-	h[player][CreaturesPlayedLastTurn] = int8(g.creaturesPlayedThisTurn(player))
-	h[0][EnemyCreaturesFightKilled] = 0
-	h[1][EnemyCreaturesFightKilled] = 0
-	g.State.MayFightHouse[player] = HouseNone
-	g.State.MayFightAny[player] = false
-	g.State.MayUseHouse[player] = HouseNone
-	g.State.KeyCostBump[player] = Bar[int]{}
-	g.State.KeywordsLost = 0
-	g.clearLasting(player)
-	// A power buff that lasted only the turn has just expired.
-	g.settleDestroyed(player)
-	g.drawStep(player)
-	g.logf("%s ends their turn", g.names[player])
-	g.assertInvariants()
+// EndPlayPhase ends the active player's play phase and runs the turn out: ready,
+// draw, then the end-of-turn abilities. It is the third and last point at which
+// a turn waits for the player — nothing after it needs a decision, so the turn
+// finishes in one call.
+func (g *Game) EndPlayPhase(player int) {
+	// The named player is the one whose turn runs out: the phases that follow act
+	// on the active player, so naming a player here is what makes them active.
+	g.State.ActivePlayer = player
+	g.enterPhase(PhaseReady)
+	g.runPhases()
 }
 
 // drawStep draws the player back up to their hand size, reduced by their chains,
@@ -178,14 +148,17 @@ func (g *Game) drawStep(player int) {
 	if target < 0 {
 		target = 0
 	}
+	before := int(g.State.Hand[player].Count)
 	g.drawTo(player, target)
+	hand := int(g.State.Hand[player].Count)
+	g.record(CardsDrawn{Player: player, Count: hand - before, Hand: hand})
 	// The reduction blocked a draw only when it left the player below a full hand
 	// with cards still available to draw.
 	if chains > 0 &&
 		int(g.State.Hand[player].Count) < HandSize+g.drawModifier(player) &&
 		g.canDraw(player) {
 		g.State.Chains[player]--
-		g.logf("%s sheds a chain (%d remaining)", g.names[player], g.State.Chains[player])
+		g.record(ChainShed{Player: player, Remaining: g.State.Chains[player]})
 	}
 }
 
@@ -251,31 +224,32 @@ func (g *Game) RaiseKeyCostThisTurn(player, amount int, source LocalID) {
 }
 
 // GrantFightForHouse lets a player use creatures of house h to fight this turn
-// even when h is not the active house. EndTurn clears the grant.
+// even when h is not the active house. The ready phase clears the grant.
 func (g *Game) GrantFightForHouse(player int, h House) {
 	g.State.MayFightHouse[player] = h
-	g.logf("%s's %s creatures may fight this turn", g.names[player], h)
+	g.record(FightGrantedForHouse{Player: player, House: h})
 }
 
 // GrantFightAnyHouse lets every creature a player controls fight this turn, whatever
-// its house (Follow the Leader). EndTurn clears the grant.
+// its house (Follow the Leader). The ready phase clears the grant.
 func (g *Game) GrantFightAnyHouse(player int) {
 	g.State.MayFightAny[player] = true
-	g.logf("%s's creatures may all fight this turn", g.names[player])
+	g.record(FightGrantedAnyHouse{Player: player})
 }
 
 // GrantUseForHouse lets a player fully use (fight, reap, or Action:) creatures of
-// house h this turn even when h is not the active house. EndTurn clears the grant.
+// house h this turn even when h is not the active house. The ready phase clears
+// the grant.
 func (g *Game) GrantUseForHouse(player int, h House) {
 	g.State.MayUseHouse[player] = h
-	g.logf("%s may use %s creatures this turn", g.names[player], h)
+	g.record(UseGrantedForHouse{Player: player, House: h})
 }
 
 // ForceActiveHouseNextTurn makes a player have to choose house h as their active
-// house on their next turn (Control the Weak). BeginTurn promotes the armed house.
+// house on their next turn (Control the Weak). StartTurn promotes the armed house.
 func (g *Game) ForceActiveHouseNextTurn(player int, h House, source LocalID) {
 	g.State.ForcedHouseNext[player] = Bar[House]{Value: h, Source: source}
-	g.logf("%s must choose house %s next turn", g.names[player], h)
+	g.record(HouseForcedNextTurn{Player: player, House: h})
 }
 
 // RestrictionSources returns the cards imposing a turn-scoped restriction on a
@@ -314,7 +288,7 @@ func (g *Game) RestrictionSources(player int) []LocalID {
 //rulebook:turn Turn structure / 1. Forge a key
 
 // forgeKey forges one key when the player can afford the current key cost, paying
-// it and firing "after you forge a key" abilities. BeginTurn forges at most one
+// it and firing "after you forge a key" abilities. StartTurn forges at most one
 // key at the start of a turn; cards may forge one more via the ForgeKey effect.
 func (g *Game) forgeKey(player int) {
 	g.forgeKeyAtExtraCost(player, 0)
@@ -386,9 +360,14 @@ func (g *Game) finishForgeKey(player int, color KeyColor, hasColor bool) {
 	g.State.TurnHistory[player][KeysForgedThisTurn]++
 	if hasColor {
 		g.State.KeyColors[player][g.State.Keys[player]-1] = color
-		g.logf("%s forges a %s key", g.names[player], color)
 	}
-	g.logf("%s forges a key (%d/%d)", g.names[player], g.State.Keys[player], KeysToWin)
+	g.record(KeyForged{
+		Player:   player,
+		Color:    color,
+		HasColor: hasColor,
+		Keys:     g.State.Keys[player],
+		Needed:   KeysToWin,
+	})
 	for _, id := range g.allInPlay(player) {
 		g.triggerAbilities(id, TriggerAfterForgeKey, 0, false)
 	}
@@ -397,7 +376,7 @@ func (g *Game) finishForgeKey(player int, color KeyColor, hasColor bool) {
 	g.settleDestroyed(player)
 	if g.State.Keys[player] >= KeysToWin {
 		g.State.Winner = player
-		g.logf("%s wins the game!", g.names[player])
+		g.record(GameWon{Player: player})
 	}
 }
 
@@ -454,5 +433,5 @@ func (g *Game) UnforgeKey(player int) {
 	}
 	g.State.Keys[player]--
 	g.State.KeyColors[player][g.State.Keys[player]] = KeyColor(0)
-	g.logf("%s unforges a key (%d/%d)", g.names[player], g.State.Keys[player], KeysToWin)
+	g.record(KeyUnforged{Player: player, Keys: g.State.Keys[player], Needed: KeysToWin})
 }

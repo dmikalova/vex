@@ -58,42 +58,56 @@ func (e PutFromPlay) Resolve(ctx *EffectContext) {
 	}
 }
 
-// PutUpTo moves up to Max cards the controller chooses from Target's pool into a
-// destination zone, one at a time, stopping early when they choose Done — Grasping
-// Vines returns up to 3 artifacts to their owners' hands. It is the bounded-choice
-// counterpart to PutFromPlay, which moves every card the Target selects.
-type PutUpTo struct {
-	Max         int
+// PutChosen moves Count cards the controller chooses from Target's pool into a
+// destination zone, one at a time — Lost in the Woods shuffles 2 friendly and 2
+// enemy creatures into their owners' decks. UpTo makes the choice declinable, the
+// "up to 3 artifacts" of Grasping Vines; without it the controller must choose as
+// many as the pool allows. It is the bounded-choice counterpart to PutFromPlay,
+// which moves every card the Target selects.
+type PutChosen struct {
+	Count       int
+	UpTo        bool
 	Target      Target
 	Destination Destination
 }
 
-// validate requires a target, a positive maximum, and a supported destination.
-func (e PutUpTo) validate() error {
+// validate requires a target, a positive count, and a supported destination.
+func (e PutChosen) validate() error {
 	if !e.Target.valid() {
-		return errUnsetTarget("PutUpTo")
+		return errUnsetTarget("PutChosen")
 	}
-	if e.Max <= 0 {
-		return fmt.Errorf("PutUpTo: Max must be positive")
+	if e.Count <= 0 {
+		return fmt.Errorf("PutChosen: Count must be positive")
 	}
 	if !e.Destination.movable() {
-		return fmt.Errorf("PutUpTo: unsupported destination %d", e.Destination.zone)
+		return fmt.Errorf("PutChosen: unsupported destination %d", e.Destination.zone)
 	}
 	return nil
 }
 
-// Text renders the effect, e.g. "put up to 3 artifacts into their owners' hands".
-func (e PutUpTo) Text() string {
-	noun := singularNoun(e.Target.Text()) + "s"
-	return e.Destination.clause(fmt.Sprintf("up to %d %s", e.Max, noun), true)
+// Text renders the effect, e.g. "put up to 3 artifacts into their owners' hands"
+// or "shuffle 2 friendly creatures into their owners' decks".
+func (e PutChosen) Text() string {
+	noun := singularNoun(e.Target.Text())
+	if e.Count == 1 {
+		return e.Destination.clause(indefinite(noun), false)
+	}
+	quantity := fmt.Sprintf("%d %ss", e.Count, noun)
+	if e.UpTo {
+		quantity = "up to " + quantity
+	}
+	return e.Destination.clause(quantity, true)
 }
 
-// Resolve moves up to Max cards one at a time. Each step offers the current pool
-// as a declinable choice so the controller can stop early; when the pool is empty
-// it stops.
-func (e PutUpTo) Resolve(ctx *EffectContext) {
-	for i := 0; i < e.Max; i++ {
-		chosen, ok := ctx.ChooseCardOptional("Choose a card to move", e.Target.Select(ctx))
+// Resolve moves Count cards one at a time. An UpTo choice is declinable so the
+// controller can stop early; either way it stops when the pool runs out.
+func (e PutChosen) Resolve(ctx *EffectContext) {
+	choose := ctx.ChooseCard
+	if e.UpTo {
+		choose = ctx.ChooseCardOptional
+	}
+	for i := 0; i < e.Count; i++ {
+		chosen, ok := choose("Choose a card to move", e.Target.Select(ctx))
 		if !ok {
 			return
 		}

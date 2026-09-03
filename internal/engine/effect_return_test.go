@@ -204,7 +204,7 @@ func TestMoveFromPlayValidate(t *testing.T) {
 	}
 }
 
-func TestPutUpTo(t *testing.T) {
+func TestPutChosen(t *testing.T) {
 	eachArt := Target{Kind: TargetEachArtifact}
 	// Text renders "up to N" with the plural noun for each destination.
 	cases := map[Destination]string{
@@ -214,31 +214,43 @@ func TestPutUpTo(t *testing.T) {
 		ToArchives:     "put up to 3 artifacts into their owners' archives",
 	}
 	for dest, want := range cases {
-		if got := (PutUpTo{Max: 3, Target: eachArt, Destination: dest}).Text(); got != want {
+		e := PutChosen{Count: 3, UpTo: true, Target: eachArt, Destination: dest}
+		if got := e.Text(); got != want {
 			t.Errorf("text(%d) = %q, want %q", dest.zone, got, want)
 		}
 	}
 
-	// validate rejects an unset target, a non-positive Max, and a bad destination.
-	if err := (PutUpTo{Max: 3, Destination: ToHand}).validate(); err == nil {
+	// Without UpTo the count is mandatory, so "up to" drops out; a single card
+	// reads as the indefinite noun.
+	mandatory := PutChosen{Count: 2, Target: eachArt, Destination: ToDeckShuffled}
+	if got := mandatory.Text(); got != "shuffle 2 artifacts into their owners' decks" {
+		t.Errorf("mandatory text = %q", got)
+	}
+	one := PutChosen{Count: 1, Target: eachArt, Destination: ToHand}
+	if got := one.Text(); got != "put an artifact into its owner's hand" {
+		t.Errorf("single text = %q", got)
+	}
+
+	// validate rejects an unset target, a non-positive Count, and a bad destination.
+	if err := (PutChosen{Count: 3, Destination: ToHand}).validate(); err == nil {
 		t.Error("unset target should be rejected")
 	}
-	if err := (PutUpTo{Target: eachArt, Destination: ToHand}).validate(); err == nil {
-		t.Error("non-positive Max should be rejected")
+	if err := (PutChosen{Target: eachArt, Destination: ToHand}).validate(); err == nil {
+		t.Error("non-positive Count should be rejected")
 	}
-	if err := (PutUpTo{Max: 1, Target: eachArt, Destination: ToBottomOfDeck}).validate(); err == nil {
+	if err := (PutChosen{Count: 1, Target: eachArt, Destination: ToBottomOfDeck}).validate(); err == nil {
 		t.Error("unsupported destination should be rejected")
 	}
-	if err := (PutUpTo{Max: 3, Target: eachArt, Destination: ToHand}).validate(); err != nil {
-		t.Errorf("valid PutUpTo = %v", err)
+	if err := (PutChosen{Count: 3, Target: eachArt, Destination: ToHand}).validate(); err != nil {
+		t.Errorf("valid PutChosen = %v", err)
 	}
 
 	g := NewGame("A", "B", 1)
 	a1 := g.AddArtifact(exAutocannon(), 0)
 	a2 := g.AddArtifact(exAutocannon(), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-	// Only two artifacts exist, so the loop stops when none remain (below Max).
-	PutUpTo{Max: 3, Target: eachArt, Destination: ToHand}.Resolve(ctx)
+	// Only two artifacts exist, so the loop stops when none remain (below Count).
+	PutChosen{Count: 3, UpTo: true, Target: eachArt, Destination: ToHand}.Resolve(ctx)
 	if g.inPlay(a1) || g.inPlay(a2) {
 		t.Error("both artifacts should have left play")
 	}
@@ -250,12 +262,21 @@ func TestPutUpTo(t *testing.T) {
 		)
 	}
 
+	// A mandatory count is not declinable, and stops when the pool empties.
+	g3 := NewGame("A", "B", 1)
+	solo := g3.AddArtifact(exAutocannon(), 0)
+	mandatory.Resolve(&EffectContext{Resolver: g3, Controller: 0})
+	if g3.inPlay(solo) {
+		t.Error("a mandatory choice should have moved the only artifact")
+	}
+
 	// Choosing "Done" (the option past the sole artifact) stops early, leaving it.
 	g2 := NewGame("A", "B", 1)
 	art := g2.AddArtifact(exAutocannon(), 0)
 	g2.SetChooser(0, optionPicker{idx: 1}) // index 0 is the artifact, 1 is "Done"
-	PutUpTo{
-		Max:         3,
+	PutChosen{
+		Count:       3,
+		UpTo:        true,
 		Target:      eachArt,
 		Destination: ToHand,
 	}.Resolve(

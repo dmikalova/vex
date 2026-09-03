@@ -295,8 +295,8 @@ func (g *Game) cannotFight(player int) bool {
 }
 
 // creaturesPlayedThisTurn counts how many of the cards a player played this turn
-// were creatures — the tally EndTurn freezes so the next player can ask how many
-// creatures their opponent played on their previous turn (Lifeweb).
+// were creatures — the tally the ready phase freezes so the next player can ask
+// how many creatures their opponent played on their previous turn (Lifeweb).
 func (g *Game) creaturesPlayedThisTurn(player int) int {
 	n := 0
 	for _, id := range g.PlayedThisTurn(player) {

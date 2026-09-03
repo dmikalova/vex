@@ -1,5 +1,7 @@
 package engine
 
+import "slices"
+
 // This file holds how a card is USED — the player actions that reap, fight, or
 // activate an "Action:" ability — the checks that gate them, and the machinery
 // that fires a card's triggered abilities. Combat resolution lives in
@@ -107,25 +109,17 @@ func (g *Game) reapWith(id LocalID) {
 // replacement of that payout (Dimension Door makes it steal instead of gain).
 func (g *Game) gainReapAember(p int, source LocalID) {
 	if act, ok := g.lastingReplacement(p, EventReapAember); ok && act == actSteal {
-		if stolen := min(1, g.State.Aember[1-p]); stolen > 0 {
-			g.State.Aember[1-p] -= stolen
-			g.State.Aember[p] += stolen
-			g.logf("%s reaps with %s, stealing %d Æmber", g.names[p], g.Name(source), stolen)
-		} else {
-			g.logf("%s reaps with %s (no Æmber to steal)", g.names[p], g.Name(source))
-		}
+		stolen := min(1, g.State.Aember[1-p])
+		g.State.Aember[1-p] -= stolen
+		g.State.Aember[p] += stolen
+		g.record(ReapedStealing{Player: p, Card: source, Amount: stolen})
 		return
 	}
 	if capturer, ok := g.gainAember(p, 1); ok {
-		g.logf(
-			"%s reaps with %s, but %s captures the Æmber",
-			g.names[p],
-			g.Name(source),
-			g.Name(capturer),
-		)
+		g.record(ReapedCaptured{Player: p, Card: source, Creature: capturer})
 		return
 	}
-	g.logf("%s reaps with %s (+1 Æmber)", g.names[p], g.Name(source))
+	g.record(Reaped{Player: p, Card: source})
 }
 
 // UseAction uses a creature's or artifact's "Action:" ability.
@@ -156,7 +150,7 @@ func (g *Game) useActionOf(actor int, id LocalID) {
 		return
 	}
 	g.State.Cards[id].Exhausted = true
-	g.logf("%s uses %s's action ability", g.names[actor], g.Name(id))
+	g.record(ActionAbilityUsed{Player: actor, Card: id})
 	g.triggerAbilitiesAs(actor, id, TriggerAction, 0, false)
 	g.emitCardUsed(actor, id)
 }
@@ -274,7 +268,7 @@ func (g *Game) recoverFromStun(id LocalID) bool {
 	}
 	core.Stunned = false
 	core.Exhausted = true
-	g.logf("%s recovers from stun instead of acting", g.Name(id))
+	g.record(StunRecovered{Creature: id})
 	return true
 }
 
@@ -284,7 +278,7 @@ func (g *Game) recoverFromStun(id LocalID) bool {
 // player and active house — ability-driven use cares only about readiness.
 func (g *Game) readyToUse(id LocalID) bool {
 	if g.State.Cards[id].Exhausted {
-		g.logf("%s is exhausted and cannot be used", g.Name(id))
+		g.record(CardCannotBeUsed{Card: id})
 		return false
 	}
 	return true
@@ -299,13 +293,23 @@ func (g *Game) resolveUpgradePlay(host, upgrade LocalID, up *CardDefinition) {
 		if ab.Trigger != TriggerAfterPlay {
 			continue
 		}
-		g.logf("%s: %s", up.Name, abilityTextWithNames(RenderAbility(ab), g.Name(host), up.Name))
+		// The ability's own text is not a log line — it is attribution (ADR 0011), so
+		// the outcomes the ability produces carry it and narrate themselves.
+		closeFrame := g.openFrame(Frame{
+			Actor:      g.owner(upgrade),
+			Source:     host,
+			HasSource:  true,
+			Trigger:    TriggerAfterPlay,
+			Grantor:    upgrade,
+			HasGrantor: true,
+		})
 		ab.Effect.Resolve(&EffectContext{
 			Resolver:   g,
 			Source:     host,
 			Upgrade:    upgrade,
 			Controller: g.owner(upgrade),
 		})
+		closeFrame()
 	}
 }
 
@@ -341,9 +345,10 @@ func (g *Game) emitEnemyDestroyed(destroyed LocalID) {
 }
 
 // emitCardPlayed fires "after you play a card" abilities on the playing player's
-// other in-play cards, with the played card as "it". Only an actual play from hand
-// fires it; a card put into play by another effect enters (emitCreatureEnters) but
-// is not played.
+// other in-play cards, with the played card as "it", and the EventCardPlayed
+// lasting reactions the player has armed (Library Access). Only an actual play from
+// hand fires it; a card put into play by another effect enters (emitCreatureEnters)
+// but is not played.
 func (g *Game) emitCardPlayed(player int, played LocalID) {
 	for _, id := range g.allInPlay(player) {
 		if id == played {
@@ -354,6 +359,7 @@ func (g *Game) emitCardPlayed(player int, played LocalID) {
 	for _, id := range g.allInPlay(1 - player) {
 		g.triggerAbilities(id, TriggerAfterEnemyCardPlayed, played, true)
 	}
+	g.emitLasting(EventCardPlayed, player, played)
 }
 
 // emitCardUsed fires "after you use a card" abilities on the user's other in-play
@@ -371,10 +377,10 @@ func (g *Game) emitCardUsed(player int, used LocalID) {
 
 // triggerAbilities resolves every ability matching the trigger that the card
 // carries itself, is granted by an attached upgrade, or is granted by an in-play
-// card's constant ability (Annihilation Ritual's "Destroyed: purge this creature"
-// on each creature). A "Destroyed:" ability may take the card out of play (purge,
-// return to hand); once it does, the remaining abilities are skipped, since the
-// card is no longer there to fire them.
+// card's constant ability. Destroyed abilities do not come through here: they
+// share one simultaneous window across every dying creature, so destroyTogether
+// owns them (ADR 0013), including the rule that a creature taken out of play
+// mid-window drops its remaining abilities.
 func (g *Game) triggerAbilities(src LocalID, trigger Trigger, it LocalID, hasIt bool) {
 	g.triggerAbilitiesAs(g.controller(src), src, trigger, it, hasIt)
 }
@@ -388,50 +394,126 @@ func (g *Game) triggerAbilitiesAs(
 	it LocalID,
 	hasIt bool,
 ) {
-	def := g.cat.def(src)
-	fire := func(ab Ability) {
-		// A Play ability on an action resolves while its source is between hand and
-		// discard, so only Destroyed abilities require their source to remain in play.
-		if ab.Trigger != trigger ||
-			(trigger == TriggerDestroyed && !g.inPlay(src)) {
-			return
-		}
-		g.logf("%s: %s", def.Name, renderAbilityLine(def, ab))
-		ab.Effect.Resolve(&EffectContext{
+	for _, t := range g.orderTriggered(actor, g.triggeredBy(src, trigger)) {
+		closeFrame := g.openFrame(Frame{
+			Actor:      actor,
+			Source:     src,
+			HasSource:  true,
+			Trigger:    trigger,
+			Grantor:    t.grantor,
+			HasGrantor: t.grantor != src,
+		})
+		t.ability.Effect.Resolve(&EffectContext{
 			Resolver:   g,
 			Source:     src,
 			Controller: actor,
 			It:         it,
 			HasIt:      hasIt,
 		})
+		closeFrame()
 	}
-	for _, ab := range def.Abilities {
-		fire(ab)
+}
+
+// triggeredBy collects every ability matching the trigger that src carries itself,
+// is granted by an attached upgrade, or is granted by an in-play card's constant
+// ability. Collection happens before any of them resolves so the whole window can
+// be ordered (ADR 0013).
+func (g *Game) triggeredBy(src LocalID, trigger Trigger) []triggeredAbility {
+	var pending []triggeredAbility
+	keep := func(grantor LocalID, ab Ability) {
+		if ab.Trigger == trigger {
+			pending = append(pending, triggeredAbility{source: src, grantor: grantor, ability: ab})
+		}
+	}
+	for _, ab := range g.cat.def(src).Abilities {
+		keep(src, ab)
 	}
 	for up, ok := g.firstUpgrade(src); ok; up, ok = g.nextUpgrade(up) {
 		for _, ab := range g.cat.def(up).Static.Granted {
-			fire(ab)
+			keep(up, ab)
 		}
 	}
 	for player := 0; player < 2; player++ {
-		for _, srcCard := range g.allInPlay(player) {
-			for _, c := range g.cat.def(srcCard).ConstantAbilities {
-				if len(c.Granted) == 0 || !g.constantAffects(srcCard, c, src) {
+		for _, grantor := range g.allInPlay(player) {
+			for _, c := range g.cat.def(grantor).ConstantAbilities {
+				if len(c.Granted) == 0 || !g.constantAffects(grantor, c, src) {
 					continue
 				}
 				for _, ab := range c.Granted {
-					fire(ab)
+					keep(grantor, ab)
 				}
 			}
 		}
 	}
+	return pending
 }
 
-// triggeredAbility is an ability waiting to resolve from a creature being
-// destroyed. It retains the creature as Source so a granted "purge this creature"
-// resolves against the creature that gained it, rather than the card that granted it.
+// orderTriggerPrompt is the prompt shown when abilities on several cards trigger
+// at once and the active player must say which card's resolves next.
+const orderTriggerPrompt = "Choose the next card whose ability resolves"
+
+// orderGrantorPrompt is the prompt shown when one card has several abilities in
+// the same trigger window (its own text plus one an upgrade or a constant ability
+// granted it) and the active player must say which resolves next.
+const orderGrantorPrompt = "Choose which ability resolves next"
+
+// orderTriggered lets the active player arrange a trigger window's abilities into
+// a resolution order (ADR 0013). Ordering runs at two levels, because the Chooser
+// port speaks in cards: first the distinct triggering cards, then — within one
+// card — the distinct cards whose text granted it each ability. Either level with
+// a single entry is forced and never prompts, so an event on one card with one
+// ability is silent, as is a batch of creatures that each carry one.
+func (g *Game) orderTriggered(actor int, pending []triggeredAbility) []triggeredAbility {
+	if len(pending) <= 1 {
+		return pending
+	}
+	ordered := make([]triggeredAbility, 0, len(pending))
+	for _, src := range g.orderByChoice(actor, orderTriggerPrompt, distinctBy(pending, sourceOf)) {
+		of := filterBy(pending, sourceOf, src)
+		for _, grantor := range g.orderByChoice(actor, orderGrantorPrompt, distinctBy(of, grantorOf)) {
+			ordered = append(ordered, filterBy(of, grantorOf, grantor)...)
+		}
+	}
+	return ordered
+}
+
+// sourceOf and grantorOf name the two card fields orderTriggered orders by.
+func sourceOf(t triggeredAbility) LocalID  { return t.source }
+func grantorOf(t triggeredAbility) LocalID { return t.grantor }
+
+// distinctBy lists the distinct values of key across pending, first-seen order.
+func distinctBy(pending []triggeredAbility, key func(triggeredAbility) LocalID) []LocalID {
+	var out []LocalID
+	for _, t := range pending {
+		if !slices.Contains(out, key(t)) {
+			out = append(out, key(t))
+		}
+	}
+	return out
+}
+
+// filterBy keeps the pending abilities whose key equals want, in collection order.
+func filterBy(
+	pending []triggeredAbility,
+	key func(triggeredAbility) LocalID,
+	want LocalID,
+) []triggeredAbility {
+	var out []triggeredAbility
+	for _, t := range pending {
+		if key(t) == want {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
+// triggeredAbility is an ability waiting to resolve in a trigger window. It
+// retains the triggering card as source so a granted "purge this creature"
+// resolves against the creature that gained it rather than the card that granted
+// it, and the granting card as grantor for ordering and attribution.
 type triggeredAbility struct {
 	source  LocalID
+	grantor LocalID
 	ability Ability
 }
 
@@ -442,33 +524,7 @@ type triggeredAbility struct {
 func (g *Game) destroyedAbilities(ids []LocalID) []triggeredAbility {
 	var pending []triggeredAbility
 	for _, id := range ids {
-		def := g.cat.def(id)
-		for _, ab := range def.Abilities {
-			if ab.Trigger == TriggerDestroyed {
-				pending = append(pending, triggeredAbility{source: id, ability: ab})
-			}
-		}
-		for _, upgrade := range g.Upgrades(id) {
-			for _, ab := range g.cat.def(upgrade).Static.Granted {
-				if ab.Trigger == TriggerDestroyed {
-					pending = append(pending, triggeredAbility{source: id, ability: ab})
-				}
-			}
-		}
-		for player := 0; player < 2; player++ {
-			for _, grantor := range g.allInPlay(player) {
-				for _, c := range g.cat.def(grantor).ConstantAbilities {
-					if !g.constantAffects(grantor, c, id) {
-						continue
-					}
-					for _, ab := range c.Granted {
-						if ab.Trigger == TriggerDestroyed {
-							pending = append(pending, triggeredAbility{source: id, ability: ab})
-						}
-					}
-				}
-			}
-		}
+		pending = append(pending, g.triggeredBy(id, TriggerDestroyed)...)
 	}
 	return pending
 }

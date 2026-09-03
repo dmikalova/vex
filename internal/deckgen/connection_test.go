@@ -17,6 +17,15 @@ func connectedCard(name string, h engine.House) Card {
 	return mkCard(name, h, engine.Connected)
 }
 
+// pulls is the plain connection: one copy of each named card, every time.
+func pulls(names ...string) Connection {
+	conn := Connection{}
+	for _, n := range names {
+		conn.Cards = append(conn.Cards, ConnectedCard{Name: n, Copies: 1, Chance: 1})
+	}
+	return conn
+}
+
 func gen(set Set) *generator {
 	return &generator{set: set, r: rand.New(rand.NewSource(1)), placed: map[string]bool{}}
 }
@@ -34,7 +43,7 @@ func countName(pod HousePod, name string) int {
 // A puller placed in a pod pulls exactly one copy of its connected partner.
 func TestConnectionPullsPartner(t *testing.T) {
 	set := NewSet("S", []Card{
-		connCard("Puller", engine.Brobnar, Connection{Cards: []string{"Partner"}}),
+		connCard("Puller", engine.Brobnar, pulls("Partner")),
 		mkCard("Filler", engine.Brobnar, engine.Common),
 		connectedCard("Partner", engine.Brobnar),
 	}, Tuning{RarityWeights: map[engine.Rarity]float64{engine.Common: 1}})
@@ -65,7 +74,7 @@ func TestConnectedExcludedFromPool(t *testing.T) {
 // A maverick puller does not fire its connection (cross-house is off for v1).
 func TestConnectionMaverickPullerSkipped(t *testing.T) {
 	set := NewSet("S", []Card{
-		connCard("P", engine.Brobnar, Connection{Cards: []string{"Q"}}),
+		connCard("P", engine.Brobnar, pulls("Q")),
 		connectedCard("Q", engine.Brobnar),
 	}, DefaultTuning())
 	g := gen(set)
@@ -86,14 +95,14 @@ func TestConnectionMissingPartner(t *testing.T) {
 		}
 	}()
 	NewSet("S", []Card{
-		connCard("P", engine.Brobnar, Connection{Cards: []string{"Ghost"}}),
+		connCard("P", engine.Brobnar, pulls("Ghost")),
 	}, DefaultTuning())
 }
 
 // A partner already in the pod is left as the single copy, not duplicated.
 func TestConnectionPartnerAlreadyPresent(t *testing.T) {
 	set := NewSet("S", []Card{
-		connCard("P", engine.Brobnar, Connection{Cards: []string{"Q"}}),
+		connCard("P", engine.Brobnar, pulls("Q")),
 		connectedCard("Q", engine.Brobnar),
 	}, DefaultTuning())
 	g := gen(set)
@@ -109,7 +118,7 @@ func TestConnectionPartnerAlreadyPresent(t *testing.T) {
 // When every slot is a protected puller there is no room to place a partner.
 func TestConnectionNoFreeSlot(t *testing.T) {
 	set := NewSet("S", []Card{
-		connCard("P", engine.Brobnar, Connection{Cards: []string{"Q"}}),
+		connCard("P", engine.Brobnar, pulls("Q")),
 		connectedCard("Q", engine.Brobnar),
 	}, DefaultTuning())
 	g := gen(set)
@@ -126,9 +135,9 @@ func TestConnectionNoFreeSlot(t *testing.T) {
 // A pulled partner's own connection resolves on a later pass (fixpoint).
 func TestConnectionFixpointChain(t *testing.T) {
 	q := connectedCard("Q", engine.Brobnar)
-	q.Profile.Connection = Connection{Cards: []string{"R"}}
+	q.Profile.Connection = pulls("R")
 	set := NewSet("S", []Card{
-		connCard("P", engine.Brobnar, Connection{Cards: []string{"Q"}}),
+		connCard("P", engine.Brobnar, pulls("Q")),
 		q,
 		connectedCard("R", engine.Brobnar),
 	}, DefaultTuning())
@@ -138,5 +147,85 @@ func TestConnectionFixpointChain(t *testing.T) {
 	out := g.expandConnections(pod)
 	if countName(out, "Q") != 1 || countName(out, "R") != 1 {
 		t.Fatalf("chain: Q=%d R=%d, want 1 and 1", countName(out, "Q"), countName(out, "R"))
+	}
+}
+
+// A connection asking for several copies places every one of them.
+func TestConnectionPullsSeveralCopies(t *testing.T) {
+	conn := Connection{Cards: []ConnectedCard{{Name: "Q", Copies: 3, Chance: 1}}}
+	set := NewSet("S", []Card{
+		connCard("P", engine.Brobnar, conn),
+		connectedCard("Q", engine.Brobnar),
+	}, DefaultTuning())
+	g := gen(set)
+	pod := HousePod{House: engine.Brobnar}
+	pod.Slots[0] = Slot{Card: set.byName["P"].Def}
+	out := g.expandConnections(pod)
+	if countName(out, "Q") != 3 {
+		t.Fatalf("Q count = %d, want 3", countName(out, "Q"))
+	}
+}
+
+// A copy already in the pod counts toward the connection's total, so a pod that
+// rolled one of the pulled card is topped up rather than filled from scratch.
+func TestConnectionCopiesCountExisting(t *testing.T) {
+	conn := Connection{Cards: []ConnectedCard{{Name: "Q", Copies: 2, Chance: 1}}}
+	set := NewSet("S", []Card{
+		connCard("P", engine.Brobnar, conn),
+		connectedCard("Q", engine.Brobnar),
+	}, DefaultTuning())
+	g := gen(set)
+	pod := HousePod{House: engine.Brobnar}
+	pod.Slots[0] = Slot{Card: set.byName["P"].Def}
+	pod.Slots[1] = Slot{Card: set.byName["Q"].Def}
+	out := g.expandConnections(pod)
+	if countName(out, "Q") != 2 {
+		t.Fatalf("Q count = %d, want 2", countName(out, "Q"))
+	}
+}
+
+// A chancy pull fires only sometimes: over many pods it appears in some and not
+// in others, and it is never pulled more than its copy count.
+func TestConnectionChancePullIsSometimes(t *testing.T) {
+	conn := Connection{Cards: []ConnectedCard{{Name: "Q", Copies: 1, Chance: 0.5}}}
+	set := NewSet("S", []Card{
+		connCard("P", engine.Brobnar, conn),
+		connectedCard("Q", engine.Brobnar),
+	}, DefaultTuning())
+	g := gen(set)
+	hits := 0
+	for i := 0; i < 200; i++ {
+		pod := HousePod{House: engine.Brobnar}
+		pod.Slots[0] = Slot{Card: set.byName["P"].Def}
+		n := countName(g.expandConnections(pod), "Q")
+		if n > 1 {
+			t.Fatalf("Q count = %d, want at most 1", n)
+		}
+		hits += n
+	}
+	if hits == 0 || hits == 200 {
+		t.Fatalf("chancy pull fired %d/200 times, want sometimes", hits)
+	}
+}
+
+// A connection pulling fewer than one copy, or at an impossible rate, is an
+// authoring error NewSet reports rather than silently normalizing.
+func TestConnectionInvalidPullPanics(t *testing.T) {
+	for name, conn := range map[string]Connection{
+		"no copies":    {Cards: []ConnectedCard{{Name: "Q", Copies: 0, Chance: 1}}},
+		"never fires":  {Cards: []ConnectedCard{{Name: "Q", Copies: 1, Chance: 0}}},
+		"always twice": {Cards: []ConnectedCard{{Name: "Q", Copies: 1, Chance: 2}}},
+	} {
+		t.Run(name, func(t *testing.T) {
+			defer func() {
+				if recover() == nil {
+					t.Fatal("NewSet must panic on an impossible connection")
+				}
+			}()
+			NewSet("S", []Card{
+				connCard("P", engine.Brobnar, conn),
+				connectedCard("Q", engine.Brobnar),
+			}, DefaultTuning())
+		})
 	}
 }

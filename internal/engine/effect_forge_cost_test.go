@@ -130,7 +130,7 @@ func TestRaiseKeyCostThisTurn(t *testing.T) {
 	if got := g.CurrentKeyCost(0); got != KeyCost+2 {
 		t.Errorf("key cost = %d, want %d right away", got, KeyCost+2)
 	}
-	g.EndTurn(0)
+	g.EndPlayPhase(0)
 	if got := g.CurrentKeyCost(0); got != KeyCost {
 		t.Errorf("key cost = %d, want %d after the turn ends", got, KeyCost)
 	}
@@ -146,15 +146,15 @@ func TestRaiseKeyCostLandsOnTheNextTurn(t *testing.T) {
 	if got := g.CurrentKeyCost(1); got != KeyCost {
 		t.Errorf("key cost = %d, want %d before the raise lands", got, KeyCost)
 	}
-	g.EndTurn(0)
-	g.BeginTurn(1)
+	g.EndPlayPhase(0)
+	g.StartTurn(1)
 	if got := g.CurrentKeyCost(1); got != KeyCost+3 {
 		t.Errorf("key cost = %d, want %d", got, KeyCost+3)
 	}
 	if reasons := g.RestrictionSources(1); len(reasons) == 0 {
 		t.Error("the raise should name its source as a turn restriction")
 	}
-	g.EndTurn(1)
+	g.EndPlayPhase(1)
 	if got := g.CurrentKeyCost(1); got != KeyCost {
 		t.Errorf("key cost = %d, want %d after the turn ends", got, KeyCost)
 	}
@@ -176,8 +176,8 @@ func TestConditionalElse(t *testing.T) {
 		Then: ForgeKey{Extra: 2},
 		Else: ForgeKey{Extra: 6},
 	}
-	want := "forge a key at +6 Æmber current cost. If your opponent has no Æmber, " +
-		"forge a key at +2 Æmber current cost instead"
+	want := "if your opponent has no Æmber, forge a key at +2 Æmber current cost. " +
+		"Otherwise, forge a key at +6 Æmber current cost"
 	if got := effect.Text(); got != want {
 		t.Errorf("text = %q, want %q", got, want)
 	}

@@ -30,7 +30,7 @@ func (g *Game) discardDestroyed(id LocalID) {
 func (g *Game) purgeFromPlay(id LocalID) {
 	o := g.leavePlayDestroyed(id)
 	g.State.Purge[o].add(id)
-	g.logf("%s is purged", g.Name(id))
+	g.record(CardPurged{Card: id})
 }
 
 // leavePlayDestroyed performs the shared teardown when a destroyed card leaves
@@ -44,7 +44,7 @@ func (g *Game) leavePlayDestroyed(id LocalID) int {
 	core := &g.State.Cards[id]
 	if core.Amber > 0 {
 		g.State.Aember[1-o] += int(core.Amber)
-		g.logf("%d Æmber on %s goes to %s's pool", core.Amber, g.Name(id), g.names[1-o])
+		g.record(AemberOnCardReleased{Card: id, Amount: int(core.Amber), To: 1 - o})
 	}
 	g.resetCore(id)
 	return o
@@ -92,7 +92,7 @@ func (g *Game) applyDestructionReplacement(controller int, id LocalID) bool {
 	if !ok {
 		return false
 	}
-	g.logf("%s would be destroyed, so %s replaces its destruction", g.Name(id), g.Name(up))
+	g.record(DestructionReplaced{Card: id, By: up})
 	r.With.Resolve(&EffectContext{
 		Resolver:   g,
 		Source:     up,
@@ -122,7 +122,7 @@ func (g *Game) destroyAttachedUpgrade(upgrade LocalID) {
 	if _, ok := g.detachUpgrade(upgrade); !ok {
 		return
 	}
-	g.logf("%s is destroyed", g.Name(upgrade))
+	g.record(CardDestroyed{Card: upgrade})
 	g.releaseControlHeldBy(upgrade)
 	g.resetCore(upgrade)
 	g.State.Discard[g.owner(upgrade)].add(upgrade)
@@ -152,7 +152,7 @@ func (g *Game) applyDestructionReplacements(controller int, ids []LocalID) []Loc
 func (g *Game) destroyTogether(controller int, ids []LocalID) {
 	ids = g.applyDestructionReplacements(controller, ids)
 	for _, id := range ids {
-		g.logf("%s is destroyed", g.Name(id))
+		g.record(CardDestroyed{Card: id})
 	}
 	// "Each time an enemy creature is destroyed": the destroyed creature's controller
 	// is the enemy of whoever watches, so the reaction fires for that opponent.
@@ -160,91 +160,31 @@ func (g *Game) destroyTogether(controller int, ids []LocalID) {
 		g.emitLasting(EventEnemyCreatureDestroyed, 1-g.controller(id), id)
 		g.emitEnemyDestroyed(id)
 	}
-	pending := g.destroyedAbilities(ids)
-	for {
-		// Drop abilities whose source has left play (e.g. an earlier Destroyed
-		// ability purged the creature); they can no longer resolve.
-		pending = g.inPlayAbilities(pending)
-		if len(pending) == 0 {
-			break
+	// The whole window is ordered once, up front, by the active player (ADR 0013).
+	// A creature that leaves play mid-window (Annihilation Ritual purges it) simply
+	// drops its remaining abilities as they come up.
+	for _, t := range g.orderTriggered(controller, g.destroyedAbilities(ids)) {
+		if !g.inPlay(t.source) {
+			continue
 		}
-		// Choose the next creature whose Destroyed ability to resolve. With several
-		// destroyed creatures still holding abilities the controller picks one (they
-		// highlight on the board); a lone creature is forced.
-		sources := distinctSources(pending)
-		src := sources[0]
-		if len(sources) > 1 {
-			if chosen, ok := g.pickCreature(
-				controller,
-				"",
-				"Choose the next creature whose Destroyed ability resolves",
-				sources,
-			); ok {
-				src = chosen
-			}
-		}
-		pick := g.pickDestroyedAbility(controller, pending, src)
-		ab := pending[pick]
-		g.logf("%s: %s", g.Name(ab.source), renderAbilityLine(g.cat.def(ab.source), ab.ability))
-		ab.ability.Effect.Resolve(
-			&EffectContext{Resolver: g, Source: ab.source, Controller: g.controller(ab.source)},
+		closeFrame := g.openFrame(Frame{
+			Actor:      g.controller(t.source),
+			Source:     t.source,
+			HasSource:  true,
+			Trigger:    TriggerDestroyed,
+			Grantor:    t.grantor,
+			HasGrantor: t.grantor != t.source,
+		})
+		t.ability.Effect.Resolve(
+			&EffectContext{Resolver: g, Source: t.source, Controller: g.controller(t.source)},
 		)
-		pending = append(pending[:pick], pending[pick+1:]...)
+		closeFrame()
 	}
 	for _, id := range ids {
 		if g.inPlay(id) {
 			g.discardDestroyed(id)
 		}
 	}
-}
-
-// inPlayAbilities keeps only the pending abilities whose source is still in play.
-func (g *Game) inPlayAbilities(pending []triggeredAbility) []triggeredAbility {
-	var kept []triggeredAbility
-	for _, ab := range pending {
-		if g.inPlay(ab.source) {
-			kept = append(kept, ab)
-		}
-	}
-	return kept
-}
-
-// distinctSources lists the distinct source creatures in pending, first-seen order.
-func distinctSources(pending []triggeredAbility) []LocalID {
-	var out []LocalID
-	for _, ab := range pending {
-		seen := false
-		for _, id := range out {
-			if id == ab.source {
-				seen = true
-				break
-			}
-		}
-		if !seen {
-			out = append(out, ab.source)
-		}
-	}
-	return out
-}
-
-// pickDestroyedAbility returns the pending index of the Destroyed ability to
-// resolve next for src: forced when the creature carries one, otherwise the
-// controller picks which of its abilities via a labeled prompt.
-func (g *Game) pickDestroyedAbility(controller int, pending []triggeredAbility, src LocalID) int {
-	var idxs []int
-	for i, ab := range pending {
-		if ab.source == src {
-			idxs = append(idxs, i)
-		}
-	}
-	if len(idxs) == 1 {
-		return idxs[0]
-	}
-	labels := make([]string, len(idxs))
-	for i, j := range idxs {
-		labels[i] = renderAbilityLine(g.cat.def(src), pending[j].ability)
-	}
-	return idxs[g.chooseOption(controller, "", "Choose which Destroyed ability resolves", labels)]
 }
 
 // destroyEach destroys each id simultaneously (KeyForge's shared Destroyed
@@ -284,7 +224,7 @@ func (g *Game) putOnTopOfDeck(id LocalID) {
 	g.discardUpgrades(id)
 	g.resetCore(id)
 	g.State.Deck[o].addFront(id)
-	g.logf("%s is put on top of %s's deck", g.Name(id), g.names[o])
+	g.record(CardPutOnTopOfDeck{Card: id, Owner: o})
 }
 
 // putIntoHand removes a card from play and places it into its owner's hand,
@@ -295,7 +235,7 @@ func (g *Game) putIntoHand(id LocalID) {
 	g.discardUpgrades(id)
 	g.resetCore(id)
 	g.State.Hand[o].add(id)
-	g.logf("%s is returned to %s's hand", g.Name(id), g.names[o])
+	g.record(CardReturnedToHand{Card: id, Owner: o})
 }
 
 // putIntoArchives removes a card from play and places it into its owner's
@@ -306,7 +246,7 @@ func (g *Game) putIntoArchives(id LocalID) {
 	g.discardUpgrades(id)
 	g.resetCore(id)
 	g.State.Archives[o].add(id)
-	g.logf("%s is put into %s's archives", g.Name(id), g.names[o])
+	g.record(CardPutIntoArchives{Card: id, Owner: o})
 }
 
 // putIntoDeckShuffled removes a card from play and shuffles it into its owner's
@@ -318,7 +258,7 @@ func (g *Game) putIntoDeckShuffled(id LocalID) {
 	g.resetCore(id)
 	g.State.Deck[o].add(id)
 	g.Shuffle(o)
-	g.logf("%s is shuffled into %s's deck", g.Name(id), g.names[o])
+	g.record(CardShuffledIntoDeck{Card: id, Owner: o})
 }
 
 // Only three zones of yours may hold a card your opponent owns: your battleline,
@@ -340,6 +280,5 @@ func (g *Game) PutIntoYourArchives(id LocalID, player int) {
 	g.discardUpgrades(id)
 	g.resetCore(id)
 	g.State.Archives[player].add(id)
-	g.logf("%s abducts %s (owned by %s) into their archives",
-		g.names[player], g.Name(id), g.names[o])
+	g.record(CardAbducted{Player: player, Card: id, Owner: o})
 }

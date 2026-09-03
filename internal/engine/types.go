@@ -252,9 +252,13 @@ const (
 	// another ability rather than a special case in the play path.
 	TriggerEntersPlay
 	// An End of Turn ability resolves during the end of its controller's turn,
-	// before cards ready and the controller draws (Shaffles drains the opponent at
+	// after cards ready and the controller draws (Shaffles drains the opponent at
 	// each turn's end).
 	TriggerEndOfTurn
+	// A Start of Turn ability resolves at the start of its controller's turn,
+	// before they forge, so an ability that changes what a key costs still has time
+	// to.
+	TriggerStartOfTurn
 	// This ability resolves after its controller chooses their active house at the
 	// start of the turn — the only "choose a house" step it watches. Changing houses
 	// mid-turn by another effect is not this start-of-turn choice and does not fire
@@ -328,6 +332,8 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return "Leaves Play: ", true
 	case TriggerEndOfTurn:
 		return "At the end of your turn, ", false
+	case TriggerStartOfTurn:
+		return "At the start of your turn, ", false
 	default:
 		return "", true
 	}

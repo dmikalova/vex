@@ -33,7 +33,6 @@ func TestProtectrix(t *testing.T) {
 
 		h.P1.Reap(Protectrix)
 		h.P1.ClickOption("Yes")
-		h.P1.ClickCard(ally)
 
 		h.Expect(ally).Damage(0)
 		if !h.Game().State.Cards[ally.ID()].DamageImmune {

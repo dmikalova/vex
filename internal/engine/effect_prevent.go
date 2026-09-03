@@ -5,7 +5,7 @@ import "fmt"
 // PreventDamage marks each creature its Target selects immune to damage for the
 // given Duration — Shield of Justice protects each friendly creature for the
 // remainder of the turn. Only EndOfTurn is supported today (the mark is cleared by
-// EndTurn); the field is explicit so a longer window can be added without
+// the ready phase); the field is explicit so a longer window can be added without
 // reshaping the callers.
 type PreventDamage struct {
 	Target   Target

@@ -179,6 +179,67 @@ func (e PurgeFromHand) Resolve(ctx *EffectContext) {
 	ctx.Resolver.PurgeFromHand(owner, chosen)
 }
 
+// PurgeEachFromHand purges every card in a player's hand that matches its filters
+// — Martians Make Bad Allies purges each non-Mars creature out of the hand it
+// just revealed. Unlike PurgeFromHand there is no choice: the filters decide, and
+// the tally is recorded so a following effect can scale with it (CardsPurged).
+type PurgeEachFromHand struct {
+	// Player whose hand the cards are purged from.
+	Player Player
+	// Type restricts the purge to cards of this type; the zero value allows any.
+	Type CardType
+	// ExceptHouse spares the cards of that house; HouseNone spares nothing.
+	ExceptHouse House
+}
+
+// validate rejects a PurgeEachFromHand whose player was left unset.
+func (e PurgeEachFromHand) validate() error {
+	if !e.Player.valid() {
+		return errUnsetPlayer("PurgeEachFromHand")
+	}
+	return nil
+}
+
+// noun renders the kind of card purged, e.g. "non-Mars creature".
+func (e PurgeEachFromHand) noun() string {
+	noun := "card"
+	if e.Type != TypeUnset {
+		noun = strings.ToLower(e.Type.String())
+	}
+	if e.ExceptHouse != HouseNone {
+		noun = "non-" + e.ExceptHouse.String() + " " + noun
+	}
+	return noun
+}
+
+// Text renders the effect, e.g. "purge each non-Mars creature from your hand".
+func (e PurgeEachFromHand) Text() string {
+	whose := "your hand"
+	if e.Player == Opponent {
+		whose = "your opponent's hand"
+	}
+	return "purge each " + e.noun() + " from " + whose
+}
+
+// Resolve purges every matching card from the hand and records the tally.
+func (e PurgeEachFromHand) Resolve(ctx *EffectContext) {
+	owner := ctx.PlayerFor(e.Player)
+	var doomed []LocalID
+	for _, id := range ctx.Resolver.Hand(owner) {
+		if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
+			continue
+		}
+		if e.ExceptHouse != HouseNone && ctx.Resolver.House(id) == e.ExceptHouse {
+			continue
+		}
+		doomed = append(doomed, id)
+	}
+	for _, id := range doomed {
+		ctx.Resolver.PurgeFromHand(owner, id)
+	}
+	ctx.Produced.Purged = len(doomed)
+}
+
 // PurgeCreature purges each creature its Target selects from play into its owner's
 // purge pile — the "purge this creature" a card gains (Annihilation Ritual grants
 // it to every creature as a Destroyed ability).

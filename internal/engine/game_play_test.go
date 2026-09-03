@@ -90,8 +90,8 @@ func TestCardPlayLimit(t *testing.T) {
 	}
 
 	// A new turn resets the count.
-	g.EndTurn(0)
-	g.BeginTurn(0)
+	g.EndPlayPhase(0)
+	g.StartTurn(0)
 	if err := g.ChooseHouse(0, Brobnar); err != nil {
 		t.Fatal(err)
 	}
@@ -102,7 +102,7 @@ func TestCardPlayLimit(t *testing.T) {
 
 func TestPlayedThisTurn(t *testing.T) {
 	g := NewGame("Alice", "Bob", 1)
-	g.BeginTurn(0)
+	g.StartTurn(0)
 	creature := g.AddToHand(NewCard("brobnar creature", Brobnar, Creature, Common, WithPower(3)), 0)
 	artifact := g.AddToHand(NewCard("sanctum artifact", Sanctum, Artifact, Common), 0)
 	action := g.AddToHand(NewCard("sanctum action", Sanctum, Tactic, Common), 0)
@@ -143,7 +143,7 @@ func TestPlayedThisTurn(t *testing.T) {
 		t.Errorf("total plays = %d, want 4", got)
 	}
 
-	g.BeginTurn(0)
+	g.StartTurn(0)
 	if got := playsOf(Sanctum); got != 0 {
 		t.Errorf("Sanctum plays after reset = %d, want 0", got)
 	}
@@ -187,8 +187,8 @@ func TestOffHousePlayGrant(t *testing.T) {
 			t.Fatalf("second off-house play = %v, want ErrWrongHouse", err)
 		}
 
-		g.EndTurn(0)
-		g.BeginTurn(0)
+		g.EndPlayPhase(0)
+		g.StartTurn(0)
 		if err := g.ChooseHouse(0, Brobnar); err != nil {
 			t.Fatal(err)
 		}
@@ -199,7 +199,7 @@ func TestOffHousePlayGrant(t *testing.T) {
 
 	t.Run("does not matter when Untamed is active", func(t *testing.T) {
 		g := NewGame("Alice", "Bob", 1)
-		g.BeginTurn(0)
+		g.StartTurn(0)
 		if err := g.ChooseHouse(0, Untamed); err != nil {
 			t.Fatal(err)
 		}

@@ -29,14 +29,15 @@ type CardCore struct {
 	Exhausted bool
 	Stunned   bool
 	// DamageImmune, while set, prevents any damage from being dealt to this creature.
-	// It lasts until end of turn (EndTurn clears it) — Shield of Justice, Protectrix.
+	// It lasts until end of turn (the ready phase clears it) — Shield of Justice,
+	// Protectrix.
 	DamageImmune bool
 	// ElusiveUsedThisTurn records that this creature has already been chosen to be
 	// fought this turn, so its Elusive keyword no longer stops pending fight damage.
-	// BeginTurn clears it for every creature in play.
+	// StartTurn clears it for every creature in play.
 	ElusiveUsedThisTurn bool
 	// TimesUsedThisTurn counts how many times this creature has been USED this
-	// turn — to reap, fight, or use an Action: ability. BeginTurn clears every
+	// turn — to reap, fight, or use an Action: ability. StartTurn clears every
 	// creature's count; leaving play clears it through resetCore.
 	TimesUsedThisTurn int16
 	Damage            int16
@@ -210,11 +211,19 @@ type GameState struct {
 	Turn         int
 	Winner       int // -1 while the game is ongoing
 
+	// Phase is the part of the turn now running (ADR 0012). The engine advances it
+	// and blocks only on the phases that need a frontend decision.
+	Phase Phase
+	// PhaseEnded is the "skip the rest of this phase" flag the phase loop reads, so
+	// an effect that cuts a phase short (Omega ending the play phase) does not have
+	// to special-case any one phase. Entering a phase clears it.
+	PhaseEnded bool
+
 	// Fight bars. CannotFight[p] blocks player p from using creatures to fight on
 	// the current turn; CannotFightNext[p] arms that block for p's next turn. An
-	// effect (Fogbank) arms the bar, BeginTurn promotes it to active for the
-	// affected player, and EndTurn lifts it — so it always lands on that player's
-	// own next turn, whoever plays in between.
+	// effect (Fogbank) arms the bar, StartTurn promotes it to active for the
+	// affected player, and the ready phase lifts it — so it always lands on that
+	// player's own next turn, whoever plays in between.
 	CannotFight     [2]Bar[bool]
 	CannotFightNext [2]Bar[bool]
 
@@ -222,19 +231,19 @@ type GameState struct {
 	// that type this turn; CannotPlayTypeNext[p] arms that block for p's next turn
 	// (Lifeward bars creatures, Scrambler Storm bars action cards). The zero value
 	// (an unset CardType) bars nothing. Like the fight bar, an effect arms it and
-	// BeginTurn promotes it to that player's own next turn.
+	// StartTurn promotes it to that player's own next turn.
 	CannotPlayTypeThis [2]Bar[CardType]
 	CannotPlayTypeNext [2]Bar[CardType]
 
 	// Use bars. CannotUse[p] blocks player p from using any card this turn — reaping,
 	// fighting, or an "Action:" ability (Skippy Timehog); playing and discarding are
 	// untouched. CannotUseNext[p] arms that block for p's next turn, and like the
-	// fight bar BeginTurn promotes it and EndTurn lifts it.
+	// fight bar StartTurn promotes it and the ready phase lifts it.
 	CannotUse     [2]Bar[bool]
 	CannotUseNext [2]Bar[bool]
 
 	// SkipForge bars. SkipForgeNext[p] makes player p skip their "forge a key" step
-	// at the start of their next turn (Miasma); BeginTurn promotes it to SkipForge[p]
+	// at the start of their next turn (Miasma); StartTurn promotes it to SkipForge[p]
 	// and forges accordingly, so it lands on that player's own next turn.
 	SkipForge     [2]Bar[bool]
 	SkipForgeNext [2]Bar[bool]
@@ -243,24 +252,27 @@ type GameState struct {
 	// KeyCostBumpNext[p] arms that raise for p's next turn (Lash of Broken Dreams
 	// makes keys cost +3 during the opponent's next turn). Unlike a card's
 	// KeyCostChange, which lives as long as the card is in play, this is a one-turn
-	// surcharge, promoted by BeginTurn and lifted by EndTurn like the other bars.
+	// surcharge, promoted by StartTurn and lifted by the ready phase like the other
+	// bars.
 	KeyCostBump     [2]Bar[int]
 	KeyCostBumpNext [2]Bar[int]
 
 	// MayFightHouse[p] is a house whose creatures player p may use to fight this
 	// turn even when it is not the active house — Brothers in Battle's "each
 	// friendly creature of that house may fight." HouseNone (the zero value) grants
-	// nothing. EndTurn clears it, so the grant lasts only the turn it was made.
+	// nothing. The ready phase clears it, so the grant lasts only the turn it was
+	// made.
 	MayFightHouse [2]House
 
 	// MayFightAny[p] lets every creature player p controls fight this turn whatever
 	// its house — Follow the Leader, Horseman of War, the unrestricted form of the
-	// MayFightHouse grant. EndTurn clears it.
+	// MayFightHouse grant. The ready phase clears it.
 	MayFightAny [2]bool
 
 	// MayUseHouse[p] is a house whose creatures player p may fully use this turn
 	// (fight, reap, or Action:) even when it is not the active house — Sigil of
-	// Brotherhood, Ritual of the Hunt. HouseNone grants nothing; EndTurn clears it.
+	// Brotherhood, Ritual of the Hunt. HouseNone grants nothing; the ready phase
+	// clears it.
 	MayUseHouse [2]House
 
 	// TurnHistory holds the small tallies of what each player did during a turn —
@@ -268,39 +280,39 @@ type GameState struct {
 	// forged a key on their previous turn", "for each enemy creature destroyed in a
 	// fight this turn"). Keeping them as one array indexed by TurnStat leaves the
 	// state flat and comparable, and makes a new tally one more enum value rather
-	// than another pair of fields. EndTurn rolls each "this turn" tally into its
-	// "last turn" twin, so "their previous turn" always means that player's own last
-	// completed turn.
+	// than another pair of fields. The ready phase rolls each "this turn" tally
+	// into its "last turn" twin, so "their previous turn" always means that
+	// player's own last completed turn.
 	TurnHistory [2][turnStatCount]int8
 
 	// KeywordsLost is the set of keywords every creature in play has lost for the
 	// remainder of the turn — Sniffer takes elusive away from each creature. It is a
-	// bitmask over keywordBit so the state stays flat and comparable; EndTurn clears
-	// it.
+	// bitmask over keywordBit so the state stays flat and comparable; the ready
+	// phase clears it.
 	KeywordsLost uint8
 
 	// Lasting holds the "for the remainder of the turn" effects active now (Full
 	// Moon, Charge!, Crystal Hive reactions; Dimension Door's replacement), fired or
 	// queried by game_lasting.go when their event occurs; LastingCount is how many of
-	// the fixed array are in use. EndTurn drops a player's entries.
+	// the fixed array are in use. The ready phase drops a player's entries.
 	Lasting      [maxLasting]LastingEffect
 	LastingCount uint8
 
 	// PlayedThisTurn[p] and DiscardedThisTurn[p] record, in order, the cards player p
-	// has played and discarded this turn; BeginTurn clears both. Cards filter them
+	// has played and discarded this turn; StartTurn clears both. Cards filter them
 	// themselves — by house for Epic Quest's "7 or more Sanctum cards this turn" and
 	// Giant Sloth — and the play log's length is the limit Ember Imp reads. Only hand
 	// discards are logged: rule "a player discarding a card" means from their hand.
 	PlayedThisTurn    [2]turnLog
 	DiscardedThisTurn [2]turnLog
 	// PlayPermissionsUsedThisTurn[p][h] counts how many off-house play permissions for
-	// house h player p has spent this turn (Witch of the Wilds). BeginTurn resets it.
+	// house h player p has spent this turn (Witch of the Wilds). StartTurn resets it.
 	// A turn cannot spend more than a hand's worth, so a byte per house is ample.
 	PlayPermissionsUsedThisTurn [2][NumHouses]uint8
 
 	// ForcedHouse[p] is the house player p must choose as their active house this
 	// turn (Control the Weak); ForcedHouseNext[p] arms that for p's next turn.
-	// BeginTurn promotes the armed house to active for the player, so it lands on
+	// StartTurn promotes the armed house to active for the player, so it lands on
 	// their own next turn. HouseNone means no house is forced.
 	ForcedHouse     [2]Bar[House]
 	ForcedHouseNext [2]Bar[House]

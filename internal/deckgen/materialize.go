@@ -18,19 +18,35 @@ type GenerationProfile struct {
 	// is stamped with that Slot's House.
 	Houseless bool
 	// Connection names the connected cards this card pulls into its pod when it is
-	// placed (Timetraveller pulls Help from Future Self; Horseman of Pestilence
-	// pulls the other three Horsemen). See Connection.
+	// placed (Timetraveller pulls Help from Future Self; Troop Call pulls the Niffle
+	// Apes it calls). See Connection.
 	Connection Connection
 }
 
 // Connection is the set of connected cards a puller card brings into its pod.
-// Each named card is ensured present in the pod exactly once, overwriting other
-// (unprotected) slots. The connected cards carry rarity Connected so they never
-// roll on their own. Duplicate counts and cross-house (maverick) connections are
-// future axes; today a connection ensures one of each named card, in-house only.
+// Each entry is ensured present at its copy count, overwriting other
+// (unprotected) slots. Cross-house (maverick) connections are a future axis;
+// today a connection pulls in-house only.
 type Connection struct {
-	// Cards are the connected cards' names, each pulled into the pod once.
-	Cards []string
+	// Cards are the connected cards, each pulled at its own count and rate.
+	Cards []ConnectedCard
+}
+
+// ConnectedCard is one card a connection pulls: how many copies the pod ends up
+// holding, and how often the pull happens at all. A guaranteed partner
+// (Timetraveller's Help from Future Self) carries Chance 1; a flavourful one
+// (Troop Call's Niffle Queen) carries less, and is rolled once per pod.
+//
+// A connected card need not be rarity Connected: Troop Call guarantees Niffle
+// Apes that roll on their own too. Author a card Connected only when it should
+// never appear without its puller, since the pool skips those entirely.
+type ConnectedCard struct {
+	// Name is the connected card's name, as it appears in the set.
+	Name string
+	// Copies is how many of it the pod ends up holding; at least one.
+	Copies int
+	// Chance is how often the pull fires, in (0, 1]; 1 is every time.
+	Chance float64
 }
 
 // Empty reports whether the connection pulls nothing.

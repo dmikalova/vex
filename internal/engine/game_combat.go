@@ -40,7 +40,7 @@ func (g *Game) fight(attacker, defender LocalID) {
 	cancelled := g.State.FightCancelled
 	g.State.FightCancelled = false
 	if cancelled {
-		g.logf("%s's fight does not occur", g.Name(attacker))
+		g.record(FightCancelled{Attacker: attacker})
 		return
 	}
 
@@ -71,9 +71,14 @@ func (g *Game) fight(attacker, defender LocalID) {
 	// "Before Fight" effect, Assault, or Hazardous can remove one first).
 	if g.inPlay(attacker) && g.inPlay(defender) {
 		ap, dp := g.Power(attacker), g.Power(defender)
-		g.logf("%s (%d power) fights %s (%d power)", g.Name(attacker), ap, g.Name(defender), dp)
+		g.record(Fought{
+			Attacker:      attacker,
+			AttackerPower: ap,
+			Defender:      defender,
+			DefenderPower: dp,
+		})
 		if elusive {
-			g.logf("%s is elusive — no fight damage is dealt", g.Name(defender))
+			g.record(ElusiveAvoidedFight{Defender: defender})
 		} else {
 			// Both fighters take their damage simultaneously, then destruction is
 			// resolved together as part of dealing it — so each dying creature is
@@ -201,19 +206,19 @@ func (g *Game) applyRawDamage(id LocalID, amount int, ignoreArmor bool) {
 	}
 	core := &g.State.Cards[id]
 	if core.DamageImmune {
-		g.logf("%s cannot be dealt damage", g.Name(id))
+		g.record(DamageRefused{Creature: id})
 		return
 	}
 	if !ignoreArmor {
 		if absorbed := min(int(core.ArmorRemaining), amount); absorbed > 0 {
 			core.ArmorRemaining -= int16(absorbed)
 			amount -= absorbed
-			g.logf("%s's armor absorbs %d damage", g.Name(id), absorbed)
+			g.record(ArmorAbsorbed{Creature: id, Amount: absorbed})
 		}
 	}
 	if amount > 0 {
 		core.Damage += int16(amount)
-		g.logf("%s takes %d damage (%d total)", g.Name(id), amount, core.Damage)
+		g.record(DamageTaken{Creature: id, Amount: amount, Total: int(core.Damage)})
 	}
 }
 

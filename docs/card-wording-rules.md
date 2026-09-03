@@ -284,6 +284,13 @@ Applies to archiving (`from your hand`, `the top card of your deck`) and any
 future zone-to-zone movement (hand, deck, discard, archives). `Archive` alone
 never implies the hand.
 
+The same holds for the Æmber **pool** a capture draws from: a capture always
+names it, even where the printed card leaves it implied.
+
+| Original                        | Curated                                        |
+| ------------------------------- | ---------------------------------------------- |
+| `a friendly creature captures 1 Aember` | `a friendly creature captures 1 Aember from your opponent` |
+
 ## 18. Æmber a player owes another player is `give`, never `pay`
 
 One verb covers Æmber changing hands between players: **`give`**. `pay` (the

@@ -89,7 +89,7 @@ func Play(t *testing.T, s Setup) *Harness {
 	if house == engine.HouseNone {
 		house = DefaultHouse
 	}
-	g.BeginTurn(0)
+	g.StartTurn(0)
 	if err := g.ChooseHouse(0, house); err != nil {
 		t.Fatalf("cardtest: ChooseHouse: %v", err)
 	}
@@ -210,8 +210,8 @@ func (p *Player) EndTurn() {
 	p.h.t.Helper()
 	other := 1 - p.index
 	p.h.run("EndTurn", func() error {
-		p.h.g.EndTurn(p.index)
-		p.h.g.BeginTurn(other)
+		p.h.g.EndPlayPhase(p.index)
+		p.h.g.StartTurn(other)
 		return nil
 	})
 }

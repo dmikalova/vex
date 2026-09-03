@@ -17,6 +17,9 @@ type ArchiveFromHand struct {
 	// Revealed shows the chosen card to the opponent before archiving it, which
 	// is how a filtered choice is verified (Incubation Chamber).
 	Revealed bool
+	// UpTo lets the controller archive fewer than Count, down to none (Mobius
+	// Scroll's "up to 2 cards").
+	UpTo bool
 }
 
 // Text renders the effect, e.g. "archive a card from your hand" or "archive 2
@@ -26,6 +29,9 @@ type ArchiveFromHand struct {
 func (e ArchiveFromHand) Text() string {
 	if e.Revealed {
 		return "reveal " + indefinite(e.handNoun()) + " from your hand and archive it"
+	}
+	if e.UpTo {
+		return fmt.Sprintf("archive up to %d %ss from your hand", e.Count, e.handNoun())
 	}
 	if e.Count == 1 {
 		return "archive " + indefinite(e.handNoun()) + " from your hand"
@@ -76,16 +82,19 @@ func (e ArchiveFromHand) resolveGate(ctx *EffectContext) bool {
 		if len(hand) == 0 {
 			return archived
 		}
-		id, ok := ctx.ChooseCreature("Choose a card to archive", hand)
+		choose := ctx.ChooseCreature
+		if e.UpTo {
+			choose = ctx.ChooseCardOptional
+		}
+		id, ok := choose("Choose a card to archive", hand)
 		if !ok {
 			return archived
 		}
 		if e.Revealed {
-			ctx.Resolver.Logf(
-				"%s reveals %s",
-				ctx.Resolver.PlayerName(ctx.Controller),
-				ctx.Resolver.Name(id),
-			)
+			ctx.Resolver.Record(CardsRevealedToAll{
+				Player: ctx.Controller,
+				Cards:  []LocalID{id},
+			})
 		}
 		ctx.Resolver.ArchiveFromHand(id)
 		archived = true

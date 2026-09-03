@@ -139,11 +139,12 @@ For the full pattern rationale and the tradeoffs, see
 
 ## 6. How a turn and an ability flow
 
-**A turn** (driven by a frontend): `BeginTurn(p)` readies the player, forges a key
+**A turn** (driven by a frontend): `StartTurn(p)` readies the player, forges a key
 if affordable, and promotes any armed "next turn" effects; the player chooses an
 active house (`ChooseHouse`) and then plays cards / reaps / fights / uses actions
-through `Game` methods; `EndTurn(p)` runs the ready step and clears turn-scoped
-state. Wins are checked after `BeginTurn`.
+through `Game` methods; `EndPlayPhase(p)` runs the ready phase, which clears
+turn-scoped state, and the phases that follow it. Wins are checked after
+`StartTurn`.
 
 **An ability** (e.g. a creature's "Play:"): the `Game` method that triggers it
 builds a fresh `EffectContext` (with the `Resolver`, the source card, and the

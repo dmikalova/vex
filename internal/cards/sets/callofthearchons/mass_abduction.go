@@ -18,8 +18,9 @@ var MassAbduction = card.New(
 	card.Provenance(card.CotA, 169),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.PutUpTo{
-			Max:         3,
+		card.Trigger.Play, card.PutChosen{
+			Count:       3,
+			UpTo:        true,
 			Target:      card.Target.EachEnemyCreature.Damaged(),
 			Destination: card.To.Archives.Yours(),
 		}),

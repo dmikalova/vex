@@ -51,6 +51,9 @@ body {
   --ring: 3px;
   /* the tallest a card is drawn, and so the tallest a board row grows */
   --card-h: 12rem;
+  /* the height a player bar and a brand-bar button share, so the two rows either
+     side of the sidebar's edge sit on the same line */
+  --bar-h: 2rem;
   display: flex;
   height: 100vh; /* fallback for browsers without dvh */
   height: 100dvh;
@@ -86,13 +89,15 @@ body {
   /* a player bar, four play rows (the midline between the battlelines), the other
      player bar, and the hand. The five card rows are one shared set of tracks, so
      a squeezed board shrinks a hand card exactly as much as a board card. They
-     stop growing at the card's own height, so spare height collects once around
-     the whole board (align-content) instead of as slack inside every row */
+     stop growing at the card's own height, so spare height is shared out between
+     the rows (align-content) instead of collecting as slack inside every row.
+     space-between rather than center so the top player bar starts on the same
+     line as the sidebar's brand bar rather than floating below it */
   grid-template-rows:
     auto minmax(0, var(--card-h)) minmax(0, var(--card-h)) auto
     minmax(0, var(--card-h)) minmax(0, var(--card-h))
     auto minmax(0, var(--card-h));
-  align-content: center;
+  align-content: space-between;
   flex: 1 1 0%;
   min-width: 0;
   gap: var(--board-gap);
@@ -281,37 +286,89 @@ body {
   color: #96e3a6;
   text-decoration: underline;
 }
-/* the log is a flat list of lines; each carries its action group's tint and the
-   spacing that used to come from a wrapping bubble, so already-logged lines never
-   change structure (only new lines append) and go-app cannot leave stale nodes.
-   Lines within a group touch, so an action reads as a single bubble; only the
-   group's first and last line carry the gap and the rounded edges. */
-.log-line {
-  padding: 0.0625rem 0.375rem;
-  border-left: 2px solid transparent;
+/* player names carry the same two colours as the line bubbles, so who acted is
+   read off the colour instead of out of the sentence */
+.log-player {
+  font-weight: 600;
 }
-.log-line--p0 {
-  background-color: rgb(123 216 143 / 0.05);
-  border-left-color: rgb(123 216 143 / 0.4);
+.log-player--p0 {
+  color: #7bd88f;
 }
-.log-line--p1 {
-  background-color: rgb(252 229 102 / 0.05);
-  border-left-color: rgb(252 229 102 / 0.4);
+.log-player--p1 {
+  color: #fce566;
 }
-.log-line--group-start {
+/* the log is one bubble per root action, with the turn and phase rules standing
+   between bubbles rather than inside one. Each bubble is tinted for the player
+   who acted, from a single custom property. */
+.log-group {
+  --log-tint: #8b888f;
+  flex: none;
   margin-top: 0.25rem;
-  padding-top: 0.2rem;
-  border-top-left-radius: 0.2rem;
-  border-top-right-radius: 0.2rem;
+  padding: 0.125rem 0.375rem 0.2rem;
+  border-left: 2px solid;
+  border-radius: 0.2rem;
+  background-color: color-mix(in srgb, var(--log-tint) 5%, transparent);
+  border-left-color: color-mix(in srgb, var(--log-tint) 40%, transparent);
 }
-.log-line--group-end {
-  margin-bottom: 0.25rem;
-  padding-bottom: 0.2rem;
-  border-bottom-left-radius: 0.2rem;
-  border-bottom-right-radius: 0.2rem;
+.log-group--p0 {
+  --log-tint: #7bd88f;
 }
-/* the newest action's lines flash and fade once */
-.log-line--new {
+.log-group--p1 {
+  --log-tint: #fce566;
+}
+.log-line {
+  padding: 0.0625rem 0;
+}
+/* a phase or turn header rules a line clear across the panel, fading out from its
+   label, so it reads as a scene break between bubbles rather than as more prose */
+.log-rule {
+  --log-tint: #8b888f;
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.35rem;
+  padding: 0.0625rem 0;
+  color: color-mix(in srgb, var(--log-tint) 70%, #8b888f);
+  font-size: 0.6875rem;
+  font-variant-caps: all-small-caps;
+  letter-spacing: 0.06em;
+}
+.log-rule--p0 {
+  --log-tint: #7bd88f;
+}
+.log-rule--p1 {
+  --log-tint: #fce566;
+}
+.log-rule::before,
+.log-rule::after {
+  content: "";
+  flex: 1 1 0%;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.35;
+}
+.log-rule-label {
+  flex: none;
+}
+/* the turn header is the heavier of the two breaks: brighter, bolder, and ruled
+   with a doubled line */
+.log-rule--turn {
+  margin-top: 0.5rem;
+  color: var(--log-tint);
+  font-weight: 700;
+  letter-spacing: 0.1em;
+}
+.log-rule--turn::before,
+.log-rule--turn::after {
+  height: 3px;
+  background: none;
+  border-top: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  opacity: 0.55;
+}
+/* the newest bubble flashes and fades once */
+.log-group--new {
   animation: logHighlight 1.5s ease-out forwards;
 }
 @keyframes logHighlight {
@@ -499,6 +556,9 @@ body {
 }
 /* compact nav button (New game, Zones) */
 .btn-nav {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--bar-h);
   border: 0;
   border-radius: 0.25rem;
   padding: 0.375rem 0.6rem;
@@ -511,11 +571,16 @@ body {
 .btn-nav:hover {
   background-color: #525053;
 }
-/* compact square button for icon-only actions (Undo/Redo) */
+/* compact square button for icon-only actions (Undo/Redo, the brand-bar nav).
+   Every one is the same square whether it holds an SVG or a glyph, so the row of
+   them reads as evenly spaced. */
 .btn-icon {
   display: inline-flex;
   align-items: center;
-  padding: 0.375rem 0.45rem;
+  justify-content: center;
+  width: var(--bar-h);
+  height: var(--bar-h);
+  padding: 0;
 }
 .icon-nav {
   width: 1.15em;
@@ -641,6 +706,20 @@ button:disabled {
 .house-btn:hover {
   filter: brightness(1.2);
 }
+/* a house prompt can offer all seven houses, so they are laid out as a grid of
+   emblems (the name lives in the tooltip) instead of seven full-width rows */
+.house-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.375rem;
+}
+.house-btn--icon {
+  padding: 0.375rem;
+}
+.house-btn--icon .icon-house {
+  width: 1.25rem;
+  height: 1.25rem;
+}
 /* the button Tab has stepped to: ringed like a selected card, so the keyboard's
    place in a prompt is visible before Enter presses it */
 .btn-cursor {
@@ -662,54 +741,67 @@ button:disabled {
 .key-choice--yellow {
   background-color: #f0c94a;
 }
-/* the key icon reads as the same ink as the label on every colour */
+/* the key icon reads as the same ink as the label on every colour. The keyhole is
+   punched out of the asset rather than filled dark, so it survives this and shows
+   the button's colour through. */
 .key-choice .icon-inline {
   width: 1.1em;
   height: 1.1em;
   filter: brightness(0);
 }
-/* the key on a colour button glints: two small sparks orbiting opposite corners,
-   so a forge reads as an event rather than another list item */
+/* the key on a colour button shines: two discs of sun rays behind it, turning in
+   opposite directions, so a forge reads as an event rather than another list item */
 .key-sparkle {
   position: relative;
   display: inline-flex;
   align-items: center;
 }
+.key-sparkle .icon-inline {
+  position: relative;
+  z-index: 1;
+}
 .key-sparkle::before,
 .key-sparkle::after {
   content: "";
   position: absolute;
-  width: 0.28em;
-  height: 0.28em;
+  z-index: 0;
+  top: 50%;
+  /* the label sits to the right of the key, so dead-centring the discs on the
+     inline box puts them right of the key; nudge them back under it */
+  left: calc(50% - 0.1em);
+  width: 2.25em;
+  height: 2.25em;
+  margin: -1.125em 0 0 -1.125em;
   border-radius: 50%;
-  background-color: #fffbe6;
-  box-shadow: 0 0 0.25em 0.05em rgb(255 251 230 / 0.9);
-  opacity: 0;
-  animation: key-spark 1.8s ease-in-out infinite;
+  pointer-events: none;
+  /* fade the rays out well before the disc's edge so they read as a glow behind
+     the key rather than a hard-edged wheel */
+  mask-image: radial-gradient(closest-side, #000 25%, transparent 62%);
 }
 .key-sparkle::before {
-  top: -0.15em;
-  right: -0.2em;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgb(255 251 230 / 0.55) 0deg 9deg,
+    transparent 9deg 30deg
+  );
+  animation: key-rays-cw 9s linear infinite;
 }
 .key-sparkle::after {
-  bottom: -0.1em;
-  left: -0.25em;
-  animation-delay: 0.9s;
+  background: repeating-conic-gradient(
+    from 9deg,
+    rgb(255 251 230 / 0.32) 0deg 6deg,
+    transparent 6deg 20deg
+  );
+  animation: key-rays-ccw 14s linear infinite;
 }
-@keyframes key-spark {
-  0%,
-  70%,
-  100% {
-    opacity: 0;
-    transform: scale(0.4);
+@keyframes key-rays-cw {
+  to {
+    transform: rotate(360deg);
   }
-  15% {
-    opacity: 1;
-    transform: scale(1);
-  }
-  40% {
-    opacity: 0;
-    transform: scale(0.5);
+}
+@keyframes key-rays-ccw {
+  to {
+    transform: rotate(-360deg);
   }
 }
 @media (prefers-reduced-motion: reduce) {
@@ -1057,13 +1149,13 @@ button:disabled {
   max-height: 11rem;
   --card-full-h: 11rem;
 }
-/* the cards restricting the active player, named above the controls */
+/* the cards restricting the active player, named above the turn HUD */
 .restrictions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
   padding: 0.35rem 0.75rem;
-  border-top: 1px solid #363537;
+  border-bottom: 1px solid #363537;
 }
 .restriction {
   font-size: 0.75rem;
@@ -1311,8 +1403,16 @@ button:disabled {
   cursor: pointer;
   box-shadow: 0 0 0 2px #7bd88f;
 }
-.card--dimmed {
-  opacity: 0.45;
+/* A dimmed card is covered by a scrim rather than faded as a whole, so the
+   keyword stripe can sit above it: how a creature can be attacked matters most
+   about the creatures you cannot act on (exhausted ones, the opponent's). */
+.card--dimmed::after {
+  content: "";
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  background-color: rgb(18 18 17 / 0.55);
+  pointer-events: none;
 }
 /* dimming is a state change, not an event, so it eases rather than snaps: a card
    entering a lowlighted board fades down instead of appearing already grey */
@@ -1321,16 +1421,24 @@ button:disabled {
     opacity 0.18s ease-out,
     filter 0.18s ease-out;
 }
-/* combat keywords as a colour stripe along the card's top edge, so how a creature
-   can be attacked is legible without reading its rules text */
+/* combat keywords as a colour stripe along the card's edge, so how a creature
+   can be attacked is legible without reading its rules text. It rides above the
+   dim scrim, and moves to the bottom edge on the opponent's rows, where the top
+   of the card is the edge furthest from the midline. */
 .card-keybar {
   position: absolute;
   top: 0;
   right: 0;
   left: 0;
-  z-index: 2;
   display: flex;
   height: 3px;
+}
+.card > .card-keybar {
+  z-index: 3;
+}
+.card-keybar--bottom {
+  top: auto;
+  bottom: 0;
 }
 .card-keybar-seg {
   flex: 1 1 0%;

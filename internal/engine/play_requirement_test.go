@@ -27,7 +27,7 @@ func TestPlayRequirement(t *testing.T) {
 	}
 
 	g := NewGame("A", "B", 1)
-	g.BeginTurn(0)
+	g.StartTurn(0)
 	if err := g.ChooseHouse(0, Brobnar); err != nil {
 		t.Fatalf("ChooseHouse: %v", err)
 	}
@@ -54,7 +54,7 @@ func TestPlayRequirement(t *testing.T) {
 
 	// A cost is charged out of the pool as the card is played.
 	h := NewGame("A", "B", 1)
-	h.BeginTurn(0)
+	h.StartTurn(0)
 	if err := h.ChooseHouse(0, Dis); err != nil {
 		t.Fatalf("ChooseHouse: %v", err)
 	}

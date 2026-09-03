@@ -159,15 +159,22 @@ repeats until nothing is unsatisfied and nothing was overwritten. By default
 connections stay in-pod; a rare cross-pod maverick connection is a tunable, off in
 the first version.
 
-_Implemented (v1)._ A pulled card carries `card.Rarity.Connected`, so it never
-rolls on its own — `NewSet` keeps Connected cards out of the pool and only indexes
-them by name. The puller declares its links with `card.Connects("Partner", …)`,
-and after a pod is filled the fixpoint loop pulls **one of each** named partner
-into an unprotected slot, in-house, skipping a maverick puller. Timetraveller
-(`card.Connects("Help from Future Self")`) and Horseman of Pestilence
-(`card.Connects("Horseman of Death", "Horseman of Famine", "Horseman of War")`) are
-the first users. Duplicate counts (Plague Rat), distinct-from-a-pool sins, and
-cross-pod maverick connections are the deferred axes.
+_Implemented (v1)._ The puller declares its links with `card.Connects(…)`, one
+entry per pulled card, and after a pod is filled the fixpoint loop tops the pod up
+to each entry's copy count from an unprotected slot, in-house, skipping a maverick
+puller. Two entry shapes exist: `card.Pull(Partner, n)` pulls `n` copies every
+time, and `card.PullSometimes(Partner, p)` pulls one copy with probability `p`,
+rolled once per pod. A copy already in the pod counts toward the total, so a pull
+tops up rather than duplicating.
+
+A pulled card is usually authored `card.Rarity.Connected`, which keeps it out of
+the pool so it never rolls without its puller — `NewSet` indexes Connected cards by
+name only. That is not required, though: Troop Call
+(`card.Pull(NiffleApe, 2)` plus `card.PullSometimes(NiffleQueen, 0.15)`) guarantees
+Niffle Apes that also roll on their own, which is how the card's flavour survives
+into deck generation. Timetraveller (`card.Pull(HelpFromFutureSelf, 1)`) and
+Horseman of Pestilence are the guaranteed-partner users.
+Distinct-from-a-pool sins and cross-pod maverick connections are the deferred axes.
 
 **Deadlock.** Constraints can genuinely conflict — too many protected slots, or
 mutually exclusive requirements. Rather than backtracking, the loop is capped at a

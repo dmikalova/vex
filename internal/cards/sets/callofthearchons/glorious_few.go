@@ -18,6 +18,6 @@ var GloriousFew = card.New(
 	card.WithAbility(card.Trigger.Play, card.GainAember{
 		Player: card.Controller,
 		Amount: 1,
-		Per:    card.OpponentExcessCreatures{},
+		Per:    card.ExcessCreatures{Player: card.Opponent},
 	}),
 )

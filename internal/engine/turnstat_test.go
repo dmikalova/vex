@@ -17,7 +17,7 @@ func TestTurnHistoryRollover(t *testing.T) {
 		t.Errorf("keys forged this turn = %d, want 1", got)
 	}
 
-	g.EndTurn(0)
+	g.EndPlayPhase(0)
 	if got := g.TurnHistory(0, KeysForgedLastTurn); got != 1 {
 		t.Errorf("keys forged last turn = %d, want 1", got)
 	}
@@ -59,7 +59,7 @@ func TestForgedKeyCondition(t *testing.T) {
 
 	g.SetAember(1, 6)
 	g.forgeKey(1)
-	g.EndTurn(1)
+	g.EndPlayPhase(1)
 	if !theirs.Met(ctx) {
 		t.Error("the opponent's key from their last turn should meet the condition")
 	}

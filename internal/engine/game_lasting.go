@@ -53,15 +53,20 @@ const (
 	EventAemberAddedToPool
 	// EventForgeKey fires after a player forges a key (a reaction point). A reaction
 	// owned by that player fires during their turn; because the registry clears a
-	// player's own entries at their EndTurn, a reaction armed on an opponent (owned
-	// by the forger) survives the arming turn and fires during the forger's next
-	// turn — the "during your opponent's next turn" window (Interdimensional Graft).
+	// player's own entries at their ready phase, a reaction armed on an opponent
+	// (owned by the forger) survives the arming turn and fires during the forger's
+	// next turn — the "during your opponent's next turn" window (Interdimensional
+	// Graft).
 	EventForgeKey
 	// EventCardEntersPlay fires after the controller plays a card that stays in play
 	// under its own name — a creature or an artifact (a reaction point). It is the
 	// window "the next creature/artifact you play" effects arm, so they can reach an
 	// artifact too, which EventCreaturePlayed cannot.
 	EventCardEntersPlay
+	// EventCardPlayed fires after the controller plays a card of any type, including
+	// one that never enters play (a reaction point). Library Access attaches here,
+	// excepting itself so it draws only for another card.
+	EventCardPlayed
 )
 
 // isReaction reports whether the event is a reaction point (fired after) rather
@@ -69,7 +74,7 @@ const (
 func (e Event) isReaction() bool {
 	return e == EventCreaturePlayed || e == EventReap || e == EventFight ||
 		e == EventEnemyCreatureDestroyed || e == EventForgeKey ||
-		e == EventCardEntersPlay
+		e == EventCardEntersPlay || e == EventCardPlayed
 }
 
 // clause renders the "when" phrase for a reaction, e.g. "each time you play a
@@ -84,6 +89,8 @@ func (e Event) clause() string {
 		return "each time an enemy creature is destroyed"
 	case EventForgeKey:
 		return "after forging a key"
+	case EventCardPlayed:
+		return "each time you play another card"
 	default:
 		return "each time you play a creature"
 	}
@@ -105,6 +112,7 @@ const (
 	actReadyPlayed
 	actGiveRemainingAember
 	actCapture
+	actDraw
 )
 
 // describe is a short label for a reaction, used when the controller orders several
@@ -119,6 +127,8 @@ func (a lastingAction) describe() string {
 		return "capture Æmber"
 	case actGiveRemainingAember:
 		return "give remaining Æmber"
+	case actDraw:
+		return "draw a card"
 	default:
 		return "gain Æmber"
 	}
@@ -143,6 +153,11 @@ type LastingEffect struct {
 	// Once removes the record after it fires a single time — "the next" rather than
 	// "each time".
 	Once bool
+	// Except, when HasExcept is set, is the card that armed the reaction, which it
+	// does not fire for: Library Access draws "each time you play another card", and
+	// playing Library Access itself is not another card.
+	Except    LocalID
+	HasExcept bool
 }
 
 // maxLasting bounds how many lasting effects can be active at once — generous for
@@ -150,35 +165,12 @@ type LastingEffect struct {
 // flat value.
 const maxLasting = 8
 
-// AddLasting registers a lasting effect owned by controller for the rest of their
-// turn. It is the single seam a "for the remainder of the turn" effect uses instead
-// of hardcoding itself into the play or reap path.
-func (g *Game) AddLasting(on Event, do lastingAction, controller, amount int) {
-	g.addLasting(LastingEffect{On: on, Do: do, Controller: int8(controller), Amount: int8(amount)})
-}
-
-// AddLastingOnce registers a one-shot reaction that fires the next time its event
-// occurs — and, when house or cardType is set, only for a subject matching them —
-// then removes itself (Blypyp readying the next Mars creature you play).
-func (g *Game) AddLastingOnce(
-	on Event, do lastingAction, controller, amount int, house House, cardType CardType,
-) {
-	g.addLasting(
-		LastingEffect{
-			On:         on,
-			Do:         do,
-			Controller: int8(controller),
-			Amount:     int8(amount),
-			House:      house,
-			Type:       cardType,
-			Once:       true,
-		},
-	)
-}
-
-// addLasting appends a lasting record, dropping it silently when the registry is
-// full.
-func (g *Game) addLasting(le LastingEffect) {
+// AddLasting registers a lasting effect owned by le.Controller for the rest of
+// their turn, dropping it silently when the registry is full. It is the single
+// seam a "for the remainder of the turn" effect uses instead of hardcoding itself
+// into the play or reap path; the record's own fields (Once, House, Type, Except)
+// narrow when it fires.
+func (g *Game) AddLasting(le LastingEffect) {
 	if int(g.State.LastingCount) >= maxLasting {
 		return
 	}
@@ -217,6 +209,9 @@ func (g *Game) emitLasting(event Event, actor int, subject LocalID) {
 			continue
 		}
 		if le.Type != TypeUnset && !le.Type.reacts(g.cat.def(subject).Type) {
+			continue
+		}
+		if le.HasExcept && le.Except == subject {
 			continue
 		}
 		pending = append(pending, le)
@@ -272,7 +267,7 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 		)
 	case actReadyPlayed:
 		g.State.Cards[subject].Exhausted = false
-		g.logf("%s is readied", g.Name(subject))
+		g.record(CreatureReadied{Creature: subject})
 	case actCapture:
 		CaptureAember{
 			Amount: int(le.Amount),
@@ -287,29 +282,30 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 				HasIt:      true,
 			},
 		)
+	case actDraw:
+		g.draw(actor, int(le.Amount))
+		g.record(LastingDraw{Player: actor, Amount: int(le.Amount), On: le.On})
 	case actGiveRemainingAember:
 		beneficiary := 1 - actor
 		amount := g.State.Aember[actor]
 		g.State.Aember[actor] = 0
 		g.State.Aember[beneficiary] += amount
-		g.logf(
-			"%s gives %d Æmber to %s after forging a key",
-			g.names[actor],
-			amount,
-			g.names[beneficiary],
-		)
+		g.record(AemberGivenAfterForging{
+			Player: actor,
+			To:     beneficiary,
+			Amount: amount,
+		})
 	default: // actGainAember
 		if capturer, ok := g.gainAember(actor, int(le.Amount)); ok {
-			g.logf(
-				"%s captures %d Æmber instead of %s gaining it (%s)",
-				g.Name(capturer),
-				le.Amount,
-				g.names[actor],
-				le.On.clause(),
-			)
+			g.record(LastingAemberCaptured{
+				Creature: capturer,
+				Player:   actor,
+				Amount:   int(le.Amount),
+				On:       le.On,
+			})
 			return
 		}
-		g.logf("%s gains %d Æmber (%s)", g.names[actor], le.Amount, le.On.clause())
+		g.record(LastingAemberGained{Player: actor, Amount: int(le.Amount), On: le.On})
 	}
 }
 

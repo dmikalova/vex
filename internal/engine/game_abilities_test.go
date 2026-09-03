@@ -86,9 +86,9 @@ func TestTimesUsedThisTurn(t *testing.T) {
 		t.Fatalf("after action, times used = %d, want 3", got)
 	}
 
-	g.BeginTurn(1)
+	g.StartTurn(1)
 	if got := g.TimesUsedThisTurn(user); got != 0 {
-		t.Fatalf("BeginTurn reset times used = %d, want 0", got)
+		t.Fatalf("StartTurn reset times used = %d, want 0", got)
 	}
 }
 

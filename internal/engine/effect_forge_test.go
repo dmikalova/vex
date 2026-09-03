@@ -57,7 +57,7 @@ func TestGiveRemainingAemberAfterOpponentForgeKey(t *testing.T) {
 	}
 
 	g := NewGame("A", "B", 1)
-	g.BeginTurn(0)
+	g.StartTurn(0)
 	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
 	if g.State.LastingCount != 1 || g.State.Lasting[0].Controller != 1 ||
 		g.State.Lasting[0].On != EventForgeKey ||
@@ -66,8 +66,8 @@ func TestGiveRemainingAemberAfterOpponentForgeKey(t *testing.T) {
 	}
 
 	g.State.Aember[1] = KeyCost + 4
-	g.EndTurn(0) // the opponent-owned reaction survives the controller's turn end
-	g.BeginTurn(1)
+	g.EndPlayPhase(0) // the opponent-owned reaction survives the controller's turn end
+	g.StartTurn(1)
 
 	if g.Keys(1) != 1 {
 		t.Errorf("opponent keys = %d, want 1", g.Keys(1))
@@ -82,7 +82,7 @@ func TestGiveRemainingAemberAfterOpponentForgeKey(t *testing.T) {
 		t.Error("reaction should persist so further forges this turn also transfer")
 	}
 
-	g.EndTurn(1)
+	g.EndPlayPhase(1)
 	if g.State.LastingCount != 0 {
 		t.Error("reaction should clear at the end of the opponent's next turn")
 	}
@@ -92,10 +92,10 @@ func TestGiveRemainingAemberAfterOpponentForgeKeyEveryForge(t *testing.T) {
 	// A key cheat can forge more than one key in a turn; the opponent must give
 	// their remaining Æmber each time.
 	g := NewGame("A", "B", 1)
-	g.BeginTurn(0)
+	g.StartTurn(0)
 	GiveRemainingAemberAfterOpponentForgeKey{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
-	g.EndTurn(0)
-	g.BeginTurn(1) // the start-of-turn forge is skipped (no Æmber), reaction still armed
+	g.EndPlayPhase(0)
+	g.StartTurn(1) // the start-of-turn forge is skipped (no Æmber), reaction still armed
 
 	g.State.Aember[1] = 5
 	ForgeKey{FreeOfCost: true}.Resolve(&EffectContext{Resolver: g, Controller: 1})
@@ -112,23 +112,23 @@ func TestGiveRemainingAemberAfterOpponentForgeKeyEveryForge(t *testing.T) {
 
 func TestGiveRemainingAemberAfterOpponentForgeKeyExpiresIfNoForge(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	g.BeginTurn(0)
+	g.StartTurn(0)
 	GiveRemainingAemberAfterOpponentForgeKey{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 
 	g.State.Aember[1] = KeyCost - 1
-	g.EndTurn(0)
-	g.BeginTurn(1)
+	g.EndPlayPhase(0)
+	g.StartTurn(1)
 	if g.Aember(1) != KeyCost-1 {
 		t.Errorf("opponent aember = %d, want %d", g.Aember(1), KeyCost-1)
 	}
 
-	g.EndTurn(1)
+	g.EndPlayPhase(1)
 	if g.State.LastingCount != 0 {
 		t.Error("reaction should expire at the end of the opponent's next turn")
 	}
 
 	g.State.Aember[1] = KeyCost + 2
-	g.BeginTurn(1)
+	g.StartTurn(1)
 	if g.Aember(1) != 2 {
 		t.Errorf("later opponent aember = %d, want 2", g.Aember(1))
 	}
@@ -139,10 +139,10 @@ func TestGiveRemainingAemberAfterOpponentForgeKeyExpiresIfNoForge(t *testing.T) 
 
 func TestGiveRemainingAemberAfterOpponentForgeKeyAppliesToCardForge(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	g.BeginTurn(0)
+	g.StartTurn(0)
 	GiveRemainingAemberAfterOpponentForgeKey{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
-	g.EndTurn(0)
-	g.BeginTurn(1)
+	g.EndPlayPhase(0)
+	g.StartTurn(1)
 
 	g.State.Aember[1] = 3
 	ForgeKey{FreeOfCost: true}.Resolve(&EffectContext{Resolver: g, Controller: 1})

@@ -26,7 +26,7 @@ type chooseRequestMsg struct {
 // actionDoneMsg reports that a play/use/fight action goroutine has finished.
 type actionDoneMsg struct{ err error }
 
-// beginDoneMsg reports that a BeginTurn goroutine has finished (keys forged).
+// beginDoneMsg reports that a StartTurn goroutine has finished (keys forged).
 type beginDoneMsg struct{}
 
 // ---- chooser bridge ----
@@ -175,7 +175,7 @@ func newGameModel(snd *sender, w, h int) gameModel {
 	g.SetChooser(1, ch)
 	g.SetPlayerHouses(0, houses[0])
 	g.SetPlayerHouses(1, houses[1])
-	g.BeginTurn(0) // first turn: no Æmber yet, so forging never triggers here
+	g.StartTurn(0) // first turn: no Æmber yet, so forging never triggers here
 	m := gameModel{
 		snd: snd, g: g, chooser: ch,
 		player: 0, deckHouses: houses, playHandPos: -1,
@@ -535,11 +535,11 @@ func (m gameModel) runAction(fn func() error) (gameModel, tea.Cmd) {
 func (m gameModel) beginTurn() (gameModel, tea.Cmd) {
 	m.phase = phaseBusy
 	g, player := m.g, m.player
-	return m, func() tea.Msg { g.BeginTurn(player); return beginDoneMsg{} }
+	return m, func() tea.Msg { g.StartTurn(player); return beginDoneMsg{} }
 }
 
 func (m gameModel) endTurn() (gameModel, tea.Cmd) {
-	m.g.EndTurn(m.player)
+	m.g.EndPlayPhase(m.player)
 	m.player = 1 - m.player
 	m.status = ""
 	return m.beginTurn() // forge + fire triggers for the next player, then house phase
@@ -841,7 +841,7 @@ func (m gameModel) logTail(n int) string {
 	var b strings.Builder
 	b.WriteString("\n\n" + faintStyle.Render("── log ──") + "\n")
 	for _, line := range log {
-		b.WriteString(faintStyle.Render(line) + "\n")
+		b.WriteString(faintStyle.Render(line.Text(m.g)) + "\n")
 	}
 	return b.String()
 }

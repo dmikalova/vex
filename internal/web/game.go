@@ -166,7 +166,9 @@ type game struct {
 	redo []undoEntry
 
 	// logGroups marks where each root action's log lines begin (and whose turn), so
-	// the log renders one bubble per action, tinted by player.
+	// the log renders one bubble per action, tinted by player. The engine narrates
+	// the turn's shape but frames only abilities, so where one player action stops
+	// and the next starts is the client's own knowledge.
 	logGroups []logMark
 
 	// logScrollHeight is the log's scrollHeight as of the previous render, so the
@@ -259,7 +261,7 @@ type cardRect struct {
 // log, and the log group marks at that moment.
 type undoEntry struct {
 	state  engine.GameState
-	log    []string
+	log    []engine.Record
 	groups []logMark
 }
 
@@ -276,7 +278,7 @@ const persistKey = "vactrol.match"
 
 // snapshotVersion tags persisted state; bump it when an engine change makes older
 // snapshots invalid so a stale one is flushed instead of restored.
-const snapshotVersion = 3
+const snapshotVersion = 6
 
 // snapshot is the persisted match. The seed deterministically rebuilds the
 // catalog and card ids; the flat GameState carries everything mutable. All other
@@ -285,13 +287,27 @@ type snapshot struct {
 	Version int
 	Seed    int64
 	State   engine.GameState
-	// Log and Groups persist the game log and its per-action bubbling so a
-	// hot-reload does not lose the history.
-	Log    []string
+	// Log persists the game log so a hot-reload does not lose the history. A typed
+	// log entry does not survive JSON (it carries an interface, like a
+	// CardDefinition's effect nodes), so each entry is saved as the text it was
+	// narrated with plus the divider it drew. Groups persists the per-action
+	// bubbling alongside it.
+	Log    []savedLine
 	Groups []logMark
 	// Manual replays the cards manual mode added, in registration order, so the
 	// rebuilt catalog holds the same ids the state refers to.
 	Manual []manualAdd
+}
+
+// savedLine is one persisted log entry: the attribution it was recorded under,
+// the text it was narrated with, and — for a turn or phase header — the rule it
+// drew and the player it announced, which the entry's type no longer carries once
+// it has been through JSON.
+type savedLine struct {
+	Frame  engine.Frame
+	Text   string
+	Rule   logRule
+	Player int
 }
 
 // manualAdd is one card manual mode put into a hand, named rather than embedded:

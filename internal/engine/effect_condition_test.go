@@ -231,7 +231,7 @@ func TestAfterChooseHouseTrigger(t *testing.T) {
 
 	t.Run("gains when the watched house is chosen", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
-		g.BeginTurn(0)
+		g.StartTurn(0)
 		g.AddToBattleline(def, 0)
 		if err := g.ChooseHouse(0, Sanctum); err != nil {
 			t.Fatalf("ChooseHouse: %v", err)
@@ -243,7 +243,7 @@ func TestAfterChooseHouseTrigger(t *testing.T) {
 
 	t.Run("does nothing when a different house is chosen", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
-		g.BeginTurn(0)
+		g.StartTurn(0)
 		g.AddToBattleline(def, 0)
 		if err := g.ChooseHouse(0, Logos); err != nil {
 			t.Fatalf("ChooseHouse: %v", err)

@@ -134,7 +134,11 @@ func (GiveRemainingAemberAfterOpponentForgeKey) Text() string {
 // to the opponent's forge, owned by the opponent so it survives this turn, fires on
 // each forge during theirs, and clears at the end of their turn.
 func (GiveRemainingAemberAfterOpponentForgeKey) Resolve(ctx *EffectContext) {
-	ctx.Resolver.AddLasting(EventForgeKey, actGiveRemainingAember, ctx.Opponent(), 0)
+	ctx.Resolver.AddLasting(LastingEffect{
+		On:         EventForgeKey,
+		Do:         actGiveRemainingAember,
+		Controller: int8(ctx.Opponent()),
+	})
 }
 
 // UnforgeKey takes a forged key back off a player (Key Hammer). It is the one

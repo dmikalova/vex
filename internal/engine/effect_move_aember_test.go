@@ -2,41 +2,38 @@ package engine
 
 import "testing"
 
-func TestPreventDamage(t *testing.T) {
+// TestMoveAemberAll checks the All mode empties every source instead of moving a
+// fixed amount, and that it cannot be combined with one.
+func TestMoveAemberAll(t *testing.T) {
+	e := MoveAember{
+		All:  true,
+		From: Target{Kind: TargetEachEnemyCreature},
+		To:   Controller,
+	}
+	want := "move all Æmber from each enemy creature to your pool"
+	if got := e.Text(); got != want {
+		t.Errorf("Text = %q, want %q", got, want)
+	}
+	if err := e.validate(); err != nil {
+		t.Errorf("validate = %v, want nil", err)
+	}
+	if (MoveAember{All: true, Amount: 1, From: e.From, To: Controller}).validate() == nil {
+		t.Error("All combined with Amount should not validate")
+	}
+
 	g := NewGame("A", "B", 1)
-	friend := g.AddToBattleline(testCreature("friend", 5), 0)
-	foe := g.AddToBattleline(testCreature("foe", 5), 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	rich := g.AddToBattleline(testCreature("rich", 4), 1)
+	poor := g.AddToBattleline(testCreature("poor", 4), 1)
+	g.AddAmberOn(rich, 3)
+	g.AddAmberOn(poor, 1)
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
 
-	e := PreventDamage{Target: Target{Kind: TargetEachFriendlyCreature}, Duration: EndOfTurn}
-	if e.Text() != "for the remainder of the turn, each friendly creature cannot be dealt damage" {
-		t.Errorf("text = %q", e.Text())
+	if g.AmberOn(rich) != 0 || g.AmberOn(poor) != 0 {
+		t.Errorf("Æmber left on the creatures = %d/%d, want 0/0",
+			g.AmberOn(rich), g.AmberOn(poor))
 	}
-	if (PreventDamage{Duration: EndOfTurn}).validate() == nil {
-		t.Error("unset target should be invalid")
-	}
-	if (PreventDamage{Target: Target{Kind: TargetEachFriendlyCreature}}).validate() == nil {
-		t.Error("unset duration should be invalid")
-	}
-	if e.validate() != nil {
-		t.Error("a set target and duration should be valid")
-	}
-
-	e.Resolve(ctx)
-	g.applyRawDamage(friend, 3, false)
-	if g.Damage(friend) != 0 {
-		t.Errorf("protected creature took %d damage, want 0", g.Damage(friend))
-	}
-
-	// Protect an enemy creature too, then confirm end of turn clears both.
-	PreventDamage{Target: Target{Kind: TargetEachEnemyCreature}, Duration: EndOfTurn}.Resolve(ctx)
-	if !g.State.Cards[foe].DamageImmune {
-		t.Fatal("enemy creature should be protected")
-	}
-	g.BeginTurn(0)
-	g.EndTurn(0)
-	if g.State.Cards[friend].DamageImmune || g.State.Cards[foe].DamageImmune {
-		t.Error("end of turn should clear damage immunity on both players' creatures")
+	if got := g.Aember(0); got != 4 {
+		t.Errorf("pool = %d, want 4", got)
 	}
 }
 
@@ -122,25 +119,5 @@ func TestMoveAemberDeclined(t *testing.T) {
 		Resolve(&EffectContext{Resolver: g, Controller: 0})
 	if g.Aember(0) != 0 {
 		t.Error("a declined move should move nothing")
-	}
-}
-
-func TestHealGate(t *testing.T) {
-	g := NewGame("A", "B", 1)
-	c := g.AddToBattleline(testCreature("c", 5), 0)
-	g.State.Cards[c].Damage = 3
-	ctx := &EffectContext{Resolver: g, Controller: 0}
-
-	if !(Heal{Fully: true, Target: Target{Kind: TargetChosenFriendlyCreature}}).resolveGate(ctx) {
-		t.Error("healing a damaged creature should report a heal")
-	}
-	if !ctx.HasIt || ctx.It != c {
-		t.Errorf("the healed creature should be left in context, got %d", ctx.It)
-	}
-
-	// Now undamaged: the gate reports nothing healed.
-	ctx2 := &EffectContext{Resolver: g, Controller: 0}
-	if (Heal{Fully: true, Target: Target{Kind: TargetChosenFriendlyCreature}}).resolveGate(ctx2) {
-		t.Error("healing an undamaged creature should report no heal")
 	}
 }

@@ -39,8 +39,8 @@ func TestChaosPortalComposition(t *testing.T) {
 	if played := g.PlayedThisTurn(0); len(played) != 1 || g.House(played[0]) != Logos {
 		t.Errorf("played this turn = %v, want one Logos card", played)
 	}
-	if len(g.Log) == 0 || !strings.Contains(g.Log[len(g.Log)-1], "Portal Scout") {
-		t.Errorf("log = %v, want the top card revealed and played", g.Log)
+	if log := g.LogText(); len(log) == 0 || !strings.Contains(log[len(log)-1], "Portal Scout") {
+		t.Errorf("log = %v, want the top card revealed and played", log)
 	}
 }
 

@@ -1,6 +1,9 @@
 package engine
 
-import "fmt"
+import (
+	"fmt"
+	"slices"
+)
 
 // Capturing Aember moves it from a player's pool onto a capturing creature, where
 // it counts for no player until that creature leaves play, at which point it goes
@@ -24,6 +27,10 @@ type CaptureAember struct {
 	Source Player
 	// Per repeats the capture, choosing a fresh Target each time.
 	Per Count
+	// Distinct bars a creature an earlier repetition already picked from being
+	// picked again, so a Per that repeats N times spreads the captures across N
+	// different creatures (Unguarded Camp).
+	Distinct bool
 }
 
 // validate requires an explicit Target and Source.
@@ -36,6 +43,9 @@ func (e CaptureAember) validate() error {
 	}
 	if e.Amount != 0 && e.By != nil {
 		return fmt.Errorf("CaptureAember: set Amount or By, not both (got Amount=%d)", e.Amount)
+	}
+	if e.Distinct && e.Per == nil {
+		return fmt.Errorf("CaptureAember: Distinct is meaningless without a Per to repeat")
 	}
 	return nil
 }
@@ -62,7 +72,14 @@ func (e CaptureAember) Text() string {
 	default:
 		body = fmt.Sprintf("%s captures %d Æmber from %s", capturer, e.Amount, e.fromText())
 	}
-	return forEach(e.Per, body)
+	body = forEach(e.Per, body)
+	if e.Distinct {
+		body += fmt.Sprintf(
+			". Each creature cannot capture more than %d Æmber this way",
+			e.Amount,
+		)
+	}
+	return body
 }
 
 // poolPossessive names the Source pool as a possessive for the "all" wording,
@@ -101,8 +118,9 @@ func (e CaptureAember) Resolve(ctx *EffectContext) {
 	if e.Per != nil {
 		reps = e.Per.Value(ctx)
 	}
+	var captured []LocalID
 	for i := 0; i < reps; i++ {
-		ids := e.Target.Select(ctx)
+		ids := e.Target.selectWith(ctx, false, e.eligible(captured))
 		if len(ids) == 0 {
 			return
 		}
@@ -112,6 +130,7 @@ func (e CaptureAember) Resolve(ctx *EffectContext) {
 			if !resolverInPlay(ctx, id) {
 				continue
 			}
+			captured = append(captured, id)
 			amt := e.Amount
 			switch {
 			case e.All:
@@ -122,7 +141,17 @@ func (e CaptureAember) Resolve(ctx *EffectContext) {
 			amt = min(amt, ctx.Resolver.Aember(pool))
 			ctx.Resolver.SetAember(pool, ctx.Resolver.Aember(pool)-amt)
 			ctx.Resolver.AddAmberOn(id, amt)
-			ctx.Resolver.Logf("%s captures %d Æmber", ctx.Resolver.Name(id), amt)
+			ctx.Resolver.Record(AemberCaptured{Creature: id, Amount: amt})
 		}
 	}
+}
+
+// eligible narrows the candidates a repetition may choose from to the creatures
+// no earlier repetition already had capture, but only when Distinct asks for it.
+// A nil filter leaves the target's own candidate set untouched.
+func (e CaptureAember) eligible(captured []LocalID) func(LocalID) bool {
+	if !e.Distinct {
+		return nil
+	}
+	return func(id LocalID) bool { return !slices.Contains(captured, id) }
 }

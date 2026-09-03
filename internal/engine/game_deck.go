@@ -92,8 +92,22 @@ func (g *Game) DiscardTopOfDeck(player int) (LocalID, bool) {
 	}
 	id := deck.removeAt(0)
 	g.State.Discard[player].add(id)
-	g.logf("%s discards the top card of their deck", g.names[player])
+	g.record(TopOfDeckDiscarded{Player: player, Card: id})
 	return id, true
+}
+
+// SwapDeckAndDiscard exchanges a player's deck with their discard pile, then
+// shuffles the new deck. Both zones are the same flat list type, so the swap is
+// a plain exchange of values (Reverse Time). That exchange is also the right
+// ordering: a deck is stored top-first and a discard pile bottom-first, so
+// handing one list to the other zone flips the stack over the way turning a
+// face-down deck face-up does — the deck's top card becomes the discard's bottom
+// card, and the discard's top card becomes the deck's bottom card.
+func (g *Game) SwapDeckAndDiscard(player int) {
+	deck, discard := &g.State.Deck[player], &g.State.Discard[player]
+	*deck, *discard = *discard, *deck
+	g.Shuffle(player)
+	g.record(DeckAndDiscardSwapped{Player: player})
 }
 
 // Shuffle randomizes a player's deck using the game's seeded RNG.

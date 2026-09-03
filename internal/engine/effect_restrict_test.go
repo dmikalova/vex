@@ -28,7 +28,7 @@ func TestCannotPlay(t *testing.T) {
 	}
 
 	g := NewGame("A", "B", 1)
-	g.BeginTurn(0)
+	g.StartTurn(0)
 	if err := g.ChooseHouse(0, Brobnar); err != nil {
 		t.Fatal(err)
 	}
@@ -75,7 +75,7 @@ func TestCannotFight(t *testing.T) {
 	}
 
 	g := NewGame("A", "B", 1)
-	g.BeginTurn(0)
+	g.StartTurn(0)
 	if err := g.ChooseHouse(0, Brobnar); err != nil {
 		t.Fatal(err)
 	}
@@ -97,8 +97,8 @@ func TestCannotFight(t *testing.T) {
 	}
 
 	// Player 0 takes an extra turn; the armed bar keeps waiting for player 1.
-	g.EndTurn(0)
-	g.BeginTurn(0)
+	g.EndPlayPhase(0)
+	g.StartTurn(0)
 	if err := g.ChooseHouse(0, Brobnar); err != nil {
 		t.Fatal(err)
 	}
@@ -108,10 +108,10 @@ func TestCannotFight(t *testing.T) {
 	if !g.State.CannotFightNext[1].Value {
 		t.Error("the opponent's armed bar must survive the caster's extra turns")
 	}
-	g.EndTurn(0)
+	g.EndPlayPhase(0)
 
 	// Player 1's turn: the bar activates and blocks fighting.
-	g.BeginTurn(1)
+	g.StartTurn(1)
 	if err := g.ChooseHouse(1, Brobnar); err != nil {
 		t.Fatal(err)
 	}
@@ -122,9 +122,9 @@ func TestCannotFight(t *testing.T) {
 		t.Errorf("restricted Fight = %v, want ErrCannotFight", err)
 	}
 	// It lifts when player 1 ends the turn.
-	g.EndTurn(1)
+	g.EndPlayPhase(1)
 	if g.State.CannotFight[1].Value {
-		t.Error("EndTurn should lift the active bar")
+		t.Error("the ready phase should lift the active bar")
 	}
 }
 
@@ -230,8 +230,8 @@ func TestToll(t *testing.T) {
 	g.AddArtifact(NewCard("Customs", Brobnar, Artifact, Common, WithTraits("Location"),
 		WithRestrictions(Restrictions{Toll: Toll{Action: TollPlayArtifact, Amount: 1}})), 0)
 
-	g.EndTurn(0)
-	g.BeginTurn(1)
+	g.EndPlayPhase(0)
+	g.StartTurn(1)
 	if err := g.ChooseHouse(1, Brobnar); err != nil {
 		t.Fatalf("ChooseHouse: %v", err)
 	}
@@ -281,7 +281,7 @@ func TestForceActiveHouseNextTurn(t *testing.T) {
 		t.Errorf("text = %q", got)
 	}
 	g := NewGame("A", "B", 1)
-	g.BeginTurn(0)
+	g.StartTurn(0)
 	if err := g.ChooseHouse(0, Brobnar); err != nil {
 		t.Fatal(err)
 	}
@@ -294,8 +294,8 @@ func TestForceActiveHouseNextTurn(t *testing.T) {
 	}
 
 	// Player 0's own choice is unaffected this turn.
-	g.EndTurn(0)
-	g.BeginTurn(1)
+	g.EndPlayPhase(0)
+	g.StartTurn(1)
 	if g.State.ForcedHouse[1].Value != Mars {
 		t.Errorf("promoted = %v, want Mars", g.State.ForcedHouse[1].Value)
 	}
@@ -307,8 +307,8 @@ func TestForceActiveHouseNextTurn(t *testing.T) {
 	}
 
 	// The restriction lasts only that one turn.
-	g.EndTurn(1)
-	g.BeginTurn(1)
+	g.EndPlayPhase(1)
+	g.StartTurn(1)
 	if g.State.ForcedHouse[1].Value != HouseNone {
 		t.Errorf("still forced = %v, want none", g.State.ForcedHouse[1].Value)
 	}
@@ -319,7 +319,7 @@ func TestForceActiveHouseNextTurn(t *testing.T) {
 
 func TestRestrictionSources(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	g.BeginTurn(0)
+	g.StartTurn(0)
 	weak := g.AddToBattleline(testCreature("Control the Weak", 1), 0)
 	fog := g.AddToBattleline(testCreature("Fogbank", 1), 0)
 
@@ -333,15 +333,15 @@ func TestRestrictionSources(t *testing.T) {
 		t.Errorf("sources before promotion = %v, want none", got)
 	}
 
-	g.EndTurn(0)
-	g.BeginTurn(1)
+	g.EndPlayPhase(0)
+	g.StartTurn(1)
 	got := g.RestrictionSources(1)
 	if len(got) != 2 || got[0] != fog || got[1] != weak {
 		t.Errorf("promoted sources = %v, want [%d %d]", got, fog, weak)
 	}
 
 	// Lifting a bar stops it naming its card.
-	g.EndTurn(1)
+	g.EndPlayPhase(1)
 	if got := g.RestrictionSources(1); len(got) != 2 {
 		t.Errorf("sources after the fight bar lifts = %v, want the other two", got)
 	}
@@ -356,7 +356,7 @@ func TestUseConditionRestriction(t *testing.T) {
 	}
 
 	g := NewGame("A", "B", 1)
-	g.BeginTurn(0)
+	g.StartTurn(0)
 	if err := g.ChooseHouse(0, Untamed); err != nil {
 		t.Fatalf("ChooseHouse: %v", err)
 	}
@@ -385,7 +385,7 @@ func TestUseConditionRestriction(t *testing.T) {
 // of the current turn (Treasure Map), which every play path consults.
 func TestCannotPlayBlanketThisTurn(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	g.BeginTurn(0)
+	g.StartTurn(0)
 	if err := g.ChooseHouse(0, Brobnar); err != nil {
 		t.Fatal(err)
 	}
@@ -404,7 +404,7 @@ func TestCannotPlayBlanketThisTurn(t *testing.T) {
 		t.Errorf("PlayCreature = %v, want ErrCannotPlayType", err)
 	}
 
-	g.EndTurn(0)
+	g.EndPlayPhase(0)
 	if g.State.CannotPlayTypeThis[0].Value != TypeUnset {
 		t.Error("the blanket bar should lift at end of turn")
 	}
@@ -430,7 +430,7 @@ func TestCannotUse(t *testing.T) {
 	}
 
 	g := NewGame("A", "B", 1)
-	g.BeginTurn(0)
+	g.StartTurn(0)
 	CannotUse{Player: Opponent, Duration: NextTurn}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
 	)
@@ -441,9 +441,9 @@ func TestCannotUse(t *testing.T) {
 	if g.State.CannotUse[0].Value {
 		t.Error("only NextTurn arms the use bar")
 	}
-	g.EndTurn(0)
+	g.EndPlayPhase(0)
 
-	g.BeginTurn(1)
+	g.StartTurn(1)
 	if err := g.ChooseHouse(1, Brobnar); err != nil {
 		t.Fatal(err)
 	}
@@ -451,7 +451,7 @@ func TestCannotUse(t *testing.T) {
 	if err := g.Reap(1, beast); err != ErrCannotUse {
 		t.Errorf("Reap = %v, want ErrCannotUse", err)
 	}
-	g.EndTurn(1)
+	g.EndPlayPhase(1)
 	if g.State.CannotUse[1].Value {
 		t.Error("the use bar should lift at end of turn")
 	}
@@ -464,7 +464,7 @@ func TestGrantFightAnyHouse(t *testing.T) {
 	}
 
 	g := NewGame("A", "B", 1)
-	g.BeginTurn(0)
+	g.StartTurn(0)
 	if err := g.ChooseHouse(0, Brobnar); err != nil {
 		t.Fatal(err)
 	}
@@ -478,8 +478,43 @@ func TestGrantFightAnyHouse(t *testing.T) {
 	if err := g.Fight(0, outsider, enemy); err != nil {
 		t.Fatalf("Fight after the grant = %v, want nil", err)
 	}
-	g.EndTurn(0)
+	g.EndPlayPhase(0)
 	if g.State.MayFightAny[0] {
 		t.Error("the grant should lift at end of turn")
+	}
+}
+
+func TestMayUseFriendlyHouse(t *testing.T) {
+	if got := (MayUseFriendlyHouse{House: Sanctum}).Text(); got != "for the remainder of the turn, you may use friendly Sanctum creatures" {
+		t.Errorf("text = %q", got)
+	}
+	if (MayUseFriendlyHouse{}).validate() == nil {
+		t.Error("unset house should be invalid")
+	}
+	if (MayUseFriendlyHouse{House: Sanctum}).validate() != nil {
+		t.Error("a set house should be valid")
+	}
+
+	g := NewGame("A", "B", 1)
+	g.StartTurn(0)
+	if err := g.ChooseHouse(0, Brobnar); err != nil {
+		t.Fatal(err)
+	}
+	c := g.AddToBattleline(NewCard("cleric", Sanctum, Creature, Common, WithPower(3)), 0)
+	if g.usableInActiveHouse(c) {
+		t.Fatal("an off-house creature should not be usable before the grant")
+	}
+
+	MayUseFriendlyHouse{House: Sanctum}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if g.State.MayUseHouse[0] != Sanctum {
+		t.Fatal("the grant should record the house")
+	}
+	if !g.usableInActiveHouse(c) {
+		t.Error("the granted-house creature should be usable")
+	}
+
+	g.EndPlayPhase(0)
+	if g.State.MayUseHouse[0] != HouseNone {
+		t.Error("the grant should clear at end of turn")
 	}
 }

@@ -91,7 +91,9 @@ func TestCaptureOpponentAemberReplacement(t *testing.T) {
 			g := started(t)
 			played := g.AddToBattleline(testCreature("played", 2), 0)
 			spider := g.AddToBattleline(testEtherSpider(), 1)
-			g.AddLasting(EventCreaturePlayed, actGainAember, 0, 2)
+			g.AddLasting(
+				LastingEffect{On: EventCreaturePlayed, Do: actGainAember, Controller: 0, Amount: 2},
+			)
 
 			g.emitLasting(EventCreaturePlayed, 0, played)
 

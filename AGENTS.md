@@ -24,6 +24,11 @@ comment/rulebook generation, golines), so use them:
   the first failing game in the fixed-seed property batch `mage test` plays; set
   `SCRIPT` to the hex a failure printed to replay that one, and `TAIL` to widen
   the log.
+- `mage trace` — play the fixed-seed property games once with the game log on and
+  write every line to `tmp/sim/trace.log` (gitignored), so a whole game reads end
+  to end. Where `mage debug` shows the tail of the game that broke, a trace is the
+  full log of games that pass. `COUNT` sets how many games (default 1), `OUT` the
+  destination.
 - `mage corpusPrune` — replay every entry in `FuzzPlay`'s seed corpus and rewrite
   it as one minimized entry per bug that still reproduces, dropping the entries
   whose bug is fixed. The corpus is the list of open findings, not an archive of
@@ -32,6 +37,19 @@ comment/rulebook generation, golines), so use them:
 When you add or update a mage target that writes a binary, keep the output in an
 ignored location (for example `./bin`) or update `.gitignore` accordingly.
 Generated binaries should not be committed.
+
+`mage` lists each target with the **first sentence** of its doc comment, so keep
+that sentence short enough to fit one 80-column line (roughly 55 characters after
+mage's indent) and put every detail in the sentences after it.
+
+Scratch files — throwaway scripts, captured logs, profiles, diff dumps — go in
+`./tmp` (gitignored), never in the system `/tmp`. Keeping them inside the
+workspace avoids permission prompts for paths outside it. Create it on demand
+with `mkdir -p tmp`.
+
+`./tmp` is gitignored but it is still inside the module, so `mage check` (which
+walks `./...`) will build, vet, lint, and coverage-check any Go package left
+there. Delete a scratch Go package before running the gate.
 
 When editing Markdown (including `AGENTS.md` and skill docs), keep files
 markdownlint-clean.
@@ -122,9 +140,8 @@ Read it before writing or reshaping code. The load-bearing summary:
   (`.agents/skills/refactor-sweep`), which also writes each finding back into
   these docs so it does not grow back.
 
-The sections below stay here because they are structural facts about *where
-things go*, not style.
-
+The sections below stay here because they are structural facts about _where
+things go_, not style.
 
 ## Engine design patterns and constraints
 
@@ -195,25 +212,25 @@ lastingAction, Controller, Amount}`.
 
 There are two flavors:
 
-- A **reaction** runs *after* an event. The event site emits **one** dispatch —
+- A **reaction** runs _after_ an event. The event site emits **one** dispatch —
   `g.emitLasting(EventCreaturePlayed, actor, subject)` / `g.emitLasting(EventReap,
-  …)` — which gathers every reaction the actor owns for that event and, when several
+…)` — which gathers every reaction the actor owns for that event and, when several
   fire at once, lets the controller **order** them (KeyForge lets the active player
   order simultaneous triggers), resolving each via `resolveReaction`. So "gain Æmber
   after you play a creature" and "deal damage after you play a creature" order for
   free. Authored as `card.ForRemainderOfTurn{On: card.Event.CreaturePlayed, Do:
-  card.GainAember{...}}` (Do is a small composed effect — `GainAember` or
+card.GainAember{...}}` (Do is a small composed effect — `GainAember` or
   `DealDamage` to an enemy creature).
-- A **replacement** changes an event's *own outcome* before it happens. The event
+- A **replacement** changes an event's _own outcome_ before it happens. The event
   site queries the registry (`g.lastingReplacement(player, EventReapAember)`) and
   applies the replacement in place — `gainReapAember` steals instead of gaining when
   Dimension Door is active. Authored as `card.Instead{Of: card.Event.ReapAember,
-  With: card.Steal}`.
+With: card.Steal}`.
 
 Adding a reaction on an existing event = supporting its `Do` in `lastingActionOf` +
 `resolveReaction`; a new event = an `Event` value, one `emitLasting`/
 `lastingReplacement` call at that site, and the `clause`/`gerund` text. You never
-touch the play/reap path's structure. `EndTurn` drops a player's entries via
+touch the play/reap path's structure. The ready phase drops a player's entries via
 `clearLasting`.
 
 ## Constant-granted abilities

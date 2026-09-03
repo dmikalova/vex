@@ -36,21 +36,25 @@ func (OpponentForgedKeys) Value(ctx *EffectContext) int {
 // CountText renders the singular noun the "for each" clause repeats.
 func (OpponentForgedKeys) CountText() string { return "forged key your opponent has" }
 
-// OpponentExcessCreatures counts how many more creatures the controller's opponent
-// controls than the controller does (never below zero) — Glorious Few.
-type OpponentExcessCreatures struct{}
+// ExcessCreatures counts how many more creatures one player controls than the
+// other (never below zero). Player names whose excess is counted: Opponent for
+// "each creature your opponent controls in excess of you" (Glorious Few),
+// Controller for "each creature you have in excess of your opponent"
+// (Unguarded Camp).
+type ExcessCreatures struct{ Player Player }
 
-// Value returns the opponent's creature count minus the controller's, floored at 0.
-func (OpponentExcessCreatures) Value(ctx *EffectContext) int {
-	return max(
-		0,
-		len(ctx.Resolver.Battleline(ctx.Opponent()))-len(ctx.Resolver.Battleline(ctx.Controller)),
-	)
+// Value returns the named player's creature count minus the other's, floored at 0.
+func (e ExcessCreatures) Value(ctx *EffectContext) int {
+	more := ctx.PlayerFor(e.Player)
+	return max(0, len(ctx.Resolver.Battleline(more))-len(ctx.Resolver.Battleline(1-more)))
 }
 
 // CountText renders the singular noun the "for each" clause repeats.
-func (OpponentExcessCreatures) CountText() string {
-	return "creature your opponent controls in excess of you"
+func (e ExcessCreatures) CountText() string {
+	if e.Player == Opponent {
+		return "creature your opponent controls in excess of you"
+	}
+	return "creature you have in excess of your opponent"
 }
 
 // CardsDestroyed counts the cards the most recent destruction in this resolution
@@ -495,4 +499,23 @@ func (c CreaturesShuffledIntoDeckThisWay) CountText() string {
 		whose = "your opponent's"
 	}
 	return "creature shuffled into " + whose + " deck this way"
+}
+
+// AemberLostThisWay counts the Æmber an earlier LoseAember in this resolution
+// took from Player's pool — Shatter Storm empties your pool and then drains your
+// opponent for triple what left it.
+type AemberLostThisWay struct{ Player Player }
+
+// Value reads that player's share of the Æmber-lost tally.
+func (c AemberLostThisWay) Value(ctx *EffectContext) int {
+	return ctx.Produced.AemberLost[ctx.PlayerFor(c.Player)]
+}
+
+// CountText renders the singular noun the "for each" clause repeats.
+func (c AemberLostThisWay) CountText() string {
+	who := "you"
+	if c.Player == Opponent {
+		who = "your opponent"
+	}
+	return "Æmber " + who + " lost this way"
 }

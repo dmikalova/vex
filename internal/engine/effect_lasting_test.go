@@ -92,8 +92,16 @@ func TestForRemainderOfTurnValidate(t *testing.T) {
 	if err := (ForRemainderOfTurn{On: EventReapAember, Do: GainAember{Player: Controller, Amount: 1}}).validate(); err == nil {
 		t.Error("non-reaction event should fail")
 	}
+	// Draw is a supported Do (Library Access).
+	if err := (ForRemainderOfTurn{On: EventCardPlayed, Do: Draw{Amount: 1}}).validate(); err != nil {
+		t.Errorf("Draw should be a supported Do: %v", err)
+	}
 	// An unsupported Do effect.
-	if err := (ForRemainderOfTurn{On: EventCreaturePlayed, Do: Draw{Amount: 1}}).validate(); err == nil {
+	unsupported := ForRemainderOfTurn{
+		On: EventCreaturePlayed,
+		Do: ShuffleIntoDeck{Zones: []Zone{Discard}},
+	}
+	if err := unsupported.validate(); err == nil {
 		t.Error("unsupported Do should fail")
 	}
 	// DealDamage must target an enemy creature.
@@ -117,9 +125,51 @@ func TestForRemainderOfTurnGainsOnPlay(t *testing.T) {
 	if got := g.Aember(0) - before; got != 1 {
 		t.Errorf("Æmber gained on play = %d, want 1", got)
 	}
-	g.EndTurn(0)
+	g.EndPlayPhase(0)
 	if g.State.LastingCount != 0 {
-		t.Error("EndTurn should clear the reaction")
+		t.Error("the ready phase should clear the reaction")
+	}
+}
+
+// TestForRemainderOfTurnDrawsOnCardPlayed covers Library Access: the reaction
+// draws for every later card played, but not for the play that armed it.
+func TestForRemainderOfTurnDrawsOnCardPlayed(t *testing.T) {
+	e := ForRemainderOfTurn{On: EventCardPlayed, Do: Draw{Amount: 1}}
+	want := "for the remainder of the turn, each time you play another card, draw a card"
+	if got := e.Text(); got != want {
+		t.Errorf("text = %q", got)
+	}
+
+	g := started(t)
+	source := g.AddToBattleline(testCreature("source", 3), 0)
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: source})
+	g.AddToDeck(testCreature("drawn", 1), 0)
+	g.AddToHand(testCreature("c", 3), 0)
+	before := len(g.Hand(0))
+
+	if _, err := g.PlayCreature(0, handIdx(g, 0, "c"), false); err != nil {
+		t.Fatalf("PlayCreature: %v", err)
+	}
+	// One card left the hand and one was drawn for it.
+	if got := len(g.Hand(0)); got != before {
+		t.Errorf("hand = %d, want %d (played one, drew one)", got, before)
+	}
+}
+
+// TestForRemainderOfTurnExceptsItsOwnPlay checks the arming card is skipped, so
+// "each time you play another card" never counts the play that installed it.
+func TestForRemainderOfTurnExceptsItsOwnPlay(t *testing.T) {
+	g := started(t)
+	armer := g.AddToBattleline(testCreature("armer", 3), 0)
+	ForRemainderOfTurn{On: EventCardPlayed, Do: Draw{Amount: 1}}.
+		Resolve(&EffectContext{Resolver: g, Controller: 0, Source: armer})
+	g.AddToDeck(testCreature("drawn", 1), 0)
+	before := len(g.Hand(0))
+
+	g.emitLasting(EventCardPlayed, 0, armer)
+
+	if got := len(g.Hand(0)); got != before {
+		t.Errorf("hand = %d, want %d (the arming card draws nothing for itself)", got, before)
 	}
 }
 

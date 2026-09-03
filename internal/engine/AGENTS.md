@@ -169,6 +169,37 @@ Reserve the domain word *"fire"* for prose ("a trigger fires", "an ability
 fires"): it is what an ability does in response to an emitted event, never the name
 of a method that does the emitting.
 
+## The game log is typed entries, not sentences
+
+The log narrates what **resolved**, not what a card promised (ADR 0011). There is
+no `Logf`: the engine cannot write a sentence into the log at all.
+
+- **A new log line is a new `LogEntry` variant**, a small comparable struct in
+  `log_<family>.go` (`log_aember.go`, `log_zone.go`, `log_play.go`, …) carrying the
+  ids and amounts of the outcome plus a `Text(Namer) string` that words it. Record
+  it with `g.record(entry)` (or `Resolver.Record` from inside an effect). Never
+  format a name into a string at the call site — carry the `LocalID` and let
+  `Text` ask the `Namer`, so the client can link the card and the log stays honest
+  about hidden zones.
+- **Attribution is a `Frame`, not a line.** "Because Bumpsy's Play ability said
+  so" is not narration — it is context. Open a frame around the resolution
+  (`closeFrame := g.openFrame(Frame{Actor, Source, Trigger, Grantor})`, deferred or
+  called at the end) and every entry recorded inside inherits it. A card's printed
+  text is never a log line.
+- **Whole-tree passes over an entry are extrinsic**, the same Visitor rule as
+  effects: `RenderEntry` splits a rendered entry into card-linkable segments from
+  the outside, in `log_render.go`. Do not add a second method to every entry.
+- **Whether a card may be named is decided by its zones, not by the entry.**
+  `Zone.public()` says which zones both players can see (discard pile, the board,
+  the purged pile — not a hand, archives, or a deck), and `nameMoved(n, id, from,
+to)` names a card once either end of the move is public and calls it "a card"
+  otherwise. An entry that narrates a zone change states the two zones and calls
+  `nameMoved`; it never calls `Namer.Name` directly, so no one entry can leak a
+  hand or a deck on its own initiative. A card in a hidden zone becomes nameable
+  only through a `Reveal`, which records its own entry.
+- Recording is switchable (`SetRecording`), so a search that plays thousands of
+  games pays nothing for narration.
+
 ## Prompts: name the card, and let the player click a target
 
 Every prompt the engine raises reaches a human, so write it as the card's own
@@ -231,5 +262,7 @@ described; do not "fix" them into a regression of a constraint.
    not the play/reap path.
 5. Is it an extrinsic whole-tree operation (AI, analysis)? A type-switch function,
    not a new interface method.
+6. Does it need to say what happened? A `LogEntry` variant in `log_<family>.go`,
+   recorded at the site the outcome actually lands — never a formatted sentence.
 
 Keep everything green including 100% `internal/engine` coverage (`mage check`).

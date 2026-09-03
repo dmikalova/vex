@@ -1,7 +1,5 @@
 package engine
 
-import "strings"
-
 // Resolver is the complete interface an effect uses to inspect and change the
 // game. Effects hold only a Resolver (through EffectContext) — never the *Game or
 // its GameState — so every change a card is able to make goes through one of
@@ -282,6 +280,9 @@ type ZoneResolver interface {
 	// ShuffleZonesIntoDeck moves each named zone's cards into a player's deck and
 	// shuffles once (discard, hand, archives).
 	ShuffleZonesIntoDeck(player int, zones []Zone)
+	// SwapDeckAndDiscard exchanges a player's deck with their discard pile and
+	// shuffles the new deck (Reverse Time).
+	SwapDeckAndDiscard(player int)
 	// MoveFromDiscardToTopOfDeck moves a card from its owner's discard to the top
 	// of their deck.
 	MoveFromDiscardToTopOfDeck(id LocalID)
@@ -324,13 +325,10 @@ type TurnResolver interface {
 	GrantUseForHouse(player int, house House)
 	// AddLasting registers a "for the remainder of the turn" effect (Full Moon,
 	// Charge!, Crystal Hive reactions; Dimension Door's replacement) on a game event,
-	// instead of the effect hardcoding itself into the play or reap path.
-	AddLasting(on Event, do lastingAction, controller, amount int)
-	// AddLastingOnce registers a one-shot reaction that fires (and self-removes) the
-	// next time its event occurs for a subject of the given house (Blypyp).
-	AddLastingOnce(
-		on Event, do lastingAction, controller, amount int, house House, cardType CardType,
-	)
+	// instead of the effect hardcoding itself into the play or reap path. The record's
+	// own fields narrow when it fires: Once for a one-shot (Blypyp), House/Type for a
+	// matching subject, Except for the card that armed it (Library Access).
+	AddLasting(le LastingEffect)
 	// ForceActiveHouseNextTurn makes a player have to choose the given house as their
 	// active house on their next turn.
 	ForceActiveHouseNextTurn(player int, house House, source LocalID)
@@ -366,10 +364,12 @@ type ChoiceResolver interface {
 	ChooseOption(player int, source LocalID, prompt string, options []string) int
 }
 
-// Logger writes to the game log.
+// Logger narrates resolved outcomes to the game log (ADR 0011). An effect does
+// not write prose: it records a typed entry describing what actually happened,
+// and the entry renders itself for whoever is reading.
 type Logger interface {
-	// Logf writes a line to the game log.
-	Logf(format string, args ...any)
+	// Record appends one narrated outcome to the game log.
+	Record(e LogEntry)
 }
 
 // The read accessors Aember, AmberOn, Damage, Power, Name, PlayerName,
@@ -403,7 +403,7 @@ func (g *Game) HasKeyword(id LocalID, k Keyword) bool { return g.hasKeyword(id, 
 // of the turn (Sniffer).
 func (g *Game) LoseKeyword(k Keyword) {
 	g.State.KeywordsLost |= keywordBit[k]
-	g.logf("each creature loses %s for the remainder of the turn", strings.ToLower(string(k)))
+	g.record(KeywordLostByAll{Keyword: k})
 }
 
 // ForgeKeyAtExtraCost has a player forge one key at its current cost plus extra.
@@ -545,7 +545,7 @@ func (g *Game) PutFromDiscardIntoHand(id LocalID) {
 	o := g.owner(id)
 	g.State.Discard[o].remove(id)
 	g.State.Hand[o].add(id)
-	g.logf("%s returns %s from their discard to hand", g.names[o], g.Name(id))
+	g.record(CardReturnedFromDiscardToHand{Player: o, Card: id})
 }
 
 // MoveFromDeckToHand moves a card from its owner's deck to their hand.
@@ -553,7 +553,7 @@ func (g *Game) MoveFromDeckToHand(id LocalID) {
 	o := g.owner(id)
 	g.State.Deck[o].remove(id)
 	g.State.Hand[o].add(id)
-	g.logf("%s puts %s from their deck into hand", g.names[o], g.Name(id))
+	g.record(CardPutFromDeckIntoHand{Player: o, Card: id})
 }
 
 // ShuffleZonesIntoDeck moves each named zone's cards into a player's deck and
@@ -568,19 +568,17 @@ func (g *Game) MoveFromDiscardToTopOfDeck(id LocalID) {
 	o := g.owner(id)
 	g.State.Discard[o].remove(id)
 	g.State.Deck[o].addFront(id)
-	g.logf("%s puts %s from their discard on top of their deck", g.names[o], g.Name(id))
+	g.record(CardPutFromDiscardOnTopOfDeck{Player: o, Card: id})
 }
 
 // GainChains adds chains to a player, which reduce their draws until shed.
 func (g *Game) GainChains(controller, amount int) {
 	g.State.Chains[controller] += amount
-	g.logf(
-		"%s gains %d %s (%d total)",
-		g.names[controller],
-		amount,
-		chainNoun(amount),
-		g.State.Chains[controller],
-	)
+	g.record(ChainsGained{
+		Player: controller,
+		Amount: amount,
+		Total:  g.State.Chains[controller],
+	})
 }
 
 // OrderByChoice is the Resolver entry point for orderByChoice.
@@ -681,5 +679,5 @@ func (g *Game) UseActionOf(actor int, id LocalID) {
 // HasAction reports whether a card has an "Action:" ability.
 func (g *Game) HasAction(id LocalID) bool { return g.hasTrigger(id, TriggerAction) }
 
-// Logf writes a line to the game log.
-func (g *Game) Logf(format string, args ...any) { g.logf(format, args...) }
+// Record appends one narrated outcome to the game log (ADR 0011).
+func (g *Game) Record(e LogEntry) { g.record(e) }

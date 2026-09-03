@@ -184,20 +184,21 @@ func TestDestroyGivesAmberToOpponent(t *testing.T) {
 
 func TestPurgesDestroyed(t *testing.T) {
 	g := started(t)
-	g.AddArtifact(NewCard("ritual", Dis, Artifact, Rare, WithConstantAbility(ConstantAbility{
-		Target: Target{Kind: TargetEachCreature},
-		Granted: []Ability{
-			{
-				Trigger: TriggerDestroyed,
-				Effect:  PurgeCreature{Target: Target{Kind: TargetThisCreature}},
+	ritual := g.AddArtifact(NewCard("ritual", Dis, Artifact, Rare,
+		WithConstantAbility(ConstantAbility{
+			Target: Target{Kind: TargetEachCreature},
+			Granted: []Ability{
+				{
+					Trigger: TriggerDestroyed,
+					Effect:  PurgeCreature{Target: Target{Kind: TargetThisCreature}},
+				},
 			},
-		},
-	})), 0)
+		})), 0)
 	enemy := g.AddToBattleline(NewCard("v", Brobnar, Creature, Common, WithPower(3),
 		WithAbility(TriggerDestroyed, GainAember{Player: Controller, Amount: 1})), 1)
 	// The active player orders the ritual's granted ability before the creature's
 	// printed one. Purging the creature stops its remaining Destroyed abilities.
-	g.SetChooser(0, optionPicker{idx: 1})
+	g.SetChooser(0, idChooser{id: ritual})
 
 	g.DestroyEach(0, []LocalID{enemy})
 

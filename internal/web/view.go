@@ -23,9 +23,9 @@ func (g *game) Render() app.UI {
 			return app.Div().Class("sidebar").Body(
 				g.brandBar(),
 				g.logPanel(),
+				g.restrictionNotes(),
 				g.turnHud(),
 				app.If(g.status != "", func() app.UI { return g.statusBanner() }),
-				g.restrictionNotes(),
 				g.controls(),
 			)
 		}),
@@ -41,9 +41,10 @@ func (g *game) Render() app.UI {
 }
 
 // restrictionNotes names the cards currently restricting the active player, right
-// above the controls. A rule like Control the Weak's forced house otherwise only
+// above the turn HUD. A rule like Control the Weak's forced house otherwise only
 // shows up as a rejected click; naming the card (hoverable, like a log mention)
-// lets the player read the restriction off the card itself.
+// lets the player read the restriction off the card itself, and sitting above the
+// HUD it is read before the step it constrains rather than after.
 func (g *game) restrictionNotes() app.UI {
 	sources := g.g.RestrictionSources(g.active())
 	if len(sources) == 0 {

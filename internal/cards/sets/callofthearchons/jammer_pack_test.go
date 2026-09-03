@@ -31,11 +31,11 @@ func TestJammerPack(t *testing.T) {
 		g := h.Game()
 		// Seven Æmber is a key short: the raised cost is eight.
 		g.State.Aember[1] = engine.KeyCost + 1
-		g.BeginTurn(1)
+		g.StartTurn(1)
 		h.P2.ExpectKeys(0)
 
 		g.State.Aember[1] = engine.KeyCost + 2
-		g.BeginTurn(1)
+		g.StartTurn(1)
 		h.P2.ExpectKeys(1)
 		h.P2.ExpectAmber(0) // paid the raised cost
 	})

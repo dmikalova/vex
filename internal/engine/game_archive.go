@@ -27,21 +27,21 @@ func (g *Game) offerArchives(player int) {
 		g.State.Hand[g.owner(id)].add(id)
 	}
 	*arc = wideList{}
-	g.logf("%s takes %d card(s) from their archives into hand", g.names[player], n)
+	g.record(ArchivesTakenIntoHand{Player: player, Count: int(n)})
 }
 
 // archiveFromHand moves a card from a player's hand to their archives.
 func (g *Game) archiveFromHand(player int, id LocalID) {
 	if g.State.Hand[player].remove(id) {
 		g.State.Archives[player].add(id)
-		g.logf("%s archives a card", g.names[player])
+		g.record(CardArchivedFromHand{Player: player, Card: id})
 	}
 }
 
 func (g *Game) archiveFromDiscard(player int, id LocalID) {
 	if g.State.Discard[player].remove(id) {
 		g.State.Archives[player].add(id)
-		g.logf("%s archives a card from their discard pile", g.names[player])
+		g.record(CardArchivedFromDiscard{Player: player, Card: id})
 	}
 }
 
@@ -54,7 +54,7 @@ func (g *Game) archiveTopOfDeck(player int) bool {
 	}
 	id := deck.removeAt(0)
 	g.State.Archives[player].add(id)
-	g.logf("%s archives the top card of their deck", g.names[player])
+	g.record(TopOfDeckArchived{Player: player, Card: id})
 	return true
 }
 
@@ -79,5 +79,5 @@ func (g *Game) discardArchives(owner int) {
 		// discarded out of these archives goes to its owner's pile.
 		g.State.Discard[g.owner(id)].add(id)
 	}
-	g.logf("%s discards %d archived card(s)", g.names[owner], len(ids))
+	g.record(ArchivesDiscarded{Player: owner, Count: len(ids)})
 }

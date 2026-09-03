@@ -20,7 +20,7 @@ func TestSkipForgeStep(t *testing.T) {
 	}
 
 	g := NewGame("A", "B", 1)
-	g.BeginTurn(0)
+	g.StartTurn(0)
 	if err := g.ChooseHouse(0, Brobnar); err != nil {
 		t.Fatal(err)
 	}
@@ -29,10 +29,10 @@ func TestSkipForgeStep(t *testing.T) {
 	if !g.State.SkipForgeNext[1].Value {
 		t.Fatal("the skip should arm the opponent's next turn")
 	}
-	g.EndTurn(0)
+	g.EndPlayPhase(0)
 
 	keysBefore := g.State.Keys[1]
-	g.BeginTurn(1)
+	g.StartTurn(1)
 	if g.State.SkipForgeNext[1].Value {
 		t.Error("the skip should be consumed when the turn begins")
 	}

@@ -8,9 +8,12 @@ import (
 	"compress/gzip"
 	"crypto/sha256"
 	"encoding/hex"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -24,6 +27,7 @@ func main() {
 	app.RunWhenOnBrowser()
 
 	version := resourceVersion()
+	assets := assetPaths()
 
 	// Serve a fullscreen web app manifest at go-app's manifest path. go-app
 	// hardcodes display "standalone"; overriding the route makes an installed PWA
@@ -46,6 +50,12 @@ func main() {
 		// applies changes with the server left running (no restart).
 		Styles:     []string{"/web/app.css"},
 		RawHeaders: []string{bootStyle, boardScript, devReloadScript},
+		// The icons are fetched one <img> at a time as the board draws, so without
+		// precaching them a client that has the wasm cached but no server draws a board
+		// of broken images. The service worker serves a cached copy first and only
+		// re-fetches when Version changes — which every asset edit does — so an offline
+		// client keeps its icons and an online one never keeps a stale set.
+		CacheableResources: assets,
 		// Byte size of app.wasm so go-app's loader accurately computes loading
 		// progress even when serving gzip-compressed / chunked responses.
 		WasmContentLength: wasmContentLength(),
@@ -112,9 +122,9 @@ func (g *gzipResponseWriter) Write(b []byte) (int, error) {
 	return g.gz.Write(b)
 }
 
-// resourceVersion hashes the served static assets so the go-app Handler version
-// changes whenever the wasm bundle or the stylesheet does, busting the service
-// worker's precache on every edit.
+// resourceVersion hashes the served static assets — the wasm bundle, the
+// stylesheet, and every icon — so the go-app Handler version changes whenever any
+// of them does, busting the service worker's precache on every edit.
 // buildID shortens a resource version to the few characters a human needs to
 // tell one build from the next.
 func buildID(version string) string {
@@ -126,7 +136,7 @@ func buildID(version string) string {
 
 func resourceVersion() string {
 	h := sha256.New()
-	for _, p := range []string{"web/app.wasm", "web/app.css"} {
+	for _, p := range append([]string{"web/app.wasm", "web/app.css"}, assetFiles()...) {
 		b, err := os.ReadFile(p)
 		if err != nil {
 			continue
@@ -134,6 +144,31 @@ func resourceVersion() string {
 		h.Write(b)
 	}
 	return hex.EncodeToString(h.Sum(nil))[:12]
+}
+
+// assetFiles lists every file under web/assets, sorted, so hashing them yields
+// the same version for the same bytes on every start.
+func assetFiles() []string {
+	var out []string
+	_ = filepath.WalkDir("web/assets", func(p string, d fs.DirEntry, err error) error {
+		if err == nil && !d.IsDir() {
+			out = append(out, p)
+		}
+		return nil
+	})
+	sort.Strings(out)
+	return out
+}
+
+// assetPaths turns the asset files into the URL paths they are served under, for
+// the service worker's precache list.
+func assetPaths() []string {
+	files := assetFiles()
+	out := make([]string, len(files))
+	for i, p := range files {
+		out[i] = "/" + filepath.ToSlash(p)
+	}
+	return out
 }
 
 // wasmContentLength returns the uncompressed byte size of web/app.wasm as a string

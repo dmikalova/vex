@@ -162,7 +162,7 @@ restored into a mismatched engine.
 ## CSS conventions (`web/app.css`)
 
 - BEM-ish: a block (`.card`), and modifiers as `--modifier` classes
-  (`.card--dimmed`, `.log-line--p0`). No inline styles from Go.
+  (`.card--dimmed`, `.log-group--p0`). No inline styles from Go.
 - House colours are custom properties (`--nm`, `--tp`, `--edge`) supplied by the
   `.card-<house>` class from `palette.go`; markup only ever carries class names.
 - Keep every animation's `-a`/`-b` pair in sync — they must have identical

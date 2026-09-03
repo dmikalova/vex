@@ -34,6 +34,6 @@ func (e Exalt) Text() string {
 func (e Exalt) Resolve(ctx *EffectContext) {
 	for _, id := range e.Target.Select(ctx) {
 		ctx.Resolver.AddAmberOn(id, e.Times)
-		ctx.Resolver.Logf("%s is exalted (%d Æmber placed)", ctx.Resolver.Name(id), e.Times)
+		ctx.Resolver.Record(AemberExalted{Creature: id, Amount: e.Times})
 	}
 }

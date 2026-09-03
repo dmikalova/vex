@@ -28,12 +28,12 @@ func TestPlayTopOfDeckEffect(t *testing.T) {
 
 func TestEndOfTurnTriggerFires(t *testing.T) {
 	g := NewGame("Alice", "Bob", 1)
-	g.BeginTurn(0)
+	g.StartTurn(0)
 	g.State.Aember[1] = 3
 	g.AddToBattleline(NewCard("Shaffles", Dis, Creature, Common, WithPower(2),
 		WithAbility(TriggerEndOfTurn, LoseAember{Player: Opponent, Amount: 1})), 0)
 
-	g.EndTurn(0)
+	g.EndPlayPhase(0)
 
 	if g.State.Aember[1] != 2 {
 		t.Errorf("opponent Æmber = %d, want 2 after end-of-turn drain", g.State.Aember[1])

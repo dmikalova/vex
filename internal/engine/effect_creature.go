@@ -39,7 +39,7 @@ func (ReadyVerb) VerbText() string { return "ready" }
 // Apply readies the creature.
 func (ReadyVerb) Apply(ctx *EffectContext, target LocalID) {
 	ctx.Resolver.SetExhausted(target, false)
-	ctx.Resolver.Logf("%s is readied", ctx.Resolver.Name(target))
+	ctx.Resolver.Record(CreatureReadied{Creature: target})
 }
 
 // FightVerb makes the chosen creature fight an enemy creature.
@@ -55,7 +55,14 @@ func (FightVerb) VerbText() string { return "fight with" }
 // Apply has the creature fight a chosen enemy creature.
 func (FightVerb) Apply(ctx *EffectContext, target LocalID) {
 	owner := ctx.Resolver.Owner(target)
-	enemies := ctx.Resolver.Battleline(1 - owner)
+	fightAmong(ctx, target, ctx.Resolver.Battleline(1-owner))
+}
+
+// fightAmong has attacker fight one of enemies, chosen by attacker's controller,
+// and reports which enemy it fought. Taking the candidates as an argument is what
+// lets RepeatedFight narrow them to the enemies no earlier fight has used.
+func fightAmong(ctx *EffectContext, attacker LocalID, enemies []LocalID) (LocalID, bool) {
+	owner := ctx.Resolver.Owner(attacker)
 	enemy, ok := ctx.Resolver.ChooseCreature(
 		owner,
 		ctx.Source,
@@ -63,10 +70,11 @@ func (FightVerb) Apply(ctx *EffectContext, target LocalID) {
 		enemies,
 	)
 	if !ok {
-		ctx.Resolver.Logf("%s has no creature to fight", ctx.Resolver.Name(target))
-		return
+		ctx.Resolver.Record(NoCreatureToFight{Creature: attacker})
+		return 0, false
 	}
-	ctx.Resolver.FightWith(target, enemy)
+	ctx.Resolver.FightWith(attacker, enemy)
+	return enemy, true
 }
 
 // OnChooseCreature picks a single creature named by its Target and applies one or
@@ -290,4 +298,74 @@ func (e OneAtATime) Resolve(ctx *EffectContext) {
 		}
 		used = append(used, chosen...)
 	}
+}
+
+// RepeatedFight readies a creature and fights with it several times over, each
+// fight against an enemy no earlier fight of this effect used — One Stood Against
+// Many fights 3 times, each time against a different enemy creature. Where
+// OneAtATime makes the *actor* differ each pass, RepeatedFight makes the *enemy*
+// differ: the same creature may be chosen to fight every time. Each fight resolves
+// fully before the next choice is offered.
+type RepeatedFight struct {
+	// Times is how many fights the effect takes at most.
+	Times int
+	// Target chooses the creature that readies and fights, once per fight.
+	Target Target
+}
+
+// validate requires an explicit target and a positive number of fights.
+func (e RepeatedFight) validate() error {
+	if !e.Target.valid() {
+		return errUnsetTarget("RepeatedFight")
+	}
+	if e.Times <= 0 {
+		return fmt.Errorf("RepeatedFight: Times must be positive")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "ready and fight with a friendly creature 3 times,
+// each time against a different enemy creature. Resolve these fights one at a
+// time".
+func (e RepeatedFight) Text() string {
+	return fmt.Sprintf(
+		"ready and fight with %s %d times, each time against a different enemy "+
+			"creature. Resolve these fights one at a time",
+		e.Target.Text(),
+		e.Times,
+	)
+}
+
+// Resolve takes up to Times fights, stopping as soon as there is no untouched
+// enemy left, no creature to fight with, or the controller declines a choice.
+func (e RepeatedFight) Resolve(ctx *EffectContext) {
+	var fought []LocalID
+	for range e.Times {
+		enemies := e.remaining(ctx, fought)
+		if len(enemies) == 0 {
+			return
+		}
+		ids := e.Target.Select(ctx)
+		if len(ids) == 0 {
+			return
+		}
+		attacker := ids[0]
+		ReadyVerb{}.Apply(ctx, attacker)
+		enemy, ok := fightAmong(ctx, attacker, enemies)
+		if !ok {
+			return
+		}
+		fought = append(fought, enemy)
+	}
+}
+
+// remaining lists the enemy creatures no earlier fight of this effect used.
+func (e RepeatedFight) remaining(ctx *EffectContext, fought []LocalID) []LocalID {
+	var enemies []LocalID
+	for _, id := range ctx.Resolver.Battleline(ctx.Opponent()) {
+		if !slices.Contains(fought, id) {
+			enemies = append(enemies, id)
+		}
+	}
+	return enemies
 }

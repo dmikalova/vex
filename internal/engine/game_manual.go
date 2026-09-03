@@ -64,7 +64,7 @@ func (g *Game) ManualMove(id LocalID, dest ManualZone) {
 	case ManualPurge:
 		g.State.Purge[o].add(id)
 	}
-	g.logf("%s manually moves %s to %s", g.names[o], g.Name(id), dest)
+	g.record(ManualCardMoved{Player: o, Card: id, To: dest})
 }
 
 // removeFromAnyZone removes id from whatever holds it. A card in play sheds its
@@ -89,11 +89,7 @@ func (g *Game) removeFromAnyZone(id LocalID) {
 // exhausted creature, or exhausting a ready one.
 func (g *Game) ManualSetExhausted(id LocalID, exhausted bool) {
 	g.State.Cards[id].Exhausted = exhausted
-	if exhausted {
-		g.logf("%s is manually exhausted", g.Name(id))
-	} else {
-		g.logf("%s is manually readied", g.Name(id))
-	}
+	g.record(ManualExhaustSet{Card: id, Exhausted: exhausted})
 }
 
 // ManualAddCard registers def as a new card owned by player and places it in
@@ -102,12 +98,12 @@ func (g *Game) ManualSetExhausted(id LocalID, exhausted bool) {
 // is exhausted rather than panicking mid-game.
 func (g *Game) ManualAddCard(def CardDefinition, player int) (LocalID, bool) {
 	if !g.cat.hasRoom() {
-		g.logf("%s cannot add a card: this match is full", g.names[player])
+		g.record(ManualMatchFull{Player: player})
 		return 0, false
 	}
 	id := g.Register(def, player)
 	g.State.Hand[player].add(id)
-	g.logf("%s manually adds %s to hand", g.names[player], g.Name(id))
+	g.record(ManualCardAdded{Player: player, Card: id})
 	return id, true
 }
 
@@ -119,7 +115,7 @@ func (g *Game) ManualAddAmber(player, delta int) {
 		n = 0
 	}
 	g.State.Aember[player] = n
-	g.logf("%s now has %d Æmber (manual)", g.names[player], n)
+	g.record(ManualAemberSet{Player: player, Amount: n})
 }
 
 // ManualAddChains adjusts player's chain count by delta (clamped at zero).
@@ -129,14 +125,14 @@ func (g *Game) ManualAddChains(player, delta int) {
 		n = 0
 	}
 	g.State.Chains[player] = n
-	g.logf("%s now has %d %s (manual)", g.names[player], n, chainNoun(n))
+	g.record(ManualChainsSet{Player: player, Amount: n})
 }
 
 // ManualSetActiveHouse sets the active player's active house directly, so
 // manual mode can switch houses mid-turn.
 func (g *Game) ManualSetActiveHouse(h House) {
 	g.State.ActiveHouse = h
-	g.logf("%s manually chooses %s as their active house", g.names[g.State.ActivePlayer], h)
+	g.record(ManualHouseChosen{Player: g.State.ActivePlayer, House: h})
 }
 
 // ManualForgeKey forges one more key for player using the next unused colour.
@@ -154,13 +150,12 @@ func (g *Game) ManualForgeKeyColor(player int, c KeyColor) {
 	}
 	g.State.KeyColors[player][g.State.Keys[player]] = c
 	g.State.Keys[player]++
-	g.logf(
-		"%s manually forges a %s key (%d/%d)",
-		g.names[player],
-		c,
-		g.State.Keys[player],
-		KeysToWin,
-	)
+	g.record(ManualKeyForged{
+		Player: player,
+		Color:  c,
+		Keys:   g.State.Keys[player],
+		Needed: KeysToWin,
+	})
 }
 
 // ManualUnforgeKey removes player's most recently forged key, if any.
@@ -170,5 +165,5 @@ func (g *Game) ManualUnforgeKey(player int) {
 	}
 	g.State.Keys[player]--
 	g.State.KeyColors[player][g.State.Keys[player]] = KeyColorNone
-	g.logf("%s manually unforges a key (%d/%d)", g.names[player], g.State.Keys[player], KeysToWin)
+	g.record(ManualKeyUnforged{Player: player, Keys: g.State.Keys[player], Needed: KeysToWin})
 }

@@ -35,7 +35,7 @@ func (e SearchForName) Resolve(ctx *EffectContext) {
 	if !ok {
 		return
 	}
-	ctx.Resolver.Logf("%s is revealed", ctx.Resolver.Name(id))
+	ctx.Resolver.Record(CardsRevealedToAll{Player: ctx.Controller, Cards: []LocalID{id}})
 	if slices.Contains(inDeck, id) {
 		ctx.Resolver.MoveFromDeckToHand(id)
 	} else {

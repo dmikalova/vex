@@ -42,6 +42,24 @@ func (e ShuffleIntoDeck) Resolve(ctx *EffectContext) {
 	ctx.Resolver.ShuffleZonesIntoDeck(ctx.Controller, e.Zones)
 }
 
+// SwapDeckAndDiscard exchanges the controller's deck with their discard pile and
+// shuffles the new deck — Reverse Time turns a spent deck back into a fresh one.
+// It differs from ShuffleIntoDeck{Discard} in that the old deck goes away into
+// the discard pile rather than surviving underneath it.
+//
+//rulebook:effect Shuffle Into Deck
+type SwapDeckAndDiscard struct{}
+
+// Text renders the effect.
+func (e SwapDeckAndDiscard) Text() string {
+	return "swap your deck and your discard pile, then shuffle your deck"
+}
+
+// Resolve swaps the two zones and shuffles.
+func (e SwapDeckAndDiscard) Resolve(ctx *EffectContext) {
+	ctx.Resolver.SwapDeckAndDiscard(ctx.Controller)
+}
+
 // shuffleableZone reports whether a zone can be shuffled into the deck.
 func shuffleableZone(z Zone) bool {
 	return z == Discard || z == Hand || z == Archives

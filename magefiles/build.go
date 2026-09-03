@@ -1,7 +1,6 @@
 //go:build mage
 
-// Vactrol developer tasks. Run `mage` to list targets, `mage <target>` to run
-// one, or `mage -l` for the same list with descriptions.
+// Vactrol developer tasks. Run `mage <target>` to run one, `mage -l` to list them.
 package main
 
 import (
@@ -12,7 +11,7 @@ import (
 	"github.com/magefile/mage/sh"
 )
 
-// Build builds all packages, for the host and then for the browser. `go build
+// Build builds all packages, for the host and the browser. `go build
 // ./...` compiles the web client for the host, which misses anything that only
 // breaks under js/wasm, so WebWasm compiles it again for the target it ships to.
 func Build() error {
@@ -27,9 +26,9 @@ func Test() error {
 	return sh.RunV("go", "test", "./...")
 }
 
-// TestRun runs only the tests whose name matches a pattern, across every package
-// — `mage testRun TestHeal`. The pattern is a Go regexp, so `mage testRun
-// 'TestBumpsy|TestUrchin'` works too.
+// TestRun runs only the tests matching a name pattern. It covers every package,
+// and the pattern is a Go regexp — `mage testRun TestHeal`, or
+// `mage testRun 'TestBumpsy|TestUrchin'`.
 func TestRun(pattern string) error {
 	return sh.RunV("go", "test", "./...", "-run", pattern)
 }
@@ -71,8 +70,8 @@ func gciCmd(sub string) []string {
 	}
 }
 
-// Fmt formats all Go files: golines (gofmt plus long-line shortening) then gci to
-// organize imports.
+// Fmt formats all Go files and organizes their imports. It runs golines (gofmt
+// plus long-line shortening), then gci.
 func Fmt() error {
 	if err := sh.RunV("go", golinesCmd("-w", ".")...); err != nil {
 		return err
@@ -80,8 +79,9 @@ func Fmt() error {
 	return sh.RunV("go", gciCmd("write")...)
 }
 
-// FmtCheck fails, without modifying files, if any Go file is not golines-clean or
-// has unorganized imports. Each tool lists the files it would change.
+// FmtCheck checks formatting and import order, writing nothing. It fails
+// if any Go file is not golines-clean or has unorganized imports, and each tool
+// lists the files it would change.
 func FmtCheck() error {
 	golOut, err := sh.Output("go", golinesCmd("-l", ".")...)
 	if err != nil {
@@ -102,7 +102,8 @@ func Tidy() error {
 	return sh.RunV("go", "mod", "tidy")
 }
 
-// Check is the full green gate: fmt-check, build, vet, lint, test, coverage.
+// Check is the full green gate before calling work done. It runs fmt-check,
+// build, vet, lint, test, and coverage.
 func Check() error {
 	mg.Deps(FmtCheck, Build, Vet, Lint, Test, Cover)
 	fmt.Println("ALL GREEN")

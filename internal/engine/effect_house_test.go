@@ -28,7 +28,7 @@ func TestBelongToHouseEndOfTurn(t *testing.T) {
 	if g.House(host) != Mars {
 		t.Fatalf("house = %s, want Mars", g.House(host))
 	}
-	g.EndTurn(0)
+	g.EndPlayPhase(0)
 	if g.House(host) != Brobnar {
 		t.Fatalf("house after end of turn = %s, want Brobnar (lasts only this turn)", g.House(host))
 	}
@@ -49,7 +49,7 @@ func TestBelongToHouseUntilLeavesPlay(t *testing.T) {
 	if g.House(host) != Mars {
 		t.Fatalf("house = %s, want Mars", g.House(host))
 	}
-	g.EndTurn(0)
+	g.EndPlayPhase(0)
 	if g.House(host) != Mars {
 		t.Fatalf(
 			"house after end of turn = %s, want still Mars (lasts until it leaves play)",

@@ -16,6 +16,7 @@
 package sim
 
 import (
+	"errors"
 	"fmt"
 	"runtime/debug"
 
@@ -68,12 +69,15 @@ func simulate(script []byte, verbose bool) (g *engine.Game, err error) {
 		return g, fmt.Errorf("invariant violated at setup: %w", e)
 	}
 
-	for turn := 0; turn < maxTurns && g.Winner() < 0; turn++ {
+	// An exhausted script ends the game: with no decisions left no player acts, and
+	// a player who never acts never gains Æmber, so the remaining turns would be
+	// identical empty ones ground out until maxTurns.
+	for turn := 0; turn < maxTurns && g.Winner() < 0 && !d.done(); turn++ {
 		player := turn % 2
-		g.BeginTurn(player)
+		g.StartTurn(player)
 		if e := g.InvariantError(); e != nil {
 			return g, fmt.Errorf(
-				"invariant violated after BeginTurn (turn %d, player %d): %w",
+				"invariant violated after StartTurn (turn %d, player %d): %w",
 				turn,
 				player,
 				e,
@@ -85,10 +89,10 @@ func simulate(script []byte, verbose bool) (g *engine.Game, err error) {
 		if e := playTurn(g, player, houses[player], d); e != nil {
 			return g, e
 		}
-		g.EndTurn(player)
+		g.EndPlayPhase(player)
 		if e := g.InvariantError(); e != nil {
 			return g, fmt.Errorf(
-				"invariant violated after EndTurn (turn %d, player %d): %w",
+				"invariant violated after EndPlayPhase (turn %d, player %d): %w",
 				turn,
 				player,
 				e,
@@ -110,7 +114,11 @@ func playTurn(g *engine.Game, player int, houses []engine.House, d *decoder) err
 		if g.Winner() >= 0 || d.done() {
 			return nil
 		}
-		if !doAction(g, player, d) {
+		acted, err := doAction(g, player, d)
+		if err != nil {
+			return err
+		}
+		if !acted {
 			return nil
 		}
 		if e := g.InvariantError(); e != nil {
@@ -125,16 +133,22 @@ func playTurn(g *engine.Game, player int, houses []engine.House, d *decoder) err
 	return nil
 }
 
-// doAction gathers the currently legal plays and creature uses, lets the script
-// pick one (or choose to stop), and applies it. It returns false when the player
-// stops or there is nothing legal to do. Engine action errors are swallowed: the
-// script is a heuristic move generator, not a legality oracle, and the invariant
-// check after each action is what actually guards correctness.
-func doAction(g *engine.Game, player int, d *decoder) bool {
-	var playable []engine.LocalID
+// doAction gathers the currently legal plays, discards, and creature uses, lets the
+// script pick one (or choose to end the turn), and applies it. It returns false
+// when the player stops or there is nothing legal to do.
+//
+// An error means the engine refused a move its own CanPlay/CanUse had just
+// declared legal — a contradiction worth failing the simulation over. Errors from
+// the reap/fight/use-action split are not that: CanUse promises some use is legal,
+// not the one the script picked, so those fall back rather than fail.
+func doAction(g *engine.Game, player int, d *decoder) (bool, error) {
+	var playable, discardable []engine.LocalID
 	for _, id := range g.Hand(player) {
 		if g.CanPlay(player, id) == nil {
 			playable = append(playable, id)
+		}
+		if g.CanDiscard(player, id) == nil {
+			discardable = append(discardable, id)
 		}
 	}
 	var usable []engine.LocalID
@@ -144,60 +158,91 @@ func doAction(g *engine.Game, player int, d *decoder) bool {
 		}
 	}
 
-	total := len(playable) + len(usable)
-	if total == 0 {
-		return false
-	}
-	choice := int(d.byte()) % (total + 1) // the extra slot is "stop here"
-	if choice == total {
-		return false
+	choice := d.pick(len(playable) + len(usable))
+	if choice < 0 {
+		// The rare branch splits between the two ways a turn winds down. Discarding
+		// shares it rather than sitting in the uniform pool because nearly every
+		// active-house card in hand is discardable, so an even slot would spend most
+		// hands on the discard pile instead of the board.
+		if len(discardable) > 0 && d.bool() {
+			return true, discardCard(g, player, discardable[int(d.byte())%len(discardable)])
+		}
+		return false, nil
 	}
 	if choice < len(playable) {
-		playCard(g, player, playable[choice], d)
-	} else {
-		useCreature(g, player, usable[choice-len(playable)], d)
+		return true, playCard(g, player, playable[choice], d)
 	}
-	return true
+	return true, useCreature(g, player, usable[choice-len(playable)], d)
+}
+
+// discardCard discards the given hand card, which CanDiscard has already vetted.
+func discardCard(g *engine.Game, player int, id engine.LocalID) error {
+	idx := indexOf(g.Hand(player), id)
+	if idx < 0 {
+		return fmt.Errorf("card %d vanished from P%d's hand before discarding it", id, player)
+	}
+	if err := g.DiscardFromHand(player, idx); err != nil {
+		return fmt.Errorf("CanDiscard allowed %s but discarding it failed: %w", g.Name(id), err)
+	}
+	return nil
 }
 
 // playCard plays the given hand card, dispatching on its type. flankLeft and any
 // target choices come from the script through the chooser.
-func playCard(g *engine.Game, player int, id engine.LocalID, d *decoder) {
+func playCard(g *engine.Game, player int, id engine.LocalID, d *decoder) error {
 	idx := indexOf(g.Hand(player), id)
 	if idx < 0 {
-		return
+		return fmt.Errorf("card %d vanished from P%d's hand before playing it", id, player)
 	}
+	var err error
 	switch g.Def(id).Type {
 	case engine.Creature:
-		_, _ = g.PlayCreature(player, idx, d.bool())
+		_, err = g.PlayCreature(player, idx, d.bool())
 	case engine.Artifact:
-		_, _ = g.PlayArtifact(player, idx)
+		_, err = g.PlayArtifact(player, idx)
 	case engine.Tactic:
-		_ = g.PlayAction(player, idx)
+		err = g.PlayAction(player, idx)
 	case engine.Upgrade:
-		_, _ = g.PlayUpgrade(player, idx)
+		_, err = g.PlayUpgrade(player, idx)
 	}
+	if err != nil {
+		return fmt.Errorf("CanPlay allowed %s but playing it failed: %w", g.Name(id), err)
+	}
+	return nil
 }
 
 // useCreature reaps, fights, or uses an action ability with the creature, chosen by
-// the script. Fighting falls back to reaping when the enemy battleline is empty.
-func useCreature(g *engine.Game, player int, id engine.LocalID, d *decoder) {
+// the script, falling back to reaping when the chosen use is not legal for it — a
+// creature with no action ability has none to use, and none can fight an empty
+// battleline. Reap is the fallback because it is the one use CanUse itself vouches
+// for, so its refusal means CanUse contradicted itself.
+func useCreature(g *engine.Game, player int, id engine.LocalID, d *decoder) error {
+	var err error
 	switch d.byte() % 3 {
 	case 0:
-		_ = g.Reap(player, id)
+		err = g.Reap(player, id)
 	case 1:
 		enemies := g.Battleline(1 - player)
 		if len(enemies) == 0 {
-			_ = g.Reap(player, id)
-			return
+			err = errNoEnemies
+			break
 		}
-		_ = g.Fight(player, id, enemies[int(d.byte())%len(enemies)])
+		err = g.Fight(player, id, enemies[int(d.byte())%len(enemies)])
 	default:
-		if err := g.UseAction(player, id); err != nil {
-			_ = g.Reap(player, id)
-		}
+		err = g.UseAction(player, id)
 	}
+	if err == nil {
+		return nil
+	}
+	if err = g.Reap(player, id); err != nil {
+		return fmt.Errorf("CanUse allowed %s but it could not even reap: %w", g.Name(id), err)
+	}
+	return nil
 }
+
+// errNoEnemies stands in for the engine's refusal when the script picks a fight
+// with an empty enemy battleline, so useCreature has one fallback path.
+var errNoEnemies = errors.New("no enemy creature to fight")
 
 // indexOf returns the position of id in ids, or -1 if absent.
 func indexOf(ids []engine.LocalID, id engine.LocalID) int {

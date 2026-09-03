@@ -1,221 +1,169 @@
 package web
 
 import (
+	"strconv"
 	"strings"
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
+
+	"github.com/dmikalova/vactrol/internal/engine"
 )
 
-// This file draws the game log, including the grouping of lines into per-action
-// bubbles and the linking of card names within a line to their card face.
+// This file draws the game log: the grouping of entries into per-phase bubbles,
+// the rules that demarcate a turn and a phase, and the card and player names
+// inside a line.
 
-// logPanel renders the log as a flat list of lines. The grouping into per-action
-// bubbles is expressed with modifier classes on the lines themselves (tint,
-// rounded first/last line, newest-flash) rather than wrapper elements, so an
-// already-logged line never changes structure as the log grows.
+// logPanel renders the log as one bubble per phase. The engine narrates a turn's
+// shape as typed entries (TurnBegan, PhaseBegan — ADR 0012), so the grouping is
+// read off the log itself rather than tracked alongside it by the client.
 func (g *game) logPanel() app.UI {
-	lines := g.logLineViews()
+	blocks := g.logBlocks()
 	return app.Div().Class("log").Body(
 		app.Div().Class("log-list").ID("gamelog").Body(
-			app.Range(lines).Slice(func(i int) app.UI {
-				ln := lines[i]
-				cls := cx("log-line",
-					ifCls(ln.player == 0, "log-line--p0"),
-					ifCls(ln.player == 1, "log-line--p1"),
-					ifCls(ln.first, "log-line--group-start"),
-					ifCls(ln.last, "log-line--group-end"),
-					ifCls(ln.newest, "log-line--new"),
-				)
-				return app.Div().Class(cls).Body(g.logSegments(ln.text)...)
-			}),
+			app.Range(blocks).Slice(func(i int) app.UI { return g.logBlockView(blocks[i]) }),
 		),
 	)
 }
 
-// logLineView is one rendered log line: its text, the player whose turn produced
-// it (-1 for setup), whether it opens or closes its action group, and whether it
-// belongs to the newest action.
-type logLineView struct {
-	text                string
-	player              int
-	first, last, newest bool
+// logRule is how heavily a record rules a line across the log: not at all, as a
+// phase header, or as the heavier turn header.
+type logRule int
+
+const (
+	ruleNone logRule = iota
+	rulePhase
+	ruleTurn
+)
+
+// restoredRule is a persisted header read back from local storage. A typed entry
+// does not survive JSON, so the saved line carries the rule it drew and this
+// wrapper hands it back — a resumed match keeps its dividers.
+type restoredRule struct {
+	engine.RestoredEntry
+	Rule   logRule
+	Player int
 }
 
-// logLineViews flattens the per-action groups into lines tagged with their
-// position in the group, which is what the stylesheet needs to draw the bubbles.
-func (g *game) logLineViews() []logLineView {
-	var out []logLineView
-	for _, grp := range g.logGroupViews() {
-		for i, line := range grp.lines {
-			out = append(out, logLineView{
-				text:   line,
-				player: grp.player,
-				first:  i == 0,
-				last:   i == len(grp.lines)-1,
-				newest: grp.newest,
-			})
-		}
+// ruleOf reports whether a record opens a new block, how it rules, and whose turn
+// it announces. The client asks the entry what it is rather than matching a
+// prefix on its prose (ADR 0011).
+func ruleOf(rec engine.Record) (logRule, int) {
+	switch e := rec.Entry.(type) {
+	case engine.TurnBegan:
+		return ruleTurn, e.Player
+	case engine.PhaseBegan:
+		return rulePhase, e.Player
+	case restoredRule:
+		return e.Rule, e.Player
 	}
-	return out
+	return ruleNone, -1
 }
 
-// logGroupView is one rendered log bubble: the lines of a single root action, the
-// player whose turn produced it (-1 for setup), and whether it is the newest.
-type logGroupView struct {
-	lines  []string
+// logBlock is one drawn piece of the log: either a rule (a turn or phase header
+// ruled across the panel, standing between bubbles) or a bubble of the lines one
+// root action produced. header is set on a rule, lines on a bubble.
+type logBlock struct {
+	header engine.LogEntry
+	rule   logRule
+	lines  []engine.Record
 	player int
 	newest bool
 }
 
-// logSeg is one root action's slice of the log (half-open [start, end)) and whose
-// turn recorded it (-1 for the leading setup lines).
-type logSeg struct {
-	start, end, player int
-}
-
-// actionSegments returns the log ranges of each root action (from logGroups) plus
-// a leading setup range, each clamped to the current log length.
-func (g *game) actionSegments() []logSeg {
-	log := g.g.Log
-	var segs []logSeg
-	first := len(log)
-	if len(g.logGroups) > 0 && g.logGroups[0].Start < first {
-		first = g.logGroups[0].Start
+// logBlocks splits the log into the rules that demarcate turns and phases and the
+// bubbles between them, one per root action. The turn shape comes from the log's
+// own typed entries; where one action stops and the next starts is the client's
+// own knowledge, since the engine frames abilities rather than player intent.
+func (g *game) logBlocks() []logBlock {
+	starts := make(map[int]int, len(g.logGroups))
+	for _, m := range g.logGroups {
+		starts[m.Start] = m.Player
 	}
-	if first > 0 {
-		segs = append(segs, logSeg{0, first, -1})
+	var out []logBlock
+	cur := logBlock{player: -1}
+	flush := func(player int) {
+		if len(cur.lines) > 0 {
+			out = append(out, cur)
+		}
+		cur = logBlock{player: player}
 	}
-	for i, m := range g.logGroups {
-		start, end := m.Start, len(log)
-		if i+1 < len(g.logGroups) {
-			end = g.logGroups[i+1].Start
+	for i, rec := range g.g.Log {
+		if rule, player := ruleOf(rec); rule != ruleNone {
+			flush(player)
+			out = append(out, logBlock{header: rec.Entry, rule: rule, player: player})
+			continue
 		}
-		if start < 0 {
-			start = 0
+		if player, ok := starts[i]; ok {
+			flush(player)
 		}
-		if end > len(log) {
-			end = len(log)
-		}
-		// Never re-cover lines an earlier segment already emitted: clamp the start
-		// forward to the previous segment's end. Guards against non-monotonic marks,
-		// which would otherwise overlap and duplicate log lines on screen.
-		if start < first {
-			start = first
-		}
-		if end < start {
-			end = start
-		}
-		if start < end {
-			segs = append(segs, logSeg{start, end, m.Player})
-			first = end
-		}
+		cur.lines = append(cur.lines, rec)
 	}
-	return segs
-}
-
-// turnBeginPlayer returns the player a "--- X begins turn N ---" line announces,
-// or -1 if the line is not a turn header.
-func (g *game) turnBeginPlayer(line string) int {
-	if !strings.HasPrefix(line, "--- ") || !strings.Contains(line, "begins turn") {
-		return -1
-	}
-	for p := 0; p < 2; p++ {
-		if strings.Contains(line, g.g.PlayerName(p)+" begins turn") {
-			return p
+	flush(-1)
+	for i := len(out) - 1; i >= 0; i-- {
+		if out[i].header == nil {
+			out[i].newest = true
+			break
 		}
-	}
-	return -1
-}
-
-// logGroupViews splits the flat log into per-action bubbles using logGroups, then
-// further splits each bubble so a "begins turn" line starts a fresh bubble tinted
-// for the new player. Lines before the first action form a leading setup bubble.
-func (g *game) logGroupViews() []logGroupView {
-	log := g.g.Log
-	var out []logGroupView
-	emit := func(lines []string, player int) {
-		if len(lines) > 0 {
-			out = append(out, logGroupView{lines: lines, player: player})
-		}
-	}
-	for _, seg := range g.actionSegments() {
-		player, lineStart := seg.player, seg.start
-		for i := seg.start; i < seg.end; i++ {
-			p := g.turnBeginPlayer(log[i])
-			if p < 0 {
-				continue
-			}
-			if i > lineStart { // the turn header opens a new bubble
-				emit(log[lineStart:i], player)
-				lineStart = i
-			}
-			player = p
-		}
-		emit(log[lineStart:seg.end], player)
-	}
-	if len(out) > 0 {
-		out[len(out)-1].newest = true
 	}
 	return out
 }
 
-// logSegments splits a log line into plain text and clickable spans for the card
-// names it mentions, so a mentioned card can be opened in the detail panel
-// without changing the engine's log strings.
-func (g *game) logSegments(line string) []app.UI {
-	var out []app.UI
-	var plain strings.Builder
-	flush := func() {
-		if plain.Len() > 0 {
-			out = append(out, app.Text(plain.String()))
-			plain.Reset()
-		}
+// logBlockView draws one block: a rule on its own, or a bubble of lines.
+func (g *game) logBlockView(b logBlock) app.UI {
+	if b.header != nil {
+		return app.Div().
+			Class(cx("log-rule",
+				ifCls(b.player == 0, "log-rule--p0"),
+				ifCls(b.player == 1, "log-rule--p1"),
+				ifCls(b.rule == ruleTurn, "log-rule--turn"),
+			)).
+			Body(app.Span().Class("log-rule-label").Body(g.logSegments(b.header)...))
 	}
-	for i := 0; i < len(line); {
-		if name := g.cardNameAt(line, i); name != "" {
-			flush()
+	cls := cx("log-group",
+		ifCls(b.player == 0, "log-group--p0"),
+		ifCls(b.player == 1, "log-group--p1"),
+		ifCls(b.newest, "log-group--new"),
+	)
+	body := make([]app.UI, 0, len(b.lines))
+	for _, rec := range b.lines {
+		body = append(body, app.Div().Class("log-line").Body(g.logSegments(rec.Entry)...))
+	}
+	return app.Div().Class(cls).Body(body...)
+}
+
+// logSegments draws one log entry, turning the card names, player names, and
+// keywords the entry itself reported into clickable spans, tinted names, and
+// emblems. The engine hands back what every marked span stands for (ADR 0011),
+// so nothing here matches prose against a card index or a word list.
+func (g *game) logSegments(entry engine.LogEntry) []app.UI {
+	var out []app.UI
+	for _, seg := range engine.RenderEntry(entry, g.g) {
+		switch {
+		case seg.HasCard:
 			out = append(out, app.Span().
 				Class("log-card").
-				DataSet("card", name).
+				DataSet("card", seg.Text).
 				OnMouseEnter(g.onLogCardHover).
 				OnMouseLeave(g.onCardHoverOut).
-				Text(name))
-			i += len(name)
-			continue
+				Text(seg.Text))
+		case seg.HasPlayer:
+			out = append(out, app.Span().
+				Class("log-player log-player--p"+strconv.Itoa(seg.Player)).
+				Text(seg.Text))
+		case seg.Icon != "":
+			out = append(out, logIcon(seg.Icon), app.Text(seg.Text))
+		default:
+			out = append(out, app.Text(seg.Text))
 		}
-		// Put the Æmber icon before the word wherever the log mentions it.
-		if strings.HasPrefix(line[i:], "Æmber") {
-			flush()
-			out = append(out, icon("aember", "icon-inline"), app.Text("Æmber"))
-			i += len("Æmber")
-			continue
-		}
-		plain.WriteByte(line[i])
-		i++
 	}
-	flush()
 	return out
 }
 
-// cardNameAt returns the longest known card name that begins at line[i] on word
-// boundaries, or "" if none.
-func (g *game) cardNameAt(line string, i int) string {
-	if i > 0 && isWordByte(line[i-1]) {
-		return "" // in the middle of a word — not a name boundary
+// logIcon draws the emblem the engine flagged a keyword with, giving house
+// emblems the outline that keeps them legible against the log's background.
+func logIcon(key string) app.UI {
+	if strings.HasPrefix(key, "house-") {
+		return icon(key, "icon-inline", "icon-outline")
 	}
-	best := ""
-	for name := range g.defByName {
-		if len(name) <= len(best) || !strings.HasPrefix(line[i:], name) {
-			continue
-		}
-		if end := i + len(name); end < len(line) && isWordByte(line[end]) {
-			continue // the name is only a prefix of a longer word
-		}
-		best = name
-	}
-	return best
-}
-
-func isWordByte(b byte) bool {
-	return b >= 'a' && b <= 'z' || b >= 'A' && b <= 'Z' || b >= '0' && b <= '9'
+	return icon(key, "icon-inline")
 }

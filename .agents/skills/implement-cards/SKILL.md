@@ -72,7 +72,19 @@ add a one-line note after the TODO marker naming the mechanic it waits on.
    mechanic instead of a card. Add its engine test in the matching
    `internal/engine/effect_*_test.go` as you go; `mage cover` gates
    `internal/engine` at 100%, and a card test does not count toward it.
-4. **Teach the client to play the mechanic**, if it needs anything new. A mechanic
+4. **File the mechanic in the rulebook.** A player-facing mechanic is only
+   finished when a player can look it up, so give its declaration a
+   `//rulebook:<section> <Title>` directive — `effect`, `keyword`, `ability`,
+   `cardtype`, `combat`, or `turn` — and let the rest of that doc comment be the
+   entry's body. `mage generateRules` (half of `mage gen`) assembles
+   `docs/rulebook.md` from them, so an entry can never drift from the code that
+   enforces it. `docs/keyforge-master-rulebook.md` is the guide to what belongs:
+   if the official rulebook explains the term to a player, ours must too. Two code
+   sites that are one rule share a title (` / <subheading>` gathers them). While
+   you are in the file, add the directive to any **existing** mechanic beside it
+   that is missing one — an undocumented neighbour is a finding, not the status
+   quo.
+5. **Teach the client to play the mechanic**, if it needs anything new. A mechanic
    that asks the player a question the browser client cannot ask is only half
    built. Read `internal/web/AGENTS.md` and check the new mechanic against it: a
    new `Chooser` prompt shape needs a case in `game_chooser.go` and a prompt in
@@ -81,7 +93,7 @@ add a one-line note after the TODO marker naming the mechanic it waits on.
    `game_lifecycle.go` and a Tab stop in `game_nav.go`. Never reimplement the rule
    in the client — ask the engine, and add the reader to `internal/engine` if it
    does not exist.
-5. **Implement every card the gate unblocks**, then close the round (step 4).
+6. **Implement every card the gate unblocks**, then close the round (step 4).
 
 State at the top of each round which gate you picked and which cards it frees, so
 the round has a visible bound.
@@ -125,7 +137,9 @@ mage coverage             # confirm the set's count moved
 ```
 
 A round is finished when `mage check` prints `ALL GREEN` and the set's count has
-gone up. Then start the next round at step 3, or hand back if the stop condition
+gone up. Read the `docs/rulebook.md` diff `mage gen` produced: every mechanic the
+round added should appear there, and nothing the round retired should still be
+listed. Then start the next round at step 3, or hand back if the stop condition
 is met. Report each round's gate, cards, and new count as it lands rather than
 saving one summary for the end.
 
