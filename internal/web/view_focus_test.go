@@ -134,6 +134,19 @@ func TestResizingRePlacesTheLift(t *testing.T) {
 	}
 }
 
+// Scrolling a strip slides the card out from under its own copy, so the copy is
+// re-placed the same way a resize re-places it.
+func TestScrollingARowRePlacesTheLift(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	c.g.selectHandID(c.ctx, c.deal(testCreature))
+	c.g.installScrollTracking()
+	c.g.placeFocus()
+	if c.g.hasFocus {
+		t.Error("scrolling with no page behind it placed the lift anyway")
+	}
+}
+
 // Dropping the selection drops the lift with it, which is a move: the client has
 
 // to render again to take the copy off the board.

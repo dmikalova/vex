@@ -540,8 +540,8 @@ body {
 
    It is grown by resizing rather than by scaling the board card as a picture: the
    reason to enlarge a card is to read the text the board was clipping, and only a
-   real box reflows it. So the height is the content's: at least --focus-min-h, and
-   as much more as the rules need, up to --focus-max-h. Which means the height is
+   real box reflows it. Only the width is set, then; the height is exactly the
+   rules' own, up to --focus-max-h. Which means the height is
    not known when the copy is placed — hence --focus-y is measured from whichever
    window edge its card is nearest, so however tall the copy turns out to be, it
    grows away from that edge instead of through it. The grow animation is the only
@@ -587,12 +587,13 @@ body {
 .card-focus .card {
   width: 100%;
   height: auto;
-  min-height: var(--focus-min-h, 12rem);
   max-height: none;
   flex: 0 1 auto;
-  /* the ogee mask follows the box now that the box follows the text; ::before
-     overhangs the card by 10px on each side, which is what is subtracted back out */
-  --card-full-h: calc(100% - 20px);
+  /* pinned to the height a card this wide would be at full size — 4/3 of its width,
+     the board card's 9rem/12rem — rather than to the height this copy happens to
+     have. The S curve is then a property of the face alone, and does not slide
+     around as the verbs above it or a long rules box change how tall the copy is. */
+  --card-full-h: calc(var(--focus-w, 13.5rem) * 4 / 3);
 }
 .card-focus .card-body,
 .card-focus .card-rules {
@@ -2328,6 +2329,7 @@ button:disabled {
   flex-direction: column;
   overflow: hidden;
   margin: 0 3px;
+  border-radius: 0.25rem;
   background-color: var(--bg);
 }
 .card-stat {

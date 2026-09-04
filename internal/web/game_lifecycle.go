@@ -32,6 +32,7 @@ func (g *game) OnMount(ctx app.Context) {
 	g.inPlayPrev = g.inPlaySet()
 	g.save(ctx)
 	g.installKeyShortcuts()
+	g.installScrollTracking()
 	g.scrollLogToBottom()
 }
 
@@ -231,10 +232,30 @@ func (g *game) installKeyShortcuts() {
 	app.Window().Get("document").Call("addEventListener", "keydown", g.keyFunc)
 }
 
+// installScrollTracking keeps the lifted card copy over the card it was lifted
+// from while a strip is scrolled. The copy is fixed to the window, so without this
+// scrolling a hand slides the card out from under its own copy. A scroll event
+// does not bubble, so the listener is registered in the capture phase and thereby
+// sees every strip at once.
+func (g *game) installScrollTracking() {
+	if g.scrollFunc != nil {
+		return
+	}
+	g.scrollFunc = app.FuncOf(func(app.Value, []app.Value) any {
+		g.placeFocus()
+		return nil
+	})
+	app.Window().Get("document").Call("addEventListener", "scroll", g.scrollFunc, true)
+}
+
 // OnResize re-places the lifted card copy, which is positioned from a measurement
 // of the board underneath it: without this, resizing the window leaves the copy
 // floating over wherever its card used to be.
-func (g *game) OnResize(app.Context) {
+func (g *game) OnResize(app.Context) { g.placeFocus() }
+
+// placeFocus re-measures the board beneath the lifted card copy and redraws when
+// the copy no longer sits where its card does.
+func (g *game) placeFocus() {
 	if g.measureFocus() {
 		g.dispatch(nil)
 	}
@@ -252,12 +273,17 @@ func navigates(key string) bool {
 	return false
 }
 
-// OnDismount removes the keyboard listener and frees its wrapped function.
+// OnDismount removes the document listeners and frees their wrapped functions.
 func (g *game) OnDismount() {
 	if g.keyFunc != nil {
 		app.Window().Get("document").Call("removeEventListener", "keydown", g.keyFunc)
 		g.keyFunc.Release()
 		g.keyFunc = nil
+	}
+	if g.scrollFunc != nil {
+		app.Window().Get("document").Call("removeEventListener", "scroll", g.scrollFunc, true)
+		g.scrollFunc.Release()
+		g.scrollFunc = nil
 	}
 }
 

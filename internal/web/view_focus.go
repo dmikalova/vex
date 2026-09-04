@@ -18,13 +18,12 @@ import (
 //
 // The copy is grown by resizing, not by scaling the board card as a picture: the
 // reason to enlarge a card is to read the text the board was clipping, and only a
-// real box reflows it. Its height is left to the content — at least focusGrow times
-// its slot, and taller than that when its rules (a stack of upgrades, say) need the
-// room, up to what the window has left.
+// real box reflows it. So only its width is set; the height is whatever its rules
+// (a stack of upgrades, say) come out at, up to what the window has left.
 
 const (
-	// focusGrow is how much larger the lifted copy is than the card it was lifted
-	// from, before its own text asks for more.
+	// focusGrow is how much wider the lifted copy is than the card it was lifted
+	// from.
 	focusGrow = 1.5
 	// focusPad is the margin the copy keeps from the edge of the window.
 	focusPad = 8.0
@@ -78,7 +77,7 @@ func (g *game) cardFocus() app.UI {
 	if !g.hasFocus {
 		return panel
 	}
-	x, y, w, minH := g.focusBox()
+	x, y, w, _ := g.focusBox()
 	// Where this particular card sits is a runtime measurement, so it is the one
 	// thing the markup carries besides class names; app.css owns what is done with
 	// it, the same way house colours arrive as --nm/--tp.
@@ -86,7 +85,6 @@ func (g *game) cardFocus() app.UI {
 		Style("--focus-x", px(x)).
 		Style("--focus-y", px(y)).
 		Style("--focus-w", px(w)).
-		Style("--focus-min-h", px(minH)).
 		Style("--focus-max-h", px(g.focusViewH-2*focusPad)).
 		// Where the copy grows from: its own slot on the board, so it is seen coming
 		// off the card rather than appearing beside it. dy is measured to the same
@@ -114,18 +112,19 @@ func (g *game) focusDY(y float64) float64 {
 // the opponent's half, the bottom for one in the player's own. Anchoring that way
 // is what lets the copy be placed from the card's rect alone: the copy is as tall
 // as its text needs, which is not known until it has been laid out, and whatever it
-// turns out to be grows away from the near edge rather than through it.
-func (g *game) focusBox() (x, y, w, minH float64) {
+// turns out to be grows away from the near edge rather than through it. h is only
+// the height the copy is assumed to come out at, which is what centres it.
+func (g *game) focusBox() (x, y, w, h float64) {
 	r := g.focusRect
 	w = min(r.w*focusGrow, g.focusViewW-2*focusPad)
-	minH = r.h * focusGrow
+	h = r.h * focusGrow
 	cy := r.y + r.h/2
 	if g.actsUp() {
 		cy = g.focusViewH - cy
 	}
 	x = clampAxis(r.x+r.w/2-w/2, w, g.focusViewW)
-	y = clampAxis(cy-minH/2, minH, g.focusViewH)
-	return x, y, w, minH
+	y = clampAxis(cy-h/2, h, g.focusViewH)
+	return x, y, w, h
 }
 
 // clampAxis pins a span of the given length inside the window, keeping focusPad at

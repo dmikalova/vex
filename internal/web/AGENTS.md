@@ -218,12 +218,18 @@ last stretch is the DOM-bound code above.
 - **Enlarge a card by resizing its box, not by `transform: scale()`.** The reason
   to enlarge a card is to read the text the board was clipping, and a transform
   does not reflow text. Resizing one means setting three things together, the way
-  `.card-preview` and `.card-focus` both do: the box, `--card-full-h` (the `.card`
-  ogee mask is pinned to it, and `::before` overhangs by 10px a side, so an
-  arbitrary-height copy wants `calc(100% - 20px)`), and the inner font sizes,
-  which are hardcoded px and so do not scale with the parent. A card whose height
-  follows its content also has to undo the `flex: 1 1 0%; min-height: 0` on
-  `.card-body`/`.card-rules`, which exist to fill and clip a fixed slot.
+  `.card-preview` and `.card-focus` both do: the box, `--card-full-h`, and the
+  inner font sizes, which are hardcoded px and so do not scale with the parent. A
+  card whose height follows its content also has to undo the
+  `flex: 1 1 0%; min-height: 0` on `.card-body`/`.card-rules`, which exist to fill
+  and clip a fixed slot.
+- **`--card-full-h` is a nominal height, not the box's own.** The ogee mask is
+  pinned to it so that a card squished into a short slot slides the S curve off
+  the bottom instead of compressing it. Set it from the card's *width* — the
+  design ratio is the board card's `9rem`/`12rem`, so `.card-focus` uses
+  `calc(var(--focus-w) * 4 / 3)`. Deriving it from the rendered height instead
+  (`100%`) makes the frame a function of how much rules text a card happens to
+  have, which reads as the curve being drawn for the wrong box.
 - **A card that overhangs its row has to leave the board's coordinate space**
   (`position: fixed`): `.card-strip` is `overflow-x: auto`, which per spec forces
   `overflow-y: hidden`, and `.board-area` is `overflow: hidden` — anything inside
@@ -234,6 +240,10 @@ last stretch is the DOM-bound code above.
   give you. `.card-focus` anchors `top` for a card in the opponent's half and
   `bottom` for one in the player's, so however tall the copy turns out to be it
   grows away from the near edge instead of through it.
+- **An overlay placed from a measurement must track everything that moves it.**
+  `.card-focus` re-measures from go-app's `Resizer` (`OnResize`) and from a
+  document-level `scroll` listener registered in the **capture** phase — a scroll
+  event does not bubble, and every card strip scrolls on its own.
 
 ## Never shout: no all-caps
 

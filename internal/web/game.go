@@ -61,6 +61,10 @@ type game struct {
 	// shortcuts; it is released on dismount.
 	keyFunc app.Func
 
+	// scrollFunc is the document-level scroll listener that keeps the lifted card
+	// copy over its card; it is released on dismount.
+	scrollFunc app.Func
+
 	phase phase
 	busy  bool // an action goroutine is resolving; input is ignored
 
