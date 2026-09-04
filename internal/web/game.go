@@ -61,10 +61,6 @@ type game struct {
 	// shortcuts; it is released on dismount.
 	keyFunc app.Func
 
-	// resizeFunc is the window resize listener, which re-measures the lifted card
-	// copy's placement; it is released on dismount.
-	resizeFunc app.Func
-
 	phase phase
 	busy  bool // an action goroutine is resolving; input is ignored
 
@@ -248,15 +244,13 @@ type game struct {
 	// (cardFocus) can be laid out over its slot and grown from there. focusID is the
 	// card that was measured and focusParity flips whenever the lift moves to another
 	// one, so the grow animation replays; hasFocus says a measurement has been taken
-	// at all, since a card really can sit at the origin. focusPanelH is how tall the
-	// copy came out once laid out (its text decides), which is what lets it be centred
-	// on its card rather than hung from the top of it. focusViewW/focusViewH are the
-	// window size as of that measurement, which is what the copy is kept inside of.
+	// at all, since a card really can sit at the origin. focusViewW/focusViewH are
+	// the window size as of that measurement, which is what the copy is kept inside
+	// of and which edge it is anchored to.
 	focusRect              cardRect
 	focusID                engine.LocalID
 	hasFocus               bool
 	focusParity            bool
-	focusPanelH            float64
 	focusViewW, focusViewH float64
 
 	// statusGen tags the current status message so a scheduled auto-clear only

@@ -28,9 +28,6 @@ const (
 	focusGrow = 1.5
 	// focusPad is the margin the copy keeps from the edge of the window.
 	focusPad = 8.0
-	// focusPanelID names the copy in the page, so its laid-out height can be measured
-	// and the copy centred on its card by the size it really is.
-	focusPanelID = "card-focus"
 )
 
 // focusCardID is the card the copy is lifted from, if any. Mid-action phases are
@@ -57,13 +54,13 @@ func (g *game) cardFocus() app.UI {
 	}
 	acts, note := g.selActions()
 	panel := app.Div().
-		ID(focusPanelID).
 		Class(cx("card-focus",
 			// The -a/-b pair replays the grow when the lift moves to another card:
 			// go-app patches the same element, and a CSS animation only restarts when
 			// its animation-name changes.
 			ifCls(!g.focusParity, "card-focus--in-a"),
 			ifCls(g.focusParity, "card-focus--in-b"),
+			ifCls(g.actsUp(), "card-focus--acts-up"),
 			// Unmeasured, the copy centres itself on the window: it is better to read
 			// the card in the middle of the screen than to lose its buttons with it.
 			ifCls(g.hasFocus, "card-focus--placed"))).
@@ -92,24 +89,42 @@ func (g *game) cardFocus() app.UI {
 		Style("--focus-min-h", px(minH)).
 		Style("--focus-max-h", px(g.focusViewH-2*focusPad)).
 		// Where the copy grows from: its own slot on the board, so it is seen coming
-		// off the card rather than appearing beside it.
+		// off the card rather than appearing beside it. dy is measured to the same
+		// corner y is anchored at, which is the one corner whose position is known
+		// without knowing how tall the copy came out.
 		Style("--focus-dx", px(g.focusRect.x-x)).
-		Style("--focus-dy", px(g.focusRect.y-y)).
+		Style("--focus-dy", px(g.focusDY(y))).
 		Style("--focus-from", strconv.FormatFloat(g.focusRect.w/w, 'f', 3, 64))
 }
 
-// focusBox is where the lifted copy goes and how wide it is: centred on the card it
-// was lifted from, then pushed back inside the window, so a card on a flank or down
-// in the hand still grows evenly in every direction it has the room to.
+// focusDY is how far the grow animation starts below the copy's anchored corner:
+// the offset that lands that corner on the matching corner of the card's own slot.
+func (g *game) focusDY(y float64) float64 {
+	if g.actsUp() {
+		return g.focusRect.y + g.focusRect.h - (g.focusViewH - y)
+	}
+	return g.focusRect.y - y
+}
+
+// focusBox is where the lifted copy goes and how wide it is: centred on the card
+// it was lifted from and then pushed back inside the window, so a card on a flank
+// or down in the hand still grows evenly in every direction it has the room to.
+//
+// y is measured from the window edge the card is nearest — the top for a card in
+// the opponent's half, the bottom for one in the player's own. Anchoring that way
+// is what lets the copy be placed from the card's rect alone: the copy is as tall
+// as its text needs, which is not known until it has been laid out, and whatever it
+// turns out to be grows away from the near edge rather than through it.
 func (g *game) focusBox() (x, y, w, minH float64) {
 	r := g.focusRect
 	w = min(r.w*focusGrow, g.focusViewW-2*focusPad)
 	minH = r.h * focusGrow
-	// How tall the copy really is depends on the text it has to fit, which is known
-	// only once it has been laid out; until then its floor stands in for it.
-	h := max(minH, g.focusPanelH)
+	cy := r.y + r.h/2
+	if g.actsUp() {
+		cy = g.focusViewH - cy
+	}
 	x = clampAxis(r.x+r.w/2-w/2, w, g.focusViewW)
-	y = clampAxis(r.y+r.h/2-h/2, h, g.focusViewH)
+	y = clampAxis(cy-minH/2, minH, g.focusViewH)
 	return x, y, w, minH
 }
 
@@ -121,6 +136,16 @@ func clampAxis(v, length, window float64) float64 {
 		return focusPad
 	}
 	return min(max(v, focusPad), hi)
+}
+
+// actsUp is whether the card's verbs are drawn above its face rather than below.
+// They go on the side facing the middle of the window — a card down in the player's
+// own half puts its buttons up, one in the opponent's half puts them down — so they
+// meet the pointer on its way in rather than beyond the edge the card was already
+// against.
+func (g *game) actsUp() bool {
+	return g.hasFocus && g.focusViewH > 0 &&
+		g.focusRect.y+g.focusRect.h/2 > g.focusViewH/2
 }
 
 // px formats a measured length for a custom property.

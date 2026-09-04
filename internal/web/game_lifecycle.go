@@ -32,7 +32,6 @@ func (g *game) OnMount(ctx app.Context) {
 	g.inPlayPrev = g.inPlaySet()
 	g.save(ctx)
 	g.installKeyShortcuts()
-	g.installResize()
 	g.scrollLogToBottom()
 }
 
@@ -124,18 +123,18 @@ func (g *game) cardDOMID(id engine.LocalID) string {
 	return boardCardID(id)
 }
 
-// measureFocus records where the selected card sits on screen and how tall the
-// lifted copy of it came out, so the copy can be centred on its card at the size
-// it really is. It reports whether anything moved, which is what tells OnUpdate to
-// render again — and, since the copy is on its own layer and so reflows nothing,
-// the render after that measures the same numbers and the pair settles. It is also
-// called from the selection itself, so the common case places the copy on its first
-// render rather than a frame later.
+// measureFocus records where the selected card sits on screen and how big the
+// window is, which is all the lifted copy of it needs to place itself. It reports
+// whether anything moved, which is what tells OnUpdate to render again — and, since
+// the copy is on its own layer and so reflows nothing, the render after that
+// measures the same numbers and the pair settles. It is also called from the
+// selection itself, so the common case places the copy on its first render rather
+// than a frame later.
 func (g *game) measureFocus() bool {
 	id, ok := g.focusCardID()
 	if !ok {
 		was := g.hasFocus
-		g.hasFocus, g.focusPanelH = false, 0
+		g.hasFocus = false
 		return was
 	}
 	el := app.Window().GetElementByID(g.cardDOMID(id))
@@ -149,29 +148,22 @@ func (g *game) measureFocus() bool {
 		w: r.Get("width").Float(),
 		h: r.Get("height").Float(),
 	}
+	// A card mid-flight or mid-collapse has no size to grow from, and dividing the
+	// grow by it would be a division by zero.
 	if next.w <= 0 || next.h <= 0 {
 		return false
 	}
-	// offsetHeight rather than a rect, because the grow animation transforms the copy
-	// and a rect would report the frame it is mid-way through rather than its layout.
-	panelH := g.focusPanelH
-	if p := app.Window().GetElementByID(focusPanelID); p.Truthy() {
-		panelH = p.Get("offsetHeight").Float()
-	}
-	view := [2]float64{
-		app.Window().Get("innerWidth").Float(),
-		app.Window().Get("innerHeight").Float(),
-	}
-	same := g.hasFocus && g.focusID == id && g.focusRect == next &&
-		g.focusPanelH == panelH && g.focusViewW == view[0] && g.focusViewH == view[1]
-	if same {
+	vw := app.Window().Get("innerWidth").Float()
+	vh := app.Window().Get("innerHeight").Float()
+	if g.hasFocus && g.focusID == id && g.focusRect == next &&
+		g.focusViewW == vw && g.focusViewH == vh {
 		return false
 	}
 	if !g.hasFocus || g.focusID != id {
 		g.focusParity = !g.focusParity
 	}
-	g.focusRect, g.focusID, g.hasFocus, g.focusPanelH = next, id, true, panelH
-	g.focusViewW, g.focusViewH = view[0], view[1]
+	g.focusRect, g.focusID, g.hasFocus = next, id, true
+	g.focusViewW, g.focusViewH = vw, vh
 	return true
 }
 
@@ -239,19 +231,13 @@ func (g *game) installKeyShortcuts() {
 	app.Window().Get("document").Call("addEventListener", "keydown", g.keyFunc)
 }
 
-// installResize wires a window resize listener, because the lifted card copy is
-// placed from a measurement of the board underneath it: without this, resizing the
-// window leaves the copy floating over wherever its card used to be. The listener
-// only asks for a render — OnUpdate does the re-measuring.
-func (g *game) installResize() {
-	if g.resizeFunc != nil {
-		return
-	}
-	g.resizeFunc = app.FuncOf(func(app.Value, []app.Value) any {
+// OnResize re-places the lifted card copy, which is positioned from a measurement
+// of the board underneath it: without this, resizing the window leaves the copy
+// floating over wherever its card used to be.
+func (g *game) OnResize(app.Context) {
+	if g.measureFocus() {
 		g.dispatch(nil)
-		return nil
-	})
-	app.Window().Call("addEventListener", "resize", g.resizeFunc)
+	}
 }
 
 // navigates reports whether a key moves or answers the selection, and so must be
@@ -272,11 +258,6 @@ func (g *game) OnDismount() {
 		app.Window().Get("document").Call("removeEventListener", "keydown", g.keyFunc)
 		g.keyFunc.Release()
 		g.keyFunc = nil
-	}
-	if g.resizeFunc != nil {
-		app.Window().Call("removeEventListener", "resize", g.resizeFunc)
-		g.resizeFunc.Release()
-		g.resizeFunc = nil
 	}
 }
 

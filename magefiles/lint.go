@@ -2,7 +2,12 @@
 
 package main
 
-import "github.com/magefile/mage/sh"
+import (
+	"fmt"
+	"os/exec"
+
+	"github.com/magefile/mage/sh"
+)
 
 // golangciLintVersion pins the linter so local, hook, and CI runs all agree.
 // Run via `go run` so it never enters the module's own dependency graph.
@@ -18,7 +23,13 @@ func Lint() error {
 // Markdownlint runs quickmark (the qmark binary) against every Markdown file,
 // using the rules in quickmark.toml. Install it (`brew install quickmark-cli` or
 // see https://github.com/ekropotin/quickmark) before running this target — unlike
-// golangci-lint, it is not a Go module mage can pin via `go run`.
+// golangci-lint, it is not a Go module mage can pin via `go run`, so environments
+// without it (e.g. CI images that haven't installed it yet) skip with a warning
+// instead of failing the whole gate.
 func Markdownlint() error {
+	if _, err := exec.LookPath("qmark"); err != nil {
+		fmt.Println("qmark not found on PATH, skipping markdown lint")
+		return nil
+	}
 	return sh.RunV("qmark")
 }

@@ -2,20 +2,22 @@ package web
 
 import "testing"
 
-// The copy is centred on the card it was lifted from, and then pushed back inside
-// the window: a card on a flank or down in the hand still grows evenly in every
-// direction it has room for, rather than off the edge of the screen.
+// The copy is centred on the card it was lifted from and then pushed back inside
+// the window, so a card on a flank or down in the hand still grows evenly in every
+// direction it has room for rather than off the edge of the screen. Its y is
+// measured from whichever window edge its card is nearest.
 func TestTheLiftCentresOnItsCardAndStaysOnScreen(t *testing.T) {
-	const w, h = 144, 192 // a card's slot; the copy is 1.5x that
+	const w, h = 144, 192 // a card's slot; the copy is at least 1.5x that
 	for _, tc := range []struct {
 		what           string
 		x, y           float64
 		wantX, wantY   float64
 		wantW, wantMin float64
 	}{
-		{"in the middle", 600, 400, 564, 352, 216, 288},
+		// Below the midline, so y is from the bottom: (800 - 496) - 288/2.
+		{"in the player's half", 600, 400, 564, 160, 216, 288},
 		{"against the top left", 4, 4, focusPad, focusPad, 216, 288},
-		{"against the bottom right", 1130, 610, 1280 - 216 - focusPad, 800 - 288 - focusPad, 216, 288},
+		{"against the bottom right", 1130, 610, 1280 - 216 - focusPad, focusPad, 216, 288},
 	} {
 		g := &game{
 			hasFocus:   true,
@@ -31,35 +33,76 @@ func TestTheLiftCentresOnItsCardAndStaysOnScreen(t *testing.T) {
 	}
 }
 
-// A copy taller than the window it is in gets pinned to the top edge rather than
-// centred off the top of it, so its face is the part that survives.
-func TestALiftTallerThanTheWindowPinsToTheTop(t *testing.T) {
+// A card in the player's own half puts its verbs above its face; one across the
+// midline puts them below, so the buttons always face the middle of the screen.
+func TestTheLiftPutsItsVerbsOnTheInsideEdge(t *testing.T) {
+	for _, tc := range []struct {
+		what   string
+		y      float64
+		wantUp bool
+	}{
+		{"in the player's hand", 700, true},
+		{"in the opposing battleline", 100, false},
+	} {
+		g := &game{
+			hasFocus:   true,
+			focusRect:  cardRect{x: 600, y: tc.y, w: 144, h: 192},
+			focusViewW: 1280,
+			focusViewH: 800,
+		}
+		if up := g.actsUp(); up != tc.wantUp {
+			t.Errorf("a card %s draws its verbs above=%v, want %v", tc.what, up, tc.wantUp)
+		}
+	}
+}
+
+// With nothing measured there is no midline to be on a side of, so the verbs stay
+// under the face — which is where the unplaced, window-centred copy wants them.
+func TestAnUnmeasuredLiftKeepsItsVerbsBelow(t *testing.T) {
+	if (&game{}).actsUp() {
+		t.Error("an unmeasured lift draws its verbs above its face, want below")
+	}
+}
+
+// A copy with no room to spare is pinned to the near edge rather than centred half
+// off the screen, so the anchored end of its face is the part that survives.
+func TestALiftTallerThanTheWindowPinsToTheNearEdge(t *testing.T) {
 	g := &game{
-		hasFocus:    true,
-		focusRect:   cardRect{x: 10, y: 10, w: 144, h: 192},
-		focusPanelH: 900,
-		focusViewW:  1280,
-		focusViewH:  400,
+		hasFocus:   true,
+		focusRect:  cardRect{x: 10, y: 10, w: 144, h: 400},
+		focusViewW: 1280,
+		focusViewH: 400,
 	}
 	if _, y, _, _ := g.focusBox(); y != focusPad {
 		t.Errorf("an oversized lift sits at y=%v, want %v", y, focusPad)
 	}
 }
 
-// Once laid out the copy knows its real height, and centres on its card by that
-// rather than by the floor it started from.
-func TestTheLiftCentresByItsLaidOutHeight(t *testing.T) {
-	g := &game{
-		hasFocus:   true,
-		focusRect:  cardRect{x: 600, y: 400, w: 144, h: 192},
-		focusViewW: 1280,
-		focusViewH: 800,
-	}
-	_, before, _, _ := g.focusBox()
-	g.focusPanelH = 400
-	_, after, _, _ := g.focusBox()
-	if after != before-56 {
-		t.Errorf("a 400px-tall lift sits at y=%v, want %v", after, before-56)
+// The grow starts at the card's own slot, so the copy is seen coming off the card
+// rather than appearing beside it. Whichever corner the copy is anchored by is the
+// one run back to the card's matching corner, since it is the only corner whose
+// place is known before the copy's text has decided how tall it is.
+func TestTheLiftGrowsOutOfItsCardsSlot(t *testing.T) {
+	for _, tc := range []struct {
+		what   string
+		y      float64
+		wantDY float64
+	}{
+		// Anchored by its top: 100 - (196 - 144).
+		{"in the opponent's half", 100, 48},
+		// Anchored by its bottom: (600 + 192) - (800 - 8).
+		{"in the player's half", 600, 0},
+	} {
+		g := &game{
+			hasFocus:   true,
+			focusRect:  cardRect{x: 600, y: tc.y, w: 144, h: 192},
+			focusViewW: 1280,
+			focusViewH: 800,
+		}
+		_, y, _, _ := g.focusBox()
+		if dy := g.focusDY(y); dy != tc.wantDY {
+			t.Errorf("a card %s grows from dy=%v, want %v", tc.what, dy, tc.wantDY)
+		}
 	}
 }
 
@@ -79,7 +122,20 @@ func TestMeasuringTheLiftWithNoPageBehindIt(t *testing.T) {
 	c.lacks("an unplaced lift", "card-focus--placed")
 }
 
+// A resized window re-places the lift, since where its card sits has moved. Off
+// browser there is nothing to measure, so the resize is simply absorbed.
+func TestResizingRePlacesTheLift(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	c.g.selectHandID(c.ctx, c.deal(testCreature))
+	c.g.OnResize(c.ctx)
+	if c.g.hasFocus {
+		t.Error("resizing with no page behind it placed the lift anyway")
+	}
+}
+
 // Dropping the selection drops the lift with it, which is a move: the client has
+
 // to render again to take the copy off the board.
 func TestDroppingTheSelectionDropsTheLift(t *testing.T) {
 	c := newClient(t)

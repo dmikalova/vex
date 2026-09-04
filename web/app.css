@@ -541,9 +541,12 @@ body {
    It is grown by resizing rather than by scaling the board card as a picture: the
    reason to enlarge a card is to read the text the board was clipping, and only a
    real box reflows it. So the height is the content's: at least --focus-min-h, and
-   as much more as the rules need, up to --focus-max-h. The grow animation is the
-   only transform, and it runs the copy back to the slot it came from
-   (--focus-dx/dy/from) rather than sizing it. */
+   as much more as the rules need, up to --focus-max-h. Which means the height is
+   not known when the copy is placed — hence --focus-y is measured from whichever
+   window edge its card is nearest, so however tall the copy turns out to be, it
+   grows away from that edge instead of through it. The grow animation is the only
+   transform, and it runs the copy back to the slot it came from (--focus-dx/dy/from)
+   rather than sizing it. */
 .card-focus {
   position: fixed;
   left: var(--focus-x, 50%);
@@ -556,7 +559,18 @@ body {
   max-height: var(--focus-max-h, 90vh);
   flex-direction: column;
   gap: 0.3rem;
+  transform-origin: top left;
   filter: drop-shadow(0 10px 22px rgb(0 0 0 / 0.6));
+}
+/* A card in the player's own half is anchored by its bottom edge and puts its verbs
+   above its face; one in the opponent's half hangs from its top edge with its verbs
+   below. Either way the buttons sit between the card and the middle of the screen,
+   which is where the pointer comes from and where the room is. */
+.card-focus--acts-up {
+  top: auto;
+  bottom: var(--focus-y, 50%);
+  flex-direction: column-reverse;
+  transform-origin: bottom left;
 }
 /* Nothing measured (no page behind the render, a card that left the DOM): centre
    the copy like a modal rather than dropping it, since dropping it would take the
@@ -640,12 +654,10 @@ body {
   from {
     transform: translate(var(--focus-dx), var(--focus-dy))
       scale(var(--focus-from));
-    transform-origin: top left;
     opacity: 0.4;
   }
   to {
     transform: none;
-    transform-origin: top left;
     opacity: 1;
   }
 }
@@ -653,12 +665,10 @@ body {
   from {
     transform: translate(var(--focus-dx), var(--focus-dy))
       scale(var(--focus-from));
-    transform-origin: top left;
     opacity: 0.4;
   }
   to {
     transform: none;
-    transform-origin: top left;
     opacity: 1;
   }
 }

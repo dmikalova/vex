@@ -215,12 +215,25 @@ last stretch is the DOM-bound code above.
   declaration in Go is a rule that belongs in the stylesheet.
 - Keep every animation's `-a`/`-b` pair in sync — they must have identical
   keyframes.
-- **Grow a card with `transform: scale()`, never a bigger box.** `.card` paints
-  its ogee frame through a mask pinned to `--card-full-h`, so a taller box puts
-  the S-curve in the wrong place. A card that overhangs its row also has to leave
-  the board's coordinate space entirely (`position: fixed`): `.card-strip` is
-  `overflow-x: auto`, which per spec forces `overflow-y: hidden`, and
-  `.board-area` is `overflow: hidden` — anything inside either one is clipped.
+- **Enlarge a card by resizing its box, not by `transform: scale()`.** The reason
+  to enlarge a card is to read the text the board was clipping, and a transform
+  does not reflow text. Resizing one means setting three things together, the way
+  `.card-preview` and `.card-focus` both do: the box, `--card-full-h` (the `.card`
+  ogee mask is pinned to it, and `::before` overhangs by 10px a side, so an
+  arbitrary-height copy wants `calc(100% - 20px)`), and the inner font sizes,
+  which are hardcoded px and so do not scale with the parent. A card whose height
+  follows its content also has to undo the `flex: 1 1 0%; min-height: 0` on
+  `.card-body`/`.card-rules`, which exist to fill and clip a fixed slot.
+- **A card that overhangs its row has to leave the board's coordinate space**
+  (`position: fixed`): `.card-strip` is `overflow-x: auto`, which per spec forces
+  `overflow-y: hidden`, and `.board-area` is `overflow: hidden` — anything inside
+  either one is clipped.
+- **Place a content-sized overlay from the edge it is nearest**, not from its own
+  centre. Its height is not known until it has been laid out, and measuring it
+  needs a second render pass that a frozen tab (or any dropped frame) will not
+  give you. `.card-focus` anchors `top` for a card in the opponent's half and
+  `bottom` for one in the player's, so however tall the copy turns out to be it
+  grows away from the near edge instead of through it.
 
 ## Never shout: no all-caps
 
