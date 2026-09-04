@@ -29,7 +29,7 @@ func TestHorsemanOfPestilence(t *testing.T) {
 						ct.Creature(
 							ct.OfHouse(card.House.Mars),
 							ct.Power(3),
-							ct.Traits("Horseman"),
+							ct.Traits(card.Traits.Horseman),
 						),
 					),
 				),

@@ -18,7 +18,7 @@ var Tocsin = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 102),
 	card.WithPower(3),
-	card.WithTraits("Demon"),
+	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(
 		card.Trigger.Reap, card.DiscardRandomFromHand{Player: card.Opponent}),
 )

@@ -18,7 +18,7 @@ var Sniffer = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 188),
 	card.WithAemberBonus(1),
-	card.WithTraits("Ally"),
+	card.WithTraits(card.Traits.Ally),
 	card.WithAbility(
 		card.Trigger.Action, card.LoseKeyword{Keyword: card.Keyword.Elusive}),
 )

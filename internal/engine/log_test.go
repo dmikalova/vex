@@ -38,7 +38,10 @@ func TestLogEntryText(t *testing.T) {
 		{KeyUnforged{Player: 0, Keys: 1, Needed: 3}, "P0 unforges a key (1/3)"},
 		{ChainShed{Player: 1, Remaining: 4}, "P1 sheds a chain (4 remaining)"},
 		{GameWon{Player: 0}, "P0 wins the game!"},
-		{PlayerStanding{Player: 0, Aember: 4, Keys: 1}, "P0 has 4 Æmber and 1 keys"},
+		{
+			PlayerStanding{Player: 0, Aember: 4, KeyColors: []KeyColor{KeyColorRed}},
+			"P0 has 4 Æmber and 1 keys",
+		},
 
 		// Æmber.
 		{AemberGained{Player: 0, Amount: 2}, "P0 gains 2 Æmber"},
@@ -66,6 +69,9 @@ func TestLogEntryText(t *testing.T) {
 		// Creatures and cards in play.
 		{CreatureReadied{Creature: 2}, "Card2 is readied"},
 		{CreatureExhausted{Creature: 2}, "Card2 is exhausted"},
+		{CreatureStunned{Creature: 2, By: 2}, "Card2 is stunned"},
+		{CreatureStunned{Creature: 2, By: 5}, "Card5 stunned Card2"},
+		{CreatureStunned{Creature: 2, By: 5, AlreadyStunned: true}, "Card2 is already stunned"},
 		{NoCreatureToFight{Creature: 2}, "Card2 has no creature to fight"},
 		{CardsRevealedToAll{Player: 0, Cards: []LocalID{1, 2}}, "P0 reveals Card1, Card2"},
 		{PositionsSwapped{A: 1, B: 2}, "Card1 swaps positions with Card2"},
@@ -137,7 +143,11 @@ func TestLogEntryText(t *testing.T) {
 		},
 
 		// Playing and using.
-		{CardPlayedToBattleline{Player: 0, Card: 9}, "P0 plays Card9 to the battleline"},
+		{CardPlayedToBattleline{Player: 0, Card: 9}, "P0 plays Card9 on their right flank"},
+		{
+			CardPlayedToBattleline{Player: 0, Card: 9, FlankLeft: true},
+			"P0 plays Card9 on their left flank",
+		},
 		{ArtifactPlayed{Player: 1, Card: 9}, "P1 plays artifact Card9"},
 		{ActionPlayed{Player: 0, Card: 9}, "P0 plays action Card9"},
 		{UpgradeAttached{Player: 0, Upgrade: 9, Host: 2}, "P0 attaches Card9 to Card2"},
@@ -252,14 +262,20 @@ func TestRenderEntrySplitsOutCardNames(t *testing.T) {
 			t.Errorf("segment %d = %+v, want %+v", i, segs[i], want[i])
 		}
 	}
-	// An entry that names no card is one plain run around the player it names.
+	// An entry that names no card still marks the keywords it contains, but "key
+	// phase" names the turn phase rather than an actual key, so it stays plain.
 	segs = RenderEntry(ForgeSkipped{Player: 0}, stubNamer{})
 	wantPlain := []LogSegment{
 		{Text: "P0", Player: 0, HasPlayer: true},
 		{Text: " skips their forge a key phase"},
 	}
-	if len(segs) != len(wantPlain) || segs[0] != wantPlain[0] || segs[1] != wantPlain[1] {
-		t.Errorf("segments = %+v, want %+v", segs, wantPlain)
+	if len(segs) != len(wantPlain) {
+		t.Fatalf("segments = %+v, want %+v", segs, wantPlain)
+	}
+	for i := range wantPlain {
+		if segs[i] != wantPlain[i] {
+			t.Errorf("segment %d = %+v, want %+v", i, segs[i], wantPlain[i])
+		}
 	}
 }
 
@@ -331,6 +347,30 @@ func TestRenderEntryMarksIconKeywords(t *testing.T) {
 	segs = RenderEntry(CardPurged{Card: 1}, houseNamer{})
 	if len(segs) != 2 || !segs[0].HasCard || segs[0].Icon != "" {
 		t.Errorf("segments = %+v, want the card name to beat the house keyword", segs)
+	}
+	// Stunning, chains, and keys all mark their own icon.
+	iconCases := []struct {
+		entry LogEntry
+		icon  string
+		word  string
+	}{
+		{CreatureStunned{Creature: 2, By: 5}, "stun", "stunned"},
+		{ChainsGained{Player: 0, Amount: 2, Total: 5}, "chains", "chains"},
+		{ChainShed{Player: 1, Remaining: 4}, "chains", "chain"},
+		{KeyForged{Player: 0, Keys: 1, Needed: 3}, "key", "key"},
+		{PlayerStanding{Player: 0, Aember: 4, KeyColors: []KeyColor{KeyColorRed}}, "key", "keys"},
+	}
+	for _, c := range iconCases {
+		segs := RenderEntry(c.entry, stubNamer{})
+		var found bool
+		for _, s := range segs {
+			if s.Icon == c.icon && s.Text == c.word {
+				found = true
+			}
+		}
+		if !found {
+			t.Errorf("segments = %+v, want a %q icon segment for %q", segs, c.icon, c.word)
+		}
 	}
 }
 

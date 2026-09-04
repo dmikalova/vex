@@ -18,7 +18,7 @@ var HuntingWitch = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 367),
 	card.WithPower(2),
-	card.WithTraits("Human", "Witch"),
+	card.WithTraits(card.Traits.Human, card.Traits.Witch),
 	card.WithAbility(card.Trigger.AfterCardPlayed, card.Conditional{
 		Cond: card.ItIs{Type: card.Type.Creature},
 		Then: card.GainAember{

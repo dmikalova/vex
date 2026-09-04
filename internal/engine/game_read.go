@@ -143,6 +143,10 @@ func (g *Game) hazardous(id LocalID) int {
 	return h
 }
 
+// Hazardous returns a creature's current Hazardous value, including attached
+// upgrades.
+func (g *Game) Hazardous(id LocalID) int { return g.hazardous(id) }
+
 // hasKeyword reports whether a creature has a keyword, either printed on it,
 // granted by an attached upgrade, or granted by a card's constant ability.
 func (g *Game) hasKeyword(id LocalID, k Keyword) bool {

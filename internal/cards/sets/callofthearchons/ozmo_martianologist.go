@@ -21,7 +21,7 @@ var Ozmo = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 148),
 	card.WithPower(2),
-	card.WithTraits("Human", "Scientist"),
+	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithFightOrReap(card.ChooseOne{
 		Options: []card.Effect{

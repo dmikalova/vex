@@ -20,6 +20,13 @@ func TestStunEffects(t *testing.T) {
 	if g.State.Cards[foe].Stunned {
 		t.Error("stun of friendly creatures should not touch the enemy")
 	}
+	entries := len(g.Log)
+	// A stun that finds its target already stunned still logs the choice, just
+	// without a state change.
+	stun.Resolve(ctx)
+	if len(g.Log) == entries {
+		t.Error("re-stunning an already-stunned creature should still log the choice")
+	}
 
 	unstun := Unstun{Target: Target{Kind: TargetEachFriendlyCreature}}
 	if unstun.Text() != "unstun each friendly creature" {

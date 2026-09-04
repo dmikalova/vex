@@ -62,6 +62,37 @@ func (g *Game) canUse(player int, id LocalID) error {
 	if g.cat.def(id).Type != Creature {
 		return ErrWrongType
 	}
+	if !g.hasAnyUse(player, id) {
+		return ErrCannotUse
+	}
+	return nil
+}
+
+// hasAnyUse reports whether at least one of the three ways to use a creature is
+// open to it, so a card barred from some of them (Tireless Crocag cannot reap) is
+// still offered while another way remains. It keeps CanUse's promise honest: a
+// Crocag with nothing to fight has no use at all this turn.
+func (g *Game) hasAnyUse(player int, id LocalID) bool {
+	if !g.cannotBeUsedTo(id, ReapUse) {
+		return true
+	}
+	if !g.cannotBeUsedTo(id, FightUse) &&
+		!g.cannotFight(player) &&
+		len(g.Battleline(1-player)) > 0 {
+		return true
+	}
+	return !g.cannotBeUsedTo(id, ActionUse) && g.hasTrigger(id, TriggerAction)
+}
+
+// canUseTo is canUse for one specific way of using the creature, so a card that
+// bars only one of them (Tireless Crocag cannot reap) stays usable the other ways.
+func (g *Game) canUseTo(player int, id LocalID, kind UseKind) error {
+	if err := g.canUse(player, id); err != nil {
+		return err
+	}
+	if g.cannotBeUsedTo(id, kind) {
+		return ErrCannotUse
+	}
 	return nil
 }
 
@@ -70,10 +101,51 @@ func (g *Game) canUse(player int, id LocalID) error {
 // action before prompting for a target.
 func (g *Game) CanUse(player int, id LocalID) error { return g.canUse(player, id) }
 
+// CanUseTo reports whether a creature may currently be used one specific way, so
+// a UI can offer Fight but not Reap on a creature that cannot reap.
+func (g *Game) CanUseTo(player int, id LocalID, kind UseKind) error {
+	return g.canUseTo(player, id, kind)
+}
+
+// CanUseArtifact reports whether an artifact's "Action:" ability may currently be
+// used by the player: nil if usable, otherwise the reason. It shares usable's
+// house check, so a Versatile artifact (Lifeward) is correctly offered out of
+// the active house rather than a UI reimplementing the house check on its own.
+func (g *Game) CanUseArtifact(player int, id LocalID) error {
+	if err := g.usable(player, id); err != nil {
+		return err
+	}
+	if g.cat.def(id).Type != Artifact {
+		return ErrWrongType
+	}
+	if !g.hasTrigger(id, TriggerAction) {
+		return ErrCannotUse
+	}
+	return nil
+}
+
 // Reap uses a creature to reap, gaining 1 Æmber and firing "Reap:" abilities.
 func (g *Game) Reap(player int, id LocalID) error {
-	if err := g.canUse(player, id); err != nil {
+	if err := g.canUseTo(player, id, ReapUse); err != nil {
 		return err
+	}
+	g.reapWith(id)
+	return nil
+}
+
+// Unstun spends a stunned creature's use for the turn shaking off the stun
+// instead — the only thing a stunned creature can do with a use, so it is
+// offered wherever Reap/Fight/an action would be, under the same checks
+// (including the active-house one). A creature that is *forced* into an
+// action rather than choosing one skips this check entirely; reapWith,
+// fight, and useActionOf each absorb that forced use into the stun recovery
+// on their own, with no active-player or house check of their own.
+func (g *Game) Unstun(player int, id LocalID) error {
+	if err := g.usable(player, id); err != nil {
+		return err
+	}
+	if g.cat.def(id).Type != Creature || !g.State.Cards[id].Stunned {
+		return ErrCannotUse
 	}
 	g.reapWith(id)
 	return nil
@@ -91,8 +163,12 @@ func (g *Game) recordUse(id LocalID) {
 
 // reapWith performs a reap driven by a rule or ability, with no active-player or
 // active-house checks: a stunned creature recovers instead; otherwise it
-// exhausts, its controller gains 1 Æmber, and its "Reap:" abilities fire.
+// exhausts, its controller gains 1 Æmber, and its "Reap:" abilities fire. A card
+// that cannot reap is not made to by an ability either.
 func (g *Game) reapWith(id LocalID) {
+	if g.cannotBeUsedTo(id, ReapUse) {
+		return
+	}
 	g.recordUse(id)
 	if g.recoverFromStun(id) {
 		return
@@ -126,6 +202,9 @@ func (g *Game) gainReapAember(p int, source LocalID) {
 func (g *Game) UseAction(player int, id LocalID) error {
 	if err := g.usable(player, id); err != nil {
 		return err
+	}
+	if g.cannotBeUsedTo(id, ActionUse) {
+		return ErrCannotUse
 	}
 	if !g.hasTrigger(id, TriggerAction) {
 		return ErrWrongType
@@ -172,7 +251,8 @@ func (g *Game) Fight(player int, attacker, defender LocalID) error {
 	if g.cannotFight(player) {
 		return ErrCannotFight
 	}
-	if err := g.canUse(player, attacker); err != nil && !g.fightErrorForgiven(err, attacker) {
+	if err := g.canUseTo(player, attacker, FightUse); err != nil &&
+		!g.fightErrorForgiven(err, attacker) {
 		return err
 	}
 	if g.cat.def(defender).Type != Creature ||
@@ -450,7 +530,7 @@ func (g *Game) triggeredBy(src LocalID, trigger Trigger) []triggeredAbility {
 
 // orderTriggerPrompt is the prompt shown when abilities on several cards trigger
 // at once and the active player must say which card's resolves next.
-const orderTriggerPrompt = "Choose the next card whose ability resolves"
+const orderTriggerPrompt = "Choose which card's ability resolves next"
 
 // orderGrantorPrompt is the prompt shown when one card has several abilities in
 // the same trigger window (its own text plus one an upgrade or a constant ability

@@ -20,7 +20,7 @@ var MagdaTheRat = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 303),
 	card.WithPower(4),
-	card.WithTraits("Elf", "Thief"),
+	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(card.Trigger.Play, card.StealAember{Amount: 2}),
 	card.WithAbility(

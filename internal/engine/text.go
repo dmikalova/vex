@@ -223,7 +223,7 @@ func renderCardText(def *CardDefinition, withName bool) string {
 	if len(def.Traits) > 0 {
 		traits := make([]string, len(def.Traits))
 		for i, t := range def.Traits {
-			traits[i] = string(t)
+			traits[i] = t.String()
 		}
 		fields = append(fields, field{"Traits", strings.Join(traits, " • ")})
 	}
@@ -286,6 +286,16 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 	}
 	if fr := def.FightRestriction; fr != (Target{}) {
 		rules = append(rules, def.Name+" can only fight "+singularNoun(fr.Text())+"s.")
+	}
+	for _, k := range def.CannotBeUsedTo {
+		rules = append(rules, def.Name+" cannot "+k.verb()+".")
+	}
+	if dw := def.DestroyedWhen; dw != nil {
+		rules = append(rules, capitalizeFirst(dw.CondText())+", destroy "+def.Name+".")
+	}
+	if t := def.TakesDamageFor; t.valid() {
+		rules = append(rules,
+			"Damage dealt to "+t.Text()+" is dealt to "+def.Name+" instead.")
 	}
 	if s := attackIgnoresText(def); s != "" {
 		rules = append(rules, s)

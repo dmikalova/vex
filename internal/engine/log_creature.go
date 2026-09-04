@@ -25,6 +25,30 @@ func (e CreatureExhausted) Text(n Namer) string {
 	return fmt.Sprintf("%s is exhausted", n.Name(e.Creature))
 }
 
+// CreatureStunned narrates a card being stunned, and by what — unless the
+// stunner is the card itself (Chuff Ape enters play stunned), which reads better
+// left passive. AlreadyStunned marks a stun that found its target already
+// stunned: the source still had to choose it, so the choice is worth a line even
+// though nothing changed (the same reasoning as a steal that finds an empty
+// pool: see ReapedStealing's "no Æmber to steal").
+type CreatureStunned struct {
+	Creature       LocalID
+	By             LocalID
+	AlreadyStunned bool
+}
+
+// Text renders the card that was stunned and, when it is not self-inflicted, the
+// card that stunned it.
+func (e CreatureStunned) Text(n Namer) string {
+	if e.AlreadyStunned {
+		return fmt.Sprintf("%s is already stunned", n.Name(e.Creature))
+	}
+	if e.By != e.Creature {
+		return fmt.Sprintf("%s stunned %s", n.Name(e.By), n.Name(e.Creature))
+	}
+	return fmt.Sprintf("%s is stunned", n.Name(e.Creature))
+}
+
 // NoCreatureToFight narrates a fight that found no enemy creature to attack, so
 // nothing happened.
 type NoCreatureToFight struct{ Creature LocalID }

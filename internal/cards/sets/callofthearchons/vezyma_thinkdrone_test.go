@@ -30,7 +30,6 @@ func TestVezymaThinkdrone(t *testing.T) {
 		})
 
 		h.P1.Reap(VezymaThinkdrone)
-		h.P1.ClickOption("Yes")
 		h.P1.ClickCard(ally)
 
 		h.Expect(ally).At(ct.Archives)

@@ -20,6 +20,6 @@ var PsychicBug = card.New(
 	card.Provenance(card.CotA, 149),
 	card.WithPower(2),
 	card.WithAemberBonus(1),
-	card.WithTraits("Cyborg", "Insect"),
+	card.WithTraits(card.Traits.Cyborg, card.Traits.Insect),
 	card.WithPlayReap(card.RevealHand{Player: card.Opponent}),
 )

@@ -16,7 +16,7 @@ var HallowedBlaster = card.New(
 	card.Type.Artifact,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 233),
-	card.WithTraits("Weapon"),
+	card.WithTraits(card.Traits.Weapon),
 	card.WithAbility(
 		card.Trigger.Action, card.Heal{
 			Amount: 3,

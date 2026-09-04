@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Power:  9
 //	Æmber:  2
-//	Traits: demon
+//	Traits: Demon
 //
 //	Taunt.
 //	While Pitlord is in play you must choose Dis as your active house.
@@ -21,7 +21,7 @@ var Pitlord = card.New(
 	card.Provenance(card.CotA, 93),
 	card.WithPower(9),
 	card.WithAemberBonus(2),
-	card.WithTraits("demon"),
+	card.WithTraits(card.Traits.Demon),
 	card.WithKeywords(card.Keyword.Taunt),
 	card.WithHouseLock(card.HouseLock{
 		Player: card.Controller,

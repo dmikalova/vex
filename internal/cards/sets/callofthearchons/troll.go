@@ -18,7 +18,7 @@ var Troll = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 48),
 	card.WithPower(8),
-	card.WithTraits("Giant"),
+	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(
 		card.Trigger.Reap, card.Heal{
 			Amount: 3,

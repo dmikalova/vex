@@ -68,9 +68,10 @@ func segmentAt(spy *namerSpy, text string, i int) (LogSegment, bool) {
 const aemberWord = "Æmber"
 
 // iconAt returns the icon segment for a keyword starting at text[i]. The icon
-// vocabulary is closed and owned by the engine — Æmber and the seven houses — so
-// a client draws emblems from what the engine reported rather than scanning
-// prose for words it happens to recognise (ADR 0011).
+// vocabulary is closed and owned by the engine — Æmber, the seven houses, being
+// stunned, chains, and keys — so a client draws emblems from what the engine
+// reported rather than scanning prose for words it happens to recognise
+// (ADR 0011).
 func iconAt(text string, i int) (LogSegment, bool) {
 	if wordAt(text, i, aemberWord) {
 		return LogSegment{Text: aemberWord, Icon: "aember"}, true
@@ -79,6 +80,22 @@ func iconAt(text string, i int) (LogSegment, bool) {
 		if name := h.String(); wordAt(text, i, name) {
 			return LogSegment{Text: name, Icon: houseIconKey(h)}, true
 		}
+	}
+	if wordAt(text, i, "stunned") {
+		return LogSegment{Text: "stunned", Icon: "stun"}, true
+	}
+	if wordAt(text, i, "chains") {
+		return LogSegment{Text: "chains", Icon: "chains"}, true
+	}
+	if wordAt(text, i, "chain") {
+		return LogSegment{Text: "chain", Icon: "chains"}, true
+	}
+	if wordAt(text, i, "keys") {
+		return LogSegment{Text: "keys", Icon: "key"}, true
+	}
+	// "key phase" names the turn phase, not an actual key, so it stays plain text.
+	if wordAt(text, i, "key") && !strings.HasPrefix(text[i+len("key"):], " phase") {
+		return LogSegment{Text: "key", Icon: "key"}, true
 	}
 	return LogSegment{}, false
 }

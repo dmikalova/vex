@@ -145,9 +145,9 @@ func TestTargetSharingTrait(t *testing.T) {
 	}
 
 	g := NewGame("A", "B", 1)
-	kin := g.AddToBattleline(testCreature("kin", 3, WithTraits("Beast")), 0)
-	prey := g.AddToBattleline(testCreature("prey", 5, WithTraits("Beast")), 1)
-	g.AddToBattleline(testCreature("spared", 5, WithTraits("Robot")), 1)
+	kin := g.AddToBattleline(testCreature("kin", 3, WithTraits(Beast)), 0)
+	prey := g.AddToBattleline(testCreature("prey", 5, WithTraits(Beast)), 1)
+	g.AddToBattleline(testCreature("spared", 5, WithTraits(Robot)), 1)
 	target := Target{Kind: TargetEachCreature}.SharingTrait()
 
 	// Without a context card the filter matches nothing.
@@ -364,21 +364,21 @@ func TestTargetOfHouse(t *testing.T) {
 func TestTargetExceptTrait(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	agent := g.AddToBattleline(
-		NewCard("a", Mars, Creature, Common, WithPower(3), WithTraits("Agent")),
+		NewCard("a", Mars, Creature, Common, WithPower(3), WithTraits(Agent)),
 		0,
 	)
 	martian := g.AddToBattleline(
-		NewCard("m", Mars, Creature, Common, WithPower(3), WithTraits("Martian")),
+		NewCard("m", Mars, Creature, Common, WithPower(3), WithTraits(Martian)),
 		0,
 	)
 	ctx := &EffectContext{Resolver: g, Source: agent, Controller: 0}
 
-	ids := (Target{Kind: TargetEachCreature}).OfHouse(Mars).ExceptTrait("Agent").Select(ctx)
+	ids := (Target{Kind: TargetEachCreature}).OfHouse(Mars).ExceptTrait(Agent).Select(ctx)
 	if len(ids) != 1 || ids[0] != martian {
 		t.Errorf("ExceptTrait(Agent) = %v, want [%d] (Agent filtered out)", ids, martian)
 	}
 	if got := (Target{Kind: TargetChosenCreature}).OfHouse(Mars).
-		ExceptTrait("Agent").
+		ExceptTrait(Agent).
 		Text(); got != "a non-Agent trait Mars creature" {
 		t.Errorf("ExceptTrait text = %q", got)
 	}
@@ -527,5 +527,23 @@ func TestTargetNamed(t *testing.T) {
 	got := tgt.Select(ctx)
 	if len(got) != 1 || got[0] != bear {
 		t.Errorf("selected %v, want just the bear (not %v)", got, other)
+	}
+}
+
+func TestTargetChosenEnemyCreatureOrArtifact(t *testing.T) {
+	tgt := Target{Kind: TargetChosenEnemyCreatureOrArtifact}
+	if want := "an enemy creature or artifact"; tgt.Text() != want {
+		t.Errorf("text = %q, want %q", tgt.Text(), want)
+	}
+
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(testCreature("mine", 3), 0)
+	foe := g.AddToBattleline(testCreature("theirs", 3), 1)
+	art := g.AddArtifact(NewCard("Their Relic", Logos, Artifact, Common), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	// Both enemy halves are candidates; the chooser takes the first.
+	if got := tgt.Select(ctx); len(got) != 1 || got[0] != foe {
+		t.Errorf("selected %v, want the enemy creature %v (candidates include %v)", got, foe, art)
 	}
 }

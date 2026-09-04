@@ -18,7 +18,7 @@ var Autocannon = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 19),
 	card.WithAemberBonus(1),
-	card.WithTraits("Weapon"),
+	card.WithTraits(card.Traits.Weapon),
 	card.WithAbility(
 		card.Trigger.AfterCreatureEnters, card.DealDamage{
 			Amount: 1,

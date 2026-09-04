@@ -25,6 +25,18 @@ func (g *game) hoverLive() bool {
 		(g.isInPlay(g.hoverID) || containsID(g.g.Hand(g.active()), g.hoverID))
 }
 
+// previewUp reports whether the hover preview should be drawn. Hovering the card
+// that is already lifted over the board is the one case it is not: the lifted copy
+// is a full-size read of that card already, so popping a second enlarged copy of
+// it would only be two of the same card on screen. Hovering anything else still
+// previews, which is what hovering is for.
+func (g *game) previewUp() bool {
+	if id, ok := g.focusCardID(); ok && g.hasHover && g.hoverID == id {
+		return false
+	}
+	return g.hoverLive() || g.hoverDef != nil
+}
+
 // onLogCardHover previews the printed card named by a log mention, to the left of
 // the log.
 func (g *game) onLogCardHover(ctx app.Context, _ app.Event) {
@@ -76,9 +88,11 @@ func (g *game) cancelRestart(_ app.Context, _ app.Event) {
 }
 
 // toggleSidebar hides or shows the whole sidebar so the board area can use the
-// full width.
-func (g *game) toggleSidebar(_ app.Context, _ app.Event) {
+// full width. It saves, because the collapsed state also decides where the
+// control dock lives, so losing it on reload would move the player's buttons.
+func (g *game) toggleSidebar(ctx app.Context, _ app.Event) {
 	g.sidebarCollapsed = !g.sidebarCollapsed
+	g.save(ctx)
 }
 
 // toggleMenu opens or closes the sidebar's hamburger menu.
@@ -92,16 +106,15 @@ func (g *game) closeMenu(_ app.Context, _ app.Event) {
 	g.menuOpen = false
 }
 
-// The menu's items close the menu and then do their thing, so the panel does not
-// hang open over the change it just made.
+// A menu item that hands the player off somewhere else closes the menu, so the
+// panel does not hang open over the thing it just opened. An item the player is
+// likely to repeat leaves it open, so a run of undos is one press each.
 
 func (g *game) undoMenu(ctx app.Context, e app.Event) {
-	g.menuOpen = false
 	g.undoAction(ctx, e)
 }
 
 func (g *game) redoMenu(ctx app.Context, e app.Event) {
-	g.menuOpen = false
 	g.redoAction(ctx, e)
 }
 

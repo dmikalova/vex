@@ -19,24 +19,45 @@ func (g *game) Render() app.UI {
 	return app.Div().Class(cx("app", ifCls(g.sidebarCollapsed, "app--sidebar-collapsed"))).Body(
 		app.Raw(iconOutlineFilter),
 		app.Div().Class("board-area").OnClick(g.clickAway).Body(g.boardArea()...),
+		// The lift and the preview draw themselves empty rather than sitting behind an
+		// app.If, so they hold a fixed place among the root's children: a conditional
+		// sibling coming and going would shift them, and go-app would rebuild the
+		// element underneath them — restarting the lift's grow every time a hover
+		// started or ended.
+		g.cardFocus(),
+		g.hoverPreview(),
 		app.If(!g.sidebarCollapsed, func() app.UI {
 			return app.Div().Class("sidebar").Body(
 				g.brandBar(),
 				g.logPanel(),
 				g.restrictionNotes(),
 				g.turnHud(),
-				app.If(g.status != "", func() app.UI { return g.statusBanner() }),
-				g.controls(),
+				g.controlDock(),
 			)
 		}),
+		// Hiding the sidebar costs the player the log, never the game: the control
+		// dock leaves with it and floats over the board instead.
+		app.If(g.sidebarCollapsed, func() app.UI { return g.controlDock() }),
 		app.If(g.sidebarCollapsed, func() app.UI {
 			return app.Button().Class("btn-nav btn-icon sidebar-reveal").Title("Show sidebar").
 				Text("«").OnClick(g.toggleSidebar)
 		}),
-		app.If(g.hoverLive() || g.hoverDef != nil, func() app.UI { return g.hoverPreview() }),
 		app.If(g.zonesPlayer >= 0, func() app.UI { return g.zonesOverlay() }),
 		app.If(g.pickerOpen, func() app.UI { return g.cardPicker() }),
 		app.If(g.keysOpen, func() app.UI { return g.keysOverlay() }),
+	)
+}
+
+// controlDock is everything the player answers with — the prompt, the action bar,
+// the house picker, the flank buttons, end turn — plus the status banner that
+// reports a rejected one. It is the same subtree in both places: a block at the
+// foot of the sidebar, or a floating panel over the board once the sidebar is
+// hidden, which is what keeps the game playable with the sidebar away.
+func (g *game) controlDock() app.UI {
+	return app.Div().Class(cx("control-dock",
+		ifCls(g.sidebarCollapsed, "control-dock--floating"))).Body(
+		app.If(g.status != "", func() app.UI { return g.statusBanner() }),
+		g.controls(),
 	)
 }
 

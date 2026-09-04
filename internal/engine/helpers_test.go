@@ -32,7 +32,7 @@ func exGiant() CardDefinition {
 		Rare,
 		WithPower(5),
 		WithArmor(0),
-		WithTraits("Giant"),
+		WithTraits(Giant),
 		WithAbility(
 			TriggerAfterForgeKey,
 			DealDamage{Amount: 2, Target: Target{Kind: TargetEachEnemyCreature}},
@@ -69,7 +69,7 @@ func exAutocannon() CardDefinition {
 		Artifact,
 		Rare,
 		WithAemberBonus(1),
-		WithTraits("Weapon"),
+		WithTraits(Weapon),
 		WithAbility(
 			TriggerAfterCreatureEnters,
 			DealDamage{Amount: 1, Target: Target{Kind: TargetTriggeringCreature}},

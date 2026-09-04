@@ -19,7 +19,7 @@ var OldBruno = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 307),
 	card.WithPower(3),
-	card.WithTraits("Elf", "Thief"),
+	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
 		card.Trigger.Play, card.CaptureAember{

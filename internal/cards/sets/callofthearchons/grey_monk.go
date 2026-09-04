@@ -19,7 +19,7 @@ var GreyMonk = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 244),
 	card.WithPower(3),
-	card.WithTraits("Human", "Priest"),
+	card.WithTraits(card.Traits.Human, card.Traits.Priest),
 	card.WithConstant(card.ConstantAbility{
 		ArmorBonus: 1,
 		Target:     card.Target.EachFriendlyCreature,

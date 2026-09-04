@@ -18,6 +18,6 @@ var AncientBear = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 345),
 	card.WithPower(5),
-	card.WithTraits("Beast"),
+	card.WithTraits(card.Traits.Beast),
 	card.WithAssault(2),
 )

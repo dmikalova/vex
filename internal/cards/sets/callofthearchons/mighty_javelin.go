@@ -19,7 +19,7 @@ var MightyJavelin = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 24),
 	card.WithAemberBonus(1),
-	card.WithTraits("Weapon"),
+	card.WithTraits(card.Traits.Weapon),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(
 		card.Trigger.Action, card.Sentences{

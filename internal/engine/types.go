@@ -141,8 +141,82 @@ func (t CardType) reacts(other CardType) bool {
 }
 
 // Trait is a flavor/type label printed on a card (e.g. "Giant", "Weapon").
-// Traits carry no inherent rules meaning on their own; other cards reference them.
-type Trait string
+// Traits carry no inherent rules meaning on their own; other cards reference
+// them (a Destroy that targets "each Scientist trait creature"). KeyForge keeps
+// coining new traits with every set, but each one still comes from a fixed,
+// printed vocabulary, so — like Keyword — this is a closed enum rather than a
+// freeform string: a misspelled trait cannot compile. A set that prints a trait
+// not yet listed below needs it added here first.
+type Trait int
+
+// The traits a card can carry, in alphabetical order.
+const (
+	// traitUnset is the invalid zero value: a Trait field left unset (e.g.
+	// PutFromDiscard.Trait, Target.trait) means "no trait filter", not a real
+	// trait.
+	traitUnset Trait = iota
+	Agent
+	Ally
+	Angel
+	Beast
+	Cleric
+	Cyborg
+	Demon
+	Dragon
+	Elf
+	Faerie
+	Fungus
+	Giant
+	Goblin
+	Horseman
+	Human
+	Imp
+	Insect
+	Item
+	Knight
+	Location
+	Martian
+	Merchant
+	Mutant
+	Niffle
+	Power
+	Priest
+	Quest
+	Ranger
+	Robot
+	Scientist
+	Soldier
+	Specter
+	Spirit
+	Thief
+	Vehicle
+	Weapon
+	Witch
+	// traitCount bounds the enum; it is not a trait.
+	traitCount
+)
+
+// traitNames maps a Trait to its printed word, indexed by the enum value.
+var traitNames = [traitCount]string{
+	Agent: "Agent", Ally: "Ally", Angel: "Angel", Beast: "Beast",
+	Cleric: "Cleric", Cyborg: "Cyborg", Demon: "Demon", Dragon: "Dragon",
+	Elf: "Elf", Faerie: "Faerie", Fungus: "Fungus", Giant: "Giant",
+	Goblin: "Goblin", Horseman: "Horseman", Human: "Human", Imp: "Imp",
+	Insect: "Insect", Item: "Item", Knight: "Knight", Location: "Location",
+	Martian: "Martian", Merchant: "Merchant", Mutant: "Mutant", Niffle: "Niffle",
+	Power: "Power", Priest: "Priest", Quest: "Quest", Ranger: "Ranger",
+	Robot: "Robot", Scientist: "Scientist", Soldier: "Soldier", Specter: "Specter",
+	Spirit: "Spirit", Thief: "Thief", Vehicle: "Vehicle", Weapon: "Weapon",
+	Witch: "Witch",
+}
+
+// String returns the trait's printed word, or "" for the unset zero value.
+func (t Trait) String() string {
+	if t <= traitUnset || t >= traitCount {
+		return ""
+	}
+	return traitNames[t]
+}
 
 // Keyword is a rules shorthand a card can have (e.g. Skirmish, Poison). Unlike
 // Trait, which any card may coin, the keywords are a closed set the rulebook

@@ -30,18 +30,18 @@ func TestMoveFromDiscardToHand(t *testing.T) {
 func TestPutFromDiscardByTrait(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	horseman := g.Register(
-		NewCard("Rider", Sanctum, Creature, Common, WithPower(5), WithTraits("Horseman")),
+		NewCard("Rider", Sanctum, Creature, Common, WithPower(5), WithTraits(Horseman)),
 		0,
 	)
 	other := g.Register(
-		NewCard("Squire", Sanctum, Creature, Common, WithPower(3), WithTraits("Human")),
+		NewCard("Squire", Sanctum, Creature, Common, WithPower(3), WithTraits(Human)),
 		0,
 	)
 	g.State.Discard[0].add(horseman)
 	g.State.Discard[0].add(other)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := PutFromDiscard{Type: Creature, Trait: "Horseman", All: true, Destination: ToHand}
+	e := PutFromDiscard{Type: Creature, Trait: Horseman, All: true, Destination: ToHand}
 	if e.Text() != "put each Horseman trait creature from your discard pile into your hand" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -57,11 +57,11 @@ func TestPutFromDiscardByTrait(t *testing.T) {
 func TestPutFromDiscardByTraitChoose(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	horseman := g.Register(
-		NewCard("Rider", Sanctum, Creature, Common, WithPower(5), WithTraits("Horseman")),
+		NewCard("Rider", Sanctum, Creature, Common, WithPower(5), WithTraits(Horseman)),
 		0,
 	)
 	other := g.Register(
-		NewCard("Squire", Sanctum, Creature, Common, WithPower(3), WithTraits("Human")),
+		NewCard("Squire", Sanctum, Creature, Common, WithPower(3), WithTraits(Human)),
 		0,
 	)
 	g.State.Discard[0].add(horseman)
@@ -70,7 +70,7 @@ func TestPutFromDiscardByTraitChoose(t *testing.T) {
 
 	// Not All: the non-Horseman card is filtered out of the candidates, leaving
 	// only the Horseman for the controller to choose.
-	e := PutFromDiscard{Type: Creature, Trait: "Horseman", Destination: ToHand}
+	e := PutFromDiscard{Type: Creature, Trait: Horseman, Destination: ToHand}
 	e.Resolve(ctx)
 	if !g.State.Hand[0].contains(horseman) {
 		t.Error("the Horseman creature should return to hand")

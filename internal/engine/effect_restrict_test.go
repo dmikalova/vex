@@ -227,7 +227,7 @@ func TestToll(t *testing.T) {
 
 	g := started(t) // player 0 active, Brobnar
 	// Player 0 controls a play-toll; player 1 will be charged to play an artifact.
-	g.AddArtifact(NewCard("Customs", Brobnar, Artifact, Common, WithTraits("Location"),
+	g.AddArtifact(NewCard("Customs", Brobnar, Artifact, Common, WithTraits(Location),
 		WithRestrictions(Restrictions{Toll: Toll{Action: TollPlayArtifact, Amount: 1}})), 0)
 
 	g.EndPlayPhase(0)
@@ -235,7 +235,7 @@ func TestToll(t *testing.T) {
 	if err := g.ChooseHouse(1, Brobnar); err != nil {
 		t.Fatalf("ChooseHouse: %v", err)
 	}
-	g.AddToHand(NewCard("Widget", Brobnar, Artifact, Common, WithTraits("Item")), 1)
+	g.AddToHand(NewCard("Widget", Brobnar, Artifact, Common, WithTraits(Item)), 1)
 	idx := handIdx(g, 1, "Widget")
 
 	// Too poor to pay the toll: the play is rejected and the card stays in hand, and
@@ -261,9 +261,9 @@ func TestToll(t *testing.T) {
 
 	// The same gate tolls using an artifact: player 0 controls a use-toll, and
 	// player 1 must pay it to fire their own artifact's action ability.
-	g.AddArtifact(NewCard("Gatekeeper", Brobnar, Artifact, Common, WithTraits("Item"),
+	g.AddArtifact(NewCard("Gatekeeper", Brobnar, Artifact, Common, WithTraits(Item),
 		WithRestrictions(Restrictions{Toll: Toll{Action: TollUseArtifact, Amount: 1}})), 0)
-	gadget := g.AddArtifact(NewCard("Gadget", Brobnar, Artifact, Common, WithTraits("Item"),
+	gadget := g.AddArtifact(NewCard("Gadget", Brobnar, Artifact, Common, WithTraits(Item),
 		WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 3})), 1)
 
 	g.State.Aember[1] = 0

@@ -25,11 +25,11 @@ func TestHonorableClaim(t *testing.T) {
 				InPlay: ct.Cards(
 					ct.Bind(
 						&knight,
-						ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Traits("Knight")),
+						ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Traits(card.Traits.Knight)),
 					),
 					ct.Bind(
 						&other,
-						ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Traits("Human")),
+						ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Traits(card.Traits.Human)),
 					),
 				),
 			},

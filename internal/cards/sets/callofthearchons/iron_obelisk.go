@@ -16,7 +16,7 @@ var IronObelisk = card.New(
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 23),
-	card.WithTraits("Location"),
+	card.WithTraits(card.Traits.Location),
 	card.WithKeyCost(card.KeyCostChange(card.Opponent, 1).Per(card.InPlay{
 		Player:  card.Controller,
 		Type:    card.Type.Creature,

@@ -25,6 +25,6 @@ var TheSting = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 295),
 	card.WithAemberBonus(1),
-	card.WithTraits("Vehicle"),
+	card.WithTraits(card.Traits.Vehicle),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

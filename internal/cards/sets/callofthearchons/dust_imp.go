@@ -18,7 +18,7 @@ var DustImp = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 83),
 	card.WithPower(2),
-	card.WithTraits("Imp"),
+	card.WithTraits(card.Traits.Imp),
 	card.WithAbility(
 		card.Trigger.Destroyed, card.GainAember{
 			Player: card.Controller,

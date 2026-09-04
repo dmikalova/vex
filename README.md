@@ -46,7 +46,8 @@ every doc is in [`docs/README.md`](docs/README.md).
 
 `mage -l` lists the available targets: `run`, `web`, `webWasm`, `build`, `test`,
 `cover`, `vet`, `fmt`, `lint`, `check`, `tidy`, `gen`. `mage check` is the full
-green gate (fmt-check, build, vet, lint, test, coverage) and is what CI runs.
+green gate (fmt-check, build, vet, lint, markdown lint, test, coverage) and is
+what CI runs.
 Card-authoring conventions live in
 [`internal/cards/AGENTS.md`](internal/cards/AGENTS.md).
 

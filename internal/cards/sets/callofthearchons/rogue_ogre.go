@@ -18,7 +18,7 @@ var RogueOgre = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 45),
 	card.WithPower(6),
-	card.WithTraits("Giant", "Mutant"),
+	card.WithTraits(card.Traits.Giant, card.Traits.Mutant),
 	card.WithAbility(
 		card.Trigger.EndOfTurn, card.Conditional{
 			Cond: card.CountIs{

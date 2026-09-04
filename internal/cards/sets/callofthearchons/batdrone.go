@@ -19,7 +19,7 @@ var Batdrone = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 136),
 	card.WithPower(2),
-	card.WithTraits("Robot"),
+	card.WithTraits(card.Traits.Robot),
 	card.WithKeywords(card.Keyword.Skirmish),
 	card.WithAbility(
 		card.Trigger.Fight, card.StealAember{Amount: 1}),

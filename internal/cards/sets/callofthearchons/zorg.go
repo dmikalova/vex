@@ -19,7 +19,7 @@ var Zorg = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 206),
 	card.WithPower(7),
-	card.WithTraits("Beast"),
+	card.WithTraits(card.Traits.Beast),
 	card.WithEntersPlay(card.Stun{Target: card.Target.This}),
 	card.WithAbility(
 		card.Trigger.BeforeFight,

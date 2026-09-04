@@ -71,18 +71,31 @@ func TestConnectedExcludedFromPool(t *testing.T) {
 	}
 }
 
-// A maverick puller does not fire its connection (cross-house is off for v1).
-func TestConnectionMaverickPullerSkipped(t *testing.T) {
+// A maverick puller still fires its connection, and the pulled partner is
+// rehoused to the pod's House and marked a maverick too — matching KeyForge's
+// own rule for a Maverick's connected cards.
+func TestConnectionMaverickPullerRehousesPartner(t *testing.T) {
 	set := NewSet("S", []Card{
-		connCard("P", engine.Brobnar, pulls("Q")),
-		connectedCard("Q", engine.Brobnar),
+		connCard("P", engine.Untamed, pulls("Q")),
+		connectedCard("Q", engine.Untamed),
 	}, DefaultTuning())
 	g := gen(set)
-	pod := HousePod{House: engine.Brobnar}
+	pod := HousePod{House: engine.Sanctum}
 	pod.Slots[0] = Slot{Card: set.byName["P"].Def, Maverick: true}
 	out := g.expandConnections(pod)
-	if countName(out, "Q") != 0 {
-		t.Fatal("maverick puller should not pull a partner")
+	if countName(out, "Q") != 1 {
+		t.Fatal("maverick puller should still pull its partner")
+	}
+	for _, s := range out.Slots {
+		if s.Card.Name != "Q" {
+			continue
+		}
+		if !s.Maverick {
+			t.Error("pulled partner should be marked a maverick")
+		}
+		if s.Card.House != engine.Sanctum {
+			t.Errorf("partner house = %v, want rehoused to %v", s.Card.House, engine.Sanctum)
+		}
 	}
 }
 

@@ -18,7 +18,7 @@ var MightyTiger = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 360),
 	card.WithPower(4),
-	card.WithTraits("Beast"),
+	card.WithTraits(card.Traits.Beast),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{
 			Amount: 4,

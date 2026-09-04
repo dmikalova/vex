@@ -18,7 +18,7 @@ var YxiloBolter = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 204),
 	card.WithPower(3),
-	card.WithTraits("Martian", "Soldier"),
+	card.WithTraits(card.Traits.Martian, card.Traits.Soldier),
 	card.WithFightOrReap(card.DamageIfDestroyed{
 		Amount: 2,
 		Target: card.Target.Creature,

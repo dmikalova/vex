@@ -30,6 +30,7 @@ func (g *game) selectBoardID(_ app.Context, id engine.LocalID) {
 	}
 	g.sel, g.selKind, g.selHand, g.hasSel = id, g.boardKindOf(id), -1, true
 	g.status = ""
+	g.measureFocus()
 }
 
 // selectHandID selects a card in the active player's hand, recovering its hand
@@ -50,6 +51,7 @@ func (g *game) selectHand(id engine.LocalID) {
 	}
 	g.sel, g.selKind, g.selHand, g.hasSel = id, selHand, idx, true
 	g.status = ""
+	g.measureFocus()
 }
 
 // selHandSlot is the place the selected card holds in the hand as drawn, or -1
@@ -66,15 +68,19 @@ func (g *game) selHandSlot() int {
 // card played or discarded from hand passes the selection to whatever card now
 // holds its place in hand (the last card, when it was the last), so playing a
 // run of cards from the keyboard keeps its place instead of starting over from
-// nothing. It only lands on a card there is still something to do with, so
-// playing the last playable card leaves nothing selected rather than parking on
-// a card the turn cannot touch. Anything else — a reap, a fight, a new turn —
-// simply clears.
+// nothing. It only does this for a keyboard-driven action — a mouse player who
+// just let go of a dragged or clicked card would find the selection jumping to
+// another one surprising. It only lands on a card there is still something to do
+// with, so playing the last playable card leaves nothing selected rather than
+// parking on a card the turn cannot touch. Anything else — a reap, a fight, a new
+// turn — simply clears.
 func (g *game) advanceSelection() {
 	slot, gone := g.handSlot, !g.hasSel || !containsID(g.g.Hand(g.active()), g.sel)
 	g.handSlot = -1
+	viaKeyboard := g.keyboardAction
+	g.keyboardAction = false
 	g.clearSelection()
-	if slot < 0 || !gone || g.phase != phaseMain {
+	if !viaKeyboard || slot < 0 || !gone || g.phase != phaseMain {
 		return
 	}
 	hand := g.sortedHand(g.active())
@@ -293,7 +299,19 @@ func (g *game) reap(ctx app.Context, _ app.Event) {
 		return
 	}
 	p, id := g.active(), g.sel
+	g.reapID, g.reaping = id, true
 	g.runAction(ctx, func() error { return g.g.Reap(p, id) })
+}
+
+// unstun sheds the stun on the selected creature: the one thing an otherwise
+// usable stunned creature can do instead of reaping, fighting, or acting.
+func (g *game) unstun(ctx app.Context, _ app.Event) {
+	if g.busy || g.choosing || g.phase != phaseMain || g.selKind != selYourCreature {
+		return
+	}
+	p, id := g.active(), g.sel
+	g.reapID, g.reaping = id, true
+	g.runAction(ctx, func() error { return g.g.Unstun(p, id) })
 }
 
 func (g *game) useAction(ctx app.Context, _ app.Event) {
@@ -304,6 +322,7 @@ func (g *game) useAction(ctx app.Context, _ app.Event) {
 		return
 	}
 	p, id := g.active(), g.sel
+	g.actID, g.acting = id, true
 	g.runAction(ctx, func() error { return g.g.UseAction(p, id) })
 }
 
@@ -314,7 +333,7 @@ func (g *game) startFight(ctx app.Context, _ app.Event) {
 	if g.busy || g.choosing || g.phase != phaseMain || g.selKind != selYourCreature {
 		return
 	}
-	if err := g.g.CanUse(g.active(), g.sel); err != nil {
+	if err := g.g.CanUseTo(g.active(), g.sel, engine.FightUse); err != nil {
 		g.setStatus(err.Error())
 		return
 	}
@@ -327,6 +346,7 @@ func (g *game) startFight(ctx app.Context, _ app.Event) {
 		return
 	}
 	g.phase = phaseFightTarget
+	g.promptCursor, g.hasCursor = 0, false
 }
 
 func (g *game) fightTargetID(ctx app.Context, defender engine.LocalID) {

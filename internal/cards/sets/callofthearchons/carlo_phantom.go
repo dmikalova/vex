@@ -19,7 +19,7 @@ var CarloPhantom = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 298),
 	card.WithPower(1),
-	card.WithTraits("Elf", "Thief"),
+	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive, card.Keyword.Skirmish),
 	card.WithAbility(card.Trigger.AfterCardPlayed, card.Conditional{
 		Cond: card.ItIs{Type: card.Type.Artifact},

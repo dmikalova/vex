@@ -607,7 +607,7 @@ func (m gameModel) discardHand(sl slot) (gameModel, tea.Cmd) {
 }
 
 func (m gameModel) startFight(att engine.LocalID) (gameModel, tea.Cmd) {
-	if err := m.g.CanUse(m.player, att); err != nil {
+	if err := m.g.CanUseTo(m.player, att, engine.FightUse); err != nil {
 		m.status = err.Error()
 		m.phase = phaseMain
 		return m, nil

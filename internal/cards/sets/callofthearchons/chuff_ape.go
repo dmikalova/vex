@@ -20,7 +20,7 @@ var ChuffApe = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 191),
 	card.WithPower(11),
-	card.WithTraits("Beast"),
+	card.WithTraits(card.Traits.Beast),
 	card.WithKeywords(card.Keyword.Taunt),
 	card.WithEntersPlay(card.Stun{Target: card.Target.This}),
 	card.WithFightOrReap(card.May{

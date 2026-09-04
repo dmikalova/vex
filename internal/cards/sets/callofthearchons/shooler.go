@@ -18,7 +18,7 @@ var Shooler = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 96),
 	card.WithPower(5),
-	card.WithTraits("Demon"),
+	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
 			Cond: card.OpponentAember{Is: card.AtLeast, Amount: 4},

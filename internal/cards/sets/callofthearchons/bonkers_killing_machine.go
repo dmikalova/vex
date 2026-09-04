@@ -16,7 +16,7 @@ var BonkersKillingMachine = card.New(
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 128),
-	card.WithTraits("Weapon"),
+	card.WithTraits(card.Traits.Weapon),
 	card.WithAbility(
 		card.Trigger.Action, card.Sentences{
 			Effects: []card.Effect{

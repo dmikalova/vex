@@ -19,7 +19,7 @@ var DewFaerie = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 350),
 	card.WithPower(2),
-	card.WithTraits("Faerie"),
+	card.WithTraits(card.Traits.Faerie),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
 		card.Trigger.Reap, card.GainAember{

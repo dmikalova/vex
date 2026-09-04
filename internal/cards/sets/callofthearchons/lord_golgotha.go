@@ -20,7 +20,7 @@ var LordGolgotha = card.New(
 	card.Provenance(card.CotA, 252),
 	card.WithPower(5),
 	card.WithArmor(2),
-	card.WithTraits("Knight", "Spirit"),
+	card.WithTraits(card.Traits.Knight, card.Traits.Spirit),
 	card.WithAbility(
 		card.Trigger.BeforeFight, card.DealDamage{
 			Target: card.Target.CreatureFought.NeighborsOf(),

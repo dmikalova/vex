@@ -18,7 +18,7 @@ var NumquidTheFair = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 253),
 	card.WithPower(3),
-	card.WithTraits("Human"),
+	card.WithTraits(card.Traits.Human),
 	card.WithAbility(card.Trigger.Play, card.RepeatOnCondition{
 		Do:   card.Destroy{Target: card.Target.EnemyCreature},
 		Cond: card.Overwhelmed{},

@@ -19,13 +19,13 @@ var NiffleQueen = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 364),
 	card.WithPower(6),
-	card.WithTraits("Beast", "Niffle"),
+	card.WithTraits(card.Traits.Beast, card.Traits.Niffle),
 	card.WithConstant(card.ConstantAbility{
-		Target:     card.Target.EachOtherFriendlyCreature.WithTrait("Beast"),
+		Target:     card.Target.EachOtherFriendlyCreature.WithTrait(card.Traits.Beast),
 		PowerBonus: 1,
 	}),
 	card.WithConstant(card.ConstantAbility{
-		Target:     card.Target.EachOtherFriendlyCreature.WithTrait("Niffle"),
+		Target:     card.Target.EachOtherFriendlyCreature.WithTrait(card.Traits.Niffle),
 		PowerBonus: 1,
 	}),
 )

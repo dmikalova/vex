@@ -19,7 +19,7 @@ var LupoTheScarred = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 359),
 	card.WithPower(6),
-	card.WithTraits("Beast"),
+	card.WithTraits(card.Traits.Beast),
 	card.WithKeywords(card.Keyword.Skirmish),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{

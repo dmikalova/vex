@@ -18,7 +18,7 @@ var VeemosLightbringer = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 262),
 	card.WithPower(6),
-	card.WithTraits("Angel", "Spirit"),
+	card.WithTraits(card.Traits.Angel, card.Traits.Spirit),
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{
 			Target: card.Target.EachCreature.Keyword(card.Keyword.Elusive),

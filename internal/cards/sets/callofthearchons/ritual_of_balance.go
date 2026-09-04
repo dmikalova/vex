@@ -16,7 +16,7 @@ var RitualOfBalance = card.New(
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 342),
-	card.WithTraits("Power"),
+	card.WithTraits(card.Traits.Power),
 	card.WithAbility(
 		card.Trigger.Action, card.Conditional{
 			Cond: card.OpponentAember{Is: card.AtLeast, Amount: 6},

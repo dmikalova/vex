@@ -8,6 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Creature
 //	Rarity: Common
 //	Power:  9
+//	Armor:  1
 //	Traits: Robot
 //
 //	Taunt.
@@ -19,7 +20,8 @@ var YxilxDominator = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 205),
 	card.WithPower(9),
-	card.WithTraits("Robot"),
+	card.WithArmor(1),
+	card.WithTraits(card.Traits.Robot),
 	card.WithKeywords(card.Keyword.Taunt),
 	card.WithEntersPlay(card.Stun{Target: card.Target.This}),
 )

@@ -26,12 +26,12 @@ var TroopCall = card.New(
 			Effects: []card.Effect{
 				card.PutFromDiscard{
 					Type:        card.Type.Creature,
-					Trait:       "Niffle",
+					Trait:       card.Traits.Niffle,
 					All:         true,
 					Destination: card.To.Hand,
 				},
 				card.PutFromPlay{
-					Target:      card.Target.EachFriendlyCreature.WithTrait("Niffle"),
+					Target:      card.Target.EachFriendlyCreature.WithTrait(card.Traits.Niffle),
 					Destination: card.To.Hand,
 				},
 			},

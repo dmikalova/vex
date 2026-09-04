@@ -18,7 +18,7 @@ var DocBookton = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 139),
 	card.WithPower(5),
-	card.WithTraits("Human", "Scientist"),
+	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
 	card.WithAbility(
 		card.Trigger.Reap, card.Draw{Amount: 1}),
 )

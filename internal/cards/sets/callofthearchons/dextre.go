@@ -19,7 +19,7 @@ var Dextre = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 138),
 	card.WithPower(3),
-	card.WithTraits("Human", "Scientist"),
+	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
 	card.WithAbility(
 		card.Trigger.Play, card.CaptureAember{
 			Amount: 1,

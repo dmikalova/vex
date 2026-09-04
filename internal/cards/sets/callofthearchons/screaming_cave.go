@@ -16,7 +16,7 @@ var ScreamingCave = card.New(
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 79),
-	card.WithTraits("Location"),
+	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
 		card.Trigger.Action,
 		card.ShuffleIntoDeck{Zones: []card.Zone{card.Hand, card.Discard}},

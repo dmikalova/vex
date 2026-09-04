@@ -14,7 +14,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var PocketUniverse = card.New("Pocket Universe",
 	card.House.Logos, card.Type.Artifact, card.Rarity.Rare,
 	card.Provenance(card.CotA, 131),
-	card.WithTraits("Item"),
+	card.WithTraits(card.Traits.Item),
 	card.WithSpendableAember(),
 	card.WithAbility(
 		card.Trigger.Action, card.MoveAemberFromPool{

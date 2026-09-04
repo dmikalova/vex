@@ -18,7 +18,7 @@ var Lifeward = card.New(
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 77),
-	card.WithTraits("Power"),
+	card.WithTraits(card.Traits.Power),
 	card.WithAemberBonus(1),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(card.Trigger.Action, card.Sentences{Effects: []card.Effect{

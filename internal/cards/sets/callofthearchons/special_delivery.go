@@ -19,7 +19,7 @@ var SpecialDelivery = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 292),
 	card.WithAemberBonus(1),
-	card.WithTraits("Item"),
+	card.WithTraits(card.Traits.Item),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(
 		card.Trigger.Action, card.DamageIfDestroyed{

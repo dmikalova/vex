@@ -19,7 +19,7 @@ var Bulleteye = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 297),
 	card.WithPower(2),
-	card.WithTraits("Elf", "Thief"),
+	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
 		card.Trigger.Reap, card.Destroy{Target: card.Target.Creature.OnFlank()}),

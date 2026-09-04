@@ -20,6 +20,11 @@ func (g *Game) runPhases() {
 			return
 		}
 		g.runPhase()
+		// A phase can end the game mid-run (forging the third key), so stop here
+		// rather than logging entry into a phase that will never actually run.
+		if g.State.Winner >= 0 {
+			return
+		}
 		if g.State.Phase == PhaseEndOfTurn {
 			return
 		}
@@ -137,9 +142,9 @@ func (g *Game) endOfTurnPhase(player int) {
 	// then the one about to.
 	for _, p := range [2]int{player, 1 - player} {
 		g.record(PlayerStanding{
-			Player: p,
-			Aember: g.State.Aember[p],
-			Keys:   g.State.Keys[p],
+			Player:    p,
+			Aember:    g.State.Aember[p],
+			KeyColors: g.KeyColors(p),
 		})
 	}
 	g.assertInvariants()

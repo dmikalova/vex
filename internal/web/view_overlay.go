@@ -80,6 +80,8 @@ func (g *game) renderZoneCard(id engine.LocalID) app.UI {
 		if targetable {
 			activate = g.chooseCandidate
 		}
+	case g.boardInert():
+		dimmed = true
 	case g.g.Manual():
 		activate = g.selectZoneCard
 	}
@@ -111,7 +113,7 @@ func printedFace(def *engine.CardDefinition) *cardView {
 		Emblem:   houseIconName(def.House),
 		TypeIcon: typeIconName(def.Type),
 		Stat:     handStat(def),
-		Rules:    engine.RenderCardRules(def),
+		Rules:    displayRules(engine.RenderCardRules(def)),
 		Kind:     kindLabel(def),
 		Trait:    traitLabel(def),
 		Rarity:   rarityMarkOf(def.Rarity),
@@ -122,26 +124,30 @@ func printedFace(def *engine.CardDefinition) *cardView {
 // moving around the board first, then acting, then the controls that frame a
 // game.
 var shortcuts = []struct{ keys, what string }{
-	{"← → ↑ ↓", "Move the selection between cards and rows"},
-	{"j k l ;", "The same four, on the home row (left, down, up, right)"},
+	{"← ↓ ↑ →", "Move the cursor between cards and rows"},
+	{"j k l ;", "Move the cursor (left, down, up, right)"},
 	{"1 – 9", "Select the nth card of the selected card's row"},
-	{"Tab / Shift+Tab", "Step through what you can act on, or a prompt's choices"},
-	{"Enter / Space", "Answer the prompt with what Tab stopped on"},
-	{"Esc", "Back out one layer: overlay, prompt, targeting, selection"},
+	{"Tab / Shift+Tab", "Step through usable cards and options"},
+	{"Enter / Space", "Confirm/yes/Play the selected card"},
+	{"n", "Decline a prompt"},
+	{"Esc", "Back out one layer"},
 	{"p", "Play the selected card from hand"},
-	{"d", "Discard the selected card from hand"},
-	{"a", "Use the selected card's Action ability"},
+	{"r", "Reap with the selected creature"},
 	{"f", "Fight with the selected creature"},
+	{"a", "Use the selected card's Action ability"},
+	{"d", "Discard the selected card from hand"},
 	{"u", "Unstun the selected creature"},
-	{"r", "Yes: answer a prompt, take the right flank, or use the card"},
-	{"n", "No: refuse a prompt you may decline"},
 	{"l", "Take the left flank while placing a creature"},
+	{"r", "Take the right flank while placing a creature"},
+	{"r", "Forge a Red key"},
+	{"b", "Forge a Blue key"},
+	{"y", "Forge a Yellow key"},
 	{"e", "End the turn (press twice when you could still act)"},
 	{"z", "Cycle the out-of-play zone viewer"},
 	{"h", "Hide or show the sidebar"},
 	{"m", "Toggle manual mode"},
-	{"Cmd/Ctrl+Z", "Undo"},
-	{"Shift+Cmd/Ctrl+Z", "Redo"},
+	{"Ctrl+Z", "Undo"},
+	{"Ctrl+Shift+Z", "Redo"},
 	{"?", "Open or close this sheet"},
 }
 

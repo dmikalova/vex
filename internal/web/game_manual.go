@@ -137,6 +137,32 @@ func (g *game) pickForgeColor(c engine.KeyColor) app.EventHandler {
 // cancelForgeKey closes the key-forge picker without forging.
 func (g *game) cancelForgeKey(_ app.Context, _ app.Event) { g.forgingKey = -1 }
 
+// chooseKeyColorKey answers a key-forge prompt — manual mode's colour picker or
+// an ordinary forge choice offered as key-colour option buttons — with color, so
+// r/b/y can forge a key directly instead of hunting the matching button. It
+// reports whether a matching prompt was up to answer, so the caller can fall
+// back to its own binding for the key when none was (r doubles as "affirm").
+func (g *game) chooseKeyColorKey(ctx app.Context, color engine.KeyColor) bool {
+	if g.forgingKey >= 0 {
+		for _, c := range g.remainingKeyColors(g.forgingKey) {
+			if c == color {
+				g.pickForgeColor(c)(ctx, app.Event{})
+				return true
+			}
+		}
+		return false
+	}
+	if g.choosingOption && g.keyColorOptions() {
+		for i, label := range g.optionLabels {
+			if keyColorByName(label) == color {
+				g.chooseOptionIdx(i)(ctx, app.Event{})
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // selectZoneCard selects a card shown in the zone viewer (in manual mode) and
 // closes the viewer, so the manual controls can act on it (e.g. move it to hand).
 func (g *game) selectZoneCard(_ app.Context, id engine.LocalID) {

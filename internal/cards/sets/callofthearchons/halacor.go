@@ -18,7 +18,7 @@ var Halacor = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 355),
 	card.WithPower(4),
-	card.WithTraits("Beast"),
+	card.WithTraits(card.Traits.Beast),
 	card.WithConstant(card.ConstantAbility{
 		Keywords: card.Keywords(card.Keyword.Skirmish),
 		Target:   card.Target.EachFriendlyCreature.OnFlank(),

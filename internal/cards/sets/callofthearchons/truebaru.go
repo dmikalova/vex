@@ -17,7 +17,7 @@ var Truebaru = card.New("Truebaru",
 	card.House.Dis, card.Type.Creature, card.Rarity.Rare,
 	card.Provenance(card.CotA, 104),
 	card.WithPower(7),
-	card.WithTraits("Demon"),
+	card.WithTraits(card.Traits.Demon),
 	card.WithKeywords(card.Keyword.Taunt),
 	card.WithAemberCost(3),
 	card.WithAbility(

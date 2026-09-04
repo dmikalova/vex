@@ -18,7 +18,7 @@ var VezymaThinkdrone = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 202),
 	card.WithPower(3),
-	card.WithTraits("Martian", "Scientist"),
+	card.WithTraits(card.Traits.Martian, card.Traits.Scientist),
 	card.WithAbility(
 		card.Trigger.Reap, card.May{
 			Do: card.ArchiveFromPlay{Target: card.Target.FriendlyCreatureOrArtifact},

@@ -77,6 +77,43 @@ func fightAmong(ctx *EffectContext, attacker LocalID, enemies []LocalID) (LocalI
 	return enemy, true
 }
 
+// ChooseCreatureThen asks the controller to choose a creature from Target,
+// records it on the effect context as "it" (read by a Target.Triggering inside
+// Then), and resolves Then unconditionally — unlike a Then result gate, Then
+// always runs once a creature is chosen, whether or not it does anything
+// (Protectrix protects a creature it heals even when there was no damage to
+// heal). It models "Choose a creature. <do something to that creature>."
+type ChooseCreatureThen struct {
+	Target Target
+	Then   Effect
+}
+
+// validate requires an explicit target and a valid Then.
+func (e ChooseCreatureThen) validate() error {
+	if !e.Target.valid() {
+		return errUnsetTarget("ChooseCreatureThen")
+	}
+	return validateEffect(e.Then)
+}
+
+// Text renders the effect, e.g. "choose a creature - fully heal it".
+func (e ChooseCreatureThen) Text() string {
+	return "choose " + e.Target.Text() + " - " + e.Then.Text()
+}
+
+// Resolve asks for a creature, records it as "it", then resolves Then. A Target
+// that chooses nothing (no candidate) leaves Then unresolved.
+func (e ChooseCreatureThen) Resolve(ctx *EffectContext) {
+	ids := e.Target.Select(ctx)
+	if len(ids) == 0 {
+		return
+	}
+	for _, id := range ids {
+		ctx.It, ctx.HasIt = id, true
+	}
+	e.Then.Resolve(ctx)
+}
+
 // OnChooseCreature picks a single creature named by its Target and applies one or
 // more verbs to it. The verbs share the single chosen target, which lets card
 // text read naturally, e.g. "Ready and fight with a friendly creature."
@@ -209,7 +246,7 @@ func (UseVerb) Apply(ctx *EffectContext, target LocalID) {
 		labels = append(labels, "fight")
 		uses = append(uses, func() { FightVerb{}.Apply(ctx, target) })
 	}
-	if ctx.Resolver.HasAction(target) {
+	if ctx.Resolver.HasTrigger(target, TriggerAction) {
 		labels = append(labels, "use its action")
 		uses = append(uses, func() { ctx.Resolver.UseActionOf(ctx.Controller, target) })
 	}

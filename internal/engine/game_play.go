@@ -292,7 +292,7 @@ func (g *Game) playCreatureCard(player int, id LocalID, flankLeft bool) {
 	} else {
 		g.State.Battleline[player].add(id)
 	}
-	g.record(CardPlayedToBattleline{Player: player, Card: id})
+	g.record(CardPlayedToBattleline{Player: player, Card: id, FlankLeft: flankLeft})
 	g.applyAemberBonus(id)
 	g.triggerAbilities(id, TriggerAfterPlay, 0, false)
 	g.emitCreatureEnters(id)

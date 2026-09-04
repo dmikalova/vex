@@ -18,6 +18,6 @@ var TitanMechanic = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 154),
 	card.WithPower(6),
-	card.WithTraits("Cyborg", "Scientist"),
+	card.WithTraits(card.Traits.Cyborg, card.Traits.Scientist),
 	card.WithKeyCost(card.KeyCostChange(card.EachPlayer, -1).WhileOnFlank()),
 )

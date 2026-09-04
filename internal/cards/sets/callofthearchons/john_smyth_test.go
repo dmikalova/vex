@@ -27,7 +27,11 @@ func TestJohnSmyth(t *testing.T) {
 					JohnSmyth,
 					ct.Bind(
 						&ally,
-						ct.Creature(ct.OfHouse(card.House.Mars), ct.Traits("Martian"), ct.Power(3)),
+						ct.Creature(
+							ct.OfHouse(card.House.Mars),
+							ct.Traits(card.Traits.Martian),
+							ct.Power(3),
+						),
 					),
 				),
 			},
@@ -48,7 +52,11 @@ func TestJohnSmyth(t *testing.T) {
 					JohnSmyth,
 					ct.Bind(
 						&agent,
-						ct.Creature(ct.OfHouse(card.House.Mars), ct.Traits("Agent"), ct.Power(3)),
+						ct.Creature(
+							ct.OfHouse(card.House.Mars),
+							ct.Traits(card.Traits.Agent),
+							ct.Power(3),
+						),
 					),
 					ct.Bind(&offHouse, ct.Creature(ct.OfHouse(card.House.Untamed), ct.Power(3))),
 				),

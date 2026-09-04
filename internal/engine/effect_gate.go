@@ -18,6 +18,18 @@ type GatingEffect interface {
 	resolveGate(ctx *EffectContext) bool
 }
 
+// resolveGateOf resolves any effect and reports whether it did something. A
+// GatingEffect answers for itself; an effect that cannot report progress always
+// counts as progress, leaving the caller's own bound (the Rule of Six) to end the
+// loop.
+func resolveGateOf(ctx *EffectContext, e Effect) bool {
+	if g, ok := e.(GatingEffect); ok {
+		return g.resolveGate(ctx)
+	}
+	e.Resolve(ctx)
+	return true
+}
+
 // Then is the "A -> B" result gate: it resolves First and, only when First did
 // something, resolves Result.
 type Then struct {

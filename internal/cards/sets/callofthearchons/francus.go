@@ -20,7 +20,7 @@ var Francus = card.New(
 	card.Provenance(card.CotA, 243),
 	card.WithPower(6),
 	card.WithArmor(1),
-	card.WithTraits("Knight", "Spirit"),
+	card.WithTraits(card.Traits.Knight, card.Traits.Spirit),
 	card.WithAbility(
 		card.Trigger.AfterDestroyedFighting, card.CaptureAember{
 			Amount: 1,

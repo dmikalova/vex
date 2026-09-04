@@ -18,7 +18,7 @@ var HarlandMindlock = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 143),
 	card.WithPower(1),
-	card.WithTraits("Cyborg", "Scientist"),
+	card.WithTraits(card.Traits.Cyborg, card.Traits.Scientist),
 	card.WithAbility(card.Trigger.Play, card.TakeControl{
 		Target:   card.Target.EnemyCreature.OnFlank(),
 		Duration: card.Duration.UntilThisLeavesPlay,

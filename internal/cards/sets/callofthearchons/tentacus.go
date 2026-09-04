@@ -18,7 +18,7 @@ var Tentacus = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 100),
 	card.WithPower(5),
-	card.WithTraits("Demon"),
+	card.WithTraits(card.Traits.Demon),
 	card.WithRestrictions(card.Restrictions{
 		Toll: card.Toll{
 			Action: card.TollOn.UseArtifact,

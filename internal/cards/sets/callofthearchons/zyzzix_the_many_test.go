@@ -30,7 +30,7 @@ func TestZyzzixTheMany(t *testing.T) {
 		})
 
 		h.P1.Reap(zyzzix)
-		h.P1.ClickOption("Yes") // the sole creature in hand is chosen for you
+		h.P1.ClickCard(creature)
 
 		h.Expect(creature).At(ct.Archives)
 		h.Expect(zyzzix).Power(6)
@@ -47,7 +47,6 @@ func TestZyzzixTheMany(t *testing.T) {
 		})
 
 		h.P1.Reap(zyzzix)
-		h.P1.ClickOption("Yes")
 
 		h.Expect(tactic).At(ct.Hand)
 		h.Expect(zyzzix).Power(3)

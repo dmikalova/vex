@@ -19,7 +19,7 @@ var Tolas = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 103),
 	card.WithPower(1),
-	card.WithTraits("Imp"),
+	card.WithTraits(card.Traits.Imp),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithConstant(card.ConstantAbility{
 		Target: card.Target.EachCreature,

@@ -18,7 +18,7 @@ var SpeedSigil = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 293),
 	card.WithAemberBonus(1),
-	card.WithTraits("Power"),
+	card.WithTraits(card.Traits.Power),
 	card.WithAbility(
 		card.Trigger.AfterCreatureEnters, card.Conditional{
 			Cond: card.FirstCreaturePlayedThisTurn{},

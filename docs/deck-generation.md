@@ -155,17 +155,19 @@ parameterized by its pool, its count (fixed or a distribution), and whether
 duplicates are allowed. Resolution is a **protected-slot fixpoint loop**: a pulled
 card overwrites a random _unprotected_ Slot in the same pod, and every member of a
 connection is then marked protected so a later connection cannot bump it. The loop
-repeats until nothing is unsatisfied and nothing was overwritten. By default
-connections stay in-pod; a rare cross-pod maverick connection is a tunable, off in
-the first version.
+repeats until nothing is unsatisfied and nothing was overwritten. A maverick puller
+fires its connection too, and the pulled partners are rehoused to the pod's House
+and marked maverick themselves — the same rule KeyForge uses for a Maverick's
+connected cards — so a Sanctum pod that mavericks in Troop Call still gets its
+Niffle Apes, rehoused to Sanctum.
 
 _Implemented (v1)._ The puller declares its links with `card.Connects(…)`, one
 entry per pulled card, and after a pod is filled the fixpoint loop tops the pod up
-to each entry's copy count from an unprotected slot, in-house, skipping a maverick
-puller. Two entry shapes exist: `card.Pull(Partner, n)` pulls `n` copies every
-time, and `card.PullSometimes(Partner, p)` pulls one copy with probability `p`,
-rolled once per pod. A copy already in the pod counts toward the total, so a pull
-tops up rather than duplicating.
+to each entry's copy count from an unprotected slot, rehousing to the pod's House
+when the puller itself is a maverick. Two entry shapes exist: `card.Pull(Partner,
+n)` pulls `n` copies every time, and `card.PullSometimes(Partner, p)` pulls one
+copy with probability `p`, rolled once per pod. A copy already in the pod counts
+toward the total, so a pull tops up rather than duplicating.
 
 A pulled card is usually authored `card.Rarity.Connected`, which keeps it out of
 the pool so it never rolls without its puller — `NewSet` indexes Connected cards by
@@ -174,7 +176,8 @@ name only. That is not required, though: Troop Call
 Niffle Apes that also roll on their own, which is how the card's flavour survives
 into deck generation. Timetraveller (`card.Pull(HelpFromFutureSelf, 1)`) and
 Horseman of Pestilence are the guaranteed-partner users.
-Distinct-from-a-pool sins and cross-pod maverick connections are the deferred axes.
+A pool distinct from a single named list (drawing a "sin" from all seven) is the
+deferred axis.
 
 **Deadlock.** Constraints can genuinely conflict — too many protected slots, or
 mutually exclusive requirements. Rather than backtracking, the loop is capped at a

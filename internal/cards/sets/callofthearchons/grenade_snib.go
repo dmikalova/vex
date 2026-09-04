@@ -18,7 +18,7 @@ var GrenadeSnib = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 34),
 	card.WithPower(2),
-	card.WithTraits("Goblin"),
+	card.WithTraits(card.Traits.Goblin),
 	card.WithAbility(
 		card.Trigger.Destroyed, card.LoseAember{
 			Player: card.Opponent,

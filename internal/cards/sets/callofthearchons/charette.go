@@ -18,7 +18,7 @@ var Charette = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 81),
 	card.WithPower(4),
-	card.WithTraits("Demon"),
+	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(
 		card.Trigger.Play, card.CaptureAember{
 			Amount: 3,

@@ -18,6 +18,6 @@ var BrainEater = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 137),
 	card.WithPower(6),
-	card.WithTraits("Cyborg", "Beast"),
+	card.WithTraits(card.Traits.Cyborg, card.Traits.Beast),
 	card.WithAbility(card.Trigger.AfterDestroyedFighting, card.Draw{Amount: 1}),
 )

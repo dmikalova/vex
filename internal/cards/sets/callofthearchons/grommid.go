@@ -19,7 +19,7 @@ var Grommid = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 194),
 	card.WithPower(10),
-	card.WithTraits("Beast"),
+	card.WithTraits(card.Traits.Beast),
 	card.WithRestrictions(card.Restrictions{CannotPlay: card.Type.Creature}),
 	card.WithAbility(
 		card.Trigger.AfterDestroyedFighting, card.LoseAember{

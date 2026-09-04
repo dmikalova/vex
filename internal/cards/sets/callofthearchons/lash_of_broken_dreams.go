@@ -16,7 +16,7 @@ var LashOfBrokenDreams = card.New(
 	card.Type.Artifact,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 75),
-	card.WithTraits("Weapon"),
+	card.WithTraits(card.Traits.Weapon),
 	card.WithAbility(
 		card.Trigger.Action, card.RaiseKeyCost{
 			Player:   card.Opponent,

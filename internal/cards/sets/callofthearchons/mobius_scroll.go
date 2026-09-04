@@ -16,7 +16,7 @@ var MobiusScroll = card.New(
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 130),
-	card.WithTraits("Item"),
+	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.Action, card.Sequence{
 			Effects: []card.Effect{

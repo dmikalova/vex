@@ -183,8 +183,12 @@ func (g *game) stateReadsCleanly() (ok bool) {
 
 // newMatch seeds a new game, wires the shared human chooser to both players, and
 // deals random decks. Both sides are driven by the same person (hotseat).
-func (g *game) newMatch() {
-	g.seed = time.Now().UnixNano()
+func (g *game) newMatch() { g.dealMatch(time.Now().UnixNano()) }
+
+// dealMatch deals a match from a given seed, which fixes the decks and every card
+// id in them.
+func (g *game) dealMatch(seed int64) {
+	g.seed = seed
 	eg, houses, mavericks := match.NewWithMavericks("Player 1", "Player 2", g.seed)
 	g.install(eg, houses, mavericks)
 	// Clear the previous game's log grouping and undo/redo history. newMatch resets

@@ -94,6 +94,25 @@ func TestDuplicatePull(t *testing.T) {
 	}
 }
 
+// The duplicate-pull only copies a card the pod could legally hold twice, so a
+// placed card of another rarity, an empty slot, and a one-copy-per-deck card are
+// each passed over — leaving nothing to copy, and a fresh draw to fill the slot.
+func TestDuplicatePullSkipsIneligible(t *testing.T) {
+	unique := mkCard("U", engine.Brobnar, engine.Common)
+	unique.Profile.OneCopyPerDeck = true
+	g := gen(NewSet("S", []Card{unique}, Tuning{
+		DuplicateRate: map[engine.Rarity]float64{engine.Common: 1},
+	}))
+	placed := []placedCard{
+		{card: mkCard("R", engine.Brobnar, engine.Rare), rarity: engine.Rare},
+		{rarity: engine.Common},
+		{card: unique, rarity: engine.Common},
+	}
+	if c, ok := g.tryDuplicate(engine.Common, placed); ok {
+		t.Fatalf("duplicated the ineligible %q", c.Def.Name)
+	}
+}
+
 // A single one-copy-per-deck card is placed at most once; the rest of the pod
 // exhausts every draw fallback.
 func TestOnePerDeckExhaustion(t *testing.T) {

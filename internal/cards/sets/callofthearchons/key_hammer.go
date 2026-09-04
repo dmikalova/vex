@@ -18,17 +18,17 @@ var KeyHammer = card.New(
 	card.Provenance(card.CotA, 66),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-			card.Conditional{
-				Cond: card.ForgedKey{
-					Player:   card.Opponent,
-					Previous: true,
+		card.Trigger.Play, card.Conditional{
+			Cond: card.ForgedKey{
+				Player:   card.Opponent,
+				Previous: true,
+			},
+			Then: card.Sequence{Effects: []card.Effect{
+				card.UnforgeKey{Player: card.Opponent},
+				card.GainAember{
+					Player: card.Opponent,
+					Amount: 6,
 				},
-				Then: card.UnforgeKey{Player: card.Opponent},
-			},
-			card.GainAember{
-				Player: card.Opponent,
-				Amount: 6,
-			},
-		}}),
+			}},
+		}),
 )

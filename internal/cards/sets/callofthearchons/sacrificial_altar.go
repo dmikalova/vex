@@ -18,11 +18,11 @@ var SacrificialAltar = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 78),
 	card.WithAemberBonus(1),
-	card.WithTraits("Location"),
+	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
 		card.Trigger.Action, card.Then{
 			First: card.PurgeCreature{
-				Target: card.Target.FriendlyCreature.WithTrait("Human"),
+				Target: card.Target.FriendlyCreature.WithTrait(card.Traits.Human),
 			},
 			Result: card.PlayFrom{
 				From: card.Discard,

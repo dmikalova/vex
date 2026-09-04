@@ -19,7 +19,7 @@ var Timetraveller = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 153),
 	card.WithPower(2),
-	card.WithTraits("Human", "Scientist"),
+	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
 	card.WithAbility(
 		card.Trigger.Play, card.Draw{Amount: 2}),
 	card.WithAbility(

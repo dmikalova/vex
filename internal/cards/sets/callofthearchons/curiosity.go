@@ -18,5 +18,7 @@ var Curiosity = card.New(
 	card.Provenance(card.CotA, 320),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.Destroy{Target: card.Target.EachCreature.WithTrait("Scientist")}),
+		card.Trigger.Play,
+		card.Destroy{Target: card.Target.EachCreature.WithTrait(card.Traits.Scientist)},
+	),
 )

@@ -23,6 +23,32 @@ func btn(label string, h app.EventHandler, class string) app.UI {
 	return app.Button().Class(class).Text(label).OnClick(h)
 }
 
+// cardFace builds the plain face of a card that is on the table — everything the
+// card itself says, and none of the board's interaction. The board's own cards
+// (renderCard) add selection, targeting, and handlers on top; the readers that
+// only show a card — the hover preview and the lifted copy — use it as it stands.
+func (g *game) cardFace(id engine.LocalID) *cardView {
+	def := g.g.Def(id)
+	house := g.g.House(id)
+	return &cardView{
+		Title:         def.Name,
+		HouseCls:      houseClasses(house),
+		Emblem:        houseIconName(house),
+		HouseChanged:  house != def.House,
+		TypeIcon:      typeIconName(def.Type),
+		Stat:          g.statLine(id),
+		Rules:         g.faceRules(id),
+		Kind:          kindLabel(def),
+		Trait:         traitLabel(def),
+		Rarity:        rarityMarkOf(def.Rarity),
+		Maverick:      g.isMaverick(id),
+		Stunned:       g.g.Stunned(id),
+		Exhausted:     g.g.Exhausted(id),
+		Bar:           g.barKeywords(id),
+		TauntShielded: def.Type == engine.Creature && g.g.TauntShielded(id),
+	}
+}
+
 // kindLabel is a card's foot label: its type (e.g. "Creature"). Traits render
 // separately as their own body line (traitLabel).
 func kindLabel(def *engine.CardDefinition) string {
@@ -35,7 +61,7 @@ func kindLabel(def *engine.CardDefinition) string {
 func traitLabel(def *engine.CardDefinition) string {
 	parts := make([]string, 0, len(def.Traits))
 	for _, t := range def.Traits {
-		parts = append(parts, string(t))
+		parts = append(parts, t.String())
 	}
 	return strings.Join(parts, " • ")
 }
@@ -97,17 +123,25 @@ func handStat(def *engine.CardDefinition) []app.UI {
 func (g *game) faceRules(id engine.LocalID) string {
 	var lines []string
 	if s := engine.RenderCardRules(g.g.Def(id)); s != "" {
-		lines = append(lines, s)
+		lines = append(lines, displayRules(s))
 	}
 	for _, up := range g.g.Upgrades(id) {
 		def := g.g.Def(up)
 		line := "↳ " + def.Name
 		if s := engine.RenderUpgradeOnCreature(def); s != "" {
-			line += ": " + s
+			line += ": " + displayRules(s)
 		}
 		lines = append(lines, line)
 	}
 	return strings.Join(lines, "\n")
+}
+
+// displayRules re-renders a result gate's "->" as an arrow glyph, the way a
+// physical card would print it. The plain "->" is the canonical text — it drives
+// generated doc comments and the rulebook (docs/card-wording-rules.md §5) and
+// stays that way — so the glyph swap happens here, once, for display only.
+func displayRules(rules string) string {
+	return strings.ReplaceAll(rules, " -> ", " → ")
 }
 
 // playableFromHand reports whether the active player can play the given hand card

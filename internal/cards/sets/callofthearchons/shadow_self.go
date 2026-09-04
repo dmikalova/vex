@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ShadowSelf
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Shadow Self
 //
 //	House:  Shadows
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Specter
 //
 //	Shadow Self deals no damage when fighting.
-//	Damage dealt to non-Specter neighbors is dealt to Shadow Self instead.
+//	Damage dealt to each neighboring non-Specter trait creature is dealt to Shadow Self instead.
 var ShadowSelf = card.New(
 	"Shadow Self",
 	card.House.Shadows,
@@ -24,6 +19,8 @@ var ShadowSelf = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 310),
 	card.WithPower(9),
-	card.WithTraits("Specter"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithTraits(card.Traits.Specter),
+	card.WithAttackDamage(card.AttackDamage{Fixed: true}),
+	card.WithTakesDamageFor(
+		card.Target.EachCreature.Neighboring().ExceptTrait(card.Traits.Specter)),
 )

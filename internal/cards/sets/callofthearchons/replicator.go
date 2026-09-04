@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Replicator
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Logos
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Mutant
 //
-//	Reap: Trigger the reap effect of another creature in play as if you controlled that creature. (That creature does not exhaust.)
+//	Reap: Trigger the reap effect of another creature.
 var Replicator = card.New(
 	"Replicator",
 	card.House.Logos,
@@ -23,6 +18,10 @@ var Replicator = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 150),
 	card.WithPower(2),
-	card.WithTraits("Mutant"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithTraits(card.Traits.Mutant),
+	card.WithAbility(
+		card.Trigger.Reap, card.TriggerAbility{
+			Trigger: card.Trigger.Reap,
+			Target:  card.Target.Creature.Other(),
+		}),
 )

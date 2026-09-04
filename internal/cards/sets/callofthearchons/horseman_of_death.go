@@ -18,11 +18,11 @@ var HorsemanOfDeath = card.New(
 	card.Rarity.Connected,
 	card.Provenance(card.CotA, 246),
 	card.WithPower(5),
-	card.WithTraits("Horseman", "Spirit"),
+	card.WithTraits(card.Traits.Horseman, card.Traits.Spirit),
 	card.WithAbility(
 		card.Trigger.Play, card.PutFromDiscard{
 			Type:        card.Type.Creature,
-			Trait:       "Horseman",
+			Trait:       card.Traits.Horseman,
 			All:         true,
 			Destination: card.To.Hand,
 		}),

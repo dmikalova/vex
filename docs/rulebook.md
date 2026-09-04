@@ -248,6 +248,13 @@ Stem Antenna's host counts as Mars for the rest of the turn). The change is
 per-match state, dropped when the creature leaves play; EndOfTurn also drops it at
 end of turn, while UntilThisLeavesPlay keeps it until the creature leaves play.
 
+### Cannot Be Used To
+
+A card that "cannot reap" is barred from one way of using it while every other
+way stays open — Tireless Crocag fights and uses its Action: normally. That is
+narrower than the timed, player-wide CannotUse/CannotFight restrictions in
+effect_restrict.go, so it lives on the card definition rather than on state.
+
 ### Capture Aember
 
 Capturing Aember moves it from a player's pool onto a capturing creature, where
@@ -502,6 +509,14 @@ ability. The opponent cannot take the action unless they can pay the toll, and
 the Aember they give goes to the toll card's controller. (The mechanic keeps the
 name Toll, but its printed text always reads "give", never "pay".)
 
+### Trigger Another Card's Ability
+
+Triggering another card's ability is not using that card. The card does not
+exhaust, its use is not recorded, and nothing that watches for a card being
+used fires — only the abilities printed under the named trigger resolve, and
+they resolve for the player whose effect reached for them, as if that player
+controlled the card.
+
 ### Unstun
 
 Unstunning a creature removes the stun status from each creature the effect
@@ -530,6 +545,7 @@ WithSpendableAember, which is what makes the bank worth filling.
 - [Assault](#assault)
 - [Before Fight](#before-fight)
 - [Belong to House](#belong-to-house)
+- [Cannot Be Used To](#cannot-be-used-to)
 - [Capture Aember](#capture-aember)
 - [Choose One](#choose-one)
 - [Combat](#combat)
@@ -574,6 +590,7 @@ WithSpendableAember, which is what makes the bank worth filling.
 - [Stun](#stun)
 - [Tactic](#tactic)
 - [Toll](#toll)
+- [Trigger Another Card's Ability](#trigger-another-cards-ability)
 - [Turn structure](#turn-structure)
 - [Unstun](#unstun)
 - [Upgrade](#upgrade)

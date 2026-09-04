@@ -19,7 +19,7 @@ var Umbra = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 314),
 	card.WithPower(2),
-	card.WithTraits("Elf", "Thief"),
+	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Skirmish),
 	card.WithAbility(
 		card.Trigger.Fight, card.StealAember{Amount: 1}),

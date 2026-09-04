@@ -11,7 +11,7 @@ func TestPhaseNames(t *testing.T) {
 		{PhaseForge, "forge a key"},
 		{PhaseChooseHouse, "choose a house"},
 		{PhaseArchives, "archives"},
-		{PhasePlay, "play"},
+		{PhasePlay, "main"},
 		{PhaseReady, "ready"},
 		{PhaseDraw, "draw"},
 		{PhaseEndOfTurn, "end of turn"},
@@ -69,6 +69,24 @@ func TestEndPhaseSkipsAnOpenPhase(t *testing.T) {
 	}
 	if g.State.PhaseEnded {
 		t.Error("entering a phase must clear the early-end flag")
+	}
+}
+
+func TestNoPhaseLogAfterGameWon(t *testing.T) {
+	g := NewGame("Alice", "Bob", 1)
+	g.State.Keys[0] = KeysToWin - 1
+	g.State.Aember[0] = KeyCost
+
+	// Forging the third key wins the game mid-forge-phase, before the loop would
+	// otherwise walk on to the archives phase.
+	g.StartTurn(0)
+
+	if g.Winner() != 0 {
+		t.Fatalf("winner = %d, want 0", g.Winner())
+	}
+	last := g.Log[len(g.Log)-1].Entry
+	if _, ok := last.(GameWon); !ok {
+		t.Errorf("last log entry = %#v, want GameWon (no phase entered after the win)", last)
 	}
 }
 

@@ -6,15 +6,25 @@ import "fmt"
 // (ADR 0011): entering a zone, its Æmber bonus, the toll it cost, and the reap,
 // fight, or action ability it was spent on.
 
-// CardPlayedToBattleline narrates a creature entering the battleline.
+// CardPlayedToBattleline narrates a creature entering the battleline on a flank.
 type CardPlayedToBattleline struct {
-	Player int
-	Card   LocalID
+	Player    int
+	Card      LocalID
+	FlankLeft bool
 }
 
-// Text renders the creature played to the battleline.
+// Text renders the creature played and the flank it landed on.
 func (e CardPlayedToBattleline) Text(n Namer) string {
-	return fmt.Sprintf("%s plays %s to the battleline", n.PlayerName(e.Player), n.Name(e.Card))
+	side := "right"
+	if e.FlankLeft {
+		side = "left"
+	}
+	return fmt.Sprintf(
+		"%s plays %s on their %s flank",
+		n.PlayerName(e.Player),
+		n.Name(e.Card),
+		side,
+	)
 }
 
 // ArtifactPlayed narrates an artifact entering the artifact row.

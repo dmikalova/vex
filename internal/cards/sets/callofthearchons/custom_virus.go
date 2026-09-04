@@ -19,7 +19,7 @@ var CustomVirus = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 183),
 	card.WithAemberBonus(1),
-	card.WithTraits("Weapon"),
+	card.WithTraits(card.Traits.Weapon),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(
 		card.Trigger.Action, card.Sentences{Effects: []card.Effect{

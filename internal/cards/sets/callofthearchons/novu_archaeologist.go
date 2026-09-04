@@ -18,6 +18,6 @@ var NovuArchaeologist = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 147),
 	card.WithPower(4),
-	card.WithTraits("Cyborg", "Scientist"),
+	card.WithTraits(card.Traits.Cyborg, card.Traits.Scientist),
 	card.WithAbility(card.Trigger.Action, card.ArchiveFromDiscard{}),
 )

@@ -29,7 +29,7 @@ func TestRoundTable(t *testing.T) {
 						ct.Creature(
 							ct.OfHouse(card.House.Sanctum),
 							ct.Power(4),
-							ct.Traits("Knight"),
+							ct.Traits(card.Traits.Knight),
 						),
 					),
 					ct.Bind(
@@ -37,7 +37,7 @@ func TestRoundTable(t *testing.T) {
 						ct.Creature(
 							ct.OfHouse(card.House.Sanctum),
 							ct.Power(4),
-							ct.Traits("Human"),
+							ct.Traits(card.Traits.Human),
 						),
 					),
 				),

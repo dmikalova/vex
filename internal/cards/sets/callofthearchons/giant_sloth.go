@@ -21,7 +21,7 @@ var GiantSloth = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 354),
 	card.WithPower(6),
-	card.WithTraits("Beast"),
+	card.WithTraits(card.Traits.Beast),
 	card.WithRestrictions(card.Restrictions{
 		UseCondition: card.CardsDiscarded{
 			Player: card.Controller,

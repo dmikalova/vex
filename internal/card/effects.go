@@ -170,6 +170,9 @@ type (
 type (
 	// OnChooseCreature picks a creature named by its Target and applies Verbs to it.
 	OnChooseCreature = engine.OnChooseCreature
+	// ChooseCreatureThen asks the controller to choose a creature, then resolves
+	// Then unconditionally (unlike Then, a result gate).
+	ChooseCreatureThen = engine.ChooseCreatureThen
 	// OneAtATime repeats a chosen-creature action over several different creatures,
 	// resolving each pass fully before offering the next choice.
 	OneAtATime = engine.OneAtATime
@@ -188,6 +191,8 @@ type (
 	ExhaustVerb = engine.ExhaustVerb
 	// Use uses up to Max cards the controller chooses from Target.
 	Use = engine.Use
+	// TriggerAbility fires another card's ability as if the controller controlled it.
+	TriggerAbility = engine.TriggerAbility
 	// TakeControl moves a card to the controller's play area and makes them its controller.
 	TakeControl = engine.TakeControl
 	// PutIntoPlay puts each targeted card into play without playing it.

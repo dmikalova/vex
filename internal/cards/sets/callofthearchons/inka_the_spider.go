@@ -19,7 +19,7 @@ var InkaTheSpider = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 356),
 	card.WithPower(1),
-	card.WithTraits("Beast"),
+	card.WithTraits(card.Traits.Beast),
 	card.WithKeywords(card.Keyword.Poison),
 	card.WithPlayReap(card.Stun{Target: card.Target.Creature}),
 )

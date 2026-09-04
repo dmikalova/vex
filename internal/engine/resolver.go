@@ -79,6 +79,9 @@ type CreatureReader interface {
 	// ArmorStripped is how much armor an effect has taken off a creature this turn,
 	// as opposed to how much it spent absorbing damage.
 	ArmorStripped(id LocalID) int
+	// Hazardous is a creature's Hazardous value: an attacker takes this much damage
+	// before fight damage is exchanged.
+	Hazardous(id LocalID) int
 	// Stunned reports whether a creature is stunned.
 	Stunned(id LocalID) bool
 	// TimesUsedThisTurn reports how many times a creature has been used this turn.
@@ -93,8 +96,10 @@ type CreatureReader interface {
 	SharesTrait(a, b LocalID) bool
 	// HasKeyword reports whether a creature has a keyword (printed or granted).
 	HasKeyword(id LocalID, k Keyword) bool
-	// HasAction reports whether a card has an "Action:" ability.
-	HasAction(id LocalID) bool
+	// HasTrigger reports whether a card has an ability under the trigger, whether
+	// printed on it, granted by an attached upgrade, or granted by a constant
+	// ability.
+	HasTrigger(id LocalID, trigger Trigger) bool
 	// House returns a card's house.
 	House(id LocalID) House
 }
@@ -235,6 +240,13 @@ type CombatResolver interface {
 	// A card can only be used while ready, so an exhausted card may be chosen but
 	// does nothing.
 	UseActionOf(actor int, id LocalID)
+	// TriggerAbilityOf resolves a card's abilities under one trigger on behalf of
+	// actor, without using the card: it does not exhaust and nothing watching for a
+	// card being used fires (Replicator triggers another creature's reap effect).
+	TriggerAbilityOf(actor int, id LocalID, trigger Trigger)
+	// TriggerDepth is how many TriggerAbilityOf resolutions are already open, which
+	// the Rule of Six bounds so a chain of them cannot run forever.
+	TriggerDepth() int
 }
 
 // ZoneResolver moves cards between zones — drawing, and shuffling a card between
@@ -739,8 +751,23 @@ func (g *Game) UseActionOf(actor int, id LocalID) {
 	}
 }
 
-// HasAction reports whether a card has an "Action:" ability.
-func (g *Game) HasAction(id LocalID) bool { return g.hasTrigger(id, TriggerAction) }
+// TriggerAbilityOf resolves a card's abilities under one trigger on behalf of
+// actor. Unlike UseActionOf this does not use the card, so readiness is beside
+// the point: an exhausted creature's reap effect still triggers, and the creature
+// neither exhausts nor counts as used.
+func (g *Game) TriggerAbilityOf(actor int, id LocalID, trigger Trigger) {
+	g.triggerDepth++
+	defer func() { g.triggerDepth-- }()
+	g.triggerAbilitiesAs(actor, id, trigger, 0, false)
+}
+
+// TriggerDepth is how many TriggerAbilityOf resolutions are currently open.
+func (g *Game) TriggerDepth() int { return g.triggerDepth }
+
+// HasTrigger reports whether a card has an ability under the trigger.
+func (g *Game) HasTrigger(id LocalID, trigger Trigger) bool {
+	return g.hasTrigger(id, trigger)
+}
 
 // Record appends one narrated outcome to the game log (ADR 0011).
 func (g *Game) Record(e LogEntry) { g.record(e) }

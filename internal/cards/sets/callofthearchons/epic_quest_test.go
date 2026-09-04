@@ -27,18 +27,18 @@ func TestEpicQuest(t *testing.T) {
 				InPlay: ct.Cards(
 					ct.Bind(
 						&knight,
-						ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Traits("Knight")),
+						ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Traits(card.Traits.Knight)),
 					),
 					ct.Bind(
 						&cleric,
-						ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Traits("Cleric")),
+						ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Traits(card.Traits.Cleric)),
 					),
 				),
 			},
 			P2: ct.Side{InPlay: ct.Cards(
 				ct.Bind(
 					&enemyKnight,
-					ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Traits("Knight")),
+					ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Traits(card.Traits.Knight)),
 				),
 			)},
 		})

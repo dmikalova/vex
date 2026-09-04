@@ -10,7 +10,7 @@ func TestReturnNamedToHand(t *testing.T) {
 
 	urchin := func(g *Game, player int) LocalID {
 		return g.Register(
-			NewCard("Urchin", Shadows, Creature, Common, WithPower(1), WithTraits("Elf", "Thief")),
+			NewCard("Urchin", Shadows, Creature, Common, WithPower(1), WithTraits(Elf, Thief)),
 			player,
 		)
 	}
@@ -19,7 +19,7 @@ func TestReturnNamedToHand(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		src := g.AddToBattleline(testCreature("faygin", 3), 0)
 		urch := g.AddToBattleline(
-			NewCard("Urchin", Shadows, Creature, Common, WithPower(1), WithTraits("Elf", "Thief")),
+			NewCard("Urchin", Shadows, Creature, Common, WithPower(1), WithTraits(Elf, Thief)),
 			0,
 		)
 		g.AddToBattleline(
@@ -60,11 +60,11 @@ func TestReturnNamedToHand(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		src := g.AddToBattleline(testCreature("faygin", 3), 0)
 		u1 := g.AddToBattleline(
-			NewCard("Urchin", Shadows, Creature, Common, WithPower(1), WithTraits("Elf", "Thief")),
+			NewCard("Urchin", Shadows, Creature, Common, WithPower(1), WithTraits(Elf, Thief)),
 			0,
 		)
 		g.AddToBattleline(
-			NewCard("Urchin", Shadows, Creature, Common, WithPower(1), WithTraits("Elf", "Thief")),
+			NewCard("Urchin", Shadows, Creature, Common, WithPower(1), WithTraits(Elf, Thief)),
 			0,
 		)
 		g.SetChooser(0, orderRejectChooser{})

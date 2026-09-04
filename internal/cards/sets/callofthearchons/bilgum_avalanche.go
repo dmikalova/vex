@@ -18,7 +18,7 @@ var BilgumAvalanche = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 28),
 	card.WithPower(5),
-	card.WithTraits("Giant"),
+	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(
 		card.Trigger.AfterForgeKey, card.DealDamage{
 			Amount: 2,

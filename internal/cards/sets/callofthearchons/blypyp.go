@@ -18,7 +18,7 @@ var Blypyp = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 190),
 	card.WithPower(2),
-	card.WithTraits("Martian", "Scientist"),
+	card.WithTraits(card.Traits.Martian, card.Traits.Scientist),
 	card.WithAbility(
 		card.Trigger.Reap, card.NextPlayed{
 			Of:         card.House.Mars,

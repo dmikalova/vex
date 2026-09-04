@@ -16,6 +16,7 @@ var Labwork = card.New(
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 114),
+	card.Provenance(card.CotA, 271),
 	card.WithAemberBonus(1),
 	card.WithAbility(card.Trigger.Play, card.ArchiveFromHand{Count: 1}),
 )

@@ -102,8 +102,10 @@ using a parity bit that flips on each flash. `cardFlash.odd` (per card),
 Flashes are **derived, not emitted**: `computeFlashes` diffs the pre-action
 snapshot (the top of the undo stack) against the resolved state. Add a new
 animation by diffing the state there, not by sprinkling calls at action sites.
-The exception is information the state does not carry — a fight's two combatants
-— which the handler arms on `g.fighters` for `computeFlashes` to consume.
+The exception is information the state does not carry — a fight's two
+combatants, which card reaped, which card used an action ability — which the
+handler arms on `g.fighters`/`g.reapID`/`g.actID` for `computeFlashes` to
+consume.
 
 A card that has left play cannot pulse, so it **flies** instead: `computeFlights`
 finds the zone it landed in and `flightsInto` renders a ghost face parented to
@@ -135,6 +137,11 @@ a card is clicked. Therefore:
   Witch of the Eye), `openZoneForPrompt` opens that player's zone viewer, makes
   only the candidates clickable, dims the rest, and scrolls to the row. The viewer
   cannot be dismissed while it is the only place the prompt can be answered.
+- Picking a fight target is not a card prompt (it runs on the UI goroutine, not
+  behind a chooser), but it shares the same Tab cursor: `tabCandidates` hands
+  both a chooser's candidates and `FightTargets` to `tabCandidate`/`isSelected`/
+  `confirmPrompt` through one seam, so a fix to how the cursor lands or draws
+  covers both instead of needing a matching fix in a second, fight-shaped copy.
 
 ## Phases and Escape layering
 
@@ -147,10 +154,12 @@ prompt → mid-action targeting → end-turn confirmation → the selection. Add
 overlay to that chain rather than giving it its own Escape handling.
 
 Keyboard shortcuts live in `onKey`. They are all single keys and all no-ops while
-`busy`/`choosing`, except Escape and `r`, which are handled first: Escape backs a
-prompt out and `r` answers it. `r` is the affirmative key (`affirm`) — yes to a
-yes/no prompt, the right flank while placing, else the selected card's main use
-(play, an artifact's action, otherwise reap).
+`busy`/`choosing`, except Escape, `r`, and `n`, which are handled first so they
+work while a prompt blocks every other key: Escape backs a prompt out, `n`
+answers a declinable one "no", and `r` reaps with the selected creature (or
+takes the right flank while placing, or forges a Red key when that prompt is
+up) — it is not a general "yes"; only Space's fallback (`affirm`) plays the
+selected hand card, uses an artifact's action, or answers a yes/no prompt.
 
 ## Persistence
 
@@ -164,14 +173,54 @@ narrated with (a typed entry does not survive JSON), so an old snapshot keeps
 restoring the old wording long after the engine stopped producing it, and the
 change looks like it did not take.
 
+## Tests drive the real client off-browser
+
+`client_test.go` is the harness. It plays the client the way a person does — the
+same handlers a click or a key press calls, over a real engine game — so add a
+test there rather than reimplementing a slice of the client to assert against.
+
+Two go-app facts make it work, and neither is guessable:
+
+- `app.Context` is a **struct**, not an interface, so it cannot be faked. One has
+  to be borrowed. go-app only fires `OnMount` when `app.IsClient` is true, which
+  it is not in a host test, but it fires `OnPreRender` when `app.IsServer` is
+  true, which it is. So `ctxProbe` implements `OnPreRender` purely to be handed a
+  live context, complete with working in-memory local storage and dispatch queue.
+  `e.ConsumeAll()` then drains dispatches, asyncs, and deferred work, so an action
+  that resolves on a background goroutine has finished when it returns.
+- A zero `app.Event{}` nil-derefs on `PreventDefault()`. Use `nullEvent()`.
+
+`app.HTMLString(g.Render())` draws the whole screen, nested components included,
+without mounting anything — which is how `view_test.go` asserts on markup.
+
+What is out of reach is the DOM: `app.Window()` reads back empty off-browser, so
+the pieces that measure or scroll elements (the fly-into-play animation, the log
+auto-scroll, the picker's focus, `ctx.JSSrc()`) no-op rather than assert. Every
+one of them is written to tolerate a render with no page behind it, which is what
+makes the rest of the client testable here at all — keep it that way.
+
+Coverage here is **deliberately ungated** (`magefiles/cover.go`), because the
+last stretch is the DOM-bound code above.
+
 ## CSS conventions (`web/app.css`)
 
 - BEM-ish: a block (`.card`), and modifiers as `--modifier` classes
   (`.card--dimmed`, `.log-group--p0`). No inline styles from Go.
 - House colours are custom properties (`--nm`, `--tp`, `--edge`) supplied by the
   `.card-<house>` class from `palette.go`; markup only ever carries class names.
+- The one exception is a **measurement**: where a particular card sits on screen
+  is a runtime fact no class can name, so `view_focus.go` hands the lifted card's
+  rect over as custom properties (`--focus-x`, `--focus-w`, …) and `app.css` owns
+  everything done with them. Values, never styling — a rule that needs a new
+  declaration in Go is a rule that belongs in the stylesheet.
 - Keep every animation's `-a`/`-b` pair in sync — they must have identical
   keyframes.
+- **Grow a card with `transform: scale()`, never a bigger box.** `.card` paints
+  its ogee frame through a mask pinned to `--card-full-h`, so a taller box puts
+  the S-curve in the wrong place. A card that overhangs its row also has to leave
+  the board's coordinate space entirely (`position: fixed`): `.card-strip` is
+  `overflow-x: auto`, which per spec forces `overflow-y: hidden`, and
+  `.board-area` is `overflow: hidden` — anything inside either one is clipped.
 
 ## Never shout: no all-caps
 

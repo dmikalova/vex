@@ -18,7 +18,7 @@ var Dysania = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 141),
 	card.WithPower(4),
-	card.WithTraits("Mutant"),
+	card.WithTraits(card.Traits.Mutant),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.GainAember{

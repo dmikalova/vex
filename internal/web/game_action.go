@@ -273,6 +273,25 @@ func (g *game) computeFlashes() {
 		}
 		g.fighting = false
 	}
+	// A card that leaves play as a side effect of its own reap/action ability
+	// cannot pulse in place, so — like the discard/pool/key pulses above — it is
+	// simply skipped rather than flashed somewhere it no longer is.
+	if g.reaping {
+		if inPlayNow[g.reapID] {
+			f := flashes[g.reapID]
+			f.reap = true
+			flashes[g.reapID] = f
+		}
+		g.reaping = false
+	}
+	if g.acting {
+		if inPlayNow[g.actID] {
+			f := flashes[g.actID]
+			f.act = true
+			flashes[g.actID] = f
+		}
+		g.acting = false
+	}
 	for id := range inPlayNow {
 		// A card played from hand flies in from its hand slot instead (flyIntoPlay),
 		// so it does not also pulse in place.

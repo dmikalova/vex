@@ -22,6 +22,11 @@ wins.
 **Key cost**:
 The Æmber required to forge a key (6 by default), which cards may raise or lower.
 
+**Check**:
+The state of holding enough Æmber to afford a key; announced in the tabletop
+game so the opponent knows a key is imminent. The client shows it as a glow on
+the Æmber count rather than a callout.
+
 **Key colour**:
 The colour of a forged key — Red, Blue, or Yellow, the same colours as KeyForge.
 Currently cosmetic; planned to matter to house Skyborn (set 8).
@@ -338,8 +343,16 @@ the zone word for its icon, then the owner's name, as the row gets shorter.
 The dashed rule between the two battlelines; the board is a mirror about it.
 
 **Sidebar**:
-The right-hand column: Brand bar, Game log, Turn HUD, Prompt, and Action bar.
-It can be collapsed to give the Board area the whole window.
+The right-hand column: Brand bar, Game log, Turn HUD, and the Control dock. It
+can be collapsed to give the Board area the whole window, which sets the Control
+dock loose to float over the board.
+
+**Control dock**:
+Everything the player answers with, as one panel: the Prompt, the Action bar, the
+House picker, the Flank buttons, and End turn. It docks into the Sidebar while
+the Sidebar is open and floats over the Board area once it is hidden, so hiding
+the Sidebar costs the player the Game log but never the game. Browser client
+only; the TUI has no collapsing region to dock into.
 
 **Brand bar**:
 The title row at the top of the Sidebar, with the navigation buttons: undo,
@@ -361,6 +374,10 @@ _prompt source_) and its answers as option buttons.
 **Action bar**:
 The buttons for what the selected card can do right now — play, discard, reap,
 use, fight, end turn.
+
+**House picker**:
+The choice of which House to call for the turn, offered at the turn's start.
+Distinct from the House strip, which only reports the three a deck has.
 
 **Flank buttons**:
 The arrow-headed buttons that place a played creature on the left or right flank.

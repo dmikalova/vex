@@ -15,16 +15,16 @@ import (
 //	Power:  12
 //	Traits: Dragon
 //
-//	Kelifi Dragon cannot be played unless you have 7 Æmber or more.
+//	Kelifi Dragon cannot be played unless you have 5 Æmber or more.
 //	Fight/Reap: Gain 1 Æmber, and deal 5 damage to a creature.
 func TestKelifiDragon(t *testing.T) {
-	t.Run("cannot be played on a pool under 7", func(t *testing.T) {
+	t.Run("cannot be played on a pool under 5", func(t *testing.T) {
 		var dragon ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
 				House: card.House.Brobnar,
 				Hand:  ct.Cards(ct.Bind(&dragon, KelifiDragon)),
-				Amber: 6,
+				Amber: 4,
 			},
 		})
 

@@ -20,7 +20,7 @@ var Firespitter = card.New(
 	card.Provenance(card.CotA, 32),
 	card.WithPower(5),
 	card.WithArmor(1),
-	card.WithTraits("Giant"),
+	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(
 		card.Trigger.BeforeFight, card.DealDamage{
 			Amount: 1,

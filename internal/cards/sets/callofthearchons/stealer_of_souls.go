@@ -18,7 +18,7 @@ var StealerOfSouls = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 98),
 	card.WithPower(6),
-	card.WithTraits("Demon"),
+	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(card.Trigger.AfterDestroyedFighting, card.Sequence{Effects: []card.Effect{
 		card.PurgeCreature{Target: card.Target.Triggering},
 		card.GainAember{

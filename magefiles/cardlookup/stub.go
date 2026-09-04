@@ -128,11 +128,11 @@ func stubSource(pkg string, set provenance.SourceSet, c provenance.Card) string 
 		fmt.Fprintf(&b, "\tcard.WithAemberBonus(%d),\n", c.Amber)
 	}
 	if len(c.Traits) > 0 {
-		quoted := make([]string, len(c.Traits))
+		named := make([]string, len(c.Traits))
 		for i, t := range c.Traits {
-			quoted[i] = quote(titleWord(t))
+			named[i] = "card.Traits." + titleWord(t)
 		}
-		b.WriteString("\tcard.WithTraits(" + strings.Join(quoted, ", ") + "),\n")
+		b.WriteString("\tcard.WithTraits(" + strings.Join(named, ", ") + "),\n")
 	}
 	b.WriteString("\t// TODO(stub): add WithKeywords / WithAbility for the printed text above.\n")
 	b.WriteString(")\n")

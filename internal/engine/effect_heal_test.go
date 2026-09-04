@@ -35,6 +35,37 @@ func TestHealEffect(t *testing.T) {
 	}
 }
 
+// A "you may fully heal a creature" is one card choice, so the player picks the
+// creature directly instead of first answering Yes (Protectrix).
+func TestMayDeclinableHeal(t *testing.T) {
+	e := May{Do: Heal{Fully: true, Target: Target{Kind: TargetChosenCreature}}}
+	if !e.Do.(declinableEffect).declinable() {
+		t.Fatal("a chosen-target Heal should be declinable")
+	}
+
+	g := NewGame("A", "B", 1)
+	ch := &cardDecliner{}
+	g.SetChooser(0, ch)
+	hurt := g.AddToBattleline(testCreature("Hurt", 5), 0)
+	g.State.Cards[hurt].Damage = 3
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if ch.asked != 1 {
+		t.Errorf("declinable prompts = %d, want 1", ch.asked)
+	}
+	if g.Damage(hurt) != 0 {
+		t.Errorf("the chosen creature should have been healed, damage = %d", g.Damage(hurt))
+	}
+
+	declined := NewGame("A", "B", 1)
+	declined.SetChooser(0, &cardDecliner{decline: true})
+	other := declined.AddToBattleline(testCreature("Hurt", 5), 0)
+	declined.State.Cards[other].Damage = 3
+	e.Resolve(&EffectContext{Resolver: declined, Controller: 0})
+	if declined.Damage(other) != 3 {
+		t.Error("a declined May should heal nothing")
+	}
+}
+
 func TestHealValidate(t *testing.T) {
 	this := Target{Kind: TargetThisCreature}
 	if err := (Heal{Target: this, Fully: true, Amount: 2}).validate(); err == nil {

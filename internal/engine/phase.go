@@ -22,8 +22,8 @@ const (
 	PhaseChooseHouse
 	// PhaseArchives offers the active player's archived cards into their hand.
 	PhaseArchives
-	// PhasePlay is the open phase: the active player plays, discards, and uses cards
-	// until they end their turn.
+	// PhasePlay is the open phase, shown to players as the "main" phase: the
+	// active player plays, discards, and uses cards until they end their turn.
 	PhasePlay
 	// PhaseReady readies the active player's cards and refreshes creature armor.
 	PhaseReady
@@ -50,7 +50,7 @@ func (p Phase) String() string {
 	case PhaseArchives:
 		return "archives"
 	case PhasePlay:
-		return "play"
+		return "main"
 	case PhaseReady:
 		return "ready"
 	case PhaseDraw:

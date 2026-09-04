@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Creature
 //	Rarity: Rare
 //	Power:  1
-//	Traits: demon
+//	Traits: Demon
 //
 //	Play: Choose a house - your opponent cannot choose that house as their active house until Restringuntus leaves play.
 var Restringuntus = card.New(
@@ -18,7 +18,7 @@ var Restringuntus = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 94),
 	card.WithPower(1),
-	card.WithTraits("demon"),
+	card.WithTraits(card.Traits.Demon),
 	card.WithHouseLock(card.HouseLock{
 		Player: card.Opponent,
 		Bars:   true,

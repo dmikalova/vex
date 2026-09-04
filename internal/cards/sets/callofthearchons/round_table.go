@@ -18,10 +18,10 @@ var RoundTable = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 235),
 	card.WithAemberBonus(1),
-	card.WithTraits("Location"),
+	card.WithTraits(card.Traits.Location),
 	card.WithConstant(card.ConstantAbility{
 		PowerBonus: 1,
 		Keywords:   card.Keywords(card.Keyword.Taunt),
-		Target:     card.Target.EachFriendlyCreature.WithTrait("Knight"),
+		Target:     card.Target.EachFriendlyCreature.WithTrait(card.Traits.Knight),
 	}),
 )

@@ -1,6 +1,7 @@
 package web
 
 import (
+	"fmt"
 	"strings"
 	"unicode/utf8"
 
@@ -42,21 +43,30 @@ type cardView struct {
 	// Exhausted shows an exhausted token on the face. Rotating the card the way a
 	// physical one turns would break the strip's grid, so the token stands in.
 	Exhausted bool
-	// Bar lists the keywords that get a coloured stripe along the card's edge
-	// (Taunt, Elusive, Hazardous…), since those change how the card can be attacked
-	// and are worth seeing without reading the rules text. BarBottom moves the
-	// stripe to the bottom edge, for the rows facing the active player across the
-	// midline.
-	Bar       []engine.Keyword
+	// Bar lists the entries that get a coloured stripe along the card's edge
+	// (Taunt, Elusive, Hazardous…) — printed keywords plus Hazardous, a magnitude
+	// rather than a boolean keyword so it does not live in engine.Keyword — since
+	// those change how the card can be attacked and are worth seeing without
+	// reading the rules text. BarBottom moves the stripe to the bottom edge, for
+	// the rows facing the active player across the midline.
+	Bar       []string
 	BarBottom bool
+	// TauntShielded adds a fainter taunt-coloured segment to the same stripe for a
+	// creature that does not have taunt itself but sits beside one that does, so a
+	// creature most attackers cannot reach reads as protected without being
+	// confused for a taunter.
+	TauntShielded bool
 	// Enter pulses the whole card as it comes into play; Fight shakes it as it
-	// attacks or is attacked; Hit washes it red as it takes damage; StunFlash and
-	// ExhaustFlash pulse their token as it is first applied. FlashOdd alternates
-	// their animation class each time so the CSS animation replays even on
-	// back-to-back triggers.
+	// attacks or is attacked; Hit washes it red as it takes damage; Reap squeezes it
+	// and washes it yellow as it reaps; Act does the same in green as it uses an
+	// action ability (an artifact's, or a creature's own); StunFlash and ExhaustFlash
+	// pulse their token as it is first applied. FlashOdd alternates their animation
+	// class each time so the CSS animation replays even on back-to-back triggers.
 	Enter bool
 	Fight bool
 	Hit   bool
+	Reap  bool
+	Act   bool
 	// FightDown lunges the fight animation downward instead of up, for the cards in
 	// the top battleline, so the two combatants move towards each other.
 	FightDown    bool
@@ -115,6 +125,47 @@ func (c *cardView) onMouseLeave(ctx app.Context, _ app.Event) {
 	}
 }
 
+// kwColorVar is the CSS var() reference for a keybar entry's colour, e.g.
+// "var(--kw-taunt)" — used to build the keybar's gradient.
+func kwColorVar(name string) string {
+	return "var(--kw-" + strings.ToLower(name) + ")"
+}
+
+// barTitle joins a card's keybar entries for the segment's hover tooltip, e.g.
+// "Taunt, Elusive".
+func barTitle(bar []string) string {
+	return strings.Join(bar, ", ")
+}
+
+// keybarBlend is how many percentage points of the keybar's total width blend
+// into the neighbouring keyword on either side of a seam — kept small so the
+// stripe reads as a solid band per keyword with a tight transition, not a soft
+// wash between them.
+const keybarBlend = 1.5
+
+// keybarGradient builds one left-to-right gradient spanning every entry in
+// bar, each given an equal-width solid band with a tight blended seam where it
+// meets its neighbour, so a multi-keyword card's edge reads as a single
+// continuous stripe rather than tiled solid blocks. It always returns a
+// gradient, even for a single entry — background-image (unlike
+// background-color) cannot take a bare color, only an <image>, so a lone
+// keyword still needs the degenerate two-stop form to render at all.
+func keybarGradient(bar []string) string {
+	n := len(bar)
+	stops := make([]string, 0, 2*n)
+	stops = append(stops, kwColorVar(bar[0])+" 0%")
+	for i := range n {
+		end := float64(i+1) / float64(n) * 100
+		if i == n-1 {
+			stops = append(stops, kwColorVar(bar[i])+" 100%")
+			break
+		}
+		stops = append(stops, fmt.Sprintf("%s %.4g%%", kwColorVar(bar[i]), end-keybarBlend))
+		stops = append(stops, fmt.Sprintf("%s %.4g%%", kwColorVar(bar[i+1]), end+keybarBlend))
+	}
+	return "linear-gradient(to right, " + strings.Join(stops, ", ") + ")"
+}
+
 func (c *cardView) Render() app.UI {
 	clickable := c.OnActivate != nil
 	cls := cx(
@@ -131,6 +182,10 @@ func (c *cardView) Render() app.UI {
 		ifCls(c.Fight && c.FightDown, "card--fight-down"),
 		ifCls(c.Hit && !c.FlashOdd, "card--hit-a"),
 		ifCls(c.Hit && c.FlashOdd, "card--hit-b"),
+		ifCls(c.Reap && !c.FlashOdd, "card--reap-a"),
+		ifCls(c.Reap && c.FlashOdd, "card--reap-b"),
+		ifCls(c.Act && !c.FlashOdd, "card--act-a"),
+		ifCls(c.Act && c.FlashOdd, "card--act-b"),
 	)
 
 	div := app.Div().Class(cls)
@@ -148,28 +203,26 @@ func (c *cardView) Render() app.UI {
 	}
 
 	return div.Body(
-		app.If(len(c.Bar) > 0, func() app.UI {
+		app.If(len(c.Bar) > 0 || c.TauntShielded, func() app.UI {
 			return app.Div().
 				Class(cx("card-keybar", ifCls(c.BarBottom, "card-keybar--bottom"))).
 				Body(
-					app.Range(c.Bar).Slice(func(i int) app.UI {
-						kw := c.Bar[i].String()
+					app.If(len(c.Bar) > 0, func() app.UI {
 						return app.Div().
-							Class("card-keybar-seg card-keybar--" + strings.ToLower(kw)).
-							Title(kw)
+							Class("card-keybar-seg").
+							Style("flex", fmt.Sprintf("%d 1 0%%", len(c.Bar))).
+							Style("background-image", keybarGradient(c.Bar)).
+							Title(barTitle(c.Bar))
+					}),
+					app.If(c.TauntShielded, func() app.UI {
+						return app.Div().
+							Class("card-keybar-seg card-keybar--taunt-shielded").
+							Title("Shielded by a neighboring Taunt creature")
 					}),
 				)
 		}),
 		app.Div().Class("card-name").Body(
-			app.If(c.Emblem != "", func() app.UI {
-				return icon(
-					c.Emblem,
-					"icon-house",
-					"icon-outline",
-					ifCls(c.HouseChanged, "icon-house--changed"),
-				)
-			}),
-			app.Span().Class(cx("card-name-text", squeezeClass(c.Title))).Text(c.Title),
+			squeezedTitle(c.Title),
 		),
 		app.Div().Class("card-body").Body(
 			app.If(len(c.Stat) > 0 || c.Stunned || c.Exhausted, func() app.UI {
@@ -201,6 +254,14 @@ func (c *cardView) Render() app.UI {
 			}),
 		),
 		app.Div().Class("card-kind").Body(
+			app.If(c.Emblem != "", func() app.UI {
+				return icon(
+					c.Emblem,
+					"icon-house",
+					"icon-outline",
+					ifCls(c.HouseChanged, "icon-house--changed"),
+				)
+			}),
 			app.If(c.TypeIcon != "", func() app.UI { return icon(c.TypeIcon, "icon-kind", "icon-outline") }),
 			app.Span().Text(c.Kind),
 			app.If(c.Maverick || c.Rarity != rarityNone, func() app.UI {
@@ -212,7 +273,12 @@ func (c *cardView) Render() app.UI {
 							Body(rarityDiamonds(c.Rarity.diamonds())...)
 					}),
 					app.If(c.Rarity.isConnected(), func() app.UI {
-						return app.Span().Class("rarity-plus").Text("+")
+						return icon(
+							"rarity-connected",
+							"icon-mark",
+							"icon-outline",
+							"rarity-connected-icon",
+						)
 					}),
 				)
 			}),
@@ -220,20 +286,46 @@ func (c *cardView) Render() app.UI {
 	)
 }
 
-// squeezeClass picks how hard to condense a title that would otherwise be cut
-// off. The banner is a fixed width, so the step is chosen from the title's length
-// rather than measured — close enough at these few sizes, and it costs no layout
-// read per card.
-func squeezeClass(title string) string {
-	switch n := utf8.RuneCountInString(title); {
-	case n > 26:
-		return "card-name-text--squeeze-3"
-	case n > 22:
-		return "card-name-text--squeeze-2"
-	case n > 18:
-		return "card-name-text--squeeze-1"
+// squeezeBaseChars is how many runes of the card font fit the name banner
+// unsqueezed, and squeezeMinScale is the floor below which a title is left to
+// the ellipsis instead of being squeezed illegibly thin. Both are calibrated
+// against the rendered banner (128px available at this font) rather than
+// measured per card, so a title's condensing is a continuous function of its
+// length instead of a few discrete steps that either under- or over-squeeze
+// whichever titles land near a step's edge.
+const (
+	squeezeBaseChars = 20
+	squeezeMinScale  = 0.7
+)
+
+// squeezeScale reports how much to horizontally condense a title that would
+// otherwise be cut off, 1 meaning no condensing at all.
+func squeezeScale(title string) float64 {
+	n := utf8.RuneCountInString(title)
+	if n <= squeezeBaseChars {
+		return 1
 	}
-	return ""
+	if scale := float64(squeezeBaseChars) / float64(n); scale > squeezeMinScale {
+		return scale
+	}
+	return squeezeMinScale
+}
+
+// squeezedTitle renders a card's name banner text, horizontally condensed via
+// scaleX when squeezeScale calls for it. The width is grown by the inverse of
+// the scale so the squeeze has the extra room to condense — flex-shrink must be
+// disabled alongside it, or the flex layout claws that extra width back before
+// the transform ever sees it.
+func squeezedTitle(title string) app.UI {
+	span := app.Span().Class("card-name-text").Text(title)
+	scale := squeezeScale(title)
+	if scale >= 1 {
+		return span
+	}
+	return span.
+		Style("transform", fmt.Sprintf("scaleX(%.3f)", scale)).
+		Style("width", fmt.Sprintf("%.2f%%", 100/scale)).
+		Style("flex-shrink", "0")
 }
 
 // cx joins non-empty class fragments with spaces.

@@ -10,8 +10,9 @@ import (
 // actionTimeout is a backstop: normal misuse (a wrong click, or a prompt left
 // unanswered at the end of a test) is caught immediately with a helpful message,
 // so this only trips if the engine genuinely wedges — which would otherwise hang
-// the whole test binary.
-const actionTimeout = 5 * time.Second
+// the whole test binary. It is a variable so the harness's own tests can shorten
+// it and exercise the wedge; card tests never touch it.
+var actionTimeout = 5 * time.Second
 
 // promptReq is one decision the engine is waiting on, carried from the action
 // goroutine to the test goroutine. reply is how the test answers: a creature id,

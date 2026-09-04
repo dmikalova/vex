@@ -169,6 +169,23 @@ func (g *Game) protectedByTaunt(attacker, target LocalID) bool {
 	return false
 }
 
+// TauntShielded reports whether a creature is shielded by a neighboring
+// taunter — sitting beside a creature with taunt, without having taunt itself.
+// It answers with no attacker in mind (unlike protectedByTaunt, which a fight
+// asks per attacker), so a client can show it as standing appearance rather than
+// a fact that only holds for the current fight.
+func (g *Game) TauntShielded(id LocalID) bool {
+	if g.hasKeyword(id, Taunt) {
+		return false
+	}
+	for _, neighbor := range neighbors(&EffectContext{Resolver: g}, id) {
+		if g.hasKeyword(neighbor, Taunt) {
+			return true
+		}
+	}
+	return false
+}
+
 // onFlankOf reports whether a creature sits on a flank (the leftmost or rightmost
 // creature) of its controller's battleline.
 func (g *Game) onFlankOf(id LocalID) bool {
@@ -192,22 +209,45 @@ func (g *Game) fightDamage(attacker, defender LocalID) int {
 	return dmg
 }
 
-// applyRawDamage records damage on a creature, letting armor absorb it first. It
-// only updates the damage counters; destruction is resolved by dealDamage, of
-// which this is the per-creature step.
-func (g *Game) applyRawDamage(id LocalID, amount int, ignoreArmor bool) {
+// applyRawDamage deals damage to a creature and returns the creature that ended
+// up marked with it. The damage runs that creature's defenses first — invulnerability
+// refuses all of it, then armor absorbs from the front — and only what survives is
+// dealt. Redirection is the last step of that chart, not the first: a shield takes
+// the damage the creature was actually dealt, and then runs its own defenses over
+// it in turn, so a shield's armor absorbs from an already-armored amount. It only
+// updates the damage counters; destruction is resolved by dealDamage, of which this
+// is the per-creature step.
+func (g *Game) applyRawDamage(id LocalID, amount int, ignoreArmor bool) LocalID {
 	if amount <= 0 {
-		return
+		return id
 	}
 	// A creature an earlier step already removed can still be named by a batch or by
 	// a trigger's "it", and damage dealt to it now would sit on a card in hand.
 	if !g.inPlay(id) {
-		return
+		return id
 	}
+	if amount = g.mitigateDamage(id, amount, ignoreArmor); amount <= 0 {
+		return id
+	}
+	if shield := g.damageRedirect(id); shield != id {
+		id = shield
+		if amount = g.mitigateDamage(id, amount, ignoreArmor); amount <= 0 {
+			return id
+		}
+	}
+	core := &g.State.Cards[id]
+	core.Damage += int16(amount)
+	g.record(DamageTaken{Creature: id, Amount: amount, Total: int(core.Damage)})
+	return id
+}
+
+// mitigateDamage runs a creature's defenses over incoming damage and returns what
+// is left for it to be dealt.
+func (g *Game) mitigateDamage(id LocalID, amount int, ignoreArmor bool) int {
 	core := &g.State.Cards[id]
 	if core.DamageImmune {
 		g.record(DamageRefused{Creature: id})
-		return
+		return 0
 	}
 	if !ignoreArmor {
 		if absorbed := min(int(core.ArmorRemaining), amount); absorbed > 0 {
@@ -216,10 +256,7 @@ func (g *Game) applyRawDamage(id LocalID, amount int, ignoreArmor bool) {
 			g.record(ArmorAbsorbed{Creature: id, Amount: absorbed})
 		}
 	}
-	if amount > 0 {
-		core.Damage += int16(amount)
-		g.record(DamageTaken{Creature: id, Amount: amount, Total: int(core.Damage)})
-	}
+	return amount
 }
 
 // DamageTarget pairs a creature with the amount of damage to deal it within a
@@ -238,25 +275,57 @@ type DamageTarget struct {
 // chooses. Resolving destruction is part of dealing damage, so once dealDamage
 // returns the dead creatures are already in the discard.
 func (g *Game) dealDamage(controller int, targets ...DamageTarget) {
-	for _, t := range targets {
-		g.applyRawDamage(t.ID, t.Amount, t.IgnoreArmor)
+	// A redirect moves the damage to a shield, so the creature to test for
+	// destruction is whichever one applyRawDamage ended up marking.
+	hit := make([]LocalID, len(targets))
+	for i, t := range targets {
+		hit[i] = g.applyRawDamage(t.ID, t.Amount, t.IgnoreArmor)
 	}
 	var dying []LocalID
-	for _, t := range targets {
-		if g.shouldDestroy(t.ID) {
-			dying = append(dying, t.ID)
+	for _, id := range hit {
+		if g.shouldDestroy(id) {
+			dying = append(dying, id)
 		}
 	}
 	g.destroyEach(controller, dying)
 }
 
+// damageRedirect returns the creature that takes the damage a creature was dealt:
+// normally id itself, but a card in play whose TakesDamageFor covers id takes it
+// instead (Shadow Self shields its non-Specter neighbors). A redirect never
+// chains — the shield's own damage is never redirected again — so two shields
+// cannot bounce damage between them.
+func (g *Game) damageRedirect(id LocalID) LocalID {
+	for player := range 2 {
+		for _, shield := range g.allInPlay(player) {
+			t := g.cat.def(shield).TakesDamageFor
+			if shield == id || !t.valid() {
+				continue
+			}
+			for _, warded := range t.Select(g.constantContext(shield)) {
+				if warded == id {
+					return shield
+				}
+			}
+		}
+	}
+	return id
+}
+
 // shouldDestroy reports whether a creature is currently in a destroyable state:
-// its damage meets or exceeds its power, its power is zero or less, or it has
-// Poison and any damage on it.
+// its damage meets or exceeds its power, its power is zero or less, it has
+// Poison and any damage on it, or its own text names a board state that destroys
+// it (Tireless Crocag while the opponent has no creatures).
 func (g *Game) shouldDestroy(id LocalID) bool {
 	def := g.cat.def(id)
 	if def.Type != Creature || !g.inPlay(id) {
 		return false
+	}
+	if dw := def.DestroyedWhen; dw != nil {
+		ctx := &EffectContext{Resolver: g, Source: id, Controller: g.controller(id)}
+		if dw.Met(ctx) {
+			return true
+		}
 	}
 	core := &g.State.Cards[id]
 	poisoned := g.hasKeyword(id, Poison) && core.Damage > 0

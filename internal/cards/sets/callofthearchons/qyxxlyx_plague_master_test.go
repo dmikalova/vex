@@ -28,12 +28,16 @@ func TestQyxxlyxPlagueMaster(t *testing.T) {
 						ct.OfHouse(card.House.Sanctum),
 						ct.Power(5),
 						ct.Armor(2),
-						ct.Traits("Human"),
+						ct.Traits(card.Traits.Human),
 					),
 				),
 				ct.Bind(
 					&beast,
-					ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Power(5), ct.Traits("Beast")),
+					ct.Creature(
+						ct.OfHouse(card.House.Sanctum),
+						ct.Power(5),
+						ct.Traits(card.Traits.Beast),
+					),
 				),
 			)},
 		})

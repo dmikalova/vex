@@ -18,6 +18,6 @@ var Murmook = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 361),
 	card.WithPower(3),
-	card.WithTraits("Beast"),
+	card.WithTraits(card.Traits.Beast),
 	card.WithKeyCost(card.KeyCostChange(card.Opponent, 1)),
 )

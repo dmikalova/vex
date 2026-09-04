@@ -20,7 +20,7 @@ var Bulwark = card.New(
 	card.Provenance(card.CotA, 238),
 	card.WithPower(4),
 	card.WithArmor(2),
-	card.WithTraits("Human", "Knight"),
+	card.WithTraits(card.Traits.Human, card.Traits.Knight),
 	card.WithConstant(card.ConstantAbility{
 		ArmorBonus: 2,
 		Target:     card.Target.EachCreature.Neighboring(),

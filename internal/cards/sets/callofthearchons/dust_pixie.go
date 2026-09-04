@@ -18,5 +18,5 @@ var DustPixie = card.New(
 	card.Provenance(card.CotA, 351),
 	card.WithPower(1),
 	card.WithAemberBonus(2),
-	card.WithTraits("Faerie"),
+	card.WithTraits(card.Traits.Faerie),
 )

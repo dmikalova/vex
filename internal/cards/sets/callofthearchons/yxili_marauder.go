@@ -19,7 +19,7 @@ var YxiliMarauder = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 203),
 	card.WithPower(2),
-	card.WithTraits("Martian", "Soldier"),
+	card.WithTraits(card.Traits.Martian, card.Traits.Soldier),
 	card.WithConstant(card.ConstantAbility{
 		Target:     card.Target.This,
 		PowerBonus: 1,

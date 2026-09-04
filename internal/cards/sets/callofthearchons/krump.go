@@ -18,7 +18,7 @@ var Krump = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 39),
 	card.WithPower(6),
-	card.WithTraits("Giant"),
+	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(
 		card.Trigger.AfterDestroyedFighting, card.LoseAember{
 			Player: card.Opponent,

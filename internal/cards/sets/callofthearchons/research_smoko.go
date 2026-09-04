@@ -18,7 +18,7 @@ var ResearchSmoko = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 151),
 	card.WithPower(2),
-	card.WithTraits("Mutant"),
+	card.WithTraits(card.Traits.Mutant),
 	card.WithAbility(
 		card.Trigger.Destroyed, card.ArchiveTopOfDeck{Count: 1}),
 )

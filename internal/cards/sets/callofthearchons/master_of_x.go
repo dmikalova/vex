@@ -17,7 +17,7 @@ func masterOf(n int) []card.Option {
 	}
 	return []card.Option{
 		card.WithPower(4),
-		card.WithTraits("Demon"),
+		card.WithTraits(card.Traits.Demon),
 		card.WithAbility(card.Trigger.Reap, card.May{Do: card.Destroy{Target: power}}),
 	}
 }

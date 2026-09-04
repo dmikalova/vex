@@ -18,7 +18,7 @@ var HebeTheHuge = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 36),
 	card.WithPower(6),
-	card.WithTraits("Giant", "Knight"),
+	card.WithTraits(card.Traits.Giant, card.Traits.Knight),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{
 			Amount: 2,

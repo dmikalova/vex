@@ -17,7 +17,7 @@ var StrangeGizmo = card.New(
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 134),
-	card.WithTraits("Item"),
+	card.WithTraits(card.Traits.Item),
 	card.WithAemberBonus(1),
 	card.WithAbility(card.Trigger.AfterForgeKey, card.Sequence{Effects: []card.Effect{
 		card.Destroy{Target: card.Target.EachCreature},

@@ -18,6 +18,6 @@ var MacisAsp = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 301),
 	card.WithPower(3),
-	card.WithTraits("Beast"),
+	card.WithTraits(card.Traits.Beast),
 	card.WithKeywords(card.Keyword.Skirmish, card.Keyword.Poison),
 )

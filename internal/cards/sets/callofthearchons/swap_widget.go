@@ -21,6 +21,6 @@ var SwapWidget = card.New(
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 189),
-	card.WithTraits("Item"),
+	card.WithTraits(card.Traits.Item),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

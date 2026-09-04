@@ -4,30 +4,34 @@ A grab-bag of things to build and open design questions. Canonical vocabulary is
 in [../CONTEXT.md](../CONTEXT.md), the rules in [rulebook.md](rulebook.md), and the
 long-term vision in [roadmap.md](roadmap.md).
 
-## UI / gameplay to build
+## Grill me
 
-- grill me on image generation
-- icons should contain both house colors, and should be roughly roundish. Brobnar - flame, sanctum cross in shield should be the yellow, dis
+- When sidebar is collapsed, can still access button actions
+- No way to see upgrade visually... adding card top/bottom takes up valuable space, maybe right/left
+- grill me on image generation. image generation should adapt with upgrades and other constant abilities
+- how to force rulebook accuracy and completeness?
+- event sourcing
 - decklists
 - Start of game setup - p1 plays 1 cards, mulligan
-- When sidebar is collapsed, can still access button actions
 - drag and drop creature directly into battleline flank (or deploy, with dynamic moving as you go across), upgrade onto creature, artifact into artifact line
-- What icons to print in the logs
-- More keyword icons - how much is too much?
-- refine being able to navigate by keyboard
 - minimize main page load to base css, icon, and wasm load by hash. index.html has no cache. wasm has json manifest of everything that caches for a while
 - The action panel (context.md could have wording for this) could be the actual card and text, and then play/reap/ etc buttons within
-- No way to see upgrade visually... adding card top/bottom takes up valuable space, maybe right/left
+- profiling - eg running property tests and outputting the profiled usage for hot paths, and then optimizing those paths as a skill
+
+## Things that can be done now
+
+- refine being able to navigate by keyboard
 - Squeeze text onto card title
 - in mobile, have the action bar under all the cards - or on the card preview?
 - For things like steal, capture - they both have an amount, By, Max, etc, similar structure. Is it possible to reuse these interfaces eg for Economy types, and other types?
-- profiling - eg running property tests and outputting the profiled usage for hot paths, and then optimizing those paths as a skill
 - using property testing to find unused code paths and then force specific tests there
-- after implementing all cards, identify cards that have unique effects and decide if they can be reworded for simplicity - is it possibility to introspect and see how many times each card facet is used?
+- in mobile squish card to text
+- More keyword icons - how much is too much?
 
 ## Deck persistence
 
 - base58 for deck IDs
+- import from MV
 
 ## Full two-player support
 
@@ -36,10 +40,13 @@ long-term vision in [roadmap.md](roadmap.md).
 - set your own primary/secondary player color
 - If a card is drawn/hidden data revealed then no undo. No undo across turn boundaries
 - Asynchronous matches
-- one click bug report with full logs, state, actions taken, and comments
+- one click bug report with full logs, state, actions taken, and comments. Also a feedback form
 - single player mode (current) and vs bot mode
 - alliance
 - custom deck builder
+- /demo route
+- toggle keyboard shortcuts
+- ability to pin players to an engine version, and then when they go to play their game they just load that engine for that game even if its an async game
 
 ## Wild ideas
 
@@ -50,6 +57,11 @@ long-term vision in [roadmap.md](roadmap.md).
 - Change enters play ready/stunned/enraged to Play: Stun X - would change timing for dominator etc
 - MM mutants - have a common, uncommon, and rare variant
 - rockatiel - the concept of really good cards that mean you have to hold answers against them for archon, vs not having complete blowout surprises that you have to hold against in sealed
+
+## Design refinements
+
+- house icons should contain both house colors, and should be roughly roundish. Brobnar - flame, sanctum cross in shield should be the yellow, dis
+- after implementing all cards, identify cards that have unique effects and decide if they can be reworded for simplicity - is it possibility to introspect and see how many times each card facet is used?
 
 ## Bot support
 
@@ -79,6 +91,7 @@ The ideal pipeline: Use an AlphaZero-style architecture. Use a neural network to
 - [building a rating engine with alphazero](https://gemini.google.com/app/24b5499fc76c5fc1)
 - Should be able to transfer the rating system to a KF rating system as long as I don't drastically change the rules - eg prophecies or the tide :/
 - Ask the system who has better odds - P1 vs P2, what about mulligan? What is the line for mulliganing?
+- Can the bot identify under rated cards and have bot play them more - although seems like this would be at the mechanics level?
 
 ## Design principles (kept from KeyForge)
 

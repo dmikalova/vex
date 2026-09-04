@@ -18,7 +18,7 @@ var EmberImp = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 85),
 	card.WithPower(2),
-	card.WithTraits("Imp"),
+	card.WithTraits(card.Traits.Imp),
 	card.WithRestrictions(card.Restrictions{
 		PlayCardLimit: card.PlayCardLimit{
 			Player: card.Opponent,

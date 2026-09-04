@@ -85,6 +85,9 @@ const (
 	// TargetChosenFriendlyCreatureOrArtifact selects a single friendly creature or artifact the
 	// controller chooses, rendered "a friendly creature or artifact".
 	TargetChosenFriendlyCreatureOrArtifact
+	// TargetChosenEnemyCreatureOrArtifact selects a single enemy creature or artifact
+	// the controller chooses, rendered "an enemy creature or artifact".
+	TargetChosenEnemyCreatureOrArtifact
 )
 
 // Target describes which cards an effect applies to. Kind picks the base set;
@@ -144,7 +147,7 @@ type Target struct {
 }
 
 // WithTrait narrows the target to cards that have the given trait, e.g.
-// Target{Kind: TargetEachCreature}.WithTrait("Scientist").
+// Target{Kind: TargetEachCreature}.WithTrait(Scientist).
 func (t Target) WithTrait(trait Trait) Target {
 	t.trait = trait
 	return t
@@ -152,7 +155,7 @@ func (t Target) WithTrait(trait Trait) Target {
 
 // ExceptTrait narrows the target to cards that do NOT have the given trait,
 // rendering the "non-<trait> trait" qualifier, e.g. a friendly Mars creature
-// ExceptTrait("Agent") reads "a friendly non-Agent trait Mars creature".
+// ExceptTrait(Agent) reads "a friendly non-Agent trait Mars creature".
 func (t Target) ExceptTrait(trait Trait) Target {
 	t.exceptTrait = trait
 	return t
@@ -385,7 +388,8 @@ func (t Target) Text() string {
 		noun = "card"
 	}
 	orArtifact := t.Kind == TargetChosenCreatureOrArtifact ||
-		t.Kind == TargetChosenFriendlyCreatureOrArtifact
+		t.Kind == TargetChosenFriendlyCreatureOrArtifact ||
+		t.Kind == TargetChosenEnemyCreatureOrArtifact
 	if orArtifact {
 		noun = "creature or artifact"
 	}
@@ -395,14 +399,14 @@ func (t Target) Text() string {
 	if t.exceptHouse != HouseNone {
 		noun = "non-" + t.exceptHouse.String() + " " + noun
 	}
-	if t.trait != "" {
-		noun = string(t.trait) + " trait " + noun
+	if t.trait != traitUnset {
+		noun = t.trait.String() + " trait " + noun
 	}
 	if t.house != HouseNone {
 		noun = t.house.String() + " " + noun
 	}
-	if t.exceptTrait != "" {
-		noun = "non-" + string(t.exceptTrait) + " trait " + noun
+	if t.exceptTrait != traitUnset {
+		noun = "non-" + t.exceptTrait.String() + " trait " + noun
 	}
 	if t.onFlank {
 		// A flank is a battleline position, so on a target that also reaches artifacts
@@ -465,8 +469,16 @@ func (t Target) Text() string {
 		phrase = "another " + noun
 	case TargetChosenArtifact:
 		phrase = "an " + noun
-	case TargetChosenEnemyArtifact:
+	case TargetChosenEnemyArtifact, TargetChosenEnemyCreatureOrArtifact:
 		phrase = "an enemy " + noun
+	case TargetChosenCreature:
+		// Other() drops the source card, which reads as "another creature" — the
+		// wording Replicator prints for a creature in play that is not itself.
+		if t.other {
+			phrase = "another " + noun
+		} else {
+			phrase = indefinite(noun)
+		}
 	default:
 		phrase = indefinite(noun)
 	}
@@ -817,14 +829,15 @@ func (t Target) isChosen() bool {
 		t.Kind == TargetChosenFriendlyCreature || t.Kind == TargetChosenOtherFriendlyCreature ||
 		t.Kind == TargetChosenOtherCreature ||
 		t.Kind == TargetChosenArtifact || t.Kind == TargetChosenEnemyArtifact || t.Kind == TargetChosenCreatureOrArtifact ||
-		t.Kind == TargetChosenFriendlyCreatureOrArtifact
+		t.Kind == TargetChosenFriendlyCreatureOrArtifact ||
+		t.Kind == TargetChosenEnemyCreatureOrArtifact
 }
 
 // filter narrows ids to those matching the target's trait, power, damaged, and
 // flank filters.
 func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
-	if t.trait == "" &&
-		t.exceptTrait == "" &&
+	if t.trait == traitUnset &&
+		t.exceptTrait == traitUnset &&
 		t.house == HouseNone &&
 		t.exceptHouse == HouseNone &&
 		!t.chosenHouse &&
@@ -848,10 +861,10 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 	}
 	out := make([]LocalID, 0, len(ids))
 	for _, id := range ids {
-		if t.trait != "" && !ctx.Resolver.HasTrait(id, t.trait) {
+		if t.trait != traitUnset && !ctx.Resolver.HasTrait(id, t.trait) {
 			continue
 		}
-		if t.exceptTrait != "" && ctx.Resolver.HasTrait(id, t.exceptTrait) {
+		if t.exceptTrait != traitUnset && ctx.Resolver.HasTrait(id, t.exceptTrait) {
 			continue
 		}
 		if t.house != HouseNone && ctx.Resolver.House(id) != t.house {
@@ -1018,6 +1031,10 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 		return append(
 			ctx.Resolver.Battleline(ctx.Controller),
 			ctx.Resolver.Artifacts(ctx.Controller)...)
+	case TargetChosenEnemyCreatureOrArtifact:
+		return append(
+			ctx.Resolver.Battleline(ctx.Opponent()),
+			ctx.Resolver.Artifacts(ctx.Opponent())...)
 	case TargetEachCreature, TargetChosenCreature:
 		return append(
 			ctx.Resolver.Battleline(ctx.Controller),

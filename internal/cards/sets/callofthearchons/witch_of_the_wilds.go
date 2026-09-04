@@ -18,6 +18,6 @@ var WitchOfTheWilds = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 347),
 	card.WithPower(4),
-	card.WithTraits("Beast", "Witch"),
+	card.WithTraits(card.Traits.Beast, card.Traits.Witch),
 	card.WithPlayPermission(card.PlayPermission{House: card.House.Self, Count: 1}),
 )

@@ -142,6 +142,59 @@ func TestCanUseErrors(t *testing.T) {
 	}
 }
 
+func TestCanUseArtifact(t *testing.T) {
+	g := started(t)
+	relic := g.AddArtifact(NewCard("Relic", Brobnar, Artifact, Common), 0)
+	if err := g.CanUseArtifact(0, relic); err != ErrCannotUse {
+		t.Errorf("artifact without an action ability = %v, want ErrCannotUse", err)
+	}
+
+	actor := g.AddArtifact(
+		NewCard(
+			"Actor",
+			Brobnar,
+			Artifact,
+			Common,
+			WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 1}),
+		),
+		0,
+	)
+	if err := g.CanUseArtifact(0, actor); err != nil {
+		t.Errorf("actor in the active house = %v, want nil", err)
+	}
+
+	// Wrong house, no Versatile: blocked.
+	g.State.ActiveHouse = Dis
+	if err := g.CanUseArtifact(0, actor); err != ErrWrongHouse {
+		t.Errorf("actor out of house = %v, want ErrWrongHouse", err)
+	}
+
+	// Versatile relaxes the house check for an artifact same as a creature.
+	versatile := g.AddArtifact(
+		NewCard(
+			"Versatile Actor", Brobnar, Artifact, Common,
+			WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 1}),
+			WithKeywords(Versatile),
+		),
+		0,
+	)
+	if err := g.CanUseArtifact(0, versatile); err != nil {
+		t.Errorf("Versatile actor out of house = %v, want nil", err)
+	}
+	g.State.ActiveHouse = Brobnar
+
+	// A creature is not an artifact.
+	creature := g.AddToBattleline(testCreature("creature", 2), 0)
+	if err := g.CanUseArtifact(0, creature); err != ErrWrongType {
+		t.Errorf("CanUseArtifact on a creature = %v, want ErrWrongType", err)
+	}
+
+	// usable()'s own checks (e.g. wrong player) surface unchanged.
+	if err := g.CanUseArtifact(1, actor); err != ErrNotActivePlayer {
+		t.Errorf("CanUseArtifact wrong player = %v, want ErrNotActivePlayer", err)
+	}
+}
+
 func TestAfterCardPlayedTrigger(t *testing.T) {
 	g := started(t)
 	g.AddToBattleline(
@@ -238,6 +291,45 @@ func TestStunBehavior(t *testing.T) {
 	}
 	if g.State.Aember[0] != before {
 		t.Error("a stunned action ability should not resolve")
+	}
+}
+
+// TestUnstun checks that Unstun spends a stunned, otherwise-usable creature's
+// use shaking off the stun instead of reaping/fighting/acting, under the same
+// checks Reap/Fight/an action would apply — including the active-house one,
+// since a stunned creature only gets this choice when it is otherwise usable.
+func TestUnstun(t *testing.T) {
+	g := started(t)
+	r := g.AddToBattleline(testCreature("stunreap", 2), 0)
+	g.State.Cards[r].Stunned = true
+	if err := g.Unstun(0, r); err != nil {
+		t.Fatalf("Unstun: %v", err)
+	}
+	if g.State.Cards[r].Stunned {
+		t.Error("Unstun should clear the stun")
+	}
+	if !g.State.Cards[r].Exhausted {
+		t.Error("Unstun should exhaust the creature")
+	}
+	// Out of house, a stunned creature has no use to spend at all — Unstun is
+	// blocked exactly like Reap, not a house-independent escape hatch.
+	outsider := g.AddToBattleline(NewCard("outsider", Dis, Creature, Common, WithPower(2)), 0)
+	g.State.Cards[outsider].Stunned = true
+	if err := g.Unstun(0, outsider); err != ErrWrongHouse {
+		t.Errorf("Unstun out of house = %v, want ErrWrongHouse", err)
+	}
+	// A creature that is not stunned has nothing for Unstun to do.
+	fine := g.AddToBattleline(testCreature("fine", 2), 0)
+	if err := g.Unstun(0, fine); err != ErrCannotUse {
+		t.Errorf("Unstun an unstunned creature = %v, want ErrCannotUse", err)
+	}
+	// The checks Unstun shares with every other use still apply: an
+	// already-exhausted creature has nothing left to spend.
+	spent := g.AddToBattleline(testCreature("spent", 2), 0)
+	g.State.Cards[spent].Stunned = true
+	g.State.Cards[spent].Exhausted = true
+	if err := g.Unstun(0, spent); err != ErrCardExhausted {
+		t.Errorf("Unstun an exhausted creature = %v, want ErrCardExhausted", err)
 	}
 }
 

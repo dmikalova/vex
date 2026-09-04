@@ -16,7 +16,7 @@ var LibraryOfBabble = card.New(
 	card.Type.Artifact,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 129),
-	card.WithTraits("Location"),
+	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
 		card.Trigger.Action, card.Draw{Amount: 1}),
 )

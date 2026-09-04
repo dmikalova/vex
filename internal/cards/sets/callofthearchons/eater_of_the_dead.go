@@ -18,7 +18,7 @@ var EaterOfTheDead = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 84),
 	card.WithPower(4),
-	card.WithTraits("Demon"),
+	card.WithTraits(card.Traits.Demon),
 	card.WithFightOrReap(card.Then{
 		First: card.PurgeCard{
 			Zone: card.Discard,

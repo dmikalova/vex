@@ -227,19 +227,34 @@ func (e ItIsOfHouse) Met(ctx *EffectContext) bool {
 type ItIs struct {
 	House House
 	Type  CardType
+	// Not inverts the match, so the condition is met when the card in context does
+	// NOT fit the filters — Neutron Shark repeats until it discards a Logos card.
+	Not bool
+	// Subject names the card outright when "it" has drifted too far from the trigger
+	// that set it. Unset says "it".
+	Subject Subject
 }
 
-// CondText renders the condition, e.g. "if it is a Mars creature" or "if it is an
-// artifact".
+// CondText renders the condition, e.g. "if it is a Mars creature", "if it is an
+// artifact", or, inverted and named, "if the discarded card is not a Logos card".
 func (e ItIs) CondText() string {
-	return "if it is " + indefinite(houseTypeNoun(e.House, e.Type))
+	if e.Not {
+		return "if " + e.Subject.noun() + " is not " + indefinite(houseTypeNoun(e.House, e.Type))
+	}
+	return "if " + e.Subject.noun() + " is " + indefinite(houseTypeNoun(e.House, e.Type))
 }
 
-// Met reports whether a card is in context and matches the house and type filters.
+// Met reports whether a card is in context and matches the house and type
+// filters, inverting the match under Not.
 func (e ItIs) Met(ctx *EffectContext) bool {
 	if !ctx.HasIt {
 		return false
 	}
+	return e.matches(ctx) != e.Not
+}
+
+// matches reports whether the card in context fits the house and type filters.
+func (e ItIs) matches(ctx *EffectContext) bool {
 	if e.House != HouseNone && ctx.Resolver.House(ctx.It) != e.House {
 		return false
 	}
@@ -385,13 +400,13 @@ func (Overwhelmed) Met(ctx *EffectContext) bool {
 	)
 }
 
-// RepeatOnCondition performs a gating effect and repeats it while the effect keeps
+// RepeatOnCondition performs an effect and repeats it while the effect keeps
 // succeeding and a condition holds — Numquid the Fair's "destroy an enemy creature
 // -> if you are overwhelmed, repeat this effect." Do runs at least once; the loop
-// stops as soon as Do does nothing (its gate is false) or Cond is not met. Do is a
-// GatingEffect so an empty board ends the loop instead of spinning.
+// stops as soon as Do does nothing (its gate is false) or Cond is not met. When Do
+// cannot report progress the Rule of Six alone bounds the loop.
 type RepeatOnCondition struct {
-	Do   GatingEffect
+	Do   Effect
 	Cond Condition
 }
 
@@ -410,7 +425,7 @@ func (e RepeatOnCondition) Text() string {
 // Rule of Six allows another pass.
 func (e RepeatOnCondition) Resolve(ctx *EffectContext) {
 	for range RuleOfSix {
-		if !e.Do.resolveGate(ctx) || !e.Cond.Met(ctx) {
+		if !resolveGateOf(ctx, e.Do) || !e.Cond.Met(ctx) {
 			return
 		}
 	}

@@ -26,11 +26,14 @@ func TestHorsemanOfDeath(t *testing.T) {
 				Discard: ct.Cards(
 					ct.Bind(
 						&rider,
-						ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Traits("Horseman")),
+						ct.Creature(
+							ct.OfHouse(card.House.Sanctum),
+							ct.Traits(card.Traits.Horseman),
+						),
 					),
 					ct.Bind(
 						&other,
-						ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Traits("Human")),
+						ct.Creature(ct.OfHouse(card.House.Sanctum), ct.Traits(card.Traits.Human)),
 					),
 				),
 			},

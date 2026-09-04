@@ -18,6 +18,6 @@ var Mother = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 145),
 	card.WithPower(5),
-	card.WithTraits("Robot", "Scientist"),
+	card.WithTraits(card.Traits.Robot, card.Traits.Scientist),
 	card.WithDrawModifier(card.Controller, 1),
 )

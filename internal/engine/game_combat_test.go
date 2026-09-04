@@ -191,6 +191,9 @@ func TestAfterDestroyedFightingTrigger(t *testing.T) {
 	weak := g2.AddToBattleline(testCreature("weak", 1), 0)
 	guard := g2.AddToBattleline(NewCard("guard", Sanctum, Creature, Common,
 		WithPower(6), WithHazardous(5), WithAbility(TriggerAfterDestroyedFighting, gain)), 1)
+	if got := g2.Hazardous(guard); got != 5 {
+		t.Errorf("guard Hazardous = %d, want 5", got)
+	}
 	before2 := g2.Aember(1)
 	if err := g2.Fight(0, weak, guard); err != nil {
 		t.Fatalf("Fight: %v", err)
@@ -609,5 +612,107 @@ func TestTauntDoesNotProtectTauntNeighbors(t *testing.T) {
 	b := g.AddToBattleline(taunt("b"), 1)
 	if got := g.FightTargets(0, att); len(got) != 2 || got[0] != a || got[1] != b {
 		t.Errorf("FightTargets = %v, want [%d %d]", got, a, b)
+	}
+}
+
+func TestTauntShielded(t *testing.T) {
+	g := started(t)
+	left := g.AddToBattleline(testCreature("left", 3), 1)
+	taunter := g.AddToBattleline(
+		NewCard("taunter", Brobnar, Creature, Common, WithPower(3), WithKeywords(Taunt)), 1)
+	right := g.AddToBattleline(testCreature("right", 3), 1)
+	far := g.AddToBattleline(testCreature("far", 3), 1)
+
+	if !g.TauntShielded(left) {
+		t.Error("left neighbor of a taunter should be shielded")
+	}
+	if !g.TauntShielded(right) {
+		t.Error("right neighbor of a taunter should be shielded")
+	}
+	if g.TauntShielded(taunter) {
+		t.Error("a taunter is not shielded by itself")
+	}
+	if g.TauntShielded(far) {
+		t.Error("a creature two away from the taunter should not be shielded")
+	}
+}
+
+// A card that takes damage for other creatures absorbs the damage aimed at each
+// creature its Target names, and its own damage is never redirected onward.
+func TestTakesDamageFor(t *testing.T) {
+	g := started(t)
+	shield := NewCard("Shield", Shadows, Creature, Common, WithPower(9),
+		WithTakesDamageFor(Target{Kind: TargetEachCreature}.Neighboring()))
+	ward := g.AddToBattleline(testCreature("ward", 2), 0)
+	sid := g.AddToBattleline(shield, 0)
+	far := g.AddToBattleline(testCreature("far", 2), 0)
+	// A second shield beside the first would bounce damage back and forth if a
+	// redirect could chain; it must not.
+	other := g.AddToBattleline(shield, 0)
+
+	g.dealDamage(0, DamageTarget{ID: ward, Amount: 2})
+	if g.Damage(ward) != 0 || g.Damage(sid) != 2 {
+		t.Errorf("ward=%d shield=%d, want 0 and 2", g.Damage(ward), g.Damage(sid))
+	}
+	if len(g.Battleline(0)) != 4 {
+		t.Error("the shielded creature should have survived")
+	}
+
+	// A creature the shield does not reach takes its own damage.
+	g.dealDamage(0, DamageTarget{ID: far, Amount: 1})
+	if g.Damage(far) != 0 || g.Damage(sid) != 3 {
+		t.Errorf("far=%d shield=%d, want 0 and 3", g.Damage(far), g.Damage(sid))
+	}
+	if g.Damage(other) != 0 {
+		t.Errorf("other shield=%d, want 0 (the nearer shield took it)", g.Damage(other))
+	}
+
+	// Damage aimed at a shield stays on it rather than hopping to its neighbor.
+	g.dealDamage(0, DamageTarget{ID: sid, Amount: 3})
+	if g.Damage(sid) != 6 {
+		t.Errorf("shield=%d, want 6 (a redirect never chains)", g.Damage(sid))
+	}
+
+	// A creature already out of play is not redirected either; the damage is
+	// simply dropped.
+	g.destroyEach(0, []LocalID{ward})
+	g.dealDamage(0, DamageTarget{ID: ward, Amount: 1})
+	if g.Damage(sid) != 6 {
+		t.Errorf("shield=%d, want 6 (damage to a card out of play goes nowhere)",
+			g.Damage(sid))
+	}
+}
+
+// Redirection is the last step of the damage chart, so both creatures' armor
+// absorbs: the shielded creature's armor reduces the damage it is dealt, and the
+// shield's armor reduces again from what it receives.
+func TestTakesDamageForAfterArmor(t *testing.T) {
+	g := started(t)
+	shield := NewCard("Shield", Shadows, Creature, Common, WithPower(9), WithArmor(2),
+		WithTakesDamageFor(Target{Kind: TargetEachCreature}.Neighboring()))
+	ward := g.AddToBattleline(NewCard("ward", Shadows, Creature, Common,
+		WithPower(6), WithArmor(2)), 0)
+	sid := g.AddToBattleline(shield, 0)
+
+	g.dealDamage(0, DamageTarget{ID: ward, Amount: 3})
+	if g.Damage(ward) != 0 || g.Damage(sid) != 0 {
+		t.Errorf("ward=%d shield=%d, want 0 and 0 (3 - 2 armor, then the last point"+
+			" absorbed by the shield's own armor)", g.Damage(ward), g.Damage(sid))
+	}
+
+	// Both creatures' armor is spent down by what it absorbed, so the next hit is
+	// only partly blunted.
+	g.dealDamage(0, DamageTarget{ID: ward, Amount: 5})
+	if g.Damage(ward) != 0 || g.Damage(sid) != 4 {
+		t.Errorf("ward=%d shield=%d, want 0 and 4", g.Damage(ward), g.Damage(sid))
+	}
+
+	// Armor that fully absorbs leaves nothing to redirect, so the shield is untouched.
+	tough := g.AddToBattleline(NewCard("tough", Shadows, Creature, Common,
+		WithPower(6), WithArmor(3)), 0)
+	g.dealDamage(0, DamageTarget{ID: tough, Amount: 3})
+	if g.Damage(tough) != 0 || g.Damage(sid) != 4 {
+		t.Errorf("tough=%d shield=%d, want 0 and 4 (its own armor swallowed it whole)",
+			g.Damage(tough), g.Damage(sid))
 	}
 }

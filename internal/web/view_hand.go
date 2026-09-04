@@ -68,7 +68,7 @@ func (g *game) renderHandCard(id engine.LocalID) app.UI {
 		Emblem:      houseIconName(def.House),
 		TypeIcon:    typeIconName(def.Type),
 		Stat:        handStat(def),
-		Rules:       engine.RenderCardRules(def),
+		Rules:       displayRules(engine.RenderCardRules(def)),
 		Kind:        kindLabel(def),
 		Trait:       traitLabel(def),
 		Rarity:      rarityMarkOf(def.Rarity),

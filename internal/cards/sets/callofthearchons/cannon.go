@@ -16,7 +16,7 @@ var Cannon = card.New(
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 21),
-	card.WithTraits("Weapon"),
+	card.WithTraits(card.Traits.Weapon),
 	card.WithAbility(
 		card.Trigger.Action, card.DealDamage{
 			Amount: 2,

@@ -19,7 +19,7 @@ var Mooncurser = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 304),
 	card.WithPower(1),
-	card.WithTraits("Elf", "Thief"),
+	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Skirmish, card.Keyword.Poison),
 	card.WithAbility(
 		card.Trigger.Fight, card.StealAember{Amount: 1}),

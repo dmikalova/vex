@@ -21,7 +21,7 @@ var GrabberJammer = card.New(
 	card.Provenance(card.CotA, 193),
 	card.WithPower(4),
 	card.WithArmor(1),
-	card.WithTraits("Robot"),
+	card.WithTraits(card.Traits.Robot),
 	card.WithKeyCost(card.KeyCostChange(card.Opponent, 1)),
 	card.WithFightOrReap(card.CaptureAember{
 		Amount: 1,

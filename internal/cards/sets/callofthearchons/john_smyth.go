@@ -19,10 +19,10 @@ var JohnSmyth = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 195),
 	card.WithPower(2),
-	card.WithTraits("Agent", "Martian"),
+	card.WithTraits(card.Traits.Agent, card.Traits.Martian),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithFightOrReap(card.OnChooseCreature{
-		Target: card.Target.Creature.OfHouse(card.House.Mars).ExceptTrait("Agent"),
+		Target: card.Target.Creature.OfHouse(card.House.Mars).ExceptTrait(card.Traits.Agent),
 		Verbs:  []card.CreatureVerb{card.ReadyVerb{}},
 	}),
 )

@@ -19,7 +19,7 @@ var VespilonTheorist = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 155),
 	card.WithPower(2),
-	card.WithTraits("Cyborg", "Scientist"),
+	card.WithTraits(card.Traits.Cyborg, card.Traits.Scientist),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
 		card.Trigger.Reap, card.ChooseHouseThen{

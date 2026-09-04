@@ -18,6 +18,6 @@ var NiffleApe = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 363),
 	card.WithPower(3),
-	card.WithTraits("Beast", "Niffle"),
+	card.WithTraits(card.Traits.Beast, card.Traits.Niffle),
 	card.WithAttackIgnores(card.Keyword.Taunt, card.Keyword.Elusive),
 )

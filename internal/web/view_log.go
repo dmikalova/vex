@@ -1,6 +1,7 @@
 package web
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -136,6 +137,11 @@ func (g *game) logBlockView(b logBlock) app.UI {
 // emblems. The engine hands back what every marked span stands for (ADR 0011),
 // so nothing here matches prose against a card index or a word list.
 func (g *game) logSegments(entry engine.LogEntry) []app.UI {
+	// PlayerStanding carries the actual forged colours, so the end-of-turn tally
+	// draws three coloured key slots instead of a plain count.
+	if ps, ok := entry.(engine.PlayerStanding); ok {
+		return g.playerStandingSegments(ps)
+	}
 	var out []app.UI
 	for _, seg := range engine.RenderEntry(entry, g.g) {
 		switch {
@@ -157,6 +163,22 @@ func (g *game) logSegments(entry engine.LogEntry) []app.UI {
 		}
 	}
 	return out
+}
+
+// playerStandingSegments draws a PlayerStanding entry: the player name, the
+// Æmber count with its icon, and the key count with its three slots coloured
+// by KeyColors rather than a plain "N keys" number.
+func (g *game) playerStandingSegments(e engine.PlayerStanding) []app.UI {
+	return []app.UI{
+		app.Span().
+			Class("log-player log-player--p" + strconv.Itoa(e.Player)).
+			Text(g.g.PlayerName(e.Player)),
+		app.Text(fmt.Sprintf(" has %d ", e.Aember)),
+		logIcon("aember"),
+		app.Text(fmt.Sprintf(" Æmber and %d/%d ", len(e.KeyColors), engine.KeysToWin)),
+		keysTally(e.KeyColors),
+		app.Text(" keys"),
+	}
 }
 
 // logIcon draws the emblem the engine flagged a keyword with, giving house

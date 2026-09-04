@@ -22,7 +22,7 @@ func (e TurnBegan) Text(n Namer) string {
 
 // PhaseBegan narrates entering one of a turn's phases, so the log can be grouped
 // by phase (ADR 0012). It is recorded for every phase, including one that turns
-// out to do nothing, so a turn where the player plays nothing still shows a play
+// out to do nothing, so a turn where the player plays nothing still shows a main
 // phase.
 type PhaseBegan struct {
 	Player int
@@ -139,13 +139,20 @@ func (e GameWon) Text(n Namer) string {
 
 // PlayerStanding narrates where a player stands as a turn ends. It states only
 // facts both players can already see, so a client may show it for both.
+// KeyColors holds the colour of each key forged so far, in forge order, so a
+// client can draw the actual coloured keys instead of just a count.
 type PlayerStanding struct {
-	Player int
-	Aember int
-	Keys   int
+	Player    int
+	Aember    int
+	KeyColors []KeyColor
 }
 
 // Text renders where a player stands.
 func (e PlayerStanding) Text(n Namer) string {
-	return fmt.Sprintf("%s has %d Æmber and %d keys", n.PlayerName(e.Player), e.Aember, e.Keys)
+	return fmt.Sprintf(
+		"%s has %d Æmber and %d keys",
+		n.PlayerName(e.Player),
+		e.Aember,
+		len(e.KeyColors),
+	)
 }

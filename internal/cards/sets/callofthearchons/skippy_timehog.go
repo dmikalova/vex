@@ -18,7 +18,7 @@ var SkippyTimehog = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 152),
 	card.WithPower(1),
-	card.WithTraits("Mutant"),
+	card.WithTraits(card.Traits.Mutant),
 	card.WithAbility(
 		card.Trigger.Play, card.CannotUse{
 			Player:   card.Opponent,

@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var InvasionPortal = card.New("Invasion Portal",
 	card.House.Mars, card.Type.Artifact, card.Rarity.Rare,
 	card.Provenance(card.CotA, 185),
-	card.WithTraits("Location"),
+	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
 		card.Trigger.Action, card.Then{
 			First: card.DiscardDeckUntil{

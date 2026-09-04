@@ -18,7 +18,7 @@ var DumaTheMartyr = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 242),
 	card.WithPower(3),
-	card.WithTraits("Human"),
+	card.WithTraits(card.Traits.Human),
 	card.WithAbility(
 		card.Trigger.Destroyed, card.Sequence{Effects: []card.Effect{
 			card.Heal{

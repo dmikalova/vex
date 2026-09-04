@@ -41,7 +41,7 @@ func TestKeyHammer(t *testing.T) {
 		h.P1.ExpectAmber(1)
 	})
 
-	t.Run("only pays the opponent when they forged nothing", func(t *testing.T) {
+	t.Run("does nothing when the opponent forged nothing", func(t *testing.T) {
 		var hammer ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
@@ -53,7 +53,7 @@ func TestKeyHammer(t *testing.T) {
 		h.P1.Play(hammer)
 
 		h.P2.ExpectKeys(0)
-		h.P2.ExpectAmber(6)
+		h.P2.ExpectAmber(0)
 		h.P1.ExpectAmber(1)
 	})
 }

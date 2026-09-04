@@ -18,7 +18,7 @@ var Earthshaker = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 31),
 	card.WithPower(7),
-	card.WithTraits("Giant"),
+	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{Target: card.Target.EachCreature.PowerAtMost(3)}),
 )

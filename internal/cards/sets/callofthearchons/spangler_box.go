@@ -21,6 +21,6 @@ var SpanglerBox = card.New(
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 132),
-	card.WithTraits("Item"),
+	card.WithTraits(card.Traits.Item),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

@@ -18,7 +18,7 @@ var GuardianDemon = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 88),
 	card.WithPower(4),
-	card.WithTraits("Demon"),
+	card.WithTraits(card.Traits.Demon),
 	card.WithPlayFightReap(card.Sentences{Effects: []card.Effect{
 		card.Heal{Amount: 2, Target: card.Target.Creature},
 		card.DealDamage{AmountFrom: card.DamageHealed{}, Target: card.Target.OtherCreature},

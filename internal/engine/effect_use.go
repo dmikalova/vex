@@ -78,7 +78,7 @@ func usableCards(ctx *EffectContext, ids []LocalID) []LocalID {
 		case Creature:
 			out = append(out, id)
 		case Artifact:
-			if ctx.Resolver.HasAction(id) {
+			if ctx.Resolver.HasTrigger(id, TriggerAction) {
 				out = append(out, id)
 			}
 		}

@@ -16,7 +16,7 @@ var GauntletOfCommand = card.New(
 	card.Type.Artifact,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 22),
-	card.WithTraits("Item"),
+	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.Action, card.OnChooseCreature{
 			Target: card.Target.FriendlyCreature,

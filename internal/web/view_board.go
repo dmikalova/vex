@@ -136,8 +136,11 @@ func (g *game) zoneCounts(player int) []app.UI {
 
 // flightsInto renders the cards that just left the board for this zone as faces
 // arcing into its pill and shrinking away, so a card that leaves play is seen
-// going somewhere rather than only bumping a counter.
+// going somewhere rather than only bumping a counter. The opposing player's bar
+// sits above their battleline rather than below it, so their arc is mirrored
+// (card-flight--opposing) to fly up into the pill instead of down.
 func (g *game) flightsInto(player int, zone string) []app.UI {
+	opposing := player != g.active()
 	var out []app.UI
 	for _, f := range g.flights {
 		if f.player != player || f.zone != zone {
@@ -146,7 +149,8 @@ func (g *game) flightsInto(player int, zone string) []app.UI {
 		out = append(out, app.Div().
 			Class(cx("card-flight",
 				ifCls(!g.flightParity, "card-flight--a"),
-				ifCls(g.flightParity, "card-flight--b"))).
+				ifCls(g.flightParity, "card-flight--b"),
+				ifCls(opposing, "card-flight--opposing"))).
 			Body(g.printedCard(f.id)))
 	}
 	return out
@@ -166,25 +170,10 @@ func (g *game) keyCostSeg(player int) app.UI {
 func (g *game) hoverPreview() app.UI {
 	var card app.UI
 	switch {
+	case !g.previewUp():
+		return app.Div()
 	case g.hoverLive():
-		def := g.g.Def(g.hoverID)
-		house := g.g.House(g.hoverID)
-		card = &cardView{
-			Title:        def.Name,
-			HouseCls:     houseClasses(house),
-			Emblem:       houseIconName(house),
-			HouseChanged: house != def.House,
-			TypeIcon:     typeIconName(def.Type),
-			Stat:         g.statLine(g.hoverID),
-			Rules:        g.faceRules(g.hoverID),
-			Kind:         kindLabel(def),
-			Trait:        traitLabel(def),
-			Rarity:       rarityMarkOf(def.Rarity),
-			Maverick:     g.isMaverick(g.hoverID),
-			Stunned:      g.g.Stunned(g.hoverID),
-			Exhausted:    g.g.Exhausted(g.hoverID),
-			Bar:          g.barKeywords(g.hoverID),
-		}
+		card = g.cardFace(g.hoverID)
 	case g.hoverDef != nil:
 		def := g.hoverDef
 		card = &cardView{
@@ -193,7 +182,7 @@ func (g *game) hoverPreview() app.UI {
 			Emblem:   houseIconName(def.House),
 			TypeIcon: typeIconName(def.Type),
 			Stat:     handStat(def),
-			Rules:    engine.RenderCardRules(def),
+			Rules:    displayRules(engine.RenderCardRules(def)),
 			Kind:     kindLabel(def),
 			Trait:    traitLabel(def),
 			Rarity:   rarityMarkOf(def.Rarity),
@@ -237,7 +226,9 @@ func (g *game) houseStrip(player int, houses []engine.House) app.UI {
 }
 
 // aemberSeg shows a player's Æmber; in manual mode it flanks the count with
-// minus/plus buttons that adjust it (usable on both players from one seat).
+// minus/plus buttons that adjust it (usable on both players from one seat). A
+// player at check — holding enough to afford a key — gets a soft glow, the
+// client's stand-in for the tabletop's "Check!" callout.
 func (g *game) aemberSeg(player int) app.UI {
 	count := app.Text(strconv.Itoa(g.g.Aember(player)))
 	ic := icon("aember", "icon-stat")
@@ -245,6 +236,7 @@ func (g *game) aemberSeg(player int) app.UI {
 	gain := cx(
 		ifCls(g.poolFlash[player] && !g.poolParity[player], "stat-seg--gain-a"),
 		ifCls(g.poolFlash[player] && g.poolParity[player], "stat-seg--gain-b"),
+		ifCls(g.g.Aember(player) >= g.g.CurrentKeyCost(player), "stat-seg--check"),
 	)
 	if !g.g.Manual() {
 		return app.Span().Class(cx("stat-seg", "tip", gain)).DataSet("tip", "Æmber").Body(count, ic)
@@ -340,6 +332,25 @@ func (g *game) keySlot(ic app.UI, manual bool, onClick app.EventHandler) app.UI 
 	return app.Button().Class("key-btn").OnClick(onClick).Body(ic)
 }
 
+// keysTally draws a static row of a player's three key slots for the game log:
+// a coloured icon for each colour in colors (forge order) and a dimmed key for
+// each still to forge — the same colouring as keysDisplay, without its
+// manual-mode forge/unforge buttons, so a past turn's colours never change.
+func keysTally(colors []engine.KeyColor) app.UI {
+	icons := make([]app.UI, 0, engine.KeysToWin)
+	for _, c := range colors {
+		name := keyColorIconName(c)
+		if name == "" {
+			name = "key"
+		}
+		icons = append(icons, icon(name, "icon-inline"))
+	}
+	for i := len(colors); i < engine.KeysToWin; i++ {
+		icons = append(icons, icon("key", "icon-inline", "key-unforged"))
+	}
+	return app.Span().Class("score-keys").Body(icons...)
+}
+
 // renderRow draws one line of the board. opposing marks the rows across the
 // midline from the active player, whose cards face the other way. The label is
 // built from separate pieces so a short window can drop the zone word for its
@@ -385,43 +396,46 @@ func (g *game) renderCard(id engine.LocalID, boardKind selKind, opposing bool) a
 	) // effective house: a control/"belongs to house" effect may override the printed one
 	flash := g.flashes[id]
 	return &cardView{
-		ID:           id,
-		DOMID:        boardCardID(id),
-		Title:        def.Name,
-		HouseCls:     houseClasses(house),
-		Emblem:       houseIconName(house),
-		HouseChanged: house != def.House,
-		TypeIcon:     typeIconName(def.Type),
-		Stat:         g.statLine(id),
-		Rules:        g.faceRules(id),
-		Kind:         kindLabel(def),
-		Trait:        traitLabel(def),
-		Rarity:       rarityMarkOf(def.Rarity),
-		Maverick:     g.isMaverick(id),
-		Stunned:      g.g.Stunned(id),
-		Exhausted:    g.g.Exhausted(id),
-		Bar:          g.barKeywords(id),
-		BarBottom:    opposing,
-		Enter:        flash.enter,
-		Fight:        flash.fight,
-		FightDown:    opposing,
-		Hit:          flash.damage || flash.fight,
-		StunFlash:    flash.stun,
-		ExhaustFlash: flash.exhaust,
-		FlashOdd:     flash.odd,
-		Selected:     g.isSelected(id),
-		Targetable:   targetable,
-		Dimmed:       dimmed,
-		OnActivate:   activate,
-		OnHover:      g.hoverCard,
-		OnHoverOut:   g.hoverClear,
+		ID:            id,
+		DOMID:         boardCardID(id),
+		Title:         def.Name,
+		HouseCls:      houseClasses(house),
+		Emblem:        houseIconName(house),
+		HouseChanged:  house != def.House,
+		TypeIcon:      typeIconName(def.Type),
+		Stat:          g.statLine(id),
+		Rules:         g.faceRules(id),
+		Kind:          kindLabel(def),
+		Trait:         traitLabel(def),
+		Rarity:        rarityMarkOf(def.Rarity),
+		Maverick:      g.isMaverick(id),
+		Stunned:       g.g.Stunned(id),
+		Exhausted:     g.g.Exhausted(id),
+		Bar:           g.barKeywords(id),
+		BarBottom:     opposing,
+		TauntShielded: def.Type == engine.Creature && g.g.TauntShielded(id),
+		Enter:         flash.enter,
+		Fight:         flash.fight,
+		FightDown:     opposing,
+		Hit:           flash.damage || flash.fight,
+		Reap:          flash.reap,
+		Act:           flash.act,
+		StunFlash:     flash.stun,
+		ExhaustFlash:  flash.exhaust,
+		FlashOdd:      flash.odd,
+		Selected:      g.isSelected(id),
+		Targetable:    targetable,
+		Dimmed:        dimmed,
+		OnActivate:    activate,
+		OnHover:       g.hoverCard,
+		OnHoverOut:    g.hoverClear,
 	}
 }
 
-// barKeywordOrder is the keywords a card shows as a coloured stripe on one of
-// its edges, in the order the stripe stacks them. Only the combat keywords are
-// included — they decide whether a fight is legal and what it costs, so they
-// must be readable without stopping to read the rules text.
+// barKeywordOrder is the printed keywords the stripe shows, in the order it
+// stacks them. Only the combat keywords are included — they decide whether a
+// fight is legal and what it costs, so they must be readable without stopping
+// to read the rules text.
 var barKeywordOrder = []engine.Keyword{
 	engine.Taunt,
 	engine.Elusive,
@@ -429,28 +443,51 @@ var barKeywordOrder = []engine.Keyword{
 	engine.Poison,
 }
 
-// barKeywords lists the stripe keywords a card in play currently has, granted
-// ones included.
-func (g *game) barKeywords(id engine.LocalID) []engine.Keyword {
-	var out []engine.Keyword
+// barKeywords lists the stripe entries a card in play currently has: its
+// keywords, granted ones included, in barKeywordOrder, then Hazardous last —
+// Hazardous is a magnitude rather than a boolean keyword, so it counts as
+// present whenever its value (including upgrades) is greater than zero.
+func (g *game) barKeywords(id engine.LocalID) []string {
+	var out []string
 	for _, k := range barKeywordOrder {
 		if g.g.HasKeyword(id, k) {
-			out = append(out, k)
+			out = append(out, k.String())
 		}
+	}
+	if g.g.Hazardous(id) > 0 {
+		out = append(out, "Hazardous")
 	}
 	return out
 }
 
-// barKeywordsOf lists the stripe keywords a definition prints, for a card face
+// barKeywordsOf lists the stripe entries a definition prints, for a card face
 // built without a board behind it.
-func barKeywordsOf(def *engine.CardDefinition) []engine.Keyword {
-	var out []engine.Keyword
+func barKeywordsOf(def *engine.CardDefinition) []string {
+	var out []string
 	for _, k := range barKeywordOrder {
 		if hasKeyword(def, k) {
-			out = append(out, k)
+			out = append(out, k.String())
 		}
 	}
+	if def.Hazardous > 0 {
+		out = append(out, "Hazardous")
+	}
 	return out
+}
+
+// boardInert reports whether nothing on the board can be acted on at all right
+// now: an option prompt (yes/no, which key colour to forge) is up, the board is
+// between turns (choosing a house, game over), or the manual key-forge picker is
+// open. It is shared by every place a card is drawn (cardVisual, renderZoneCard)
+// so the board reads as inert consistently rather than each place deciding it on
+// its own — an option prompt in particular blocks the whole board exactly like
+// these already did, but until now fell through to g.busy's plain "leave it as
+// it was" instead, which left cards lit as if still actionable.
+func (g *game) boardInert() bool {
+	return g.choosingOption ||
+		g.phase == phaseHouse ||
+		g.phase == phaseOver ||
+		g.forgingKey >= 0
 }
 
 // cardVisual decides how a card (in hand or in play) responds and looks in the
@@ -458,10 +495,10 @@ func barKeywordsOf(def *engine.CardDefinition) []engine.Keyword {
 // clickable), whether the card is a highlighted action target, and whether it is
 // lowlighted (dimmed) as an invalid choice. During a chooser or fight-target
 // prompt only the eligible cards are highlighted and the rest dimmed; whenever no
-// card can be acted on at all (choosing a house, picking a key colour, game over)
-// the whole board dims; and in ordinary play, cards the active player cannot act
-// with (wrong house, exhausted, or unplayable from hand) and the opponent's
-// read-only cards are dimmed so the usable ones stand out.
+// card can be acted on at all (boardInert) the whole board dims; and in ordinary
+// play, cards the active player cannot act with (wrong house, exhausted, or
+// unplayable from hand) and the opponent's read-only cards are dimmed so the
+// usable ones stand out.
 func (g *game) cardVisual(
 	id engine.LocalID,
 	kind selKind,
@@ -474,6 +511,14 @@ func (g *game) cardVisual(
 			return g.chooseCandidate, true, false
 		}
 		return nil, false, true
+	case g.boardInert():
+		// Nothing can be acted on until the prompt in front of the player is
+		// answered, so the board reads as inert rather than inviting a click that
+		// would be rejected. Cards stay clickable to inspect.
+		if kind == selHand {
+			return g.selectHandID, false, true
+		}
+		return g.selectBoardID, false, true
 	case g.busy:
 		return nil, false, false
 	case g.phase == phaseFightTarget:
@@ -481,11 +526,6 @@ func (g *game) cardVisual(
 			return g.fightTargetID, true, false
 		}
 		return nil, false, true
-	case g.phase == phaseHouse, g.phase == phaseOver, g.forgingKey >= 0:
-		// Nothing can be acted on until the board is back in the main phase, so it
-		// reads as inert rather than inviting a click that would be rejected. Cards
-		// stay clickable to inspect.
-		return g.selectBoardID, false, true
 	case kind == selHand:
 		return g.selectHandID, false, !g.usableFromHand(id)
 	case kind == selYourCreature, kind == selYourArtifact:
@@ -498,17 +538,16 @@ func (g *game) cardVisual(
 }
 
 // actionable reports whether the active player can act with one of their own
-// cards this turn, so the ones they cannot use are lowlighted. Creatures defer to
-// the engine's CanUse (house, readiness, ownership); an artifact needs an action
-// ability, readiness, and the active house.
+// cards this turn, so the ones they cannot use are lowlighted. Both creatures and
+// artifacts defer to the engine (CanUse / CanUseArtifact) rather than
+// reimplementing the house check here, so a Versatile artifact (Lifeward) is
+// correctly offered out of the active house.
 func (g *game) actionable(id engine.LocalID, kind selKind) bool {
 	switch kind {
 	case selYourCreature:
 		return g.g.CanUse(g.active(), id) == nil
 	case selYourArtifact:
-		def := g.g.Def(id)
-		inHouse := g.g.State.ActiveHouse == engine.HouseNone || def.House == g.g.State.ActiveHouse
-		return inHouse && g.g.HasAction(id) && !g.g.Exhausted(id)
+		return g.g.CanUseArtifact(g.active(), id) == nil
 	default:
 		return true
 	}

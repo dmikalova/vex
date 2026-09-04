@@ -24,11 +24,11 @@ func TestCustomVirus(t *testing.T) {
 			P1: ct.Side{
 				House:  card.House.Mars,
 				InPlay: ct.Cards(ct.Bind(&virus, CustomVirus)),
-				Hand:   ct.Cards(ct.Bind(&purged, ct.Creature(ct.Traits("Beast")))),
+				Hand:   ct.Cards(ct.Bind(&purged, ct.Creature(ct.Traits(card.Traits.Beast)))),
 			},
 			P2: ct.Side{InPlay: ct.Cards(
-				ct.Bind(&prey, ct.Creature(ct.Power(5), ct.Traits("Beast"))),
-				ct.Bind(&spared, ct.Creature(ct.Power(5), ct.Traits("Robot"))),
+				ct.Bind(&prey, ct.Creature(ct.Power(5), ct.Traits(card.Traits.Beast))),
+				ct.Bind(&spared, ct.Creature(ct.Power(5), ct.Traits(card.Traits.Robot))),
 			)},
 		})
 

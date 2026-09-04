@@ -18,7 +18,7 @@ var WitchOfTheEye = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 368),
 	card.WithPower(3),
-	card.WithTraits("Human", "Witch"),
+	card.WithTraits(card.Traits.Human, card.Traits.Witch),
 	card.WithAbility(
 		card.Trigger.Reap, card.PutFromDiscard{Destination: card.To.Hand}),
 )

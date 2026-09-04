@@ -17,7 +17,7 @@ var KeyToDis = card.New(
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 74),
-	card.WithTraits("Item"),
+	card.WithTraits(card.Traits.Item),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(
 		card.Trigger.Action, card.Sequence{Effects: []card.Effect{

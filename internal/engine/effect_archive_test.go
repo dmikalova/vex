@@ -147,20 +147,20 @@ func TestArchiveFromPlayEffect(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddArtifact(NewCard("quest", Sanctum, Artifact, Rare), 0)
 	knight := g.AddToBattleline(
-		NewCard("knight", Sanctum, Creature, Common, WithPower(4), WithTraits("Knight")),
+		NewCard("knight", Sanctum, Creature, Common, WithPower(4), WithTraits(Knight)),
 		0,
 	)
 	nonKnight := g.AddToBattleline(
-		NewCard("cleric", Sanctum, Creature, Common, WithPower(4), WithTraits("Cleric")),
+		NewCard("cleric", Sanctum, Creature, Common, WithPower(4), WithTraits(Cleric)),
 		0,
 	)
 	enemyKnight := g.AddToBattleline(
-		NewCard("enemy", Sanctum, Creature, Common, WithPower(4), WithTraits("Knight")),
+		NewCard("enemy", Sanctum, Creature, Common, WithPower(4), WithTraits(Knight)),
 		1,
 	)
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
-	e := ArchiveFromPlay{Target: Target{Kind: TargetEachFriendlyCreature}.WithTrait("Knight")}
+	e := ArchiveFromPlay{Target: Target{Kind: TargetEachFriendlyCreature}.WithTrait(Knight)}
 	if e.Text() != "archive each friendly Knight trait creature from play" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -197,6 +197,86 @@ func TestArchiveFromPlayFriendlyInPlay(t *testing.T) {
 	e.Resolve(ctx)
 	if g.inPlay(art) || !g.State.Archives[0].contains(art) {
 		t.Error("friendly artifact should be archived")
+	}
+}
+
+// A "you may archive a friendly creature or artifact from play" is one card
+// choice, so the player picks the card directly instead of first answering Yes
+// (Vezyma Thinkdrone).
+func TestMayDeclinableArchiveFromPlay(t *testing.T) {
+	e := May{Do: ArchiveFromPlay{Target: Target{Kind: TargetChosenFriendlyCreatureOrArtifact}}}
+	if !e.Do.(declinableEffect).declinable() {
+		t.Fatal("a chosen-target ArchiveFromPlay should be declinable")
+	}
+
+	g := NewGame("A", "B", 1)
+	ch := &cardDecliner{}
+	g.SetChooser(0, ch)
+	keep := g.AddArtifact(NewCard("keep", Mars, Artifact, Common), 0)
+	doomed := g.AddArtifact(NewCard("doomed", Mars, Artifact, Common), 0)
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if ch.asked != 1 {
+		t.Errorf("declinable prompts = %d, want 1", ch.asked)
+	}
+	if !g.inPlay(keep) {
+		t.Error("the unchosen artifact should stay in play")
+	}
+	if g.inPlay(doomed) || !g.State.Archives[0].contains(doomed) {
+		t.Error("the chosen artifact should have been archived")
+	}
+
+	declined := NewGame("A", "B", 1)
+	declined.SetChooser(0, &cardDecliner{decline: true})
+	other := declined.AddArtifact(NewCard("relic", Mars, Artifact, Common), 0)
+	e.Resolve(&EffectContext{Resolver: declined, Controller: 0})
+	if !declined.inPlay(other) {
+		t.Error("a declined May should archive nothing")
+	}
+}
+
+// A "you may reveal a creature from your hand and archive it" is one card
+// choice, so the player picks the card directly instead of first answering Yes
+// (Zyzzix the Many).
+func TestMayDeclinableArchiveFromHand(t *testing.T) {
+	e := May{Do: ArchiveFromHand{Count: 1, Type: Creature}}
+	if !e.Do.(declinableEffect).declinable() {
+		t.Fatal("a single-count ArchiveFromHand should be declinable")
+	}
+	if (ArchiveFromHand{Count: 1, UpTo: true}).declinable() {
+		t.Error("an UpTo ArchiveFromHand should keep its own cycle, not be declinable")
+	}
+	if (ArchiveFromHand{Count: 2}).declinable() {
+		t.Error("a multi-count ArchiveFromHand should keep its own cycle, not be declinable")
+	}
+
+	g := NewGame("A", "B", 1)
+	ch := &cardDecliner{}
+	g.SetChooser(0, ch)
+	g.AddToHand(testCreature("keep", 1), 0)
+	doomed := g.AddToHand(testCreature("doomed", 1), 0)
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if ch.asked != 1 {
+		t.Errorf("declinable prompts = %d, want 1", ch.asked)
+	}
+	if g.State.Archives[0].Count != 1 || !g.State.Archives[0].contains(doomed) {
+		t.Error("the chosen card should have been archived")
+	}
+
+	declined := NewGame("A", "B", 1)
+	declined.SetChooser(0, &cardDecliner{decline: true})
+	declined.AddToHand(testCreature("keep", 1), 0)
+	e.Resolve(&EffectContext{Resolver: declined, Controller: 0})
+	if declined.State.Archives[0].Count != 0 {
+		t.Error("a declined May should archive nothing")
+	}
+
+	// A filter admitting nothing is not offered at all (Zyzzix the Many with no
+	// creature in hand).
+	empty := NewGame("A", "B", 1)
+	empty.AddToHand(NewCard("tactic", Mars, Tactic, Common), 0)
+	e.Resolve(&EffectContext{Resolver: empty, Controller: 0})
+	if empty.State.Archives[0].Count != 0 {
+		t.Error("an empty candidate set should archive nothing")
 	}
 }
 

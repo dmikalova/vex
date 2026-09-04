@@ -63,6 +63,26 @@
   /* the padding a panel keeps from the window's edge, which is also the inset
      the board and the sidebar's brand bar start at */
   --shell-pad: 0.75rem;
+
+  /* the keybar's combat-keyword colours, named so a segment can blend into its
+     neighbour's colour at the shared seam (see .card-keybar-seg) without either
+     side needing to know the other's hex value */
+  --kw-taunt: #7295d6;
+  /* not --p0's green: that green is already the targetable-ring colour
+     (.card--targetable), so a green keybar reads as "you can pick this" rather
+     than "this creature is elusive" */
+  --kw-elusive: #4fd1c5;
+  --kw-skirmish: #fce566;
+  --kw-poison: #b58ee0;
+  /* not --warning or --danger: those already read as UI-level alerts (a low
+     timer, an illegal action), so Hazardous gets its own rust-orange rather than
+     borrowing an accent that means something else on the same screen */
+  --kw-hazardous: #e2703a;
+  /* a creature shielded by a neighboring taunter, but not a taunter itself:
+     light silver, distinct from all four combat-keyword colours (including
+     poison's purple) and, unlike a near-black bar, still visible against dark
+     card art */
+  --kw-taunt-shielded: #d9d9d9;
 }
 
 html,
@@ -192,6 +212,96 @@ body {
    gives way to it rather than running underneath */
 .app--sidebar-collapsed .board-area > .score-pill:first-child {
   margin-right: 2.5rem;
+}
+
+/* ---- control dock ----
+   Docked in the sidebar the dock is just the block at its foot and needs no box.
+   Collapsed, it leaves with the sidebar and floats over the board, because
+   hiding the log must not cost the player the buttons they answer prompts with.
+   It sits above the board but below the overlays (30) and the menu (60). */
+.control-dock--floating {
+  position: fixed;
+  z-index: 22;
+  right: var(--shell-pad);
+  bottom: var(--shell-pad);
+  width: 20rem;
+  max-width: calc(100vw - 2 * var(--shell-pad));
+  /* a tall state (a prompt with its source card) scrolls rather than growing off
+     the top of the screen */
+  max-height: 70dvh;
+  overflow-y: auto;
+  border: 1px solid var(--line-strong);
+  border-radius: 0.5rem;
+  background-color: var(--surface);
+  box-shadow: 0 0.5rem 1.5rem rgb(0 0 0 / 45%);
+}
+/* a card scrolled to the end of its row would otherwise come to rest underneath
+   the floating dock with no way to bring it back out, so each strip keeps a
+   dock's width of scrollable room past its last card. Rows the dock does not
+   reach pay only an empty scroll range, which moves no card. */
+.app--sidebar-collapsed .card-strip {
+  padding-inline-end: calc(20rem + var(--shell-pad));
+  scroll-padding-inline-end: calc(20rem + var(--shell-pad));
+}
+
+/* A phone held upright has height to spare and no width, so the dock spans the
+   bottom instead of taking a corner. Here it stops floating and becomes the last
+   item in the shell, stacking the board above it: the board already squeezes its
+   card rows to whatever height it is given, so it gives way to the dock rather
+   than leaving the hand underneath it. */
+@media (orientation: portrait) and (max-width: 40rem) {
+  .app--sidebar-collapsed {
+    flex-direction: column;
+  }
+  .app--sidebar-collapsed .board-area {
+    min-height: 0;
+  }
+  .control-dock--floating {
+    position: static;
+    width: auto;
+    max-width: none;
+    /* the board keeps at least half the screen however much the dock wants; past
+       that the dock scrolls inside itself */
+    max-height: 50dvh;
+    flex: 0 0 auto;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 0.5rem 0.5rem 0 0;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  /* stacked, a selected creature's dock runs to ~21rem, most of a phone: the card
+     face moves beside its buttons instead of above them. The face spans the
+     column so the buttons stack alongside it rather than below it. Only a column
+     that has a face has anything to sit beside; the rest stay stacked. */
+  .control-dock--floating .btn-col:has(> .prompt-card) {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-content: start;
+    grid-auto-rows: min-content;
+  }
+  .control-dock--floating .btn-col > .prompt-card {
+    grid-row: 1 / span 3;
+    padding-bottom: 0;
+  }
+  /* the houses are peers, and the dock spans the screen here, so they fit
+     shoulder to shoulder under their title rather than each taking a row. They
+     share the width evenly however many the player may pick from. */
+  .control-dock--floating .house-pick {
+    flex-flow: row wrap;
+  }
+  .control-dock--floating .house-pick > .section-title {
+    flex-basis: 100%;
+  }
+  .control-dock--floating .house-pick > .house-btn {
+    flex: 1;
+    width: auto;
+  }
+  /* the dock spans the full width here, so no row can hide a card behind it */
+  .app--sidebar-collapsed .card-strip {
+    padding-inline-end: 0;
+    scroll-padding-inline-end: 0;
+  }
 }
 
 /* ---- sidebar: brand, log (grows), details, controls ---- */
@@ -422,6 +532,137 @@ body {
     box-shadow: inset 0 0 0 999px transparent;
   }
 }
+/* the lifted copy of the selected card: laid out over the slot the real card is
+   still sitting in (--focus-x/y/w, measured by the client) and grown from there,
+   with the card's own verbs under it. It is fixed, so it takes the board out of its
+   own coordinate space — the strips it overhangs are overflow-x: auto and would
+   otherwise clip it — and reflows nothing behind it.
+
+   It is grown by resizing rather than by scaling the board card as a picture: the
+   reason to enlarge a card is to read the text the board was clipping, and only a
+   real box reflows it. So the height is the content's: at least --focus-min-h, and
+   as much more as the rules need, up to --focus-max-h. The grow animation is the
+   only transform, and it runs the copy back to the slot it came from
+   (--focus-dx/dy/from) rather than sizing it. */
+.card-focus {
+  position: fixed;
+  left: var(--focus-x, 50%);
+  top: var(--focus-y, 50%);
+  /* Above the board and the cards on it, but under the floating control dock and
+     every modal overlay, so the lift can never cover End turn or a prompt. */
+  z-index: 21;
+  display: flex;
+  width: var(--focus-w, 13.5rem);
+  max-height: var(--focus-max-h, 90vh);
+  flex-direction: column;
+  gap: 0.3rem;
+  filter: drop-shadow(0 10px 22px rgb(0 0 0 / 0.6));
+}
+/* Nothing measured (no page behind the render, a card that left the DOM): centre
+   the copy like a modal rather than dropping it, since dropping it would take the
+   card's buttons with it. */
+.card-focus:not(.card-focus--placed) {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+/* The face's own layout is written for a fixed-height slot on the board: a body
+   and rules block that flex to fill it and clip what does not fit. Here the card
+   is the one being fitted to its text, so the same blocks size to their content
+   and the card's own overflow does the clipping once there is no window left. */
+.card-focus .card {
+  width: 100%;
+  height: auto;
+  min-height: var(--focus-min-h, 12rem);
+  max-height: none;
+  flex: 0 1 auto;
+  /* the ogee mask follows the box now that the box follows the text; ::before
+     overhangs the card by 10px on each side, which is what is subtracted back out */
+  --card-full-h: calc(100% - 20px);
+}
+.card-focus .card-body,
+.card-focus .card-rules {
+  flex: 0 0 auto;
+  min-height: auto;
+  overflow: visible;
+}
+/* The point of the enlargement is legibility, so the face's fixed pixel type
+   scales with the box — the same way .card-preview sizes its own. */
+.card-focus .card-name-text {
+  font-size: 15px;
+}
+.card-focus .card-stat {
+  font-size: 13px;
+}
+.card-focus .card-traits {
+  font-size: 11px;
+}
+.card-focus .card-rules {
+  font-size: 13px;
+}
+.card-focus .card-kind {
+  font-size: 11px;
+}
+/* The buttons are a sibling of the face, not a band inside it, so the face stays
+   byte-identical to the one on the board. */
+.card-focus-acts {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+.card-focus-acts button {
+  flex: 1 1 auto;
+  padding: 0.35rem 0.5rem;
+  font-size: 0.75rem;
+}
+.card-focus-acts .hint {
+  flex: 1 1 100%;
+  padding: 0.2rem 0.4rem;
+  border-radius: 0.25rem;
+  background: rgb(0 0 0 / 0.75);
+  font-size: 0.7rem;
+  text-align: center;
+}
+
+/* Keep the -a/-b pair in sync: they must have identical keyframes, and only exist
+   as a pair so the grow replays when the lift moves to another card. The fill is
+   forwards rather than both on purpose: a backgrounded tab never ticks its
+   animations, and backwards fill would pin the copy at the from-state — back at the
+   card's slot, with none of the enlargement it was lifted for. */
+.card-focus--placed.card-focus--in-a {
+  animation: card-focus-in-a 150ms cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+.card-focus--placed.card-focus--in-b {
+  animation: card-focus-in-b 150ms cubic-bezier(0.2, 0.8, 0.3, 1) forwards;
+}
+@keyframes card-focus-in-a {
+  from {
+    transform: translate(var(--focus-dx), var(--focus-dy))
+      scale(var(--focus-from));
+    transform-origin: top left;
+    opacity: 0.4;
+  }
+  to {
+    transform: none;
+    transform-origin: top left;
+    opacity: 1;
+  }
+}
+@keyframes card-focus-in-b {
+  from {
+    transform: translate(var(--focus-dx), var(--focus-dy))
+      scale(var(--focus-from));
+    transform-origin: top left;
+    opacity: 0.4;
+  }
+  to {
+    transform: none;
+    transform-origin: top left;
+    opacity: 1;
+  }
+}
+
 /* hover card preview: an enlarged card floating by the log (board hover) or just
    left of the log (a log mention) */
 .card-preview {
@@ -450,6 +691,17 @@ body {
 }
 .card-preview .card-name-text {
   font-size: 13px;
+}
+
+/* At mobile widths the board is already full of cards, so an enlarged hover
+   preview only covers content rather than clarifying it. max-width alone misses
+   a phone rotated to landscape (its viewport width clears 640px), so it's paired
+   with a touchscreen check — hover:none + pointer:coarse — that fires regardless
+   of orientation and is what actually distinguishes "no real hover" devices. */
+@media (max-width: 640px), (hover: none) and (pointer: coarse) {
+  .card-preview {
+    display: none;
+  }
 }
 
 .details {
@@ -527,6 +779,7 @@ body {
 .btn-secondary,
 .btn-warning,
 .btn-danger,
+.btn-unstun,
 .btn-nav,
 .house-btn {
   display: inline-flex;
@@ -546,6 +799,7 @@ body {
 .btn-secondary,
 .btn-warning,
 .btn-danger,
+.btn-unstun,
 .house-btn {
   width: 100%;
 }
@@ -624,6 +878,15 @@ body {
 }
 .btn-danger:hover {
   background-color: var(--danger-bright);
+}
+/* Unstun is its own caution color (the highlight yellow) rather than the green
+   of an ordinary primary action, since it is recovering from a setback. */
+.btn-unstun {
+  background-color: var(--p1);
+  color: var(--ink-on-accent);
+}
+.btn-unstun:hover {
+  background-color: color-mix(in srgb, var(--p1) 85%, white);
 }
 /* compact nav button (New game, Zones): the same box, sized to its label rather
    than to the column it sits in */
@@ -1284,17 +1547,57 @@ button:disabled {
 }
 
 /* ---- out-of-play zone viewer (archives + discard piles) ---- */
+/* the panel's width used to be a fluid min(92vw, 60rem): on most viewports that
+   lands between whole card columns, so the last (or only) row of a card-strip
+   left-aligns short of the panel's own edge, leaving a slab of empty margin on
+   the right that nothing else balances. The panel's width is quantized instead
+   — one @media step per card column count it can show — so it always ends
+   exactly at a card's right edge and centers as a whole (its margin: auto comes
+   from over-backdrop's centering flex) rather than leaving that dangling gap.
+   Each step's width is N * card width + (N-1) * card gap + the panel's own
+   horizontal padding on both sides + a 1rem allowance for .zones-body's
+   scroll gutter (reserved by scrollbar-gutter: stable below, for the platforms
+   that honor it; on the rest that space just goes unused as slightly wider
+   margin) — i.e. enough for .card-strip to lay out N columns with zero left
+   over even with a scrollbar. The steps must be re-derived if --board-gap, the
+   card width (9rem), or this padding ever change. */
 .zones-panel {
   position: relative;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  width: min(92vw, 60rem);
+  width: 12.5rem; /* 1 column */
+  max-width: 92vw;
   max-height: 85vh;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--panel-radius);
   background-color: var(--surface);
+}
+@media (min-width: 383px) {
+  .zones-panel {
+    width: 22rem; /* 2 columns */
+  }
+}
+@media (min-width: 548px) {
+  .zones-panel {
+    width: 31.5rem; /* 3 columns */
+  }
+}
+@media (min-width: 714px) {
+  .zones-panel {
+    width: 41rem; /* 4 columns */
+  }
+}
+@media (min-width: 879px) {
+  .zones-panel {
+    width: 50.5rem; /* 5 columns */
+  }
+}
+@media (min-width: 1044px) {
+  .zones-panel {
+    width: 60rem; /* 6 columns, the same cap the old fluid width had */
+  }
 }
 /* the panel title is a fixed header; only the piles below it scroll */
 .zones-header {
@@ -1319,6 +1622,9 @@ button:disabled {
   flex-direction: column;
   gap: 0.75rem;
   overflow-y: auto;
+  /* reserve the scrollbar's gutter whether or not it is actually scrolling, so
+     it never eats into the width the .zones-panel steps above budgeted for it */
+  scrollbar-gutter: stable;
   padding: 0 1.25rem 1.25rem;
 }
 .zones-close {
@@ -1434,6 +1740,10 @@ button:disabled {
   box-shadow:
     0 4px 6px -1px rgb(0 0 0 / 0.3),
     0 2px 4px -2px rgb(0 0 0 / 0.3);
+  /* the targetable/selected ring is a box-shadow, which doesn't grow the layout
+     box scrollIntoView measures — this margin gives it room so the ring isn't
+     clipped by the strip's edge when the cursor scrolls a card into view */
+  scroll-margin: 4px;
 }
 .card::before {
   content: "";
@@ -1453,12 +1763,14 @@ button:disabled {
   position: relative;
   z-index: 1;
 }
-.card--selected {
-  box-shadow: 0 0 0 2px var(--p1);
-}
 .card--targetable {
   cursor: pointer;
   box-shadow: 0 0 0 2px var(--p0);
+}
+/* declared after --targetable so the Tab cursor's yellow ring wins the box-shadow
+   when a card is both a targetable candidate and the one currently selected */
+.card--selected {
+  box-shadow: 0 0 0 2px var(--p1);
 }
 /* A dimmed card is covered by a scrim rather than faded as a whole, so the
    keyword stripe can sit above it: how a creature can be attacked matters most
@@ -1501,17 +1813,11 @@ button:disabled {
 .card-keybar-seg {
   flex: 1 1 0%;
 }
-.card-keybar--taunt {
-  background-color: #7295d6;
-}
-.card-keybar--elusive {
-  background-color: #7bd88f;
-}
-.card-keybar--skirmish {
-  background-color: #fce566;
-}
-.card-keybar--poison {
-  background-color: #b58ee0;
+/* a creature shielded by a neighboring taunter, but not a taunter itself: solid,
+   not part of the keyword gradient (card.go's keybarGradient), since it isn't a
+   keyword printed on the card */
+.card-keybar--taunt-shielded {
+  background-color: var(--kw-taunt-shielded);
 }
 .card--clickable {
   cursor: pointer;
@@ -1589,6 +1895,16 @@ button:disabled {
 .card-flight--b {
   animation: cardFlightB 0.55s ease-in both;
 }
+/* the opposing player's bar sits above their battleline rather than below it,
+   so their card arcs up into the pill instead of down — a vertical mirror of
+   the same two keyframes, kept as separate names so the a/b retrigger trick
+   above still works. */
+.card-flight--opposing.card-flight--a {
+  animation-name: cardFlightUpA;
+}
+.card-flight--opposing.card-flight--b {
+  animation-name: cardFlightUpB;
+}
 /* several cards leaving at once are fanned and staggered, so a simultaneous
    destruction reads as several cards flying off rather than one */
 .card-flight:nth-of-type(2) {
@@ -1637,6 +1953,38 @@ button:disabled {
   100% {
     opacity: 0;
     transform: translate(-50%, 0) scale(0.05) rotate(22deg);
+  }
+}
+@keyframes cardFlightUpA {
+  0% {
+    opacity: 0;
+    transform: translate(-170%, 290%) scale(1) rotate(10deg);
+  }
+  15% {
+    opacity: 1;
+  }
+  55% {
+    transform: translate(-25%, 155%) scale(0.6) rotate(-9deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 0) scale(0.05) rotate(-22deg);
+  }
+}
+@keyframes cardFlightUpB {
+  0% {
+    opacity: 0;
+    transform: translate(-170%, 290%) scale(1) rotate(10deg);
+  }
+  15% {
+    opacity: 1;
+  }
+  55% {
+    transform: translate(-25%, 155%) scale(0.6) rotate(-9deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, 0) scale(0.05) rotate(-22deg);
   }
 }
 
@@ -1713,6 +2061,89 @@ button:disabled {
   }
 }
 
+/* reaping: the card squeezes in place and springs back, washing yellow — a
+   quieter payoff than combat's clash, so both the motion and the glow live in
+   one animation rather than being split across two classes. */
+.card--reap-a {
+  animation: cardReapA 0.45s ease-out;
+}
+.card--reap-b {
+  animation: cardReapB 0.45s ease-out;
+}
+@keyframes cardReapA {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: inset 0 0 0 0 rgb(252 230 102 / 0);
+  }
+  35% {
+    transform: scale(0.88);
+    box-shadow:
+      inset 0 0 14px 4px rgb(252 230 102 / 0.75),
+      0 0 10px rgb(252 230 102 / 0.7);
+  }
+  65% {
+    transform: scale(1.04);
+  }
+}
+@keyframes cardReapB {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: inset 0 0 0 0 rgb(252 230 102 / 0);
+  }
+  35% {
+    transform: scale(0.88);
+    box-shadow:
+      inset 0 0 14px 4px rgb(252 230 102 / 0.75),
+      0 0 10px rgb(252 230 102 / 0.7);
+  }
+  65% {
+    transform: scale(1.04);
+  }
+}
+
+/* using an action ability (an artifact's, or a creature's own): the same squeeze
+   and spring as a reap, washing green instead of yellow. */
+.card--act-a {
+  animation: cardActA 0.45s ease-out;
+}
+.card--act-b {
+  animation: cardActB 0.45s ease-out;
+}
+@keyframes cardActA {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: inset 0 0 0 0 rgb(123 216 143 / 0);
+  }
+  35% {
+    transform: scale(0.88);
+    box-shadow:
+      inset 0 0 14px 4px rgb(123 216 143 / 0.75),
+      0 0 10px rgb(123 216 143 / 0.7);
+  }
+  65% {
+    transform: scale(1.04);
+  }
+}
+@keyframes cardActB {
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: inset 0 0 0 0 rgb(123 216 143 / 0);
+  }
+  35% {
+    transform: scale(0.88);
+    box-shadow:
+      inset 0 0 14px 4px rgb(123 216 143 / 0.75),
+      0 0 10px rgb(123 216 143 / 0.7);
+  }
+  65% {
+    transform: scale(1.04);
+  }
+}
+
 /* stat-icon pulses: a stat segment flashes its colour and swells briefly.
    dmg = red (damage), pow = cyan (power counters), gain = gold (Æmber / keys). */
 .stat-seg--dmg-a {
@@ -1784,6 +2215,15 @@ button:disabled {
 }
 .stat-seg--gain-b {
   animation: segGainB 0.6s ease-out;
+}
+/* "at check": the player holds enough Æmber to afford a key, the tabletop's
+   "Check!" moment. The glow lives on the icon only (like a key's shine), not as
+   a text-shadow on the digits, so the count stays legible. */
+.stat-seg--check {
+  color: var(--p1);
+}
+.stat-seg--check .icon {
+  filter: drop-shadow(0 0 4px rgb(252 229 102 / 0.65));
 }
 @keyframes segGainA {
   0%,
@@ -1862,24 +2302,13 @@ button:disabled {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-/* a long title is condensed horizontally rather than cut off, so the whole name
-   stays readable. scaleX only, so every title keeps the same cap height and the
-   banner never changes size; the ellipsis stays as the last resort. */
-.card-name-text--squeeze-1 {
-  transform: scaleX(0.9);
+  /* a long title is condensed horizontally (scaleX, computed per title in Go —
+     see squeezeScale) rather than cut off, so the whole name stays readable and
+     every title keeps the same cap height; the ellipsis stays as the last
+     resort. Scaling from the left edge keeps the title's start put as it
+     condenses. The width/flex-shrink the squeeze needs are set inline per
+     title, since only a squeezed title needs the extra room. */
   transform-origin: left center;
-  width: 111%;
-}
-.card-name-text--squeeze-2 {
-  transform: scaleX(0.8);
-  transform-origin: left center;
-  width: 125%;
-}
-.card-name-text--squeeze-3 {
-  transform: scaleX(0.7);
-  transform-origin: left center;
-  width: 143%;
 }
 /* dark inner body, inset left/right so the gradient frame shows as side borders */
 .card-body {
@@ -1937,7 +2366,6 @@ button:disabled {
 .card-kind {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
   margin-top: auto;
   padding: 0.125rem 0.5rem;
   font-size: 9px;
@@ -1971,18 +2399,11 @@ button:disabled {
   width: 0.85em;
   height: 0.85em;
 }
-/* Connected cards show a single "+" in place of rarity diamonds; the hard
-   text-shadow traces a crisp outline (no blur) so it reads on any art. */
-.rarity-plus {
-  font-size: 1.15em;
-  font-weight: 900;
-  line-height: 1;
-  color: #cfd6e6;
-  text-shadow:
-    1px 0 0 rgb(0 0 0 / 0.85),
-    -1px 0 0 rgb(0 0 0 / 0.85),
-    0 1px 0 rgb(0 0 0 / 0.85),
-    0 -1px 0 rgb(0 0 0 / 0.85);
+/* Connected cards show two overlapping circles in place of rarity diamonds,
+   sized to match the diamond marks it stands beside. */
+.rarity-connected-icon {
+  width: 0.95em;
+  height: 0.95em;
 }
 
 /* ---- icons (static SVGs from web/assets) ---- */

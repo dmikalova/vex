@@ -47,9 +47,16 @@ func houseIconName(h engine.House) string {
 }
 
 // houseIcon renders a house emblem with the outline that keeps it legible on any
-// background; extra adds sizing/placement classes.
+// background; extra adds sizing/placement classes. A card's own emblem stays
+// hidden when its house is unset (see houseIconName), but a caller drawing an
+// explicit house label — the Style gallery's house rows, a house-picker button —
+// always wants something on screen, so HouseNone falls back to its own icon here.
 func houseIcon(h engine.House, extra ...string) app.UI {
-	return icon(houseIconName(h), append([]string{"icon-outline"}, extra...)...)
+	name := houseIconName(h)
+	if name == "" {
+		name = "house-none"
+	}
+	return icon(name, append([]string{"icon-outline"}, extra...)...)
 }
 
 // typeIconName is the asset stem for a card type's icon.

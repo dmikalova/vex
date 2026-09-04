@@ -2,6 +2,8 @@ package web
 
 import (
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
+
+	"github.com/dmikalova/vactrol/internal/engine"
 )
 
 // This file is the component's lifecycle and its page-level wiring: mounting and
@@ -11,13 +13,26 @@ import (
 // OnMount resumes the saved match if there is one, else deals a fresh game. It
 // runs on the UI goroutine once the component is inserted into the page.
 func (g *game) OnMount(ctx app.Context) {
-	g.dispatch = ctx.Dispatch
+	// go-app only calls a component's OnUpdate when its *parent* re-renders it
+	// with changed exported fields; a root route like this one flags and
+	// re-renders itself, so that path never runs and OnUpdate would otherwise
+	// never fire. Deferring it here — after every dispatch, once the DOM has
+	// actually been patched — is what actually invokes it.
+	g.dispatch = func(fn func(app.Context)) {
+		ctx.Dispatch(func(c app.Context) {
+			if fn != nil {
+				fn(c)
+			}
+			c.Defer(g.OnUpdate)
+		})
+	}
 	if !g.resume(ctx) {
 		g.newMatch()
 	}
 	g.inPlayPrev = g.inPlaySet()
 	g.save(ctx)
 	g.installKeyShortcuts()
+	g.installResize()
 	g.scrollLogToBottom()
 }
 
@@ -31,7 +46,13 @@ const logScrollSlack = 48
 func (g *game) OnUpdate(app.Context) {
 	g.flyIntoPlay()
 	g.scrollPromptZoneIntoView()
+	g.scrollCursorIntoView()
 	g.focusPickerInput()
+	// Measured after the cursor scroll, so the rect is the card's resting place
+	// rather than wherever it was on the way there.
+	if g.measureFocus() {
+		g.dispatch(nil)
+	}
 	el := app.Window().GetElementByID("gamelog")
 	if !el.Truthy() {
 		return
@@ -60,6 +81,98 @@ func (g *game) scrollPromptZoneIntoView() {
 	}
 	el.Call("scrollIntoView", map[string]any{"block": "center"})
 	g.promptZoneScrolled = true
+}
+
+// scrollCursorIntoView keeps whatever Tab is currently pointed at — a card
+// prompt's or fight target's cursor, or in ordinary play the selection — inside
+// its row's scrolled strip. It is derived from the cursor's position rather than
+// fired on a Tab keypress, so it is safe to run on every render: "nearest" only
+// moves the scroll when the card is not already visible, so it never fights a
+// player who has scrolled a strip on their own.
+func (g *game) scrollCursorIntoView() {
+	id, ok := g.cursorCardID()
+	if !ok {
+		return
+	}
+	el := app.Window().GetElementByID(id)
+	if !el.Truthy() {
+		return
+	}
+	el.Call("scrollIntoView", map[string]any{"block": "nearest", "inline": "nearest"})
+}
+
+// cursorCardID is the DOM id of the card Tab is currently pointed at.
+func (g *game) cursorCardID() (string, bool) {
+	if cands, ok := g.tabCandidates(); ok {
+		if !g.hasCursor || !containsID(cands, g.promptCursor) {
+			return "", false
+		}
+		return g.cardDOMID(g.promptCursor), true
+	}
+	if !g.hasSel {
+		return "", false
+	}
+	return g.cardDOMID(g.sel), true
+}
+
+// cardDOMID is the DOM id a card renders under, in whichever zone currently
+// holds it.
+func (g *game) cardDOMID(id engine.LocalID) string {
+	if containsID(g.g.Hand(g.active()), id) {
+		return handCardID(id)
+	}
+	return boardCardID(id)
+}
+
+// measureFocus records where the selected card sits on screen and how tall the
+// lifted copy of it came out, so the copy can be centred on its card at the size
+// it really is. It reports whether anything moved, which is what tells OnUpdate to
+// render again — and, since the copy is on its own layer and so reflows nothing,
+// the render after that measures the same numbers and the pair settles. It is also
+// called from the selection itself, so the common case places the copy on its first
+// render rather than a frame later.
+func (g *game) measureFocus() bool {
+	id, ok := g.focusCardID()
+	if !ok {
+		was := g.hasFocus
+		g.hasFocus, g.focusPanelH = false, 0
+		return was
+	}
+	el := app.Window().GetElementByID(g.cardDOMID(id))
+	if !el.Truthy() {
+		return false
+	}
+	r := el.Call("getBoundingClientRect")
+	next := cardRect{
+		x: r.Get("left").Float(),
+		y: r.Get("top").Float(),
+		w: r.Get("width").Float(),
+		h: r.Get("height").Float(),
+	}
+	if next.w <= 0 || next.h <= 0 {
+		return false
+	}
+	// offsetHeight rather than a rect, because the grow animation transforms the copy
+	// and a rect would report the frame it is mid-way through rather than its layout.
+	panelH := g.focusPanelH
+	if p := app.Window().GetElementByID(focusPanelID); p.Truthy() {
+		panelH = p.Get("offsetHeight").Float()
+	}
+	view := [2]float64{
+		app.Window().Get("innerWidth").Float(),
+		app.Window().Get("innerHeight").Float(),
+	}
+	same := g.hasFocus && g.focusID == id && g.focusRect == next &&
+		g.focusPanelH == panelH && g.focusViewW == view[0] && g.focusViewH == view[1]
+	if same {
+		return false
+	}
+	if !g.hasFocus || g.focusID != id {
+		g.focusParity = !g.focusParity
+	}
+	g.focusRect, g.focusID, g.hasFocus, g.focusPanelH = next, id, true, panelH
+	g.focusViewW, g.focusViewH = view[0], view[1]
+	return true
 }
 
 // focusPickerInput puts the caret in the manual card picker's search box the first
@@ -104,16 +217,13 @@ func (g *game) installKeyShortcuts() {
 		}
 		key := e.Get("key").String()
 		if e.Get("ctrlKey").Bool() || e.Get("metaKey").Bool() {
-			// Ctrl/Cmd+Z undo; Ctrl/Cmd+Shift+Z or Ctrl/Cmd+Y redo.
-			switch key {
-			case "z", "Z":
+			// Ctrl/Cmd+Z undo; Ctrl/Cmd+Shift+Z redo.
+			if key == "z" || key == "Z" {
 				if e.Get("shiftKey").Bool() {
 					g.dispatch(func(ctx app.Context) { g.redoAction(ctx, app.Event{}) })
 				} else {
 					g.dispatch(func(ctx app.Context) { g.undoAction(ctx, app.Event{}) })
 				}
-			case "y", "Y":
-				g.dispatch(func(ctx app.Context) { g.redoAction(ctx, app.Event{}) })
 			}
 			return nil
 		}
@@ -127,6 +237,21 @@ func (g *game) installKeyShortcuts() {
 		return nil
 	})
 	app.Window().Get("document").Call("addEventListener", "keydown", g.keyFunc)
+}
+
+// installResize wires a window resize listener, because the lifted card copy is
+// placed from a measurement of the board underneath it: without this, resizing the
+// window leaves the copy floating over wherever its card used to be. The listener
+// only asks for a render — OnUpdate does the re-measuring.
+func (g *game) installResize() {
+	if g.resizeFunc != nil {
+		return
+	}
+	g.resizeFunc = app.FuncOf(func(app.Value, []app.Value) any {
+		g.dispatch(nil)
+		return nil
+	})
+	app.Window().Call("addEventListener", "resize", g.resizeFunc)
 }
 
 // navigates reports whether a key moves or answers the selection, and so must be
@@ -147,6 +272,11 @@ func (g *game) OnDismount() {
 		app.Window().Get("document").Call("removeEventListener", "keydown", g.keyFunc)
 		g.keyFunc.Release()
 		g.keyFunc = nil
+	}
+	if g.resizeFunc != nil {
+		app.Window().Call("removeEventListener", "resize", g.resizeFunc)
+		g.resizeFunc.Release()
+		g.resizeFunc = nil
 	}
 }
 
@@ -177,10 +307,27 @@ func (g *game) onKey(ctx app.Context, key string, shift bool) {
 		g.dismiss(ctx)
 		return
 	case "r":
-		g.affirm(ctx)
+		// While placing a creature r commits the right flank on its own, the same
+		// as l for the left — a deliberate press should not need a second key to
+		// confirm it. Otherwise r just reaps: it is not a general "yes" (see Space).
+		if g.phase == phaseFlank {
+			g.playFlank(false)(ctx, app.Event{})
+			return
+		}
+		if g.chooseKeyColorKey(ctx, engine.KeyColorRed) {
+			return
+		}
+		g.keyboardAction = true
+		g.reap(ctx, app.Event{})
 		return
 	case "n":
 		g.deny(ctx)
+		return
+	case "b":
+		g.chooseKeyColorKey(ctx, engine.KeyColorBlue)
+		return
+	case "y":
+		g.chooseKeyColorKey(ctx, engine.KeyColorYellow)
 		return
 	case "Tab":
 		if shift {
@@ -189,11 +336,23 @@ func (g *game) onKey(ctx app.Context, key string, shift bool) {
 			g.tabSel(ctx, 1)
 		}
 		return
-	case "Enter", " ":
+	case "Enter":
 		g.confirmPrompt(ctx)
+		return
+	case " ":
+		// Space confirms the Tab cursor like Enter, but when there is none to
+		// confirm it falls back to affirm's default answer instead of doing nothing.
+		if !g.confirmPrompt(ctx) {
+			g.affirm(ctx)
+		}
 		return
 	case "?":
 		g.keysOpen = !g.keysOpen
+		return
+	case "h":
+		// Showing and hiding the log mutates no game state, so it races with nothing
+		// and belongs with the other view-only keys, above the guard below.
+		g.toggleSidebar(ctx, app.Event{})
 		return
 	}
 	if g.busy || g.choosing || g.choosingOption {
@@ -222,23 +381,21 @@ func (g *game) onKey(ctx app.Context, key string, shift bool) {
 		}
 		g.moveSel(ctx, -1, 0)
 	case "p":
+		g.keyboardAction = true
 		g.play(ctx, app.Event{})
 	case "d":
+		g.keyboardAction = true
 		g.discard(ctx, app.Event{})
 	case "a":
+		g.keyboardAction = true
 		g.useAction(ctx, app.Event{})
 	case "f":
 		g.startFight(ctx, app.Event{})
 	case "u":
-		// A stunned creature's only use is to shed the stun, which the engine spends
-		// through the same reap path.
-		if g.selKind == selYourCreature && g.g.Stunned(g.sel) {
-			g.reap(ctx, app.Event{})
-		}
+		g.keyboardAction = true
+		g.unstun(ctx, app.Event{})
 	case "z", "Z":
 		g.cycleZones()
-	case "h":
-		g.toggleSidebar(ctx, app.Event{})
 	case "m":
 		g.toggleManual(ctx, app.Event{})
 	case "e":
@@ -248,11 +405,11 @@ func (g *game) onKey(ctx app.Context, key string, shift bool) {
 	}
 }
 
-// affirm is the one "yes, do it" key (r): it takes the affirmative move for
-// whatever is in front of the player — answering a yes/no prompt, taking the
-// right flank while placing a creature, or the selected card's main use (play
-// from hand, an artifact's action, otherwise reap). Each handler self-guards, so
-// a press with nothing to affirm is a no-op.
+// affirm is Space's fallback when there is no Tab cursor to confirm: it takes
+// the affirmative move for whatever is in front of the player — answering a
+// yes/no prompt, or the selected card's main use (play from hand, an
+// artifact's action, otherwise reap). Each handler self-guards, so a press
+// with nothing to affirm is a no-op.
 func (g *game) affirm(ctx app.Context) {
 	if g.choosingOption {
 		// Only a yes/no prompt has an affirmative answer; a list of alternatives has
@@ -262,17 +419,18 @@ func (g *game) affirm(ctx app.Context) {
 		}
 		return
 	}
-	if g.busy || g.choosing {
+	if g.busy || g.choosing || g.phase == phaseFlank {
 		return
 	}
-	switch {
-	case g.phase == phaseFlank:
-		g.playFlank(false)(ctx, app.Event{})
-	case g.selKind == selHand:
+	switch g.selKind {
+	case selHand:
+		g.keyboardAction = true
 		g.play(ctx, app.Event{})
-	case g.selKind == selYourArtifact:
+	case selYourArtifact:
+		g.keyboardAction = true
 		g.useAction(ctx, app.Event{})
 	default:
+		g.keyboardAction = true
 		g.reap(ctx, app.Event{})
 	}
 }

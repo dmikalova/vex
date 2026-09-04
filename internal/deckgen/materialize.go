@@ -25,8 +25,9 @@ type GenerationProfile struct {
 
 // Connection is the set of connected cards a puller card brings into its pod.
 // Each entry is ensured present at its copy count, overwriting other
-// (unprotected) slots. Cross-house (maverick) connections are a future axis;
-// today a connection pulls in-house only.
+// (unprotected) slots. A maverick puller still fires its connection, and its
+// partners are rehoused to the pod's House along with it (the printed-house
+// rule KeyForge itself uses for a Maverick's connected cards).
 type Connection struct {
 	// Cards are the connected cards, each pulled at its own count and rate.
 	Cards []ConnectedCard

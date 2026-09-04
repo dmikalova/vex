@@ -18,7 +18,7 @@ var RaidingKnight = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 255),
 	card.WithPower(4),
-	card.WithTraits("Human", "Knight"),
+	card.WithTraits(card.Traits.Human, card.Traits.Knight),
 	card.WithAbility(
 		card.Trigger.Play, card.CaptureAember{
 			Amount: 1,

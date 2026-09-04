@@ -111,6 +111,34 @@ func (e DealDamage) Resolve(ctx *EffectContext) {
 		}
 		return
 	}
+	if amount := e.amount(ctx); amount > 0 {
+		e.dealTo(ctx, amount, e.Target.Select(ctx))
+	}
+}
+
+// declinable reports that the damage lands on a single clickable creature, so a
+// "you may" wrapping it (Rock-Hurling Giant) can be answered by clicking that
+// creature instead of a separate Yes/No.
+func (e DealDamage) declinable() bool { return e.Spread == nil && e.Target.isChosen() }
+
+// resolveOptional is Resolve under a May: the creature is asked declinably, with
+// a Done to decline.
+func (e DealDamage) resolveOptional(ctx *EffectContext) bool {
+	amount := e.amount(ctx)
+	if amount <= 0 {
+		return false
+	}
+	ids := e.Target.SelectOptional(ctx)
+	if len(ids) == 0 {
+		return false
+	}
+	e.dealTo(ctx, amount, ids)
+	return true
+}
+
+// amount computes how much damage a non-Spread DealDamage deals, before any
+// per-target multiplier.
+func (e DealDamage) amount(ctx *EffectContext) int {
 	amount := e.Amount
 	switch {
 	case e.AmountFrom != nil:
@@ -118,10 +146,12 @@ func (e DealDamage) Resolve(ctx *EffectContext) {
 	case e.Per != nil:
 		amount *= e.Per.Value(ctx)
 	}
-	if amount <= 0 {
-		return
-	}
-	ids := e.Target.Select(ctx)
+	return amount
+}
+
+// dealTo deals amount (before any PerTarget multiplier) to an already-selected
+// set of creatures simultaneously.
+func (e DealDamage) dealTo(ctx *EffectContext, amount int, ids []LocalID) {
 	targets := make([]DamageTarget, len(ids))
 	for i, id := range ids {
 		hit := amount

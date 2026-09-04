@@ -20,7 +20,7 @@ var ChampionTabris = card.New(
 	card.Provenance(card.CotA, 240),
 	card.WithPower(6),
 	card.WithArmor(2),
-	card.WithTraits("Human", "Knight"),
+	card.WithTraits(card.Traits.Human, card.Traits.Knight),
 	card.WithAbility(
 		card.Trigger.Fight, card.CaptureAember{
 			Amount: 1,

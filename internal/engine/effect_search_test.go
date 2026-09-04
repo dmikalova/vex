@@ -16,7 +16,7 @@ func TestSearchForName(t *testing.T) {
 				Creature,
 				Common,
 				WithPower(2),
-				WithTraits("Human", "Scientist"),
+				WithTraits(Human, Scientist),
 			),
 			player,
 		)

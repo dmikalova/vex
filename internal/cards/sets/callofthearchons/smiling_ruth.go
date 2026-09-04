@@ -19,7 +19,7 @@ var SmilingRuth = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 312),
 	card.WithPower(1),
-	card.WithTraits("Elf", "Thief"),
+	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
 		card.Trigger.Reap, card.Conditional{

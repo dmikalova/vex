@@ -18,7 +18,7 @@ var MushroomMan = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 362),
 	card.WithPower(2),
-	card.WithTraits("Fungus", "Human"),
+	card.WithTraits(card.Traits.Fungus, card.Traits.Human),
 	card.WithConstant(card.ConstantAbility{
 		Target:     card.Target.This,
 		PowerBonus: 3,

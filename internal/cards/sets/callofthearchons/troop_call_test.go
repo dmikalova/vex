@@ -25,17 +25,17 @@ func TestTroopCall(t *testing.T) {
 				Discard: ct.Cards(
 					ct.Bind(
 						&buried,
-						ct.Creature(ct.OfHouse(card.House.Untamed), ct.Traits("Niffle")),
+						ct.Creature(ct.OfHouse(card.House.Untamed), ct.Traits(card.Traits.Niffle)),
 					),
 				),
 				InPlay: ct.Cards(
 					ct.Bind(
 						&inPlay,
-						ct.Creature(ct.OfHouse(card.House.Untamed), ct.Traits("Niffle")),
+						ct.Creature(ct.OfHouse(card.House.Untamed), ct.Traits(card.Traits.Niffle)),
 					),
 					ct.Bind(
 						&other,
-						ct.Creature(ct.OfHouse(card.House.Untamed), ct.Traits("Beast")),
+						ct.Creature(ct.OfHouse(card.House.Untamed), ct.Traits(card.Traits.Beast)),
 					),
 				),
 			},

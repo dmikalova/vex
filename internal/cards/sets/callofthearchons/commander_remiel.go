@@ -18,7 +18,7 @@ var CommanderRemiel = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 241),
 	card.WithPower(3),
-	card.WithTraits("Human", "Knight"),
+	card.WithTraits(card.Traits.Human, card.Traits.Knight),
 	card.WithAbility(
 		card.Trigger.Reap, card.OnChooseCreature{
 			Target: card.Target.FriendlyCreature.ExceptHouse(card.House.Sanctum),

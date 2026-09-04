@@ -16,7 +16,7 @@ var BearFlute = card.New(
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 340),
-	card.WithTraits("Item"),
+	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
 			card.Heal{

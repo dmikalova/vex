@@ -20,7 +20,7 @@ var FuzzyGruen = card.New(
 	card.Provenance(card.CotA, 353),
 	card.WithPower(5),
 	card.WithAemberBonus(2),
-	card.WithTraits("Beast"),
+	card.WithTraits(card.Traits.Beast),
 	card.WithAbility(
 		card.Trigger.Play, card.GainAember{
 			Player: card.Opponent,

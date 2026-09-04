@@ -18,11 +18,11 @@ var EpicQuest = card.New(
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 231),
-	card.WithTraits("Quest"),
+	card.WithTraits(card.Traits.Quest),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(
 		card.Trigger.Play, card.ArchiveFromPlay{
-			Target: card.Target.EachFriendlyCreature.WithTrait("Knight"),
+			Target: card.Target.EachFriendlyCreature.WithTrait(card.Traits.Knight),
 		}),
 	card.WithAbility(
 		card.Trigger.Action, card.Conditional{

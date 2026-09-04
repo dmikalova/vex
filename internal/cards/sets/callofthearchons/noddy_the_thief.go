@@ -19,7 +19,7 @@ var NoddyTheThief = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 306),
 	card.WithPower(2),
-	card.WithTraits("Elf", "Thief"),
+	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
 		card.Trigger.Action, card.StealAember{Amount: 1}),

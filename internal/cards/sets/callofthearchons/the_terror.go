@@ -18,7 +18,7 @@ var TheTerror = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 101),
 	card.WithPower(5),
-	card.WithTraits("Demon", "Knight"),
+	card.WithTraits(card.Traits.Demon, card.Traits.Knight),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
 			Cond: card.OpponentAember{Is: card.Exactly, Amount: 0},

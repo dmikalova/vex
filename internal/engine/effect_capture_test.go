@@ -161,7 +161,7 @@ func TestCaptureAemberDistinct(t *testing.T) {
 }
 
 func marsCreature(name string, power int) CardDefinition {
-	return NewCard(name, Mars, Creature, Common, WithPower(power), WithTraits("Martian"))
+	return NewCard(name, Mars, Creature, Common, WithPower(power), WithTraits(Martian))
 }
 
 func TestCaptureAemberByEnemy(t *testing.T) {

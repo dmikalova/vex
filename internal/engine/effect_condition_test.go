@@ -180,6 +180,15 @@ func TestItIs(t *testing.T) {
 		"if it is an artifact":     {Type: Artifact},
 		"if it is a Mars card":     {House: Mars},
 		"if it is a card":          {},
+		"if it is not a Logos card": {
+			House: Logos,
+			Not:   true,
+		},
+		"if the discarded card is not a Logos card": {
+			House:   Logos,
+			Not:     true,
+			Subject: DiscardedCard,
+		},
 	}
 	for want, e := range cases {
 		if got := e.CondText(); got != want {
@@ -204,6 +213,14 @@ func TestItIs(t *testing.T) {
 	}
 	if (ItIs{Type: Artifact}).Met(ctx) {
 		t.Error("a creature should not match an artifact filter")
+	}
+
+	// Not inverts the match, so the condition holds for everything that does not fit.
+	if !(ItIs{House: Logos, Not: true}).Met(ctx) {
+		t.Error("a Mars creature should meet a not-Logos filter")
+	}
+	if (ItIs{House: Mars, Not: true}).Met(ctx) {
+		t.Error("a Mars creature should not meet a not-Mars filter")
 	}
 }
 

@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// NeutronShark
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Neutron Shark
 //
 //	House:  Logos
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  1
 //	Traits: Beast • Mutant
 //
-//	Play/Fight/Reap: Destroy an enemy creature or artifact and a friendly creature or artifact. Discard the top card of your deck. If that card is not a Logos card, trigger this effect again.
+//	Play/Fight/Reap: Destroy an enemy creature or artifact and a friendly creature or artifact, and discard the top card of your deck -> if the discarded card is not a Logos card, repeat this effect.
 var NeutronShark = card.New(
 	"Neutron Shark",
 	card.House.Logos,
@@ -23,6 +18,17 @@ var NeutronShark = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 146),
 	card.WithPower(1),
-	card.WithTraits("Beast", "Mutant"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithTraits(card.Traits.Beast, card.Traits.Mutant),
+	card.WithPlayFightReap(card.RepeatOnCondition{
+		Do: card.Sequence{Effects: []card.Effect{
+			card.Destroy{Target: card.Target.EnemyCreatureOrArtifact},
+			card.Destroy{Target: card.Target.FriendlyCreatureOrArtifact},
+			card.DiscardTopOfDeck{Player: card.Controller},
+		}},
+		Cond: card.ItIs{
+			House:   card.House.Self,
+			Not:     true,
+			Subject: card.Subject.DiscardedCard,
+		},
+	}),
 )

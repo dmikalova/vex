@@ -18,7 +18,7 @@ var EvasionSigil = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 286),
 	card.WithAemberBonus(1),
-	card.WithTraits("Power"),
+	card.WithTraits(card.Traits.Power),
 	card.WithConstant(card.ConstantAbility{
 		Target: card.Target.EachCreature,
 		Granted: []card.Ability{{

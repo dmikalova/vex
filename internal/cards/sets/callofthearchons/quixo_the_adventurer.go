@@ -19,7 +19,7 @@ var QuixoTheAdventurer = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 144),
 	card.WithPower(3),
-	card.WithTraits("Human", "Scientist"),
+	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
 	card.WithKeywords(card.Keyword.Skirmish),
 	card.WithAbility(
 		card.Trigger.Fight, card.Draw{Amount: 1}),

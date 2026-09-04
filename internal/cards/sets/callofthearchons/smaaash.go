@@ -18,7 +18,7 @@ var Smaaash = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 46),
 	card.WithPower(5),
-	card.WithTraits("Giant"),
+	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(
 		card.Trigger.Play, card.Stun{Target: card.Target.Creature}),
 )

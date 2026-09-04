@@ -23,6 +23,6 @@ var SpectralTunneler = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 133),
 	card.WithAemberBonus(1),
-	card.WithTraits("Item"),
+	card.WithTraits(card.Traits.Item),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

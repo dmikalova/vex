@@ -86,6 +86,10 @@ type Game struct {
 	Log []Record
 	// frames is the stack of open attribution frames; see Game.openFrame.
 	frames []Frame
+	// triggerDepth is how many TriggerAbility resolutions are open. Two Replicators
+	// would trigger each other's reap effect forever, so the Rule of Six bounds the
+	// chain the same way it bounds a repeated effect.
+	triggerDepth int
 	// recording is whether outcomes are narrated at all. NewGame turns it on; a bot
 	// exploring cloned positions turns it off so the log costs nothing.
 	recording bool

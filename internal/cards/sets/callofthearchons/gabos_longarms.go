@@ -18,7 +18,7 @@ var GabosLongarms = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 86),
 	card.WithPower(5),
-	card.WithTraits("Demon"),
+	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(
 		card.Trigger.BeforeFight, card.RedirectFightDamage{Target: card.Target.Creature}),
 )

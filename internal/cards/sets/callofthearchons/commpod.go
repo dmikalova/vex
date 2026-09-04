@@ -16,7 +16,7 @@ var Commpod = card.New(
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 181),
-	card.WithTraits("Item"),
+	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.Action, card.Sequence{
 			Effects: []card.Effect{

@@ -18,7 +18,7 @@ var Dodger = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 308),
 	card.WithPower(5),
-	card.WithTraits("Elf", "Thief"),
+	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithAbility(
 		card.Trigger.Fight, card.StealAember{Amount: 1}),
 )

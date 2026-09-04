@@ -18,7 +18,7 @@ var JehuTheBureaucrat = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 250),
 	card.WithPower(3),
-	card.WithTraits("Human"),
+	card.WithTraits(card.Traits.Human),
 	card.WithAbility(
 		card.Trigger.AfterChooseHouse, card.Conditional{
 			Cond: card.ChoseHouse{House: card.House.Self},

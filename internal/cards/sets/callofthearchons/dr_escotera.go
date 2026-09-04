@@ -18,7 +18,7 @@ var DrEscotera = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 140),
 	card.WithPower(4),
-	card.WithTraits("Cyborg", "Scientist"),
+	card.WithTraits(card.Traits.Cyborg, card.Traits.Scientist),
 	card.WithAbility(
 		card.Trigger.Play, card.GainAember{
 			Player: card.Controller,

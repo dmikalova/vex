@@ -18,7 +18,7 @@ var PiranhaMonkeys = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 365),
 	card.WithPower(2),
-	card.WithTraits("Beast"),
+	card.WithTraits(card.Traits.Beast),
 	card.WithPlayReap(card.DealDamage{
 		Amount: 2,
 		Target: card.Target.EachCreature.Other(),

@@ -16,7 +16,7 @@ var PhylyxTheDisintegrator = card.New("Phylyx the Disintegrator",
 	card.House.Mars, card.Type.Creature, card.Rarity.Rare,
 	card.Provenance(card.CotA, 197),
 	card.WithPower(1),
-	card.WithTraits("Martian", "Soldier"),
+	card.WithTraits(card.Traits.Martian, card.Traits.Soldier),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
 		card.Trigger.Action, card.LoseAember{

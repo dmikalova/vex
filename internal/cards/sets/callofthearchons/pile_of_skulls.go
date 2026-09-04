@@ -16,7 +16,7 @@ var PileOfSkulls = card.New(
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 25),
-	card.WithTraits("Location"),
+	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
 		card.Trigger.AfterEnemyCreatureDestroyed, card.CaptureAember{
 			Amount: 1,

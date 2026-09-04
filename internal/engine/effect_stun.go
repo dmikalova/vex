@@ -31,10 +31,16 @@ func (e Stun) targetText() string { return e.Target.Text() }
 // Text renders the effect, e.g. "stun each friendly creature".
 func (e Stun) Text() string { return e.verb() + " " + e.targetText() }
 
-// Resolve stuns each selected creature.
+// Resolve stuns each selected creature. A creature already stunned still gets a
+// log line — the source still had to choose it — just without a state change.
 func (e Stun) Resolve(ctx *EffectContext) {
 	for _, id := range e.Target.Select(ctx) {
+		if ctx.Resolver.Stunned(id) {
+			ctx.Resolver.Record(CreatureStunned{Creature: id, By: ctx.Source, AlreadyStunned: true})
+			continue
+		}
 		ctx.Resolver.SetStunned(id, true)
+		ctx.Resolver.Record(CreatureStunned{Creature: id, By: ctx.Source})
 	}
 }
 

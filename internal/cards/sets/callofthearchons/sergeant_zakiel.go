@@ -18,7 +18,7 @@ var SergeantZakiel = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 258),
 	card.WithPower(4),
-	card.WithTraits("Human", "Knight"),
+	card.WithTraits(card.Traits.Human, card.Traits.Knight),
 	card.WithAbility(
 		card.Trigger.Play, card.May{
 			Do: card.OnChooseCreature{

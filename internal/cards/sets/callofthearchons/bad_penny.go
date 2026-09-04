@@ -18,7 +18,7 @@ var BadPenny = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 296),
 	card.WithPower(1),
-	card.WithTraits("Human", "Thief"),
+	card.WithTraits(card.Traits.Human, card.Traits.Thief),
 	card.WithAbility(
 		card.Trigger.Destroyed, card.PutFromPlay{
 			Target:      card.Target.This,

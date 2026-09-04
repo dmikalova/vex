@@ -16,7 +16,7 @@ var SafePlace = card.New("Safe Place",
 	card.House.Shadows, card.Type.Artifact, card.Rarity.Rare,
 	card.Provenance(card.CotA, 289),
 	card.WithAemberBonus(1),
-	card.WithTraits("Location"),
+	card.WithTraits(card.Traits.Location),
 	card.WithSpendableAember(),
 	card.WithAbility(
 		card.Trigger.Action, card.MoveAemberFromPool{

@@ -20,7 +20,7 @@ var StaunchKnight = card.New(
 	card.Provenance(card.CotA, 259),
 	card.WithPower(4),
 	card.WithArmor(2),
-	card.WithTraits("Human", "Knight"),
+	card.WithTraits(card.Traits.Human, card.Traits.Knight),
 	card.WithConstant(card.ConstantAbility{
 		PowerBonus: 2,
 		Target:     card.Target.This.OnFlank(),

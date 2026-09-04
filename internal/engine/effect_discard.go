@@ -34,8 +34,8 @@ func (e PutFromDiscard) noun() string {
 	if e.Type != TypeUnset {
 		base = strings.ToLower(e.Type.String())
 	}
-	if e.Trait != "" {
-		base = string(e.Trait) + " trait " + base
+	if e.Trait != traitUnset {
+		base = e.Trait.String() + " trait " + base
 	}
 	return base
 }
@@ -88,7 +88,7 @@ func (e PutFromDiscard) Resolve(ctx *EffectContext) {
 			if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
 				continue
 			}
-			if e.Trait != "" && !ctx.Resolver.HasTrait(id, e.Trait) {
+			if e.Trait != traitUnset && !ctx.Resolver.HasTrait(id, e.Trait) {
 				continue
 			}
 			if e.OfChosenHouse && ctx.Resolver.House(id) != ctx.ChosenHouse {
@@ -100,13 +100,13 @@ func (e PutFromDiscard) Resolve(ctx *EffectContext) {
 	}
 	discard := ctx.Resolver.Discard(ctx.Controller)
 	candidates := discard
-	if e.Type != TypeUnset || e.Trait != "" {
+	if e.Type != TypeUnset || e.Trait != traitUnset {
 		candidates = nil
 		for _, id := range discard {
 			if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
 				continue
 			}
-			if e.Trait != "" && !ctx.Resolver.HasTrait(id, e.Trait) {
+			if e.Trait != traitUnset && !ctx.Resolver.HasTrait(id, e.Trait) {
 				continue
 			}
 			candidates = append(candidates, id)

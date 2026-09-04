@@ -18,6 +18,6 @@ var HorsemanOfWar = card.New(
 	card.Rarity.Connected,
 	card.Provenance(card.CotA, 249),
 	card.WithPower(5),
-	card.WithTraits("Horseman", "Spirit"),
+	card.WithTraits(card.Traits.Horseman, card.Traits.Spirit),
 	card.WithAbility(card.Trigger.Play, card.GrantFightAnyHouse{}),
 )

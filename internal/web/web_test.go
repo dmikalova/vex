@@ -61,6 +61,12 @@ func TestHouseIconNamesHaveAssets(t *testing.T) {
 	if got := houseIconName(engine.HouseNone); got != "" {
 		t.Errorf("houseIconName(HouseNone) = %q, want empty", got)
 	}
+	// houseIconName itself stays "" for HouseNone (a card's own emblem hides when
+	// its house is unset), but houseIcon falls back to a real asset for it, since
+	// the Style gallery and house pickers draw HouseNone as its own labelled row.
+	if !assetExists(t, "house-none") {
+		t.Error("houseIcon's HouseNone fallback \"house-none\" has no web/assets/house-none.svg")
+	}
 	for h := engine.HouseNone + 1; int(h) < engine.NumHouses; h++ {
 		name := houseIconName(h)
 		if name == "" {
@@ -196,7 +202,10 @@ func TestRarityMarks(t *testing.T) {
 }
 
 func TestKindAndTraitLabels(t *testing.T) {
-	def := &engine.CardDefinition{Type: engine.Creature, Traits: []engine.Trait{"Human", "Knight"}}
+	def := &engine.CardDefinition{
+		Type:   engine.Creature,
+		Traits: []engine.Trait{engine.Human, engine.Knight},
+	}
 	if got := kindLabel(def); got == "" {
 		t.Error("kindLabel(creature) is empty")
 	}

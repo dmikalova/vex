@@ -146,7 +146,7 @@ func TestPurgeCreatureFromHand(t *testing.T) {
 
 	t.Run("purges a chosen hand creature and sets it in context", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
-		kin := g.AddToHand(testCreature("kin", 3, WithTraits("Beast")), 0)
+		kin := g.AddToHand(testCreature("kin", 3, WithTraits(Beast)), 0)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 
 		e.Resolve(ctx)
@@ -179,8 +179,8 @@ func TestPurgeCreatureFromHand(t *testing.T) {
 
 	t.Run("a declined choice purges nothing", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
-		g.AddToHand(testCreature("kin1", 3, WithTraits("Beast")), 0)
-		g.AddToHand(testCreature("kin2", 3, WithTraits("Beast")), 0)
+		g.AddToHand(testCreature("kin1", 3, WithTraits(Beast)), 0)
+		g.AddToHand(testCreature("kin2", 3, WithTraits(Beast)), 0)
 		g.SetChooser(0, orderRejectChooser{})
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 		e.Resolve(ctx)

@@ -18,7 +18,7 @@ var OverlordGreking = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 87),
 	card.WithPower(7),
-	card.WithTraits("Demon"),
+	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(
 		card.Trigger.AfterDestroyedFighting, card.PutIntoPlay{
 			Target:           card.Target.Triggering,

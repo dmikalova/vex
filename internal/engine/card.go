@@ -41,6 +41,23 @@ type CardDefinition struct {
 	// The zero Target imposes no restriction.
 	FightRestriction Target
 
+	// CannotBeUsedTo are the ways this card may not be used — Tireless Crocag cannot
+	// reap, but still fights. It bars the card itself, unlike the player-wide
+	// restrictions in Restricts. Empty imposes no restriction.
+	CannotBeUsedTo []UseKind
+
+	// DestroyedWhen, when set, is a condition that puts this creature in a
+	// destroyable state for as long as it holds — Tireless Crocag dies while its
+	// controller's opponent has no creatures. It is read board-wide every time
+	// destruction settles, so it takes effect the moment the board makes it true.
+	DestroyedWhen Condition
+
+	// TakesDamageFor, when set, names the creatures whose damage this card takes
+	// instead — Shadow Self takes the damage dealt to its non-Specter neighbors.
+	// It is read wherever damage lands, so it covers fight damage and effect damage
+	// alike. The zero Target shields nobody.
+	TakesDamageFor Target
+
 	// AttackIgnores are the defensive keywords this creature ignores while it is
 	// attacking — Niffle Ape ignores taunt and elusive, so it may be used to fight a
 	// creature its neighbors' taunt shields and no elusive stops the damage.
@@ -390,7 +407,33 @@ func NewCard(
 			panic(fmt.Sprintf("card %q: %v", name, err))
 		}
 	}
+	if dw := c.DestroyedWhen; dw != nil {
+		if err := validateCondition(dw); err != nil {
+			panic(fmt.Sprintf("card %q: %v", name, err))
+		}
+	}
+	for _, k := range c.CannotBeUsedTo {
+		if !k.valid() {
+			panic(fmt.Sprintf("card %q: CannotBeUsedTo has an unset use kind", name))
+		}
+	}
 	return c
+}
+
+// WithCannotBeUsedTo bars a card from the named ways of being used.
+func WithCannotBeUsedTo(kinds ...UseKind) CardOption {
+	return func(c *CardDefinition) { c.CannotBeUsedTo = append(c.CannotBeUsedTo, kinds...) }
+}
+
+// WithDestroyedWhen makes a creature destroyable for as long as cond holds.
+func WithDestroyedWhen(cond Condition) CardOption {
+	return func(c *CardDefinition) { c.DestroyedWhen = cond }
+}
+
+// WithTakesDamageFor makes this card take the damage dealt to the creatures its
+// Target names, instead of them (Shadow Self shields its non-Specter neighbors).
+func WithTakesDamageFor(t Target) CardOption {
+	return func(c *CardDefinition) { c.TakesDamageFor = t }
 }
 
 // WithPower sets a creature's power.

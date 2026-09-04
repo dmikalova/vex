@@ -18,9 +18,9 @@ var HorsemanOfPestilence = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 248),
 	card.WithPower(5),
-	card.WithTraits("Horseman", "Spirit"),
+	card.WithTraits(card.Traits.Horseman, card.Traits.Spirit),
 	card.WithPlayFightReap(card.DealDamage{
 		Amount: 1,
-		Target: card.Target.EachCreature.ExceptTrait("Horseman"),
+		Target: card.Target.EachCreature.ExceptTrait(card.Traits.Horseman),
 	}),
 )

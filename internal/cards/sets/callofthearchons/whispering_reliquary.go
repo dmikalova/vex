@@ -16,7 +16,7 @@ var WhisperingReliquary = card.New(
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 237),
-	card.WithTraits("Item"),
+	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.Action, card.PutFromPlay{
 			Target:      card.Target.Artifact,

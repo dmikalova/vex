@@ -165,6 +165,17 @@ func TestRepeatOnCondition(t *testing.T) {
 	}.Resolve(
 		&EffectContext{Resolver: g2, Controller: 0},
 	)
+
+	// A Do that cannot report progress always counts as progress, so only the
+	// condition and the Rule of Six end the loop (Neutron Shark).
+	g3 := NewGame("A", "B", 1)
+	RepeatOnCondition{
+		Do:   GainAember{Amount: 1, Player: Controller},
+		Cond: OpponentAember{Is: AtLeast, Amount: 1},
+	}.Resolve(&EffectContext{Resolver: g3, Controller: 0})
+	if g3.Aember(0) != 1 {
+		t.Errorf("aember = %d, want 1 (the condition fails after one pass)", g3.Aember(0))
+	}
 }
 
 func TestTakeControlTargeted(t *testing.T) {

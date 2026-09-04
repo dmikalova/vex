@@ -61,6 +61,10 @@ type game struct {
 	// shortcuts; it is released on dismount.
 	keyFunc app.Func
 
+	// resizeFunc is the window resize listener, which re-measures the lifted card
+	// copy's placement; it is released on dismount.
+	resizeFunc app.Func
+
 	phase phase
 	busy  bool // an action goroutine is resolving; input is ignored
 
@@ -155,6 +159,14 @@ type game struct {
 	// the card leaves. -1 means the action did not start from a card in hand.
 	handSlot int
 
+	// keyboardAction says the root action now running was invoked by a keyboard
+	// shortcut rather than a click or drag, so advanceSelection only auto-selects
+	// the next card when the player is driving from the keyboard — a mouse player
+	// who just let go of a card would find the selection jumping to another one
+	// surprising. Set by onKey right before it calls into a handler, and consumed
+	// (and cleared) by advanceSelection once the action resolves.
+	keyboardAction bool
+
 	// defByName maps every card's name to its definition, for log-mention lookups.
 	defByName map[string]*engine.CardDefinition
 
@@ -217,12 +229,35 @@ type game struct {
 	// since 0 is a real card id.
 	fighters [2]engine.LocalID
 	fighting bool
+	// reapID/reaping arms the yellow reap animation for one card the same way
+	// fighters/fighting arms the fight clash; consumed by computeFlashes.
+	reapID  engine.LocalID
+	reaping bool
+	// actID/acting arms the green action-ability animation (an artifact's action, or
+	// a creature's own) for one card, the same way reapID/reaping does for reap.
+	actID  engine.LocalID
+	acting bool
 	// takeoff is where a card being played sat in hand when the player let go of
 	// it, so the board card it becomes can be animated from that spot rather than
 	// appearing in place. Armed at play time and spent by the next render.
 	takeoff   cardRect
 	takeoffID engine.LocalID
 	takingOff bool
+
+	// focusRect is where the selected card sits on screen, so the lifted copy of it
+	// (cardFocus) can be laid out over its slot and grown from there. focusID is the
+	// card that was measured and focusParity flips whenever the lift moves to another
+	// one, so the grow animation replays; hasFocus says a measurement has been taken
+	// at all, since a card really can sit at the origin. focusPanelH is how tall the
+	// copy came out once laid out (its text decides), which is what lets it be centred
+	// on its card rather than hung from the top of it. focusViewW/focusViewH are the
+	// window size as of that measurement, which is what the copy is kept inside of.
+	focusRect              cardRect
+	focusID                engine.LocalID
+	hasFocus               bool
+	focusParity            bool
+	focusPanelH            float64
+	focusViewW, focusViewH float64
 
 	// statusGen tags the current status message so a scheduled auto-clear only
 	// clears the message it was armed for, not a newer one.
@@ -240,6 +275,8 @@ type cardFlash struct {
 	stun    bool // became stunned
 	enter   bool // entered play this action
 	fight   bool // was the attacker or defender of a fight
+	reap    bool // reaped
+	act     bool // used an action ability (an artifact's, or a creature's own)
 	odd     bool // alternates each flash to restart the CSS animation
 }
 
@@ -254,7 +291,7 @@ type flight struct {
 // cardRect is a card's place on screen in viewport pixels, as the browser
 // reports it.
 type cardRect struct {
-	x, y, w float64
+	x, y, w, h float64
 }
 
 // undoEntry is a restorable snapshot: the flat GameState (a pure value copy), the
@@ -280,7 +317,7 @@ const persistKey = "vactrol.match"
 // snapshots invalid so a stale one is flushed instead of restored. A log entry is
 // saved as the prose it was narrated with, so rewording an entry dates every
 // snapshot holding the old wording and counts as such a change.
-const snapshotVersion = 8
+const snapshotVersion = 9
 
 // snapshot is the persisted match. The seed deterministically rebuilds the
 // catalog and card ids; the flat GameState carries everything mutable. All other

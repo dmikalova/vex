@@ -18,7 +18,7 @@ var LomirFlamefist = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 40),
 	card.WithPower(5),
-	card.WithTraits("Giant"),
+	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
 			Cond: card.OpponentAember{Is: card.AtLeast, Amount: 7},

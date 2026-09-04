@@ -18,7 +18,7 @@ var Mugwump = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 42),
 	card.WithPower(6),
-	card.WithTraits("Giant"),
+	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(
 		card.Trigger.AfterDestroyedFighting, card.Sequence{
 			Effects: []card.Effect{

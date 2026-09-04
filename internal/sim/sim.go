@@ -218,33 +218,39 @@ func playCard(g *engine.Game, player int, id engine.LocalID, d *decoder) error {
 	return nil
 }
 
-// useCreature reaps, fights, or uses an action ability with the creature, chosen by
-// the script, falling back to reaping when the chosen use is not legal for it — a
-// creature with no action ability has none to use, and none can fight an empty
-// battleline. Reap is the fallback because it is the one use CanUse itself vouches
-// for, so its refusal means CanUse contradicted itself.
+// useCreature reaps, fights, or uses an action ability with the creature, starting
+// from the use the script chose and falling through to the others when that one is
+// not legal for it — a creature with no action ability has none to use, none can
+// fight an empty battleline, and Tireless Crocag cannot reap. CanUse vouches only
+// that *some* use is legal, so all three being refused means it contradicted itself.
 func useCreature(g *engine.Game, player int, id engine.LocalID, d *decoder) error {
+	start, target := int(d.byte()%3), int(d.byte())
 	var err error
-	switch d.byte() % 3 {
-	case 0:
-		err = g.Reap(player, id)
-	case 1:
-		enemies := g.Battleline(1 - player)
-		if len(enemies) == 0 {
-			err = errNoEnemies
-			break
+	for i := range 3 {
+		switch (start + i) % 3 {
+		case 0:
+			err = g.Reap(player, id)
+		case 1:
+			enemies := g.Battleline(1 - player)
+			if len(enemies) == 0 {
+				err = errNoEnemies
+				break
+			}
+			// Try every defender from the script's pick onward: taunt makes some of
+			// them illegal without making fighting itself illegal.
+			for j := range enemies {
+				if err = g.Fight(player, id, enemies[(target+j)%len(enemies)]); err == nil {
+					break
+				}
+			}
+		default:
+			err = g.UseAction(player, id)
 		}
-		err = g.Fight(player, id, enemies[int(d.byte())%len(enemies)])
-	default:
-		err = g.UseAction(player, id)
+		if err == nil {
+			return nil
+		}
 	}
-	if err == nil {
-		return nil
-	}
-	if err = g.Reap(player, id); err != nil {
-		return fmt.Errorf("CanUse allowed %s but it could not even reap: %w", g.Name(id), err)
-	}
-	return nil
+	return fmt.Errorf("CanUse allowed %s but no use of it was legal: %w", g.Name(id), err)
 }
 
 // errNoEnemies stands in for the engine's refusal when the script picks a fight

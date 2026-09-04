@@ -18,7 +18,7 @@ var Sneklifter = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 313),
 	card.WithPower(2),
-	card.WithTraits("Elf", "Thief"),
+	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.TakeControl{

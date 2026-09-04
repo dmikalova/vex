@@ -10,7 +10,8 @@ import "github.com/dmikalova/vactrol/internal/engine"
 // Trait and Player are the loose value types authors name directly (Player as an
 // effect field, whose values are card.Controller / card.Opponent below).
 type (
-	// Trait is a freeform label such as "Giant" or "Weapon".
+	// Trait is the value type for a card.Traits.X constant, e.g. as the field type
+	// of an effect that filters by trait (PutFromDiscard.Trait).
 	Trait = engine.Trait
 	// Player is the relative player an effect targets: card.Controller or card.Opponent.
 	Player = engine.Player
@@ -73,6 +74,17 @@ type cardTypes struct {
 	Any engine.CardType
 }
 
+// Subject groups the cards a condition can name instead of saying "it", e.g.
+// card.Subject.DiscardedCard.
+var Subject = subjects{
+	DiscardedCard: engine.DiscardedCard,
+}
+
+type subjects struct {
+	// DiscardedCard names the card an effect just discarded.
+	DiscardedCard engine.Subject
+}
+
 // Rarity groups the rarity values, e.g. card.Rarity.Common.
 var Rarity = rarities{
 	Common:    engine.Common,
@@ -94,6 +106,92 @@ type rarities struct {
 	// Connected is the rarity of a card that only enters a deck through another
 	// card's connection (see card.Connects).
 	Connected engine.Rarity
+}
+
+// Traits groups the trait values, e.g. card.Traits.Beast. Named plural, unlike
+// House/Type/Keyword/Rarity, because the singular Trait already names the value
+// type above.
+var Traits = traits{
+	Agent:     engine.Agent,
+	Ally:      engine.Ally,
+	Angel:     engine.Angel,
+	Beast:     engine.Beast,
+	Cleric:    engine.Cleric,
+	Cyborg:    engine.Cyborg,
+	Demon:     engine.Demon,
+	Dragon:    engine.Dragon,
+	Elf:       engine.Elf,
+	Faerie:    engine.Faerie,
+	Fungus:    engine.Fungus,
+	Giant:     engine.Giant,
+	Goblin:    engine.Goblin,
+	Horseman:  engine.Horseman,
+	Human:     engine.Human,
+	Imp:       engine.Imp,
+	Insect:    engine.Insect,
+	Item:      engine.Item,
+	Knight:    engine.Knight,
+	Location:  engine.Location,
+	Martian:   engine.Martian,
+	Merchant:  engine.Merchant,
+	Mutant:    engine.Mutant,
+	Niffle:    engine.Niffle,
+	Power:     engine.Power,
+	Priest:    engine.Priest,
+	Quest:     engine.Quest,
+	Ranger:    engine.Ranger,
+	Robot:     engine.Robot,
+	Scientist: engine.Scientist,
+	Soldier:   engine.Soldier,
+	Specter:   engine.Specter,
+	Spirit:    engine.Spirit,
+	Thief:     engine.Thief,
+	Vehicle:   engine.Vehicle,
+	Weapon:    engine.Weapon,
+	Witch:     engine.Witch,
+}
+
+// traits backs the Traits namespace. A trait carries no rules meaning of its
+// own (unlike a keyword), so a per-field comment here would only restate the
+// field's name.
+type traits struct {
+	Agent,
+	Ally,
+	Angel,
+	Beast,
+	Cleric,
+	Cyborg,
+	Demon,
+	Dragon,
+	Elf,
+	Faerie,
+	Fungus,
+	Giant,
+	Goblin,
+	Horseman,
+	Human,
+	Imp,
+	Insect,
+	Item,
+	Knight,
+	Location,
+	Martian,
+	Merchant,
+	Mutant,
+	Niffle,
+	Power,
+	Priest,
+	Quest,
+	Ranger,
+	Robot,
+	Scientist,
+	Soldier,
+	Specter,
+	Spirit,
+	Thief,
+	Vehicle,
+	Weapon,
+	Witch engine.Trait
 }
 
 // Keyword groups the keyword values, e.g. card.Keyword.Skirmish.
@@ -123,6 +221,22 @@ type keywords struct {
 // because card.Keyword is the value namespace, so a []card.Keyword literal can't
 // be written directly.
 func Keywords(k ...engine.Keyword) []engine.Keyword { return k }
+
+// UseKind groups the ways a card in play can be used, e.g. card.UseKind.Reap.
+var UseKind = useKinds{
+	Reap:   engine.ReapUse,
+	Fight:  engine.FightUse,
+	Action: engine.ActionUse,
+}
+
+type useKinds struct {
+	// Reap is using a creature to reap.
+	Reap engine.UseKind
+	// Fight is using a creature to fight.
+	Fight engine.UseKind
+	// Action is using a card's "Action:" ability.
+	Action engine.UseKind
+}
 
 // Types builds the card-type slice for a Types filter, e.g.
 // card.DiscardFromHand{Types: card.Types(card.Type.Creature)}. Like Keywords, it

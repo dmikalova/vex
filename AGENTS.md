@@ -14,11 +14,15 @@ comment/rulebook generation, golines), so use them:
 - `mage testRun <pattern>` — run only the tests matching a name pattern.
 - `mage vet` — run `go vet`.
 - `mage fmt` / `mage fmtCheck` — format, or check formatting without writing.
-- `mage cover` — run engine tests and report coverage (kept at 100%).
+- `mage cover` — report coverage for each gated area, which must stay at 100%.
+  The areas are `internal/engine`, the card definitions under
+  `internal/cards/sets`, `internal/cards/cardtest`, and `internal/deckgen`; they
+  are listed in `magefiles/cover.go`. `internal/web` is deliberately ungated.
 - `mage generateComments` — rewrite each card's doc comment from its definition.
 - `mage gen` — regenerate card comments and the rulebook.
-- `mage check` — the full green gate (fmt-check, build, vet, test, coverage);
-  run this before considering work done. It must print `ALL GREEN`.
+- `mage check` — the full green gate (fmt-check, build, vet, lint, markdown
+  lint, test, coverage); run this before considering work done. It must print
+  `ALL GREEN`.
 - `mage debug` — replay a simulated game with the game log on and print the log
   tail next to the invariant violation that ended it. With no `SCRIPT` it finds
   the first failing game in the fixed-seed property batch `mage test` plays; set
@@ -313,7 +317,7 @@ sounds like:
   event or a **replacement** of its outcome.
 - **The wider craft** — the effect tree is the **Interpreter** pattern, and a
   whole-tree pass over it is a **Visitor**; splitting `Resolver` by role is the
-  **interface segregation principle**; `card.New(name, …, With*)` is a
+  **interface segregation principle**; `card.New(name, …, WithFoo)` is a
   **functional-options** builder; the bot is **MCTS** (Monte Carlo Tree Search);
   flat comparable state makes `GameState` a **value type**, which is what lets
   undo be a **snapshot** rather than an inverse operation.

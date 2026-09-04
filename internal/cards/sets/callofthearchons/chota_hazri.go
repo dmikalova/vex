@@ -18,7 +18,7 @@ var ChotaHazri = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 349),
 	card.WithPower(3),
-	card.WithTraits("Human", "Witch"),
+	card.WithTraits(card.Traits.Human, card.Traits.Witch),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.LoseAember{

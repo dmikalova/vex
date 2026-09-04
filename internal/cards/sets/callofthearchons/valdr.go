@@ -18,7 +18,7 @@ var Valdr = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 29),
 	card.WithPower(6),
-	card.WithTraits("Giant"),
+	card.WithTraits(card.Traits.Giant),
 	card.WithAttackDamage(card.AttackDamage{
 		Amount:    2,
 		FlankOnly: true,

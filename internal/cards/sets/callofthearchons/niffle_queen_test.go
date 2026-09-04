@@ -28,12 +28,12 @@ func TestNiffleQueen(t *testing.T) {
 					ct.Bind(&niffleBeast, ct.Creature(
 						ct.OfHouse(card.House.Untamed),
 						ct.Power(3),
-						ct.Traits("Beast", "Niffle"),
+						ct.Traits(card.Traits.Beast, card.Traits.Niffle),
 					)),
 					ct.Bind(&beast, ct.Creature(
 						ct.OfHouse(card.House.Untamed),
 						ct.Power(3),
-						ct.Traits("Beast"),
+						ct.Traits(card.Traits.Beast),
 					)),
 					ct.Bind(&plain, ct.Creature(ct.OfHouse(card.House.Untamed), ct.Power(3))),
 				),
@@ -43,7 +43,7 @@ func TestNiffleQueen(t *testing.T) {
 					ct.Bind(&foe, ct.Creature(
 						ct.OfHouse(card.House.Untamed),
 						ct.Power(3),
-						ct.Traits("Beast"),
+						ct.Traits(card.Traits.Beast),
 					)),
 				),
 			},

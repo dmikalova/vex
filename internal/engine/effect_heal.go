@@ -38,10 +38,31 @@ func (e Heal) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 // creature to heal even with no damage anywhere on the board). Neighbours pulled
 // in after the choice can still be undamaged, so the loop skips them too.
 func (e Heal) resolveGate(ctx *EffectContext) bool {
+	return e.heal(ctx, e.Target.selectWith(ctx, false, e.damagedOnly(ctx)))
+}
+
+// declinable reports that the healing is a single clickable creature.
+func (e Heal) declinable() bool { return e.Target.isChosen() }
+
+// resolveOptional is resolveGate under a May: the creature to heal is asked
+// declinably, with a Done to decline, instead of a separate Yes/No before the
+// pick (Protectrix).
+func (e Heal) resolveOptional(ctx *EffectContext) bool {
+	return e.heal(ctx, e.Target.selectWith(ctx, true, e.damagedOnly(ctx)))
+}
+
+// damagedOnly drops undamaged creatures from a Heal's candidates: healing one
+// does nothing, so offering it is a vacuous choice.
+func (e Heal) damagedOnly(ctx *EffectContext) func(LocalID) bool {
+	return func(id LocalID) bool { return ctx.Resolver.Damage(id) > 0 }
+}
+
+// heal removes damage from an already-selected set of creatures (all of it when
+// Fully), and records how many were actually healed.
+func (e Heal) heal(ctx *EffectContext, ids []LocalID) bool {
 	healed := 0
 	damageHealed := 0
-	damagedOnly := func(id LocalID) bool { return ctx.Resolver.Damage(id) > 0 }
-	for _, id := range e.Target.selectWith(ctx, false, damagedOnly) {
+	for _, id := range ids {
 		before := ctx.Resolver.Damage(id)
 		if before == 0 {
 			continue

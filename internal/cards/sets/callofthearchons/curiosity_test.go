@@ -27,7 +27,7 @@ func TestCuriosity(t *testing.T) {
 						ct.Creature(
 							ct.OfHouse(card.House.Logos),
 							ct.Power(3),
-							ct.Traits("Scientist"),
+							ct.Traits(card.Traits.Scientist),
 						),
 					),
 					ct.Bind(
@@ -35,7 +35,7 @@ func TestCuriosity(t *testing.T) {
 						ct.Creature(
 							ct.OfHouse(card.House.Untamed),
 							ct.Power(3),
-							ct.Traits("Beast"),
+							ct.Traits(card.Traits.Beast),
 						),
 					),
 				),

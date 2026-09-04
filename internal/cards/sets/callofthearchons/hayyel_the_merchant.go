@@ -18,7 +18,7 @@ var HayyelTheMerchant = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 245),
 	card.WithPower(3),
-	card.WithTraits("Human", "Merchant"),
+	card.WithTraits(card.Traits.Human, card.Traits.Merchant),
 	card.WithAbility(card.Trigger.AfterCardPlayed, card.Conditional{
 		Cond: card.ItIs{Type: card.Type.Artifact},
 		Then: card.GainAember{

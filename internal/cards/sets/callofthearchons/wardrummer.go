@@ -18,7 +18,7 @@ var Wardrummer = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 49),
 	card.WithPower(3),
-	card.WithTraits("Goblin"),
+	card.WithTraits(card.Traits.Goblin),
 	card.WithAbility(
 		card.Trigger.Play, card.PutFromPlay{
 			Target:      card.Target.EachOtherFriendlyCreature.OfHouse(card.House.Brobnar),

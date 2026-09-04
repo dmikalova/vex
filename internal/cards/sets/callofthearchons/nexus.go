@@ -19,7 +19,7 @@ var Nexus = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 305),
 	card.WithPower(3),
-	card.WithTraits("Cyborg", "Thief"),
+	card.WithTraits(card.Traits.Cyborg, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
 		card.Trigger.Reap, card.Use{

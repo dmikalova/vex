@@ -86,20 +86,48 @@ func (e ArchiveFromHand) resolveGate(ctx *EffectContext) bool {
 		if e.UpTo {
 			choose = ctx.ChooseCardOptional
 		}
-		id, ok := choose("Choose a card to archive", hand)
-		if !ok {
+		if !e.archiveOne(ctx, hand, choose) {
 			return archived
 		}
-		if e.Revealed {
-			ctx.Resolver.Record(CardsRevealedToAll{
-				Player: ctx.Controller,
-				Cards:  []LocalID{id},
-			})
-		}
-		ctx.Resolver.ArchiveFromHand(id)
 		archived = true
 	}
 	return archived
+}
+
+// declinable reports that archiving is a single clickable card, so a "you may"
+// wrapping it (Zyzzix the Many) can be answered by clicking that card instead of
+// a separate Yes/No. A multi-card archive keeps its own "up to" cycle instead.
+func (e ArchiveFromHand) declinable() bool { return e.Count == 1 && !e.UpTo }
+
+// resolveOptional is resolveGate under a May: the card is asked declinably, with
+// a Done to decline.
+func (e ArchiveFromHand) resolveOptional(ctx *EffectContext) bool {
+	hand := e.candidates(ctx)
+	if len(hand) == 0 {
+		return false
+	}
+	return e.archiveOne(ctx, hand, ctx.ChooseCardOptional)
+}
+
+// archiveOne asks choose to pick one candidate and archives it, revealing it
+// first when Revealed is set, and reports whether a card was archived.
+func (e ArchiveFromHand) archiveOne(
+	ctx *EffectContext,
+	hand []LocalID,
+	choose func(prompt string, candidates []LocalID) (LocalID, bool),
+) bool {
+	id, ok := choose("Choose a card to archive", hand)
+	if !ok {
+		return false
+	}
+	if e.Revealed {
+		ctx.Resolver.Record(CardsRevealedToAll{
+			Player: ctx.Controller,
+			Cards:  []LocalID{id},
+		})
+	}
+	ctx.Resolver.ArchiveFromHand(id)
+	return true
 }
 
 // ArchiveTopOfDeck moves the top Count cards of the controller's deck into their
@@ -169,10 +197,26 @@ func (e ArchiveFromPlay) Text() string {
 }
 
 // Resolve archives each selected in-play card.
-func (e ArchiveFromPlay) Resolve(ctx *EffectContext) {
-	for _, id := range e.Target.Select(ctx) {
+func (e ArchiveFromPlay) Resolve(ctx *EffectContext) { e.archive(ctx, e.Target.Select(ctx)) }
+
+// declinable reports that the archiving is a single clickable card, so a "you
+// may" wrapping it (Vezyma Thinkdrone) can be answered by clicking that card
+// instead of a separate Yes/No.
+func (e ArchiveFromPlay) declinable() bool { return e.Target.isChosen() }
+
+// resolveOptional is Resolve under a May: the card is asked declinably, with a
+// Done to decline.
+func (e ArchiveFromPlay) resolveOptional(ctx *EffectContext) bool {
+	return e.archive(ctx, e.Target.SelectOptional(ctx))
+}
+
+// archive puts an already-selected set of in-play cards into their owners'
+// archives, and reports whether anything was.
+func (e ArchiveFromPlay) archive(ctx *EffectContext, ids []LocalID) bool {
+	for _, id := range ids {
 		ctx.Resolver.PutIntoArchives(id)
 	}
+	return len(ids) > 0
 }
 
 // DiscardArchives moves all of a player's archived cards into their discard pile.

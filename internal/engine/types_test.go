@@ -26,6 +26,18 @@ func TestParseHouse(t *testing.T) {
 	}
 }
 
+func TestTraitString(t *testing.T) {
+	if Beast.String() != "Beast" {
+		t.Errorf("Beast.String() = %q, want Beast", Beast.String())
+	}
+	if traitUnset.String() != "" {
+		t.Errorf("traitUnset.String() = %q, want empty", traitUnset.String())
+	}
+	if Trait(999).String() != "" {
+		t.Errorf("Trait(999).String() = %q, want empty", Trait(999).String())
+	}
+}
+
 // TestCardTypeReacts covers the three filter modes a lasting entry's card type
 // has: unset matches anything, AnyType means creature-or-artifact, and a named
 // type matches only itself.

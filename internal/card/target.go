@@ -28,6 +28,7 @@ var Target = targets{
 	CreatureFought:             engine.Target{Kind: engine.TargetCreatureFought},
 	CreatureOrArtifact:         engine.Target{Kind: engine.TargetChosenCreatureOrArtifact},
 	FriendlyCreatureOrArtifact: engine.Target{Kind: engine.TargetChosenFriendlyCreatureOrArtifact},
+	EnemyCreatureOrArtifact:    engine.Target{Kind: engine.TargetChosenEnemyCreatureOrArtifact},
 	Artifact:                   engine.Target{Kind: engine.TargetChosenArtifact},
 	EnemyArtifact:              engine.Target{Kind: engine.TargetChosenEnemyArtifact},
 }
@@ -72,6 +73,8 @@ type targets struct {
 	CreatureOrArtifact engine.Target
 	// FriendlyCreatureOrArtifact is a friendly creature or artifact the controller chooses.
 	FriendlyCreatureOrArtifact engine.Target
+	// EnemyCreatureOrArtifact is an enemy creature or artifact the controller chooses.
+	EnemyCreatureOrArtifact engine.Target
 	// Artifact is a single artifact the controller chooses, either side.
 	Artifact engine.Target
 	// EnemyArtifact is a single enemy artifact the controller chooses.

@@ -18,7 +18,7 @@ var Flaxia = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 352),
 	card.WithPower(4),
-	card.WithTraits("Faerie"),
+	card.WithTraits(card.Traits.Faerie),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
 			Cond: card.ControlsMoreCreatures{},

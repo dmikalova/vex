@@ -18,7 +18,7 @@ var Tunk = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 199),
 	card.WithPower(6),
-	card.WithTraits("Robot"),
+	card.WithTraits(card.Traits.Robot),
 	card.WithAbility(card.Trigger.AfterCardPlayed, card.Conditional{
 		Cond: card.ItIs{
 			House: card.House.Self,

@@ -42,7 +42,9 @@ type Harness struct {
 	P1 *Player
 	P2 *Player
 
-	t *testing.T
+	// t is testing.TB rather than *testing.T so the harness's own failure paths
+	// can be driven by a recording double; a card test always passes its *testing.T.
+	t testing.TB
 	g *engine.Game
 
 	prompt  chan promptReq
@@ -66,7 +68,7 @@ type Player struct {
 // Play builds a game from a Setup and returns the running harness. Player 1 is
 // the active player with their house chosen, so their cards can be played
 // immediately. A t.Cleanup guards that the test leaves no prompt unanswered.
-func Play(t *testing.T, s Setup) *Harness {
+func Play(t testing.TB, s Setup) *Harness {
 	t.Helper()
 	seed := s.Seed
 	if seed == 0 {
@@ -89,10 +91,17 @@ func Play(t *testing.T, s Setup) *Harness {
 	if house == engine.HouseNone {
 		house = DefaultHouse
 	}
-	g.StartTurn(0)
-	if err := g.ChooseHouse(0, house); err != nil {
-		t.Fatalf("cardtest: ChooseHouse: %v", err)
+	// A made-up house is accepted by the engine but matches no card, so the
+	// scenario would silently be one where nothing is playable. Catch it here
+	// rather than let the test read a board that never moved.
+	if int(house) >= engine.NumHouses {
+		t.Fatalf("cardtest: Setup names house %d, which is not one of the %d houses",
+			house, engine.NumHouses)
 	}
+	g.StartTurn(0)
+	// ChooseHouse refuses only a locked or forced house, and the first turn of a
+	// scenario has neither, so a real house is always accepted here.
+	_ = g.ChooseHouse(0, house)
 
 	h.placeSide(0, s.P1)
 	h.placeSide(1, s.P2)
@@ -179,6 +188,16 @@ func (p *Player) ExpectCannotUse(card any) {
 	id := p.h.resolve(card, p.h.inPlayIDs(), "ExpectCannotUse")
 	if err := p.h.g.CanUse(p.index, id); err == nil {
 		p.h.t.Fatalf("%s may be used, want it blocked", p.h.g.Name(id))
+	}
+}
+
+// ExpectCannotUseTo asserts that one of this player's cards may not be used one
+// specific way while the others stay open — Tireless Crocag cannot reap.
+func (p *Player) ExpectCannotUseTo(card any, kind engine.UseKind) {
+	p.h.t.Helper()
+	id := p.h.resolve(card, p.h.inPlayIDs(), "ExpectCannotUseTo")
+	if err := p.h.g.CanUseTo(p.index, id, kind); err == nil {
+		p.h.t.Fatalf("%s may be used to %v, want it blocked", p.h.g.Name(id), kind)
 	}
 }
 
@@ -363,6 +382,7 @@ func (h *Harness) findInHand(player int, card any) (int, engine.LocalID) {
 			}
 		}
 		h.t.Fatalf("Play: %s is not in %s's hand", h.g.Name(v.id), playerName(player))
+		return 0, 0
 	case engine.CardDefinition:
 		idx, id, n := -1, engine.LocalID(0), 0
 		for i, cid := range hand {
@@ -382,10 +402,11 @@ func (h *Harness) findInHand(player int, card any) (int, engine.LocalID) {
 			)
 		}
 		h.t.Fatalf("Play(%s): not in %s's hand", v.Name, playerName(player))
+		return 0, 0
 	default:
 		h.t.Fatalf("Play: cannot play a %T", card)
+		return 0, 0
 	}
-	return 0, 0
 }
 
 // resolve resolves a def-or-handle to a single id within the given id set. A
@@ -410,10 +431,11 @@ func (h *Harness) resolve(card any, ids []engine.LocalID, ctx string) engine.Loc
 			h.t.Fatalf("%s(%s): %d matching cards — use ct.Bind to name one", ctx, v.Name, n)
 		}
 		h.t.Fatalf("%s(%s): no matching card found", ctx, v.Name)
+		return 0
 	default:
 		h.t.Fatalf("%s: cannot resolve a %T", ctx, card)
+		return 0
 	}
-	return 0
 }
 
 // ownerOf reports which player currently holds a card, scanning play and hand.

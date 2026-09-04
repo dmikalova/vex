@@ -18,7 +18,7 @@ var HorsemanOfFamine = card.New(
 	card.Rarity.Connected,
 	card.Provenance(card.CotA, 247),
 	card.WithPower(5),
-	card.WithTraits("Horseman", "Spirit"),
+	card.WithTraits(card.Traits.Horseman, card.Traits.Spirit),
 	card.WithPlayFightReap(card.Destroy{
 		Target: card.Target.EachCreature.Selector(card.LeastPowerful),
 	}),

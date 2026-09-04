@@ -19,7 +19,7 @@ var Mindwarper = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 196),
 	card.WithPower(2),
-	card.WithTraits("Martian", "Scientist"),
+	card.WithTraits(card.Traits.Martian, card.Traits.Scientist),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
 		card.Trigger.Action, card.CaptureAember{

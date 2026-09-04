@@ -19,7 +19,7 @@ var PingleWhoAnnoys = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 43),
 	card.WithPower(2),
-	card.WithTraits("Goblin"),
+	card.WithTraits(card.Traits.Goblin),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{

@@ -19,7 +19,7 @@ var Urchin = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 315),
 	card.WithPower(1),
-	card.WithTraits("Elf", "Thief"),
+	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
 		card.Trigger.Play, card.StealAember{Amount: 1}),

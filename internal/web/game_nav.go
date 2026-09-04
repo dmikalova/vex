@@ -66,9 +66,10 @@ func (g *game) selectNth(ctx app.Context, n int) {
 	g.navSelect(ctx, rows, row, n-1)
 }
 
-// moveSel walks the selection one card along its row (dCol) or one row up or
-// down (dRow), skipping empty rows and holding its place along the row it steps
-// into. With nothing selected it starts at the first card in hand.
+// moveSel walks the selection one card along its row (dCol, wrapping at the
+// row's ends) or one row up or down (dRow), skipping empty rows and holding its
+// place along the row it steps into. With nothing selected it starts at the
+// first card in hand.
 func (g *game) moveSel(ctx app.Context, dRow, dCol int) {
 	rows := g.navRows()
 	row, col := g.navPos(rows)
@@ -77,7 +78,8 @@ func (g *game) moveSel(ctx app.Context, dRow, dCol int) {
 		return
 	}
 	if dCol != 0 {
-		g.navSelect(ctx, rows, row, col+dCol)
+		ids := rows[row]
+		g.navSelect(ctx, rows, row, ((col+dCol)%len(ids)+len(ids))%len(ids))
 		return
 	}
 	for r := row + dRow; r >= 0 && r < len(rows); r += dRow {
@@ -101,7 +103,7 @@ func (g *game) tabSel(ctx app.Context, step int) {
 		g.btnCursor, g.hasBtnCursor = cycleIdx(n, g.btnCursor, g.hasBtnCursor, step), true
 		return
 	}
-	if g.choosing {
+	if _, ok := g.tabCandidates(); ok {
 		g.tabCandidate(step)
 		return
 	}
@@ -130,13 +132,29 @@ func (g *game) tabSel(ctx app.Context, step int) {
 	}
 }
 
+// tabCandidates returns the candidate list a card prompt currently has up, and
+// whether one is up at all — a chooser's candidates, or (sharing the same Tab
+// cursor) the enemy creatures a declared fight may still hit. Unifying the two
+// here means a fix to how the cursor lands or draws applies to both at once.
+func (g *game) tabCandidates() ([]engine.LocalID, bool) {
+	switch {
+	case g.choosing:
+		return g.chooserCandidates, true
+	case g.phase == phaseFightTarget:
+		return g.g.FightTargets(g.active(), g.attacker), true
+	}
+	return nil, false
+}
+
 // tabCandidate moves the card prompt's cursor one step along its candidates. An
 // optional prompt ("exhaust up to 3 creatures") is a cycle of its candidates plus
 // one tail stop on Done, because stopping early is one of its answers and a
-// player answering from the keyboard has to be able to reach it.
+// player answering from the keyboard has to be able to reach it. A fight target
+// has no such tail stop — once a fight is declared some enemy must be hit — so
+// it just cycles.
 func (g *game) tabCandidate(step int) {
-	cands := g.chooserCandidates
-	if !g.chooserDeclinable {
+	cands, _ := g.tabCandidates()
+	if !g.choosing || !g.chooserDeclinable {
 		g.promptCursor, g.hasCursor = cycleID(cands, g.promptCursor, step), true
 		return
 	}
@@ -264,15 +282,23 @@ func (g *game) isDoneCursor() bool {
 }
 
 // confirmPrompt answers whatever prompt is up with the candidate Tab stopped on
-// — a button, or a card — so a prompt can be finished without the mouse.
-func (g *game) confirmPrompt(ctx app.Context) {
+// — a button, or a card — so a prompt can be finished without the mouse. It
+// reports whether it did anything, so a key bound to both "confirm the Tab
+// cursor" and "affirm the default answer" (Space) knows to fall back.
+func (g *game) confirmPrompt(ctx app.Context) bool {
 	if g.pressButton(ctx) {
-		return
+		return true
 	}
-	if !g.choosing || !g.hasCursor || !containsID(g.chooserCandidates, g.promptCursor) {
-		return
+	cands, ok := g.tabCandidates()
+	if !ok || !g.hasCursor || !containsID(cands, g.promptCursor) {
+		return false
+	}
+	if g.phase == phaseFightTarget {
+		g.fightTargetID(ctx, g.promptCursor)
+		return true
 	}
 	g.chooseCandidate(ctx, g.promptCursor)
+	return true
 }
 
 // cycleIdx returns the button index one step on from cur in a row of n, wrapping
@@ -306,7 +332,7 @@ func cycleID(ids []engine.LocalID, cur engine.LocalID, step int) engine.LocalID 
 // isSelected reports whether a card draws as the selected one: the current
 // selection, or the candidate a prompt's Tab cursor has landed on.
 func (g *game) isSelected(id engine.LocalID) bool {
-	if g.choosing {
+	if _, ok := g.tabCandidates(); ok {
 		return g.hasCursor && g.promptCursor == id
 	}
 	return g.hasSel && g.sel == id

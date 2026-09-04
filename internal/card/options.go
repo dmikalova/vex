@@ -10,7 +10,7 @@ var (
 	WithPower = func(p int) Option { return gameplay(engine.WithPower(p)) }
 	// WithArmor sets a creature's armor.
 	WithArmor = func(a int) Option { return gameplay(engine.WithArmor(a)) }
-	// WithTraits sets a card's traits (e.g. "Beast", "Item").
+	// WithTraits sets a card's traits (e.g. card.Traits.Beast, card.Traits.Item).
 	WithTraits = func(t ...Trait) Option { return gameplay(engine.WithTraits(t...)) }
 	// WithKeywords gives a card keywords (Skirmish, Elusive, ...).
 	WithKeywords = func(k ...engine.Keyword) Option { return gameplay(engine.WithKeywords(k...)) }
@@ -22,6 +22,14 @@ var (
 	WithAttackDamage = func(ad engine.AttackDamage) Option { return gameplay(engine.WithAttackDamage(ad)) }
 	// WithFightRestriction restricts which creatures this creature may fight.
 	WithFightRestriction = func(t engine.Target) Option { return gameplay(engine.WithFightRestriction(t)) }
+	// WithCannotBeUsedTo bars a card from named ways of being used (reap, fight, action).
+	WithCannotBeUsedTo = func(k ...engine.UseKind) Option {
+		return gameplay(engine.WithCannotBeUsedTo(k...))
+	}
+	// WithDestroyedWhen destroys a creature for as long as a board condition holds.
+	WithDestroyedWhen = func(c Condition) Option { return gameplay(engine.WithDestroyedWhen(c)) }
+	// WithTakesDamageFor makes this card take the damage dealt to other creatures.
+	WithTakesDamageFor = func(t engine.Target) Option { return gameplay(engine.WithTakesDamageFor(t)) }
 	// WithAttackIgnores makes a creature ignore defensive keywords while attacking.
 	WithAttackIgnores = func(kws ...engine.Keyword) Option { return gameplay(engine.WithAttackIgnores(kws...)) }
 	// WithEntersPlay adds an effect that resolves as the creature enters play.

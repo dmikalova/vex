@@ -18,7 +18,7 @@ var SelwynTheFence = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 309),
 	card.WithPower(3),
-	card.WithTraits("Elf", "Thief"),
+	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithFightOrReap(card.MoveAember{
 		Amount: 1,
 		From:   card.Target.FriendlyCreatureOrArtifact,

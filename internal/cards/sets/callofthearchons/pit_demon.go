@@ -18,7 +18,7 @@ var PitDemon = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 92),
 	card.WithPower(5),
-	card.WithTraits("Demon"),
+	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(
 		card.Trigger.Action, card.StealAember{Amount: 1}),
 )
