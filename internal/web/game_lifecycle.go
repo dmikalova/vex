@@ -83,15 +83,19 @@ func (g *game) scrollPromptZoneIntoView() {
 	g.promptZoneScrolled = true
 }
 
-// scrollCursorIntoView keeps whatever Tab is currently pointed at — a card
+// scrollCursorIntoView brings whatever Tab is currently pointed at — a card
 // prompt's or fight target's cursor, or in ordinary play the selection — inside
-// its row's scrolled strip. It is derived from the cursor's position rather than
-// fired on a Tab keypress, so it is safe to run on every render: "nearest" only
-// moves the scroll when the card is not already visible, so it never fights a
-// player who has scrolled a strip on their own.
+// its row's scrolled strip. It fires only when the cursor lands on a new card:
+// running on every render, it would haul a strip back every time the player
+// scrolled away from the selected card, and the player and the client would take
+// turns fighting over the scroll position.
 func (g *game) scrollCursorIntoView() {
 	id, ok := g.cursorCardID()
 	if !ok {
+		g.cursorScrolled = ""
+		return
+	}
+	if id == g.cursorScrolled {
 		return
 	}
 	el := app.Window().GetElementByID(id)
@@ -99,6 +103,7 @@ func (g *game) scrollCursorIntoView() {
 		return
 	}
 	el.Call("scrollIntoView", map[string]any{"block": "nearest", "inline": "nearest"})
+	g.cursorScrolled = id
 }
 
 // cursorCardID is the DOM id of the card Tab is currently pointed at.
@@ -259,6 +264,32 @@ func (g *game) placeFocus() {
 	if g.measureFocus() {
 		g.dispatch(nil)
 	}
+}
+
+// wheelOverFocus scrolls the strip the lifted card copy is drawn over, since the
+// copy now takes the pointer (it has to, to be the source of its own drag) and
+// would otherwise stop a wheel dead on the very card the player is reading.
+func (g *game) wheelOverFocus(_ app.Context, e app.Event) {
+	id, ok := g.focusCardID()
+	if !ok {
+		return
+	}
+	el := app.Window().GetElementByID(g.cardDOMID(id))
+	if !el.Truthy() {
+		return
+	}
+	strip := el.Call("closest", ".card-strip")
+	if !strip.Truthy() {
+		return
+	}
+	// A strip only scrolls sideways, and a plain mouse wheel only has a dy to give
+	// it — which is the trade the browser itself makes over a horizontal scroller.
+	d := e.Get("deltaX").Float()
+	if d == 0 {
+		d = e.Get("deltaY").Float()
+	}
+	strip.Set("scrollLeft", strip.Get("scrollLeft").Float()+d)
+	e.PreventDefault()
 }
 
 // navigates reports whether a key moves or answers the selection, and so must be

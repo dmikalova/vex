@@ -105,6 +105,10 @@ type game struct {
 	promptZone         string
 	promptZoneScrolled bool
 
+	// cursorScrolled is the DOM id the Tab cursor was last scrolled to, so the
+	// scroll happens once when the cursor moves rather than on every render.
+	cursorScrolled string
+
 	// forgingKey, when >= 0, opens the manual-mode key-forge colour picker for that
 	// player. -1 keeps it closed.
 	forgingKey int

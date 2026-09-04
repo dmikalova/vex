@@ -19,12 +19,16 @@ import (
 // The copy is grown by resizing, not by scaling the board card as a picture: the
 // reason to enlarge a card is to read the text the board was clipping, and only a
 // real box reflows it. So only its width is set; the height is whatever its rules
-// (a stack of upgrades, say) come out at, up to what the window has left.
+// (a stack of upgrades, say) come out at, with a floor of focusMinGrow and a
+// ceiling of what the window has left.
 
 const (
 	// focusGrow is how much wider the lifted copy is than the card it was lifted
-	// from.
-	focusGrow = 1.5
+	// from. This is the dial for how large the lift reads.
+	focusGrow = 1.2
+	// focusMinGrow is the shortest the copy may be, as a multiple of its card's
+	// height: enough to read as lifted even when its rules are a single line.
+	focusMinGrow = 1.1
 	// focusPad is the margin the copy keeps from the edge of the window.
 	focusPad = 8.0
 )
@@ -52,7 +56,18 @@ func (g *game) cardFocus() app.UI {
 		return app.Div()
 	}
 	acts, note := g.selActions()
+	face := g.cardFace(id)
+	// The copy is the card, so a drag has to start from it: it lies over its own
+	// neighbours, and a pointer that fell through would grab whichever card the
+	// enlarged face happens to cover.
+	if g.selKind == selHand && g.playableFromHand(id) {
+		face.ID = id
+		face.Draggable = true
+		face.OnDragStart = g.startHandDrag
+		face.OnDragEnd = g.endHandDrag
+	}
 	panel := app.Div().
+		OnWheel(g.wheelOverFocus).
 		Class(cx("card-focus",
 			// The -a/-b pair replays the grow when the lift moves to another card:
 			// go-app patches the same element, and a CSS animation only restarts when
@@ -64,7 +79,7 @@ func (g *game) cardFocus() app.UI {
 			// the card in the middle of the screen than to lose its buttons with it.
 			ifCls(g.hasFocus, "card-focus--placed"))).
 		Body(
-			g.cardFace(id),
+			face,
 			app.Div().Class("card-focus-acts").Body(
 				app.Range(acts).Slice(func(i int) app.UI {
 					return btn(acts[i].Label, acts[i].On, acts[i].Class)
@@ -77,7 +92,7 @@ func (g *game) cardFocus() app.UI {
 	if !g.hasFocus {
 		return panel
 	}
-	x, y, w, _ := g.focusBox()
+	x, y, w, minH := g.focusBox()
 	// Where this particular card sits is a runtime measurement, so it is the one
 	// thing the markup carries besides class names; app.css owns what is done with
 	// it, the same way house colours arrive as --nm/--tp.
@@ -85,6 +100,7 @@ func (g *game) cardFocus() app.UI {
 		Style("--focus-x", px(x)).
 		Style("--focus-y", px(y)).
 		Style("--focus-w", px(w)).
+		Style("--focus-min-h", px(minH)).
 		Style("--focus-max-h", px(g.focusViewH-2*focusPad)).
 		// Where the copy grows from: its own slot on the board, so it is seen coming
 		// off the card rather than appearing beside it. dy is measured to the same
@@ -112,19 +128,20 @@ func (g *game) focusDY(y float64) float64 {
 // the opponent's half, the bottom for one in the player's own. Anchoring that way
 // is what lets the copy be placed from the card's rect alone: the copy is as tall
 // as its text needs, which is not known until it has been laid out, and whatever it
-// turns out to be grows away from the near edge rather than through it. h is only
-// the height the copy is assumed to come out at, which is what centres it.
-func (g *game) focusBox() (x, y, w, h float64) {
+// turns out to be grows away from the near edge rather than through it. minH is
+// both the copy's floor and, for want of knowing better, the height it is centred
+// as if it had.
+func (g *game) focusBox() (x, y, w, minH float64) {
 	r := g.focusRect
 	w = min(r.w*focusGrow, g.focusViewW-2*focusPad)
-	h = r.h * focusGrow
+	minH = r.h * focusMinGrow
 	cy := r.y + r.h/2
 	if g.actsUp() {
 		cy = g.focusViewH - cy
 	}
 	x = clampAxis(r.x+r.w/2-w/2, w, g.focusViewW)
-	y = clampAxis(cy-h/2, h, g.focusViewH)
-	return x, y, w, h
+	y = clampAxis(cy-minH/2, minH, g.focusViewH)
+	return x, y, w, minH
 }
 
 // clampAxis pins a span of the given length inside the window, keeping focusPad at

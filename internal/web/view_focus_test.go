@@ -1,23 +1,29 @@
 package web
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 // The copy is centred on the card it was lifted from and then pushed back inside
 // the window, so a card on a flank or down in the hand still grows evenly in every
 // direction it has room for rather than off the edge of the screen. Its y is
 // measured from whichever window edge its card is nearest.
 func TestTheLiftCentresOnItsCardAndStaysOnScreen(t *testing.T) {
-	const w, h = 144, 192 // a card's slot; the copy is at least 1.5x that
+	const w, h = 144, 192 // a card's slot
+	// The copy's own size, and so the box it is centred and clamped as.
+	gotW := float64(w) * focusGrow
+	minH := float64(h) * focusMinGrow
 	for _, tc := range []struct {
 		what           string
 		x, y           float64
 		wantX, wantY   float64
 		wantW, wantMin float64
 	}{
-		// Below the midline, so y is from the bottom: (800 - 496) - 288/2.
-		{"in the player's half", 600, 400, 564, 160, 216, 288},
-		{"against the top left", 4, 4, focusPad, focusPad, 216, 288},
-		{"against the bottom right", 1130, 610, 1280 - 216 - focusPad, focusPad, 216, 288},
+		// Below the midline, so y is from the bottom: (800 - 496) - minH/2.
+		{"in the player's half", 600, 400, 672 - gotW/2, 304 - minH/2, gotW, minH},
+		{"against the top left", 4, 4, focusPad, focusPad, gotW, minH},
+		{"against the bottom right", 1130, 610, 1280 - gotW - focusPad, focusPad, gotW, minH},
 	} {
 		g := &game{
 			hasFocus:   true,
@@ -83,13 +89,14 @@ func TestALiftTallerThanTheWindowPinsToTheNearEdge(t *testing.T) {
 // one run back to the card's matching corner, since it is the only corner whose
 // place is known before the copy's text has decided how tall it is.
 func TestTheLiftGrowsOutOfItsCardsSlot(t *testing.T) {
+	minH := float64(192) * focusMinGrow
 	for _, tc := range []struct {
 		what   string
 		y      float64
 		wantDY float64
 	}{
-		// Anchored by its top: 100 - (196 - 144).
-		{"in the opponent's half", 100, 48},
+		// Anchored by its top: 100 - (196 - minH/2).
+		{"in the opponent's half", 100, 100 - (196 - minH/2)},
 		// Anchored by its bottom: (600 + 192) - (800 - 8).
 		{"in the player's half", 600, 0},
 	} {
@@ -162,6 +169,39 @@ func TestDroppingTheSelectionDropsTheLift(t *testing.T) {
 	if c.g.hasFocus {
 		t.Error("the lift outlived the selection")
 	}
+}
+
+// A drag has to start from the lifted copy itself: it lies over its neighbours,
+// so a pointer falling through it would grab whichever card the enlarged face
+// happens to cover. A card already on the board has nowhere to be dragged to.
+func TestDraggingTheLiftedCard(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	id := c.deal(testCreature)
+
+	c.g.selectHandID(c.ctx, id)
+	if !strings.Contains(liftMarkup(t, c.html()), " draggable>") {
+		t.Error("the lifted copy of a playable hand card is not a drag source")
+	}
+
+	c.playFromHand(id)
+	c.ownNextTurn(testHouse)
+	c.g.selectBoardID(c.ctx, id)
+	if strings.Contains(liftMarkup(t, c.html()), " draggable>") {
+		t.Error("the lifted copy of a creature already in play is a drag source")
+	}
+}
+
+// liftMarkup is the lifted copy's face, cut out of the drawn client so a count of
+// drag sources cannot pick up the hand underneath it.
+func liftMarkup(t *testing.T, h string) string {
+	t.Helper()
+	from := strings.Index(h, `class="card-focus`)
+	to := strings.Index(h, `class="card-focus-acts`)
+	if from < 0 || to < from {
+		t.Fatal("the client drew no lifted card")
+	}
+	return h[from:to]
 }
 
 // Hovering the card that is already lifted does not also pop the preview — that
