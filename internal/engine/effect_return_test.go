@@ -186,6 +186,30 @@ func TestMoveFromPlayToDeckShuffled(t *testing.T) {
 	}
 }
 
+func TestPutFromPlayGate(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("src", 1), 0)
+	other := g.AddToBattleline(testCreature("other", 1), 0)
+	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+
+	e := PutFromPlay{Target: Target{Kind: TargetThisCreature}, Destination: ToHand}
+	if !e.resolveGate(ctx) {
+		t.Error("resolveGate should report true when a card moved")
+	}
+	if !ctx.HasIt || ctx.It != src {
+		t.Errorf("ctx.It = %v (HasIt %v), want %d", ctx.It, ctx.HasIt, src)
+	}
+
+	ctx = &EffectContext{Resolver: g, Source: other, Controller: 0}
+	e = PutFromPlay{Target: Target{Kind: TargetThisCreature}.Damaged(), Destination: ToHand}
+	if e.resolveGate(ctx) {
+		t.Error("resolveGate should report false when nothing moved")
+	}
+	if ctx.HasIt {
+		t.Error("ctx.It should not be set when nothing moved")
+	}
+}
+
 func TestMoveFromPlayValidate(t *testing.T) {
 	this := Target{Kind: TargetThisCreature}
 	for _, d := range []Destination{ToHand, ToTopOfDeck, ToDeckShuffled, ToArchives} {

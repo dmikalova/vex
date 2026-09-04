@@ -569,7 +569,6 @@ body {
      wheel over the copy is handed to the row underneath in Go (wheelOverFocus). */
   pointer-events: none;
   transform-origin: top left;
-  filter: drop-shadow(0 10px 22px rgb(0 0 0 / 0.6));
 }
 /* A card in the player's own half is anchored by its bottom edge and puts its verbs
    above its face; one in the opponent's half hangs from its top edge with its verbs
@@ -600,13 +599,24 @@ body {
   max-height: none;
   flex: 0 1 auto;
   pointer-events: auto;
+  /* The shadow is on each piece rather than on the pair, because a filter on an
+     ancestor stops the face being its own layer and the browser then cuts the drag
+     image out of the pair — taking a sliver of the button above with it. */
+  filter: drop-shadow(0 10px 22px rgb(0 0 0 / 0.6));
   /* pinned to the height a card this wide would be at full size — 4/3 of its width,
      the board card's 9rem/12rem — rather than to the height this copy happens to
      have. The S curve is then a property of the face alone, and does not slide
      around as the verbs above it or a long rules box change how tall the copy is. */
   --card-full-h: calc(var(--focus-w, 13.5rem) * 4 / 3);
 }
-.card-focus .card-body,
+/* The card is floored at --focus-min-h, so on a card with little text there is
+   slack to share out. It goes to the body, whose dark panel is what the text is
+   read off: a card with a band of bare art under a stubby panel reads as clipped. */
+.card-focus .card-body {
+  flex: 1 1 auto;
+  min-height: auto;
+  overflow: visible;
+}
 .card-focus .card-rules {
   flex: 0 0 auto;
   min-height: auto;
@@ -642,6 +652,7 @@ body {
   padding: 0.25rem;
   border-radius: 0.375rem;
   background: var(--surface);
+  filter: drop-shadow(0 10px 22px rgb(0 0 0 / 0.6));
   pointer-events: auto;
 }
 .card-focus-acts button {

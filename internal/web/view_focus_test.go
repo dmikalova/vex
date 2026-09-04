@@ -171,6 +171,22 @@ func TestDroppingTheSelectionDropsTheLift(t *testing.T) {
 	}
 }
 
+// The keybar reports what a card is doing on the table — granted keywords and all
+// — so the copy of a card still in hand does not draw one. Reading Elusive off a
+// card that is not on a battleline says it is dodging a fight it cannot be in.
+func TestTheLiftDrawsAKeybarOnlyInPlay(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	id := c.deal("Dew Faerie")
+
+	c.g.selectHandID(c.ctx, id)
+	c.lacks("a card lifted out of hand", "card-keybar")
+
+	c.playFromHand(id)
+	c.g.selectBoardID(c.ctx, id)
+	c.wants("a card lifted off the battleline", "card-keybar")
+}
+
 // A drag has to start from the lifted copy itself: it lies over its neighbours,
 // so a pointer falling through it would grab whichever card the enlarged face
 // happens to cover. A card already on the board has nowhere to be dragged to.

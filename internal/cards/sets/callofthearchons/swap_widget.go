@@ -1,20 +1,15 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// SwapWidget
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Swap Widget
 //
 //	House:  Mars
 //	Type:   Artifact
 //	Rarity: Rare
 //	Traits: Item
 //
-//	Action: Return a ready friendly Mars creature to your hand. If you do, put a Mars creature with a different name from your hand into play, then ready it.
+//	Action: Put a friendly ready Mars creature into its owner's hand -> put a Mars creature with a different name from your hand into play, and ready it.
 var SwapWidget = card.New(
 	"Swap Widget",
 	card.House.Mars,
@@ -22,5 +17,19 @@ var SwapWidget = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 189),
 	card.WithTraits(card.Traits.Item),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Action, card.Then{
+			First: card.PutFromPlay{
+				Target:      card.Target.FriendlyCreature.OfHouse(card.House.Self).Ready(),
+				Destination: card.To.Hand,
+			},
+			Result: card.Sequence{Effects: []card.Effect{
+				card.PutFromHand{
+					Type:           card.Type.Creature,
+					House:          card.House.Self,
+					ExceptSameName: true,
+				},
+				card.Ready{Target: card.Target.Triggering},
+			}},
+		}),
 )

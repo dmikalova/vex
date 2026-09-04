@@ -130,6 +130,7 @@ func (g *game) controls() app.UI {
 	}
 	// Mid-action selections (choosing a flank or a fight target) show only their
 	// own controls — End turn is withheld until the action finishes or is cancelled.
+	// A flank is asked on the lifted card, so for that one the dock is simply empty.
 	if g.phase == phaseFlank || g.phase == phaseFightTarget {
 		return app.Div().Class("controls").Body(g.targetingPrompt())
 	}
@@ -336,26 +337,12 @@ func (g *game) keyColorOptions() bool {
 	return true
 }
 
-// targetingPrompt is the dock's mid-action question: which flank to place a
-// creature on, or which enemy to fight. A card's own verbs are not here — they
-// are drawn on the lifted copy of the card itself (cardFocus), which leaves the
-// dock to the questions that belong to no card.
+// targetingPrompt is the dock's mid-action question: which enemy to fight. A
+// card's own verbs are not here — they are drawn on the lifted copy of the card
+// itself (cardFocus), which leaves the dock to the questions whose answer is some
+// other card on the board.
 func (g *game) targetingPrompt() app.UI {
-	switch g.phase {
-	case phaseFlank:
-		return app.Div().Class("btn-col").Body(
-			app.Div().Class("section-title").Text("Play "+g.g.Def(g.sel).Name+" to which flank?"),
-			btn("Left flank", g.playFlank(true), cx("btn-primary", "btn-flank", "btn-flank--left",
-				ifCls(g.isButtonCursor(0), "btn-cursor"))),
-			btn(
-				"Right flank",
-				g.playFlank(false),
-				cx("btn-primary", "btn-flank", "btn-flank--right",
-					ifCls(g.isButtonCursor(1), "btn-cursor")),
-			),
-			btn("Cancel", g.cancelTargeting, "btn-secondary"),
-		)
-	case phaseFightTarget:
+	if g.phase == phaseFightTarget {
 		return app.Div().Class("btn-col").Body(
 			app.Div().Class("prompt").Text("Pick an enemy creature to fight"),
 			btn("Cancel", g.cancelTargeting, "btn-secondary"),
@@ -380,6 +367,9 @@ func (g *game) selActions() ([]cardAction, string) {
 	if !g.hasSel {
 		return nil, ""
 	}
+	if g.phase == phaseFlank {
+		return g.flankActions()
+	}
 	switch g.selKind {
 	case selHand:
 		return g.handCardActions()
@@ -389,6 +379,19 @@ func (g *game) selActions() ([]cardAction, string) {
 		return g.artifactCardActions()
 	}
 	return nil, "Read-only — this is your opponent's card."
+}
+
+// flankActions is the which-end question, asked on the creature being placed: it
+// is a verb of that card like Play is, so it belongs where Play was rather than
+// in a dock the player has to look away to.
+func (g *game) flankActions() ([]cardAction, string) {
+	return []cardAction{
+		{"Left flank", cx("btn-primary", "btn-flank", "btn-flank--left",
+			ifCls(g.isButtonCursor(0), "btn-cursor")), g.playFlank(true)},
+		{"Right flank", cx("btn-primary", "btn-flank", "btn-flank--right",
+			ifCls(g.isButtonCursor(1), "btn-cursor")), g.playFlank(false)},
+		{"Cancel", "btn-secondary", g.cancelTargeting},
+	}, ""
 }
 
 func (g *game) handCardActions() ([]cardAction, string) {

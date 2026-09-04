@@ -30,6 +30,14 @@ func btn(label string, h app.EventHandler, class string) app.UI {
 func (g *game) cardFace(id engine.LocalID) *cardView {
 	def := g.g.Def(id)
 	house := g.g.House(id)
+	// The keybar is a fact about a card on the table — its granted keywords
+	// included — so a card being read in hand does not draw one.
+	var bar []string
+	var taunted bool
+	if g.inPlay(id) {
+		bar = g.barKeywords(id)
+		taunted = def.Type == engine.Creature && g.g.TauntShielded(id)
+	}
 	return &cardView{
 		Title:         def.Name,
 		HouseCls:      houseClasses(house),
@@ -44,9 +52,20 @@ func (g *game) cardFace(id engine.LocalID) *cardView {
 		Maverick:      g.isMaverick(id),
 		Stunned:       g.g.Stunned(id),
 		Exhausted:     g.g.Exhausted(id),
-		Bar:           g.barKeywords(id),
-		TauntShielded: def.Type == engine.Creature && g.g.TauntShielded(id),
+		Bar:           bar,
+		TauntShielded: taunted,
 	}
+}
+
+// inPlay reports whether a card is on the table — in either battleline or either
+// artifact row — as opposed to in a hand or an out-of-play pile.
+func (g *game) inPlay(id engine.LocalID) bool {
+	for p := range 2 {
+		if containsID(g.g.Battleline(p), id) || containsID(g.g.Artifacts(p), id) {
+			return true
+		}
+	}
+	return false
 }
 
 // kindLabel is a card's foot label: its type (e.g. "Creature"). Traits render

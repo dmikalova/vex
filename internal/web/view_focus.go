@@ -33,11 +33,12 @@ const (
 	focusPad = 8.0
 )
 
-// focusCardID is the card the copy is lifted from, if any. Mid-action phases are
-// left alone: the board is being picked over for a flank or a fight target, and a
-// card blown up over it would cover the thing being picked.
+// focusCardID is the card the copy is lifted from, if any. Picking a flank keeps
+// the lift, since the question is about the card being placed and is asked on it;
+// picking a fight target drops it, since the answer is another card on the board
+// that a card blown up over it would cover.
 func (g *game) focusCardID() (engine.LocalID, bool) {
-	if !g.hasSel || g.phase != phaseMain {
+	if !g.hasSel || (g.phase != phaseMain && g.phase != phaseFlank) {
 		return 0, false
 	}
 	if g.busy || g.choosing || g.choosingOption || g.pickerOpen || g.forgingKey >= 0 {
@@ -60,7 +61,7 @@ func (g *game) cardFocus() app.UI {
 	// The copy is the card, so a drag has to start from it: it lies over its own
 	// neighbours, and a pointer that fell through would grab whichever card the
 	// enlarged face happens to cover.
-	if g.selKind == selHand && g.playableFromHand(id) {
+	if g.phase == phaseMain && g.selKind == selHand && g.playableFromHand(id) {
 		face.ID = id
 		face.Draggable = true
 		face.OnDragStart = g.startHandDrag

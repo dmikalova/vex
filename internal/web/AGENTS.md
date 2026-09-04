@@ -225,7 +225,7 @@ last stretch is the DOM-bound code above.
   and clip a fixed slot.
 - **`--card-full-h` is a nominal height, not the box's own.** The ogee mask is
   pinned to it so that a card squished into a short slot slides the S curve off
-  the bottom instead of compressing it. Set it from the card's *width* — the
+  the bottom instead of compressing it. Set it from the card's _width_ — the
   design ratio is the board card's `9rem`/`12rem`, so `.card-focus` uses
   `calc(var(--focus-w) * 4 / 3)`. Deriving it from the rendered height instead
   (`100%`) makes the frame a function of how much rules text a card happens to
@@ -244,6 +244,16 @@ last stretch is the DOM-bound code above.
   `.card-focus` re-measures from go-app's `Resizer` (`OnResize`) and from a
   document-level `scroll` listener registered in the **capture** phase — a scroll
   event does not bubble, and every card strip scrolls on its own.
+- **A copy of a card that covers its neighbours has to take the pointer.**
+  `pointer-events: none` on `.card-focus` looked like a free way to let the wheel
+  through, but it also let a drag through: the grab landed on whichever card the
+  enlarged face happened to lie over, not on the card being enlarged. The face is
+  `pointer-events: auto` and is its own drag source, and the wheel is handed on to
+  the strip underneath in Go (`wheelOverFocus`).
+- **Keep `filter` off the ancestor of a drag source.** A filtered ancestor stops
+  the dragged element being its own layer, and the browser then cuts the drag
+  image out of the ancestor — pulling in a sliver of whatever sits next to it.
+  `.card-focus` gives its drop-shadow to the face and the verbs separately.
 
 ## Never shout: no all-caps
 

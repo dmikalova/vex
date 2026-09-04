@@ -118,7 +118,10 @@ type Target struct {
 	damaged       bool
 	undamaged     bool
 	stunned       bool
-	withAember    bool
+	// ready narrows the target to creatures that are not exhausted (Swap Widget's
+	// "a ready friendly Mars creature").
+	ready      bool
+	withAember bool
 	// withArmor narrows the target to creatures that have armor at all, rendering
 	// " with armor". It reads the creature's armor value, not what is left of it, so
 	// a creature that has already spent its armor absorbing damage still has armor.
@@ -295,6 +298,12 @@ func (t Target) Stunned() Target {
 	return t
 }
 
+// Ready narrows the target to creatures that are not exhausted.
+func (t Target) Ready() Target {
+	t.ready = true
+	return t
+}
+
 // allows reports whether a single card satisfies the target's per-card filters,
 // ignoring its base-set Kind. It is how a Target expresses a condition on one
 // specific card (e.g. a fight restriction testing the defender).
@@ -429,6 +438,9 @@ func (t Target) Text() string {
 	}
 	if t.stunned {
 		noun = "stunned " + noun
+	}
+	if t.ready {
+		noun = "ready " + noun
 	}
 	if t.keyword.valid() {
 		noun = strings.ToLower(t.keyword.String()) + " " + noun
@@ -849,6 +861,7 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 		!t.damaged &&
 		!t.undamaged &&
 		!t.stunned &&
+		!t.ready &&
 		!t.withAember &&
 		!t.withArmor &&
 		t.keyword == keywordUnset &&
@@ -908,6 +921,9 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 			continue
 		}
 		if t.stunned && !ctx.Resolver.Stunned(id) {
+			continue
+		}
+		if t.ready && ctx.Resolver.Exhausted(id) {
 			continue
 		}
 		if t.onFlank && ctx.Resolver.IsCreature(id) && !onFlank(ctx, id) {

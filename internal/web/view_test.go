@@ -100,16 +100,40 @@ func TestDrawingNoLiftedCard(t *testing.T) {
 	c.lacks("no selection", "card-focus")
 }
 
-// The lift stands down while the board is being picked over for a flank, so the
-// enlarged card cannot cover the row it is being placed in.
-func TestTheLiftStandsDownWhilePickingAFlank(t *testing.T) {
+// Picking a flank is a question about the card being placed, so it is asked on
+// the lifted copy of that card rather than in the dock.
+func TestTheLiftAsksWhichFlank(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
 	c.playFromHand(c.deal(testCreature))
 
 	c.g.selectHandID(c.ctx, c.deal(testCreature))
 	c.do(c.g.play)
-	c.lacks("the flank prompt", "card-focus")
+	c.wants("the flank prompt", "card-focus", "Left flank", "Right flank", "Cancel")
+	c.lacks("the flank prompt", "End turn")
+}
+
+// Selecting another card while a flank is pending is a change of mind about which
+// card to play, so the question goes away rather than being answered with the new
+// card.
+func TestSelectingAnotherCardTakesBackTheFlankQuestion(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	c.playFromHand(c.deal(testCreature))
+
+	c.g.selectHandID(c.ctx, c.deal(testCreature))
+	c.do(c.g.play)
+	if c.g.phase != phaseFlank {
+		t.Fatalf("the phase is %v, want phaseFlank", c.g.phase)
+	}
+
+	other := c.deal(testArtifact)
+	c.g.selectHandID(c.ctx, other)
+	if c.g.phase != phaseMain {
+		t.Errorf("selecting another card left the phase at %v, want phaseMain", c.g.phase)
+	}
+	c.wants("the new selection", "Play", "Discard")
+	c.lacks("the new selection", "Left flank")
 }
 
 // A card that cannot act is still lifted, and says why instead of offering verbs.

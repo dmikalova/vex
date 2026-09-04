@@ -225,6 +225,24 @@ func TestTargetUndamagedAndOther(t *testing.T) {
 	}
 }
 
+func TestTargetReady(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("src", 3), 0)
+	spent := g.AddToBattleline(testCreature("spent", 3), 0)
+	g.State.Cards[spent].Exhausted = true
+	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+
+	if ids := (Target{Kind: TargetEachCreature}).Ready().
+		Select(ctx); len(ids) != 1 ||
+		ids[0] != src {
+		t.Errorf("Ready filter = %v, want [%d]", ids, src)
+	}
+	if got := (Target{Kind: TargetEachFriendlyCreature}).Ready().
+		Text(); got != "each friendly ready creature" {
+		t.Errorf("ready text = %q", got)
+	}
+}
+
 func TestTargetWithAemberAndLeastPowerful(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	rich := g.AddToBattleline(testCreature("rich", 5), 0)

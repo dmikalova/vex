@@ -113,6 +113,8 @@ type (
 	PutChosen = engine.PutChosen
 	// PutFromDiscard moves a chosen card from your discard pile to a Destination.
 	PutFromDiscard = engine.PutFromDiscard
+	// PutFromHand puts a chosen card from your hand directly into play.
+	PutFromHand = engine.PutFromHand
 	// ReturnNamedToHand returns a chosen card of a given name to its owner's hand.
 	ReturnNamedToHand = engine.ReturnNamedToHand
 	// SearchForName searches your deck and discard pile for a named card.

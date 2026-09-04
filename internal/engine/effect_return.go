@@ -43,11 +43,18 @@ func (e PutFromPlay) validate() error {
 // the top of the deck are stacked in an order the controller chooses. A card an
 // earlier move already took out of play — a "Leaves Play:" ability can destroy
 // one still on the list — is skipped rather than moved and counted twice.
-func (e PutFromPlay) Resolve(ctx *EffectContext) {
+func (e PutFromPlay) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
+
+// resolveGate moves the target and reports whether any card actually moved, so
+// PutFromPlay can gate a Then — Swap Widget only swaps in a new creature if it
+// actually returned one. The last card moved is left in context (ctx.It) so a
+// following effect can act on "it" or exclude cards sharing its name.
+func (e PutFromPlay) resolveGate(ctx *EffectContext) bool {
 	ids := e.Target.Select(ctx)
 	if e.Destination == ToTopOfDeck {
 		ids = ctx.OrderByChoice("Choose the next card to put on top of the deck", ids)
 	}
+	moved := false
 	for _, id := range ids {
 		if !resolverInPlay(ctx, id) {
 			continue
@@ -55,7 +62,10 @@ func (e PutFromPlay) Resolve(ctx *EffectContext) {
 		controller := ctx.Resolver.Controller(id)
 		e.Destination.move(ctx, id)
 		ctx.Produced.Moved[controller]++
+		ctx.It, ctx.HasIt = id, true
+		moved = true
 	}
+	return moved
 }
 
 // PutChosen moves Count cards the controller chooses from Target's pool into a

@@ -28,6 +28,7 @@ func (g *game) selectBoardID(_ app.Context, id engine.LocalID) {
 	if g.busy || g.choosing || g.phase == phaseFightTarget {
 		return
 	}
+	g.abandonFlank(id)
 	g.sel, g.selKind, g.selHand, g.hasSel = id, g.boardKindOf(id), -1, true
 	g.status = ""
 	g.measureFocus()
@@ -39,7 +40,17 @@ func (g *game) selectHandID(_ app.Context, id engine.LocalID) {
 	if g.busy || g.choosing || g.phase == phaseFightTarget {
 		return
 	}
+	g.abandonFlank(id)
 	g.selectHand(id)
+}
+
+// abandonFlank takes back the pending flank question when the player selects some
+// other card: that is a change of mind about which card to play, and leaving the
+// question up would answer it with the card they just moved on to.
+func (g *game) abandonFlank(id engine.LocalID) {
+	if g.phase == phaseFlank && id != g.sel {
+		g.phase = phaseMain
+	}
 }
 
 // selectHand makes a card in hand the selection, recovering its hand index from
