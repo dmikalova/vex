@@ -168,12 +168,14 @@ const (
 	Fungus
 	Giant
 	Goblin
+	Equation
 	Horseman
 	Human
 	Imp
 	Insect
 	Item
 	Knight
+	Law
 	Location
 	Martian
 	Merchant
@@ -184,8 +186,10 @@ const (
 	Priest
 	Quest
 	Ranger
+	Rat
 	Robot
 	Scientist
+	Shard
 	Soldier
 	Specter
 	Spirit
@@ -208,6 +212,7 @@ var traitNames = [traitCount]string{
 	Demon:     "Demon",
 	Dragon:    "Dragon",
 	Elf:       "Elf",
+	Equation:  "Equation",
 	Faerie:    "Faerie",
 	Fungus:    "Fungus",
 	Giant:     "Giant",
@@ -218,6 +223,7 @@ var traitNames = [traitCount]string{
 	Insect:    "Insect",
 	Item:      "Item",
 	Knight:    "Knight",
+	Law:       "Law",
 	Location:  "Location",
 	Martian:   "Martian",
 	Merchant:  "Merchant",
@@ -228,8 +234,10 @@ var traitNames = [traitCount]string{
 	Priest:    "Priest",
 	Quest:     "Quest",
 	Ranger:    "Ranger",
+	Rat:       "Rat",
 	Robot:     "Robot",
 	Scientist: "Scientist",
+	Shard:     "Shard",
 	Soldier:   "Soldier",
 	Specter:   "Specter",
 	Spirit:    "Spirit",
@@ -421,6 +429,12 @@ const (
 	// teardown, so the card is still on the board when it resolves. TriggerDestroyed is
 	// the narrower "only when destroyed" version.
 	TriggerLeavesPlay
+	// This ability resolves after the card that carries it is itself used — reaped
+	// or fought with, or fired as an "Action:". Unlike TriggerAfterUse (which fires
+	// on the user's other cards with the used card as "it"), this fires on the used
+	// card itself, so an upgrade can punish its own host: Containment Field destroys
+	// its host after it is used, Bonerot Venom deals it 2 damage.
+	TriggerAfterUsedSelf
 	// triggerCount bounds the enum so Triggers can range it; it is not a trigger.
 	triggerCount
 )
@@ -479,6 +493,8 @@ func (t Trigger) String() string {
 		return "After You Use a Card"
 	case TriggerAfterDiscardFromHand:
 		return "After You Discard a Card From Your Hand"
+	case TriggerAfterUsedSelf:
+		return "After This Creature Is Used"
 	case TriggerEndOfTurn:
 		return "End of Turn"
 	case TriggerStartOfTurn:
@@ -530,6 +546,8 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return "After you use a card, ", false
 	case TriggerAfterDiscardFromHand:
 		return "After you discard a card from your hand, ", false
+	case TriggerAfterUsedSelf:
+		return "After " + SelfName + " is used, ", false
 	case TriggerLeavesPlay:
 		return "Leaves Play: ", true
 	case TriggerEndOfTurn:

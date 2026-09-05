@@ -22,16 +22,7 @@ type CreatureVerb interface {
 // fight with" for two, and an Oxford-comma list "give skirmish to, ready, and
 // fight with" for three or more.
 func joinVerbs(parts []string) string {
-	switch len(parts) {
-	case 0:
-		return ""
-	case 1:
-		return parts[0]
-	case 2:
-		return parts[0] + " and " + parts[1]
-	default:
-		return strings.Join(parts[:len(parts)-1], ", ") + ", and " + parts[len(parts)-1]
-	}
+	return oxfordAnd(parts)
 }
 
 // A narrowingVerb can only act on some of the creatures its target names, and

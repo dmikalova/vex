@@ -109,7 +109,33 @@ func (g *game) logBlocks() []logBlock {
 	return out
 }
 
-// logBlockView draws one block: a rule on its own, or a bubble of lines.
+// toastBubble is one root action's log lines held for the minimized-log toast,
+// with the timer id (gen) its expiry runs under. It carries copies of the lines
+// rather than log indices so a bubble reads the same after the floor moves on.
+type toastBubble struct {
+	lines  []engine.Record
+	player int
+	gen    int
+}
+
+// logToast draws the recent log bubbles as a transient banner over the board
+// while the sidebar is hidden, so a minimized log still shows what just happened.
+// It reuses the panel's own bubble (logBlockView), so a toast reads exactly like
+// the log it stands in for. Hovering or clicking it pauses the per-bubble expiry
+// (pauseToast/toggleToastPin), so a name can be read or clicked without the toast
+// vanishing out from under the pointer.
+func (g *game) logToast() app.UI {
+	n := len(g.toastBubbles)
+	return app.Div().Class(cx("log", "log-toast", ifCls(g.toastPinned, "log-toast--pinned"))).
+		OnMouseEnter(g.pauseToast).
+		OnMouseLeave(g.resumeToast).
+		OnClick(g.toggleToastPin).
+		Body(app.Range(g.toastBubbles).Slice(func(i int) app.UI {
+			b := g.toastBubbles[i]
+			return g.logBlockView(logBlock{lines: b.lines, player: b.player, newest: i == n-1})
+		}))
+}
+
 func (g *game) logBlockView(b logBlock) app.UI {
 	if b.header != nil {
 		return app.Div().

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <title>Vactrol</title>
+  <!-- Full-bleed background so the icon is maskable: Android crops it to a circle
+       or squircle, and the amber diamond stays inside the 80% safe zone. -->
+  <rect width="512" height="512" fill="#1c1c1b"/>
+  <path d="M256 96 416 224 256 416 96 224Z" fill="#f0b429" stroke="#a9791a" stroke-width="14" stroke-linejoin="round"/>
+  <path d="M256 96 416 224H96Z" fill="#ffd469"/>
+  <path d="M256 96 256 416 96 224Z" fill="#000" opacity="0.08"/>
+</svg>

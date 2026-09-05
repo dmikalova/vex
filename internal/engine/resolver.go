@@ -390,6 +390,9 @@ type TurnResolver interface {
 	// GrantUseForHouse lets a player fully use (fight, reap, or Action:) creatures of
 	// the given house this turn even out of the active house.
 	GrantUseForHouse(player int, house House)
+	// GrantPlayForHouse lets a player play cards of the given house from hand this
+	// turn even out of the active house (the Ambassador cycle).
+	GrantPlayForHouse(player int, house House)
 	// AddLasting registers a "for the remainder of the turn" effect (Full Moon,
 	// Charge!, Crystal Hive reactions; Dimension Door's replacement) on a game event,
 	// instead of the effect hardcoding itself into the play or reap path. The record's

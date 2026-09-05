@@ -148,18 +148,18 @@ func TestDealDamagePerCount(t *testing.T) {
 }
 
 func TestSpreadCreatureAndNeighbors(t *testing.T) {
+	// Without NotOnFlank, any creature is a legal target.
 	g := NewGame("A", "B", 1)
-	// left and right are on flanks; only mid is a legal (non-flank) target.
 	left := g.AddToBattleline(testCreature("left", 10), 1)
 	mid := g.AddToBattleline(testCreature("mid", 10), 1)
 	right := g.AddToBattleline(testCreature("right", 10), 1)
+	g.SetChooser(0, &idQueueChooser{ids: []LocalID{mid}})
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	e := DealDamage{Spread: CreatureAndNeighbors{Amount: 4, Splash: 2}}
-	if e.Text() != "deal 4 damage to a creature that is not on a flank and 2 damage to each of its neighbors" {
+	if e.Text() != "deal 4 damage to a creature and 2 damage to each of its neighbors" {
 		t.Errorf("text = %q", e.Text())
 	}
-	// The default chooser picks the only non-flank creature, mid.
 	e.Resolve(ctx)
 	if g.Damage(mid) != 4 {
 		t.Errorf("chosen damage = %d, want 4", g.Damage(mid))
@@ -168,17 +168,42 @@ func TestSpreadCreatureAndNeighbors(t *testing.T) {
 		t.Errorf("neighbor damage = %d/%d, want 2/2", g.Damage(left), g.Damage(right))
 	}
 
-	// No non-flank creature (two creatures, both flanks): nothing happens.
+	// A flank creature is now a legal target and has a single neighbor.
 	g2 := NewGame("A", "B", 1)
-	a := g2.AddToBattleline(testCreature("a", 5), 1)
-	g2.AddToBattleline(testCreature("b", 5), 1)
-	DealDamage{
-		Spread: CreatureAndNeighbors{Amount: 4, Splash: 2},
-	}.Resolve(
+	flank := g2.AddToBattleline(testCreature("flank", 10), 1)
+	inner := g2.AddToBattleline(testCreature("inner", 10), 1)
+	DealDamage{Spread: CreatureAndNeighbors{Amount: 4, Splash: 2}}.Resolve(
 		&EffectContext{Resolver: g2, Controller: 0},
 	)
-	if g2.Damage(a) != 0 {
-		t.Errorf("no legal target should deal no damage, got %d", g2.Damage(a))
+	if g2.Damage(flank) != 4 || g2.Damage(inner) != 2 {
+		t.Errorf("flank hit = %d, neighbor = %d, want 4/2", g2.Damage(flank), g2.Damage(inner))
+	}
+
+	// NotOnFlank keeps the choice to an interior creature, which the default
+	// chooser then picks as the only legal target.
+	g3 := NewGame("A", "B", 1)
+	fl := g3.AddToBattleline(testCreature("fl", 10), 1)
+	center := g3.AddToBattleline(testCreature("center", 10), 1)
+	fr := g3.AddToBattleline(testCreature("fr", 10), 1)
+	restricted := DealDamage{Spread: CreatureAndNeighbors{Amount: 4, Splash: 2, NotOnFlank: true}}
+	if restricted.Text() != "deal 4 damage to a creature that is not on a flank and 2 damage to each of its neighbors" {
+		t.Errorf("restricted text = %q", restricted.Text())
+	}
+	restricted.Resolve(&EffectContext{Resolver: g3, Controller: 0})
+	if g3.Damage(center) != 4 || g3.Damage(fl) != 2 || g3.Damage(fr) != 2 {
+		t.Errorf("restricted damage = %d (%d/%d), want 4 (2/2)",
+			g3.Damage(center), g3.Damage(fl), g3.Damage(fr))
+	}
+
+	// NotOnFlank with only flank creatures: no legal target, nothing happens.
+	g4 := NewGame("A", "B", 1)
+	a := g4.AddToBattleline(testCreature("a", 5), 1)
+	g4.AddToBattleline(testCreature("b", 5), 1)
+	DealDamage{Spread: CreatureAndNeighbors{Amount: 4, Splash: 2, NotOnFlank: true}}.Resolve(
+		&EffectContext{Resolver: g4, Controller: 0},
+	)
+	if g4.Damage(a) != 0 {
+		t.Errorf("no legal target should deal no damage, got %d", g4.Damage(a))
 	}
 }
 

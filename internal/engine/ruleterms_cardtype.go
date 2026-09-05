@@ -17,28 +17,32 @@ carry no rules of their own), and its rules text. Creatures additionally show a
 	)
 	registerRuleTerms([]RuleTerm{
 		{
-			Section: SectionCardType,
-			Title:   "Creature",
+			Section:    SectionCardType,
+			Title:      "Creature",
+			Definition: "A unit played into your battleline that, once ready, can reap for Æmber, fight, or use an Action ability.",
 			Body: `A creature is a unit you play into your battleline. Once it is ready, it can
 reap for Æmber, fight an enemy creature, or use an "Action:" ability.`,
 		},
 		{
-			Section: SectionCardType,
-			Title:   "Tactic",
+			Section:    SectionCardType,
+			Title:      "Tactic",
+			Definition: "A one-shot card whose effect resolves as you play it, then goes straight to your discard pile.",
 			Body: `A tactic (KeyForge's "action" card type, renamed to free the word "Action"
 for the ability) is a one-shot card: its effect resolves as you play it, and
 it then goes straight to your discard pile.`,
 		},
 		{
-			Section: SectionCardType,
-			Title:   "Artifact",
+			Section:    SectionCardType,
+			Title:      "Artifact",
+			Definition: "A permanent card played alongside your creatures, usually used for its Action ability.",
 			Body: `An artifact is a permanent card you play alongside your creatures. It stays
 in play until something removes it and is typically used for its "Action:"
 ability.`,
 		},
 		{
-			Section: SectionCardType,
-			Title:   "Upgrade",
+			Section:    SectionCardType,
+			Title:      "Upgrade",
+			Definition: "A card that attaches to a creature as you play it, changing its stats or granting it abilities while attached.",
 			Body: `An upgrade attaches to a creature as you play it, changing that creature's
 stats or granting it keywords and abilities for as long as it stays attached.`,
 		},

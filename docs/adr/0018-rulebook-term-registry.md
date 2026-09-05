@@ -1,5 +1,11 @@
 # The rulebook is a typed term registry, complete by construction
 
+> **Update.** The typed registry decided here still stands, but the rulebook is no
+> longer generated to `docs/rulebook.md`. The web client renders the registry live
+> at `/rulebook` and `/glossary` (via `engine.RuleBook()` / `engine.Glossary()`),
+> so the `magefiles/genrules` renderer and the freshness check have been removed.
+> References below to the generated file describe the original decision.
+
 ## Context
 
 The rulebook (`docs/rulebook.md`) is generated. Foundational prose lives in

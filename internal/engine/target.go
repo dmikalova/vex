@@ -88,6 +88,11 @@ const (
 	// TargetChosenEnemyCreatureOrArtifact selects a single enemy creature or artifact
 	// the controller chooses, rendered "an enemy creature or artifact".
 	TargetChosenEnemyCreatureOrArtifact
+	// TargetTheChosenCreature selects the creature a preceding ChooseCreatureThen
+	// put in context (ctx.It) and renders it as "the chosen creature", the standard
+	// referent for a just-chosen creature (Sack of Coins deals its per-Æmber damage
+	// to the chosen creature).
+	TargetTheChosenCreature
 )
 
 // Target describes which cards an effect applies to. Kind picks the base set;
@@ -115,9 +120,13 @@ type Target struct {
 	// variablePower renders an exact-power qualifier as the placeholder "X" — a
 	// template face whose concrete variants each fix the number (Master of X).
 	variablePower bool
-	damaged       bool
-	undamaged     bool
-	stunned       bool
+	// oddPower narrows the target to creatures whose power is odd, and evenPower to
+	// those whose power is even (Onyx Knight, Opal Knight).
+	oddPower  bool
+	evenPower bool
+	damaged   bool
+	undamaged bool
+	stunned   bool
 	// ready narrows the target to creatures that are not exhausted (Swap Widget's
 	// "a ready friendly Mars creature").
 	ready      bool
@@ -240,6 +249,18 @@ func (t Target) PowerAtLeast(minPower int) Target {
 func (t Target) PowerExactly(power int) Target {
 	t.exactPower = power
 	t.hasExactPower = true
+	return t
+}
+
+// OddPower narrows the target to creatures whose power is odd (Onyx Knight).
+func (t Target) OddPower() Target {
+	t.oddPower = true
+	return t
+}
+
+// EvenPower narrows the target to creatures whose power is even (Opal Knight).
+func (t Target) EvenPower() Target {
+	t.evenPower = true
 	return t
 }
 
@@ -386,6 +407,8 @@ func (t Target) Text() string {
 		return t.decorateNeighbors("the creature " + SelfName + " fights")
 	case TargetTheOtherCreature:
 		return "the other creature"
+	case TargetTheChosenCreature:
+		return "the chosen creature"
 	}
 	noun := "creature"
 	if t.Kind == TargetEachArtifact || t.Kind == TargetChosenArtifact ||
@@ -506,6 +529,12 @@ func (t Target) Text() string {
 		} else {
 			phrase += fmt.Sprintf(" with power %d", t.exactPower)
 		}
+	}
+	if t.oddPower {
+		phrase += " with odd power"
+	}
+	if t.evenPower {
+		phrase += " with even power"
 	}
 	if t.withAember {
 		phrase += " with \u00c6mber on it"
@@ -858,6 +887,8 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 		!t.hasMaxPower &&
 		!t.hasMinPower &&
 		!t.hasExactPower &&
+		!t.oddPower &&
+		!t.evenPower &&
 		!t.damaged &&
 		!t.undamaged &&
 		!t.stunned &&
@@ -903,6 +934,12 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 			continue
 		}
 		if t.hasExactPower && ctx.Resolver.Power(id) != t.exactPower {
+			continue
+		}
+		if t.oddPower && ctx.Resolver.Power(id)%2 == 0 {
+			continue
+		}
+		if t.evenPower && ctx.Resolver.Power(id)%2 != 0 {
 			continue
 		}
 		if t.damaged && ctx.Resolver.Damage(id) == 0 {
@@ -1025,7 +1062,8 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 	switch t.Kind {
 	case TargetThisCreature:
 		return []LocalID{ctx.Source}
-	case TargetTriggeringCreature, TargetTheOtherCreature, TargetCreatureFought:
+	case TargetTriggeringCreature, TargetTheOtherCreature, TargetTheChosenCreature,
+		TargetCreatureFought:
 		if ctx.HasIt {
 			return []LocalID{ctx.It}
 		}

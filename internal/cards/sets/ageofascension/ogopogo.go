@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Ogopogo
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Brobnar
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  6
 //	Traits: Giant
 //
-//	After Ogopogo attacks and destroys a creature, you may deal 2D to a creature.
+//	After a creature is destroyed fighting Ogopogo, you may deal 2 damage to a creature.
 var Ogopogo = card.New(
 	"Ogopogo",
 	card.House.Brobnar,
@@ -24,5 +19,11 @@ var Ogopogo = card.New(
 	card.Provenance(card.AoA, 26),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Giant),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.AfterDestroyedFighting, card.May{
+			Do: card.DealDamage{
+				Target: card.Target.Creature,
+				Amount: 2,
+			},
+		}),
 )

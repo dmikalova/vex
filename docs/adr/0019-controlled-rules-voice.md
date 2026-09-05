@@ -64,10 +64,13 @@ the divergence is recorded in the Vactrol⇄KeyForge divergence register (the
 divergence half of the split `card-wording-rules.md`). "Match KeyForge" never
 silently overrides a recorded divergence.
 
-`docs/card-wording-rules.md` is split to serve this: one document is the Rules
-voice / wording conventions (house style, surface-independent), the other is the
-divergence register (where and why Vactrol departs from KeyForge). The conventions
-document is decoupled from the one KeyForge set it was originally diffed against.
+`docs/card-wording-rules.md` is split to serve this. The wording conventions
+(house style, surface-independent) stay in
+[card-wording-rules.md](../card-wording-rules.md); the divergence register (where
+and why Vactrol departs from KeyForge, plus the precedence rule) is
+[keyforge-divergences.md](../keyforge-divergences.md). The numbered rules keep
+their numbers so that the many `rule N` cross-references in code and docs stay
+valid; the register indexes the divergent rules rather than renumbering them.
 
 ## Consequences
 

@@ -443,6 +443,7 @@ func (g *game) renderCard(id engine.LocalID, boardKind selKind, opposing bool) a
 		Maverick:      g.isMaverick(id),
 		Stunned:       g.g.Stunned(id),
 		Exhausted:     g.g.Exhausted(id),
+		PowerCounters: int(g.g.State.Cards[id].PowerCounters),
 		Bar:           g.barKeywords(id),
 		BarBottom:     opposing,
 		TauntShielded: def.Type == engine.Creature && g.g.TauntShielded(id),
@@ -454,6 +455,7 @@ func (g *game) renderCard(id engine.LocalID, boardKind selKind, opposing bool) a
 		Act:           flash.act,
 		StunFlash:     flash.stun,
 		ExhaustFlash:  flash.exhaust,
+		PowerFlash:    flash.power,
 		FlashOdd:      flash.odd,
 		Selected:      g.isSelected(id),
 		Targetable:    targetable,
@@ -481,11 +483,18 @@ func (g *game) hostWithTabs(id engine.LocalID, face app.UI) app.UI {
 	if len(left) == 0 && len(right) == 0 {
 		return face
 	}
-	return app.Div().Class("card-host").Body(
-		app.Div().Class("card-tabs card-tabs--left").Body(left...),
-		app.Div().Class("card-tabs card-tabs--right").Body(right...),
-		face,
-	)
+	// Attached cards dim with their host: an exhausted creature has already acted,
+	// so its upgrades and under-cards read as spent alongside it rather than
+	// standing out beside a greyed face.
+	dim := ifCls(g.inPlay(id) && g.g.Exhausted(id), "card-tabs--dim")
+	return app.Div().Class("card-host").
+		Style("--under-tabs", strconv.Itoa(len(left))).
+		Style("--up-tabs", strconv.Itoa(len(right))).
+		Body(
+			app.Div().Class(cx("card-tabs", "card-tabs--left", dim)).Body(left...),
+			app.Div().Class(cx("card-tabs", "card-tabs--right", dim)).Body(right...),
+			face,
+		)
 }
 
 // upgradeTabs renders each upgrade attached to id as a peeking tab along its

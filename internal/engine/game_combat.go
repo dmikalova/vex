@@ -94,8 +94,15 @@ func (g *Game) fight(attacker, defender LocalID) {
 	}
 	// A creature the fight destroyed has left play, so its "After Fight:" ability
 	// does not resolve — and must not, since its per-match state is already gone.
+	// A defender that survived the fight is passed as "it" so an after-fight
+	// ability can name "the creature <self> fights" (Roxador stuns it); a defender
+	// the fight destroyed leaves no such target.
 	if g.inPlay(attacker) {
-		g.triggerAbilities(attacker, TriggerAfterFight, 0, false)
+		if g.inPlay(defender) {
+			g.triggerAbilities(attacker, TriggerAfterFight, defender, true)
+		} else {
+			g.triggerAbilities(attacker, TriggerAfterFight, 0, false)
+		}
 	}
 
 	// "After a creature is destroyed fighting X": when exactly one combatant is

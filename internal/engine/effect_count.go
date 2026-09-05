@@ -22,7 +22,24 @@ func forEach(per Count, body string) string {
 	if per == nil {
 		return body
 	}
-	return "for each " + per.CountText() + ", " + body
+	return "for each " + countLeadText(per) + ", " + body
+}
+
+// leadingCounter is a Count whose "for each" clause names its subject when the
+// clause leads the sentence, where a trailing "it" would read as a forward
+// reference — NeighborsOfThis is "neighbor it has" trailing but "neighbor <self>
+// has" leading.
+type leadingCounter interface {
+	leadingCountText() string
+}
+
+// countLeadText renders per's "for each" noun for a leading clause, preferring a
+// leadingCounter's named form over the trailing CountText.
+func countLeadText(per Count) string {
+	if lc, ok := per.(leadingCounter); ok {
+		return lc.leadingCountText()
+	}
+	return per.CountText()
 }
 
 // OpponentForgedKeys counts the keys the controller's opponent has forged.
@@ -142,6 +159,9 @@ type InPlay struct {
 	Type CardType
 	// House filters by house; the zero value (HouseNone) counts any house.
 	House House
+	// Trait filters by trait; the unset zero value counts any trait, and a set
+	// trait replaces the rendered noun with it ("friendly Shard").
+	Trait Trait
 	// Ready counts only cards that are ready (not exhausted).
 	Ready bool
 	// Damaged counts only creatures that have damage on them.
@@ -165,6 +185,9 @@ func (e InPlay) Value(ctx *EffectContext) int {
 	n := 0
 	for _, id := range e.set(ctx) {
 		if e.House != HouseNone && ctx.Resolver.House(id) != e.House {
+			continue
+		}
+		if e.Trait != traitUnset && !ctx.Resolver.HasTrait(id, e.Trait) {
 			continue
 		}
 		if e.Ready && ctx.Resolver.Exhausted(id) {
@@ -232,8 +255,19 @@ func (e InPlay) who() string {
 	}
 }
 
-// typeNoun renders the filtered type as a noun.
+// typeNoun renders the filtered type as a noun. A trait filter names the trait
+// itself ("Shard"), and combines with a type as "Thief trait creature".
 func (e InPlay) typeNoun() string {
+	if e.Trait != traitUnset {
+		switch e.Type {
+		case Creature:
+			return e.Trait.String() + " trait creature"
+		case Artifact:
+			return e.Trait.String() + " trait artifact"
+		default:
+			return e.Trait.String()
+		}
+	}
 	switch e.Type {
 	case Creature:
 		return "creature"
@@ -269,10 +303,10 @@ func (e InPlay) noun() string {
 }
 
 // CountText renders the singular noun the "for each" clause repeats. A
-// house-filtered count reads "friendly Mars creature"; an unfiltered one adds "in
-// play" to distinguish it from cards in hand.
+// house- or trait-filtered count reads "friendly Mars creature" / "friendly
+// Shard"; an unfiltered one adds "in play" to distinguish it from cards in hand.
 func (e InPlay) CountText() string {
-	if e.House != HouseNone && e.Player != EachPlayer {
+	if (e.House != HouseNone || e.Trait != traitUnset) && e.Player != EachPlayer {
 		return e.noun()
 	}
 	return e.noun() + " in play"
@@ -540,6 +574,46 @@ func (c AemberLostThisWay) CountText() string {
 	return "Æmber " + who + " lost this way"
 }
 
+// AemberInPool counts the Æmber in a player's pool — Sack of Coins deals a
+// point of damage for each Æmber in your pool, and Marmo Swarm grows by it.
+type AemberInPool struct{ Player Player }
+
+// Value reads that player's current Æmber pool.
+func (c AemberInPool) Value(ctx *EffectContext) int {
+	return ctx.Resolver.Aember(ctx.PlayerFor(c.Player))
+}
+
+// CountText renders the singular noun the "for each" clause repeats.
+func (c AemberInPool) CountText() string {
+	who := "your"
+	if c.Player == Opponent {
+		who = "your opponent's"
+	}
+	return "Æmber in " + who + " pool"
+}
+
+// NeighborsOfThis counts the battleline neighbors of the creature holding the
+// ability — 0, 1, or 2. Knoxx grows by 3 power for each neighbor it has. Its
+// value only changes when the battleline does, so the destroyed sweep already
+// runs each time it can shift.
+type NeighborsOfThis struct{}
+
+// Value counts the source creature's immediate battleline neighbors.
+func (c NeighborsOfThis) Value(ctx *EffectContext) int {
+	return len(neighbors(ctx, ctx.Source))
+}
+
+// CountText renders the singular noun the "for each" clause repeats.
+func (c NeighborsOfThis) CountText() string {
+	return "neighbor it has"
+}
+
+// leadingCountText names the source creature when the clause leads the sentence,
+// where a trailing "it" would be a forward reference — Nyzyk Resonator.
+func (c NeighborsOfThis) leadingCountText() string {
+	return "neighbor " + SelfName + " has"
+}
+
 // CardsReturnedThisWay counts the cards an earlier PutFromDiscard in this
 // resolution recovered from the discard pile — Ortannu the Chained deals a hit
 // for each Binding it returned.
@@ -549,4 +623,4 @@ type CardsReturnedThisWay struct{}
 func (CardsReturnedThisWay) Value(ctx *EffectContext) int { return ctx.Produced.Returned }
 
 // CountText renders the singular noun the "for each" clause repeats.
-func (CardsReturnedThisWay) CountText() string { return "card returned this way" }
+func (CardsReturnedThisWay) CountText() string { return "card put into your hand this way" }

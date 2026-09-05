@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// NyzykResonator
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Nyzyk Resonator
 //
 //	House:  Mars
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Martian • Soldier
 //
-//	For each neighbor Nyzyk Resonator has, your opponent's keys cost +2A.
+//	For each neighbor Nyzyk Resonator has, your opponent's keys cost +2 Æmber.
 var NyzykResonator = card.New(
 	"Nyzyk Resonator",
 	card.House.Mars,
@@ -26,5 +21,5 @@ var NyzykResonator = card.New(
 	card.WithPower(2),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Martian, card.Traits.Soldier),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeyCost(card.KeyCostChange(card.Opponent, 2).Per(card.NeighborsOfThis{})),
 )

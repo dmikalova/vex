@@ -19,7 +19,8 @@ var Pound = card.New(
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{Spread: card.CreatureAndNeighbors{
-			Amount: 2,
-			Splash: 1,
+			Amount:     2,
+			Splash:     1,
+			NotOnFlank: true,
 		}}),
 )

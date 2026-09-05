@@ -37,8 +37,14 @@ func (Tool) Missing() error {
 
 // Coverage reports how many cards of each set are implemented. A card
 // counts as covered once an implemented card tags it with a provenance Ref.
-func (Tool) Coverage() error {
-	return sh.RunV("go", "run", "./magefiles/cardlookup", "coverage")
+// Pass -new to count only the cards a set introduces, excluding the ones it
+// reprints from an earlier set.
+func (Tool) Coverage(new *bool) error {
+	args := []string{"run", "./magefiles/cardlookup", "coverage"}
+	if new != nil && *new {
+		args = append(args, "-new")
+	}
+	return sh.RunV("go", args...)
 }
 
 // Stub scaffolds a stub for each unimplemented card in a set. Each stub is

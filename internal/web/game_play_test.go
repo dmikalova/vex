@@ -70,6 +70,25 @@ func TestSelectingACardNotInHandDoesNothing(t *testing.T) {
 	}
 }
 
+// Playing an Omega card ends the play phase the moment it resolves, which runs
+// the turn out. The end-turn button hands the turn to the opponent afterward;
+// this makes sure the Omega path does the same handoff rather than leaving the
+// ended turn's player waiting to choose a house again.
+func TestPlayingAnOmegaCardHandsTheTurnToTheOpponent(t *testing.T) {
+	c := newClient(t)
+	c.startTurn()
+	c.manual() // lift the house restriction so Swindle (Shadows) is playable
+	me := c.g.active()
+	c.playFromHand(c.deal("Swindle"))
+
+	if got := c.g.active(); got != 1-me {
+		t.Fatalf("after an Omega card the active player is %d, want the opponent %d", got, 1-me)
+	}
+	if c.g.phase != phaseHouse {
+		t.Errorf("the opponent's turn is at phase %v, want phaseHouse", c.g.phase)
+	}
+}
+
 func TestBoardKindOfEachRow(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
@@ -275,8 +294,29 @@ func TestEndTurnConfirms(t *testing.T) {
 	}
 }
 
-// Ending is only offered from the resting main phase; the mid-action phases have
-// their own way out.
+// Arming the end-turn confirm drops the current selection, so the red "Confirm
+// end turn" is not read as ending the turn with the selected card, and the
+// jiggling usable cards are what the eye lands on instead.
+func TestArmingTheEndTurnConfirmClearsTheSelection(t *testing.T) {
+	c := newClient(t)
+	c.startTurn()
+	if !c.g.hasMoves() {
+		t.Skip("the deal left the opening turn with nothing to do")
+	}
+	id := c.hand()[0]
+	c.g.selectHandID(c.ctx, id)
+	if !c.g.hasSel {
+		t.Fatal("the card was not selected")
+	}
+
+	c.do(c.g.endTurn)
+	if !c.g.confirmEndTurn {
+		t.Fatal("ending a turn with moves left did not arm the confirmation")
+	}
+	if c.g.hasSel {
+		t.Error("arming the confirm left the card selected")
+	}
+}
 func TestEndTurnOnlyFromMain(t *testing.T) {
 	c := newClient(t)
 	was := c.g.active()

@@ -196,6 +196,9 @@ func (g *game) endTurn(ctx app.Context, _ app.Event) {
 	// the player is already looking — no transient message needed.
 	if !g.confirmEndTurn && g.hasMoves() {
 		g.confirmEndTurn = true
+		// Drop the selection so the confirm's warning is not read as "end turn with
+		// this card", and the jiggling usable cards are what draws the eye instead.
+		g.clearSelection()
 		return
 	}
 	g.confirmEndTurn = false
@@ -207,6 +210,21 @@ func (g *game) endTurn(ctx app.Context, _ app.Event) {
 		g.g.StartTurn(opp)  // forge + start-of-turn triggers for the next player
 		return nil
 	})
+}
+
+// handOffEndedTurn starts the opponent's turn when an action ran the current
+// turn out without going through the end-turn button. An Omega card ends the
+// play phase the moment it resolves (endStepIfOmega calls EndPlayPhase), which
+// readies, draws, and resolves end-of-turn abilities but stops there, at
+// PhaseEndOfTurn, with the same player still active. The end-turn button always
+// pairs EndPlayPhase with StartTurn; this completes that pairing for the Omega
+// path, so playing an Omega card hands the turn to the opponent instead of
+// leaving the ended turn's player waiting to choose a house again. Every other
+// action leaves the engine mid-play-phase, so this is a no-op for them.
+func (g *game) handOffEndedTurn() {
+	if g.g.State.Phase == engine.PhaseEndOfTurn && g.g.Winner() < 0 {
+		g.g.StartTurn(1 - g.g.State.ActivePlayer)
+	}
 }
 
 // hasMoves reports whether the active player could still act this turn: a playable

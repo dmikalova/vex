@@ -1,26 +1,35 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// BinateRupture
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Binate Rupture
 //
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Alpha. (You can only play this card before doing anything else this step.)
-//	Play: Each player gains A equal to
-//	the A in their pool.
+//	Alpha.
+//	Play: For each Æmber in your pool, gain 1 Æmber, and for each Æmber in your opponent's pool, your opponent gains 1 Æmber.
 var BinateRupture = card.New(
 	"Binate Rupture",
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.AoA, 109),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Alpha),
+	card.WithAbility(
+		card.Trigger.Play, card.Sequence{
+			Effects: []card.Effect{
+				card.GainAember{
+					Player: card.Controller,
+					Amount: 1,
+					Per:    card.AemberInPool{Player: card.Controller},
+				},
+				card.GainAember{
+					Player: card.Opponent,
+					Amount: 1,
+					Per:    card.AemberInPool{Player: card.Opponent},
+				},
+			},
+		}),
 )

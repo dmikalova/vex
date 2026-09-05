@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// AgentHooMan
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Agent Hoo-man
 //
 //	House:  Mars
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Martian • Agent
 //
-//	Elusive. (The first time this creature is attacked each turn, no damage is dealt.)
-//	Reap: Choose a friendly non-Mars creature and an enemy non-Mars creature. Stun the chosen creatures.
+//	Elusive.
+//	Reap: Stun a friendly non-Mars creature and an enemy non-Mars creature.
 var AgentHooMan = card.New(
 	"Agent Hoo-man",
 	card.House.Mars,
@@ -25,5 +20,12 @@ var AgentHooMan = card.New(
 	card.Provenance(card.AoA, 160),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Martian, card.Traits.Agent),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithAbility(
+		card.Trigger.Reap, card.Sequence{
+			Effects: []card.Effect{
+				card.Stun{Target: card.Target.FriendlyCreature.ExceptHouse(card.House.Self)},
+				card.Stun{Target: card.Target.EnemyCreature.ExceptHouse(card.House.Self)},
+			},
+		}),
 )

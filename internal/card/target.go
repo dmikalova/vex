@@ -25,6 +25,7 @@ var Target = targets{
 	OtherFriendlyCreature:      engine.Target{Kind: engine.TargetChosenOtherFriendlyCreature},
 	OtherCreature:              engine.Target{Kind: engine.TargetChosenOtherCreature},
 	TheOtherCreature:           engine.Target{Kind: engine.TargetTheOtherCreature},
+	TheChosenCreature:          engine.Target{Kind: engine.TargetTheChosenCreature},
 	CreatureFought:             engine.Target{Kind: engine.TargetCreatureFought},
 	CreatureOrArtifact:         engine.Target{Kind: engine.TargetChosenCreatureOrArtifact},
 	FriendlyCreatureOrArtifact: engine.Target{Kind: engine.TargetChosenFriendlyCreatureOrArtifact},
@@ -69,6 +70,8 @@ type targets struct {
 	OtherCreature engine.Target
 	// TheOtherCreature selects the creature in context (ctx.It), "the other creature".
 	TheOtherCreature engine.Target
+	// TheChosenCreature selects the creature in context (ctx.It), "the chosen creature".
+	TheChosenCreature engine.Target
 	// CreatureOrArtifact is a creature or artifact the controller chooses, either side.
 	CreatureOrArtifact engine.Target
 	// FriendlyCreatureOrArtifact is a friendly creature or artifact the controller chooses.

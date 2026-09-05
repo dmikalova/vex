@@ -848,6 +848,7 @@ func TestNewTriggerPrefixes(t *testing.T) {
 		TriggerAfterEnemyCreatureDestroyed: "After an enemy creature is destroyed during your turn, ",
 		TriggerAfterUse:                    "After you use a card, ",
 		TriggerAfterDiscardFromHand:        "After you discard a card from your hand, ",
+		TriggerAfterUsedSelf:               "After " + SelfName + " is used, ",
 		TriggerLeavesPlay:                  "Leaves Play: ",
 	} {
 		if got, _ := trigger.prefix(); got != want {

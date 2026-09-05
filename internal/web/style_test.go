@@ -29,8 +29,9 @@ func TestGalleryShowsEveryIcon(t *testing.T) {
 	var want []string
 	for _, f := range files {
 		stem := strings.TrimSuffix(filepath.Base(f), ".svg")
-		// The favicon is browser chrome, not part of the board's vocabulary.
-		if stem == "favicon" {
+		// The favicon and the PWA app icon are browser/install chrome, not part of
+		// the board's vocabulary.
+		if stem == "favicon" || stem == "app-icon" {
 			continue
 		}
 		want = append(want, stem)
@@ -166,6 +167,32 @@ func TestGalleryShowsEveryAttachmentCombination(t *testing.T) {
 		if !captions[w] {
 			t.Errorf("the gallery has no attachment specimen %q", w)
 		}
+	}
+}
+
+// The attachment section reshuffles which cards it shows on reload, like the
+// randomMatch sections do, rather than always opening on the same first cards.
+// The cursor's start is seeded from styleSeed, so different loads pick different
+// hosts; a cursor that ignored the seed would open on the same host every time.
+func TestTheAttachmentSectionReshufflesOnReload(t *testing.T) {
+	saved := styleSeed
+	defer func() { styleSeed = saved }()
+
+	firstHost := func(seed int64) string {
+		styleSeed = seed
+		h := attachHarness()
+		specs := buildAttachments(h.g)
+		return h.g.Def(specs[0].host).Name
+	}
+	seen := map[string]bool{}
+	for seed := int64(1); seed <= 8; seed++ {
+		seen[firstHost(seed)] = true
+	}
+	if len(seen) < 2 {
+		t.Errorf(
+			"the attachment section opened on the same host for every seed (%v); it did not reshuffle",
+			seen,
+		)
 	}
 }
 

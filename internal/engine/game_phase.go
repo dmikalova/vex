@@ -126,6 +126,7 @@ func (g *Game) readyPhase(player int) {
 	g.State.MayFightHouse[player] = HouseNone
 	g.State.MayFightAny[player] = false
 	g.State.MayUseHouse[player] = HouseNone
+	g.State.MayPlayHouse[player] = HouseNone
 	g.State.KeyCostBump[player] = Bar[int]{}
 	g.State.KeywordsLost = 0
 	g.clearLasting(player)

@@ -88,7 +88,7 @@ func (e CannotPlay) validate() error {
 }
 
 // Text renders the effect, e.g. "your opponent cannot play creatures during their
-// next turn". The Tactic type prints as "action cards" (rule 19).
+// next turn". The renamed Tactic type prints capitalized as "Tactics" (rule 19).
 func (e CannotPlay) Text() string {
 	who, whose := "you", "your"
 	if e.Player == Opponent {
@@ -96,7 +96,7 @@ func (e CannotPlay) Text() string {
 	}
 	noun := strings.ToLower(e.barred().String()) + "s"
 	if e.Type == Tactic {
-		noun = "action cards"
+		noun = "Tactics"
 	}
 	when := "during " + whose + " next turn"
 	if e.Duration == EndOfTurn {
@@ -239,6 +239,33 @@ func (e MayUseFriendlyHouse) Text() string {
 
 // Resolve grants the controller full use of their House creatures this turn.
 func (e MayUseFriendlyHouse) Resolve(ctx *EffectContext) {
+	ctx.Resolver.GrantUseForHouse(ctx.Controller, e.House)
+}
+
+// MayPlayOrUseFriendlyHouse lets the controller both play cards of House from hand
+// and fully use their House creatures this turn even out of the active house — the
+// Ambassador cycle's "you may play or use a <House> card this turn". Both grants
+// last only the current turn (the ready phase clears them).
+type MayPlayOrUseFriendlyHouse struct {
+	House House
+}
+
+// validate rejects a MayPlayOrUseFriendlyHouse whose house was left unset.
+func (e MayPlayOrUseFriendlyHouse) validate() error {
+	if e.House == HouseNone {
+		return fmt.Errorf("MayPlayOrUseFriendlyHouse: house must be set")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "you may play or use a Mars card this turn".
+func (e MayPlayOrUseFriendlyHouse) Text() string {
+	return fmt.Sprintf("you may play or use a %s card this turn", e.House)
+}
+
+// Resolve grants the controller both play and use of that house this turn.
+func (e MayPlayOrUseFriendlyHouse) Resolve(ctx *EffectContext) {
+	ctx.Resolver.GrantPlayForHouse(ctx.Controller, e.House)
 	ctx.Resolver.GrantUseForHouse(ctx.Controller, e.House)
 }
 

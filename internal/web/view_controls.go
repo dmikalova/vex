@@ -76,19 +76,34 @@ func (g *game) endTurnButton() app.UI {
 	return btn("End turn", g.endTurn, cx("btn-secondary", cursor))
 }
 
+// endTurnBar is the End turn control with the undo shortcut sitting to its left,
+// so a card played by mistake is one icon-click from being taken back without
+// opening the menu. The undo button rides with End turn — it appears only in the
+// same resting controls — and is disabled when there is nothing to undo.
+func (g *game) endTurnBar() app.UI {
+	undo := app.Button().
+		Class(cx("btn-secondary", "btn-icon")).
+		Title("Undo").
+		Disabled(!g.canUndo()).
+		OnClick(g.undoAction).
+		Body(icon("undo", "icon-nav"))
+	return app.Div().Class("end-turn-bar").Body(undo, g.endTurnButton())
+}
+
 // controls is the bottom of the sidebar: the contextual controls (house picker or
 // action bar) plus End turn. House selection has no End turn — a house must be
 // chosen first.
 func (g *game) controls() app.UI {
+	// A pending new game takes over the controls with the set picker until sets are
+	// chosen or it is cancelled — even over a finished game, which is how "New game"
+	// on the end-of-game panel opens the picker rather than redrawing the result.
+	if g.awaitingSetup {
+		return app.Div().Class("controls").Body(g.setChooser())
+	}
 	// A finished game replaces every control with the result: nothing else can be
 	// done, and a modal over the board would hide the position that ended it.
 	if g.phase == phaseOver {
 		return app.Div().Class("controls").Body(g.overPanel())
-	}
-	// A pending new game takes over the controls with the set picker until sets
-	// are chosen or it is cancelled.
-	if g.awaitingSetup {
-		return app.Div().Class("controls").Body(g.setChooser())
 	}
 	// A pending manual key forge takes over the controls until a colour is picked
 	// or cancelled; once forgingKey resets, the previous buttons return on their own.
@@ -132,7 +147,7 @@ func (g *game) controls() app.UI {
 	}
 	// A selected card's verbs are drawn on the card itself, so nothing here
 	// competes with End turn for the dock.
-	body := []app.UI{g.endTurnButton()}
+	body := []app.UI{g.endTurnBar()}
 	if g.g.Manual() {
 		body = append([]app.UI{g.manualPanel()}, body...)
 	}
@@ -153,8 +168,10 @@ func (g *game) setChooser() app.UI {
 		app.Div().Class("prompt").Text(fmt.Sprintf("Player %d — choose a set", g.setPick+1)),
 	)
 	for _, name := range names {
-		body = append(body, btn(name,
-			func(ctx app.Context, _ app.Event) { g.pickSet(ctx, name) }, "btn-secondary"))
+		body = append(body, app.Button().
+			Class(cx("btn-secondary", "set-btn", setAccent(name))).
+			OnClick(func(ctx app.Context, _ app.Event) { g.pickSet(ctx, name) }).
+			Body(app.Span().Class("set-emblem"), app.Text(name)))
 	}
 	body = append(body, btn("Cancel", g.cancelSetup, "btn-secondary"))
 	return app.Div().Class("btn-col", "set-pick").Body(body...)

@@ -1,8 +1,8 @@
 # TODOs & design notes
 
 A grab-bag of things to fix, build, and answer. Canonical vocabulary is
-in [../CONTEXT.md](../CONTEXT.md), the rules in [rulebook.md](rulebook.md), and the
-long-term vision in [roadmap.md](roadmap.md).
+in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term registry
+(the `/rulebook` page), and the long-term vision in [roadmap.md](roadmap.md).
 
 ## Grill me
 
@@ -17,29 +17,13 @@ Typed rulebook registry (ADR 0018):
 - DEFERRED — extending completeness to turn/combat steps. Needs first-class
   turn/combat step values, not a parallel list invented for the test; the current
   `Phase` enum mixes implementation-only phases.
-- Registry `Definition` fields are intentionally left empty pending the glossary
-  work below.
 
 Rules-voice text passes (no behavior change):
 
-- STE-lite pre-pass — conform existing card text, log lines, and docs to the Rules voice.
 - Code-comments migration (ADR 0020) — staged package-by-package. The resource-spelling sweep is DONE: the only prose `Aember` in a comment (effect_aember.go's resolveGate) is now `Æmber`; the remaining `Aember` in comments are Go symbol names (`Aember` method/field), card names (`Irradiated Aember`), or generated stub source-text, which correctly keep the ASCII form. The broader plain-voice comment rewrite continues per package.
-- Optional controlled-vocabulary linter for the Rules voice.
-
-Doc restructuring:
-
-- Split card-wording-rules.md into wording/voice conventions vs. a Vactrol⇄KeyForge divergence register — deferred because renumbering breaks inbound cross-refs like "rule 12".
-- DONE — the six rulebook framing fragments (overview + section intros) moved from docs/rulebook/*.md into the engine registry (`RuleOverview()`/`RuleSectionIntro()`, co-located in ruleterms_*.go); genrules renders them from the contract and the docs/rulebook/ dir is gone. See ADR 0018 Update.
-
-Live rulebook (your earlier priority):
-
-- Engine-backed rulebook page — each entry cites a runnable Given/When/Then scenario that is real engine code, doubling as regression coverage.
-- Accuracy example-binding ratchet — let terms cite a real engine test, then require it for subtle rules over time.
-- Glossary page — surface each term's one-line Definition as a searchable client page.
 
 ### Next focus
 
-- make sure that if a set refers to a card in another set that that cards must exist otherwise fail loudly
 - grill me on image generation. image generation should adapt with upgrades and other constant abilities
 - event sourcing
 - decklists
@@ -50,19 +34,17 @@ Live rulebook (your earlier priority):
 - profiling - eg running property tests and outputting the profiled usage for hot paths, and then optimizing those paths as a skill
 - using property testing to find unused code paths and then force specific tests there
 - Is there a way to validate that the UI handles and presents all possible game states/prompts? eg if I add a new prompt route, can the UI then automatically fail bc its not handled?
+- On the style page add a section with all of the Log and Text usages rendered out. The easiest wayt to do this might be to create a dedicated preview area that dynamically displays these elements as they are used in the engine (eg show a set of cards that covers every rendering element, and a log that does the same for all log entries)
+- card gallery (and search). Gallery links to cards, and cards can pull in all the relevant rules onto that page
+- For things like steal, capture - they both have an amount, By, Max, etc, similar structure. Is it possible to reuse these interfaces eg for Economy types, and other types?
+- Improve master of x materialization
+- House Ambassador (eg Brobnar Amassador) as a materialization - make it work as a legacy/maverick to swap with a card in another house
+- In the rulebook have an Accuracy example-binding ratchet — let terms cite a real engine test, then require it for subtle rules over time so that players can interact with the examples and understand the evolving rules context.
 
 ## Things that can be done now
 
-- card gallery (and search)
-- style should use a random card every time the page loads
-- For things like steal, capture - they both have an amount, By, Max, etc, similar structure. Is it possible to reuse these interfaces eg for Economy types, and other types?
-- House Ambassador (eg Brobnar Amassador) as a materialization - make it work as a legacy/maverick to swap with a card in another house
-- with logs minimized you can toast from the top things like revealed cards - or even toast all the logs
-
 ## Uncertain if still relevant
 
-- Skeleton key - the action prompt should be centered - cannot see which creature is selected with tab
-- After playing cards and having next one selected, need to double esc. Also can't click e to prompt end turn while card is selected
 - magda the rat just says player 2 steals 2 aember rather than magda the rat steals 2 from player 1 to player 2
 - generic key icon in log
 - artifacts can be sorted by house and name
@@ -91,6 +73,7 @@ Live rulebook (your earlier priority):
 - when selecting cards one at a time (lost in the woods), the cards disappear from the board - and then after selecting for a side the animation happens. Animation should be per click, or since they're shuffled together they shouldn't leave the board until both selected - the first one should get a checkmark, and then the second one finished and they all go
 - "Witch of the Eye recovers from stun instead of acting" should be "Player 2 unstuns Witch of the Eye" - the wording for stun/unstun should be consistent, no recover
 - "Lost in the Woods shuffles Murmook and Chota Hazri into Player 2's deck"
+- Skeleton key - the action prompt should be centered - cannot see which creature is selected with tab
 
 ## UI finesse
 
@@ -104,14 +87,19 @@ Live rulebook (your earlier priority):
 - discard from hand and other zones animation
 - when selecting cards like for mothergun it should get a checkmark, not dim, and also be able to click again to uncheck
 - simplify s curve
+- toggle animations
+- a whole ass settings panel
+- house icons should contain both house colors, and should be roughly roundish. Brobnar - flame, sanctum cross in shield should be the yellow, dis
+- Cannot act dialogue on cards is not necessary
 
-## Deck persistence
+## Game finesse
 
-- base58 for deck IDs
-- import from MV
+- after implementing all cards, identify cards that have unique effects and decide if they can be reworded for simplicity - is it possibility to introspect and see how many times each card facet is used?
 
 ## Full two-player support
 
+- base58 for deck IDs
+- import from MV
 - manual mode needs to prompt for confirmation
 - custom keyboard shortcuts saved to player profiles
 - set your own primary/secondary player color
@@ -127,6 +115,8 @@ Live rulebook (your earlier priority):
 
 ## Wild ideas
 
+- generate 10k decks, score them, and graph their scores with average, mean, std dev, and 95/99/99.9%iles
+- translations
 - Display multiple houses
 - resolution zone
 - stadiums
@@ -135,11 +125,6 @@ Live rulebook (your earlier priority):
 - MM mutants - have a common, uncommon, and rare variant
 - rockatiel - the concept of really good cards that mean you have to hold answers against them for archon, vs not having complete blowout surprises that you have to hold against in sealed
 - If a maverick has a fate, it should pull in prophecies - how to balance prophecies so they could be in any deck?
-
-## Design refinements
-
-- house icons should contain both house colors, and should be roughly roundish. Brobnar - flame, sanctum cross in shield should be the yellow, dis
-- after implementing all cards, identify cards that have unique effects and decide if they can be reworded for simplicity - is it possibility to introspect and see how many times each card facet is used?
 
 ## Bot support
 

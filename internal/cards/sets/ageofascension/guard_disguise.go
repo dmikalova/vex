@@ -1,20 +1,15 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// GuardDisguise
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Guard Disguise
 //
 //	House:  Shadows
 //	Type:   Artifact
 //	Rarity: Rare
 //	Traits: Item
 //
-//	Action: Sacrifice Guard Disguise. If your opponent has 3A or fewer, steal 3A.
+//	Action: Destroy Guard Disguise, and if your opponent has 3 Æmber or fewer, steal 3 Æmber.
 var GuardDisguise = card.New(
 	"Guard Disguise",
 	card.House.Shadows,
@@ -22,5 +17,12 @@ var GuardDisguise = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, 302),
 	card.WithTraits(card.Traits.Item),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
+			card.Destroy{Target: card.Target.This},
+			card.Conditional{
+				Cond: card.OpponentAember{Is: card.AtMost, Amount: 3},
+				Then: card.StealAember{Amount: 3},
+			},
+		}}),
 )

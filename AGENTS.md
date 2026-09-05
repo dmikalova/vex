@@ -69,7 +69,8 @@ the `tools` mage namespace, invoked with a colon (`mage tool:stub`):
   interactive ↑/↓ picker; set `SET=<slug>` to name one directly (slugs match the
   files in `internal/cards/provenance` minus `.json`, e.g. `callofthearchons`).
 - `mage tool:coverage` — per-source-set count of cards covered by an implemented
-  card's provenance Ref.
+  card's provenance Ref. Pass `-new` (`mage tool:coverage -new`) to count only the
+  cards a set introduces, excluding the ones it reprints from an earlier set.
 
 - `mage tool:stub "<setSlug>"` — scaffold a build-excluded (`//go:build todo`) stub
   file for every unimplemented card in a set, each carrying the printed text and a
@@ -298,8 +299,9 @@ never a bespoke Omni trigger (the engine has none; ADR 0009).
 
 ## Rules voice and rulebook maintenance
 
-Every player-facing surface — printed card text, the game log, the generated
-rulebook (`docs/rulebook.md`), and the prose that frames it — is written in one
+Every player-facing surface — printed card text, the game log, the rulebook page
+(`/rulebook`, rendered from the engine's typed rulebook term registry), and the
+prose that frames it — is written in one
 controlled **Rules voice** (ADR 0019): short declarative sentences, one
 instruction per sentence, controlled vocabulary (one word per meaning), no
 flourish. Card text follows the wording conventions in
@@ -323,7 +325,8 @@ Three standing invariants:
   KeyForge Master Rulebook ([docs/keyforge-master-rulebook.md](docs/keyforge-master-rulebook.md))
   is the wording authority **only for what Vactrol has not already decided**. Where
   Vactrol deliberately diverges from KeyForge, **Vactrol wins**, and the divergence
-  is recorded in the Vactrol⇄KeyForge divergence register — never silently
+  is recorded in the Vactrol⇄KeyForge divergence register
+  ([docs/keyforge-divergences.md](docs/keyforge-divergences.md)) — never silently
   overwritten by a later "match KeyForge".
 
 ## Speak the lingo

@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// BindingIrons
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Binding Irons
 //
 //	House:  Dis
 //	Type:   Tactic
@@ -20,5 +15,9 @@ var BindingIrons = card.New(
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.AoA, 55),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.GainChains{
+			Player: card.Opponent,
+			Amount: 3,
+		}),
 )

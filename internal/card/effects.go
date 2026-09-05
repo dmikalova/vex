@@ -49,7 +49,7 @@ type (
 	PerTarget = engine.PerTarget
 	// CreatureAndNeighbor (a Spread) damages a chosen creature and one of its neighbors.
 	CreatureAndNeighbor = engine.CreatureAndNeighbor
-	// CreatureAndNeighbors (a Spread) damages a chosen non-flank creature and each of its neighbors.
+	// CreatureAndNeighbors (a Spread) damages a chosen creature and each of its neighbors.
 	CreatureAndNeighbors = engine.CreatureAndNeighbors
 	// DifferentCreatures (a Spread) damages a chosen creature and a different chosen creature.
 	DifferentCreatures = engine.DifferentCreatures
@@ -251,12 +251,18 @@ type (
 	May = engine.May
 	// Then is the A -> B result gate: resolves Result only when First did something.
 	Then = engine.Then
+	// OrAmount switches an effect's amount to Amount when When holds, printing the
+	// linear "<base>, or <alt> if <cond>" form instead of an Otherwise branch (rule
+	// 22). Used as StealAember{Amount: 1, Or: card.OrAmount{Amount: 2, When: ...}}.
+	OrAmount = engine.OrAmount
 )
 
 // Conditions gate a Conditional, RepeatWhile, or MayRepeat.
 type (
 	// OpponentAember gates on the opponent's Æmber pool (Is + Amount).
 	OpponentAember = engine.OpponentAember
+	// YourAember gates on the controller's own Æmber pool (Is + Amount).
+	YourAember = engine.YourAember
 	// CardsDestroyedFewerThan is met when fewer than Amount cards were destroyed this way.
 	CardsDestroyedFewerThan = engine.CardsDestroyedFewerThan
 	// CountIs gates on any Count compared against a threshold (Count + Is + Amount).
@@ -282,10 +288,14 @@ type (
 var (
 	// AtLeast is met when the quantity is at least Amount.
 	AtLeast = engine.AtLeast
+	// AtMost is met when the quantity is at most Amount.
+	AtMost = engine.AtMost
 	// Exactly is met when the quantity is exactly Amount.
 	Exactly = engine.Exactly
 	// MoreThanYou is met when the opponent's pool holds more Æmber than yours.
 	MoreThanYou = engine.MoreThanYou
+	// MoreThanOpponent is met when your pool holds more Æmber than the opponent's.
+	MoreThanOpponent = engine.MoreThanOpponent
 )
 
 // House references for conditions that compare a card's house dynamically.
@@ -341,6 +351,10 @@ type (
 	// AemberLostThisWay counts the Æmber an earlier LoseAember in the same
 	// resolution took from its Player's pool.
 	AemberLostThisWay = engine.AemberLostThisWay
+	// AemberInPool counts the Æmber currently in a player's pool.
+	AemberInPool = engine.AemberInPool
+	// NeighborsOfThis counts the battleline neighbors of the source creature (0-2).
+	NeighborsOfThis = engine.NeighborsOfThis
 	// CardsReturnedThisWay counts the cards an earlier PutFromDiscard in the same
 	// resolution recovered from the discard pile.
 	CardsReturnedThisWay = engine.CardsReturnedThisWay
@@ -384,6 +398,8 @@ type (
 	PreventDamage = engine.PreventDamage
 	// MayUseFriendlyHouse lets the controller use their House creatures this turn.
 	MayUseFriendlyHouse = engine.MayUseFriendlyHouse
+	// MayPlayOrUseFriendlyHouse lets the controller play and use a House this turn.
+	MayPlayOrUseFriendlyHouse = engine.MayPlayOrUseFriendlyHouse
 	// GrantFightForChosenHouse lets your chosen-house creatures fight this turn.
 	GrantFightForChosenHouse = engine.GrantFightForChosenHouse
 	// GrantFightAnyHouse lets every friendly creature fight this turn.

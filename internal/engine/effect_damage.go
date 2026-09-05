@@ -295,27 +295,38 @@ func (s CreatureAndNeighbor) hits(ctx *EffectContext) []DamageTarget {
 	return out
 }
 
-// CreatureAndNeighbors deals Amount to a chosen creature that is not on a flank
-// and Splash to each of that creature's neighbors, all at once — Lava Ball. The
-// not-on-a-flank choice guarantees the chosen creature has two neighbors. A
-// DealDamage Spread.
+// CreatureAndNeighbors deals Amount to a chosen creature and Splash to each of
+// that creature's neighbors, all at once — the "with N splash" wording (Lava
+// Ball). NotOnFlank narrows the choice to an interior creature, which always has
+// two neighbors (Booby Trap). A DealDamage Spread.
 type CreatureAndNeighbors struct {
-	Amount int
-	Splash int
+	Amount     int
+	Splash     int
+	NotOnFlank bool
 }
 
 // spreadText renders the clause.
 func (s CreatureAndNeighbors) spreadText() string {
+	creature := "a creature"
+	if s.NotOnFlank {
+		creature = "a creature that is not on a flank"
+	}
 	return fmt.Sprintf(
-		"deal %d damage to a creature that is not on a flank and %d damage to each of its neighbors",
+		"deal %d damage to %s and %d damage to each of its neighbors",
 		s.Amount,
+		creature,
 		s.Splash,
 	)
 }
 
-// hits chooses a non-flank creature, then hits it and its neighbors.
+// hits chooses a creature, then hits it and its neighbors. NotOnFlank keeps the
+// choice to an interior creature.
 func (s CreatureAndNeighbors) hits(ctx *EffectContext) []DamageTarget {
-	chosen := Target{Kind: TargetChosenCreature}.NotOnFlank().Select(ctx)
+	target := Target{Kind: TargetChosenCreature}
+	if s.NotOnFlank {
+		target = target.NotOnFlank()
+	}
+	chosen := target.Select(ctx)
 	if len(chosen) == 0 {
 		return nil
 	}

@@ -75,6 +75,18 @@ func TestRuleTermsWellFormed(t *testing.T) {
 	}
 }
 
+// TestGlossaryComplete enforces that the glossary column of the registry (ADR
+// 0018) has no blank rows: every glossary entry carries a Definition. The
+// definitions were authored once the rulebook page and glossary landed, so this
+// keeps a newly added term from silently reintroducing an empty entry.
+func TestGlossaryComplete(t *testing.T) {
+	for _, e := range Glossary() {
+		if e.Definition == "" {
+			t.Errorf("glossary entry %q has no definition (ADR 0018)", e.Title)
+		}
+	}
+}
+
 // TestRuleFramingRegistered checks the framing prose that moved out of
 // docs/rulebook/*.md and into the registry (ADR 0018): the document overview is
 // present, each section that carries an intro still has one, and a section with

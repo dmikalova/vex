@@ -121,6 +121,7 @@ var Traits = traits{
 	Demon:     engine.Demon,
 	Dragon:    engine.Dragon,
 	Elf:       engine.Elf,
+	Equation:  engine.Equation,
 	Faerie:    engine.Faerie,
 	Fungus:    engine.Fungus,
 	Giant:     engine.Giant,
@@ -131,6 +132,7 @@ var Traits = traits{
 	Insect:    engine.Insect,
 	Item:      engine.Item,
 	Knight:    engine.Knight,
+	Law:       engine.Law,
 	Location:  engine.Location,
 	Martian:   engine.Martian,
 	Merchant:  engine.Merchant,
@@ -141,8 +143,10 @@ var Traits = traits{
 	Priest:    engine.Priest,
 	Quest:     engine.Quest,
 	Ranger:    engine.Ranger,
+	Rat:       engine.Rat,
 	Robot:     engine.Robot,
 	Scientist: engine.Scientist,
+	Shard:     engine.Shard,
 	Soldier:   engine.Soldier,
 	Specter:   engine.Specter,
 	Spirit:    engine.Spirit,
@@ -165,6 +169,7 @@ type traits struct {
 	Demon,
 	Dragon,
 	Elf,
+	Equation,
 	Faerie,
 	Fungus,
 	Giant,
@@ -175,6 +180,7 @@ type traits struct {
 	Insect,
 	Item,
 	Knight,
+	Law,
 	Location,
 	Martian,
 	Merchant,
@@ -185,8 +191,10 @@ type traits struct {
 	Priest,
 	Quest,
 	Ranger,
+	Rat,
 	Robot,
 	Scientist,
+	Shard,
 	Soldier,
 	Specter,
 	Spirit,
@@ -278,6 +286,7 @@ var Trigger = triggers{
 	AfterEnemyCardPlayed:        engine.TriggerAfterEnemyCardPlayed,
 	AfterUse:                    engine.TriggerAfterUse,
 	AfterDiscardFromHand:        engine.TriggerAfterDiscardFromHand,
+	UsedSelf:                    engine.TriggerAfterUsedSelf,
 	LeavesPlay:                  engine.TriggerLeavesPlay,
 }
 
@@ -316,6 +325,9 @@ type triggers struct {
 	AfterUse engine.Trigger
 	// AfterDiscardFromHand fires after the controller discards a card from hand.
 	AfterDiscardFromHand engine.Trigger
+	// UsedSelf fires after this creature is itself used (reap, fight, or Action:),
+	// so an upgrade can punish its own host ("After this creature is used, ...").
+	UsedSelf engine.Trigger
 	// LeavesPlay fires as this card leaves play by any route ("Leaves Play:").
 	LeavesPlay engine.Trigger
 }

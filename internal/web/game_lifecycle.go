@@ -1,6 +1,9 @@
 package web
 
 import (
+	"math"
+	"time"
+
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
 	"github.com/dmikalova/vactrol/internal/engine"
@@ -33,6 +36,7 @@ func (g *game) OnMount(ctx app.Context) {
 	g.save(ctx)
 	g.installKeyShortcuts()
 	g.installScrollTracking()
+	g.installSwipeGestures()
 	g.scrollLogToBottom()
 }
 
@@ -47,7 +51,9 @@ func (g *game) OnUpdate(app.Context) {
 	g.flyIntoPlay()
 	g.scrollPromptZoneIntoView()
 	g.scrollCursorIntoView()
+	g.scrollUsableRowsIntoView()
 	g.focusPickerInput()
+	g.refreshToast()
 	// Measured after the cursor scroll, so the rect is the card's resting place
 	// rather than wherever it was on the way there.
 	if g.measureFocus() {
@@ -81,6 +87,50 @@ func (g *game) scrollPromptZoneIntoView() {
 	}
 	el.Call("scrollIntoView", map[string]any{"block": "center"})
 	g.promptZoneScrolled = true
+}
+
+// scrollUsableRowsIntoView, when the end-turn confirm arms, scrolls each row that
+// still holds a usable card so at least one jiggling card in that row is in view.
+// The confirm warns that moves are left; a card the player has scrolled past is
+// pulled back into its strip so the warning points at something they can see. It
+// fires once per arming: scrolling every render would fight a player who then
+// scrolls away, so once the rows have been revealed it waits for the next confirm.
+func (g *game) scrollUsableRowsIntoView() {
+	if !g.confirmEndTurn {
+		g.confirmScrolled = false
+		return
+	}
+	if g.confirmScrolled {
+		return
+	}
+	g.confirmScrolled = true
+	p := g.active()
+	// The first jiggling card in a strip is scrolled into view, which carries its
+	// whole strip's scroll along, so one card per row satisfies the confirm.
+	rows := []struct {
+		ids  []engine.LocalID
+		kind selKind
+		hand bool
+	}{
+		{g.g.Battleline(p), selYourCreature, false},
+		{g.g.Artifacts(p), selYourArtifact, false},
+		{g.g.Hand(p), selHand, true},
+	}
+	for _, row := range rows {
+		for _, id := range row.ids {
+			if !g.jiggling(id, row.kind) {
+				continue
+			}
+			domID := boardCardID(id)
+			if row.hand {
+				domID = handCardID(id)
+			}
+			if el := app.Window().GetElementByID(domID); el.Truthy() {
+				el.Call("scrollIntoView", map[string]any{"block": "nearest", "inline": "nearest"})
+			}
+			break
+		}
+	}
 }
 
 // scrollCursorIntoView brings whatever Tab is currently pointed at — a card
@@ -198,6 +248,126 @@ func (g *game) scrollLogToBottom() {
 	g.logScrollHeight = el.Get("scrollHeight").Float()
 }
 
+// toastLinger is how long a minimized-log toast bubble stays up before it clears
+// itself.
+const toastLinger = 5 * time.Second
+
+// refreshToast surfaces log lines the player would otherwise miss: while the
+// sidebar (and its log) is hidden, new lines since the last catch-up group into
+// the same bubbles the panel draws and toast over the board. With the sidebar
+// open the log itself is on screen, so nothing toasts and the catch-up simply
+// tracks the log. It runs after each render (from OnUpdate); once caught up it
+// dispatches nothing, so it cannot loop. Turn and phase headers do not toast — a
+// bare scene break is not news — but they still close the open bubble.
+func (g *game) refreshToast() {
+	if !g.sidebarCollapsed {
+		g.toastSeen = len(g.g.Log)
+		g.toastBubbles = nil
+		g.toastOpen = false
+		return
+	}
+	if len(g.g.Log) <= g.toastSeen {
+		return
+	}
+	starts := make(map[int]int, len(g.logGroups))
+	for _, m := range g.logGroups {
+		starts[m.Start] = m.Player
+	}
+	changed := false
+	for i := g.toastSeen; i < len(g.g.Log); i++ {
+		rec := g.g.Log[i]
+		if rule, _ := ruleOf(rec); rule != ruleNone {
+			g.toastOpen = false
+			continue
+		}
+		if player, ok := starts[i]; ok {
+			g.openToastBubble(player)
+		} else if !g.toastOpen {
+			g.openToastBubble(g.enclosingPlayer(i))
+		}
+		b := &g.toastBubbles[len(g.toastBubbles)-1]
+		b.lines = append(b.lines, rec)
+		g.armToastExpiry(b)
+		changed = true
+	}
+	g.toastSeen = len(g.g.Log)
+	if changed {
+		g.dispatch(nil)
+	}
+}
+
+// openToastBubble starts a fresh bubble for a new root action, so the toast keeps
+// the same one-bubble-per-action grouping the log panel does.
+func (g *game) openToastBubble(player int) {
+	g.toastBubbles = append(g.toastBubbles, toastBubble{player: player})
+	g.toastOpen = true
+}
+
+// enclosingPlayer is whose action a bubble that did not start on a group mark
+// belongs to — the last group opened at or before that line.
+func (g *game) enclosingPlayer(i int) int {
+	player, at := -1, -1
+	for _, m := range g.logGroups {
+		if m.Start <= i && m.Start > at {
+			at, player = m.Start, m.Player
+		}
+	}
+	return player
+}
+
+// armToastExpiry (re)starts a bubble's countdown, freshening it on every new line
+// so an action still resolving does not fade mid-way. When it fires it drops just
+// that bubble, unless the pointer is holding the toast open, in which case it
+// waits out another linger. A superseded timer finds no bubble with its id and
+// does nothing.
+func (g *game) armToastExpiry(b *toastBubble) {
+	g.toastGen++
+	b.gen = g.toastGen
+	gen := g.toastGen
+	time.AfterFunc(toastLinger, func() {
+		g.dispatch(func(app.Context) {
+			if g.toastHover || g.toastPinned {
+				g.rearmToastExpiry(gen)
+				return
+			}
+			g.dropToastBubble(gen)
+		})
+	})
+}
+
+// rearmToastExpiry keeps a held-open bubble alive: it arms a fresh countdown for
+// the same bubble, so a paused toast never expires under the pointer.
+func (g *game) rearmToastExpiry(gen int) {
+	for i := range g.toastBubbles {
+		if g.toastBubbles[i].gen == gen {
+			g.armToastExpiry(&g.toastBubbles[i])
+			return
+		}
+	}
+}
+
+// dropToastBubble removes the bubble whose countdown just fired. Dropping the
+// newest bubble also closes the group, so the next line opens a fresh one.
+func (g *game) dropToastBubble(gen int) {
+	for i := range g.toastBubbles {
+		if g.toastBubbles[i].gen == gen {
+			if i == len(g.toastBubbles)-1 {
+				g.toastOpen = false
+			}
+			g.toastBubbles = append(g.toastBubbles[:i], g.toastBubbles[i+1:]...)
+			return
+		}
+	}
+}
+
+// pauseToast, resumeToast, and toggleToastPin keep the toast up while the player
+// is reading it: hovering freezes every bubble's countdown, leaving lets them run
+// again, and a click pins the whole toast open until the next click.
+func (g *game) pauseToast(_ app.Context, _ app.Event)  { g.toastHover = true }
+func (g *game) resumeToast(_ app.Context, _ app.Event) { g.toastHover = false }
+
+func (g *game) toggleToastPin(_ app.Context, _ app.Event) { g.toastPinned = !g.toastPinned }
+
 // installKeyShortcuts wires a document-level keydown listener so common actions
 // have a single-key shortcut (see onKey). It listens on the document because the
 // board has no single focused element to receive the keys.
@@ -251,6 +421,73 @@ func (g *game) installScrollTracking() {
 		return nil
 	})
 	app.Window().Get("document").Call("addEventListener", "scroll", g.scrollFunc, true)
+}
+
+// swipeEdgeBand is how far (in pixels) from the right edge a touch must begin for
+// an open-swipe to count, so an edge drag reveals the sidebar without a swipe that
+// starts mid-board doing the same.
+const swipeEdgeBand = 32
+
+// swipeMinDistance is the horizontal travel (in pixels) a swipe must cover before
+// it toggles the sidebar, so a tap or a short drag does not move it.
+const swipeMinDistance = 60
+
+// installSwipeGestures wires document-level touch listeners so a horizontal swipe
+// moves the sidebar on a touchscreen: a swipe that starts near the right edge and
+// travels left reveals the sidebar, and a swipe that travels right hides it. It
+// mirrors the » / « reveal buttons for a phone where the edge is easier to reach
+// than the button. A mostly-vertical drag (scrolling a strip or the log) is left
+// alone, and an open-swipe must begin in the edge band so a mid-board drag does
+// not summon the drawer.
+func (g *game) installSwipeGestures() {
+	if g.touchStartFunc != nil {
+		return
+	}
+	g.touchStartFunc = app.FuncOf(func(_ app.Value, args []app.Value) any {
+		if len(args) == 0 {
+			return nil
+		}
+		touches := args[0].Get("touches")
+		if !touches.Truthy() || touches.Get("length").Int() != 1 {
+			g.swipeTracking = false
+			return nil
+		}
+		t := touches.Index(0)
+		g.swipeStartX = t.Get("clientX").Float()
+		g.swipeStartY = t.Get("clientY").Float()
+		g.swipeTracking = true
+		return nil
+	})
+	g.touchEndFunc = app.FuncOf(func(_ app.Value, args []app.Value) any {
+		if !g.swipeTracking || len(args) == 0 {
+			return nil
+		}
+		g.swipeTracking = false
+		changed := args[0].Get("changedTouches")
+		if !changed.Truthy() || changed.Get("length").Int() == 0 {
+			return nil
+		}
+		t := changed.Index(0)
+		dx := t.Get("clientX").Float() - g.swipeStartX
+		dy := t.Get("clientY").Float() - g.swipeStartY
+		// A mostly-vertical drag is a scroll, not a sidebar swipe.
+		if math.Abs(dx) < swipeMinDistance || math.Abs(dy) > math.Abs(dx) {
+			return nil
+		}
+		width := app.Window().Get("innerWidth").Float()
+		switch {
+		case dx < 0 && g.sidebarCollapsed && g.swipeStartX >= width-swipeEdgeBand:
+			// Swipe left from the right edge: reveal the hidden sidebar.
+			g.dispatch(func(ctx app.Context) { g.toggleSidebar(ctx, app.Event{}) })
+		case dx > 0 && !g.sidebarCollapsed:
+			// Swipe right: hide the sidebar out to the edge.
+			g.dispatch(func(ctx app.Context) { g.toggleSidebar(ctx, app.Event{}) })
+		}
+		return nil
+	})
+	doc := app.Window().Get("document")
+	doc.Call("addEventListener", "touchstart", g.touchStartFunc, map[string]any{"passive": true})
+	doc.Call("addEventListener", "touchend", g.touchEndFunc, map[string]any{"passive": true})
 }
 
 // OnResize re-places the lifted card copy, which is positioned from a measurement
@@ -315,6 +552,16 @@ func (g *game) OnDismount() {
 		app.Window().Get("document").Call("removeEventListener", "scroll", g.scrollFunc, true)
 		g.scrollFunc.Release()
 		g.scrollFunc = nil
+	}
+	if g.touchStartFunc != nil {
+		app.Window().Get("document").Call("removeEventListener", "touchstart", g.touchStartFunc)
+		g.touchStartFunc.Release()
+		g.touchStartFunc = nil
+	}
+	if g.touchEndFunc != nil {
+		app.Window().Get("document").Call("removeEventListener", "touchend", g.touchEndFunc)
+		g.touchEndFunc.Release()
+		g.touchEndFunc = nil
 	}
 }
 

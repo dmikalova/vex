@@ -1,6 +1,8 @@
 package web
 
 import (
+	"hash/fnv"
+	"math/rand"
 	"strconv"
 	"strings"
 
@@ -27,18 +29,39 @@ type specimen struct {
 // found reports whether the query matched a card.
 func (s specimen) found() bool { return s.Def != nil }
 
-// firstMatch returns the first card in the catalog satisfying want, or a gap
-// specimen if none does. The catalog is sorted by house then name, so the same
-// query always answers with the same card and the gallery does not reshuffle
-// between renders.
-func firstMatch(caption string, want func(*engine.CardDefinition) bool) specimen {
+// styleSeed is randomized once per page load (set in NewStyle) so the gallery
+// shows different qualifying cards on every reload. It stays fixed for the life
+// of that load so the many re-renders within one load do not reshuffle the page:
+// a specimen's pick depends only on its caption and this seed, never on render
+// order or how many other specimens the page happened to draw first.
+var styleSeed int64
+
+// captionSeed hashes a caption to a stable number, so each query gets its own
+// deterministic stream off styleSeed rather than sharing one order-dependent
+// sequence with every other query on the page.
+func captionSeed(caption string) int64 {
+	h := fnv.New64a()
+	_, _ = h.Write([]byte(caption))
+	return int64(h.Sum64())
+}
+
+// randomMatch returns a card the query matches, chosen at random from all the
+// matches, or a gap specimen if none does. The pick is seeded from styleSeed and
+// the caption, so it varies across page loads but is identical across every
+// re-render within one load — the gallery reshuffles on reload, not on hover.
+func randomMatch(caption string, want func(*engine.CardDefinition) bool) specimen {
 	all := cards.All()
+	var matches []int
 	for i := range all {
 		if want(&all[i]) {
-			return specimen{Caption: caption, Def: &all[i]}
+			matches = append(matches, i)
 		}
 	}
-	return specimen{Caption: caption}
+	if len(matches) == 0 {
+		return specimen{Caption: caption}
+	}
+	r := rand.New(rand.NewSource(styleSeed ^ captionSeed(caption)))
+	return specimen{Caption: caption, Def: &all[matches[r.Intn(len(matches))]]}
 }
 
 // houseGrid returns the House-by-Card-type table of specimens, row-major with
@@ -52,7 +75,7 @@ func houseGrid() (houses []engine.House, types []engine.CardType, cells []specim
 	types = []engine.CardType{engine.Creature, engine.Tactic, engine.Artifact, engine.Upgrade}
 	for _, h := range houses {
 		for _, ct := range types {
-			cells = append(cells, firstMatch(
+			cells = append(cells, randomMatch(
 				h.String()+" "+ct.String(),
 				func(d *engine.CardDefinition) bool { return d.House == h && d.Type == ct },
 			))
@@ -69,7 +92,7 @@ func raritySpecimens() []specimen {
 	}
 	out := make([]specimen, 0, len(rarities))
 	for _, r := range rarities {
-		out = append(out, firstMatch(string(r), func(d *engine.CardDefinition) bool {
+		out = append(out, randomMatch(string(r), func(d *engine.CardDefinition) bool {
 			return d.Rarity == r
 		}))
 	}
@@ -83,24 +106,27 @@ func raritySpecimens() []specimen {
 func featureSpecimens() []specimen {
 	out := make([]specimen, 0, len(engine.Keywords())+7)
 	for _, kw := range engine.Keywords() {
-		out = append(out, firstMatch(kw.String(), func(d *engine.CardDefinition) bool {
+		out = append(out, randomMatch(kw.String(), func(d *engine.CardDefinition) bool {
 			return hasKeyword(d, kw)
 		}))
 	}
 	out = append(
 		out,
-		firstMatch("Assault", func(d *engine.CardDefinition) bool { return d.Assault > 0 }),
-		firstMatch("Hazardous", func(d *engine.CardDefinition) bool { return d.Hazardous > 0 }),
-		firstMatch("Armor > 0", func(d *engine.CardDefinition) bool { return d.Armor > 0 }),
-		firstMatch("Æmber bonus", func(d *engine.CardDefinition) bool { return d.AemberBonus > 0 }),
-		firstMatch(
+		randomMatch("Assault", func(d *engine.CardDefinition) bool { return d.Assault > 0 }),
+		randomMatch("Hazardous", func(d *engine.CardDefinition) bool { return d.Hazardous > 0 }),
+		randomMatch("Armor > 0", func(d *engine.CardDefinition) bool { return d.Armor > 0 }),
+		randomMatch(
+			"Æmber bonus",
+			func(d *engine.CardDefinition) bool { return d.AemberBonus > 0 },
+		),
+		randomMatch(
 			"Two or more traits",
 			func(d *engine.CardDefinition) bool { return len(d.Traits) > 1 },
 		),
-		firstMatch("Constant ability", func(d *engine.CardDefinition) bool {
+		randomMatch("Constant ability", func(d *engine.CardDefinition) bool {
 			return len(d.ConstantAbilities) > 0
 		}),
-		firstMatch("Longest rules text", longestRules()),
+		randomMatch("Longest rules text", longestRules()),
 	)
 	return out
 }
@@ -161,7 +187,18 @@ type cardCursor struct {
 	i   int
 }
 
-func newCardCursor() *cardCursor { return &cardCursor{all: cards.All()} }
+func newCardCursor() *cardCursor {
+	all := cards.All()
+	// Start at a per-load offset so the attachment section walks a different window
+	// of the catalog on every reload, the way the randomMatch sections reshuffle;
+	// left at zero it would show the same first cards every time. The offset is
+	// fixed for the life of the load, so re-renders within one load are stable.
+	i := 0
+	if len(all) > 0 {
+		i = int(uint64(styleSeed^captionSeed("attach")) % uint64(len(all)))
+	}
+	return &cardCursor{all: all, i: i}
+}
 
 func (c *cardCursor) next() engine.CardDefinition {
 	d := c.all[c.i%len(c.all)]

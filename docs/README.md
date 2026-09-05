@@ -61,12 +61,15 @@ together and **CONTEXT** for what the words mean.
 
 ## Rules
 
-- [rulebook.md](rulebook.md) — Vactrol's own rulebook, **generated** from the
-  engine (`mage gen`); the authoritative source for how mechanics work.
+- The **rulebook** lives as the web client's `/rulebook` and `/glossary` pages,
+  rendered live from the engine's typed rulebook term registry (ADR 0018); the
+  authoritative source for how mechanics work.
 - [keyforge-master-rulebook.md](keyforge-master-rulebook.md) — the official
   KeyForge rulebook, kept as a faithful reference only.
 - [card-wording-rules.md](card-wording-rules.md) — the curated conventions every
   card's printed text must follow.
+- [keyforge-divergences.md](keyforge-divergences.md) — the Vactrol⇄KeyForge
+  divergence register: where and why Vactrol departs from KeyForge.
 
 ## Contributing
 

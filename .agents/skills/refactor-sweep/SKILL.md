@@ -90,14 +90,14 @@ cannot show on its own. A finding is a type, field, or function whose _why_,
 unit, invariant, or zero-value meaning is unstated — not one whose name already
 says it. Rewrite a comment that restates its next line rather than adding another.
 
-**Missing rulebook entries.** A player-facing mechanic with no
-`//rulebook:<section> <Title>` directive on its declaration is a finding: it is
-absent from the generated `docs/rulebook.md`, so a player cannot look it up.
+**Missing rulebook entries.** A player-facing mechanic with no `RuleTerm` in
+`internal/engine/ruleterms_<section>.go` is a finding: it is
+absent from the `/rulebook` page, so a player cannot look it up.
 Judge what is player-facing against `docs/keyforge-master-rulebook.md` — if the
 official rulebook explains the term to a player, ours must too. Sections are
-`turn`, `combat`, `cardtype`, `keyword`, `ability`, and `effect`; the rest of the
-comment group is the entry's body, and a ` / <subheading>` suffix gathers several
-code sites under one heading. An entry whose text no longer matches what the code
+`turn`, `combat`, `cardtype`, `keyword`, `ability`, and `effect`; the term's `Body`
+is the entry's text, and a `Subtitle` groups several
+code sites under one `Title`. An entry whose text no longer matches what the code
 does, and a directive left on a mechanic a refactor retired, are findings of the
 same class. List the gaps with:
 
@@ -147,9 +147,9 @@ down, and writing it is worth more than the three fixes.
 - A rule about **the client** (prompts, handlers, snapshots, CSS) →
   `internal/web/AGENTS.md`.
 - A rule about **printed card text** → `docs/card-wording-rules.md`.
-- A rule a **player** needs, about a mechanic the engine now has → a
-  `//rulebook:` directive on the declaration that enforces it, so
-  `docs/rulebook.md` regenerates with it. Never hand-edit `docs/rulebook.md`.
+- A rule a **player** needs, about a mechanic the engine now has → a `RuleTerm`
+  in the matching `internal/engine/ruleterms_<section>.go` (ADR 0018), so the
+  `/rulebook` page picks it up.
 - A **decision with real tradeoffs** you had to weigh → a new `docs/adr/NNNN-*.md`,
   with the alternatives you rejected and why. Point at it from the AGENTS file
   that governs the area.
@@ -166,12 +166,12 @@ rather than inventing a rule to have written one.
 ## 6. Close green and report
 
 ```sh
-mage gen && mage check      # gen = card comments + rulebook; check must print ALL GREEN
+mage gen && mage check      # gen = card comments; check must print ALL GREEN
 ```
 
-Read the `docs/rulebook.md` diff `mage gen` produced: it is the reader-facing
-summary of what the sweep changed, and an unexpected entry appearing or vanishing
-there is a mechanic the sweep moved without meaning to.
+The `/rulebook` page is the reader-facing summary of the rules the sweep touched;
+an unexpected term appearing or vanishing there is a mechanic the sweep moved
+without meaning to.
 
 `mage check` includes the 100% `internal/engine` coverage gate: new engine code
 needs its test in the matching `internal/engine/effect_*_test.go` or

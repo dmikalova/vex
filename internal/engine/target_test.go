@@ -109,6 +109,7 @@ func TestTargetText(t *testing.T) {
 		TargetEachFriendlyCreature: "each friendly creature",
 		TargetEachEnemyCreature:    "each enemy creature",
 		TargetEachArtifact:         "each artifact",
+		TargetTheChosenCreature:    "the chosen creature",
 		TargetKind(99):             "a creature",
 	}
 	for kind, want := range cases {
@@ -198,6 +199,34 @@ func TestTargetPowerFilters(t *testing.T) {
 	if got := (Target{Kind: TargetChosenCreature}).PowerVariable().
 		Text(); got != "a creature with power X" {
 		t.Errorf("PowerVariable text = %q", got)
+	}
+}
+
+func TestTargetPowerParity(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	p2 := g.AddToBattleline(testCreature("p2", 2), 0)
+	p3 := g.AddToBattleline(testCreature("p3", 3), 0)
+	p4 := g.AddToBattleline(testCreature("p4", 4), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	if ids := (Target{Kind: TargetEachCreature}).OddPower().
+		Select(ctx); len(ids) != 1 ||
+		ids[0] != p3 {
+		t.Errorf("OddPower = %v, want [%d]", ids, p3)
+	}
+	if ids := (Target{Kind: TargetEachCreature}).EvenPower().
+		Select(ctx); len(ids) != 2 ||
+		ids[0] != p2 ||
+		ids[1] != p4 {
+		t.Errorf("EvenPower = %v, want [%d %d]", ids, p2, p4)
+	}
+	if got := (Target{Kind: TargetEachCreature}).OddPower().
+		Text(); got != "each creature with odd power" {
+		t.Errorf("OddPower text = %q", got)
+	}
+	if got := (Target{Kind: TargetEachCreature}).EvenPower().
+		Text(); got != "each creature with even power" {
+		t.Errorf("EvenPower text = %q", got)
 	}
 }
 

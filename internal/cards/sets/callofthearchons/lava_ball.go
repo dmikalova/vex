@@ -17,7 +17,8 @@ var LavaBall = card.New(
 	card.Provenance(card.CotA, 9),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{Spread: card.CreatureAndNeighbors{
-			Amount: 4,
-			Splash: 2,
+			Amount:     4,
+			Splash:     2,
+			NotOnFlank: true,
 		}}),
 )

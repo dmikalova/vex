@@ -12,6 +12,9 @@ func TestDrawEffect(t *testing.T) {
 	if (Draw{Amount: 1}).Text() != "draw a card" {
 		t.Errorf("single text = %q", (Draw{Amount: 1}).Text())
 	}
+	if (Draw{Amount: 1, You: true}).Text() != "you draw a card" {
+		t.Errorf("you text = %q", (Draw{Amount: 1, You: true}).Text())
+	}
 	e := Draw{Amount: 2}
 	if e.Text() != "draw 2 cards" {
 		t.Errorf("text = %q", e.Text())

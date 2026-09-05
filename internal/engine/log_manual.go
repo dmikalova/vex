@@ -40,6 +40,18 @@ func (e UseGrantedForHouse) Text(n Namer) string {
 	return fmt.Sprintf("%s may use %s creatures this turn", n.PlayerName(e.Player), e.House)
 }
 
+// PlayGrantedForHouse narrates permission to play a house's cards from hand this
+// turn out of the active house.
+type PlayGrantedForHouse struct {
+	Player int
+	House  House
+}
+
+// Text renders permission to play a house's cards this turn.
+func (e PlayGrantedForHouse) Text(n Namer) string {
+	return fmt.Sprintf("%s may play %s cards this turn", n.PlayerName(e.Player), e.House)
+}
+
 // HouseForcedNextTurn narrates a card dictating next turn's active house.
 type HouseForcedNextTurn struct {
 	Player int

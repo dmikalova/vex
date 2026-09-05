@@ -4,6 +4,8 @@ package main
 
 import (
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -49,14 +51,23 @@ func Cover() error {
 
 // run measures one gate and reports whether it is short of 100%.
 func (g coverGate) run() error {
-	profile := "coverage." + g.name + ".out"
-	if err := sh.RunV(
+	if err := os.MkdirAll("tmp", 0o755); err != nil {
+		return err
+	}
+	// The profile is a throwaway artifact, so it is written under ./tmp (gitignored)
+	// rather than the repo root.
+	profile := filepath.Join("tmp", "coverage."+g.name+".out")
+	// The per-package go test lines here report the coverpkg's coverage against a
+	// different package's tests, which reads as confusing noise next to the real
+	// figure below, so the output is captured and only surfaced when the run fails.
+	if out, err := sh.Output(
 		"go",
 		"test",
 		g.test,
 		"-coverpkg="+g.count,
 		"-coverprofile="+profile,
 	); err != nil {
+		fmt.Print(tidyTestOutput(out))
 		return err
 	}
 	out, err := sh.Output("go", "tool", "cover", "-func="+profile)
@@ -65,12 +76,12 @@ func (g coverGate) run() error {
 	}
 	lines := strings.Split(strings.TrimRight(out, "\n"), "\n")
 	total := lines[len(lines)-1]
-	fmt.Printf("%s: %s\n", g.name, total)
 	fields := strings.Fields(total)
 	pct, err := strconv.ParseFloat(strings.TrimSuffix(fields[len(fields)-1], "%"), 64)
 	if err != nil {
 		return fmt.Errorf("parsing coverage percent from %q: %w", total, err)
 	}
+	fmt.Printf("%-10s %.1f%%\n", g.name+":", pct)
 	if pct < 100 {
 		fmt.Printf("%s functions below 100%%:\n", g.name)
 		for _, l := range lines[:len(lines)-1] {

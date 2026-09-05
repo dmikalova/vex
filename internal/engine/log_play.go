@@ -135,7 +135,7 @@ type TollPaid struct {
 
 // Text renders the toll paid, to whom, and the action it bought.
 func (e TollPaid) Text(n Namer) string {
-	return fmt.Sprintf("%s pays %d Æmber to %s to %s",
+	return fmt.Sprintf("%s gives %d Æmber to %s to %s",
 		n.PlayerName(e.Player), e.Amount, n.PlayerName(e.Payee), e.Action.phrase())
 }
 

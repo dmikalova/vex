@@ -24,6 +24,8 @@ import (
 
 func main() {
 	app.Route("/", web.NewGame)
+	app.Route("/rulebook", web.NewRulebook)
+	app.Route("/glossary", web.NewGlossary)
 	if styleEnabled() {
 		app.Route("/style", web.NewStyle)
 	}
@@ -45,14 +47,19 @@ func main() {
 		BackgroundColor: "#1c1c1b",
 		ThemeColor:      "#1c1c1b",
 		Icon: app.Icon{
-			SVG:     "/web/assets/favicon.svg",
-			Default: "/web/assets/favicon.svg",
+			// Raster icons at the standard PWA sizes make the app installable on
+			// Android/Chrome, which wants a 192 and a 512 PNG; the SVG stays as the
+			// scalable favicon, and the maskable 512 adapts to each platform's shape.
+			SVG:      "/web/assets/favicon.svg",
+			Default:  "/web/assets/icon-192.png",
+			Large:    "/web/assets/icon-512.png",
+			Maskable: "/web/assets/icon-512.png",
 		},
 		// Plain CSS served as a static file from web/ — no CDN, no build step. The dev
 		// server serves it from disk, so editing web/app.css and refreshing the browser
 		// applies changes with the server left running (no restart).
 		Styles:     []string{"/web/app.css"},
-		RawHeaders: []string{bootStyle, boardScript, devReloadScript},
+		RawHeaders: []string{bootStyle, appleTouchIcon, boardScript, devReloadScript},
 		// The icons are fetched one <img> at a time as the board draws, so without
 		// precaching them a client that has the wasm cached but no server draws a board
 		// of broken images. The service worker serves a cached copy first and only
@@ -210,9 +217,19 @@ const webManifest = `{
   "display": "fullscreen",
   "display_override": ["fullscreen", "standalone"],
   "icons": [
-    { "src": "/web/assets/favicon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "any" }
+    { "src": "/web/assets/favicon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "any" },
+    { "src": "/web/assets/icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "any" },
+    { "src": "/web/assets/icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "any" },
+    { "src": "/web/assets/app-icon.svg", "type": "image/svg+xml", "sizes": "any", "purpose": "maskable" },
+    { "src": "/web/assets/icon-192.png", "type": "image/png", "sizes": "192x192", "purpose": "maskable" },
+    { "src": "/web/assets/icon-512.png", "type": "image/png", "sizes": "512x512", "purpose": "maskable" }
   ]
 }`
+
+// appleTouchIcon points iOS Safari at the home-screen icon it uses when the app
+// is added to the home screen; go-app's Icon struct has no Apple-touch field, so
+// the link tag is injected into the head directly.
+const appleTouchIcon = `<link rel="apple-touch-icon" href="/web/assets/apple-touch-icon.png">`
 
 // bootStyle is an inline <head> stylesheet that paints the dark background
 // immediately, before the external app.css link finishes loading. Without it a

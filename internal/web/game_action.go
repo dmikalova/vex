@@ -29,7 +29,13 @@ func (g *game) runAction(ctx app.Context, fn func() error) {
 	// any Dispatch whose source element is no longer mounted — which would leave
 	// the UI stuck on "resolving…" after a chooser.
 	ctx.Async(func() {
-		crashed, err := runSafely(fn)
+		crashed, err := runSafely(func() error {
+			if e := fn(); e != nil {
+				return e
+			}
+			g.handOffEndedTurn()
+			return nil
+		})
 		g.dispatch(func(ctx app.Context) {
 			g.busy = false
 			if crashed {

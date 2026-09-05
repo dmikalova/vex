@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// EyeOfJudgment
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Eye of Judgment
 //
 //	House:  Sanctum
 //	Type:   Artifact
@@ -24,5 +19,9 @@ var EyeOfJudgment = card.New(
 	card.Provenance(card.AoA, 253),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Item),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Action, card.PurgeCard{
+			Zone: card.Discard,
+			Type: card.Type.Creature,
+		}),
 )

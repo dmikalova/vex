@@ -6,24 +6,19 @@ root `AGENTS.md`). Every card's rendered text obeys the conventions below, so th
 printed card maps cleanly onto the effect AST (each clause is a node) and can never
 desync from behavior.
 
-The conventions were derived by diffing a curated implementation set against the
-original printed KeyForge text; that provenance is kept here for reference.
-
-- **Source of truth for originals:** [callofthearchons.json](../internal/cards/provenance/callofthearchons.json) — the pristine
-  printed text of every Call of the Archons card (flat JSON array).
-- **Curated set:** [cota-top.jsonc](cota-top.jsonc) — the minimal set selected for
-  implementation, keyed by house, with reworded text.
-- **Regenerate the diff:** `python3 scripts/diff-cota.py` (prints every
-  old→new text change; used to build and maintain this document).
-
-Of 124 curated cards, 77 had their text reworded and 1 was renamed. No stats
-(power, armor, Æmber, house, type, rarity) were changed.
+The conventions were originally derived by diffing a curated implementation set
+against the original printed KeyForge text, but they now stand on their own as
+house style — they apply to every set, not just the one they were first drawn
+from. The pristine printed originals still live in
+[callofthearchons.json](../internal/cards/provenance/callofthearchons.json), a flat
+JSON array of every Call of the Archons card, for reference.
 
 Some conventions are deliberate **divergences** from KeyForge — a renamed card
-type, retired verbs, restructured abilities. Where Vactrol diverges, Vactrol wins;
-those changes are called out inline and gathered under _Deliberate rule changes_
-at the end, and the precedence rule (fall back to the KeyForge Master Rulebook
-only for what Vactrol has not decided) lives in the root `AGENTS.md`.
+type, retired verbs, restructured abilities. Where Vactrol diverges, Vactrol wins.
+Each divergence is called out inline below and cataloged in the
+[Vactrol⇄KeyForge divergence register](keyforge-divergences.md), which holds the
+precedence rule (fall back to the KeyForge Master Rulebook only for what Vactrol
+has not decided).
 
 The goal of the rewording is **one printed sentence per engine operation**: text
 that maps cleanly onto the effect AST (each clause is a node), so the printed
@@ -124,9 +119,9 @@ written with an arrow, not a follow-up sentence.
 | Original                                                                                        | Curated                                                                              |
 | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | `Purge a creature from a discard pile. If you do, put a +1 power counter on Eater of the Dead.` | `Purge a creature from a discard pile -> give Eater of the Dead a +1 power counter.` |
-| `Destroy a damaged creature. If you do, steal 1 Aember.`                                        | `Destroy a damaged creature -> steal 1 Aember.`                                      |
+| `Destroy a damaged creature. If you do, steal 1 Æmber.`                                         | `Destroy a damaged creature -> steal 1 Æmber.`                                       |
 | `You may sacrifice another friendly creature. If you do, fully heal Chuff Ape.`                 | `You may destroy another friendly creature -> fully heal Chuff Ape.`                 |
-| `Lose 1 Aember. If you do, you may forge a key at current cost.`                                | `Lose 1 Aember -> forge a key at current cost.`                                      |
+| `Lose 1 Æmber. If you do, you may forge a key at current cost.`                                 | `Lose 1 Æmber -> forge a key at current cost.`                                       |
 
 `A -> B` is a **gate**: attempt A, and only run B if A actually happened. Maps to
 `Gate{attempt: A, then: B}`. This is distinct from an unconditional sequence
@@ -143,11 +138,11 @@ creature` when a creature was just chosen.
 When an effect replaces what _would_ happen, the `would` cue comes first and
 `instead` heads the replacement clause — the twist is never buried at the end.
 
-| Original                                                                                       | Curated                                                                                    |
-| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `…any Aember you would gain from reaping is stolen from your opponent instead.`                | `…instead of gaining Æmber from reaping, steal the same amount.`                           |
-| `Each Aember that would be added to your opponent's pool is captured by Ether Spider instead.` | `If Aember would be added to your opponent's pool, instead Ether Spider captures it.`      |
-| `Destroyed: Fully heal this creature and destroy Armageddon Cloak instead.`                    | `If this creature would be destroyed, instead fully heal it and destroy Armageddon Cloak.` |
+| Original                                                                                      | Curated                                                                                    |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `…any Æmber you would gain from reaping is stolen from your opponent instead.`                | `…instead of gaining Æmber from reaping, steal the same amount.`                           |
+| `Each Æmber that would be added to your opponent's pool is captured by Ether Spider instead.` | `If Æmber would be added to your opponent's pool, instead Ether Spider captures it.`       |
+| `Destroyed: Fully heal this creature and destroy Armageddon Cloak instead.`                   | `If this creature would be destroyed, instead fully heal it and destroy Armageddon Cloak.` |
 
 Two shapes:
 
@@ -163,14 +158,14 @@ replacement, not a post-destruction trigger.
 A creature refers to itself by name, not "this creature" (outside granted
 abilities).
 
-| Original                  | Curated                             |
-| ------------------------- | ----------------------------------- |
-| `Play: Capture 3 Aember.` | `Play: Charette captures 3 Aember.` |
+| Original                 | Curated                            |
+| ------------------------ | ---------------------------------- |
+| `Play: Capture 3 Æmber.` | `Play: Charette captures 3 Æmber.` |
 
 The rule by context:
 
 - **On a creature, where the creature is the subject/holder of the effect** — it
-  names itself: `Charette captures 3 Aember`, `Valdr deals +2 Damage …`,
+  names itself: `Charette captures 3 Æmber`, `Valdr deals +2 Damage …`,
   `fully heal Chuff Ape`. Capture and static modifiers bind to that specific
   creature, so the name carries meaning.
   - **Capture always names its target:** the
@@ -186,10 +181,10 @@ into its owner's archives`.
 
 ## 8. `Choose one` renders as a bulleted list
 
-| Original                                                                          | Curated                                                                                  |
-| --------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
-| `Choose one: Archive a card, or, for each archived card you have, gain 1 Aember.` | `Choose one:`<br>`- Archive a card`<br>`- Gain 1 Aember for each card in your archives.` |
-| `Choose one: destroy each Dis creature, or gain 1 Aember.`                        | `Choose one:`<br>`- Destroy each Dis creature`<br>`- Gain 1 Aember.`                     |
+| Original                                                                         | Curated                                                                                 |
+| -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `Choose one: Archive a card, or, for each archived card you have, gain 1 Æmber.` | `Choose one:`<br>`- Archive a card`<br>`- Gain 1 Æmber for each card in your archives.` |
+| `Choose one: destroy each Dis creature, or gain 1 Æmber.`                        | `Choose one:`<br>`- Destroy each Dis creature`<br>`- Gain 1 Æmber.`                     |
 
 Each option is a list item; maps to `ChooseOne{options: [...]}`.
 
@@ -201,9 +196,9 @@ has to run to the end for the multiplier and jump back.
 
 | Original                                                          | Curated                                                            |
 | ----------------------------------------------------------------- | ------------------------------------------------------------------ |
-| `Gain 1 Aember for each forged key your opponent has.`            | `For each forged key your opponent has, gain 1 Aember.`            |
-| `gain 1 Aember each time you play a creature.`                    | `each time you play a creature, gain 1 Aember.`                    |
-| `Gain 1 Aember for each creature healed this way.`                | `For each creature healed this way, gain 1 Aember.`                |
+| `Gain 1 Æmber for each forged key your opponent has.`             | `For each forged key your opponent has, gain 1 Æmber.`             |
+| `gain 1 Æmber each time you play a creature.`                     | `each time you play a creature, gain 1 Æmber.`                     |
+| `Gain 1 Æmber for each creature healed this way.`                 | `For each creature healed this way, gain 1 Æmber.`                 |
 | `Deal 1 Damage to a creature for each friendly creature in play.` | `For each friendly creature in play, deal 1 damage to a creature.` |
 
 The loop header precedes the body, matching `ForEach{source, body}`. In the
@@ -237,7 +232,7 @@ Longhand descriptions are replaced by the canonical keyword/verb.
 
 | Original                                                                                  | Curated                                                             | Keyword          |
 | ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------- | ---------------- |
-| `Place 2 Aember from the common supply on an enemy creature.`                             | `Exalt an enemy creature 2 times.`                                  | Exalt            |
+| `Place 2 Æmber from the common supply on an enemy creature.`                              | `Exalt an enemy creature 2 times.`                                  | Exalt            |
 | `This creature gains, "You may use this creature as if it belonged to the active house."` | `This creature gains versatile.`                                    | versatile        |
 | `This creature belongs to all houses.`                                                    | `This creature gains versatile.`                                    | versatile        |
 | `Omni: Destroy Gorm of Omm. Destroy an artifact.`                                         | `Versatile.`<br>`Action: Destroy Gorm of Omm. Destroy an artifact.` | Omni → versatile |
@@ -330,9 +325,9 @@ never implies the hand.
 The same holds for the Æmber **pool** a capture draws from: a capture always
 names it, even where the printed card leaves it implied.
 
-| Original                        | Curated                                        |
-| ------------------------------- | ---------------------------------------------- |
-| `a friendly creature captures 1 Aember` | `a friendly creature captures 1 Aember from your opponent` |
+| Original                               | Curated                                                   |
+| -------------------------------------- | --------------------------------------------------------- |
+| `a friendly creature captures 1 Æmber` | `a friendly creature captures 1 Æmber from your opponent` |
 
 ## 18. Æmber a player owes another player is `give`, never `pay`
 
@@ -341,10 +336,10 @@ printed wording on toll cards) is retired so every player-to-player transfer rea
 the same way, matching Interdimensional Graft's "they must give you their
 remaining Æmber".
 
-| Original                                                            | Curated                                                              |
-| ------------------------------------------------------------------- | -------------------------------------------------------------------- |
-| `Your opponent must pay you 1 Aember in order to play an artifact.` | `Your opponent must give you 1 Aember in order to play an artifact.` |
-| `…they must pay you their remaining Aember.`                        | `…they must give you their remaining Aember.`                        |
+| Original                                                           | Curated                                                             |
+| ------------------------------------------------------------------ | ------------------------------------------------------------------- |
+| `Your opponent must pay you 1 Æmber in order to play an artifact.` | `Your opponent must give you 1 Æmber in order to play an artifact.` |
+| `…they must pay you their remaining Æmber.`                        | `…they must give you their remaining Æmber.`                        |
 
 The engine keeps the mechanic named `Toll` (the thing a card charges), but its
 rendered text says `give`. (Affected: Customs Office, Tentacus,
@@ -403,19 +398,34 @@ card`.** Both `you may` and `this turn` go — a play with no legal card in hand
 simply does nothing, so the permission needs no explicit opt-out. (Affected: Phase
 Shift, Kirby.)
 
+## 22. A number-only branch collapses to `or <alt> if <cond>`
+
+A two-armed `If <cond>, <A>. Otherwise, <B>.` whose arms are the **same verb**
+differing only in a number is a disguised parameter, not a real fork. It collapses
+to one verb that states the base value and appends the exception as a trailing
+rider — a linear sentence read in order, with no branch.
+
+| Original                                                                                                                | Curated                                                                      |
+| ----------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `If your opponent has 7 Æmber or more, steal 2 Æmber. Otherwise, steal 1 Æmber.`                                        | `Steal 1 Æmber, or 2 if your opponent has 7 Æmber or more.`                  |
+| `If your opponent has no Æmber, forge a key at +2 Æmber current cost. Otherwise, forge a key at +6 Æmber current cost.` | `Forge a key at +6 Æmber current cost, or +2 if your opponent has no Æmber.` |
+
+The base value is the one that applies when the condition is **absent**; the rider
+names the value the condition switches to. Maps to a single effect node whose
+amount carries an `OrAmount{Amount, When}` — the alternate value and its guard —
+which renders the `, or <alt> if <cond>` tail and picks the value at resolve time.
+No `Else` arm exists.
+
+`Otherwise` survives only for a genuine two-way branch — arms that are **different
+actions**, not the same verb with a different number. Vespilon Theorist keeps it
+(archive the revealed card and gain 1 Æmber, or discard it), because archive and
+discard are different actions on different zones. (Affected: Ronnie Wristclocks,
+Key of Darkness.)
+
 ---
 
 ## Deliberate rule changes (not just wording)
 
-A few cards were changed in ways that affect the rules, not just phrasing — to
-**simplify** the card down to base rules text, to make it
-**slightly more interesting**, or to bring it in line with **modern errata**:
-
-- **Charge!** buffs all creatures, not just ones played this turn (dropped
-  `you play`).
-- **Imperial Traitor** `Reveal` (not `Look at`) — modern wording.
-- **Ganger Chieftain** / **Biomatrix Backup** made mandatory (dropped `you may`).
-- **Hypnotic Command** leans on the base rule that the **active player makes all
-  decisions**, so `an enemy creature captures …` needs no explicit `choose`.
-- **Phase Shift** / **Kirby** play their off-house card **immediately** rather
-  than granting a permission for later in the turn (rule 21).
+A few cards diverge from KeyForge in ways that affect the rules, not just
+phrasing. Those changes, and the precedence rule that governs every divergence,
+live in the [Vactrol⇄KeyForge divergence register](keyforge-divergences.md).

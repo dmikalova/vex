@@ -19,7 +19,8 @@ var Flamethrower = card.New(
 	card.WithTraits(card.Traits.Weapon),
 	card.WithAbility(
 		card.Trigger.Action, card.DealDamage{Spread: card.CreatureAndNeighbors{
-			Amount: 1,
-			Splash: 1,
+			Amount:     1,
+			Splash:     1,
+			NotOnFlank: true,
 		}}),
 )

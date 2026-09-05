@@ -20,9 +20,9 @@ linters:
       # The engine and card facade deliberately use rulebook-first / imperative doc
       # comments (e.g. "// stun a creature ...", "// A Before Fight ability
       # resolves ...") and section-grouped type aliases, rather than the Go-doc
-      # "Name ..." form — it feeds docs/rulebook.md via genrules and reads like the
-      # printed cards. Drop revive's comment-form check; the presence check
-      # ("should have comment") stays active.
+      # "Name ..." form — they feed the rulebook term registry (engine.RuleTerms())
+      # and read like the printed cards. Drop revive's comment-form check; the
+      # presence check ("should have comment") stays active.
       - linters:
           - revive
         text: "should be of the form"

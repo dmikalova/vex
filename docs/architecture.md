@@ -9,7 +9,8 @@ It is the human-facing companion to three other kinds of docs:
 
 - **`AGENTS.md` files** (root, `internal/engine`, `internal/cards`) are the
   contributor/agent rules — the conventions to follow when changing code.
-- **`docs/rulebook.md`** (generated) is the _game_ rules the engine implements.
+- **The rulebook page (`/rulebook`)** is the _game_ rules the engine implements,
+  rendered live from the engine's typed rulebook term registry (ADR 0018).
 - **`CONTEXT.md`** is the glossary; **`docs/roadmap.md`** and **`docs/todo.md`**
   cover long-term direction and planning. See **`docs/README.md`** for a full
   index of the documentation.
@@ -169,8 +170,11 @@ Two generators keep prose in sync with code (run via `mage gen`):
 
 - **`gencomments`** rewrites each card's doc comment (and its test's) from the
   card definition, so the comment always mirrors the rendered card box.
-- **`genrules`** builds `docs/rulebook.md` from `//rulebook:` directives in engine
-  doc comments, so the rulebook stays next to the code it describes.
+
+The rulebook is no longer generated to a file: the web client's `/rulebook` and
+`/glossary` pages render the engine's typed rulebook term registry
+(`engine.RuleBook()` / `engine.Glossary()`; ADR 0018) directly, so the rules stay
+next to the code they describe and are complete by construction.
 
 Authoring conventions (file layout, the multiline struct style, wording rules)
 live in [`internal/cards/AGENTS.md`](../internal/cards/AGENTS.md).

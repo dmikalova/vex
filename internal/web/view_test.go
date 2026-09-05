@@ -77,6 +77,18 @@ func TestDrawingAPlayedTurn(t *testing.T) {
 		"board-area", "score-pill", "log-list", "End turn", testCreature)
 }
 
+// The action bar carries an inline Undo icon beside End turn, so a misplay is one
+// click from being taken back. It rides with End turn: the opening house prompt
+// has no End turn and so shows no Undo either.
+func TestTheActionBarShowsAnInlineUndo(t *testing.T) {
+	c := newClient(t)
+	c.lacks("the house prompt", "end-turn-bar", "undo.svg")
+
+	c.manualTurn(testHouse)
+	c.playFromHand(c.deal(testCreature))
+	c.wants("a played turn", "end-turn-bar", "undo.svg", "End turn")
+}
+
 // A selected card is lifted off the board as a copy of itself carrying exactly
 // the verbs that card has, while the dock keeps End turn.
 func TestDrawingTheLiftedCard(t *testing.T) {
@@ -146,16 +158,9 @@ func TestALiftedCardSaysWhyItCannotAct(t *testing.T) {
 	// The creature entered play exhausted, so this turn it can do nothing.
 	c.g.selectBoardID(c.ctx, id)
 	c.wants("an exhausted creature", "card-focus", "Cannot act")
-	// The lift lies over the hand, whose cards may print a "Reap:" ability of
-	// their own, so the no-verb check reads the lifted copy alone.
-	h := c.html()
-	from := strings.Index(h, `class="card-focus`)
-	if from < 0 {
-		t.Fatal("the client drew no lifted card")
-	}
-	if strings.Contains(h[from:], "Reap") {
-		t.Error("an exhausted creature still offers a Reap verb")
-	}
+	// The verb button renders as >Reap<; a card's printed "Reap:" rules text
+	// elsewhere on the board must not be mistaken for the button being offered.
+	c.lacks("an exhausted creature", ">Reap<")
 }
 
 // A prompt takes the controls over, and an optional one draws the way to pass.
@@ -218,6 +223,48 @@ func TestDrawingAnUpgradeTab(t *testing.T) {
 
 	c.wants("a creature with an attached upgrade", "card-host", "card-tabs--right", "card-tab")
 	c.lacks("a creature with an attached upgrade", "card-tab--back")
+	// The host reserves one tab's width of margin per attached card, so a neighbour
+	// in the strip is pushed clear of the tab instead of covering it.
+	c.wants("a host that reserves room for its upgrade tab", "--up-tabs:1")
+}
+
+// A power counter on a creature shows a +1 (or -1) token in its status row, with
+// the count when more than one rides the card, so how many tokens sit on it is
+// legible for the interactions that care.
+func TestDrawingAPowerCounterToken(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	host := c.deal(testCreature)
+	c.playFromHand(host)
+
+	c.lacks("a creature with no counters", "power-counter-plus.svg", "power-counter-minus.svg")
+
+	c.g.g.AddPowerCounter(host, 3)
+	c.wants("a creature with three +1 counters", "power-counter-plus.svg", ">3<")
+	c.lacks("a creature with +1 counters", "power-counter-minus.svg")
+
+	c.g.g.AddPowerCounter(host, -5) // net -2
+	c.wants("a creature at net -2", "power-counter-minus.svg", ">2<")
+	c.lacks("a creature at net -2", "power-counter-plus.svg")
+}
+
+// Attached cards dim with an exhausted host and brighten when it readies, so an
+// upgrade reads as spent alongside the creature that has already acted.
+func TestAttachedTabsDimWithAnExhaustedHost(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	host := c.deal(testCreature)
+	c.playFromHand(host) // a creature enters play exhausted
+
+	up := c.g.g.Register(
+		engine.NewCard("Test Upgrade", testHouse, engine.Upgrade, engine.Common), c.g.active())
+	c.g.g.AttachUpgrade(host, up)
+
+	c.wants("an exhausted host's tabs", "card-tabs--dim")
+
+	c.g.selectBoardID(c.ctx, host)
+	c.do(c.g.manualReady)
+	c.lacks("a ready host's tabs", "card-tabs--dim")
 }
 
 // A faceup Under-card (Graft's rule) draws its own house colour, since it is
@@ -289,6 +336,32 @@ func TestTheEndTurnConfirmJigglesUsableCards(t *testing.T) {
 	c.wants("a playable hand card once the confirm is armed", "card--jiggle")
 }
 
+// The end-turn confirm reveals its usable rows once when it arms and rearms the
+// reveal after it disarms, so the strips scroll a jiggling card into view the
+// moment moves-left is warned rather than every render while it stays armed.
+func TestTheEndTurnConfirmScrollsUsableRowsOnce(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	c.deal(testCreature)
+
+	c.g.scrollUsableRowsIntoView()
+	if c.g.confirmScrolled {
+		t.Fatal("the usable rows should not be scrolled before the confirm arms")
+	}
+
+	c.g.confirmEndTurn = true
+	c.g.scrollUsableRowsIntoView()
+	if !c.g.confirmScrolled {
+		t.Fatal("arming the confirm should reveal the usable rows once")
+	}
+
+	c.g.confirmEndTurn = false
+	c.g.scrollUsableRowsIntoView()
+	if c.g.confirmScrolled {
+		t.Fatal("disarming the confirm should rearm the reveal for next time")
+	}
+}
+
 // A face-up pile names its cards in the hover tip, so a zone reads like the
 // upgrade title bars: just the names. A hidden zone stays a bare label.
 func TestZoneTipNamesTheCardsInAFaceUpPile(t *testing.T) {
@@ -319,6 +392,20 @@ func TestDrawingTheSetPicker(t *testing.T) {
 	c.startTurn()
 	c.do(c.g.restartMenu)
 	c.wants("the set picker", "New game", "choose a set", "Cancel")
+}
+
+// New game must work from the end-of-game panel too: over a finished game the
+// picker takes the controls, rather than the win result shadowing it.
+func TestNewGameFromTheEndOfGamePanel(t *testing.T) {
+	c := newClient(t)
+	c.startTurn()
+	c.g.g.State.Winner = 0
+	c.g.phase = phaseOver
+	c.wants("the end-of-game panel", "wins!", "New game")
+
+	c.do(c.g.openSetup)
+	c.wants("the set picker over a finished game", "choose a set")
+	c.lacks("the set picker over a finished game", "wins!")
 }
 
 // A rejected click is reported in the dock, next to the control that rejected it.

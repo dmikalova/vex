@@ -6,7 +6,7 @@ func TestCannotPlay(t *testing.T) {
 	if got := (CannotPlay{Player: Opponent, Type: Creature, Duration: NextTurn}).Text(); got != "your opponent cannot play creatures during their next turn" {
 		t.Errorf("creature text = %q", got)
 	}
-	if got := (CannotPlay{Player: Controller, Type: Tactic, Duration: NextTurn}).Text(); got != "you cannot play action cards during your next turn" {
+	if got := (CannotPlay{Player: Controller, Type: Tactic, Duration: NextTurn}).Text(); got != "you cannot play Tactics during your next turn" {
 		t.Errorf("tactic text = %q", got)
 	}
 	if got := (CannotPlay{Player: Controller, Duration: EndOfTurn}).Text(); got != "you cannot play cards for the remainder of the turn" {
@@ -523,5 +523,50 @@ func TestMayUseFriendlyHouse(t *testing.T) {
 	g.EndPlayPhase(0)
 	if g.State.MayUseHouse[0] != HouseNone {
 		t.Error("the grant should clear at end of turn")
+	}
+}
+
+func TestMayPlayOrUseFriendlyHouse(t *testing.T) {
+	if got := (MayPlayOrUseFriendlyHouse{House: Mars}).Text(); got != "you may play or use a Mars card this turn" {
+		t.Errorf("text = %q", got)
+	}
+	if (MayPlayOrUseFriendlyHouse{}).validate() == nil {
+		t.Error("unset house should be invalid")
+	}
+	if (MayPlayOrUseFriendlyHouse{House: Mars}).validate() != nil {
+		t.Error("a set house should be valid")
+	}
+
+	g := NewGame("A", "B", 1)
+	g.StartTurn(0)
+	if err := g.ChooseHouse(0, Sanctum); err != nil {
+		t.Fatal(err)
+	}
+	off := NewCard("marauder", Mars, Creature, Common, WithPower(3))
+	if g.mayPlayFromHand(0, &off) {
+		t.Fatal("an off-house card should not be playable before the grant")
+	}
+	c := g.AddToBattleline(NewCard("cleric", Mars, Creature, Common, WithPower(3)), 0)
+	if g.usableInActiveHouse(c) {
+		t.Fatal("an off-house creature should not be usable before the grant")
+	}
+
+	MayPlayOrUseFriendlyHouse{House: Mars}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if g.State.MayPlayHouse[0] != Mars {
+		t.Fatal("the grant should record the play house")
+	}
+	if g.State.MayUseHouse[0] != Mars {
+		t.Fatal("the grant should record the use house")
+	}
+	if !g.mayPlayFromHand(0, &off) {
+		t.Error("the granted-house card should be playable")
+	}
+	if !g.usableInActiveHouse(c) {
+		t.Error("the granted-house creature should be usable")
+	}
+
+	g.EndPlayPhase(0)
+	if g.State.MayPlayHouse[0] != HouseNone {
+		t.Error("the play grant should clear at end of turn")
 	}
 }

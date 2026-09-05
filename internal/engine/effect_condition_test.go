@@ -297,7 +297,7 @@ func TestOpponentAember(t *testing.T) {
 	if (OpponentAember{}).validate() == nil {
 		t.Error("an unset comparison should be invalid")
 	}
-	for _, is := range []Comparison{AtLeast, Exactly, MoreThanYou} {
+	for _, is := range []Comparison{AtLeast, AtMost, Exactly, MoreThanYou} {
 		if (OpponentAember{Is: is}).validate() != nil {
 			t.Errorf("comparison %d should validate", is)
 		}
@@ -305,6 +305,9 @@ func TestOpponentAember(t *testing.T) {
 
 	if got := (OpponentAember{Is: AtLeast, Amount: 7}).CondText(); got != "if your opponent has 7 Æmber or more" {
 		t.Errorf("at-least text = %q", got)
+	}
+	if got := (OpponentAember{Is: AtMost, Amount: 3}).CondText(); got != "if your opponent has 3 Æmber or fewer" {
+		t.Errorf("at-most text = %q", got)
 	}
 	if got := (OpponentAember{Is: Exactly, Amount: 1}).CondText(); got != "if your opponent has exactly 1 Æmber" {
 		t.Errorf("exact text = %q", got)
@@ -321,6 +324,10 @@ func TestOpponentAember(t *testing.T) {
 		(OpponentAember{Is: AtLeast, Amount: 4}).Met(ctx) {
 		t.Error("AtLeast comparison wrong")
 	}
+	if !(OpponentAember{Is: AtMost, Amount: 3}).Met(ctx) ||
+		(OpponentAember{Is: AtMost, Amount: 2}).Met(ctx) {
+		t.Error("AtMost comparison wrong")
+	}
 	if !(OpponentAember{Is: Exactly, Amount: 3}).Met(ctx) ||
 		(OpponentAember{Is: Exactly, Amount: 2}).Met(ctx) {
 		t.Error("Exactly comparison wrong")
@@ -336,6 +343,57 @@ func TestOpponentAember(t *testing.T) {
 	// Conditional surfaces an unset condition at validation time.
 	if (Conditional{Cond: OpponentAember{}, Then: GainAember{Player: Controller, Amount: 1}}).validate() == nil {
 		t.Error("Conditional should surface an invalid condition")
+	}
+}
+
+func TestYourAember(t *testing.T) {
+	if (YourAember{}).validate() == nil {
+		t.Error("an unset comparison should be invalid")
+	}
+	for _, is := range []Comparison{AtLeast, AtMost, Exactly, MoreThanOpponent} {
+		if (YourAember{Is: is}).validate() != nil {
+			t.Errorf("comparison %d should validate", is)
+		}
+	}
+
+	if got := (YourAember{Is: AtLeast, Amount: 3}).CondText(); got != "if you have 3 Æmber or more" {
+		t.Errorf("at-least text = %q", got)
+	}
+	if got := (YourAember{Is: AtMost, Amount: 2}).CondText(); got != "if you have 2 Æmber or fewer" {
+		t.Errorf("at-most text = %q", got)
+	}
+	if got := (YourAember{Is: Exactly, Amount: 1}).CondText(); got != "if you have exactly 1 Æmber" {
+		t.Errorf("exact text = %q", got)
+	}
+	if got := (YourAember{Is: Exactly, Amount: 0}).CondText(); got != "if you have no Æmber" {
+		t.Errorf("zero text = %q", got)
+	}
+	if got := (YourAember{Is: MoreThanOpponent}).CondText(); got != "if you have more Æmber than your opponent" {
+		t.Errorf("more-than-opponent text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	g.State.Aember[0] = 3 // controller
+	g.State.Aember[1] = 2 // opponent
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	if !(YourAember{Is: AtLeast, Amount: 3}).Met(ctx) ||
+		(YourAember{Is: AtLeast, Amount: 4}).Met(ctx) {
+		t.Error("AtLeast comparison wrong")
+	}
+	if !(YourAember{Is: AtMost, Amount: 3}).Met(ctx) ||
+		(YourAember{Is: AtMost, Amount: 2}).Met(ctx) {
+		t.Error("AtMost comparison wrong")
+	}
+	if !(YourAember{Is: Exactly, Amount: 3}).Met(ctx) ||
+		(YourAember{Is: Exactly, Amount: 2}).Met(ctx) {
+		t.Error("Exactly comparison wrong")
+	}
+	if !(YourAember{Is: MoreThanOpponent}).Met(ctx) {
+		t.Error("MoreThanOpponent should hold when 3 > 2")
+	}
+	g.State.Aember[1] = 3
+	if (YourAember{Is: MoreThanOpponent}).Met(ctx) {
+		t.Error("MoreThanOpponent should not hold when 3 == 3")
 	}
 }
 

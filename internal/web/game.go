@@ -65,6 +65,16 @@ type game struct {
 	// copy over its card; it is released on dismount.
 	scrollFunc app.Func
 
+	// touchStartFunc and touchEndFunc back the edge-swipe that reveals or hides the
+	// sidebar; both are released on dismount. swipeStartX/swipeStartY/swipeTracking
+	// hold the in-progress touch: a swipe that begins near the right edge and travels
+	// left opens the sidebar, one that travels right closes it.
+	touchStartFunc app.Func
+	touchEndFunc   app.Func
+	swipeStartX    float64
+	swipeStartY    float64
+	swipeTracking  bool
+
 	phase phase
 	busy  bool // an action goroutine is resolving; input is ignored
 
@@ -147,6 +157,21 @@ type game struct {
 	// floating button reopens it.
 	sidebarCollapsed bool
 
+	// toastBubbles are the recent log bubbles surfaced over the board while the
+	// sidebar (and its log) is hidden, so a minimized log still tells the player
+	// what just happened. Each holds one root action's log lines and expires on its
+	// own timer, oldest first, so only the latest bubbles linger rather than the
+	// whole backlog. toastSeen is how far refreshToast has caught up, toastOpen
+	// whether the last bubble still takes new lines. toastHover and toastPinned hold
+	// every bubble open while the pointer is over the toast or after a click;
+	// toastGen mints the per-bubble timer ids.
+	toastBubbles []toastBubble
+	toastSeen    int
+	toastOpen    bool
+	toastHover   bool
+	toastPinned  bool
+	toastGen     int
+
 	// keysOpen shows the keyboard shortcut sheet (the ? key).
 	keysOpen bool
 
@@ -158,6 +183,11 @@ type game struct {
 	// still act; a second end-turn (e or the button) confirms. Any other action
 	// (via beginAction), selecting another card, or an undo/redo disarms it.
 	confirmEndTurn bool
+
+	// confirmScrolled tracks whether the end-turn confirm's usable rows have already
+	// been scrolled over once, so the strips scroll to reveal a jiggling card the
+	// moment the confirm arms rather than every render while it stays armed.
+	confirmScrolled bool
 
 	// btnCursor is the prompt button Tab has stepped to — an index into whatever
 	// buttons the current prompt offers (an option prompt's labels, the house

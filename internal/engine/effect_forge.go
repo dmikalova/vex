@@ -15,6 +15,10 @@ type ForgeKey struct {
 	// ReducedBy subtracts a running count from Extra, never below the current key
 	// cost — Key Abduction's +9 comes down by 1 for each card in hand.
 	ReducedBy Count
+	// Or switches Extra to an alternate surcharge when a condition holds, so the card
+	// reads "forge a key at +6 Æmber current cost, or +2 if …" instead of a two-armed
+	// Otherwise branch (rule 22).
+	Or OrAmount
 }
 
 // validate rejects a reduction with nothing to reduce.
@@ -25,24 +29,32 @@ func (e ForgeKey) validate() error {
 	if e.FreeOfCost && e.Extra != 0 {
 		return fmt.Errorf("ForgeKey: a free forge cannot also cost Extra")
 	}
-	return nil
+	if e.Or.set() && e.FreeOfCost {
+		return fmt.Errorf("ForgeKey: a free forge cannot also carry an Or surcharge")
+	}
+	return e.Or.validate()
 }
 
 // Text renders the effect.
 func (e ForgeKey) Text() string {
+	var body string
 	switch {
 	case e.FreeOfCost:
 		return "forge a key at no cost"
 	case e.ReducedBy != nil:
-		return fmt.Sprintf(
+		body = fmt.Sprintf(
 			"forge a key at +%d Æmber current cost, reduced by 1 Æmber for each %s",
 			e.Extra, e.ReducedBy.CountText(),
 		)
 	case e.Extra != 0:
-		return fmt.Sprintf("forge a key at +%d Æmber current cost", e.Extra)
+		body = fmt.Sprintf("forge a key at +%d Æmber current cost", e.Extra)
 	default:
-		return "forge a key at current cost"
+		body = "forge a key at current cost"
 	}
+	if e.Or.set() {
+		body += e.Or.tail(fmt.Sprintf("+%d", e.Or.Amount))
+	}
+	return body
 }
 
 // Resolve forges one key for the controller if affordable.
@@ -52,6 +64,9 @@ func (e ForgeKey) Resolve(ctx *EffectContext) {
 		return
 	}
 	extra := e.Extra
+	if e.Or.set() {
+		extra = e.Or.pick(e.Extra, ctx)
+	}
 	if e.ReducedBy != nil {
 		extra -= e.ReducedBy.Value(ctx)
 	}

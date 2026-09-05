@@ -8,6 +8,10 @@ import "fmt"
 type Draw struct {
 	Amount int
 	Per    Count
+	// You names the drawer explicitly ("you draw a card") to re-assert the subject
+	// when the draw follows a clause whose subject was the opponent (Perplexing
+	// Sophistry: "your opponent discards ..., and you draw a card").
+	You bool
 }
 
 // Text renders the effect, e.g. "draw a card" or "draw 2 cards". A "for each"
@@ -17,6 +21,9 @@ func (e Draw) Text() string {
 	phrase := fmt.Sprintf("draw %d cards", e.Amount)
 	if e.Amount == 1 {
 		phrase = "draw a card"
+	}
+	if e.You {
+		phrase = "you " + phrase
 	}
 	return forEach(e.Per, phrase)
 }

@@ -6,10 +6,10 @@ generation. It is a glossary only — no implementation detail.
 
 ## The game
 
-The engine implements a KeyForge-style game; **`docs/rulebook.md` is the
-authoritative, comprehensive source** for how each mechanic works. The entries
-here only fix the shared vocabulary — especially where Vactrol diverges from
-KeyForge.
+The engine implements a KeyForge-style game; the **rulebook page (`/rulebook`),
+rendered from the engine's typed rulebook term registry, is the authoritative,
+comprehensive source** for how each mechanic works. The entries here only fix the
+shared vocabulary — especially where Vactrol diverges from KeyForge.
 
 **Æmber**:
 The game's currency. A player gains Æmber into a pool and spends it to forge keys;

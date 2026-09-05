@@ -9,6 +9,7 @@
 package cards
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
@@ -115,8 +116,10 @@ func ownPool(native, reprints []card.RegisteredCard) []deckgen.Card {
 
 // reprintsBySet resolves each set's reprint claims (its 0set.go entries) to the
 // registered card that implements them, keyed by source-set name. A claim whose
-// card is not implemented is skipped. The per-set slices are sorted by name so the
-// pool is deterministic regardless of package init order.
+// card no set implements is a stale 0set.go referring to a renamed or removed
+// card; rather than silently drop it from the pool (and generate a short deck),
+// this panics so the mismatch is caught loudly. The per-set slices are sorted by
+// name so the pool is deterministic regardless of package init order.
 func reprintsBySet() map[string][]card.RegisteredCard {
 	byName := map[string]card.RegisteredCard{}
 	for _, rc := range card.Cards() {
@@ -124,9 +127,14 @@ func reprintsBySet() map[string][]card.RegisteredCard {
 	}
 	out := map[string][]card.RegisteredCard{}
 	for _, rp := range card.ReprintRefs() {
-		if rc, ok := byName[normalizeName(rp.Name)]; ok {
-			out[rp.Set.Name] = append(out[rp.Set.Name], rc)
+		rc, ok := byName[normalizeName(rp.Name)]
+		if !ok {
+			panic(fmt.Sprintf(
+				"cards: %s reprint #%d refers to %q, which no set implements",
+				rp.Set.Name, rp.Number, rp.Name,
+			))
 		}
+		out[rp.Set.Name] = append(out[rp.Set.Name], rc)
 	}
 	for _, regs := range out {
 		sort.Slice(regs, func(i, j int) bool { return regs[i].Def.Name < regs[j].Def.Name })

@@ -43,7 +43,11 @@ type cardView struct {
 	// Exhausted shows an exhausted token on the face. Rotating the card the way a
 	// physical one turns would break the strip's grid, so the token stands in.
 	Exhausted bool
-	// Bar lists the entries that get a coloured stripe along the card's edge
+	// PowerCounters is the net power from +1/-1 counters on the card. A creature
+	// carrying counters shows a +1 (or -1) power token beside its stun/exhaust
+	// tokens, with the count when more than one, so how many tokens ride the card
+	// is legible for the interactions that care about it, not just the net power.
+	PowerCounters int
 	// (Taunt, Elusive, Hazardous…) — printed keywords plus Hazardous, a magnitude
 	// rather than a boolean keyword so it does not live in engine.Keyword — since
 	// those change how the card can be attacked and are worth seeing without
@@ -72,6 +76,7 @@ type cardView struct {
 	FightDown    bool
 	StunFlash    bool
 	ExhaustFlash bool
+	PowerFlash   bool
 	FlashOdd     bool
 	Selected     bool
 	Targetable   bool
@@ -127,6 +132,25 @@ func (c *cardView) onMouseLeave(ctx app.Context, _ app.Event) {
 	if c.OnHoverOut != nil {
 		c.OnHoverOut(ctx)
 	}
+}
+
+// powerCounterToken draws the +1 (or -1) power-counter token in the card's status
+// row, with the count when more than a single counter rides the card. The net
+// counters carry the sign, so a positive net shows the plus token and a negative
+// net the minus one; the pulse replays when the count last changed.
+func (c *cardView) powerCounterToken() app.UI {
+	name, n := "power-counter-plus", c.PowerCounters
+	if n < 0 {
+		name, n = "power-counter-minus", -n
+	}
+	return app.Div().Class("card-counter").Body(
+		icon(name, "icon-token", "icon-outline",
+			ifCls(c.PowerFlash && !c.FlashOdd, "icon--pulse-a"),
+			ifCls(c.PowerFlash && c.FlashOdd, "icon--pulse-b")),
+		app.If(n > 1, func() app.UI {
+			return app.Span().Class("card-counter-num").Text(fmt.Sprintf("%d", n))
+		}),
+	)
 }
 
 // kwColorVar is the CSS var() reference for a keybar entry's colour, e.g.
@@ -230,13 +254,16 @@ func (c *cardView) Render() app.UI {
 			squeezedTitle(c.Title),
 		),
 		app.Div().Class("card-body").Body(
-			app.If(len(c.Stat) > 0 || c.Stunned || c.Exhausted, func() app.UI {
+			app.If(len(c.Stat) > 0 || c.Stunned || c.Exhausted || c.PowerCounters != 0, func() app.UI {
 				return app.Div().Class("card-stat").Body(
 					app.Range(c.Stat).Slice(func(i int) app.UI { return c.Stat[i] }),
 					// Stun and exhaustion read as more of the card's current condition, so
 					// they sit at the end of the stat line rather than in its name banner.
-					app.If(c.Stunned || c.Exhausted, func() app.UI {
+					app.If(c.Stunned || c.Exhausted || c.PowerCounters != 0, func() app.UI {
 						return app.Div().Class("card-tokens").Body(
+							app.If(c.PowerCounters != 0, func() app.UI {
+								return c.powerCounterToken()
+							}),
 							app.If(c.Stunned, func() app.UI {
 								return icon("stun", "icon-token", "icon-outline",
 									ifCls(c.StunFlash && !c.FlashOdd, "icon--pulse-a"),
@@ -288,9 +315,14 @@ func (c *cardView) Render() app.UI {
 				)
 			}),
 		),
-		// The selection ring is drawn inside the card edge and below the keybar, so
-		// it slips under the keyword stripe instead of cutting across it and never
-		// peeks past the card's top or bottom edge.
+		// The selection and targetable rings are drawn inside the card edge and
+		// below the keybar, so they slip under the keyword stripe instead of cutting
+		// across it and never peek past the card's top or bottom edge. Both use the
+		// same .card-selection overlay; targetable is rendered first so a card that
+		// is both shows the yellow selection ring over the green targetable one.
+		app.If(c.Targetable, func() app.UI {
+			return app.Div().Class("card-selection card-selection--targetable")
+		}),
 		app.If(c.Selected, func() app.UI {
 			return app.Div().Class("card-selection")
 		}),

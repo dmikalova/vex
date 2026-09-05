@@ -315,6 +315,12 @@ type GameState struct {
 	// clears it.
 	MayUseHouse [2]House
 
+	// MayPlayHouse[p] is a house whose cards player p may play from hand this turn
+	// even when it is not the active house — the Ambassador cycle's "you may play
+	// or use a <House> card this turn". HouseNone grants nothing; the ready phase
+	// clears it.
+	MayPlayHouse [2]House
+
 	// TurnHistory holds the small tallies of what each player did during a turn —
 	// several cards ask that rather than what is on the board ("if your opponent
 	// forged a key on their previous turn", "for each enemy creature destroyed in a

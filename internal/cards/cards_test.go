@@ -188,3 +188,24 @@ func TestProvenanceHasNoOverlap(t *testing.T) {
 		}
 	}
 }
+
+// TestEveryReprintResolvesToACard checks that every reprint claim a set makes (its
+// 0set.go card.Reprint entries) names a card some set actually implements. A claim
+// that resolves to nothing is a stale 0set.go — a card renamed or removed without
+// regenerating — which would silently shrink that set's pool; here it fails the
+// gate loudly and names the offending claim instead.
+func TestEveryReprintResolvesToACard(t *testing.T) {
+	byName := make(map[string]bool)
+	for _, rc := range card.Cards() {
+		byName[normalizeName(rc.Def.Name)] = true
+	}
+	for _, rp := range card.ReprintRefs() {
+		if !byName[normalizeName(rp.Name)] {
+			t.Errorf(
+				"%s reprint #%d refers to %q, which no set implements "+
+					"(stale 0set.go — regenerate with `mage tool:stub %s`)",
+				rp.Set.Name, rp.Number, rp.Name, rp.Set.Slug,
+			)
+		}
+	}
+}

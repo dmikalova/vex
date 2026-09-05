@@ -442,11 +442,13 @@ func (g *Game) emitCardPlayed(player int, played LocalID) {
 	g.emitLasting(EventCardPlayed, player, played)
 }
 
-// emitCardUsed fires "after you use a card" abilities on the user's other in-play
-// cards, with the used card as "it". Every route to using a card — reaping,
-// fighting, or an "Action:" — ends here, so a reaction to using never has to be
-// wired into each verb separately.
+// emitCardUsed fires the used card's own "after this creature is used" abilities,
+// then the "after you use a card" abilities on the user's other in-play cards with
+// the used card as "it". Every route to using a card — reaping, fighting, or an
+// "Action:" — ends here, so both reactions to using are wired in one place rather
+// than into each verb separately.
 func (g *Game) emitCardUsed(player int, used LocalID) {
+	g.triggerAbilities(used, TriggerAfterUsedSelf, 0, false)
 	for _, id := range g.allInPlay(player) {
 		if id == used {
 			continue

@@ -14,7 +14,8 @@ file covers only the card-authoring specifics on top of it.
 ## Rules reference
 
 When a rules question isn't settled by the vactrol implementation itself or by
-[docs/rulebook.md](../../docs/rulebook.md), the converted KeyForge Master Rulebook
+the engine's rulebook term registry (the `/rulebook` page), the converted KeyForge
+Master Rulebook
 at [docs/keyforge-master-rulebook.md](../../docs/keyforge-master-rulebook.md) is
 available for reference. Take it with a grain of salt: it is a converted PDF, and
 while much of it matches how vactrol behaves, some nuances have been intentionally

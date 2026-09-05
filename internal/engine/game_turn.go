@@ -239,6 +239,14 @@ func (g *Game) GrantUseForHouse(player int, h House) {
 	g.record(UseGrantedForHouse{Player: player, House: h})
 }
 
+// GrantPlayForHouse lets a player play cards of house h from hand this turn even
+// when h is not the active house — the Ambassador cycle. The ready phase clears
+// the grant.
+func (g *Game) GrantPlayForHouse(player int, h House) {
+	g.State.MayPlayHouse[player] = h
+	g.record(PlayGrantedForHouse{Player: player, House: h})
+}
+
 // ForceActiveHouseNextTurn makes a player have to choose house h as their active
 // house on their next turn (Control the Weak). StartTurn promotes the armed house.
 func (g *Game) ForceActiveHouseNextTurn(player int, h House, source LocalID) {

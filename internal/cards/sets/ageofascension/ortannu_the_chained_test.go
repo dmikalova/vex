@@ -15,7 +15,7 @@ import (
 //	Power:  7
 //	Traits: Demon
 //
-//	Reap: Put each Ortannu's Binding from your discard pile into your hand. For each card returned this way, deal 2 damage to a creature that is not on a flank and 2 damage to each of its neighbors.
+//	Reap: Put each Ortannu's Binding from your discard pile into your hand. For each card put into your hand this way, deal 2 damage to a creature and 2 damage to each of its neighbors.
 func TestOrtannuTheChained(t *testing.T) {
 	t.Run("returns each Binding and deals a splash hit per return", func(t *testing.T) {
 		var mid, left, right ct.Card
@@ -35,8 +35,10 @@ func TestOrtannuTheChained(t *testing.T) {
 		})
 
 		h.P1.Reap(OrtannuTheChained)
+		h.P1.ClickCard(mid) // first return's spread hit
+		h.P1.ClickCard(mid) // second return's spread hit
 
-		// Two returns → two spread hits on the non-flank creature: 2+2 = 4 damage,
+		// Two returns → two spread hits on the chosen creature: 2+2 = 4 damage,
 		// with 2 splash per hit to each neighbor.
 		h.Expect(mid).Damage(4)
 		h.Expect(left).Damage(4)

@@ -23,14 +23,14 @@ func Build() error {
 
 // Test runs all tests.
 func Test() error {
-	return sh.RunV("go", "test", "./...")
+	return goTest("./...")
 }
 
 // TestRun runs only the tests matching a name pattern. It covers every package,
 // and the pattern is a Go regexp — `mage testRun TestHeal`, or
 // `mage testRun 'TestBumpsy|TestUrchin'`.
 func TestRun(pattern string) error {
-	return sh.RunV("go", "test", "./...", "-run", pattern)
+	return goTest("./...", "-run", pattern)
 }
 
 // Vet runs go vet.
@@ -103,10 +103,17 @@ func Tidy() error {
 }
 
 // Check is the full green gate before calling work done. It runs fmt-check,
-// build, vet, lint, markdown lint, test, coverage, and the rulebook freshness
-// check.
+// build, vet, lint, markdown lint, test, and coverage. The independent checks run
+// together; test and coverage run after them, in order, so their reports read as
+// two clean blocks rather than interleaving.
 func Check() error {
-	mg.Deps(FmtCheck, Build, Vet, Lint, Markdownlint, Test, Cover, RulebookFresh)
+	mg.Deps(FmtCheck, Build, Vet, Lint, Markdownlint)
+	if err := Test(); err != nil {
+		return err
+	}
+	if err := Cover(); err != nil {
+		return err
+	}
 	fmt.Println("ALL GREEN")
 	return nil
 }

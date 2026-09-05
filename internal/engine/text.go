@@ -433,7 +433,22 @@ func staticBonuses(m StaticModifier) string {
 	for _, kw := range m.Keywords {
 		parts = append(parts, strings.ToLower(kw.String()))
 	}
-	return strings.Join(parts, " and ")
+	return oxfordAnd(parts)
+}
+
+// oxfordAnd joins parts into one clause: "a" alone, "a and b" for two, and an
+// Oxford-comma list "a, b, and c" for three or more.
+func oxfordAnd(parts []string) string {
+	switch len(parts) {
+	case 0:
+		return ""
+	case 1:
+		return parts[0]
+	case 2:
+		return parts[0] + " and " + parts[1]
+	default:
+		return strings.Join(parts[:len(parts)-1], ", ") + ", and " + parts[len(parts)-1]
+	}
 }
 
 // upgradeStaticLines renders an Upgrade's continuous modifier and replacement
@@ -537,7 +552,7 @@ func constantText(def *CardDefinition) string {
 			continue
 		}
 		who := capitalizeFirst(c.target().Text())
-		line := who + " gains " + strings.Join(parts, " and ")
+		line := who + " gains " + oxfordAnd(parts)
 		if c.Per != nil {
 			line += " for each " + c.Per.CountText()
 		}
@@ -634,6 +649,11 @@ func keyCostText(kc KeyCostChange) string {
 	}
 	sentence := fmt.Sprintf("%s keys cost %+d Æmber", whose, kc.amount)
 	if kc.per != nil {
+		// A self-referential count reads forward as a leading, named clause
+		// (Nyzyk Resonator); an aggregate count trails the sentence.
+		if _, ok := kc.per.(leadingCounter); ok {
+			return capitalizeFirst(forEach(kc.per, sentence)) + "."
+		}
 		sentence += " for each " + kc.per.CountText()
 	}
 	if kc.whileOnFlank {

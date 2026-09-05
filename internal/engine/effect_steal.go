@@ -12,6 +12,9 @@ type StealAember struct {
 	By Loss
 	// Per multiplies Amount by a running count.
 	Per Count
+	// Or switches Amount to an alternate when a condition holds, so the card reads
+	// "steal 1 Æmber, or 2 if …" instead of a two-armed Otherwise branch (rule 22).
+	Or OrAmount
 	// Player is who takes the Æmber. Unset (the usual case) means the controller
 	// steals from their opponent; Opponent turns the theft around, so the opponent
 	// takes from the controller (Magda the Rat as she leaves play).
@@ -28,12 +31,15 @@ func (e StealAember) sides(ctx *EffectContext) (player, opponent int) {
 }
 
 // validate rejects a StealAember that sets both a fixed Amount and a By share
-// (the two are different ways to say how much to steal).
+// (the two are different ways to say how much to steal), then checks the Or guard.
 func (e StealAember) validate() error {
 	if e.Amount != 0 && e.By != nil {
 		return fmt.Errorf("StealAember: set Amount or By, not both (got Amount=%d)", e.Amount)
 	}
-	return nil
+	if e.Or.set() && e.By != nil {
+		return fmt.Errorf("StealAember: Or and By both set the amount; use one")
+	}
+	return e.Or.validate()
 }
 
 // Text renders the effect, e.g. "steal 1 Æmber", "steal all but 6 Æmber from your
@@ -49,7 +55,11 @@ func (e StealAember) Text() string {
 	if e.Player == Opponent {
 		verb = "your opponent steals "
 	}
-	return forEach(e.Per, verb+object)
+	body := forEach(e.Per, verb+object)
+	if e.Or.set() {
+		body += e.Or.tail(fmt.Sprintf("%d", e.Or.Amount))
+	}
+	return body
 }
 
 // Resolve moves the Æmber from the opponent's pool to the controller's.
@@ -75,8 +85,9 @@ func (e StealAember) amount(ctx *EffectContext, opp int) int {
 	if e.By != nil {
 		return e.By.lose(ctx.Resolver.Aember(opp))
 	}
+	base := e.Or.pick(e.Amount, ctx)
 	if e.Per != nil {
-		return e.Amount * e.Per.Value(ctx)
+		return base * e.Per.Value(ctx)
 	}
-	return e.Amount
+	return base
 }

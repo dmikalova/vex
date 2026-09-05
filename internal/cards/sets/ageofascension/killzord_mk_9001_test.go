@@ -13,13 +13,12 @@ import (
 //	Type:   Upgrade
 //	Rarity: Rare
 //
-//	This creature gains +2 power and +2 armor and skirmish.
-//	This creature gains, "Fight: Gain 1 chain."
+//	This creature gains +2 power, +2 armor, and skirmish.
 func TestKillzordMk9001(t *testing.T) {
 	t.Run(
-		"boosts its host and gives its controller a chain when the host fights",
+		"boosts its host's power and armor",
 		func(t *testing.T) {
-			var host, foe ct.Card
+			var host ct.Card
 			h := ct.Play(t, ct.Setup{
 				P1: ct.Side{
 					House: card.House.Mars,
@@ -30,17 +29,10 @@ func TestKillzordMk9001(t *testing.T) {
 						),
 					),
 				},
-				P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.Power(20))))},
 			})
 
 			h.Expect(host).Power(6)
 			h.Expect(host).Armor(2)
-
-			h.P1.Fight(host, foe)
-
-			if got := h.Game().State.Chains[0]; got != 1 {
-				t.Errorf("controller should gain 1 chain, got %d", got)
-			}
 		},
 	)
 }

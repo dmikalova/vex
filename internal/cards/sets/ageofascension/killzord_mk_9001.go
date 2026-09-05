@@ -8,8 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Upgrade
 //	Rarity: Rare
 //
-//	This creature gains +2 power and +2 armor and skirmish.
-//	This creature gains, "Fight: Gain 1 chain."
+//	This creature gains +2 power, +2 armor, and skirmish.
 var KillzordMk9001 = card.New(
 	"Killzord Mk. 9001",
 	card.House.Mars,
@@ -20,9 +19,5 @@ var KillzordMk9001 = card.New(
 		PowerBonus: 2,
 		ArmorBonus: 2,
 		Keywords:   card.Keywords(card.Keyword.Skirmish),
-		Granted: []card.Ability{{
-			Trigger: card.Trigger.Fight,
-			Effect:  card.GainChains{Amount: 1},
-		}},
 	}),
 )

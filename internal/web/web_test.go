@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/dmikalova/vactrol/internal/cards"
 	"github.com/dmikalova/vactrol/internal/engine"
 )
 
@@ -118,6 +119,27 @@ func TestHouseClassesAreDefinedInCSS(t *testing.T) {
 		cls := houseClasses(h)
 		if !strings.Contains(css, "."+cls) {
 			t.Errorf("house %v: web/app.css defines no .%s rule", h, cls)
+		}
+	}
+}
+
+// TestSetAccentClassesAreDefinedInCSS guards the set-picker seam: every set the
+// picker lists resolves to a .set-<slug> accent class defined in app.css, and the
+// shared emblem the buttons mask lives on disk. A set whose accent or emblem is
+// missing renders as an uncoloured, unmarked button rather than a visible break.
+func TestSetAccentClassesAreDefinedInCSS(t *testing.T) {
+	css := repoFile(t, "web/app.css")
+	if !assetExists(t, "set") {
+		t.Error("set emblem has no web/assets/set.svg")
+	}
+	for _, name := range cards.DeckSetNames() {
+		cls := setAccent(name)
+		if cls == "" {
+			t.Errorf("set %q has no accent class", name)
+			continue
+		}
+		if !strings.Contains(css, "."+cls+" {") {
+			t.Errorf("set %q: web/app.css defines no .%s rule", name, cls)
 		}
 	}
 }

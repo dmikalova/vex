@@ -42,6 +42,9 @@ func (g *game) Render() app.UI {
 			return app.Button().Class("btn-nav btn-icon sidebar-reveal").Title("Show sidebar").
 				Text("«").OnClick(g.toggleSidebar)
 		}),
+		app.If(g.sidebarCollapsed && len(g.toastBubbles) > 0, func() app.UI {
+			return g.logToast()
+		}),
 		app.If(g.zonesPlayer >= 0, func() app.UI { return g.zonesOverlay() }),
 		app.If(g.pickerOpen, func() app.UI { return g.cardPicker() }),
 		app.If(g.keysOpen, func() app.UI { return g.keysOverlay() }),
@@ -128,9 +131,21 @@ func (g *game) brandMenu() app.UI {
 					menuItem("restart", "New game", g.restartMenu,
 						g.busy || g.choosing || g.choosingOption, false),
 					menuItem("", "Keyboard shortcuts", g.keysMenu, false, false),
+					app.Hr().Class("menu-divider"),
+					menuLink("Rulebook", "/rulebook"),
+					menuLink("Glossary", "/glossary"),
 				),
 			)
 		}),
+	)
+}
+
+// menuLink is a menu row that navigates to a reference page rather than acting on
+// the game — the rulebook and glossary.
+func menuLink(label, href string) app.UI {
+	return app.A().Class("menu-item").Href(href).Body(
+		app.Span().Class("menu-glyph").Text("›"),
+		app.Span().Class("menu-label").Text(label),
 	)
 }
 

@@ -1,20 +1,15 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ShardOfGreed
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Shard of Greed
 //
 //	House:  Shadows
 //	Type:   Artifact
 //	Rarity: Rare
 //	Traits: Item • Shard
 //
-//	Action: Gain 1A for each friendly Shard.
+//	Action: For each friendly Shard, gain 1 Æmber.
 var ShardOfGreed = card.New(
 	"Shard of Greed",
 	card.House.Shadows,
@@ -22,5 +17,13 @@ var ShardOfGreed = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, 315),
 	card.WithTraits(card.Traits.Item, card.Traits.Shard),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Action, card.GainAember{
+			Player: card.Controller,
+			Amount: 1,
+			Per: card.InPlay{
+				Player: card.Controller,
+				Trait:  card.Traits.Shard,
+			},
+		}),
 )

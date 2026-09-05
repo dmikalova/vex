@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// PlagueRat
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Plague Rat
 //
 //	House:  Shadows
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  1
 //	Traits: Beast • Rat
 //
-//	Elusive. (The first time this creature is attacked each turn, no damage is dealt.)
-//	Play: Each non-Rat creature is dealt 1D for each Rat creature in play.
+//	Elusive.
+//	Play: For each Rat trait creature in play, deal 1 damage to each non-Rat trait creature.
 var PlagueRat = card.New(
 	"Plague Rat",
 	card.House.Shadows,
@@ -25,5 +20,15 @@ var PlagueRat = card.New(
 	card.Provenance(card.AoA, 308),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Beast, card.Traits.Rat),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithAbility(
+		card.Trigger.Play, card.DealDamage{
+			Amount: 1,
+			Per: card.InPlay{
+				Player: card.EachPlayer,
+				Type:   card.Type.Creature,
+				Trait:  card.Traits.Rat,
+			},
+			Target: card.Target.EachCreature.ExceptTrait(card.Traits.Rat),
+		}),
 )

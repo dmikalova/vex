@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// RonnieWristclocks
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Ronnie Wristclocks
 //
 //	House:  Shadows
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Elf • Thief
 //
-//	Play: Steal 1A. If your opponent has 7A or more, steal 2A instead.
+//	Play: Steal 1 Æmber, or 2 if your opponent has 7 Æmber or more.
 var RonnieWristclocks = card.New(
 	"Ronnie Wristclocks",
 	card.House.Shadows,
@@ -24,5 +19,12 @@ var RonnieWristclocks = card.New(
 	card.Provenance(card.AoA, 276),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.StealAember{
+			Amount: 1,
+			Or: card.OrAmount{
+				Amount: 2,
+				When:   card.OpponentAember{Is: card.AtLeast, Amount: 7},
+			},
+		}),
 )

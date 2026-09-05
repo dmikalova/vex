@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  7
 //	Traits: Demon
 //
-//	Reap: Put each Ortannu's Binding from your discard pile into your hand. For each card returned this way, deal 2 damage to a creature that is not on a flank and 2 damage to each of its neighbors.
+//	Reap: Put each Ortannu's Binding from your discard pile into your hand. For each card put into your hand this way, deal 2 damage to a creature and 2 damage to each of its neighbors.
 var OrtannuTheChained = card.New(
 	"Ortannu the Chained",
 	card.House.Dis,

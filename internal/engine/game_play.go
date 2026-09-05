@@ -477,6 +477,9 @@ func (g *Game) mayPlayFromHand(player int, def *CardDefinition) bool {
 	if g.inActiveHouse(def) {
 		return true
 	}
+	if def.House == g.State.MayPlayHouse[player] {
+		return true
+	}
 	return g.playPermissionRemaining(player, def.House) > 0
 }
 

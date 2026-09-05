@@ -22,6 +22,8 @@ const (
 	comparisonUnset Comparison = iota
 	// AtLeast is met when the quantity is at least Amount.
 	AtLeast
+	// AtMost is met when the quantity is at most Amount.
+	AtMost
 	// Exactly is met when the quantity is exactly Amount (which is why the
 	// comparison is named separately from the amount: Exactly with Amount 0 is a
 	// real check that a bare integer field could not tell from "unset").
@@ -29,6 +31,9 @@ const (
 	// MoreThanYou is met when the opponent's pool holds strictly more Æmber than the
 	// controller's; it ignores Amount and applies only to OpponentAember.
 	MoreThanYou
+	// MoreThanOpponent is met when the controller's pool holds strictly more Æmber
+	// than the opponent's; it ignores Amount and applies only to YourAember.
+	MoreThanOpponent
 )
 
 // OpponentAember gates on the opponent's Æmber pool: Is names the comparison and
@@ -42,10 +47,10 @@ type OpponentAember struct {
 // validate requires a comparison to be named (its zero value is invalid).
 func (c OpponentAember) validate() error {
 	switch c.Is {
-	case AtLeast, Exactly, MoreThanYou:
+	case AtLeast, AtMost, Exactly, MoreThanYou:
 		return nil
 	default:
-		return fmt.Errorf("OpponentAember: Is must be AtLeast, Exactly, or MoreThanYou")
+		return fmt.Errorf("OpponentAember: Is must be AtLeast, AtMost, Exactly, or MoreThanYou")
 	}
 }
 
@@ -58,6 +63,8 @@ func (c OpponentAember) CondText() string {
 		return fmt.Sprintf("if your opponent has exactly %d Æmber", c.Amount)
 	case c.Is == MoreThanYou:
 		return "if your opponent has more Æmber than you"
+	case c.Is == AtMost:
+		return fmt.Sprintf("if your opponent has %d Æmber or fewer", c.Amount)
 	default:
 		return fmt.Sprintf("if your opponent has %d Æmber or more", c.Amount)
 	}
@@ -69,10 +76,60 @@ func (c OpponentAember) Met(ctx *EffectContext) bool {
 	switch c.Is {
 	case Exactly:
 		return opp == c.Amount
+	case AtMost:
+		return opp <= c.Amount
 	case MoreThanYou:
 		return opp > ctx.Resolver.Aember(ctx.Controller)
 	default:
 		return opp >= c.Amount
+	}
+}
+
+// YourAember gates on the controller's own Æmber pool: Is names the comparison
+// and Amount the threshold it compares against (unused by MoreThanOpponent).
+type YourAember struct {
+	Is     Comparison
+	Amount int
+}
+
+// validate requires a comparison to be named (its zero value is invalid).
+func (c YourAember) validate() error {
+	switch c.Is {
+	case AtLeast, AtMost, Exactly, MoreThanOpponent:
+		return nil
+	default:
+		return fmt.Errorf("YourAember: Is must be AtLeast, AtMost, Exactly, or MoreThanOpponent")
+	}
+}
+
+// CondText renders the condition, e.g. "if you have 3 Æmber or more".
+func (c YourAember) CondText() string {
+	switch {
+	case c.Is == Exactly && c.Amount == 0:
+		return "if you have no Æmber"
+	case c.Is == Exactly:
+		return fmt.Sprintf("if you have exactly %d Æmber", c.Amount)
+	case c.Is == MoreThanOpponent:
+		return "if you have more Æmber than your opponent"
+	case c.Is == AtMost:
+		return fmt.Sprintf("if you have %d Æmber or fewer", c.Amount)
+	default:
+		return fmt.Sprintf("if you have %d Æmber or more", c.Amount)
+	}
+}
+
+// Met reports whether the controller's pool satisfies the comparison.
+func (c YourAember) Met(ctx *EffectContext) bool {
+	you := ctx.Resolver.Aember(ctx.Controller)
+	switch c.Is {
+	case Exactly:
+		return you == c.Amount
+	case AtMost:
+		return you <= c.Amount
+	case MoreThanOpponent:
+		return you > ctx.Resolver.Aember(ctx.Opponent())
+	default:
+		return you >= c.Amount
 	}
 }
 
@@ -339,6 +396,42 @@ func (e Conditional) validate() error {
 		return nil
 	}
 	return validateEffect(e.Else)
+}
+
+// OrAmount is an alternate scalar an effect switches to when When holds, so a card
+// that only changes a number by a fact prints the linear "<base> …, or <alt> if
+// <cond>" form instead of a two-armed "If <cond>, … Otherwise, …" branch
+// (card-wording rule 22). The effect owns how the numbers read — a bare "2" for a
+// steal, a "+2" surcharge for a forge — so OrAmount supplies only the alternate
+// value, the guard, and the shared ", or … if <cond>" tail. Its zero value (When
+// nil) means "no alternate", so an effect treats an unset OrAmount as absent.
+type OrAmount struct {
+	Amount int
+	When   Condition
+}
+
+// set reports whether an alternate is configured.
+func (o OrAmount) set() bool { return o.When != nil }
+
+// pick returns the alternate amount when the guard holds, else base.
+func (o OrAmount) pick(base int, ctx *EffectContext) int {
+	if o.set() && o.When.Met(ctx) {
+		return o.Amount
+	}
+	return base
+}
+
+// tail renders ", or <alt> if <cond>", with alt already formatted by the effect.
+func (o OrAmount) tail(alt string) string {
+	return ", or " + alt + " " + o.When.CondText()
+}
+
+// validate rejects an alternate whose guard is missing or invalid.
+func (o OrAmount) validate() error {
+	if !o.set() {
+		return nil
+	}
+	return validateCondition(o.When)
 }
 
 // RuleOfSix is the most times a card can be played, used, or made to resolve

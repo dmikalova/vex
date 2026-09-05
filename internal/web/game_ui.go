@@ -115,6 +115,11 @@ func (g *game) openSetup(_ app.Context, _ app.Event) {
 // control dock lives, so losing it on reload would move the player's buttons.
 func (g *game) toggleSidebar(ctx app.Context, _ app.Event) {
 	g.sidebarCollapsed = !g.sidebarCollapsed
+	// Catch the toast up to the log at the moment it hides, so collapsing does not
+	// dump the whole backlog into a toast — only lines emitted afterward toast.
+	g.toastSeen = len(g.g.Log)
+	g.toastBubbles = nil
+	g.toastOpen = false
 	g.save(ctx)
 }
 

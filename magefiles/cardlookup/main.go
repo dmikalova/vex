@@ -65,7 +65,7 @@ func run(args []string) error {
 	case "missing":
 		return missing(args[1:])
 	case "coverage":
-		return coverage()
+		return coverage(args[1:])
 	case "stub":
 		return stub(args[1:])
 	default:
@@ -75,7 +75,7 @@ func run(args []string) error {
 
 func usage() error {
 	return fmt.Errorf(
-		"usage: cardlookup <lookup <query> | missing [setSlug] | coverage | stub <setSlug>>",
+		"usage: cardlookup <lookup <query> | missing [setSlug] | coverage [-new] | stub <setSlug>>",
 	)
 }
 
@@ -237,18 +237,60 @@ func missing(args []string) error {
 }
 
 // coverage prints, per source set, how many cards are covered by an implemented
-// card's provenance Ref.
-func coverage() error {
+// card's provenance Ref. With -new it counts only the cards a set introduces,
+// excluding the ones it reprints from an earlier set, so the total is the set's
+// own new cards rather than its whole printing.
+func coverage(args []string) error {
+	newOnly := false
+	for _, a := range args {
+		switch a {
+		case "-new", "--new":
+			newOnly = true
+		default:
+			return fmt.Errorf("usage: cardlookup coverage [-new]")
+		}
+	}
 	_ = cards.All()
 	covered := coveredNumbers()
+	var introduced map[string]map[int]bool
+	if newOnly {
+		introduced = newNumbers()
+	}
 	for _, set := range provenance.Sets() {
-		n := 0
+		n, total := 0, 0
 		for _, c := range set.Cards {
+			if newOnly && !introduced[set.Slug][c.Number] {
+				continue
+			}
+			total++
 			if covered[set.Slug][c.Number] {
 				n++
 			}
 		}
-		fmt.Printf("%-5s %-22s %3d / %3d\n", set.Code, set.Name, n, len(set.Cards))
+		fmt.Printf("%-5s %-22s %3d / %3d\n", set.Code, set.Name, n, total)
 	}
 	return nil
+}
+
+// newNumbers returns, per source-set slug, the collector numbers of the cards a
+// set introduces: a card whose name first appears in that set walking the sets in
+// release order. A card reprinted from an earlier set is left out, so the count is
+// the set's own new cards rather than everything it prints.
+func newNumbers() map[string]map[int]bool {
+	seen := map[string]bool{}
+	introduced := map[string]map[int]bool{}
+	for _, set := range provenance.Sets() {
+		for _, c := range set.Cards {
+			key := normalizeName(c.Name)
+			if seen[key] {
+				continue
+			}
+			seen[key] = true
+			if introduced[set.Slug] == nil {
+				introduced[set.Slug] = map[int]bool{}
+			}
+			introduced[set.Slug][c.Number] = true
+		}
+	}
+	return introduced
 }

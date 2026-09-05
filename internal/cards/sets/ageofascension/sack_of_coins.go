@@ -1,21 +1,15 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// SackOfCoins
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Sack of Coins
 //
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Deal 1D to a creature for each
-//	A in your pool.
+//	Play: Choose a creature - for each Æmber in your pool, deal 1 damage to the chosen creature.
 var SackOfCoins = card.New(
 	"Sack of Coins",
 	card.House.Shadows,
@@ -23,5 +17,13 @@ var SackOfCoins = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, 312),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.ChooseCreatureThen{
+			Target: card.Target.Creature,
+			Then: card.DealDamage{
+				Amount: 1,
+				Per:    card.AemberInPool{Player: card.Controller},
+				Target: card.Target.TheChosenCreature,
+			},
+		}),
 )

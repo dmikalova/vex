@@ -34,8 +34,13 @@ var fontOrigins = map[string]bool{
 }
 
 // NewStyle returns the root component for the Style gallery. It is registered
-// only when the page is served from localhost — see cmd/web/main.go.
-func NewStyle() app.Composer { return &style{} }
+// only when the page is served from localhost — see cmd/web/main.go. It reseeds
+// the specimen picker on every load so a plain browser refresh draws a different
+// set of qualifying cards.
+func NewStyle() app.Composer {
+	styleSeed = time.Now().UnixNano()
+	return &style{}
+}
 
 // style is the gallery's root component. It owns a synthetic game to render the
 // board surfaces from, and the font selections the page is compared under.
@@ -555,7 +560,7 @@ func (s *style) iconSection() app.UI {
 // this is the only place that shows the candidates together, which is what
 // choosing between two faces actually requires.
 func (s *style) typeSection() app.UI {
-	sp := firstMatch("Longest rules text", longestRules())
+	sp := randomMatch("Longest rules text", longestRules())
 	families := append([]string{""}, s.fonts...)
 	out := make([]app.UI, 0, len(families))
 	for _, f := range families {
@@ -623,13 +628,16 @@ var cardStatuses = []struct {
 	{"Stunned", func(c *cardView) { c.Stunned = true }},
 	{"Exhausted", func(c *cardView) { c.Exhausted = true }},
 	{"Stunned and exhausted", func(c *cardView) { c.Stunned, c.Exhausted = true, true }},
+	{"One +1 power counter", func(c *cardView) { c.PowerCounters = 1 }},
+	{"Three +1 power counters", func(c *cardView) { c.PowerCounters = 3 }},
+	{"A -1 power counter", func(c *cardView) { c.PowerCounters = -1 }},
 }
 
 // statusRow shows a creature face wearing each condition token, so the stun and
 // exhausted marks can be read on a real card rather than only as bare icons in
 // the icon grid.
 func (s *style) statusRow() app.UI {
-	sp := firstMatch("Creature", func(d *engine.CardDefinition) bool {
+	sp := randomMatch("Creature", func(d *engine.CardDefinition) bool {
 		return d.Type == engine.Creature
 	})
 	out := make([]app.UI, 0, len(cardStatuses))
@@ -743,7 +751,7 @@ func (s *style) barSection() app.UI {
 // board; the replay buttons flip the parity class, which is how the client
 // restarts an animation that is already running.
 func (s *style) motionSection() app.UI {
-	sp := firstMatch("Creature", func(d *engine.CardDefinition) bool {
+	sp := randomMatch("Creature", func(d *engine.CardDefinition) bool {
 		return d.Type == engine.Creature
 	})
 	kinds := []struct {
@@ -835,6 +843,7 @@ var galleryIcons = []string{
 	"rarity-diamond",
 	"redo",
 	"restart",
+	"set",
 	"shield",
 	"stun",
 	"type-action",

@@ -185,7 +185,7 @@ func TestLogEntryText(t *testing.T) {
 		{AemberSpentToPlay{Player: 0, Card: 9, Amount: 1}, "P0 loses 1 Æmber to play Card9"},
 		{
 			TollPaid{Player: 0, Payee: 1, Amount: 1, Action: TollUseArtifact},
-			"P0 pays 1 Æmber to P1 to use an artifact",
+			"P0 gives 1 Æmber to P1 to use an artifact",
 		},
 		{Reaped{Player: 0, Card: 2}, "P0 reaps with Card2 (+1 Æmber)"},
 		{
@@ -227,6 +227,7 @@ func TestLogEntryText(t *testing.T) {
 		},
 		{FightGrantedAnyHouse{Player: 1}, "P1's creatures may all fight this turn"},
 		{UseGrantedForHouse{Player: 0, House: Dis}, "P0 may use Dis creatures this turn"},
+		{PlayGrantedForHouse{Player: 0, House: Mars}, "P0 may play Mars cards this turn"},
 		{
 			HouseForcedNextTurn{Player: 1, House: Logos},
 			"P1 must choose house Logos next turn",

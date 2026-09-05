@@ -8,6 +8,7 @@ func TestInPlay(t *testing.T) {
 	g.AddToBattleline(NewCard("m2", Mars, Creature, Common, WithPower(2)), 0)
 	g.AddToBattleline(NewCard("b1", Brobnar, Creature, Common, WithPower(2)), 0)
 	g.AddArtifact(NewCard("relic", Brobnar, Artifact, Common), 0)
+	g.AddArtifact(NewCard("shard", Brobnar, Artifact, Common, WithTraits(Shard)), 0)
 	g.AddToBattleline(NewCard("foe", Shadows, Creature, Common, WithPower(2)), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
@@ -19,8 +20,9 @@ func TestInPlay(t *testing.T) {
 	}{
 		{"friendly creatures", InPlay{Player: Controller, Type: Creature}, 3},
 		{"friendly Mars creatures", InPlay{Player: Controller, Type: Creature, House: Mars}, 2},
-		{"friendly artifacts", InPlay{Player: Controller, Type: Artifact}, 1},
-		{"friendly cards, any type", InPlay{Player: Controller}, 4},
+		{"friendly artifacts", InPlay{Player: Controller, Type: Artifact}, 2},
+		{"friendly cards, any type", InPlay{Player: Controller}, 5},
+		{"friendly Shards", InPlay{Player: Controller, Trait: Shard}, 1},
 		{"enemy creatures", InPlay{Player: Opponent, Type: Creature}, 1},
 	}
 	for _, tc := range values {
@@ -36,6 +38,9 @@ func TestInPlay(t *testing.T) {
 	}{
 		{InPlay{Player: Controller, Type: Creature}, "friendly creature in play"},
 		{InPlay{Player: Controller, Type: Creature, House: Mars}, "friendly Mars creature"},
+		{InPlay{Player: Controller, Trait: Shard}, "friendly Shard"},
+		{InPlay{Player: Controller, Type: Creature, Trait: Thief}, "friendly Thief trait creature"},
+		{InPlay{Player: Controller, Type: Artifact, Trait: Shard}, "friendly Shard trait artifact"},
 		{InPlay{Player: Opponent, Type: Creature}, "enemy creature in play"},
 		{InPlay{Player: Controller, Type: Artifact}, "friendly artifact in play"},
 		{InPlay{Player: Controller}, "friendly card in play"},
@@ -123,7 +128,7 @@ func TestCardsReturnedThisWayCount(t *testing.T) {
 	ctx.Produced.Returned = 3
 
 	c := CardsReturnedThisWay{}
-	if got := c.CountText(); got != "card returned this way" {
+	if got := c.CountText(); got != "card put into your hand this way" {
 		t.Errorf("count text = %q", got)
 	}
 	if got := c.Value(ctx); got != 3 {
@@ -209,5 +214,59 @@ func TestInPlayByName(t *testing.T) {
 	two := InPlay{Player: EachPlayer, Type: Creature, Name: "Ancient Bear", Amount: 2}
 	if want := "if there are 2 Ancient Bears in play"; two.CondText() != want {
 		t.Errorf("cond text = %q, want %q", two.CondText(), want)
+	}
+}
+
+func TestAemberInPool(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.SetAember(0, 4)
+	g.SetAember(1, 2)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	if got := (AemberInPool{Player: Controller}).Value(ctx); got != 4 {
+		t.Errorf("controller pool count = %d, want 4", got)
+	}
+	if got := (AemberInPool{Player: Opponent}).Value(ctx); got != 2 {
+		t.Errorf("opponent pool count = %d, want 2", got)
+	}
+	if got := (AemberInPool{Player: Controller}).CountText(); got != "Æmber in your pool" {
+		t.Errorf("count text = %q", got)
+	}
+	if got := (AemberInPool{Player: Opponent}).CountText(); got != "Æmber in your opponent's pool" {
+		t.Errorf("count text = %q", got)
+	}
+}
+
+func TestNeighborsOfThis(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	left := NewCard("left", Mars, Creature, Common, WithPower(2))
+	mid := NewCard("mid", Mars, Creature, Common, WithPower(2))
+	right := NewCard("right", Mars, Creature, Common, WithPower(2))
+	g.AddToBattleline(left, 0)
+	g.AddToBattleline(mid, 0)
+	g.AddToBattleline(right, 0)
+
+	// A middle creature has two neighbors; a flank creature has one.
+	midID := g.State.Battleline[0].slice()[1]
+	flankID := g.State.Battleline[0].slice()[0]
+
+	if got := (NeighborsOfThis{}).Value(&EffectContext{Resolver: g, Source: midID}); got != 2 {
+		t.Errorf("middle neighbors = %d, want 2", got)
+	}
+	if got := (NeighborsOfThis{}).Value(&EffectContext{Resolver: g, Source: flankID}); got != 1 {
+		t.Errorf("flank neighbors = %d, want 1", got)
+	}
+	if got := (NeighborsOfThis{}).CountText(); got != "neighbor it has" {
+		t.Errorf("count text = %q", got)
+	}
+	// Leading a sentence, the clause names the source instead of saying "it".
+	if got := (NeighborsOfThis{}).leadingCountText(); got != "neighbor "+SelfName+" has" {
+		t.Errorf("leading count text = %q", got)
+	}
+	// keyCostText renders the leading, named form for a self-referential count.
+	kc := NewKeyCostChange(Opponent, 2).Per(NeighborsOfThis{})
+	want := "For each neighbor " + SelfName + " has, your opponent's keys cost +2 Æmber."
+	if got := keyCostText(kc); got != want {
+		t.Errorf("key cost text = %q, want %q", got, want)
 	}
 }
