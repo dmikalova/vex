@@ -153,6 +153,22 @@ it is used).`,
 		},
 		{
 			Section:    SectionAbility,
+			Title:      "After a Creature Reaps",
+			Definition: "An ability that resolves after any creature reaps, friendly or enemy.",
+			Body: `This ability resolves after any creature reaps — friendly or enemy — with the
+reaping creature as "it" (Orb of Invidius stuns whatever just reaped). It fires
+on every in-play card, including the reaper itself.`,
+		},
+		{
+			Section:    SectionAbility,
+			Title:      "After an Enemy Creature Reaps",
+			Definition: "An ability that resolves after an enemy creature reaps.",
+			Body: `This ability resolves after an enemy creature reaps, with the reaping creature
+as "it" (Pip Pip stuns the enemy that just reaped). Reaping happens only on the
+reaper's own turn, so this naturally fires only for the reaper's opponent.`,
+		},
+		{
+			Section:    SectionAbility,
 			Title:      "Leaves Play",
 			Definition: "An ability that resolves as the card leaves play by any route.",
 			Body: `A Leaves Play ability resolves as the card leaves play by any route — destroyed,

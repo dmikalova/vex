@@ -212,8 +212,12 @@ func TestFlankKeys(t *testing.T) {
 
 func TestDiscardingFromHand(t *testing.T) {
 	c := newClient(t)
-	c.startTurn()
 	id := c.hand()[0]
+	h := c.g.g.House(id)
+	c.do(c.g.pickHouse(h))
+	if c.g.phase != phaseMain {
+		t.Fatalf("after choosing %v the phase is %v, want phaseMain", h, c.g.phase)
+	}
 	c.g.selectHandID(c.ctx, id)
 	c.do(c.g.discard)
 	if containsID(c.hand(), id) {
@@ -315,6 +319,47 @@ func TestArmingTheEndTurnConfirmClearsTheSelection(t *testing.T) {
 	}
 	if c.g.hasSel {
 		t.Error("arming the confirm left the card selected")
+	}
+}
+
+// A fight grant (Brothers in Battle) lets an off-house creature fight, so the
+// board makes it actionable and offers Fight alone — reaping stays barred out of
+// house. Without the grant an off-house creature is inert.
+func TestFightGrantOffersFightOnAnOffHouseCreature(t *testing.T) {
+	c := newClient(t)
+	c.g.g.State.ActiveHouse = engine.Brobnar
+	c.g.phase = phaseMain
+	p := c.g.active()
+	att := c.g.g.AddToBattleline(
+		engine.NewCard(
+			"Off Fighter",
+			engine.Untamed,
+			engine.Creature,
+			engine.Common,
+			engine.WithPower(4),
+		),
+		p,
+	)
+	c.g.g.AddToBattleline(
+		engine.NewCard("Foe", engine.Dis, engine.Creature, engine.Common, engine.WithPower(2)),
+		1-p)
+
+	if c.g.actionable(att, selYourCreature) {
+		t.Fatal("an off-house creature is actionable without a grant")
+	}
+
+	c.g.g.State.MayFightHouse[p] = engine.Untamed
+	if !c.g.actionable(att, selYourCreature) {
+		t.Fatal("a fight-granted off-house creature is not actionable")
+	}
+
+	c.g.selectBoardID(c.ctx, att)
+	acts, note := c.g.creatureCardActions()
+	if note != "" {
+		t.Fatalf("granted creature reported %q, want an action instead", note)
+	}
+	if len(acts) != 1 || acts[0].Label != "Fight" {
+		t.Errorf("granted creature actions = %+v, want a single Fight", acts)
 	}
 }
 func TestEndTurnOnlyFromMain(t *testing.T) {

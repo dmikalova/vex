@@ -7,6 +7,7 @@ import "fmt"
 // the flat GameState. This split keeps the runtime state a plain value that can
 // be copied cheaply (see GameState.FastCopy).
 type CardDefinition struct {
+	// Identity printed on the card.
 	Name   string
 	House  House
 	Type   CardType
@@ -17,6 +18,7 @@ type CardDefinition struct {
 	Power int
 	Armor int
 
+	// Keywords are the keywords printed on the card.
 	Keywords []Keyword
 
 	// A creature with Assault N deals N damage to the creature it attacks,
@@ -200,6 +202,8 @@ func (l PlayCardLimit) affects(controller, target int) bool {
 // (which NewKeyCostChange never produces) changes nothing. (A Duration will later
 // bound how long the change lasts; today every key-cost change is continuous.)
 type KeyCostChange struct {
+	// amount is the Æmber added to the affected keys' cost; player is whose keys
+	// change (Controller, Opponent, or EachPlayer). Build with NewKeyCostChange.
 	amount int
 	player Player
 	// per scales the amount by a running count read from the source card's point of
@@ -258,6 +262,7 @@ func (kc KeyCostChange) affects(owner, target int) bool {
 // StaticModifier is a continuous change applied by an Upgrade to the creature it
 // is attached to.
 type StaticModifier struct {
+	// Flat stat bonuses the Upgrade adds to its host creature.
 	PowerBonus     int
 	ArmorBonus     int
 	AssaultBonus   int
@@ -294,9 +299,12 @@ type StaticModifier struct {
 // value) reaches every card in play — creatures and artifacts, the source
 // included.
 type ConstantAbility struct {
+	// Flat stat bonuses added to each creature the Target reaches.
 	PowerBonus int
 	ArmorBonus int
-	Target     Target
+	// Target says which cards the ability reaches, read from the source's point of
+	// view; the zero value reaches every card in play.
+	Target Target
 	// Per scales the bonuses by a running count read from the source's point of
 	// view — Mushroom Man gets +3 power for each unforged key its controller has.
 	Per Count

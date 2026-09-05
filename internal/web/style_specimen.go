@@ -179,29 +179,32 @@ type attachSpecimen struct {
 	host    engine.LocalID
 }
 
-// cardCursor hands out catalog cards in catalog order, so successive picks are
-// distinct without a written-down list. It wraps at the end rather than running
-// out, so a small loaded catalog still fills every slot.
+// cardCursor hands out catalog cards in a per-load shuffled order, so successive
+// picks are distinct and jump across houses without a written-down list. It wraps
+// at the end rather than running out, so a small loaded catalog still fills every
+// slot.
 type cardCursor struct {
-	all []engine.CardDefinition
-	i   int
+	all   []engine.CardDefinition
+	order []int
+	i     int
 }
 
 func newCardCursor() *cardCursor {
 	all := cards.All()
-	// Start at a per-load offset so the attachment section walks a different window
-	// of the catalog on every reload, the way the randomMatch sections reshuffle;
-	// left at zero it would show the same first cards every time. The offset is
-	// fixed for the life of the load, so re-renders within one load are stable.
-	i := 0
-	if len(all) > 0 {
-		i = int(uint64(styleSeed^captionSeed("attach")) % uint64(len(all)))
+	order := make([]int, len(all))
+	for i := range order {
+		order[i] = i
 	}
-	return &cardCursor{all: all, i: i}
+	// Walk the catalog in a shuffled order so successive picks jump across houses
+	// instead of marching through its alphabetical house clusters; seeded from
+	// styleSeed so it reshuffles on reload but stays fixed for the life of a load.
+	r := rand.New(rand.NewSource(styleSeed ^ captionSeed("attach")))
+	r.Shuffle(len(order), func(a, b int) { order[a], order[b] = order[b], order[a] })
+	return &cardCursor{all: all, order: order}
 }
 
 func (c *cardCursor) next() engine.CardDefinition {
-	d := c.all[c.i%len(c.all)]
+	d := c.all[c.order[c.i%len(c.order)]]
 	c.i++
 	return d
 }

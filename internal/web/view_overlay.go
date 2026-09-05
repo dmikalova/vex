@@ -128,7 +128,7 @@ var shortcuts = []struct{ keys, what string }{
 	{"j k l ;", "Move the cursor (left, down, up, right)"},
 	{"1 – 9", "Select the nth card of the selected card's row"},
 	{"Tab / Shift+Tab", "Step through usable cards and options"},
-	{"Enter / Space", "Confirm/yes/Play the selected card"},
+	{"Enter / Space", "Confirm / Play the selected card"},
 	{"n", "Decline a prompt"},
 	{"Esc", "Back out one layer"},
 	{"p", "Play the selected card from hand"},

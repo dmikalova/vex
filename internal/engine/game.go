@@ -77,7 +77,9 @@ type Orderer interface {
 // engine services (player names, choosers, RNG, log). Cloning a state for MCTS
 // only needs GameState.FastCopy; this wrapper is the live match harness.
 type Game struct {
-	State   GameState
+	// State is the flat mutable game state; FastCopy clones it for MCTS rollouts.
+	State GameState
+	// Verbose, when set, prints each log entry to stdout as it is narrated.
 	Verbose bool
 	// Log is the public narration of the match — the same for both players, naming
 	// no card in a hidden zone (ADR 0011). It lives on Game, not GameState, because
@@ -94,6 +96,8 @@ type Game struct {
 	// exploring cloned positions turns it off so the log costs nothing.
 	recording bool
 
+	// Engine services around the state: player names, per-player choosers, the
+	// read-only card catalog, and the match RNG.
 	names    [2]string
 	choosers [2]Chooser
 	cat      *catalog
@@ -110,6 +114,19 @@ type Game struct {
 	// settling is true while a destruction batch or a state-based sweep is running,
 	// so the sweep does not re-enter and split a batch's simultaneous timing.
 	settling bool
+	// destroyingSource names the card whose effect is carrying out the current
+	// destruction, so the batch it targets narrates as one grouped line ("Strange
+	// Gizmo destroys A, B, and C") instead of a passive line per creature. The next
+	// destruction batch consumes and clears it, so state-based deaths that follow
+	// (a creature that lost a buff) and combat damage — which have no such agent —
+	// stay passive.
+	destroyingSource    LocalID
+	hasDestroyingSource bool
+	// shuffleBatch, while a batch is open, collects the cards an effect shuffles
+	// into a deck so they narrate as one grouped line per owner ("Lost in the Woods
+	// shuffles A and B into P2's deck") instead of a passive line per creature.
+	shuffleBatch    []LocalID
+	batchingShuffle bool
 }
 
 // NewGame creates a new two-player game seeded for deterministic play.

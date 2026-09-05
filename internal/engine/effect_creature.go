@@ -252,8 +252,14 @@ func (UseVerb) canApplyTo(ctx *EffectContext, target LocalID) bool {
 }
 
 // Apply offers the controller the target's available uses and resolves the chosen
-// one.
+// one. A stunned creature can only spend its use shaking off the stun, so there is
+// nothing to choose: it is unstunned directly rather than prompting reap/fight/
+// action (any of which would just recover from stun anyway).
 func (UseVerb) Apply(ctx *EffectContext, target LocalID) {
+	if ctx.Resolver.Stunned(target) {
+		ctx.Resolver.ReapWith(target)
+		return
+	}
 	owner := ctx.Resolver.Owner(target)
 	labels := []string{"reap"}
 	uses := []func(){func() { ctx.Resolver.ReapWith(target) }}
@@ -267,7 +273,7 @@ func (UseVerb) Apply(ctx *EffectContext, target LocalID) {
 	}
 	idx := ctx.Resolver.ChooseOption(
 		owner,
-		ctx.Source,
+		target,
 		"Choose how to use "+ctx.Resolver.Name(target),
 		labels,
 	)
@@ -326,7 +332,8 @@ func (v GainKeywordVerb) Apply(ctx *EffectContext, target LocalID) {
 // stop early by declining.
 type OneAtATime struct {
 	// Times is how many passes the controller may take at most.
-	Times  int
+	Times int
+	// Target picks the creature each pass; Verbs are the actions applied to it.
 	Target Target
 	Verbs  []CreatureVerb
 }

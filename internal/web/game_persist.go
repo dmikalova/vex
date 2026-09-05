@@ -40,6 +40,13 @@ func (g *game) save(ctx app.Context) {
 			Rule:   rule,
 			Player: player,
 		}
+		if ps, ok := rec.Entry.(engine.PlayerStanding); ok {
+			saved[i].Standing = &savedStanding{
+				Player: ps.Player,
+				Aember: ps.Aember,
+				Keys:   ps.KeyColors,
+			}
+		}
 	}
 	_ = ctx.LocalStorage().Set(persistKey, snapshot{
 		Version:  snapshotVersion,
@@ -126,7 +133,16 @@ func (g *game) resume(ctx app.Context) (ok bool) {
 		for i, line := range snap.Log {
 			entry := engine.RestoredEntry{Line: line.Text}
 			restored[i] = engine.Record{Frame: line.Frame, Entry: entry}
-			if line.Rule != ruleNone {
+			switch {
+			case line.Standing != nil:
+				// Rebuild the real PlayerStanding so its coloured key tally
+				// redraws instead of reverting to the plain narrated count.
+				restored[i].Entry = engine.PlayerStanding{
+					Player:    line.Standing.Player,
+					Aember:    line.Standing.Aember,
+					KeyColors: line.Standing.Keys,
+				}
+			case line.Rule != ruleNone:
 				restored[i].Entry = restoredRule{
 					RestoredEntry: entry,
 					Rule:          line.Rule,
@@ -140,6 +156,10 @@ func (g *game) resume(ctx app.Context) (ok bool) {
 	g.settlePhase()
 	g.clearSelection()
 	g.restoreUI(snap.UI)
+	// A resumed match already holds its whole log, so only lines produced after
+	// this point are news; start the toast caught up rather than replaying the
+	// entire history into one banner on the first render.
+	g.toastSeen = len(g.g.Log)
 	g.status = ""
 	return true
 }

@@ -70,6 +70,37 @@ func TestAMatchSurvivesAReload(t *testing.T) {
 	}
 }
 
+// A PlayerStanding's coloured key tally survives a reload: the typed entry is
+// rebuilt from its persisted fields rather than flattened to the plain narrated
+// count, so refreshing the page does not change what the key log shows.
+func TestAStandingsKeyTallySurvivesAReload(t *testing.T) {
+	c := newClient(t)
+	c.startTurn()
+	c.g.g.Log = append(c.g.g.Log, engine.Record{Entry: engine.PlayerStanding{
+		Player:    0,
+		Aember:    4,
+		KeyColors: []engine.KeyColor{engine.KeyColorRed, engine.KeyColorBlue},
+	}})
+	c.g.save(c.ctx)
+
+	next := c.reload()
+	var got engine.PlayerStanding
+	var found bool
+	for _, rec := range next.g.g.Log {
+		if ps, ok := rec.Entry.(engine.PlayerStanding); ok {
+			got, found = ps, true
+		}
+	}
+	if !found {
+		t.Fatal("the standing did not come back as a typed PlayerStanding")
+	}
+	if len(got.KeyColors) != 2 ||
+		got.KeyColors[0] != engine.KeyColorRed ||
+		got.KeyColors[1] != engine.KeyColorBlue {
+		t.Errorf("the key tally came back as %v, want two forged keys", got.KeyColors)
+	}
+}
+
 // A viewer a prompt opened belongs to that prompt, and the prompt does not
 // survive the reload, so it comes back closed rather than over nothing.
 func TestAPromptsZoneViewerDoesNotSurvive(t *testing.T) {
@@ -228,6 +259,29 @@ func TestAStateWithUnreadableIdsIsDropped(t *testing.T) {
 	c.g.g.State.Hand[c.g.active()].IDs[0] = engine.LocalID(250)
 	c.g.save(c.ctx)
 	c.expectDropped()
+}
+
+// A resumed match starts its toast caught up: reopening a page with the sidebar
+// collapsed must not replay the whole game log into one banner over the board.
+func TestReloadingDoesNotToastTheWholeLog(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	id := c.deal(testCreature)
+	c.playFromHand(id)      // lines the toast would replay
+	c.do(c.g.toggleSidebar) // collapse the sidebar and save it collapsed
+
+	next := c.reload()
+	if !next.g.sidebarCollapsed {
+		t.Fatal("the reload did not come back with the sidebar collapsed")
+	}
+	if next.g.toastSeen != len(next.g.g.Log) {
+		t.Errorf("toastSeen = %d, want %d (caught up on reload)",
+			next.g.toastSeen, len(next.g.g.Log))
+	}
+	next.g.refreshToast()
+	if len(next.g.toastBubbles) != 0 {
+		t.Errorf("reloading toasted %d bubbles, want none", len(next.g.toastBubbles))
+	}
 }
 
 // reload is what a page load does: a fresh component over the same storage,

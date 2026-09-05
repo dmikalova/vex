@@ -60,6 +60,8 @@ func errUnsetDuration(effect string) error {
 // via that interface — never by reaching into the state directly. Cards are
 // referenced by LocalID, keeping the context flat.
 type EffectContext struct {
+	// Resolver is the only door to the game: an effect inspects and changes the
+	// match through it, never by reaching into the state directly.
 	Resolver   Resolver
 	Source     LocalID // the card whose ability is resolving
 	Controller int     // the player who controls the ability

@@ -82,6 +82,20 @@ func (e TopOfDeckDiscarded) Text(n Namer) string {
 		n.PlayerName(e.Player), nameMoved(n, e.Card, deck, Discard))
 }
 
+// CardDiscardedFromDeck narrates a specific card going from a deck to the discard
+// pile — a card the controller looked at and chose not to keep (Eyegor).
+type CardDiscardedFromDeck struct {
+	Player int
+	Card   LocalID
+}
+
+// Text renders the discarded card, which lands face up in the public discard pile
+// and is named.
+func (e CardDiscardedFromDeck) Text(n Namer) string {
+	return fmt.Sprintf("%s discards %s from their deck",
+		n.PlayerName(e.Player), nameMoved(n, e.Card, deck, Discard))
+}
+
 // DeckAndDiscardSwapped narrates a deck and discard pile trading places.
 type DeckAndDiscardSwapped struct{ Player int }
 
@@ -182,6 +196,22 @@ type CardShuffledIntoDeck struct {
 func (e CardShuffledIntoDeck) Text(n Namer) string {
 	return fmt.Sprintf("%s is shuffled into %s's deck",
 		nameMoved(n, e.Card, inPlay, deck), n.PlayerName(e.Owner))
+}
+
+// CardsShuffledIntoDeckBy narrates a source shuffling one owner's creatures into
+// that owner's deck as one grouped line ("Lost in the Woods shuffles Murmook and
+// Chota Hazri into P2's deck"), so a card that shuffles several creatures at once
+// reads as one act rather than a passive line per creature.
+type CardsShuffledIntoDeckBy struct {
+	Source LocalID
+	Owner  int
+	Cards  []LocalID
+}
+
+// Text renders the grouped shuffle attributed to its source.
+func (e CardsShuffledIntoDeckBy) Text(n Namer) string {
+	return fmt.Sprintf("%s shuffles %s into %s's deck",
+		n.Name(e.Source), namedCardsAnd(n, e.Cards), n.PlayerName(e.Owner))
 }
 
 // CardAbducted narrates a creature taken into the abductor's archives, which is

@@ -124,6 +124,67 @@ func TestDamageThenIfDestroyed(t *testing.T) {
 	})
 }
 
+func TestDamageThen(t *testing.T) {
+	t.Run("runs the follow-up whether or not the creature is destroyed", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		tough := g.AddToBattleline(testCreature("tough", 6), 1)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+
+		e := DamageThen{
+			Amount: 2,
+			Target: Target{Kind: TargetChosenCreature},
+			Then:   GainAember{Player: Controller, Amount: 1},
+		}
+		if got, want := e.Text(), "deal 2 damage to a creature and gain 1 \u00c6mber"; got != want {
+			t.Fatalf("text = %q, want %q", got, want)
+		}
+		e.Resolve(ctx)
+		if g.Damage(tough) != 2 {
+			t.Errorf("damage = %d, want 2", g.Damage(tough))
+		}
+		if g.State.Aember[0] != 1 {
+			t.Errorf("aember = %d, want 1 (follow-up ran on the survivor)", g.State.Aember[0])
+		}
+	})
+
+	t.Run("puts the damaged creature in context", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		weak := g.AddToBattleline(testCreature("weak", 1), 1)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+
+		DamageThen{
+			Amount: 3,
+			Target: Target{Kind: TargetChosenEnemyCreature},
+			Then:   PurgeCreature{Target: Target{Kind: TargetTriggeringCreature}},
+		}.Resolve(ctx)
+		if g.State.Discard[1].contains(weak) {
+			t.Error("the destroyed creature should be purged out of the discard pile")
+		}
+	})
+
+	t.Run("no target is a no-op", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+		DamageThen{
+			Amount: 3,
+			Target: Target{Kind: TargetChosenEnemyCreature},
+			Then:   GainAember{Player: Controller, Amount: 1},
+		}.Resolve(ctx)
+		if g.State.Aember[0] != 0 {
+			t.Error("no target should not run the follow-up")
+		}
+	})
+
+	t.Run("validate", func(t *testing.T) {
+		if (DamageThen{Then: GainAember{Player: Controller, Amount: 1}}).validate() == nil {
+			t.Error("unset target should be invalid")
+		}
+		if (DamageThen{Target: Target{Kind: TargetChosenCreature}, Then: GainAember{}}).validate() == nil {
+			t.Error("invalid follow-up should surface")
+		}
+	})
+}
+
 func TestDealDamagePerCount(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	// Three friendly creatures multiply the 1 base damage to 3.

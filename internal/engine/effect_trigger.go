@@ -14,7 +14,8 @@ type TriggerAbility struct {
 	// Trigger names which of the target's abilities resolve — its Play, Fight, or
 	// Reap effect.
 	Trigger Trigger
-	Target  Target
+	// Target names the card whose abilities are triggered.
+	Target Target
 }
 
 // validate requires a target and one of the three action triggers a card can

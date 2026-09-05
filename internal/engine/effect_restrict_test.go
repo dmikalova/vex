@@ -66,6 +66,24 @@ func TestGrantFightForChosenHouse(t *testing.T) {
 	}
 }
 
+func TestGrantFightForFriendlyHouse(t *testing.T) {
+	if err := (GrantFightForFriendlyHouse{}).validate(); err == nil {
+		t.Error("an unset house should be rejected")
+	}
+	e := GrantFightForFriendlyHouse{House: Brobnar}
+	if err := e.validate(); err != nil {
+		t.Errorf("validate = %v, want nil", err)
+	}
+	if got := e.Text(); got != "for the remainder of the turn, each friendly Brobnar creature may fight" {
+		t.Errorf("text = %q", got)
+	}
+	g := NewGame("A", "B", 1)
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if g.State.MayFightHouse[0] != Brobnar {
+		t.Errorf("MayFightHouse[0] = %v, want Brobnar", g.State.MayFightHouse[0])
+	}
+}
+
 func TestCannotFight(t *testing.T) {
 	if got := (CannotFight{Player: Opponent}).Text(); got != "your opponent cannot use creatures to fight during their next turn" {
 		t.Errorf("opponent text = %q", got)

@@ -9,6 +9,7 @@ import (
 // with a specific name, reveal it, and put it into their hand — Help from Future
 // Self tutoring a Timetraveller. Nothing happens if no matching card is found.
 type SearchForName struct {
+	// Name is the card name searched for.
 	Name string
 	// All takes every copy found instead of one the controller chooses, which
 	// leaves nothing to choose and so asks nothing (Bear Flute).

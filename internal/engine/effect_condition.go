@@ -19,6 +19,8 @@ type Condition interface {
 type Comparison int
 
 const (
+	// comparisonUnset is the invalid zero value; a condition must name a real
+	// comparison, so an unset one is caught at init.
 	comparisonUnset Comparison = iota
 	// AtLeast is met when the quantity is at least Amount.
 	AtLeast
@@ -279,6 +281,8 @@ func (e ItIsOfHouse) Met(ctx *EffectContext) bool {
 // the concrete-value counterpart to ItIsOfHouse, which names the house by
 // reference (the chosen or active house).
 type ItIs struct {
+	// House and Type are the filters the card in context must match; either one
+	// left unset matches any.
 	House House
 	Type  CardType
 	// Not inverts the match, so the condition is met when the card in context does

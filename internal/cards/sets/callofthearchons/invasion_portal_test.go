@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Traits: Location
 //
-//	Action: Discard cards from the top of your deck until you discard a Mars creature or run out of cards -> put it into your hand.
+//	Action: Discard cards from the top of your deck until you discard a Mars creature or run out of cards -> put the discarded creature into your hand.
 func TestInvasionPortal(t *testing.T) {
 	t.Run("digs to the first Mars creature and takes it", func(t *testing.T) {
 		var portal, skipped, martian ct.Card

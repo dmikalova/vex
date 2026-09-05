@@ -2,13 +2,12 @@ package engine
 
 import "fmt"
 
-// A +1 power counter is a permanent token placed on a creature that raises its
-// power by one for as long as it stays in play; a -1 power counter lowers it. A
-// creature can hold any number of counters, and they are shed when it leaves play.
 // Power counters are permanent +1/-1 power tokens placed on a creature: they
 // raise (or lower) its power for as long as it stays in play, and are shed when
-// it leaves. AddPowerCounter places counters on each creature its Target selects.
+// it leaves. A creature can hold any number of them. AddPowerCounter places
+// counters on each creature its Target selects.
 type AddPowerCounter struct {
+	// Target picks the creatures the counters are placed on.
 	Target Target
 	// Amount is the total power the counters add, placed as that many +1 (or -1)
 	// counters — Amount: 2 is "two +1 power counters", not one +2 counter.

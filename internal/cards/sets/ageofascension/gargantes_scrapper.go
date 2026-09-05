@@ -8,6 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Creature
 //	Rarity: Uncommon
 //	Power:  3
+//	Æmber:  1
 //	Traits: Giant
 //
 //	Alpha.
@@ -18,6 +19,7 @@ var GargantesScrapper = card.New(
 	card.Type.Creature,
 	card.Rarity.Uncommon,
 	card.Provenance(card.AoA, 23),
+	card.WithAemberBonus(1),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Giant),
 	card.WithKeywords(card.Keyword.Alpha),

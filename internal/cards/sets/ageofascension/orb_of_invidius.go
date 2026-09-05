@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// OrbOfInvidius
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Orb of Invidius
 //
 //	House:  Dis
 //	Type:   Artifact
@@ -24,5 +19,6 @@ var OrbOfInvidius = card.New(
 	card.Provenance(card.AoA, 96),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Item),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.AfterCreatureReaps, card.Stun{Target: card.Target.Triggering}),
 )

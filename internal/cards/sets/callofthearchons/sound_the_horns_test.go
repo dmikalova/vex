@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Discard cards from the top of your deck until you discard a Brobnar creature or run out of cards -> put it into your hand.
+//	Play: Discard cards from the top of your deck until you discard a Brobnar creature or run out of cards -> put the discarded creature into your hand.
 func TestSoundTheHorns(t *testing.T) {
 	t.Run("digs to the first Brobnar creature and takes it", func(t *testing.T) {
 		var horns, skipped, brute, buried ct.Card

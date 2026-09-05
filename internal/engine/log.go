@@ -57,6 +57,22 @@ func namedCards(n Namer, ids []LocalID) string {
 	return strings.Join(names, ", ")
 }
 
+// namedCardsAnd lists several cards by name as a prose series — "A", "A and B",
+// or "A, B, and C" — for an entry that reads as a sentence.
+func namedCardsAnd(n Namer, ids []LocalID) string {
+	names := make([]string, len(ids))
+	for i, id := range ids {
+		names[i] = n.Name(id)
+	}
+	if len(names) < 2 {
+		return strings.Join(names, "")
+	}
+	if len(names) == 2 {
+		return names[0] + " and " + names[1]
+	}
+	return strings.Join(names[:len(names)-1], ", ") + ", and " + names[len(names)-1]
+}
+
 // because appends the event a lasting reaction fired on, so a lasting entry
 // reads as its plain outcome plus what triggered it and the two never drift.
 func because(text string, on Event) string {

@@ -5,8 +5,10 @@ import "testing"
 // TestClosedCatalogsAreComplete enforces ADR 0018: each closed catalog the game
 // defines is complete in the rulebook registry. A member with no term fails the
 // build here rather than going silently undescribed (the gap that once left
-// Elusive and Taunt out of the rulebook). Effects and turn/combat steps are not
-// yet closed catalogs and are exempt; see docs/todo.md.
+// Elusive and Taunt out of the rulebook). Turn phases are covered too; only
+// effects stay exempt (no closed effect catalog exists yet — see docs/todo.md),
+// and combat is deliberately not a step catalog: fighting is an action taken
+// during the main phase, described in its own section, not a turn step.
 func TestClosedCatalogsAreComplete(t *testing.T) {
 	titled := func(section Section) map[string]bool {
 		have := map[string]bool{}
@@ -49,6 +51,22 @@ func TestClosedCatalogsAreComplete(t *testing.T) {
 			}
 			if !have[name] {
 				t.Errorf("trigger %q has no rulebook term (ADR 0018)", name)
+			}
+		}
+	})
+
+	t.Run("turn phases", func(t *testing.T) {
+		// Phase terms all share the Title "Turn structure" and differ by Subtitle,
+		// so completeness is keyed on the subtitle each phase owns (rulebookStep).
+		have := map[string]bool{}
+		for _, term := range RuleTerms() {
+			if term.Section == SectionTurn {
+				have[term.Subtitle] = true
+			}
+		}
+		for _, p := range Phases() {
+			if !have[p.rulebookStep()] {
+				t.Errorf("phase %q has no rulebook term (ADR 0018)", p)
 			}
 		}
 	})

@@ -51,6 +51,10 @@ func TestLogEntryText(t *testing.T) {
 		{AemberGained{Player: 0, Amount: 2}, "P0 gains 2 Æmber"},
 		{AemberLost{Player: 1, Amount: 1}, "P1 loses 1 Æmber"},
 		{AemberStolen{Player: 0, From: 1, Amount: 2}, "P0 steals 2 Æmber from P1"},
+		{
+			AemberStolen{Player: 0, From: 1, Amount: 2, Source: 7, HasSource: true},
+			"Card7 steals 2 Æmber from P1",
+		},
 		{AemberCaptured{Creature: 7, Amount: 3}, "Card7 captures 3 Æmber"},
 		{
 			AemberCapturedInsteadOfGain{Creature: 7, Player: 1, Amount: 1},
@@ -81,9 +85,23 @@ func TestLogEntryText(t *testing.T) {
 		{NoCreatureToFight{Creature: 2}, "Card2 has no creature to fight"},
 		{CardsRevealedToAll{Player: 0, Cards: []LocalID{1, 2}}, "P0 reveals Card1, Card2"},
 		{PositionsSwapped{A: 1, B: 2}, "Card1 swaps positions with Card2"},
+		{MovedToFlank{Creature: 2, Right: true}, "Card2 moves to the right flank"},
+		{MovedToFlank{Creature: 2}, "Card2 moves to the left flank"},
 		{ControlTaken{Player: 1, Card: 3}, "P1 takes control of Card3"},
 		{ControlReturned{Card: 3, Owner: 0}, "Card3 returns to P0's control"},
 		{CardDestroyed{Card: 3}, "Card3 is destroyed"},
+		{
+			CardsDestroyedBy{Source: 5, Cards: []LocalID{3}},
+			"Card5 destroys Card3",
+		},
+		{
+			CardsDestroyedBy{Source: 5, Cards: []LocalID{3, 8}},
+			"Card5 destroys Card3 and Card8",
+		},
+		{
+			CardsDestroyedBy{Source: 5, Cards: []LocalID{3, 8, 9}},
+			"Card5 destroys Card3, Card8, and Card9",
+		},
 		{
 			DestructionReplaced{Card: 3, By: 8},
 			"Card3 would be destroyed, so Card8 replaces its destruction",
@@ -92,7 +110,7 @@ func TestLogEntryText(t *testing.T) {
 			AemberOnCardReleased{Card: 3, Amount: 2, To: 1},
 			"2 Æmber on Card3 goes to P1's pool",
 		},
-		{StunRecovered{Creature: 3}, "Card3 recovers from stun instead of acting"},
+		{StunRecovered{Player: 1, Creature: 3}, "P1 unstuns Card3"},
 		{CardCannotBeUsed{Card: 3}, "Card3 is exhausted and cannot be used"},
 
 		// Combat.
@@ -122,6 +140,10 @@ func TestLogEntryText(t *testing.T) {
 			TopOfDeckDiscarded{Player: 0, Card: 6},
 			"P0 discards Card6 from the top of their deck",
 		},
+		{
+			CardDiscardedFromDeck{Player: 0, Card: 6},
+			"P0 discards Card6 from their deck",
+		},
 		{DeckAndDiscardSwapped{Player: 1}, "P1 swaps their deck and discard pile"},
 		{CardDiscarded{Player: 0, Card: 6}, "P0 discards Card6"},
 		{CardPurgedFromDiscard{Player: 0, Card: 6}, "P0 purges Card6 from a discard pile"},
@@ -131,6 +153,10 @@ func TestLogEntryText(t *testing.T) {
 		{CardReturnedToHand{Card: 6, Owner: 1}, "Card6 is returned to P1's hand"},
 		{CardPutIntoArchives{Card: 6, Owner: 0}, "Card6 is put into P0's archives"},
 		{CardShuffledIntoDeck{Card: 6, Owner: 1}, "Card6 is shuffled into P1's deck"},
+		{
+			CardsShuffledIntoDeckBy{Source: 5, Owner: 1, Cards: []LocalID{3, 8}},
+			"Card5 shuffles Card3 and Card8 into P1's deck",
+		},
 		{
 			CardAbducted{Player: 0, Card: 6, Owner: 1},
 			"P0 abducts Card6 (owned by P1) into their archives",
@@ -176,6 +202,10 @@ func TestLogEntryText(t *testing.T) {
 		{
 			CardPutIntoPlay{Player: 1, Card: 9},
 			"P1 puts Card9 into play under their control",
+		},
+		{
+			PlayedFromTopOfDeck{Source: 3, Card: 9, Player: 0},
+			"Card3 plays Card9 from the top of P0's deck",
 		},
 		{AemberBonusGained{Player: 0, Card: 9, Amount: 2}, "P0 gains 2 Æmber from Card9"},
 		{
@@ -402,6 +432,30 @@ func TestRenderEntryMarksIconKeywords(t *testing.T) {
 type houseNamer struct{ stubNamer }
 
 func (houseNamer) Name(LocalID) string { return "Brobnar" }
+
+// TestZoneIconAt checks each zone noun is marked with its zone emblem, and that a
+// verb sharing a stem — "discards", "purges" — stays plain text.
+func TestZoneIconAt(t *testing.T) {
+	cases := []struct {
+		word string
+		icon string
+	}{
+		{"hand", "zone-hand"},
+		{"deck", "zone-deck"},
+		{"discard", "zone-discard"},
+		{"archives", "zone-archives"},
+		{"purge", "zone-purge"},
+	}
+	for _, c := range cases {
+		seg, ok := zoneIconAt(c.word, 0)
+		if !ok || seg.Icon != c.icon || seg.Text != c.word {
+			t.Errorf("zoneIconAt(%q) = %+v, %v; want icon %q", c.word, seg, ok, c.icon)
+		}
+	}
+	if _, ok := zoneIconAt("discards a card", 0); ok {
+		t.Error("the verb \"discards\" should not be marked as the discard zone")
+	}
+}
 
 // TestWordAt checks the whole-word guard directly, including a keyword that
 // begins in the middle of a longer word, so it is not marked as its own word.

@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ZysysyxShockworm
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Zysysyx Shockworm
 //
 //	House:  Mars
 //	Type:   Creature
@@ -26,5 +21,6 @@ var ZysysyxShockworm = card.New(
 	card.WithPower(3),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Martian, card.Traits.Soldier),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.AfterEnemyCreatureReaps, card.Stun{Target: card.Target.Triggering}),
 )

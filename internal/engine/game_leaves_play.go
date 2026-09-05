@@ -166,8 +166,16 @@ func (g *Game) applyDestructionReplacements(controller int, ids []LocalID) []Loc
 // creature still in play goes to its discard pile.
 func (g *Game) destroyTogether(controller int, ids []LocalID) {
 	ids = g.applyDestructionReplacements(controller, ids)
-	for _, id := range ids {
-		g.record(CardDestroyed{Card: id})
+	// The source is consumed by the batch it directly targets; any state-based
+	// deaths that follow (a creature that lost a buff) narrate passively.
+	source, hasSource := g.destroyingSource, g.hasDestroyingSource
+	g.hasDestroyingSource = false
+	if hasSource && len(ids) > 0 {
+		g.record(CardsDestroyedBy{Source: source, Cards: append([]LocalID(nil), ids...)})
+	} else {
+		for _, id := range ids {
+			g.record(CardDestroyed{Card: id})
+		}
 	}
 	// "Each time an enemy creature is destroyed": the destroyed creature's controller
 	// is the enemy of whoever watches, so the reaction fires for that opponent.
@@ -178,7 +186,7 @@ func (g *Game) destroyTogether(controller int, ids []LocalID) {
 	// The whole window is ordered once, up front, by the active player (ADR 0013).
 	// A creature that leaves play mid-window (Annihilation Ritual purges it) simply
 	// drops its remaining abilities as they come up.
-	for _, t := range g.orderTriggered(controller, g.destroyedAbilities(ids)) {
+	for _, t := range g.orderTriggered(controller, TriggerDestroyed, g.destroyedAbilities(ids)) {
 		if !g.inPlay(t.source) {
 			continue
 		}
@@ -277,6 +285,10 @@ func (g *Game) putIntoDeckShuffled(id LocalID) {
 	g.resetCore(id)
 	g.State.Deck[o].add(id)
 	g.Shuffle(o)
+	if g.batchingShuffle {
+		g.shuffleBatch = append(g.shuffleBatch, id)
+		return
+	}
 	g.record(CardShuffledIntoDeck{Card: id, Owner: o})
 }
 

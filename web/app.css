@@ -800,6 +800,29 @@ body {
   }
 }
 
+/* the deselected copy shrinking back to its slot: card-focus-in run backwards, so
+   a dropped selection eases out the way it eased in. It is a fading picture — no
+   verbs, no pointer events — so the board underneath is live again at once. */
+.card-focus--placed.card-focus--out {
+  pointer-events: none;
+  animation: card-focus-out 150ms cubic-bezier(0.4, 0, 0.7, 0.2) forwards;
+}
+.card-focus--out .card,
+.card-focus--out .card-focus-acts {
+  pointer-events: none;
+}
+@keyframes card-focus-out {
+  from {
+    transform: none;
+    opacity: 1;
+  }
+  to {
+    transform: translate(var(--focus-dx), var(--focus-dy))
+      scale(var(--focus-from));
+    opacity: 0;
+  }
+}
+
 /* hover card preview: an enlarged card floating by the log (board hover) or just
    left of the log (a log mention) */
 .card-preview {
@@ -1519,10 +1542,11 @@ button:disabled {
   font: inherit;
   cursor: pointer;
 }
-.score-house-dim {
+/* dim only the emblem, not the whole element: opacity on the span would fade its
+   hover tip too, since a child cannot exceed its parent's opacity */
+.score-house-dim .icon {
   opacity: 0.4;
   filter: grayscale(0.55);
-  font-weight: 400;
 }
 .score-zones {
   display: inline-flex;
@@ -1539,7 +1563,8 @@ button:disabled {
   gap: 0.15rem;
 }
 /* an unlabelled icon names itself on hover: a CSS bubble rather than title= so it
-   appears immediately. The label is the element's data-tip. */
+   appears immediately. The label is the element's data-tip, styled to read like a
+   zone roster's title bar (quiet, spaced) rather than a plain tooltip. */
 .tip {
   position: relative;
 }
@@ -1554,7 +1579,7 @@ button:disabled {
   border-radius: var(--ctl-radius);
   background: var(--surface-hover);
   border: 1px solid var(--line-strong);
-  color: var(--ink);
+  color: var(--ink-quiet);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.03em;
@@ -1565,14 +1590,61 @@ button:disabled {
 .tip:hover::after {
   opacity: 1;
 }
-/* a zone whose contents may be read lists them under the label: the data-tip is
-   the label and one card name per line, so the bubble grows into a little roster
-   the way an upgrade shows only its title bar. The first line (the label) is the
-   heading; the rest are names, so it reads left-aligned rather than centred. */
-.tip-multi::after {
-  white-space: pre-line;
-  text-align: left;
+/* a zone whose contents may be read opens a roster popover of house-coloured
+   card headers — the same title bar an upgrade tab shows — instead of a plain
+   text tip. The count sits still; the roster floats above it on hover. */
+.zone-has-roster {
+  position: relative;
+}
+.zone-roster {
+  position: absolute;
+  bottom: calc(100% + 0.25rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 7rem;
   max-width: 14rem;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding: 0.25rem;
+  border-radius: var(--ctl-radius);
+  background: var(--surface-hover);
+  border: 1px solid var(--line-strong);
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.5);
+}
+.zone-has-roster:hover .zone-roster {
+  display: flex;
+}
+/* the top bar has nothing above it, so its roster drops below instead of being
+   clipped off the top of the board */
+.board-area > .score-pill:first-child .zone-roster {
+  top: calc(100% + 0.25rem);
+  bottom: auto;
+}
+.zone-roster-label {
+  color: var(--ink-quiet);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 0 0.15rem 0.1rem;
+}
+.zone-roster-item {
+  border-radius: 3px;
+  padding: 0.15rem 0.35rem;
+  background-color: var(--nm, var(--surface-hover));
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.4);
+}
+.zone-roster-name {
+  color: var(--nm-fg, var(--ink));
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
 }
 /* the top bar has nothing above it, so its tips drop below instead of being
    clipped off the top of the board */

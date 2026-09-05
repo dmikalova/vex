@@ -31,15 +31,26 @@ func (e AemberLost) Text(n Namer) string {
 
 // AemberStolen narrates Æmber moving from one pool to the other. Amount is what
 // was actually taken, which is less than asked for when the victim's pool runs
-// out — and zero when it was already empty.
+// out — and zero when it was already empty. Source names the card whose ability
+// stole, so the line reads from the card's perspective ("Magda the Rat steals 2
+// Æmber from Player 1") rather than the controller's; HasSource is false for a
+// steal with no card to credit, which falls back to the player.
 type AemberStolen struct {
 	Player int
 	From   int
 	Amount int
+	Source LocalID
+	// HasSource distinguishes a card named by LocalID 0 from no source at all.
+	HasSource bool
 }
 
-// Text renders the steal, and how much it actually took.
+// Text renders the steal, and how much it actually took, crediting the source
+// card when there is one and the controller otherwise.
 func (e AemberStolen) Text(n Namer) string {
+	if e.HasSource {
+		return fmt.Sprintf("%s steals %d Æmber from %s",
+			n.Name(e.Source), e.Amount, n.PlayerName(e.From))
+	}
 	return fmt.Sprintf("%s steals %d Æmber from %s",
 		n.PlayerName(e.Player), e.Amount, n.PlayerName(e.From))
 }

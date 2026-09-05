@@ -64,7 +64,7 @@ func (e Destroy) destroy(ctx *EffectContext, ids []LocalID) bool {
 	for _, id := range ids {
 		controllers[id] = ctx.Resolver.Controller(id)
 	}
-	ctx.Resolver.DestroyEach(ctx.Controller, ids)
+	ctx.Resolver.DestroyEachFrom(ctx.Controller, ctx.Source, ids)
 	for _, id := range ids {
 		if !resolverInPlay(ctx, id) {
 			ctx.Produced.Destroyed[controllers[id]]++

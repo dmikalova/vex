@@ -310,3 +310,39 @@ func TestPutChosen(t *testing.T) {
 		t.Error("choosing Done should leave the artifact in play")
 	}
 }
+
+// Shuffling several creatures into their owners' decks with one effect narrates
+// one grouped, source-attributed line per owner instead of a passive line each.
+func TestPutChosenGroupsShufflesByOwnerInLog(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	src := g.AddArtifact(exAutocannon(), 0)
+	a1 := g.AddToBattleline(testCreature("a1", 3), 0)
+	a2 := g.AddToBattleline(testCreature("a2", 3), 0)
+	b1 := g.AddToBattleline(testCreature("b1", 3), 1)
+	g.SetChooser(0, FirstChooser{})
+	PutChosen{
+		Count:       3,
+		Target:      Target{Kind: TargetEachCreature},
+		Destination: ToDeckShuffled,
+	}.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+
+	if g.inPlay(a1) || g.inPlay(a2) || g.inPlay(b1) {
+		t.Fatal("all three creatures should have left play")
+	}
+	var grouped int
+	for _, rec := range g.Log {
+		if e, ok := rec.Entry.(CardsShuffledIntoDeckBy); ok {
+			grouped++
+			if e.Source != src {
+				t.Errorf("grouped shuffle source = %v, want %v", e.Source, src)
+			}
+		}
+		if _, ok := rec.Entry.(CardShuffledIntoDeck); ok {
+			t.Error("a batched shuffle should not also narrate a passive per-card line")
+		}
+	}
+	// One line for P0's two creatures, one for P1's one creature.
+	if grouped != 2 {
+		t.Errorf("grouped shuffle lines = %d, want 2 (one per owner)", grouped)
+	}
+}

@@ -43,6 +43,8 @@ type (
 	DamageThenIfDestroyed = engine.DamageThenIfDestroyed
 	// DamageThenIfSurvives deals damage, then runs Then only if the creature survives.
 	DamageThenIfSurvives = engine.DamageThenIfSurvives
+	// DamageThen deals damage to a creature, then runs Then on it whether it lived or not.
+	DamageThen = engine.DamageThen
 	// Spread is a DealDamage strategy that hits several related creatures at once.
 	Spread = engine.Spread
 	// PerTarget is a DealDamage strategy scaling the damage per creature hit.
@@ -160,7 +162,9 @@ type (
 	PlayRevealedCard = engine.PlayRevealedCard
 	// PlayTopOfDeck plays the top card of the controller's deck outright.
 	PlayTopOfDeck = engine.PlayTopOfDeck
-	// PlayFrom plays a card the controller chooses from their hand or discard pile
+	// LookAtTop looks at the top Count cards of your deck, puts one into your
+	// hand, and discards the others.
+	LookAtTop = engine.LookAtTop
 	// (From), ignoring the active house. Set Except to make House the house that
 	// may not be played.
 	PlayFrom = engine.PlayFrom
@@ -223,6 +227,8 @@ type (
 	PutIntoPlay = engine.PutIntoPlay
 	// Swap exchanges this creature's battleline position with another.
 	Swap = engine.Swap
+	// MoveToFlank moves the targeted creature to either flank of its controller's battleline.
+	MoveToFlank = engine.MoveToFlank
 )
 
 // Composites and control flow.
@@ -402,6 +408,8 @@ type (
 	MayPlayOrUseFriendlyHouse = engine.MayPlayOrUseFriendlyHouse
 	// GrantFightForChosenHouse lets your chosen-house creatures fight this turn.
 	GrantFightForChosenHouse = engine.GrantFightForChosenHouse
+	// GrantFightForFriendlyHouse lets your creatures of a named House fight this turn.
+	GrantFightForFriendlyHouse = engine.GrantFightForFriendlyHouse
 	// GrantFightAnyHouse lets every friendly creature fight this turn.
 	GrantFightAnyHouse = engine.GrantFightAnyHouse
 	// BelongToHouse makes the targeted creatures belong to a House for a Duration.

@@ -30,6 +30,8 @@ type PlayFrom struct {
 	// is still your play — it counts against your own card-play limit — but returns
 	// to its owner's discard pile.
 	Player Player
+	// House and Type narrow which cards may be chosen; Except inverts the house
+	// filter, so House names the house that may not be played ("a non-Logos card").
 	House  House
 	Except bool
 	Type   CardType

@@ -26,8 +26,12 @@ const (
 // CardCore is the mutable per-match state of a single card, stored purely by
 // value. It carries no pointers so the whole GameState copies flat.
 type CardCore struct {
+	// Exhausted is whether the card is turned sideways from being used, so it
+	// cannot be used again until it readies.
 	Exhausted bool
-	Stunned   bool
+	// Stunned is whether the creature is stunned: the next time it is used, that use
+	// removes the stun instead of reaping, fighting, or firing an Action.
+	Stunned bool
 	// DamageImmune, while set, prevents any damage from being dealt to this creature.
 	// It lasts until end of turn (the ready phase clears it) — Shield of Justice,
 	// Protectrix.
@@ -48,8 +52,12 @@ type CardCore struct {
 	// turn — to reap, fight, or use an Action: ability. StartTurn clears every
 	// creature's count; leaving play clears it through resetCore.
 	TimesUsedThisTurn int16
-	Damage            int16
-	ArmorRemaining    int16
+	// Damage is the damage marked on the creature; it is destroyed once this reaches
+	// its power.
+	Damage int16
+	// ArmorRemaining is the armor left to absorb damage; it refreshes to full when
+	// the creature's controller readies.
+	ArmorRemaining int16
 	// ArmorStripped is how much armor an effect took off this creature, as opposed
 	// to how much it spent absorbing damage — the "for each point of armor it lost
 	// this way" tally (Red-Hot Armor). The controller's ready phase clears it along
@@ -222,18 +230,27 @@ func (z *wideList) remove(id LocalID) bool   { return listRemove(z.IDs[:], &z.Co
 // no heap allocation or garbage-collector pressure — the property MCTS rollouts
 // depend on. Read-only card definitions live in the separate catalog.
 type GameState struct {
-	Cards      [maxCards]CardCore
+	// Cards is every card's mutable per-match state, indexed by LocalID.
+	Cards [maxCards]CardCore
+	// Battleline[p] is player p's row of creatures in play, in flank-to-flank order.
 	Battleline [2]wideList
-	Hand       [2]deckList
-	Deck       [2]deckList
-	Discard    [2]deckList
-	Artifacts  [2]wideList
-	Archives   [2]wideList
+	// Hand[p] is player p's hand.
+	Hand [2]deckList
+	// Deck[p] is player p's draw pile.
+	Deck [2]deckList
+	// Discard[p] is player p's discard pile.
+	Discard [2]deckList
+	// Artifacts[p] is player p's row of artifacts in play.
+	Artifacts [2]wideList
+	// Archives[p] is player p's archives — cards set aside to be taken into hand.
+	Archives [2]wideList
 	// Purge holds cards set aside out of the game ("purged"); they never return.
 	Purge [2]deckList
 
+	// Aember[p] is the Æmber in player p's pool.
 	Aember [2]int
-	Keys   [2]int
+	// Keys[p] is how many keys player p has forged.
+	Keys [2]int
 
 	// KeyColors[p] holds the colour of each key player p has forged, in forge order;
 	// entries [0:Keys[p]] are set, the rest are KeyColorNone. A player picks the
@@ -246,10 +263,13 @@ type GameState struct {
 	// actually blocked a draw (see Game.drawStep).
 	Chains [2]int
 
+	// ActivePlayer is the index of the player whose turn it is.
 	ActivePlayer int
-	ActiveHouse  House
-	Turn         int
-	Winner       int // -1 while the game is ongoing
+	// ActiveHouse is the house the active player chose to act with this turn.
+	ActiveHouse House
+	// Turn is the current turn number.
+	Turn   int
+	Winner int // -1 while the game is ongoing
 
 	// Phase is the part of the turn now running (ADR 0012). The engine advances it
 	// and blocks only on the phases that need a frontend decision.

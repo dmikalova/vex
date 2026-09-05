@@ -100,6 +100,21 @@ func (e PositionsSwapped) Text(n Namer) string {
 	return fmt.Sprintf("%s swaps positions with %s", n.Name(e.A), n.Name(e.B))
 }
 
+// MovedToFlank narrates a creature moving to a flank of its battleline.
+type MovedToFlank struct {
+	Creature LocalID
+	Right    bool
+}
+
+// Text renders the creature and the flank it moved to.
+func (e MovedToFlank) Text(n Namer) string {
+	side := "left"
+	if e.Right {
+		side = "right"
+	}
+	return fmt.Sprintf("%s moves to the %s flank", n.Name(e.Creature), side)
+}
+
 // ControlTaken narrates a card moving into another player's rows without
 // changing owner.
 type ControlTaken struct {
@@ -131,6 +146,19 @@ func (e CardDestroyed) Text(n Namer) string {
 	return fmt.Sprintf("%s is destroyed", n.Name(e.Card))
 }
 
+// CardsDestroyedBy narrates one card's effect destroying a group of cards, so the
+// destruction is credited to its agent — "Strange Gizmo destroys A, B, and C" —
+// rather than a passive line per creature.
+type CardsDestroyedBy struct {
+	Source LocalID
+	Cards  []LocalID
+}
+
+// Text renders the source card and the cards it destroyed.
+func (e CardsDestroyedBy) Text(n Namer) string {
+	return fmt.Sprintf("%s destroys %s", n.Name(e.Source), namedCardsAnd(n, e.Cards))
+}
+
 // DestructionReplaced narrates an upgrade or ability taking a card's destruction
 // on itself.
 type DestructionReplaced struct {
@@ -159,12 +187,16 @@ func (e AemberOnCardReleased) Text(n Namer) string {
 }
 
 // StunRecovered narrates a use spent removing a stun counter instead of reaping,
-// fighting, or acting.
-type StunRecovered struct{ Creature LocalID }
+// fighting, or acting. It reads as the controller unstunning the creature, so the
+// log speaks the same "unstun" verb as the Unstun effect (Clear Mind).
+type StunRecovered struct {
+	Player   int
+	Creature LocalID
+}
 
 // Text renders a use spent recovering from stun.
 func (e StunRecovered) Text(n Namer) string {
-	return fmt.Sprintf("%s recovers from stun instead of acting", n.Name(e.Creature))
+	return fmt.Sprintf("%s unstuns %s", n.PlayerName(e.Player), n.Name(e.Creature))
 }
 
 // CardCannotBeUsed narrates a use refused because the card was exhausted.

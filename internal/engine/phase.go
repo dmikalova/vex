@@ -68,3 +68,47 @@ func (p Phase) String() string {
 func (p Phase) waitsForInput() bool {
 	return p == PhaseChooseHouse || p == PhasePlay
 }
+
+// Phases lists every real phase in turn order (excluding the unset zero value).
+// It is the canonical enumeration: the rulebook completeness check ranges over
+// this, so a phase added above cannot go silently undescribed.
+func Phases() []Phase {
+	return []Phase{
+		PhaseStartOfTurn,
+		PhaseForge,
+		PhaseChooseHouse,
+		PhaseArchives,
+		PhasePlay,
+		PhaseReady,
+		PhaseDraw,
+		PhaseEndOfTurn,
+	}
+}
+
+// rulebookStep returns the phase's heading under the "Turn structure" rulebook
+// term — a numbered "N. Name" subtitle naming the phase as the rulebook presents
+// it, so the play phase reads "Main phase". This is the single source for those
+// subtitles: ruleterms_turn.go builds each term's Subtitle from it, and the
+// completeness check requires every phase to have a term keyed by it.
+func (p Phase) rulebookStep() string {
+	switch p {
+	case PhaseStartOfTurn:
+		return "1. Start of turn"
+	case PhaseForge:
+		return "2. Forge a key"
+	case PhaseChooseHouse:
+		return "3. Choose a house"
+	case PhaseArchives:
+		return "4. Archives"
+	case PhasePlay:
+		return "5. Main phase"
+	case PhaseReady:
+		return "6. Ready"
+	case PhaseDraw:
+		return "7. Draw"
+	case PhaseEndOfTurn:
+		return "8. End of turn"
+	default:
+		return ""
+	}
+}

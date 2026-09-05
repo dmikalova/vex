@@ -1,5 +1,7 @@
 package engine
 
+import "fmt"
+
 // RevealTopOfDeck reveals the top card of the controller's deck — logging it and
 // putting it in context (ctx.It) so a following effect can inspect or play it (Chaos
 // Portal plays it when it is of the chosen house). Revealing does not move the card;
@@ -47,6 +49,11 @@ func (PlayTopOfDeck) Text() string { return "play the top card of your deck" }
 // Resolve plays the top card of the controller's deck, if any.
 func (PlayTopOfDeck) Resolve(ctx *EffectContext) {
 	if id, ok := ctx.Resolver.TopOfDeck(ctx.Controller); ok {
+		ctx.Resolver.Record(PlayedFromTopOfDeck{
+			Source: ctx.Source,
+			Card:   id,
+			Player: ctx.Controller,
+		})
 		ctx.Resolver.PlayFromDeck(ctx.Controller, id)
 	}
 }
@@ -132,6 +139,51 @@ func (e ForEachDiscarded) Resolve(ctx *EffectContext) {
 	for _, id := range ctx.Produced.Discarded {
 		ctx.It, ctx.HasIt = id, true
 		e.Do.Resolve(ctx)
+	}
+}
+
+// LookAtTop looks at the top Count cards of the controller's deck, puts one the
+// controller chooses into their hand, and discards the others — Eyegor. It looks
+// at as many as remain when the deck holds fewer than Count, and does nothing on
+// an empty deck.
+type LookAtTop struct {
+	Count int
+}
+
+// validate rejects a non-positive Count: looking at zero cards is meaningless, so
+// an omitted count is an authoring error, not a silent default.
+func (e LookAtTop) validate() error {
+	if e.Count < 1 {
+		return fmt.Errorf("LookAtTop: Count must be at least 1")
+	}
+	return nil
+}
+
+// Text renders the effect.
+func (e LookAtTop) Text() string {
+	return fmt.Sprintf(
+		"look at the top %d cards of your deck, put 1 into your hand, and discard the others",
+		e.Count,
+	)
+}
+
+// Resolve looks at the top Count cards, moves the one the controller chooses to
+// their hand, and discards the rest.
+func (e LookAtTop) Resolve(ctx *EffectContext) {
+	deck := ctx.Resolver.Deck(ctx.Controller)
+	if len(deck) == 0 {
+		return
+	}
+	top := deck[:min(e.Count, len(deck))]
+	keep, ok := ctx.ChooseCard("Choose a card to put into your hand", top)
+	if !ok {
+		return
+	}
+	ctx.Resolver.MoveFromDeckToHand(keep)
+	for _, id := range top {
+		if id != keep {
+			ctx.Resolver.MoveFromDeckToDiscard(id)
+		}
 	}
 }
 
@@ -226,15 +278,35 @@ func (e DiscardDeckUntil) resolveGate(ctx *EffectContext) bool {
 }
 
 // PutDiscardedIntoHand takes the card in context out of the discard pile and
-// into its owner's hand. It is the tail of a dig through the deck, where the
-// card was just discarded and "it" is unambiguous.
-type PutDiscardedIntoHand struct{}
+// into its owner's hand. It is the tail of a dig through the deck (DiscardDeckUntil)
+// that just discarded the card. Type names what the dig stopped on so the tail
+// reads "put the discarded creature into your hand" rather than a bare "it"; the
+// zero value stays the generic "card".
+type PutDiscardedIntoHand struct {
+	// Type names the discarded card the dig stopped on; the zero value is "card".
+	Type CardType
+}
 
-// Text renders the effect.
-func (PutDiscardedIntoHand) Text() string { return "put it into your hand" }
+// Text renders the effect, naming the discarded card the dig stopped on.
+func (e PutDiscardedIntoHand) Text() string {
+	return "put the discarded " + discardedNoun(e.Type) + " into your hand"
+}
+
+// discardedNoun names a discarded card by type for the "put the discarded …"
+// tail: a creature, an artifact, or a bare card when the type is unset.
+func discardedNoun(t CardType) string {
+	switch t {
+	case Creature:
+		return "creature"
+	case Artifact:
+		return "artifact"
+	default:
+		return "card"
+	}
+}
 
 // Resolve moves the contextual card from the discard pile to hand.
-func (PutDiscardedIntoHand) Resolve(ctx *EffectContext) {
+func (e PutDiscardedIntoHand) Resolve(ctx *EffectContext) {
 	if ctx.HasIt {
 		ctx.Resolver.PutFromDiscardIntoHand(ctx.It)
 	}

@@ -424,6 +424,24 @@ Key of Darkness.)
 
 ---
 
+## 23. "That creature and each creature that shares a trait" folds into the trait sweep
+
+A card that chooses a creature and then destroys "that creature **and** each
+creature that shares a trait with it" names the chosen creature twice: once as the
+subject and again, implicitly, in the trait sweep — a creature always shares a
+trait with itself. The curated text drops the redundant "that creature and" and
+states only the sweep, so `ChooseCreatureThen{Then: Destroy{... .SharingTrait()}}`
+renders `choose a creature - destroy each creature that shares a trait with it`.
+The chosen creature is still destroyed, because it matches its own trait filter.
+
+| Original                                                                                  | Curated                                                                  |
+| ----------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `Choose a creature. Destroy that creature and each creature that shares a trait with it.` | `Choose a creature - destroy each creature that shares a trait with it.` |
+
+(Affected: Extinction.)
+
+---
+
 ## Deliberate rule changes (not just wording)
 
 A few cards diverge from KeyForge in ways that affect the rules, not just

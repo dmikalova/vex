@@ -7,6 +7,7 @@ import "fmt"
 // house on a later turn. Archiving from hand lets you choose which cards to set
 // aside.
 type ArchiveFromHand struct {
+	// Count is how many cards to archive from hand.
 	Count int
 	// Type filters which cards may be chosen; the zero value allows any type.
 	Type CardType

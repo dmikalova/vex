@@ -379,8 +379,17 @@ func TestZoneTipNamesTheCardsInAFaceUpPile(t *testing.T) {
 	if len(names) != 1 || names[0] != testCreature {
 		t.Fatalf("discard tip listed %v, want [%s]", names, testCreature)
 	}
-	if got := c.g.zoneNames(c.g.active(), "Deck", []engine.LocalID{1}); got != nil {
-		t.Errorf("a hidden deck leaked its names: %v", got)
+	// The player may review their own deck (sorted so its order stays hidden).
+	own := c.g.zoneNames(
+		c.g.active(),
+		"Deck",
+		[]engine.LocalID{c.g.g.AddToDeck(*def, c.g.active())},
+	)
+	if len(own) != 1 || own[0] != testCreature {
+		t.Errorf("own deck roster listed %v, want [%s]", own, testCreature)
+	}
+	if got := c.g.zoneNames(1-c.g.active(), "Deck", []engine.LocalID{1}); got != nil {
+		t.Errorf("an opponent's deck leaked its names: %v", got)
 	}
 	if got := c.g.zoneNames(1-c.g.active(), "Hand", []engine.LocalID{1}); got != nil {
 		t.Errorf("an opponent's hand leaked its names: %v", got)
@@ -541,6 +550,24 @@ func TestDrawingForgedKeys(t *testing.T) {
 	c.do(c.g.manualForgeKey(me))
 	c.do(c.g.pickForgeColor(engine.KeyColorRed))
 	c.wants("a forged key", "score-keys", "key-red.svg", "key-btn")
+}
+
+// The end-of-turn standing draws all three key slots, colouring the ones forged
+// and dimming the rest, rather than a plain "N keys" number.
+func TestPlayerStandingDrawsThreeKeySlots(t *testing.T) {
+	c := newClient(t)
+	e := engine.PlayerStanding{
+		Player:    0,
+		Aember:    4,
+		KeyColors: []engine.KeyColor{engine.KeyColorRed},
+	}
+	h := app.HTMLString(app.Div().Body(c.g.playerStandingSegments(e)...))
+	if !strings.Contains(h, "key-red") {
+		t.Error("the standing did not colour the forged key")
+	}
+	if n := strings.Count(h, "key-unforged"); n != 2 {
+		t.Errorf("the standing drew %d unforged key slots, want 2", n)
+	}
 }
 
 // A card on the board draws under its own id, with its power on its face.

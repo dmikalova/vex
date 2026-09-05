@@ -154,6 +154,7 @@ func (e CardsInHand) CountText() string {
 // InPlay{Player: Controller, Type: Creature} or the house-filtered
 // InPlay{Player: Controller, Type: Creature, House: Mars}.
 type InPlay struct {
+	// Player names whose cards to count (Controller or Opponent).
 	Player Player
 	// Type filters by card type; the zero value counts any type.
 	Type CardType
@@ -330,6 +331,7 @@ func (e InPlay) CondText() string {
 // met once Amount have been played (Epic Quest fires after seven), defaulting to
 // one. This replaces a bespoke "played at least N of a house" condition.
 type CardsPlayed struct {
+	// Player names whose plays to count; House filters by the played card's house.
 	Player Player
 	House  House
 	// Amount is the minimum the Condition role requires; zero means at least one.

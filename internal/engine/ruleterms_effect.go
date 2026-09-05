@@ -139,8 +139,9 @@ Invasion Portal both pair it with PutDiscardedIntoHand.`,
 			Title:      "Return",
 			Definition: "Take the card just found in the discard pile into its owner's hand.",
 			Body: `PutDiscardedIntoHand takes the card in context out of the discard pile and
-into its owner's hand. It is the tail of a dig through the deck, where the
-card was just discarded and "it" is unambiguous.`,
+into its owner's hand. It is the tail of a dig through the deck (DiscardDeckUntil)
+that just discarded the card. Type names what the dig stopped on so the tail
+reads "put the discarded creature into your hand" rather than a bare "it".`,
 		},
 		{
 			Section:    SectionEffect,

@@ -85,6 +85,21 @@ func (e CardPutIntoPlay) Text(n Namer) string {
 		n.PlayerName(e.Player), n.Name(e.Card))
 }
 
+// PlayedFromTopOfDeck narrates a card an ability played off the top of a deck
+// (Wild Wormhole), crediting the ability's card and naming whose deck it came
+// from, so the following placement line reads as the consequence of that play.
+type PlayedFromTopOfDeck struct {
+	Source LocalID
+	Card   LocalID
+	Player int
+}
+
+// Text renders the ability, the card it played, and whose deck it came off.
+func (e PlayedFromTopOfDeck) Text(n Namer) string {
+	return fmt.Sprintf("%s plays %s from the top of %s's deck",
+		n.Name(e.Source), n.Name(e.Card), n.PlayerName(e.Player))
+}
+
 // AemberBonusGained narrates the Æmber bonus printed on a card being collected.
 type AemberBonusGained struct {
 	Player int

@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// SignalFire
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Signal Fire
 //
 //	House:  Brobnar
 //	Type:   Artifact
@@ -15,7 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Item
 //
-//	Omni: Sacrifice Signal Fire. For the remainder of the turn, friendly Brobnar creatures may fight as though they belonged to the active house.
+//	Versatile.
+//	Action: Destroy Signal Fire. For the remainder of the turn, each friendly Brobnar creature may fight.
 var SignalFire = card.New(
 	"Signal Fire",
 	card.House.Brobnar,
@@ -24,5 +20,10 @@ var SignalFire = card.New(
 	card.Provenance(card.AoA, 49),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Item),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Versatile),
+	card.WithAbility(
+		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+			card.Destroy{Target: card.Target.This},
+			card.GrantFightForFriendlyHouse{House: card.House.Brobnar},
+		}}),
 )

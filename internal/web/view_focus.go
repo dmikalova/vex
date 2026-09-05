@@ -54,6 +54,9 @@ func (g *game) focusCardID() (engine.LocalID, bool) {
 func (g *game) cardFocus() app.UI {
 	id, ok := g.focusCardID()
 	if !ok {
+		if g.focusExit {
+			return g.cardFocusExit()
+		}
 		return app.Div()
 	}
 	acts, note := g.selActions()
@@ -110,6 +113,57 @@ func (g *game) cardFocus() app.UI {
 		Style("--focus-dx", px(g.focusRect.x-x)).
 		Style("--focus-dy", px(g.focusDY(y))).
 		Style("--focus-from", strconv.FormatFloat(g.focusRect.w/w, 'f', 3, 64))
+}
+
+// focusSnapshot is the fully-resolved placement of the lifted copy: every custom
+// property cardFocus writes, captured while the card is still selected so the
+// shrink-back exit can be drawn after the selection that produced it is gone.
+type focusSnapshot struct {
+	id                  engine.LocalID
+	x, y, w, minH, maxH float64
+	dx, dy, from        float64
+	actsUp              bool
+	parity              bool
+}
+
+// focusSnapshotNow resolves the lifted copy's current placement from the live
+// measurement, so measureFocus can stash it for the exit while the numbers are
+// still true.
+func (g *game) focusSnapshotNow(id engine.LocalID) focusSnapshot {
+	x, y, w, minH := g.focusBox()
+	return focusSnapshot{
+		id: id, x: x, y: y, w: w, minH: minH,
+		maxH:   g.focusViewH - 2*focusPad,
+		dx:     g.focusRect.x - x,
+		dy:     g.focusDY(y),
+		from:   g.focusRect.w / w,
+		actsUp: g.actsUp(),
+		parity: g.focusParity,
+	}
+}
+
+// cardFocusExit draws the just-deselected card's copy shrinking back to its slot:
+// the grow-in run backwards from the snapshot taken while it was still selected,
+// so a dropped selection eases out instead of blinking away. It carries no verbs
+// and takes no clicks — it is a fading picture, and the board underneath is live
+// again the instant the selection is gone.
+func (g *game) cardFocusExit() app.UI {
+	s := g.focusShown
+	if s.id == 0 {
+		return app.Div()
+	}
+	return app.Div().
+		Class(cx("card-focus", "card-focus--placed", "card-focus--out",
+			ifCls(s.actsUp, "card-focus--acts-up"))).
+		Body(g.cardFace(s.id)).
+		Style("--focus-x", px(s.x)).
+		Style("--focus-y", px(s.y)).
+		Style("--focus-w", px(s.w)).
+		Style("--focus-min-h", px(s.minH)).
+		Style("--focus-max-h", px(s.maxH)).
+		Style("--focus-dx", px(s.dx)).
+		Style("--focus-dy", px(s.dy)).
+		Style("--focus-from", strconv.FormatFloat(s.from, 'f', 3, 64))
 }
 
 // focusDY is how far the grow animation starts below the copy's anchored corner:

@@ -34,3 +34,36 @@ func (e Swap) Resolve(ctx *EffectContext) {
 		ctx.It, ctx.HasIt = other, true
 	}
 }
+
+// MoveToFlank moves the creature its Target selects to either flank of that
+// creature's controller's battleline, the controller of the effect choosing
+// which flank. Only the battleline slot moves; no card state travels. A Target
+// that selects nothing, or a creature no longer in a battleline, leaves the
+// battleline unchanged — so following a DealDamage that destroyed the creature is
+// a safe no-op.
+type MoveToFlank struct {
+	Target Target
+}
+
+// validate requires the creature to move.
+func (e MoveToFlank) validate() error {
+	if !e.Target.valid() {
+		return errUnsetTarget("MoveToFlank")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "move it to either flank of its controller's
+// battleline".
+func (e MoveToFlank) Text() string {
+	return "move " + e.Target.Text() + " to either flank of its controller's battleline"
+}
+
+// Resolve moves each selected creature to the flank the controller chooses.
+func (e MoveToFlank) Resolve(ctx *EffectContext) {
+	for _, id := range e.Target.Select(ctx) {
+		right := ctx.ChooseOption(
+			"Choose a flank", []string{"left flank", "right flank"}) == 1
+		ctx.Resolver.MoveToFlank(id, right)
+	}
+}

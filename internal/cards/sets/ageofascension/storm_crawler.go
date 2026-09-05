@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// StormCrawler
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Storm Crawler
 //
 //	House:  Mars
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Robot
 //
-//	Storm Crawler only deals 1D when fighting.
+//	Storm Crawler deals 1 Damage when fighting.
 //	After an enemy creature reaps, stun it.
 var StormCrawler = card.New(
 	"Storm Crawler",
@@ -27,5 +22,10 @@ var StormCrawler = card.New(
 	card.WithPower(6),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Robot),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAttackDamage(card.AttackDamage{
+		Amount: 1,
+		Fixed:  true,
+	}),
+	card.WithAbility(
+		card.Trigger.AfterEnemyCreatureReaps, card.Stun{Target: card.Target.Triggering}),
 )

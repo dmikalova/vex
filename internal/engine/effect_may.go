@@ -27,6 +27,8 @@ type declinableEffect interface {
 	// choice. "You may destroy each Mars creature" is not — there is nothing to
 	// click — so it keeps the Yes/No.
 	declinable() bool
+	// resolveOptional resolves the effect as its own optional choice, returning
+	// whether anything happened.
 	resolveOptional(ctx *EffectContext) bool
 }
 

@@ -214,6 +214,9 @@ type CreatureResolver interface {
 	// SwapBattlelinePositions exchanges two creatures' positions in the same
 	// battleline without moving any state between the creatures.
 	SwapBattlelinePositions(a, b LocalID)
+	// MoveToFlank moves one creature to a flank of its own controller's battleline:
+	// the right flank when right is true, otherwise the left.
+	MoveToFlank(id LocalID, right bool)
 	// LoseKeyword takes a keyword away from every creature in play for the
 	// remainder of the turn.
 	LoseKeyword(k Keyword)
@@ -234,6 +237,9 @@ type CombatResolver interface {
 	DealDamage(controller int, targets []DamageTarget)
 	// DestroyEach destroys the given creatures as one simultaneous event.
 	DestroyEach(controller int, ids []LocalID)
+	// DestroyEachFrom is DestroyEach credited to a source card, so the batch it
+	// targets narrates as "<source> destroys A, B, and C" in one line.
+	DestroyEachFrom(controller int, source LocalID, ids []LocalID)
 	// SetFightDamageRedirect redirects the attacker's fight damage in the fight in
 	// progress to another creature (Gabos Longarms), read and cleared by combat.
 	SetFightDamageRedirect(id LocalID)
@@ -282,6 +288,13 @@ type ZoneResolver interface {
 	PutIntoYourArchives(id LocalID, player int)
 	// PutIntoDeckShuffled moves a card from play into its owner's deck and shuffles.
 	PutIntoDeckShuffled(id LocalID)
+	// BeginShuffleBatch starts collecting the cards shuffled into a deck until
+	// EndShuffleBatch, so an effect that shuffles several creatures at once narrates
+	// them as one grouped line per owner attributed to source.
+	BeginShuffleBatch()
+	// EndShuffleBatch closes the batch opened by BeginShuffleBatch, narrating the
+	// collected cards grouped by owner as CardsShuffledIntoDeckBy from source.
+	EndShuffleBatch(source LocalID)
 	// ArchiveFromHand moves a card from its owner's hand to their archives.
 	ArchiveFromHand(id LocalID)
 	// ArchiveFromDiscard moves a card from a player's discard pile to their archives.
@@ -316,6 +329,9 @@ type ZoneResolver interface {
 	PutFromDiscardIntoHand(id LocalID)
 	// MoveFromDeckToHand moves a card from its owner's deck to their hand.
 	MoveFromDeckToHand(id LocalID)
+	// MoveFromDeckToDiscard moves a card from its owner's deck to their discard
+	// pile — a card the controller looked at and chose not to keep (Eyegor).
+	MoveFromDeckToDiscard(id LocalID)
 	// PlayFromDeck plays a specific card from a player's deck, removing it from the
 	// deck as it is played (Chaos Portal plays the card it revealed).
 	PlayFromDeck(player int, id LocalID)
@@ -623,6 +639,15 @@ func (g *Game) DealDamage(controller int, targets []DamageTarget) {
 // DestroyEach is the Resolver entry point for destroyEach.
 func (g *Game) DestroyEach(controller int, ids []LocalID) { g.destroyEach(controller, ids) }
 
+// DestroyEachFrom credits a source card for the destruction, so the batch it
+// targets narrates as one grouped line.
+func (g *Game) DestroyEachFrom(controller int, source LocalID, ids []LocalID) {
+	prevS, prevH := g.destroyingSource, g.hasDestroyingSource
+	g.destroyingSource, g.hasDestroyingSource = source, true
+	g.destroyEach(controller, ids)
+	g.destroyingSource, g.hasDestroyingSource = prevS, prevH
+}
+
 // TakeControl is the Resolver entry point for takeControl.
 func (g *Game) TakeControl(id LocalID, controller int, source LocalID) {
 	g.takeControl(id, controller, source)
@@ -657,6 +682,32 @@ func (g *Game) PutIntoArchives(id LocalID) { g.putIntoArchives(id) }
 
 // PutIntoDeckShuffled is the Resolver entry point for putIntoDeckShuffled.
 func (g *Game) PutIntoDeckShuffled(id LocalID) { g.putIntoDeckShuffled(id) }
+
+// BeginShuffleBatch opens a shuffle batch: cards shuffled into a deck until
+// EndShuffleBatch are collected rather than narrated one by one.
+func (g *Game) BeginShuffleBatch() {
+	g.shuffleBatch, g.batchingShuffle = nil, true
+}
+
+// EndShuffleBatch closes the batch and narrates the collected cards grouped by
+// owner as one CardsShuffledIntoDeckBy line each, attributed to source, in the
+// order the owners were first shuffled.
+func (g *Game) EndShuffleBatch(source LocalID) {
+	batch := g.shuffleBatch
+	g.shuffleBatch, g.batchingShuffle = nil, false
+	byOwner := map[int][]LocalID{}
+	var owners []int
+	for _, id := range batch {
+		o := g.owner(id)
+		if _, seen := byOwner[o]; !seen {
+			owners = append(owners, o)
+		}
+		byOwner[o] = append(byOwner[o], id)
+	}
+	for _, o := range owners {
+		g.record(CardsShuffledIntoDeckBy{Source: source, Owner: o, Cards: byOwner[o]})
+	}
+}
 
 // ArchiveFromHand moves a card from its owner's hand to their archives.
 func (g *Game) ArchiveFromHand(id LocalID) { g.archiveFromHand(g.owner(id), id) }
@@ -707,6 +758,14 @@ func (g *Game) MoveFromDeckToHand(id LocalID) {
 	g.State.Deck[o].remove(id)
 	g.State.Hand[o].add(id)
 	g.record(CardPutFromDeckIntoHand{Player: o, Card: id})
+}
+
+// MoveFromDeckToDiscard moves a card from its owner's deck to their discard pile.
+func (g *Game) MoveFromDeckToDiscard(id LocalID) {
+	o := g.owner(id)
+	g.State.Deck[o].remove(id)
+	g.State.Discard[o].add(id)
+	g.record(CardDiscardedFromDeck{Player: o, Card: id})
 }
 
 // ShuffleZonesIntoDeck moves each named zone's cards into a player's deck and

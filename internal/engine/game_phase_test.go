@@ -6,19 +6,23 @@ func TestPhaseNames(t *testing.T) {
 	for _, tc := range []struct {
 		phase Phase
 		want  string
+		step  string
 	}{
-		{PhaseStartOfTurn, "start of turn"},
-		{PhaseForge, "forge a key"},
-		{PhaseChooseHouse, "choose a house"},
-		{PhaseArchives, "archives"},
-		{PhasePlay, "main"},
-		{PhaseReady, "ready"},
-		{PhaseDraw, "draw"},
-		{PhaseEndOfTurn, "end of turn"},
-		{phaseUnset, "no phase"},
+		{PhaseStartOfTurn, "start of turn", "1. Start of turn"},
+		{PhaseForge, "forge a key", "2. Forge a key"},
+		{PhaseChooseHouse, "choose a house", "3. Choose a house"},
+		{PhaseArchives, "archives", "4. Archives"},
+		{PhasePlay, "main", "5. Main phase"},
+		{PhaseReady, "ready", "6. Ready"},
+		{PhaseDraw, "draw", "7. Draw"},
+		{PhaseEndOfTurn, "end of turn", "8. End of turn"},
+		{phaseUnset, "no phase", ""},
 	} {
 		if got := tc.phase.String(); got != tc.want {
 			t.Errorf("Phase(%d).String() = %q, want %q", tc.phase, got, tc.want)
+		}
+		if got := tc.phase.rulebookStep(); got != tc.step {
+			t.Errorf("Phase(%d).rulebookStep() = %q, want %q", tc.phase, got, tc.step)
 		}
 	}
 	if phaseUnset.valid() {

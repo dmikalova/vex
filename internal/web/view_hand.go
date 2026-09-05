@@ -37,6 +37,14 @@ func (g *game) sortedHand(p int) []engine.LocalID {
 	return g.sortByHouseTypeName(g.g.Hand(p))
 }
 
+// sortedArtifacts returns the player's artifact-row ids ordered by house, then
+// name, so the artifact line reads consistently instead of by play order. It
+// sorts a copy — the engine's own order is untouched, so selection still maps to
+// the right card.
+func (g *game) sortedArtifacts(p int) []engine.LocalID {
+	return g.sortByHouseTypeName(g.g.Artifacts(p))
+}
+
 // sortByHouseTypeName returns a copy of ids ordered by house, then card type,
 // then name — the stable reading order shared by the hand and the deck view. The
 // deck in particular must not reveal its shuffled order, so it is always sorted.

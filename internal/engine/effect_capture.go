@@ -13,6 +13,7 @@ import (
 // the capture, choosing a fresh Target each time (Hypnotic Command captures once
 // for each friendly Mars creature).
 type CaptureAember struct {
+	// Amount is the fixed Æmber to capture.
 	Amount int
 	// All captures the whole Source pool instead of a fixed Amount.
 	All bool

@@ -43,41 +43,12 @@ Rules-voice text passes (no behavior change):
 
 ## Things that can be done now
 
-## Uncertain if still relevant
-
-- magda the rat just says player 2 steals 2 aember rather than magda the rat steals 2 from player 1 to player 2
-- generic key icon in log
-- artifacts can be sorted by house and name
-- when I have a maverick library of the damned and am prompted to archive, the example card in the action bar is not the live card, its its original house
-- after reaping the next card should be targeted
-- the advance targeting should only be done if played by keyboard shortcuts
-- protectrix prompts to heal a creature - should instead let me select a creature or select done. Identify any other cards/actions that behave like this
-- For resolving destoyred effects - "Choose the next card whose ability resolves" 6 times
-- should instead be "Resolve destroyed abilities"
-- Wild wormhole doesn't log that it "Wild Wormhole plays Biomatrix Backup from the top of Player 1's deck"
-- Destruction / Strange Gizmo should say "Strange Gizmo destroys Francus" etc
-- discard pile icon could be disorganized pile of cards
-- animation doesn't include enemy cards
-- r/b/y to forge key color
-- "Choose a creature to attach Jammer Pack onto" - also smush the text to one line
-- hovering over a zone should just list the cards
-- The zones should have their icons in the modal
-- u for undo, shift u for redo, s for unstun
-- Invasion portal should read "put the discarded creature into your hand"
-- on cards -> should render as an arrow
-- playing an action card should have an animation - eg go to center, get big, go to discard
-- What would the artifact animation be?
-- ulyq megamouth -> use doc bookton - the action bar preview is for ulyq, and the reap/fight colors are missing
-- ulyq -> doc bookton -> prompts on how to use when stunned, should automatically unstun
-- zone icons in logs
-- when selecting cards one at a time (lost in the woods), the cards disappear from the board - and then after selecting for a side the animation happens. Animation should be per click, or since they're shuffled together they shouldn't leave the board until both selected - the first one should get a checkmark, and then the second one finished and they all go
-- "Witch of the Eye recovers from stun instead of acting" should be "Player 2 unstuns Witch of the Eye" - the wording for stun/unstun should be consistent, no recover
-- "Lost in the Woods shuffles Murmook and Chota Hazri into Player 2's deck"
-- Skeleton key - the action prompt should be centered - cannot see which creature is selected with tab
+- remove abduct / simplify to archive targets - the rules already naturally handle how archiving your opponent's cards works
 
 ## UI finesse
 
 - animation library and overhaul
+- playing an action card should have an animation - eg go to center, get big, go to discard
 - destroy animations are going under
 - steal and capture animation
 - refine being able to navigate by keyboard
@@ -115,6 +86,7 @@ Rules-voice text passes (no behavior change):
 
 ## Wild ideas
 
+- tool to extract cards from MV
 - generate 10k decks, score them, and graph their scores with average, mean, std dev, and 95/99/99.9%iles
 - translations
 - Display multiple houses

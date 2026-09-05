@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
-	"strings"
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
@@ -25,11 +24,11 @@ func (g *game) boardArea() []app.UI {
 		Class(cx("play-zone", ifCls(g.dragging, "play-zone--drop"))).
 		OnDrop(g.dropOnBoard).
 		Body(
-			g.renderRow(opp, "artifacts", g.g.Artifacts(opp), selOther, true),
+			g.renderRow(opp, "artifacts", g.sortedArtifacts(opp), selOther, true),
 			g.renderRow(opp, "battleline", g.g.Battleline(opp), selOther, true),
 			app.Div().Class("midline"),
 			g.renderRow(p, "battleline", g.g.Battleline(p), selYourCreature, false),
-			g.renderRow(p, "artifacts", g.g.Artifacts(p), selYourArtifact, false),
+			g.renderRow(p, "artifacts", g.sortedArtifacts(p), selYourArtifact, false),
 		)
 	return []app.UI{
 		g.scorePill(opp),
@@ -129,41 +128,83 @@ func (g *game) zoneCounts(player int) []app.UI {
 		}
 		body := []app.UI{icon(z.name, "icon-stat"), app.Text(strconv.Itoa(len(z.ids)))}
 		body = append(body, g.flightsInto(player, z.name)...)
-		// The tip names the cards in the zone when this player is allowed to see
-		// them — a face-up pile, or their own hand — and otherwise just labels it.
-		cls := cx("zone-count", "tip", pulse)
-		tip := z.label
-		if names := g.zoneNames(player, z.label, z.ids); len(names) > 0 {
-			cls = cx(cls, "tip-multi")
-			tip = z.label + "\n" + strings.Join(names, "\n")
+		// A readable pile with cards opens a roster of house-coloured card headers,
+		// the same title bar an upgrade tab shows; every other zone just names
+		// itself in a plain hover tip.
+		if roster := g.zoneRoster(player, z.label, z.ids); roster != nil {
+			out = append(out,
+				app.Span().Class(cx("zone-count", "zone-has-roster", pulse)).
+					Body(append(body, roster)...),
+			)
+			continue
 		}
 		out = append(out,
-			app.Span().Class(cls).DataSet("tip", tip).Body(body...),
+			app.Span().Class(cx("zone-count", "tip", pulse)).DataSet("tip", z.label).Body(body...),
 		)
 	}
 	return out
 }
 
+// zoneRoster renders the readable cards in a zone as house-coloured header rows —
+// the same title bar an upgrade tab shows — for the popover that opens when the
+// zone count is hovered. It returns nil for a zone this player may not read or one
+// with no cards, so hovering a hidden or empty pile shows only its label.
+func (g *game) zoneRoster(player int, label string, ids []engine.LocalID) app.UI {
+	shown := g.readableZoneIDs(player, label, ids)
+	if len(shown) == 0 {
+		return nil
+	}
+	rows := make([]app.UI, 0, len(shown)+1)
+	rows = append(rows, app.Div().Class("zone-roster-label").Text(label))
+	for _, id := range shown {
+		def := g.g.Def(id)
+		rows = append(rows,
+			app.Div().Class(cx("zone-roster-item", houseClasses(def.House))).
+				Body(app.Span().Class("zone-roster-name").Text(def.Name)),
+		)
+	}
+	return app.Div().Class("zone-roster").Body(rows...)
+}
+
 // zoneNames lists the names of the cards in a zone, sorted, but only for the
-// zones this player may read: the face-up discard and purge piles of either
-// player, and their own hand. A hidden zone (a deck's order, face-down archives,
-// an opponent's hand) returns nothing, so hovering it never leaks its contents.
+// zones this player may read (see readableZoneIDs). A hidden zone returns nothing.
 func (g *game) zoneNames(player int, label string, ids []engine.LocalID) []string {
+	readable := g.readableZoneIDs(player, label, ids)
+	if len(readable) == 0 {
+		return nil
+	}
+	names := make([]string, len(readable))
+	for i, id := range readable {
+		names[i] = g.g.Def(id).Name
+	}
+	return names
+}
+
+// readableZoneIDs returns a zone's cards sorted by house then name, but only for
+// the zones this player may read: the face-up discard and purge piles of either
+// player, and their own hand and deck. Sorting the deck by house rather than draw
+// order lets a player review their own remaining deck without its order leaking. A
+// hidden zone (face-down archives, an opponent's hand or deck) returns nil, so
+// hovering it never leaks its contents.
+func (g *game) readableZoneIDs(player int, label string, ids []engine.LocalID) []engine.LocalID {
 	switch label {
 	case "Discard", "Purge":
-	case "Hand":
+	case "Hand", "Deck":
 		if player != g.active() {
 			return nil
 		}
 	default:
 		return nil
 	}
-	names := make([]string, 0, len(ids))
-	for _, id := range ids {
-		names = append(names, g.g.Def(id).Name)
-	}
-	sort.Strings(names)
-	return names
+	sorted := append([]engine.LocalID(nil), ids...)
+	sort.Slice(sorted, func(i, j int) bool {
+		a, b := g.g.Def(sorted[i]), g.g.Def(sorted[j])
+		if a.House != b.House {
+			return a.House < b.House
+		}
+		return a.Name < b.Name
+	})
+	return sorted
 }
 
 // flightsInto renders the cards that just left the board for this zone as faces
@@ -662,7 +703,10 @@ func (g *game) cardVisual(
 func (g *game) actionable(id engine.LocalID, kind selKind) bool {
 	switch kind {
 	case selYourCreature:
-		return g.g.CanUse(g.active(), id) == nil
+		// A fight grant (Brothers in Battle) lets a creature fight out of the active
+		// house, so it is actionable even when CanUse rejects its house.
+		return g.g.CanUse(g.active(), id) == nil ||
+			g.g.CanUseTo(g.active(), id, engine.FightUse) == nil
 	case selYourArtifact:
 		return g.g.CanUseArtifact(g.active(), id) == nil
 	default:

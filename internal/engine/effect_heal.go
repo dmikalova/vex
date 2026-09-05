@@ -6,9 +6,9 @@ import "fmt"
 // once. It can never remove more damage than is on the creature (a creature with
 // no damage is unaffected), and it never changes a creature's power.
 type Heal struct {
-	Amount int  // damage to remove; must be zero when Fully is set
-	Fully  bool // remove all damage instead of a fixed Amount
-	Target Target
+	Amount int    // damage to remove; must be zero when Fully is set
+	Fully  bool   // remove all damage instead of a fixed Amount
+	Target Target // the creatures to heal
 }
 
 // Text renders the effect, e.g. "heal 1 damage from each creature" or

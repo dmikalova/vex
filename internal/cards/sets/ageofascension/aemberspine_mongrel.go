@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// AemberspineMongrel
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Aemberspine Mongrel
 //
 //	House:  Untamed
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Beast
 //
-//	Hazardous 3. (Before this creature is attacked, deal 3D to the attacking enemy.)
-//	After your opponent uses a creature to reap, gain 1A.
+//	Hazardous 3.
+//	After an enemy creature reaps, gain 1 Æmber.
 var AemberspineMongrel = card.New(
 	"Aemberspine Mongrel",
 	card.House.Untamed,
@@ -25,5 +20,10 @@ var AemberspineMongrel = card.New(
 	card.Provenance(card.AoA, 335),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Beast),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithHazardous(3),
+	card.WithAbility(
+		card.Trigger.AfterEnemyCreatureReaps, card.GainAember{
+			Player: card.Controller,
+			Amount: 1,
+		}),
 )

@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// AemberImp
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Aember Imp
 //
 //	House:  Dis
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Imp
 //
-//	Elusive. (The first time this creature is attacked each turn, no damage is dealt.)
+//	Elusive.
 //	After a creature reaps, stun it.
 var AemberImp = card.New(
 	"Aember Imp",
@@ -25,5 +20,7 @@ var AemberImp = card.New(
 	card.Provenance(card.AoA, 53),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Imp),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithAbility(
+		card.Trigger.AfterCreatureReaps, card.Stun{Target: card.Target.Triggering}),
 )

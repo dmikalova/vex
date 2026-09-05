@@ -139,9 +139,12 @@ func (e PutFromDiscard) Resolve(ctx *EffectContext) {
 // ChooseHouseThen. It models "discard each creature of the chosen house from your
 // opponent's hand."
 type DiscardHand struct {
+	// Player names whose hand is discarded from.
 	Player Player
 	// Types restricts the discard to cards of the listed types; empty discards any card.
-	Types         []CardType
+	Types []CardType
+	// OfChosenHouse limits the discard to cards of the house picked by an enclosing
+	// ChooseHouseThen.
 	OfChosenHouse bool
 }
 

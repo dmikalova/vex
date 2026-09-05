@@ -138,6 +138,7 @@ func (a lastingAction) describe() string {
 // does, the player it belongs to, and its magnitude. It is a plain value so the
 // flat GameState can hold a fixed array of them.
 type LastingEffect struct {
+	// The event this attaches to, what it does, whose it is, and its magnitude.
 	On         Event
 	Do         lastingAction
 	Controller int8

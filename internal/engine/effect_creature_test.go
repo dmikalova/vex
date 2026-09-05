@@ -109,6 +109,29 @@ func TestUseVerb(t *testing.T) {
 	}
 }
 
+// Using a stunned creature can only shake off the stun, so UseVerb unstuns it
+// straight away rather than asking how to use it: no prompt, and no reap Æmber.
+func TestUseVerbOnStunnedCreatureUnstunsWithoutPrompting(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	target := actor(g)
+	g.State.Cards[target].Stunned = true
+	asked := &promptRecorder{}
+	g.SetChooser(0, asked)
+	UseVerb{}.Apply(&EffectContext{Resolver: g, Source: target, Controller: 0}, target)
+	if asked.asked != 0 {
+		t.Errorf("a stunned creature was asked how to use it %d times, want 0", asked.asked)
+	}
+	if g.Stunned(target) {
+		t.Error("using a stunned creature should have shaken off the stun")
+	}
+	if !g.Exhausted(target) {
+		t.Error("recovering from stun should have exhausted the creature")
+	}
+	if g.Aember(0) != 0 {
+		t.Errorf("recovering from stun should gain no Æmber, got %d", g.Aember(0))
+	}
+}
+
 // A creature can only be used while ready. An exhausted creature may still be
 // chosen to be used, but reaping, fighting, or using its action does nothing.
 func TestUsingExhaustedCreatureDoesNothing(t *testing.T) {

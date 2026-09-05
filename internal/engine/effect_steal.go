@@ -7,6 +7,7 @@ import "fmt"
 // a fixed Amount — optionally multiplied by a Per count — or a By share of the
 // opponent's pool (By: AllBut(6) leaves them exactly six).
 type StealAember struct {
+	// Amount is the fixed Æmber to steal.
 	Amount int
 	// By steals a share of the opponent's pool instead of a fixed Amount.
 	By Loss
@@ -75,7 +76,16 @@ func (e StealAember) resolveGate(ctx *EffectContext) bool {
 	amt := min(e.amount(ctx, opponent), ctx.Resolver.Aember(opponent))
 	ctx.Resolver.SetAember(opponent, ctx.Resolver.Aember(opponent)-amt)
 	ctx.Resolver.SetAember(player, ctx.Resolver.Aember(player)+amt)
-	ctx.Resolver.Record(AemberStolen{Player: player, From: opponent, Amount: amt})
+	// Credit the card when the controller is the one stealing, so the line reads
+	// from the card's perspective; a turned-around steal (your opponent steals as
+	// the card leaves play) has no such agent, so it stays player-attributed.
+	ctx.Resolver.Record(AemberStolen{
+		Player:    player,
+		From:      opponent,
+		Amount:    amt,
+		Source:    ctx.Source,
+		HasSource: e.Player != Opponent,
+	})
 	return amt > 0
 }
 

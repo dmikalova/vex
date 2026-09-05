@@ -18,7 +18,10 @@ import "fmt"
 type TakeControl struct {
 	// Target picks which cards to take. The zero value means "this creature" — the
 	// host of the resolving Upgrade (Collar of Subordination).
-	Target     Target
+	Target Target
+	// Duration says which reversion applies: UntilThisLeavesPlay for creatures,
+	// Forever for artifacts. ToOpponent hands the card to the opponent instead of
+	// taking it (Spangler Box).
 	Duration   Duration
 	ToOpponent bool
 }

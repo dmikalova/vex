@@ -11,6 +11,7 @@ type GainChains struct {
 	// Player takes the chains; an unset zero value means the controller, so the
 	// common "gain N chains" cards need not name it.
 	Player Player
+	// Amount is how many chains to gain.
 	Amount int
 }
 

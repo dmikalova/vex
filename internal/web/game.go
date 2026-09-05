@@ -300,6 +300,16 @@ type game struct {
 	focusParity            bool
 	focusViewW, focusViewH float64
 
+	// focusExit keeps the lifted copy on screen after a card is deselected so it
+	// shrinks back to its slot — the grow-in played backwards — rather than blinking
+	// away. focusShown is the copy's placement snapshotted from the last live
+	// measurement, kept because the selection focusBox reads from is already gone by
+	// the time the exit plays; focusExitGen tags the clear timer so a fresh
+	// selection cancels a pending exit.
+	focusExit    bool
+	focusShown   focusSnapshot
+	focusExitGen int
+
 	// statusGen tags the current status message so a scheduled auto-clear only
 	// clears the message it was armed for, not a newer one.
 	statusGen int
@@ -358,7 +368,7 @@ const persistKey = "vactrol.match"
 // snapshots invalid so a stale one is flushed instead of restored. A log entry is
 // saved as the prose it was narrated with, so rewording an entry dates every
 // snapshot holding the old wording and counts as such a change.
-const snapshotVersion = 9
+const snapshotVersion = 10
 
 // snapshot is the persisted match. The seed deterministically rebuilds the
 // catalog and card ids; the flat GameState carries everything mutable. All other
@@ -405,6 +415,20 @@ type savedLine struct {
 	Text   string
 	Rule   logRule
 	Player int
+	// Standing holds an end-of-turn PlayerStanding's data, so the coloured key
+	// tally survives the reload the typed entry does not. Its fields are all
+	// JSON-safe (ints and a KeyColor slice), so the real entry is rebuilt on
+	// resume rather than flattened to the plain "N keys" text. Nil on every other
+	// line.
+	Standing *savedStanding
+}
+
+// savedStanding persists a PlayerStanding so a resumed match redraws the same
+// coloured key tally it showed before the reload instead of a plain count.
+type savedStanding struct {
+	Player int
+	Aember int
+	Keys   []engine.KeyColor
 }
 
 // manualAdd is one card manual mode put into a hand, named rather than embedded:

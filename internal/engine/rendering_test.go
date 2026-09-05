@@ -849,6 +849,8 @@ func TestNewTriggerPrefixes(t *testing.T) {
 		TriggerAfterUse:                    "After you use a card, ",
 		TriggerAfterDiscardFromHand:        "After you discard a card from your hand, ",
 		TriggerAfterUsedSelf:               "After " + SelfName + " is used, ",
+		TriggerAfterCreatureReaps:          "After a creature reaps, ",
+		TriggerAfterEnemyCreatureReaps:     "After an enemy creature reaps, ",
 		TriggerLeavesPlay:                  "Leaves Play: ",
 	} {
 		if got, _ := trigger.prefix(); got != want {

@@ -16,10 +16,10 @@ import (
 func (g *game) navRows() [][]engine.LocalID {
 	p, opp := g.active(), 1-g.active()
 	return [][]engine.LocalID{
-		g.g.Artifacts(opp),
+		g.sortedArtifacts(opp),
 		g.g.Battleline(opp),
 		g.g.Battleline(p),
-		g.g.Artifacts(p),
+		g.sortedArtifacts(p),
 		g.sortedHand(p),
 	}
 }

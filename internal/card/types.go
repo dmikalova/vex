@@ -287,6 +287,8 @@ var Trigger = triggers{
 	AfterUse:                    engine.TriggerAfterUse,
 	AfterDiscardFromHand:        engine.TriggerAfterDiscardFromHand,
 	UsedSelf:                    engine.TriggerAfterUsedSelf,
+	AfterCreatureReaps:          engine.TriggerAfterCreatureReaps,
+	AfterEnemyCreatureReaps:     engine.TriggerAfterEnemyCreatureReaps,
 	LeavesPlay:                  engine.TriggerLeavesPlay,
 }
 
@@ -328,6 +330,12 @@ type triggers struct {
 	// UsedSelf fires after this creature is itself used (reap, fight, or Action:),
 	// so an upgrade can punish its own host ("After this creature is used, ...").
 	UsedSelf engine.Trigger
+	// AfterCreatureReaps fires after any creature reaps (friendly or enemy), with
+	// the reaper as "it" (Orb of Invidius stuns whatever just reaped).
+	AfterCreatureReaps engine.Trigger
+	// AfterEnemyCreatureReaps fires after an enemy creature reaps, with the reaper
+	// as "it" (Pip Pip stuns the enemy that just reaped).
+	AfterEnemyCreatureReaps engine.Trigger
 	// LeavesPlay fires as this card leaves play by any route ("Leaves Play:").
 	LeavesPlay engine.Trigger
 }

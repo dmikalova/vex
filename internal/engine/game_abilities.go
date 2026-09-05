@@ -86,8 +86,12 @@ func (g *Game) hasAnyUse(player int, id LocalID) bool {
 
 // canUseTo is canUse for one specific way of using the creature, so a card that
 // bars only one of them (Tireless Crocag cannot reap) stays usable the other ways.
+// A wrong-house error is forgiven for FightUse when a fight grant (Brothers in
+// Battle) covers the creature, so the UI offers Fight on exactly the creatures
+// Fight itself would let through.
 func (g *Game) canUseTo(player int, id LocalID, kind UseKind) error {
-	if err := g.canUse(player, id); err != nil {
+	if err := g.canUse(player, id); err != nil &&
+		(kind != FightUse || !g.fightErrorForgiven(err, id)) {
 		return err
 	}
 	if g.cannotBeUsedTo(id, kind) {
@@ -179,6 +183,7 @@ func (g *Game) reapWith(id LocalID) {
 	g.triggerAbilities(id, TriggerAfterReap, 0, false)
 	g.emitCardUsed(p, id)
 	g.emitLasting(EventReap, p, id)
+	g.emitCreatureReaped(p, id)
 }
 
 // gainReapAember pays out the Æmber a reap grants to player p, applying any lasting
@@ -348,7 +353,7 @@ func (g *Game) recoverFromStun(id LocalID) bool {
 	}
 	core.Stunned = false
 	core.Exhausted = true
-	g.record(StunRecovered{Creature: id})
+	g.record(StunRecovered{Player: g.controller(id), Creature: id})
 	return true
 }
 
@@ -457,6 +462,23 @@ func (g *Game) emitCardUsed(player int, used LocalID) {
 	}
 }
 
+// emitCreatureReaped fires the persistent reap reactions after a creature reaps:
+// "after a creature reaps" on every in-play card (Orb of Invidius, including the
+// reaper itself), and "after an enemy creature reaps" on the reaper's opponent's
+// cards (Pip Pip), each with the reaping creature as "it". Reaping only happens on
+// the reaper's own turn, so the enemy reaction naturally fires only for the
+// non-active player.
+func (g *Game) emitCreatureReaped(reaper int, reaped LocalID) {
+	for player := 0; player < 2; player++ {
+		for _, id := range g.allInPlay(player) {
+			g.triggerAbilities(id, TriggerAfterCreatureReaps, reaped, true)
+		}
+	}
+	for _, id := range g.allInPlay(1 - reaper) {
+		g.triggerAbilities(id, TriggerAfterEnemyCreatureReaps, reaped, true)
+	}
+}
+
 // triggerAbilities resolves every ability matching the trigger that the card
 // carries itself, is granted by an attached upgrade, or is granted by an in-play
 // card's constant ability. Destroyed abilities do not come through here: they
@@ -476,7 +498,7 @@ func (g *Game) triggerAbilitiesAs(
 	it LocalID,
 	hasIt bool,
 ) {
-	for _, t := range g.orderTriggered(actor, g.triggeredBy(src, trigger)) {
+	for _, t := range g.orderTriggered(actor, trigger, g.triggeredBy(src, trigger)) {
 		closeFrame := g.openFrame(Frame{
 			Actor:      actor,
 			Source:     src,
@@ -534,6 +556,11 @@ func (g *Game) triggeredBy(src LocalID, trigger Trigger) []triggeredAbility {
 // at once and the active player must say which card's resolves next.
 const orderTriggerPrompt = "Choose which card's ability resolves next"
 
+// orderDestroyedPrompt names the destroyed-ability window plainly, since the
+// player is arranging the Destroyed abilities of several cards leaving play at
+// once rather than picking one card off a generic list.
+const orderDestroyedPrompt = "Resolve destroyed abilities"
+
 // orderGrantorPrompt is the prompt shown when one card has several abilities in
 // the same trigger window (its own text plus one an upgrade or a constant ability
 // granted it) and the active player must say which resolves next.
@@ -544,13 +571,22 @@ const orderGrantorPrompt = "Choose which ability resolves next"
 // port speaks in cards: first the distinct triggering cards, then — within one
 // card — the distinct cards whose text granted it each ability. Either level with
 // a single entry is forced and never prompts, so an event on one card with one
-// ability is silent, as is a batch of creatures that each carry one.
-func (g *Game) orderTriggered(actor int, pending []triggeredAbility) []triggeredAbility {
+// ability is silent, as is a batch of creatures that each carry one. The trigger
+// names the window so a Destroyed batch reads as "Resolve destroyed abilities".
+func (g *Game) orderTriggered(
+	actor int,
+	trigger Trigger,
+	pending []triggeredAbility,
+) []triggeredAbility {
 	if len(pending) <= 1 {
 		return pending
 	}
+	prompt := orderTriggerPrompt
+	if trigger == TriggerDestroyed {
+		prompt = orderDestroyedPrompt
+	}
 	ordered := make([]triggeredAbility, 0, len(pending))
-	for _, src := range g.orderByChoice(actor, orderTriggerPrompt, distinctBy(pending, sourceOf)) {
+	for _, src := range g.orderByChoice(actor, prompt, distinctBy(pending, sourceOf)) {
 		of := filterBy(pending, sourceOf, src)
 		for _, grantor := range g.orderByChoice(actor, orderGrantorPrompt, distinctBy(of, grantorOf)) {
 			ordered = append(ordered, filterBy(of, grantorOf, grantor)...)

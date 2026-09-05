@@ -13,6 +13,7 @@ import (
 //	Type:   Creature
 //	Rarity: Uncommon
 //	Power:  3
+//	Æmber:  1
 //	Traits: Giant
 //
 //	Alpha.
@@ -31,10 +32,12 @@ func TestGargantesScrapper(t *testing.T) {
 
 		h.P1.Play(GargantesScrapper)
 
-		h.Expect(foe).Damage(9)
+		// Playing adds its Æmber bonus (1) to the pool of 3 before the Play
+		// ability resolves, so 4 Æmber deal 12 damage.
+		h.Expect(foe).Damage(12)
 	})
 
-	t.Run("deals no damage with an empty pool", func(t *testing.T) {
+	t.Run("counts its own Æmber bonus with an empty pool", func(t *testing.T) {
 		var foe ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
@@ -47,6 +50,7 @@ func TestGargantesScrapper(t *testing.T) {
 
 		h.P1.Play(GargantesScrapper)
 
-		h.Expect(foe).Damage(0)
+		// The Æmber bonus (1) is in the pool when the Play ability resolves.
+		h.Expect(foe).Damage(3)
 	})
 }

@@ -435,6 +435,14 @@ const (
 	// card itself, so an upgrade can punish its own host: Containment Field destroys
 	// its host after it is used, Bonerot Venom deals it 2 damage.
 	TriggerAfterUsedSelf
+	// This ability resolves after any creature reaps — friendly or enemy — with the
+	// reaping creature as "it" (Orb of Invidius stuns whatever just reaped). It fires
+	// on every in-play card, including the reaper itself.
+	TriggerAfterCreatureReaps
+	// This ability resolves after an enemy creature reaps, with the reaping creature
+	// as "it" (Pip Pip stuns the enemy that just reaped). Reaping happens only on the
+	// reaper's own turn, so this naturally fires only for the reaper's opponent.
+	TriggerAfterEnemyCreatureReaps
 	// triggerCount bounds the enum so Triggers can range it; it is not a trigger.
 	triggerCount
 )
@@ -495,6 +503,10 @@ func (t Trigger) String() string {
 		return "After You Discard a Card From Your Hand"
 	case TriggerAfterUsedSelf:
 		return "After This Creature Is Used"
+	case TriggerAfterCreatureReaps:
+		return "After a Creature Reaps"
+	case TriggerAfterEnemyCreatureReaps:
+		return "After an Enemy Creature Reaps"
 	case TriggerEndOfTurn:
 		return "End of Turn"
 	case TriggerStartOfTurn:
@@ -548,6 +560,10 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return "After you discard a card from your hand, ", false
 	case TriggerAfterUsedSelf:
 		return "After " + SelfName + " is used, ", false
+	case TriggerAfterCreatureReaps:
+		return "After a creature reaps, ", false
+	case TriggerAfterEnemyCreatureReaps:
+		return "After an enemy creature reaps, ", false
 	case TriggerLeavesPlay:
 		return "Leaves Play: ", true
 	case TriggerEndOfTurn:

@@ -186,6 +186,31 @@ func TestDroppingTheSelectionDropsTheLift(t *testing.T) {
 	}
 }
 
+// A selection dropped while its copy was measured plays the copy out — the
+// grow-in run backwards — rather than blinking it away: the copy stays up with
+// the exit class until the shrink-back finishes, then clears itself.
+func TestDeselectingACardPlaysTheLiftOut(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	id := c.deal(testCreature)
+	c.g.selectHandID(c.ctx, id)
+	// Off-browser nothing measures, so stand in the placement the exit shrinks to.
+	c.g.hasFocus = true
+	c.g.focusShown = focusSnapshot{id: id, w: 100, minH: 100}
+
+	c.g.clearSelection()
+	if !c.g.measureFocus() {
+		t.Fatal("dropping the selection did not report a move")
+	}
+	if !c.g.focusExit {
+		t.Fatal("dropping the selection did not start the lift's exit")
+	}
+	c.wants("the lift shrinking back to its slot", "card-focus--out")
+
+	c.await("the exit to clear itself", func() bool { return !c.g.focusExit })
+	c.lacks("the lift gone after its exit", "card-focus--out")
+}
+
 // The keybar reports what a card is doing on the table — granted keywords and all
 // — so the copy of a card still in hand does not draw one. Reading Elusive off a
 // card that is not on a battleline says it is dodging a fight it cannot be in.

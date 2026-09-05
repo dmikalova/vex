@@ -7,6 +7,7 @@ import "fmt"
 // forges without paying. Both paths fire "after you forge a key" abilities and,
 // on the final key, win the game.
 type ForgeKey struct {
+	// FreeOfCost forges without paying the key cost.
 	FreeOfCost bool
 	// Extra raises the cost of this one forge above the current key cost — Key of
 	// Darkness forges at +6. It is a surcharge on the forge, not a change to the key

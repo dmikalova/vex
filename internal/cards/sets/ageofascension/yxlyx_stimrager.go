@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// YxlyxStimrager
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Yxlyx Stimrager
 //
 //	House:  Mars
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  2
 //	Traits: Martian • Soldier
 //
-//	Fight: Deal 2D to a creature and move it to either flank of its controller's battleline.
+//	Fight: Deal 2 damage to a creature and move it to either flank of its controller's battleline.
 var YxlyxStimrager = card.New(
 	"Yxlyx Stimrager",
 	card.House.Mars,
@@ -26,5 +21,10 @@ var YxlyxStimrager = card.New(
 	card.WithPower(4),
 	card.WithArmor(2),
 	card.WithTraits(card.Traits.Martian, card.Traits.Soldier),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Fight, card.DamageThen{
+			Amount: 2,
+			Target: card.Target.Creature,
+			Then:   card.MoveToFlank{Target: card.Target.Triggering},
+		}),
 )

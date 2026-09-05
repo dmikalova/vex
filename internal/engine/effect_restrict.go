@@ -215,6 +215,38 @@ func (GrantFightAnyHouse) Resolve(ctx *EffectContext) {
 	ctx.Resolver.GrantFightAnyHouse(ctx.Controller)
 }
 
+// GrantFightForFriendlyHouse lets the controller's creatures of a fixed House fight
+// this turn even out of the active house — Signal Fire's "friendly Brobnar creatures
+// may fight as though they belonged to the active house." Unlike
+// GrantFightForChosenHouse, which reads the house from an enclosing ChooseHouseThen,
+// this names the house on the card. The grant lasts only the current turn (the ready
+// phase clears it).
+type GrantFightForFriendlyHouse struct {
+	House House
+}
+
+// validate rejects a GrantFightForFriendlyHouse whose house was left unset.
+func (e GrantFightForFriendlyHouse) validate() error {
+	if e.House == HouseNone {
+		return fmt.Errorf("GrantFightForFriendlyHouse: house must be set")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "for the remainder of the turn, each friendly
+// Brobnar creature may fight".
+func (e GrantFightForFriendlyHouse) Text() string {
+	return fmt.Sprintf(
+		"for the remainder of the turn, each friendly %s creature may fight",
+		e.House,
+	)
+}
+
+// Resolve grants the controller's House creatures the right to fight this turn.
+func (e GrantFightForFriendlyHouse) Resolve(ctx *EffectContext) {
+	ctx.Resolver.GrantFightForHouse(ctx.Controller, e.House)
+}
+
 // MayUseFriendlyHouse lets the controller fully use (fight, reap, or Action:) their
 // creatures of House this turn even out of the active house — Sigil of Brotherhood,
 // Ritual of the Hunt. The grant lasts only the current turn (the ready phase

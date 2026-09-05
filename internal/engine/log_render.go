@@ -97,6 +97,34 @@ func iconAt(text string, i int) (LogSegment, bool) {
 	if wordAt(text, i, "key") && !strings.HasPrefix(text[i+len("key"):], " phase") {
 		return LogSegment{Text: "key", Icon: "key"}, true
 	}
+	if zone, ok := zoneIconAt(text, i); ok {
+		return zone, true
+	}
+	return LogSegment{}, false
+}
+
+// zoneNouns pairs each zone noun the log names as a destination or source with the
+// emblem of that zone, so "draws a card to hand" or "into the discard pile" reads
+// with the zone's icon. The nouns are whole words (wordAt), so the verbs that
+// share a stem — "discards", "purges" — stay plain text.
+var zoneNouns = []struct {
+	word string
+	icon string
+}{
+	{"hand", "zone-hand"},
+	{"deck", "zone-deck"},
+	{"discard", "zone-discard"},
+	{"archives", "zone-archives"},
+	{"purge", "zone-purge"},
+}
+
+// zoneIconAt returns the zone-emblem segment for a zone noun starting at text[i].
+func zoneIconAt(text string, i int) (LogSegment, bool) {
+	for _, z := range zoneNouns {
+		if wordAt(text, i, z.word) {
+			return LogSegment{Text: z.word, Icon: z.icon}, true
+		}
+	}
 	return LogSegment{}, false
 }
 

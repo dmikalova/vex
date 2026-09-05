@@ -2,6 +2,7 @@ package web
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
@@ -260,9 +261,10 @@ func (g *game) cardPicker() app.UI {
 	)
 }
 
-// pickableHouses is the set of houses the active player may choose from. When a
-// card has forced a house on them, only that house is offered — showing all
-// three and then rejecting two of them makes the restriction look like a bug.
+// pickableHouses is the set of houses the active player may choose from, sorted
+// by house name so the choice reads the same every turn. When a card has forced a
+// house on them, only that house is offered — showing all three and then
+// rejecting two of them makes the restriction look like a bug.
 func (g *game) pickableHouses() []engine.House {
 	p := g.active()
 	houses := g.deckHouses[p]
@@ -271,7 +273,11 @@ func (g *game) pickableHouses() []engine.House {
 			return []engine.House{forced}
 		}
 	}
-	return houses
+	sorted := append([]engine.House(nil), houses...)
+	sort.Slice(sorted, func(i, j int) bool {
+		return sorted[i].String() < sorted[j].String()
+	})
+	return sorted
 }
 
 // housePicker offers the houses the active player may choose from.
@@ -472,7 +478,11 @@ func (g *game) handCardActions() ([]cardAction, string) {
 }
 
 func (g *game) creatureCardActions() ([]cardAction, string) {
-	if err := g.g.CanUse(g.active(), g.sel); err != nil {
+	// A fight grant (Brothers in Battle) makes a creature usable to fight even when
+	// CanUse rejects its house, so bail with the error only when no fight is open
+	// either; the per-use gates below then offer Fight alone.
+	if err := g.g.CanUse(g.active(), g.sel); err != nil &&
+		g.g.CanUseTo(g.active(), g.sel, engine.FightUse) != nil {
 		return nil, "Cannot act: " + err.Error() + "."
 	}
 	// A stunned creature recovers from stun instead of acting, so any use just

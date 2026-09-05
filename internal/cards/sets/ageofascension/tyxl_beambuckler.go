@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// TyxlBeambuckler
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Tyxl Beambuckler
 //
 //	House:  Mars
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Martian • Soldier
 //
-//	Play: Deal 2D to a creature and move it to either flank of its controller's battleline.
+//	Play: Deal 2 damage to a creature and move it to either flank of its controller's battleline.
 var TyxlBeambuckler = card.New(
 	"Tyxl Beambuckler",
 	card.House.Mars,
@@ -26,5 +21,10 @@ var TyxlBeambuckler = card.New(
 	card.WithPower(4),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Martian, card.Traits.Soldier),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.DamageThen{
+			Amount: 2,
+			Target: card.Target.Creature,
+			Then:   card.MoveToFlank{Target: card.Target.Triggering},
+		}),
 )

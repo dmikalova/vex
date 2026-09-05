@@ -128,6 +128,8 @@ func (a allBut) qualifier() string    { return fmt.Sprintf("with %d Æmber or mo
 // The amount lost is either a fixed Amount or a By loss of the pool (By: Half,
 // By: AllBut(5)) — set one, not both.
 type LoseAember struct {
+	// Player is whose pool loses; the amount is either a fixed Amount or a By loss of
+	// the pool (set one, not both).
 	Player Player
 	Amount int
 	By     Loss
@@ -220,6 +222,7 @@ func (e LoseAember) amountFor(ctx *EffectContext, p int) int {
 // Parked there it only matters to a card that can spend the Æmber sitting on it —
 // Safe Place, Pocket Universe.
 type MoveAemberFromPool struct {
+	// Amount is how much Æmber to move from the pool onto the card.
 	Amount int
 	// Target names the card the Æmber moves onto.
 	Target Target

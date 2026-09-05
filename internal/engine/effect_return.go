@@ -108,8 +108,22 @@ func (e PutChosen) Text() string {
 }
 
 // Resolve moves Count cards one at a time. An UpTo choice is declinable so the
-// controller can stop early; either way it stops when the pool runs out.
+// controller can stop early; either way it stops when the pool runs out. Shuffles
+// into a deck are batched so several creatures moved at once narrate as one
+// grouped line per owner attributed to this ability's source.
 func (e PutChosen) Resolve(ctx *EffectContext) {
+	if e.Destination == ToDeckShuffled {
+		ctx.Resolver.BeginShuffleBatch()
+		e.resolveMoves(ctx)
+		ctx.Resolver.EndShuffleBatch(ctx.Source)
+		return
+	}
+	e.resolveMoves(ctx)
+}
+
+// resolveMoves runs the choose-and-move loop shared by the batched and unbatched
+// paths.
+func (e PutChosen) resolveMoves(ctx *EffectContext) {
 	choose := ctx.ChooseCard
 	if e.UpTo {
 		choose = ctx.ChooseCardOptional

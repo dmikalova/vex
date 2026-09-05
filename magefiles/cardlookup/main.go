@@ -256,6 +256,7 @@ func coverage(args []string) error {
 	if newOnly {
 		introduced = newNumbers()
 	}
+	var sumCovered, sumTotal int
 	for _, set := range provenance.Sets() {
 		n, total := 0, 0
 		for _, c := range set.Cards {
@@ -267,8 +268,12 @@ func coverage(args []string) error {
 				n++
 			}
 		}
-		fmt.Printf("%-5s %-22s %3d / %3d\n", set.Code, set.Name, n, total)
+		sumCovered += n
+		sumTotal += total
+		fmt.Printf("%-5s %-22s %3d / %3d  (%3d left)\n", set.Code, set.Name, n, total, total-n)
 	}
+	fmt.Printf("%-5s %-22s %3d / %3d  (%3d left)\n",
+		"", "TOTAL", sumCovered, sumTotal, sumTotal-sumCovered)
 	return nil
 }
 

@@ -10,6 +10,8 @@ import "fmt"
 // creatures they are damaged simultaneously and any that died are destroyed
 // together, so no creature's destruction changes another's.
 type DealDamage struct {
+	// Amount is the base damage; Per multiplies it by a running count "for each";
+	// Target is the creatures the damage lands on.
 	Amount int
 	Per    Count
 	Target Target
@@ -242,6 +244,45 @@ func (e DamageThenIfSurvives) Resolve(ctx *EffectContext) {
 		ctx.It, ctx.HasIt = id, true
 		e.Then.Resolve(ctx)
 	}
+}
+
+// DamageThen deals damage to one chosen creature and then resolves a follow-up
+// effect on that same creature, whether or not the damage destroyed it — Tyxl
+// Beambuckler's "deal 2 damage to a creature and move it to either flank of its
+// controller's battleline". The chosen creature is placed in context (ctx.It) so
+// Then can refer to it; a Then that acts on a destroyed creature is a no-op.
+type DamageThen struct {
+	Amount int
+	Target Target
+	Then   Effect
+}
+
+// validate requires a target and a well-formed follow-up effect.
+func (e DamageThen) validate() error {
+	if !e.Target.valid() {
+		return errUnsetTarget("DamageThen")
+	}
+	return validateEffect(e.Then)
+}
+
+// Text renders the effect, e.g. "deal 2 damage to a creature and move it to
+// either flank of its controller's battleline".
+func (e DamageThen) Text() string {
+	return fmt.Sprintf("deal %d damage to %s and %s",
+		e.Amount, e.Target.Text(), e.Then.Text())
+}
+
+// Resolve deals the damage to the chosen creature, records it as "it", then
+// resolves Then unconditionally.
+func (e DamageThen) Resolve(ctx *EffectContext) {
+	ids := e.Target.Select(ctx)
+	if len(ids) == 0 {
+		return
+	}
+	id := ids[0]
+	ctx.Resolver.DealDamage(ctx.Controller, []DamageTarget{{ID: id, Amount: e.Amount}})
+	ctx.It, ctx.HasIt = id, true
+	e.Then.Resolve(ctx)
 }
 
 // Spread turns the controller's choices into a simultaneous batch of damage hits

@@ -142,6 +142,29 @@ func TestCanUseErrors(t *testing.T) {
 	}
 }
 
+// TestFightGrantForgivesWrongHouseForFightOnly verifies that a fight grant
+// (Brothers in Battle) lets an off-house creature be used to fight — so a UI that
+// asks CanUseTo before offering Fight offers it — while leaving reap barred.
+func TestFightGrantForgivesWrongHouseForFightOnly(t *testing.T) {
+	g := started(t) // Brobnar active
+	off := g.AddToBattleline(NewCard("off", Sanctum, Creature, Common, WithPower(3)), 0)
+	g.AddToBattleline(testCreature("foe", 3), 1)
+
+	// Without the grant, fighting out of house is barred.
+	if err := g.CanUseTo(0, off, FightUse); err != ErrWrongHouse {
+		t.Errorf("ungranted fight = %v, want ErrWrongHouse", err)
+	}
+
+	g.State.MayFightHouse[0] = Sanctum
+	if err := g.CanUseTo(0, off, FightUse); err != nil {
+		t.Errorf("granted fight = %v, want nil", err)
+	}
+	// The grant is fight-only: reap stays barred out of house.
+	if err := g.CanUseTo(0, off, ReapUse); err != ErrWrongHouse {
+		t.Errorf("granted reap = %v, want ErrWrongHouse", err)
+	}
+}
+
 func TestCanUseArtifact(t *testing.T) {
 	g := started(t)
 	relic := g.AddArtifact(NewCard("Relic", Brobnar, Artifact, Common), 0)

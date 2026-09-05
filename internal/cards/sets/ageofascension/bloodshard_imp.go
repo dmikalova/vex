@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// BloodshardImp
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Bloodshard Imp
 //
 //	House:  Dis
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Imp
 //
-//	After a creature reaps, its controller must sacrifice it.
+//	After a creature reaps, destroy it.
 var BloodshardImp = card.New(
 	"Bloodshard Imp",
 	card.House.Dis,
@@ -24,5 +19,6 @@ var BloodshardImp = card.New(
 	card.Provenance(card.AoA, 70),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Imp),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.AfterCreatureReaps, card.Destroy{Target: card.Target.Triggering}),
 )

@@ -6,6 +6,7 @@ import "fmt"
 // when you must draw, your discard pile is shuffled to form a new deck first, so
 // you only fail to draw when both deck and discard are empty.
 type Draw struct {
+	// Amount is how many cards to draw; Per multiplies it by a running count.
 	Amount int
 	Per    Count
 	// You names the drawer explicitly ("you draw a card") to re-assert the subject

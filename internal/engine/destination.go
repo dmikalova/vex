@@ -10,6 +10,7 @@ import "fmt"
 // separate destinations (its top, its bottom, and shuffled in), so "the deck"
 // alone is never a destination; a card always names which.
 type Destination struct {
+	// zone is the zone half of the destination.
 	zone destinationZone
 	// yours redirects the move into the resolving player's own copy of the zone.
 	yours bool
@@ -22,6 +23,7 @@ const (
 	// destUnset is the invalid zero value: an effect must name where a card goes
 	// rather than leave the destination unset.
 	destUnset destinationZone = iota
+	// The zones a Destination can name.
 	destHand
 	destTopOfDeck
 	destBottomOfDeck

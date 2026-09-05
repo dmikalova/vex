@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"slices"
 	"strings"
 	"testing"
 )
@@ -383,8 +384,12 @@ func TestDiscardDeckUntil(t *testing.T) {
 		t.Errorf("plain text = %q", got)
 	}
 
-	if got := (PutDiscardedIntoHand{}).Text(); got != "put it into your hand" {
+	if got := (PutDiscardedIntoHand{}).Text(); got != "put the discarded card into your hand" {
 		t.Errorf("tail text = %q", got)
+	}
+	if got := (PutDiscardedIntoHand{Type: Creature}).Text(); got !=
+		"put the discarded creature into your hand" {
+		t.Errorf("creature tail text = %q", got)
 	}
 
 	g := NewGame("A", "B", 1)
@@ -415,4 +420,75 @@ func TestDiscardDeckUntil(t *testing.T) {
 	// Resolved bare, the dig still runs; it just has no tail to gate.
 	DiscardDeckUntil{Type: Artifact}.Resolve(ctx)
 	PutDiscardedIntoHand{}.Resolve(ctx)
+}
+
+// TestLookAtTop covers the "look at the top N, keep one, discard the rest" dig:
+// the chosen card goes to hand, the others to the discard pile, and short or empty
+// decks are handled.
+func TestLookAtTop(t *testing.T) {
+	if got := (LookAtTop{Count: 3}).Text(); got !=
+		"look at the top 3 cards of your deck, put 1 into your hand, and discard the others" {
+		t.Errorf("Text() = %q", got)
+	}
+	if (LookAtTop{}).validate() == nil {
+		t.Error("a Count of 0 should be rejected")
+	}
+	if err := (LookAtTop{Count: 3}).validate(); err != nil {
+		t.Errorf("validate() = %v", err)
+	}
+
+	t.Run("keeps the chosen card and discards the rest", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		a := g.AddToDeck(NewCard("A Card", Logos, Creature, Common, WithPower(2)), 0)
+		b := g.AddToDeck(NewCard("B Card", Logos, Tactic, Common), 0)
+		c := g.AddToDeck(NewCard("C Card", Logos, Artifact, Common), 0)
+		bottom := g.AddToDeck(NewCard("Bottom", Logos, Creature, Common, WithPower(1)), 0)
+		g.SetChooser(0, &idQueueChooser{ids: []LocalID{b}})
+		LookAtTop{Count: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if got := g.Hand(0); len(got) != 1 || got[0] != b {
+			t.Errorf("hand = %v, want [%d]", got, b)
+		}
+		if got := g.Discard(0); !slices.Contains(got, a) || !slices.Contains(got, c) {
+			t.Errorf("discard = %v, want to contain %d and %d", got, a, c)
+		}
+		if got := g.Deck(0); len(got) != 1 || got[0] != bottom {
+			t.Errorf("deck = %v, want [%d]", got, bottom)
+		}
+	})
+
+	t.Run("looks at as many as remain", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		a := g.AddToDeck(NewCard("A Card", Logos, Creature, Common, WithPower(2)), 0)
+		b := g.AddToDeck(NewCard("B Card", Logos, Tactic, Common), 0)
+		g.SetChooser(0, &idQueueChooser{ids: []LocalID{a}})
+		LookAtTop{Count: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if got := g.Hand(0); len(got) != 1 || got[0] != a {
+			t.Errorf("hand = %v, want [%d]", got, a)
+		}
+		if got := g.Discard(0); len(got) != 1 || got[0] != b {
+			t.Errorf("discard = %v, want [%d]", got, b)
+		}
+	})
+
+	t.Run("an empty deck does nothing", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		LookAtTop{Count: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if got := g.Hand(0); len(got) != 0 {
+			t.Errorf("hand = %v, want empty", got)
+		}
+	})
+
+	t.Run("a declined choice keeps everything in the deck", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.AddToDeck(NewCard("A Card", Logos, Creature, Common, WithPower(2)), 0)
+		g.AddToDeck(NewCard("B Card", Logos, Tactic, Common), 0)
+		g.SetChooser(0, orderRejectChooser{})
+		LookAtTop{Count: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if got := g.Hand(0); len(got) != 0 {
+			t.Errorf("hand = %v, want empty", got)
+		}
+		if got := g.Deck(0); len(got) != 2 {
+			t.Errorf("deck = %v, want 2 cards", got)
+		}
+	})
 }

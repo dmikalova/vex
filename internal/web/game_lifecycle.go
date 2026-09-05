@@ -191,6 +191,12 @@ func (g *game) measureFocus() bool {
 	if !ok {
 		was := g.hasFocus
 		g.hasFocus = false
+		// A selection dropped while the card is still at rest (not mid-play/use)
+		// plays the copy out; an action-driven drop leaves the flight animation to
+		// carry the card instead.
+		if was && !g.busy && g.focusShown.id != 0 {
+			g.startFocusExit()
+		}
 		return was
 	}
 	el := app.Window().GetElementByID(g.cardDOMID(id))
@@ -211,6 +217,8 @@ func (g *game) measureFocus() bool {
 	}
 	vw := app.Window().Get("innerWidth").Float()
 	vh := app.Window().Get("innerHeight").Float()
+	// A live copy supersedes any exit that was still fading.
+	g.focusExit = false
 	if g.hasFocus && g.focusID == id && g.focusRect == next &&
 		g.focusViewW == vw && g.focusViewH == vh {
 		return false
@@ -220,7 +228,29 @@ func (g *game) measureFocus() bool {
 	}
 	g.focusRect, g.focusID, g.hasFocus = next, id, true
 	g.focusViewW, g.focusViewH = vw, vh
+	g.focusShown = g.focusSnapshotNow(id)
 	return true
+}
+
+// focusExitDur is how long the deselected copy takes to shrink back to its slot.
+// It matches the grow-in it plays backwards (card-focus-out in app.css).
+const focusExitDur = 150 * time.Millisecond
+
+// startFocusExit begins the shrink-back of a just-deselected copy and arms a timer
+// to clear it once the animation has run. The generation tag means a fresh
+// selection during the fade (which clears focusExit itself) leaves this timer to
+// find nothing to do.
+func (g *game) startFocusExit() {
+	g.focusExit = true
+	g.focusExitGen++
+	gen := g.focusExitGen
+	time.AfterFunc(focusExitDur, func() {
+		g.dispatch(func(app.Context) {
+			if g.focusExitGen == gen {
+				g.focusExit = false
+			}
+		})
+	})
 }
 
 // focusPickerInput puts the caret in the manual card picker's search box the first
