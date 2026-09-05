@@ -238,7 +238,7 @@ func TestPutChosen(t *testing.T) {
 		ToArchives:     "put up to 3 artifacts into their owners' archives",
 	}
 	for dest, want := range cases {
-		e := PutChosen{Count: 3, UpTo: true, Target: eachArt, Destination: dest}
+		e := PutChosen{Amount: 3, UpTo: true, Target: eachArt, Destination: dest}
 		if got := e.Text(); got != want {
 			t.Errorf("text(%d) = %q, want %q", dest.zone, got, want)
 		}
@@ -246,26 +246,26 @@ func TestPutChosen(t *testing.T) {
 
 	// Without UpTo the count is mandatory, so "up to" drops out; a single card
 	// reads as the indefinite noun.
-	mandatory := PutChosen{Count: 2, Target: eachArt, Destination: ToDeckShuffled}
+	mandatory := PutChosen{Amount: 2, Target: eachArt, Destination: ToDeckShuffled}
 	if got := mandatory.Text(); got != "shuffle 2 artifacts into their owners' decks" {
 		t.Errorf("mandatory text = %q", got)
 	}
-	one := PutChosen{Count: 1, Target: eachArt, Destination: ToHand}
+	one := PutChosen{Amount: 1, Target: eachArt, Destination: ToHand}
 	if got := one.Text(); got != "put an artifact into its owner's hand" {
 		t.Errorf("single text = %q", got)
 	}
 
 	// validate rejects an unset target, a non-positive Count, and a bad destination.
-	if err := (PutChosen{Count: 3, Destination: ToHand}).validate(); err == nil {
+	if err := (PutChosen{Amount: 3, Destination: ToHand}).validate(); err == nil {
 		t.Error("unset target should be rejected")
 	}
 	if err := (PutChosen{Target: eachArt, Destination: ToHand}).validate(); err == nil {
 		t.Error("non-positive Count should be rejected")
 	}
-	if err := (PutChosen{Count: 1, Target: eachArt, Destination: ToBottomOfDeck}).validate(); err == nil {
+	if err := (PutChosen{Amount: 1, Target: eachArt, Destination: ToBottomOfDeck}).validate(); err == nil {
 		t.Error("unsupported destination should be rejected")
 	}
-	if err := (PutChosen{Count: 3, Target: eachArt, Destination: ToHand}).validate(); err != nil {
+	if err := (PutChosen{Amount: 3, Target: eachArt, Destination: ToHand}).validate(); err != nil {
 		t.Errorf("valid PutChosen = %v", err)
 	}
 
@@ -274,7 +274,7 @@ func TestPutChosen(t *testing.T) {
 	a2 := g.AddArtifact(exAutocannon(), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 	// Only two artifacts exist, so the loop stops when none remain (below Count).
-	PutChosen{Count: 3, UpTo: true, Target: eachArt, Destination: ToHand}.Resolve(ctx)
+	PutChosen{Amount: 3, UpTo: true, Target: eachArt, Destination: ToHand}.Resolve(ctx)
 	if g.inPlay(a1) || g.inPlay(a2) {
 		t.Error("both artifacts should have left play")
 	}
@@ -299,7 +299,7 @@ func TestPutChosen(t *testing.T) {
 	art := g2.AddArtifact(exAutocannon(), 0)
 	g2.SetChooser(0, optionPicker{idx: 1}) // index 0 is the artifact, 1 is "Done"
 	PutChosen{
-		Count:       3,
+		Amount:      3,
 		UpTo:        true,
 		Target:      eachArt,
 		Destination: ToHand,
@@ -321,7 +321,7 @@ func TestPutChosenGroupsShufflesByOwnerInLog(t *testing.T) {
 	b1 := g.AddToBattleline(testCreature("b1", 3), 1)
 	g.SetChooser(0, FirstChooser{})
 	PutChosen{
-		Count:       3,
+		Amount:      3,
 		Target:      Target{Kind: TargetEachCreature},
 		Destination: ToDeckShuffled,
 	}.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})

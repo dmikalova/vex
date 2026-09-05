@@ -4,13 +4,13 @@ import "testing"
 
 func TestPurge(t *testing.T) {
 	// Text variants.
-	if got := (PurgeCard{Zone: Discard, Count: 2, UpTo: true}).Text(); got != "purge up to 2 cards from a discard pile" {
+	if got := (PurgeCard{Zone: Discard, Amount: 2, UpTo: true}).Text(); got != "purge up to 2 cards from a discard pile" {
 		t.Errorf("up-to text = %q", got)
 	}
 	if got := (PurgeCard{Zone: Discard, Type: Creature}).Text(); got != "purge a creature from a discard pile" {
 		t.Errorf("single text = %q", got)
 	}
-	if got := (PurgeCard{Zone: Discard, Count: 2}).Text(); got != "purge 2 cards from a discard pile" {
+	if got := (PurgeCard{Zone: Discard, Amount: 2}).Text(); got != "purge 2 cards from a discard pile" {
 		t.Errorf("count text = %q", got)
 	}
 
@@ -23,7 +23,7 @@ func TestPurge(t *testing.T) {
 	g.State.Discard[0].add(b)
 	g.State.Discard[0].add(c)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-	if !(PurgeCard{Zone: Discard, Count: 2, UpTo: true}).resolveGate(ctx) {
+	if !(PurgeCard{Zone: Discard, Amount: 2, UpTo: true}).resolveGate(ctx) {
 		t.Error("purging cards should report success")
 	}
 	if len(g.Purge(0)) != 2 || len(g.Discard(0)) != 1 {
@@ -38,7 +38,7 @@ func TestPurge(t *testing.T) {
 	g2.State.Discard[0].add(m)
 	g2.State.Discard[1].add(n)
 	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
-	PurgeCard{Zone: Discard, Count: 2, UpTo: true}.Resolve(ctx2)
+	PurgeCard{Zone: Discard, Amount: 2, UpTo: true}.Resolve(ctx2)
 	if got := g2.Purge(0); len(got) != 1 || got[0] != m {
 		t.Errorf("own zone purge = %v, want [m]", got)
 	}
@@ -52,7 +52,7 @@ func TestPurge(t *testing.T) {
 	g3.State.Discard[0].add(x)
 	ctx3 := &EffectContext{Resolver: g3, Controller: 0}
 	g3.SetChooser(0, optionPicker{idx: 1}) // options [x, Done] -> idx 1 is Done
-	if (PurgeCard{Zone: Discard, Count: 2, UpTo: true}).resolveGate(ctx3) {
+	if (PurgeCard{Zone: Discard, Amount: 2, UpTo: true}).resolveGate(ctx3) {
 		t.Error("declining should report no purge")
 	}
 	if len(g3.Purge(0)) != 0 {

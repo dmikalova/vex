@@ -20,6 +20,9 @@ var Timetraveller = card.New(
 	card.Provenance(card.CotA, 153),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
+	card.Connects(
+		card.Pull(HelpFromFutureSelf, 1),
+	),
 	card.WithAbility(
 		card.Trigger.Play, card.Draw{Amount: 2}),
 	card.WithAbility(

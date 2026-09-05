@@ -18,6 +18,6 @@ var BloodMoney = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Exalt{
 			Target: card.Target.EnemyCreature,
-			Times:  2,
+			Amount: 2,
 		}),
 )

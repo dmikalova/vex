@@ -19,8 +19,8 @@ var FeedingPit = card.New(
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(card.Trigger.Action, card.Then{
 		First: card.DiscardFromHand{
-			Count: 1,
-			Types: card.Types(card.Type.Creature),
+			Amount: 1,
+			Types:  card.Types(card.Type.Creature),
 		},
 		Result: card.GainAember{
 			Player: card.Controller,

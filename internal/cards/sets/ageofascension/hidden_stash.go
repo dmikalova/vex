@@ -18,5 +18,5 @@ var HiddenStash = card.New(
 	card.Provenance(card.AoA, 286),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.ArchiveFromHand{Count: 1}),
+		card.Trigger.Play, card.ArchiveFromHand{Amount: 1}),
 )

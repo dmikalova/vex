@@ -19,7 +19,7 @@ var LightsOut = card.New(
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.PutChosen{
-			Count:       2,
+			Amount:      2,
 			UpTo:        true,
 			Target:      card.Target.EachEnemyCreature,
 			Destination: card.To.Hand,

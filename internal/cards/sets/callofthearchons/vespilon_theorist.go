@@ -30,7 +30,7 @@ var VespilonTheorist = card.New(
 						Cond: card.ItIsOfHouse{House: card.TheChosenHouse},
 						Then: card.Sequence{
 							Effects: []card.Effect{
-								card.ArchiveTopOfDeck{Count: 1},
+								card.ArchiveTopOfDeck{Amount: 1},
 								card.GainAember{
 									Player: card.Controller,
 									Amount: 1,

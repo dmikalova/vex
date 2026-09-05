@@ -85,8 +85,8 @@ func TestControlsCreaturesOfHouses(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	c := ControlsCreaturesOfHouses{Count: 3}
-	if c.CondText() != "if you control creatures from 3 different houses" {
+	c := ControlsCreaturesOfHouses{Amount: 3}
+	if c.CondText() != "if you control creatures from 3 or more houses" {
 		t.Errorf("CondText = %q", c.CondText())
 	}
 	if err := c.validate(); err != nil {
@@ -110,7 +110,7 @@ func TestControlsCreaturesOfHouses(t *testing.T) {
 	if c.Met(ctx) != true {
 		t.Error("duplicate house should still leave 3 distinct houses")
 	}
-	if (ControlsCreaturesOfHouses{Count: 4}).Met(ctx) {
+	if (ControlsCreaturesOfHouses{Amount: 4}).Met(ctx) {
 		t.Error("only 3 distinct houses should not meet a Count of 4")
 	}
 }

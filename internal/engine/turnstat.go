@@ -22,6 +22,10 @@ const (
 	// turn — The Warchest. It is the only tally kept from the watching player's side
 	// rather than the acting player's, because that is the side the card pays.
 	EnemyCreaturesFightKilled
+	// EnemyCreaturesDestroyed counts the player's enemy creatures destroyed by any
+	// means this turn — Foozle. Like EnemyCreaturesFightKilled it is kept from the
+	// watching player's side, but it counts every destruction, not only fights.
+	EnemyCreaturesDestroyed
 	// turnStatCount sizes GameState.TurnHistory and is not a tally itself.
 	turnStatCount
 )
@@ -32,4 +36,5 @@ var turnStatNoun = map[TurnStat]string{
 	KeysForgedLastTurn:        "key forged on the previous turn",
 	CreaturesPlayedLastTurn:   "creature played on the previous turn",
 	EnemyCreaturesFightKilled: "enemy creature that was destroyed in a fight this turn",
+	EnemyCreaturesDestroyed:   "enemy creature that was destroyed this turn",
 }

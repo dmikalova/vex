@@ -142,18 +142,18 @@ func (e ForEachDiscarded) Resolve(ctx *EffectContext) {
 	}
 }
 
-// LookAtTop looks at the top Count cards of the controller's deck, puts one the
+// LookAtTop looks at the top Amount cards of the controller's deck, puts one the
 // controller chooses into their hand, and discards the others — Eyegor. It looks
-// at as many as remain when the deck holds fewer than Count, and does nothing on
+// at as many as remain when the deck holds fewer than Amount, and does nothing on
 // an empty deck.
 type LookAtTop struct {
-	Count int
+	Amount int
 }
 
 // validate rejects a non-positive Count: looking at zero cards is meaningless, so
 // an omitted count is an authoring error, not a silent default.
 func (e LookAtTop) validate() error {
-	if e.Count < 1 {
+	if e.Amount < 1 {
 		return fmt.Errorf("LookAtTop: Count must be at least 1")
 	}
 	return nil
@@ -163,18 +163,18 @@ func (e LookAtTop) validate() error {
 func (e LookAtTop) Text() string {
 	return fmt.Sprintf(
 		"look at the top %d cards of your deck, put 1 into your hand, and discard the others",
-		e.Count,
+		e.Amount,
 	)
 }
 
-// Resolve looks at the top Count cards, moves the one the controller chooses to
+// Resolve looks at the top Amount cards, moves the one the controller chooses to
 // their hand, and discards the rest.
 func (e LookAtTop) Resolve(ctx *EffectContext) {
 	deck := ctx.Resolver.Deck(ctx.Controller)
 	if len(deck) == 0 {
 		return
 	}
-	top := deck[:min(e.Count, len(deck))]
+	top := deck[:min(e.Amount, len(deck))]
 	keep, ok := ctx.ChooseCard("Choose a card to put into your hand", top)
 	if !ok {
 		return

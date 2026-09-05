@@ -20,5 +20,5 @@ var Eyegor = card.New(
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Cyborg),
 	card.WithAbility(
-		card.Trigger.Play, card.LookAtTop{Count: 3}),
+		card.Trigger.Play, card.LookAtTop{Amount: 3}),
 )

@@ -272,21 +272,21 @@ func TestDiscardFromHandEffect(t *testing.T) {
 	g.AddToHand(NewCard("b", Logos, Tactic, Common), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	if (DiscardFromHand{Count: 1}).Text() != "discard a card from your hand" {
-		t.Errorf("text = %q", (DiscardFromHand{Count: 1}).Text())
+	if (DiscardFromHand{Amount: 1}).Text() != "discard a card from your hand" {
+		t.Errorf("text = %q", (DiscardFromHand{Amount: 1}).Text())
 	}
-	if (DiscardFromHand{Count: 2}).Text() != "discard 2 cards from your hand" {
-		t.Errorf("plural text = %q", (DiscardFromHand{Count: 2}).Text())
+	if (DiscardFromHand{Amount: 2}).Text() != "discard 2 cards from your hand" {
+		t.Errorf("plural text = %q", (DiscardFromHand{Amount: 2}).Text())
 	}
 
 	// The default chooser discards the first hand card (a).
-	(DiscardFromHand{Count: 1}).Resolve(ctx)
+	(DiscardFromHand{Amount: 1}).Resolve(ctx)
 	if g.State.Hand[0].contains(a) || !g.State.Discard[0].contains(a) {
 		t.Error("chosen card should be discarded")
 	}
 
 	// Discarding more than the hand holds stops when the hand empties.
-	(DiscardFromHand{Count: 5}).Resolve(ctx)
+	(DiscardFromHand{Amount: 5}).Resolve(ctx)
 	if g.State.Hand[0].Count != 0 {
 		t.Errorf("hand should be empty, got %d", g.State.Hand[0].Count)
 	}
@@ -298,7 +298,7 @@ func TestDiscardFromHandEffectDeclined(t *testing.T) {
 	g.AddToHand(NewCard("d", Logos, Tactic, Common), 0)
 	g.SetChooser(0, orderRejectChooser{})
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-	(DiscardFromHand{Count: 1}).Resolve(ctx)
+	(DiscardFromHand{Amount: 1}).Resolve(ctx)
 	if g.State.Discard[0].Count != 0 {
 		t.Error("a declined discard choice should discard nothing")
 	}
@@ -310,18 +310,18 @@ func TestDiscardFromHandCreaturesOnlyGate(t *testing.T) {
 	g.AddToHand(NewCard("tactic", Mars, Tactic, Common), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := DiscardFromHand{Count: 1, Types: []CardType{Creature}}
+	e := DiscardFromHand{Amount: 1, Types: []CardType{Creature}}
 	if e.Text() != "discard a creature from your hand" {
 		t.Errorf("text = %q", e.Text())
 	}
-	if plural := (DiscardFromHand{Count: 2, Types: []CardType{Creature}}).Text(); plural != "discard 2 creatures from your hand" {
+	if plural := (DiscardFromHand{Amount: 2, Types: []CardType{Creature}}).Text(); plural != "discard 2 creatures from your hand" {
 		t.Errorf("plural text = %q", plural)
 	}
 	// Type-filter rendering: multiple types join with "or"; other types read "card".
-	if got := (DiscardFromHand{Count: 1, Types: []CardType{Creature, Artifact}}).Text(); got != "discard a creature or artifact from your hand" {
+	if got := (DiscardFromHand{Amount: 1, Types: []CardType{Creature, Artifact}}).Text(); got != "discard a creature or artifact from your hand" {
 		t.Errorf("multi-type text = %q", got)
 	}
-	if got := (DiscardFromHand{Count: 1, Types: []CardType{Upgrade}}).Text(); got != "discard a card from your hand" {
+	if got := (DiscardFromHand{Amount: 1, Types: []CardType{Upgrade}}).Text(); got != "discard a card from your hand" {
 		t.Errorf("other-type text = %q", got)
 	}
 

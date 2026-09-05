@@ -19,8 +19,8 @@ var SloppyLabwork = card.New(
 	card.WithAemberBonus(1),
 	card.WithAbility(card.Trigger.Play, card.Sentences{
 		Effects: []card.Effect{
-			card.ArchiveFromHand{Count: 1},
-			card.DiscardFromHand{Count: 1},
+			card.ArchiveFromHand{Amount: 1},
+			card.DiscardFromHand{Amount: 1},
 		},
 	}),
 )

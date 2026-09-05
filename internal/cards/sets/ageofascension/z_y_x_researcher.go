@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ZYXResearcher
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Z.Y.X. Researcher
 //
 //	House:  Logos
 //	Type:   Creature
@@ -15,7 +10,9 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Human • Scientist
 //
-//	Play: Archive the top card of your deck or the top card of your discard pile.
+//	Play: Choose one:
+//	- Archive the top card of your deck
+//	- Archive the top card of your discard pile.
 var ZYXResearcher = card.New(
 	"Z.Y.X. Researcher",
 	card.House.Logos,
@@ -24,5 +21,11 @@ var ZYXResearcher = card.New(
 	card.Provenance(card.AoA, 123),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.ChooseOne{
+			Options: []card.Effect{
+				card.ArchiveTopOfDeck{Amount: 1},
+				card.ArchiveTopOfDiscard{Amount: 1},
+			},
+		}),
 )

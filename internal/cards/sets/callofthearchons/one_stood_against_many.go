@@ -19,7 +19,7 @@ var OneStoodAgainstMany = card.New(
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.RepeatedFight{
-			Times:  3,
+			Times:  card.Fixed(3),
 			Target: card.Target.FriendlyCreature,
 		}),
 )

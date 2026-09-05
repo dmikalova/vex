@@ -21,7 +21,7 @@ var Wardrummer = card.New(
 	card.WithTraits(card.Traits.Goblin),
 	card.WithAbility(
 		card.Trigger.Play, card.PutFromPlay{
-			Target:      card.Target.EachOtherFriendlyCreature.OfHouse(card.House.Brobnar),
+			Target:      card.Target.EachOtherFriendlyCreature.OfHouse(card.House.Self),
 			Destination: card.To.Hand,
 		}),
 )

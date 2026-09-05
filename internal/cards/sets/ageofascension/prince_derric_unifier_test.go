@@ -16,7 +16,7 @@ import (
 //	Armor:  1
 //	Traits: Human • Knight
 //
-//	Play: If you control creatures from 3 different houses, gain 3 Æmber.
+//	Play: If you control creatures from 3 or more houses, gain 3 Æmber.
 func TestPrinceDerricUnifier(t *testing.T) {
 	t.Run("gains 3 Æmber when your creatures span 3 houses", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

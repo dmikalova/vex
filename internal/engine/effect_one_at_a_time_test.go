@@ -5,7 +5,7 @@ import "testing"
 // TestOneAtATimeText covers the rendered phrase and the validation of its bounds.
 func TestOneAtATimeText(t *testing.T) {
 	e := OneAtATime{
-		Times:  3,
+		Times:  Fixed(3),
 		Target: Target{Kind: TargetChosenFriendlyCreature},
 		Verbs:  []CreatureVerb{ReadyVerb{}, FightVerb{}},
 	}
@@ -17,7 +17,7 @@ func TestOneAtATimeText(t *testing.T) {
 	if err := e.validate(); err != nil {
 		t.Errorf("validate = %v, want nil", err)
 	}
-	if err := (OneAtATime{Times: 3}).validate(); err == nil {
+	if err := (OneAtATime{Times: Fixed(3)}).validate(); err == nil {
 		t.Error("a targetless OneAtATime should not validate")
 	}
 	if err := (OneAtATime{Target: e.Target}).validate(); err == nil {
@@ -41,7 +41,7 @@ func TestOneAtATimeActsOnDifferentCreatures(t *testing.T) {
 	// Three passes over only two creatures: both are readied, then the third pass
 	// finds nobody left and stops.
 	OneAtATime{
-		Times:  3,
+		Times:  Fixed(3),
 		Target: Target{Kind: TargetChosenFriendlyCreature},
 		Verbs:  []CreatureVerb{ReadyVerb{}},
 	}.Resolve(ctx)
@@ -65,7 +65,7 @@ func TestOneAtATimeStopsWhenDeclined(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	OneAtATime{
-		Times:  2,
+		Times:  Fixed(2),
 		Target: Target{Kind: TargetChosenFriendlyCreature},
 		Verbs:  []CreatureVerb{ReadyVerb{}},
 	}.Resolve(ctx)

@@ -22,7 +22,7 @@ var ZyzzixTheMany = card.New(
 	card.WithFightOrReap(card.May{
 		Do: card.Then{
 			First: card.ArchiveFromHand{
-				Count:    1,
+				Amount:   1,
 				Type:     card.Type.Creature,
 				Revealed: true,
 			},

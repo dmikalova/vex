@@ -1,8 +1,17 @@
 package cards
 
 import (
+	"bytes"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"io/fs"
 	"math/rand"
+	"os"
+	"path/filepath"
+	"reflect"
+	"strings"
 	"testing"
 
 	"github.com/dmikalova/vactrol/internal/card"
@@ -208,4 +217,203 @@ func TestEveryReprintResolvesToACard(t *testing.T) {
 			)
 		}
 	}
+}
+
+// TestNoCardHardcodesItsOwnHouse enforces the self-house convention (see
+// internal/cards/AGENTS.md): a card whose ability names its own house writes
+// card.House.Self, never that house spelled out. Self is resolved to the card's
+// own house once, at card.New time, so the printed house and the ability can
+// never drift and a Maverick inherits the house it is printed in. Only a card
+// that names a *different* house — Brobnar Ambassador, a Sanctum card, naming
+// Brobnar — spells the house out, and that never matches its own house here.
+//
+// The check reads source because card.New erases the distinction: after
+// resolution both card.House.Self and the literal are the same concrete house,
+// so a test over the registered database could not tell an author who wrote Self
+// from one who hardcoded the house. Parsing the card.New call sites keeps the two
+// apart.
+func TestNoCardHardcodesItsOwnHouse(t *testing.T) {
+	fset := token.NewFileSet()
+	err := filepath.WalkDir("sets", func(path string, d fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() || !strings.HasSuffix(path, ".go") ||
+			strings.HasSuffix(path, "_test.go") {
+			return nil
+		}
+		src, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		if bytes.Contains(src, []byte("//go:build todo")) {
+			return nil // build-excluded stub; not part of the database
+		}
+		f, err := parser.ParseFile(fset, path, src, 0)
+		if err != nil {
+			return err
+		}
+		ast.Inspect(f, func(n ast.Node) bool {
+			call, ok := n.(*ast.CallExpr)
+			if !ok || !isCardNew(call.Fun) || len(call.Args) < 2 {
+				return true
+			}
+			own := houseName(call.Args[1])
+			if own == "" {
+				return true
+			}
+			// call.Args[1] is the card's own house arg and is left untouched; only
+			// the ability options that follow are checked for naming it again.
+			for _, arg := range call.Args[2:] {
+				ast.Inspect(arg, func(m ast.Node) bool {
+					if houseName(m) == own {
+						t.Errorf(
+							"%s: card.House.%s names the card's own house; write card.House.Self",
+							path, own,
+						)
+					}
+					return true
+				})
+			}
+			return true
+		})
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+// isCardNew reports whether fun is the selector card.New.
+func isCardNew(fun ast.Expr) bool {
+	sel, ok := fun.(*ast.SelectorExpr)
+	if !ok || sel.Sel.Name != "New" {
+		return false
+	}
+	pkg, ok := sel.X.(*ast.Ident)
+	return ok && pkg.Name == "card"
+}
+
+// houseName returns the house named by a card.House.<House> selector, or "" when
+// expr is not such a selector or names the Self sentinel (which never counts as a
+// hardcoded house).
+func houseName(expr ast.Node) string {
+	sel, ok := expr.(*ast.SelectorExpr)
+	if !ok || sel.Sel.Name == "Self" {
+		return ""
+	}
+	house, ok := sel.X.(*ast.SelectorExpr)
+	if !ok || house.Sel.Name != "House" {
+		return ""
+	}
+	pkg, ok := house.X.(*ast.Ident)
+	if !ok || pkg.Name != "card" {
+		return ""
+	}
+	return sel.Sel.Name
+}
+
+// TestReferencedCardIsConnected enforces that a card naming another card in its
+// text — Grumpus Tamer tutoring a War Grumpus, Faygin returning an Urchin — is
+// linked to that card by a card.Connects pull, so a generated deck never deals
+// the tutor without its target. The link counts in either direction: the namer
+// may pull its target (Grumpus Tamer pulls War Grumpus), or the target may pull
+// the namer (Timetraveller pulls Help from Future Self, which names Timetraveller
+// back), since a card that is only ever pulled in by X always shares X's pod.
+// References are read straight from the definition: card text is generated from
+// the effect tree rather than stored, so the only strings that equal another
+// card's name are genuine references (an effect's SearchForName, a Target's Named
+// filter, …).
+//
+// How many copies to pull and at what chance is a judgment call the author makes
+// (how many Urchins a Faygin deck wants), which the test cannot infer, so it only
+// checks that the link exists — not its count.
+func TestReferencedCardIsConnected(t *testing.T) {
+	regs := card.Cards()
+	names := make(map[string]bool, len(regs))
+	pulls := make(map[string]map[string]bool, len(regs))
+	for _, rc := range regs {
+		names[rc.Def.Name] = true
+		links := make(map[string]bool, len(rc.Profile.Connection.Cards))
+		for _, cc := range rc.Profile.Connection.Cards {
+			links[cc.Name] = true
+		}
+		pulls[rc.Def.Name] = links
+	}
+	for _, rc := range regs {
+		for ref := range referencedCardNames(reflect.ValueOf(rc.Def), names) {
+			if ref == rc.Def.Name || pulls[rc.Def.Name][ref] || pulls[ref][rc.Def.Name] {
+				continue
+			}
+			t.Errorf(
+				"%s names %q but neither card connects to the other; add "+
+					"card.Connects(card.Pull(...)) on one of them (ask the author "+
+					"for the copy count and chance)",
+				rc.Def.Name, ref,
+			)
+		}
+	}
+}
+
+// TestConnectedCardIsPulled is the mirror of TestReferencedCardIsConnected: a
+// card of Rarity.Connected is kept out of the pool and never rolls on its own
+// (deck generation indexes it by name and only places it through a puller), so
+// some other card must pull it in with card.Connects — otherwise it can never
+// reach a deck. Unlike a named reference, the puller need not mention the card in
+// its text: the three Connected Horsemen ride in on Horseman of Pestilence, which
+// names none of them.
+func TestConnectedCardIsPulled(t *testing.T) {
+	regs := card.Cards()
+	pulled := make(map[string]bool)
+	for _, rc := range regs {
+		for _, cc := range rc.Profile.Connection.Cards {
+			pulled[cc.Name] = true
+		}
+	}
+	for _, rc := range regs {
+		if rc.Def.Rarity != engine.Connected || pulled[rc.Def.Name] {
+			continue
+		}
+		t.Errorf(
+			"%s is Rarity.Connected but nothing pulls it in, so it can never reach "+
+				"a deck; give its partner card.Connects(card.Pull(%s, n))",
+			rc.Def.Name, rc.Def.Name,
+		)
+	}
+}
+
+// referencedCardNames collects every registered card name (a key of names) that
+// appears as a string value anywhere in def's effect tree, targets, and other
+// fields. It reads unexported fields too, so a name tucked inside a Target's
+// filter is found; only read operations are used, never Set or Interface.
+func referencedCardNames(def reflect.Value, names map[string]bool) map[string]bool {
+	found := map[string]bool{}
+	var walk func(v reflect.Value)
+	walk = func(v reflect.Value) {
+		switch v.Kind() {
+		case reflect.String:
+			if names[v.String()] {
+				found[v.String()] = true
+			}
+		case reflect.Struct:
+			for i := range v.NumField() {
+				walk(v.Field(i))
+			}
+		case reflect.Slice, reflect.Array:
+			for i := range v.Len() {
+				walk(v.Index(i))
+			}
+		case reflect.Interface, reflect.Pointer:
+			if !v.IsNil() {
+				walk(v.Elem())
+			}
+		case reflect.Map:
+			for iter := v.MapRange(); iter.Next(); {
+				walk(iter.Key())
+				walk(iter.Value())
+			}
+		}
+	}
+	walk(def)
+	return found
 }

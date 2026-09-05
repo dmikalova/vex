@@ -332,7 +332,7 @@ func (v GainKeywordVerb) Apply(ctx *EffectContext, target LocalID) {
 // stop early by declining.
 type OneAtATime struct {
 	// Times is how many passes the controller may take at most.
-	Times int
+	Times Count
 	// Target picks the creature each pass; Verbs are the actions applied to it.
 	Target Target
 	Verbs  []CreatureVerb
@@ -343,8 +343,8 @@ func (e OneAtATime) validate() error {
 	if !e.Target.valid() {
 		return errUnsetTarget("OneAtATime")
 	}
-	if e.Times <= 0 {
-		return fmt.Errorf("OneAtATime: Times must be positive")
+	if fixedValue(e.Times) <= 0 {
+		return fmt.Errorf("OneAtATime: Times must be a positive fixed count")
 	}
 	return nil
 }
@@ -364,7 +364,7 @@ func (e OneAtATime) Text() string {
 	return fmt.Sprintf(
 		"%s up to %d different %ss, one at a time",
 		joinVerbs(verbs),
-		e.Times,
+		fixedValue(e.Times),
 		singularNoun(e.Target.Text()),
 	)
 }
@@ -374,7 +374,7 @@ func (e OneAtATime) Text() string {
 func (e OneAtATime) Resolve(ctx *EffectContext) {
 	pass := e.each()
 	var used []LocalID
-	for range e.Times {
+	for range e.Times.Value(ctx) {
 		chosen := pass.applyToChosen(ctx, used)
 		if len(chosen) == 0 {
 			return
@@ -391,7 +391,7 @@ func (e OneAtATime) Resolve(ctx *EffectContext) {
 // fully before the next choice is offered.
 type RepeatedFight struct {
 	// Times is how many fights the effect takes at most.
-	Times int
+	Times Count
 	// Target chooses the creature that readies and fights, once per fight.
 	Target Target
 }
@@ -401,8 +401,8 @@ func (e RepeatedFight) validate() error {
 	if !e.Target.valid() {
 		return errUnsetTarget("RepeatedFight")
 	}
-	if e.Times <= 0 {
-		return fmt.Errorf("RepeatedFight: Times must be positive")
+	if fixedValue(e.Times) <= 0 {
+		return fmt.Errorf("RepeatedFight: Times must be a positive fixed count")
 	}
 	return nil
 }
@@ -415,7 +415,7 @@ func (e RepeatedFight) Text() string {
 		"ready and fight with %s %d times, each time against a different enemy "+
 			"creature. Resolve these fights one at a time",
 		e.Target.Text(),
-		e.Times,
+		fixedValue(e.Times),
 	)
 }
 
@@ -423,7 +423,7 @@ func (e RepeatedFight) Text() string {
 // enemy left, no creature to fight with, or the controller declines a choice.
 func (e RepeatedFight) Resolve(ctx *EffectContext) {
 	var fought []LocalID
-	for range e.Times {
+	for range e.Times.Value(ctx) {
 		enemies := e.remaining(ctx, fought)
 		if len(enemies) == 0 {
 			return

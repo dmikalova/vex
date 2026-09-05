@@ -26,7 +26,7 @@ var Commpod = card.New(
 				},
 				card.ReadyCreatures{
 					Max:    card.CardsRevealed{},
-					Target: card.Target.EachFriendlyCreature.OfHouse(card.House.Mars),
+					Target: card.Target.EachFriendlyCreature.OfHouse(card.House.Self),
 				},
 			},
 		}),

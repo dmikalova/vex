@@ -217,28 +217,28 @@ func (e DiscardRandomFromHand) Resolve(ctx *EffectContext) {
 	ctx.Resolver.DiscardRandomFromHand(ctx.PlayerFor(e.Player))
 }
 
-// DiscardFromHand has the controller choose and discard Count cards from their own
+// DiscardFromHand has the controller choose and discard Amount cards from their own
 // hand — the "discard a card" effect where the player picks which card leaves
 // (Sloppy Labwork), distinct from DiscardHand (which discards every matching card)
 // and DiscardRandomFromHand (which the player does not choose). Types limits the
 // choice to the listed card types (Feeding Pit's "discard a creature from your
 // hand"); an empty Types allows any card.
 type DiscardFromHand struct {
-	Count int
-	Types []CardType
+	Amount int
+	Types  []CardType
 }
 
 // Text renders the effect, e.g. "discard a card from your hand", naming the source
 // zone explicitly (rule 17).
 func (e DiscardFromHand) Text() string {
 	noun := typeNoun(e.Types)
-	if e.Count == 1 {
+	if e.Amount == 1 {
 		return "discard " + indefinite(noun) + " from your hand"
 	}
-	return "discard " + countNoun(e.Count, noun) + " from your hand"
+	return "discard " + countNoun(e.Amount, noun) + " from your hand"
 }
 
-// Resolve has the controller choose and discard Count cards from their hand,
+// Resolve has the controller choose and discard Amount cards from their hand,
 // stopping early if the hand runs out or the choice is declined.
 func (e DiscardFromHand) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 
@@ -247,7 +247,7 @@ func (e DiscardFromHand) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 // discarded.
 func (e DiscardFromHand) resolveGate(ctx *EffectContext) bool {
 	moved := false
-	for i := 0; i < e.Count; i++ {
+	for i := 0; i < e.Amount; i++ {
 		var candidates []LocalID
 		for _, id := range ctx.Resolver.Hand(ctx.Controller) {
 			if matchesTypes(e.Types, ctx.Resolver.TypeOf(id)) {

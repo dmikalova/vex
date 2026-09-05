@@ -426,14 +426,14 @@ func TestDiscardDeckUntil(t *testing.T) {
 // the chosen card goes to hand, the others to the discard pile, and short or empty
 // decks are handled.
 func TestLookAtTop(t *testing.T) {
-	if got := (LookAtTop{Count: 3}).Text(); got !=
+	if got := (LookAtTop{Amount: 3}).Text(); got !=
 		"look at the top 3 cards of your deck, put 1 into your hand, and discard the others" {
 		t.Errorf("Text() = %q", got)
 	}
 	if (LookAtTop{}).validate() == nil {
 		t.Error("a Count of 0 should be rejected")
 	}
-	if err := (LookAtTop{Count: 3}).validate(); err != nil {
+	if err := (LookAtTop{Amount: 3}).validate(); err != nil {
 		t.Errorf("validate() = %v", err)
 	}
 
@@ -444,7 +444,7 @@ func TestLookAtTop(t *testing.T) {
 		c := g.AddToDeck(NewCard("C Card", Logos, Artifact, Common), 0)
 		bottom := g.AddToDeck(NewCard("Bottom", Logos, Creature, Common, WithPower(1)), 0)
 		g.SetChooser(0, &idQueueChooser{ids: []LocalID{b}})
-		LookAtTop{Count: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		LookAtTop{Amount: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 		if got := g.Hand(0); len(got) != 1 || got[0] != b {
 			t.Errorf("hand = %v, want [%d]", got, b)
 		}
@@ -461,7 +461,7 @@ func TestLookAtTop(t *testing.T) {
 		a := g.AddToDeck(NewCard("A Card", Logos, Creature, Common, WithPower(2)), 0)
 		b := g.AddToDeck(NewCard("B Card", Logos, Tactic, Common), 0)
 		g.SetChooser(0, &idQueueChooser{ids: []LocalID{a}})
-		LookAtTop{Count: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		LookAtTop{Amount: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 		if got := g.Hand(0); len(got) != 1 || got[0] != a {
 			t.Errorf("hand = %v, want [%d]", got, a)
 		}
@@ -472,7 +472,7 @@ func TestLookAtTop(t *testing.T) {
 
 	t.Run("an empty deck does nothing", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
-		LookAtTop{Count: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		LookAtTop{Amount: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 		if got := g.Hand(0); len(got) != 0 {
 			t.Errorf("hand = %v, want empty", got)
 		}
@@ -483,7 +483,7 @@ func TestLookAtTop(t *testing.T) {
 		g.AddToDeck(NewCard("A Card", Logos, Creature, Common, WithPower(2)), 0)
 		g.AddToDeck(NewCard("B Card", Logos, Tactic, Common), 0)
 		g.SetChooser(0, orderRejectChooser{})
-		LookAtTop{Count: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		LookAtTop{Amount: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 		if got := g.Hand(0); len(got) != 0 {
 			t.Errorf("hand = %v, want empty", got)
 		}

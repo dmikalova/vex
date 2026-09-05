@@ -164,34 +164,34 @@ func (ControlsMoreCreatures) Met(ctx *EffectContext) bool {
 }
 
 // ControlsCreaturesOfHouses is met while the controller's creatures in play span
-// at least Count different houses — Prince Derric, Unifier pays out when three
+// at least Amount different houses — Prince Derric, Unifier pays out when three
 // houses are represented.
 type ControlsCreaturesOfHouses struct {
-	// Count is the number of different houses that must be represented.
-	Count int
+	// Amount is the number of different houses that must be represented.
+	Amount int
 }
 
 // validate requires a positive Count.
 func (c ControlsCreaturesOfHouses) validate() error {
-	if c.Count <= 0 {
+	if c.Amount <= 0 {
 		return fmt.Errorf("ControlsCreaturesOfHouses: Count must be positive")
 	}
 	return nil
 }
 
-// CondText renders the condition, e.g. "if you control creatures from 3 different
+// CondText renders the condition, e.g. "if you control creatures from 3 or more
 // houses".
 func (c ControlsCreaturesOfHouses) CondText() string {
-	return fmt.Sprintf("if you control creatures from %d different houses", c.Count)
+	return fmt.Sprintf("if you control creatures from %d or more houses", c.Amount)
 }
 
-// Met reports whether the controller's creatures span at least Count houses.
+// Met reports whether the controller's creatures span at least Amount houses.
 func (c ControlsCreaturesOfHouses) Met(ctx *EffectContext) bool {
 	seen := map[House]bool{}
 	for _, id := range ctx.Resolver.Battleline(ctx.Controller) {
 		seen[ctx.Resolver.House(id)] = true
 	}
-	return len(seen) >= c.Count
+	return len(seen) >= c.Amount
 }
 
 // FirstCreaturePlayedThisTurn is met when the card in context (ctx.It, the
@@ -717,4 +717,20 @@ func (c ForgedKey) stat() TurnStat {
 		return KeysForgedLastTurn
 	}
 	return KeysForgedThisTurn
+}
+
+// EnemyCreatureDestroyed is met while at least one enemy creature has been
+// destroyed this turn — Foozle reaps for an extra Æmber once the opponent has
+// lost a creature.
+type EnemyCreatureDestroyed struct{}
+
+// CondText renders the condition.
+func (EnemyCreatureDestroyed) CondText() string {
+	return "if an enemy creature has been destroyed this turn"
+}
+
+// Met reports whether the controller has seen an enemy creature destroyed this
+// turn.
+func (EnemyCreatureDestroyed) Met(ctx *EffectContext) bool {
+	return ctx.Resolver.TurnHistory(ctx.Controller, EnemyCreaturesDestroyed) > 0
 }

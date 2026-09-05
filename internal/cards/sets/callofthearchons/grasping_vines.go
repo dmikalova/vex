@@ -20,7 +20,7 @@ var GraspingVines = card.New(
 	card.WithAbility(
 		card.Trigger.Play,
 		card.PutChosen{
-			Count:       3,
+			Amount:      3,
 			UpTo:        true,
 			Target:      card.Target.EachArtifact,
 			Destination: card.To.Hand,

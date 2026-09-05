@@ -17,7 +17,7 @@ var RelentlessAssault = card.New(
 	card.Provenance(card.CotA, 13),
 	card.WithAbility(
 		card.Trigger.Play, card.OneAtATime{
-			Times:  3,
+			Times:  card.Fixed(3),
 			Target: card.Target.FriendlyCreature,
 			Verbs:  []card.CreatureVerb{card.ReadyVerb{}, card.FightVerb{}},
 		}),

@@ -20,11 +20,11 @@ type PurgeCard struct {
 	Zone Zone
 	// Type restricts the purge to cards of this type; the zero value allows any.
 	Type CardType
-	// Count is how many cards to purge; the zero value counts as one, so a bare
+	// Amount is how many cards to purge; the zero value counts as one, so a bare
 	// Purge reads as "purge a card".
-	Count int
-	// UpTo lets the controller purge fewer than Count, down to none (Creeping
-	// Oblivion's "up to 2"). Without it they purge Count when that many match.
+	Amount int
+	// UpTo lets the controller purge fewer than Amount, down to none (Creeping
+	// Oblivion's "up to 2"). Without it they purge Amount when that many match.
 	UpTo bool
 }
 
@@ -36,12 +36,12 @@ func (e PurgeCard) validate() error {
 	return nil
 }
 
-// count is Count with the zero value treated as one.
+// count is Amount with the zero value treated as one.
 func (e PurgeCard) count() int {
-	if e.Count < 1 {
+	if e.Amount < 1 {
 		return 1
 	}
-	return e.Count
+	return e.Amount
 }
 
 // noun renders the kind of card purged: the lowercased type when set, else "card".

@@ -69,6 +69,15 @@ type CardCore struct {
 	// PowerCounters is the net power from +1/-1 power counters placed on the card;
 	// it adds to the creature's power for as long as it stays in play.
 	PowerCounters int16
+	// TempPowerBonus is power a creature gained for the remainder of the turn
+	// (Abond the Armorsmith's Action grants armor the same way). The ready phase
+	// clears it for every creature.
+	TempPowerBonus int16
+	// TempArmorBonus is armor a creature gained for the remainder of the turn —
+	// Abond the Armorsmith gives other friendly creatures +1 armor until end of
+	// turn. Adding it also tops up ArmorRemaining so the extra armor can absorb
+	// damage this turn; the ready phase clears it for every creature.
+	TempArmorBonus int16
 	// TempHouse is the house this in-play card belongs to until its controller's
 	// turn ends. HouseNone means it belongs to its printed house.
 	TempHouse House

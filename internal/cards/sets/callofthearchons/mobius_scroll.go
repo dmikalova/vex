@@ -22,8 +22,8 @@ var MobiusScroll = card.New(
 			Effects: []card.Effect{
 				card.ArchiveFromPlay{Target: card.Target.This},
 				card.ArchiveFromHand{
-					Count: 2,
-					UpTo:  true,
+					Amount: 2,
+					UpTo:   true,
 				},
 			},
 		}),

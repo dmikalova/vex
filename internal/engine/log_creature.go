@@ -29,6 +29,20 @@ func (e CreatureGainedKeyword) Text(n Namer) string {
 	return fmt.Sprintf("%s gains %s", n.Name(e.Creature), strings.ToLower(e.Keyword.String()))
 }
 
+// CreatureGainedStats narrates a creature gaining power and/or armor for the turn
+// (Abond the Armorsmith grants +1 armor).
+type CreatureGainedStats struct {
+	Creature LocalID
+	Power    int
+	Armor    int
+}
+
+// Text renders the creature and the stats it gained, e.g. "Card2 gains +1 armor".
+func (e CreatureGainedStats) Text(n Namer) string {
+	return fmt.Sprintf("%s gains %s", n.Name(e.Creature),
+		staticBonuses(StaticModifier{PowerBonus: e.Power, ArmorBonus: e.Armor}))
+}
+
 // CreatureConsideredFlank narrates a creature being treated as a flank creature
 // for the turn (Spectral Tunneler).
 type CreatureConsideredFlank struct{ Creature LocalID }

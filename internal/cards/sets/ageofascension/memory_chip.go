@@ -18,5 +18,5 @@ var MemoryChip = card.New(
 	card.Provenance(card.AoA, 132),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
-		card.Trigger.AfterChooseHouse, card.ArchiveFromHand{Count: 1}),
+		card.Trigger.AfterChooseHouse, card.ArchiveFromHand{Amount: 1}),
 )

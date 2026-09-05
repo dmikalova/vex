@@ -21,7 +21,7 @@ var IncubationChamber = card.New(
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(
 		card.Trigger.Action, card.ArchiveFromHand{
-			Count:    1,
+			Amount:   1,
 			Type:     card.Type.Creature,
 			House:    card.House.Self,
 			Revealed: true,

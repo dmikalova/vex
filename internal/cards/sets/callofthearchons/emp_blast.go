@@ -19,7 +19,7 @@ var EMPBlast = card.New(
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
-			card.Stun{Target: card.Target.EachCreature.OfHouse(card.House.Mars)},
+			card.Stun{Target: card.Target.EachCreature.OfHouse(card.House.Self)},
 			card.Stun{Target: card.Target.EachCreature.WithTrait(card.Traits.Robot)},
 			card.Destroy{Target: card.Target.EachArtifact},
 		}}),

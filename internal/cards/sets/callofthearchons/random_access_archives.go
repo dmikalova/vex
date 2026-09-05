@@ -17,5 +17,5 @@ var RandomAccessArchives = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 119),
 	card.WithAemberBonus(1),
-	card.WithAbility(card.Trigger.Play, card.ArchiveTopOfDeck{Count: 1}),
+	card.WithAbility(card.Trigger.Play, card.ArchiveTopOfDeck{Amount: 1}),
 )

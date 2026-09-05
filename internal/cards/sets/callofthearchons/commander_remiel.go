@@ -21,7 +21,7 @@ var CommanderRemiel = card.New(
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),
 	card.WithAbility(
 		card.Trigger.Reap, card.OnChooseCreature{
-			Target: card.Target.FriendlyCreature.ExceptHouse(card.House.Sanctum),
+			Target: card.Target.FriendlyCreature.ExceptHouse(card.House.Self),
 			Verbs:  []card.CreatureVerb{card.UseVerb{}},
 		}),
 )

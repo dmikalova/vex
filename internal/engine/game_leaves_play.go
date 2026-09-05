@@ -180,6 +180,9 @@ func (g *Game) destroyTogether(controller int, ids []LocalID) {
 	// "Each time an enemy creature is destroyed": the destroyed creature's controller
 	// is the enemy of whoever watches, so the reaction fires for that opponent.
 	for _, id := range ids {
+		if g.TypeOf(id) == Creature {
+			g.State.TurnHistory[1-g.controller(id)][EnemyCreaturesDestroyed]++
+		}
 		g.emitLasting(EventEnemyCreatureDestroyed, 1-g.controller(id), id)
 		g.emitEnemyDestroyed(id)
 	}

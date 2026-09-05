@@ -450,11 +450,11 @@ it instead.") is authored as a `ChooseCreatureThen` whose `Then` is a
 `Conditional`: the exception is the `Then` branch and the default is the `Else`.
 The curated text therefore leads with the choice and the condition rather than the
 default action, because the condition must be read against the creature's state
-*before* the default would change it — stunning first would make "already stunned"
+_before_ the default would change it — stunning first would make "already stunned"
 always true.
 
-| Original                                                                            | Curated                                                                                    |
-| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Original                                                                            | Curated                                                                                            |
+| ----------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
 | `Stun an enemy creature. If that creature was already stunned, destroy it instead.` | `Choose an enemy creature - if that creature was already stunned, destroy it. Otherwise, stun it.` |
 
 (Affected: 1-2 Punch.)
@@ -469,9 +469,9 @@ A card that states an effect and then qualifies it with a trailing condition
 with `If <cond>, <effect>` so every gated effect reads the same way, matching the
 condition-leading form KeyForge already uses elsewhere.
 
-| Original                                                       | Curated                                                                    |
-| -------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| `Gain 3A if you control creatures from 3 different houses.`    | `If you control creatures from 3 different houses, gain 3 Æmber.`          |
+| Original                                                    | Curated                                                           |
+| ----------------------------------------------------------- | ----------------------------------------------------------------- |
+| `Gain 3A if you control creatures from 3 different houses.` | `If you control creatures from 3 different houses, gain 3 Æmber.` |
 
 (Affected: Prince Derric, Unifier.)
 

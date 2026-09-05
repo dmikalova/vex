@@ -155,7 +155,11 @@ house the card itself belongs to — that house is written out. So:
 - **Named house is a different house** (or the card would still say "Logos" if it
   were reprinted in another house)? Write the house out.
 
-When you touch a card that hardcodes its own house, convert it.
+`TestNoCardHardcodesItsOwnHouse` (in `cards_test.go`) enforces this: it parses
+every `card.New` call and fails if an ability names the card's own declared
+house instead of `card.House.Self`. Because `card.New` resolves the sentinel to
+the concrete house, the two are indistinguishable afterward, so the test reads
+source — a hardcoded own-house literal cannot reach the database unnoticed.
 
 ## Wording rules
 

@@ -8,10 +8,10 @@ func TestExaltEffect(t *testing.T) {
 	enemy := g.AddToBattleline(testCreature("enemy", 1), 1)
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
-	if got := (Exalt{Target: Target{Kind: TargetChosenFriendlyCreature}, Times: 1}).Text(); got != "exalt a friendly creature" {
+	if got := (Exalt{Target: Target{Kind: TargetChosenFriendlyCreature}, Amount: 1}).Text(); got != "exalt a friendly creature" {
 		t.Errorf("single exalt text = %q", got)
 	}
-	e := Exalt{Target: Target{Kind: TargetChosenEnemyCreature}, Times: 2}
+	e := Exalt{Target: Target{Kind: TargetChosenEnemyCreature}, Amount: 2}
 	if e.Text() != "exalt an enemy creature 2 times" {
 		t.Errorf("text = %q", e.Text())
 	}

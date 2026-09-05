@@ -16,7 +16,7 @@ func TestAbductionText(t *testing.T) {
 	}
 
 	many := PutChosen{
-		Count:       3,
+		Amount:      3,
 		UpTo:        true,
 		Target:      Target{Kind: TargetEachEnemyCreature},
 		Destination: ToArchives.Yours(),

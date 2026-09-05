@@ -8,7 +8,7 @@ import "fmt"
 // N times places N Æmber.
 type Exalt struct {
 	Target Target
-	Times  int
+	Amount int
 }
 
 // validate requires an explicit target.
@@ -22,16 +22,16 @@ func (e Exalt) validate() error {
 // Text renders the effect, e.g. "exalt an enemy creature 2 times". A single
 // exalt drops the count so it reads naturally.
 func (e Exalt) Text() string {
-	if e.Times == 1 {
+	if e.Amount == 1 {
 		return "exalt " + e.Target.Text()
 	}
-	return fmt.Sprintf("exalt %s %d times", e.Target.Text(), e.Times)
+	return fmt.Sprintf("exalt %s %d times", e.Target.Text(), e.Amount)
 }
 
-// Resolve chooses a creature (through the Target) and places Times Æmber on it.
+// Resolve chooses a creature (through the Target) and places Amount Æmber on it.
 func (e Exalt) Resolve(ctx *EffectContext) {
 	for _, id := range e.Target.Select(ctx) {
-		ctx.Resolver.AddAmberOn(id, e.Times)
-		ctx.Resolver.Record(AemberExalted{Creature: id, Amount: e.Times})
+		ctx.Resolver.AddAmberOn(id, e.Amount)
+		ctx.Resolver.Record(AemberExalted{Creature: id, Amount: e.Amount})
 	}
 }

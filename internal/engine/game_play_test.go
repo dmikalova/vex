@@ -159,7 +159,7 @@ func TestOffHousePlayGrant(t *testing.T) {
 		Creature,
 		Rare,
 		WithPower(4),
-		WithPlayPermission(PlayPermission{House: Untamed, Count: 1}),
+		WithPlayPermission(PlayPermission{House: Untamed, Amount: 1}),
 	)
 
 	t.Run("allows one off-house play and consumes it", func(t *testing.T) {

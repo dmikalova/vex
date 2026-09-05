@@ -36,6 +36,26 @@ func scaled(base int, per Count, ctx *EffectContext) int {
 	return base * per.Value(ctx)
 }
 
+// Fixed is a Count of a constant number — a repetition that always runs the same
+// number of times whatever the board (RepeatedFight fights a fixed number of
+// times). It lets every Times field be a Count, whether or not the count scales.
+type Fixed int
+
+// Value returns the constant, ignoring game state.
+func (n Fixed) Value(*EffectContext) int { return int(n) }
+
+// CountText is unused: a Fixed never leads a "for each" clause; the effects that
+// take one print its number directly.
+func (n Fixed) CountText() string { return "" }
+
+// fixedValue reads the constant of a Count that must be a Fixed, for text built
+// before resolution (no game state yet). Effects that call it validate their count
+// is a Fixed, so a non-Fixed reads as zero and fails that check.
+func fixedValue(c Count) int {
+	f, _ := c.(Fixed)
+	return int(f)
+}
+
 // leadingCounter is a Count whose "for each" clause names its subject when the
 // clause leads the sentence, where a trailing "it" would read as a forward
 // reference — NeighborsOfThis is "neighbor it has" trailing but "neighbor <self>

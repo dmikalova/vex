@@ -20,5 +20,5 @@ var Yurk = card.New(
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(
-		card.Trigger.Play, card.DiscardFromHand{Count: 1}),
+		card.Trigger.Play, card.DiscardFromHand{Amount: 1}),
 )

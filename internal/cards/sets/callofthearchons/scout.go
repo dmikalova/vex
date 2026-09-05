@@ -19,7 +19,7 @@ var Scout = card.New(
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.OneAtATime{
-			Times:  2,
+			Times:  card.Fixed(2),
 			Target: card.Target.FriendlyCreature,
 			Verbs: []card.CreatureVerb{
 				card.GainKeywordVerb{Keyword: card.Keyword.Skirmish},

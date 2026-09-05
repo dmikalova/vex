@@ -111,6 +111,8 @@ func (g *Game) readyPhase(player int) {
 		g.State.Cards[id].DamageImmune = false
 		g.State.Cards[id].GrantedKeywords = 0
 		g.State.Cards[id].ConsideredFlank = false
+		g.State.Cards[id].TempPowerBonus = 0
+		g.State.Cards[id].TempArmorBonus = 0
 	}
 	g.State.CannotFight[player] = Bar[bool]{}
 	g.State.CannotUse[player] = Bar[bool]{}
@@ -123,6 +125,8 @@ func (g *Game) readyPhase(player int) {
 	h[player][CreaturesPlayedLastTurn] = int8(g.creaturesPlayedThisTurn(player))
 	h[0][EnemyCreaturesFightKilled] = 0
 	h[1][EnemyCreaturesFightKilled] = 0
+	h[0][EnemyCreaturesDestroyed] = 0
+	h[1][EnemyCreaturesDestroyed] = 0
 	g.State.MayFightHouse[player] = HouseNone
 	g.State.MayFightAny[player] = false
 	g.State.MayUseHouse[player] = HouseNone

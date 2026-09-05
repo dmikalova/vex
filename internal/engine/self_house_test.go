@@ -19,7 +19,7 @@ func TestResolveSelfHouseThroughDefinition(t *testing.T) {
 				Selector(ExceptMostPowerful)},
 			Exhaust{Target: Target{Kind: TargetEachCreature}.ExceptHouse(SelfHouse)},
 		}}),
-		WithPlayPermission(PlayPermission{House: SelfHouse, Count: 1}),
+		WithPlayPermission(PlayPermission{House: SelfHouse, Amount: 1}),
 		WithHouseLock(HouseLock{Player: Controller, House: SelfHouse}),
 		WithKeyCost(NewKeyCostChange(Opponent, 1).Per(InPlay{
 			Player: Controller,

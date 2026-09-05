@@ -124,15 +124,16 @@ far:
   `CreaturesHealed`, `DamageHealed`, `CardsDestroyed`. A new such tally is a field
   on `Produced` plus a small `Count`, never a bespoke fused effect.
 
-Prefer a shared **helper** over a shared embeddable value type. A `Quantity{Amount,
-By, Per}` struct is tempting, but the shape is not as uniform as it looks:
-`StealAember` also carries `Or`, and each effect has its own extras (`Player`,
-`Source`, `Target`, `All`, `Distinct`, `Times`). One struct would fit at most three
-of the four; the part that is genuinely uniform is only `{Amount, By, Per}`, whose
-logic the helpers above already carry at zero authoring cost. And there is no seam
-to absorb the change — the `card` facade aliases these structs
-(`card.StealAember = engine.StealAember`), so adding a field lands directly in ~120
-card call sites plus their tests. Factor the logic, keep the fields.
+Prefer a shared **helper** over a shared embeddable value type. Now that `Per`
+means one thing everywhere, `{Amount, By, Per}` genuinely is uniform across
+`StealAember`/`LoseAember`/`CaptureAember` (and `{Amount, Per}` in `GainAember`,
+which has no pool to take a share of), so a `Quantity{Amount, By, Per}` would fit.
+It still does not pay off. Go composite literals do not promote embedded fields, and
+the `card` facade aliases these structs (`card.StealAember = engine.StealAember`),
+so a `Quantity` would turn every flat authoring site — `{Amount: 2, Per: X}` — into a
+nested `{Quantity: Quantity{Amount: 2, Per: X}}` across ~120 card call sites plus
+their tests, buying nothing the helpers above do not already carry. Factor the
+logic, keep the fields.
 
 ## `Resolver` is segregated into role interfaces — add to the right role
 

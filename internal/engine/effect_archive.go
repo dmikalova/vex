@@ -7,8 +7,8 @@ import "fmt"
 // house on a later turn. Archiving from hand lets you choose which cards to set
 // aside.
 type ArchiveFromHand struct {
-	// Count is how many cards to archive from hand.
-	Count int
+	// Amount is how many cards to archive from hand.
+	Amount int
 	// Type filters which cards may be chosen; the zero value allows any type.
 	Type CardType
 	// House filters which cards may be chosen; HouseNone allows any house.
@@ -16,7 +16,7 @@ type ArchiveFromHand struct {
 	// Revealed shows the chosen card to the opponent before archiving it, which
 	// is how a filtered choice is verified (Incubation Chamber).
 	Revealed bool
-	// UpTo lets the controller archive fewer than Count, down to none (Mobius
+	// UpTo lets the controller archive fewer than Amount, down to none (Mobius
 	// Scroll's "up to 2 cards").
 	UpTo bool
 }
@@ -30,12 +30,12 @@ func (e ArchiveFromHand) Text() string {
 		return "reveal " + indefinite(e.handNoun()) + " from your hand and archive it"
 	}
 	if e.UpTo {
-		return fmt.Sprintf("archive up to %d %ss from your hand", e.Count, e.handNoun())
+		return fmt.Sprintf("archive up to %d %ss from your hand", e.Amount, e.handNoun())
 	}
-	if e.Count == 1 {
+	if e.Amount == 1 {
 		return "archive " + indefinite(e.handNoun()) + " from your hand"
 	}
-	return fmt.Sprintf("archive %d %ss from your hand", e.Count, e.handNoun())
+	return fmt.Sprintf("archive %d %ss from your hand", e.Amount, e.handNoun())
 }
 
 // handNoun names the cards the filters admit, e.g. "card" or "Mars creature".
@@ -68,7 +68,7 @@ func (e ArchiveFromHand) candidates(ctx *EffectContext) []LocalID {
 	return out
 }
 
-// Resolve has the controller choose and archive Count cards from their hand,
+// Resolve has the controller choose and archive Amount cards from their hand,
 // stopping early if the hand runs out or the choice is declined.
 func (e ArchiveFromHand) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 
@@ -76,7 +76,7 @@ func (e ArchiveFromHand) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 // "if you do" can follow a reveal (Zyzzix the Many).
 func (e ArchiveFromHand) resolveGate(ctx *EffectContext) bool {
 	archived := false
-	for i := 0; i < e.Count; i++ {
+	for i := 0; i < e.Amount; i++ {
 		hand := e.candidates(ctx)
 		if len(hand) == 0 {
 			return archived
@@ -96,7 +96,7 @@ func (e ArchiveFromHand) resolveGate(ctx *EffectContext) bool {
 // declinable reports that archiving is a single clickable card, so a "you may"
 // wrapping it (Zyzzix the Many) can be answered by clicking that card instead of
 // a separate Yes/No. A multi-card archive keeps its own "up to" cycle instead.
-func (e ArchiveFromHand) declinable() bool { return e.Count == 1 && !e.UpTo }
+func (e ArchiveFromHand) declinable() bool { return e.Amount == 1 && !e.UpTo }
 
 // resolveOptional is resolveGate under a May: the card is asked declinably, with
 // a Done to decline.
@@ -129,24 +129,47 @@ func (e ArchiveFromHand) archiveOne(
 	return true
 }
 
-// ArchiveTopOfDeck moves the top Count cards of the controller's deck into their
+// ArchiveTopOfDeck moves the top Amount cards of the controller's deck into their
 // archives, with no choice involved.
 type ArchiveTopOfDeck struct {
-	Count int
+	Amount int
 }
 
 // Text renders the effect, e.g. "archive the top card of your deck".
 func (e ArchiveTopOfDeck) Text() string {
-	if e.Count == 1 {
+	if e.Amount == 1 {
 		return "archive the top card of your deck"
 	}
-	return fmt.Sprintf("archive the top %d cards of your deck", e.Count)
+	return fmt.Sprintf("archive the top %d cards of your deck", e.Amount)
 }
 
 // Resolve archives the top cards in order, stopping early if the deck runs out.
 func (e ArchiveTopOfDeck) Resolve(ctx *EffectContext) {
-	for i := 0; i < e.Count; i++ {
+	for i := 0; i < e.Amount; i++ {
 		if !ctx.Resolver.ArchiveTopOfDeck(ctx.Controller) {
+			return
+		}
+	}
+}
+
+// ArchiveTopOfDiscard moves the top Amount cards of the controller's discard pile
+// into their archives, with no choice involved.
+type ArchiveTopOfDiscard struct {
+	Amount int
+}
+
+// Text renders the effect, e.g. "archive the top card of your discard pile".
+func (e ArchiveTopOfDiscard) Text() string {
+	if e.Amount == 1 {
+		return "archive the top card of your discard pile"
+	}
+	return fmt.Sprintf("archive the top %d cards of your discard pile", e.Amount)
+}
+
+// Resolve archives the top cards in order, stopping early if the discard runs out.
+func (e ArchiveTopOfDiscard) Resolve(ctx *EffectContext) {
+	for i := 0; i < e.Amount; i++ {
+		if !ctx.Resolver.ArchiveTopOfDiscard(ctx.Controller) {
 			return
 		}
 	}

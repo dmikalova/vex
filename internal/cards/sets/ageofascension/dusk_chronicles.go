@@ -26,7 +26,7 @@ var DuskChronicles = card.New(
 				},
 				card.Conditional{
 					Cond: card.YourAember{Is: card.MoreThanOpponent},
-					Then: card.ArchiveFromHand{Count: 1},
+					Then: card.ArchiveFromHand{Amount: 1},
 				},
 			},
 		}),

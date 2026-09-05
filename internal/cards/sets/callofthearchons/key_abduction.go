@@ -20,7 +20,7 @@ var KeyAbduction = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.PutFromPlay{
-				Target:      card.Target.EachCreature.OfHouse(card.House.Mars),
+				Target:      card.Target.EachCreature.OfHouse(card.House.Self),
 				Destination: card.To.Hand,
 			},
 			card.ForgeKey{

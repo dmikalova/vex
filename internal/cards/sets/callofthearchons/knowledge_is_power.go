@@ -19,7 +19,7 @@ var KnowledgeIsPower = card.New(
 	card.Provenance(card.CotA, 113),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseOne{Options: []card.Effect{
-			card.ArchiveFromHand{Count: 1},
+			card.ArchiveFromHand{Amount: 1},
 			card.GainAember{
 				Player: card.Controller,
 				Amount: 1,

@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Foozle
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Brobnar
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Giant
 //
-//	Reap: If an enemy creature has been destroyed this turn, gain 1A.
+//	Reap: If an enemy creature has been destroyed this turn, gain 1 Æmber.
 var Foozle = card.New(
 	"Foozle",
 	card.House.Brobnar,
@@ -24,5 +19,9 @@ var Foozle = card.New(
 	card.Provenance(card.AoA, 8),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Giant),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Reap, card.Conditional{
+			Cond: card.EnemyCreatureDestroyed{},
+			Then: card.GainAember{Player: card.Controller, Amount: 1},
+		}),
 )

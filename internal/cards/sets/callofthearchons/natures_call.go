@@ -19,7 +19,7 @@ var NaturesCall = card.New(
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.PutChosen{
-			Count:       3,
+			Amount:      3,
 			UpTo:        true,
 			Target:      card.Target.EachCreature,
 			Destination: card.To.Hand,

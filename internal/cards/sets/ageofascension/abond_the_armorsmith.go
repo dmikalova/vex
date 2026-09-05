@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// AbondTheArmorsmith
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Abond the Armorsmith
 //
 //	House:  Sanctum
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Human
 //
-//	Other friendly creatures get +1 armor.
-//	Action: For the remainder of the turn, other friendly creatures get +1 armor.
+//	Each other friendly creature gains +1 armor.
+//	Action: For the remainder of the turn, each other friendly creature gains +1 armor.
 var AbondTheArmorsmith = card.New(
 	"Abond the Armorsmith",
 	card.House.Sanctum,
@@ -25,5 +20,13 @@ var AbondTheArmorsmith = card.New(
 	card.Provenance(card.AoA, 212),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithConstant(card.ConstantAbility{
+		ArmorBonus: 1,
+		Target:     card.Target.EachOtherFriendlyCreature,
+	}),
+	card.WithAbility(
+		card.Trigger.Action, card.GainStats{
+			Target: card.Target.EachOtherFriendlyCreature,
+			Armor:  1,
+		}),
 )

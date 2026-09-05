@@ -8,15 +8,15 @@ func TestArchiveEffect(t *testing.T) {
 	c2 := g.AddToHand(testCreature("c2", 1), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	if (ArchiveFromHand{Count: 1}).Text() != "archive a card from your hand" {
-		t.Errorf("archive text = %q", (ArchiveFromHand{Count: 1}).Text())
+	if (ArchiveFromHand{Amount: 1}).Text() != "archive a card from your hand" {
+		t.Errorf("archive text = %q", (ArchiveFromHand{Amount: 1}).Text())
 	}
-	if (ArchiveFromHand{Count: 2}).Text() != "archive 2 cards from your hand" {
-		t.Errorf("archive plural text = %q", (ArchiveFromHand{Count: 2}).Text())
+	if (ArchiveFromHand{Amount: 2}).Text() != "archive 2 cards from your hand" {
+		t.Errorf("archive plural text = %q", (ArchiveFromHand{Amount: 2}).Text())
 	}
 
 	// The default chooser archives the first hand card (c1).
-	(ArchiveFromHand{Count: 1}).Resolve(ctx)
+	(ArchiveFromHand{Amount: 1}).Resolve(ctx)
 	if g.State.Archives[0].Count != 1 || g.State.Archives[0].IDs[0] != c1 {
 		t.Errorf("archives = %v, want [%d]", g.State.Archives[0].slice(), c1)
 	}
@@ -25,7 +25,7 @@ func TestArchiveEffect(t *testing.T) {
 	}
 
 	// Archiving more than the hand holds stops when the hand empties.
-	(ArchiveFromHand{Count: 5}).Resolve(ctx)
+	(ArchiveFromHand{Amount: 5}).Resolve(ctx)
 	if len(g.Hand(0)) != 0 {
 		t.Errorf("hand should be empty, got %v", g.Hand(0))
 	}
@@ -41,7 +41,7 @@ func TestArchiveEffectDeclined(t *testing.T) {
 	g.AddToHand(testCreature("d", 1), 0)
 	g.SetChooser(0, orderRejectChooser{})
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-	(ArchiveFromHand{Count: 1}).Resolve(ctx)
+	(ArchiveFromHand{Amount: 1}).Resolve(ctx)
 	if g.State.Archives[0].Count != 0 {
 		t.Error("a declined archive choice should archive nothing")
 	}
@@ -50,7 +50,7 @@ func TestArchiveEffectDeclined(t *testing.T) {
 // TestArchiveFromHandUpTo covers Mobius Scroll's "up to 2 cards": the controller
 // archives one and stops, leaving the rest in hand.
 func TestArchiveFromHandUpTo(t *testing.T) {
-	e := ArchiveFromHand{Count: 2, UpTo: true}
+	e := ArchiveFromHand{Amount: 2, UpTo: true}
 	if got := e.Text(); got != "archive up to 2 cards from your hand" {
 		t.Errorf("text = %q", got)
 	}
@@ -121,20 +121,20 @@ func TestArchiveTopOfDeckEffect(t *testing.T) {
 	g.AddToDeck(testCreature("next", 1), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	if (ArchiveTopOfDeck{Count: 1}).Text() != "archive the top card of your deck" {
-		t.Errorf("text = %q", (ArchiveTopOfDeck{Count: 1}).Text())
+	if (ArchiveTopOfDeck{Amount: 1}).Text() != "archive the top card of your deck" {
+		t.Errorf("text = %q", (ArchiveTopOfDeck{Amount: 1}).Text())
 	}
-	if (ArchiveTopOfDeck{Count: 2}).Text() != "archive the top 2 cards of your deck" {
-		t.Errorf("plural text = %q", (ArchiveTopOfDeck{Count: 2}).Text())
+	if (ArchiveTopOfDeck{Amount: 2}).Text() != "archive the top 2 cards of your deck" {
+		t.Errorf("plural text = %q", (ArchiveTopOfDeck{Amount: 2}).Text())
 	}
 
-	(ArchiveTopOfDeck{Count: 1}).Resolve(ctx)
+	(ArchiveTopOfDeck{Amount: 1}).Resolve(ctx)
 	if g.State.Archives[0].Count != 1 || g.State.Archives[0].IDs[0] != top {
 		t.Errorf("archived %v, want the top card %d", g.State.Archives[0].slice(), top)
 	}
 
 	// Archiving more than the deck holds stops when the deck empties.
-	(ArchiveTopOfDeck{Count: 5}).Resolve(ctx)
+	(ArchiveTopOfDeck{Amount: 5}).Resolve(ctx)
 	if g.State.Deck[0].Count != 0 {
 		t.Errorf("deck should be empty, got %d", g.State.Deck[0].Count)
 	}
@@ -142,7 +142,35 @@ func TestArchiveTopOfDeckEffect(t *testing.T) {
 		t.Errorf("archives count = %d, want 2", g.State.Archives[0].Count)
 	}
 }
+func TestArchiveTopOfDiscardEffect(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.State.Discard[0].add(g.Register(testCreature("bottom", 1), 0))
+	top := g.Register(testCreature("top", 1), 0)
+	g.State.Discard[0].add(top)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
 
+	if (ArchiveTopOfDiscard{Amount: 1}).Text() != "archive the top card of your discard pile" {
+		t.Errorf("text = %q", (ArchiveTopOfDiscard{Amount: 1}).Text())
+	}
+	if (ArchiveTopOfDiscard{Amount: 2}).Text() != "archive the top 2 cards of your discard pile" {
+		t.Errorf("plural text = %q", (ArchiveTopOfDiscard{Amount: 2}).Text())
+	}
+
+	// The most recently discarded card is the top and archives first.
+	(ArchiveTopOfDiscard{Amount: 1}).Resolve(ctx)
+	if g.State.Archives[0].Count != 1 || g.State.Archives[0].IDs[0] != top {
+		t.Errorf("archived %v, want the top card %d", g.State.Archives[0].slice(), top)
+	}
+
+	// Archiving more than the discard holds stops when the pile empties.
+	(ArchiveTopOfDiscard{Amount: 5}).Resolve(ctx)
+	if g.State.Discard[0].Count != 0 {
+		t.Errorf("discard should be empty, got %d", g.State.Discard[0].Count)
+	}
+	if g.State.Archives[0].Count != 2 {
+		t.Errorf("archives count = %d, want 2", g.State.Archives[0].Count)
+	}
+}
 func TestArchiveFromPlayEffect(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddArtifact(NewCard("quest", Sanctum, Artifact, Rare), 0)
@@ -238,14 +266,14 @@ func TestMayDeclinableArchiveFromPlay(t *testing.T) {
 // choice, so the player picks the card directly instead of first answering Yes
 // (Zyzzix the Many).
 func TestMayDeclinableArchiveFromHand(t *testing.T) {
-	e := May{Do: ArchiveFromHand{Count: 1, Type: Creature}}
+	e := May{Do: ArchiveFromHand{Amount: 1, Type: Creature}}
 	if !e.Do.(declinableEffect).declinable() {
 		t.Fatal("a single-count ArchiveFromHand should be declinable")
 	}
-	if (ArchiveFromHand{Count: 1, UpTo: true}).declinable() {
+	if (ArchiveFromHand{Amount: 1, UpTo: true}).declinable() {
 		t.Error("an UpTo ArchiveFromHand should keep its own cycle, not be declinable")
 	}
-	if (ArchiveFromHand{Count: 2}).declinable() {
+	if (ArchiveFromHand{Amount: 2}).declinable() {
 		t.Error("a multi-count ArchiveFromHand should keep its own cycle, not be declinable")
 	}
 
@@ -283,7 +311,7 @@ func TestMayDeclinableArchiveFromHand(t *testing.T) {
 func TestArchivesOfferedOnChooseHouse(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	a := g.AddToHand(testCreature("a", 1), 0)
-	(ArchiveFromHand{Count: 1}).Resolve(&EffectContext{Resolver: g, Controller: 0})
+	(ArchiveFromHand{Amount: 1}).Resolve(&EffectContext{Resolver: g, Controller: 0})
 	if g.State.Archives[0].Count != 1 {
 		t.Fatalf("setup: archives count = %d, want 1", g.State.Archives[0].Count)
 	}
@@ -309,7 +337,7 @@ func TestArchivesOfferedOnChooseHouse(t *testing.T) {
 func TestArchivesDeclinedOnChooseHouse(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.AddToHand(testCreature("a", 1), 0)
-	(ArchiveFromHand{Count: 1}).Resolve(&EffectContext{Resolver: g, Controller: 0})
+	(ArchiveFromHand{Amount: 1}).Resolve(&EffectContext{Resolver: g, Controller: 0})
 	g.SetChooser(0, optionPicker{idx: 1}) // decline the offer
 
 	g.StartTurn(0)
@@ -328,15 +356,15 @@ func TestArchivesDeclinedOnChooseHouse(t *testing.T) {
 // matching the type and house filters are offered, the effect reports whether it
 // archived anything, and the text reads as the reveal it is.
 func TestArchiveFromHandFiltered(t *testing.T) {
-	e := ArchiveFromHand{Count: 1, Type: Creature, House: Mars, Revealed: true}
+	e := ArchiveFromHand{Amount: 1, Type: Creature, House: Mars, Revealed: true}
 	want := "reveal a Mars creature from your hand and archive it"
 	if e.Text() != want {
 		t.Errorf("text = %q, want %q", e.Text(), want)
 	}
-	if got := (ArchiveFromHand{Count: 2}).Text(); got != "archive 2 cards from your hand" {
+	if got := (ArchiveFromHand{Amount: 2}).Text(); got != "archive 2 cards from your hand" {
 		t.Errorf("plain plural text = %q", got)
 	}
-	if got := (ArchiveFromHand{Count: 1, Type: Artifact}).Text(); got != "archive an artifact from your hand" {
+	if got := (ArchiveFromHand{Amount: 1, Type: Artifact}).Text(); got != "archive an artifact from your hand" {
 		t.Errorf("artifact text = %q", got)
 	}
 

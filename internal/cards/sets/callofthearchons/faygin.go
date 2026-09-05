@@ -21,6 +21,9 @@ var Faygin = card.New(
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),
+	card.Connects(
+		card.Pull(Urchin, 2),
+	),
 	card.WithAbility(
 		card.Trigger.Reap, card.ReturnNamedToHand{Name: "Urchin"}),
 )

@@ -17,5 +17,5 @@ var LibraryOfTheDamned = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 76),
 	card.WithTraits(card.Traits.Location),
-	card.WithAbility(card.Trigger.Action, card.ArchiveFromHand{Count: 1}),
+	card.WithAbility(card.Trigger.Action, card.ArchiveFromHand{Amount: 1}),
 )

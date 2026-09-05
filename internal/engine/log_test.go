@@ -81,6 +81,8 @@ func TestLogEntryText(t *testing.T) {
 		// Creatures and cards in play.
 		{CreatureReadied{Creature: 2}, "Card2 is readied"},
 		{CreatureGainedKeyword{Creature: 2, Keyword: Skirmish}, "Card2 gains skirmish"},
+		{CreatureGainedStats{Creature: 2, Armor: 1}, "Card2 gains +1 armor"},
+		{CreatureGainedStats{Creature: 2, Power: 2, Armor: 2}, "Card2 gains +2 power and +2 armor"},
 		{CreatureConsideredFlank{Creature: 2}, "Card2 is considered a flank creature"},
 		{CreatureExhausted{Creature: 2}, "Card2 is exhausted"},
 		{CreatureStunned{Creature: 2, By: 2}, "Card2 is stunned"},

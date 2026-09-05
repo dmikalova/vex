@@ -270,3 +270,13 @@ func TestNeighborsOfThis(t *testing.T) {
 		t.Errorf("key cost text = %q, want %q", got, want)
 	}
 }
+
+func TestFixed(t *testing.T) {
+	// Fixed yields its constant regardless of game state and leads no clause.
+	if got := Fixed(3).Value(nil); got != 3 {
+		t.Errorf("Fixed value = %d, want 3", got)
+	}
+	if got := Fixed(3).CountText(); got != "" {
+		t.Errorf("Fixed count text = %q, want empty", got)
+	}
+}

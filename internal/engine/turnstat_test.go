@@ -65,6 +65,24 @@ func TestForgedKeyCondition(t *testing.T) {
 	}
 }
 
+func TestEnemyCreatureDestroyedCondition(t *testing.T) {
+	c := EnemyCreatureDestroyed{}
+	if got := c.CondText(); got != "if an enemy creature has been destroyed this turn" {
+		t.Errorf("CondText = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	if c.Met(ctx) {
+		t.Error("no creature destroyed yet, condition should be unmet")
+	}
+
+	g.State.TurnHistory[0][EnemyCreaturesDestroyed] = 1
+	if !c.Met(ctx) {
+		t.Error("an enemy creature destroyed this turn should meet the condition")
+	}
+}
+
 // TestTurnCount covers the shared count over a turn-history tally, in both the
 // "for each" and the "if" rendering.
 func TestTurnCount(t *testing.T) {

@@ -8,20 +8,6 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 ### Current focus
 
-Typed rulebook registry (ADR 0018):
-
-- DEFERRED — classifying effects (RuleBearing/Composition/Implementation) and
-  enforcing effect completeness (ADR 0018 exempts effects "until that
-  classification exists"; assigned to ADR 0019). Needs an effect-type enumeration
-  that does not yet exist.
-- DEFERRED — extending completeness to turn/combat steps. Needs first-class
-  turn/combat step values, not a parallel list invented for the test; the current
-  `Phase` enum mixes implementation-only phases.
-
-Rules-voice text passes (no behavior change):
-
-- Code-comments migration (ADR 0020) — staged package-by-package. The resource-spelling sweep is DONE: the only prose `Aember` in a comment (effect_aember.go's resolveGate) is now `Æmber`; the remaining `Aember` in comments are Go symbol names (`Aember` method/field), card names (`Irradiated Aember`), or generated stub source-text, which correctly keep the ASCII form. The broader plain-voice comment rewrite continues per package.
-
 ### Next focus
 
 - grill me on image generation. image generation should adapt with upgrades and other constant abilities

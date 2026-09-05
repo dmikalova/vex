@@ -21,7 +21,7 @@ var MartiansMakeBadAllies = card.New(
 			card.PurgeEachFromHand{
 				Player:      card.Controller,
 				Type:        card.Type.Creature,
-				ExceptHouse: card.House.Mars,
+				ExceptHouse: card.House.Self,
 			},
 			card.GainAember{
 				Player: card.Controller,

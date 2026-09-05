@@ -228,6 +228,10 @@ type CreatureResolver interface {
 	// ConsiderFlank makes one creature count as a flank creature for the remainder
 	// of the turn regardless of its position (Spectral Tunneler).
 	ConsiderFlank(id LocalID)
+	// GainStats gives one creature power and/or armor for the remainder of the turn
+	// (Abond the Armorsmith grants +1 armor). Added armor also tops up the armor
+	// left to absorb damage this turn.
+	GainStats(id LocalID, power, armor int)
 }
 
 // CombatResolver resolves damage, destruction, and the fights, reaps, and actions
@@ -304,6 +308,9 @@ type ZoneResolver interface {
 	// ArchiveTopOfDeck moves the top card of a player's deck to their archives,
 	// reporting whether a card was available.
 	ArchiveTopOfDeck(player int) bool
+	// ArchiveTopOfDiscard moves the top card of a player's discard pile to their
+	// archives, reporting whether a card was available.
+	ArchiveTopOfDiscard(player int) bool
 	// DiscardTopOfDeck moves the top card of a player's deck to their discard pile,
 	// returning that card and whether one was available.
 	DiscardTopOfDeck(player int) (LocalID, bool)
@@ -523,6 +530,22 @@ func (g *Game) ConsiderFlank(id LocalID) {
 	g.record(CreatureConsideredFlank{Creature: id})
 }
 
+// GainStats gives one creature power and/or armor for the remainder of the turn
+// (Abond the Armorsmith). The added armor also tops up the armor still available
+// to absorb damage this turn, so the extra points can stop damage right away.
+func (g *Game) GainStats(id LocalID, power, armor int) {
+	c := g.stateOf(id)
+	if c == nil {
+		return
+	}
+	c.TempPowerBonus += int16(power)
+	c.TempArmorBonus += int16(armor)
+	if armor > 0 {
+		c.ArmorRemaining += int16(armor)
+	}
+	g.record(CreatureGainedStats{Creature: id, Power: power, Armor: armor})
+}
+
 // ForgeKeyAtExtraCost has a player forge one key at its current cost plus extra.
 func (g *Game) ForgeKeyAtExtraCost(player, extra int) { g.forgeKeyAtExtraCost(player, extra) }
 
@@ -719,6 +742,9 @@ func (g *Game) ArchiveFromDiscard(owner int, id LocalID) { g.archiveFromDiscard(
 
 // ArchiveTopOfDeck moves the top card of a player's deck to their archives.
 func (g *Game) ArchiveTopOfDeck(player int) bool { return g.archiveTopOfDeck(player) }
+
+// ArchiveTopOfDiscard moves the top card of a player's discard pile to their archives.
+func (g *Game) ArchiveTopOfDiscard(player int) bool { return g.archiveTopOfDiscard(player) }
 
 // DiscardArchives moves all of a player's archived cards to their discard pile.
 func (g *Game) DiscardArchives(owner int) { g.discardArchives(owner) }

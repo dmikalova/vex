@@ -58,6 +58,20 @@ func (g *Game) archiveTopOfDeck(player int) bool {
 	return true
 }
 
+// archiveTopOfDiscard moves the top card of a player's discard pile — the most
+// recently discarded, at the end of the list — to their archives, reporting
+// whether a card was available to archive.
+func (g *Game) archiveTopOfDiscard(player int) bool {
+	discard := &g.State.Discard[player]
+	if discard.Count == 0 {
+		return false
+	}
+	id := discard.removeAt(int(discard.Count) - 1)
+	g.State.Archives[player].add(id)
+	g.record(CardArchivedFromDiscard{Player: player, Card: id})
+	return true
+}
+
 // discardArchives moves all of a player's archived cards to their discard pile.
 // The active player performs the discard, so they choose the order when it is
 // their own archives but cannot when it is an opponent's — those enter the

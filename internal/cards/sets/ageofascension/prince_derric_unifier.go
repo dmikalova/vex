@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Human • Knight
 //
-//	Play: If you control creatures from 3 different houses, gain 3 Æmber.
+//	Play: If you control creatures from 3 or more houses, gain 3 Æmber.
 var PrinceDerricUnifier = card.New(
 	"Prince Derric, Unifier",
 	card.House.Sanctum,
@@ -23,7 +23,7 @@ var PrinceDerricUnifier = card.New(
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
-			Cond: card.ControlsCreaturesOfHouses{Count: 3},
+			Cond: card.ControlsCreaturesOfHouses{Amount: 3},
 			Then: card.GainAember{
 				Player: card.Controller,
 				Amount: 3,

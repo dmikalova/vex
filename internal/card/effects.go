@@ -66,6 +66,9 @@ type (
 	// LoseArmor takes all the remaining armor off each creature it targets, and
 	// tallies it for a following ArmorLostThisWay.
 	LoseArmor = engine.LoseArmor
+	// GainStats gives each targeted creature power and/or armor for the remainder
+	// of the turn (Abond the Armorsmith grants +1 armor).
+	GainStats = engine.GainStats
 )
 
 // Destruction and purging.
@@ -114,7 +117,7 @@ type (
 	Draw = engine.Draw
 	// PutFromPlay takes each targeted card out of play into a chosen Destination.
 	PutFromPlay = engine.PutFromPlay
-	// PutChosen moves Count cards the controller chooses into a Destination,
+	// PutChosen moves Amount cards the controller chooses into a Destination,
 	// declinably when UpTo is set.
 	PutChosen = engine.PutChosen
 	// PutFromDiscard moves a chosen card from your discard pile to a Destination.
@@ -134,15 +137,17 @@ type (
 	ArchiveFromHand = engine.ArchiveFromHand
 	// ArchiveFromDiscard moves a chosen card from the discard pile into archives.
 	ArchiveFromDiscard = engine.ArchiveFromDiscard
-	// ArchiveTopOfDeck moves the top Count cards of your deck into archives.
+	// ArchiveTopOfDeck moves the top Amount cards of your deck into archives.
 	ArchiveTopOfDeck = engine.ArchiveTopOfDeck
+	// ArchiveTopOfDiscard moves the top Amount cards of your discard pile into archives.
+	ArchiveTopOfDiscard = engine.ArchiveTopOfDiscard
 	// ArchiveFromPlay moves each targeted in-play card into its owner's archives.
 	ArchiveFromPlay = engine.ArchiveFromPlay
 	// DiscardArchives moves all of a player's archived cards into their discard pile.
 	DiscardArchives = engine.DiscardArchives
 	// DiscardHand discards cards from a player's hand.
 	DiscardHand = engine.DiscardHand
-	// DiscardFromHand has the controller choose and discard Count cards.
+	// DiscardFromHand has the controller choose and discard Amount cards.
 	DiscardFromHand = engine.DiscardFromHand
 	// DiscardRandomFromHand discards one uniformly random card from a player's hand.
 	DiscardRandomFromHand = engine.DiscardRandomFromHand
@@ -164,7 +169,7 @@ type (
 	PlayRevealedCard = engine.PlayRevealedCard
 	// PlayTopOfDeck plays the top card of the controller's deck outright.
 	PlayTopOfDeck = engine.PlayTopOfDeck
-	// LookAtTop looks at the top Count cards of your deck, puts one into your
+	// LookAtTop looks at the top Amount cards of your deck, puts one into your
 	// hand, and discards the others.
 	LookAtTop = engine.LookAtTop
 	// (From), ignoring the active house. Set Except to make House the house that
@@ -277,7 +282,7 @@ type (
 	CountIs = engine.CountIs
 	// ControlsMoreCreatures is met while you control more creatures than the opponent.
 	ControlsMoreCreatures = engine.ControlsMoreCreatures
-	// ControlsCreaturesOfHouses is met while your creatures span at least Count houses.
+	// ControlsCreaturesOfHouses is met while your creatures span at least Amount houses.
 	ControlsCreaturesOfHouses = engine.ControlsCreaturesOfHouses
 	// FirstCreaturePlayedThisTurn is met when the card in context is the first
 	// creature played this turn — a once-per-turn charge (Speed Sigil).
@@ -325,6 +330,9 @@ var (
 // Counts feed an effect's Per, scaling it by a board quantity; InPlay doubles as
 // a Condition.
 type (
+	// Fixed is a Count of a constant number, for a Times that does not scale with
+	// the board (RepeatedFight fights a fixed number of times).
+	Fixed = engine.Fixed
 	// InPlay counts (or gates on) the cards a player has in play matching its filters.
 	InPlay = engine.InPlay
 	// CardsPlayed counts the cards of a house a player has played this turn.
@@ -339,6 +347,8 @@ type (
 	TurnCount = engine.TurnCount
 	// ForgedKey gates on whether a player forged a key this turn or their previous one.
 	ForgedKey = engine.ForgedKey
+	// EnemyCreatureDestroyed is met once an enemy creature has been destroyed this turn.
+	EnemyCreatureDestroyed = engine.EnemyCreatureDestroyed
 	// ExcessCreatures counts how many more creatures one player controls than the other.
 	ExcessCreatures = engine.ExcessCreatures
 	// CardsInArchives counts the cards in a player's archives.

@@ -20,7 +20,7 @@ var Hecatomb = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.Destroy{
-				Target: card.Target.EachCreature.OfHouse(card.House.Dis),
+				Target: card.Target.EachCreature.OfHouse(card.House.Self),
 			},
 			card.GainAember{
 				Player: card.EachPlayer,

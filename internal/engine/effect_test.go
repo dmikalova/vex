@@ -91,7 +91,7 @@ func TestRequiredTargetValidation(t *testing.T) {
 	}{
 		{"DealDamage", DealDamage{Amount: 1}, DealDamage{Amount: 1, Target: this}},
 		{"Destroy", Destroy{}, Destroy{Target: this}},
-		{"Exalt", Exalt{Times: 1}, Exalt{Times: 1, Target: this}},
+		{"Exalt", Exalt{Amount: 1}, Exalt{Amount: 1, Target: this}},
 		{"Exhaust", Exhaust{}, Exhaust{Target: this}},
 		{"Ready", Ready{}, Ready{Target: this}},
 		{"ReadyIfFirstUse", ReadyIfFirstUse{}, ReadyIfFirstUse{Target: this}},

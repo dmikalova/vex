@@ -20,5 +20,5 @@ var AncientYurk = card.New(
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(
-		card.Trigger.Play, card.DiscardFromHand{Count: 3}),
+		card.Trigger.Play, card.DiscardFromHand{Amount: 3}),
 )

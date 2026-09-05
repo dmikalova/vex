@@ -5,7 +5,7 @@ import "testing"
 // TestRepeatedFightText covers the rendered phrase and the validation of its
 // bounds.
 func TestRepeatedFightText(t *testing.T) {
-	e := RepeatedFight{Times: 3, Target: Target{Kind: TargetChosenFriendlyCreature}}
+	e := RepeatedFight{Times: Fixed(3), Target: Target{Kind: TargetChosenFriendlyCreature}}
 	want := "ready and fight with a friendly creature 3 times, each time against " +
 		"a different enemy creature. Resolve these fights one at a time"
 	if got := e.Text(); got != want {
@@ -15,7 +15,7 @@ func TestRepeatedFightText(t *testing.T) {
 	if err := e.validate(); err != nil {
 		t.Errorf("validate = %v, want nil", err)
 	}
-	if err := (RepeatedFight{Times: 3}).validate(); err == nil {
+	if err := (RepeatedFight{Times: Fixed(3)}).validate(); err == nil {
 		t.Error("a targetless RepeatedFight should not validate")
 	}
 	if err := (RepeatedFight{Target: e.Target}).validate(); err == nil {
@@ -35,7 +35,7 @@ func TestRepeatedFightNeverFightsTheSameEnemyTwice(t *testing.T) {
 	}
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	RepeatedFight{Times: 3, Target: Target{Kind: TargetChosenFriendlyCreature}}.
+	RepeatedFight{Times: Fixed(3), Target: Target{Kind: TargetChosenFriendlyCreature}}.
 		Resolve(ctx)
 
 	if len(g.Battleline(1)) != 0 {
@@ -57,7 +57,7 @@ func TestRepeatedFightStopsWithoutAnEnemy(t *testing.T) {
 	g.State.Cards[hero].Exhausted = true
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	RepeatedFight{Times: 3, Target: Target{Kind: TargetChosenFriendlyCreature}}.
+	RepeatedFight{Times: Fixed(3), Target: Target{Kind: TargetChosenFriendlyCreature}}.
 		Resolve(ctx)
 
 	if !g.State.Cards[hero].Exhausted {
@@ -72,7 +72,7 @@ func TestRepeatedFightStopsWithoutACreature(t *testing.T) {
 	foe := g.AddToBattleline(testCreature("foe", 1), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	RepeatedFight{Times: 3, Target: Target{Kind: TargetChosenFriendlyCreature}}.
+	RepeatedFight{Times: Fixed(3), Target: Target{Kind: TargetChosenFriendlyCreature}}.
 		Resolve(ctx)
 
 	if g.Damage(foe) != 0 {
@@ -90,7 +90,7 @@ func TestRepeatedFightStopsWhenDeclined(t *testing.T) {
 	g.SetChooser(0, orderRejectChooser{})
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	RepeatedFight{Times: 2, Target: Target{Kind: TargetChosenFriendlyCreature}}.
+	RepeatedFight{Times: Fixed(2), Target: Target{Kind: TargetChosenFriendlyCreature}}.
 		Resolve(ctx)
 
 	if len(g.Battleline(1)) != 2 {

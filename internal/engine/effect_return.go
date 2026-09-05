@@ -66,14 +66,14 @@ func (e PutFromPlay) resolveGate(ctx *EffectContext) bool {
 	return moved
 }
 
-// PutChosen moves Count cards the controller chooses from Target's pool into a
+// PutChosen moves Amount cards the controller chooses from Target's pool into a
 // destination zone, one at a time — Lost in the Woods shuffles 2 friendly and 2
 // enemy creatures into their owners' decks. UpTo makes the choice declinable, the
 // "up to 3 artifacts" of Grasping Vines; without it the controller must choose as
 // many as the pool allows. It is the bounded-choice counterpart to PutFromPlay,
 // which moves every card the Target selects.
 type PutChosen struct {
-	Count       int
+	Amount      int
 	UpTo        bool
 	Target      Target
 	Destination Destination
@@ -84,7 +84,7 @@ func (e PutChosen) validate() error {
 	if !e.Target.valid() {
 		return errUnsetTarget("PutChosen")
 	}
-	if e.Count <= 0 {
+	if e.Amount <= 0 {
 		return fmt.Errorf("PutChosen: Count must be positive")
 	}
 	if !e.Destination.movable() {
@@ -97,17 +97,17 @@ func (e PutChosen) validate() error {
 // or "shuffle 2 friendly creatures into their owners' decks".
 func (e PutChosen) Text() string {
 	noun := singularNoun(e.Target.Text())
-	if e.Count == 1 {
+	if e.Amount == 1 {
 		return e.Destination.clause(indefinite(noun), false)
 	}
-	quantity := fmt.Sprintf("%d %ss", e.Count, noun)
+	quantity := fmt.Sprintf("%d %ss", e.Amount, noun)
 	if e.UpTo {
 		quantity = "up to " + quantity
 	}
 	return e.Destination.clause(quantity, true)
 }
 
-// Resolve moves Count cards one at a time. An UpTo choice is declinable so the
+// Resolve moves Amount cards one at a time. An UpTo choice is declinable so the
 // controller can stop early; either way it stops when the pool runs out. Shuffles
 // into a deck are batched so several creatures moved at once narrate as one
 // grouped line per owner attributed to this ability's source.
@@ -128,7 +128,7 @@ func (e PutChosen) resolveMoves(ctx *EffectContext) {
 	if e.UpTo {
 		choose = ctx.ChooseCardOptional
 	}
-	for i := 0; i < e.Count; i++ {
+	for i := 0; i < e.Amount; i++ {
 		chosen, ok := choose("Choose a card to move", e.Target.Select(ctx))
 		if !ok {
 			return

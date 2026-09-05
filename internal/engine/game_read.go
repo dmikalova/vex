@@ -55,6 +55,7 @@ func (g *Game) Power(id LocalID) int {
 		p += g.staticOn(id, up).PowerBonus
 	}
 	p += int(core.PowerCounters)
+	p += int(core.TempPowerBonus)
 	p += g.constantBonus(id, func(c ConstantAbility) int { return c.PowerBonus })
 	return p
 }
@@ -69,6 +70,7 @@ func (g *Game) armor(id LocalID) int {
 	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
 		a += g.staticOn(id, up).ArmorBonus
 	}
+	a += int(g.State.Cards[id].TempArmorBonus)
 	a += g.constantBonus(id, func(c ConstantAbility) int { return c.ArmorBonus })
 	return a
 }
