@@ -270,6 +270,7 @@ func (g *Game) mitigateDamage(id LocalID, amount int, ignoreArmor bool) int {
 // single simultaneous batch (see dealDamage). It is exported because effects
 // build damage batches and pass them through the Resolver.
 type DamageTarget struct {
+	// ID is the creature; Amount is the damage dealt to it in the batch.
 	ID     LocalID
 	Amount int
 	// IgnoreArmor makes this instance of damage bypass the creature's armor.

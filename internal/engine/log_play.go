@@ -9,6 +9,8 @@ import "fmt"
 // CardPlayedToBattleline narrates a creature entering the battleline on a flank,
 // or — when a Deploy creature lands between two others — into the battleline.
 type CardPlayedToBattleline struct {
+	// Player is who played it, Card is the creature, and FlankLeft is which flank it
+	// entered on.
 	Player    int
 	Card      LocalID
 	FlankLeft bool

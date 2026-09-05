@@ -11,6 +11,7 @@ type Phase uint8
 
 // The phases of a turn, in the order they run.
 const (
+	// phaseUnset is the invalid zero value: a game between turns is in no phase.
 	phaseUnset Phase = iota
 	// PhaseStartOfTurn resolves "at the start of your turn" abilities, before the
 	// active player forges.

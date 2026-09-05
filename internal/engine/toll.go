@@ -21,6 +21,7 @@ type Toll struct {
 type TollAction uint8
 
 const (
+	// tollActionUnset is the invalid zero value; a toll must name its action.
 	tollActionUnset TollAction = iota
 	// TollPlayArtifact charges the opponent to play an artifact.
 	TollPlayArtifact

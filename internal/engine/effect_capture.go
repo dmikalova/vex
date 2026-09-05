@@ -9,12 +9,16 @@ import (
 // it counts for no player until that creature leaves play, at which point it goes
 // to the pool of the capturing creature's controller's opponent. A creature can
 // only capture what the Source pool holds. Target is the creature that captures
-// (this creature by default); Source is the pool the Æmber comes from; Per repeats
+// (this creature by default); Source is the pool the Æmber comes from. The two
+// count axes are distinct: Per scales how much one capturer takes (Yxili Marauder
+// captures 1 per friendly ready Mars creature onto itself), while Times repeats
 // the capture, choosing a fresh Target each time (Hypnotic Command captures once
 // for each friendly Mars creature).
 type CaptureAember struct {
-	// Amount is the fixed Æmber to capture.
+	// Amount is the fixed Æmber to capture; Per scales it "for each ...".
 	Amount int
+	// Per multiplies the Amount one capturer takes by a running count.
+	Per Count
 	// All captures the whole Source pool instead of a fixed Amount.
 	All bool
 	// By captures a share of the Source pool instead of a fixed Amount
@@ -24,10 +28,10 @@ type CaptureAember struct {
 	Target Target
 	// Source is the pool the Æmber is taken from.
 	Source Player
-	// Per repeats the capture, choosing a fresh Target each time.
-	Per Count
+	// Times repeats the capture, choosing a fresh Target each time.
+	Times Count
 	// Distinct bars a creature an earlier repetition already picked from being
-	// picked again, so a Per that repeats N times spreads the captures across N
+	// picked again, so a Times that repeats N times spreads the captures across N
 	// different creatures (Unguarded Camp).
 	Distinct bool
 }
@@ -40,11 +44,11 @@ func (e CaptureAember) validate() error {
 	if e.Source == playerUnset {
 		return errUnsetPlayer("CaptureAember")
 	}
-	if e.Amount != 0 && e.By != nil {
-		return fmt.Errorf("CaptureAember: set Amount or By, not both (got Amount=%d)", e.Amount)
+	if err := errAmountOr("CaptureAember", "By", e.Amount, e.By != nil); err != nil {
+		return err
 	}
-	if e.Distinct && e.Per == nil {
-		return fmt.Errorf("CaptureAember: Distinct is meaningless without a Per to repeat")
+	if e.Distinct && e.Times == nil {
+		return fmt.Errorf("CaptureAember: Distinct is meaningless without a Times to repeat")
 	}
 	if e.Source == ItsOpponent && (e.All || e.By != nil) {
 		return fmt.Errorf(
@@ -66,17 +70,21 @@ func (e CaptureAember) Text() string {
 	switch {
 	case e.All:
 		body = fmt.Sprintf("%s captures all %s Æmber", capturer, e.poolPossessive())
-	case e.By != nil:
+	default:
 		body = fmt.Sprintf(
 			"%s captures %s from %s",
 			capturer,
-			e.By.object(e.poolPossessive()),
+			aemberObject(e.Amount, e.By, e.poolPossessive()),
 			e.fromText(),
 		)
-	default:
-		body = fmt.Sprintf("%s captures %d Æmber from %s", capturer, e.Amount, e.fromText())
 	}
-	body = forEach(e.Per, body)
+	// A card sets at most one count axis; whichever is present leads the "for
+	// each" clause. Per and Times render the same phrasing but differ in resolution.
+	count := e.Times
+	if count == nil {
+		count = e.Per
+	}
+	body = forEach(count, body)
 	if e.Distinct {
 		body += fmt.Sprintf(
 			". Each creature cannot capture more than %d Æmber this way",
@@ -117,12 +125,13 @@ func (e CaptureAember) fromText() string {
 }
 
 // Resolve moves Æmber from the Source pool onto each capturing creature, repeating
-// Per times and choosing a fresh Target each time. Capturing stops early if the
-// Target selects nothing (no eligible creature, or the choice is declined).
+// Times times and choosing a fresh Target each time, and scaling one capturer's
+// take by Per. Capturing stops early if the Target selects nothing (no eligible
+// creature, or the choice is declined).
 func (e CaptureAember) Resolve(ctx *EffectContext) {
 	reps := 1
-	if e.Per != nil {
-		reps = e.Per.Value(ctx)
+	if e.Times != nil {
+		reps = e.Times.Value(ctx)
 	}
 	var captured []LocalID
 	for i := 0; i < reps; i++ {
@@ -138,15 +147,14 @@ func (e CaptureAember) Resolve(ctx *EffectContext) {
 			}
 			captured = append(captured, id)
 			pool := e.sourcePool(ctx, id)
-			amt := e.Amount
-			switch {
-			case e.All:
-				amt = ctx.Resolver.Aember(pool)
-			case e.By != nil:
-				amt = e.By.lose(ctx.Resolver.Aember(pool))
+			// All captures the whole pool, which the AllAember share already expresses.
+			by := e.By
+			if e.All {
+				by = AllAember
 			}
-			amt = min(amt, ctx.Resolver.Aember(pool))
-			ctx.Resolver.SetAember(pool, ctx.Resolver.Aember(pool)-amt)
+			held := ctx.Resolver.Aember(pool)
+			amt := min(poolAmount(scaled(e.Amount, e.Per, ctx), by, nil, ctx, held), held)
+			ctx.Resolver.SetAember(pool, held-amt)
 			ctx.Resolver.AddAmberOn(id, amt)
 			ctx.Resolver.Record(AemberCaptured{Creature: id, Amount: amt})
 		}
@@ -171,4 +179,49 @@ func (e CaptureAember) sourcePool(ctx *EffectContext, capturer LocalID) int {
 		return 1 - ctx.Resolver.Controller(capturer)
 	}
 	return ctx.PlayerFor(e.Source)
+}
+
+// MoveAemberToCommonSupply removes Æmber sitting on a creature and returns it to the
+// common supply, the reverse of a capture — Aubade the Grim discards one of its
+// own captured Æmber each time it reaps. A creature holding fewer than Amount is
+// simply emptied rather than driven negative.
+type MoveAemberToCommonSupply struct {
+	// Amount is the Æmber to remove from each target.
+	Amount int
+	// Target is the creature the Æmber is removed from; the zero value is this
+	// creature.
+	Target Target
+}
+
+// validate requires an explicit Target and a positive Amount.
+func (e MoveAemberToCommonSupply) validate() error {
+	if !e.Target.valid() {
+		return errUnsetTarget("MoveAemberToCommonSupply")
+	}
+	if e.Amount <= 0 {
+		return fmt.Errorf("MoveAemberToCommonSupply: Amount must be positive")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "move 1 Æmber from {self} to the common supply".
+func (e MoveAemberToCommonSupply) Text() string {
+	target := SelfName
+	if e.Target.Kind != TargetThisCreature {
+		target = e.Target.Text()
+	}
+	return fmt.Sprintf("move %d Æmber from %s to the common supply", e.Amount, target)
+}
+
+// Resolve removes up to Amount Æmber from each target, returning it to the common
+// supply. A target holding none is skipped.
+func (e MoveAemberToCommonSupply) Resolve(ctx *EffectContext) {
+	for _, id := range e.Target.Select(ctx) {
+		remove := min(e.Amount, ctx.Resolver.AmberOn(id))
+		if remove <= 0 {
+			continue
+		}
+		ctx.Resolver.AddAmberOn(id, -remove)
+		ctx.Resolver.Record(AemberMovedToCommonSupply{Creature: id, Amount: remove})
+	}
 }

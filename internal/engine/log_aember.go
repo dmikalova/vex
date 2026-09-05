@@ -36,6 +36,8 @@ func (e AemberLost) Text(n Namer) string {
 // Æmber from Player 1") rather than the controller's; HasSource is false for a
 // steal with no card to credit, which falls back to the player.
 type AemberStolen struct {
+	// Player is who stole, From is who lost, Amount is what was actually taken, and
+	// Source is the card credited (see HasSource).
 	Player int
 	From   int
 	Amount int
@@ -65,6 +67,18 @@ type AemberCaptured struct {
 // Text renders the Æmber a creature captured.
 func (e AemberCaptured) Text(n Namer) string {
 	return fmt.Sprintf("%s captures %d Æmber", n.Name(e.Creature), e.Amount)
+}
+
+// AemberMovedToCommonSupply narrates Æmber removed from a creature and returned
+// to the common supply, the reverse of a capture.
+type AemberMovedToCommonSupply struct {
+	Creature LocalID
+	Amount   int
+}
+
+// Text renders the Æmber a creature moved to the common supply.
+func (e AemberMovedToCommonSupply) Text(n Namer) string {
+	return fmt.Sprintf("%s moves %d Æmber to the common supply", n.Name(e.Creature), e.Amount)
 }
 
 // AemberCapturedInsteadOfGain narrates a gain that a capturing effect

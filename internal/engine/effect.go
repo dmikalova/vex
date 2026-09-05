@@ -55,6 +55,17 @@ func errUnsetDuration(effect string) error {
 	return fmt.Errorf("%s: duration must be set", effect)
 }
 
+// errAmountOr rejects an effect that sets both a fixed Amount and an alternative
+// way to say the same magnitude — a By share of a pool, or an All/Fully
+// whole-quantity flag. The two are mutually exclusive: alt names the alternative
+// ("By", "All", "Fully") and altSet reports whether it is set.
+func errAmountOr(effect, alt string, amount int, altSet bool) error {
+	if amount != 0 && altSet {
+		return fmt.Errorf("%s: set Amount or %s, not both (got Amount=%d)", effect, alt, amount)
+	}
+	return nil
+}
+
 // EffectContext carries the state an effect needs while resolving. It exposes the
 // game only through a Resolver, so an effect can inspect and change the game only
 // via that interface — never by reaching into the state directly. Cards are

@@ -49,6 +49,7 @@ type EconomyReader interface {
 	AemberProtected(player int) bool
 	// Keys returns the number of keys a player has forged.
 	Keys(player int) int
+	// TurnHistory returns a player's running tally for a TurnStat.
 	TurnHistory(player int, of TurnStat) int
 }
 
@@ -172,6 +173,7 @@ type EconomyResolver interface {
 	RaiseKeyCostThisTurn(player, amount int, source LocalID)
 	// ForgeKeyFree has a player forge one key without paying its current cost.
 	ForgeKeyFree(player int)
+	// UnforgeKey takes one forged key back off a player (Key Hammer).
 	UnforgeKey(player int)
 	// GainChains adds chains to a player, penalizing their future draws.
 	GainChains(controller, amount int)

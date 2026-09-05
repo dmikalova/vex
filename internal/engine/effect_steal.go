@@ -34,8 +34,8 @@ func (e StealAember) sides(ctx *EffectContext) (player, opponent int) {
 // validate rejects a StealAember that sets both a fixed Amount and a By share
 // (the two are different ways to say how much to steal), then checks the Or guard.
 func (e StealAember) validate() error {
-	if e.Amount != 0 && e.By != nil {
-		return fmt.Errorf("StealAember: set Amount or By, not both (got Amount=%d)", e.Amount)
+	if err := errAmountOr("StealAember", "By", e.Amount, e.By != nil); err != nil {
+		return err
 	}
 	if e.Or.set() && e.By != nil {
 		return fmt.Errorf("StealAember: Or and By both set the amount; use one")
@@ -50,7 +50,7 @@ func (e StealAember) Text() string {
 	if e.By != nil {
 		// A share is measured against the opponent's pool, so name whose pool it is:
 		// "all but 6 Æmber" on its own does not say.
-		object = e.By.object("your opponent's") + " from your opponent"
+		object = aemberObject(e.Amount, e.By, "your opponent's") + " from your opponent"
 	}
 	verb := "steal "
 	if e.Player == Opponent {
@@ -90,14 +90,7 @@ func (e StealAember) resolveGate(ctx *EffectContext) bool {
 }
 
 // amount is how much to steal: the By share of the opponent's pool when set,
-// otherwise the fixed Amount scaled by Per.
+// otherwise the fixed Amount scaled by Per, with Or choosing the base.
 func (e StealAember) amount(ctx *EffectContext, opp int) int {
-	if e.By != nil {
-		return e.By.lose(ctx.Resolver.Aember(opp))
-	}
-	base := e.Or.pick(e.Amount, ctx)
-	if e.Per != nil {
-		return base * e.Per.Value(ctx)
-	}
-	return base
+	return poolAmount(e.Or.pick(e.Amount, ctx), e.By, e.Per, ctx, ctx.Resolver.Aember(opp))
 }

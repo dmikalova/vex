@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// AubadeTheGrim
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Aubade the Grim
 //
 //	House:  Sanctum
 //	Type:   Creature
@@ -16,8 +11,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Spirit • Knight
 //
-//	Play: Capture 3A.
-//	Reap: Discard 1A from Aubade the Grim.
+//	Play: Aubade the Grim captures 3 Æmber from your opponent.
+//	Reap: Move 1 Æmber from Aubade the Grim to the common supply.
 var AubadeTheGrim = card.New(
 	"Aubade the Grim",
 	card.House.Sanctum,
@@ -27,5 +22,15 @@ var AubadeTheGrim = card.New(
 	card.WithPower(4),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Spirit, card.Traits.Knight),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.CaptureAember{
+			Amount: 3,
+			Target: card.Target.This,
+			Source: card.Opponent,
+		}),
+	card.WithAbility(
+		card.Trigger.Reap, card.MoveAemberToCommonSupply{
+			Amount: 1,
+			Target: card.Target.This,
+		}),
 )

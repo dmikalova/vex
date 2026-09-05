@@ -85,13 +85,7 @@ func (e Heal) validate() error {
 	if !e.Target.valid() {
 		return errUnsetTarget("Heal")
 	}
-	if e.Fully && e.Amount != 0 {
-		return fmt.Errorf(
-			"heal: set Amount or Fully, not both (got Amount=%d, Fully=true)",
-			e.Amount,
-		)
-	}
-	return nil
+	return errAmountOr("Heal", "Fully", e.Amount, e.Fully)
 }
 
 // CreaturesHealed counts the creatures the most recent Heal actually healed — the

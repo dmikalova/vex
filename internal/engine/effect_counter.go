@@ -45,10 +45,7 @@ func (e AddPowerCounter) counters() string {
 
 // Resolve places the counters on each selected creature, scaled by Per.
 func (e AddPowerCounter) Resolve(ctx *EffectContext) {
-	amount := e.Amount
-	if e.Per != nil {
-		amount *= e.Per.Value(ctx)
-	}
+	amount := scaled(e.Amount, e.Per, ctx)
 	for _, id := range e.Target.Select(ctx) {
 		ctx.Resolver.AddPowerCounter(id, amount)
 	}

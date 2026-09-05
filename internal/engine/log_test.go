@@ -57,6 +57,10 @@ func TestLogEntryText(t *testing.T) {
 		},
 		{AemberCaptured{Creature: 7, Amount: 3}, "Card7 captures 3 Æmber"},
 		{
+			AemberMovedToCommonSupply{Creature: 7, Amount: 1},
+			"Card7 moves 1 Æmber to the common supply",
+		},
+		{
 			AemberCapturedInsteadOfGain{Creature: 7, Player: 1, Amount: 1},
 			"Card7 captures 1 Æmber instead of P1 gaining it",
 		},

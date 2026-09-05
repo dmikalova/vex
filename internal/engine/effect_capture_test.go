@@ -21,6 +21,52 @@ func TestCaptureAemberEffect(t *testing.T) {
 	}
 }
 
+func TestMoveAemberToCommonSupplyEffect(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("aubade", 4), 0)
+	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+
+	e := MoveAemberToCommonSupply{Amount: 1, Target: Target{Kind: TargetThisCreature}}
+	if e.Text() != "move 1 Æmber from {self} to the common supply" {
+		t.Errorf("text = %q", e.Text())
+	}
+
+	e.Resolve(ctx) // nothing captured: no-op
+	if got := g.AmberOn(src); got != 0 {
+		t.Errorf("empty discard = %d, want 0", got)
+	}
+
+	g.AddAmberOn(src, 3)
+	e.Resolve(ctx)
+	if got := g.AmberOn(src); got != 2 {
+		t.Errorf("after discarding 1 of 3 = %d, want 2", got)
+	}
+
+	// Discarding more than is held empties the creature rather than going negative.
+	big := MoveAemberToCommonSupply{Amount: 5, Target: Target{Kind: TargetThisCreature}}
+	big.Resolve(ctx)
+	if got := g.AmberOn(src); got != 0 {
+		t.Errorf("over-discard = %d, want 0", got)
+	}
+
+	// A chosen target renders by its own noun rather than {self}.
+	chosen := MoveAemberToCommonSupply{Amount: 2, Target: Target{Kind: TargetChosenEnemyCreature}}
+	if chosen.Text() != "move 2 Æmber from an enemy creature to the common supply" {
+		t.Errorf("chosen text = %q", chosen.Text())
+	}
+
+	// validate rejects an unset target and a non-positive amount, accepts a valid one.
+	if err := (MoveAemberToCommonSupply{Amount: 1}).validate(); err == nil {
+		t.Error("unset target should be rejected")
+	}
+	if err := (MoveAemberToCommonSupply{Target: Target{Kind: TargetThisCreature}}).validate(); err == nil {
+		t.Error("non-positive amount should be rejected")
+	}
+	if err := e.validate(); err != nil {
+		t.Errorf("valid effect rejected: %v", err)
+	}
+}
+
 func TestCaptureAllAember(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("drumble", 2), 0)
@@ -37,6 +83,31 @@ func TestCaptureAllAember(t *testing.T) {
 	}
 	if g.Aember(1) != 0 {
 		t.Errorf("opponent aember = %d, want 0", g.Aember(1))
+	}
+}
+
+// TestCaptureAemberScaled captures once onto one creature, with Per scaling how
+// much that one capturer takes (Yxili Marauder: 1 per friendly ready Mars
+// creature), as opposed to Times repeating the capture onto fresh creatures.
+func TestCaptureAemberScaled(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(marsCreature("yxili", 2), 0)
+	g.AddToBattleline(marsCreature("ally", 3), 0) // two friendly Mars creatures -> Per = 2
+	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	g.State.Aember[1] = 5
+
+	e := CaptureAember{
+		Amount: 1,
+		Target: Target{Kind: TargetThisCreature},
+		Source: Opponent,
+		Per:    InPlay{Player: Controller, Type: Creature, House: Mars},
+	}
+	e.Resolve(ctx)
+	if got := g.AmberOn(src); got != 2 {
+		t.Errorf("captured onto self = %d, want 2 (1 x 2 Mars)", got)
+	}
+	if got := g.Aember(1); got != 3 {
+		t.Errorf("opponent aember = %d, want 3 (5 - 2)", got)
 	}
 }
 
@@ -117,7 +188,7 @@ func TestCaptureAemberValidate(t *testing.T) {
 	}
 	lone := CaptureAember{Amount: 1, Target: this, Source: Opponent, Distinct: true}
 	if err := validateEffect(lone); err == nil {
-		t.Error("Distinct without a Per should fail validation")
+		t.Error("Distinct without a Times should fail validation")
 	}
 }
 
@@ -129,7 +200,7 @@ func TestCaptureAemberDistinct(t *testing.T) {
 		Amount:   1,
 		Target:   Target{Kind: TargetChosenFriendlyCreature},
 		Source:   Opponent,
-		Per:      ExcessCreatures{Player: Controller},
+		Times:    ExcessCreatures{Player: Controller},
 		Distinct: true,
 	}
 	want := "for each creature you have in excess of your opponent, a friendly " +
@@ -176,7 +247,7 @@ func TestCaptureAemberByEnemy(t *testing.T) {
 		Amount: 1,
 		Target: Target{Kind: TargetChosenEnemyCreature},
 		Source: Opponent,
-		Per:    InPlay{Player: Controller, Type: Creature, House: Mars},
+		Times:  InPlay{Player: Controller, Type: Creature, House: Mars},
 	}
 	want := "for each friendly Mars creature, an enemy creature captures 1 Æmber from their own side"
 	if e.Text() != want {
@@ -205,7 +276,7 @@ func TestCaptureAemberByEnemyNoEnemies(t *testing.T) {
 		Amount: 1,
 		Target: Target{Kind: TargetChosenEnemyCreature},
 		Source: Opponent,
-		Per:    InPlay{Player: Controller, Type: Creature, House: Mars},
+		Times:  InPlay{Player: Controller, Type: Creature, House: Mars},
 	}
 	e.Resolve(ctx)
 	if g.Aember(1) != 2 {
@@ -226,7 +297,7 @@ func TestCaptureAemberByEnemyDeclined(t *testing.T) {
 		Amount: 1,
 		Target: Target{Kind: TargetChosenEnemyCreature},
 		Source: Opponent,
-		Per:    InPlay{Player: Controller, Type: Creature, House: Mars},
+		Times:  InPlay{Player: Controller, Type: Creature, House: Mars},
 	}
 	e.Resolve(ctx)
 	if g.Aember(1) != 2 {

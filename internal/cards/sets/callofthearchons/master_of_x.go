@@ -52,3 +52,5 @@ var MasterOfX = card.New(
 		}),
 	)...,
 )
+
+// TODO: can this me more inlined

@@ -22,7 +22,7 @@ var UnguardedCamp = card.New(
 			Amount:   1,
 			Target:   card.Target.FriendlyCreature,
 			Source:   card.Opponent,
-			Per:      card.ExcessCreatures{Player: card.Controller},
+			Times:    card.ExcessCreatures{Player: card.Controller},
 			Distinct: true,
 		}),
 )

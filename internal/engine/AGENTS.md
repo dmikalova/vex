@@ -90,6 +90,50 @@ Rule of thumb: when behavior varies along an axis, model the axis as a small
 strategy interface that also renders its own text — not a new `Effect`/`Target`
 field or a `bool`.
 
+## Reused effect shapes get one shared helper, not a copy per effect
+
+Effects recur in **shapes** — the same little field cluster and the same logic to
+turn it into a value, a phrase, or a validation error — across unrelated
+mechanics. When a shape shows up in a third effect, factor its logic into one
+helper the effects share; each effect keeps its own authoring fields (so the card
+API stays ergonomic), but not its own copy of the behavior. The shapes factored so
+far:
+
+- **Scale by a `Per` count.** A magnitude that reads "N for each ..." is a base
+  times a `Per Count`. `scaled(base, per, ctx)` (`effect_count.go`) is the value
+  companion to `forEach`'s text — `Draw`, `GainAember`, `DealDamage`,
+  `AddPowerCounter`, `CaptureAember`, and the economy amounts all scale through it.
+  `Per` means the same thing on every effect: multiply one target's amount. The
+  distinct "re-run choosing a fresh target" axis is `Times` (`Repeat.Times`,
+  `CaptureAember.Times`), never an overloaded `Per`.
+- **Amount, or an alternative magnitude.** Many effects offer a fixed `Amount`
+  or one other way to say the same size — a `By` pool share, an `All`/`Fully`
+  whole-quantity flag. `errAmountOr(name, alt, amount, altSet)` (`effect.go`) is
+  the shared "set one, not both" validation, beside the `errUnset*` helpers.
+- **How much Æmber against a pool.** `StealAember`, `LoseAember`, `CaptureAember`
+  (and, minus the share, `GainAember`) express the amount as a fixed base scaled by
+  `Per`, or a `By Loss` share (`Half`, `AllBut(n)`, `AllAember`). The economy
+  helpers in `effect_aember.go` — `poolAmount(base, by, per, ctx, pool)` for the
+  value (uncapped; the caller `min`s against the pool and records the capped
+  figure) and `aemberObject(amount, by, possessive)` for the printed object — carry
+  that. A `bool` like Capture's `All` is `By: AllAember` internally; keep the
+  authoring `bool` only where the printed wording genuinely differs ("captures
+  **all** your opponent's Æmber" has no "from" clause).
+- **Count what the previous effect produced.** A "for each ... this way" magnitude
+  is a `Count` reading a tally the prior effect left on `ctx.Produced` —
+  `CreaturesHealed`, `DamageHealed`, `CardsDestroyed`. A new such tally is a field
+  on `Produced` plus a small `Count`, never a bespoke fused effect.
+
+Prefer a shared **helper** over a shared embeddable value type. A `Quantity{Amount,
+By, Per}` struct is tempting, but the shape is not as uniform as it looks:
+`StealAember` also carries `Or`, and each effect has its own extras (`Player`,
+`Source`, `Target`, `All`, `Distinct`, `Times`). One struct would fit at most three
+of the four; the part that is genuinely uniform is only `{Amount, By, Per}`, whose
+logic the helpers above already carry at zero authoring cost. And there is no seam
+to absorb the change — the `card` facade aliases these structs
+(`card.StealAember = engine.StealAember`), so adding a field lands directly in ~120
+card call sites plus their tests. Factor the logic, keep the fields.
+
 ## `Resolver` is segregated into role interfaces — add to the right role
 
 The port and its rationale are ADR 0008. In practice it is composed from focused

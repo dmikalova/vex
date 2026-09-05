@@ -13,11 +13,14 @@ import "strings"
 // for a game concept with an emblem — each carrying what it was named by, so a
 // client never has to recognise it from the words.
 type LogSegment struct {
+	// Text is the raw text of this segment.
 	Text string
+	// Card is the card this segment names (see HasCard).
 	Card LocalID
 	// HasCard distinguishes a card named by LocalID 0 from plain text.
 	HasCard bool
-	Player  int
+	// Player is the player this segment names (see HasPlayer).
+	Player int
 	// HasPlayer distinguishes player 0 from plain text.
 	HasPlayer bool
 	// Icon is the concept key of the emblem this segment's keyword stands for
@@ -157,12 +160,14 @@ type namerSpy struct {
 	named []namedThing
 }
 
+// Name records that id was named, then returns its name.
 func (s *namerSpy) Name(id LocalID) string {
 	name := s.Namer.Name(id)
 	s.named = append(s.named, namedThing{name: name, card: id, isCard: true})
 	return name
 }
 
+// PlayerName records that player was named, then returns their name.
 func (s *namerSpy) PlayerName(player int) string {
 	name := s.Namer.PlayerName(player)
 	s.named = append(s.named, namedThing{name: name, player: player})

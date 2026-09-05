@@ -27,6 +27,8 @@ type (
 	StealAember = engine.StealAember
 	// CaptureAember moves Æmber from a pool onto a capturing creature.
 	CaptureAember = engine.CaptureAember
+	// MoveAemberToCommonSupply removes Æmber sitting on a creature to the common supply.
+	MoveAemberToCommonSupply = engine.MoveAemberToCommonSupply
 	// Exalt places Æmber from the common supply onto a chosen card.
 	Exalt = engine.Exalt
 	// Loss says how much Æmber a LoseAember removes (Half, AllBut).
@@ -275,6 +277,8 @@ type (
 	CountIs = engine.CountIs
 	// ControlsMoreCreatures is met while you control more creatures than the opponent.
 	ControlsMoreCreatures = engine.ControlsMoreCreatures
+	// ControlsCreaturesOfHouses is met while your creatures span at least Count houses.
+	ControlsCreaturesOfHouses = engine.ControlsCreaturesOfHouses
 	// FirstCreaturePlayedThisTurn is met when the card in context is the first
 	// creature played this turn — a once-per-turn charge (Speed Sigil).
 	FirstCreaturePlayedThisTurn = engine.FirstCreaturePlayedThisTurn
@@ -286,6 +290,8 @@ type (
 	ItIs = engine.ItIs
 	// ItIsOffIdentity is met when the card in context is off your identity houses.
 	ItIsOffIdentity = engine.ItIsOffIdentity
+	// ItIsStunned is met when the creature in context is already stunned.
+	ItIsStunned = engine.ItIsStunned
 	// ChoseHouse is met when the controller's active house is House.
 	ChoseHouse = engine.ChoseHouse
 )

@@ -9,6 +9,7 @@ package engine
 type UseKind uint8
 
 const (
+	// useKindUnset is the invalid zero value; a real use kind must be named.
 	useKindUnset UseKind = iota
 	// ReapUse is using a creature to reap.
 	ReapUse
@@ -16,6 +17,7 @@ const (
 	FightUse
 	// ActionUse is using a card's "Action:" ability.
 	ActionUse
+	// useKindCount bounds the enum for valid checks.
 	useKindCount
 )
 

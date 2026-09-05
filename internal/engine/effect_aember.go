@@ -60,10 +60,7 @@ func (e GainAember) Resolve(ctx *EffectContext) {
 // gain hands p the Æmber this effect is worth as seen from ctx, honouring a
 // capture that replaces the gain.
 func (e GainAember) gain(ctx *EffectContext, p int) {
-	amount := e.Amount
-	if e.Per != nil {
-		amount *= e.Per.Value(ctx)
-	}
+	amount := scaled(e.Amount, e.Per, ctx)
 	if capturer, ok := ctx.Resolver.GainAember(p, amount); ok {
 		ctx.Resolver.Record(AemberCapturedInsteadOfGain{
 			Creature: capturer,
@@ -122,6 +119,32 @@ func (a allBut) lose(pool int) int    { return max(0, pool-a.keep) }
 func (a allBut) object(string) string { return fmt.Sprintf("all but %d Æmber", a.keep) }
 func (a allBut) qualifier() string    { return fmt.Sprintf("with %d Æmber or more", a.keep+1) }
 
+// The economy effects that move Æmber against a pool — StealAember, LoseAember,
+// CaptureAember — all express "how much" the same way: a fixed base, optionally
+// scaled by a Per count, or a By share of the pool. These three helpers hold that
+// shared shape so each effect keeps its own authoring fields but not its own copy
+// of the amount logic.
+
+// poolAmount is how much Æmber to move against a pool of the given size: the By
+// share when set, otherwise base scaled by an optional Per. It does not cap at the
+// pool — a share already fits, and a fixed amount is capped by the caller, which
+// records the capped figure.
+func poolAmount(base int, by Loss, per Count, ctx *EffectContext, pool int) int {
+	if by != nil {
+		return by.lose(pool)
+	}
+	return scaled(base, per, ctx)
+}
+
+// aemberObject renders the object of an economy verb: a By share against the given
+// possessive ("half of their Æmber"), or a plain "N Æmber" count.
+func aemberObject(amount int, by Loss, possessive string) string {
+	if by != nil {
+		return by.object(possessive)
+	}
+	return fmt.Sprintf("%d Æmber", amount)
+}
+
 // To lose Æmber, a player returns that many Æmber from their pool to the common
 // supply. A pool can never go below zero, so a player told to lose more Æmber than
 // they have simply loses all of it. Player may be EachPlayer, so both players lose.
@@ -144,10 +167,7 @@ func (e LoseAember) validate() error {
 	if !e.Player.valid() {
 		return errUnsetPlayer("LoseAember")
 	}
-	if e.Amount != 0 && e.By != nil {
-		return fmt.Errorf("LoseAember: set Amount or By, not both (got Amount=%d)", e.Amount)
-	}
-	return nil
+	return errAmountOr("LoseAember", "By", e.Amount, e.By != nil)
 }
 
 // Text renders the effect, e.g. "lose 1 Æmber", "your opponent loses 4 Æmber", or
@@ -162,10 +182,9 @@ func (e LoseAember) Text() string {
 	default:
 		subject, verb, possessive = "", "lose", "your"
 	}
-	object := fmt.Sprintf("%d Æmber", e.Amount)
+	object := aemberObject(e.Amount, e.By, possessive)
 	qualifier := ""
 	if e.By != nil {
-		object = e.By.object(possessive)
 		if q := e.By.qualifier(); q != "" {
 			qualifier = " " + q
 		}
@@ -206,15 +225,9 @@ func (e LoseAember) losers(ctx *EffectContext) []int {
 }
 
 // amountFor is how much the given player loses: the By loss applied to their pool
-// when set, otherwise the fixed Amount.
+// when set, otherwise the fixed Amount scaled by Per.
 func (e LoseAember) amountFor(ctx *EffectContext, p int) int {
-	if e.By != nil {
-		return e.By.lose(ctx.Resolver.Aember(p))
-	}
-	if e.Per != nil {
-		return e.Amount * e.Per.Value(ctx)
-	}
-	return e.Amount
+	return poolAmount(e.Amount, e.By, e.Per, ctx, ctx.Resolver.Aember(p))
 }
 
 // Moving Æmber from your pool to a card takes that many Æmber out of your pool

@@ -41,6 +41,28 @@ func TestConditionalEffect(t *testing.T) {
 	}
 }
 
+func TestItIsStunned(t *testing.T) {
+	c := ItIsStunned{}
+	if c.CondText() != "if that creature was already stunned" {
+		t.Errorf("text = %q", c.CondText())
+	}
+
+	g := NewGame("A", "B", 1)
+	stunned := g.AddToBattleline(testCreature("stunned", 3), 1)
+	g.SetStunned(stunned, true)
+	ready := g.AddToBattleline(testCreature("ready", 3), 1)
+
+	if !c.Met(&EffectContext{Resolver: g, Controller: 0, It: stunned, HasIt: true}) {
+		t.Error("a stunned creature should meet the condition")
+	}
+	if c.Met(&EffectContext{Resolver: g, Controller: 0, It: ready, HasIt: true}) {
+		t.Error("an unstunned creature should not meet the condition")
+	}
+	if c.Met(&EffectContext{Resolver: g, Controller: 0}) {
+		t.Error("no creature in context should not meet the condition")
+	}
+}
+
 func TestControlsMoreCreatures(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
@@ -56,6 +78,40 @@ func TestControlsMoreCreatures(t *testing.T) {
 	g.AddToBattleline(testCreature("theirs", 1), 1)
 	if c.Met(ctx) {
 		t.Error("1 vs 1 should not be met")
+	}
+}
+
+func TestControlsCreaturesOfHouses(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	c := ControlsCreaturesOfHouses{Count: 3}
+	if c.CondText() != "if you control creatures from 3 different houses" {
+		t.Errorf("CondText = %q", c.CondText())
+	}
+	if err := c.validate(); err != nil {
+		t.Errorf("valid Count rejected: %v", err)
+	}
+	if err := (ControlsCreaturesOfHouses{}).validate(); err == nil {
+		t.Error("non-positive Count should be rejected")
+	}
+
+	g.AddToBattleline(NewCard("b", Brobnar, Creature, Common, WithPower(2)), 0)
+	g.AddToBattleline(NewCard("l", Logos, Creature, Common, WithPower(2)), 0)
+	if c.Met(ctx) {
+		t.Error("2 houses should not meet a Count of 3")
+	}
+	g.AddToBattleline(NewCard("s", Sanctum, Creature, Common, WithPower(2)), 0)
+	if !c.Met(ctx) {
+		t.Error("3 houses should meet a Count of 3")
+	}
+	// A second creature of an already-counted house does not raise the tally.
+	g.AddToBattleline(NewCard("b2", Brobnar, Creature, Common, WithPower(2)), 0)
+	if c.Met(ctx) != true {
+		t.Error("duplicate house should still leave 3 distinct houses")
+	}
+	if (ControlsCreaturesOfHouses{Count: 4}).Met(ctx) {
+		t.Error("only 3 distinct houses should not meet a Count of 4")
 	}
 }
 

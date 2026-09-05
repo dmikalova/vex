@@ -25,6 +25,17 @@ func forEach(per Count, body string) string {
 	return "for each " + countLeadText(per) + ", " + body
 }
 
+// scaled multiplies a base amount by a Per count when one is set — the value
+// companion to forEach's text. Every effect whose magnitude is "N for each ..."
+// (Draw, GainAember, DealDamage, AddPowerCounter, the economy amounts) scales the
+// same way, so they share this rather than each re-testing per for nil.
+func scaled(base int, per Count, ctx *EffectContext) int {
+	if per == nil {
+		return base
+	}
+	return base * per.Value(ctx)
+}
+
 // leadingCounter is a Count whose "for each" clause names its subject when the
 // clause leads the sentence, where a trailing "it" would read as a forward
 // reference — NeighborsOfThis is "neighbor it has" trailing but "neighbor <self>

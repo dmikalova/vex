@@ -40,8 +40,8 @@ func (e MoveAember) validate() error {
 	if !e.From.valid() {
 		return errUnsetTarget("MoveAember")
 	}
-	if e.All && e.Amount != 0 {
-		return fmt.Errorf("MoveAember: set All or Amount, not both (got Amount=%d)", e.Amount)
+	if err := errAmountOr("MoveAember", "All", e.Amount, e.All); err != nil {
+		return err
 	}
 	if e.toPool() == e.Onto.valid() {
 		return fmt.Errorf("MoveAember: set exactly one destination (To pool or Onto card)")

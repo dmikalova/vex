@@ -20,7 +20,7 @@ var HypnoticCommand = card.New(
 			Amount: 1,
 			Target: card.Target.EnemyCreature,
 			Source: card.Opponent,
-			Per: card.InPlay{
+			Times: card.InPlay{
 				Player: card.Controller,
 				Type:   card.Type.Creature,
 				House:  card.House.Self,

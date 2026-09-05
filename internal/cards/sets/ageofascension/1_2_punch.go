@@ -1,21 +1,15 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// Card12Punch
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// 1-2 Punch
 //
 //	House:  Brobnar
 //	Type:   Tactic
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Stun an enemy creature.
-//	If that creature was already stunned, destroy it instead.
+//	Play: Choose an enemy creature - if that creature was already stunned, destroy it. Otherwise, stun it.
 var Card12Punch = card.New(
 	"1-2 Punch",
 	card.House.Brobnar,
@@ -23,5 +17,13 @@ var Card12Punch = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.AoA, 1),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.ChooseCreatureThen{
+			Target: card.Target.EnemyCreature,
+			Then: card.Conditional{
+				Cond: card.ItIsStunned{},
+				Then: card.Destroy{Target: card.Target.Triggering},
+				Else: card.Stun{Target: card.Target.Triggering},
+			},
+		}),
 )

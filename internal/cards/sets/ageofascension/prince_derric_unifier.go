@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// PrinceDerricUnifier
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Prince Derric, Unifier
 //
 //	House:  Sanctum
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Human • Knight
 //
-//	Play: Gain 3A if you control creatures from 3 different houses.
+//	Play: If you control creatures from 3 different houses, gain 3 Æmber.
 var PrinceDerricUnifier = card.New(
 	"Prince Derric, Unifier",
 	card.House.Sanctum,
@@ -26,5 +21,12 @@ var PrinceDerricUnifier = card.New(
 	card.WithPower(4),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Conditional{
+			Cond: card.ControlsCreaturesOfHouses{Count: 3},
+			Then: card.GainAember{
+				Player: card.Controller,
+				Amount: 3,
+			},
+		}),
 )

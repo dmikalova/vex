@@ -442,6 +442,41 @@ The chosen creature is still destroyed, because it matches its own trait filter.
 
 ---
 
+## 24. "Do X. If <cond>, do Y instead" becomes a choose-then conditional
+
+A card that names a default action on a creature and then overrides it with an
+exception ("Stun an enemy creature. If that creature was already stunned, destroy
+it instead.") is authored as a `ChooseCreatureThen` whose `Then` is a
+`Conditional`: the exception is the `Then` branch and the default is the `Else`.
+The curated text therefore leads with the choice and the condition rather than the
+default action, because the condition must be read against the creature's state
+*before* the default would change it — stunning first would make "already stunned"
+always true.
+
+| Original                                                                            | Curated                                                                                    |
+| ----------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| `Stun an enemy creature. If that creature was already stunned, destroy it instead.` | `Choose an enemy creature - if that creature was already stunned, destroy it. Otherwise, stun it.` |
+
+(Affected: 1-2 Punch.)
+
+---
+
+## 25. A trailing `if <cond>` condition moves to the front
+
+A card that states an effect and then qualifies it with a trailing condition
+("Gain 3A if you control creatures from 3 different houses.") is authored as a
+`Conditional`, which always renders the condition first. The curated text leads
+with `If <cond>, <effect>` so every gated effect reads the same way, matching the
+condition-leading form KeyForge already uses elsewhere.
+
+| Original                                                       | Curated                                                                    |
+| -------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| `Gain 3A if you control creatures from 3 different houses.`    | `If you control creatures from 3 different houses, gain 3 Æmber.`          |
+
+(Affected: Prince Derric, Unifier.)
+
+---
+
 ## Deliberate rule changes (not just wording)
 
 A few cards diverge from KeyForge in ways that affect the rules, not just

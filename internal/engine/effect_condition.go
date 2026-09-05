@@ -163,6 +163,37 @@ func (ControlsMoreCreatures) Met(ctx *EffectContext) bool {
 	)
 }
 
+// ControlsCreaturesOfHouses is met while the controller's creatures in play span
+// at least Count different houses — Prince Derric, Unifier pays out when three
+// houses are represented.
+type ControlsCreaturesOfHouses struct {
+	// Count is the number of different houses that must be represented.
+	Count int
+}
+
+// validate requires a positive Count.
+func (c ControlsCreaturesOfHouses) validate() error {
+	if c.Count <= 0 {
+		return fmt.Errorf("ControlsCreaturesOfHouses: Count must be positive")
+	}
+	return nil
+}
+
+// CondText renders the condition, e.g. "if you control creatures from 3 different
+// houses".
+func (c ControlsCreaturesOfHouses) CondText() string {
+	return fmt.Sprintf("if you control creatures from %d different houses", c.Count)
+}
+
+// Met reports whether the controller's creatures span at least Count houses.
+func (c ControlsCreaturesOfHouses) Met(ctx *EffectContext) bool {
+	seen := map[House]bool{}
+	for _, id := range ctx.Resolver.Battleline(ctx.Controller) {
+		seen[ctx.Resolver.House(id)] = true
+	}
+	return len(seen) >= c.Count
+}
+
 // FirstCreaturePlayedThisTurn is met when the card in context (ctx.It, the
 // creature that fired the trigger) is the first creature its player played this
 // turn — Speed Sigil readies it. It is a once-per-turn charge that needs no state
@@ -338,6 +369,21 @@ func (ItIsOffIdentity) CondText() string {
 // identity houses.
 func (ItIsOffIdentity) Met(ctx *EffectContext) bool {
 	return ctx.HasIt && !ctx.Resolver.PlayerHasHouse(ctx.Controller, ctx.Resolver.House(ctx.It))
+}
+
+// ItIsStunned is met when the creature in context (ctx.It) is already stunned.
+// 1-2 Punch uses it to destroy a chosen creature that was already stunned rather
+// than stunning it.
+type ItIsStunned struct{}
+
+// CondText renders the condition.
+func (ItIsStunned) CondText() string {
+	return "if that creature was already stunned"
+}
+
+// Met reports whether a creature is in context and is stunned.
+func (ItIsStunned) Met(ctx *EffectContext) bool {
+	return ctx.HasIt && ctx.Resolver.Stunned(ctx.It)
 }
 
 // houseTypeNoun renders a card filtered by house and type as a noun, e.g. "Mars

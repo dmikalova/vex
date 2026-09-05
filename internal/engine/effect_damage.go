@@ -139,14 +139,10 @@ func (e DealDamage) resolveOptional(ctx *EffectContext) bool {
 // amount computes how much damage a non-Spread DealDamage deals, before any
 // per-target multiplier.
 func (e DealDamage) amount(ctx *EffectContext) int {
-	amount := e.Amount
-	switch {
-	case e.AmountFrom != nil:
-		amount = e.AmountFrom.Value(ctx)
-	case e.Per != nil:
-		amount *= e.Per.Value(ctx)
+	if e.AmountFrom != nil {
+		return e.AmountFrom.Value(ctx)
 	}
-	return amount
+	return scaled(e.Amount, e.Per, ctx)
 }
 
 // dealTo deals amount (before any PerTarget multiplier) to an already-selected
