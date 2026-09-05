@@ -122,6 +122,29 @@ func TestTakeControlArtifact(t *testing.T) {
 			t.Error("the taken creature should be left in context as It")
 		}
 	})
+
+	t.Run("ToOpponent gives control away instead of taking it", func(t *testing.T) {
+		giveAway := TakeControl{
+			Target:     Target{Kind: TargetThisCreature},
+			Duration:   Forever,
+			ToOpponent: true,
+		}
+		if got := giveAway.Text(); got != "your opponent gains control of "+SelfName {
+			t.Errorf("ToOpponent text = %q", got)
+		}
+
+		g := NewGame("A", "B", 1)
+		art := g.AddArtifact(NewCard("Spangler Box", Logos, Artifact, Rare), 0)
+		ctx := &EffectContext{Resolver: g, Source: art, Controller: 0}
+		TakeControl{
+			Target:     Target{Kind: TargetThisCreature},
+			Duration:   Forever,
+			ToOpponent: true,
+		}.Resolve(ctx)
+		if g.controller(art) != 1 {
+			t.Errorf("controller = %d, want 1 (the opponent)", g.controller(art))
+		}
+	})
 }
 
 func TestItIsOffIdentity(t *testing.T) {

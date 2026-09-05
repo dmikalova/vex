@@ -5,8 +5,6 @@ import "fmt"
 // Healing takes damage tokens off a creature — a fixed amount, or all of them at
 // once. It can never remove more damage than is on the creature (a creature with
 // no damage is unaffected), and it never changes a creature's power.
-//
-//rulebook:effect Heal
 type Heal struct {
 	Amount int  // damage to remove; must be zero when Fully is set
 	Fully  bool // remove all damage instead of a fixed Amount

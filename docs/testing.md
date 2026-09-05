@@ -20,7 +20,7 @@ pieces fit together.
 - **Hunting bugs no one thought to test?** Let the **whole-game simulator**
   (`internal/sim`) play random legal games and check invariants — run continuously
   in `mage test`, deeply with `mage fuzz`, and at volume with `mage soak`.
-- **Frontend glue (`tui`, `web`)?** Largely untested by design (TTY/DOM-bound);
+- **Frontend glue (`web`)?** Largely untested by design (DOM-bound);
   push logic worth testing down into the engine or `match`.
 
 ## Coverage philosophy: what is gated and why

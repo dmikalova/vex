@@ -5,8 +5,6 @@ package engine
 // X>", where passing is always allowed even when a legal target exists — the
 // distinction that keeps Chuff Ape's "you may destroy another friendly creature"
 // from ever being forced.
-//
-//rulebook:effect May
 type May struct {
 	Do Effect
 }

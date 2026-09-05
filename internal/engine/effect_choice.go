@@ -4,8 +4,6 @@ import "strings"
 
 // A "choose one" ability offers its controller a set of alternative effects and
 // resolves only the one they pick; the options not chosen do nothing.
-//
-//rulebook:effect Choose One
 type ChooseOne struct {
 	Options []Effect
 }

@@ -10,11 +10,9 @@ import (
 // it is captured or placed on a creature, where it belongs to no one until that
 // creature leaves play.
 
-// To gain Aember, a player moves that many Aember from the common supply into
+// To gain Æmber, a player moves that many Æmber from the common supply into
 // their pool — the ability's controller by default, or their opponent when the
 // card says so. A "for each" clause multiplies the amount by a running count.
-//
-//rulebook:effect Gain Aember
 type GainAember struct {
 	Player Player
 	Amount int
@@ -124,13 +122,11 @@ func (a allBut) lose(pool int) int    { return max(0, pool-a.keep) }
 func (a allBut) object(string) string { return fmt.Sprintf("all but %d Æmber", a.keep) }
 func (a allBut) qualifier() string    { return fmt.Sprintf("with %d Æmber or more", a.keep+1) }
 
-// To lose Aember, a player returns that many Aember from their pool to the common
-// supply. A pool can never go below zero, so a player told to lose more Aember than
+// To lose Æmber, a player returns that many Æmber from their pool to the common
+// supply. A pool can never go below zero, so a player told to lose more Æmber than
 // they have simply loses all of it. Player may be EachPlayer, so both players lose.
 // The amount lost is either a fixed Amount or a By loss of the pool (By: Half,
 // By: AllBut(5)) — set one, not both.
-//
-//rulebook:effect Lose Aember
 type LoseAember struct {
 	Player Player
 	Amount int
@@ -182,7 +178,7 @@ func (e LoseAember) Text() string {
 // below zero.
 func (e LoseAember) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 
-// resolveGate removes the Aember and reports whether any actually left a pool, so a
+// resolveGate removes the Æmber and reports whether any actually left a pool, so a
 // LoseAember can gate a Then — Key Charge only forges if Æmber was lost.
 func (e LoseAember) resolveGate(ctx *EffectContext) bool {
 	moved := false
@@ -219,11 +215,10 @@ func (e LoseAember) amountFor(ctx *EffectContext, p int) int {
 	return e.Amount
 }
 
-// MoveAemberFromPool banks Æmber out of your pool onto a card, where it sits
-// until something takes it off again. Safe Place and Pocket Universe pair it with
-// WithSpendableAember, which is what makes the bank worth filling.
-//
-//rulebook:effect Æmber
+// Moving Æmber from your pool to a card takes that many Æmber out of your pool
+// and sets it on the card, where it stays until something moves it off again.
+// Parked there it only matters to a card that can spend the Æmber sitting on it —
+// Safe Place, Pocket Universe.
 type MoveAemberFromPool struct {
 	Amount int
 	// Target names the card the Æmber moves onto.

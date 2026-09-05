@@ -12,6 +12,11 @@
 // enrolls every set), keyed by the name literal in each file's card.New call, so
 // no file needs to declare which card it holds. Files excluded from the build
 // (the `//go:build todo` stubs) register nothing and are left alone.
+//
+// The same comment is written above each card's `func Test<Card>` in its
+// `_test.go` (the card-authoring guide says that block is generated, not
+// hand-written), matched by mapping the test name Test<X> back to the card var X
+// declared in the same set package.
 package main
 
 import (
@@ -43,12 +48,20 @@ func main() {
 
 func run() error {
 	defs := definitionsByName()
-	files, err := cardFiles(setsRoot)
+	srcFiles, err := cardFiles(setsRoot)
+	if err != nil {
+		return err
+	}
+	testFiles, err := testCardFiles(setsRoot)
+	if err != nil {
+		return err
+	}
+	names, err := varNamesByDir(srcFiles)
 	if err != nil {
 		return err
 	}
 	changed := 0
-	for _, path := range files {
+	for _, path := range srcFiles {
 		ok, err := rewriteFile(path, defs)
 		if err != nil {
 			return fmt.Errorf("%s: %w", path, err)
@@ -57,7 +70,17 @@ func run() error {
 			changed++
 		}
 	}
-	fmt.Printf("gencomments: %d card files scanned, %d comments rewritten\n", len(files), changed)
+	for _, path := range testFiles {
+		ok, err := rewriteTestFile(path, defs, names[filepath.Dir(path)])
+		if err != nil {
+			return fmt.Errorf("%s: %w", path, err)
+		}
+		if ok {
+			changed++
+		}
+	}
+	fmt.Printf("gencomments: %d card files scanned, %d comments rewritten\n",
+		len(srcFiles)+len(testFiles), changed)
 	return nil
 }
 
@@ -87,6 +110,78 @@ func cardFiles(root string) ([]string, error) {
 	return files, err
 }
 
+// testCardFiles lists the _test.go files under root, in a stable order — the card
+// tests whose doc comment above func Test<Card> mirrors the card box.
+func testCardFiles(root string) ([]string, error) {
+	var files []string
+	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+		switch {
+		case err != nil:
+			return err
+		case d.IsDir(), !strings.HasSuffix(path, "_test.go"):
+			return nil
+		}
+		files = append(files, path)
+		return nil
+	})
+	sort.Strings(files)
+	return files, err
+}
+
+// varNamesByDir maps each set directory to its card vars — the identifier a
+// `var X = card.New("Name", …)` declares, mapped to the printed Name. It links a
+// test (func Test<X>) back to the card it exercises so the test's doc comment is
+// generated from the same definition as the card's own file.
+func varNamesByDir(files []string) (map[string]map[string]string, error) {
+	out := map[string]map[string]string{}
+	for _, path := range files {
+		src, err := os.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+		fset := token.NewFileSet()
+		f, err := parser.ParseFile(fset, path, src, 0)
+		if err != nil {
+			return nil, err
+		}
+		dir := filepath.Dir(path)
+		for _, decl := range f.Decls {
+			gd, ok := decl.(*ast.GenDecl)
+			if !ok {
+				continue
+			}
+			ident, name, ok := cardVarOf(gd)
+			if !ok {
+				continue
+			}
+			if out[dir] == nil {
+				out[dir] = map[string]string{}
+			}
+			out[dir][ident] = name
+		}
+	}
+	return out, nil
+}
+
+// edit is a byte-range replacement in a file's source: [start,end) becomes text.
+// An empty range (start==end) is an insertion point.
+type edit struct {
+	start, end int
+	text       string
+}
+
+// applyEdits rewrites src by applying edits from the end backwards, so earlier
+// offsets stay valid and the rest of the file — including hand-written formatting
+// — is untouched.
+func applyEdits(src []byte, edits []edit) []byte {
+	out := src
+	for i := len(edits) - 1; i >= 0; i-- {
+		e := edits[i]
+		out = append(append(append([]byte{}, out[:e.start]...), e.text...), out[e.end:]...)
+	}
+	return out
+}
+
 // rewriteFile replaces the doc comment of every `var X = card.New("Name", …)` in
 // one file, reporting whether anything changed. Edits are applied to the raw
 // source bytes from the end backwards so earlier offsets stay valid, which keeps
@@ -103,10 +198,6 @@ func rewriteFile(path string, defs map[string]engine.CardDefinition) (bool, erro
 	}
 	base := fset.File(f.Pos()).Base()
 
-	type edit struct {
-		start, end int // byte range of the existing comment (empty range = insert)
-		text       string
-	}
 	var edits []edit
 	for _, decl := range f.Decls {
 		gd, ok := decl.(*ast.GenDecl)
@@ -130,47 +221,101 @@ func rewriteFile(path string, defs map[string]engine.CardDefinition) (bool, erro
 		}
 		edits = append(edits, edit{start, end, renderComment(&def)})
 	}
-	out := src
-	for i := len(edits) - 1; i >= 0; i-- {
-		e := edits[i]
-		out = append(append(append([]byte{}, out[:e.start]...), e.text...), out[e.end:]...)
-	}
+	out := applyEdits(src, edits)
 	if bytes.Equal(out, src) {
 		return false, nil
 	}
 	return true, os.WriteFile(path, out, 0o644)
 }
 
-// cardNameOf returns the printed name a `var X = card.New("Name", …)` declaration
-// builds, or false if the declaration is not a card.
-func cardNameOf(gd *ast.GenDecl) (string, bool) {
-	if len(gd.Specs) != 1 {
-		return "", false
+// rewriteTestFile replaces the doc comment of every `func Test<Card>(t *testing.T)`
+// in one test file with the card's card-box comment — the same block the card's own
+// source file carries. The card is found by mapping the test name Test<X> to the
+// card var X declared in the same package (varToName). Test funcs whose name maps
+// to no card, or a card not in the registry, are left alone.
+func rewriteTestFile(
+	path string,
+	defs map[string]engine.CardDefinition,
+	varToName map[string]string,
+) (bool, error) {
+	if len(varToName) == 0 {
+		return false, nil
+	}
+	src, err := os.ReadFile(path)
+	if err != nil {
+		return false, err
+	}
+	fset := token.NewFileSet()
+	f, err := parser.ParseFile(fset, path, src, parser.ParseComments)
+	if err != nil {
+		return false, err
+	}
+	base := fset.File(f.Pos()).Base()
+
+	var edits []edit
+	for _, decl := range f.Decls {
+		fd, ok := decl.(*ast.FuncDecl)
+		if !ok || fd.Recv != nil || !strings.HasPrefix(fd.Name.Name, "Test") {
+			continue
+		}
+		name, ok := varToName[strings.TrimPrefix(fd.Name.Name, "Test")]
+		if !ok {
+			continue
+		}
+		def, ok := defs[name]
+		if !ok {
+			continue
+		}
+		start, end := int(fd.Pos())-base, int(fd.Pos())-base
+		if fd.Doc != nil {
+			start = int(fd.Doc.Pos()) - base
+		}
+		edits = append(edits, edit{start, end, renderComment(&def)})
+	}
+	out := applyEdits(src, edits)
+	if bytes.Equal(out, src) {
+		return false, nil
+	}
+	return true, os.WriteFile(path, out, 0o644)
+}
+
+// cardVarOf returns the identifier and printed name a `var X = card.New("Name", …)`
+// declaration builds, or ok=false if the declaration is not a card.
+func cardVarOf(gd *ast.GenDecl) (ident, name string, ok bool) {
+	if gd.Tok != token.VAR || len(gd.Specs) != 1 {
+		return "", "", false
 	}
 	vs, ok := gd.Specs[0].(*ast.ValueSpec)
-	if !ok || len(vs.Values) != 1 {
-		return "", false
+	if !ok || len(vs.Names) != 1 || len(vs.Values) != 1 {
+		return "", "", false
 	}
 	call, ok := vs.Values[0].(*ast.CallExpr)
 	if !ok || len(call.Args) == 0 {
-		return "", false
+		return "", "", false
 	}
 	sel, ok := call.Fun.(*ast.SelectorExpr)
 	if !ok || sel.Sel.Name != "New" {
-		return "", false
+		return "", "", false
 	}
 	if pkg, ok := sel.X.(*ast.Ident); !ok || pkg.Name != "card" {
-		return "", false
+		return "", "", false
 	}
 	lit, ok := call.Args[0].(*ast.BasicLit)
 	if !ok || lit.Kind != token.STRING {
-		return "", false
+		return "", "", false
 	}
 	name, err := strconv.Unquote(lit.Value)
 	if err != nil {
-		return "", false
+		return "", "", false
 	}
-	return name, true
+	return vs.Names[0].Name, name, true
+}
+
+// cardNameOf returns the printed name a `var X = card.New("Name", …)` declaration
+// builds, or false if the declaration is not a card.
+func cardNameOf(gd *ast.GenDecl) (string, bool) {
+	_, name, ok := cardVarOf(gd)
+	return name, ok
 }
 
 // renderComment builds a card's whole doc comment, ending in the newline that

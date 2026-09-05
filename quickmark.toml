@@ -6,7 +6,7 @@ blanks-around-fences = "off" # Allow fenced code blocks without blank lines arou
 blanks-around-lists = "off" # Disable blanks-around-lists - too strict for loose lists with spacing
 emphasis-style = "off" # Disable emphasis style consistency - allow both * and _
 fenced-code-language = "off" # Don't require language specifier in fenced code blocks
-first-line-heading = "off" # docs/rulebook/*.md are prose fragments genrules splices into rulebook.md; they intentionally have no top-level heading
+first-line-heading = "off" # generated docs/rulebook.md opens with a DO-NOT-EDIT HTML comment, not a heading
 line-length = "off" # Disable line length - let editors handle wrapping
 no-inline-html = "off" # Allow inline HTML (common in GitHub READMEs, badges)
 

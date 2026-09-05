@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Elf • Thief
 //
-//	Elusive. Versatile.
+//	Elusive, Versatile.
 //	Action: Deal 1 damage to a creature. If this damage destroys that creature, gain 1 Æmber.
 func TestMackTheKnife(t *testing.T) {
 	t.Run("gains 1 Æmber when its damage destroys the creature", func(t *testing.T) {

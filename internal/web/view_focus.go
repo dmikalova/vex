@@ -156,13 +156,14 @@ func clampAxis(v, length, window float64) float64 {
 }
 
 // actsUp is whether the card's verbs are drawn above its face rather than below.
-// They go on the side facing the middle of the window — a card down in the player's
-// own half puts its buttons up, one in the opponent's half puts them down — so they
-// meet the pointer on its way in rather than beyond the edge the card was already
-// against.
+// Only a card lifted from hand draws them above: the hand sits along the bottom
+// edge, so its buttons face up into the window. Every card on the board — the
+// player's own creatures included — draws them below, so a card being played and a
+// card already in play read their buttons in the same place. The copy anchors from
+// the same edge its buttons sit against, so face and buttons grow into the window
+// together rather than one of them off the near edge.
 func (g *game) actsUp() bool {
-	return g.hasFocus && g.focusViewH > 0 &&
-		g.focusRect.y+g.focusRect.h/2 > g.focusViewH/2
+	return g.hasFocus && g.selKind == selHand
 }
 
 // px formats a measured length for a custom property.

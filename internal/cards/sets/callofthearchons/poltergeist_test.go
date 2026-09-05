@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Use an artifact as if it were yours. Destroy it.
+//	Play: Use an artifact. Destroy it.
 func TestPoltergeist(t *testing.T) {
 	t.Run("uses an enemy artifact and then destroys it", func(t *testing.T) {
 		var theirs, drawn ct.Card

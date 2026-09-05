@@ -39,13 +39,13 @@ func TestMayDeclinableDealDamage(t *testing.T) {
 	}
 }
 
-func TestDamageIfDestroyed(t *testing.T) {
+func TestDamageThenIfDestroyed(t *testing.T) {
 	t.Run("runs the follow-up only when the damage destroys the creature", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		weak := g.AddToBattleline(testCreature("weak", 2), 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 
-		e := DamageIfDestroyed{
+		e := DamageThenIfDestroyed{
 			Amount: 3,
 			Target: Target{Kind: TargetChosenEnemyCreature},
 			Then:   GainAember{Player: Controller, Amount: 1},
@@ -67,7 +67,7 @@ func TestDamageIfDestroyed(t *testing.T) {
 		tough := g.AddToBattleline(testCreature("tough", 6), 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 
-		DamageIfDestroyed{
+		DamageThenIfDestroyed{
 			Amount: 2,
 			Target: Target{Kind: TargetChosenEnemyCreature},
 			Then:   GainAember{Player: Controller, Amount: 1},
@@ -87,7 +87,7 @@ func TestDamageIfDestroyed(t *testing.T) {
 		weak := g.AddToBattleline(testCreature("weak", 1), 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 
-		DamageIfDestroyed{
+		DamageThenIfDestroyed{
 			Amount: 3,
 			Target: Target{Kind: TargetChosenEnemyCreature},
 			Then:   PurgeCreature{Target: Target{Kind: TargetTriggeringCreature}},
@@ -102,7 +102,7 @@ func TestDamageIfDestroyed(t *testing.T) {
 	t.Run("no target is a no-op", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
-		DamageIfDestroyed{
+		DamageThenIfDestroyed{
 			Amount: 3,
 			Target: Target{Kind: TargetChosenEnemyCreature},
 			Then:   GainAember{Player: Controller, Amount: 1},
@@ -115,10 +115,10 @@ func TestDamageIfDestroyed(t *testing.T) {
 	})
 
 	t.Run("validate", func(t *testing.T) {
-		if (DamageIfDestroyed{Then: GainAember{Player: Controller, Amount: 1}}).validate() == nil {
+		if (DamageThenIfDestroyed{Then: GainAember{Player: Controller, Amount: 1}}).validate() == nil {
 			t.Error("unset target should be invalid")
 		}
-		if (DamageIfDestroyed{Target: Target{Kind: TargetChosenCreature}, Then: GainAember{}}).validate() == nil {
+		if (DamageThenIfDestroyed{Target: Target{Kind: TargetChosenCreature}, Then: GainAember{}}).validate() == nil {
 			t.Error("invalid follow-up should surface")
 		}
 	})

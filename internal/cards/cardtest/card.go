@@ -3,19 +3,22 @@ package cardtest
 import "github.com/dmikalova/vactrol/internal/engine"
 
 // Zone names where a card can be, mirroring the game's zones plus Attached (an
-// upgrade on a creature) and Gone (removed from the match). At and Location use
-// it so tests read like the game: h.Expect(tiger).At(ct.Discard).
+// upgrade on a creature), Under (a card placed under a host), and Nowhere (in no
+// zone at all — a destroyed card that has been cleared, or an unbound handle).
+// At and Location use it so tests read like the game:
+// h.Expect(tiger).At(ct.Discard).
 type Zone int
 
 // The zones a card can occupy.
 const (
-	Gone     Zone = iota // not found in any zone (e.g. destroyed and cleared)
+	Nowhere  Zone = iota // not found in any zone (e.g. destroyed and cleared)
 	PlayArea             // on a battleline or in an artifact row
 	Hand
 	Discard
 	Archives
 	Deck
 	Attached // an upgrade attached to a creature
+	Under    // a card placed under a host (Masterplan, Jargogle)
 	Purge    // set aside out of the game
 )
 
@@ -34,10 +37,12 @@ func (z Zone) String() string {
 		return "deck"
 	case Attached:
 		return "attached"
+	case Under:
+		return "under"
 	case Purge:
 		return "purge"
 	default:
-		return "gone"
+		return "nowhere"
 	}
 }
 

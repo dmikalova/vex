@@ -45,11 +45,13 @@ func (g *Game) GainAember(
 	return g.gainAember(player, amount)
 }
 
-// aemberCaptorFor returns the first in-play creature whose continuous replacement
+// aemberCaptorFor returns the in-play creature whose continuous replacement
 // captures Æmber that would be added to player's pool, or ok=false when none does.
 // A card's replacement names which pool it watches relative to the card's controller
-// (Ether Spider watches its Opponent's).
+// (Ether Spider watches its Opponent's). When several creatures could each capture
+// the Æmber — two Ether Spiders in play — their controller chooses which one does.
 func (g *Game) aemberCaptorFor(player int) (LocalID, bool) {
+	var captors []LocalID
 	for p := 0; p < 2; p++ {
 		for _, id := range g.allInPlay(p) {
 			def := g.cat.def(id)
@@ -64,9 +66,24 @@ func (g *Game) aemberCaptorFor(player int) (LocalID, bool) {
 				pool = 1 - p
 			}
 			if pool == player {
-				return id, true
+				captors = append(captors, id)
 			}
 		}
 	}
-	return 0, false
+	switch len(captors) {
+	case 0:
+		return 0, false
+	case 1:
+		return captors[0], true
+	}
+	chosen, ok := g.ChooseCreature(
+		g.controller(captors[0]),
+		0,
+		"Choose which creature captures the Æmber",
+		captors,
+	)
+	if !ok {
+		return captors[0], true
+	}
+	return chosen, true
 }

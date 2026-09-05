@@ -4,9 +4,6 @@ package engine
 // way stays open — Tireless Crocag fights and uses its Action: normally. That is
 // narrower than the timed, player-wide CannotUse/CannotFight restrictions in
 // effect_restrict.go, so it lives on the card definition rather than on state.
-//
-//rulebook:effect Cannot Be Used To
-
 // UseKind names one of the three ways a card in play can be used. Reaping,
 // fighting, and using an "Action:" ability are the rulebook's whole list.
 type UseKind uint8

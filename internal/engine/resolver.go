@@ -100,6 +100,10 @@ type CreatureReader interface {
 	// printed on it, granted by an attached upgrade, or granted by a constant
 	// ability.
 	HasTrigger(id LocalID, trigger Trigger) bool
+	// ConsideredFlank reports whether a creature is treated as a flank creature for
+	// the remainder of the turn regardless of its battleline position (Spectral
+	// Tunneler).
+	ConsideredFlank(id LocalID) bool
 	// House returns a card's house.
 	House(id LocalID) House
 }
@@ -124,6 +128,9 @@ type ZoneReader interface {
 	// TopOfDeck returns the top card of a player's deck without moving it,
 	// reporting whether the deck holds a card.
 	TopOfDeck(player int) (LocalID, bool)
+	// Under returns the ids of the cards placed under a host, face up or face
+	// down, in the order they were placed (Masterplan, Jargogle, Graft).
+	Under(host LocalID) []LocalID
 }
 
 // TurnReader reads turn-scoped state: the active house and the cards played and
@@ -210,6 +217,12 @@ type CreatureResolver interface {
 	// LoseKeyword takes a keyword away from every creature in play for the
 	// remainder of the turn.
 	LoseKeyword(k Keyword)
+	// GrantKeyword gives one creature a keyword for the remainder of the turn
+	// (Scout grants Skirmish).
+	GrantKeyword(id LocalID, k Keyword)
+	// ConsiderFlank makes one creature count as a flank creature for the remainder
+	// of the turn regardless of its position (Spectral Tunneler).
+	ConsiderFlank(id LocalID)
 }
 
 // CombatResolver resolves damage, destruction, and the fights, reaps, and actions
@@ -231,6 +244,10 @@ type CombatResolver interface {
 	// player and house). A creature can only be used while ready, so an exhausted
 	// attacker may be chosen but does nothing.
 	FightWith(attacker, defender LocalID)
+	// ProtectedByTaunt reports whether target cannot be chosen to be fought by
+	// attacker because a neighboring taunter shields it — respected by
+	// ability-driven fights too, so a forced fight cannot reach past a taunter.
+	ProtectedByTaunt(attacker, target LocalID) bool
 	// ReapWith reaps with a creature (ability-driven, ignoring active player and
 	// house). A creature can only be used while ready, so an exhausted creature may
 	// be chosen but does nothing.
@@ -288,6 +305,10 @@ type ZoneResolver interface {
 	// PurgeFromPlay moves a card from play to its owner's purge pile (set aside out
 	// of the game).
 	PurgeFromPlay(id LocalID)
+	// MarkPlayedActionPurged marks a resolving action card to be set aside out of
+	// the game when its play completes, rather than going to the discard pile
+	// (Library Access purges itself).
+	MarkPlayedActionPurged(id LocalID)
 	// PutIntoPlay puts a card into play under controller's control without playing
 	// it — no bonus icons and no Play: abilities resolve.
 	PutIntoPlay(id LocalID, controller int)
@@ -302,9 +323,27 @@ type ZoneResolver interface {
 	// the active-house gate (Sacrificial Altar). It does nothing when the card is
 	// not in that discard pile.
 	PlayFromDiscard(player int, id LocalID)
+	// PlayFromOpponentDiscard plays a card out of the given player's opponent's
+	// discard pile as that player's own play (Mimicry copies an action from the
+	// other player's discard). It does nothing when the card is not in that discard
+	// pile.
+	PlayFromOpponentDiscard(player int, id LocalID)
 	// PlayFromHand plays a specific card from a player's hand, bypassing the
 	// active-house gate (Phase Shift's off-house card).
 	PlayFromHand(player int, id LocalID)
+	// PlayFromUnder plays a specific card from under whatever host it sits under
+	// (Masterplan's and Jargogle's own "play the card under me"). It does nothing
+	// when the card is not currently placed under anything.
+	PlayFromUnder(player int, id LocalID)
+	// PutCardUnder removes a card from a player's hand and places it under host,
+	// face up or face down (Masterplan, Jargogle).
+	PutCardUnder(owner int, id, host LocalID, faceDown bool)
+	// GraftUnder moves a card from play to faceup under host, out of play
+	// (rulebook: Graft; Spangler Box).
+	GraftUnder(id, host LocalID)
+	// PutUnderIntoPlay puts every card placed under host into play under its
+	// owner's control (Spangler Box's Destroyed ability).
+	PutUnderIntoPlay(host LocalID)
 	// ShuffleZonesIntoDeck moves each named zone's cards into a player's deck and
 	// shuffles once (discard, hand, archives).
 	ShuffleZonesIntoDeck(player int, zones []Zone)
@@ -427,11 +466,40 @@ func (g *Game) SharesTrait(a, b LocalID) bool {
 // HasKeyword reports whether a creature has a keyword, printed or granted.
 func (g *Game) HasKeyword(id LocalID, k Keyword) bool { return g.hasKeyword(id, k) }
 
+// ProtectedByTaunt reports whether target is shielded from attacker by a
+// neighboring taunter (the exported CombatResolver port method).
+func (g *Game) ProtectedByTaunt(attacker, target LocalID) bool {
+	return g.protectedByTaunt(attacker, target)
+}
+
 // LoseKeyword takes a keyword away from every creature in play for the remainder
 // of the turn (Sniffer).
 func (g *Game) LoseKeyword(k Keyword) {
 	g.State.KeywordsLost |= k.bit()
 	g.record(KeywordLostByAll{Keyword: k})
+}
+
+// GrantKeyword gives one creature a keyword for the remainder of the turn (Scout).
+func (g *Game) GrantKeyword(id LocalID, k Keyword) {
+	if g.State.Cards[id].GrantedKeywords&k.bit() != 0 {
+		return
+	}
+	g.State.Cards[id].GrantedKeywords |= k.bit()
+	g.record(CreatureGainedKeyword{Creature: id, Keyword: k})
+}
+
+// ConsideredFlank reports whether a creature counts as a flank creature for the
+// turn regardless of its battleline position (Spectral Tunneler).
+func (g *Game) ConsideredFlank(id LocalID) bool { return g.State.Cards[id].ConsideredFlank }
+
+// ConsiderFlank makes one creature count as a flank creature for the remainder of
+// the turn (Spectral Tunneler).
+func (g *Game) ConsiderFlank(id LocalID) {
+	if g.State.Cards[id].ConsideredFlank {
+		return
+	}
+	g.State.Cards[id].ConsideredFlank = true
+	g.record(CreatureConsideredFlank{Creature: id})
 }
 
 // ForgeKeyAtExtraCost has a player forge one key at its current cost plus extra.
@@ -607,6 +675,13 @@ func (g *Game) PurgeFromHand(owner int, id LocalID) { g.purgeFromHand(owner, id)
 
 // PurgeFromPlay is the Resolver entry point for purgeFromPlay.
 func (g *Game) PurgeFromPlay(id LocalID) { g.purgeFromPlay(id) }
+
+// MarkPlayedActionPurged marks a resolving action to be purged instead of
+// discarded when its play completes (Library Access).
+func (g *Game) MarkPlayedActionPurged(id LocalID) {
+	g.State.PurgePlayedAction = id
+	g.State.PurgePlayedActionSet = true
+}
 
 // AddPowerCounter changes the net power counters on a creature.
 func (g *Game) AddPowerCounter(id LocalID, delta int) {

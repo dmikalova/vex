@@ -143,3 +143,126 @@ func specimenLabel(s specimen) string {
 	}
 	return strings.Join(parts, " · ")
 }
+
+// attachSpecimen is a host card built on the harness carrying a fixed set of
+// upgrades and under-cards, captioned with the combination it shows. The gallery
+// renders it through the board's own tabbed-host path (hostWithTabs), so what it
+// shows is exactly what the board draws.
+type attachSpecimen struct {
+	caption string
+	host    engine.LocalID
+}
+
+// cardCursor hands out catalog cards in catalog order, so successive picks are
+// distinct without a written-down list. It wraps at the end rather than running
+// out, so a small loaded catalog still fills every slot.
+type cardCursor struct {
+	all []engine.CardDefinition
+	i   int
+}
+
+func newCardCursor() *cardCursor { return &cardCursor{all: cards.All()} }
+
+func (c *cardCursor) next() engine.CardDefinition {
+	d := c.all[c.i%len(c.all)]
+	c.i++
+	return d
+}
+
+// nextOf returns the next card of a given type, falling back to any card when
+// the loaded catalog has none, so the upgrade tabs read as upgrades whenever the
+// sets provide them.
+func (c *cardCursor) nextOf(ct engine.CardType) engine.CardDefinition {
+	for range c.all {
+		if d := c.next(); d.Type == ct {
+			return d
+		}
+	}
+	return c.next()
+}
+
+// underMaskLabel names one faceup/facedown combination for n under-cards, bit i
+// set meaning the i-th card is facedown.
+func underMaskLabel(n, mask int) string {
+	parts := make([]string, n)
+	for i := range n {
+		if mask&(1<<i) != 0 {
+			parts[i] = "down"
+		} else {
+			parts[i] = "up"
+		}
+	}
+	return strings.Join(parts, " · ")
+}
+
+// buildAttachments populates the harness with the attachment specimens the
+// gallery shows — 1/2/3 upgrades, 1/2/3 under-cards in every faceup/facedown
+// combination, and the two composed together — and returns them in display
+// order. A facedown under-card only renders as a card-back to a player who does
+// not control the host, so the facedown combinations sit on the opponent's cards
+// (owner 1), where the active player (owner 0) cannot peek; the upgrade rows and
+// the "peeked" example sit on the active player's own cards.
+func buildAttachments(g *engine.Game) []attachSpecimen {
+	cur := newCardCursor()
+	host := func(owner int) engine.LocalID {
+		return g.AddToBattleline(cur.nextOf(engine.Creature), owner)
+	}
+	var out []attachSpecimen
+
+	// Upgrades: 1, 2, 3 on the active player's own creature.
+	for n := 1; n <= 3; n++ {
+		h := host(0)
+		for range n {
+			g.AttachUpgrade(h, g.Register(cur.nextOf(engine.Upgrade), 0))
+		}
+		out = append(out, attachSpecimen{
+			caption: strconv.Itoa(n) + " upgrade" + plural(n),
+			host:    h,
+		})
+	}
+
+	// Under-cards: every faceup/facedown combination of 1, 2, 3 cards, on the
+	// opponent's creature so a facedown card reads as a card-back.
+	for n := 1; n <= 3; n++ {
+		for mask := range 1 << n {
+			h := host(1)
+			for i := range n {
+				g.AttachUnder(h, g.Register(cur.next(), 1), mask&(1<<i) != 0)
+			}
+			out = append(out, attachSpecimen{
+				caption: strconv.Itoa(n) + " under: " + underMaskLabel(n, mask),
+				host:    h,
+			})
+		}
+	}
+
+	// Your own facedown under-card: you control the host, so you see it revealed
+	// rather than as a back — the one case the opponent rows cannot show.
+	yours := host(0)
+	g.AttachUnder(yours, g.Register(cur.next(), 0), true)
+	out = append(out, attachSpecimen{caption: "1 under, facedown (you peek)", host: yours})
+
+	// Combined: upgrades and under-cards on the same opponent host.
+	for _, n := range []int{2, 3} {
+		h := host(1)
+		for range n {
+			g.AttachUpgrade(h, g.Register(cur.nextOf(engine.Upgrade), 1))
+		}
+		for i := range n {
+			g.AttachUnder(h, g.Register(cur.next(), 1), i%2 == 1)
+		}
+		out = append(out, attachSpecimen{
+			caption: strconv.Itoa(n) + " upgrades + " + strconv.Itoa(n) + " under",
+			host:    h,
+		})
+	}
+	return out
+}
+
+// plural returns the "s" that turns a count's noun plural, or "" for one.
+func plural(n int) string {
+	if n == 1 {
+		return ""
+	}
+	return "s"
+}

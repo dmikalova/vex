@@ -52,6 +52,17 @@ func Upgraded(host any, upgrades ...any) Entry {
 	return e
 }
 
+// DeckOf builds n vanilla creatures of the given house, a deck deep enough to
+// draw from without emptying when a scenario cares about how many cards are
+// drawn, not what they are.
+func DeckOf(house engine.House, n int) []Entry {
+	items := make([]any, n)
+	for i := range items {
+		items[i] = Creature(OfHouse(house), Power(2))
+	}
+	return Cards(items...)
+}
+
 // toEntry converts a card definition or an Entry into an Entry.
 func toEntry(x any) Entry {
 	switch v := x.(type) {

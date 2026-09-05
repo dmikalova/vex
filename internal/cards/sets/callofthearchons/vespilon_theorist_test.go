@@ -8,6 +8,15 @@ import (
 )
 
 // Vespilon Theorist
+//
+//	House:  Logos
+//	Type:   Creature
+//	Rarity: Rare
+//	Power:  2
+//	Traits: Cyborg • Scientist
+//
+//	Elusive.
+//	Reap: Choose a house - reveal the top card of your deck. If it is of the chosen house, archive the top card of your deck, and gain 1 Æmber. Otherwise, discard the top card of your deck.
 func TestVespilonTheorist(t *testing.T) {
 	t.Run("archives the revealed card of the chosen house", func(t *testing.T) {
 		var theorist, top ct.Card

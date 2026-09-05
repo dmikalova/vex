@@ -1,6 +1,8 @@
 package web
 
 import (
+	"strconv"
+
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
 	"github.com/dmikalova/vactrol/internal/engine"
@@ -17,12 +19,47 @@ func (g *game) hoverCard(_ app.Context, id engine.LocalID) {
 // hoverClear hides the hover preview (a card leave).
 func (g *game) hoverClear(_ app.Context) { g.hasHover, g.hoverDef = false, nil }
 
+// onCardTabHover previews the card a peeking tab represents. The id is read back
+// off the tab's own dataset rather than carried on a component field — see
+// cardTab in view_board.go.
+func (g *game) onCardTabHover(ctx app.Context, _ app.Event) {
+	id, err := strconv.Atoi(ctx.JSSrc().Get("dataset").Get("id").String())
+	if err != nil {
+		return
+	}
+	g.hoverCard(ctx, engine.LocalID(id))
+}
+
+// onCardTabHoverOut adapts hoverClear to the two-argument event handler shape a
+// plain element needs (a component method like cardView's can drop the unused
+// event itself; a tab is not a component).
+func (g *game) onCardTabHoverOut(ctx app.Context, _ app.Event) { g.hoverClear(ctx) }
+
 // hoverLive reports whether the hovered live card is still somewhere the client
 // draws it. A card that leaves play (destroyed, purged, put into hand) vanishes
 // from the DOM without firing a leave, so the preview has to drop it itself.
 func (g *game) hoverLive() bool {
 	return g.hasHover &&
-		(g.isInPlay(g.hoverID) || containsID(g.g.Hand(g.active()), g.hoverID))
+		(g.isInPlay(g.hoverID) || containsID(g.g.Hand(g.active()), g.hoverID) ||
+			g.attachedRevealed(g.hoverID))
+}
+
+// attachedRevealed reports whether id is an Upgrade or an Under-card attached to
+// a card in play and, for an Under-card, currently revealed to the active
+// player — the only two ways a card that has no zone of its own can still be a
+// legitimate hover preview (its peeking tab, in view_board.go).
+func (g *game) attachedRevealed(id engine.LocalID) bool {
+	for p := range 2 {
+		for _, host := range append(g.g.Battleline(p), g.g.Artifacts(p)...) {
+			if containsID(g.g.Upgrades(host), id) {
+				return true
+			}
+			if containsID(g.g.Under(host), id) {
+				return !g.g.UnderFaceDown(id) || g.g.Peekable(g.active(), host)
+			}
+		}
+	}
+	return false
 }
 
 // previewUp reports whether the hover preview should be drawn. Hovering the card
@@ -64,27 +101,13 @@ func (g *game) remainingKeyColors(player int) []engine.KeyColor {
 	return out
 }
 
-func (g *game) restart(ctx app.Context, _ app.Event) {
-	if g.busy || g.choosing {
-		return
-	}
-	g.confirmRestart = false
-	g.newMatch()
-	g.save(ctx)
-}
-
-// askRestart opens the restart confirmation in the controls area rather than
-// restarting immediately.
-func (g *game) askRestart(_ app.Context, _ app.Event) {
+// openSetup opens the new-game set picker in the action bar, unless an action or
+// prompt owns the screen.
+func (g *game) openSetup(_ app.Context, _ app.Event) {
 	if g.busy || g.choosing || g.choosingOption {
 		return
 	}
-	g.confirmRestart = true
-}
-
-// cancelRestart dismisses the restart confirmation, leaving the game running.
-func (g *game) cancelRestart(_ app.Context, _ app.Event) {
-	g.confirmRestart = false
+	g.beginSetup()
 }
 
 // toggleSidebar hides or shows the whole sidebar so the board area can use the
@@ -125,7 +148,7 @@ func (g *game) manualMenu(ctx app.Context, e app.Event) {
 
 func (g *game) restartMenu(ctx app.Context, e app.Event) {
 	g.menuOpen = false
-	g.askRestart(ctx, e)
+	g.openSetup(ctx, e)
 }
 
 func (g *game) keysMenu(ctx app.Context, e app.Event) {

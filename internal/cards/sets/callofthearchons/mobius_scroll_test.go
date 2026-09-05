@@ -8,6 +8,13 @@ import (
 )
 
 // Mobius Scroll
+//
+//	House:  Logos
+//	Type:   Artifact
+//	Rarity: Rare
+//	Traits: Item
+//
+//	Action: Archive Mobius Scroll from play, and archive up to 2 cards from your hand.
 func TestMobiusScroll(t *testing.T) {
 	t.Run("archives itself and two chosen cards", func(t *testing.T) {
 		var scroll, first, second, kept ct.Card

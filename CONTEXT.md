@@ -117,6 +117,23 @@ A zone whose contents are not known to both players (deck, hand, archives) versu
 one whose contents are (play, discard, purged). The distinction decides whether a
 card can be named.
 
+**Upgrade**:
+A card type attached to a creature rather than played onto the battleline itself;
+it grants its host a bonus (power, armor, a keyword) for as long as it stays
+attached, and leaves play alongside its host or on its own.
+
+**Under** / **Under-card**:
+A card placed under another card rather than played into a zone of its own —
+Masterplan and Jargogle bury a card from hand this way, Graft always faceup.
+Unlike an Upgrade, an under-card is out of play: it does not fight, reap, or
+count toward anything power does. It may be placed face up or facedown; a
+facedown under-card is exactly as hidden as a card in hand.
+_Avoid_: beneath.
+
+**Peek** / **Peekable**:
+Looking at a facedown under-card without revealing it to the opponent. Only the
+controller of the host a card is placed under may peek at it.
+
 **Constant ability**:
 An ability with no boldfaced trigger, which applies continuously while its card
 stays in play — the power and armor bonuses one card hands its neighbors, a
@@ -307,8 +324,7 @@ correctly.
 ## The client
 
 The names of the screen's regions, so a request or a bug report can point at one.
-Both the browser client and the TUI present the same regions; these names are the
-shared ones.
+These are the names the browser client's regions go by.
 
 **Board area**:
 Everything but the Sidebar: the two Player bars, the Play zone between them, and
@@ -351,8 +367,7 @@ dock loose to float over the board.
 Everything the player answers with, as one panel: the Prompt, the Action bar, the
 House picker, the Flank buttons, and End turn. It docks into the Sidebar while
 the Sidebar is open and floats over the Board area once it is hidden, so hiding
-the Sidebar costs the player the Game log but never the game. Browser client
-only; the TUI has no collapsing region to dock into.
+the Sidebar costs the player the Game log but never the game.
 
 **Brand bar**:
 The title row at the top of the Sidebar, with the navigation buttons: undo,

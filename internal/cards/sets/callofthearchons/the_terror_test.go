@@ -15,7 +15,7 @@ import (
 //	Power:  5
 //	Traits: Demon • Knight
 //
-//	Play: If your opponent has exactly 0 Æmber, gain 2 Æmber.
+//	Play: If your opponent has no Æmber, gain 2 Æmber.
 func TestTheTerror(t *testing.T) {
 	t.Run("gains 2 Æmber when the opponent has none", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

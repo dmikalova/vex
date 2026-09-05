@@ -947,8 +947,11 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 }
 
 // onFlank reports whether a creature is on a flank of its battleline (its
-// leftmost or rightmost creature).
+// leftmost or rightmost creature), or is considered one for the turn.
 func onFlank(ctx *EffectContext, id LocalID) bool {
+	if ctx.Resolver.ConsideredFlank(id) {
+		return true
+	}
 	bl := battlelineContaining(ctx, id)
 	return len(bl) > 0 &&
 		(bl[0] == id || bl[len(bl)-1] == id)

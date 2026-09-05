@@ -22,14 +22,10 @@ type CardDefinition struct {
 	// A creature with Assault N deals N damage to the creature it attacks,
 	// immediately before combat damage is dealt. Zero means the creature does not
 	// have Assault.
-	//
-	//rulebook:keyword Assault
 	Assault int
 	// A creature with Hazardous N deals N damage to any creature that attacks it,
 	// before that attacker deals its combat damage. Zero means the creature does
 	// not have Hazardous.
-	//
-	//rulebook:keyword Hazardous
 	Hazardous int
 	// AttackDamage customizes the damage this creature deals when it fights, for the
 	// few creatures whose fight damage is not simply their current power (Valdr's
@@ -115,6 +111,10 @@ type CardDefinition struct {
 	// so it is a private vault its controller can bank into (Safe Place).
 	SpendableAember bool
 
+	// GainsForgeAember gives this card's controller all the Æmber their opponent
+	// spends forging a key, for as long as it stays in play (The Sting).
+	GainsForgeAember bool
+
 	// PlayRequirement is the Æmber the controller must have — and, when the
 	// requirement spends, gives up — to play this card from hand.
 	PlayRequirement PlayRequirement
@@ -163,6 +163,9 @@ type Restrictions struct {
 	Toll Toll
 	// UseCondition is a Condition that must be met for the controller to use this card (Giant Sloth).
 	UseCondition Condition
+	// SkipForge bars the controller from forging a key during their "forge a
+	// key" step (The Sting).
+	SkipForge bool
 }
 
 // PlayCardLimit caps how many cards Player may play in a turn while its source
@@ -283,14 +286,6 @@ type StaticModifier struct {
 	// standing at the edge of the line.
 	WhileOnFlank bool
 }
-
-// A constant ability is a continuous rule a card applies while it stays in play,
-// with no trigger of its own — "Each friendly creature gains +1 power", or a card
-// that grants every creature a keyword or a "Destroyed:" ability. Its effect
-// applies for as long as the source card remains in play and stops the moment it
-// leaves; applying it is not "using" the card and never exhausts it.
-//
-//rulebook:ability Constant Ability
 
 // ConstantAbility is a continuous stat modifier a card in play applies to
 // creatures — "Each friendly creature gains +1 power" — lasting only while the
@@ -553,6 +548,12 @@ func WithAemberTheftImmunity() CardOption {
 // controller forges a key (Safe Place, Pocket Universe).
 func WithSpendableAember() CardOption {
 	return func(c *CardDefinition) { c.SpendableAember = true }
+}
+
+// WithGainsForgeAember gives the card's controller all the Æmber their opponent
+// spends forging a key, for as long as it stays in play (The Sting).
+func WithGainsForgeAember() CardOption {
+	return func(c *CardDefinition) { c.GainsForgeAember = true }
 }
 
 // WithPlayRequirement puts an Æmber requirement on playing the card, either a

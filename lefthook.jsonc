@@ -9,13 +9,4 @@
       "refetch": true,
     },
   ],
-
-  // golangci-lint runs through mage so the pinned version stays in one place.
-  "pre-commit": {
-    "commands": {
-      "go-lint": {
-        "run": "mage lint",
-      },
-    },
-  },
 }

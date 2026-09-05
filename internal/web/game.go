@@ -1,6 +1,6 @@
 // Package web is the browser client for the Vactrol card game. It renders an
-// interactive two-player hotseat match with the same engine the terminal UI
-// uses, compiled to WebAssembly via the go-app framework: the playtester sees
+// interactive two-player hotseat match on the Vactrol engine,
+// compiled to WebAssembly via the go-app framework: the playtester sees
 // the whole board and drives both sides.
 package web
 
@@ -67,6 +67,19 @@ type game struct {
 
 	phase phase
 	busy  bool // an action goroutine is resolving; input is ignored
+
+	// awaitingSetup shows the new-game set picker in the action bar over the
+	// current board. It is on from a New game until both players have chosen a set
+	// (or the same-sets shortcut is taken), at which point the match is dealt.
+	awaitingSetup bool
+	// setPick is the player (0 or 1) currently choosing a set in the action bar.
+	setPick int
+	// setNames holds each player's chosen deck-generation set for the current
+	// match, persisted so a resume rebuilds the same decks.
+	setNames [2]string
+	// prevSetNames snapshots the running match's sets when the picker opens, so its
+	// same-sets shortcut is stable while a player picks.
+	prevSetNames [2]string
 
 	// selection
 	sel      engine.LocalID
@@ -141,13 +154,9 @@ type game struct {
 	// game, keyboard shortcuts).
 	menuOpen bool
 
-	// confirmRestart shows the restart confirmation in the controls area instead of
-	// restarting immediately.
-	confirmRestart bool
-
 	// confirmEndTurn is armed when the player asks to end the turn while they could
 	// still act; a second end-turn (e or the button) confirms. Any other action
-	// (via beginAction) or an undo/redo disarms it.
+	// (via beginAction), selecting another card, or an undo/redo disarms it.
 	confirmEndTurn bool
 
 	// btnCursor is the prompt button Tab has stepped to — an index into whatever
@@ -328,6 +337,10 @@ type snapshot struct {
 	Version int
 	Seed    int64
 	State   engine.GameState
+	// SetNames records each player's chosen deck-generation set, so a resume
+	// rebuilds the same decks the seed alone would not pin down once sets can
+	// differ between players.
+	SetNames [2]string
 	// Log persists the game log so a hot-reload does not lose the history. A typed
 	// log entry does not survive JSON (it carries an interface, like a
 	// CardDefinition's effect nodes), so each entry is saved as the text it was

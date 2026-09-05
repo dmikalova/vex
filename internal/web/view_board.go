@@ -2,7 +2,9 @@ package web
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
@@ -43,7 +45,7 @@ func (g *game) turnHud() app.UI {
 	p := g.active()
 	steps := map[phase]string{
 		phaseHouse:       "Choose a house",
-		phaseMain:        "Play, use, discard",
+		phaseMain:        "Main phase",
 		phaseFlank:       "Placing a creature",
 		phaseFightTarget: "Choosing a fight target",
 		phaseOver:        "Game over",
@@ -109,13 +111,13 @@ func (g *game) zoneCounts(player int) []app.UI {
 	zones := []struct {
 		name  string
 		label string
-		n     int
+		ids   []engine.LocalID
 	}{
-		{"zone-hand", "Hand", len(g.g.Hand(player))},
-		{"zone-deck", "Deck", len(g.g.Deck(player))},
-		{"zone-discard", "Discard", len(g.g.Discard(player))},
-		{"zone-archives", "Archives", len(g.g.Archives(player))},
-		{"zone-purge", "Purge", len(g.g.Purge(player))},
+		{"zone-hand", "Hand", g.g.Hand(player)},
+		{"zone-deck", "Deck", g.g.Deck(player)},
+		{"zone-discard", "Discard", g.g.Discard(player)},
+		{"zone-archives", "Archives", g.g.Archives(player)},
+		{"zone-purge", "Purge", g.g.Purge(player)},
 	}
 	out := make([]app.UI, 0, len(zones))
 	for _, z := range zones {
@@ -125,13 +127,43 @@ func (g *game) zoneCounts(player int) []app.UI {
 		if z.label == "Discard" && g.discardFlash[player] {
 			pulse = pulseClass(true, g.discardParity[player], "gain")
 		}
-		body := []app.UI{icon(z.name, "icon-stat"), app.Text(strconv.Itoa(z.n))}
+		body := []app.UI{icon(z.name, "icon-stat"), app.Text(strconv.Itoa(len(z.ids)))}
 		body = append(body, g.flightsInto(player, z.name)...)
+		// The tip names the cards in the zone when this player is allowed to see
+		// them — a face-up pile, or their own hand — and otherwise just labels it.
+		cls := cx("zone-count", "tip", pulse)
+		tip := z.label
+		if names := g.zoneNames(player, z.label, z.ids); len(names) > 0 {
+			cls = cx(cls, "tip-multi")
+			tip = z.label + "\n" + strings.Join(names, "\n")
+		}
 		out = append(out,
-			app.Span().Class(cx("zone-count", "tip", pulse)).DataSet("tip", z.label).Body(body...),
+			app.Span().Class(cls).DataSet("tip", tip).Body(body...),
 		)
 	}
 	return out
+}
+
+// zoneNames lists the names of the cards in a zone, sorted, but only for the
+// zones this player may read: the face-up discard and purge piles of either
+// player, and their own hand. A hidden zone (a deck's order, face-down archives,
+// an opponent's hand) returns nothing, so hovering it never leaks its contents.
+func (g *game) zoneNames(player int, label string, ids []engine.LocalID) []string {
+	switch label {
+	case "Discard", "Purge":
+	case "Hand":
+		if player != g.active() {
+			return nil
+		}
+	default:
+		return nil
+	}
+	names := make([]string, 0, len(ids))
+	for _, id := range ids {
+		names = append(names, g.g.Def(id).Name)
+	}
+	sort.Strings(names)
+	return names
 }
 
 // flightsInto renders the cards that just left the board for this zone as faces
@@ -395,7 +427,7 @@ func (g *game) renderCard(id engine.LocalID, boardKind selKind, opposing bool) a
 		id,
 	) // effective house: a control/"belongs to house" effect may override the printed one
 	flash := g.flashes[id]
-	return &cardView{
+	face := &cardView{
 		ID:            id,
 		DOMID:         boardCardID(id),
 		Title:         def.Name,
@@ -426,10 +458,81 @@ func (g *game) renderCard(id engine.LocalID, boardKind selKind, opposing bool) a
 		Selected:      g.isSelected(id),
 		Targetable:    targetable,
 		Dimmed:        dimmed,
+		Jiggle:        g.jiggling(id, boardKind),
 		OnActivate:    activate,
 		OnHover:       g.hoverCard,
 		OnHoverOut:    g.hoverClear,
 	}
+	return g.hostWithTabs(id, face)
+}
+
+// hostWithTabs wraps a rendered face in the peeking-tab host when the card
+// carries upgrades or under-cards, so the board and the Style gallery build the
+// tabbed layout from the same code. A card with nothing attached is returned
+// unwrapped.
+//
+// The tab strips are siblings drawn before the face in a shared, non-clipping
+// host, so the face — later in the DOM, same stacking context — paints over
+// their inner edge and only a sliver of each peeks out. Nesting them inside
+// cardView itself would not work: .card clips its own children to draw the ogee
+// name-banner frame, which would hide the peeking part too.
+func (g *game) hostWithTabs(id engine.LocalID, face app.UI) app.UI {
+	left, right := g.underTabs(id), g.upgradeTabs(id)
+	if len(left) == 0 && len(right) == 0 {
+		return face
+	}
+	return app.Div().Class("card-host").Body(
+		app.Div().Class("card-tabs card-tabs--left").Body(left...),
+		app.Div().Class("card-tabs card-tabs--right").Body(right...),
+		face,
+	)
+}
+
+// upgradeTabs renders each upgrade attached to id as a peeking tab along its
+// right edge, in attach order. An upgrade is never facedown, so every tab shows
+// its own house colour and hovers into the full preview.
+func (g *game) upgradeTabs(id engine.LocalID) []app.UI {
+	ups := g.g.Upgrades(id)
+	tabs := make([]app.UI, 0, len(ups))
+	for _, up := range ups {
+		tabs = append(tabs, g.cardTab(up))
+	}
+	return tabs
+}
+
+// underTabs renders each card placed under id as a peeking tab along its left
+// edge, in the order they were placed: its own house colour when revealed
+// (faceup, or facedown but the active player controls id and may Peek), a plain
+// card back otherwise, which previews nothing.
+func (g *game) underTabs(id engine.LocalID) []app.UI {
+	buried := g.g.Under(id)
+	tabs := make([]app.UI, 0, len(buried))
+	for _, u := range buried {
+		if g.g.UnderFaceDown(u) && !g.g.Peekable(g.active(), id) {
+			tabs = append(tabs, app.Div().Class("card-tab card-tab--back").
+				Body(app.Span().Class("card-tab-title").Text("VEX")))
+			continue
+		}
+		tabs = append(tabs, g.cardTab(u))
+	}
+	return tabs
+}
+
+// cardTab renders one revealed peeking tab: a house-tinted sliver, its card's
+// name banner turned on its side, so the whole title reads down the tab and each
+// further tab fans out past the last rather than hiding below it. It previews the
+// full card the same way hovering the card itself does. The id is read back off
+// the element's own dataset, the same way onScorePillClick reads its player,
+// since a tab is a plain element rather than a component that could carry it as a
+// field.
+func (g *game) cardTab(id engine.LocalID) app.UI {
+	def := g.g.Def(id)
+	return app.Div().
+		Class(cx("card-tab", houseClasses(g.g.House(id)))).
+		DataSet("id", strconv.Itoa(int(id))).
+		OnMouseEnter(g.onCardTabHover).
+		OnMouseLeave(g.onCardTabHoverOut).
+		Body(app.Span().Class("card-tab-title").Text(def.Name))
 }
 
 // barKeywordOrder is the printed keywords the stripe shows, in the order it
@@ -450,6 +553,11 @@ var barKeywordOrder = []engine.Keyword{
 func (g *game) barKeywords(id engine.LocalID) []string {
 	var out []string
 	for _, k := range barKeywordOrder {
+		// A creature that has spent its Elusive this turn is no longer elusive for
+		// the rest of the turn, so its stripe drops the Elusive colour.
+		if k == engine.Elusive && g.g.ElusiveSpent(id) {
+			continue
+		}
 		if g.g.HasKeyword(id, k) {
 			out = append(out, k.String())
 		}
@@ -551,4 +659,21 @@ func (g *game) actionable(id engine.LocalID, kind selKind) bool {
 	default:
 		return true
 	}
+}
+
+// jiggling reports whether a card should play the end-turn attention wobble: the
+// end-turn confirm is armed and this is one of the cards the player could still
+// act with, so the confirm points at exactly what it is warning about. It mirrors
+// hasMoves, which decides whether the confirm arms at all.
+func (g *game) jiggling(id engine.LocalID, kind selKind) bool {
+	if !g.confirmEndTurn {
+		return false
+	}
+	switch kind {
+	case selHand:
+		return g.usableFromHand(id)
+	case selYourCreature, selYourArtifact:
+		return g.actionable(id, kind)
+	}
+	return false
 }

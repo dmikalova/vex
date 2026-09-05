@@ -8,6 +8,13 @@ import (
 )
 
 // Mating Season
+//
+//	House:  Mars
+//	Type:   Tactic
+//	Rarity: Rare
+//	Æmber:  1
+//
+//	Play: Shuffle each Mars creature into its owner's deck. For each creature shuffled into their deck this way, each player gains 1 Æmber.
 func TestMatingSeason(t *testing.T) {
 	mars := ct.OfHouse(card.House.Mars)
 

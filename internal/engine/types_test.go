@@ -61,6 +61,28 @@ func TestCardTypeReacts(t *testing.T) {
 	}
 }
 
+// TestCardTypes pins the real-type enumeration: CardTypes lists exactly the four
+// types a card can be, each renders its printed word, and neither the TypeUnset
+// nor AnyType sentinel leaks in.
+func TestCardTypes(t *testing.T) {
+	all := CardTypes()
+	want := []CardType{Creature, Tactic, Artifact, Upgrade}
+	if len(all) != len(want) {
+		t.Fatalf("CardTypes() has %d entries, want %d", len(all), len(want))
+	}
+	for i, ct := range all {
+		if ct != want[i] {
+			t.Errorf("CardTypes()[%d] = %v, want %v", i, ct, want[i])
+		}
+		if ct.String() == "" {
+			t.Errorf("card type %d renders empty", ct)
+		}
+		if ct == TypeUnset || ct == AnyType {
+			t.Errorf("CardTypes() leaked the sentinel %v", ct)
+		}
+	}
+}
+
 // TestKeywords pins the enum's three derived views against each other: every
 // keyword Keywords() lists must name itself and claim a distinct bit, and the
 // unset zero must render empty and claim no bit rather than shifting negatively.
@@ -86,7 +108,38 @@ func TestKeywords(t *testing.T) {
 		}
 		seen |= k.bit()
 	}
-	if all[0] != Skirmish || all[len(all)-1] != Versatile {
-		t.Errorf("Keywords() = %v, want Skirmish first and Versatile last", all)
+	if all[0] != Skirmish || all[len(all)-1] != Deploy {
+		t.Errorf("Keywords() = %v, want Skirmish first and Deploy last", all)
+	}
+}
+
+// TestTriggers pins the trigger catalog against its rulebook surface: Triggers
+// omits the unset zero, every real trigger names itself, and the two implicit
+// triggers (EntersPlay, AfterChooseHouse) name themselves but are unprinted, so
+// they head no rulebook entry.
+func TestTriggers(t *testing.T) {
+	all := Triggers()
+	if len(all) != int(triggerCount)-1 {
+		t.Fatalf("Triggers() has %d entries, want %d", len(all), triggerCount-1)
+	}
+	for _, tr := range all {
+		if tr == triggerUnset {
+			t.Errorf("Triggers() leaked the unset zero")
+		}
+		if tr.String() == "" {
+			t.Errorf("trigger %d names itself empty", tr)
+		}
+	}
+	if TriggerEntersPlay.Printed() || TriggerAfterChooseHouse.Printed() {
+		t.Errorf("EntersPlay/AfterChooseHouse should be unprinted")
+	}
+	if TriggerEntersPlay.String() == "" || TriggerAfterChooseHouse.String() == "" {
+		t.Errorf("implicit triggers should still name themselves for logging")
+	}
+	if !TriggerAfterPlay.Printed() || TriggerAfterPlay.String() != "Play" {
+		t.Errorf("Play trigger should be printed and name itself %q", "Play")
+	}
+	if triggerUnset.String() != "" || triggerUnset.Printed() {
+		t.Errorf("triggerUnset should be unprinted with no name")
 	}
 }

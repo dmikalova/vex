@@ -30,10 +30,12 @@ func (g *Game) InvariantError() error {
 	}
 
 	// Card conservation: every registered card must sit in exactly one place —
-	// some zone list, or attached as an upgrade to an in-play creature. A card that
-	// vanishes or duplicates is a leak in a move-between-zones path.
+	// some zone list, attached as an upgrade to an in-play creature, or placed
+	// under an in-play card. A card that vanishes or duplicates is a leak in a
+	// move-between-zones path.
 	var count [maxCards]int
 	var attached [maxCards]bool
+	var underAttached [maxCards]bool
 	tally := func(ids []LocalID) {
 		for _, id := range ids {
 			count[id]++
@@ -69,6 +71,18 @@ func (g *Game) InvariantError() error {
 					)
 				}
 			}
+			for u, ok := g.firstUnder(id); ok; u, ok = g.nextUnder(u) {
+				count[u]++
+				underAttached[u] = true
+				if g.State.Cards[u].UnderHostPlus != underPlus(id) {
+					return fmt.Errorf(
+						"card %d (%s) is placed under %s but its host back-link disagrees",
+						u,
+						g.cat.def(u).Name,
+						g.Name(id),
+					)
+				}
+			}
 		}
 	}
 	for id := 0; id < len(g.cat.defs); id++ {
@@ -85,6 +99,15 @@ func (g *Game) InvariantError() error {
 		if g.State.Cards[id].HostPlus != 0 && !attached[id] {
 			return fmt.Errorf(
 				"card %d (%s) has a host back-link but no creature holds it (dangling upgrade)",
+				id,
+				g.cat.def(LocalID(id)).Name,
+			)
+		}
+		// A card placed under a host must be reachable from that host's chain, the
+		// same dangling-attachment shape as an upgrade above.
+		if g.State.Cards[id].UnderHostPlus != 0 && !underAttached[id] {
+			return fmt.Errorf(
+				"card %d (%s) has an under-host back-link but no host holds it (dangling under-card)",
 				id,
 				g.cat.def(LocalID(id)).Name,
 			)
@@ -109,12 +132,13 @@ func (g *Game) InvariantError() error {
 	}
 
 	// Per-match state belongs to cards in play. Leaving play zeroes the whole
-	// CardCore, so any card outside play (and not attached as an upgrade) carrying
-	// damage, Æmber, a stun, counters, or a host link is a leave-play path that
-	// forgot to reset it.
+	// CardCore, so any card outside play (and not attached as an upgrade, and not
+	// placed under a host — which is deliberately out of play yet still carries
+	// its host and facedown links) carrying damage, Æmber, a stun, counters, or a
+	// host link is a leave-play path that forgot to reset it.
 	for id := 0; id < len(g.cat.defs); id++ {
 		lid := LocalID(id)
-		if g.inPlay(lid) || attached[id] {
+		if g.inPlay(lid) || attached[id] || underAttached[id] {
 			continue
 		}
 		if core := g.State.Cards[id]; core != (CardCore{}) {

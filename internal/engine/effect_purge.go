@@ -9,9 +9,6 @@ import (
 // no ability can reach it unless that ability names the purge pile. It is the most
 // permanent way a card leaves play: a purged card never enters a discard pile and
 // can never be drawn, played, or destroyed again.
-//
-//rulebook:effect Purge
-
 // PurgeCard sets cards aside out of the game, taken from a zone the controller
 // picks.
 // It serves both as a standalone effect (Creeping Oblivion purges up to 2 cards)
@@ -333,4 +330,22 @@ func (PurgeCreatureFromHand) Resolve(ctx *EffectContext) {
 	}
 	ctx.Resolver.PurgeFromHand(ctx.Controller, purged)
 	ctx.It, ctx.HasIt = purged, true
+}
+
+// PurgeSource purges the card whose ability this is (Library Access purges
+// itself). A source still in play — a creature or artifact — is purged from play;
+// a resolving action card, not yet in any zone, is instead marked to be set aside
+// out of the game when its play completes, rather than going to the discard pile.
+type PurgeSource struct{}
+
+// Text renders the effect using the source card's own name.
+func (PurgeSource) Text() string { return "purge " + SelfName }
+
+// Resolve purges the source card.
+func (PurgeSource) Resolve(ctx *EffectContext) {
+	if resolverInPlay(ctx, ctx.Source) {
+		ctx.Resolver.PurgeFromPlay(ctx.Source)
+		return
+	}
+	ctx.Resolver.MarkPlayedActionPurged(ctx.Source)
 }

@@ -17,7 +17,7 @@ func (g *game) overPanel() app.UI {
 	winner := g.g.Winner()
 	return app.Div().Class("btn-col over-panel").Body(
 		app.Div().Class("section-title").Text(g.g.PlayerName(winner)+" wins!"),
-		btn("New game", g.restart, "btn-primary"),
+		btn("New game", g.openSetup, "btn-primary"),
 	)
 }
 
@@ -55,7 +55,7 @@ func (g *game) zoneRow(label string, ids []engine.LocalID) app.UI {
 	return row.Body(
 		app.Div().Class("row-label").Text(fmt.Sprintf("%s (%d)", label, len(ids))),
 		app.If(len(ids) == 0, func() app.UI {
-			return app.Div().Class("row-empty").Text("—")
+			return app.Div().Class("row-empty")
 		}).Else(func() app.UI {
 			return app.Div().Class("card-strip").Body(
 				app.Range(ids).Slice(func(i int) app.UI { return g.renderZoneCard(ids[i]) }),

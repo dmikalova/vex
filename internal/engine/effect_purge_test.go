@@ -212,3 +212,43 @@ func TestCardsPurgedCount(t *testing.T) {
 		t.Errorf("purged = %d, want 2", got)
 	}
 }
+
+func TestPurgeSource(t *testing.T) {
+	if got := (PurgeSource{}).Text(); got != "purge "+SelfName {
+		t.Errorf("text = %q", got)
+	}
+
+	t.Run("purges an in-play source from play", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		src := g.AddToBattleline(testCreature("src", 3), 0)
+
+		PurgeSource{}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: src})
+
+		if !g.State.Purge[0].contains(src) {
+			t.Error("an in-play source should be purged from play")
+		}
+	})
+
+	t.Run("sets a resolving action aside instead of discarding it", func(t *testing.T) {
+		g := started(t)
+		idx := int(g.State.Hand[0].Count)
+		id := g.AddToHand(
+			NewCard(
+				"Self Purge", Brobnar, Tactic, Common,
+				WithAbility(TriggerAfterPlay, PurgeSource{}),
+			),
+			0,
+		)
+
+		if err := g.PlayAction(0, idx); err != nil {
+			t.Fatalf("PlayAction: %v", err)
+		}
+
+		if !g.State.Purge[0].contains(id) {
+			t.Error("a self-purging action should be set aside in the purge pile")
+		}
+		if g.State.Discard[0].contains(id) {
+			t.Error("a self-purging action should not go to the discard pile")
+		}
+	})
+}

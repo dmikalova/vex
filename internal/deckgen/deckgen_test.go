@@ -9,6 +9,12 @@ import (
 // synthSet builds a deterministic test Set: houses × rarities, several cards
 // each, so draws always succeed.
 func synthSet() Set {
+	return NewSet("Test", synthCards(), DefaultTuning())
+}
+
+// synthCards is synthSet's flat card list, shared with tests that build a Set
+// with custom tuning.
+func synthCards() []Card {
 	houses := []engine.House{engine.Brobnar, engine.Dis, engine.Logos, engine.Mars, engine.Sanctum}
 	rarities := []engine.Rarity{engine.Common, engine.Uncommon, engine.Rare}
 	var cs []Card
@@ -23,7 +29,7 @@ func synthSet() Set {
 			}
 		}
 	}
-	return NewSet("Test", cs, DefaultTuning())
+	return cs
 }
 
 func TestGenerateIsDeterministic(t *testing.T) {
@@ -45,6 +51,79 @@ func TestGenerateIsDeterministic(t *testing.T) {
 				cb[i].House,
 			)
 		}
+	}
+}
+
+// legacyPool builds a legacy pool for the same houses as synthSet, with clearly
+// distinct names so a legacy draw is recognizable.
+func legacyPool() []Card {
+	houses := []engine.House{engine.Brobnar, engine.Dis, engine.Logos, engine.Mars, engine.Sanctum}
+	var cs []Card
+	for _, h := range houses {
+		for i := 0; i < 4; i++ {
+			name := "Legacy-" + h.String() + "-" + string(rune('a'+i))
+			cs = append(
+				cs,
+				Card{
+					Def: engine.NewCard(
+						name,
+						h,
+						engine.Creature,
+						engine.Common,
+						engine.WithPower(2),
+					),
+				},
+			)
+		}
+	}
+	// Entries the legacy pool must skip: a houseless special, a Connected card,
+	// and a houseless (HouseNone) card.
+	cs = append(
+		cs,
+		Card{
+			Def: engine.NewCard(
+				"Legacy-Special",
+				engine.Brobnar,
+				engine.Creature,
+				engine.Common,
+			),
+			Profile: GenerationProfile{Houseless: true},
+		},
+		Card{
+			Def: engine.NewCard("Legacy-Connected", engine.Dis, engine.Creature, engine.Connected),
+		},
+		Card{
+			Def: engine.NewCard(
+				"Legacy-Houseless",
+				engine.HouseNone,
+				engine.Creature,
+				engine.Common,
+			),
+		},
+	)
+	return cs
+}
+
+func TestLegacyDraws(t *testing.T) {
+	tuning := DefaultTuning()
+	tuning.LegacyRate = 1 // every non-special slot draws from the legacy pool
+	set := NewSet("Test", synthCards(), tuning).WithLegacy(legacyPool())
+
+	deck := Generate(set, 3)
+	legacyCount := 0
+	for _, pod := range deck.Pods {
+		for _, s := range pod.Slots {
+			if s.Legacy {
+				legacyCount++
+				if s.Card.House != pod.House {
+					t.Errorf("legacy card %q house = %v, want pod house %v",
+						s.Card.Name, s.Card.House, pod.House)
+				}
+			}
+		}
+	}
+	if legacyCount == 0 {
+		t.Fatal("expected some slots to be filled from the legacy pool")
 	}
 }
 

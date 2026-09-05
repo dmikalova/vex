@@ -1,14 +1,11 @@
 package engine
 
 // A result gate resolves one action and then a follow-up, but only when the first
-// action actually happened — written A -> B (destroy a creature -> steal 1 Aember;
+// action actually happened — written A -> B (destroy a creature -> steal 1 Æmber;
 // purge a creature -> give a +1 power counter). The follow-up never runs when the
 // gate does nothing: no valid target, an empty zone, or a declined choice. It is
 // distinct from a conditional, which turns on a fact about the board rather than an
 // action succeeding.
-//
-//rulebook:effect Result Gate
-
 // GatingEffect is an effect that can be the first half of a Then: besides
 // resolving, it reports whether it did anything. The report is an unexported
 // method, so only engine effects (Destroy, Purge) can be a gate.

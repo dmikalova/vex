@@ -4,6 +4,10 @@
 [default.extend-words]
 # "mis-scripted" (as in a deliberately wrong test script) is intentional.
 mis = "mis"
+# "They're Everywhere" is an official card name; its identifiers spell it
+# "Theyre"/"theyre", which must not be "corrected".
+Theyre = "Theyre"
+theyre = "theyre"
 
 [files]
 extend-exclude = [

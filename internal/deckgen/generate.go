@@ -164,6 +164,11 @@ func (g *generator) fillSlot(house engine.House, placed []placedCard) (Slot, pla
 	}
 
 	rarity := g.rollRarity()
+	if g.chance(t.LegacyRate) {
+		if c, ok := g.pick(g.set.legacyByHouse[house]); ok {
+			return g.commit(c, SlotContext{House: house, Rarity: rarity, Legacy: true})
+		}
+	}
 	if c, ok := g.tryDuplicate(rarity, placed); ok {
 		return g.commit(c, SlotContext{House: house, Rarity: rarity})
 	}

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"math/rand"
+	"time"
 
 	"github.com/dmikalova/vactrol/internal/engine"
 )
@@ -14,7 +15,19 @@ import (
 // batch has to be generated together for script i to stay the same game between
 // the property test and a debug replay of it.
 func SeedScripts(count int) [][]byte {
-	r := rand.New(rand.NewSource(1))
+	return scriptsFrom(rand.New(rand.NewSource(1)), count)
+}
+
+// RandomScripts builds a batch of game scripts from a fresh, non-deterministic
+// source, so each test run explores games the fixed-seed batch never plays. A
+// failure stays fully reproducible: the script bytes alone determine the game, so
+// the hex TestSimulateSeeds prints replays under `mage debug`.
+func RandomScripts(count int) [][]byte {
+	return scriptsFrom(rand.New(rand.NewSource(time.Now().UnixNano())), count)
+}
+
+// scriptsFrom draws count game scripts in sequence from one source.
+func scriptsFrom(r *rand.Rand, count int) [][]byte {
 	scripts := make([][]byte, count)
 	for i := range scripts {
 		scripts[i] = make([]byte, 8+r.Intn(400))

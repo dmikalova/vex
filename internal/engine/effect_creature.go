@@ -18,6 +18,22 @@ type CreatureVerb interface {
 	Apply(ctx *EffectContext, target LocalID)
 }
 
+// joinVerbs strings verb phrases into one clause: "ready" alone, "ready and
+// fight with" for two, and an Oxford-comma list "give skirmish to, ready, and
+// fight with" for three or more.
+func joinVerbs(parts []string) string {
+	switch len(parts) {
+	case 0:
+		return ""
+	case 1:
+		return parts[0]
+	case 2:
+		return parts[0] + " and " + parts[1]
+	default:
+		return strings.Join(parts[:len(parts)-1], ", ") + ", and " + parts[len(parts)-1]
+	}
+}
+
 // A narrowingVerb can only act on some of the creatures its target names, and
 // so narrows the choice offered without changing the printed text: "use a
 // friendly creature" never meant an exhausted one, since using it would do
@@ -60,14 +76,22 @@ func (FightVerb) Apply(ctx *EffectContext, target LocalID) {
 
 // fightAmong has attacker fight one of enemies, chosen by attacker's controller,
 // and reports which enemy it fought. Taking the candidates as an argument is what
-// lets RepeatedFight narrow them to the enemies no earlier fight has used.
+// lets RepeatedFight narrow them to the enemies no earlier fight has used. A
+// taunter still shields its neighbors from an ability-driven fight (Sergeant
+// Zakiel cannot reach past a taunter), so taunt-protected enemies are dropped.
 func fightAmong(ctx *EffectContext, attacker LocalID, enemies []LocalID) (LocalID, bool) {
 	owner := ctx.Resolver.Owner(attacker)
+	var reachable []LocalID
+	for _, e := range enemies {
+		if !ctx.Resolver.ProtectedByTaunt(attacker, e) {
+			reachable = append(reachable, e)
+		}
+	}
 	enemy, ok := ctx.Resolver.ChooseCreature(
 		owner,
 		ctx.Source,
 		"Choose a creature to fight",
-		enemies,
+		reachable,
 	)
 	if !ok {
 		ctx.Resolver.Record(NoCreatureToFight{Creature: attacker})
@@ -137,7 +161,7 @@ func (e OnChooseCreature) Text() string {
 	for _, v := range e.Verbs {
 		parts = append(parts, v.VerbText())
 	}
-	return strings.Join(parts, " and ") + " " + e.Target.Text()
+	return joinVerbs(parts) + " " + e.Target.Text()
 }
 
 // Resolve chooses the creature (through its Target) once, then applies each verb
@@ -287,6 +311,22 @@ func (ExhaustVerb) Apply(ctx *EffectContext, target LocalID) {
 	ctx.Resolver.SetExhausted(target, true)
 }
 
+// GainKeywordVerb gives the chosen creature a keyword for the remainder of the
+// turn (Scout grants Skirmish before fighting). As a verb it shares the single
+// chosen target with the other verbs of a OneAtATime, so "give skirmish to,
+// ready, and fight with" reads and resolves against one creature per pass.
+type GainKeywordVerb struct{ Keyword Keyword }
+
+// VerbText returns the verb phrase, e.g. "give skirmish to".
+func (v GainKeywordVerb) VerbText() string {
+	return "give " + strings.ToLower(v.Keyword.String()) + " to"
+}
+
+// Apply grants the creature the keyword for the remainder of the turn.
+func (v GainKeywordVerb) Apply(ctx *EffectContext, target LocalID) {
+	ctx.Resolver.GrantKeyword(target, v.Keyword)
+}
+
 // OneAtATime repeats a chosen-creature action several passes over, each pass on
 // a creature no earlier pass took — Relentless Assault readies and fights with
 // up to 3 different friendly creatures, one at a time. Each pass resolves fully
@@ -325,7 +365,7 @@ func (e OneAtATime) Text() string {
 	}
 	return fmt.Sprintf(
 		"%s up to %d different %ss, one at a time",
-		strings.Join(verbs, " and "),
+		joinVerbs(verbs),
 		e.Times,
 		singularNoun(e.Target.Text()),
 	)

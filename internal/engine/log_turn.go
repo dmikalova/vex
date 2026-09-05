@@ -85,6 +85,20 @@ func (e ForgeSkipped) Text(n Namer) string {
 	return fmt.Sprintf("%s skips their forge a key phase", n.PlayerName(e.Player))
 }
 
+// AemberGainedFromForging narrates a card gaining all the Æmber its controller's
+// opponent spent forging a key (The Sting), instead of it vanishing.
+type AemberGainedFromForging struct {
+	Card   LocalID
+	From   int
+	Amount int
+}
+
+// Text renders the forge spending a card gained.
+func (e AemberGainedFromForging) Text(n Namer) string {
+	return fmt.Sprintf("%s gains the %d Æmber %s spends forging a key",
+		n.Name(e.Card), e.Amount, n.PlayerName(e.From))
+}
+
 // KeyForged narrates a forged key: its colour when the player picked one, and
 // where it puts them on the way to winning.
 type KeyForged struct {

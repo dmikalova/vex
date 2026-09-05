@@ -32,6 +32,14 @@ type CardCore struct {
 	// It lasts until end of turn (the ready phase clears it) — Shield of Justice,
 	// Protectrix.
 	DamageImmune bool
+	// GrantedKeywords is the set of keywords this creature has gained for the
+	// remainder of the turn, as a bitmask of Keyword.bit() values (Scout grants
+	// Skirmish). The ready phase clears it for every creature.
+	GrantedKeywords uint8
+	// ConsideredFlank, while set, makes this creature count as a flank creature no
+	// matter where it sits in its battleline (Spectral Tunneler). It lasts until the
+	// remainder of the turn; the ready phase clears it for every creature.
+	ConsideredFlank bool
 	// ElusiveUsedThisTurn records that this creature has already been chosen to be
 	// fought this turn, so its Elusive keyword no longer stops pending fight damage.
 	// StartTurn clears it for every creature in play.
@@ -83,6 +91,22 @@ type CardCore struct {
 	// "until it leaves play" (Collar of Subordination). When that source leaves
 	// play, the control override is reverted. 0 means no such source.
 	ControlSource LocalID
+	// Cards placed under a host form an intrusive singly-linked list threaded
+	// through these three bytes, mirroring FirstUpgradePlus/NextUpgradePlus/HostPlus
+	// above (see game_under.go) — but unlike an upgrade, a card placed under a host
+	// is out of play: Masterplan and Jargogle set a card aside this way rather than
+	// leaving it in play. FirstUnderPlus is the head of a host's chain,
+	// NextUnderPlus is the next card under the same host, and UnderHostPlus is the
+	// back-link to the host.
+	FirstUnderPlus uint8
+	NextUnderPlus  uint8
+	UnderHostPlus  uint8
+	// UnderFaceDown records whether this particular card, while placed under a
+	// host, is facedown (Masterplan, Jargogle) rather than faceup (Graft) — so only
+	// the host's controller may look at it (see Peekable). Named specifically for
+	// the Under mechanic rather than a generic "FaceDown" to avoid colliding with
+	// the unrelated facedown-in-play token-creature mechanic (Winds of Exchange).
+	UnderFaceDown bool
 }
 
 // A zone is an ordered, fixed-capacity collection of card ids (hand, deck, battle
@@ -138,6 +162,15 @@ func listAddFront(ids []LocalID, count *uint8, id LocalID) {
 	*count++
 }
 
+// listInsertAt inserts an id at position i (0..count), shifting the ids at and
+// after i one slot right — the general placement a Deploy creature uses to enter
+// anywhere in its battleline. i == 0 is the left flank, i == count the right.
+func listInsertAt(ids []LocalID, count *uint8, i int, id LocalID) {
+	copy(ids[i+1:*count+1], ids[i:*count])
+	ids[i] = id
+	*count++
+}
+
 // listIndexOf returns the position of id, or -1 if absent.
 func listIndexOf(ids []LocalID, count uint8, id LocalID) int {
 	for i := 0; i < int(count); i++ {
@@ -175,9 +208,11 @@ func (z *deckList) contains(id LocalID) bool { return z.indexOf(id) >= 0 }
 func (z *deckList) removeAt(i int) LocalID   { return listRemoveAt(z.IDs[:], &z.Count, i) }
 func (z *deckList) remove(id LocalID) bool   { return listRemove(z.IDs[:], &z.Count, id) }
 
-func (z *wideList) slice() []LocalID         { return listSlice(z.IDs[:], z.Count) }
-func (z *wideList) add(id LocalID)           { listAdd(z.IDs[:], &z.Count, id) }
-func (z *wideList) addFront(id LocalID)      { listAddFront(z.IDs[:], &z.Count, id) }
+func (z *wideList) slice() []LocalID { return listSlice(z.IDs[:], z.Count) }
+func (z *wideList) add(id LocalID)   { listAdd(z.IDs[:], &z.Count, id) }
+func (z *wideList) insertAt(i int, id LocalID) {
+	listInsertAt(z.IDs[:], &z.Count, i, id)
+}
 func (z *wideList) indexOf(id LocalID) int   { return listIndexOf(z.IDs[:], z.Count, id) }
 func (z *wideList) contains(id LocalID) bool { return z.indexOf(id) >= 0 }
 func (z *wideList) remove(id LocalID) bool   { return listRemove(z.IDs[:], &z.Count, id) }
@@ -331,6 +366,13 @@ type GameState struct {
 	// (Evasion Sigil). It is set during the fight in progress and read and cleared
 	// before Assault, Hazardous, fight damage, and Fight: abilities would resolve.
 	FightCancelled bool
+	// PurgePlayedAction is the action card whose own "Play:" ability purges it
+	// (Library Access): it is set while that ability resolves and read when the
+	// played action would go to the discard pile, sending it to the purge pile
+	// instead. PurgePlayedActionSet distinguishes "purge card 0" from the unset
+	// zero value, since LocalID 0 is a valid card.
+	PurgePlayedAction    LocalID
+	PurgePlayedActionSet bool
 }
 
 // FastCopy returns an independent copy of the state. Because every field is a

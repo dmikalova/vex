@@ -128,6 +128,41 @@ func TestInvariantErrorUpgradeBackLinkDisagrees(t *testing.T) {
 	}
 }
 
+// A card that carries an under-host back-link but is not held in any host's
+// under-chain is a dangling under-card — mirroring the dangling-upgrade case
+// above for the Under mechanic (see ADR 0016).
+func TestInvariantErrorDanglingUnderCard(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	host := g.AddArtifact(NewCard("Host", Brobnar, Artifact, Common), 0)
+	buried := g.AddToHand(testCreature("Buried", 2), 0)
+	g.State.Cards[buried].UnderHostPlus = underPlus(host) // back-link with no chain entry
+	err := g.InvariantError()
+	if err == nil {
+		t.Fatalf("expected an invariant error for a dangling under-card, got nil")
+	}
+	if !strings.Contains(err.Error(), "dangling under-card") {
+		t.Fatalf("error %q does not describe a dangling under-card", err)
+	}
+}
+
+// A card in a host's under-chain whose back-link points somewhere else is a
+// broken attachment even though conservation still counts it once.
+func TestInvariantErrorUnderBackLinkDisagrees(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	host := g.AddArtifact(NewCard("Host", Brobnar, Artifact, Common), 0)
+	other := g.AddArtifact(NewCard("Other", Brobnar, Artifact, Common), 0)
+	buried := g.Register(testCreature("Buried", 2), 0)
+	g.AttachUnder(host, buried, false)
+	g.State.Cards[buried].UnderHostPlus = underPlus(other) // point the back-link elsewhere
+	err := g.InvariantError()
+	if err == nil {
+		t.Fatalf("expected an invariant error for a disagreeing under back-link, got nil")
+	}
+	if !strings.Contains(err.Error(), "back-link disagrees") {
+		t.Fatalf("error %q does not describe a back-link mismatch", err)
+	}
+}
+
 // A creature whose damage has caught up with its power has no business sitting in
 // the battleline: some state-based sweep failed to notice it.
 func TestInvariantErrorDamagedCreatureStillInPlay(t *testing.T) {

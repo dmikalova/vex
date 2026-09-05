@@ -76,6 +76,10 @@ type cardView struct {
 	Selected     bool
 	Targetable   bool
 	Dimmed       bool
+	// Jiggle wobbles the card once to draw the eye: it is played on the cards a
+	// player could still act with when they try to end the turn with moves left, so
+	// the end-turn confirm points at what it is warning about.
+	Jiggle bool
 	// OnActivate is called with ID when the card is clicked; nil means the card is
 	// not clickable. The id is passed rather than captured in the handler because
 	// go-app compares event handlers by function pointer and would not refresh a
@@ -186,6 +190,7 @@ func (c *cardView) Render() app.UI {
 		ifCls(c.Reap && c.FlashOdd, "card--reap-b"),
 		ifCls(c.Act && !c.FlashOdd, "card--act-a"),
 		ifCls(c.Act && c.FlashOdd, "card--act-b"),
+		ifCls(c.Jiggle, "card--jiggle"),
 	)
 
 	div := app.Div().Class(cls)
@@ -283,6 +288,12 @@ func (c *cardView) Render() app.UI {
 				)
 			}),
 		),
+		// The selection ring is drawn inside the card edge and below the keybar, so
+		// it slips under the keyword stripe instead of cutting across it and never
+		// peeks past the card's top or bottom edge.
+		app.If(c.Selected, func() app.UI {
+			return app.Div().Class("card-selection")
+		}),
 	)
 }
 

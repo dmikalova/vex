@@ -6,8 +6,6 @@ package engine
 // redirects the attacker's outgoing fight damage — the attacker still takes
 // damage back from the creature it fights. The chosen creature is stored on the
 // game state for the fight in progress; the combat step reads and clears it.
-//
-//rulebook:effect Redirect Fight Damage
 type RedirectFightDamage struct {
 	Target Target
 }

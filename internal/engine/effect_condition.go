@@ -3,13 +3,10 @@ package engine
 import "fmt"
 
 // A conditional gates an effect behind a check on the current game state — the
-// "If ..." clause a card opens with, e.g. "If your opponent has 7 or more Aember,
-// they lose 4 Aember." The effect resolves only when the condition is met. Unlike
+// "If ..." clause a card opens with, e.g. "If your opponent has 7 or more Æmber,
+// they lose 4 Æmber." The effect resolves only when the condition is met. Unlike
 // a result gate (A -> B), which turns on an action succeeding, a conditional turns
 // on a fact about the board.
-//
-//rulebook:effect Conditional
-
 // Condition is a boolean predicate on the live game, used by Conditional.
 type Condition interface {
 	CondText() string

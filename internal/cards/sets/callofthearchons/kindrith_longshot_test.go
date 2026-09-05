@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Human • Ranger
 //
-//	Elusive. Skirmish.
+//	Elusive, Skirmish.
 //	Reap: Deal 2 damage to a creature.
 func TestKindrithLongshot(t *testing.T) {
 	t.Run("deals 2 damage to a chosen creature when it reaps", func(t *testing.T) {

@@ -8,6 +8,12 @@ import (
 )
 
 // Phase Shift
+//
+//	House:  Logos
+//	Type:   Tactic
+//	Rarity: Common
+//
+//	Play: Play a non-Logos card.
 func TestPhaseShift(t *testing.T) {
 	t.Run("plays a non-Logos card from hand", func(t *testing.T) {
 		var brobnar ct.Card

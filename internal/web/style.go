@@ -46,6 +46,16 @@ type style struct {
 	// only exist mid-match (the Player bar) have something to draw.
 	harness *game
 
+	// attachHost is a second, otherwise-empty game whose only cards are the
+	// hosts the "Attached and under" section draws, kept apart from harness so
+	// its many upgrade and under-cards do not crowd out the zone-filling harness
+	// against the per-match card limit.
+	attachHost *game
+
+	// attachments are the host cards attachHost carries with upgrades and
+	// under-cards attached, built once so each render draws the same board.
+	attachments []attachSpecimen
+
 	// fonts are the font families loaded so far, in the order they were added.
 	// The first is the page default; the compare strip renders one specimen per
 	// entry.
@@ -65,6 +75,26 @@ type style struct {
 	flashOdd bool
 	// autoloop replays the animations continuously rather than on each press.
 	autoloop bool
+
+	// pinnedID is the card whose enlarged copy is held open over the page after a
+	// click, and hasPinned whether one is open. Hover previews go through the
+	// attachHost game's own hover state, but the click-to-enlarge is the gallery's
+	// alone, so it lives here.
+	pinnedID  engine.LocalID
+	hasPinned bool
+
+	// dispatch re-renders the gallery from its always-mounted root, bound in
+	// OnMount. The specimen faces raise the hover preview and the held enlargement
+	// by mutating this component's state from inside a nested cardView's own event
+	// handler; go-app only re-renders the component that owns the clicked element
+	// (the cardView), so without dispatching from the root here the overlay would
+	// not appear until some other event redrew the page.
+	dispatch func(func(app.Context))
+
+	// saveScrollFunc is the beforeunload listener that parks the scroll offset so
+	// a plain browser refresh returns to the same spot, the way a hot-reload does.
+	// Held so OnDismount can release it.
+	saveScrollFunc app.Func
 }
 
 // styleSection is one titled block of the page, named so the section links and
@@ -75,7 +105,16 @@ type styleSection struct {
 }
 
 func (s *style) OnMount(ctx app.Context) {
+	s.dispatch = func(fn func(app.Context)) {
+		ctx.Dispatch(func(c app.Context) {
+			if fn != nil {
+				fn(c)
+			}
+		})
+	}
 	s.harness = styleHarness()
+	s.attachHost = attachHarness()
+	s.attachments = buildAttachments(s.attachHost.g)
 	var saved struct {
 		Fonts  []string
 		UIFont string
@@ -86,7 +125,54 @@ func (s *style) OnMount(ctx app.Context) {
 	for _, f := range s.fonts {
 		linkFont(f)
 	}
+	s.saveScrollFunc = app.FuncOf(func(app.Value, []app.Value) any {
+		s.saveScroll(ctx)
+		return nil
+	})
+	app.Window().Call("addEventListener", "beforeunload", s.saveScrollFunc)
+	s.restoreScroll(ctx)
 }
+
+// OnDismount releases the unload listener OnMount installed.
+func (s *style) OnDismount() {
+	if s.saveScrollFunc != nil {
+		app.Window().Call("removeEventListener", "beforeunload", s.saveScrollFunc)
+		s.saveScrollFunc.Release()
+		s.saveScrollFunc = nil
+	}
+}
+
+// OnAppUpdate fires when go-app has built a fresh wasm bundle. It saves the
+// scroll offset and reloads onto the new build, which OnMount then restores —
+// the same hot-reload hand-off the match uses, only there is no game state to
+// keep, just where on the page the reader was.
+func (s *style) OnAppUpdate(ctx app.Context) {
+	s.saveScroll(ctx)
+	ctx.Reload()
+}
+
+// saveScroll parks the current scroll offset where restoreScroll will find it.
+func (s *style) saveScroll(ctx app.Context) {
+	_ = ctx.LocalStorage().Set(styleScrollKey, app.Window().Get("scrollY").Float())
+}
+
+// restoreScroll returns the page to the offset the last unload saved, once the
+// page has laid out enough to scroll. The offset is cleared as it is read; the
+// unload listener re-saves it before the next reload, so a live refresh keeps
+// its place while a fresh visit still opens at the top.
+func (s *style) restoreScroll(ctx app.Context) {
+	var y float64
+	if err := ctx.LocalStorage().Get(styleScrollKey, &y); err != nil || y <= 0 {
+		return
+	}
+	ctx.LocalStorage().Del(styleScrollKey)
+	ctx.Defer(func(app.Context) { app.Window().Call("scrollTo", 0.0, y) })
+}
+
+// styleScrollKey is where the gallery parks its scroll offset across a reload,
+// whether a hot-reload or a plain refresh. It is separate from stylePersistKey
+// so consuming the one-shot offset never rewrites the font selections.
+const styleScrollKey = "vactrol.style.scroll"
 
 // save writes the font selections back to local storage. Nothing else on the
 // page is worth persisting: the specimens are derived from the catalog and the
@@ -143,6 +229,19 @@ func styleHarness() *game {
 	return g
 }
 
+// attachHarness builds the near-empty game the "Attached and under" section
+// hangs its host cards on. It carries no zone fill of its own, so all of a
+// match's card slots are free for the section's many upgrades and under-cards;
+// the active player is 0 so a facedown under-card on the opponent's host (owner
+// 1) reads as a card-back, which is the difference the section shows.
+func attachHarness() *game {
+	g := &game{selHand: -1, zonesPlayer: -1, forgingKey: -1, handSlot: -1}
+	g.g = engine.NewGame("Player One", "Player Two", 1)
+	g.mavericks = map[engine.LocalID]bool{}
+	g.g.State.ActivePlayer = 0
+	return g
+}
+
 // Render lays the gallery out as one scrolling page under a sticky header: the
 // primitives first (colours, icons, type), then what they compose into (cards,
 // the Player bar), then what moves. Reading top to bottom is reading the design
@@ -157,6 +256,7 @@ func (s *style) Render() app.UI {
 		{"type", "Typography", s.typeSection},
 		{"houses", "House grid", s.houseSection},
 		{"features", "Card features", s.featureSection},
+		{"attached", "Attached and under", s.attachSection},
 		{"bar", "Player bar", s.barSection},
 		{"motion", "Animations", s.motionSection},
 	}
@@ -167,6 +267,7 @@ func (s *style) Render() app.UI {
 			sec.body(),
 		))
 	}
+	body = append(body, s.previewOverlay(), s.enlargeOverlay())
 	page := app.Div().Class("style-page").Body(body...)
 	if s.uiFont != "" {
 		page = page.Style("font-family", quoteFamily(s.uiFont))
@@ -506,6 +607,125 @@ func (s *style) featureSection() app.UI {
 		s.specimenRow(raritySpecimens()),
 		app.H3().Class("style-h3").Text("Keywords and stats"),
 		s.specimenRow(featureSpecimens()),
+		app.H3().Class("style-h3").Text("Statuses"),
+		s.statusRow(),
+	)
+}
+
+// cardStatuses are the condition tokens a card face can wear, each named and
+// paired with the flag that raises it. Listing them here is what lets the
+// gallery enumerate every status a board card can show in one place, and adding
+// a status is adding a row.
+var cardStatuses = []struct {
+	name string
+	set  func(*cardView)
+}{
+	{"Stunned", func(c *cardView) { c.Stunned = true }},
+	{"Exhausted", func(c *cardView) { c.Exhausted = true }},
+	{"Stunned and exhausted", func(c *cardView) { c.Stunned, c.Exhausted = true, true }},
+}
+
+// statusRow shows a creature face wearing each condition token, so the stun and
+// exhausted marks can be read on a real card rather than only as bare icons in
+// the icon grid.
+func (s *style) statusRow() app.UI {
+	sp := firstMatch("Creature", func(d *engine.CardDefinition) bool {
+		return d.Type == engine.Creature
+	})
+	out := make([]app.UI, 0, len(cardStatuses))
+	for _, st := range cardStatuses {
+		face := printedFace(sp.Def)
+		st.set(face)
+		out = append(out, app.Div().Class("style-specimen").Body(
+			face,
+			app.Div().Class("style-caption").Body(
+				app.Span().Class("style-caption-q").Text(st.name),
+			),
+		))
+	}
+	return app.Div().Class("style-row").Body(out...)
+}
+
+// attachSection shows a card carrying upgrades and under-cards, across the
+// counts and faceup/facedown combinations the board has to draw. Each specimen
+// is a real harness card rendered through the board's own tabbed-host path, so
+// what the gallery shows is what a game shows. Hovering the host face raises the
+// same enlarged preview a board card does, and clicking it opens a held
+// enlargement; the tabs keep their board wiring but the gallery only previews
+// and enlarges the card itself, not the upgrades and under-cards.
+func (s *style) attachSection() app.UI {
+	out := make([]app.UI, 0, len(s.attachments))
+	for _, a := range s.attachments {
+		face := s.attachHost.printedCard(a.host)
+		face.OnHover = s.previewHover
+		face.OnHoverOut = s.previewOut
+		face.OnActivate = s.enlargeCard
+		out = append(out, app.Div().Class("style-specimen").Body(
+			s.attachHost.hostWithTabs(a.host, face),
+			app.Div().Class("style-caption").Body(
+				app.Span().Class("style-caption-q").Text(a.caption),
+			),
+		))
+	}
+	return app.Div().Class("style-row style-row--attach").Body(out...)
+}
+
+// previewHover raises the hover preview for a specimen face, and previewOut
+// hides it, each going through the attachHost game's own hover state and then
+// dispatching a gallery re-render so the top-right preview appears at once
+// rather than waiting for some other event to redraw the page.
+func (s *style) previewHover(ctx app.Context, id engine.LocalID) {
+	s.attachHost.hoverCard(ctx, id)
+	s.dispatch(nil)
+}
+
+func (s *style) previewOut(ctx app.Context) {
+	s.attachHost.hoverClear(ctx)
+	s.dispatch(nil)
+}
+
+// enlargeCard opens the clicked host card as a held enlargement, or closes it
+// when the same card is clicked again, so a click toggles its own blow-up.
+func (s *style) enlargeCard(_ app.Context, id engine.LocalID) {
+	if s.hasPinned && s.pinnedID == id {
+		s.hasPinned = false
+	} else {
+		s.pinnedID, s.hasPinned = id, true
+	}
+	s.dispatch(nil)
+}
+
+// closeEnlarge dismisses the held enlargement (a click on its backdrop).
+func (s *style) closeEnlarge(_ app.Context, _ app.Event) {
+	s.hasPinned = false
+	s.dispatch(nil)
+}
+
+// previewOverlay is the enlarged read-only card the gallery floats top-right
+// while a host face or one of its tabs is hovered, the same preview a board card
+// raises. A held enlargement takes the screen instead, so the hover preview
+// steps aside while one is open.
+func (s *style) previewOverlay() app.UI {
+	g := s.attachHost
+	if s.hasPinned || !g.hasHover {
+		return app.Div()
+	}
+	return app.Div().Class("card-preview card-preview--board").Body(
+		g.printedCard(g.hoverID),
+	)
+}
+
+// enlargeOverlay is the held blow-up a click opens: the card grown large over a
+// dimming backdrop that dismisses it, so a specimen can be read close up without
+// the board's action buttons a real lift would carry.
+func (s *style) enlargeOverlay() app.UI {
+	if !s.hasPinned {
+		return app.Div()
+	}
+	return app.Div().Class("style-enlarge").OnClick(s.closeEnlarge).Body(
+		app.Div().Class("style-enlarge-card").Body(
+			s.attachHost.printedCard(s.pinnedID),
+		),
 	)
 }
 
@@ -590,6 +810,7 @@ const styleLoopPeriod = 900 * time.Millisecond
 // vocabulary). A test holds this equal to the directory.
 var galleryIcons = []string{
 	"aember",
+	"card-back",
 	"chains",
 	"damage",
 	"exhausted",

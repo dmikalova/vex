@@ -13,6 +13,7 @@ import (
 //	Type:   Creature
 //	Rarity: Common
 //	Power:  9
+//	Armor:  1
 //	Traits: Robot
 //
 //	Taunt.

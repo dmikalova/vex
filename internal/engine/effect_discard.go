@@ -17,6 +17,9 @@ type PutFromDiscard struct {
 	Type CardType
 	// Trait restricts the choice to cards with that trait; the zero value allows any.
 	Trait Trait
+	// Name restricts the choice to cards with that exact name; the zero value allows
+	// any (Ortannu the Chained returns each copy of Ortannu's Binding).
+	Name string
 	// Destination is where the card goes: ToHand or ToTopOfDeck.
 	Destination Destination
 	// All moves every matching card instead of one chosen card (Arise! returning
@@ -27,9 +30,13 @@ type PutFromDiscard struct {
 	OfChosenHouse bool
 }
 
-// noun renders the kind of card the effect moves — the lowercased card type when
-// Type is set (e.g. "creature"), otherwise the generic "card".
+// noun renders the kind of card the effect moves — the card's own name when Name
+// is set (e.g. "Ortannu's Binding"), the lowercased card type when Type is set
+// (e.g. "creature"), otherwise the generic "card".
 func (e PutFromDiscard) noun() string {
+	if e.Name != "" {
+		return e.Name
+	}
 	base := "card"
 	if e.Type != TypeUnset {
 		base = strings.ToLower(e.Type.String())
@@ -70,13 +77,15 @@ func (e PutFromDiscard) Text() string {
 	return "put " + indefinite(e.noun()) + " from your discard pile " + e.destPhrase()
 }
 
-// moveTo moves one card from the discard pile to the destination.
+// moveTo moves one card from the discard pile to the destination and tallies it
+// for a following CardsReturnedThisWay.
 func (e PutFromDiscard) moveTo(ctx *EffectContext, id LocalID) {
 	if e.Destination == ToTopOfDeck {
 		ctx.Resolver.MoveFromDiscardToTopOfDeck(id)
 	} else {
 		ctx.Resolver.PutFromDiscardIntoHand(id)
 	}
+	ctx.Produced.Returned++
 }
 
 // Resolve moves a card from the controller's discard pile to the destination. With
@@ -91,6 +100,9 @@ func (e PutFromDiscard) Resolve(ctx *EffectContext) {
 			if e.Trait != traitUnset && !ctx.Resolver.HasTrait(id, e.Trait) {
 				continue
 			}
+			if e.Name != "" && ctx.Resolver.Name(id) != e.Name {
+				continue
+			}
 			if e.OfChosenHouse && ctx.Resolver.House(id) != ctx.ChosenHouse {
 				continue
 			}
@@ -100,13 +112,16 @@ func (e PutFromDiscard) Resolve(ctx *EffectContext) {
 	}
 	discard := ctx.Resolver.Discard(ctx.Controller)
 	candidates := discard
-	if e.Type != TypeUnset || e.Trait != traitUnset {
+	if e.Type != TypeUnset || e.Trait != traitUnset || e.Name != "" {
 		candidates = nil
 		for _, id := range discard {
 			if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
 				continue
 			}
 			if e.Trait != traitUnset && !ctx.Resolver.HasTrait(id, e.Trait) {
+				continue
+			}
+			if e.Name != "" && ctx.Resolver.Name(id) != e.Name {
 				continue
 			}
 			candidates = append(candidates, id)

@@ -146,7 +146,16 @@ func TestALiftedCardSaysWhyItCannotAct(t *testing.T) {
 	// The creature entered play exhausted, so this turn it can do nothing.
 	c.g.selectBoardID(c.ctx, id)
 	c.wants("an exhausted creature", "card-focus", "Cannot act")
-	c.lacks("an exhausted creature", "Reap")
+	// The lift lies over the hand, whose cards may print a "Reap:" ability of
+	// their own, so the no-verb check reads the lifted copy alone.
+	h := c.html()
+	from := strings.Index(h, `class="card-focus`)
+	if from < 0 {
+		t.Fatal("the client drew no lifted card")
+	}
+	if strings.Contains(h[from:], "Reap") {
+		t.Error("an exhausted creature still offers a Reap verb")
+	}
 }
 
 // A prompt takes the controls over, and an optional one draws the way to pass.
@@ -178,6 +187,74 @@ func TestDrawingAnOptionPrompt(t *testing.T) {
 	<-out
 }
 
+// A reap/fight/action prompt another card raised (Inspiration's "use a friendly
+// creature") draws the standard use buttons — capitalised labels in their own
+// colours — rather than the plain lowercase option list a generic prompt would.
+func TestAUseVerbPromptDrawsTheStandardButtons(t *testing.T) {
+	c := newClient(t)
+	c.startTurn()
+	out := make(chan int, 1)
+	labels := []string{"reap", "fight", "use its action"}
+	go func() { out <- c.g.chooser.ChooseOption("A Card", "Choose how to use it", labels) }()
+	c.await("the prompt to go up", func() bool { return c.g.choosingOption })
+
+	c.wants("a use-verb prompt", ">Reap<", ">Fight<", ">Action<", "btn-warning", "btn-danger")
+	c.lacks("a use-verb prompt", ">reap<", ">fight<")
+	c.do(c.g.chooseOptionIdx(0))
+	<-out
+}
+
+// An Upgrade attached to a creature draws as a peeking tab on the board rather
+// than only as a rules-text line, so it reads as an attached card at a glance.
+func TestDrawingAnUpgradeTab(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	host := c.deal(testCreature)
+	c.playFromHand(host)
+
+	up := c.g.g.Register(
+		engine.NewCard("Test Upgrade", testHouse, engine.Upgrade, engine.Common), c.g.active())
+	c.g.g.AttachUpgrade(host, up)
+
+	c.wants("a creature with an attached upgrade", "card-host", "card-tabs--right", "card-tab")
+	c.lacks("a creature with an attached upgrade", "card-tab--back")
+}
+
+// A faceup Under-card (Graft's rule) draws its own house colour, since it is
+// visible to both players.
+func TestDrawingARevealedUnderTab(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	host := c.deal(testCreature)
+	c.playFromHand(host)
+
+	buried := c.g.g.Register(
+		engine.NewCard("Buried", testHouse, engine.Creature, engine.Common), c.g.active())
+	c.g.g.AttachUnder(host, buried, false)
+
+	c.wants("a creature with a faceup under-card", "card-tabs--left", "card-tab")
+	c.lacks("a creature with a faceup under-card", "card-tab--back")
+}
+
+// A facedown Under-card the opponent may not peek draws as a plain card back,
+// never the buried card's own face.
+func TestDrawingAHiddenUnderTab(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	host := c.deal(testCreature)
+	c.playFromHand(host)
+
+	buried := c.g.g.Register(
+		engine.NewCard("Buried", testHouse, engine.Creature, engine.Common), c.g.active())
+	c.g.g.AttachUnder(host, buried, true)
+
+	c.pass()
+	c.manualTurn(testHouse)
+
+	c.wants("the opponent's view of a facedown under-card", "card-tabs--left", "card-tab--back")
+	c.lacks("the opponent's view of a facedown under-card", "Buried")
+}
+
 func TestDrawingTheFlankPrompt(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
@@ -200,11 +277,48 @@ func TestDrawingTheEndTurnConfirmation(t *testing.T) {
 	c.wants("an armed end turn", "Confirm end turn")
 }
 
-func TestDrawingTheRestartConfirmation(t *testing.T) {
+// The end-turn confirm wobbles the cards the player could still act with, so the
+// warning points at exactly what it means. A playable card in hand jiggles only
+// once the confirm is armed.
+func TestTheEndTurnConfirmJigglesUsableCards(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	c.deal(testCreature)
+	c.lacks("a playable hand card before the confirm", "card--jiggle")
+	c.g.confirmEndTurn = true
+	c.wants("a playable hand card once the confirm is armed", "card--jiggle")
+}
+
+// A face-up pile names its cards in the hover tip, so a zone reads like the
+// upgrade title bars: just the names. A hidden zone stays a bare label.
+func TestZoneTipNamesTheCardsInAFaceUpPile(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	def, ok := c.g.defByName[testCreature]
+	if !ok {
+		t.Fatalf("no card named %q", testCreature)
+	}
+	names := c.g.zoneNames(
+		c.g.active(),
+		"Discard",
+		[]engine.LocalID{c.g.g.AddToDiscard(*def, c.g.active())},
+	)
+	if len(names) != 1 || names[0] != testCreature {
+		t.Fatalf("discard tip listed %v, want [%s]", names, testCreature)
+	}
+	if got := c.g.zoneNames(c.g.active(), "Deck", []engine.LocalID{1}); got != nil {
+		t.Errorf("a hidden deck leaked its names: %v", got)
+	}
+	if got := c.g.zoneNames(1-c.g.active(), "Hand", []engine.LocalID{1}); got != nil {
+		t.Errorf("an opponent's hand leaked its names: %v", got)
+	}
+}
+
+func TestDrawingTheSetPicker(t *testing.T) {
 	c := newClient(t)
 	c.startTurn()
 	c.do(c.g.restartMenu)
-	c.wants("the restart confirmation", "Restart game?", "Cancel")
+	c.wants("the set picker", "New game", "choose a set", "Cancel")
 }
 
 // A rejected click is reported in the dock, next to the control that rejected it.

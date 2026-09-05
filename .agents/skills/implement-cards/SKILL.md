@@ -21,15 +21,16 @@ An unqualified "keep going" or "iterate" means the whole set.
 Then, once per run:
 
 ```sh
-mage coverage             # per-set covered/total — the number the run moves
-mage missing <setSlug>    # each remaining card with stats, printed text, and a
-                          # ready-made card.Provenance(...) call
-mage stub <setSlug>       # scaffold a build-excluded stub for every one of them
+mage tool:coverage        # per-set covered/total — the number the run moves
+SET=<slug> mage tool:missing # each remaining card with stats, printed text, and
+                           # a ready-made card.Provenance(...) call; run with no
+                           # SET to pick the set from an interactive ↑/↓ list
+mage tool:stub <setSlug>  # scaffold a build-excluded stub for every one of them
 ```
 
 Set slugs match the files in `internal/cards/provenance/` minus `.json`.
 
-`mage stub` writes `internal/cards/sets/<slug>/<snake>.go` starting with
+`mage tool:stub` writes `internal/cards/sets/<slug>/<snake>.go` starting with
 `//go:build todo`, so it is left out of the build, vet, test, lint, gencomments,
 and the card registry — coverage stays honest. Each stub carries the card's
 printed text, a `// TODO(stub)` marker, and a vanilla `card.New(...)` skeleton.
@@ -108,7 +109,7 @@ the round has a visible bound.
    `card.Type.Tactic` (wording rule 19). Follow the one-field-per-line struct style
    in `internal/cards/AGENTS.md`. When an ability names the card's **own** house,
    write `card.House.Self` rather than repeating the house — but a card naming a
-   *different* house (Take That, Smarty Pants is about Logos creatures) spells that
+   _different_ house (Take That, Smarty Pants is about Logos creatures) spells that
    house out.
 3. Write `<snake>_test.go` with the `ct.Play` harness — a `func Test<Name>` with
    `t.Run` subtests. A sole target auto-resolves; with 2+ candidates answer via
@@ -133,7 +134,7 @@ Watch the `create_file` dup-first-line bug: after creating `.go` files, check
 
 ```sh
 mage gen && mage check    # gen = comments + rulebook; check must print ALL GREEN
-mage coverage             # confirm the set's count moved
+mage tool:coverage        # confirm the set's count moved
 ```
 
 A round is finished when `mage check` prints `ALL GREEN` and the set's count has

@@ -1,8 +1,13 @@
 # Card wording rules
 
-This document characterizes the wording transformations applied when curating the
-minimal implementation set. It is derived by diffing the curated set against the
-original printed card text.
+These are the house wording conventions for printed card text — one surface of the
+controlled Rules voice ([ADR 0019](adr/0019-controlled-rules-voice.md); see the
+root `AGENTS.md`). Every card's rendered text obeys the conventions below, so the
+printed card maps cleanly onto the effect AST (each clause is a node) and can never
+desync from behavior.
+
+The conventions were derived by diffing a curated implementation set against the
+original printed KeyForge text; that provenance is kept here for reference.
 
 - **Source of truth for originals:** [callofthearchons.json](../internal/cards/provenance/callofthearchons.json) — the pristine
   printed text of every Call of the Archons card (flat JSON array).
@@ -13,6 +18,12 @@ original printed card text.
 
 Of 124 curated cards, 77 had their text reworded and 1 was renamed. No stats
 (power, armor, Æmber, house, type, rarity) were changed.
+
+Some conventions are deliberate **divergences** from KeyForge — a renamed card
+type, retired verbs, restructured abilities. Where Vactrol diverges, Vactrol wins;
+those changes are called out inline and gathered under _Deliberate rule changes_
+at the end, and the precedence rule (fall back to the KeyForge Master Rulebook
+only for what Vactrol has not decided) lives in the root `AGENTS.md`.
 
 The goal of the rewording is **one printed sentence per engine operation**: text
 that maps cleanly onto the effect AST (each clause is a node), so the printed
@@ -290,7 +301,12 @@ does not (`Spider deals no damage when fighting.`).
 
 ## 16. Spelling, qualifiers, and referents
 
-- **`Aember`** — never `Æmber`.
+- **`Æmber`** — never `Aember`. The engine renders the resource as `Æmber`
+  everywhere (card text, log, rulebook), so that is the one spelling in
+  player-facing prose. Go identifiers keep the ASCII `Aember` by convention:
+  `Æ` is a legal Go identifier rune (a Unicode uppercase letter), so `Æmber`
+  would compile, but ASCII keeps identifiers typeable and greppable. This rule
+  governs text, not code.
 - **`<Trait> trait`** — trait references carry the `trait` qualifier
   (`Scientist trait creature`, `Knight trait creature`); house references never do
   (`Mars creature`, `Sanctum creature`).

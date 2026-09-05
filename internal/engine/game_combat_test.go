@@ -479,7 +479,7 @@ func TestElusive(t *testing.T) {
 	if g3.inPlay(frail) {
 		t.Error("hazardous should still destroy the attacker of an elusive creature")
 	}
-	if !g3.State.Cards[thorns].ElusiveUsedThisTurn {
+	if !g3.ElusiveSpent(thorns) {
 		t.Error("elusive should be spent even when the fight never happens")
 	}
 
@@ -493,7 +493,7 @@ func TestElusive(t *testing.T) {
 		1,
 	)
 	g4.fight(sigil, ghoul)
-	if g4.State.Cards[ghoul].ElusiveUsedThisTurn {
+	if g4.ElusiveSpent(ghoul) {
 		t.Error("a cancelled fight should not spend elusive")
 	}
 }

@@ -8,8 +8,6 @@ import (
 // SearchForName lets the controller search their deck and discard pile for a card
 // with a specific name, reveal it, and put it into their hand — Help from Future
 // Self tutoring a Timetraveller. Nothing happens if no matching card is found.
-//
-//rulebook:effect Search for Named Card
 type SearchForName struct {
 	Name string
 	// All takes every copy found instead of one the controller chooses, which

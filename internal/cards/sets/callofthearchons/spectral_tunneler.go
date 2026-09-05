@@ -1,13 +1,8 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// SpectralTunneler
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Spectral Tunneler
 //
 //	House:  Logos
 //	Type:   Artifact
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Item
 //
-//	Action: Choose a creature. For the remainder of the turn, that creature is considered a flank creature and gains, "Reap: Draw a card."
+//	Action: Choose a creature - for the remainder of the turn, it is considered a flank creature, and it gains, "Reap: Draw a card."
 var SpectralTunneler = card.New(
 	"Spectral Tunneler",
 	card.House.Logos,
@@ -24,5 +19,18 @@ var SpectralTunneler = card.New(
 	card.Provenance(card.CotA, 133),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Item),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Action, card.ChooseCreatureThen{
+			Target: card.Target.Creature,
+			Then: card.Sequence{Effects: []card.Effect{
+				card.ConsiderFlank{Target: card.Target.Triggering},
+				card.GainAbility{
+					Target: card.Target.Triggering,
+					Ability: card.Ability{
+						Trigger: card.Trigger.Reap,
+						Effect:  card.Draw{Amount: 1},
+					},
+				},
+			}},
+		}),
 )

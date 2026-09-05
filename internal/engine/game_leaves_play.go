@@ -41,6 +41,7 @@ func (g *Game) leavePlayDestroyed(id LocalID) int {
 	o := g.owner(id)
 	g.removeFromPlay(id)
 	g.discardUpgrades(id)
+	g.discardUnder(id)
 	core := &g.State.Cards[id]
 	if core.Amber > 0 {
 		g.State.Aember[1-o] += int(core.Amber)
@@ -79,6 +80,20 @@ func (g *Game) discardUpgrades(id LocalID) {
 		g.detachUpgrade(up)
 		g.releaseControlHeldBy(up)
 		g.State.Discard[g.owner(up)].add(up)
+	}
+}
+
+// discardUnder moves the cards placed under a host to their owners' discard
+// piles when the host leaves play — generalizing Graft's own rule (if the card
+// onto which it is grafted leaves play, the grafted card is placed in its
+// owner's discard pile) to every card placed under a card, not only a grafted
+// one (see ADR 0016). A card that leaves play — destroyed or relocated — sheds
+// what is placed under it this way; it does not follow the host to hand, deck,
+// or archives.
+func (g *Game) discardUnder(id LocalID) {
+	for _, u := range g.underOf(id) {
+		g.detachUnder(u)
+		g.State.Discard[g.owner(u)].add(u)
 	}
 }
 
@@ -222,6 +237,7 @@ func (g *Game) putOnTopOfDeck(id LocalID) {
 	o := g.owner(id)
 	g.removeFromPlay(id)
 	g.discardUpgrades(id)
+	g.discardUnder(id)
 	g.resetCore(id)
 	g.State.Deck[o].addFront(id)
 	g.record(CardPutOnTopOfDeck{Card: id, Owner: o})
@@ -233,6 +249,7 @@ func (g *Game) putIntoHand(id LocalID) {
 	o := g.owner(id)
 	g.removeFromPlay(id)
 	g.discardUpgrades(id)
+	g.discardUnder(id)
 	g.resetCore(id)
 	g.State.Hand[o].add(id)
 	g.record(CardReturnedToHand{Card: id, Owner: o})
@@ -244,6 +261,7 @@ func (g *Game) putIntoArchives(id LocalID) {
 	o := g.owner(id)
 	g.removeFromPlay(id)
 	g.discardUpgrades(id)
+	g.discardUnder(id)
 	g.resetCore(id)
 	g.State.Archives[o].add(id)
 	g.record(CardPutIntoArchives{Card: id, Owner: o})
@@ -255,6 +273,7 @@ func (g *Game) putIntoDeckShuffled(id LocalID) {
 	o := g.owner(id)
 	g.removeFromPlay(id)
 	g.discardUpgrades(id)
+	g.discardUnder(id)
 	g.resetCore(id)
 	g.State.Deck[o].add(id)
 	g.Shuffle(o)
@@ -267,9 +286,6 @@ func (g *Game) putIntoDeckShuffled(id LocalID) {
 // matching zone instead. So an enemy creature abducted into your archives goes to
 // your opponent's hand when you take your archives up, and to their discard pile
 // if those archives are discarded.
-//
-//rulebook:effect Abduct
-
 // PutIntoYourArchives removes a creature from play into the archives of the player
 // who took it rather than its owner's — Mass Abduction, Sample Collection, and
 // Uxlyx the Zookeeper all abduct this way. Nothing is marked on the card: the
@@ -278,6 +294,7 @@ func (g *Game) PutIntoYourArchives(id LocalID, player int) {
 	o := g.owner(id)
 	g.removeFromPlay(id)
 	g.discardUpgrades(id)
+	g.discardUnder(id)
 	g.resetCore(id)
 	g.State.Archives[player].add(id)
 	g.record(CardAbducted{Player: player, Card: id, Owner: o})

@@ -8,13 +8,11 @@ import (
 // PutFromPlay takes each card its Target selects out of play and puts it in a
 // destination zone — the top of its owner's deck, their hand, or their archives —
 // shedding the per-match state the card built up in play (damage, spent armor,
-// Aember on it, upgrades). The destination is required. Moving a card out of play
+// Æmber on it, upgrades). The destination is required. Moving a card out of play
 // this way is how a "Destroyed:" ability can save its own creature: the creature
 // leaves for the named zone as it is destroyed, so it never reaches the discard
 // pile. When several cards move to the top of the deck at once the controller
 // chooses the order they stack.
-//
-//rulebook:effect Put from Play
 type PutFromPlay struct {
 	Target      Target
 	Destination Destination
@@ -130,8 +128,6 @@ func (e PutChosen) Resolve(ctx *EffectContext) {
 // discard pile — Faygin recovering an Urchin. The controller chooses among both
 // zones at once; an in-play creature returns to hand (shedding its in-play state)
 // and a discard card is recovered.
-//
-//rulebook:effect Return Named Card to Hand
 type ReturnNamedToHand struct {
 	Name string
 }

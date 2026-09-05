@@ -15,7 +15,7 @@ import (
 //	Rarity: Rare
 //	Power:  9
 //	Æmber:  2
-//	Traits: demon
+//	Traits: Demon
 //
 //	Taunt.
 //	While Pitlord is in play you must choose Dis as your active house.

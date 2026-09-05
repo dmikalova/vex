@@ -62,3 +62,78 @@ func TestAemberProtection(t *testing.T) {
 		t.Error("card rules should render the theft-immunity line")
 	}
 }
+
+func TestSkipsForgeConstant(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	if g.skipsForge(0) {
+		t.Error("a player with nothing in play should not skip forging")
+	}
+	def := NewCard("The Sting", Shadows, Artifact, Rare,
+		WithRestrictions(Restrictions{SkipForge: true}))
+	sting := g.AddArtifact(def, 0)
+	if !g.skipsForge(0) {
+		t.Error("a controller of a SkipForge card should skip forging")
+	}
+	if g.skipsForge(1) {
+		t.Error("the opponent should be unaffected")
+	}
+	if !strings.Contains(RenderCardRules(&def), `You skip your "forge a key" step.`) {
+		t.Error("card rules should render the skip-forge line")
+	}
+
+	g.State.Aember[0] = 6
+	keysBefore := g.State.Keys[0]
+	g.forgePhase(0)
+	if g.State.Keys[0] != keysBefore {
+		t.Error("a player skipping their forge step should not forge a key")
+	}
+	if g.State.Aember[0] != 6 {
+		t.Error("skipping the forge step should not spend any Æmber")
+	}
+	_ = sting
+}
+
+func TestForgeAemberGain(t *testing.T) {
+	if got := gainsForgeAemberText(&CardDefinition{}); got != "" {
+		t.Errorf("gainsForgeAemberText on a plain card = %q, want empty", got)
+	}
+	def := NewCard("The Sting", Shadows, Artifact, Rare, WithGainsForgeAember())
+	if !def.GainsForgeAember {
+		t.Error("WithGainsForgeAember should set the flag")
+	}
+	if got := gainsForgeAemberText(
+		&def,
+	); got != "You gain all Æmber your opponent spends when forging a key." {
+		t.Errorf("gainsForgeAemberText = %q", got)
+	}
+	if !strings.Contains(
+		RenderCardRules(&def), "You gain all Æmber your opponent spends when forging a key.",
+	) {
+		t.Error("card rules should render the forge-aember-gain line")
+	}
+
+	g := NewGame("A", "B", 1)
+	if _, ok := g.forgeAemberGainer(0); ok {
+		t.Error("no gainer should be found with nothing in play")
+	}
+	sting := g.AddArtifact(def, 1)
+	gainer, ok := g.forgeAemberGainer(0)
+	if !ok || gainer != sting {
+		t.Errorf("forgeAemberGainer = %d, %v, want %d, true", gainer, ok, sting)
+	}
+	if _, ok := g.forgeAemberGainer(1); ok {
+		t.Error("a player should not gain their own forge spending")
+	}
+
+	g.State.Aember[0] = 6
+	g.forgeKey(0)
+	if g.State.Keys[0] != 1 {
+		t.Fatal("the payer should still forge their key")
+	}
+	if g.State.Aember[0] != 0 {
+		t.Errorf("payer pool = %d, want 0", g.State.Aember[0])
+	}
+	if g.State.Aember[1] != KeyCost {
+		t.Errorf("gainer pool = %d, want %d", g.State.Aember[1], KeyCost)
+	}
+}

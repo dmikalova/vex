@@ -116,6 +116,10 @@ type Produced struct {
 	// play — sent home rather than destroyed — this resolution, read by
 	// CreaturesShuffledIntoDeckThisWay (Mating Season).
 	Moved [2]int
+	// Returned is how many cards the most recent PutFromDiscard recovered this
+	// resolution, read by CardsReturnedThisWay (Ortannu the Chained deals damage
+	// for each Binding it returned).
+	Returned int
 	// AemberLost[p] is how much Æmber a LoseAember has taken from player p's pool
 	// this resolution, read by AemberLostThisWay (Shatter Storm drains the opponent
 	// for triple what its controller lost).

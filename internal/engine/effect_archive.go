@@ -6,8 +6,6 @@ import "fmt"
 // the opponent's reach, and you may take them into your hand after picking a
 // house on a later turn. Archiving from hand lets you choose which cards to set
 // aside.
-//
-//rulebook:effect Archive
 type ArchiveFromHand struct {
 	Count int
 	// Type filters which cards may be chosen; the zero value allows any type.

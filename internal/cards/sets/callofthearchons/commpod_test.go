@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Traits: Item
 //
-//	Action: Reveal any number of Mars cards from your hand, and for each card revealed this way, ready a Mars creature.
+//	Action: Reveal any number of Mars cards from your hand, and for each card revealed this way, ready a friendly Mars creature.
 func TestCommpod(t *testing.T) {
 	t.Run("readies a Mars creature for each Mars card revealed", func(t *testing.T) {
 		var a, b, t1, t2 ct.Card

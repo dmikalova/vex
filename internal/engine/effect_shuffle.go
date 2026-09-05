@@ -9,8 +9,6 @@ import (
 // discard pile (Help from Future Self), the hand and discard pile (Screaming
 // Cave), or the archives and discard pile. It moves every named zone's cards into
 // the deck, then shuffles once.
-//
-//rulebook:effect Shuffle Into Deck
 type ShuffleIntoDeck struct {
 	Zones []Zone
 }
@@ -46,8 +44,6 @@ func (e ShuffleIntoDeck) Resolve(ctx *EffectContext) {
 // shuffles the new deck — Reverse Time turns a spent deck back into a fresh one.
 // It differs from ShuffleIntoDeck{Discard} in that the old deck goes away into
 // the discard pile rather than surviving underneath it.
-//
-//rulebook:effect Shuffle Into Deck
 type SwapDeckAndDiscard struct{}
 
 // Text renders the effect.

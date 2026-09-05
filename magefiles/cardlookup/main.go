@@ -4,7 +4,7 @@
 // throwaway grep/JSON script to find a card's collector number, printed text, or
 // implementation status.
 //
-// Subcommands (run via `mage lookup`, `mage missing`, `mage coverage`):
+// Subcommands (run via `mage tool:lookup`, `mage tool:missing`, `mage tool:coverage`):
 //
 //	lookup <query>       Print every source card whose name contains <query>
 //	                     (case-insensitive), with set code, collector number,
@@ -14,7 +14,8 @@
 //
 //	missing [setSlug]    List the source cards in a set (default: the Call of the
 //	                     Archons catalog) that no implemented card yet tags with a
-//	                     provenance Ref, i.e. the cards still to implement.
+//	                     provenance Ref, i.e. the cards still to implement. With no
+//	                     set named, an interactive ↑/↓ picker chooses one.
 //
 //	coverage             Print, per source set, how many of its cards are covered
 //	                     by an implemented card's provenance Ref.
@@ -32,6 +33,8 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/charmbracelet/x/term"
+
 	"github.com/dmikalova/vactrol/internal/card"
 	"github.com/dmikalova/vactrol/internal/cards"
 	"github.com/dmikalova/vactrol/internal/cards/provenance"
@@ -42,6 +45,14 @@ func main() {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
+}
+
+// isInteractive reports whether stdin is a terminal, so the interactive set
+// picker is only offered when a person can actually drive it. A char-device
+// check alone is not enough — /dev/null is a char device too — so it asks the
+// terminal library.
+func isInteractive() bool {
+	return term.IsTerminal(os.Stdin.Fd())
 }
 
 func run(args []string) error {
@@ -170,12 +181,30 @@ func normalizeName(name string) string {
 }
 
 // missing lists the source cards in a set not yet covered by any implemented card.
+// With no set named it opens the interactive picker on a terminal, and falls back
+// to Call of the Archons when stdin is not a terminal (a pipe or CI).
 func missing(args []string) error {
-	slug := provenance.CallOfTheArchons.Slug
-	if len(args) == 1 {
+	var slug string
+	switch len(args) {
+	case 0:
+	case 1:
 		slug = args[0]
-	} else if len(args) > 1 {
+	default:
 		return fmt.Errorf("usage: cardlookup missing [setSlug]")
+	}
+	if slug == "" {
+		if isInteractive() {
+			picked, err := pickSet()
+			if err != nil {
+				return err
+			}
+			if picked == "" {
+				return nil // cancelled
+			}
+			slug = picked
+		} else {
+			slug = provenance.CallOfTheArchons.Slug
+		}
 	}
 	// Touch the aggregator so every set package registers its cards.
 	_ = cards.All()

@@ -8,8 +8,6 @@ package engine
 // and tallies what it took so a following effect can scale with it (Red-Hot Armor
 // strips armor, then deals damage for each point stripped). The armor comes back
 // when its controller readies, the same way armor spent absorbing damage does.
-//
-//rulebook:effect Lose Armor
 type LoseArmor struct {
 	Target Target
 }

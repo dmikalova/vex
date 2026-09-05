@@ -36,6 +36,30 @@ func TestFightVerbNoEnemy(t *testing.T) {
 	}
 }
 
+// A taunter shields its neighbors from an ability-driven fight too, so a forced
+// fight (Sergeant Zakiel) cannot reach past a taunter to the creature beside it.
+func TestFightVerbRespectsTaunt(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("src", 3), 0)
+	taunter := g.AddToBattleline(testCreature("taunter", 5, WithKeywords(Taunt)), 1)
+	shielded := g.AddToBattleline(testCreature("shielded", 3), 1)
+	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+
+	// Aiming at the shielded neighbor: it is filtered out, so no fight lands.
+	g.SetChooser(0, idChooser{id: shielded})
+	FightVerb{}.Apply(ctx, src)
+	if g.Damage(shielded) != 0 {
+		t.Errorf("shielded neighbor took %d damage; taunt should shield it", g.Damage(shielded))
+	}
+
+	// The taunter itself stays reachable.
+	g.SetChooser(0, idChooser{id: taunter})
+	FightVerb{}.Apply(ctx, src)
+	if g.Damage(taunter) != 3 {
+		t.Errorf("taunter took %d damage, want 3", g.Damage(taunter))
+	}
+}
+
 // actor builds a creature with an "Action:" ability that gains 5 Æmber.
 func actor(g *Game) LocalID {
 	return g.AddToBattleline(NewCard("actor", Brobnar, Creature, Common, WithPower(3),

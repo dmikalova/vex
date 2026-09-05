@@ -8,6 +8,12 @@ import (
 )
 
 // Relentless Assault
+//
+//	House:  Brobnar
+//	Type:   Tactic
+//	Rarity: Uncommon
+//
+//	Play: Ready and fight with up to 3 different friendly creatures, one at a time.
 func TestRelentlessAssault(t *testing.T) {
 	brobnar := ct.OfHouse(card.House.Brobnar)
 

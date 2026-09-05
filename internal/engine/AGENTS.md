@@ -45,7 +45,7 @@ recorded as ADRs — read them for the full rationale and the rejected alternati
 - **Composite — `Sequence`, `Sentences`, `Conditional`, `ChooseHouseThen`,
   `MayRepeat`, …** compose child `Effect`s and recurse `validateEffect` into them.
   Prefer composing small nodes over one fused node (root `AGENTS.md`: "decompose
-  fused effects"). The two ordered composites differ only in how they *read*:
+  fused effects"). The two ordered composites differ only in how they _read_:
   `Sequence` conjoins its children into one compound instruction ("a, and b"),
   `Sentences` renders each child as its own sentence ("A. B."). Pick by how the
   printed card reads. Do **not** wrap individual children to change their
@@ -70,7 +70,7 @@ is a strategy that carries **both** its behavior and its printed-text fragment, 
 it plugs into the AST without desync:
 
 - **`Chooser` (`game.go`) is the decision strategy**, swapped per frontend:
-  `FirstChooser` (bot/tests, deterministic), `teaChooser` (TUI), `webChooser`
+  `FirstChooser` (bot/tests, deterministic), `webChooser`
   (web), `bridgeChooser` (test harness). The engine never knows _how_ a decision
   is made. Extend a chooser's capability with an **optional capability
   interface** discovered by type assertion — `OptionChooser`, `Orderer` — with a
@@ -166,12 +166,12 @@ Three tiers of verb, kept distinct so a method name says which level it works at
   `emitCardPlayed`, `emitCreatureEnters`, `emitEnemyDestroyed`, `emitLasting`. Use
   it at an event site that dispatches to responders (triggered abilities and the
   lasting registry).
-- **`trigger…`** resolves a *single card's* abilities matching a trigger —
+- **`trigger…`** resolves a _single card's_ abilities matching a trigger —
   `triggerAbilities(id, TriggerAfterReap, …)`. The emitters call into it per card.
 - **`resolve…`** carries out one specific effect or ability — `Effect.Resolve`,
   `resolveReaction`, `resolveUpgradePlay`.
 
-Reserve the domain word *"fire"* for prose ("a trigger fires", "an ability
+Reserve the domain word _"fire"_ for prose ("a trigger fires", "an ability
 fires"): it is what an ability does in response to an emitted event, never the name
 of a method that does the emitting.
 
@@ -221,7 +221,7 @@ sentence and route it through the channel a UI can render as a board interaction
 
 - **Ask through `pickCreature`/`pickCard`, not `ChooseOption`, whenever the answer
   is a card.** A card choice is made by clicking the card, so a frontend
-  highlights the candidates and takes a click. A list of card *names* as buttons is
+  highlights the candidates and takes a click. A list of card _names_ as buttons is
   a fallback, not the design; only use `ChooseOption` when the options are not
   cards (a house, a key colour, "yes"/"no").
 - **Refer to the source card with `SelfName`, never a literal name.** The engine
@@ -232,11 +232,11 @@ sentence and route it through the channel a UI can render as a board interaction
   ("choose a creature to attach {self} to"), so the prompt and the printed text
   are the same sentence.
 - **When the choice is optional ("may", "up to N"), the player must be able to
-  stop**: the prompt is declinable, and a frontend shows a *Done* button beside
+  stop**: the prompt is declinable, and a frontend shows a _Done_ button beside
   the highlighted candidates. An optional choice must therefore **not** be
   short-circuited when only one candidate remains — that would take the choice
   away. `pickCreature` auto-takes a sole candidate precisely because it models a
-  *mandatory* choice; an optional one needs its own path.
+  _mandatory_ choice; an optional one needs its own path.
 
 These are conscious tradeoffs; the "why" is in the linked ADRs. Handle them as
 described; do not "fix" them into a regression of a constraint.

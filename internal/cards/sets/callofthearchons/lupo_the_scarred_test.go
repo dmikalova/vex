@@ -16,7 +16,7 @@ import (
 //	Traits: Beast
 //
 //	Skirmish.
-//	Play: Deal 2 damage to an enemy creature.
+//	Play: Deal 2 damage to a creature.
 func TestLupoTheScarred(t *testing.T) {
 	t.Run("deals 2 damage to a chosen creature when played", func(t *testing.T) {
 		var foe ct.Card

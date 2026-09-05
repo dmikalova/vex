@@ -255,3 +255,91 @@ func TestInstead(t *testing.T) {
 		t.Errorf("two replacements: p0=%d p1=%d, want 1/2", g2.Aember(0), g2.Aember(1))
 	}
 }
+
+func TestReactionEventOf(t *testing.T) {
+	if ev, ok := reactionEventOf(TriggerAfterReap); !ok || ev != EventReap {
+		t.Errorf("reactionEventOf(Reap) = %v, %v; want EventReap, true", ev, ok)
+	}
+	if _, ok := reactionEventOf(TriggerAfterPlay); ok {
+		t.Error("a non-reap trigger should not map to a reaction event")
+	}
+}
+
+func TestGainAbilityValidate(t *testing.T) {
+	reap := func(e Effect) Ability { return Ability{Trigger: TriggerAfterReap, Effect: e} }
+
+	if err := (GainAbility{Ability: reap(Draw{Amount: 1})}).validate(); err == nil {
+		t.Error("an unset target should be rejected")
+	}
+	// A trigger the registry cannot hang a per-creature reaction on.
+	if err := (GainAbility{
+		Target:  Target{Kind: TargetTriggeringCreature},
+		Ability: Ability{Trigger: TriggerAfterPlay, Effect: Draw{Amount: 1}},
+	}).validate(); err == nil {
+		t.Error("an unsupported trigger should be rejected")
+	}
+	// A Reap ability whose effect the flat registry cannot carry.
+	if err := (GainAbility{
+		Target:  Target{Kind: TargetTriggeringCreature},
+		Ability: reap(Ready{Target: Target{Kind: TargetTriggeringCreature}}),
+	}).validate(); err == nil {
+		t.Error("an unsupported ability effect should be rejected")
+	}
+	if err := (GainAbility{
+		Target:  Target{Kind: TargetTriggeringCreature},
+		Ability: reap(Draw{Amount: 1}),
+	}).validate(); err != nil {
+		t.Errorf("valid GainAbility = %v", err)
+	}
+}
+
+func TestGainAbilityText(t *testing.T) {
+	e := GainAbility{
+		Target:  Target{Kind: TargetTriggeringCreature},
+		Ability: Ability{Trigger: TriggerAfterReap, Effect: Draw{Amount: 1}},
+	}
+	want := `it gains, "Reap: Draw a card."`
+	if got := e.Text(); got != want {
+		t.Errorf("text = %q, want %q", got, want)
+	}
+}
+
+// GainAbility scopes the granted reaction to the one creature it targets: that
+// creature's reap draws, but another creature's reap does not.
+func TestGainAbilityResolveSubjectScoped(t *testing.T) {
+	g := started(t)
+	granted := g.AddToBattleline(testCreature("granted", 3), 0)
+	other := g.AddToBattleline(testCreature("other", 3), 0)
+	g.AddToDeck(testCreature("d1", 1), 0)
+	g.AddToDeck(testCreature("d2", 1), 0)
+
+	GainAbility{
+		Target:  Target{Kind: TargetThisCreature},
+		Ability: Ability{Trigger: TriggerAfterReap, Effect: Draw{Amount: 1}},
+	}.Resolve(&EffectContext{Resolver: g, Source: granted, Controller: 0})
+
+	if g.State.LastingCount != 1 {
+		t.Fatalf("lasting count = %d, want 1", g.State.LastingCount)
+	}
+	le := g.State.Lasting[0]
+	if le.On != EventReap || le.Do != actDraw || !le.HasSubject || le.Subject != granted {
+		t.Fatalf(
+			"registered reaction = %+v, want a Subject-scoped reap draw on the granted creature",
+			le,
+		)
+	}
+
+	// The granted creature's reap draws.
+	before := len(g.Hand(0))
+	g.emitLasting(EventReap, 0, granted)
+	if got := len(g.Hand(0)); got != before+1 {
+		t.Errorf("hand after the granted creature reaps = %d, want %d", got, before+1)
+	}
+
+	// A different creature's reap does not (the Subject filter skips it).
+	before = len(g.Hand(0))
+	g.emitLasting(EventReap, 0, other)
+	if got := len(g.Hand(0)); got != before {
+		t.Errorf("hand after another creature reaps = %d, want %d (no draw)", got, before)
+	}
+}

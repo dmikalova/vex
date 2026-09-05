@@ -8,8 +8,6 @@ import "strings"
 // value allows any. ExceptSameName excludes a card sharing the name of the card
 // currently in context (ctx.It), the "with a different name" clause — meant to
 // follow a gate that left a card in context, e.g. Then{PutFromPlay, PutFromHand}.
-//
-//rulebook:effect Put from Hand
 type PutFromHand struct {
 	Type           CardType
 	House          House

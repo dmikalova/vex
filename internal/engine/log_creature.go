@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"strings"
 )
 
 // This file holds the log entries that narrate what happens to a creature or
@@ -15,6 +16,26 @@ type CreatureReadied struct{ Creature LocalID }
 // Text renders the card that was readied.
 func (e CreatureReadied) Text(n Namer) string {
 	return fmt.Sprintf("%s is readied", n.Name(e.Creature))
+}
+
+// CreatureGainedKeyword narrates a creature gaining a keyword for the turn.
+type CreatureGainedKeyword struct {
+	Creature LocalID
+	Keyword  Keyword
+}
+
+// Text renders the creature and the keyword it gained.
+func (e CreatureGainedKeyword) Text(n Namer) string {
+	return fmt.Sprintf("%s gains %s", n.Name(e.Creature), strings.ToLower(e.Keyword.String()))
+}
+
+// CreatureConsideredFlank narrates a creature being treated as a flank creature
+// for the turn (Spectral Tunneler).
+type CreatureConsideredFlank struct{ Creature LocalID }
+
+// Text renders the creature now considered a flank creature.
+func (e CreatureConsideredFlank) Text(n Namer) string {
+	return fmt.Sprintf("%s is considered a flank creature", n.Name(e.Creature))
 }
 
 // CreatureExhausted narrates a card being turned sideways.

@@ -111,6 +111,54 @@ func TestMoveFromDiscardAll(t *testing.T) {
 	}
 }
 
+func TestPutFromDiscardByName(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	bind1 := g.Register(NewCard("Ortannu's Binding", Dis, Tactic, Common), 0)
+	bind2 := g.Register(NewCard("Ortannu's Binding", Dis, Tactic, Common), 0)
+	other := g.Register(NewCard("Gateway to Dis", Dis, Tactic, Common), 0)
+	for _, id := range []LocalID{bind1, bind2, other} {
+		g.State.Discard[0].add(id)
+	}
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	e := PutFromDiscard{Name: "Ortannu's Binding", All: true, Destination: ToHand}
+	if e.Text() != "put each Ortannu's Binding from your discard pile into your hand" {
+		t.Errorf("text = %q", e.Text())
+	}
+	e.Resolve(ctx)
+
+	hand := g.Hand(0)
+	if len(hand) != 2 || !containsID(hand, bind1) || !containsID(hand, bind2) {
+		t.Errorf("hand = %v, want both Bindings", hand)
+	}
+	if d := g.Discard(0); len(d) != 1 || d[0] != other {
+		t.Errorf("discard = %v, want just the differently named card", d)
+	}
+	if ctx.Produced.Returned != 2 {
+		t.Errorf("Returned = %d, want 2", ctx.Produced.Returned)
+	}
+}
+
+func TestPutFromDiscardByNameChoose(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	bind := g.Register(NewCard("Ortannu's Binding", Dis, Tactic, Common), 0)
+	other := g.Register(NewCard("Gateway to Dis", Dis, Tactic, Common), 0)
+	g.State.Discard[0].add(bind)
+	g.State.Discard[0].add(other)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	// Not All: the differently named card is filtered out of the candidates,
+	// leaving only the Binding for the controller to choose.
+	e := PutFromDiscard{Name: "Ortannu's Binding", Destination: ToHand}
+	e.Resolve(ctx)
+	if !g.State.Hand[0].contains(bind) {
+		t.Error("the named card should return to hand")
+	}
+	if g.State.Hand[0].contains(other) {
+		t.Error("the differently named card should stay in the discard pile")
+	}
+}
+
 func TestReturnCreatureFromDiscardToDeck(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	act := g.Register(NewCard("act", Brobnar, Tactic, Common), 0) // non-creature

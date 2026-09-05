@@ -30,6 +30,7 @@ func (g *game) selectBoardID(_ app.Context, id engine.LocalID) {
 	}
 	g.abandonFlank(id)
 	g.sel, g.selKind, g.selHand, g.hasSel = id, g.boardKindOf(id), -1, true
+	g.confirmEndTurn = false
 	g.status = ""
 	g.measureFocus()
 }
@@ -61,6 +62,7 @@ func (g *game) selectHand(id engine.LocalID) {
 		return
 	}
 	g.sel, g.selKind, g.selHand, g.hasSel = id, selHand, idx, true
+	g.confirmEndTurn = false
 	g.status = ""
 	g.measureFocus()
 }
@@ -109,18 +111,50 @@ func (g *game) advanceSelection() {
 
 // clickAway drops the selection when a click lands on the board's background
 // rather than on a card or a player bar. The click bubbles up from whatever it
-// hit, so the target is asked what it belongs to.
-func (g *game) clickAway(_ app.Context, e app.Event) {
+// hit, so the target is asked what it belongs to. It is bound to the board area,
+// so every click it sees is already outside the sidebar.
+func (g *game) clickAway(ctx app.Context, e app.Event) {
+	t := e.Get("target")
+	// A sidebar wide enough to read as a drawer over the board is dismissed by the
+	// first click outside it, ahead of any selection change, the way a drawer
+	// closes when you tap the page behind it.
+	if t.Truthy() && !g.sidebarCollapsed && g.sidebarTooWide(t) {
+		g.sidebarCollapsed = true
+		g.save(ctx)
+		return
+	}
 	if !g.hasSel || g.busy || g.choosing ||
 		g.phase == phaseFightTarget || g.phase == phaseFlank {
 		return
 	}
-	if t := e.Get("target"); t.Truthy() {
+	if t.Truthy() {
 		if t.Call("closest", ".card, .score-pill").Truthy() {
 			return
 		}
 	}
 	g.clearSelection()
+}
+
+// sidebarTooWide reports whether the open sidebar covers more than 40% of the
+// viewport, the point at which it reads as a drawer over the board rather than a
+// panel beside it. The sidebar is a fixed width, so it only crosses 40% on a
+// narrow enough window; it is measured live from the DOM the click arrived
+// through, and reports false when there is no DOM to measure.
+func (g *game) sidebarTooWide(target app.Value) bool {
+	doc := target.Get("ownerDocument")
+	if !doc.Truthy() {
+		return false
+	}
+	sb := doc.Call("querySelector", ".sidebar")
+	if !sb.Truthy() {
+		return false
+	}
+	vw := app.Window().Get("innerWidth").Float()
+	if vw <= 0 {
+		return false
+	}
+	w := sb.Call("getBoundingClientRect").Get("width").Float()
+	return w > 0.4*vw
 }
 
 // boardKindOf reports how a card in play should be treated when selected: one of

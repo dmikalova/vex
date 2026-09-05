@@ -76,6 +76,7 @@ func (g *game) renderHandCard(id engine.LocalID) app.UI {
 		Selected:    g.isSelected(id),
 		Targetable:  targetable,
 		Dimmed:      dimmed,
+		Jiggle:      g.jiggling(id, selHand),
 		OnActivate:  activate,
 		Draggable:   draggable,
 		OnDragStart: g.startHandDrag,

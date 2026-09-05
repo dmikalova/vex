@@ -11,7 +11,7 @@ import (
 //
 //	House:  Logos
 //	Type:   Tactic
-//	Rarity: FIXED
+//	Rarity: Connected
 //	Æmber:  1
 //
 //	Play: Search your deck and discard pile for a Timetraveller, reveal it, and put it into your hand, and shuffle your discard pile into your deck.

@@ -134,6 +134,7 @@ var Traits = traits{
 	Location:  engine.Location,
 	Martian:   engine.Martian,
 	Merchant:  engine.Merchant,
+	Monk:      engine.Monk,
 	Mutant:    engine.Mutant,
 	Niffle:    engine.Niffle,
 	Power:     engine.Power,
@@ -177,6 +178,7 @@ type traits struct {
 	Location,
 	Martian,
 	Merchant,
+	Monk,
 	Mutant,
 	Niffle,
 	Power,
@@ -201,6 +203,9 @@ var Keyword = keywords{
 	Elusive:   engine.Elusive,
 	Taunt:     engine.Taunt,
 	Versatile: engine.Versatile,
+	Alpha:     engine.Alpha,
+	Omega:     engine.Omega,
+	Deploy:    engine.Deploy,
 }
 
 type keywords struct {
@@ -214,6 +219,15 @@ type keywords struct {
 	Taunt engine.Keyword
 	// Versatile: this card may be played from any house (its Action: is an Omni).
 	Versatile engine.Keyword
+	// Alpha: this card can only be played as the first card its player plays,
+	// uses, or discards on their turn.
+	Alpha engine.Keyword
+	// Omega: after this card is played, the current step of the turn ends — no
+	// more cards this step except through pending abilities still resolving.
+	Omega engine.Keyword
+	// Deploy: this creature may enter play at any position in its controller's
+	// battleline, not only on a flank.
+	Deploy engine.Keyword
 }
 
 // Keywords builds the keyword slice for an upgrade's granted keywords, e.g.

@@ -8,6 +8,12 @@ import (
 )
 
 // Martian Hounds
+//
+//	House:  Mars
+//	Type:   Tactic
+//	Rarity: Rare
+//
+//	Play: For each damaged creature in play, give a creature 2 +1 power counters.
 func TestMartianHounds(t *testing.T) {
 	t.Run("gives two counters per damaged creature", func(t *testing.T) {
 		var hounds, chosen, damaged, enemy ct.Card

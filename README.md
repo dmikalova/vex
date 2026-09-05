@@ -3,13 +3,12 @@
 Vactrol is a rules engine for a [KeyForge](https://keyforge.fandom.com/)-style
 card game, written in Go. It models a full two-player match — houses, Æmber,
 keys, combat, and card abilities — behind a small, pointerless state type that is
-cheap to copy (for AI search), and ships with a terminal UI for browsing the card
-database and playing hotseat games.
+cheap to copy (for AI search), and ships with a WebAssembly client for playing
+in the browser.
 
 ## Quick start
 
 ```sh
-mage run      # launch the terminal UI (card explorer + hotseat game)
 mage web      # build the wasm client and serve it at http://localhost:8000
 mage test     # run the test suite
 mage cover    # engine test coverage (kept at 100%)
@@ -19,18 +18,16 @@ Requires Go 1.26+.
 
 ## Layout
 
-| Path | Package | Responsibility |
-| ---- | ------- | -------------- |
-| `internal/engine` | `engine` | Core rules engine: game state, combat, and the card-effect AST. Pointerless and clone-friendly. |
-| `internal/card` | `card` | Authoring facade over the engine (grouped namespaces like `card.House.X`) plus the card registry. |
-| `internal/cards` | `cards` | Card-database aggregator; blank-imports every set so its cards self-register. |
-| `internal/cards/sets/<set>` | e.g. `callofthearchons` | One self-registering file per card. |
-| `internal/cards/cardtest` | `cardtest` | Shared test harness for the set packages. |
-| `internal/tui` | `tui` | [Bubble Tea](https://github.com/charmbracelet/bubbletea) terminal UI. |
-| `cmd/tui` | `main` | Thin entry point that calls `tui.Run()`. |
-| `internal/match` | `match` | Shared match setup (random decks, house list) used by every frontend. |
-| `internal/web` | `web` | [go-app](https://github.com/maxence-charriere/go-app) WebAssembly client, Monokai-themed. |
-| `cmd/web` | `main` | Serves the web client and, compiled to wasm, runs it in the browser. |
+| Path                        | Package                 | Responsibility                                                                                    |
+| --------------------------- | ----------------------- | ------------------------------------------------------------------------------------------------- |
+| `internal/engine`           | `engine`                | Core rules engine: game state, combat, and the card-effect AST. Pointerless and clone-friendly.   |
+| `internal/card`             | `card`                  | Authoring facade over the engine (grouped namespaces like `card.House.X`) plus the card registry. |
+| `internal/cards`            | `cards`                 | Card-database aggregator; blank-imports every set so its cards self-register.                     |
+| `internal/cards/sets/<set>` | e.g. `callofthearchons` | One self-registering file per card.                                                               |
+| `internal/cards/cardtest`   | `cardtest`              | Shared test harness for the set packages.                                                         |
+| `internal/match`            | `match`                 | Shared match setup (random decks, house list) used by every frontend.                             |
+| `internal/web`              | `web`                   | [go-app](https://github.com/maxence-charriere/go-app) WebAssembly client, Monokai-themed.         |
+| `cmd/web`                   | `main`                  | Serves the web client and, compiled to wasm, runs it in the browser.                              |
 
 The web UI ships today; further frontends (e.g. an MCTS bot) and a lobby server
 are planned as their own `cmd/…` binaries and `internal/…` packages on the same
@@ -44,10 +41,21 @@ every doc is in [`docs/README.md`](docs/README.md).
 
 ## Development
 
-`mage -l` lists the available targets: `run`, `web`, `webWasm`, `build`, `test`,
+`mage -l` lists the available targets: `web`, `webWasm`, `build`, `test`,
 `cover`, `vet`, `fmt`, `lint`, `check`, `tidy`, `gen`. `mage check` is the full
 green gate (fmt-check, build, vet, lint, markdown lint, test, coverage) and is
 what CI runs.
+
+The card-management commands live under the `tools` namespace, for researching
+and implementing cards:
+
+```sh
+mage tool:lookup "ether spider"   # find source cards by name, with a ready-made card.Provenance(...)
+mage tool:missing         # pick a set (↑/↓), then list its cards still to implement
+mage tool:coverage                 # per-set count of implemented cards
+mage tool:stub callofthearchons    # scaffold build-excluded stubs for a set's unimplemented cards
+```
+
 Card-authoring conventions live in
 [`internal/cards/AGENTS.md`](internal/cards/AGENTS.md).
 

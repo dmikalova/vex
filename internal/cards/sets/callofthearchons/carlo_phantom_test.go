@@ -15,7 +15,7 @@ import (
 //	Power:  1
 //	Traits: Elf • Thief
 //
-//	Elusive. Skirmish.
+//	Elusive, Skirmish.
 //	After you play an artifact, steal 1 Æmber.
 func TestCarloPhantom(t *testing.T) {
 	t.Run("steals 1 Æmber each time its controller plays an artifact", func(t *testing.T) {

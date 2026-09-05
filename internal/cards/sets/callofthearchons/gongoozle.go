@@ -17,7 +17,7 @@ var Gongoozle = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 60),
 	card.WithAemberBonus(1),
-	card.WithAbility(card.Trigger.Play, card.DamageIfSurvives{
+	card.WithAbility(card.Trigger.Play, card.DamageThenIfSurvives{
 		Amount: 3,
 		Target: card.Target.Creature,
 		Then:   card.DiscardRandomFromHand{Player: card.ItsOwner},

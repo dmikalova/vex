@@ -633,6 +633,18 @@ func TestRenderCardRules(t *testing.T) {
 			),
 			"Fight: Tabris captures 1 Æmber from your opponent.",
 		},
+		// A card that takes damage for other creatures renders that shield line.
+		{
+			NewCard(
+				"Ward",
+				Sanctum,
+				Creature,
+				Common,
+				WithPower(5),
+				WithTakesDamageFor(Target{Kind: TargetEachCreature}.Neighboring()),
+			),
+			"Damage dealt to each neighboring creature is dealt to Ward instead.",
+		},
 	}
 	for _, tc := range cases {
 		if got := RenderCardRules(&tc.def); got != tc.want {

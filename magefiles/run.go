@@ -12,11 +12,6 @@ import (
 	"github.com/dmikalova/vactrol/internal/hotreload"
 )
 
-// Tui launches the vactrol TUI. It is a card explorer and a hotseat game.
-func Tui() error {
-	return sh.RunV("go", "run", "./cmd/tui")
-}
-
 // WebWasm builds the web client to WebAssembly (web/app.wasm). -trimpath makes
 // the build reproducible; -ldflags="-s -w" drops debug info to shrink the bundle.
 func WebWasm() error {

@@ -10,8 +10,6 @@ import "fmt"
 // Exhausting a creature turns it sideways so it cannot be used again until it
 // readies at the end of its controller's turn. It exhausts each creature the
 // effect targets.
-//
-//rulebook:effect Exhaust
 type Exhaust struct {
 	Target Target
 }
@@ -82,8 +80,6 @@ func (e ExhaustCreatures) Resolve(ctx *EffectContext) {
 
 // Readying a creature turns it upright again so it can be used, the opposite of
 // exhausting. It readies each creature the effect targets.
-//
-//rulebook:effect Ready
 type Ready struct {
 	Target Target
 }

@@ -11,7 +11,7 @@ import (
 //
 //	House:  Sanctum
 //	Type:   Creature
-//	Rarity: FIXED
+//	Rarity: Connected
 //	Power:  5
 //	Traits: Horseman • Spirit
 //

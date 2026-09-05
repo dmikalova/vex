@@ -7,8 +7,6 @@ import "fmt"
 // Stem Antenna's host counts as Mars for the rest of the turn). The change is
 // per-match state, dropped when the creature leaves play; EndOfTurn also drops it at
 // end of turn, while UntilThisLeavesPlay keeps it until the creature leaves play.
-//
-//rulebook:effect Belong to House
 type BelongToHouse struct {
 	Target   Target
 	House    House
@@ -55,8 +53,6 @@ func (e BelongToHouse) Resolve(ctx *EffectContext) {
 // of a HouseLock whose house is not printed but named: Restringuntus chooses a
 // house on play and bars its opponent from it until it leaves play. Player names
 // whose choice the lock will constrain, and must match the card's HouseLock.
-//
-//rulebook:effect Name a House
 type NameHouse struct {
 	Player Player
 }

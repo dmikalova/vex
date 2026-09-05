@@ -141,7 +141,7 @@ not.
   matches the invalid-zero sentinels above: the zero value is the "unset/none"
   member, and the remaining members are ordered so ordinal arithmetic replaces
   literals where it reads naturally (e.g. the rarity marks run `rarityCommon…
-  raritySpecial`, so a mark's ordinal *is* its diamond count).
+raritySpecial`, so a mark's ordinal _is_ its diamond count).
 
 ## Composition and design
 
@@ -317,8 +317,8 @@ avoiding per-turn allocation on hot paths.
 ## Dependencies and tooling
 
 - **Keep dependencies minimal and deliberate.** This is vactrol's most explicit
-  departure from TigerStyle's _zero-dependencies_ policy: the frontends do depend
-  on libraries (a TUI toolkit, a WebAssembly framework). But the core `engine`
+  departure from TigerStyle's _zero-dependencies_ policy: the frontend does depend
+  on libraries (a WebAssembly framework). But the core `engine`
   imports nothing upward and stays dependency-light on purpose, and a new
   dependency — especially anywhere near the engine — must earn its place against
   the supply-chain, safety, and maintenance cost it adds.

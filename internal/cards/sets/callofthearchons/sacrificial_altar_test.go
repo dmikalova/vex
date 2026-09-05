@@ -7,6 +7,15 @@ import (
 	ct "github.com/dmikalova/vactrol/internal/cards/cardtest"
 )
 
+// Sacrificial Altar
+//
+//	House:  Dis
+//	Type:   Artifact
+//	Rarity: Rare
+//	Æmber:  1
+//	Traits: Location
+//
+//	Action: Purge a friendly Human trait creature -> play a creature from your discard pile.
 func TestSacrificialAltar(t *testing.T) {
 	t.Run("trades a Human for a creature in the discard pile", func(t *testing.T) {
 		var altar, human, risen ct.Card

@@ -336,7 +336,7 @@ func TestEscapeBacksOutOneLayerAtATime(t *testing.T) {
 	c.startTurn()
 	c.g.selectHandID(c.ctx, c.hand()[0])
 	c.g.confirmEndTurn = true
-	c.g.confirmRestart = true
+	c.g.awaitingSetup = true
 	c.g.zonesPlayer = 0
 	c.g.pickerOpen = true
 	c.g.menuOpen = true
@@ -350,7 +350,7 @@ func TestEscapeBacksOutOneLayerAtATime(t *testing.T) {
 		{"the menu", func(g *game) bool { return g.menuOpen }},
 		{"the card picker", func(g *game) bool { return g.pickerOpen }},
 		{"the zone viewer", func(g *game) bool { return g.zonesPlayer >= 0 }},
-		{"the restart confirmation", func(g *game) bool { return g.confirmRestart }},
+		{"the set picker", func(g *game) bool { return g.awaitingSetup }},
 		{"the end-turn confirmation", func(g *game) bool { return g.confirmEndTurn }},
 		{"the selection", func(g *game) bool { return g.hasSel }},
 	}

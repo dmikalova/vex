@@ -9,8 +9,6 @@ import "fmt"
 // exceeds its power is destroyed. When one ability deals damage to several
 // creatures they are damaged simultaneously and any that died are destroyed
 // together, so no creature's destruction changes another's.
-//
-//rulebook:effect Deal Damage
 type DealDamage struct {
 	Amount int
 	Per    Count
@@ -163,27 +161,27 @@ func (e DealDamage) dealTo(ctx *EffectContext, amount int, ids []LocalID) {
 	ctx.Resolver.DealDamage(ctx.Controller, targets)
 }
 
-// DamageIfDestroyed deals damage to one chosen creature and, only if that damage
+// DamageThenIfDestroyed deals damage to one chosen creature and, only if that damage
 // destroys it, resolves a follow-up effect with the destroyed creature in context
 // (ctx.It) — Seeker Needle's "deal 1 damage to a creature. If this damage destroys
 // that creature, gain 1 Æmber."
-type DamageIfDestroyed struct {
+type DamageThenIfDestroyed struct {
 	Amount int
 	Target Target
 	Then   Effect
 }
 
 // validate requires a target and a well-formed follow-up effect.
-func (e DamageIfDestroyed) validate() error {
+func (e DamageThenIfDestroyed) validate() error {
 	if !e.Target.valid() {
-		return errUnsetTarget("DamageIfDestroyed")
+		return errUnsetTarget("DamageThenIfDestroyed")
 	}
 	return validateEffect(e.Then)
 }
 
 // Text renders the effect, e.g. "deal 2 damage to a creature. If this damage
 // destroys that creature, steal 1 Æmber".
-func (e DamageIfDestroyed) Text() string {
+func (e DamageThenIfDestroyed) Text() string {
 	return fmt.Sprintf("deal %d damage to %s. If this damage destroys that creature, %s",
 		e.Amount, e.Target.Text(), e.Then.Text())
 }
@@ -191,7 +189,7 @@ func (e DamageIfDestroyed) Text() string {
 // Resolve deals the damage to the chosen creature, then runs Then only if the
 // creature has left play. The destroyed creature is placed in context (ctx.It) so
 // Then can refer to it ("purge it").
-func (e DamageIfDestroyed) Resolve(ctx *EffectContext) {
+func (e DamageThenIfDestroyed) Resolve(ctx *EffectContext) {
 	ids := e.Target.Select(ctx)
 	if len(ids) == 0 {
 		return
@@ -204,28 +202,28 @@ func (e DamageIfDestroyed) Resolve(ctx *EffectContext) {
 	}
 }
 
-// DamageIfSurvives deals damage to one chosen creature and, only if the creature
+// DamageThenIfSurvives deals damage to one chosen creature and, only if the creature
 // is not destroyed, resolves a follow-up effect with the surviving creature in
 // context (ctx.It) — Gongoozle's "deal 3 damage to a creature. If it is not
 // destroyed, its owner discards a random card from their hand." This is a plain
 // state branch, not a result gate.
-type DamageIfSurvives struct {
+type DamageThenIfSurvives struct {
 	Amount int
 	Target Target
 	Then   Effect
 }
 
 // validate requires a target and a well-formed follow-up effect.
-func (e DamageIfSurvives) validate() error {
+func (e DamageThenIfSurvives) validate() error {
 	if !e.Target.valid() {
-		return errUnsetTarget("DamageIfSurvives")
+		return errUnsetTarget("DamageThenIfSurvives")
 	}
 	return validateEffect(e.Then)
 }
 
 // Text renders the effect, e.g. "deal 3 damage to a creature. If it is not
 // destroyed, its owner discards a random card from their hand".
-func (e DamageIfSurvives) Text() string {
+func (e DamageThenIfSurvives) Text() string {
 	return fmt.Sprintf("deal %d damage to %s. If it is not destroyed, %s",
 		e.Amount, e.Target.Text(), e.Then.Text())
 }
@@ -233,7 +231,7 @@ func (e DamageIfSurvives) Text() string {
 // Resolve deals the damage to the chosen creature, then runs Then only if the
 // creature is still in play. The surviving creature is placed in context (ctx.It)
 // so Then can refer to it ("its owner").
-func (e DamageIfSurvives) Resolve(ctx *EffectContext) {
+func (e DamageThenIfSurvives) Resolve(ctx *EffectContext) {
 	ids := e.Target.Select(ctx)
 	if len(ids) == 0 {
 		return

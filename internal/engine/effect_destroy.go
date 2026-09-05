@@ -7,8 +7,6 @@ package engine
 // only then does each creature still in play move to the discard pile, along with
 // its upgrades. A destroy effect can target every creature or only those matching
 // a filter, such as "each creature with power 3 or lower".
-//
-//rulebook:effect Destroy
 type Destroy struct {
 	Target Target
 }

@@ -30,6 +30,59 @@ func TestCaptureOpponentAemberReplacement(t *testing.T) {
 	})
 
 	t.Run(
+		"two spiders let their controller choose which one captures the Æmber",
+		func(t *testing.T) {
+			g := started(t)
+			src := g.AddToBattleline(testCreature("src", 1), 0)
+			first := g.AddToBattleline(testEtherSpider(), 1)
+			second := g.AddToBattleline(testEtherSpider(), 1)
+			g.SetChooser(1, idChooser{id: second}) // the spiders' controller picks
+
+			GainAember{
+				Player: Controller,
+				Amount: 2,
+			}.Resolve(
+				&EffectContext{Resolver: g, Source: src, Controller: 0},
+			)
+
+			if g.Aember(0) != 0 {
+				t.Errorf("player Æmber = %d, want 0", g.Aember(0))
+			}
+			if g.AmberOn(first) != 0 {
+				t.Errorf("first spider Æmber = %d, want 0", g.AmberOn(first))
+			}
+			if g.AmberOn(second) != 2 {
+				t.Errorf("chosen spider Æmber = %d, want 2", g.AmberOn(second))
+			}
+		},
+	)
+
+	t.Run(
+		"a declined choice falls back to the first spider",
+		func(t *testing.T) {
+			g := started(t)
+			src := g.AddToBattleline(testCreature("src", 1), 0)
+			first := g.AddToBattleline(testEtherSpider(), 1)
+			second := g.AddToBattleline(testEtherSpider(), 1)
+			g.SetChooser(1, orderRejectChooser{}) // declines to pick
+
+			GainAember{
+				Player: Controller,
+				Amount: 2,
+			}.Resolve(
+				&EffectContext{Resolver: g, Source: src, Controller: 0},
+			)
+
+			if g.AmberOn(first) != 2 {
+				t.Errorf("first spider Æmber = %d, want 2", g.AmberOn(first))
+			}
+			if g.AmberOn(second) != 0 {
+				t.Errorf("second spider Æmber = %d, want 0", g.AmberOn(second))
+			}
+		},
+	)
+
+	t.Run(
 		"only the incoming gain is captured; the pool owner keeps existing Æmber",
 		func(t *testing.T) {
 			g := started(t)

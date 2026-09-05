@@ -39,10 +39,10 @@ type (
 type (
 	// DealDamage deals damage to each creature its Target selects.
 	DealDamage = engine.DealDamage
-	// DamageIfDestroyed deals damage, then runs Then only if the creature left play.
-	DamageIfDestroyed = engine.DamageIfDestroyed
-	// DamageIfSurvives deals damage, then runs Then only if the creature survives.
-	DamageIfSurvives = engine.DamageIfSurvives
+	// DamageThenIfDestroyed deals damage, then runs Then only if the creature left play.
+	DamageThenIfDestroyed = engine.DamageThenIfDestroyed
+	// DamageThenIfSurvives deals damage, then runs Then only if the creature survives.
+	DamageThenIfSurvives = engine.DamageThenIfSurvives
 	// Spread is a DealDamage strategy that hits several related creatures at once.
 	Spread = engine.Spread
 	// PerTarget is a DealDamage strategy scaling the damage per creature hit.
@@ -76,6 +76,8 @@ type (
 	PurgeEachFromHand = engine.PurgeEachFromHand
 	// PurgeCreature purges each creature its Target selects from play.
 	PurgeCreature = engine.PurgeCreature
+	// PurgeSource purges the card whose ability this is (Library Access purges itself).
+	PurgeSource = engine.PurgeSource
 	// LoseKeyword takes a keyword from each creature for the remainder of the turn.
 	LoseKeyword = engine.LoseKeyword
 	// PurgeCreatureFromHand purges a chosen creature from your hand and puts it in context.
@@ -162,6 +164,17 @@ type (
 	// (From), ignoring the active house. Set Except to make House the house that
 	// may not be played.
 	PlayFrom = engine.PlayFrom
+	// PutUnderFromHand puts a card the controller chooses from their hand under
+	// the resolving card, face up or face down.
+	PutUnderFromHand = engine.PutUnderFromHand
+	// PlayCardUnder plays the card placed under the resolving card.
+	PlayCardUnder = engine.PlayCardUnder
+	// Graft moves a target card in play faceup under the resolving card, out of
+	// play (rulebook: Graft).
+	Graft = engine.Graft
+	// PutUnderIntoPlay puts every card under the resolving card into play under
+	// its owner's control.
+	PutUnderIntoPlay = engine.PutUnderIntoPlay
 	// CancelFight makes the fight in progress not occur (a Before Fight effect).
 	CancelFight = engine.CancelFight
 	// RevealHand shows the cards in a player's hand to both players and records them.
@@ -191,6 +204,15 @@ type (
 	StunVerb = engine.StunVerb
 	// ExhaustVerb exhausts the chosen creature.
 	ExhaustVerb = engine.ExhaustVerb
+	// GainKeywordVerb gives the chosen creature a keyword for the remainder of the
+	// turn (Scout grants Skirmish).
+	GainKeywordVerb = engine.GainKeywordVerb
+	// ConsiderFlank makes the chosen creature count as a flank creature for the
+	// remainder of the turn (Spectral Tunneler).
+	ConsiderFlank = engine.ConsiderFlank
+	// GainAbility grants the chosen creature a triggered ability for the remainder
+	// of the turn (Spectral Tunneler grants "Reap: Draw a card").
+	GainAbility = engine.GainAbility
 	// Use uses up to Max cards the controller chooses from Target.
 	Use = engine.Use
 	// TriggerAbility fires another card's ability as if the controller controlled it.
@@ -319,6 +341,9 @@ type (
 	// AemberLostThisWay counts the Æmber an earlier LoseAember in the same
 	// resolution took from its Player's pool.
 	AemberLostThisWay = engine.AemberLostThisWay
+	// CardsReturnedThisWay counts the cards an earlier PutFromDiscard in the same
+	// resolution recovered from the discard pile.
+	CardsReturnedThisWay = engine.CardsReturnedThisWay
 	// CardsInHand counts the cards in a player's hand of a referenced house.
 	CardsInHand = engine.CardsInHand
 	// CreaturesHealed counts the creatures the most recent Heal healed.

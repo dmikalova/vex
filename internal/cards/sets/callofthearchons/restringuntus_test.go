@@ -14,7 +14,7 @@ import (
 //	Type:   Creature
 //	Rarity: Rare
 //	Power:  1
-//	Traits: demon
+//	Traits: Demon
 //
 //	Play: Choose a house - your opponent cannot choose that house as their active house until Restringuntus leaves play.
 func TestRestringuntus(t *testing.T) {

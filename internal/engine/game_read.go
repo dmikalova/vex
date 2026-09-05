@@ -63,9 +63,6 @@ func (g *Game) Power(id LocalID) int {
 // would be dealt: each point of armor stops 1 damage, and armor spent this way does
 // not come back until the creature's controller readies at the end of their turn.
 // Armor never reduces a creature's power, and healing does not restore spent armor.
-//
-//rulebook:combat Armor
-
 // armor returns a creature's armor value including attached upgrades.
 func (g *Game) armor(id LocalID) int {
 	a := g.cat.def(id).Armor
@@ -147,13 +144,24 @@ func (g *Game) hazardous(id LocalID) int {
 // upgrades.
 func (g *Game) Hazardous(id LocalID) int { return g.hazardous(id) }
 
+// ElusiveSpent reports whether a creature has already used its Elusive this turn,
+// so it will take combat damage for the rest of the turn. The keybar drops the
+// Elusive stripe while this holds.
+func (g *Game) ElusiveSpent(id LocalID) bool {
+	return g.State.Cards[id].ElusiveUsedThisTurn
+}
+
 // hasKeyword reports whether a creature has a keyword, either printed on it,
-// granted by an attached upgrade, or granted by a card's constant ability.
+// granted by an attached upgrade, granted by a card's constant ability, or gained
+// for the remainder of the turn (Scout).
 func (g *Game) hasKeyword(id LocalID, k Keyword) bool {
 	if g.State.KeywordsLost&k.bit() != 0 {
 		return false
 	}
 	if g.cat.def(id).hasKeyword(k) {
+		return true
+	}
+	if g.State.Cards[id].GrantedKeywords&k.bit() != 0 {
 		return true
 	}
 	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
@@ -279,6 +287,28 @@ func (g *Game) Upgrades(id LocalID) []LocalID {
 	return g.upgradesOf(id)
 }
 
+// Under returns the ids of the cards placed under a host — Masterplan, Jargogle,
+// Graft — face up or face down, in the order they were placed. These cards are
+// out of play, so they never appear in Battleline, Artifacts, or any other zone
+// reader; a host's own Under chain is the only way to reach them.
+func (g *Game) Under(host LocalID) []LocalID {
+	return g.underOf(host)
+}
+
+// UnderFaceDown reports whether a card currently placed under a host is
+// facedown, as opposed to faceup (Graft always places its card faceup).
+func (g *Game) UnderFaceDown(id LocalID) bool {
+	return g.State.Cards[id].UnderFaceDown
+}
+
+// Peekable reports whether viewer may look at the front of a facedown card
+// placed under host — only the host's controller may (master rulebook,
+// FACEDOWN CARDS: a facedown card may only be viewed by the controller of the
+// card it is placed under).
+func (g *Game) Peekable(viewer int, host LocalID) bool {
+	return g.Controller(host) == viewer
+}
+
 // inPlay reports whether an id is in either player's battleline or artifact row.
 // A controlled creature physically sits in its controller's battleline while its
 // owner remains unchanged, so this must not assume owner == controller.
@@ -337,6 +367,28 @@ func (g *Game) cannotPlayCreatures(player int) bool {
 		}
 	}
 	return false
+}
+
+// skipsForge reports whether a player is barred from forging a key by a constant
+// Restrictions.SkipForge rule on a card they control in play (The Sting).
+func (g *Game) skipsForge(player int) bool {
+	for _, id := range g.allInPlay(player) {
+		if g.cat.def(id).Restricts.SkipForge {
+			return true
+		}
+	}
+	return false
+}
+
+// forgeAemberGainer returns the opponent's in-play card that gains payer's forge
+// spending (The Sting), and whether one is in play.
+func (g *Game) forgeAemberGainer(payer int) (LocalID, bool) {
+	for _, id := range g.allInPlay(1 - payer) {
+		if g.cat.def(id).GainsForgeAember {
+			return id, true
+		}
+	}
+	return 0, false
 }
 
 // cannotPlayCard reports whether a player cannot play another card this turn

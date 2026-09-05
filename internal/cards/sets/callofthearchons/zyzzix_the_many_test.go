@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Martian • Soldier
 //
-//	Fight/Reap: You may reveal a creature from your hand and archive it -> give Zyzzix the Many a +3 power counter.
+//	Fight/Reap: You may reveal a creature from your hand and archive it -> give Zyzzix the Many 3 +1 power counters.
 func TestZyzzixTheMany(t *testing.T) {
 	t.Run("reaping archives a revealed creature and grows Zyzzix", func(t *testing.T) {
 		var zyzzix, creature ct.Card

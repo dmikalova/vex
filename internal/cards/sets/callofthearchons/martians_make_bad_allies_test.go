@@ -7,6 +7,13 @@ import (
 	ct "github.com/dmikalova/vactrol/internal/cards/cardtest"
 )
 
+// Martians Make Bad Allies
+//
+//	House:  Mars
+//	Type:   Tactic
+//	Rarity: Rare
+//
+//	Play: Reveal your hand, and purge each non-Mars creature from your hand, and for each creature purged this way, gain 1 Æmber.
 func TestMartiansMakeBadAllies(t *testing.T) {
 	t.Run("purges each non-Mars creature in hand and gains 1 Æmber per purge", func(t *testing.T) {
 		var martian, brobnar, untamed, tactic ct.Card

@@ -3,8 +3,11 @@ package web
 import (
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
 	"github.com/dmikalova/vactrol/internal/engine"
 )
@@ -122,7 +125,8 @@ func TestEveryKeywordHasASpecimenRow(t *testing.T) {
 // harness is a synthetic game, so a surface that assumes a state only a played
 // match reaches would fail here rather than in a browser.
 func TestGalleryRenders(t *testing.T) {
-	s := &style{harness: styleHarness()}
+	s := &style{harness: styleHarness(), attachHost: attachHarness()}
+	s.attachments = buildAttachments(s.attachHost.g)
 	if s.Render() == nil {
 		t.Fatal("the gallery rendered nothing")
 	}
@@ -132,6 +136,61 @@ func TestGalleryRenders(t *testing.T) {
 	s.houseFont[engine.Brobnar] = "Inter"
 	if s.Render() == nil {
 		t.Fatal("the gallery rendered nothing with fonts selected")
+	}
+}
+
+// TestGalleryShowsEveryAttachmentCombination holds the attachment specimens to
+// the counts and faceup/facedown combinations the board must draw: 1/2/3
+// upgrades, every faceup/facedown mask of 1/2/3 under-cards, the peeked case,
+// and the two composed. A combination the board can reach but the gallery omits
+// would be an unshown state.
+func TestGalleryShowsEveryAttachmentCombination(t *testing.T) {
+	h := attachHarness()
+	specs := buildAttachments(h.g)
+	captions := map[string]bool{}
+	for _, s := range specs {
+		captions[s.caption] = true
+	}
+	want := []string{
+		"1 upgrade", "2 upgrades", "3 upgrades",
+		"1 under: up", "1 under: down",
+		"1 under, facedown (you peek)",
+		"2 upgrades + 2 under", "3 upgrades + 3 under",
+	}
+	for n := 1; n <= 3; n++ {
+		for mask := range 1 << n {
+			want = append(want, strconv.Itoa(n)+" under: "+underMaskLabel(n, mask))
+		}
+	}
+	for _, w := range want {
+		if !captions[w] {
+			t.Errorf("the gallery has no attachment specimen %q", w)
+		}
+	}
+}
+
+// TestGalleryHidesAFacedownUnderFromTheOpponent renders the specimens and checks
+// that a facedown under-card on the opponent's card draws as a card-back, while
+// the specimen for a card you control draws its face — the visible difference
+// between the two the section exists to show.
+func TestGalleryHidesAFacedownUnderFromTheOpponent(t *testing.T) {
+	h := attachHarness()
+	specs := buildAttachments(h.g)
+	var hidden, peeked string
+	for _, s := range specs {
+		html := app.HTMLString(h.hostWithTabs(s.host, h.printedCard(s.host)))
+		switch s.caption {
+		case "1 under: down":
+			hidden = html
+		case "1 under, facedown (you peek)":
+			peeked = html
+		}
+	}
+	if !strings.Contains(hidden, "card-tab--back") {
+		t.Error("a facedown under-card on the opponent's card is not drawn as a card-back")
+	}
+	if strings.Contains(peeked, "card-tab--back") {
+		t.Error("your own facedown under-card is drawn as a card-back instead of its face")
 	}
 }
 

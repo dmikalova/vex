@@ -539,3 +539,14 @@ func (c AemberLostThisWay) CountText() string {
 	}
 	return "Æmber " + who + " lost this way"
 }
+
+// CardsReturnedThisWay counts the cards an earlier PutFromDiscard in this
+// resolution recovered from the discard pile — Ortannu the Chained deals a hit
+// for each Binding it returned.
+type CardsReturnedThisWay struct{}
+
+// Value reads how many cards the preceding PutFromDiscard returned.
+func (CardsReturnedThisWay) Value(ctx *EffectContext) int { return ctx.Produced.Returned }
+
+// CountText renders the singular noun the "for each" clause repeats.
+func (CardsReturnedThisWay) CountText() string { return "card returned this way" }

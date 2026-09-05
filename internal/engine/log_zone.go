@@ -236,3 +236,39 @@ func (e CardPutFromDiscardOnTopOfDeck) Text(n Namer) string {
 	return fmt.Sprintf("%s puts %s from their discard pile on top of their deck",
 		n.PlayerName(e.Player), nameMoved(n, e.Card, Discard, deck))
 }
+
+// CardPutUnder narrates a card placed under a host (Masterplan, Jargogle,
+// Graft). Unlike a move between two of Zone's fixed zones, whether the moved
+// card may be named here depends on this particular card, not on a zone
+// identity nameMoved can look up — a facedown card is exactly as hidden as one
+// in a hand, so it is named only when placed faceup.
+type CardPutUnder struct {
+	Player   int
+	Card     LocalID
+	Host     LocalID
+	FaceDown bool
+}
+
+// Text renders the card placed under its host, naming it only if it went
+// faceup.
+func (e CardPutUnder) Text(n Namer) string {
+	what, face := n.Name(e.Card), "faceup"
+	if e.FaceDown {
+		what, face = "a card", "facedown"
+	}
+	return fmt.Sprintf("%s puts %s %s under %s",
+		n.PlayerName(e.Player), what, face, n.Name(e.Host))
+}
+
+// CardGrafted narrates a card in play being grafted faceup under a host, out of
+// play (Spangler Box). Graft always places its card faceup, so the card is
+// always named.
+type CardGrafted struct {
+	Card LocalID
+	Host LocalID
+}
+
+// Text renders the grafted card and the host it now sits under.
+func (e CardGrafted) Text(n Namer) string {
+	return fmt.Sprintf("%s is grafted onto %s", n.Name(e.Card), n.Name(e.Host))
+}

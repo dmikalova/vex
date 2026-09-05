@@ -340,6 +340,14 @@ func (g *game) onKey(ctx app.Context, key string, shift bool) {
 	if g.g == nil {
 		return
 	}
+	// While the set picker is up every game key is inert; only Escape works, to
+	// back out of it.
+	if g.awaitingSetup {
+		if key == "Escape" {
+			g.dismiss(ctx)
+		}
+		return
+	}
 	switch key {
 	case "Escape":
 		g.dismiss(ctx)
@@ -505,8 +513,8 @@ func (g *game) dismiss(ctx app.Context) {
 		g.pickerOpen = false
 	case g.zonesPlayer >= 0 && g.promptZone == "":
 		g.zonesPlayer = -1
-	case g.confirmRestart:
-		g.confirmRestart = false
+	case g.awaitingSetup:
+		g.awaitingSetup = false
 	case g.forgingKey >= 0:
 		g.forgingKey = -1
 	case g.choosing:

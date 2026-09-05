@@ -103,9 +103,10 @@ func Tidy() error {
 }
 
 // Check is the full green gate before calling work done. It runs fmt-check,
-// build, vet, lint, markdown lint, test, and coverage.
+// build, vet, lint, markdown lint, test, coverage, and the rulebook freshness
+// check.
 func Check() error {
-	mg.Deps(FmtCheck, Build, Vet, Lint, Markdownlint, Test, Cover)
+	mg.Deps(FmtCheck, Build, Vet, Lint, Markdownlint, Test, Cover, RulebookFresh)
 	fmt.Println("ALL GREEN")
 	return nil
 }

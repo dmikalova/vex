@@ -325,6 +325,9 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 	if s := captureOpponentAemberText(def); s != "" {
 		rules = append(rules, s)
 	}
+	if s := gainsForgeAemberText(def); s != "" {
+		rules = append(rules, s)
+	}
 	rules = append(rules, upgradeStaticLines(def, hosted)...)
 	if s := constantText(def); s != "" {
 		rules = append(rules, s)
@@ -608,6 +611,9 @@ func restrictionText(r Restrictions) []string {
 			),
 		)
 	}
+	if r.SkipForge {
+		lines = append(lines, `You skip your "forge a key" step.`)
+	}
 	return lines
 }
 
@@ -676,6 +682,16 @@ func captureOpponentAemberText(def *CardDefinition) string {
 		whose = "your opponent's"
 	}
 	return "If Æmber would be added to " + whose + " pool, instead " + def.Name + " captures it."
+}
+
+// gainsForgeAemberText renders a card that gains all the Æmber its controller's
+// opponent spends forging a key, e.g. "You gain all Æmber your opponent spends
+// when forging a key."
+func gainsForgeAemberText(def *CardDefinition) string {
+	if !def.GainsForgeAember {
+		return ""
+	}
+	return "You gain all Æmber your opponent spends when forging a key."
 }
 
 // keywordText renders a card's keywords as a single leading sentence, e.g.

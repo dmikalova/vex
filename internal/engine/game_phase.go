@@ -78,7 +78,7 @@ func (g *Game) startOfTurnPhase(player int) {
 // forgePhase forges a key if the player can afford one, unless an effect (Miasma)
 // made them skip the phase.
 func (g *Game) forgePhase(player int) {
-	if g.State.SkipForge[player].Value {
+	if g.State.SkipForge[player].Value || g.skipsForge(player) {
 		g.record(ForgeSkipped{Player: player})
 		return
 	}
@@ -105,9 +105,12 @@ func (g *Game) readyPhase(player int) {
 		g.record(CardsReadied{Player: player, Cards: readied})
 	}
 	// "Cannot be dealt damage" lasts only the turn, so clear it on every creature,
-	// including any enemy one an effect protected (Protectrix).
+	// including any enemy one an effect protected (Protectrix). A keyword gained for
+	// the turn (Scout) expires the same way, on whichever creature holds it.
 	for _, id := range append(g.allInPlay(player), g.allInPlay(1-player)...) {
 		g.State.Cards[id].DamageImmune = false
+		g.State.Cards[id].GrantedKeywords = 0
+		g.State.Cards[id].ConsideredFlank = false
 	}
 	g.State.CannotFight[player] = Bar[bool]{}
 	g.State.CannotUse[player] = Bar[bool]{}

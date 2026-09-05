@@ -7,9 +7,6 @@ import "fmt"
 // used fires — only the abilities printed under the named trigger resolve, and
 // they resolve for the player whose effect reached for them, as if that player
 // controlled the card.
-//
-//rulebook:effect Trigger Another Card's Ability
-
 // TriggerAbility resolves the abilities a chosen card carries for one trigger as
 // if the effect's controller controlled that card. Replicator reaps by
 // triggering the reap effect of another creature in play.

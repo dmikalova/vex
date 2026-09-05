@@ -7,8 +7,6 @@ import "fmt"
 // chains are shed, one on each turn the reduction blocks a draw. Gaining a chain is
 // the cost some strong effects charge, so a card's power is paid for by a slower
 // hand refill (see Game.drawStep).
-//
-//rulebook:effect Gain Chains
 type GainChains struct {
 	Amount int
 }

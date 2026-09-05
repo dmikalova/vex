@@ -22,6 +22,11 @@ func TestPlayFromText(t *testing.T) {
 			PlayFrom{From: Hand, House: Untamed, Type: Artifact},
 			"play an Untamed artifact",
 		},
+		{
+			"opponent's discard pile",
+			PlayFrom{From: Discard, Player: Opponent, Type: Tactic},
+			"play a tactic from your opponent's discard pile",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -38,6 +43,45 @@ func TestPlayFromValidate(t *testing.T) {
 	}
 	if err := (PlayFrom{From: Hand, House: Logos, Except: true}).validate(); err != nil {
 		t.Errorf("validate = %v, want nil", err)
+	}
+	if err := (PlayFrom{From: Hand, Player: Opponent}).validate(); err == nil {
+		t.Error("only the opponent's discard pile may be played from, not their hand")
+	}
+}
+
+// TestPlayFromOpponentDiscard covers Mimicry: an action played out of the
+// opponent's discard pile resolves under the controller's control, counts as the
+// controller's own play, and returns to the top of its owner's discard pile.
+func TestPlayFromOpponentDiscard(t *testing.T) {
+	g := started(t)
+	copied := g.AddToDiscard(NewCard("Copied", Logos, Tactic, Common,
+		WithAbility(TriggerAfterPlay, GainAember{Player: Controller, Amount: 2})), 1)
+	buried := g.AddToDiscard(NewCard("Buried", Logos, Creature, Common, WithPower(1)), 1)
+
+	PlayFrom{From: Discard, Player: Opponent, Type: Tactic}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0},
+	)
+
+	// The Play: ability resolved under player 0's control, so player 0 — not the
+	// owner — gained the Æmber.
+	if got := g.State.Aember[0]; got != 2 {
+		t.Errorf("player 0 Æmber = %d, want 2 from playing the copied action", got)
+	}
+	if got := g.State.Aember[1]; got != 0 {
+		t.Errorf("player 1 Æmber = %d, want 0 — the owner does not gain", got)
+	}
+	// It counts as player 0's own play (Ember Imp can limit it).
+	if played := g.State.PlayedThisTurn[0].slice(); len(played) != 1 || played[0] != copied {
+		t.Errorf("player 0's plays = %v, want just the copied action %d", played, copied)
+	}
+	// The action returns to the top of its owner's (player 1's) discard pile, above
+	// the card that was already there.
+	if g.State.Discard[0].contains(copied) {
+		t.Error("the copied action should not land in the player's own discard pile")
+	}
+	discard := g.Discard(1)
+	if len(discard) != 2 || discard[len(discard)-1] != copied || discard[0] != buried {
+		t.Errorf("player 1 discard = %v, want [%d %d]", discard, buried, copied)
 	}
 }
 

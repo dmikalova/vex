@@ -2,12 +2,10 @@ package engine
 
 import "fmt"
 
-// Stealing Aember moves it from the opponent's pool into your own. You can only
-// steal as much Aember as the opponent actually has. How much is stolen is either
+// Stealing Æmber moves it from the opponent's pool into your own. You can only
+// steal as much Æmber as the opponent actually has. How much is stolen is either
 // a fixed Amount — optionally multiplied by a Per count — or a By share of the
 // opponent's pool (By: AllBut(6) leaves them exactly six).
-//
-//rulebook:effect Steal Aember
 type StealAember struct {
 	Amount int
 	// By steals a share of the opponent's pool instead of a fixed Amount.

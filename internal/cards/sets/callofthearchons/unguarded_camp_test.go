@@ -8,8 +8,14 @@ import (
 	"github.com/dmikalova/vactrol/internal/cards/sets/callofthearchons"
 )
 
-// TestUnguardedCamp covers the capture repeating once per creature the
-// controller has in excess of their opponent, spread across different creatures.
+// Unguarded Camp
+//
+//	House:  Brobnar
+//	Type:   Tactic
+//	Rarity: Uncommon
+//	Æmber:  1
+//
+//	Play: For each creature you have in excess of your opponent, a friendly creature captures 1 Æmber from your opponent. Each creature cannot capture more than 1 Æmber this way.
 func TestUnguardedCamp(t *testing.T) {
 	var camp, a, b, c ct.Card
 	h := ct.Play(t, ct.Setup{

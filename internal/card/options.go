@@ -56,6 +56,9 @@ var (
 	WithAemberTheftImmunity = func() Option { return gameplay(engine.WithAemberTheftImmunity()) }
 	// WithSpendableAember lets Æmber banked on this card be spent when forging.
 	WithSpendableAember = func() Option { return gameplay(engine.WithSpendableAember()) }
+	// WithGainsForgeAember gives this card's controller all the Æmber their
+	// opponent spends forging a key, for as long as it stays in play.
+	WithGainsForgeAember = func() Option { return gameplay(engine.WithGainsForgeAember()) }
 	// WithAemberThreshold requires a pool of at least n to play this card.
 	WithAemberThreshold = func(n int) Option {
 		return gameplay(engine.WithPlayRequirement(engine.AemberThreshold(n)))

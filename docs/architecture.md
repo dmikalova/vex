@@ -41,12 +41,9 @@ off those two ideas.
 ```mermaid
 flowchart TD
   subgraph frontends [Frontends]
-    tui[internal/tui\nterminal UI]
     web[internal/web\nWebAssembly UI]
   end
-  cmdtui[cmd/tui] --> tui
   cmdweb[cmd/web] --> web
-  tui --> match
   web --> match
   match[internal/match\nshared deck setup]
   match --> cards
@@ -75,9 +72,8 @@ never import `engine` directly.
 | `internal/cards/cardtest`   | Declarative test harness (`ct.Play`, `ct.Side`, `h.Expect`) shared by the set packages.                                                                 |
 | `internal/cards/provenance` | Embedded catalogs of the original KeyForge cards; links each Vactrol card to its source.                                                                |
 | `internal/match`            | Shared match setup (random three-house decks, opening hands) used by every frontend.                                                                    |
-| `internal/tui`              | Bubble Tea terminal UI.                                                                                                                                 |
 | `internal/web`              | go-app WebAssembly client.                                                                                                                              |
-| `cmd/tui`, `cmd/web`        | Thin binaries that wire up a frontend.                                                                                                                  |
+| `cmd/web`                   | Thin binary that wires up the web frontend.                                                                                                             |
 | `magefiles/`                | Build/test/lint/codegen targets (`mage …`), including the comment/rulebook generators.                                                                  |
 
 ## 4. The core model (medium level)
@@ -88,8 +84,7 @@ Four types carry the whole engine:
   fixed `[maxCards]CardCore` for per-card in-play state, and per-player zone lists
   (battleline, hand, deck, discard, artifacts, archives, purge) plus pools, keys,
   and turn flags. Each zone is sized to its own bound — deck-bounded zones hold 36
-  cards, zones that can hold both decks (battle line, artifact row, archives) hold
-  72. `GameState.FastCopy()` is a plain value copy. No pointers/slices/
+  cards, zones that can hold both decks (battle line, artifact row, archives) hold 72. `GameState.FastCopy()` is a plain value copy. No pointers/slices/
   maps live here — that constraint is load-bearing (see `internal/engine/AGENTS.md`).
 - **`LocalID`** (`uint8`) — a card's identity within one match. Everything in
   `GameState` refers to cards by `LocalID`, never by pointer.
@@ -185,11 +180,11 @@ live in [`internal/cards/AGENTS.md`](../internal/cards/AGENTS.md).
 Both frontends build a game through `internal/match` (`match.New` deals two random
 three-house decks deterministically from a seed) and then install their own
 `Chooser`. The engine's `Chooser` is **synchronous** (an effect calls it and
-blocks on the answer), but both UIs have a single event loop that must not block —
-so each wraps the engine call in a background goroutine and bridges the choice
-back to the UI thread (the TUI via Bubble Tea messages, the web via go-app
-dispatches). Rendering is intentionally _not_ shared — terminal cells and HTML are
-different enough that only the setup (`match`) is common.
+blocks on the answer), but the UI has a single event loop that must not block —
+so it wraps the engine call in a background goroutine and bridges the choice
+back to the UI thread (the web via go-app
+dispatches). Rendering is intentionally _not_ shared — the setup (`match`) is what
+frontends have in common.
 
 Planned frontends (an MCTS bot, a lobby server) are expected to be new `cmd/…`
 binaries and `internal/…` packages on the same engine; the pointerless state and

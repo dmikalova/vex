@@ -1,5 +1,5 @@
 // Package match sets up Vactrol games in the way every frontend needs — the
-// terminal UI, the web client, and the future lobby server all deal the same
+// web client and the future lobby server all deal the same
 // kind of random two-player match. Keeping this here means the frontends share
 // one deck-building implementation instead of each copying it.
 package match
@@ -34,8 +34,18 @@ func New(p0Name, p1Name string, seed int64) (*engine.Game, [2][]engine.House) {
 func NewWithMavericks(
 	p0Name, p1Name string, seed int64,
 ) (*engine.Game, [2][]engine.House, [2][]engine.LocalID) {
+	return NewWithSets(p0Name, p1Name, seed, [2]string{})
+}
+
+// NewWithSets is NewWithMavericks but each player's deck is generated from a named
+// deck-generation set (as cards.DeckSetNamed resolves it). An empty or unknown
+// name falls back to the default set, so a caller with no choice to make passes
+// the zero value.
+func NewWithSets(
+	p0Name, p1Name string, seed int64, setNames [2]string,
+) (*engine.Game, [2][]engine.House, [2][]engine.LocalID) {
 	g := engine.NewGame(p0Name, p1Name, seed)
-	houses, mavericks := SetupDecks(g, seed)
+	houses, mavericks := SetupDecksFor(g, seed, setNames)
 	return g, houses, mavericks
 }
 
@@ -44,11 +54,29 @@ func NewWithMavericks(
 // an opening hand, and returns each player's three houses (sorted by name)
 // together with the LocalID of every Maverick card that player was dealt.
 func SetupDecks(g *engine.Game, seed int64) ([2][]engine.House, [2][]engine.LocalID) {
-	set := cards.DeckSet()
+	return SetupDecksFor(g, seed, [2]string{})
+}
+
+// setFor resolves a chosen set name to its deck-generation Set, defaulting an
+// empty or unknown name to the base set.
+func setFor(name string) deckgen.Set {
+	if name != "" {
+		if s, ok := cards.DeckSetNamed(name); ok {
+			return s
+		}
+	}
+	return cards.DeckSet()
+}
+
+// SetupDecksFor is SetupDecks with each player's set named explicitly, so a
+// frontend can let the two players play different sets.
+func SetupDecksFor(
+	g *engine.Game, seed int64, setNames [2]string,
+) ([2][]engine.House, [2][]engine.LocalID) {
 	var houses [2][]engine.House
 	var mavericks [2][]engine.LocalID
 	for player := 0; player < 2; player++ {
-		deck := deckgen.Generate(set, seed+int64(player)+1)
+		deck := deckgen.Generate(setFor(setNames[player]), seed+int64(player)+1)
 		houses[player] = deck.Houses()
 
 		// Deal each card with its Maverick flag alongside, so the flag survives the

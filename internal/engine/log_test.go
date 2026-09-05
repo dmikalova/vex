@@ -31,6 +31,10 @@ func TestLogEntryText(t *testing.T) {
 		{HouseChosen{Player: 1, House: Brobnar}, "P1 chooses house Brobnar"},
 		{ForgeSkipped{Player: 0}, "P0 skips their forge a key phase"},
 		{
+			AemberGainedFromForging{Card: 5, From: 1, Amount: 6},
+			"Card5 gains the 6 Æmber P1 spends forging a key",
+		},
+		{
 			KeyForged{Player: 0, Color: KeyColorRed, HasColor: true, Keys: 1, Needed: 3},
 			"P0 forges a Red key (1/3)",
 		},
@@ -68,6 +72,8 @@ func TestLogEntryText(t *testing.T) {
 
 		// Creatures and cards in play.
 		{CreatureReadied{Creature: 2}, "Card2 is readied"},
+		{CreatureGainedKeyword{Creature: 2, Keyword: Skirmish}, "Card2 gains skirmish"},
+		{CreatureConsideredFlank{Creature: 2}, "Card2 is considered a flank creature"},
 		{CreatureExhausted{Creature: 2}, "Card2 is exhausted"},
 		{CreatureStunned{Creature: 2, By: 2}, "Card2 is stunned"},
 		{CreatureStunned{Creature: 2, By: 5}, "Card5 stunned Card2"},
@@ -141,12 +147,28 @@ func TestLogEntryText(t *testing.T) {
 			CardPutFromDiscardOnTopOfDeck{Player: 0, Card: 6},
 			"P0 puts Card6 from their discard pile on top of their deck",
 		},
+		{
+			CardPutUnder{Player: 0, Card: 6, Host: 9, FaceDown: false},
+			"P0 puts Card6 faceup under Card9",
+		},
+		{
+			CardPutUnder{Player: 0, Card: 6, Host: 9, FaceDown: true},
+			"P0 puts a card facedown under Card9",
+		},
+		{
+			CardGrafted{Card: 6, Host: 9},
+			"Card6 is grafted onto Card9",
+		},
 
 		// Playing and using.
 		{CardPlayedToBattleline{Player: 0, Card: 9}, "P0 plays Card9 on their right flank"},
 		{
 			CardPlayedToBattleline{Player: 0, Card: 9, FlankLeft: true},
 			"P0 plays Card9 on their left flank",
+		},
+		{
+			CardPlayedToBattleline{Player: 0, Card: 9, Interior: true},
+			"P0 plays Card9 into their battleline",
 		},
 		{ArtifactPlayed{Player: 1, Card: 9}, "P1 plays artifact Card9"},
 		{ActionPlayed{Player: 0, Card: 9}, "P0 plays action Card9"},
@@ -379,6 +401,23 @@ func TestRenderEntryMarksIconKeywords(t *testing.T) {
 type houseNamer struct{ stubNamer }
 
 func (houseNamer) Name(LocalID) string { return "Brobnar" }
+
+// TestWordAt checks the whole-word guard directly, including a keyword that
+// begins in the middle of a longer word, so it is not marked as its own word.
+func TestWordAt(t *testing.T) {
+	if !wordAt("has chains now", 4, "chains") {
+		t.Error("a standalone word should match")
+	}
+	if wordAt("unchained", 2, "chain") {
+		t.Error("a word preceded by a letter should not match")
+	}
+	if wordAt("chained", 0, "chain") {
+		t.Error("a word followed by a letter should not match")
+	}
+	if wordAt("chain", 0, "") {
+		t.Error("an empty word never matches")
+	}
+}
 
 // namelessNamer names nothing, standing in for a card the reader may not see.
 type namelessNamer struct{ stubNamer }

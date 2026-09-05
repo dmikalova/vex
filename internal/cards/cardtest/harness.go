@@ -491,7 +491,14 @@ func (h *Harness) location(id engine.LocalID) Zone {
 			}
 		}
 	}
-	return Gone
+	for p := 0; p < 2; p++ {
+		for _, cid := range append(h.g.Battleline(p), h.g.Artifacts(p)...) {
+			if containsID(h.g.Under(cid), id) {
+				return Under
+			}
+		}
+	}
+	return Nowhere
 }
 
 // inPlayIDs returns every creature and artifact in play, both players.
@@ -504,7 +511,8 @@ func (h *Harness) inPlayIDs() []engine.LocalID {
 	return out
 }
 
-// allIDs returns every card in every zone, plus attached upgrades, both players.
+// allIDs returns every card in every zone, plus attached upgrades and cards
+// placed under a host, both players.
 func (h *Harness) allIDs() []engine.LocalID {
 	var out []engine.LocalID
 	for p := 0; p < 2; p++ {
@@ -513,12 +521,16 @@ func (h *Harness) allIDs() []engine.LocalID {
 		out = append(out, h.g.Hand(p)...)
 		out = append(out, h.g.Discard(p)...)
 		out = append(out, h.g.Archives(p)...)
+		out = append(out, h.g.Purge(p)...)
 		d := &h.g.State.Deck[p]
 		for i := 0; i < int(d.Count); i++ {
 			out = append(out, d.IDs[i])
 		}
 		for _, cid := range h.g.Battleline(p) {
 			out = append(out, h.g.Upgrades(cid)...)
+		}
+		for _, cid := range append(h.g.Battleline(p), h.g.Artifacts(p)...) {
+			out = append(out, h.g.Under(cid)...)
 		}
 	}
 	return out

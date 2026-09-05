@@ -102,12 +102,28 @@ func TestUpgradeIsAttached(t *testing.T) {
 	h.Expect(host).Power(5)
 }
 
-// An id in no zone at all is Gone. Nothing a card test does produces one, so it
-// is asserted directly rather than through a card.
+// A card placed under a host sits in neither player's battleline nor artifact
+// row, which is the zone a test asserts with At(ct.Under).
+func TestUnderCardIsUnder(t *testing.T) {
+	var host Card
+	h := Play(t, Setup{P1: Side{InPlay: []Entry{Bind(&host, Artifact())}}})
+	buried := h.g.Register(
+		engine.NewCard("Buried", engine.Brobnar, engine.Creature, engine.Common),
+		0,
+	)
+	h.g.AttachUnder(host.ID(), buried, true)
+
+	if got := h.location(buried); got != Under {
+		t.Errorf("location = %v, want %v", got, Under)
+	}
+}
+
+// An id in no zone at all is Nowhere. Nothing a card test does produces one, so
+// it is asserted directly rather than through a card.
 func TestLocationOfNothing(t *testing.T) {
 	h := Play(t, Setup{})
-	if got := h.location(engine.LocalID(200)); got != Gone {
-		t.Errorf("location of an unknown id = %v, want %v", got, Gone)
+	if got := h.location(engine.LocalID(200)); got != Nowhere {
+		t.Errorf("location of an unknown id = %v, want %v", got, Nowhere)
 	}
 	if got := h.ownerOf(engine.LocalID(200)); got != 0 {
 		t.Errorf("owner of an unknown id = %d, want 0", got)

@@ -32,11 +32,19 @@ func FuzzPlay(f *testing.F) {
 // TestSimulateSeeds is the fixed-seed property test wired into `mage test`: it
 // plays a deterministic batch of random games so every run of the suite shakes the
 // engine, while staying fast enough for the gate. Because the seed is fixed, a
-// regression here is reproducible from the printed script.
+// regression here is reproducible from the printed script. It then plays a second
+// batch from a fresh, non-deterministic source, so each run also explores games
+// the fixed batch never touches — a failure there is still replayable from the
+// printed hex under `mage debug`.
 func TestSimulateSeeds(t *testing.T) {
 	for i, script := range SeedScripts(1000) {
 		if err := Simulate(script); err != nil {
-			t.Fatalf("batch %d, script %x failed: %v", i, script, err)
+			t.Fatalf("fixed batch %d, script %x failed: %v", i, script, err)
+		}
+	}
+	for i, script := range RandomScripts(1000) {
+		if err := Simulate(script); err != nil {
+			t.Fatalf("random batch %d, script %x failed: %v", i, script, err)
 		}
 	}
 }

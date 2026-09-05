@@ -44,6 +44,20 @@ together and **CONTEXT** for what the words mean.
     engine state
   - [0013](adr/0013-end-of-turn-last-and-ordered-triggers.md) — end-of-turn
     abilities resolve last; simultaneous triggers are ordered
+  - [0014](adr/0014-style-gallery-on-real-components.md) — the Style gallery
+    renders real components, gated at runtime
+  - [0015](adr/0015-selected-card-lifts-an-enlarged-copy.md) — clicking a card
+    lifts an enlarged copy with its actions on it
+  - [0016](adr/0016-under-a-per-host-facedown-capable-attachment.md) — under, a
+    per-host, out-of-play, facedown-capable attachment
+  - [0017](adr/0017-one-deckgen-set-per-source-set-with-legacy-pool.md) — one
+    deck-generation Set per source set, other sets as its legacy pool
+  - [0018](adr/0018-rulebook-term-registry.md) — the rulebook is a typed term
+    registry, complete by construction
+  - [0019](adr/0019-controlled-rules-voice.md) — a controlled Rules voice for
+    every player-facing surface
+  - [0020](adr/0020-controlled-code-comments.md) — code comments follow the same
+    plain, controlled style
 
 ## Rules
 

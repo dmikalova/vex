@@ -153,6 +153,12 @@ type LastingEffect struct {
 	// Once removes the record after it fires a single time — "the next" rather than
 	// "each time".
 	Once bool
+	// Subject, when HasSubject is set, limits a reaction to that one creature as the
+	// subject of the event — Spectral Tunneler grants a single chosen creature
+	// "Reap: Draw a card", so only that creature's reap draws. A zero HasSubject
+	// reacts to any subject.
+	Subject    LocalID
+	HasSubject bool
 	// Except, when HasExcept is set, is the card that armed the reaction, which it
 	// does not fire for: Library Access draws "each time you play another card", and
 	// playing Library Access itself is not another card.
@@ -209,6 +215,9 @@ func (g *Game) emitLasting(event Event, actor int, subject LocalID) {
 			continue
 		}
 		if le.Type != TypeUnset && !le.Type.reacts(g.cat.def(subject).Type) {
+			continue
+		}
+		if le.HasSubject && le.Subject != subject {
 			continue
 		}
 		if le.HasExcept && le.Except == subject {

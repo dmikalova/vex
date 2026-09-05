@@ -7,6 +7,14 @@ import (
 	ct "github.com/dmikalova/vactrol/internal/cards/cardtest"
 )
 
+// Reverse Time
+//
+//	House:  Logos
+//	Type:   Tactic
+//	Rarity: Rare
+//	Æmber:  1
+//
+//	Play: Swap your deck and your discard pile, then shuffle your deck.
 func TestReverseTime(t *testing.T) {
 	t.Run("swaps the deck and the discard pile", func(t *testing.T) {
 		var inDeck, inDiscard ct.Card

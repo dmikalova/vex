@@ -75,6 +75,65 @@ func lastingActionOf(e Effect) (lastingAction, int, bool) {
 	return 0, 0, false
 }
 
+// reactionEventOf maps a triggered ability's trigger to the reaction event that
+// fires it, reporting whether the trigger is one a lasting per-creature grant can
+// hang on. Only Reap is needed today (Spectral Tunneler); it lives here so
+// GainAbility and the registry agree on the mapping.
+func reactionEventOf(t Trigger) (Event, bool) {
+	if t == TriggerAfterReap {
+		return EventReap, true
+	}
+	return eventUnset, false
+}
+
+// GainAbility grants each creature its Target selects a triggered ability for the
+// remainder of the turn — Spectral Tunneler grants a chosen creature "Reap: Draw a
+// card". Unlike ForRemainderOfTurn's controller-wide reaction, this one is scoped
+// to the single granted creature through the registry's Subject, so only that
+// creature's own trigger fires it. The ability is stored flat, so only triggers
+// and effects the registry can carry (a Reap reaction with a Draw) are allowed.
+type GainAbility struct {
+	Target  Target
+	Ability Ability
+}
+
+// validate requires a target and an ability the flat registry can carry.
+func (e GainAbility) validate() error {
+	if !e.Target.valid() {
+		return errUnsetTarget("GainAbility")
+	}
+	if _, ok := reactionEventOf(e.Ability.Trigger); !ok {
+		return fmt.Errorf("GainAbility: unsupported trigger %v", e.Ability.Trigger)
+	}
+	if _, _, ok := lastingActionOf(e.Ability.Effect); !ok {
+		return fmt.Errorf("GainAbility: unsupported ability effect %T", e.Ability.Effect)
+	}
+	return validateEffect(e.Ability.Effect)
+}
+
+// Text renders the effect, e.g. `it gains, "Reap: Draw a card."` — a granted
+// ability takes a comma and quotes (card-wording rule 2), the period inside.
+func (e GainAbility) Text() string {
+	return e.Target.Text() + ` gains, "` + RenderAbility(e.Ability) + `"`
+}
+
+// Resolve registers the ability as a per-creature reaction on each selected
+// creature for the rest of the controller's turn.
+func (e GainAbility) Resolve(ctx *EffectContext) {
+	event, _ := reactionEventOf(e.Ability.Trigger)
+	action, amount, _ := lastingActionOf(e.Ability.Effect)
+	for _, id := range e.Target.Select(ctx) {
+		ctx.Resolver.AddLasting(LastingEffect{
+			On:         event,
+			Do:         action,
+			Controller: int8(ctx.Controller),
+			Amount:     int8(amount),
+			Subject:    id,
+			HasSubject: true,
+		})
+	}
+}
+
 // Replacement is a lasting change to an event's own outcome, used by Instead.
 type Replacement uint8
 

@@ -7,6 +7,13 @@ import (
 	ct "github.com/dmikalova/vactrol/internal/cards/cardtest"
 )
 
+// Shatter Storm
+//
+//	House:  Mars
+//	Type:   Tactic
+//	Rarity: Rare
+//
+//	Play: Lose all your Æmber, and for each Æmber you lost this way, your opponent loses 3 Æmber.
 func TestShatterStorm(t *testing.T) {
 	t.Run("empties your pool and drains triple that from your opponent", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

@@ -11,8 +11,6 @@ package engine
 // that action happening. Its constant abilities and any effect that does not
 // require using it keep working while it is stunned. Stunning applies this status
 // to each creature the effect targets.
-//
-//rulebook:effect Stun
 type Stun struct {
 	Target Target
 }
@@ -46,8 +44,6 @@ func (e Stun) Resolve(ctx *EffectContext) {
 
 // Unstunning a creature removes the stun status from each creature the effect
 // targets, freeing it to act normally instead of having to shake the stun off.
-//
-//rulebook:effect Unstun
 type Unstun struct {
 	Target Target
 }

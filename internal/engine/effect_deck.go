@@ -4,8 +4,6 @@ package engine
 // putting it in context (ctx.It) so a following effect can inspect or play it (Chaos
 // Portal plays it when it is of the chosen house). Revealing does not move the card;
 // an empty deck reveals nothing.
-//
-//rulebook:effect Reveal Top of Deck
 type RevealTopOfDeck struct{}
 
 // Text renders the effect.
@@ -172,8 +170,6 @@ func resolverInPlay(ctx *EffectContext, id LocalID) bool {
 // finds stays in the discard pile and goes into context (ctx.It), so what happens
 // to it is a separate effect gated on the dig succeeding — Sound the Horns and
 // Invasion Portal both pair it with PutDiscardedIntoHand.
-//
-//rulebook:effect Discard
 type DiscardDeckUntil struct {
 	// Type filters what ends the dig; the zero value stops at any card.
 	Type CardType
@@ -232,8 +228,6 @@ func (e DiscardDeckUntil) resolveGate(ctx *EffectContext) bool {
 // PutDiscardedIntoHand takes the card in context out of the discard pile and
 // into its owner's hand. It is the tail of a dig through the deck, where the
 // card was just discarded and "it" is unambiguous.
-//
-//rulebook:effect Return
 type PutDiscardedIntoHand struct{}
 
 // Text renders the effect.

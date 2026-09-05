@@ -5,15 +5,13 @@ import (
 	"slices"
 )
 
-// Capturing Aember moves it from a player's pool onto a capturing creature, where
+// Capturing Æmber moves it from a player's pool onto a capturing creature, where
 // it counts for no player until that creature leaves play, at which point it goes
 // to the pool of the capturing creature's controller's opponent. A creature can
 // only capture what the Source pool holds. Target is the creature that captures
-// (this creature by default); Source is the pool the Aember comes from; Per repeats
+// (this creature by default); Source is the pool the Æmber comes from; Per repeats
 // the capture, choosing a fresh Target each time (Hypnotic Command captures once
 // for each friendly Mars creature).
-//
-//rulebook:effect Capture Aember
 type CaptureAember struct {
 	Amount int
 	// All captures the whole Source pool instead of a fixed Amount.

@@ -8,6 +8,13 @@ import (
 )
 
 // Lash of Broken Dreams
+//
+//	House:  Dis
+//	Type:   Artifact
+//	Rarity: Common
+//	Traits: Weapon
+//
+//	Action: Keys cost +3 Æmber during your opponent's next turn.
 func TestLashOfBrokenDreams(t *testing.T) {
 	t.Run("taxes the opponent's next turn", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

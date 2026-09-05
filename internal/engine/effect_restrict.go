@@ -11,9 +11,6 @@ import (
 // turn, or a constant rule printed on a card in play; while it is active the
 // forbidden action simply cannot be taken. When one effect says a player "cannot"
 // and another says they "must" or "may" do the same thing, "cannot" wins.
-//
-//rulebook:effect Restriction
-
 // Restriction effects forbid a player some action for a stretch of the game,
 // rather than changing the board directly. A "cannot" rule can arrive two ways:
 // as a timed effect (this file) or as a constant rule printed on a card in play

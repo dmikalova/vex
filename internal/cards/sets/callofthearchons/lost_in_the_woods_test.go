@@ -7,6 +7,14 @@ import (
 	ct "github.com/dmikalova/vactrol/internal/cards/cardtest"
 )
 
+// Lost in the Woods
+//
+//	House:  Untamed
+//	Type:   Tactic
+//	Rarity: Common
+//	Æmber:  1
+//
+//	Play: Shuffle 2 friendly creatures into their owners' decks, and shuffle 2 enemy creatures into their owners' decks.
 func TestLostInTheWoods(t *testing.T) {
 	t.Run("shuffles 2 friendly and 2 enemy creatures into their owners' decks", func(t *testing.T) {
 		var ally1, ally2, foe1, foe2 ct.Card

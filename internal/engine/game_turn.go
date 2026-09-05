@@ -73,9 +73,6 @@ func (g *Game) StartTurn(player int) {
 // for this turn. For the rest of the turn you may play from hand and use only
 // cards of that house, except cards that ignore the restriction such as Versatile
 // ones.
-//
-//rulebook:turn Turn structure / 2. Choose a house
-
 // ChooseHouse sets ActiveHouse, then hands back to the phase loop, which offers
 // the player's archived cards into hand now that a house is locked in and settles
 // on the play phase.
@@ -122,9 +119,6 @@ func (g *Game) playerHasHouse(player int, house House) bool {
 // back upright, ready to act next turn) and you draw back up to a full hand of
 // six cards. Creatures and artifacts that entered play exhausted this turn ready
 // here too.
-//
-//rulebook:turn Turn structure / 3. Ready and draw
-
 // EndPlayPhase ends the active player's play phase and runs the turn out: ready,
 // draw, then the end-of-turn abilities. It is the third and last point at which
 // a turn waits for the player — nothing after it needs a decision, so the turn
@@ -282,11 +276,8 @@ func (g *Game) RestrictionSources(player int) []LocalID {
 }
 
 // Forge a key: at the start of your turn you forge a single key if you can pay
-// its current cost — 6 Aember by default. A player forges at most one key per turn.
+// its current cost — 6 Æmber by default. A player forges at most one key per turn.
 // Keys are the win condition — forge your third key and you win the game.
-//
-//rulebook:turn Turn structure / 1. Forge a key
-
 // forgeKey forges one key when the player can afford the current key cost, paying
 // it and firing "after you forge a key" abilities. StartTurn forges at most one
 // key at the start of a turn; cards may forge one more via the ForgeKey effect.
@@ -320,18 +311,26 @@ func (g *Game) spendableAember(player int) int {
 
 // payKeyCost takes the cost out of the player's pool first, falling back to the
 // Æmber banked on their vault cards — pool Æmber is the more exposed of the two,
-// so spending it first is what a player wants.
+// so spending it first is what a player wants. If the opponent controls a card
+// that gains forge spending (The Sting), the whole cost goes to them instead of
+// vanishing.
 func (g *Game) payKeyCost(player, cost int) {
+	total := cost
 	fromPool := min(cost, g.State.Aember[player])
 	g.State.Aember[player] -= fromPool
 	cost -= fromPool
 	for _, id := range g.vaults(player) {
 		if cost == 0 {
-			return
+			break
 		}
 		taken := min(cost, g.AmberOn(id))
 		g.AddAmberOn(id, -taken)
 		cost -= taken
+	}
+	if gainer, ok := g.forgeAemberGainer(player); ok && total > 0 {
+		beneficiary := g.controller(gainer)
+		g.State.Aember[beneficiary] += total
+		g.record(AemberGainedFromForging{Card: gainer, From: player, Amount: total})
 	}
 }
 

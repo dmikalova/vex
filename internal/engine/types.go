@@ -84,26 +84,18 @@ const (
 	// every card rather than none.
 	TypeUnset CardType = iota
 	// A creature is a unit you play into your battleline. Once it is ready, it can
-	// reap for Aember, fight an enemy creature, or use an "Action:" ability.
-	//
-	//rulebook:cardtype Creature
+	// reap for Æmber, fight an enemy creature, or use an "Action:" ability.
 	Creature
 	// A tactic (KeyForge's "action" card type, renamed to free the word "Action"
 	// for the ability) is a one-shot card: its effect resolves as you play it, and
 	// it then goes straight to your discard pile.
-	//
-	//rulebook:cardtype Tactic
 	Tactic
 	// An artifact is a permanent card you play alongside your creatures. It stays
 	// in play until something removes it and is typically used for its "Action:"
 	// ability.
-	//
-	//rulebook:cardtype Artifact
 	Artifact
 	// An upgrade attaches to a creature as you play it, changing that creature's
 	// stats or granting it keywords and abilities for as long as it stays attached.
-	//
-	//rulebook:cardtype Upgrade
 	Upgrade
 	// AnyType is the wildcard a type-scoped effect uses to mean "every card type"
 	// rather than one of them — Treasure Map bars playing cards outright, not cards
@@ -124,6 +116,14 @@ var cardTypeNames = map[CardType]string{
 
 // String renders the type as its printed word.
 func (t CardType) String() string { return cardTypeNames[t] }
+
+// CardTypes lists every real card type in rulebook order. It excludes the
+// TypeUnset and AnyType sentinels (which are not types a card can be), so
+// anything that must cover all card types — the rulebook completeness check —
+// ranges over this and cannot silently miss one.
+func CardTypes() []CardType {
+	return []CardType{Creature, Tactic, Artifact, Upgrade}
+}
 
 // reacts reports whether a filter of this type matches a card of type other.
 // TypeUnset matches everything, AnyType matches the two types that stay in play
@@ -177,6 +177,7 @@ const (
 	Location
 	Martian
 	Merchant
+	Monk
 	Mutant
 	Niffle
 	Power
@@ -198,16 +199,44 @@ const (
 
 // traitNames maps a Trait to its printed word, indexed by the enum value.
 var traitNames = [traitCount]string{
-	Agent: "Agent", Ally: "Ally", Angel: "Angel", Beast: "Beast",
-	Cleric: "Cleric", Cyborg: "Cyborg", Demon: "Demon", Dragon: "Dragon",
-	Elf: "Elf", Faerie: "Faerie", Fungus: "Fungus", Giant: "Giant",
-	Goblin: "Goblin", Horseman: "Horseman", Human: "Human", Imp: "Imp",
-	Insect: "Insect", Item: "Item", Knight: "Knight", Location: "Location",
-	Martian: "Martian", Merchant: "Merchant", Mutant: "Mutant", Niffle: "Niffle",
-	Power: "Power", Priest: "Priest", Quest: "Quest", Ranger: "Ranger",
-	Robot: "Robot", Scientist: "Scientist", Soldier: "Soldier", Specter: "Specter",
-	Spirit: "Spirit", Thief: "Thief", Vehicle: "Vehicle", Weapon: "Weapon",
-	Witch: "Witch",
+	Agent:     "Agent",
+	Ally:      "Ally",
+	Angel:     "Angel",
+	Beast:     "Beast",
+	Cleric:    "Cleric",
+	Cyborg:    "Cyborg",
+	Demon:     "Demon",
+	Dragon:    "Dragon",
+	Elf:       "Elf",
+	Faerie:    "Faerie",
+	Fungus:    "Fungus",
+	Giant:     "Giant",
+	Goblin:    "Goblin",
+	Horseman:  "Horseman",
+	Human:     "Human",
+	Imp:       "Imp",
+	Insect:    "Insect",
+	Item:      "Item",
+	Knight:    "Knight",
+	Location:  "Location",
+	Martian:   "Martian",
+	Merchant:  "Merchant",
+	Mutant:    "Mutant",
+	Niffle:    "Niffle",
+	Monk:      "Monk",
+	Power:     "Power",
+	Priest:    "Priest",
+	Quest:     "Quest",
+	Ranger:    "Ranger",
+	Robot:     "Robot",
+	Scientist: "Scientist",
+	Soldier:   "Soldier",
+	Specter:   "Specter",
+	Spirit:    "Spirit",
+	Thief:     "Thief",
+	Vehicle:   "Vehicle",
+	Weapon:    "Weapon",
+	Witch:     "Witch",
 }
 
 // String returns the trait's printed word, or "" for the unset zero value.
@@ -229,27 +258,39 @@ const (
 	keywordUnset Keyword = iota
 	// A creature with Skirmish takes no damage when it is used to fight: it deals
 	// its power to the enemy creature but takes none back.
-	//
-	//rulebook:keyword Skirmish
 	Skirmish
 	// Any amount of damage dealt to a creature with Poison destroys it, however
 	// much power it has left.
-	//
-	//rulebook:keyword Poison
 	Poison
 	// Elusive: the first time this creature is chosen to be fought each turn, no
-	// pending fight damage is dealt by or to it.
+	// pending fight damage is dealt by or to it. Later fights that same turn deal
+	// damage normally.
 	Elusive
 	// Taunt: this creature's neighbors cannot be chosen to be fought unless they
-	// have taunt themselves.
+	// have taunt themselves, so a Taunt creature shields the creatures beside it.
 	Taunt
 	// A card with Versatile may, once in play, be used (reap/fight/action) as if
 	// it belonged to the active house. It does not relax playing from hand — a
 	// Versatile card is still played only when its own house is the one chosen
 	// this turn.
-	//
-	//rulebook:keyword Versatile
 	Versatile
+	// A card with Alpha can only be played as the first thing its player does on
+	// their turn: it cannot be played once that player has played, used, or
+	// discarded any other card this turn (First Blood, Unlocked Gateway's
+	// counterpart). It is a restriction on playing, so it never appears as a
+	// granted or lost creature keyword.
+	Alpha
+	// A card with Omega ends the current step of the turn the moment it resolves:
+	// no more cards may be played, used, or discarded for the rest of that step,
+	// except through pending abilities and effects still resolving (Unlocked
+	// Gateway). Play then continues to the next step, so more cards can still be
+	// played later that turn. Like Alpha it constrains playing, not combat.
+	Omega
+	// A creature with Deploy may enter play at any position in its controller's
+	// battleline, not only on a flank — its controller chooses the spot as it is
+	// played ("Lion" Bautrem, Challe the Safeguard). It matters only while the
+	// creature is being played, so it too is never granted or lost.
+	Deploy
 	// keywordCount bounds the enum; it is not a keyword.
 	keywordCount
 )
@@ -262,6 +303,9 @@ var keywordNames = [keywordCount]string{
 	Elusive:   "Elusive",
 	Taunt:     "Taunt",
 	Versatile: "Versatile",
+	Alpha:     "Alpha",
+	Omega:     "Omega",
+	Deploy:    "Deploy",
 }
 
 // String returns the keyword's printed word, capitalized as a card prints it.
@@ -307,55 +351,35 @@ const (
 	// A Play ability resolves right after you play the card from your hand. On a
 	// creature or artifact it fires as the card enters play; on an action it is the
 	// card's one-shot effect.
-	//
-	//rulebook:ability Play
 	TriggerAfterPlay
 	// A Reap ability resolves after you use a ready creature to reap. Reaping gains
-	// you 1 Aember and exhausts the creature; the ability resolves in addition.
-	//
-	//rulebook:ability Reap
+	// you 1 Æmber and exhausts the creature; the ability resolves in addition.
 	TriggerAfterReap
 	// A Fight ability resolves after a creature you used to fight has dealt and
 	// taken its combat damage and any resulting destruction has been carried out.
-	//
-	//rulebook:ability Fight
 	TriggerAfterFight
 	// An Action ability is one you resolve by using the card directly, without
 	// reaping or fighting; using it this way exhausts the card.
-	//
-	//rulebook:ability Action
 	TriggerAction
 	// This ability resolves after its controller forges a key.
-	//
-	//rulebook:ability After You Forge a Key
 	TriggerAfterForgeKey
 	// This ability resolves after any creature enters play, including creatures
 	// your opponent plays.
-	//
-	//rulebook:ability After a Creature Enters Play
 	TriggerAfterCreatureEnters
 	// A Destroyed ability resolves as the card is destroyed, before it reaches the
 	// discard pile, so it can still act on the board it is leaving.
-	//
-	//rulebook:ability Destroyed
 	TriggerDestroyed
 	// A Before Fight ability resolves when a creature is used to fight, before any
 	// combat damage is dealt.
-	//
-	//rulebook:ability Before Fight
 	TriggerBeforeFight
 	// This ability resolves on a creature that survives a fight in which the other
 	// combatant was destroyed; the destroyed creature is the one referred to as
 	// "it".
-	//
-	//rulebook:ability After a Creature Is Destroyed Fighting
 	TriggerAfterDestroyedFighting
 	// This ability resolves after its controller plays a card — a creature,
 	// artifact, or action — from hand. Putting a card into play by another effect is
 	// not "playing" it and does not fire this (that is TriggerAfterCreatureEnters).
 	// AfterCardPlayed narrows it to a house and/or type.
-	//
-	//rulebook:ability After You Play a Card
 	TriggerAfterCardPlayed
 	// An Enters Play ability resolves on a creature as it enters play, whatever
 	// brought it in — the creature's own reaction to arriving, such as Chuff Ape
@@ -378,14 +402,11 @@ const (
 	// only when Sanctum is chosen), which need not be the card's own house.
 	TriggerAfterChooseHouse
 	// This ability resolves after an enemy creature is destroyed during its
-	// controller's turn — Pile of Skulls has a friendly creature capture Æmber
-	// whenever an enemy creature is destroyed on your turn. It is a persistent
-	// reaction on an in-play card, fired only for the active player's cards.
+	// controller's turn (Pile of Skulls captures Æmber onto a friendly creature
+	// whenever an enemy creature is destroyed on your turn).
 	TriggerAfterEnemyCreatureDestroyed
-	// This ability resolves after the opponent of the card's controller plays a card
-	// — Teliga gains its controller Æmber whenever the opponent plays a creature. It is
-	// the mirror of TriggerAfterCardPlayed, fired on the watching player's in-play
-	// cards rather than the player who did the playing.
+	// This ability resolves after your opponent plays a card (Teliga gains its
+	// controller Æmber whenever the opponent plays a card).
 	TriggerAfterEnemyCardPlayed
 	// This ability resolves after its controller uses a card — reaps or fights with a
 	// creature, or fires an "Action:" — with the used card as "it" (Veylan Analyst
@@ -399,10 +420,79 @@ const (
 	// purged, returned to hand, archived, or shuffled away. It fires before the card's
 	// teardown, so the card is still on the board when it resolves. TriggerDestroyed is
 	// the narrower "only when destroyed" version.
-	//
-	//rulebook:ability Leaves Play
 	TriggerLeavesPlay
+	// triggerCount bounds the enum so Triggers can range it; it is not a trigger.
+	triggerCount
 )
+
+// Triggers lists every real trigger in declaration order (excluding the unset
+// zero). Printed reports which of them a card actually prints a prefix for, and
+// String gives that trigger's rulebook heading; the two implicit triggers
+// (EntersPlay, AfterChooseHouse) fire with no printed text and no heading.
+func Triggers() []Trigger {
+	all := make([]Trigger, 0, triggerCount-1)
+	for t := triggerUnset + 1; t < triggerCount; t++ {
+		all = append(all, t)
+	}
+	return all
+}
+
+// Printed reports whether a card prints a text prefix for this trigger. A printed
+// trigger is player-facing and must carry a rulebook entry (its String heading);
+// an unprinted one (EntersPlay, AfterChooseHouse) fires implicitly.
+func (t Trigger) Printed() bool {
+	text, _ := t.prefix()
+	return text != ""
+}
+
+// String returns the trigger's name. For a printed trigger this is also its
+// rulebook heading (the Title of its SectionAbility RuleTerm); the two implicit
+// triggers name themselves for logging though they head no rulebook entry, and
+// the unset zero renders empty.
+func (t Trigger) String() string {
+	switch t {
+	case TriggerAfterPlay:
+		return "Play"
+	case TriggerAfterReap:
+		return "Reap"
+	case TriggerAfterFight:
+		return "Fight"
+	case TriggerAction:
+		return "Action"
+	case TriggerAfterForgeKey:
+		return "After You Forge a Key"
+	case TriggerAfterCreatureEnters:
+		return "After a Creature Enters Play"
+	case TriggerDestroyed:
+		return "Destroyed"
+	case TriggerBeforeFight:
+		return "Before Fight"
+	case TriggerAfterDestroyedFighting:
+		return "After a Creature Is Destroyed Fighting"
+	case TriggerAfterCardPlayed:
+		return "After You Play a Card"
+	case TriggerAfterEnemyCreatureDestroyed:
+		return "After an Enemy Creature Is Destroyed"
+	case TriggerAfterEnemyCardPlayed:
+		return "After Your Opponent Plays a Card"
+	case TriggerAfterUse:
+		return "After You Use a Card"
+	case TriggerAfterDiscardFromHand:
+		return "After You Discard a Card From Your Hand"
+	case TriggerEndOfTurn:
+		return "End of Turn"
+	case TriggerStartOfTurn:
+		return "Start of Turn"
+	case TriggerLeavesPlay:
+		return "Leaves Play"
+	case TriggerEntersPlay:
+		return "Enters Play"
+	case TriggerAfterChooseHouse:
+		return "After Choosing a House"
+	default:
+		return ""
+	}
+}
 
 // prefix returns the printed text prefix for a trigger and whether the effect
 // clause that follows should be capitalized (colon-style triggers start a new

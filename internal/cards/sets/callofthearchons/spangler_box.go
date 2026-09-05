@@ -1,20 +1,16 @@
-//go:build todo
-
 package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// SpanglerBox
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Spangler Box
 //
 //	House:  Logos
 //	Type:   Artifact
 //	Rarity: Rare
 //	Traits: Item
 //
-//	Action: Purge a creature in play. If you do, your opponent gains control of Spangler Box. If Spangler Box leaves play, return to play all cards purged by Spangler Box.
+//	Action: Graft a creature from play, and your opponent gains control of Spangler Box.
+//	Destroyed: Put each card under Spangler Box into play under its owner's control.
 var SpanglerBox = card.New(
 	"Spangler Box",
 	card.House.Logos,
@@ -22,5 +18,15 @@ var SpanglerBox = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, 132),
 	card.WithTraits(card.Traits.Item),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
+			card.Graft{Target: card.Target.Creature},
+			card.TakeControl{
+				Target:     card.Target.This,
+				ToOpponent: true,
+				Duration:   card.Duration.Forever,
+			},
+		}}),
+	card.WithAbility(
+		card.Trigger.Destroyed, card.PutUnderIntoPlay{}),
 )

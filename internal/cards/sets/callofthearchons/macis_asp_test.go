@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Beast
 //
-//	Skirmish. Poison.
+//	Skirmish, Poison.
 func TestMacisAsp(t *testing.T) {
 	t.Run("is a 3-power creature with Skirmish and Poison", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

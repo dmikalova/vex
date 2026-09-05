@@ -115,3 +115,59 @@ func TestArtifactOrFlankCreatureText(t *testing.T) {
 		t.Errorf("text = %q", got)
 	}
 }
+
+// TestGrantKeyword covers a keyword gained for the remainder of the turn: it is
+// seen while it lasts, granted only once, and cleared when the turn ends.
+func TestGrantKeyword(t *testing.T) {
+	g := started(t)
+	g.SetRecording(true)
+	scout := g.AddToBattleline(testCreature("scout", 3), 0)
+	if g.hasKeyword(scout, Skirmish) {
+		t.Fatal("the creature should not start with skirmish")
+	}
+
+	GainKeywordVerb{Keyword: Skirmish}.Apply(&EffectContext{Resolver: g, Controller: 0}, scout)
+	if !g.hasKeyword(scout, Skirmish) {
+		t.Error("the creature should have gained skirmish")
+	}
+
+	// A second grant of the same keyword changes nothing and logs nothing new.
+	before := len(g.Log)
+	g.GrantKeyword(scout, Skirmish)
+	if len(g.Log) != before {
+		t.Error("re-granting a keyword the creature already has should be a no-op")
+	}
+
+	g.EndPlayPhase(0)
+	if g.hasKeyword(scout, Skirmish) {
+		t.Error("a granted keyword should expire when the turn ends")
+	}
+}
+
+// TestGainKeywordVerbText covers the verb phrase used in one-at-a-time text.
+func TestGainKeywordVerbText(t *testing.T) {
+	if got := (GainKeywordVerb{Keyword: Skirmish}).VerbText(); got != "give skirmish to" {
+		t.Errorf("VerbText = %q", got)
+	}
+}
+
+// TestJoinVerbs covers the empty, single, pair, and Oxford-comma list forms.
+func TestJoinVerbs(t *testing.T) {
+	cases := []struct {
+		parts []string
+		want  string
+	}{
+		{nil, ""},
+		{[]string{"ready"}, "ready"},
+		{[]string{"ready", "fight with"}, "ready and fight with"},
+		{
+			[]string{"give skirmish to", "ready", "fight with"},
+			"give skirmish to, ready, and fight with",
+		},
+	}
+	for _, tc := range cases {
+		if got := joinVerbs(tc.parts); got != tc.want {
+			t.Errorf("joinVerbs(%v) = %q, want %q", tc.parts, got, tc.want)
+		}
+	}
+}

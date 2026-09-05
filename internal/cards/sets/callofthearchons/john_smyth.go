@@ -22,7 +22,7 @@ var JohnSmyth = card.New(
 	card.WithTraits(card.Traits.Agent, card.Traits.Martian),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithFightOrReap(card.OnChooseCreature{
-		Target: card.Target.Creature.OfHouse(card.House.Mars).ExceptTrait(card.Traits.Agent),
+		Target: card.Target.Creature.OfHouse(card.House.Self).ExceptTrait(card.Traits.Agent),
 		Verbs:  []card.CreatureVerb{card.ReadyVerb{}},
 	}),
 )

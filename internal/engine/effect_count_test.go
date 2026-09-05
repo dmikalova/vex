@@ -117,6 +117,20 @@ func TestCardsDestroyedCount(t *testing.T) {
 	}
 }
 
+func TestCardsReturnedThisWayCount(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx.Produced.Returned = 3
+
+	c := CardsReturnedThisWay{}
+	if got := c.CountText(); got != "card returned this way" {
+		t.Errorf("count text = %q", got)
+	}
+	if got := c.Value(ctx); got != 3 {
+		t.Errorf("value = %d, want 3", got)
+	}
+}
+
 func TestEachFriendlyArtifactTarget(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	mine := g.AddArtifact(NewCard("mine", Brobnar, Artifact, Common), 0)

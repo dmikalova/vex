@@ -11,7 +11,7 @@ import (
 // snapshot is thrown away instead.
 
 // A mounted client with nothing saved deals a fresh match rather than coming up
-// empty.
+// empty; set selection is reached later through New game.
 func TestMountDealsWhenThereIsNothingToResume(t *testing.T) {
 	c := newBlankClient(t)
 	c.g.OnMount(c.ctx)
@@ -19,6 +19,9 @@ func TestMountDealsWhenThereIsNothingToResume(t *testing.T) {
 
 	if c.g.g == nil {
 		t.Fatal("mounting dealt no match")
+	}
+	if c.g.awaitingSetup {
+		t.Error("mounting opened the set picker instead of dealing")
 	}
 	if c.g.phase != phaseHouse {
 		t.Errorf("the dealt match is at phase %v, want phaseHouse", c.g.phase)

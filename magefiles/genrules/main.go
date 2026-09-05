@@ -1,48 +1,35 @@
 // Command genrules assembles the Vactrol rulebook (docs/rulebook.md) from the
-// doc comments on the engine's implementation. It is the source of
-// `mage generateRules` (and half of `mage gen`).
+// engine's typed term registry. It is the source of `mage generateRules` (and
+// half of `mage gen`).
 //
-// The idea mirrors gencomments: keep the rules text next to the code that
-// enforces them so the two can never drift. Code opts into the rulebook by
-// carrying a `//rulebook:<section> <Title>` directive in a comment; the rest of
-// that comment group is the entry's body. The directive can sit in a
-// declaration's doc comment, or in a standalone comment block just above it, so a
-// function can keep an ordinary implementation doc comment and still contribute a
-// player-facing rule. A title may add a ` / <subheading>` suffix to gather
-// several code sites under one heading. Entries are grouped by section and sorted
-// alphabetically by title, so adding a keyword or effect just drops it into its
-// section without renumbering anything.
+// The rules text lives next to the code that enforces it as engine.RuleTerms()
+// (ADR 0018): each keyword, card type, trigger, and rule-bearing effect registers
+// a RuleTerm carrying its section, title, and body. genrules renders that table —
+// grouping terms by section and sorting alphabetically by title — instead of
+// re-parsing Go source, so a new term flows through as data. Terms may share a
+// title to gather several code sites under one heading, and carry a subtitle to
+// nest beneath it.
 //
-// Foundational prose that isn't tied to any one declaration — the overview and
-// each section's intro — lives as Markdown under docs/rulebook/ and is spliced in
-// around the generated entries.
+// Foundational prose that isn't tied to any one term — the overview and each
+// section's intro — also lives in the engine registry (engine.RuleOverview() and
+// engine.RuleSectionIntro()) and is spliced in around the rendered entries, so the
+// whole rulebook flows through one typed contract.
 package main
 
 import (
-	"errors"
+	"flag"
 	"fmt"
-	"go/ast"
-	"go/parser"
-	"go/token"
-	"io/fs"
 	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 	"unicode"
+
+	"github.com/dmikalova/vactrol/internal/engine"
 )
 
 const (
-	// defaultRoot is the package tree scanned for rulebook directives.
-	defaultRoot = "internal/engine"
-	// proseDir holds the hand-written Markdown fragments (overview + section
-	// intros) that frame the generated entries.
-	proseDir = "docs/rulebook"
 	// outputFile is the assembled rulebook.
 	outputFile = "docs/rulebook.md"
-	// directive is the doc-comment marker that files a declaration into the
-	// rulebook. gofmt treats it as a directive and keeps it verbatim.
-	directive = "rulebook:"
 )
 
 // section is one top-level rulebook section. Sections print in this fixed order;
@@ -54,7 +41,7 @@ type section struct {
 }
 
 // sections is the ordered spine of the rulebook. Add a section by adding a row
-// here (and, optionally, a docs/rulebook/<key>.md intro).
+// here (and, optionally, an engine.RuleSectionIntro for it).
 var sections = []section{
 	{"turn", "The Turn"},
 	{"combat", "Combat"},
@@ -73,24 +60,39 @@ type entry struct {
 }
 
 func main() {
-	roots := os.Args[1:]
-	if len(roots) == 0 {
-		roots = []string{defaultRoot}
-	}
+	check := flag.Bool("check", false,
+		"verify the committed rulebook is up to date; do not write (ADR 0018)")
+	flag.Parse()
 
 	byKey := map[string][]entry{}
-	for _, root := range roots {
-		if err := harvest(root, byKey); err != nil {
+	for _, t := range engine.RuleTerms() {
+		byKey[string(t.Section)] = append(byKey[string(t.Section)], entry{
+			title:    t.Title,
+			subtitle: t.Subtitle,
+			body:     t.Body,
+		})
+	}
+
+	doc := render(byKey)
+
+	if *check {
+		// Freshness gate: render into memory and compare to the committed file,
+		// so a rulebook left stale by a forgotten `mage gen` fails the build
+		// without touching the working tree.
+		existing, err := os.ReadFile(outputFile)
+		if err != nil {
 			fmt.Fprintln(os.Stderr, "genrules:", err)
 			os.Exit(1)
 		}
+		if string(existing) != doc {
+			fmt.Fprintf(os.Stderr,
+				"genrules: %s is stale; run `mage gen`\n", outputFile)
+			os.Exit(1)
+		}
+		fmt.Printf("genrules: %s is up to date\n", outputFile)
+		return
 	}
 
-	doc, err := render(byKey)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, "genrules:", err)
-		os.Exit(1)
-	}
 	if err := os.WriteFile(outputFile, []byte(doc), 0o644); err != nil {
 		fmt.Fprintln(os.Stderr, "genrules:", err)
 		os.Exit(1)
@@ -103,127 +105,17 @@ func main() {
 	fmt.Printf("genrules: wrote %s (%d entries)\n", outputFile, n)
 }
 
-// harvest walks root, parsing every non-test .go file and collecting the
-// rulebook entry from each comment group that carries a directive. It scans all
-// comments, not just doc comments, so a rule can live in its own comment block
-// sitting above a declaration's ordinary (implementation) doc comment.
-func harvest(root string, byKey map[string][]entry) error {
-	return filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
-		if err != nil {
-			return err
-		}
-		if d.IsDir() ||
-			filepath.Ext(path) != ".go" ||
-			isTestFile(path) {
-			return nil
-		}
-		fset := token.NewFileSet()
-		file, err := parser.ParseFile(fset, path, nil, parser.ParseComments)
-		if err != nil {
-			return fmt.Errorf("%s: %w", path, err)
-		}
-		for _, cg := range file.Comments {
-			collect(cg, byKey)
-		}
-		return nil
-	})
-}
-
-// collect files the entry described by doc, if any, under its section key. A
-// title may carry a " / <subheading>" suffix, which groups it with other entries
-// of the same title under one heading.
-func collect(doc *ast.CommentGroup, byKey map[string][]entry) {
-	key, rawTitle, body, ok := parseDirective(doc)
-	if !ok {
-		return
-	}
-	title, subtitle, _ := strings.Cut(rawTitle, " / ")
-	byKey[key] = append(byKey[key], entry{
-		title:    strings.TrimSpace(title),
-		subtitle: strings.TrimSpace(subtitle),
-		body:     body,
-	})
-}
-
-// parseDirective extracts the section key, title, and body from a doc comment.
-// The body is every non-directive comment line, so it is unaffected by where
-// gofmt places the directive within the comment. ok is false when the comment is
-// absent or carries no rulebook directive.
-func parseDirective(doc *ast.CommentGroup) (key, title, body string, ok bool) {
-	if doc == nil {
-		return "", "", "", false
-	}
-	var bodyLines []string
-	for _, c := range doc.List {
-		line := commentText(c.Text)
-		if k, t, isDir := directiveOf(line); isDir {
-			key, title, ok = k, t, true
-			continue
-		}
-		bodyLines = append(bodyLines, strings.TrimPrefix(line, " "))
-	}
-	if !ok {
-		return "", "", "", false
-	}
-	return key, title, joinBody(bodyLines), true
-}
-
-// commentText strips the comment markers from a single comment token, leaving the
-// raw line (leading space, if any, preserved so paragraph text keeps its shape).
-func commentText(raw string) string {
-	if s, ok := strings.CutPrefix(raw, "//"); ok {
-		return s
-	}
-	s := strings.TrimPrefix(raw, "/*")
-	s = strings.TrimSuffix(s, "*/")
-	return s
-}
-
-// directiveOf reports whether line is a rulebook directive and, if so, returns
-// its section key and title.
-func directiveOf(line string) (key, title string, ok bool) {
-	trimmed := strings.TrimSpace(line)
-	rest, ok := strings.CutPrefix(trimmed, directive)
-	if !ok {
-		return "", "", false
-	}
-	rest = strings.TrimSpace(rest)
-	key, title, _ = strings.Cut(rest, " ")
-	return key, strings.TrimSpace(title), true
-}
-
-// joinBody joins body lines, trims surrounding blank lines, and collapses runs of
-// blank lines to a single paragraph break.
-func joinBody(lines []string) string {
-	var out []string
-	prevBlank := true // drop leading blanks
-	for _, l := range lines {
-		if strings.TrimSpace(l) == "" {
-			if prevBlank {
-				continue
-			}
-			prevBlank = true
-			out = append(out, "")
-			continue
-		}
-		prevBlank = false
-		out = append(out, l)
-	}
-	return strings.TrimRight(strings.Join(out, "\n"), "\n")
-}
-
-// render assembles the full rulebook Markdown from the harvested entries and the
-// prose fragments.
-func render(byKey map[string][]entry) (string, error) {
+// render assembles the full rulebook Markdown from the registered terms and the
+// registered framing prose.
+func render(byKey map[string][]entry) string {
 	var b strings.Builder
 	b.WriteString("<!-- Code generated by magefiles/genrules; DO NOT EDIT. -->\n")
-	b.WriteString("<!-- Term entries come from doc comments under " + defaultRoot + "; -->\n")
-	b.WriteString("<!-- prose lives in " + proseDir + "/. Run `mage gen` to regenerate. -->\n\n")
+	b.WriteString(
+		"<!-- Terms and prose come from engine.RuleTerms()/RuleOverview()/RuleSectionIntro() (ADR 0018); -->\n",
+	)
+	b.WriteString("<!-- run `mage gen` to regenerate. -->\n\n")
 
-	overview, err := readProse("overview")
-	if err != nil {
-		return "", err
-	}
+	overview := engine.RuleOverview()
 	if overview != "" {
 		b.WriteString(overview)
 		b.WriteString("\n\n")
@@ -232,10 +124,7 @@ func render(byKey map[string][]entry) (string, error) {
 	var index []indexEntry
 	for _, sec := range sections {
 		entries := byKey[sec.key]
-		intro, err := readProse(sec.key)
-		if err != nil {
-			return "", err
-		}
+		intro := engine.RuleSectionIntro(engine.Section(sec.key))
 		if len(entries) == 0 && intro == "" {
 			continue
 		}
@@ -275,7 +164,7 @@ func render(byKey map[string][]entry) (string, error) {
 
 	writeIndex(&b, index)
 
-	return strings.TrimRight(b.String(), "\n") + "\n", nil
+	return strings.TrimRight(b.String(), "\n") + "\n"
 }
 
 // indexEntry is one term in the trailing alphabetical index: the heading text and
@@ -360,22 +249,4 @@ func writeBody(b *strings.Builder, body string) {
 		b.WriteString(body)
 		b.WriteString("\n\n")
 	}
-}
-
-// readProse returns the trimmed contents of docs/rulebook/<name>.md, or "" when
-// that fragment does not exist.
-func readProse(name string) (string, error) {
-	data, err := os.ReadFile(filepath.Join(proseDir, name+".md"))
-	if errors.Is(err, fs.ErrNotExist) {
-		return "", nil
-	}
-	if err != nil {
-		return "", err
-	}
-	return strings.TrimSpace(string(data)), nil
-}
-
-// isTestFile reports whether path is a _test.go file.
-func isTestFile(path string) bool {
-	return strings.HasSuffix(filepath.Base(path), "_test.go")
 }

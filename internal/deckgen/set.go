@@ -29,6 +29,11 @@ type Set struct {
 	byHouse map[engine.House][]Card
 	byName  map[string]Card
 	special []Card
+
+	// legacyByHouse holds the legacy pool — cards from other sets that a slot may
+	// draw instead of one of this set's own, keeping the pod's House. It is empty
+	// for a single-set build and populated by WithLegacy.
+	legacyByHouse map[engine.House][]Card
 }
 
 // NewSet builds a Set from a flat list of pool entries, bucketing them by House
@@ -72,6 +77,24 @@ func NewSet(name string, cards []Card, tuning Tuning) Set {
 	}
 	sort.Slice(s.houses, func(i, j int) bool { return s.houses[i].String() < s.houses[j].String() })
 	s.validateConnections()
+	return s
+}
+
+// WithLegacy attaches a legacy pool to the set: cards from other sets that a slot
+// may draw instead of one of this set's own, at the set's Tuning.LegacyRate. Only
+// housed, non-Connected cards are pooled, bucketed by House — a legacy card keeps
+// its own House and rarity, since it is not rehoused the way a maverick is. It
+// returns the set with the pool attached so it reads as a builder step.
+func (s Set) WithLegacy(cards []Card) Set {
+	s.legacyByHouse = map[engine.House][]Card{}
+	for _, c := range cards {
+		if c.Profile.Houseless || c.Def.Rarity == engine.Connected {
+			continue
+		}
+		if h := c.Def.House; h != engine.HouseNone {
+			s.legacyByHouse[h] = append(s.legacyByHouse[h], c)
+		}
+	}
 	return s
 }
 

@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Steal all but 6 Æmber.
+//	Play: Steal all but 6 Æmber from your opponent.
 func TestTooMuchToProtect(t *testing.T) {
 	t.Run("steals the Æmber above six", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

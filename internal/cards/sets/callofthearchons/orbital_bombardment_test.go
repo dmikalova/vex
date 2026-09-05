@@ -8,6 +8,13 @@ import (
 )
 
 // Orbital Bombardment
+//
+//	House:  Mars
+//	Type:   Tactic
+//	Rarity: Uncommon
+//	Æmber:  1
+//
+//	Play: Reveal any number of Mars cards from your hand. For each card revealed this way, deal 2 damage to a creature.
 func TestOrbitalBombardment(t *testing.T) {
 	t.Run("deals 2 damage per Mars card revealed", func(t *testing.T) {
 		var bombardment, mars, other, first, second ct.Card

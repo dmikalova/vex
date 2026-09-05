@@ -7,6 +7,17 @@ import (
 	ct "github.com/dmikalova/vactrol/internal/cards/cardtest"
 )
 
+// Tireless Crocag
+//
+//	House:  Brobnar
+//	Type:   Creature
+//	Rarity: Rare
+//	Power:  7
+//	Traits: Giant
+//
+//	Versatile.
+//	Tireless Crocag cannot reap.
+//	If there are no enemy creatures in play, destroy Tireless Crocag.
 func TestTirelessCrocag(t *testing.T) {
 	t.Run("cannot reap but fights out of house, then dies with the board", func(t *testing.T) {
 		var crocag, foe ct.Card

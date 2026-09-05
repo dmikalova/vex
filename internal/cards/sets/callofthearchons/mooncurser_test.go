@@ -15,7 +15,7 @@ import (
 //	Power:  1
 //	Traits: Elf • Thief
 //
-//	Skirmish. Poison.
+//	Skirmish, Poison.
 //	Fight: Steal 1 Æmber.
 func TestMooncurser(t *testing.T) {
 	t.Run("steals 1 Æmber when it fights", func(t *testing.T) {

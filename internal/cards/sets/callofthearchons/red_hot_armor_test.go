@@ -7,6 +7,14 @@ import (
 	ct "github.com/dmikalova/vactrol/internal/cards/cardtest"
 )
 
+// Red-Hot Armor
+//
+//	House:  Dis
+//	Type:   Tactic
+//	Rarity: Rare
+//	Æmber:  1
+//
+//	Play: Each enemy creature with armor loses all of its armor. Deal 1 damage to each enemy creature with armor for each point of armor it lost this way.
 func TestRedHotArmor(t *testing.T) {
 	var armored, bare ct.Card
 	h := ct.Play(t, ct.Setup{

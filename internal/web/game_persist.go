@@ -42,13 +42,14 @@ func (g *game) save(ctx app.Context) {
 		}
 	}
 	_ = ctx.LocalStorage().Set(persistKey, snapshot{
-		Version: snapshotVersion,
-		Seed:    g.seed,
-		State:   state,
-		Log:     saved,
-		Groups:  groups,
-		Manual:  g.manualAdds,
-		UI:      g.savedUI(),
+		Version:  snapshotVersion,
+		Seed:     g.seed,
+		SetNames: g.setNames,
+		State:    state,
+		Log:      saved,
+		Groups:   groups,
+		Manual:   g.manualAdds,
+		UI:       g.savedUI(),
 	})
 }
 
@@ -106,7 +107,8 @@ func (g *game) resume(ctx app.Context) (ok bool) {
 	}()
 
 	g.seed = snap.Seed
-	eg, houses, mavericks := match.NewWithMavericks("Player 1", "Player 2", snap.Seed)
+	g.setNames = snap.SetNames
+	eg, houses, mavericks := match.NewWithSets("Player 1", "Player 2", snap.Seed, snap.SetNames)
 	g.install(eg, houses, mavericks)
 	if !g.replayManualAdds(snap.Manual) {
 		store.Del(persistKey)
@@ -189,7 +191,7 @@ func (g *game) newMatch() { g.dealMatch(time.Now().UnixNano()) }
 // id in them.
 func (g *game) dealMatch(seed int64) {
 	g.seed = seed
-	eg, houses, mavericks := match.NewWithMavericks("Player 1", "Player 2", g.seed)
+	eg, houses, mavericks := match.NewWithSets("Player 1", "Player 2", g.seed, g.setNames)
 	g.install(eg, houses, mavericks)
 	// Clear the previous game's log grouping and undo/redo history. newMatch resets
 	// the engine log to a single turn-1 header, so stale marks (with larger Start

@@ -20,8 +20,7 @@ func Lint() error {
 		"run")
 }
 
-// Markdownlint runs quickmark (the qmark binary) against every Markdown file,
-// using the rules in quickmark.toml. Install it (`brew install quickmark-cli` or
+// Markdownlint runs quickmark to lint all markdown files. Install it (`brew install quickmark-cli` or
 // see https://github.com/ekropotin/quickmark) before running this target — unlike
 // golangci-lint, it is not a Go module mage can pin via `go run`, so environments
 // without it (e.g. CI images that haven't installed it yet) skip with a warning

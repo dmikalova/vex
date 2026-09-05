@@ -87,8 +87,9 @@ func TestZoneString(t *testing.T) {
 		{Archives, "archives"},
 		{Deck, "deck"},
 		{Attached, "attached"},
+		{Under, "under"},
 		{Purge, "purge"},
-		{Gone, "gone"},
+		{Nowhere, "nowhere"},
 	} {
 		if got := tc.z.String(); got != tc.want {
 			t.Errorf("Zone(%d) = %q, want %q", tc.z, got, tc.want)

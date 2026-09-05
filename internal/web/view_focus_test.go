@@ -8,7 +8,8 @@ import (
 // The copy is centred on the card it was lifted from and then pushed back inside
 // the window, so a card on a flank or down in the hand still grows evenly in every
 // direction it has room for rather than off the edge of the screen. Its y is
-// measured from whichever window edge its card is nearest.
+// measured from whichever window edge its buttons sit against — the bottom for a
+// card in hand, the top for a card on the board.
 func TestTheLiftCentresOnItsCardAndStaysOnScreen(t *testing.T) {
 	const w, h = 144, 192 // a card's slot
 	// The copy's own size, and so the box it is centred and clamped as.
@@ -16,17 +17,26 @@ func TestTheLiftCentresOnItsCardAndStaysOnScreen(t *testing.T) {
 	minH := float64(h) * focusMinGrow
 	for _, tc := range []struct {
 		what           string
+		kind           selKind
 		x, y           float64
 		wantX, wantY   float64
 		wantW, wantMin float64
 	}{
-		// Below the midline, so y is from the bottom: (800 - 496) - minH/2.
-		{"in the player's half", 600, 400, 672 - gotW/2, 304 - minH/2, gotW, minH},
-		{"against the top left", 4, 4, focusPad, focusPad, gotW, minH},
-		{"against the bottom right", 1130, 610, 1280 - gotW - focusPad, focusPad, gotW, minH},
+		// A hand card anchors from the bottom, so y is from the bottom edge:
+		// (800 - 496) - minH/2.
+		{"in hand", selHand, 600, 400, 672 - gotW/2, 304 - minH/2, gotW, minH},
+		// A board card anchors from the top, so y is its own centre less half its
+		// height: 496 - minH/2.
+		{"on the board", selYourCreature, 600, 400, 672 - gotW/2, 496 - minH/2, gotW, minH},
+		// A board card against the top edge is pinned there.
+		{"against the top left", selYourCreature, 4, 4, focusPad, focusPad, gotW, minH},
+		// A hand card near the bottom edge anchors from the bottom and is pinned to
+		// its near (bottom-measured) edge.
+		{"against the bottom right", selHand, 1130, 610, 1280 - gotW - focusPad, focusPad, gotW, minH},
 	} {
 		g := &game{
 			hasFocus:   true,
+			selKind:    tc.kind,
 			focusRect:  cardRect{x: tc.x, y: tc.y, w: w, h: h},
 			focusViewW: 1280,
 			focusViewH: 800,
@@ -39,20 +49,23 @@ func TestTheLiftCentresOnItsCardAndStaysOnScreen(t *testing.T) {
 	}
 }
 
-// A card in the player's own half puts its verbs above its face; one across the
-// midline puts them below, so the buttons always face the middle of the screen.
-func TestTheLiftPutsItsVerbsOnTheInsideEdge(t *testing.T) {
+// A card lifted from hand puts its verbs above its face; a card on the board puts
+// them below, so a card being played and a card already in play read their buttons
+// in the same place.
+func TestTheLiftPutsHandVerbsAboveAndBoardVerbsBelow(t *testing.T) {
 	for _, tc := range []struct {
 		what   string
-		y      float64
+		kind   selKind
 		wantUp bool
 	}{
-		{"in the player's hand", 700, true},
-		{"in the opposing battleline", 100, false},
+		{"in the player's hand", selHand, true},
+		{"in the player's own battleline", selYourCreature, false},
+		{"in the opposing battleline", selOther, false},
 	} {
 		g := &game{
 			hasFocus:   true,
-			focusRect:  cardRect{x: 600, y: tc.y, w: 144, h: 192},
+			selKind:    tc.kind,
+			focusRect:  cardRect{x: 600, y: 400, w: 144, h: 192},
 			focusViewW: 1280,
 			focusViewH: 800,
 		}
@@ -92,16 +105,18 @@ func TestTheLiftGrowsOutOfItsCardsSlot(t *testing.T) {
 	minH := float64(192) * focusMinGrow
 	for _, tc := range []struct {
 		what   string
+		kind   selKind
 		y      float64
 		wantDY float64
 	}{
-		// Anchored by its top: 100 - (196 - minH/2).
-		{"in the opponent's half", 100, 100 - (196 - minH/2)},
-		// Anchored by its bottom: (600 + 192) - (800 - 8).
-		{"in the player's half", 600, 0},
+		// A board card is anchored by its top: 100 - (196 - minH/2).
+		{"in the opponent's half", selOther, 100, 100 - (196 - minH/2)},
+		// A hand card is anchored by its bottom: (600 + 192) - (800 - 8).
+		{"in the player's hand", selHand, 600, 0},
 	} {
 		g := &game{
 			hasFocus:   true,
+			selKind:    tc.kind,
 			focusRect:  cardRect{x: 600, y: tc.y, w: 144, h: 192},
 			focusViewW: 1280,
 			focusViewH: 800,

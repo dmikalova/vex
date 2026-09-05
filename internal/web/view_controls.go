@@ -1,10 +1,12 @@
 package web
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
+	"github.com/dmikalova/vactrol/internal/cards"
 	"github.com/dmikalova/vactrol/internal/engine"
 )
 
@@ -83,16 +85,10 @@ func (g *game) controls() app.UI {
 	if g.phase == phaseOver {
 		return app.Div().Class("controls").Body(g.overPanel())
 	}
-	// A pending restart takes over the controls until confirmed or cancelled.
-	if g.confirmRestart {
-		return app.Div().Class("controls").Body(
-			app.Div().Class("btn-col").Body(
-				app.Div().Class("section-title").Text("Restart game?"),
-				app.Div().Class("hint").Text("This ends the current game and deals a new one."),
-				btn("Restart", g.restart, "btn-danger"),
-				btn("Cancel", g.cancelRestart, "btn-secondary"),
-			),
-		)
+	// A pending new game takes over the controls with the set picker until sets
+	// are chosen or it is cancelled.
+	if g.awaitingSetup {
+		return app.Div().Class("controls").Body(g.setChooser())
 	}
 	// A pending manual key forge takes over the controls until a colour is picked
 	// or cancelled; once forgingKey resets, the previous buttons return on their own.
@@ -141,6 +137,27 @@ func (g *game) controls() app.UI {
 		body = append([]app.UI{g.manualPanel()}, body...)
 	}
 	return app.Div().Class("controls").Body(body...)
+}
+
+// setChooser is the new-game set picker drawn in the action bar. When a previous
+// game exists it leads with a same-sets shortcut so a rematch is one click, then
+// asks each player which set to play; Cancel leaves the current game running.
+func (g *game) setChooser() app.UI {
+	names := cards.DeckSetNames()
+	body := []app.UI{app.Div().Class("section-title").Text("New game")}
+	if g.hasPrevSets() {
+		body = append(body, btn("Same sets — "+g.prevSetLabel(),
+			func(ctx app.Context, _ app.Event) { g.continueSameSets(ctx) }, "btn-primary"))
+	}
+	body = append(body,
+		app.Div().Class("prompt").Text(fmt.Sprintf("Player %d — choose a set", g.setPick+1)),
+	)
+	for _, name := range names {
+		body = append(body, btn(name,
+			func(ctx app.Context, _ app.Event) { g.pickSet(ctx, name) }, "btn-secondary"))
+	}
+	body = append(body, btn("Cancel", g.cancelSetup, "btn-secondary"))
+	return app.Div().Class("btn-col", "set-pick").Body(body...)
 }
 
 // manualPanel is the manual-mode control block: add an arbitrary card, and (for a
@@ -267,8 +284,10 @@ func containsHouse(houses []engine.House, h engine.House) bool {
 // optionChooser renders a labeled multiple-choice prompt. When every option is a
 // key colour it shows themed key buttons; when every option is a house it shows a
 // grid of house emblems — a house prompt can offer all seven, and seven full-width
-// rows push the rest of the controls off the screen where a grid does not.
-// Anything else falls back to plain primary buttons.
+// rows push the rest of the controls off the screen where a grid does not. When
+// every option is a way of using a creature (a reap/fight/action prompt another
+// card raised) it shows the standard use buttons, so a triggered use reads like a
+// chosen one. Anything else falls back to plain primary buttons.
 func (g *game) optionChooser() app.UI {
 	if g.keyColorOptions() {
 		return app.Div().Class("btn-col").Body(
@@ -281,6 +300,17 @@ func (g *game) optionChooser() app.UI {
 					g.isButtonCursor(i),
 					g.chooseOptionIdx(i),
 				)
+			}),
+		)
+	}
+	if g.useVerbOptions() {
+		return app.Div().Class("btn-col").Body(
+			app.Div().Class("prompt").Text(g.optionPrompt),
+			app.Range(g.optionLabels).Slice(func(i int) app.UI {
+				k, _ := useVerbKindOfLabel(g.optionLabels[i])
+				s := useVerbSpec(k)
+				return btn(s.text, g.chooseOptionIdx(i),
+					cx(s.class, ifCls(g.isButtonCursor(i), "btn-cursor")))
 			}),
 		)
 	}
@@ -331,6 +361,21 @@ func (g *game) keyColorOptions() bool {
 	}
 	for _, label := range g.optionLabels {
 		if keyColorByName(label) == engine.KeyColorNone {
+			return false
+		}
+	}
+	return true
+}
+
+// useVerbOptions reports whether every current option label is a way of using a
+// creature (reap, fight, use its action), so a reap/fight/action prompt another
+// card raised is drawn as the standard use buttons rather than a plain option list.
+func (g *game) useVerbOptions() bool {
+	if len(g.optionLabels) == 0 {
+		return false
+	}
+	for _, label := range g.optionLabels {
+		if _, ok := useVerbKindOfLabel(label); !ok {
 			return false
 		}
 	}
@@ -422,19 +467,60 @@ func (g *game) creatureCardActions() ([]cardAction, string) {
 	// Tireless Crocag fights and uses its Action: ability but cannot reap.
 	var acts []cardAction
 	if g.g.CanUseTo(g.active(), g.sel, engine.ReapUse) == nil {
-		acts = append(acts, cardAction{"Reap", "btn-warning", g.reap})
+		s := useVerbSpec(engine.ReapUse)
+		acts = append(acts, cardAction{s.text, s.class, g.reap})
 	}
 	// Fight also needs a legal target (e.g. with no enemy creatures, a ready Valdr
 	// can still reap but has nothing to fight).
 	if g.g.CanUseTo(g.active(), g.sel, engine.FightUse) == nil &&
 		len(g.g.FightTargets(g.active(), g.sel)) > 0 {
-		acts = append(acts, cardAction{"Fight", "btn-danger", g.startFight})
+		s := useVerbSpec(engine.FightUse)
+		acts = append(acts, cardAction{s.text, s.class, g.startFight})
 	}
 	if g.g.HasTrigger(g.sel, engine.TriggerAction) &&
 		g.g.CanUseTo(g.active(), g.sel, engine.ActionUse) == nil {
-		acts = append(acts, cardAction{"Action", "btn-primary", g.useAction})
+		s := useVerbSpec(engine.ActionUse)
+		acts = append(acts, cardAction{s.text, s.class, g.useAction})
 	}
 	return acts, ""
+}
+
+// useVerbButtonSpec is how one way of using a creature reads and is styled. The
+// three specs are the single source for the reap/fight/action buttons, so a use
+// prompted by another card (Inspiration's UseVerb) reads exactly like one the
+// player reached by selecting the creature — rather than the plain lowercase
+// option list a generic prompt would draw.
+type useVerbButtonSpec struct {
+	text  string
+	class string
+}
+
+// useVerbSpec returns the button spec for a use kind.
+func useVerbSpec(k engine.UseKind) useVerbButtonSpec {
+	switch k {
+	case engine.FightUse:
+		return useVerbButtonSpec{"Fight", "btn-danger"}
+	case engine.ActionUse:
+		return useVerbButtonSpec{"Action", "btn-primary"}
+	default: // ReapUse
+		return useVerbButtonSpec{"Reap", "btn-warning"}
+	}
+}
+
+// useVerbKindOfLabel maps a UseVerb option label (see the engine's effect_creature
+// UseVerb.Apply) to its use kind, reporting !ok for a label that is not one of the
+// three use verbs. It is how the option prompt recognises a reap/fight/action
+// choice and draws it as the standard buttons.
+func useVerbKindOfLabel(label string) (engine.UseKind, bool) {
+	switch label {
+	case "reap":
+		return engine.ReapUse, true
+	case "fight":
+		return engine.FightUse, true
+	case "use its action":
+		return engine.ActionUse, true
+	}
+	return 0, false
 }
 
 func (g *game) artifactCardActions() ([]cardAction, string) {

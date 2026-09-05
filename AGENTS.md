@@ -58,23 +58,27 @@ there. Delete a scratch Go package before running the gate.
 When editing Markdown (including `AGENTS.md` and skill docs), keep files
 markdownlint-clean.
 
-Card research (so you never need a throwaway grep/JSON script):
+Card research (so you never need a throwaway grep/JSON script). These live under
+the `tools` mage namespace, invoked with a colon (`mage tool:stub`):
 
-- `mage lookup "<name>"` — print every source card whose name contains the
+- `mage tool:lookup "<name>"` — print every source card whose name contains the
   query, with set code, collector number, house/type/rarity, printed text, and a
   ready-made `card.Provenance(...)` call.
-- `mage missing <setSlug>` — list the source cards in a set not yet tagged by an
-  implemented card (the cards still to implement); slugs match the files in
-  `internal/cards/provenance` minus `.json` (e.g. `callofthearchons`).
-- `mage coverage` — per-source-set count of cards covered by an implemented
+- `mage tool:missing` — list the source cards in a set not yet tagged by an
+  implemented card (the cards still to implement). With no set chosen it opens an
+  interactive ↑/↓ picker; set `SET=<slug>` to name one directly (slugs match the
+  files in `internal/cards/provenance` minus `.json`, e.g. `callofthearchons`).
+- `mage tool:coverage` — per-source-set count of cards covered by an implemented
   card's provenance Ref.
 
-- `mage stub "<setSlug>"` — scaffold a build-excluded (`//go:build todo`) stub
+- `mage tool:stub "<setSlug>"` — scaffold a build-excluded (`//go:build todo`) stub
   file for every unimplemented card in a set, each carrying the printed text and a
   TODO marker. Excluded stubs do not compile or register, so the card database and
   coverage stay honest until a card is actually implemented; to implement one,
-  remove the build tag and write the real ability. See the `implement-cards` skill
-  (`.agents/skills/implement-cards`) for the full workflow.
+  remove the build tag and write the real ability. It also (re)generates the set
+  package's `0set.go`, cataloging the cards the set reprints from earlier sets so
+  they join its deck-generation pool as full members (ADR 0021). See the
+  `implement-cards` skill (`.agents/skills/implement-cards`) for the full workflow.
 
 Run `mage -l` to see every target.
 
@@ -291,6 +295,36 @@ obey the curated wording conventions in
 `Sacrifice <self>` is written `Destroy <self>`, and an **`Omni:` ability is
 authored as `Versatile` (a keyword on the card) plus a `Trigger.Action` ability**,
 never a bespoke Omni trigger (the engine has none; ADR 0009).
+
+## Rules voice and rulebook maintenance
+
+Every player-facing surface — printed card text, the game log, the generated
+rulebook (`docs/rulebook.md`), and the prose that frames it — is written in one
+controlled **Rules voice** (ADR 0019): short declarative sentences, one
+instruction per sentence, controlled vocabulary (one word per meaning), no
+flourish. Card text follows the wording conventions in
+[docs/card-wording-rules.md](docs/card-wording-rules.md); rulebook rules are plain
+declarative sentences; bound examples are written Given/When/Then. The resource is
+spelled **Æmber** everywhere. New and edited code comments follow the same plain
+style (ADR 0020); the bulk comment migration is separate.
+
+Three standing invariants:
+
+- **Keep the rules current.** When you add or change a keyword, trigger, card
+  type, or rule-bearing effect, register or update its rulebook term in the same
+  change. The rulebook is a typed registry complete by construction (ADR 0018), so
+  an undescribed keyword fails the build and a stale committed rulebook fails
+  `mage check`.
+- **Comment and implementation must agree.** A doc comment says what its code
+  does, never what it no longer does (ADR 0006). Where the behavior is non-obvious,
+  bind the claim to an example (a cited engine test/scenario) rather than trusting
+  prose.
+- **Reference the KeyForge Master Rulebook, follow the Vactrol voice.** The
+  KeyForge Master Rulebook ([docs/keyforge-master-rulebook.md](docs/keyforge-master-rulebook.md))
+  is the wording authority **only for what Vactrol has not already decided**. Where
+  Vactrol deliberately diverges from KeyForge, **Vactrol wins**, and the divergence
+  is recorded in the Vactrol⇄KeyForge divergence register — never silently
+  overwritten by a later "match KeyForge".
 
 ## Speak the lingo
 

@@ -13,9 +13,6 @@ package engine
 // destroyed, and both deaths are resolved together, so neither fighter's
 // destruction changes the damage the other deals. Finally, if the attacker
 // survived, its "Fight" abilities resolve.
-//
-//rulebook:combat Combat
-
 // fight resolves combat between an attacker and a defender. Both deal damage equal
 // to their power simultaneously; Skirmish prevents the attacker taking damage back.
 func (g *Game) fight(attacker, defender LocalID) {
@@ -189,6 +186,9 @@ func (g *Game) TauntShielded(id LocalID) bool {
 // onFlankOf reports whether a creature sits on a flank (the leftmost or rightmost
 // creature) of its controller's battleline.
 func (g *Game) onFlankOf(id LocalID) bool {
+	if g.State.Cards[id].ConsideredFlank {
+		return true
+	}
 	bl := g.State.Battleline[g.controller(id)].slice()
 	return len(bl) > 0 &&
 		(bl[0] == id || bl[len(bl)-1] == id)

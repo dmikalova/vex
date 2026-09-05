@@ -18,14 +18,14 @@ func (c midThenFirst) ChooseCreature(_, _ string, cands []LocalID) (LocalID, boo
 	return cands[0], true
 }
 
-func TestDamageIfSurvives(t *testing.T) {
+func TestDamageThenIfSurvives(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	survivor := g.AddToBattleline(testCreature("s", 5), 1)
 	g.AddToHand(testCreature("h1", 1), 1)
 	g.AddToHand(testCreature("h2", 1), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := DamageIfSurvives{
+	e := DamageThenIfSurvives{
 		Amount: 3,
 		Target: Target{Kind: TargetChosenCreature},
 		Then:   DiscardRandomFromHand{Player: ItsOwner},
@@ -33,10 +33,10 @@ func TestDamageIfSurvives(t *testing.T) {
 	if e.Text() != "deal 3 damage to a creature. If it is not destroyed, its owner discards a random card from their hand" {
 		t.Errorf("text = %q", e.Text())
 	}
-	if (DamageIfSurvives{Then: DiscardRandomFromHand{Player: Opponent}}).validate() == nil {
+	if (DamageThenIfSurvives{Then: DiscardRandomFromHand{Player: Opponent}}).validate() == nil {
 		t.Error("unset target should be invalid")
 	}
-	if (DamageIfSurvives{Target: Target{Kind: TargetChosenCreature}, Then: DiscardRandomFromHand{Player: Opponent}}).validate() != nil {
+	if (DamageThenIfSurvives{Target: Target{Kind: TargetChosenCreature}, Then: DiscardRandomFromHand{Player: Opponent}}).validate() != nil {
 		t.Error("a set target with a valid follow-up should pass")
 	}
 
@@ -52,7 +52,7 @@ func TestDamageIfSurvives(t *testing.T) {
 	g2 := NewGame("A", "B", 1)
 	dead := g2.AddToBattleline(testCreature("d", 2), 1)
 	g2.AddToHand(testCreature("keep", 1), 1)
-	(DamageIfSurvives{Amount: 3, Target: Target{Kind: TargetChosenCreature}, Then: DiscardRandomFromHand{Player: ItsOwner}}).Resolve(
+	(DamageThenIfSurvives{Amount: 3, Target: Target{Kind: TargetChosenCreature}, Then: DiscardRandomFromHand{Player: ItsOwner}}).Resolve(
 		&EffectContext{Resolver: g2, Controller: 0},
 	)
 	if g2.inPlay(dead) {
@@ -64,7 +64,7 @@ func TestDamageIfSurvives(t *testing.T) {
 
 	// No creature to target: nothing happens.
 	g3 := NewGame("A", "B", 1)
-	(DamageIfSurvives{Amount: 3, Target: Target{Kind: TargetChosenCreature}, Then: DiscardRandomFromHand{Player: ItsOwner}}).Resolve(
+	(DamageThenIfSurvives{Amount: 3, Target: Target{Kind: TargetChosenCreature}, Then: DiscardRandomFromHand{Player: ItsOwner}}).Resolve(
 		&EffectContext{Resolver: g3, Controller: 0},
 	)
 }

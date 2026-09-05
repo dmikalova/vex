@@ -17,7 +17,7 @@ func (g *Game) PlayCreature(player, handIndex int, flankLeft bool) (LocalID, err
 		return 0, err
 	}
 	def := g.cat.def(id)
-	return g.playCardFromZone(
+	result, err := g.playCardFromZone(
 		player,
 		id,
 		func() { g.State.Hand[player].removeAt(handIndex) },
@@ -26,6 +26,10 @@ func (g *Game) PlayCreature(player, handIndex int, flankLeft bool) (LocalID, err
 			consumePlayPermission: g.usesPlayPermission(player, def),
 		},
 	)
+	if err == nil {
+		g.endStepIfOmega(player, def)
+	}
+	return result, err
 }
 
 // PlayArtifact plays an artifact from hand into the artifact row. If the opponent
@@ -37,7 +41,7 @@ func (g *Game) PlayArtifact(player, handIndex int) (LocalID, error) {
 		return 0, err
 	}
 	def := g.cat.def(id)
-	return g.playCardFromZone(
+	result, err := g.playCardFromZone(
 		player,
 		id,
 		func() { g.State.Hand[player].removeAt(handIndex) },
@@ -45,6 +49,10 @@ func (g *Game) PlayArtifact(player, handIndex int) (LocalID, error) {
 			consumePlayPermission: g.usesPlayPermission(player, def),
 		},
 	)
+	if err == nil {
+		g.endStepIfOmega(player, def)
+	}
+	return result, err
 }
 
 // chargeToll makes player pay every toll an opponent's in-play card imposes for
@@ -93,6 +101,9 @@ func (g *Game) PlayAction(player, handIndex int) error {
 			consumePlayPermission: g.usesPlayPermission(player, def),
 		},
 	)
+	if err == nil {
+		g.endStepIfOmega(player, def)
+	}
 	return err
 }
 
@@ -160,12 +171,24 @@ func (g *Game) PlayUpgrade(player, handIndex int) (LocalID, error) {
 	if def.Type != Upgrade {
 		return 0, ErrWrongType
 	}
+	if g.barredByAlpha(player, def) {
+		return 0, ErrAlphaNotFirst
+	}
 	if !g.mayPlayFromHand(player, def) {
 		return 0, ErrWrongHouse
 	}
-	return g.playCardFromZone(player, id, func() { hand.removeAt(handIndex) }, playCardOptions{
-		consumePlayPermission: g.usesPlayPermission(player, def),
-	})
+	host, err := g.playCardFromZone(
+		player,
+		id,
+		func() { hand.removeAt(handIndex) },
+		playCardOptions{
+			consumePlayPermission: g.usesPlayPermission(player, def),
+		},
+	)
+	if err == nil {
+		g.endStepIfOmega(player, def)
+	}
+	return host, err
 }
 
 // TopOfDeck returns the top card of a player's deck without moving it, reporting
@@ -198,6 +221,29 @@ func (g *Game) PlayFromHand(player int, id LocalID) {
 // in that discard pile.
 func (g *Game) PlayFromDiscard(player int, id LocalID) {
 	g.playFromPile(player, id, &g.State.Discard[player])
+}
+
+// PlayFromOpponentDiscard plays a specific card out of the opponent's discard
+// pile as the given player's own play — Mimicry copies an action out of the
+// other player's discard, so the play counts against the active player's own
+// card-play limit (Ember Imp can block it) yet the card is owned by, and returns
+// to, the opponent. It does nothing when the card is not in that discard pile.
+func (g *Game) PlayFromOpponentDiscard(player int, id LocalID) {
+	g.playFromPile(player, id, &g.State.Discard[1-player])
+}
+
+// PlayFromUnder plays a specific card from under whatever host it sits under,
+// bypassing the active-house gate the same way PlayFromHand/PlayFromDiscard do —
+// Masterplan's and Jargogle's own "play the card under me." Where playFromPile
+// removes the card from a deckList, a card under a host sits in the intrusive
+// Under chain (game_under.go) instead, so this has its own small body rather
+// than reusing playFromPile. It does nothing if the card is not currently placed
+// under anything.
+func (g *Game) PlayFromUnder(player int, id LocalID) {
+	if _, ok := g.underHostOf(id); !ok {
+		return
+	}
+	_, _ = g.playCardFromZone(player, id, func() { g.detachUnder(id) }, playCardOptions{})
 }
 
 // playFromPile plays a card out of one of a player's face-down piles. Where the
@@ -281,18 +327,21 @@ func (g *Game) playCardFromZone(
 	}
 }
 
-// playCreatureCard places a creature on a flank and fires the standard play
+// playCreatureCard places a creature on a flank — or, for a Deploy creature,
+// anywhere in the battleline its controller chooses — and fires the standard play
 // sequence for a creature already removed from its previous zone.
 func (g *Game) playCreatureCard(player int, id LocalID, flankLeft bool) {
 	core := &g.State.Cards[id]
 	core.Exhausted = true // enters play exhausted; readies during the end-of-turn ready step
 	core.ArmorRemaining = int16(g.armor(id))
-	if flankLeft {
-		g.State.Battleline[player].addFront(id)
-	} else {
-		g.State.Battleline[player].add(id)
-	}
-	g.record(CardPlayedToBattleline{Player: player, Card: id, FlankLeft: flankLeft})
+	pos, interior := g.deployPosition(player, id, flankLeft)
+	g.State.Battleline[player].insertAt(pos, id)
+	g.record(CardPlayedToBattleline{
+		Player:    player,
+		Card:      id,
+		FlankLeft: pos == 0,
+		Interior:  interior,
+	})
 	g.applyAemberBonus(id)
 	g.triggerAbilities(id, TriggerAfterPlay, 0, false)
 	g.emitCreatureEnters(id)
@@ -353,9 +402,24 @@ func (g *Game) playArtifactCard(player int, id LocalID) {
 func (g *Game) playActionCard(player int, id LocalID) {
 	g.record(ActionPlayed{Player: player, Card: id})
 	g.applyAemberBonus(id)
-	g.triggerAbilities(id, TriggerAfterPlay, 0, false)
+	// The Play: ability resolves under the control of the player who played the
+	// card, not the card's owner. They differ only when one player plays another's
+	// card (Mimicry copies an action out of the opponent's discard pile).
+	g.triggerAbilitiesAs(player, id, TriggerAfterPlay, 0, false)
 	g.emitCardPlayed(player, id)
-	g.State.Discard[player].add(id)
+	// A played action goes to the top of its owner's discard pile — unless its own
+	// "Play:" ability purged it (Library Access), in which case it is set aside out
+	// of the game instead. Owner and player differ only when one player plays
+	// another's card (Mimicry).
+	owner := g.owner(id)
+	if g.State.PurgePlayedActionSet && g.State.PurgePlayedAction == id {
+		g.State.PurgePlayedAction = 0
+		g.State.PurgePlayedActionSet = false
+		g.State.Purge[owner].add(id)
+		g.record(CardPurged{Card: id})
+		return
+	}
+	g.State.Discard[owner].add(id)
 }
 
 // playUpgradeCard attaches an upgrade to host and fires its standard play sequence
@@ -484,6 +548,9 @@ func (g *Game) validateHandPlay(player, handIndex int, want CardType) (LocalID, 
 	if g.barredFromPlaying(player, want) {
 		return 0, ErrCannotPlayType
 	}
+	if g.barredByAlpha(player, def) {
+		return 0, ErrAlphaNotFirst
+	}
 	if !g.mayPlayFromHand(player, def) {
 		return 0, ErrWrongHouse
 	}
@@ -510,6 +577,9 @@ func (g *Game) CanPlay(player int, id LocalID) error {
 	}
 	if g.cannotPlayCard(player) {
 		return ErrCardPlayLimit
+	}
+	if g.barredByAlpha(player, def) {
+		return ErrAlphaNotFirst
 	}
 	if !g.mayPlayFromHand(player, def) {
 		return ErrWrongHouse
