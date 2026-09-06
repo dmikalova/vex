@@ -26,6 +26,26 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 ## Things that can be done now
 
+- Add a landing page, and move the main game to /play
+- How hard would it be to add a go doc server? eg mage docs? I wanted to look at that
+- When prompted to pick up archives, the no option should be red
+- When I use harland mindlock to take control of a creature, it automatically just puts it on the right flank instead of prompting me
+- While a creature or artifact is in play, it should reserve its status area so that when its exhausted and then readied, the card image doesn't bounce around
+- When a restriction happens, it should log as a yellow warning with the triangle ! symbol. When a manual mode change happens, it should be a red with an alert symbol
+- When forging a key color, in the logs it just shows as a grey key instead of its color
+- On the toast, the X is currently off the screen and thus extends the toast pane and adds a horizontal scroll bar. Bring it in more, its ok if it would end up covering some text
+- On mobile sized views, we turned off hover. Can we actually enable hover for log lines - whether that's clicked in the sidebar or in the toast
+- If I use Ulyq Megamouth to then use Dharna, it prompts me in the action bar to reap or fight. This shows the Dharna card top, then says something like how do you want to use dharna, and then the reap / fight buttons. Can you remove the dharna card top, and make the Dharna name clickable to cause a hover similar to the log lines. Part of my goal is to make the action bar when needed the same height as when it just says end turn
+- If I fight into a creature with backup copy, and there's a tolas out, it asks me to prompt the order of resolution which is good, but I can only select tolas - I can't click on the creature that the upgrade is on.
+- If I use yxlix stimrager to damage a creature and that creature is destroyed by the damage, I am still prompted to move it to a flank - this can just be elided since its no longer relevant for any card that is no longer in the battleline
+- If there are no other actions to take, then make the end turn button fade to green
+- When in the middle of a prompt I should be able to turn on manual mode, and if its not there then also cancel the prompt while in manual mode. I should also be able to undo at this time to effectively cancel the current action
+- When the manual mode prompt is open, it should have have the wrench in its action bar to turn it off. You can remove the wrench from the hud that comes out of the burger menu
+- Is it possible after long pressing on the player bar to see tooltips, to then move my finger around and whatever I'm over the tooltip for that comes up and the other one goes down?
+- If there is one friendly damaged creature, dharna should still prompt to let you choose any friendly creature and just heal 0. Currently autoselects the one damaged creature
+- Add a concede option to the hamburger menu
+- Add a legacy icon that shows up in the rarity section, similar to mavericks
+
 - House Ambassador (eg Brobnar Amassador) as a materialization - make it work as a legacy/maverick to swap with a card in another house
 - remove abduct / simplify to archive targets - the rules already naturally handle how archiving your opponent's cards works
 - can splash and splashattack be combined?

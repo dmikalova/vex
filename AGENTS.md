@@ -20,6 +20,8 @@ comment/rulebook generation, golines), so use them:
   are listed in `magefiles/cover.go`. `internal/web` is deliberately ungated.
 - `mage generateComments` — rewrite each card's doc comment from its definition.
 - `mage gen` — regenerate card comments and the rulebook.
+- `mage docs` — serve this module's Go documentation at `http://localhost:6060`
+  (pkgsite, the pkg.go.dev renderer); read-only, no gate depends on it.
 - `mage check` — the full green gate (fmt-check, build, vet, lint, markdown
   lint, test, coverage); run this before considering work done. It must print
   `ALL GREEN`.

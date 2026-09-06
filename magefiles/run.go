@@ -12,6 +12,21 @@ import (
 	"github.com/dmikalova/vactrol/internal/hotreload"
 )
 
+// pkgsiteVersion pins the doc server (the renderer behind pkg.go.dev). Unlike the
+// formatter and linter it is a read-only local viewer that no gate depends on, so
+// bumping it is low-risk; it is pinned for reproducible fetches all the same.
+const pkgsiteVersion = "v0.4.0"
+
+// Docs serves this module's Go documentation at http://localhost:6060 with the
+// same rendering as pkg.go.dev. It runs pkgsite over the local module via
+// `go run`, so the tool never enters the module's own dependency graph, and
+// blocks until Ctrl-C. The first run fetches pkgsite and may take a minute.
+func Docs() error {
+	const addr = "localhost:6060"
+	return sh.RunV("go", "run",
+		"golang.org/x/pkgsite/cmd/pkgsite@"+pkgsiteVersion, "-http", addr, ".")
+}
+
 // WebWasm builds the web client to WebAssembly (web/app.wasm). -trimpath makes
 // the build reproducible; -ldflags="-s -w" drops debug info to shrink the bundle.
 func WebWasm() error {
@@ -44,11 +59,10 @@ func Web() error {
 			if err := WebWasm(); err != nil {
 				return err
 			}
-			// Refresh the precompressed .br/.gz siblings so the browser, which
-			// prefers them, is served this build rather than a stale compression.
-			if err := WebAssets(); err != nil {
-				return err
-			}
+			// No WebAssets here: precompressing (max-level brotli) the multi-megabyte
+			// wasm on every rebuild is what made the dev loop take ~50s. The server
+			// falls back to the raw files when the .br/.gz siblings are absent, so the
+			// dev server serves them straight from disk.
 			return sh.Run("go", "build", "-o", bin, "./cmd/web")
 		},
 		Command:    bin,

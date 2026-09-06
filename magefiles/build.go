@@ -14,16 +14,16 @@ import (
 // Build builds all packages, for the host and the browser. `go build
 // ./...` compiles the web client for the host, which misses anything that only
 // breaks under js/wasm, so WebWasm compiles it again for the target it ships to.
-// WebAssets then minifies and precompresses the static web assets the server
-// streams.
+// It does not precompress the static assets: that step (WebAssets) is slow
+// max-level brotli, only the shipped server needs it, and the server falls back
+// to the raw files when the .br/.gz siblings are absent. CI runs `mage webAssets`
+// explicitly (see Dockerfile); locally run it by hand when you want to test the
+// compressed path.
 func Build() error {
 	if err := sh.RunV("go", "build", "./..."); err != nil {
 		return err
 	}
-	if err := WebWasm(); err != nil {
-		return err
-	}
-	return WebAssets()
+	return WebWasm()
 }
 
 // Test runs all tests.
