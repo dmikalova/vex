@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <title>Doom counter</title>
+  <path d="M12 2 20 7v10l-8 5-8-5V7Z" fill="#5f3dc4" stroke="#3b2483" stroke-width="1" stroke-linejoin="round"/>
+  <circle cx="9.3" cy="11" r="1.6" fill="#fff"/>
+  <circle cx="14.7" cy="11" r="1.6" fill="#fff"/>
+  <path d="M9 15.5h6" stroke="#fff" stroke-width="1.6" stroke-linecap="round"/>
+</svg>

@@ -29,6 +29,7 @@ func TestHarlandMindlock(t *testing.T) {
 		})
 
 		h.P1.Play(HarlandMindlock)
+		h.P1.ClickOption("right flank")
 
 		if got := h.Game().Owner(foe.ID()); got != 1 {
 			t.Errorf("ownership should stay with player 1, got %d", got)

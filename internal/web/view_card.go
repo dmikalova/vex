@@ -51,8 +51,10 @@ func (g *game) cardFace(id engine.LocalID) *cardView {
 		Trait:         traitLabel(def),
 		Rarity:        rarityMarkOf(def.Rarity),
 		Maverick:      g.isMaverick(id),
+		Legacy:        g.isLegacy(id),
 		Stunned:       g.g.Stunned(id),
 		Exhausted:     g.g.Exhausted(id),
+		InPlay:        g.inPlay(id),
 		Bar:           bar,
 		TauntShielded: taunted,
 	}

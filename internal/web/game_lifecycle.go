@@ -37,6 +37,7 @@ func (g *game) OnMount(ctx app.Context) {
 	g.installKeyShortcuts()
 	g.installScrollTracking()
 	g.installSwipeGestures()
+	g.installTipDrag()
 	g.scrollLogToBottom()
 }
 
@@ -502,9 +503,15 @@ func (g *game) installSwipeGestures() {
 		g.swipeStartX = t.Get("clientX").Float()
 		g.swipeStartY = t.Get("clientY").Float()
 		g.swipeTracking = true
+		target := args[0].Get("target")
+		// A press that begins on the player bar drives its stat tooltip (see
+		// installTipDrag), so it must not also swipe the sidebar.
+		if target.Truthy() && target.Call("closest", ".score-pill").Truthy() {
+			g.swipeTracking = false
+			return nil
+		}
 		// Note whether the touch began on the toast, so its end can flick it away
 		// instead of moving the sidebar.
-		target := args[0].Get("target")
 		g.toastSwipeStart = target.Truthy() &&
 			target.Call("closest", ".log-toast").Truthy()
 		return nil
@@ -544,6 +551,82 @@ func (g *game) installSwipeGestures() {
 	doc := app.Window().Get("document")
 	doc.Call("addEventListener", "touchstart", g.touchStartFunc, map[string]any{"passive": true})
 	doc.Call("addEventListener", "touchend", g.touchEndFunc, map[string]any{"passive": true})
+}
+
+// installTipDrag makes the player bar's stat tooltips reachable by touch: a press
+// on a stat shows its tooltip at once, and dragging the finger along the bar moves
+// the tooltip to whichever stat is under it; releasing clears it. The tips are CSS
+// hover bubbles, which a touchscreen never triggers, so this drives the same
+// .tip--active state a real hover would. It is scoped to stats inside a
+// .score-pill, and a press here suppresses the sidebar edge-swipe.
+func (g *game) installTipDrag() {
+	if g.tipDownFunc != nil {
+		return
+	}
+	g.tipActive = app.Null()
+	// activate moves the shown tooltip to el (a null el clears it), toggling the
+	// .tip--active class the CSS reveals the bubble on.
+	activate := func(el app.Value) {
+		if g.tipActive.Truthy() {
+			g.tipActive.Get("classList").Call("remove", "tip--active")
+		}
+		g.tipActive = el
+		if el.Truthy() {
+			el.Get("classList").Call("add", "tip--active")
+		}
+	}
+	// tipUnder returns the player-bar stat tooltip under a viewport point, or a null
+	// value when the point is off every stat.
+	tipUnder := func(x, y float64) app.Value {
+		el := app.Window().Get("document").Call("elementFromPoint", x, y)
+		if !el.Truthy() {
+			return app.Null()
+		}
+		tip := el.Call("closest", ".tip")
+		if !tip.Truthy() || !tip.Call("closest", ".score-pill").Truthy() {
+			return app.Null()
+		}
+		return tip
+	}
+	g.tipDownFunc = app.FuncOf(func(_ app.Value, args []app.Value) any {
+		if len(args) == 0 {
+			return nil
+		}
+		tip := tipUnder(args[0].Get("clientX").Float(), args[0].Get("clientY").Float())
+		if !tip.Truthy() {
+			return nil
+		}
+		g.tipTracking = true
+		activate(tip)
+		return nil
+	})
+	g.tipMoveFunc = app.FuncOf(func(_ app.Value, args []app.Value) any {
+		if !g.tipTracking || len(args) == 0 {
+			return nil
+		}
+		tip := tipUnder(args[0].Get("clientX").Float(), args[0].Get("clientY").Float())
+		if !tip.Truthy() {
+			activate(app.Null())
+			return nil
+		}
+		if !g.tipActive.Truthy() || !tip.Call("isSameNode", g.tipActive).Bool() {
+			activate(tip)
+		}
+		return nil
+	})
+	g.tipUpFunc = app.FuncOf(func(_ app.Value, _ []app.Value) any {
+		if !g.tipTracking {
+			return nil
+		}
+		g.tipTracking = false
+		activate(app.Null())
+		return nil
+	})
+	doc := app.Window().Get("document")
+	doc.Call("addEventListener", "pointerdown", g.tipDownFunc, map[string]any{"passive": true})
+	doc.Call("addEventListener", "pointermove", g.tipMoveFunc, map[string]any{"passive": true})
+	doc.Call("addEventListener", "pointerup", g.tipUpFunc, map[string]any{"passive": true})
+	doc.Call("addEventListener", "pointercancel", g.tipUpFunc, map[string]any{"passive": true})
 }
 
 // OnResize re-places the lifted card copy, which is positioned from a measurement
@@ -618,6 +701,17 @@ func (g *game) OnDismount() {
 		app.Window().Get("document").Call("removeEventListener", "touchend", g.touchEndFunc)
 		g.touchEndFunc.Release()
 		g.touchEndFunc = nil
+	}
+	if g.tipDownFunc != nil {
+		doc := app.Window().Get("document")
+		doc.Call("removeEventListener", "pointerdown", g.tipDownFunc)
+		doc.Call("removeEventListener", "pointermove", g.tipMoveFunc)
+		doc.Call("removeEventListener", "pointerup", g.tipUpFunc)
+		doc.Call("removeEventListener", "pointercancel", g.tipUpFunc)
+		g.tipDownFunc.Release()
+		g.tipMoveFunc.Release()
+		g.tipUpFunc.Release()
+		g.tipDownFunc, g.tipMoveFunc, g.tipUpFunc = nil, nil, nil
 	}
 }
 
@@ -825,11 +919,17 @@ func (g *game) dismiss(ctx app.Context) {
 		// Escape puts the card down and the next backs out of the prompt itself.
 		g.clearSelection()
 	case g.choosing:
-		// An optional prompt is declined; otherwise only a manual-mode prompt is
-		// escapable, since a real chooser is mandatory.
-		if g.chooserDeclinable {
+		// In manual mode Escape cancels any prompt, backing the whole action out;
+		// otherwise only an optional prompt is escapable, by declining it, since a
+		// real chooser is mandatory.
+		if g.g.Manual() {
+			g.cancelChooser(ctx, app.Event{})
+		} else if g.chooserDeclinable {
 			g.declineChooser(ctx, app.Event{})
-		} else if g.g.Manual() {
+		}
+	case g.choosingOption:
+		// An option prompt has no decline; only manual mode can back out of it.
+		if g.g.Manual() {
 			g.cancelChooser(ctx, app.Event{})
 		}
 	case g.phase == phaseFlank || g.phase == phaseFightTarget:

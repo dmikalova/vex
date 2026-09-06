@@ -17,8 +17,10 @@ import (
 
 // promptSourceHeader names the card driving the current prompt and shows its
 // face, so the player can read the ability they are resolving without hunting for
-// the card on the board. The face already carries the card's name, so the name is
-// spelled out only when there is no face to show.
+// the card on the board. The name is a green token wired to the same preview a
+// log mention uses (tap or hover to enlarge the card), which is the only source
+// affordance on mobile, where the face is dropped for room. The name is spelled
+// out as plain text only when there is no matching card to preview.
 func (g *game) promptSourceHeader() app.UI {
 	return app.If(g.promptSource != "", func() app.UI {
 		def := g.defByName[g.promptSource]
@@ -29,6 +31,12 @@ func (g *game) promptSourceHeader() app.UI {
 		}
 		house, changed := g.promptSourceHouse(def)
 		return app.Div().Class("prompt-source-block").Body(
+			app.Span().Class("prompt-source-name log-card").
+				DataSet("card", g.promptSource).
+				OnMouseEnter(g.onLogCardHover).
+				OnMouseLeave(g.onCardHoverOut).
+				OnClick(g.onLogCardTap).
+				Text(g.promptSource),
 			app.Div().Class("prompt-card").Body(&cardView{
 				Title:        def.Name,
 				HouseCls:     houseClasses(house),
@@ -74,7 +82,9 @@ func (g *game) endTurnButton() app.UI {
 	if g.confirmEndTurn {
 		return btn("Confirm end turn", g.endTurn, cx("btn-danger", cursor))
 	}
-	return btn("End turn", g.endTurn, cx("btn-secondary", cursor))
+	// With nothing left to do, the button fades green to invite ending the turn.
+	ready := ifCls(!g.hasMoves(), "btn-endturn--ready")
+	return btn("End turn", g.endTurn, cx("btn-secondary", ready, cursor))
 }
 
 // endTurnBar is the End turn control with the undo shortcut sitting to its left,
@@ -88,7 +98,17 @@ func (g *game) endTurnBar() app.UI {
 		Disabled(!g.canUndo()).
 		OnClick(g.undoAction).
 		Body(icon("undo", "icon-nav"))
-	return app.Div().Class("end-turn-bar").Body(undo, g.endTurnButton())
+	body := []app.UI{undo, g.endTurnButton()}
+	// In manual mode a green wrench rides to the right of End turn (mirroring Undo on
+	// the left) so the mode that is on is one click from off without opening the menu.
+	if g.g.Manual() {
+		body = append(body, app.Button().
+			Class(cx("btn-nav", "btn-icon", "btn-nav-on")).
+			Title("Manual mode is on — click to turn it off").
+			OnClick(g.toggleManual).
+			Body(icon("wrench", "icon-nav")))
+	}
+	return app.Div().Class("end-turn-bar").Body(body...)
 }
 
 // controls is the bottom of the sidebar: the contextual controls (house picker or
@@ -113,7 +133,13 @@ func (g *game) controls() app.UI {
 	}
 	// A labeled option prompt (e.g. "take archives?") shows its choices as buttons.
 	if g.choosingOption {
-		return app.Div().Class("controls").Body(g.promptSourceHeader(), g.optionChooser())
+		body := []app.UI{g.promptSourceHeader(), g.optionChooser()}
+		// Manual mode adds a Cancel that backs the whole action out — an option prompt
+		// has no decline of its own, so this is the only way out of a stuck one.
+		if g.g.Manual() {
+			body = append(body, btn("Cancel", g.cancelChooser, "btn-secondary"))
+		}
+		return app.Div().Class("controls").Body(body...)
 	}
 	// While an engine chooser waits, the controls become the prompt itself: a
 	// green call to action to click one of the highlighted cards.
@@ -122,14 +148,14 @@ func (g *game) controls() app.UI {
 			g.promptSourceHeader(),
 			app.Div().Class("prompt").Text(g.chooserPrompt),
 		}
-		// An optional prompt ("you may", "up to N") is passed on with Done; a
-		// mandatory one has no cancel, except in manual mode where the player may
-		// need to escape a prompt with no clickable candidate.
-		switch {
-		case g.chooserDeclinable:
+		// An optional prompt ("you may", "up to N") is passed on with Done. Manual mode
+		// adds a Cancel on every prompt — optional or mandatory — that backs the whole
+		// action out, the way out of a prompt with no clickable candidate.
+		if g.chooserDeclinable {
 			body = append(body, btn("Done", g.declineChooser,
 				cx("btn-primary", ifCls(g.isDoneCursor(), "btn-cursor"))))
-		case g.g.Manual():
+		}
+		if g.g.Manual() {
 			body = append(body, btn("Cancel", g.cancelChooser, "btn-secondary"))
 		}
 		return app.Div().Class("controls").Body(body...)
@@ -356,8 +382,13 @@ func (g *game) optionChooser() app.UI {
 	return app.Div().Class("btn-col").Body(
 		app.Div().Class("prompt").Text(g.optionPrompt),
 		app.Range(g.optionLabels).Slice(func(i int) app.UI {
+			// A declining "No" is the destructive-looking choice, so it reads red.
+			kind := "btn-primary"
+			if g.optionLabels[i] == "No" {
+				kind = "btn-danger"
+			}
 			return btn(g.optionLabels[i], g.chooseOptionIdx(i),
-				cx("btn-primary", ifCls(g.isButtonCursor(i), "btn-cursor")))
+				cx(kind, ifCls(g.isButtonCursor(i), "btn-cursor")))
 		}),
 	)
 }

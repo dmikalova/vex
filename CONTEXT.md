@@ -50,6 +50,20 @@ divisions "steps"; Vactrol calls them phases everywhere — engine, rulebook, ca
 text, and game log.
 _Avoid_: step, turn step, main phase.
 
+**Opening hand**:
+The starting hand each player draws during setup: the player who takes the first
+turn draws 7 cards, the other draws 6.
+
+**Mulligan**:
+A player's one setup option to shuffle their whole opening hand back into their
+deck and draw a new hand of one card fewer. Taken in turn order, starting with the
+first player; the new hand must be kept.
+
+**First turn rule**:
+On the first player's first turn only, that player may play or discard just one
+card from their hand. Using creatures is unaffected, and a card the played card
+lets its controller play does not count against the limit.
+
 **Reveal**:
 To make a card in a hidden zone publicly known. Revealing is the only way a card
 in a hidden zone is ever named — to the opponent, and in the game log.
@@ -88,6 +102,14 @@ To set a card aside out of the game; purged cards never return.
 The Æmber verbs — capture moves Æmber onto a creature (off a player's pool), steal
 takes Æmber from the opponent's pool into yours, exalt places Æmber from the
 supply onto a card.
+
+**Counter** (generic counter):
+A card-placed marker that sits on an in-play card, stacks, and does nothing on its
+own — its meaning is defined entirely by the card that reads it (a doom counter,
+read by Wretched Doll). Generic counters live in one global side-table on
+`GameState`, not a field per kind (ADR 0024). A **power counter** is not one: it
+is a +1/-1 token that changes a creature's power, and — like damage and
+Æmber-on-card — stays bespoke per-card state.
 
 **Toll**:
 Æmber the opponent must pay a card's controller in order to play or use an
@@ -342,6 +364,12 @@ discard, archives, purge — which open the Zone viewer.
 
 **House strip**:
 The three deck Houses shown in a Player bar, with the non-active ones lowlighted.
+
+**Deck list**:
+The full roster of a player's Deck — its 3 Houses each with their 12 cards —
+shown as a popover from a deck icon on the Player bar, one column per House with
+each card's type and Rarity. It presents the static generated roster, not the
+live draw order, so it leaks nothing about the deck pile.
 
 **Play zone**:
 The four Board rows of cards in play, artifacts outside and battlelines inside,

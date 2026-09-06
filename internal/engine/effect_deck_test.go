@@ -387,6 +387,10 @@ func TestDiscardDeckUntil(t *testing.T) {
 	if got := (PutDiscardedIntoHand{}).Text(); got != "put the discarded card into your hand" {
 		t.Errorf("tail text = %q", got)
 	}
+	if got := (PutDiscardedIntoHand{Type: Artifact}).Text(); got !=
+		"put the discarded artifact into your hand" {
+		t.Errorf("artifact text = %q", got)
+	}
 	if got := (PutDiscardedIntoHand{Type: Creature}).Text(); got !=
 		"put the discarded creature into your hand" {
 		t.Errorf("creature tail text = %q", got)
@@ -491,4 +495,41 @@ func TestLookAtTop(t *testing.T) {
 			t.Errorf("deck = %v, want 2 cards", got)
 		}
 	})
+}
+
+func TestDiscardTopAndForEachDiscardedHouseFilter(t *testing.T) {
+	// DiscardTop validate and text.
+	if err := (DiscardTop{Player: Controller, Amount: 0}).validate(); err == nil {
+		t.Error("DiscardTop with Amount 0 should fail validation")
+	}
+	if err := (DiscardTop{Player: Controller, Amount: 2}).validate(); err != nil {
+		t.Errorf("valid DiscardTop = %v", err)
+	}
+	if got := (DiscardTop{Player: Controller, Amount: 1}).Text(); got != "discard the top 1 card of your deck" {
+		t.Errorf("singular text = %q", got)
+	}
+	if got := (DiscardTop{Player: Opponent, Amount: 2}).Text(); got != "discard the top 2 cards of your opponent's deck" {
+		t.Errorf("opponent text = %q", got)
+	}
+
+	if got := (ForEachDiscarded{Do: GainAember{Player: Controller, Amount: 1}}).Text(); got != "for each card discarded this way, gain 1 Æmber" {
+		t.Errorf("unfiltered text = %q", got)
+	}
+	if got := (ForEachDiscarded{House: Logos, Do: GainAember{Player: Controller, Amount: 1}}).Text(); got != "for each Logos card discarded this way, gain 1 Æmber" {
+		t.Errorf("filtered text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	g.AddToDeck(NewCard("L1", Logos, Tactic, Common), 0)
+	g.AddToDeck(NewCard("M", Mars, Tactic, Common), 0)
+	g.AddToDeck(NewCard("L2", Logos, Tactic, Common), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	Sentences{Effects: []Effect{
+		DiscardTop{Player: Controller, Amount: 3},
+		ForEachDiscarded{House: Logos, Do: GainAember{Player: Controller, Amount: 1}},
+	}}.Resolve(ctx)
+
+	if g.Aember(0) != 2 {
+		t.Errorf("gained %d Æmber, want 2 (one per Logos card)", g.Aember(0))
+	}
 }

@@ -199,10 +199,44 @@ func TestPlayFromValidatesItsSourcePile(t *testing.T) {
 	if err := (PlayFrom{}).validate(); err == nil {
 		t.Error("an effect with no source pile should be rejected")
 	}
-	if err := (PlayFrom{From: Archives}).validate(); err == nil {
-		t.Error("the archives are not a pile a card may be played from")
-	}
 	if err := (PlayFrom{From: Discard}).validate(); err != nil {
 		t.Errorf("playing from the discard pile should validate: %v", err)
+	}
+}
+
+// TestPlayFromArchives covers Project Z.Y.X.: a creature plays a card out of its
+// controller's archives, bypassing the active-house gate.
+func TestPlayFromArchives(t *testing.T) {
+	e := PlayFrom{From: Archives, Type: Creature}
+	want := "play a creature from your archives"
+	if e.Text() != want {
+		t.Errorf("text = %q, want %q", e.Text(), want)
+	}
+	if err := (PlayFrom{From: Archives}).validate(); err != nil {
+		t.Errorf("playing from the archives should validate: %v", err)
+	}
+
+	g := started(t) // Brobnar is the active house.
+	creature := g.AddToArchives(NewCard("Archived", Logos, Creature, Common, WithPower(2)), 0)
+	g.AddToArchives(NewCard("Archived Tactic", Logos, Tactic, Common), 0) // wrong type
+
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+
+	if got := g.Battleline(0); len(got) != 1 || got[0] != creature {
+		t.Errorf("battleline = %v, want the creature %d from the archives", got, creature)
+	}
+	if g.State.Archives[0].contains(creature) {
+		t.Error("the played creature should have left the archives")
+	}
+}
+
+func TestGamePlayFromArchivesIgnoresACardElsewhere(t *testing.T) {
+	g := started(t)
+	inHand := g.AddToHand(NewCard("Not Archived", Logos, Creature, Common, WithPower(2)), 0)
+
+	g.PlayFromArchives(0, inHand)
+
+	if got := len(g.Battleline(0)); got != 0 {
+		t.Errorf("battleline holds %d creatures, want none", got)
 	}
 }

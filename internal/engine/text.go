@@ -309,6 +309,9 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 	if s := attackIgnoresText(def); s != "" {
 		rules = append(rules, s)
 	}
+	if s := attackKeywordsText(def); s != "" {
+		rules = append(rules, s)
+	}
 	rules = append(rules, restrictionText(def.Restricts, def.Type == Upgrade)...)
 	if def.PreventSteal {
 		rules = append(rules, "Your Æmber cannot be stolen.")
@@ -319,14 +322,16 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 	if s := def.PlayRequirement.text(); s != "" {
 		rules = append(rules, strings.ReplaceAll(s, SelfName, def.Name))
 	}
-	if s := keyCostText(def.KeyCostChange); s != "" {
-		rules = append(rules, strings.ReplaceAll(s, SelfName, def.Name))
+	for _, kc := range def.KeyCostChanges {
+		if s := keyCostText(kc); s != "" {
+			rules = append(rules, strings.ReplaceAll(s, SelfName, def.Name))
+		}
 	}
 	if s := def.HouseLock.text(); s != "" {
 		rules = append(rules, strings.ReplaceAll(s, SelfName, def.Name))
 	}
 	if s := drawModifierText(def.DrawModifier); s != "" {
-		rules = append(rules, s)
+		rules = append(rules, strings.ReplaceAll(s, SelfName, def.Name))
 	}
 	if s := playPermissionText(def.PlayPermission); s != "" {
 		rules = append(rules, s)
@@ -367,7 +372,7 @@ func CardDocComment(def *CardDefinition) string {
 }
 
 // drawModifierText renders a card's continuous change to a player's end-of-turn
-// hand refill, e.g. `During your "draw cards" step, refill your hand to 1
+// hand refill, e.g. `During your "draw cards" phase, refill your hand to 1
 // additional card.` Returns "" when the modifier is zero.
 func drawModifierText(m DrawModifier) string {
 	if m.Amount == 0 {
@@ -381,32 +386,37 @@ func drawModifierText(m DrawModifier) string {
 	if n != 1 {
 		noun = "cards"
 	}
+	var s string
 	switch m.Player {
 	case Controller:
-		return fmt.Sprintf(
-			"During your %q step, refill your hand to %d %s %s.",
+		s = fmt.Sprintf(
+			"During your %q phase, refill your hand to %d %s %s.",
 			"draw cards",
 			n,
 			word,
 			noun,
 		)
 	case Opponent:
-		return fmt.Sprintf(
-			"During their %q step, your opponent refills their hand to %d %s %s.",
+		s = fmt.Sprintf(
+			"During their %q phase, your opponent refills their hand to %d %s %s.",
 			"draw cards",
 			n,
 			word,
 			noun,
 		)
 	default: // EachPlayer
-		return fmt.Sprintf(
-			"During their %q step, each player refills their hand to %d %s %s.",
+		s = fmt.Sprintf(
+			"During their %q phase, each player refills their hand to %d %s %s.",
 			"draw cards",
 			n,
 			word,
 			noun,
 		)
 	}
+	if m.OnlyWhileOffFlank {
+		s = "While " + SelfName + " is not on a flank, " + strings.ToLower(s[:1]) + s[1:]
+	}
+	return s
 }
 
 // staticText renders an Upgrade's continuous modifier, e.g.
@@ -654,10 +664,13 @@ func restrictionText(r Restrictions, isUpgrade bool) []string {
 		)
 	}
 	if r.SkipForge {
-		lines = append(lines, `You skip your "forge a key" step.`)
+		lines = append(lines, `You skip your "forge a key" phase.`)
 	}
 	if n := r.NoForgeKeyNumber; n > 0 {
 		lines = append(lines, fmt.Sprintf("Players cannot forge their %s key.", ordinalWord(n)))
+	}
+	if r.MustFightIfAble {
+		lines = append(lines, "Creatures must fight when used, if able.")
 	}
 	return lines
 }
@@ -816,6 +829,32 @@ func attackIgnoresText(def *CardDefinition) string {
 	}
 	return fmt.Sprintf(
 		"While %s is attacking, ignore %s.",
+		def.Name,
+		strings.Join(words, " and "),
+	)
+}
+
+// attackKeywordsText renders the keywords a creature gains while attacking, e.g.
+// "Spyyyder gains poison while attacking an enemy flank creature." Returns "" when
+// the creature gains none.
+func attackKeywordsText(def *CardDefinition) string {
+	ak := def.AttackKeywords
+	if len(ak.Keywords) == 0 {
+		return ""
+	}
+	words := make([]string, len(ak.Keywords))
+	for i, kw := range ak.Keywords {
+		words[i] = strings.ToLower(kw.String())
+	}
+	if ak.FlankOnly {
+		return fmt.Sprintf(
+			"%s gains %s while attacking an enemy flank creature.",
+			def.Name,
+			strings.Join(words, " and "),
+		)
+	}
+	return fmt.Sprintf(
+		"%s gains %s while attacking.",
 		def.Name,
 		strings.Join(words, " and "),
 	)

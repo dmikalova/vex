@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"slices"
+	"testing"
+)
 
 func TestHealEffect(t *testing.T) {
 	g := NewGame("A", "B", 1)
@@ -248,9 +251,9 @@ func TestSetDamageClampsNegative(t *testing.T) {
 	}
 }
 
-// TestHealSkipsUndamagedNeighbor pins the one way an undamaged creature still
-// reaches the healing loop: the chosen creature's neighbours are pulled in after
-// the keep-filter has already dropped everything with no damage on it.
+// TestHealSkipsUndamagedNeighbor pins that an undamaged creature reaching the
+// healing loop — the chosen creature's neighbours, pulled in after the choice —
+// heals nothing and is not counted, even though every creature is now offered.
 func TestHealSkipsUndamagedNeighbor(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	wounded := g.AddToBattleline(testCreature("wounded", 5), 0)
@@ -272,27 +275,38 @@ func TestHealSkipsUndamagedNeighbor(t *testing.T) {
 	}
 }
 
-// healChooserTrap fails the test if the engine asks it anything: healing an
-// undamaged board must not reach a prompt at all.
-type healChooserTrap struct{ t *testing.T }
-
-func (c healChooserTrap) ChooseCreature(_, prompt string, _ []LocalID) (LocalID, bool) {
-	c.t.Errorf("unexpected prompt %q: healing an undamaged board should ask nothing", prompt)
-	return 0, false
+// healChooserSpy records that the engine asked it to choose, so a test can pin
+// that healing offers a choice even when nothing on the board is damaged.
+type healChooserSpy struct {
+	asked bool
+	ids   []LocalID
 }
 
-// TestHealAsksNothingWhenNothingIsDamaged pins that a chosen heal with no damaged
-// candidate never reaches the chooser — on an undamaged board the prompt is a
-// choice that cannot change anything (Guardian Demon).
-func TestHealAsksNothingWhenNothingIsDamaged(t *testing.T) {
+func (c *healChooserSpy) ChooseCreature(_, _ string, ids []LocalID) (LocalID, bool) {
+	c.asked = true
+	c.ids = ids
+	return ids[0], true
+}
+
+// TestHealOffersEveryCreatureEvenUndamaged pins that "heal a creature" is a real
+// choice the player always makes: on an undamaged board it still offers every
+// creature (choosing one heals nothing), rather than skipping the prompt.
+func TestHealOffersEveryCreatureEvenUndamaged(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	g.AddToBattleline(testCreature("a", 5), 0)
-	g.AddToBattleline(testCreature("b", 5), 0)
-	g.SetChooser(0, healChooserTrap{t})
+	a := g.AddToBattleline(testCreature("a", 5), 0)
+	b := g.AddToBattleline(testCreature("b", 5), 0)
+	spy := &healChooserSpy{}
+	g.SetChooser(0, spy)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	if (Heal{Amount: 2, Target: Target{Kind: TargetChosenFriendlyCreature}}).resolveGate(ctx) {
-		t.Error("healing an undamaged board should report nothing healed")
+		t.Error("healing an undamaged creature should report nothing healed")
+	}
+	if !spy.asked {
+		t.Error("healing should offer a choice even with nothing damaged")
+	}
+	if want := []LocalID{a, b}; !slices.Equal(spy.ids, want) {
+		t.Errorf("offered %v, want every creature %v", spy.ids, want)
 	}
 }
 

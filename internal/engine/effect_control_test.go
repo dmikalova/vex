@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"slices"
+	"testing"
+)
 
 func TestTakeControl(t *testing.T) {
 	if got := (TakeControl{Duration: UntilThisLeavesPlay}).Text(); got != "take control of this creature until {upgrade} leaves play" {
@@ -36,6 +39,46 @@ func TestTakeControl(t *testing.T) {
 	}
 	if !g.State.Battleline[0].contains(host) || g.State.Battleline[1].contains(host) {
 		t.Fatalf("battlelines = %v/%v, want host only under P1", g.Battleline(0), g.Battleline(1))
+	}
+}
+
+// TestTakeControlPlacesSeizedCreatureOnChosenFlank pins that the player gaining
+// control places the seized creature on the flank they choose, and that an empty
+// taker line — the creature's only home — is not worth a prompt.
+func TestTakeControlPlacesSeizedCreatureOnChosenFlank(t *testing.T) {
+	take := TakeControl{
+		Target:   Target{Kind: TargetChosenEnemyCreature},
+		Duration: UntilThisLeavesPlay,
+	}
+
+	// A creature already in the taker's line: the flank is asked and honored.
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("src", 3), 0)
+	mine := g.AddToBattleline(testCreature("mine", 3), 0)
+	foe := g.AddToBattleline(testCreature("foe", 3), 1)
+	g.SetChooser(0, optionPicker{idx: 1}) // right flank
+	take.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+	if got, want := g.Battleline(0), []LocalID{src, mine, foe}; !slices.Equal(got, want) {
+		t.Fatalf("right-flank placement = %v, want %v", got, want)
+	}
+
+	// The left flank places the seized creature at the head of the line.
+	g2 := NewGame("A", "B", 1)
+	s2 := g2.AddToBattleline(testCreature("s2", 3), 0)
+	f2 := g2.AddToBattleline(testCreature("f2", 3), 1)
+	g2.SetChooser(0, optionPicker{idx: 0})
+	take.Resolve(&EffectContext{Resolver: g2, Source: s2, Controller: 0})
+	if got, want := g2.Battleline(0), []LocalID{f2, s2}; !slices.Equal(got, want) {
+		t.Fatalf("left-flank placement = %v, want %v", got, want)
+	}
+
+	// An empty taker line: the seized creature has one home, so no flank is asked.
+	g3 := NewGame("A", "B", 1)
+	box := g3.AddArtifact(NewCard("box", Logos, Artifact, Rare), 0)
+	f3 := g3.AddToBattleline(testCreature("f3", 3), 1)
+	take.Resolve(&EffectContext{Resolver: g3, Source: box, Controller: 0})
+	if got, want := g3.Battleline(0), []LocalID{f3}; !slices.Equal(got, want) {
+		t.Fatalf("single placement = %v, want %v", got, want)
 	}
 }
 

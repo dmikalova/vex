@@ -187,6 +187,7 @@ const (
 	Quest
 	Ranger
 	Rat
+	Redacted
 	Robot
 	Scientist
 	Shard
@@ -236,6 +237,7 @@ var traitNames = [traitCount]string{
 	Quest:     "Quest",
 	Ranger:    "Ranger",
 	Rat:       "Rat",
+	Redacted:  "[redacted]",
 	Robot:     "Robot",
 	Scientist: "Scientist",
 	Shard:     "Shard",
@@ -376,6 +378,12 @@ const (
 	// This ability resolves after any creature enters play, including creatures
 	// your opponent plays.
 	TriggerAfterCreatureEnters
+	// This ability resolves after a creature is played into a battleline position
+	// adjacent to the card holding the ability — the creature that was played is
+	// referred to as "it". Because a creature is only ever played onto its own
+	// controller's battleline, only the controller's own plays reach it (Fila the
+	// Researcher draws a card each time).
+	TriggerAfterCreaturePlayedAdjacent
 	// A Destroyed ability resolves as the card is destroyed, before it reaches the
 	// discard pile, so it can still act on the board it is leaving.
 	TriggerDestroyed
@@ -497,6 +505,8 @@ func (t Trigger) String() string {
 		return "After You Forge a Key"
 	case TriggerAfterCreatureEnters:
 		return "After a Creature Enters Play"
+	case TriggerAfterCreaturePlayedAdjacent:
+		return "After a Creature Is Played Adjacent"
 	case TriggerDestroyed:
 		return "Destroyed"
 	case TriggerBeforeFight:
@@ -564,6 +574,8 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return "After a player forges a key, ", false
 	case TriggerAfterCreatureEnters:
 		return "After a creature enters play, ", false
+	case TriggerAfterCreaturePlayedAdjacent:
+		return "After a creature is played adjacent to " + SelfName + ", ", false
 	case TriggerAfterDestroyedFighting:
 		return "After a creature is destroyed fighting " + SelfName + ", ", false
 	case TriggerAfterEnemyCreatureDestroyed:

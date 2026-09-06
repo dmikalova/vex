@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Demon
 //
-//	During their "draw cards" step, your opponent refills their hand to 1 less card.
+//	During their "draw cards" phase, your opponent refills their hand to 1 less card.
 func TestSuccubus(t *testing.T) {
 	t.Run("refills the opponent's hand to one fewer card", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

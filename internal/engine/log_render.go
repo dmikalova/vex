@@ -98,7 +98,7 @@ func iconAt(text string, i int) (LogSegment, bool) {
 	}
 	// "key phase" names the turn phase, not an actual key, so it stays plain text.
 	if wordAt(text, i, "key") && !strings.HasPrefix(text[i+len("key"):], " phase") {
-		return LogSegment{Text: "key", Icon: "key"}, true
+		return LogSegment{Text: "key", Icon: keyIconBefore(text, i)}, true
 	}
 	if zone, ok := zoneIconAt(text, i); ok {
 		return zone, true
@@ -134,6 +134,21 @@ func zoneIconAt(text string, i int) (LogSegment, bool) {
 // houseIconKey is the concept key of a house's emblem.
 func houseIconKey(h House) string {
 	return "house-" + strings.ToLower(h.String())
+}
+
+// keyIconBefore picks the key emblem for the "key" noun at text[i]: a coloured
+// key when the word just before it names a forged colour ("forges a Red key"),
+// the plain key otherwise ("forges a key", "unforges a key").
+func keyIconBefore(text string, i int) string {
+	before := strings.TrimRight(text[:i], " ")
+	for _, c := range keyColorOrder {
+		name := c.String()
+		if j := len(before) - len(name); strings.HasSuffix(before, name) &&
+			(j == 0 || before[j-1] == ' ') {
+			return "key-" + strings.ToLower(name)
+		}
+	}
+	return "key"
 }
 
 // namedThing is one card or player an entry asked to have named while it

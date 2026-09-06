@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Traits: Location
 //
-//	During their "draw cards" step, each player refills their hand to 1 additional card.
+//	During their "draw cards" phase, each player refills their hand to 1 additional card.
 var TheHowlingPit = card.New(
 	"The Howling Pit",
 	card.House.Logos,

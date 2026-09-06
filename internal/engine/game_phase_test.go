@@ -76,6 +76,28 @@ func TestEndPhaseSkipsAnOpenPhase(t *testing.T) {
 	}
 }
 
+func TestConcedeHandsTheGameToTheOpponent(t *testing.T) {
+	g := NewGame("Alice", "Bob", 1)
+
+	g.Concede(0)
+
+	if g.Winner() != 1 {
+		t.Fatalf("winner = %d, want 1 (opponent of the conceding player)", g.Winner())
+	}
+	last := g.Log[len(g.Log)-1].Entry
+	if _, ok := last.(PlayerConceded); !ok {
+		t.Errorf("last log entry = %#v, want PlayerConceded", last)
+	}
+
+	// A second concede is a no-op: the game is already decided.
+	before := len(g.Log)
+	g.Concede(1)
+	if g.Winner() != 1 || len(g.Log) != before {
+		t.Errorf("conceding a decided game changed it: winner %d, log grew by %d",
+			g.Winner(), len(g.Log)-before)
+	}
+}
+
 func TestNoPhaseLogAfterGameWon(t *testing.T) {
 	g := NewGame("Alice", "Bob", 1)
 	g.State.Keys[0] = KeysToWin - 1

@@ -47,7 +47,6 @@ func TestAttackIgnoresKeywords(t *testing.T) {
 	if got := attackIgnoresText(&CardDefinition{Name: "plain"}); got != "" {
 		t.Errorf("a creature that ignores nothing should print nothing, got %q", got)
 	}
-
 	g := started(t)
 	attacker := g.AddToBattleline(ape(), 0)
 	def := ape()
@@ -73,6 +72,24 @@ func TestAttackIgnoresKeywords(t *testing.T) {
 	g.fight(attacker, hidden)
 	if g.inPlay(hidden) {
 		t.Error("an attacker ignoring elusive should destroy the hidden creature")
+	}
+}
+
+func TestAttackKeywordsText(t *testing.T) {
+	if got := attackKeywordsText(&CardDefinition{
+		Name:           "Spyyyder",
+		AttackKeywords: AttackKeywords{Keywords: []Keyword{Poison}, FlankOnly: true},
+	}); got != "Spyyyder gains poison while attacking an enemy flank creature." {
+		t.Errorf("flank-only text = %q", got)
+	}
+	if got := attackKeywordsText(&CardDefinition{
+		Name:           "Foo",
+		AttackKeywords: AttackKeywords{Keywords: []Keyword{Poison}},
+	}); got != "Foo gains poison while attacking." {
+		t.Errorf("plain text = %q", got)
+	}
+	if got := attackKeywordsText(&CardDefinition{Name: "plain"}); got != "" {
+		t.Errorf("a creature that gains nothing should print nothing, got %q", got)
 	}
 }
 

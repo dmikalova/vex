@@ -86,6 +86,7 @@ func (g *Game) fight(attacker, defender LocalID) {
 			if redirect != 0 {
 				dmgTarget = redirect
 			}
+			before := g.State.Cards[dmgTarget].Damage
 			targets := []DamageTarget{{ID: dmgTarget, Amount: g.fightDamage(attacker, defender)}}
 			if !g.hasKeyword(attacker, Skirmish) &&
 				!g.cat.def(defender).DealsNoDamageWhenAttacked {
@@ -99,6 +100,14 @@ func (g *Game) fight(attacker, defender LocalID) {
 				}
 			}
 			g.dealDamage(g.controller(attacker), targets...)
+			// An attacker that gains poison for this fight destroys the creature it
+			// dealt fight damage to, if that creature took any damage and survived.
+			if g.attackGrantsPoison(attacker, defender) &&
+				g.inPlay(dmgTarget) &&
+				g.State.Cards[dmgTarget].Damage > before {
+				g.destroyEach(g.controller(attacker), []LocalID{dmgTarget})
+			}
+
 		}
 	}
 	// A creature the fight destroyed has left play, so its "After Fight:" ability
@@ -167,9 +176,21 @@ func (g *Game) attackIgnores(attacker LocalID, k Keyword) bool {
 	return false
 }
 
-// protectedByTaunt reports whether a creature cannot be chosen to be fought by an
-// attacker: a taunter shields its neighbors, so a neighbor of one is out of reach
-// unless it has taunt itself or the attacker ignores taunt.
+// attackGrantsPoison reports whether an attacker gains poison for a fight against
+// this defender — Spyyyder gains poison only when the defender is on a flank.
+func (g *Game) attackGrantsPoison(attacker, defender LocalID) bool {
+	ak := g.cat.def(attacker).AttackKeywords
+	if ak.FlankOnly && !g.onFlankOf(defender) {
+		return false
+	}
+	for _, kw := range ak.Keywords {
+		if kw == Poison {
+			return true
+		}
+	}
+	return false
+}
+
 func (g *Game) protectedByTaunt(attacker, target LocalID) bool {
 	if g.attackIgnores(attacker, Taunt) || g.hasKeyword(target, Taunt) {
 		return false

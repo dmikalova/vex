@@ -5,8 +5,6 @@
 package match
 
 import (
-	"math/rand"
-
 	"github.com/dmikalova/vactrol/internal/cards"
 	"github.com/dmikalova/vactrol/internal/deckgen"
 	"github.com/dmikalova/vactrol/internal/engine"
@@ -19,21 +17,23 @@ const DeckSize = deckgen.DeckSize
 // DeckHouseCount is how many houses make up a deck — three, as in KeyForge.
 const DeckHouseCount = deckgen.PodCount
 
-// New creates a two-player game seeded for deterministic play, deals each player
-// a procedurally generated three-house deck, and returns the game together with
-// each player's three houses. The caller installs choosers and calls StartTurn to
-// start play, so each frontend can wire in its own interaction model first.
+// New creates a two-player game seeded for deterministic play, generates each
+// player a procedurally generated three-house deck into their deck zone, and
+// returns the game together with each player's three houses. The caller installs
+// choosers and calls engine.StartGame to deal opening hands and start play, so
+// each frontend can wire in its own interaction model first.
 func New(p0Name, p1Name string, seed int64) (*engine.Game, [2][]engine.House) {
-	g, houses, _ := NewWithMavericks(p0Name, p1Name, seed)
+	g, houses, _, _ := NewWithMavericks(p0Name, p1Name, seed)
 	return g, houses
 }
 
 // NewWithMavericks is New plus, for each player, the LocalID of every Maverick
-// card it was dealt — a card played out of its printed house — so a frontend can
+// card it was dealt — a card played out of its printed house — and the LocalID of
+// every Legacy card — a card drawn from an earlier set's pool — so a frontend can
 // badge those cards. The game and houses are exactly what New returns.
 func NewWithMavericks(
 	p0Name, p1Name string, seed int64,
-) (*engine.Game, [2][]engine.House, [2][]engine.LocalID) {
+) (*engine.Game, [2][]engine.House, [2][]engine.LocalID, [2][]engine.LocalID) {
 	return NewWithSets(p0Name, p1Name, seed, [2]string{})
 }
 
@@ -43,17 +43,19 @@ func NewWithMavericks(
 // the zero value.
 func NewWithSets(
 	p0Name, p1Name string, seed int64, setNames [2]string,
-) (*engine.Game, [2][]engine.House, [2][]engine.LocalID) {
+) (*engine.Game, [2][]engine.House, [2][]engine.LocalID, [2][]engine.LocalID) {
 	g := engine.NewGame(p0Name, p1Name, seed)
-	houses, mavericks := SetupDecksFor(g, seed, setNames)
-	return g, houses, mavericks
+	houses, mavericks, legacies := SetupDecksFor(g, seed, setNames)
+	return g, houses, mavericks, legacies
 }
 
-// SetupDecks generates each player a deck (see internal/deckgen), shuffles it
-// deterministically from the seed so the opening hand is not house-blocked, deals
-// an opening hand, and returns each player's three houses (sorted by name)
-// together with the LocalID of every Maverick card that player was dealt.
-func SetupDecks(g *engine.Game, seed int64) ([2][]engine.House, [2][]engine.LocalID) {
+// SetupDecks generates each player a deck (see internal/deckgen) into their deck
+// zone and returns each player's three houses (sorted by name) together with the
+// LocalID of every Maverick card and every Legacy card that player was dealt.
+// engine.StartGame shuffles and deals the opening hands.
+func SetupDecks(
+	g *engine.Game, seed int64,
+) ([2][]engine.House, [2][]engine.LocalID, [2][]engine.LocalID) {
 	return SetupDecksFor(g, seed, [2]string{})
 }
 
@@ -72,40 +74,28 @@ func setFor(name string) deckgen.Set {
 // frontend can let the two players play different sets.
 func SetupDecksFor(
 	g *engine.Game, seed int64, setNames [2]string,
-) ([2][]engine.House, [2][]engine.LocalID) {
+) ([2][]engine.House, [2][]engine.LocalID, [2][]engine.LocalID) {
 	var houses [2][]engine.House
 	var mavericks [2][]engine.LocalID
+	var legacies [2][]engine.LocalID
 	for player := 0; player < 2; player++ {
 		deck := deckgen.Generate(setFor(setNames[player]), seed+int64(player)+1)
 		houses[player] = deck.Houses()
 
-		// Deal each card with its Maverick flag alongside, so the flag survives the
-		// shuffle and can be pinned to the LocalID the engine assigns on deal.
-		defs := make([]engine.CardDefinition, 0, deckgen.DeckSize)
-		maverick := make([]bool, 0, deckgen.DeckSize)
+		// The whole deck goes into the deck zone; engine.StartGame shuffles it and
+		// deals the opening hands. Each card's Maverick and Legacy flags are pinned to
+		// the LocalID the engine assigns on add, so the badge survives that shuffle.
 		for _, pod := range deck.Pods {
 			for _, s := range pod.Slots {
-				defs = append(defs, s.Card)
-				maverick = append(maverick, s.Maverick)
-			}
-		}
-
-		r := rand.New(rand.NewSource(seed + int64(player) + 100))
-		r.Shuffle(len(defs), func(i, j int) {
-			defs[i], defs[j] = defs[j], defs[i]
-			maverick[i], maverick[j] = maverick[j], maverick[i]
-		})
-		for i, d := range defs {
-			var id engine.LocalID
-			if i < engine.HandSize {
-				id = g.AddToHand(d, player)
-			} else {
-				id = g.AddToDeck(d, player)
-			}
-			if maverick[i] {
-				mavericks[player] = append(mavericks[player], id)
+				id := g.AddToDeck(s.Card, player)
+				if s.Maverick {
+					mavericks[player] = append(mavericks[player], id)
+				}
+				if s.Legacy {
+					legacies[player] = append(legacies[player], id)
+				}
 			}
 		}
 	}
-	return houses, mavericks
+	return houses, mavericks, legacies
 }

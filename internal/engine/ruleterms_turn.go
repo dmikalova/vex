@@ -25,6 +25,29 @@ now, before you forge, so an ability that changes what a key costs or adjusts yo
 abilities when more than one triggers.`,
 		},
 		{
+			Section:    SectionTurn,
+			Title:      "Setup",
+			Subtitle:   "opening hand and mulligan",
+			Definition: "Each player's starting hand: the first player draws 7 cards, the second draws 6, and each may mulligan once for one card fewer.",
+			Body: `To set up, one player is chosen to take the first turn. That first player draws a
+starting hand of 7 cards; the other player draws 6. Then each player, starting
+with the first, may mulligan once: shuffle their whole hand back into their deck
+and draw a new hand of one card fewer — 6 for the first player, 5 for the second.
+A player who mulligans keeps the new hand. Chains cut the opening draw the same way
+they cut any draw, and a mulligan sheds no further chain.`,
+		},
+		{
+			Section:    SectionTurn,
+			Title:      "First turn rule",
+			Subtitle:   "the first player's first turn",
+			Definition: "On the first player's first turn, they may play or discard only one card from their hand.",
+			Body: `On the first player's first turn only, that player may play or discard just one
+card from their hand — one or the other, not both. Using creatures to reap, fight,
+or take an "Action:" is unaffected. A card the played card lets its controller
+play (Wild Wormhole, Phase Shift) does not count against this limit, and a card
+effect can modify the rule.`,
+		},
+		{
 			Section:  SectionTurn,
 			Title:    "Turn structure",
 			Subtitle: PhaseForge.rulebookStep(),

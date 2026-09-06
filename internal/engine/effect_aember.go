@@ -86,6 +86,57 @@ func (e GainAember) gain(ctx *EffectContext, p int) {
 	ctx.Resolver.Record(AemberGained{Player: p, Amount: amount})
 }
 
+// GainAemberEqualTo has a player gain Æmber equal to a running count rather than a
+// fixed amount, so the sentence reads "gain Æmber equal to <count>" instead of the
+// "for each" phrasing GainAember's Per produces (The Flex gains half a creature's
+// power).
+type GainAemberEqualTo struct {
+	Player Player
+	Count  Count
+}
+
+// validate rejects a GainAemberEqualTo whose player or count was left unset.
+func (e GainAemberEqualTo) validate() error {
+	if !e.Player.valid() {
+		return errUnsetPlayer("GainAemberEqualTo")
+	}
+	if e.Count == nil {
+		return errors.New("GainAemberEqualTo: Count is required")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "gain Æmber equal to half its power, rounded down".
+func (e GainAemberEqualTo) Text() string {
+	verb := "gain"
+	switch e.Player {
+	case Opponent:
+		verb = "your opponent gains"
+	case EachPlayer:
+		verb = "each player gains"
+	}
+	return verb + " Æmber equal to " + e.Count.CountText()
+}
+
+// Resolve gives the selected player Æmber equal to the count, honouring a capture
+// that replaces the gain. A zero or negative count gains nothing.
+func (e GainAemberEqualTo) Resolve(ctx *EffectContext) {
+	amount := e.Count.Value(ctx)
+	if amount <= 0 {
+		return
+	}
+	p := ctx.PlayerFor(e.Player)
+	if capturer, ok := ctx.Resolver.GainAember(p, amount); ok {
+		ctx.Resolver.Record(AemberCapturedInsteadOfGain{
+			Creature: capturer,
+			Player:   p,
+			Amount:   amount,
+		})
+		return
+	}
+	ctx.Resolver.Record(AemberGained{Player: p, Amount: amount})
+}
+
 // A Loss says how much Æmber to remove from a pool when the amount depends on the
 // pool's current size — half of it, or all but a fixed remainder. A LoseAember uses
 // one via its By field instead of a fixed Amount.
@@ -282,6 +333,33 @@ func (e MoveAemberFromPool) validate() error {
 	}
 	if e.Target == (Target{}) {
 		return errors.New("MoveAemberFromPool needs a Target")
+	}
+	return nil
+}
+
+// PlaceAemberOnThis places Amount Æmber from the common supply on the source card,
+// where it accrues until the card is destroyed ([REDACTED] hoards Æmber each time
+// you choose its house). Unlike MoveAemberFromPool the Æmber comes from the supply,
+// not a player's pool.
+type PlaceAemberOnThis struct {
+	// Amount is how much Æmber to place on the source card.
+	Amount int
+}
+
+// Text renders the effect, e.g. "place 1 Æmber from the common supply on {self}".
+func (e PlaceAemberOnThis) Text() string {
+	return fmt.Sprintf("place %d Æmber from the common supply on %s", e.Amount, SelfName)
+}
+
+// Resolve places the Æmber on the source card.
+func (e PlaceAemberOnThis) Resolve(ctx *EffectContext) {
+	ctx.Resolver.AddAmberOn(ctx.Source, e.Amount)
+}
+
+// validate rejects a placement of nothing.
+func (e PlaceAemberOnThis) validate() error {
+	if e.Amount <= 0 {
+		return errors.New("PlaceAemberOnThis needs a positive Amount")
 	}
 	return nil
 }

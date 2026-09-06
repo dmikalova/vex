@@ -145,4 +145,16 @@ func TestMoveToFlank(t *testing.T) {
 	if got, want := g.Battleline(1), []LocalID{a, c, mover}; !slices.Equal(got, want) {
 		t.Fatalf("battleline after empty target = %v, want %v", got, want)
 	}
+
+	// A triggering creature the preceding effect destroyed still selects, but it
+	// has left the battleline: it is skipped before a flank is asked, so no move
+	// happens and the line is unchanged.
+	gone := g.AddToBattleline(testCreature("gone", 2), 1)
+	g.removeFromPlay(gone)
+	before := slices.Clone(g.Battleline(1))
+	MoveToFlank{Target: Target{Kind: TargetTriggeringCreature}}.
+		Resolve(&EffectContext{Resolver: g, Controller: 0, It: gone, HasIt: true})
+	if got := g.Battleline(1); !slices.Equal(got, before) {
+		t.Fatalf("moving a departed creature changed the battleline: %v", got)
+	}
 }

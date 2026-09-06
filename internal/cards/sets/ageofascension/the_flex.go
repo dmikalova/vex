@@ -1,24 +1,29 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// TheFlex
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// The Flex
 //
 //	House:  Brobnar
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Choose a ready friendly Brobnar creature. Exhaust it and gain A equal to half its power (rounding down the gain).
+//	Play: Choose a friendly ready Brobnar creature - exhaust it, and gain Æmber equal to half its power, rounded down.
 var TheFlex = card.New(
 	"The Flex",
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.AoA, 31),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.ChooseCreatureThen{
+			Target: card.Target.FriendlyCreature.OfHouse(card.House.Self).Ready(),
+			Then: card.Sequence{Effects: []card.Effect{
+				card.Exhaust{Target: card.Target.Triggering},
+				card.GainAemberEqualTo{
+					Player: card.Controller,
+					Count:  card.HalfPowerOfChosen{},
+				},
+			}},
+		}),
 )

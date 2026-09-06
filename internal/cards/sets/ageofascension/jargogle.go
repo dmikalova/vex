@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Jargogle
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Logos
 //	Type:   Creature
@@ -17,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Play: Put a card from your hand facedown under Jargogle.
-//	Destroyed: If it is your turn, play the card under Jargogle; otherwise, archive that card.
+//	Destroyed: If it is your turn, play the card under Jargogle. Otherwise, archive the card under Jargogle.
 var Jargogle = card.New(
 	"Jargogle",
 	card.House.Logos,
@@ -26,5 +21,13 @@ var Jargogle = card.New(
 	card.Provenance(card.AoA, 131),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Beast, card.Traits.Mutant),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithAbility(
+		card.Trigger.Play, card.PutUnderFromHand{FaceDown: true}),
+	card.WithAbility(
+		card.Trigger.Destroyed, card.Conditional{
+			Cond: card.ItIsYourTurn{},
+			Then: card.PlayCardUnder{},
+			Else: card.ArchiveCardUnder{},
+		}),
 )

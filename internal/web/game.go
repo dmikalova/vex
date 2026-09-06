@@ -52,6 +52,9 @@ type game struct {
 	// mavericks holds the LocalID of every Maverick card dealt this match (a card
 	// played out of its printed house), so its face shows the maverick emblem.
 	mavericks map[engine.LocalID]bool
+	// legacy holds the LocalID of every Legacy card dealt this match (a card drawn
+	// from an earlier set's pool), so its face shows the legacy emblem.
+	legacy map[engine.LocalID]bool
 
 	// dispatch schedules a mutation on the UI goroutine (captured from a Context).
 	// It lets the background chooser update fields safely.
@@ -74,6 +77,16 @@ type game struct {
 	swipeStartX    float64
 	swipeStartY    float64
 	swipeTracking  bool
+
+	// tipDownFunc/tipMoveFunc/tipUpFunc back the touch-drag that shows the player
+	// bar's stat tooltips on a touchscreen; all three are released on dismount.
+	// tipTracking marks a press in progress (which also suppresses the sidebar
+	// swipe), and tipActive is the stat element whose tooltip is currently shown.
+	tipDownFunc app.Func
+	tipMoveFunc app.Func
+	tipUpFunc   app.Func
+	tipTracking bool
+	tipActive   app.Value
 
 	phase phase
 	busy  bool // an action goroutine is resolving; input is ignored
@@ -118,6 +131,11 @@ type game struct {
 	choosingOption bool
 	optionPrompt   string
 	optionLabels   []string
+
+	// cancelling marks a manual-mode Cancel in flight: the current prompt (and any
+	// that follow it as the effect drains) answers itself, and when the action
+	// goroutine returns runAction rolls the whole action back to its start snapshot.
+	cancelling bool
 
 	// zonesPlayer, when >= 0, opens the out-of-play zone viewer (discard, archives,
 	// and purge piles) for that player. -1 keeps the viewer closed.
@@ -238,11 +256,16 @@ type game struct {
 	// set — LocalID 0 is a real card (the first one dealt), so a zero id cannot mean
 	// "nothing hovered". hoverDef is a printed card looked up from a log mention.
 	// hoverInLog positions the preview left of the log (a mention) rather than over
-	// it (a board card).
-	hoverID    engine.LocalID
-	hasHover   bool
-	hoverDef   *engine.CardDefinition
-	hoverInLog bool
+	// it (a board card). hoverOverSidebar draws the mention preview over the sidebar
+	// instead of beside it, when the window is too narrow to show a whole card to the
+	// sidebar's left; hoverAtBottom anchors it to the bottom of the viewport when the
+	// tapped log line sits in the top half, so the preview never covers its source.
+	hoverID          engine.LocalID
+	hasHover         bool
+	hoverDef         *engine.CardDefinition
+	hoverInLog       bool
+	hoverOverSidebar bool
+	hoverAtBottom    bool
 
 	// flashes queues one-shot board animations computed after each action: which
 	// cards took damage, gained Æmber, changed power counters, were stunned or
@@ -451,6 +474,12 @@ type manualAdd struct {
 // card played out of its printed house), so its face can show the emblem.
 func (g *game) isMaverick(id engine.LocalID) bool {
 	return g.mavericks[id]
+}
+
+// isLegacy reports whether the dealt card with this LocalID is a Legacy card (a
+// card drawn from an earlier set's pool), so its face can show the emblem.
+func (g *game) isLegacy(id engine.LocalID) bool {
+	return g.legacy[id]
 }
 
 // cardsByName indexes every registered card's definition by its display name so

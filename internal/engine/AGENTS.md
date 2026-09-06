@@ -203,6 +203,27 @@ and `resolveReaction`; a new event = an `Event` value, one
 text. You never restructure the play/reap hot path. Keep the enum dispatch
 centralized.
 
+## Generic counters are a global side-table, not a field per kind
+
+Card-placed markers that only matter to the cards that read them — a doom counter
+(Wretched Doll), and its kin — live in one global side-table on `GameState`
+(`Counters [maxCounterEntries]CounterEntry` + `CounterCount`), not a bespoke
+`int16` field on `CardCore` per kind. `CardCore` is copied whole into every
+snapshot, so a field per kind would add hundreds of bytes to `FastCopy` for
+markers that are almost always absent; the side-table costs nothing when empty.
+The decision, its bound, and the rejected per-card layouts are ADR 0024.
+
+To add a counter: one `CounterKind` value in `counter.go` with its display noun —
+no rulebook term (the one "Generic Counters" entry covers them all), no new state
+field, no per-kind resolver method. Place and read through the generic
+`PlaceCounter{Kind, Target, Amount}` effect, the `CounterInPlay{Kind}` condition,
+the `Target.WithCounter(kind)` filter, and the `PlaceCounter`/`CountersOn`
+resolver methods. A per-card count folds into its entry's `N` (saturating), and a
+card sheds every entry through the one `removeFromPlay` funnel. Do **not** add a
+`FooCounters int16` to `CardCore` for a new marker. Power counters, damage, and
+Æmber-on-card stay bespoke: they are read on the hot path by identity and change a
+creature's power or fate, not markers a card names.
+
 ## Event, ability, and effect verbs: emit → trigger → resolve
 
 Three tiers of verb, kept distinct so a method name says which level it works at:

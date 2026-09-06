@@ -32,6 +32,33 @@ func TestHoverPreview(t *testing.T) {
 	}
 }
 
+// A log mention opens a printed-card preview and marks it as a log preview so it
+// is placed to clear the line it was read from. Off-browser there is no window to
+// measure, so the placement falls back to drawing over the sidebar.
+func TestLogMentionPreview(t *testing.T) {
+	c := newClient(t)
+	c.startTurn()
+	var def *engine.CardDefinition
+	for _, d := range c.g.defByName {
+		def = d
+		break
+	}
+	if def == nil {
+		t.Fatal("no card definitions to preview")
+	}
+
+	c.g.setLogPreview(c.ctx, def)
+	if !c.g.hoverInLog || c.g.hoverDef != def {
+		t.Fatalf("setLogPreview left hoverInLog=%v hoverDef=%v", c.g.hoverInLog, c.g.hoverDef)
+	}
+	if !c.g.previewUp() {
+		t.Error("a log-mention preview should read as up")
+	}
+	if !c.g.hoverOverSidebar {
+		t.Error("with no window to measure, the preview should default over the sidebar")
+	}
+}
+
 // A card that leaves the zones the client draws vanishes from the DOM without
 // firing a leave, so the preview has to notice on its own that it is stale.
 func TestHoverOfAGoneCardIsNotLive(t *testing.T) {
@@ -197,15 +224,18 @@ func TestNewGameSameSets(t *testing.T) {
 }
 
 // Every one of these guards exists so a prompt the player must answer is not
-// walked away from by a stray click behind it.
+// walked away from by a stray click behind it. Manual mode is the exception: it
+// may be toggled mid-prompt, since turning it on is how the player reaches the
+// Cancel that backs out of a prompt with no clickable answer.
 func TestBusyAndPromptGuards(t *testing.T) {
 	tests := []struct {
-		name string
-		arm  func(g *game)
+		name          string
+		arm           func(g *game)
+		manualToggles bool // manual mode may still be toggled in this state
 	}{
-		{"busy", func(g *game) { g.busy = true }},
-		{"choosing", func(g *game) { g.choosing = true }},
-		{"choosingOption", func(g *game) { g.choosingOption = true }},
+		{"busy", func(g *game) { g.busy = true }, false},
+		{"choosing", func(g *game) { g.choosing = true }, true},
+		{"choosingOption", func(g *game) { g.choosingOption = true }, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -219,8 +249,8 @@ func TestBusyAndPromptGuards(t *testing.T) {
 			}
 			wasManual := c.g.g.Manual()
 			c.do(c.g.toggleManual)
-			if c.g.g.Manual() != wasManual {
-				t.Error("toggleManual went through")
+			if toggled := c.g.g.Manual() != wasManual; toggled != tt.manualToggles {
+				t.Errorf("toggleManual changed=%v, want %v", toggled, tt.manualToggles)
 			}
 		})
 	}

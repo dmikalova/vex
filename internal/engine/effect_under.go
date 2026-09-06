@@ -110,3 +110,18 @@ func (PutUnderIntoPlay) Text() string {
 func (PutUnderIntoPlay) Resolve(ctx *EffectContext) {
 	ctx.Resolver.PutUnderIntoPlay(ctx.Source)
 }
+
+// ArchiveCardUnder archives the card placed under the resolving card, moving it
+// to its owner's archives — Jargogle's Destroyed ability when it is not its
+// controller's turn. It does nothing with nothing underneath.
+type ArchiveCardUnder struct{}
+
+// Text renders the effect, e.g. "archive the card under {self}".
+func (ArchiveCardUnder) Text() string {
+	return "archive the card under " + SelfName
+}
+
+// Resolve archives each card under the resolving card.
+func (ArchiveCardUnder) Resolve(ctx *EffectContext) {
+	ctx.Resolver.ArchiveCardUnder(ctx.Source)
+}

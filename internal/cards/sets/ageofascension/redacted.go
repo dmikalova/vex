@@ -1,20 +1,15 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// REDACTED
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// [REDACTED]
 //
 //	House:  Logos
 //	Type:   Artifact
 //	Rarity: Rare
 //	Traits: [redacted]
 //
-//	After you choose Logos as your active house, place 1A from the common supply on [REDACTED]. When there are 4 or more A on [REDACTED], sacrifice it and forge a key at no cost.
+//	After you choose Logos as your active house, place 1 Æmber from the common supply on [REDACTED]. If there are 4 or more Æmber on it, destroy [REDACTED], and forge a key at no cost.
 var REDACTED = card.New(
 	"[REDACTED]",
 	card.House.Logos,
@@ -22,5 +17,18 @@ var REDACTED = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, 139),
 	card.WithTraits(card.Traits.Redacted),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.AfterChooseHouse, card.Conditional{
+			Cond: card.ChoseHouse{House: card.House.Self},
+			Then: card.Sentences{Effects: []card.Effect{
+				card.PlaceAemberOnThis{Amount: 1},
+				card.Conditional{
+					Cond: card.AemberOnThisAtLeast{Amount: 4},
+					Then: card.Sequence{Effects: []card.Effect{
+						card.Destroy{Target: card.Target.This},
+						card.ForgeKey{FreeOfCost: true},
+					}},
+				},
+			}},
+		}),
 )

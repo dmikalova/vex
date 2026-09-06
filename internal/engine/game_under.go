@@ -140,3 +140,17 @@ func (g *Game) PutUnderIntoPlay(host LocalID) {
 		g.putIntoPlay(u, g.owner(u))
 	}
 }
+
+// ArchiveCardUnder moves every card placed under host to its owner's archives,
+// detaching each from the under-chain first — Jargogle's Destroyed ability when
+// it is not its controller's turn. Reading the chain into a slice up front
+// (underOf) lets each card detach without disturbing the walk.
+func (g *Game) ArchiveCardUnder(host LocalID) {
+	for _, u := range g.underOf(host) {
+		g.detachUnder(u)
+		o := g.owner(u)
+		g.resetCore(u)
+		g.State.Archives[o].add(u)
+		g.record(CardPutIntoArchives{Card: u, Owner: o})
+	}
+}

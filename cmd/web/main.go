@@ -26,7 +26,8 @@ import (
 )
 
 func main() {
-	app.Route("/", web.NewGame)
+	app.Route("/", web.NewLanding)
+	app.Route("/play", web.NewGame)
 	app.Route("/cards", web.NewGallery)
 	app.Route("/rulebook", web.NewRulebook)
 	app.Route("/glossary", web.NewGlossary)

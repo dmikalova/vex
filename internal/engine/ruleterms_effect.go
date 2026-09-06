@@ -105,6 +105,16 @@ creature can hold any number of counters, and they are shed when it leaves play.
 		},
 		{
 			Section:    SectionEffect,
+			Title:      "Generic Counters",
+			Definition: "Card-placed markers that do nothing on their own and matter only to the cards that read them.",
+			Body: `A generic counter is a token placed on a card in play whose meaning is defined
+entirely by the card that reads it. It does nothing on its own; a card can hold
+any number of counters of a kind, and they are shed when it leaves play. The
+doom counter is one: Wretched Doll destroys every creature carrying a doom
+counter when there is one in play, and otherwise places a fresh one.`,
+		},
+		{
+			Section:    SectionEffect,
 			Title:      "Deal Damage",
 			Definition: "Put pending damage on the targeted creatures; armor stops some, and a creature whose damage reaches its power is destroyed.",
 			Body: `Dealing damage puts that much pending damage on each creature the effect
@@ -293,6 +303,16 @@ directly. A restriction can be a timed effect that lasts through a player's next
 turn, or a constant rule printed on a card in play; while it is active the
 forbidden action simply cannot be taken. When one effect says a player "cannot"
 and another says they "must" or "may" do the same thing, "cannot" wins.`,
+		},
+		{
+			Section:    SectionEffect,
+			Title:      "Must Fight When Used",
+			Definition: "While in play, force every creature that has a legal fight target to fight when used, barring reap and Action abilities.",
+			Body: `Some cards in play impose that creatures must fight when used, if able (Little
+Rapscal). While such a card is in play, a creature that has at least one legal
+enemy to fight cannot be used to reap or to use an "Action:" ability — its only
+use is to fight. A creature with no legal fight target is unaffected and may reap
+or act as usual. The rule applies to both players' creatures.`,
 		},
 		{
 			Section:    SectionEffect,

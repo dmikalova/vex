@@ -81,6 +81,7 @@ func (g *game) restrictionNotes() app.UI {
 				DataSet("card", name).
 				OnMouseEnter(g.onLogCardHover).
 				OnMouseLeave(g.onCardHoverOut).
+				OnClick(g.onLogCardTap).
 				Text(name)
 		}),
 	)
@@ -99,13 +100,6 @@ func (g *game) brandBar() app.UI {
 			return app.Span().Class("badge-busy").Text("resolving…")
 		}),
 		app.Div().Class("spacer"),
-		app.If(g.g.Manual(), func() app.UI {
-			return app.Button().Class("btn-nav btn-icon btn-nav-on").
-				Title("Manual mode is on — click to turn it off").
-				Disabled(g.busy || g.choosing || g.choosingOption).
-				OnClick(g.toggleManual).
-				Body(icon("wrench", "icon-nav"))
-		}),
 		g.brandMenu(),
 		app.Button().Class("btn-nav btn-icon").Title("Hide sidebar").
 			Text("»").OnClick(g.toggleSidebar),
@@ -122,19 +116,23 @@ func (g *game) brandMenu() app.UI {
 		app.Button().Class(cx("btn-nav", "btn-icon", ifCls(g.menuOpen, "btn-nav-on"))).
 			Title("Menu").Text("☰").OnClick(g.toggleMenu),
 		app.If(g.menuOpen, func() app.UI {
+			items := []app.UI{
+				menuItem("undo", "Undo", g.undoMenu, !g.canUndo(), false),
+				menuItem("redo", "Redo", g.redoMenu, !g.canRedo(), false),
+				menuItem("wrench", "Manual mode", g.manualMenu,
+					g.busy && !g.choosing && !g.choosingOption, g.g.Manual()),
+				menuItem("restart", "New game", g.restartMenu,
+					g.busy || g.choosing || g.choosingOption, false),
+				menuItem("glyph-ban", "Concede", g.concedeMenu,
+					g.busy || g.choosing || g.choosingOption || g.g.Winner() >= 0, false),
+				menuItem("", "Keyboard shortcuts", g.keysMenu, false, false),
+				app.Hr().Class("menu-divider"),
+			}
+			for _, l := range referencePages() {
+				items = append(items, menuLink(l.label, l.href))
+			}
 			return app.Div().Class("menu-backdrop").OnClick(g.closeMenu).Body(
-				app.Div().Class("menu-panel").OnClick(g.stopClick).Body(
-					menuItem("undo", "Undo", g.undoMenu, !g.canUndo(), false),
-					menuItem("redo", "Redo", g.redoMenu, !g.canRedo(), false),
-					menuItem("wrench", "Manual mode", g.manualMenu,
-						g.busy || g.choosing || g.choosingOption, g.g.Manual()),
-					menuItem("restart", "New game", g.restartMenu,
-						g.busy || g.choosing || g.choosingOption, false),
-					menuItem("", "Keyboard shortcuts", g.keysMenu, false, false),
-					app.Hr().Class("menu-divider"),
-					menuLink("Rulebook", "/rulebook"),
-					menuLink("Glossary", "/glossary"),
-				),
+				app.Div().Class("menu-panel").OnClick(g.stopClick).Body(items...),
 			)
 		}),
 	)

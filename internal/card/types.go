@@ -13,6 +13,9 @@ type (
 	// Trait is the value type for a card.Traits.X constant, e.g. as the field type
 	// of an effect that filters by trait (PutFromDiscard.Trait).
 	Trait = engine.Trait
+	// KeywordValue is the value type for a card.Keyword.X constant, e.g. as an
+	// element of card.AttackKeywords.Keywords.
+	KeywordValue = engine.Keyword
 	// Player is the relative player an effect targets: card.Controller or card.Opponent.
 	Player = engine.Player
 )
@@ -144,6 +147,7 @@ var Traits = traits{
 	Quest:     engine.Quest,
 	Ranger:    engine.Ranger,
 	Rat:       engine.Rat,
+	Redacted:  engine.Redacted,
 	Robot:     engine.Robot,
 	Scientist: engine.Scientist,
 	Shard:     engine.Shard,
@@ -193,6 +197,7 @@ type traits struct {
 	Quest,
 	Ranger,
 	Rat,
+	Redacted,
 	Robot,
 	Scientist,
 	Shard,
@@ -278,6 +283,7 @@ var Trigger = triggers{
 	Action:                      engine.TriggerAction,
 	AfterForgeKey:               engine.TriggerAfterForgeKey,
 	AfterCreatureEnters:         engine.TriggerAfterCreatureEnters,
+	AfterCreaturePlayedAdjacent: engine.TriggerAfterCreaturePlayedAdjacent,
 	Destroyed:                   engine.TriggerDestroyed,
 	AfterDestroyedFighting:      engine.TriggerAfterDestroyedFighting,
 	AfterCardPlayed:             engine.TriggerAfterCardPlayed,
@@ -311,6 +317,8 @@ type triggers struct {
 	AfterForgeKey engine.Trigger
 	// AfterCreatureEnters fires after another creature enters play.
 	AfterCreatureEnters engine.Trigger
+	// AfterCreaturePlayedAdjacent fires after a creature is played adjacent to this card.
+	AfterCreaturePlayedAdjacent engine.Trigger
 	// Destroyed fires when this creature is destroyed ("Destroyed:").
 	Destroyed engine.Trigger
 	// AfterDestroyedFighting fires when a creature is destroyed fighting this one.

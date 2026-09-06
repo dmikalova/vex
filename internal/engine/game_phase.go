@@ -116,6 +116,7 @@ func (g *Game) readyPhase(player int) {
 	}
 	g.State.CannotFight[player] = Bar[bool]{}
 	g.State.CannotUse[player] = Bar[bool]{}
+	g.State.CannotReapHouse[player] = Bar[House]{}
 	g.State.CannotPlayTypeThis[player] = Bar[CardType]{}
 	// Roll this turn's history into "last turn" so the next player can ask what their
 	// opponent just did.
@@ -127,12 +128,15 @@ func (g *Game) readyPhase(player int) {
 	h[1][EnemyCreaturesFightKilled] = 0
 	h[0][EnemyCreaturesDestroyed] = 0
 	h[1][EnemyCreaturesDestroyed] = 0
+	h[player][CreaturesReapedThisTurn] = 0
 	g.State.MayFightHouse[player] = HouseNone
 	g.State.MayFightAny[player] = false
 	g.State.MayUseHouse[player] = HouseNone
 	g.State.MayPlayHouse[player] = HouseNone
+	g.State.MayUseArtifactsAnyHouse[player] = false
 	g.State.KeyCostBump[player] = Bar[int]{}
 	g.State.KeywordsLost = 0
+	g.State.TextBlank[player] = Bar[bool]{}
 	g.clearLasting(player)
 	// A power buff that lasted only the turn has just expired.
 	g.settleDestroyed(player)

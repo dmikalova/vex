@@ -27,6 +27,10 @@ type webChooser struct {
 	g           *game
 	reply       chan chooseReply
 	optionReply chan int
+	// cancel is closed by a manual-mode Cancel to drain the rest of the action: once
+	// closed every prompt this effect raises answers itself immediately, so a single
+	// click backs the whole action out. runAction remakes it before the next action.
+	cancel chan struct{}
 }
 
 // ChooseCreature posts a chooser request to the UI and waits for the player's
@@ -61,6 +65,14 @@ func (c *webChooser) ask(
 	if len(candidates) == 0 {
 		return 0, false
 	}
+	// A manual-mode Cancel already in flight drains without showing the prompt: this
+	// and every later prompt of the same action answer themselves so one click backs
+	// the action out.
+	select {
+	case <-c.cancel:
+		return 0, false
+	default:
+	}
 	// Discard any stale reply left in the buffer (e.g. from a double click on the
 	// previous prompt) so it cannot silently answer this one.
 	select {
@@ -77,7 +89,12 @@ func (c *webChooser) ask(
 		c.g.btnCursor, c.g.hasBtnCursor = 0, false
 		c.g.openZoneForPrompt(candidates)
 	})
-	r := <-c.reply
+	var r chooseReply
+	select {
+	case r = <-c.reply:
+	case <-c.cancel:
+		r = chooseReply{ok: false}
+	}
 	c.g.dispatch(func(app.Context) {
 		c.g.choosing = false
 		c.g.chooserDeclinable = false
@@ -130,6 +147,12 @@ func (g *game) closeZoneForPrompt() {
 // UI and blocks until the player clicks one of the option buttons. Without this,
 // the engine falls back to the first option — which silently auto-took archives.
 func (c *webChooser) ChooseOption(source, prompt string, options []string) int {
+	// A manual-mode Cancel already in flight drains without showing the prompt.
+	select {
+	case <-c.cancel:
+		return 0
+	default:
+	}
 	// Drop any stale reply so a leftover click cannot answer this prompt.
 	select {
 	case <-c.optionReply:
@@ -141,7 +164,12 @@ func (c *webChooser) ChooseOption(source, prompt string, options []string) int {
 		c.g.optionLabels = options
 		c.g.promptSource = source
 	})
-	i := <-c.optionReply
+	var i int
+	select {
+	case i = <-c.optionReply:
+	case <-c.cancel:
+		i = 0
+	}
 	c.g.dispatch(func(app.Context) {
 		c.g.choosingOption = false
 		c.g.optionPrompt = ""
@@ -221,14 +249,18 @@ func (g *game) stopClick(_ app.Context, e app.Event) {
 	e.Call("stopPropagation")
 }
 
-// cancelChooser answers the current creature chooser with "no choice", so a
-// player in manual mode can escape a prompt with no clickable candidate.
+// cancelChooser backs the whole action out of a prompt in manual mode: it closes
+// the chooser's cancel channel so this prompt and any that follow it answer
+// themselves, draining the effect to completion. runAction then rolls the action
+// back to the snapshot beginAction recorded. It is the only way out of a prompt
+// with no clickable candidate (a mandatory card prompt or an option prompt).
 func (g *game) cancelChooser(_ app.Context, _ app.Event) {
-	if !g.choosing {
+	if !g.choosing && !g.choosingOption {
 		return
 	}
-	select {
-	case g.chooser.reply <- chooseReply{ok: false}:
-	default:
+	if g.cancelling {
+		return
 	}
+	g.cancelling = true
+	close(g.chooser.cancel)
 }

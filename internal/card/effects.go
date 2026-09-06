@@ -19,8 +19,13 @@ type (
 type (
 	// GainAember moves Æmber from the common supply into a player's pool.
 	GainAember = engine.GainAember
+	// GainAemberEqualTo gains Æmber equal to a running count (The Flex gains half a
+	// chosen creature's power).
+	GainAemberEqualTo = engine.GainAemberEqualTo
 	// MoveAemberFromPool banks Æmber out of your pool onto a card.
 	MoveAemberFromPool = engine.MoveAemberFromPool
+	// PlaceAemberOnThis places Æmber from the common supply on this card.
+	PlaceAemberOnThis = engine.PlaceAemberOnThis
 	// LoseAember returns Æmber from a player's pool to the supply (see By: Half, AllBut).
 	LoseAember = engine.LoseAember
 	// StealAember moves Æmber from the opponent's pool into yours.
@@ -81,6 +86,10 @@ type (
 	Destroy = engine.Destroy
 	// DestroyChosen destroys any number of creatures the controller picks from its Target.
 	DestroyChosen = engine.DestroyChosen
+	// DestroyFriendlyCreaturesToForge destroys any number of friendly creatures
+	// totalling a power threshold to trigger a follow-up effect (Might Makes Right
+	// forges free).
+	DestroyFriendlyCreaturesToForge = engine.DestroyFriendlyCreaturesToForge
 	// PurgeCard sets cards aside out of the game, from a named zone.
 	PurgeCard = engine.PurgeCard
 	// PurgeFromHand purges one card the controller chooses from a player's hand.
@@ -115,6 +124,8 @@ type (
 	ReadyCreatures = engine.ReadyCreatures
 	// AddPowerCounter places permanent +1/-1 power counters on a creature.
 	AddPowerCounter = engine.AddPowerCounter
+	// PlaceCounter puts generic counters (doom and its kin) on each card its target selects.
+	PlaceCounter = engine.PlaceCounter
 )
 
 // Drawing, moving, and revealing cards between zones.
@@ -177,6 +188,8 @@ type (
 	PutDiscardedIntoHand = engine.PutDiscardedIntoHand
 	// DiscardTopOfEachDeck discards the top card of each player's deck.
 	DiscardTopOfEachDeck = engine.DiscardTopOfEachDeck
+	// DiscardTop discards the top Amount cards of one player's deck.
+	DiscardTop = engine.DiscardTop
 	// ForEachDiscarded resolves Do once for each card a preceding discard removed.
 	ForEachDiscarded = engine.ForEachDiscarded
 	// RevealTopOfDeck reveals the top card of the controller's deck.
@@ -202,6 +215,8 @@ type (
 	// PutUnderIntoPlay puts every card under the resolving card into play under
 	// its owner's control.
 	PutUnderIntoPlay = engine.PutUnderIntoPlay
+	// ArchiveCardUnder archives the card placed under the resolving card.
+	ArchiveCardUnder = engine.ArchiveCardUnder
 	// CancelFight makes the fight in progress not occur (a Before Fight effect).
 	CancelFight = engine.CancelFight
 	// RevealHand shows the cards in a player's hand to both players and records them.
@@ -305,6 +320,8 @@ type (
 	ControlsMoreCreatures = engine.ControlsMoreCreatures
 	// SourceOnFlank gates on the source card's flank position (Not inverts it).
 	SourceOnFlank = engine.SourceOnFlank
+	// SourceReady is met while the source card is ready (Bellowing Patrizate's gate).
+	SourceReady = engine.SourceReady
 	// SourceNeighborsAllOfHouse is met while every neighbor of the source card
 	// belongs to House (Xanthyx Harvester's use gate).
 	SourceNeighborsAllOfHouse = engine.SourceNeighborsAllOfHouse
@@ -315,6 +332,10 @@ type (
 	FirstCreaturePlayedThisTurn = engine.FirstCreaturePlayedThisTurn
 	// NoCreaturesPlayedThisTurn is met when you played no creatures this turn (Redlock).
 	NoCreaturesPlayedThisTurn = engine.NoCreaturesPlayedThisTurn
+	// ItIsYourTurn is met when the ability's controller is the active player.
+	ItIsYourTurn = engine.ItIsYourTurn
+	// AemberOnThisAtLeast is met when at least Amount Æmber sits on this card.
+	AemberOnThisAtLeast = engine.AemberOnThisAtLeast
 	// Overwhelmed is met while the opponent controls more creatures than you.
 	Overwhelmed = engine.Overwhelmed
 	// ItIsOfHouse is met when the card in context belongs to a referenced house.
@@ -377,6 +398,10 @@ type (
 	ForgedKey = engine.ForgedKey
 	// EnemyCreatureDestroyed is met once an enemy creature has been destroyed this turn.
 	EnemyCreatureDestroyed = engine.EnemyCreatureDestroyed
+	// FirstReapOfTurn is met when the reap in context is the first this turn.
+	FirstReapOfTurn = engine.FirstReapOfTurn
+	// CounterInPlay is met while at least one card in play carries a generic counter of the given kind.
+	CounterInPlay = engine.CounterInPlay
 	// ExcessCreatures counts how many more creatures one player controls than the other.
 	ExcessCreatures = engine.ExcessCreatures
 	// CardsInArchives counts the cards in a player's archives.
@@ -430,6 +455,12 @@ type (
 	AemberOnThis = engine.AemberOnThis
 	// DamageOnThis counts the damage sitting on the source card.
 	DamageOnThis = engine.DamageOnThis
+	// HalfPowerOfChosen is half the power (rounded down) of the creature just chosen.
+	HalfPowerOfChosen = engine.HalfPowerOfChosen
+	// PowerOfChosen is the full power of the creature in context.
+	PowerOfChosen = engine.PowerOfChosen
+	// TraitsOfChosen counts the traits of the creature just chosen.
+	TraitsOfChosen = engine.TraitsOfChosen
 	// CopiesInDiscard counts the copies of this card in your discard pile.
 	CopiesInDiscard = engine.CopiesInDiscard
 )
@@ -454,12 +485,19 @@ type (
 	CannotPlay = engine.CannotPlay
 	// CannotUse bars a player from reaping, fighting, or using Action: abilities.
 	CannotUse = engine.CannotUse
-	// SkipForgeStep makes a player skip their forge-a-key step next turn.
-	SkipForgeStep = engine.SkipForgeStep
+	// ChosenHouseCannotReapNextTurn bars a player from reaping with creatures of the
+	// chosen house throughout their next turn.
+	ChosenHouseCannotReapNextTurn = engine.ChosenHouseCannotReapNextTurn
+	// BlankEnemyText blanks enemy creatures' text boxes until your next turn (Shadow of Dis).
+	BlankEnemyText = engine.BlankEnemyText
+	// SkipForgePhase makes a player skip their forge-a-key phase next turn.
+	SkipForgePhase = engine.SkipForgePhase
 	// PreventDamage marks the targeted creatures immune to damage for a Duration.
 	PreventDamage = engine.PreventDamage
 	// MayUseFriendlyHouse lets the controller use their House creatures this turn.
 	MayUseFriendlyHouse = engine.MayUseFriendlyHouse
+	// MayUseFriendlyArtifacts lets the controller use any friendly artifact this turn.
+	MayUseFriendlyArtifacts = engine.MayUseFriendlyArtifacts
 	// MayPlayOrUseFriendlyHouse lets the controller play and use a House this turn.
 	MayPlayOrUseFriendlyHouse = engine.MayPlayOrUseFriendlyHouse
 	// GrantFightForChosenHouse lets your chosen-house creatures fight this turn.
@@ -489,11 +527,20 @@ type (
 	GainChains = engine.GainChains
 )
 
+// Counter groups the generic counter kinds a card can place or read, e.g.
+// card.PlaceCounter{Kind: card.Counter.Doom, Target: card.Target.ChosenCreature}.
+var Counter = counters{
+	Doom: engine.CounterDoom,
+}
+
+type counters struct {
+	Doom engine.CounterKind
+}
+
 // Event groups the game events a lasting "for the remainder of the turn" effect
 // attaches to (see ForRemainderOfTurn and Instead), e.g.
 // card.ForRemainderOfTurn{On: card.Event.CreaturePlayed, Do: card.GainAember{...}}.
-var Event = events{
-	CreaturePlayed:         engine.EventCreaturePlayed,
+var Event = events{CreaturePlayed: engine.EventCreaturePlayed,
 	Reap:                   engine.EventReap,
 	Fight:                  engine.EventFight,
 	EnemyCreatureDestroyed: engine.EventEnemyCreatureDestroyed,

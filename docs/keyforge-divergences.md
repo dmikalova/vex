@@ -33,6 +33,7 @@ answers "where does Vactrol diverge from KeyForge, and why".
 | `while under your control` becomes a one-time swap            | rule 20 | avoids continuous re-checking; sticks with the card   |
 | A deferred play permission becomes an immediate play          | rule 21 | avoids turn-scoped unused-permission memory           |
 | A number-only `Otherwise` branch becomes `or <alt> if <cond>` | rule 22 | one linear sentence, no fork                          |
+| A turn `step` is named a `phase`                              | rule 28 | [ADR 0012](adr/0012-first-class-turn-phases.md)       |
 
 ## Per-card rule changes
 

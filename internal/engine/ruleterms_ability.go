@@ -73,6 +73,16 @@ your opponent plays.`,
 		},
 		{
 			Section:    SectionAbility,
+			Title:      "After a Creature Is Played Adjacent",
+			Definition: "An ability that resolves after a creature is played into a battleline position next to this card.",
+			Body: `This ability resolves after a creature is played into a battleline position
+adjacent to the card holding it. A creature is only ever played onto its own
+controller's battleline, so only the controller's own plays reach it. It does
+not fire for a creature merely put into play by another effect, only for one
+that is played.`,
+		},
+		{
+			Section:    SectionAbility,
 			Title:      "Destroyed",
 			Definition: "An ability that resolves as the card is destroyed, before it reaches the discard pile.",
 			Body: `A Destroyed ability resolves as the card is destroyed, before it reaches the

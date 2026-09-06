@@ -512,6 +512,24 @@ counted, so behavior and text cannot drift.
 
 ---
 
+## 28. A turn `step` is named a `phase`
+
+A named part of the turn is a **phase**, never a **step** — Vactrol has one word
+for a segment of the turn ([ADR 0012](adr/0012-first-class-turn-phases.md) makes
+the turn phases first-class). Card and rules text that refers to the `"forge a
+key"` or `"draw cards"` part of the turn writes `phase`, where KeyForge writes
+`step`.
+
+| Original                                     | Curated                                       |
+| -------------------------------------------- | --------------------------------------------- |
+| `During your "draw cards" step, …`           | `During your "draw cards" phase, …`           |
+| `skips the "forge a key" step during …`      | `skips the "forge a key" phase during …`      |
+| `You skip your "forge a key" step.`          | `You skip your "forge a key" phase.`          |
+
+(Affected: Streke, Mother, Succubus, The Howling Pit, Miasma.)
+
+---
+
 ## Deliberate rule changes (not just wording)
 
 A few cards diverge from KeyForge in ways that affect the rules, not just

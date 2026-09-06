@@ -79,6 +79,12 @@ the `tools` mage namespace, invoked with a colon (`mage tool:stub`):
   card's provenance Ref. Pass `-new` (`mage tool:coverage -new`) to count only the
   cards a set introduces, excluding the ones it reprints from an earlier set.
 
+- `mage tool:gameSize` — report the in-memory `GameState` size (the cost of one
+  undo snapshot), the number of implemented cards, and — after building a fresh
+  wasm — the shipped web bundle's size raw and compressed (brotli and gzip, the
+  levels `WebAssets` ships), split into the WASM bundle, the other assets, and
+  the total.
+
 - `mage tool:stub "<setSlug>"` — scaffold a build-excluded (`//go:build todo`) stub
   file for every unimplemented card in a set, each carrying the printed text and a
   TODO marker. Excluded stubs do not compile or register, so the card database and

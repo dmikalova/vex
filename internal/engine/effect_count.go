@@ -73,6 +73,22 @@ func countLeadText(per Count) string {
 	return per.CountText()
 }
 
+// cardinalCounter is the optional capability of a Count that renders itself as a
+// cardinal "the number of …" phrase, for a clause that compares a value against
+// the count rather than repeating "for each …".
+type cardinalCounter interface {
+	cardinalCountText() string
+}
+
+// cardinalCountText renders a Count as "the number of …", preferring a
+// cardinalCounter's own phrasing over its singular "for each" noun.
+func cardinalCountText(c Count) string {
+	if cc, ok := c.(cardinalCounter); ok {
+		return cc.cardinalCountText()
+	}
+	return "the number of " + c.CountText()
+}
+
 // OpponentForgedKeys counts the keys the controller's opponent has forged.
 type OpponentForgedKeys struct{}
 
@@ -251,6 +267,9 @@ type InPlay struct {
 	Ready bool
 	// Damaged counts only creatures that have damage on them.
 	Damaged bool
+	// MinPower counts only creatures whose power is at least this value; zero (the
+	// unset default) applies no power floor (Grump Buggy counts power 5 or higher).
+	MinPower int
 	// Other leaves the source card itself out of the count, which is how a card
 	// counts its companions (Phylyx the Disintegrator).
 	Other bool
@@ -279,6 +298,9 @@ func (e InPlay) Value(ctx *EffectContext) int {
 			continue
 		}
 		if e.Damaged && ctx.Resolver.Damage(id) == 0 {
+			continue
+		}
+		if e.MinPower > 0 && ctx.Resolver.Power(id) < e.MinPower {
 			continue
 		}
 		if e.Other && id == ctx.Source {
@@ -384,17 +406,39 @@ func (e InPlay) noun() string {
 	if e.House != HouseNone {
 		parts = append(parts, e.House.String())
 	}
-	return strings.Join(append(parts, e.typeNoun()), " ")
+	noun := strings.Join(append(parts, e.typeNoun()), " ")
+	if e.MinPower > 0 {
+		noun += fmt.Sprintf(" with power %d or higher", e.MinPower)
+	}
+	return noun
 }
 
 // CountText renders the singular noun the "for each" clause repeats. A
 // house- or trait-filtered count reads "friendly Mars creature" / "friendly
 // Shard"; an unfiltered one adds "in play" to distinguish it from cards in hand.
 func (e InPlay) CountText() string {
-	if (e.House != HouseNone || e.Trait != traitUnset) && e.Player != EachPlayer {
+	if (e.House != HouseNone || e.Trait != traitUnset || e.MinPower > 0) && e.Player != EachPlayer {
 		return e.noun()
 	}
 	return e.noun() + " in play"
+}
+
+// cardinalCountText renders the count as "the number of friendly Mars creatures
+// you control", the cardinal form for a clause that compares against it.
+func (e InPlay) cardinalCountText() string {
+	return "the number of " + plural(2, e.noun()) + " " + e.controls()
+}
+
+// controls renders which side's board the cardinal count reads from.
+func (e InPlay) controls() string {
+	switch e.Player {
+	case Opponent:
+		return "your opponent controls"
+	case EachPlayer:
+		return "in play"
+	default:
+		return "you control"
+	}
 }
 
 // CondText renders the condition, e.g. "if there is a friendly creature in play"
@@ -552,6 +596,57 @@ func (DamageOnThis) Value(ctx *EffectContext) int { return ctx.Resolver.Damage(c
 
 // CountText renders the singular noun the "for each" clause repeats.
 func (DamageOnThis) CountText() string { return "damage on it" }
+
+// HalfPowerOfChosen is half the power (rounded down) of the creature in context
+// (ctx.It) — the creature a ChooseCreatureThen just picked. The Flex gains Æmber
+// equal to half a chosen creature's power.
+type HalfPowerOfChosen struct{}
+
+// Value returns half the context creature's power, rounded down, or zero when no
+// creature is in context.
+func (HalfPowerOfChosen) Value(ctx *EffectContext) int {
+	if !ctx.HasIt {
+		return 0
+	}
+	return ctx.Resolver.Power(ctx.It) / 2
+}
+
+// CountText renders the amount as it reads in an "equal to" clause.
+func (HalfPowerOfChosen) CountText() string { return "half its power, rounded down" }
+
+// PowerOfChosen is the full power of the creature in context (ctx.It) — the
+// creature a fight or a ChooseCreatureThen put in context. Mindworm makes the
+// creature it fights deal damage equal to its power to each of its neighbors.
+type PowerOfChosen struct{}
+
+// Value returns the context creature's power, or zero when no creature is in
+// context.
+func (PowerOfChosen) Value(ctx *EffectContext) int {
+	if !ctx.HasIt {
+		return 0
+	}
+	return ctx.Resolver.Power(ctx.It)
+}
+
+// CountText renders the amount as it reads in an "equal to" clause.
+func (PowerOfChosen) CountText() string { return "its power" }
+
+// TraitsOfChosen counts the traits of the creature in context (ctx.It) — the
+// creature a ChooseCreatureThen just picked. Entropic Swirl acts once per trait
+// the chosen creature has.
+type TraitsOfChosen struct{}
+
+// Value returns the number of traits on the context creature, or zero when no
+// creature is in context.
+func (TraitsOfChosen) Value(ctx *EffectContext) int {
+	if !ctx.HasIt {
+		return 0
+	}
+	return ctx.Resolver.TraitCount(ctx.It)
+}
+
+// CountText renders the singular noun the "for each" clause repeats.
+func (TraitsOfChosen) CountText() string { return "trait that creature has" }
 
 // CopiesInDiscard counts the cards in the controller's discard pile sharing the
 // source card's name — a card that pays off for having been played before

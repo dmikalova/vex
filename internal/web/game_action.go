@@ -38,6 +38,11 @@ func (g *game) runAction(ctx app.Context, fn func() error) {
 		})
 		g.dispatch(func(ctx app.Context) {
 			g.busy = false
+			// A manual-mode Cancel drained this action; roll it back to the snapshot
+			// beginAction recorded and remake the cancel channel for the next action.
+			cancelled := g.cancelling
+			g.cancelling = false
+			g.chooser.cancel = make(chan struct{})
 			if crashed {
 				// A corrupt engine state can panic mid-action (e.g. an
 				// out-of-range card id). Roll back to the snapshot beginAction
@@ -49,6 +54,15 @@ func (g *game) runAction(ctx app.Context, fn func() error) {
 					g.restore(last)
 				}
 				g.setStatus(err.Error())
+				g.save(ctx)
+				return
+			}
+			if cancelled {
+				if n := len(g.undo); n > 0 {
+					last := g.undo[n-1]
+					g.undo = g.undo[:n-1]
+					g.restore(last)
+				}
 				g.save(ctx)
 				return
 			}

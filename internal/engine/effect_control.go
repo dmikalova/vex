@@ -83,6 +83,14 @@ func (e TakeControl) resolveGate(ctx *EffectContext) bool {
 	for _, id := range e.Target.Select(ctx) {
 		if ctx.Resolver.IsCreature(id) {
 			ctx.Resolver.TakeControl(id, newController, ctx.Source)
+			// The player gaining control places the seized creature on a flank of
+			// their battleline (Harland Mindlock). With no other creature there it
+			// has only one home, so the flank is not worth asking.
+			if len(ctx.Resolver.Battleline(newController)) > 1 {
+				right := ctx.Resolver.ChooseOption(newController, ctx.Source,
+					"Choose a flank", []string{"left flank", "right flank"}) == 1
+				ctx.Resolver.MoveToFlank(id, right)
+			}
 		} else {
 			ctx.Resolver.TakeControlOfArtifact(id, newController)
 		}

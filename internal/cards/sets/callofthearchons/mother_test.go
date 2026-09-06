@@ -15,7 +15,7 @@ import (
 //	Power:  5
 //	Traits: Robot • Scientist
 //
-//	During your "draw cards" step, refill your hand to 1 additional card.
+//	During your "draw cards" phase, refill your hand to 1 additional card.
 func TestMother(t *testing.T) {
 	t.Run("refills its controller's hand to one additional card", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

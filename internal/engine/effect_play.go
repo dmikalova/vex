@@ -43,8 +43,8 @@ func (e PlayFrom) validate() error {
 	if e.Except && e.House == HouseNone {
 		return fmt.Errorf("PlayFrom: Except needs a house to exclude")
 	}
-	if e.From != Hand && e.From != Discard {
-		return fmt.Errorf("PlayFrom: From must be Hand or Discard, got %v", e.From)
+	if e.From != Hand && e.From != Discard && e.From != Archives {
+		return fmt.Errorf("PlayFrom: From must be Hand, Discard, or Archives, got %v", e.From)
 	}
 	if e.Player == Opponent && e.From != Discard {
 		return fmt.Errorf("PlayFrom: only the opponent's discard pile may be played from")
@@ -105,6 +105,8 @@ func (e PlayFrom) Resolve(ctx *EffectContext) {
 		ctx.Resolver.PlayFromOpponentDiscard(ctx.Controller, id)
 	case e.From == Discard:
 		ctx.Resolver.PlayFromDiscard(ctx.Controller, id)
+	case e.From == Archives:
+		ctx.Resolver.PlayFromArchives(ctx.Controller, id)
 	default:
 		ctx.Resolver.PlayFromHand(ctx.Controller, id)
 	}
@@ -119,8 +121,11 @@ func (e PlayFrom) candidates(ctx *EffectContext) []LocalID {
 		player = ctx.Opponent()
 	}
 	source := ctx.Resolver.Hand(player)
-	if e.From == Discard {
+	switch e.From {
+	case Discard:
 		source = ctx.Resolver.Discard(player)
+	case Archives:
+		source = ctx.Resolver.Archives(player)
 	}
 	var out []LocalID
 	for _, id := range source {

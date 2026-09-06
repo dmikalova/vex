@@ -608,7 +608,7 @@ func TestKeyCostChangePerAndFlank(t *testing.T) {
 			Damaged: true,
 		})))
 	want := "Your opponent's keys cost +1 Æmber for each friendly damaged Brobnar creature."
-	if got := keyCostText(obelisk.KeyCostChange); got != want {
+	if got := keyCostText(obelisk.KeyCostChanges[0]); got != want {
 		t.Errorf("per text = %q, want %q", got, want)
 	}
 
@@ -626,7 +626,7 @@ func TestKeyCostChangePerAndFlank(t *testing.T) {
 	mechanic := NewCard("Titan Mechanic", Logos, Creature, Common, WithPower(6),
 		WithKeyCost(NewKeyCostChange(EachPlayer, -1).WhileOnFlank()))
 	wantFlank := "While " + SelfName + " is on a flank, each player's keys cost -1 Æmber."
-	if got := keyCostText(mechanic.KeyCostChange); got != wantFlank {
+	if got := keyCostText(mechanic.KeyCostChanges[0]); got != wantFlank {
 		t.Errorf("flank text = %q, want %q", got, wantFlank)
 	}
 

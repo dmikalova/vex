@@ -30,6 +30,22 @@ func TestCannotBeUsedToReap(t *testing.T) {
 	}
 }
 
+// A house-scoped reap bar (Seismo-entangler) refuses the reap of a creature of
+// that house while leaving it free to fight.
+func TestCannotReapHouseLeavesFightUsable(t *testing.T) {
+	g := started(t)
+	g.State.CannotReapHouse[0].Value = Brobnar
+	reaper := g.AddToBattleline(testCreature("reaper", 4), 0)
+	g.AddToBattleline(testCreature("foe", 3), 1)
+
+	if err := g.CanUseTo(0, reaper, ReapUse); err != ErrCannotUse {
+		t.Errorf("CanUseTo(reap) barred by house = %v, want ErrCannotUse", err)
+	}
+	if err := g.CanUseTo(0, reaper, FightUse); err != nil {
+		t.Errorf("CanUseTo(fight) = %v, want nil", err)
+	}
+}
+
 // A card barred from fighting or from its Action: ability is refused those uses,
 // and an effect that reaps with a card which cannot reap does nothing.
 func TestCannotBeUsedToFightAndAction(t *testing.T) {
@@ -157,6 +173,71 @@ func TestCannotBeUsedToText(t *testing.T) {
 	}
 	if !ReapUse.valid() || !FightUse.valid() || !ActionUse.valid() {
 		t.Error("the real use kinds must be valid")
+	}
+}
+
+// While a "creatures must fight when used, if able" card is in play, a creature
+// with a legal fight target may only fight — reap and Action uses are refused —
+// but a creature with nothing to fight is free to reap or act.
+func TestMustFightIfAble(t *testing.T) {
+	g := started(t)
+	g.AddArtifact(NewCard("Little Rapscal Rule", Brobnar, Artifact, Common,
+		WithRestrictions(Restrictions{MustFightIfAble: true})), 0)
+	brute := g.AddToBattleline(
+		testCreature("brute", 5,
+			WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 1})), 0)
+
+	// With no enemy creature, the brute may reap or act freely.
+	if err := g.CanUseTo(0, brute, ReapUse); err != nil {
+		t.Errorf("reap with nothing to fight = %v, want nil", err)
+	}
+
+	foe := g.AddToBattleline(testCreature("foe", 3), 1)
+	if err := g.CanUseTo(0, brute, ReapUse); err != ErrCannotUse {
+		t.Errorf("reap while a fight is available = %v, want ErrCannotUse", err)
+	}
+	if err := g.Reap(0, brute); err != ErrCannotUse {
+		t.Errorf("Reap = %v, want ErrCannotUse", err)
+	}
+	if err := g.UseAction(0, brute); err != ErrCannotUse {
+		t.Errorf("UseAction while a fight is available = %v, want ErrCannotUse", err)
+	}
+	if err := g.CanUseTo(0, brute, FightUse); err != nil {
+		t.Errorf("fight = %v, want nil", err)
+	}
+	if err := g.Fight(0, brute, foe); err != nil {
+		t.Fatalf("Fight: %v", err)
+	}
+}
+
+// The must-fight rule only bars reap while the creature is truly able to fight;
+// when fighting is barred (Fogbank) it may not fight and so is free to reap,
+// keeping CanUse consistent with the individual uses.
+func TestMustFightIfAbleUnableToFight(t *testing.T) {
+	g := started(t)
+	g.AddArtifact(NewCard("Little Rapscal Rule", Brobnar, Artifact, Common,
+		WithRestrictions(Restrictions{MustFightIfAble: true})), 0)
+	brute := g.AddToBattleline(testCreature("brute", 5), 0)
+	g.AddToBattleline(testCreature("foe", 3), 1)
+	g.State.CannotFight[0] = Bar[bool]{Value: true}
+
+	if err := g.CanUse(0, brute); err != nil {
+		t.Errorf("CanUse = %v, want nil", err)
+	}
+	if err := g.CanUseTo(0, brute, ReapUse); err != nil {
+		t.Errorf("reap while unable to fight = %v, want nil", err)
+	}
+	if err := g.Reap(0, brute); err != nil {
+		t.Errorf("Reap while unable to fight = %v, want nil", err)
+	}
+}
+
+// A card imposing the must-fight rule prints it in its rules text.
+func TestMustFightIfAbleText(t *testing.T) {
+	def := NewCard("Rapscal", Brobnar, Creature, Common, WithPower(2),
+		WithRestrictions(Restrictions{MustFightIfAble: true}))
+	if !containsLine(cardRules(&def, false), "Creatures must fight when used, if able.") {
+		t.Errorf("cardRules = %v, want the must-fight line", cardRules(&def, false))
 	}
 }
 

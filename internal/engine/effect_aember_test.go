@@ -162,6 +162,77 @@ func TestLoseAemberHalfAndEachPlayer(t *testing.T) {
 	}
 }
 
+// TestGainAemberEqualToAndHalfPower covers gaining Æmber equal to a count that
+// reads the chosen creature's power, halved and rounded down (The Flex).
+func TestGainAemberEqualToAndHalfPower(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	beefy := g.AddToBattleline(testCreature("beefy", 5), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0, It: beefy, HasIt: true}
+
+	e := GainAemberEqualTo{Player: Controller, Count: HalfPowerOfChosen{}}
+	if got := e.Text(); got != "gain Æmber equal to half its power, rounded down" {
+		t.Errorf("text = %q", got)
+	}
+	e.Resolve(ctx)
+	if g.State.Aember[0] != 2 {
+		t.Errorf("aember = %d, want 2 (half of power 5, rounded down)", g.State.Aember[0])
+	}
+
+	// With no creature in context the count is zero and nothing is gained.
+	if got := (HalfPowerOfChosen{}).Value(&EffectContext{Resolver: g, Controller: 0}); got != 0 {
+		t.Errorf("HalfPowerOfChosen with no It = %d, want 0", got)
+	}
+	if got := (HalfPowerOfChosen{}).CountText(); got != "half its power, rounded down" {
+		t.Errorf("count text = %q", got)
+	}
+
+	// The opponent form uses the "your opponent gains" verb.
+	if got := (GainAemberEqualTo{Player: Opponent, Count: HalfPowerOfChosen{}}).Text(); got !=
+		"your opponent gains Æmber equal to half its power, rounded down" {
+		t.Errorf("opponent text = %q", got)
+	}
+	// The each-player form uses the "each player gains" verb.
+	if got := (GainAemberEqualTo{Player: EachPlayer, Count: HalfPowerOfChosen{}}).Text(); got !=
+		"each player gains Æmber equal to half its power, rounded down" {
+		t.Errorf("each-player text = %q", got)
+	}
+	// Validation rejects an unset player or count, and accepts a fully set effect.
+	if (GainAemberEqualTo{Count: HalfPowerOfChosen{}}).validate() == nil {
+		t.Error("unset player should be rejected")
+	}
+	if (GainAemberEqualTo{Player: Controller}).validate() == nil {
+		t.Error("unset count should be rejected")
+	}
+	if (GainAemberEqualTo{Player: Controller, Count: HalfPowerOfChosen{}}).validate() != nil {
+		t.Error("a fully set effect should be valid")
+	}
+	// With no creature in context the count is zero and nothing is gained.
+	before := g.State.Aember[0]
+	GainAemberEqualTo{Player: Controller, Count: HalfPowerOfChosen{}}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0},
+	)
+	if g.State.Aember[0] != before {
+		t.Errorf("zero count gained Æmber: %d, want %d", g.State.Aember[0], before)
+	}
+}
+
+// TestGainAemberEqualToCaptured covers a gain-equal-to count that a continuous
+// replacement (Ether Spider) captures instead of adding to the pool.
+func TestGainAemberEqualToCaptured(t *testing.T) {
+	g := started(t)
+	src := g.AddToBattleline(testCreature("src", 4), 0)
+	spider := g.AddToBattleline(testEtherSpider(), 1)
+	GainAemberEqualTo{Player: Controller, Count: HalfPowerOfChosen{}}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0, It: src, HasIt: true},
+	)
+	if g.Aember(0) != 0 {
+		t.Errorf("player Æmber = %d, want 0 (captured)", g.Aember(0))
+	}
+	if g.AmberOn(spider) != 2 {
+		t.Errorf("spider Æmber = %d, want 2 (half of power 4)", g.AmberOn(spider))
+	}
+}
+
 func TestLoseAemberValidate(t *testing.T) {
 	if err := (LoseAember{Player: Controller, Amount: 2, By: Half}).validate(); err == nil {
 		t.Error("setting both Amount and By should be rejected")
@@ -234,5 +305,34 @@ func TestMoveAemberFromPoolAndVault(t *testing.T) {
 	g.forgeKey(0)
 	if g.Keys(0) != 2 || g.AmberOn(id) != 3 {
 		t.Errorf("keys = %d, banked = %d; want 2 and 3", g.Keys(0), g.AmberOn(id))
+	}
+}
+
+// TestPlaceAemberOnThis covers placing Æmber from the common supply on the source
+// card, which accrues on the card rather than moving from a pool.
+func TestPlaceAemberOnThis(t *testing.T) {
+	e := PlaceAemberOnThis{Amount: 1}
+	if got := e.Text(); got != "place 1 Æmber from the common supply on "+SelfName {
+		t.Errorf("text = %q", got)
+	}
+	if err := (PlaceAemberOnThis{}).validate(); err == nil {
+		t.Error("placing no Æmber should be rejected")
+	}
+	if err := e.validate(); err != nil {
+		t.Errorf("validate = %v, want nil", err)
+	}
+
+	vault := NewCard("Safe Place", Shadows, Artifact, Rare)
+	g := NewGame("A", "B", 1)
+	id := g.AddArtifact(vault, 0)
+	ctx := &EffectContext{Resolver: g, Source: id, Controller: 0}
+
+	e.Resolve(ctx)
+	e.Resolve(ctx)
+	if g.AmberOn(id) != 2 {
+		t.Errorf("Æmber on card = %d, want 2", g.AmberOn(id))
+	}
+	if g.Aember(0) != 0 {
+		t.Errorf("pool = %d, want 0 (Æmber comes from the supply)", g.Aember(0))
 	}
 }

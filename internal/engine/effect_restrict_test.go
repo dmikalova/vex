@@ -471,7 +471,7 @@ func TestRestrictionSources(t *testing.T) {
 	g.ForceActiveHouseNextTurn(1, Mars, weak)
 	// A card imposing three bars is named once.
 	g.CannotFightNextTurn(1, fog)
-	g.SkipForgeStepNextTurn(1, fog)
+	g.SkipForgePhaseNextTurn(1, fog)
 	g.CannotPlayTypeNextTurn(1, Creature, fog)
 	// The armed cards are not binding anyone until the affected player's turn.
 	if got := g.RestrictionSources(1); len(got) != 0 {
@@ -668,6 +668,38 @@ func TestMayUseFriendlyHouse(t *testing.T) {
 	}
 }
 
+// TestMayUseFriendlyArtifacts covers Scientifical Hack's grant: any friendly
+// artifact becomes usable out of the active house for the rest of the turn.
+func TestMayUseFriendlyArtifacts(t *testing.T) {
+	if got := (MayUseFriendlyArtifacts{}).Text(); got != "for the remainder of the turn, you may use friendly artifacts as if they belonged to the active house" {
+		t.Errorf("text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	g.StartTurn(0)
+	if err := g.ChooseHouse(0, Brobnar); err != nil {
+		t.Fatal(err)
+	}
+	relic := g.AddArtifact(NewCard("relic", Sanctum, Artifact, Common,
+		WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 1})), 0)
+	if g.usableInActiveHouse(relic) {
+		t.Fatal("an off-house artifact should not be usable before the grant")
+	}
+
+	MayUseFriendlyArtifacts{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if !g.State.MayUseArtifactsAnyHouse[0] {
+		t.Fatal("the grant should record the permission")
+	}
+	if !g.usableInActiveHouse(relic) {
+		t.Error("the friendly artifact should be usable after the grant")
+	}
+
+	g.EndPlayPhase(0)
+	if g.State.MayUseArtifactsAnyHouse[0] {
+		t.Error("the grant should clear at end of turn")
+	}
+}
+
 func TestMayPlayOrUseFriendlyHouse(t *testing.T) {
 	if got := (MayPlayOrUseFriendlyHouse{House: Mars}).Text(); got != "you may play or use a Mars card this turn" {
 		t.Errorf("text = %q", got)
@@ -710,5 +742,51 @@ func TestMayPlayOrUseFriendlyHouse(t *testing.T) {
 	g.EndPlayPhase(0)
 	if g.State.MayPlayHouse[0] != HouseNone {
 		t.Error("the play grant should clear at end of turn")
+	}
+}
+
+// TestChosenHouseCannotReapNextTurn covers the house-scoped reap bar armed for a
+// player's next turn (Seismo-entangler).
+func TestChosenHouseCannotReapNextTurn(t *testing.T) {
+	if got := (ChosenHouseCannotReapNextTurn{Player: Opponent}).Text(); got != "during your opponent's next turn, creatures of the chosen house cannot be used to reap" {
+		t.Errorf("opponent text = %q", got)
+	}
+	if got := (ChosenHouseCannotReapNextTurn{Player: Controller}).Text(); got != "during your next turn, creatures of the chosen house cannot be used to reap" {
+		t.Errorf("controller text = %q", got)
+	}
+	if (ChosenHouseCannotReapNextTurn{}).validate() == nil {
+		t.Error("unset player should be invalid")
+	}
+	if (ChosenHouseCannotReapNextTurn{Player: Opponent}).validate() != nil {
+		t.Error("a fully set effect should be valid")
+	}
+
+	g := NewGame("A", "B", 1)
+	g.StartTurn(0)
+	ChosenHouseCannotReapNextTurn{Player: Opponent}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0, ChosenHouse: Brobnar},
+	)
+	if g.State.CannotReapHouseNext[1].Value != Brobnar {
+		t.Fatalf("armed = %v, want Brobnar", g.State.CannotReapHouseNext[1].Value)
+	}
+	g.EndPlayPhase(0)
+
+	g.StartTurn(1)
+	if err := g.ChooseHouse(1, Brobnar); err != nil {
+		t.Fatal(err)
+	}
+	if g.State.CannotReapHouse[1].Value != Brobnar {
+		t.Fatalf("promoted = %v, want Brobnar", g.State.CannotReapHouse[1].Value)
+	}
+	beast := g.AddToBattleline(NewCard("beast", Brobnar, Creature, Common, WithPower(3)), 1)
+	if err := g.Reap(1, beast); err != ErrCannotUse {
+		t.Errorf("Reap barred house = %v, want ErrCannotUse", err)
+	}
+	if g.CanUse(1, beast) == nil {
+		t.Error("a barred creature with no other use should have no use")
+	}
+	g.EndPlayPhase(1)
+	if g.State.CannotReapHouse[1].Value != HouseNone {
+		t.Error("the reap bar should lift at end of turn")
 	}
 }

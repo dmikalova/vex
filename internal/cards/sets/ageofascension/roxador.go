@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Skirmish.
 //	Roxador deals 2 Damage when fighting.
-//	Fight: Stun the creature Roxador fights.
+//	Fight: Stun the creature Roxador fought.
 var Roxador = card.New(
 	"Roxador",
 	card.House.Untamed,

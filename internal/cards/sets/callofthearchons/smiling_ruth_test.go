@@ -41,6 +41,7 @@ func TestSmilingRuth(t *testing.T) {
 		h.P1.ExpectKeys(1)
 		h.P1.Reap(ruth)
 		h.P1.ClickCard(otherFlank)
+		h.P1.ClickOption("right flank")
 
 		h.Expect(otherFlank).At(ct.PlayArea)
 		inMine := false

@@ -73,6 +73,7 @@ func (g *game) renderHandCard(id engine.LocalID) app.UI {
 	face.ID = id
 	face.DOMID = handCardID(id)
 	face.Maverick = g.isMaverick(id)
+	face.Legacy = g.isLegacy(id)
 	face.Selected = g.isSelected(id)
 	face.Targetable = targetable
 	face.Dimmed = dimmed

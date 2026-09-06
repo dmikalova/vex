@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Vehicle
 //
-//	You skip your "forge a key" step.
+//	You skip your "forge a key" phase.
 //	You gain all Æmber your opponent spends when forging a key.
 //	Action: Destroy The Sting.
 var TheSting = card.New(

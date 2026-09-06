@@ -26,6 +26,10 @@ const (
 	// means this turn — Foozle. Like EnemyCreaturesFightKilled it is kept from the
 	// watching player's side, but it counts every destruction, not only fights.
 	EnemyCreaturesDestroyed
+	// CreaturesReapedThisTurn counts the creatures the player has reaped with during
+	// the current turn — Aember Conduction Unit stuns the first enemy creature to
+	// reap. It is kept from the reaping (active) player's side.
+	CreaturesReapedThisTurn
 	// turnStatCount sizes GameState.TurnHistory and is not a tally itself.
 	turnStatCount
 )
@@ -37,4 +41,5 @@ var turnStatNoun = map[TurnStat]string{
 	CreaturesPlayedLastTurn:   "creature played on the previous turn",
 	EnemyCreaturesFightKilled: "enemy creature that was destroyed in a fight this turn",
 	EnemyCreaturesDestroyed:   "enemy creature that was destroyed this turn",
+	CreaturesReapedThisTurn:   "creature that has reaped this turn",
 }

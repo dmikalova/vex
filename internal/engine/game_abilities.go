@@ -18,6 +18,7 @@ func (g *Game) usableInActiveHouse(id LocalID) bool {
 		g.State.ActiveHouse == HouseNone ||
 		g.House(id) == g.State.ActiveHouse ||
 		g.hasKeyword(id, Versatile) ||
+		(g.State.MayUseArtifactsAnyHouse[g.controller(id)] && g.cat.def(id).Type == Artifact) ||
 		(g.State.MayUseHouse[g.controller(id)] != HouseNone && g.House(id) == g.State.MayUseHouse[g.controller(id)])
 }
 
@@ -82,15 +83,25 @@ func (g *Game) canUse(player int, id LocalID) error {
 // still offered while another way remains. It keeps CanUse's promise honest: a
 // Crocag with nothing to fight has no use at all this turn.
 func (g *Game) hasAnyUse(player int, id LocalID) bool {
-	if !g.cannotBeUsedTo(id, ReapUse) && !g.cannotReap(player) {
+	if !g.cannotBeUsedTo(id, ReapUse) && !g.cannotReap(player) &&
+		!g.cannotReapHouse(player, id) {
 		return true
 	}
-	if !g.cannotBeUsedTo(id, FightUse) &&
-		!g.cannotFight(player) &&
-		g.canFightSomeEnemy(player, id) {
+	if g.canFight(player, id) {
 		return true
 	}
 	return !g.cannotBeUsedTo(id, ActionUse) && g.hasTrigger(id, TriggerAction)
+}
+
+// canFight reports whether the creature is genuinely able to fight right now: it
+// is not barred from fighting — player-wide (Fogbank, a Fighting restriction) or
+// per-card — and has a legal target. It is the fight branch of hasAnyUse and what
+// "must fight if able" (Little Rapscal) tests, so a creature that cannot fight is
+// free to reap rather than stranded.
+func (g *Game) canFight(player int, id LocalID) bool {
+	return !g.cannotBeUsedTo(id, FightUse) &&
+		!g.cannotFight(player) &&
+		g.canFightSomeEnemy(player, id)
 }
 
 // canUseTo is canUse for one specific way of using the creature, so a card that
@@ -106,10 +117,25 @@ func (g *Game) canUseTo(player int, id LocalID, kind UseKind) error {
 	if kind == ReapUse && g.cannotReap(player) {
 		return ErrCannotUse
 	}
+	if kind == ReapUse && g.cannotReapHouse(player, id) {
+		return ErrCannotUse
+	}
+	if (kind == ReapUse || kind == ActionUse) && g.mustFightWhenUsed(player, id) {
+		return ErrCannotUse
+	}
 	if g.cannotBeUsedTo(id, kind) {
 		return ErrCannotUse
 	}
 	return nil
+}
+
+// mustFightWhenUsed reports whether the global "creatures must fight when used, if
+// able" rule (Little Rapscal) currently bars this creature from reaping or using
+// an Action ability — true only while the rule is in play and the creature is able
+// to fight, so a creature with nothing to fight, or barred from fighting (Fogbank),
+// may still reap or act.
+func (g *Game) mustFightWhenUsed(player int, id LocalID) bool {
+	return g.mustFightIfAble() && g.canFight(player, id)
 }
 
 // CanUse reports whether a creature may currently be used (reap/fight/action) by
@@ -195,6 +221,7 @@ func (g *Game) reapWith(id LocalID) {
 	g.triggerAbilities(id, TriggerAfterReap, 0, false)
 	g.emitCardUsed(p, id)
 	g.emitLasting(EventReap, p, id)
+	g.State.TurnHistory[p][CreaturesReapedThisTurn]++
 	g.emitCreatureReaped(p, id)
 }
 
@@ -221,6 +248,9 @@ func (g *Game) UseAction(player int, id LocalID) error {
 		return err
 	}
 	if g.cannotBeUsedTo(id, ActionUse) {
+		return ErrCannotUse
+	}
+	if g.cat.def(id).Type == Creature && g.mustFightWhenUsed(player, id) {
 		return ErrCannotUse
 	}
 	if !g.hasTrigger(id, TriggerAction) {
@@ -448,6 +478,18 @@ func (g *Game) emitCreatureEnters(entered LocalID) {
 	}
 }
 
+// emitCreaturePlayedAdjacent fires the "after a creature is played adjacent to
+// this" reaction on each creature sitting beside the just-played creature, with
+// the played creature as the trigger target ("it"). Only a creature's own
+// controller plays onto its battleline, so this naturally reaches only the
+// controller's neighbours (Fila the Researcher).
+func (g *Game) emitCreaturePlayedAdjacent(played LocalID) {
+	ctx := &EffectContext{Resolver: g}
+	for _, neighbor := range neighbors(ctx, played) {
+		g.triggerAbilities(neighbor, TriggerAfterCreaturePlayedAdjacent, played, true)
+	}
+}
+
 // emitEnemyDestroyed fires the persistent "after an enemy creature is destroyed
 // during your turn" reaction (Pile of Skulls) on the active player's in-play
 // cards. It fires only for the active player, and only when the destroyed
@@ -577,6 +619,9 @@ func (g *Game) triggeredBy(src LocalID, trigger Trigger) []triggeredAbility {
 		}
 	}
 	for _, ab := range g.cat.def(src).Abilities {
+		if g.textBlanked(src) {
+			break
+		}
 		keep(src, ab)
 	}
 	for up, ok := g.firstUpgrade(src); ok; up, ok = g.nextUpgrade(up) {
@@ -587,7 +632,8 @@ func (g *Game) triggeredBy(src LocalID, trigger Trigger) []triggeredAbility {
 	for player := 0; player < 2; player++ {
 		for _, grantor := range g.allInPlay(player) {
 			for _, c := range g.cat.def(grantor).ConstantAbilities {
-				if len(c.Granted) == 0 || !g.constantAffects(grantor, c, src) {
+				if len(c.Granted) == 0 || !g.constantActive(grantor, c) ||
+					!g.constantAffects(grantor, c, src) {
 					continue
 				}
 				for _, ab := range c.Granted {

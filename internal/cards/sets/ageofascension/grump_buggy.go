@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// GrumpBuggy
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Grump Buggy
 //
 //	House:  Brobnar
 //	Type:   Artifact
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Vehicle
 //
-//	Your opponent's keys cost +1A for each friendly creature with power 5 or higher.
-//	Your keys cost +1A for each enemy creature with power 5 or higher.
+//	Your opponent's keys cost +1 Æmber for each friendly creature with power 5 or higher.
+//	Your keys cost +1 Æmber for each enemy creature with power 5 or higher.
 var GrumpBuggy = card.New(
 	"Grump Buggy",
 	card.House.Brobnar,
@@ -25,5 +20,14 @@ var GrumpBuggy = card.New(
 	card.Provenance(card.AoA, 24),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Vehicle),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeyCost(card.KeyCostChange(card.Opponent, 1).Per(card.InPlay{
+		Player:   card.Controller,
+		Type:     card.Type.Creature,
+		MinPower: 5,
+	})),
+	card.WithKeyCost(card.KeyCostChange(card.Controller, 1).Per(card.InPlay{
+		Player:   card.Opponent,
+		Type:     card.Type.Creature,
+		MinPower: 5,
+	})),
 )

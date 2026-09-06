@@ -60,8 +60,28 @@ func newClient(t *testing.T) *client {
 	t.Helper()
 	c := newBlankClient(t)
 	c.g.dealMatch(testSeed)
+	c.keepOpeningHands()
 	c.g.inPlayPrev = c.g.inPlaySet()
 	return c
+}
+
+// keepOpeningHands answers both players' setup mulligan prompts with Keep and
+// waits for setup to settle at the house choice — the state a freshly dealt match
+// rests in. Each answer is keyed to the deciding player (setup makes them the
+// active one) so it cannot fire twice against the same prompt. A test that wants
+// to exercise the mulligan itself drives dealMatch and the prompts directly
+// instead of going through newClient.
+func (c *client) keepOpeningHands() {
+	c.t.Helper()
+	for p := range 2 {
+		c.await("a mulligan prompt", func() bool {
+			return c.g.choosingOption && c.g.active() == p
+		})
+		c.do(c.g.chooseOptionIdx(0))
+	}
+	c.await("setup to reach the house choice", func() bool {
+		return !c.g.busy && c.g.phase == phaseHouse
+	})
 }
 
 // newBlankClient mounts a game with no match dealt, for the tests that want to

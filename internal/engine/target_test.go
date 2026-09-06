@@ -137,6 +137,14 @@ func TestTargetText(t *testing.T) {
 	if got := (Target{Kind: TargetChosenArtifact}).Text(); got != "an artifact" {
 		t.Errorf("chosen-artifact text = %q", got)
 	}
+	if got := (Target{Kind: TargetEachCreature}.ExceptHouse(Mars)).
+		Text(); got != "each non-Mars creature" {
+		t.Errorf("except-house text = %q", got)
+	}
+	if got := (Target{Kind: TargetCreatureFought}).Text(); got !=
+		"the creature "+SelfName+" fought" {
+		t.Errorf("creature-fought text = %q", got)
+	}
 }
 
 func TestTargetSharingTrait(t *testing.T) {
@@ -559,6 +567,53 @@ func containsID(ids []LocalID, id LocalID) bool {
 	return false
 }
 
+// TestPowerLessThan covers the selector Exterminate! Exterminate! uses: keep the
+// creatures whose power is below a running count, and render the cardinal clause.
+func TestPowerLessThan(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(NewCard("m1", Mars, Creature, Common, WithPower(2)), 0)
+	g.AddToBattleline(NewCard("m2", Mars, Creature, Common, WithPower(2)), 0)
+	weak := g.AddToBattleline(testCreature("weak", 1), 1)
+	equal := g.AddToBattleline(testCreature("equal", 2), 1)
+	strong := g.AddToBattleline(testCreature("strong", 3), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	// Threshold is the two friendly Mars creatures, so only power < 2 is kept:
+	// power == 2 and power 3 both survive.
+	limit := InPlay{Player: Controller, Type: Creature, House: Mars}
+	got := Target{Kind: TargetEachEnemyCreature}.Selector(PowerLessThan(limit)).Select(ctx)
+	if len(got) != 1 || got[0] != weak || containsID(got, equal) || containsID(got, strong) {
+		t.Errorf("PowerLessThan = %v, want [weak]", got)
+	}
+
+	if text := (Target{Kind: TargetEachEnemyCreature}).Selector(PowerLessThan(limit)).
+		Text(); text !=
+		"each enemy creature with power less than the number of friendly Mars creatures you control" {
+		t.Errorf("PowerLessThan text = %q", text)
+	}
+
+	// An empty set keeps nothing.
+	empty := &EffectContext{Resolver: NewGame("A", "B", 1), Controller: 0}
+	if ids := (Target{Kind: TargetEachEnemyCreature}).Selector(PowerLessThan(limit)).
+		Select(empty); len(
+		ids,
+	) != 0 {
+		t.Errorf("PowerLessThan empty = %v, want none", ids)
+	}
+
+	// The SelfHouse sentinel in the count resolves to the card's own house, even
+	// though it lives in the selector's unexported field.
+	selfLimit := InPlay{Player: Controller, Type: Creature, House: SelfHouse}
+	resolved := resolvedIn(
+		(Target{Kind: TargetEachEnemyCreature}).Selector(PowerLessThan(selfLimit)),
+		Mars,
+	)
+	if text := resolved.Text(); text !=
+		"each enemy creature with power less than the number of friendly Mars creatures you control" {
+		t.Errorf("resolved SelfHouse text = %q", text)
+	}
+}
+
 func TestTargetChosenOtherFriendly(t *testing.T) {
 	if got := (Target{Kind: TargetChosenOtherFriendlyCreature}).Text(); got != "another friendly creature" {
 		t.Errorf("text = %q, want %q", got, "another friendly creature")
@@ -627,5 +682,30 @@ func TestTargetChosenEnemyCreatureOrArtifact(t *testing.T) {
 	// Both enemy halves are candidates; the chooser takes the first.
 	if got := tgt.Select(ctx); len(got) != 1 || got[0] != foe {
 		t.Errorf("selected %v, want the enemy creature %v (candidates include %v)", got, foe, art)
+	}
+}
+
+// TestTargetChosenUpgrade renders "an upgrade" and selects from every upgrade
+// attached to any creature in play (Destroy Them All!).
+func TestTargetChosenUpgrade(t *testing.T) {
+	if got := (Target{Kind: TargetChosenUpgrade}).Text(); got != "an upgrade" {
+		t.Errorf("chosen-upgrade text = %q, want %q", got, "an upgrade")
+	}
+	if !(Target{Kind: TargetChosenUpgrade}).isChosen() {
+		t.Error("chosen-upgrade should be a chosen target")
+	}
+
+	g := started(t)
+	mine := g.AddToBattleline(testCreature("mine", 3), 0)
+	theirs := g.AddToBattleline(testCreature("theirs", 3), 1)
+	up1 := g.Register(NewCard("up1", Brobnar, Upgrade, Common), 0)
+	up2 := g.Register(NewCard("up2", Brobnar, Upgrade, Common), 1)
+	g.AttachUpgrade(mine, up1)
+	g.AttachUpgrade(theirs, up2)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	if ids := (Target{Kind: TargetChosenUpgrade}).selectBase(ctx); len(ids) != 2 ||
+		ids[0] != up1 || ids[1] != up2 {
+		t.Errorf("chosen-upgrade selectBase = %v, want [%d %d]", ids, up1, up2)
 	}
 }

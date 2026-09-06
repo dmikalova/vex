@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// CollectorWorm
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Collector Worm
 //
 //	House:  Mars
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  5
 //	Traits: Beast
 //
-//	Fight: Archive the creature Collector Worm fights. If that creature leaves your archives, put it in its owner's hand instead.
+//	Fight: Put the creature Collector Worm fought into your archives.
 var CollectorWorm = card.New(
 	"Collector Worm",
 	card.House.Mars,
@@ -26,5 +21,9 @@ var CollectorWorm = card.New(
 	card.WithPower(2),
 	card.WithArmor(5),
 	card.WithTraits(card.Traits.Beast),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Fight, card.PutFromPlay{
+			Target:      card.Target.CreatureFought,
+			Destination: card.To.Archives.Yours(),
+		}),
 )

@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// AemberConductionUnit
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Aember Conduction Unit
 //
 //	House:  Mars
 //	Type:   Artifact
@@ -22,5 +17,9 @@ var AemberConductionUnit = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.AoA, 176),
 	card.WithTraits(card.Traits.Item),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.AfterEnemyCreatureReaps, card.Conditional{
+			Cond: card.FirstReapOfTurn{},
+			Then: card.Stun{Target: card.Target.Triggering},
+		}),
 )

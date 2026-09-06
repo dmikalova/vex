@@ -10,7 +10,9 @@ package engine
 // exhaustion, attached upgrades), so one zeroing covers them all and any field
 // added later is reset automatically — no leaves-play path has to remember to
 // clear it. Callers apply field-specific side effects (moving upgrades to the
-// discard, handing Æmber to the opponent) BEFORE resetting.
+// discard, handing Æmber to the opponent) BEFORE resetting. Generic counters
+// live off CardCore in the global table, so removeFromPlay sheds them separately
+// (ADR 0024).
 func (g *Game) resetCore(id LocalID) { g.State.Cards[id] = CardCore{} }
 
 // discardDestroyed moves a destroyed card from play to its owner's discard: it
@@ -57,6 +59,7 @@ func (g *Game) leavePlayDestroyed(id LocalID) int {
 // scan both players' rows.
 func (g *Game) removeFromPlay(id LocalID) {
 	g.emitLeavesPlay(id)
+	g.clearCounters(id)
 	for p := 0; p < 2; p++ {
 		g.State.Battleline[p].remove(id)
 		g.State.Artifacts[p].remove(id)

@@ -117,6 +117,17 @@ to seed it. `card.New(...)`:
   break its fields onto their own lines as above.
 - Slice elements that are themselves single-field or empty structs stay inline
   within the slice (e.g. `Verbs: []card.CreatureVerb{card.ReadyVerb{}, card.FightVerb{}}`).
+- **A card with several abilities lists them in printed order: ongoing lines
+  first, the `Play`/`Action` line last.** A card prints its always-on or
+  recurring ability (a `WithConstant` line, or a `WithAbility(card.Trigger.StartOfTurn,
+  …)` / `EndOfTurn` line) above its `Play:`/`Action:` ability, so author the
+  `With*` calls in that same top-to-bottom order (Wretched Doll: its
+  start-of-turn sweep is written before its `Play` doom-counter). Each ability is
+  its own `WithConstant`/`WithAbility` call; do not fuse two printed lines into one.
+- **One ability that reads as several sentences is one `card.Sentences`,** not
+  several abilities: `card.Sentences{Effects: []card.Effect{…}}` renders its
+  effects space-joined on a single line under one trigger. Reach for two
+  `WithAbility` calls only when the card genuinely prints two ability lines.
 
 Run `mage fmt` after editing (golines aligns the fields; it does not add the line
 breaks, so the one-field-per-line layout above is the author's responsibility).

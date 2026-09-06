@@ -76,6 +76,10 @@ type CardDefinition struct {
 	// creature its neighbors' taunt shields and no elusive stops the damage.
 	AttackIgnores []Keyword
 
+	// AttackKeywords are keywords this creature gains only while attacking — Spyyyder
+	// gains poison while attacking a flank creature. The zero value grants none.
+	AttackKeywords AttackKeywords
+
 	// AemberBonus is the number of Æmber "pips" printed on the card; the
 	// controller gains this much Æmber when the card is played.
 	AemberBonus int
@@ -92,10 +96,11 @@ type CardDefinition struct {
 	// controller while it is in play (e.g. Grommid's "You cannot play creatures").
 	Restricts Restrictions
 
-	// KeyCostChange is a continuous change this card, while in play, makes to key
-	// cost — who it affects and by how much (e.g. Grabber Jammer's "Your opponent's
-	// keys cost +1 Æmber"). The zero value changes nothing.
-	KeyCostChange KeyCostChange
+	// KeyCostChanges are the continuous changes this card, while in play, makes to
+	// key cost — who each affects and by how much (e.g. Grabber Jammer's "Your
+	// opponent's keys cost +1 Æmber"). A card may impose several (Grump Buggy raises
+	// each player's keys by a different count). Empty changes nothing.
+	KeyCostChanges []KeyCostChange
 
 	// HouseLock is a continuous constraint this card, while in play, puts on a
 	// player's active-house choice — Pitlord's "you must choose Dis", Restringuntus'
@@ -141,12 +146,15 @@ type CardDefinition struct {
 }
 
 // DrawModifier is a continuous change a card in play makes to how many cards a
-// player draws back up to during their "draw cards" step. Player is relative to
+// player draws back up to during their "draw cards" phase. Player is relative to
 // the card's controller (Controller, Opponent, or EachPlayer), and Amount is added
 // to the normal hand size (+1 for Mother and The Howling Pit, -1 for Succubus).
 type DrawModifier struct {
 	Player Player
 	Amount int
+	// OnlyWhileOffFlank restricts the modifier to while the source card is not on a
+	// flank of its battleline (Streke).
+	OnlyWhileOffFlank bool
 }
 
 // affects reports whether a draw modifier owned by owner applies to target's draw.
@@ -192,6 +200,10 @@ type Restrictions struct {
 	// (1 = first, 2 = second, 3 = third) while this card stays in play — the Key
 	// Imps' "Players cannot forge their first key." Its zero value bars nothing.
 	NoForgeKeyNumber int
+	// MustFightIfAble makes every creature on the board that could fight an enemy
+	// have to fight when used — it cannot reap or use an Action ability while a legal
+	// fight target exists (Little Rapscal). Affects both players' creatures.
+	MustFightIfAble bool
 }
 
 // PlayCardLimit caps how many cards Player may play in a turn while its source
@@ -543,6 +555,22 @@ func WithAttackIgnores(kws ...Keyword) CardOption {
 	return func(c *CardDefinition) { c.AttackIgnores = kws }
 }
 
+// AttackKeywords are keywords a creature gains only while it is attacking. The
+// zero value grants none.
+type AttackKeywords struct {
+	// Keywords are the keywords the attacker gains for the fight.
+	Keywords []Keyword
+	// FlankOnly limits the grant to attacks on a defender that is on a flank
+	// (Spyyyder gains poison only against a flank creature).
+	FlankOnly bool
+}
+
+// WithAttackKeywords makes a creature gain keywords while it is attacking — with
+// FlankOnly the grant applies only against a defender on a flank (Spyyyder).
+func WithAttackKeywords(ak AttackKeywords) CardOption {
+	return func(c *CardDefinition) { c.AttackKeywords = ak }
+}
+
 // WithEntersPlay makes a creature apply an effect to itself as it enters play
 // (Chuff Ape stunning itself with Stun) by giving it that effect as an Enters Play
 // ability — an ability the enter-play event fires, so the play path needs no
@@ -576,9 +604,10 @@ func WithHouseLock(l HouseLock) CardOption {
 }
 
 // WithKeyCost makes the card, while in play, impose the given key-cost change (who
-// it affects and by how much).
+// it affects and by how much). Called more than once, each change stacks (Grump
+// Buggy raises each player's keys by a separate per-creature count).
 func WithKeyCost(kc KeyCostChange) CardOption {
-	return func(c *CardDefinition) { c.KeyCostChange = kc }
+	return func(c *CardDefinition) { c.KeyCostChanges = append(c.KeyCostChanges, kc) }
 }
 
 // WithReplaces sets a continuous replacement the card applies to a game event's
@@ -592,6 +621,15 @@ func WithReplaces(r Instead) CardOption {
 // opponent, The Howling Pit +1 for each player).
 func WithDrawModifier(player Player, amount int) CardOption {
 	return func(c *CardDefinition) { c.DrawModifier = DrawModifier{Player: player, Amount: amount} }
+}
+
+// WithDrawModifierOffFlank is WithDrawModifier gated on the source not being on a
+// flank of its battleline (Streke slows the opponent's refill only while buried in
+// the middle of the line).
+func WithDrawModifierOffFlank(player Player, amount int) CardOption {
+	return func(c *CardDefinition) {
+		c.DrawModifier = DrawModifier{Player: player, Amount: amount, OnlyWhileOffFlank: true}
+	}
 }
 
 // WithAemberTheftImmunity makes the card, while in play, protect its controller's

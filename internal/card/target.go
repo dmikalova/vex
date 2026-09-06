@@ -31,6 +31,7 @@ var Target = targets{
 	FriendlyCreatureOrArtifact: engine.Target{Kind: engine.TargetChosenFriendlyCreatureOrArtifact},
 	EnemyCreatureOrArtifact:    engine.Target{Kind: engine.TargetChosenEnemyCreatureOrArtifact},
 	Artifact:                   engine.Target{Kind: engine.TargetChosenArtifact},
+	Upgrade:                    engine.Target{Kind: engine.TargetChosenUpgrade},
 	FriendlyArtifact:           engine.Target{Kind: engine.TargetChosenFriendlyArtifact},
 	EnemyArtifact:              engine.Target{Kind: engine.TargetChosenEnemyArtifact},
 	FormerNeighbors:            engine.Target{Kind: engine.TargetFormerNeighbors},
@@ -82,6 +83,8 @@ type targets struct {
 	EnemyCreatureOrArtifact engine.Target
 	// Artifact is a single artifact the controller chooses, either side.
 	Artifact engine.Target
+	// Upgrade is a single upgrade the controller chooses from all in play.
+	Upgrade engine.Target
 	// FriendlyArtifact is a single friendly artifact the controller chooses.
 	FriendlyArtifact engine.Target
 	// EnemyArtifact is a single enemy artifact the controller chooses.
@@ -121,6 +124,12 @@ var MostPowerful = engine.MostPowerful
 // card.Target.EachCreature.Selector(card.LowestAndHighestPower) (Standardized
 // Testing).
 var LowestAndHighestPower = engine.LowestAndHighestPower
+
+// PowerLessThan is a Selector that keeps every creature of a set whose power is
+// below a running count, e.g.
+// card.Target.EachCreature.ExceptHouse(card.House.Self).Selector(card.PowerLessThan(count))
+// (Exterminate! Exterminate!).
+var PowerLessThan = engine.PowerLessThan
 
 // Stunned is the set of stunned creatures, used as a fight restriction: pass it to
 // card.WithFightRestriction to limit a creature to fighting only stunned creatures

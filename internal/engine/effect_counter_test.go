@@ -51,3 +51,22 @@ func TestAddPowerCounterPer(t *testing.T) {
 		t.Errorf("negative counters = %q", got)
 	}
 }
+
+// A -1 power counter that lowers a damaged creature's power to its damage
+// destroys it, the same sweep a leaving buff triggers — CanUse's map order must
+// never leave a lethal creature sitting in play.
+func TestAddPowerCounterSettlesLethal(t *testing.T) {
+	g := started(t)
+	c := g.AddToBattleline(testCreature("c", 3), 1)
+	g.DealDamage(0, []DamageTarget{{ID: c, Amount: 2}})
+	if !g.inPlay(c) {
+		t.Fatal("2 damage should not destroy a 3-power creature")
+	}
+
+	AddPowerCounter{Target: Target{Kind: TargetThisCreature}, Amount: -1}.
+		Resolve(&EffectContext{Resolver: g, Source: c, Controller: 0})
+
+	if g.inPlay(c) {
+		t.Errorf("a -1 counter dropping power to 2 with 2 damage should destroy it")
+	}
+}

@@ -5,17 +5,17 @@ import (
 	"testing"
 )
 
-func TestSkipForgeStep(t *testing.T) {
-	if got := (SkipForgeStep{Player: Opponent}).Text(); got != `your opponent skips the "forge a key" step during their next turn` {
+func TestSkipForgePhase(t *testing.T) {
+	if got := (SkipForgePhase{Player: Opponent}).Text(); got != `your opponent skips the "forge a key" phase during their next turn` {
 		t.Errorf("opponent text = %q", got)
 	}
-	if got := (SkipForgeStep{Player: Controller}).Text(); got != `you skip the "forge a key" step during your next turn` {
+	if got := (SkipForgePhase{Player: Controller}).Text(); got != `you skip the "forge a key" phase during your next turn` {
 		t.Errorf("self text = %q", got)
 	}
-	if (SkipForgeStep{}).validate() == nil {
+	if (SkipForgePhase{}).validate() == nil {
 		t.Error("unset player should be invalid")
 	}
-	if (SkipForgeStep{Player: Opponent}).validate() != nil {
+	if (SkipForgePhase{Player: Opponent}).validate() != nil {
 		t.Error("a set player should be valid")
 	}
 
@@ -25,7 +25,7 @@ func TestSkipForgeStep(t *testing.T) {
 		t.Fatal(err)
 	}
 	g.State.Aember[1] = 6 // enough for player 1 to forge on their turn
-	SkipForgeStep{Player: Opponent}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	SkipForgePhase{Player: Opponent}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 	if !g.State.SkipForgeNext[1].Value {
 		t.Fatal("the skip should arm the opponent's next turn")
 	}
@@ -77,7 +77,7 @@ func TestSkipsForgeConstant(t *testing.T) {
 	if g.skipsForge(1) {
 		t.Error("the opponent should be unaffected")
 	}
-	if !strings.Contains(RenderCardRules(&def), `You skip your "forge a key" step.`) {
+	if !strings.Contains(RenderCardRules(&def), `You skip your "forge a key" phase.`) {
 		t.Error("card rules should render the skip-forge line")
 	}
 
@@ -85,10 +85,10 @@ func TestSkipsForgeConstant(t *testing.T) {
 	keysBefore := g.State.Keys[0]
 	g.forgePhase(0)
 	if g.State.Keys[0] != keysBefore {
-		t.Error("a player skipping their forge step should not forge a key")
+		t.Error("a player skipping their forge phase should not forge a key")
 	}
 	if g.State.Aember[0] != 6 {
-		t.Error("skipping the forge step should not spend any Æmber")
+		t.Error("skipping the forge phase should not spend any Æmber")
 	}
 	_ = sting
 }

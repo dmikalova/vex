@@ -125,6 +125,45 @@ func TestAttackDamage(t *testing.T) {
 	}
 }
 
+func TestAttackKeywordsPoison(t *testing.T) {
+	spyyyder := func() CardDefinition {
+		return NewCard("Spyyyder", Dis, Creature, Common, WithPower(2),
+			WithKeywords(Skirmish),
+			WithAttackKeywords(AttackKeywords{Keywords: []Keyword{Poison}, FlankOnly: true}))
+	}
+
+	// Against a flank creature that survives the fight damage, poison destroys it.
+	g := started(t)
+	att := g.AddToBattleline(spyyyder(), 0)
+	flank := g.AddToBattleline(testCreature("flank", 10), 1)
+	g.fight(att, flank)
+	if g.inPlay(flank) {
+		t.Error("flank defender should be destroyed by attack poison")
+	}
+
+	// A creature in the middle of the line is not on a flank: no poison, it lives.
+	g2 := started(t)
+	att2 := g2.AddToBattleline(spyyyder(), 0)
+	g2.AddToBattleline(testCreature("left", 10), 1)
+	middle := g2.AddToBattleline(testCreature("middle", 10), 1)
+	g2.AddToBattleline(testCreature("right", 10), 1)
+	g2.fight(att2, middle)
+	if !g2.inPlay(middle) {
+		t.Error("middle defender should survive: no attack poison off a flank")
+	}
+
+	// Poison needs damage to actually land: armor that absorbs it all spares the
+	// creature.
+	g3 := started(t)
+	att3 := g3.AddToBattleline(spyyyder(), 0)
+	armored := g3.AddToBattleline(
+		NewCard("armored", Logos, Creature, Common, WithPower(10), WithArmor(5)), 1)
+	g3.fight(att3, armored)
+	if !g3.inPlay(armored) {
+		t.Error("fully-absorbed defender should survive: poison needs damage dealt")
+	}
+}
+
 func TestBeforeFightTrigger(t *testing.T) {
 	g := started(t)
 	spit := DealDamage{Amount: 1, Target: Target{Kind: TargetEachEnemyCreature}}

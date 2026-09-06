@@ -131,15 +131,28 @@ func (g *Game) constantAffects(src LocalID, c ConstantAbility, id LocalID) bool 
 // for its source — a WhileOffFlank ability is suspended while its source holds a
 // flank.
 func (g *Game) constantActive(src LocalID, c ConstantAbility) bool {
+	if g.textBlanked(src) {
+		return false
+	}
 	if c.WhileOffFlank && g.onFlankOf(src) {
 		return false
 	}
 	return true
 }
 
+// textBlanked reports whether a creature's text box is currently blanked (Shadow
+// of Dis), so its printed keywords, abilities, and constant grants are ignored —
+// its traits and stats are untouched. Only creatures are blanked.
+func (g *Game) textBlanked(id LocalID) bool {
+	return g.State.TextBlank[g.controller(id)].Value && g.cat.def(id).Type == Creature
+}
+
 // assault returns a creature's Assault value including attached upgrades.
 func (g *Game) assault(id LocalID) int {
-	a := g.cat.def(id).Assault
+	a := 0
+	if !g.textBlanked(id) {
+		a = g.cat.def(id).Assault
+	}
 	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
 		a += g.cat.def(up).Static.AssaultBonus
 	}
@@ -148,7 +161,10 @@ func (g *Game) assault(id LocalID) int {
 
 // hazardous returns a creature's Hazardous value including attached upgrades.
 func (g *Game) hazardous(id LocalID) int {
-	h := g.cat.def(id).Hazardous
+	h := 0
+	if !g.textBlanked(id) {
+		h = g.cat.def(id).Hazardous
+	}
 	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
 		h += g.cat.def(up).Static.HazardousBonus
 	}
@@ -162,7 +178,10 @@ func (g *Game) Hazardous(id LocalID) int { return g.hazardous(id) }
 // splashAttack returns a creature's Splash-attack value including attached
 // upgrades.
 func (g *Game) splashAttack(id LocalID) int {
-	s := g.cat.def(id).SplashAttack
+	s := 0
+	if !g.textBlanked(id) {
+		s = g.cat.def(id).SplashAttack
+	}
 	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
 		s += g.cat.def(up).Static.SplashAttackBonus
 	}
@@ -183,7 +202,7 @@ func (g *Game) hasKeyword(id LocalID, k Keyword) bool {
 	if g.State.KeywordsLost&k.bit() != 0 {
 		return false
 	}
-	if g.cat.def(id).hasKeyword(k) {
+	if !g.textBlanked(id) && g.cat.def(id).hasKeyword(k) {
 		return true
 	}
 	if g.State.Cards[id].GrantedKeywords&k.bit() != 0 {
@@ -346,6 +365,12 @@ func (g *Game) inPlay(id LocalID) bool {
 	return false
 }
 
+// InBattleline reports whether a creature currently sits on either player's
+// battleline, excluding artifacts and cards that have left play.
+func (g *Game) InBattleline(id LocalID) bool {
+	return g.State.Battleline[0].contains(id) || g.State.Battleline[1].contains(id)
+}
+
 // cannotFight reports whether a player is barred from using creatures to fight,
 // by a timed bar (Fogbank) or a constant Restrictions.Fighting rule on a card
 // they control in play.
@@ -359,6 +384,28 @@ func (g *Game) cannotFight(player int) bool {
 		}
 	}
 	return false
+}
+
+// mustFightIfAble reports whether any card in play imposes the global "creatures
+// must fight when used, if able" rule (Little Rapscal). It affects both players'
+// creatures, so it scans every in-play card.
+func (g *Game) mustFightIfAble() bool {
+	for owner := 0; owner < 2; owner++ {
+		for _, id := range g.allInPlay(owner) {
+			if g.cat.def(id).Restricts.MustFightIfAble {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// cannotReapHouse reports whether a creature is barred from reaping because a
+// turn-scoped bar (Seismo-entangler) stops its controller reaping with creatures
+// of that creature's house this turn.
+func (g *Game) cannotReapHouse(player int, id LocalID) bool {
+	bar := g.State.CannotReapHouse[player]
+	return bar.Value != HouseNone && bar.Value == g.House(id)
 }
 
 // cannotReap reports whether a player is barred from reaping by a constant
@@ -522,8 +569,10 @@ func (g *Game) houseLockAllows(player int, house House) bool {
 // attached upgrades.
 func (g *Game) keyCostChangeFor(id LocalID, controller, target int) int {
 	total := 0
-	if kc := g.cat.def(id).KeyCostChange; kc.affects(controller, target) {
-		total += g.keyCostAmount(id, kc)
+	for _, kc := range g.cat.def(id).KeyCostChanges {
+		if kc.affects(controller, target) {
+			total += g.keyCostAmount(id, kc)
+		}
 	}
 	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
 		if kc := g.cat.def(up).Static.KeyCostChange; kc.affects(controller, target) {

@@ -47,6 +47,7 @@ func TestGreyMonk(t *testing.T) {
 
 		ally.Damaged(2)
 		h.P1.Reap(GreyMonk)
+		h.P1.ClickCard(ally)
 
 		h.Expect(ally).Damage(0)
 	})

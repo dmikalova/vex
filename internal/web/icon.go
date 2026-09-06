@@ -186,7 +186,7 @@ func isActionTrigger(t engine.Trigger) bool {
 func triggerIcon(t engine.Trigger) string {
 	switch t {
 	case engine.TriggerAfterPlay, engine.TriggerEntersPlay,
-		engine.TriggerAfterCreatureEnters:
+		engine.TriggerAfterCreatureEnters, engine.TriggerAfterCreaturePlayedAdjacent:
 		return "glyph-play"
 	case engine.TriggerAfterReap, engine.TriggerAfterCreatureReaps,
 		engine.TriggerAfterEnemyCreatureReaps:
@@ -227,6 +227,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 			return []glyph{{asset: "aember", decor: playerDecor(v.Player)}}, true
 		}
 		return []glyph{{asset: "aember", qty: v.Amount, decor: playerDecor(v.Player)}}, true
+	case engine.GainAemberEqualTo:
+		return []glyph{{asset: "aember", decor: playerDecor(v.Player)}}, true
 	case engine.LoseAember:
 		return []glyph{{asset: "aember", text: "−", decor: playerDecor(v.Player)}}, true
 	case engine.StealAember:
@@ -267,6 +269,14 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		}, true
 	case engine.ForgeKey:
 		return []glyph{{asset: "forge"}}, true
+	case engine.DestroyFriendlyCreaturesToForge:
+		gs := []glyph{{asset: "glyph-destroy"}, targetGlyph(v.Target)}
+		more, _ := effectGlyphs(v.Then)
+		return append(gs, more...), true
+	case engine.PlaceCounter:
+		return []glyph{{asset: counterAsset(v.Kind)}, arrowTo(targetGlyph(v.Target))}, true
+	case engine.BlankEnemyText:
+		return []glyph{{asset: "type-creature", decor: decorEnemy | decorEach}}, true
 	case engine.ArchiveFromHand:
 		return []glyph{{asset: "zone-archives", qty: v.Amount}}, true
 	case engine.ArchiveFromDiscard, engine.ArchiveFromPlay, engine.ArchiveTopOfDeck,
@@ -385,6 +395,11 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "aember"}, arrowTo(moveAemberDest(v.Onto, v.To))}, true
 	case engine.MoveAemberFromPool:
 		return []glyph{{asset: "aember", qty: v.Amount}, arrowTo(targetGlyph(v.Target))}, true
+	case engine.PlaceAemberOnThis:
+		return []glyph{
+			{asset: "aember", qty: v.Amount},
+			arrowTo(glyph{asset: "card-back", decor: decorThis}),
+		}, true
 	case engine.MoveAemberToCommonSupply:
 		return []glyph{
 			{asset: "aember", qty: v.Amount, decor: decorChosen},
@@ -432,7 +447,7 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		}, true
 	case engine.RaiseKeyCost:
 		return []glyph{{asset: "forge"}, {asset: "aember", qty: v.Amount}}, true
-	case engine.SkipForgeStep:
+	case engine.SkipForgePhase:
 		return []glyph{{asset: "forge"}, {asset: "glyph-ban"}}, true
 	case engine.CannotFight:
 		return []glyph{{asset: "glyph-fight"}, {asset: "glyph-ban"}}, true
@@ -440,6 +455,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "glyph-play"}, {asset: "glyph-ban"}}, true
 	case engine.CannotUse:
 		return []glyph{{asset: "glyph-action"}, {asset: "glyph-ban"}}, true
+	case engine.ChosenHouseCannotReapNextTurn:
+		return []glyph{{asset: "glyph-reap"}, {asset: "glyph-ban"}}, true
 	case engine.LoseKeyword:
 		if a := keywordIcon(v.Keyword); a != "" {
 			return []glyph{{asset: a}, {asset: "glyph-ban"}}, true
@@ -461,6 +478,11 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "glyph-fight", decor: decorEach}}, true
 	case engine.MayUseFriendlyHouse:
 		return []glyph{{asset: "glyph-action", decor: decorFriendly}}, true
+	case engine.MayUseFriendlyArtifacts:
+		return []glyph{
+			{asset: "type-artifact", decor: decorFriendly},
+			{asset: "glyph-action"},
+		}, true
 	case engine.DiscardDeckUntil:
 		return []glyph{{asset: "zone-deck"}, {asset: "zone-discard"}}, true
 	case engine.PutDiscardedIntoHand:
@@ -469,6 +491,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "zone-discard", decor: playerDecor(v.Player)}}, true
 	case engine.DiscardTopOfEachDeck:
 		return []glyph{{asset: "zone-discard", decor: decorEach}}, true
+	case engine.DiscardTop:
+		return []glyph{{asset: "zone-discard", qty: v.Amount, decor: playerDecor(v.Player)}}, true
 	case engine.ForEachDiscarded:
 		return effectGlyphs(v.Do)
 	case engine.UnforgeKey:
@@ -502,6 +526,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		}, true
 	case engine.PlayCardUnder:
 		return []glyph{{asset: "card-back"}, arrowTo(glyph{asset: "glyph-play"})}, true
+	case engine.ArchiveCardUnder:
+		return []glyph{{asset: "card-back"}, arrowTo(glyph{asset: "zone-archives"})}, true
 	case engine.PlayRevealedCard:
 		return []glyph{{asset: "glyph-play"}}, true
 	case engine.RevealTopOfDeck:
@@ -618,6 +644,18 @@ func arrowTo(g glyph) glyph {
 	return g
 }
 
+// counterAsset maps a generic counter kind to its icon-strip asset, or "" for a
+// kind with no icon yet — TestCounterIconNamesHaveAssets fails on the "" so every
+// counter ships its own unique SVG.
+func counterAsset(kind engine.CounterKind) string {
+	switch kind {
+	case engine.CounterDoom:
+		return "doom-counter"
+	default:
+		return ""
+	}
+}
+
 // targetGlyph renders a Target as its noun glyph plus the decorations that carry
 // its enemy/friendly/each/chosen shape. Fine filters (power, house, trait) stay
 // in the rules text; the strip summarises the noun.
@@ -650,6 +688,8 @@ func targetGlyph(t engine.Target) glyph {
 		return glyph{asset: "type-artifact", decor: decorChosen}
 	case engine.TargetChosenEnemyArtifact:
 		return glyph{asset: "type-artifact", decor: decorChosen | decorEnemy}
+	case engine.TargetChosenUpgrade:
+		return glyph{asset: "type-upgrade", decor: decorChosen}
 	case engine.TargetEachCardInPlay, engine.TargetEachFriendlyCardInPlay,
 		engine.TargetChosenCreatureOrArtifact,
 		engine.TargetChosenFriendlyCreatureOrArtifact,

@@ -40,6 +40,17 @@ func (e UseGrantedForHouse) Text(n Namer) string {
 	return fmt.Sprintf("%s may use %s creatures this turn", n.PlayerName(e.Player), e.House)
 }
 
+// UseArtifactsGrantedAnyHouse narrates permission to use any friendly artifact
+// out of the active house this turn (Scientifical Hack).
+type UseArtifactsGrantedAnyHouse struct {
+	Player int
+}
+
+// Text renders permission to use any friendly artifact this turn.
+func (e UseArtifactsGrantedAnyHouse) Text(n Namer) string {
+	return fmt.Sprintf("%s may use friendly artifacts this turn", n.PlayerName(e.Player))
+}
+
 // PlayGrantedForHouse narrates permission to play a house's cards from hand this
 // turn out of the active house.
 type PlayGrantedForHouse struct {

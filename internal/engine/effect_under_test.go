@@ -221,3 +221,33 @@ func TestPutUnderIntoPlayResolveReturnsToOwners(t *testing.T) {
 		)
 	}
 }
+
+// TestArchiveCardUnderText renders the effect.
+func TestArchiveCardUnderText(t *testing.T) {
+	if got := (ArchiveCardUnder{}).Text(); got != "archive the card under {self}" {
+		t.Errorf("text = %q, want %q", got, "archive the card under {self}")
+	}
+}
+
+// TestArchiveCardUnderResolveMovesToOwnerArchives archives every card under the
+// source into its own owner's archives, whichever player that is.
+func TestArchiveCardUnderResolveMovesToOwnerArchives(t *testing.T) {
+	g := started(t)
+	host := g.AddArtifact(NewCard("Host", Brobnar, Artifact, Common), 0)
+	mine := g.Register(NewCard("Mine", Brobnar, Creature, Common, WithPower(2)), 0)
+	theirs := g.Register(NewCard("Theirs", Brobnar, Creature, Common, WithPower(2)), 1)
+	g.AttachUnder(host, mine, true)
+	g.AttachUnder(host, theirs, true)
+
+	ArchiveCardUnder{}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: host})
+
+	if got := g.Under(host); len(got) != 0 {
+		t.Errorf("under = %v, want empty", got)
+	}
+	if got := g.Archives(0); len(got) != 1 || got[0] != mine {
+		t.Errorf("player 0 archives = %v, want [%d]", got, mine)
+	}
+	if got := g.Archives(1); len(got) != 1 || got[0] != theirs {
+		t.Errorf("player 1 archives = %v, want [%d]", got, theirs)
+	}
+}

@@ -199,6 +199,7 @@ func styleHarness() *game {
 	g := &game{selHand: -1, zonesPlayer: -1, forgingKey: -1, handSlot: -1}
 	g.g = engine.NewGame("Player One", "Player Two", 1)
 	g.mavericks = map[engine.LocalID]bool{}
+	g.legacy = map[engine.LocalID]bool{}
 	g.deckHouses = [2][]engine.House{
 		{engine.Brobnar, engine.Dis, engine.Logos},
 		{engine.Mars, engine.Sanctum, engine.Untamed},
@@ -243,6 +244,7 @@ func attachHarness() *game {
 	g := &game{selHand: -1, zonesPlayer: -1, forgingKey: -1, handSlot: -1}
 	g.g = engine.NewGame("Player One", "Player Two", 1)
 	g.mavericks = map[engine.LocalID]bool{}
+	g.legacy = map[engine.LocalID]bool{}
 	g.g.State.ActivePlayer = 0
 	return g
 }
@@ -865,6 +867,7 @@ var galleryIcons = []string{
 	"card-back",
 	"chains",
 	"damage",
+	"doom-counter",
 	"exhausted",
 	"forge",
 	"glyph-action",
@@ -904,6 +907,7 @@ var galleryIcons = []string{
 	"kw-taunt",
 	"kw-versatile",
 	"maverick",
+	"legacy",
 	"power",
 	"power-counter-minus",
 	"power-counter-plus",

@@ -237,6 +237,25 @@ func TestDrawingAnUpgradeTab(t *testing.T) {
 	c.wants("a host that reserves room for its upgrade tab", "--up-tabs:1")
 }
 
+// An attached upgrade that is a chooser candidate — one Destroy Them All may
+// destroy — gets the targetable ring on its own tab, since the tab is the only
+// thing to click for a card that shares its host's board slot.
+func TestChoosingAnAttachedUpgrade(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	host := c.deal(testCreature)
+	c.playFromHand(host)
+
+	up := c.g.g.Register(
+		engine.NewCard("Test Upgrade", testHouse, engine.Upgrade, engine.Common), c.g.active())
+	c.g.g.AttachUpgrade(host, up)
+
+	c.g.choosing = true
+	c.g.chooserCandidates = []engine.LocalID{up}
+
+	c.wants("an upgrade candidate", "card-tab--target")
+}
+
 // A power counter on a creature shows a +1 (or -1) token in its status row, with
 // the count when more than one rides the card, so how many tokens sit on it is
 // legible for the interactions that care.
@@ -602,16 +621,26 @@ func TestDrawingTheHand(t *testing.T) {
 }
 
 // A damaged creature shows the damage it is carrying; an undamaged one does not
-// carry a zero.
+// carry a zero. The check is scoped to the creature's own stat line: a card's
+// ability-glyph strip (ADR 0022) can carry a damage glyph too — a hand card that
+// deals damage draws one — so a page-wide search would not tell a stat from a
+// glyph.
 func TestDrawingDamage(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
 	id := c.deal(testCreature)
 	c.playFromHand(id)
-	c.lacks("an undamaged creature", "damage.svg")
+	statHTML := func() string {
+		return app.HTMLString(app.Div().Body(c.g.statLine(id)...))
+	}
+	if strings.Contains(statHTML(), "damage.svg") {
+		t.Error("an undamaged creature still shows a damage stat")
+	}
 
 	c.g.g.State.Cards[id].Damage = 1
-	c.wants("a damaged creature", "damage.svg")
+	if !strings.Contains(statHTML(), "damage.svg") {
+		t.Error("a damaged creature does not show a damage stat")
+	}
 }
 
 // The menu is drawn behind its button, and undo is offered as unavailable rather

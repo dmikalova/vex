@@ -26,9 +26,11 @@ const (
 	TargetThisCreature
 	// TargetTriggeringCreature selects the creature that caused the trigger ("it").
 	TargetTriggeringCreature
-	// TargetCreatureFought selects the creature the source is fighting, named in
-	// full ("the creature <self> fights") so a Before Fight ability that reaches
-	// past it — Lord Golgotha damaging its neighbors — reads unambiguously.
+	// TargetCreatureFought selects the creature the source fought, named in full.
+	// A Fight: ability resolves after the fight, so the bare form reads in the past
+	// ("the creature <self> fought"). A Before Fight ability that reaches past it —
+	// Lord Golgotha damaging its neighbors — resolves before the fight, so the
+	// neighbor-decorated form reads in the present ("the creature <self> fights").
 	TargetCreatureFought
 	// TargetEachCreature selects every creature in play.
 	TargetEachCreature
@@ -77,6 +79,9 @@ const (
 	// TargetChosenFriendlyArtifact selects a single friendly artifact the
 	// controller chooses (Anahita the Trader gives one away).
 	TargetChosenFriendlyArtifact
+	// TargetChosenUpgrade selects a single upgrade the controller chooses from all
+	// upgrades attached to any creature in play (Destroy Them All! destroys one).
+	TargetChosenUpgrade
 	// TargetTheOtherCreature selects the creature in context (ctx.It) — the one a
 	// preceding effect chose as "another" creature — and renders it as "the other
 	// creature". Transposition Sandals swaps with another creature, then uses the
@@ -136,6 +141,10 @@ type Target struct {
 	// "a ready friendly Mars creature").
 	ready      bool
 	withAember bool
+	// withCounter narrows the target to cards carrying a generic counter of this
+	// kind, rendering " with a doom counter" and the like (Wretched Doll destroys
+	// every creature with a doom counter). CounterNone leaves the filter off.
+	withCounter CounterKind
 	// withArmor narrows the target to creatures that have armor at all, rendering
 	// " with armor". It reads the creature's armor value, not what is left of it, so
 	// a creature that has already spent its armor absorbing damage still has armor.
@@ -300,6 +309,14 @@ func (t Target) WithAember() Target {
 	return t
 }
 
+// WithCounter narrows the target to cards carrying a generic counter of the
+// given kind, rendering " with a <kind>", e.g. "each creature with a doom
+// counter".
+func (t Target) WithCounter(kind CounterKind) Target {
+	t.withCounter = kind
+	return t
+}
+
 // WithArmor narrows the target to creatures that have armor, rendering " with
 // armor", e.g. "each enemy creature with armor".
 func (t Target) WithArmor() Target {
@@ -419,7 +436,10 @@ func (t Target) Text() string {
 	case TargetTriggeringCreature:
 		return t.decorateNeighbors("it")
 	case TargetCreatureFought:
-		return t.decorateNeighbors("the creature " + SelfName + " fights")
+		if t.withNeighbors || t.neighborsOf {
+			return t.decorateNeighbors("the creature " + SelfName + " fights")
+		}
+		return "the creature " + SelfName + " fought"
 	case TargetTheOtherCreature:
 		return "the other creature"
 	case TargetTheChosenCreature:
@@ -433,6 +453,9 @@ func (t Target) Text() string {
 		t.Kind == TargetChosenFriendlyArtifact ||
 		t.Kind == TargetEachEnemyArtifact {
 		noun = "artifact"
+	}
+	if t.Kind == TargetChosenUpgrade {
+		noun = "upgrade"
 	}
 	if t.Kind == TargetEachFriendlyCardInPlay {
 		noun = "card"
@@ -522,6 +545,8 @@ func (t Target) Text() string {
 		phrase = "another " + noun
 	case TargetChosenArtifact:
 		phrase = "an " + noun
+	case TargetChosenUpgrade:
+		phrase = "an " + noun
 	case TargetChosenEnemyArtifact, TargetChosenEnemyCreatureOrArtifact:
 		phrase = "an enemy " + noun
 	case TargetChosenFriendlyArtifact:
@@ -554,6 +579,9 @@ func (t Target) Text() string {
 	}
 	if t.withAember {
 		phrase += " with \u00c6mber on it"
+	}
+	if t.withCounter.valid() {
+		phrase += " with a " + t.withCounter.noun()
 	}
 	if t.withArmor {
 		phrase += " with armor"
@@ -926,12 +954,47 @@ func (lowestAndHighestPower) refine(ctx *EffectContext, ids []LocalID) []LocalID
 	return kept
 }
 
+// PowerLessThan is a Selector that keeps every creature of a set whose power is
+// below a running count — Exterminate! Exterminate! destroys each non-Mars
+// creature with power less than the number of friendly Mars creatures you
+// control. The threshold is read when the effect resolves, so it reflects the
+// board at that moment.
+func PowerLessThan(limit Count) Selector { return powerLessThan{limit: limit} }
+
+// powerLessThan implements the PowerLessThan selector.
+type powerLessThan struct{ limit Count }
+
+// selfHouseResolved resolves the SelfHouse sentinel inside the count, which lives
+// in an unexported field reflection cannot reach on its own.
+func (p powerLessThan) selfHouseResolved(house House) any {
+	p.limit = resolvedIn(p.limit, house)
+	return p
+}
+
+// clause renders "<phrase> with power less than the number of …".
+func (p powerLessThan) clause(phrase string) string {
+	return phrase + " with power less than " + cardinalCountText(p.limit)
+}
+
+// refine keeps the creatures whose power is below the count's value.
+func (p powerLessThan) refine(ctx *EffectContext, ids []LocalID) []LocalID {
+	limit := p.limit.Value(ctx)
+	kept := make([]LocalID, 0, len(ids))
+	for _, id := range ids {
+		if ctx.Resolver.Power(id) < limit {
+			kept = append(kept, id)
+		}
+	}
+	return kept
+}
+
 // isChosen reports whether the Kind resolves to a single player-chosen creature.
 func (t Target) isChosen() bool {
 	return t.Kind == TargetChosenCreature || t.Kind == TargetChosenEnemyCreature ||
 		t.Kind == TargetChosenFriendlyCreature || t.Kind == TargetChosenOtherFriendlyCreature ||
 		t.Kind == TargetChosenOtherCreature ||
 		t.Kind == TargetChosenArtifact || t.Kind == TargetChosenEnemyArtifact || t.Kind == TargetChosenFriendlyArtifact || t.Kind == TargetChosenCreatureOrArtifact ||
+		t.Kind == TargetChosenUpgrade ||
 		t.Kind == TargetChosenFriendlyCreatureOrArtifact ||
 		t.Kind == TargetChosenEnemyCreatureOrArtifact
 }
@@ -956,6 +1019,7 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 		!t.stunned &&
 		!t.ready &&
 		!t.withAember &&
+		!t.withCounter.valid() &&
 		!t.withArmor &&
 		t.keyword == keywordUnset &&
 		!t.onFlank &&
@@ -1013,6 +1077,9 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 			continue
 		}
 		if t.withAember && ctx.Resolver.AmberOn(id) == 0 {
+			continue
+		}
+		if t.withCounter.valid() && ctx.Resolver.CountersOn(id, t.withCounter) == 0 {
 			continue
 		}
 		if t.withArmor && ctx.Resolver.Armor(id) == 0 {
@@ -1168,6 +1235,14 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 		return ctx.Resolver.Artifacts(ctx.Opponent())
 	case TargetChosenFriendlyArtifact:
 		return ctx.Resolver.Artifacts(ctx.Controller)
+	case TargetChosenUpgrade:
+		var ups []LocalID
+		for _, c := range append(
+			ctx.Resolver.Battleline(ctx.Controller),
+			ctx.Resolver.Battleline(ctx.Opponent())...) {
+			ups = append(ups, ctx.Resolver.Upgrades(c)...)
+		}
+		return ups
 	case TargetEachEnemyArtifact:
 		return ctx.Resolver.Artifacts(ctx.Opponent())
 	case TargetEachFriendlyArtifact:

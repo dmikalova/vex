@@ -69,6 +69,9 @@ type CreatureReader interface {
 	Damage(id LocalID) int
 	// AmberOn returns the Æmber sitting on a card (from capture, exalt, ...).
 	AmberOn(id LocalID) int
+	// CountersOn returns how many generic counters of a kind sit on a card — the
+	// card-placed markers a card reads (a doom counter for Wretched Doll).
+	CountersOn(id LocalID, kind CounterKind) int
 	// AemberBonus returns the number of Æmber pips printed on a card.
 	AemberBonus(id LocalID) int
 	// Exhausted reports whether a creature is exhausted.
@@ -77,6 +80,10 @@ type CreatureReader interface {
 	// destroyed, returned, or purged partway through an effect that is still
 	// resolving.
 	InPlay(id LocalID) bool
+	// InBattleline reports whether a card currently sits on a battleline, as opposed
+	// to having left play or being an artifact — only a battleline creature can be
+	// moved to a flank.
+	InBattleline(id LocalID) bool
 	// Armor is a creature's armor value, before any of it is spent or stripped.
 	Armor(id LocalID) int
 	// ArmorStripped is how much armor an effect has taken off a creature this turn,
@@ -95,6 +102,8 @@ type CreatureReader interface {
 	TypeOf(id LocalID) CardType
 	// HasTrait reports whether a card has a trait.
 	HasTrait(id LocalID, trait Trait) bool
+	// TraitCount reports how many traits a card has.
+	TraitCount(id LocalID) int
 	// SharesTrait reports whether two cards share at least one trait.
 	SharesTrait(a, b LocalID) bool
 	// HasKeyword reports whether a creature has a keyword (printed or granted).
@@ -118,6 +127,8 @@ type ZoneReader interface {
 	Battleline(player int) []LocalID
 	// Artifacts returns a copy of a player's artifacts.
 	Artifacts(player int) []LocalID
+	// Upgrades returns the upgrades attached to a host, in order.
+	Upgrades(host LocalID) []LocalID
 	// Hand returns a copy of a player's hand.
 	Hand(player int) []LocalID
 	// Discard returns a copy of a player's discard pile.
@@ -200,6 +211,10 @@ type CreatureResolver interface {
 	// AddPowerCounter changes the net power counters on a creature, adjusting its
 	// power for as long as it stays in play.
 	AddPowerCounter(id LocalID, delta int)
+	// PlaceCounter puts n generic counters of a kind on an in-play card. Generic
+	// counters are card-placed markers that only matter to cards that read them
+	// (a doom counter for Wretched Doll); they are shed when the card leaves play.
+	PlaceCounter(id LocalID, kind CounterKind, n int)
 	// BelongToHouseForRemainderOfTurn makes a card belong to house until its
 	// controller's turn ends.
 	BelongToHouseForRemainderOfTurn(id LocalID, house House)
@@ -369,6 +384,10 @@ type ZoneResolver interface {
 	// (Masterplan's and Jargogle's own "play the card under me"). It does nothing
 	// when the card is not currently placed under anything.
 	PlayFromUnder(player int, id LocalID)
+	// PlayFromArchives plays a specific card from a player's archives, bypassing the
+	// active-house gate (Project Z.Y.X.). It does nothing when the card is not in
+	// that player's archives.
+	PlayFromArchives(player int, id LocalID)
 	// PutCardUnder removes a card from a player's hand and places it under host,
 	// face up or face down (Masterplan, Jargogle).
 	PutCardUnder(owner int, id, host LocalID, faceDown bool)
@@ -378,6 +397,9 @@ type ZoneResolver interface {
 	// PutUnderIntoPlay puts every card placed under host into play under its
 	// owner's control (Spangler Box's Destroyed ability).
 	PutUnderIntoPlay(host LocalID)
+	// ArchiveCardUnder moves each card placed under host to its owner's archives
+	// (Jargogle's Destroyed ability when it is not its controller's turn).
+	ArchiveCardUnder(host LocalID)
 	// ShuffleZonesIntoDeck moves each named zone's cards into a player's deck and
 	// shuffles once (discard, hand, archives).
 	ShuffleZonesIntoDeck(player int, zones []Zone)
@@ -418,9 +440,16 @@ type TurnResolver interface {
 	// CannotUseNextTurn bars a player from reaping, fighting, or using an "Action:"
 	// ability throughout their next turn (Skippy Timehog).
 	CannotUseNextTurn(player int, source LocalID)
-	// SkipForgeStepNextTurn makes a player skip their "forge a key" step at the start
+	// CannotReapHouseNextTurn bars a player from reaping with creatures of the given
+	// house throughout their next turn (Seismo-entangler).
+	CannotReapHouseNextTurn(player int, house House, source LocalID)
+	// BlankEnemyText blanks the text box of every creature the given player controls
+	// until the card's controller's next turn — its printed keywords, abilities, and
+	// constant grants are ignored (Shadow of Dis). Its traits and stats remain.
+	BlankEnemyText(player int, source LocalID)
+	// SkipForgePhaseNextTurn makes a player skip their "forge a key" phase at the start
 	// of their next turn (Miasma).
-	SkipForgeStepNextTurn(player int, source LocalID)
+	SkipForgePhaseNextTurn(player int, source LocalID)
 	// GrantFightForHouse lets a player use creatures of the given house to fight
 	// this turn even out of the active house.
 	GrantFightForHouse(player int, house House)
@@ -433,6 +462,9 @@ type TurnResolver interface {
 	// GrantPlayForHouse lets a player play cards of the given house from hand this
 	// turn even out of the active house (the Ambassador cycle).
 	GrantPlayForHouse(player int, house House)
+	// GrantUseArtifactsAnyHouse lets a player use any friendly artifact this turn as
+	// if it belonged to the active house (Scientifical Hack).
+	GrantUseArtifactsAnyHouse(player int)
 	// AddLasting registers a "for the remainder of the turn" effect (Full Moon,
 	// Charge!, Crystal Hive reactions; Dimension Door's replacement) on a game event,
 	// instead of the effect hardcoding itself into the play or reap path. The record's
@@ -497,6 +529,9 @@ func (g *Game) Controller(id LocalID) int { return g.controller(id) }
 
 // HasTrait reports whether a card has a trait.
 func (g *Game) HasTrait(id LocalID, trait Trait) bool { return g.cat.def(id).hasTrait(trait) }
+
+// TraitCount reports how many traits a card has.
+func (g *Game) TraitCount(id LocalID) int { return len(g.cat.def(id).Traits) }
 
 // SharesTrait reports whether two cards have at least one trait in common.
 func (g *Game) SharesTrait(a, b LocalID) bool {
@@ -808,11 +843,14 @@ func (g *Game) MarkPlayedActionArchived(id LocalID) {
 	g.State.ArchivePlayedActionSet = true
 }
 
-// AddPowerCounter changes the net power counters on a creature.
+// AddPowerCounter changes the net power counters on a creature. A -1 counter can
+// lower power to the damage already marked, so the board is settled after — the
+// same sweep a leaving buff needs.
 func (g *Game) AddPowerCounter(id LocalID, delta int) {
 	if c := g.stateOf(id); c != nil {
 		c.PowerCounters += int16(delta)
 	}
+	g.settleDestroyed(g.State.ActivePlayer)
 }
 
 // PutFromDiscardIntoHand moves a card from its owner's discard pile to their hand.

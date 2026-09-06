@@ -649,6 +649,18 @@ func TestRenderCardRules(t *testing.T) {
 			),
 			"Damage dealt to each neighboring creature is dealt to Ward instead.",
 		},
+		// A card that gains a keyword only while attacking renders that clause.
+		{
+			NewCard(
+				"Spyyyder",
+				Shadows,
+				Creature,
+				Common,
+				WithPower(4),
+				WithAttackKeywords(AttackKeywords{Keywords: []Keyword{Poison}}),
+			),
+			"Spyyyder gains poison while attacking.",
+		},
 	}
 	for _, tc := range cases {
 		if got := RenderCardRules(&tc.def); got != tc.want {

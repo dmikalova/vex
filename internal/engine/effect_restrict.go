@@ -152,33 +152,64 @@ func (e CannotUse) Resolve(ctx *EffectContext) {
 	}
 }
 
-// SkipForgeStep makes a player skip their "forge a key" step at the start of their
-// next turn (Miasma).
-type SkipForgeStep struct {
+// ChosenHouseCannotReapNextTurn bars a player from reaping with creatures of the
+// house an enclosing ChooseHouseThen picked, throughout that player's next turn
+// (Seismo-entangler's "During your opponent's next turn, creatures of the chosen
+// house cannot be used to reap").
+type ChosenHouseCannotReapNextTurn struct {
 	Player Player
 }
 
-// validate rejects a SkipForgeStep whose player was left unset.
-func (e SkipForgeStep) validate() error {
+// validate rejects an effect whose player was left unset.
+func (e ChosenHouseCannotReapNextTurn) validate() error {
 	if !e.Player.valid() {
-		return errUnsetPlayer("SkipForgeStep")
+		return errUnsetPlayer("ChosenHouseCannotReapNextTurn")
 	}
 	return nil
 }
 
-// Text renders the effect, e.g. `your opponent skips the "forge a key" step during
+// Text renders the effect, e.g. "during your opponent's next turn, creatures of
+// the chosen house cannot be used to reap".
+func (e ChosenHouseCannotReapNextTurn) Text() string {
+	whose := "your"
+	if e.Player == Opponent {
+		whose = "your opponent's"
+	}
+	return "during " + whose + " next turn, creatures of the chosen house cannot be used to reap"
+}
+
+// Resolve arms the reap-by-house bar on the chosen player's next turn.
+func (e ChosenHouseCannotReapNextTurn) Resolve(ctx *EffectContext) {
+	ctx.Resolver.CannotReapHouseNextTurn(ctx.PlayerFor(e.Player), ctx.ChosenHouse, ctx.Source)
+}
+
+// SkipForgePhase makes a player skip their "forge a key" phase at the start of their
+// next turn (Miasma).
+type SkipForgePhase struct {
+	Player Player
+}
+
+// validate rejects a SkipForgePhase whose player was left unset.
+func (e SkipForgePhase) validate() error {
+	if !e.Player.valid() {
+		return errUnsetPlayer("SkipForgePhase")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. `your opponent skips the "forge a key" phase during
 // their next turn`.
-func (e SkipForgeStep) Text() string {
+func (e SkipForgePhase) Text() string {
 	who, whose, verb := "you", "your", "skip"
 	if e.Player == Opponent {
 		who, whose, verb = "your opponent", "their", "skips"
 	}
-	return fmt.Sprintf("%s %s the %q step during %s next turn", who, verb, "forge a key", whose)
+	return fmt.Sprintf("%s %s the %q phase during %s next turn", who, verb, "forge a key", whose)
 }
 
 // Resolve arms the skip on the chosen player's next turn.
-func (e SkipForgeStep) Resolve(ctx *EffectContext) {
-	ctx.Resolver.SkipForgeStepNextTurn(ctx.PlayerFor(e.Player), ctx.Source)
+func (e SkipForgePhase) Resolve(ctx *EffectContext) {
+	ctx.Resolver.SkipForgePhaseNextTurn(ctx.PlayerFor(e.Player), ctx.Source)
 }
 
 // GrantFightForChosenHouse lets the controller's creatures of the house picked by
@@ -272,6 +303,23 @@ func (e MayUseFriendlyHouse) Text() string {
 // Resolve grants the controller full use of their House creatures this turn.
 func (e MayUseFriendlyHouse) Resolve(ctx *EffectContext) {
 	ctx.Resolver.GrantUseForHouse(ctx.Controller, e.House)
+}
+
+// MayUseFriendlyArtifacts lets the controller use any friendly artifact this turn
+// as if it belonged to the active house — Scientifical Hack. Unlike
+// MayUseFriendlyHouse, which frees creatures of one named house, this frees every
+// friendly artifact whatever its house. The grant lasts only the current turn (the
+// ready phase clears it).
+type MayUseFriendlyArtifacts struct{}
+
+// Text renders the effect.
+func (MayUseFriendlyArtifacts) Text() string {
+	return "for the remainder of the turn, you may use friendly artifacts as if they belonged to the active house"
+}
+
+// Resolve grants the controller use of every friendly artifact this turn.
+func (MayUseFriendlyArtifacts) Resolve(ctx *EffectContext) {
+	ctx.Resolver.GrantUseArtifactsAnyHouse(ctx.Controller)
 }
 
 // MayPlayOrUseFriendlyHouse lets the controller both play cards of House from hand

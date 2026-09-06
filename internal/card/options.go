@@ -22,6 +22,8 @@ var (
 	WithSplashAttack = func(n int) Option { return gameplay(engine.WithSplashAttack(n)) }
 	// WithAttackDamage overrides how much fight damage a creature deals.
 	WithAttackDamage = func(ad engine.AttackDamage) Option { return gameplay(engine.WithAttackDamage(ad)) }
+	// WithAttackKeywords makes a creature gain keywords while it is attacking (Spyyyder gains poison against a flank creature).
+	WithAttackKeywords = func(ak engine.AttackKeywords) Option { return gameplay(engine.WithAttackKeywords(ak)) }
 	// WithNoDamageWhenAttacked makes a creature deal no retaliation damage when attacked.
 	WithNoDamageWhenAttacked = func() Option { return gameplay(engine.WithNoDamageWhenAttacked()) }
 	// WithFriendlyEntersPlayReady makes friendly cards of the given type enter play ready while this card is in play.
@@ -58,6 +60,11 @@ var (
 	WithReplaces = func(r Instead) Option { return gameplay(engine.WithReplaces(r)) }
 	// WithDrawModifier changes how many cards a player draws.
 	WithDrawModifier = func(p Player, amount int) Option { return gameplay(engine.WithDrawModifier(p, amount)) }
+	// WithDrawModifierOffFlank changes how many cards a player draws, but only while
+	// the source card is not on a flank (Streke).
+	WithDrawModifierOffFlank = func(p Player, amount int) Option {
+		return gameplay(engine.WithDrawModifierOffFlank(p, amount))
+	}
 	// WithAemberTheftImmunity makes Æmber on this card immune to theft.
 	WithAemberTheftImmunity = func() Option { return gameplay(engine.WithAemberTheftImmunity()) }
 	// WithSpendableAember lets Æmber banked on this card be spent when forging.

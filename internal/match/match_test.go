@@ -29,12 +29,30 @@ func TestNewDealsDeterministicDecks(t *testing.T) {
 		if len(h1[p]) != DeckHouseCount {
 			t.Errorf("player %d got %d houses, want %d", p, len(h1[p]), DeckHouseCount)
 		}
-		if got := len(g1.Hand(p)); got != engine.HandSize {
-			t.Errorf("player %d hand = %d, want %d", p, got, engine.HandSize)
+		// New leaves the whole deck in the deck zone; engine.StartGame deals the
+		// opening hands.
+		if got := len(g1.Hand(p)); got != 0 {
+			t.Errorf("player %d hand = %d, want 0 before StartGame", p, got)
 		}
-		if got := int(g1.State.Deck[p].Count); got != DeckSize-engine.HandSize {
-			t.Errorf("player %d deck = %d, want %d", p, got, DeckSize-engine.HandSize)
+		if got := int(g1.State.Deck[p].Count); got != DeckSize {
+			t.Errorf("player %d deck = %d, want %d", p, got, DeckSize)
 		}
+	}
+}
+
+func TestStartGameDealsOpeningHands(t *testing.T) {
+	g, _ := New("Alice", "Bob", 42)
+	g.StartGame(0)
+	// The first player draws one more than the second (7 vs a full HandSize of 6).
+	if got := len(g.Hand(0)); got != engine.HandSize+engine.FirstPlayerBonusCards {
+		t.Errorf(
+			"first player hand = %d, want %d",
+			got,
+			engine.HandSize+engine.FirstPlayerBonusCards,
+		)
+	}
+	if got := len(g.Hand(1)); got != engine.HandSize {
+		t.Errorf("second player hand = %d, want %d", got, engine.HandSize)
 	}
 }
 

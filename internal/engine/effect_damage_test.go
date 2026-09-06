@@ -503,6 +503,9 @@ func TestSpreadUpToCreatures(t *testing.T) {
 		if (DealDamage{Spread: UpToCreatures{Count: 0, Amount: 1}}).validate() == nil {
 			t.Error("Count 0 should be invalid")
 		}
+		if (DealDamage{Spread: UpToCreatures{Count: 3, Amount: 1}}).validate() != nil {
+			t.Error("Count 3 should be valid")
+		}
 	})
 }
 

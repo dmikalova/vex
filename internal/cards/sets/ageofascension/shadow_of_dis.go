@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ShadowOfDis
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Shadow of Dis
 //
 //	House:  Dis
 //	Type:   Tactic
@@ -22,5 +17,6 @@ var ShadowOfDis = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, 103),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.BlankEnemyText{}),
 )

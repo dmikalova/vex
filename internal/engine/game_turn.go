@@ -7,17 +7,20 @@ import (
 
 // Engine action errors.
 var (
-	ErrNotActivePlayer       = errors.New("not the active player")
-	ErrCardNotInHand         = errors.New("card index is not in hand")
-	ErrWrongType             = errors.New("card is the wrong type for this action")
-	ErrWrongHouse            = errors.New("card's house is not the active house")
-	ErrCardExhausted         = errors.New("card is exhausted")
-	ErrNoTarget              = errors.New("no legal target")
-	ErrGameOver              = errors.New("the game is already over")
-	ErrCannotFight           = errors.New("cannot use creatures to fight this turn")
-	ErrCannotPlayCreature    = errors.New("cannot play creatures")
-	ErrCannotPlayType        = errors.New("cannot play cards of this type this turn")
-	ErrCardPlayLimit         = errors.New("card-play limit reached this turn")
+	ErrNotActivePlayer    = errors.New("not the active player")
+	ErrCardNotInHand      = errors.New("card index is not in hand")
+	ErrWrongType          = errors.New("card is the wrong type for this action")
+	ErrWrongHouse         = errors.New("card's house is not the active house")
+	ErrCardExhausted      = errors.New("card is exhausted")
+	ErrNoTarget           = errors.New("no legal target")
+	ErrGameOver           = errors.New("the game is already over")
+	ErrCannotFight        = errors.New("cannot use creatures to fight this turn")
+	ErrCannotPlayCreature = errors.New("cannot play creatures")
+	ErrCannotPlayType     = errors.New("cannot play cards of this type this turn")
+	ErrCardPlayLimit      = errors.New("card-play limit reached this turn")
+	ErrFirstTurnOneCard   = errors.New(
+		"the first player may play or discard only one card on their first turn",
+	)
 	ErrCannotPayToll         = errors.New("cannot pay the toll for this action")
 	ErrPlayRequirement       = errors.New("not enough Æmber to play this card")
 	ErrMustChooseForcedHouse = errors.New("must choose the forced active house this turn")
@@ -44,6 +47,7 @@ func (g *Game) StartTurn(player int) {
 	g.State.PlayedThisTurn[player].reset()
 	g.State.DiscardedThisTurn[player].reset()
 	g.State.PlayPermissionsUsedThisTurn[player] = [NumHouses]uint8{}
+	g.State.FirstTurnPlayLimit[player] = false
 	for p := 0; p < 2; p++ {
 		for _, id := range g.State.Battleline[p].slice() {
 			g.State.Cards[id].TimesUsedThisTurn = 0
@@ -58,6 +62,8 @@ func (g *Game) StartTurn(player int) {
 	g.State.CannotPlayTypeNext[player] = Bar[CardType]{}
 	g.State.CannotUse[player] = g.State.CannotUseNext[player]
 	g.State.CannotUseNext[player] = Bar[bool]{}
+	g.State.CannotReapHouse[player] = g.State.CannotReapHouseNext[player]
+	g.State.CannotReapHouseNext[player] = Bar[House]{}
 	g.State.ForcedHouse[player] = g.State.ForcedHouseNext[player]
 	g.State.ForcedHouseNext[player] = Bar[House]{}
 	g.State.ForbiddenHouse[player] = g.State.ForbiddenHouseNext[player]
@@ -170,6 +176,9 @@ func (g *Game) drawModifier(player int) int {
 	for owner := 0; owner < 2; owner++ {
 		for _, id := range g.allInPlay(owner) {
 			if m := g.cat.def(id).DrawModifier; m.Amount != 0 && m.affects(owner, player) {
+				if m.OnlyWhileOffFlank && g.onFlankOf(id) {
+					continue
+				}
 				total += m.Amount
 			}
 		}
@@ -199,9 +208,27 @@ func (g *Game) CannotUseNextTurn(player int, source LocalID) {
 	g.State.CannotUseNext[player] = Bar[bool]{Value: true, Source: source}
 }
 
-// SkipForgeStepNextTurn makes a player skip their forge-a-key step at the start of
+// CannotReapHouseNextTurn arms a bar that stops a player reaping with creatures
+// of house h throughout their next turn (Seismo-entangler). StartTurn promotes
+// the armed house.
+func (g *Game) CannotReapHouseNextTurn(player int, h House, source LocalID) {
+	g.State.CannotReapHouseNext[player] = Bar[House]{Value: h, Source: source}
+}
+
+// BlankEnemyText blanks the text box of every creature the given player controls
+// until the source's controller's next turn (Shadow of Dis). Set on the affected
+// player, the blank persists through that player's own next turn and is lifted by
+// their ready phase, so it spans exactly through the opponent's turn.
+func (g *Game) BlankEnemyText(player int, source LocalID) {
+	g.State.TextBlank[player] = Bar[bool]{Value: true, Source: source}
+	// Blanking drops any power a creature's own constant granted it (Mushroom Man,
+	// Marmo Swarm), which can leave it at or below its damage.
+	g.settleDestroyed(g.State.ActivePlayer)
+}
+
+// SkipForgePhaseNextTurn makes a player skip their forge-a-key phase at the start of
 // their next turn.
-func (g *Game) SkipForgeStepNextTurn(player int, source LocalID) {
+func (g *Game) SkipForgePhaseNextTurn(player int, source LocalID) {
 	g.State.SkipForgeNext[player] = Bar[bool]{Value: true, Source: source}
 }
 
@@ -251,6 +278,14 @@ func (g *Game) GrantUseForHouse(player int, h House) {
 func (g *Game) GrantPlayForHouse(player int, h House) {
 	g.State.MayPlayHouse[player] = h
 	g.record(PlayGrantedForHouse{Player: player, House: h})
+}
+
+// GrantUseArtifactsAnyHouse lets a player use any friendly artifact this turn as
+// if it belonged to the active house (Scientifical Hack). The ready phase clears
+// the grant.
+func (g *Game) GrantUseArtifactsAnyHouse(player int) {
+	g.State.MayUseArtifactsAnyHouse[player] = true
+	g.record(UseArtifactsGrantedAnyHouse{Player: player})
 }
 
 // ForceActiveHouseNextTurn makes a player have to choose house h as their active
@@ -409,6 +444,16 @@ func (g *Game) finishForgeKey(player int, color KeyColor, hasColor bool) {
 		g.State.Winner = player
 		g.record(GameWon{Player: player})
 	}
+}
+
+// Concede forfeits the game for player: their opponent becomes the winner. It is
+// a no-op once the game is already decided.
+func (g *Game) Concede(player int) {
+	if g.State.Winner >= 0 {
+		return
+	}
+	g.record(PlayerConceded{Player: player})
+	g.State.Winner = 1 - player
 }
 
 // pickKeyColor asks the player which colour the key they are forging should be,

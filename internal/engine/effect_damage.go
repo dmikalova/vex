@@ -86,7 +86,12 @@ func (e DealDamage) Text() string {
 	}
 	amount := fmt.Sprintf("%d damage", e.Amount)
 	if e.AmountFrom != nil {
-		amount = "that amount of damage"
+		switch e.AmountFrom.(type) {
+		case DamageHealed:
+			amount = "that amount of damage"
+		default:
+			amount = "damage equal to " + e.AmountFrom.CountText()
+		}
 	}
 	body := fmt.Sprintf("deal %s to %s", amount, e.Target.Text())
 	if e.PerTarget != nil {

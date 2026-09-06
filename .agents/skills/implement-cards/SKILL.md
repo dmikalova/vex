@@ -157,7 +157,12 @@ matter per card; save `mage check` for step 3.
 3. Write `<snake>_test.go` with the `ct.Play` harness — a `func Test<Name>` with
    `t.Run` subtests. A sole target auto-resolves; with 2+ candidates answer via
    `h.P1.ClickCard(handle)` / `h.P1.ClickOption(name)`. Set up a damaged creature
-   with `handle.Damaged(n)`; read chains via `h.Game().State.Chains[0]`.
+   with `handle.Damaged(n)`; read chains via `h.Game().State.Chains[0]`. A
+   recurring `Trigger.StartOfTurn` / `EndOfTurn` ability fires from in play, not
+   on play: loop back to its owner's next turn with `h.P1.EndTurn();
+   h.P2.ChooseHouse(other); h.P2.EndTurn()` — the start-of-turn ability resolves
+   during that turn hand-off, before choose-house, so a sole-target effect needs
+   no click.
 4. Run `mage generateComments` — it rewrites the card and test doc comments from
    the definition. Read the generated text against `docs/card-wording-rules.md`.
    A wording fix means changing the effect's `Text()` in

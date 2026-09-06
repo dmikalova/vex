@@ -20,6 +20,32 @@ func (e TurnBegan) Text(n Namer) string {
 	return fmt.Sprintf("%s begins turn %d", n.PlayerName(e.Player), e.Turn)
 }
 
+// GameStarted narrates the game's opening: who takes the first turn, and the
+// opening hand each player drew. It names no card, since hands are hidden
+// (ADR 0011); the per-player CardsDrawn entries that follow carry the counts.
+type GameStarted struct {
+	FirstPlayer int
+}
+
+// Text renders the first player, who takes the opening turn.
+func (e GameStarted) Text(n Namer) string {
+	return fmt.Sprintf("%s takes the first turn", n.PlayerName(e.FirstPlayer))
+}
+
+// Mulliganed narrates a player taking their one setup mulligan: they shuffled
+// their opening hand back and drew one fewer card. It names no card (ADR 0011),
+// only the size of the new hand.
+type Mulliganed struct {
+	Player int
+	Hand   int
+}
+
+// Text renders the mulligan a player took, and the hand it left them.
+func (e Mulliganed) Text(n Namer) string {
+	return fmt.Sprintf("%s mulligans, drawing a new hand of %d",
+		n.PlayerName(e.Player), e.Hand)
+}
+
 // PhaseBegan narrates entering one of a turn's phases, so the log can be grouped
 // by phase (ADR 0012). It is recorded for every phase, including one that turns
 // out to do nothing, so a turn where the player plays nothing still shows a main
@@ -149,6 +175,14 @@ type GameWon struct{ Player int }
 // Text renders the player who forged their third key.
 func (e GameWon) Text(n Namer) string {
 	return fmt.Sprintf("%s wins the game!", n.PlayerName(e.Player))
+}
+
+// PlayerConceded narrates a player forfeiting the game.
+type PlayerConceded struct{ Player int }
+
+// Text renders the player who conceded.
+func (e PlayerConceded) Text(n Namer) string {
+	return fmt.Sprintf("%s concedes.", n.PlayerName(e.Player))
 }
 
 // PlayerStanding narrates where a player stands as a turn ends. It states only

@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Traits: Location
 //
-//	During their "draw cards" step, each player refills their hand to 1 additional card.
+//	During their "draw cards" phase, each player refills their hand to 1 additional card.
 func TestTheHowlingPit(t *testing.T) {
 	t.Run("refills each player's hand to one additional card", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

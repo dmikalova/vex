@@ -121,9 +121,13 @@ func (DiscardTopOfEachDeck) Resolve(ctx *EffectContext) {
 // ForEachDiscarded resolves Do once for each card a preceding DiscardTopOfEachDeck
 // discarded, putting that card in context (ctx.It) so Do can refer to it — Bonkers
 // Killing Machine destroys a creature or artifact of each discarded card's house
-// (Do targets Target.OfContextualHouse).
+// (Do targets Target.OfContextualHouse). A House filter narrows the iteration to
+// the discarded cards of one house — Fetchdrones acts "for each Logos card
+// discarded this way".
 type ForEachDiscarded struct {
-	Do Effect
+	// House, when set, restricts the iteration to discarded cards of that house.
+	House House
+	Do    Effect
 }
 
 // validate surfaces a configuration error from Do.
@@ -131,14 +135,66 @@ func (e ForEachDiscarded) validate() error { return validateEffect(e.Do) }
 
 // Text renders the effect, leading with the iteration clause.
 func (e ForEachDiscarded) Text() string {
-	return "for each card discarded this way, " + e.Do.Text()
+	card := "card"
+	if e.House != HouseNone {
+		card = e.House.String() + " card"
+	}
+	return "for each " + card + " discarded this way, " + e.Do.Text()
 }
 
-// Resolve runs Do for each discarded card, in context as ctx.It.
+// Resolve runs Do for each discarded card (of the House filter when set), in
+// context as ctx.It.
 func (e ForEachDiscarded) Resolve(ctx *EffectContext) {
 	for _, id := range ctx.Produced.Discarded {
+		if e.House != HouseNone && ctx.Resolver.House(id) != e.House {
+			continue
+		}
 		ctx.It, ctx.HasIt = id, true
 		e.Do.Resolve(ctx)
+	}
+}
+
+// DiscardTop discards the top Amount cards of one player's deck, recording each on
+// the context so a following ForEachDiscarded can act on it — Fetchdrones discards
+// the top two cards of your deck. An empty deck contributes no card.
+type DiscardTop struct {
+	Player Player
+	Amount int
+}
+
+// validate rejects a non-positive Amount.
+func (e DiscardTop) validate() error {
+	if e.Amount < 1 {
+		return fmt.Errorf("DiscardTop: Amount must be at least 1")
+	}
+	return nil
+}
+
+// Text renders the effect from the chosen player's perspective.
+func (e DiscardTop) Text() string {
+	noun := "cards"
+	if e.Amount == 1 {
+		noun = "card"
+	}
+	deck := "your deck"
+	if e.Player == Opponent {
+		deck = "your opponent's deck"
+	}
+	return fmt.Sprintf("discard the top %d %s of %s", e.Amount, noun, deck)
+}
+
+// Resolve discards the top Amount cards of the chosen deck (the controller's when
+// Player is unset), recording the discarded cards on the context.
+func (e DiscardTop) Resolve(ctx *EffectContext) {
+	ctx.Produced.Discarded = nil
+	player := ctx.Controller
+	if e.Player.valid() {
+		player = ctx.PlayerFor(e.Player)
+	}
+	for range e.Amount {
+		if id, ok := ctx.Resolver.DiscardTopOfDeck(player); ok {
+			ctx.Produced.Discarded = append(ctx.Produced.Discarded, id)
+		}
 	}
 }
 

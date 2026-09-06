@@ -74,7 +74,11 @@ func simulate(script []byte, verbose bool) (g *engine.Game, err error) {
 	// identical empty ones ground out until maxTurns.
 	for turn := 0; turn < maxTurns && g.Winner() < 0 && !d.done(); turn++ {
 		player := turn % 2
-		g.StartTurn(player)
+		if turn == 0 {
+			g.StartGame(player)
+		} else {
+			g.StartTurn(player)
+		}
 		if e := g.InvariantError(); e != nil {
 			return g, fmt.Errorf(
 				"invariant violated after StartTurn (turn %d, player %d): %w",

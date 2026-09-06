@@ -311,7 +311,14 @@ type GameState struct {
 	CannotUse     [2]Bar[bool]
 	CannotUseNext [2]Bar[bool]
 
-	// SkipForge bars. SkipForgeNext[p] makes player p skip their "forge a key" step
+	// Reap-by-house bars. CannotReapHouse[p] stops player p reaping with creatures
+	// of the named house this turn (Seismo-entangler); CannotReapHouseNext[p] arms
+	// that block for p's next turn. HouseNone (the zero value) bars nothing.
+	// StartTurn promotes the armed house, so it lands on that player's own turn.
+	CannotReapHouse     [2]Bar[House]
+	CannotReapHouseNext [2]Bar[House]
+
+	// SkipForge bars. SkipForgeNext[p] makes player p skip their "forge a key" phase
 	// at the start of their next turn (Miasma); StartTurn promotes it to SkipForge[p]
 	// and forges accordingly, so it lands on that player's own next turn.
 	SkipForge     [2]Bar[bool]
@@ -350,6 +357,11 @@ type GameState struct {
 	// clears it.
 	MayPlayHouse [2]House
 
+	// MayUseArtifactsAnyHouse[p] lets player p use any friendly artifact as if it
+	// belonged to the active house for the remainder of the turn — Scientifical
+	// Hack. The ready phase clears it.
+	MayUseArtifactsAnyHouse [2]bool
+
 	// TurnHistory holds the small tallies of what each player did during a turn —
 	// several cards ask that rather than what is on the board ("if your opponent
 	// forged a key on their previous turn", "for each enemy creature destroyed in a
@@ -365,6 +377,14 @@ type GameState struct {
 	// bitmask over keywordBit so the state stays flat and comparable; the ready
 	// phase clears it.
 	KeywordsLost uint8
+
+	// TextBlank[p] blanks the text box of every creature player p controls — its
+	// printed keywords, abilities, and constant grants are ignored (its traits and
+	// stats remain). Shadow of Dis blanks the opponent's creatures "until your next
+	// turn": set on the affected player, it persists through that player's own next
+	// turn and is lifted by their ready phase, so it always spans exactly through
+	// the opponent's turn whoever plays in between.
+	TextBlank [2]Bar[bool]
 
 	// Lasting holds the "for the remainder of the turn" effects active now (Full
 	// Moon, Charge!, Crystal Hive reactions; Dimension Door's replacement), fired or
@@ -384,6 +404,14 @@ type GameState struct {
 	// house h player p has spent this turn (Witch of the Wilds). StartTurn resets it.
 	// A turn cannot spend more than a hand's worth, so a byte per house is ample.
 	PlayPermissionsUsedThisTurn [2][NumHouses]uint8
+
+	// FirstTurnPlayLimit[p] holds the first-turn rule for player p: on the first
+	// player's first turn they may play or discard only one card from hand. StartGame
+	// arms it for the first player once the opening turn has begun, and StartTurn
+	// clears it at the start of every turn, so it lasts only that one turn. Cards a
+	// played card lets its controller play (Wild Wormhole, Phase Shift) bypass the
+	// limit because they never pass through the volitional play/discard gates.
+	FirstTurnPlayLimit [2]bool
 
 	// ForcedHouse[p] is the house player p must choose as their active house this
 	// turn (Control the Weak); ForcedHouseNext[p] arms that for p's next turn.
@@ -422,6 +450,15 @@ type GameState struct {
 	// unset zero value, since LocalID 0 is a valid card.
 	ArchivePlayedAction    LocalID
 	ArchivePlayedActionSet bool
+	// Counters is the global side-table of generic counters — the card-placed
+	// markers (doom, and its kin) whose meaning is defined entirely by the card
+	// that reads them. One entry per (card, kind) pair, its count folded into N, so
+	// a creature piled high with one kind is still a single entry (ADR 0024). The
+	// table lives here rather than in CardCore so an unused kind costs nothing per
+	// snapshot; CounterCount is how many of the entries are live. Compacted on
+	// removal and shed when a card leaves play.
+	Counters     [maxCounterEntries]CounterEntry
+	CounterCount uint8
 }
 
 // FastCopy returns an independent copy of the state. Because every field is a

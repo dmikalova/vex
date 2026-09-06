@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Your opponent skips the "forge a key" step during their next turn.
+//	Play: Your opponent skips the "forge a key" phase during their next turn.
 var Miasma = card.New(
 	"Miasma",
 	card.House.Shadows,
@@ -17,5 +17,5 @@ var Miasma = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 275),
 	card.WithAemberBonus(1),
-	card.WithAbility(card.Trigger.Play, card.SkipForgeStep{Player: card.Opponent}),
+	card.WithAbility(card.Trigger.Play, card.SkipForgePhase{Player: card.Opponent}),
 )

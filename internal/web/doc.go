@@ -24,10 +24,25 @@ type docLink struct {
 // docLinks is the nav shared by every reference page: back to the game and across
 // to each sibling reference page.
 var docLinks = []docLink{
-	{"/", "Game"},
+	{"/play", "Game"},
 	{"/cards", "Cards"},
 	{"/rulebook", "Rulebook"},
 	{"/glossary", "Glossary"},
+}
+
+// referencePages returns the reference pages the in-game hamburger menu links to:
+// every docLink except the game itself (/play), which is where the menu already
+// lives. Adding a served reference page to docLinks lists it in both the pages'
+// cross-nav and the game menu, so a new page is picked up in one place.
+func referencePages() []docLink {
+	out := make([]docLink, 0, len(docLinks))
+	for _, l := range docLinks {
+		if l.href == "/play" {
+			continue
+		}
+		out = append(out, l)
+	}
+	return out
 }
 
 // docHeader is the reference pages' brand bar: the title and the cross-page nav.

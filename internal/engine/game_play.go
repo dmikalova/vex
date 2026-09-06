@@ -116,6 +116,9 @@ func (g *Game) DiscardFromHand(player, handIndex int) error {
 	if g.State.ActivePlayer != player {
 		return ErrNotActivePlayer
 	}
+	if g.barredByFirstTurn(player) {
+		return ErrFirstTurnOneCard
+	}
 	hand := &g.State.Hand[player]
 	if handIndex < 0 || handIndex >= int(hand.Count) {
 		return ErrCardNotInHand
@@ -126,6 +129,7 @@ func (g *Game) DiscardFromHand(player, handIndex int) error {
 	}
 	hand.removeAt(handIndex)
 	g.State.Discard[player].add(id)
+	g.State.DiscardedThisTurn[player].add(id)
 	g.record(CardDiscarded{Player: player, Card: id})
 	return nil
 }
@@ -144,6 +148,9 @@ func (g *Game) CanDiscard(player int, id LocalID) error {
 	if !slices.Contains(g.State.Hand[player].slice(), id) {
 		return ErrCardNotInHand
 	}
+	if g.barredByFirstTurn(player) {
+		return ErrFirstTurnOneCard
+	}
 	if !g.inActiveHouse(g.cat.def(id)) {
 		return ErrWrongHouse
 	}
@@ -161,6 +168,9 @@ func (g *Game) PlayUpgrade(player, handIndex int) (LocalID, error) {
 	}
 	if g.cannotPlayCard(player) {
 		return 0, ErrCardPlayLimit
+	}
+	if g.barredByFirstTurn(player) {
+		return 0, ErrFirstTurnOneCard
 	}
 	hand := &g.State.Hand[player]
 	if handIndex < 0 || handIndex >= int(hand.Count) {
@@ -244,6 +254,19 @@ func (g *Game) PlayFromUnder(player int, id LocalID) {
 		return
 	}
 	_, _ = g.playCardFromZone(player, id, func() { g.detachUnder(id) }, playCardOptions{})
+}
+
+// PlayFromArchives plays a specific card out of a player's archives, bypassing the
+// active-house gate the same way PlayFromHand does — Project Z.Y.X. plays an
+// archived card "as if it were in your hand and in the active house." Archives is
+// a wideList rather than a deckList, so it does not reuse playFromPile. It does
+// nothing when the card is not in that player's archives.
+func (g *Game) PlayFromArchives(player int, id LocalID) {
+	arc := &g.State.Archives[player]
+	if arc.indexOf(id) < 0 {
+		return
+	}
+	_, _ = g.playCardFromZone(player, id, func() { arc.remove(id) }, playCardOptions{})
 }
 
 // playFromPile plays a card out of one of a player's face-down piles. Where the
@@ -348,6 +371,7 @@ func (g *Game) playCreatureCard(player int, id LocalID, flankLeft bool) {
 	g.applyAemberBonus(id)
 	g.triggerAbilities(id, TriggerAfterPlay, 0, false)
 	g.emitCreatureEnters(id)
+	g.emitCreaturePlayedAdjacent(id)
 	g.emitCardPlayed(player, id)
 	g.emitLasting(EventCreaturePlayed, player, id)
 	g.emitLasting(EventCardEntersPlay, player, id)
@@ -537,6 +561,19 @@ func (g *Game) recordCardPlayed(player int, id LocalID, opts playCardOptions) {
 	g.State.PlayedThisTurn[player].add(id)
 }
 
+// barredByFirstTurn reports whether the first-turn rule blocks player from
+// playing or discarding a card from hand now: it is armed only for the first
+// player's first turn, and blocks once they have taken one volitional play or
+// discard. A card that a played card lets them play (Wild Wormhole, Phase Shift)
+// goes through playCardFromZone directly, not these gates, so it is never barred.
+func (g *Game) barredByFirstTurn(player int) bool {
+	if g.manual {
+		return false
+	}
+	return g.State.FirstTurnPlayLimit[player] &&
+		g.State.PlayedThisTurn[player].Count+g.State.DiscardedThisTurn[player].Count >= 1
+}
+
 // validateHandPlay runs the read-only checks that a hand card may be played —
 // game not over, active player, no card-play limit reached, index in hand, right
 // type, and play permission — and returns the card without mutating the hand. It
@@ -550,6 +587,9 @@ func (g *Game) validateHandPlay(player, handIndex int, want CardType) (LocalID, 
 	}
 	if g.cannotPlayCard(player) {
 		return 0, ErrCardPlayLimit
+	}
+	if g.barredByFirstTurn(player) {
+		return 0, ErrFirstTurnOneCard
 	}
 	hand := &g.State.Hand[player]
 	if handIndex < 0 || handIndex >= int(hand.Count) {
@@ -592,6 +632,9 @@ func (g *Game) CanPlay(player int, id LocalID) error {
 	}
 	if g.cannotPlayCard(player) {
 		return ErrCardPlayLimit
+	}
+	if g.barredByFirstTurn(player) {
+		return ErrFirstTurnOneCard
 	}
 	if g.barredByAlpha(player, def) {
 		return ErrAlphaNotFirst

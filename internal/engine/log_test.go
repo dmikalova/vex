@@ -42,6 +42,7 @@ func TestLogEntryText(t *testing.T) {
 		{KeyUnforged{Player: 0, Keys: 1, Needed: 3}, "P0 unforges a key (1/3)"},
 		{ChainShed{Player: 1, Remaining: 4}, "P1 sheds a chain (4 remaining)"},
 		{GameWon{Player: 0}, "P0 wins the game!"},
+		{PlayerConceded{Player: 1}, "P1 concedes."},
 		{
 			PlayerStanding{Player: 0, Aember: 4, KeyColors: []KeyColor{KeyColorRed}},
 			"P0 has 4 Æmber and 1 keys",
@@ -271,6 +272,7 @@ func TestLogEntryText(t *testing.T) {
 		},
 		{FightGrantedAnyHouse{Player: 1}, "P1's creatures may all fight this turn"},
 		{UseGrantedForHouse{Player: 0, House: Dis}, "P0 may use Dis creatures this turn"},
+		{UseArtifactsGrantedAnyHouse{Player: 0}, "P0 may use friendly artifacts this turn"},
 		{PlayGrantedForHouse{Player: 0, House: Mars}, "P0 may play Mars cards this turn"},
 		{
 			HouseForcedNextTurn{Player: 1, House: Logos},
@@ -429,7 +431,12 @@ func TestRenderEntryMarksIconKeywords(t *testing.T) {
 		{ChainsGained{Player: 0, Amount: 2, Total: 5}, "chains", "chains"},
 		{ChainShed{Player: 1, Remaining: 4}, "chains", "chain"},
 		{KeyForged{Player: 0, Keys: 1, Needed: 3}, "key", "key"},
+		{
+			KeyForged{Player: 0, Color: KeyColorRed, HasColor: true, Keys: 1, Needed: 3},
+			"key-red", "key",
+		},
 		{PlayerStanding{Player: 0, Aember: 4, KeyColors: []KeyColor{KeyColorRed}}, "key", "keys"},
+		{CardShuffledIntoDeck{Card: 6, Owner: 1}, "zone-deck", "deck"},
 	}
 	for _, c := range iconCases {
 		segs := RenderEntry(c.entry, stubNamer{})

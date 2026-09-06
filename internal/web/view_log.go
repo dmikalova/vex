@@ -160,9 +160,27 @@ func (g *game) logBlockView(b logBlock) app.UI {
 	)
 	body := make([]app.UI, 0, len(b.lines))
 	for _, rec := range b.lines {
-		body = append(body, app.Div().Class("log-line").Body(g.logSegments(rec.Entry)...))
+		body = append(body, app.Div().
+			Class(cx("log-line", logToneClass(rec.Entry))).
+			Body(g.logSegments(rec.Entry)...))
 	}
 	return app.Div().Class(cls).Body(body...)
+}
+
+// logToneClass tints a log line by how much it should catch the eye: a manual
+// edit rewrites the match by hand, so it reads as a red alert; a restriction
+// blocks an action the player expected to take, so it reads as a yellow warning.
+// A line that is neither carries no extra class.
+func logToneClass(entry engine.LogEntry) string {
+	switch entry.(type) {
+	case engine.ManualCardMoved, engine.ManualExhaustSet, engine.ManualMatchFull,
+		engine.ManualCardAdded, engine.ManualAemberSet, engine.ManualChainsSet,
+		engine.ManualHouseChosen, engine.ManualKeyForged, engine.ManualKeyUnforged:
+		return "log-line--alert"
+	case engine.HouseForbiddenNextTurn, engine.CardCannotBeUsed, engine.DamageRefused:
+		return "log-line--warn"
+	}
+	return ""
 }
 
 // logSegments draws one log entry, turning the card names, player names, and
@@ -184,6 +202,7 @@ func (g *game) logSegments(entry engine.LogEntry) []app.UI {
 				DataSet("card", seg.Text).
 				OnMouseEnter(g.onLogCardHover).
 				OnMouseLeave(g.onCardHoverOut).
+				OnClick(g.onLogCardTap).
 				Text(seg.Text))
 		case seg.HasPlayer:
 			out = append(out, app.Span().

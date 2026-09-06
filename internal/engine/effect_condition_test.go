@@ -81,6 +81,22 @@ func TestControlsMoreCreatures(t *testing.T) {
 	}
 }
 
+func TestSourceReadyCondition(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("src", 2), 0)
+	c := SourceReady{}
+	if c.CondText() != "if "+SelfName+" is ready" {
+		t.Errorf("CondText = %q", c.CondText())
+	}
+	if !c.Met(&EffectContext{Resolver: g, Source: src}) {
+		t.Error("a ready source should be met")
+	}
+	g.SetExhausted(src, true)
+	if c.Met(&EffectContext{Resolver: g, Source: src}) {
+		t.Error("an exhausted source should not be met")
+	}
+}
+
 func TestSourceOnFlankCondition(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	left := g.AddToBattleline(testCreature("left", 2), 0)
@@ -693,5 +709,64 @@ func TestNoCreaturesPlayedThisTurn(t *testing.T) {
 	}
 	if cond.Met(ctx) {
 		t.Error("after playing a creature the condition should not be met")
+	}
+}
+
+// TestItIsYourTurn is met when the controller is the active player and not
+// otherwise.
+func TestItIsYourTurn(t *testing.T) {
+	g := started(t)
+	g.State.ActivePlayer = 0
+	if got := (ItIsYourTurn{}).CondText(); got != "if it is your turn" {
+		t.Errorf("text = %q, want %q", got, "if it is your turn")
+	}
+	if !(ItIsYourTurn{}).Met(&EffectContext{Resolver: g, Controller: 0}) {
+		t.Error("should be met for the active player")
+	}
+	if (ItIsYourTurn{}).Met(&EffectContext{Resolver: g, Controller: 1}) {
+		t.Error("should not be met for the inactive player")
+	}
+}
+
+func TestAemberOnThisAtLeast(t *testing.T) {
+	c := AemberOnThisAtLeast{Amount: 4}
+	if got := c.CondText(); got != "if there are 4 or more Æmber on it" {
+		t.Errorf("text = %q", got)
+	}
+	g := NewGame("A", "B", 1)
+	vault := NewCard("Safe Place", Shadows, Artifact, Rare)
+	id := g.AddArtifact(vault, 0)
+	ctx := &EffectContext{Resolver: g, Source: id, Controller: 0}
+	if c.Met(ctx) {
+		t.Error("should not be met below the threshold")
+	}
+	g.AddAmberOn(id, 4)
+	if !c.Met(ctx) {
+		t.Error("should be met at the threshold")
+	}
+}
+
+// TestFirstReapOfTurn covers Aember Conduction Unit's gate: met only while the
+// reap in context is the first creature to reap this turn.
+func TestFirstReapOfTurn(t *testing.T) {
+	if got := (FirstReapOfTurn{}).CondText(); got != "if it is the first time a creature has reaped this turn" {
+		t.Errorf("CondText = %q", got)
+	}
+	if (FirstReapOfTurn{}).Met(&EffectContext{Resolver: started(t)}) {
+		t.Error("with no creature in context the condition should not be met")
+	}
+
+	g := started(t)
+	first := g.AddToBattleline(NewCard("first", Brobnar, Creature, Common, WithPower(3)), 0)
+	second := g.AddToBattleline(NewCard("second", Brobnar, Creature, Common, WithPower(3)), 0)
+
+	g.reapWith(first)
+	if !(FirstReapOfTurn{}).Met(&EffectContext{Resolver: g, It: first, HasIt: true}) {
+		t.Error("the first reap of the turn should meet the condition")
+	}
+
+	g.reapWith(second)
+	if (FirstReapOfTurn{}).Met(&EffectContext{Resolver: g, It: second, HasIt: true}) {
+		t.Error("a later reap should not meet the condition")
 	}
 }

@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ProjectZYX
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Project Z.Y.X.
 //
 //	House:  Logos
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Cyborg • Mutant
 //
-//	Fight/Reap: You may play one of your archived cards as if it were in your hand and in the active house.
+//	Fight/Reap: You may play a card from your archives.
 var ProjectZYX = card.New(
 	"Project Z.Y.X.",
 	card.House.Logos,
@@ -26,5 +21,5 @@ var ProjectZYX = card.New(
 	card.WithPower(5),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Mutant),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithFightOrReap(card.May{Do: card.PlayFrom{From: card.Archives}}),
 )

@@ -13,7 +13,10 @@ import (
 // toggleManual turns the engine's manual mode on or off, lifting house
 // restrictions and revealing the manual controls.
 func (g *game) toggleManual(ctx app.Context, _ app.Event) {
-	if g.busy || g.choosing || g.choosingOption {
+	// Manual mode may be toggled mid-prompt (g.busy with a chooser waiting): turning
+	// it on reveals the Cancel button that escapes a stuck prompt. Only a non-prompt
+	// busy state (an effect still animating) blocks the toggle.
+	if g.busy && !g.choosing && !g.choosingOption {
 		return
 	}
 	g.g.SetManual(!g.g.Manual())

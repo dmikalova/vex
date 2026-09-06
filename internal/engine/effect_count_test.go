@@ -71,6 +71,52 @@ func TestInPlay(t *testing.T) {
 	}
 }
 
+// TestCardinalCountText covers the cardinal "the number of …" form a clause
+// compares against, including the InPlay side phrasing and the generic fallback.
+func TestCardinalCountText(t *testing.T) {
+	cardinals := []struct {
+		in   Count
+		want string
+	}{
+		{
+			InPlay{Player: Controller, Type: Creature, House: Mars},
+			"the number of friendly Mars creatures you control",
+		},
+		{
+			InPlay{Player: Opponent, Type: Creature},
+			"the number of enemy creatures your opponent controls",
+		},
+		{
+			InPlay{Player: EachPlayer, Type: Creature},
+			"the number of creatures in play",
+		},
+		{OpponentForgedKeys{}, "the number of forged key your opponent has"},
+	}
+	for _, tc := range cardinals {
+		if got := cardinalCountText(tc.in); got != tc.want {
+			t.Errorf("cardinalCountText = %q, want %q", got, tc.want)
+		}
+	}
+}
+
+// TestInPlayMinPower covers the power floor Grump Buggy scales its key-cost change
+// by: only creatures at or above MinPower count, and the noun names the threshold.
+func TestInPlayMinPower(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(NewCard("big", Brobnar, Creature, Common, WithPower(6)), 0)
+	g.AddToBattleline(NewCard("exact", Brobnar, Creature, Common, WithPower(5)), 0)
+	g.AddToBattleline(NewCard("small", Brobnar, Creature, Common, WithPower(4)), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	strong := InPlay{Player: Controller, Type: Creature, MinPower: 5}
+	if got := strong.Value(ctx); got != 2 {
+		t.Errorf("MinPower 5 Value = %d, want 2", got)
+	}
+	if got := strong.CountText(); got != "friendly creature with power 5 or higher" {
+		t.Errorf("CountText = %q", got)
+	}
+}
+
 func TestInPlayEachPlayer(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.AddToBattleline(testCreature("f", 5), 0)
@@ -346,5 +392,48 @@ func TestFixed(t *testing.T) {
 	}
 	if got := Fixed(3).CountText(); got != "" {
 		t.Errorf("Fixed count text = %q, want empty", got)
+	}
+}
+
+func TestTraitsOfChosen(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	id := g.AddToBattleline(
+		NewCard("beast", Untamed, Creature, Common, WithPower(3), WithTraits(Beast, Mutant)), 0)
+	c := TraitsOfChosen{}
+	if got := c.CountText(); got != "trait that creature has" {
+		t.Errorf("text = %q", got)
+	}
+	if got := c.Value(&EffectContext{Resolver: g, Controller: 0, It: id, HasIt: true}); got != 2 {
+		t.Errorf("value = %d, want 2", got)
+	}
+	if got := c.Value(&EffectContext{Resolver: g, Controller: 0}); got != 0 {
+		t.Errorf("value with no creature in context = %d, want 0", got)
+	}
+}
+
+// TestPowerOfChosen covers the full-power count (Mindworm): the value is the
+// context creature's power, zero without one, and it renders inside an "equal to"
+// clause.
+func TestPowerOfChosen(t *testing.T) {
+	if got := (PowerOfChosen{}).CountText(); got != "its power" {
+		t.Errorf("CountText = %q, want %q", got, "its power")
+	}
+	if got := (PowerOfChosen{}).Value(&EffectContext{}); got != 0 {
+		t.Errorf("Value with no It = %d, want 0", got)
+	}
+
+	g := started(t)
+	c := g.AddToBattleline(NewCard("brute", Mars, Creature, Common, WithPower(6)), 0)
+	if got := (PowerOfChosen{}).Value(&EffectContext{Resolver: g, It: c, HasIt: true}); got != 6 {
+		t.Errorf("Value = %d, want 6", got)
+	}
+
+	e := DealDamage{
+		AmountFrom: PowerOfChosen{},
+		Target:     Target{Kind: TargetCreatureFought}.NeighborsOf(),
+	}
+	want := "deal damage equal to its power to each neighbor of the creature {self} fights"
+	if got := e.Text(); got != want {
+		t.Errorf("Text = %q, want %q", got, want)
 	}
 }

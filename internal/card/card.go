@@ -56,6 +56,9 @@ type (
 	// AttackDamage customizes the damage a creature deals when it fights (Valdr's
 	// flank bonus, Ether Spider dealing none); pass it to card.WithAttackDamage.
 	AttackDamage = engine.AttackDamage
+	// AttackKeywords are keywords a creature gains while attacking (Spyyyder's
+	// poison against a flank creature); pass it to card.WithAttackKeywords.
+	AttackKeywords = engine.AttackKeywords
 )
 
 // TollOn groups the actions a Toll can charge for, e.g. card.TollOn.PlayArtifact.

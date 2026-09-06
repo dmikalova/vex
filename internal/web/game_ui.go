@@ -35,6 +35,19 @@ func (g *game) onCardTabHover(ctx app.Context, _ app.Event) {
 // event itself; a tab is not a component).
 func (g *game) onCardTabHoverOut(ctx app.Context, _ app.Event) { g.hoverClear(ctx) }
 
+// onCardTabTap answers a chooser prompt with the card a peeking tab represents —
+// the only way to pick an attached card (an upgrade Destroy Them All may destroy)
+// that shares its host's board slot and so has no card face of its own to click.
+// The id is read back off the tab's own dataset, the same way onCardTabHover does;
+// cardTab only wires this handler onto a tab that is a current candidate.
+func (g *game) onCardTabTap(ctx app.Context, _ app.Event) {
+	id, err := strconv.Atoi(ctx.JSSrc().Get("dataset").Get("id").String())
+	if err != nil {
+		return
+	}
+	g.chooseCandidate(ctx, engine.LocalID(id))
+}
+
 // hoverLive reports whether the hovered live card is still somewhere the client
 // draws it. A card that leaves play (destroyed, purged, put into hand) vanishes
 // from the DOM without firing a leave, so the preview has to drop it itself.
@@ -74,12 +87,54 @@ func (g *game) previewUp() bool {
 	return g.hoverLive() || g.hoverDef != nil
 }
 
-// onLogCardHover previews the printed card named by a log mention, to the left of
-// the log.
+// onLogCardHover previews the printed card named by a log mention, placed to
+// clear the log line it was read from (see setLogPreview).
 func (g *game) onLogCardHover(ctx app.Context, _ app.Event) {
 	if def, ok := g.defByName[ctx.JSSrc().Get("dataset").Get("card").String()]; ok {
-		g.hasHover, g.hoverDef, g.hoverInLog = false, def, true
+		g.setLogPreview(ctx, def)
 	}
+}
+
+// onLogCardTap is the touch counterpart of onLogCardHover: a tap on a log mention
+// opens its preview, and a second tap on the same mention dismisses it, since a
+// touchscreen has no hover-out to close it.
+func (g *game) onLogCardTap(ctx app.Context, _ app.Event) {
+	def, ok := g.defByName[ctx.JSSrc().Get("dataset").Get("card").String()]
+	if !ok {
+		return
+	}
+	if g.hoverInLog && g.hoverDef == def {
+		g.hasHover, g.hoverDef = false, nil
+		return
+	}
+	g.setLogPreview(ctx, def)
+}
+
+// setLogPreview shows def as a log-mention preview and positions it to clear its
+// source: over the sidebar when the window is too narrow to show a whole card
+// beside it, and anchored to the bottom of the viewport when the tapped line sits
+// in the top half.
+func (g *game) setLogPreview(ctx app.Context, def *engine.CardDefinition) {
+	g.hasHover, g.hoverDef, g.hoverInLog = false, def, true
+	g.hoverOverSidebar, g.hoverAtBottom = g.logPreviewPlacement(ctx)
+}
+
+// logPreviewPlacement decides where a log-mention preview goes. It draws over the
+// sidebar when the sidebar is collapsed or the window is narrower than a preview
+// plus the sidebar can sit side by side, and anchors to the bottom when the tapped
+// line is in the top half of the viewport. Off-browser (no window to measure) it
+// reports the over-sidebar, top-anchored default.
+func (g *game) logPreviewPlacement(ctx app.Context) (overSidebar, atBottom bool) {
+	const remPx = 16.0
+	vw := app.Window().Get("innerWidth").Float()
+	overSidebar = g.sidebarCollapsed || vw < 34*remPx
+	if src := ctx.JSSrc(); src.Truthy() {
+		if vh := app.Window().Get("innerHeight").Float(); vh > 0 {
+			top := src.Call("getBoundingClientRect").Get("top").Float()
+			atBottom = top < vh/2
+		}
+	}
+	return overSidebar, atBottom
 }
 
 // onCardHoverOut hides the hover preview (a log-mention leave).
@@ -180,6 +235,20 @@ func (g *game) manualMenu(ctx app.Context, e app.Event) {
 func (g *game) restartMenu(ctx app.Context, e app.Event) {
 	g.menuOpen = false
 	g.openSetup(ctx, e)
+}
+
+// concedeMenu forfeits the game for the active player, handing the win to their
+// opponent. It is recorded as a root action, so it can be undone.
+func (g *game) concedeMenu(ctx app.Context, _ app.Event) {
+	g.menuOpen = false
+	if g.busy || g.choosing || g.choosingOption || g.g.Winner() >= 0 {
+		return
+	}
+	g.beginAction()
+	g.g.Concede(g.active())
+	g.clearSelection()
+	g.settlePhase()
+	g.save(ctx)
 }
 
 func (g *game) keysMenu(ctx app.Context, e app.Event) {

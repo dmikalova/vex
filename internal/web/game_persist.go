@@ -115,8 +115,13 @@ func (g *game) resume(ctx app.Context) (ok bool) {
 
 	g.seed = snap.Seed
 	g.setNames = snap.SetNames
-	eg, houses, mavericks := match.NewWithSets("Player 1", "Player 2", snap.Seed, snap.SetNames)
-	g.install(eg, houses, mavericks)
+	eg, houses, mavericks, legacies := match.NewWithSets(
+		"Player 1",
+		"Player 2",
+		snap.Seed,
+		snap.SetNames,
+	)
+	g.install(eg, houses, mavericks, legacies)
 	if !g.replayManualAdds(snap.Manual) {
 		store.Del(persistKey)
 		return false
@@ -211,8 +216,8 @@ func (g *game) newMatch() { g.dealMatch(time.Now().UnixNano()) }
 // id in them.
 func (g *game) dealMatch(seed int64) {
 	g.seed = seed
-	eg, houses, mavericks := match.NewWithSets("Player 1", "Player 2", g.seed, g.setNames)
-	g.install(eg, houses, mavericks)
+	eg, houses, mavericks, legacies := match.NewWithSets("Player 1", "Player 2", g.seed, g.setNames)
+	g.install(eg, houses, mavericks, legacies)
 	// Clear the previous game's log grouping and undo/redo history. newMatch resets
 	// the engine log to a single turn-1 header, so stale marks (with larger Start
 	// indices from the old, longer log) would bubble the fresh log at the wrong
@@ -221,7 +226,6 @@ func (g *game) dealMatch(seed int64) {
 	g.undo = nil
 	g.redo = nil
 	g.manualAdds = nil
-	g.g.StartTurn(0) // no Æmber yet, so the opening forge step is a no-op
 	// The new deal shares no board with the old one, so the animation baseline is
 	// reset too: otherwise the next action diffs against the previous game's cards
 	// and flies them all off to the discard.
@@ -231,17 +235,41 @@ func (g *game) dealMatch(seed int64) {
 	g.clearSelection()
 	g.zonesPlayer = -1
 	g.status = ""
+	// Run setup on a background goroutine so the interactive chooser can offer each
+	// player their one mulligan: StartGame deals both opening hands, prompts each
+	// player in turn (blocking this goroutine on the chooser, never the UI one),
+	// then begins the first turn and pauses at the house choice. The finish hops
+	// back to the UI goroutine through g.dispatch.
+	g.busy = true
+	go func() {
+		g.g.StartGame(0)
+		g.dispatch(func(ctx app.Context) {
+			g.busy = false
+			g.clearFlashes()
+			g.inPlayPrev = g.inPlaySet()
+			g.phase = phaseHouse
+			g.clearSelection()
+			g.save(ctx)
+		})
+	}()
 }
 
 // install wires a freshly built engine game into the component: it attaches the
 // shared human chooser to both players and records the harness, its deck houses,
-// and which dealt cards are Mavericks. The caller sets the starting phase.
+// and which dealt cards are Mavericks or Legacy cards. The caller sets the
+// starting phase.
 func (g *game) install(
 	eg *engine.Game,
 	houses [2][]engine.House,
 	mavericks [2][]engine.LocalID,
+	legacies [2][]engine.LocalID,
 ) {
-	ch := &webChooser{g: g, reply: make(chan chooseReply, 1), optionReply: make(chan int, 1)}
+	ch := &webChooser{
+		g:           g,
+		reply:       make(chan chooseReply, 1),
+		optionReply: make(chan int, 1),
+		cancel:      make(chan struct{}),
+	}
 	eg.SetChooser(0, ch)
 	eg.SetChooser(1, ch)
 	// Declare each player's deck houses so a forced house they lack is ignored
@@ -255,6 +283,12 @@ func (g *game) install(
 	for _, ids := range mavericks {
 		for _, id := range ids {
 			g.mavericks[id] = true
+		}
+	}
+	g.legacy = make(map[engine.LocalID]bool)
+	for _, ids := range legacies {
+		for _, id := range ids {
+			g.legacy[id] = true
 		}
 	}
 	if g.defByName == nil {

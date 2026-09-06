@@ -1,20 +1,15 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// MightMakesRight
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Might Makes Right
 //
 //	House:  Brobnar
 //	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: You may sacrifice any number of creatures with total power of 25 or more. If you do, forge a key at no cost.
+//	Play: You may destroy any number of friendly creatures with total power of 25 or more - forge a key at no cost.
 var MightMakesRight = card.New(
 	"Might Makes Right",
 	card.House.Brobnar,
@@ -22,5 +17,10 @@ var MightMakesRight = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, 43),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.DestroyFriendlyCreaturesToForge{
+			Target:        card.Target.EachFriendlyCreature,
+			MinTotalPower: 25,
+			Then:          card.ForgeKey{FreeOfCost: true},
+		}),
 )

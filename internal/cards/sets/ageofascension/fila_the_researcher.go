@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// FilaTheResearcher
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Fila the Researcher
 //
 //	House:  Logos
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  1
 //	Traits: Human • Scientist
 //
-//	Elusive. (The first time this creature is attacked each turn, no damage is dealt.)
+//	Elusive.
 //	After a creature is played adjacent to Fila the Researcher, draw a card.
 var FilaTheResearcher = card.New(
 	"Fila the Researcher",
@@ -25,5 +20,7 @@ var FilaTheResearcher = card.New(
 	card.Provenance(card.AoA, 129),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithAbility(
+		card.Trigger.AfterCreaturePlayedAdjacent, card.Draw{Amount: 1}),
 )

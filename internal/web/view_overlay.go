@@ -99,6 +99,7 @@ func (g *game) printedCard(id engine.LocalID) *cardView {
 	c := printedFace(g.g.Def(id))
 	c.ID = id
 	c.Maverick = g.isMaverick(id)
+	c.Legacy = g.isLegacy(id)
 	return c
 }
 

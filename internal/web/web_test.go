@@ -113,6 +113,37 @@ func TestTypeAndKeyIconNamesHaveAssets(t *testing.T) {
 	}
 }
 
+// TestCounterIconNamesHaveAssets guards the generic-counter icon seam: every
+// counter kind the engine defines resolves to a unique icon asset that exists on
+// disk. A new CounterKind with no counterAsset entry (or one reusing another
+// kind's icon) fails here, so the web strip can never draw two counters the same
+// or fall back to a missing SVG.
+func TestCounterIconNamesHaveAssets(t *testing.T) {
+	if got := counterAsset(engine.CounterNone); got != "" {
+		t.Errorf("counterAsset(CounterNone) = %q, want empty", got)
+	}
+	seen := map[string]engine.CounterKind{}
+	for k := engine.CounterNone + 1; int(k) < engine.NumCounterKinds; k++ {
+		name := counterAsset(k)
+		if name == "" {
+			t.Errorf("counter kind %d has no icon asset", k)
+			continue
+		}
+		if !assetExists(t, name) {
+			t.Errorf("counter kind %d: no web/assets/%s.svg", k, name)
+		}
+		if prev, dup := seen[name]; dup {
+			t.Errorf(
+				"counter kinds %d and %d share icon %q; each needs a unique one",
+				prev,
+				k,
+				name,
+			)
+		}
+		seen[name] = k
+	}
+}
+
 func TestHouseClassesAreDefinedInCSS(t *testing.T) {
 	css := repoFile(t, "web/app.css")
 	for h := engine.HouseNone + 1; int(h) < engine.NumHouses; h++ {

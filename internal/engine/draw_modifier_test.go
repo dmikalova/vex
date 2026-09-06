@@ -8,21 +8,26 @@ import (
 func TestDrawModifierText(t *testing.T) {
 	if got := drawModifierText(
 		DrawModifier{Player: Controller, Amount: 1},
-	); got != `During your "draw cards" step, refill your hand to 1 additional card.` {
+	); got != `During your "draw cards" phase, refill your hand to 1 additional card.` {
 		t.Errorf("controller text = %q", got)
 	}
 	if got := drawModifierText(
 		DrawModifier{Player: Opponent, Amount: -1},
-	); got != `During their "draw cards" step, your opponent refills their hand to 1 less card.` {
+	); got != `During their "draw cards" phase, your opponent refills their hand to 1 less card.` {
 		t.Errorf("opponent text = %q", got)
 	}
 	if got := drawModifierText(
 		DrawModifier{Player: EachPlayer, Amount: 2},
-	); got != `During their "draw cards" step, each player refills their hand to 2 additional cards.` {
+	); got != `During their "draw cards" phase, each player refills their hand to 2 additional cards.` {
 		t.Errorf("each-player text = %q", got)
 	}
 	if got := drawModifierText(DrawModifier{}); got != "" {
 		t.Errorf("zero modifier text = %q, want empty", got)
+	}
+	if got := drawModifierText(
+		DrawModifier{Player: Opponent, Amount: -1, OnlyWhileOffFlank: true},
+	); got != `While `+SelfName+` is not on a flank, during their "draw cards" phase, your opponent refills their hand to 1 less card.` {
+		t.Errorf("off-flank text = %q", got)
 	}
 }
 
@@ -68,5 +73,37 @@ func TestDrawStepModifier(t *testing.T) {
 
 	if got := int(g.State.Hand[0].Count); got != HandSize+1 {
 		t.Errorf("hand after draw = %d, want %d (one additional card)", got, HandSize+1)
+	}
+}
+
+// TestDrawModifierOffFlank covers the positional gate: the modifier applies only
+// while its source is off a flank of its battleline (Streke).
+func TestDrawModifierOffFlank(t *testing.T) {
+	off := func() int {
+		g := NewGame("A", "B", 1)
+		streke := NewCard(
+			"Streke", Dis, Creature, Common, WithPower(2),
+			WithDrawModifierOffFlank(Opponent, -1),
+		)
+		g.AddToBattleline(testCreature("l", 3), 0)
+		g.AddToBattleline(streke, 0) // buried in the middle: off a flank
+		g.AddToBattleline(testCreature("r", 3), 0)
+		return g.drawModifier(1)
+	}
+	if got := off(); got != -1 {
+		t.Errorf("off-flank drawModifier = %d, want -1", got)
+	}
+
+	on := func() int {
+		g := NewGame("A", "B", 1)
+		streke := NewCard(
+			"Streke", Dis, Creature, Common, WithPower(2),
+			WithDrawModifierOffFlank(Opponent, -1),
+		)
+		g.AddToBattleline(streke, 0) // alone: on a flank
+		return g.drawModifier(1)
+	}
+	if got := on(); got != 0 {
+		t.Errorf("on-flank drawModifier = %d, want 0", got)
 	}
 }

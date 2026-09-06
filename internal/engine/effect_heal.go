@@ -31,12 +31,12 @@ func (e Heal) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 // healed damage. The last creature healed is left in context (ctx.It) so a
 // following effect can act on "that creature".
 //
-// Undamaged creatures are dropped before the prompt, not after it: healing one
-// does nothing, so offering it is a vacuous choice (Guardian Demon asked for a
-// creature to heal even with no damage anywhere on the board). Neighbours pulled
-// in after the choice can still be undamaged, so the loop skips them too.
+// Every creature the target names is offered, damaged or not: "heal a creature"
+// is a real choice the player makes, and picking an undamaged one (healing
+// nothing) is a legal, sometimes deliberate, play. A creature with no damage
+// simply heals nothing in the loop below.
 func (e Heal) resolveGate(ctx *EffectContext) bool {
-	return e.heal(ctx, e.Target.selectWith(ctx, false, e.damagedOnly(ctx)))
+	return e.heal(ctx, e.Target.Select(ctx))
 }
 
 // declinable reports that the healing is a single clickable creature.
@@ -46,13 +46,7 @@ func (e Heal) declinable() bool { return e.Target.isChosen() }
 // declinably, with a Done to decline, instead of a separate Yes/No before the
 // pick (Protectrix).
 func (e Heal) resolveOptional(ctx *EffectContext) bool {
-	return e.heal(ctx, e.Target.selectWith(ctx, true, e.damagedOnly(ctx)))
-}
-
-// damagedOnly drops undamaged creatures from a Heal's candidates: healing one
-// does nothing, so offering it is a vacuous choice.
-func (e Heal) damagedOnly(ctx *EffectContext) func(LocalID) bool {
-	return func(id LocalID) bool { return ctx.Resolver.Damage(id) > 0 }
+	return e.heal(ctx, e.Target.SelectOptional(ctx))
 }
 
 // heal removes damage from an already-selected set of creatures (all of it when

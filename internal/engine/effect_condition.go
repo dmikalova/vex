@@ -183,6 +183,18 @@ func (c SourceOnFlank) Met(ctx *EffectContext) bool {
 	return onFlank(ctx, ctx.Source) != c.Not
 }
 
+// SourceReady is met while the source card is ready (unexhausted) — Bellowing
+// Patrizate damages each creature that enters play only while it is ready.
+type SourceReady struct{}
+
+// CondText renders the condition naming the source card.
+func (SourceReady) CondText() string { return "if " + SelfName + " is ready" }
+
+// Met reports whether the source card is currently ready.
+func (SourceReady) Met(ctx *EffectContext) bool {
+	return !ctx.Resolver.Exhausted(ctx.Source)
+}
+
 // SourceNeighborsAllOfHouse is met while every battleline neighbor of the source
 // card belongs to House — Xanthyx Harvester cannot be used while it has a
 // non-Mars neighbor, so its use is gated on this being met.
@@ -284,6 +296,35 @@ func (NoCreaturesPlayedThisTurn) Met(ctx *EffectContext) bool {
 		}
 	}
 	return true
+}
+
+// ItIsYourTurn is met when the ability's controller is the active player —
+// Jargogle plays the card under it when destroyed on its controller's turn, and
+// archives it otherwise.
+type ItIsYourTurn struct{}
+
+// CondText renders the condition.
+func (ItIsYourTurn) CondText() string { return "if it is your turn" }
+
+// Met reports whether the controller is the active player.
+func (ItIsYourTurn) Met(ctx *EffectContext) bool {
+	return ctx.Resolver.ActivePlayer() == ctx.Controller
+}
+
+// AemberOnThisAtLeast is met when at least Amount Æmber sits on the source card —
+// [REDACTED] sacrifices itself once it has hoarded four or more.
+type AemberOnThisAtLeast struct {
+	Amount int
+}
+
+// CondText renders the condition clause.
+func (c AemberOnThisAtLeast) CondText() string {
+	return fmt.Sprintf("if there are %d or more Æmber on it", c.Amount)
+}
+
+// Met reports whether the source card holds at least Amount Æmber.
+func (c AemberOnThisAtLeast) Met(ctx *EffectContext) bool {
+	return ctx.Resolver.AmberOn(ctx.Source) >= c.Amount
 }
 
 // CardsDestroyedFewerThan is met when fewer than Amount cards were destroyed this
@@ -814,4 +855,49 @@ func (EnemyCreatureDestroyed) CondText() string {
 // turn.
 func (EnemyCreatureDestroyed) Met(ctx *EffectContext) bool {
 	return ctx.Resolver.TurnHistory(ctx.Controller, EnemyCreaturesDestroyed) > 0
+}
+
+// FirstReapOfTurn is met when the reap in context is the first time a creature
+// has reaped this turn — Aember Conduction Unit stuns only the first enemy
+// creature to reap. It reads the reaping creature (ctx.It) so it asks about the
+// active player's tally, which counts one once this reap has been tallied.
+type FirstReapOfTurn struct{}
+
+// CondText renders the condition.
+func (FirstReapOfTurn) CondText() string {
+	return "if it is the first time a creature has reaped this turn"
+}
+
+// Met reports whether exactly one creature has reaped this turn, the reaping
+// creature in context being that one.
+func (FirstReapOfTurn) Met(ctx *EffectContext) bool {
+	if !ctx.HasIt {
+		return false
+	}
+	return ctx.Resolver.TurnHistory(ctx.Resolver.Controller(ctx.It), CreaturesReapedThisTurn) == 1
+}
+
+// CounterInPlay is met while at least one card in play carries a generic counter
+// of Kind — Wretched Doll destroys every doom-marked creature when there is one,
+// and otherwise marks a fresh one.
+type CounterInPlay struct {
+	// Kind is the counter to look for.
+	Kind CounterKind
+}
+
+// CondText renders the condition.
+func (c CounterInPlay) CondText() string {
+	return "if there is a " + c.Kind.noun() + " in play"
+}
+
+// Met reports whether any creature in either battleline carries the counter.
+func (c CounterInPlay) Met(ctx *EffectContext) bool {
+	for player := 0; player < 2; player++ {
+		for _, id := range ctx.Resolver.Battleline(player) {
+			if ctx.Resolver.CountersOn(id, c.Kind) > 0 {
+				return true
+			}
+		}
+	}
+	return false
 }

@@ -64,6 +64,10 @@ type gallery struct {
 	minArmor        string
 	maxArmor        string
 	order           string
+
+	// ready is false until the async catalog build finishes; the page renders its
+	// shell immediately and fills the grid in once ready.
+	ready bool
 }
 
 // rarityOrder gives each rarity its catalog rank, so the Rarity facet reads in
@@ -76,11 +80,11 @@ var rarityOrder = map[engine.Rarity]int{
 	engine.Connected: 4,
 }
 
-// OnMount builds the catalog from the registered cards once — materializing
-// template cards into their concrete variants — indexes each card's set
-// memberships and search haystacks, and collects the distinct facet values the
-// sidebar offers.
-func (g *gallery) OnMount(app.Context) {
+// OnMount initializes the empty filter state, then builds the catalog off the
+// initial paint (ctx.Async) so the page shell appears immediately and the cards
+// stream in when the build — materializing template cards, indexing set
+// memberships and search haystacks — finishes.
+func (g *gallery) OnMount(ctx app.Context) {
 	g.selHouse = map[engine.House]bool{}
 	g.selSet = map[string]bool{}
 	g.selType = map[engine.CardType]bool{}
@@ -89,6 +93,39 @@ func (g *gallery) OnMount(app.Context) {
 	g.selTrait = map[engine.Trait]bool{}
 	g.order = "name"
 
+	ctx.Async(func() {
+		cat := buildGalleryCatalog()
+		ctx.Dispatch(func(app.Context) {
+			g.cards = cat.cards
+			g.houses = cat.houses
+			g.sets = cat.sets
+			g.types = cat.types
+			g.rarities = cat.rarities
+			g.keywords = cat.keywords
+			g.traits = cat.traits
+			g.ready = true
+		})
+	})
+}
+
+// galleryCatalog is the built catalog: every card as a printed entry plus the
+// distinct facet values the sidebar offers, all ordered for display.
+type galleryCatalog struct {
+	cards    []galleryCard
+	houses   []engine.House
+	sets     []string
+	types    []engine.CardType
+	rarities []engine.Rarity
+	keywords []engine.Keyword
+	traits   []engine.Trait
+}
+
+// buildGalleryCatalog materializes template cards into their concrete variants,
+// indexes each card's set memberships and search haystacks, and collects the
+// distinct facet values the sidebar offers. It is pure, so OnMount runs it off
+// the UI goroutine.
+func buildGalleryCatalog() galleryCatalog {
+	var cat galleryCatalog
 	reprintsByName := reprintSetsByName()
 	seenHouse := map[engine.House]bool{}
 	seenSet := map[string]bool{}
@@ -103,42 +140,49 @@ func (g *gallery) OnMount(app.Context) {
 		reprint := reprintsByName[regs[i].Def.Name]
 		for _, def := range materializedDefs(regs[i]) {
 			def := def
-			g.cards = append(g.cards, galleryCard{
+			cat.cards = append(cat.cards, galleryCard{
 				def:         &def,
 				nativeSets:  native,
 				reprintSets: reprint,
 				nameHay:     def.Name,
 				textHay:     def.Name + "\n" + engine.RenderCardRules(&def),
 			})
-			markSeen(seenHouse, &g.houses, def.House)
-			markSeen(seenType, &g.types, def.Type)
-			markSeen(seenRarity, &g.rarities, def.Rarity)
+			markSeen(seenHouse, &cat.houses, def.House)
+			markSeen(seenType, &cat.types, def.Type)
+			markSeen(seenRarity, &cat.rarities, def.Rarity)
 			for _, k := range def.Keywords {
-				markSeen(seenKeyword, &g.keywords, k)
+				markSeen(seenKeyword, &cat.keywords, k)
 			}
 			for _, t := range def.Traits {
-				markSeen(seenTrait, &g.traits, t)
+				markSeen(seenTrait, &cat.traits, t)
 			}
 		}
 		for s := range native {
-			markSeen(seenSet, &g.sets, s)
+			markSeen(seenSet, &cat.sets, s)
 		}
 		for s := range reprint {
-			markSeen(seenSet, &g.sets, s)
+			markSeen(seenSet, &cat.sets, s)
 		}
 	}
 
-	sort.Slice(g.houses, func(i, j int) bool { return g.houses[i].String() < g.houses[j].String() })
-	sort.Strings(g.sets)
 	sort.Slice(
-		g.rarities,
-		func(i, j int) bool { return rarityOrder[g.rarities[i]] < rarityOrder[g.rarities[j]] },
+		cat.houses,
+		func(i, j int) bool { return cat.houses[i].String() < cat.houses[j].String() },
+	)
+	sort.Strings(cat.sets)
+	sort.Slice(
+		cat.rarities,
+		func(i, j int) bool { return rarityOrder[cat.rarities[i]] < rarityOrder[cat.rarities[j]] },
 	)
 	sort.Slice(
-		g.keywords,
-		func(i, j int) bool { return g.keywords[i].String() < g.keywords[j].String() },
+		cat.keywords,
+		func(i, j int) bool { return cat.keywords[i].String() < cat.keywords[j].String() },
 	)
-	sort.Slice(g.traits, func(i, j int) bool { return g.traits[i].String() < g.traits[j].String() })
+	sort.Slice(
+		cat.traits,
+		func(i, j int) bool { return cat.traits[i].String() < cat.traits[j].String() },
+	)
+	return cat
 }
 
 // OnAppUpdate reloads the page onto a freshly built wasm bundle, so a dev edit
@@ -353,13 +397,21 @@ func (g *gallery) Render() app.UI {
 				// drag is wired in galleryScript, which sets --gallery-sidebar-w.
 				app.Div().Class("gallery-divider"),
 				app.Div().Class("gallery-main").Body(
-					app.Div().Class("gallery-count").
-						Text(fmt.Sprintf("%d of %d cards", len(shown), len(g.cards))),
-					app.Div().Class("gallery-grid").Body(
-						app.Range(shown).Slice(func(i int) app.UI {
-							return app.Div().Class("gallery-card").Body(printedFace(shown[i].def))
-						}),
-					),
+					app.If(!g.ready, func() app.UI {
+						return app.Div().Class("gallery-count").Text("Loading cards…")
+					}).Else(func() app.UI {
+						return app.Div().Body(
+							app.Div().Class("gallery-count").
+								Text(fmt.Sprintf("%d of %d cards", len(shown), len(g.cards))),
+							app.Div().Class("gallery-grid").Body(
+								app.Range(shown).Slice(func(i int) app.UI {
+									return app.Div().
+										Class("gallery-card").
+										Body(printedFace(shown[i].def))
+								}),
+							),
+						)
+					}),
 				),
 			),
 		),

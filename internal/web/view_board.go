@@ -255,8 +255,13 @@ func (g *game) hoverPreview() app.UI {
 	pos := "card-preview--board"
 	if g.hoverInLog {
 		pos = "card-preview--log"
+		if g.hoverOverSidebar {
+			pos = "card-preview--over"
+		}
 	}
-	return app.Div().Class(cx("card-preview", pos)).Body(card)
+	return app.Div().
+		Class(cx("card-preview", pos, ifCls(g.hoverInLog && g.hoverAtBottom, "card-preview--bottom"))).
+		Body(card)
 }
 
 // houseStrip shows the player's three deck houses in their score pill. Once that
@@ -499,8 +504,13 @@ func (g *game) hostWithTabs(id engine.LocalID, face app.UI, dimmed bool) app.UI 
 	// Attached cards dim with their host: an exhausted creature has already acted,
 	// so its upgrades and under-cards read as spent alongside it rather than
 	// standing out beside a greyed face; a host dimmed as an invalid choice greys
-	// its attachments the same way.
-	dim := ifCls(dimmed || (g.inPlay(id) && g.g.Exhausted(id)), "card-tabs--dim")
+	// its attachments the same way. During a chooser prompt the strips are left
+	// undimmed, so an attached candidate (an upgrade Destroy Them All may destroy)
+	// keeps its targetable ring instead of being greyed out with its host.
+	dim := ifCls(
+		!g.choosing && (dimmed || (g.inPlay(id) && g.g.Exhausted(id))),
+		"card-tabs--dim",
+	)
 	return app.Div().Class("card-host").
 		Style("--under-tabs", strconv.Itoa(len(left))).
 		Style("--up-tabs", strconv.Itoa(len(right))).
@@ -550,12 +560,20 @@ func (g *game) underTabs(id engine.LocalID) []app.UI {
 // field.
 func (g *game) cardTab(id engine.LocalID) app.UI {
 	def := g.g.Def(id)
-	return app.Div().
-		Class(cx("card-tab", houseClasses(g.g.House(id)))).
+	// During a chooser prompt an attached card can itself be a candidate (Destroy
+	// Them All targeting an upgrade). Its tab is the only thing to click, since it
+	// shares its host's slot, so a candidate tab gets the targetable ring and its
+	// own tap handler; the rest of the board dims around it as usual.
+	target := g.choosing && containsID(g.chooserCandidates, id)
+	tab := app.Div().
+		Class(cx("card-tab", houseClasses(g.g.House(id)), ifCls(target, "card-tab--target"))).
 		DataSet("id", strconv.Itoa(int(id))).
 		OnMouseEnter(g.onCardTabHover).
-		OnMouseLeave(g.onCardTabHoverOut).
-		Body(app.Span().Class("card-tab-title").Text(def.Name))
+		OnMouseLeave(g.onCardTabHoverOut)
+	if target {
+		tab = tab.OnClick(g.onCardTabTap)
+	}
+	return tab.Body(app.Span().Class("card-tab-title").Text(def.Name))
 }
 
 // barKeywordOrder is the printed keywords the stripe shows, in the order it

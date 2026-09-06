@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Spyyyder
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Dis
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Demon
 //
-//	Skirmish. (When you use this creature to fight, it is dealt no damage in return.)
+//	Skirmish.
 //	Spyyyder gains poison while attacking an enemy flank creature.
 var Spyyyder = card.New(
 	"Spyyyder",
@@ -25,5 +20,9 @@ var Spyyyder = card.New(
 	card.Provenance(card.AoA, 84),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Demon),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Skirmish),
+	card.WithAttackKeywords(card.AttackKeywords{
+		Keywords:  []card.KeywordValue{card.Keyword.Poison},
+		FlankOnly: true,
+	}),
 )

@@ -531,6 +531,20 @@ body {
 .log-line {
   padding: 0.0625rem 0;
 }
+/* a restriction warns in yellow with a triangle; a manual edit alerts in red.
+   The symbol sits inline before the text so it reads even in the toast. */
+.log-line--warn {
+  color: var(--warning);
+}
+.log-line--warn::before {
+  content: "⚠ ";
+}
+.log-line--alert {
+  color: var(--danger);
+}
+.log-line--alert::before {
+  content: "❗ ";
+}
 /* the zone-count icon is decorative: let the long-press land on the count span
    behind it (which raises the roster) rather than on the <img>, so a phone does
    not offer to download the icon on a long press. */
@@ -575,12 +589,14 @@ body {
   border-color: var(--p0);
 }
 /* the dismiss affordance rides the toast's top-right corner as a small floating
-   button rather than a column of its own, so it never widens the bubble. On mobile
-   a horizontal swipe flicks the toast away, this is the pointer equivalent. */
+   button rather than a column of its own, so it never widens the bubble. It sits
+   just inside the edge (not overhanging) so a narrow viewport never gains a
+   horizontal scrollbar from it; it may overlap a little text. On mobile a
+   horizontal swipe flicks the toast away, this is the pointer equivalent. */
 .log-toast-close {
   position: absolute;
-  top: -0.5rem;
-  right: -0.5rem;
+  top: 0.25rem;
+  right: 0.25rem;
   z-index: 1;
   display: flex;
   align-items: center;
@@ -879,6 +895,18 @@ body {
 .card-preview--log {
   right: calc(20rem + var(--shell-pad));
 }
+/* a narrow window has no room for a whole card to the sidebar's left, so the
+   mention preview is drawn over the sidebar instead (its z-index already clears
+   the sidebar, which sits in normal flow). */
+.card-preview--over {
+  right: var(--shell-pad);
+}
+/* a mention read from the top half of the viewport anchors its preview to the
+   bottom, so the enlarged card never covers the log line it came from. */
+.card-preview--bottom {
+  top: auto;
+  bottom: var(--shell-pad);
+}
 .card-preview .card {
   width: 100%;
   height: 100%;
@@ -898,7 +926,16 @@ body {
    with a touchscreen check — hover:none + pointer:coarse — that fires regardless
    of orientation and is what actually distinguishes "no real hover" devices. */
 @media (max-width: 640px), (hover: none) and (pointer: coarse) {
-  .card-preview {
+  /* the board/hand hover preview needs a real hover, so it stays off on touch —
+     but a log mention (sidebar or toast) is tapped deliberately, so its preview
+     stays available on mobile. */
+  .card-preview--board {
+    display: none;
+  }
+  /* the source card's face is dropped on mobile — the green name above it (which
+     opens the same preview a log mention does) is the source affordance, so the
+     prompt stays as short as the End turn row. */
+  .prompt-card {
     display: none;
   }
 }
@@ -1063,6 +1100,21 @@ body {
 }
 .btn-secondary:hover {
   background-color: var(--line-strong);
+}
+/* When the turn has nothing left to do, End turn fades from the neutral
+   secondary face to green, inviting the player to end. */
+.btn-endturn--ready {
+  background-color: var(--p0);
+  border-color: var(--p0);
+  color: var(--ink-on-accent);
+  transition:
+    background-color 0.5s ease,
+    border-color 0.5s ease,
+    color 0.5s ease;
+}
+.btn-endturn--ready:hover {
+  background-color: var(--p0-bright);
+  border-color: var(--p0-bright);
 }
 .btn-warning {
   background-color: var(--warning);
@@ -1629,6 +1681,17 @@ button:disabled {
 .tip:hover::after {
   opacity: 1;
 }
+/* .tip--active is the touch equivalent of :hover — installTipDrag sets it on the
+   player-bar stat under a finger press, so a tooltip that only a real hover would
+   raise is reachable on a touchscreen. */
+.tip--active::after {
+  opacity: 1;
+}
+/* player-bar stats claim the touch gesture so dragging a finger across them moves
+   the tooltip instead of scrolling the page out from under it. */
+.score-pill .tip {
+  touch-action: none;
+}
 /* a zone whose contents may be read opens a roster popover of house-coloured
    card headers — the same title bar an upgrade tab shows — instead of a plain
    text tip. The count sits still; the roster floats above it on hover. */
@@ -1746,6 +1809,14 @@ button:disabled {
 .prompt-source {
   font-weight: 700;
   color: var(--ink-soft);
+  padding-bottom: 0.25rem;
+}
+/* the source card's name as a green token: tap or hover it to enlarge the card in
+   the preview, the same as a log mention. On mobile it is the only source
+   affordance, since the face below is dropped for room. */
+.prompt-source-name {
+  display: inline-block;
+  font-weight: 700;
   padding-bottom: 0.25rem;
 }
 /* the source card's face beneath its name, so the ability being resolved can be
@@ -2235,6 +2306,15 @@ button:disabled {
 .card-tab--back .card-tab-title {
   color: #c9a876;
   letter-spacing: 0.1rem;
+}
+/* A tab that is a current chooser candidate — an attached card you may pick, such
+   as an upgrade Destroy Them All can destroy. It wears the same green targetable
+   ring the card faces use and turns the cursor to a pointer, so an attached card
+   that shares its host's slot can still be clicked. */
+.card-tab--target {
+  cursor: pointer;
+  outline: 2px solid var(--p0);
+  outline-offset: -1px;
 }
 .card--clickable {
   cursor: pointer;
@@ -2781,6 +2861,11 @@ button:disabled {
   align-items: center;
   gap: 0.2rem;
   margin-left: auto;
+}
+/* an in-play card always reserves the token row's height, so exhausting or
+   readying a card (adding or clearing its token) never reflows the face below. */
+.card-tokens--reserved {
+  min-height: 1.4em;
 }
 /* a power-counter token with its count: the +1/-1 icon and, when more than one
    counter rides the card, the number tucked against it so the token reads as
@@ -3419,6 +3504,60 @@ button:disabled {
   margin: 0 auto;
   padding: var(--shell-pad) var(--shell-pad) 4rem;
   color: var(--ink-soft);
+}
+.landing {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg);
+  color: var(--ink);
+  padding: 2rem;
+}
+.landing-hero {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.25rem;
+  text-align: center;
+}
+.landing-title {
+  font-size: 4rem;
+  font-weight: 800;
+  margin: 0;
+  color: var(--p0);
+  letter-spacing: 0.02em;
+}
+.landing-tagline {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 1.125rem;
+  max-width: 28rem;
+}
+.landing-play {
+  margin-top: 0.5rem;
+  padding: 0.75rem 2.5rem;
+  border-radius: var(--ctl-radius);
+  background-color: var(--p0);
+  color: var(--ink-on-accent);
+  font-weight: 700;
+  font-size: 1.125rem;
+  text-decoration: none;
+}
+.landing-play:hover {
+  background-color: var(--p0-bright);
+}
+.landing-nav {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 0.5rem;
+}
+.landing-link {
+  color: var(--ink-quiet);
+  text-decoration: none;
+}
+.landing-link:hover {
+  color: var(--ink);
 }
 .doc-header {
   display: flex;
