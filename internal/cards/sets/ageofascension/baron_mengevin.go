@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// BaronMengevin
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Baron Mengevin
 //
 //	House:  Sanctum
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Human • Knight
 //
-//	After you discard a Sanctum card from your hand, Baron Mengevin captures 1A.
+//	After you discard a card from your hand, if it is a Sanctum card, Baron Mengevin captures 1 Æmber from your opponent.
 var BaronMengevin = card.New(
 	"Baron Mengevin",
 	card.House.Sanctum,
@@ -26,5 +21,12 @@ var BaronMengevin = card.New(
 	card.WithPower(6),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.AfterDiscardFromHand, card.Conditional{
+		Cond: card.ItIs{House: card.House.Self},
+		Then: card.CaptureAember{
+			Target: card.Target.This,
+			Amount: 1,
+			Source: card.Opponent,
+		},
+	}),
 )

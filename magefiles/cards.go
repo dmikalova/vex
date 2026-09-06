@@ -58,3 +58,18 @@ func (Tool) Coverage(new *bool) error {
 func (Tool) Stub(setSlug string) error {
 	return sh.RunV("go", "run", "./magefiles/cardlookup", "stub", setSlug)
 }
+
+// NextCard prints the next unimplemented card whose stub file still carries the
+// `//go:build todo` constraint, walking a set's missing cards in collector-number
+// order and stopping at the first one on disk. It is the pick-the-next-card step
+// of the implement-cards workflow: build the card it names, drop the build tag,
+// and run it again for the next. With no set chosen it opens the interactive ↑/↓
+// picker; set SET=<slug> to name one directly, e.g. `SET=ageofascension mage
+// tool:nextCard`.
+func (Tool) NextCard() error {
+	args := []string{"run", "./magefiles/cardlookup", "next-card"}
+	if set := os.Getenv("SET"); set != "" {
+		args = append(args, set)
+	}
+	return sh.RunV("go", args...)
+}

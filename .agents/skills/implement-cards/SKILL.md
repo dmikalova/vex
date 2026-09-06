@@ -1,93 +1,138 @@
 ---
 name: implement-cards
-description: Work through a KeyForge set's unimplemented cards in this repo, one round at a time. Use when the user wants to implement or stub a set's backlog ("implement more Call of the Archons cards", "stub the rest", "keep going", "iterate until the set is done"), triage what is easy, or pick the next mechanic to build.
+description: Work through a KeyForge set's unimplemented cards in this repo until the amount asked is done. Use when the user wants to implement a set's backlog ("implement more Call of the Archons cards", "keep going", "iterate until the set is done"), or triage what is easy.
 ---
 
-A set's backlog is worked in **rounds**. A round builds one missing mechanic and
-then cashes in every card that mechanic unblocks, so each round leaves the engine
-slightly richer and the set measurably more covered. Rounds repeat until the stop
-condition is met.
+The backlog is worked **one card at a time**, driven by `mage tool:nextCard`.
+Ask the tool for the next unimplemented card, build it, drop its build tag, and
+ask again. Each card leaves the engine slightly richer and the set measurably
+more covered. The loop repeats until the stop condition is met.
+
+The goal is **cards implemented**. Keep moving through the backlog: prefer
+implementing the next card to polishing the last one. This is **one continuous
+run through the entire stop condition** — never frame it to the user as a
+"multi-session grind", a "first batch", or work that will be "continued later".
+When the user says "do all the cards", they mean do all the cards now, in this
+run, without handing back partway. Do not propose stopping, do not ask whether to
+keep going, and do not offer a status report as a substitute for finishing. Tests
+matter, and you should get your own work passing; but if a card is a reasonable
+best-effort implementation and the only failures come from **another agent's**
+in-progress changes (an unfamiliar file, a symbol you never touched, a gate that
+was green before you started), note it and keep going rather than stalling on
+someone else's edit.
+
+**Do not call `task_complete`, and do not end your turn, until the stop condition
+below is met.** A card that compiles, a green `mage check`, a reconnaissance
+conclusion that "the rest all need new mechanics", and a written status summary
+are ALL checkpoints, never the finish — reaching one means ask for the next card
+and build it, not stop and report. "Every remaining card needs a new mechanic" is
+the normal state of a backlog run, not a blocker: building the mechanic IS the
+job, so keep building them one after another. The ONLY things that authorize
+ending the run are: the stop condition is met, every remaining card is genuinely
+blocked by something you cannot build (not merely "needs new work"), or the user
+interrupts. After each card lands, the default and automatic next action is to run
+`mage tool:nextCard` and start the next card — no pause, no check-in.
 
 Read `internal/cards/AGENTS.md` (authoring + tests), `docs/card-wording-rules.md`
 (rendered-text rules), and the root `AGENTS.md` (composability) before starting.
 
 ## 1. Fix the stop condition, then set up
 
-Restate the stop condition before touching code, because it decides when to hand
-back: **the whole set**, **a count** ("ten more cards", "three rounds"), or a
+Restate the stop condition before touching code, because it is the ONLY thing
+that ends the run — nothing else authorizes `task_complete`.
+It is one of: **the whole set**, **a count** ("ten more cards"), or a
 **qualifier** ("all the Mars cards", "everything that isn't a lasting effect").
-An unqualified "keep going" or "iterate" means the whole set.
+An unqualified "keep going" or "iterate" means the whole set. Hold the count
+explicitly (in a session memory file) and check it after each card; until it is
+reached, keep going.
+
+The backlog must already be stubbed — every unimplemented card is a
+`//go:build todo` file that `mage tool:nextCard` can hand you. If a set has not
+been stubbed yet, run the **stub-cards** skill first.
 
 Then, once per run:
 
 ```sh
-mage tool:coverage        # per-set covered/total — the number the run moves
-SET=<slug> mage tool:missing # each remaining card with stats, printed text, and
-                           # a ready-made card.Provenance(...) call; run with no
-                           # SET to pick the set from an interactive ↑/↓ list
-mage tool:stub <setSlug>  # scaffold a build-excluded stub for every one of them
+mage tool:coverage           # per-set covered/total — the number the run moves
+SET=<slug> mage tool:nextCard # the next //go:build todo card: its file path,
+                              # stats, printed text, and card.Provenance(...) call
 ```
 
-Set slugs match the files in `internal/cards/provenance/` minus `.json`.
+Set slugs match the files in `internal/cards/provenance/` minus `.json`. `nextCard`
+walks the set's missing cards in collector-number order and stops at the first one
+still carrying a `//go:build todo` stub — so implementing a card (dropping its
+build tag) is what advances the tool to the next one. With no `SET` it opens an
+interactive ↑/↓ picker.
 
-`mage tool:stub` writes `internal/cards/sets/<slug>/<snake>.go` starting with
-`//go:build todo`, so it is left out of the build, vet, test, lint, gencomments,
-and the card registry — coverage stays honest. Each stub carries the card's
-printed text, a `// TODO(stub)` marker, and a vanilla `card.New(...)` skeleton.
-Existing files are never overwritten, so re-run it freely as rounds land.
+**Keep a triage memo in session memory.** Record the running state so a resumed
+run does not re-triage from scratch: which cards are done, and the mechanics you
+have already built (with the cards each unblocked). When you notice, while reading
+one card, that a later card wants the same mechanic, jot it there. Update it as
+cards land.
 
-## 2. Round one: harvest the free cards
+## 2. The loop: next card, build, repeat
 
-The first round builds no mechanic. Walk the whole backlog and implement every
-card that is already **easy** — its text composes entirely from primitives that
-exist today. This clears the noise so later rounds choose between genuine
-mechanics rather than tripping over cards that never needed one.
+Run `mage tool:nextCard`, build the card it names, then run it again. For each
+card:
 
-A card is easy when its whole text composes from the facade
-(`internal/card/effects.go`, `target.go`, `options.go`): the effect nodes
-(`DealDamage`, `GainAember`, `Stun`, `Destroy`, `PutFromPlay`, `PurgeCreature`,
-`CaptureAember`, `Draw`, `GainChains`, `OnChooseCreature`, …), the targets
-(`card.Target.*` with chainable filters `.PowerAtMost()`, `.OfHouse()`,
-`.WithTrait()`, `.Damaged()`, `.Neighboring()`, `.UpTo()`, …), and the composites
-(`Sequence` of `Sentence`-wrapped effects, `ChooseOne`, `Conditional`, `Then`).
-Grep the effect files or a similar existing card to confirm a primitive's exact
-fields before using it.
+1. **Decide whether it is easy or gated.** A card is **easy** when its whole text
+   composes from the facade (`internal/card/effects.go`, `target.go`,
+   `options.go`): the effect nodes (`DealDamage`, `GainAember`, `Stun`, `Destroy`,
+   `PutFromPlay`, `PurgeCreature`, `CaptureAember`, `Draw`, `GainChains`,
+   `OnChooseCreature`, …), the targets (`card.Target.*` with chainable filters
+   `.PowerAtMost()`, `.OfHouse()`, `.WithTrait()`, `.Damaged()`, `.Neighboring()`,
+   `.UpTo()`, …), and the composites (`Sequence` of `Sentence`-wrapped effects,
+   `ChooseOne`, `Conditional`, `Then`). Grep the effect files or a similar
+   existing card to confirm a primitive's exact fields before using it. An easy
+   card is built directly (_Implementing one card_ below).
+2. **A gated card needs a mechanic that does not exist yet** — a new effect,
+   target filter, count, selector, condition, or cross-turn hook. Build the
+   mechanic (_Building a mechanic_ below), then implement the card on top of it.
+3. **After a mechanic lands, cash it in.** Before returning to strict `nextCard`
+   order, implement any other unimplemented card that the same mechanic now
+   unblocks — that is what makes it a mechanic instead of a one-off. Use the
+   triage memo (and a quick scan of the remaining stubs' printed text) to find
+   them. Only when the mechanic is fully cashed in do you go back to `nextCard`.
 
-Everything else is **gated**: it needs a mechanic that does not exist yet — a new
-effect, target filter, count, selector, condition, or a cross-turn hook. Leave a
-gated card as its `//go:build todo` stub and, when the design is already clear,
-add a one-line note after the TODO marker naming the mechanic it waits on.
+**Verify with a targeted `go test`, not `mage check`, inside the loop.** A full
+gate run is slow and its `ALL GREEN` is a false finish line that invites stopping,
+so `mage check` is an **end-of-run** step, not a per-card one. Verify each card as
+it lands by running `go test` for **exactly the card or mechanic you changed**:
 
-## 3. Each later round: build the cheapest gate, then cash it in
+```sh
+go test ./internal/cards/sets/<slug>/ -run Test<Name>   # the card you just wrote
+go test ./internal/engine/ -run Test<Mechanic>          # the mechanic it uses
+```
 
-1. **Group the gated cards by the mechanic they wait on.** Read the remaining
-   stubs' printed text and cluster them: "needs a count of X", "needs a lasting
-   reaction on event Y", "needs a target filter for Z".
-2. **Pick the cheapest gate** — the smallest engine surface that unblocks the most
-   cards. A new field or Strategy on an existing effect is cheaper than a new
+Name the specific `-run` pattern — the card's `Test<Name>` and, for a gated card,
+the engine `Test<Mechanic>` you added — so the run is a few seconds, not the whole
+suite. Add `mage build` when a change spans packages. Only the two targeted tests
+matter per card; save `mage check` for step 3.
+
+### Building a mechanic
+
+1. **Shape it for the whole cluster, not the first card.** Name and shape the
+   mechanic so every card that wants it can use it. Prefer the cheapest engine
+   surface: a new field or Strategy on an existing effect is cheaper than a new
    effect; a new effect is cheaper than a new `Resolver` capability, which is
-   cheaper than new state. A gate that frees a single card is worth building only
-   when nothing cheaper is left.
-3. **Build the mechanic against the whole cluster, not the first card.** Name and
-   shape it so every card in the group can use it — that is what makes it a
-   mechanic instead of a card. Add its engine test in the matching
-   `internal/engine/effect_*_test.go` as you go; `mage cover` gates
-   `internal/engine` at 100%, and a card test does not count toward it.
-4. **File the mechanic in the rulebook.** A player-facing mechanic is only
+   cheaper than new state.
+2. **Add its engine test** in the matching `internal/engine/effect_*_test.go` as
+   you go; `mage cover` gates `internal/engine` at 100%, and a card test does not
+   count toward it.
+3. **File the mechanic in the rulebook.** A player-facing mechanic is only
    finished when a player can look it up, so register a `RuleTerm` for it in the
    matching `internal/engine/ruleterms_<section>.go` — `effect`, `keyword`,
    `ability`, `cardtype`, `combat`, or `turn` — with a `Title` and a `Body` that
    is the entry's text. The `/rulebook` and `/glossary` pages render the registry
-   live (ADR 0018), and the completeness test
-   fails the build if a closed catalog (keyword, trigger, card type) has a member
-   with no term, so an entry can never drift from the code it describes.
-   `docs/keyforge-master-rulebook.md` is the guide to what belongs: if the
-   official rulebook explains the term to a player, ours must too. Two code sites
-   that are one rule share a `Title` (a `Subtitle` groups them beneath it). While
-   you are in the file, add a term for any **existing** mechanic beside it
-   that is missing one — an undocumented neighbour is a finding, not the status
-   quo.
-5. **Teach the client to play the mechanic**, if it needs anything new. A mechanic
+   live (ADR 0018), and the completeness test fails the build if a closed catalog
+   (keyword, trigger, card type) has a member with no term, so an entry can never
+   drift from the code it describes. `docs/keyforge-master-rulebook.md` is the
+   guide to what belongs: if the official rulebook explains the term to a player,
+   ours must too. Two code sites that are one rule share a `Title` (a `Subtitle`
+   groups them beneath it). While you are in the file, add a term for any
+   **existing** mechanic beside it that is missing one — an undocumented neighbour
+   is a finding, not the status quo.
+4. **Teach the client to play the mechanic**, if it needs anything new. A mechanic
    that asks the player a question the browser client cannot ask is only half
    built. Read `internal/web/AGENTS.md` and check the new mechanic against it: a
    new `Chooser` prompt shape needs a case in `game_chooser.go` and a prompt in
@@ -96,10 +141,6 @@ add a one-line note after the TODO marker naming the mechanic it waits on.
    `game_lifecycle.go` and a Tab stop in `game_nav.go`. Never reimplement the rule
    in the client — ask the engine, and add the reader to `internal/engine` if it
    does not exist.
-6. **Implement every card the gate unblocks**, then close the round (step 4).
-
-State at the top of each round which gate you picked and which cards it frees, so
-the round has a visible bound.
 
 ### Implementing one card
 
@@ -132,38 +173,30 @@ Watch the `create_file` dup-first-line bug: after creating `.go` files, check
 `line1 == line2` and drop the dup
 (`for f in ...; do [ "$(sed -n 1p "$f")" = "$(sed -n 2p "$f")" ] && sed -i '' '1d' "$f"; done`).
 
-## 4. Close every round green
+## 3. Verify, then keep going
+
+The targeted `go test` runs in step 2 are what verify each card as it lands.
+`mage check` is the **final** validation, run at the end to confirm everything in
+your changes is working together — not after every card:
 
 ```sh
-mage gen && mage check    # gen = comments + rulebook; check must print ALL GREEN
+mage gen && mage check    # gen = comments + rulebook; check prints ALL GREEN
 mage tool:coverage        # confirm the set's count moved
 ```
 
-A round is finished when `mage check` prints `ALL GREEN` and the set's count has
-gone up. Every mechanic the round added should appear on the `/rulebook` page,
-and nothing the round retired should still be
-listed. Then start the next round at step 3, or hand back if the stop condition
-is met. Report each round's gate, cards, and new count as it lands rather than
-saving one summary for the end.
+Run this once a mechanic and all the cards it unblocked have landed (and again
+before you hand back), so `mage check` validates the whole batch of your changes
+rather than a single card. Aim to leave the tree with `mage check` printing
+`ALL GREEN` and the set's count higher than it started. Every mechanic you added should appear on the `/rulebook`
+page, and nothing you retired should still be listed.
 
-## 5. Consolidate every third round
-
-Mechanics added one round at a time drift toward a pile of near-duplicates. Every
-third round, before starting the next gate, sweep the mechanics the run has added
-against the "Composition and design" section of `docs/style-guide.md` and
-`internal/engine/AGENTS.md`, and act on what you find:
-
-- **Consolidate** near-duplicates. Two effects differing by a constant or a side
-  are one effect parameterized over an enum; two conditions asking the same
-  question of different subjects are one condition with a `Player`.
-- **Decompose** anything fused. "A, then B if C" belongs in the card as
-  `Sequence{A, Conditional{C, B}}`, not in one bespoke node; thread values through
-  `EffectContext` (`ctx.It`, `ctx.ChosenHouse`, `ctx.Produced.*`).
-- **Simplify** down the ladder: a field or Strategy on an existing effect (a
-  `Count`, `Selector`, `Condition`, `Chooser`) beats a new node, and a new node
-  beats new state.
-- **Re-express** the cards already using the old shape, and delete what the
-  consolidation retired. The card and engine tests pin both behavior and rendered
-  text, so refactor freely and let the suite catch regressions.
-
-Close the sweep the same way a round closes: `mage gen && mage check`.
+But a green gate is a checkpoint, not a finish line: the run's purpose is to keep
+converting stubs into implemented cards. Do not stall chasing a green gate you did
+not break. If `mage check` fails only on **another agent's** in-progress change —
+a file you never touched, a symbol you did not add, a check that was green before
+your edits — record it briefly and move on to the next card rather than reverting
+or "fixing" their work. Get _your_ changes passing; leave theirs alone. Report
+progress as it lands rather than saving one summary for the end — but a report is
+not a handoff: after reporting, immediately run `mage tool:nextCard` and begin the
+next card. **Hand back (and only then call `task_complete`) solely when the stop
+condition is met** or you have run out of implementable cards.

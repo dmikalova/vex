@@ -35,6 +35,42 @@ func (e Swap) Resolve(ctx *EffectContext) {
 	}
 }
 
+// SwapChosen exchanges the battleline positions of two creatures the controller
+// chooses from a single battleline — Quantum Fingertrap's "swap the positions of
+// two creatures in a battleline". Only positions move; no card state travels. The
+// second creature is chosen from the same battleline as the first, so the two
+// always share a battleline. If no first creature, or no second in that
+// battleline, is chosen, the battleline is left unchanged.
+type SwapChosen struct{}
+
+// Text renders the effect.
+func (SwapChosen) Text() string {
+	return "swap the positions of two creatures in a battleline"
+}
+
+// Resolve chooses two creatures in one battleline and swaps their positions.
+func (SwapChosen) Resolve(ctx *EffectContext) {
+	all := append(
+		append([]LocalID(nil), ctx.Resolver.Battleline(ctx.Controller)...),
+		ctx.Resolver.Battleline(ctx.Opponent())...,
+	)
+	first, ok := ctx.ChooseCreature("Choose the first creature to swap", all)
+	if !ok {
+		return
+	}
+	var others []LocalID
+	for _, id := range ctx.Resolver.Battleline(ctx.Resolver.Controller(first)) {
+		if id != first {
+			others = append(others, id)
+		}
+	}
+	second, ok := ctx.ChooseCreature("Choose the second creature to swap", others)
+	if !ok {
+		return
+	}
+	ctx.Resolver.SwapBattlelinePositions(first, second)
+}
+
 // MoveToFlank moves the creature its Target selects to either flank of that
 // creature's controller's battleline, the controller of the effect choosing
 // which flank. Only the battleline slot moves; no card state travels. A Target

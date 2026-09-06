@@ -24,6 +24,10 @@ type glossary struct {
 	app.Compo
 }
 
+// OnAppUpdate reloads the page onto a freshly built wasm bundle, so a dev edit
+// appears without a manual refresh (the same hand-off the game and gallery use).
+func (g *glossary) OnAppUpdate(ctx app.Context) { ctx.Reload() }
+
 // Render draws the glossary as a definition list, one term per row.
 func (g *glossary) Render() app.UI {
 	entries := engine.Glossary()

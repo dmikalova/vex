@@ -1,20 +1,15 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// MarsNeedsAember
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Mars Needs Aember
 //
 //	House:  Mars
 //	Type:   Tactic
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Each damaged enemy non-Mars creature captures 1A from their own side.
+//	Play: Each enemy damaged non-Mars creature captures 1 Æmber from your opponent.
 var MarsNeedsAember = card.New(
 	"Mars Needs Aember",
 	card.House.Mars,
@@ -22,5 +17,10 @@ var MarsNeedsAember = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.AoA, 166),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.CaptureAember{
+			Amount: 1,
+			Target: card.Target.EachEnemyCreature.Damaged().ExceptHouse(card.House.Self),
+			Source: card.Opponent,
+		}),
 )

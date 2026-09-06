@@ -22,6 +22,7 @@ var (
 	ErrPlayRequirement       = errors.New("not enough Æmber to play this card")
 	ErrMustChooseForcedHouse = errors.New("must choose the forced active house this turn")
 	ErrHouseLocked           = errors.New("a card in play locks the active house choice")
+	ErrHouseForbidden        = errors.New("a card forbids choosing this active house this turn")
 	ErrCannotUse             = errors.New("card's use condition is not met")
 )
 
@@ -59,6 +60,8 @@ func (g *Game) StartTurn(player int) {
 	g.State.CannotUseNext[player] = Bar[bool]{}
 	g.State.ForcedHouse[player] = g.State.ForcedHouseNext[player]
 	g.State.ForcedHouseNext[player] = Bar[House]{}
+	g.State.ForbiddenHouse[player] = g.State.ForbiddenHouseNext[player]
+	g.State.ForbiddenHouseNext[player] = Bar[House]{}
 	g.State.SkipForge[player] = g.State.SkipForgeNext[player]
 	g.State.SkipForgeNext[player] = Bar[bool]{}
 	g.State.KeyCostBump[player] = g.State.KeyCostBumpNext[player]
@@ -86,6 +89,9 @@ func (g *Game) ChooseHouse(player int, house House) error {
 		house != fh &&
 		g.playerHasHouse(player, fh) {
 		return ErrMustChooseForcedHouse
+	}
+	if g.State.ForbiddenHouse[player].Value == house && house != HouseNone {
+		return ErrHouseForbidden
 	}
 	if !g.houseLockAllows(player, house) {
 		return ErrHouseLocked
@@ -254,6 +260,13 @@ func (g *Game) ForceActiveHouseNextTurn(player int, h House, source LocalID) {
 	g.record(HouseForcedNextTurn{Player: player, House: h})
 }
 
+// ForbidActiveHouseNextTurn makes a player unable to choose house h as their
+// active house on their next turn (Tezmal). StartTurn promotes the armed house.
+func (g *Game) ForbidActiveHouseNextTurn(player int, h House, source LocalID) {
+	g.State.ForbiddenHouseNext[player] = Bar[House]{Value: h, Source: source}
+	g.record(HouseForbiddenNextTurn{Player: player, House: h})
+}
+
 // RestrictionSources returns the cards imposing a turn-scoped restriction on a
 // player right now, so a frontend can remind them which cards are binding them.
 // It reads the bars themselves, so a bar that has been lifted stops naming its
@@ -296,6 +309,9 @@ func (g *Game) forgeKey(player int) {
 // forgeKeyAtExtraCost forges one key at the current cost plus a surcharge for
 // this forge alone, doing nothing when the player cannot afford the total.
 func (g *Game) forgeKeyAtExtraCost(player, extra int) {
+	if g.forgeKeyNumberBarred(player) {
+		return
+	}
 	cost := g.keyCost(player) + extra
 	if g.spendableAember(player) < cost {
 		return
@@ -355,6 +371,9 @@ func (g *Game) vaults(player int) []LocalID {
 
 // forgeKeyFree forges one key without paying its current cost.
 func (g *Game) forgeKeyFree(player int) {
+	if g.forgeKeyNumberBarred(player) {
+		return
+	}
 	color, ok := g.pickKeyColor(player)
 	g.finishForgeKey(player, color, ok)
 }
@@ -377,6 +396,11 @@ func (g *Game) finishForgeKey(player int, color KeyColor, hasColor bool) {
 	})
 	for _, id := range g.allInPlay(player) {
 		g.triggerAbilities(id, TriggerAfterForgeKey, 0, false)
+	}
+	for _, p := range []int{player, 1 - player} {
+		for _, id := range g.allInPlay(p) {
+			g.triggerAbilitiesAs(player, id, TriggerAfterPlayerForgesKey, 0, false)
+		}
 	}
 	g.emitLasting(EventForgeKey, player, 0)
 	// Forging changes the unforged-key count some creatures draw their power from.

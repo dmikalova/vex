@@ -39,6 +39,13 @@ func Template(f MaterializeFunc) Option { return func(b *builder) { b.materializ
 // OneCopyPerDeck bars deck generation from placing more than one copy of the card.
 func OneCopyPerDeck() Option { return func(b *builder) { b.profile.OneCopyPerDeck = true } }
 
+// RarityWeight scales how often deck generation draws this card among its
+// house+rarity peers, relative to the default weight of 1 — the card-level
+// companion to a Set's Tuning.RarityWeights. A fraction makes a card rarer within
+// its rarity: the five Master-of-N variants each carry card.RarityWeight(0.2), so
+// the family drafts about as often as one ordinary Rare card.
+func RarityWeight(w float64) Option { return func(b *builder) { b.profile.RarityWeight = w } }
+
 // Connects marks the card as a connection puller: when it is placed in a pod,
 // deck generation pulls the given cards into that pod. Each pull is built with
 // card.Pull or card.PullSometimes, which name the connected card by its own

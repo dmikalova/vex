@@ -8,10 +8,13 @@ import (
 	"compress/gzip"
 	"crypto/sha256"
 	"encoding/hex"
+	"io"
 	"io/fs"
 	"log"
+	"mime"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"sort"
 	"strconv"
@@ -24,6 +27,7 @@ import (
 
 func main() {
 	app.Route("/", web.NewGame)
+	app.Route("/cards", web.NewGallery)
 	app.Route("/rulebook", web.NewRulebook)
 	app.Route("/glossary", web.NewGlossary)
 	if styleEnabled() {
@@ -39,7 +43,13 @@ func main() {
 	// launch immersively, hiding the Android status and navigation bars.
 	http.HandleFunc("/manifest.webmanifest", serveManifest)
 
-	http.Handle("/", &app.Handler{
+	// Serve /web/ static assets ourselves, ahead of the go-app handler, so we can
+	// stream prebuilt brotli/gzip files (mage webAssets) instead of compressing
+	// every request. go-app would otherwise serve these itself and re-gzip the
+	// multi-megabyte wasm on each fetch.
+	http.Handle("/web/", staticAssets(version))
+
+	http.Handle("/", gzipHandler(&app.Handler{
 		Name:            "Vactrol",
 		ShortName:       "Vactrol",
 		Title:           "Vactrol",
@@ -58,8 +68,15 @@ func main() {
 		// Plain CSS served as a static file from web/ — no CDN, no build step. The dev
 		// server serves it from disk, so editing web/app.css and refreshing the browser
 		// applies changes with the server left running (no restart).
-		Styles:     []string{"/web/app.css"},
-		RawHeaders: []string{bootStyle, appleTouchIcon, boardScript, devReloadScript},
+		Styles: []string{"/web/app.css"},
+		RawHeaders: []string{
+			bootStyle,
+			appleTouchIcon,
+			boardScript,
+			galleryScript,
+			iconFitScript,
+			devReloadScript,
+		},
 		// The icons are fetched one <img> at a time as the board draws, so without
 		// precaching them a client that has the wasm cached but no server draws a board
 		// of broken images. The service worker serves a cached copy first and only
@@ -81,7 +98,7 @@ func main() {
 			// serves; without it the gallery's page would be served and render blank.
 			styleEnv: os.Getenv(styleEnv),
 		},
-	})
+	}))
 
 	// Cloud Run injects PORT; fall back to 8000 for local `mage web`.
 	port := os.Getenv("PORT")
@@ -90,14 +107,15 @@ func main() {
 	}
 	addr := ":" + port
 	log.Printf("Vactrol web client on http://localhost%s (build %s)", addr, buildID(version))
-	if err := http.ListenAndServe(addr, gzipHandler(http.DefaultServeMux)); err != nil {
+	if err := http.ListenAndServe(addr, http.DefaultServeMux); err != nil {
 		log.Fatal(err)
 	}
 }
 
-// gzipHandler wraps h to gzip-encode responses for clients that accept it. The
-// biggest asset is app.wasm, which compresses to roughly half its size, so this
-// is the largest lever on first-load download time.
+// gzipHandler wraps h to gzip-encode responses for clients that accept it. It
+// covers go-app's dynamically generated resources (the HTML shell, app.js,
+// wasm_exec.js, app-worker.js); the large static assets under /web/ are served
+// precompressed by staticAssets instead, so they never reach this path.
 func gzipHandler(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
@@ -135,6 +153,83 @@ func (g *gzipResponseWriter) Write(b []byte) (int, error) {
 		g.WriteHeader(http.StatusOK)
 	}
 	return g.gz.Write(b)
+}
+
+// staticAssets serves files under /web/, preferring the prebuilt brotli or gzip
+// sibling (mage webAssets) that matches the client's Accept-Encoding and falling
+// back to the raw file. It mirrors go-app's own no-cache + version ETag so an
+// unchanged build still revalidates to 304, but adds brotli and skips the
+// per-request compression go-app's file server would incur. The dev server has no
+// precompressed siblings, so it simply serves the raw files from disk.
+func staticAssets(version string) http.Handler {
+	etag := `"` + version + `"`
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		file := filepath.FromSlash(strings.TrimPrefix(path.Clean(r.URL.Path), "/"))
+		if !strings.HasPrefix(file, "web"+string(filepath.Separator)) {
+			http.NotFound(w, r)
+			return
+		}
+		w.Header().Set("ETag", etag)
+		w.Header().Set("Cache-Control", "no-cache")
+		w.Header().Add("Vary", "Accept-Encoding")
+		if r.Header.Get("If-None-Match") == etag {
+			w.WriteHeader(http.StatusNotModified)
+			return
+		}
+		w.Header().Set("Content-Type", assetContentType(file))
+		accept := r.Header.Get("Accept-Encoding")
+		if strings.Contains(accept, "br") && serveAsset(w, file+".br", "br") {
+			return
+		}
+		if strings.Contains(accept, "gzip") && serveAsset(w, file+".gz", "gzip") {
+			return
+		}
+		if !serveAsset(w, file, "") {
+			http.NotFound(w, r)
+		}
+	})
+}
+
+// serveAsset streams path with the given Content-Encoding (empty for identity),
+// reporting whether it existed. The caller has already set the Content-Type to
+// the logical asset's type, since a .br/.gz name would resolve to the wrong one.
+func serveAsset(w http.ResponseWriter, path, encoding string) bool {
+	f, err := os.Open(path)
+	if err != nil {
+		return false
+	}
+	defer func() { _ = f.Close() }()
+	info, err := f.Stat()
+	if err != nil || info.IsDir() {
+		return false
+	}
+	if encoding != "" {
+		w.Header().Set("Content-Encoding", encoding)
+	}
+	w.Header().Set("Content-Length", strconv.FormatInt(info.Size(), 10))
+	_, _ = io.Copy(w, f)
+	return true
+}
+
+// assetContentType maps an asset path to the Content-Type of its logical
+// resource, independent of any .br/.gz compression suffix.
+func assetContentType(path string) string {
+	switch strings.ToLower(filepath.Ext(path)) {
+	case ".css":
+		return "text/css; charset=utf-8"
+	case ".svg":
+		return "image/svg+xml"
+	case ".wasm":
+		return "application/wasm"
+	case ".js":
+		return "text/javascript; charset=utf-8"
+	case ".json", ".webmanifest":
+		return "application/manifest+json"
+	}
+	if ct := mime.TypeByExtension(filepath.Ext(path)); ct != "" {
+		return ct
+	}
+	return "application/octet-stream"
 }
 
 // resourceVersion hashes the served static assets — the wasm bundle, the
@@ -285,6 +380,70 @@ const boardScript = `<script>
 })();
 </script>`
 
+// galleryScript makes the /cards filter sidebar resizable: dragging the
+// .gallery-divider anywhere along its height sets --gallery-sidebar-w on the
+// layout, which the sidebar's width reads. Pointer capture keeps the drag alive
+// off the thin handle, and the width is clamped to the sidebar's min/max.
+const galleryScript = `<script>
+(function () {
+  var W = '--gallery-sidebar-w', MIN = 176, MAX = 512;
+  document.addEventListener('pointerdown', function (e) {
+    var d = e.target && e.target.closest ? e.target.closest('.gallery-divider') : null;
+    if (!d) { return; }
+    var layout = d.closest('.gallery-layout');
+    var side = layout && layout.querySelector('.gallery-sidebar');
+    if (!side) { return; }
+    e.preventDefault();
+    d.classList.add('gallery-divider--drag');
+    if (d.setPointerCapture) { d.setPointerCapture(e.pointerId); }
+    var left = side.getBoundingClientRect().left;
+    function move(ev) {
+      var w = Math.max(MIN, Math.min(MAX, ev.clientX - left));
+      layout.style.setProperty(W, w + 'px');
+    }
+    function up() {
+      d.classList.remove('gallery-divider--drag');
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', up);
+    }
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerup', up);
+  });
+})();
+</script>`
+
+// iconFitScript keeps each card's icon strip (.card-icons) on a single line: when
+// its content (.card-icons-fit) is wider than the band, it scales the content
+// horizontally so the glyphs squeeze to fit instead of wrapping onto a second line
+// or clipping. It re-fits on load, on resize, and whenever the DOM changes (go-app
+// re-renders cards), coalescing bursts into one animation frame.
+const iconFitScript = `<script>
+(function () {
+  function fit(band) {
+    var inner = band.firstElementChild;
+    if (!inner) { return; }
+    inner.style.transform = '';
+    var cs = getComputedStyle(band);
+    var avail = band.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    var w = inner.scrollWidth;
+    if (w > avail && w > 0) { inner.style.transform = 'scaleX(' + (avail / w) + ')'; }
+  }
+  var scheduled = false;
+  function schedule() {
+    if (scheduled) { return; }
+    scheduled = true;
+    requestAnimationFrame(function () {
+      scheduled = false;
+      document.querySelectorAll('.card-icons').forEach(fit);
+    });
+  }
+  window.addEventListener('load', schedule);
+  window.addEventListener('resize', schedule);
+  // childList only, so our own style writes do not retrigger the observer.
+  new MutationObserver(schedule).observe(document.documentElement, { childList: true, subtree: true });
+})();
+</script>`
+
 // devReloadScript polls the service worker for a new build. `mage web` restarts
 // the server on every edit, which bumps go-app's version; the poll makes an open
 // tab re-fetch app-worker.js, and go-app fires OnAppUpdate → ctx.Reload() so code
@@ -293,6 +452,15 @@ const boardScript = `<script>
 const devReloadScript = `<script>
 (function () {
   if (!('serviceWorker' in navigator)) { return; }
+  // When a freshly built worker takes control, reload once so the new wasm/CSS is
+  // actually shown — this is what lets an already-open tab reset itself instead of
+  // waiting for a manual hard refresh.
+  var reloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', function () {
+    if (reloaded) { return; }
+    reloaded = true;
+    window.location.reload();
+  });
   setInterval(function () {
     navigator.serviceWorker.getRegistration().then(function (r) { if (r) { r.update(); } });
   }, 1500);

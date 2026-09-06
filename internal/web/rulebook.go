@@ -24,6 +24,10 @@ type rulebook struct {
 	app.Compo
 }
 
+// OnAppUpdate reloads the page onto a freshly built wasm bundle, so a dev edit
+// appears without a manual refresh (the same hand-off the game and gallery use).
+func (r *rulebook) OnAppUpdate(ctx app.Context) { ctx.Reload() }
+
 // Render draws the overview, a table of contents, then each rulebook section with
 // its intro and term groups, in the engine's canonical order.
 func (r *rulebook) Render() app.UI {

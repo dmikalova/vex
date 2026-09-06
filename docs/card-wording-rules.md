@@ -477,6 +477,41 @@ condition-leading form KeyForge already uses elsewhere.
 
 ---
 
+## 26. Use-conditions read from the controller, and an upgrade names its host
+
+A card that may not be used until its controller has met a condition is authored
+as a `Restrictions.UseCondition`. On a creature or artifact it renders `You
+cannot use this card unless <condition>.`; on an upgrade — where "this card" is
+the upgrade, not the thing being used — the subject becomes the host creature:
+`This creature cannot be used unless <condition>.` The condition itself always
+reads from the controller's point of view (`you have discarded a card from your
+hand this turn`), replacing KeyForge's third-person `its controller has
+discarded a card this turn`.
+
+| Original (upgrade)                                                                   | Curated                                                                                   |
+| ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| `This creature cannot be used unless its controller has discarded a card this turn.` | `This creature cannot be used unless you have discarded a card from your hand this turn.` |
+
+(Affected: Earthbind. Giant Sloth is the creature form.)
+
+---
+
+## 27. "Gain that much Æmber" becomes a `for each Æmber bonus` clause
+
+A card that destroys a card and then gains Æmber equal to that card's Æmber bonus
+is authored as a `Destroy` followed by a `GainAember{Per: AemberBonusDestroyed}`,
+which the engine renders as an explicit per-pip clause rather than the printed
+back-reference `you gain that much Æmber`. The rendered form names what is being
+counted, so behavior and text cannot drift.
+
+| Original                                                                              | Curated                                                                              |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `Destroy an artifact. If that artifact had an Æmber bonus, you gain that much Æmber.` | `Destroy an artifact. For each Æmber bonus on the destroyed artifact, gain 1 Æmber.` |
+
+(Affected: Rustgnawer.)
+
+---
+
 ## Deliberate rule changes (not just wording)
 
 A few cards diverge from KeyForge in ways that affect the rules, not just

@@ -29,10 +29,25 @@ type CardDefinition struct {
 	// before that attacker deals its combat damage. Zero means the creature does
 	// not have Hazardous.
 	Hazardous int
+	// A creature with Splash-attack N deals N damage to each neighbor of the
+	// creature it fights, simultaneously with its own fight damage. Zero means the
+	// creature does not have Splash-attack.
+	SplashAttack int
 	// AttackDamage customizes the damage this creature deals when it fights, for the
 	// few creatures whose fight damage is not simply their current power (Valdr's
 	// flank bonus, Ether Spider dealing none). The zero value deals its power.
 	AttackDamage AttackDamage
+
+	// DealsNoDamageWhenAttacked stops this creature from dealing its retaliation
+	// damage to an attacker when it is fought (Lollop the Titanic). It leaves the
+	// creature's own fight damage untouched.
+	DealsNoDamageWhenAttacked bool
+
+	// GrantsEntersReady, when set to Creature or Artifact, makes friendly cards of
+	// that type enter play ready instead of exhausted while this card is in play —
+	// Duskwitch readies your creatures, The Curator readies your artifacts.
+	// TypeUnset grants nothing.
+	GrantsEntersReady CardType
 
 	// FightRestriction, when set, limits which enemy creatures this creature may
 	// fight to those its Target allows (Bigtwig can only fight stunned creatures).
@@ -152,6 +167,11 @@ func (m DrawModifier) affects(owner, target int) bool {
 type Restrictions struct {
 	// Fighting bars the controller from using creatures to fight.
 	Fighting bool
+	// Reaping bars a player's creatures from reaping while this card stays in play,
+	// relative to the card's controller (Barrister Joya's Opponent bars the enemy's
+	// creatures, "Enemy creatures cannot reap."). Its zero value (playerUnset)
+	// imposes no reaping restriction.
+	Reaping Player
 	// CannotPlay bars the controller from playing cards of this type (e.g. Creature
 	// for Grommid's "You cannot play creatures"). The zero value (an unset CardType)
 	// imposes no play restriction.
@@ -168,6 +188,10 @@ type Restrictions struct {
 	// SkipForge bars the controller from forging a key during their "forge a
 	// key" step (The Sting).
 	SkipForge bool
+	// NoForgeKeyNumber bars every player from forging the key of this ordinal
+	// (1 = first, 2 = second, 3 = third) while this card stays in play — the Key
+	// Imps' "Players cannot forge their first key." Its zero value bars nothing.
+	NoForgeKeyNumber int
 }
 
 // PlayCardLimit caps how many cards Player may play in a turn while its source
@@ -263,10 +287,11 @@ func (kc KeyCostChange) affects(owner, target int) bool {
 // is attached to.
 type StaticModifier struct {
 	// Flat stat bonuses the Upgrade adds to its host creature.
-	PowerBonus     int
-	ArmorBonus     int
-	AssaultBonus   int
-	HazardousBonus int
+	PowerBonus        int
+	ArmorBonus        int
+	AssaultBonus      int
+	HazardousBonus    int
+	SplashAttackBonus int
 
 	// Granted are triggered abilities the Upgrade grants its host creature. The
 	// host fires them as if they were printed on it (see Game.triggerAbilities).
@@ -316,6 +341,10 @@ type ConstantAbility struct {
 	// each creature a "Destroyed: purge this creature." The reached creatures fire
 	// them as if printed on them (see Game.triggerAbilities).
 	Granted []Ability
+	// WhileOffFlank suspends the whole ability unless the source card is off a
+	// flank (in the interior of its controller's battleline) — Gub's "While Gub is
+	// not on a flank, it gets +5 power and gains taunt."
+	WhileOffFlank bool
 }
 
 // target returns the constant ability's effective Target: an unset Target reaches
@@ -463,6 +492,13 @@ func WithAssault(n int) CardOption { return func(c *CardDefinition) { c.Assault 
 // N damage before fight damage.
 func WithHazardous(n int) CardOption { return func(c *CardDefinition) { c.Hazardous = n } }
 
+// WithSplashAttack gives a creature Splash-attack N: when it fights, it deals N
+// damage to each neighbor of the creature it fights, at the same time as its own
+// fight damage.
+func WithSplashAttack(n int) CardOption {
+	return func(c *CardDefinition) { c.SplashAttack = n }
+}
+
 // AttackDamage customizes the damage a creature deals when it fights. The zero
 // value leaves fight damage equal to the creature's power; the fields override or
 // adjust it for the handful of creatures that need it.
@@ -481,6 +517,18 @@ type AttackDamage struct {
 // WithAttackDamage customizes the damage a creature deals when it fights.
 func WithAttackDamage(ad AttackDamage) CardOption {
 	return func(c *CardDefinition) { c.AttackDamage = ad }
+}
+
+// WithNoDamageWhenAttacked makes a creature deal no retaliation damage to an
+// attacker that fights it (Lollop the Titanic).
+func WithNoDamageWhenAttacked() CardOption {
+	return func(c *CardDefinition) { c.DealsNoDamageWhenAttacked = true }
+}
+
+// WithFriendlyEntersPlayReady makes friendly cards of the given type enter play
+// ready while this card is in play (Duskwitch for creatures, The Curator for artifacts).
+func WithFriendlyEntersPlayReady(t CardType) CardOption {
+	return func(c *CardDefinition) { c.GrantsEntersReady = t }
 }
 
 // WithFightRestriction limits which creatures a creature may fight to those the

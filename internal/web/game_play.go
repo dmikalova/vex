@@ -30,6 +30,7 @@ func (g *game) selectBoardID(_ app.Context, id engine.LocalID) {
 	}
 	g.abandonFlank(id)
 	g.sel, g.selKind, g.selHand, g.hasSel = id, g.boardKindOf(id), -1, true
+	g.inspecting = false
 	g.confirmEndTurn = false
 	g.status = ""
 	g.measureFocus()
@@ -62,6 +63,7 @@ func (g *game) selectHand(id engine.LocalID) {
 		return
 	}
 	g.sel, g.selKind, g.selHand, g.hasSel = id, selHand, idx, true
+	g.inspecting = false
 	g.confirmEndTurn = false
 	g.status = ""
 	g.measureFocus()
@@ -115,6 +117,9 @@ func (g *game) advanceSelection() {
 // so every click it sees is already outside the sidebar.
 func (g *game) clickAway(ctx app.Context, e app.Event) {
 	t := e.Get("target")
+	// A click anywhere on the board unpins a held-open toast: clicking the toast
+	// pins it, clicking outside it lets it go.
+	g.toastPinned = false
 	// A sidebar wide enough to read as a drawer over the board is dismissed by the
 	// first click outside it, ahead of any selection change, the way a drawer
 	// closes when you tap the page behind it.

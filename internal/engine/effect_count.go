@@ -116,6 +116,59 @@ func (CardsDestroyed) Value(ctx *EffectContext) int { return ctx.Produced.TotalD
 // CountText renders the singular noun the "for each" clause repeats.
 func (CardsDestroyed) CountText() string { return "card destroyed this way" }
 
+// CreaturesDestroyed counts the cards the most recent destruction in this
+// resolution removed from play, rendered as creatures — the "for each creature
+// destroyed this way" tally (Martyr's End gains 1 Æmber for each friendly
+// creature it destroyed). Use it when the destruction removes only creatures;
+// use CardsDestroyed when it can also remove artifacts.
+type CreaturesDestroyed struct{}
+
+// Value returns how many cards the preceding Destroy actually removed.
+func (CreaturesDestroyed) Value(ctx *EffectContext) int { return ctx.Produced.TotalDestroyed() }
+
+// CountText renders the singular noun the "for each" clause repeats.
+func (CreaturesDestroyed) CountText() string { return "creature destroyed this way" }
+
+// AemberBonusDestroyed counts the total Æmber pips printed on the cards the most
+// recent destruction in this resolution removed from play — the "for each Æmber
+// bonus on the destroyed artifact" tally (Rustgnawer gains the destroyed
+// artifact's Æmber bonus).
+type AemberBonusDestroyed struct{}
+
+// Value returns the total Æmber bonus of the cards the preceding Destroy removed.
+func (AemberBonusDestroyed) Value(ctx *EffectContext) int {
+	return ctx.Produced.AemberBonusDestroyed
+}
+
+// CountText renders the singular noun the "for each" clause repeats.
+func (AemberBonusDestroyed) CountText() string { return "Æmber bonus on the destroyed artifact" }
+
+// HousesInPlay counts the distinct houses represented among all cards in play,
+// optionally excluding one house — Free Markets pays out per house other than
+// its own Sanctum.
+type HousesInPlay struct{ Except House }
+
+// Value counts the distinct houses on the board, skipping the excepted one.
+func (e HousesInPlay) Value(ctx *EffectContext) int {
+	seen := map[House]bool{}
+	for _, p := range [2]int{0, 1} {
+		for _, id := range append(ctx.Resolver.Battleline(p), ctx.Resolver.Artifacts(p)...) {
+			if h := ctx.Resolver.House(id); h != e.Except {
+				seen[h] = true
+			}
+		}
+	}
+	return len(seen)
+}
+
+// CountText renders the singular noun the "for each" clause repeats.
+func (e HousesInPlay) CountText() string {
+	if e.Except != HouseNone {
+		return "house represented among cards in play, except for " + e.Except.String()
+	}
+	return "house represented among cards in play"
+}
+
 // CardsInArchives counts the cards in a player's archives.
 type CardsInArchives struct{ Player Player }
 
@@ -489,6 +542,16 @@ func (AemberOnThis) Value(ctx *EffectContext) int { return ctx.Resolver.AmberOn(
 
 // CountText renders the singular noun the "for each" clause repeats.
 func (AemberOnThis) CountText() string { return "Æmber on it" }
+
+// DamageOnThis counts the damage sitting on the source card, so a card can scale
+// with how hurt it is (Angwish charges its opponent +1 key cost per damage on it).
+type DamageOnThis struct{}
+
+// Value returns the damage on the source card.
+func (DamageOnThis) Value(ctx *EffectContext) int { return ctx.Resolver.Damage(ctx.Source) }
+
+// CountText renders the singular noun the "for each" clause repeats.
+func (DamageOnThis) CountText() string { return "damage on it" }
 
 // CopiesInDiscard counts the cards in the controller's discard pile sharing the
 // source card's name — a card that pays off for having been played before

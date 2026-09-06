@@ -129,6 +129,37 @@ func (e ArchiveFromHand) archiveOne(
 	return true
 }
 
+// ArchiveRandomFromHand archives Amount uniformly random cards from the
+// controller's hand — Eureka!'s "archive 2 random cards from your hand", where
+// the archiving player does not choose which cards leave a hidden hand.
+type ArchiveRandomFromHand struct {
+	// Amount is how many random cards to archive from hand.
+	Amount int
+}
+
+// validate rejects an ArchiveRandomFromHand whose amount is not positive.
+func (e ArchiveRandomFromHand) validate() error {
+	if e.Amount <= 0 {
+		return fmt.Errorf("ArchiveRandomFromHand: Amount must be positive")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "archive 2 random cards from your hand".
+func (e ArchiveRandomFromHand) Text() string {
+	if e.Amount == 1 {
+		return "archive a random card from your hand"
+	}
+	return fmt.Sprintf("archive %d random cards from your hand", e.Amount)
+}
+
+// Resolve archives Amount random cards from the controller's hand.
+func (e ArchiveRandomFromHand) Resolve(ctx *EffectContext) {
+	for i := 0; i < e.Amount; i++ {
+		ctx.Resolver.ArchiveRandomFromHand(ctx.Controller)
+	}
+}
+
 // ArchiveTopOfDeck moves the top Amount cards of the controller's deck into their
 // archives, with no choice involved.
 type ArchiveTopOfDeck struct {
@@ -176,18 +207,30 @@ func (e ArchiveTopOfDiscard) Resolve(ctx *EffectContext) {
 }
 
 // ArchiveFromDiscard moves a card the controller chooses from their discard pile
-// into their archives.
-type ArchiveFromDiscard struct{}
+// into their archives. House filters which cards may be chosen; HouseNone allows
+// any card (Glyxl Proliferator archives only a Mars card).
+type ArchiveFromDiscard struct {
+	House House
+}
 
 // Text renders the effect, naming the source zone explicitly.
 func (e ArchiveFromDiscard) Text() string {
-	return "archive a card from your discard pile"
+	noun := "card"
+	if e.House != HouseNone {
+		noun = e.House.String() + " " + noun
+	}
+	return "archive " + indefinite(noun) + " from your discard pile"
 }
 
 // Resolve has the controller choose one card from their discard pile and archive
 // it, doing nothing when the discard pile is empty or the choice is declined.
 func (e ArchiveFromDiscard) Resolve(ctx *EffectContext) {
-	discard := ctx.Resolver.Discard(ctx.Controller)
+	var discard []LocalID
+	for _, id := range ctx.Resolver.Discard(ctx.Controller) {
+		if e.House == HouseNone || ctx.Resolver.House(id) == e.House {
+			discard = append(discard, id)
+		}
+	}
 	if len(discard) == 0 {
 		return
 	}
@@ -239,6 +282,24 @@ func (e ArchiveFromPlay) archive(ctx *EffectContext, ids []LocalID) bool {
 		ctx.Resolver.PutIntoArchives(id)
 	}
 	return len(ids) > 0
+}
+
+// ArchiveSource archives the card whose ability this is (Sucker Punch archives
+// itself). A source still in play — a creature or artifact — is archived from
+// play; a resolving action card, not yet in any zone, is instead marked to go to
+// its owner's archives when its play completes, rather than to the discard pile.
+type ArchiveSource struct{}
+
+// Text renders the effect using the source card's own name.
+func (ArchiveSource) Text() string { return "archive " + SelfName }
+
+// Resolve archives the source card.
+func (ArchiveSource) Resolve(ctx *EffectContext) {
+	if resolverInPlay(ctx, ctx.Source) {
+		ctx.Resolver.PutIntoArchives(ctx.Source)
+		return
+	}
+	ctx.Resolver.MarkPlayedActionArchived(ctx.Source)
 }
 
 // DiscardArchives moves all of a player's archived cards into their discard pile.

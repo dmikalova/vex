@@ -412,6 +412,34 @@ The overlay listing a player's out-of-play zones as rows of cards.
 The enlarged face of the card under the cursor, whether on the board, in hand, or
 named in the Game log.
 
+**Icon strip**:
+The thin visual band on a card face — roughly one and a half text lines tall,
+below the stat area and above the traits — that transcribes the card's printed
+mechanics as composed icons. It complements the rules text; the text stays
+authoritative. A creature's strip is its own plus each attached Upgrade's,
+concatenated.
+_Avoid_: card image, icon bar, sigil line.
+
+**Glyph**:
+One base icon in the Icon strip's vocabulary — a noun (damage, Æmber, creature,
+key), a verb or operator (deal, gain, destroy, the `→` result gate), or a
+quantity rendered on the noun it counts. Glyphs compose spatially and may be
+squished, overlaid, or combined to save room.
+
+**Glyph decoration**:
+A treatment applied to a noun Glyph to carry a Target filter without taking a
+slot — an enemy tint on one edge, a friendly tint, an "each" stack, a "chosen"
+outline. So `3 damage → enemy creature` is a quantity-on-damage, a `→`, and an
+enemy-decorated creature Glyph.
+
+**Iconography pass**:
+The Visitor that walks a card's Effect AST (and its Targets, Counts, and
+Conditions) and emits the Glyphs the client renders into the Icon strip. It is
+the visual counterpart of rules-text generation. It type-switches over the
+engine's Effect types but lives in the client layer, not in package engine, so
+the engine's 100% coverage gate does not force an icon test per effect; it runs
+in the WASM client, so no pre-rendered card art is served.
+
 **Result panel**:
 The end-of-game result, shown in the Action bar's place once a player has forged
 their third key.
@@ -438,4 +466,14 @@ game. Its regions:
   which combinations the implemented sets have no card for.
 - **Font compare**: the strip that renders one specimen once per loaded font, to
   choose between faces for the same House.
+
+**Card gallery**:
+The page at `/cards` showing every card in the database as a printed face,
+filterable by House, Set, Type, and by name and rules text. Facets are _OR_
+within a category and _AND_ across categories; the text box takes a small query
+syntax (`term term` for all-of, `a|b` for either, `-x` to exclude, `"phrase"`
+for an exact run, `\"` to search a literal quote). Unlike the Style gallery it is
+a real, always-served page, not a development surface.
+_Avoid_: card list, card browser, catalog page.
+
 - **Style header**: the sticky controls for the fonts in use.

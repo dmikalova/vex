@@ -298,8 +298,8 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 	case actGiveRemainingAember:
 		beneficiary := 1 - actor
 		amount := g.State.Aember[actor]
-		g.State.Aember[actor] = 0
-		g.State.Aember[beneficiary] += amount
+		g.SetAember(actor, 0)
+		g.SetAember(beneficiary, g.State.Aember[beneficiary]+amount)
 		g.record(AemberGivenAfterForging{
 			Player: actor,
 			To:     beneficiary,

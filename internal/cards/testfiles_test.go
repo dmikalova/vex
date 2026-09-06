@@ -135,8 +135,11 @@ func parseFile(t *testing.T, fset *token.FileSet, path string) *ast.File {
 	return f
 }
 
-// declaresCard reports whether f declares an exported top-level var assigned from
-// card.New — i.e. whether the file implements a card.
+// declaresCard reports whether f declares an exported top-level var whose value
+// implements a card — either card.New(...) directly, or a set-local family
+// wrapper (a bare-identifier call taking the card's name as a string literal,
+// e.g. master("Master of 1", ...)) that forwards to card.New. The generated
+// 0set.go, whose only exported var is card.NewSet(...), is not an implementation.
 func declaresCard(f *ast.File) bool {
 	for _, decl := range f.Decls {
 		gen, ok := decl.(*ast.GenDecl)
@@ -148,12 +151,27 @@ func declaresCard(f *ast.File) bool {
 			if !ok || len(vs.Names) != 1 || len(vs.Values) != 1 {
 				continue
 			}
-			if vs.Names[0].IsExported() && isCardNewCall(vs.Values[0]) {
+			if vs.Names[0].IsExported() && declaresCardValue(vs.Values[0]) {
 				return true
 			}
 		}
 	}
 	return false
+}
+
+// declaresCardValue reports whether a var initializer builds a card: a direct
+// card.New(...) call, or a set-local wrapper called by a bare identifier
+// (e.g. master(1, ...)) that forwards to card.New.
+func declaresCardValue(expr ast.Expr) bool {
+	if isCardNewCall(expr) {
+		return true
+	}
+	call, ok := expr.(*ast.CallExpr)
+	if !ok || len(call.Args) == 0 {
+		return false
+	}
+	_, ok = call.Fun.(*ast.Ident)
+	return ok
 }
 
 // isCardNewCall reports whether expr is a call to card.New.

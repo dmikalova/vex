@@ -59,16 +59,27 @@ func (e TakeControl) Text() string {
 // moves to their artifact row permanently. The host-creature form (no Target) is
 // Collar's upgrade-anchored control. The last card taken is recorded as "it" for a
 // following effect (Sneklifter's house reassignment).
-func (e TakeControl) Resolve(ctx *EffectContext) {
+func (e TakeControl) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
+
+// resolveGate changes control to the player resolving the ability, or to their
+// opponent when ToOpponent is set, and reports whether any card actually moved so
+// it can be the First of a Then (Anahita the Trader gives an artifact away -> the
+// opponent gives 2 Æmber). A creature moves to the new controller's
+// battleline anchored to the source (reverting when it leaves play); an artifact
+// moves to their artifact row permanently. The host-creature form (no Target) is
+// Collar's upgrade-anchored control. The last card taken is recorded as "it" for a
+// following effect (Sneklifter's house reassignment).
+func (e TakeControl) resolveGate(ctx *EffectContext) bool {
 	if !e.Target.valid() {
 		ctx.Resolver.TakeControl(ctx.Source, ctx.Controller, ctx.Upgrade)
 		ctx.It, ctx.HasIt = ctx.Source, true
-		return
+		return true
 	}
 	newController := ctx.Controller
 	if e.ToOpponent {
 		newController = ctx.Opponent()
 	}
+	moved := false
 	for _, id := range e.Target.Select(ctx) {
 		if ctx.Resolver.IsCreature(id) {
 			ctx.Resolver.TakeControl(id, newController, ctx.Source)
@@ -76,5 +87,7 @@ func (e TakeControl) Resolve(ctx *EffectContext) {
 			ctx.Resolver.TakeControlOfArtifact(id, newController)
 		}
 		ctx.It, ctx.HasIt = id, true
+		moved = true
 	}
+	return moved
 }

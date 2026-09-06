@@ -284,6 +284,33 @@ func TestReloadingDoesNotToastTheWholeLog(t *testing.T) {
 	}
 }
 
+// Dismissing the toast clears every bubble and catches the seen floor up, so the
+// same lines do not surface again on the next refresh.
+func TestDismissingTheToastClearsIt(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	c.do(c.g.toggleSidebar) // collapse the sidebar so lines toast
+	id := c.deal(testCreature)
+	c.playFromHand(id)
+	c.g.refreshToast()
+	if len(c.g.toastBubbles) == 0 {
+		t.Fatal("expected a toast bubble to surface")
+	}
+
+	c.g.clearToast()
+	if len(c.g.toastBubbles) != 0 {
+		t.Errorf("dismiss left %d bubbles, want 0", len(c.g.toastBubbles))
+	}
+	if c.g.toastSeen != len(c.g.g.Log) {
+		t.Errorf("toastSeen = %d, want %d (caught up on dismiss)",
+			c.g.toastSeen, len(c.g.g.Log))
+	}
+	c.g.refreshToast()
+	if len(c.g.toastBubbles) != 0 {
+		t.Errorf("dismissed lines toasted again: %d bubbles", len(c.g.toastBubbles))
+	}
+}
+
 // reload is what a page load does: a fresh component over the same storage,
 // resuming what the last one saved.
 func (c *client) reload() *client {

@@ -173,13 +173,92 @@ func TestCannotFightConstant(t *testing.T) {
 	}
 }
 
+func TestCannotReapConstant(t *testing.T) {
+	// restrictionText renders each relative player.
+	if got := restrictionText(Restrictions{Reaping: Controller}, false); len(got) != 1 ||
+		got[0] != "Your creatures cannot reap." {
+		t.Errorf("controller reaping text = %v", got)
+	}
+	if got := restrictionText(Restrictions{Reaping: Opponent}, false); len(got) != 1 ||
+		got[0] != "Enemy creatures cannot reap." {
+		t.Errorf("opponent reaping text = %v", got)
+	}
+	if got := restrictionText(Restrictions{Reaping: EachPlayer}, false); len(got) != 1 ||
+		got[0] != "Creatures cannot reap." {
+		t.Errorf("each-player reaping text = %v", got)
+	}
+	// A use-condition phrases against the card, or the host creature on an upgrade.
+	cond := Restrictions{UseCondition: CardsDiscarded{Player: Controller, Amount: 1}}
+	if got := restrictionText(cond, false); len(got) != 1 ||
+		got[0] != "You cannot use this card unless you have discarded a card from your hand this turn." {
+		t.Errorf("card use-condition text = %v", got)
+	}
+	if got := restrictionText(cond, true); len(got) != 1 ||
+		got[0] != "This creature cannot be used unless you have discarded a card from your hand this turn." {
+		t.Errorf("upgrade use-condition text = %v", got)
+	}
+
+	g := started(t) // player 0 active, Brobnar
+	reaper := g.AddToBattleline(testCreature("reaper", 4), 0)
+	if g.cannotReap(0) || g.cannotReap(1) {
+		t.Fatal("no restriction yet")
+	}
+	// A card player 0 controls with Reaping Opponent bars only player 1.
+	joya := g.AddToBattleline(
+		NewCard("Joya", Brobnar, Creature, Common, WithPower(5),
+			WithRestrictions(Restrictions{Reaping: Opponent})),
+		0,
+	)
+	if g.cannotReap(0) {
+		t.Error("Reaping Opponent should not bar the controller")
+	}
+	if !g.cannotReap(1) {
+		t.Error("Reaping Opponent should bar the opponent")
+	}
+	// EachPlayer bars everyone.
+	eachDef := NewCard("Joya", Brobnar, Creature, Common, WithPower(5),
+		WithRestrictions(Restrictions{Reaping: EachPlayer}))
+	g.cat.defs[joya] = &eachDef
+	if !g.cannotReap(0) || !g.cannotReap(1) {
+		t.Error("Reaping EachPlayer should bar both players")
+	}
+	// Controller bars only the card's controller.
+	ctrlDef := NewCard("Joya", Brobnar, Creature, Common, WithPower(5),
+		WithRestrictions(Restrictions{Reaping: Controller}))
+	g.cat.defs[joya] = &ctrlDef
+	if !g.cannotReap(0) || g.cannotReap(1) {
+		t.Error("Reaping Controller should bar only the controller")
+	}
+	// The active player cannot reap. With an enemy creature present the reaper can
+	// still fight, so canUse passes and canUseTo's ReapUse guard is what stops it.
+	g.AddToBattleline(testCreature("enemy", 4), 1)
+	if err := g.CanUseTo(0, reaper, ReapUse); err != ErrCannotUse {
+		t.Errorf("CanUseTo(reap) while barred = %v, want ErrCannotUse", err)
+	}
+	if err := g.CanUseTo(0, reaper, FightUse); err != nil {
+		t.Errorf("CanUseTo(fight) while only reaping is barred = %v, want nil", err)
+	}
+	if err := g.Reap(0, reaper); err != ErrCannotUse {
+		t.Errorf("Reap while barred = %v, want ErrCannotUse", err)
+	}
+	// reapWith is a no-op too, so a forced reap gains no Æmber.
+	g.reapWith(reaper)
+	if g.State.Aember[0] != 0 {
+		t.Errorf("forced reap while barred gained %d Æmber, want 0", g.State.Aember[0])
+	}
+}
+
 func TestCannotPlayCreatures(t *testing.T) {
-	if got := restrictionText(Restrictions{Fighting: true, CannotPlay: Creature}); len(got) != 2 ||
-		got[0] != "You cannot use creatures to fight." || got[1] != "You cannot play creatures." {
+	if got := restrictionText(
+		Restrictions{Fighting: true, CannotPlay: Creature},
+		false,
+	); len(got) != 2 ||
+		got[0] != "You cannot use creatures to fight." ||
+		got[1] != "You cannot play creatures." {
 		t.Errorf("restrictionText = %v", got)
 	}
 	if got := restrictionText(
-		Restrictions{PlayCardLimit: PlayCardLimit{Player: Controller, Amount: 1}},
+		Restrictions{PlayCardLimit: PlayCardLimit{Player: Controller, Amount: 1}}, false,
 	); len(
 		got,
 	) != 1 ||
@@ -187,7 +266,7 @@ func TestCannotPlayCreatures(t *testing.T) {
 		t.Errorf("controller card limit text = %v", got)
 	}
 	if got := restrictionText(
-		Restrictions{PlayCardLimit: PlayCardLimit{Player: EachPlayer, Amount: 1}},
+		Restrictions{PlayCardLimit: PlayCardLimit{Player: EachPlayer, Amount: 1}}, false,
 	); len(
 		got,
 	) != 1 ||
@@ -227,7 +306,7 @@ func TestCannotPlayCreatures(t *testing.T) {
 func TestToll(t *testing.T) {
 	// Text renders for both actions a toll can charge for.
 	if got := restrictionText(
-		Restrictions{Toll: Toll{Action: TollPlayArtifact, Amount: 1}},
+		Restrictions{Toll: Toll{Action: TollPlayArtifact, Amount: 1}}, false,
 	); len(
 		got,
 	) != 1 ||
@@ -235,7 +314,7 @@ func TestToll(t *testing.T) {
 		t.Errorf("play-toll text = %v", got)
 	}
 	if got := restrictionText(
-		Restrictions{Toll: Toll{Action: TollUseArtifact, Amount: 2}},
+		Restrictions{Toll: Toll{Action: TollUseArtifact, Amount: 2}}, false,
 	); len(
 		got,
 	) != 1 ||
@@ -342,6 +421,47 @@ func TestForceActiveHouseNextTurn(t *testing.T) {
 	}
 }
 
+func TestForbidActiveHouseNextTurn(t *testing.T) {
+	if got := (ForbidOpponentActiveHouse{}).Text(); got != "your opponent cannot choose that house as their active house on their next turn" {
+		t.Errorf("text = %q", got)
+	}
+	g := NewGame("A", "B", 1)
+	g.StartTurn(0)
+	if err := g.ChooseHouse(0, Brobnar); err != nil {
+		t.Fatal(err)
+	}
+
+	ForbidOpponentActiveHouse{}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0, ChosenHouse: Mars},
+	)
+	if g.State.ForbiddenHouseNext[1].Value != Mars {
+		t.Fatalf("armed = %v, want Mars", g.State.ForbiddenHouseNext[1].Value)
+	}
+
+	// Player 0's own choice is unaffected this turn.
+	g.EndPlayPhase(0)
+	g.StartTurn(1)
+	if g.State.ForbiddenHouse[1].Value != Mars {
+		t.Errorf("promoted = %v, want Mars", g.State.ForbiddenHouse[1].Value)
+	}
+	if err := g.ChooseHouse(1, Mars); err != ErrHouseForbidden {
+		t.Errorf("forbidden house = %v, want ErrHouseForbidden", err)
+	}
+	if err := g.ChooseHouse(1, Sanctum); err != nil {
+		t.Fatalf("allowed house: %v", err)
+	}
+
+	// The restriction lasts only that one turn.
+	g.EndPlayPhase(1)
+	g.StartTurn(1)
+	if g.State.ForbiddenHouse[1].Value != HouseNone {
+		t.Errorf("still forbidden = %v, want none", g.State.ForbiddenHouse[1].Value)
+	}
+	if err := g.ChooseHouse(1, Mars); err != nil {
+		t.Errorf("free choice = %v, want nil", err)
+	}
+}
+
 func TestRestrictionSources(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.StartTurn(0)
@@ -376,7 +496,11 @@ func TestUseConditionRestriction(t *testing.T) {
 	cond := CardsDiscarded{Player: Controller, House: Untamed, Amount: 1}
 	want := "You cannot use this card unless you have discarded an Untamed card " +
 		"from your hand this turn."
-	if got := restrictionText(Restrictions{UseCondition: cond}); len(got) != 1 || got[0] != want {
+	if got := restrictionText(
+		Restrictions{UseCondition: cond},
+		false,
+	); len(got) != 1 ||
+		got[0] != want {
 		t.Errorf("restrictionText = %v", got)
 	}
 

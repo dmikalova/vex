@@ -424,6 +424,63 @@ func TestAssaultAndHazardous(t *testing.T) {
 	}
 }
 
+func TestSplashAttack(t *testing.T) {
+	// Splash-attack hits each neighbor of the fought creature at the same time as
+	// the fight damage the fought creature takes.
+	g := NewGame("A", "B", 1)
+	att := g.AddToBattleline(
+		NewCard("splasher", Brobnar, Creature, Common, WithPower(5), WithSplashAttack(2)),
+		0,
+	)
+	left := g.AddToBattleline(testCreature("left", 20), 1)
+	mid := g.AddToBattleline(testCreature("mid", 20), 1)
+	right := g.AddToBattleline(testCreature("right", 20), 1)
+	g.fight(att, mid)
+	if g.Damage(mid) != 5 {
+		t.Errorf("fought creature damage = %d, want 5", g.Damage(mid))
+	}
+	if g.Damage(left) != 2 || g.Damage(right) != 2 {
+		t.Errorf("neighbor damage = %d/%d, want 2/2", g.Damage(left), g.Damage(right))
+	}
+
+	// A fought flank creature has only one neighbor: only that one is splashed.
+	g2 := NewGame("A", "B", 1)
+	att2 := g2.AddToBattleline(
+		NewCard("splasher2", Brobnar, Creature, Common, WithPower(5), WithSplashAttack(3)),
+		0,
+	)
+	flank := g2.AddToBattleline(testCreature("flank", 20), 1)
+	inner := g2.AddToBattleline(testCreature("inner", 20), 1)
+	g2.fight(att2, flank)
+	if g2.Damage(inner) != 3 {
+		t.Errorf("flank neighbor damage = %d, want 3", g2.Damage(inner))
+	}
+
+	// Splash-attack granted by an upgrade stacks (the accessor sums upgrade bonuses).
+	g3 := NewGame("A", "B", 1)
+	host := g3.AddToBattleline(testCreature("host", 5), 0)
+	tgt := g3.AddToBattleline(testCreature("tgt", 20), 1)
+	nb := g3.AddToBattleline(testCreature("nb", 20), 1)
+	attachUpgrade(
+		g3,
+		host,
+		NewCard(
+			"spray",
+			Untamed,
+			Upgrade,
+			Common,
+			WithStatic(StaticModifier{SplashAttackBonus: 2}),
+		),
+	)
+	if got := g3.splashAttack(host); got != 2 {
+		t.Errorf("upgraded splash-attack = %d, want 2", got)
+	}
+	g3.fight(host, tgt)
+	if g3.Damage(nb) != 2 {
+		t.Errorf("upgraded splash neighbor damage = %d, want 2", g3.Damage(nb))
+	}
+}
+
 func TestElusive(t *testing.T) {
 	// The first fight against an elusive creature deals no fight damage either way.
 	g := NewGame("A", "B", 1)

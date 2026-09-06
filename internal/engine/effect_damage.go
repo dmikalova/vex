@@ -107,7 +107,16 @@ func (e DealDamage) Text() string {
 func (e DealDamage) Resolve(ctx *EffectContext) {
 	if e.Spread != nil {
 		if hits := e.Spread.hits(ctx); len(hits) > 0 {
+			owners := make([]int, len(hits))
+			for i, h := range hits {
+				owners[i] = ctx.Resolver.Controller(h.ID)
+			}
 			ctx.Resolver.DealDamage(ctx.Controller, hits)
+			for i, h := range hits {
+				if !resolverInPlay(ctx, h.ID) {
+					ctx.Produced.Destroyed[owners[i]]++
+				}
+			}
 		}
 		return
 	}
@@ -193,6 +202,7 @@ func (e DamageThenIfDestroyed) Resolve(ctx *EffectContext) {
 		return
 	}
 	id := ids[0]
+	ctx.Produced.Neighbors = neighbors(ctx, id)
 	ctx.Resolver.DealDamage(ctx.Controller, []DamageTarget{{ID: id, Amount: e.Amount}})
 	if !resolverInPlay(ctx, id) {
 		ctx.It, ctx.HasIt = id, true
@@ -399,6 +409,108 @@ func (s DifferentCreatures) hits(ctx *EffectContext) []DamageTarget {
 		if id, ok := ctx.ChooseCreature("Choose a different creature", others); ok {
 			out = append(out, DamageTarget{ID: id, Amount: s.Second})
 		}
+	}
+	return out
+}
+
+// UpToCreatures deals Amount to up to Count different creatures the controller
+// chooses one at a time, declining any of them with Done — Throwing Stars deals 1
+// damage to up to 3 creatures. A DealDamage Spread.
+type UpToCreatures struct {
+	Count  int
+	Amount int
+}
+
+// validate requires room for at least one creature.
+func (s UpToCreatures) validate() error {
+	if s.Count < 1 {
+		return fmt.Errorf("UpToCreatures: Count must be at least 1, got %d", s.Count)
+	}
+	return nil
+}
+
+// spreadText renders the clause.
+func (s UpToCreatures) spreadText() string {
+	return fmt.Sprintf("deal %d damage to up to %d creatures", s.Amount, s.Count)
+}
+
+// hits asks for creatures one at a time, up to Count, excluding those already
+// chosen, stopping when the controller declines or none remain.
+func (s UpToCreatures) hits(ctx *EffectContext) []DamageTarget {
+	chosen := map[LocalID]bool{}
+	var out []DamageTarget
+	for len(out) < s.Count {
+		var cands []LocalID
+		for p := 0; p < 2; p++ {
+			for _, id := range ctx.Resolver.Battleline(p) {
+				if !chosen[id] {
+					cands = append(cands, id)
+				}
+			}
+		}
+		if len(cands) == 0 {
+			break
+		}
+		id, ok := ctx.ChooseCardOptional("Choose a creature", cands)
+		if !ok {
+			break
+		}
+		chosen[id] = true
+		out = append(out, DamageTarget{ID: id, Amount: s.Amount})
+	}
+	return out
+}
+
+// DivideDamage deals a pool of Amount damage — scaled by an optional Per count —
+// that the controller divides one point at a time among any number of creatures,
+// all landing at once. First Blood deals 2 damage for each friendly Brobnar
+// creature, divided freely. A DealDamage Spread.
+type DivideDamage struct {
+	Amount int
+	Per    Count
+}
+
+// validate requires a positive base amount.
+func (s DivideDamage) validate() error {
+	if s.Amount < 1 {
+		return fmt.Errorf("DivideDamage: Amount must be at least 1, got %d", s.Amount)
+	}
+	return nil
+}
+
+// spreadText renders the clause, e.g. "deal 2 damage for each friendly Brobnar
+// creature, divided among any number of creatures".
+func (s DivideDamage) spreadText() string {
+	amount := fmt.Sprintf("deal %d damage", s.Amount)
+	if s.Per != nil {
+		amount += " for each " + s.Per.CountText()
+	}
+	return amount + ", divided among any number of creatures"
+}
+
+// hits places the pool one point at a time onto creatures the controller chooses,
+// accumulating the points into a simultaneous batch of hits.
+func (s DivideDamage) hits(ctx *EffectContext) []DamageTarget {
+	total := scaled(s.Amount, s.Per, ctx)
+	assigned := map[LocalID]int{}
+	order := []LocalID{}
+	for i := 0; i < total; i++ {
+		var cands []LocalID
+		for p := 0; p < 2; p++ {
+			cands = append(cands, ctx.Resolver.Battleline(p)...)
+		}
+		if len(cands) == 0 {
+			break
+		}
+		id, _ := ctx.ChooseCard("Choose a creature to damage", cands)
+		if _, seen := assigned[id]; !seen {
+			order = append(order, id)
+		}
+		assigned[id]++
+	}
+	out := make([]DamageTarget, len(order))
+	for i, id := range order {
+		out[i] = DamageTarget{ID: id, Amount: assigned[id]}
 	}
 	return out
 }

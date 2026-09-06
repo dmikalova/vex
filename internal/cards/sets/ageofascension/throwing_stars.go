@@ -1,24 +1,28 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ThrowingStars
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Throwing Stars
 //
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Deal 1D to up to 3 creatures. Gain 1A for each creature destroyed this way.
+//	Play: Deal 1 damage to up to 3 creatures. For each creature destroyed this way, gain 1 Æmber.
 var ThrowingStars = card.New(
 	"Throwing Stars",
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.AoA, 279),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+			card.DealDamage{Spread: card.UpToCreatures{Count: 3, Amount: 1}},
+			card.GainAember{
+				Player: card.Controller,
+				Amount: 1,
+				Per:    card.CreaturesDestroyed{},
+			},
+		}},
+	),
 )

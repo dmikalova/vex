@@ -137,6 +137,14 @@ type Produced struct {
 	// this resolution, read by AemberLostThisWay (Shatter Storm drains the opponent
 	// for triple what its controller lost).
 	AemberLost [2]int
+	// Neighbors are the battleline neighbors an effect snapshotted just before it
+	// removed a creature from play, read by a TargetFormerNeighbors in a following
+	// effect (Pain Reaction hits the destroyed creature's former neighbors).
+	Neighbors []LocalID
+	// AemberBonusDestroyed is the total Æmber pips printed on the cards this
+	// resolution has destroyed, read by an AemberBonusDestroyed count in a following
+	// effect (Rustgnawer gains the destroyed artifact's Æmber bonus).
+	AemberBonusDestroyed int
 }
 
 // TotalDestroyed is how many cards this resolution has destroyed, both sides
@@ -159,6 +167,8 @@ func (ctx *EffectContext) PlayerFor(p Player) int {
 		return ctx.Resolver.Owner(ctx.It)
 	case ItsOpponent:
 		return 1 - ctx.Resolver.Controller(ctx.It)
+	case ThatPlayer:
+		return ctx.Controller
 	default:
 		panic("engine: effect has no player set (playerUnset)")
 	}
@@ -230,6 +240,11 @@ const (
 	// Pandemonium's "each undamaged creature captures 1 Æmber from its opponent"
 	// takes from your pool for the enemy's creatures and from theirs for yours.
 	ItsOpponent
+	// ThatPlayer is the player named by the ability's trigger — the actor of the
+	// event that fired it, not relative to the card's controller. It renders "that
+	// player" and is how a cross-player reaction refers back to whoever caused it
+	// (Forgemaster Og drains "that player", the one who just forged).
+	ThatPlayer
 )
 
 // valid reports whether p names a real player (not the unset zero value).

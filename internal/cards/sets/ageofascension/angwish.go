@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Angwish
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Dis
 //	Type:   Creature
@@ -15,8 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  6
 //	Traits: Demon
 //
-//	For each damage on Angwish,
-//	your opponent's keys cost +1A.
+//	Your opponent's keys cost +1 Æmber for each damage on it.
 var Angwish = card.New(
 	"Angwish",
 	card.House.Dis,
@@ -25,5 +19,5 @@ var Angwish = card.New(
 	card.Provenance(card.AoA, 69),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Demon),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeyCost(card.KeyCostChange(card.Opponent, 1).Per(card.DamageOnThis{})),
 )

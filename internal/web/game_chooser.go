@@ -157,6 +157,7 @@ func (g *game) chooseCandidate(_ app.Context, id engine.LocalID) {
 	if !g.choosing {
 		return
 	}
+	g.inspecting = false
 	select {
 	case g.chooser.reply <- chooseReply{id: id, ok: true}:
 	default:

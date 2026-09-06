@@ -1,20 +1,15 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// MartyrsEnd
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Martyr's End
 //
 //	House:  Sanctum
 //	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Destroy any number of friendly creatures. Gain 1A for each creature destroyed this way.
+//	Play: Destroy any number of friendly creatures. For each creature destroyed this way, gain 1 Æmber.
 var MartyrsEnd = card.New(
 	"Martyr's End",
 	card.House.Sanctum,
@@ -22,5 +17,13 @@ var MartyrsEnd = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, 255),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+			card.DestroyChosen{Target: card.Target.EachFriendlyCreature},
+			card.GainAember{
+				Player: card.Controller,
+				Amount: 1,
+				Per:    card.CreaturesDestroyed{},
+			},
+		}}),
 )

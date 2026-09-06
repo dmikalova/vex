@@ -21,6 +21,11 @@ type GenerationProfile struct {
 	// placed (Timetraveller pulls Help from Future Self; Troop Call pulls the Niffle
 	// Apes it calls). See Connection.
 	Connection Connection
+	// RarityWeight scales how often deck generation draws this card among its
+	// house+rarity peers, relative to the default weight of 1; a value of 0 (or
+	// less) means the default. Five Master-of-N variants at 0.2 draft as often as
+	// one ordinary Rare card.
+	RarityWeight float64
 }
 
 // Connection is the set of connected cards a puller card brings into its pod.

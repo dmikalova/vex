@@ -12,6 +12,9 @@ COPY . .
 # WebAssembly client bundle served at /web/app.wasm by go-app. -trimpath makes
 # the build reproducible; -ldflags="-s -w" drops debug info to shrink the bundle.
 RUN GOOS=js GOARCH=wasm go build -trimpath -ldflags="-s -w" -o web/app.wasm ./cmd/web
+# Minify and precompress (brotli + gzip) the static web assets so the server
+# streams prebuilt bodies instead of compressing every request.
+RUN go run github.com/magefile/mage webAssets
 # Native server binary.
 RUN CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /vactrol-web ./cmd/web
 

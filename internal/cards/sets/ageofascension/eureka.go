@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// Eureka
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Eureka!
 //
 //	House:  Logos
 //	Type:   Tactic
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Alpha.
-//	Play: Gain 2A. Archive 2 random cards from your hand.
+//	Play: Gain 2 Æmber. Archive 2 random cards from your hand.
 var Eureka = card.New(
 	"Eureka!",
 	card.House.Logos,
@@ -23,5 +18,12 @@ var Eureka = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.AoA, 128),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Alpha),
+	card.WithAbility(
+		card.Trigger.Play, card.Sentences{
+			Effects: []card.Effect{
+				card.GainAember{Player: card.Controller, Amount: 2},
+				card.ArchiveRandomFromHand{Amount: 2},
+			},
+		}),
 )

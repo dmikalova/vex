@@ -263,6 +263,10 @@ body {
     position: static;
     width: auto;
     max-width: none;
+    /* hold a floor height whatever the dock currently shows, so a short state (a
+       lone End turn) and a taller prompt (choose a flank) occupy the same band and
+       the board above does not resize as prompts come and go */
+    min-height: 6rem;
     /* the board keeps at least half the screen however much the dock wants; past
        that the dock scrolls inside itself */
     max-height: 50dvh;
@@ -527,6 +531,13 @@ body {
 .log-line {
   padding: 0.0625rem 0;
 }
+/* the zone-count icon is decorative: let the long-press land on the count span
+   behind it (which raises the roster) rather than on the <img>, so a phone does
+   not offer to download the icon on a long press. */
+.zone-count .icon {
+  pointer-events: none;
+  -webkit-touch-callout: none;
+}
 /* while the sidebar (and its log) is hidden, recent log bubbles toast at the top
    of the board so a minimized log still narrates what just happened. It floats
    centred above the board, below the overlays; each bubble expires on its own
@@ -541,8 +552,9 @@ body {
   transform: translateX(-50%);
   display: flex;
   flex-direction: column;
-  width: max-content;
-  max-width: min(28rem, calc(100vw - 2 * var(--shell-pad)));
+  /* a fixed width so successive bubbles line up rather than each toast jumping to
+     its own content width; still narrows on a viewport too small for it */
+  width: min(28rem, calc(100vw - 2 * var(--shell-pad)));
   max-height: 60dvh;
   overflow-y: auto;
   padding: 0.375rem 0.625rem 0.5rem;
@@ -560,6 +572,33 @@ body {
 /* a clicked toast is pinned open until the next click; the brighter edge says it
    will not clear itself while pinned */
 .log-toast--pinned {
+  border-color: var(--p0);
+}
+/* the dismiss affordance rides the toast's top-right corner as a small floating
+   button rather than a column of its own, so it never widens the bubble. On mobile
+   a horizontal swipe flicks the toast away, this is the pointer equivalent. */
+.log-toast-close {
+  position: absolute;
+  top: -0.5rem;
+  right: -0.5rem;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 50%;
+  background-color: var(--surface);
+  box-shadow: 0 0.125rem 0.375rem rgb(0 0 0 / 45%);
+  color: var(--ink-muted);
+  font-size: 0.875rem;
+  line-height: 1;
+  cursor: pointer;
+}
+.log-toast-close:hover {
+  color: var(--ink);
   border-color: var(--p0);
 }
 @keyframes toast-in {
@@ -2762,6 +2801,116 @@ button:disabled {
   align-items: center;
   gap: 0.125rem;
 }
+/* Icon strip (ADR 0022): a thin band of composed mechanic glyphs between the stat
+   line and the trait line. It stays about 1.5 text lines tall; when a card's
+   glyphs are too wide the whole strip scales down horizontally to fit rather than
+   wrap or clip. */
+.card-icons {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* full-bleed to the card's side edges, like a card's art band */
+  margin: 0.1rem 0;
+  padding: 0.15rem 0.4rem;
+  max-height: 1.9rem;
+  overflow: hidden;
+  /* the house's primary colour, so the glyph band reads as part of the card's
+     identity and its numerals are not dark-on-dark */
+  background: var(--nm);
+  color: var(--nm-fg);
+}
+/* the strip's content, kept on one line and scaled horizontally to fit by the
+   icon-fit script (iconFitScript) so a busy card squeezes instead of wrapping */
+.card-icons-fit {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  white-space: nowrap;
+  gap: 0.1rem 0.25rem;
+  transform-origin: center;
+}
+.card-icon-line {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+  white-space: nowrap;
+}
+/* the divider between two abilities on the one band */
+.card-icon-sep {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--nm-fg);
+  opacity: 0.55;
+  padding: 0 0.05rem;
+}
+.card-glyph-trigger {
+  width: 0.9rem;
+  height: 0.9rem;
+  margin-right: 0.05rem;
+}
+/* several action triggers (Play/Fight/Reap) sharing one effect, joined by "/" */
+.card-glyph-trigger-group {
+  display: inline-flex;
+  align-items: center;
+}
+.card-glyph-trigger-sep {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--nm-fg);
+  opacity: 0.55;
+  padding: 0 0.02rem;
+}
+.card-glyph {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.08rem;
+}
+.card-glyph-arrow {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--nm-fg);
+  opacity: 0.7;
+}
+.card-glyph-icon {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.card-glyph-img {
+  width: 0.85rem;
+  height: 0.85rem;
+}
+/* the number that precedes its glyph — the "3" in "3 damage" */
+.card-glyph-qty {
+  font-size: 9px;
+  font-weight: 800;
+  color: var(--nm-fg);
+  padding: 0 0.1rem;
+}
+/* decorations carry a Target's shape without spending a slot: enemy/friendly
+   tint the glyph, each stacks it, chosen outlines it, this marks the source. */
+.card-glyph--enemy .card-glyph-img {
+  filter: drop-shadow(0 0 1px #d05050);
+}
+.card-glyph--friendly .card-glyph-img {
+  filter: drop-shadow(0 0 1px #5090d0);
+}
+.card-glyph--each .card-glyph-icon::before {
+  content: "";
+  position: absolute;
+  inset: 0.1rem -0.12rem -0.12rem 0.1rem;
+  border-radius: 0.15rem;
+  background: rgba(255, 255, 255, 0.18);
+  z-index: -1;
+}
+.card-glyph--chosen .card-glyph-img {
+  outline: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 0.15rem;
+}
+.card-glyph--this .card-glyph-img {
+  outline: 1px dotted rgba(255, 255, 255, 0.5);
+  border-radius: 0.15rem;
+}
 /* trait line: sits under the stat line and above the rules, muted so it reads as
    secondary to the rules text without shouting */
 .card-traits {
@@ -3359,6 +3508,196 @@ button:disabled {
 .doc-toc a:hover {
   color: var(--ink);
   text-decoration: underline;
+}
+/* The /cards gallery is wider than the reading pages: it lays cards out in a
+   grid rather than a single reading column. */
+.gallery-page {
+  max-width: min(96rem, 96vw);
+}
+/* The gallery splits into a fixed filter sidebar and the card grid, so the named
+   filter groups run down the left and never eat the grid's vertical space. */
+.gallery-layout {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+}
+.gallery-sidebar {
+  flex: 0 0 auto;
+  align-self: flex-start;
+  width: var(--gallery-sidebar-w, 15rem);
+  min-width: 11rem;
+  max-width: 32rem;
+  position: sticky;
+  top: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-height: calc(100vh - 1rem);
+  overflow: auto;
+  /* room on the left so an input's focus ring is not clipped by overflow */
+  padding: 0.25rem 0.75rem 0.25rem 0.25rem;
+}
+/* the draggable divider between the filter panel and the card grid; stretches the
+   full height of the layout so the seam runs all the way down and can be grabbed
+   anywhere along it (drag wired in galleryScript) */
+.gallery-divider {
+  flex: 0 0 6px;
+  align-self: stretch;
+  margin: 0 0.6rem;
+  border-radius: 3px;
+  background: var(--line);
+  cursor: col-resize;
+}
+.gallery-divider:hover,
+.gallery-divider.gallery-divider--drag {
+  background: var(--p0);
+}
+.gallery-main {
+  flex: 1 1 0%;
+  min-width: 0;
+}
+.gallery-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.gallery-group-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-quiet);
+}
+.gallery-order {
+  align-self: flex-start;
+  min-width: 8rem;
+  max-width: 100%;
+  box-sizing: border-box;
+  padding: 0.35rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: var(--panel-radius);
+  background-color: var(--surface);
+  color: var(--ink);
+}
+/* rarity chip marks: the diamonds (one per rank) or the connected mark */
+.gallery-rarity-mark {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.05rem;
+}
+/* a set chip's colour swatch, tinted by the set's --set-accent */
+.gallery-set-emblem {
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 0.15rem;
+  background-color: var(--set-accent, var(--ink-quiet));
+  flex: 0 0 auto;
+}
+.gallery-range {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+.gallery-range-dash {
+  color: var(--ink-quiet);
+}
+.gallery-num {
+  width: 4rem;
+  padding: 0.35rem 0.4rem;
+  border: 1px solid var(--line);
+  border-radius: var(--panel-radius);
+  background-color: var(--surface);
+  color: var(--ink);
+}
+.gallery-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+.gallery-facets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+.gallery-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.2rem 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background-color: var(--surface);
+  color: var(--ink-soft);
+  cursor: pointer;
+  font-size: 0.78rem;
+}
+.gallery-chip:hover {
+  color: var(--ink);
+}
+.gallery-chip--on {
+  border-color: var(--p0);
+  color: var(--ink);
+  font-weight: 600;
+}
+/* house chips carry their house's colour on border, and fill with it when on */
+.gallery-chip--house {
+  border-color: color-mix(in srgb, var(--edge) 55%, var(--line));
+}
+.gallery-chip--house:hover {
+  border-color: var(--edge);
+}
+.gallery-chip--house.gallery-chip--on {
+  border-color: var(--edge);
+  background-color: color-mix(in srgb, var(--edge) 22%, var(--surface));
+}
+/* the Traits section folds away so the long trait list never dominates */
+.gallery-collapsible > .gallery-group-label {
+  cursor: pointer;
+  list-style: none;
+}
+.gallery-collapsible > .gallery-group-label::-webkit-details-marker {
+  display: none;
+}
+.gallery-collapsible > .gallery-group-label::before {
+  content: "▸ ";
+  color: var(--ink-quiet);
+}
+.gallery-collapsible[open] > .gallery-group-label::before {
+  content: "▾ ";
+}
+.gallery-collapsible > .gallery-facets {
+  margin-top: 0.3rem;
+}
+.gallery-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.4rem 0.6rem;
+  border: 1px solid var(--line);
+  border-radius: var(--panel-radius);
+  background-color: var(--surface);
+  color: var(--ink);
+}
+.gallery-count {
+  color: var(--ink-quiet);
+  font-size: 0.85rem;
+  margin-bottom: 0.75rem;
+}
+.gallery-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
+}
+/* Every match stays in the DOM (so browser find and anchors work), but the
+   browser skips layout and paint for off-screen cards, bounding cost without
+   windowing (ADR 0023). The intrinsic size mirrors the card box so the scrollbar
+   stays honest for cards that have not been painted yet. */
+.gallery-card {
+  content-visibility: auto;
+  contain-intrinsic-size: 9rem var(--card-h);
 }
 .glossary {
   display: grid;

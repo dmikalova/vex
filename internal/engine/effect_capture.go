@@ -156,7 +156,7 @@ func (e CaptureAember) Resolve(ctx *EffectContext) {
 			amt := min(poolAmount(scaled(e.Amount, e.Per, ctx), by, nil, ctx, held), held)
 			ctx.Resolver.SetAember(pool, held-amt)
 			ctx.Resolver.AddAmberOn(id, amt)
-			ctx.Resolver.Record(AemberCaptured{Creature: id, Amount: amt})
+			ctx.Resolver.Record(AemberCaptured{Creature: id, Amount: amt, Source: ctx.Source})
 		}
 	}
 }

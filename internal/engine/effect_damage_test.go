@@ -122,6 +122,30 @@ func TestDamageThenIfDestroyed(t *testing.T) {
 			t.Error("invalid follow-up should surface")
 		}
 	})
+
+	t.Run("follow-up can hit the destroyed creature's former neighbors", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		left := g.AddToBattleline(testCreature("left", 6), 1)
+		mid := g.AddToBattleline(testCreature("mid", 2), 1)
+		right := g.AddToBattleline(testCreature("right", 6), 1)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+
+		e := DamageThenIfDestroyed{
+			Amount: 3,
+			Target: Target{Kind: TargetChosenEnemyCreature}.PowerAtMost(2),
+			Then:   DealDamage{Amount: 2, Target: Target{Kind: TargetFormerNeighbors}},
+		}
+		if got := (Target{Kind: TargetFormerNeighbors}).Text(); got != "each of that creature's neighbors" {
+			t.Errorf("former-neighbors text = %q", got)
+		}
+		e.Resolve(ctx)
+		if resolverInPlay(ctx, mid) {
+			t.Error("mid creature should be destroyed")
+		}
+		if g.Damage(left) != 2 || g.Damage(right) != 2 {
+			t.Errorf("neighbor damage = %d/%d, want 2/2", g.Damage(left), g.Damage(right))
+		}
+	})
 }
 
 func TestDamageThen(t *testing.T) {
@@ -405,6 +429,79 @@ func TestSpreadFlankWalk(t *testing.T) {
 		}
 		if (DealDamage{Spread: CreatureAndNeighbors{}}).validate() != nil {
 			t.Error("a spread that cannot be misconfigured should be valid")
+		}
+	})
+}
+
+// declineAfterChooser answers with each queued id in turn, then declines.
+type declineAfterChooser struct{ ids []LocalID }
+
+func (c *declineAfterChooser) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) {
+	return cands[0], true
+}
+
+func (c *declineAfterChooser) ChooseCardOrDecline(_, _ string, _ []LocalID) (LocalID, bool) {
+	if len(c.ids) > 0 {
+		id := c.ids[0]
+		c.ids = c.ids[1:]
+		return id, true
+	}
+	return 0, false
+}
+
+func TestSpreadUpToCreatures(t *testing.T) {
+	t.Run("damages up to Count creatures and tallies the kills", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.AddToBattleline(testCreature("a", 1), 1)
+		g.AddToBattleline(testCreature("b", 1), 1)
+		g.AddToBattleline(testCreature("c", 1), 1)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+
+		e := DealDamage{Spread: UpToCreatures{Count: 3, Amount: 1}}
+		if e.Text() != "deal 1 damage to up to 3 creatures" {
+			t.Errorf("text = %q", e.Text())
+		}
+		e.Resolve(ctx)
+		if got := ctx.Produced.TotalDestroyed(); got != 3 {
+			t.Errorf("destroyed tally = %d, want 3", got)
+		}
+	})
+
+	t.Run("survivors are not tallied", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		a := g.AddToBattleline(testCreature("a", 5), 1)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+		DealDamage{Spread: UpToCreatures{Count: 3, Amount: 1}}.Resolve(ctx)
+		if g.Damage(a) != 1 {
+			t.Errorf("damage = %d, want 1", g.Damage(a))
+		}
+		if got := ctx.Produced.TotalDestroyed(); got != 0 {
+			t.Errorf("destroyed tally = %d, want 0", got)
+		}
+	})
+
+	t.Run("stops when the controller declines", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		a := g.AddToBattleline(testCreature("a", 5), 1)
+		b := g.AddToBattleline(testCreature("b", 5), 1)
+		g.SetChooser(0, &declineAfterChooser{ids: []LocalID{a}})
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+		DealDamage{Spread: UpToCreatures{Count: 3, Amount: 1}}.Resolve(ctx)
+		if g.Damage(a) != 1 || g.Damage(b) != 0 {
+			t.Errorf("damage = %d/%d, want 1/0", g.Damage(a), g.Damage(b))
+		}
+	})
+
+	t.Run("with no creatures, does nothing", func(_ *testing.T) {
+		g := NewGame("A", "B", 1)
+		DealDamage{Spread: UpToCreatures{Count: 3, Amount: 1}}.Resolve(
+			&EffectContext{Resolver: g, Controller: 0},
+		)
+	})
+
+	t.Run("validate rejects a Count below one", func(t *testing.T) {
+		if (DealDamage{Spread: UpToCreatures{Count: 0, Amount: 1}}).validate() == nil {
+			t.Error("Count 0 should be invalid")
 		}
 	})
 }

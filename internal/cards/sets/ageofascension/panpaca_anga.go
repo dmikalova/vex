@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// PanpacaAnga
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Panpaca, Anga
 //
 //	House:  Untamed
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Beast
 //
-//	Creatures to the right of Panpaca, Anga in the battleline get +2 power.
+//	Each creature to the right of Panpaca, Anga gains +2 power.
 var PanpacaAnga = card.New(
 	"Panpaca, Anga",
 	card.House.Untamed,
@@ -24,5 +19,8 @@ var PanpacaAnga = card.New(
 	card.Provenance(card.AoA, 347),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Beast),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithConstant(card.ConstantAbility{
+		Target:     card.Target.EachCreature.ToRightOfSource(),
+		PowerBonus: 2,
+	}),
 )

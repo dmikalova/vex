@@ -248,18 +248,7 @@ func (g *game) hoverPreview() app.UI {
 	case g.hoverLive():
 		card = g.cardFace(g.hoverID)
 	case g.hoverDef != nil:
-		def := g.hoverDef
-		card = &cardView{
-			Title:    def.Name,
-			HouseCls: houseClasses(def.House),
-			Emblem:   houseIconName(def.House),
-			TypeIcon: typeIconName(def.Type),
-			Stat:     handStat(def),
-			Rules:    displayRules(engine.RenderCardRules(def)),
-			Kind:     kindLabel(def),
-			Trait:    traitLabel(def),
-			Rarity:   rarityMarkOf(def.Rarity),
-		}
+		card = printedFace(g.hoverDef)
 	default:
 		return app.Div()
 	}
@@ -393,7 +382,7 @@ func (g *game) keysDisplay(player int) app.UI {
 		ifCls(g.keyFlash[player] && !g.keyParity[player], "stat-seg--gain-a"),
 		ifCls(g.keyFlash[player] && g.keyParity[player], "stat-seg--gain-b"),
 	)
-	return app.Span().Class(cx("score-keys", gain)).Body(slots...)
+	return app.Span().Class(cx("score-keys", "tip", gain)).DataSet("tip", "Keys").Body(slots...)
 }
 
 // keySlot renders a key icon as a clickable forge/unforge button in manual mode,
@@ -462,51 +451,34 @@ func (g *game) renderRow(
 }
 
 func (g *game) renderCard(id engine.LocalID, boardKind selKind, opposing bool) app.UI {
-	def := g.g.Def(id)
 	activate, targetable, dimmed := g.cardVisual(id, boardKind)
-	house := g.g.House(
-		id,
-	) // effective house: a control/"belongs to house" effect may override the printed one
 	flash := g.flashes[id]
-	face := &cardView{
-		ID:            id,
-		DOMID:         boardCardID(id),
-		Title:         def.Name,
-		HouseCls:      houseClasses(house),
-		Emblem:        houseIconName(house),
-		HouseChanged:  house != def.House,
-		TypeIcon:      typeIconName(def.Type),
-		Stat:          g.statLine(id),
-		Rules:         g.faceRules(id),
-		Kind:          kindLabel(def),
-		Trait:         traitLabel(def),
-		Rarity:        rarityMarkOf(def.Rarity),
-		Maverick:      g.isMaverick(id),
-		Stunned:       g.g.Stunned(id),
-		Exhausted:     g.g.Exhausted(id),
-		PowerCounters: int(g.g.State.Cards[id].PowerCounters),
-		Bar:           g.barKeywords(id),
-		BarBottom:     opposing,
-		TauntShielded: def.Type == engine.Creature && g.g.TauntShielded(id),
-		Enter:         flash.enter,
-		Fight:         flash.fight,
-		FightDown:     opposing,
-		Hit:           flash.damage || flash.fight,
-		Reap:          flash.reap,
-		Act:           flash.act,
-		StunFlash:     flash.stun,
-		ExhaustFlash:  flash.exhaust,
-		PowerFlash:    flash.power,
-		FlashOdd:      flash.odd,
-		Selected:      g.isSelected(id),
-		Targetable:    targetable,
-		Dimmed:        dimmed,
-		Jiggle:        g.jiggling(id, boardKind),
-		OnActivate:    activate,
-		OnHover:       g.hoverCard,
-		OnHoverOut:    g.hoverClear,
-	}
-	return g.hostWithTabs(id, face)
+	// The in-play face (stats, rules-with-upgrades, keybar) comes from cardFace;
+	// renderCard adds only the board's interaction and per-frame flash state.
+	face := g.cardFace(id)
+	face.ID = id
+	face.DOMID = boardCardID(id)
+	face.PowerCounters = int(g.g.State.Cards[id].PowerCounters)
+	face.BarBottom = opposing
+	face.Enter = flash.enter
+	face.Fight = flash.fight
+	face.FightDown = opposing
+	face.Hit = flash.damage || flash.fight
+	face.Reap = flash.reap
+	face.Act = flash.act
+	face.StunFlash = flash.stun
+	face.ExhaustFlash = flash.exhaust
+	face.PowerFlash = flash.power
+	face.FlashOdd = flash.odd
+	face.Selected = g.isSelected(id)
+	face.Targetable = targetable
+	face.Dimmed = dimmed
+	face.Jiggle = g.jiggling(id, boardKind)
+	face.OnActivate = activate
+	face.OnHover = g.hoverCard
+	face.OnHoverOut = g.hoverClear
+	face.OnContextMenu = g.liftCard
+	return g.hostWithTabs(id, face, dimmed)
 }
 
 // hostWithTabs wraps a rendered face in the peeking-tab host when the card
@@ -519,15 +491,16 @@ func (g *game) renderCard(id engine.LocalID, boardKind selKind, opposing bool) a
 // their inner edge and only a sliver of each peeks out. Nesting them inside
 // cardView itself would not work: .card clips its own children to draw the ogee
 // name-banner frame, which would hide the peeking part too.
-func (g *game) hostWithTabs(id engine.LocalID, face app.UI) app.UI {
+func (g *game) hostWithTabs(id engine.LocalID, face app.UI, dimmed bool) app.UI {
 	left, right := g.underTabs(id), g.upgradeTabs(id)
 	if len(left) == 0 && len(right) == 0 {
 		return face
 	}
 	// Attached cards dim with their host: an exhausted creature has already acted,
 	// so its upgrades and under-cards read as spent alongside it rather than
-	// standing out beside a greyed face.
-	dim := ifCls(g.inPlay(id) && g.g.Exhausted(id), "card-tabs--dim")
+	// standing out beside a greyed face; a host dimmed as an invalid choice greys
+	// its attachments the same way.
+	dim := ifCls(dimmed || (g.inPlay(id) && g.g.Exhausted(id)), "card-tabs--dim")
 	return app.Div().Class("card-host").
 		Style("--under-tabs", strconv.Itoa(len(left))).
 		Style("--up-tabs", strconv.Itoa(len(right))).

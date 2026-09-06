@@ -145,12 +145,13 @@ func varNamesByDir(files []string) (map[string]map[string]string, error) {
 			return nil, err
 		}
 		dir := filepath.Dir(path)
+		wrappers := wrapperTemplates(f)
 		for _, decl := range f.Decls {
 			gd, ok := decl.(*ast.GenDecl)
 			if !ok {
 				continue
 			}
-			ident, name, ok := cardVarOf(gd)
+			ident, name, ok := cardVarOf(gd, wrappers)
 			if !ok {
 				continue
 			}
@@ -197,6 +198,7 @@ func rewriteFile(path string, defs map[string]engine.CardDefinition) (bool, erro
 		return false, err
 	}
 	base := fset.File(f.Pos()).Base()
+	wrappers := wrapperTemplates(f)
 
 	var edits []edit
 	for _, decl := range f.Decls {
@@ -204,7 +206,7 @@ func rewriteFile(path string, defs map[string]engine.CardDefinition) (bool, erro
 		if !ok || gd.Tok != token.VAR {
 			continue
 		}
-		name, ok := cardNameOf(gd)
+		name, ok := cardNameOf(gd, wrappers)
 		if !ok {
 			continue
 		}
@@ -279,42 +281,196 @@ func rewriteTestFile(
 	return true, os.WriteFile(path, out, 0o644)
 }
 
-// cardVarOf returns the identifier and printed name a `var X = card.New("Name", …)`
-// declaration builds, or ok=false if the declaration is not a card.
-func cardVarOf(gd *ast.GenDecl) (ident, name string, ok bool) {
+// cardVarOf returns the identifier and printed name a card-declaring var builds,
+// or ok=false if the declaration is not one. It recognizes any single-var
+// initializer whose value is a call to card.New or a set-local family wrapper.
+// The name comes from a string-literal first argument (`card.New("Name", …)` or
+// `master("Master of 1", …)`); when the first argument is not a literal, the name
+// is resolved through the wrapper (`master(1, …)` → "Master of 1", see callName).
+// The callee is not checked — a name absent from the built registry is filtered
+// downstream (see rewriteFile), so only real cards are documented.
+func cardVarOf(gd *ast.GenDecl, wrappers map[string]nameTemplate) (ident, name string, ok bool) {
 	if gd.Tok != token.VAR || len(gd.Specs) != 1 {
 		return "", "", false
 	}
 	vs, ok := gd.Specs[0].(*ast.ValueSpec)
-	if !ok || len(vs.Names) != 1 || len(vs.Values) != 1 {
+	if !ok || len(vs.Names) != 1 || len(vs.Values) != 1 || !vs.Names[0].IsExported() {
 		return "", "", false
 	}
 	call, ok := vs.Values[0].(*ast.CallExpr)
 	if !ok || len(call.Args) == 0 {
 		return "", "", false
 	}
-	sel, ok := call.Fun.(*ast.SelectorExpr)
-	if !ok || sel.Sel.Name != "New" {
-		return "", "", false
-	}
-	if pkg, ok := sel.X.(*ast.Ident); !ok || pkg.Name != "card" {
-		return "", "", false
-	}
-	lit, ok := call.Args[0].(*ast.BasicLit)
-	if !ok || lit.Kind != token.STRING {
-		return "", "", false
-	}
-	name, err := strconv.Unquote(lit.Value)
-	if err != nil {
+	name, ok = callName(call, wrappers)
+	if !ok {
 		return "", "", false
 	}
 	return vs.Names[0].Name, name, true
 }
 
-// cardNameOf returns the printed name a `var X = card.New("Name", …)` declaration
-// builds, or false if the declaration is not a card.
-func cardNameOf(gd *ast.GenDecl) (string, bool) {
-	_, name, ok := cardVarOf(gd)
+// callName returns the printed card name a card-building call yields: its
+// string-literal first argument when it has one, or — when the first argument is
+// not a literal — the name a set-local wrapper builds from the call's literal
+// arguments via fmt.Sprintf (master(1, …) → "Master of 1").
+func callName(call *ast.CallExpr, wrappers map[string]nameTemplate) (string, bool) {
+	if lit, ok := call.Args[0].(*ast.BasicLit); ok && lit.Kind == token.STRING {
+		s, err := strconv.Unquote(lit.Value)
+		return s, err == nil
+	}
+	id, ok := call.Fun.(*ast.Ident)
+	if !ok {
+		return "", false
+	}
+	tmpl, ok := wrappers[id.Name]
+	if !ok {
+		return "", false
+	}
+	return tmpl.eval(call.Args)
+}
+
+// nameTemplate describes how a set-local wrapper builds its card.New name from
+// the wrapper's parameters: a fmt.Sprintf format and, in verb order, the wrapper
+// parameter index feeding each verb.
+type nameTemplate struct {
+	format string
+	args   []int
+}
+
+// eval renders the name from a wrapper call's arguments, or false if a needed
+// argument is missing or not an int/string literal.
+func (t nameTemplate) eval(callArgs []ast.Expr) (string, bool) {
+	vals := make([]any, len(t.args))
+	for i, idx := range t.args {
+		if idx >= len(callArgs) {
+			return "", false
+		}
+		v, ok := literalValue(callArgs[idx])
+		if !ok {
+			return "", false
+		}
+		vals[i] = v
+	}
+	return fmt.Sprintf(t.format, vals...), true
+}
+
+// wrapperTemplates finds set-local wrapper funcs in f whose card.New name is a
+// fmt.Sprintf over the wrapper's parameters, keyed by wrapper name, so a call
+// like master(1, …) resolves to a printed name without a string-literal argument.
+func wrapperTemplates(f *ast.File) map[string]nameTemplate {
+	out := map[string]nameTemplate{}
+	for _, decl := range f.Decls {
+		fd, ok := decl.(*ast.FuncDecl)
+		if !ok || fd.Recv != nil || fd.Body == nil || fd.Type.Params == nil {
+			continue
+		}
+		arg, ok := cardNewNameArg(fd.Body)
+		if !ok {
+			continue
+		}
+		if tmpl, ok := sprintfTemplate(arg, paramIndex(fd.Type)); ok {
+			out[fd.Name.Name] = tmpl
+		}
+	}
+	return out
+}
+
+// cardNewNameArg returns the first argument of the card.New call in a wrapper
+// body — the expression that builds the printed name.
+func cardNewNameArg(body *ast.BlockStmt) (ast.Expr, bool) {
+	var arg ast.Expr
+	ast.Inspect(body, func(n ast.Node) bool {
+		if arg != nil {
+			return false
+		}
+		if call, ok := n.(*ast.CallExpr); ok && isSelector(call.Fun, "card", "New") &&
+			len(call.Args) > 0 {
+			arg = call.Args[0]
+			return false
+		}
+		return true
+	})
+	return arg, arg != nil
+}
+
+// sprintfTemplate reads a `fmt.Sprintf(format, params…)` name expression into a
+// nameTemplate, mapping each verb argument back to the wrapper parameter feeding
+// it. It fails on any argument that is not one of the wrapper's parameters.
+func sprintfTemplate(expr ast.Expr, params map[string]int) (nameTemplate, bool) {
+	call, ok := expr.(*ast.CallExpr)
+	if !ok || !isSelector(call.Fun, "fmt", "Sprintf") || len(call.Args) < 1 {
+		return nameTemplate{}, false
+	}
+	lit, ok := call.Args[0].(*ast.BasicLit)
+	if !ok || lit.Kind != token.STRING {
+		return nameTemplate{}, false
+	}
+	format, err := strconv.Unquote(lit.Value)
+	if err != nil {
+		return nameTemplate{}, false
+	}
+	args := make([]int, 0, len(call.Args)-1)
+	for _, a := range call.Args[1:] {
+		id, ok := a.(*ast.Ident)
+		if !ok {
+			return nameTemplate{}, false
+		}
+		idx, ok := params[id.Name]
+		if !ok {
+			return nameTemplate{}, false
+		}
+		args = append(args, idx)
+	}
+	return nameTemplate{format: format, args: args}, true
+}
+
+// paramIndex maps each named parameter of ft to its positional index.
+func paramIndex(ft *ast.FuncType) map[string]int {
+	out := map[string]int{}
+	i := 0
+	for _, field := range ft.Params.List {
+		if len(field.Names) == 0 {
+			i++
+			continue
+		}
+		for _, n := range field.Names {
+			out[n.Name] = i
+			i++
+		}
+	}
+	return out
+}
+
+// literalValue returns the Go value of an int or string basic literal.
+func literalValue(expr ast.Expr) (any, bool) {
+	lit, ok := expr.(*ast.BasicLit)
+	if !ok {
+		return nil, false
+	}
+	switch lit.Kind {
+	case token.INT:
+		n, err := strconv.Atoi(lit.Value)
+		return n, err == nil
+	case token.STRING:
+		s, err := strconv.Unquote(lit.Value)
+		return s, err == nil
+	}
+	return nil, false
+}
+
+// isSelector reports whether e is the selector expression pkg.name.
+func isSelector(e ast.Expr, pkg, name string) bool {
+	sel, ok := e.(*ast.SelectorExpr)
+	if !ok || sel.Sel.Name != name {
+		return false
+	}
+	id, ok := sel.X.(*ast.Ident)
+	return ok && id.Name == pkg
+}
+
+// cardNameOf returns the printed name a `var X = card.New("Name", …)` (or a
+// set-local wrapper) declaration builds, or false if the declaration is not a card.
+func cardNameOf(gd *ast.GenDecl, wrappers map[string]nameTemplate) (string, bool) {
+	_, name, ok := cardVarOf(gd, wrappers)
 	return name, ok
 }
 

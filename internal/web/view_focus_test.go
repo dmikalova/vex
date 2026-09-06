@@ -284,3 +284,64 @@ func TestFormattingAMeasuredLength(t *testing.T) {
 		t.Errorf("px(12.345) = %q, want \"12.3px\"", got)
 	}
 }
+
+// The action lift is not drawn once a prompt owns the board, but an inspect lift —
+// raised by a long press or right-click — is, so a card can be read to help answer
+// the prompt. It carries no verbs, since there is no turn action to take yet.
+func TestTheInspectLiftReadsACardMidPrompt(t *testing.T) {
+	// An ordinary selection lifts while choosing a house or taking the turn, but a
+	// live chooser suppresses it.
+	choosing := &game{hasSel: true, choosing: true, phase: phaseMain, sel: 1, forgingKey: -1}
+	if _, ok := choosing.focusCardID(); ok {
+		t.Error("an ordinary selection lifted while a chooser was up")
+	}
+	// The same card marked inspecting lifts regardless, and offers no verbs.
+	peek := &game{
+		hasSel:     true,
+		choosing:   true,
+		inspecting: true,
+		sel:        1,
+		selKind:    selYourCreature,
+		forgingKey: -1,
+	}
+	if _, ok := peek.focusCardID(); !ok {
+		t.Error("an inspect lift did not read a card while a chooser was up")
+	}
+	if acts, _ := peek.selActions(); acts != nil {
+		t.Errorf("the inspect lift offered verbs %v, want none", acts)
+	}
+}
+
+// Choosing a house is its own phase, and a card tapped there lifts to be read even
+// though there is no action to take on it yet, so the verbs stay off.
+func TestTheLiftReadsACardWhileChoosingAHouse(t *testing.T) {
+	g := &game{hasSel: true, phase: phaseHouse, sel: 1, selKind: selHand, forgingKey: -1}
+	if _, ok := g.focusCardID(); !ok {
+		t.Error("a card tapped while choosing a house did not lift")
+	}
+	if acts, _ := g.selActions(); acts != nil {
+		t.Errorf("the house-choice lift offered verbs %v, want none", acts)
+	}
+}
+
+// A long press raises the inspect lift on any card, and tapping the enlarged copy
+// (dropInspect) puts it back down so the tap under it can answer the prompt.
+func TestLongPressRaisesAndDropsTheInspectLift(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	id := c.deal(testCreature)
+
+	c.g.liftCard(c.ctx, id)
+	if !c.g.inspecting || !c.g.hasSel || c.g.sel != id {
+		t.Fatalf("a long press did not raise the inspect lift (inspecting=%v sel=%d)",
+			c.g.inspecting, c.g.sel)
+	}
+	if _, ok := c.g.focusCardID(); !ok {
+		t.Error("the inspect lift did not draw its enlarged copy")
+	}
+
+	c.g.dropInspect(c.ctx, nullEvent())
+	if c.g.inspecting || c.g.hasSel {
+		t.Error("tapping the inspect lift did not put the card back down")
+	}
+}

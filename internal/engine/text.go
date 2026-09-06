@@ -284,6 +284,15 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 	if s := attackDamageText(def); s != "" {
 		rules = append(rules, s)
 	}
+	if def.DealsNoDamageWhenAttacked {
+		rules = append(rules, def.Name+" deals no damage when attacked.")
+	}
+	switch def.GrantsEntersReady {
+	case Creature:
+		rules = append(rules, "Your creatures enter play ready.")
+	case Artifact:
+		rules = append(rules, "Friendly artifacts enter play ready.")
+	}
 	if fr := def.FightRestriction; fr != (Target{}) {
 		rules = append(rules, def.Name+" can only fight "+singularNoun(fr.Text())+"s.")
 	}
@@ -300,7 +309,7 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 	if s := attackIgnoresText(def); s != "" {
 		rules = append(rules, s)
 	}
-	rules = append(rules, restrictionText(def.Restricts)...)
+	rules = append(rules, restrictionText(def.Restricts, def.Type == Upgrade)...)
 	if def.PreventSteal {
 		rules = append(rules, "Your Æmber cannot be stolen.")
 	}
@@ -429,6 +438,9 @@ func staticBonuses(m StaticModifier) string {
 	}
 	if m.HazardousBonus != 0 {
 		parts = append(parts, fmt.Sprintf("%+d hazardous", m.HazardousBonus))
+	}
+	if m.SplashAttackBonus != 0 {
+		parts = append(parts, fmt.Sprintf("%+d splash-attack", m.SplashAttackBonus))
 	}
 	for _, kw := range m.Keywords {
 		parts = append(parts, strings.ToLower(kw.String()))
@@ -559,6 +571,9 @@ func constantText(def *CardDefinition) string {
 		if tgt := c.target(); tgt.Kind == TargetThisCreature && tgt.onFlank {
 			line += " while it is on a flank"
 		}
+		if c.WhileOffFlank {
+			line += " while it is not on a flank"
+		}
 		line += "."
 		lines = append(lines, strings.ReplaceAll(line, SelfName, def.Name))
 	}
@@ -588,17 +603,29 @@ func constantGrantedText(def *CardDefinition) []string {
 }
 
 // restrictionText renders a card's constant "cannot" rules, one line each, e.g.
-// "You cannot play creatures." Returns nil when the card imposes none.
-func restrictionText(r Restrictions) []string {
+// "You cannot play creatures." Returns nil when the card imposes none. isUpgrade
+// phrases a use-condition against the host creature (Earthbind) rather than the
+// card itself (Giant Sloth).
+func restrictionText(r Restrictions, isUpgrade bool) []string {
 	var lines []string
 	if c := r.UseCondition; c != nil {
-		lines = append(
-			lines,
-			"You cannot use this card unless "+strings.TrimPrefix(c.CondText(), "if ")+".",
-		)
+		cond := strings.TrimPrefix(c.CondText(), "if ")
+		if isUpgrade {
+			lines = append(lines, "This creature cannot be used unless "+cond+".")
+		} else {
+			lines = append(lines, "You cannot use this card unless "+cond+".")
+		}
 	}
 	if r.Fighting {
 		lines = append(lines, "You cannot use creatures to fight.")
+	}
+	switch r.Reaping {
+	case Controller:
+		lines = append(lines, "Your creatures cannot reap.")
+	case Opponent:
+		lines = append(lines, "Enemy creatures cannot reap.")
+	case EachPlayer:
+		lines = append(lines, "Creatures cannot reap.")
 	}
 	if r.CannotPlay != TypeUnset {
 		lines = append(lines, "You cannot play "+strings.ToLower(r.CannotPlay.String())+"s.")
@@ -629,7 +656,25 @@ func restrictionText(r Restrictions) []string {
 	if r.SkipForge {
 		lines = append(lines, `You skip your "forge a key" step.`)
 	}
+	if n := r.NoForgeKeyNumber; n > 0 {
+		lines = append(lines, fmt.Sprintf("Players cannot forge their %s key.", ordinalWord(n)))
+	}
 	return lines
+}
+
+// ordinalWord renders a small positive integer as its English ordinal word,
+// covering the key ordinals the Key Imps bar (first, second, third).
+func ordinalWord(n int) string {
+	switch n {
+	case 1:
+		return "first"
+	case 2:
+		return "second"
+	case 3:
+		return "third"
+	default:
+		return fmt.Sprintf("%dth", n)
+	}
 }
 
 // keyCostText renders a card's key-cost change, e.g. "Your opponent's keys cost +1
@@ -726,6 +771,9 @@ func keywordText(def *CardDefinition) string {
 	}
 	if def.Hazardous > 0 {
 		parts = append(parts, fmt.Sprintf("Hazardous %d", def.Hazardous))
+	}
+	if def.SplashAttack > 0 {
+		parts = append(parts, fmt.Sprintf("Splash-attack %d", def.SplashAttack))
 	}
 	if len(parts) == 0 {
 		return ""

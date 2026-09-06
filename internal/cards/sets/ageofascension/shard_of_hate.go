@@ -1,20 +1,15 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ShardOfHate
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Shard of Hate
 //
 //	House:  Mars
 //	Type:   Artifact
 //	Rarity: Rare
 //	Traits: Item • Shard
 //
-//	Action: Stun an enemy creature for each friendly Shard.
+//	Action: For each friendly Shard, stun an enemy creature.
 var ShardOfHate = card.New(
 	"Shard of Hate",
 	card.House.Mars,
@@ -22,5 +17,12 @@ var ShardOfHate = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, 205),
 	card.WithTraits(card.Traits.Item, card.Traits.Shard),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Action, card.Repeat{
+			Times: card.InPlay{
+				Player: card.Controller,
+				Trait:  card.Traits.Shard,
+			},
+			Do: card.Stun{Target: card.Target.EnemyCreature},
+		}),
 )

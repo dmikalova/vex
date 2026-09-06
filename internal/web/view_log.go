@@ -130,10 +130,17 @@ func (g *game) logToast() app.UI {
 		OnMouseEnter(g.pauseToast).
 		OnMouseLeave(g.resumeToast).
 		OnClick(g.toggleToastPin).
-		Body(app.Range(g.toastBubbles).Slice(func(i int) app.UI {
-			b := g.toastBubbles[i]
-			return g.logBlockView(logBlock{lines: b.lines, player: b.player, newest: i == n-1})
-		}))
+		Body(
+			app.Button().
+				Class("log-toast-close").
+				Aria("label", "Dismiss").
+				OnClick(g.dismissToast).
+				Text("×"),
+			app.Range(g.toastBubbles).Slice(func(i int) app.UI {
+				b := g.toastBubbles[i]
+				return g.logBlockView(logBlock{lines: b.lines, player: b.player, newest: i == n-1})
+			}),
+		)
 }
 
 func (g *game) logBlockView(b logBlock) app.UI {

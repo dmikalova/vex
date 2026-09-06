@@ -163,6 +163,48 @@ func (ControlsMoreCreatures) Met(ctx *EffectContext) bool {
 	)
 }
 
+// SourceOnFlank is met by the position of the source card: with Not false when it
+// is on a flank of its battleline, with Not true when it is not — Glyxl
+// Proliferator archives only while on a flank, Titan Librarian only while not.
+type SourceOnFlank struct {
+	Not bool
+}
+
+// CondText renders the condition naming the source card.
+func (c SourceOnFlank) CondText() string {
+	if c.Not {
+		return "if " + SelfName + " is not on a flank"
+	}
+	return "if " + SelfName + " is on a flank"
+}
+
+// Met reports whether the source card's flank position matches Not.
+func (c SourceOnFlank) Met(ctx *EffectContext) bool {
+	return onFlank(ctx, ctx.Source) != c.Not
+}
+
+// SourceNeighborsAllOfHouse is met while every battleline neighbor of the source
+// card belongs to House — Xanthyx Harvester cannot be used while it has a
+// non-Mars neighbor, so its use is gated on this being met.
+type SourceNeighborsAllOfHouse struct {
+	House House
+}
+
+// CondText renders the condition, e.g. "if it has no non-Mars neighbor".
+func (c SourceNeighborsAllOfHouse) CondText() string {
+	return "if it has no non-" + c.House.String() + " neighbor"
+}
+
+// Met reports whether the source card has no neighbor off House.
+func (c SourceNeighborsAllOfHouse) Met(ctx *EffectContext) bool {
+	for _, n := range neighbors(ctx, ctx.Source) {
+		if ctx.Resolver.House(n) != c.House {
+			return false
+		}
+	}
+	return true
+}
+
 // ControlsCreaturesOfHouses is met while the controller's creatures in play span
 // at least Amount different houses — Prince Derric, Unifier pays out when three
 // houses are represented.
@@ -221,6 +263,27 @@ func (FirstCreaturePlayedThisTurn) Met(ctx *EffectContext) bool {
 		}
 	}
 	return false
+}
+
+// NoCreaturesPlayedThisTurn is met when the controller has not played any
+// creatures during the current turn — Redlock pays out at end of turn only on a
+// turn its controller played no creatures. A creature put into play by an effect
+// rather than played does not count, so it does not spoil the payout.
+type NoCreaturesPlayedThisTurn struct{}
+
+// CondText renders the condition.
+func (NoCreaturesPlayedThisTurn) CondText() string {
+	return "if you did not play any creatures this turn"
+}
+
+// Met reports whether none of the controller's plays this turn were creatures.
+func (NoCreaturesPlayedThisTurn) Met(ctx *EffectContext) bool {
+	for _, id := range ctx.Resolver.PlayedThisTurn(ctx.Controller) {
+		if ctx.Resolver.TypeOf(id) == Creature {
+			return false
+		}
+	}
+	return true
 }
 
 // CardsDestroyedFewerThan is met when fewer than Amount cards were destroyed this
@@ -585,13 +648,25 @@ func (e MayRepeat) Text() string {
 	return e.Do.Text() + " -> " + e.Cond.CondText() + ", you may repeat this effect"
 }
 
-// Resolve runs Do once, then repeats it while Cond holds, the controller keeps
-// choosing to repeat, and the Rule of Six allows another pass.
+// Resolve runs Do once, then repeats it while Cond holds and the Rule of Six
+// allows another pass. When Do leads with a single clickable choice, each repeat
+// is driven by that choice — the controller keeps picking to repeat, or passes
+// with Done — rather than a separate Yes/No question.
 func (e MayRepeat) Resolve(ctx *EffectContext) {
 	e.Do.Resolve(ctx)
+	d, byChoice := e.Do.(declinableEffect)
+	byChoice = byChoice && d.declinable()
 	for range RuleOfSix - 1 {
-		if !e.Cond.Met(ctx) ||
-			ctx.ChooseOption("Repeat this effect?", []string{"Yes", "No"}) != 0 {
+		if !e.Cond.Met(ctx) {
+			return
+		}
+		if byChoice {
+			if !d.resolveOptional(ctx) {
+				return
+			}
+			continue
+		}
+		if ctx.ChooseOption("Repeat this effect?", []string{"Yes", "No"}) != 0 {
 			return
 		}
 		e.Do.Resolve(ctx)
@@ -682,6 +757,9 @@ type countClauser interface {
 type ForgedKey struct {
 	Player   Player
 	Previous bool
+	// Not inverts the condition, reading "if you have not forged a key this turn"
+	// (Nightforge).
+	Not bool
 }
 
 // validate requires the condition to name whose key it asks about.
@@ -703,12 +781,15 @@ func (c ForgedKey) CondText() string {
 	if c.Previous {
 		when = "on " + possessive + " previous turn"
 	}
+	if c.Not {
+		return fmt.Sprintf("if %s have not forged a key %s", subject, when)
+	}
 	return fmt.Sprintf("if %s forged a key %s", subject, when)
 }
 
 // Met reports whether the named player forged at least one key in the window.
 func (c ForgedKey) Met(ctx *EffectContext) bool {
-	return ctx.Resolver.TurnHistory(ctx.PlayerFor(c.Player), c.stat()) > 0
+	return (ctx.Resolver.TurnHistory(ctx.PlayerFor(c.Player), c.stat()) > 0) != c.Not
 }
 
 // stat picks the tally the window corresponds to.

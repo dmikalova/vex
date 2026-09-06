@@ -38,13 +38,24 @@ const (
 // picking a fight target drops it, since the answer is another card on the board
 // that a card blown up over it would cover.
 func (g *game) focusCardID() (engine.LocalID, bool) {
-	if !g.hasSel || (g.phase != phaseMain && g.phase != phaseFlank) {
+	if !g.hasSel || g.pickerOpen {
 		return 0, false
 	}
-	if g.busy || g.choosing || g.choosingOption || g.pickerOpen || g.forgingKey >= 0 {
+	// A peek raised by a long press or right-click reads a card in any phase, even
+	// while a prompt owns the board.
+	if g.inspecting {
+		return g.sel, true
+	}
+	if g.busy || g.choosing || g.choosingOption || g.forgingKey >= 0 {
 		return 0, false
 	}
-	return g.sel, true
+	// The action lift is up while choosing a house or taking the turn — placing a
+	// card keeps it, since the flank question is asked on the card being placed.
+	switch g.phase {
+	case phaseHouse, phaseMain, phaseFlank:
+		return g.sel, true
+	}
+	return 0, false
 }
 
 // cardFocus is the lifted copy: the card's face, a button for each thing it can
@@ -72,6 +83,9 @@ func (g *game) cardFocus() app.UI {
 	}
 	panel := app.Div().
 		OnWheel(g.wheelOverFocus).
+		// A peek lift is a read-only enlargement, so a tap on it puts the card down
+		// and lets the tap under it answer the prompt the peek was raised over.
+		OnClick(g.dropInspect).
 		Class(cx("card-focus",
 			// The -a/-b pair replays the grow when the lift moves to another card:
 			// go-app patches the same element, and a CSS animation only restarts when

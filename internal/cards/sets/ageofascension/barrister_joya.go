@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// BarristerJoya
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Barrister Joya
 //
 //	House:  Sanctum
 //	Type:   Creature
@@ -26,5 +21,5 @@ var BarristerJoya = card.New(
 	card.WithPower(5),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithRestrictions(card.Restrictions{Reaping: card.Opponent}),
 )

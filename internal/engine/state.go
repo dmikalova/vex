@@ -392,6 +392,13 @@ type GameState struct {
 	ForcedHouse     [2]Bar[House]
 	ForcedHouseNext [2]Bar[House]
 
+	// ForbiddenHouse[p] is a house player p cannot choose as their active house
+	// this turn (Tezmal); ForbiddenHouseNext[p] arms that for p's next turn.
+	// StartTurn promotes the armed house, so it lands on the player's own next
+	// turn. HouseNone means no house is forbidden.
+	ForbiddenHouse     [2]Bar[House]
+	ForbiddenHouseNext [2]Bar[House]
+
 	// FightDamageRedirect is the creature a "Before Fight" ability chose to receive
 	// the attacker's fight damage instead of the defender (Gabos Longarms). It is
 	// set during the fight in progress and read and cleared by the combat step; 0
@@ -408,6 +415,13 @@ type GameState struct {
 	// zero value, since LocalID 0 is a valid card.
 	PurgePlayedAction    LocalID
 	PurgePlayedActionSet bool
+	// ArchivePlayedAction is the action card whose own "Play:" ability archives it
+	// (Sucker Punch): it is set while that ability resolves and read when the
+	// played action would go to the discard pile, sending it to the archives
+	// instead. ArchivePlayedActionSet distinguishes "archive card 0" from the
+	// unset zero value, since LocalID 0 is a valid card.
+	ArchivePlayedAction    LocalID
+	ArchivePlayedActionSet bool
 }
 
 // FastCopy returns an independent copy of the state. Because every field is a

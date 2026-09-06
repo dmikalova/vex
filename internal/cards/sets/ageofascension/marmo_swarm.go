@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// MarmoSwarm
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Marmo Swarm
 //
 //	House:  Untamed
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Beast
 //
-//	Marmo Swarm gets +1 power for each A in your pool.
+//	Marmo Swarm gains +1 power for each Æmber in your pool.
 var MarmoSwarm = card.New(
 	"Marmo Swarm",
 	card.House.Untamed,
@@ -24,5 +19,9 @@ var MarmoSwarm = card.New(
 	card.Provenance(card.AoA, 327),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Beast),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithConstant(card.ConstantAbility{
+		Target:     card.Target.This,
+		PowerBonus: 1,
+		Per:        card.AemberInPool{Player: card.Controller},
+	}),
 )

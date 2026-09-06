@@ -8,27 +8,30 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 ### Current focus
 
+- grill me on image generation. image generation should adapt with upgrades and other constant abilities
+
 ### Next focus
 
-- grill me on image generation. image generation should adapt with upgrades and other constant abilities
 - event sourcing
 - decklists
 - Start of game setup - p1 plays 1 cards, mulligan
 - drag and drop creature directly into battleline flank (or deploy, with dynamic moving as you go across), upgrade onto creature, artifact into artifact line
-- minimize main page load to base css, icon, and wasm load by hash. index.html has no cache. wasm has json manifest of everything that caches for a while. Also css should be minified and compressed, what about everything else?
 - The action panel (context.md could have wording for this) could be the actual card and text, and then play/reap/ etc buttons within
 - profiling - eg running property tests and outputting the profiled usage for hot paths, and then optimizing those paths as a skill
 - using property testing to find unused code paths and then force specific tests there
 - Is there a way to validate that the UI handles and presents all possible game states/prompts? eg if I add a new prompt route, can the UI then automatically fail bc its not handled?
 - On the style page add a section with all of the Log and Text usages rendered out. The easiest wayt to do this might be to create a dedicated preview area that dynamically displays these elements as they are used in the engine (eg show a set of cards that covers every rendering element, and a log that does the same for all log entries)
 - card gallery (and search). Gallery links to cards, and cards can pull in all the relevant rules onto that page
-- Improve master of x materialization
-- House Ambassador (eg Brobnar Amassador) as a materialization - make it work as a legacy/maverick to swap with a card in another house
 - In the rulebook have an Accuracy example-binding ratchet — let terms cite a real engine test, then require it for subtle rules over time so that players can interact with the examples and understand the evolving rules context.
 
 ## Things that can be done now
 
+- House Ambassador (eg Brobnar Amassador) as a materialization - make it work as a legacy/maverick to swap with a card in another house
 - remove abduct / simplify to archive targets - the rules already naturally handle how archiving your opponent's cards works
+- can splash and splashattack be combined?
+- enemy creature should be indicated in archives and even under my control
+- Change the wording from X trait creature to just X creature - if a creature becomes an artifact or vice versa, then the wording kinda breaks. This needs finesse bc the ideal would be to change all the cards that can target artifacts to just say the trait, and then otherwise do specify creature.
+- Update card.New to be all opts
 
 ## UI finesse
 
@@ -82,6 +85,7 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - MM mutants - have a common, uncommon, and rare variant
 - rockatiel - the concept of really good cards that mean you have to hold answers against them for archon, vs not having complete blowout surprises that you have to hold against in sealed
 - If a maverick has a fate, it should pull in prophecies - how to balance prophecies so they could be in any deck?
+- Find the 100 longest card tests in keyteki and digest them down to what the test is trying to capture
 
 ## Bot support
 

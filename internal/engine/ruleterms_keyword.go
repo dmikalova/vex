@@ -29,6 +29,14 @@ not have Hazardous.`,
 		},
 		{
 			Section:    SectionKeyword,
+			Title:      "Splash-attack",
+			Definition: "When the creature fights, it deals N damage to each neighbor of the creature it fights, at the same time as its own fight damage.",
+			Body: `A creature with Splash-attack N deals N damage to each neighbor of the
+creature it fights, simultaneously with the fight damage from its power. Zero
+means the creature does not have Splash-attack.`,
+		},
+		{
+			Section:    SectionKeyword,
 			Title:      "Skirmish",
 			Definition: "The creature takes no damage back when it is used to fight.",
 			Body: `A creature with Skirmish takes no damage when it is used to fight: it deals

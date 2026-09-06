@@ -31,7 +31,9 @@ var Target = targets{
 	FriendlyCreatureOrArtifact: engine.Target{Kind: engine.TargetChosenFriendlyCreatureOrArtifact},
 	EnemyCreatureOrArtifact:    engine.Target{Kind: engine.TargetChosenEnemyCreatureOrArtifact},
 	Artifact:                   engine.Target{Kind: engine.TargetChosenArtifact},
+	FriendlyArtifact:           engine.Target{Kind: engine.TargetChosenFriendlyArtifact},
 	EnemyArtifact:              engine.Target{Kind: engine.TargetChosenEnemyArtifact},
+	FormerNeighbors:            engine.Target{Kind: engine.TargetFormerNeighbors},
 }
 
 type targets struct {
@@ -80,8 +82,14 @@ type targets struct {
 	EnemyCreatureOrArtifact engine.Target
 	// Artifact is a single artifact the controller chooses, either side.
 	Artifact engine.Target
+	// FriendlyArtifact is a single friendly artifact the controller chooses.
+	FriendlyArtifact engine.Target
 	// EnemyArtifact is a single enemy artifact the controller chooses.
 	EnemyArtifact engine.Target
+	// FormerNeighbors selects the neighbors a preceding effect snapshotted before
+	// removing a creature ("each of that creature's neighbors"), for a follow-up
+	// that hits a destroyed creature's former neighbors (Pain Reaction).
+	FormerNeighbors engine.Target
 }
 
 // Selector refines a Target relative to the whole selected set (see
@@ -107,6 +115,12 @@ var LeastPowerful = engine.LeastPowerful
 // set, e.g. card.Target.EachCreature.Selector(card.MostPowerful(3)) (Three Fates).
 // When more tie at the cutoff than there are slots, the controller chooses which.
 var MostPowerful = engine.MostPowerful
+
+// LowestAndHighestPower is a Selector that keeps every creature tied for the
+// lowest power and every creature tied for the highest power, e.g.
+// card.Target.EachCreature.Selector(card.LowestAndHighestPower) (Standardized
+// Testing).
+var LowestAndHighestPower = engine.LowestAndHighestPower
 
 // Stunned is the set of stunned creatures, used as a fight restriction: pass it to
 // card.WithFightRestriction to limit a creature to fighting only stunned creatures

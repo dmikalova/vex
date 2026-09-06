@@ -205,7 +205,7 @@ func TestGalleryHidesAFacedownUnderFromTheOpponent(t *testing.T) {
 	specs := buildAttachments(h.g)
 	var hidden, peeked string
 	for _, s := range specs {
-		html := app.HTMLString(h.hostWithTabs(s.host, h.printedCard(s.host)))
+		html := app.HTMLString(h.hostWithTabs(s.host, h.printedCard(s.host), false))
 		switch s.caption {
 		case "1 under: down":
 			hidden = html

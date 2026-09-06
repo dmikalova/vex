@@ -70,6 +70,7 @@ func init() {
 	card.Reprint(card.AoA, 136, "Rocket Boots")
 	card.Reprint(card.AoA, 138, "Sloppy Labwork")
 	card.Reprint(card.AoA, 140, "Chaos Portal")
+	card.Reprint(card.AoA, 141, "Bonkers Killing Machine")
 	card.Reprint(card.AoA, 142, "Dysania")
 	card.Reprint(card.AoA, 145, "Harland Mindlock")
 	card.Reprint(card.AoA, 146, "Help from Future Self")

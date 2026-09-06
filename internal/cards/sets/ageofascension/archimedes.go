@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Archimedes
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Logos
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Cyborg • Beast
 //
-//	Elusive. (The first time this creature is attacked each turn, no damage is dealt.)
-//	Each of Archimedes's neighbors gains, "Destroyed: Archive this creature."
+//	Elusive.
+//	Each neighboring creature gains, "Destroyed: Archive this creature from play."
 var Archimedes = card.New(
 	"Archimedes",
 	card.House.Logos,
@@ -25,5 +20,12 @@ var Archimedes = card.New(
 	card.Provenance(card.AoA, 108),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Beast),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithConstant(card.ConstantAbility{
+		Target: card.Target.EachCreature.Neighboring(),
+		Granted: []card.Ability{{
+			Trigger: card.Trigger.Destroyed,
+			Effect:  card.ArchiveFromPlay{Target: card.Target.This},
+		}},
+	}),
 )

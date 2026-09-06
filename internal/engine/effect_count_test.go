@@ -122,6 +122,48 @@ func TestCardsDestroyedCount(t *testing.T) {
 	}
 }
 
+func TestCreaturesDestroyedCount(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx.Produced.Destroyed = [2]int{2, 1}
+
+	c := CreaturesDestroyed{}
+	if got := c.CountText(); got != "creature destroyed this way" {
+		t.Errorf("count text = %q", got)
+	}
+	if got := c.Value(ctx); got != 3 {
+		t.Errorf("value = %d, want 3", got)
+	}
+}
+
+func TestAemberBonusDestroyedCount(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx.Produced.AemberBonusDestroyed = 2
+
+	c := AemberBonusDestroyed{}
+	if got := c.CountText(); got != "Æmber bonus on the destroyed artifact" {
+		t.Errorf("count text = %q", got)
+	}
+	if got := c.Value(ctx); got != 2 {
+		t.Errorf("value = %d, want 2", got)
+	}
+}
+
+func TestDestroyTalliesAemberBonus(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	art := g.AddArtifact(NewCard("relic", Brobnar, Artifact, Common, WithAemberBonus(3)), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	if got := g.AemberBonus(art); got != 3 {
+		t.Errorf("AemberBonus = %d, want 3", got)
+	}
+	Destroy{Target: Target{Kind: TargetChosenEnemyArtifact}}.Resolve(ctx)
+	if got := ctx.Produced.AemberBonusDestroyed; got != 3 {
+		t.Errorf("tallied Æmber bonus = %d, want 3", got)
+	}
+}
+
 func TestCardsReturnedThisWayCount(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
@@ -133,6 +175,32 @@ func TestCardsReturnedThisWayCount(t *testing.T) {
 	}
 	if got := c.Value(ctx); got != 3 {
 		t.Errorf("value = %d, want 3", got)
+	}
+}
+
+func TestHousesInPlay(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(NewCard("m", Mars, Creature, Common, WithPower(4)), 0)
+	g.AddToBattleline(NewCard("l", Logos, Creature, Common, WithPower(4)), 0)
+	g.AddToBattleline(NewCard("s", Sanctum, Creature, Common, WithPower(4)), 0)
+	g.AddToBattleline(NewCard("b", Brobnar, Creature, Common, WithPower(4)), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	all := HousesInPlay{}
+	if got := all.Value(ctx); got != 4 {
+		t.Errorf("value = %d, want 4", got)
+	}
+	if got := all.CountText(); got != "house represented among cards in play" {
+		t.Errorf("count text = %q", got)
+	}
+
+	exceptSanctum := HousesInPlay{Except: Sanctum}
+	if got := exceptSanctum.Value(ctx); got != 3 {
+		t.Errorf("except value = %d, want 3", got)
+	}
+	want := "house represented among cards in play, except for Sanctum"
+	if got := exceptSanctum.CountText(); got != want {
+		t.Errorf("count text = %q, want %q", got, want)
 	}
 }
 

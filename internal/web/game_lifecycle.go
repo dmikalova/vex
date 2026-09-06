@@ -398,6 +398,22 @@ func (g *game) resumeToast(_ app.Context, _ app.Event) { g.toastHover = false }
 
 func (g *game) toggleToastPin(_ app.Context, _ app.Event) { g.toastPinned = !g.toastPinned }
 
+// dismissToast clears the toast outright, catching the seen floor up to the log
+// so its lines do not toast again. It stops the click from also toggling the pin.
+func (g *game) dismissToast(_ app.Context, e app.Event) {
+	e.Call("stopPropagation")
+	g.clearToast()
+}
+
+// clearToast drops every toast bubble and catches the seen floor up to the log so
+// the cleared lines do not toast again.
+func (g *game) clearToast() {
+	g.toastBubbles = nil
+	g.toastOpen = false
+	g.toastPinned = false
+	g.toastSeen = len(g.g.Log)
+}
+
 // installKeyShortcuts wires a document-level keydown listener so common actions
 // have a single-key shortcut (see onKey). It listens on the document because the
 // board has no single focused element to receive the keys.
@@ -486,6 +502,11 @@ func (g *game) installSwipeGestures() {
 		g.swipeStartX = t.Get("clientX").Float()
 		g.swipeStartY = t.Get("clientY").Float()
 		g.swipeTracking = true
+		// Note whether the touch began on the toast, so its end can flick it away
+		// instead of moving the sidebar.
+		target := args[0].Get("target")
+		g.toastSwipeStart = target.Truthy() &&
+			target.Call("closest", ".log-toast").Truthy()
 		return nil
 	})
 	g.touchEndFunc = app.FuncOf(func(_ app.Value, args []app.Value) any {
@@ -502,6 +523,11 @@ func (g *game) installSwipeGestures() {
 		dy := t.Get("clientY").Float() - g.swipeStartY
 		// A mostly-vertical drag is a scroll, not a sidebar swipe.
 		if math.Abs(dx) < swipeMinDistance || math.Abs(dy) > math.Abs(dx) {
+			return nil
+		}
+		// A horizontal swipe that began on the toast flicks it away, either way.
+		if g.toastSwipeStart && len(g.toastBubbles) > 0 {
+			g.dispatch(func(app.Context) { g.clearToast() })
 			return nil
 		}
 		width := app.Window().Get("innerWidth").Float()
@@ -794,6 +820,10 @@ func (g *game) dismiss(ctx app.Context) {
 		g.awaitingSetup = false
 	case g.forgingKey >= 0:
 		g.forgingKey = -1
+	case g.inspecting:
+		// A peek lift is dropped ahead of the prompt it was raised over, so the first
+		// Escape puts the card down and the next backs out of the prompt itself.
+		g.clearSelection()
 	case g.choosing:
 		// An optional prompt is declined; otherwise only a manual-mode prompt is
 		// escapable, since a real chooser is mandatory.

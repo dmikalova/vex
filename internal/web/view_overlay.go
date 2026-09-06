@@ -117,6 +117,7 @@ func printedFace(def *engine.CardDefinition) *cardView {
 		Kind:     kindLabel(def),
 		Trait:    traitLabel(def),
 		Rarity:   rarityMarkOf(def.Rarity),
+		Icons:    cardGlyphs(def),
 	}
 }
 

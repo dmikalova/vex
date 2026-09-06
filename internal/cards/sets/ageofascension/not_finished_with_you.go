@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// NotFinishedWithYou
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Not Finished with You
 //
 //	House:  Dis
 //	Type:   Tactic
@@ -22,5 +17,6 @@ var NotFinishedWithYou = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.AoA, 63),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.ShuffleChosenCreaturesFromDiscard{}),
 )

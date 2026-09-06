@@ -100,7 +100,16 @@ func TestDrawingTheLiftedCard(t *testing.T) {
 	c.wants("a card selected in hand", "card-focus", "Play", "Discard", "End turn")
 
 	c.playFromHand(id)
-	c.ownNextTurn(testHouse)
+
+	// The opponent fields a creature during their turn, so our ready creature has
+	// a legal fight target when we take the board again (Fight is offered only when
+	// a target exists).
+	c.pass()
+	c.manualTurn(testHouse)
+	c.playFromHand(c.deal(testCreature))
+	c.pass()
+	c.manualTurn(testHouse)
+
 	c.g.selectBoardID(c.ctx, id)
 	c.wants("a ready creature selected", "card-focus", "Reap", "Fight")
 }

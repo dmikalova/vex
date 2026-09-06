@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// GlyxlProliferator
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Glyxl Proliferator
 //
 //	House:  Mars
 //	Type:   Creature
@@ -24,5 +19,9 @@ var GlyxlProliferator = card.New(
 	card.Provenance(card.AoA, 163),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Martian, card.Traits.Soldier),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Reap, card.Conditional{
+			Cond: card.SourceOnFlank{},
+			Then: card.ArchiveFromDiscard{House: card.House.Self},
+		}),
 )

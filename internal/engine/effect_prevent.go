@@ -26,8 +26,13 @@ func (e PreventDamage) validate() error {
 // Text renders the effect, e.g. "for the remainder of the turn, each friendly
 // creature cannot be dealt damage".
 func (e PreventDamage) Text() string {
-	return fmt.Sprintf("for the remainder of the turn, %s cannot be dealt damage", e.Target.Text())
+	return "for the remainder of the turn, " + e.durationSubject() + " " + e.durationPredicate()
 }
+
+// durationSubject and durationPredicate split the body so ForDuration can state
+// the shared clause and subject once: "it" / "cannot be dealt damage".
+func (e PreventDamage) durationSubject() string   { return e.Target.Text() }
+func (e PreventDamage) durationPredicate() string { return "cannot be dealt damage" }
 
 // Resolve marks each selected creature damage-immune for the duration.
 func (e PreventDamage) Resolve(ctx *EffectContext) {

@@ -72,6 +72,11 @@ func TestRequiredTargetValidation(t *testing.T) {
 		{"LoseAember", LoseAember{Amount: 1}, LoseAember{Player: Controller, Amount: 1}},
 		{"DiscardArchives", DiscardArchives{}, DiscardArchives{Player: Controller}},
 		{"DiscardHand", DiscardHand{}, DiscardHand{Player: Controller}},
+		{
+			"DiscardRandomFromArchives",
+			DiscardRandomFromArchives{},
+			DiscardRandomFromArchives{Player: Opponent},
+		},
 		{"Reveal", RevealHand{}, RevealHand{Player: Controller}},
 	}
 	for _, tc := range cases {

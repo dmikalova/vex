@@ -237,6 +237,29 @@ func TestAfterCardPlayedTrigger(t *testing.T) {
 	}
 }
 
+func TestUpgradeUseConditionGatesHost(t *testing.T) {
+	g := started(t) // player 0 active, Brobnar
+	host := g.AddToBattleline(NewCard("host", Brobnar, Creature, Common, WithPower(3)), 0)
+	// An attached upgrade bars the host's use until its condition is met.
+	attachUpgrade(g, host, NewCard(
+		"bind",
+		Untamed,
+		Upgrade,
+		Common,
+		WithRestrictions(
+			Restrictions{UseCondition: CardsDiscarded{Player: Controller, Amount: 1}},
+		),
+	))
+	if err := g.usable(0, host); err != ErrCannotUse {
+		t.Fatalf("host with unmet upgrade use-condition = %v, want ErrCannotUse", err)
+	}
+	c := g.AddToHand(NewCard("spare", Brobnar, Tactic, Common), 0)
+	g.DiscardCardFromHand(0, c)
+	if err := g.usable(0, host); err != nil {
+		t.Fatalf("host after discard = %v, want nil", err)
+	}
+}
+
 func TestGrantedKeywordsFromUpgrades(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	host := g.AddToBattleline(testCreature("host", 3), 0)

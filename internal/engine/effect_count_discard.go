@@ -46,8 +46,15 @@ func (e CardsDiscarded) CondText() string {
 }
 
 // discardPhrase renders the required discards: "an Untamed card" for one, or
-// "3 Untamed cards" for more.
+// "3 Untamed cards" for more. With HouseNone the house is omitted ("a card",
+// "3 cards"), so an Earthbind-style "discarded a card" reads naturally.
 func (e CardsDiscarded) discardPhrase() string {
+	if e.House == HouseNone {
+		if e.Amount == 1 {
+			return "a card"
+		}
+		return fmt.Sprintf("%d cards", e.Amount)
+	}
 	if e.Amount == 1 {
 		return indefinite(e.House.String() + " card")
 	}

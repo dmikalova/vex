@@ -151,6 +151,7 @@ var Traits = traits{
 	Specter:   engine.Specter,
 	Spirit:    engine.Spirit,
 	Thief:     engine.Thief,
+	Tree:      engine.Tree,
 	Vehicle:   engine.Vehicle,
 	Weapon:    engine.Weapon,
 	Witch:     engine.Witch,
@@ -199,6 +200,7 @@ type traits struct {
 	Specter,
 	Spirit,
 	Thief,
+	Tree,
 	Vehicle,
 	Weapon,
 	Witch engine.Trait
@@ -283,12 +285,14 @@ var Trigger = triggers{
 	StartOfTurn:                 engine.TriggerStartOfTurn,
 	AfterChooseHouse:            engine.TriggerAfterChooseHouse,
 	AfterEnemyCreatureDestroyed: engine.TriggerAfterEnemyCreatureDestroyed,
+	AfterCreatureDestroyed:      engine.TriggerAfterCreatureDestroyed,
 	AfterEnemyCardPlayed:        engine.TriggerAfterEnemyCardPlayed,
 	AfterUse:                    engine.TriggerAfterUse,
 	AfterDiscardFromHand:        engine.TriggerAfterDiscardFromHand,
 	UsedSelf:                    engine.TriggerAfterUsedSelf,
 	AfterCreatureReaps:          engine.TriggerAfterCreatureReaps,
 	AfterEnemyCreatureReaps:     engine.TriggerAfterEnemyCreatureReaps,
+	AfterPlayerForgesKey:        engine.TriggerAfterPlayerForgesKey,
 	LeavesPlay:                  engine.TriggerLeavesPlay,
 }
 
@@ -321,6 +325,9 @@ type triggers struct {
 	AfterChooseHouse engine.Trigger
 	// AfterEnemyCreatureDestroyed fires after an enemy creature is destroyed during your turn.
 	AfterEnemyCreatureDestroyed engine.Trigger
+	// AfterCreatureDestroyed fires after any creature is destroyed, with the
+	// destroyed creature as "it"; it fires only for cards that survive the batch.
+	AfterCreatureDestroyed engine.Trigger
 	// AfterEnemyCardPlayed fires after the opponent plays a card.
 	AfterEnemyCardPlayed engine.Trigger
 	// AfterUse fires after the controller uses a card (reap, fight, or Action:).
@@ -336,6 +343,9 @@ type triggers struct {
 	// AfterEnemyCreatureReaps fires after an enemy creature reaps, with the reaper
 	// as "it" (Pip Pip stuns the enemy that just reaped).
 	AfterEnemyCreatureReaps engine.Trigger
+	// AfterPlayerForgesKey fires after any player forges a key, acting on the
+	// player who forged (Forgemaster Og).
+	AfterPlayerForgesKey engine.Trigger
 	// LeavesPlay fires as this card leaves play by any route ("Leaves Play:").
 	LeavesPlay engine.Trigger
 }
@@ -356,4 +366,7 @@ var (
 	// ItsOpponent is the opponent of the card in context — for a capture, of the
 	// capturing creature, so each side's creatures draw from a different pool.
 	ItsOpponent = engine.ItsOpponent
+	// ThatPlayer is the player named by the ability's trigger — for a cross-player
+	// reaction, whoever caused it (Forgemaster Og drains the player who forged).
+	ThatPlayer = engine.ThatPlayer
 )

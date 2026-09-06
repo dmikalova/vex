@@ -1,20 +1,15 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ShardOfLife
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Shard of Life
 //
 //	House:  Untamed
 //	Type:   Artifact
 //	Rarity: Rare
 //	Traits: Item • Shard
 //
-//	Action: Shuffle a card from your discard pile into your deck for each friendly Shard.
+//	Action: For each friendly Shard, shuffle a card from your discard pile into your deck.
 var ShardOfLife = card.New(
 	"Shard of Life",
 	card.House.Untamed,
@@ -22,5 +17,8 @@ var ShardOfLife = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, 366),
 	card.WithTraits(card.Traits.Item, card.Traits.Shard),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Action, card.ShuffleCardsFromDiscard{
+			Count: card.InPlay{Player: card.Controller, Trait: card.Traits.Shard},
+		}),
 )

@@ -194,6 +194,7 @@ const (
 	Specter
 	Spirit
 	Thief
+	Tree
 	Vehicle
 	Weapon
 	Witch
@@ -242,6 +243,7 @@ var traitNames = [traitCount]string{
 	Specter:   "Specter",
 	Spirit:    "Spirit",
 	Thief:     "Thief",
+	Tree:      "Tree",
 	Vehicle:   "Vehicle",
 	Weapon:    "Weapon",
 	Witch:     "Witch",
@@ -443,6 +445,16 @@ const (
 	// as "it" (Pip Pip stuns the enemy that just reaped). Reaping happens only on the
 	// reaper's own turn, so this naturally fires only for the reaper's opponent.
 	TriggerAfterEnemyCreatureReaps
+	// This ability resolves after any creature is destroyed — friendly or enemy —
+	// with the destroyed creature as "it" (Neffru gains its owner Æmber). It fires
+	// on every card still in play once the whole destruction batch has resolved and
+	// the destroyed cards have reached their discard piles, so a card destroyed in
+	// the same batch does not react.
+	TriggerAfterCreatureDestroyed
+	// This ability resolves after any player forges a key — its own controller or
+	// the opponent — with the forging player as its actor, so "they" refers to
+	// whoever forged (Forgemaster Og drains the forger's pool).
+	TriggerAfterPlayerForgesKey
 	// triggerCount bounds the enum so Triggers can range it; it is not a trigger.
 	triggerCount
 )
@@ -507,6 +519,10 @@ func (t Trigger) String() string {
 		return "After a Creature Reaps"
 	case TriggerAfterEnemyCreatureReaps:
 		return "After an Enemy Creature Reaps"
+	case TriggerAfterCreatureDestroyed:
+		return "After a Creature Is Destroyed"
+	case TriggerAfterPlayerForgesKey:
+		return "After a Player Forges a Key"
 	case TriggerEndOfTurn:
 		return "End of Turn"
 	case TriggerStartOfTurn:
@@ -544,6 +560,8 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return "Destroyed: ", true
 	case TriggerAfterForgeKey:
 		return "After you forge a key, ", false
+	case TriggerAfterPlayerForgesKey:
+		return "After a player forges a key, ", false
 	case TriggerAfterCreatureEnters:
 		return "After a creature enters play, ", false
 	case TriggerAfterDestroyedFighting:
@@ -564,6 +582,8 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return "After a creature reaps, ", false
 	case TriggerAfterEnemyCreatureReaps:
 		return "After an enemy creature reaps, ", false
+	case TriggerAfterCreatureDestroyed:
+		return "After a creature is destroyed, ", false
 	case TriggerLeavesPlay:
 		return "Leaves Play: ", true
 	case TriggerEndOfTurn:

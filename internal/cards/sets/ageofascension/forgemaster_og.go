@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ForgemasterOg
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Forgemaster Og
 //
 //	House:  Brobnar
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Giant
 //
-//	After a player forges a key, they lose all of their remaining A.
+//	After a player forges a key, that player loses all their Æmber.
 var ForgemasterOg = card.New(
 	"Forgemaster Og",
 	card.House.Brobnar,
@@ -24,5 +19,8 @@ var ForgemasterOg = card.New(
 	card.Provenance(card.AoA, 38),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Giant),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.AfterPlayerForgesKey,
+		card.LoseAember{Player: card.ThatPlayer, By: card.AllAember},
+	),
 )

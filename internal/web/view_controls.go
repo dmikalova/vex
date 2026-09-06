@@ -435,6 +435,11 @@ func (g *game) selActions() ([]cardAction, string) {
 	if !g.hasSel {
 		return nil, ""
 	}
+	// A peek lift, or the lift raised while choosing a house, only enlarges the
+	// card to read it — there is no turn action to offer yet, so it carries no verbs.
+	if g.inspecting || g.boardInert() {
+		return nil, ""
+	}
 	if g.phase == phaseFlank {
 		return g.flankActions()
 	}

@@ -57,6 +57,34 @@ func TestSwap(t *testing.T) {
 	}
 }
 
+func TestSwapChosen(t *testing.T) {
+	if got := (SwapChosen{}).Text(); got != "swap the positions of two creatures in a battleline" {
+		t.Errorf("text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	// No creatures: nothing to choose, no panic.
+	(SwapChosen{}).Resolve(ctx)
+
+	a := g.AddToBattleline(testCreature("a", 2), 0)
+	// One creature: no second creature to pick, battleline unchanged.
+	(SwapChosen{}).Resolve(ctx)
+	if got, want := g.Battleline(0), []LocalID{a}; !slices.Equal(got, want) {
+		t.Fatalf("single-creature swap changed battleline: %v", got)
+	}
+
+	b := g.AddToBattleline(testCreature("b", 2), 0)
+	c := g.AddToBattleline(testCreature("c", 2), 0)
+	// The default chooser picks the first creature (a) then the first of the
+	// remainder (b), swapping a and b.
+	(SwapChosen{}).Resolve(ctx)
+	if got, want := g.Battleline(0), []LocalID{b, a, c}; !slices.Equal(got, want) {
+		t.Fatalf("battleline after swap = %v, want %v", got, want)
+	}
+}
+
 func TestMoveToFlankGameMethod(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	left := g.AddToBattleline(testCreature("left", 2), 0)

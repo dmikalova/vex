@@ -68,6 +68,11 @@ the `tools` mage namespace, invoked with a colon (`mage tool:stub`):
   implemented card (the cards still to implement). With no set chosen it opens an
   interactive ↑/↓ picker; set `SET=<slug>` to name one directly (slugs match the
   files in `internal/cards/provenance` minus `.json`, e.g. `callofthearchons`).
+- `mage tool:nextCard` — print the next unimplemented card whose stub still
+  carries the `//go:build todo` constraint, in collector-number order — the card
+  to build next. With no set chosen it opens the interactive ↑/↓ picker; set
+  `SET=<slug>` to name one directly. This is the driver of the `implement-cards`
+  workflow: build the card it names, drop the build tag, and run it again.
 - `mage tool:coverage` — per-source-set count of cards covered by an implemented
   card's provenance Ref. Pass `-new` (`mage tool:coverage -new`) to count only the
   cards a set introduces, excluding the ones it reprints from an earlier set.
@@ -79,7 +84,9 @@ the `tools` mage namespace, invoked with a colon (`mage tool:stub`):
   remove the build tag and write the real ability. It also (re)generates the set
   package's `0set.go`, cataloging the cards the set reprints from earlier sets so
   they join its deck-generation pool as full members (ADR 0021). See the
-  `implement-cards` skill (`.agents/skills/implement-cards`) for the full workflow.
+  `stub-cards` skill (`.agents/skills/stub-cards`) for the stubbing workflow and
+  the `implement-cards` skill (`.agents/skills/implement-cards`) for building the
+  stubs into real cards.
 
 Run `mage -l` to see every target.
 

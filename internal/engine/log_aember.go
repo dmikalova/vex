@@ -58,14 +58,23 @@ func (e AemberStolen) Text(n Namer) string {
 }
 
 // AemberCaptured narrates Æmber moved onto a creature, where it stays out of
-// every pool until the creature leaves play.
+// every pool until the creature leaves play. Source is the card whose ability
+// captured the Æmber; when it is a different card than the capturing creature
+// (Pile of Skulls sending Æmber onto a friendly creature), the line credits the
+// source and names the creature the Æmber lands on.
 type AemberCaptured struct {
 	Creature LocalID
 	Amount   int
+	Source   LocalID
 }
 
-// Text renders the Æmber a creature captured.
+// Text renders the Æmber a creature captured, crediting the source card when it
+// is not the capturing creature itself.
 func (e AemberCaptured) Text(n Namer) string {
+	if e.Source != e.Creature {
+		return fmt.Sprintf("%s captures %d Æmber onto %s",
+			n.Name(e.Source), e.Amount, n.Name(e.Creature))
+	}
 	return fmt.Sprintf("%s captures %d Æmber", n.Name(e.Creature), e.Amount)
 }
 

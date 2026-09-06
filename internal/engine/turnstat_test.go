@@ -38,10 +38,14 @@ func TestForgedKeyCondition(t *testing.T) {
 
 	mine := ForgedKey{Player: Controller}
 	theirs := ForgedKey{Player: Opponent, Previous: true}
+	notMine := ForgedKey{Player: Controller, Not: true}
 	if got := mine.CondText(); got != "if you forged a key this turn" {
 		t.Errorf("CondText = %q", got)
 	}
 	if got := theirs.CondText(); got != "if your opponent forged a key on their previous turn" {
+		t.Errorf("CondText = %q", got)
+	}
+	if got := notMine.CondText(); got != "if you have not forged a key this turn" {
 		t.Errorf("CondText = %q", got)
 	}
 
@@ -50,11 +54,17 @@ func TestForgedKeyCondition(t *testing.T) {
 	if mine.Met(ctx) || theirs.Met(ctx) {
 		t.Error("nothing forged yet, both conditions should be unmet")
 	}
+	if !notMine.Met(ctx) {
+		t.Error("no key forged yet, the negated condition should be met")
+	}
 
 	g.SetAember(0, 6)
 	g.forgeKey(0)
 	if !mine.Met(ctx) {
 		t.Error("a key forged this turn should meet the condition")
+	}
+	if notMine.Met(ctx) {
+		t.Error("a key forged this turn should not meet the negated condition")
 	}
 
 	g.SetAember(1, 6)

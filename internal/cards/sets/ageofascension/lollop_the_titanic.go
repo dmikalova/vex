@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// LollopTheTitanic
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Lollop the Titanic
 //
 //	House:  Brobnar
 //	Type:   Creature
@@ -24,5 +19,5 @@ var LollopTheTitanic = card.New(
 	card.Provenance(card.AoA, 14),
 	card.WithPower(11),
 	card.WithTraits(card.Traits.Giant, card.Traits.Location),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithNoDamageWhenAttacked(),
 )

@@ -63,6 +63,17 @@ func (e HouseForcedNextTurn) Text(n Namer) string {
 	return fmt.Sprintf("%s must choose house %s next turn", n.PlayerName(e.Player), e.House)
 }
 
+// HouseForbiddenNextTurn narrates a card barring a house from next turn's choice.
+type HouseForbiddenNextTurn struct {
+	Player int
+	House  House
+}
+
+// Text renders the house a player cannot choose next turn.
+func (e HouseForbiddenNextTurn) Text(n Namer) string {
+	return fmt.Sprintf("%s cannot choose house %s next turn", n.PlayerName(e.Player), e.House)
+}
+
 // KeywordLostByAll narrates a keyword switched off across the whole board for
 // the rest of the turn.
 type KeywordLostByAll struct{ Keyword Keyword }

@@ -95,3 +95,19 @@ func (g *Game) discardArchives(owner int) {
 	}
 	g.record(ArchivesDiscarded{Player: owner, Count: len(ids)})
 }
+
+// discardRandomFromArchives moves one uniformly random card from a player's
+// archives to a discard pile, doing nothing if the archives are empty. The card
+// is drawn at random because a player's archives are facedown and hidden.
+func (g *Game) discardRandomFromArchives(owner int) {
+	arc := &g.State.Archives[owner]
+	if arc.Count == 0 {
+		return
+	}
+	id := arc.IDs[g.rng.Intn(int(arc.Count))]
+	arc.remove(id)
+	// A discard pile only ever holds its own player's cards, so an abducted card
+	// discarded out of these archives goes to its owner's pile.
+	g.State.Discard[g.owner(id)].add(id)
+	g.record(CardDiscardedFromArchives{Player: owner, Card: id})
+}

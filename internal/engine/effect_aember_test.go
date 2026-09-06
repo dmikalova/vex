@@ -26,6 +26,11 @@ func TestGainAemberEffect(t *testing.T) {
 	if g.State.Aember[1] != 1 {
 		t.Errorf("opponent aember = %d, want 1", g.State.Aember[1])
 	}
+
+	owner := GainAember{Player: ItsOwner, Amount: 1}
+	if owner.Text() != "its owner gains 1 Æmber" {
+		t.Errorf("owner text = %q", owner.Text())
+	}
 }
 
 func TestGainAemberPerCount(t *testing.T) {
@@ -55,6 +60,34 @@ func TestGainAemberPerArchivedCards(t *testing.T) {
 	e.Resolve(ctx)
 	if g.Aember(0) != 3 { // 1 per each of the 3 archived cards
 		t.Errorf("aember = %d, want 3", g.Aember(0))
+	}
+}
+
+func TestGainAemberMax(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	e := GainAember{Player: Controller, Amount: 1, Per: Fixed(5), Max: 2}
+	if !strings.Contains(e.Text(), "to a maximum of 2 Æmber") {
+		t.Errorf("text = %q", e.Text())
+	}
+	e.Resolve(ctx)
+	if g.Aember(0) != 2 {
+		t.Errorf("aember = %d, want 2 (capped)", g.Aember(0))
+	}
+	// Below the cap, the full amount is gained.
+	e2 := GainAember{Player: Controller, Amount: 1, Per: Fixed(1), Max: 5}
+	e2.Resolve(ctx)
+	if g.Aember(0) != 3 {
+		t.Errorf("aember = %d, want 3", g.Aember(0))
+	}
+}
+
+func TestGainAemberMaxRequiresPer(t *testing.T) {
+	if (GainAember{Player: Controller, Max: 2}).validate() == nil {
+		t.Error("Max without Per should be rejected")
+	}
+	if err := (GainAember{Player: Controller, Amount: 1, Per: Fixed(1), Max: 2}).validate(); err != nil {
+		t.Errorf("Max with Per should validate, got %v", err)
 	}
 }
 

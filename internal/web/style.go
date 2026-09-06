@@ -257,7 +257,7 @@ func (s *style) Render() app.UI {
 	}
 	sections := []styleSection{
 		{"colors", "Colour tokens", s.colorSection},
-		{"icons", "Icons", s.iconSection},
+		{"glyphs", "Glyph vocabulary", s.glyphVocabSection},
 		{"type", "Typography", s.typeSection},
 		{"houses", "House grid", s.houseSection},
 		{"features", "Card features", s.featureSection},
@@ -541,18 +541,62 @@ var styleTokens = []string{
 
 var houseTokens = []string{"--nm", "--nm-fg", "--tp", "--tp-fg", "--edge"}
 
-// iconSection shows every icon asset at the size the board draws it. The stems
-// come from galleryIcons, which a test holds equal to web/assets, so an icon
-// added to the app cannot quietly stay out of the gallery.
-func (s *style) iconSection() app.UI {
-	out := make([]app.UI, 0, len(galleryIcons))
+// glyphVocabSection is the full glyph vocabulary: every glyph asset shown with its
+// name, followed by worked composition examples run through the real effectGlyphs
+// pass, so the catalog can never drift from what cards actually render. The
+// examples end with the abstract fallback glyph a mechanic gets before it is
+// drawn.
+func (s *style) glyphVocabSection() app.UI {
+	type example struct {
+		label    string
+		triggers []string
+		effect   engine.Effect
+	}
+	examples := []example{
+		{"Play/Fight/Reap: destroy the least powerful creature",
+			[]string{"glyph-play", "glyph-fight", "glyph-reap"}, engine.Destroy{
+				Target: engine.Target{Kind: engine.TargetChosenCreature},
+			}},
+		{"Deal 3 damage to an enemy creature", []string{"glyph-play"}, engine.DealDamage{
+			Amount: 3,
+			Target: engine.Target{Kind: engine.TargetChosenEnemyCreature},
+		}},
+		{"Gain 1 Æmber", []string{"glyph-reap"}, engine.GainAember{Amount: 1}},
+		{"Stun an enemy creature", []string{"glyph-fight"}, engine.Stun{
+			Target: engine.Target{Kind: engine.TargetChosenEnemyCreature},
+		}},
+		{"Draw 2 cards", []string{"glyph-reap"}, engine.Draw{Amount: 2}},
+		{"A creature cannot fight", []string{"glyph-action"}, engine.CannotFight{}},
+		{"Look at the top card of your deck", []string{"glyph-play"}, engine.LookAtTop{Amount: 1}},
+		{"Take control of an enemy creature", []string{"glyph-play"}, engine.TakeControl{
+			Target: engine.Target{Kind: engine.TargetChosenEnemyCreature},
+		}},
+	}
+	grid := make([]app.UI, 0, len(galleryIcons))
 	for _, name := range galleryIcons {
-		out = append(out, app.Div().Class("style-swatch").Body(
+		grid = append(grid, app.Div().Class("style-swatch").Body(
 			icon(name, "icon-outline"),
 			app.Span().Class("style-mono").Text(name),
 		))
 	}
-	return app.Div().Class("style-row style-row--icons").Body(out...)
+	rows := make([]app.UI, 0, len(examples)+1)
+	for _, ex := range examples {
+		gs, _ := effectGlyphs(ex.effect)
+		rows = append(rows, app.Div().Class("style-swatch").Body(
+			iconLine(glyphLine{triggers: ex.triggers, glyphs: gs}),
+			app.Span().Class("style-mono").Text(ex.label),
+		))
+	}
+	rows = append(rows, app.Div().Class("style-swatch").Body(
+		iconLine(glyphLine{glyphs: []glyph{{asset: "glyph-unknown"}}}),
+		app.Span().Class("style-mono").Text("a mechanic not yet drawn"),
+	))
+	return app.Div().Body(
+		app.H3().Class("style-h3").Text("Every glyph"),
+		app.Div().Class("style-row style-row--icons").Body(grid...),
+		app.H3().Class("style-h3").Text("Compositions"),
+		app.Div().Class("style-row").Body(rows...),
+	)
 }
 
 // typeSection is the font comparison: the same specimen rendered once per loaded
@@ -669,7 +713,7 @@ func (s *style) attachSection() app.UI {
 		face.OnHoverOut = s.previewOut
 		face.OnActivate = s.enlargeCard
 		out = append(out, app.Div().Class("style-specimen").Body(
-			s.attachHost.hostWithTabs(a.host, face),
+			s.attachHost.hostWithTabs(a.host, face, false),
 			app.Div().Class("style-caption").Body(
 				app.Span().Class("style-caption-q").Text(a.caption),
 			),
@@ -823,6 +867,21 @@ var galleryIcons = []string{
 	"damage",
 	"exhausted",
 	"forge",
+	"glyph-action",
+	"glyph-ban",
+	"glyph-choose",
+	"glyph-destroy",
+	"glyph-destroyed",
+	"glyph-fight",
+	"glyph-flank",
+	"glyph-heal",
+	"glyph-look",
+	"glyph-play",
+	"glyph-reap",
+	"glyph-return",
+	"glyph-search",
+	"glyph-swap",
+	"glyph-unknown",
 	"house-brobnar",
 	"house-dis",
 	"house-logos",
@@ -835,6 +894,15 @@ var galleryIcons = []string{
 	"key-blue",
 	"key-red",
 	"key-yellow",
+	"kw-alpha",
+	"kw-deploy",
+	"kw-elusive",
+	"kw-hazardous",
+	"kw-omega",
+	"kw-poison",
+	"kw-skirmish",
+	"kw-taunt",
+	"kw-versatile",
 	"maverick",
 	"power",
 	"power-counter-minus",

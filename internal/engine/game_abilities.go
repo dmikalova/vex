@@ -51,6 +51,15 @@ func (g *Game) usable(player int, id LocalID) error {
 			return ErrCannotUse
 		}
 	}
+	// An attached Upgrade may also bar the host's use (Earthbind).
+	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
+		if c := g.cat.def(up).Restricts.UseCondition; c != nil {
+			ctx := &EffectContext{Resolver: g, Source: id, Controller: player}
+			if !c.Met(ctx) {
+				return ErrCannotUse
+			}
+		}
+	}
 	return nil
 }
 
@@ -73,12 +82,12 @@ func (g *Game) canUse(player int, id LocalID) error {
 // still offered while another way remains. It keeps CanUse's promise honest: a
 // Crocag with nothing to fight has no use at all this turn.
 func (g *Game) hasAnyUse(player int, id LocalID) bool {
-	if !g.cannotBeUsedTo(id, ReapUse) {
+	if !g.cannotBeUsedTo(id, ReapUse) && !g.cannotReap(player) {
 		return true
 	}
 	if !g.cannotBeUsedTo(id, FightUse) &&
 		!g.cannotFight(player) &&
-		len(g.Battleline(1-player)) > 0 {
+		g.canFightSomeEnemy(player, id) {
 		return true
 	}
 	return !g.cannotBeUsedTo(id, ActionUse) && g.hasTrigger(id, TriggerAction)
@@ -93,6 +102,9 @@ func (g *Game) canUseTo(player int, id LocalID, kind UseKind) error {
 	if err := g.canUse(player, id); err != nil &&
 		(kind != FightUse || !g.fightErrorForgiven(err, id)) {
 		return err
+	}
+	if kind == ReapUse && g.cannotReap(player) {
+		return ErrCannotUse
 	}
 	if g.cannotBeUsedTo(id, kind) {
 		return ErrCannotUse
@@ -170,7 +182,7 @@ func (g *Game) recordUse(id LocalID) {
 // exhausts, its controller gains 1 Æmber, and its "Reap:" abilities fire. A card
 // that cannot reap is not made to by an ability either.
 func (g *Game) reapWith(id LocalID) {
-	if g.cannotBeUsedTo(id, ReapUse) {
+	if g.cannotBeUsedTo(id, ReapUse) || g.cannotReap(g.controller(id)) {
 		return
 	}
 	g.recordUse(id)
@@ -191,8 +203,8 @@ func (g *Game) reapWith(id LocalID) {
 func (g *Game) gainReapAember(p int, source LocalID) {
 	if act, ok := g.lastingReplacement(p, EventReapAember); ok && act == actSteal {
 		stolen := min(1, g.State.Aember[1-p])
-		g.State.Aember[1-p] -= stolen
-		g.State.Aember[p] += stolen
+		g.SetAember(1-p, g.State.Aember[1-p]-stolen)
+		g.SetAember(p, g.State.Aember[p]+stolen)
 		g.record(ReapedStealing{Player: p, Card: source, Amount: stolen})
 		return
 	}
@@ -327,19 +339,41 @@ func (g *Game) FightTargets(player int, attacker LocalID) []LocalID {
 	if err := g.canUse(player, attacker); err != nil && !g.fightErrorForgiven(err, attacker) {
 		return nil
 	}
-	fr := g.cat.def(attacker).FightRestriction
 	var targets []LocalID
 	for _, def := range g.State.Battleline[1-player].slice() {
-		if g.protectedByTaunt(attacker, def) {
-			continue
+		if g.fightAllows(player, attacker, def) {
+			targets = append(targets, def)
 		}
-		if fr != (Target{}) &&
-			!fr.allows(&EffectContext{Resolver: g, Source: attacker, Controller: player}, def) {
-			continue
-		}
-		targets = append(targets, def)
 	}
 	return targets
+}
+
+// fightAllows reports whether attacker may legally fight the enemy def right now,
+// accounting for taunt and the attacker's fight restriction (Bigtwig fights only
+// stunned creatures). It is the per-target predicate shared by FightTargets and
+// canFightSomeEnemy; it does not repeat the player-wide and readiness checks its
+// callers make.
+func (g *Game) fightAllows(player int, attacker, def LocalID) bool {
+	if g.protectedByTaunt(attacker, def) {
+		return false
+	}
+	fr := g.cat.def(attacker).FightRestriction
+	return fr == (Target{}) ||
+		fr.allows(&EffectContext{Resolver: g, Source: attacker, Controller: player}, def)
+}
+
+// canFightSomeEnemy reports whether attacker has at least one legal fight target,
+// so hasAnyUse does not count fighting as an available use for a creature every
+// enemy is protected from (taunt) or that its restriction forbids (Bigtwig with no
+// stunned enemy). It does not call canUse, so hasAnyUse can call it without
+// recursing.
+func (g *Game) canFightSomeEnemy(player int, attacker LocalID) bool {
+	for _, def := range g.State.Battleline[1-player].slice() {
+		if g.fightAllows(player, attacker, def) {
+			return true
+		}
+	}
+	return false
 }
 
 // recoverFromStun handles using a stunned creature: it exhausts and clears the
@@ -426,6 +460,19 @@ func (g *Game) emitEnemyDestroyed(destroyed LocalID) {
 	}
 	for _, id := range g.allInPlay(active) {
 		g.triggerAbilities(id, TriggerAfterEnemyCreatureDestroyed, destroyed, true)
+	}
+}
+
+// emitCreatureDestroyed fires the "after a creature is destroyed" reaction (Neffru)
+// on every card still in play, with the destroyed creature as "it". It is called
+// once the destruction batch has finished resolving Destroyed abilities and the
+// destroyed cards have reached their discard piles, so a card destroyed in the
+// same batch is no longer in play and does not react.
+func (g *Game) emitCreatureDestroyed(destroyed LocalID) {
+	for player := 0; player < 2; player++ {
+		for _, id := range g.allInPlay(player) {
+			g.triggerAbilities(id, TriggerAfterCreatureDestroyed, destroyed, true)
+		}
 	}
 }
 

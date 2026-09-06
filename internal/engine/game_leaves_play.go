@@ -211,6 +211,14 @@ func (g *Game) destroyTogether(controller int, ids []LocalID) {
 			g.discardDestroyed(id)
 		}
 	}
+	// Only now, with the batch in the discard pile, does "after a creature is
+	// destroyed" fire — so a card destroyed in this same batch (its ability now in
+	// the discard) does not react to the deaths alongside it.
+	for _, id := range ids {
+		if g.TypeOf(id) == Creature {
+			g.emitCreatureDestroyed(id)
+		}
+	}
 }
 
 // destroyEach destroys each id simultaneously (KeyForge's shared Destroyed

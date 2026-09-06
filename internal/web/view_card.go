@@ -46,6 +46,7 @@ func (g *game) cardFace(id engine.LocalID) *cardView {
 		TypeIcon:      typeIconName(def.Type),
 		Stat:          g.statLine(id),
 		Rules:         g.faceRules(id),
+		Icons:         cardGlyphs(def),
 		Kind:          kindLabel(def),
 		Trait:         traitLabel(def),
 		Rarity:        rarityMarkOf(def.Rarity),

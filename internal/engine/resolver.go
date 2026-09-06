@@ -69,6 +69,8 @@ type CreatureReader interface {
 	Damage(id LocalID) int
 	// AmberOn returns the Æmber sitting on a card (from capture, exalt, ...).
 	AmberOn(id LocalID) int
+	// AemberBonus returns the number of Æmber pips printed on a card.
+	AemberBonus(id LocalID) int
 	// Exhausted reports whether a creature is exhausted.
 	Exhausted(id LocalID) bool
 	// InPlay reports whether a card is still on the board, as opposed to having been
@@ -303,6 +305,9 @@ type ZoneResolver interface {
 	EndShuffleBatch(source LocalID)
 	// ArchiveFromHand moves a card from its owner's hand to their archives.
 	ArchiveFromHand(id LocalID)
+	// ArchiveRandomFromHand moves one uniformly random card from a player's hand
+	// to their archives (Eureka!).
+	ArchiveRandomFromHand(owner int)
 	// ArchiveFromDiscard moves a card from a player's discard pile to their archives.
 	ArchiveFromDiscard(owner int, id LocalID)
 	// ArchiveTopOfDeck moves the top card of a player's deck to their archives,
@@ -331,6 +336,10 @@ type ZoneResolver interface {
 	// the game when its play completes, rather than going to the discard pile
 	// (Library Access purges itself).
 	MarkPlayedActionPurged(id LocalID)
+	// MarkPlayedActionArchived marks a resolving action card to go to its owner's
+	// archives when its play completes, rather than going to the discard pile
+	// (Sucker Punch archives itself).
+	MarkPlayedActionArchived(id LocalID)
 	// PutIntoPlay puts a card into play under controller's control without playing
 	// it — no bonus icons and no Play: abilities resolve.
 	PutIntoPlay(id LocalID, controller int)
@@ -378,12 +387,18 @@ type ZoneResolver interface {
 	// MoveFromDiscardToTopOfDeck moves a card from its owner's discard to the top
 	// of their deck.
 	MoveFromDiscardToTopOfDeck(id LocalID)
+	// ShuffleFromDiscardIntoDeck moves a card from its owner's discard pile into
+	// their deck and shuffles, collected into a shuffle batch when one is open.
+	ShuffleFromDiscardIntoDeck(id LocalID)
 	// DiscardCardFromHand moves a specific card from a player's hand to their discard
 	// zone.
 	DiscardCardFromHand(owner int, id LocalID)
 	// DiscardRandomFromHand discards one uniformly random card from a player's hand,
 	// doing nothing if the hand is empty.
 	DiscardRandomFromHand(owner int)
+	// DiscardRandomFromArchives discards one uniformly random card from a player's
+	// archives, doing nothing if the archives are empty.
+	DiscardRandomFromArchives(owner int)
 }
 
 // TurnResolver installs turn-scoped and lasting effects: restrictions and grants
@@ -427,6 +442,9 @@ type TurnResolver interface {
 	// ForceActiveHouseNextTurn makes a player have to choose the given house as their
 	// active house on their next turn.
 	ForceActiveHouseNextTurn(player int, house House, source LocalID)
+	// ForbidActiveHouseNextTurn makes a player unable to choose the given house as
+	// their active house on their next turn.
+	ForbidActiveHouseNextTurn(player int, house House, source LocalID)
 }
 
 // ChoiceResolver asks a player to make a decision — ordering a set of cards, or
@@ -558,12 +576,16 @@ func (g *Game) IsCreature(id LocalID) bool { return g.cat.def(id).Type == Creatu
 // TypeOf returns a card's type.
 func (g *Game) TypeOf(id LocalID) CardType { return g.cat.def(id).Type }
 
-// SetAember sets a player's Æmber pool, clamped at zero.
+// SetAember sets a player's Æmber pool, clamped at zero. Pool Æmber can feed a
+// creature's power (Marmo Swarm gains +1 power per Æmber in its controller's pool),
+// so lowering a pool can leave a creature with lethal damage; settleDestroyed
+// notices, mirroring the sweep addAmberOn runs when card-borne Æmber changes.
 func (g *Game) SetAember(player, amount int) {
 	if amount < 0 {
 		amount = 0
 	}
 	g.State.Aember[player] = amount
+	g.settleDestroyed(g.State.ActivePlayer)
 }
 
 // stateOf returns a card's mutable in-play state, or nil once it has left play.
@@ -737,6 +759,16 @@ func (g *Game) EndShuffleBatch(source LocalID) {
 // ArchiveFromHand moves a card from its owner's hand to their archives.
 func (g *Game) ArchiveFromHand(id LocalID) { g.archiveFromHand(g.owner(id), id) }
 
+// ArchiveRandomFromHand moves one uniformly random card from a player's hand to
+// their archives, doing nothing if the hand is empty.
+func (g *Game) ArchiveRandomFromHand(owner int) {
+	hand := &g.State.Hand[owner]
+	if hand.Count == 0 {
+		return
+	}
+	g.archiveFromHand(owner, hand.IDs[g.rng.Intn(int(hand.Count))])
+}
+
 // ArchiveFromDiscard moves a card from a player's discard pile to their archives.
 func (g *Game) ArchiveFromDiscard(owner int, id LocalID) { g.archiveFromDiscard(owner, id) }
 
@@ -748,6 +780,10 @@ func (g *Game) ArchiveTopOfDiscard(player int) bool { return g.archiveTopOfDisca
 
 // DiscardArchives moves all of a player's archived cards to their discard pile.
 func (g *Game) DiscardArchives(owner int) { g.discardArchives(owner) }
+
+// DiscardRandomFromArchives discards one uniformly random card from a player's
+// archives, doing nothing if the archives are empty.
+func (g *Game) DiscardRandomFromArchives(owner int) { g.discardRandomFromArchives(owner) }
 
 // PurgeFromDiscard moves a card from a player's discard pile to their purge pile.
 func (g *Game) PurgeFromDiscard(owner int, id LocalID) { g.purgeFromDiscard(owner, id) }
@@ -763,6 +799,13 @@ func (g *Game) PurgeFromPlay(id LocalID) { g.purgeFromPlay(id) }
 func (g *Game) MarkPlayedActionPurged(id LocalID) {
 	g.State.PurgePlayedAction = id
 	g.State.PurgePlayedActionSet = true
+}
+
+// MarkPlayedActionArchived marks a resolving action to be archived instead of
+// discarded when its play completes (Sucker Punch).
+func (g *Game) MarkPlayedActionArchived(id LocalID) {
+	g.State.ArchivePlayedAction = id
+	g.State.ArchivePlayedActionSet = true
 }
 
 // AddPowerCounter changes the net power counters on a creature.
@@ -809,6 +852,21 @@ func (g *Game) MoveFromDiscardToTopOfDeck(id LocalID) {
 	g.State.Discard[o].remove(id)
 	g.State.Deck[o].addFront(id)
 	g.record(CardPutFromDiscardOnTopOfDeck{Player: o, Card: id})
+}
+
+// ShuffleFromDiscardIntoDeck moves a card from its owner's discard pile into their
+// deck and shuffles. During a shuffle batch the card is collected for a single
+// grouped narration rather than narrated on its own (Not Finished with You).
+func (g *Game) ShuffleFromDiscardIntoDeck(id LocalID) {
+	o := g.owner(id)
+	g.State.Discard[o].remove(id)
+	g.State.Deck[o].add(id)
+	g.Shuffle(o)
+	if g.batchingShuffle {
+		g.shuffleBatch = append(g.shuffleBatch, id)
+		return
+	}
+	g.record(CardShuffledIntoDeck{Card: id, Owner: o})
 }
 
 // GainChains adds chains to a player, which reduce their draws until shed.

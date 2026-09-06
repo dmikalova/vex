@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Rustgnawer
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Untamed
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Beast • Insect
 //
-//	Fight: Destroy an artifact. If that artifact had an Aember bonus, you gain that much A.
+//	Fight: Destroy an artifact. For each Æmber bonus on the destroyed artifact, gain 1 Æmber.
 var Rustgnawer = card.New(
 	"Rustgnawer",
 	card.House.Untamed,
@@ -24,5 +19,13 @@ var Rustgnawer = card.New(
 	card.Provenance(card.AoA, 330),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Beast, card.Traits.Insect),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Fight, card.Sentences{Effects: []card.Effect{
+			card.Destroy{Target: card.Target.Artifact},
+			card.GainAember{
+				Player: card.Controller,
+				Amount: 1,
+				Per:    card.AemberBonusDestroyed{},
+			},
+		}}),
 )

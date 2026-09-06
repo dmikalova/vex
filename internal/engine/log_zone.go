@@ -116,6 +116,19 @@ func (e CardDiscarded) Text(n Namer) string {
 		n.PlayerName(e.Player), nameMoved(n, e.Card, Hand, Discard))
 }
 
+// CardDiscardedFromArchives narrates a card going from an archives to a discard
+// pile, which is public, so the card lands face up and is named.
+type CardDiscardedFromArchives struct {
+	Player int
+	Card   LocalID
+}
+
+// Text renders the discarded card, revealed as it enters the public discard pile.
+func (e CardDiscardedFromArchives) Text(n Namer) string {
+	return fmt.Sprintf("%s discards %s from their archives",
+		n.PlayerName(e.Player), nameMoved(n, e.Card, Archives, Discard))
+}
+
 // CardPurgedFromDiscard narrates a card purged out of a discard pile.
 type CardPurgedFromDiscard struct {
 	Player int

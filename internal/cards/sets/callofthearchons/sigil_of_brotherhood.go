@@ -18,8 +18,8 @@ var SigilOfBrotherhood = card.New(
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, 236),
-	card.WithTraits(card.Traits.Power),
 	card.WithAemberBonus(1),
+	card.WithTraits(card.Traits.Power),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(card.Trigger.Action, card.Sentences{Effects: []card.Effect{
 		card.Destroy{Target: card.Target.This},

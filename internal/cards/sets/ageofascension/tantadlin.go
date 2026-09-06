@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Tantadlin
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Untamed
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  9
 //	Traits: Tree
 //
-//	Tantadlin only deals 2D when fighting.
+//	Tantadlin deals 2 Damage when fighting.
 //	Fight: Discard a random card from your opponent's archives.
 var Tantadlin = card.New(
 	"Tantadlin",
@@ -25,5 +20,10 @@ var Tantadlin = card.New(
 	card.Provenance(card.AoA, 333),
 	card.WithPower(9),
 	card.WithTraits(card.Traits.Tree),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAttackDamage(card.AttackDamage{
+		Amount: 2,
+		Fixed:  true,
+	}),
+	card.WithAbility(
+		card.Trigger.Fight, card.DiscardRandomFromArchives{Player: card.Opponent}),
 )

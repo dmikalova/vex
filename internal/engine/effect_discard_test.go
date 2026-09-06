@@ -266,6 +266,53 @@ func TestDiscardRandomFromHand(t *testing.T) {
 	}
 }
 
+func TestDiscardRandomFromArchives(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	a := g.AddToArchives(NewCard("a", Mars, Tactic, Common), 1)
+	b := g.AddToArchives(NewCard("b", Mars, Tactic, Common), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	e := DiscardRandomFromArchives{Player: Opponent}
+	if e.Text() != "discard a random card from your opponent's archives" {
+		t.Errorf("text = %q", e.Text())
+	}
+	if self := (DiscardRandomFromArchives{Player: Controller}).Text(); self != "discard a random card from your archives" {
+		t.Errorf("self text = %q", self)
+	}
+	if owner := (DiscardRandomFromArchives{Player: ItsOwner}).Text(); owner != "its owner discards a random card from their archives" {
+		t.Errorf("owner text = %q", owner)
+	}
+	if (DiscardRandomFromArchives{}).validate() == nil {
+		t.Error("unset player should be invalid")
+	}
+	if (DiscardRandomFromArchives{Player: Opponent}).validate() != nil {
+		t.Error("set player should be valid")
+	}
+
+	e.Resolve(ctx)
+	if g.State.Archives[1].Count != 1 {
+		t.Errorf("archives count = %d, want 1 after one discard", g.State.Archives[1].Count)
+	}
+	if g.State.Discard[1].Count != 1 {
+		t.Errorf("discard count = %d, want 1", g.State.Discard[1].Count)
+	}
+	// The discarded card is one of the two; the other remains.
+	if g.State.Archives[1].contains(a) == g.State.Archives[1].contains(b) {
+		t.Error("exactly one of the two cards should remain in archives")
+	}
+
+	// Empty archives is a no-op.
+	g.DiscardRandomFromArchives(1)
+	g.DiscardRandomFromArchives(1) // archives now empty
+	g.DiscardRandomFromArchives(1)
+	if g.State.Discard[1].Count != 2 {
+		t.Errorf(
+			"discard count = %d, want 2 (empty-archives discards are no-ops)",
+			g.State.Discard[1].Count,
+		)
+	}
+}
+
 func TestDiscardFromHandEffect(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	a := g.AddToHand(NewCard("a", Logos, Tactic, Common), 0)

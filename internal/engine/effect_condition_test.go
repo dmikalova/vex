@@ -81,6 +81,62 @@ func TestControlsMoreCreatures(t *testing.T) {
 	}
 }
 
+func TestSourceOnFlankCondition(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	left := g.AddToBattleline(testCreature("left", 2), 0)
+	mid := g.AddToBattleline(testCreature("mid", 2), 0)
+	g.AddToBattleline(testCreature("right", 2), 0)
+
+	on := SourceOnFlank{}
+	off := SourceOnFlank{Not: true}
+	if on.CondText() != "if "+SelfName+" is on a flank" {
+		t.Errorf("on CondText = %q", on.CondText())
+	}
+	if off.CondText() != "if "+SelfName+" is not on a flank" {
+		t.Errorf("off CondText = %q", off.CondText())
+	}
+	if !on.Met(&EffectContext{Resolver: g, Source: left}) {
+		t.Error("left flank creature should satisfy SourceOnFlank")
+	}
+	if on.Met(&EffectContext{Resolver: g, Source: mid}) {
+		t.Error("interior creature should not satisfy SourceOnFlank")
+	}
+	if !off.Met(&EffectContext{Resolver: g, Source: mid}) {
+		t.Error("interior creature should satisfy SourceOnFlank{Not}")
+	}
+	if off.Met(&EffectContext{Resolver: g, Source: left}) {
+		t.Error("flank creature should not satisfy SourceOnFlank{Not}")
+	}
+}
+
+func TestSourceNeighborsAllOfHouseCondition(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	marsCreature := func(name string) CardDefinition {
+		return NewCard(name, Mars, Creature, Common, WithPower(2))
+	}
+	g.AddToBattleline(marsCreature("left"), 0)
+	src := g.AddToBattleline(marsCreature("mid"), 0)
+	g.AddToBattleline(testCreature("right", 2), 0) // Brobnar
+
+	c := SourceNeighborsAllOfHouse{House: Mars}
+	if c.CondText() != "if it has no non-Mars neighbor" {
+		t.Errorf("CondText = %q", c.CondText())
+	}
+	ctx := &EffectContext{Resolver: g, Source: src}
+	if c.Met(ctx) {
+		t.Error("Mars creature with a Brobnar neighbor should not be met")
+	}
+
+	// A battleline of only Mars creatures satisfies the condition.
+	g2 := NewGame("A", "B", 1)
+	g2.AddToBattleline(marsCreature("l"), 0)
+	src2 := g2.AddToBattleline(marsCreature("m"), 0)
+	g2.AddToBattleline(marsCreature("r"), 0)
+	if !c.Met(&EffectContext{Resolver: g2, Source: src2}) {
+		t.Error("Mars creature with only Mars neighbors should be met")
+	}
+}
+
 func TestControlsCreaturesOfHouses(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
@@ -226,6 +282,44 @@ func TestMayRepeat(t *testing.T) {
 		MayRepeat{Cond: InPlay{Player: Controller, Type: Creature}, Do: StealAember{Amount: 1}},
 	); err != nil {
 		t.Errorf("validate = %v", err)
+	}
+}
+
+// When Do is a single clickable choice, the repeat is offered by letting the
+// player keep picking rather than answering Yes/No.
+func TestMayRepeatDrivenByChoice(t *testing.T) {
+	e := MayRepeat{
+		Cond: InPlay{Player: Controller, Type: Creature},
+		Do: Sequence{Effects: []Effect{
+			Destroy{Target: Target{Kind: TargetChosenEnemyCreature}},
+			Destroy{Target: Target{Kind: TargetChosenFriendlyCreature}},
+		}},
+	}
+
+	// Picking again keeps repeating until no friendly creature remains.
+	accepted := NewGame("A", "B", 1)
+	accepted.SetChooser(0, &cardDecliner{})
+	foeA := accepted.AddToBattleline(testCreature("FoeA", 3), 1)
+	foeB := accepted.AddToBattleline(testCreature("FoeB", 3), 1)
+	allyA := accepted.AddToBattleline(testCreature("AllyA", 3), 0)
+	allyB := accepted.AddToBattleline(testCreature("AllyB", 3), 0)
+	e.Resolve(&EffectContext{Resolver: accepted, Controller: 0})
+	for _, id := range []LocalID{foeA, foeB, allyA, allyB} {
+		if onAnyLine(accepted, id) {
+			t.Errorf("creature %d should have been destroyed", id)
+		}
+	}
+
+	// Passing on the first offer runs Do exactly once even though a friendly remains.
+	declined := NewGame("A", "B", 1)
+	declined.SetChooser(0, &cardDecliner{decline: true})
+	declined.AddToBattleline(testCreature("FoeA", 3), 1)
+	survivorFoe := declined.AddToBattleline(testCreature("FoeB", 3), 1)
+	declined.AddToBattleline(testCreature("AllyA", 3), 0)
+	survivorAlly := declined.AddToBattleline(testCreature("AllyB", 3), 0)
+	e.Resolve(&EffectContext{Resolver: declined, Controller: 0})
+	if !onAnyLine(declined, survivorFoe) || !onAnyLine(declined, survivorAlly) {
+		t.Error("declining the repeat should leave the second pair in play")
 	}
 }
 
@@ -570,5 +664,34 @@ func TestFirstCreaturePlayedThisTurn(t *testing.T) {
 	}
 	if cond.Met(&EffectContext{Resolver: g, Controller: 0, It: second, HasIt: true}) {
 		t.Error("a later creature should not meet the condition")
+	}
+}
+
+func TestNoCreaturesPlayedThisTurn(t *testing.T) {
+	cond := NoCreaturesPlayedThisTurn{}
+	if got := cond.CondText(); got != "if you did not play any creatures this turn" {
+		t.Errorf("text = %q", got)
+	}
+
+	g := started(t)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	if !cond.Met(ctx) {
+		t.Error("having played nothing, the condition should be met")
+	}
+
+	tactic := g.AddToHand(NewCard("Warm Up", Brobnar, Tactic, Common), 0)
+	if err := g.PlayAction(0, handIdxByID(g, 0, tactic)); err != nil {
+		t.Fatalf("play tactic: %v", err)
+	}
+	if !cond.Met(ctx) {
+		t.Error("playing only a tactic should keep the condition met")
+	}
+
+	creature := g.AddToHand(NewCard("Beef", Brobnar, Creature, Common, WithPower(2)), 0)
+	if _, err := g.PlayCreature(0, handIdxByID(g, 0, creature), false); err != nil {
+		t.Fatalf("play creature: %v", err)
+	}
+	if cond.Met(ctx) {
+		t.Error("after playing a creature the condition should not be met")
 	}
 }

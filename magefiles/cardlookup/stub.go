@@ -112,24 +112,38 @@ func writeSetConfig(dir string, set provenance.Set) (int, error) {
 
 // reprintsForSet returns the cards in set's catalog that are implemented in a
 // different set — the reprints it claims as pool members via 0set.go — in
-// collector-number order. A card native to this set (implemented in its own
-// package) or not implemented anywhere is not a reprint.
+// collector-number order. A source printing is a reprint when an implemented
+// card built from another printing of that same card lives in a different set:
+// each implemented card's provenance Refs are resolved to the names of the source
+// cards it was built from, and any same-named printing in this set is that card.
+// This is what lets a card tag only the printing it was built from (and a card
+// renamed away from its printed name still resolve). The emitted claim carries
+// the implementing card's own name so it resolves in the aggregator, and each
+// implementing card appears at most once.
 func reprintsForSet(set provenance.Set) []provenance.Card {
-	implemented := map[string]bool{}
-	home := map[string]string{}
+	refName := sourceNameByRef()
+	type impl struct{ name, home string }
+	bySourceName := map[string]impl{}
 	for _, rc := range card.Cards() {
-		n := normalizeName(rc.Def.Name)
-		implemented[n] = true
+		home := ""
 		if len(rc.Provenance) > 0 {
-			home[n] = rc.Provenance[0].Set.Name
+			home = rc.Provenance[0].Set.Name
+		}
+		for _, ref := range rc.Provenance {
+			if name, ok := refName[ref]; ok {
+				bySourceName[normalizeName(name)] = impl{rc.Def.Name, home}
+			}
 		}
 	}
 	var out []provenance.Card
+	seen := map[string]bool{}
 	for _, c := range set.Cards {
-		n := normalizeName(c.Name)
-		if !implemented[n] || home[n] == set.Name {
+		im, ok := bySourceName[normalizeName(c.Name)]
+		if !ok || im.home == set.Name || seen[im.name] {
 			continue
 		}
+		seen[im.name] = true
+		c.Name = im.name
 		out = append(out, c)
 	}
 	sort.Slice(out, func(i, j int) bool { return out[i].Number < out[j].Number })

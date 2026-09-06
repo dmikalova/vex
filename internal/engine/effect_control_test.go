@@ -145,6 +145,32 @@ func TestTakeControlArtifact(t *testing.T) {
 			t.Errorf("controller = %d, want 1 (the opponent)", g.controller(art))
 		}
 	})
+
+	t.Run("gives a chosen friendly artifact away and reports progress", func(t *testing.T) {
+		give := TakeControl{
+			Target:     Target{Kind: TargetChosenFriendlyArtifact},
+			Duration:   Forever,
+			ToOpponent: true,
+		}
+		if got := give.Text(); got != "your opponent gains control of a friendly artifact" {
+			t.Errorf("friendly give text = %q", got)
+		}
+
+		g := NewGame("A", "B", 1)
+		art := g.AddArtifact(NewCard("Gizmo", Sanctum, Artifact, Common), 0)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+		if !give.resolveGate(ctx) {
+			t.Error("giving an artifact away should report progress")
+		}
+		if g.controller(art) != 1 {
+			t.Errorf("controller = %d, want 1 (the opponent)", g.controller(art))
+		}
+
+		empty := NewGame("A", "B", 1)
+		if give.resolveGate(&EffectContext{Resolver: empty, Controller: 0}) {
+			t.Error("no friendly artifact should report no progress")
+		}
+	})
 }
 
 func TestItIsOffIdentity(t *testing.T) {

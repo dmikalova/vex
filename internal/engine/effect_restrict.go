@@ -316,3 +316,19 @@ func (ForceOpponentActiveHouse) Text() string {
 func (ForceOpponentActiveHouse) Resolve(ctx *EffectContext) {
 	ctx.Resolver.ForceActiveHouseNextTurn(ctx.Opponent(), ctx.ChosenHouse, ctx.Source)
 }
+
+// ForbidOpponentActiveHouse bars the opponent from choosing the house picked by
+// an enclosing ChooseHouseThen as their active house on their next turn — Tezmal's
+// "your opponent cannot choose that house as their active house on their next
+// turn."
+type ForbidOpponentActiveHouse struct{}
+
+// Text renders the effect.
+func (ForbidOpponentActiveHouse) Text() string {
+	return "your opponent cannot choose that house as their active house on their next turn"
+}
+
+// Resolve arms the forbidden house on the opponent's next turn.
+func (ForbidOpponentActiveHouse) Resolve(ctx *EffectContext) {
+	ctx.Resolver.ForbidActiveHouseNextTurn(ctx.Opponent(), ctx.ChosenHouse, ctx.Source)
+}

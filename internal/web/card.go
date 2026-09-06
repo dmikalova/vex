@@ -29,7 +29,12 @@ type cardView struct {
 	HouseChanged bool
 	TypeIcon     string   // card-type icon asset stem
 	Stat         []app.UI // compact stat nodes (power, damage, Æmber… with icons)
-	Rules        string   // rules/ability text for the face
+	// Icons is the card's Icon strip: its mechanics as composed glyph lines, shown
+	// between the stat line and the trait line (ADR 0022). Empty leaves the strip
+	// off (a card with no triggered abilities, or a live-board face that does not
+	// build it).
+	Icons []glyphLine
+	Rules string // rules/ability text for the face
 	// Trait is the card's trait line (e.g. "Human • Knight"), shown in the body
 	// under the stat line and above the rules; "" when the card has no traits.
 	Trait string
@@ -99,6 +104,9 @@ type cardView struct {
 	// leaves — they drive the hover card preview.
 	OnHover    func(app.Context, engine.LocalID)
 	OnHoverOut func(app.Context)
+	// OnContextMenu fires with ID on a right-click or a touch long-press; it raises
+	// the read-only inspect lift. nil leaves the browser's own context menu in place.
+	OnContextMenu func(app.Context, engine.LocalID)
 }
 
 // onClick is a stable method (unlike a per-card closure) so go-app keeps it bound
@@ -132,6 +140,16 @@ func (c *cardView) onMouseLeave(ctx app.Context, _ app.Event) {
 	if c.OnHoverOut != nil {
 		c.OnHoverOut(ctx)
 	}
+}
+
+// onContextMenu suppresses the browser's own menu and raises the inspect lift, so
+// a right-click or touch long-press reads a card instead of offering to save it.
+func (c *cardView) onContextMenu(ctx app.Context, e app.Event) {
+	if c.OnContextMenu == nil {
+		return
+	}
+	e.PreventDefault()
+	c.OnContextMenu(ctx, c.ID)
 }
 
 // powerCounterToken draws the +1 (or -1) power-counter token in the card's status
@@ -230,6 +248,9 @@ func (c *cardView) Render() app.UI {
 	if c.OnHover != nil {
 		div = div.OnMouseEnter(c.onMouseEnter).OnMouseLeave(c.onMouseLeave)
 	}
+	if c.OnContextMenu != nil {
+		div = div.OnContextMenu(c.onContextMenu)
+	}
 
 	return div.Body(
 		app.If(len(c.Bar) > 0 || c.TauntShielded, func() app.UI {
@@ -277,6 +298,9 @@ func (c *cardView) Render() app.UI {
 						)
 					}),
 				)
+			}),
+			app.If(len(c.Icons) > 0, func() app.UI {
+				return iconStrip(c.Icons)
 			}),
 			app.If(c.Trait != "", func() app.UI {
 				return app.Div().Class("card-traits").Text(c.Trait)

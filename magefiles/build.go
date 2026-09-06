@@ -14,11 +14,16 @@ import (
 // Build builds all packages, for the host and the browser. `go build
 // ./...` compiles the web client for the host, which misses anything that only
 // breaks under js/wasm, so WebWasm compiles it again for the target it ships to.
+// WebAssets then minifies and precompresses the static web assets the server
+// streams.
 func Build() error {
 	if err := sh.RunV("go", "build", "./..."); err != nil {
 		return err
 	}
-	return WebWasm()
+	if err := WebWasm(); err != nil {
+		return err
+	}
+	return WebAssets()
 }
 
 // Test runs all tests.

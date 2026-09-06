@@ -94,6 +94,32 @@ func TestDuplicatePull(t *testing.T) {
 	}
 }
 
+// RarityWeight biases pick toward its heavier peers: a weight-3 card drawn
+// against a weight-1 (default) card wins the clear majority of draws.
+func TestRarityWeightBiasesPick(t *testing.T) {
+	heavy := mkCard("Heavy", engine.Brobnar, engine.Common)
+	heavy.Profile.RarityWeight = 3
+	light := mkCard("Light", engine.Brobnar, engine.Common)
+	g := gen(NewSet("S", []Card{heavy, light}, Tuning{
+		RarityWeights: map[engine.Rarity]float64{engine.Common: 1},
+	}))
+	cards := []Card{heavy, light}
+	heavyWins := 0
+	const draws = 400
+	for range draws {
+		c, ok := g.pick(cards)
+		if !ok {
+			t.Fatal("pick found nothing eligible")
+		}
+		if c.Def.Name == "Heavy" {
+			heavyWins++
+		}
+	}
+	if heavyWins <= draws/2 {
+		t.Fatalf("weight-3 card won %d of %d draws, want a majority", heavyWins, draws)
+	}
+}
+
 // The duplicate-pull only copies a card the pod could legally hold twice, so a
 // placed card of another rarity, an empty slot, and a one-copy-per-deck card are
 // each passed over — leaving nothing to copy, and a fresh draw to fill the slot.

@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Gub
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Dis
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  1
 //	Traits: Demon
 //
-//	While Gub is not on a flank, it gets +5 power and gains taunt.
+//	Gub gains +5 power and taunt while it is not on a flank.
 var Gub = card.New(
 	"Gub",
 	card.House.Dis,
@@ -24,5 +19,10 @@ var Gub = card.New(
 	card.Provenance(card.AoA, 60),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Demon),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithConstant(card.ConstantAbility{
+		Target:        card.Target.This,
+		PowerBonus:    5,
+		Keywords:      card.Keywords(card.Keyword.Taunt),
+		WhileOffFlank: true,
+	}),
 )

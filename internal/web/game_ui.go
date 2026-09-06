@@ -85,6 +85,32 @@ func (g *game) onLogCardHover(ctx app.Context, _ app.Event) {
 // onCardHoverOut hides the hover preview (a log-mention leave).
 func (g *game) onCardHoverOut(_ app.Context, _ app.Event) { g.hasHover, g.hoverDef = false, nil }
 
+// liftCard raises the read-only inspect lift for a card, whatever the phase — the
+// long-press/right-click path to enlarge a card while a prompt (a chooser, a
+// house choice) owns the board and a tap would answer it. It selects the card for
+// the lift without the play-phase guards a click passes, so it works mid-prompt;
+// selActions draws no verbs while inspecting, so the lift only enlarges.
+func (g *game) liftCard(_ app.Context, id engine.LocalID) {
+	if g.pickerOpen {
+		return
+	}
+	if idx := indexOfID(g.g.Hand(g.active()), id); idx >= 0 {
+		g.sel, g.selKind, g.selHand = id, selHand, idx
+	} else {
+		g.sel, g.selKind, g.selHand = id, g.boardKindOf(id), -1
+	}
+	g.hasSel, g.inspecting = true, true
+	g.measureFocus()
+}
+
+// dropInspect dismisses the inspect lift when its enlarged copy is tapped, so a
+// peek raised over a prompt gets out of the way of answering it.
+func (g *game) dropInspect(_ app.Context, _ app.Event) {
+	if g.inspecting {
+		g.clearSelection()
+	}
+}
+
 // remainingKeyColors lists the key colours player has not yet forged, in the
 // canonical order.
 func (g *game) remainingKeyColors(player int) []engine.KeyColor {

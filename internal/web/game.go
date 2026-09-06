@@ -171,6 +171,9 @@ type game struct {
 	toastHover   bool
 	toastPinned  bool
 	toastGen     int
+	// toastSwipeStart marks whether the in-flight touch began on the toast, so the
+	// global swipe listener flicks the toast away rather than moving the sidebar.
+	toastSwipeStart bool
 
 	// keysOpen shows the keyboard shortcut sheet (the ? key).
 	keysOpen bool
@@ -310,6 +313,12 @@ type game struct {
 	focusShown   focusSnapshot
 	focusExitGen int
 
+	// inspecting marks the lift as a read-only peek raised by a long press or
+	// right-click rather than a selection: it enlarges a card to read while a prompt
+	// (a chooser, a house choice) owns the board, so it shows the card's face with
+	// no action buttons and is dropped by the next tap or Escape.
+	inspecting bool
+
 	// statusGen tags the current status message so a scheduled auto-clear only
 	// clears the message it was armed for, not a newer one.
 	statusGen int
@@ -368,7 +377,7 @@ const persistKey = "vactrol.match"
 // snapshots invalid so a stale one is flushed instead of restored. A log entry is
 // saved as the prose it was narrated with, so rewording an entry dates every
 // snapshot holding the old wording and counts as such a change.
-const snapshotVersion = 10
+const snapshotVersion = 11
 
 // snapshot is the persisted match. The seed deterministically rebuilds the
 // catalog and card ids; the flat GameState carries everything mutable. All other
@@ -465,5 +474,6 @@ func (g *game) clearSelection() {
 	g.selKind = selNone
 	g.selHand = -1
 	g.hasSel = false
+	g.inspecting = false
 	g.attacker = 0
 }

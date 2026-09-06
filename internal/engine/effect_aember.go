@@ -17,12 +17,18 @@ type GainAember struct {
 	Player Player
 	Amount int
 	Per    Count
+	// Max caps the total gained after the Per count multiplies it (Free Markets
+	// gains 1 Æmber per house in play, to a maximum of 6). Zero means no cap.
+	Max int
 }
 
 // validate rejects a GainAember whose player was left unset.
 func (e GainAember) validate() error {
 	if !e.Player.valid() {
 		return errUnsetPlayer("GainAember")
+	}
+	if e.Max != 0 && e.Per == nil {
+		return errors.New("GainAember: Max requires a Per count")
 	}
 	return nil
 }
@@ -37,6 +43,11 @@ func (e GainAember) Text() string {
 		phrase = fmt.Sprintf("your opponent gains %d Æmber", e.Amount)
 	case EachPlayer:
 		phrase = fmt.Sprintf("each player gains %d Æmber", e.Amount)
+	case ItsOwner:
+		phrase = fmt.Sprintf("its owner gains %d Æmber", e.Amount)
+	}
+	if e.Max > 0 {
+		phrase += fmt.Sprintf(", to a maximum of %d Æmber", e.Max)
 	}
 	return forEach(e.Per, phrase)
 }
@@ -61,6 +72,9 @@ func (e GainAember) Resolve(ctx *EffectContext) {
 // capture that replaces the gain.
 func (e GainAember) gain(ctx *EffectContext, p int) {
 	amount := scaled(e.Amount, e.Per, ctx)
+	if e.Max > 0 && amount > e.Max {
+		amount = e.Max
+	}
 	if capturer, ok := ctx.Resolver.GainAember(p, amount); ok {
 		ctx.Resolver.Record(AemberCapturedInsteadOfGain{
 			Creature: capturer,
@@ -179,6 +193,8 @@ func (e LoseAember) Text() string {
 		subject, verb, possessive = "each player", "loses", "their"
 	case Opponent:
 		subject, verb, possessive = "your opponent", "loses", "their"
+	case ThatPlayer:
+		subject, verb, possessive = "that player", "loses", "their"
 	default:
 		subject, verb, possessive = "", "lose", "your"
 	}

@@ -17,8 +17,8 @@ var GangerChieftain = card.New(
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, 33),
-	card.WithTraits(card.Traits.Giant),
 	card.WithPower(5),
+	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(
 		card.Trigger.Play, card.OnChooseCreature{
 			Target: card.Target.Creature.Neighboring(),

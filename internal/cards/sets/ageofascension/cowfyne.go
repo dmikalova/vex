@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Giant
 //
-//	Before Fight: Deal 2 damage to each neighbor of the creature Cowfyne fights.
+//	Splash-attack 2.
 var Cowfyne = card.New(
 	"Cowfyne",
 	card.House.Brobnar,
@@ -19,9 +19,5 @@ var Cowfyne = card.New(
 	card.Provenance(card.AoA, 5),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Giant),
-	card.WithAbility(
-		card.Trigger.BeforeFight, card.DealDamage{
-			Amount: 2,
-			Target: card.Target.CreatureFought.NeighborsOf(),
-		}),
+	card.WithSplashAttack(2),
 )

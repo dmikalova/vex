@@ -25,6 +25,7 @@ type docLink struct {
 // to each sibling reference page.
 var docLinks = []docLink{
 	{"/", "Game"},
+	{"/cards", "Cards"},
 	{"/rulebook", "Rulebook"},
 	{"/glossary", "Glossary"},
 }

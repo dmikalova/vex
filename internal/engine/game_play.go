@@ -68,8 +68,8 @@ func (g *Game) chargeToll(player int, action TollAction) error {
 		return ErrCannotPayToll
 	}
 	payee := 1 - player
-	g.State.Aember[player] -= owed
-	g.State.Aember[payee] += owed
+	g.SetAember(player, g.State.Aember[player]-owed)
+	g.SetAember(payee, g.State.Aember[payee]+owed)
 	g.record(TollPaid{Player: player, Payee: payee, Amount: owed, Action: action})
 	return nil
 }
@@ -333,6 +333,9 @@ func (g *Game) playCardFromZone(
 func (g *Game) playCreatureCard(player int, id LocalID, flankLeft bool) {
 	core := &g.State.Cards[id]
 	core.Exhausted = true // enters play exhausted; readies during the end-of-turn ready step
+	if g.entersPlayReady(g.controller(id), Creature) {
+		core.Exhausted = false
+	}
 	core.ArmorRemaining = int16(g.armor(id))
 	pos, interior := g.deployPosition(player, id, flankLeft)
 	g.State.Battleline[player].insertAt(pos, id)
@@ -388,6 +391,9 @@ func (g *Game) putIntoPlay(id LocalID, controller int) {
 // artifact already removed from its previous zone.
 func (g *Game) playArtifactCard(player int, id LocalID) {
 	g.State.Cards[id].Exhausted = true // enters play exhausted; readies during the end-of-turn ready step
+	if g.entersPlayReady(g.controller(id), Artifact) {
+		g.State.Cards[id].Exhausted = false
+	}
 	g.State.Artifacts[player].add(id)
 	g.record(ArtifactPlayed{Player: player, Card: id})
 	g.applyAemberBonus(id)
@@ -417,6 +423,12 @@ func (g *Game) playActionCard(player int, id LocalID) {
 		g.State.PurgePlayedActionSet = false
 		g.State.Purge[owner].add(id)
 		g.record(CardPurged{Card: id})
+		return
+	}
+	if g.State.ArchivePlayedActionSet && g.State.ArchivePlayedAction == id {
+		g.State.ArchivePlayedAction = 0
+		g.State.ArchivePlayedActionSet = false
+		g.PutIntoArchives(id)
 		return
 	}
 	g.State.Discard[owner].add(id)
@@ -516,7 +528,7 @@ func (g *Game) playPermissionRemaining(player int, house House) int {
 func (g *Game) recordCardPlayed(player int, id LocalID, opts playCardOptions) {
 	def := g.cat.def(id)
 	if r := def.PlayRequirement; r.Spend && r.required() {
-		g.State.Aember[player] -= r.Aember
+		g.SetAember(player, g.State.Aember[player]-r.Aember)
 		g.record(AemberSpentToPlay{Player: player, Card: id, Amount: r.Aember})
 	}
 	if opts.consumePlayPermission {

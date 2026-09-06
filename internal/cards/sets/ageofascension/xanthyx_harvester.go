@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// XanthyxHarvester
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Xanthyx Harvester
 //
 //	House:  Mars
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Beast
 //
-//	Xanthyx Harvester cannot be used while it has a non-Mars neighbor.
-//	Reap: Gain 1A.
+//	You cannot use this card unless it has no non-Mars neighbor.
+//	Reap: Gain 1 Æmber.
 var XanthyxHarvester = card.New(
 	"Xanthyx Harvester",
 	card.House.Mars,
@@ -25,5 +20,14 @@ var XanthyxHarvester = card.New(
 	card.Provenance(card.AoA, 173),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Beast),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithRestrictions(card.Restrictions{
+		UseCondition: card.SourceNeighborsAllOfHouse{
+			House: card.House.Self,
+		},
+	}),
+	card.WithAbility(
+		card.Trigger.Reap, card.GainAember{
+			Player: card.Controller,
+			Amount: 1,
+		}),
 )

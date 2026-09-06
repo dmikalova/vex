@@ -33,8 +33,14 @@ func (e BelongToHouse) Text() string {
 	if e.Duration == UntilThisLeavesPlay {
 		return e.Target.Text() + " belongs to house " + e.House.String() + " until it leaves play"
 	}
-	return "for the remainder of the turn, " + e.Target.Text() +
-		" belongs to house " + e.House.String()
+	return "for the remainder of the turn, " + e.durationSubject() + " " + e.durationPredicate()
+}
+
+// durationSubject and durationPredicate split the body so ForDuration can state
+// the shared clause and subject once: "it" / "belongs to house Sanctum".
+func (e BelongToHouse) durationSubject() string { return e.Target.Text() }
+func (e BelongToHouse) durationPredicate() string {
+	return "belongs to house " + e.House.String()
 }
 
 // Resolve makes each selected creature belong to House for the Duration.

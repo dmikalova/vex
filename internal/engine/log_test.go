@@ -55,7 +55,11 @@ func TestLogEntryText(t *testing.T) {
 			AemberStolen{Player: 0, From: 1, Amount: 2, Source: 7, HasSource: true},
 			"Card7 steals 2 Æmber from P1",
 		},
-		{AemberCaptured{Creature: 7, Amount: 3}, "Card7 captures 3 Æmber"},
+		{AemberCaptured{Creature: 7, Amount: 3, Source: 7}, "Card7 captures 3 Æmber"},
+		{
+			AemberCaptured{Creature: 7, Amount: 1, Source: 3},
+			"Card3 captures 1 Æmber onto Card7",
+		},
 		{
 			AemberMovedToCommonSupply{Creature: 7, Amount: 1},
 			"Card7 moves 1 Æmber to the common supply",
@@ -152,6 +156,10 @@ func TestLogEntryText(t *testing.T) {
 		},
 		{DeckAndDiscardSwapped{Player: 1}, "P1 swaps their deck and discard pile"},
 		{CardDiscarded{Player: 0, Card: 6}, "P0 discards Card6"},
+		{
+			CardDiscardedFromArchives{Player: 0, Card: 6},
+			"P0 discards Card6 from their archives",
+		},
 		{CardPurgedFromDiscard{Player: 0, Card: 6}, "P0 purges Card6 from a discard pile"},
 		{CardPurgedFromHand{Player: 1, Card: 6}, "P1 purges Card6 from a hand"},
 		{CardPurged{Card: 6}, "Card6 is purged"},
@@ -267,6 +275,10 @@ func TestLogEntryText(t *testing.T) {
 		{
 			HouseForcedNextTurn{Player: 1, House: Logos},
 			"P1 must choose house Logos next turn",
+		},
+		{
+			HouseForbiddenNextTurn{Player: 1, House: Logos},
+			"P1 cannot choose house Logos next turn",
 		},
 		{
 			KeywordLostByAll{Keyword: Elusive},

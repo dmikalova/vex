@@ -18,8 +18,14 @@ var (
 	WithAssault = func(n int) Option { return gameplay(engine.WithAssault(n)) }
 	// WithHazardous gives a creature Hazardous N — it deals N damage to a creature that fights it, first.
 	WithHazardous = func(n int) Option { return gameplay(engine.WithHazardous(n)) }
+	// WithSplashAttack gives a creature Splash-attack N — when it fights it also deals N damage to each neighbor of the creature it fights.
+	WithSplashAttack = func(n int) Option { return gameplay(engine.WithSplashAttack(n)) }
 	// WithAttackDamage overrides how much fight damage a creature deals.
 	WithAttackDamage = func(ad engine.AttackDamage) Option { return gameplay(engine.WithAttackDamage(ad)) }
+	// WithNoDamageWhenAttacked makes a creature deal no retaliation damage when attacked.
+	WithNoDamageWhenAttacked = func() Option { return gameplay(engine.WithNoDamageWhenAttacked()) }
+	// WithFriendlyEntersPlayReady makes friendly cards of the given type enter play ready while this card is in play.
+	WithFriendlyEntersPlayReady = func(t engine.CardType) Option { return gameplay(engine.WithFriendlyEntersPlayReady(t)) }
 	// WithFightRestriction restricts which creatures this creature may fight.
 	WithFightRestriction = func(t engine.Target) Option { return gameplay(engine.WithFightRestriction(t)) }
 	// WithCannotBeUsedTo bars a card from named ways of being used (reap, fight, action).

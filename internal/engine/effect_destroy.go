@@ -61,14 +61,64 @@ func (e Destroy) resolveOptional(ctx *EffectContext) bool {
 // destroy carries out the destruction of an already-selected set.
 func (e Destroy) destroy(ctx *EffectContext, ids []LocalID) bool {
 	controllers := make(map[LocalID]int, len(ids))
+	bonuses := make(map[LocalID]int, len(ids))
 	for _, id := range ids {
 		controllers[id] = ctx.Resolver.Controller(id)
+		bonuses[id] = ctx.Resolver.AemberBonus(id)
 	}
 	ctx.Resolver.DestroyEachFrom(ctx.Controller, ctx.Source, ids)
 	for _, id := range ids {
 		if !resolverInPlay(ctx, id) {
 			ctx.Produced.Destroyed[controllers[id]]++
+			ctx.Produced.AemberBonusDestroyed += bonuses[id]
 		}
 	}
 	return len(ids) > 0
+}
+
+// DestroyChosen destroys any number of creatures the controller picks from the
+// Target pool, chosen one at a time and then destroyed together — Martyr's End
+// destroys any number of friendly creatures. It tallies them into
+// Produced.Destroyed so a following "gain 1 Æmber for each creature destroyed this
+// way" can pay out.
+type DestroyChosen struct {
+	Target Target
+}
+
+// validate requires an explicit target pool to choose from.
+func (e DestroyChosen) validate() error {
+	if !e.Target.valid() {
+		return errUnsetTarget("DestroyChosen")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "destroy any number of friendly creatures".
+func (e DestroyChosen) Text() string {
+	return "destroy any number of " + singularNoun(e.Target.Text()) + "s"
+}
+
+// Resolve gathers the controller's picks one at a time, then destroys them all at
+// once so their Destroyed abilities see each other still in play.
+func (e DestroyChosen) Resolve(ctx *EffectContext) {
+	picked := map[LocalID]bool{}
+	var chosen []LocalID
+	for {
+		var cands []LocalID
+		for _, id := range e.Target.Select(ctx) {
+			if !picked[id] {
+				cands = append(cands, id)
+			}
+		}
+		if len(cands) == 0 {
+			break
+		}
+		pick, ok := ctx.ChooseCardOptional("Choose a creature to destroy", cands)
+		if !ok {
+			break
+		}
+		picked[pick] = true
+		chosen = append(chosen, pick)
+	}
+	Destroy{}.destroy(ctx, chosen)
 }

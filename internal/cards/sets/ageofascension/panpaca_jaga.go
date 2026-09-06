@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// PanpacaJaga
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Panpaca, Jaga
 //
 //	House:  Untamed
 //	Type:   Creature
@@ -16,8 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Skirmish.
-//	Creatures to the left of Panpaca,
-//	Jaga in the battleline gain skirmish.
+//	Each creature to the left of Panpaca, Jaga gains skirmish.
 var PanpacaJaga = card.New(
 	"Panpaca, Jaga",
 	card.House.Untamed,
@@ -26,5 +20,9 @@ var PanpacaJaga = card.New(
 	card.Provenance(card.AoA, 348),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Beast),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Skirmish),
+	card.WithConstant(card.ConstantAbility{
+		Target:   card.Target.EachCreature.ToLeftOfSource(),
+		Keywords: card.Keywords(card.Keyword.Skirmish),
+	}),
 )

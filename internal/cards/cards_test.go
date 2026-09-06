@@ -80,14 +80,13 @@ func TestAllIsSortedDeterministically(t *testing.T) {
 }
 
 // TestMaterializedNamesAreUnique extends the duplicate-name check in
-// TestAllIsAValidDatabase past materialization: a template (e.g. Master of X)
-// never appears in a deck under its own registered name, only under whatever
-// name its Materializer gives the concrete variant it produces (Master of 1..5),
-// so those variant names must be just as unique as any registered card's name —
-// both against every other registered name and against every other template's
-// variants. It samples many (House, seed) combinations per template so a
-// randomized Materializer (like Master of X rolling its power) exercises its
-// whole output range instead of just whatever it happens to produce once.
+// TestAllIsAValidDatabase past materialization: a template never appears in a
+// deck under its own registered name, only under whatever name its Materializer
+// gives the concrete variant it produces, so those variant names must be just as
+// unique as any registered card's name — both against every other registered
+// name and against every other template's variants. It samples many (House, seed)
+// combinations per template so a randomized Materializer exercises its whole
+// output range instead of just whatever it happens to produce once.
 func TestMaterializedNamesAreUnique(t *testing.T) {
 	regs := card.Cards()
 
@@ -125,34 +124,12 @@ func TestMaterializedNamesAreUnique(t *testing.T) {
 	}
 }
 
-// knownDuplicateImplementations are card name pairs (order does not matter)
-// confirmed to be intentional identical-behavior reprints under a different
-// name — real KeyForge's own equivalent of Fogbank/Foggify — rather than a
-// copy-paste mistake. TestNoDuplicateImplementations allows these and flags
-// every other collision, so a new hit means a genuinely new pair to triage:
-// add it here once confirmed intentional, otherwise fix the card.
-var knownDuplicateImplementations = [][2]string{
-	// Both "Play: Archive a card." (Logos Common / Shadows Uncommon).
-	{"Labwork", "Hidden Stash"},
-}
-
-func isKnownDuplicateImplementation(a, b string) bool {
-	for _, pair := range knownDuplicateImplementations {
-		if (pair[0] == a && pair[1] == b) || (pair[0] == b && pair[1] == a) {
-			return true
-		}
-	}
-	return false
-}
-
 // TestNoDuplicateImplementations flags two differently named cards whose whole
 // behavior — type, stats, keywords, and abilities — is otherwise identical,
 // ignoring rarity and the house/name that legitimately differ between a card and
-// its reprint. Real KeyForge does this on purpose (Fogbank, Untamed Uncommon, and
-// Foggify, Logos Common, both read "Your opponent cannot use creatures to fight
-// on their next turn"), so a hit here is not automatically a bug — but outside
-// knownDuplicateImplementations it is exactly the shape a copy-pasted card that
-// forgot to change its actual effect would take, so it fails until triaged.
+// its reprint. Cards that share an implementation must share one definition with
+// multiple Provenance tags, not two copy-pasted definitions, so any collision
+// here is a duplicate to fold into a single card.
 func TestNoDuplicateImplementations(t *testing.T) {
 	all := All()
 	seenBy := make(map[string]string, len(all))
@@ -163,13 +140,11 @@ func TestNoDuplicateImplementations(t *testing.T) {
 		sig.Rarity = ""
 		key := fmt.Sprintf("%#v", sig)
 		if owner, ok := seenBy[key]; ok {
-			if !isKnownDuplicateImplementation(owner, c.Name) {
-				t.Errorf(
-					"%q and %q have identical implementations (same type, stats, keywords, and abilities); confirm this is an intentional reprint like Fogbank/Foggify, then add it to knownDuplicateImplementations",
-					owner,
-					c.Name,
-				)
-			}
+			t.Errorf(
+				"%q and %q have identical implementations (same type, stats, keywords, and abilities); fold them into one card with multiple Provenance tags",
+				owner,
+				c.Name,
+			)
 			continue
 		}
 		seenBy[key] = c.Name

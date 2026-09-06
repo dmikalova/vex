@@ -68,28 +68,21 @@ func (g *game) renderHandCard(id engine.LocalID) app.UI {
 	activate, targetable, dimmed := g.cardVisual(id, selHand)
 	draggable := !g.busy && !g.choosing && !g.choosingOption &&
 		g.phase == phaseMain && g.playableFromHand(id)
-	return &cardView{
-		ID:          id,
-		DOMID:       handCardID(id),
-		Title:       def.Name,
-		HouseCls:    houseClasses(def.House),
-		Emblem:      houseIconName(def.House),
-		TypeIcon:    typeIconName(def.Type),
-		Stat:        handStat(def),
-		Rules:       displayRules(engine.RenderCardRules(def)),
-		Kind:        kindLabel(def),
-		Trait:       traitLabel(def),
-		Rarity:      rarityMarkOf(def.Rarity),
-		Maverick:    g.isMaverick(id),
-		Selected:    g.isSelected(id),
-		Targetable:  targetable,
-		Dimmed:      dimmed,
-		Jiggle:      g.jiggling(id, selHand),
-		OnActivate:  activate,
-		Draggable:   draggable,
-		OnDragStart: g.startHandDrag,
-		OnDragEnd:   g.endHandDrag,
-		OnHover:     g.hoverCard,
-		OnHoverOut:  g.hoverClear,
-	}
+	// A hand card is a printed face plus the hand's interaction wiring.
+	face := printedFace(def)
+	face.ID = id
+	face.DOMID = handCardID(id)
+	face.Maverick = g.isMaverick(id)
+	face.Selected = g.isSelected(id)
+	face.Targetable = targetable
+	face.Dimmed = dimmed
+	face.Jiggle = g.jiggling(id, selHand)
+	face.OnActivate = activate
+	face.Draggable = draggable
+	face.OnDragStart = g.startHandDrag
+	face.OnDragEnd = g.endHandDrag
+	face.OnHover = g.hoverCard
+	face.OnHoverOut = g.hoverClear
+	face.OnContextMenu = g.liftCard
+	return face
 }

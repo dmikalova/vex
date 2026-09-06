@@ -74,6 +74,9 @@ const (
 	// TargetChosenEnemyArtifact selects a single enemy artifact the controller
 	// chooses (Sneklifter seizes one).
 	TargetChosenEnemyArtifact
+	// TargetChosenFriendlyArtifact selects a single friendly artifact the
+	// controller chooses (Anahita the Trader gives one away).
+	TargetChosenFriendlyArtifact
 	// TargetTheOtherCreature selects the creature in context (ctx.It) — the one a
 	// preceding effect chose as "another" creature — and renders it as "the other
 	// creature". Transposition Sandals swaps with another creature, then uses the
@@ -93,6 +96,11 @@ const (
 	// referent for a just-chosen creature (Sack of Coins deals its per-Æmber damage
 	// to the chosen creature).
 	TargetTheChosenCreature
+	// TargetFormerNeighbors selects the battleline neighbors a preceding effect
+	// snapshotted before it removed a creature (ctx.Produced.Neighbors) and renders
+	// them as "each of that creature's neighbors" — Pain Reaction hits the neighbors
+	// of the creature its damage just destroyed.
+	TargetFormerNeighbors
 )
 
 // Target describes which cards an effect applies to. Kind picks the base set;
@@ -117,9 +125,6 @@ type Target struct {
 	hasMinPower   bool
 	exactPower    int
 	hasExactPower bool
-	// variablePower renders an exact-power qualifier as the placeholder "X" — a
-	// template face whose concrete variants each fix the number (Master of X).
-	variablePower bool
 	// oddPower narrows the target to creatures whose power is odd, and evenPower to
 	// those whose power is even (Onyx Knight, Opal Knight).
 	oddPower  bool
@@ -139,6 +144,11 @@ type Target struct {
 	onFlank     bool
 	notOnFlank  bool
 	neighboring bool
+	// toRightOfSource narrows the target to the creatures positioned to the right of
+	// the source card in its battleline, and toLeftOfSource to those on its left —
+	// the Panpacas, which buff one direction of their line.
+	toRightOfSource bool
+	toLeftOfSource  bool
 	// withNeighbors expands a single chosen creature to include its battleline
 	// neighbors (Tremor stuns a creature and each of its neighbors).
 	withNeighbors bool
@@ -264,15 +274,6 @@ func (t Target) EvenPower() Target {
 	return t
 }
 
-// PowerVariable narrows the target to a power the card fills in per instance,
-// rendering the placeholder "X" (the Master of X template face) until a concrete
-// variant sets the number with PowerExactly.
-func (t Target) PowerVariable() Target {
-	t.hasExactPower = true
-	t.variablePower = true
-	return t
-}
-
 // Damaged narrows the target to creatures that currently have damage on them.
 func (t Target) Damaged() Target {
 	t.damaged = true
@@ -348,6 +349,20 @@ func (t Target) NotOnFlank() Target {
 	return t
 }
 
+// ToRightOfSource narrows the target to the creatures positioned to the right of
+// the source card in its battleline (Panpaca, Anga).
+func (t Target) ToRightOfSource() Target {
+	t.toRightOfSource = true
+	return t
+}
+
+// ToLeftOfSource narrows the target to the creatures positioned to the left of
+// the source card in its battleline (Panpaca, Jaga).
+func (t Target) ToLeftOfSource() Target {
+	t.toLeftOfSource = true
+	return t
+}
+
 // Neighboring narrows the target to the source card's battleline neighbors (the
 // creatures immediately to its left and right).
 func (t Target) Neighboring() Target {
@@ -409,10 +424,13 @@ func (t Target) Text() string {
 		return "the other creature"
 	case TargetTheChosenCreature:
 		return "the chosen creature"
+	case TargetFormerNeighbors:
+		return "each of that creature's neighbors"
 	}
 	noun := "creature"
 	if t.Kind == TargetEachArtifact || t.Kind == TargetChosenArtifact ||
 		t.Kind == TargetChosenEnemyArtifact || t.Kind == TargetEachFriendlyArtifact ||
+		t.Kind == TargetChosenFriendlyArtifact ||
 		t.Kind == TargetEachEnemyArtifact {
 		noun = "artifact"
 	}
@@ -506,6 +524,8 @@ func (t Target) Text() string {
 		phrase = "an " + noun
 	case TargetChosenEnemyArtifact, TargetChosenEnemyCreatureOrArtifact:
 		phrase = "an enemy " + noun
+	case TargetChosenFriendlyArtifact:
+		phrase = "a friendly " + noun
 	case TargetChosenCreature:
 		// Other() drops the source card, which reads as "another creature" — the
 		// wording Replicator prints for a creature in play that is not itself.
@@ -524,11 +544,7 @@ func (t Target) Text() string {
 		phrase += fmt.Sprintf(" with power %d or higher", t.minPower)
 	}
 	if t.hasExactPower {
-		if t.variablePower {
-			phrase += " with power X"
-		} else {
-			phrase += fmt.Sprintf(" with power %d", t.exactPower)
-		}
+		phrase += fmt.Sprintf(" with power %d", t.exactPower)
 	}
 	if t.oddPower {
 		phrase += " with odd power"
@@ -544,6 +560,12 @@ func (t Target) Text() string {
 	}
 	if t.notOnFlank {
 		phrase += " that is not on a flank"
+	}
+	if t.toRightOfSource {
+		phrase += " to the right of " + SelfName
+	}
+	if t.toLeftOfSource {
+		phrase += " to the left of " + SelfName
 	}
 	if t.chosenHouse {
 		phrase += " of the chosen house"
@@ -864,12 +886,52 @@ func (m mostPowerfulN) refine(ctx *EffectContext, ids []LocalID) []LocalID {
 	return chosen
 }
 
+// LowestAndHighestPower is a Selector that keeps every creature tied for the
+// lowest power together with every creature tied for the highest power, selecting
+// both extremes at once so they resolve simultaneously (Standardized Testing
+// destroys each creature with the lowest power and each with the highest).
+var LowestAndHighestPower Selector = lowestAndHighestPower{}
+
+// lowestAndHighestPower implements the LowestAndHighestPower selector.
+type lowestAndHighestPower struct{}
+
+// clause renders "<phrase> with the lowest power and <phrase> with the highest
+// power", e.g. "each creature" -> "each creature with the lowest power and each
+// creature with the highest power".
+func (lowestAndHighestPower) clause(phrase string) string {
+	return phrase + " with the lowest power and " + phrase + " with the highest power"
+}
+
+// refine keeps every creature whose power equals the set's minimum or maximum, so
+// a set with a single power keeps all of it. An empty set selects nothing.
+func (lowestAndHighestPower) refine(ctx *EffectContext, ids []LocalID) []LocalID {
+	if len(ids) == 0 {
+		return nil
+	}
+	low, high := ctx.Resolver.Power(ids[0]), ctx.Resolver.Power(ids[0])
+	for _, id := range ids[1:] {
+		switch p := ctx.Resolver.Power(id); {
+		case p < low:
+			low = p
+		case p > high:
+			high = p
+		}
+	}
+	kept := make([]LocalID, 0, len(ids))
+	for _, id := range ids {
+		if p := ctx.Resolver.Power(id); p == low || p == high {
+			kept = append(kept, id)
+		}
+	}
+	return kept
+}
+
 // isChosen reports whether the Kind resolves to a single player-chosen creature.
 func (t Target) isChosen() bool {
 	return t.Kind == TargetChosenCreature || t.Kind == TargetChosenEnemyCreature ||
 		t.Kind == TargetChosenFriendlyCreature || t.Kind == TargetChosenOtherFriendlyCreature ||
 		t.Kind == TargetChosenOtherCreature ||
-		t.Kind == TargetChosenArtifact || t.Kind == TargetChosenEnemyArtifact || t.Kind == TargetChosenCreatureOrArtifact ||
+		t.Kind == TargetChosenArtifact || t.Kind == TargetChosenEnemyArtifact || t.Kind == TargetChosenFriendlyArtifact || t.Kind == TargetChosenCreatureOrArtifact ||
 		t.Kind == TargetChosenFriendlyCreatureOrArtifact ||
 		t.Kind == TargetChosenEnemyCreatureOrArtifact
 }
@@ -899,6 +961,8 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 		!t.onFlank &&
 		!t.notOnFlank &&
 		!t.neighboring &&
+		!t.toRightOfSource &&
+		!t.toLeftOfSource &&
 		!t.other &&
 		t.named == "" {
 		return ids
@@ -972,6 +1036,12 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 		if t.neighboring && !isNeighbor(ctx, ctx.Source, id) {
 			continue
 		}
+		if t.toRightOfSource && !toSideOfSource(ctx, ctx.Source, id, +1) {
+			continue
+		}
+		if t.toLeftOfSource && !toSideOfSource(ctx, ctx.Source, id, -1) {
+			continue
+		}
 		if t.other && id == ctx.Source {
 			continue
 		}
@@ -992,6 +1062,28 @@ func onFlank(ctx *EffectContext, id LocalID) bool {
 	bl := battlelineContaining(ctx, id)
 	return len(bl) > 0 &&
 		(bl[0] == id || bl[len(bl)-1] == id)
+}
+
+// toSideOfSource reports whether id sits on the given side of src within src's
+// battleline: dir +1 for the creatures to src's right, -1 for those to its left.
+func toSideOfSource(ctx *EffectContext, src, id LocalID, dir int) bool {
+	bl := battlelineContaining(ctx, src)
+	si, ii := -1, -1
+	for j, x := range bl {
+		switch x {
+		case src:
+			si = j
+		case id:
+			ii = j
+		}
+	}
+	if si < 0 || ii < 0 {
+		return false
+	}
+	if dir > 0 {
+		return ii > si
+	}
+	return ii < si
 }
 
 // isNeighbor reports whether id is one of src's battleline neighbors.
@@ -1074,6 +1166,8 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 			ctx.Resolver.Artifacts(ctx.Opponent())...)
 	case TargetChosenEnemyArtifact:
 		return ctx.Resolver.Artifacts(ctx.Opponent())
+	case TargetChosenFriendlyArtifact:
+		return ctx.Resolver.Artifacts(ctx.Controller)
 	case TargetEachEnemyArtifact:
 		return ctx.Resolver.Artifacts(ctx.Opponent())
 	case TargetEachFriendlyArtifact:
@@ -1115,6 +1209,8 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 				ctx.Resolver.Battleline(ctx.Opponent())...)
 		}
 		return creaturesExcept(ctx, ctx.It)
+	case TargetFormerNeighbors:
+		return ctx.Produced.Neighbors
 	default:
 		return nil
 	}

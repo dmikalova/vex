@@ -196,10 +196,6 @@ func TestTargetPowerFilters(t *testing.T) {
 		Text(); got != "a creature with power 1" {
 		t.Errorf("PowerExactly text = %q", got)
 	}
-	if got := (Target{Kind: TargetChosenCreature}).PowerVariable().
-		Text(); got != "a creature with power X" {
-		t.Errorf("PowerVariable text = %q", got)
-	}
 }
 
 func TestTargetPowerParity(t *testing.T) {
@@ -315,6 +311,45 @@ func TestLeastPowerfulTieChoice(t *testing.T) {
 	ids := (Target{Kind: TargetEachEnemyCreature}).Selector(LeastPowerful).Select(ctx)
 	if len(ids) != 1 || ids[0] != b {
 		t.Errorf("tie choice = %v, want [%d]; a=%d", ids, b, a)
+	}
+}
+
+func TestLowestAndHighestPower(t *testing.T) {
+	// Text names both extremes.
+	if got := (Target{Kind: TargetEachCreature}).Selector(LowestAndHighestPower).
+		Text(); got != "each creature with the lowest power and each creature with the highest power" {
+		t.Errorf("text = %q", got)
+	}
+
+	// An empty set selects nothing.
+	empty := &EffectContext{Resolver: NewGame("A", "B", 1), Controller: 0}
+	if ids := (Target{Kind: TargetEachCreature}).Selector(LowestAndHighestPower).
+		Select(empty); ids != nil {
+		t.Errorf("empty = %v, want nil", ids)
+	}
+
+	// The extremes are kept (ties included) and the middle dropped. The middle
+	// creature is added first so a later, lower-power creature exercises the
+	// new-minimum branch.
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(testCreature("mid", 4), 0)
+	lowA := g.AddToBattleline(testCreature("lowA", 2), 0)
+	lowB := g.AddToBattleline(testCreature("lowB", 2), 1)
+	high := g.AddToBattleline(testCreature("high", 6), 1)
+	got := (Target{Kind: TargetEachCreature}).Selector(LowestAndHighestPower).
+		Select(&EffectContext{Resolver: g, Controller: 0})
+	if len(got) != 3 || !containsID(got, lowA) || !containsID(got, lowB) ||
+		!containsID(got, high) {
+		t.Errorf("LowestAndHighestPower = %v, want [%d %d %d]", got, lowA, lowB, high)
+	}
+
+	// When every creature shares one power the whole set is both extremes.
+	g1 := NewGame("A", "B", 1)
+	only := g1.AddToBattleline(testCreature("only", 3), 0)
+	all := (Target{Kind: TargetEachCreature}).Selector(LowestAndHighestPower).
+		Select(&EffectContext{Resolver: g1, Controller: 0})
+	if len(all) != 1 || all[0] != only {
+		t.Errorf("single-power set = %v, want [%d]", all, only)
 	}
 }
 

@@ -217,6 +217,39 @@ func (e DiscardRandomFromHand) Resolve(ctx *EffectContext) {
 	ctx.Resolver.DiscardRandomFromHand(ctx.PlayerFor(e.Player))
 }
 
+// DiscardRandomFromArchives discards one uniformly random card from a player's
+// archives — Tantadlin's "discard a random card from your opponent's archives",
+// where the discarding player cannot see the facedown archives to choose.
+type DiscardRandomFromArchives struct {
+	Player Player
+}
+
+// validate rejects a DiscardRandomFromArchives whose player was left unset.
+func (e DiscardRandomFromArchives) validate() error {
+	if !e.Player.valid() {
+		return errUnsetPlayer("DiscardRandomFromArchives")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "discard a random card from your opponent's
+// archives".
+func (e DiscardRandomFromArchives) Text() string {
+	switch e.Player {
+	case Opponent:
+		return "discard a random card from your opponent's archives"
+	case ItsOwner:
+		return "its owner discards a random card from their archives"
+	default:
+		return "discard a random card from your archives"
+	}
+}
+
+// Resolve discards one random card from the chosen player's archives.
+func (e DiscardRandomFromArchives) Resolve(ctx *EffectContext) {
+	ctx.Resolver.DiscardRandomFromArchives(ctx.PlayerFor(e.Player))
+}
+
 // DiscardFromHand has the controller choose and discard Amount cards from their own
 // hand — the "discard a card" effect where the player picks which card leaves
 // (Sloppy Labwork), distinct from DiscardHand (which discards every matching card)

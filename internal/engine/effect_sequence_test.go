@@ -86,3 +86,80 @@ func TestSequenceCombinesSameVerb(t *testing.T) {
 		t.Errorf("three text = %q, want %q", got, want)
 	}
 }
+
+// A sequence that leads with a single clickable choice is declinable, so a May or
+// MayRepeat wrapping it is driven by that click.
+func TestSequenceDeclinable(t *testing.T) {
+	led := Sequence{Effects: []Effect{
+		Destroy{Target: Target{Kind: TargetChosenEnemyCreature}},
+		Destroy{Target: Target{Kind: TargetChosenFriendlyCreature}},
+	}}
+	if !led.declinable() {
+		t.Error("a sequence leading with a chosen Destroy should be declinable")
+	}
+	if (Sequence{}).declinable() {
+		t.Error("an empty sequence should not be declinable")
+	}
+	untargeted := Sequence{Effects: []Effect{
+		Destroy{Target: Target{Kind: TargetEachCreature}},
+	}}
+	if untargeted.declinable() {
+		t.Error("a sequence leading with an untargeted effect should not be declinable")
+	}
+}
+
+// Taking the leading choice resolves the whole sequence; declining it passes on
+// everything.
+func TestSequenceResolveOptional(t *testing.T) {
+	seq := Sequence{Effects: []Effect{
+		Destroy{Target: Target{Kind: TargetChosenEnemyCreature}},
+		Destroy{Target: Target{Kind: TargetChosenFriendlyCreature}},
+	}}
+
+	accepted := NewGame("A", "B", 1)
+	accepted.SetChooser(0, &cardDecliner{})
+	foe := accepted.AddToBattleline(testCreature("Foe", 3), 1)
+	ally := accepted.AddToBattleline(testCreature("Ally", 3), 0)
+	if !seq.resolveOptional(&EffectContext{Resolver: accepted, Controller: 0}) {
+		t.Error("taking the leading choice should report the sequence resolved")
+	}
+	if onAnyLine(accepted, foe) || onAnyLine(accepted, ally) {
+		t.Error("both creatures should have been destroyed")
+	}
+
+	declined := NewGame("A", "B", 1)
+	declined.SetChooser(0, &cardDecliner{decline: true})
+	survivor := declined.AddToBattleline(testCreature("Foe", 3), 1)
+	if seq.resolveOptional(&EffectContext{Resolver: declined, Controller: 0}) {
+		t.Error("declining the leading choice should report nothing resolved")
+	}
+	if !onAnyLine(declined, survivor) {
+		t.Error("a declined sequence should destroy nothing")
+	}
+}
+
+// onAnyLine reports whether a creature is still in either player's battleline.
+func onAnyLine(g *Game, id LocalID) bool {
+	for _, p := range []int{0, 1} {
+		for _, x := range g.Battleline(p) {
+			if x == id {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// A sequence with no declinable lead has nothing to offer optionally.
+func TestSequenceResolveOptionalWithoutAChoice(t *testing.T) {
+	empty := Sequence{}
+	if empty.resolveOptional(&EffectContext{}) {
+		t.Error("an empty sequence should resolve nothing optionally")
+	}
+	untargeted := Sequence{Effects: []Effect{
+		Destroy{Target: Target{Kind: TargetEachCreature}},
+	}}
+	if untargeted.resolveOptional(&EffectContext{}) {
+		t.Error("an untargeted lead should resolve nothing optionally")
+	}
+}

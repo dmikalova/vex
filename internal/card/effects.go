@@ -57,6 +57,10 @@ type (
 	CreatureAndNeighbors = engine.CreatureAndNeighbors
 	// DifferentCreatures (a Spread) damages a chosen creature and a different chosen creature.
 	DifferentCreatures = engine.DifferentCreatures
+	// UpToCreatures (a Spread) deals damage to up to N chosen creatures.
+	UpToCreatures = engine.UpToCreatures
+	// DivideDamage (a Spread) divides a damage pool among any number of creatures.
+	DivideDamage = engine.DivideDamage
 	// FlankWalk (a Spread) deals decreasing damage inward from a chosen flank creature.
 	FlankWalk = engine.FlankWalk
 	// RedirectFightDamage is a Before Fight effect redirecting this creature's fight damage.
@@ -75,6 +79,8 @@ type (
 type (
 	// Destroy removes the creatures its Target selects from play.
 	Destroy = engine.Destroy
+	// DestroyChosen destroys any number of creatures the controller picks from its Target.
+	DestroyChosen = engine.DestroyChosen
 	// PurgeCard sets cards aside out of the game, from a named zone.
 	PurgeCard = engine.PurgeCard
 	// PurgeFromHand purges one card the controller chooses from a player's hand.
@@ -130,11 +136,17 @@ type (
 	SearchForName = engine.SearchForName
 	// ShuffleIntoDeck shuffles the controller's named zones (hand, discard, archives) into their deck.
 	ShuffleIntoDeck = engine.ShuffleIntoDeck
+	// ShuffleChosenCreaturesFromDiscard shuffles any number of chosen creatures from your discard pile into your deck.
+	ShuffleChosenCreaturesFromDiscard = engine.ShuffleChosenCreaturesFromDiscard
+	// ShuffleCardsFromDiscard shuffles a counted number of chosen cards from your discard pile into your deck.
+	ShuffleCardsFromDiscard = engine.ShuffleCardsFromDiscard
 	// SwapDeckAndDiscard exchanges the controller's deck with their discard pile,
 	// then shuffles.
 	SwapDeckAndDiscard = engine.SwapDeckAndDiscard
 	// ArchiveFromHand moves cards from a hand into the controller's archives.
 	ArchiveFromHand = engine.ArchiveFromHand
+	// ArchiveRandomFromHand archives Amount random cards from your hand (Eureka!).
+	ArchiveRandomFromHand = engine.ArchiveRandomFromHand
 	// ArchiveFromDiscard moves a chosen card from the discard pile into archives.
 	ArchiveFromDiscard = engine.ArchiveFromDiscard
 	// ArchiveTopOfDeck moves the top Amount cards of your deck into archives.
@@ -143,6 +155,8 @@ type (
 	ArchiveTopOfDiscard = engine.ArchiveTopOfDiscard
 	// ArchiveFromPlay moves each targeted in-play card into its owner's archives.
 	ArchiveFromPlay = engine.ArchiveFromPlay
+	// ArchiveSource archives the card whose ability this is (Sucker Punch).
+	ArchiveSource = engine.ArchiveSource
 	// DiscardArchives moves all of a player's archived cards into their discard pile.
 	DiscardArchives = engine.DiscardArchives
 	// DiscardHand discards cards from a player's hand.
@@ -151,6 +165,8 @@ type (
 	DiscardFromHand = engine.DiscardFromHand
 	// DiscardRandomFromHand discards one uniformly random card from a player's hand.
 	DiscardRandomFromHand = engine.DiscardRandomFromHand
+	// DiscardRandomFromArchives discards one uniformly random card from a player's archives.
+	DiscardRandomFromArchives = engine.DiscardRandomFromArchives
 	// DiscardTopOfDeck discards the top card of a deck and puts it in context.
 	DiscardTopOfDeck = engine.DiscardTopOfDeck
 	// DiscardDeckUntil discards from the top of your deck until it turns up a
@@ -234,6 +250,8 @@ type (
 	PutIntoPlay = engine.PutIntoPlay
 	// Swap exchanges this creature's battleline position with another.
 	Swap = engine.Swap
+	// SwapChosen swaps the positions of two creatures chosen from one battleline.
+	SwapChosen = engine.SwapChosen
 	// MoveToFlank moves the targeted creature to either flank of its controller's battleline.
 	MoveToFlank = engine.MoveToFlank
 )
@@ -242,6 +260,9 @@ type (
 type (
 	// Sequence resolves several effects in order.
 	Sequence = engine.Sequence
+	// ForDuration applies several timed effects sharing one duration and
+	// renders their shared "for the remainder of the turn, ..." clause once.
+	ForDuration = engine.ForDuration
 	// Repeat resolves an effect once for each of a running count, choosing
 	// afresh each time.
 	Repeat = engine.Repeat
@@ -282,11 +303,18 @@ type (
 	CountIs = engine.CountIs
 	// ControlsMoreCreatures is met while you control more creatures than the opponent.
 	ControlsMoreCreatures = engine.ControlsMoreCreatures
+	// SourceOnFlank gates on the source card's flank position (Not inverts it).
+	SourceOnFlank = engine.SourceOnFlank
+	// SourceNeighborsAllOfHouse is met while every neighbor of the source card
+	// belongs to House (Xanthyx Harvester's use gate).
+	SourceNeighborsAllOfHouse = engine.SourceNeighborsAllOfHouse
 	// ControlsCreaturesOfHouses is met while your creatures span at least Amount houses.
 	ControlsCreaturesOfHouses = engine.ControlsCreaturesOfHouses
 	// FirstCreaturePlayedThisTurn is met when the card in context is the first
 	// creature played this turn — a once-per-turn charge (Speed Sigil).
 	FirstCreaturePlayedThisTurn = engine.FirstCreaturePlayedThisTurn
+	// NoCreaturesPlayedThisTurn is met when you played no creatures this turn (Redlock).
+	NoCreaturesPlayedThisTurn = engine.NoCreaturesPlayedThisTurn
 	// Overwhelmed is met while the opponent controls more creatures than you.
 	Overwhelmed = engine.Overwhelmed
 	// ItIsOfHouse is met when the card in context belongs to a referenced house.
@@ -353,10 +381,20 @@ type (
 	ExcessCreatures = engine.ExcessCreatures
 	// CardsInArchives counts the cards in a player's archives.
 	CardsInArchives = engine.CardsInArchives
+	// HousesInPlay counts the distinct houses among all cards in play, optionally
+	// excluding one house.
+	HousesInPlay = engine.HousesInPlay
 	// CardsRevealed counts the cards the most recent Reveal showed.
 	CardsRevealed = engine.CardsRevealed
 	// CardsDestroyed counts the cards the most recent destruction removed "this way".
 	CardsDestroyed = engine.CardsDestroyed
+	// CreaturesDestroyed counts the cards the most recent destruction removed "this
+	// way", rendered as creatures. Use it when only creatures can be destroyed;
+	// use CardsDestroyed when artifacts can be too.
+	CreaturesDestroyed = engine.CreaturesDestroyed
+	// AemberBonusDestroyed counts the total Æmber pips on the cards the most recent
+	// destruction removed (Rustgnawer gains the destroyed artifact's Æmber bonus).
+	AemberBonusDestroyed = engine.AemberBonusDestroyed
 	// CardsPurged counts the creatures the most recent purge removed "this way".
 	CardsPurged = engine.CardsPurged
 
@@ -390,6 +428,8 @@ type (
 	UnforgedKeys = engine.UnforgedKeys
 	// AemberOnThis counts the Æmber sitting on the source card.
 	AemberOnThis = engine.AemberOnThis
+	// DamageOnThis counts the damage sitting on the source card.
+	DamageOnThis = engine.DamageOnThis
 	// CopiesInDiscard counts the copies of this card in your discard pile.
 	CopiesInDiscard = engine.CopiesInDiscard
 )
@@ -435,6 +475,8 @@ type (
 	NameHouse = engine.NameHouse
 	// ForceOpponentActiveHouse forces the opponent's active house next turn.
 	ForceOpponentActiveHouse = engine.ForceOpponentActiveHouse
+	// ForbidOpponentActiveHouse bars the opponent's chosen house next turn (Tezmal).
+	ForbidOpponentActiveHouse = engine.ForbidOpponentActiveHouse
 	// ForgeKey has the controller forge a key outside the normal step.
 	ForgeKey = engine.ForgeKey
 	// UnforgeKey takes a forged key back off a player (Key Hammer).

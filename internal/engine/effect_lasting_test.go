@@ -260,8 +260,11 @@ func TestReactionEventOf(t *testing.T) {
 	if ev, ok := reactionEventOf(TriggerAfterReap); !ok || ev != EventReap {
 		t.Errorf("reactionEventOf(Reap) = %v, %v; want EventReap, true", ev, ok)
 	}
+	if ev, ok := reactionEventOf(TriggerAfterFight); !ok || ev != EventFight {
+		t.Errorf("reactionEventOf(Fight) = %v, %v; want EventFight, true", ev, ok)
+	}
 	if _, ok := reactionEventOf(TriggerAfterPlay); ok {
-		t.Error("a non-reap trigger should not map to a reaction event")
+		t.Error("a non-reaction trigger should not map to a reaction event")
 	}
 }
 
@@ -281,7 +284,7 @@ func TestGainAbilityValidate(t *testing.T) {
 	// A Reap ability whose effect the flat registry cannot carry.
 	if err := (GainAbility{
 		Target:  Target{Kind: TargetTriggeringCreature},
-		Ability: reap(Ready{Target: Target{Kind: TargetTriggeringCreature}}),
+		Ability: reap(ArchiveSource{}),
 	}).validate(); err == nil {
 		t.Error("an unsupported ability effect should be rejected")
 	}
@@ -301,6 +304,43 @@ func TestGainAbilityText(t *testing.T) {
 	want := `it gains, "Reap: Draw a card."`
 	if got := e.Text(); got != want {
 		t.Errorf("text = %q, want %q", got, want)
+	}
+}
+
+// GainAbility can grant a Fight reaction that readies the fighting creature, and
+// renders the granted self-reference as "this creature" rather than the source
+// card's name (Into the Fray).
+func TestGainAbilityFightReady(t *testing.T) {
+	e := GainAbility{
+		Target: Target{Kind: TargetTriggeringCreature},
+		Ability: Ability{
+			Trigger: TriggerAfterFight,
+			Effect:  Ready{Target: Target{Kind: TargetThisCreature}},
+		},
+	}
+	if err := e.validate(); err != nil {
+		t.Fatalf("valid Fight/Ready GainAbility = %v", err)
+	}
+	if got, want := e.Text(), `it gains, "Fight: Ready this creature."`; got != want {
+		t.Errorf("text = %q, want %q", got, want)
+	}
+
+	g := started(t)
+	granted := g.AddToBattleline(testCreature("granted", 3), 0)
+	GainAbility{
+		Target:  Target{Kind: TargetThisCreature},
+		Ability: e.Ability,
+	}.Resolve(&EffectContext{Resolver: g, Source: granted, Controller: 0})
+
+	le := g.State.Lasting[0]
+	if le.On != EventFight || le.Do != actReadyPlayed || le.Subject != granted {
+		t.Fatalf("registered reaction = %+v, want a Subject-scoped fight ready", le)
+	}
+
+	g.State.Cards[granted].Exhausted = true
+	g.emitLasting(EventFight, 0, granted)
+	if g.State.Cards[granted].Exhausted {
+		t.Error("the granted creature should be readied after it fights")
 	}
 }
 

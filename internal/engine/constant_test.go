@@ -276,4 +276,14 @@ func TestConstantPerCount(t *testing.T) {
 	if got := onThis.Value(&EffectContext{Resolver: g, Source: id, Controller: 0}); got != 2 {
 		t.Errorf("AemberOnThis value = %d, want 2", got)
 	}
+
+	// DamageOnThis reads the damage sitting on the source card.
+	dmgOnThis := DamageOnThis{}
+	if got := dmgOnThis.CountText(); got != "damage on it" {
+		t.Errorf("DamageOnThis count text = %q", got)
+	}
+	g.SetDamage(id, 3)
+	if got := dmgOnThis.Value(&EffectContext{Resolver: g, Source: id, Controller: 0}); got != 3 {
+		t.Errorf("DamageOnThis value = %d, want 3", got)
+	}
 }

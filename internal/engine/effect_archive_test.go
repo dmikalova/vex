@@ -103,6 +103,30 @@ func TestArchiveFromDiscardEffect(t *testing.T) {
 	}
 }
 
+func TestArchiveFromDiscardHouseFilter(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.AddToDiscard(NewCard("logos", Logos, Creature, Common, WithPower(1)), 0)
+	mars := g.AddToDiscard(NewCard("mars", Mars, Creature, Common, WithPower(1)), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	e := ArchiveFromDiscard{House: Mars}
+	if e.Text() != "archive a Mars card from your discard pile" {
+		t.Errorf("text = %q", e.Text())
+	}
+	// Only the Mars card is a candidate, so the default chooser archives it.
+	e.Resolve(ctx)
+	if g.State.Archives[0].Count != 1 || g.State.Archives[0].IDs[0] != mars {
+		t.Errorf("archives = %v, want [%d]", g.State.Archives[0].slice(), mars)
+	}
+	// A discard pile with no card of the house archives nothing.
+	empty := &EffectContext{Resolver: g, Controller: 1}
+	g.AddToDiscard(NewCard("logos2", Logos, Creature, Common, WithPower(1)), 1)
+	e.Resolve(empty)
+	if g.State.Archives[1].Count != 0 {
+		t.Error("no Mars card in discard should archive nothing")
+	}
+}
+
 func TestArchiveFromDiscardDeclined(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.AddToDiscard(testCreature("c", 1), 0)
@@ -385,5 +409,43 @@ func TestArchiveFromHandFiltered(t *testing.T) {
 	}
 	if e.resolveGate(ctx) {
 		t.Error("with no matching card left the gate should report nothing archived")
+	}
+}
+
+func TestArchiveRandomFromHand(t *testing.T) {
+	if (ArchiveRandomFromHand{Amount: 1}).Text() != "archive a random card from your hand" {
+		t.Errorf("text = %q", (ArchiveRandomFromHand{Amount: 1}).Text())
+	}
+	if (ArchiveRandomFromHand{Amount: 2}).Text() != "archive 2 random cards from your hand" {
+		t.Errorf("plural text = %q", (ArchiveRandomFromHand{Amount: 2}).Text())
+	}
+	if (ArchiveRandomFromHand{}).validate() == nil {
+		t.Error("a zero-amount ArchiveRandomFromHand should not validate")
+	}
+	if (ArchiveRandomFromHand{Amount: 1}).validate() != nil {
+		t.Error("a positive ArchiveRandomFromHand should validate")
+	}
+
+	g := NewGame("A", "B", 1)
+	g.AddToHand(testCreature("c1", 1), 0)
+	g.AddToHand(testCreature("c2", 1), 0)
+	g.AddToHand(testCreature("c3", 1), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	(ArchiveRandomFromHand{Amount: 2}).Resolve(ctx)
+	if g.State.Archives[0].Count != 2 {
+		t.Errorf("archives count = %d, want 2", g.State.Archives[0].Count)
+	}
+	if len(g.Hand(0)) != 1 {
+		t.Errorf("hand = %v, want 1 card left", g.Hand(0))
+	}
+
+	// Archiving more than the hand holds stops when the hand empties.
+	(ArchiveRandomFromHand{Amount: 5}).Resolve(ctx)
+	if len(g.Hand(0)) != 0 {
+		t.Errorf("hand should be empty, got %v", g.Hand(0))
+	}
+	if g.State.Archives[0].Count != 3 {
+		t.Errorf("archives count = %d, want 3", g.State.Archives[0].Count)
 	}
 }

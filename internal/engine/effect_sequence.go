@@ -101,6 +101,34 @@ func (e Sequence) Resolve(ctx *EffectContext) {
 	}
 }
 
+// declinable reports that the sequence leads with a single clickable choice, so a
+// May or MayRepeat wrapping it can be driven by that choice (and a Done to pass)
+// rather than a separate Yes/No — the rest of the sequence then follows.
+func (e Sequence) declinable() bool {
+	if len(e.Effects) == 0 {
+		return false
+	}
+	d, ok := e.Effects[0].(declinableEffect)
+	return ok && d.declinable()
+}
+
+// resolveOptional asks the leading choice declinably; only when it is taken do the
+// remaining effects resolve, so declining the first pick passes on the whole
+// sequence.
+func (e Sequence) resolveOptional(ctx *EffectContext) bool {
+	if len(e.Effects) == 0 {
+		return false
+	}
+	first, ok := e.Effects[0].(declinableEffect)
+	if !ok || !first.declinable() || !first.resolveOptional(ctx) {
+		return false
+	}
+	for _, child := range e.Effects[1:] {
+		child.Resolve(ctx)
+	}
+	return true
+}
+
 // validate surfaces the first configuration error among the child effects.
 func (e Sequence) validate() error {
 	for _, child := range e.Effects {

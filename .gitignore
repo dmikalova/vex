@@ -30,6 +30,11 @@ profile.cov
 # Web client WebAssembly build artifact (regenerate with `mage webWasm`)
 web/app.wasm
 
+# Precompressed/minified static web asset artifacts (regenerate with
+# `mage webAssets`).
+/web/**/*.br
+/web/**/*.gz
+
 # Dependency directories (remove the comment below to include it)
 vendor/
 

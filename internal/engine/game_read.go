@@ -26,6 +26,9 @@ func (g *Game) controller(id LocalID) int {
 // Name returns a card's printed name.
 func (g *Game) Name(id LocalID) string { return g.cat.def(id).Name }
 
+// AemberBonus returns the number of Æmber pips printed on a card.
+func (g *Game) AemberBonus(id LocalID) int { return g.cat.def(id).AemberBonus }
+
 // House returns the house a card currently belongs to. A temporary "belongs to
 // house" effect applies only while the card remains in play; everywhere else the
 // card keeps its printed house.
@@ -93,7 +96,7 @@ func (g *Game) constantBonus(id LocalID, pick func(ConstantAbility) int) int {
 		for _, src := range g.allInPlay(p) {
 			for _, c := range g.cat.def(src).ConstantAbilities {
 				b := pick(c)
-				if b == 0 || !g.constantAffects(src, c, id) {
+				if b == 0 || !g.constantActive(src, c) || !g.constantAffects(src, c, id) {
 					continue
 				}
 				if c.Per != nil {
@@ -124,6 +127,16 @@ func (g *Game) constantAffects(src LocalID, c ConstantAbility, id LocalID) bool 
 	return false
 }
 
+// constantActive reports whether constant ability c's positional condition is met
+// for its source — a WhileOffFlank ability is suspended while its source holds a
+// flank.
+func (g *Game) constantActive(src LocalID, c ConstantAbility) bool {
+	if c.WhileOffFlank && g.onFlankOf(src) {
+		return false
+	}
+	return true
+}
+
 // assault returns a creature's Assault value including attached upgrades.
 func (g *Game) assault(id LocalID) int {
 	a := g.cat.def(id).Assault
@@ -145,6 +158,16 @@ func (g *Game) hazardous(id LocalID) int {
 // Hazardous returns a creature's current Hazardous value, including attached
 // upgrades.
 func (g *Game) Hazardous(id LocalID) int { return g.hazardous(id) }
+
+// splashAttack returns a creature's Splash-attack value including attached
+// upgrades.
+func (g *Game) splashAttack(id LocalID) int {
+	s := g.cat.def(id).SplashAttack
+	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
+		s += g.cat.def(up).Static.SplashAttackBonus
+	}
+	return s
+}
 
 // ElusiveSpent reports whether a creature has already used its Elusive this turn,
 // so it will take combat damage for the rest of the turn. The keybar drops the
@@ -177,7 +200,7 @@ func (g *Game) hasKeyword(id LocalID, k Keyword) bool {
 		for _, src := range g.allInPlay(p) {
 			for _, c := range g.cat.def(src).ConstantAbilities {
 				for _, kw := range c.Keywords {
-					if kw == k && g.constantAffects(src, c, id) {
+					if kw == k && g.constantActive(src, c) && g.constantAffects(src, c, id) {
 						return true
 					}
 				}
@@ -338,6 +361,31 @@ func (g *Game) cannotFight(player int) bool {
 	return false
 }
 
+// cannotReap reports whether a player is barred from reaping by a constant
+// Restrictions.Reaping rule on a card in play — either their own (Reaping
+// Controller) or their opponent's (Barrister Joya's Reaping Opponent, "Enemy
+// creatures cannot reap.").
+func (g *Game) cannotReap(player int) bool {
+	for owner := 0; owner < 2; owner++ {
+		for _, id := range g.allInPlay(owner) {
+			r := g.cat.def(id).Restricts.Reaping
+			switch r {
+			case Controller:
+				if player == owner {
+					return true
+				}
+			case Opponent:
+				if player != owner {
+					return true
+				}
+			case EachPlayer:
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // creaturesPlayedThisTurn counts how many of the cards a player played this turn
 // were creatures — the tally the ready phase freezes so the next player can ask
 // how many creatures their opponent played on their previous turn (Lifeweb).
@@ -377,6 +425,21 @@ func (g *Game) skipsForge(player int) bool {
 	for _, id := range g.allInPlay(player) {
 		if g.cat.def(id).Restricts.SkipForge {
 			return true
+		}
+	}
+	return false
+}
+
+// forgeKeyNumberBarred reports whether the next key player would forge is barred
+// by a constant Restrictions.NoForgeKeyNumber rule on any card in play — the Key
+// Imps bar a key ordinal for both players, whoever controls the Imp.
+func (g *Game) forgeKeyNumberBarred(player int) bool {
+	next := g.State.Keys[player] + 1
+	for p := 0; p < 2; p++ {
+		for _, id := range g.allInPlay(p) {
+			if g.cat.def(id).Restricts.NoForgeKeyNumber == next {
+				return true
+			}
 		}
 	}
 	return false
@@ -512,6 +575,20 @@ func (g *Game) allInPlay(player int) []LocalID {
 	out = append(out, b...)
 	out = append(out, a...)
 	return out
+}
+
+// entersPlayReady reports whether a card player controls grants player's cards
+// of type t entry into play ready rather than exhausted (Duskwitch for
+// creatures, The Curator for artifacts). The grant is friendly only, so callers
+// pass the entering card's controller: a card that somehow enters under the
+// opponent's control is not readied by your granter and stays exhausted.
+func (g *Game) entersPlayReady(player int, t CardType) bool {
+	for _, id := range g.allInPlay(player) {
+		if g.cat.def(id).GrantsEntersReady == t {
+			return true
+		}
+	}
+	return false
 }
 
 // cloneIDs copies a slice of ids so callers cannot alias the state arrays.

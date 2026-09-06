@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// AnahitaTheTrader
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Anahita the Trader
 //
 //	House:  Sanctum
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Human • Merchant
 //
-//	Reap: Give control of a friendly artifact to your opponent. If you do, they must give you 2A.
+//	Reap: Your opponent gains control of a friendly artifact -> steal 2 Æmber.
 var AnahitaTheTrader = card.New(
 	"Anahita the Trader",
 	card.House.Sanctum,
@@ -24,5 +19,13 @@ var AnahitaTheTrader = card.New(
 	card.Provenance(card.AoA, 248),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Merchant),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Reap, card.Then{
+			First: card.TakeControl{
+				Target:     card.Target.FriendlyArtifact,
+				Duration:   card.Duration.Forever,
+				ToOpponent: true,
+			},
+			Result: card.StealAember{Amount: 2},
+		}),
 )

@@ -35,6 +35,15 @@ func TestCardsDiscarded(t *testing.T) {
 	if got := eAmount.CondText(); got != "if you have discarded 3 Untamed cards from your hand this turn" {
 		t.Errorf("eAmount.CondText() = %q", got)
 	}
+	// HouseNone omits the house: "a card" for one, "N cards" for more.
+	eAny := CardsDiscarded{Player: Controller, Amount: 1}
+	if got := eAny.CondText(); got != "if you have discarded a card from your hand this turn" {
+		t.Errorf("eAny.CondText() = %q", got)
+	}
+	eAnyMany := CardsDiscarded{Player: Controller, Amount: 2}
+	if got := eAnyMany.CondText(); got != "if you have discarded 2 cards from your hand this turn" {
+		t.Errorf("eAnyMany.CondText() = %q", got)
+	}
 
 	c := g.AddToHand(NewCard("Untamed Action", Untamed, Tactic, Common), 0)
 	g.DiscardCardFromHand(0, c)

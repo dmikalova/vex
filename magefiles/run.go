@@ -44,6 +44,11 @@ func Web() error {
 			if err := WebWasm(); err != nil {
 				return err
 			}
+			// Refresh the precompressed .br/.gz siblings so the browser, which
+			// prefers them, is served this build rather than a stale compression.
+			if err := WebAssets(); err != nil {
+				return err
+			}
 			return sh.Run("go", "build", "-o", bin, "./cmd/web")
 		},
 		Command:    bin,

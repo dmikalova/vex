@@ -1,24 +1,38 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// GoldenAura
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Golden Aura
 //
 //	House:  Sanctum
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Choose a creature. Fully heal the chosen creature. For the remainder of the turn, the chosen creature is considered to be in house Sanctum and cannot be dealt damage.
+//	Play: Choose a creature - fully heal it, and for the remainder of the turn, it belongs to house Sanctum and cannot be dealt damage.
 var GoldenAura = card.New(
 	"Golden Aura",
 	card.House.Sanctum,
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.AoA, 217),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.Play, card.ChooseCreatureThen{
+		Target: card.Target.Creature,
+		Then: card.Sequence{Effects: []card.Effect{
+			card.Heal{Fully: true, Target: card.Target.Triggering},
+			card.ForDuration{
+				Duration: card.Duration.EndOfTurn,
+				Effects: []card.Effect{
+					card.BelongToHouse{
+						Target:   card.Target.Triggering,
+						House:    card.House.Self,
+						Duration: card.Duration.EndOfTurn,
+					},
+					card.PreventDamage{
+						Target:   card.Target.Triggering,
+						Duration: card.Duration.EndOfTurn,
+					},
+				},
+			},
+		}},
+	}),
 )

@@ -58,6 +58,14 @@ reaping or fighting; using it this way exhausts the card.`,
 		},
 		{
 			Section:    SectionAbility,
+			Title:      "After a Player Forges a Key",
+			Definition: "An ability that resolves after any player forges a key, acting on the player who forged.",
+			Body: `This ability resolves after any player forges a key, its own controller or
+the opponent. The player who forged is the one it acts on, so "they" always
+means whoever forged.`,
+		},
+		{
+			Section:    SectionAbility,
 			Title:      "After a Creature Enters Play",
 			Definition: "An ability that resolves after any creature enters play, including the opponent's.",
 			Body: `This ability resolves after any creature enters play, including creatures
@@ -117,6 +125,16 @@ to.`,
 			Body: `This ability resolves after an enemy creature is destroyed during its
 controller's turn (Pile of Skulls captures Æmber onto a friendly creature
 whenever an enemy creature is destroyed on your turn).`,
+		},
+		{
+			Section:    SectionAbility,
+			Title:      "After a Creature Is Destroyed",
+			Definition: "An ability that resolves after any creature is destroyed, with that creature as \"it\".",
+			Body: `This ability resolves after any creature is destroyed, friendly or enemy,
+with the destroyed creature as "it" (Neffru gains that creature's owner 1 Æmber).
+It resolves only after the whole destruction is complete and the destroyed cards
+have reached their discard piles, so a card destroyed alongside them does not
+react.`,
 		},
 		{
 			Section:    SectionAbility,

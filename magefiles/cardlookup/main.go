@@ -25,11 +25,16 @@
 //	                     printed text and a TODO marker. Excluded stubs do not
 //	                     compile or register, so the database and coverage stay
 //	                     honest until a card is actually implemented.
+//
+//	next-card [setSlug]  Print the next unimplemented card whose stub still carries
+//	                     the `//go:build todo` constraint, in collector-number
+//	                     order — the card to build next.
 package main
 
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 
@@ -68,6 +73,8 @@ func run(args []string) error {
 		return coverage(args[1:])
 	case "stub":
 		return stub(args[1:])
+	case "next-card":
+		return nextCard(args[1:])
 	default:
 		return usage()
 	}
@@ -75,7 +82,8 @@ func run(args []string) error {
 
 func usage() error {
 	return fmt.Errorf(
-		"usage: cardlookup <lookup <query> | missing [setSlug] | coverage [-new] | stub <setSlug>>",
+		"usage: cardlookup <lookup <query> | missing [setSlug] | " +
+			"coverage [-new] | stub <setSlug> | next-card [setSlug]>",
 	)
 }
 
@@ -141,11 +149,13 @@ func provCodeVar(set provenance.SourceSet) string {
 }
 
 // coveredNumbers returns, per source-set slug, the set of collector numbers that
-// count as implemented. A number is covered when an implemented card either tags
-// it with a provenance Ref, or shares the source card's name — a reprint of an
-// already-implemented card is itself already implemented, so it is not "missing"
-// and does not need a stub. (KeyForge card names identify the card: the same name
-// in another set is the same card.)
+// count as implemented. A source printing is implemented when some implemented
+// card carries a provenance Ref to any printing of that same card: the Ref names
+// a source card, and every same-named printing across sets is the same card, so
+// tagging one printing covers them all. This means a card need only tag the
+// printing it was built from (e.g. Labwork's CotA #114 and #271) — its reprints
+// in later sets are covered by name without a per-set Ref, and a card renamed
+// away from its printed name still covers its printings through the Ref.
 func coveredNumbers() map[string]map[int]bool {
 	covered := map[string]map[int]bool{}
 	mark := func(slug string, number int) {
@@ -155,15 +165,15 @@ func coveredNumbers() map[string]map[int]bool {
 		covered[slug][number] = true
 	}
 
+	refName := sourceNameByRef()
 	implemented := map[string]bool{}
 	for _, rc := range card.Cards() {
-		implemented[normalizeName(rc.Def.Name)] = true
 		for _, ref := range rc.Provenance {
-			mark(ref.Set.Slug, ref.Number)
+			if name, ok := refName[ref]; ok {
+				implemented[normalizeName(name)] = true
+			}
 		}
 	}
-	// A source card whose name is already implemented (a reprint) is covered in
-	// whichever set it appears, even without an explicit Ref to that printing.
 	for _, set := range provenance.Sets() {
 		for _, c := range set.Cards {
 			if implemented[normalizeName(c.Name)] {
@@ -172,6 +182,19 @@ func coveredNumbers() map[string]map[int]bool {
 		}
 	}
 	return covered
+}
+
+// sourceNameByRef maps every source printing (set + collector number) to its
+// catalog card name, so a card's provenance Ref can be resolved to the name of
+// the source card it was built from.
+func sourceNameByRef() map[provenance.Ref]string {
+	out := map[provenance.Ref]string{}
+	for _, set := range provenance.Sets() {
+		for _, c := range set.Cards {
+			out[provenance.Ref{Set: set.SourceSet, Number: c.Number}] = c.Name
+		}
+	}
+	return out
 }
 
 // normalizeName folds a card name to a case- and space-insensitive key so an
@@ -234,6 +257,87 @@ func missing(args []string) error {
 		printCard(set.SourceSet, c)
 	}
 	return nil
+}
+
+// nextCard prints the next unimplemented card whose stub file still carries the
+// `//go:build todo` constraint, walking the set's missing cards in collector-
+// number order and stopping at the first one that has a stub on disk. It is the
+// pick-the-next-card step of the implement-cards workflow: build the card it
+// names, drop the build tag, and run it again for the next. With no set named it
+// resolves the slug the way `missing` does (interactive picker, or Call of the
+// Archons when stdin is not a terminal).
+func nextCard(args []string) error {
+	var slug string
+	switch len(args) {
+	case 0:
+	case 1:
+		slug = args[0]
+	default:
+		return fmt.Errorf("usage: cardlookup next-card [setSlug]")
+	}
+	if slug == "" {
+		if isInteractive() {
+			picked, err := pickSet()
+			if err != nil {
+				return err
+			}
+			if picked == "" {
+				return nil // cancelled
+			}
+			slug = picked
+		} else {
+			slug = provenance.CallOfTheArchons.Slug
+		}
+	}
+	// Touch the aggregator so every set package registers its cards.
+	_ = cards.All()
+	covered := coveredNumbers()[slug]
+
+	sets := provenance.Sets()
+	var set *provenance.Set
+	for i := range sets {
+		if sets[i].Slug == slug {
+			set = &sets[i]
+			break
+		}
+	}
+	if set == nil {
+		return fmt.Errorf("unknown set slug %q", slug)
+	}
+
+	var miss []provenance.Card
+	for _, c := range set.Cards {
+		if !covered[c.Number] {
+			miss = append(miss, c)
+		}
+	}
+	sort.Slice(miss, func(i, j int) bool { return miss[i].Number < miss[j].Number })
+
+	dir := filepath.Join("internal", "cards", "sets", slug)
+	for _, c := range miss {
+		path := filepath.Join(dir, fileName(c.Name)+".go")
+		if !hasBuildTodo(path) {
+			continue
+		}
+		fmt.Printf("%s\n\n", path)
+		printCard(set.SourceSet, c)
+		return nil
+	}
+	return fmt.Errorf(
+		"no //go:build todo stub found in %s — run `mage tool:stub %s` first",
+		dir,
+		slug,
+	)
+}
+
+// hasBuildTodo reports whether the file at path exists and starts with the
+// `//go:build todo` constraint that marks an unimplemented stub.
+func hasBuildTodo(path string) bool {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return false
+	}
+	return strings.HasPrefix(strings.TrimSpace(string(data)), "//go:build todo")
 }
 
 // coverage prints, per source set, how many cards are covered by an implemented

@@ -250,6 +250,10 @@ func TestGeneratedCardText(t *testing.T) {
 			"House:  Untamed\nType:   Creature\nRarity: Rare\nPower:  2\n\nHazardous 5.",
 		},
 		{
+			NewCard("Cowfyne", Brobnar, Creature, Common, WithPower(5), WithSplashAttack(2)),
+			"House:  Brobnar\nType:   Creature\nRarity: Common\nPower:  5\n\nSplash-attack 2.",
+		},
+		{
 			NewCard(
 				"Valdr",
 				Brobnar,
@@ -810,6 +814,11 @@ func TestStaticText(t *testing.T) {
 		t.Errorf("hazardous staticText = %q", got)
 	}
 	if got := staticText(
+		StaticModifier{SplashAttackBonus: 3},
+	); got != "This creature gains +3 splash-attack." {
+		t.Errorf("splash-attack staticText = %q", got)
+	}
+	if got := staticText(
 		StaticModifier{Keywords: []Keyword{Skirmish}},
 	); got != "This creature gains skirmish." {
 		t.Errorf("keyword staticText = %q", got)
@@ -851,6 +860,7 @@ func TestNewTriggerPrefixes(t *testing.T) {
 		TriggerAfterUsedSelf:               "After " + SelfName + " is used, ",
 		TriggerAfterCreatureReaps:          "After a creature reaps, ",
 		TriggerAfterEnemyCreatureReaps:     "After an enemy creature reaps, ",
+		TriggerAfterCreatureDestroyed:      "After a creature is destroyed, ",
 		TriggerLeavesPlay:                  "Leaves Play: ",
 	} {
 		if got, _ := trigger.prefix(); got != want {

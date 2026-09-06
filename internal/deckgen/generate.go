@@ -253,7 +253,9 @@ func (g *generator) tryDuplicate(rarity engine.Rarity, placed []placedCard) (Car
 }
 
 // pick returns a random eligible card, skipping one-copy-per-deck cards already
-// placed. It reports false when nothing is eligible.
+// placed. Eligible cards are drawn weighted by their RarityWeight (default 1),
+// so a card can be made rarer within its rarity than its peers. It reports false
+// when nothing is eligible.
 func (g *generator) pick(cards []Card) (Card, bool) {
 	elig := make([]Card, 0, len(cards))
 	for _, c := range cards {
@@ -265,7 +267,26 @@ func (g *generator) pick(cards []Card) (Card, bool) {
 	if len(elig) == 0 {
 		return Card{}, false
 	}
-	return elig[g.r.Intn(len(elig))], true
+	total := 0.0
+	for _, c := range elig {
+		total += drawWeight(c)
+	}
+	x := g.r.Float64() * total
+	for i := 0; i < len(elig)-1; i++ {
+		if x -= drawWeight(elig[i]); x < 0 {
+			return elig[i], true
+		}
+	}
+	return elig[len(elig)-1], true
+}
+
+// drawWeight is a card's relative draw weight within its house+rarity bucket,
+// defaulting to 1 when its RarityWeight is unset (0 or less).
+func drawWeight(c Card) float64 {
+	if c.Profile.RarityWeight > 0 {
+		return c.Profile.RarityWeight
+	}
+	return 1
 }
 
 // otherHouse picks a Set House other than house.

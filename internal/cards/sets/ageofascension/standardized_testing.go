@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// StandardizedTesting
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Standardized Testing
 //
 //	House:  Logos
 //	Type:   Tactic
@@ -20,5 +15,8 @@ var StandardizedTesting = card.New(
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.AoA, 119),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Destroy{
+			Target: card.Target.EachCreature.Selector(card.LowestAndHighestPower),
+		}),
 )

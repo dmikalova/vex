@@ -1,0 +1,33 @@
+package ageofascension
+
+import (
+	"testing"
+
+	"github.com/dmikalova/vactrol/internal/card"
+	ct "github.com/dmikalova/vactrol/internal/cards/cardtest"
+	"github.com/dmikalova/vactrol/internal/engine"
+)
+
+// Gold Key Imp
+//
+//	House:  Dis
+//	Type:   Creature
+//	Rarity: Special
+//	Power:  2
+//	Traits: Imp
+//
+//	Elusive.
+//	Players cannot forge their third key.
+func TestGoldKeyImp(t *testing.T) {
+	h := ct.Play(t, ct.Setup{
+		P1: ct.Side{House: card.House.Dis, InPlay: ct.Cards(GoldKeyImp)},
+	})
+	g := h.Game()
+
+	g.State.Keys[0] = 2 // has two keys; the third is barred
+	g.State.Aember[0] = engine.KeyCost
+	h.P1.EndTurn() // to P2
+	h.P2.EndTurn() // back to P1: forge phase runs, third key is barred
+
+	h.P1.ExpectKeys(2)
+}

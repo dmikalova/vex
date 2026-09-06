@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// TheCurator
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// The Curator
 //
 //	House:  Logos
 //	Type:   Creature
@@ -24,5 +19,5 @@ var TheCurator = card.New(
 	card.Provenance(card.AoA, 157),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithFriendlyEntersPlayReady(card.Type.Artifact),
 )

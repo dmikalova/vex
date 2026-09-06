@@ -71,17 +71,22 @@ func lastingActionOf(e Effect) (lastingAction, int, bool) {
 		return actCapture, d.Amount, true
 	case Draw:
 		return actDraw, d.Amount, true
+	case Ready:
+		return actReadyPlayed, 0, true
 	}
 	return 0, 0, false
 }
 
 // reactionEventOf maps a triggered ability's trigger to the reaction event that
 // fires it, reporting whether the trigger is one a lasting per-creature grant can
-// hang on. Only Reap is needed today (Spectral Tunneler); it lives here so
-// GainAbility and the registry agree on the mapping.
+// hang on. Reap (Spectral Tunneler) and Fight (Into the Fray) are supported; it
+// lives here so GainAbility and the registry agree on the mapping.
 func reactionEventOf(t Trigger) (Event, bool) {
-	if t == TriggerAfterReap {
+	switch t {
+	case TriggerAfterReap:
 		return EventReap, true
+	case TriggerAfterFight:
+		return EventFight, true
 	}
 	return eventUnset, false
 }
@@ -91,7 +96,8 @@ func reactionEventOf(t Trigger) (Event, bool) {
 // card". Unlike ForRemainderOfTurn's controller-wide reaction, this one is scoped
 // to the single granted creature through the registry's Subject, so only that
 // creature's own trigger fires it. The ability is stored flat, so only triggers
-// and effects the registry can carry (a Reap reaction with a Draw) are allowed.
+// and effects the registry can carry (a Reap or Fight reaction whose effect is a
+// Draw, damage, capture, or Ready) are allowed.
 type GainAbility struct {
 	Target  Target
 	Ability Ability
@@ -112,9 +118,12 @@ func (e GainAbility) validate() error {
 }
 
 // Text renders the effect, e.g. `it gains, "Reap: Draw a card."` — a granted
-// ability takes a comma and quotes (card-wording rule 2), the period inside.
+// ability takes a comma and quotes (card-wording rule 2), the period inside. A
+// self-reference in the granted ability names the creature that gains it, so it
+// renders "this creature" rather than the source card's name.
 func (e GainAbility) Text() string {
-	return e.Target.Text() + ` gains, "` + RenderAbility(e.Ability) + `"`
+	granted := strings.ReplaceAll(RenderAbility(e.Ability), SelfName, "this creature")
+	return e.Target.Text() + ` gains, "` + granted + `"`
 }
 
 // Resolve registers the ability as a per-creature reaction on each selected

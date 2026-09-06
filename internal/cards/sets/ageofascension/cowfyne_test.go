@@ -15,9 +15,9 @@ import (
 //	Power:  5
 //	Traits: Giant
 //
-//	Before Fight: Deal 2 damage to each neighbor of the creature Cowfyne fights.
+//	Splash-attack 2.
 func TestCowfyne(t *testing.T) {
-	t.Run("deals 2 damage to each neighbor of the creature it fights", func(t *testing.T) {
+	t.Run("deals 2 splash damage to each neighbor while it fights", func(t *testing.T) {
 		var left, middle, right ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
@@ -36,6 +36,7 @@ func TestCowfyne(t *testing.T) {
 		h.P1.Fight(Cowfyne, middle)
 
 		h.Expect(left).Damage(2)
+		h.Expect(middle).Damage(5)
 		h.Expect(right).Damage(2)
 	})
 }

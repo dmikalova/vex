@@ -1,8 +1,9 @@
 package engine
 
 // This file holds combat: an attacker fighting a defender, dealing damage (with
-// armor, Skirmish, Assault, and Hazardous), and deciding which creatures the
-// damage destroys. The destruction itself is carried out in game_destroy.go.
+// armor, Skirmish, Assault, Hazardous, and Splash-attack), and deciding which
+// creatures the damage destroys. The destruction itself is carried out in
+// game_destroy.go.
 
 // Combat: use one of your ready creatures to fight an enemy creature. Using it to
 // fight exhausts it. First, any "Before Fight" abilities and the Assault and
@@ -86,8 +87,16 @@ func (g *Game) fight(attacker, defender LocalID) {
 				dmgTarget = redirect
 			}
 			targets := []DamageTarget{{ID: dmgTarget, Amount: g.fightDamage(attacker, defender)}}
-			if !g.hasKeyword(attacker, Skirmish) {
+			if !g.hasKeyword(attacker, Skirmish) &&
+				!g.cat.def(defender).DealsNoDamageWhenAttacked {
 				targets = append(targets, DamageTarget{ID: attacker, Amount: dp})
+			}
+			// Splash-attack deals its damage to each neighbor of the creature the
+			// attacker fights, at the same time as fight damage.
+			if s := g.splashAttack(attacker); s > 0 {
+				for _, n := range neighbors(&EffectContext{Resolver: g}, defender) {
+					targets = append(targets, DamageTarget{ID: n, Amount: s})
+				}
 			}
 			g.dealDamage(g.controller(attacker), targets...)
 		}

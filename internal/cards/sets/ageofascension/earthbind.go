@@ -1,20 +1,15 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Earthbind
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
 //	House:  Untamed
 //	Type:   Upgrade
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature cannot be used unless its controller has discarded a card this turn.
+//	This creature cannot be used unless you have discarded a card from your hand this turn.
 var Earthbind = card.New(
 	"Earthbind",
 	card.House.Untamed,
@@ -22,5 +17,10 @@ var Earthbind = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, 352),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithRestrictions(card.Restrictions{
+		UseCondition: card.CardsDiscarded{
+			Player: card.Controller,
+			Amount: 1,
+		},
+	}),
 )
