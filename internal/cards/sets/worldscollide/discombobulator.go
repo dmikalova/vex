@@ -20,7 +20,7 @@ var Discombobulator = card.New(
 	card.House.Logos,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 149),
+	card.Provenance(card.WC, "149"),
 	card.WithAemberBonus(1),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

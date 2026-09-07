@@ -375,7 +375,7 @@ type triggers struct {
 	AfterNeighborFights engine.Trigger
 	// Destroyed fires when this creature is destroyed ("Destroyed:").
 	Destroyed engine.Trigger
-	// AfterDestroyedFighting fires when a creature is destroyed fighting this one.
+	// AfterDestroyedFighting fires when a creature is destroyed in a fight with this one.
 	AfterDestroyedFighting engine.Trigger
 	// AfterArmorPrevents fires after this card prevents damage with its own armor.
 	AfterArmorPrevents engine.Trigger

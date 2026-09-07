@@ -22,7 +22,7 @@ var EeOnTheFringes = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 88),
+	card.Provenance(card.WC, "88"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Imp),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

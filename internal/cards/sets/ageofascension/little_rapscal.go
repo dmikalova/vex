@@ -17,7 +17,7 @@ var LittleRapscal = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 25),
+	card.Provenance(card.AoA, "25"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Goblin),
 	card.WithKeywords(card.Keyword.Elusive),

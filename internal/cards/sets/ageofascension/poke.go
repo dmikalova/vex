@@ -15,7 +15,7 @@ var Poke = card.New(
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 117),
+	card.Provenance(card.AoA, "117"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.DamageThenIfDestroyed{

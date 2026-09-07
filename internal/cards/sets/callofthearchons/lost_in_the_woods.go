@@ -15,7 +15,7 @@ var LostInTheWoods = card.New(
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 327),
+	card.Provenance(card.CotA, "327"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{

@@ -15,7 +15,7 @@ var ShardOfStrength = card.New(
 	card.House.Brobnar,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 48),
+	card.Provenance(card.AoA, "48"),
 	card.WithTraits(card.Traits.Item, card.Traits.Shard),
 	card.WithAbility(
 		card.Trigger.Action, card.AddPowerCounter{

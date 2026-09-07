@@ -18,7 +18,7 @@ var CenturionStenopius = card.New(
 	card.House.Saurian,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 199),
+	card.Provenance(card.WC, "199"),
 	card.WithPower(3),
 	card.WithArmor(2),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Soldier),

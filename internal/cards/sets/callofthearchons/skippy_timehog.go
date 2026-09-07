@@ -16,7 +16,7 @@ var SkippyTimehog = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 152),
+	card.Provenance(card.CotA, "152"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Mutant),
 	card.WithAbility(

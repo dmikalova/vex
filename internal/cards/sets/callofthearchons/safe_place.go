@@ -14,7 +14,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Action: Move 1 Æmber from your pool to Safe Place.
 var SafePlace = card.New("Safe Place",
 	card.House.Shadows, card.Type.Artifact, card.Rarity.Rare,
-	card.Provenance(card.CotA, 289),
+	card.Provenance(card.CotA, "289"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Location),
 	card.WithSpendableAember(),

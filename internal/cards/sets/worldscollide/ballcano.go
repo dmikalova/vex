@@ -14,7 +14,7 @@ var Ballcano = card.New(
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 3),
+	card.Provenance(card.WC, "3"),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.DealDamage{

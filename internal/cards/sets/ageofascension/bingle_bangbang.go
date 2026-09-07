@@ -16,7 +16,7 @@ var BingleBangbang = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 2),
+	card.Provenance(card.AoA, "2"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Goblin),
 	card.WithAbility(

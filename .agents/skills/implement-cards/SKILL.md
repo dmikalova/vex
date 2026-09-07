@@ -8,11 +8,16 @@ Ask the tool for the next unimplemented card, build it, drop its build tag, and
 ask again. Each card leaves the engine slightly richer and the set measurably
 more covered. The loop repeats until the stop condition is met.
 
+When several stubbed cards share a mechanic, you may jot them grouped in
+[docs/todo-agent.md](../../../docs/todo-agent.md) and build the shared primitive
+once, then knock out the group — a planning overlay on the collector-number
+`nextCard` order, not a replacement for it. Delete each entry as its card lands (a
+done item is removed, never marked done).
+
 The goal is **cards implemented**. Keep moving through the backlog: prefer
 implementing the next card to polishing the last one. This is **one continuous
 run through the entire stop condition** — never frame it to the user as a
-"multi-session grind", a "first batch", or work that will be "continued later".
-When the user says "do all the cards", they mean do all the cards now, in this
+"multi-session grind", a "first batch", or work that will be "continued later".When the user says "do all the cards", they mean do all the cards now, in this
 run, without handing back partway. Do not propose stopping, do not ask whether to
 keep going, and do not offer a status report as a substitute for finishing. Tests
 matter, and you should get your own work passing; but if a card is a reasonable
@@ -53,15 +58,15 @@ been stubbed yet, run the **stub-cards** skill first.
 Then, once per run:
 
 ```sh
-mage tool:coverage           # per-set covered/total — the number the run moves
-SET=<slug> mage tool:nextCard # the next //go:build todo card: its file path,
-                              # stats, printed text, and card.Provenance(...) call
+mage tool:coverage             # per-set covered/total — the number the run moves
+mage tool:nextCard -set=<slug> # the next //go:build todo card: its file path,
+                               # stats, printed text, and card.Provenance(...) call
 ```
 
 Set slugs match the files in `internal/cards/provenance/` minus `.json`. `nextCard`
 walks the set's missing cards in collector-number order and stops at the first one
 still carrying a `//go:build todo` stub — so implementing a card (dropping its
-build tag) is what advances the tool to the next one. With no `SET` it opens an
+build tag) is what advances the tool to the next one. With no `-set` it opens an
 interactive ↑/↓ picker.
 
 **Keep a triage memo in session memory.** Record the running state so a resumed
@@ -146,23 +151,23 @@ matter per card; save `mage check` for step 3.
 
 1. Delete the stub (`command rm <snake>.go` — `rm -f` is blocked by an alias) and
    write the real `internal/cards/sets/<slug>/<snake>.go`.
-2. Seed it with a bare `// <Card Name>` comment above
-   `var Name = card.New("Name", card.House.X, card.Type.Y, card.Rarity.Z,
-   card.Provenance(card.<Set>, n), With*...)`. The card TYPE "action" is
-   `card.Type.Tactic` (wording rule 19). Follow the one-field-per-line struct style
-   in `internal/cards/AGENTS.md`. When an ability names the card's **own** house,
-   write `card.House.Self` rather than repeating the house — but a card naming a
-   _different_ house (Take That, Smarty Pants is about Logos creatures) spells that
-   house out.
+2. Seed it with a bare `// <Card Name>` comment above a
+   `var Name = card.New(…)` declaration — the house, `card.Type`, rarity, a
+   `card.Provenance(card.<Set>, n)`, then the `With*` options. The card TYPE
+   "action" is `card.Type.Tactic` (wording rule 19). Follow the one-field-per-line
+   struct style in `internal/cards/AGENTS.md`. When an ability names the card's
+   **own** house, write `card.House.Self` rather than repeating the house — but a
+   card naming a _different_ house (Take That, Smarty Pants is about Logos
+   creatures) spells that house out.
 3. Write `<snake>_test.go` with the `ct.Play` harness — a `func Test<Name>` with
    `t.Run` subtests. A sole target auto-resolves; with 2+ candidates answer via
    `h.P1.ClickCard(handle)` / `h.P1.ClickOption(name)`. Set up a damaged creature
    with `handle.Damaged(n)`; read chains via `h.Game().State.Chains[0]`. A
    recurring `Trigger.StartOfTurn` / `EndOfTurn` ability fires from in play, not
-   on play: loop back to its owner's next turn with `h.P1.EndTurn();
-   h.P2.ChooseHouse(other); h.P2.EndTurn()` — the start-of-turn ability resolves
-   during that turn hand-off, before choose-house, so a sole-target effect needs
-   no click.
+   on play: loop back to its owner's next turn with `h.P1.EndTurn()`, then
+   `h.P2.ChooseHouse(other)` and `h.P2.EndTurn()` — the start-of-turn ability
+   resolves during that turn hand-off, before choose-house, so a sole-target
+   effect needs no click.
 4. Run `mage generateComments` — it rewrites the card and test doc comments from
    the definition. Read the generated text against `docs/card-wording-rules.md`.
    A wording fix means changing the effect's `Text()` in
@@ -218,21 +223,43 @@ contention rather than serializing:
   **medium** (one small new primitive), and **gated** (a genuinely new mechanic).
   Write the classification to the session triage memo. The subagents implement
   from this list; they do not each re-triage the set.
-- **Give each subagent a disjoint set of cards** (hence disjoint files, since one
-  card is one `<snake>.go` + `<snake>_test.go`). No two agents touch the same
+- **Know which regime you are in.** Early in a set the backlog is mostly easy, so
+  parallel card agents win big. In a mature set the easy cards are gone and
+  **every remaining card needs a primitive** — there parallel card agents have
+  little to do until the engine grows, so the throughput lever is the engine, not
+  the fan-out. Do not spin up empty-handed card agents against a mechanic-gated
+  backlog; grow the engine first (next bullet).
+- **Phase the engine ahead of the cards; do not overlap them.** The engine is a
+  single-writer resource — only the mechanics agent touches `internal/engine` +
+  `internal/card`, and a card agent cannot build a gated card until its primitive
+  exists. So run the mechanics work as its **own phase**: land a primitive (or a
+  cluster of them), reconcile centrally, and only **then** fan out card agents
+  over the cards those primitives just unblocked. Overlapping a card-agent wave
+  with an in-flight engine refactor is the main source of wasted time — the
+  refactor breaks the shared build mid-wave and every card agent stalls on a
+  failure that is not theirs.
+- **Batch the primitives, not one-per-wave.** A mechanics phase that lands one
+  primitive unblocks ~3 cards and pays the full reconcile cost for them. Group the
+  triage's medium/gated cards by the primitive they share and have the mechanics
+  agent build the whole **cluster** of related primitives in one phase (each with
+  its engine test and rulebook term), so one reconcile releases a dozen cards
+  instead of three. Order clusters by how many cards each unblocks.
+- **Give each card subagent a disjoint set of cards** (hence disjoint files, since
+  one card is one `<snake>.go` + `<snake>_test.go`). No two agents touch the same
   file. Hand them the card **names** and let them locate the stub; include the
   printed text or a one-line mechanic hint so they need no extra lookup.
-- **Dedicate ONE subagent to mechanics.** While the others clear easy cards, a
-  single mechanics agent owns `internal/engine` + `internal/card` for the run and
-  builds the medium/gated primitives (one at a time, each with its engine test and
-  rulebook term). Only this agent edits the engine, so there is no write race on
-  engine files. It reports each primitive it lands so the orchestrator can, in a
-  later wave, hand the now-unblocked cards to a card agent.
 - **Forbid `mage generateComments` / `mage gen` / `mage check` inside subagents.**
   `generateComments` rewrites **every** card's doc comment repo-wide — that is the
   real cross-agent race. Card agents write code + a targeted `go test` only; the
   **orchestrator runs `mage generateComments` once, centrally**, after a wave
   finishes, then the full `mage gen && mage check`.
+- **Quiesce before the central gate.** `mage check` is the most contended command
+  in the run — it catches every sibling's mid-edit as a failure. Run it only
+  between waves, when your own agents have returned, and first glance at
+  `git status --short internal/engine internal/web`: if a package you did not
+  touch is mid-edit, wait for it to settle rather than diagnosing its red. When
+  the gate fails only on files outside your wave's change set, record it and move
+  on — do not chase a red gate you did not cause.
 - **Tell every subagent that a transient build break from a file it did not write
   is expected** — wait a moment and retry the `go test`; never edit or revert
   another agent's file.
@@ -240,11 +267,11 @@ contention rather than serializing:
   needs a new primitive must **leave the stub, skip the card, and report it** with
   the missing primitive — never invent engine surface (that is the mechanics
   agent's job) and never force a broken implementation.
-- **Waves, not one shot.** Spawn a wave of parallel agents over disjoint easy
-  batches plus the mechanics agent; when they return, the orchestrator runs the
-  central `generateComments` + `mage check`, folds in the mechanics agent's new
-  primitives, and spawns the next wave (including the cards the new primitives just
-  unblocked). Keep the waves going until the stop condition is met.
+- **Waves, not one shot.** A wave is: a mechanics phase that lands a primitive
+  cluster, then a fan-out of card agents over disjoint batches of the cards it
+  unblocked (plus any still-easy cards). When they return, the orchestrator runs
+  the central `generateComments` + `mage check`, folds in the results, and plans
+  the next wave's cluster. Keep the waves going until the stop condition is met.
 - **When the mechanics agent adds new `Effect` nodes, the central `mage check`
   will fail two ungated spots the subagents cannot see — fix them in the
   reconcile:** `internal/web` `TestIconTotality` fails until each new effect gets a

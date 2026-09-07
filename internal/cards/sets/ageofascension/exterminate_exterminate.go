@@ -14,7 +14,7 @@ var ExterminateExterminate = card.New(
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 180),
+	card.Provenance(card.AoA, "180"),
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{
 			Target: card.Target.EachCreature.

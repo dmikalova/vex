@@ -15,9 +15,9 @@ import (
 //	Power:  6
 //	Traits: Cyborg • Beast
 //
-//	After a creature is destroyed fighting Brain Eater, draw a card.
+//	After a creature is destroyed in a fight with Brain Eater, draw a card.
 func TestBrainEater(t *testing.T) {
-	t.Run("draws a card after a creature is destroyed fighting it", func(t *testing.T) {
+	t.Run("draws a card after a creature is destroyed in a fight with it", func(t *testing.T) {
 		var prey, drawn ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{

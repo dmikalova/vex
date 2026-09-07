@@ -19,6 +19,6 @@ var HarvestTime = card.New(
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 106),
+	card.Provenance(card.WC, "106"),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

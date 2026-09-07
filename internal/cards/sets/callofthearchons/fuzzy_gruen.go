@@ -17,7 +17,7 @@ var FuzzyGruen = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 353),
+	card.Provenance(card.CotA, "353"),
 	card.WithPower(5),
 	card.WithAemberBonus(2),
 	card.WithTraits(card.Traits.Beast),

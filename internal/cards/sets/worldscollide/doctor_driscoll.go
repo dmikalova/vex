@@ -17,7 +17,7 @@ var DoctorDriscoll = card.New(
 	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 329),
+	card.Provenance(card.WC, "329"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
 	card.WithKeywords(card.Keyword.Elusive),

@@ -22,7 +22,7 @@ var OratorHissaro = card.New(
 	card.House.Saurian,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 205),
+	card.Provenance(card.WC, "205"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Politician),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

@@ -15,7 +15,7 @@ var TheGoldenSpiral = card.New(
 	card.House.Saurian,
 	card.Type.Artifact,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 194),
+	card.Provenance(card.WC, "194"),
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
 		card.Trigger.Action, card.ChooseCreatureThen{

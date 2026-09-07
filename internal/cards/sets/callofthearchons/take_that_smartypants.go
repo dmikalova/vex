@@ -15,7 +15,7 @@ var TakeThatSmartypants = card.New(
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 11),
+	card.Provenance(card.CotA, "11"),
 	card.WithAemberBonus(1),
 	card.WithAbility(card.Trigger.Play, card.Conditional{
 		Cond: card.InPlay{

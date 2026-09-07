@@ -18,7 +18,7 @@ var TitanGuardian = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 141),
+	card.Provenance(card.WC, "141"),
 	card.WithPower(5),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Beast, card.Traits.Cyborg),

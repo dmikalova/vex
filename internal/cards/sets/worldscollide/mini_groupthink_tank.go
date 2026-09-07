@@ -22,7 +22,7 @@ var MiniGroupthinkTank = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 155),
+	card.Provenance(card.WC, "155"),
 	card.WithPower(3),
 	card.WithArmor(2),
 	card.WithTraits(card.Traits.Robot, card.Traits.Experiment),

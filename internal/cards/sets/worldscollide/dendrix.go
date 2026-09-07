@@ -16,7 +16,7 @@ var Dendrix = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 71),
+	card.Provenance(card.WC, "71"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(

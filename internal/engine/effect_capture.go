@@ -156,7 +156,7 @@ func (e CaptureAember) Resolve(ctx *EffectContext) {
 			amt := min(poolAmount(scaled(e.Amount, e.Per, ctx), by, nil, ctx, held), held)
 			// Po's Pixies: the source pool keeps its Æmber and the capture is drawn
 			// from the common supply instead, so only the creature's Æmber grows.
-			fromSupply := ctx.Resolver.TheftRedirectedToSupply(pool)
+			fromSupply := ctx.Resolver.AemberTakenFromSupply(pool)
 			if !fromSupply {
 				ctx.Resolver.SetAember(pool, held-amt)
 			}
@@ -191,43 +191,59 @@ func (e CaptureAember) sourcePool(ctx *EffectContext, capturer LocalID) int {
 	return ctx.PlayerFor(e.Source)
 }
 
-// MoveAemberToCommonSupply removes Æmber sitting on a creature and returns it to the
+// MoveAemberToSupply removes Æmber sitting on a creature and returns it to the
 // common supply, the reverse of a capture — Aubade the Grim discards one of its
 // own captured Æmber each time it reaps. A creature holding fewer than Amount is
 // simply emptied rather than driven negative.
-type MoveAemberToCommonSupply struct {
-	// Amount is the Æmber to remove from each target.
+type MoveAemberToSupply struct {
+	// Amount is the Æmber to remove from each target. Ignored when All is set.
 	Amount int
+	// All removes every Æmber on each target rather than a fixed Amount, rendering
+	// "move each Æmber on <target> to the common supply" (Imperial Scutum,
+	// Praefectus Ludo).
+	All bool
 	// Target is the creature the Æmber is removed from; the zero value is this
 	// creature.
 	Target Target
 }
 
-// validate requires an explicit Target and a positive Amount.
-func (e MoveAemberToCommonSupply) validate() error {
+// validate requires an explicit Target and either a positive Amount or the All
+// flag, but not both.
+func (e MoveAemberToSupply) validate() error {
 	if !e.Target.valid() {
-		return errUnsetTarget("MoveAemberToCommonSupply")
+		return errUnsetTarget("MoveAemberToSupply")
 	}
-	if e.Amount <= 0 {
-		return fmt.Errorf("MoveAemberToCommonSupply: Amount must be positive")
+	if err := errAmountOr("MoveAemberToSupply", "All", e.Amount, e.All); err != nil {
+		return err
+	}
+	if !e.All && e.Amount <= 0 {
+		return fmt.Errorf("MoveAemberToSupply: Amount must be positive")
 	}
 	return nil
 }
 
-// Text renders the effect, e.g. "move 1 Æmber from {self} to the common supply".
-func (e MoveAemberToCommonSupply) Text() string {
+// Text renders the effect, e.g. "move 1 Æmber from {self} to the common supply",
+// or "move each Æmber on {self} to the common supply" in All mode.
+func (e MoveAemberToSupply) Text() string {
 	target := SelfName
 	if e.Target.Kind != TargetThisCreature {
 		target = e.Target.Text()
 	}
+	if e.All {
+		return fmt.Sprintf("move each \u00c6mber on %s to the common supply", target)
+	}
 	return fmt.Sprintf("move %d Æmber from %s to the common supply", e.Amount, target)
 }
 
-// Resolve removes up to Amount Æmber from each target, returning it to the common
-// supply. A target holding none is skipped.
-func (e MoveAemberToCommonSupply) Resolve(ctx *EffectContext) {
+// Resolve removes the Æmber from each target — Amount, or all of it in All mode —
+// returning it to the common supply. A target holding none is skipped.
+func (e MoveAemberToSupply) Resolve(ctx *EffectContext) {
 	for _, id := range e.Target.Select(ctx) {
-		remove := min(e.Amount, ctx.Resolver.AmberOn(id))
+		have := ctx.Resolver.AmberOn(id)
+		remove := have
+		if !e.All {
+			remove = min(e.Amount, have)
+		}
 		if remove <= 0 {
 			continue
 		}

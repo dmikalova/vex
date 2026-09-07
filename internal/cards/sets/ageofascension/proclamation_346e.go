@@ -15,7 +15,7 @@ var Proclamation346E = card.New(
 	card.House.Sanctum,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 261),
+	card.Provenance(card.AoA, "261"),
 	card.WithTraits(card.Traits.Law),
 	card.WithKeyCost(
 		card.KeyCostChange(card.Opponent, 2).While(

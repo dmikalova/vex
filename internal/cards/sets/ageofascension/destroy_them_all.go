@@ -14,7 +14,7 @@ var DestroyThemAll = card.New(
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 179),
+	card.Provenance(card.AoA, "179"),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.Destroy{Target: card.Target.Artifact},

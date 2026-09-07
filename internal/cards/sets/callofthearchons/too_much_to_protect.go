@@ -15,7 +15,7 @@ var TooMuchToProtect = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 283),
+	card.Provenance(card.CotA, "283"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.StealAember{By: card.AllBut(6)}),

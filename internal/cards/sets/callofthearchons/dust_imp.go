@@ -16,7 +16,7 @@ var DustImp = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 83),
+	card.Provenance(card.CotA, "83"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Imp),
 	card.WithAbility(

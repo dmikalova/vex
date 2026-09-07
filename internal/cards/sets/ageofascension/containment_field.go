@@ -14,7 +14,7 @@ var ContainmentField = card.New(
 	card.House.Mars,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 178),
+	card.Provenance(card.AoA, "178"),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.UsedSelf,

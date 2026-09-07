@@ -378,12 +378,8 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 		rules = append(rules, s)
 	}
 	rules = append(rules, restrictionText(def.Restricts, def.Type == Upgrade)...)
-	if def.PreventSteal {
+	if def.AemberCannotBeStolen {
 		rules = append(rules, "Your Æmber cannot be stolen.")
-	}
-	if def.TheftFromSupply {
-		rules = append(rules,
-			"Æmber stolen or captured from your pool is taken from the common supply instead.")
 	}
 	if def.SpendableAember {
 		rules = append(rules, "You may spend Æmber on "+def.Name+" when forging keys.")
@@ -406,6 +402,9 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 		rules = append(rules, s)
 	}
 	if s := captureOpponentAemberText(def); s != "" {
+		rules = append(rules, s)
+	}
+	if s := takeFromSupplyText(def); s != "" {
 		rules = append(rules, s)
 	}
 	if s := gainsForgeAemberText(def); s != "" {
@@ -666,10 +665,23 @@ func constantText(def *CardDefinition) string {
 				c.target().Text() + " gains " + oxfordAnd(parts)
 		}
 		if c.Per != nil {
-			line += " for each " + c.Per.CountText()
+			// A count read from the source names it, unless the buffed creature is the
+			// source itself, where a trailing "it" reads unambiguously (Centurion
+			// Stenopius "for each Æmber on it").
+			noun := c.Per.CountText()
+			if c.target().Kind != TargetThisCreature {
+				noun = countLeadText(c.Per)
+			}
+			line += " for each " + noun
+		}
+		if c.PerTarget != nil {
+			line += " for each " + c.PerTarget.perTargetText()
 		}
 		if tgt := c.target(); tgt.Kind == TargetThisCreature && tgt.onFlank {
 			line += " while it is on a flank"
+		}
+		if tgt := c.target(); tgt.Kind == TargetThisCreature && tgt.damaged {
+			line += " while it is damaged"
 		}
 		if c.WhileOffFlank {
 			line += " while it is not on a flank"
@@ -863,6 +875,17 @@ func captureOpponentAemberText(def *CardDefinition) string {
 		whose = "your opponent's"
 	}
 	return "If Æmber would be added to " + whose + " pool, instead " + def.Name + " captures it."
+}
+
+// takeFromSupplyText renders a continuous replacement that draws a steal or capture
+// from the common supply instead of the target's pool, e.g. "Æmber stolen or
+// captured from your pool is taken from the common supply instead." (Po's Pixies).
+func takeFromSupplyText(def *CardDefinition) string {
+	r := def.Replaces
+	if r.Of != EventAemberTakenFromPool || r.With != FromCommonSupply {
+		return ""
+	}
+	return "Æmber stolen or captured from your pool is taken from the common supply instead."
 }
 
 // gainsForgeAemberText renders a card that gains all the Æmber its controller's

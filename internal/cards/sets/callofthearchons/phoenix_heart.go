@@ -14,7 +14,7 @@ var PhoenixHeart = card.New(
 	card.House.Brobnar,
 	card.Type.Upgrade,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 51),
+	card.Provenance(card.CotA, "51"),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{
 			{Trigger: card.Trigger.Destroyed, Effect: card.Sequence{Effects: []card.Effect{

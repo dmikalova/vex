@@ -16,7 +16,7 @@ var SkyboosterSquadron = card.New(
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 170),
+	card.Provenance(card.AoA, "170"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Martian, card.Traits.Soldier),
 	card.WithAbility(

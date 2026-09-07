@@ -15,7 +15,7 @@ var WildSpirit = card.New(
 	card.House.Untamed,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 384),
+	card.Provenance(card.WC, "384"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{{

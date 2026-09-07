@@ -154,6 +154,16 @@ func (g *game) controls() app.UI {
 		}
 		return app.Div().Class("controls").Body(body...)
 	}
+	// A Deploy placement lights the battleline and asks the player to click a
+	// creature to land beside — or take a flank — so the controls become the
+	// direction toggle and flank shortcuts rather than a button per gap.
+	if g.choosingPosition {
+		body := []app.UI{g.promptSourceHeader(), g.positionChooser()}
+		if g.g.Manual() {
+			body = append(body, btn("Cancel", g.cancelChooser, "btn-secondary"))
+		}
+		return app.Div().Class("controls").Body(body...)
+	}
 	// While an engine chooser waits, the controls become the prompt itself: a
 	// green call to action to click one of the highlighted cards.
 	if g.choosing {
@@ -358,6 +368,28 @@ func containsHouse(houses []engine.House, h engine.House) bool {
 // every option is a way of using a creature (a reap/fight/action prompt another
 // card raised) it shows the standard use buttons, so a triggered use reads like a
 // chosen one. Anything else falls back to plain primary buttons.
+// positionChooser renders the Deploy placement controls: a direction toggle
+// (place a clicked creature to its left or right, the armed side shown filled)
+// and the two flank shortcuts. The battleline itself is the rest of the picker —
+// its creatures light as click targets in cardVisual.
+func (g *game) positionChooser() app.UI {
+	dirClass := func(armed bool) string {
+		if armed {
+			return "btn-primary"
+		}
+		return "btn-secondary"
+	}
+	return app.Div().Class("btn-col").Body(
+		app.Div().Class("prompt").Text(g.positionPrompt),
+		btn("Deploy left of a creature", g.setPositionDir(false), dirClass(!g.positionRight)),
+		btn("Deploy right of a creature", g.setPositionDir(true), dirClass(g.positionRight)),
+		btn("Left flank", g.choosePositionFlank(true),
+			cx("btn-primary", "btn-flank", "btn-flank--left")),
+		btn("Right flank", g.choosePositionFlank(false),
+			cx("btn-primary", "btn-flank", "btn-flank--right")),
+	)
+}
+
 func (g *game) optionChooser() app.UI {
 	if g.keyColorOptions() {
 		return app.Div().Class("btn-col").Body(

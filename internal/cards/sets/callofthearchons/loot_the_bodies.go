@@ -14,7 +14,7 @@ var LootTheBodies = card.New(
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 10),
+	card.Provenance(card.CotA, "10"),
 	card.WithAbility(
 		card.Trigger.Play, card.ForRemainderOfTurn{
 			On: card.Event.EnemyCreatureDestroyed,

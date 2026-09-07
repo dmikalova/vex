@@ -14,6 +14,6 @@ var MantleOfTheZealot = card.New(
 	card.House.Sanctum,
 	card.Type.Upgrade,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 264),
+	card.Provenance(card.CotA, "264"),
 	card.WithStatic(card.StaticModifier{Keywords: card.Keywords(card.Keyword.Versatile)}),
 )

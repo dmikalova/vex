@@ -14,6 +14,6 @@ var FollowTheLeader = card.New(
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 8),
+	card.Provenance(card.CotA, "8"),
 	card.WithAbility(card.Trigger.Play, card.GrantFightAnyHouse{}),
 )

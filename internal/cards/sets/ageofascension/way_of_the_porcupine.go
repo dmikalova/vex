@@ -15,7 +15,7 @@ var WayOfThePorcupine = card.New(
 	card.House.Untamed,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 350),
+	card.Provenance(card.AoA, "350"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{HazardousBonus: 3}),
 )

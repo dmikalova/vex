@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Brobnar
 //	Type:   Upgrade
-//	Rarity: FIXED
+//	Rarity: Special
 //	Æmber:  1
 //
 //	This creature gains invulnerable. (It cannot be destroyed or dealt damage.)
@@ -20,8 +20,9 @@ var Ghostform = card.New(
 	"Ghostform",
 	card.House.Brobnar,
 	card.Type.Upgrade,
-	card.Rarity.FIXED,
-	card.Provenance(card.WC, 0),
+	// TODO(variant): rarity relabelled from FIXED to Special — handle manually
+	card.Rarity.Special,
+	card.Provenance(card.WC, "A01"),
 	card.WithAemberBonus(1),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

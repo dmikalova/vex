@@ -16,7 +16,7 @@ var VeemosLightbringer = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 262),
+	card.Provenance(card.CotA, "262"),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Angel, card.Traits.Spirit),
 	card.WithAbility(

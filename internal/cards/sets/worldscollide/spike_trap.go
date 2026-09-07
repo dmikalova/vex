@@ -17,7 +17,7 @@ var SpikeTrap = card.New(
 	card.House.Shadows,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 261),
+	card.Provenance(card.WC, "261"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Weapon),
 	card.WithKeywords(card.Keyword.Versatile),

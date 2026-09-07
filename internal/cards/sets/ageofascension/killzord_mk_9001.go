@@ -14,7 +14,7 @@ var KillzordMk9001 = card.New(
 	card.House.Mars,
 	card.Type.Upgrade,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 201),
+	card.Provenance(card.AoA, "201"),
 	card.WithStatic(card.StaticModifier{
 		PowerBonus: 2,
 		ArmorBonus: 2,

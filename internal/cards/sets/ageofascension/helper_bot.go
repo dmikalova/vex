@@ -16,7 +16,7 @@ var HelperBot = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 112),
+	card.Provenance(card.AoA, "112"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Robot),
 	card.WithAbility(

@@ -16,7 +16,7 @@ var Tocsin = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 102),
+	card.Provenance(card.CotA, "102"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(

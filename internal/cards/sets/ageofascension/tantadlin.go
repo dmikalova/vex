@@ -17,7 +17,7 @@ var Tantadlin = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 333),
+	card.Provenance(card.AoA, "333"),
 	card.WithPower(9),
 	card.WithTraits(card.Traits.Tree),
 	card.WithAttackDamage(card.AttackDamage{

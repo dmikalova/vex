@@ -16,7 +16,7 @@ var CommanderChan = card.New(
 	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 296),
+	card.Provenance(card.WC, "296"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Human),
 	card.WithFightOrReap(card.Use{

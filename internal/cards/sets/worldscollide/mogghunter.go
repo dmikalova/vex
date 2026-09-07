@@ -16,7 +16,7 @@ var Mogghunter = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 11),
+	card.Provenance(card.WC, "11"),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(

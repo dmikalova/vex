@@ -11,7 +11,7 @@ import (
 //
 //	House:  Brobnar
 //	Type:   Tactic
-//	Rarity: Rare
+//	Rarity: Special
 //	Æmber:  1
 //
 //	Play: Give a creature two +1 power counters.

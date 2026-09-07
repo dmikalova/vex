@@ -14,7 +14,7 @@ var KeyCharge = card.New(
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 325),
+	card.Provenance(card.CotA, "325"),
 	card.WithAbility(card.Trigger.Play, card.Then{
 		First: card.LoseAember{
 			Player: card.Controller,

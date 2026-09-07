@@ -276,7 +276,10 @@ func (g *game) play(ctx app.Context, _ app.Event) {
 	g.markTakeoff(g.sel)
 	switch def.Type {
 	case engine.Creature:
-		if len(g.g.Battleline(p)) == 0 {
+		// An empty line has one spot, and a Deploy creature is placed by the
+		// click-to-place position prompt the engine raises (not a flank) — both play
+		// straight away rather than asking the which-flank question first.
+		if len(g.g.Battleline(p)) == 0 || g.g.HasKeyword(g.sel, engine.Deploy) {
 			g.runAction(
 				ctx,
 				func() error { _, err := g.g.PlayCreature(p, idx, false); return playTypeError(err, def.Type) },

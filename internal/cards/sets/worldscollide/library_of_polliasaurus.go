@@ -15,7 +15,7 @@ var LibraryOfPolliasaurus = card.New(
 	card.House.Saurian,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 204),
+	card.Provenance(card.WC, "204"),
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
 		card.Trigger.Action, card.MoveAember{

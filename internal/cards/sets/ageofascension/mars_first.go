@@ -15,7 +15,7 @@ var MarsFirst = card.New(
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 165),
+	card.Provenance(card.AoA, "165"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.OnChooseCreature{

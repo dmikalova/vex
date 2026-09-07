@@ -17,7 +17,7 @@ var NepetaGigantica = card.New(
 	card.House.Untamed,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 394),
+	card.Provenance(card.WC, "394"),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.Action, card.ChooseOne{Options: []card.Effect{

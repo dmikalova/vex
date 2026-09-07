@@ -11,6 +11,16 @@ appropriate durable place so it holds for future work: the relevant `AGENTS.md`,
 a `docs/` page, an ADR, or a code comment on the seam it governs. Make the change
 _and_ record the rule; a fix without the write-down is only half the task.
 
+## Agent todos go in `docs/todo-agent.md`, not `docs/todo.md`
+
+`docs/todo.md` is the **human's** personal list — do not write into it. When a
+request implies work you want to queue, plan, or show progress on, write it in
+[docs/todo-agent.md](docs/todo-agent.md): a scratchpad where you translate a
+request into concrete, grouped work items. When an item is **done, delete it**
+(do not mark it done) — the file only ever shows what is still outstanding, so it
+reads as a live surface for coordinating with the human on what you mean to do
+next. Group items by area or mechanic so related work is built together.
+
 ## Build, test, and lint through `mage`
 
 Run all build/test/format/coverage tasks through `mage`, not raw `go`
@@ -95,12 +105,12 @@ the `tools` mage namespace, invoked with a colon (`mage tool:stub`):
   ready-made `card.Provenance(...)` call.
 - `mage tool:missing` — list the source cards in a set not yet tagged by an
   implemented card (the cards still to implement). With no set chosen it opens an
-  interactive ↑/↓ picker; set `SET=<slug>` to name one directly (slugs match the
+  interactive ↑/↓ picker; pass `-set=<slug>` to name one directly (slugs match the
   files in `internal/cards/provenance` minus `.json`, e.g. `callofthearchons`).
 - `mage tool:nextCard` — print the next unimplemented card whose stub still
   carries the `//go:build todo` constraint, in collector-number order — the card
-  to build next. With no set chosen it opens the interactive ↑/↓ picker; set
-  `SET=<slug>` to name one directly. This is the driver of the `implement-cards`
+  to build next. With no set chosen it opens the interactive ↑/↓ picker; pass
+  `-set=<slug>` to name one directly. This is the driver of the `implement-cards`
   workflow: build the card it names, drop the build tag, and run it again.
 - `mage tool:coverage` — per-source-set count of cards covered by an implemented
   card's provenance Ref. Pass `-new` (`mage tool:coverage -new`) to count only the
@@ -147,6 +157,15 @@ vet, or tests fail because of a change you did **not** make — an unfamiliar fi
 a symbol you never touched, an in-progress edit that doesn't yet compile — assume
 another agent is mid-change. Wait a little and try again rather than "fixing" or
 reverting their work. Only act on failures that stem from your own changes.
+
+Prefer **targeted `go test`** for your own work and save the full `mage check`
+for when you actually need the whole-tree gate. `mage check` is the single most
+contended command in a multi-agent run: it builds and lints everything, so it
+catches every sibling's mid-edit as a failure that is not yours. Before you run
+it, glance at `git status --short internal/engine internal/web` — if a shared
+package is mid-edit, the gate will fail on their work, not yours. When it fails
+only on files outside your change set, record it and move on; do not chase a red
+gate you did not cause.
 
 ## Leave git alone
 
@@ -311,10 +330,12 @@ to its discard pile. Never implement this kind of card as a global override in
 ## KeyForge vernacular
 
 Names must stay within KeyForge's own vocabulary, not generic gaming terms —
-`ExceptMostPowerfulCreature`, not `ExceptStrongest`; `CannotFight`, not
-`PreventFight`. The full sourcing order (provenance files → existing
-implementations → closest KeyForge phrasing) is in the naming section of
-[docs/style-guide.md](docs/style-guide.md).
+`ExceptMostPowerfulCreature`, not `ExceptStrongest`; `AemberCannotBeStolen`, not
+`AemberTheftImmune` (theft and immunity are not KeyForge words). Use `cannot` for
+a standing restriction or immunity, and reserve `prevent` for armor absorbing
+damage ("prevents damage with its armor"). The full sourcing order (provenance
+files → existing implementations → closest KeyForge phrasing) is in the naming
+section of [docs/style-guide.md](docs/style-guide.md).
 
 ## Writing abilities (card authoring)
 

@@ -102,6 +102,9 @@ func (g *Game) constantBonus(id LocalID, pick func(ConstantAbility) int) int {
 				if c.Per != nil {
 					b *= c.Per.Value(g.constantContext(src))
 				}
+				if c.PerTarget != nil {
+					b *= c.PerTarget.perTargetValue(g.constantContext(src), id)
+				}
 				sum += b
 			}
 		}
@@ -281,11 +284,6 @@ func (g *Game) Aember(player int) int { return g.State.Aember[player] }
 
 // AemberProtected is the Resolver entry point for aemberProtected.
 func (g *Game) AemberProtected(player int) bool { return g.aemberProtected(player) }
-
-// TheftRedirectedToSupply is the Resolver entry point for theftRedirectedToSupply.
-func (g *Game) TheftRedirectedToSupply(player int) bool {
-	return g.theftRedirectedToSupply(player)
-}
 
 // Keys returns a player's forged key count.
 func (g *Game) Keys(player int) int { return g.State.Keys[player] }
@@ -555,23 +553,11 @@ func (g *Game) cannotPlayCard(player int) bool {
 	return false
 }
 
-// aemberProtected reports whether a card player controls makes their Æmber immune
-// to being stolen (The Vaultkeeper).
+// aemberProtected reports whether a card player controls makes their Æmber unable
+// to be stolen (The Vaultkeeper).
 func (g *Game) aemberProtected(player int) bool {
 	for _, id := range g.allInPlay(player) {
-		if g.cat.def(id).PreventSteal {
-			return true
-		}
-	}
-	return false
-}
-
-// theftRedirectedToSupply reports whether Æmber stolen or captured from player's
-// pool is drawn from the common supply instead, leaving the pool untouched (Po's
-// Pixies).
-func (g *Game) theftRedirectedToSupply(player int) bool {
-	for _, id := range g.allInPlay(player) {
-		if g.cat.def(id).TheftFromSupply {
+		if g.cat.def(id).AemberCannotBeStolen {
 			return true
 		}
 	}

@@ -18,7 +18,7 @@ var SenatorShrix = card.New(
 	card.House.Saurian,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 193),
+	card.Provenance(card.WC, "193"),
 	card.WithPower(4),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Politician),

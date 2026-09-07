@@ -17,7 +17,7 @@ var JohnSmyth = card.New(
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 195),
+	card.Provenance(card.CotA, "195"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Agent, card.Traits.Martian),
 	card.WithKeywords(card.Keyword.Elusive),

@@ -16,7 +16,7 @@ var HayyelTheMerchant = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 245),
+	card.Provenance(card.CotA, "245"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human, card.Traits.Merchant),
 	card.WithAbility(card.Trigger.AfterCardPlayed, card.Conditional{

@@ -20,7 +20,7 @@ var HunterOrHunted = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 269),
+	card.Provenance(card.WC, "269"),
 	card.WithAemberBonus(1),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

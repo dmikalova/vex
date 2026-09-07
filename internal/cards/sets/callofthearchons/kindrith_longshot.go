@@ -17,7 +17,7 @@ var KindrithLongshot = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 357),
+	card.Provenance(card.CotA, "357"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human, card.Traits.Ranger),
 	card.WithKeywords(card.Keyword.Elusive, card.Keyword.Skirmish),

@@ -16,7 +16,7 @@ var WitchOfTheEye = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 368),
+	card.Provenance(card.CotA, "368"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human, card.Traits.Witch),
 	card.WithAbility(

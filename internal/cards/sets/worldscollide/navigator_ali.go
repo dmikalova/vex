@@ -16,7 +16,7 @@ var NavigatorAli = card.New(
 	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 314),
+	card.Provenance(card.WC, "314"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human),
 	card.WithPlayFightReap(card.ReorderTop{Amount: 3}),

@@ -21,7 +21,7 @@ var SelfBolsteringAutomata = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 176),
+	card.Provenance(card.WC, "176"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Robot),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

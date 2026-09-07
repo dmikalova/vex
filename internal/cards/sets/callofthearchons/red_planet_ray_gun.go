@@ -15,7 +15,7 @@ var RedPlanetRayGun = card.New(
 	card.House.Mars,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 211),
+	card.Provenance(card.CotA, "211"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{{

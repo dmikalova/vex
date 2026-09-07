@@ -15,7 +15,7 @@ var TotalRecall = card.New(
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 179),
+	card.Provenance(card.CotA, "179"),
 	card.WithAemberBonus(1),
 	card.WithAbility(card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 		card.GainAember{

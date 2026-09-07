@@ -15,7 +15,7 @@ var RedHotArmor = card.New(
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 70),
+	card.Provenance(card.CotA, "70"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{

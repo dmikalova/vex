@@ -15,7 +15,7 @@ var LifeForALife = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 273),
+	card.Provenance(card.AoA, "273"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Then{

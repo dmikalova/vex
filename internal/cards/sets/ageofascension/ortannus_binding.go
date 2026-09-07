@@ -15,7 +15,7 @@ var OrtannusBinding = card.New(
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Connected,
-	card.Provenance(card.AoA, 98),
+	card.Provenance(card.AoA, "98"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{

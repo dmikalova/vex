@@ -14,7 +14,7 @@ var GoldenAura = card.New(
 	card.House.Sanctum,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 217),
+	card.Provenance(card.AoA, "217"),
 	card.WithAbility(card.Trigger.Play, card.ChooseCreatureThen{
 		Target: card.Target.Creature,
 		Then: card.Sequence{Effects: []card.Effect{
@@ -27,7 +27,7 @@ var GoldenAura = card.New(
 						House:    card.House.Self,
 						Duration: card.Duration.EndOfTurn,
 					},
-					card.PreventDamage{
+					card.CannotBeDealtDamage{
 						Target:   card.Target.Triggering,
 						Duration: card.Duration.EndOfTurn,
 					},

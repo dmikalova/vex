@@ -17,7 +17,7 @@ var PlagueRat = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 308),
+	card.Provenance(card.AoA, "308"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Beast, card.Traits.Rat),
 	card.WithKeywords(card.Keyword.Elusive),

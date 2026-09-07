@@ -17,7 +17,7 @@ var Faygin = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 300),
+	card.Provenance(card.CotA, "300"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),

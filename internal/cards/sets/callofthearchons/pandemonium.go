@@ -15,7 +15,7 @@ var Pandemonium = card.New(
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 68),
+	card.Provenance(card.CotA, "68"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.CaptureAember{

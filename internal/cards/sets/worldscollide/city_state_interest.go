@@ -14,7 +14,7 @@ var CityStateInterest = card.New(
 	card.House.Saurian,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 200),
+	card.Provenance(card.WC, "200"),
 	card.WithAbility(
 		card.Trigger.Play, card.CaptureAember{
 			Amount: 1,

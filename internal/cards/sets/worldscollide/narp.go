@@ -17,7 +17,7 @@ var Narp = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 12),
+	card.Provenance(card.WC, "12"),
 	card.WithPower(8),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Giant),

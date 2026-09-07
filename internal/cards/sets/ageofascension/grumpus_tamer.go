@@ -16,7 +16,7 @@ var GrumpusTamer = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 39),
+	card.Provenance(card.AoA, "39"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Giant),
 	card.Connects(

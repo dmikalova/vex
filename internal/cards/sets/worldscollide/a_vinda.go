@@ -16,7 +16,7 @@ var AVinda = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 235),
+	card.Provenance(card.WC, "235"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithAbility(

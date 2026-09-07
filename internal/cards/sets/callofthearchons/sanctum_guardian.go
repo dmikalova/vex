@@ -17,7 +17,7 @@ var SanctumGuardian = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 256),
+	card.Provenance(card.CotA, "256"),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Knight, card.Traits.Spirit),
 	card.WithKeywords(card.Keyword.Taunt),

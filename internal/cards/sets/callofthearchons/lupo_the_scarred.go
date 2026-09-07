@@ -17,7 +17,7 @@ var LupoTheScarred = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 359),
+	card.Provenance(card.CotA, "359"),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Beast),
 	card.WithKeywords(card.Keyword.Skirmish),

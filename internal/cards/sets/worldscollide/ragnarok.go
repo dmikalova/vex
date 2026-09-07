@@ -20,6 +20,6 @@ var Ragnarok = card.New(
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 47),
+	card.Provenance(card.WC, "47"),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

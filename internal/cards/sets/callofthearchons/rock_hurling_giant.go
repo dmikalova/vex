@@ -16,7 +16,7 @@ var RockHurlingGiant = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 44),
+	card.Provenance(card.CotA, "44"),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(card.Trigger.AfterDiscardFromHand, card.Conditional{

@@ -15,7 +15,7 @@ var PainReaction = card.New(
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 78),
+	card.Provenance(card.AoA, "78"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.DamageThenIfDestroyed{

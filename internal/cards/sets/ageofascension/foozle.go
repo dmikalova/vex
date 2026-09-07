@@ -16,7 +16,7 @@ var Foozle = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 8),
+	card.Provenance(card.AoA, "8"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(

@@ -15,7 +15,7 @@ var Quicksand = card.New(
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 364),
+	card.Provenance(card.AoA, "364"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play,

@@ -15,7 +15,7 @@ var Stomp = card.New(
 	card.House.Saurian,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 210),
+	card.Provenance(card.WC, "210"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.DamageThenIfDestroyed{

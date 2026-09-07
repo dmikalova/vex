@@ -18,7 +18,7 @@ var TheSting = card.New(
 	card.House.Shadows,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 295),
+	card.Provenance(card.CotA, "295"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Vehicle),
 	card.WithRestrictions(card.Restrictions{SkipForge: true}),

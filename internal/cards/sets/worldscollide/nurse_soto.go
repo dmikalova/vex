@@ -17,7 +17,7 @@ var NurseSoto = card.New(
 	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 315),
+	card.Provenance(card.WC, "315"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human),
 	card.WithKeywords(card.Keyword.Deploy),

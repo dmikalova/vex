@@ -14,7 +14,7 @@ var Duskrunner = card.New(
 	card.House.Shadows,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 316),
+	card.Provenance(card.CotA, "316"),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{
 			{Trigger: card.Trigger.Reap, Effect: card.StealAember{Amount: 1}},

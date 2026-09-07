@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// PrimusUnguis
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Primus Unguis
 //
 //	House:  Saurian
 //	Type:   Creature
@@ -16,16 +11,25 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Dinosaur • Soldier
 //
-//	Each friendly creature gets +2 power for each A on Primus Unguis.
+//	Each friendly creature gains +2 power for each Æmber on Primus Unguis.
 //	Reap: Exalt Primus Unguis.
 var PrimusUnguis = card.New(
 	"Primus Unguis",
 	card.House.Saurian,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 226),
+	card.Provenance(card.WC, "226"),
 	card.WithPower(5),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Soldier),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithConstant(card.ConstantAbility{
+		Target:     card.Target.EachFriendlyCreature,
+		PowerBonus: 2,
+		Per:        card.AemberOnThis{},
+	}),
+	card.WithAbility(
+		card.Trigger.Reap, card.Exalt{
+			Target: card.Target.This,
+			Amount: 1,
+		}),
 )

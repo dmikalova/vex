@@ -22,7 +22,7 @@ var GujiDinosaurHunter = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 38),
+	card.Provenance(card.WC, "38"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Giant, card.Traits.Hunter),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

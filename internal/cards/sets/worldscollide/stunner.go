@@ -15,7 +15,7 @@ var Stunner = card.New(
 	card.House.StarAlliance,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 319),
+	card.Provenance(card.WC, "319"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightOrReap(card.May{Do: card.Stun{Target: card.Target.Creature}}),

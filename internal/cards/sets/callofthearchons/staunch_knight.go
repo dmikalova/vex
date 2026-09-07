@@ -17,7 +17,7 @@ var StaunchKnight = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 259),
+	card.Provenance(card.CotA, "259"),
 	card.WithPower(4),
 	card.WithArmor(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),

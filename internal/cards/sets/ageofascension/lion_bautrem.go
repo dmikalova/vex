@@ -18,7 +18,7 @@ var LionBautrem = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 211),
+	card.Provenance(card.AoA, "211"),
 	card.WithPower(4),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),

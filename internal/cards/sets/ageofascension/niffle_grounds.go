@@ -16,7 +16,7 @@ var NiffleGrounds = card.New(
 	card.House.Untamed,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 346),
+	card.Provenance(card.AoA, "346"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(

@@ -23,7 +23,7 @@ var VineappleTree = card.New(
 	card.House.Untamed,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 402),
+	card.Provenance(card.WC, "402"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Location),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

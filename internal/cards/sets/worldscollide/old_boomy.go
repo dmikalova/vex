@@ -21,7 +21,7 @@ var OldBoomy = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 45),
+	card.Provenance(card.WC, "45"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Goblin, card.Traits.Scientist),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

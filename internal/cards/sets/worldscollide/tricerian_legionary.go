@@ -18,7 +18,7 @@ var TricerianLegionary = card.New(
 	card.House.Saurian,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 197),
+	card.Provenance(card.WC, "197"),
 	card.WithPower(5),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Soldier),

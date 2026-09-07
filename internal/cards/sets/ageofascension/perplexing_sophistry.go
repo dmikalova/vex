@@ -15,7 +15,7 @@ var PerplexingSophistry = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 293),
+	card.Provenance(card.AoA, "293"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{

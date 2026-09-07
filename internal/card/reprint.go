@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/cards/provenance"
 // against the card registry. See docs/deck-generation.md and ADR 0021.
 type ReprintRef struct {
 	Set    provenance.SourceSet
-	Number int
+	Number string
 	Name   string
 }
 
@@ -21,7 +21,7 @@ var reprints []ReprintRef
 // printed in set at collector number number. A set's generated 0set.go calls it
 // once per reprint so the card joins that set's pool without the package importing
 // another set. It is a deck-generation membership claim, never read by the engine.
-func Reprint(set provenance.SourceSet, number int, name string) {
+func Reprint(set provenance.SourceSet, number string, name string) {
 	reprints = append(reprints, ReprintRef{Set: set, Number: number, Name: name})
 }
 

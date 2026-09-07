@@ -16,7 +16,7 @@ var OnyxKnight = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 95),
+	card.Provenance(card.AoA, "95"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Demon, card.Traits.Knight),
 	card.WithAbility(

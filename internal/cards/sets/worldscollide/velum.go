@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Logos
 //	Type:   Creature
-//	Rarity: FIXED
+//	Rarity: Special
 //	Power:  2
 //	Traits: Human • Scientist
 //
@@ -21,8 +21,9 @@ var Velum = card.New(
 	"Velum",
 	card.House.Logos,
 	card.Type.Creature,
-	card.Rarity.FIXED,
-	card.Provenance(card.WC, 181),
+	// TODO(variant): rarity relabelled from FIXED to Special — handle manually
+	card.Rarity.Special,
+	card.Provenance(card.WC, "181"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

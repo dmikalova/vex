@@ -15,7 +15,7 @@ var BonerotVenom = card.New(
 	card.House.Shadows,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 283),
+	card.Provenance(card.AoA, "283"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{{

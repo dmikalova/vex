@@ -17,7 +17,7 @@ var EpicQuest = card.New(
 	card.House.Sanctum,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 231),
+	card.Provenance(card.CotA, "231"),
 	card.WithTraits(card.Traits.Quest),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(

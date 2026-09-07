@@ -17,7 +17,7 @@ var Tolas = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 103),
+	card.Provenance(card.CotA, "103"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Imp),
 	card.WithKeywords(card.Keyword.Elusive),

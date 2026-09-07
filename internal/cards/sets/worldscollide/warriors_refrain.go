@@ -15,7 +15,7 @@ var WarriorsRefrain = card.New(
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 16),
+	card.Provenance(card.WC, "16"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Stun{

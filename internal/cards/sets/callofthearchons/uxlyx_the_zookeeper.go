@@ -17,7 +17,7 @@ var UxlyxTheZookeeper = card.New(
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 201),
+	card.Provenance(card.CotA, "201"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Martian, card.Traits.Scientist),
 	card.WithKeywords(card.Keyword.Elusive),

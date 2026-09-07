@@ -14,7 +14,7 @@ var RedAlert = card.New(
 	card.House.StarAlliance,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 303),
+	card.Provenance(card.WC, "303"),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{
 			Amount: 1,

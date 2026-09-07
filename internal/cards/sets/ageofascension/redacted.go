@@ -15,7 +15,7 @@ var REDACTED = card.New(
 	card.House.Logos,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 139),
+	card.Provenance(card.AoA, "139"),
 	card.WithTraits(card.Traits.Redacted),
 	card.WithAbility(
 		card.Trigger.AfterChooseHouse, card.Conditional{

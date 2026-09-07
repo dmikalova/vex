@@ -15,7 +15,7 @@ var LightsOut = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 274),
+	card.Provenance(card.CotA, "274"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.PutChosen{

@@ -16,7 +16,7 @@ var BadPenny = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 296),
+	card.Provenance(card.CotA, "296"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Human, card.Traits.Thief),
 	card.WithAbility(

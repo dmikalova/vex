@@ -15,7 +15,7 @@ var StealthMode = card.New(
 	card.House.StarAlliance,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 306),
+	card.Provenance(card.WC, "306"),
 	// TODO(duplicate): mechanically identical to Scrambler Storm (Logos) — fold/handle manually.
 	card.WithAemberBonus(1),
 	card.WithAbility(card.Trigger.Play, card.CannotPlay{

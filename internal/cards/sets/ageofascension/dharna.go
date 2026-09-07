@@ -17,7 +17,7 @@ var Dharna = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 319),
+	card.Provenance(card.AoA, "319"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Elf, card.Traits.Witch),
 	card.WithAbility(

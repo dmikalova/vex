@@ -16,7 +16,7 @@ var Lilithal = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 79),
+	card.Provenance(card.WC, "79"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Demon),
 	card.WithFightOrReap(card.CaptureAember{

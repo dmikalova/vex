@@ -15,7 +15,7 @@ var HealingBlast = card.New(
 	card.House.Sanctum,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 219),
+	card.Provenance(card.AoA, "219"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{

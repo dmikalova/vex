@@ -15,7 +15,7 @@ var CullTheWeak = card.New(
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 57),
+	card.Provenance(card.AoA, "57"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{

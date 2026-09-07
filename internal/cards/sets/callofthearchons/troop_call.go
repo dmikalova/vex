@@ -15,7 +15,7 @@ var TroopCall = card.New(
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 337),
+	card.Provenance(card.CotA, "337"),
 	card.WithAemberBonus(1),
 	card.Connects(
 		card.Pull(NiffleApe, 2),

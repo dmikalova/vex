@@ -15,7 +15,7 @@ var Punch = card.New(
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 12),
+	card.Provenance(card.CotA, "12"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{

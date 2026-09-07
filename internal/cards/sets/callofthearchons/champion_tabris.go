@@ -17,7 +17,7 @@ var ChampionTabris = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 240),
+	card.Provenance(card.CotA, "240"),
 	card.WithPower(6),
 	card.WithArmor(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),

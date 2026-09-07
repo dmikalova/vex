@@ -20,7 +20,7 @@ var Xenotraining = card.New(
 	card.House.Staralliance,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 323),
+	card.Provenance(card.WC, "323"),
 	card.WithAemberBonus(1),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

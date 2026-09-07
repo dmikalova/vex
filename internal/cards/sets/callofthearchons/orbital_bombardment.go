@@ -15,7 +15,7 @@ var OrbitalBombardment = card.New(
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 172),
+	card.Provenance(card.CotA, "172"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{

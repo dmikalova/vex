@@ -10,13 +10,13 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  6
 //	Traits: Giant
 //
-//	After a creature is destroyed fighting Ogopogo, you may deal 2 damage to a creature.
+//	After a creature is destroyed in a fight with Ogopogo, you may deal 2 damage to a creature.
 var Ogopogo = card.New(
 	"Ogopogo",
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 26),
+	card.Provenance(card.AoA, "26"),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(

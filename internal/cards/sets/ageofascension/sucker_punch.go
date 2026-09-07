@@ -16,7 +16,7 @@ var SuckerPunch = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 277),
+	card.Provenance(card.AoA, "277"),
 	card.WithAemberBonus(1),
 	card.WithKeywords(card.Keyword.Alpha),
 	card.WithAbility(

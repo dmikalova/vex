@@ -16,7 +16,7 @@ var VezymaThinkdrone = card.New(
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 202),
+	card.Provenance(card.CotA, "202"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Martian, card.Traits.Scientist),
 	card.WithAbility(

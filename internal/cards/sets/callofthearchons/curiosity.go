@@ -15,7 +15,7 @@ var Curiosity = card.New(
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 320),
+	card.Provenance(card.CotA, "320"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play,

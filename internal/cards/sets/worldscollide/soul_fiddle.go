@@ -15,7 +15,7 @@ var SoulFiddle = card.New(
 	card.House.Dis,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 97),
+	card.Provenance(card.WC, "97"),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.Action, card.Enrage{Target: card.Target.Creature}),

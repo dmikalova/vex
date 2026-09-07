@@ -16,7 +16,7 @@ var RogueOgre = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 45),
+	card.Provenance(card.CotA, "45"),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Giant, card.Traits.Mutant),
 	card.WithAbility(

@@ -16,7 +16,7 @@ var Irestaff = card.New(
 	card.House.Brobnar,
 	card.Type.Artifact,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 10),
+	card.Provenance(card.WC, "10"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Weapon),
 	card.WithAbility(

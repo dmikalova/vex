@@ -16,7 +16,7 @@ var KnowledgeIsPower = card.New(
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 113),
+	card.Provenance(card.CotA, "113"),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseOne{Options: []card.Effect{
 			card.ArchiveFromHand{Amount: 1},

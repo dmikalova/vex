@@ -15,7 +15,7 @@ var UnlockedGateway = card.New(
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 67),
+	card.Provenance(card.AoA, "67"),
 	card.WithKeywords(card.Keyword.Omega),
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{Target: card.Target.EachCreature}),

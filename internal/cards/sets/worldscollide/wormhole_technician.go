@@ -16,7 +16,7 @@ var WormholeTechnician = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 144),
+	card.Provenance(card.WC, "144"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Scientist),
 	card.WithAbility(

@@ -47,9 +47,9 @@ type EconomyReader interface {
 	// AemberProtected reports whether a card the player controls makes their Æmber
 	// immune to being stolen (The Vaultkeeper).
 	AemberProtected(player int) bool
-	// TheftRedirectedToSupply reports whether Æmber stolen or captured from the
-	// player's pool is taken from the common supply instead (Po's Pixies).
-	TheftRedirectedToSupply(player int) bool
+	// AemberTakenFromSupply reports whether Æmber a steal or capture takes from the
+	// player's pool is drawn from the common supply instead (Po's Pixies).
+	AemberTakenFromSupply(player int) bool
 	// Keys returns the number of keys a player has forged.
 	Keys(player int) int
 	// TurnHistory returns a player's running tally for a TurnStat.
@@ -220,12 +220,13 @@ type CreatureResolver interface {
 	SetEnraged(id LocalID, enraged bool)
 	// SetWarded sets a creature's ward status.
 	SetWarded(id LocalID, warded bool)
-	// PreventDamage marks a creature immune to damage for the remainder of the turn.
-	PreventDamage(id LocalID)
-	// PreventDamageForSide makes every creature player controls immune to damage for
-	// the remainder of the turn, read live so creatures gained after it resolves are
-	// covered too (Shield of Justice).
-	PreventDamageForSide(player int)
+	// SetDamageImmune marks a creature unable to be dealt damage for the remainder
+	// of the turn.
+	SetDamageImmune(id LocalID)
+	// SetSideDamageImmune makes every creature player controls unable to be dealt
+	// damage for the remainder of the turn, read live so creatures gained after it
+	// resolves are covered too (Shield of Justice).
+	SetSideDamageImmune(player int)
 	// SetExhausted sets a creature's exhausted status.
 	SetExhausted(id LocalID, exhausted bool)
 	// AddAmberOn changes the Æmber sitting on a card.
@@ -760,17 +761,19 @@ func (g *Game) SetWarded(id LocalID, warded bool) {
 	}
 }
 
-// PreventDamage marks a creature immune to damage for the remainder of the turn.
-func (g *Game) PreventDamage(id LocalID) {
+// SetDamageImmune marks a creature unable to be dealt damage for the remainder of
+// the turn.
+func (g *Game) SetDamageImmune(id LocalID) {
 	if c := g.stateOf(id); c != nil {
 		c.DamageImmune = true
 	}
 }
 
-// PreventDamageForSide makes every creature player controls immune to damage for
-// the remainder of the turn (Shield of Justice). The mask is read live at damage
-// time, so a creature played or taken after this resolves is protected too.
-func (g *Game) PreventDamageForSide(player int) {
+// SetSideDamageImmune makes every creature player controls unable to be dealt
+// damage for the remainder of the turn (Shield of Justice). The mask is read live
+// at damage time, so a creature played or taken after this resolves is protected
+// too.
+func (g *Game) SetSideDamageImmune(player int) {
 	g.State.SideDamageImmune[player] = true
 }
 

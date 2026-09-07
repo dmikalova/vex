@@ -22,7 +22,7 @@ var Manchego = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 275),
+	card.Provenance(card.WC, "275"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human, card.Traits.Thief),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

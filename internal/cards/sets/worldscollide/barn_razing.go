@@ -19,6 +19,6 @@ var BarnRazing = card.New(
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 4),
+	card.Provenance(card.WC, "4"),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

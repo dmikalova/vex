@@ -17,7 +17,7 @@ var Mindwarper = card.New(
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 196),
+	card.Provenance(card.CotA, "196"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Martian, card.Traits.Scientist),
 	card.WithKeywords(card.Keyword.Elusive),

@@ -15,7 +15,7 @@ var BonkersKillingMachine = card.New(
 	card.House.Logos,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 128),
+	card.Provenance(card.CotA, "128"),
 	card.WithTraits(card.Traits.Weapon),
 	card.WithAbility(
 		card.Trigger.Action, card.Sentences{

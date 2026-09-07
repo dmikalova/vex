@@ -58,6 +58,27 @@ together and **CONTEXT** for what the words mean.
     every player-facing surface
   - [0020](adr/0020-controlled-code-comments.md) — code comments follow the same
     plain, controlled style
+  - [0021](adr/0021-reprints-are-full-set-members.md) — a reprint is a full member
+    of the reprinting set's deck-generation pool
+  - [0022](adr/0022-iconography-is-a-visitor-not-an-effect-method.md) — card
+    iconography is a Visitor over the effect AST, not a node method
+  - [0023](adr/0023-card-gallery-served-page-with-in-client-filtering.md) — the
+    card gallery is a served page with in-client filtering
+  - [0024](adr/0024-generic-counters-global-side-table.md) — generic card counters
+    live in a global side-table, not a field per kind
+  - [0025](adr/0025-deck-list-from-retained-generated-roster.md) — the deck list is
+    rendered from the retained generated roster
+  - [0026](adr/0026-creatures-playable-as-upgrades.md) — creatures can be played as
+    upgrades
+  - [0027](adr/0027-houses-alphabetical.md) — houses are ordered alphabetically
+  - [0028](adr/0028-take-control-lifo-stack.md) — take control is a LIFO stack of
+    control effects, not one source per card
+  - [0029](adr/0029-settle-at-resolution-boundaries.md) — destruction settles at
+    resolution boundaries, not after every state change
+  - [0030](adr/0030-a-card-out-of-play-takes-no-further-part.md) — a card out of
+    play takes no further part
+  - [0031](adr/0031-zone-movement-is-one-mechanism.md) — zone movement is one
+    mechanism; the KeyForge verbs are sugar over it
 
 ## Rules
 
@@ -82,3 +103,6 @@ together and **CONTEXT** for what the words mean.
 
 - [todo.md](todo.md) — the running list of things to build and open design
   questions.
+- [todo-agent.md](todo-agent.md) — the agent's scratchpad of concrete work items.
+  Agents write here, never in `todo.md`; a done item is deleted, not marked done,
+  so the file always shows only outstanding work.

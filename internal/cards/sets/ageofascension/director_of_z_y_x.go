@@ -17,7 +17,7 @@ var DirectorOfZYX = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 127),
+	card.Provenance(card.AoA, "127"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Scientist),
 	card.WithKeywords(card.Keyword.Elusive),

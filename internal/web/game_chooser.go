@@ -30,6 +30,8 @@ type webChooser struct {
 	g           *game
 	reply       chan chooseReply
 	optionReply chan int
+	// positionReply carries the battleline position a Deploy placement resolves to.
+	positionReply chan int
 	// cancel is closed by a manual-mode Cancel to drain the rest of the action: once
 	// closed every prompt this effect raises answers itself immediately, so a single
 	// click backs the whole action out. runAction remakes it before the next action.
@@ -230,6 +232,46 @@ func (c *webChooser) ChooseOption(source, prompt string, options []string) int {
 	return i
 }
 
+// ChoosePosition implements the engine's PositionChooser: instead of a labeled
+// option per battleline gap, it lights the line's creatures and lets the player
+// place a Deploy creature by clicking one — to its left or right, per the armed
+// direction toggle — or by taking a flank button. It returns the position the new
+// creature enters before (0 the left flank, len(line) the right flank).
+func (c *webChooser) ChoosePosition(source, prompt string, line []engine.LocalID) int {
+	// A manual-mode Cancel already in flight drains without showing the prompt.
+	select {
+	case <-c.cancel:
+		return 0
+	default:
+	}
+	// Drop any stale reply so a leftover click cannot answer this prompt.
+	select {
+	case <-c.positionReply:
+	default:
+	}
+	c.g.dispatch(func(app.Context) {
+		c.g.choosingPosition = true
+		c.g.positionPrompt = prompt
+		c.g.positionLine = line
+		c.g.positionRight = false
+		c.g.promptSource = source
+	})
+	var pos int
+	select {
+	case pos = <-c.positionReply:
+	case <-c.cancel:
+		pos = 0
+	}
+	c.g.dispatch(func(app.Context) {
+		c.g.choosingPosition = false
+		c.g.positionPrompt = ""
+		c.g.positionLine = nil
+		c.g.positionRight = false
+		c.g.promptSource = ""
+	})
+	return pos
+}
+
 // ---- the click handlers a prompt is answered with ----
 
 func (g *game) chooseCandidate(_ app.Context, id engine.LocalID) {
@@ -283,6 +325,64 @@ func (g *game) chooseOptionIdx(i int) app.EventHandler {
 	}
 }
 
+// choosePositionCandidate answers a Deploy placement prompt with the position the
+// clicked battleline creature implies: to its left (its own index) or its right
+// (index + 1), per the armed direction toggle.
+func (g *game) choosePositionCandidate(_ app.Context, id engine.LocalID) {
+	if !g.choosingPosition {
+		return
+	}
+	pos := -1
+	for i, c := range g.positionLine {
+		if c == id {
+			pos = i
+			break
+		}
+	}
+	if pos < 0 {
+		return
+	}
+	if g.positionRight {
+		pos++
+	}
+	g.answerPosition(pos)
+}
+
+// choosePositionFlank answers a Deploy placement prompt with a flank: the left
+// flank is position 0, the right flank the end of the line.
+func (g *game) choosePositionFlank(left bool) app.EventHandler {
+	return func(_ app.Context, _ app.Event) {
+		if !g.choosingPosition {
+			return
+		}
+		if left {
+			g.answerPosition(0)
+			return
+		}
+		g.answerPosition(len(g.positionLine))
+	}
+}
+
+// setPositionDir arms whether a clicked creature is placed to its left or right.
+func (g *game) setPositionDir(right bool) app.EventHandler {
+	return func(_ app.Context, _ app.Event) {
+		if !g.choosingPosition {
+			return
+		}
+		g.positionRight = right
+	}
+}
+
+// answerPosition sends a resolved battleline position back to the parked action
+// goroutine.
+func (g *game) answerPosition(pos int) {
+	g.inspecting = false
+	select {
+	case g.chooser.positionReply <- pos:
+	default:
+	}
+}
+
 // onScorePillClick opens the out-of-play zone viewer for the clicked player. The
 // player index is read from the zone counts' data attribute rather than captured
 // in a closure, so the single stable handler stays valid across re-renders (go-app
@@ -319,7 +419,7 @@ func (g *game) stopClick(_ app.Context, e app.Event) {
 // back to the snapshot beginAction recorded. It is the only way out of a prompt
 // with no clickable candidate (a mandatory card prompt or an option prompt).
 func (g *game) cancelChooser(_ app.Context, _ app.Event) {
-	if !g.choosing && !g.choosingOption {
+	if !g.choosing && !g.choosingOption && !g.choosingPosition {
 		return
 	}
 	if g.cancelling {

@@ -15,7 +15,7 @@ var DoorstepToHeaven = card.New(
 	card.House.Sanctum,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 217),
+	card.Provenance(card.CotA, "217"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.LoseAember{

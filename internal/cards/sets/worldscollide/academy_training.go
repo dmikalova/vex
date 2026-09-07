@@ -20,6 +20,6 @@ var AcademyTraining = card.New(
 	card.House.Logos,
 	card.Type.Upgrade,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 161),
+	card.Provenance(card.WC, "161"),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

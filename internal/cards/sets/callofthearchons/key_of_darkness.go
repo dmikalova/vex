@@ -14,7 +14,7 @@ var KeyOfDarkness = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 273),
+	card.Provenance(card.CotA, "273"),
 	card.WithAbility(
 		card.Trigger.Play, card.ForgeKey{
 			Extra: 6,

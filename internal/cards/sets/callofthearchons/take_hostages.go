@@ -14,7 +14,7 @@ var TakeHostages = card.New(
 	card.House.Sanctum,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 226),
+	card.Provenance(card.CotA, "226"),
 	card.WithAbility(
 		card.Trigger.Play, card.ForRemainderOfTurn{
 			On: card.Event.Fight,

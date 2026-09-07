@@ -16,7 +16,7 @@ var ResearchSmoko = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 151),
+	card.Provenance(card.CotA, "151"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Mutant),
 	card.WithAbility(

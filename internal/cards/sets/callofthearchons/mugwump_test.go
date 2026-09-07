@@ -15,7 +15,7 @@ import (
 //	Power:  6
 //	Traits: Giant
 //
-//	After a creature is destroyed fighting Mugwump, fully heal Mugwump, and give Mugwump a +1 power counter.
+//	After a creature is destroyed in a fight with Mugwump, fully heal Mugwump, and give Mugwump a +1 power counter.
 func TestMugwump(t *testing.T) {
 	t.Run("fully heals and gains a power counter after a kill in combat", func(t *testing.T) {
 		var mugwump, foe ct.Card

@@ -20,7 +20,7 @@ var WeCanALLWin = card.New(
 	card.House.Staralliance,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 344),
+	card.Provenance(card.WC, "344"),
 	card.WithAemberBonus(1),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

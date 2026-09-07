@@ -16,7 +16,7 @@ var OldYurk = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 77),
+	card.Provenance(card.AoA, "77"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(

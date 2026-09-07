@@ -21,7 +21,7 @@ var InformationOfficerGray = card.New(
 	card.House.Staralliance,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 312),
+	card.Provenance(card.WC, "312"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Human),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

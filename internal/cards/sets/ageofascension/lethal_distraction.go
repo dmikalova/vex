@@ -15,7 +15,7 @@ var LethalDistraction = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 305),
+	card.Provenance(card.AoA, "305"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.TakesExtraDamage{

@@ -15,7 +15,7 @@ var Hock = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 239),
+	card.Provenance(card.WC, "239"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Then{

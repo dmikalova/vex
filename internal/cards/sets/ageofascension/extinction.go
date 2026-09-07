@@ -14,7 +14,7 @@ var Extinction = card.New(
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 196),
+	card.Provenance(card.AoA, "196"),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseCreatureThen{
 			Target: card.Target.Creature,

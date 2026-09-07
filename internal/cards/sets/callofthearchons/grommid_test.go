@@ -17,7 +17,7 @@ import (
 //	Traits: Beast
 //
 //	You cannot play creatures.
-//	After a creature is destroyed fighting Grommid, your opponent loses 1 Æmber.
+//	After a creature is destroyed in a fight with Grommid, your opponent loses 1 Æmber.
 func TestGrommid(t *testing.T) {
 	setup := func(t *testing.T) (h *ct.Harness, grommid, enemy ct.Card) {
 		h = ct.Play(t, ct.Setup{
@@ -44,7 +44,7 @@ func TestGrommid(t *testing.T) {
 		}
 	})
 
-	t.Run("drains 1 Æmber when an enemy is destroyed fighting it", func(t *testing.T) {
+	t.Run("drains 1 Æmber when an enemy is destroyed in a fight with it", func(t *testing.T) {
 		h, grommid, enemy := setup(t)
 
 		h.P1.Fight(grommid, enemy)

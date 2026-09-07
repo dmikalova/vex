@@ -21,7 +21,7 @@ var Aembertracker = card.New(
 	card.House.Staralliance,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 324),
+	card.Provenance(card.WC, "324"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Beast),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

@@ -17,7 +17,7 @@ var Mindworm = card.New(
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 168),
+	card.Provenance(card.AoA, "168"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Beast),
 	card.WithKeywords(card.Keyword.Elusive),

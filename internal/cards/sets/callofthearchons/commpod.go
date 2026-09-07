@@ -15,7 +15,7 @@ var Commpod = card.New(
 	card.House.Mars,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 181),
+	card.Provenance(card.CotA, "181"),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.Action, card.Sequence{

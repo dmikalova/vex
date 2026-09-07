@@ -14,7 +14,7 @@ var TheFlex = card.New(
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 31),
+	card.Provenance(card.AoA, "31"),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseCreatureThen{
 			Target: card.Target.FriendlyCreature.OfHouse(card.House.Self).Ready(),
@@ -22,7 +22,7 @@ var TheFlex = card.New(
 				card.Exhaust{Target: card.Target.Triggering},
 				card.GainAemberEqualTo{
 					Player: card.Controller,
-					Count:  card.HalfPowerOfChosen{},
+					Count:  card.PowerOfChosen{Of: card.Half},
 				},
 			}},
 		}),

@@ -15,7 +15,7 @@ var BlindingLight = card.New(
 	card.House.Sanctum,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 213),
+	card.Provenance(card.CotA, "213"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseHouseThen{

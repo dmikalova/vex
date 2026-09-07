@@ -22,7 +22,7 @@ var Ghosthawk = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 356),
+	card.Provenance(card.WC, "356"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Beast),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

@@ -21,7 +21,7 @@ var UniversalRecycleBin = card.New(
 	card.House.Logos,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 179),
+	card.Provenance(card.WC, "179"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Item),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

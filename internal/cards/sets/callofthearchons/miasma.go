@@ -15,7 +15,7 @@ var Miasma = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 275),
+	card.Provenance(card.CotA, "275"),
 	card.WithAemberBonus(1),
 	card.WithAbility(card.Trigger.Play, card.SkipForgePhase{Player: card.Opponent}),
 )

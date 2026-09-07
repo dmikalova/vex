@@ -17,7 +17,7 @@ var MaruckTheMarked = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 220),
+	card.Provenance(card.AoA, "220"),
 	card.WithPower(5),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Spirit, card.Traits.Knight),

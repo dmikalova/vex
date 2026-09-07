@@ -16,7 +16,7 @@ var HelmsmanSpears = card.New(
 	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 311),
+	card.Provenance(card.WC, "311"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human),
 	card.WithFightOrReap(card.Then{

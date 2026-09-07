@@ -15,7 +15,7 @@ var PersistenceHunting = card.New(
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 328),
+	card.Provenance(card.AoA, "328"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseHouseThen{

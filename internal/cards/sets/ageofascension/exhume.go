@@ -15,7 +15,7 @@ var Exhume = card.New(
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 59),
+	card.Provenance(card.AoA, "59"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.PlayFrom{

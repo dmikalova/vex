@@ -17,7 +17,7 @@ var TyxlBeambuckler = card.New(
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 171),
+	card.Provenance(card.AoA, "171"),
 	card.WithPower(4),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Martian, card.Traits.Soldier),

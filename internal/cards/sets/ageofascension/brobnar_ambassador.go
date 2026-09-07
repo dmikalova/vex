@@ -17,7 +17,7 @@ var BrobnarAmbassador = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Special,
-	card.Provenance(card.AoA, 229),
+	card.Provenance(card.AoA, "229"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Human),
 	card.WithKeywords(card.Keyword.Elusive),

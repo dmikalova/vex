@@ -17,7 +17,7 @@ var LordGolgotha = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 252),
+	card.Provenance(card.CotA, "252"),
 	card.WithPower(5),
 	card.WithArmor(2),
 	card.WithTraits(card.Traits.Knight, card.Traits.Spirit),

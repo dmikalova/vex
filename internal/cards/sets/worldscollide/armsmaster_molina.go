@@ -22,7 +22,7 @@ var ArmsmasterMolina = card.New(
 	card.House.Staralliance,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 292),
+	card.Provenance(card.WC, "292"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Human),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

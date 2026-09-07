@@ -16,7 +16,7 @@ var FirstOfficerFrane = card.New(
 	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 298),
+	card.Provenance(card.WC, "298"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Human),
 	card.WithPlayFightReap(card.CaptureAember{

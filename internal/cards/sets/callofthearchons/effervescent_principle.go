@@ -14,7 +14,7 @@ var EffervescentPrinciple = card.New(
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 109),
+	card.Provenance(card.CotA, "109"),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{

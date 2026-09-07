@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Forge a key at +7 Æmber current cost, reduced by 1 Æmber for each house represented among cards in play (to a maximum of 6).
+//	Play: Forge a key at +7 Æmber current cost, reduced by 1 Æmber for each house represented among cards in play.
 func TestForgingAnAlliance(t *testing.T) {
 	t.Run("forges at +7 reduced by 1 per house among cards in play", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

@@ -19,6 +19,6 @@ var EncounterSuit = card.New(
 	card.House.Staralliance,
 	card.Type.Upgrade,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 330),
+	card.Provenance(card.WC, "330"),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

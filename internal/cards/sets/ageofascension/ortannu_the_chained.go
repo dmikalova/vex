@@ -16,7 +16,7 @@ var OrtannuTheChained = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 97),
+	card.Provenance(card.AoA, "97"),
 	card.WithPower(7),
 	card.WithTraits(card.Traits.Demon),
 	card.Connects(

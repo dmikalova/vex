@@ -14,7 +14,7 @@ var CreepingOblivion = card.New(
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 56),
+	card.Provenance(card.CotA, "56"),
 	card.WithAbility(
 		card.Trigger.Play, card.PurgeCard{
 			Zone:   card.Discard,

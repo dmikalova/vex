@@ -15,7 +15,7 @@ var HeistNight = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 303),
+	card.Provenance(card.AoA, "303"),
 	card.WithKeywords(card.Keyword.Alpha),
 	card.WithAbility(
 		card.Trigger.Play, card.StealAember{

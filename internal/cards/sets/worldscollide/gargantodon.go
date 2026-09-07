@@ -23,7 +23,7 @@ var Gargantodon = card.New(
 	card.House.Saurian,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 203),
+	card.Provenance(card.WC, "203"),
 	card.WithPower(16),
 	card.WithTraits(card.Traits.Beast),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

@@ -17,7 +17,7 @@ var MightyJavelin = card.New(
 	card.House.Brobnar,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 24),
+	card.Provenance(card.CotA, "24"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Weapon),
 	card.WithKeywords(card.Keyword.Versatile),

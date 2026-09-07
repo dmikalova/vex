@@ -19,6 +19,6 @@ var QuintrinoFlux = card.New(
 	card.House.Staralliance,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 317),
+	card.Provenance(card.WC, "317"),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

@@ -16,7 +16,7 @@ var AnahitaTheTrader = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 248),
+	card.Provenance(card.AoA, "248"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Merchant),
 	card.WithAbility(

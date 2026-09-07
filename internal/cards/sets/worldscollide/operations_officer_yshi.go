@@ -19,7 +19,7 @@ var OperationsOfficerYshi = card.New(
 	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 334),
+	card.Provenance(card.WC, "334"),
 	card.WithPower(4),
 	card.WithArmor(2),
 	card.WithTraits(card.Traits.Spirit),

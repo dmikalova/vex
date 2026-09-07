@@ -14,7 +14,7 @@ var SampleCollection = card.New(
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 175),
+	card.Provenance(card.CotA, "175"),
 	card.WithAbility(
 		card.Trigger.Play, card.Repeat{
 			Times: card.OpponentForgedKeys{},

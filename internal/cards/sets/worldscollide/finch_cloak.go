@@ -16,7 +16,7 @@ var FinchCloak = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 267),
+	card.Provenance(card.WC, "267"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithFightOrReap(card.Conditional{

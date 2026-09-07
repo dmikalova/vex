@@ -15,7 +15,7 @@ var GauntletOfCommand = card.New(
 	card.House.Brobnar,
 	card.Type.Artifact,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 22),
+	card.Provenance(card.CotA, "22"),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.Action, card.OnChooseCreature{

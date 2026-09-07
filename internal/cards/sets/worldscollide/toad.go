@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Untamed
 //	Type:   Creature
-//	Rarity: FIXED
+//	Rarity: Special
 //	Power:  1
 //	Traits: Beast
 //
@@ -20,8 +20,9 @@ var Toad = card.New(
 	"Toad",
 	card.House.Untamed,
 	card.Type.Creature,
-	card.Rarity.FIXED,
-	card.Provenance(card.WC, 405),
+	// TODO(variant): rarity relabelled from FIXED to Special — handle manually
+	card.Rarity.Special,
+	card.Provenance(card.WC, "405"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Beast),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

@@ -18,7 +18,7 @@ var Roxador = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 365),
+	card.Provenance(card.AoA, "365"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Beast),
 	card.WithKeywords(card.Keyword.Skirmish),

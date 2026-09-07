@@ -17,7 +17,7 @@ var Streke = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 65),
+	card.Provenance(card.AoA, "65"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Imp),
 	card.WithKeywords(card.Keyword.Elusive),

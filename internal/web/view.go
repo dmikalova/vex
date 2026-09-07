@@ -96,7 +96,7 @@ func (g *game) brandBar() app.UI {
 		app.Span().Class("brand-title").Text("Vactrol"),
 		// The server publishes the short build id of the bundle it served.
 		app.Span().Class("brand-version").Text(app.Getenv("VACTROL_BUILD")),
-		app.If(g.busy && !g.choosing && !g.choosingOption, func() app.UI {
+		app.If(g.busy && !g.choosing && !g.choosingOption && !g.choosingPosition, func() app.UI {
 			return app.Span().Class("badge-busy").Text("resolving…")
 		}),
 		app.Div().Class("spacer"),
@@ -119,12 +119,24 @@ func (g *game) brandMenu() app.UI {
 			items := []app.UI{
 				menuItem("undo", "Undo", g.undoMenu, !g.canUndo(), false),
 				menuItem("redo", "Redo", g.redoMenu, !g.canRedo(), false),
-				menuItem("wrench", "Manual mode", g.manualMenu,
-					g.busy && !g.choosing && !g.choosingOption, g.g.Manual()),
+				menuItem(
+					"wrench",
+					"Manual mode",
+					g.manualMenu,
+					g.busy && !g.choosing && !g.choosingOption &&
+						!g.choosingPosition,
+					g.g.Manual(),
+				),
 				menuItem("restart", "New game", g.restartMenu,
-					g.busy || g.choosing || g.choosingOption, false),
-				menuItem("glyph-ban", "Concede", g.concedeMenu,
-					g.busy || g.choosing || g.choosingOption || g.g.Winner() >= 0, false),
+					g.busy || g.choosing || g.choosingOption || g.choosingPosition, false),
+				menuItem(
+					"glyph-ban",
+					"Concede",
+					g.concedeMenu,
+					g.busy || g.choosing || g.choosingOption || g.choosingPosition ||
+						g.g.Winner() >= 0,
+					false,
+				),
 				menuItem("", "Keyboard shortcuts", g.keysMenu, false, false),
 				app.Hr().Class("menu-divider"),
 			}

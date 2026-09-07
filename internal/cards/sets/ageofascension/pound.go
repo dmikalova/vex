@@ -15,7 +15,7 @@ var Pound = card.New(
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 15),
+	card.Provenance(card.AoA, "15"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{Spread: card.CreatureAndNeighbors{

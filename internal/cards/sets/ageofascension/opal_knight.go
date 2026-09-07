@@ -16,7 +16,7 @@ var OpalKnight = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 260),
+	card.Provenance(card.AoA, "260"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Spirit, card.Traits.Knight),
 	card.WithAbility(

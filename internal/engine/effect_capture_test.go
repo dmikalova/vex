@@ -21,12 +21,12 @@ func TestCaptureAemberEffect(t *testing.T) {
 	}
 }
 
-func TestMoveAemberToCommonSupplyEffect(t *testing.T) {
+func TestMoveAemberToSupplyEffect(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("aubade", 4), 0)
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
-	e := MoveAemberToCommonSupply{Amount: 1, Target: Target{Kind: TargetThisCreature}}
+	e := MoveAemberToSupply{Amount: 1, Target: Target{Kind: TargetThisCreature}}
 	if e.Text() != "move 1 Æmber from {self} to the common supply" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -43,23 +43,23 @@ func TestMoveAemberToCommonSupplyEffect(t *testing.T) {
 	}
 
 	// Discarding more than is held empties the creature rather than going negative.
-	big := MoveAemberToCommonSupply{Amount: 5, Target: Target{Kind: TargetThisCreature}}
+	big := MoveAemberToSupply{Amount: 5, Target: Target{Kind: TargetThisCreature}}
 	big.Resolve(ctx)
 	if got := g.AmberOn(src); got != 0 {
 		t.Errorf("over-discard = %d, want 0", got)
 	}
 
 	// A chosen target renders by its own noun rather than {self}.
-	chosen := MoveAemberToCommonSupply{Amount: 2, Target: Target{Kind: TargetChosenEnemyCreature}}
+	chosen := MoveAemberToSupply{Amount: 2, Target: Target{Kind: TargetChosenEnemyCreature}}
 	if chosen.Text() != "move 2 Æmber from an enemy creature to the common supply" {
 		t.Errorf("chosen text = %q", chosen.Text())
 	}
 
 	// validate rejects an unset target and a non-positive amount, accepts a valid one.
-	if err := (MoveAemberToCommonSupply{Amount: 1}).validate(); err == nil {
+	if err := (MoveAemberToSupply{Amount: 1}).validate(); err == nil {
 		t.Error("unset target should be rejected")
 	}
-	if err := (MoveAemberToCommonSupply{Target: Target{Kind: TargetThisCreature}}).validate(); err == nil {
+	if err := (MoveAemberToSupply{Target: Target{Kind: TargetThisCreature}}).validate(); err == nil {
 		t.Error("non-positive amount should be rejected")
 	}
 	if err := e.validate(); err != nil {

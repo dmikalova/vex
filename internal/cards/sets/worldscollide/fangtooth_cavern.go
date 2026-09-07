@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// FangtoothCavern
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Fangtooth Cavern
 //
 //	House:  Untamed
 //	Type:   Artifact
@@ -21,8 +16,11 @@ var FangtoothCavern = card.New(
 	card.House.Untamed,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 370),
+	card.Provenance(card.WC, "370"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Location),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.EndOfTurn, card.Destroy{
+			Target: card.Target.EachCreature.Selector(card.LeastPowerful),
+		}),
 )

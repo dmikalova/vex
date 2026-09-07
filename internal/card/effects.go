@@ -32,10 +32,12 @@ type (
 	StealAember = engine.StealAember
 	// CaptureAember moves Æmber from a pool onto a capturing creature.
 	CaptureAember = engine.CaptureAember
-	// MoveAemberToCommonSupply removes Æmber sitting on a creature to the common supply.
-	MoveAemberToCommonSupply = engine.MoveAemberToCommonSupply
+	// MoveAemberToSupply removes Æmber sitting on a creature to the common supply.
+	MoveAemberToSupply = engine.MoveAemberToSupply
 	// Exalt places Æmber from the common supply onto a chosen card.
 	Exalt = engine.Exalt
+	// ExaltToRepeat resolves Do, then lets the controller exalt a creature to repeat it.
+	ExaltToRepeat = engine.ExaltToRepeat
 	// Loss says how much Æmber a LoseAember removes (Half, AllBut).
 	Loss = engine.Loss
 	// MoveAember moves Æmber off a card into a pool or onto another card.
@@ -313,6 +315,9 @@ type (
 	TakeControl = engine.TakeControl
 	// PutIntoPlay puts each targeted card into play without playing it.
 	PutIntoPlay = engine.PutIntoPlay
+	// Control names whose control a card enters under when put into play (see
+	// PutIntoPlay): card.Owner (the default) or card.Yours.
+	Control = engine.Control
 	// Swap exchanges this creature's battleline position with another.
 	Swap = engine.Swap
 	// SwapChosen swaps the positions of two creatures chosen from one battleline.
@@ -522,9 +527,8 @@ type (
 	AemberOnThis = engine.AemberOnThis
 	// DamageOnThis counts the damage sitting on the source card.
 	DamageOnThis = engine.DamageOnThis
-	// HalfPowerOfChosen is half the power (rounded down) of the creature just chosen.
-	HalfPowerOfChosen = engine.HalfPowerOfChosen
-	// PowerOfChosen is the full power of the creature in context.
+	// PowerOfChosen is the power of the creature in context, optionally a fraction
+	// of it (Of: Half — The Flex).
 	PowerOfChosen = engine.PowerOfChosen
 	// TraitsOfChosen counts the traits of the creature just chosen.
 	TraitsOfChosen = engine.TraitsOfChosen
@@ -561,8 +565,9 @@ type (
 	BlankEnemyText = engine.BlankEnemyText
 	// SkipForgePhase makes a player skip their forge-a-key phase next turn.
 	SkipForgePhase = engine.SkipForgePhase
-	// PreventDamage marks the targeted creatures immune to damage for a Duration.
-	PreventDamage = engine.PreventDamage
+	// CannotBeDealtDamage marks the targeted creatures unable to be dealt damage
+	// for a Duration.
+	CannotBeDealtDamage = engine.CannotBeDealtDamage
 	// MayUseFriendlyHouse lets the controller use their House creatures this turn.
 	MayUseFriendlyHouse = engine.MayUseFriendlyHouse
 	// MayUseFriendlyArtifacts lets the controller use any friendly artifact this turn.
@@ -616,6 +621,7 @@ var Event = events{CreaturePlayed: engine.EventCreaturePlayed,
 	ReapAember:             engine.EventReapAember,
 	Destroyed:              engine.EventCreatureDestroyed,
 	AemberAddedToPool:      engine.EventAemberAddedToPool,
+	AemberTakenFromPool:    engine.EventAemberTakenFromPool,
 	CardPlayed:             engine.EventCardPlayed,
 }
 
@@ -627,6 +633,7 @@ type events struct {
 	ReapAember,
 	Destroyed,
 	AemberAddedToPool,
+	AemberTakenFromPool,
 	CardPlayed engine.Event
 }
 
@@ -637,6 +644,18 @@ var Steal = engine.Steal
 // Capture is the replacement that makes Æmber added to the opponent's pool be
 // captured by the source creature instead, for card.WithReplaces (Ether Spider).
 var Capture = engine.Capture
+
+// FromCommonSupply is the replacement that draws a steal or capture from the
+// common supply instead of the target's pool, for card.WithReplaces (Po's Pixies).
+var FromCommonSupply = engine.FromCommonSupply
+
+// Owner puts a card into play under its owner's control — the default for
+// PutIntoPlay.Control, usually omitted.
+var Owner = engine.ControlOwner
+
+// Yours puts a card into play under the resolving player's control:
+// card.PutIntoPlay{Control: card.Yours} (Overlord Greking).
+var Yours = engine.ControlYours
 
 // Half is the Loss that makes a LoseAember remove half the pool, rounded down:
 // card.LoseAember{Player: card.EachPlayer, By: card.Half}.

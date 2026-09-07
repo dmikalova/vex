@@ -17,7 +17,7 @@ var SigilOfBrotherhood = card.New(
 	card.House.Sanctum,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 236),
+	card.Provenance(card.CotA, "236"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Power),
 	card.WithKeywords(card.Keyword.Versatile),

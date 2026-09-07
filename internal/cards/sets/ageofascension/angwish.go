@@ -16,7 +16,7 @@ var Angwish = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 69),
+	card.Provenance(card.AoA, "69"),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Demon),
 	card.WithKeyCost(card.KeyCostChange(card.Opponent, 1).Per(card.DamageOnThis{})),

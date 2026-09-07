@@ -14,7 +14,7 @@ var MartiansMakeBadAllies = card.New(
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 168),
+	card.Provenance(card.CotA, "168"),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.RevealHand{Player: card.Controller},

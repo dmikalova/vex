@@ -15,7 +15,7 @@ var RegrettableMeteor = card.New(
 	card.House.Saurian,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 208),
+	card.Provenance(card.WC, "208"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{

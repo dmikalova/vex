@@ -16,7 +16,7 @@ var YoMamaMastery = card.New(
 	card.House.Brobnar,
 	card.Type.Upgrade,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 52),
+	card.Provenance(card.CotA, "52"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{Keywords: card.Keywords(card.Keyword.Taunt)}),
 	card.WithAbility(

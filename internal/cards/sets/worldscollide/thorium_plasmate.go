@@ -20,7 +20,7 @@ var ThoriumPlasmate = card.New(
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 140),
+	card.Provenance(card.WC, "140"),
 	card.WithAemberBonus(1),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

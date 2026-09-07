@@ -15,7 +15,7 @@ var MightMakesRight = card.New(
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 43),
+	card.Provenance(card.AoA, "43"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.DestroyFriendlyCreaturesToForge{

@@ -15,7 +15,7 @@ var ControlTheWeak = card.New(
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 55),
+	card.Provenance(card.CotA, "55"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseHouseThen{

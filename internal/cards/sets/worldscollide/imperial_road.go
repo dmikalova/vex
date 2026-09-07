@@ -20,7 +20,7 @@ var ImperialRoad = card.New(
 	card.House.Saurian,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 223),
+	card.Provenance(card.WC, "223"),
 	card.WithTraits(card.Traits.Location),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

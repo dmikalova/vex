@@ -15,7 +15,7 @@ var GuiltyHearts = card.New(
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 61),
+	card.Provenance(card.CotA, "61"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{

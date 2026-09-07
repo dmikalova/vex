@@ -16,7 +16,7 @@ var AncientBear = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 345),
+	card.Provenance(card.CotA, "345"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Beast),
 	card.WithAssault(2),

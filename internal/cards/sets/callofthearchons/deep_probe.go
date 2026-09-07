@@ -15,7 +15,7 @@ var DeepProbe = card.New(
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 162),
+	card.Provenance(card.CotA, "162"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseHouseThen{

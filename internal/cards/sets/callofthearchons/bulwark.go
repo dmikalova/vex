@@ -17,7 +17,7 @@ var Bulwark = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 238),
+	card.Provenance(card.CotA, "238"),
 	card.WithPower(4),
 	card.WithArmor(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),

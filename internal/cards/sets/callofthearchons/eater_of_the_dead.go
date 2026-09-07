@@ -16,7 +16,7 @@ var EaterOfTheDead = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 84),
+	card.Provenance(card.CotA, "84"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Demon),
 	card.WithFightOrReap(card.Then{

@@ -15,7 +15,7 @@ var HonorableClaim = card.New(
 	card.House.Sanctum,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 219),
+	card.Provenance(card.CotA, "219"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.CaptureAember{

@@ -17,7 +17,7 @@ var XanthyxHarvester = card.New(
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 173),
+	card.Provenance(card.AoA, "173"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Beast),
 	card.WithRestrictions(card.Restrictions{

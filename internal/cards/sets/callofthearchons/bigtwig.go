@@ -17,7 +17,7 @@ var Bigtwig = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 346),
+	card.Provenance(card.CotA, "346"),
 	card.WithPower(7),
 	card.WithTraits(card.Traits.Beast),
 	card.WithFightRestriction(card.Stunned),

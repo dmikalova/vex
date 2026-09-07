@@ -17,7 +17,7 @@ var RitualOfTheHunt = card.New(
 	card.House.Untamed,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 343),
+	card.Provenance(card.CotA, "343"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Power),
 	card.WithKeywords(card.Keyword.Versatile),

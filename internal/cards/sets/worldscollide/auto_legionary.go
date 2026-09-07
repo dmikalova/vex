@@ -20,7 +20,7 @@ var AutoLegionary = card.New(
 	card.House.Saurian,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 214),
+	card.Provenance(card.WC, "214"),
 	card.WithTraits(card.Traits.Robot, card.Traits.Ally),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

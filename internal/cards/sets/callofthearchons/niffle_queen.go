@@ -17,7 +17,7 @@ var NiffleQueen = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 364),
+	card.Provenance(card.CotA, "364"),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Beast, card.Traits.Niffle),
 	card.WithConstant(card.ConstantAbility{

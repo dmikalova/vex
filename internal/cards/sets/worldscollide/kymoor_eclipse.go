@@ -14,7 +14,7 @@ var KymoorEclipse = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 243),
+	card.Provenance(card.WC, "243"),
 	card.WithAbility(
 		card.Trigger.Play, card.PutFromPlay{
 			Target:      card.Target.EachCreature.OnFlank(),

@@ -15,7 +15,7 @@ var CutthroatResearch = card.New(
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 110),
+	card.Provenance(card.AoA, "110"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{

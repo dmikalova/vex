@@ -16,7 +16,7 @@ var KalochStonefather = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 41),
+	card.Provenance(card.WC, "41"),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Giant, card.Traits.Leader),
 	card.WithConstant(card.ConstantAbility{

@@ -14,7 +14,7 @@ var TheHarderTheyCome = card.New(
 	card.House.Sanctum,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 228),
+	card.Provenance(card.CotA, "228"),
 	card.WithAbility(
 		card.Trigger.Play, card.PurgeCreature{
 			Target: card.Target.Creature.PowerAtLeast(5),

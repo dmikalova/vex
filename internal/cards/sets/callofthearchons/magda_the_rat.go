@@ -18,7 +18,7 @@ var MagdaTheRat = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 303),
+	card.Provenance(card.CotA, "303"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),

@@ -18,7 +18,7 @@ var IxxyxliFixfinger = card.New(
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 164),
+	card.Provenance(card.AoA, "164"),
 	card.WithPower(2),
 	card.WithArmor(2),
 	card.WithTraits(card.Traits.Martian, card.Traits.Scientist),

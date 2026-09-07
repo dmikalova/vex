@@ -15,7 +15,7 @@ var ImperialTraitor = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 272),
+	card.Provenance(card.CotA, "272"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{

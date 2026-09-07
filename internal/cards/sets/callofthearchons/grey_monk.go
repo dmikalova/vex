@@ -17,7 +17,7 @@ var GreyMonk = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 244),
+	card.Provenance(card.CotA, "244"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human, card.Traits.Priest),
 	card.WithConstant(card.ConstantAbility{

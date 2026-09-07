@@ -17,7 +17,7 @@ var Rotgrub = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 83),
+	card.Provenance(card.WC, "83"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Beast),
 	card.WithAbility(

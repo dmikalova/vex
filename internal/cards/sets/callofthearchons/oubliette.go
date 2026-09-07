@@ -14,7 +14,7 @@ var Oubliette = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 278),
+	card.Provenance(card.CotA, "278"),
 	card.WithAbility(
 		card.Trigger.Play, card.PurgeCreature{
 			Target: card.Target.Creature.PowerAtMost(3),

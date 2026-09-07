@@ -16,7 +16,7 @@ var Murmook = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 361),
+	card.Provenance(card.CotA, "361"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Beast),
 	card.WithKeyCost(card.KeyCostChange(card.Opponent, 1)),

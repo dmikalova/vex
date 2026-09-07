@@ -20,7 +20,7 @@ var FesteringTouch = card.New(
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 75),
+	card.Provenance(card.WC, "75"),
 	card.WithAemberBonus(1),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

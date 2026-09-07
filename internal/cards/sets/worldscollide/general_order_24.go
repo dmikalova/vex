@@ -20,7 +20,7 @@ var GeneralOrder24 = card.New(
 	card.House.Staralliance,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 333),
+	card.Provenance(card.WC, "333"),
 	card.WithTraits(card.Traits.Law),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

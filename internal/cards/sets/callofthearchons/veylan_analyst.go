@@ -16,7 +16,7 @@ var VeylanAnalyst = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 156),
+	card.Provenance(card.CotA, "156"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Scientist),
 	card.WithAbility(card.Trigger.AfterUse, card.Conditional{

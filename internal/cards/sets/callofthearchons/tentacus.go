@@ -16,7 +16,7 @@ var Tentacus = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 100),
+	card.Provenance(card.CotA, "100"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Demon),
 	card.WithRestrictions(card.Restrictions{

@@ -16,7 +16,7 @@ var MedicIngram = card.New(
 	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 301),
+	card.Provenance(card.WC, "301"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human),
 	card.WithPlayFightReap(card.May{Do: card.ChooseCreatureThen{

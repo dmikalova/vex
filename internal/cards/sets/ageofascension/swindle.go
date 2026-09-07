@@ -15,7 +15,7 @@ var Swindle = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 278),
+	card.Provenance(card.AoA, "278"),
 	card.WithKeywords(card.Keyword.Alpha, card.Keyword.Omega),
 	card.WithAbility(
 		card.Trigger.Play, card.StealAember{Amount: 3}),

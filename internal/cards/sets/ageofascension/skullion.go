@@ -17,7 +17,7 @@ var Skullion = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 82),
+	card.Provenance(card.AoA, "82"),
 	card.WithPower(7),
 	card.WithArmor(2),
 	card.WithTraits(card.Traits.Demon),

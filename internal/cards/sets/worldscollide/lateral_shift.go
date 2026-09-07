@@ -11,14 +11,15 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Brobnar
 //	Type:   Tactic
-//	Rarity: FIXED
+//	Rarity: Special
 //
 //	Play: Look at your opponent's hand. Play a card from that hand as if it were yours.
 var LateralShift = card.New(
 	"Lateral Shift",
 	card.House.Brobnar,
 	card.Type.Tactic,
-	card.Rarity.FIXED,
-	card.Provenance(card.WC, 0),
+	// TODO(variant): rarity relabelled from FIXED to Special — handle manually
+	card.Rarity.Special,
+	card.Provenance(card.WC, "A03"),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

@@ -17,7 +17,7 @@ var ImprintedMurmook = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 358),
+	card.Provenance(card.WC, "358"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Beast),
 	card.WithKeywords(card.Keyword.Elusive),

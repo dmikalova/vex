@@ -150,6 +150,15 @@ type game struct {
 	optionPrompt   string
 	optionLabels   []string
 
+	// engine position chooser: placing a Deploy creature by clicking the battleline
+	// rather than picking a labeled gap. positionLine is the battleline being
+	// placed into; a click on one of its creatures lands the new creature to that
+	// creature's left or right per positionRight (false = left, true = right).
+	choosingPosition bool
+	positionPrompt   string
+	positionLine     []engine.LocalID
+	positionRight    bool
+
 	// cancelling marks a manual-mode Cancel in flight: the current prompt (and any
 	// that follow it as the effect drains) answers itself, and when the action
 	// goroutine returns runAction rolls the whole action back to its start snapshot.

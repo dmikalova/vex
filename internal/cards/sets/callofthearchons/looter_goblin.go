@@ -17,7 +17,7 @@ var LooterGoblin = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 41),
+	card.Provenance(card.CotA, "41"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Goblin),
 	card.WithKeywords(card.Keyword.Elusive),

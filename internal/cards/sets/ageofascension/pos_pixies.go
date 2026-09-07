@@ -17,9 +17,13 @@ var PosPixies = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 362),
+	card.Provenance(card.AoA, "362"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Faerie),
 	card.WithKeywords(card.Keyword.Elusive),
-	card.WithTheftFromCommonSupply(),
+	card.WithReplaces(card.Instead{
+		Of:     card.Event.AemberTakenFromPool,
+		Player: card.Controller,
+		With:   card.FromCommonSupply,
+	}),
 )

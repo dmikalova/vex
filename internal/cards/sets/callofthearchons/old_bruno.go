@@ -17,7 +17,7 @@ var OldBruno = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 307),
+	card.Provenance(card.CotA, "307"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),

@@ -16,7 +16,7 @@ var OrbOfInvidius = card.New(
 	card.House.Dis,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 96),
+	card.Provenance(card.AoA, "96"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(

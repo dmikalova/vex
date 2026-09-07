@@ -15,7 +15,7 @@ var Mothergun = card.New(
 	card.House.Mars,
 	card.Type.Artifact,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 187),
+	card.Provenance(card.CotA, "187"),
 	card.WithTraits(card.Traits.Weapon),
 	card.WithAbility(
 		card.Trigger.Action, card.Sequence{

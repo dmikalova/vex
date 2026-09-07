@@ -14,7 +14,7 @@ var PunctuatedEquilibrium = card.New(
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 363),
+	card.Provenance(card.AoA, "363"),
 	card.WithAbility(
 		card.Trigger.Play, card.EachPlayerDiscardsAndRefillsHand{}),
 )

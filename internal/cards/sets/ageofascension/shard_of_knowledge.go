@@ -15,7 +15,7 @@ var ShardOfKnowledge = card.New(
 	card.House.Logos,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 155),
+	card.Provenance(card.AoA, "155"),
 	card.WithTraits(card.Traits.Item, card.Traits.Shard),
 	card.WithAbility(
 		card.Trigger.Action, card.Draw{

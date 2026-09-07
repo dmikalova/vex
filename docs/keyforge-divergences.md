@@ -34,6 +34,8 @@ answers "where does Vactrol diverge from KeyForge, and why".
 | A deferred play permission becomes an immediate play          | rule 21 | avoids turn-scoped unused-permission memory           |
 | A number-only `Otherwise` branch becomes `or <alt> if <cond>` | rule 22 | one linear sentence, no fork                          |
 | A turn `step` is named a `phase`                              | rule 28 | [ADR 0012](adr/0012-first-class-turn-phases.md)       |
+| Fight timing is named `in a fight with`                       | rule 29 | one phrase for the fight timing window                |
+| A count cap is dropped — `(to a maximum of N)` is removed     | rule 30 | Vactrol has no count cap; the count is uncapped       |
 
 ## Per-card rule changes
 
@@ -50,3 +52,11 @@ interesting, or brings it in line with modern errata.
   decisions, so `an enemy creature captures …` needs no explicit `choose`.
 - **Phase Shift** and **Kirby** play their off-house card immediately rather than
   granting a permission for later in the turn (rule 21).
+- **Trust No One** is a `Choose one:` rather than a forced `If … Otherwise …`. The
+  conditional branch ("if there are no friendly creatures in play, steal 1 Æmber
+  per house among enemy creatures") still gates on the empty board, so it does
+  nothing when you control a creature — a rational player picks the flat "steal 1
+  Æmber" then, reproducing the original outcome, while the choice frame reads
+  cleaner. Only a forced branch whose gated arm is a strict bonus over a safe
+  fallback converts this way; most `If … Otherwise …` cards (random reveals,
+  target-dependent or whose-turn conditions) do not.

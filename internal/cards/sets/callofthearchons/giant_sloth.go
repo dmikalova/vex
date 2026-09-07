@@ -19,7 +19,7 @@ var GiantSloth = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 354),
+	card.Provenance(card.CotA, "354"),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Beast),
 	card.WithRestrictions(card.Restrictions{

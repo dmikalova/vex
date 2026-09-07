@@ -23,7 +23,7 @@ var Weasand = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 285),
+	card.Provenance(card.WC, "285"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Beast, card.Traits.Thief),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

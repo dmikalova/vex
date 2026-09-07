@@ -23,7 +23,7 @@ var Spartasaur = card.New(
 	card.House.Saurian,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 231),
+	card.Provenance(card.WC, "231"),
 	card.WithPower(6),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Soldier),

@@ -22,7 +22,7 @@ var CaptainValJericho = card.New(
 	card.House.Staralliance,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 326),
+	card.Provenance(card.WC, "326"),
 	card.WithPower(5),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Human, card.Traits.Leader),

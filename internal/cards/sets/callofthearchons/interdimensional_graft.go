@@ -15,7 +15,7 @@ var InterdimensionalGraft = card.New(
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 112),
+	card.Provenance(card.CotA, "112"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.GiveRemainingAemberAfterOpponentForgeKey{}),

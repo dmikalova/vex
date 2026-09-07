@@ -16,7 +16,7 @@ var Screechbomb = card.New(
 	card.House.Brobnar,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 26),
+	card.Provenance(card.CotA, "26"),
 	card.WithTraits(card.Traits.Weapon),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(

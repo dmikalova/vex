@@ -15,7 +15,7 @@ var PawnSacrifice = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 279),
+	card.Provenance(card.CotA, "279"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Then{

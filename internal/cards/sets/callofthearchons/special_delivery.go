@@ -17,7 +17,7 @@ var SpecialDelivery = card.New(
 	card.House.Shadows,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 292),
+	card.Provenance(card.CotA, "292"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Item),
 	card.WithKeywords(card.Keyword.Versatile),

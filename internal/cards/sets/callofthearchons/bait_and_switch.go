@@ -14,7 +14,7 @@ var BaitAndSwitch = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 267),
+	card.Provenance(card.CotA, "267"),
 	card.WithAbility(
 		card.Trigger.Play, card.RepeatWhile{
 			Cond: card.OpponentAember{Is: card.MoreThanYou},

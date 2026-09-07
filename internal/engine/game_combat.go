@@ -140,7 +140,7 @@ func (g *Game) fight(attacker, defender LocalID) {
 		}
 	}
 
-	// "After a creature is destroyed fighting X": when exactly one combatant is
+	// "After a creature is destroyed in a fight with X": when exactly one combatant is
 	// removed by the fight, the survivor's ability fires with the destroyed
 	// creature as `it`.
 	attackerDead, defenderDead := !g.inPlay(attacker), !g.inPlay(defender)

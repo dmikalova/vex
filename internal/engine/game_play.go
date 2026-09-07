@@ -434,6 +434,9 @@ func (g *Game) playCardFromZone(
 func (g *Game) applyTreachery(player int, id LocalID) {
 	if g.hasKeyword(id, Treachery) {
 		g.takeControl(id, 1-player, id)
+		// The handoff re-forms neighbors on both battlelines, so a creature that
+		// lost a flank or neighbor power bonus in the move must settle now.
+		g.settleDestroyed(player)
 	}
 }
 

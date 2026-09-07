@@ -16,7 +16,7 @@ var CulfTheQuiet = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 20),
+	card.Provenance(card.AoA, "20"),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Giant),
 	card.WithKeywords(card.Keyword.Elusive),

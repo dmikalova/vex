@@ -16,7 +16,7 @@ var Shooler = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 96),
+	card.Provenance(card.CotA, "96"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(

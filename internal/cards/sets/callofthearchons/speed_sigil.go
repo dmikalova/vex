@@ -16,7 +16,7 @@ var SpeedSigil = card.New(
 	card.House.Shadows,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 293),
+	card.Provenance(card.CotA, "293"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Power),
 	card.WithAbility(

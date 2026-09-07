@@ -16,7 +16,7 @@ var LollopTheTitanic = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 14),
+	card.Provenance(card.AoA, "14"),
 	card.WithPower(11),
 	card.WithTraits(card.Traits.Giant, card.Traits.Location),
 	card.WithNoDamageWhenAttacked(),

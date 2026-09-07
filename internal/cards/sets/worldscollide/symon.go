@@ -17,7 +17,7 @@ var Symon = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 247),
+	card.Provenance(card.WC, "247"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Alien, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Skirmish),

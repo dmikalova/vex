@@ -17,7 +17,7 @@ var Duskwitch = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 320),
+	card.Provenance(card.AoA, "320"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Human, card.Traits.Witch),
 	card.WithKeywords(card.Keyword.Omega, card.Keyword.Elusive),

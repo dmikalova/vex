@@ -15,7 +15,7 @@ var ThreeFates = card.New(
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 71),
+	card.Provenance(card.CotA, "71"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play,

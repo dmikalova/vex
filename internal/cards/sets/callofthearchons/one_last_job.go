@@ -15,7 +15,7 @@ var OneLastJob = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 277),
+	card.Provenance(card.CotA, "277"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{

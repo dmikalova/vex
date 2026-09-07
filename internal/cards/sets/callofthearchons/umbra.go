@@ -17,7 +17,7 @@ var Umbra = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 314),
+	card.Provenance(card.CotA, "314"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Skirmish),

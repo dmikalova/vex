@@ -17,7 +17,7 @@ var ScowlyCaper = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 313),
+	card.Provenance(card.AoA, "313"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Skirmish, card.Keyword.Treachery, card.Keyword.Versatile),

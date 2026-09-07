@@ -16,7 +16,7 @@ var DrEscotera = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 140),
+	card.Provenance(card.CotA, "140"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Scientist),
 	card.WithAbility(

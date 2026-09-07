@@ -14,7 +14,7 @@ var LibraryAccess = card.New(
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 115),
+	card.Provenance(card.CotA, "115"),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.ForRemainderOfTurn{

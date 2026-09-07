@@ -21,7 +21,7 @@ var Philophosaurus = card.New(
 	card.House.Saurian,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 207),
+	card.Provenance(card.WC, "207"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Philosopher),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

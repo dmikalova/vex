@@ -17,7 +17,7 @@ var Shorty = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 13),
+	card.Provenance(card.WC, "13"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Giant),
 	card.WithAssault(4),

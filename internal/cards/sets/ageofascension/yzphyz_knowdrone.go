@@ -17,7 +17,7 @@ var YzphyzKnowdrone = card.New(
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 210),
+	card.Provenance(card.AoA, "210"),
 	card.WithPower(3),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Martian, card.Traits.Scientist),

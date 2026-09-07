@@ -15,7 +15,7 @@ var BinateRupture = card.New(
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 109),
+	card.Provenance(card.AoA, "109"),
 	card.WithKeywords(card.Keyword.Alpha),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{

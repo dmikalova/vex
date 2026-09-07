@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Brobnar
 //	Type:   Creature
-//	Rarity: FIXED
+//	Rarity: Special
 //	Power:  10
 //	Armor:  1
 //	Traits: Giant
@@ -21,8 +21,9 @@ var MegaNarp = card.New(
 	"Mega Narp",
 	card.House.Brobnar,
 	card.Type.Creature,
-	card.Rarity.FIXED,
-	card.Provenance(card.WC, 60),
+	// TODO(variant): rarity relabelled from FIXED to Special — handle manually
+	card.Rarity.Special,
+	card.Provenance(card.WC, "60"),
 	card.WithPower(10),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Giant),

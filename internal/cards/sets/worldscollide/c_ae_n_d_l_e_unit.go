@@ -18,7 +18,7 @@ var CAeNDLEUnit = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 146),
+	card.Provenance(card.WC, "146"),
 	card.WithPower(5),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Robot),

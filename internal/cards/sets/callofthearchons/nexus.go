@@ -17,7 +17,7 @@ var Nexus = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 305),
+	card.Provenance(card.CotA, "305"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),

@@ -17,7 +17,7 @@ var BordanTheRedeemed = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 215),
+	card.Provenance(card.AoA, "215"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),

@@ -14,7 +14,7 @@ var AFairGame = card.New(
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 53),
+	card.Provenance(card.CotA, "53"),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.DiscardTopOfDeck{Player: card.Opponent},

@@ -21,7 +21,7 @@ var SnagsMirror = card.New(
 	card.House.Dis,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 117),
+	card.Provenance(card.WC, "117"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Item),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

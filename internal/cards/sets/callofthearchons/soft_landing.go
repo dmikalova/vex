@@ -14,7 +14,7 @@ var SoftLanding = card.New(
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 177),
+	card.Provenance(card.CotA, "177"),
 	card.WithAbility(
 		card.Trigger.Play, card.NextPlayed{
 			Type:       card.Type.Any,

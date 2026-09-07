@@ -15,7 +15,7 @@ var BloodOfTitans = card.New(
 	card.House.Brobnar,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 50),
+	card.Provenance(card.CotA, "50"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{PowerBonus: 5}),
 )

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Shadows
 //	Type:   Creature
-//	Rarity: Variant
+//	Rarity: Special
 //	Power:  1
 //	Traits: Elf • Thief
 //
@@ -21,8 +21,9 @@ var LogosPlant = card.New(
 	"Logos Plant",
 	card.House.Shadows,
 	card.Type.Creature,
-	card.Rarity.Rare,
-	card.Provenance(card.WC, 288),
+	// TODO(variant): rarity relabelled from Variant to Special — handle manually
+	card.Rarity.Special,
+	card.Provenance(card.WC, "288"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

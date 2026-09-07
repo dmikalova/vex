@@ -148,6 +148,12 @@ a card is clicked. Therefore:
 `phase` is the client's own interaction state, not a rules concept:
 `phaseHouse` → `phaseMain` → (`phaseFlank` | `phaseFightTarget`) → `phaseOver`.
 
+A Deploy creature skips `phaseFlank`: playing it runs straight away, and the
+engine raises its `ChoosePosition` prompt (the `choosingPosition` overlay) so the
+player clicks a battleline creature to land beside — the direction toggle picks
+its left or right — or takes a flank button. A plain creature on a non-empty line
+still asks the which-flank question in `phaseFlank` first.
+
 Escape calls `dismiss`, which backs out **exactly one layer**, innermost first:
 picker → zone viewer → restart confirmation → key-forge picker → an escapable
 prompt → mid-action targeting → end-turn confirmation → the selection. Add a new

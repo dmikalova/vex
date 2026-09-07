@@ -16,7 +16,7 @@ var IncubationChamber = card.New(
 	card.House.Mars,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 186),
+	card.Provenance(card.CotA, "186"),
 	card.WithTraits(card.Traits.Location),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(

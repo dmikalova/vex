@@ -15,7 +15,7 @@ var TheWarchest = card.New(
 	card.House.Brobnar,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 27),
+	card.Provenance(card.CotA, "27"),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.Action, card.GainAember{

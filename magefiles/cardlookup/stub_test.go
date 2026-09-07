@@ -15,10 +15,10 @@ func TestMasterOfXCoversItsNumberedPrintings(t *testing.T) {
 	_ = cards.All()
 	covered := coveredNumbers()[provenance.CallOfTheArchons.Slug]
 
-	for number, name := range map[int]string{89: "Master of 1", 90: "Master of 2", 91: "Master of 3"} {
+	for number, name := range map[string]string{"089": "Master of 1", "090": "Master of 2", "091": "Master of 3"} {
 		if !covered[number] {
 			t.Errorf(
-				"CotA #%d (%s) is uncovered, so mage tool:stub would scaffold it",
+				"CotA #%s (%s) is uncovered, so mage tool:stub would scaffold it",
 				number,
 				name,
 			)

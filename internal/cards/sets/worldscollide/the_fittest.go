@@ -15,7 +15,7 @@ var TheFittest = card.New(
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 366),
+	card.Provenance(card.WC, "366"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.AddPowerCounter{

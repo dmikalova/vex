@@ -16,7 +16,7 @@ var Wardrummer = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 49),
+	card.Provenance(card.CotA, "49"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Goblin),
 	card.WithAbility(

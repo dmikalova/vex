@@ -22,7 +22,7 @@ var SciOfficerMorpheus = card.New(
 	card.House.Staralliance,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 318),
+	card.Provenance(card.WC, "318"),
 	card.WithPower(2),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Shapeshifter, card.Traits.Scientist),

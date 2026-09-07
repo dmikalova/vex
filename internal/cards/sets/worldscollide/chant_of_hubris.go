@@ -15,7 +15,7 @@ var ChantOfHubris = card.New(
 	card.House.Saurian,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 184),
+	card.Provenance(card.WC, "184"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.MoveAember{

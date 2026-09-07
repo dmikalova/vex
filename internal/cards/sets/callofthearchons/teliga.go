@@ -16,7 +16,7 @@ var Teliga = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 366),
+	card.Provenance(card.CotA, "366"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human, card.Traits.Witch),
 	card.WithAbility(card.Trigger.AfterEnemyCardPlayed, card.Conditional{

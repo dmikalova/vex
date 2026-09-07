@@ -17,7 +17,7 @@ var SignalFire = card.New(
 	card.House.Brobnar,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 49),
+	card.Provenance(card.AoA, "49"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Item),
 	card.WithKeywords(card.Keyword.Versatile),

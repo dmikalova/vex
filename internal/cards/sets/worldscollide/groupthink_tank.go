@@ -22,7 +22,7 @@ var GroupthinkTank = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 151),
+	card.Provenance(card.WC, "151"),
 	card.WithPower(4),
 	card.WithArmor(3),
 	card.WithTraits(card.Traits.Robot, card.Traits.Experiment),

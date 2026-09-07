@@ -15,7 +15,7 @@ var RemoteAccess = card.New(
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 120),
+	card.Provenance(card.CotA, "120"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Use{

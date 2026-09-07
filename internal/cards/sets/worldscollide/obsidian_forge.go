@@ -21,7 +21,7 @@ var ObsidianForge = card.New(
 	card.House.Dis,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 93),
+	card.Provenance(card.WC, "93"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Item),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

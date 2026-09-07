@@ -15,7 +15,7 @@ var RiggedLottery = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 309),
+	card.Provenance(card.AoA, "309"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{

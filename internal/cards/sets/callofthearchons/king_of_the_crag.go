@@ -16,7 +16,7 @@ var KingOfTheCrag = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 38),
+	card.Provenance(card.CotA, "38"),
 	card.WithPower(7),
 	card.WithTraits(card.Traits.Giant),
 	card.WithConstant(card.ConstantAbility{

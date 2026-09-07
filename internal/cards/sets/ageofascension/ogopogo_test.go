@@ -15,7 +15,7 @@ import (
 //	Power:  6
 //	Traits: Giant
 //
-//	After a creature is destroyed fighting Ogopogo, you may deal 2 damage to a creature.
+//	After a creature is destroyed in a fight with Ogopogo, you may deal 2 damage to a creature.
 func TestOgopogo(t *testing.T) {
 	t.Run("may deal 2 damage after destroying a creature in a fight", func(t *testing.T) {
 		var ogopogo, foe, other ct.Card

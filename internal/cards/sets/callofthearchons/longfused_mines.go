@@ -17,7 +17,7 @@ var LongfusedMines = card.New(
 	card.House.Shadows,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 287),
+	card.Provenance(card.CotA, "287"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Weapon),
 	card.WithKeywords(card.Keyword.Versatile),

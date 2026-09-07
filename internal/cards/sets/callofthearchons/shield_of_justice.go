@@ -15,10 +15,10 @@ var ShieldOfJustice = card.New(
 	card.House.Sanctum,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 225),
+	card.Provenance(card.CotA, "225"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.PreventDamage{
+		card.Trigger.Play, card.CannotBeDealtDamage{
 			Target:   card.Target.EachFriendlyCreature,
 			Duration: card.Duration.EndOfTurn,
 		}),

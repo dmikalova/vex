@@ -17,7 +17,7 @@ var ChampionAnaphiel = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 239),
+	card.Provenance(card.CotA, "239"),
 	card.WithPower(6),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Knight, card.Traits.Spirit),

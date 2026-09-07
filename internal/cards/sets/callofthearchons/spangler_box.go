@@ -16,7 +16,7 @@ var SpanglerBox = card.New(
 	card.House.Logos,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 132),
+	card.Provenance(card.CotA, "132"),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.Action, card.Sequence{Effects: []card.Effect{

@@ -16,7 +16,7 @@ var PsionicOfficerLang = card.New(
 	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 337),
+	card.Provenance(card.WC, "337"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human),
 	card.WithAbility(

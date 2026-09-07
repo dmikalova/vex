@@ -17,7 +17,7 @@ var MackTheKnife = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 302),
+	card.Provenance(card.CotA, "302"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive, card.Keyword.Versatile),

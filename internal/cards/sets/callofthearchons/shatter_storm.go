@@ -14,7 +14,7 @@ var ShatterStorm = card.New(
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 176),
+	card.Provenance(card.CotA, "176"),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.LoseAember{

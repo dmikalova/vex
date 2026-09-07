@@ -16,7 +16,7 @@ var ForgemasterOg = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 38),
+	card.Provenance(card.AoA, "38"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(

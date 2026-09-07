@@ -23,7 +23,7 @@ var Crassosaurus = card.New(
 	card.House.Saurian,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 217),
+	card.Provenance(card.WC, "217"),
 	card.WithPower(4),
 	card.WithArmor(2),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Politician),

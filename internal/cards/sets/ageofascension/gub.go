@@ -16,7 +16,7 @@ var Gub = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 60),
+	card.Provenance(card.AoA, "60"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Demon),
 	card.WithConstant(card.ConstantAbility{

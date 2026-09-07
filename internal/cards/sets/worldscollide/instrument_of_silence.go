@@ -15,7 +15,7 @@ var InstrumentOfSilence = card.New(
 	card.House.Untamed,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 375),
+	card.Provenance(card.WC, "375"),
 	card.WithStatic(card.StaticModifier{
 		Keywords: card.Keywords(card.Keyword.Skirmish),
 		Granted: []card.Ability{{

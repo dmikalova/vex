@@ -21,7 +21,7 @@ var TechivorePulpate = card.New(
 	card.House.Staralliance,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 341),
+	card.Provenance(card.WC, "341"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Jelly),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

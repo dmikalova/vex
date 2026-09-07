@@ -21,7 +21,7 @@ var KompsosHaruspex = card.New(
 	card.House.Saurian,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 224),
+	card.Provenance(card.WC, "224"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Priest),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

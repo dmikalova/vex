@@ -19,6 +19,6 @@ var IntoTheNight = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 256),
+	card.Provenance(card.WC, "256"),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

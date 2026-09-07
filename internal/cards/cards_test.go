@@ -186,7 +186,7 @@ func TestProvenanceHasNoOverlap(t *testing.T) {
 		for _, ref := range rc.Provenance {
 			if owner, ok := seenBy[ref]; ok && owner != rc.Def.Name {
 				t.Errorf(
-					"%s and %s both claim provenance %s #%d",
+					"%s and %s both claim provenance %s #%s",
 					owner, rc.Def.Name, ref.Set.Code, ref.Number,
 				)
 				continue
@@ -209,7 +209,7 @@ func TestEveryReprintResolvesToACard(t *testing.T) {
 	for _, rp := range card.ReprintRefs() {
 		if !byName[normalizeName(rp.Name)] {
 			t.Errorf(
-				"%s reprint #%d refers to %q, which no set implements "+
+				"%s reprint #%s refers to %q, which no set implements "+
 					"(stale 0set.go — regenerate with `mage tool:stub %s`)",
 				rp.Set.Name, rp.Number, rp.Name, rp.Set.Slug,
 			)

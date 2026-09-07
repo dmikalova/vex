@@ -16,7 +16,7 @@ var Begone = card.New(
 	card.House.Sanctum,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 212),
+	card.Provenance(card.CotA, "212"),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseOne{Options: []card.Effect{
 			card.Destroy{Target: card.Target.EachCreature.OfHouse(card.House.Dis)},

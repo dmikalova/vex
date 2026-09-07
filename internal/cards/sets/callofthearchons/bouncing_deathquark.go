@@ -14,7 +14,7 @@ var BouncingDeathquark = card.New(
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 107),
+	card.Provenance(card.CotA, "107"),
 	card.WithAbility(
 		card.Trigger.Play, card.MayRepeat{
 			Cond: card.InPlay{

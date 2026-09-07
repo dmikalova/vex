@@ -15,7 +15,7 @@ var MatingSeason = card.New(
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 170),
+	card.Provenance(card.CotA, "170"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{

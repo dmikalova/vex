@@ -20,7 +20,7 @@ var ImperialScutum = card.New(
 	card.House.Saurian,
 	card.Type.Upgrade,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 185),
+	card.Provenance(card.WC, "185"),
 	card.WithAemberBonus(1),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

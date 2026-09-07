@@ -14,7 +14,7 @@ var InkyGloom = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 241),
+	card.Provenance(card.WC, "241"),
 	card.WithAbility(
 		card.Trigger.Play, card.CannotReap{
 			Player:   card.Opponent,

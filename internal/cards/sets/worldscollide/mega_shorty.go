@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Brobnar
 //	Type:   Creature
-//	Rarity: FIXED
+//	Rarity: Special
 //	Power:  6
 //	Traits: Giant
 //
@@ -21,8 +21,9 @@ var MegaShorty = card.New(
 	"Mega Shorty",
 	card.House.Brobnar,
 	card.Type.Creature,
-	card.Rarity.FIXED,
-	card.Provenance(card.WC, 61),
+	// TODO(variant): rarity relabelled from FIXED to Special — handle manually
+	card.Rarity.Special,
+	card.Provenance(card.WC, "61"),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Giant),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

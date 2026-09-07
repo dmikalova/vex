@@ -18,7 +18,7 @@ var StormCrawler = card.New(
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 189),
+	card.Provenance(card.AoA, "189"),
 	card.WithPower(6),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Robot),

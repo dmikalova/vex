@@ -16,7 +16,7 @@ var GormOfOmm = card.New(
 	card.House.Sanctum,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 232),
+	card.Provenance(card.CotA, "232"),
 	card.WithTraits(card.Traits.Item),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(

@@ -357,7 +357,7 @@ func TestRepeatWhileStopsWhenActionPrevented(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.State.Aember[0], g.State.Aember[1] = 0, 5
 	g.AddToBattleline(
-		NewCard("keeper", Sanctum, Creature, Rare, WithPower(4), WithAemberTheftImmunity()),
+		NewCard("keeper", Sanctum, Creature, Rare, WithPower(4), WithAemberCannotBeStolen()),
 		1,
 	)
 

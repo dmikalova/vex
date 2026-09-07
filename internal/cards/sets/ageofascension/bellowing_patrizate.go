@@ -16,7 +16,7 @@ var BellowingPatrizate = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 34),
+	card.Provenance(card.AoA, "34"),
 	card.WithPower(7),
 	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(

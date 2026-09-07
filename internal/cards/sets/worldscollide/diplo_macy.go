@@ -21,7 +21,7 @@ var DiploMacy = card.New(
 	card.House.Saurian,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 218),
+	card.Provenance(card.WC, "218"),
 	card.WithAemberBonus(1),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

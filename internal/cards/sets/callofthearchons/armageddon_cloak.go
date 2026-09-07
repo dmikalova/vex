@@ -15,7 +15,7 @@ var ArmageddonCloak = card.New(
 	card.House.Sanctum,
 	card.Type.Upgrade,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 263),
+	card.Provenance(card.CotA, "263"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		HazardousBonus: 2,

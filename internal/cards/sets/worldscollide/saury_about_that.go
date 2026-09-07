@@ -14,7 +14,7 @@ var SauryAboutThat = card.New(
 	card.House.Saurian,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 228),
+	card.Provenance(card.WC, "228"),
 	card.WithAbility(
 		card.Trigger.Play, card.Then{
 			First:  card.Destroy{Target: card.Target.Creature},

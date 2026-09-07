@@ -15,7 +15,7 @@ var DominatorBauble = card.New(
 	card.House.Dis,
 	card.Type.Artifact,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 73),
+	card.Provenance(card.CotA, "73"),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.Action, card.OnChooseCreature{

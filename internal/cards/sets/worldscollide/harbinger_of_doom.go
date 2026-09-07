@@ -17,7 +17,7 @@ var HarbingerOfDoom = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 76),
+	card.Provenance(card.WC, "76"),
 	card.WithPower(2),
 	card.WithArmor(3),
 	card.WithTraits(card.Traits.Demon),

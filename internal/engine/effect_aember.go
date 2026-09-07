@@ -17,18 +17,12 @@ type GainAember struct {
 	Player Player
 	Amount int
 	Per    Count
-	// Max caps the total gained after the Per count multiplies it (Free Markets
-	// gains 1 Æmber per house in play, to a maximum of 6). Zero means no cap.
-	Max int
 }
 
 // validate rejects a GainAember whose player was left unset.
 func (e GainAember) validate() error {
 	if !e.Player.valid() {
 		return errUnsetPlayer("GainAember")
-	}
-	if e.Max != 0 && e.Per == nil {
-		return errors.New("GainAember: Max requires a Per count")
 	}
 	return nil
 }
@@ -47,9 +41,6 @@ func (e GainAember) Text() string {
 		phrase = fmt.Sprintf("its owner gains %d Æmber", e.Amount)
 	case ItsController:
 		phrase = fmt.Sprintf("its controller gains %d Æmber", e.Amount)
-	}
-	if e.Max > 0 {
-		phrase += fmt.Sprintf(", to a maximum of %d Æmber", e.Max)
 	}
 	return forEach(e.Per, phrase)
 }
@@ -74,9 +65,6 @@ func (e GainAember) Resolve(ctx *EffectContext) {
 // capture that replaces the gain.
 func (e GainAember) gain(ctx *EffectContext, p int) {
 	amount := scaled(e.Amount, e.Per, ctx)
-	if e.Max > 0 && amount > e.Max {
-		amount = e.Max
-	}
 	if capturer, ok := ctx.Resolver.GainAember(p, amount); ok {
 		ctx.Resolver.Record(AemberCapturedInsteadOfGain{
 			Creature: capturer,
@@ -163,6 +151,11 @@ func (half) object(possessive string) string {
 	return "half of " + possessive + " Æmber, rounded down"
 }
 func (half) qualifier() string { return "" }
+
+// countPhrase renders a fraction of a count rather than a pool (PowerOfChosen's
+// Of), e.g. "half its power, rounded down", so the same Half serves both
+// LoseAember{By: Half} and PowerOfChosen{Of: Half}.
+func (half) countPhrase(noun string) string { return "half " + noun + ", rounded down" }
 
 // AllAember empties a pool entirely, whatever its size — Shatter Storm's "lose
 // all your Æmber".

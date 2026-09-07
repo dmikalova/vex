@@ -16,7 +16,7 @@ var LomirFlamefist = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 40),
+	card.Provenance(card.CotA, "40"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(

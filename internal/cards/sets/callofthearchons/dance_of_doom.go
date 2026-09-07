@@ -14,7 +14,7 @@ var DanceOfDoom = card.New(
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 57),
+	card.Provenance(card.CotA, "57"),
 	card.WithAbility(
 		card.Trigger.Play,
 		card.Destroy{Target: card.Target.EachCreature.Selector(card.SamePowerAsChosen)},

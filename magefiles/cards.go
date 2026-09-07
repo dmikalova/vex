@@ -3,8 +3,6 @@
 package main
 
 import (
-	"os"
-
 	"github.com/magefile/mage/mg"
 	"github.com/magefile/mage/sh"
 )
@@ -24,13 +22,13 @@ func (Tool) Lookup(query string) error {
 
 // Missing lists a set's cards still to implement. Those are the source cards no
 // implemented card tags with a provenance Ref yet. With no set chosen it opens an
-// interactive ↑/↓ picker; set SET=<slug> to name one directly, e.g.
-// `SET=callofthearchons mage tool:missing` (slugs match the files in
+// interactive ↑/↓ picker; pass -set=<slug> to name one directly, e.g.
+// `mage tool:missing -set=callofthearchons` (slugs match the files in
 // internal/cards/provenance, minus the .json).
-func (Tool) Missing() error {
+func (Tool) Missing(set *string) error {
 	args := []string{"run", "./magefiles/cardlookup", "missing"}
-	if set := os.Getenv("SET"); set != "" {
-		args = append(args, set)
+	if set != nil && *set != "" {
+		args = append(args, *set)
 	}
 	return sh.RunV("go", args...)
 }
@@ -64,12 +62,27 @@ func (Tool) Stub(setSlug string) error {
 // order and stopping at the first one on disk. It is the pick-the-next-card step
 // of the implement-cards workflow: build the card it names, drop the build tag,
 // and run it again for the next. With no set chosen it opens the interactive ↑/↓
-// picker; set SET=<slug> to name one directly, e.g. `SET=ageofascension mage
-// tool:nextCard`.
-func (Tool) NextCard() error {
+// picker; pass -set=<slug> to name one directly, e.g. `mage tool:nextCard
+// -set=ageofascension`.
+func (Tool) NextCard(set *string) error {
 	args := []string{"run", "./magefiles/cardlookup", "next-card"}
-	if set := os.Getenv("SET"); set != "" {
-		args = append(args, set)
+	if set != nil && *set != "" {
+		args = append(args, *set)
+	}
+	return sh.RunV("go", args...)
+}
+
+// ImportProvenance rebuilds a set's source catalog from the Master Vault decks
+// feed. It pages the feed for the set's expansion, folds each linked card into the
+// catalog shape (ASCII-folded name and text, expanded amber/damage markup,
+// normalized house and rarity, classified anomalies), and writes
+// internal/cards/provenance/<slug>.json. With no set chosen it opens an
+// interactive picker offering every set plus "All sets"; pass -set=<slug> to name
+// one, or -set=all to rebuild every set in release order (each fetched on its own).
+func (Tool) ImportProvenance(set *string) error {
+	args := []string{"run", "./magefiles/cardlookup", "import-provenance"}
+	if set != nil && *set != "" {
+		args = append(args, *set)
 	}
 	return sh.RunV("go", args...)
 }

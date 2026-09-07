@@ -15,7 +15,7 @@ var AemberConductionUnit = card.New(
 	card.House.Mars,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 176),
+	card.Provenance(card.AoA, "176"),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.AfterEnemyCreatureReaps, card.Conditional{

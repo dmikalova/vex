@@ -16,7 +16,7 @@ var Hologrammophone = card.New(
 	card.House.Logos,
 	card.Type.Artifact,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 135),
+	card.Provenance(card.WC, "135"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(

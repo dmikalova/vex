@@ -15,7 +15,7 @@ var BearFlute = card.New(
 	card.House.Untamed,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 340),
+	card.Provenance(card.CotA, "340"),
 	card.WithTraits(card.Traits.Item),
 	card.Connects(
 		card.Pull(AncientBear, 2),

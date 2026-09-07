@@ -21,7 +21,7 @@ var ShatteredThrone = card.New(
 	card.House.Brobnar,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 28),
+	card.Provenance(card.WC, "28"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Location),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

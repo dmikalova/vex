@@ -16,7 +16,7 @@ var BriarGrubbling = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 348),
+	card.Provenance(card.CotA, "348"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Beast, card.Traits.Insect),
 	card.WithHazardous(5),

@@ -17,7 +17,7 @@ var ProjectZYX = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 152),
+	card.Provenance(card.AoA, "152"),
 	card.WithPower(5),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Mutant),

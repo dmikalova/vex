@@ -15,7 +15,7 @@ var LayOfTheLand = card.New(
 	card.House.StarAlliance,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 313),
+	card.Provenance(card.WC, "313"),
 	card.WithAemberBonus(1),
 	card.WithAbility(card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 		card.ReorderTop{Amount: 3},

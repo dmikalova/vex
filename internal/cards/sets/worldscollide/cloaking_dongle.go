@@ -20,7 +20,7 @@ var CloakingDongle = card.New(
 	card.House.Staralliance,
 	card.Type.Upgrade,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 294),
+	card.Provenance(card.WC, "294"),
 	card.WithAemberBonus(1),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

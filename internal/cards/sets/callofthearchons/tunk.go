@@ -16,7 +16,7 @@ var Tunk = card.New(
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 199),
+	card.Provenance(card.CotA, "199"),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Robot),
 	card.WithAbility(card.Trigger.AfterCardPlayed, card.Conditional{

@@ -18,7 +18,7 @@ var ChuffApe = card.New(
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 191),
+	card.Provenance(card.CotA, "191"),
 	card.WithPower(11),
 	card.WithTraits(card.Traits.Beast),
 	card.WithKeywords(card.Keyword.Taunt),

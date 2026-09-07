@@ -14,7 +14,7 @@ var CollarOfSubordination = card.New(
 	card.House.Dis,
 	card.Type.Upgrade,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 105),
+	card.Provenance(card.CotA, "105"),
 	card.WithAbility(
 		card.Trigger.Play, card.TakeControl{
 			Duration: card.Duration.UntilThisLeavesPlay,

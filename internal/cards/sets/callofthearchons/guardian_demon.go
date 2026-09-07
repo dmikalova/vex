@@ -16,7 +16,7 @@ var GuardianDemon = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 88),
+	card.Provenance(card.CotA, "88"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Demon),
 	card.WithPlayFightReap(card.Sentences{Effects: []card.Effect{

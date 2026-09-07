@@ -19,8 +19,8 @@ type ForDuration struct {
 // durationScoped is a timed effect that renders its body in two parts — the
 // subject it acts on and the predicate it applies — so ForDuration can state the
 // shared "for the remainder of the turn, " clause once and, when the children act
-// on the same subject, name that subject once too. BelongToHouse and PreventDamage
-// implement it.
+// on the same subject, name that subject once too. BelongToHouse and
+// CannotBeDealtDamage implement it.
 type durationScoped interface {
 	durationSubject() string
 	durationPredicate() string

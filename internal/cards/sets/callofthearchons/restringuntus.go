@@ -16,7 +16,7 @@ var Restringuntus = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 94),
+	card.Provenance(card.CotA, "94"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Demon),
 	card.WithHouseLock(card.HouseLock{

@@ -16,7 +16,7 @@ var HorsemanOfPestilence = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 248),
+	card.Provenance(card.CotA, "248"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Horseman, card.Traits.Spirit),
 	card.Connects(

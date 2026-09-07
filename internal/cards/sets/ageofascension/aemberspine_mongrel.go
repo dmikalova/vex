@@ -17,7 +17,7 @@ var AemberspineMongrel = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 335),
+	card.Provenance(card.AoA, "335"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Beast),
 	card.WithHazardous(3),

@@ -16,7 +16,7 @@ var AnnihilationRitual = card.New(
 	card.House.Dis,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 72),
+	card.Provenance(card.CotA, "72"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Power),
 	card.WithConstant(card.ConstantAbility{

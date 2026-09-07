@@ -17,7 +17,7 @@ var AgentHooMan = card.New(
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 160),
+	card.Provenance(card.AoA, "160"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Martian, card.Traits.Agent),
 	card.WithKeywords(card.Keyword.Elusive),

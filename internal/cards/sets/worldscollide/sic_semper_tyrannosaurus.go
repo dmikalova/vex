@@ -19,6 +19,6 @@ var SicSemperTyrannosaurus = card.New(
 	card.House.Saurian,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 209),
+	card.Provenance(card.WC, "209"),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

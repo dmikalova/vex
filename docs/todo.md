@@ -8,42 +8,10 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 ### Current focus
 
-### Backlog dump (2026-09-07)
-
-Done: Witch of the Wilds wording; Veylan Analyst wording ("After you use an
-artifact, gain 1 Aember" via a generalized after-you-act fold); Mulligan button
-red; row labels (name-stripped + capitalized); Hazardous/Assault log source
-narration; deckgen `Exact` pull (Timetraveller ⇒ Help From Future Self, 1:1);
-action bar shows disabled End Turn + Undo when empty; click player bar to unlift;
-Back button on start-of-turn house selection; Bigtwig/Booby Trap/Collector Worm
-ability glyphs; card split into separate status/art/text boxes (art meets title
-with no seam when there is no status); mobile toast clears the 2-row player bar;
-Baron Mengevin reword + discard-action capture bug (manual `DiscardFromHand` now
-fires "after you discard" reactions, so each Baron captures); at-check Æmber
-highlight in the end-of-turn log; swipe-to-open sidebar ignores card-strip
-swipes; End Turn jiggle and slide happen the same update cycle; first-turn
-discard restriction aligned with play (discard offer now asks the engine's
-`CanDiscard`, so after the opening volition nothing reads as live).
-
-Card text / wording (each is a rendering-standardization task — text comes from
-the effect AST per ADR 0006, so these need engine text work, not a string edit):
-
-- Standardize fight wording to "in a fight with" (KeyForge uses fighting / while
-  fighting / during / etc.). e.g. Krump → "After a creature is destroyed in a
-  fight with Krump, …". This canonically names the timing window when power
-  damage is exchanged in a fight — including splash or other abilities that
-  destroy multiple creatures. (Design: needs a rulebook term + a shared timing
-  window; decide global rename vs. Krump-first.)
-
-Client — UI/UX:
-
-- Deploy: when I play a card with Deploy, offer left/right flank AND deploy
-  left / deploy right; if I choose deploy, let me pick the neighbor by clicking a
-  creature in the battleline rather than a button per creature.
+- tool to extract cards from MV
 
 ### Next focus
 
-- tool to extract cards from MV
 - shards should pull in shards for the other houses
 - House Ambassador (eg Brobnar Amassador) as a materialization - make it work as a legacy/maverick to swap with a card in another house
 - bane, brew (common), plant, and blaster variant
@@ -72,7 +40,11 @@ Client — UI/UX:
 - gigantic, tide
 - have to double click to activate preview from logs
 
+- Instead of "OnIt" should we use "OnTarget"
+- Anomaly provenance
 - tmtp and tezmal - max 1 copy
+- Repeatedly get error that comes back after fixing - seems to come back after lefthook so probably some auto formatting issue --- FAIL: TestDraggingTheLiftedCard (0.01s)
+    view_focus_test.go:240: the lifted copy of a playable hand card is not a drag source
 
 ## UI finesse
 

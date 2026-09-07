@@ -16,7 +16,7 @@ var Drummernaut = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 6),
+	card.Provenance(card.AoA, "6"),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Giant),
 	card.WithPlayFightReap(card.PutFromPlay{

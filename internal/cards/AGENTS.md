@@ -120,7 +120,7 @@ to seed it. `card.New(...)`:
 - **A card with several abilities lists them in printed order: ongoing lines
   first, the `Play`/`Action` line last.** A card prints its always-on or
   recurring ability (a `WithConstant` line, or a `WithAbility(card.Trigger.StartOfTurn,
-  …)` / `EndOfTurn` line) above its `Play:`/`Action:` ability, so author the
+…)` / `EndOfTurn` line) above its `Play:`/`Action:` ability, so author the
   `With*` calls in that same top-to-bottom order (Wretched Doll: its
   start-of-turn sweep is written before its `Play` doom-counter). Each ability is
   its own `WithConstant`/`WithAbility` call; do not fuse two printed lines into one.
@@ -236,6 +236,24 @@ and prefer reshaping a `Target`/`Count`/`Selector` over adding a new effect):
 After any wording change, run `mage generateComments` (regenerates every card's
 comment) and the engine tests (the `Text()` assertions live in
 `internal/engine/effect_*_test.go`).
+
+## Zone movement is one family — extend it, don't fork it
+
+Archiving, discarding, purging, shuffling into the deck, and putting a card into
+play / hand / on top of a deck are one mechanism: a source zone, a selection (a
+chosen card, any number, all matching, a random one, the top N, narrowed by
+house / type / name / trait), and a destination ([ADR 0031](../../docs/adr/0031-zone-movement-is-one-mechanism.md)).
+Author each with the KeyForge verb the card prints — the `card.Archive…`,
+`card.Discard…`, `card.Purge…`, `card.Shuffle…`, and `card.Put…` families. When a
+card needs a movement an existing verb does not cover, it is almost always a new
+source zone, selection, or destination on that family — not a new bespoke type.
+These families are being consolidated onto the one mechanism as their cards are
+touched, so shape a new movement effect to fit it rather than adding another
+one-off `…FromHand` / `…TopOfDeck` variant to unwind later. The same holds for the
+smaller shared vocabularies: prefer a `Target`/`Selector` filter, a `Count`, a
+`Duration` field, or a portion (`By: Half`) over a name that spells the whole card
+sentence (see [docs/style-guide.md](../../docs/style-guide.md), "Composition and
+design").
 
 ## Tests
 

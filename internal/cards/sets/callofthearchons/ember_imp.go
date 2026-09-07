@@ -16,7 +16,7 @@ var EmberImp = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 85),
+	card.Provenance(card.CotA, "85"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Imp),
 	card.WithRestrictions(card.Restrictions{

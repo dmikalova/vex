@@ -16,7 +16,7 @@ var Autocannon = card.New(
 	card.House.Brobnar,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 19),
+	card.Provenance(card.CotA, "19"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Weapon),
 	card.WithAbility(

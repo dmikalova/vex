@@ -17,7 +17,7 @@ var Paraguardian = card.New(
 	card.House.Saurian,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 206),
+	card.Provenance(card.WC, "206"),
 	card.WithPower(6),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Soldier),

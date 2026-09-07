@@ -14,7 +14,7 @@ var PsychicNetwork = card.New(
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 174),
+	card.Provenance(card.CotA, "174"),
 	card.WithAbility(
 		card.Trigger.Play, card.StealAember{
 			Amount: 1,

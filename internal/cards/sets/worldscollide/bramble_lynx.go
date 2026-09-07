@@ -17,7 +17,7 @@ var BrambleLynx = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 353),
+	card.Provenance(card.WC, "353"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Beast),
 	card.WithKeywords(card.Keyword.Skirmish),

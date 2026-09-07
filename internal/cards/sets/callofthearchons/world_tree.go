@@ -15,7 +15,7 @@ var WorldTree = card.New(
 	card.House.Untamed,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 344),
+	card.Provenance(card.CotA, "344"),
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
 		card.Trigger.Action, card.PutFromDiscard{

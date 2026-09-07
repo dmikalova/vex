@@ -15,7 +15,7 @@ var ChaosPortal = card.New(
 	card.House.Logos,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 127),
+	card.Provenance(card.CotA, "127"),
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
 		card.Trigger.Action, card.ChooseHouseThen{

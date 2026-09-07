@@ -22,7 +22,7 @@ var ChiefEngineerWalls = card.New(
 	card.House.Staralliance,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 293),
+	card.Provenance(card.WC, "293"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

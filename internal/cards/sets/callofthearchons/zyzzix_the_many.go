@@ -16,7 +16,7 @@ var ZyzzixTheMany = card.New(
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 207),
+	card.Provenance(card.CotA, "207"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Martian, card.Traits.Soldier),
 	card.WithFightOrReap(card.May{

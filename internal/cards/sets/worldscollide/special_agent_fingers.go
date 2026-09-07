@@ -17,7 +17,7 @@ var SpecialAgentFingers = card.New(
 	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 339),
+	card.Provenance(card.WC, "339"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),

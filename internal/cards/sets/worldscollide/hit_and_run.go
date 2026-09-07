@@ -14,7 +14,7 @@ var HitAndRun = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 238),
+	card.Provenance(card.WC, "238"),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.DealDamage{

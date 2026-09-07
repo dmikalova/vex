@@ -15,7 +15,7 @@ var GhostlyHand = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 270),
+	card.Provenance(card.CotA, "270"),
 	card.WithAemberBonus(2),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{

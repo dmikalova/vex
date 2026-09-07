@@ -15,7 +15,7 @@ var HaedrothsWall = card.New(
 	card.House.Sanctum,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 236),
+	card.Provenance(card.AoA, "236"),
 	card.WithTraits(card.Traits.Location),
 	card.WithConstant(card.ConstantAbility{
 		PowerBonus: 2,

@@ -16,7 +16,7 @@ var TheFloorIsLava = card.New(
 	card.House.Brobnar,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 51),
+	card.Provenance(card.WC, "51"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(

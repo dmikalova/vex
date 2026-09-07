@@ -16,7 +16,7 @@ var SeraphicArmor = card.New(
 	card.House.Sanctum,
 	card.Type.Upgrade,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 263),
+	card.Provenance(card.AoA, "263"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{ArmorBonus: 1}),
 	card.WithAbility(

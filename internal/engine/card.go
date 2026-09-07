@@ -122,8 +122,10 @@ type CardDefinition struct {
 	PlayPermission PlayPermission
 
 	// Replaces is a continuous replacement this card applies to a game event's
-	// outcome while it is in play — Ether Spider replaces Æmber being added to its
-	// opponent's pool (EventAemberAddedToPool, scoped by Player) with capturing it.
+	// outcome while it is in play, on either end of an Æmber flow: Ether Spider
+	// replaces Æmber being added to its opponent's pool (EventAemberAddedToPool, the
+	// destination) with capturing it, and Po's Pixies replaces the source of a steal
+	// or capture from its own pool (EventAemberTakenFromPool) with the common supply.
 	// The zero value carries no replacement. (An Upgrade grants a replacement to its
 	// host through StaticModifier.Replaces instead.)
 	Replaces Instead
@@ -134,14 +136,9 @@ type CardDefinition struct {
 	// nothing.
 	DrawModifier DrawModifier
 
-	// PreventSteal, while the card is in play, makes its controller's Æmber
+	// AemberCannotBeStolen, while the card is in play, makes its controller's Æmber
 	// impossible for the opponent to steal (The Vaultkeeper).
-	PreventSteal bool
-
-	// TheftFromSupply, while the card is in play, makes any Æmber stolen or captured
-	// from its controller's pool come from the common supply instead, so the thief
-	// still gains that Æmber but the controller keeps their own (Po's Pixies).
-	TheftFromSupply bool
+	AemberCannotBeStolen bool
 
 	// SpendableAember lets the Æmber sitting on this card be put toward a key,
 	// so it is a private vault its controller can bank into (Safe Place).
@@ -393,8 +390,14 @@ type ConstantAbility struct {
 	// view; the zero value reaches every card in play.
 	Target Target
 	// Per scales the bonuses by a running count read from the source's point of
-	// view — Mushroom Man gets +3 power for each unforged key its controller has.
+	// view — Mushroom Man gets +3 power for each unforged key its controller has,
+	// Primus Unguis +2 power for each Æmber on itself. The same count reaches every
+	// creature the Target names; use PerTarget when the count is read per creature.
 	Per Count
+	// PerTarget scales the bonuses by a count read separately for each creature the
+	// Target reaches — Tribune Pompitus gives each friendly creature +2 power for
+	// each Æmber on that creature, so a creature holding no Æmber gains nothing.
+	PerTarget PerTarget
 	// Keywords are keywords the card grants to every creature its Target reaches,
 	// for as long as it stays in play — Round Table grants friendly Knights taunt.
 	Keywords []Keyword
@@ -718,17 +721,10 @@ func WithDrawModifierOffFlank(player Player, amount int) CardOption {
 	}
 }
 
-// WithAemberTheftImmunity makes the card, while in play, protect its controller's
+// WithAemberCannotBeStolen makes the card, while in play, keep its controller's
 // Æmber from being stolen (The Vaultkeeper).
-func WithAemberTheftImmunity() CardOption {
-	return func(c *CardDefinition) { c.PreventSteal = true }
-}
-
-// WithTheftFromCommonSupply makes the card, while in play, make any Æmber stolen
-// or captured from its controller's pool come from the common supply instead, so
-// a thief gains that Æmber but the controller keeps their own (Po's Pixies).
-func WithTheftFromCommonSupply() CardOption {
-	return func(c *CardDefinition) { c.TheftFromSupply = true }
+func WithAemberCannotBeStolen() CardOption {
+	return func(c *CardDefinition) { c.AemberCannotBeStolen = true }
 }
 
 // WithSpendableAember lets the Æmber banked on the card be spent when its

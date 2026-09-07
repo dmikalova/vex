@@ -21,7 +21,7 @@ var TransporterPlatform = card.New(
 	card.House.Staralliance,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 321),
+	card.Provenance(card.WC, "321"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Location),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

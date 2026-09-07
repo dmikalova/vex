@@ -15,7 +15,7 @@ var BoobyTrap = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 268),
+	card.Provenance(card.CotA, "268"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{Spread: card.CreatureAndNeighbors{

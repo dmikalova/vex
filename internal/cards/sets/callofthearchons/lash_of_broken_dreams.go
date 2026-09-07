@@ -15,7 +15,7 @@ var LashOfBrokenDreams = card.New(
 	card.House.Dis,
 	card.Type.Artifact,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 75),
+	card.Provenance(card.CotA, "75"),
 	card.WithTraits(card.Traits.Weapon),
 	card.WithAbility(
 		card.Trigger.Action, card.RaiseKeyCost{

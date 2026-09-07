@@ -15,7 +15,7 @@ var Exile = card.New(
 	card.House.Saurian,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 202),
+	card.Provenance(card.WC, "202"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.TakeControl{

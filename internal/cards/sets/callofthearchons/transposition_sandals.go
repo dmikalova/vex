@@ -15,7 +15,7 @@ var TranspositionSandals = card.New(
 	card.House.Logos,
 	card.Type.Upgrade,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 159),
+	card.Provenance(card.CotA, "159"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{

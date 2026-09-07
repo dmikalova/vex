@@ -14,7 +14,7 @@ var NerveBlast = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 276),
+	card.Provenance(card.CotA, "276"),
 	card.WithAbility(
 		card.Trigger.Play, card.Then{
 			First: card.StealAember{Amount: 1},

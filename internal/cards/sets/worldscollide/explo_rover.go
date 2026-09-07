@@ -17,7 +17,7 @@ var ExploRover = card.New(
 	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 297),
+	card.Provenance(card.WC, "297"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Robot),
 	card.WithKeywords(card.Keyword.Skirmish),

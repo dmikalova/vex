@@ -14,7 +14,7 @@ var MightyLance = card.New(
 	card.House.Sanctum,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 221),
+	card.Provenance(card.CotA, "221"),
 	card.WithAbility(card.Trigger.Play, card.DealDamage{Spread: card.CreatureAndNeighbor{
 		Amount:         3,
 		NeighborAmount: 3,

@@ -14,7 +14,7 @@ var Inspiration = card.New(
 	card.House.Sanctum,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 220),
+	card.Provenance(card.CotA, "220"),
 	card.WithAbility(
 		card.Trigger.Play, card.OnChooseCreature{
 			Target: card.Target.FriendlyCreature,

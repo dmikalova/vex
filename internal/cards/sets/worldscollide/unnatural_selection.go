@@ -20,7 +20,7 @@ var UnnaturalSelection = card.New(
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 367),
+	card.Provenance(card.WC, "367"),
 	card.WithAemberBonus(1),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

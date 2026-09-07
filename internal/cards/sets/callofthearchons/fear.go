@@ -14,7 +14,7 @@ var Fear = card.New(
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 58),
+	card.Provenance(card.CotA, "58"),
 	card.WithAbility(
 		card.Trigger.Play, card.PutFromPlay{
 			Target:      card.Target.EnemyCreature,

@@ -15,7 +15,7 @@ var HelpFromFutureSelf = card.New(
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Connected,
-	card.Provenance(card.CotA, 111),
+	card.Provenance(card.CotA, "111"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{

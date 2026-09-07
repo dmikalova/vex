@@ -15,7 +15,7 @@ var PhloxemSpike = card.New(
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 186),
+	card.Provenance(card.AoA, "186"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{

@@ -16,7 +16,7 @@ var TheCurator = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 157),
+	card.Provenance(card.AoA, "157"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
 	card.WithFriendlyEntersPlayReady(card.Type.Artifact),

@@ -16,7 +16,7 @@ var Snufflegator = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 358),
+	card.Provenance(card.CotA, "358"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Beast),
 	card.WithKeywords(card.Keyword.Skirmish),

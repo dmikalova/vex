@@ -17,7 +17,7 @@ var ShadowSelf = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 310),
+	card.Provenance(card.CotA, "310"),
 	card.WithPower(9),
 	card.WithTraits(card.Traits.Specter),
 	card.WithAttackDamage(card.AttackDamage{Fixed: true}),

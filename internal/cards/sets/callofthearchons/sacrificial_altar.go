@@ -16,7 +16,7 @@ var SacrificialAltar = card.New(
 	card.House.Dis,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 78),
+	card.Provenance(card.CotA, "78"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(

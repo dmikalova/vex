@@ -15,7 +15,7 @@ var TheEvilEye = card.New(
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 84),
+	card.Provenance(card.WC, "84"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.RaiseKeyCost{

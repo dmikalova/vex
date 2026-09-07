@@ -15,7 +15,7 @@ var ShardOfLife = card.New(
 	card.House.Untamed,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 366),
+	card.Provenance(card.AoA, "366"),
 	card.WithTraits(card.Traits.Item, card.Traits.Shard),
 	card.WithAbility(
 		card.Trigger.Action, card.ShuffleCardsFromDiscard{

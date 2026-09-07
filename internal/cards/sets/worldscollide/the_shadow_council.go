@@ -17,7 +17,7 @@ var TheShadowCouncil = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 283),
+	card.Provenance(card.WC, "283"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Elf, card.Traits.Leader, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),

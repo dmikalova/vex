@@ -18,7 +18,7 @@ var GrabberJammer = card.New(
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 193),
+	card.Provenance(card.CotA, "193"),
 	card.WithPower(4),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Robot),

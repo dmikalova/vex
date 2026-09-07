@@ -45,7 +45,7 @@ func TestAemberProtection(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.State.Aember[1] = 3
 	g.AddToBattleline(
-		NewCard("keeper", Sanctum, Creature, Rare, WithPower(4), WithAemberTheftImmunity()),
+		NewCard("keeper", Sanctum, Creature, Rare, WithPower(4), WithAemberCannotBeStolen()),
 		1,
 	)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
@@ -57,9 +57,9 @@ func TestAemberProtection(t *testing.T) {
 		t.Errorf("Æmber = %d/%d, want 3/0 (nothing stolen)", g.State.Aember[0], g.State.Aember[1])
 	}
 
-	def := NewCard("keeper", Sanctum, Creature, Rare, WithPower(4), WithAemberTheftImmunity())
+	def := NewCard("keeper", Sanctum, Creature, Rare, WithPower(4), WithAemberCannotBeStolen())
 	if !strings.Contains(RenderCardRules(&def), "Your Æmber cannot be stolen.") {
-		t.Error("card rules should render the theft-immunity line")
+		t.Error("card rules should render the cannot-be-stolen line")
 	}
 }
 

@@ -16,7 +16,7 @@ var Sniffer = card.New(
 	card.House.Mars,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 188),
+	card.Provenance(card.CotA, "188"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Ally),
 	card.WithAbility(

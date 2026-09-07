@@ -105,11 +105,13 @@ combat damage is dealt.`,
 		},
 		{
 			Section:    SectionAbility,
-			Title:      "After a Creature Is Destroyed Fighting",
+			Title:      "After a Creature Is Destroyed in a Fight With",
 			Definition: "An ability that resolves on a creature that survives a fight in which the other combatant was destroyed.",
-			Body: `This ability resolves on a creature that survives a fight in which the other
-combatant was destroyed; the destroyed creature is the one referred to as
-"it".`,
+			Body: `"In a fight with" names the timing window of a single fight: the moment power
+damage is exchanged between the two combatants. This ability resolves on a
+creature that survives a fight with the creature it is used against when that
+other combatant is destroyed in the exchange; the destroyed creature is the one
+referred to as "it".`,
 		},
 		{
 			Section:    SectionAbility,

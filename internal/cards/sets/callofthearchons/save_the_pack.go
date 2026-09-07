@@ -14,7 +14,7 @@ var SaveThePack = card.New(
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 333),
+	card.Provenance(card.CotA, "333"),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{
 			Effects: []card.Effect{

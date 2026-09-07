@@ -170,14 +170,29 @@ would find easiest to build on — not the shortest path to a passing build.
   reusable count with a `House` and `Amount` field, not a new `…OfHouseAtLeast`
   type. A new lifetime is a `Duration` field (`EndOfTurn`,
   `UntilThisLeavesPlay`), not a `…ForRemainderOfTurn` variant. "Which house" is a
-  house choice/reference, not a `…OfChosenHouse` / `…OfActiveHouse` pair.
+  house choice/reference, not a `…OfChosenHouse` / `…OfActiveHouse` pair. A
+  fraction of a quantity is a portion field shared by pools and counts (`By: Half`
+  on a pool, `Of: Half` on a count), not a `Half…` type. A restriction that lasts
+  a window is a restriction plus a `Duration` — a house that cannot reap next turn
+  is `CannotReap` scoped by house for a duration, not a
+  `ChosenHouseCannotReapNextTurn` type.
 - **Reuse the shared vocabularies.** `Target` already filters by house, trait,
   type, chosen/active house, and set-relative selectors — reach for it (or extend
   it) before inventing a parallel filter. Events (`EventCreaturePlayed`,
   `EventReap`, `EventCreatureDestroyed`, …) with a subject already drive triggers,
   lasting reactions (`ForRemainderOfTurn`), and replacements (`Instead`,
   `Replace`) — extend that spine rather than adding a one-off flag on
-  `CardDefinition`.
+  `CardDefinition`. Moving a card between zones is one mechanism — archive,
+  discard, purge, shuffle, put — parameterized by source zone, selection, and
+  destination ([ADR 0031](adr/0031-zone-movement-is-one-mechanism.md)); reach for
+  the verb the card prints, not a new `…From…` type.
+- **Ask the positive question.** A condition named for its negative case hides the
+  membership test underneath it. `ItIsOffIdentity` — a card whose house is not one
+  of your deck's — is really the positive question, _is it of one of your
+  identity's houses?_, with the branch negated; `AemberBonusDestroyed` on a fought
+  creature is really _does the creature it fought have Æmber bonus icons?_, a
+  condition reading `ctx.It`, not a count named for destruction. Invert the filter
+  to the question the card actually asks and reuse the membership condition.
 - **Self-reference through existing seams.** "Destroy this Upgrade" is
   `Destroy{Target: This}` (the destroy path detaches an attached upgrade), not a
   `DestroyThisUpgrade`. "This creature captures the Æmber" is a replacement of the
@@ -255,8 +270,14 @@ avoiding per-turn allocation on hot paths.
   two concepts causes exactly the confusion you'd expect.
 - **Speak KeyForge, not generic game-speak.** Names — types, methods, fields,
   effects, targets — must stay within KeyForge's own vocabulary. Say
-  `ExceptMostPowerfulCreature`, not `ExceptStrongest`; `CannotFight`, not
-  `PreventFight`. When you need the right word, source it in this order:
+  `ExceptMostPowerfulCreature`, not `ExceptStrongest`; `AemberCannotBeStolen`,
+  not `AemberTheftImmune` — _theft_ and _immunity_ are not KeyForge words, and
+  the card itself says "cannot be stolen". A standing restriction or immunity is
+  **cannot** (`CannotFight`, `CannotBeDealtDamage`, `AemberCannotBeStolen`).
+  Reserve **prevent** for the one thing KeyForge uses it for — armor absorbing
+  damage ("prevents damage with its armor", `DamagePrevented`). A specific
+  in-progress event that is negated reads "does not occur" (`CancelFight`). When
+  you need the right word, source it in this order:
   1. the provenance files (`internal/cards/provenance`) and the original card
      text they point at — the canonical wording;
   2. existing implementations in this repo — reuse an established term rather than

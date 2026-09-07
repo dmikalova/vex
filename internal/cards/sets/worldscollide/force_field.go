@@ -15,7 +15,7 @@ var ForceField = card.New(
 	card.House.StarAlliance,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 310),
+	card.Provenance(card.WC, "310"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{{

@@ -15,7 +15,7 @@ var NotFinishedWithYou = card.New(
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 63),
+	card.Provenance(card.AoA, "63"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.ShuffleChosenCreaturesFromDiscard{}),

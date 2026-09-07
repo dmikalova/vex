@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Brobnar
 //	Type:   Creature
-//	Rarity: FIXED
+//	Rarity: Special
 //	Power:  4
 //	Traits: Robot • Specter
 //
@@ -21,8 +21,9 @@ var TheGrimReaper = card.New(
 	"The Grim Reaper",
 	card.House.Brobnar,
 	card.Type.Creature,
-	card.Rarity.FIXED,
-	card.Provenance(card.WC, 0),
+	// TODO(variant): rarity relabelled from FIXED to Special — handle manually
+	card.Rarity.Special,
+	card.Provenance(card.WC, "A07"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Robot, card.Traits.Specter),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

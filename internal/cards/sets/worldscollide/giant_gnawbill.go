@@ -21,7 +21,7 @@ var GiantGnawbill = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 390),
+	card.Provenance(card.WC, "390"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Beast),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

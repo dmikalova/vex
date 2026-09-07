@@ -20,7 +20,7 @@ var FavorOfRex = card.New(
 	card.House.Saurian,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 219),
+	card.Provenance(card.WC, "219"),
 	card.WithAemberBonus(1),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

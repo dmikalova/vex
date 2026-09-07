@@ -13,7 +13,9 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: If there are no friendly creatures in play, for each house represented among enemy creatures (to a maximum of 3), steal 1 Æmber. Otherwise, steal 1 Æmber.
+//	Play: Choose one:
+//	- If there are no friendly creatures in play, for each house represented among enemy creatures, steal 1 Æmber
+//	- Steal 1 Æmber.
 func TestTrustNoOne(t *testing.T) {
 	t.Run("steals 1 Æmber while you control creatures", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
@@ -26,12 +28,13 @@ func TestTrustNoOne(t *testing.T) {
 		})
 
 		h.P1.Play(TrustNoOne)
+		h.P1.ClickOption("steal 1 Æmber")
 		h.P1.ExpectAmber(1)
 		h.P2.ExpectAmber(4)
 	})
 
 	t.Run(
-		"with no friendly creatures, steals 1 per house among enemy creatures, capped at 3",
+		"with no friendly creatures, steals 1 per house among enemy creatures",
 		func(t *testing.T) {
 			h := ct.Play(t, ct.Setup{
 				P1: ct.Side{
@@ -49,10 +52,11 @@ func TestTrustNoOne(t *testing.T) {
 				},
 			})
 
-			// Mars, Logos, Brobnar, Untamed = 4 houses, capped at 3.
+			// Mars, Logos, Brobnar, Untamed = 4 houses, uncapped.
 			h.P1.Play(TrustNoOne)
-			h.P1.ExpectAmber(3)
-			h.P2.ExpectAmber(2)
+			h.P1.ClickOption("for each house")
+			h.P1.ExpectAmber(4)
+			h.P2.ExpectAmber(1)
 		},
 	)
 }

@@ -22,7 +22,7 @@ var SenatorBracchus = card.New(
 	card.House.Saurian,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 229),
+	card.Provenance(card.WC, "229"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Politician),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

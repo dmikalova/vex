@@ -23,7 +23,7 @@ var CincinnatusRex = card.New(
 	card.House.Saurian,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 215),
+	card.Provenance(card.WC, "215"),
 	card.WithPower(6),
 	card.WithArmor(4),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Soldier),

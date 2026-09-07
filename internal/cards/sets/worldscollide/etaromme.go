@@ -21,7 +21,7 @@ var Etaromme = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 73),
+	card.Provenance(card.WC, "73"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Demon),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

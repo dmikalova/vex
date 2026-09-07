@@ -15,7 +15,7 @@ var MindBarb = card.New(
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 67),
+	card.Provenance(card.CotA, "67"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.DiscardRandomFromHand{Player: card.Opponent}),

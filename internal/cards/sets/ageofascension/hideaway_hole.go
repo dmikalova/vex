@@ -17,7 +17,7 @@ var HideawayHole = card.New(
 	card.House.Shadows,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 287),
+	card.Provenance(card.AoA, "287"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Location),
 	card.WithKeywords(card.Keyword.Versatile),

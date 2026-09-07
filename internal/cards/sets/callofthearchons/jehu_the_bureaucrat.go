@@ -16,7 +16,7 @@ var JehuTheBureaucrat = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 250),
+	card.Provenance(card.CotA, "250"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human),
 	card.WithAbility(

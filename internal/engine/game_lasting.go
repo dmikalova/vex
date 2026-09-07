@@ -51,6 +51,13 @@ const (
 	// intercepts the incoming gain, so the pool's owner keeps the Æmber they already
 	// have.
 	EventAemberAddedToPool
+	// EventAemberTakenFromPool is Æmber about to be taken from a player's pool by a
+	// steal or capture (a replacement point). A card that redirects the take's source
+	// — Po's Pixies, scoped to its controller's own pool — is queried here, drawing
+	// the Æmber from the common supply instead so the pool's owner keeps what they
+	// have while the taker still gains it. It is the source end of the same Æmber-flow
+	// replacement spine EventAemberAddedToPool is the destination end of.
+	EventAemberTakenFromPool
 	// EventForgeKey fires after a player forges a key (a reaction point). A reaction
 	// owned by that player fires during their turn; because the registry clears a
 	// player's own entries at their ready phase, a reaction armed on an opponent

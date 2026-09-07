@@ -16,7 +16,7 @@ var Ragwarg = card.New(
 	card.House.Brobnar,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 27),
+	card.Provenance(card.WC, "27"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(

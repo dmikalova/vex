@@ -14,7 +14,7 @@ var ChampionsChallenge = card.New(
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 6),
+	card.Provenance(card.CotA, "6"),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.Destroy{Target: card.Target.EachEnemyCreature.Selector(card.ExceptMostPowerful)},

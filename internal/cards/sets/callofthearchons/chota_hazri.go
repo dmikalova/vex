@@ -16,7 +16,7 @@ var ChotaHazri = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 349),
+	card.Provenance(card.CotA, "349"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human, card.Traits.Witch),
 	card.WithAbility(

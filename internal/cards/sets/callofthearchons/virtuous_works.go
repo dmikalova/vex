@@ -13,6 +13,6 @@ var VirtuousWorks = card.New(
 	card.House.Sanctum,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 230),
+	card.Provenance(card.CotA, "230"),
 	card.WithAemberBonus(3),
 )

@@ -51,6 +51,16 @@ type OptionChooser interface {
 	ChooseOption(source, prompt string, options []string) int
 }
 
+// PositionChooser is an optional Chooser capability: choosing where a Deploy
+// creature enters its controller's battleline by pointing at the line itself —
+// position i lands the creature before line[i] (0 the left flank, len(line) the
+// right flank). It lets a client offer click-to-place on the battleline instead
+// of one labeled option per gap. A Chooser that does not implement it falls back
+// to the OptionChooser channel with those gaps rendered as labeled options.
+type PositionChooser interface {
+	ChoosePosition(source, prompt string, line []LocalID) int
+}
+
 // DeclinableChooser is an optional Chooser capability: an optional card choice
 // the player may pass on — the "you may purge a card" and "up to 3 creatures" of
 // a card's text. It is separate from ChooseCreature because declining is itself

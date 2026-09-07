@@ -15,7 +15,7 @@ var Fetchdrones = card.New(
 	card.House.Logos,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 144),
+	card.Provenance(card.AoA, "144"),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.Action, card.Sentences{Effects: []card.Effect{

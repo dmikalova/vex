@@ -129,10 +129,10 @@ does. It exists to stop an unbounded loop from hanging the game.
 
 **Invulnerable**:
 A KeyForge keyword: an invulnerable creature cannot be destroyed or dealt damage.
-The engine does not model the full keyword yet — only the damage-prevention half,
-as the `DamageImmune` flag set by the `PreventDamage` effect ("cannot be dealt
-damage this turn"; Shield of Justice, Protectrix). Those cards prevent damage
-only, so they are not truly invulnerable.
+The engine does not model the full keyword yet — only the cannot-be-dealt-damage
+half, as the `DamageImmune` flag set by the `CannotBeDealtDamage` effect (Shield
+of Justice, Protectrix). Those cards stop damage only, so they are not truly
+invulnerable.
 
 **Hidden zone** / **Public zone**:
 A zone whose contents are not known to both players (deck, hand, archives) versus
@@ -259,6 +259,28 @@ from (source set + collector number). It exists only to track which original car
 each implementation is based on, so the author can confirm every original KeyForge
 card is eventually covered. It is never consulted by the engine or by deck
 generation, and a card's behavior never depends on it.
+
+**Source catalog**:
+The embedded JSON list of one original KeyForge set's cards
+(`internal/cards/provenance/<slug>.json`), the data Provenance Refs point into. A
+card records its `printed` name (the original) whenever that differs from its
+ASCII-folded `name`.
+_Avoid_: pack data, master-vault data.
+
+**Collector number**:
+The number printed on an original card, stored as a string. Most are zero-padded
+integers (`004`, `151`); a set's reference cards carry lettered numbers (`S01`,
+`A21`, `P07`), which is why it is not an `int` (ADR 0032).
+
+**Reference card**:
+A source card that is not a normal deck card: an anomaly (`S…`), a Worlds Collide
+`A…` card, a prophecy (`P…`), The Tide, an archon power, or a token creature. It
+lives in the source catalog like any other card, classified by its type.
+
+**Provenance importer**:
+`mage tool:importProvenance` — rebuilds a source catalog from the Master Vault
+decks feed, folding each card to ASCII and expanding its amber/damage markup. It
+replaced the removed `mage generateProvenance`.
 
 ## Deck generation
 

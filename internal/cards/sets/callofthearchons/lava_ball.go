@@ -14,7 +14,7 @@ var LavaBall = card.New(
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 9),
+	card.Provenance(card.CotA, "9"),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{Spread: card.CreatureAndNeighbors{
 			Amount:     4,

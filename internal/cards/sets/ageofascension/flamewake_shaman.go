@@ -16,7 +16,7 @@ var FlamewakeShaman = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 22),
+	card.Provenance(card.AoA, "22"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Human),
 	card.WithAbility(

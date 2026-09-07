@@ -12,7 +12,10 @@ func TestChooseCreatureThen(t *testing.T) {
 		Target: Target{Kind: TargetChosenCreature},
 		Then: Sequence{Effects: []Effect{
 			Heal{Fully: true, Target: Target{Kind: TargetTriggeringCreature}},
-			PreventDamage{Target: Target{Kind: TargetTriggeringCreature}, Duration: EndOfTurn},
+			CannotBeDealtDamage{
+				Target:   Target{Kind: TargetTriggeringCreature},
+				Duration: EndOfTurn,
+			},
 		}},
 	}
 	want := "choose a creature - fully heal it, and for the remainder of the turn, it cannot be dealt damage"
@@ -38,13 +41,19 @@ func TestChooseCreatureThenNoCandidates(_ *testing.T) {
 	// panic, no effect).
 	ChooseCreatureThen{
 		Target: Target{Kind: TargetChosenCreature},
-		Then:   PreventDamage{Target: Target{Kind: TargetTriggeringCreature}, Duration: EndOfTurn},
+		Then: CannotBeDealtDamage{
+			Target:   Target{Kind: TargetTriggeringCreature},
+			Duration: EndOfTurn,
+		},
 	}.Resolve(ctx)
 }
 
 func TestChooseCreatureThenValidate(t *testing.T) {
 	unsetTarget := ChooseCreatureThen{
-		Then: PreventDamage{Target: Target{Kind: TargetTriggeringCreature}, Duration: EndOfTurn},
+		Then: CannotBeDealtDamage{
+			Target:   Target{Kind: TargetTriggeringCreature},
+			Duration: EndOfTurn,
+		},
 	}
 	if validateEffect(unsetTarget) == nil {
 		t.Error("ChooseCreatureThen with an unset Target should fail validation")
@@ -60,7 +69,10 @@ func TestChooseCreatureThenValidate(t *testing.T) {
 
 	good := ChooseCreatureThen{
 		Target: Target{Kind: TargetChosenCreature},
-		Then:   PreventDamage{Target: Target{Kind: TargetTriggeringCreature}, Duration: EndOfTurn},
+		Then: CannotBeDealtDamage{
+			Target:   Target{Kind: TargetTriggeringCreature},
+			Duration: EndOfTurn,
+		},
 	}
 	if validateEffect(good) != nil {
 		t.Error("ChooseCreatureThen with a valid Target and Then should pass validation")

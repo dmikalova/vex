@@ -17,7 +17,7 @@ var CombatPheromones = card.New(
 	card.House.Mars,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 180),
+	card.Provenance(card.CotA, "180"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Item),
 	card.WithKeywords(card.Keyword.Versatile),

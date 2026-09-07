@@ -16,7 +16,7 @@ var KnucklesBolton = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 271),
+	card.Provenance(card.AoA, "271"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive, card.Keyword.Skirmish),

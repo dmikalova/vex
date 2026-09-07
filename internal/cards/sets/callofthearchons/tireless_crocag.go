@@ -18,7 +18,7 @@ var TirelessCrocag = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 47),
+	card.Provenance(card.CotA, "47"),
 	card.WithPower(7),
 	card.WithTraits(card.Traits.Giant),
 	card.WithKeywords(card.Keyword.Versatile),

@@ -16,7 +16,7 @@ var Silvertooth = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 311),
+	card.Provenance(card.CotA, "311"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithEntersPlay(card.Ready{Target: card.Target.This}),

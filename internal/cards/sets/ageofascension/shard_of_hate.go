@@ -15,7 +15,7 @@ var ShardOfHate = card.New(
 	card.House.Mars,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 205),
+	card.Provenance(card.AoA, "205"),
 	card.WithTraits(card.Traits.Item, card.Traits.Shard),
 	card.WithAbility(
 		card.Trigger.Action, card.Repeat{

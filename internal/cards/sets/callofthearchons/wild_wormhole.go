@@ -15,7 +15,7 @@ var WildWormhole = card.New(
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 125),
+	card.Provenance(card.CotA, "125"),
 	card.WithAemberBonus(1),
 	card.WithAbility(card.Trigger.Play, card.PlayTopOfDeck{}),
 )

@@ -19,6 +19,6 @@ var InformationExchange = card.New(
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 136),
+	card.Provenance(card.WC, "136"),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

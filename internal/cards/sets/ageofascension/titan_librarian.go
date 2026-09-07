@@ -16,7 +16,7 @@ var TitanLibrarian = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 120),
+	card.Provenance(card.AoA, "120"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Scientist),
 	card.WithAbility(

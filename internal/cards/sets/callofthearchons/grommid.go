@@ -11,13 +11,13 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	You cannot play creatures.
-//	After a creature is destroyed fighting Grommid, your opponent loses 1 Æmber.
+//	After a creature is destroyed in a fight with Grommid, your opponent loses 1 Æmber.
 var Grommid = card.New(
 	"Grommid",
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 194),
+	card.Provenance(card.CotA, "194"),
 	card.WithPower(10),
 	card.WithTraits(card.Traits.Beast),
 	card.WithRestrictions(card.Restrictions{CannotPlay: card.Type.Creature}),

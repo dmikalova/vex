@@ -16,7 +16,7 @@ var Dysania = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 141),
+	card.Provenance(card.CotA, "141"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Mutant),
 	card.WithAbility(

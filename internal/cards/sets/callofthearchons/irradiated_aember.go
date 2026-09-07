@@ -15,7 +15,7 @@ var IrradiatedAember = card.New(
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 165),
+	card.Provenance(card.CotA, "165"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{

@@ -21,7 +21,7 @@ var PraefectusLudo = card.New(
 	card.House.Saurian,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 190),
+	card.Provenance(card.WC, "190"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Politician),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

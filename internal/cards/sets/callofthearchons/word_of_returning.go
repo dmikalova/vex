@@ -15,7 +15,7 @@ var WordOfReturning = card.New(
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 339),
+	card.Provenance(card.CotA, "339"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{

@@ -17,7 +17,7 @@ var QuestorJarta = card.New(
 	card.House.Saurian,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 191),
+	card.Provenance(card.WC, "191"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Politician),
 	card.WithKeywords(card.Keyword.Elusive),

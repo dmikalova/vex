@@ -16,7 +16,7 @@ var WarGrumpus = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 52),
+	card.Provenance(card.AoA, "52"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Beast),
 	card.WithFightOrReap(card.OnChooseCreature{

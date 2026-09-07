@@ -664,6 +664,13 @@ func (g *game) cardVisual(
 	kind selKind,
 ) (activate func(app.Context, engine.LocalID), targetable, dimmed bool) {
 	switch {
+	case g.choosingPosition:
+		// Placing a Deploy creature: its battleline creatures are the click targets
+		// (click one to land beside it); everything else dims.
+		if containsID(g.positionLine, id) {
+			return g.choosePositionCandidate, true, false
+		}
+		return nil, false, true
 	case g.choosing:
 		// A chooser runs on a background goroutine, so g.busy is also set; the
 		// choosing case must come first or the candidates would not be clickable.

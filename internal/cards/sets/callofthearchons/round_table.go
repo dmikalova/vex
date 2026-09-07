@@ -16,7 +16,7 @@ var RoundTable = card.New(
 	card.House.Sanctum,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 235),
+	card.Provenance(card.CotA, "235"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Location),
 	card.WithConstant(card.ConstantAbility{

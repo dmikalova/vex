@@ -16,7 +16,7 @@ var FirstBlood = card.New(
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 7),
+	card.Provenance(card.AoA, "7"),
 	card.WithAemberBonus(1),
 	card.WithKeywords(card.Keyword.Alpha),
 	card.WithAbility(

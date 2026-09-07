@@ -10,13 +10,13 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  6
 //	Traits: Giant
 //
-//	After a creature is destroyed fighting Mugwump, fully heal Mugwump, and give Mugwump a +1 power counter.
+//	After a creature is destroyed in a fight with Mugwump, fully heal Mugwump, and give Mugwump a +1 power counter.
 var Mugwump = card.New(
 	"Mugwump",
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 42),
+	card.Provenance(card.CotA, "42"),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(

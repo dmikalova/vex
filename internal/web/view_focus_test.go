@@ -236,16 +236,25 @@ func TestDraggingTheLiftedCard(t *testing.T) {
 	id := c.deal(testCreature)
 
 	c.g.selectHandID(c.ctx, id)
-	if !strings.Contains(liftMarkup(t, c.html()), " draggable>") {
+	if !hasDraggable(liftMarkup(t, c.html())) {
 		t.Error("the lifted copy of a playable hand card is not a drag source")
 	}
 
 	c.playFromHand(id)
 	c.ownNextTurn(testHouse)
 	c.g.selectBoardID(c.ctx, id)
-	if strings.Contains(liftMarkup(t, c.html()), " draggable>") {
+	if hasDraggable(liftMarkup(t, c.html())) {
 		t.Error("the lifted copy of a creature already in play is a drag source")
 	}
+}
+
+// hasDraggable reports whether the markup carries a bare `draggable` boolean
+// attribute. go-app renders an element's attributes from a map, so their order
+// is not stable — the attribute may land anywhere in the tag, followed by a
+// space or the closing `>`, and the check must not assume it is last.
+func hasDraggable(markup string) bool {
+	return strings.Contains(markup, " draggable>") ||
+		strings.Contains(markup, " draggable ")
 }
 
 // liftMarkup is the lifted copy's face, cut out of the drawn client so a count of

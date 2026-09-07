@@ -1,29 +1,28 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// EDAIEdie4x4
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// EDAI "Edie" 4x4
 //
 //	House:  Logos
 //	Type:   Creature
 //	Rarity: Common
 //	Power:  3
-//	Traits: Ai • Scientist
+//	Traits: AI • Scientist
 //
-//	Play: Archive a card.
-//	Your opponent's keys cost +1A for each card in your archives.
+//	Your opponent's keys cost +1 Æmber for each card in your archives.
+//	Play: Archive a card from your hand.
 var EDAIEdie4x4 = card.New(
 	"EDAI \"Edie\" 4x4",
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 132),
+	card.Provenance(card.WC, "132"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Ai, card.Traits.Scientist),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeyCost(card.KeyCostChange(card.Opponent, 1).Per(card.CardsInArchives{
+		Player: card.Controller,
+	})),
+	card.WithAbility(
+		card.Trigger.Play, card.ArchiveFromHand{Amount: 1}),
 )

@@ -14,7 +14,7 @@ var SongOfTheWild = card.New(
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 364),
+	card.Provenance(card.WC, "364"),
 	card.WithAbility(
 		card.Trigger.Play, card.GainAbility{
 			Target: card.Target.EachFriendlyCreature,

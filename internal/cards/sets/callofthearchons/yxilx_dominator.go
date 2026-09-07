@@ -18,7 +18,7 @@ var YxilxDominator = card.New(
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 205),
+	card.Provenance(card.CotA, "205"),
 	card.WithPower(9),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Robot),

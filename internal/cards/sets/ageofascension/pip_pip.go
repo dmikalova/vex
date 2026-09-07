@@ -16,7 +16,7 @@ var PipPip = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 116),
+	card.Provenance(card.AoA, "116"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
 	card.WithAbility(

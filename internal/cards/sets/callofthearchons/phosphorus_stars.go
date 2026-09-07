@@ -14,7 +14,7 @@ var PhosphorusStars = card.New(
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 173),
+	card.Provenance(card.CotA, "173"),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{
 			Effects: []card.Effect{

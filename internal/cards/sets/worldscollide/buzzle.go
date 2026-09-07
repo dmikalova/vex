@@ -17,7 +17,7 @@ var Buzzle = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 70),
+	card.Provenance(card.WC, "70"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Beast),
 	card.WithKeywords(card.Keyword.Skirmish),

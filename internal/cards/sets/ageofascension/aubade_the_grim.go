@@ -18,7 +18,7 @@ var AubadeTheGrim = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 213),
+	card.Provenance(card.AoA, "213"),
 	card.WithPower(4),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Spirit, card.Traits.Knight),
@@ -29,7 +29,7 @@ var AubadeTheGrim = card.New(
 			Source: card.Opponent,
 		}),
 	card.WithAbility(
-		card.Trigger.Reap, card.MoveAemberToCommonSupply{
+		card.Trigger.Reap, card.MoveAemberToSupply{
 			Amount: 1,
 			Target: card.Target.This,
 		}),

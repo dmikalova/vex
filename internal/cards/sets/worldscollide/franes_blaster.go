@@ -6,7 +6,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Star Alliance
 //	Type:   Upgrade
-//	Rarity: Rare
+//	Rarity: Special
 //	Æmber:  1
 //
 //	This creature gains, "Fight/Reap: You may choose one:
@@ -16,9 +16,9 @@ var FranesBlaster = card.New(
 	"Frane's Blaster",
 	card.House.StarAlliance,
 	card.Type.Upgrade,
-	// TODO(variant): rarity relabelled from Variant to Rare — handle manually
-	card.Rarity.Rare,
-	card.Provenance(card.WC, 346),
+	// TODO(variant): rarity relabelled from Variant to Special — handle manually
+	card.Rarity.Special,
+	card.Provenance(card.WC, "346"),
 	card.WithAemberBonus(1),
 	card.Connects(card.Pull(FirstOfficerFrane, 1)),
 	card.WithStatic(card.StaticModifier{

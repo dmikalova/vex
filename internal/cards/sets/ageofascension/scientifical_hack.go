@@ -17,7 +17,7 @@ var ScientificalHack = card.New(
 	card.House.Logos,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 154),
+	card.Provenance(card.AoA, "154"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Equation),
 	card.WithKeywords(card.Keyword.Versatile),

@@ -11,7 +11,7 @@ import (
 //
 //	House:  Dis
 //	Type:   Tactic
-//	Rarity: Rare
+//	Rarity: Special
 //	Æmber:  1
 //
 //	Play: Destroy a Human creature.

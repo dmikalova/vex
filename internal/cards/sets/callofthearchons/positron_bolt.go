@@ -15,7 +15,7 @@ var PositronBolt = card.New(
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 118),
+	card.Provenance(card.CotA, "118"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{Spread: card.FlankWalk{

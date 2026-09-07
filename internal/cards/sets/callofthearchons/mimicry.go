@@ -14,7 +14,7 @@ var Mimicry = card.New(
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 328),
+	card.Provenance(card.CotA, "328"),
 	card.WithAbility(
 		card.Trigger.Play, card.PlayFrom{
 			From:   card.Discard,

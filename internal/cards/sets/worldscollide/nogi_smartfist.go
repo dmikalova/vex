@@ -16,7 +16,7 @@ var NogiSmartfist = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 44),
+	card.Provenance(card.WC, "44"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Giant, card.Traits.Scientist),
 	card.WithAbility(

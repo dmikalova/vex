@@ -14,7 +14,7 @@ var IntoTheFray = card.New(
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 13),
+	card.Provenance(card.AoA, "13"),
 	card.WithAbility(
 		card.Trigger.Play, card.GainAbility{
 			Target: card.Target.FriendlyCreature.OfHouse(card.House.Self),

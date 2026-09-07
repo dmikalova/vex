@@ -15,7 +15,7 @@ var NocturnalManeuver = card.New(
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 330),
+	card.Provenance(card.CotA, "330"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.ExhaustCreatures{

@@ -16,7 +16,7 @@ var NepentheSeed = card.New(
 	card.House.Untamed,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 341),
+	card.Provenance(card.CotA, "341"),
 	card.WithTraits(card.Traits.Item),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(

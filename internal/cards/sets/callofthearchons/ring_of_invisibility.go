@@ -15,7 +15,7 @@ var RingOfInvisibility = card.New(
 	card.House.Shadows,
 	card.Type.Upgrade,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 317),
+	card.Provenance(card.CotA, "317"),
 	card.WithAemberBonus(1),
 	card.WithStatic(
 		card.StaticModifier{Keywords: card.Keywords(card.Keyword.Elusive, card.Keyword.Skirmish)},

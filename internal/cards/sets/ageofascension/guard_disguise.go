@@ -15,7 +15,7 @@ var GuardDisguise = card.New(
 	card.House.Shadows,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 302),
+	card.Provenance(card.AoA, "302"),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.Action, card.Sequence{Effects: []card.Effect{

@@ -14,7 +14,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Star Alliance
 //	Type:   Upgrade
-//	Rarity: Variant
+//	Rarity: Special
 //	Æmber:  1
 //
 //	This creature gains, "Fight/Reap: You may deal 2 damage to a creature, or attach Walls' Blaster to Chief Engineer Walls."
@@ -23,8 +23,9 @@ var WallsBlaster = card.New(
 	"Walls' Blaster",
 	card.House.StarAlliance,
 	card.Type.Upgrade,
-	card.Rarity.Rare,
-	card.Provenance(card.WC, 352),
+	// TODO(variant): rarity relabelled from Variant to Special — handle manually
+	card.Rarity.Special,
+	card.Provenance(card.WC, "352"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightOrReap(card.May{Do: card.ChooseOne{Options: []card.Effect{

@@ -15,7 +15,7 @@ var FlameWreathed = card.New(
 	card.House.Dis,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 106),
+	card.Provenance(card.CotA, "106"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		PowerBonus:     2,

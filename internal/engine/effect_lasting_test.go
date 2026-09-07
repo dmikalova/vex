@@ -223,6 +223,12 @@ func TestInstead(t *testing.T) {
 	if err := (Instead{Of: EventAemberAddedToPool, With: Capture, Player: Opponent}).validate(); err != nil {
 		t.Errorf("a scoped pool replacement should pass: %v", err)
 	}
+	if err := (Instead{Of: EventAemberTakenFromPool, With: FromCommonSupply}).validate(); err == nil {
+		t.Error("a source pool event without a Player should fail")
+	}
+	if err := (Instead{Of: EventAemberTakenFromPool, With: FromCommonSupply, Player: Controller}).validate(); err != nil {
+		t.Errorf("a scoped source replacement should pass: %v", err)
+	}
 
 	// Reaping steals instead of gaining.
 	g := started(t)

@@ -14,7 +14,7 @@ var AmmoniaClouds = card.New(
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 160),
+	card.Provenance(card.CotA, "160"),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{
 			Amount: 3,

@@ -15,7 +15,7 @@ var RitualOfBalance = card.New(
 	card.House.Untamed,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 342),
+	card.Provenance(card.CotA, "342"),
 	card.WithTraits(card.Traits.Power),
 	card.WithAbility(
 		card.Trigger.Action, card.Conditional{

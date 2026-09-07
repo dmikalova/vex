@@ -15,7 +15,7 @@ var WayOfTheWolf = card.New(
 	card.House.Untamed,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 370),
+	card.Provenance(card.CotA, "370"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{Keywords: card.Keywords(card.Keyword.Skirmish)}),
 )

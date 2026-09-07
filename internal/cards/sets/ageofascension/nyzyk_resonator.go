@@ -17,7 +17,7 @@ var NyzykResonator = card.New(
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 184),
+	card.Provenance(card.AoA, "184"),
 	card.WithPower(2),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Martian, card.Traits.Soldier),

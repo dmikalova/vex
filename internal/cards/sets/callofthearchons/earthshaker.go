@@ -16,7 +16,7 @@ var Earthshaker = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 31),
+	card.Provenance(card.CotA, "31"),
 	card.WithPower(7),
 	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(

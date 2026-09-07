@@ -14,7 +14,7 @@ var DimensionDoor = card.New(
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 108),
+	card.Provenance(card.CotA, "108"),
 	card.WithAbility(
 		card.Trigger.Play, card.Instead{
 			Of:   card.Event.ReapAember,

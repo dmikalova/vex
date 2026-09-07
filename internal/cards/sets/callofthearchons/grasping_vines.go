@@ -15,7 +15,7 @@ var GraspingVines = card.New(
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 324),
+	card.Provenance(card.CotA, "324"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play,

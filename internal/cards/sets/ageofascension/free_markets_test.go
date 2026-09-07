@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: For each house represented among cards in play, except for Sanctum, gain 1 Æmber, to a maximum of 6 Æmber.
+//	Play: For each house represented among cards in play, except for Sanctum, gain 1 Æmber.
 func TestFreeMarkets(t *testing.T) {
 	t.Run("gains 1 Æmber per house in play except Sanctum", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

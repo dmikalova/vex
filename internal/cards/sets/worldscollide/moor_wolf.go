@@ -17,7 +17,7 @@ var MoorWolf = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 393),
+	card.Provenance(card.WC, "393"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Beast, card.Traits.Wolf),
 	card.WithKeywords(card.Keyword.Skirmish),

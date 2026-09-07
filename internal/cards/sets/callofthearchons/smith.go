@@ -15,7 +15,7 @@ var Smith = card.New(
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 14),
+	card.Provenance(card.CotA, "14"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{

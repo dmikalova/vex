@@ -21,7 +21,7 @@ var Gebuk = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 373),
+	card.Provenance(card.WC, "373"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Beast),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

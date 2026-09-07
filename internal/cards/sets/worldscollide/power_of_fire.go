@@ -19,6 +19,6 @@ var PowerOfFire = card.New(
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 26),
+	card.Provenance(card.WC, "26"),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

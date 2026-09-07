@@ -68,11 +68,8 @@ var (
 	WithDrawModifierOffFlank = func(p Player, amount int) Option {
 		return gameplay(engine.WithDrawModifierOffFlank(p, amount))
 	}
-	// WithAemberTheftImmunity makes Æmber on this card immune to theft.
-	WithAemberTheftImmunity = func() Option { return gameplay(engine.WithAemberTheftImmunity()) }
-	// WithTheftFromCommonSupply redirects Æmber stolen or captured from your pool to
-	// the common supply, so a thief still gains it but you keep your own.
-	WithTheftFromCommonSupply = func() Option { return gameplay(engine.WithTheftFromCommonSupply()) }
+	// WithAemberCannotBeStolen keeps the controller's Æmber from being stolen.
+	WithAemberCannotBeStolen = func() Option { return gameplay(engine.WithAemberCannotBeStolen()) }
 	// WithSpendableAember lets Æmber banked on this card be spent when forging.
 	WithSpendableAember = func() Option { return gameplay(engine.WithSpendableAember()) }
 	// WithGainsForgeAember gives this card's controller all the Æmber their

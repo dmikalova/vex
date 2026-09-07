@@ -14,7 +14,7 @@ var BurnTheStockpile = card.New(
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 5),
+	card.Provenance(card.CotA, "5"),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
 			Cond: card.OpponentAember{Is: card.AtLeast, Amount: 7},

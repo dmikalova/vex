@@ -20,7 +20,7 @@ var Imperium = card.New(
 	card.House.Saurian,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 186),
+	card.Provenance(card.WC, "186"),
 	card.WithAemberBonus(1),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

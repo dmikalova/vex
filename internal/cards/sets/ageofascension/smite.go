@@ -14,7 +14,7 @@ var Smite = card.New(
 	card.House.Sanctum,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 224),
+	card.Provenance(card.AoA, "224"),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.OnChooseCreature{

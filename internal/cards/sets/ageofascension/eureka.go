@@ -16,7 +16,7 @@ var Eureka = card.New(
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 128),
+	card.Provenance(card.AoA, "128"),
 	card.WithAemberBonus(1),
 	card.WithKeywords(card.Keyword.Alpha),
 	card.WithAbility(

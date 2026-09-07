@@ -22,7 +22,7 @@ var TheBigOne = card.New(
 	card.House.Brobnar,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 50),
+	card.Provenance(card.WC, "50"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Weapon),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

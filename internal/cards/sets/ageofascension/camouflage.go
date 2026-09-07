@@ -15,7 +15,7 @@ var Camouflage = card.New(
 	card.House.Untamed,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 337),
+	card.Provenance(card.AoA, "337"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{ProtectsFromNonFlank: true}),
 )

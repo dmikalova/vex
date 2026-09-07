@@ -17,7 +17,7 @@ var PsychicBug = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 149),
+	card.Provenance(card.CotA, "149"),
 	card.WithPower(2),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Insect),

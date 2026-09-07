@@ -21,7 +21,7 @@ var Malison = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 80),
+	card.Provenance(card.WC, "80"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Demon),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

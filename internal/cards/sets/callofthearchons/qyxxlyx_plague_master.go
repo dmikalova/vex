@@ -16,7 +16,7 @@ var QyxxlyxPlagueMaster = card.New(
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 198),
+	card.Provenance(card.CotA, "198"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Martian, card.Traits.Scientist),
 	card.WithFightOrReap(card.DealDamage{

@@ -22,7 +22,7 @@ var Hyde = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 167),
+	card.Provenance(card.WC, "167"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

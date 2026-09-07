@@ -64,6 +64,44 @@ func TestDeployChoosesPosition(t *testing.T) {
 	}
 }
 
+// positionPicker is a PositionChooser that lands a Deploy creature at a fixed
+// position, and records the line it was asked about.
+type positionPicker struct {
+	pos  int
+	line []LocalID
+}
+
+func (positionPicker) ChooseCreature(_, _ string, _ []LocalID) (LocalID, bool) {
+	return 0, false
+}
+
+func (p *positionPicker) ChoosePosition(_, _ string, line []LocalID) int {
+	p.line = line
+	return p.pos
+}
+
+// TestDeployPositionChooser covers the PositionChooser capability: a chooser that
+// speaks the battleline directly is pointed at the line and returns a position
+// index, bypassing the labeled-option fallback.
+func TestDeployPositionChooser(t *testing.T) {
+	g := started(t)
+	g.AddToBattleline(testCreature("A", 3), 0)
+	g.AddToBattleline(testCreature("B", 3), 0)
+	pick := &positionPicker{pos: 1} // between A and B
+	g.SetChooser(0, pick)
+	d := g.AddToHand(NewCard("Ranger", Brobnar, Creature, Common,
+		WithPower(3), WithKeywords(Deploy)), 0)
+	if _, err := g.PlayCreature(0, handIdxByID(g, 0, d), false); err != nil {
+		t.Fatalf("deploy via PositionChooser: %v", err)
+	}
+	if got := names(g, g.Battleline(0)); got != "A Ranger B" {
+		t.Errorf("position-chooser deploy order = %q, want %q", got, "A Ranger B")
+	}
+	if len(pick.line) != 2 {
+		t.Errorf("chooser saw line of %d, want 2", len(pick.line))
+	}
+}
+
 // names joins the printed names of ids into a space-separated string for readable
 // battleline assertions.
 func names(g *Game, ids []LocalID) string {

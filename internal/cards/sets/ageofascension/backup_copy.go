@@ -15,7 +15,7 @@ var BackupCopy = card.New(
 	card.House.Logos,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 124),
+	card.Provenance(card.AoA, "124"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{{

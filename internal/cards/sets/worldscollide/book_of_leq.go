@@ -20,7 +20,7 @@ var BookOfLeQ = card.New(
 	card.House.Staralliance,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 325),
+	card.Provenance(card.WC, "325"),
 	card.WithTraits(card.Traits.Item),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

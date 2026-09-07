@@ -15,7 +15,7 @@ var Soulkeeper = card.New(
 	card.House.Dis,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 83),
+	card.Provenance(card.AoA, "83"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{{

@@ -16,7 +16,7 @@ var Shaffles = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 95),
+	card.Provenance(card.CotA, "95"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Imp),
 	card.WithAbility(card.Trigger.EndOfTurn, card.LoseAember{

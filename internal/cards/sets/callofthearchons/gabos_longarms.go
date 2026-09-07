@@ -16,7 +16,7 @@ var GabosLongarms = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 86),
+	card.Provenance(card.CotA, "86"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(

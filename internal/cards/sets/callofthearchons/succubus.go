@@ -16,7 +16,7 @@ var Succubus = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 99),
+	card.Provenance(card.CotA, "99"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Demon),
 	card.WithDrawModifier(card.Opponent, -1),

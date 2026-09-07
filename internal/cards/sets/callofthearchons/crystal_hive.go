@@ -15,7 +15,7 @@ var CrystalHive = card.New(
 	card.House.Mars,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 182),
+	card.Provenance(card.CotA, "182"),
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
 		card.Trigger.Action, card.ForRemainderOfTurn{

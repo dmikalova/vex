@@ -15,7 +15,7 @@ var FertilityChant = card.New(
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 321),
+	card.Provenance(card.CotA, "321"),
 	card.WithAemberBonus(4),
 	card.WithAbility(
 		card.Trigger.Play, card.GainAember{

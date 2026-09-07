@@ -16,7 +16,7 @@ var LieutenantKhrkhar = card.New(
 	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 299),
+	card.Provenance(card.WC, "299"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Alien, card.Traits.Handuhan),
 	card.WithKeywords(card.Keyword.Taunt),

@@ -22,7 +22,7 @@ var Fidgit = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 254),
+	card.Provenance(card.WC, "254"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Faerie, card.Traits.Thief),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

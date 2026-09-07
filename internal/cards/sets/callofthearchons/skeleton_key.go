@@ -15,7 +15,7 @@ var SkeletonKey = card.New(
 	card.House.Shadows,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 291),
+	card.Provenance(card.CotA, "291"),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.Action, card.CaptureAember{

@@ -14,7 +14,7 @@ var RocketBoots = card.New(
 	card.House.Logos,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 158),
+	card.Provenance(card.CotA, "158"),
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightOrReap(card.ReadyIfFirstUse{Target: card.Target.This}),
 	}),

@@ -16,7 +16,7 @@ var BabblingBibliophile = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 129),
+	card.Provenance(card.WC, "129"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Scientist),
 	card.WithAbility(

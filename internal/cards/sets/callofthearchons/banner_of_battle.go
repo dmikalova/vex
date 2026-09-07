@@ -15,7 +15,7 @@ var BannerOfBattle = card.New(
 	card.House.Brobnar,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 20),
+	card.Provenance(card.CotA, "20"),
 	card.WithTraits(card.Traits.Item),
 	card.WithConstant(card.ConstantAbility{
 		PowerBonus: 1,

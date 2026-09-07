@@ -14,7 +14,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Action: For each other friendly Mars creature, your opponent loses 1 Æmber.
 var PhylyxTheDisintegrator = card.New("Phylyx the Disintegrator",
 	card.House.Mars, card.Type.Creature, card.Rarity.Rare,
-	card.Provenance(card.CotA, 197),
+	card.Provenance(card.CotA, "197"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Martian, card.Traits.Soldier),
 	card.WithKeywords(card.Keyword.Elusive),

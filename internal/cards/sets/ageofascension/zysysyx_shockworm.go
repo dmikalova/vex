@@ -17,7 +17,7 @@ var ZysysyxShockworm = card.New(
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 175),
+	card.Provenance(card.AoA, "175"),
 	card.WithPower(3),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Martian, card.Traits.Soldier),

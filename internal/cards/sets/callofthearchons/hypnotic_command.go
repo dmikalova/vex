@@ -14,7 +14,7 @@ var HypnoticCommand = card.New(
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 164),
+	card.Provenance(card.CotA, "164"),
 	card.WithAbility(
 		card.Trigger.Play, card.CaptureAember{
 			Amount: 1,

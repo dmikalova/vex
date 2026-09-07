@@ -76,7 +76,7 @@ func (e StealAember) resolveGate(ctx *EffectContext) bool {
 	amt := min(e.amount(ctx, opponent), ctx.Resolver.Aember(opponent))
 	// Po's Pixies: the victim keeps their Æmber and the difference is drawn from the
 	// common supply, so only the thief's pool grows.
-	fromSupply := ctx.Resolver.TheftRedirectedToSupply(opponent)
+	fromSupply := ctx.Resolver.AemberTakenFromSupply(opponent)
 	if !fromSupply {
 		ctx.Resolver.SetAember(opponent, ctx.Resolver.Aember(opponent)-amt)
 	}

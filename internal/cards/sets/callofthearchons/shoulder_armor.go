@@ -15,7 +15,7 @@ var ShoulderArmor = card.New(
 	card.House.Sanctum,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 266),
+	card.Provenance(card.CotA, "266"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		PowerBonus:   2,

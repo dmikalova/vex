@@ -14,7 +14,7 @@ var CowardsEnd = card.New(
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 7),
+	card.Provenance(card.CotA, "7"),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{
 			Effects: []card.Effect{

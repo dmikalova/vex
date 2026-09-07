@@ -17,7 +17,7 @@ var CustomVirus = card.New(
 	card.House.Mars,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 183),
+	card.Provenance(card.CotA, "183"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Weapon),
 	card.WithKeywords(card.Keyword.Versatile),

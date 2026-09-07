@@ -17,7 +17,7 @@ var MusthicMurmook = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 361),
+	card.Provenance(card.WC, "361"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Beast),
 	card.WithKeyCost(card.KeyCostChange(card.EachPlayer, 1)),

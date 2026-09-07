@@ -17,7 +17,7 @@ var Spyyyder = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 84),
+	card.Provenance(card.AoA, "84"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Demon),
 	card.WithKeywords(card.Keyword.Skirmish),

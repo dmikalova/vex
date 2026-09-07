@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Dis
 //	Type:   Creature
-//	Rarity: Variant
+//	Rarity: Special
 //	Power:  5
 //	Traits: Demon
 //
@@ -20,8 +20,9 @@ var Dexus = card.New(
 	"Dexus",
 	card.House.Dis,
 	card.Type.Creature,
-	card.Rarity.Rare,
-	card.Provenance(card.WC, 124),
+	// TODO(variant): rarity relabelled from Variant to Special — handle manually
+	card.Rarity.Special,
+	card.Provenance(card.WC, "124"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Demon),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

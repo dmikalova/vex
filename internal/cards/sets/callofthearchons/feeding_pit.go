@@ -15,7 +15,7 @@ var FeedingPit = card.New(
 	card.House.Mars,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 184),
+	card.Provenance(card.CotA, "184"),
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(card.Trigger.Action, card.Then{
 		First: card.DiscardFromHand{

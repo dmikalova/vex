@@ -17,7 +17,7 @@ var Dextre = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 138),
+	card.Provenance(card.CotA, "138"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
 	card.WithAbility(

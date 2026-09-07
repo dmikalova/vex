@@ -14,7 +14,7 @@ var CleansingWave = card.New(
 	card.House.Sanctum,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 215),
+	card.Provenance(card.CotA, "215"),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.Heal{

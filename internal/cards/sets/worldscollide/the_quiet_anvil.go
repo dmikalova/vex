@@ -17,7 +17,7 @@ var TheQuietAnvil = card.New(
 	card.House.Shadows,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 282),
+	card.Provenance(card.WC, "282"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Item),
 	card.WithKeyCost(card.KeyCostChange(card.EachPlayer, -2)),

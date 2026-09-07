@@ -15,7 +15,7 @@ var DustPixie = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 351),
+	card.Provenance(card.CotA, "351"),
 	card.WithPower(1),
 	card.WithAemberBonus(2),
 	card.WithTraits(card.Traits.Faerie),

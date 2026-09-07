@@ -17,7 +17,7 @@ var BronzeKeyImp = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Special,
-	card.Provenance(card.AoA, 71),
+	card.Provenance(card.AoA, "71"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Imp),
 	card.WithKeywords(card.Keyword.Elusive),

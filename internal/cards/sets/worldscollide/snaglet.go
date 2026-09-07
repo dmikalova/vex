@@ -22,7 +22,7 @@ var Snaglet = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 118),
+	card.Provenance(card.WC, "118"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Imp),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

@@ -14,7 +14,7 @@ var UnsuspectingPrey = card.New(
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 368),
+	card.Provenance(card.WC, "368"),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{
 			Spread: card.UpToCreatures{Count: 3, Amount: 2, Undamaged: true},

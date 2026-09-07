@@ -18,7 +18,7 @@ var Jargogle = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 131),
+	card.Provenance(card.AoA, "131"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Beast, card.Traits.Mutant),
 	card.WithKeywords(card.Keyword.Elusive),

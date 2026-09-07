@@ -14,7 +14,7 @@ var TautauVapors = card.New(
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 139),
+	card.Provenance(card.WC, "139"),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{
 			Effects: []card.Effect{

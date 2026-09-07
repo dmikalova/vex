@@ -17,7 +17,7 @@ var Bumblebird = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 336),
+	card.Provenance(card.AoA, "336"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Beast, card.Traits.Insect),
 	card.WithKeywords(card.Keyword.Alpha),

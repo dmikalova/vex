@@ -393,6 +393,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return effectGlyphs(v.Do)
 	case engine.MayRepeat:
 		return effectGlyphs(v.Do)
+	case engine.ExaltToRepeat:
+		return effectGlyphs(v.Do)
 	case engine.May:
 		return effectGlyphs(v.Do)
 	case engine.Then:
@@ -442,7 +444,7 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 			{asset: "aember", qty: v.Amount},
 			arrowTo(glyph{asset: "card-back", decor: decorThis}),
 		}, true
-	case engine.MoveAemberToCommonSupply:
+	case engine.MoveAemberToSupply:
 		return []glyph{
 			{asset: "aember", qty: v.Amount, decor: decorChosen},
 			arrowTo(glyph{asset: "glyph-return"}),
@@ -462,7 +464,7 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		}, true
 	case engine.GrantFightAnyHouse:
 		return []glyph{{asset: "glyph-fight", decor: decorFriendly | decorEach}}, true
-	case engine.PreventDamage:
+	case engine.CannotBeDealtDamage:
 		return []glyph{{asset: "shield"}, arrowTo(targetGlyph(v.Target))}, true
 	case engine.RedirectFightDamage:
 		return []glyph{

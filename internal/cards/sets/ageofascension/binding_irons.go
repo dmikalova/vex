@@ -14,7 +14,7 @@ var BindingIrons = card.New(
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 55),
+	card.Provenance(card.AoA, "55"),
 	card.WithAbility(
 		card.Trigger.Play, card.GainChains{
 			Player: card.Opponent,

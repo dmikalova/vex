@@ -15,7 +15,7 @@ var SeismoEntangler = card.New(
 	card.House.Logos,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 137),
+	card.Provenance(card.AoA, "137"),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.Action, card.ChooseHouseThen{

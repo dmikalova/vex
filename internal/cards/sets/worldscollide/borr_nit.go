@@ -21,7 +21,7 @@ var BorrNit = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 86),
+	card.Provenance(card.WC, "86"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Demon),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

@@ -15,7 +15,7 @@ var CustomsOffice = card.New(
 	card.House.Shadows,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 285),
+	card.Provenance(card.CotA, "285"),
 	card.WithTraits(card.Traits.Location),
 	card.WithRestrictions(card.Restrictions{Toll: card.Toll{
 		Action: card.TollOn.PlayArtifact,

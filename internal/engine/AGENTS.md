@@ -123,6 +123,16 @@ far:
   is a `Count` reading a tally the prior effect left on `ctx.Produced` —
   `CreaturesHealed`, `DamageHealed`, `CardsDestroyed`. A new such tally is a field
   on `Produced` plus a small `Count`, never a bespoke fused effect.
+- **Move a card between zones.** Archive, Discard, Purge, Shuffle, and Put are one
+  mechanism — a source zone, a selection strategy (chosen / any-number / all /
+  random / top-N, with house/type/name/trait filters), a destination, and the
+  optional `ctx.It`/`ctx.Produced` side effects — with each KeyForge verb a thin
+  authoring struct that fixes the destination and delegates to it (ADR 0031). It
+  is the largest instance of this rule, and the target the Archive/Discard/Purge/
+  Shuffle/Put families fold into as their cards are touched: a new zone-movement
+  effect adds a selection filter or a destination, never a new bespoke type. The
+  mechanism stays unexported — authors write the verb the card prints, not a
+  generic `Move`.
 
 Prefer a shared **helper** over a shared embeddable value type. Now that `Per`
 means one thing everywhere, `{Amount, By, Per}` genuinely is uniform across
@@ -202,6 +212,25 @@ and `resolveReaction`; a new event = an `Event` value, one
 `emitLasting`/`lastingReplacement` call at the site, and its `clause`/`gerund`
 text. You never restructure the play/reap hot path. Keep the enum dispatch
 centralized.
+
+**Modifying pending damage is a replacement, not a reaction.** "Whenever a
+creature takes damage, it takes an additional N" (Lethal Distraction) reads as a
+reaction, but a reaction deals the extra as a _second_ hit after the fact. The
+direction is to model it as a replacement on a "damage about to be dealt" event
+that takes the pending amount and increases it, so the extra lands as part of the
+same damage — extending the `Replacement`/`Instead` vocabulary and retiring the
+bespoke `TakesExtraDamage` effect (ADR 0031; not yet built).
+
+**Æmber flow is replaced on either endpoint — source or destination.** When Æmber
+moves, a continuous `Replaces` on a card can swap either end. The **destination**
+is `EventAemberAddedToPool` — Ether Spider captures Æmber before it lands in a
+pool. The **source** is `EventAemberTakenFromPool` — Po's Pixies draws a steal or
+capture from the common supply instead of the pool. Both ride the one
+`Instead{Of, With, Player}` a card carries in `CardDefinition.Replaces`, read (not
+resolved) by a scanner scoped to the watched pool: `aemberCaptorFor` on the
+destination, `AemberTakenFromSupply` on the source. A new redirect of where taken
+or added Æmber comes from or goes to is a `Replaces` on the matching event plus a
+member on the `Replacement` enum — never a bespoke `CardDefinition` bool.
 
 ## Generic counters are a global side-table, not a field per kind
 

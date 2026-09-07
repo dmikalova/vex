@@ -16,7 +16,7 @@ var GlyxlProliferator = card.New(
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 163),
+	card.Provenance(card.AoA, "163"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Martian, card.Traits.Soldier),
 	card.WithAbility(

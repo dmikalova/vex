@@ -16,7 +16,7 @@ var SpectralTunneler = card.New(
 	card.House.Logos,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 133),
+	card.Provenance(card.CotA, "133"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(

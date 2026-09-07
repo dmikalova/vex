@@ -14,7 +14,7 @@ var CooperativeHunting = card.New(
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 319),
+	card.Provenance(card.CotA, "319"),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{
 			Amount: 1,

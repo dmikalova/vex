@@ -14,7 +14,7 @@ var BloodMoney = card.New(
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 3),
+	card.Provenance(card.CotA, "3"),
 	card.WithAbility(
 		card.Trigger.Play, card.Exalt{
 			Target: card.Target.EnemyCreature,

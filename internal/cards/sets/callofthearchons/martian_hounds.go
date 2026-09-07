@@ -14,7 +14,7 @@ var MartianHounds = card.New(
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 167),
+	card.Provenance(card.CotA, "167"),
 	card.WithAbility(
 		card.Trigger.Play, card.AddPowerCounter{
 			Target: card.Target.Creature,

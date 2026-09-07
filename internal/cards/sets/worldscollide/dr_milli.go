@@ -21,7 +21,7 @@ var DrMilli = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 150),
+	card.Provenance(card.WC, "150"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Scientist),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

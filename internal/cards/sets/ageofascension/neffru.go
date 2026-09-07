@@ -16,7 +16,7 @@ var Neffru = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 94),
+	card.Provenance(card.AoA, "94"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(

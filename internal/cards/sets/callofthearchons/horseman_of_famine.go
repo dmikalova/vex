@@ -16,7 +16,7 @@ var HorsemanOfFamine = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Connected,
-	card.Provenance(card.CotA, 247),
+	card.Provenance(card.CotA, "247"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Horseman, card.Traits.Spirit),
 	card.WithPlayFightReap(card.Destroy{

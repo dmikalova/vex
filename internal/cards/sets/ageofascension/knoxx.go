@@ -16,7 +16,7 @@ var Knoxx = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 326),
+	card.Provenance(card.AoA, "326"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Beast),
 	card.WithConstant(card.ConstantAbility{

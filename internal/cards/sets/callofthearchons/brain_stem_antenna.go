@@ -14,7 +14,7 @@ var BrainStemAntenna = card.New(
 	card.House.Mars,
 	card.Type.Upgrade,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 209),
+	card.Provenance(card.CotA, "209"),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{
 			{Trigger: card.Trigger.AfterCardPlayed, Effect: card.Conditional{

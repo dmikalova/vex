@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Action: Move 1 Æmber from your pool to Pocket Universe.
 var PocketUniverse = card.New("Pocket Universe",
 	card.House.Logos, card.Type.Artifact, card.Rarity.Rare,
-	card.Provenance(card.CotA, 131),
+	card.Provenance(card.CotA, "131"),
 	card.WithTraits(card.Traits.Item),
 	card.WithSpendableAember(),
 	card.WithAbility(

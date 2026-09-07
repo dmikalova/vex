@@ -14,7 +14,7 @@ var Hysteria = card.New(
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 65),
+	card.Provenance(card.CotA, "65"),
 	card.WithAbility(
 		card.Trigger.Play, card.PutFromPlay{
 			Target:      card.Target.EachCreature,

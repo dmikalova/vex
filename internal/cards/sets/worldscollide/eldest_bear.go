@@ -17,7 +17,7 @@ var EldestBear = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 388),
+	card.Provenance(card.WC, "388"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Beast, card.Traits.Leader, card.Traits.Witch),
 	card.WithAssault(3),

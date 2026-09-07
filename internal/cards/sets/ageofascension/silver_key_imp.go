@@ -17,7 +17,7 @@ var SilverKeyImp = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Special,
-	card.Provenance(card.AoA, 81),
+	card.Provenance(card.AoA, "81"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Imp),
 	card.WithKeywords(card.Keyword.Elusive),

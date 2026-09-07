@@ -14,7 +14,7 @@ var RelentlessAssault = card.New(
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 13),
+	card.Provenance(card.CotA, "13"),
 	card.WithAbility(
 		card.Trigger.Play, card.OneAtATime{
 			Times:  card.Fixed(3),

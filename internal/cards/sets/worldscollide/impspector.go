@@ -21,7 +21,7 @@ var Impspector = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 77),
+	card.Provenance(card.WC, "77"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Imp),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

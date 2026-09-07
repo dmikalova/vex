@@ -19,6 +19,6 @@ var GoodOfTheMany = card.New(
 	card.House.Saurian,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 220),
+	card.Provenance(card.WC, "220"),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

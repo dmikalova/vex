@@ -21,7 +21,7 @@ var SaurusRex = card.New(
 	card.House.Saurian,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 227),
+	card.Provenance(card.WC, "227"),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Leader),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

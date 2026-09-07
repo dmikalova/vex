@@ -4,6 +4,7 @@
 [default.extend-words]
 # "mis-scripted" (as in a deliberately wrong test script) is intentional.
 mis = "mis"
+caf = "caf"
 # Card names
 Theyre = "Theyre" # They're Everywhere
 theyre = "theyre"

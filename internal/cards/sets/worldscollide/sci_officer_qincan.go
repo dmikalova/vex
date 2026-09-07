@@ -22,7 +22,7 @@ var SciOfficerQincan = card.New(
 	card.House.Staralliance,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 304),
+	card.Provenance(card.WC, "304"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Alien, card.Traits.Proximan, card.Traits.Scientist),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

@@ -16,7 +16,7 @@ var Dodger = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 308),
+	card.Provenance(card.CotA, "308"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithAbility(

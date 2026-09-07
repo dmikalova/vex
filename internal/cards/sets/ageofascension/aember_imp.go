@@ -17,7 +17,7 @@ var AemberImp = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 53),
+	card.Provenance(card.AoA, "53"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Imp),
 	card.WithKeywords(card.Keyword.Elusive),

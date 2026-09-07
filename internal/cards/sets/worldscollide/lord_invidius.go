@@ -22,7 +22,7 @@ var LordInvidius = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 110),
+	card.Provenance(card.WC, "110"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Demon, card.Traits.Leader),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

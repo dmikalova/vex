@@ -15,7 +15,7 @@ var ShadowOfDis = card.New(
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 103),
+	card.Provenance(card.AoA, "103"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.BlankEnemyText{}),

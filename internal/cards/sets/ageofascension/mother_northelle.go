@@ -17,7 +17,7 @@ var MotherNorthelle = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 257),
+	card.Provenance(card.AoA, "257"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Monk),
 	card.WithKeywords(card.Keyword.Elusive),

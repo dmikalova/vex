@@ -15,7 +15,7 @@ import (
 //	Power:  5
 //	Traits: Knight • Spirit
 //
-//	Reap: Choose a creature - fully heal it, and for the remainder of the turn, it cannot be dealt damage.
+//	Reap: Choose a creature - fully heal it. For the remainder of the turn, it cannot be dealt damage.
 func TestProtectrix(t *testing.T) {
 	t.Run("fully heals a creature and protects it from damage", func(t *testing.T) {
 		var ally ct.Card

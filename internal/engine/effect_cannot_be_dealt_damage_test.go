@@ -2,20 +2,20 @@ package engine
 
 import "testing"
 
-func TestPreventDamage(t *testing.T) {
+func TestCannotBeDealtDamage(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	friend := g.AddToBattleline(testCreature("friend", 5), 0)
 	foe := g.AddToBattleline(testCreature("foe", 5), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := PreventDamage{Target: Target{Kind: TargetEachFriendlyCreature}, Duration: EndOfTurn}
+	e := CannotBeDealtDamage{Target: Target{Kind: TargetEachFriendlyCreature}, Duration: EndOfTurn}
 	if e.Text() != "for the remainder of the turn, each friendly creature cannot be dealt damage" {
 		t.Errorf("text = %q", e.Text())
 	}
-	if (PreventDamage{Duration: EndOfTurn}).validate() == nil {
+	if (CannotBeDealtDamage{Duration: EndOfTurn}).validate() == nil {
 		t.Error("unset target should be invalid")
 	}
-	if (PreventDamage{Target: Target{Kind: TargetEachFriendlyCreature}}).validate() == nil {
+	if (CannotBeDealtDamage{Target: Target{Kind: TargetEachFriendlyCreature}}).validate() == nil {
 		t.Error("unset duration should be invalid")
 	}
 	if e.validate() != nil {
@@ -36,7 +36,12 @@ func TestPreventDamage(t *testing.T) {
 	}
 
 	// Protect the enemy side too, then confirm end of turn clears both.
-	PreventDamage{Target: Target{Kind: TargetEachEnemyCreature}, Duration: EndOfTurn}.Resolve(ctx)
+	CannotBeDealtDamage{
+		Target:   Target{Kind: TargetEachEnemyCreature},
+		Duration: EndOfTurn,
+	}.Resolve(
+		ctx,
+	)
 	if !g.State.SideDamageImmune[1] {
 		t.Fatal("enemy side should be protected")
 	}
@@ -53,7 +58,7 @@ func TestPreventDamage(t *testing.T) {
 
 // A per-card or filtered target is not a whole side, so it protects the concrete
 // creatures it selects (and keeps rendering that phrase) rather than the side.
-func TestPreventDamageWholeSide(t *testing.T) {
+func TestCannotBeDealtDamageWholeSide(t *testing.T) {
 	if _, ok := (Target{Kind: TargetThisCreature}).wholeSide(0); ok {
 		t.Error("a single-creature target is not a whole side")
 	}

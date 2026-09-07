@@ -17,7 +17,7 @@ var DeepwoodDruid = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 355),
+	card.Provenance(card.WC, "355"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Elf, card.Traits.Witch),
 	card.WithKeywords(card.Keyword.Deploy),

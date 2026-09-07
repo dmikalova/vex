@@ -14,7 +14,7 @@ var FullMoon = card.New(
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 323),
+	card.Provenance(card.CotA, "323"),
 	card.WithAbility(
 		card.Trigger.Play, card.ForRemainderOfTurn{
 			On: card.Event.CreaturePlayed,

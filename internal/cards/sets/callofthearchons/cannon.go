@@ -15,7 +15,7 @@ var Cannon = card.New(
 	card.House.Brobnar,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 21),
+	card.Provenance(card.CotA, "21"),
 	card.WithTraits(card.Traits.Weapon),
 	card.WithAbility(
 		card.Trigger.Action, card.DealDamage{

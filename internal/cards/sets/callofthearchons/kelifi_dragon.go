@@ -14,7 +14,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Fight/Reap: Gain 1 Æmber, and deal 5 damage to a creature.
 var KelifiDragon = card.New("Kelifi Dragon",
 	card.House.Brobnar, card.Type.Creature, card.Rarity.Rare,
-	card.Provenance(card.CotA, 37),
+	card.Provenance(card.CotA, "37"),
 	card.WithPower(12),
 	card.WithTraits(card.Traits.Dragon),
 	card.WithAemberThreshold(5),

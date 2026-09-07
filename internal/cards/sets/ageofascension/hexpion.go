@@ -16,7 +16,7 @@ var Hexpion = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 113),
+	card.Provenance(card.AoA, "113"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Robot),
 	card.WithAbility(

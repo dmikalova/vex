@@ -17,7 +17,7 @@ var GrumpBuggy = card.New(
 	card.House.Brobnar,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 24),
+	card.Provenance(card.AoA, "24"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Vehicle),
 	card.WithKeyCost(card.KeyCostChange(card.Opponent, 1).Per(card.InPlay{

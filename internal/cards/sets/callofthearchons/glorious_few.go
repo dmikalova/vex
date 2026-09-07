@@ -14,7 +14,7 @@ var GloriousFew = card.New(
 	card.House.Sanctum,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 218),
+	card.Provenance(card.CotA, "218"),
 	card.WithAbility(card.Trigger.Play, card.GainAember{
 		Player: card.Controller,
 		Amount: 1,

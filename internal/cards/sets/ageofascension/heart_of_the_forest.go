@@ -16,7 +16,7 @@ var HeartOfTheForest = card.New(
 	card.House.Untamed,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 355),
+	card.Provenance(card.AoA, "355"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Location),
 	card.WithRestrictions(card.Restrictions{NoForgeWhileAheadOnKeys: true}),

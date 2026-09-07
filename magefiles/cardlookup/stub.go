@@ -130,7 +130,7 @@ func reprintsForSet(set provenance.Set) []provenance.Card {
 			home = rc.Provenance[0].Set.Name
 		}
 		for _, ref := range rc.Provenance {
-			if name, ok := refName[ref]; ok {
+			if name, ok := refName[refKey(ref)]; ok {
 				bySourceName[normalizeName(name)] = impl{rc.Def.Name, home}
 			}
 		}
@@ -171,7 +171,7 @@ func setConfigSource(set provenance.Set, reprints []provenance.Card) string {
 	for _, c := range reprints {
 		fmt.Fprintf(
 			&b,
-			"\tcard.Reprint(card.%s, %d, %s)\n",
+			"\tcard.Reprint(card.%s, %q, %s)\n",
 			provCodeVar(set.SourceSet),
 			c.Number,
 			quote(c.Name),
@@ -195,7 +195,7 @@ func stubSource(pkg string, set provenance.SourceSet, c provenance.Card) string 
 	b.WriteString("// implement the ability once the needed effect exists.\n//\n")
 	b.WriteString("//\tHouse:  " + titleWord(c.House) + "\n")
 	b.WriteString("//\tType:   " + cardTypeName(c.Type) + "\n")
-	b.WriteString("//\tRarity: " + c.Rarity + "\n")
+	b.WriteString("//\tRarity: " + rarityName(c.Rarity) + "\n")
 	if isCreature(c.Type) {
 		fmt.Fprintf(&b, "//\tPower:  %d\n", c.Power)
 		if c.Armor > 0 {
@@ -221,8 +221,13 @@ func stubSource(pkg string, set provenance.SourceSet, c provenance.Card) string 
 	b.WriteString("\t" + quote(c.Name) + ",\n")
 	b.WriteString("\tcard.House." + titleWord(c.House) + ",\n")
 	b.WriteString("\tcard.Type." + cardTypeName(c.Type) + ",\n")
-	b.WriteString("\tcard.Rarity." + c.Rarity + ",\n")
-	fmt.Fprintf(&b, "\tcard.Provenance(card.%s, %d),\n", provCodeVar(set), c.Number)
+	if mapped := rarityName(c.Rarity); !strings.EqualFold(mapped, c.Rarity) {
+		fmt.Fprintf(&b,
+			"\t// TODO(variant): rarity relabelled from %s to %s — handle manually\n",
+			c.Rarity, mapped)
+	}
+	b.WriteString("\tcard.Rarity." + rarityName(c.Rarity) + ",\n")
+	fmt.Fprintf(&b, "\tcard.Provenance(card.%s, %q),\n", provCodeVar(set), c.Number)
 	if isCreature(c.Type) {
 		fmt.Fprintf(&b, "\tcard.WithPower(%d),\n", c.Power)
 		if c.Armor > 0 {
@@ -246,6 +251,24 @@ func stubSource(pkg string, set provenance.SourceSet, c provenance.Card) string 
 
 func isCreature(t string) bool { return strings.EqualFold(t, "creature") }
 
+// facadeRarities is the set of rarity names the card facade defines
+// (card.Rarity.*). Any source rarity outside it has no facade value of its own.
+var facadeRarities = map[string]bool{
+	"common": true, "uncommon": true, "rare": true, "special": true, "connected": true,
+}
+
+// rarityName maps a source rarity onto the facade Rarity namespace field. The
+// facade has no value for the special-slot rarities the catalogs carry — Variant
+// (ambassadors, brews, Master of N), FIXED (anomalies), Token, Evil Twin, The
+// Tide — so every rarity outside facadeRarities renders as Special; the standard
+// rarities pass through unchanged.
+func rarityName(rarity string) string {
+	if facadeRarities[strings.ToLower(rarity)] {
+		return rarity
+	}
+	return "Special"
+}
+
 // cardTypeName maps a source card type onto the facade Type namespace field.
 // KeyForge's "action" card type is named Tactic in this repo (card-wording rule 19).
 func cardTypeName(t string) string {
@@ -263,62 +286,67 @@ func cardTypeName(t string) string {
 	}
 }
 
-// varName turns a card name into an exported Go identifier, dropping punctuation
-// and capitalizing each word's first rune while preserving existing capitals
-// (so "EMP Blast" stays EMPBlast, "Coward's End" becomes CowardsEnd).
+// varName turns a card name into an exported Go identifier: it keeps only ASCII
+// letters and digits, capitalizing the first letter of each whitespace-separated
+// word while preserving existing capitals (so "EMP Blast" stays EMPBlast), and
+// drops every other character without a word break ("Coward's End" becomes
+// CowardsEnd, "Z-Y-X Researcher" becomes ZYXResearcher). Source names arriving
+// from the provenance importer are already ASCII-folded, so no accented letter or
+// Æ reaches here.
 func varName(name string) string {
 	var b strings.Builder
 	upNext := true
 	for _, r := range name {
 		switch {
-		case isApostrophe(r):
-			// drop apostrophes without a word break (Coward's -> Cowards)
-		case unicode.IsLetter(r) || unicode.IsDigit(r):
+		case isASCIIAlnum(r):
 			if upNext {
 				b.WriteRune(unicode.ToUpper(r))
 				upNext = false
 			} else {
 				b.WriteRune(r)
 			}
-		default:
+		case unicode.IsSpace(r):
 			upNext = true
+		default:
+			// drop any other character without a word break
 		}
 	}
 	id := b.String()
-	if id == "" || unicode.IsDigit(rune(id[0])) {
+	if id == "" || (id[0] >= '0' && id[0] <= '9') {
 		id = "Card" + id
 	}
 	return id
 }
 
-// fileName turns a card name into a snake_case file base name.
+// fileName turns a card name into a snake_case file base name: it keeps only
+// ASCII letters and digits (lowercased), joins whitespace-separated words with
+// '_', and drops every other character without a separator ("Coward's End"
+// becomes cowards_end, "Z-Y-X Researcher" becomes zyx_researcher).
 func fileName(name string) string {
 	var b strings.Builder
 	prevSep := true
 	for _, r := range name {
 		switch {
-		case isApostrophe(r):
-			// drop apostrophes without a separator (Coward's -> cowards)
-		case unicode.IsLetter(r) || unicode.IsDigit(r):
+		case isASCIIAlnum(r):
 			b.WriteRune(unicode.ToLower(r))
 			prevSep = false
-		default:
+		case unicode.IsSpace(r):
 			if !prevSep {
 				b.WriteRune('_')
 				prevSep = true
 			}
+		default:
+			// drop any other character without a separator
 		}
 	}
 	return strings.Trim(b.String(), "_")
 }
 
-// isApostrophe reports whether r is an apostrophe in any of the forms card names
-// use — the ASCII ', the typographic ' (U+2019), or the modifier letter ʼ
-// (U+02BC). The last is a Unicode letter, so without this it would slip through
-// as a letter and land verbatim in an identifier and filename (the "Frane'Blaster"
-// bug); all three are dropped so "Frane's Blaster" is Franes'Blaster / Franes'_blaster.
-func isApostrophe(r rune) bool {
-	return r == '\'' || r == '\u2019' || r == '\u02bc'
+// isASCIIAlnum reports whether r is a plain ASCII letter or digit — the only
+// runes varName and fileName keep, since a card name reaches them already
+// ASCII-folded by the provenance importer.
+func isASCIIAlnum(r rune) bool {
+	return r >= 'a' && r <= 'z' || r >= 'A' && r <= 'Z' || r >= '0' && r <= '9'
 }
 
 // titleWord capitalizes the first rune of a single lowercase source token.

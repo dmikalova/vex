@@ -16,7 +16,7 @@ var DracoPraeco = card.New(
 	card.House.Saurian,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 201),
+	card.Provenance(card.WC, "201"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Politician),
 	card.WithAbility(

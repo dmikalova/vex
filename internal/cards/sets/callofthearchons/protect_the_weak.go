@@ -15,7 +15,7 @@ var ProtectTheWeak = card.New(
 	card.House.Sanctum,
 	card.Type.Upgrade,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 265),
+	card.Provenance(card.CotA, "265"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		ArmorBonus: 1,

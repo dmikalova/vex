@@ -163,6 +163,37 @@ func TestArrivalKillsFlankNeighborBeforeAfterPlay(t *testing.T) {
 	}
 }
 
+// TestTreacheryHandoffSettlesTheNewController pins that handing a Treachery
+// creature to the opponent settles the board it lands in: the seized creature
+// joins the new controller's right flank and pushes that side's flank creature
+// interior, so a creature that loses its "+2 while on a flank" bonus and drops to
+// or below its damage must be destroyed in the same action, not left lingering.
+func TestTreacheryHandoffSettlesTheNewController(t *testing.T) {
+	g := started(t)
+	g.AddToBattleline(testCreature("left", 3), 0)
+	guard := g.AddToBattleline(
+		testCreature("flank guard", 4,
+			WithConstantAbility(ConstantAbility{
+				Target:     Target{Kind: TargetThisCreature}.OnFlank(),
+				PowerBonus: 2,
+			})),
+		0,
+	)
+	g.State.Cards[guard].Damage = 5 // lethal at 4 power, survives at 6 on a flank
+
+	seized := g.AddToHand(testCreature("treachery", 3, WithKeywords(Treachery)), 1)
+	g.State.ActivePlayer = 1
+	g.State.ActiveHouse = Brobnar
+	g.PlayFromHand(1, seized)
+
+	if g.controller(seized) != 0 {
+		t.Fatal("a Treachery creature should enter under the opponent's control")
+	}
+	if g.inPlay(guard) {
+		t.Error("the guard should be destroyed once the handoff pushes it off its flank")
+	}
+}
+
 // TestPlaceAemberOnACardOutOfPlayLandsOnNothing checks an ability that places
 // Æmber on its own source after that source has left play banks nothing on the
 // card in its discard pile (Strange Gizmo forging a key mid-window).

@@ -582,7 +582,7 @@ func (t Trigger) String() string {
 	case TriggerBeforeFight:
 		return "Before Fight"
 	case TriggerAfterDestroyedFighting:
-		return "After a Creature Is Destroyed Fighting"
+		return "After a Creature Is Destroyed in a Fight With"
 	case TriggerAfterArmorPrevents:
 		return "After This Creature Prevents Damage With Its Armor"
 	case TriggerAfterCardPlayed:
@@ -651,7 +651,7 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 	case TriggerAfterNeighborFights:
 		return "After a neighbor of " + SelfName + " is used to fight, ", false
 	case TriggerAfterDestroyedFighting:
-		return "After a creature is destroyed fighting " + SelfName + ", ", false
+		return "After a creature is destroyed in a fight with " + SelfName + ", ", false
 	case TriggerAfterArmorPrevents:
 		return "After " + SelfName + " prevents damage with its armor, ", false
 	case TriggerAfterEnemyCreatureDestroyed:

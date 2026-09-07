@@ -16,7 +16,7 @@ var YantzeeGang = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 282),
+	card.Provenance(card.AoA, "282"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithAbility(

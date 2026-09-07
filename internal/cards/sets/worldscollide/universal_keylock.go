@@ -22,7 +22,7 @@ var UniversalKeylock = card.New(
 	card.House.Logos,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 178),
+	card.Provenance(card.WC, "178"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Item),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

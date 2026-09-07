@@ -16,7 +16,7 @@ var RonnieWristclocks = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 276),
+	card.Provenance(card.AoA, "276"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithAbility(

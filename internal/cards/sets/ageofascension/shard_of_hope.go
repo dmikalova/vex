@@ -15,7 +15,7 @@ var ShardOfHope = card.New(
 	card.House.Sanctum,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 264),
+	card.Provenance(card.AoA, "264"),
 	card.WithTraits(card.Traits.Item, card.Traits.Shard),
 	card.WithAbility(
 		card.Trigger.Action, card.CaptureAember{

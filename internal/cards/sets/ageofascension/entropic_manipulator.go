@@ -15,7 +15,7 @@ var EntropicManipulator = card.New(
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 195),
+	card.Provenance(card.AoA, "195"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.RedistributeDamage{}),

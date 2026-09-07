@@ -8,18 +8,17 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: For each house represented among cards in play, except for Sanctum, gain 1 Æmber, to a maximum of 6 Æmber.
+//	Play: For each house represented among cards in play, except for Sanctum, gain 1 Æmber.
 var FreeMarkets = card.New(
 	"Free Markets",
 	card.House.Sanctum,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 233),
+	card.Provenance(card.AoA, "233"),
 	card.WithAbility(
 		card.Trigger.Play, card.GainAember{
 			Player: card.Controller,
 			Amount: 1,
 			Per:    card.HousesInPlay{Except: card.House.Self},
-			Max:    6,
 		}),
 )

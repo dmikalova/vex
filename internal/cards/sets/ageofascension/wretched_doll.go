@@ -16,7 +16,7 @@ var WretchedDoll = card.New(
 	card.House.Dis,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 107),
+	card.Provenance(card.AoA, "107"),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.Play, card.PlaceCounter{

@@ -17,7 +17,7 @@ var Drumble = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 82),
+	card.Provenance(card.CotA, "82"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Imp),
 	card.WithKeywords(card.Keyword.Elusive),

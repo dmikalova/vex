@@ -15,7 +15,7 @@ var ExperimentalTherapy = card.New(
 	card.House.Logos,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 157),
+	card.Provenance(card.CotA, "157"),
 	card.WithStatic(card.StaticModifier{Keywords: card.Keywords(card.Keyword.Versatile)}),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{

@@ -6,7 +6,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Dis
 //	Type:   Tactic
-//	Rarity: Rare
+//	Rarity: Special
 //	Æmber:  1
 //
 //	Play: Destroy a Human creature.
@@ -14,8 +14,8 @@ var HumansBane = card.New(
 	"Humans' Bane",
 	card.House.Dis,
 	card.Type.Tactic,
-	card.Rarity.Rare,
-	card.Provenance(card.WC, 126),
+	card.Rarity.Special,
+	card.Provenance(card.WC, "126"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{

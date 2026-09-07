@@ -16,7 +16,7 @@ var Flaxia = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 352),
+	card.Provenance(card.CotA, "352"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Faerie),
 	card.WithAbility(

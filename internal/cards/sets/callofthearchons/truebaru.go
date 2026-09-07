@@ -15,7 +15,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Destroyed: Gain 5 Æmber.
 var Truebaru = card.New("Truebaru",
 	card.House.Dis, card.Type.Creature, card.Rarity.Rare,
-	card.Provenance(card.CotA, 104),
+	card.Provenance(card.CotA, "104"),
 	card.WithPower(7),
 	card.WithTraits(card.Traits.Demon),
 	card.WithKeywords(card.Keyword.Taunt),

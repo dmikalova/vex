@@ -14,7 +14,7 @@ var TheSpiritsWay = card.New(
 	card.House.Sanctum,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 229),
+	card.Provenance(card.CotA, "229"),
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{
 			Target: card.Target.EachCreature.PowerAtLeast(3),

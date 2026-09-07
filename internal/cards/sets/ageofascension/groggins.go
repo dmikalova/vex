@@ -16,7 +16,7 @@ var Groggins = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 11),
+	card.Provenance(card.AoA, "11"),
 	card.WithPower(8),
 	card.WithTraits(card.Traits.Giant),
 	card.WithFightRestriction(card.Target.EachCreature.OnFlank()),

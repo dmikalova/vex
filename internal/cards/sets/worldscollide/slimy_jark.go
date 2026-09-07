@@ -17,7 +17,7 @@ var SlimyJark = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 30),
+	card.Provenance(card.WC, "30"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Goblin),
 	card.WithKeywords(card.Keyword.Skirmish, card.Keyword.Elusive),

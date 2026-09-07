@@ -17,7 +17,7 @@ var PrinceDerricUnifier = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 240),
+	card.Provenance(card.AoA, "240"),
 	card.WithPower(4),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),

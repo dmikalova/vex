@@ -198,12 +198,9 @@ type HousesAmong struct {
 	// Type filters the surveyed cards; the zero value surveys any type, Creature
 	// only creatures.
 	Type CardType
-	// Max caps the counted houses and the "to a maximum of N" clause it renders;
-	// zero means no cap.
-	Max int
 }
 
-// Value counts the distinct houses on the surveyed cards, capped at Max.
+// Value counts the distinct houses on the surveyed cards.
 func (e HousesAmong) Value(ctx *EffectContext) int {
 	var seen [NumHouses]bool
 	n := 0
@@ -214,9 +211,6 @@ func (e HousesAmong) Value(ctx *EffectContext) int {
 				n++
 			}
 		}
-	}
-	if e.Max > 0 && n > e.Max {
-		return e.Max
 	}
 	return n
 }
@@ -255,14 +249,10 @@ func (e HousesAmong) scope() string {
 	}
 }
 
-// CountText renders the singular noun the "for each" clause repeats, adding the
-// "(to a maximum of N)" clause when Max caps the count.
+// CountText renders the singular noun the "for each" clause repeats. Any Max cap
+// is silent, so it does not appear in the text.
 func (e HousesAmong) CountText() string {
-	s := "house represented among " + e.scope()
-	if e.Max > 0 {
-		s += fmt.Sprintf(" (to a maximum of %d)", e.Max)
-	}
-	return s
+	return "house represented among " + e.scope()
 }
 
 // CardsInArchives counts the cards in a player's archives.
@@ -667,6 +657,11 @@ func (AemberOnThis) Value(ctx *EffectContext) int { return ctx.Resolver.AmberOn(
 // CountText renders the singular noun the "for each" clause repeats.
 func (AemberOnThis) CountText() string { return "Æmber on it" }
 
+// leadingCountText names the source, for a clause whose buffed subject is some
+// other creature — Primus Unguis's "for each Æmber on Primus Unguis" — where a
+// trailing "it" would point at the wrong card.
+func (AemberOnThis) leadingCountText() string { return "Æmber on " + SelfName }
+
 // DamageOnThis counts the damage sitting on the source card, so a card can scale
 // with how hurt it is (Angwish charges its opponent +1 key cost per damage on it).
 type DamageOnThis struct{}
@@ -677,39 +672,44 @@ func (DamageOnThis) Value(ctx *EffectContext) int { return ctx.Resolver.Damage(c
 // CountText renders the singular noun the "for each" clause repeats.
 func (DamageOnThis) CountText() string { return "damage on it" }
 
-// HalfPowerOfChosen is half the power (rounded down) of the creature in context
-// (ctx.It) — the creature a ChooseCreatureThen just picked. The Flex gains Æmber
-// equal to half a chosen creature's power.
-type HalfPowerOfChosen struct{}
+// portionPhraser is the optional capability of a Loss that can also phrase a
+// fraction of a count rather than a pool — "half its power, rounded down". Half
+// implements it, so the same portion vocabulary serves both LoseAember{By: Half}
+// and PowerOfChosen{Of: Half}.
+type portionPhraser interface {
+	countPhrase(noun string) string
+}
 
-// Value returns half the context creature's power, rounded down, or zero when no
-// creature is in context.
-func (HalfPowerOfChosen) Value(ctx *EffectContext) int {
+// PowerOfChosen is the power of the creature in context (ctx.It) — the creature a
+// fight or a ChooseCreatureThen put in context. Mindworm makes the creature it
+// fights deal damage equal to its power to each of its neighbors. Of takes a
+// fraction of that power (Of: Half is half, rounded down — The Flex); the zero
+// value is the full power.
+type PowerOfChosen struct {
+	Of Loss
+}
+
+// Value returns the context creature's power, reduced by the Of fraction when set,
+// or zero when no creature is in context.
+func (e PowerOfChosen) Value(ctx *EffectContext) int {
 	if !ctx.HasIt {
 		return 0
 	}
-	return ctx.Resolver.Power(ctx.It) / 2
-}
-
-// CountText renders the amount as it reads in an "equal to" clause.
-func (HalfPowerOfChosen) CountText() string { return "half its power, rounded down" }
-
-// PowerOfChosen is the full power of the creature in context (ctx.It) — the
-// creature a fight or a ChooseCreatureThen put in context. Mindworm makes the
-// creature it fights deal damage equal to its power to each of its neighbors.
-type PowerOfChosen struct{}
-
-// Value returns the context creature's power, or zero when no creature is in
-// context.
-func (PowerOfChosen) Value(ctx *EffectContext) int {
-	if !ctx.HasIt {
-		return 0
+	power := ctx.Resolver.Power(ctx.It)
+	if e.Of != nil {
+		power = e.Of.lose(power)
 	}
-	return ctx.Resolver.Power(ctx.It)
+	return power
 }
 
-// CountText renders the amount as it reads in an "equal to" clause.
-func (PowerOfChosen) CountText() string { return "its power" }
+// CountText renders the amount as it reads in an "equal to" clause, e.g. "its
+// power" or "half its power, rounded down".
+func (e PowerOfChosen) CountText() string {
+	if p, ok := e.Of.(portionPhraser); ok {
+		return p.countPhrase("its power")
+	}
+	return "its power"
+}
 
 // TraitsOfChosen counts the traits of the creature in context (ctx.It) — the
 // creature a ChooseCreatureThen just picked. Entropic Swirl acts once per trait

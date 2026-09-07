@@ -17,7 +17,7 @@ var LadyMaxena = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 251),
+	card.Provenance(card.CotA, "251"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Knight, card.Traits.Spirit),
 	card.WithAbility(

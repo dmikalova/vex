@@ -14,7 +14,7 @@ var StandardizedTesting = card.New(
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 119),
+	card.Provenance(card.AoA, "119"),
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{
 			Target: card.Target.EachCreature.Selector(card.LowestAndHighestPower),

@@ -21,7 +21,7 @@ var QuixxleStone = card.New(
 	card.House.Staralliance,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 338),
+	card.Provenance(card.WC, "338"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Item),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

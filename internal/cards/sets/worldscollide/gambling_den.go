@@ -21,7 +21,7 @@ var GamblingDen = card.New(
 	card.House.Shadows,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 268),
+	card.Provenance(card.WC, "268"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Location),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

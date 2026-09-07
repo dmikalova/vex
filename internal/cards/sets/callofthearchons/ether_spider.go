@@ -17,7 +17,7 @@ var EtherSpider = card.New(
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 192),
+	card.Provenance(card.CotA, "192"),
 	card.WithPower(7),
 	card.WithTraits(card.Traits.Beast),
 	card.WithAttackDamage(card.AttackDamage{

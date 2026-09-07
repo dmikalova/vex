@@ -17,7 +17,7 @@ var ChalleTheSafeguard = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 216),
+	card.Provenance(card.AoA, "216"),
 	card.WithPower(4),
 	card.WithArmor(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),

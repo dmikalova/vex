@@ -17,7 +17,7 @@ var TheGreyRider = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 226),
+	card.Provenance(card.AoA, "226"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Monk),
 	card.WithKeywords(card.Keyword.Deploy),

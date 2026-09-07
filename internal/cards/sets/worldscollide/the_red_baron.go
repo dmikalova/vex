@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Brobnar
 //	Type:   Creature
-//	Rarity: FIXED
+//	Rarity: Special
 //	Power:  4
 //	Armor:  1
 //	Traits: Cyborg • Pirate
@@ -22,8 +22,9 @@ var TheRedBaron = card.New(
 	"The Red Baron",
 	card.House.Brobnar,
 	card.Type.Creature,
-	card.Rarity.FIXED,
-	card.Provenance(card.WC, 0),
+	// TODO(variant): rarity relabelled from FIXED to Special — handle manually
+	card.Rarity.Special,
+	card.Provenance(card.WC, "A08"),
 	card.WithPower(4),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Pirate),

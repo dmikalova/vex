@@ -16,7 +16,7 @@ var GrenadeSnib = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 34),
+	card.Provenance(card.CotA, "34"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Goblin),
 	card.WithAbility(

@@ -23,7 +23,7 @@ var CALV1N = card.New(
 	card.House.Staralliance,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 308),
+	card.Provenance(card.WC, "308"),
 	card.WithPower(2),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Robot),

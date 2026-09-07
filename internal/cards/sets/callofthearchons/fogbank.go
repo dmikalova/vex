@@ -15,8 +15,8 @@ var Fogbank = card.New(
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 110),
-	card.Provenance(card.CotA, 322),
+	card.Provenance(card.CotA, "110"),
+	card.Provenance(card.CotA, "322"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.CannotFight{

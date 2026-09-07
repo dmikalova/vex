@@ -15,7 +15,7 @@ var JammerPack = card.New(
 	card.House.Mars,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 210),
+	card.Provenance(card.CotA, "210"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{KeyCostChange: card.KeyCostChange(card.Opponent, 2)}),
 )

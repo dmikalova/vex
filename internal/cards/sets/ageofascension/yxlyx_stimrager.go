@@ -17,7 +17,7 @@ var YxlyxStimrager = card.New(
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 209),
+	card.Provenance(card.AoA, "209"),
 	card.WithPower(4),
 	card.WithArmor(2),
 	card.WithTraits(card.Traits.Martian, card.Traits.Soldier),

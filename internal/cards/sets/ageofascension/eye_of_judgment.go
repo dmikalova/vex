@@ -16,7 +16,7 @@ var EyeOfJudgment = card.New(
 	card.House.Sanctum,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 253),
+	card.Provenance(card.AoA, "253"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(

@@ -21,7 +21,7 @@ var IgonTheGreen = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 39),
+	card.Provenance(card.WC, "39"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Giant),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

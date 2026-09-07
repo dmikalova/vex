@@ -21,7 +21,7 @@ var UnchartedLands = card.New(
 	card.House.Staralliance,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 342),
+	card.Provenance(card.WC, "342"),
 	card.WithTraits(card.Traits.Location),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

@@ -1,26 +1,29 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Zap
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Tactic
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Deal 1D to a creature for each house represented among creatures in play.
+//	Play: For each house represented among creatures in play, deal 1 damage to a creature.
 var Zap = card.New(
 	"Zap",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 307),
+	card.Provenance(card.WC, "307"),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.DealDamage{
+			Amount: 1,
+			Per: card.HousesAmong{
+				Player: card.EachPlayer,
+				Type:   card.Type.Creature,
+			},
+			Target: card.Target.Creature,
+		}),
 )

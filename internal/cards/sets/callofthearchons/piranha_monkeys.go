@@ -16,7 +16,7 @@ var PiranhaMonkeys = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 365),
+	card.Provenance(card.CotA, "365"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Beast),
 	card.WithPlayReap(card.DealDamage{

@@ -16,7 +16,7 @@ var CybergiantRig = card.New(
 	card.House.Brobnar,
 	card.Type.Upgrade,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 37),
+	card.Provenance(card.AoA, "37"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{{

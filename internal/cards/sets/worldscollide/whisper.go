@@ -17,7 +17,7 @@ var Whisper = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 265),
+	card.Provenance(card.WC, "265"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),

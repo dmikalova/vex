@@ -17,7 +17,7 @@ var Gatekeeper = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 260),
+	card.Provenance(card.CotA, "260"),
 	card.WithPower(5),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Knight, card.Traits.Spirit),

@@ -15,7 +15,7 @@ var AncientPower = card.New(
 	card.House.Saurian,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 198),
+	card.Provenance(card.WC, "198"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Ward{

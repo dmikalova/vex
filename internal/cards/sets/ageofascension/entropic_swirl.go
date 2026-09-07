@@ -14,7 +14,7 @@ var EntropicSwirl = card.New(
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 143),
+	card.Provenance(card.AoA, "143"),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseCreatureThen{
 			Target: card.Target.Creature,

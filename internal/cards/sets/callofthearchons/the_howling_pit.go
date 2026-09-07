@@ -15,7 +15,7 @@ var TheHowlingPit = card.New(
 	card.House.Logos,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 135),
+	card.Provenance(card.CotA, "135"),
 	card.WithTraits(card.Traits.Location),
 	card.WithDrawModifier(card.EachPlayer, 1),
 )

@@ -174,7 +174,7 @@ func reprintsBySet() map[string][]card.RegisteredCard {
 		rc, ok := byName[normalizeName(rp.Name)]
 		if !ok {
 			panic(fmt.Sprintf(
-				"cards: %s reprint #%d refers to %q, which no set implements",
+				"cards: %s reprint #%s refers to %q, which no set implements",
 				rp.Set.Name, rp.Number, rp.Name,
 			))
 		}

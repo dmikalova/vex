@@ -17,7 +17,7 @@ var RhetorGallim = card.New(
 	card.House.Saurian,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 192),
+	card.Provenance(card.WC, "192"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Philosopher),
 	card.WithAbility(

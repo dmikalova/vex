@@ -17,7 +17,7 @@ var MabTheMad = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 378),
+	card.Provenance(card.WC, "378"),
 	card.WithPower(2),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Faerie),

@@ -16,7 +16,7 @@ var XenosBloodshadow = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 404),
+	card.Provenance(card.WC, "404"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Human, card.Traits.Witch),
 	card.WithKeywords(card.Keyword.Elusive, card.Keyword.Poison, card.Keyword.Skirmish),

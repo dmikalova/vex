@@ -13,10 +13,10 @@ import (
 //	Type:   Upgrade
 //	Rarity: Uncommon
 //
-//	This creature gains, "Your opponent's keys cost +1 Æmber for each house represented among friendly creatures (to a maximum of 3)."
+//	This creature gains, "Your opponent's keys cost +1 Æmber for each house represented among friendly creatures."
 func TestQuadracorder(t *testing.T) {
 	t.Run(
-		"charges the opponent 1 more per house among friendly creatures, capped at 3",
+		"charges the opponent 1 more per house among friendly creatures",
 		func(t *testing.T) {
 			var mars, logos, shadows, brobnar ct.Card
 			h := ct.Play(t, ct.Setup{
@@ -34,9 +34,9 @@ func TestQuadracorder(t *testing.T) {
 				},
 			})
 
-			// Mars, Logos, Shadows, Brobnar = 4 houses, capped at 3, so +3.
-			if got := h.Game().CurrentKeyCost(1); got != 9 {
-				t.Errorf("opponent key cost with four houses = %d, want 9", got)
+			// Mars, Logos, Shadows, Brobnar = 4 houses, so +4.
+			if got := h.Game().CurrentKeyCost(1); got != 10 {
+				t.Errorf("opponent key cost with four houses = %d, want 10", got)
 			}
 			if got := h.Game().CurrentKeyCost(0); got != 6 {
 				t.Errorf("the controller's own key cost = %d, want 6", got)
@@ -44,7 +44,7 @@ func TestQuadracorder(t *testing.T) {
 		},
 	)
 
-	t.Run("scales below the cap with fewer houses", func(t *testing.T) {
+	t.Run("scales with fewer houses", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
 				House: card.House.StarAlliance,

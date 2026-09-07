@@ -17,7 +17,7 @@ var Harmonia = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 357),
+	card.Provenance(card.WC, "357"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Witch),
 	card.WithKeywords(card.Keyword.Elusive),

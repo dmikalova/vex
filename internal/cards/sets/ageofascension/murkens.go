@@ -18,7 +18,7 @@ var Murkens = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 290),
+	card.Provenance(card.AoA, "290"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithAbility(

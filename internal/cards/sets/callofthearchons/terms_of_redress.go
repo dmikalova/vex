@@ -15,7 +15,7 @@ var TermsOfRedress = card.New(
 	card.House.Sanctum,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 227),
+	card.Provenance(card.CotA, "227"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.CaptureAember{

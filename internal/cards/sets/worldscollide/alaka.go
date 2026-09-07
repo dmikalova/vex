@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Alaka
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Brobnar
 //	Type:   Creature
@@ -21,8 +16,11 @@ var Alaka = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 1),
+	card.Provenance(card.WC, "1"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Giant),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithEntersPlay(card.Conditional{
+		Cond: card.UsedCreatureToFight{},
+		Then: card.Ready{Target: card.Target.This},
+	}),
 )

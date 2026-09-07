@@ -531,6 +531,40 @@ key"` or `"draw cards"` part of the turn writes `phase`, where KeyForge writes
 
 ---
 
+## 29. Fight timing is named `in a fight with`
+
+The moment a fight exchanges power damage between two combatants is written as
+`in a fight with <creature>`, Vactrol's one phrase for that timing window.
+KeyForge names it several ways — `fighting`, `while fighting`, `during a fight` —
+and Vactrol collapses them to one, so a trigger that fires on the destruction of
+the other combatant reads the same on every card.
+
+| Original                                          | Curated                                                  |
+| ------------------------------------------------- | -------------------------------------------------------- |
+| `After a creature is destroyed fighting Krump, …` | `After a creature is destroyed in a fight with Krump, …` |
+
+(Affected: Krump.)
+
+---
+
+## 30. A count cap is dropped — no `(to a maximum of N)` clause
+
+A `for each` count that KeyForge caps prints the cap in parentheses — `gain 1
+Æmber (to a maximum of 6) for each house …`. Vactrol drops the cap entirely: the
+count is uncapped and the clause is not rendered, so the "for each" sentence
+reads clean. This is a deliberate rules divergence, not just a wording change
+(see `keyforge-divergences.md`).
+
+| Original                                                                             | Curated                                                          |
+| ------------------------------------------------------------------------------------ | ---------------------------------------------------------------- |
+| `for each house represented among cards in play, gain 1 Æmber, to a maximum of 6`    | `for each house represented among cards in play, gain 1 Æmber`   |
+| `steal 1 Æmber for each house represented among enemy creatures (to a maximum of 3)` | `steal 1 Æmber for each house represented among enemy creatures` |
+
+(Affected: Free Markets, Forging an Alliance, Trust No One, and the reprints
+that share their text.)
+
+---
+
 ## Deliberate rule changes (not just wording)
 
 A few cards diverge from KeyForge in ways that affect the rules, not just

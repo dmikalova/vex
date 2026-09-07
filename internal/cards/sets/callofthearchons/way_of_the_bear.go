@@ -15,7 +15,7 @@ var WayOfTheBear = card.New(
 	card.House.Untamed,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 369),
+	card.Provenance(card.CotA, "369"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{AssaultBonus: 2}),
 )

@@ -17,7 +17,7 @@ var DeipnoSpymaster = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 299),
+	card.Provenance(card.CotA, "299"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive, card.Keyword.Versatile),

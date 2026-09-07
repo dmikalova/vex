@@ -7,7 +7,7 @@ import (
 
 func TestPutIntoPlay(t *testing.T) {
 	t.Run("text", func(t *testing.T) {
-		if got := (PutIntoPlay{Target: Target{Kind: TargetTriggeringCreature}, UnderYourControl: true}).Text(); got != "put it into play under your control" {
+		if got := (PutIntoPlay{Target: Target{Kind: TargetTriggeringCreature}, Control: ControlYours}).Text(); got != "put it into play under your control" {
 			t.Errorf("text = %q", got)
 		}
 		if got := (PutIntoPlay{Target: Target{Kind: TargetTriggeringCreature}}).Text(); got != "put it into play" {
@@ -32,8 +32,8 @@ func TestPutIntoPlay(t *testing.T) {
 			ctx := &EffectContext{Resolver: g, Controller: 0, It: foe, HasIt: true}
 
 			PutIntoPlay{
-				Target:           Target{Kind: TargetTriggeringCreature},
-				UnderYourControl: true,
+				Target:  Target{Kind: TargetTriggeringCreature},
+				Control: ControlYours,
 			}.Resolve(
 				ctx,
 			)
@@ -71,8 +71,8 @@ func TestPutIntoPlay(t *testing.T) {
 		ctx := &EffectContext{Resolver: g, Controller: 0, It: art, HasIt: true}
 
 		PutIntoPlay{
-			Target:           Target{Kind: TargetTriggeringCreature},
-			UnderYourControl: true,
+			Target:  Target{Kind: TargetTriggeringCreature},
+			Control: ControlYours,
 		}.Resolve(
 			ctx,
 		)

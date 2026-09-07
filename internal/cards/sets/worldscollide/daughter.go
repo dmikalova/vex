@@ -22,7 +22,7 @@ var Daughter = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 131),
+	card.Provenance(card.WC, "131"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Scientist),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

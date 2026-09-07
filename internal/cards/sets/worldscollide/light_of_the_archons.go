@@ -20,7 +20,7 @@ var LightOfTheArchons = card.New(
 	card.House.Staralliance,
 	card.Type.Upgrade,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 300),
+	card.Provenance(card.WC, "300"),
 	card.WithAemberBonus(1),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

@@ -15,7 +15,7 @@ var EMPBlast = card.New(
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 163),
+	card.Provenance(card.CotA, "163"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{

@@ -15,7 +15,7 @@ var MassAbduction = card.New(
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 169),
+	card.Provenance(card.CotA, "169"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.PutChosen{

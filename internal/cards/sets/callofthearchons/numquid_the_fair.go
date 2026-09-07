@@ -16,7 +16,7 @@ var NumquidTheFair = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 253),
+	card.Provenance(card.CotA, "253"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human),
 	card.WithAbility(card.Trigger.Play, card.RepeatOnCondition{

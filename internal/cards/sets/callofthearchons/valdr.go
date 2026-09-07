@@ -16,7 +16,7 @@ var Valdr = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 29),
+	card.Provenance(card.CotA, "29"),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Giant),
 	card.WithAttackDamage(card.AttackDamage{

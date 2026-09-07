@@ -35,7 +35,7 @@ calls in `init()`:
 package ageofascension
 
 func init() {
-    card.Reprint(card.AoA, 359, "Mighty Tiger")
+    card.Reprint(card.AoA, "359", "Mighty Tiger")
     // ... every AoA card implemented in an earlier set, by collector number ...
 }
 ```

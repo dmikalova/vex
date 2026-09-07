@@ -14,7 +14,7 @@ var Warsong = card.New(
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 18),
+	card.Provenance(card.CotA, "18"),
 	card.WithAbility(
 		card.Trigger.Play, card.ForRemainderOfTurn{
 			On: card.Event.Fight,

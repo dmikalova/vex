@@ -16,7 +16,7 @@ var Grovekeeper = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 324),
+	card.Provenance(card.AoA, "324"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human, card.Traits.Witch),
 	card.WithAbility(

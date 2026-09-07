@@ -17,7 +17,7 @@ var AbondTheArmorsmith = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 212),
+	card.Provenance(card.AoA, "212"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human),
 	card.WithConstant(card.ConstantAbility{

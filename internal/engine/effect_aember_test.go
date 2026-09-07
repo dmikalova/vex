@@ -90,28 +90,10 @@ func TestGainAemberPerArchivedCards(t *testing.T) {
 func TestGainAemberMax(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-	e := GainAember{Player: Controller, Amount: 1, Per: Fixed(5), Max: 2}
-	if !strings.Contains(e.Text(), "to a maximum of 2 Æmber") {
-		t.Errorf("text = %q", e.Text())
-	}
+	e := GainAember{Player: Controller, Amount: 1, Per: Fixed(5)}
 	e.Resolve(ctx)
-	if g.Aember(0) != 2 {
-		t.Errorf("aember = %d, want 2 (capped)", g.Aember(0))
-	}
-	// Below the cap, the full amount is gained.
-	e2 := GainAember{Player: Controller, Amount: 1, Per: Fixed(1), Max: 5}
-	e2.Resolve(ctx)
-	if g.Aember(0) != 3 {
-		t.Errorf("aember = %d, want 3", g.Aember(0))
-	}
-}
-
-func TestGainAemberMaxRequiresPer(t *testing.T) {
-	if (GainAember{Player: Controller, Max: 2}).validate() == nil {
-		t.Error("Max without Per should be rejected")
-	}
-	if err := (GainAember{Player: Controller, Amount: 1, Per: Fixed(1), Max: 2}).validate(); err != nil {
-		t.Errorf("Max with Per should validate, got %v", err)
+	if g.Aember(0) != 5 {
+		t.Errorf("aember = %d, want 5 (uncapped)", g.Aember(0))
 	}
 }
 
@@ -210,7 +192,7 @@ func TestGainAemberEqualToAndHalfPower(t *testing.T) {
 	beefy := g.AddToBattleline(testCreature("beefy", 5), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0, It: beefy, HasIt: true}
 
-	e := GainAemberEqualTo{Player: Controller, Count: HalfPowerOfChosen{}}
+	e := GainAemberEqualTo{Player: Controller, Count: PowerOfChosen{Of: Half}}
 	if got := e.Text(); got != "gain Æmber equal to half its power, rounded down" {
 		t.Errorf("text = %q", got)
 	}
@@ -220,36 +202,38 @@ func TestGainAemberEqualToAndHalfPower(t *testing.T) {
 	}
 
 	// With no creature in context the count is zero and nothing is gained.
-	if got := (HalfPowerOfChosen{}).Value(&EffectContext{Resolver: g, Controller: 0}); got != 0 {
-		t.Errorf("HalfPowerOfChosen with no It = %d, want 0", got)
+	if got := (PowerOfChosen{Of: Half}).Value(
+		&EffectContext{Resolver: g, Controller: 0},
+	); got != 0 {
+		t.Errorf("PowerOfChosen{Of: Half} with no It = %d, want 0", got)
 	}
-	if got := (HalfPowerOfChosen{}).CountText(); got != "half its power, rounded down" {
+	if got := (PowerOfChosen{Of: Half}).CountText(); got != "half its power, rounded down" {
 		t.Errorf("count text = %q", got)
 	}
 
 	// The opponent form uses the "your opponent gains" verb.
-	if got := (GainAemberEqualTo{Player: Opponent, Count: HalfPowerOfChosen{}}).Text(); got !=
+	if got := (GainAemberEqualTo{Player: Opponent, Count: PowerOfChosen{Of: Half}}).Text(); got !=
 		"your opponent gains Æmber equal to half its power, rounded down" {
 		t.Errorf("opponent text = %q", got)
 	}
 	// The each-player form uses the "each player gains" verb.
-	if got := (GainAemberEqualTo{Player: EachPlayer, Count: HalfPowerOfChosen{}}).Text(); got !=
+	if got := (GainAemberEqualTo{Player: EachPlayer, Count: PowerOfChosen{Of: Half}}).Text(); got !=
 		"each player gains Æmber equal to half its power, rounded down" {
 		t.Errorf("each-player text = %q", got)
 	}
 	// Validation rejects an unset player or count, and accepts a fully set effect.
-	if (GainAemberEqualTo{Count: HalfPowerOfChosen{}}).validate() == nil {
+	if (GainAemberEqualTo{Count: PowerOfChosen{Of: Half}}).validate() == nil {
 		t.Error("unset player should be rejected")
 	}
 	if (GainAemberEqualTo{Player: Controller}).validate() == nil {
 		t.Error("unset count should be rejected")
 	}
-	if (GainAemberEqualTo{Player: Controller, Count: HalfPowerOfChosen{}}).validate() != nil {
+	if (GainAemberEqualTo{Player: Controller, Count: PowerOfChosen{Of: Half}}).validate() != nil {
 		t.Error("a fully set effect should be valid")
 	}
 	// With no creature in context the count is zero and nothing is gained.
 	before := g.State.Aember[0]
-	GainAemberEqualTo{Player: Controller, Count: HalfPowerOfChosen{}}.Resolve(
+	GainAemberEqualTo{Player: Controller, Count: PowerOfChosen{Of: Half}}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
 	)
 	if g.State.Aember[0] != before {
@@ -263,7 +247,7 @@ func TestGainAemberEqualToCaptured(t *testing.T) {
 	g := started(t)
 	src := g.AddToBattleline(testCreature("src", 4), 0)
 	spider := g.AddToBattleline(testEtherSpider(), 1)
-	GainAemberEqualTo{Player: Controller, Count: HalfPowerOfChosen{}}.Resolve(
+	GainAemberEqualTo{Player: Controller, Count: PowerOfChosen{Of: Half}}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0, It: src, HasIt: true},
 	)
 	if g.Aember(0) != 0 {

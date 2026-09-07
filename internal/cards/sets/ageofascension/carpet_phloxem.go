@@ -15,7 +15,7 @@ var CarpetPhloxem = card.New(
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 161),
+	card.Provenance(card.AoA, "161"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{

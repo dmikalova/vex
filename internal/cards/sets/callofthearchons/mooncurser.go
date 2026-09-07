@@ -17,7 +17,7 @@ var Mooncurser = card.New(
 	card.House.Shadows,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 304),
+	card.Provenance(card.CotA, "304"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Skirmish, card.Keyword.Poison),

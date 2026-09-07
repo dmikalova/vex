@@ -16,7 +16,7 @@ var HebeTheHuge = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 36),
+	card.Provenance(card.CotA, "36"),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Giant, card.Traits.Knight),
 	card.WithAbility(

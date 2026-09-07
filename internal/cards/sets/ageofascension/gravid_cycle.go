@@ -16,7 +16,7 @@ var GravidCycle = card.New(
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 354),
+	card.Provenance(card.AoA, "354"),
 	card.WithAemberBonus(1),
 	card.WithKeywords(card.Keyword.Omega),
 	card.WithAbility(

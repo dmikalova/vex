@@ -16,7 +16,7 @@ var MarmoSwarm = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 327),
+	card.Provenance(card.AoA, "327"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Beast),
 	card.WithConstant(card.ConstantAbility{

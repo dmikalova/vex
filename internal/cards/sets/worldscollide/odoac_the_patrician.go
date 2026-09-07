@@ -22,7 +22,7 @@ var OdoacThePatrician = card.New(
 	card.House.Saurian,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 188),
+	card.Provenance(card.WC, "188"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Politician),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

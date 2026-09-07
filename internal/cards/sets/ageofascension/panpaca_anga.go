@@ -16,7 +16,7 @@ var PanpacaAnga = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 347),
+	card.Provenance(card.AoA, "347"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Beast),
 	card.WithConstant(card.ConstantAbility{

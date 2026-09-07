@@ -15,7 +15,7 @@ var Earthbind = card.New(
 	card.House.Untamed,
 	card.Type.Upgrade,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 352),
+	card.Provenance(card.AoA, "352"),
 	card.WithAemberBonus(1),
 	card.WithRestrictions(card.Restrictions{
 		UseCondition: card.CardsDiscarded{

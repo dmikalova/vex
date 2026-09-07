@@ -14,7 +14,7 @@ var AxiomOfGrisk = card.New(
 	card.House.Saurian,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 182),
+	card.Provenance(card.WC, "182"),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.Ward{Target: card.Target.Creature},

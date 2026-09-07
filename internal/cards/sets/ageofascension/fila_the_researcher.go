@@ -17,7 +17,7 @@ var FilaTheResearcher = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 129),
+	card.Provenance(card.AoA, "129"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
 	card.WithKeywords(card.Keyword.Elusive),

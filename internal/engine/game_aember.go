@@ -92,3 +92,28 @@ func (g *Game) aemberCaptorFor(player int) (LocalID, bool) {
 	}
 	return chosen, true
 }
+
+// AemberTakenFromSupply reports whether Æmber a steal or capture takes from
+// player's pool is drawn from the common supply instead, leaving the pool
+// untouched (Po's Pixies). It is the source half of the Æmber-flow replacement
+// spine, the mirror of aemberCaptorFor on the destination half: it reads the
+// continuous replacement each in-play card carries (Replaces), scoped to the pool
+// it watches, rather than a bespoke flag.
+func (g *Game) AemberTakenFromSupply(player int) bool {
+	for p := 0; p < 2; p++ {
+		for _, id := range g.allInPlay(p) {
+			r := g.cat.def(id).Replaces
+			if r.Of != EventAemberTakenFromPool || r.With != FromCommonSupply {
+				continue
+			}
+			pool := p
+			if r.Player == Opponent {
+				pool = 1 - p
+			}
+			if pool == player {
+				return true
+			}
+		}
+	}
+	return false
+}

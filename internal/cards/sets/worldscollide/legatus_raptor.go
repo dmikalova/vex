@@ -17,7 +17,7 @@ var LegatusRaptor = card.New(
 	card.House.Saurian,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 187),
+	card.Provenance(card.WC, "187"),
 	card.WithPower(4),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Soldier),

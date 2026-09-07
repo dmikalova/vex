@@ -15,7 +15,7 @@ var UniversalTranslator = card.New(
 	card.House.StarAlliance,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 322),
+	card.Provenance(card.WC, "322"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightOrReap(card.Use{

@@ -15,7 +15,7 @@ var SubtleChain = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 262),
+	card.Provenance(card.WC, "262"),
 	// TODO(duplicate): mechanically identical to Mind Barb (Dis) — fold/handle manually.
 	card.WithAemberBonus(1),
 	card.WithAbility(

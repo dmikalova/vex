@@ -16,7 +16,7 @@ var SergeantZakiel = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 258),
+	card.Provenance(card.CotA, "258"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),
 	card.WithAbility(

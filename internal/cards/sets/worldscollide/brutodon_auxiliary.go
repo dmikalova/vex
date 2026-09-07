@@ -16,7 +16,7 @@ var BrutodonAuxiliary = card.New(
 	card.House.Saurian,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 183),
+	card.Provenance(card.WC, "183"),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Beast),
 	card.WithKeywords(card.Keyword.Taunt),

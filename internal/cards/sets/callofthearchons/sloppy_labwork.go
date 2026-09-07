@@ -15,7 +15,7 @@ var SloppyLabwork = card.New(
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 123),
+	card.Provenance(card.CotA, "123"),
 	card.WithAemberBonus(1),
 	card.WithAbility(card.Trigger.Play, card.Sentences{
 		Effects: []card.Effect{

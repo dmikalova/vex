@@ -272,10 +272,11 @@ func (g *game) install(
 	rosters [2]match.Roster,
 ) {
 	ch := &webChooser{
-		g:           g,
-		reply:       make(chan chooseReply, 1),
-		optionReply: make(chan int, 1),
-		cancel:      make(chan struct{}),
+		g:             g,
+		reply:         make(chan chooseReply, 1),
+		optionReply:   make(chan int, 1),
+		positionReply: make(chan int, 1),
+		cancel:        make(chan struct{}),
 	}
 	eg.SetChooser(0, ch)
 	eg.SetChooser(1, ch)

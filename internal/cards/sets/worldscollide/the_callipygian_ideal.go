@@ -20,6 +20,6 @@ var TheCallipygianIdeal = card.New(
 	card.House.Saurian,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 212),
+	card.Provenance(card.WC, "212"),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

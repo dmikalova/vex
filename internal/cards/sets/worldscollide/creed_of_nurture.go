@@ -20,7 +20,7 @@ var CreedOfNurture = card.New(
 	card.House.Untamed,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 386),
+	card.Provenance(card.WC, "386"),
 	card.WithTraits(card.Traits.Power),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

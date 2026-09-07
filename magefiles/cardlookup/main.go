@@ -29,6 +29,12 @@
 //	next-card [setSlug]  Print the next unimplemented card whose stub still carries
 //	                     the `//go:build todo` constraint, in collector-number
 //	                     order — the card to build next.
+//
+//	import-provenance [setSlug|all]
+//	                     Rebuild a set's source catalog (…/provenance/<slug>.json)
+//	                     from the Master Vault decks feed, ASCII-folding names and
+//	                     text and expanding the amber/damage markup. With no set it
+//	                     opens a picker offering every set plus "All sets".
 package main
 
 import (
@@ -36,6 +42,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
 	"github.com/charmbracelet/x/term"
@@ -75,6 +82,8 @@ func run(args []string) error {
 		return stub(args[1:])
 	case "next-card":
 		return nextCard(args[1:])
+	case "import-provenance":
+		return importProvenance(args[1:])
 	default:
 		return usage()
 	}
@@ -83,7 +92,8 @@ func run(args []string) error {
 func usage() error {
 	return fmt.Errorf(
 		"usage: cardlookup <lookup <query> | missing [setSlug] | " +
-			"coverage [-new] | stub <setSlug> | next-card [setSlug]>",
+			"coverage [-new] | stub <setSlug> | next-card [setSlug] | " +
+			"import-provenance [setSlug|all]>",
 	)
 }
 
@@ -112,7 +122,7 @@ func lookup(args []string) error {
 // printCard renders one source card as an aligned block, ending with a ready-made
 // card.Provenance call for the definition.
 func printCard(set provenance.SourceSet, c provenance.Card) {
-	fmt.Printf("%s #%d  %s\n", set.Code, c.Number, c.Name)
+	fmt.Printf("%s #%s  %s\n", set.Code, c.Number, c.Name)
 	fmt.Printf("  House:  %s\n", c.House)
 	fmt.Printf("  Type:   %s\n", c.Type)
 	fmt.Printf("  Rarity: %s\n", c.Rarity)
@@ -134,7 +144,7 @@ func printCard(set provenance.SourceSet, c provenance.Card) {
 	if c.Text != "" {
 		fmt.Printf("  Text:   %s\n", strings.ReplaceAll(c.Text, "\n", "\n          "))
 	}
-	fmt.Printf("  Provenance: card.Provenance(card.%s, %d)\n\n", provCodeVar(set), c.Number)
+	fmt.Printf("  Provenance: card.Provenance(card.%s, %q)\n\n", provCodeVar(set), c.Number)
 }
 
 // provCodeVar maps a source set to the card-facade variable that names it (card.CotA,
@@ -156,11 +166,11 @@ func provCodeVar(set provenance.SourceSet) string {
 // printing it was built from (e.g. Labwork's CotA #114 and #271) — its reprints
 // in later sets are covered by name without a per-set Ref, and a card renamed
 // away from its printed name still covers its printings through the Ref.
-func coveredNumbers() map[string]map[int]bool {
-	covered := map[string]map[int]bool{}
-	mark := func(slug string, number int) {
+func coveredNumbers() map[string]map[string]bool {
+	covered := map[string]map[string]bool{}
+	mark := func(slug string, number string) {
 		if covered[slug] == nil {
-			covered[slug] = map[int]bool{}
+			covered[slug] = map[string]bool{}
 		}
 		covered[slug][number] = true
 	}
@@ -169,7 +179,7 @@ func coveredNumbers() map[string]map[int]bool {
 	implemented := map[string]bool{}
 	for _, rc := range card.Cards() {
 		for _, ref := range rc.Provenance {
-			if name, ok := refName[ref]; ok {
+			if name, ok := refName[refKey(ref)]; ok {
 				implemented[normalizeName(name)] = true
 			}
 		}
@@ -186,15 +196,35 @@ func coveredNumbers() map[string]map[int]bool {
 
 // sourceNameByRef maps every source printing (set + collector number) to its
 // catalog card name, so a card's provenance Ref can be resolved to the name of
-// the source card it was built from.
+// the source card it was built from. Refs are keyed through refKey so a call-site
+// number ("4") matches its zero-padded catalog form ("004").
 func sourceNameByRef() map[provenance.Ref]string {
 	out := map[provenance.Ref]string{}
 	for _, set := range provenance.Sets() {
 		for _, c := range set.Cards {
-			out[provenance.Ref{Set: set.SourceSet, Number: c.Number}] = c.Name
+			out[refKey(provenance.Ref{Set: set.SourceSet, Number: c.Number})] = c.Name
 		}
 	}
 	return out
+}
+
+// refKey canonicalizes a Ref's collector number so a call-site number and its
+// catalog form resolve to the same key: an all-digit number drops its leading
+// zeros ("004" and "4" both become "4"), a lettered reference number is left as
+// is ("S01", "A21").
+func refKey(ref provenance.Ref) provenance.Ref {
+	ref.Number = normNumber(ref.Number)
+	return ref
+}
+
+// normNumber canonicalizes a collector number: an all-digit number is reduced to
+// its integer form ("004" -> "4"), and any number with a letter is returned
+// unchanged ("S01", "A21", "P07").
+func normNumber(s string) string {
+	if n, err := strconv.Atoi(s); err == nil {
+		return strconv.Itoa(n)
+	}
+	return s
 }
 
 // normalizeName folds a card name to a case- and space-insensitive key so an
@@ -356,7 +386,7 @@ func coverage(args []string) error {
 	}
 	_ = cards.All()
 	covered := coveredNumbers()
-	var introduced map[string]map[int]bool
+	var introduced map[string]map[string]bool
 	if newOnly {
 		introduced = newNumbers()
 	}
@@ -385,9 +415,9 @@ func coverage(args []string) error {
 // set introduces: a card whose name first appears in that set walking the sets in
 // release order. A card reprinted from an earlier set is left out, so the count is
 // the set's own new cards rather than everything it prints.
-func newNumbers() map[string]map[int]bool {
+func newNumbers() map[string]map[string]bool {
 	seen := map[string]bool{}
-	introduced := map[string]map[int]bool{}
+	introduced := map[string]map[string]bool{}
 	for _, set := range provenance.Sets() {
 		for _, c := range set.Cards {
 			key := normalizeName(c.Name)
@@ -396,7 +426,7 @@ func newNumbers() map[string]map[int]bool {
 			}
 			seen[key] = true
 			if introduced[set.Slug] == nil {
-				introduced[set.Slug] = map[int]bool{}
+				introduced[set.Slug] = map[string]bool{}
 			}
 			introduced[set.Slug][c.Number] = true
 		}

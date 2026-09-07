@@ -16,8 +16,8 @@ var TheVaultkeeper = card.New(
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 261),
+	card.Provenance(card.CotA, "261"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Knight, card.Traits.Spirit),
-	card.WithAemberTheftImmunity(),
+	card.WithAemberCannotBeStolen(),
 )

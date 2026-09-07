@@ -16,7 +16,7 @@ var NeutronShark = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 146),
+	card.Provenance(card.CotA, "146"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Beast, card.Traits.Mutant),
 	card.WithPlayFightReap(card.RepeatOnCondition{

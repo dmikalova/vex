@@ -17,7 +17,7 @@ var PrescriptiveGrammarbot = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 173),
+	card.Provenance(card.WC, "173"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Robot),
 	card.WithKeywords(card.Keyword.Taunt),

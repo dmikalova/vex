@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Brobnar
 //	Type:   Artifact
-//	Rarity: FIXED
+//	Rarity: Special
 //	Traits: Item
 //
 //	Omni: Sacrifice Orb of Wonder. If you do, search your deck for a card and add it to your hand. Then, shuffle your deck.
@@ -19,8 +19,9 @@ var OrbOfWonder = card.New(
 	"Orb of Wonder",
 	card.House.Brobnar,
 	card.Type.Artifact,
-	card.Rarity.FIXED,
-	card.Provenance(card.WC, 0),
+	// TODO(variant): rarity relabelled from FIXED to Special — handle manually
+	card.Rarity.Special,
+	card.Provenance(card.WC, "A06"),
 	card.WithTraits(card.Traits.Item),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

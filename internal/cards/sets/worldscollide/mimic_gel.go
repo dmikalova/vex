@@ -22,7 +22,7 @@ var MimicGel = card.New(
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 170),
+	card.Provenance(card.WC, "170"),
 	card.WithPower(0),
 	card.WithTraits(card.Traits.Shapeshifter, card.Traits.Mutant),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

@@ -210,8 +210,72 @@ func TestCancellingTheFlankPrompt(t *testing.T) {
 	}
 }
 
-// While placing a creature, l and r commit a flank on their own rather than
-// moving the selection, so a deliberate press needs no second key to confirm it.
+// A Deploy creature skips the flank prompt and instead raises the click-to-place
+// position prompt: the player clicks a battleline creature to land beside it, on
+// the side the direction toggle arms, or takes a flank button. These drive the
+// answer handlers directly against a staged prompt (the state ChoosePosition
+// posts), so no background goroutine is needed to test the click-to-position map.
+func TestDeployPlacementByClick(t *testing.T) {
+	stage := func(t *testing.T) (*client, []engine.LocalID) {
+		t.Helper()
+		c := newClient(t)
+		c.manualTurn(testHouse)
+		c.playFromHand(c.deal(testCreature))
+		c.playFromHand(c.deal(testCreature))
+		line := c.board()
+		c.g.choosingPosition = true
+		c.g.positionLine = line
+		c.g.positionRight = false
+		return c, line
+	}
+	answered := func(t *testing.T, c *client) int {
+		t.Helper()
+		select {
+		case pos := <-c.g.chooser.positionReply:
+			return pos
+		default:
+			t.Fatal("the placement handler sent no position")
+			return -1
+		}
+	}
+
+	t.Run("clicking a creature deploys to its left by default", func(t *testing.T) {
+		c, line := stage(t)
+		c.g.choosePositionCandidate(c.ctx, line[1]) // before the second creature
+		if got := answered(t, c); got != 1 {
+			t.Errorf("deploy-left of index 1 = position %d, want 1", got)
+		}
+	})
+
+	t.Run("arming deploy right places after the clicked creature", func(t *testing.T) {
+		c, line := stage(t)
+		c.do(c.g.setPositionDir(true))
+		c.g.choosePositionCandidate(c.ctx, line[0]) // after the first creature
+		if got := answered(t, c); got != 1 {
+			t.Errorf("deploy-right of index 0 = position %d, want 1", got)
+		}
+	})
+
+	t.Run("the flank buttons answer the ends of the line", func(t *testing.T) {
+		c, line := stage(t)
+		c.do(c.g.choosePositionFlank(false)) // right flank
+		if got := answered(t, c); got != len(line) {
+			t.Errorf("the right flank = position %d, want %d", got, len(line))
+		}
+	})
+
+	t.Run("clicking a creature not on the line is ignored", func(t *testing.T) {
+		c, _ := stage(t)
+		offLine := c.deal(testCreature) // in hand, not on the battleline
+		c.g.choosePositionCandidate(c.ctx, offLine)
+		select {
+		case <-c.g.chooser.positionReply:
+			t.Fatal("an off-line click answered the prompt")
+		default:
+		}
+	})
+}
+
 func TestFlankKeys(t *testing.T) {
 	for _, tt := range []struct {
 		key  string

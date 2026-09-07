@@ -15,7 +15,7 @@ var DuskChronicles = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 268),
+	card.Provenance(card.AoA, "268"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{

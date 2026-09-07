@@ -15,7 +15,7 @@ var BattleFleet = card.New(
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 161),
+	card.Provenance(card.CotA, "161"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{

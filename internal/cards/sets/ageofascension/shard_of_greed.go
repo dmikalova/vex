@@ -15,7 +15,7 @@ var ShardOfGreed = card.New(
 	card.House.Shadows,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 315),
+	card.Provenance(card.AoA, "315"),
 	card.WithTraits(card.Traits.Item, card.Traits.Shard),
 	card.WithAbility(
 		card.Trigger.Action, card.GainAember{

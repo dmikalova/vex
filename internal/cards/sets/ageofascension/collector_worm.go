@@ -17,7 +17,7 @@ var CollectorWorm = card.New(
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 162),
+	card.Provenance(card.AoA, "162"),
 	card.WithPower(2),
 	card.WithArmor(5),
 	card.WithTraits(card.Traits.Beast),

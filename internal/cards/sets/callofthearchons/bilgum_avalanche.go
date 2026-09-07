@@ -16,7 +16,7 @@ var BilgumAvalanche = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 28),
+	card.Provenance(card.CotA, "28"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(

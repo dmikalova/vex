@@ -6,7 +6,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Star Alliance
 //	Type:   Upgrade
-//	Rarity: Rare
+//	Rarity: Special
 //	Æmber:  1
 //
 //	This creature gains, "Fight/Reap: You may choose one:
@@ -16,9 +16,9 @@ var KhrkharsBlaster = card.New(
 	"Khrkhar's Blaster",
 	card.House.StarAlliance,
 	card.Type.Upgrade,
-	// TODO(variant): rarity relabelled from Variant to Rare — handle manually
-	card.Rarity.Rare,
-	card.Provenance(card.WC, 349),
+	// TODO(variant): rarity relabelled from Variant to Special — handle manually
+	card.Rarity.Special,
+	card.Provenance(card.WC, "349"),
 	card.WithAemberBonus(1),
 	card.Connects(card.Pull(LieutenantKhrkhar, 1)),
 	card.WithStatic(card.StaticModifier{

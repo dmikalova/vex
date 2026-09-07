@@ -15,7 +15,7 @@ var MartyrsEnd = card.New(
 	card.House.Sanctum,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.AoA, 255),
+	card.Provenance(card.AoA, "255"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{

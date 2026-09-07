@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Brobnar
 //	Type:   Creature
-//	Rarity: FIXED
+//	Rarity: Special
 //	Power:  8
 //	Traits: Giant
 //
@@ -20,8 +20,9 @@ var MegaMogghunter = card.New(
 	"Mega Mogghunter",
 	card.House.Brobnar,
 	card.Type.Creature,
-	card.Rarity.FIXED,
-	card.Provenance(card.WC, 59),
+	// TODO(variant): rarity relabelled from FIXED to Special — handle manually
+	card.Rarity.Special,
+	card.Provenance(card.WC, "59"),
 	card.WithPower(8),
 	card.WithTraits(card.Traits.Giant),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

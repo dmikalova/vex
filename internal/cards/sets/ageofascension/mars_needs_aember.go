@@ -15,7 +15,7 @@ var MarsNeedsAember = card.New(
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 166),
+	card.Provenance(card.AoA, "166"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.CaptureAember{

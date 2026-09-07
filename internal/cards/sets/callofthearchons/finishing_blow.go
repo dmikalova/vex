@@ -15,7 +15,7 @@ var FinishingBlow = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 269),
+	card.Provenance(card.CotA, "269"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Then{

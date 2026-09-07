@@ -22,7 +22,7 @@ var StiltKin = card.New(
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.WC, 14),
+	card.Provenance(card.WC, "14"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Goblin),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

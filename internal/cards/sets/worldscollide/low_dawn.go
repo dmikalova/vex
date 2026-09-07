@@ -20,7 +20,7 @@ var LowDawn = card.New(
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 377),
+	card.Provenance(card.WC, "377"),
 	card.WithAemberBonus(1),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

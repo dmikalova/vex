@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Brobnar
 //	Type:   Creature
-//	Rarity: FIXED
+//	Rarity: Special
 //	Power:  6
 //	Traits: Giant
 //
@@ -20,8 +20,9 @@ var MegaAlaka = card.New(
 	"Mega Alaka",
 	card.House.Brobnar,
 	card.Type.Creature,
-	card.Rarity.FIXED,
-	card.Provenance(card.WC, 54),
+	// TODO(variant): rarity relabelled from FIXED to Special — handle manually
+	card.Rarity.Special,
+	card.Provenance(card.WC, "54"),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Giant),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

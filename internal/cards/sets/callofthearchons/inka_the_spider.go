@@ -17,7 +17,7 @@ var InkaTheSpider = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 356),
+	card.Provenance(card.CotA, "356"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Beast),
 	card.WithKeywords(card.Keyword.Poison),

@@ -20,7 +20,7 @@ var CreedOfNature = card.New(
 	card.House.Untamed,
 	card.Type.Artifact,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 385),
+	card.Provenance(card.WC, "385"),
 	card.WithTraits(card.Traits.Power),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

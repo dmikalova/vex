@@ -16,7 +16,7 @@ var BloodshardImp = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 70),
+	card.Provenance(card.AoA, "70"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Imp),
 	card.WithAbility(

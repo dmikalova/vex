@@ -17,7 +17,7 @@ var PanpacaJaga = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.AoA, 348),
+	card.Provenance(card.AoA, "348"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Beast),
 	card.WithKeywords(card.Keyword.Skirmish),

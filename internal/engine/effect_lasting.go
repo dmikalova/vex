@@ -198,6 +198,11 @@ const (
 	// (Ether Spider). It is applied continuously at the add-to-pool site, not through
 	// the turn-scoped lasting registry, so it has no lastingAction.
 	Capture
+	// FromCommonSupply replaces the source of a steal or capture: the Æmber is drawn
+	// from the common supply instead of the target's pool (Po's Pixies). Like Capture
+	// it is applied continuously at the take site, never through the turn-scoped
+	// registry, so it has no lastingAction.
+	FromCommonSupply
 )
 
 // valid reports whether r names a real replacement (not the unset zero value).
@@ -260,7 +265,8 @@ func (e Instead) validate() error {
 	if !e.With.valid() {
 		return fmt.Errorf("Instead: replacement must be set")
 	}
-	if e.Of == EventAemberAddedToPool && !e.Player.valid() {
+	if (e.Of == EventAemberAddedToPool || e.Of == EventAemberTakenFromPool) &&
+		!e.Player.valid() {
 		return fmt.Errorf("Instead: a pool event needs a Player to scope it")
 	}
 	return nil

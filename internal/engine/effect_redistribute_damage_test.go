@@ -127,3 +127,39 @@ func TestRedistributeDamageChoosesOpponent(t *testing.T) {
 		t.Errorf("own damage = %d, want 3 (untouched)", got)
 	}
 }
+
+// redistNoPick accepts the option prompts but never names a placement creature,
+// exercising Resolve's fallback to the first creature.
+type redistNoPick struct{ options []int }
+
+func (c *redistNoPick) ChooseOption(_, _ string, _ []string) int {
+	if len(c.options) > 0 {
+		o := c.options[0]
+		c.options = c.options[1:]
+		return o
+	}
+	return 0
+}
+
+func (redistNoPick) ChooseCreature(_, _ string, _ []LocalID) (LocalID, bool) {
+	return 0, false
+}
+
+func TestRedistributeDamageFallsBackToFirstCreature(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	a := g.AddToBattleline(testCreature("a", 5), 0)
+	b := g.AddToBattleline(testCreature("b", 5), 0)
+	g.SetDamage(b, 2)
+	// Accept, but never pick a placement target: both units fall onto creatures[0].
+	g.SetChooser(0, &redistNoPick{options: []int{0, 0}})
+
+	ctx := &EffectContext{Resolver: g, Source: a, Controller: 0}
+	RedistributeDamage{}.Resolve(ctx)
+
+	if got := g.Damage(a); got != 2 {
+		t.Errorf("a damage = %d, want 2 (fallback pile onto first creature)", got)
+	}
+	if got := g.Damage(b); got != 0 {
+		t.Errorf("b damage = %d, want 0", got)
+	}
+}

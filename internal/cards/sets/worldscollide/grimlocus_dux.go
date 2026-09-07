@@ -18,7 +18,7 @@ var GrimlocusDux = card.New(
 	card.House.Saurian,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.WC, 221),
+	card.Provenance(card.WC, "221"),
 	card.WithPower(11),
 	card.WithArmor(2),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Soldier),

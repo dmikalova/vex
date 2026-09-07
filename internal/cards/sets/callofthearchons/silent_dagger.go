@@ -15,7 +15,7 @@ var SilentDagger = card.New(
 	card.House.Shadows,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 318),
+	card.Provenance(card.CotA, "318"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{

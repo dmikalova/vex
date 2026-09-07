@@ -15,7 +15,7 @@ var TwinBoltEmission = card.New(
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 124),
+	card.Provenance(card.CotA, "124"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{Spread: card.DifferentCreatures{

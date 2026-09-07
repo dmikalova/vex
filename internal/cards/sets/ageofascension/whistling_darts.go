@@ -15,7 +15,7 @@ var WhistlingDarts = card.New(
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Common,
-	card.Provenance(card.AoA, 281),
+	card.Provenance(card.AoA, "281"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{

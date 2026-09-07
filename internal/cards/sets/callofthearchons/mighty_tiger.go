@@ -16,7 +16,7 @@ var MightyTiger = card.New(
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Rare,
-	card.Provenance(card.CotA, 360),
+	card.Provenance(card.CotA, "360"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Beast),
 	card.WithAbility(

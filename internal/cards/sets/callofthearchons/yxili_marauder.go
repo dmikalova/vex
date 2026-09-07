@@ -17,7 +17,7 @@ var YxiliMarauder = card.New(
 	card.House.Mars,
 	card.Type.Creature,
 	card.Rarity.Common,
-	card.Provenance(card.CotA, 203),
+	card.Provenance(card.CotA, "203"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Martian, card.Traits.Soldier),
 	card.WithConstant(card.ConstantAbility{

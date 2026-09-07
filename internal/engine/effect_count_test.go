@@ -278,16 +278,6 @@ func TestHousesAmong(t *testing.T) {
 			3, "house represented among friendly creatures",
 		},
 		{
-			"friendly creatures, cap not reached",
-			HousesAmong{Player: Controller, Type: Creature, Max: 5},
-			3, "house represented among friendly creatures (to a maximum of 5)",
-		},
-		{
-			"friendly creatures, cap reached",
-			HousesAmong{Player: Controller, Type: Creature, Max: 2},
-			2, "house represented among friendly creatures (to a maximum of 2)",
-		},
-		{
 			"enemy creatures",
 			HousesAmong{Player: Opponent, Type: Creature},
 			2, "house represented among enemy creatures",

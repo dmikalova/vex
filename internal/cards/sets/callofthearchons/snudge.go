@@ -16,7 +16,7 @@ var Snudge = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.CotA, 97),
+	card.Provenance(card.CotA, "97"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Demon),
 	card.WithFightOrReap(card.PutFromPlay{

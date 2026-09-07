@@ -21,7 +21,7 @@ var Snag = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, 96),
+	card.Provenance(card.WC, "96"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Demon),
 	// TODO(stub): add WithKeywords / WithAbility for the printed text above.

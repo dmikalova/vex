@@ -522,6 +522,52 @@ func TestNeighbors(t *testing.T) {
 	}
 }
 
+func TestTargetWithUpgrade(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	upgraded := g.AddToBattleline(testCreature("up", 3), 0)
+	bare := g.AddToBattleline(testCreature("bare", 3), 0)
+	attachUpgrade(g, upgraded, NewCard("plating", Mars, Upgrade, Common))
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	if ids := (Target{Kind: TargetEachCreature}).WithUpgrade().
+		Select(ctx); len(ids) != 1 || ids[0] != upgraded {
+		t.Errorf("WithUpgrade = %v, want [%d] (the bare creature %d filtered out)",
+			ids, upgraded, bare)
+	}
+	if got := (Target{Kind: TargetEachCreature}).WithUpgrade().
+		Text(); got != "each creature with an upgrade" {
+		t.Errorf("with-upgrade text = %q", got)
+	}
+}
+
+func TestTargetSharesHouseWithNeighbors(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	left := g.AddToBattleline(NewCard("l", Mars, Creature, Common, WithPower(3)), 0)
+	mid := g.AddToBattleline(NewCard("m", Mars, Creature, Common, WithPower(3)), 0)
+	right := g.AddToBattleline(NewCard("r", Mars, Creature, Common, WithPower(3)), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	// Every creature shares its house with at least one neighbor.
+	if ids := (Target{Kind: TargetEachCreature}).SharesHouseWithNeighbors(1).
+		Select(ctx); len(ids) != 3 ||
+		ids[0] != left || ids[1] != mid || ids[2] != right {
+		t.Errorf("SharesHouseWithNeighbors(1) = %v, want [%d %d %d]", ids, left, mid, right)
+	}
+	// Only the middle creature has two same-house neighbors; the flanks have one.
+	if ids := (Target{Kind: TargetEachCreature}).SharesHouseWithNeighbors(2).
+		Select(ctx); len(ids) != 1 || ids[0] != mid {
+		t.Errorf("SharesHouseWithNeighbors(2) = %v, want [%d]", ids, mid)
+	}
+	if got := (Target{Kind: TargetEachCreature}).SharesHouseWithNeighbors(1).
+		Text(); got != "each creature that shares a house with at least 1 of its neighbors" {
+		t.Errorf("shares-house(1) text = %q", got)
+	}
+	if got := (Target{Kind: TargetEachCreature}).SharesHouseWithNeighbors(2).
+		Text(); got != "each creature that shares a house with 2 of its neighbors" {
+		t.Errorf("shares-house(2) text = %q", got)
+	}
+}
+
 func TestTargetExceptMostPowerful(t *testing.T) {
 	if got := (Target{Kind: TargetEachEnemyCreature}.Selector(ExceptMostPowerful)).Text(); got != "each enemy creature except the most powerful enemy creature" {
 		t.Errorf("enemy text = %q", got)

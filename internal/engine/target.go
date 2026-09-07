@@ -164,11 +164,20 @@ type Target struct {
 	// withArmor narrows the target to creatures that have armor at all, rendering
 	// " with armor". It reads the creature's armor value, not what is left of it, so
 	// a creature that has already spent its armor absorbing damage still has armor.
-	withArmor   bool
-	keyword     Keyword
-	onFlank     bool
-	notOnFlank  bool
-	neighboring bool
+	withArmor bool
+	// withUpgrade narrows the target to creatures that have at least one upgrade
+	// attached, rendering " with an upgrade" (Tachyon Pulse exhausts each creature
+	// with an upgrade).
+	withUpgrade bool
+	// sharesHouseNeighbors narrows the target to creatures sharing a house with at
+	// least this many of their battleline neighbors, rendering "that shares a house
+	// with N of its neighbors" (Groupthink Tank, Mini Groupthink Tank). Zero leaves
+	// the filter off.
+	sharesHouseNeighbors int
+	keyword              Keyword
+	onFlank              bool
+	notOnFlank           bool
+	neighboring          bool
 	// toRightOfSource narrows the target to the creatures positioned to the right of
 	// the source card in its battleline, and toLeftOfSource to those on its left —
 	// the Panpacas, which buff one direction of their line.
@@ -344,6 +353,23 @@ func (t Target) WithCounter(kind CounterKind) Target {
 // armor", e.g. "each enemy creature with armor".
 func (t Target) WithArmor() Target {
 	t.withArmor = true
+	return t
+}
+
+// WithUpgrade narrows the target to creatures that have at least one upgrade
+// attached, rendering " with an upgrade", e.g. "each creature with an upgrade"
+// (Tachyon Pulse).
+func (t Target) WithUpgrade() Target {
+	t.withUpgrade = true
+	return t
+}
+
+// SharesHouseWithNeighbors narrows the target to creatures sharing a house with
+// at least the given number of their battleline neighbors, rendering "that shares
+// a house with at least 1 of its neighbors" for 1 (Groupthink Tank) and "that
+// shares a house with N of its neighbors" otherwise (Mini Groupthink Tank).
+func (t Target) SharesHouseWithNeighbors(atLeast int) Target {
+	t.sharesHouseNeighbors = atLeast
 	return t
 }
 
@@ -624,6 +650,17 @@ func (t Target) Text() string {
 	}
 	if t.withArmor {
 		phrase += " with armor"
+	}
+	if t.withUpgrade {
+		phrase += " with an upgrade"
+	}
+	if t.sharesHouseNeighbors == 1 {
+		phrase += " that shares a house with at least 1 of its neighbors"
+	} else if t.sharesHouseNeighbors > 1 {
+		phrase += fmt.Sprintf(
+			" that shares a house with %d of its neighbors",
+			t.sharesHouseNeighbors,
+		)
 	}
 	if t.notOnFlank {
 		phrase += " that is not on a flank"
@@ -1083,6 +1120,8 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 		!t.withoutAember &&
 		!t.withCounter.valid() &&
 		!t.withArmor &&
+		!t.withUpgrade &&
+		t.sharesHouseNeighbors == 0 &&
 		t.keyword == keywordUnset &&
 		!t.onFlank &&
 		!t.notOnFlank &&
@@ -1148,6 +1187,13 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 			continue
 		}
 		if t.withArmor && ctx.Resolver.Armor(id) == 0 {
+			continue
+		}
+		if t.withUpgrade && len(ctx.Resolver.Upgrades(id)) == 0 {
+			continue
+		}
+		if t.sharesHouseNeighbors > 0 &&
+			sharedHouseNeighbors(ctx, id) < t.sharesHouseNeighbors {
 			continue
 		}
 		if t.keyword.valid() && !ctx.Resolver.HasKeyword(id, t.keyword) {
@@ -1226,6 +1272,19 @@ func isNeighbor(ctx *EffectContext, src, id LocalID) bool {
 		}
 	}
 	return false
+}
+
+// sharedHouseNeighbors counts how many of id's battleline neighbors share its
+// house — the measure behind SharesHouseWithNeighbors (Groupthink Tank).
+func sharedHouseNeighbors(ctx *EffectContext, id LocalID) int {
+	house := ctx.Resolver.House(id)
+	shared := 0
+	for _, n := range neighbors(ctx, id) {
+		if ctx.Resolver.House(n) == house {
+			shared++
+		}
+	}
+	return shared
 }
 
 // neighbors returns the creatures immediately adjacent to id in its controller's
