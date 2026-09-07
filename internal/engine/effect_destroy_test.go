@@ -27,7 +27,7 @@ func TestDestroyEffect(t *testing.T) {
 		1,
 	)
 	byTrait := Destroy{Target: Target{Kind: TargetEachCreature}.WithTrait(Scientist)}
-	if byTrait.Text() != "destroy each Scientist trait creature" {
+	if byTrait.Text() != "destroy each Scientist creature" {
 		t.Errorf("trait text = %q", byTrait.Text())
 	}
 	byTrait.Resolve(ctx)

@@ -3,11 +3,12 @@
 // so a soak, fuzz, or property-test failure can be read as the sequence of plays
 // that produced it instead of a bare invariant message.
 //
-// Run it via `mage debug`, which passes SCRIPT and TAIL through as its arguments:
+// Run it via `mage debug`, which passes its -script and -tail flags through as
+// arguments:
 //
 //	mage debug                     # first failing fixed-seed property game
-//	SCRIPT=00ff1a... mage debug    # a specific script (the hex a failure prints)
-//	TAIL=200 mage debug            # widen the log tail from its default
+//	mage debug -script=00ff1a...   # a specific script (the hex a failure prints)
+//	mage debug -tail=200           # widen the log tail from its default
 package main
 
 import (

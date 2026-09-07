@@ -15,7 +15,7 @@ import (
 //	Traits: Quest
 //
 //	Versatile.
-//	Play: Archive each friendly Knight trait creature from play.
+//	Play: Archive each friendly Knight creature from play.
 //	Action: If you have played 7 or more Sanctum cards this turn, destroy Epic Quest, and forge a key at no cost.
 func TestEpicQuest(t *testing.T) {
 	t.Run("archives each friendly Knight creature in play", func(t *testing.T) {

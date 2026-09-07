@@ -3,6 +3,14 @@
 Repo-wide guidance for agents. See `internal/cards/AGENTS.md` for
 card-authoring specifics.
 
+## "Reminder" means write it down
+
+When a request says **"Reminder"** (or "remember this", "document this"), it is
+not asking for a one-off fix — it is asking you to capture the rule in the
+appropriate durable place so it holds for future work: the relevant `AGENTS.md`,
+a `docs/` page, an ADR, or a code comment on the seam it governs. Make the change
+_and_ record the rule; a fix without the write-down is only half the task.
+
 ## Build, test, and lint through `mage`
 
 Run all build/test/format/coverage tasks through `mage`, not raw `go`
@@ -26,25 +34,34 @@ comment/rulebook generation, golines), so use them:
   lint, markdown lint, test, coverage); run this before considering work done. It
   must print `ALL GREEN`.
 - `mage debug` — replay a simulated game with the game log on and print the log
-  tail next to the invariant violation that ended it. With no `SCRIPT` it finds
-  the first failing game in the fixed-seed property batch `mage test` plays; set
-  `SCRIPT` to the hex a failure printed to replay that one, and `TAIL` to widen
-  the log. `SCRIPT` and `TAIL` are environment variables set **before** `mage`
-  (`SCRIPT=<hex> TAIL=200 mage debug`), not arguments after it.
+  tail next to the invariant violation that ended it. With no `-script` it finds
+  the first failing game in the fixed-seed property batch `mage test` plays; pass
+  `-script` the hex a failure printed to replay that one, and `-tail` to widen
+  the log (`mage debug -script=<hex> -tail=200`).
 
   When an invariant names a card, the violation is a symptom — the cause is
   usually an earlier line and a card no longer in the frame. Read the named card's
-  whole lifecycle, not just the tail: widen `TAIL` (or `mage trace` the game to a
+  whole lifecycle, not just the tail: widen `-tail` (or `mage trace` the game to a
   file) and grep the log for the card by name to see when it entered, what damage
   and power it showed, and which other card was buffing, blanking, capturing, or
   neighboring it. A creature that dies "for no reason" almost always lost a buff a
   now-departed card was granting — so identify the cards that were in play around
   it, not only the card the invariant printed.
+
 - `mage trace` — play the fixed-seed property games once with the game log on and
   write every line to `tmp/sim/trace.log` (gitignored), so a whole game reads end
   to end. Where `mage debug` shows the tail of the game that broke, a trace is the
-  full log of games that pass. `COUNT` sets how many games (default 1), `OUT` the
-  destination.
+  full log of games that pass. `-count` sets how many games (default 1), `-out` the
+  destination (`mage trace -count=25 -out=tmp/sim/mine.log`).
+- `mage profile` — profile the engine under the whole-game simulator (the closest
+  proxy for MCTS load), write CPU and allocation profiles to `tmp/sim`, and print
+  the per-game counts next to a committed baseline so a regression shows as a delta.
+  Default runs the 1000 seeded games; `-random` runs a fresh random outlier batch;
+  `-save` re-blesses the baseline. It never blocks and never gates — the baseline is
+  advisory and lives outside `mage check` and CI. See `docs/testing.md`.
+- `mage profileServer` — open a profile from the last `mage profile` run in the
+  interactive pprof web UI (flame graph, call graph, source view); blocks until
+  stopped. `-mem` serves the allocation profile, `-random` the outlier run's.
 - `mage corpusPrune` — replay every entry in `FuzzPlay`'s seed corpus and rewrite
   it as one minimized entry per bug that still reproduces, dropping the entries
   whose bug is fixed. The corpus is the list of open findings, not an archive of

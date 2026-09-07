@@ -107,7 +107,11 @@ func legacyPool() []Card {
 func TestLegacyDraws(t *testing.T) {
 	tuning := DefaultTuning()
 	tuning.LegacyRate = 1 // every non-special slot draws from the legacy pool
-	set := NewSet("Test", synthCards(), tuning).WithLegacy(legacyPool())
+	entries := make([]LegacyEntry, 0)
+	for _, c := range legacyPool() {
+		entries = append(entries, LegacyEntry{Card: c, Set: "Other"})
+	}
+	set := NewSet("Test", synthCards(), tuning).WithLegacy(NewLegacy(entries))
 
 	deck := Generate(set, 3)
 	legacyCount := 0
@@ -124,6 +128,19 @@ func TestLegacyDraws(t *testing.T) {
 	}
 	if legacyCount == 0 {
 		t.Fatal("expected some slots to be filled from the legacy pool")
+	}
+}
+
+// candidates drops the entries belonging to the drawing set and keeps the rest, so
+// a Set never draws one of its own cards as a legacy card.
+func TestLegacyCandidatesExcludesOwnSet(t *testing.T) {
+	l := NewLegacy([]LegacyEntry{
+		{Card: mkCard("Own", engine.Brobnar, engine.Common), Set: "Mine"},
+		{Card: mkCard("Other", engine.Brobnar, engine.Common), Set: "Yours"},
+	})
+	got := l.candidates(l.byHouseRarity[engine.Brobnar][engine.Common], "Mine")
+	if len(got) != 1 || got[0].Def.Name != "Other" {
+		t.Fatalf("candidates = %v, want one card named Other", got)
 	}
 }
 

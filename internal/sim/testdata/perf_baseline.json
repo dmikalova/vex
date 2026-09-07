@@ -1,0 +1,6 @@
+{
+  "allocs_per_game": 5519.997,
+  "bytes_per_game": 1640387.452,
+  "actions_per_game": 56.81,
+  "fastcopy_allocs_per_op": 0
+}

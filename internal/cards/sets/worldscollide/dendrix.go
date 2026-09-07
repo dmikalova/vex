@@ -1,0 +1,24 @@
+package worldscollide
+
+import "github.com/dmikalova/vactrol/internal/card"
+
+// Dendrix
+//
+//	House:  Dis
+//	Type:   Creature
+//	Rarity: Common
+//	Power:  5
+//	Traits: Demon
+//
+//	Fight: Your opponent discards a random card from their hand.
+var Dendrix = card.New(
+	"Dendrix",
+	card.House.Dis,
+	card.Type.Creature,
+	card.Rarity.Common,
+	card.Provenance(card.WC, 71),
+	card.WithPower(5),
+	card.WithTraits(card.Traits.Demon),
+	card.WithAbility(
+		card.Trigger.Fight, card.DiscardRandomFromHand{Player: card.Opponent}),
+)

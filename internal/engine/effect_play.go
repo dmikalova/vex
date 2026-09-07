@@ -139,3 +139,43 @@ func (e PlayFrom) candidates(ctx *EffectContext) []LocalID {
 	}
 	return out
 }
+
+// PlayRandomFromOpponentArchives has the controller play a random card from their
+// opponent's archives as their own (a Murkens option). The card is played as the
+// controller's own play — it counts against their card-play limit — and, if it
+// stays in play, the controller controls it while its owner stays the opponent.
+// With the opponent's archives empty it does nothing.
+type PlayRandomFromOpponentArchives struct{}
+
+// validate accepts the effect; it has no configuration.
+func (PlayRandomFromOpponentArchives) validate() error { return nil }
+
+// Text renders the effect's printed clause.
+func (PlayRandomFromOpponentArchives) Text() string {
+	return "play a random card from your opponent's archives"
+}
+
+// Resolve plays a random card out of the opponent's archives as the controller's.
+func (PlayRandomFromOpponentArchives) Resolve(ctx *EffectContext) {
+	ctx.Resolver.PlayRandomFromOpponentArchives(ctx.Controller)
+}
+
+// PlayTopOfOpponentDeck has the controller play the top card of their opponent's
+// deck as their own (a Murkens option). The card is played as the controller's own
+// play — it counts against their card-play limit — and, if it stays in play, the
+// controller controls it while its owner stays the opponent. With the opponent's
+// deck empty it does nothing.
+type PlayTopOfOpponentDeck struct{}
+
+// validate accepts the effect; it has no configuration.
+func (PlayTopOfOpponentDeck) validate() error { return nil }
+
+// Text renders the effect's printed clause.
+func (PlayTopOfOpponentDeck) Text() string {
+	return "play the top card of your opponent's deck"
+}
+
+// Resolve plays the top card of the opponent's deck as the controller's.
+func (PlayTopOfOpponentDeck) Resolve(ctx *EffectContext) {
+	ctx.Resolver.PlayTopOfOpponentDeck(ctx.Controller)
+}

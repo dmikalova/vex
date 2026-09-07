@@ -232,15 +232,20 @@ func (g *generator) draw(house engine.House, rarity engine.Rarity, maverick bool
 	return g.pick(g.set.byHouse[house])
 }
 
-// drawLegacy picks a legacy card for the pod House at the rolled rarity, falling
-// back to any rarity in that House so a legacy slot still fills when the House has
-// no legacy card of that rarity. It reports false when the House has no legacy
-// cards at all (or there is no legacy pool).
+// drawLegacy picks a legacy card for the pod House at the rolled rarity from the
+// shared cross-set pool, excluding this set's own cards, and falling back to any
+// rarity in that House so a legacy slot still fills when the House has no legacy
+// card of that rarity. It reports false when no legacy pool is attached, or the
+// House has no legacy card from another set.
 func (g *generator) drawLegacy(house engine.House, rarity engine.Rarity) (Card, bool) {
-	if c, ok := g.pick(g.set.legacyPool[house][rarity]); ok {
+	l := g.set.legacy
+	if l == nil {
+		return Card{}, false
+	}
+	if c, ok := g.pick(l.candidates(l.byHouseRarity[house][rarity], g.set.Name)); ok {
 		return c, true
 	}
-	return g.pick(g.set.legacyByHouse[house])
+	return g.pick(l.candidates(l.byHouse[house], g.set.Name))
 }
 
 // tryDuplicate copies an already-placed same-pod, same-rarity card with the

@@ -15,7 +15,7 @@ import (
 //	Power:  5
 //	Traits: Horseman • Spirit
 //
-//	Play/Fight/Reap: Deal 1 damage to each non-Horseman trait creature.
+//	Play/Fight/Reap: Deal 1 damage to each non-Horseman creature.
 func TestHorsemanOfPestilence(t *testing.T) {
 	t.Run("deals 1 damage to each non-Horseman creature when played", func(t *testing.T) {
 		var normal, horseman ct.Card

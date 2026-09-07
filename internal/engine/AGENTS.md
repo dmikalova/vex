@@ -278,6 +278,18 @@ second time into two zones. Hold the `settling` flag across the batch and settle
 once at the end (`destroyBatch`, `putIntoArchivesEach` are the models); never loop
 a per-card leave-play call over a pre-selected list without batching.
 
+**A card is not "destroyed" until it reaches the discard pile.** Resolving a
+creature's `Destroyed:` abilities is a distinct, earlier timing window from the
+creature _being destroyed_: during `destroyTogether` every dying creature stays in
+play while the batch's `Destroyed:` abilities resolve, and only then does each go
+to its discard pile. The **"after ... destroyed"** reactions (`emitCreatureDestroyed`
+for Neffru, `emitEnemyDestroyed` for Pile of Skulls) fire only after that move, so
+a creature killed in the same batch is out of play and can neither be chosen by
+those reactions nor react to the deaths beside it — e.g. Pile of Skulls cannot
+capture onto a friendly creature that died in the same combat. Do not fire an
+"after destroyed" reaction (or offer a prompt that could pick a dying creature)
+inside the destruction window; wait until the batch is in the discard.
+
 ## Event, ability, and effect verbs: emit → trigger → resolve
 
 Three tiers of verb, kept distinct so a method name says which level it works at:

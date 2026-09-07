@@ -428,6 +428,21 @@ func (g *game) installKeyShortcuts() {
 			return nil
 		}
 		e := args[0]
+		// The card picker owns Tab/Enter/arrows/Escape while it is open, even with
+		// the caret in its search box (where the text-input guard below would
+		// otherwise skip them), so the list is driven from the keyboard and Tab
+		// cannot escape the modal into the board behind it.
+		if g.pickerOpen {
+			key := e.Get("key").String()
+			switch key {
+			case "Tab", "Enter", "ArrowUp", "ArrowDown", "Escape":
+				e.Call("preventDefault")
+				shift := e.Get("shiftKey").Bool()
+				g.dispatch(func(ctx app.Context) { g.onPickerKey(ctx, key, shift) })
+				return nil
+			}
+			return nil
+		}
 		if isTextInput(e.Get("target")) || e.Get("altKey").Bool() {
 			return nil
 		}

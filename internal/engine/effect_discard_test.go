@@ -42,7 +42,7 @@ func TestPutFromDiscardByTrait(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	e := PutFromDiscard{Type: Creature, Trait: Horseman, All: true, Destination: ToHand}
-	if e.Text() != "put each Horseman trait creature from your discard pile into your hand" {
+	if e.Text() != "put each Horseman creature from your discard pile into your hand" {
 		t.Errorf("text = %q", e.Text())
 	}
 	e.Resolve(ctx)

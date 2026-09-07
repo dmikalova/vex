@@ -1,0 +1,20 @@
+//go:build todo
+
+package worldscollide
+
+import "github.com/dmikalova/vactrol/internal/card"
+
+// Prescriptive Grammarbot
+var PrescriptiveGrammarbot = card.New(
+	"Prescriptive Grammarbot",
+	card.House.Logos,
+	card.Type.Creature,
+	card.Rarity.Rare,
+	card.Provenance(card.WC, 173),
+	card.WithPower(3),
+	card.WithTraits(card.Traits.Robot),
+	card.WithKeywords(card.Keyword.Taunt),
+	card.WithHazardous(3),
+	card.WithAbility(
+		card.Trigger.Reap, card.Enrage{Target: card.Target.Creature}),
+)

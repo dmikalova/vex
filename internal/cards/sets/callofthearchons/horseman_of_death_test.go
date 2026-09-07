@@ -15,7 +15,7 @@ import (
 //	Power:  5
 //	Traits: Horseman • Spirit
 //
-//	Play: Put each Horseman trait creature from your discard pile into your hand.
+//	Play: Put each Horseman creature from your discard pile into your hand.
 func TestHorsemanOfDeath(t *testing.T) {
 	t.Run("returns each Horseman creature from your discard pile to hand", func(t *testing.T) {
 		var rider, other ct.Card

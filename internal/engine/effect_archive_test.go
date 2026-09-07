@@ -213,7 +213,7 @@ func TestArchiveFromPlayEffect(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
 	e := ArchiveFromPlay{Target: Target{Kind: TargetEachFriendlyCreature}.WithTrait(Knight)}
-	if e.Text() != "archive each friendly Knight trait creature from play" {
+	if e.Text() != "archive each friendly Knight creature from play" {
 		t.Errorf("text = %q", e.Text())
 	}
 	e.Resolve(ctx)

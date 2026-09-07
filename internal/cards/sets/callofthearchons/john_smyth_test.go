@@ -16,7 +16,7 @@ import (
 //	Traits: Agent • Martian
 //
 //	Elusive.
-//	Fight/Reap: Ready a non-Agent trait Mars creature.
+//	Fight/Reap: Ready a non-Agent Mars creature.
 func TestJohnSmyth(t *testing.T) {
 	t.Run("readies a non-Agent Mars creature on reap", func(t *testing.T) {
 		var ally ct.Card

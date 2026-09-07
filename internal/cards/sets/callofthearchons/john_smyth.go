@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Agent • Martian
 //
 //	Elusive.
-//	Fight/Reap: Ready a non-Agent trait Mars creature.
+//	Fight/Reap: Ready a non-Agent Mars creature.
 var JohnSmyth = card.New(
 	"\"John Smyth\"",
 	card.House.Mars,

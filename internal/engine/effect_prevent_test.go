@@ -27,15 +27,41 @@ func TestPreventDamage(t *testing.T) {
 	if g.Damage(friend) != 0 {
 		t.Errorf("protected creature took %d damage, want 0", g.Damage(friend))
 	}
+	// A friendly creature that arrives after the immunity resolves is protected too:
+	// the side-wide mask is read live, not a snapshot of who was in play.
+	late := g.AddToBattleline(testCreature("late", 5), 0)
+	g.applyRawDamage(late, 3, false)
+	if g.Damage(late) != 0 {
+		t.Errorf("late-arriving friendly creature took %d damage, want 0", g.Damage(late))
+	}
 
-	// Protect an enemy creature too, then confirm end of turn clears both.
+	// Protect the enemy side too, then confirm end of turn clears both.
 	PreventDamage{Target: Target{Kind: TargetEachEnemyCreature}, Duration: EndOfTurn}.Resolve(ctx)
-	if !g.State.Cards[foe].DamageImmune {
-		t.Fatal("enemy creature should be protected")
+	if !g.State.SideDamageImmune[1] {
+		t.Fatal("enemy side should be protected")
+	}
+	g.applyRawDamage(foe, 3, false)
+	if g.Damage(foe) != 0 {
+		t.Errorf("protected enemy creature took %d damage, want 0", g.Damage(foe))
 	}
 	g.StartTurn(0)
 	g.EndPlayPhase(0)
-	if g.State.Cards[friend].DamageImmune || g.State.Cards[foe].DamageImmune {
-		t.Error("end of turn should clear damage immunity on both players' creatures")
+	if g.State.SideDamageImmune[0] || g.State.SideDamageImmune[1] {
+		t.Error("end of turn should clear side-wide damage immunity for both players")
+	}
+}
+
+// A per-card or filtered target is not a whole side, so it protects the concrete
+// creatures it selects (and keeps rendering that phrase) rather than the side.
+func TestPreventDamageWholeSide(t *testing.T) {
+	if _, ok := (Target{Kind: TargetThisCreature}).wholeSide(0); ok {
+		t.Error("a single-creature target is not a whole side")
+	}
+	filtered := Target{Kind: TargetEachFriendlyCreature}.WithTrait(Knight)
+	if _, ok := filtered.wholeSide(0); ok {
+		t.Error("a trait-filtered friendly target is not a whole side")
+	}
+	if p, ok := (Target{Kind: TargetEachEnemyCreature}).wholeSide(0); !ok || p != 1 {
+		t.Errorf("enemy side for controller 0 = (%d, %v), want (1, true)", p, ok)
 	}
 }

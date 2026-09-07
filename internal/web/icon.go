@@ -241,6 +241,10 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "zone-hand", qty: v.Amount}}, true
 	case engine.Stun:
 		return []glyph{{asset: "stun"}, arrowTo(targetGlyph(v.Target))}, true
+	case engine.Enrage:
+		return []glyph{{asset: "glyph-fight"}, arrowTo(targetGlyph(v.Target))}, true
+	case engine.Ward:
+		return []glyph{{asset: "shield"}, arrowTo(targetGlyph(v.Target))}, true
 	case engine.Exhaust:
 		return []glyph{{asset: "exhausted"}, arrowTo(targetGlyph(v.Target))}, true
 	case engine.Ready:
@@ -307,6 +311,16 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "glyph-return"}}, true
 	case engine.PlayFrom, engine.PlayTopOfDeck, engine.PutIntoPlay:
 		return []glyph{{asset: "glyph-play"}}, true
+	case engine.PlayRandomFromOpponentArchives:
+		return []glyph{
+			{asset: "zone-archives", decor: decorEnemy},
+			arrowTo(glyph{asset: "glyph-play"}),
+		}, true
+	case engine.PlayTopOfOpponentDeck:
+		return []glyph{
+			{asset: "zone-deck", decor: decorEnemy},
+			arrowTo(glyph{asset: "glyph-play"}),
+		}, true
 	case engine.PutFromPlay:
 		if a := destinationGlyph(v.Destination); a != "" {
 			return []glyph{targetGlyph(v.Target), arrowTo(glyph{asset: a})}, true
@@ -420,6 +434,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 			decor = decorEnemy
 		}
 		return []glyph{{asset: "aember", decor: decor}, {asset: "glyph-swap"}}, true
+	case engine.RedistributeDamage:
+		return []glyph{{asset: "damage"}, {asset: "glyph-swap"}}, true
 	case engine.GiveRemainingAemberAfterOpponentForgeKey:
 		return []glyph{
 			{asset: "forge", decor: decorEnemy},

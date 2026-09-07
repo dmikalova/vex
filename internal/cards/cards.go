@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 
 	"github.com/dmikalova/vactrol/internal/card"
 	"github.com/dmikalova/vactrol/internal/cards/provenance"
@@ -19,6 +20,8 @@ import (
 	_ "github.com/dmikalova/vactrol/internal/cards/sets/ageofascension"
 	// Blank-imported so each set's cards self-register through its package init.
 	_ "github.com/dmikalova/vactrol/internal/cards/sets/callofthearchons"
+	// Blank-imported so each set's cards self-register through its package init.
+	_ "github.com/dmikalova/vactrol/internal/cards/sets/worldscollide"
 	"github.com/dmikalova/vactrol/internal/deckgen"
 )
 
@@ -65,26 +68,36 @@ func bySet() map[string][]card.RegisteredCard {
 // is the cards implemented in its package plus its reprints — cards implemented in
 // an earlier set but printed in this one too (declared by a set's 0set.go and
 // resolved here by name), which are full pool members the same as a newly
-// implemented card. Each set also carries a legacy pool of every other set's
-// cards, from which a slot occasionally draws a same-House card (that draw may
-// land on a card this set also reprints). The sets come back in release order.
+// implemented card. Every set shares one cross-set legacy pool, from which a slot
+// occasionally draws a same-House card printed in another set (excluding the
+// drawing set's own cards; that draw may land on a card this set also reprints).
+// The sets come back in release order.
+//
+// The result is cached: it is a pure function of the registered catalog, which is
+// fixed at package init, so recomputing it per game (once per match.New) wasted
+// deck generation's allocation. Callers treat the returned Sets as read-only —
+// Generate takes a Set by value and only reads its pools — so a shared value is
+// safe.
 func DeckSets() []deckgen.Set {
+	deckSetsOnce.Do(func() { deckSetsCache = buildDeckSets() })
+	return deckSetsCache
+}
+
+var (
+	deckSetsOnce  sync.Once
+	deckSetsCache []deckgen.Set
+)
+
+// buildDeckSets does the actual per-set pool assembly DeckSets caches.
+func buildDeckSets() []deckgen.Set {
 	groups := bySet()
 	reprints := reprintsBySet()
+	legacy := buildLegacy(groups)
 	var sets []deckgen.Set
 	for _, name := range setOrder() {
 		own := ownPool(groups[name], reprints[name])
 		if len(own) == 0 {
 			continue
-		}
-		var legacy []deckgen.Card
-		for other, otherRegs := range groups {
-			if other == name {
-				continue
-			}
-			for _, rc := range otherRegs {
-				legacy = append(legacy, deckgenCard(rc))
-			}
 		}
 		sets = append(
 			sets,
@@ -92,6 +105,37 @@ func DeckSets() []deckgen.Set {
 		)
 	}
 	return sets
+}
+
+// buildLegacy assembles the single cross-set legacy pool shared by every set: each
+// registered card tagged with the set it belongs to. A Set draws only the entries
+// whose set differs from its own, so a legacy slot pulls a card printed in another
+// set. Building it once and sharing it avoids copying every other set's cards into
+// every set. Cards are added in release order, then any group with no release-set
+// name (wholly original cards) in name order, so the pool is deterministic.
+func buildLegacy(groups map[string][]card.RegisteredCard) *deckgen.Legacy {
+	var entries []deckgen.LegacyEntry
+	seen := map[string]bool{}
+	add := func(name string) {
+		seen[name] = true
+		for _, rc := range groups[name] {
+			entries = append(entries, deckgen.LegacyEntry{Card: deckgenCard(rc), Set: name})
+		}
+	}
+	for _, name := range setOrder() {
+		add(name)
+	}
+	var rest []string
+	for name := range groups {
+		if !seen[name] {
+			rest = append(rest, name)
+		}
+	}
+	sort.Strings(rest)
+	for _, name := range rest {
+		add(name)
+	}
+	return deckgen.NewLegacy(entries)
 }
 
 // ownPool is a set's deck-generation pool: its natively implemented cards followed

@@ -217,13 +217,15 @@ func (g *Game) destroyTogether(controller int, ids []LocalID) {
 		}
 	}
 	// "Each time an enemy creature is destroyed": the destroyed creature's controller
-	// is the enemy of whoever watches, so the reaction fires for that opponent.
+	// is the enemy of whoever watches, so the reaction fires for that opponent. The
+	// count and the lasting "each time destroyed" event fire here, in the destruction
+	// window; the "after ... destroyed" reactions wait until the batch reaches the
+	// discard pile (below), because a card is not destroyed until it lands there.
 	for _, id := range ids {
 		if g.TypeOf(id) == Creature {
 			g.State.TurnHistory[1-g.controller(id)][EnemyCreaturesDestroyed]++
 		}
 		g.emitLasting(EventEnemyCreatureDestroyed, 1-g.controller(id), id)
-		g.emitEnemyDestroyed(id)
 	}
 	// The whole window is ordered once, up front, by the active player (ADR 0013).
 	// A creature that leaves play mid-window (Annihilation Ritual purges it) simply
@@ -250,11 +252,15 @@ func (g *Game) destroyTogether(controller int, ids []LocalID) {
 			g.discardDestroyed(id)
 		}
 	}
-	// Only now, with the batch in the discard pile, does "after a creature is
-	// destroyed" fire — so a card destroyed in this same batch (its ability now in
-	// the discard) does not react to the deaths alongside it.
+	// Only now, with the batch in the discard pile, do the "after ... destroyed"
+	// reactions fire — Neffru's "after a creature is destroyed" and Pile of Skulls'
+	// "after an enemy creature is destroyed" — so a card destroyed in this same batch
+	// is out of play and cannot be chosen or react to the deaths alongside it (e.g.
+	// Pile of Skulls cannot capture onto a friendly creature that died in the same
+	// combat).
 	for _, id := range ids {
 		if g.TypeOf(id) == Creature {
+			g.emitEnemyDestroyed(id)
 			g.emitCreatureDestroyed(id)
 		}
 	}

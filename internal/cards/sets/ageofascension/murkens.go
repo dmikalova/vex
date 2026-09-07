@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Murkens
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Shadows
 //	Type:   Creature
@@ -15,7 +10,9 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Elf • Thief
 //
-//	Play: Choose a random card in your opponent's archives or the top card of your opponent's deck. Play that card as if it were yours.
+//	Play: Choose one:
+//	- Play a random card from your opponent's archives
+//	- Play the top card of your opponent's deck.
 var Murkens = card.New(
 	"Murkens",
 	card.House.Shadows,
@@ -24,5 +21,11 @@ var Murkens = card.New(
 	card.Provenance(card.AoA, 290),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.ChooseOne{
+			Options: []card.Effect{
+				card.PlayRandomFromOpponentArchives{},
+				card.PlayTopOfOpponentDeck{},
+			},
+		}),
 )

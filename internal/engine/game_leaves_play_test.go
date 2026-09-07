@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"slices"
+	"testing"
+)
 
 // These tests exercise destruction — the KeyForge simultaneous "Destroyed:"
 // timing — and where a card and its upgrades and Æmber go as it leaves play.
@@ -28,6 +31,90 @@ func TestDestroyOrderByCreature(t *testing.T) {
 
 	if g.Aember(0) != before+2 {
 		t.Errorf("aember = %d, want %d (both Destroyed abilities resolve)", g.Aember(0), before+2)
+	}
+}
+
+// orderMark is a test Destroyed effect that appends its tag to a shared log when
+// it resolves, so a test can read back the resolution order. Two marks with the
+// same tag render identical text, so orderTriggered treats them as one ability.
+type orderMark struct {
+	log *[]string
+	tag string
+}
+
+func (m orderMark) Text() string             { return "mark " + m.tag }
+func (m orderMark) Resolve(_ *EffectContext) { *m.log = append(*m.log, m.tag) }
+
+// countingReverseChooser records how many ordering picks it is asked to make and
+// reverses each list, so a test can prove identical abilities are never ordered.
+type countingReverseChooser struct{ picks int }
+
+func (c *countingReverseChooser) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) {
+	c.picks++
+	return cands[len(cands)-1], true
+}
+
+// TestOrderTriggeredCollapsesIdenticalAbilities checks that identical Destroyed
+// abilities are auto-ordered — never prompted — while a distinct ability is still
+// ordered against them. Two creatures carry the same mark and a third a different
+// one, so ordering asks a single pick (the two distinct abilities), and the
+// identical pair resolves together behind whichever end the pick chose.
+func TestOrderTriggeredCollapsesIdenticalAbilities(t *testing.T) {
+	g := started(t)
+	var log []string
+	ch := &countingReverseChooser{}
+	g.SetChooser(0, ch)
+	a := g.AddToBattleline(
+		testCreature("a", 3, WithAbility(TriggerDestroyed, orderMark{&log, "same"})),
+		0,
+	)
+	b := g.AddToBattleline(
+		testCreature("b", 3, WithAbility(TriggerDestroyed, orderMark{&log, "same"})),
+		0,
+	)
+	c := g.AddToBattleline(
+		testCreature("c", 3, WithAbility(TriggerDestroyed, orderMark{&log, "diff"})),
+		0,
+	)
+
+	g.DestroyEach(0, []LocalID{a, b, c})
+
+	if ch.picks != 1 {
+		t.Errorf(
+			"ordering picks = %d, want 1 (only the two distinct abilities are ordered)",
+			ch.picks,
+		)
+	}
+	// The chooser reverses, so the later-seen distinct ability resolves first.
+	want := []string{"diff", "same", "same"}
+	if !slices.Equal(log, want) {
+		t.Errorf("resolution order = %v, want %v", log, want)
+	}
+}
+
+// TestOrderTriggeredAllIdenticalNeverPrompts checks that a window whose abilities
+// are all identical is auto-ordered with no pick at all.
+func TestOrderTriggeredAllIdenticalNeverPrompts(t *testing.T) {
+	g := started(t)
+	var log []string
+	ch := &countingReverseChooser{}
+	g.SetChooser(0, ch)
+	a := g.AddToBattleline(
+		testCreature("a", 3, WithAbility(TriggerDestroyed, orderMark{&log, "same"})),
+		0,
+	)
+	b := g.AddToBattleline(
+		testCreature("b", 3, WithAbility(TriggerDestroyed, orderMark{&log, "same"})),
+		0,
+	)
+
+	g.DestroyEach(0, []LocalID{a, b})
+
+	if ch.picks != 0 {
+		t.Errorf("ordering picks = %d, want 0 (identical abilities are never prompted)", ch.picks)
+	}
+	if len(log) != 2 {
+		t.Errorf("resolved %d abilities, want 2", len(log))
 	}
 }
 

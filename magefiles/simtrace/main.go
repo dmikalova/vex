@@ -2,11 +2,12 @@
 // turned on and writes every log line to a file, so a whole game can be read as
 // the sequence of plays it was rather than watched one prompt at a time.
 //
-// Run it via `mage trace`, which passes COUNT and OUT through as its arguments:
+// Run it via `mage trace`, which passes its -count and -out flags through as
+// arguments:
 //
-//	mage trace              # the first property game, into tmp/sim/trace.log
-//	COUNT=25 mage trace     # the first 25 games
-//	OUT=tmp/sim/x.log mage trace
+//	mage trace                     # the first property game, into tmp/sim/trace.log
+//	mage trace -count=25           # the first 25 games
+//	mage trace -out=tmp/sim/x.log
 package main
 
 import (

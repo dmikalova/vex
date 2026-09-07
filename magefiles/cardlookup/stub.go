@@ -271,6 +271,8 @@ func varName(name string) string {
 	upNext := true
 	for _, r := range name {
 		switch {
+		case isApostrophe(r):
+			// drop apostrophes without a word break (Coward's -> Cowards)
 		case unicode.IsLetter(r) || unicode.IsDigit(r):
 			if upNext {
 				b.WriteRune(unicode.ToUpper(r))
@@ -278,8 +280,6 @@ func varName(name string) string {
 			} else {
 				b.WriteRune(r)
 			}
-		case r == '\'':
-			// drop apostrophes without a word break (Coward's -> Cowards)
 		default:
 			upNext = true
 		}
@@ -297,11 +297,11 @@ func fileName(name string) string {
 	prevSep := true
 	for _, r := range name {
 		switch {
+		case isApostrophe(r):
+			// drop apostrophes without a separator (Coward's -> cowards)
 		case unicode.IsLetter(r) || unicode.IsDigit(r):
 			b.WriteRune(unicode.ToLower(r))
 			prevSep = false
-		case r == '\'':
-			// drop apostrophes without a separator (Coward's -> cowards)
 		default:
 			if !prevSep {
 				b.WriteRune('_')
@@ -310,6 +310,15 @@ func fileName(name string) string {
 		}
 	}
 	return strings.Trim(b.String(), "_")
+}
+
+// isApostrophe reports whether r is an apostrophe in any of the forms card names
+// use — the ASCII ', the typographic ' (U+2019), or the modifier letter ʼ
+// (U+02BC). The last is a Unicode letter, so without this it would slip through
+// as a letter and land verbatim in an identifier and filename (the "Frane'Blaster"
+// bug); all three are dropped so "Frane's Blaster" is Franes'Blaster / Franes'_blaster.
+func isApostrophe(r rune) bool {
+	return r == '\'' || r == '\u2019' || r == '\u02bc'
 }
 
 // titleWord capitalizes the first rune of a single lowercase source token.

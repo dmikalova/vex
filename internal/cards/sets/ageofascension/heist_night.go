@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //
 //	Alpha.
-//	Play: For each friendly Thief trait creature, steal 1 Æmber.
+//	Play: For each friendly Thief creature, steal 1 Æmber.
 var HeistNight = card.New(
 	"Heist Night",
 	card.House.Shadows,

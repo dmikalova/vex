@@ -1,6 +1,7 @@
 package web
 
 import (
+	"slices"
 	"testing"
 
 	"github.com/dmikalova/vactrol/internal/engine"
@@ -135,6 +136,110 @@ func TestAPromptWithNoCandidatesAnswersItself(t *testing.T) {
 	}
 	if c.g.choosing {
 		t.Error("a prompt with no candidates went up on screen")
+	}
+}
+
+// order raises an ordering prompt from a background goroutine, as the engine's
+// orderByChoice does through the Orderer, and hands back the channel the arranged
+// order arrives on.
+func (c *client) order(prompt string, ids []engine.LocalID) chan []engine.LocalID {
+	c.t.Helper()
+	out := make(chan []engine.LocalID, 1)
+	go func() { out <- c.g.chooser.OrderCreatures("A Card", prompt, ids) }()
+	return out
+}
+
+// samePermutation reports whether got is a rearrangement of want.
+func samePermutation(got, want []engine.LocalID) bool {
+	if len(got) != len(want) {
+		return false
+	}
+	seen := map[engine.LocalID]int{}
+	for _, id := range want {
+		seen[id]++
+	}
+	for _, id := range got {
+		seen[id]--
+	}
+	for _, n := range seen {
+		if n != 0 {
+			return false
+		}
+	}
+	return true
+}
+
+// TestAutoResolveOrder checks that the Auto-resolve button answers an ordering
+// prompt with a full random order in one click, ending the window without picking
+// each ability in turn.
+func TestAutoResolveOrder(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	first := c.deal(testCreature)
+	second := c.deal(testCreature)
+	c.playFromHand(first)
+	c.playFromHand(second)
+	cands := c.board()
+
+	out := c.order("Order them", cands)
+	c.await(
+		"the ordering prompt to go up",
+		func() bool { return c.g.choosing && c.g.chooserOrdering },
+	)
+
+	c.g.autoResolveOrder(c.ctx, nullEvent())
+	got := <-out
+	c.await("the prompt to come down", func() bool { return !c.g.choosing })
+
+	if !samePermutation(got, cands) {
+		t.Errorf("auto-resolve returned %v, want a permutation of %v", got, cands)
+	}
+}
+
+// TestOrderByPickingEach checks that ordering a window by clicking cards still
+// works through the Orderer: each pick resolves next and the last is forced.
+func TestOrderByPickingEach(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	first := c.deal(testCreature)
+	second := c.deal(testCreature)
+	c.playFromHand(first)
+	c.playFromHand(second)
+	cands := c.board()
+
+	out := c.order("Order them", cands)
+	c.await("the ordering prompt to go up", func() bool { return c.g.chooserOrdering })
+
+	c.g.chooseCandidate(c.ctx, cands[1])
+	got := <-out
+	c.await("the prompt to come down", func() bool { return !c.g.choosing })
+
+	if want := []engine.LocalID{cands[1], cands[0]}; !slices.Equal(got, want) {
+		t.Errorf("ordering picked %v, want %v", got, want)
+	}
+}
+
+// TestAutoResolveOnlyForOrdering checks that Auto-resolve is inert unless an
+// ordering prompt is up, so a stray click cannot answer another kind of prompt.
+func TestAutoResolveOnlyForOrdering(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	only := c.deal(testCreature)
+	next := c.deal(testCreature)
+	c.playFromHand(only)
+	c.playFromHand(next)
+	cands := c.board()
+
+	answer := c.ask("Choose a creature", false, cands)
+	c.await("the prompt to go up", func() bool { return c.g.choosing })
+
+	c.g.autoResolveOrder(c.ctx, nullEvent()) // no ordering prompt: ignored
+	if c.g.chooserOrdering {
+		t.Error("a plain card prompt was marked as ordering")
+	}
+	c.g.chooseCandidate(c.ctx, cands[0])
+	if got := <-answer; !got.ok {
+		t.Error("the plain prompt should still answer with a normal pick")
 	}
 }
 

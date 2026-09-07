@@ -1,6 +1,7 @@
 package web
 
 import (
+	"math/rand"
 	"strconv"
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
@@ -13,10 +14,12 @@ import (
 // question, and the player's click sends the answer back.
 
 // chooseReply carries the player's answer to an engine chooser request: the
-// chosen id, or ok=false when the player cancels.
+// chosen id, or ok=false when the player cancels. auto is set when the player
+// answered an ordering prompt with Auto-resolve, asking for a random order.
 type chooseReply struct {
-	id engine.LocalID
-	ok bool
+	id   engine.LocalID
+	ok   bool
+	auto bool
 }
 
 // webChooser adapts the engine's synchronous Chooser to go-app's single UI
@@ -62,15 +65,61 @@ func (c *webChooser) ask(
 	candidates []engine.LocalID,
 	declinable bool,
 ) (engine.LocalID, bool) {
+	r := c.raise(source, prompt, candidates, declinable, false)
+	return r.id, r.ok
+}
+
+// OrderCreatures implements the engine's Orderer: instead of being asked to pick
+// the next id repeatedly, the whole window is ordered here so an Auto-resolve
+// button can offer a single random order. It otherwise reproduces the engine's
+// default repeated-pick loop — each pick is a card prompt, the last id is forced —
+// so ordering a batch by clicking cards is unchanged; Auto-resolve shuffles
+// whatever remains and returns it, ending the window in one click.
+func (c *webChooser) OrderCreatures(
+	source, prompt string,
+	ids []engine.LocalID,
+) []engine.LocalID {
+	remaining := append([]engine.LocalID(nil), ids...)
+	ordered := make([]engine.LocalID, 0, len(ids))
+	for len(remaining) > 1 {
+		r := c.raise(source, prompt, remaining, false, true)
+		if r.auto {
+			rand.Shuffle(len(remaining), func(i, j int) {
+				remaining[i], remaining[j] = remaining[j], remaining[i]
+			})
+			return append(ordered, remaining...)
+		}
+		if !r.ok {
+			break
+		}
+		ordered = append(ordered, r.id)
+		for i, id := range remaining {
+			if id == r.id {
+				remaining = append(remaining[:i], remaining[i+1:]...)
+				break
+			}
+		}
+	}
+	return append(ordered, remaining...)
+}
+
+// raise shows a card prompt on the UI goroutine and blocks the action goroutine
+// until a candidate is clicked, the prompt is declined or Auto-resolved, or it is
+// cancelled. ordering marks an Orderer prompt so the controls offer Auto-resolve.
+func (c *webChooser) raise(
+	source, prompt string,
+	candidates []engine.LocalID,
+	declinable, ordering bool,
+) chooseReply {
 	if len(candidates) == 0 {
-		return 0, false
+		return chooseReply{}
 	}
 	// A manual-mode Cancel already in flight drains without showing the prompt: this
 	// and every later prompt of the same action answer themselves so one click backs
 	// the action out.
 	select {
 	case <-c.cancel:
-		return 0, false
+		return chooseReply{}
 	default:
 	}
 	// Discard any stale reply left in the buffer (e.g. from a double click on the
@@ -82,6 +131,7 @@ func (c *webChooser) ask(
 	c.g.dispatch(func(app.Context) {
 		c.g.choosing = true
 		c.g.chooserDeclinable = declinable
+		c.g.chooserOrdering = ordering
 		c.g.chooserPrompt = prompt
 		c.g.chooserCandidates = candidates
 		c.g.promptSource = source
@@ -98,6 +148,7 @@ func (c *webChooser) ask(
 	c.g.dispatch(func(app.Context) {
 		c.g.choosing = false
 		c.g.chooserDeclinable = false
+		c.g.chooserOrdering = false
 		c.g.chooserPrompt = ""
 		c.g.chooserCandidates = nil
 		c.g.promptSource = ""
@@ -105,7 +156,7 @@ func (c *webChooser) ask(
 		c.g.btnCursor, c.g.hasBtnCursor = 0, false
 		c.g.closeZoneForPrompt()
 	})
-	return r.id, r.ok
+	return r
 }
 
 // openZoneForPrompt opens the out-of-play zone viewer when a prompt's candidates
@@ -200,6 +251,19 @@ func (g *game) declineChooser(_ app.Context, _ app.Event) {
 	}
 	select {
 	case g.chooser.reply <- chooseReply{}:
+	default:
+	}
+}
+
+// autoResolveOrder answers an ordering prompt with a request for a random order —
+// the Auto-resolve button — so the player need not arrange abilities whose order
+// they do not care about.
+func (g *game) autoResolveOrder(_ app.Context, _ app.Event) {
+	if !g.choosing || !g.chooserOrdering {
+		return
+	}
+	select {
+	case g.chooser.reply <- chooseReply{auto: true}:
 	default:
 	}
 }

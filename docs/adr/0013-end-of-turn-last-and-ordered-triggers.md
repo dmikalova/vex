@@ -41,3 +41,14 @@ frontend.
   back to scan order, which is the previous behavior.
 - The game log can state the order a player chose, because there now is one
   (ADR 0011).
+- **Identical abilities are auto-ordered, never prompted.** Ordering compares
+  ability _identity_ — trigger plus rendered text — not card, because the same
+  card can resolve differently as the board changes. Abilities that would resolve
+  identically are collapsed to one representative before the prompt, so a window
+  of only identical abilities is silent and a window with a distinct one asks only
+  about the distinct abilities. See `orderTriggered` in `game_abilities.go`.
+- **A frontend may offer Auto-resolve on an ordering prompt.** Whether an order is
+  worth arranging is the player's call, not the engine's, so the client's
+  `Orderer` implementation adds an Auto-resolve button that answers with a random
+  order in one click. The engine is unchanged: the default chooser still keeps
+  scan order.

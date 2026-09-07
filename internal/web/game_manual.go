@@ -1,6 +1,8 @@
 package web
 
 import (
+	"strings"
+
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
 	"github.com/dmikalova/vactrol/internal/engine"
@@ -179,13 +181,76 @@ func (g *game) openPicker(_ app.Context, _ app.Event) {
 	g.pickerOpen = true
 	g.pickerQuery = ""
 	g.pickerFocused = false
+	g.pickerCursor = 0
 }
 
 func (g *game) closePicker(_ app.Context, _ app.Event) { g.pickerOpen = false }
 
-// pickerInput records the search box's text as the player types.
+// pickerInput records the search box's text as the player types. Refiltering
+// resets the cursor to the first row so Enter adds the top match.
 func (g *game) pickerInput(ctx app.Context, _ app.Event) {
 	g.pickerQuery = ctx.JSSrc().Get("value").String()
+	g.pickerCursor = 0
+}
+
+// pickerMatches is the filtered card pool the picker shows: every card whose name
+// contains the (case-insensitive) query, in pool order.
+func (g *game) pickerMatches() []engine.CardDefinition {
+	q := strings.ToLower(strings.TrimSpace(g.pickerQuery))
+	var matches []engine.CardDefinition
+	for _, d := range g.allDefs {
+		if q == "" || strings.Contains(strings.ToLower(d.Name), q) {
+			matches = append(matches, d)
+		}
+	}
+	return matches
+}
+
+// movePickerCursor steps the highlighted row by delta, clamped to the list so the
+// cursor never runs off either end.
+func (g *game) movePickerCursor(delta int) {
+	n := len(g.pickerMatches())
+	if n == 0 {
+		g.pickerCursor = 0
+		return
+	}
+	g.pickerCursor += delta
+	if g.pickerCursor < 0 {
+		g.pickerCursor = 0
+	}
+	if g.pickerCursor >= n {
+		g.pickerCursor = n - 1
+	}
+}
+
+// onPickerKey handles the keys the card picker owns while it is open, so Tab,
+// Enter and the arrows drive the list instead of the board behind it.
+func (g *game) onPickerKey(ctx app.Context, key string, shift bool) {
+	switch key {
+	case "Escape":
+		g.closePicker(ctx, app.Event{})
+	case "Enter":
+		g.addCursorCard(ctx)
+	case "Tab":
+		if shift {
+			g.movePickerCursor(-1)
+		} else {
+			g.movePickerCursor(1)
+		}
+	case "ArrowUp":
+		g.movePickerCursor(-1)
+	case "ArrowDown":
+		g.movePickerCursor(1)
+	}
+}
+
+// addCursorCard adds the highlighted picker row's card to the active player's hand.
+func (g *game) addCursorCard(ctx app.Context) {
+	matches := g.pickerMatches()
+	if g.pickerCursor < 0 || g.pickerCursor >= len(matches) {
+		return
+	}
+	g.addCardDef(ctx, matches[g.pickerCursor])
 }
 
 // addPickedCard adds the clicked picker row's card to the active player's hand.
@@ -197,9 +262,15 @@ func (g *game) addPickedCard(ctx app.Context, _ app.Event) {
 	if !ok {
 		return
 	}
+	g.addCardDef(ctx, *def)
+}
+
+// addCardDef puts a card definition into the active player's hand and records the
+// add so a reload can replay it, then closes the picker.
+func (g *game) addCardDef(ctx app.Context, def engine.CardDefinition) {
 	g.beginAction()
 	player := g.active()
-	if _, added := g.g.ManualAddCard(*def, player); added {
+	if _, added := g.g.ManualAddCard(def, player); added {
 		// The catalog is not part of the saved state, so record the add for a
 		// reload to replay; undo rolls the state back but not the registration.
 		g.manualAdds = append(g.manualAdds, manualAdd{Name: def.Name, Player: player})

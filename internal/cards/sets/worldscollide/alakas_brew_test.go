@@ -1,0 +1,33 @@
+package worldscollide
+
+import (
+	"testing"
+
+	"github.com/dmikalova/vactrol/internal/card"
+	ct "github.com/dmikalova/vactrol/internal/cards/cardtest"
+)
+
+// Alaka's Brew
+//
+//	House:  Brobnar
+//	Type:   Tactic
+//	Rarity: Common
+//	Æmber:  1
+//
+//	Play: Give a creature 2 +1 power counters.
+func TestAlakasBrew(t *testing.T) {
+	t.Run("gives a creature two +1 power counters", func(t *testing.T) {
+		var troll ct.Card
+		h := ct.Play(t, ct.Setup{
+			P1: ct.Side{
+				House:  card.House.Brobnar,
+				Hand:   ct.Cards(AlakasBrew),
+				InPlay: ct.Cards(ct.Bind(&troll, ct.Creature(ct.Power(4)))),
+			},
+		})
+
+		h.P1.Play(AlakasBrew)
+
+		h.Expect(troll).Power(6)
+	})
+}

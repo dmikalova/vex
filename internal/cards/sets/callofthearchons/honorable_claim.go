@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Each friendly Knight trait creature captures 1 Æmber from your opponent.
+//	Play: Each friendly Knight creature captures 1 Æmber from your opponent.
 var HonorableClaim = card.New(
 	"Honorable Claim",
 	card.House.Sanctum,

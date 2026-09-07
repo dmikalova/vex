@@ -30,14 +30,11 @@ type Set struct {
 	byName  map[string]Card
 	special []Card
 
-	// legacyByHouse and legacyPool hold the legacy pool — cards from other sets
-	// that a slot may draw instead of one of this set's own, keeping the pod's
-	// House. legacyPool buckets them by House then rarity so a slot draws a legacy
-	// card of its own rolled rarity; legacyByHouse is the flat per-House fallback
-	// for a rolled rarity that House has no legacy card of. Both are empty for a
-	// single-set build and populated by WithLegacy.
-	legacyByHouse map[engine.House][]Card
-	legacyPool    map[engine.House]map[engine.Rarity][]Card
+	// legacy is the shared cross-set pool a slot may draw from at
+	// Tuning.LegacyRate, keeping the pod's House. It is nil for a single-set build
+	// and attached by WithLegacy; the same *Legacy is shared by every Set, which
+	// draws only the entries whose set differs from its own Name.
+	legacy *Legacy
 }
 
 // NewSet builds a Set from a flat list of pool entries, bucketing them by House
@@ -84,16 +81,39 @@ func NewSet(name string, cards []Card, tuning Tuning) Set {
 	return s
 }
 
-// WithLegacy attaches a legacy pool to the set: cards from other sets that a slot
-// may draw instead of one of this set's own, at the set's Tuning.LegacyRate. Only
-// housed, non-Connected cards are pooled, bucketed by House and rarity so a slot
-// draws a legacy card of its own rolled rarity — a legacy card keeps its own
-// House and rarity, since it is not rehoused the way a maverick is. It returns
-// the set with the pool attached so it reads as a builder step.
-func (s Set) WithLegacy(cards []Card) Set {
-	s.legacyByHouse = map[engine.House][]Card{}
-	s.legacyPool = map[engine.House]map[engine.Rarity][]Card{}
-	for _, c := range cards {
+// LegacyEntry pairs a pool Card with the name of the source set it belongs to.
+// The shared Legacy is built from these so that, when a Set draws a legacy card,
+// it can exclude the entries that belong to the Set itself.
+type LegacyEntry struct {
+	Card Card
+	Set  string
+}
+
+// Legacy is the cross-set pool shared by every Set: every set's cards bucketed by
+// House and rarity, each tagged with the set it came from. One Legacy is built for
+// the whole catalog with NewLegacy and referenced by every Set, rather than each
+// Set holding its own copy of every other set's cards. A Set draws only the
+// entries whose set differs from its own, so a legacy slot always pulls a card
+// printed in another set.
+type Legacy struct {
+	// byHouseRarity buckets entries by House then rarity so a slot draws a legacy
+	// card of its own rolled rarity; byHouse is the flat per-House fallback for a
+	// rolled rarity that House has no legacy card of.
+	byHouseRarity map[engine.House]map[engine.Rarity][]LegacyEntry
+	byHouse       map[engine.House][]LegacyEntry
+}
+
+// NewLegacy buckets legacy entries by House and rarity. Only housed, non-Connected
+// cards are pooled — a legacy card keeps its own House and rarity, since it is not
+// rehoused the way a maverick is. Houseless Specials, Connected cards, and cards
+// with no House are skipped.
+func NewLegacy(entries []LegacyEntry) *Legacy {
+	l := &Legacy{
+		byHouseRarity: map[engine.House]map[engine.Rarity][]LegacyEntry{},
+		byHouse:       map[engine.House][]LegacyEntry{},
+	}
+	for _, e := range entries {
+		c := e.Card
 		if c.Profile.Houseless || c.Def.Rarity == engine.Connected {
 			continue
 		}
@@ -101,12 +121,35 @@ func (s Set) WithLegacy(cards []Card) Set {
 		if h == engine.HouseNone {
 			continue
 		}
-		s.legacyByHouse[h] = append(s.legacyByHouse[h], c)
-		if s.legacyPool[h] == nil {
-			s.legacyPool[h] = map[engine.Rarity][]Card{}
+		l.byHouse[h] = append(l.byHouse[h], e)
+		if l.byHouseRarity[h] == nil {
+			l.byHouseRarity[h] = map[engine.Rarity][]LegacyEntry{}
 		}
-		s.legacyPool[h][c.Def.Rarity] = append(s.legacyPool[h][c.Def.Rarity], c)
+		l.byHouseRarity[h][c.Def.Rarity] = append(l.byHouseRarity[h][c.Def.Rarity], e)
 	}
+	return l
+}
+
+// candidates returns the entries' cards excluding those from the drawing set, so a
+// Set never draws one of its own cards as a legacy card.
+func (l *Legacy) candidates(entries []LegacyEntry, exclude string) []Card {
+	out := make([]Card, 0, len(entries))
+	for _, e := range entries {
+		if e.Set == exclude {
+			continue
+		}
+		out = append(out, e.Card)
+	}
+	return out
+}
+
+// WithLegacy attaches the shared Legacy pool to the set: cards printed in other
+// sets that a slot may draw instead of one of this set's own, at the set's
+// Tuning.LegacyRate. The same *Legacy is shared by every Set; this Set draws only
+// the entries whose set differs from its Name. It returns the set with the pool
+// attached so it reads as a builder step.
+func (s Set) WithLegacy(l *Legacy) Set {
+	s.legacy = l
 	return s
 }
 

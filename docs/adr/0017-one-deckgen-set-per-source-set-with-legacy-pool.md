@@ -23,20 +23,24 @@ card's first provenance `Ref` (`rc.Provenance[0].Set.Name`). The `cards`
 aggregator groups every registered card by that name (`bySet`), walks the sets in
 release order (`provenance.Sets()`), and builds **one `deckgen.Set` per source
 set** — `DeckSets()`. Each set's own cards form its pool; the cards of _every
-other_ set become its **legacy pool**, attached with a new builder step:
+other_ set are its **legacy pool**, supplied as one shared `Legacy` value built
+once for the whole catalog and attached to every set with a builder step:
 
 ```go
-deckgen.NewSet(name, own, deckgen.DefaultTuning()).WithLegacy(legacy)
+deckgen.NewSet(name, own, deckgen.DefaultTuning()).WithLegacy(shared)
 ```
 
-`WithLegacy` buckets the legacy cards by House **and rarity** (`legacyPool`, with
-a flat per-House `legacyByHouse` fallback), **skipping** houseless Specials,
-`Connected` cards, and `HouseNone` — the same cards the main pool excludes — and
-keeps each legacy card's own House (no rehousing). During generation, `fillSlot`
-rolls `Tuning.LegacyRate` per slot; on a hit it draws a legacy card of the slot's
-**rolled rarity** from `legacyPool[house][rarity]`, falling back to any rarity of
-that House when it has no legacy card of that rarity, and commits the slot with
-`Legacy: true` at the drawn card's own rarity, leaving its House untouched.
+`NewLegacy` buckets every registered card by House **and rarity** (with a flat
+per-House fallback), tagging each with the set it came from and **skipping**
+houseless Specials, `Connected` cards, and `HouseNone` — the same cards the main
+pool excludes — and keeps each legacy card's own House (no rehousing). The one
+`*Legacy` is shared by every set rather than copied per set; a set draws only the
+entries whose set differs from its own Name, so a legacy slot pulls a card printed
+in another set. During generation, `fillSlot` rolls `Tuning.LegacyRate` per slot;
+on a hit it draws a legacy card of the slot's **rolled rarity** for its House,
+falling back to any rarity of that House when it has no legacy card of that
+rarity, and commits the slot with `Legacy: true` at the drawn card's own rarity,
+leaving its House untouched.
 
 `DeckSet()` — the single-set entry point every current caller (`match`, `sim`)
 uses — returns `DeckSets()[0]`, the **first released set** (CotA). That set is the

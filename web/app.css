@@ -1255,6 +1255,13 @@ body {
 .picker-item:hover {
   background-color: var(--surface-hover);
 }
+/* the row the keyboard cursor is on: ringed yellow like every other selection,
+   so the row Enter will add reads the same as a selected card or button. */
+.picker-cursor {
+  outline: 2px solid var(--p1);
+  outline-offset: -2px;
+  background-color: var(--surface-hover);
+}
 .picker-name {
   flex: 1 1 auto;
 }
@@ -2426,6 +2433,14 @@ button:disabled {
 }
 .card--clickable {
   cursor: pointer;
+  /* selection is shown by the yellow .card-selection overlay, so suppress the
+     browser's own click feedback: the tap-highlight box and the focus outline a
+     clickable card would otherwise flash in the UA's blue. */
+  -webkit-tap-highlight-color: transparent;
+}
+.card--clickable:focus,
+.card--clickable:focus-visible {
+  outline: none;
 }
 .card--clickable:hover {
   filter: brightness(1.15);

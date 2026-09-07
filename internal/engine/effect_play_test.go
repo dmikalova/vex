@@ -240,3 +240,136 @@ func TestGamePlayFromArchivesIgnoresACardElsewhere(t *testing.T) {
 		t.Errorf("battleline holds %d creatures, want none", got)
 	}
 }
+
+func TestPlayRandomFromOpponentArchivesText(t *testing.T) {
+	want := "play a random card from your opponent's archives"
+	if got := (PlayRandomFromOpponentArchives{}).Text(); got != want {
+		t.Errorf("text = %q", got)
+	}
+}
+
+func TestPlayTopOfOpponentDeckText(t *testing.T) {
+	want := "play the top card of your opponent's deck"
+	if got := (PlayTopOfOpponentDeck{}).Text(); got != want {
+		t.Errorf("text = %q", got)
+	}
+}
+
+func TestPlayFromOpponentEffectsValidate(t *testing.T) {
+	if err := validateEffect(PlayRandomFromOpponentArchives{}); err != nil {
+		t.Errorf("archives validate = %v", err)
+	}
+	if err := validateEffect(PlayTopOfOpponentDeck{}); err != nil {
+		t.Errorf("deck validate = %v", err)
+	}
+}
+
+// TestPlayTopOfOpponentDeckCreature covers Murkens grabbing a creature off the
+// top of the opponent's deck: it enters the controller's battleline under their
+// control, still owned by the opponent, and its Play: ability resolves for the
+// controller.
+func TestPlayTopOfOpponentDeckCreature(t *testing.T) {
+	g := started(t)
+	foe := g.AddToDeck(NewCard("Foe", Logos, Creature, Common, WithPower(3),
+		WithAbility(TriggerAfterPlay, GainAember{Player: Controller, Amount: 2})), 1)
+
+	g.PlayTopOfOpponentDeck(0)
+
+	if !g.inPlay(foe) {
+		t.Fatal("the creature should be in play")
+	}
+	if got := g.controller(foe); got != 0 {
+		t.Errorf("controller = %d, want 0", got)
+	}
+	if got := g.owner(foe); got != 1 {
+		t.Errorf("owner = %d, want 1 (unchanged)", got)
+	}
+	if got := g.Battleline(0); len(got) != 1 || got[0] != foe {
+		t.Errorf("battleline[0] = %v, want [%d]", got, foe)
+	}
+	if got := g.State.Aember[0]; got != 2 {
+		t.Errorf("player 0 Æmber = %d, want 2 from the Play: ability", got)
+	}
+}
+
+// TestPlayRandomFromOpponentArchives covers Murkens grabbing an action out of the
+// opponent's archives: it resolves as the controller's own play and returns to
+// its owner's discard pile.
+func TestPlayRandomFromOpponentArchives(t *testing.T) {
+	g := started(t)
+	act := g.AddToArchives(NewCard("Snatched", Logos, Tactic, Common,
+		WithAbility(TriggerAfterPlay, GainAember{Player: Controller, Amount: 3})), 1)
+
+	g.PlayRandomFromOpponentArchives(0)
+
+	if got := g.State.Aember[0]; got != 3 {
+		t.Errorf("player 0 Æmber = %d, want 3", got)
+	}
+	if g.State.Archives[1].contains(act) {
+		t.Error("the action should have left the archives")
+	}
+	if d := g.Discard(1); len(d) != 1 || d[0] != act {
+		t.Errorf("owner discard = %v, want [%d]", d, act)
+	}
+}
+
+func TestPlayRandomFromOpponentArchivesEmpty(t *testing.T) {
+	g := started(t)
+	g.PlayRandomFromOpponentArchives(0) // no panic on empty archives
+}
+
+func TestPlayTopOfOpponentDeckEmpty(t *testing.T) {
+	g := started(t)
+	g.PlayTopOfOpponentDeck(0) // no panic on empty deck
+}
+
+// TestPlayForeignRevertsRejectedPlay covers a foreign play the gates reject: the
+// optimistic control taken before the play is reverted, and the card is left
+// untouched in its pile.
+func TestPlayForeignRevertsRejectedPlay(t *testing.T) {
+	g := started(t) // player 0 is active
+	foe := g.AddToDeck(NewCard("Foe", Logos, Creature, Common, WithPower(3)), 0)
+
+	// Player 1 is not active, so the play is rejected before the card is removed.
+	g.PlayTopOfOpponentDeck(1)
+
+	if got := g.controller(foe); got != 0 {
+		t.Errorf("controller = %d, want 0 (control reverted)", got)
+	}
+	if got := g.State.Cards[foe].ControlPlus; got != 0 {
+		t.Errorf("ControlPlus = %d, want 0", got)
+	}
+	if !g.State.Deck[0].contains(foe) {
+		t.Error("the card should still be in its deck")
+	}
+}
+
+// TestPlayRandomFromOpponentArchivesResolve plays a random card out of the
+// opponent's archives as the controller's own.
+func TestPlayRandomFromOpponentArchivesResolve(t *testing.T) {
+	g := started(t)
+	act := g.AddToArchives(NewCard("A", Logos, Tactic, Common,
+		WithAbility(TriggerAfterPlay, GainAember{Player: Controller, Amount: 1})), 1)
+
+	PlayRandomFromOpponentArchives{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+
+	if g.State.Archives[1].contains(act) {
+		t.Error("archives card should have been played")
+	}
+	if got := g.State.Aember[0]; got != 1 {
+		t.Errorf("player 0 Æmber = %d, want 1", got)
+	}
+}
+
+// TestPlayTopOfOpponentDeckResolve plays the top card of the opponent's deck as
+// the controller's own.
+func TestPlayTopOfOpponentDeckResolve(t *testing.T) {
+	g := started(t)
+	top := g.AddToDeck(NewCard("D", Logos, Creature, Common, WithPower(2)), 1)
+
+	PlayTopOfOpponentDeck{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+
+	if !g.inPlay(top) || g.controller(top) != 0 {
+		t.Error("deck top should be in play under player 0")
+	}
+}

@@ -4,10 +4,14 @@
 [default.extend-words]
 # "mis-scripted" (as in a deliberately wrong test script) is intentional.
 mis = "mis"
-# "They're Everywhere" is an official card name; its identifiers spell it
-# "Theyre"/"theyre", which must not be "corrected".
-Theyre = "Theyre"
+# Card names
+Theyre = "Theyre" # They're Everywhere
 theyre = "theyre"
+Frane = "Frane" # First Officer Frane
+# Identity mapping: leave the possessive-stripped token "Franes" alone. It must
+# NOT map to a different value (e.g. "Franes'") — an active correction would
+# rewrite the identifiers in cardlookup's name tests on every commit.
+Franes = "Franes"
 
 [files]
 extend-exclude = [

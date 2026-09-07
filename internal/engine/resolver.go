@@ -215,6 +215,10 @@ type CreatureResolver interface {
 	SetWarded(id LocalID, warded bool)
 	// PreventDamage marks a creature immune to damage for the remainder of the turn.
 	PreventDamage(id LocalID)
+	// PreventDamageForSide makes every creature player controls immune to damage for
+	// the remainder of the turn, read live so creatures gained after it resolves are
+	// covered too (Shield of Justice).
+	PreventDamageForSide(player int)
 	// SetExhausted sets a creature's exhausted status.
 	SetExhausted(id LocalID, exhausted bool)
 	// AddAmberOn changes the Æmber sitting on a card.
@@ -416,6 +420,14 @@ type ZoneResolver interface {
 	// active-house gate (Project Z.Y.X.). It does nothing when the card is not in
 	// that player's archives.
 	PlayFromArchives(player int, id LocalID)
+	// PlayRandomFromOpponentArchives plays a uniformly random card from player's
+	// opponent's archives as player's own play, giving player control of it if it
+	// stays in play (Murkens). It does nothing when those archives are empty.
+	PlayRandomFromOpponentArchives(player int)
+	// PlayTopOfOpponentDeck plays the top card of player's opponent's deck as
+	// player's own play, giving player control of it if it stays in play (Murkens).
+	// It does nothing when that deck is empty.
+	PlayTopOfOpponentDeck(player int)
 	// PutCardUnder removes a card from a player's hand and places it under host,
 	// face up or face down (Masterplan, Jargogle).
 	PutCardUnder(owner int, id, host LocalID, faceDown bool)
@@ -735,6 +747,13 @@ func (g *Game) PreventDamage(id LocalID) {
 	if c := g.stateOf(id); c != nil {
 		c.DamageImmune = true
 	}
+}
+
+// PreventDamageForSide makes every creature player controls immune to damage for
+// the remainder of the turn (Shield of Justice). The mask is read live at damage
+// time, so a creature played or taken after this resolves is protected too.
+func (g *Game) PreventDamageForSide(player int) {
+	g.State.SideDamageImmune[player] = true
 }
 
 // SetExhausted sets a creature's exhausted status.

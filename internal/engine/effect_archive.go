@@ -255,7 +255,7 @@ func (e ArchiveFromPlay) validate() error {
 	return nil
 }
 
-// Text renders the effect, e.g. "archive each friendly Knight trait creature from
+// Text renders the effect, e.g. "archive each friendly Knight creature from
 // play".
 func (e ArchiveFromPlay) Text() string {
 	return fmt.Sprintf("archive %s from play", e.Target.Text())

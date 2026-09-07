@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Horseman • Spirit
 //
-//	Play/Fight/Reap: Deal 1 damage to each non-Horseman trait creature.
+//	Play/Fight/Reap: Deal 1 damage to each non-Horseman creature.
 var HorsemanOfPestilence = card.New(
 	"Horseman of Pestilence",
 	card.House.Sanctum,

@@ -21,6 +21,8 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 ### Next focus
 
 - profiling - eg running property tests and outputting the profiled usage for hot paths, and then optimizing those paths as a skill
+- House Ambassador (eg Brobnar Amassador) as a materialization - make it work as a legacy/maverick to swap with a card in another house
+- Way to always settle damage anytime power could change, instead of having to have settles strewn about the codebase. Similarly, way to settle that a card is no longer in play, so its abilities don't proc, and things that it may have triggered can no longer target it consistently instead of having to know all the call sites - eg redacted strange gizmo forge a key was putting amber back on redacted
 - event sourcing
 - drag and drop creature directly into battleline flank (or deploy, with dynamic moving as you go across), upgrade onto creature, artifact into artifact line
 - The action panel (context.md could have wording for this) could be the actual card and text, and then play/reap/ etc buttons within
@@ -31,33 +33,22 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - In the rulebook have an Accuracy example-binding ratchet — let terms cite a real engine test, then require it for subtle rules over time so that players can interact with the examples and understand the evolving rules context.
 - Be able to set up situation and then run it in the engine UI for playwright
 - rename to Vex
-
-## Things that can be done now
-
-- Way to always settle damage anytime power could change, instead of having to have settles strewn about the codebase
-- Manual mode should allow you to move deck card to hand etc
-- Space should confirm manual mode add card when its highlighted by tabbing
-
-- House Ambassador (eg Brobnar Amassador) as a materialization - make it work as a legacy/maverick to swap with a card in another house
 - remove abduct / simplify to archive targets - the rules already naturally handle how archiving your opponent's cards works
 - can splash and splashattack be combined?
 - enemy creature should be indicated in archives and even under my control
-- Change the wording from X trait creature to just X creature - if a creature becomes an artifact or vice versa, then the wording kinda breaks. This needs finesse bc the ideal would be to change all the cards that can target artifacts to just say the trait, and then otherwise do specify creature.
 - Update card.New to be all opts
-- bdq (see screenshot) is doing the action bar with title cards thing
-- end turns lights up green if I can discard a card and have a restriction that I can't play cards
-- if two of the same exact effects resolve - eg double interdimensional graft - you could auto-order them
-- pile of skulls is after destroyed so cards should already be in the discard when capturing
-- Make sure things like lose keyword acts as a mask for its duration, rather, than permanently altering the state.
-- bdq (see screenshot) is doing the action bar with title cards thing
-- end turns lights up green if I can discard a card and have a restriction that I can't play cards
-- if two of the same exact effects resolve - eg double interdimensional graft - you could auto-order them
+- sequence vs sentences wording - eg sequence is obviously game, and sentences is textual, but they're both textual and game
+
+## Things that can be done now
+
+- ? bdq (see screenshot) is doing the action bar with title cards thing
+- ? they're everywhere sequence
 - auteresolve button
-- shield of justice only protects the creatures when it is played rather than being ongoing - this is an example of specific memory trying to be avoided
+
+- bane, brew (common), plant, and blaster variant
+- gigantic, tide
+- So the areas on the card are the status area, the art area, and the text area. The status area and text area should be separate boxes so they can have rounded corners, and the art area can remain the same. That should mean if there is no status area then the art area goes all the way up to the title with no seam
 - veylan analyst wording
-- jehu self house
-- they're everywhere sequence
-- sequence vs sentences wording
 - does which of the wilds wording need to be so extensive
 - radiant Truth stun everyone on one line
 - clicking on the player bar should unlift a card
@@ -82,6 +73,7 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 ## UI finesse
 
+- Manual mode should allow you to move deck card to hand etc
 - animation library and overhaul
 - playing an action card should have an animation - eg go to center, get big, go to discard
 - destroy animations are going under
@@ -102,6 +94,7 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 - after implementing all cards, identify cards that have unique effects and decide if they can be reworded for simplicity - is it possibility to introspect and see how many times each card facet is used?
 - Renaming the draw pile to reserve so that deck list, the full deck itself, and the deck pile are distinct and clearly named
+- Choose one: rewrites
 
 ## Full two-player support
 
@@ -134,6 +127,7 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - rockatiel - the concept of really good cards that mean you have to hold answers against them for archon, vs not having complete blowout surprises that you have to hold against in sealed
 - If a maverick has a fate, it should pull in prophecies - how to balance prophecies so they could be in any deck?
 - Find the 100 longest card tests in keyteki and digest them down to what the test is trying to capture
+- manual mode - change card house, edit bonus icons/distortions - only on manual mode cards
 
 ## Bot support
 

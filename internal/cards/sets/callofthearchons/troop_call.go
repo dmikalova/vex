@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Put each Niffle trait creature from your discard pile into your hand. Put each friendly Niffle trait creature into its owner's hand.
+//	Play: Put each Niffle creature from your discard pile into your hand. Put each friendly Niffle creature into its owner's hand.
 var TroopCall = card.New(
 	"Troop Call",
 	card.House.Untamed,

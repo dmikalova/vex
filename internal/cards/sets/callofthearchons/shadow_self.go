@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Specter
 //
 //	Shadow Self deals no damage when fighting.
-//	Damage dealt to each neighboring non-Specter trait creature is dealt to Shadow Self instead.
+//	Damage dealt to each neighboring non-Specter creature is dealt to Shadow Self instead.
 var ShadowSelf = card.New(
 	"Shadow Self",
 	card.House.Shadows,

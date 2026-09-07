@@ -48,16 +48,16 @@ type CardCore struct {
 	// GrantedKeywords is the set of keywords this creature has gained for the
 	// remainder of the turn, as a bitmask of Keyword.bit() values (Scout grants
 	// Skirmish). The ready phase clears it for every creature.
-	GrantedKeywords uint8
+	GrantedKeywords uint16
 	// LostKeywords is the set of keywords this creature has lost for the remainder
 	// of the turn, as a bitmask of Keyword.bit() values (Niffle Grounds strips one
 	// creature of taunt and elusive). The ready phase clears it for every creature.
-	LostKeywords uint8
+	LostKeywords uint16
 	// KeywordsUntilNextTurn is the set of keywords this creature has gained until
 	// the start of its controller's next turn, as a bitmask of Keyword.bit() values
 	// (Hideaway Hole grants elusive). Unlike GrantedKeywords, only the controller's
 	// own ready phase clears it, so a defensive keyword survives the opponent's turn.
-	KeywordsUntilNextTurn uint8
+	KeywordsUntilNextTurn uint16
 	// ConsideredFlank, while set, makes this creature count as a flank creature no
 	// matter where it sits in its battleline (Spectral Tunneler). It lasts until the
 	// remainder of the turn; the ready phase clears it for every creature.
@@ -328,6 +328,14 @@ type GameState struct {
 	CannotUse     [2]Bar[bool]
 	CannotUseNext [2]Bar[bool]
 
+	// SideDamageImmune[p], while set, makes every creature player p controls immune
+	// to damage for the current turn — Shield of Justice protects each friendly
+	// creature for the remainder of the turn. It is a side-wide mask read live at
+	// damage time (not a snapshot of the creatures in play when it resolved), so a
+	// creature played or gained after it resolves is protected too, and one taken by
+	// the opponent is not. The ready phase clears it, like the turn bars.
+	SideDamageImmune [2]bool
+
 	// Reap-by-house bars. CannotReapHouse[p] stops player p reaping with creatures
 	// of the named house this turn (Seismo-entangler); CannotReapHouseNext[p] arms
 	// that block for p's next turn. HouseNone (the zero value) bars nothing.
@@ -393,7 +401,7 @@ type GameState struct {
 	// remainder of the turn — Sniffer takes elusive away from each creature. It is a
 	// bitmask over keywordBit so the state stays flat and comparable; the ready
 	// phase clears it.
-	KeywordsLost uint8
+	KeywordsLost uint16
 
 	// TextBlank[p] blanks the text box of every creature player p controls — its
 	// printed keywords, abilities, and constant grants are ignored (its traits and

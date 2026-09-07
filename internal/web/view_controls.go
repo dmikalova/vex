@@ -3,7 +3,6 @@ package web
 import (
 	"fmt"
 	"sort"
-	"strings"
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
@@ -155,6 +154,11 @@ func (g *game) controls() app.UI {
 			body = append(body, btn("Done", g.declineChooser,
 				cx("btn-primary", ifCls(g.isDoneCursor(), "btn-cursor"))))
 		}
+		// An ordering prompt offers Auto-resolve, which answers with a random order
+		// so the player need not arrange abilities whose order does not matter to them.
+		if g.chooserOrdering {
+			body = append(body, btn("Auto-resolve", g.autoResolveOrder, "btn-secondary"))
+		}
 		if g.g.Manual() {
 			body = append(body, btn("Cancel", g.cancelChooser, "btn-secondary"))
 		}
@@ -256,24 +260,20 @@ const pickerInputID = "pickerinput"
 // cardPicker is the fuzzy, text-only card picker for adding an arbitrary card
 // from the pool to hand. It filters the pool by a case-insensitive name substring.
 func (g *game) cardPicker() app.UI {
-	q := strings.ToLower(strings.TrimSpace(g.pickerQuery))
-	var matches []engine.CardDefinition
-	for _, d := range g.allDefs {
-		if q == "" || strings.Contains(strings.ToLower(d.Name), q) {
-			matches = append(matches, d)
-		}
-	}
+	matches := g.pickerMatches()
 	return app.Div().Class("over-backdrop").OnClick(g.closePicker).Body(
 		app.Div().Class("picker-panel").OnClick(g.stopClick).Body(
 			app.Button().Class("zones-close").Text("✕").OnClick(g.closePicker),
 			app.Div().Class("over-title").Text("Add a card to hand"),
 			app.Input().ID(pickerInputID).Class("picker-input").Type("text").
+				AutoFocus(true).
 				Placeholder("Search cards…").
 				Value(g.pickerQuery).OnInput(g.pickerInput),
 			app.Div().Class("picker-list").Body(
 				app.Range(matches).Slice(func(i int) app.UI {
 					d := matches[i]
-					return app.Button().Class("picker-item").
+					return app.Button().
+						Class(cx("picker-item", ifCls(i == g.pickerCursor, "picker-cursor"))).
 						DataSet("card", d.Name).
 						OnClick(g.addPickedCard).
 						Body(

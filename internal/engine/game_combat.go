@@ -315,7 +315,7 @@ func (g *Game) applyRawDamage(id LocalID, amount int, ignoreArmor bool) LocalID 
 // is left for it to be dealt.
 func (g *Game) mitigateDamage(id LocalID, amount int, ignoreArmor bool) int {
 	core := &g.State.Cards[id]
-	if core.DamageImmune {
+	if core.DamageImmune || g.State.SideDamageImmune[g.controller(id)] {
 		g.record(DamageRefused{Creature: id})
 		return 0
 	}

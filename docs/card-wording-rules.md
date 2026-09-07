@@ -302,9 +302,10 @@ does not (`Spider deals no damage when fighting.`).
   `Æ` is a legal Go identifier rune (a Unicode uppercase letter), so `Æmber`
   would compile, but ASCII keeps identifiers typeable and greppable. This rule
   governs text, not code.
-- **`<Trait> trait`** — trait references carry the `trait` qualifier
-  (`Scientist trait creature`, `Knight trait creature`); house references never do
-  (`Mars creature`, `Sanctum creature`).
+- **`<Trait>` references read like house references** — a trait filter names the
+  trait as a plain adjective on the noun (`Scientist creature`, `Knight
+creature`), exactly as houses do (`Mars creature`, `Sanctum creature`). Neither
+  carries a `trait` qualifier.
 - **`during their next turn`** — not `on their next turn`.
 - **`the chosen creature`** — the standard referent for a creature just chosen
   (`Choose a creature. … the chosen creature`).
@@ -520,11 +521,11 @@ the turn phases first-class). Card and rules text that refers to the `"forge a
 key"` or `"draw cards"` part of the turn writes `phase`, where KeyForge writes
 `step`.
 
-| Original                                     | Curated                                       |
-| -------------------------------------------- | --------------------------------------------- |
-| `During your "draw cards" step, …`           | `During your "draw cards" phase, …`           |
-| `skips the "forge a key" step during …`      | `skips the "forge a key" phase during …`      |
-| `You skip your "forge a key" step.`          | `You skip your "forge a key" phase.`          |
+| Original                                | Curated                                  |
+| --------------------------------------- | ---------------------------------------- |
+| `During your "draw cards" step, …`      | `During your "draw cards" phase, …`      |
+| `skips the "forge a key" step during …` | `skips the "forge a key" phase during …` |
+| `You skip your "forge a key" step.`     | `You skip your "forge a key" phase.`     |
 
 (Affected: Streke, Mother, Succubus, The Howling Pit, Miasma.)
 

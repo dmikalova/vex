@@ -268,13 +268,59 @@ mage check        # the full gate: fmt, build, vet, lint, test, cover
 mage fuzz         # coverage-guided whole-game fuzzing (-tags assert), 60s
 mage soak         # volume soak of random games (-tags assert), 30s
 
-# both take a time budget; mage wants -name=value, so no space after the flag:
-mage fuzz -duration=5m      # -d=5m is the same flag
-mage soak -duration=5m      # -d=5m is the same flag
-FUZZTIME=10000x mage fuzz   # env still takes fuzzing's "Nx" execution count
+# every target takes flags; mage wants -name=value, so no space after the flag:
+mage fuzz -fuzztime=5m      # a Go duration, or...
+mage fuzz -fuzztime=10000x  # ...an "Nx" execution count a duration cannot express
+mage soak -duration=5m      # the soak's time budget
 
 # focused runs while iterating:
 mage testRun TestHeal
 mage testRun 'TestHeal|TestAmmoniaClouds'
 mage fuzzClean    # reset the local fuzz corpus if it gets stale
 ```
+
+The debug and trace replays take flags the same way — `mage debug -script=<hex>
+-tail=200`, `mage trace -count=25 -out=tmp/sim/mine.log`.
+
+## Profiling and the local regression baseline
+
+`mage profile` profiles the engine under the whole-game simulator — the closest
+proxy the repo has for the load an MCTS bot would put on the engine, since the bot
+does not exist yet. It runs the sim benchmarks in `internal/sim`, writes CPU and
+allocation profiles under `tmp/sim`, and prints the per-game counts next to a
+committed baseline so a regression shows as a delta:
+
+```sh
+mage profile                # profile the 1000 seeded games -> tmp/sim/cpu.prof, mem.prof
+mage profile -random        # profile a fresh random batch -> cpu-random.prof, mem-random.prof
+mage profile -save          # re-bless the baseline from the seeded run
+
+mage profileServer          # open the seeded CPU flame graph in the pprof web UI
+mage profileServer -mem     # the allocation flame graph
+mage profileServer -random  # the outlier run's profiles
+```
+
+The workload is the `internal/sim` benchmarks:
+
+- **`BenchmarkPlaySeeds`** replays the 1000 deterministic seeded games — the
+  realistic action and allocation mix, and what the baseline records. It skips the
+  simulator's per-action invariant audits, which are the harness's cost, not the
+  engine's, and which MCTS never pays.
+- **`BenchmarkPlayRandom`** is the `-random` outlier pass: a fresh random batch
+  whose counts vary run to run, printed for inspection but never baselined.
+- **`BenchmarkFastCopy`** copies the flat `GameState` — one undo/MCTS snapshot. It
+  must report **0 allocs/op**; the baseline guards that, since adding a pointer to
+  `GameState` (against ADR 0005) would make the copy allocate.
+- **`BenchmarkSnapshotApplyRestore`** snapshots, applies one legal action, and
+  restores — the MCTS inner loop. Split from `BenchmarkFastCopy` so a moved number
+  tells "the snapshot grew" apart from "the action got slower".
+
+**The baseline is advisory, local, and never gates anything.** It lives at
+`internal/sim/testdata/perf_baseline.json` and holds only counts — never
+wall-clock, so it is independent of CPU speed and its git history reads as change
+over time. Re-bless it with `mage profile -save` when a change legitimately moves
+the numbers. The play counts carry a small per-run jitter (the engine randomizes
+map iteration per process, nudging a few script-indexed choices), so read a delta
+of a percent or two as noise and a sudden jump as a real regression; only the
+`FastCopy` allocs count is exact. Nothing here runs in `mage check` or CI —
+profiling is a tool you reach for, not a gate.

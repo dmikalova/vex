@@ -102,5 +102,14 @@ battleline, not only on a flank — its controller chooses the spot as it is
 played ("Lion" Bautrem, Challe the Safeguard). It matters only while the
 creature is being played, so it too is never granted or lost.`,
 		},
+		{
+			Section:    SectionKeyword,
+			Title:      "Treachery",
+			Definition: "The card enters play under your opponent's control.",
+			Body: `A card with Treachery enters play under your opponent's control (Scowly
+Caper). You still play it on your own turn and take any Æmber bonus it
+prints, but the moment it is in play it belongs to your opponent. It matters
+only as the card is played, so it is never granted or lost.`,
+		},
 	})
 }

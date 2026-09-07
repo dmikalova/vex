@@ -16,7 +16,7 @@ import (
 //	Traits: Specter
 //
 //	Shadow Self deals no damage when fighting.
-//	Damage dealt to each neighboring non-Specter trait creature is dealt to Shadow Self instead.
+//	Damage dealt to each neighboring non-Specter creature is dealt to Shadow Self instead.
 func TestShadowSelf(t *testing.T) {
 	t.Run("shields a non-Specter neighbor and deals no fight damage", func(t *testing.T) {
 		var shadow, ward, foe ct.Card

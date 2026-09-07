@@ -42,7 +42,7 @@ func (e PutFromDiscard) noun() string {
 		base = strings.ToLower(e.Type.String())
 	}
 	if e.Trait != traitUnset {
-		base = e.Trait.String() + " trait " + base
+		base = e.Trait.String() + " " + base
 	}
 	return base
 }

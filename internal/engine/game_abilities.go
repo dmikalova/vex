@@ -1,6 +1,9 @@
 package engine
 
-import "slices"
+import (
+	"slices"
+	"strconv"
+)
 
 // This file holds how a card is USED — the player actions that reap, fight, or
 // activate an "Action:" ability — the checks that gate them, and the machinery
@@ -502,7 +505,11 @@ func (g *Game) emitCreaturePlayedAdjacent(played LocalID) {
 // during your turn" reaction (Pile of Skulls) on the active player's in-play
 // cards. It fires only for the active player, and only when the destroyed
 // creature is one of their enemies, so the reaction is naturally limited to your
-// own turn and to enemy creatures.
+// own turn and to enemy creatures. Like emitCreatureDestroyed it is called once
+// the destruction batch has reached the discard pile, so a friendly creature that
+// died in the same batch is no longer in play to be chosen (a card is not
+// destroyed — and does not open the "after destroyed" window — until it lands in
+// the discard).
 func (g *Game) emitEnemyDestroyed(destroyed LocalID) {
 	active := g.State.ActivePlayer
 	if g.controller(destroyed) == active {
@@ -668,11 +675,17 @@ const orderDestroyedPrompt = "Resolve destroyed abilities"
 const orderGrantorPrompt = "Choose which ability resolves next"
 
 // orderTriggered lets the active player arrange a trigger window's abilities into
-// a resolution order (ADR 0013). Ordering runs at two levels, because the Chooser
-// port speaks in cards: first the distinct triggering cards, then — within one
-// card — the distinct cards whose text granted it each ability. Either level with
-// a single entry is forced and never prompts, so an event on one card with one
-// ability is silent, as is a batch of creatures that each carry one. The trigger
+// a resolution order (ADR 0013). Identical abilities — same trigger and same
+// rendered text, even from different cards — resolve the same in any order, so
+// they are collapsed to one representative that carries them all: the player is
+// asked to order only the distinct abilities, and a window whose abilities are all
+// identical is auto-ordered and never prompts. (Identity is compared, not card,
+// because the same card can resolve differently as the board changes.) Ordering of
+// the distinct abilities then runs at two levels, because the Chooser port speaks
+// in cards: first the distinct triggering cards, then — within one card — the
+// distinct cards whose text granted it each ability. Either level with a single
+// entry is forced and never prompts, so an event on one card with one ability is
+// silent, as is a batch of creatures that each carry the same one. The trigger
 // names the window so a Destroyed batch reads as "Resolve destroyed abilities".
 func (g *Game) orderTriggered(
 	actor int,
@@ -682,18 +695,51 @@ func (g *Game) orderTriggered(
 	if len(pending) <= 1 {
 		return pending
 	}
+	reps, members := collapseIdentical(pending)
+	if len(reps) == 1 {
+		return pending
+	}
 	prompt := orderTriggerPrompt
 	if trigger == TriggerDestroyed {
 		prompt = orderDestroyedPrompt
 	}
 	ordered := make([]triggeredAbility, 0, len(pending))
-	for _, src := range g.orderByChoice(actor, prompt, distinctBy(pending, sourceOf)) {
-		of := filterBy(pending, sourceOf, src)
+	for _, src := range g.orderByChoice(actor, prompt, distinctBy(reps, sourceOf)) {
+		of := filterBy(reps, sourceOf, src)
 		for _, grantor := range g.orderByChoice(actor, orderGrantorPrompt, distinctBy(of, grantorOf)) {
-			ordered = append(ordered, filterBy(of, grantorOf, grantor)...)
+			for _, r := range filterBy(of, grantorOf, grantor) {
+				ordered = append(ordered, members[abilityIdentity(r.ability)]...)
+			}
 		}
 	}
 	return ordered
+}
+
+// abilityIdentity keys an ability by what it will do — its trigger and rendered
+// text — so two abilities that resolve identically share a key. It is what
+// collapseIdentical groups by, so ordering is only ever asked between abilities
+// that would actually resolve differently.
+func abilityIdentity(a Ability) string {
+	return strconv.Itoa(int(a.Trigger)) + "\x00" + a.Effect.Text()
+}
+
+// collapseIdentical groups pending by ability identity in first-seen order,
+// returning one representative per distinct ability and a map from each identity
+// to every pending ability sharing it. Ordering runs over the representatives;
+// each is expanded back to its members once the order is fixed.
+func collapseIdentical(
+	pending []triggeredAbility,
+) ([]triggeredAbility, map[string][]triggeredAbility) {
+	members := map[string][]triggeredAbility{}
+	var reps []triggeredAbility
+	for _, t := range pending {
+		k := abilityIdentity(t.ability)
+		if _, seen := members[k]; !seen {
+			reps = append(reps, t)
+		}
+		members[k] = append(members[k], t)
+	}
+	return reps, members
 }
 
 // sourceOf and grantorOf name the two card fields orderTriggered orders by.

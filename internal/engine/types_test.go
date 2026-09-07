@@ -98,7 +98,7 @@ func TestKeywords(t *testing.T) {
 	if len(all) != int(keywordCount)-1 {
 		t.Fatalf("Keywords() has %d entries, want %d", len(all), keywordCount-1)
 	}
-	var seen uint8
+	var seen uint16
 	for _, k := range all {
 		if k.String() == "" {
 			t.Errorf("keyword %d renders empty", k)
@@ -108,8 +108,8 @@ func TestKeywords(t *testing.T) {
 		}
 		seen |= k.bit()
 	}
-	if all[0] != Skirmish || all[len(all)-1] != Deploy {
-		t.Errorf("Keywords() = %v, want Skirmish first and Deploy last", all)
+	if all[0] != Skirmish || all[len(all)-1] != Treachery {
+		t.Errorf("Keywords() = %v, want Skirmish first and Treachery last", all)
 	}
 }
 

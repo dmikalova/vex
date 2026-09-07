@@ -8,7 +8,7 @@ import (
 
 // A Target names the cards an ability acts on. KeyForge abilities are written in
 // terms of noun phrases — "this creature", "each enemy creature", "a friendly
-// creature", "each Scientist trait creature", "each creature with power 3 or
+// creature", "each Scientist creature", "each creature with power 3 or
 // lower" — and Target captures exactly that: a base set chosen by Kind, narrowed
 // by optional filters. Because the same value both renders the phrase (Text) and
 // selects the cards (Select), one effect such as Destroy can express many
@@ -190,8 +190,8 @@ func (t Target) WithTrait(trait Trait) Target {
 }
 
 // ExceptTrait narrows the target to cards that do NOT have the given trait,
-// rendering the "non-<trait> trait" qualifier, e.g. a friendly Mars creature
-// ExceptTrait(Agent) reads "a friendly non-Agent trait Mars creature".
+// rendering the "non-<trait>" qualifier, e.g. a friendly Mars creature
+// ExceptTrait(Agent) reads "a friendly non-Agent Mars creature".
 func (t Target) ExceptTrait(trait Trait) Target {
 	t.exceptTrait = trait
 	return t
@@ -433,7 +433,7 @@ func (t Target) valid() bool {
 }
 
 // Text renders the target as an English noun phrase, e.g. "each enemy creature",
-// "each Scientist trait creature", or "each creature with power 3 or lower".
+// "each Scientist creature", or "each creature with power 3 or lower".
 func (t Target) Text() string {
 	switch t.Kind {
 	case TargetThisCreature:
@@ -480,13 +480,13 @@ func (t Target) Text() string {
 		noun = "non-" + t.exceptHouse.String() + " " + noun
 	}
 	if t.trait != traitUnset {
-		noun = t.trait.String() + " trait " + noun
+		noun = t.trait.String() + " " + noun
 	}
 	if t.house != HouseNone {
 		noun = t.house.String() + " " + noun
 	}
 	if t.exceptTrait != traitUnset {
-		noun = "non-" + t.exceptTrait.String() + " trait " + noun
+		noun = "non-" + t.exceptTrait.String() + " " + noun
 	}
 	if t.onFlank {
 		// A flank is a battleline position, so on a target that also reaches artifacts
@@ -635,6 +635,28 @@ func (t Target) decorateNeighbors(phrase string) string {
 // (returning nil when there are none or the choice is declined).
 func (t Target) Select(ctx *EffectContext) []LocalID {
 	return t.selectWith(ctx, false, nil)
+}
+
+// wholeSide reports whether the target is a plain, unfiltered whole side — every
+// friendly creature or every enemy creature with no narrowing — and which player
+// that side belongs to. A side-wide, live-read status (Shield of Justice's
+// damage immunity) can stand in for selecting those creatures one by one, which
+// also covers creatures that arrive after the effect resolves. Any narrowing
+// filter (a trait, a power bound, a flank) makes it not a whole side, so it falls
+// back to selecting concrete creatures.
+func (t Target) wholeSide(controller int) (player int, ok bool) {
+	switch t.Kind {
+	case TargetEachFriendlyCreature:
+		player = controller
+	case TargetEachEnemyCreature:
+		player = 1 - controller
+	default:
+		return 0, false
+	}
+	if t != (Target{Kind: t.Kind}) {
+		return 0, false
+	}
+	return player, true
 }
 
 // SelectOptional is Select inside a "you may": a chosen target is asked

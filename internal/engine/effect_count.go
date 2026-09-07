@@ -363,14 +363,14 @@ func (e InPlay) who() string {
 }
 
 // typeNoun renders the filtered type as a noun. A trait filter names the trait
-// itself ("Shard"), and combines with a type as "Thief trait creature".
+// itself ("Shard"), and combines with a type as "Thief creature".
 func (e InPlay) typeNoun() string {
 	if e.Trait != traitUnset {
 		switch e.Type {
 		case Creature:
-			return e.Trait.String() + " trait creature"
+			return e.Trait.String() + " creature"
 		case Artifact:
-			return e.Trait.String() + " trait artifact"
+			return e.Trait.String() + " artifact"
 		default:
 			return e.Trait.String()
 		}

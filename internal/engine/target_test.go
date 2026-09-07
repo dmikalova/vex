@@ -476,7 +476,7 @@ func TestTargetExceptTrait(t *testing.T) {
 	}
 	if got := (Target{Kind: TargetChosenCreature}).OfHouse(Mars).
 		ExceptTrait(Agent).
-		Text(); got != "a non-Agent trait Mars creature" {
+		Text(); got != "a non-Agent Mars creature" {
 		t.Errorf("ExceptTrait text = %q", got)
 	}
 }

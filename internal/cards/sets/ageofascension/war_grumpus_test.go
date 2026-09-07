@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Beast
 //
-//	Fight/Reap: Ready and fight with a neighboring Giant trait creature.
+//	Fight/Reap: Ready and fight with a neighboring Giant creature.
 func TestWarGrumpus(t *testing.T) {
 	t.Run("reap readies and fights with a neighboring Giant", func(t *testing.T) {
 		var giant, foe ct.Card

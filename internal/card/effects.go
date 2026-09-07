@@ -232,6 +232,12 @@ type (
 	// (From), ignoring the active house. Set Except to make House the house that
 	// may not be played.
 	PlayFrom = engine.PlayFrom
+	// PlayRandomFromOpponentArchives plays a random card from the opponent's
+	// archives as your own (a Murkens option).
+	PlayRandomFromOpponentArchives = engine.PlayRandomFromOpponentArchives
+	// PlayTopOfOpponentDeck plays the top card of the opponent's deck as your own
+	// (a Murkens option).
+	PlayTopOfOpponentDeck = engine.PlayTopOfOpponentDeck
 	// PutUnderFromHand puts a card the controller chooses from their hand under
 	// the resolving card, face up or face down.
 	PutUnderFromHand = engine.PutUnderFromHand
@@ -289,6 +295,10 @@ type (
 	// RedistributeCapturedAember moves all the Æmber on one side's creatures back
 	// among that side's creatures however the controller chooses (Equalize).
 	RedistributeCapturedAember = engine.RedistributeCapturedAember
+	// RedistributeDamage lets the controller choose a player and optionally move
+	// all the damage on that player's creatures among that player's creatures
+	// (Entropic Manipulator).
+	RedistributeDamage = engine.RedistributeDamage
 	// Use uses up to Max cards the controller chooses from Target.
 	Use = engine.Use
 	// TriggerAbility fires another card's ability as if the controller controlled it.

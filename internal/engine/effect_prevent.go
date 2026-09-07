@@ -34,8 +34,16 @@ func (e PreventDamage) Text() string {
 func (e PreventDamage) durationSubject() string   { return e.Target.Text() }
 func (e PreventDamage) durationPredicate() string { return "cannot be dealt damage" }
 
-// Resolve marks each selected creature damage-immune for the duration.
+// Resolve marks each selected creature damage-immune for the duration. When the
+// target is a whole, unfiltered side (Shield of Justice's "each friendly
+// creature") the immunity is registered side-wide and read live, so a creature
+// played or gained later is protected too, rather than a snapshot of the
+// creatures in play the moment it resolved.
 func (e PreventDamage) Resolve(ctx *EffectContext) {
+	if player, ok := e.Target.wholeSide(ctx.Controller); ok {
+		ctx.Resolver.PreventDamageForSide(player)
+		return
+	}
 	for _, id := range e.Target.Select(ctx) {
 		ctx.Resolver.PreventDamage(id)
 	}

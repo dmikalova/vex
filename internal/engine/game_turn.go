@@ -104,7 +104,13 @@ func (g *Game) ChooseHouse(player int, house House) error {
 	}
 	g.State.ActiveHouse = house
 	g.record(HouseChosen{Player: player, House: house})
+	// The snapshot is taken once, but an earlier card's ability can remove a later
+	// one from play (Strange Gizmo destroys friendly artifacts); a card that has
+	// left play mid-window drops its remaining trigger (ADR 0013).
 	for _, id := range g.allInPlay(player) {
+		if !g.inPlay(id) {
+			continue
+		}
 		g.triggerAbilities(id, TriggerAfterChooseHouse, 0, false)
 	}
 	g.enterPhase(PhaseArchives)

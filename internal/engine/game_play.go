@@ -271,6 +271,52 @@ func (g *Game) PlayFromArchives(player int, id LocalID) {
 	_, _ = g.playCardFromZone(player, id, func() { arc.remove(id) }, playCardOptions{})
 }
 
+// PlayRandomFromOpponentArchives plays a uniformly random card from player's
+// opponent's archives as player's own play (Murkens). The card is drawn at random
+// because a player's archives are facedown and hidden.
+func (g *Game) PlayRandomFromOpponentArchives(player int) {
+	arc := &g.State.Archives[1-player]
+	if arc.Count == 0 {
+		return
+	}
+	id := arc.IDs[g.rng.Intn(int(arc.Count))]
+	g.playForeign(player, id, func() { arc.remove(id) })
+}
+
+// PlayTopOfOpponentDeck plays the top card of player's opponent's deck as player's
+// own play (Murkens).
+func (g *Game) PlayTopOfOpponentDeck(player int) {
+	deck := &g.State.Deck[1-player]
+	if deck.Count == 0 {
+		return
+	}
+	g.playForeign(player, deck.IDs[0], func() { deck.removeAt(0) })
+}
+
+// playForeign plays a card that player may not own as player's own play. When the
+// card is owned by the other player, player takes control of it — held as a
+// permanent control naming the card itself as source, so it lasts until the card
+// leaves play and the card still returns to its owner's zone. Control is set
+// before the play so the card's controller reads correctly while its Play:
+// ability resolves; a rejected play (card-play limit, unmet play requirement)
+// reverts it.
+func (g *Game) playForeign(player int, id LocalID, remove func()) {
+	// Only a card that stays in play under an independent controller — a creature
+	// or an artifact — needs a control entry so it reads as player's after the
+	// play. A Tactic resolves and leaves play at once, so taking control of it
+	// would leak in-play state onto a card no longer in play.
+	t := g.cat.def(id).Type
+	foreign := g.owner(id) != player && (t == Creature || t == Artifact)
+	if foreign {
+		g.State.Cards[id].ControlPlus = uint8(player + 1)
+		g.pushControl(id, player, id)
+	}
+	if _, err := g.playCardFromZone(player, id, remove, playCardOptions{}); err != nil && foreign {
+		g.State.Cards[id].ControlPlus = 0
+		g.clearControls(id)
+	}
+}
+
 // playFromPile plays a card out of one of a player's face-down piles. Where the
 // card comes from is the only thing that differs between playing from deck, hand,
 // and discard pile — every gate, the log, and the card's Play: ability are the
@@ -345,6 +391,7 @@ func (g *Game) playCardFromZone(
 		g.recordCardPlayed(player, id, opts)
 		remove()
 		g.playCreatureCard(player, id, opts.flankLeft)
+		g.applyTreachery(player, id)
 		return id, nil
 	case Artifact:
 		if err := g.chargeToll(player, TollPlayArtifact); err != nil {
@@ -353,6 +400,7 @@ func (g *Game) playCardFromZone(
 		g.recordCardPlayed(player, id, opts)
 		remove()
 		g.playArtifactCard(player, id)
+		g.applyTreachery(player, id)
 		return id, nil
 	case Tactic:
 		g.recordCardPlayed(player, id, opts)
@@ -376,6 +424,17 @@ func (g *Game) playCardFromZone(
 		return host, nil
 	default:
 		return 0, ErrWrongType
+	}
+}
+
+// applyTreachery hands a just-played Treachery card to its player's opponent,
+// permanently — the keyword means the card enters play under your opponent's
+// control. The card is placed and its Play abilities and Æmber bonus resolve for
+// the player first (they still take the bonus); only then does control pass. The
+// card itself is the control source, so the control lasts until it leaves play.
+func (g *Game) applyTreachery(player int, id LocalID) {
+	if g.hasKeyword(id, Treachery) {
+		g.takeControl(id, 1-player, id)
 	}
 }
 

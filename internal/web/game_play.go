@@ -233,12 +233,15 @@ func (g *game) handOffEndedTurn() {
 }
 
 // hasMoves reports whether the active player could still act this turn: a playable
-// hand card, a usable creature, or a usable artifact. It drives the end-turn
-// confirmation — with nothing left to do, ending needs no confirm.
+// or discardable hand card, a usable creature, or a usable artifact. It drives the
+// end-turn confirmation — with nothing left to do, ending needs no confirm. A card
+// that cannot be played but can still be discarded (a restriction bars playing,
+// not discarding) is a move, so the button does not go green while a legal action
+// remains.
 func (g *game) hasMoves() bool {
 	p := g.active()
 	for _, id := range g.g.Hand(p) {
-		if g.g.CanPlay(p, id) == nil {
+		if g.g.CanPlay(p, id) == nil || g.g.CanDiscard(p, id) == nil {
 			return true
 		}
 	}

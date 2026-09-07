@@ -1,0 +1,26 @@
+//go:build todo
+
+package worldscollide
+
+import "github.com/dmikalova/vactrol/internal/card"
+
+// Zap
+//
+// TODO(stub): unimplemented. Remove the //go:build todo tag and
+// implement the ability once the needed effect exists.
+//
+//	House:  Staralliance
+//	Type:   Tactic
+//	Rarity: Common
+//	Æmber:  1
+//
+//	Play: Deal 1D to a creature for each house represented among creatures in play.
+var Zap = card.New(
+	"Zap",
+	card.House.Staralliance,
+	card.Type.Tactic,
+	card.Rarity.Common,
+	card.Provenance(card.WC, 307),
+	card.WithAemberBonus(1),
+	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+)

@@ -128,7 +128,11 @@ type game struct {
 	// "up to N". It adds the Done button and lets Escape answer the prompt instead
 	// of being swallowed.
 	chooserDeclinable bool
-	promptSource      string // card driving the current chooser/option prompt, if any
+	// chooserOrdering marks an ordering prompt (arranging several abilities' or
+	// cards' resolution order). It adds the Auto-resolve button, which answers with
+	// a random order instead of picking each in turn.
+	chooserOrdering bool
+	promptSource    string // card driving the current chooser/option prompt, if any
 	// promptCursor is the candidate Tab has stepped to while a card prompt is up.
 	// It draws as selected and is what Enter answers the prompt with, but only once
 	// hasCursor says Tab has moved: LocalID 0 is a real card, so a zero cursor
@@ -170,7 +174,11 @@ type game struct {
 	pickerOpen    bool
 	pickerFocused bool
 	pickerQuery   string
-	allDefs       []engine.CardDefinition
+	// pickerCursor is the index of the highlighted row in the filtered picker
+	// list; Enter adds it and Tab/arrows move it. It resets to 0 (the first row)
+	// whenever the picker opens or the query filters the list.
+	pickerCursor int
+	allDefs      []engine.CardDefinition
 	// manualAdds records, in registration order, the cards manual mode put into a
 	// hand. The catalog is rebuilt from the seed, which knows nothing about them, so
 	// a reload has to replay them or the saved state holds ids the catalog lacks.
@@ -409,7 +417,7 @@ const persistKey = "vactrol.match"
 // snapshots invalid so a stale one is flushed instead of restored. A log entry is
 // saved as the prose it was narrated with, so rewording an entry dates every
 // snapshot holding the old wording and counts as such a change.
-const snapshotVersion = 13
+const snapshotVersion = 14
 
 // snapshot is the persisted match. The seed deterministically rebuilds the
 // catalog and card ids; the flat GameState carries everything mutable. All other

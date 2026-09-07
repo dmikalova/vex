@@ -157,7 +157,7 @@ func (t CardType) reacts(other CardType) bool {
 
 // Trait is a flavor/type label printed on a card (e.g. "Giant", "Weapon").
 // Traits carry no inherent rules meaning on their own; other cards reference
-// them (a Destroy that targets "each Scientist trait creature"). KeyForge keeps
+// them (a Destroy that targets "each Scientist creature"). KeyForge keeps
 // coining new traits with every set, but each one still comes from a fixed,
 // printed vocabulary, so — like Keyword — this is a closed enum rather than a
 // freeform string: a misspelled trait cannot compile. A set that prints a trait
@@ -214,56 +214,92 @@ const (
 	Vehicle
 	Weapon
 	Witch
+	Ai
+	Alien
+	Aquan
+	Dinosaur
+	Experiment
+	Handuhan
+	Hunter
+	Jelly
+	Krxix
+	Leader
+	Philosopher
+	Pilot
+	Pirate
+	Politician
+	Proximan
+	Psion
+	Shapeshifter
+	Wolf
 	// traitCount bounds the enum; it is not a trait.
 	traitCount
 )
 
 // traitNames maps a Trait to its printed word, indexed by the enum value.
 var traitNames = [traitCount]string{
-	Agent:     "Agent",
-	Ally:      "Ally",
-	Angel:     "Angel",
-	Beast:     "Beast",
-	Cleric:    "Cleric",
-	Cyborg:    "Cyborg",
-	Demon:     "Demon",
-	Dragon:    "Dragon",
-	Elf:       "Elf",
-	Equation:  "Equation",
-	Faerie:    "Faerie",
-	Fungus:    "Fungus",
-	Giant:     "Giant",
-	Goblin:    "Goblin",
-	Horseman:  "Horseman",
-	Human:     "Human",
-	Imp:       "Imp",
-	Insect:    "Insect",
-	Item:      "Item",
-	Knight:    "Knight",
-	Law:       "Law",
-	Location:  "Location",
-	Martian:   "Martian",
-	Merchant:  "Merchant",
-	Mutant:    "Mutant",
-	Niffle:    "Niffle",
-	Monk:      "Monk",
-	Power:     "Power",
-	Priest:    "Priest",
-	Quest:     "Quest",
-	Ranger:    "Ranger",
-	Rat:       "Rat",
-	Redacted:  "[redacted]",
-	Robot:     "Robot",
-	Scientist: "Scientist",
-	Shard:     "Shard",
-	Soldier:   "Soldier",
-	Specter:   "Specter",
-	Spirit:    "Spirit",
-	Thief:     "Thief",
-	Tree:      "Tree",
-	Vehicle:   "Vehicle",
-	Weapon:    "Weapon",
-	Witch:     "Witch",
+	Agent:        "Agent",
+	Ally:         "Ally",
+	Angel:        "Angel",
+	Beast:        "Beast",
+	Cleric:       "Cleric",
+	Cyborg:       "Cyborg",
+	Demon:        "Demon",
+	Dragon:       "Dragon",
+	Elf:          "Elf",
+	Equation:     "Equation",
+	Faerie:       "Faerie",
+	Fungus:       "Fungus",
+	Giant:        "Giant",
+	Goblin:       "Goblin",
+	Horseman:     "Horseman",
+	Human:        "Human",
+	Imp:          "Imp",
+	Insect:       "Insect",
+	Item:         "Item",
+	Knight:       "Knight",
+	Law:          "Law",
+	Location:     "Location",
+	Martian:      "Martian",
+	Merchant:     "Merchant",
+	Mutant:       "Mutant",
+	Niffle:       "Niffle",
+	Monk:         "Monk",
+	Power:        "Power",
+	Priest:       "Priest",
+	Quest:        "Quest",
+	Ranger:       "Ranger",
+	Rat:          "Rat",
+	Redacted:     "[redacted]",
+	Robot:        "Robot",
+	Scientist:    "Scientist",
+	Shard:        "Shard",
+	Soldier:      "Soldier",
+	Specter:      "Specter",
+	Spirit:       "Spirit",
+	Thief:        "Thief",
+	Tree:         "Tree",
+	Vehicle:      "Vehicle",
+	Weapon:       "Weapon",
+	Witch:        "Witch",
+	Ai:           "AI",
+	Alien:        "Alien",
+	Aquan:        "Aquan",
+	Dinosaur:     "Dinosaur",
+	Experiment:   "Experiment",
+	Handuhan:     "Handuhan",
+	Hunter:       "Hunter",
+	Jelly:        "Jelly",
+	Krxix:        "Krxix",
+	Leader:       "Leader",
+	Philosopher:  "Philosopher",
+	Pilot:        "Pilot",
+	Pirate:       "Pirate",
+	Politician:   "Politician",
+	Proximan:     "Proximan",
+	Psion:        "Psion",
+	Shapeshifter: "Shapeshifter",
+	Wolf:         "Wolf",
 }
 
 // String returns the trait's printed word, or "" for the unset zero value.
@@ -318,6 +354,10 @@ const (
 	// played ("Lion" Bautrem, Challe the Safeguard). It matters only while the
 	// creature is being played, so it too is never granted or lost.
 	Deploy
+	// A card with Treachery enters play under your opponent's control (Scowly
+	// Caper, the curses). It matters only as the card is played, so it is never
+	// granted or lost.
+	Treachery
 	// keywordCount bounds the enum; it is not a keyword.
 	keywordCount
 )
@@ -333,6 +373,7 @@ var keywordNames = [keywordCount]string{
 	Alpha:     "Alpha",
 	Omega:     "Omega",
 	Deploy:    "Deploy",
+	Treachery: "Treachery",
 }
 
 // String returns the keyword's printed word, capitalized as a card prints it.
@@ -349,8 +390,9 @@ func (k Keyword) valid() bool { return k > keywordUnset && k < keywordCount }
 // bit is the bit k occupies in GameState.KeywordsLost, so a "for the remainder of
 // the turn, each creature loses <keyword>" effect can be held as one flat
 // comparable value. Being derived from the enum, it cannot fall out of step with
-// it the way a hand-maintained table could.
-func (k Keyword) bit() uint8 {
+// it the way a hand-maintained table could. It is a uint16 because the keyword
+// catalog has outgrown eight members.
+func (k Keyword) bit() uint16 {
 	if !k.valid() {
 		return 0
 	}
