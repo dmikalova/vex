@@ -9,14 +9,16 @@ import "slices"
 // PlayCreature plays a creature from hand onto the battleline. flankLeft places it
 // on the left flank; otherwise it goes to the right flank.
 func (g *Game) PlayCreature(player, handIndex int, flankLeft bool) (LocalID, error) {
-	if g.cannotPlayCreatures(player) {
-		return 0, ErrCannotPlayCreature
-	}
 	id, err := g.validateHandPlay(player, handIndex, Creature)
 	if err != nil {
 		return 0, err
 	}
 	def := g.cat.def(id)
+	// A creature played as an upgrade is not playing a creature, so a creature ban
+	// bars it only when it cannot become an upgrade — no host to attach to.
+	if g.cannotPlayCreatures(player) && (!def.PlayableAsUpgrade || !g.hasUpgradeHost()) {
+		return 0, ErrCannotPlayCreature
+	}
 	result, err := g.playCardFromZone(
 		player,
 		id,
@@ -310,7 +312,34 @@ func (g *Game) playCardFromZone(
 	}
 	switch def.Type {
 	case Creature:
-		if g.cannotPlayCreatures(player) {
+		banned := g.cannotPlayCreatures(player)
+		if def.PlayableAsUpgrade && g.hasUpgradeHost() {
+			// Playing a creature as an upgrade is not playing a creature, so it is
+			// allowed even while creatures are barred — a ban then forces upgrade mode.
+			asUpgrade := banned
+			if !banned {
+				asUpgrade = g.chooseOption(player, g.Name(id),
+					"Play "+SelfName+" as a creature or an upgrade?",
+					[]string{"Creature", "Upgrade"}) == 1
+			}
+			if asUpgrade {
+				candidates := append(g.battlelineCopy(player), g.battlelineCopy(1-player)...)
+				host, ok := g.pickCreature(
+					player,
+					g.Name(id),
+					"Choose a creature to attach "+SelfName+" to",
+					candidates,
+				)
+				if !ok {
+					return 0, ErrNoTarget
+				}
+				g.recordCardPlayed(player, id, opts)
+				remove()
+				g.playUpgradeCard(player, id, host, def)
+				return host, nil
+			}
+		}
+		if banned {
 			return 0, ErrCannotPlayCreature
 		}
 		g.recordCardPlayed(player, id, opts)
@@ -350,6 +379,13 @@ func (g *Game) playCardFromZone(
 	}
 }
 
+// hasUpgradeHost reports whether any creature is in play on either battleline to
+// attach an upgrade to — the host an Upgrade, or a creature played as an upgrade,
+// needs.
+func (g *Game) hasUpgradeHost() bool {
+	return g.State.Battleline[0].Count > 0 || g.State.Battleline[1].Count > 0
+}
+
 // playCreatureCard places a creature on a flank — or, for a Deploy creature,
 // anywhere in the battleline its controller chooses — and fires the standard play
 // sequence for a creature already removed from its previous zone.
@@ -384,9 +420,10 @@ func (g *Game) playCreatureCard(player int, id LocalID, flankLeft bool) {
 // onto the right flank of controller's battleline, an artifact into controller's
 // artifact row. Because it is not played, its bonus icons and Play: abilities do
 // not resolve; only "enters play" reactions fire. Ownership is unchanged, so the
-// card still returns to its owner's zone when it later leaves play. Control is
-// held permanently: the card is its own control source, and releaseControlHeldBy
-// only ever reverts control anchored to a leaving upgrade, never to the card.
+// card still returns to its owner's zone when it later leaves play. When it enters
+// under a player other than its owner, that control is held permanently: the card
+// names itself as the source of a control-stack entry, which only clears when the
+// card itself leaves play (never reverted by a leaving source).
 func (g *Game) putIntoPlay(id LocalID, controller int) {
 	if g.inPlay(id) {
 		return
@@ -395,8 +432,8 @@ func (g *Game) putIntoPlay(id LocalID, controller int) {
 	core := &g.State.Cards[id]
 	if controller != g.owner(id) {
 		core.ControlPlus = uint8(controller + 1)
+		g.pushControl(id, controller, id)
 	}
-	core.ControlSource = id
 	switch g.cat.def(id).Type {
 	case Creature:
 		core.Exhausted = true
@@ -625,7 +662,9 @@ func (g *Game) CanPlay(player int, id LocalID) error {
 	}
 	def := g.cat.def(id)
 	if def.Type == Creature && g.cannotPlayCreatures(player) {
-		return ErrCannotPlayCreature
+		if !def.PlayableAsUpgrade || !g.hasUpgradeHost() {
+			return ErrCannotPlayCreature
+		}
 	}
 	if g.barredFromPlaying(player, def.Type) {
 		return ErrCannotPlayType
@@ -650,9 +689,7 @@ func (g *Game) CanPlay(player int, id LocalID) error {
 		return ErrCannotPayToll
 	}
 	if def.Type == Upgrade &&
-		len(
-			g.State.Battleline[player].slice(),
-		) == 0 && len(g.State.Battleline[1-player].slice()) == 0 {
+		!g.hasUpgradeHost() {
 		return ErrNoTarget
 	}
 	return nil

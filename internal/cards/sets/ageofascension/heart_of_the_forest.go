@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// HeartOfTheForest
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Heart of the Forest
 //
 //	House:  Untamed
 //	Type:   Artifact
@@ -24,5 +19,5 @@ var HeartOfTheForest = card.New(
 	card.Provenance(card.AoA, 355),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Location),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithRestrictions(card.Restrictions{NoForgeWhileAheadOnKeys: true}),
 )

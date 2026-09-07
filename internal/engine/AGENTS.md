@@ -224,6 +224,60 @@ card sheds every entry through the one `removeFromPlay` funnel. Do **not** add a
 Æmber-on-card stay bespoke: they are read on the hot path by identity and change a
 creature's power or fate, not markers a card names.
 
+## Take control is a LIFO stack, not one source per card
+
+"Take control" effects stack. Two abilities can seize the same card, and when the
+newer one ends the older one — if still in effect — takes over; only when the last
+ends does the card revert to its owner. Model this as the global control stack on
+`GameState` (`Controls [maxControlEntries]ControlEntry` + `ControlCount`, in
+`game_control.go`), the same flat, sparse, order-by-construction shape as the
+counter side-table. A card's controller is the top entry naming it; `ControlPlus`
+on `CardCore` is only the fast O(1) cache of that top, refreshed on every push and
+pop. The decision and the bug it fixed (a single `ControlSource` reverting straight
+to the owner, and artifacts never reverting) are ADR 0028.
+
+To take control, push one entry through `takeControl(id, controller, source)` — it
+handles creatures and artifacts alike. `source` is the card whose leaving play ends
+the grant; a **Forever** grant names the seized card itself as `source`, so it
+lapses only when the card leaves play. A take first supersedes its own source's
+earlier entry on the card (`supersedeControl` drops the matching `(card, source)`
+pair), so re-taking replaces rather than stacks — this bounds the stack to the
+distinct in-play sources per card, the board rather than the game length. Every
+exit funnels through `removeFromPlay`, which calls `releaseControlHeldBy(id)` to
+revert what the leaving card held and `clearControls(id)` to shed its own entries.
+Do **not** add a second control field to `CardCore` or special-case artifacts; a
+permanent grant is just a self-sourced stack entry.
+
+## Power is dynamic: settle destruction after anything that can lower it
+
+A creature's power is computed, not stored — base plus upgrades, power counters,
+temporary bonuses, and the constant abilities in play (`Power` in `game_read.go`).
+So a creature can become destroyable with **no effect touching it**: the card
+buffing it leaves play, its `+power` counter is removed, an enemy blanks its text,
+its owner unforges a key a `Per` count scaled on. `shouldDestroy` names that state
+and `settleDestroyed` is what notices it — but only where it is called.
+
+**Any code path that can lower a creature's power must end by settling
+destruction.** When you add or change a mechanic that touches power — a new
+counter, a constant, a blank, a control swap, a `Per`-scaled bonus, a card leaving
+play — trace every way it can reduce a `Power` result and make sure the path ends
+in `g.settleDestroyed(controller)` (directly, or through `removeFromPlay`, which
+already settles). A missed settle does not fail loudly: it leaves a creature in
+play with damage at or above its power, and the bug only surfaces turns later when
+something else finally settles the board — exactly the kind of "in 2 places" or
+"power above damage" invariant a sim soak trips. This has recurred often enough to
+be a standing check: `AddPowerCounter`, `BlankEnemyText`, `SetAember`, and the
+key-forge paths all settle for this reason; new siblings must too.
+
+**When several cards leave play at once, they leave together.** An effect that
+removes a batch of creatures (archive, destroy, return, shuffle) must not let the
+first removal's settle destroy a later member of the same batch — Epic Quest
+archives "Lion" Bautrem and the neighbor it was buffing simultaneously, so the
+neighbor is archived, not destroyed for the power it just lost and then archived a
+second time into two zones. Hold the `settling` flag across the batch and settle
+once at the end (`destroyBatch`, `putIntoArchivesEach` are the models); never loop
+a per-card leave-play call over a pre-selected list without batching.
+
 ## Event, ability, and effect verbs: emit → trigger → resolve
 
 Three tiers of verb, kept distinct so a method name says which level it works at:

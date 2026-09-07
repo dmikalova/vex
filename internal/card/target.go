@@ -35,6 +35,7 @@ var Target = targets{
 	FriendlyArtifact:           engine.Target{Kind: engine.TargetChosenFriendlyArtifact},
 	EnemyArtifact:              engine.Target{Kind: engine.TargetChosenEnemyArtifact},
 	FormerNeighbors:            engine.Target{Kind: engine.TargetFormerNeighbors},
+	TheFoughtCreature:          engine.Target{Kind: engine.TargetTheFoughtCreature},
 }
 
 type targets struct {
@@ -93,6 +94,10 @@ type targets struct {
 	// removing a creature ("each of that creature's neighbors"), for a follow-up
 	// that hits a destroyed creature's former neighbors (Pain Reaction).
 	FormerNeighbors engine.Target
+	// TheFoughtCreature selects the creature a preceding effect had a chosen creature
+	// fight ("the fought creature"), naming no fighter — Smite makes a friendly
+	// creature fight, then damages the fought creature's neighbors.
+	TheFoughtCreature engine.Target
 }
 
 // Selector refines a Target relative to the whole selected set (see

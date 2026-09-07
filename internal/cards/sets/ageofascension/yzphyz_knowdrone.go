@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// YzphyzKnowdrone
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Yzphyz Knowdrone
 //
 //	House:  Mars
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Martian • Scientist
 //
-//	Play: Archive a card. You may purge an archived card to stun a creature.
+//	Play: Archive a card from your hand. You may purge a card from your archives to stun a creature.
 var YzphyzKnowdrone = card.New(
 	"Yzphyz Knowdrone",
 	card.House.Mars,
@@ -26,5 +21,11 @@ var YzphyzKnowdrone = card.New(
 	card.WithPower(3),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Martian, card.Traits.Scientist),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+			card.ArchiveFromHand{Amount: 1},
+			card.PurgeArchivedCardThen{
+				Then: card.Stun{Target: card.Target.Creature},
+			},
+		}}),
 )

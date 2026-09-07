@@ -81,8 +81,15 @@ func (e TakeControl) resolveGate(ctx *EffectContext) bool {
 	}
 	moved := false
 	for _, id := range e.Target.Select(ctx) {
+		// A Forever control never reverts to a leaving source, so it anchors to the
+		// seized card itself; an UntilThisLeavesPlay control anchors to the resolving
+		// card and reverts when that card leaves play.
+		source := ctx.Source
+		if e.Duration == Forever {
+			source = id
+		}
+		ctx.Resolver.TakeControl(id, newController, source)
 		if ctx.Resolver.IsCreature(id) {
-			ctx.Resolver.TakeControl(id, newController, ctx.Source)
 			// The player gaining control places the seized creature on a flank of
 			// their battleline (Harland Mindlock). With no other creature there it
 			// has only one home, so the flank is not worth asking.
@@ -91,8 +98,6 @@ func (e TakeControl) resolveGate(ctx *EffectContext) bool {
 					"Choose a flank", []string{"left flank", "right flank"}) == 1
 				ctx.Resolver.MoveToFlank(id, right)
 			}
-		} else {
-			ctx.Resolver.TakeControlOfArtifact(id, newController)
 		}
 		ctx.It, ctx.HasIt = id, true
 		moved = true

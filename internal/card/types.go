@@ -22,14 +22,16 @@ type (
 
 // House groups the faction values, e.g. card.House.Brobnar.
 var House = houses{
-	Brobnar: engine.Brobnar,
-	Dis:     engine.Dis,
-	Logos:   engine.Logos,
-	Mars:    engine.Mars,
-	Sanctum: engine.Sanctum,
-	Shadows: engine.Shadows,
-	Untamed: engine.Untamed,
-	Self:    engine.SelfHouse,
+	Brobnar:      engine.Brobnar,
+	Dis:          engine.Dis,
+	Logos:        engine.Logos,
+	Mars:         engine.Mars,
+	Sanctum:      engine.Sanctum,
+	Saurian:      engine.Saurian,
+	Shadows:      engine.Shadows,
+	StarAlliance: engine.StarAlliance,
+	Untamed:      engine.Untamed,
+	Self:         engine.SelfHouse,
 }
 
 type houses struct {
@@ -45,6 +47,10 @@ type houses struct {
 	Sanctum engine.House
 	// Shadows is the house of thieves and elves.
 	Shadows engine.House
+	// Saurian is the house of dinosaurs and Roman legionnaires.
+	Saurian engine.House
+	// StarAlliance is the house of the united starship crews.
+	StarAlliance engine.House
 	// Untamed is the house of nature and beasts.
 	Untamed engine.House
 	// Self is the card's own house, filled in when the card is built. Use it
@@ -284,8 +290,10 @@ var Trigger = triggers{
 	AfterForgeKey:               engine.TriggerAfterForgeKey,
 	AfterCreatureEnters:         engine.TriggerAfterCreatureEnters,
 	AfterCreaturePlayedAdjacent: engine.TriggerAfterCreaturePlayedAdjacent,
+	AfterNeighborFights:         engine.TriggerAfterNeighborFights,
 	Destroyed:                   engine.TriggerDestroyed,
 	AfterDestroyedFighting:      engine.TriggerAfterDestroyedFighting,
+	AfterArmorPrevents:          engine.TriggerAfterArmorPrevents,
 	AfterCardPlayed:             engine.TriggerAfterCardPlayed,
 	EndOfTurn:                   engine.TriggerEndOfTurn,
 	StartOfTurn:                 engine.TriggerStartOfTurn,
@@ -319,10 +327,14 @@ type triggers struct {
 	AfterCreatureEnters engine.Trigger
 	// AfterCreaturePlayedAdjacent fires after a creature is played adjacent to this card.
 	AfterCreaturePlayedAdjacent engine.Trigger
+	// AfterNeighborFights fires after a battleline neighbor of this card is used to fight.
+	AfterNeighborFights engine.Trigger
 	// Destroyed fires when this creature is destroyed ("Destroyed:").
 	Destroyed engine.Trigger
 	// AfterDestroyedFighting fires when a creature is destroyed fighting this one.
 	AfterDestroyedFighting engine.Trigger
+	// AfterArmorPrevents fires after this card prevents damage with its own armor.
+	AfterArmorPrevents engine.Trigger
 	// AfterCardPlayed fires after the controller plays a card.
 	AfterCardPlayed engine.Trigger
 	// EndOfTurn fires at the end of the controller's turn.

@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// PosPixies
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Po's Pixies
 //
 //	House:  Untamed
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  1
 //	Traits: Faerie
 //
-//	Elusive. (The first time this creature is attacked each turn, no damage is dealt.)
-//	A stolen or captured from your pool is taken from the common supply instead.
+//	Elusive.
+//	Æmber stolen or captured from your pool is taken from the common supply instead.
 var PosPixies = card.New(
 	"Po's Pixies",
 	card.House.Untamed,
@@ -25,5 +20,6 @@ var PosPixies = card.New(
 	card.Provenance(card.AoA, 362),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Faerie),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithTheftFromCommonSupply(),
 )

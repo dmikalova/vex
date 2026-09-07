@@ -30,9 +30,27 @@ func (g *Game) discardDestroyed(id LocalID) {
 // "purge this creature" a Destroyed ability can do (Annihilation Ritual). A card
 // purged as it is destroyed leaves play, so destroyTogether then skips discarding it.
 func (g *Game) purgeFromPlay(id LocalID) {
+	if g.absorbedByWard(id) {
+		return
+	}
 	o := g.leavePlayDestroyed(id)
 	g.State.Purge[o].add(id)
 	g.record(CardPurged{Card: id})
+}
+
+// absorbedByWard reports whether a warded creature's ward absorbs a removal from
+// play or an instance of damage. A warded creature instead loses its ward and
+// stays; the effect that tried to remove or damage it still resolves, just with no
+// effect on the creature. Ward covers only leaving play and damage — not stun,
+// enrage, capture, control, or power loss — so only those funnels ask it.
+func (g *Game) absorbedByWard(id LocalID) bool {
+	c := g.stateOf(id)
+	if c == nil || !c.Warded {
+		return false
+	}
+	c.Warded = false
+	g.record(WardAbsorbed{Creature: id})
+	return true
 }
 
 // leavePlayDestroyed performs the shared teardown when a destroyed card leaves
@@ -53,13 +71,29 @@ func (g *Game) leavePlayDestroyed(id LocalID) int {
 	return o
 }
 
-// removeFromPlay removes id from every in-play zone. A card normally appears only
-// under its owner, but control-changing effects move creatures into another
-// player's battleline while ownership stays fixed, so leave-play teardown must
-// scan both players' rows.
+// removeFromPlay takes a card out of play for good: it fires the card's Leaves
+// Play abilities, sheds its counters, reverts any cards it was controlling and
+// sheds its own control entries, then unlists it from every in-play zone and
+// settles the board it left. Every real exit — destroyed, purged, returned to
+// hand, archived, put on or shuffled into a deck, grafted — funnels through here.
+// A change of control is NOT an exit: the card stays in play on the other side, so
+// control uses unlistFromPlay directly and never fires Leaves Play or sheds
+// counters.
 func (g *Game) removeFromPlay(id LocalID) {
 	g.emitLeavesPlay(id)
 	g.clearCounters(id)
+	g.releaseControlHeldBy(id)
+	g.unlistFromPlay(id)
+	g.clearControls(id)
+}
+
+// unlistFromPlay removes id from both players' battlelines and artifact rows and
+// settles the board it left, without the Leaves Play teardown. It is the shared
+// zone move under both a real exit (removeFromPlay) and a change of control, which
+// pulls a creature from one side to re-add it on the other while it stays in play.
+// A card normally appears only under its owner, but control moves it into another
+// player's rows while ownership stays fixed, so the move must scan both rows.
+func (g *Game) unlistFromPlay(id LocalID) {
 	for p := 0; p < 2; p++ {
 		g.State.Battleline[p].remove(id)
 		g.State.Artifacts[p].remove(id)
@@ -146,12 +180,14 @@ func (g *Game) destroyAttachedUpgrade(upgrade LocalID) {
 	g.State.Discard[g.owner(upgrade)].add(upgrade)
 }
 
-// applyDestructionReplacements removes creatures whose destruction was replaced
-// from the pending destruction set before any Destroyed abilities are collected.
-func (g *Game) applyDestructionReplacements(controller int, ids []LocalID) []LocalID {
+// filterUndestroyed drops creatures whose destruction does not happen from the
+// pending set before any Destroyed abilities are collected, so a saved creature
+// never counts as destroyed. A ward absorbs the destruction (spent first), or an
+// attached Upgrade replaces it (Armageddon Cloak).
+func (g *Game) filterUndestroyed(controller int, ids []LocalID) []LocalID {
 	var out []LocalID
 	for _, id := range ids {
-		if g.applyDestructionReplacement(controller, id) {
+		if g.absorbedByWard(id) || g.applyDestructionReplacement(controller, id) {
 			continue
 		}
 		out = append(out, id)
@@ -168,7 +204,7 @@ func (g *Game) applyDestructionReplacements(controller int, ids []LocalID) []Loc
 // Ritual purges it) cannot resolve any of its remaining abilities. Then every
 // creature still in play goes to its discard pile.
 func (g *Game) destroyTogether(controller int, ids []LocalID) {
-	ids = g.applyDestructionReplacements(controller, ids)
+	ids = g.filterUndestroyed(controller, ids)
 	// The source is consumed by the batch it directly targets; any state-based
 	// deaths that follow (a creature that lost a buff) narrate passively.
 	source, hasSource := g.destroyingSource, g.hasDestroyingSource
@@ -256,6 +292,9 @@ func (g *Game) destroyBatch(controller int, ids []LocalID) {
 // putOnTopOfDeck removes a card from play and places it on top of its owner's
 // deck, clearing the per-match state it accrued while in play.
 func (g *Game) putOnTopOfDeck(id LocalID) {
+	if g.absorbedByWard(id) {
+		return
+	}
 	o := g.owner(id)
 	g.removeFromPlay(id)
 	g.discardUpgrades(id)
@@ -268,6 +307,9 @@ func (g *Game) putOnTopOfDeck(id LocalID) {
 // putIntoHand removes a card from play and places it into its owner's hand,
 // clearing the per-match state it accrued while in play.
 func (g *Game) putIntoHand(id LocalID) {
+	if g.absorbedByWard(id) {
+		return
+	}
 	o := g.owner(id)
 	g.removeFromPlay(id)
 	g.discardUpgrades(id)
@@ -280,6 +322,9 @@ func (g *Game) putIntoHand(id LocalID) {
 // putIntoArchives removes a card from play and places it into its owner's
 // archives, clearing the per-match state it accrued while in play.
 func (g *Game) putIntoArchives(id LocalID) {
+	if g.absorbedByWard(id) {
+		return
+	}
 	o := g.owner(id)
 	g.removeFromPlay(id)
 	g.discardUpgrades(id)
@@ -289,9 +334,27 @@ func (g *Game) putIntoArchives(id LocalID) {
 	g.record(CardPutIntoArchives{Card: id, Owner: o})
 }
 
+// putIntoArchivesEach archives a snapshot of in-play cards simultaneously, then
+// settles once. Holding the settling flag stops one card's leave-play from
+// destroying another still in the batch (Epic Quest archives "Lion" Bautrem and
+// the neighbor it was buffing at the same time, so the neighbor is archived, not
+// destroyed for the power it just lost).
+func (g *Game) putIntoArchivesEach(controller int, ids []LocalID) {
+	was := g.settling
+	g.settling = true
+	for _, id := range ids {
+		g.putIntoArchives(id)
+	}
+	g.settling = was
+	g.settleDestroyed(controller)
+}
+
 // putIntoDeckShuffled removes a card from play and shuffles it into its owner's
 // deck, clearing the per-match state it accrued while in play.
 func (g *Game) putIntoDeckShuffled(id LocalID) {
+	if g.absorbedByWard(id) {
+		return
+	}
 	o := g.owner(id)
 	g.removeFromPlay(id)
 	g.discardUpgrades(id)
@@ -317,6 +380,9 @@ func (g *Game) putIntoDeckShuffled(id LocalID) {
 // Uxlyx the Zookeeper all abduct this way. Nothing is marked on the card: the
 // ownership rule above sends it home the moment it leaves those archives.
 func (g *Game) PutIntoYourArchives(id LocalID, player int) {
+	if g.absorbedByWard(id) {
+		return
+	}
 	o := g.owner(id)
 	g.removeFromPlay(id)
 	g.discardUpgrades(id)

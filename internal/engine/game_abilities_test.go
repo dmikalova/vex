@@ -340,6 +340,35 @@ func TestStunBehavior(t *testing.T) {
 	}
 }
 
+// TestMustFightWhenEnraged checks that an enraged creature must fight when used if
+// it can: with an enemy to fight it may not reap or act, but with nothing to fight
+// enrage cannot force it, so it may reap.
+func TestMustFightWhenEnraged(t *testing.T) {
+	// With an enemy present, an enraged creature must fight: reap and action are
+	// barred, but fighting is still allowed.
+	g := started(t)
+	g.AddToBattleline(testCreature("enemy", 3), 1)
+	withFoe := g.AddToBattleline(testCreature("enraged-foe", 3), 0)
+	g.State.Cards[withFoe].Enraged = true
+	if g.canUseTo(0, withFoe, ReapUse) != ErrCannotUse {
+		t.Error("enraged creature with an enemy should not be able to reap")
+	}
+	if g.canUseTo(0, withFoe, ActionUse) != ErrCannotUse {
+		t.Error("enraged creature with an enemy should not be able to use an Action")
+	}
+	if err := g.canUseTo(0, withFoe, FightUse); err != nil {
+		t.Errorf("enraged creature should still be able to fight: %v", err)
+	}
+
+	// With no enemy to fight, enrage cannot force a fight, so the creature may reap.
+	g2 := started(t)
+	alone := g2.AddToBattleline(testCreature("enraged-alone", 3), 0)
+	g2.State.Cards[alone].Enraged = true
+	if err := g2.canUseTo(0, alone, ReapUse); err != nil {
+		t.Errorf("enraged creature with nothing to fight should be able to reap: %v", err)
+	}
+}
+
 // TestUnstun checks that Unstun spends a stunned, otherwise-usable creature's
 // use shaking off the stun instead of reaping/fighting/acting, under the same
 // checks Reap/Fight/an action would apply — including the active-house one,

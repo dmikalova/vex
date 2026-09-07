@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// PunctuatedEquilibrium
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Punctuated Equilibrium
 //
 //	House:  Untamed
 //	Type:   Tactic
@@ -20,5 +15,6 @@ var PunctuatedEquilibrium = card.New(
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, 363),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.EachPlayerDiscardsAndRefillsHand{}),
 )

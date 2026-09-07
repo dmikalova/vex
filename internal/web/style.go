@@ -196,7 +196,7 @@ func (s *style) save(ctx app.Context) {
 // every branch of a Player bar at once, and a gallery that has to be played to
 // is a gallery nobody looks at.
 func styleHarness() *game {
-	g := &game{selHand: -1, zonesPlayer: -1, forgingKey: -1, handSlot: -1}
+	g := &game{selHand: -1, zonesPlayer: -1, forgingKey: -1, handSlot: -1, deckOpen: -1}
 	g.g = engine.NewGame("Player One", "Player Two", 1)
 	g.mavericks = map[engine.LocalID]bool{}
 	g.legacy = map[engine.LocalID]bool{}
@@ -241,7 +241,7 @@ func styleHarness() *game {
 // the active player is 0 so a facedown under-card on the opponent's host (owner
 // 1) reads as a card-back, which is the difference the section shows.
 func attachHarness() *game {
-	g := &game{selHand: -1, zonesPlayer: -1, forgingKey: -1, handSlot: -1}
+	g := &game{selHand: -1, zonesPlayer: -1, forgingKey: -1, handSlot: -1, deckOpen: -1}
 	g.g = engine.NewGame("Player One", "Player Two", 1)
 	g.mavericks = map[engine.LocalID]bool{}
 	g.legacy = map[engine.LocalID]bool{}
@@ -867,6 +867,7 @@ var galleryIcons = []string{
 	"card-back",
 	"chains",
 	"damage",
+	"deck-list",
 	"doom-counter",
 	"exhausted",
 	"forge",
@@ -891,7 +892,9 @@ var galleryIcons = []string{
 	"house-mars",
 	"house-none",
 	"house-sanctum",
+	"house-saurian",
 	"house-shadows",
+	"house-staralliance",
 	"house-untamed",
 	"key",
 	"key-blue",
@@ -913,6 +916,10 @@ var galleryIcons = []string{
 	"power-counter-plus",
 	"rarity-connected",
 	"rarity-diamond",
+	"rarity-hexagon",
+	"rarity-pentagon",
+	"rarity-square",
+	"rarity-triangle",
 	"redo",
 	"restart",
 	"set",

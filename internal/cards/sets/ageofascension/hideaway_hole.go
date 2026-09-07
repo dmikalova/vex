@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// HideawayHole
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Hideaway Hole
 //
 //	House:  Shadows
 //	Type:   Artifact
@@ -15,7 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Location
 //
-//	Omni: Sacrifice Hideaway Hole. Creatures you control gain elusive until the start of your next turn.
+//	Versatile.
+//	Action: Destroy Hideaway Hole. Each friendly creature gains elusive until the start of your next turn.
 var HideawayHole = card.New(
 	"Hideaway Hole",
 	card.House.Shadows,
@@ -24,5 +20,13 @@ var HideawayHole = card.New(
 	card.Provenance(card.AoA, 287),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Location),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Versatile),
+	card.WithAbility(
+		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+			card.Destroy{Target: card.Target.This},
+			card.GainKeyword{
+				Target:  card.Target.EachFriendlyCreature,
+				Keyword: card.Keyword.Elusive,
+			},
+		}}),
 )

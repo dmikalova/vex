@@ -1,5 +1,7 @@
 package engine
 
+import "fmt"
+
 // Destroying a creature removes it from play. When an effect destroys several
 // creatures they are destroyed simultaneously: every one is tagged for
 // destruction and stays in play while their "Destroyed:" abilities resolve, in an
@@ -121,4 +123,54 @@ func (e DestroyChosen) Resolve(ctx *EffectContext) {
 		chosen = append(chosen, pick)
 	}
 	Destroy{}.destroy(ctx, chosen)
+}
+
+// DestroyMostPowerfulUnlessReadyHouse destroys the most powerful creature
+// controlled by each player who does not control a ready creature of House —
+// Quicksand spares any player fielding a ready Untamed creature and destroys the
+// most powerful creature of everyone else. When a player's largest creatures tie,
+// the effect's controller chooses which one is destroyed.
+type DestroyMostPowerfulUnlessReadyHouse struct {
+	// House is the house whose ready creature spares its controller.
+	House House
+}
+
+// validate requires an explicit house.
+func (e DestroyMostPowerfulUnlessReadyHouse) validate() error {
+	if e.House == HouseNone {
+		return fmt.Errorf("DestroyMostPowerfulUnlessReadyHouse: House must be set")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "destroy the most powerful creature controlled by
+// each player who does not control a ready Untamed creature".
+func (e DestroyMostPowerfulUnlessReadyHouse) Text() string {
+	return "destroy the most powerful creature controlled by each player who " +
+		"does not control a ready " + e.House.String() + " creature"
+}
+
+// Resolve destroys the most powerful creature of each player who lacks a ready
+// creature of House, all at once so their Destroyed abilities see each other.
+func (e DestroyMostPowerfulUnlessReadyHouse) Resolve(ctx *EffectContext) {
+	var doomed []LocalID
+	for p := 0; p < 2; p++ {
+		if e.controlsReadyHouse(ctx, p) {
+			continue
+		}
+		if ids := ctx.Resolver.Battleline(p); len(ids) > 0 {
+			doomed = append(doomed, mostPowerfulN{n: 1}.refine(ctx, ids)...)
+		}
+	}
+	Destroy{}.destroy(ctx, doomed)
+}
+
+// controlsReadyHouse reports whether player p controls a ready creature of House.
+func (e DestroyMostPowerfulUnlessReadyHouse) controlsReadyHouse(ctx *EffectContext, p int) bool {
+	for _, id := range ctx.Resolver.Battleline(p) {
+		if ctx.Resolver.House(id) == e.House && !ctx.Resolver.Exhausted(id) {
+			return true
+		}
+	}
+	return false
 }

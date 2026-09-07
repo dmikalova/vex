@@ -1,20 +1,15 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// SongOfSpring
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Song of Spring
 //
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Shuffle any number of friendly Untamed creatures from your hand, discard pile, or battleline back into your deck.
+//	Play: Shuffle any number of friendly Untamed creatures from your hand, discard pile, or battleline into your deck.
 var SongOfSpring = card.New(
 	"Song of Spring",
 	card.House.Untamed,
@@ -22,5 +17,8 @@ var SongOfSpring = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.AoA, 332),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.ShuffleChosenCreaturesFromZones{
+			House: card.House.Self,
+		}),
 )

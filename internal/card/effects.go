@@ -86,6 +86,9 @@ type (
 	Destroy = engine.Destroy
 	// DestroyChosen destroys any number of creatures the controller picks from its Target.
 	DestroyChosen = engine.DestroyChosen
+	// DestroyMostPowerfulUnlessReadyHouse destroys the most powerful creature of
+	// each player who does not control a ready creature of House (Quicksand).
+	DestroyMostPowerfulUnlessReadyHouse = engine.DestroyMostPowerfulUnlessReadyHouse
 	// DestroyFriendlyCreaturesToForge destroys any number of friendly creatures
 	// totalling a power threshold to trigger a follow-up effect (Might Makes Right
 	// forges free).
@@ -96,14 +99,28 @@ type (
 	PurgeFromHand = engine.PurgeFromHand
 	// PurgeEachFromHand purges every matching card from a player's hand.
 	PurgeEachFromHand = engine.PurgeEachFromHand
+	// PurgeEachFromDiscard purges every matching card from both discard piles.
+	PurgeEachFromDiscard = engine.PurgeEachFromDiscard
 	// PurgeCreature purges each creature its Target selects from play.
 	PurgeCreature = engine.PurgeCreature
 	// PurgeSource purges the card whose ability this is (Library Access purges itself).
 	PurgeSource = engine.PurgeSource
 	// LoseKeyword takes a keyword from each creature for the remainder of the turn.
 	LoseKeyword = engine.LoseKeyword
+	// LoseKeywords takes one or more keywords from each targeted creature for the
+	// remainder of the turn (Niffle Grounds strips taunt and elusive).
+	LoseKeywords = engine.LoseKeywords
+	// GainKeyword gives each targeted creature a keyword until the start of your
+	// next turn (Hideaway Hole grants your creatures elusive).
+	GainKeyword = engine.GainKeyword
 	// PurgeCreatureFromHand purges a chosen creature from your hand and puts it in context.
 	PurgeCreatureFromHand = engine.PurgeCreatureFromHand
+	// PurgeArchivesForDamage purges any number of cards from your archives to deal
+	// damage to a creature for each card purged.
+	PurgeArchivesForDamage = engine.PurgeArchivesForDamage
+	// PurgeArchivedCardThen optionally purges a card from your archives to pay for
+	// a follow-up effect (Yzphyz Knowdrone purges to stun a creature).
+	PurgeArchivedCardThen = engine.PurgeArchivedCardThen
 )
 
 // Creature state (stun, exhaust, power counters).
@@ -112,6 +129,13 @@ type (
 	Stun = engine.Stun
 	// Unstun removes the stun from each creature its Target selects.
 	Unstun = engine.Unstun
+	// Enrage places an enrage on the creatures its Target selects. An enraged
+	// creature must be used to fight on its controller's turn if it is able to.
+	Enrage = engine.Enrage
+	// Ward places a one-shot shield on the creatures its Target selects; it
+	// absorbs the next instance of damage or the next time the creature leaves
+	// play, then is spent.
+	Ward = engine.Ward
 	// Exhaust turns the targeted creatures sideways so they cannot be used.
 	Exhaust = engine.Exhaust
 	// ExhaustCreatures exhausts up to Max creatures the controller chooses.
@@ -149,6 +173,8 @@ type (
 	ShuffleIntoDeck = engine.ShuffleIntoDeck
 	// ShuffleChosenCreaturesFromDiscard shuffles any number of chosen creatures from your discard pile into your deck.
 	ShuffleChosenCreaturesFromDiscard = engine.ShuffleChosenCreaturesFromDiscard
+	// ShuffleChosenCreaturesFromZones shuffles any number of chosen friendly creatures from your hand, discard pile, or battleline into your deck.
+	ShuffleChosenCreaturesFromZones = engine.ShuffleChosenCreaturesFromZones
 	// ShuffleCardsFromDiscard shuffles a counted number of chosen cards from your discard pile into your deck.
 	ShuffleCardsFromDiscard = engine.ShuffleCardsFromDiscard
 	// SwapDeckAndDiscard exchanges the controller's deck with their discard pile,
@@ -172,6 +198,8 @@ type (
 	DiscardArchives = engine.DiscardArchives
 	// DiscardHand discards cards from a player's hand.
 	DiscardHand = engine.DiscardHand
+	// EachPlayerDiscardsAndRefillsHand makes both players discard and redraw their hand.
+	EachPlayerDiscardsAndRefillsHand = engine.EachPlayerDiscardsAndRefillsHand
 	// DiscardFromHand has the controller choose and discard Amount cards.
 	DiscardFromHand = engine.DiscardFromHand
 	// DiscardRandomFromHand discards one uniformly random card from a player's hand.
@@ -255,6 +283,12 @@ type (
 	// GainAbility grants the chosen creature a triggered ability for the remainder
 	// of the turn (Spectral Tunneler grants "Reap: Draw a card").
 	GainAbility = engine.GainAbility
+	// TakesExtraDamage makes the chosen creature take additional damage whenever it
+	// takes damage, for the remainder of the turn (Lethal Distraction).
+	TakesExtraDamage = engine.TakesExtraDamage
+	// RedistributeCapturedAember moves all the Æmber on one side's creatures back
+	// among that side's creatures however the controller chooses (Equalize).
+	RedistributeCapturedAember = engine.RedistributeCapturedAember
 	// Use uses up to Max cards the controller chooses from Target.
 	Use = engine.Use
 	// TriggerAbility fires another card's ability as if the controller controlled it.
@@ -310,6 +344,8 @@ type (
 type (
 	// OpponentAember gates on the opponent's Æmber pool (Is + Amount).
 	OpponentAember = engine.OpponentAember
+	// PlayerControlsFewerHousesThan is met while a player controls creatures from fewer than Amount houses.
+	PlayerControlsFewerHousesThan = engine.PlayerControlsFewerHousesThan
 	// YourAember gates on the controller's own Æmber pool (Is + Amount).
 	YourAember = engine.YourAember
 	// CardsDestroyedFewerThan is met when fewer than Amount cards were destroyed this way.
@@ -449,6 +485,8 @@ type (
 	CreaturesHealed = engine.CreaturesHealed
 	// DamageHealed counts the damage the most recent Heal removed (for DealDamage.AmountFrom).
 	DamageHealed = engine.DamageHealed
+	// DamagePrevented counts the damage a creature just prevented with its own armor.
+	DamagePrevented = engine.DamagePrevented
 	// UnforgedKeys counts the keys a player has still to forge.
 	UnforgedKeys = engine.UnforgedKeys
 	// AemberOnThis counts the Æmber sitting on the source card.

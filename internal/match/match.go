@@ -17,6 +17,53 @@ const DeckSize = deckgen.DeckSize
 // DeckHouseCount is how many houses make up a deck — three, as in KeyForge.
 const DeckHouseCount = deckgen.PodCount
 
+// Roster is a player's generated deck as a static, read-only list — its three
+// House pods each with their twelve cards, kept from deck generation so a deck
+// list can show the exact cards dealt (ADR 0025). It holds no draw order: the
+// live draw pile lives in the engine deck zone, not here.
+type Roster struct {
+	Set    string
+	Houses [deckgen.PodCount]HouseRoster
+}
+
+// HouseRoster is one House of a Roster with its twelve cards in slot order.
+type HouseRoster struct {
+	House engine.House
+	Cards [deckgen.PodSize]RosterCard
+}
+
+// RosterCard is one card in a Roster: its definition and its Maverick/Legacy
+// provenance. Rarity is read from the card definition, not the slot it filled, so
+// a card shows its own rarity wherever it lands (a legacy card and its home-set
+// printing match).
+type RosterCard struct {
+	Def      engine.CardDefinition
+	Maverick bool
+	Legacy   bool
+}
+
+// Empty reports whether the roster is the zero value (no deck generated), so a
+// frontend built without a deal — the style gallery — draws no deck list.
+func (r Roster) Empty() bool { return r.Houses[0].House == engine.HouseNone }
+
+// rosterOf projects a generated deck into a static Roster: each pod's House and
+// each slot's card and Maverick/Legacy provenance, in slot order.
+func rosterOf(deck deckgen.Deck) Roster {
+	var r Roster
+	r.Set = deck.Set
+	for i, pod := range deck.Pods {
+		r.Houses[i].House = pod.House
+		for j, s := range pod.Slots {
+			r.Houses[i].Cards[j] = RosterCard{
+				Def:      s.Card,
+				Maverick: s.Maverick,
+				Legacy:   s.Legacy,
+			}
+		}
+	}
+	return r
+}
+
 // New creates a two-player game seeded for deterministic play, generates each
 // player a procedurally generated three-house deck into their deck zone, and
 // returns the game together with each player's three houses. The caller installs
@@ -34,19 +81,20 @@ func New(p0Name, p1Name string, seed int64) (*engine.Game, [2][]engine.House) {
 func NewWithMavericks(
 	p0Name, p1Name string, seed int64,
 ) (*engine.Game, [2][]engine.House, [2][]engine.LocalID, [2][]engine.LocalID) {
-	return NewWithSets(p0Name, p1Name, seed, [2]string{})
+	g, houses, mavericks, legacies, _ := NewWithSets(p0Name, p1Name, seed, [2]string{})
+	return g, houses, mavericks, legacies
 }
 
 // NewWithSets is NewWithMavericks but each player's deck is generated from a named
 // deck-generation set (as cards.DeckSetNamed resolves it). An empty or unknown
 // name falls back to the default set, so a caller with no choice to make passes
-// the zero value.
+// the zero value. It also returns each player's static deck Roster (ADR 0025).
 func NewWithSets(
 	p0Name, p1Name string, seed int64, setNames [2]string,
-) (*engine.Game, [2][]engine.House, [2][]engine.LocalID, [2][]engine.LocalID) {
+) (*engine.Game, [2][]engine.House, [2][]engine.LocalID, [2][]engine.LocalID, [2]Roster) {
 	g := engine.NewGame(p0Name, p1Name, seed)
-	houses, mavericks, legacies := SetupDecksFor(g, seed, setNames)
-	return g, houses, mavericks, legacies
+	houses, mavericks, legacies, rosters := SetupDecksFor(g, seed, setNames)
+	return g, houses, mavericks, legacies, rosters
 }
 
 // SetupDecks generates each player a deck (see internal/deckgen) into their deck
@@ -56,7 +104,8 @@ func NewWithSets(
 func SetupDecks(
 	g *engine.Game, seed int64,
 ) ([2][]engine.House, [2][]engine.LocalID, [2][]engine.LocalID) {
-	return SetupDecksFor(g, seed, [2]string{})
+	houses, mavericks, legacies, _ := SetupDecksFor(g, seed, [2]string{})
+	return houses, mavericks, legacies
 }
 
 // setFor resolves a chosen set name to its deck-generation Set, defaulting an
@@ -71,16 +120,20 @@ func setFor(name string) deckgen.Set {
 }
 
 // SetupDecksFor is SetupDecks with each player's set named explicitly, so a
-// frontend can let the two players play different sets.
+// frontend can let the two players play different sets. It also returns each
+// player's static deck Roster — the generated deck kept as a read-only list so a
+// deck list shows the exact cards dealt, immune to later pool changes (ADR 0025).
 func SetupDecksFor(
 	g *engine.Game, seed int64, setNames [2]string,
-) ([2][]engine.House, [2][]engine.LocalID, [2][]engine.LocalID) {
+) ([2][]engine.House, [2][]engine.LocalID, [2][]engine.LocalID, [2]Roster) {
 	var houses [2][]engine.House
 	var mavericks [2][]engine.LocalID
 	var legacies [2][]engine.LocalID
+	var rosters [2]Roster
 	for player := 0; player < 2; player++ {
 		deck := deckgen.Generate(setFor(setNames[player]), seed+int64(player)+1)
 		houses[player] = deck.Houses()
+		rosters[player] = rosterOf(deck)
 
 		// The whole deck goes into the deck zone; engine.StartGame shuffles it and
 		// deals the opening hands. Each card's Maverick and Legacy flags are pinned to
@@ -97,5 +150,5 @@ func SetupDecksFor(
 			}
 		}
 	}
-	return houses, mavericks, legacies
+	return houses, mavericks, legacies, rosters
 }

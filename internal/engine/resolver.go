@@ -47,6 +47,9 @@ type EconomyReader interface {
 	// AemberProtected reports whether a card the player controls makes their Æmber
 	// immune to being stolen (The Vaultkeeper).
 	AemberProtected(player int) bool
+	// TheftRedirectedToSupply reports whether Æmber stolen or captured from the
+	// player's pool is taken from the common supply instead (Po's Pixies).
+	TheftRedirectedToSupply(player int) bool
 	// Keys returns the number of keys a player has forged.
 	Keys(player int) int
 	// TurnHistory returns a player's running tally for a TurnStat.
@@ -94,6 +97,10 @@ type CreatureReader interface {
 	Hazardous(id LocalID) int
 	// Stunned reports whether a creature is stunned.
 	Stunned(id LocalID) bool
+	// Enraged reports whether a creature is enraged.
+	Enraged(id LocalID) bool
+	// Warded reports whether a creature has a ward.
+	Warded(id LocalID) bool
 	// TimesUsedThisTurn reports how many times a creature has been used this turn.
 	TimesUsedThisTurn(id LocalID) int
 	// IsCreature reports whether a card is a creature.
@@ -202,6 +209,10 @@ type CreatureResolver interface {
 	StripArmor(id LocalID)
 	// SetStunned sets a creature's stun status.
 	SetStunned(id LocalID, stunned bool)
+	// SetEnraged sets a creature's enrage status.
+	SetEnraged(id LocalID, enraged bool)
+	// SetWarded sets a creature's ward status.
+	SetWarded(id LocalID, warded bool)
 	// PreventDamage marks a creature immune to damage for the remainder of the turn.
 	PreventDamage(id LocalID)
 	// SetExhausted sets a creature's exhausted status.
@@ -223,13 +234,14 @@ type CreatureResolver interface {
 	// SetNamedHouse records the house a card named as it entered play, which its
 	// HouseLock then constrains for as long as the card stays in play.
 	SetNamedHouse(id LocalID, house House)
-	// TakeControl moves a creature into controller's battleline without changing
-	// ownership; when it later leaves play it still goes to its owner's zone. source
-	// is the card whose lasting effect holds the control (reverted when it leaves play).
+	// TakeControl moves a card into controller's play area — a creature into their
+	// battleline, an artifact into their artifact row — without changing ownership;
+	// when it later leaves play it still goes to its owner's zone. source is the
+	// card whose lasting effect holds the control, reverted when source leaves play;
+	// a permanent (Forever) control names the seized card itself as source. Control
+	// stacks LIFO, so a later take takes precedence and removing it falls back to
+	// the one beneath.
 	TakeControl(id LocalID, controller int, source LocalID)
-	// TakeControlOfArtifact moves an artifact into controller's artifact row for
-	// good, without changing ownership. There is no reverting source.
-	TakeControlOfArtifact(id LocalID, controller int)
 	// SwapBattlelinePositions exchanges two creatures' positions in the same
 	// battleline without moving any state between the creatures.
 	SwapBattlelinePositions(a, b LocalID)
@@ -242,6 +254,13 @@ type CreatureResolver interface {
 	// GrantKeyword gives one creature a keyword for the remainder of the turn
 	// (Scout grants Skirmish).
 	GrantKeyword(id LocalID, k Keyword)
+	// LoseKeywordFrom takes a keyword away from one creature for the remainder of
+	// the turn (Niffle Grounds strips taunt and elusive).
+	LoseKeywordFrom(id LocalID, k Keyword)
+	// GrantKeywordUntilNextTurn gives one creature a keyword until the start of its
+	// controller's next turn (Hideaway Hole grants elusive), surviving the
+	// opponent's turn.
+	GrantKeywordUntilNextTurn(id LocalID, k Keyword)
 	// ConsiderFlank makes one creature count as a flank creature for the remainder
 	// of the turn regardless of its position (Spectral Tunneler).
 	ConsiderFlank(id LocalID)
@@ -300,12 +319,18 @@ type CombatResolver interface {
 type ZoneResolver interface {
 	// Draw makes a player draw count cards.
 	Draw(controller, count int)
+	// RefillHand refills a player's hand as if it were the end of their turn,
+	// honoring their chains and draw modifiers (Punctuated Equilibrium).
+	RefillHand(player int)
 	// PutOnTopOfDeck moves a card from play to the top of its owner's deck.
 	PutOnTopOfDeck(id LocalID)
 	// PutIntoHand moves a card from play to its owner's hand.
 	PutIntoHand(id LocalID)
 	// PutIntoArchives moves a card from play to its owner's archives.
 	PutIntoArchives(id LocalID)
+	// PutIntoArchivesEach archives a snapshot of in-play cards simultaneously, so
+	// one card's leave-play does not destroy another still in the batch.
+	PutIntoArchivesEach(controller int, ids []LocalID)
 	// PutIntoYourArchives moves a card from play into player's own archives, which
 	// may hold an enemy card (an abduction).
 	PutIntoYourArchives(id LocalID, player int)
@@ -344,6 +369,9 @@ type ZoneResolver interface {
 	// PurgeFromHand moves a card from a player's hand to their purge pile (set aside
 	// out of the game).
 	PurgeFromHand(owner int, id LocalID)
+	// PurgeFromArchives moves a card from a player's archives to their purge pile
+	// (set aside out of the game).
+	PurgeFromArchives(owner int, id LocalID)
 	// PurgeFromPlay moves a card from play to its owner's purge pile (set aside out
 	// of the game).
 	PurgeFromPlay(id LocalID)
@@ -412,6 +440,9 @@ type ZoneResolver interface {
 	// ShuffleFromDiscardIntoDeck moves a card from its owner's discard pile into
 	// their deck and shuffles, collected into a shuffle batch when one is open.
 	ShuffleFromDiscardIntoDeck(id LocalID)
+	// ShuffleFromHandIntoDeck moves a card from its owner's hand into their deck and
+	// shuffles, collected into a shuffle batch when one is open.
+	ShuffleFromHandIntoDeck(id LocalID)
 	// DiscardCardFromHand moves a specific card from a player's hand to their discard
 	// zone.
 	DiscardCardFromHand(owner int, id LocalID)
@@ -569,6 +600,26 @@ func (g *Game) GrantKeyword(id LocalID, k Keyword) {
 	g.record(CreatureGainedKeyword{Creature: id, Keyword: k})
 }
 
+// LoseKeywordFrom takes a keyword away from one creature for the remainder of the
+// turn (Niffle Grounds).
+func (g *Game) LoseKeywordFrom(id LocalID, k Keyword) {
+	if g.State.Cards[id].LostKeywords&k.bit() != 0 {
+		return
+	}
+	g.State.Cards[id].LostKeywords |= k.bit()
+	g.record(CreatureLostKeyword{Creature: id, Keyword: k})
+}
+
+// GrantKeywordUntilNextTurn gives one creature a keyword until the start of its
+// controller's next turn (Hideaway Hole).
+func (g *Game) GrantKeywordUntilNextTurn(id LocalID, k Keyword) {
+	if g.State.Cards[id].KeywordsUntilNextTurn&k.bit() != 0 {
+		return
+	}
+	g.State.Cards[id].KeywordsUntilNextTurn |= k.bit()
+	g.record(CreatureGainedKeyword{Creature: id, Keyword: k})
+}
+
 // ConsideredFlank reports whether a creature counts as a flank creature for the
 // turn regardless of its battleline position (Spectral Tunneler).
 func (g *Game) ConsideredFlank(id LocalID) bool { return g.State.Cards[id].ConsideredFlank }
@@ -665,6 +716,20 @@ func (g *Game) SetStunned(id LocalID, stunned bool) {
 	}
 }
 
+// SetEnraged sets a creature's enrage status.
+func (g *Game) SetEnraged(id LocalID, enraged bool) {
+	if c := g.stateOf(id); c != nil {
+		c.Enraged = enraged
+	}
+}
+
+// SetWarded sets a creature's ward status.
+func (g *Game) SetWarded(id LocalID, warded bool) {
+	if c := g.stateOf(id); c != nil {
+		c.Warded = warded
+	}
+}
+
 // PreventDamage marks a creature immune to damage for the remainder of the turn.
 func (g *Game) PreventDamage(id LocalID) {
 	if c := g.stateOf(id); c != nil {
@@ -735,11 +800,6 @@ func (g *Game) TakeControl(id LocalID, controller int, source LocalID) {
 	g.takeControl(id, controller, source)
 }
 
-// TakeControlOfArtifact is the Resolver entry point for takeControlOfArtifact.
-func (g *Game) TakeControlOfArtifact(id LocalID, controller int) {
-	g.takeControlOfArtifact(id, controller)
-}
-
 // PutIntoPlay is the Resolver entry point for putIntoPlay.
 func (g *Game) PutIntoPlay(id LocalID, controller int) {
 	g.putIntoPlay(id, controller)
@@ -753,6 +813,10 @@ func (g *Game) PlayerHasHouse(player int, house House) bool {
 // Draw is the Resolver entry point for the internal draw.
 func (g *Game) Draw(controller, count int) { g.draw(controller, count) }
 
+// RefillHand refills a player's hand as if it were the end of their turn,
+// honoring their chains and draw modifiers (Punctuated Equilibrium).
+func (g *Game) RefillHand(player int) { g.drawStep(player) }
+
 // PutOnTopOfDeck is the Resolver entry point for putOnTopOfDeck.
 func (g *Game) PutOnTopOfDeck(id LocalID) { g.putOnTopOfDeck(id) }
 
@@ -761,6 +825,11 @@ func (g *Game) PutIntoHand(id LocalID) { g.putIntoHand(id) }
 
 // PutIntoArchives is the Resolver entry point for putIntoArchives.
 func (g *Game) PutIntoArchives(id LocalID) { g.putIntoArchives(id) }
+
+// PutIntoArchivesEach is the Resolver entry point for putIntoArchivesEach.
+func (g *Game) PutIntoArchivesEach(controller int, ids []LocalID) {
+	g.putIntoArchivesEach(controller, ids)
+}
 
 // PutIntoDeckShuffled is the Resolver entry point for putIntoDeckShuffled.
 func (g *Game) PutIntoDeckShuffled(id LocalID) { g.putIntoDeckShuffled(id) }
@@ -825,6 +894,9 @@ func (g *Game) PurgeFromDiscard(owner int, id LocalID) { g.purgeFromDiscard(owne
 
 // PurgeFromHand moves a card from a player's hand to their purge pile.
 func (g *Game) PurgeFromHand(owner int, id LocalID) { g.purgeFromHand(owner, id) }
+
+// PurgeFromArchives moves a card from a player's archives to their purge pile.
+func (g *Game) PurgeFromArchives(owner int, id LocalID) { g.purgeFromArchives(owner, id) }
 
 // PurgeFromPlay is the Resolver entry point for purgeFromPlay.
 func (g *Game) PurgeFromPlay(id LocalID) { g.purgeFromPlay(id) }
@@ -898,6 +970,21 @@ func (g *Game) MoveFromDiscardToTopOfDeck(id LocalID) {
 func (g *Game) ShuffleFromDiscardIntoDeck(id LocalID) {
 	o := g.owner(id)
 	g.State.Discard[o].remove(id)
+	g.State.Deck[o].add(id)
+	g.Shuffle(o)
+	if g.batchingShuffle {
+		g.shuffleBatch = append(g.shuffleBatch, id)
+		return
+	}
+	g.record(CardShuffledIntoDeck{Card: id, Owner: o})
+}
+
+// ShuffleFromHandIntoDeck moves a card from its owner's hand into their deck and
+// shuffles. During a shuffle batch the card is collected for a single grouped
+// narration rather than narrated on its own.
+func (g *Game) ShuffleFromHandIntoDeck(id LocalID) {
+	o := g.owner(id)
+	g.State.Hand[o].remove(id)
 	g.State.Deck[o].add(id)
 	g.Shuffle(o)
 	if g.batchingShuffle {

@@ -265,9 +265,43 @@ func RenderCardRules(def *CardDefinition) string {
 // attached. Printed on its own an Upgrade has to say who it is talking about —
 // `This creature gains, "Reap: Steal 1 Æmber."` — but drawn on the host's face
 // that creature is right there, so the framing is dropped and the line reads as
-// if it were printed on the creature: `Reap: Steal 1 Æmber.`
+// if it were printed on the creature: `Reap: Steal 1 Æmber.` A creature played as
+// an upgrade shows only what its Static grants the host, not its own creature
+// keywords and abilities, which do not apply while it is an upgrade.
 func RenderUpgradeOnCreature(def *CardDefinition) string {
+	if def.PlayableAsUpgrade {
+		return strings.Join(upgradeGrantLines(def, true), "\n")
+	}
 	return strings.Join(cardRules(def, true), "\n")
+}
+
+// upgradeGrantLines gathers what an Upgrade grants its host: its static modifier,
+// its non-flank fight protection, and its granted abilities, in printed order.
+// hosted drops the "this creature" framing for a face already showing the host.
+func upgradeGrantLines(def *CardDefinition, hosted bool) []string {
+	var lines []string
+	lines = append(lines, upgradeStaticLines(def, hosted)...)
+	if def.Static.ProtectsFromNonFlank {
+		lines = append(lines,
+			"Creatures not on a flank cannot fight this creature.")
+	}
+	lines = append(lines, grantedText(def.Static, hosted)...)
+	return lines
+}
+
+// playableAsUpgradeText renders the clause a creature played as an upgrade prints
+// below its own text — `<name> may be played as an upgrade instead of a creature,
+// with the text: "…"` — quoting what it grants a host. The granted text's own
+// double quotes become single quotes so they nest inside the clause. Returns ""
+// for a card that cannot be played as an upgrade.
+func playableAsUpgradeText(def *CardDefinition) string {
+	if !def.PlayableAsUpgrade {
+		return ""
+	}
+	body := strings.ReplaceAll(strings.Join(upgradeGrantLines(def, false), " "), `"`, `'`)
+	return def.Name +
+		` may be played as an upgrade instead of a creature, with the text: "` +
+		body + `"`
 }
 
 // cardRules assembles a card's rules lines in printed order: keywords, "cannot"
@@ -316,6 +350,10 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 	if def.PreventSteal {
 		rules = append(rules, "Your Æmber cannot be stolen.")
 	}
+	if def.TheftFromSupply {
+		rules = append(rules,
+			"Æmber stolen or captured from your pool is taken from the common supply instead.")
+	}
 	if def.SpendableAember {
 		rules = append(rules, "You may spend Æmber on "+def.Name+" when forging keys.")
 	}
@@ -342,13 +380,26 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 	if s := gainsForgeAemberText(def); s != "" {
 		rules = append(rules, s)
 	}
-	rules = append(rules, upgradeStaticLines(def, hosted)...)
+	// A creature played as an upgrade folds its Static grant into the "may be played
+	// as an upgrade" clause below, so it does not also print as standalone lines.
+	if !def.PlayableAsUpgrade {
+		rules = append(rules, upgradeStaticLines(def, hosted)...)
+		if def.Static.ProtectsFromNonFlank {
+			rules = append(rules,
+				"Creatures not on a flank cannot fight this creature.")
+		}
+	}
 	if s := constantText(def); s != "" {
 		rules = append(rules, s)
 	}
 	rules = append(rules, constantGrantedText(def)...)
-	rules = append(rules, grantedText(def.Static, hosted)...)
+	if !def.PlayableAsUpgrade {
+		rules = append(rules, grantedText(def.Static, hosted)...)
+	}
 	rules = append(rules, abilityLines(def)...)
+	if s := playableAsUpgradeText(def); s != "" {
+		rules = append(rules, s)
+	}
 	return rules
 }
 
@@ -669,6 +720,10 @@ func restrictionText(r Restrictions, isUpgrade bool) []string {
 	if n := r.NoForgeKeyNumber; n > 0 {
 		lines = append(lines, fmt.Sprintf("Players cannot forge their %s key.", ordinalWord(n)))
 	}
+	if r.NoForgeWhileAheadOnKeys {
+		lines = append(lines,
+			"Each player cannot forge keys while they have more forged keys than their opponent.")
+	}
 	if r.MustFightIfAble {
 		lines = append(lines, "Creatures must fight when used, if able.")
 	}
@@ -716,6 +771,9 @@ func keyCostText(kc KeyCostChange) string {
 	}
 	if kc.whileOnFlank {
 		return "While " + SelfName + " is on a flank, " + sentence + "."
+	}
+	if kc.whileCondition != nil {
+		return capitalizeFirst(kc.whileCondition.CondText()) + ", " + sentence + "."
 	}
 	return capitalizeFirst(sentence) + "."
 }

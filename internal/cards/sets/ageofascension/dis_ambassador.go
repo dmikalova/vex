@@ -24,3 +24,5 @@ var DisAmbassador = card.New(
 	// TODO: planned rework of the Ambassador cycle.
 	card.WithFightOrReap(card.MayPlayOrUseFriendlyHouse{House: card.House.Dis}),
 )
+
+// TODO: should not be special

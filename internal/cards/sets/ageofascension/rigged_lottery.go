@@ -1,20 +1,15 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// RiggedLottery
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Rigged Lottery
 //
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Each player discards the top 5 cards of their deck. For each Shadows card discarded, its owner gains 1A.
+//	Play: Discard the top 5 cards of each player's deck. For each Shadows card discarded this way, its owner gains 1 Æmber.
 var RiggedLottery = card.New(
 	"Rigged Lottery",
 	card.House.Shadows,
@@ -22,5 +17,12 @@ var RiggedLottery = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, 309),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+			card.DiscardTopOfEachDeck{Amount: 5},
+			card.ForEachDiscarded{
+				House: card.House.Self,
+				Do:    card.GainAember{Player: card.ItsOwner, Amount: 1},
+			},
+		}}),
 )

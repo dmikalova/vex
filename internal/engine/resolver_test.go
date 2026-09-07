@@ -26,6 +26,7 @@ func TestInPlayStateWritesSkipCardsOutOfPlay(t *testing.T) {
 
 	g.SetDamage(gone, 2)
 	g.SetStunned(gone, true)
+	g.SetWarded(gone, true)
 	g.PreventDamage(gone)
 	g.SetExhausted(gone, true)
 	g.BelongToHouseForRemainderOfTurn(gone, Dis)

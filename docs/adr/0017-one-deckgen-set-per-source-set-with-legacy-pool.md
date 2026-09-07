@@ -29,12 +29,14 @@ other_ set become its **legacy pool**, attached with a new builder step:
 deckgen.NewSet(name, own, deckgen.DefaultTuning()).WithLegacy(legacy)
 ```
 
-`WithLegacy` buckets the legacy cards by House (`legacyByHouse`), **skipping**
-houseless Specials, `Connected` cards, and `HouseNone` — the same cards the main
-pool excludes — and keeps each legacy card's own House (no rehousing). During
-generation, `fillSlot` rolls `Tuning.LegacyRate` per slot; on a hit it draws from
-`legacyByHouse[house]` and commits the slot with `Legacy: true`, leaving the
-card's House untouched.
+`WithLegacy` buckets the legacy cards by House **and rarity** (`legacyPool`, with
+a flat per-House `legacyByHouse` fallback), **skipping** houseless Specials,
+`Connected` cards, and `HouseNone` — the same cards the main pool excludes — and
+keeps each legacy card's own House (no rehousing). During generation, `fillSlot`
+rolls `Tuning.LegacyRate` per slot; on a hit it draws a legacy card of the slot's
+**rolled rarity** from `legacyPool[house][rarity]`, falling back to any rarity of
+that House when it has no legacy card of that rarity, and commits the slot with
+`Legacy: true` at the drawn card's own rarity, leaving its House untouched.
 
 `DeckSet()` — the single-set entry point every current caller (`match`, `sim`)
 uses — returns `DeckSets()[0]`, the **first released set** (CotA). That set is the

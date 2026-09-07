@@ -107,12 +107,16 @@ func Tidy() error {
 	return sh.RunV("go", "mod", "tidy")
 }
 
-// Check is the full green gate before calling work done. It runs fmt-check,
-// build, vet, lint, markdown lint, test, and coverage. The independent checks run
-// together; test and coverage run after them, in order, so their reports read as
-// two clean blocks rather than interleaving.
+// Check is the full green gate before calling work done. It formats in place,
+// then runs build, vet, lint, markdown lint, test, and coverage. Fmt runs first
+// and alone (it writes files) so it cannot race the readers; the independent
+// checks then run together, and test and coverage run after them, in order, so
+// their reports read as two clean blocks rather than interleaving.
 func Check() error {
-	mg.Deps(FmtCheck, Build, Vet, Lint, Markdownlint)
+	if err := Fmt(); err != nil {
+		return err
+	}
+	mg.Deps(Build, Vet, Lint, Markdownlint)
 	if err := Test(); err != nil {
 		return err
 	}

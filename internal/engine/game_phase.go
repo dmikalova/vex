@@ -78,7 +78,8 @@ func (g *Game) startOfTurnPhase(player int) {
 // forgePhase forges a key if the player can afford one, unless an effect (Miasma)
 // made them skip the phase.
 func (g *Game) forgePhase(player int) {
-	if g.State.SkipForge[player].Value || g.skipsForge(player) {
+	if g.State.SkipForge[player].Value || g.skipsForge(player) ||
+		g.forgeBarredWhileAhead(player) {
 		g.record(ForgeSkipped{Player: player})
 		return
 	}
@@ -110,9 +111,15 @@ func (g *Game) readyPhase(player int) {
 	for _, id := range append(g.allInPlay(player), g.allInPlay(1-player)...) {
 		g.State.Cards[id].DamageImmune = false
 		g.State.Cards[id].GrantedKeywords = 0
+		g.State.Cards[id].LostKeywords = 0
 		g.State.Cards[id].ConsideredFlank = false
 		g.State.Cards[id].TempPowerBonus = 0
 		g.State.Cards[id].TempArmorBonus = 0
+	}
+	// A keyword gained "until the start of your next turn" (Hideaway Hole) lifts
+	// only at the controller's own ready phase, so it survived the opponent's turn.
+	for _, id := range g.allInPlay(player) {
+		g.State.Cards[id].KeywordsUntilNextTurn = 0
 	}
 	g.State.CannotFight[player] = Bar[bool]{}
 	g.State.CannotUse[player] = Bar[bool]{}

@@ -22,14 +22,24 @@ comment/rulebook generation, golines), so use them:
 - `mage gen` — regenerate card comments and the rulebook.
 - `mage docs` — serve this module's Go documentation at `http://localhost:6060`
   (pkgsite, the pkg.go.dev renderer); read-only, no gate depends on it.
-- `mage check` — the full green gate (fmt-check, build, vet, lint, markdown
-  lint, test, coverage); run this before considering work done. It must print
-  `ALL GREEN`.
+- `mage check` — the full green gate (fmt formats in place, then build, vet,
+  lint, markdown lint, test, coverage); run this before considering work done. It
+  must print `ALL GREEN`.
 - `mage debug` — replay a simulated game with the game log on and print the log
   tail next to the invariant violation that ended it. With no `SCRIPT` it finds
   the first failing game in the fixed-seed property batch `mage test` plays; set
   `SCRIPT` to the hex a failure printed to replay that one, and `TAIL` to widen
-  the log.
+  the log. `SCRIPT` and `TAIL` are environment variables set **before** `mage`
+  (`SCRIPT=<hex> TAIL=200 mage debug`), not arguments after it.
+
+  When an invariant names a card, the violation is a symptom — the cause is
+  usually an earlier line and a card no longer in the frame. Read the named card's
+  whole lifecycle, not just the tail: widen `TAIL` (or `mage trace` the game to a
+  file) and grep the log for the card by name to see when it entered, what damage
+  and power it showed, and which other card was buffing, blanking, capturing, or
+  neighboring it. A creature that dies "for no reason" almost always lost a buff a
+  now-departed card was granting — so identify the cards that were in play around
+  it, not only the card the invariant printed.
 - `mage trace` — play the fixed-seed property games once with the game log on and
   write every line to `tmp/sim/trace.log` (gitignored), so a whole game reads end
   to end. Where `mage debug` shows the tail of the game that broke, a trace is the

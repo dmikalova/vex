@@ -9,6 +9,7 @@ import (
 
 	"github.com/dmikalova/vactrol/internal/cards"
 	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vactrol/internal/match"
 )
 
 // phase is the interaction state of the client, distinct from the engine's own
@@ -38,7 +39,7 @@ const (
 // NewGame returns the root component for a fresh browser client session. The
 // match itself is seeded on the client in OnMount.
 func NewGame() app.Composer {
-	return &game{selHand: -1, zonesPlayer: -1, forgingKey: -1, handSlot: -1}
+	return &game{selHand: -1, zonesPlayer: -1, forgingKey: -1, handSlot: -1, deckOpen: -1}
 }
 
 // game is the root component: it owns the live engine.Game and all UI state.
@@ -55,6 +56,14 @@ type game struct {
 	// legacy holds the LocalID of every Legacy card dealt this match (a card drawn
 	// from an earlier set's pool), so its face shows the legacy emblem.
 	legacy map[engine.LocalID]bool
+	// rosters holds each player's static deck list — the generated deck kept as a
+	// read-only roster so the deck-list popover shows the exact cards dealt (ADR
+	// 0025), never the live draw order.
+	rosters [2]match.Roster
+	// deckOpen is the player whose deck-list popover is pinned open by a tap, or -1.
+	// Desktop hover opens it without this; a touch tap toggles it and a tap outside
+	// clears it (see onDeckToggle and installTipDrag's outside-close).
+	deckOpen int
 
 	// dispatch schedules a mutation on the UI goroutine (captured from a Context).
 	// It lets the background chooser update fields safely.
@@ -400,7 +409,7 @@ const persistKey = "vactrol.match"
 // snapshots invalid so a stale one is flushed instead of restored. A log entry is
 // saved as the prose it was narrated with, so rewording an entry dates every
 // snapshot holding the old wording and counts as such a change.
-const snapshotVersion = 11
+const snapshotVersion = 13
 
 // snapshot is the persisted match. The seed deterministically rebuilds the
 // catalog and card ids; the flat GameState carries everything mutable. All other

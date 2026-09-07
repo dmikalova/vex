@@ -30,12 +30,8 @@ func TestTakeControl(t *testing.T) {
 	if g.controller(host) != 0 {
 		t.Fatalf("controller = %d, want P1", g.controller(host))
 	}
-	if g.State.Cards[host].ControlSource != collar {
-		t.Fatalf(
-			"control source = %d, want the collar %d",
-			g.State.Cards[host].ControlSource,
-			collar,
-		)
+	if src := controlSourceOf(g, host); src != collar {
+		t.Fatalf("control source = %d, want the collar %d", src, collar)
 	}
 	if !g.State.Battleline[0].contains(host) || g.State.Battleline[1].contains(host) {
 		t.Fatalf("battlelines = %v/%v, want host only under P1", g.Battleline(0), g.Battleline(1))
@@ -238,18 +234,110 @@ func TestItIsOffIdentity(t *testing.T) {
 	}
 }
 
+// controlSourceOf returns the source of the topmost control entry over a card, or
+// 0 when the card carries none.
+func controlSourceOf(g *Game, id LocalID) LocalID {
+	for i := int(g.State.ControlCount) - 1; i >= 0; i-- {
+		if g.State.Controls[i].Card == id {
+			return g.State.Controls[i].Source
+		}
+	}
+	return 0
+}
+
 func TestTakeControlOfArtifactGuard(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	creature := g.AddToBattleline(testCreature("c", 3), 1)
-	g.takeControlOfArtifact(creature, 0) // not an artifact: no-op
-	if g.controller(creature) != 1 {
-		t.Error("a non-artifact should not be seized")
+	shelved := g.Register(NewCard("relic", Dis, Artifact, Rare), 1) // registered, not in play
+	g.takeControl(shelved, 0, shelved)                              // not in play: no-op
+	if g.controller(shelved) != 1 {
+		t.Error("a card that is not in play should not be seized")
+	}
+	if g.State.ControlCount != 0 {
+		t.Errorf("control stack = %d entries, want 0", g.State.ControlCount)
+	}
+}
+
+// TestControlStackIsLIFO pins that stacked control effects revert in LIFO order:
+// removing the newer effect falls back to the one beneath, and only removing the
+// last returns the card to its owner.
+func TestControlStackIsLIFO(t *testing.T) {
+	g := started(t)
+	foe := g.AddToBattleline(testCreature("foe", 3), 1)
+	srcA := g.AddToBattleline(testCreature("srcA", 3), 0)
+	srcB := g.AddToBattleline(testCreature("srcB", 3), 0)
+
+	g.takeControl(foe, 0, srcA) // A seizes foe for P0
+	g.takeControl(foe, 0, srcB) // B stacks on top, also for P0
+
+	// The newer effect lapsing falls back to A's control, not to the owner.
+	g.releaseControlHeldBy(srcB)
+	if g.controller(foe) != 0 {
+		t.Fatalf("controller after B lapses = %d, want P0 (falls back to A)", g.controller(foe))
+	}
+	if src := controlSourceOf(g, foe); src != srcA {
+		t.Fatalf("control source after B lapses = %d, want A %d", src, srcA)
+	}
+
+	// The last effect lapsing returns the creature to its owner.
+	g.releaseControlHeldBy(srcA)
+	if g.controller(foe) != 1 {
+		t.Fatalf("controller after A lapses = %d, want owner P1", g.controller(foe))
+	}
+	if g.State.ControlCount != 0 {
+		t.Fatalf("control stack = %d entries, want 0", g.State.ControlCount)
+	}
+}
+
+// TestControlTableFull pins that overflowing the control stack panics rather than
+// silently dropping a control effect.
+func TestControlTableFull(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	for range maxControlEntries {
+		g.pushControl(LocalID(1), 0, LocalID(1))
+	}
+	defer func() {
+		if recover() == nil {
+			t.Fatal("an entry past capacity should panic")
+		}
+	}()
+	g.pushControl(LocalID(1), 0, LocalID(1))
+}
+
+// TestPermanentControlDoesNotAccumulate pins that swapping a card's control every
+// turn (Whirlpool) does not grow the stack: a permanent take supersedes the whole
+// stack, so far more takes than the table's capacity never panic and leave one
+// entry.
+func TestPermanentControlDoesNotAccumulate(t *testing.T) {
+	g := started(t)
+	foe := g.AddToBattleline(testCreature("foe", 3), 1)
+	for i := range maxControlEntries * 3 {
+		g.takeControl(foe, i%2, foe) // permanent (self-sourced), swapping sides
+	}
+	if g.State.ControlCount != 1 {
+		t.Fatalf(
+			"control stack = %d entries, want 1 after repeated permanent takes",
+			g.State.ControlCount,
+		)
+	}
+	if g.controller(foe) != (maxControlEntries*3-1)%2 {
+		t.Fatalf("controller = %d, want the last taker", g.controller(foe))
+	}
+}
+
+// TestRevertibleControlDedupesBySource pins that the same source re-taking a card
+// replaces its own entry rather than stacking a duplicate.
+func TestRevertibleControlDedupesBySource(t *testing.T) {
+	g := started(t)
+	foe := g.AddToBattleline(testCreature("foe", 3), 1)
+	src := g.AddToBattleline(testCreature("src", 3), 0)
+	g.takeControl(foe, 0, src)
+	g.takeControl(foe, 0, src)
+	if g.State.ControlCount != 1 {
+		t.Fatalf("control stack = %d entries, want 1 (same source dedupes)", g.State.ControlCount)
 	}
 }
 
 // A creature kept alive only by its own side's +power aura is destroyed the moment
-// it changes sides, because the aura no longer reaches it and the damage already
-// marked on it becomes lethal.
 func TestTakeControlDestroysNewlyLethalCreature(t *testing.T) {
 	g := started(t)
 	g.AddArtifact(NewCard("Banner", Brobnar, Artifact, Rare, WithConstantAbility(
@@ -268,5 +356,41 @@ func TestTakeControlDestroysNewlyLethalCreature(t *testing.T) {
 	}
 	if !containsID(g.Discard(1), ape) {
 		t.Errorf("discard = %v, want the ape in its owner's pile", g.Discard(1))
+	}
+}
+
+// TestTakeControlIsNotLeavingPlay pins that a change of control is not an exit: it
+// does not fire the creature's Leaves Play abilities and does not shed its
+// counters — the creature stays in play, only on the other side.
+func TestTakeControlIsNotLeavingPlay(t *testing.T) {
+	g := started(t)
+	foe := g.AddToBattleline(
+		testCreature(
+			"foe",
+			3,
+			WithAbility(TriggerLeavesPlay, GainAember{Player: Controller, Amount: 1}),
+		),
+		1,
+	)
+	g.PlaceCounter(foe, CounterDoom, 2)
+	before := g.Aember(1)
+
+	g.takeControl(foe, 0, 0)
+
+	if g.Aember(1) != before {
+		t.Errorf(
+			"a control change fired a Leaves Play ability: Æmber %d -> %d",
+			before,
+			g.Aember(1),
+		)
+	}
+	if g.CountersOn(foe, CounterDoom) != 2 {
+		t.Errorf(
+			"counters = %d, want 2: a control change must not shed counters",
+			g.CountersOn(foe, CounterDoom),
+		)
+	}
+	if g.controller(foe) != 0 || !g.State.Battleline[0].contains(foe) {
+		t.Errorf("controller = %d, want P0 with the creature in play", g.controller(foe))
 	}
 }

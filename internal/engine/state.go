@@ -32,6 +32,15 @@ type CardCore struct {
 	// Stunned is whether the creature is stunned: the next time it is used, that use
 	// removes the stun instead of reaping, fighting, or firing an Action.
 	Stunned bool
+	// Enraged is whether the creature is enraged: while set, its controller must use
+	// it to fight on their turn if it is able to. Enrage persists across turns until
+	// an effect removes it, so nothing in the ready phase clears it.
+	Enraged bool
+	// Warded is whether the creature has a ward: a one-shot shield that absorbs the
+	// next instance of damage or the next time it would leave play, then is spent.
+	// Ward persists until it is spent or an effect removes it; the ready phase does
+	// not clear it.
+	Warded bool
 	// DamageImmune, while set, prevents any damage from being dealt to this creature.
 	// It lasts until end of turn (the ready phase clears it) — Shield of Justice,
 	// Protectrix.
@@ -40,6 +49,15 @@ type CardCore struct {
 	// remainder of the turn, as a bitmask of Keyword.bit() values (Scout grants
 	// Skirmish). The ready phase clears it for every creature.
 	GrantedKeywords uint8
+	// LostKeywords is the set of keywords this creature has lost for the remainder
+	// of the turn, as a bitmask of Keyword.bit() values (Niffle Grounds strips one
+	// creature of taunt and elusive). The ready phase clears it for every creature.
+	LostKeywords uint8
+	// KeywordsUntilNextTurn is the set of keywords this creature has gained until
+	// the start of its controller's next turn, as a bitmask of Keyword.bit() values
+	// (Hideaway Hole grants elusive). Unlike GrantedKeywords, only the controller's
+	// own ready phase clears it, so a defensive keyword survives the opponent's turn.
+	KeywordsUntilNextTurn uint8
 	// ConsideredFlank, while set, makes this creature count as a flank creature no
 	// matter where it sits in its battleline (Spectral Tunneler). It lasts until the
 	// remainder of the turn; the ready phase clears it for every creature.
@@ -101,13 +119,12 @@ type CardCore struct {
 	FirstUpgradePlus uint8
 	NextUpgradePlus  uint8
 	HostPlus         uint8
-	// ControlPlus is a temporary control override: 0 means the owner controls the
-	// card, otherwise the controller is ControlPlus-1. Ownership never changes.
+	// ControlPlus caches a card's current controller: 0 means the owner controls
+	// the card, otherwise the controller is ControlPlus-1. Ownership never changes.
+	// It is the fast read of the top of the card's control stack in the global
+	// Controls table, re-derived whenever a control effect is added or removed
+	// (see control.go).
 	ControlPlus uint8
-	// ControlSource is the card whose lasting effect took control of this creature
-	// "until it leaves play" (Collar of Subordination). When that source leaves
-	// play, the control override is reverted. 0 means no such source.
-	ControlSource LocalID
 	// Cards placed under a host form an intrusive singly-linked list threaded
 	// through these three bytes, mirroring FirstUpgradePlus/NextUpgradePlus/HostPlus
 	// above (see game_under.go) — but unlike an upgrade, a card placed under a host
@@ -459,6 +476,14 @@ type GameState struct {
 	// removal and shed when a card leaves play.
 	Counters     [maxCounterEntries]CounterEntry
 	CounterCount uint8
+	// Controls is the global stack of "take control" effects, ordered by when each
+	// was applied. A card's current controller is the most recently pushed entry
+	// still in effect; removing one falls back to the entry beneath it (LIFO). The
+	// table lives here rather than in CardCore so a card that is never seized costs
+	// nothing per snapshot; ControlCount is how many entries are live. Compacted on
+	// removal (see control.go).
+	Controls     [maxControlEntries]ControlEntry
+	ControlCount uint8
 }
 
 // FastCopy returns an independent copy of the state. Because every field is a

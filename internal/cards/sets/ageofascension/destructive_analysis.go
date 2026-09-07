@@ -1,20 +1,15 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// DestructiveAnalysis
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Destructive Analysis
 //
 //	House:  Mars
 //	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Deal 2D to a creature. You may purge any number of cards from your archives to deal an additional 2D to the same creature for each card purged this way.
+//	Play: Deal 2 damage to a creature and purge any number of cards from your archives to deal an additional 2 damage to it for each card purged this way.
 var DestructiveAnalysis = card.New(
 	"Destructive Analysis",
 	card.House.Mars,
@@ -22,5 +17,15 @@ var DestructiveAnalysis = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, 194),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.DamageThen{
+			Amount: 2,
+			Target: card.Target.Creature,
+			Then: card.PurgeArchivesForDamage{
+				Amount: 2,
+				Target: card.Target.Triggering,
+			},
+		}),
 )
+
+// TODO: why is damage then needed instead of a sequence. PurgeArchivesForDamage is ridiculous

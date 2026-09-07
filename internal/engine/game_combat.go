@@ -42,6 +42,12 @@ func (g *Game) fight(attacker, defender LocalID) {
 		return
 	}
 
+	// Snapshot the attacker's battleline neighbors before combat, so an "after a
+	// neighbor is used to fight" reaction (Little Niff) fires for the creatures
+	// beside the attacker even if the fight destroys the attacker and shifts the
+	// battleline.
+	neighborsAtFight := neighbors(&EffectContext{Resolver: g}, attacker)
+
 	// Assault and Hazardous deal their damage before fight damage: the attacker's
 	// Assault hits the defender, the defender's Hazardous hits the attacker.
 	// Either can destroy a fighter before combat. Skipped if a "Before Fight"
@@ -143,6 +149,14 @@ func (g *Game) fight(attacker, defender LocalID) {
 	}
 	g.emitCardUsed(g.controller(attacker), attacker)
 	g.emitLasting(EventFight, g.controller(attacker), attacker)
+	// Fire "after a neighbor of this is used to fight" on the creatures that
+	// flanked the attacker when the fight began (Little Niff), with the attacker
+	// as "it". A neighbor destroyed by the fight is skipped.
+	for _, neighbor := range neighborsAtFight {
+		if g.inPlay(neighbor) {
+			g.triggerAbilities(neighbor, TriggerAfterNeighborFights, attacker, true)
+		}
+	}
 }
 
 // spendElusive reports whether the defender's Elusive keyword stops the pending
@@ -231,6 +245,18 @@ func (g *Game) onFlankOf(id LocalID) bool {
 		(bl[0] == id || bl[len(bl)-1] == id)
 }
 
+// protectedFromNonFlank reports whether a creature carries a "creatures not on a
+// flank cannot fight this creature" restriction from an attached upgrade
+// (Camouflage). A blanked upgrade grants nothing (staticOn honors blanking).
+func (g *Game) protectedFromNonFlank(id LocalID) bool {
+	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
+		if g.staticOn(id, up).ProtectsFromNonFlank {
+			return true
+		}
+	}
+	return false
+}
+
 // fightDamage returns the damage an attacker deals to the defender it fights: its
 // power, unless the card's AttackDamage overrides it (a Fixed amount) or adds a
 // bonus (which may be limited to a defender on a flank).
@@ -275,6 +301,13 @@ func (g *Game) applyRawDamage(id LocalID, amount int, ignoreArmor bool) LocalID 
 	core := &g.State.Cards[id]
 	core.Damage += int16(amount)
 	g.record(DamageTaken{Creature: id, Amount: amount, Total: int(core.Damage)})
+	// A creature carrying a Lethal Distraction takes additional damage on top of
+	// each instance it takes. The bonus is added once here, so it does not itself
+	// re-trigger the effect on the same instance.
+	if bonus := g.lastingExtraDamage(id); bonus > 0 {
+		core.Damage += int16(bonus)
+		g.record(DamageTaken{Creature: id, Amount: bonus, Total: int(core.Damage)})
+	}
 	return id
 }
 
@@ -284,6 +317,9 @@ func (g *Game) mitigateDamage(id LocalID, amount int, ignoreArmor bool) int {
 	core := &g.State.Cards[id]
 	if core.DamageImmune {
 		g.record(DamageRefused{Creature: id})
+		return 0
+	}
+	if g.absorbedByWard(id) {
 		return 0
 	}
 	if !ignoreArmor {
@@ -313,6 +349,18 @@ type DamageTarget struct {
 // chooses. Resolving destruction is part of dealing damage, so once dealDamage
 // returns the dead creatures are already in the discard.
 func (g *Game) dealDamage(controller int, targets ...DamageTarget) {
+	// Snapshot the armor of any creature that watches for its own armor prevention
+	// (Maruck the Marked) so the batch can report how much each just prevented. The
+	// snapshot is skipped entirely when no such creature is in play, so the common
+	// case adds nothing to the hot path.
+	watchers := g.armorPreventWatchers()
+	var armorBefore map[LocalID]int
+	if len(watchers) > 0 {
+		armorBefore = make(map[LocalID]int, len(watchers))
+		for _, id := range watchers {
+			armorBefore[id] = int(g.State.Cards[id].ArmorRemaining)
+		}
+	}
 	// A redirect moves the damage to a shield, so the creature to test for
 	// destruction is whichever one applyRawDamage ended up marking.
 	hit := make([]LocalID, len(targets))
@@ -326,6 +374,54 @@ func (g *Game) dealDamage(controller int, targets ...DamageTarget) {
 		}
 	}
 	g.destroyEach(controller, dying)
+	if len(watchers) > 0 {
+		g.emitArmorPrevented(watchers, armorBefore)
+	}
+}
+
+// armorPreventWatchers lists the in-play creatures carrying an After This Creature
+// Prevents Damage With Its Armor ability, so dealDamage can skip its bookkeeping
+// entirely when none are present.
+func (g *Game) armorPreventWatchers() []LocalID {
+	var watchers []LocalID
+	for player := 0; player < 2; player++ {
+		for _, id := range g.allInPlay(player) {
+			if len(g.triggeredBy(id, TriggerAfterArmorPrevents)) > 0 {
+				watchers = append(watchers, id)
+			}
+		}
+	}
+	return watchers
+}
+
+// emitArmorPrevented fires each watcher's After This Creature Prevents Damage With
+// Its Armor ability, scaled by the armor it just spent absorbing damage (before
+// minus what remains). A watcher that spent no armor, or left play in the batch,
+// does not fire.
+func (g *Game) emitArmorPrevented(watchers []LocalID, armorBefore map[LocalID]int) {
+	for _, id := range watchers {
+		prevented := armorBefore[id] - int(g.State.Cards[id].ArmorRemaining)
+		if prevented <= 0 || !g.inPlay(id) {
+			continue
+		}
+		actor := g.controller(id)
+		for _, t := range g.orderTriggered(
+			actor, TriggerAfterArmorPrevents, g.triggeredBy(id, TriggerAfterArmorPrevents),
+		) {
+			closeFrame := g.openFrame(Frame{
+				Actor:      actor,
+				Source:     id,
+				HasSource:  true,
+				Trigger:    TriggerAfterArmorPrevents,
+				Grantor:    t.grantor,
+				HasGrantor: t.grantor != id,
+			})
+			ctx := &EffectContext{Resolver: g, Source: id, Controller: actor}
+			ctx.Produced.ArmorPrevented = prevented
+			t.ability.Effect.Resolve(ctx)
+			closeFrame()
+		}
+	}
 }
 
 // damageRedirect returns the creature that takes the damage a creature was dealt:

@@ -190,6 +190,32 @@ func TestPlayTopOfDeckLeavesUnplayableCardOnTop(t *testing.T) {
 	})
 }
 
+func TestDiscardTopOfEachDeckAmount(t *testing.T) {
+	g := started(t)
+	source := g.AddArtifact(NewCard("Rigged Lottery Source", Shadows, Tactic, Rare), 0)
+	for range 3 {
+		g.AddToDeck(NewCard("Shadows Card", Shadows, Creature, Common), 0)
+		g.AddToDeck(NewCard("Mars Card", Mars, Creature, Common), 1)
+	}
+	ctx := &EffectContext{Resolver: g, Source: source, Controller: 0}
+
+	e := DiscardTopOfEachDeck{Amount: 2}
+	if got := e.Text(); got != "discard the top 2 cards of each player's deck" {
+		t.Errorf("text = %q", got)
+	}
+	e.Resolve(ctx)
+
+	if got := len(g.Discard(0)); got != 2 {
+		t.Errorf("controller discard = %d, want 2", got)
+	}
+	if got := len(g.Discard(1)); got != 2 {
+		t.Errorf("opponent discard = %d, want 2", got)
+	}
+	if got := len(ctx.Produced.Discarded); got != 4 {
+		t.Errorf("recorded discards = %d, want 4", got)
+	}
+}
+
 func TestBonkersComposition(t *testing.T) {
 	g := started(t)
 	source := g.AddArtifact(NewCard("Bonkers Killing Machine", Logos, Artifact, Rare), 0)

@@ -89,6 +89,7 @@ func fightAmong(ctx *EffectContext, attacker LocalID, enemies []LocalID) (LocalI
 		return 0, false
 	}
 	ctx.Resolver.FightWith(attacker, enemy)
+	ctx.It, ctx.HasIt = enemy, true
 	return enemy, true
 }
 

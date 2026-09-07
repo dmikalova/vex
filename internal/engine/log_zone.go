@@ -154,6 +154,19 @@ func (e CardPurgedFromHand) Text(n Namer) string {
 		n.PlayerName(e.Player), nameMoved(n, e.Card, Hand, purged))
 }
 
+// CardPurgedFromArchives narrates a card purged out of a player's archives.
+// Purging turns it face up, so naming it leaks nothing.
+type CardPurgedFromArchives struct {
+	Player int
+	Card   LocalID
+}
+
+// Text renders the card purged out of archives.
+func (e CardPurgedFromArchives) Text(n Namer) string {
+	return fmt.Sprintf("%s purges %s from archives",
+		n.PlayerName(e.Player), nameMoved(n, e.Card, Archives, purged))
+}
+
 // CardPurged narrates a card in play being purged.
 type CardPurged struct{ Card LocalID }
 

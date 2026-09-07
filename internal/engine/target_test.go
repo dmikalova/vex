@@ -145,6 +145,13 @@ func TestTargetText(t *testing.T) {
 		"the creature "+SelfName+" fought" {
 		t.Errorf("creature-fought text = %q", got)
 	}
+	if got := (Target{Kind: TargetTheFoughtCreature}).Text(); got != "the fought creature" {
+		t.Errorf("fought-creature text = %q", got)
+	}
+	if got := (Target{Kind: TargetTheFoughtCreature}.NeighborsOf()).
+		Text(); got != "each neighbor of the fought creature" {
+		t.Errorf("fought-creature neighbors text = %q", got)
+	}
 }
 
 func TestTargetSharingTrait(t *testing.T) {

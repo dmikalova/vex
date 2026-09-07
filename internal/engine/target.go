@@ -106,6 +106,11 @@ const (
 	// them as "each of that creature's neighbors" — Pain Reaction hits the neighbors
 	// of the creature its damage just destroyed.
 	TargetFormerNeighbors
+	// TargetTheFoughtCreature selects the creature a preceding effect had a chosen
+	// creature fight (ctx.It) and renders it as "the fought creature", naming no
+	// fighter — Smite makes a friendly creature fight, then damages the fought
+	// creature's neighbors, so the fight is not the source's own.
+	TargetTheFoughtCreature
 )
 
 // Target describes which cards an effect applies to. Kind picks the base set;
@@ -446,6 +451,8 @@ func (t Target) Text() string {
 		return "the chosen creature"
 	case TargetFormerNeighbors:
 		return "each of that creature's neighbors"
+	case TargetTheFoughtCreature:
+		return t.decorateNeighbors("the fought creature")
 	}
 	noun := "creature"
 	if t.Kind == TargetEachArtifact || t.Kind == TargetChosenArtifact ||
@@ -1222,7 +1229,7 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 	case TargetThisCreature:
 		return []LocalID{ctx.Source}
 	case TargetTriggeringCreature, TargetTheOtherCreature, TargetTheChosenCreature,
-		TargetCreatureFought:
+		TargetCreatureFought, TargetTheFoughtCreature:
 		if ctx.HasIt {
 			return []LocalID{ctx.It}
 		}

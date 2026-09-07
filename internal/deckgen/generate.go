@@ -165,8 +165,8 @@ func (g *generator) fillSlot(house engine.House, placed []placedCard) (Slot, pla
 
 	rarity := g.rollRarity()
 	if g.chance(t.LegacyRate) {
-		if c, ok := g.pick(g.set.legacyByHouse[house]); ok {
-			return g.commit(c, SlotContext{House: house, Rarity: rarity, Legacy: true})
+		if c, ok := g.drawLegacy(house, rarity); ok {
+			return g.commit(c, SlotContext{House: house, Rarity: c.Def.Rarity, Legacy: true})
 		}
 	}
 	if c, ok := g.tryDuplicate(rarity, placed); ok {
@@ -230,6 +230,17 @@ func (g *generator) draw(house engine.House, rarity engine.Rarity, maverick bool
 		return c, true
 	}
 	return g.pick(g.set.byHouse[house])
+}
+
+// drawLegacy picks a legacy card for the pod House at the rolled rarity, falling
+// back to any rarity in that House so a legacy slot still fills when the House has
+// no legacy card of that rarity. It reports false when the House has no legacy
+// cards at all (or there is no legacy pool).
+func (g *generator) drawLegacy(house engine.House, rarity engine.Rarity) (Card, bool) {
+	if c, ok := g.pick(g.set.legacyPool[house][rarity]); ok {
+		return c, true
+	}
+	return g.pick(g.set.legacyByHouse[house])
 }
 
 // tryDuplicate copies an already-placed same-pod, same-rarity card with the

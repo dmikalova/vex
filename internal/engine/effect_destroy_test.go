@@ -39,6 +39,48 @@ func TestDestroyEffect(t *testing.T) {
 	}
 }
 
+// TestDestroyMostPowerfulUnlessReadyHouse covers Quicksand: each player who does
+// not control a ready creature of the named house loses their most powerful
+// creature; a player fielding a ready one is spared entirely.
+func TestDestroyMostPowerfulUnlessReadyHouse(t *testing.T) {
+	e := DestroyMostPowerfulUnlessReadyHouse{House: Untamed}
+	if got := e.Text(); got != "destroy the most powerful creature controlled by "+
+		"each player who does not control a ready Untamed creature" {
+		t.Errorf("text = %q", got)
+	}
+	if (DestroyMostPowerfulUnlessReadyHouse{}).validate() == nil {
+		t.Error("validate should reject an unset house")
+	}
+	if err := e.validate(); err != nil {
+		t.Errorf("validate with house set = %v", err)
+	}
+
+	g := NewGame("A", "B", 1)
+	// P0 controls a ready Untamed creature, so it is spared entirely.
+	readyUntamed := g.AddToBattleline(NewCard("ready", Untamed, Creature, Common, WithPower(2)), 0)
+	bigP0 := g.AddToBattleline(testCreature("bigP0", 8), 0)
+	// P1's only Untamed creature is exhausted, so P1 is not spared.
+	exhaustedUntamed := g.AddToBattleline(
+		NewCard("weary", Untamed, Creature, Common, WithPower(2)),
+		1,
+	)
+	g.SetExhausted(exhaustedUntamed, true)
+	bigP1 := g.AddToBattleline(testCreature("bigP1", 6), 1)
+	smallP1 := g.AddToBattleline(testCreature("smallP1", 3), 1)
+
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+
+	if !g.inPlay(readyUntamed) || !g.inPlay(bigP0) {
+		t.Error("a player with a ready Untamed creature should be spared entirely")
+	}
+	if g.inPlay(bigP1) {
+		t.Error("the most powerful creature of an unspared player should be destroyed")
+	}
+	if !g.inPlay(smallP1) || !g.inPlay(exhaustedUntamed) {
+		t.Error("only the most powerful creature of an unspared player is destroyed")
+	}
+}
+
 func TestDestroyChosenArtifact(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	mine := g.AddArtifact(exAutocannon(), 0)

@@ -29,6 +29,17 @@ func (e CreatureGainedKeyword) Text(n Namer) string {
 	return fmt.Sprintf("%s gains %s", n.Name(e.Creature), strings.ToLower(e.Keyword.String()))
 }
 
+// CreatureLostKeyword narrates a single creature losing a keyword for the turn.
+type CreatureLostKeyword struct {
+	Creature LocalID
+	Keyword  Keyword
+}
+
+// Text renders the creature and the keyword it lost.
+func (e CreatureLostKeyword) Text(n Namer) string {
+	return fmt.Sprintf("%s loses %s", n.Name(e.Creature), strings.ToLower(e.Keyword.String()))
+}
+
 // CreatureGainedStats narrates a creature gaining power and/or armor for the turn
 // (Abond the Armorsmith grants +1 armor).
 type CreatureGainedStats struct {
@@ -82,6 +93,59 @@ func (e CreatureStunned) Text(n Namer) string {
 		return fmt.Sprintf("%s stunned %s", n.Name(e.By), n.Name(e.Creature))
 	}
 	return fmt.Sprintf("%s is stunned", n.Name(e.Creature))
+}
+
+// CreatureEnraged narrates a card being enraged, and by what — unless the source
+// is the card itself, which reads better left passive. AlreadyEnraged marks an
+// enrage that found its target already enraged: the source still had to choose it,
+// so the choice is worth a line even though nothing changed.
+type CreatureEnraged struct {
+	Creature       LocalID
+	By             LocalID
+	AlreadyEnraged bool
+}
+
+// Text renders the card that was enraged and, when it is not self-inflicted, the
+// card that enraged it.
+func (e CreatureEnraged) Text(n Namer) string {
+	if e.AlreadyEnraged {
+		return fmt.Sprintf("%s is already enraged", n.Name(e.Creature))
+	}
+	if e.By != e.Creature {
+		return fmt.Sprintf("%s enraged %s", n.Name(e.By), n.Name(e.Creature))
+	}
+	return fmt.Sprintf("%s is enraged", n.Name(e.Creature))
+}
+
+// CreatureWarded narrates a card being warded, and by what — unless the source is
+// the card itself, which reads better left passive. AlreadyWarded marks a ward
+// that found its target already warded: the source still had to choose it, so the
+// choice is worth a line even though nothing changed.
+type CreatureWarded struct {
+	Creature      LocalID
+	By            LocalID
+	AlreadyWarded bool
+}
+
+// Text renders the card that was warded and, when it is not self-inflicted, the
+// card that warded it.
+func (e CreatureWarded) Text(n Namer) string {
+	if e.AlreadyWarded {
+		return fmt.Sprintf("%s is already warded", n.Name(e.Creature))
+	}
+	if e.By != e.Creature {
+		return fmt.Sprintf("%s warded %s", n.Name(e.By), n.Name(e.Creature))
+	}
+	return fmt.Sprintf("%s is warded", n.Name(e.Creature))
+}
+
+// WardAbsorbed narrates a creature's ward being spent: it absorbed an instance of
+// damage or a removal from play, so the creature stays and loses its ward.
+type WardAbsorbed struct{ Creature LocalID }
+
+// Text renders the creature whose ward was spent.
+func (e WardAbsorbed) Text(n Namer) string {
+	return fmt.Sprintf("%s's ward absorbs the effect", n.Name(e.Creature))
 }
 
 // NoCreatureToFight narrates a fight that found no enemy creature to attack, so

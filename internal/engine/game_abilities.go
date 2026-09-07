@@ -129,13 +129,13 @@ func (g *Game) canUseTo(player int, id LocalID, kind UseKind) error {
 	return nil
 }
 
-// mustFightWhenUsed reports whether the global "creatures must fight when used, if
-// able" rule (Little Rapscal) currently bars this creature from reaping or using
-// an Action ability — true only while the rule is in play and the creature is able
-// to fight, so a creature with nothing to fight, or barred from fighting (Fogbank),
-// may still reap or act.
+// mustFightWhenUsed reports whether this creature is currently barred from reaping
+// or using an Action ability because it must fight instead — true when either the
+// global "creatures must fight when used, if able" rule (Little Rapscal) is in play
+// or the creature is enraged, and the creature is able to fight. A creature with
+// nothing to fight, or barred from fighting (Fogbank), may still reap or act.
 func (g *Game) mustFightWhenUsed(player int, id LocalID) bool {
-	return g.mustFightIfAble() && g.canFight(player, id)
+	return (g.mustFightIfAble() || g.Enraged(id)) && g.canFight(player, id)
 }
 
 // CanUse reports whether a creature may currently be used (reap/fight/action) by
@@ -308,6 +308,10 @@ func (g *Game) Fight(player int, attacker, defender LocalID) error {
 		g.protectedByTaunt(attacker, defender) {
 		return ErrNoTarget
 	}
+	// Camouflage bars an attacker that is not on a flank from fighting its host.
+	if g.protectedFromNonFlank(defender) && !g.onFlankOf(attacker) {
+		return ErrNoTarget
+	}
 	if fr := g.cat.def(attacker).FightRestriction; fr != (Target{}) &&
 		!fr.allows(&EffectContext{Resolver: g, Source: attacker, Controller: player}, defender) {
 		return ErrNoTarget
@@ -385,6 +389,10 @@ func (g *Game) FightTargets(player int, attacker LocalID) []LocalID {
 // callers make.
 func (g *Game) fightAllows(player int, attacker, def LocalID) bool {
 	if g.protectedByTaunt(attacker, def) {
+		return false
+	}
+	// Camouflage bars an attacker that is not on a flank from fighting its host.
+	if g.protectedFromNonFlank(def) && !g.onFlankOf(attacker) {
 		return false
 	}
 	fr := g.cat.def(attacker).FightRestriction

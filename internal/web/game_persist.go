@@ -115,13 +115,13 @@ func (g *game) resume(ctx app.Context) (ok bool) {
 
 	g.seed = snap.Seed
 	g.setNames = snap.SetNames
-	eg, houses, mavericks, legacies := match.NewWithSets(
+	eg, houses, mavericks, legacies, rosters := match.NewWithSets(
 		"Player 1",
 		"Player 2",
 		snap.Seed,
 		snap.SetNames,
 	)
-	g.install(eg, houses, mavericks, legacies)
+	g.install(eg, houses, mavericks, legacies, rosters)
 	if !g.replayManualAdds(snap.Manual) {
 		store.Del(persistKey)
 		return false
@@ -216,8 +216,13 @@ func (g *game) newMatch() { g.dealMatch(time.Now().UnixNano()) }
 // id in them.
 func (g *game) dealMatch(seed int64) {
 	g.seed = seed
-	eg, houses, mavericks, legacies := match.NewWithSets("Player 1", "Player 2", g.seed, g.setNames)
-	g.install(eg, houses, mavericks, legacies)
+	eg, houses, mavericks, legacies, rosters := match.NewWithSets(
+		"Player 1",
+		"Player 2",
+		g.seed,
+		g.setNames,
+	)
+	g.install(eg, houses, mavericks, legacies, rosters)
 	// Clear the previous game's log grouping and undo/redo history. newMatch resets
 	// the engine log to a single turn-1 header, so stale marks (with larger Start
 	// indices from the old, longer log) would bubble the fresh log at the wrong
@@ -234,6 +239,7 @@ func (g *game) dealMatch(seed int64) {
 	g.phase = phaseHouse
 	g.clearSelection()
 	g.zonesPlayer = -1
+	g.deckOpen = -1
 	g.status = ""
 	// Run setup on a background goroutine so the interactive chooser can offer each
 	// player their one mulligan: StartGame deals both opening hands, prompts each
@@ -263,6 +269,7 @@ func (g *game) install(
 	houses [2][]engine.House,
 	mavericks [2][]engine.LocalID,
 	legacies [2][]engine.LocalID,
+	rosters [2]match.Roster,
 ) {
 	ch := &webChooser{
 		g:           g,
@@ -279,6 +286,7 @@ func (g *game) install(
 	g.g = eg
 	g.chooser = ch
 	g.deckHouses = houses
+	g.rosters = rosters
 	g.mavericks = make(map[engine.LocalID]bool)
 	for _, ids := range mavericks {
 		for _, id := range ids {

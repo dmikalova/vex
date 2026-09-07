@@ -158,6 +158,15 @@ house's creatures — Ixxyxli Fixfinger (Mars) giving each other Martian creatur
 +1 armor — writes `card.Target.EachOtherFriendlyCreature.OfHouse(card.House.Self)`,
 not `OfHouse(card.House.Mars)`.
 
+## Anomalies are `card.Rarity.Special` and houseless
+
+An **anomaly** is a rare houseless card (Worlds Collide onward) that can appear in
+a deck of any house. Author every anomaly with `card.Rarity.Special` — the rarity
+bucket this engine already uses for the off-house / any-house cards (the
+Ambassadors, the Key Imps) — never Common/Uncommon/Rare. This is a standing
+convention: when a set introduces anomalies, they go under Special so deck
+generation treats them as houseless, not as members of one house's pool.
+
 The test is what the card is _about_, not which house it happens to print. Take
 That, Smarty Pants names Logos because it is about Logos creatures, whichever
 house the card itself belongs to — that house is written out. So:

@@ -143,12 +143,54 @@ func (e GainAbility) Resolve(ctx *EffectContext) {
 	}
 }
 
+// TakesExtraDamage makes each creature its Target selects take an additional
+// Amount damage whenever it takes damage, for the rest of the controller's turn —
+// Lethal Distraction's "for the remainder of the turn, whenever this creature takes
+// damage, it takes an additional 2 damage". It is a subject-scoped augmentation, so
+// only the chosen creature's own damage is boosted.
+type TakesExtraDamage struct {
+	Target Target
+	Amount int
+}
+
+// validate requires a target and a positive Amount.
+func (e TakesExtraDamage) validate() error {
+	if !e.Target.valid() {
+		return errUnsetTarget("TakesExtraDamage")
+	}
+	if e.Amount <= 0 {
+		return fmt.Errorf("TakesExtraDamage: Amount must be positive")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "for the remainder of the turn, whenever it takes
+// damage, it takes an additional 2 damage".
+func (e TakesExtraDamage) Text() string {
+	return fmt.Sprintf(
+		"for the remainder of the turn, whenever %s takes damage, it takes an additional %d damage",
+		e.Target.Text(), e.Amount)
+}
+
+// Resolve registers the augmentation on each selected creature for the rest of the
+// controller's turn.
+func (e TakesExtraDamage) Resolve(ctx *EffectContext) {
+	for _, id := range e.Target.Select(ctx) {
+		ctx.Resolver.AddLasting(LastingEffect{
+			On:         EventCreatureTakesDamage,
+			Controller: int8(ctx.Controller),
+			Amount:     int8(e.Amount),
+			Subject:    id,
+			HasSubject: true,
+		})
+	}
+}
+
 // Replacement is a lasting change to an event's own outcome, used by Instead.
 type Replacement uint8
 
 const (
-	// replacementUnset is the invalid zero value: an Instead must name its
-	// replacement rather than leave it unset.
+	// replacementUnset is the invalid zero value: an Instead must name its	// replacement rather than leave it unset.
 	replacementUnset Replacement = iota
 	// Steal replaces gaining Æmber with stealing that much from the opponent.
 	Steal

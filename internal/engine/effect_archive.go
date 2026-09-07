@@ -276,11 +276,10 @@ func (e ArchiveFromPlay) resolveOptional(ctx *EffectContext) bool {
 }
 
 // archive puts an already-selected set of in-play cards into their owners'
-// archives, and reports whether anything was.
+// archives, and reports whether anything was. The cards leave play at the same
+// time, so archiving one that was buffing another does not destroy that other.
 func (e ArchiveFromPlay) archive(ctx *EffectContext, ids []LocalID) bool {
-	for _, id := range ids {
-		ctx.Resolver.PutIntoArchives(id)
-	}
+	ctx.Resolver.PutIntoArchivesEach(ctx.Resolver.ActivePlayer(), ids)
 	return len(ids) > 0
 }
 

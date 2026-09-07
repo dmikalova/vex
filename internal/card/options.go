@@ -46,6 +46,9 @@ var (
 	WithAemberBonus = func(n int) Option { return gameplay(engine.WithAemberBonus(n)) }
 	// WithStatic adds a static modifier (an upgrade's granted stats and abilities).
 	WithStatic = func(m StaticModifier) Option { return gameplay(engine.WithStatic(m)) }
+	// WithPlayableAsUpgrade lets a creature be played as an upgrade instead of a
+	// creature, granting its host the card's WithStatic modifier.
+	WithPlayableAsUpgrade = func() Option { return gameplay(engine.WithPlayableAsUpgrade()) }
 	// WithConstant adds an ability that applies to the board while the card is in play.
 	WithConstant = func(c ConstantAbility) Option { return gameplay(engine.WithConstantAbility(c)) }
 	// WithRestrictions adds constant restrictions (cannot fight, cannot reap, ...).
@@ -67,6 +70,9 @@ var (
 	}
 	// WithAemberTheftImmunity makes Æmber on this card immune to theft.
 	WithAemberTheftImmunity = func() Option { return gameplay(engine.WithAemberTheftImmunity()) }
+	// WithTheftFromCommonSupply redirects Æmber stolen or captured from your pool to
+	// the common supply, so a thief still gains it but you keep your own.
+	WithTheftFromCommonSupply = func() Option { return gameplay(engine.WithTheftFromCommonSupply()) }
 	// WithSpendableAember lets Æmber banked on this card be spent when forging.
 	WithSpendableAember = func() Option { return gameplay(engine.WithSpendableAember()) }
 	// WithGainsForgeAember gives this card's controller all the Æmber their

@@ -56,10 +56,33 @@ func TestLogEntryText(t *testing.T) {
 			AemberStolen{Player: 0, From: 1, Amount: 2, Source: 7, HasSource: true},
 			"Card7 steals 2 Æmber from P1",
 		},
+		{
+			AemberStolen{Player: 0, From: 1, Amount: 2, FromSupply: true},
+			"P0 steals 2 Æmber from the common supply",
+		},
+		{
+			AemberStolen{
+				Player:     0,
+				From:       1,
+				Amount:     2,
+				Source:     7,
+				HasSource:  true,
+				FromSupply: true,
+			},
+			"Card7 steals 2 Æmber from the common supply",
+		},
 		{AemberCaptured{Creature: 7, Amount: 3, Source: 7}, "Card7 captures 3 Æmber"},
 		{
 			AemberCaptured{Creature: 7, Amount: 1, Source: 3},
 			"Card3 captures 1 Æmber onto Card7",
+		},
+		{
+			AemberCaptured{Creature: 7, Amount: 3, Source: 7, FromSupply: true},
+			"Card7 captures 3 Æmber from the common supply",
+		},
+		{
+			AemberCaptured{Creature: 7, Amount: 1, Source: 3, FromSupply: true},
+			"Card3 captures 1 Æmber onto Card7 from the common supply",
 		},
 		{
 			AemberMovedToCommonSupply{Creature: 7, Amount: 1},
@@ -86,6 +109,7 @@ func TestLogEntryText(t *testing.T) {
 		// Creatures and cards in play.
 		{CreatureReadied{Creature: 2}, "Card2 is readied"},
 		{CreatureGainedKeyword{Creature: 2, Keyword: Skirmish}, "Card2 gains skirmish"},
+		{CreatureLostKeyword{Creature: 2, Keyword: Elusive}, "Card2 loses elusive"},
 		{CreatureGainedStats{Creature: 2, Armor: 1}, "Card2 gains +1 armor"},
 		{CreatureGainedStats{Creature: 2, Power: 2, Armor: 2}, "Card2 gains +2 power and +2 armor"},
 		{CreatureConsideredFlank{Creature: 2}, "Card2 is considered a flank creature"},
@@ -93,6 +117,12 @@ func TestLogEntryText(t *testing.T) {
 		{CreatureStunned{Creature: 2, By: 2}, "Card2 is stunned"},
 		{CreatureStunned{Creature: 2, By: 5}, "Card5 stunned Card2"},
 		{CreatureStunned{Creature: 2, By: 5, AlreadyStunned: true}, "Card2 is already stunned"},
+		{CreatureEnraged{Creature: 2, By: 2}, "Card2 is enraged"},
+		{CreatureEnraged{Creature: 2, By: 5}, "Card5 enraged Card2"},
+		{CreatureEnraged{Creature: 2, By: 5, AlreadyEnraged: true}, "Card2 is already enraged"},
+		{CreatureWarded{Creature: 2, By: 2}, "Card2 is warded"},
+		{CreatureWarded{Creature: 2, By: 5}, "Card5 warded Card2"},
+		{CreatureWarded{Creature: 2, By: 5, AlreadyWarded: true}, "Card2 is already warded"},
 		{NoCreatureToFight{Creature: 2}, "Card2 has no creature to fight"},
 		{CardsRevealedToAll{Player: 0, Cards: []LocalID{1, 2}}, "P0 reveals Card1, Card2"},
 		{PositionsSwapped{A: 1, B: 2}, "Card1 swaps positions with Card2"},
@@ -163,6 +193,7 @@ func TestLogEntryText(t *testing.T) {
 		},
 		{CardPurgedFromDiscard{Player: 0, Card: 6}, "P0 purges Card6 from a discard pile"},
 		{CardPurgedFromHand{Player: 1, Card: 6}, "P1 purges Card6 from a hand"},
+		{CardPurgedFromArchives{Player: 1, Card: 6}, "P1 purges Card6 from archives"},
 		{CardPurged{Card: 6}, "Card6 is purged"},
 		{CardPutOnTopOfDeck{Card: 6, Owner: 0}, "Card6 is put on top of P0's deck"},
 		{CardReturnedToHand{Card: 6, Owner: 1}, "Card6 is returned to P1's hand"},

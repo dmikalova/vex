@@ -552,16 +552,17 @@ body {
   pointer-events: none;
   -webkit-touch-callout: none;
 }
-/* while the sidebar (and its log) is hidden, recent log bubbles toast at the top
-   of the board so a minimized log still narrates what just happened. It floats
-   centred above the board, below the overlays; each bubble expires on its own
-   timer (oldest first) unless the pointer holds the toast open. It reuses the log
-   panel's own bubbles and grouping, so a toast reads exactly like the log it
-   stands in for. */
+/* while the sidebar (and its log) is hidden, recent log bubbles toast near the
+   top of the board so a minimized log still narrates what just happened. It sits
+   just below the top player bar so that bar stays visible and its controls stay
+   clickable (the toast no longer covers them). It floats centred, below the
+   overlays; each bubble expires on its own timer (oldest first) unless the
+   pointer holds the toast open. It reuses the log panel's own bubbles and
+   grouping, so a toast reads exactly like the log it stands in for. */
 .log-toast {
   position: fixed;
   z-index: 21;
-  top: var(--shell-pad);
+  top: calc(var(--shell-pad) + var(--ctl-h) + var(--board-gap));
   left: 50%;
   transform: translateX(-50%);
   display: flex;
@@ -1747,6 +1748,113 @@ button:disabled {
   overflow: hidden;
   text-overflow: ellipsis;
   display: block;
+}
+/* the deck list opens from a deck icon on the player bar: a wide popover of the
+   player's static roster laid out as three house columns side by side. Desktop
+   hover opens it; a tap pins it via .deck-tip--open (see onDeckToggle). */
+.deck-tip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+.deck-tip-btn {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+.deck-tip-btn .icon {
+  width: 1.25em;
+  height: 1.25em;
+}
+.deck-list {
+  position: absolute;
+  bottom: calc(100% + 0.35rem);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 40;
+  display: none;
+  flex-direction: column;
+  gap: 0.35rem;
+  max-width: min(46rem, 92vw);
+  max-height: 70vh;
+  overflow: auto;
+  padding: 0.4rem 0.5rem;
+  border-radius: var(--ctl-radius);
+  background: var(--surface-hover);
+  border: 1px solid var(--line-strong);
+  box-shadow: 0 4px 16px rgb(0 0 0 / 0.55);
+}
+.deck-tip:hover .deck-list,
+.deck-tip--open .deck-list {
+  display: flex;
+}
+/* the top bar has nothing above it, so its deck list drops below rather than
+   being clipped off the top of the board */
+.board-area > .score-pill:first-child .deck-list {
+  top: calc(100% + 0.35rem);
+  bottom: auto;
+}
+.deck-list-head {
+  color: var(--ink-quiet);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 0 0.15rem;
+}
+/* three houses side by side; on a narrow screen the popover scrolls sideways
+   rather than reflowing a house into an unreadable single strip */
+.deck-list-cols {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+.deck-list-col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 12rem;
+}
+.deck-list-colhead {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  border-radius: 3px;
+  padding: 0.15rem 0.35rem;
+  margin-bottom: 2px;
+  background-color: var(--nm, var(--surface-hover));
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.4);
+}
+.deck-list-colhead .icon {
+  width: 1.15em;
+  height: 1.15em;
+}
+.deck-list-house {
+  color: var(--nm-fg, var(--ink));
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.deck-list-row {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.05rem 0.3rem;
+}
+/* the type and rarity marks read as one label, so they sit tight together while
+   the row's gap keeps the name and provenance marks apart */
+.deck-list-marks {
+  display: inline-flex;
+  align-items: center;
+  gap: 0;
+  flex: 0 0 auto;
+}
+.deck-list-name {
+  color: var(--ink);
+  font-size: 0.72rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 /* the top bar has nothing above it, so its tips drop below instead of being
    clipped off the top of the board */
@@ -3191,6 +3299,26 @@ button:disabled {
      side by side in the Style gallery. */
   --font-house: inherit;
 }
+.card-saurian {
+  --nm: #1f9e94;
+  --nm-fg: #04211f;
+  --tp: #c9a24c;
+  --tp-fg: #241a06;
+  --edge: #1f9e94;
+  /* The face's font, overridable per house so two faces can be compared
+     side by side in the Style gallery. */
+  --font-house: inherit;
+}
+.card-staralliance {
+  --nm: #d9a41f;
+  --nm-fg: #241900;
+  --tp: #1c2f5c;
+  --tp-fg: #dce7fb;
+  --edge: #d9a41f;
+  /* The face's font, overridable per house so two faces can be compared
+     side by side in the Style gallery. */
+  --font-house: inherit;
+}
 .card-none {
   --nm: #3a3a38;
   --nm-fg: #f7f1ff;
@@ -3206,31 +3334,31 @@ button:disabled {
    emblem read from --set-accent; the .set-<slug> class is applied by
    internal/web/setpalette.go, keyed by the set's provenance slug. ---- */
 .set-callofthearchons {
-  --set-accent: #3fc1e6;
+  --set-accent: #b83029;
 }
 .set-ageofascension {
-  --set-accent: #f2ab2b;
+  --set-accent: #2f7fd6;
 }
 .set-worldscollide {
-  --set-accent: #e8743b;
+  --set-accent: #8b46c2;
 }
 .set-massmutation {
-  --set-accent: #4caf6d;
+  --set-accent: #0e1730;
 }
 .set-darktidings {
-  --set-accent: #2f6bcf;
+  --set-accent: #26426f;
 }
 .set-windsofexchange {
-  --set-accent: #5fb0e6;
+  --set-accent: #b0ac33;
 }
 .set-grimreminders {
-  --set-accent: #c8434f;
+  --set-accent: #4a7398;
 }
 .set-aemberskies {
-  --set-accent: #7fc8e0;
+  --set-accent: #e8742b;
 }
 .set-tokensofchange {
-  --set-accent: #9b6cc4;
+  --set-accent: #e2436a;
 }
 .set-moremutation {
   --set-accent: #8fc23f;
@@ -3239,16 +3367,16 @@ button:disabled {
   --set-accent: #d3579e;
 }
 .set-vaultmasters2025 {
-  --set-accent: #8b95a3;
+  --set-accent: #8fc23f;
 }
 .set-propheticvisions {
-  --set-accent: #5a55c8;
+  --set-accent: #6f43a6;
 }
 .set-crucibleclash {
-  --set-accent: #e0553f;
+  --set-accent: #8a7346;
 }
 .set-draconianmeasures {
-  --set-accent: #a83232;
+  --set-accent: #a55fd0;
 }
 
 /* ============================================================================

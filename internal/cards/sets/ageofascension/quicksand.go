@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Quicksand
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Untamed
 //	Type:   Tactic
@@ -22,5 +17,7 @@ var Quicksand = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, 364),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play,
+		card.DestroyMostPowerfulUnlessReadyHouse{House: card.House.Self}),
 )

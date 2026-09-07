@@ -77,6 +77,9 @@ func (g *game) scorePill(player int) app.UI {
 		app.Text(" • "),
 		g.keysDisplay(player),
 	}
+	if seg := g.deckTip(player); seg != nil {
+		detail = append(detail, app.Text(" • "), seg)
+	}
 	if houses := g.deckHouses[player]; len(houses) > 0 {
 		detail = append(detail, app.Text(" • "), g.houseStrip(player, houses))
 	}

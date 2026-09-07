@@ -14,7 +14,8 @@ func houseSlug(h engine.House) string {
 	if h == engine.HouseNone {
 		return "none"
 	}
-	return strings.ToLower(h.String())
+	// Star Alliance's printed name has a space; the class/asset stem drops it.
+	return strings.ReplaceAll(strings.ToLower(h.String()), " ", "")
 }
 
 // houseClasses returns the class that tints a card face by its house.

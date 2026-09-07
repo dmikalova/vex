@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// LittleNiff
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Little Niff
 //
 //	House:  Shadows
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Elf • Thief
 //
-//	Omega. Deploy. Elusive.
-//	After a neighbor of Little Niff is used to fight, steal 1A.
+//	Deploy, Elusive, Omega.
+//	After a neighbor of Little Niff is used to fight, steal 1 Æmber.
 var LittleNiff = card.New(
 	"Little Niff",
 	card.House.Shadows,
@@ -25,5 +20,11 @@ var LittleNiff = card.New(
 	card.Provenance(card.AoA, 289),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(
+		card.Keyword.Deploy,
+		card.Keyword.Elusive,
+		card.Keyword.Omega,
+	),
+	card.WithAbility(
+		card.Trigger.AfterNeighborFights, card.StealAember{Amount: 1}),
 )

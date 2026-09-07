@@ -158,6 +158,8 @@ func TestAllTriggerPrefixes(t *testing.T) {
 		TriggerAfterForgeKey:          "After you forge a key, gain 1 Æmber.",
 		TriggerAfterCreatureEnters:    "After a creature enters play, gain 1 Æmber.",
 		TriggerAfterDestroyedFighting: "After a creature is destroyed fighting {self}, gain 1 Æmber.",
+		TriggerAfterArmorPrevents:     "After {self} prevents damage with its armor, gain 1 Æmber.",
+		TriggerAfterNeighborFights:    "After a neighbor of {self} is used to fight, gain 1 Æmber.",
 		TriggerAfterCardPlayed:        "After you play a card, gain 1 Æmber.",
 	}
 	for tr, want := range cases {
@@ -214,6 +216,38 @@ func TestGeneratedCardText(t *testing.T) {
 				WithKeywords(Taunt),
 			),
 			"House:  Sanctum\nType:   Creature\nRarity: Common\nPower:  6\nArmor:  1\nTraits: Knight\n\nTaunt.",
+		},
+		{
+			NewCard(
+				"Camouflage",
+				Untamed,
+				Upgrade,
+				Uncommon,
+				WithStatic(StaticModifier{ProtectsFromNonFlank: true}),
+			),
+			"House:  Untamed\nType:   Upgrade\nRarity: Uncommon\n\nCreatures not on a flank cannot fight this creature.",
+		},
+		{
+			NewCard(
+				"Heart of the Forest",
+				Untamed,
+				Artifact,
+				Rare,
+				WithRestrictions(Restrictions{NoForgeWhileAheadOnKeys: true}),
+			),
+			"House:  Untamed\nType:   Artifact\nRarity: Rare\n\nEach player cannot forge keys while they have more forged keys than their opponent.",
+		},
+		{
+			NewCard(
+				"Po's Pixies",
+				Untamed,
+				Creature,
+				Rare,
+				WithPower(1),
+				WithKeywords(Elusive),
+				WithTheftFromCommonSupply(),
+			),
+			"House:  Untamed\nType:   Creature\nRarity: Rare\nPower:  1\n\nElusive.\nÆmber stolen or captured from your pool is taken from the common supply instead.",
 		},
 		{
 			NewCard(
@@ -746,6 +780,17 @@ func TestRenderUpgradeOnCreature(t *testing.T) {
 				),
 			),
 			"+2 hazardous.\nIf this creature would be destroyed, instead destroy Cloak.",
+		},
+		// Non-flank fight protection reads as the rule itself, hosted on the creature.
+		{
+			NewCard(
+				"Camouflage",
+				Untamed,
+				Upgrade,
+				Uncommon,
+				WithStatic(StaticModifier{ProtectsFromNonFlank: true}),
+			),
+			"Creatures not on a flank cannot fight this creature.",
 		},
 	}
 	for _, tc := range cases {

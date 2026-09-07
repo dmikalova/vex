@@ -154,9 +154,19 @@ func (e CaptureAember) Resolve(ctx *EffectContext) {
 			}
 			held := ctx.Resolver.Aember(pool)
 			amt := min(poolAmount(scaled(e.Amount, e.Per, ctx), by, nil, ctx, held), held)
-			ctx.Resolver.SetAember(pool, held-amt)
+			// Po's Pixies: the source pool keeps its Æmber and the capture is drawn
+			// from the common supply instead, so only the creature's Æmber grows.
+			fromSupply := ctx.Resolver.TheftRedirectedToSupply(pool)
+			if !fromSupply {
+				ctx.Resolver.SetAember(pool, held-amt)
+			}
 			ctx.Resolver.AddAmberOn(id, amt)
-			ctx.Resolver.Record(AemberCaptured{Creature: id, Amount: amt, Source: ctx.Source})
+			ctx.Resolver.Record(AemberCaptured{
+				Creature:   id,
+				Amount:     amt,
+				Source:     ctx.Source,
+				FromSupply: fromSupply,
+			})
 		}
 	}
 }

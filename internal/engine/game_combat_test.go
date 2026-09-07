@@ -203,6 +203,77 @@ func TestBeforeFightTrigger(t *testing.T) {
 	}
 }
 
+// TestCamouflageBlocksNonFlankAttackers pins Camouflage: only a creature on a
+// flank of its own battleline may be used to fight the camouflaged host; an
+// interior attacker cannot, from either the fight verb or the target list.
+func TestCamouflageBlocksNonFlankAttackers(t *testing.T) {
+	g := started(t)
+	left := g.AddToBattleline(testCreature("left", 4), 0)
+	mid := g.AddToBattleline(testCreature("mid", 4), 0)
+	g.AddToBattleline(testCreature("right", 4), 0)
+	defender := g.AddToBattleline(testCreature("def", 3), 1)
+	attachUpgrade(g, defender, NewCard("camo", Untamed, Upgrade, Uncommon,
+		WithStatic(StaticModifier{ProtectsFromNonFlank: true})))
+
+	// A non-flank (interior) attacker cannot fight the camouflaged defender.
+	if got := g.FightTargets(0, mid); len(got) != 0 {
+		t.Errorf("FightTargets for interior attacker = %v, want none", got)
+	}
+	if err := g.Fight(0, mid, defender); err != ErrNoTarget {
+		t.Errorf("interior attacker Fight err = %v, want ErrNoTarget", err)
+	}
+
+	// A flank attacker may fight it.
+	if got := g.FightTargets(0, left); len(got) != 1 || got[0] != defender {
+		t.Errorf("FightTargets for flank attacker = %v, want [%d]", got, defender)
+	}
+	if err := g.Fight(0, left, defender); err != nil {
+		t.Fatalf("flank attacker Fight: %v", err)
+	}
+}
+
+// TestAfterNeighborFightsTrigger covers the trigger Little Niff uses: it fires
+// for a creature used to fight beside the watcher, stealing 1 Æmber, but not for a
+// creature that fights away from it.
+func TestAfterNeighborFightsTrigger(t *testing.T) {
+	steal := StealAember{Amount: 1}
+
+	t.Run("fires when a neighbor is used to fight", func(t *testing.T) {
+		g := started(t)
+		g.AddToBattleline(
+			testCreature("niff", 2, WithAbility(TriggerAfterNeighborFights, steal)), 0)
+		attacker := g.AddToBattleline(testCreature("att", 4), 0)
+		defender := g.AddToBattleline(testCreature("def", 3), 1)
+		g.State.Aember[1] = 2
+		if err := g.Fight(0, attacker, defender); err != nil {
+			t.Fatalf("Fight: %v", err)
+		}
+		if g.Aember(0) != 1 {
+			t.Errorf("controller aember = %d, want 1", g.Aember(0))
+		}
+		if g.Aember(1) != 1 {
+			t.Errorf("opponent aember = %d, want 1", g.Aember(1))
+		}
+	})
+
+	t.Run("does not fire for a fight away from the watcher", func(t *testing.T) {
+		g := started(t)
+		g.AddToBattleline(
+			testCreature("niff", 2, WithAbility(TriggerAfterNeighborFights, steal)), 0)
+		g.AddToBattleline(testCreature("buffer", 2), 0)
+		attacker := g.AddToBattleline(testCreature("att", 4), 0)
+		defender := g.AddToBattleline(testCreature("def", 3), 1)
+		g.State.Aember[1] = 2
+		if err := g.Fight(0, attacker, defender); err != nil {
+			t.Fatalf("Fight: %v", err)
+		}
+		if g.Aember(0) != 0 {
+			t.Errorf("controller aember = %d, want 0 (attacker not beside the watcher)",
+				g.Aember(0))
+		}
+	})
+}
+
 func TestAfterDestroyedFightingTrigger(t *testing.T) {
 	gain := GainAember{Player: Controller, Amount: 1}
 

@@ -130,6 +130,31 @@ func rarityDiamonds(n int) []app.UI {
 	return out
 }
 
+// deckRarityIcon renders a card's rarity as one compact shape for the deck list:
+// a polygon whose side count rises with rarity — triangle Common, square
+// Uncommon, pentagon Rare, hexagon Special — and the Connected link glyph for a
+// connected card. Distinct silhouettes, not colour, carry the tier, so the list
+// stays legible to colour-blind players. A rarity with no mark renders nothing.
+func deckRarityIcon(r engine.Rarity) app.UI {
+	name := ""
+	switch r {
+	case engine.Common:
+		name = "rarity-triangle"
+	case engine.Uncommon:
+		name = "rarity-square"
+	case engine.Rare:
+		name = "rarity-pentagon"
+	case engine.Special:
+		name = "rarity-hexagon"
+	case engine.Connected:
+		name = "rarity-connected"
+	}
+	if name == "" {
+		return nil
+	}
+	return icon(name, "icon-mark", "icon-outline")
+}
+
 // keyColorIconName is the asset stem for a forged key's colour.
 func keyColorIconName(c engine.KeyColor) string {
 	switch c {

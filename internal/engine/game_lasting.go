@@ -67,6 +67,11 @@ const (
 	// one that never enters play (a reaction point). Library Access attaches here,
 	// excepting itself so it draws only for another card.
 	EventCardPlayed
+	// EventCreatureTakesDamage is an amount of damage about to land on a creature (an
+	// augmentation point, always subject-scoped). Lethal Distraction attaches a "this
+	// creature takes an additional N damage whenever it takes damage" effect to one
+	// chosen creature; applyRawDamage queries the registry and adds the bonus.
+	EventCreatureTakesDamage
 )
 
 // isReaction reports whether the event is a reaction point (fired after) rather
@@ -329,4 +334,18 @@ func (g *Game) lastingReplacement(player int, event Event) (lastingAction, bool)
 		}
 	}
 	return 0, false
+}
+
+// lastingExtraDamage sums the additional damage a creature takes from every
+// EventCreatureTakesDamage effect keyed to it — Lethal Distraction adds 2 to each
+// instance of damage the chosen creature takes for the rest of the turn.
+func (g *Game) lastingExtraDamage(id LocalID) int {
+	total := 0
+	for i := 0; i < int(g.State.LastingCount); i++ {
+		le := g.State.Lasting[i]
+		if le.On == EventCreatureTakesDamage && le.HasSubject && le.Subject == id {
+			total += int(le.Amount)
+		}
+	}
+	return total
 }

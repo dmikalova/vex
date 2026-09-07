@@ -20,3 +20,11 @@ func (g *Game) purgeFromHand(owner int, id LocalID) {
 	g.State.Purge[owner].add(id)
 	g.record(CardPurgedFromHand{Player: g.State.ActivePlayer, Card: id})
 }
+
+// purgeFromArchives moves a card from a player's archives to their purge pile.
+// Callers pass a card already in those archives.
+func (g *Game) purgeFromArchives(owner int, id LocalID) {
+	g.State.Archives[owner].remove(id)
+	g.State.Purge[owner].add(id)
+	g.record(CardPurgedFromArchives{Player: g.State.ActivePlayer, Card: id})
+}

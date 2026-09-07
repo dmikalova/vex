@@ -55,6 +55,7 @@ func (g *game) OnUpdate(app.Context) {
 	g.scrollUsableRowsIntoView()
 	g.focusPickerInput()
 	g.refreshToast()
+	g.clampOpenDeckList()
 	// Measured after the cursor scroll, so the rect is the card's resting place
 	// rather than wherever it was on the way there.
 	if g.measureFocus() {
@@ -591,6 +592,17 @@ func (g *game) installTipDrag() {
 	g.tipDownFunc = app.FuncOf(func(_ app.Value, args []app.Value) any {
 		if len(args) == 0 {
 			return nil
+		}
+		// A pinned deck list closes when the tap lands outside any deck icon, so a
+		// touchscreen can dismiss it the way a click-away or hover-out would.
+		if g.deckOpen >= 0 {
+			if t := args[0].Get("target"); !t.Truthy() ||
+				!t.Call("closest", ".deck-tip").Truthy() {
+				g.deckOpen = -1
+				if g.dispatch != nil {
+					g.dispatch(nil)
+				}
+			}
 		}
 		tip := tipUnder(args[0].Get("clientX").Float(), args[0].Get("clientY").Float())
 		if !tip.Truthy() {

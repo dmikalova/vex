@@ -202,10 +202,16 @@ func (g *Game) hasKeyword(id LocalID, k Keyword) bool {
 	if g.State.KeywordsLost&k.bit() != 0 {
 		return false
 	}
+	if g.State.Cards[id].LostKeywords&k.bit() != 0 {
+		return false
+	}
 	if !g.textBlanked(id) && g.cat.def(id).hasKeyword(k) {
 		return true
 	}
 	if g.State.Cards[id].GrantedKeywords&k.bit() != 0 {
+		return true
+	}
+	if g.State.Cards[id].KeywordsUntilNextTurn&k.bit() != 0 {
 		return true
 	}
 	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
@@ -255,6 +261,12 @@ func (g *Game) InPlay(id LocalID) bool { return g.inPlay(id) }
 // Stunned reports whether a creature is stunned.
 func (g *Game) Stunned(id LocalID) bool { return g.State.Cards[id].Stunned }
 
+// Enraged reports whether a creature is enraged.
+func (g *Game) Enraged(id LocalID) bool { return g.State.Cards[id].Enraged }
+
+// Warded reports whether a creature has a ward.
+func (g *Game) Warded(id LocalID) bool { return g.State.Cards[id].Warded }
+
 // TimesUsedThisTurn reports how many times this creature has been USED this turn:
 // reaped, fought, or had its Action: ability used.
 func (g *Game) TimesUsedThisTurn(id LocalID) int {
@@ -266,6 +278,11 @@ func (g *Game) Aember(player int) int { return g.State.Aember[player] }
 
 // AemberProtected is the Resolver entry point for aemberProtected.
 func (g *Game) AemberProtected(player int) bool { return g.aemberProtected(player) }
+
+// TheftRedirectedToSupply is the Resolver entry point for theftRedirectedToSupply.
+func (g *Game) TheftRedirectedToSupply(player int) bool {
+	return g.theftRedirectedToSupply(player)
+}
 
 // Keys returns a player's forged key count.
 func (g *Game) Keys(player int) int { return g.State.Keys[player] }
@@ -529,6 +546,35 @@ func (g *Game) aemberProtected(player int) bool {
 	return false
 }
 
+// theftRedirectedToSupply reports whether Æmber stolen or captured from player's
+// pool is drawn from the common supply instead, leaving the pool untouched (Po's
+// Pixies).
+func (g *Game) theftRedirectedToSupply(player int) bool {
+	for _, id := range g.allInPlay(player) {
+		if g.cat.def(id).TheftFromSupply {
+			return true
+		}
+	}
+	return false
+}
+
+// forgeBarredWhileAhead reports whether player is barred from forging because a
+// card in play bars every player who leads on forged keys from forging (Heart of
+// the Forest).
+func (g *Game) forgeBarredWhileAhead(player int) bool {
+	if g.State.Keys[player] <= g.State.Keys[1-player] {
+		return false
+	}
+	for controller := 0; controller < 2; controller++ {
+		for _, id := range g.allInPlay(controller) {
+			if g.cat.def(id).Restricts.NoForgeWhileAheadOnKeys {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // houseLockAllows reports whether player may choose house as their active house,
 // given every house lock a card in play holds over them (Pitlord requires Dis of
 // its controller, Restringuntus bars its opponent from the house it named). A
@@ -586,6 +632,9 @@ func (g *Game) keyCostChangeFor(id LocalID, controller, target int) int {
 // while its flank condition is unmet, and scaled by its count when it has one.
 func (g *Game) keyCostAmount(src LocalID, kc KeyCostChange) int {
 	if kc.whileOnFlank && !onFlank(g.constantContext(src), src) {
+		return 0
+	}
+	if kc.whileCondition != nil && !kc.whileCondition.Met(g.constantContext(src)) {
 		return 0
 	}
 	if kc.per == nil {

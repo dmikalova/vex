@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// SirMarrows
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Sir Marrows
 //
 //	House:  Sanctum
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  2
 //	Traits: Human • Knight
 //
-//	After your opponent gains A by reaping, Sir Marrows captures it.
+//	After an enemy creature reaps, Sir Marrows captures 1 Æmber from your opponent.
 var SirMarrows = card.New(
 	"Sir Marrows",
 	card.House.Sanctum,
@@ -26,5 +21,10 @@ var SirMarrows = card.New(
 	card.WithPower(4),
 	card.WithArmor(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.AfterEnemyCreatureReaps, card.CaptureAember{
+			Amount: 1,
+			Target: card.Target.This,
+			Source: card.Opponent,
+		}),
 )

@@ -145,6 +145,11 @@ type Produced struct {
 	// resolution has destroyed, read by an AemberBonusDestroyed count in a following
 	// effect (Rustgnawer gains the destroyed artifact's Æmber bonus).
 	AemberBonusDestroyed int
+	// ArmorPrevented is how much damage a creature just prevented with its own
+	// armor, set when an After This Creature Prevents Damage With Its Armor ability
+	// resolves and read by a DamagePrevented count (Maruck the Marked captures 1
+	// Æmber for each damage prevented).
+	ArmorPrevented int
 }
 
 // TotalDestroyed is how many cards this resolution has destroyed, both sides

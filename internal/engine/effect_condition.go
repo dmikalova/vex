@@ -490,6 +490,46 @@ func (ItIsStunned) Met(ctx *EffectContext) bool {
 	return ctx.HasIt && ctx.Resolver.Stunned(ctx.It)
 }
 
+// PlayerControlsFewerHousesThan is met while the chosen player controls creatures
+// from fewer than Amount distinct houses (Proclamation 346E taxes the opponent's
+// keys until they field three houses). It counts houses among creatures only, not
+// artifacts.
+type PlayerControlsFewerHousesThan struct {
+	Player Player
+	Amount int
+}
+
+// validate requires a positive threshold.
+func (c PlayerControlsFewerHousesThan) validate() error {
+	if c.Amount <= 0 {
+		return fmt.Errorf("PlayerControlsFewerHousesThan: Amount must be positive")
+	}
+	return nil
+}
+
+// CondText renders the condition as a "while" clause naming the player and the
+// house count, e.g. "while your opponent does not control creatures from 3 or
+// more different houses".
+func (c PlayerControlsFewerHousesThan) CondText() string {
+	whose := "you do"
+	if c.Player == Opponent {
+		whose = "your opponent does"
+	}
+	return fmt.Sprintf(
+		"while %s not control creatures from %d or more different houses", whose, c.Amount)
+}
+
+// Met counts the distinct houses among the chosen player's creatures and reports
+// whether that count is below the threshold.
+func (c PlayerControlsFewerHousesThan) Met(ctx *EffectContext) bool {
+	player := ctx.PlayerFor(c.Player)
+	seen := map[House]bool{}
+	for _, id := range ctx.Resolver.Battleline(player) {
+		seen[ctx.Resolver.House(id)] = true
+	}
+	return len(seen) < c.Amount
+}
+
 // houseTypeNoun renders a card filtered by house and type as a noun, e.g. "Mars
 // creature", "artifact", or the bare "card" when neither is set.
 func houseTypeNoun(house House, typ CardType) string {

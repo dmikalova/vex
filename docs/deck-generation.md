@@ -122,7 +122,9 @@ averages _and_ the right variance for free.**
   - **Maverick** (`p ≈ 1/12`, ≈3 per deck) draws from a _different same-Set
     House_ at the rolled rarity, then rehouses the card to the pod.
   - **Legacy** (`p ≈ 1/6`, ≈6 per deck) draws from the _same House in a different
-    Set_.
+    Set_ at the slot's rolled rarity, so a legacy card matches the rarity its
+    slot would have drawn (falling back to any rarity of that House when it has
+    no legacy card of that rarity).
   - **Legacy Maverick** needs no special handling — it is simply both flips firing
     on one Slot.
 - **Duplicates.** Most real decks have a couple of duplicate cards. This is a

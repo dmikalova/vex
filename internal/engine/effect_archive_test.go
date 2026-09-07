@@ -235,6 +235,47 @@ func TestArchiveFromPlayEffect(t *testing.T) {
 	}
 }
 
+// TestArchiveFromPlayArchivesBufferAndBuffedTogether checks that archiving a
+// snapshot of creatures happens simultaneously: a creature buffing a damaged
+// neighbor and that neighbor both go to archives at once, so the neighbor is
+// archived rather than destroyed for the power it loses (Epic Quest + "Lion"
+// Bautrem's neighbor).
+func TestArchiveFromPlayArchivesBufferAndBuffedTogether(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	src := g.AddArtifact(NewCard("quest", Sanctum, Artifact, Rare), 0)
+	buffer := g.AddToBattleline(
+		NewCard("buffer", Sanctum, Creature, Common, WithPower(4),
+			WithConstantAbility(ConstantAbility{
+				PowerBonus: 2,
+				Target:     Target{Kind: TargetEachCreature}.Neighboring(),
+			})),
+		0,
+	)
+	neighbor := g.AddToBattleline(
+		NewCard("neighbor", Sanctum, Creature, Common, WithPower(3)),
+		0,
+	)
+	// 4 damage is lethal at base power 3 but survivable at 5 with the buff.
+	g.applyRawDamage(neighbor, 4, true)
+	if !g.inPlay(neighbor) {
+		t.Fatal("neighbor should survive while the buffer is in play")
+	}
+	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+
+	e := ArchiveFromPlay{Target: Target{Kind: TargetEachFriendlyCreature}}
+	e.Resolve(ctx)
+
+	if g.inPlay(buffer) || g.inPlay(neighbor) {
+		t.Error("both creatures should have left play")
+	}
+	if !g.State.Archives[0].contains(neighbor) {
+		t.Error("the buffed neighbor should be archived, not destroyed")
+	}
+	if g.State.Discard[0].contains(neighbor) {
+		t.Error("the neighbor must not also be in the discard pile")
+	}
+}
+
 func TestArchiveFromPlayFriendlyInPlay(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	art := g.AddArtifact(NewCard("relic", Mars, Artifact, Common), 0)

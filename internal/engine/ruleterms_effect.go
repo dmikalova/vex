@@ -391,6 +391,30 @@ targets, freeing it to act normally instead of having to shake the stun off.`,
 		},
 		{
 			Section:    SectionEffect,
+			Title:      "Enrage",
+			Definition: "Place a status on a creature; while enraged, its controller must use it to fight on their turn if it is able to.",
+			Body: `An enrage is a status placed on a creature. While a creature is enraged, its
+controller must use it to fight on their turn whenever it is able to — it cannot
+reap or use an "Action:" ability while there is an enemy creature it can fight. If
+it cannot fight (nothing to fight, or an effect stops it), it is free to reap or
+act. Enrage persists until an effect removes it. Enraging applies this status to
+each creature the effect targets.`,
+		},
+		{
+			Section:    SectionEffect,
+			Title:      "Ward",
+			Definition: "Place a one-shot shield on a creature; it absorbs the next instance of damage or the next time the creature would leave play, then is spent.",
+			Body: `A ward is a one-shot shield placed on a creature. The first time a warded
+creature would be dealt damage or would leave play — destroyed, purged, returned
+to hand, archived, put on or shuffled into a deck, or placed under a card — that
+damage or removal is absorbed: the creature stays, and its ward is spent. Even a
+single point of damage spends the whole ward. Ward intercepts every removal, even
+the controller's own. It covers only damage and leaving play; it does not stop a
+stun, an enrage, a capture, a change of control, or a loss of power. Warding
+applies this status to each creature the effect targets.`,
+		},
+		{
+			Section:    SectionEffect,
 			Title:      "Trigger Another Card's Ability",
 			Definition: "Resolve the abilities under another card's named trigger without using that card, for the player who reached for them.",
 			Body: `Triggering another card's ability is not using that card. The card does not

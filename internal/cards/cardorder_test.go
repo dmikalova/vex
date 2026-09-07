@@ -47,6 +47,7 @@ var optionRank = map[string]int{
 	"WithDrawModifier":            7,
 	"WithDrawModifierOffFlank":    7,
 	"WithAemberTheftImmunity":     7,
+	"WithTheftFromCommonSupply":   7,
 	"WithSpendableAember":         7,
 	"WithGainsForgeAember":        7,
 	"WithAemberThreshold":         7,

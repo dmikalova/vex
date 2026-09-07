@@ -74,17 +74,23 @@ func (e StealAember) resolveGate(ctx *EffectContext) bool {
 		return false
 	}
 	amt := min(e.amount(ctx, opponent), ctx.Resolver.Aember(opponent))
-	ctx.Resolver.SetAember(opponent, ctx.Resolver.Aember(opponent)-amt)
+	// Po's Pixies: the victim keeps their Æmber and the difference is drawn from the
+	// common supply, so only the thief's pool grows.
+	fromSupply := ctx.Resolver.TheftRedirectedToSupply(opponent)
+	if !fromSupply {
+		ctx.Resolver.SetAember(opponent, ctx.Resolver.Aember(opponent)-amt)
+	}
 	ctx.Resolver.SetAember(player, ctx.Resolver.Aember(player)+amt)
 	// Credit the card when the controller is the one stealing, so the line reads
 	// from the card's perspective; a turned-around steal (your opponent steals as
 	// the card leaves play) has no such agent, so it stays player-attributed.
 	ctx.Resolver.Record(AemberStolen{
-		Player:    player,
-		From:      opponent,
-		Amount:    amt,
-		Source:    ctx.Source,
-		HasSource: e.Player != Opponent,
+		Player:     player,
+		From:       opponent,
+		Amount:     amt,
+		Source:     ctx.Source,
+		HasSource:  e.Player != Opponent,
+		FromSupply: fromSupply,
 	})
 	return amt > 0
 }

@@ -9,7 +9,9 @@ import "strings"
 // live inside the flat, value-copyable GameState without introducing pointers.
 type House uint8
 
-// The houses a card can belong to, in canonical order.
+// The houses a card can belong to, in alphabetical order (see
+// docs/adr/0027-houses-alphabetical.md). The enum order is the on-disk order of
+// persisted state, so reordering it bumps the persisted-state version.
 const (
 	// HouseNone means no house is chosen/assigned.
 	HouseNone House = iota
@@ -18,7 +20,9 @@ const (
 	Logos
 	Mars
 	Sanctum
+	Saurian
 	Shadows
+	StarAlliance
 	Untamed
 	// SelfHouse is the sentinel a card uses to name its own house instead of
 	// spelling it out: Battle Fleet, a Mars card, reveals SelfHouse cards. NewCard
@@ -27,14 +31,25 @@ const (
 	// and the printed house can never drift from the house on the card.
 	SelfHouse
 	// NumHouses is the number of house slots a card can actually occupy: HouseNone
-	// through Untamed, but not SelfHouse, which is resolved away when the card is
-	// built and so never indexes state.
-	NumHouses = int(Untamed) + 1
+	// through the last real house, but not SelfHouse, which is resolved away when
+	// the card is built and so never indexes state. SelfHouse is the first
+	// non-house sentinel, so its value is exactly the count of real slots — deriving
+	// NumHouses from it keeps the count correct no matter which house is added last.
+	NumHouses = int(SelfHouse)
 )
 
 // houseNames maps a House to its printed name, indexed by the enum value.
 var houseNames = [...]string{
-	"None", "Brobnar", "Dis", "Logos", "Mars", "Sanctum", "Shadows", "Untamed",
+	"None",
+	"Brobnar",
+	"Dis",
+	"Logos",
+	"Mars",
+	"Sanctum",
+	"Saurian",
+	"Shadows",
+	"Star Alliance",
+	"Untamed",
 }
 
 // String returns the printed house name.
@@ -384,6 +399,11 @@ const (
 	// controller's battleline, only the controller's own plays reach it (Fila the
 	// Researcher draws a card each time).
 	TriggerAfterCreaturePlayedAdjacent
+	// This ability resolves after a battleline neighbor of the card holding the
+	// ability is used to fight — the neighbor that fought is referred to as "it"
+	// (Little Niff steals 1 Æmber whenever a neighbor fights). It fires whether or
+	// not the neighbor survives the fight.
+	TriggerAfterNeighborFights
 	// A Destroyed ability resolves as the card is destroyed, before it reaches the
 	// discard pile, so it can still act on the board it is leaving.
 	TriggerDestroyed
@@ -394,6 +414,12 @@ const (
 	// combatant was destroyed; the destroyed creature is the one referred to as
 	// "it".
 	TriggerAfterDestroyedFighting
+	// This ability resolves after the card holding it prevents damage with its own
+	// armor — the amount just prevented is the total armor it spent absorbing the
+	// damage instance (Maruck the Marked captures 1 Æmber for each damage
+	// prevented). Armor spent by a shield taking the damage instead does not fire
+	// it, only armor spent by the card itself.
+	TriggerAfterArmorPrevents
 	// This ability resolves after its controller plays a card — a creature,
 	// artifact, or action — from hand. Putting a card into play by another effect is
 	// not "playing" it and does not fire this (that is TriggerAfterCreatureEnters).
@@ -507,12 +533,16 @@ func (t Trigger) String() string {
 		return "After a Creature Enters Play"
 	case TriggerAfterCreaturePlayedAdjacent:
 		return "After a Creature Is Played Adjacent"
+	case TriggerAfterNeighborFights:
+		return "After a Neighbor Is Used to Fight"
 	case TriggerDestroyed:
 		return "Destroyed"
 	case TriggerBeforeFight:
 		return "Before Fight"
 	case TriggerAfterDestroyedFighting:
 		return "After a Creature Is Destroyed Fighting"
+	case TriggerAfterArmorPrevents:
+		return "After This Creature Prevents Damage With Its Armor"
 	case TriggerAfterCardPlayed:
 		return "After You Play a Card"
 	case TriggerAfterEnemyCreatureDestroyed:
@@ -576,8 +606,12 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return "After a creature enters play, ", false
 	case TriggerAfterCreaturePlayedAdjacent:
 		return "After a creature is played adjacent to " + SelfName + ", ", false
+	case TriggerAfterNeighborFights:
+		return "After a neighbor of " + SelfName + " is used to fight, ", false
 	case TriggerAfterDestroyedFighting:
 		return "After a creature is destroyed fighting " + SelfName + ", ", false
+	case TriggerAfterArmorPrevents:
+		return "After " + SelfName + " prevents damage with its armor, ", false
 	case TriggerAfterEnemyCreatureDestroyed:
 		return "After an enemy creature is destroyed during your turn, ", false
 	case TriggerAfterCardPlayed:

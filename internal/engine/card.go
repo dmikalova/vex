@@ -84,8 +84,17 @@ type CardDefinition struct {
 	// controller gains this much Æmber when the card is played.
 	AemberBonus int
 
-	// Static is a continuous modifier an Upgrade applies to its host creature.
+	// Static is a continuous modifier an Upgrade applies to its host creature. A
+	// creature with PlayableAsUpgrade set also carries what it grants a host here.
 	Static StaticModifier
+
+	// PlayableAsUpgrade lets this creature be played as an upgrade instead of a
+	// creature, attaching to a host that then gains its Static modifier (Explo-rover
+	// grants skirmish, CALV-1N grants a Fight/Reap draw). The card is authored twice
+	// over — its own creature keywords and abilities are its identity in the
+	// battleline, and Static is what it grants a host as an upgrade. Only a Creature
+	// may set it, and its Static must grant something (validated in NewCard).
+	PlayableAsUpgrade bool
 
 	// ConstantAbilities are constant abilities this card applies to creatures in play for as
 	// long as it stays in play (see Game.constantBonus). Unlike Static (an Upgrade
@@ -128,6 +137,11 @@ type CardDefinition struct {
 	// PreventSteal, while the card is in play, makes its controller's Æmber
 	// impossible for the opponent to steal (The Vaultkeeper).
 	PreventSteal bool
+
+	// TheftFromSupply, while the card is in play, makes any Æmber stolen or captured
+	// from its controller's pool come from the common supply instead, so the thief
+	// still gains that Æmber but the controller keeps their own (Po's Pixies).
+	TheftFromSupply bool
 
 	// SpendableAember lets the Æmber sitting on this card be put toward a key,
 	// so it is a private vault its controller can bank into (Safe Place).
@@ -200,6 +214,10 @@ type Restrictions struct {
 	// (1 = first, 2 = second, 3 = third) while this card stays in play — the Key
 	// Imps' "Players cannot forge their first key." Its zero value bars nothing.
 	NoForgeKeyNumber int
+	// NoForgeWhileAheadOnKeys bars every player from forging while they have more
+	// forged keys than their opponent, whoever controls this card (Heart of the
+	// Forest keeps the leader from pulling further ahead).
+	NoForgeWhileAheadOnKeys bool
 	// MustFightIfAble makes every creature on the board that could fight an enemy
 	// have to fight when used — it cannot reap or use an Action ability while a legal
 	// fight target exists (Little Rapscal). Affects both players' creatures.
@@ -248,6 +266,10 @@ type KeyCostChange struct {
 	// whileOnFlank suspends the change unless the source card holds a flank of its
 	// controller's battleline (Titan Mechanic).
 	whileOnFlank bool
+	// whileCondition suspends the change unless the condition holds on the live
+	// board (Proclamation 346E charges +2 only while the opponent controls creatures
+	// from fewer than three houses).
+	whileCondition Condition
 }
 
 // Per scales the change by a running count, so a card can charge per creature it
@@ -260,6 +282,12 @@ func (kc KeyCostChange) Per(c Count) KeyCostChange {
 // WhileOnFlank applies the change only while the source card is on a flank.
 func (kc KeyCostChange) WhileOnFlank() KeyCostChange {
 	kc.whileOnFlank = true
+	return kc
+}
+
+// While applies the change only while the condition holds on the live board.
+func (kc KeyCostChange) While(c Condition) KeyCostChange {
+	kc.whileCondition = c
 	return kc
 }
 
@@ -327,6 +355,28 @@ type StaticModifier struct {
 	// flank of its controller's battleline — Shoulder Armor only armors a creature
 	// standing at the edge of the line.
 	WhileOnFlank bool
+
+	// ProtectsFromNonFlank bars creatures that are not on a flank from being used
+	// to fight the host creature — Camouflage. A creature on a flank may still
+	// fight it.
+	ProtectsFromNonFlank bool
+}
+
+// grants reports whether the modifier gives its host anything at all — a stat
+// bonus, a keyword, a granted ability, a key-cost change, a replacement, or
+// flank protection. It gates a creature-as-upgrade at init: playing such a card
+// as an upgrade must actually do something (see NewCard).
+func (m StaticModifier) grants() bool {
+	return m.PowerBonus != 0 ||
+		m.ArmorBonus != 0 ||
+		m.AssaultBonus != 0 ||
+		m.HazardousBonus != 0 ||
+		m.SplashAttackBonus != 0 ||
+		len(m.Granted) > 0 ||
+		len(m.Keywords) > 0 ||
+		m.KeyCostChange.amount != 0 ||
+		m.Replaces.valid() ||
+		m.ProtectsFromNonFlank
 }
 
 // ConstantAbility is a continuous stat modifier a card in play applies to
@@ -461,6 +511,17 @@ func NewCard(
 			panic(fmt.Sprintf("card %q: CannotBeUsedTo has an unset use kind", name))
 		}
 	}
+	if c.PlayableAsUpgrade {
+		if c.Type != Creature {
+			panic(fmt.Sprintf("card %q: only a creature may be played as an upgrade", name))
+		}
+		if !c.Static.grants() {
+			panic(fmt.Sprintf(
+				"card %q: a creature played as an upgrade must grant its host something",
+				name,
+			))
+		}
+	}
 	return c
 }
 
@@ -585,6 +646,13 @@ func WithAemberBonus(n int) CardOption { return func(c *CardDefinition) { c.Aemb
 // WithStatic sets the continuous modifier an Upgrade applies to its host.
 func WithStatic(m StaticModifier) CardOption { return func(c *CardDefinition) { c.Static = m } }
 
+// WithPlayableAsUpgrade lets a creature be played as an upgrade instead of a
+// creature, granting its host the card's Static modifier. The card must be a
+// creature and its Static must grant something (both validated in NewCard).
+func WithPlayableAsUpgrade() CardOption {
+	return func(c *CardDefinition) { c.PlayableAsUpgrade = true }
+}
+
 // WithConstantAbility appends a constant ability this card applies to creatures
 // while it is in play.
 func WithConstantAbility(c ConstantAbility) CardOption {
@@ -636,6 +704,13 @@ func WithDrawModifierOffFlank(player Player, amount int) CardOption {
 // Æmber from being stolen (The Vaultkeeper).
 func WithAemberTheftImmunity() CardOption {
 	return func(c *CardDefinition) { c.PreventSteal = true }
+}
+
+// WithTheftFromCommonSupply makes the card, while in play, make any Æmber stolen
+// or captured from its controller's pool come from the common supply instead, so
+// a thief gains that Æmber but the controller keeps their own (Po's Pixies).
+func WithTheftFromCommonSupply() CardOption {
+	return func(c *CardDefinition) { c.TheftFromSupply = true }
 }
 
 // WithSpendableAember lets the Æmber banked on the card be spent when its

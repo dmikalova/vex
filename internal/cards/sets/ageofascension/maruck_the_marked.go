@@ -1,13 +1,8 @@
-//go:build todo
-
 package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// MaruckTheMarked
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Maruck the Marked
 //
 //	House:  Sanctum
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Spirit • Knight
 //
-//	After Maruck the Marked prevents damage with its armor, capture 1A for each damage just prevented.
+//	After Maruck the Marked prevents damage with its armor, for each damage just prevented, Maruck the Marked captures 1 Æmber from your opponent.
 var MaruckTheMarked = card.New(
 	"Maruck the Marked",
 	card.House.Sanctum,
@@ -26,5 +21,11 @@ var MaruckTheMarked = card.New(
 	card.WithPower(5),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Spirit, card.Traits.Knight),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.AfterArmorPrevents, card.CaptureAember{
+			Amount: 1,
+			Per:    card.DamagePrevented{},
+			Target: card.Target.This,
+			Source: card.Opponent,
+		}),
 )

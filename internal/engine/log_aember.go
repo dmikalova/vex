@@ -44,17 +44,25 @@ type AemberStolen struct {
 	Source LocalID
 	// HasSource distinguishes a card named by LocalID 0 from no source at all.
 	HasSource bool
+	// FromSupply marks a steal whose victim keeps their Æmber because a card they
+	// control redirected the theft's source to the common supply (Po's Pixies): the
+	// thief still gains the Æmber, so the line reads "from the common supply".
+	FromSupply bool
 }
 
 // Text renders the steal, and how much it actually took, crediting the source
 // card when there is one and the controller otherwise.
 func (e AemberStolen) Text(n Namer) string {
+	from := n.PlayerName(e.From)
+	if e.FromSupply {
+		from = "the common supply"
+	}
 	if e.HasSource {
 		return fmt.Sprintf("%s steals %d Æmber from %s",
-			n.Name(e.Source), e.Amount, n.PlayerName(e.From))
+			n.Name(e.Source), e.Amount, from)
 	}
 	return fmt.Sprintf("%s steals %d Æmber from %s",
-		n.PlayerName(e.Player), e.Amount, n.PlayerName(e.From))
+		n.PlayerName(e.Player), e.Amount, from)
 }
 
 // AemberCaptured narrates Æmber moved onto a creature, where it stays out of
@@ -66,16 +74,23 @@ type AemberCaptured struct {
 	Creature LocalID
 	Amount   int
 	Source   LocalID
+	// FromSupply marks a capture whose source pool kept its Æmber because a card
+	// its owner controls redirected the capture to the common supply (Po's Pixies).
+	FromSupply bool
 }
 
 // Text renders the Æmber a creature captured, crediting the source card when it
 // is not the capturing creature itself.
 func (e AemberCaptured) Text(n Namer) string {
-	if e.Source != e.Creature {
-		return fmt.Sprintf("%s captures %d Æmber onto %s",
-			n.Name(e.Source), e.Amount, n.Name(e.Creature))
+	suffix := ""
+	if e.FromSupply {
+		suffix = " from the common supply"
 	}
-	return fmt.Sprintf("%s captures %d Æmber", n.Name(e.Creature), e.Amount)
+	if e.Source != e.Creature {
+		return fmt.Sprintf("%s captures %d Æmber onto %s%s",
+			n.Name(e.Source), e.Amount, n.Name(e.Creature), suffix)
+	}
+	return fmt.Sprintf("%s captures %d Æmber%s", n.Name(e.Creature), e.Amount, suffix)
 }
 
 // AemberMovedToCommonSupply narrates Æmber removed from a creature and returned

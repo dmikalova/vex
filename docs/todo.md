@@ -10,20 +10,20 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 - decklists
 - Implementation plan (ordered):
-match — stop discarding the generated deckgen.Deck; retain the ordered roster and expose a read-only per-player projection (3 Houses × 12 {def, rarity, maverick, legacy}) into the web game state.
-assets — add deck-list.svg + rarity-triangle/square/pentagon/hexagon.svg.
-web icons.go — a single-glyph rarity helper for the deck list.
-player bar (view_board.go scorePill) — insert the deck-list .tip icon between keys and the house strip.
-popover — the 3-column deck-list view + .deck-list CSS (reusing the roster popover pattern); the deckListVisible seam.
-touch — tap-open/tap-away-close for the icon.
-verify — GOOS=js GOARCH=wasm go build, go test ./internal/web, mage check.
+  match — stop discarding the generated deckgen.Deck; retain the ordered roster and expose a read-only per-player projection (3 Houses × 12 {def, rarity, maverick, legacy}) into the web game state.
+  assets — add deck-list.svg + rarity-triangle/square/pentagon/hexagon.svg.
+  web icons.go — a single-glyph rarity helper for the deck list.
+  player bar (view_board.go scorePill) — insert the deck-list .tip icon between keys and the house strip.
+  popover — the 3-column deck-list view + .deck-list CSS (reusing the roster popover pattern); the deckListVisible seam.
+  touch — tap-open/tap-away-close for the icon.
+  verify — GOOS=js GOARCH=wasm go build, go test ./internal/web, mage check.
 
 ### Next focus
 
+- profiling - eg running property tests and outputting the profiled usage for hot paths, and then optimizing those paths as a skill
 - event sourcing
 - drag and drop creature directly into battleline flank (or deploy, with dynamic moving as you go across), upgrade onto creature, artifact into artifact line
 - The action panel (context.md could have wording for this) could be the actual card and text, and then play/reap/ etc buttons within
-- profiling - eg running property tests and outputting the profiled usage for hot paths, and then optimizing those paths as a skill
 - using property testing to find unused code paths and then force specific tests there
 - Is there a way to validate that the UI handles and presents all possible game states/prompts? eg if I add a new prompt route, can the UI then automatically fail bc its not handled?
 - On the style page add a section with all of the Log and Text usages rendered out. The easiest wayt to do this might be to create a dedicated preview area that dynamically displays these elements as they are used in the engine (eg show a set of cards that covers every rendering element, and a log that does the same for all log entries)
@@ -44,6 +44,41 @@ verify — GOOS=js GOARCH=wasm go build, go test ./internal/web, mage check.
 - enemy creature should be indicated in archives and even under my control
 - Change the wording from X trait creature to just X creature - if a creature becomes an artifact or vice versa, then the wording kinda breaks. This needs finesse bc the ideal would be to change all the cards that can target artifacts to just say the trait, and then otherwise do specify creature.
 - Update card.New to be all opts
+- bdq (see screenshot) is doing the action bar with title cards thing
+- end turns lights up green if I can discard a card and have a restriction that I can't play cards
+- if two of the same exact effects resolve - eg double interdimensional graft - you could auto-order them
+- pile of skulls is after destroyed so cards should already be in the discard when capturing
+- Make sure things like lose keyword acts as a mask for its duration, rather, than permanently altering the state.
+- bdq (see screenshot) is doing the action bar with title cards thing
+- end turns lights up green if I can discard a card and have a restriction that I can't play cards
+- if two of the same exact effects resolve - eg double interdimensional graft - you could auto-order them
+- auteresolve button
+- shield of justice only protects the creatures when it is played rather than being ongoing - this is an example of specific memory trying to be avoided
+- veylan analyst wording
+- jehu self house
+- they're everywhere sequence
+- sequence vs sentences wording
+- does which of the wilds wording need to be so extensive
+- radiant Truth stun everyone on one line
+- clicking on the player bar should unlift a card
+- If nothing is in the action bar the end turn and undo buttons etc can be there but dimmed/unclickable
+- bigtwig missing glyph
+- swipe from right is annoying
+- have to double click to activate preview from logs
+- Is the player name needed for each row
+- the slide to usable cards is too long - does it happen after jiggle?
+- aember on artifacts goes to opponent?
+- shards should pull in shards for the other houses
+- krump and fighting in general - in a fight with
+- hffs one to one with time traveller
+
+- hazardous
+  Director of Z.Y.X. takes 2 damage (2 total)
+  Director of Z.Y.X. (3 power) fights Ember Imp (4 power)
+  Ember Imp takes 3 damage (5 total)
+  Director of Z.Y.X. takes 4 damage (6 total)
+  Ember Imp is destroyed
+  Director of Z.Y.X. is destroyed
 
 ## UI finesse
 

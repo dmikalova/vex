@@ -83,6 +83,14 @@ that is played.`,
 		},
 		{
 			Section:    SectionAbility,
+			Title:      "After a Neighbor Is Used to Fight",
+			Definition: "An ability that resolves after a battleline neighbor of this card is used to fight.",
+			Body: `This ability resolves after a battleline neighbor of the card holding it is
+used to fight — the neighbor that fought is referred to as "it". It fires
+whether or not the neighbor survives the fight.`,
+		},
+		{
+			Section:    SectionAbility,
 			Title:      "Destroyed",
 			Definition: "An ability that resolves as the card is destroyed, before it reaches the discard pile.",
 			Body: `A Destroyed ability resolves as the card is destroyed, before it reaches the
@@ -102,6 +110,15 @@ combat damage is dealt.`,
 			Body: `This ability resolves on a creature that survives a fight in which the other
 combatant was destroyed; the destroyed creature is the one referred to as
 "it".`,
+		},
+		{
+			Section:    SectionAbility,
+			Title:      "After This Creature Prevents Damage With Its Armor",
+			Definition: "An ability that resolves after the card prevents damage with its own armor, scaled by the amount prevented.",
+			Body: `This ability resolves after the card holding it prevents damage with its own
+armor. The amount just prevented is the total armor it spent absorbing the damage
+instance. Armor spent by a shield taking the damage in its place does not fire it,
+only armor the card itself spends.`,
 		},
 		{
 			Section:    SectionAbility,

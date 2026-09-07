@@ -30,10 +30,14 @@ type Set struct {
 	byName  map[string]Card
 	special []Card
 
-	// legacyByHouse holds the legacy pool — cards from other sets that a slot may
-	// draw instead of one of this set's own, keeping the pod's House. It is empty
-	// for a single-set build and populated by WithLegacy.
+	// legacyByHouse and legacyPool hold the legacy pool — cards from other sets
+	// that a slot may draw instead of one of this set's own, keeping the pod's
+	// House. legacyPool buckets them by House then rarity so a slot draws a legacy
+	// card of its own rolled rarity; legacyByHouse is the flat per-House fallback
+	// for a rolled rarity that House has no legacy card of. Both are empty for a
+	// single-set build and populated by WithLegacy.
 	legacyByHouse map[engine.House][]Card
+	legacyPool    map[engine.House]map[engine.Rarity][]Card
 }
 
 // NewSet builds a Set from a flat list of pool entries, bucketing them by House
@@ -82,18 +86,26 @@ func NewSet(name string, cards []Card, tuning Tuning) Set {
 
 // WithLegacy attaches a legacy pool to the set: cards from other sets that a slot
 // may draw instead of one of this set's own, at the set's Tuning.LegacyRate. Only
-// housed, non-Connected cards are pooled, bucketed by House — a legacy card keeps
-// its own House and rarity, since it is not rehoused the way a maverick is. It
-// returns the set with the pool attached so it reads as a builder step.
+// housed, non-Connected cards are pooled, bucketed by House and rarity so a slot
+// draws a legacy card of its own rolled rarity — a legacy card keeps its own
+// House and rarity, since it is not rehoused the way a maverick is. It returns
+// the set with the pool attached so it reads as a builder step.
 func (s Set) WithLegacy(cards []Card) Set {
 	s.legacyByHouse = map[engine.House][]Card{}
+	s.legacyPool = map[engine.House]map[engine.Rarity][]Card{}
 	for _, c := range cards {
 		if c.Profile.Houseless || c.Def.Rarity == engine.Connected {
 			continue
 		}
-		if h := c.Def.House; h != engine.HouseNone {
-			s.legacyByHouse[h] = append(s.legacyByHouse[h], c)
+		h := c.Def.House
+		if h == engine.HouseNone {
+			continue
 		}
+		s.legacyByHouse[h] = append(s.legacyByHouse[h], c)
+		if s.legacyPool[h] == nil {
+			s.legacyPool[h] = map[engine.Rarity][]Card{}
+		}
+		s.legacyPool[h][c.Def.Rarity] = append(s.legacyPool[h][c.Def.Rarity], c)
 	}
 	return s
 }

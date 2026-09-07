@@ -144,12 +144,34 @@ func TestCounterIconNamesHaveAssets(t *testing.T) {
 	}
 }
 
+// cssRuleDeclares reports whether the CSS rule for selector defines every one of
+// props. It isolates the rule body (from "selector {" to the next "}") so a
+// property defined in some other rule cannot satisfy the check — catching a house
+// or set whose class exists but supplies no colour, which would render blank.
+func cssRuleDeclares(css, selector string, props ...string) bool {
+	i := strings.Index(css, selector+" {")
+	if i < 0 {
+		return false
+	}
+	body := css[i+len(selector)+2:]
+	if end := strings.Index(body, "}"); end >= 0 {
+		body = body[:end]
+	}
+	for _, p := range props {
+		if !strings.Contains(body, p) {
+			return false
+		}
+	}
+	return true
+}
+
 func TestHouseClassesAreDefinedInCSS(t *testing.T) {
 	css := repoFile(t, "web/app.css")
 	for h := engine.HouseNone + 1; int(h) < engine.NumHouses; h++ {
 		cls := houseClasses(h)
-		if !strings.Contains(css, "."+cls) {
-			t.Errorf("house %v: web/app.css defines no .%s rule", h, cls)
+		if !cssRuleDeclares(css, "."+cls, "--nm:", "--edge:") {
+			t.Errorf("house %v: web/app.css .%s rule must define house colours "+
+				"(--nm and --edge); a missing colour must fail here, not render blank", h, cls)
 		}
 	}
 }
@@ -169,8 +191,9 @@ func TestSetAccentClassesAreDefinedInCSS(t *testing.T) {
 			t.Errorf("set %q has no accent class", name)
 			continue
 		}
-		if !strings.Contains(css, "."+cls+" {") {
-			t.Errorf("set %q: web/app.css defines no .%s rule", name, cls)
+		if !cssRuleDeclares(css, "."+cls, "--set-accent:") {
+			t.Errorf("set %q: web/app.css .%s rule must define --set-accent; a "+
+				"missing colour must fail here, not render blank", name, cls)
 		}
 	}
 }

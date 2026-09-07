@@ -100,20 +100,39 @@ func (e DiscardTopOfDeck) Resolve(ctx *EffectContext) {
 // controller's first, then the opponent's — and records each discarded card on
 // the context so a following ForEachDiscarded can act on it. An empty deck
 // contributes no card. Bonkers Killing Machine pairs it with ForEachDiscarded.
-type DiscardTopOfEachDeck struct{}
-
-// Text renders the effect.
-func (DiscardTopOfEachDeck) Text() string {
-	return "discard the top card of each player's deck"
+// Amount discards that many top cards of each deck (Rigged Lottery discards five);
+// the zero value discards one.
+type DiscardTopOfEachDeck struct {
+	// Amount is how many top cards of each deck to discard; the zero value is one.
+	Amount int
 }
 
-// Resolve discards the controller's top deck card, then the opponent's, recording
-// the discarded cards on the context.
-func (DiscardTopOfEachDeck) Resolve(ctx *EffectContext) {
+// count is Amount with the zero value treated as one.
+func (e DiscardTopOfEachDeck) count() int {
+	if e.Amount < 1 {
+		return 1
+	}
+	return e.Amount
+}
+
+// Text renders the effect.
+func (e DiscardTopOfEachDeck) Text() string {
+	if e.count() == 1 {
+		return "discard the top card of each player's deck"
+	}
+	return fmt.Sprintf(
+		"discard the top %d cards of each player's deck", e.count())
+}
+
+// Resolve discards the controller's top deck cards, then the opponent's,
+// recording the discarded cards on the context.
+func (e DiscardTopOfEachDeck) Resolve(ctx *EffectContext) {
 	ctx.Produced.Discarded = nil
 	for _, player := range []int{ctx.Controller, ctx.Opponent()} {
-		if discarded, ok := ctx.Resolver.DiscardTopOfDeck(player); ok {
-			ctx.Produced.Discarded = append(ctx.Produced.Discarded, discarded)
+		for range e.count() {
+			if discarded, ok := ctx.Resolver.DiscardTopOfDeck(player); ok {
+				ctx.Produced.Discarded = append(ctx.Produced.Discarded, discarded)
+			}
 		}
 	}
 }

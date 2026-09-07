@@ -23,3 +23,5 @@ var GoldKeyImp = card.New(
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithRestrictions(card.Restrictions{NoForgeKeyNumber: 3}),
 )
+
+// TODO: should not be special

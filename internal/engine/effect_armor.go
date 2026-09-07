@@ -48,3 +48,22 @@ func (armorLostThisWay) perTargetValue(ctx *EffectContext, id LocalID) int {
 
 // perTargetText renders the singular unit the "for each" clause repeats.
 func (armorLostThisWay) perTargetText() string { return "point of armor it lost this way" }
+
+// DamagePrevented is the amount of damage a creature just prevented with its own
+// armor, read by a "for each damage just prevented" clause in an After This
+// Creature Prevents Damage With Its Armor ability (Maruck the Marked captures 1
+// Æmber for each). It reads the armor spent absorbing damage, set on the context
+// when the trigger fires.
+type DamagePrevented struct{}
+
+// Value returns how much damage was just prevented with armor.
+func (DamagePrevented) Value(ctx *EffectContext) int { return ctx.Produced.ArmorPrevented }
+
+// CountText renders the singular noun a "for each" clause repeats.
+func (DamagePrevented) CountText() string { return "damage just prevented" }
+
+// CountClause renders the clause CountIs puts after "if". Damage is a mass noun,
+// so the plural flag does not change it.
+func (DamagePrevented) CountClause(quantity string, _ bool) string {
+	return quantity + " damage was just prevented"
+}
