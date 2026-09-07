@@ -131,7 +131,9 @@ func TestTheLiftAsksWhichFlank(t *testing.T) {
 	c.g.selectHandID(c.ctx, c.deal(testCreature))
 	c.do(c.g.play)
 	c.wants("the flank prompt", "card-focus", "Left flank", "Right flank", "Cancel")
-	c.lacks("the flank prompt", "End turn")
+	// The flank verbs sit on the lifted card; the dock shows the resting controls
+	// greyed out rather than a blank box.
+	c.wants("the flank dock", "end-turn-bar", "End turn", "disabled")
 }
 
 // Selecting another card while a flank is pending is a change of mind about which
@@ -342,7 +344,9 @@ func TestDrawingTheFlankPrompt(t *testing.T) {
 		t.Fatalf("the phase is %v, want phaseFlank", c.g.phase)
 	}
 	c.wants("the flank prompt", "Left", "Right")
-	c.lacks("the flank prompt", "End turn")
+	// The dock has no flank question of its own, so it shows the resting controls
+	// disabled instead of an empty box.
+	c.wants("the flank dock", "end-turn-bar", "disabled")
 }
 
 func TestDrawingTheEndTurnConfirmation(t *testing.T) {
@@ -595,6 +599,26 @@ func TestPlayerStandingDrawsThreeKeySlots(t *testing.T) {
 	}
 	if n := strings.Count(h, "key-unforged"); n != 2 {
 		t.Errorf("the standing drew %d unforged key slots, want 2", n)
+	}
+}
+
+// The end-of-turn standing lights its Æmber amount with the check highlight when
+// the player holds enough to forge their next key, and leaves it plain otherwise,
+// so the log echoes the board's "Check!" glow.
+func TestPlayerStandingHighlightsAemberAtCheck(t *testing.T) {
+	c := newClient(t)
+	cost := c.g.g.CurrentKeyCost(0)
+
+	atCheck := engine.PlayerStanding{Player: 0, Aember: cost}
+	h := app.HTMLString(app.Div().Body(c.g.playerStandingSegments(atCheck)...))
+	if !strings.Contains(h, "log-aember") {
+		t.Error("a standing at check did not highlight the Æmber amount")
+	}
+
+	below := engine.PlayerStanding{Player: 0, Aember: cost - 1}
+	h = app.HTMLString(app.Div().Body(c.g.playerStandingSegments(below)...))
+	if strings.Contains(h, "log-aember") {
+		t.Error("a standing below check highlighted the Æmber amount")
 	}
 }
 

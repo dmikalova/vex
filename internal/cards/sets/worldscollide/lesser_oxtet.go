@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// LesserOxtet
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Lesser Oxtet
 //
 //	House:  Dis
 //	Type:   Creature
@@ -16,8 +11,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon
 //
 //	Elusive.
-//	Play: Purge each card in your hand.
-//	Reap: Keys cost +3A during your opponent's next turn.
+//	Play: Purge each card from your hand.
+//	Reap: Keys cost +3 Æmber during your opponent's next turn.
 var LesserOxtet = card.New(
 	"Lesser Oxtet",
 	card.House.Dis,
@@ -26,5 +21,13 @@ var LesserOxtet = card.New(
 	card.Provenance(card.WC, 109),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Demon),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithAbility(
+		card.Trigger.Play, card.PurgeEachFromHand{Player: card.Controller}),
+	card.WithAbility(
+		card.Trigger.Reap, card.RaiseKeyCost{
+			Player:   card.Opponent,
+			Amount:   3,
+			Duration: card.Duration.NextTurn,
+		}),
 )

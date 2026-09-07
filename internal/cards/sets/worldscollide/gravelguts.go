@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Giant
 //
-//	After a creature is destroyed fighting Gravelguts, give Gravelguts 2 +1 power counters.
+//	After a creature is destroyed fighting Gravelguts, give Gravelguts two +1 power counters.
 var Gravelguts = card.New(
 	"Gravelguts",
 	card.House.Brobnar,

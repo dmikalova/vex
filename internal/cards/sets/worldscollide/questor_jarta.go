@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// QuestorJarta
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Questor Jarta
 //
 //	House:  Saurian
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Dinosaur • Politician
 //
-//	Elusive. (The first time this creature is attacked each turn, no damage is dealt.)
-//	Reap: You may exalt Questor Jarta. If you do, gain 1A.
+//	Elusive.
+//	Reap: You may exalt Questor Jarta. Gain 1 Æmber.
 var QuestorJarta = card.New(
 	"Questor Jarta",
 	card.House.Saurian,
@@ -25,5 +20,16 @@ var QuestorJarta = card.New(
 	card.Provenance(card.WC, 191),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Politician),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithAbility(
+		card.Trigger.Reap, card.May{Do: card.Sentences{Effects: []card.Effect{
+			card.Exalt{
+				Target: card.Target.This,
+				Amount: 1,
+			},
+			card.GainAember{
+				Player: card.Controller,
+				Amount: 1,
+			},
+		}}}),
 )

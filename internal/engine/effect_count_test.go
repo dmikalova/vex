@@ -250,6 +250,71 @@ func TestHousesInPlay(t *testing.T) {
 	}
 }
 
+func TestHousesAmong(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	// Controller's board: three creature houses, one artifact house, one houseless
+	// creature (which counts toward no house).
+	g.AddToBattleline(NewCard("m0", Mars, Creature, Common, WithPower(4)), 0)
+	g.AddToBattleline(NewCard("l0", Logos, Creature, Common, WithPower(4)), 0)
+	g.AddToBattleline(NewCard("s0", Sanctum, Creature, Common, WithPower(4)), 0)
+	g.AddToBattleline(NewCard("none", HouseNone, Creature, Common, WithPower(4)), 0)
+	g.AddArtifact(NewCard("u0", Untamed, Artifact, Common), 0)
+	// Opponent's board: two creature houses (one shared with the controller) and one
+	// artifact house.
+	g.AddToBattleline(NewCard("b1", Brobnar, Creature, Common, WithPower(4)), 1)
+	g.AddToBattleline(NewCard("m1", Mars, Creature, Common, WithPower(4)), 1)
+	g.AddArtifact(NewCard("sh1", Shadows, Artifact, Common), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	cases := []struct {
+		name  string
+		count HousesAmong
+		value int
+		text  string
+	}{
+		{
+			"friendly creatures, uncapped",
+			HousesAmong{Player: Controller, Type: Creature},
+			3, "house represented among friendly creatures",
+		},
+		{
+			"friendly creatures, cap not reached",
+			HousesAmong{Player: Controller, Type: Creature, Max: 5},
+			3, "house represented among friendly creatures (to a maximum of 5)",
+		},
+		{
+			"friendly creatures, cap reached",
+			HousesAmong{Player: Controller, Type: Creature, Max: 2},
+			2, "house represented among friendly creatures (to a maximum of 2)",
+		},
+		{
+			"enemy creatures",
+			HousesAmong{Player: Opponent, Type: Creature},
+			2, "house represented among enemy creatures",
+		},
+		{
+			"friendly cards, both rows",
+			HousesAmong{Player: Controller},
+			4, "house represented among friendly cards",
+		},
+		{
+			"every card in play, both rows",
+			HousesAmong{Player: EachPlayer},
+			6, "house represented among cards in play",
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			if got := c.count.Value(ctx); got != c.value {
+				t.Errorf("value = %d, want %d", got, c.value)
+			}
+			if got := c.count.CountText(); got != c.text {
+				t.Errorf("count text = %q, want %q", got, c.text)
+			}
+		})
+	}
+}
+
 func TestEachFriendlyArtifactTarget(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	mine := g.AddArtifact(NewCard("mine", Brobnar, Artifact, Common), 0)

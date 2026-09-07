@@ -1,10 +1,18 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Tricerian Legionary
+//
+//	House:  Saurian
+//	Type:   Creature
+//	Rarity: Common
+//	Power:  5
+//	Armor:  1
+//	Traits: Dinosaur • Soldier
+//
+//	Taunt.
+//	Play: Ward a friendly creature.
 var TricerianLegionary = card.New(
 	"Tricerian Legionary",
 	card.House.Saurian,

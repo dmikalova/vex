@@ -37,7 +37,7 @@ func TestAddPowerCounterPer(t *testing.T) {
 		Amount: 2,
 		Per:    InPlay{Player: EachPlayer, Type: Creature, Damaged: true},
 	}
-	want := "for each damaged creature in play, give {self} 2 +1 power counters"
+	want := "for each damaged creature in play, give {self} two +1 power counters"
 	if got := e.Text(); got != want {
 		t.Errorf("text = %q, want %q", got, want)
 	}
@@ -47,14 +47,18 @@ func TestAddPowerCounterPer(t *testing.T) {
 		t.Errorf("power = %d, want 5 (one damaged creature, two counters)", g.Power(c))
 	}
 
-	if got := (AddPowerCounter{Amount: -2}).counters(); got != "2 -1 power counters" {
+	if got := (AddPowerCounter{Amount: -2}).counters(); got != "two -1 power counters" {
 		t.Errorf("negative counters = %q", got)
+	}
+	// A count larger than KeyForge ever prints falls back to digits.
+	if got := (AddPowerCounter{Amount: 11}).counters(); got != "11 +1 power counters" {
+		t.Errorf("large counters = %q", got)
 	}
 }
 
 // A -1 power counter that lowers a damaged creature's power to its damage
-// destroys it, the same sweep a leaving buff triggers — CanUse's map order must
-// never leave a lethal creature sitting in play.
+// destroys it at the resolution boundary, the same sweep a leaving buff triggers
+// — CanUse's map order must never leave a lethal creature sitting in play.
 func TestAddPowerCounterSettlesLethal(t *testing.T) {
 	g := started(t)
 	c := g.AddToBattleline(testCreature("c", 3), 1)
@@ -65,6 +69,7 @@ func TestAddPowerCounterSettlesLethal(t *testing.T) {
 
 	AddPowerCounter{Target: Target{Kind: TargetThisCreature}, Amount: -1}.
 		Resolve(&EffectContext{Resolver: g, Source: c, Controller: 0})
+	g.settleDestroyed(0) // the resolution boundary settles the counter (ADR 0029)
 
 	if g.inPlay(c) {
 		t.Errorf("a -1 counter dropping power to 2 with 2 damage should destroy it")

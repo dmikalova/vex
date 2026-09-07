@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Cyborg • Scientist
 //
-//	After you use a card, if it is an artifact, gain 1 Æmber.
+//	After you use an artifact, gain 1 Æmber.
 var VeylanAnalyst = card.New(
 	"Veylan Analyst",
 	card.House.Logos,

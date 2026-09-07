@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// FinchCloak
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Finch Cloak
 //
 //	House:  Shadows
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Elf • Thief
 //
-//	Fight/Reap: If you have less A than your opponent, steal 1A. Otherwise, each player gains 1A.
+//	Fight/Reap: If your opponent has more Æmber than you, steal 1 Æmber. Otherwise, each player gains 1 Æmber.
 var FinchCloak = card.New(
 	"Finch Cloak",
 	card.House.Shadows,
@@ -24,5 +19,12 @@ var FinchCloak = card.New(
 	card.Provenance(card.WC, 267),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithFightOrReap(card.Conditional{
+		Cond: card.OpponentAember{Is: card.MoreThanYou},
+		Then: card.StealAember{Amount: 1},
+		Else: card.GainAember{
+			Player: card.EachPlayer,
+			Amount: 1,
+		},
+	}),
 )

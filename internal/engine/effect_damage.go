@@ -55,6 +55,19 @@ func (aemberOnIt) perTargetValue(ctx *EffectContext, id LocalID) int {
 
 func (aemberOnIt) perTargetText() string { return "\u00c6mber on it" }
 
+// DamageOnIt scales per target by the damage already sitting on that target, so a
+// single effect hits each creature for as much as it is already hurt (Cauldron
+// Boil deals each creature damage equal to the damage already on it).
+var DamageOnIt PerTarget = damageOnIt{}
+
+type damageOnIt struct{}
+
+func (damageOnIt) perTargetValue(ctx *EffectContext, id LocalID) int {
+	return ctx.Resolver.Damage(id)
+}
+
+func (damageOnIt) perTargetText() string { return "point of damage on it" }
+
 // validate requires an explicit target, or a Spread that supplies its own.
 func (e DealDamage) validate() error {
 	if e.Spread != nil {
@@ -420,10 +433,12 @@ func (s DifferentCreatures) hits(ctx *EffectContext) []DamageTarget {
 
 // UpToCreatures deals Amount to up to Count different creatures the controller
 // chooses one at a time, declining any of them with Done — Throwing Stars deals 1
-// damage to up to 3 creatures. A DealDamage Spread.
+// damage to up to 3 creatures. Undamaged narrows the choice to creatures that have
+// no damage on them (Unsuspecting Prey). A DealDamage Spread.
 type UpToCreatures struct {
-	Count  int
-	Amount int
+	Count     int
+	Amount    int
+	Undamaged bool
 }
 
 // validate requires room for at least one creature.
@@ -436,11 +451,16 @@ func (s UpToCreatures) validate() error {
 
 // spreadText renders the clause.
 func (s UpToCreatures) spreadText() string {
-	return fmt.Sprintf("deal %d damage to up to %d creatures", s.Amount, s.Count)
+	noun := "creatures"
+	if s.Undamaged {
+		noun = "undamaged creatures"
+	}
+	return fmt.Sprintf("deal %d damage to up to %d %s", s.Amount, s.Count, noun)
 }
 
 // hits asks for creatures one at a time, up to Count, excluding those already
-// chosen, stopping when the controller declines or none remain.
+// chosen (and, when Undamaged is set, any that already carry damage), stopping
+// when the controller declines or none remain.
 func (s UpToCreatures) hits(ctx *EffectContext) []DamageTarget {
 	chosen := map[LocalID]bool{}
 	var out []DamageTarget
@@ -448,9 +468,13 @@ func (s UpToCreatures) hits(ctx *EffectContext) []DamageTarget {
 		var cands []LocalID
 		for p := 0; p < 2; p++ {
 			for _, id := range ctx.Resolver.Battleline(p) {
-				if !chosen[id] {
-					cands = append(cands, id)
+				if chosen[id] {
+					continue
 				}
+				if s.Undamaged && ctx.Resolver.Damage(id) > 0 {
+					continue
+				}
+				cands = append(cands, id)
 			}
 		}
 		if len(cands) == 0 {

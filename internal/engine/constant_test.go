@@ -66,6 +66,35 @@ func TestConstantAbilityNeighboringTarget(t *testing.T) {
 	}
 }
 
+// A constant ability can grant a "cannot reap" restriction to the creatures its
+// Target reaches: Narp bars its neighbors from reaping while distant friends stay
+// free to reap, and the restriction reads on the card.
+func TestCannotBeUsedToFromConstantAbility(t *testing.T) {
+	g := started(t)
+	narp := NewCard("Narp", Brobnar, Creature, Common, WithPower(8),
+		WithConstantAbility(ConstantAbility{
+			Target:         Target{Kind: TargetEachCreature}.Neighboring(),
+			CannotBeUsedTo: []UseKind{ReapUse},
+		}))
+	left := g.AddToBattleline(testCreature("left", 3), 0)
+	g.AddToBattleline(narp, 0)
+	right := g.AddToBattleline(testCreature("right", 3), 0)
+	far := g.AddToBattleline(testCreature("far", 3), 0)
+
+	if err := g.CanUseTo(0, left, ReapUse); err != ErrCannotUse {
+		t.Errorf("left neighbor reap = %v, want ErrCannotUse", err)
+	}
+	if err := g.CanUseTo(0, right, ReapUse); err != ErrCannotUse {
+		t.Errorf("right neighbor reap = %v, want ErrCannotUse", err)
+	}
+	if err := g.CanUseTo(0, far, ReapUse); err != nil {
+		t.Errorf("far friend reap = %v, want nil", err)
+	}
+	if got := constantText(&narp); got != "Each neighboring creature cannot reap." {
+		t.Errorf("Narp constant text = %q", got)
+	}
+}
+
 // A constant ability with no target reaches every creature in play, including
 // the source itself and the enemy.
 func TestConstantAbilityNoTargetReachesEveryone(t *testing.T) {

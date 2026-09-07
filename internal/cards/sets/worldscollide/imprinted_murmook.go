@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ImprintedMurmook
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Imprinted Murmook
 //
 //	House:  Untamed
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Beast
 //
-//	Elusive. (The first time this creature is attacked each turn, no damage is dealt.)
-//	Your keys cost -1A.
+//	Elusive.
+//	Your keys cost -1 Æmber.
 var ImprintedMurmook = card.New(
 	"Imprinted Murmook",
 	card.House.Untamed,
@@ -25,5 +20,6 @@ var ImprintedMurmook = card.New(
 	card.Provenance(card.WC, 358),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Beast),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithKeyCost(card.KeyCostChange(card.Controller, -1)),
 )

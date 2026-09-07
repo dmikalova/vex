@@ -1,20 +1,15 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// CauldronBoil
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Cauldron Boil
 //
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Deal damage to each creature equal to the amount of damage on that creature.
+//	Play: Deal 1 damage to each creature for each point of damage on it.
 var CauldronBoil = card.New(
 	"Cauldron Boil",
 	card.House.Untamed,
@@ -22,5 +17,10 @@ var CauldronBoil = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.WC, 354),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.DealDamage{
+			Amount:    1,
+			Target:    card.Target.EachCreature,
+			PerTarget: card.DamageOnIt,
+		}),
 )

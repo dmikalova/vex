@@ -242,3 +242,54 @@ func TestConnectionInvalidPullPanics(t *testing.T) {
 		})
 	}
 }
+
+// exactPulls is the 1:1-per-source connection: one copy of the named card for
+// every instance of the puller.
+func exactPulls(name string) Connection {
+	return Connection{Cards: []ConnectedCard{{Name: name, Copies: 1, Chance: 1, Exact: true}}}
+}
+
+// An exact connection pulls one partner per puller instance, so a pod holding
+// two Timetravellers ends up with two Help from Future Self — the plain (pod-wide)
+// connection would place only one.
+func TestConnectionExactPullsOnePerPuller(t *testing.T) {
+	set := NewSet("S", []Card{
+		connCard("P", engine.Brobnar, exactPulls("Q")),
+		connectedCard("Q", engine.Brobnar),
+	}, DefaultTuning())
+	g := gen(set)
+	pod := HousePod{House: engine.Brobnar}
+	pod.Slots[0] = Slot{Card: set.byName["P"].Def}
+	pod.Slots[1] = Slot{Card: set.byName["P"].Def}
+	out := g.expandConnections(pod)
+	if countName(out, "Q") != 2 {
+		t.Fatalf("Q count = %d, want 2 (one per puller)", countName(out, "Q"))
+	}
+}
+
+// A chancy exact pull rolls per puller instance, so two pullers can pull a
+// different number of partners than one — the roll is not shared pod-wide.
+func TestConnectionExactChanceRollsPerPuller(t *testing.T) {
+	conn := Connection{Cards: []ConnectedCard{{Name: "Q", Copies: 1, Chance: 0.5, Exact: true}}}
+	set := NewSet("S", []Card{
+		connCard("P", engine.Brobnar, conn),
+		connectedCard("Q", engine.Brobnar),
+	}, DefaultTuning())
+	g := gen(set)
+	seenTwo := false
+	for i := 0; i < 200 && !seenTwo; i++ {
+		pod := HousePod{House: engine.Brobnar}
+		pod.Slots[0] = Slot{Card: set.byName["P"].Def}
+		pod.Slots[1] = Slot{Card: set.byName["P"].Def}
+		n := countName(g.expandConnections(pod), "Q")
+		if n > 2 {
+			t.Fatalf("Q count = %d, want at most 2", n)
+		}
+		if n == 2 {
+			seenTwo = true
+		}
+	}
+	if !seenTwo {
+		t.Fatal("two pullers never both rolled their exact pull")
+	}
+}

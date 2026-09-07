@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// RegrettableMeteor
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Regrettable Meteor
 //
 //	House:  Saurian
 //	Type:   Tactic
@@ -22,5 +17,9 @@ var RegrettableMeteor = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, 208),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
+			card.Destroy{Target: card.Target.EachCreature.WithTrait(card.Traits.Dinosaur)},
+			card.Destroy{Target: card.Target.EachCreature.PowerAtLeast(6)},
+		}}),
 )

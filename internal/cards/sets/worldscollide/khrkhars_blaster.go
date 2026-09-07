@@ -1,27 +1,33 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// KhrkharsBlaster
+// Khrkhar's Blaster
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Upgrade
-//	Rarity: Variant
+//	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains, "Fight/Reap: You may deal 2D to a creature, or attach Khrkhar's Blaster to Lieutenant Khrkhar."
-//	After you attach Khrkhar's Blaster to Lieutenant Khrkhar, ward Lieutenant Khrkhar.
+//	This creature gains, "Fight/Reap: You may choose one:
+//	- Deal 2 damage to a creature
+//	- Attach this creature to Lieutenant Khrkhar, and ward Lieutenant Khrkhar."
 var KhrkharsBlaster = card.New(
 	"Khrkhar's Blaster",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Upgrade,
+	// TODO(variant): rarity relabelled from Variant to Rare — handle manually
 	card.Rarity.Rare,
 	card.Provenance(card.WC, 349),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.Connects(card.Pull(LieutenantKhrkhar, 1)),
+	card.WithStatic(card.StaticModifier{
+		Granted: card.FightOrReap(card.May{Do: card.ChooseOne{Options: []card.Effect{
+			card.DealDamage{Amount: 2, Target: card.Target.Creature},
+			card.Sequence{Effects: []card.Effect{
+				card.AttachSelfTo{Host: "Lieutenant Khrkhar"},
+				card.Ward{Target: card.Target.AttachedHost.Named("Lieutenant Khrkhar")},
+			}},
+		}}}),
+	}),
 )

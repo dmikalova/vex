@@ -53,6 +53,7 @@ var optionRank = map[string]int{
 	"WithAemberThreshold":         7,
 	"WithAemberCost":              7,
 	"WithStatic":                  7,
+	"WithPlayableAsUpgrade":       7,
 	"WithConstant":                7,
 	"Connects":                    7,
 	// Abilities come after the passive modifiers.

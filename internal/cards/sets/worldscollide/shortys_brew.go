@@ -1,16 +1,22 @@
-//go:build todo
-
-// TODO: source rarity is "Variant"; awaiting a real-rarity mapping before implementing.
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Shorty's Brew
+//
+//	House:  Brobnar
+//	Type:   Tactic
+//	Rarity: Rare
+//	Æmber:  1
+//
+//	Play: Give a creature two +1 power counters.
 var ShortysBrew = card.New(
 	"Shorty's Brew",
 	card.House.Brobnar,
 	card.Type.Tactic,
+	// TODO(variant): rarity relabelled from Variant to Rare — handle manually
 	card.Rarity.Rare,
+	// TODO(duplicate): mechanically identical to Alaka's Brew — fold/handle manually
 	card.Provenance(card.WC, 68),
 	card.WithAemberBonus(1),
 	card.WithAbility(

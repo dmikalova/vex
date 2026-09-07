@@ -10,6 +10,7 @@ var TurnStat = turnStats{
 	KeysForgedLastTurn:        engine.KeysForgedLastTurn,
 	CreaturesPlayedLastTurn:   engine.CreaturesPlayedLastTurn,
 	EnemyCreaturesFightKilled: engine.EnemyCreaturesFightKilled,
+	EnemyCreaturesDestroyed:   engine.EnemyCreaturesDestroyed,
 }
 
 type turnStats struct {
@@ -23,4 +24,7 @@ type turnStats struct {
 	// EnemyCreaturesFightKilled counts the player's enemies destroyed in a fight
 	// this turn.
 	EnemyCreaturesFightKilled engine.TurnStat
+	// EnemyCreaturesDestroyed counts the player's enemy creatures destroyed by any
+	// means this turn.
+	EnemyCreaturesDestroyed engine.TurnStat
 }

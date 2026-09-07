@@ -280,6 +280,12 @@ func (c *cardView) Render() app.UI {
 		app.Div().Class("card-name").Body(
 			squeezedTitle(c.Title),
 		),
+		// The face's three regions are their own boxes so each rounds its own
+		// corners: the status box (stat line, tokens), the art band (the icon
+		// strip, full-bleed and unrounded), and the text box (traits and rules).
+		// The status box is only rendered when it has content, so a card with no
+		// status leaves the art band — itself the house colour, like the name
+		// banner above it — running up to the title with no empty box or seam.
 		app.Div().Class("card-body").Body(
 			app.If(len(c.Stat) > 0 || c.Stunned || c.Exhausted || c.PowerCounters != 0 || c.InPlay, func() app.UI {
 				return app.Div().Class("card-stat").Body(
@@ -309,14 +315,20 @@ func (c *cardView) Render() app.UI {
 					}),
 				)
 			}),
+			// The art band sits between the two boxes, full-bleed and unrounded, so
+			// a card with no status leaves it running up to the title with no seam.
 			app.If(len(c.Icons) > 0, func() app.UI {
 				return iconStrip(c.Icons)
 			}),
-			app.If(c.Trait != "", func() app.UI {
-				return app.Div().Class("card-traits").Text(c.Trait)
-			}),
-			app.If(c.Rules != "", func() app.UI {
-				return app.Div().Class("card-rules").Text(c.Rules)
+			app.If(c.Trait != "" || c.Rules != "", func() app.UI {
+				return app.Div().Class("card-text").Body(
+					app.If(c.Trait != "", func() app.UI {
+						return app.Div().Class("card-traits").Text(c.Trait)
+					}),
+					app.If(c.Rules != "", func() app.UI {
+						return app.Div().Class("card-rules").Text(c.Rules)
+					}),
+				)
 			}),
 		),
 		app.Div().Class("card-kind").Body(

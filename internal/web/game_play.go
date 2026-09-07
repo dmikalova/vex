@@ -111,10 +111,12 @@ func (g *game) advanceSelection() {
 	}
 }
 
-// clickAway drops the selection when a click lands on the board's background
-// rather than on a card or a player bar. The click bubbles up from whatever it
-// hit, so the target is asked what it belongs to. It is bound to the board area,
-// so every click it sees is already outside the sidebar.
+// clickAway drops the selection when a click lands on the board's background, or
+// on a player bar while a card is lifted — clicking a bar is a way to put the
+// lifted card down, the same as clicking empty space. Only a card keeps the
+// selection. The click bubbles up from whatever it hit, so the target is asked
+// what it belongs to. It is bound to the board area, so every click it sees is
+// already outside the sidebar.
 func (g *game) clickAway(ctx app.Context, e app.Event) {
 	t := e.Get("target")
 	// A click anywhere on the board unpins a held-open toast: clicking the toast
@@ -204,6 +206,10 @@ func (g *game) endTurn(ctx app.Context, _ app.Event) {
 		// Drop the selection so the confirm's warning is not read as "end turn with
 		// this card", and the jiggling usable cards are what draws the eye instead.
 		g.clearSelection()
+		// Dispatch an update so OnUpdate (and scrollUsableRowsIntoView) fires in the
+		// same cycle as this render: the jiggle starts as the strips scroll a usable
+		// card into view, rather than the scroll lagging until the next dispatch.
+		g.dispatch(func(app.Context) {})
 		return
 	}
 	g.confirmEndTurn = false

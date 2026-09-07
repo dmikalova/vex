@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// LegatusRaptor
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Legatus Raptor
 //
 //	House:  Saurian
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Dinosaur • Soldier
 //
-//	Fight: You may exalt Legatus Raptor. If you do, ready and use another friendly creature.
+//	Fight: You may exalt Legatus Raptor, and ready and use another friendly creature.
 var LegatusRaptor = card.New(
 	"Legatus Raptor",
 	card.House.Saurian,
@@ -26,5 +21,15 @@ var LegatusRaptor = card.New(
 	card.WithPower(4),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Soldier),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Fight, card.May{Do: card.Sequence{Effects: []card.Effect{
+			card.Exalt{
+				Target: card.Target.This,
+				Amount: 1,
+			},
+			card.OnChooseCreature{
+				Target: card.Target.OtherFriendlyCreature,
+				Verbs:  []card.CreatureVerb{card.ReadyVerb{}, card.UseVerb{}},
+			},
+		}}}),
 )

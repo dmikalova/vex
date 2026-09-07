@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Give a creature 2 +1 power counters.
+//	Play: Give a creature two +1 power counters.
 var AlakasBrew = card.New(
 	"Alaka's Brew",
 	card.House.Brobnar,

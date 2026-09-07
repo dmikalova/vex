@@ -124,6 +124,7 @@ func (g *Game) readyPhase(player int) {
 	g.State.CannotFight[player] = Bar[bool]{}
 	g.State.CannotUse[player] = Bar[bool]{}
 	g.State.SideDamageImmune = [2]bool{}
+	g.State.CannotReap[player] = Bar[bool]{}
 	g.State.CannotReapHouse[player] = Bar[House]{}
 	g.State.CannotPlayTypeThis[player] = Bar[CardType]{}
 	// Roll this turn's history into "last turn" so the next player can ask what their
@@ -137,6 +138,7 @@ func (g *Game) readyPhase(player int) {
 	h[0][EnemyCreaturesDestroyed] = 0
 	h[1][EnemyCreaturesDestroyed] = 0
 	h[player][CreaturesReapedThisTurn] = 0
+	h[player][CreaturesFoughtThisTurn] = 0
 	g.State.MayFightHouse[player] = HouseNone
 	g.State.MayFightAny[player] = false
 	g.State.MayUseHouse[player] = HouseNone

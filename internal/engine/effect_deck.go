@@ -262,6 +262,59 @@ func (e LookAtTop) Resolve(ctx *EffectContext) {
 	}
 }
 
+// ReorderTop looks at the top Amount cards of the controller's deck and puts them
+// back in any order the controller chooses — Navigator Ali. It looks at as many as
+// remain when the deck holds fewer than Amount, and reorders nothing when fewer
+// than two cards are there to reorder.
+type ReorderTop struct {
+	Amount int
+}
+
+// validate rejects a non-positive Amount: reordering zero cards is meaningless.
+func (e ReorderTop) validate() error {
+	if e.Amount < 1 {
+		return fmt.Errorf("ReorderTop: Amount must be at least 1")
+	}
+	return nil
+}
+
+// Text renders the effect.
+func (e ReorderTop) Text() string {
+	return fmt.Sprintf(
+		"look at the top %d cards of your deck and put them back in any order",
+		e.Amount,
+	)
+}
+
+// Resolve has the controller choose the new order of the top cards, placing the
+// chosen card on top each step until one remains.
+func (e ReorderTop) Resolve(ctx *EffectContext) {
+	deck := ctx.Resolver.Deck(ctx.Controller)
+	top := deck[:min(e.Amount, len(deck))]
+	if len(top) < 2 {
+		return
+	}
+	remaining := append([]LocalID(nil), top...)
+	order := make([]LocalID, 0, len(top))
+	for len(remaining) > 1 {
+		id, ok := ctx.ChooseCard(
+			"Choose the next card to place on top of your deck", remaining,
+		)
+		if !ok {
+			return
+		}
+		order = append(order, id)
+		for i, r := range remaining {
+			if r == id {
+				remaining = append(remaining[:i], remaining[i+1:]...)
+				break
+			}
+		}
+	}
+	order = append(order, remaining[0])
+	ctx.Resolver.SetDeckTop(ctx.Controller, order)
+}
+
 // CancelFight makes the fight in progress not occur — a "Before Fight" effect
 // (Evasion Sigil, gated on the discarded card's house). The attacker was still used
 // to fight, so it stays exhausted; combat reads the cancellation and skips Assault,

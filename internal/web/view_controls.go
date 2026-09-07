@@ -110,6 +110,20 @@ func (g *game) endTurnBar() app.UI {
 	return app.Div().Class("end-turn-bar").Body(body...)
 }
 
+// disabledEndTurnBar draws the resting Undo + End turn controls greyed out and
+// non-clickable. It fills the dock during a mid-action step (placing a creature)
+// whose own controls live on the lifted card, so the dock reads as the controls
+// paused rather than a blank box.
+func (g *game) disabledEndTurnBar() app.UI {
+	undo := app.Button().
+		Class(cx("btn-secondary", "btn-icon")).
+		Title("Undo").
+		Disabled(true).
+		Body(icon("undo", "icon-nav"))
+	end := app.Button().Class("btn-secondary").Disabled(true).Text("End turn")
+	return app.Div().Class("end-turn-bar").Body(undo, end)
+}
+
 // controls is the bottom of the sidebar: the contextual controls (house picker or
 // action bar) plus End turn. House selection has no End turn — a house must be
 // chosen first.
@@ -318,6 +332,13 @@ func (g *game) housePicker() app.UI {
 				OnClick(g.pickHouse(h)).
 				Body(houseIcon(h, "icon-inline"), app.Text(h.String()))
 		}),
+		// Back steps out of the state that put the player at house selection — the
+		// previous turn, reached by undo. On the game's very first turn there is
+		// nothing to undo, so it greys out rather than vanishing.
+		app.Button().Class("btn-secondary").
+			Disabled(!g.canUndo()).
+			OnClick(g.undoAction).
+			Text("Back"),
 	)
 }
 
@@ -382,9 +403,10 @@ func (g *game) optionChooser() app.UI {
 	return app.Div().Class("btn-col").Body(
 		app.Div().Class("prompt").Text(g.optionPrompt),
 		app.Range(g.optionLabels).Slice(func(i int) app.UI {
-			// A declining "No" is the destructive-looking choice, so it reads red.
+			// A declining "No" or a hand-shedding "Mulligan" is the
+			// destructive-looking choice, so it reads red.
 			kind := "btn-primary"
-			if g.optionLabels[i] == "No" {
+			if g.optionLabels[i] == "No" || g.optionLabels[i] == "Mulligan" {
 				kind = "btn-danger"
 			}
 			return btn(g.optionLabels[i], g.chooseOptionIdx(i),
@@ -447,7 +469,10 @@ func (g *game) targetingPrompt() app.UI {
 			btn("Cancel", g.cancelTargeting, "btn-secondary"),
 		)
 	}
-	return app.Div()
+	// Placing a creature asks its which-end question on the lifted card, so the dock
+	// has no prompt of its own — it shows the resting controls disabled rather than
+	// an empty box.
+	return g.disabledEndTurnBar()
 }
 
 // cardAction is one verb the selected card offers. The dock's mid-action prompts
@@ -506,7 +531,8 @@ func (g *game) handCardActions() ([]cardAction, string) {
 	} else {
 		acts = append(acts, cardAction{"Play", "btn-primary", g.play})
 	}
-	// Discarding needs only that the card is of the active house.
+	// Discarding is offered whenever the engine allows it (active house, and not
+	// barred by the first-turn one-card rule).
 	if g.discardableFromHand(g.sel) {
 		acts = append(acts, cardAction{"Discard", "btn-danger", g.discard})
 	}

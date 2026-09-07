@@ -219,13 +219,23 @@ func (g *game) logSegments(entry engine.LogEntry) []app.UI {
 
 // playerStandingSegments draws a PlayerStanding entry: the player name, the
 // Æmber count with its icon, and the key count with its three slots coloured
-// by KeyColors rather than a plain "N keys" number.
+// by KeyColors rather than a plain "N keys" number. When the standing puts the
+// player at check — holding enough Æmber to afford their next key — the amount is
+// lit with the check highlight, the log's echo of the score pill's "Check!" glow.
 func (g *game) playerStandingSegments(e engine.PlayerStanding) []app.UI {
+	amount := app.Text(fmt.Sprintf(" has %d ", e.Aember))
+	if e.Aember >= g.g.CurrentKeyCost(e.Player) {
+		amount = app.Span().Body(
+			app.Text(" has "),
+			app.Span().Class("log-aember").Text(strconv.Itoa(e.Aember)),
+			app.Text(" "),
+		)
+	}
 	return []app.UI{
 		app.Span().
 			Class("log-player log-player--p" + strconv.Itoa(e.Player)).
 			Text(g.g.PlayerName(e.Player)),
-		app.Text(fmt.Sprintf(" has %d ", e.Aember)),
+		amount,
 		logIcon("aember"),
 		app.Text(fmt.Sprintf(" Æmber and %d/%d ", len(e.KeyColors), engine.KeysToWin)),
 		keysTally(e.KeyColors),

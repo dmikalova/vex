@@ -16,7 +16,7 @@ import (
 //	Traits: Beast • Insect
 //
 //	Alpha.
-//	Play: Give each other friendly Untamed creature 2 +1 power counters.
+//	Play: Give each other friendly Untamed creature two +1 power counters.
 func TestBumblebird(t *testing.T) {
 	t.Run("adds 2 power counters to each other friendly creature", func(t *testing.T) {
 		var ally ct.Card

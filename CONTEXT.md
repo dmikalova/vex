@@ -164,6 +164,42 @@ It is not a triggered ability and applying it does not exhaust the card. This is
 the only continuous-effect concept in the engine; there is no separate notion of
 an "aura".
 
+**Tagged for destruction**:
+The window in which a creature is marked to die but is still in play — its power
+is still computed, its buffs still apply, it is still itself. A `Destroyed:`
+ability is a triggered ability whose trigger is _being tagged for destruction_,
+so it resolves here, while its creature is still in play, before the creature is
+considered destroyed. Distinct from the later moment the creature reaches its
+discard pile (ADR 0030).
+_Avoid_: sacrificed, marked (as a code term).
+
+**After-destruction reaction** / **after window**:
+A triggered ability on a _different, in-play_ card that fires once a card has left
+play or reached its discard — Neffru's "after a creature is destroyed", Pile of
+Skulls' "after an enemy creature is destroyed". The reacting card is the **source**
+and is in play; the card that left is the **subject** (`it`). Not to be confused
+with a `Destroyed:` ability, which belongs to the destroyed creature itself and
+resolves earlier, while it is still tagged.
+_Avoid_: leaves-play trigger (the card leaving play has none in KeyForge).
+
+**Left play** / **out of play**:
+A card off the board — in a discard, hand, deck, archives, or purged. A card that
+has left play can only ever be the **subject** of a resolving ability, never its
+**source**: writes to it no-op (the guarded write path) and no ability resolves
+_from_ it (the source-in-play guard, RAW §190) (ADR 0030). "Leaves Play:" is an
+engine-internal trigger name (`TriggerLeavesPlay`), not a KeyForge term, and it
+fires while the card is still listed on the board.
+
+**Settle** / **settlement**:
+The state-based sweep (`settleDestroyed`) that destroys every in-play creature now
+holding lethal damage or non-positive power, repeated to a fixpoint because
+destroying one creature can drop a buff keeping another alive. Because power is
+derived from the whole board, the sweep runs at each **resolution boundary** — after
+an ability or a top-level action resolves, and before any choice — rather than after
+every single change; new code relies on that boundary and does not settle by hand
+(ADR 0029).
+_Avoid_: validate, check state.
+
 **Take control** / **latest ability wins**:
 Taking control moves a card to your play area and makes you its controller;
 ownership never changes and still decides where the card returns when it leaves

@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// TitanGuardian
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Titan Guardian
 //
 //	House:  Logos
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Beast • Cyborg
 //
-//	Taunt. (This creature's neighbors cannot be attacked unless they have taunt.)
+//	Taunt.
 //	Destroyed: If Titan Guardian is not on a flank, draw 2 cards.
 var TitanGuardian = card.New(
 	"Titan Guardian",
@@ -27,5 +22,10 @@ var TitanGuardian = card.New(
 	card.WithPower(5),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Beast, card.Traits.Cyborg),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Taunt),
+	card.WithAbility(
+		card.Trigger.Destroyed, card.Conditional{
+			Cond: card.SourceOnFlank{Not: true},
+			Then: card.Draw{Amount: 2},
+		}),
 )

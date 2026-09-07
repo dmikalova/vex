@@ -403,10 +403,18 @@ type ConstantAbility struct {
 	// each creature a "Destroyed: purge this creature." The reached creatures fire
 	// them as if printed on them (see Game.triggerAbilities).
 	Granted []Ability
+	// CannotBeUsedTo bars the creatures its Target reaches from these ways of being
+	// used, for as long as the card stays in play — Narp stops its neighbors from
+	// reaping. It is the grantable form of CardDefinition.CannotBeUsedTo.
+	CannotBeUsedTo []UseKind
 	// WhileOffFlank suspends the whole ability unless the source card is off a
 	// flank (in the interior of its controller's battleline) — Gub's "While Gub is
 	// not on a flank, it gets +5 power and gains taunt."
 	WhileOffFlank bool
+	// WhileInCenter suspends the whole ability unless the source card sits in the
+	// center of its controller's battleline — Kaloch Stonefather grants friendly
+	// creatures skirmish only while it is centered.
+	WhileInCenter bool
 }
 
 // target returns the constant ability's effective Target: an unset Target reaches
@@ -509,6 +517,16 @@ func NewCard(
 	for _, k := range c.CannotBeUsedTo {
 		if !k.valid() {
 			panic(fmt.Sprintf("card %q: CannotBeUsedTo has an unset use kind", name))
+		}
+	}
+	for _, ca := range c.ConstantAbilities {
+		for _, k := range ca.CannotBeUsedTo {
+			if !k.valid() {
+				panic(fmt.Sprintf(
+					"card %q: a constant ability's CannotBeUsedTo has an unset use kind",
+					name,
+				))
+			}
 		}
 	}
 	if c.PlayableAsUpgrade {

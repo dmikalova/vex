@@ -70,6 +70,14 @@ func Pull(c Definition, copies int) ConnectedCard {
 	return ConnectedCard{Name: c.Name, Copies: copies, Chance: 1}
 }
 
+// PullExact is one connected card brought into the pod once per copy of the
+// puller, so N pullers guarantee N partners — e.g. two Timetravellers pull two
+// Help From Future Self. Use it where an ordinary Pull would collapse several
+// pullers onto a single shared partner.
+func PullExact(c Definition, copies int) ConnectedCard {
+	return ConnectedCard{Name: c.Name, Copies: copies, Chance: 1, Exact: true}
+}
+
 // PullSometimes is one connected card brought into the pod with the given
 // probability, rolled once per pod. It is how a card guarantees a flourish
 // without guaranteeing it every deck.

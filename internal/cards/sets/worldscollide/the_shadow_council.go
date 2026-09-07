@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// TheShadowCouncil
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// The Shadow Council
 //
 //	House:  Shadows
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Elf • Leader • Thief
 //
 //	Elusive.
-//	While The Shadow Council is in the center of your battleline, it gains, "Action: Steal 2A."
+//	While The Shadow Council is in the center of your battleline, it gains, "Action: Steal 2 Æmber."
 var TheShadowCouncil = card.New(
 	"The Shadow Council",
 	card.House.Shadows,
@@ -25,5 +20,13 @@ var TheShadowCouncil = card.New(
 	card.Provenance(card.WC, 283),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Elf, card.Traits.Leader, card.Traits.Thief),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithConstant(card.ConstantAbility{
+		Target:        card.Target.This,
+		WhileInCenter: true,
+		Granted: []card.Ability{{
+			Trigger: card.Trigger.Action,
+			Effect:  card.StealAember{Amount: 2},
+		}},
+	}),
 )

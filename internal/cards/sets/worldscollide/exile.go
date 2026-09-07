@@ -1,20 +1,15 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Exile
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
 //	House:  Saurian
 //	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Give control of a friendly creature to your opponent.
+//	Play: Your opponent gains control of a friendly creature.
 var Exile = card.New(
 	"Exile",
 	card.House.Saurian,
@@ -22,5 +17,10 @@ var Exile = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, 202),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.TakeControl{
+			Target:     card.Target.FriendlyCreature,
+			ToOpponent: true,
+			Duration:   card.Duration.Forever,
+		}),
 )

@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// CenturionStenopius
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Centurion Stenopius
 //
 //	House:  Saurian
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  2
 //	Traits: Dinosaur • Soldier
 //
-//	Centurion Stenopius gets +3 power for each A on it.
+//	Centurion Stenopius gains +3 power for each Æmber on it.
 //	Play/Fight/Reap: You may exalt Centurion Stenopius.
 var CenturionStenopius = card.New(
 	"Centurion Stenopius",
@@ -27,5 +22,13 @@ var CenturionStenopius = card.New(
 	card.WithPower(3),
 	card.WithArmor(2),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Soldier),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithConstant(card.ConstantAbility{
+		Target:     card.Target.This,
+		PowerBonus: 3,
+		Per:        card.AemberOnThis{},
+	}),
+	card.WithPlayFightReap(card.May{Do: card.Exalt{
+		Target: card.Target.This,
+		Amount: 1,
+	}}),
 )

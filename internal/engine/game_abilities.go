@@ -175,6 +175,9 @@ func (g *Game) Reap(player int, id LocalID) error {
 		return err
 	}
 	g.reapWith(id)
+	// Boundary: the reap and any lasting reaction it fired can change power
+	// anywhere on the board (ADR 0029).
+	g.settleDestroyed(player)
 	return nil
 }
 
@@ -193,6 +196,9 @@ func (g *Game) Unstun(player int, id LocalID) error {
 		return ErrCannotUse
 	}
 	g.reapWith(id)
+	// Boundary: the reap and any lasting reaction it fired can change power
+	// anywhere on the board (ADR 0029).
+	g.settleDestroyed(player)
 	return nil
 }
 
@@ -265,6 +271,9 @@ func (g *Game) UseAction(player int, id LocalID) error {
 		}
 	}
 	g.useActionOf(player, id)
+	// Boundary: the action and any lasting reaction it fired can change power
+	// anywhere on the board (ADR 0029).
+	g.settleDestroyed(player)
 	return nil
 }
 
@@ -320,6 +329,9 @@ func (g *Game) Fight(player int, attacker, defender LocalID) error {
 		return ErrNoTarget
 	}
 	g.fight(attacker, defender)
+	// Boundary: combat resolution and any lasting reaction it fired can change
+	// power anywhere on the board (ADR 0029).
+	g.settleDestroyed(player)
 	return nil
 }
 
@@ -339,7 +351,7 @@ func (g *Game) hasTrigger(id LocalID, trigger Trigger) bool {
 	for player := 0; player < 2; player++ {
 		for _, grantor := range g.allInPlay(player) {
 			for _, c := range g.cat.def(grantor).ConstantAbilities {
-				if !g.constantAffects(grantor, c, id) {
+				if !g.constantActive(grantor, c) || !g.constantAffects(grantor, c, id) {
 					continue
 				}
 				for _, ab := range c.Granted {
@@ -501,16 +513,16 @@ func (g *Game) emitCreaturePlayedAdjacent(played LocalID) {
 	}
 }
 
-// emitEnemyDestroyed fires the persistent "after an enemy creature is destroyed
-// during your turn" reaction (Pile of Skulls) on the active player's in-play
-// cards. It fires only for the active player, and only when the destroyed
+// emitAfterEnemyDestroyed fires the persistent "after an enemy creature is
+// destroyed during your turn" reaction (Pile of Skulls) on the active player's
+// in-play cards. It fires only for the active player, and only when the destroyed
 // creature is one of their enemies, so the reaction is naturally limited to your
-// own turn and to enemy creatures. Like emitCreatureDestroyed it is called once
-// the destruction batch has reached the discard pile, so a friendly creature that
-// died in the same batch is no longer in play to be chosen (a card is not
+// own turn and to enemy creatures. Like emitAfterCreatureDestroyed it is called
+// once the destruction batch has reached the discard pile, so a friendly creature
+// that died in the same batch is no longer in play to be chosen (a card is not
 // destroyed — and does not open the "after destroyed" window — until it lands in
 // the discard).
-func (g *Game) emitEnemyDestroyed(destroyed LocalID) {
+func (g *Game) emitAfterEnemyDestroyed(destroyed LocalID) {
 	active := g.State.ActivePlayer
 	if g.controller(destroyed) == active {
 		return
@@ -520,12 +532,12 @@ func (g *Game) emitEnemyDestroyed(destroyed LocalID) {
 	}
 }
 
-// emitCreatureDestroyed fires the "after a creature is destroyed" reaction (Neffru)
-// on every card still in play, with the destroyed creature as "it". It is called
-// once the destruction batch has finished resolving Destroyed abilities and the
-// destroyed cards have reached their discard piles, so a card destroyed in the
+// emitAfterCreatureDestroyed fires the "after a creature is destroyed" reaction
+// (Neffru) on every card still in play, with the destroyed creature as "it". It is
+// called once the destruction batch has finished resolving Destroyed abilities and
+// the destroyed cards have reached their discard piles, so a card destroyed in the
 // same batch is no longer in play and does not react.
-func (g *Game) emitCreatureDestroyed(destroyed LocalID) {
+func (g *Game) emitAfterCreatureDestroyed(destroyed LocalID) {
 	for player := 0; player < 2; player++ {
 		for _, id := range g.allInPlay(player) {
 			g.triggerAbilities(id, TriggerAfterCreatureDestroyed, destroyed, true)
@@ -603,6 +615,16 @@ func (g *Game) triggerAbilitiesAs(
 	hasIt bool,
 ) {
 	for _, t := range g.orderTriggered(actor, trigger, g.triggeredBy(src, trigger)) {
+		// An earlier ability in the same window can take src out of play (Strange
+		// Gizmo destroys friendly artifacts as its house is chosen; a forge-key
+		// reactor destroys itself), and a card that has left play resolves nothing
+		// more (RAW §190, ADR 0030). A tactic is the one source that resolves its
+		// own ability while not in play — it never enters play, so "source in play"
+		// does not apply to it; its Play: still resolves. The destruction window
+		// keeps its own copy of this guard because it resolves in destroyTogether.
+		if !g.inPlay(src) && g.cat.def(src).Type != Tactic {
+			continue
+		}
 		closeFrame := g.openFrame(Frame{
 			Actor:      actor,
 			Source:     src,
@@ -611,14 +633,29 @@ func (g *Game) triggerAbilitiesAs(
 			Grantor:    t.grantor,
 			HasGrantor: t.grantor != src,
 		})
-		t.ability.Effect.Resolve(&EffectContext{
+		ec := &EffectContext{
 			Resolver:   g,
 			Source:     src,
 			Controller: actor,
 			It:         it,
 			HasIt:      hasIt,
-		})
+		}
+		// A granted ability whose grantor is an attached upgrade still knows the
+		// upgrade itself (Source is the host), so an effect on the granted ability can
+		// move or anchor to that upgrade — a "blaster" attaching itself to its named
+		// creature.
+		if t.grantor != src && g.cat.def(t.grantor).Type == Upgrade {
+			ec.Upgrade = t.grantor
+		}
+		t.ability.Effect.Resolve(ec)
 		closeFrame()
+		// Boundary: a resolved ability can change power anywhere on the board (a buff
+		// left, a counter moved, Æmber spent off a creature that draws power from
+		// it), so settle here rather than making each effect settle itself. New
+		// mechanics rely on this boundary and must not hand-call settleDestroyed
+		// (ADR 0029). The settling flag collapses nested sweeps, so a batch still
+		// leaves together.
+		g.settleDestroyed(actor)
 	}
 }
 

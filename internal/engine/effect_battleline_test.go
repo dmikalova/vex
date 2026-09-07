@@ -155,6 +155,6 @@ func TestMoveToFlank(t *testing.T) {
 	MoveToFlank{Target: Target{Kind: TargetTriggeringCreature}}.
 		Resolve(&EffectContext{Resolver: g, Controller: 0, It: gone, HasIt: true})
 	if got := g.Battleline(1); !slices.Equal(got, before) {
-		t.Fatalf("moving a departed creature changed the battleline: %v", got)
+		t.Fatalf("moving a creature that left play changed the battleline: %v", got)
 	}
 }

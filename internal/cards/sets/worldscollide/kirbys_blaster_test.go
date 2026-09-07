@@ -1,0 +1,50 @@
+package worldscollide
+
+import (
+	"testing"
+
+	"github.com/dmikalova/vactrol/internal/card"
+	ct "github.com/dmikalova/vactrol/internal/cards/cardtest"
+)
+
+// Kirby's Blaster
+//
+//	House:  Star Alliance
+//	Type:   Upgrade
+//	Rarity: Rare
+//	Æmber:  1
+//
+//	This creature gains, "Fight/Reap: You may choose one:
+//	- Deal 2 damage to a creature
+//	- Attach this creature to Com. Officer Kirby, and draw 2 cards."
+func TestKirbysBlaster(t *testing.T) {
+	t.Run("draws 2 cards on the attach payoff", func(t *testing.T) {
+		var carrier, top1, top2 ct.Card
+		h := ct.Play(t, ct.Setup{
+			P1: ct.Side{
+				House: card.House.StarAlliance,
+				InPlay: ct.Cards(
+					ct.Upgraded(
+						ct.Bind(
+							&carrier,
+							ct.Creature(ct.OfHouse(card.House.StarAlliance), ct.Power(4)),
+						),
+						KirbysBlaster,
+					),
+				),
+				Deck: ct.Cards(
+					ct.Bind(&top1, ct.Creature(ct.OfHouse(card.House.StarAlliance), ct.Power(3))),
+					ct.Bind(&top2, ct.Creature(ct.OfHouse(card.House.StarAlliance), ct.Power(3))),
+				),
+			},
+		})
+
+		h.P1.Reap(carrier)
+		h.P1.ClickOption("Yes")
+		h.P1.ExpectPrompt("Choose one")
+		h.P1.ClickOption("attach")
+
+		h.Expect(top1).At(ct.Hand)
+		h.Expect(top2).At(ct.Hand)
+	})
+}

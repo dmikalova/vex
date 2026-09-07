@@ -30,6 +30,10 @@ const (
 	// the current turn — Aember Conduction Unit stuns the first enemy creature to
 	// reap. It is kept from the reaping (active) player's side.
 	CreaturesReapedThisTurn
+	// CreaturesFoughtThisTurn counts the creatures the player has used to fight during
+	// the current turn — Alaka enters play ready once you have fought. It is kept from
+	// the attacking (active) player's side.
+	CreaturesFoughtThisTurn
 	// turnStatCount sizes GameState.TurnHistory and is not a tally itself.
 	turnStatCount
 )
@@ -42,4 +46,5 @@ var turnStatNoun = map[TurnStat]string{
 	EnemyCreaturesFightKilled: "enemy creature that was destroyed in a fight this turn",
 	EnemyCreaturesDestroyed:   "enemy creature that was destroyed this turn",
 	CreaturesReapedThisTurn:   "creature that has reaped this turn",
+	CreaturesFoughtThisTurn:   "creature that has fought this turn",
 }

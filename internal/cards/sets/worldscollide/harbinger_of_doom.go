@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// HarbingerOfDoom
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Harbinger of Doom
 //
 //	House:  Dis
 //	Type:   Creature
@@ -26,5 +21,6 @@ var HarbingerOfDoom = card.New(
 	card.WithPower(2),
 	card.WithArmor(3),
 	card.WithTraits(card.Traits.Demon),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Destroyed, card.Destroy{Target: card.Target.EachCreature}),
 )

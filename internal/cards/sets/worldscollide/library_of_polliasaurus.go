@@ -1,20 +1,15 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// LibraryOfPolliasaurus
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Library of Polliasaurus
 //
 //	House:  Saurian
 //	Type:   Artifact
 //	Rarity: Uncommon
 //	Traits: Location
 //
-//	Action: Move 1A from a friendly creature to your pool.
+//	Action: Move 1 Æmber from a friendly creature to your pool.
 var LibraryOfPolliasaurus = card.New(
 	"Library of Polliasaurus",
 	card.House.Saurian,
@@ -22,5 +17,10 @@ var LibraryOfPolliasaurus = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, 204),
 	card.WithTraits(card.Traits.Location),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Action, card.MoveAember{
+			Amount: 1,
+			From:   card.Target.FriendlyCreature,
+			To:     card.Controller,
+		}),
 )

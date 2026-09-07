@@ -1,29 +1,26 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// SpecialAgentFingers
+// Special Agent "Fingers"
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Creature
 //	Rarity: Rare
 //	Power:  1
 //	Traits: Elf • Thief
 //
 //	Elusive.
-//	Action: Steal 1A.
+//	Action: Steal 1 Æmber.
 var SpecialAgentFingers = card.New(
 	"Special Agent \"Fingers\"",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, 339),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithAbility(
+		card.Trigger.Action, card.StealAember{Amount: 1}),
 )

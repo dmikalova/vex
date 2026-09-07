@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// KymoorEclipse
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Kymoor Eclipse
 //
 //	House:  Shadows
 //	Type:   Tactic
@@ -20,5 +15,9 @@ var KymoorEclipse = card.New(
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.WC, 243),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.PutFromPlay{
+			Target:      card.Target.EachCreature.OnFlank(),
+			Destination: card.To.DeckShuffled,
+		}),
 )

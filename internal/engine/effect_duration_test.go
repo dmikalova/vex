@@ -75,7 +75,7 @@ func TestForDurationResolvesChildren(t *testing.T) {
 	if g.House(host) != Mars {
 		t.Errorf("house = %s, want Mars", g.House(host))
 	}
-	g.applyRawDamage(host, 2, false)
+	g.applyRawDamage(DamageTarget{ID: host, Amount: 2})
 	if g.Damage(host) != 0 {
 		t.Errorf("damage = %d, want 0 (prevented)", g.Damage(host))
 	}

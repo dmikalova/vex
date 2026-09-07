@@ -1,24 +1,24 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// RedAlert
+// Red Alert
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: If there are more enemy creatures than friendly creatures, deal damage to each enemy creature equal to the difference.
+//	Play: For each creature your opponent controls in excess of you, deal 1 damage to each enemy creature.
 var RedAlert = card.New(
 	"Red Alert",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.WC, 303),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.DealDamage{
+			Amount: 1,
+			Per:    card.ExcessCreatures{Player: card.Opponent},
+			Target: card.Target.EachEnemyCreature,
+		}),
 )

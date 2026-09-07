@@ -328,3 +328,36 @@ func TestDestroyedAbilitiesCollectEverySource(t *testing.T) {
 		t.Errorf("destroyed abilities = %d, want printed + upgrade + constant = 3", len(got))
 	}
 }
+
+// TestDestroyedEachDoesNotReTriggerItself checks the destroying-window guard: a
+// creature whose "Destroyed: Destroy each creature" ability re-selects itself
+// (Harbinger of Doom) is already being destroyed by the enclosing batch, so its
+// own Destroyed ability does not fire again forever and it is discarded once. Two
+// such creatures in play prove the guard nests: destroying one wipes the whole
+// board — including the other, whose identical ability adds nothing new — and the
+// destruction terminates with every creature in the discard pile exactly once.
+func TestDestroyedEachDoesNotReTriggerItself(t *testing.T) {
+	g := started(t)
+	wipe := Destroy{Target: Target{Kind: TargetEachCreature}}
+	harb := g.AddToBattleline(testCreature("harb", 3, WithAbility(TriggerDestroyed, wipe)), 0)
+	harb2 := g.AddToBattleline(testCreature("harb2", 3, WithAbility(TriggerDestroyed, wipe)), 0)
+	bystander := g.AddToBattleline(testCreature("bystander", 3), 0)
+
+	g.DestroyEach(0, []LocalID{harb})
+
+	discard := g.Discard(0)
+	for _, id := range []LocalID{harb, harb2, bystander} {
+		if g.inPlay(id) {
+			t.Errorf("creature %v still in play; the board wipe should have destroyed it", id)
+		}
+		n := 0
+		for _, d := range discard {
+			if d == id {
+				n++
+			}
+		}
+		if n != 1 {
+			t.Errorf("creature %v appears %d times in discard, want exactly 1", id, n)
+		}
+	}
+}

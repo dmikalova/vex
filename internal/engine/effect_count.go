@@ -185,6 +185,86 @@ func (e HousesInPlay) CountText() string {
 	return "house represented among cards in play"
 }
 
+// HousesAmong counts the distinct houses represented among a chosen set of
+// in-play cards — a player's creatures, all creatures, or all cards in play — for
+// effects that scale with how many houses share the board (Trust No One,
+// Quadracorder, Galactic Census, Forging an Alliance). It is the player- and
+// type-scoped companion to HousesInPlay, which counts every card in play minus one
+// excepted house (Free Markets); a houseless card counts toward no house.
+type HousesAmong struct {
+	// Player names whose cards to survey: Controller (friendly), Opponent (enemy),
+	// or EachPlayer (both).
+	Player Player
+	// Type filters the surveyed cards; the zero value surveys any type, Creature
+	// only creatures.
+	Type CardType
+	// Max caps the counted houses and the "to a maximum of N" clause it renders;
+	// zero means no cap.
+	Max int
+}
+
+// Value counts the distinct houses on the surveyed cards, capped at Max.
+func (e HousesAmong) Value(ctx *EffectContext) int {
+	var seen [NumHouses]bool
+	n := 0
+	for _, p := range e.players(ctx) {
+		for _, id := range e.set(ctx, p) {
+			if h := ctx.Resolver.House(id); h != HouseNone && !seen[h] {
+				seen[h] = true
+				n++
+			}
+		}
+	}
+	if e.Max > 0 && n > e.Max {
+		return e.Max
+	}
+	return n
+}
+
+// players returns the sides to survey: both under EachPlayer, else the named one.
+func (e HousesAmong) players(ctx *EffectContext) []int {
+	if e.Player == EachPlayer {
+		return []int{0, 1}
+	}
+	return []int{ctx.PlayerFor(e.Player)}
+}
+
+// set returns a player's in-play ids the type filter surveys: the battleline for
+// creatures, or both rows when the type is unset.
+func (e HousesAmong) set(ctx *EffectContext, p int) []LocalID {
+	if e.Type == Creature {
+		return ctx.Resolver.Battleline(p)
+	}
+	return append(ctx.Resolver.Battleline(p), ctx.Resolver.Artifacts(p)...)
+}
+
+// scope names the surveyed set as a plural noun the text roles share: "friendly
+// creatures", "enemy creatures", "creatures in play", or "cards in play".
+func (e HousesAmong) scope() string {
+	noun := "cards"
+	if e.Type == Creature {
+		noun = "creatures"
+	}
+	switch e.Player {
+	case Controller:
+		return "friendly " + noun
+	case Opponent:
+		return "enemy " + noun
+	default:
+		return noun + " in play"
+	}
+}
+
+// CountText renders the singular noun the "for each" clause repeats, adding the
+// "(to a maximum of N)" clause when Max caps the count.
+func (e HousesAmong) CountText() string {
+	s := "house represented among " + e.scope()
+	if e.Max > 0 {
+		s += fmt.Sprintf(" (to a maximum of %d)", e.Max)
+	}
+	return s
+}
+
 // CardsInArchives counts the cards in a player's archives.
 type CardsInArchives struct{ Player Player }
 
@@ -690,17 +770,27 @@ func (c TurnCount) Value(ctx *EffectContext) int {
 func (c TurnCount) CountText() string { return turnStatNoun[c.Of] }
 
 // CountClause renders the "if ..." clause CountIs needs, e.g. "if your opponent
-// played 3 or more creatures on their previous turn".
+// played 3 or more creatures on their previous turn" or, for the enemy-destroyed
+// tally, "if 3 or more enemy creatures have been destroyed this turn".
 func (c TurnCount) CountClause(quantity string, plural bool) string {
-	subject, possessive := "you played", "your"
-	if c.Player == Opponent {
-		subject, possessive = "your opponent played", "their"
+	switch c.Of {
+	case EnemyCreaturesDestroyed:
+		noun := "enemy creature has"
+		if plural {
+			noun = "enemy creatures have"
+		}
+		return fmt.Sprintf("%s %s been destroyed this turn", quantity, noun)
+	default:
+		subject, possessive := "you played", "your"
+		if c.Player == Opponent {
+			subject, possessive = "your opponent played", "their"
+		}
+		noun := "creature"
+		if plural {
+			noun = "creatures"
+		}
+		return fmt.Sprintf("%s %s %s on %s previous turn", subject, quantity, noun, possessive)
 	}
-	noun := "creature"
-	if plural {
-		noun = "creatures"
-	}
-	return fmt.Sprintf("%s %s %s on %s previous turn", subject, quantity, noun, possessive)
 }
 
 // The two "... this way" counts below read one player's share of a tally rather

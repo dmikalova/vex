@@ -606,6 +606,58 @@ func TestCannotUse(t *testing.T) {
 	}
 }
 
+// TestCannotReap covers the timed player-wide bar that stops a player reaping with
+// any creature throughout their next turn (Inky Gloom), while fighting stays open.
+func TestCannotReap(t *testing.T) {
+	if got := (CannotReap{Player: Opponent, Duration: NextTurn}).Text(); got != "your opponent cannot use creatures to reap during their next turn" {
+		t.Errorf("opponent text = %q", got)
+	}
+	if got := (CannotReap{Player: Controller, Duration: NextTurn}).Text(); got != "you cannot use creatures to reap during your next turn" {
+		t.Errorf("controller text = %q", got)
+	}
+	if (CannotReap{Duration: NextTurn}).validate() == nil {
+		t.Error("unset player should be invalid")
+	}
+	if (CannotReap{Player: Opponent}).validate() == nil {
+		t.Error("unset duration should be invalid")
+	}
+	if (CannotReap{Player: Opponent, Duration: NextTurn}).validate() != nil {
+		t.Error("a fully set effect should be valid")
+	}
+
+	g := NewGame("A", "B", 1)
+	g.StartTurn(0)
+	CannotReap{Player: Opponent, Duration: NextTurn}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0},
+	)
+	// A duration the effect does not handle arms nothing.
+	CannotReap{Player: Controller, Duration: EndOfTurn}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0},
+	)
+	if g.State.CannotReap[0].Value {
+		t.Error("only NextTurn arms the reap bar")
+	}
+	foe := g.AddToBattleline(NewCard("foe", Brobnar, Creature, Common, WithPower(3)), 0)
+	g.EndPlayPhase(0)
+
+	g.StartTurn(1)
+	if err := g.ChooseHouse(1, Brobnar); err != nil {
+		t.Fatal(err)
+	}
+	beast := g.AddToBattleline(NewCard("beast", Brobnar, Creature, Common, WithPower(3)), 1)
+	if err := g.Reap(1, beast); err != ErrCannotUse {
+		t.Errorf("Reap while barred = %v, want ErrCannotUse", err)
+	}
+	// The bar stops reaping only — fighting stays open.
+	if err := g.Fight(1, beast, foe); err != nil {
+		t.Errorf("Fight while reap-barred = %v, want nil", err)
+	}
+	g.EndPlayPhase(1)
+	if g.State.CannotReap[1].Value {
+		t.Error("the reap bar should lift at end of turn")
+	}
+}
+
 // TestGrantFightAnyHouse covers the house-blind fight grant (Follow the Leader).
 func TestGrantFightAnyHouse(t *testing.T) {
 	if got := (GrantFightAnyHouse{}).Text(); got != "for the remainder of the turn, each friendly creature may fight" {

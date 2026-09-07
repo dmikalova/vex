@@ -94,3 +94,22 @@ func (g *Game) detachUpgrade(up LocalID) (LocalID, bool) {
 func (g *Game) hostOf(upgrade LocalID) (LocalID, bool) {
 	return decodeUpgrade(g.State.Cards[upgrade].HostPlus)
 }
+
+// HostOf is the exported form of hostOf, letting an effect (a blaster's payoff
+// targeting the instance it bound to) read an upgrade's current host.
+func (g *Game) HostOf(upgrade LocalID) (LocalID, bool) {
+	return g.hostOf(upgrade)
+}
+
+// MoveUpgrade relocates an already-attached upgrade from its current host onto
+// newHost, keeping the upgrade in play. It is how a movable upgrade — a Star
+// Alliance "blaster" — homes to its signature creature. It does nothing when the
+// upgrade is not currently attached to any creature, so a stray call cannot graft
+// an unattached card onto the battleline.
+func (g *Game) MoveUpgrade(upgrade, newHost LocalID) {
+	if _, ok := g.detachUpgrade(upgrade); !ok {
+		return
+	}
+	g.AttachUpgrade(newHost, upgrade)
+	g.record(UpgradeAttached{Player: g.owner(upgrade), Upgrade: upgrade, Host: newHost})
+}

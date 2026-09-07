@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// NogiSmartfist
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Nogi Smartfist
 //
 //	House:  Brobnar
 //	Type:   Creature
@@ -24,5 +19,9 @@ var NogiSmartfist = card.New(
 	card.Provenance(card.WC, 44),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Giant, card.Traits.Scientist),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Fight, card.Sentences{Effects: []card.Effect{
+			card.Draw{Amount: 2},
+			card.DiscardRandomFromHand{Player: card.Controller, Amount: 2},
+		}}),
 )

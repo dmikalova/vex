@@ -1,28 +1,26 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// CommanderChan
+// Commander Chan
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Creature
 //	Rarity: Common
 //	Power:  4
 //	Traits: Human
 //
-//	Fight/Reap: Use another friendly creature.
+//	Fight/Reap: Use an other creature.
 var CommanderChan = card.New(
 	"Commander Chan",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.WC, 296),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Human),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithFightOrReap(card.Use{
+		Max:    1,
+		Target: card.Target.EachOtherFriendlyCreature,
+	}),
 )

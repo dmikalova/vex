@@ -12,15 +12,20 @@ const maxCardAember = math.MaxInt16
 // clamps only the top: wrapping there would turn a huge pile into negative Æmber
 // that later leaks back into a pool when the card leaves play. Going below zero is
 // a real bug, so it is left to InvariantError to catch rather than hidden here.
+// A card that has left play takes no write — an ability that places Æmber on its
+// own source after that source was destroyed (Strange Gizmo forging mid-window)
+// lands on nothing rather than banking Æmber on a card in a discard pile.
 func (g *Game) addAmberOn(id LocalID, delta int) {
-	total := int(g.State.Cards[id].Amber) + delta
+	c := g.stateOf(id)
+	if c == nil {
+		return
+	}
+	total := int(c.Amber) + delta
 	if total > maxCardAember {
 		g.record(AemberLostToCeiling{Card: id, Amount: total - maxCardAember})
 		total = maxCardAember
 	}
-	g.State.Cards[id].Amber = int16(total)
-	// A creature can draw its power from the Æmber sitting on it (Yxili Marauder).
-	g.settleDestroyed(g.controller(id))
+	c.Amber = int16(total)
 }
 
 // gainAember adds Æmber from the common supply to a player's pool. It is the

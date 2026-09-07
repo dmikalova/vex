@@ -167,6 +167,28 @@ Ambassadors, the Key Imps) — never Common/Uncommon/Rare. This is a standing
 convention: when a set introduces anomalies, they go under Special so deck
 generation treats them as houseless, not as members of one house's pool.
 
+## Variant rarity → author as `card.Rarity.Rare` + a manual-handling TODO
+
+Some source cards carry a **Variant** rarity (the Worlds Collide "Brews" and the
+signature "Blaster" upgrades). The deckgen rarity model has no Variant bucket, and
+adding one is a deliberate deck-generation decision the maintainer owns. Until then,
+**author a Variant card as `card.Rarity.Rare` with a
+`// TODO(variant): rarity relabelled from Variant to Rare — handle manually` line**
+on the rarity option, and implement its ability normally. This unblocks the card's
+mechanics without silently committing to a rarity mapping.
+
+## Mechanically-identical cross-house twins → implement + allowlist + TODO
+
+Two source cards can be byte-identical in implementation but print in different
+houses (e.g. Subtle Chain/Shadows ≡ Mind Barb/Dis; Stealth Mode/Star Alliance ≡
+Scrambler Storm/Logos). A plain reprint is wrong (it keeps the original's house),
+and folding drops the second house. Do **not** leave these as stubs. Instead:
+implement the twin as a full card **in its own house**, add a
+`// TODO(duplicate): mechanically identical to <Card> — fold/handle manually` line
+on it, and add its name to the `identicalTwinTODO` allowlist in
+`internal/cards/cards_test.go` so `TestNoDuplicateImplementations` permits the
+deliberate duplicate. The maintainer resolves the fold later.
+
 The test is what the card is _about_, not which house it happens to print. Take
 That, Smarty Pants names Logos because it is about Logos creatures, whichever
 house the card itself belongs to — that house is written out. So:

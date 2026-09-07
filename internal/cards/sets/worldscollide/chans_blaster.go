@@ -1,27 +1,33 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ChansBlaster
+// Chan's Blaster
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Upgrade
-//	Rarity: Variant
+//	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains, "Fight/Reap: You may deal 2D to a creature, or attach Chan's Blaster to Commander Chan."
-//	After you attach Chan's Blaster to Commander Chan, you may use another friendly creature.
+//	This creature gains, "Fight/Reap: You may choose one:
+//	- Deal 2 damage to a creature
+//	- Attach this creature to Commander Chan, and you may use an another creature."
 var ChansBlaster = card.New(
 	"Chan's Blaster",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Upgrade,
+	// TODO(variant): rarity relabelled from Variant to Rare — handle manually
 	card.Rarity.Rare,
 	card.Provenance(card.WC, 345),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.Connects(card.Pull(CommanderChan, 1)),
+	card.WithStatic(card.StaticModifier{
+		Granted: card.FightOrReap(card.May{Do: card.ChooseOne{Options: []card.Effect{
+			card.DealDamage{Amount: 2, Target: card.Target.Creature},
+			card.Sequence{Effects: []card.Effect{
+				card.AttachSelfTo{Host: "Commander Chan"},
+				card.May{Do: card.Use{Max: 1, Target: card.Target.OtherFriendlyCreature}},
+			}},
+		}}}),
+	}),
 )

@@ -15,7 +15,7 @@ import (
 //	Power:  2
 //	Traits: Cyborg • Scientist
 //
-//	After you use a card, if it is an artifact, gain 1 Æmber.
+//	After you use an artifact, gain 1 Æmber.
 func TestVeylanAnalyst(t *testing.T) {
 	t.Run("gains Æmber when you use an artifact", func(t *testing.T) {
 		var analyst, relic ct.Card

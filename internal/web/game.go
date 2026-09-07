@@ -86,6 +86,11 @@ type game struct {
 	swipeStartX    float64
 	swipeStartY    float64
 	swipeTracking  bool
+	// swipeOnStrip marks that the touch began inside a horizontally-scrollable card
+	// row (.card-strip). Scrolling such a row is a left/right drag that would
+	// otherwise read as an open-swipe, so a strip-anchored swipe never opens the
+	// sidebar; closing it (swipe right while open) is left alone.
+	swipeOnStrip bool
 
 	// tipDownFunc/tipMoveFunc/tipUpFunc back the touch-drag that shows the player
 	// bar's stat tooltips on a touchscreen; all three are released on dismount.

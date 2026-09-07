@@ -111,6 +111,13 @@ const (
 	// fighter — Smite makes a friendly creature fight, then damages the fought
 	// creature's neighbors, so the fight is not the source's own.
 	TargetTheFoughtCreature
+	// TargetAttachedHost selects the creature the resolving upgrade (ctx.Upgrade)
+	// is attached to — the exact instance a blaster bound to when AttachSelfTo
+	// homed it, identified by LocalID rather than by name. Its payoff acts on that
+	// one creature, never on a second same-named copy, and selects nothing once the
+	// bound instance has left play (its upgrade is no longer attached). Named()
+	// supplies the printed name so the text still reads as the signature creature.
+	TargetAttachedHost
 )
 
 // Target describes which cards an effect applies to. Kind picks the base set;
@@ -146,6 +153,10 @@ type Target struct {
 	// "a ready friendly Mars creature").
 	ready      bool
 	withAember bool
+	// withoutAember narrows the target to creatures that have no Æmber on them,
+	// rendering " with no Æmber on it" (Draining Touch destroys a creature with no
+	// Æmber on it).
+	withoutAember bool
 	// withCounter narrows the target to cards carrying a generic counter of this
 	// kind, rendering " with a doom counter" and the like (Wretched Doll destroys
 	// every creature with a doom counter). CounterNone leaves the filter off.
@@ -314,6 +325,13 @@ func (t Target) WithAember() Target {
 	return t
 }
 
+// WithoutAember narrows the target to creatures that have no Æmber on them,
+// rendering " with no Æmber on it", e.g. "a creature with no Æmber on it".
+func (t Target) WithoutAember() Target {
+	t.withoutAember = true
+	return t
+}
+
 // WithCounter narrows the target to cards carrying a generic counter of the
 // given kind, rendering " with a <kind>", e.g. "each creature with a doom
 // counter".
@@ -449,6 +467,11 @@ func (t Target) Text() string {
 		return "the other creature"
 	case TargetTheChosenCreature:
 		return "the chosen creature"
+	case TargetAttachedHost:
+		if t.named != "" {
+			return t.named
+		}
+		return "the attached creature"
 	case TargetFormerNeighbors:
 		return "each of that creature's neighbors"
 	case TargetTheFoughtCreature:
@@ -515,6 +538,12 @@ func (t Target) Text() string {
 	}
 	if t.keyword.valid() {
 		noun = strings.ToLower(t.keyword.String()) + " " + noun
+	}
+	if t.named != "" && t.isChosen() {
+		// A proper name identifies one specific card, which takes no article: a
+		// single-target phrase names it outright ("ward Lieutenant Khrkhar", not
+		// "ward a friendly Lieutenant Khrkhar").
+		return t.decorateNeighbors(noun)
 	}
 	var phrase string
 	switch t.Kind {
@@ -586,6 +615,9 @@ func (t Target) Text() string {
 	}
 	if t.withAember {
 		phrase += " with \u00c6mber on it"
+	}
+	if t.withoutAember {
+		phrase += " with no \u00c6mber on it"
 	}
 	if t.withCounter.valid() {
 		phrase += " with a " + t.withCounter.noun()
@@ -1048,6 +1080,7 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 		!t.stunned &&
 		!t.ready &&
 		!t.withAember &&
+		!t.withoutAember &&
 		!t.withCounter.valid() &&
 		!t.withArmor &&
 		t.keyword == keywordUnset &&
@@ -1106,6 +1139,9 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 			continue
 		}
 		if t.withAember && ctx.Resolver.AmberOn(id) == 0 {
+			continue
+		}
+		if t.withoutAember && ctx.Resolver.AmberOn(id) != 0 {
 			continue
 		}
 		if t.withCounter.valid() && ctx.Resolver.CountersOn(id, t.withCounter) == 0 {
@@ -1250,6 +1286,11 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 	switch t.Kind {
 	case TargetThisCreature:
 		return []LocalID{ctx.Source}
+	case TargetAttachedHost:
+		if host, ok := ctx.Resolver.HostOf(ctx.Upgrade); ok {
+			return []LocalID{host}
+		}
+		return nil
 	case TargetTriggeringCreature, TargetTheOtherCreature, TargetTheChosenCreature,
 		TargetCreatureFought, TargetTheFoughtCreature:
 		if ctx.HasIt {

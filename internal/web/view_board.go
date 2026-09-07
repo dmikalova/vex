@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
@@ -24,11 +25,11 @@ func (g *game) boardArea() []app.UI {
 		Class(cx("play-zone", ifCls(g.dragging, "play-zone--drop"))).
 		OnDrop(g.dropOnBoard).
 		Body(
-			g.renderRow(opp, "artifacts", g.sortedArtifacts(opp), selOther, true),
-			g.renderRow(opp, "battleline", g.g.Battleline(opp), selOther, true),
+			g.renderRow("artifacts", g.sortedArtifacts(opp), selOther, true),
+			g.renderRow("battleline", g.g.Battleline(opp), selOther, true),
 			app.Div().Class("midline"),
-			g.renderRow(p, "battleline", g.g.Battleline(p), selYourCreature, false),
-			g.renderRow(p, "artifacts", g.sortedArtifacts(p), selYourArtifact, false),
+			g.renderRow("battleline", g.g.Battleline(p), selYourCreature, false),
+			g.renderRow("artifacts", g.sortedArtifacts(p), selYourArtifact, false),
 		)
 	return []app.UI{
 		g.scorePill(opp),
@@ -424,9 +425,8 @@ func keysTally(colors []engine.KeyColor) app.UI {
 // renderRow draws one line of the board. opposing marks the rows across the
 // midline from the active player, whose cards face the other way. The label is
 // built from separate pieces so a short window can drop the zone word for its
-// icon, and then the player name, rather than clipping the whole label.
+// icon rather than clipping the whole label.
 func (g *game) renderRow(
-	player int,
 	zone string,
 	ids []engine.LocalID,
 	boardKind selKind,
@@ -444,8 +444,7 @@ func (g *game) renderRow(
 		Class(cx("board-row", ifCls(opposing, "board-row--opposing"))).
 		Body(
 			app.Div().Class("row-label").Body(
-				app.Span().Class("row-label-name").Text(g.g.PlayerName(player)+" "),
-				app.Span().Class("row-label-zone").Text(zone+" "),
+				app.Span().Class("row-label-zone").Text(capitalizeFirst(zone)+" "),
 				app.Text(fmt.Sprintf("(%d", len(ids))),
 				icon(zoneIcon, "row-label-icon"),
 				app.Text(")"),
@@ -456,6 +455,15 @@ func (g *game) renderRow(
 				}),
 			),
 		)
+}
+
+// capitalizeFirst upper-cases the first rune of an ASCII zone word so a row
+// label reads "Battleline" rather than "battleline".
+func capitalizeFirst(s string) string {
+	if s == "" {
+		return s
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
 }
 
 func (g *game) renderCard(id engine.LocalID, boardKind selKind, opposing bool) app.UI {

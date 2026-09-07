@@ -23,14 +23,14 @@ func TestPreventDamage(t *testing.T) {
 	}
 
 	e.Resolve(ctx)
-	g.applyRawDamage(friend, 3, false)
+	g.applyRawDamage(DamageTarget{ID: friend, Amount: 3})
 	if g.Damage(friend) != 0 {
 		t.Errorf("protected creature took %d damage, want 0", g.Damage(friend))
 	}
 	// A friendly creature that arrives after the immunity resolves is protected too:
 	// the side-wide mask is read live, not a snapshot of who was in play.
 	late := g.AddToBattleline(testCreature("late", 5), 0)
-	g.applyRawDamage(late, 3, false)
+	g.applyRawDamage(DamageTarget{ID: late, Amount: 3})
 	if g.Damage(late) != 0 {
 		t.Errorf("late-arriving friendly creature took %d damage, want 0", g.Damage(late))
 	}
@@ -40,7 +40,7 @@ func TestPreventDamage(t *testing.T) {
 	if !g.State.SideDamageImmune[1] {
 		t.Fatal("enemy side should be protected")
 	}
-	g.applyRawDamage(foe, 3, false)
+	g.applyRawDamage(DamageTarget{ID: foe, Amount: 3})
 	if g.Damage(foe) != 0 {
 		t.Errorf("protected enemy creature took %d damage, want 0", g.Damage(foe))
 	}

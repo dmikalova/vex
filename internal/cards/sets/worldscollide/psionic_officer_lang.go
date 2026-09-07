@@ -1,15 +1,10 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// PsionicOfficerLang
+// Psionic Officer Lang
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Creature
 //	Rarity: Rare
 //	Power:  3
@@ -18,11 +13,12 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	After an enemy creature reaps, archive the top card of your deck.
 var PsionicOfficerLang = card.New(
 	"Psionic Officer Lang",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, 337),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.AfterEnemyCreatureReaps, card.ArchiveTopOfDeck{Amount: 1}),
 )

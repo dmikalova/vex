@@ -69,6 +69,11 @@ func (e Destroy) destroy(ctx *EffectContext, ids []LocalID) bool {
 		bonuses[id] = ctx.Resolver.AemberBonus(id)
 	}
 	ctx.Resolver.DestroyEachFrom(ctx.Controller, ctx.Source, ids)
+	if len(ids) == 1 {
+		// Remember who controlled the destroyed creature, so a following effect can
+		// pay "its controller" the right side even after it leaves play.
+		ctx.ItController = controllers[ids[0]]
+	}
 	for _, id := range ids {
 		if !resolverInPlay(ctx, id) {
 			ctx.Produced.Destroyed[controllers[id]]++

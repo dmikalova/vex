@@ -312,6 +312,11 @@ type useKinds struct {
 	Action engine.UseKind
 }
 
+// UseKinds builds the use-kind slice for a ConstantAbility.CannotBeUsedTo field,
+// because card.UseKind is the value namespace, so a []card.UseKind literal can't
+// be written directly. E.g. card.UseKinds(card.UseKind.Reap).
+func UseKinds(k ...engine.UseKind) []engine.UseKind { return k }
+
 // Types builds the card-type slice for a Types filter, e.g.
 // card.DiscardFromHand{Types: card.Types(card.Type.Creature)}. Like Keywords, it
 // exists because card.Type is the value namespace, so a []card.CardType literal
@@ -425,6 +430,11 @@ var (
 	// ItsOpponent is the opponent of the card in context — for a capture, of the
 	// capturing creature, so each side's creatures draw from a different pool.
 	ItsOpponent = engine.ItsOpponent
+	// ItsController is the player who controlled the card in context when a
+	// preceding effect touched it — the "its controller" referent for a destroyed
+	// creature, captured before it leaves play so a stolen creature pays its
+	// controller, not its owner (Saury About That).
+	ItsController = engine.ItsController
 	// ThatPlayer is the player named by the ability's trigger — for a cross-player
 	// reaction, whoever caused it (Forgemaster Og drains the player who forged).
 	ThatPlayer = engine.ThatPlayer

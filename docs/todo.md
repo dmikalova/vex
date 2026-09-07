@@ -8,20 +8,45 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 ### Current focus
 
-- decklists
-- Implementation plan (ordered):
-  match — stop discarding the generated deckgen.Deck; retain the ordered roster and expose a read-only per-player projection (3 Houses × 12 {def, rarity, maverick, legacy}) into the web game state.
-  assets — add deck-list.svg + rarity-triangle/square/pentagon/hexagon.svg.
-  web icons.go — a single-glyph rarity helper for the deck list.
-  player bar (view_board.go scorePill) — insert the deck-list .tip icon between keys and the house strip.
-  popover — the 3-column deck-list view + .deck-list CSS (reusing the roster popover pattern); the deckListVisible seam.
-  touch — tap-open/tap-away-close for the icon.
-  verify — GOOS=js GOARCH=wasm go build, go test ./internal/web, mage check.
+### Backlog dump (2026-09-07)
+
+Done: Witch of the Wilds wording; Veylan Analyst wording ("After you use an
+artifact, gain 1 Aember" via a generalized after-you-act fold); Mulligan button
+red; row labels (name-stripped + capitalized); Hazardous/Assault log source
+narration; deckgen `Exact` pull (Timetraveller ⇒ Help From Future Self, 1:1);
+action bar shows disabled End Turn + Undo when empty; click player bar to unlift;
+Back button on start-of-turn house selection; Bigtwig/Booby Trap/Collector Worm
+ability glyphs; card split into separate status/art/text boxes (art meets title
+with no seam when there is no status); mobile toast clears the 2-row player bar;
+Baron Mengevin reword + discard-action capture bug (manual `DiscardFromHand` now
+fires "after you discard" reactions, so each Baron captures); at-check Æmber
+highlight in the end-of-turn log; swipe-to-open sidebar ignores card-strip
+swipes; End Turn jiggle and slide happen the same update cycle; first-turn
+discard restriction aligned with play (discard offer now asks the engine's
+`CanDiscard`, so after the opening volition nothing reads as live).
+
+Card text / wording (each is a rendering-standardization task — text comes from
+the effect AST per ADR 0006, so these need engine text work, not a string edit):
+
+- Standardize fight wording to "in a fight with" (KeyForge uses fighting / while
+  fighting / during / etc.). e.g. Krump → "After a creature is destroyed in a
+  fight with Krump, …". This canonically names the timing window when power
+  damage is exchanged in a fight — including splash or other abilities that
+  destroy multiple creatures. (Design: needs a rulebook term + a shared timing
+  window; decide global rename vs. Krump-first.)
+
+Client — UI/UX:
+
+- Deploy: when I play a card with Deploy, offer left/right flank AND deploy
+  left / deploy right; if I choose deploy, let me pick the neighbor by clicking a
+  creature in the battleline rather than a button per creature.
 
 ### Next focus
 
-- profiling - eg running property tests and outputting the profiled usage for hot paths, and then optimizing those paths as a skill
+- tool to extract cards from MV
+- shards should pull in shards for the other houses
 - House Ambassador (eg Brobnar Amassador) as a materialization - make it work as a legacy/maverick to swap with a card in another house
+- bane, brew (common), plant, and blaster variant
 - Way to always settle damage anytime power could change, instead of having to have settles strewn about the codebase. Similarly, way to settle that a card is no longer in play, so its abilities don't proc, and things that it may have triggered can no longer target it consistently instead of having to know all the call sites - eg redacted strange gizmo forge a key was putting amber back on redacted
 - event sourcing
 - drag and drop creature directly into battleline flank (or deploy, with dynamic moving as you go across), upgrade onto creature, artifact into artifact line
@@ -44,32 +69,10 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - ? bdq (see screenshot) is doing the action bar with title cards thing
 - ? they're everywhere sequence
 - auteresolve button
-
-- bane, brew (common), plant, and blaster variant
 - gigantic, tide
-- So the areas on the card are the status area, the art area, and the text area. The status area and text area should be separate boxes so they can have rounded corners, and the art area can remain the same. That should mean if there is no status area then the art area goes all the way up to the title with no seam
-- veylan analyst wording
-- does which of the wilds wording need to be so extensive
-- radiant Truth stun everyone on one line
-- clicking on the player bar should unlift a card
-- If nothing is in the action bar the end turn and undo buttons etc can be there but dimmed/unclickable
-- bigtwig missing glyph
-- swipe from right is annoying
 - have to double click to activate preview from logs
-- Is the player name needed for each row
-- the slide to usable cards is too long - does it happen after jiggle?
-- aember on artifacts goes to opponent?
-- shards should pull in shards for the other houses
-- krump and fighting in general - in a fight with
-- hffs one to one with time traveller
 
-- hazardous
-  Director of Z.Y.X. takes 2 damage (2 total)
-  Director of Z.Y.X. (3 power) fights Ember Imp (4 power)
-  Ember Imp takes 3 damage (5 total)
-  Director of Z.Y.X. takes 4 damage (6 total)
-  Ember Imp is destroyed
-  Director of Z.Y.X. is destroyed
+- tmtp and tezmal - max 1 copy
 
 ## UI finesse
 
@@ -115,7 +118,7 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 ## Wild ideas
 
-- tool to extract cards from MV
+- aember on artifacts goes to opponent?
 - generate 10k decks, score them, and graph their scores with average, mean, std dev, and 95/99/99.9%iles
 - translations
 - Display multiple houses
@@ -128,6 +131,7 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - If a maverick has a fate, it should pull in prophecies - how to balance prophecies so they could be in any deck?
 - Find the 100 longest card tests in keyteki and digest them down to what the test is trying to capture
 - manual mode - change card house, edit bonus icons/distortions - only on manual mode cards
+- Bonus icons don't resolve if the creature dies while resolving them, and they count as the creature dealing the effect, not the game
 
 ## Bot support
 

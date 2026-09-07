@@ -258,7 +258,7 @@ type AemberOnCardReleased struct {
 	To     int
 }
 
-// Text renders the Æmber a departing card released to a pool.
+// Text renders the Æmber a card released to a pool as it left play.
 func (e AemberOnCardReleased) Text(n Namer) string {
 	return fmt.Sprintf("%d Æmber on %s goes to %s's pool",
 		e.Amount, n.Name(e.Card), n.PlayerName(e.To))

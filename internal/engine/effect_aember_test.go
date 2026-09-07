@@ -33,6 +33,30 @@ func TestGainAemberEffect(t *testing.T) {
 	}
 }
 
+func TestGainAemberItsController(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	foe := g.AddToBattleline(testCreature("foe", 1), 1)
+	_ = foe
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	e := GainAember{Player: ItsController, Amount: 1}
+	if e.Text() != "its controller gains 1 Æmber" {
+		t.Errorf("its-controller text = %q", e.Text())
+	}
+
+	// Destroy the enemy creature, then its controller (player 1) gains 1 Æmber.
+	// The controller is captured before the creature leaves play, so the gate pays
+	// the right side even though the destroyed card would revert to its owner.
+	gate := Then{First: Destroy{Target: Target{Kind: TargetChosenCreature}}, Result: e}
+	gate.Resolve(ctx)
+	if g.State.Aember[1] != 1 {
+		t.Errorf("controller aember = %d, want 1", g.State.Aember[1])
+	}
+	if g.State.Aember[0] != 0 {
+		t.Errorf("own aember = %d, want 0", g.State.Aember[0])
+	}
+}
+
 func TestGainAemberPerCount(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.State.Keys[1] = 2 // opponent has forged 2 keys
@@ -114,6 +138,23 @@ func TestLoseAemberEffect(t *testing.T) {
 	foe.Resolve(ctx) // opponent has only 1; floors at 0
 	if g.State.Aember[1] != 0 {
 		t.Errorf("opponent aember = %d, want 0", g.State.Aember[1])
+	}
+}
+
+func TestLoseAemberItsOwner(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("src", 1), 0)
+	foe := g.AddToBattleline(testCreature("foe", 1), 1)
+	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0, It: foe, HasIt: true}
+	g.State.Aember[1] = 3
+
+	e := LoseAember{Player: ItsOwner, Amount: 1}
+	if e.Text() != "its controller loses 1 Æmber" {
+		t.Errorf("its-owner text = %q", e.Text())
+	}
+	e.Resolve(ctx)
+	if g.State.Aember[1] != 2 {
+		t.Errorf("owner aember = %d, want 2", g.State.Aember[1])
 	}
 }
 

@@ -164,6 +164,14 @@ func TestLogEntryText(t *testing.T) {
 		{DamageRefused{Creature: 2}, "Card2 cannot be dealt damage"},
 		{ArmorAbsorbed{Creature: 2, Amount: 1}, "Card2's armor absorbs 1 damage"},
 		{DamageTaken{Creature: 2, Amount: 3, Total: 4}, "Card2 takes 3 damage (4 total)"},
+		{
+			AssaultDealt{Source: 1, Value: 2, Amount: 2, Target: 2},
+			"Card1's 2 Assault deals 2 damage to Card2",
+		},
+		{
+			HazardousDealt{Source: 2, Value: 5, Amount: 5, Target: 1},
+			"Card2's 5 Hazardous deals 5 damage to Card1",
+		},
 
 		// Zones.
 		{

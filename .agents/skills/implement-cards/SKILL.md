@@ -205,3 +205,55 @@ progress as it lands rather than saving one summary for the end — but a report
 not a handoff: after reporting, immediately run `mage tool:nextCard` and begin the
 next card. **Hand back (and only then call `task_complete`) solely when the stop
 condition is met** or you have run out of implementable cards.
+
+## 4. Running the backlog in parallel with subagents
+
+A large backlog is faster to clear with several subagents working at once. The
+one hazard is that they all edit the **same set package**, so a sibling's
+half-written file transiently breaks everyone's `go build`/`go test`. Remove the
+contention rather than serializing:
+
+- **Triage first, on the orchestrator.** Before spawning anyone, read the whole
+  backlog and classify every card into **easy** (composes from the facade),
+  **medium** (one small new primitive), and **gated** (a genuinely new mechanic).
+  Write the classification to the session triage memo. The subagents implement
+  from this list; they do not each re-triage the set.
+- **Give each subagent a disjoint set of cards** (hence disjoint files, since one
+  card is one `<snake>.go` + `<snake>_test.go`). No two agents touch the same
+  file. Hand them the card **names** and let them locate the stub; include the
+  printed text or a one-line mechanic hint so they need no extra lookup.
+- **Dedicate ONE subagent to mechanics.** While the others clear easy cards, a
+  single mechanics agent owns `internal/engine` + `internal/card` for the run and
+  builds the medium/gated primitives (one at a time, each with its engine test and
+  rulebook term). Only this agent edits the engine, so there is no write race on
+  engine files. It reports each primitive it lands so the orchestrator can, in a
+  later wave, hand the now-unblocked cards to a card agent.
+- **Forbid `mage generateComments` / `mage gen` / `mage check` inside subagents.**
+  `generateComments` rewrites **every** card's doc comment repo-wide — that is the
+  real cross-agent race. Card agents write code + a targeted `go test` only; the
+  **orchestrator runs `mage generateComments` once, centrally**, after a wave
+  finishes, then the full `mage gen && mage check`.
+- **Tell every subagent that a transient build break from a file it did not write
+  is expected** — wait a moment and retry the `go test`; never edit or revert
+  another agent's file.
+- **Make skips explicit.** A card agent that discovers its "easy" card actually
+  needs a new primitive must **leave the stub, skip the card, and report it** with
+  the missing primitive — never invent engine surface (that is the mechanics
+  agent's job) and never force a broken implementation.
+- **Waves, not one shot.** Spawn a wave of parallel agents over disjoint easy
+  batches plus the mechanics agent; when they return, the orchestrator runs the
+  central `generateComments` + `mage check`, folds in the mechanics agent's new
+  primitives, and spawns the next wave (including the cards the new primitives just
+  unblocked). Keep the waves going until the stop condition is met.
+- **When the mechanics agent adds new `Effect` nodes, the central `mage check`
+  will fail two ungated spots the subagents cannot see — fix them in the
+  reconcile:** `internal/web` `TestIconTotality` fails until each new effect gets a
+  glyph `case` in `internal/web/icon.go` `effectGlyphs` (the `iconFallbackAllowed`
+  list is empty, so every effect needs a mapping — reuse the nearest sibling's
+  asset), and `internal/cards` `TestOptionsAreInCanonicalOrder` fails if a card
+  uses a `WithX` option no card used before until that option gets an
+  `optionRank` entry in `cardorder_test.go`.
+
+The stop condition, the "keep going" discipline, and the "leave another agent's
+failures alone" rule from sections 1–3 all still hold — parallelism changes
+_how many cards are in flight_, not _when the run ends_.

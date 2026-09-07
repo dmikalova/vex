@@ -184,11 +184,21 @@ func (e DiscardHand) Resolve(ctx *EffectContext) {
 	}
 }
 
-// DiscardRandomFromHand discards one uniformly random card from a player's hand — the
-// "discard a random card" effect on cards like Mind Barb and Tocsin, where the
-// discarding player does not choose which card leaves a hidden hand.
+// DiscardRandomFromHand discards one or more uniformly random cards from a player's
+// hand — the "discard a random card" effect on cards like Mind Barb and Tocsin,
+// where the discarding player does not choose which card leaves a hidden hand.
+// Amount discards that many (Nogi Smartfist discards 2); an unset zero means one.
 type DiscardRandomFromHand struct {
 	Player Player
+	Amount int
+}
+
+// count is how many cards to discard: the named Amount, or one when left unset.
+func (e DiscardRandomFromHand) count() int {
+	if e.Amount < 1 {
+		return 1
+	}
+	return e.Amount
 }
 
 // validate rejects a DiscardRandomFromHand whose player was left unset.
@@ -200,21 +210,29 @@ func (e DiscardRandomFromHand) validate() error {
 }
 
 // Text renders the effect, e.g. "your opponent discards a random card from their
-// hand".
+// hand" or "discard 2 random cards from your hand".
 func (e DiscardRandomFromHand) Text() string {
+	object := "a random card"
+	if e.count() > 1 {
+		object = fmt.Sprintf("%d random cards", e.count())
+	}
 	switch e.Player {
 	case Opponent:
-		return "your opponent discards a random card from their hand"
+		return "your opponent discards " + object + " from their hand"
 	case ItsOwner:
-		return "its owner discards a random card from their hand"
+		return "its owner discards " + object + " from their hand"
 	default:
-		return "discard a random card from your hand"
+		return "discard " + object + " from your hand"
 	}
 }
 
-// Resolve discards one random card from the chosen player's hand.
+// Resolve discards count() random cards from the chosen player's hand, one at a
+// time (a smaller hand simply discards fewer).
 func (e DiscardRandomFromHand) Resolve(ctx *EffectContext) {
-	ctx.Resolver.DiscardRandomFromHand(ctx.PlayerFor(e.Player))
+	p := ctx.PlayerFor(e.Player)
+	for i := 0; i < e.count(); i++ {
+		ctx.Resolver.DiscardRandomFromHand(p)
+	}
 }
 
 // DiscardRandomFromArchives discards one uniformly random card from a player's
@@ -255,16 +273,23 @@ func (e DiscardRandomFromArchives) Resolve(ctx *EffectContext) {
 // (Sloppy Labwork), distinct from DiscardHand (which discards every matching card)
 // and DiscardRandomFromHand (which the player does not choose). Types limits the
 // choice to the listed card types (Feeding Pit's "discard a creature from your
-// hand"); an empty Types allows any card.
+// hand"); an empty Types allows any card. AnyNumber lets the controller discard as
+// many matching cards as they like, declining when done — Helmsman Spears discards
+// any number of cards. Every card discarded this way is recorded on the context so
+// a following ForEachDiscarded can act once per card.
 type DiscardFromHand struct {
-	Amount int
-	Types  []CardType
+	Amount    int
+	Types     []CardType
+	AnyNumber bool
 }
 
 // Text renders the effect, e.g. "discard a card from your hand", naming the source
 // zone explicitly (rule 17).
 func (e DiscardFromHand) Text() string {
 	noun := typeNoun(e.Types)
+	if e.AnyNumber {
+		return "discard any number of " + noun + "s from your hand"
+	}
 	if e.Amount == 1 {
 		return "discard " + indefinite(noun) + " from your hand"
 	}
@@ -277,10 +302,10 @@ func (e DiscardFromHand) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 
 // resolveGate performs the discards and reports whether any card was discarded, so
 // DiscardFromHand can gate a Then — Feeding Pit only gains Æmber if a creature was
-// discarded.
+// discarded. Each discarded card is appended to ctx.Produced.Discarded.
 func (e DiscardFromHand) resolveGate(ctx *EffectContext) bool {
 	moved := false
-	for i := 0; i < e.Amount; i++ {
+	for i := 0; e.AnyNumber || i < e.Amount; i++ {
 		var candidates []LocalID
 		for _, id := range ctx.Resolver.Hand(ctx.Controller) {
 			if matchesTypes(e.Types, ctx.Resolver.TypeOf(id)) {
@@ -290,11 +315,20 @@ func (e DiscardFromHand) resolveGate(ctx *EffectContext) bool {
 		if len(candidates) == 0 {
 			return moved
 		}
-		id, ok := ctx.ChooseCreature("Choose a card to discard", candidates)
+		var (
+			id LocalID
+			ok bool
+		)
+		if e.AnyNumber {
+			id, ok = ctx.ChooseCardOptional("Choose a card to discard", candidates)
+		} else {
+			id, ok = ctx.ChooseCreature("Choose a card to discard", candidates)
+		}
 		if !ok {
 			return moved
 		}
 		ctx.Resolver.DiscardCardFromHand(ctx.Controller, id)
+		ctx.Produced.Discarded = append(ctx.Produced.Discarded, id)
 		moved = true
 	}
 	return moved

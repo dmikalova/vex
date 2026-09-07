@@ -110,7 +110,9 @@ func (g *Game) PlayAction(player, handIndex int) error {
 }
 
 // DiscardFromHand discards a card of the active house from a player's hand,
-// moving it to the discard pile. It performs no other effect.
+// moving it to the discard pile and firing any "after you discard a card from
+// your hand" reactions (Baron Mengevin captures Æmber when you discard a Sanctum
+// card).
 func (g *Game) DiscardFromHand(player, handIndex int) error {
 	if g.State.Winner >= 0 {
 		return ErrGameOver
@@ -129,10 +131,7 @@ func (g *Game) DiscardFromHand(player, handIndex int) error {
 	if !g.inActiveHouse(g.cat.def(id)) {
 		return ErrWrongHouse
 	}
-	hand.removeAt(handIndex)
-	g.State.Discard[player].add(id)
-	g.State.DiscardedThisTurn[player].add(id)
-	g.record(CardDiscarded{Player: player, Card: id})
+	g.DiscardCardFromHand(player, id)
 	return nil
 }
 
@@ -463,6 +462,11 @@ func (g *Game) playCreatureCard(player int, id LocalID, flankLeft bool) {
 		FlankLeft: pos == 0,
 		Interior:  interior,
 	})
+	// The arrival can push a neighbor off a flank, dropping it below the power its
+	// flank bonus was keeping it at. That is a state-based death that settles at
+	// once — before bonus icons and before the after-play window — so the played
+	// creature's own ability never sees the doomed neighbor still in play.
+	g.settleDestroyed(player)
 	g.applyAemberBonus(id)
 	g.triggerAbilities(id, TriggerAfterPlay, 0, false)
 	g.emitCreatureEnters(id)

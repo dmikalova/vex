@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Human • Knight
 //
-//	After you discard a card from your hand, if it is a Sanctum card, Baron Mengevin captures 1 Æmber from your opponent.
+//	After you discard a Sanctum card, Baron Mengevin captures 1 Æmber from your opponent.
 var BaronMengevin = card.New(
 	"Baron Mengevin",
 	card.House.Sanctum,

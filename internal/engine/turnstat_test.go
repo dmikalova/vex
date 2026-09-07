@@ -113,6 +113,16 @@ func TestTurnCount(t *testing.T) {
 		t.Errorf("CountClause = %q", got)
 	}
 
+	destroyed := TurnCount{Player: Controller, Of: EnemyCreaturesDestroyed}
+	if got := destroyed.CountClause("3 or more", true); got !=
+		"3 or more enemy creatures have been destroyed this turn" {
+		t.Errorf("CountClause(destroyed, plural) = %q", got)
+	}
+	if got := destroyed.CountClause("exactly 1", false); got !=
+		"exactly 1 enemy creature has been destroyed this turn" {
+		t.Errorf("CountClause(destroyed, singular) = %q", got)
+	}
+
 	g := NewGame("A", "B", 1)
 	g.State.TurnHistory[0][EnemyCreaturesFightKilled] = 2
 	if got := c.Value(&EffectContext{Resolver: g, Controller: 0}); got != 2 {

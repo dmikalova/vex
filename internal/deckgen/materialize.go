@@ -53,6 +53,11 @@ type ConnectedCard struct {
 	Copies int
 	// Chance is how often the pull fires, in (0, 1]; 1 is every time.
 	Chance float64
+	// Exact makes the pull fire once per puller instance rather than once per
+	// pod: a pod with N pullers ends up holding N*Copies of the connected card,
+	// so each Timetraveller pulls its own Help from Future Self. Left false, the
+	// pull is a pod-wide "at least Copies", the flavour Troop Call needs.
+	Exact bool
 }
 
 // Empty reports whether the connection pulls nothing.

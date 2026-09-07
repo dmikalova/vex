@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// MabTheMad
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Mab the Mad
 //
 //	House:  Untamed
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Faerie
 //
-//	Reap: Shuffle Mab the Mad into your deck.
+//	Reap: Shuffle Mab the Mad into its owner's deck.
 var MabTheMad = card.New(
 	"Mab the Mad",
 	card.House.Untamed,
@@ -26,5 +21,9 @@ var MabTheMad = card.New(
 	card.WithPower(2),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Faerie),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Reap, card.PutFromPlay{
+			Target:      card.Target.This,
+			Destination: card.To.DeckShuffled,
+		}),
 )

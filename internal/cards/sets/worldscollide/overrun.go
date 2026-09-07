@@ -1,20 +1,15 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Overrun
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
 //	House:  Brobnar
 //	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: If 3 or more enemy creatures have been destroyed this turn, your opponent loses 2A.
+//	Play: If 3 or more enemy creatures have been destroyed this turn, your opponent loses 2 Æmber.
 var Overrun = card.New(
 	"Overrun",
 	card.House.Brobnar,
@@ -22,5 +17,19 @@ var Overrun = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, 25),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Conditional{
+			Cond: card.CountIs{
+				Count: card.TurnCount{
+					Player: card.Controller,
+					Of:     card.TurnStat.EnemyCreaturesDestroyed,
+				},
+				Is:     card.AtLeast,
+				Amount: 3,
+			},
+			Then: card.LoseAember{
+				Player: card.Opponent,
+				Amount: 2,
+			},
+		}),
 )

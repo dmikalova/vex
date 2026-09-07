@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// RhetorGallim
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Rhetor Gallim
 //
 //	House:  Saurian
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Dinosaur • Philosopher
 //
-//	Play: Your opponent's keys cost +3A during their next turn.
-//	Reap: You may exalt Rhetor Gallim. If you do, your opponent's keys cost +3A during their next turn.
+//	Play: Keys cost +3 Æmber during your opponent's next turn.
+//	Reap: You may exalt Rhetor Gallim. Keys cost +3 Æmber during your opponent's next turn.
 var RhetorGallim = card.New(
 	"Rhetor Gallim",
 	card.House.Saurian,
@@ -25,5 +20,22 @@ var RhetorGallim = card.New(
 	card.Provenance(card.WC, 192),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Philosopher),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.RaiseKeyCost{
+			Player:   card.Opponent,
+			Amount:   3,
+			Duration: card.Duration.NextTurn,
+		}),
+	card.WithAbility(
+		card.Trigger.Reap, card.May{Do: card.Sentences{Effects: []card.Effect{
+			card.Exalt{
+				Target: card.Target.This,
+				Amount: 1,
+			},
+			card.RaiseKeyCost{
+				Player:   card.Opponent,
+				Amount:   3,
+				Duration: card.Duration.NextTurn,
+			},
+		}}}),
 )

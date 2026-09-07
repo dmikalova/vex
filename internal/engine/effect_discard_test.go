@@ -266,6 +266,26 @@ func TestDiscardRandomFromHand(t *testing.T) {
 	}
 }
 
+func TestDiscardRandomFromHandAmount(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.AddToHand(NewCard("a", Mars, Tactic, Common), 0)
+	g.AddToHand(NewCard("b", Mars, Tactic, Common), 0)
+	g.AddToHand(NewCard("c", Mars, Tactic, Common), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	e := DiscardRandomFromHand{Player: Controller, Amount: 2}
+	if got := e.Text(); got != "discard 2 random cards from your hand" {
+		t.Errorf("text = %q", got)
+	}
+	e.Resolve(ctx)
+	if g.State.Hand[0].Count != 1 {
+		t.Errorf("hand count = %d, want 1 after discarding 2", g.State.Hand[0].Count)
+	}
+	if g.State.Discard[0].Count != 2 {
+		t.Errorf("discard count = %d, want 2", g.State.Discard[0].Count)
+	}
+}
+
 func TestDiscardRandomFromArchives(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	a := g.AddToArchives(NewCard("a", Mars, Tactic, Common), 1)
@@ -349,6 +369,43 @@ func TestDiscardFromHandEffectDeclined(t *testing.T) {
 	if g.State.Discard[0].Count != 0 {
 		t.Error("a declined discard choice should discard nothing")
 	}
+}
+
+func TestDiscardFromHandAnyNumber(t *testing.T) {
+	t.Run("text renders any number", func(t *testing.T) {
+		if got := (DiscardFromHand{AnyNumber: true}).Text(); got != "discard any number of cards from your hand" {
+			t.Errorf("text = %q", got)
+		}
+	})
+
+	t.Run("discards every card and records each on the context", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.AddToHand(NewCard("a", Logos, Tactic, Common), 0)
+		g.AddToHand(NewCard("b", Logos, Tactic, Common), 0)
+		g.AddToHand(NewCard("c", Logos, Tactic, Common), 0)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+		(DiscardFromHand{AnyNumber: true}).Resolve(ctx)
+		if g.State.Hand[0].Count != 0 {
+			t.Errorf("hand = %d, want 0", g.State.Hand[0].Count)
+		}
+		if got := len(ctx.Produced.Discarded); got != 3 {
+			t.Errorf("recorded discards = %d, want 3", got)
+		}
+	})
+
+	t.Run("declining discards nothing", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.AddToHand(NewCard("d", Logos, Tactic, Common), 0)
+		g.SetChooser(0, &declineAfterChooser{})
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+		(DiscardFromHand{AnyNumber: true}).Resolve(ctx)
+		if g.State.Discard[0].Count != 0 {
+			t.Error("a declined discard should discard nothing")
+		}
+		if len(ctx.Produced.Discarded) != 0 {
+			t.Error("a declined discard should record nothing")
+		}
+	})
 }
 
 func TestDiscardFromHandCreaturesOnlyGate(t *testing.T) {

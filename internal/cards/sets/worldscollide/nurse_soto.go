@@ -1,29 +1,28 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// NurseSoto
+// Nurse Soto
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Creature
 //	Rarity: Uncommon
 //	Power:  3
 //	Traits: Human
 //
-//	Deploy. (This creature can enter play anywhere in your battleline.)
-//	Play/Fight/Reap: Heal 3 damage from each of Nurse Soto's neighbors.
+//	Deploy.
+//	Play/Fight/Reap: Heal 3 damage from each neighboring creature.
 var NurseSoto = card.New(
 	"Nurse Soto",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, 315),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Deploy),
+	card.WithPlayFightReap(card.Heal{
+		Amount: 3,
+		Target: card.Target.EachCreature.Neighboring(),
+	}),
 )

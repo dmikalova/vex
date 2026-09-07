@@ -1,10 +1,16 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Brutodon Auxiliary
+//
+//	House:  Saurian
+//	Type:   Creature
+//	Rarity: Common
+//	Power:  6
+//	Traits: Beast
+//
+//	Taunt, Hazardous 2.
 var BrutodonAuxiliary = card.New(
 	"Brutodon Auxiliary",
 	card.House.Saurian,

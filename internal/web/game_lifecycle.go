@@ -500,8 +500,9 @@ const swipeMinDistance = 60
 // travels left reveals the sidebar, and a swipe that travels right hides it. It
 // mirrors the » / « reveal buttons for a phone where the edge is easier to reach
 // than the button. A mostly-vertical drag (scrolling a strip or the log) is left
-// alone, and an open-swipe must begin in the edge band so a mid-board drag does
-// not summon the drawer.
+// alone, an open-swipe must begin in the edge band so a mid-board drag does not
+// summon the drawer, and a swipe that begins on a horizontally-scrollable card row
+// never opens the sidebar so scrolling a row of creatures is not mistaken for one.
 func (g *game) installSwipeGestures() {
 	if g.touchStartFunc != nil {
 		return
@@ -530,6 +531,10 @@ func (g *game) installSwipeGestures() {
 		// instead of moving the sidebar.
 		g.toastSwipeStart = target.Truthy() &&
 			target.Call("closest", ".log-toast").Truthy()
+		// Note whether the touch began inside a horizontally-scrollable card row, so
+		// scrolling a row of creatures or artifacts is not mistaken for an open-swipe.
+		g.swipeOnStrip = target.Truthy() &&
+			target.Call("closest", ".card-strip").Truthy()
 		return nil
 	})
 	g.touchEndFunc = app.FuncOf(func(_ app.Value, args []app.Value) any {
@@ -555,8 +560,9 @@ func (g *game) installSwipeGestures() {
 		}
 		width := app.Window().Get("innerWidth").Float()
 		switch {
-		case dx < 0 && g.sidebarCollapsed && g.swipeStartX >= width-swipeEdgeBand:
-			// Swipe left from the right edge: reveal the hidden sidebar.
+		case dx < 0 && g.sidebarCollapsed && g.swipeStartX >= width-swipeEdgeBand && !g.swipeOnStrip:
+			// Swipe left from the right edge: reveal the hidden sidebar. A swipe that
+			// began on a scrollable card row is left to scroll that row instead.
 			g.dispatch(func(ctx app.Context) { g.toggleSidebar(ctx, app.Event{}) })
 		case dx > 0 && !g.sidebarCollapsed:
 			// Swipe right: hide the sidebar out to the edge.

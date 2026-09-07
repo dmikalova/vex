@@ -17,8 +17,7 @@ func (g *game) renderHand() app.UI {
 	ids := g.sortedHand(p)
 	return app.Div().Class("board-row").Body(
 		app.Div().Class("row-label").Body(
-			app.Span().Class("row-label-name").Text(g.g.PlayerName(p)+" "),
-			app.Span().Class("row-label-zone").Text("hand "),
+			app.Span().Class("row-label-zone").Text("Hand "),
 			app.Text(fmt.Sprintf("(%d", len(ids))),
 			icon("zone-hand", "row-label-icon"),
 			app.Text(")"),

@@ -1,26 +1,26 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// UniversalTranslator
+// Universal Translator
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Upgrade
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains, "Fight/Reap: Use a friendly non-Star Alliance creature."
+//	This creature gains, "Fight/Reap: Use a non-Star Alliance creature."
 var UniversalTranslator = card.New(
 	"Universal Translator",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, 322),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithStatic(card.StaticModifier{
+		Granted: card.FightOrReap(card.Use{
+			Max:    1,
+			Target: card.Target.EachFriendlyCreature.ExceptHouse(card.House.Self),
+		}),
+	}),
 )

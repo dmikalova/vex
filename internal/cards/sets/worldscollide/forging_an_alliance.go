@@ -1,26 +1,28 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ForgingAnAlliance
+// Forging an Alliance
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Forge a key at +7A current cost, reduced by 1A (to a maximum of 6) for each house represented among cards in play.
+//	Play: Forge a key at +7 Æmber current cost, reduced by 1 Æmber for each house represented among cards in play (to a maximum of 6).
 var ForgingAnAlliance = card.New(
 	"Forging an Alliance",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, 331),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.ForgeKey{
+			Extra: 7,
+			ReducedBy: card.HousesAmong{
+				Player: card.EachPlayer,
+				Max:    6,
+			},
+		}),
 )

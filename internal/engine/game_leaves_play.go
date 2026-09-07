@@ -195,6 +195,34 @@ func (g *Game) filterUndestroyed(controller int, ids []LocalID) []LocalID {
 	return out
 }
 
+// excludeOpenWindows drops creatures whose Destroyed window is already open — the
+// ones an enclosing destruction batch is still resolving. A nested destruction
+// that re-selects them (Harbinger of Doom's "destroy each creature" re-selects
+// Harbinger) leaves them to the enclosing batch, so they neither re-fire their
+// Destroyed abilities nor get discarded twice.
+func (g *Game) excludeOpenWindows(ids []LocalID) []LocalID {
+	if len(g.destroyingWindow) == 0 {
+		return ids
+	}
+	var out []LocalID
+	for _, id := range ids {
+		if !g.inDestroyingWindow(id) {
+			out = append(out, id)
+		}
+	}
+	return out
+}
+
+// inDestroyingWindow reports whether a creature's Destroyed window is already open.
+func (g *Game) inDestroyingWindow(id LocalID) bool {
+	for _, w := range g.destroyingWindow {
+		if w == id {
+			return true
+		}
+	}
+	return false
+}
+
 // destroyTogether destroys several creatures as one simultaneous event, matching
 // KeyForge timing. Every creature remains in play while all of their Destroyed
 // abilities are collected; the active player resolves those abilities in an order
@@ -205,6 +233,15 @@ func (g *Game) filterUndestroyed(controller int, ids []LocalID) []LocalID {
 // creature still in play goes to its discard pile.
 func (g *Game) destroyTogether(controller int, ids []LocalID) {
 	ids = g.filterUndestroyed(controller, ids)
+	// A creature caught by a nested destruction while its own Destroyed window is
+	// still open (Harbinger of Doom's "Destroyed: destroy each creature" re-selects
+	// Harbinger) is already being destroyed by the enclosing batch; drop it here so
+	// its Destroyed abilities do not fire twice and it is discarded once.
+	ids = g.excludeOpenWindows(ids)
+	g.destroyingWindow = append(g.destroyingWindow, ids...)
+	defer func() {
+		g.destroyingWindow = g.destroyingWindow[:len(g.destroyingWindow)-len(ids)]
+	}()
 	// The source is consumed by the batch it directly targets; any state-based
 	// deaths that follow (a creature that lost a buff) narrate passively.
 	source, hasSource := g.destroyingSource, g.hasDestroyingSource
@@ -260,8 +297,8 @@ func (g *Game) destroyTogether(controller int, ids []LocalID) {
 	// combat).
 	for _, id := range ids {
 		if g.TypeOf(id) == Creature {
-			g.emitEnemyDestroyed(id)
-			g.emitCreatureDestroyed(id)
+			g.emitAfterEnemyDestroyed(id)
+			g.emitAfterCreatureDestroyed(id)
 		}
 	}
 }

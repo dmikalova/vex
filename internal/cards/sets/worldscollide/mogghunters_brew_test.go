@@ -1,5 +1,3 @@
-//go:build todo
-
 package worldscollide
 
 import (
@@ -10,6 +8,13 @@ import (
 )
 
 // Mogghunter's Brew
+//
+//	House:  Brobnar
+//	Type:   Tactic
+//	Rarity: Rare
+//	Æmber:  1
+//
+//	Play: Give a creature two +1 power counters.
 func TestMogghuntersBrew(t *testing.T) {
 	t.Run("gives a creature two +1 power counters", func(t *testing.T) {
 		var troll ct.Card

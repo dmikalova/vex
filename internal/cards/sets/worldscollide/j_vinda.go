@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// JVinda
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// J. Vinda
 //
 //	House:  Shadows
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Elf • Thief
 //
-//	Elusive. (The first time this creature is attacked each turn, no damage is dealt.)
-//	Reap: Deal 1D to a creature. If this damage destroys that creature, steal 1A.
+//	Elusive.
+//	Reap: Deal 1 damage to a creature. If this damage destroys that creature, steal 1 Æmber.
 var JVinda = card.New(
 	"J. Vinda",
 	card.House.Shadows,
@@ -25,5 +20,11 @@ var JVinda = card.New(
 	card.Provenance(card.WC, 242),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithAbility(
+		card.Trigger.Reap, card.DamageThenIfDestroyed{
+			Amount: 1,
+			Target: card.Target.Creature,
+			Then:   card.StealAember{Amount: 1},
+		}),
 )

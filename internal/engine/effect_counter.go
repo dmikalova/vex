@@ -30,17 +30,33 @@ func (e AddPowerCounter) Text() string {
 	return forEach(e.Per, fmt.Sprintf("give %s %s", e.Target.Text(), e.counters()))
 }
 
-// counters renders the tokens placed, e.g. "a +1 power counter" or "2 +1 power
-// counters": a larger Amount is that many single counters.
+// counters renders the tokens placed, e.g. "a +1 power counter" or "two +1 power
+// counters": a larger Amount is that many single counters, and the count is
+// spelled out to match KeyForge's printed wording.
 func (e AddPowerCounter) counters() string {
 	unit := 1
 	if e.Amount < 0 {
 		unit = -1
 	}
 	if n := e.Amount * unit; n != 1 {
-		return fmt.Sprintf("%d %+d power counters", n, unit)
+		return fmt.Sprintf("%s %+d power counters", spellCounters(n), unit)
 	}
 	return fmt.Sprintf("a %+d power counter", unit)
+}
+
+// counterWords spells out the small counts KeyForge prints as words.
+var counterWords = map[int]string{
+	2: "two", 3: "three", 4: "four", 5: "five",
+	6: "six", 7: "seven", 8: "eight", 9: "nine", 10: "ten",
+}
+
+// spellCounters renders a token count as its English word, falling back to the
+// digits for counts larger than KeyForge ever prints.
+func spellCounters(n int) string {
+	if w, ok := counterWords[n]; ok {
+		return w
+	}
+	return fmt.Sprintf("%d", n)
 }
 
 // Resolve places the counters on each selected creature, scaled by Per.

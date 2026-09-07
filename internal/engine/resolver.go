@@ -87,6 +87,10 @@ type CreatureReader interface {
 	// to having left play or being an artifact — only a battleline creature can be
 	// moved to a flank.
 	InBattleline(id LocalID) bool
+	// InCenterOfBattleline reports whether a creature sits in the exact center of
+	// its controller's battleline — the middle creature of an odd-sized line, with
+	// equal creatures to its left and right. An even-sized line has no center.
+	InCenterOfBattleline(id LocalID) bool
 	// Armor is a creature's armor value, before any of it is spent or stripped.
 	Armor(id LocalID) int
 	// ArmorStripped is how much armor an effect has taken off a creature this turn,
@@ -136,6 +140,9 @@ type ZoneReader interface {
 	Artifacts(player int) []LocalID
 	// Upgrades returns the upgrades attached to a host, in order.
 	Upgrades(host LocalID) []LocalID
+	// HostOf returns the creature an attached upgrade is on, reporting ok=false
+	// when the id is not attached to any creature.
+	HostOf(upgrade LocalID) (LocalID, bool)
 	// Hand returns a copy of a player's hand.
 	Hand(player int) []LocalID
 	// Discard returns a copy of a player's discard pile.
@@ -397,6 +404,11 @@ type ZoneResolver interface {
 	// MoveFromDeckToDiscard moves a card from its owner's deck to their discard
 	// pile — a card the controller looked at and chose not to keep (Eyegor).
 	MoveFromDeckToDiscard(id LocalID)
+	// SetDeckTop rewrites the top len(order) cards of a player's deck to the given
+	// order (order[0] becomes the new top) — the controller reordering the cards
+	// they looked at (Navigator Ali). The ids must be exactly the cards currently
+	// in those top positions, permuted.
+	SetDeckTop(player int, order []LocalID)
 	// PlayFromDeck plays a specific card from a player's deck, removing it from the
 	// deck as it is played (Chaos Portal plays the card it revealed).
 	PlayFromDeck(player int, id LocalID)
@@ -440,6 +452,10 @@ type ZoneResolver interface {
 	// ArchiveCardUnder moves each card placed under host to its owner's archives
 	// (Jargogle's Destroyed ability when it is not its controller's turn).
 	ArchiveCardUnder(host LocalID)
+	// MoveUpgrade relocates an already-attached upgrade from its current host onto
+	// newHost, keeping it in play (a movable Star Alliance "blaster" homing to its
+	// signature creature). It does nothing when the upgrade is not attached.
+	MoveUpgrade(upgrade, newHost LocalID)
 	// ShuffleZonesIntoDeck moves each named zone's cards into a player's deck and
 	// shuffles once (discard, hand, archives).
 	ShuffleZonesIntoDeck(player int, zones []Zone)
@@ -483,6 +499,9 @@ type TurnResolver interface {
 	// CannotUseNextTurn bars a player from reaping, fighting, or using an "Action:"
 	// ability throughout their next turn (Skippy Timehog).
 	CannotUseNextTurn(player int, source LocalID)
+	// CannotReapNextTurn bars a player from reaping with any creature throughout
+	// their next turn (Inky Gloom); fighting and "Action:" abilities stay open.
+	CannotReapNextTurn(player int, source LocalID)
 	// CannotReapHouseNextTurn bars a player from reaping with creatures of the given
 	// house throughout their next turn (Seismo-entangler).
 	CannotReapHouseNextTurn(player int, house House, source LocalID)
@@ -676,14 +695,13 @@ func (g *Game) TypeOf(id LocalID) CardType { return g.cat.def(id).Type }
 
 // SetAember sets a player's Æmber pool, clamped at zero. Pool Æmber can feed a
 // creature's power (Marmo Swarm gains +1 power per Æmber in its controller's pool),
-// so lowering a pool can leave a creature with lethal damage; settleDestroyed
-// notices, mirroring the sweep addAmberOn runs when card-borne Æmber changes.
+// so lowering a pool can leave a creature with lethal damage; the resolution
+// boundary settles that, not this write (ADR 0029).
 func (g *Game) SetAember(player, amount int) {
 	if amount < 0 {
 		amount = 0
 	}
 	g.State.Aember[player] = amount
-	g.settleDestroyed(g.State.ActivePlayer)
 }
 
 // stateOf returns a card's mutable in-play state, or nil once it has left play.
@@ -935,13 +953,12 @@ func (g *Game) MarkPlayedActionArchived(id LocalID) {
 }
 
 // AddPowerCounter changes the net power counters on a creature. A -1 counter can
-// lower power to the damage already marked, so the board is settled after — the
-// same sweep a leaving buff needs.
+// lower power to the damage already marked; the resolution boundary settles that,
+// not this write (ADR 0029).
 func (g *Game) AddPowerCounter(id LocalID, delta int) {
 	if c := g.stateOf(id); c != nil {
 		c.PowerCounters += int16(delta)
 	}
-	g.settleDestroyed(g.State.ActivePlayer)
 }
 
 // PutFromDiscardIntoHand moves a card from its owner's discard pile to their hand.
@@ -966,6 +983,13 @@ func (g *Game) MoveFromDeckToDiscard(id LocalID) {
 	g.State.Deck[o].remove(id)
 	g.State.Discard[o].add(id)
 	g.record(CardDiscardedFromDeck{Player: o, Card: id})
+}
+
+// SetDeckTop rewrites the top len(order) cards of player's deck to order, with
+// order[0] on top. The reorder is private information, so it records no log line.
+func (g *Game) SetDeckTop(player int, order []LocalID) {
+	d := &g.State.Deck[player]
+	copy(d.IDs[:], order)
 }
 
 // ShuffleZonesIntoDeck moves each named zone's cards into a player's deck and

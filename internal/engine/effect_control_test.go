@@ -337,7 +337,8 @@ func TestRevertibleControlDedupesBySource(t *testing.T) {
 	}
 }
 
-// A creature kept alive only by its own side's +power aura is destroyed the moment
+// A creature kept alive only by its own side's +power aura is destroyed at the
+// resolution boundary once it changes sides and loses that aura.
 func TestTakeControlDestroysNewlyLethalCreature(t *testing.T) {
 	g := started(t)
 	g.AddArtifact(NewCard("Banner", Brobnar, Artifact, Rare, WithConstantAbility(
@@ -350,6 +351,7 @@ func TestTakeControlDestroysNewlyLethalCreature(t *testing.T) {
 	}
 
 	g.takeControl(ape, 0, 0)
+	g.settleDestroyed(0) // the resolution boundary settles the swap (ADR 0029)
 
 	if g.inPlay(ape) {
 		t.Fatalf("ape is still in play at %d power with 3 damage", g.Power(ape))

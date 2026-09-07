@@ -1,15 +1,10 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ForceField
+// Force Field
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Upgrade
 //	Rarity: Uncommon
 //	Æmber:  1
@@ -17,10 +12,15 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	This creature gains, "Reap: Ward this creature."
 var ForceField = card.New(
 	"Force Field",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, 310),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithStatic(card.StaticModifier{
+		Granted: []card.Ability{{
+			Trigger: card.Trigger.Reap,
+			Effect:  card.Ward{Target: card.Target.This},
+		}},
+	}),
 )

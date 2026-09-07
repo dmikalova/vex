@@ -15,7 +15,7 @@ import (
 //	Power:  5
 //	Traits: Giant
 //
-//	After a creature is destroyed fighting Gravelguts, give Gravelguts 2 +1 power counters.
+//	After a creature is destroyed fighting Gravelguts, give Gravelguts two +1 power counters.
 func TestGravelguts(t *testing.T) {
 	t.Run("gains two +1 power counters when an enemy is destroyed fighting it", func(t *testing.T) {
 		var foe ct.Card

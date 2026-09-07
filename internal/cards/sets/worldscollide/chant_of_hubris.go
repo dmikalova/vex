@@ -1,10 +1,15 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Chant of Hubris
+//
+//	House:  Saurian
+//	Type:   Tactic
+//	Rarity: Common
+//	Æmber:  1
+//
+//	Play: Move 1 Æmber from a creature to another creature.
 var ChantOfHubris = card.New(
 	"Chant of Hubris",
 	card.House.Saurian,

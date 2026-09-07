@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// MoorWolf
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Moor Wolf
 //
 //	House:  Untamed
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast • Wolf
 //
 //	Skirmish.
-//	Play: Ready each other Wolf creature.
+//	Play: Ready each other friendly Wolf creature.
 var MoorWolf = card.New(
 	"Moor Wolf",
 	card.House.Untamed,
@@ -25,5 +20,9 @@ var MoorWolf = card.New(
 	card.Provenance(card.WC, 393),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Beast, card.Traits.Wolf),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Skirmish),
+	card.WithAbility(
+		card.Trigger.Play, card.Ready{
+			Target: card.Target.EachOtherFriendlyCreature.WithTrait(card.Traits.Wolf),
+		}),
 )

@@ -1,20 +1,15 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// TheGoldenSpiral
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// The Golden Spiral
 //
 //	House:  Saurian
 //	Type:   Artifact
 //	Rarity: Common
 //	Traits: Location
 //
-//	Action: Exalt a friendly creature. Ready and use that creature.
+//	Action: Choose a friendly creature - exalt the chosen creature. Ready and use the chosen creature.
 var TheGoldenSpiral = card.New(
 	"The Golden Spiral",
 	card.House.Saurian,
@@ -22,5 +17,21 @@ var TheGoldenSpiral = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.WC, 194),
 	card.WithTraits(card.Traits.Location),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Action, card.ChooseCreatureThen{
+			Target: card.Target.FriendlyCreature,
+			Then: card.Sentences{Effects: []card.Effect{
+				card.Exalt{
+					Target: card.Target.TheChosenCreature,
+					Amount: 1,
+				},
+				card.OnChooseCreature{
+					Target: card.Target.TheChosenCreature,
+					Verbs: []card.CreatureVerb{
+						card.ReadyVerb{},
+						card.UseVerb{},
+					},
+				},
+			}},
+		}),
 )

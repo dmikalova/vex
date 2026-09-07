@@ -45,6 +45,8 @@ func (e GainAember) Text() string {
 		phrase = fmt.Sprintf("each player gains %d Æmber", e.Amount)
 	case ItsOwner:
 		phrase = fmt.Sprintf("its owner gains %d Æmber", e.Amount)
+	case ItsController:
+		phrase = fmt.Sprintf("its controller gains %d Æmber", e.Amount)
 	}
 	if e.Max > 0 {
 		phrase += fmt.Sprintf(", to a maximum of %d Æmber", e.Max)
@@ -246,6 +248,8 @@ func (e LoseAember) Text() string {
 		subject, verb, possessive = "your opponent", "loses", "their"
 	case ThatPlayer:
 		subject, verb, possessive = "that player", "loses", "their"
+	case ItsOwner:
+		subject, verb, possessive = "its controller", "loses", "their"
 	default:
 		subject, verb, possessive = "", "lose", "your"
 	}

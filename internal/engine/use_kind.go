@@ -37,11 +37,25 @@ func (k UseKind) verb() string {
 	}
 }
 
-// cannotBeUsedTo reports whether a card's printed text bars this way of using it.
+// cannotBeUsedTo reports whether this way of using the card is barred — by the
+// card's own printed text, or by a constant ability of a card in play that grants
+// the restriction to the creatures it reaches (Narp bars its neighbors from
+// reaping).
 func (g *Game) cannotBeUsedTo(id LocalID, kind UseKind) bool {
 	for _, k := range g.cat.def(id).CannotBeUsedTo {
 		if k == kind {
 			return true
+		}
+	}
+	for p := 0; p < 2; p++ {
+		for _, src := range g.allInPlay(p) {
+			for _, c := range g.cat.def(src).ConstantAbilities {
+				for _, k := range c.CannotBeUsedTo {
+					if k == kind && g.constantActive(src, c) && g.constantAffects(src, c, id) {
+						return true
+					}
+				}
+			}
 		}
 	}
 	return false

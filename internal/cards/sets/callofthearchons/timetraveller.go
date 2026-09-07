@@ -21,7 +21,7 @@ var Timetraveller = card.New(
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
 	card.Connects(
-		card.Pull(HelpFromFutureSelf, 1),
+		card.PullExact(HelpFromFutureSelf, 1),
 	),
 	card.WithAbility(
 		card.Trigger.Play, card.Draw{Amount: 2}),

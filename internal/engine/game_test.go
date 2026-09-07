@@ -256,6 +256,23 @@ func TestDiscardFromHand(t *testing.T) {
 	}
 }
 
+// TestDiscardFromHandFiresReactions checks that the manual discard turn action
+// fires "after you discard a card from your hand" reactions (Baron Mengevin), the
+// same as a discard driven by an effect — the two paths must not diverge.
+func TestDiscardFromHandFiresReactions(t *testing.T) {
+	g := started(t)
+	watcher := NewCard("Watcher", Brobnar, Creature, Common, WithPower(3),
+		WithAbility(TriggerAfterDiscardFromHand, GainAember{Player: Controller, Amount: 1}))
+	g.AddToBattleline(watcher, 0)
+	brob := g.AddToHand(testCreature("brob", 3), 0)
+	if err := g.DiscardFromHand(0, handIdxByID(g, 0, brob)); err != nil {
+		t.Fatalf("DiscardFromHand: %v", err)
+	}
+	if got := g.Aember(0); got != 1 {
+		t.Errorf("aember = %d, want 1 (discard reaction should fire)", got)
+	}
+}
+
 // TestCanDiscard checks that CanDiscard reports exactly what DiscardFromHand
 // enforces, so a caller can list the legal discards without replaying the rule.
 func TestCanDiscard(t *testing.T) {

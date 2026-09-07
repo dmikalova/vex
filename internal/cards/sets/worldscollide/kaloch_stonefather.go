@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// KalochStonefather
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Kaloch Stonefather
 //
 //	House:  Brobnar
 //	Type:   Creature
@@ -24,5 +19,9 @@ var KalochStonefather = card.New(
 	card.Provenance(card.WC, 41),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Giant, card.Traits.Leader),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithConstant(card.ConstantAbility{
+		Target:        card.Target.EachFriendlyCreature,
+		Keywords:      card.Keywords(card.Keyword.Skirmish),
+		WhileInCenter: true,
+	}),
 )

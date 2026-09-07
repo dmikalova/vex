@@ -1,10 +1,18 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // C.Ae.N.D.L.E. Unit
+//
+//	House:  Logos
+//	Type:   Creature
+//	Rarity: Uncommon
+//	Power:  5
+//	Armor:  1
+//	Traits: Robot
+//
+//	After an enemy creature reaps, draw a card.
+//	Action: C.Ae.N.D.L.E. Unit captures 1 Æmber from your opponent.
 var CAeNDLEUnit = card.New(
 	"C.Ae.N.D.L.E. Unit",
 	card.House.Logos,

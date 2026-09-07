@@ -47,12 +47,6 @@ func (g *Game) takeControl(id LocalID, controller int, source LocalID) {
 	g.pushControl(id, controller, source)
 	g.placeUnderController(id, controller)
 	g.record(ControlTaken{Player: controller, Card: id})
-	// Switching sides re-aims every constant ability that reads "friendly" or
-	// "enemy", so the card can land already dead: a damaged creature only alive on
-	// the +power its old side gave it, or one whose new side is under a
-	// power-reducing constant ability. unlistFromPlay settled the side it left, not
-	// this one.
-	g.settleDestroyed(g.State.ActivePlayer)
 }
 
 // supersedeControl drops a source's earlier control entry on a card before that
@@ -119,7 +113,7 @@ func (g *Game) placeUnderController(id LocalID, controller int) {
 // names the seized card itself as its source, so it is shed by clearControls when
 // that card leaves play, not here. Every affected card is still in play — a card
 // sheds its own control entries when it leaves (clearControls) — so re-deriving
-// never touches a departed card.
+// never touches a card that has left play.
 func (g *Game) releaseControlHeldBy(source LocalID) {
 	affected := g.dropControls(func(e ControlEntry) bool {
 		return e.Source == source && e.Card != source
@@ -129,9 +123,6 @@ func (g *Game) releaseControlHeldBy(source LocalID) {
 		g.placeUnderController(id, controller)
 		g.record(ControlReturned{Card: id, Owner: controller})
 	}
-	// Handing cards back swaps which side's constant abilities reach them, so
-	// settle once the whole batch has moved.
-	g.settleDestroyed(g.State.ActivePlayer)
 }
 
 // clearControls drops every control effect naming a card as its seized subject,

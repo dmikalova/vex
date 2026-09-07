@@ -1,10 +1,17 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Prescriptive Grammarbot
+//
+//	House:  Logos
+//	Type:   Creature
+//	Rarity: Rare
+//	Power:  3
+//	Traits: Robot
+//
+//	Taunt, Hazardous 3.
+//	Reap: Enrage a creature.
 var PrescriptiveGrammarbot = card.New(
 	"Prescriptive Grammarbot",
 	card.House.Logos,

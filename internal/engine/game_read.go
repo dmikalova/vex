@@ -137,6 +137,9 @@ func (g *Game) constantActive(src LocalID, c ConstantAbility) bool {
 	if c.WhileOffFlank && g.onFlankOf(src) {
 		return false
 	}
+	if c.WhileInCenter && !g.InCenterOfBattleline(src) {
+		return false
+	}
 	return true
 }
 
@@ -388,6 +391,19 @@ func (g *Game) InBattleline(id LocalID) bool {
 	return g.State.Battleline[0].contains(id) || g.State.Battleline[1].contains(id)
 }
 
+// InCenterOfBattleline reports whether a creature sits in the exact center of its
+// controller's battleline: the single middle creature of an odd-sized line, with
+// equal creatures to its left and right. An even-sized line has no center, so a
+// creature there is never centered; a lone creature is its own center.
+func (g *Game) InCenterOfBattleline(id LocalID) bool {
+	bl := g.State.Battleline[g.controller(id)].slice()
+	n := len(bl)
+	if n%2 == 0 {
+		return false
+	}
+	return bl[n/2] == id
+}
+
 // cannotFight reports whether a player is barred from using creatures to fight,
 // by a timed bar (Fogbank) or a constant Restrictions.Fighting rule on a card
 // they control in play.
@@ -425,11 +441,15 @@ func (g *Game) cannotReapHouse(player int, id LocalID) bool {
 	return bar.Value != HouseNone && bar.Value == g.House(id)
 }
 
-// cannotReap reports whether a player is barred from reaping by a constant
-// Restrictions.Reaping rule on a card in play — either their own (Reaping
-// Controller) or their opponent's (Barrister Joya's Reaping Opponent, "Enemy
-// creatures cannot reap.").
+// cannotReap reports whether a player is barred from reaping — either by the
+// timed player-wide bar armed for this turn (Inky Gloom) or by a constant
+// Restrictions.Reaping rule on a card in play, their own (Reaping Controller) or
+// their opponent's (Barrister Joya's Reaping Opponent, "Enemy creatures cannot
+// reap.").
 func (g *Game) cannotReap(player int) bool {
+	if g.State.CannotReap[player].Value {
+		return true
+	}
 	for owner := 0; owner < 2; owner++ {
 		for _, id := range g.allInPlay(owner) {
 			r := g.cat.def(id).Restricts.Reaping

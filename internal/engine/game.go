@@ -127,6 +127,12 @@ type Game struct {
 	// shuffles A and B into P2's deck") instead of a passive line per creature.
 	shuffleBatch    []LocalID
 	batchingShuffle bool
+	// destroyingWindow holds the creatures whose "Destroyed:" window is currently
+	// open — those already being destroyed by an enclosing batch. A nested
+	// destruction that re-selects one of them (Harbinger of Doom's "Destroyed:
+	// destroy each creature" re-selects Harbinger itself) skips it, so its Destroyed
+	// abilities fire once and it is discarded once. It nests with the call stack.
+	destroyingWindow []LocalID
 }
 
 // NewGame creates a new two-player game seeded for deterministic play.
@@ -185,6 +191,9 @@ func (g *Game) pickCreature(
 	if len(candidates) == 1 {
 		return candidates[0], true
 	}
+	// Boundary: settle before presenting the choice, so the player never chooses
+	// among creatures one of which is already dead (ADR 0029).
+	g.settleDestroyed(player)
 	return g.chooserFor(player).ChooseCreature(source, renderPrompt(source, prompt), candidates)
 }
 
@@ -195,6 +204,8 @@ func (g *Game) pickCard(player int, source, prompt string, candidates []LocalID)
 	if len(candidates) == 1 {
 		return candidates[0], true
 	}
+	// Boundary: settle before presenting the choice (ADR 0029).
+	g.settleDestroyed(player)
 	return g.chooserFor(player).ChooseCreature(source, renderPrompt(source, prompt), candidates)
 }
 
@@ -212,6 +223,8 @@ func (g *Game) pickOptional(
 	if len(candidates) == 0 {
 		return 0, false
 	}
+	// Boundary: settle before presenting the choice (ADR 0029).
+	g.settleDestroyed(player)
 	if dc, ok := g.chooserFor(player).(DeclinableChooser); ok {
 		return dc.ChooseCardOrDecline(source, renderPrompt(source, prompt), candidates)
 	}

@@ -45,8 +45,8 @@ comment/rulebook generation, golines), so use them:
   file) and grep the log for the card by name to see when it entered, what damage
   and power it showed, and which other card was buffing, blanking, capturing, or
   neighboring it. A creature that dies "for no reason" almost always lost a buff a
-  now-departed card was granting — so identify the cards that were in play around
-  it, not only the card the invariant printed.
+  card that has since left play was granting — so identify the cards that were in
+  play around it, not only the card the invariant printed.
 
 - `mage trace` — play the fixed-seed property games once with the game log on and
   write every line to `tmp/sim/trace.log` (gitignored), so a whole game reads end

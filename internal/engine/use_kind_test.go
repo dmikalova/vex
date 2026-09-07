@@ -140,6 +140,21 @@ func TestCannotBeUsedToRejectsUnsetKind(t *testing.T) {
 		WithCannotBeUsedTo(UseKind(0)))
 }
 
+// A constant ability that grants an unset use kind is rejected at registration,
+// just like a printed one, so a broken grant can never reach a game.
+func TestConstantCannotBeUsedToRejectsUnsetKind(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Error("NewCard should reject an unset use kind on a constant ability")
+		}
+	}()
+	NewCard("Bad", Brobnar, Creature, Common, WithPower(1),
+		WithConstantAbility(ConstantAbility{
+			Target:         Target{Kind: TargetEachCreature}.Neighboring(),
+			CannotBeUsedTo: []UseKind{UseKind(0)},
+		}))
+}
+
 func TestDestroyedWhenRejectsInvalidCondition(t *testing.T) {
 	defer func() {
 		if recover() == nil {

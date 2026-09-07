@@ -13,8 +13,6 @@ func (g *Game) SwapBattlelinePositions(a, b LocalID) {
 		}
 		line.IDs[ai], line.IDs[bi] = line.IDs[bi], line.IDs[ai]
 		g.record(PositionsSwapped{A: a, B: b})
-		// A power bonus that only reaches a flank may have moved off one of them.
-		g.settleDestroyed(player)
 		return
 	}
 }
@@ -34,8 +32,6 @@ func (g *Game) MoveToFlank(id LocalID, right bool) {
 			line.insertAt(0, id)
 		}
 		g.record(MovedToFlank{Creature: id, Right: right})
-		// A power bonus that only reaches a flank may have moved onto or off it.
-		g.settleDestroyed(player)
 		return
 	}
 }

@@ -68,3 +68,48 @@ func (e DamageTaken) Text(n Namer) string {
 	return fmt.Sprintf("%s takes %d damage (%d total)",
 		n.Name(e.Creature), e.Amount, e.Total)
 }
+
+// AssaultDealt narrates the pre-fight Assault an attacker deals the creature it
+// attacks: the source, the Assault value, the damage that landed, and the target.
+type AssaultDealt struct {
+	Source LocalID
+	Value  int
+	Amount int
+	Target LocalID
+}
+
+// Text renders the Assault damage, naming its source and keyword value.
+func (e AssaultDealt) Text(n Namer) string {
+	return fmt.Sprintf("%s's %d Assault deals %d damage to %s",
+		n.Name(e.Source), e.Value, e.Amount, n.Name(e.Target))
+}
+
+// HazardousDealt narrates the pre-fight Hazardous a defender deals its attacker:
+// the source, the Hazardous value, the damage that landed, and the target.
+type HazardousDealt struct {
+	Source LocalID
+	Value  int
+	Amount int
+	Target LocalID
+}
+
+// Text renders the Hazardous damage, naming its source and keyword value.
+func (e HazardousDealt) Text(n Namer) string {
+	return fmt.Sprintf("%s's %d Hazardous deals %d damage to %s",
+		n.Name(e.Source), e.Value, e.Amount, n.Name(e.Target))
+}
+
+// damageEntry chooses how a landed hit narrates: pre-fight Assault or Hazardous
+// names its striking creature and keyword value, and any other damage is the bare
+// DamageTaken line with the creature's new total. dealt is the damage left after
+// armor; total is the creature's damage after taking it.
+func (t DamageTarget) damageEntry(target LocalID, dealt, total int) LogEntry {
+	switch t.SourceKeyword {
+	case assaultDamage:
+		return AssaultDealt{Source: t.Source, Value: t.Amount, Amount: dealt, Target: target}
+	case hazardousDamage:
+		return HazardousDealt{Source: t.Source, Value: t.Amount, Amount: dealt, Target: target}
+	default:
+		return DamageTaken{Creature: target, Amount: dealt, Total: total}
+	}
+}

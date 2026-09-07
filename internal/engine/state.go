@@ -336,6 +336,13 @@ type GameState struct {
 	// the opponent is not. The ready phase clears it, like the turn bars.
 	SideDamageImmune [2]bool
 
+	// Reap bars. CannotReap[p] stops player p reaping with any creature this turn
+	// (Inky Gloom); CannotReapNext[p] arms that block for p's next turn. Like the
+	// use bar, StartTurn promotes it and the ready phase lifts it. This is narrower
+	// than CannotUse — fighting and "Action:" abilities stay open.
+	CannotReap     [2]Bar[bool]
+	CannotReapNext [2]Bar[bool]
+
 	// Reap-by-house bars. CannotReapHouse[p] stops player p reaping with creatures
 	// of the named house this turn (Seismo-entangler); CannotReapHouseNext[p] arms
 	// that block for p's next turn. HouseNone (the zero value) bars nothing.

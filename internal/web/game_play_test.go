@@ -37,6 +37,36 @@ func TestChooseHouseStartsTheTurn(t *testing.T) {
 	}
 }
 
+// The start-of-turn house picker offers a Back button that steps out of the turn
+// via undo. On the game's first turn there is nothing to step back to, so Back is
+// greyed out; once a turn has been taken, Back undoes it.
+func TestHousePickerBack(t *testing.T) {
+	c := newClient(t)
+	if c.g.phase != phaseHouse {
+		t.Fatalf("a fresh deal is at phase %v, want phaseHouse", c.g.phase)
+	}
+	c.g.undo = nil
+	c.wants("the first-turn house picker", "Back")
+	if c.g.canUndo() {
+		t.Error("a first-turn house pick has nothing to step back to")
+	}
+
+	// Choose a house and end the turn; the opponent then faces the house picker with
+	// a turn to step back to, so Back is live and undoing it returns to that turn.
+	c.do(c.g.pickHouse(c.g.pickableHouses()[0]))
+	c.pass()
+	c.await("the opponent's house choice", func() bool {
+		return !c.g.busy && c.g.phase == phaseHouse
+	})
+	if !c.g.canUndo() {
+		t.Fatal("the opponent's house pick has a turn to step back to")
+	}
+	c.do(c.g.undoAction)
+	if c.g.phase != phaseMain {
+		t.Errorf("Back from the house picker left the phase at %v, want phaseMain", c.g.phase)
+	}
+}
+
 func TestSelectingACardInHand(t *testing.T) {
 	c := newClient(t)
 	c.startTurn()
@@ -225,6 +255,45 @@ func TestDiscardingFromHand(t *testing.T) {
 	}
 	if !containsID(c.g.g.Discard(c.g.active()), id) {
 		t.Error("the discarded card is not in the discard pile")
+	}
+}
+
+// On the first turn a player takes exactly one action. After that opening volition
+// every other hand card must read as non-discardable, exactly as it reads as
+// non-playable: the discard offer is gated by the engine's CanDiscard, not a
+// partial active-house check that ignored the first-turn limit.
+func TestFirstTurnDiscardRestrictionMatchesPlay(t *testing.T) {
+	c := newClient(t)
+	c.startTurn() // Brobnar, the first player's barred first turn
+	var brob []engine.LocalID
+	for _, id := range c.hand() {
+		if c.g.g.Def(id).House == engine.Brobnar {
+			brob = append(brob, id)
+		}
+	}
+	if len(brob) < 2 {
+		t.Fatalf("the seeded first hand needs two active-house cards, got %d", len(brob))
+	}
+	toDiscard, other := brob[0], brob[1]
+
+	// Before the opening action an active-house card can be discarded.
+	if !c.g.discardableFromHand(other) {
+		t.Fatal("an active-house card was not discardable before the first action")
+	}
+
+	// Spend the one first-turn action on a discard.
+	c.g.selectHandID(c.ctx, toDiscard)
+	c.do(c.g.discard)
+
+	// The first-turn limit now bars everything else, discard included.
+	if c.g.discardableFromHand(other) {
+		t.Error("a hand card is still discardable after the first-turn action")
+	}
+	if c.g.usableFromHand(other) {
+		t.Error("a barred hand card still reads as usable")
+	}
+	if c.g.hasMoves() {
+		t.Error("the turn still reports moves after its one action")
 	}
 }
 

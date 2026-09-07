@@ -256,7 +256,7 @@ func TestArchiveFromPlayArchivesBufferAndBuffedTogether(t *testing.T) {
 		0,
 	)
 	// 4 damage is lethal at base power 3 but survivable at 5 with the buff.
-	g.applyRawDamage(neighbor, 4, true)
+	g.applyRawDamage(DamageTarget{ID: neighbor, Amount: 4, IgnoreArmor: true})
 	if !g.inPlay(neighbor) {
 		t.Fatal("neighbor should survive while the buffer is in play")
 	}

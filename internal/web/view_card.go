@@ -173,10 +173,11 @@ func (g *game) playableFromHand(id engine.LocalID) bool {
 }
 
 // discardableFromHand reports whether the active player may discard the given
-// hand card: discarding needs only that the card is of the active house.
+// hand card right now. It asks the engine (CanDiscard) rather than re-deriving the
+// rule, so the first-turn one-card restriction bars discarding exactly as it bars
+// playing — after the opening volition no hand card reads as live.
 func (g *game) discardableFromHand(id engine.LocalID) bool {
-	h := g.g.State.ActiveHouse
-	return h != engine.HouseNone && g.g.Def(id).House == h
+	return g.g.CanDiscard(g.active(), id) == nil
 }
 
 // usableFromHand reports whether a hand card can be acted on at all this turn —

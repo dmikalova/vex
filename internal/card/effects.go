@@ -156,6 +156,9 @@ type (
 type (
 	// Draw puts the top Amount cards of your deck into your hand.
 	Draw = engine.Draw
+	// AttachSelfTo moves the resolving upgrade onto the friendly creature with the
+	// given printed name (a Star Alliance "blaster" homing to its signature creature).
+	AttachSelfTo = engine.AttachSelfTo
 	// PutFromPlay takes each targeted card out of play into a chosen Destination.
 	PutFromPlay = engine.PutFromPlay
 	// PutChosen moves Amount cards the controller chooses into a Destination,
@@ -229,6 +232,9 @@ type (
 	// LookAtTop looks at the top Amount cards of your deck, puts one into your
 	// hand, and discards the others.
 	LookAtTop = engine.LookAtTop
+	// ReorderTop looks at the top Amount cards of your deck and puts them back in
+	// any order you choose.
+	ReorderTop = engine.ReorderTop
 	// (From), ignoring the active house. Set Except to make House the house that
 	// may not be played.
 	PlayFrom = engine.PlayFrom
@@ -366,6 +372,9 @@ type (
 	ControlsMoreCreatures = engine.ControlsMoreCreatures
 	// SourceOnFlank gates on the source card's flank position (Not inverts it).
 	SourceOnFlank = engine.SourceOnFlank
+	// SourceInCenterOfBattleline is met while the source card sits in the center
+	// of its controller's battleline (an even-sized line has no center).
+	SourceInCenterOfBattleline = engine.SourceInCenterOfBattleline
 	// SourceReady is met while the source card is ready (Bellowing Patrizate's gate).
 	SourceReady = engine.SourceReady
 	// SourceNeighborsAllOfHouse is met while every neighbor of the source card
@@ -444,6 +453,10 @@ type (
 	ForgedKey = engine.ForgedKey
 	// EnemyCreatureDestroyed is met once an enemy creature has been destroyed this turn.
 	EnemyCreatureDestroyed = engine.EnemyCreatureDestroyed
+	// UsedCreatureToReap is met once you have used a creature to reap this turn.
+	UsedCreatureToReap = engine.UsedCreatureToReap
+	// UsedCreatureToFight is met once you have used a creature to fight this turn.
+	UsedCreatureToFight = engine.UsedCreatureToFight
 	// FirstReapOfTurn is met when the reap in context is the first this turn.
 	FirstReapOfTurn = engine.FirstReapOfTurn
 	// CounterInPlay is met while at least one card in play carries a generic counter of the given kind.
@@ -455,6 +468,12 @@ type (
 	// HousesInPlay counts the distinct houses among all cards in play, optionally
 	// excluding one house.
 	HousesInPlay = engine.HousesInPlay
+	// HousesAmong counts the distinct houses among a player's creatures, all
+	// creatures, or all cards in play, optionally capped by Max.
+	HousesAmong = engine.HousesAmong
+	// HousesRepresented is met when the houses among a chosen set of cards compare to
+	// an amount.
+	HousesRepresented = engine.HousesRepresented
 	// CardsRevealed counts the cards the most recent Reveal showed.
 	CardsRevealed = engine.CardsRevealed
 	// CardsDestroyed counts the cards the most recent destruction removed "this way".
@@ -533,6 +552,8 @@ type (
 	CannotPlay = engine.CannotPlay
 	// CannotUse bars a player from reaping, fighting, or using Action: abilities.
 	CannotUse = engine.CannotUse
+	// CannotReap bars a player from using creatures to reap for a Duration.
+	CannotReap = engine.CannotReap
 	// ChosenHouseCannotReapNextTurn bars a player from reaping with creatures of the
 	// chosen house throughout their next turn.
 	ChosenHouseCannotReapNextTurn = engine.ChosenHouseCannotReapNextTurn
@@ -632,6 +653,10 @@ var AllAember = engine.AllAember
 // AemberOnIt is the PerTarget that scales damage by the Æmber on each creature
 // hit: card.DealDamage{Amount: 1, Target: ..., PerTarget: card.AemberOnIt}.
 var AemberOnIt = engine.AemberOnIt
+
+// DamageOnIt is the PerTarget that scales damage by the damage already on each
+// creature hit (Cauldron Boil).
+var DamageOnIt = engine.DamageOnIt
 
 // ArmorLostThisWay is the PerTarget that scales damage by the armor an effect has
 // stripped off each creature hit (Red-Hot Armor).

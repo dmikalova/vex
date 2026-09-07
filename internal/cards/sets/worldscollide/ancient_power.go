@@ -1,10 +1,15 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Ancient Power
+//
+//	House:  Saurian
+//	Type:   Tactic
+//	Rarity: Uncommon
+//	Æmber:  1
+//
+//	Play: Ward each friendly creature with Æmber on it.
 var AncientPower = card.New(
 	"Ancient Power",
 	card.House.Saurian,

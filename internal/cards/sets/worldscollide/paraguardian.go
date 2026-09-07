@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Paraguardian
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Saurian
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Dinosaur • Soldier
 //
-//	Reap: You may exalt Paraguardian. If you do, ward each of its neighbors.
+//	Reap: You may exalt Paraguardian. Ward Paraguardian.
 var Paraguardian = card.New(
 	"Paraguardian",
 	card.House.Saurian,
@@ -26,5 +21,9 @@ var Paraguardian = card.New(
 	card.WithPower(6),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Soldier),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Reap, card.May{Do: card.Sentences{Effects: []card.Effect{
+			card.Exalt{Target: card.Target.This, Amount: 1},
+			card.Ward{Target: card.Target.This.NeighborsOf()},
+		}}}),
 )

@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// SpikeTrap
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Spike Trap
 //
 //	House:  Shadows
 //	Type:   Artifact
@@ -15,7 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Weapon
 //
-//	Omni: Sacrifice Spike Trap. If you do, deal 3D to each flank creature.
+//	Versatile.
+//	Action: Destroy Spike Trap -> deal 3 damage to each flank creature.
 var SpikeTrap = card.New(
 	"Spike Trap",
 	card.House.Shadows,
@@ -24,5 +20,13 @@ var SpikeTrap = card.New(
 	card.Provenance(card.WC, 261),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Weapon),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Versatile),
+	card.WithAbility(
+		card.Trigger.Action, card.Then{
+			First: card.Destroy{Target: card.Target.This},
+			Result: card.DealDamage{
+				Amount: 3,
+				Target: card.Target.EachCreature.OnFlank(),
+			},
+		}),
 )

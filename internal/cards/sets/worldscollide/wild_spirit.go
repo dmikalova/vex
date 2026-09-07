@@ -1,20 +1,15 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// WildSpirit
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Wild Spirit
 //
 //	House:  Untamed
 //	Type:   Upgrade
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains, "Reap: Capture 1A."
+//	This creature gains, "Reap: this creature captures 1 Æmber from your opponent."
 var WildSpirit = card.New(
 	"Wild Spirit",
 	card.House.Untamed,
@@ -22,5 +17,14 @@ var WildSpirit = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, 384),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithStatic(card.StaticModifier{
+		Granted: []card.Ability{{
+			Trigger: card.Trigger.Reap,
+			Effect: card.CaptureAember{
+				Amount: 1,
+				Target: card.Target.This,
+				Source: card.Opponent,
+			},
+		}},
+	}),
 )

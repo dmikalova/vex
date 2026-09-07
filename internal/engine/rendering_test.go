@@ -113,6 +113,62 @@ func TestAfterYouPlayFolding(t *testing.T) {
 	}
 }
 
+func TestAfterYouUseFolding(t *testing.T) {
+	// Veylan Analyst: a Conditional{ItIs} on an AfterUse reaction folds into the
+	// natural "after you use a <shape>" wording.
+	folded := RenderAbility(
+		Ability{
+			Trigger: TriggerAfterUse,
+			Effect: Conditional{
+				Cond: ItIs{Type: Artifact},
+				Then: GainAember{Player: Controller, Amount: 1},
+			},
+		},
+	)
+	if want := "After you use an artifact, gain 1 Æmber."; folded != want {
+		t.Errorf("folded = %q, want %q", folded, want)
+	}
+	// A non-Conditional use reaction keeps the broad prefix.
+	plain := RenderAbility(
+		Ability{Trigger: TriggerAfterUse, Effect: GainAember{Player: Controller, Amount: 1}},
+	)
+	if want := "After you use a card, gain 1 Æmber."; plain != want {
+		t.Errorf("plain = %q, want %q", plain, want)
+	}
+}
+
+func TestAfterYouDiscardFolding(t *testing.T) {
+	// Baron Mengevin: a Conditional{ItIs} on an AfterDiscardFromHand reaction folds
+	// into the natural "after you discard a <shape>" wording, with a house-only ItIs
+	// rendering the house noun.
+	folded := RenderAbility(
+		Ability{
+			Trigger: TriggerAfterDiscardFromHand,
+			Effect: Conditional{
+				Cond: ItIs{House: Sanctum},
+				Then: CaptureAember{
+					Target: Target{Kind: TargetThisCreature},
+					Amount: 1,
+					Source: Opponent,
+				},
+			},
+		},
+	)
+	if want := "After you discard a Sanctum card, " + SelfName + " captures 1 Æmber from your opponent."; folded != want {
+		t.Errorf("folded = %q, want %q", folded, want)
+	}
+	// A non-Conditional discard reaction keeps the broad prefix.
+	plain := RenderAbility(
+		Ability{
+			Trigger: TriggerAfterDiscardFromHand,
+			Effect:  GainAember{Player: Controller, Amount: 1},
+		},
+	)
+	if want := "After you discard a card from your hand, gain 1 Æmber."; plain != want {
+		t.Errorf("plain = %q, want %q", plain, want)
+	}
+}
+
 func TestIsFightReapPair(t *testing.T) {
 	ready := ReadyIfFirstUse{Target: Target{Kind: TargetThisCreature}}
 	reap := Ability{Trigger: TriggerAfterReap, Effect: ready}
@@ -569,7 +625,7 @@ func TestGeneratedCardText(t *testing.T) {
 				WithPower(4),
 				WithPlayPermission(PlayPermission{House: Untamed, Amount: 1}),
 			),
-			"House:  Untamed\nType:   Creature\nRarity: Rare\nPower:  4\n\nDuring each turn in which Untamed is not your active house, you may play one Untamed card.",
+			"House:  Untamed\nType:   Creature\nRarity: Rare\nPower:  4\n\nEach turn you may play one Untamed card.",
 		},
 		{
 			NewCard(
@@ -580,7 +636,7 @@ func TestGeneratedCardText(t *testing.T) {
 				WithPower(4),
 				WithPlayPermission(PlayPermission{House: Untamed, Amount: 2}),
 			),
-			"House:  Untamed\nType:   Creature\nRarity: Rare\nPower:  4\n\nDuring each turn in which Untamed is not your active house, you may play 2 Untamed cards.",
+			"House:  Untamed\nType:   Creature\nRarity: Rare\nPower:  4\n\nEach turn you may play 2 Untamed cards.",
 		},
 		{
 			NewCard(

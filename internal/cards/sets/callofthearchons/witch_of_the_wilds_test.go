@@ -16,7 +16,7 @@ import (
 //	Power:  4
 //	Traits: Beast • Witch
 //
-//	During each turn in which Untamed is not your active house, you may play one Untamed card.
+//	Each turn you may play one Untamed card.
 func TestWitchOfTheWilds(t *testing.T) {
 	t.Run("allows one Untamed card to be played off-house", func(t *testing.T) {
 		var first ct.Card

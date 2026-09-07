@@ -282,9 +282,10 @@ a per-card leave-play call over a pre-selected list without batching.
 creature's `Destroyed:` abilities is a distinct, earlier timing window from the
 creature _being destroyed_: during `destroyTogether` every dying creature stays in
 play while the batch's `Destroyed:` abilities resolve, and only then does each go
-to its discard pile. The **"after ... destroyed"** reactions (`emitCreatureDestroyed`
-for Neffru, `emitEnemyDestroyed` for Pile of Skulls) fire only after that move, so
-a creature killed in the same batch is out of play and can neither be chosen by
+to its discard pile. The **"after ... destroyed"** reactions
+(`emitAfterCreatureDestroyed` for Neffru, `emitAfterEnemyDestroyed` for Pile of
+Skulls) fire only after that move, so a creature killed in the same batch is out
+of play and can neither be chosen by
 those reactions nor react to the deaths beside it — e.g. Pile of Skulls cannot
 capture onto a friendly creature that died in the same combat. Do not fire an
 "after destroyed" reaction (or offer a prompt that could pick a dying creature)
@@ -295,7 +296,7 @@ inside the destruction window; wait until the batch is in the discard.
 Three tiers of verb, kept distinct so a method name says which level it works at:
 
 - **`emit<Event>`** announces a game event and fans out to everything listening —
-  `emitCardPlayed`, `emitCreatureEnters`, `emitEnemyDestroyed`, `emitLasting`. Use
+  `emitCardPlayed`, `emitCreatureEnters`, `emitAfterEnemyDestroyed`, `emitLasting`. Use
   it at an event site that dispatches to responders (triggered abilities and the
   lasting registry).
 - **`trigger…`** resolves a _single card's_ abilities matching a trigger —

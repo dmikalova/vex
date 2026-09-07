@@ -24,6 +24,7 @@ func (g *Game) fight(attacker, defender LocalID) {
 	if g.recoverFromStun(attacker) {
 		return
 	}
+	g.State.TurnHistory[attackerSide][CreaturesFoughtThisTurn]++
 	// Using a creature to fight exhausts it before anything else resolves, so a
 	// "Before Fight" ability already sees the attacker exhausted. The defender is
 	// put in context, so an ability can act on "the creature this fights".
@@ -55,10 +56,20 @@ func (g *Game) fight(attacker, defender LocalID) {
 	if g.inPlay(defender) {
 		var pre []DamageTarget
 		if a := g.assault(attacker); a > 0 {
-			pre = append(pre, DamageTarget{ID: defender, Amount: a})
+			pre = append(pre, DamageTarget{
+				ID:            defender,
+				Amount:        a,
+				Source:        attacker,
+				SourceKeyword: assaultDamage,
+			})
 		}
 		if h := g.hazardous(defender); h > 0 {
-			pre = append(pre, DamageTarget{ID: attacker, Amount: h})
+			pre = append(pre, DamageTarget{
+				ID:            attacker,
+				Amount:        h,
+				Source:        defender,
+				SourceKeyword: hazardousDamage,
+			})
 		}
 		if len(pre) > 0 {
 			g.dealDamage(g.controller(attacker), pre...)
@@ -280,7 +291,8 @@ func (g *Game) fightDamage(attacker, defender LocalID) int {
 // it in turn, so a shield's armor absorbs from an already-armored amount. It only
 // updates the damage counters; destruction is resolved by dealDamage, of which this
 // is the per-creature step.
-func (g *Game) applyRawDamage(id LocalID, amount int, ignoreArmor bool) LocalID {
+func (g *Game) applyRawDamage(t DamageTarget) LocalID {
+	id, amount, ignoreArmor := t.ID, t.Amount, t.IgnoreArmor
 	if amount <= 0 {
 		return id
 	}
@@ -300,7 +312,7 @@ func (g *Game) applyRawDamage(id LocalID, amount int, ignoreArmor bool) LocalID 
 	}
 	core := &g.State.Cards[id]
 	core.Damage += int16(amount)
-	g.record(DamageTaken{Creature: id, Amount: amount, Total: int(core.Damage)})
+	g.record(t.damageEntry(id, amount, int(core.Damage)))
 	// A creature carrying a Lethal Distraction takes additional damage on top of
 	// each instance it takes. The bonus is added once here, so it does not itself
 	// re-trigger the effect on the same instance.
@@ -341,7 +353,26 @@ type DamageTarget struct {
 	Amount int
 	// IgnoreArmor makes this instance of damage bypass the creature's armor.
 	IgnoreArmor bool
+	// Source, when SourceKeyword is set, credits this damage to a creature's
+	// pre-fight keyword — its Assault, or its Hazardous — so the hit narrates
+	// "<Source>'s N <keyword> deals N damage to <ID>" instead of the bare
+	// "<ID> takes N damage" line, naming where the pre-fight damage came from.
+	Source        LocalID
+	SourceKeyword combatKeyword
 }
+
+// combatKeyword names the pre-fight keyword crediting a DamageTarget's damage, so
+// applyRawDamage narrates the striking creature and its keyword value rather than
+// a bare "takes N damage" line. The zero value credits no source: the hit narrates
+// as the plain DamageTaken line.
+type combatKeyword int
+
+const (
+	// assaultDamage credits the attacker's Assault striking the creature it attacks.
+	assaultDamage combatKeyword = iota + 1
+	// hazardousDamage credits the defender's Hazardous striking its attacker.
+	hazardousDamage
+)
 
 // dealDamage deals damage to every target simultaneously: each creature takes its
 // damage (armor absorbs first) before any destruction is resolved, then all that
@@ -365,7 +396,7 @@ func (g *Game) dealDamage(controller int, targets ...DamageTarget) {
 	// destruction is whichever one applyRawDamage ended up marking.
 	hit := make([]LocalID, len(targets))
 	for i, t := range targets {
-		hit[i] = g.applyRawDamage(t.ID, t.Amount, t.IgnoreArmor)
+		hit[i] = g.applyRawDamage(t)
 	}
 	var dying []LocalID
 	for _, id := range hit {

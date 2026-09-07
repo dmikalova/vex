@@ -60,6 +60,12 @@ func cardGlyphs(def *engine.CardDefinition) []glyphLine {
 	if kw := keywordGlyphs(def); len(kw) > 0 {
 		lines = append(lines, glyphLine{glyphs: kw, covered: true})
 	}
+	if def.FightRestriction != (engine.Target{}) {
+		lines = append(lines, glyphLine{
+			glyphs:  fightRestrictionGlyphs(def.FightRestriction),
+			covered: true,
+		})
+	}
 	for i := 0; i < len(def.Abilities); {
 		ab := def.Abilities[i]
 		gs, covered := effectGlyphs(ab.Effect)
@@ -169,6 +175,14 @@ func constantLines(ca engine.ConstantAbility) []glyphLine {
 	return lines
 }
 
+// fightRestrictionGlyphs renders a creature's fight restriction — the creatures it
+// is limited to fighting — as a fight glyph arrowed to that noun. The qualifier
+// that narrows the set (stunned, damaged) stays in the rules text, as with any
+// fine target filter.
+func fightRestrictionGlyphs(fr engine.Target) []glyph {
+	return []glyph{{asset: "glyph-fight"}, arrowTo(targetGlyph(fr))}
+}
+
 // isActionTrigger reports whether a trigger is one of the three action triggers
 // (Play, Fight, Reap) that WithPlayFightReap and its pair variants merge onto one
 // line.
@@ -213,9 +227,14 @@ func triggerIcon(t engine.Trigger) string {
 func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 	switch v := e.(type) {
 	case engine.DealDamage:
-		// The spread and per-count variants hit several creatures or scale by a
-		// board count; the numeral lives in the text, so the glyph drops the qty.
-		if v.Spread != nil || v.Per != nil || v.PerTarget != nil || v.AmountFrom != nil {
+		// A Spread carries its own creature targets rather than filling Target, so it
+		// draws its own summary noun; the counts and neighbor split stay in the text.
+		if v.Spread != nil {
+			return []glyph{{asset: "damage"}, arrowTo(spreadTargetGlyph())}, true
+		}
+		// The per-count variants hit several creatures or scale by a board count; the
+		// numeral lives in the text, so the glyph drops the qty.
+		if v.Per != nil || v.PerTarget != nil || v.AmountFrom != nil {
 			return []glyph{{asset: "damage"}, arrowTo(targetGlyph(v.Target))}, true
 		}
 		return []glyph{
@@ -488,6 +507,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "glyph-action"}, {asset: "glyph-ban"}}, true
 	case engine.ChosenHouseCannotReapNextTurn:
 		return []glyph{{asset: "glyph-reap"}, {asset: "glyph-ban"}}, true
+	case engine.CannotReap:
+		return []glyph{{asset: "glyph-reap"}, {asset: "glyph-ban"}}, true
 	case engine.LoseKeyword:
 		if a := keywordIcon(v.Keyword); a != "" {
 			return []glyph{{asset: a}, {asset: "glyph-ban"}}, true
@@ -508,6 +529,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 	case engine.MayPlayOrUseFriendlyHouse:
 		return []glyph{{asset: "glyph-play"}, {asset: "glyph-action"}}, true
 	case engine.LookAtTop:
+		return []glyph{{asset: "zone-deck"}, {asset: "glyph-look"}}, true
+	case engine.ReorderTop:
 		return []glyph{{asset: "zone-deck"}, {asset: "glyph-look"}}, true
 	case engine.RevealHand:
 		return []glyph{{asset: "zone-hand"}, {asset: "glyph-look"}}, true
@@ -719,6 +742,13 @@ func counterAsset(kind engine.CounterKind) string {
 	}
 }
 
+// spreadTargetGlyph is the creature glyph a DealDamage Spread hits. Every spread
+// chooses one or more creatures; the amounts and neighbor split stay in the rules
+// text, so the strip summarises the spread as its chosen-creature noun.
+func spreadTargetGlyph() glyph {
+	return glyph{asset: "type-creature", decor: decorChosen}
+}
+
 // targetGlyph renders a Target as its noun glyph plus the decorations that carry
 // its enemy/friendly/each/chosen shape. Fine filters (power, house, trait) stay
 // in the rules text; the strip summarises the noun.
@@ -727,7 +757,8 @@ func targetGlyph(t engine.Target) glyph {
 	case engine.TargetThisCreature:
 		return glyph{asset: "type-creature", decor: decorThis}
 	case engine.TargetTriggeringCreature, engine.TargetTheOtherCreature,
-		engine.TargetTheChosenCreature:
+		engine.TargetTheChosenCreature, engine.TargetCreatureFought,
+		engine.TargetTheFoughtCreature:
 		return glyph{asset: "type-creature", decor: decorChosen}
 	case engine.TargetEachCreature:
 		return glyph{asset: "type-creature", decor: decorEach}

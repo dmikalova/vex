@@ -534,6 +534,40 @@ func TestAssaultAndHazardous(t *testing.T) {
 	}
 }
 
+// TestPreFightDamageNarratesSource checks that Assault and Hazardous narrate the
+// creature and keyword value that dealt the pre-fight damage, not a bare
+// "takes N damage" line.
+func TestPreFightDamageNarratesSource(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	att := g.AddToBattleline(
+		NewCard("imp", Dis, Creature, Common, WithPower(6), WithAssault(2)),
+		0,
+	)
+	def := g.AddToBattleline(
+		NewCard("director", Logos, Creature, Common, WithPower(6), WithHazardous(3)),
+		1,
+	)
+	g.fight(att, def)
+
+	assault := "imp's 2 Assault deals 2 damage to director"
+	hazardous := "director's 3 Hazardous deals 3 damage to imp"
+	var gotAssault, gotHazardous bool
+	for _, line := range g.LogText() {
+		switch line {
+		case assault:
+			gotAssault = true
+		case hazardous:
+			gotHazardous = true
+		}
+	}
+	if !gotAssault {
+		t.Errorf("log = %v, want a line %q", g.LogText(), assault)
+	}
+	if !gotHazardous {
+		t.Errorf("log = %v, want a line %q", g.LogText(), hazardous)
+	}
+}
+
 func TestSplashAttack(t *testing.T) {
 	// Splash-attack hits each neighbor of the fought creature at the same time as
 	// the fight damage the fought creature takes.

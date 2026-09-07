@@ -2,7 +2,7 @@ package engine
 
 import "testing"
 
-func TestEmitEnemyDestroyed(t *testing.T) {
+func TestEmitAfterEnemyDestroyed(t *testing.T) {
 	pileDef := NewCard("Pile", Brobnar, Artifact, Rare,
 		WithAbility(TriggerAfterEnemyCreatureDestroyed, CaptureAember{
 			Amount: 1,

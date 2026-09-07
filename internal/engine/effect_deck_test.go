@@ -523,6 +523,67 @@ func TestLookAtTop(t *testing.T) {
 	})
 }
 
+// TestReorderTop covers "look at the top N and put them back in any order": the
+// controller's chosen order becomes the new top, short decks are left alone, and a
+// declined choice leaves the order untouched.
+func TestReorderTop(t *testing.T) {
+	if got := (ReorderTop{Amount: 3}).Text(); got !=
+		"look at the top 3 cards of your deck and put them back in any order" {
+		t.Errorf("Text() = %q", got)
+	}
+	if (ReorderTop{}).validate() == nil {
+		t.Error("a Count of 0 should be rejected")
+	}
+	if err := (ReorderTop{Amount: 3}).validate(); err != nil {
+		t.Errorf("validate() = %v", err)
+	}
+
+	t.Run("places the chosen order on top, leaving the rest", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		a := g.AddToDeck(NewCard("A Card", Logos, Creature, Common, WithPower(2)), 0)
+		b := g.AddToDeck(NewCard("B Card", Logos, Tactic, Common), 0)
+		c := g.AddToDeck(NewCard("C Card", Logos, Artifact, Common), 0)
+		bottom := g.AddToDeck(NewCard("Bottom", Logos, Creature, Common, WithPower(1)), 0)
+		g.SetChooser(0, &idQueueChooser{ids: []LocalID{c, a}})
+		ReorderTop{Amount: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if got := g.Deck(0); len(got) != 4 ||
+			got[0] != c || got[1] != a || got[2] != b || got[3] != bottom {
+			t.Errorf("deck = %v, want [%d %d %d %d]", got, c, a, b, bottom)
+		}
+	})
+
+	t.Run("reorders as many as remain", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		a := g.AddToDeck(NewCard("A Card", Logos, Creature, Common, WithPower(2)), 0)
+		b := g.AddToDeck(NewCard("B Card", Logos, Tactic, Common), 0)
+		g.SetChooser(0, &idQueueChooser{ids: []LocalID{b}})
+		ReorderTop{Amount: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if got := g.Deck(0); len(got) != 2 || got[0] != b || got[1] != a {
+			t.Errorf("deck = %v, want [%d %d]", got, b, a)
+		}
+	})
+
+	t.Run("fewer than two cards does nothing", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		only := g.AddToDeck(NewCard("Only", Logos, Creature, Common, WithPower(2)), 0)
+		ReorderTop{Amount: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if got := g.Deck(0); len(got) != 1 || got[0] != only {
+			t.Errorf("deck = %v, want [%d]", got, only)
+		}
+	})
+
+	t.Run("a declined choice keeps the original order", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		a := g.AddToDeck(NewCard("A Card", Logos, Creature, Common, WithPower(2)), 0)
+		b := g.AddToDeck(NewCard("B Card", Logos, Tactic, Common), 0)
+		g.SetChooser(0, orderRejectChooser{})
+		ReorderTop{Amount: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if got := g.Deck(0); len(got) != 2 || got[0] != a || got[1] != b {
+			t.Errorf("deck = %v, want [%d %d]", got, a, b)
+		}
+	})
+}
+
 func TestDiscardTopAndForEachDiscardedHouseFilter(t *testing.T) {
 	// DiscardTop validate and text.
 	if err := (DiscardTop{Player: Controller, Amount: 0}).validate(); err == nil {

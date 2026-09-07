@@ -70,9 +70,9 @@ func TestBlankEnemyTextSuppressesAbilitiesAndConstants(t *testing.T) {
 }
 
 // Blanking a creature that buffs its own power with a constant ability drops it to
-// its base power, which can meet the damage already on it — the blank must then
-// destroy it rather than leave a lethal creature in play (Mushroom Man, Marmo
-// Swarm under Shadow of Dis).
+// its base power, which can meet the damage already on it — the resolution
+// boundary must then destroy it rather than leave a lethal creature in play
+// (Mushroom Man, Marmo Swarm under Shadow of Dis).
 func TestBlankEnemyTextSettlesLethal(t *testing.T) {
 	g := started(t)
 	foe := g.AddToBattleline(
@@ -87,6 +87,7 @@ func TestBlankEnemyTextSettlesLethal(t *testing.T) {
 	}
 
 	g.BlankEnemyText(1, foe)
+	g.settleDestroyed(0) // the resolution boundary settles the blank (ADR 0029)
 
 	if g.inPlay(foe) {
 		t.Errorf("blanking to base 2 power under 5 damage should destroy it")

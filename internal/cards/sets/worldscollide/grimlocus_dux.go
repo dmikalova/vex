@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// GrimlocusDux
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Grimlocus Dux
 //
 //	House:  Saurian
 //	Type:   Creature
@@ -17,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Dinosaur • Soldier
 //
 //	Taunt.
-//	Play: Exalt Grimlocus Dux twice.
+//	Play: Exalt Grimlocus Dux 2 times.
 var GrimlocusDux = card.New(
 	"Grimlocus Dux",
 	card.House.Saurian,
@@ -27,5 +22,10 @@ var GrimlocusDux = card.New(
 	card.WithPower(11),
 	card.WithArmor(2),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Soldier),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Taunt),
+	card.WithAbility(
+		card.Trigger.Play, card.Exalt{
+			Target: card.Target.This,
+			Amount: 2,
+		}),
 )

@@ -316,6 +316,23 @@ func TestTargetWithAemberAndLeastPowerful(t *testing.T) {
 	}
 }
 
+func TestTargetWithoutAember(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	rich := g.AddToBattleline(testCreature("rich", 5), 0)
+	g.State.Cards[rich].Amber = 2
+	bare := g.AddToBattleline(testCreature("bare", 3), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	if ids := (Target{Kind: TargetEachCreature}).WithoutAember().
+		Select(ctx); len(ids) != 1 || ids[0] != bare {
+		t.Errorf("WithoutAember = %v, want [%d]", ids, bare)
+	}
+	if got := (Target{Kind: TargetChosenCreature}).WithoutAember().
+		Text(); got != "a creature with no Æmber on it" {
+		t.Errorf("WithoutAember text = %q", got)
+	}
+}
+
 func TestLeastPowerfulTieChoice(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	a := g.AddToBattleline(testCreature("a", 2), 1)

@@ -507,6 +507,26 @@ func TestSpreadUpToCreatures(t *testing.T) {
 			t.Error("Count 3 should be valid")
 		}
 	})
+
+	t.Run("Undamaged offers only creatures with no damage on them", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		hurt := g.AddToBattleline(testCreature("hurt", 9), 1)
+		clean := g.AddToBattleline(testCreature("clean", 9), 1)
+		g.SetDamage(hurt, 1)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+
+		e := DealDamage{Spread: UpToCreatures{Count: 3, Amount: 2, Undamaged: true}}
+		if got := e.Text(); got != "deal 2 damage to up to 3 undamaged creatures" {
+			t.Errorf("text = %q", got)
+		}
+		e.Resolve(ctx)
+		if got := g.Damage(clean); got != 2 {
+			t.Errorf("undamaged creature = %d, want 2", got)
+		}
+		if got := g.Damage(hurt); got != 1 {
+			t.Errorf("already-damaged creature = %d, want 1 (untouched)", got)
+		}
+	})
 }
 
 // TestDealDamagePerTarget checks the damage is scaled by a quantity read off
@@ -541,6 +561,38 @@ func TestDealDamagePerTarget(t *testing.T) {
 	}
 	if got := g.Damage(bare); got != 0 {
 		t.Errorf("damage on the bare creature = %d, want 0", got)
+	}
+}
+
+// TestDealDamageDamageOnIt checks the DamageOnIt PerTarget scales each hit by the
+// damage already sitting on that creature (Cauldron Boil).
+func TestDealDamageDamageOnIt(t *testing.T) {
+	e := DealDamage{
+		Amount:    1,
+		Target:    Target{Kind: TargetEachCreature},
+		PerTarget: DamageOnIt,
+	}
+	want := "deal 1 damage to each creature for each point of damage on it"
+	if got := e.Text(); got != want {
+		t.Errorf("Text = %q, want %q", got, want)
+	}
+	if err := e.validate(); err != nil {
+		t.Errorf("validate = %v, want nil", err)
+	}
+
+	g := NewGame("A", "B", 1)
+	hurt := g.AddToBattleline(testCreature("hurt", 9), 1)
+	fine := g.AddToBattleline(testCreature("fine", 9), 1)
+	g.SetDamage(hurt, 3)
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+
+	// The wounded creature takes 1 damage per point already on it (3 * 1 = 3),
+	// landing on 6; the unwounded one takes nothing.
+	if got := g.Damage(hurt); got != 6 {
+		t.Errorf("damage on the wounded creature = %d, want 6", got)
+	}
+	if got := g.Damage(fine); got != 0 {
+		t.Errorf("damage on the healthy creature = %d, want 0", got)
 	}
 }
 

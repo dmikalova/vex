@@ -1,24 +1,25 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Quadracorder
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Upgrade
 //	Rarity: Uncommon
 //
-//	Your opponent's keys cost +1A for each house represented among friendly creatures (to a maximum of 3).
+//	This creature gains, "Your opponent's keys cost +1 Æmber for each house represented among friendly creatures (to a maximum of 3)."
 var Quadracorder = card.New(
 	"Quadracorder",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, 316),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithStatic(card.StaticModifier{
+		KeyCostChange: card.KeyCostChange(card.Opponent, 1).Per(card.HousesAmong{
+			Player: card.Controller,
+			Type:   card.Type.Creature,
+			Max:    3,
+		}),
+	}),
 )

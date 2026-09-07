@@ -1,27 +1,33 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// GarciasBlaster
+// Garcia's Blaster
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Upgrade
-//	Rarity: Variant
+//	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains, "Fight/Reap: You may deal 2D to a creature, or attach Garcia's Blaster to Sensor Chief Garcia."
-//	After you attach Garcia's Blaster to Sensor Chief Garcia, steal 1A.
+//	This creature gains, "Fight/Reap: You may choose one:
+//	- Deal 2 damage to a creature
+//	- Attach this creature to Sensor Chief Garcia, and steal 1 Æmber."
 var GarciasBlaster = card.New(
 	"Garcia's Blaster",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Upgrade,
+	// TODO(variant): rarity relabelled from Variant to Rare — handle manually
 	card.Rarity.Rare,
 	card.Provenance(card.WC, 347),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.Connects(card.Pull(SensorChiefGarcia, 1)),
+	card.WithStatic(card.StaticModifier{
+		Granted: card.FightOrReap(card.May{Do: card.ChooseOne{Options: []card.Effect{
+			card.DealDamage{Amount: 2, Target: card.Target.Creature},
+			card.Sequence{Effects: []card.Effect{
+				card.AttachSelfTo{Host: "Sensor Chief Garcia"},
+				card.StealAember{Amount: 1},
+			}},
+		}}}),
+	}),
 )

@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// DeepwoodDruid
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Deepwood Druid
 //
 //	House:  Untamed
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Elf • Witch
 //
-//	Deploy. (This creature can enter play anywhere in your battleline.)
+//	Deploy.
 //	Play/Reap: Fully heal a neighboring creature.
 var DeepwoodDruid = card.New(
 	"Deepwood Druid",
@@ -25,5 +20,9 @@ var DeepwoodDruid = card.New(
 	card.Provenance(card.WC, 355),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Elf, card.Traits.Witch),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Deploy),
+	card.WithPlayReap(card.Heal{
+		Fully:  true,
+		Target: card.Target.Creature.Neighboring(),
+	}),
 )

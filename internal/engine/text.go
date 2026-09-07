@@ -10,7 +10,17 @@ import (
 // e.g. "After you forge a key, deal 2 damage to each enemy creature."
 func RenderAbility(a Ability) string {
 	if a.Trigger == TriggerAfterCardPlayed {
-		if s, ok := afterYouPlayText(a.Effect); ok {
+		if s, ok := afterYouActOnText("play", a.Effect); ok {
+			return punctuate(capitalizeFirst(s))
+		}
+	}
+	if a.Trigger == TriggerAfterUse {
+		if s, ok := afterYouActOnText("use", a.Effect); ok {
+			return punctuate(capitalizeFirst(s))
+		}
+	}
+	if a.Trigger == TriggerAfterDiscardFromHand {
+		if s, ok := afterYouActOnText("discard", a.Effect); ok {
 			return punctuate(capitalizeFirst(s))
 		}
 	}
@@ -20,6 +30,9 @@ func RenderAbility(a Ability) string {
 		}
 	}
 	if a.Trigger == TriggerEntersPlay {
+		if s, ok := entersPlayConditionalText(a.Effect); ok {
+			return punctuate(capitalizeFirst(s))
+		}
 		return SelfName + " enters play " + enterStateWord(a.Effect) + "."
 	}
 	prefix, capitalize := a.Trigger.prefix()
@@ -30,13 +43,15 @@ func RenderAbility(a Ability) string {
 	return prefix + punctuate(body)
 }
 
-// afterYouPlayText folds an "after you play a card" ability whose effect only
-// gates on the played card's shape — a Conditional{ItIs} — into the natural
-// "after you play a <shape>, <then>" wording (Carlo Phantom's "after you play an
-// artifact, steal 1 Æmber"), rather than the literal "after you play a card, if
-// it is a <shape>, ...". Any other effect renders with the broad prefix, so an
-// unconditional or state-gated reaction still reads "After you play a card, ...".
-func afterYouPlayText(e Effect) (string, bool) {
+// afterYouActOnText folds an "after you <verb> a card" reaction gated only on the
+// subject card's shape — a Conditional{ItIs} — into the natural "after you <verb>
+// a <shape>, <then>" wording: Carlo Phantom's "after you play an artifact, steal
+// 1 Æmber", Veylan Analyst's "after you use an artifact, gain 1 Æmber", and Baron
+// Mengevin's "after you discard a Sanctum card, ...", rather than the literal
+// "after you <verb> a card, if it is a <shape>, ...". Any other effect renders
+// with the broad prefix, so an unconditional or state-gated reaction still reads
+// "After you <verb> a card, ...".
+func afterYouActOnText(verb string, e Effect) (string, bool) {
 	cond, ok := e.(Conditional)
 	if !ok {
 		return "", false
@@ -45,7 +60,7 @@ func afterYouPlayText(e Effect) (string, bool) {
 	if !ok {
 		return "", false
 	}
-	return "after you play " + indefinite(
+	return "after you " + verb + " " + indefinite(
 		houseTypeNoun(it.House, it.Type),
 	) + ", " + cond.Then.Text(), true
 }
@@ -66,6 +81,22 @@ func afterChooseHouseText(e Effect) (string, bool) {
 		return "", false
 	}
 	return "after you choose " + ch.House.String() + " as your active house, " + cond.Then.Text(), true
+}
+
+// entersPlayConditionalText folds an "enters play" ability whose effect is gated
+// on a board fact — a Conditional{Cond, Then: <state effect>} — into the natural
+// "<cond>, <self> enters play ready" wording (Bramble Lynx's "if you have used a
+// creature to reap this turn, Bramble Lynx enters play ready"), rather than the
+// literal "if ..., ready this creature". Any other effect shape reports false and
+// renders with the ordinary "<self> enters play <word>" form.
+func entersPlayConditionalText(e Effect) (string, bool) {
+	cond, ok := e.(Conditional)
+	if !ok || cond.Else != nil {
+		return "", false
+	}
+	return cond.Cond.CondText() + ", " + SelfName + " enters play " + enterStateWord(
+		cond.Then,
+	), true
 }
 
 // enterStateWord renders the state an "enters play" ability leaves its creature in,
@@ -611,6 +642,11 @@ func constantText(def *CardDefinition) string {
 	}
 	var lines []string
 	for _, c := range def.ConstantAbilities {
+		who := capitalizeFirst(c.target().Text())
+		for _, k := range c.CannotBeUsedTo {
+			line := who + " cannot " + k.verb() + "."
+			lines = append(lines, strings.ReplaceAll(line, SelfName, def.Name))
+		}
 		var parts []string
 		if c.PowerBonus != 0 {
 			parts = append(parts, fmt.Sprintf("%+d power", c.PowerBonus))
@@ -624,8 +660,11 @@ func constantText(def *CardDefinition) string {
 		if len(parts) == 0 {
 			continue
 		}
-		who := capitalizeFirst(c.target().Text())
 		line := who + " gains " + oxfordAnd(parts)
+		if c.WhileInCenter {
+			line = "While " + SelfName + " is in the center of your battleline, " +
+				c.target().Text() + " gains " + oxfordAnd(parts)
+		}
 		if c.Per != nil {
 			line += " for each " + c.Per.CountText()
 		}
@@ -657,6 +696,11 @@ func constantGrantedText(def *CardDefinition) []string {
 		subject := capitalizeFirst(c.target().Text())
 		for _, ab := range c.Granted {
 			body := abilityTextWithNames(RenderAbility(ab), "this creature", def.Name)
+			if c.WhileInCenter {
+				lines = append(lines, "While "+def.Name+
+					" is in the center of your battleline, it gains, \""+body+`"`)
+				continue
+			}
 			lines = append(lines, subject+` gains, "`+body+`"`)
 		}
 	}
@@ -779,7 +823,9 @@ func keyCostText(kc KeyCostChange) string {
 }
 
 // playPermissionText renders a continuous permission to play cards of a house
-// while that house is not active, e.g. Witch of the Wilds.
+// while that house is not active, e.g. Witch of the Wilds. The rendered text
+// drops the "not your active house" qualifier — a player can already play cards
+// of their active house — and reads as the plain standing permission it is.
 func playPermissionText(p PlayPermission) string {
 	if !p.granted() {
 		return ""
@@ -789,8 +835,7 @@ func playPermissionText(p PlayPermission) string {
 		noun += "s"
 	}
 	return fmt.Sprintf(
-		"During each turn in which %s is not your active house, you may play %s %s.",
-		p.House,
+		"Each turn you may play %s %s.",
 		countWord(p.count()),
 		noun,
 	)

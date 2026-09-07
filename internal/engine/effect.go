@@ -81,6 +81,12 @@ type EffectContext struct {
 	// card). HasIt reports whether one is set.
 	It    LocalID
 	HasIt bool
+	// ItController is the player who controlled ctx.It at the moment a preceding
+	// effect touched it — captured before the card left play, so an ItsController
+	// player value still names the right side after the creature is gone (Saury
+	// About That destroys a creature, then its controller gains Æmber). A live
+	// creature's current controller is read through the Resolver instead.
+	ItController int
 	// Upgrade is the attached Upgrade whose own ability is resolving, when one is —
 	// an Upgrade's "Play:" fires with Source set to its host creature, so Upgrade
 	// lets that effect still refer to the Upgrade itself (e.g. as the source of a
@@ -172,6 +178,8 @@ func (ctx *EffectContext) PlayerFor(p Player) int {
 		return ctx.Resolver.Owner(ctx.It)
 	case ItsOpponent:
 		return 1 - ctx.Resolver.Controller(ctx.It)
+	case ItsController:
+		return ctx.ItController
 	case ThatPlayer:
 		return ctx.Controller
 	default:
@@ -245,6 +253,12 @@ const (
 	// Pandemonium's "each undamaged creature captures 1 Æmber from its opponent"
 	// takes from your pool for the enemy's creatures and from theirs for yours.
 	ItsOpponent
+	// ItsController is the player who controlled the creature in context when a
+	// preceding effect touched it (ctx.ItController) — the "its controller" referent
+	// for a destroyed creature, whose controller is captured before it leaves play
+	// so a stolen creature still pays its controller, not its owner (Saury About
+	// That).
+	ItsController
 	// ThatPlayer is the player named by the ability's trigger — the actor of the
 	// event that fired it, not relative to the card's controller. It renders "that
 	// player" and is how a cross-player reaction refers back to whoever caused it

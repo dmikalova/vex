@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// TheQuietAnvil
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// The Quiet Anvil
 //
 //	House:  Shadows
 //	Type:   Artifact
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Item
 //
-//	Keys cost -2A.
+//	Each player's keys cost -2 Æmber.
 //	After a player forges a key, destroy The Quiet Anvil.
 var TheQuietAnvil = card.New(
 	"The Quiet Anvil",
@@ -25,5 +20,7 @@ var TheQuietAnvil = card.New(
 	card.Provenance(card.WC, 282),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Item),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeyCost(card.KeyCostChange(card.EachPlayer, -2)),
+	card.WithAbility(
+		card.Trigger.AfterPlayerForgesKey, card.Destroy{Target: card.Target.This}),
 )

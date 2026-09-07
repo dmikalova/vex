@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// BreakerHill
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Breaker Hill
 //
 //	House:  Shadows
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  1
 //	Traits: Elf • Thief
 //
-//	Elusive. (The first time this creature is attacked each turn, no damage is dealt.)
-//	Each of Breaker Hill's neighbors gains, "Action: Steal 1A."
+//	Elusive.
+//	Each neighboring creature gains, "Action: Steal 1 Æmber."
 var BreakerHill = card.New(
 	"Breaker Hill",
 	card.House.Shadows,
@@ -25,5 +20,12 @@ var BreakerHill = card.New(
 	card.Provenance(card.WC, 237),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithConstant(card.ConstantAbility{
+		Target: card.Target.EachCreature.Neighboring(),
+		Granted: []card.Ability{{
+			Trigger: card.Trigger.Action,
+			Effect:  card.StealAember{Amount: 1},
+		}},
+	}),
 )

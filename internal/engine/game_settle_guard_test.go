@@ -9,7 +9,7 @@ func TestDamageSkipsACardOutOfPlay(t *testing.T) {
 	victim := g.AddToBattleline(NewCard("Oak", Untamed, Creature, Common, WithPower(5)), 0)
 	g.putIntoHand(victim)
 
-	g.applyRawDamage(victim, 3, true)
+	g.applyRawDamage(DamageTarget{ID: victim, Amount: 3, IgnoreArmor: true})
 
 	if got := g.State.Cards[victim].Damage; got != 0 {
 		t.Errorf("damage on a card in hand = %d, want 0", got)
@@ -50,12 +50,13 @@ func TestAemberOnACreatureFeedsItsPower(t *testing.T) {
 		0,
 	)
 	g.addAmberOn(marauder, 2)
-	g.applyRawDamage(marauder, 3, true)
+	g.applyRawDamage(DamageTarget{ID: marauder, Amount: 3, IgnoreArmor: true})
 
 	if !g.inPlay(marauder) {
 		t.Fatal("3 damage should not destroy it at 4 power")
 	}
 	g.addAmberOn(marauder, -1)
+	g.settleDestroyed(0) // the resolution boundary settles the loss (ADR 0029)
 
 	if g.inPlay(marauder) {
 		t.Errorf("losing the Æmber should drop it to 3 power and destroy it")
@@ -97,7 +98,7 @@ func TestForgingSettlesPowerFromUnforgedKeys(t *testing.T) {
 			})),
 		0,
 	)
-	g.applyRawDamage(id, 6, true)
+	g.applyRawDamage(DamageTarget{ID: id, Amount: 6, IgnoreArmor: true})
 
 	if !g.inPlay(id) {
 		t.Fatal("6 damage should not destroy it while it holds 11 power")
@@ -110,5 +111,69 @@ func TestForgingSettlesPowerFromUnforgedKeys(t *testing.T) {
 	g.forgeKeyFree(0)
 	if g.inPlay(id) {
 		t.Errorf("a second forge should drop it to 5 power and destroy it")
+	}
+}
+
+// recordInPlay is a test effect that records whether a given card is still in play
+// at the moment it resolves.
+type recordInPlay struct {
+	id  LocalID
+	got *bool
+}
+
+func (recordInPlay) Text() string { return "record in play" }
+func (e recordInPlay) Resolve(ctx *EffectContext) {
+	*e.got = ctx.Resolver.InPlay(e.id)
+}
+
+// TestArrivalKillsFlankNeighborBeforeAfterPlay pins the timing: a creature that
+// loses its "+2 while on a flank" bonus because an arriving creature pushes it
+// interior dies from that state-based check the instant it is placed — before the
+// played creature's own after-play ability resolves, so that ability never sees
+// the doomed neighbor still in play (Buzzle purging a neighbor it just doomed).
+func TestArrivalKillsFlankNeighborBeforeAfterPlay(t *testing.T) {
+	g := started(t)
+	g.AddToBattleline(testCreature("left", 3), 0)
+	neighbor := g.AddToBattleline(
+		testCreature("flank guard", 4,
+			WithConstantAbility(ConstantAbility{
+				Target:     Target{Kind: TargetThisCreature}.OnFlank(),
+				PowerBonus: 2,
+			})),
+		0,
+	)
+	g.State.Cards[neighbor].Damage = 5 // lethal at 4 power, survives at 6 on a flank
+
+	var neighborStillInPlay bool
+	id := g.AddToHand(
+		testCreature("arriving", 3,
+			WithAbility(TriggerAfterPlay, recordInPlay{id: neighbor, got: &neighborStillInPlay})),
+		0,
+	)
+	g.State.ActivePlayer = 0
+	g.State.ActiveHouse = Brobnar
+	g.PlayFromHand(0, id)
+
+	if neighborStillInPlay {
+		t.Error("the after-play ability saw the doomed neighbor still in play; " +
+			"it should have died on arrival, before the after-play window")
+	}
+	if g.inPlay(neighbor) {
+		t.Error("the neighbor should be destroyed once it is pushed off its flank")
+	}
+}
+
+// TestPlaceAemberOnACardOutOfPlayLandsOnNothing checks an ability that places
+// Æmber on its own source after that source has left play banks nothing on the
+// card in its discard pile (Strange Gizmo forging a key mid-window).
+func TestPlaceAemberOnACardOutOfPlayLandsOnNothing(t *testing.T) {
+	g := started(t)
+	src := g.AddToBattleline(NewCard("Gizmo", Logos, Creature, Common, WithPower(3)), 0)
+	g.putIntoHand(src)
+
+	PlaceAemberOnThis{Amount: 2}.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+
+	if got := g.State.Cards[src].Amber; got != 0 {
+		t.Errorf("Æmber on a card in hand = %d, want 0", got)
 	}
 }

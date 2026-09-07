@@ -1,10 +1,18 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Senator Shrix
+//
+//	House:  Saurian
+//	Type:   Creature
+//	Rarity: Common
+//	Power:  4
+//	Armor:  1
+//	Traits: Dinosaur • Politician
+//
+//	You may spend Æmber on Senator Shrix when forging keys.
+//	Play/Reap: You may exalt Senator Shrix.
 var SenatorShrix = card.New(
 	"Senator Shrix",
 	card.House.Saurian,

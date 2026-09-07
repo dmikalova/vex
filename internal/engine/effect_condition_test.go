@@ -81,6 +81,109 @@ func TestControlsMoreCreatures(t *testing.T) {
 	}
 }
 
+// TestUsedCreatureToReap covers the condition that a creature has reaped this turn
+// (Bramble Lynx), plus the "enters play ready" rendering when it gates an entry.
+func TestUsedCreatureToReap(t *testing.T) {
+	c := UsedCreatureToReap{}
+	if got := c.CondText(); got != "if you have used a creature to reap this turn" {
+		t.Errorf("CondText = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	if c.Met(ctx) {
+		t.Error("no reap yet, condition should not be met")
+	}
+	g.State.TurnHistory[0][CreaturesReapedThisTurn] = 1
+	if !c.Met(ctx) {
+		t.Error("after a reap, condition should be met")
+	}
+
+	// It gates a conditional "enters play ready" ability and renders naturally.
+	a := Ability{
+		Trigger: TriggerEntersPlay,
+		Effect: Conditional{
+			Cond: UsedCreatureToReap{},
+			Then: Ready{Target: Target{Kind: TargetThisCreature}},
+		},
+	}
+	want := "If you have used a creature to reap this turn, " + SelfName + " enters play ready."
+	if got := RenderAbility(a); got != want {
+		t.Errorf("RenderAbility = %q, want %q", got, want)
+	}
+}
+
+// TestUsedCreatureToFight covers the condition that a creature has fought this
+// turn (Alaka), plus the "enters play ready" rendering when it gates an entry.
+func TestUsedCreatureToFight(t *testing.T) {
+	c := UsedCreatureToFight{}
+	if got := c.CondText(); got != "if you have used a creature to fight this turn" {
+		t.Errorf("CondText = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	if c.Met(ctx) {
+		t.Error("no fight yet, condition should not be met")
+	}
+	g.State.TurnHistory[0][CreaturesFoughtThisTurn] = 1
+	if !c.Met(ctx) {
+		t.Error("after a fight, condition should be met")
+	}
+
+	a := Ability{
+		Trigger: TriggerEntersPlay,
+		Effect: Conditional{
+			Cond: UsedCreatureToFight{},
+			Then: Ready{Target: Target{Kind: TargetThisCreature}},
+		},
+	}
+	want := "If you have used a creature to fight this turn, " + SelfName + " enters play ready."
+	if got := RenderAbility(a); got != want {
+		t.Errorf("RenderAbility = %q, want %q", got, want)
+	}
+}
+
+// TestHousesRepresented covers the condition comparing distinct houses among a
+// surveyed set (Galactic Census) across every comparison.
+func TestHousesRepresented(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(NewCard("m", Mars, Creature, Common, WithPower(4)), 0)
+	g.AddToBattleline(NewCard("l", Logos, Creature, Common, WithPower(4)), 0)
+	g.AddToBattleline(NewCard("s", Sanctum, Creature, Common, WithPower(4)), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	among := HousesAmong{Player: EachPlayer, Type: Creature}
+	cases := []struct {
+		is   Comparison
+		amt  int
+		met  bool
+		text string
+	}{
+		{AtLeast, 3, true, "if there are 3 or more houses represented among creatures in play"},
+		{AtLeast, 4, false, "if there are 4 or more houses represented among creatures in play"},
+		{AtMost, 3, true, "if there are 3 or fewer houses represented among creatures in play"},
+		{AtMost, 2, false, "if there are 2 or fewer houses represented among creatures in play"},
+		{Exactly, 3, true, "if there are exactly 3 houses represented among creatures in play"},
+		{Exactly, 2, false, "if there are exactly 2 houses represented among creatures in play"},
+	}
+	for _, tc := range cases {
+		c := HousesRepresented{Among: among, Is: tc.is, Amount: tc.amt}
+		if err := c.validate(); err != nil {
+			t.Errorf("validate(%v, %d) = %v", tc.is, tc.amt, err)
+		}
+		if got := c.Met(ctx); got != tc.met {
+			t.Errorf("Met(%v, %d) = %v, want %v", tc.is, tc.amt, got, tc.met)
+		}
+		if got := c.CondText(); got != tc.text {
+			t.Errorf("CondText(%v, %d) = %q", tc.is, tc.amt, got)
+		}
+	}
+	if err := (HousesRepresented{Among: among, Is: comparisonUnset}).validate(); err == nil {
+		t.Error("unset comparison should fail validation")
+	}
+}
+
 func TestSourceReadyCondition(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("src", 2), 0)

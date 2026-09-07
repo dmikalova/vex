@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// SubtleChain
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Subtle Chain
 //
 //	House:  Shadows
 //	Type:   Tactic
@@ -21,6 +16,8 @@ var SubtleChain = card.New(
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, 262),
+	// TODO(duplicate): mechanically identical to Mind Barb (Dis) — fold/handle manually.
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.DiscardRandomFromHand{Player: card.Opponent}),
 )

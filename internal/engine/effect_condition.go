@@ -183,6 +183,21 @@ func (c SourceOnFlank) Met(ctx *EffectContext) bool {
 	return onFlank(ctx, ctx.Source) != c.Not
 }
 
+// SourceInCenterOfBattleline is met while the source card sits in the center of
+// its controller's battleline — the middle creature of an odd-sized line, with
+// equal creatures to its left and right. An even-sized line has no center.
+type SourceInCenterOfBattleline struct{}
+
+// CondText renders the condition naming the source card.
+func (SourceInCenterOfBattleline) CondText() string {
+	return "if " + SelfName + " is in the center of your battleline"
+}
+
+// Met reports whether the source card sits in the center of its battleline.
+func (SourceInCenterOfBattleline) Met(ctx *EffectContext) bool {
+	return ctx.Resolver.InCenterOfBattleline(ctx.Source)
+}
+
 // SourceReady is met while the source card is ready (unexhausted) — Bellowing
 // Patrizate damages each creature that enters play only while it is ready.
 type SourceReady struct{}
@@ -895,6 +910,80 @@ func (EnemyCreatureDestroyed) CondText() string {
 // turn.
 func (EnemyCreatureDestroyed) Met(ctx *EffectContext) bool {
 	return ctx.Resolver.TurnHistory(ctx.Controller, EnemyCreaturesDestroyed) > 0
+}
+
+// UsedCreatureToReap is met while the controller has used a creature to reap at
+// least once this turn — Bramble Lynx enters play ready once you have reaped.
+type UsedCreatureToReap struct{}
+
+// CondText renders the condition.
+func (UsedCreatureToReap) CondText() string {
+	return "if you have used a creature to reap this turn"
+}
+
+// Met reports whether the controller has reaped with a creature this turn.
+func (UsedCreatureToReap) Met(ctx *EffectContext) bool {
+	return ctx.Resolver.TurnHistory(ctx.Controller, CreaturesReapedThisTurn) > 0
+}
+
+// UsedCreatureToFight is met while the controller has used a creature to fight at
+// least once this turn — Alaka enters play ready once you have fought.
+type UsedCreatureToFight struct{}
+
+// CondText renders the condition.
+func (UsedCreatureToFight) CondText() string {
+	return "if you have used a creature to fight this turn"
+}
+
+// Met reports whether the controller has fought with a creature this turn.
+func (UsedCreatureToFight) Met(ctx *EffectContext) bool {
+	return ctx.Resolver.TurnHistory(ctx.Controller, CreaturesFoughtThisTurn) > 0
+}
+
+// HousesRepresented is met when the distinct houses represented among a chosen
+// set of in-play cards compare (Is) to Amount — Galactic Census pays out more as
+// more houses share the board. Among carries no Max, so the raw house count is
+// compared.
+type HousesRepresented struct {
+	Among  HousesAmong
+	Is     Comparison
+	Amount int
+}
+
+// validate requires a comparison the condition supports.
+func (c HousesRepresented) validate() error {
+	switch c.Is {
+	case AtLeast, AtMost, Exactly:
+		return nil
+	default:
+		return fmt.Errorf("HousesRepresented: Is must be AtLeast, AtMost, or Exactly")
+	}
+}
+
+// Met compares the surveyed house count against Amount by Is.
+func (c HousesRepresented) Met(ctx *EffectContext) bool {
+	n := c.Among.Value(ctx)
+	switch c.Is {
+	case AtMost:
+		return n <= c.Amount
+	case Exactly:
+		return n == c.Amount
+	default:
+		return n >= c.Amount
+	}
+}
+
+// CondText renders the condition, e.g. "if there are 3 or more houses represented
+// among creatures in play".
+func (c HousesRepresented) CondText() string {
+	qty := fmt.Sprintf("%d or more", c.Amount)
+	switch c.Is {
+	case AtMost:
+		qty = fmt.Sprintf("%d or fewer", c.Amount)
+	case Exactly:
+		qty = fmt.Sprintf("exactly %d", c.Amount)
+	}
+	return fmt.Sprintf("if there are %s houses represented among %s", qty, c.Among.scope())
 }
 
 // FirstReapOfTurn is met when the reap in context is the first time a creature

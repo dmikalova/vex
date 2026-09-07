@@ -55,6 +55,43 @@ func (e CannotFight) Resolve(ctx *EffectContext) {
 	}
 }
 
+// CannotReap bars a player from using creatures to reap. As an effect it is a
+// timed bar — Inky Gloom stops an opponent for the Duration of their next turn.
+// It is narrower than CannotUse: only reaping is barred, so the affected player's
+// creatures can still fight and fire "Action:" abilities.
+type CannotReap struct {
+	Player   Player
+	Duration Duration
+}
+
+// validate rejects a CannotReap whose player or duration was left unset.
+func (e CannotReap) validate() error {
+	if !e.Player.valid() {
+		return errUnsetPlayer("CannotReap")
+	}
+	if !e.Duration.valid() {
+		return errUnsetDuration("CannotReap")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "your opponent cannot use creatures to reap
+// during their next turn".
+func (e CannotReap) Text() string {
+	who, whose := "you", "your"
+	if e.Player == Opponent {
+		who, whose = "your opponent", "their"
+	}
+	return who + " cannot use creatures to reap during " + whose + " next turn"
+}
+
+// Resolve applies the timed bar to the chosen player.
+func (e CannotReap) Resolve(ctx *EffectContext) {
+	if e.Duration == NextTurn {
+		ctx.Resolver.CannotReapNextTurn(ctx.PlayerFor(e.Player), ctx.Source)
+	}
+}
+
 // CannotPlay bars a player from playing cards for the Duration — Lifeward stops
 // creatures and Scrambler Storm stops action cards through the affected player's
 // next turn, while Treasure Map stops every card for the rest of the current turn.

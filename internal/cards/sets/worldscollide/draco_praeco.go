@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// DracoPraeco
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Draco Praeco
 //
 //	House:  Saurian
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Dinosaur • Politician
 //
-//	Reap: You may exalt Draco Praeco. If you do, choose a house. Enrage each creature of that house.
+//	Reap: You may exalt Draco Praeco, and choose a house - enrage each creature of the chosen house.
 var DracoPraeco = card.New(
 	"Draco Praeco",
 	card.House.Saurian,
@@ -24,5 +19,14 @@ var DracoPraeco = card.New(
 	card.Provenance(card.WC, 201),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Politician),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Reap, card.May{Do: card.Sequence{Effects: []card.Effect{
+			card.Exalt{
+				Target: card.Target.This,
+				Amount: 1,
+			},
+			card.ChooseHouseThen{
+				Then: card.Enrage{Target: card.Target.EachCreature.OfChosenHouse()},
+			},
+		}}}),
 )

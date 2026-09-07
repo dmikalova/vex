@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Traits: Item • Shard
 //
-//	Action: For each friendly Shard, give a friendly creature 3 +1 power counters.
+//	Action: For each friendly Shard, give a friendly creature three +1 power counters.
 var ShardOfStrength = card.New(
 	"Shard of Strength",
 	card.House.Brobnar,

@@ -62,6 +62,8 @@ func (g *Game) StartTurn(player int) {
 	g.State.CannotPlayTypeNext[player] = Bar[CardType]{}
 	g.State.CannotUse[player] = g.State.CannotUseNext[player]
 	g.State.CannotUseNext[player] = Bar[bool]{}
+	g.State.CannotReap[player] = g.State.CannotReapNext[player]
+	g.State.CannotReapNext[player] = Bar[bool]{}
 	g.State.CannotReapHouse[player] = g.State.CannotReapHouseNext[player]
 	g.State.CannotReapHouseNext[player] = Bar[House]{}
 	g.State.ForcedHouse[player] = g.State.ForcedHouseNext[player]
@@ -105,12 +107,9 @@ func (g *Game) ChooseHouse(player int, house House) error {
 	g.State.ActiveHouse = house
 	g.record(HouseChosen{Player: player, House: house})
 	// The snapshot is taken once, but an earlier card's ability can remove a later
-	// one from play (Strange Gizmo destroys friendly artifacts); a card that has
-	// left play mid-window drops its remaining trigger (ADR 0013).
+	// one from play (Strange Gizmo destroys friendly artifacts); triggerAbilitiesAs
+	// drops the trigger of a card that has left play mid-window (ADR 0030).
 	for _, id := range g.allInPlay(player) {
-		if !g.inPlay(id) {
-			continue
-		}
 		g.triggerAbilities(id, TriggerAfterChooseHouse, 0, false)
 	}
 	g.enterPhase(PhaseArchives)
@@ -214,6 +213,14 @@ func (g *Game) CannotUseNextTurn(player int, source LocalID) {
 	g.State.CannotUseNext[player] = Bar[bool]{Value: true, Source: source}
 }
 
+// CannotReapNextTurn arms a bar that stops a player reaping with any creature
+// throughout their next turn (Inky Gloom). StartTurn promotes it and the ready
+// phase lifts it. It is narrower than CannotUseNextTurn: fighting and "Action:"
+// abilities stay open.
+func (g *Game) CannotReapNextTurn(player int, source LocalID) {
+	g.State.CannotReapNext[player] = Bar[bool]{Value: true, Source: source}
+}
+
 // CannotReapHouseNextTurn arms a bar that stops a player reaping with creatures
 // of house h throughout their next turn (Seismo-entangler). StartTurn promotes
 // the armed house.
@@ -227,9 +234,6 @@ func (g *Game) CannotReapHouseNextTurn(player int, h House, source LocalID) {
 // their ready phase, so it spans exactly through the opponent's turn.
 func (g *Game) BlankEnemyText(player int, source LocalID) {
 	g.State.TextBlank[player] = Bar[bool]{Value: true, Source: source}
-	// Blanking drops any power a creature's own constant granted it (Mushroom Man,
-	// Marmo Swarm), which can leave it at or below its damage.
-	g.settleDestroyed(g.State.ActivePlayer)
 }
 
 // SkipForgePhaseNextTurn makes a player skip their forge-a-key phase at the start of

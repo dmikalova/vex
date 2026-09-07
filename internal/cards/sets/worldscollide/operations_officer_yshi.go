@@ -1,15 +1,10 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// OperationsOfficerYshi
+// Operations Officer Yshi
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Creature
 //	Rarity: Rare
 //	Power:  4
@@ -17,15 +12,24 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Spirit
 //
 //	Taunt.
-//	Each of Operations Officer Yshi's neighbors gains, "Fight/Reap: Capture 1A."
+//	Each neighboring creature gains, "Reap: this creature captures 1 Æmber from your opponent."
+//	Each neighboring creature gains, "Fight: this creature captures 1 Æmber from your opponent."
 var OperationsOfficerYshi = card.New(
 	"Operations Officer Yshi",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, 334),
 	card.WithPower(4),
 	card.WithArmor(2),
 	card.WithTraits(card.Traits.Spirit),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Taunt),
+	card.WithConstant(card.ConstantAbility{
+		Target: card.Target.EachCreature.Neighboring(),
+		Granted: card.FightOrReap(card.CaptureAember{
+			Amount: 1,
+			Target: card.Target.This,
+			Source: card.Opponent,
+		}),
+	}),
 )

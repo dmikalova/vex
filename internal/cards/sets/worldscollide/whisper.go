@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Whisper
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Shadows
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Elf • Thief
 //
 //	Elusive.
-//	Action: Lose 1A. If you do, destroy a creature.
+//	Action: Lose 1 Æmber -> destroy a creature.
 var Whisper = card.New(
 	"Whisper",
 	card.House.Shadows,
@@ -25,5 +20,13 @@ var Whisper = card.New(
 	card.Provenance(card.WC, 265),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithAbility(
+		card.Trigger.Action, card.Then{
+			First: card.LoseAember{
+				Player: card.Controller,
+				Amount: 1,
+			},
+			Result: card.Destroy{Target: card.Target.Creature},
+		}),
 )

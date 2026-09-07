@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Beast • Witch
 //
-//	During each turn in which Untamed is not your active house, you may play one Untamed card.
+//	Each turn you may play one Untamed card.
 var WitchOfTheWilds = card.New(
 	"Witch of the Wilds",
 	card.House.Untamed,

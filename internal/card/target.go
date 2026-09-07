@@ -36,6 +36,7 @@ var Target = targets{
 	EnemyArtifact:              engine.Target{Kind: engine.TargetChosenEnemyArtifact},
 	FormerNeighbors:            engine.Target{Kind: engine.TargetFormerNeighbors},
 	TheFoughtCreature:          engine.Target{Kind: engine.TargetTheFoughtCreature},
+	AttachedHost:               engine.Target{Kind: engine.TargetAttachedHost},
 }
 
 type targets struct {
@@ -98,6 +99,10 @@ type targets struct {
 	// fight ("the fought creature"), naming no fighter — Smite makes a friendly
 	// creature fight, then damages the fought creature's neighbors.
 	TheFoughtCreature engine.Target
+	// AttachedHost selects the creature the resolving upgrade is attached to — the
+	// instance a blaster bound to when AttachSelfTo homed it, not a same-named copy.
+	// Chain Named() to give it the signature creature's printed name.
+	AttachedHost engine.Target
 }
 
 // Selector refines a Target relative to the whole selected set (see

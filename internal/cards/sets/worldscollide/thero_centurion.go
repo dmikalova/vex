@@ -1,10 +1,17 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Thero Centurion
+//
+//	House:  Saurian
+//	Type:   Creature
+//	Rarity: Common
+//	Power:  6
+//	Armor:  1
+//	Traits: Dinosaur • Soldier
+//
+//	Play/Fight: Thero Centurion captures 1 Æmber from your opponent.
 var TheroCenturion = card.New(
 	"Thero Centurion",
 	card.House.Saurian,

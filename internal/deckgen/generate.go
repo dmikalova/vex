@@ -55,11 +55,13 @@ func (g *generator) fillPod(house engine.House) HousePod {
 // mavericks in on a later pass. Puller and partner slots are protected, and the
 // pass repeats to a fixpoint so a pulled partner's own connection also resolves.
 // A chancy pull is rolled once per pod and remembered, so a later pass cannot
-// re-roll it. The loop always terminates: each productive pass consumes one of
-// the finitely many unprotected slots, so placePartners eventually places
-// nothing.
+// re-roll it. An exact pull instead fires once per puller instance, so N pullers
+// pull N partners (each Timetraveller its own Help from Future Self). The loop
+// always terminates: each productive pass consumes one of the finitely many
+// unprotected slots, so placePartners eventually places nothing.
 func (g *generator) expandConnections(pod HousePod) HousePod {
 	protected := make([]bool, PodSize)
+	counted := make([]bool, PodSize)
 	wanted := map[string]int{}
 	rehouse := map[string]bool{}
 	for {
@@ -74,6 +76,18 @@ func (g *generator) expandConnections(pod HousePod) HousePod {
 				if pod.Slots[i].Maverick {
 					rehouse[cc.Name] = true
 				}
+				if cc.Exact {
+					// An exact pull fires once per puller instance: count this
+					// slot's copies a single time (counted guards the fixpoint's
+					// later passes), so N pullers pull N partners.
+					if !counted[i] {
+						if n := g.pullCopies(cc); n > 0 {
+							wanted[cc.Name] += n
+							order = append(order, cc.Name)
+						}
+					}
+					continue
+				}
 				if _, rolled := wanted[cc.Name]; !rolled {
 					wanted[cc.Name] = g.pullCopies(cc)
 					if wanted[cc.Name] > 0 {
@@ -81,6 +95,7 @@ func (g *generator) expandConnections(pod HousePod) HousePod {
 					}
 				}
 			}
+			counted[i] = true
 		}
 		if len(order) == 0 {
 			return pod

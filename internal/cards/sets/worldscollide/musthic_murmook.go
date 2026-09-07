@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// MusthicMurmook
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Musthic Murmook
 //
 //	House:  Untamed
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Beast
 //
-//	Each player's keys cost +1A.
-//	Play: Deal 4D to a creature.
+//	Each player's keys cost +1 Æmber.
+//	Play: Deal 4 damage to a creature.
 var MusthicMurmook = card.New(
 	"Musthic Murmook",
 	card.House.Untamed,
@@ -25,5 +20,10 @@ var MusthicMurmook = card.New(
 	card.Provenance(card.WC, 361),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Beast),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeyCost(card.KeyCostChange(card.EachPlayer, 1)),
+	card.WithAbility(
+		card.Trigger.Play, card.DealDamage{
+			Amount: 4,
+			Target: card.Target.Creature,
+		}),
 )

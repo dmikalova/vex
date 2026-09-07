@@ -1,0 +1,58 @@
+package worldscollide
+
+import (
+	"testing"
+
+	"github.com/dmikalova/vactrol/internal/card"
+	ct "github.com/dmikalova/vactrol/internal/cards/cardtest"
+)
+
+// Trust No One
+//
+//	House:  Shadows
+//	Type:   Tactic
+//	Rarity: Common
+//
+//	Play: If there are no friendly creatures in play, for each house represented among enemy creatures (to a maximum of 3), steal 1 Æmber. Otherwise, steal 1 Æmber.
+func TestTrustNoOne(t *testing.T) {
+	t.Run("steals 1 Æmber while you control creatures", func(t *testing.T) {
+		h := ct.Play(t, ct.Setup{
+			P1: ct.Side{
+				House:  card.House.Shadows,
+				Hand:   ct.Cards(TrustNoOne),
+				InPlay: ct.Cards(ct.Creature(ct.OfHouse(card.House.Shadows))),
+			},
+			P2: ct.Side{Amber: 5},
+		})
+
+		h.P1.Play(TrustNoOne)
+		h.P1.ExpectAmber(1)
+		h.P2.ExpectAmber(4)
+	})
+
+	t.Run(
+		"with no friendly creatures, steals 1 per house among enemy creatures, capped at 3",
+		func(t *testing.T) {
+			h := ct.Play(t, ct.Setup{
+				P1: ct.Side{
+					House: card.House.Shadows,
+					Hand:  ct.Cards(TrustNoOne),
+				},
+				P2: ct.Side{
+					Amber: 5,
+					InPlay: ct.Cards(
+						ct.Creature(ct.OfHouse(card.House.Mars)),
+						ct.Creature(ct.OfHouse(card.House.Logos)),
+						ct.Creature(ct.OfHouse(card.House.Brobnar)),
+						ct.Creature(ct.OfHouse(card.House.Untamed)),
+					),
+				},
+			})
+
+			// Mars, Logos, Brobnar, Untamed = 4 houses, capped at 3.
+			h.P1.Play(TrustNoOne)
+			h.P1.ExpectAmber(3)
+			h.P2.ExpectAmber(2)
+		},
+	)
+}

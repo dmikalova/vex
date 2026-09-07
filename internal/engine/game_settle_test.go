@@ -35,7 +35,7 @@ func TestBuffLossKillsADamagedCreature(t *testing.T) {
 	g := started(t)
 	src := g.AddToBattleline(banner(2), 0)
 	victim := g.AddToBattleline(NewCard("Oak", Untamed, Creature, Common, WithPower(3)), 0)
-	g.applyRawDamage(victim, 4, true)
+	g.applyRawDamage(DamageTarget{ID: victim, Amount: 4, IgnoreArmor: true})
 
 	if !g.inPlay(victim) {
 		t.Fatal("4 damage should not destroy a 5-power creature")
@@ -56,7 +56,7 @@ func TestSettleCascades(t *testing.T) {
 	last := g.AddToBattleline(NewCard("Sprout", Untamed, Creature, Common), 0)
 
 	// middle sits at 3 printed + 2 from src + 2 from itself; last is 0 + 4.
-	g.applyRawDamage(middle, 6, true)
+	g.applyRawDamage(DamageTarget{ID: middle, Amount: 6, IgnoreArmor: true})
 	g.putIntoHand(src)
 
 	if g.inPlay(middle) {
