@@ -962,3 +962,148 @@ func TestChosenHouseCannotReapNextTurn(t *testing.T) {
 		t.Error("the reap bar should lift at end of turn")
 	}
 }
+
+// TestCreaturesCannotFight covers the board-wide fight bar with a house exception
+// (Into the Night): every non-excepted creature, on either side, is stopped from
+// fighting until the caster's next turn, while reaping and the spared house stay
+// open.
+func TestCreaturesCannotFight(t *testing.T) {
+	withHouse := CreaturesCannot{Action: FightUse, ExceptHouse: Shadows, Duration: NextTurn}
+	if got := withHouse.Text(); got != "until the start of your next turn, non-Shadows creatures cannot be used to fight" {
+		t.Errorf("house-exception text = %q", got)
+	}
+	noHouse := CreaturesCannot{Action: ReapUse, Duration: NextTurn}
+	if got := noHouse.Text(); got != "until the start of your next turn, creatures cannot be used to reap" {
+		t.Errorf("no-exception text = %q", got)
+	}
+
+	if (CreaturesCannot{Duration: NextTurn}).validate() == nil {
+		t.Error("unset action should be invalid")
+	}
+	if (CreaturesCannot{Action: ActionUse, Duration: NextTurn}).validate() == nil {
+		t.Error("an Action-ability bar should be invalid")
+	}
+	if (CreaturesCannot{Action: FightUse}).validate() == nil {
+		t.Error("unset duration should be invalid")
+	}
+	if (CreaturesCannot{Action: FightUse, Duration: NextTurn}).validate() != nil {
+		t.Error("a fully set effect should be valid")
+	}
+
+	g := NewGame("A", "B", 1)
+	g.StartTurn(0)
+	if err := g.ChooseHouse(0, Shadows); err != nil {
+		t.Fatal(err)
+	}
+	withHouse.Resolve(&EffectContext{Resolver: g, Controller: 0})
+
+	// The caster is barred this turn; the opponent's next turn is armed.
+	if g.State.CreaturesCannot[0].Value.Action != FightUse {
+		t.Fatal("the caster's own turn should be barred immediately")
+	}
+	if g.State.CreaturesCannotNext[1].Value.Action != FightUse {
+		t.Fatal("the opponent's next turn should be armed")
+	}
+
+	// The exception spares Shadows creatures and bars every other house; reaping
+	// stays open. The bar rides on each player's own bar slot, so the opponent's
+	// creatures are reached on the opponent's turn (below), not the caster's.
+	myShadows := g.AddToBattleline(NewCard("mine-sh", Shadows, Creature, Common, WithPower(3)), 0)
+	myBrobnar := g.AddToBattleline(NewCard("mine-br", Brobnar, Creature, Common, WithPower(3)), 0)
+	if g.creaturesGloballyBarred(myShadows, FightUse) {
+		t.Error("a Shadows creature should be spared by the exception")
+	}
+	if !g.creaturesGloballyBarred(myBrobnar, FightUse) {
+		t.Error("a non-Shadows creature should be barred from fighting")
+	}
+	if g.creaturesGloballyBarred(myBrobnar, ReapUse) {
+		t.Error("a fight bar must not stop reaping")
+	}
+
+	// End to end on the caster's own turn: a spared Shadows creature can fight in
+	// the active Shadows house.
+	def := g.AddToBattleline(NewCard("def", Brobnar, Creature, Common, WithPower(3)), 1)
+	if err := g.Fight(0, myShadows, def); err != nil {
+		t.Errorf("spared Fight = %v, want nil", err)
+	}
+
+	// The caster's own bar lifts at end of their turn.
+	g.EndPlayPhase(0)
+	if g.State.CreaturesCannot[0].Value.Action != useKindUnset {
+		t.Error("the caster's bar should lift at end of their turn")
+	}
+
+	// The opponent's turn: the armed bar activates and blocks fighting.
+	g.StartTurn(1)
+	if err := g.ChooseHouse(1, Brobnar); err != nil {
+		t.Fatal(err)
+	}
+	if g.State.CreaturesCannot[1].Value.Action != FightUse {
+		t.Fatal("the opponent's bar should activate on their turn")
+	}
+	if g.State.CreaturesCannotNext[1].Value.Action != useKindUnset {
+		t.Error("the armed slot should be disarmed once promoted")
+	}
+	p1c := g.AddToBattleline(NewCard("p1-br", Brobnar, Creature, Common, WithPower(3)), 1)
+	target := g.AddToBattleline(NewCard("tgt", Brobnar, Creature, Common, WithPower(3)), 0)
+	if err := g.Fight(1, p1c, target); err != ErrCannotUse {
+		t.Errorf("opponent barred Fight = %v, want ErrCannotUse", err)
+	}
+	g.EndPlayPhase(1)
+
+	// The caster's next turn is clean.
+	g.StartTurn(0)
+	if err := g.ChooseHouse(0, Shadows); err != nil {
+		t.Fatal(err)
+	}
+	if g.State.CreaturesCannot[0].Value.Action != useKindUnset {
+		t.Error("the caster's next turn should be free of the bar")
+	}
+}
+
+// TestCreaturesCannotReap covers the board-wide reap bar with no house exception
+// (Sow Salt): every creature on either side is stopped from reaping until the
+// caster's next turn, while fighting stays open.
+func TestCreaturesCannotReap(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.StartTurn(0)
+	if err := g.ChooseHouse(0, Brobnar); err != nil {
+		t.Fatal(err)
+	}
+	CreaturesCannot{Action: ReapUse, Duration: NextTurn}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0},
+	)
+
+	mine := g.AddToBattleline(NewCard("mine", Brobnar, Creature, Common, WithPower(3)), 0)
+	if !g.creaturesGloballyBarred(mine, ReapUse) {
+		t.Error("with no exception, every creature should be barred from reaping")
+	}
+	if g.creaturesGloballyBarred(mine, FightUse) {
+		t.Error("a reap bar must not stop fighting")
+	}
+	if err := g.Reap(0, mine); err != ErrCannotUse {
+		t.Errorf("barred Reap = %v, want ErrCannotUse", err)
+	}
+
+	// The opponent's turn: the bar reaches their creatures too.
+	g.EndPlayPhase(0)
+	g.StartTurn(1)
+	if err := g.ChooseHouse(1, Brobnar); err != nil {
+		t.Fatal(err)
+	}
+	foe := g.AddToBattleline(NewCard("foe", Brobnar, Creature, Common, WithPower(3)), 1)
+	if err := g.Reap(1, foe); err != ErrCannotUse {
+		t.Errorf("opponent barred Reap = %v, want ErrCannotUse", err)
+	}
+	g.EndPlayPhase(1)
+
+	// The caster's next turn: reaping works again.
+	g.StartTurn(0)
+	if err := g.ChooseHouse(0, Brobnar); err != nil {
+		t.Fatal(err)
+	}
+	back := g.AddToBattleline(NewCard("back", Brobnar, Creature, Common, WithPower(3)), 0)
+	if err := g.Reap(0, back); err != nil {
+		t.Errorf("Reap after the bar lifts = %v, want nil", err)
+	}
+}

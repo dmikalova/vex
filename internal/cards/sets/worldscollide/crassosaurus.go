@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Crassosaurus
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Saurian
 //	Type:   Creature
@@ -17,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Dinosaur • Politician
 //
 //	Elusive.
-//	Play: Capture 10A from any combination of players. Then, if Crassosaurus has fewer than 10A on it, purge Crassosaurus.
+//	Play: Crassosaurus captures 10 Æmber from any combination of players. If there are fewer than 10 Æmber on it, purge Crassosaurus.
 var Crassosaurus = card.New(
 	"Crassosaurus",
 	card.House.Saurian,
@@ -27,5 +22,14 @@ var Crassosaurus = card.New(
 	card.WithPower(4),
 	card.WithArmor(2),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Politician),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithAbility(
+		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+			card.CaptureFromAnyPlayer{Amount: 10},
+			card.Conditional{
+				Cond: card.AemberOnThisAtLeast{Amount: 10, Not: true},
+				Then: card.PurgeCreature{Target: card.Target.This},
+			},
+		}},
+	),
 )

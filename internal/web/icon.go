@@ -426,10 +426,12 @@ func triggerIcon(t engine.Trigger) string {
 		return "glyph-choose"
 	case engine.TriggerAfterDiscardFromHand:
 		return "zone-discard"
+	case engine.TriggerAfterAemberStolenFromYou:
+		return "aember"
 	case engine.TriggerAfterArmorPrevents:
 		return "shield"
 	case engine.TriggerStartOfTurn, engine.TriggerEndOfTurn,
-		engine.TriggerEndOfReadyStep:
+		engine.TriggerEndOfReadyStep, engine.TriggerAfterAnyPlayerStartOfTurn:
 		return "phase-turn"
 	default:
 		return "glyph-unknown"
@@ -477,6 +479,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "aember", qty: v.Amount, decor: decorEnemy | decorChosen}}, true
 	case engine.CaptureAember:
 		return []glyph{{asset: "aember", qty: v.Amount, decor: decorEnemy}}, true
+	case engine.CaptureFromAnyPlayer:
+		return []glyph{{asset: "aember", qty: v.Amount}}, true
 	case engine.GainChains:
 		return []glyph{{asset: "chains", qty: v.Amount, decor: playerDecor(v.Player)}}, true
 	case engine.Draw:
@@ -487,6 +491,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "glyph-fight"}, arrowTo(targetGlyph(v.Target))}, true
 	case engine.Ward:
 		return []glyph{{asset: "shield"}, arrowTo(targetGlyph(v.Target))}, true
+	case engine.MoveWard:
+		return []glyph{{asset: "shield"}, arrowTo(targetGlyph(v.Onto))}, true
 	case engine.Exhaust:
 		return []glyph{{asset: "exhausted"}, arrowTo(targetGlyph(v.Target))}, true
 	case engine.Ready:
@@ -501,6 +507,16 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		}, true
 	case engine.Destroy:
 		return []glyph{{asset: "glyph-destroy"}, arrowTo(targetGlyph(v.Target))}, true
+	case engine.DestroyAllExceptChosen:
+		return []glyph{
+			{asset: "glyph-destroy"},
+			arrowTo(glyph{asset: "type-creature", decor: decorEach}),
+		}, true
+	case engine.Tertiate:
+		return []glyph{
+			{asset: "glyph-destroy"},
+			arrowTo(glyph{asset: "type-creature", decor: decorEach}),
+		}, true
 	case engine.PurgeCreature:
 		return []glyph{{asset: "zone-purge"}, arrowTo(targetGlyph(v.Target))}, true
 	case engine.Heal:
@@ -527,6 +543,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		}, true
 	case engine.PlaceCounter:
 		return []glyph{{asset: counterAsset(v.Kind)}, arrowTo(targetGlyph(v.Target))}, true
+	case engine.RemoveCounters:
+		return []glyph{{asset: counterAsset(v.Kind)}, arrowTo(targetGlyph(v.Target))}, true
 	case engine.BlankEnemyText:
 		return []glyph{{asset: "type-creature", decor: decorEnemy | decorEach}}, true
 	case engine.ArchiveFromHand:
@@ -535,6 +553,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "zone-archives"}}, true
 	case engine.ArchiveSource:
 		return []glyph{{asset: "zone-archives", decor: decorThis}}, true
+	case engine.ArchivePurgedCard:
+		return []glyph{{asset: "zone-purge"}, arrowTo(glyph{asset: "zone-archives"})}, true
 	case engine.DiscardFromHand, engine.DiscardRandomFromHand:
 		return []glyph{{asset: "zone-discard"}}, true
 	case engine.DiscardRandomFromArchives:
@@ -558,7 +578,11 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return append(gs, more...), true
 	case engine.ShuffleIntoDeck:
 		return []glyph{{asset: "zone-deck"}}, true
+	case engine.ShuffleFriendlyCardsInPlayIntoDeck:
+		return []glyph{{asset: "zone-deck"}}, true
 	case engine.ShuffleCardsFromDiscard:
+		return []glyph{{asset: "zone-discard"}, arrowTo(glyph{asset: "zone-deck"})}, true
+	case engine.ShuffleMatchingFromDiscardIntoDeck:
 		return []glyph{{asset: "zone-discard"}, arrowTo(glyph{asset: "zone-deck"})}, true
 	case engine.ReturnNamedToHand:
 		return []glyph{{asset: "glyph-return"}}, true
@@ -572,6 +596,11 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 	case engine.PlayTopOfOpponentDeck:
 		return []glyph{
 			{asset: "zone-deck", decor: decorEnemy},
+			arrowTo(glyph{asset: "glyph-play"}),
+		}, true
+	case engine.PlayDiscardedTacticFromOpponent:
+		return []glyph{
+			{asset: "zone-discard", decor: decorEnemy},
 			arrowTo(glyph{asset: "glyph-play"}),
 		}, true
 	case engine.PutFromPlay:
@@ -729,6 +758,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "zone-hand"}, arrowTo(glyph{asset: "card-back"})}, true
 	case engine.PutUnderIntoPlay:
 		return []glyph{{asset: "card-back"}, arrowTo(glyph{asset: "glyph-play"})}, true
+	case engine.TriggerGraftedPlayEffect:
+		return []glyph{{asset: "card-back"}, arrowTo(glyph{asset: "glyph-play"})}, true
 	case engine.SwapDeckAndDiscard:
 		return []glyph{
 			{asset: "zone-deck"},
@@ -737,6 +768,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		}, true
 	case engine.RaiseKeyCost:
 		return []glyph{{asset: "forge"}, {asset: "aember", qty: v.Amount}}, true
+	case engine.LowerKeyCost:
+		return []glyph{{asset: "forge"}, {asset: "aember", qty: -v.Amount}}, true
 	case engine.SkipForgePhase:
 		return []glyph{{asset: "forge"}, {asset: "glyph-ban"}}, true
 	case engine.CannotFight:
@@ -745,6 +778,12 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "glyph-play"}, {asset: "glyph-ban"}}, true
 	case engine.CannotUse:
 		return []glyph{{asset: "glyph-action"}, {asset: "glyph-ban"}}, true
+	case engine.CreaturesCannot:
+		action := "glyph-reap"
+		if v.Action == engine.FightUse {
+			action = "glyph-fight"
+		}
+		return []glyph{{asset: action}, {asset: "glyph-ban"}}, true
 	case engine.ChosenHouseCannotReapNextTurn:
 		return []glyph{{asset: "glyph-reap"}, {asset: "glyph-ban"}}, true
 	case engine.CannotReap:
@@ -934,6 +973,8 @@ func verbGlyphs(verbs []engine.CreatureVerb) []glyph {
 		switch vv := verb.(type) {
 		case engine.ReadyVerb:
 			gs = append(gs, glyph{asset: "exhausted", decor: decorFriendly})
+		case engine.ReapVerb:
+			gs = append(gs, glyph{asset: "glyph-reap"})
 		case engine.FightVerb:
 			gs = append(gs, glyph{asset: "glyph-fight"})
 		case engine.UseVerb:
@@ -1010,6 +1051,12 @@ func counterAsset(kind engine.CounterKind) string {
 		return "doom-counter"
 	case engine.CounterFuse:
 		return "fuse-counter"
+	case engine.CounterGrowth:
+		return "growth-counter"
+	case engine.CounterGlory:
+		return "glory-counter"
+	case engine.CounterDisruption:
+		return "disruption-counter"
 	default:
 		return ""
 	}

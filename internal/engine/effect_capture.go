@@ -192,6 +192,77 @@ func (e CaptureAember) sourcePool(ctx *EffectContext, capturer LocalID) int {
 	return ctx.PlayerFor(e.Source)
 }
 
+// CaptureFromAnyPlayer captures up to Amount Æmber onto this creature, drawn from
+// both players' pools in whatever split the controller chooses ("capture N Æmber
+// from any combination of players", Crassosaurus). Each unit is taken from a pool
+// the controller names when both still hold Æmber, so a rational controller strips
+// the opponent first but may spend their own pool too. Capturing stops once both
+// pools are empty, so a capture is capped by what the pools actually hold.
+//
+// The split is decided here; the moves themselves delegate to CaptureAember, one
+// capture per contributing pool, so the capture, supply-redirect, and log behavior
+// stay identical to every other capture.
+type CaptureFromAnyPlayer struct {
+	// Amount is the total Æmber to capture across both pools.
+	Amount int
+}
+
+// validate requires a positive Amount.
+func (e CaptureFromAnyPlayer) validate() error {
+	if e.Amount <= 0 {
+		return fmt.Errorf("CaptureFromAnyPlayer needs a positive Amount")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "{self} captures 10 Æmber from any combination of
+// players".
+func (e CaptureFromAnyPlayer) Text() string {
+	return fmt.Sprintf(
+		"%s captures %d Æmber from any combination of players", SelfName, e.Amount,
+	)
+}
+
+// Resolve asks the controller, one Æmber at a time, which pool to draw from while
+// both hold Æmber, then captures each pool's share onto this creature. Reading the
+// pool totals up front and decrementing local budgets keeps a pool from being
+// picked past what it holds.
+func (e CaptureFromAnyPlayer) Resolve(ctx *EffectContext) {
+	ownLeft := ctx.Resolver.Aember(ctx.Controller)
+	oppLeft := ctx.Resolver.Aember(ctx.Opponent())
+	fromOwn, fromOpp := 0, 0
+	for n := 0; n < e.Amount && (ownLeft > 0 || oppLeft > 0); n++ {
+		takeOwn := ownLeft > 0
+		if ownLeft > 0 && oppLeft > 0 {
+			takeOwn = ctx.ChooseOption(
+				"Capture 1 Æmber from which pool?",
+				[]string{"your pool", "your opponent's pool"},
+			) == 0
+		}
+		if takeOwn {
+			fromOwn, ownLeft = fromOwn+1, ownLeft-1
+		} else {
+			fromOpp, oppLeft = fromOpp+1, oppLeft-1
+		}
+	}
+	e.captureFrom(ctx, Controller, fromOwn)
+	e.captureFrom(ctx, Opponent, fromOpp)
+}
+
+// captureFrom captures amt Æmber onto this creature from one pool, delegating to
+// CaptureAember so the move behaves exactly like any other capture. A zero share
+// is skipped so an untouched pool never logs a capture.
+func (e CaptureFromAnyPlayer) captureFrom(ctx *EffectContext, source Player, amt int) {
+	if amt <= 0 {
+		return
+	}
+	CaptureAember{
+		Amount: amt,
+		Target: Target{Kind: TargetThisCreature},
+		Source: source,
+	}.Resolve(ctx)
+}
+
 // MoveAemberToSupply removes Æmber sitting on a creature and returns it to the
 // common supply, the reverse of a capture — Aubade the Grim discards one of its
 // own captured Æmber each time it reaps. A creature holding fewer than Amount is

@@ -42,6 +42,9 @@ func (k UseKind) verb() string {
 // the restriction to the creatures it reaches (Narp bars its neighbors from
 // reaping).
 func (g *Game) cannotBeUsedTo(id LocalID, kind UseKind) bool {
+	if g.creaturesGloballyBarred(id, kind) {
+		return true
+	}
 	for _, k := range g.cat.def(id).CannotBeUsedTo {
 		if k == kind {
 			return true

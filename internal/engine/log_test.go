@@ -127,6 +127,7 @@ func TestLogEntryText(t *testing.T) {
 		{CreatureWarded{Creature: 2, By: 2}, "Card2 is warded"},
 		{CreatureWarded{Creature: 2, By: 5}, "Card5 warded Card2"},
 		{CreatureWarded{Creature: 2, By: 5, AlreadyWarded: true}, "Card2 is already warded"},
+		{WardMoved{From: 2, To: 3, By: 5}, "Card5 moves a ward from Card2 to Card3"},
 		{WardAbsorbed{Creature: 2}, "Card2's ward absorbs the effect"},
 		{NoCreatureToFight{Creature: 2}, "Card2 has no creature to fight"},
 		{CardsRevealedToAll{Player: 0, Cards: []LocalID{1, 2}}, "P0 reveals Card1, Card2"},

@@ -1,20 +1,16 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ImperialRoad
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Imperial Road
 //
 //	House:  Saurian
 //	Type:   Artifact
 //	Rarity: Rare
 //	Traits: Location
 //
-//	Omni: Play a Saurian creature. That creature enters play stunned.
+//	Versatile.
+//	Action: Play a Saurian creature -> stun it.
 var ImperialRoad = card.New(
 	"Imperial Road",
 	card.House.Saurian,
@@ -22,5 +18,14 @@ var ImperialRoad = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "223"),
 	card.WithTraits(card.Traits.Location),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Versatile),
+	card.WithAbility(
+		card.Trigger.Action, card.Then{
+			First: card.PlayFrom{
+				From:  card.Hand,
+				House: card.House.Self,
+				Type:  card.Type.Creature,
+			},
+			Result: card.Stun{Target: card.Target.Triggering},
+		}),
 )

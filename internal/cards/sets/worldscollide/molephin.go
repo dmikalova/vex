@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Molephin
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Untamed
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Beast
 //
-//	Hazardous 3. (Before this creature is attacked, deal 3D to the attacking enemy.)
-//	After A is stolen from you, deal 1D to each enemy creature for each A stolen.
+//	Hazardous 3.
+//	After Æmber is stolen from you, for each Æmber stolen, deal 1 damage to each enemy creature.
 var Molephin = card.New(
 	"Molephin",
 	card.House.Untamed,
@@ -25,5 +20,11 @@ var Molephin = card.New(
 	card.Provenance(card.WC, "360"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Beast),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithHazardous(3),
+	card.WithAbility(
+		card.Trigger.AfterAemberStolenFromYou, card.DealDamage{
+			Amount: 1,
+			Per:    card.AemberStolenThisEvent{},
+			Target: card.Target.EachEnemyCreature,
+		}),
 )

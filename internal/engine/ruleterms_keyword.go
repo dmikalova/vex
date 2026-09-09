@@ -113,5 +113,15 @@ Caper). You still play it on your own turn and take any Æmber bonus it
 prints, but the moment it is in play it belongs to your opponent. It matters
 only as the card is played, so it is never granted or lost.`,
 		},
+		{
+			Section:    SectionKeyword,
+			Title:      "Invulnerable",
+			Definition: "The creature cannot be destroyed or dealt damage.",
+			Body: `A creature with Invulnerable cannot be destroyed or dealt damage
+(Ghostform, Nizak, The Forgotten). Damage aimed at it never lands, so it
+absorbs no armor and takes no chains of destruction, and every destruction
+effect passes it over. It is usually granted, and may be granted only while
+the creature is fighting.`,
+		},
 	})
 }

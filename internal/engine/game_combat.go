@@ -168,6 +168,19 @@ func (g *Game) fight(attacker, defender LocalID) {
 	if attackerDead && !defenderDead {
 		g.triggerAbilities(defender, TriggerAfterDestroyedFighting, attacker, true)
 	}
+	// "After an enemy creature is destroyed while fighting": a bystander (The
+	// Colosseum) whose controller is the enemy of a combatant killed in the fight
+	// reacts, with the destroyed creature as "it".
+	if defenderDead {
+		for _, id := range g.allInPlay(1 - defenderSide) {
+			g.triggerAbilities(id, TriggerAfterEnemyDestroyedFighting, defender, true)
+		}
+	}
+	if attackerDead {
+		for _, id := range g.allInPlay(1 - attackerSide) {
+			g.triggerAbilities(id, TriggerAfterEnemyDestroyedFighting, attacker, true)
+		}
+	}
 	g.emitCardUsed(g.controller(attacker), attacker)
 	g.emitLasting(EventFight, g.controller(attacker), attacker)
 	// Fire "after a creature is used to fight" on every in-play card (Shattered
@@ -382,7 +395,8 @@ func (g *Game) applyRawDamage(t DamageTarget) LocalID {
 // is left for it to be dealt.
 func (g *Game) mitigateDamage(id LocalID, amount int, ignoreArmor bool) int {
 	core := &g.State.Cards[id]
-	if core.DamageImmune || g.State.SideDamageImmune[g.controller(id)] {
+	if core.DamageImmune || g.State.SideDamageImmune[g.controller(id)] ||
+		g.hasKeyword(id, Invulnerable) {
 		g.record(DamageRefused{Creature: id})
 		return 0
 	}

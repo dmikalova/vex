@@ -1,6 +1,7 @@
 package web
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 
@@ -337,24 +338,27 @@ func TestArmorShowsWhatIsLeftToAbsorb(t *testing.T) {
 
 	// Whitespace is normalised so the count can be pinned to the shield icon it
 	// labels — the markup is pretty-printed across lines, and the power stat can
-	// carry the same number.
+	// carry the same number. The icon's attributes are matched order-independently
+	// because go-app writes an element's attributes in map order, which is
+	// randomised per render: what the test binds is the count to a shield icon, not
+	// the order class and src happen to land in.
 	norm := func(s string) string { return strings.Join(strings.Fields(s), "") }
-	shield := func(n string) string {
-		return n + `<imgclass="iconicon-stat"src="/web/assets/shield.svg">`
+	shield := regexp.MustCompile(`(\d+)<img[^>]*shield\.svg`)
+	armorShown := func(h string) string {
+		if m := shield.FindStringSubmatch(h); m != nil {
+			return m[1]
+		}
+		return ""
 	}
 
 	c.g.g.State.Cards[id].ArmorRemaining = 5
-	if h := norm(c.html()); !strings.Contains(h, shield("5")) {
-		t.Error("a creature with armor intact did not show 5 armor remaining")
+	if got := armorShown(norm(c.html())); got != "5" {
+		t.Errorf("a creature with armor intact showed %q armor remaining, want 5", got)
 	}
 
 	c.g.g.State.Cards[id].ArmorRemaining = 2
-	h := norm(c.html())
-	if !strings.Contains(h, shield("2")) {
-		t.Error("a creature after absorbing did not show 2 armor remaining")
-	}
-	if strings.Contains(h, shield("5")) {
-		t.Error("armor still showed 5 after falling to 2")
+	if got := armorShown(norm(c.html())); got != "2" {
+		t.Errorf("a creature after absorbing showed %q armor remaining, want 2", got)
 	}
 }
 

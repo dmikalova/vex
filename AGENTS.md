@@ -251,10 +251,14 @@ engine seam. The load-bearing rules that affect how you add anything:
 - `game.go` + `game_*.go` — the `Game` runtime: methods on `*Game`, grouped by
   area (`game_turn.go`, `game_play.go`, `game_read.go`, `game_abilities.go`,
   `game_combat.go`, `game_leaves_play.go`, …). A new `Game` method goes in the
-  matching `game_*.go`.
+  matching `game_*.go` — except a keyword mechanic's own gate methods, which live
+  with the keyword (below).
 - `effect.go` + `effect_*.go` — the effect AST, one file per mechanic
   (`effect_aember.go`, `effect_damage.go`, …). A new effect goes in
-  `effect_<mechanic>.go`.
+  `effect_<mechanic>.go`. A keyword mechanic whose implementation is a `*Game` gate
+  rather than an effect node keeps that gate in its `effect_<keyword>.go` file too,
+  so the keyword reads as one unit — Alpha's `barredByAlpha`, Omega's
+  `endStepIfOmega`, Deploy's `deployPosition`/`chooseFlank`/`choosePosition`.
 - Everything else is a small type/data file named after the concept it defines:
   `card.go`, `state.go`, `types.go`, `target.go`, `duration.go`, `destination.go`,
   `resolver.go`, `text.go`. A new enum or value type gets its **own**

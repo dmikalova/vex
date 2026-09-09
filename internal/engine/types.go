@@ -360,6 +360,11 @@ const (
 	// Caper, the curses). It matters only as the card is played, so it is never
 	// granted or lost.
 	Treachery
+	// A creature with Invulnerable cannot be destroyed or dealt damage (Ghostform,
+	// Nizak, The Forgotten). It absorbs no damage — the damage simply never lands —
+	// and it survives every destruction effect. It is usually granted, and may be
+	// granted only while the creature is fighting.
+	Invulnerable
 	// keywordCount bounds the enum; it is not a keyword.
 	keywordCount
 )
@@ -367,15 +372,16 @@ const (
 // keywordNames is the printed word for each keyword; the unset zero renders
 // empty.
 var keywordNames = [keywordCount]string{
-	Skirmish:  "Skirmish",
-	Poison:    "Poison",
-	Elusive:   "Elusive",
-	Taunt:     "Taunt",
-	Versatile: "Versatile",
-	Alpha:     "Alpha",
-	Omega:     "Omega",
-	Deploy:    "Deploy",
-	Treachery: "Treachery",
+	Skirmish:     "Skirmish",
+	Poison:       "Poison",
+	Elusive:      "Elusive",
+	Taunt:        "Taunt",
+	Versatile:    "Versatile",
+	Alpha:        "Alpha",
+	Omega:        "Omega",
+	Deploy:       "Deploy",
+	Treachery:    "Treachery",
+	Invulnerable: "Invulnerable",
 }
 
 // String returns the keyword's printed word, capitalized as a card prints it.
@@ -458,6 +464,13 @@ const (
 	// combatant was destroyed; the destroyed creature is the one referred to as
 	// "it".
 	TriggerAfterDestroyedFighting
+	// This ability resolves on any card whose controller is the enemy of a creature
+	// destroyed while fighting — either combatant killed in a fight (The Colosseum
+	// puts a glory counter on itself). The destroyed creature is referred to as
+	// "it". Unlike TriggerAfterDestroyedFighting it fires on a bystander, not a
+	// combatant, so an artifact off to the side can watch every enemy death in
+	// combat.
+	TriggerAfterEnemyDestroyedFighting
 	// This ability resolves on a creature whose own Assault damage destroys the
 	// creature it attacks, before the fight itself would resolve (Skoll gives a
 	// friendly creature a power counter). The destroyed creature is referred to as
@@ -565,6 +578,18 @@ const (
 	// destruction batch has reached the discard piles, so a card destroyed in the
 	// same batch does not react.
 	TriggerAfterFriendlyCreatureDestroyed
+	// This ability resolves after Æmber is stolen from its controller, with the
+	// number of Æmber stolen in that single theft available to the effect as a
+	// count (Molephin deals 1 damage to each enemy creature for each Æmber stolen).
+	// It fires on the victim's in-play cards; a theft from the other player does
+	// not fire it.
+	TriggerAfterAemberStolenFromYou
+	// This ability resolves at the start of every player's turn — its own
+	// controller's and the opponent's — resolving as the player whose turn is
+	// starting, so "they"/"that player" is the turn's active player, not the card's
+	// controller (Gambling Den, General Order 24). It is the whole-board companion
+	// to TriggerStartOfTurn, which fires only on its own controller's turn.
+	TriggerAfterAnyPlayerStartOfTurn
 	// triggerCount bounds the enum so Triggers can range it; it is not a trigger.
 	triggerCount
 )
@@ -617,6 +642,8 @@ func (t Trigger) String() string {
 		return "Before Fight"
 	case TriggerAfterDestroyedFighting:
 		return "After a Creature Is Destroyed in a Fight With"
+	case TriggerAfterEnemyDestroyedFighting:
+		return "After an Enemy Creature Is Destroyed While Fighting"
 	case TriggerAfterAssaultDestroys:
 		return "After a Creature Is Destroyed by This Creature's Assault Damage"
 	case TriggerAfterArmorPrevents:
@@ -637,6 +664,8 @@ func (t Trigger) String() string {
 		return "After a Creature Reaps"
 	case TriggerAfterEnemyCreatureReaps:
 		return "After an Enemy Creature Reaps"
+	case TriggerAfterAemberStolenFromYou:
+		return "After Æmber Is Stolen From You"
 	case TriggerAfterCreatureFights:
 		return "After a Creature Is Used to Fight"
 	case TriggerAfterCreatureDestroyed:
@@ -655,6 +684,8 @@ func (t Trigger) String() string {
 		return "End of Ready Step"
 	case TriggerAfterAnyPlayerChoosesHouse:
 		return "After a Player Chooses a House"
+	case TriggerAfterAnyPlayerStartOfTurn:
+		return "At the Start of Each Player's Turn"
 	case TriggerLeavesPlay:
 		return "Leaves Play"
 	case TriggerEntersPlay:
@@ -698,6 +729,8 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return "After a neighbor of " + SelfName + " is used to fight, ", false
 	case TriggerAfterDestroyedFighting:
 		return "After a creature is destroyed in a fight with " + SelfName + ", ", false
+	case TriggerAfterEnemyDestroyedFighting:
+		return "After an enemy creature is destroyed while fighting, ", false
 	case TriggerAfterAssaultDestroys:
 		return "After a creature is destroyed by " + SelfName + "'s assault damage, ", false
 	case TriggerAfterArmorPrevents:
@@ -722,6 +755,8 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return "After a creature is used to fight, ", false
 	case TriggerAfterCreatureDestroyed:
 		return "After a creature is destroyed, ", false
+	case TriggerAfterAemberStolenFromYou:
+		return "After Æmber is stolen from you, ", false
 	case TriggerAfterFriendlyCreatureDestroyed:
 		return "After a friendly creature is destroyed, ", false
 	case TriggerAfterCreaturePlayed:
@@ -734,6 +769,8 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return "At the start of your turn, ", false
 	case TriggerEndOfReadyStep:
 		return `At the end of your "ready cards" step, `, false
+	case TriggerAfterAnyPlayerStartOfTurn:
+		return "At the start of each player's turn, ", false
 	case TriggerAfterAnyPlayerChoosesHouse:
 		return "After a player chooses an active house, ", false
 	default:

@@ -29,6 +29,11 @@ func TestDrawModifierText(t *testing.T) {
 	); got != `While `+SelfName+` is not on a flank, during their "draw cards" phase, your opponent refills their hand to 1 less card.` {
 		t.Errorf("off-flank text = %q", got)
 	}
+	if got := drawModifierText(
+		DrawModifier{Player: Controller, Amount: 2, OnlyWhileInCenter: true},
+	); got != `While `+SelfName+` is in the center of the battleline, during your "draw cards" phase, refill your hand to 2 additional cards.` {
+		t.Errorf("in-center text = %q", got)
+	}
 }
 
 func TestDrawModifierAffects(t *testing.T) {
@@ -105,5 +110,38 @@ func TestDrawModifierOffFlank(t *testing.T) {
 	}
 	if got := on(); got != 0 {
 		t.Errorf("on-flank drawModifier = %d, want 0", got)
+	}
+}
+
+// TestDrawModifierInCenter covers the positional gate: the modifier applies only
+// while its source sits in the center of its battleline (Zenzizenzizenzic).
+func TestDrawModifierInCenter(t *testing.T) {
+	center := func() int {
+		g := NewGame("A", "B", 1)
+		zzz := NewCard(
+			"Zenzizenzizenzic", Logos, Creature, Rare, WithPower(4),
+			WithDrawModifierInCenter(Controller, 2),
+		)
+		g.AddToBattleline(testCreature("l", 3), 0)
+		g.AddToBattleline(zzz, 0) // middle of an odd line: centered
+		g.AddToBattleline(testCreature("r", 3), 0)
+		return g.drawModifier(0)
+	}
+	if got := center(); got != 2 {
+		t.Errorf("in-center drawModifier = %d, want 2", got)
+	}
+
+	offCenter := func() int {
+		g := NewGame("A", "B", 1)
+		zzz := NewCard(
+			"Zenzizenzizenzic", Logos, Creature, Rare, WithPower(4),
+			WithDrawModifierInCenter(Controller, 2),
+		)
+		g.AddToBattleline(zzz, 0) // on a flank with another creature: not centered
+		g.AddToBattleline(testCreature("r", 3), 0)
+		return g.drawModifier(0)
+	}
+	if got := offCenter(); got != 0 {
+		t.Errorf("off-center drawModifier = %d, want 0", got)
 	}
 }

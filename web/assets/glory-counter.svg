@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <title>Glory counter</title>
+  <circle cx="12" cy="12" r="8" fill="#f59f00" stroke="#b8860b" stroke-width="1"/>
+  <path d="M12 6.5 13.6 10l3.9.3-3 2.5.9 3.8L12 14.6 8.6 16.6l.9-3.8-3-2.5 3.9-.3Z" fill="#fff3bf" stroke="#b8860b" stroke-width="0.6" stroke-linejoin="round"/>
+</svg>

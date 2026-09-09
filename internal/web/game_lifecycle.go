@@ -128,7 +128,10 @@ func (g *game) scrollUsableRowsIntoView() {
 				domID = handCardID(id)
 			}
 			if el := app.Window().GetElementByID(domID); el.Truthy() {
-				el.Call("scrollIntoView", map[string]any{"block": "nearest", "inline": "nearest"})
+				el.Call(
+					"scrollIntoView",
+					map[string]any{"block": "nearest", "inline": "nearest"},
+				)
 			}
 			break
 		}
@@ -154,7 +157,10 @@ func (g *game) scrollCursorIntoView() {
 	if !el.Truthy() {
 		return
 	}
-	el.Call("scrollIntoView", map[string]any{"block": "nearest", "inline": "nearest"})
+	el.Call(
+		"scrollIntoView",
+		map[string]any{"block": "nearest", "inline": "nearest"},
+	)
 	g.cursorScrolled = id
 }
 
@@ -284,6 +290,11 @@ func (g *game) scrollLogToBottom() {
 // itself.
 const toastLinger = 5 * time.Second
 
+// toastLeave is how long a bubble's leave animation runs — a quarter second to
+// fade, then a quarter second to collapse the space it held (see the
+// .log-toast-item--leaving rule) — before it is taken out of the toast.
+const toastLeave = 500 * time.Millisecond
+
 // refreshToast surfaces log lines the player would otherwise miss: while the
 // sidebar (and its log) is hidden, new lines since the last catch-up group into
 // the same bubbles the panel draws and toast over the board. With the sidebar
@@ -378,14 +389,33 @@ func (g *game) rearmToastExpiry(gen int) {
 	}
 }
 
-// dropToastBubble removes the bubble whose countdown just fired. Dropping the
-// newest bubble also closes the group, so the next line opens a fresh one.
+// dropToastBubble starts the leave of the bubble whose countdown just fired: it
+// fades and collapses in place (see toastLeave) before removeToastBubble takes it
+// out. Dropping the newest bubble also closes the group, so the next line opens a
+// fresh one. A bubble already leaving stays put.
 func (g *game) dropToastBubble(gen int) {
 	for i := range g.toastBubbles {
 		if g.toastBubbles[i].gen == gen {
+			if g.toastBubbles[i].leaving {
+				return
+			}
 			if i == len(g.toastBubbles)-1 {
 				g.toastOpen = false
 			}
+			g.toastBubbles[i].leaving = true
+			time.AfterFunc(toastLeave, func() {
+				g.dispatch(func(app.Context) { g.removeToastBubble(gen) })
+			})
+			return
+		}
+	}
+}
+
+// removeToastBubble takes a faded-out bubble out of the toast once its leave
+// animation has run.
+func (g *game) removeToastBubble(gen int) {
+	for i := range g.toastBubbles {
+		if g.toastBubbles[i].gen == gen {
 			g.toastBubbles = append(g.toastBubbles[:i], g.toastBubbles[i+1:]...)
 			return
 		}
@@ -398,7 +428,12 @@ func (g *game) dropToastBubble(gen int) {
 func (g *game) pauseToast(_ app.Context, _ app.Event)  { g.toastHover = true }
 func (g *game) resumeToast(_ app.Context, _ app.Event) { g.toastHover = false }
 
-func (g *game) toggleToastPin(_ app.Context, _ app.Event) { g.toastPinned = !g.toastPinned }
+func (g *game) toggleToastPin(
+	_ app.Context,
+	_ app.Event,
+) {
+	g.toastPinned = !g.toastPinned
+}
 
 // dismissToast clears the toast outright, catching the seen floor up to the log
 // so its lines do not toast again. It stops the click from also toggling the pin.
@@ -438,7 +473,9 @@ func (g *game) installKeyShortcuts() {
 			case "Tab", "Enter", "ArrowUp", "ArrowDown", "Escape":
 				e.Call("preventDefault")
 				shift := e.Get("shiftKey").Bool()
-				g.dispatch(func(ctx app.Context) { g.onPickerKey(ctx, key, shift) })
+				g.dispatch(
+					func(ctx app.Context) { g.onPickerKey(ctx, key, shift) },
+				)
 				return nil
 			}
 			return nil
@@ -451,7 +488,9 @@ func (g *game) installKeyShortcuts() {
 			// Ctrl/Cmd+Z undo; Ctrl/Cmd+Shift+Z redo.
 			if key == "z" || key == "Z" {
 				if e.Get("shiftKey").Bool() {
-					g.dispatch(func(ctx app.Context) { g.redoAction(ctx, app.Event{}) })
+					g.dispatch(
+						func(ctx app.Context) { g.redoAction(ctx, app.Event{}) },
+					)
 				} else {
 					g.dispatch(func(ctx app.Context) { g.undoAction(ctx, app.Event{}) })
 				}
@@ -483,7 +522,9 @@ func (g *game) installScrollTracking() {
 		g.placeFocus()
 		return nil
 	})
-	app.Window().Get("document").Call("addEventListener", "scroll", g.scrollFunc, true)
+	app.Window().
+		Get("document").
+		Call("addEventListener", "scroll", g.scrollFunc, true)
 }
 
 // swipeEdgeBand is how far (in pixels) from the right edge a touch must begin for
@@ -563,16 +604,30 @@ func (g *game) installSwipeGestures() {
 		case dx < 0 && g.sidebarCollapsed && g.swipeStartX >= width-swipeEdgeBand && !g.swipeOnStrip:
 			// Swipe left from the right edge: reveal the hidden sidebar. A swipe that
 			// began on a scrollable card row is left to scroll that row instead.
-			g.dispatch(func(ctx app.Context) { g.toggleSidebar(ctx, app.Event{}) })
+			g.dispatch(
+				func(ctx app.Context) { g.toggleSidebar(ctx, app.Event{}) },
+			)
 		case dx > 0 && !g.sidebarCollapsed:
 			// Swipe right: hide the sidebar out to the edge.
-			g.dispatch(func(ctx app.Context) { g.toggleSidebar(ctx, app.Event{}) })
+			g.dispatch(
+				func(ctx app.Context) { g.toggleSidebar(ctx, app.Event{}) },
+			)
 		}
 		return nil
 	})
 	doc := app.Window().Get("document")
-	doc.Call("addEventListener", "touchstart", g.touchStartFunc, map[string]any{"passive": true})
-	doc.Call("addEventListener", "touchend", g.touchEndFunc, map[string]any{"passive": true})
+	doc.Call(
+		"addEventListener",
+		"touchstart",
+		g.touchStartFunc,
+		map[string]any{"passive": true},
+	)
+	doc.Call(
+		"addEventListener",
+		"touchend",
+		g.touchEndFunc,
+		map[string]any{"passive": true},
+	)
 }
 
 // installTipDrag makes the player bar's stat tooltips reachable by touch: a press
@@ -625,7 +680,10 @@ func (g *game) installTipDrag() {
 				}
 			}
 		}
-		tip := tipUnder(args[0].Get("clientX").Float(), args[0].Get("clientY").Float())
+		tip := tipUnder(
+			args[0].Get("clientX").Float(),
+			args[0].Get("clientY").Float(),
+		)
 		if !tip.Truthy() {
 			return nil
 		}
@@ -637,12 +695,16 @@ func (g *game) installTipDrag() {
 		if !g.tipTracking || len(args) == 0 {
 			return nil
 		}
-		tip := tipUnder(args[0].Get("clientX").Float(), args[0].Get("clientY").Float())
+		tip := tipUnder(
+			args[0].Get("clientX").Float(),
+			args[0].Get("clientY").Float(),
+		)
 		if !tip.Truthy() {
 			activate(app.Null())
 			return nil
 		}
-		if !g.tipActive.Truthy() || !tip.Call("isSameNode", g.tipActive).Bool() {
+		if !g.tipActive.Truthy() ||
+			!tip.Call("isSameNode", g.tipActive).Bool() {
 			activate(tip)
 		}
 		return nil
@@ -656,10 +718,30 @@ func (g *game) installTipDrag() {
 		return nil
 	})
 	doc := app.Window().Get("document")
-	doc.Call("addEventListener", "pointerdown", g.tipDownFunc, map[string]any{"passive": true})
-	doc.Call("addEventListener", "pointermove", g.tipMoveFunc, map[string]any{"passive": true})
-	doc.Call("addEventListener", "pointerup", g.tipUpFunc, map[string]any{"passive": true})
-	doc.Call("addEventListener", "pointercancel", g.tipUpFunc, map[string]any{"passive": true})
+	doc.Call(
+		"addEventListener",
+		"pointerdown",
+		g.tipDownFunc,
+		map[string]any{"passive": true},
+	)
+	doc.Call(
+		"addEventListener",
+		"pointermove",
+		g.tipMoveFunc,
+		map[string]any{"passive": true},
+	)
+	doc.Call(
+		"addEventListener",
+		"pointerup",
+		g.tipUpFunc,
+		map[string]any{"passive": true},
+	)
+	doc.Call(
+		"addEventListener",
+		"pointercancel",
+		g.tipUpFunc,
+		map[string]any{"passive": true},
+	)
 }
 
 // OnResize re-places the lifted card copy, which is positioned from a measurement
@@ -716,22 +798,30 @@ func navigates(key string) bool {
 // OnDismount removes the document listeners and frees their wrapped functions.
 func (g *game) OnDismount() {
 	if g.keyFunc != nil {
-		app.Window().Get("document").Call("removeEventListener", "keydown", g.keyFunc)
+		app.Window().
+			Get("document").
+			Call("removeEventListener", "keydown", g.keyFunc)
 		g.keyFunc.Release()
 		g.keyFunc = nil
 	}
 	if g.scrollFunc != nil {
-		app.Window().Get("document").Call("removeEventListener", "scroll", g.scrollFunc, true)
+		app.Window().
+			Get("document").
+			Call("removeEventListener", "scroll", g.scrollFunc, true)
 		g.scrollFunc.Release()
 		g.scrollFunc = nil
 	}
 	if g.touchStartFunc != nil {
-		app.Window().Get("document").Call("removeEventListener", "touchstart", g.touchStartFunc)
+		app.Window().
+			Get("document").
+			Call("removeEventListener", "touchstart", g.touchStartFunc)
 		g.touchStartFunc.Release()
 		g.touchStartFunc = nil
 	}
 	if g.touchEndFunc != nil {
-		app.Window().Get("document").Call("removeEventListener", "touchend", g.touchEndFunc)
+		app.Window().
+			Get("document").
+			Call("removeEventListener", "touchend", g.touchEndFunc)
 		g.touchEndFunc.Release()
 		g.touchEndFunc = nil
 	}

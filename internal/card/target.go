@@ -119,6 +119,12 @@ var ExceptMostPowerful = engine.ExceptMostPowerful
 // card.Target.EachCreature.Selector(card.SamePowerAsChosen) (Dance of Doom).
 var SamePowerAsChosen = engine.SamePowerAsChosen
 
+// SamePowerAsEitherChosen is a Selector that keeps every creature sharing the
+// power of a chosen friendly or enemy creature, e.g.
+// card.Target.EachCreature.Selector(card.SamePowerAsEitherChosen) (Quintrino
+// Flux).
+var SamePowerAsEitherChosen = engine.SamePowerAsEitherChosen
+
 // LeastPowerful is a Selector that keeps only the single least powerful creature
 // of a set, e.g. card.Target.EachCreature.Selector(card.LeastPowerful) (Horseman
 // of Famine). When several tie the controller chooses which one to keep.
@@ -129,11 +135,22 @@ var LeastPowerful = engine.LeastPowerful
 // When more tie at the cutoff than there are slots, the controller chooses which.
 var MostPowerful = engine.MostPowerful
 
+// HouseWithAtLeast returns a Selector that keeps only creatures whose house has
+// at least n creatures in play, counting each house across both battlelines, e.g.
+// card.Target.EachCreature.Selector(card.HouseWithAtLeast(3)) (No Safety in
+// Numbers).
+var HouseWithAtLeast = engine.HouseWithAtLeast
+
 // LowestAndHighestPower is a Selector that keeps every creature tied for the
 // lowest power and every creature tied for the highest power, e.g.
 // card.Target.EachCreature.Selector(card.LowestAndHighestPower) (Standardized
 // Testing).
 var LowestAndHighestPower = engine.LowestAndHighestPower
+
+// WithoutSharedTrait returns a Selector that keeps only creatures that share no
+// trait with another creature in the same controller's battleline, e.g.
+// card.Target.EachCreature.Selector(card.WithoutSharedTrait()) (Good of the Many).
+var WithoutSharedTrait = engine.WithoutSharedTrait
 
 // PowerLessThan is a Selector that keeps every creature of a set whose power is
 // below a running count, e.g.

@@ -1,30 +1,32 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// SciOfficerMorpheus
+// Sci. Officer Morpheus
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Creature
 //	Rarity: Uncommon
 //	Power:  2
 //	Armor:  1
 //	Traits: Shapeshifter • Scientist
 //
-//	After you play a creature with a play effect, trigger its play effect an additional time.
+//	After a creature is played, if it is a friendly creature, trigger the play effect of it.
 var SciOfficerMorpheus = card.New(
 	"Sci. Officer Morpheus",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "318"),
 	card.WithPower(2),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Shapeshifter, card.Traits.Scientist),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.AfterCreaturePlayed, card.Conditional{
+			Cond: card.ItIsFriendly{},
+			Then: card.TriggerAbility{
+				Trigger: card.Trigger.Play,
+				Target:  card.Target.Triggering,
+			},
+		}),
 )

@@ -1,26 +1,29 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// GeneralOrder24
+// General Order 24
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Artifact
 //	Rarity: Rare
 //	Traits: Law
 //
-//	At the start of each player's turn, they must choose a creature they control and destroy each creature of the chosen creature's house. If that player has no creatures in play, destroy General Order 24 instead.
+//	At the start of each player's turn, if there are no friendly creatures in play, destroy General Order 24. Otherwise, choose a friendly creature - destroy each creature of that card's house.
 var GeneralOrder24 = card.New(
 	"General Order 24",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "333"),
 	card.WithTraits(card.Traits.Law),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.AfterAnyPlayerStartOfTurn, card.Conditional{
+			Cond: card.InPlay{Player: card.Controller, Type: card.Type.Creature, None: true},
+			Then: card.Destroy{Target: card.Target.This},
+			Else: card.ChooseCreatureThen{
+				Target: card.Target.FriendlyCreature,
+				Then:   card.Destroy{Target: card.Target.EachCreature.OfContextualHouse()},
+			},
+		}),
 )

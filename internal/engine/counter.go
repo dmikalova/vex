@@ -24,6 +24,15 @@ const (
 	// CounterFuse is a fuse counter — The Big One accumulates one each time a
 	// creature is played and destroys the whole board once it holds ten or more.
 	CounterFuse
+	// CounterGrowth is a growth counter — Vineapple Tree raises every key's cost by
+	// one Æmber for each one it carries, and sheds them all after a key is forged.
+	CounterGrowth
+	// CounterGlory is a glory counter — The Colosseum gains one each time an enemy
+	// creature is destroyed while fighting, and spends six to forge a key.
+	CounterGlory
+	// CounterDisruption is a disruption counter — Disruption Field raises the
+	// opponent's key cost by one Æmber for each one it carries.
+	CounterDisruption
 	// NumCounterKinds is one past the last real kind, so callers can range over
 	// CounterNone+1 .. NumCounterKinds to visit every counter (the web icon
 	// completeness test does, to force a new kind to ship its own unique icon).
@@ -33,6 +42,17 @@ const (
 // valid reports whether the kind names a real counter.
 func (k CounterKind) valid() bool { return k != CounterNone }
 
+// carriesCounters reports whether a card can hold a generic counter: it is in
+// play, or it is an upgrade attached to a creature (Disruption Field accumulates
+// disruption counters on itself while attached).
+func (g *Game) carriesCounters(id LocalID) bool {
+	if g.inPlay(id) {
+		return true
+	}
+	_, ok := g.hostOf(id)
+	return ok
+}
+
 // noun renders the counter's display name for card text, e.g. "doom counter".
 func (k CounterKind) noun() string {
 	switch k {
@@ -40,6 +60,12 @@ func (k CounterKind) noun() string {
 		return "doom counter"
 	case CounterFuse:
 		return "fuse counter"
+	case CounterGrowth:
+		return "growth counter"
+	case CounterGlory:
+		return "glory counter"
+	case CounterDisruption:
+		return "disruption counter"
 	default:
 		return "counter"
 	}
@@ -71,7 +97,7 @@ func (g *Game) counterIndex(id LocalID, kind CounterKind) int {
 // on a card that is not in play, or a non-positive count, is a no-op. A 65th
 // distinct (card, kind) pair panics — a caught invariant, never a silent drop.
 func (g *Game) PlaceCounter(id LocalID, kind CounterKind, n int) {
-	if n <= 0 || g.stateOf(id) == nil {
+	if n <= 0 || !g.carriesCounters(id) {
 		return
 	}
 	if i := g.counterIndex(id, kind); i >= 0 {
@@ -108,6 +134,33 @@ func (g *Game) clearCounters(id LocalID) {
 		}
 		i++
 	}
+}
+
+// RemoveCounters drops every counter of one kind from a card, leaving its other
+// kinds untouched — Vineapple Tree removes each growth counter from itself after a
+// key is forged. A card carrying no counter of that kind is left as is.
+func (g *Game) RemoveCounters(id LocalID, kind CounterKind) {
+	if i := g.counterIndex(id, kind); i >= 0 {
+		g.removeCounterEntryAt(i)
+	}
+}
+
+// RemoveCountersN takes n counters of one kind off a card, dropping the entry
+// once it reaches zero — The Colosseum removes six glory counters to forge a key.
+// A non-positive n is a no-op; more than the card carries removes all of them.
+func (g *Game) RemoveCountersN(id LocalID, kind CounterKind, n int) {
+	if n <= 0 {
+		return
+	}
+	i := g.counterIndex(id, kind)
+	if i < 0 {
+		return
+	}
+	if n >= int(g.State.Counters[i].N) {
+		g.removeCounterEntryAt(i)
+		return
+	}
+	g.State.Counters[i].N -= uint8(n)
 }
 
 // removeCounterEntryAt deletes the entry at position i, shifting the tail left to

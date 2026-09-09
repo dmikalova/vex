@@ -1,20 +1,15 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// FavorOfRex
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Favor of Rex
 //
 //	House:  Saurian
 //	Type:   Tactic
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Trigger the play effect of a creature as if you had just played it.
+//	Play: Trigger the play effect of a creature.
 var FavorOfRex = card.New(
 	"Favor of Rex",
 	card.House.Saurian,
@@ -22,5 +17,9 @@ var FavorOfRex = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "219"),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.TriggerAbility{
+			Trigger: card.Trigger.Play,
+			Target:  card.Target.Creature,
+		}),
 )

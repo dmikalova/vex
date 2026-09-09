@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// GamblingDen
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Gambling Den
 //
 //	House:  Shadows
 //	Type:   Artifact
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Location
 //
-//	At the start of each player's turn, that player may name a house. If they do, reveal the top card of their deck. If it is of the named house, they gain 2A. Otherwise, they lose 2A.
+//	At the start of each player's turn, you may choose a house - reveal the top card of your deck. If it is of the chosen house, gain 2 Æmber. Otherwise, lose 2 Æmber.
 var GamblingDen = card.New(
 	"Gambling Den",
 	card.House.Shadows,
@@ -24,5 +19,19 @@ var GamblingDen = card.New(
 	card.Provenance(card.WC, "268"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Location),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.AfterAnyPlayerStartOfTurn, card.May{
+			Do: card.ChooseHouseThen{
+				Then: card.Sentences{
+					Effects: []card.Effect{
+						card.RevealTopOfDeck{},
+						card.Conditional{
+							Cond: card.ItIsOfHouse{House: card.TheChosenHouse},
+							Then: card.GainAember{Player: card.Controller, Amount: 2},
+							Else: card.LoseAember{Player: card.Controller, Amount: 2},
+						},
+					},
+				},
+			},
+		}),
 )

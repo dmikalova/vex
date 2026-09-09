@@ -35,6 +35,8 @@ type (
 	StealAember = engine.StealAember
 	// CaptureAember moves Æmber from a pool onto a capturing creature.
 	CaptureAember = engine.CaptureAember
+	// CaptureFromAnyPlayer captures Æmber onto this creature from both pools in any split.
+	CaptureFromAnyPlayer = engine.CaptureFromAnyPlayer
 	// MoveAemberToSupply removes Æmber sitting on a creature to the common supply.
 	MoveAemberToSupply = engine.MoveAemberToSupply
 	// Exalt places Æmber from the common supply onto a chosen card.
@@ -63,9 +65,8 @@ type (
 	Spread = engine.Spread
 	// PerTarget is a DealDamage strategy scaling the damage per creature hit.
 	PerTarget = engine.PerTarget
-	// CreatureAndNeighbor (a Spread) damages a chosen creature and one of its neighbors.
-	CreatureAndNeighbor = engine.CreatureAndNeighbor
-	// CreatureAndNeighbors (a Spread) damages a chosen creature and each of its neighbors.
+	// CreatureAndNeighbors (a Spread) damages a chosen creature and its neighbors —
+	// each of them, or one chosen when Scope is card.OneNeighbor.
 	CreatureAndNeighbors = engine.CreatureAndNeighbors
 	// DifferentCreatures (a Spread) damages a chosen creature and a different chosen creature.
 	DifferentCreatures = engine.DifferentCreatures
@@ -103,6 +104,10 @@ type (
 	Destroy = engine.Destroy
 	// DestroyChosen destroys any number of creatures the controller picks from its Target.
 	DestroyChosen = engine.DestroyChosen
+	// DestroyAllExceptChosen keeps a chosen number of friendly and enemy creatures and destroys every other creature.
+	DestroyAllExceptChosen = engine.DestroyAllExceptChosen
+	// Tertiate destroys one third of all enemy creatures and one third of all friendly creatures (rounding up each time).
+	Tertiate = engine.Tertiate
 	// DestroyMostPowerfulUnlessReadyHouse destroys the most powerful creature of
 	// each player who does not control a ready creature of House (Quicksand).
 	DestroyMostPowerfulUnlessReadyHouse = engine.DestroyMostPowerfulUnlessReadyHouse
@@ -165,6 +170,8 @@ type (
 	// absorbs the next instance of damage or the next time the creature leaves
 	// play, then is spent.
 	Ward = engine.Ward
+	// MoveWard takes the ward off one warded creature and places it on another (Hunter or Hunted?).
+	MoveWard = engine.MoveWard
 	// Exhaust turns the targeted creatures sideways so they cannot be used.
 	Exhaust = engine.Exhaust
 	// ExhaustCreatures exhausts up to Max creatures the controller chooses.
@@ -179,6 +186,8 @@ type (
 	AddPowerCounter = engine.AddPowerCounter
 	// PlaceCounter puts generic counters (doom and its kin) on each card its target selects.
 	PlaceCounter = engine.PlaceCounter
+	// RemoveCounters takes every generic counter of one kind off each targeted card.
+	RemoveCounters = engine.RemoveCounters
 )
 
 // Drawing, moving, and revealing cards between zones.
@@ -212,6 +221,11 @@ type (
 	ShuffleChosenCreaturesFromZones = engine.ShuffleChosenCreaturesFromZones
 	// ShuffleCardsFromDiscard shuffles a counted number of chosen cards from your discard pile into your deck.
 	ShuffleCardsFromDiscard = engine.ShuffleCardsFromDiscard
+	// ShuffleMatchingFromDiscardIntoDeck shuffles each matching card from your
+	// discard pile into your deck.
+	ShuffleMatchingFromDiscardIntoDeck = engine.ShuffleMatchingFromDiscardIntoDeck
+	// ShuffleFriendlyCardsInPlayIntoDeck shuffles every friendly card in play into your deck, then draws a card for each shuffled this way.
+	ShuffleFriendlyCardsInPlayIntoDeck = engine.ShuffleFriendlyCardsInPlayIntoDeck
 	// SwapDeckAndDiscard exchanges the controller's deck with their discard pile,
 	// then shuffles.
 	SwapDeckAndDiscard = engine.SwapDeckAndDiscard
@@ -228,6 +242,11 @@ type (
 	ArchiveFromPlay = engine.ArchiveFromPlay
 	// ArchiveSource archives the card whose ability this is (Sucker Punch).
 	ArchiveSource = engine.ArchiveSource
+	// ArchiveGrantingUpgrade archives the upgrade whose granted ability this is
+	// (Ghostform archives itself off its host).
+	ArchiveGrantingUpgrade = engine.ArchiveGrantingUpgrade
+	// ArchivePurgedCard archives a card the controller chooses from their own purge pile (Universal Recycle Bin).
+	ArchivePurgedCard = engine.ArchivePurgedCard
 	// DiscardArchives moves all of a player's archived cards into their discard pile.
 	DiscardArchives = engine.DiscardArchives
 	// DiscardHand discards cards from a player's hand.
@@ -285,11 +304,18 @@ type (
 	// PlayTopOfOpponentDeck plays the top card of the opponent's deck as your own
 	// (a Murkens option).
 	PlayTopOfOpponentDeck = engine.PlayTopOfOpponentDeck
+	// PlayDiscardedTacticFromOpponent is Fidgit's reap: discard a random card from
+	// the opponent's archives or their deck top, then play it as your own if it is a
+	// Tactic.
+	PlayDiscardedTacticFromOpponent = engine.PlayDiscardedTacticFromOpponent
 	// PutUnderFromHand puts a card the controller chooses from their hand under
 	// the resolving card, face up or face down.
 	PutUnderFromHand = engine.PutUnderFromHand
 	// PlayCardUnder plays the card placed under the resolving card.
 	PlayCardUnder = engine.PlayCardUnder
+	// TriggerGraftedPlayEffect triggers the play effect of an action card grafted
+	// faceup under the resolving card, leaving it grafted (Infomancer, Memolith).
+	TriggerGraftedPlayEffect = engine.TriggerGraftedPlayEffect
 	// Graft moves a target card in play faceup under the resolving card, out of
 	// play (rulebook: Graft).
 	Graft = engine.Graft
@@ -319,6 +345,8 @@ type (
 	RepeatedFight = engine.RepeatedFight
 	// ReadyVerb readies the chosen creature.
 	ReadyVerb = engine.ReadyVerb
+	// ReapVerb makes the chosen creature reap.
+	ReapVerb = engine.ReapVerb
 	// FightVerb makes the chosen creature fight an enemy creature.
 	FightVerb = engine.FightVerb
 	// UseVerb uses the chosen creature (reap, fight, or Action:).
@@ -425,6 +453,11 @@ type (
 	HasOtherFriendlyCreatures = engine.HasOtherFriendlyCreatures
 	// CardsInDeckAtMost is met when the controller's deck holds at most Amount cards.
 	CardsInDeckAtMost = engine.CardsInDeckAtMost
+	// CardsInDiscardAtLeast is met when the controller's discard pile holds at least
+	// Amount cards matching House and Type.
+	CardsInDiscardAtLeast = engine.CardsInDiscardAtLeast
+	// Haunted is met while the controller has 10 or more cards in their discard pile.
+	Haunted = engine.Haunted
 	// ControlsNamed is met when the controller has a card of a given name in play.
 	ControlsNamed = engine.ControlsNamed // ItIsOnFlank gates on whether the context creature (ctx.It) is on a flank.
 	ItIsOnFlank   = engine.ItIsOnFlank
@@ -457,6 +490,8 @@ type (
 	Overwhelmed = engine.Overwhelmed
 	// ItIsOfHouse is met when the card in context belongs to a referenced house.
 	ItIsOfHouse = engine.ItIsOfHouse
+	// ItIsFriendly is met when the card in context is controlled by you.
+	ItIsFriendly = engine.ItIsFriendly
 	// ItIs is met when the card in context matches a concrete House and/or Type.
 	ItIs = engine.ItIs
 	// ItIsOfTrait is met when the creature in context has the named trait.
@@ -472,6 +507,9 @@ type (
 	ItIsStunned = engine.ItIsStunned
 	// ChoseHouse is met when the controller's active house is House.
 	ChoseHouse = engine.ChoseHouse
+	// ActiveHouseMatchesNoCardsInPlay is met when no card in play, across both
+	// players and every card type, belongs to the chosen active house.
+	ActiveHouseMatchesNoCardsInPlay = engine.ActiveHouseMatchesNoCardsInPlay
 )
 
 // Æmber-pool comparisons for card.PoolAember{Player: ..., Is: ..., Amount: n}.
@@ -516,14 +554,17 @@ type (
 	CardsDiscarded = engine.CardsDiscarded
 	// OpponentForgedKeys counts the keys the opponent has forged.
 	OpponentForgedKeys = engine.OpponentForgedKeys
+	// CountersOnThis counts the generic counters of one kind on the source card.
+	CountersOnThis = engine.CountersOnThis
 	// PurgedCards counts every card in the purge pile across both players.
 	PurgedCards = engine.PurgedCards
 	// TurnCount counts one of the engine's turn-history tallies (Player + Of).
-	TurnCount = engine.TurnCount
-	// ForgedKey gates on whether a player forged a key this turn or their previous one.
+	TurnCount = engine.TurnCount // ForgedKey gates on whether a player forged a key this turn or their previous one.
 	ForgedKey = engine.ForgedKey
 	// OpponentHasMoreKeys is met when your opponent has forged more keys than you.
 	OpponentHasMoreKeys = engine.OpponentHasMoreKeys
+	// KeyColorForged is met while a player has forged a key of a given colour.
+	KeyColorForged = engine.KeyColorForged
 	// AemberStolenFromYou is met if your opponent stole Æmber from you last turn.
 	AemberStolenFromYou = engine.AemberStolenFromYou
 	// EnemyCreatureDestroyed is met once an enemy creature has been destroyed this turn.
@@ -592,6 +633,8 @@ type (
 	DamageHealed = engine.DamageHealed
 	// DamagePrevented counts the damage a creature just prevented with its own armor.
 	DamagePrevented = engine.DamagePrevented
+	// AemberStolenThisEvent counts the Æmber taken in the theft that fired an After Æmber Is Stolen From You ability.
+	AemberStolenThisEvent = engine.AemberStolenThisEvent
 	// UnforgedKeys counts the keys a player has still to forge.
 	UnforgedKeys = engine.UnforgedKeys
 	// AemberOnThis counts the Æmber sitting on the source card.
@@ -629,6 +672,10 @@ type (
 	CannotUse = engine.CannotUse
 	// CannotReap bars a player from using creatures to reap for a Duration.
 	CannotReap = engine.CannotReap
+	// CreaturesCannot bars every creature in play — both players' — from fighting
+	// or reaping until the caster's next turn, sparing an excepted house (Into the
+	// Night, Sow Salt).
+	CreaturesCannot = engine.CreaturesCannot
 	// ChosenHouseCannotReapNextTurn bars a player from reaping with creatures of the
 	// chosen house throughout their next turn.
 	ChosenHouseCannotReapNextTurn = engine.ChosenHouseCannotReapNextTurn
@@ -675,6 +722,8 @@ type (
 	UnforgeKey = engine.UnforgeKey
 	// RaiseKeyCost makes keys cost more throughout a player's next turn.
 	RaiseKeyCost = engine.RaiseKeyCost
+	// LowerKeyCost drops keys' cost (a negative bump) for a Duration; may be EachPlayer.
+	LowerKeyCost = engine.LowerKeyCost
 	// GiveRemainingAemberAfterOpponentForgeKey arms Interdimensional Graft's delayed gift.
 	GiveRemainingAemberAfterOpponentForgeKey = engine.GiveRemainingAemberAfterOpponentForgeKey
 	// GainChains gives a player chains (a draw penalty).
@@ -684,13 +733,19 @@ type (
 // Counter groups the generic counter kinds a card can place or read, e.g.
 // card.PlaceCounter{Kind: card.Counter.Doom, Target: card.Target.ChosenCreature}.
 var Counter = counters{
-	Doom: engine.CounterDoom,
-	Fuse: engine.CounterFuse,
+	Doom:       engine.CounterDoom,
+	Fuse:       engine.CounterFuse,
+	Growth:     engine.CounterGrowth,
+	Glory:      engine.CounterGlory,
+	Disruption: engine.CounterDisruption,
 }
 
 type counters struct {
-	Doom engine.CounterKind
-	Fuse engine.CounterKind
+	Doom       engine.CounterKind
+	Fuse       engine.CounterKind
+	Growth     engine.CounterKind
+	Glory      engine.CounterKind
+	Disruption engine.CounterKind
 }
 
 // Tally names a per-resolution "... this way" tally for card.ProducedThisWay, e.g.
@@ -758,6 +813,10 @@ var Yours = engine.ControlYours
 // Half is the Loss that makes a LoseAember remove half the pool, rounded down:
 // card.LoseAember{Player: card.EachPlayer, By: card.Half}.
 var Half = engine.Half
+
+// OneNeighbor makes a CreatureAndNeighbors spread hit one chosen neighbor instead
+// of every neighbor (Mighty Lance): card.CreatureAndNeighbors{Scope: card.OneNeighbor}.
+var OneNeighbor = engine.OneNeighbor
 
 // AllBut is the Loss that makes a LoseAember reduce a pool to keep, removing
 // everything above it: card.LoseAember{Player: card.EachPlayer, By: card.AllBut(5)}.

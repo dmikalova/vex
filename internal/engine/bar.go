@@ -9,6 +9,15 @@ type Bar[T comparable] struct {
 	Source LocalID
 }
 
+// A CreatureBar is a board-wide "creatures cannot fight/reap" restriction (Into
+// the Night, Sow Salt): the barred Action (fighting or reaping) and the one house
+// it spares (HouseNone spares none). It is comparable, so it rides in a Bar and
+// in flat state; the zero value (an unset Action) bars nothing.
+type CreatureBar struct {
+	Action      UseKind
+	ExceptHouse House
+}
+
 // A HouseWager is a bet on a player's active house on a future turn: if that
 // player chooses House, the Predictor steals Amount (Snaglet). The zero value
 // (Amount 0) arms no wager, and paying it out clears it.

@@ -100,6 +100,57 @@ func (e CannotReap) Resolve(ctx *EffectContext) {
 	}
 }
 
+// CreaturesCannot bars every creature in play — both players' — from being used
+// one way (fighting or reaping) until the start of the caster's next turn, save
+// for creatures of an excepted house. Where CannotFight and CannotReap bar one
+// player's use of their own creatures, this is a rule on the whole board: Into
+// the Night stops non-Shadows creatures fighting, Sow Salt stops every creature
+// reaping. ExceptHouse left unset (HouseNone) spares no house.
+type CreaturesCannot struct {
+	Action      UseKind
+	ExceptHouse House
+	Duration    Duration
+}
+
+// validate rejects a CreaturesCannot that bars no real action or names no
+// duration. The action must be fighting or reaping; an "Action:" ability cannot
+// be barred this way. An unset ExceptHouse is legal and spares no house.
+func (e CreaturesCannot) validate() error {
+	if e.Action != FightUse && e.Action != ReapUse {
+		return fmt.Errorf("CreaturesCannot: action must be FightUse or ReapUse")
+	}
+	if !e.Duration.valid() {
+		return errUnsetDuration("CreaturesCannot")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "until the start of your next turn, non-Shadows
+// creatures cannot be used to fight", or with no house exception "until the start
+// of your next turn, creatures cannot be used to reap".
+func (e CreaturesCannot) Text() string {
+	subject := "creatures"
+	if e.ExceptHouse != HouseNone {
+		subject = "non-" + e.ExceptHouse.String() + " creatures"
+	}
+	return "until the start of your next turn, " + subject +
+		" cannot be used to " + e.Action.verb()
+}
+
+// Resolve arms the board-wide bar: it stops the caster using creatures this way
+// for the rest of their turn and the opponent throughout their next turn, so it
+// lifts at the start of the caster's next turn.
+func (e CreaturesCannot) Resolve(ctx *EffectContext) {
+	if e.Duration == NextTurn {
+		ctx.Resolver.CreaturesCannotUntilNextTurn(
+			ctx.Controller,
+			e.Action,
+			e.ExceptHouse,
+			ctx.Source,
+		)
+	}
+}
+
 // CannotPlay bars a player from playing cards for the Duration — Lifeward stops
 // creatures and Scrambler Storm stops action cards through the affected player's
 // next turn, while Treasure Map stops every card for the rest of the current turn.

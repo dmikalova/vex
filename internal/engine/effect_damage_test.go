@@ -347,6 +347,40 @@ func TestSpreadCreatureAndNeighbors(t *testing.T) {
 	}
 }
 
+// TestSpreadCreatureAndNeighborsAtTarget proves that a named Target aims the
+// spread at that creature — the one this creature fought (ctx.It) — hitting it
+// and its neighbors with no choose-creature prompt. A chooser primed to pick a
+// decoy would land the damage there instead if a choice were made.
+func TestSpreadCreatureAndNeighborsAtTarget(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	left := g.AddToBattleline(testCreature("left", 10), 1)
+	fought := g.AddToBattleline(testCreature("fought", 10), 1)
+	right := g.AddToBattleline(testCreature("right", 10), 1)
+	decoy := g.AddToBattleline(testCreature("decoy", 10), 0)
+	g.SetChooser(0, &idQueueChooser{ids: []LocalID{decoy}})
+	ctx := &EffectContext{Resolver: g, Controller: 0, It: fought, HasIt: true}
+
+	e := DealDamage{Spread: CreatureAndNeighbors{
+		Amount: 2,
+		Splash: 2,
+		Target: Target{Kind: TargetCreatureFought},
+	}}
+	want := "deal 2 damage to the creature {self} fought and 2 damage to each of its neighbors"
+	if e.Text() != want {
+		t.Errorf("text = %q, want %q", e.Text(), want)
+	}
+	e.Resolve(ctx)
+	if g.Damage(fought) != 2 {
+		t.Errorf("fought damage = %d, want 2", g.Damage(fought))
+	}
+	if g.Damage(left) != 2 || g.Damage(right) != 2 {
+		t.Errorf("neighbor damage = %d/%d, want 2/2", g.Damage(left), g.Damage(right))
+	}
+	if g.Damage(decoy) != 0 {
+		t.Errorf("decoy took %d damage; target should not be chosen", g.Damage(decoy))
+	}
+}
+
 func TestDealDamageIgnoreArmor(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	armored := g.AddToBattleline(testCreature("armored", 5, WithArmor(2)), 1)

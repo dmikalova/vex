@@ -97,7 +97,7 @@ func (e ExaltToRepeat) Text() string {
 func (e ExaltToRepeat) Resolve(ctx *EffectContext) {
 	e.Do.Resolve(ctx)
 	for range RuleOfSix - 1 {
-		ids := e.Exalt.SelectOptional(ctx)
+		ids := e.exaltChoice(ctx)
 		if len(ids) == 0 {
 			return
 		}
@@ -107,4 +107,23 @@ func (e ExaltToRepeat) Resolve(ctx *EffectContext) {
 		}
 		e.Do.Resolve(ctx)
 	}
+}
+
+// exaltChoice offers the exalt that pays for another repeat, or none to stop. A
+// chosen target is its own declinable prompt (pick a creature or decline); a
+// back-reference like the chosen creature has nothing to pick, so it is offered
+// as a Yes/No confirm on the creature Do just acted on.
+func (e ExaltToRepeat) exaltChoice(ctx *EffectContext) []LocalID {
+	if e.Exalt.isChosen() {
+		return e.Exalt.SelectOptional(ctx)
+	}
+	ids := e.Exalt.Select(ctx)
+	if len(ids) == 0 {
+		return nil
+	}
+	prompt := "Exalt " + e.Exalt.Text() + " to repeat the preceding effect?"
+	if ctx.ChooseOption(prompt, []string{"Yes", "No"}) != 0 {
+		return nil
+	}
+	return ids
 }

@@ -60,6 +60,22 @@ type houses struct {
 	Self engine.House
 }
 
+// KeyColor groups the forged-key colours, e.g. card.KeyColor.Red.
+var KeyColor = keyColors{
+	Red:    engine.KeyColorRed,
+	Blue:   engine.KeyColorBlue,
+	Yellow: engine.KeyColorYellow,
+}
+
+type keyColors struct {
+	// Red is the red key.
+	Red engine.KeyColor
+	// Blue is the blue key.
+	Blue engine.KeyColor
+	// Yellow is the yellow key.
+	Yellow engine.KeyColor
+}
+
 // Type groups the card-type values, e.g. card.Type.Creature.
 var Type = cardTypes{
 	Creature: engine.Creature,
@@ -255,15 +271,16 @@ type traits struct {
 
 // Keyword groups the keyword values, e.g. card.Keyword.Skirmish.
 var Keyword = keywords{
-	Skirmish:  engine.Skirmish,
-	Poison:    engine.Poison,
-	Elusive:   engine.Elusive,
-	Taunt:     engine.Taunt,
-	Versatile: engine.Versatile,
-	Alpha:     engine.Alpha,
-	Omega:     engine.Omega,
-	Deploy:    engine.Deploy,
-	Treachery: engine.Treachery,
+	Skirmish:     engine.Skirmish,
+	Poison:       engine.Poison,
+	Elusive:      engine.Elusive,
+	Taunt:        engine.Taunt,
+	Versatile:    engine.Versatile,
+	Alpha:        engine.Alpha,
+	Omega:        engine.Omega,
+	Deploy:       engine.Deploy,
+	Treachery:    engine.Treachery,
+	Invulnerable: engine.Invulnerable,
 }
 
 type keywords struct {
@@ -288,6 +305,8 @@ type keywords struct {
 	Deploy engine.Keyword
 	// Treachery: this card enters play under your opponent's control.
 	Treachery engine.Keyword
+	// Invulnerable: this creature cannot be destroyed or dealt damage.
+	Invulnerable engine.Keyword
 }
 
 // Keywords builds the keyword slice for an upgrade's granted keywords, e.g.
@@ -337,6 +356,7 @@ var Trigger = triggers{
 	AfterNeighborFights:            engine.TriggerAfterNeighborFights,
 	Destroyed:                      engine.TriggerDestroyed,
 	AfterDestroyedFighting:         engine.TriggerAfterDestroyedFighting,
+	AfterEnemyDestroyedFighting:    engine.TriggerAfterEnemyDestroyedFighting,
 	AfterAssaultDestroys:           engine.TriggerAfterAssaultDestroys,
 	AfterArmorPrevents:             engine.TriggerAfterArmorPrevents,
 	AfterCardPlayed:                engine.TriggerAfterCardPlayed,
@@ -357,6 +377,8 @@ var Trigger = triggers{
 	AfterCreatureFights:            engine.TriggerAfterCreatureFights,
 	AfterPlayerForgesKey:           engine.TriggerAfterPlayerForgesKey,
 	AfterCreaturePlayed:            engine.TriggerAfterCreaturePlayed,
+	AfterAemberStolenFromYou:       engine.TriggerAfterAemberStolenFromYou,
+	AfterAnyPlayerStartOfTurn:      engine.TriggerAfterAnyPlayerStartOfTurn,
 	LeavesPlay:                     engine.TriggerLeavesPlay,
 }
 
@@ -383,6 +405,8 @@ type triggers struct {
 	Destroyed engine.Trigger
 	// AfterDestroyedFighting fires when a creature is destroyed in a fight with this one.
 	AfterDestroyedFighting engine.Trigger
+	// AfterEnemyDestroyedFighting fires on a bystander when an enemy creature is destroyed while fighting.
+	AfterEnemyDestroyedFighting engine.Trigger
 	// AfterAssaultDestroys fires when this creature's Assault damage destroys the creature it attacks.
 	AfterAssaultDestroys engine.Trigger
 	// AfterArmorPrevents fires after this card prevents damage with its own armor.
@@ -434,6 +458,15 @@ type triggers struct {
 	// AfterCreaturePlayed fires after any creature is played from hand (friendly or
 	// enemy), with the played creature as "it" (The Big One).
 	AfterCreaturePlayed engine.Trigger
+	// AfterAemberStolenFromYou fires after Æmber is stolen from this card's
+	// controller, with the number stolen in that theft available as a count
+	// (Molephin).
+	AfterAemberStolenFromYou engine.Trigger
+	// AfterAnyPlayerStartOfTurn fires at the start of every player's turn — its own
+	// controller's and the opponent's — resolving as the player whose turn is
+	// starting, so "they"/"that player" is that active player (Gambling Den, General
+	// Order 24).
+	AfterAnyPlayerStartOfTurn engine.Trigger
 	// LeavesPlay fires as this card leaves play by any route ("Leaves Play:").
 	LeavesPlay engine.Trigger
 }

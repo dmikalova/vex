@@ -440,19 +440,26 @@ func (ItIsYourTurn) Met(ctx *EffectContext) bool {
 }
 
 // AemberOnThisAtLeast is met when at least Amount Æmber sits on the source card —
-// [REDACTED] sacrifices itself once it has hoarded four or more.
+// [REDACTED] sacrifices itself once it has hoarded four or more. Not flips the
+// sense to "fewer than Amount", so Crassosaurus purges itself when it captured too
+// little.
 type AemberOnThisAtLeast struct {
 	Amount int
+	// Not flips the sense: false is met at or above the threshold, true below it.
+	Not bool
 }
 
-// CondText renders the condition clause.
+// CondText renders the condition clause, "fewer than" when Not flips the sense.
 func (c AemberOnThisAtLeast) CondText() string {
+	if c.Not {
+		return fmt.Sprintf("if there are fewer than %d Æmber on it", c.Amount)
+	}
 	return fmt.Sprintf("if there are %d or more Æmber on it", c.Amount)
 }
 
-// Met reports whether the source card holds at least Amount Æmber.
+// Met reports whether the source card holds at least Amount Æmber, flipped by Not.
 func (c AemberOnThisAtLeast) Met(ctx *EffectContext) bool {
-	return ctx.Resolver.AmberOn(ctx.Source) >= c.Amount
+	return (ctx.Resolver.AmberOn(ctx.Source) >= c.Amount) != c.Not
 }
 
 // CardsDestroyedFewerThan is met when fewer than Amount cards were destroyed this
@@ -1286,4 +1293,34 @@ func (c OpponentHasMoreKeys) CondText() string {
 // Met reports whether the opponent's forged-key count exceeds the controller's.
 func (c OpponentHasMoreKeys) Met(ctx *EffectContext) bool {
 	return ctx.Resolver.Keys(ctx.Opponent()) > ctx.Resolver.Keys(ctx.Controller)
+}
+
+// KeyColorForged is met while the named player has forged a key of a given colour
+// — The Red Baron gains a reap while your red key is forged, and gains elusive
+// while your opponent's red key is forged.
+type KeyColorForged struct {
+	// Player is whose forged keys to look at: Controller or Opponent.
+	Player Player
+	// Color is the key colour that must be among that player's forged keys.
+	Color KeyColor
+}
+
+// CondText renders the clause, e.g. "if your red key is forged" or "if your
+// opponent's red key is forged".
+func (c KeyColorForged) CondText() string {
+	possessive := "your"
+	if c.Player == Opponent {
+		possessive = "your opponent's"
+	}
+	return fmt.Sprintf("if %s %s key is forged", possessive, strings.ToLower(c.Color.String()))
+}
+
+// Met reports whether the named player has forged a key of Color.
+func (c KeyColorForged) Met(ctx *EffectContext) bool {
+	for _, col := range ctx.Resolver.KeyColors(ctx.PlayerFor(c.Player)) {
+		if col == c.Color {
+			return true
+		}
+	}
+	return false
 }

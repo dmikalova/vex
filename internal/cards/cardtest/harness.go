@@ -34,6 +34,10 @@ type Side struct {
 	Archives []Entry
 	Amber    int
 	Keys     int
+	// ForgedKeys are the colours of the keys this player has already forged.
+	// Setting it forges that many keys of those colours (for cards that read key
+	// colour, like The Red Baron); use Keys when only the count matters.
+	ForgedKeys []engine.KeyColor
 }
 
 // Harness is a running scenario. It owns the game and the two players and bridges
@@ -331,6 +335,10 @@ func (h *Harness) placeSide(player int, s Side) {
 	}
 	if s.Keys != 0 {
 		h.g.State.Keys[player] = s.Keys
+	}
+	copy(h.g.State.KeyColors[player][:], s.ForgedKeys)
+	if n := len(s.ForgedKeys); n != 0 {
+		h.g.State.Keys[player] = n
 	}
 }
 

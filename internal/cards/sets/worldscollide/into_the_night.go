@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// IntoTheNight
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Into the Night
 //
 //	House:  Shadows
 //	Type:   Tactic
@@ -20,5 +15,10 @@ var IntoTheNight = card.New(
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "256"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.CreaturesCannot{
+			Action:      card.UseKind.Fight,
+			ExceptHouse: card.House.Self,
+			Duration:    card.Duration.NextTurn,
+		}),
 )

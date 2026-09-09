@@ -11,7 +11,7 @@ import (
 //
 //	House:  Star Alliance
 //	Type:   Upgrade
-//	Rarity: Special
+//	Rarity: Rare
 //	Æmber:  1
 //
 //	This creature gains, "Fight/Reap: You may choose one:

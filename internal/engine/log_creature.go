@@ -139,6 +139,18 @@ func (e CreatureWarded) Text(n Namer) string {
 	return fmt.Sprintf("%s is warded", n.Name(e.Creature))
 }
 
+// WardMoved narrates a ward being taken off one creature and placed on another.
+type WardMoved struct {
+	From LocalID
+	To   LocalID
+	By   LocalID
+}
+
+// Text renders the creature the ward left and the creature it moved to.
+func (e WardMoved) Text(n Namer) string {
+	return fmt.Sprintf("%s moves a ward from %s to %s", n.Name(e.By), n.Name(e.From), n.Name(e.To))
+}
+
 // WardAbsorbed narrates a creature's ward being spent: it absorbed an instance of
 // damage or a removal from play, so the creature stays and loses its ward.
 type WardAbsorbed struct{ Creature LocalID }

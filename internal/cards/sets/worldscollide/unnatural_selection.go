@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// UnnaturalSelection
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Unnatural Selection
 //
 //	House:  Untamed
 //	Type:   Tactic
@@ -22,5 +17,9 @@ var UnnaturalSelection = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.WC, "367"),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.DestroyAllExceptChosen{
+			FriendlyKept: 3,
+			EnemyKept:    3,
+		}),
 )

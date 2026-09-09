@@ -8,6 +8,7 @@ var Duration = durations{
 	EndOfTurn:           engine.EndOfTurn,
 	NextTurn:            engine.NextTurn,
 	UntilThisLeavesPlay: engine.UntilThisLeavesPlay,
+	EndOfNextTurn:       engine.EndOfNextTurn,
 	Forever:             engine.Forever,
 }
 
@@ -18,6 +19,8 @@ type durations struct {
 	NextTurn engine.Duration
 	// UntilThisLeavesPlay lasts until the card whose effect set it leaves play.
 	UntilThisLeavesPlay engine.Duration
+	// EndOfNextTurn lasts from now through the end of the affected player's next turn.
+	EndOfNextTurn engine.Duration
 	// Forever never lifts; it lasts the rest of the game (latest ability wins).
 	Forever engine.Duration
 }

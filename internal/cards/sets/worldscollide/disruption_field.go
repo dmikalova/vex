@@ -1,27 +1,31 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// DisruptionField
+// Disruption Field
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Upgrade
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Your opponent's keys cost +1A for each disruption counter on Disruption Field.
-//	This creature gains "Fight/Reap: Put a disruption counter on Disruption Field."
+//	Your opponent's keys cost +1 Æmber for each disruption counter on Disruption Field.
+//	This creature gains, "Fight/Reap: Put a disruption counter on Disruption Field."
 var DisruptionField = card.New(
 	"Disruption Field",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Upgrade,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "328"),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeyCost(
+		card.KeyCostChange(card.Opponent, 1).
+			Per(card.CountersOnThis{Kind: card.Counter.Disruption}),
+	),
+	card.WithStatic(card.StaticModifier{
+		Granted: card.FightOrReap(card.PlaceCounter{
+			Kind:   card.Counter.Disruption,
+			Target: card.Target.Upgrade.Named("Disruption Field"),
+		}),
+	}),
 )

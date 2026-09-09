@@ -248,6 +248,14 @@ body {
   padding-inline-end: calc(20rem + var(--shell-pad));
   scroll-padding-inline-end: calc(20rem + var(--shell-pad));
 }
+/* the floating dock also sits over the bottom-right corner, on top of the lower
+   player bar. That bar scrolls sideways, so it keeps a dock's width of trailing
+   room the same way the card rows do, holding its stats and keys out from under
+   the buttons rather than letting them hide behind the dock. */
+.app--sidebar-collapsed .board-area > .score-pill:last-child {
+  padding-inline-end: calc(20rem + var(--shell-pad));
+  scroll-padding-inline-end: calc(20rem + var(--shell-pad));
+}
 
 /* A phone held upright has height to spare and no width, so the dock spans the
    bottom instead of taking a corner. Here it stops floating and becomes the last
@@ -333,6 +341,12 @@ body {
   /* the dock spans the full width here, so no row can hide a card behind it */
   .app--sidebar-collapsed .card-strip {
     padding-inline-end: 0;
+    scroll-padding-inline-end: 0;
+  }
+  /* the dock no longer takes the bottom-right corner here either, so the lower
+     player bar drops its reserved room. */
+  .app--sidebar-collapsed .board-area > .score-pill:last-child {
+    padding-inline-end: var(--ctl-pad-x);
     scroll-padding-inline-end: 0;
   }
   /* on a portrait phone the prompt bar stays minimal: the source card's face is
@@ -633,6 +647,35 @@ body {
   to {
     opacity: 1;
     transform: translateX(-50%);
+  }
+}
+/* a toast bubble leaves in two quick beats: it fades out over the first quarter
+   second, then the space it held collapses over the next, so lines clearing at
+   the end of their timer read as "gone, then closed up" rather than vanishing
+   with a jump. The 1fr→0fr grid track animates the height smoothly whatever the
+   bubble's content height, so the inner box must clip its overflow. */
+.log-toast-item {
+  display: grid;
+  grid-template-rows: 1fr;
+}
+.log-toast-item-inner {
+  min-height: 0;
+  overflow: hidden;
+}
+.log-toast-item--leaving {
+  pointer-events: none;
+  animation:
+    toast-line-fade 0.25s ease forwards,
+    toast-line-collapse 0.25s ease 0.25s forwards;
+}
+@keyframes toast-line-fade {
+  to {
+    opacity: 0;
+  }
+}
+@keyframes toast-line-collapse {
+  to {
+    grid-template-rows: 0fr;
   }
 }
 /* a phase or turn header rules a line clear across the panel, fading out from its

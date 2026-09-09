@@ -392,6 +392,12 @@ func TestMostPowerful(t *testing.T) {
 		t.Errorf("text = %q", got)
 	}
 
+	// A single most powerful reads in the singular, without a count.
+	if got := (Target{Kind: TargetEachCreature}).Selector(MostPowerful(1)).
+		Text(); got != "the most powerful creature" {
+		t.Errorf("singular text = %q", got)
+	}
+
 	// Fewer creatures than n keeps them all.
 	g0 := NewGame("A", "B", 1)
 	g0.AddToBattleline(testCreature("only", 3), 1)
@@ -437,6 +443,66 @@ func TestMostPowerful(t *testing.T) {
 		Select(&EffectContext{Resolver: g3, Controller: 0})
 	if len(fallback) != 2 || !containsID(fallback, hi) || !containsID(fallback, lo1) {
 		t.Errorf("declined tie = %v, want [%d %d]", fallback, hi, lo1)
+	}
+}
+
+func TestHouseWithAtLeast(t *testing.T) {
+	// Text renders the "belongs to a house" clause with the threshold.
+	want := "each creature that belongs to a house that has 3 or more creatures in play"
+	if got := (Target{Kind: TargetEachCreature}).Selector(HouseWithAtLeast(3)).
+		Text(); got != want {
+		t.Errorf("text = %q", got)
+	}
+
+	// Mars has three creatures split across both players; Sanctum has one. The
+	// selector keeps the three Mars creatures and drops the lone Sanctum creature,
+	// proving both players' creatures count toward one house's total.
+	g := NewGame("A", "B", 1)
+	m1 := g.AddToBattleline(NewCard("m1", Mars, Creature, Common, WithPower(3)), 0)
+	m2 := g.AddToBattleline(NewCard("m2", Mars, Creature, Common, WithPower(3)), 0)
+	m3 := g.AddToBattleline(NewCard("m3", Mars, Creature, Common, WithPower(3)), 1)
+	g.AddToBattleline(NewCard("s1", Sanctum, Creature, Common, WithPower(3)), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	got := (Target{Kind: TargetEachCreature}).Selector(HouseWithAtLeast(3)).Select(ctx)
+	if len(got) != 3 || !containsID(got, m1) || !containsID(got, m2) || !containsID(got, m3) {
+		t.Errorf("HouseWithAtLeast(3) = %v, want the three Mars creatures", got)
+	}
+
+	// Raising the threshold above every house's count keeps nothing.
+	none := (Target{Kind: TargetEachCreature}).Selector(HouseWithAtLeast(4)).Select(ctx)
+	if len(none) != 0 {
+		t.Errorf("HouseWithAtLeast(4) = %v, want nothing", none)
+	}
+}
+
+func TestWithoutSharedTrait(t *testing.T) {
+	// Text renders the "does not share a trait" clause.
+	want := "each creature that does not share a trait with another creature in its controller's battleline"
+	if got := (Target{Kind: TargetEachCreature}).Selector(WithoutSharedTrait()).
+		Text(); got != want {
+		t.Errorf("text = %q", got)
+	}
+
+	// P0 has two Beasts (they share a trait, so neither is a loner) and one
+	// Human whose only trait-sharer sits in the ENEMY battleline. P1 has that
+	// lone Human. The selector keeps the two Humans (each a loner in its own
+	// battleline) and drops the two Beasts.
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(NewCard("b1", Mars, Creature, Common, WithPower(3), WithTraits(Beast)), 0)
+	g.AddToBattleline(NewCard("b2", Mars, Creature, Common, WithPower(3), WithTraits(Beast)), 0)
+	h0 := g.AddToBattleline(
+		NewCard("h0", Mars, Creature, Common, WithPower(3), WithTraits(Human)),
+		0,
+	)
+	h1 := g.AddToBattleline(
+		NewCard("h1", Sanctum, Creature, Common, WithPower(3), WithTraits(Human)),
+		1,
+	)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	got := (Target{Kind: TargetEachCreature}).Selector(WithoutSharedTrait()).Select(ctx)
+	if len(got) != 2 || !containsID(got, h0) || !containsID(got, h1) {
+		t.Errorf("WithoutSharedTrait = %v, want the two Human loners", got)
 	}
 }
 

@@ -1,15 +1,10 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// QuixxleStone
+// Quixxle Stone
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Artifact
 //	Rarity: Rare
 //	Æmber:  1
@@ -18,11 +13,14 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	If a player has more creatures in play than their opponent, they cannot play creatures.
 var QuixxleStone = card.New(
 	"Quixxle Stone",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "338"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Item),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithCannotPlayWhile(card.ConditionalPlayBar{
+		Type: card.Type.Creature,
+		When: card.ControlsMoreCreatures{},
+	}),
 )

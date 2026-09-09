@@ -45,6 +45,15 @@ func (g *Game) archiveFromDiscard(player int, id LocalID) {
 	}
 }
 
+// archiveFromPurge moves a card from a player's purge pile to their archives —
+// the recovery of a card set aside out of the game (Universal Recycle Bin).
+func (g *Game) archiveFromPurge(player int, id LocalID) {
+	if g.State.Purge[player].remove(id) {
+		g.State.Archives[player].add(id)
+		g.record(CardArchivedFromPurge{Player: player, Card: id})
+	}
+}
+
 // archiveFromDeck moves a specific card the controller looked at — one of the top
 // few, not blindly the top one — from a player's deck to their archives.
 func (g *Game) archiveFromDeck(player int, id LocalID) {

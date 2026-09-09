@@ -350,6 +350,16 @@ type GameState struct {
 	CannotReapHouse     [2]Bar[House]
 	CannotReapHouseNext [2]Bar[House]
 
+	// Board-wide creature bars. CreaturesCannot[p] stops player p using their
+	// creatures one way — fighting or reaping — this turn, save for the house the
+	// bar spares (Into the Night, Sow Salt); CreaturesCannotNext[p] arms that block
+	// for p's next turn. Unlike CannotFight/CannotReap, which are one player's own
+	// choice, these are a rule on every creature in play, so the caster arms both
+	// entries: their own for this turn and the opponent's for next turn, and it
+	// lifts at the start of the caster's next turn. The zero value bars nothing.
+	CreaturesCannot     [2]Bar[CreatureBar]
+	CreaturesCannotNext [2]Bar[CreatureBar]
+
 	// SkipForge bars. SkipForgeNext[p] makes player p skip their "forge a key" phase
 	// at the start of their next turn (Miasma); StartTurn promotes it to SkipForge[p]
 	// and forges accordingly, so it lands on that player's own next turn.

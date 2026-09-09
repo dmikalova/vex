@@ -242,7 +242,6 @@ func TestCaptureAemberDistinct(t *testing.T) {
 		t.Errorf("opponent pool = %d, want 2", got)
 	}
 }
-
 func marsCreature(name string, power int) CardDefinition {
 	return NewCard(name, Mars, Creature, Common, WithPower(power), WithTraits(Martian))
 }
@@ -362,4 +361,148 @@ func TestPlayerForItsOpponent(t *testing.T) {
 	if got := ctx.PlayerFor(ItsOpponent); got != 0 {
 		t.Errorf("PlayerFor(ItsOpponent) = %d, want 0", got)
 	}
+}
+
+// queueOptionChooser answers ChooseOption from a fixed queue of indices, so a test
+// can drive a per-unit split choice.
+type queueOptionChooser struct {
+	FirstChooser
+	opts []int
+	i    int
+}
+
+func (q *queueOptionChooser) ChooseOption(_, _ string, _ []string) int {
+	v := q.opts[q.i]
+	q.i++
+	return v
+}
+
+// TestCaptureFromAnyPlayer covers Crassosaurus's capture: the controller splits
+// the capture across both pools, it caps at what the pools hold, and an untouched
+// pool contributes nothing.
+func TestCaptureFromAnyPlayer(t *testing.T) {
+	e := CaptureFromAnyPlayer{Amount: 10}
+	if got := e.Text(); got != "{self} captures 10 Æmber from any combination of players" {
+		t.Errorf("text = %q", got)
+	}
+	if err := (CaptureFromAnyPlayer{}).validate(); err == nil {
+		t.Error("a non-positive Amount should be rejected")
+	}
+	if err := e.validate(); err != nil {
+		t.Errorf("valid effect rejected: %v", err)
+	}
+
+	// Rich pools: the controller chooses the split, taking some from each pool.
+	t.Run("splits across both pools", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		src := g.AddToBattleline(testCreature("crass", 4), 0)
+		g.SetAember(0, 4)
+		g.SetAember(1, 4)
+		// opp, own, opp, own, opp -> 3 from the opponent, 2 from the controller.
+		g.SetChooser(0, &queueOptionChooser{opts: []int{1, 0, 1, 0, 1}})
+		CaptureFromAnyPlayer{Amount: 5}.
+			Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+		if got := g.AmberOn(src); got != 5 {
+			t.Errorf("captured = %d, want 5", got)
+		}
+		if g.Aember(0) != 2 || g.Aember(1) != 1 {
+			t.Errorf("pools = %d/%d, want 2/1", g.Aember(0), g.Aember(1))
+		}
+	})
+
+	// Short pools: the capture stops once both pools are empty, taking fewer than
+	// the full Amount. The default chooser takes the controller's pool first.
+	t.Run("captures less when the pools are short", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		src := g.AddToBattleline(testCreature("crass", 4), 0)
+		g.SetAember(0, 1)
+		g.SetAember(1, 2)
+		g.SetChooser(0, optionPicker{idx: 0}) // "your pool" whenever both hold Æmber
+		CaptureFromAnyPlayer{Amount: 10}.
+			Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+		if got := g.AmberOn(src); got != 3 {
+			t.Errorf("captured = %d, want 3", got)
+		}
+		if g.Aember(0) != 0 || g.Aember(1) != 0 {
+			t.Errorf("pools = %d/%d, want 0/0", g.Aember(0), g.Aember(1))
+		}
+	})
+
+	// Only the opponent has Æmber: the empty controller pool contributes nothing.
+	t.Run("only the opponent has Æmber", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		src := g.AddToBattleline(testCreature("crass", 4), 0)
+		g.SetAember(1, 3)
+		CaptureFromAnyPlayer{Amount: 2}.
+			Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+		if got := g.AmberOn(src); got != 2 {
+			t.Errorf("captured = %d, want 2", got)
+		}
+		if g.Aember(1) != 1 {
+			t.Errorf("opponent pool = %d, want 1", g.Aember(1))
+		}
+	})
+
+	// Only the controller has Æmber: the empty opponent pool contributes nothing.
+	t.Run("only the controller has Æmber", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		src := g.AddToBattleline(testCreature("crass", 4), 0)
+		g.SetAember(0, 3)
+		CaptureFromAnyPlayer{Amount: 2}.
+			Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+		if got := g.AmberOn(src); got != 2 {
+			t.Errorf("captured = %d, want 2", got)
+		}
+		if g.Aember(0) != 1 {
+			t.Errorf("controller pool = %d, want 1", g.Aember(0))
+		}
+	})
+
+	// Both pools empty: the capture resolves to nothing.
+	t.Run("no Æmber anywhere", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		src := g.AddToBattleline(testCreature("crass", 4), 0)
+		CaptureFromAnyPlayer{Amount: 5}.
+			Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+		if got := g.AmberOn(src); got != 0 {
+			t.Errorf("captured = %d, want 0", got)
+		}
+	})
+}
+
+// TestCrassosaurusSelfPurge covers the composed Play ability: after the capture,
+// the creature purges itself only when it captured fewer than 10 Æmber.
+func TestCrassosaurusSelfPurge(t *testing.T) {
+	play := Sentences{Effects: []Effect{
+		CaptureFromAnyPlayer{Amount: 10},
+		Conditional{
+			Cond: AemberOnThisAtLeast{Amount: 10, Not: true},
+			Then: PurgeCreature{Target: Target{Kind: TargetThisCreature}},
+		},
+	}}
+
+	// Short of 10: the creature captures what it can, then purges itself.
+	t.Run("purges when it captured fewer than 10", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		src := g.AddToBattleline(testCreature("crass", 4), 0)
+		g.SetAember(1, 6)
+		play.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+		if !g.State.Purge[0].contains(src) {
+			t.Error("Crassosaurus should have purged itself after capturing only 6")
+		}
+	})
+
+	// A full 10: the creature keeps its captured Æmber and stays in play.
+	t.Run("stays when it captured 10", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		src := g.AddToBattleline(testCreature("crass", 4), 0)
+		g.SetAember(1, 10)
+		play.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+		if g.State.Purge[0].contains(src) {
+			t.Error("Crassosaurus should stay in play after capturing 10")
+		}
+		if got := g.AmberOn(src); got != 10 {
+			t.Errorf("captured = %d, want 10", got)
+		}
+	})
 }

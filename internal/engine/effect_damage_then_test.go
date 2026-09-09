@@ -71,7 +71,7 @@ func TestDamageThenIfSurvives(t *testing.T) {
 }
 
 func TestDamageCreatureAndNeighbor(t *testing.T) {
-	e := DealDamage{Spread: CreatureAndNeighbor{Amount: 3, NeighborAmount: 3}}
+	e := DealDamage{Spread: CreatureAndNeighbors{Amount: 3, Splash: 3, Scope: OneNeighbor}}
 	if e.Text() != "deal 3 damage to a creature and 3 damage to a neighbor of that creature" {
 		t.Errorf("text = %q", e.Text())
 	}

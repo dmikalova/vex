@@ -148,6 +148,9 @@ func (g *Game) constantActive(src LocalID, c ConstantAbility) bool {
 	if c.WhileInCenter && !g.InCenterOfBattleline(src) {
 		return false
 	}
+	if c.WhileCondition != nil && !c.WhileCondition.Met(g.constantContext(src)) {
+		return false
+	}
 	return true
 }
 
@@ -445,6 +448,18 @@ func (g *Game) cannotReapHouse(player int, id LocalID) bool {
 	return bar.Value != HouseNone && bar.Value == g.House(id)
 }
 
+// creaturesGloballyBarred reports whether a board-wide "creatures cannot
+// fight/reap" bar (Into the Night, Sow Salt) currently stops creature id being
+// used the given way. The bar reaches every creature whose controller holds it,
+// save for creatures of the one house it spares.
+func (g *Game) creaturesGloballyBarred(id LocalID, kind UseKind) bool {
+	bar := g.State.CreaturesCannot[g.controller(id)].Value
+	if bar.Action != kind {
+		return false
+	}
+	return bar.ExceptHouse == HouseNone || g.House(id) != bar.ExceptHouse
+}
+
 // cannotReap reports whether a player is barred from reaping — either by the
 // timed player-wide bar armed for this turn (Inky Gloom) or by a constant
 // Restrictions.Reaping rule on a card in play, their own (Reaping Controller) or
@@ -494,14 +509,32 @@ func (g *Game) barredFromPlaying(player int, t CardType) bool {
 	return barred == t || barred == AnyType
 }
 
-// cannotPlayCreatures reports whether a player is barred from playing creatures by
-// a constant Restrictions.CannotPlay rule on a card they control in play.
 // cannotPlayCreatures reports whether player is barred from playing creatures by a
-// constant "cannot play" rule on a card in play.
+// constant "cannot play" rule on a card in play — either a Restrictions.CannotPlay
+// rule they control or a symmetric CannotPlayWhile bar whose condition holds.
 func (g *Game) cannotPlayCreatures(player int) bool {
 	for _, id := range g.allInPlay(player) {
 		if g.cat.def(id).Restricts.CannotPlay == Creature {
 			return true
+		}
+	}
+	return g.barredByConditionalPlayBar(player, Creature)
+}
+
+// barredByConditionalPlayBar reports whether any card in play — either player's —
+// bars player from playing cards of type t through a CannotPlayWhile rule whose
+// condition holds for player (Quixxle Stone bars whoever controls more creatures).
+func (g *Game) barredByConditionalPlayBar(player int, t CardType) bool {
+	for p := 0; p < 2; p++ {
+		for _, id := range g.allInPlay(p) {
+			bar := g.cat.def(id).CannotPlayWhile
+			if bar.When == nil || bar.Type != t {
+				continue
+			}
+			ctx := &EffectContext{Resolver: g, Source: id, Controller: player}
+			if bar.When.Met(ctx) {
+				return true
+			}
 		}
 	}
 	return false
@@ -644,6 +677,11 @@ func (g *Game) keyCostChangeFor(id LocalID, controller, target int) int {
 		if kc := g.cat.def(up).Static.KeyCostChange; kc.affects(controller, target) {
 			total += g.keyCostAmount(id, kc)
 		}
+		for _, kc := range g.cat.def(up).KeyCostChanges {
+			if kc.affects(controller, target) {
+				total += g.keyCostAmount(up, kc)
+			}
+		}
 	}
 	return total
 }
@@ -672,7 +710,8 @@ func (g *Game) keyCost(target int) int {
 			cost += g.keyCostChangeFor(id, controller, target)
 		}
 	}
-	return cost
+	// A key cost can never fall below 0, whatever reductions stack (We Can ALL Win).
+	return max(cost, 0)
 }
 
 // CurrentKeyCost is the exported view of keyCost: the Æmber a player must spend

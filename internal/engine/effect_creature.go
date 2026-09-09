@@ -49,6 +49,21 @@ func (ReadyVerb) Apply(ctx *EffectContext, target LocalID) {
 	ctx.Resolver.Record(CreatureReadied{Creature: target})
 }
 
+// ReapVerb makes the chosen creature reap.
+//
+// Reaping with a creature gains its controller one Æmber, fires the creature's
+// Reap abilities, and exhausts it (see Game.reapWith). A creature can only be
+// used while ready, so an exhausted creature may be chosen but does nothing.
+type ReapVerb struct{}
+
+// VerbText returns the verb phrase.
+func (ReapVerb) VerbText() string { return "reap with" }
+
+// Apply has the creature reap.
+func (ReapVerb) Apply(ctx *EffectContext, target LocalID) {
+	ctx.Resolver.ReapWith(target)
+}
+
 // FightVerb makes the chosen creature fight an enemy creature.
 //
 // Using a creature to fight has it attack an enemy creature: both deal their

@@ -125,6 +125,16 @@ referred to as "it".`,
 		},
 		{
 			Section:    SectionAbility,
+			Title:      "After an Enemy Creature Is Destroyed While Fighting",
+			Definition: "An ability that resolves on a bystander when an enemy creature is destroyed in a fight.",
+			Body: `This ability resolves whenever a creature is destroyed while fighting — either
+combatant killed in the exchange of power damage — on a card whose controller is
+the enemy of that creature. It fires on a bystander, not on a combatant, so an
+artifact off to the side reacts to every enemy death in combat; the destroyed
+creature is the one referred to as "it".`,
+		},
+		{
+			Section:    SectionAbility,
 			Title:      "After a Creature Is Destroyed by This Creature's Assault Damage",
 			Definition: "An ability that resolves on a creature whose own Assault damage destroys the creature it attacks.",
 			Body: `Assault deals its damage before the fight itself resolves. When that Assault
@@ -169,6 +179,16 @@ to.`,
 		},
 		{
 			Section:    SectionAbility,
+			Title:      "At the Start of Each Player's Turn",
+			Definition: "An ability that resolves at the start of every player's turn, resolving as the player whose turn it is.",
+			Body: `This ability resolves at the start of every player's turn, its own
+controller's and the opponent's, resolving as the player whose turn is starting so
+"they"/"that player" is that active player rather than the card's controller
+(Gambling Den, General Order 24). It is the whole-board companion to Start of Turn,
+which fires only on its own controller's turn.`,
+		},
+		{
+			Section:    SectionAbility,
 			Title:      "End of Ready Step",
 			Definition: `An ability that resolves at the end of its controller's "ready cards" step, after every card has readied.`,
 			Body: `An End of Ready Step ability resolves at the end of its controller's
@@ -210,6 +230,15 @@ destroyed creature as "it" (Spartasaur destroys each non-Dinosaur creature). It
 resolves only after the whole destruction is complete and the destroyed cards
 have reached their discard piles, so a card destroyed alongside them does not
 react.`,
+		},
+		{
+			Section:    SectionAbility,
+			Title:      "After Æmber Is Stolen From You",
+			Definition: "An ability that resolves after Æmber is stolen from its controller, scaled by the amount stolen.",
+			Body: `This ability resolves after Æmber is stolen from its controller. The number of
+Æmber taken in that single theft is available to the effect, so it can scale by
+it (Molephin deals 1 damage to each enemy creature for each Æmber stolen). A
+theft from the other player does not fire it.`,
 		},
 		{
 			Section:    SectionAbility,

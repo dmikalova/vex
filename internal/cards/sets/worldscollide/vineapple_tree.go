@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// VineappleTree
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Vineapple Tree
 //
 //	House:  Untamed
 //	Type:   Artifact
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Location
 //
-//	Keys cost +1A for each growth counter on Vineapple Tree.
+//	Each player's keys cost +1 Æmber for each growth counter on Vineapple Tree.
 //	After a player forges a key, remove each growth counter from Vineapple Tree.
 //	Action: Put a growth counter on Vineapple Tree.
 var VineappleTree = card.New(
@@ -26,5 +21,16 @@ var VineappleTree = card.New(
 	card.Provenance(card.WC, "402"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Location),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeyCost(
+		card.KeyCostChange(card.EachPlayer, 1).Per(card.CountersOnThis{Kind: card.Counter.Growth})),
+	card.WithAbility(
+		card.Trigger.AfterPlayerForgesKey, card.RemoveCounters{
+			Kind:   card.Counter.Growth,
+			Target: card.Target.This,
+		}),
+	card.WithAbility(
+		card.Trigger.Action, card.PlaceCounter{
+			Kind:   card.Counter.Growth,
+			Target: card.Target.This,
+		}),
 )

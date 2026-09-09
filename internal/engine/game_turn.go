@@ -66,6 +66,8 @@ func (g *Game) StartTurn(player int) {
 	g.State.CannotReapNext[player] = Bar[bool]{}
 	g.State.CannotReapHouse[player] = g.State.CannotReapHouseNext[player]
 	g.State.CannotReapHouseNext[player] = Bar[House]{}
+	g.State.CreaturesCannot[player] = g.State.CreaturesCannotNext[player]
+	g.State.CreaturesCannotNext[player] = Bar[CreatureBar]{}
 	g.State.ForcedHouse[player] = g.State.ForcedHouseNext[player]
 	g.State.ForcedHouseNext[player] = Bar[House]{}
 	g.State.ForbiddenHouse[player] = g.State.ForbiddenHouseNext[player]
@@ -196,6 +198,9 @@ func (g *Game) drawModifier(player int) int {
 				if m.OnlyWhileOffFlank && g.onFlankOf(id) {
 					continue
 				}
+				if m.OnlyWhileInCenter && !g.InCenterOfBattleline(id) {
+					continue
+				}
 				total += m.Amount
 			}
 		}
@@ -247,6 +252,25 @@ func (g *Game) CannotReapThisTurn(player int, source LocalID) {
 // the armed house.
 func (g *Game) CannotReapHouseNextTurn(player int, h House, source LocalID) {
 	g.State.CannotReapHouseNext[player] = Bar[House]{Value: h, Source: source}
+}
+
+// CreaturesCannotUntilNextTurn arms a board-wide bar that stops both players
+// using creatures one way — fighting or reaping — until the caster's next turn,
+// sparing creatures of exceptHouse (Into the Night, Sow Salt). The caster is
+// barred for the rest of this turn and the opponent for their next turn, so the
+// bar lifts at the start of the caster's next turn.
+func (g *Game) CreaturesCannotUntilNextTurn(
+	caster int,
+	action UseKind,
+	exceptHouse House,
+	source LocalID,
+) {
+	bar := Bar[CreatureBar]{
+		Value:  CreatureBar{Action: action, ExceptHouse: exceptHouse},
+		Source: source,
+	}
+	g.State.CreaturesCannot[caster] = bar
+	g.State.CreaturesCannotNext[1-caster] = bar
 }
 
 // BlankEnemyText blanks the text box of every creature the given player controls

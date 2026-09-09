@@ -208,20 +208,21 @@ func TestTargetTextDefault(t *testing.T) {
 
 func TestAllTriggerPrefixes(t *testing.T) {
 	cases := map[Trigger]string{
-		TriggerAfterPlay:              "Play: Gain 1 Æmber.",
-		TriggerAfterReap:              "Reap: Gain 1 Æmber.",
-		TriggerAfterFight:             "Fight: Gain 1 Æmber.",
-		TriggerBeforeFight:            "Before Fight: Gain 1 Æmber.",
-		TriggerAction:                 "Action: Gain 1 Æmber.",
-		TriggerDestroyed:              "Destroyed: Gain 1 Æmber.",
-		TriggerAfterForgeKey:          "After you forge a key, gain 1 Æmber.",
-		TriggerAfterCreatureEnters:    "After a creature enters play, gain 1 Æmber.",
-		TriggerAfterDestroyedFighting: "After a creature is destroyed in a fight with {self}, gain 1 Æmber.",
-		TriggerAfterAssaultDestroys:   "After a creature is destroyed by {self}'s assault damage, gain 1 Æmber.",
-		TriggerAfterArmorPrevents:     "After {self} prevents damage with its armor, gain 1 Æmber.",
-		TriggerAfterNeighborFights:    "After a neighbor of {self} is used to fight, gain 1 Æmber.",
-		TriggerAfterCardPlayed:        "After you play a card, gain 1 Æmber.",
-		TriggerAfterCreaturePlayed:    "After a creature is played, gain 1 Æmber.",
+		TriggerAfterPlay:                "Play: Gain 1 Æmber.",
+		TriggerAfterReap:                "Reap: Gain 1 Æmber.",
+		TriggerAfterFight:               "Fight: Gain 1 Æmber.",
+		TriggerBeforeFight:              "Before Fight: Gain 1 Æmber.",
+		TriggerAction:                   "Action: Gain 1 Æmber.",
+		TriggerDestroyed:                "Destroyed: Gain 1 Æmber.",
+		TriggerAfterForgeKey:            "After you forge a key, gain 1 Æmber.",
+		TriggerAfterCreatureEnters:      "After a creature enters play, gain 1 Æmber.",
+		TriggerAfterDestroyedFighting:   "After a creature is destroyed in a fight with {self}, gain 1 Æmber.",
+		TriggerAfterAssaultDestroys:     "After a creature is destroyed by {self}'s assault damage, gain 1 Æmber.",
+		TriggerAfterArmorPrevents:       "After {self} prevents damage with its armor, gain 1 Æmber.",
+		TriggerAfterNeighborFights:      "After a neighbor of {self} is used to fight, gain 1 Æmber.",
+		TriggerAfterCardPlayed:          "After you play a card, gain 1 Æmber.",
+		TriggerAfterCreaturePlayed:      "After a creature is played, gain 1 Æmber.",
+		TriggerAfterAemberStolenFromYou: "After Æmber is stolen from you, gain 1 Æmber.",
 	}
 	for tr, want := range cases {
 		got := RenderAbility(
@@ -881,6 +882,22 @@ func TestUpgradeGrantLinesHouseOverride(t *testing.T) {
 		WithStatic(StaticModifier{HouseOverride: Logos}), WithPlayableAsUpgrade())
 	lines := upgradeGrantLines(&def, true)
 	want := "This creature belongs to Logos"
+	if len(lines) == 0 || lines[0] != want {
+		t.Errorf("grant lines = %v, want first %q", lines, want)
+	}
+}
+
+// TestUpgradeGrantLinesHouseOverrideWithGrant covers a house-override line that
+// folds in a granted ability, so it reads as one sentence (Academy Training's
+// `belongs to Logos and gains "Reap: Draw a card."`).
+func TestUpgradeGrantLinesHouseOverrideWithGrant(t *testing.T) {
+	def := NewCard("Academy Training", Logos, Upgrade, Rare,
+		WithStatic(StaticModifier{
+			HouseOverride: Logos,
+			Granted:       []Ability{{Trigger: TriggerAfterReap, Effect: Draw{Amount: 1}}},
+		}))
+	lines := upgradeGrantLines(&def, true)
+	want := `This creature belongs to Logos and this creature gains "Reap: Draw a card."`
 	if len(lines) == 0 || lines[0] != want {
 		t.Errorf("grant lines = %v, want first %q", lines, want)
 	}

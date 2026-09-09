@@ -947,6 +947,60 @@ func (samePowerAsChosen) refine(ctx *EffectContext, ids []LocalID) []LocalID {
 	return out
 }
 
+// SamePowerAsEitherChosen is the two-choice sibling of SamePowerAsChosen: the
+// controller chooses one friendly and one enemy creature from the set, and it
+// keeps every creature sharing the power of either — both chosen creatures
+// included — so a Destroy paired with it wipes out both power brackets at once
+// (Quintrino Flux). Both creatures are chosen before the set is narrowed, so the
+// kept set is computed from the board as it stands before any destruction. A
+// declined choice contributes no power. It leads with the pair of choices so the
+// printed phrase reads left to right, the choices before their consequence.
+var SamePowerAsEitherChosen Selector = samePowerAsEitherChosen{}
+
+// samePowerAsEitherChosen implements the SamePowerAsEitherChosen selector.
+type samePowerAsEitherChosen struct{}
+
+// lead renders both choices ahead of the effect's verb.
+func (samePowerAsEitherChosen) lead() string {
+	return "choose a friendly creature and an enemy creature"
+}
+
+// clause renders "<phrase> with the same power as either of the chosen creatures".
+func (samePowerAsEitherChosen) clause(phrase string) string {
+	return phrase + " with the same power as either of the chosen creatures"
+}
+
+// refine chooses one friendly and one enemy creature, then keeps every creature
+// in the set matching either chosen power. Both choices are made first, so the
+// kept set unions the two power brackets from the pre-narrowing board.
+func (samePowerAsEitherChosen) refine(ctx *EffectContext, ids []LocalID) []LocalID {
+	var friendly, enemy []LocalID
+	for _, id := range ids {
+		if ctx.Resolver.Controller(id) == ctx.Controller {
+			friendly = append(friendly, id)
+		} else {
+			enemy = append(enemy, id)
+		}
+	}
+	powers := map[int]bool{}
+	if fc, ok := ctx.ChooseCreature("Choose a friendly creature", friendly); ok {
+		powers[ctx.Resolver.Power(fc)] = true
+	}
+	if ec, ok := ctx.ChooseCreature("Choose an enemy creature", enemy); ok {
+		powers[ctx.Resolver.Power(ec)] = true
+	}
+	if len(powers) == 0 {
+		return nil
+	}
+	out := make([]LocalID, 0, len(ids))
+	for _, id := range ids {
+		if powers[ctx.Resolver.Power(id)] {
+			out = append(out, id)
+		}
+	}
+	return out
+}
+
 // LeastPowerful is a Selector that keeps only the single least powerful creature
 // of a set, e.g. card.Target.EachCreature.Selector(card.LeastPowerful) (Horseman
 // of Famine). When several tie for least powerful the controller chooses which.
@@ -997,9 +1051,14 @@ func MostPowerful(n int) Selector { return mostPowerfulN{n: n} }
 // mostPowerfulN implements the MostPowerful selector.
 type mostPowerfulN struct{ n int }
 
-// clause renders "the N most powerful <noun>s", e.g. "the 3 most powerful creatures".
+// clause renders "the N most powerful <noun>s", e.g. "the 3 most powerful
+// creatures", and the singular "the most powerful <noun>" when n is 1.
 func (m mostPowerfulN) clause(phrase string) string {
-	return fmt.Sprintf("the %d most powerful %ss", m.n, strings.TrimPrefix(phrase, "each "))
+	noun := strings.TrimPrefix(phrase, "each ")
+	if m.n == 1 {
+		return "the most powerful " + noun
+	}
+	return fmt.Sprintf("the %d most powerful %ss", m.n, noun)
 }
 
 // refine keeps the n highest-power creatures, letting the controller break ties
@@ -1041,6 +1100,81 @@ func (m mostPowerfulN) refine(ctx *EffectContext, ids []LocalID) []LocalID {
 		}
 	}
 	return chosen
+}
+
+// HouseWithAtLeast returns a Selector that keeps only creatures whose house has
+// at least n creatures in play, counting that house across both players'
+// battlelines — a house is a house regardless of who controls its creatures. No
+// Safety in Numbers deals its damage to each creature that belongs to a house
+// with 3 or more creatures in play.
+func HouseWithAtLeast(n int) Selector { return houseWithAtLeast{n: n} }
+
+// houseWithAtLeast implements the HouseWithAtLeast selector.
+type houseWithAtLeast struct{ n int }
+
+// clause renders "<phrase> that belongs to a house that has N or more creatures
+// in play", e.g. "each creature that belongs to a house that has 3 or more
+// creatures in play".
+func (h houseWithAtLeast) clause(phrase string) string {
+	return fmt.Sprintf(
+		"%s that belongs to a house that has %d or more creatures in play",
+		phrase, h.n,
+	)
+}
+
+// refine keeps only creatures whose house has at least n creatures in play,
+// counting each house across both battlelines so both players' creatures of a
+// house count toward its total.
+func (h houseWithAtLeast) refine(ctx *EffectContext, ids []LocalID) []LocalID {
+	counts := map[House]int{}
+	for player := 0; player < 2; player++ {
+		for _, cid := range ctx.Resolver.Battleline(player) {
+			counts[ctx.Resolver.House(cid)]++
+		}
+	}
+	kept := make([]LocalID, 0, len(ids))
+	for _, id := range ids {
+		if counts[ctx.Resolver.House(id)] >= h.n {
+			kept = append(kept, id)
+		}
+	}
+	return kept
+}
+
+// WithoutSharedTrait returns a Selector that keeps only creatures that share no
+// trait with any other creature in the same controller's battleline — a "loner".
+// A creature with no traits shares no trait, so it is kept. Good of the Many
+// destroys each creature that does not share a trait with another creature in its
+// controller's battleline.
+func WithoutSharedTrait() Selector { return withoutSharedTrait{} }
+
+// withoutSharedTrait implements the WithoutSharedTrait selector.
+type withoutSharedTrait struct{}
+
+// clause renders "<phrase> that does not share a trait with another creature in
+// its controller's battleline".
+func (withoutSharedTrait) clause(phrase string) string {
+	return phrase + " that does not share a trait with another creature in its controller's battleline"
+}
+
+// refine keeps a creature only when no other creature its controller controls
+// shares a trait with it, comparing each candidate against its own battleline
+// mates alone (an enemy sharing a trait does not save it).
+func (withoutSharedTrait) refine(ctx *EffectContext, ids []LocalID) []LocalID {
+	kept := make([]LocalID, 0, len(ids))
+	for _, id := range ids {
+		shared := false
+		for _, mate := range ctx.Resolver.Battleline(ctx.Resolver.Controller(id)) {
+			if mate != id && ctx.Resolver.SharesTrait(id, mate) {
+				shared = true
+				break
+			}
+		}
+		if !shared {
+			kept = append(kept, id)
+		}
+	}
+	return kept
 }
 
 // LowestAndHighestPower is a Selector that keeps every creature tied for the

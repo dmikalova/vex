@@ -2,6 +2,38 @@ package engine
 
 import "testing"
 
+// TestCountersOnAttachedUpgrade covers Disruption Field: a counter placed on an
+// attached upgrade is stored, raises the opponent's key cost through the
+// upgrade's own WithKeyCost scaled by CountersOnThis, and is shed when the
+// upgrade leaves play with its host.
+func TestCountersOnAttachedUpgrade(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	host := g.AddToBattleline(testCreature("host", 3), 0)
+	up := attachUpgrade(g, host, NewCard("Field", StarAlliance, Upgrade, Rare,
+		WithKeyCost(NewKeyCostChange(Opponent, 1).Per(CountersOnThis{Kind: CounterDisruption}))))
+
+	if got := g.CurrentKeyCost(1); got != KeyCost {
+		t.Fatalf("opponent key cost with no counters = %d, want %d", got, KeyCost)
+	}
+
+	g.PlaceCounter(up, CounterDisruption, 2)
+	if got := g.CountersOn(up, CounterDisruption); got != 2 {
+		t.Fatalf("counters on the attached upgrade = %d, want 2", got)
+	}
+	if got := g.CurrentKeyCost(1); got != KeyCost+2 {
+		t.Errorf("opponent key cost with two counters = %d, want %d", got, KeyCost+2)
+	}
+
+	ctx := &EffectContext{Resolver: g, Source: host, Controller: 0}
+	Destroy{Target: Target{Kind: TargetThisCreature}}.Resolve(ctx)
+	if g.State.CounterCount != 0 {
+		t.Errorf(
+			"the discarded upgrade should shed its counters, got %d entries",
+			g.State.CounterCount,
+		)
+	}
+}
+
 // TestPlaceCounter covers Wretched Doll's marker: placing a doom counter,
 // reading it back, and stacking a second onto the same entry.
 func TestPlaceCounter(t *testing.T) {
@@ -180,6 +212,12 @@ func TestDestroyWithCounter(t *testing.T) {
 func TestCounterKindNoun(t *testing.T) {
 	if got := CounterNone.noun(); got != "counter" {
 		t.Errorf("fallback noun = %q", got)
+	}
+	if got := CounterGlory.noun(); got != "glory counter" {
+		t.Errorf("CounterGlory.noun() = %q, want %q", got, "glory counter")
+	}
+	if got := CounterDisruption.noun(); got != "disruption counter" {
+		t.Errorf("CounterDisruption.noun() = %q, want %q", got, "disruption counter")
 	}
 	if CounterNone.valid() {
 		t.Error("CounterNone should not be a valid kind")

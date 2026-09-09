@@ -27,6 +27,11 @@ func TestPlayFromText(t *testing.T) {
 			PlayFrom{From: Discard, Player: Opponent, Type: Tactic},
 			"play a tactic from your opponent's discard pile",
 		},
+		{
+			"opponent's hand",
+			PlayFrom{From: Hand, Player: Opponent},
+			"play a card from your opponent's hand",
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -44,8 +49,11 @@ func TestPlayFromValidate(t *testing.T) {
 	if err := (PlayFrom{From: Hand, House: Logos, Except: true}).validate(); err != nil {
 		t.Errorf("validate = %v, want nil", err)
 	}
-	if err := (PlayFrom{From: Hand, Player: Opponent}).validate(); err == nil {
-		t.Error("only the opponent's discard pile may be played from, not their hand")
+	if err := (PlayFrom{From: Hand, Player: Opponent}).validate(); err != nil {
+		t.Errorf("the opponent's hand may be played from (Lateral Shift): %v", err)
+	}
+	if err := (PlayFrom{From: Archives, Player: Opponent}).validate(); err == nil {
+		t.Error("only the opponent's hand or discard pile may be played from, not their archives")
 	}
 }
 
@@ -82,6 +90,83 @@ func TestPlayFromOpponentDiscard(t *testing.T) {
 	discard := g.Discard(1)
 	if len(discard) != 2 || discard[len(discard)-1] != copied || discard[0] != buried {
 		t.Errorf("player 1 discard = %v, want [%d %d]", discard, buried, copied)
+	}
+}
+
+// TestPlayFromBindsIt covers Imperial Road: PlayFrom binds the played card in
+// context (ctx.It) so a chained Stun via Then stuns it.
+func TestPlayFromBindsIt(t *testing.T) {
+	g := started(t)
+	dino := g.AddToHand(NewCard("Dino", Brobnar, Creature, Common, WithPower(3)), 0)
+
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	Then{
+		First:  PlayFrom{From: Hand, Type: Creature},
+		Result: Stun{Target: Target{Kind: TargetTriggeringCreature}},
+	}.Resolve(ctx)
+
+	if !ctx.HasIt || ctx.It != dino {
+		t.Fatalf("ctx.It = %d (has %v), want played creature %d", ctx.It, ctx.HasIt, dino)
+	}
+	if line := g.Battleline(0); len(line) != 1 || line[0] != dino {
+		t.Fatalf("battleline = %v, want the played creature %d", line, dino)
+	}
+	if !g.Stunned(dino) {
+		t.Error("the played creature should be stunned by the chained Stun")
+	}
+}
+
+// TestPlayFromGateFalseWithNoCandidate confirms the gate reports false when no
+// eligible card is in the pile, so a Then's follow-up never runs.
+func TestPlayFromGateFalseWithNoCandidate(t *testing.T) {
+	g := started(t)
+	bystander := g.AddToBattleline(NewCard("Bystander", Brobnar, Creature, Common, WithPower(2)), 0)
+
+	Then{
+		First:  PlayFrom{From: Hand, Type: Creature},
+		Result: Stun{Target: Target{Kind: TargetEachFriendlyCreature}},
+	}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+
+	if g.Stunned(bystander) {
+		t.Error("no card was played, so the gate is false and the follow-up Stun must not run")
+	}
+}
+
+// TestPlayFromOpponentHand covers Lateral Shift: a player plays a creature out of
+// the opponent's hand as their own — it enters the player's battleline under their
+// control and leaves the opponent's hand, while its owner stays the opponent.
+func TestPlayFromOpponentHand(t *testing.T) {
+	g := started(t)
+	foreign := g.AddToHand(NewCard("Borrowed", Brobnar, Creature, Common, WithPower(4)), 1)
+
+	PlayFrom{From: Hand, Player: Opponent}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+
+	if line := g.Battleline(0); len(line) != 1 || line[0] != foreign {
+		t.Fatalf("player 0 battleline = %v, want the borrowed creature %d", line, foreign)
+	}
+	for _, id := range g.Hand(1) {
+		if id == foreign {
+			t.Error("the borrowed creature should have left the opponent's hand")
+		}
+	}
+	if got := g.Controller(foreign); got != 0 {
+		t.Errorf("controller = %d, want player 0 who played it", got)
+	}
+	if got := g.Owner(foreign); got != 1 {
+		t.Errorf("owner = %d, want player 1 whose hand it came from", got)
+	}
+}
+
+// TestPlayFromOpponentHandIgnoresUnknownCard covers the guard: asking to play a
+// card that is not in the opponent's hand does nothing.
+func TestPlayFromOpponentHandIgnoresUnknownCard(t *testing.T) {
+	g := started(t)
+	before := len(g.Battleline(0))
+
+	g.PlayFromOpponentHand(0, LocalID(200))
+
+	if got := len(g.Battleline(0)); got != before {
+		t.Errorf("battleline changed to %d cards, want %d", got, before)
 	}
 }
 

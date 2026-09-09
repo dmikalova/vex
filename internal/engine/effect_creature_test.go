@@ -360,6 +360,31 @@ func TestStunExhaustVerbs(t *testing.T) {
 	}
 }
 
+// ReapVerb reaps with its target: the creature gains its controller one Æmber
+// and is exhausted. An exhausted creature may still be chosen but does nothing.
+func TestReapVerb(t *testing.T) {
+	if got := (ReapVerb{}).VerbText(); got != "reap with" {
+		t.Errorf("ReapVerb text = %q, want %q", got, "reap with")
+	}
+
+	g := started(t)
+	id := g.AddToBattleline(testCreature("c", 3), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ReapVerb{}.Apply(ctx, id)
+	if g.Aember(0) != 1 {
+		t.Errorf("reap: aember = %d, want 1", g.Aember(0))
+	}
+	if !g.State.Cards[id].Exhausted {
+		t.Error("reap should have exhausted the creature")
+	}
+
+	// An exhausted creature is not used again: no further Æmber.
+	ReapVerb{}.Apply(ctx, id)
+	if g.Aember(0) != 1 {
+		t.Errorf("reap on exhausted creature: aember = %d, want 1", g.Aember(0))
+	}
+}
+
 // An earlier sentence can destroy the very creature a later one names —
 // Transposition Sandals swaps a creature off the flank that was keeping it alive,
 // then says to use it — so a creature that has left play takes no verbs.

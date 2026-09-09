@@ -35,6 +35,10 @@ type (
 	// Restrictions are the continuous "cannot" rules a card imposes on its
 	// controller while in play (e.g. card.Restrictions{CannotPlay: card.Type.Creature}).
 	Restrictions = engine.Restrictions
+	// ConditionalPlayBar is the symmetric, board-wide play bar a card imposes while
+	// in play; use it as card.WithCannotPlayWhile(card.ConditionalPlayBar{Type:
+	// card.Type.Creature, When: card.ControlsMoreCreatures{}}).
+	ConditionalPlayBar = engine.ConditionalPlayBar
 	// HouseLock is the continuous constraint a card in play puts on a player's
 	// active-house choice, e.g. card.HouseLock{Player: card.Controller, House:
 	// card.House.Dis}. Leave House unset when the card names one on play with

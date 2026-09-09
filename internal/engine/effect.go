@@ -162,6 +162,10 @@ type Produced struct {
 	// resolves and read by a DamagePrevented count (Maruck the Marked captures 1
 	// Æmber for each damage prevented).
 	ArmorPrevented int
+	// AemberStolen is how much Æmber was just stolen in the single theft that fired
+	// an After Æmber Is Stolen From You ability, read by an AemberStolenThisEvent
+	// count (Molephin deals 1 damage to each enemy creature for each).
+	AemberStolen int
 }
 
 // TotalDestroyed is how many cards this resolution has destroyed, both sides

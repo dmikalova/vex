@@ -93,6 +93,9 @@ func (e StealAember) resolveGate(ctx *EffectContext) bool {
 		HasSource:  e.Player != Opponent,
 		FromSupply: fromSupply,
 	})
+	// The victim's After Æmber Is Stolen From You abilities react to the completed
+	// theft, so they fire after it is recorded.
+	ctx.Resolver.EmitAemberStolenFrom(opponent, amt)
 	return amt > 0
 }
 

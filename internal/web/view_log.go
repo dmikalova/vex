@@ -21,7 +21,8 @@ func (g *game) logPanel() app.UI {
 	blocks := g.logBlocks()
 	return app.Div().Class("log").Body(
 		app.Div().Class("log-list").ID("gamelog").Body(
-			app.Range(blocks).Slice(func(i int) app.UI { return g.logBlockView(blocks[i]) }),
+			app.Range(blocks).
+				Slice(func(i int) app.UI { return g.logBlockView(blocks[i]) }),
 		),
 	)
 }
@@ -91,7 +92,10 @@ func (g *game) logBlocks() []logBlock {
 	for i, rec := range g.g.Log {
 		if rule, player := ruleOf(rec); rule != ruleNone {
 			flush(player)
-			out = append(out, logBlock{header: rec.Entry, rule: rule, player: player})
+			out = append(
+				out,
+				logBlock{header: rec.Entry, rule: rule, player: player},
+			)
 			continue
 		}
 		if player, ok := starts[i]; ok {
@@ -113,9 +117,10 @@ func (g *game) logBlocks() []logBlock {
 // with the timer id (gen) its expiry runs under. It carries copies of the lines
 // rather than log indices so a bubble reads the same after the floor moves on.
 type toastBubble struct {
-	lines  []engine.Record
-	player int
-	gen    int
+	lines   []engine.Record
+	player  int
+	gen     int
+	leaving bool
 }
 
 // logToast draws the recent log bubbles as a transient banner over the board
@@ -126,7 +131,8 @@ type toastBubble struct {
 // vanishing out from under the pointer.
 func (g *game) logToast() app.UI {
 	n := len(g.toastBubbles)
-	return app.Div().Class(cx("log", "log-toast", ifCls(g.toastPinned, "log-toast--pinned"))).
+	return app.Div().
+		Class(cx("log", "log-toast", ifCls(g.toastPinned, "log-toast--pinned"))).
 		OnMouseEnter(g.pauseToast).
 		OnMouseLeave(g.resumeToast).
 		OnClick(g.toggleToastPin).
@@ -138,7 +144,13 @@ func (g *game) logToast() app.UI {
 				Text("×"),
 			app.Range(g.toastBubbles).Slice(func(i int) app.UI {
 				b := g.toastBubbles[i]
-				return g.logBlockView(logBlock{lines: b.lines, player: b.player, newest: i == n-1})
+				return app.Div().
+					Class(cx("log-toast-item",
+						ifCls(b.leaving, "log-toast-item--leaving"))).
+					Body(app.Div().Class("log-toast-item-inner").Body(
+						g.logBlockView(logBlock{lines: b.lines, player: b.player, newest: i == n-1}),
+					),
+					)
 			}),
 		)
 }
@@ -237,7 +249,13 @@ func (g *game) playerStandingSegments(e engine.PlayerStanding) []app.UI {
 			Text(g.g.PlayerName(e.Player)),
 		amount,
 		logIcon("aember"),
-		app.Text(fmt.Sprintf(" Æmber and %d/%d ", len(e.KeyColors), engine.KeysToWin)),
+		app.Text(
+			fmt.Sprintf(
+				" Æmber and %d/%d ",
+				len(e.KeyColors),
+				engine.KeysToWin,
+			),
+		),
 		keysTally(e.KeyColors),
 		app.Text(" keys"),
 	}

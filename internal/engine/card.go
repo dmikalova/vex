@@ -105,6 +105,13 @@ type CardDefinition struct {
 	// controller while it is in play (e.g. Grommid's "You cannot play creatures").
 	Restricts Restrictions
 
+	// CannotPlayWhile is a symmetric, board-wide play bar the card imposes while in
+	// play: any player who meets its condition cannot play cards of its type,
+	// whoever controls the card (Quixxle Stone). Unlike Restricts.CannotPlay it is
+	// evaluated per attempting player, so it bars whichever side the condition
+	// names. The zero value (nil condition) imposes no restriction.
+	CannotPlayWhile ConditionalPlayBar
+
 	// KeyCostChanges are the continuous changes this card, while in play, makes to
 	// key cost — who each affects and by how much (e.g. Grabber Jammer's "Your
 	// opponent's keys cost +1 Æmber"). A card may impose several (Grump Buggy raises
@@ -170,6 +177,9 @@ type DrawModifier struct {
 	// OnlyWhileOffFlank restricts the modifier to while the source card is not on a
 	// flank of its battleline (Streke).
 	OnlyWhileOffFlank bool
+	// OnlyWhileInCenter restricts the modifier to while the source card is in the
+	// center of its battleline (Zenzizenzizenzic).
+	OnlyWhileInCenter bool
 }
 
 // affects reports whether a draw modifier owned by owner applies to target's draw.
@@ -223,6 +233,15 @@ type Restrictions struct {
 	// have to fight when used — it cannot reap or use an Action ability while a legal
 	// fight target exists (Little Rapscal). Affects both players' creatures.
 	MustFightIfAble bool
+}
+
+// ConditionalPlayBar is a symmetric, board-wide play restriction a card imposes
+// while it stays in play: any player for whom When is met cannot play cards of
+// Type, whoever controls the card (Quixxle Stone bars whichever player controls
+// more creatures). A nil When imposes no restriction.
+type ConditionalPlayBar struct {
+	Type CardType
+	When Condition
 }
 
 // PlayCardLimit caps how many cards Player may play in a turn while its source
@@ -437,6 +456,10 @@ type ConstantAbility struct {
 	// center of its controller's battleline — Kaloch Stonefather grants friendly
 	// creatures skirmish only while it is centered.
 	WhileInCenter bool
+	// WhileCondition suspends the whole ability unless the condition holds, read
+	// from the source's point of view — The Red Baron grants itself a reap only
+	// while your red key is forged. It is nil when the ability is always active.
+	WhileCondition Condition
 }
 
 // target returns the constant ability's effective Target: an unset Target reaches
@@ -705,6 +728,12 @@ func WithRestrictions(r Restrictions) CardOption {
 	return func(c *CardDefinition) { c.Restricts = r }
 }
 
+// WithCannotPlayWhile sets the symmetric, board-wide play bar a card imposes while
+// in play, barring any player who meets the condition from playing that type.
+func WithCannotPlayWhile(b ConditionalPlayBar) CardOption {
+	return func(c *CardDefinition) { c.CannotPlayWhile = b }
+}
+
 // WithHouseLock sets the continuous constraint a card puts on a player's
 // active-house choice while it is in play.
 func WithHouseLock(l HouseLock) CardOption {
@@ -737,6 +766,14 @@ func WithDrawModifier(player Player, amount int) CardOption {
 func WithDrawModifierOffFlank(player Player, amount int) CardOption {
 	return func(c *CardDefinition) {
 		c.DrawModifier = DrawModifier{Player: player, Amount: amount, OnlyWhileOffFlank: true}
+	}
+}
+
+// WithDrawModifierInCenter is WithDrawModifier gated on the source sitting in the
+// center of its battleline (Zenzizenzizenzic refills extra only from the middle).
+func WithDrawModifierInCenter(player Player, amount int) CardOption {
+	return func(c *CardDefinition) {
+		c.DrawModifier = DrawModifier{Player: player, Amount: amount, OnlyWhileInCenter: true}
 	}
 }
 

@@ -170,6 +170,102 @@ func TestRaiseKeyCostStacks(t *testing.T) {
 	}
 }
 
+// TestLowerKeyCostText covers the rendered sentence and validation.
+func TestLowerKeyCostText(t *testing.T) {
+	each := LowerKeyCost{Player: EachPlayer, Amount: 2, Duration: EndOfNextTurn}
+	if got := each.Text(); got != "each player's keys cost -2 Æmber until the end of your next turn" {
+		t.Errorf("text = %q", got)
+	}
+	if got := (LowerKeyCost{
+		Player:   Controller,
+		Amount:   1,
+		Duration: EndOfTurn,
+	}).Text(); got != "your keys cost -1 Æmber for the remainder of the turn" {
+		t.Errorf("controller text = %q", got)
+	}
+	if got := (LowerKeyCost{
+		Player:   Opponent,
+		Amount:   3,
+		Duration: NextTurn,
+	}).Text(); got != "your opponent's keys cost -3 Æmber during your next turn" {
+		t.Errorf("opponent text = %q", got)
+	}
+	if err := each.validate(); err != nil {
+		t.Errorf("validate = %v, want nil", err)
+	}
+	if err := (LowerKeyCost{Amount: 2, Duration: EndOfNextTurn}).validate(); err == nil {
+		t.Error("an unset player should not validate")
+	}
+	if err := (LowerKeyCost{Player: EachPlayer, Duration: EndOfNextTurn}).validate(); err == nil {
+		t.Error("a zero drop should not validate")
+	}
+	if err := (LowerKeyCost{Player: EachPlayer, Amount: 2}).validate(); err == nil {
+		t.Error("an unset duration should not validate")
+	}
+	if err := (LowerKeyCost{
+		Player:   EachPlayer,
+		Amount:   2,
+		Duration: Forever,
+	}).validate(); err == nil {
+		t.Error("a duration the drop cannot express should not validate")
+	}
+}
+
+// TestLowerKeyCostEachPlayer checks the drop is live for both players the moment
+// it resolves and lasts through the controller's next turn.
+func TestLowerKeyCostEachPlayer(t *testing.T) {
+	g := started(t)
+	source := g.AddToBattleline(NewCard("Win", StarAlliance, Creature, Common, WithPower(1)), 0)
+
+	LowerKeyCost{Player: EachPlayer, Amount: 2, Duration: EndOfNextTurn}.
+		Resolve(&EffectContext{Resolver: g, Controller: 0, Source: source})
+
+	// Both players see the -2 immediately.
+	if got := g.CurrentKeyCost(0); got != KeyCost-2 {
+		t.Errorf("controller key cost = %d, want %d right away", got, KeyCost-2)
+	}
+	if got := g.CurrentKeyCost(1); got != KeyCost-2 {
+		t.Errorf("opponent key cost = %d, want %d right away", got, KeyCost-2)
+	}
+
+	// The opponent's next turn (the one between) still carries the drop.
+	g.EndPlayPhase(0)
+	g.StartTurn(1)
+	if got := g.CurrentKeyCost(1); got != KeyCost-2 {
+		t.Errorf("opponent key cost = %d, want %d on their turn", got, KeyCost-2)
+	}
+
+	// The controller's next turn still carries the drop, then it lifts at its end.
+	g.EndPlayPhase(1)
+	g.StartTurn(0)
+	if got := g.CurrentKeyCost(0); got != KeyCost-2 {
+		t.Errorf("controller key cost = %d, want %d on their next turn", got, KeyCost-2)
+	}
+	g.EndPlayPhase(0)
+	if got := g.CurrentKeyCost(0); got != KeyCost {
+		t.Errorf("controller key cost = %d, want %d after the window", got, KeyCost)
+	}
+}
+
+// TestLowerKeyCostSumsWithRaiseAndFloorsAtZero checks a lower and a raise on the
+// same player sum, and a heavier lower never drives the key cost below 0.
+func TestLowerKeyCostSumsWithRaiseAndFloorsAtZero(t *testing.T) {
+	g := started(t)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	LowerKeyCost{Player: Controller, Amount: 2, Duration: EndOfTurn}.Resolve(ctx)
+	RaiseKeyCost{Player: Controller, Amount: 3, Duration: EndOfTurn}.Resolve(ctx)
+	if got := g.CurrentKeyCost(0); got != KeyCost+1 {
+		t.Errorf("key cost = %d, want %d (a -2 and a +3 sum)", got, KeyCost+1)
+	}
+
+	// A drop larger than the base cost floors the key cost at 0, never negative.
+	LowerKeyCost{Player: Controller, Amount: 20, Duration: EndOfTurn}.Resolve(ctx)
+	if got := g.CurrentKeyCost(0); got != 0 {
+		t.Errorf("key cost = %d, want 0 (floored, never negative)", got)
+	}
+}
+
 func TestConditionalElse(t *testing.T) {
 	effect := Conditional{
 		Cond: PoolAember{Player: Opponent, Is: Exactly},

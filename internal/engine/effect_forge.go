@@ -134,6 +134,90 @@ func (e RaiseKeyCost) Resolve(ctx *EffectContext) {
 	}
 }
 
+// LowerKeyCost makes a player's keys cost Amount less Æmber for the Duration —
+// We Can ALL Win drops each player's keys by 2 until the end of the controller's
+// next turn. Amount is written positive and rendered "-N". It shares the key
+// surcharge bars with RaiseKeyCost (a lower is a negative bump), so a coexisting
+// lower and raise on the same player sum, and the key cost read floors the total
+// at 0 before a key is forged.
+//
+// Player may be EachPlayer, lowering both players' keys at once. EndOfNextTurn is
+// live the moment it resolves, unlike RaiseKeyCost's NextTurn, which waits for the
+// affected player's next turn before it bites.
+type LowerKeyCost struct {
+	Player   Player
+	Amount   int
+	Duration Duration
+}
+
+// validate requires a player, a positive drop, and a key surcharge window.
+func (e LowerKeyCost) validate() error {
+	if !e.Player.valid() {
+		return errUnsetPlayer("LowerKeyCost")
+	}
+	if e.Amount <= 0 {
+		return fmt.Errorf("LowerKeyCost: Amount must be positive")
+	}
+	switch e.Duration {
+	case EndOfTurn, NextTurn, EndOfNextTurn:
+		return nil
+	case durationUnset:
+		return errUnsetDuration("LowerKeyCost")
+	default:
+		return fmt.Errorf(
+			"LowerKeyCost: Duration %v is not a key surcharge window", e.Duration,
+		)
+	}
+}
+
+// Text renders the effect, e.g. "each player's keys cost -2 Æmber until the end
+// of your next turn".
+func (e LowerKeyCost) Text() string {
+	whose := "your"
+	if e.Player == Opponent {
+		whose = "your opponent's"
+	}
+	if e.Player == EachPlayer {
+		return fmt.Sprintf("each player's keys cost -%d Æmber %s", e.Amount, e.window())
+	}
+	return fmt.Sprintf("%s keys cost -%d Æmber %s", whose, e.Amount, e.window())
+}
+
+// window renders the duration clause. "your" always names the controller, whose
+// next turn ends the window even when EachPlayer lowers both sides.
+func (e LowerKeyCost) window() string {
+	switch e.Duration {
+	case EndOfTurn:
+		return "for the remainder of the turn"
+	case NextTurn:
+		return "during your next turn"
+	default: // EndOfNextTurn
+		return "until the end of your next turn"
+	}
+}
+
+// Resolve arms the drop on each affected player for the Duration.
+func (e LowerKeyCost) Resolve(ctx *EffectContext) {
+	if e.Player == EachPlayer {
+		for _, p := range [2]int{ctx.Controller, ctx.Opponent()} {
+			e.arm(ctx, p)
+		}
+		return
+	}
+	e.arm(ctx, ctx.PlayerFor(e.Player))
+}
+
+// arm records the negative bump on player p. EndOfNextTurn sets both the current
+// turn and next turn bars so the drop is live now and again on p's next turn.
+func (e LowerKeyCost) arm(ctx *EffectContext, p int) {
+	if e.Duration == EndOfTurn || e.Duration == EndOfNextTurn {
+		ctx.Resolver.RaiseKeyCostThisTurn(p, -e.Amount, ctx.Source)
+	}
+	if e.Duration == NextTurn || e.Duration == EndOfNextTurn {
+		ctx.Resolver.RaiseKeyCostNextTurn(p, -e.Amount, ctx.Source)
+	}
+}
+
 // GiveRemainingAemberAfterOpponentForgeKey arms Interdimensional Graft's delayed
 // forge penalty: each time the opponent forges a key during their next turn, they
 // give their remaining Æmber to the controller. It is durable across this turn's

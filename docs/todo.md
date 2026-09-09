@@ -40,17 +40,28 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 ## Things that can be done now
 
+- Before implementing totally new mechanics, must attempt to fit them into existing mechanics, including by expanding them. If its determined to not be possible or reasonable, must ask and explain why and get confirmation before proceeding.
+- Hunter or Hunted
 - ? bdq (see screenshot) is doing the action bar with title cards thing
 - ? they're everywhere sequence
 - gigantic, tide, mimic gel
 - Instead of "OnIt" should we use "OnTarget"
-- Anomaly provenance
+- Anomaly provenance - eg move them to their home set, or put them in an anomaly set
 - creeping oblivion prompt
 - OneCopyPerDeck should be ordered higher up, check the rest of the ordering eg constant should be above play, then reap, then fight
 - Philophosaurus implementation
+- counters should be named "generic-counter-$NAME" so that they all get organized together. eg effect_generic_counter_growth.go and generic-counter-growth.svg
+- player bar scroll does not work on icons
+- row scroll sucks
+- phalanx strike repeats endlessly
+- log stun on one line? Harder to read
+- shadow self should not deal damage in fight
+- tooltips are now in the player bar rather than over it
+- creature as upgrade prompts for flank then upgrade. Play button itself could say "play creature" and "play upgrade"
 
 ## UI finesse
 
+- Eliminate iconFallbackAllowed for glyphs
 - should rigged lottery log everything together
 - if cards are in action bar buttons - just have clickable preview toggle on right
 - split the zone dialog into each zone
@@ -73,6 +84,9 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - a whole ass settings panel
 - house icons should contain both house colors, and should be roughly roundish. Brobnar - flame, sanctum cross in shield should be the yellow, dis
 - Cannot act dialogue on cards is not necessary
+- Stilt-kin needs to pull in 2 giants - in general a rule is needed for trait specific cards to pull in 2 of those cards
+- VM 25 anomalies? Omega TT etc
+- Special cards have a special treatment (skybeasts, revenants, dragonscale)
 
 ## Game finesse
 

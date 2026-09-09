@@ -26,9 +26,9 @@ type PlayFrom struct {
 	From Zone
 	// Player names whose pile the card comes from: Controller (the default, an
 	// unset zero value) plays out of your own pile; Opponent reaches into the
-	// opponent's discard pile (Mimicry). A card played from the opponent's discard
-	// is still your play — it counts against your own card-play limit — but returns
-	// to its owner's discard pile.
+	// opponent's hand (Lateral Shift) or discard pile (Mimicry). A card played from
+	// the opponent's pile is still your play — it counts against your own card-play
+	// limit — but is owned by, and returns to, the opponent.
 	Player Player
 	// House and Type narrow which cards may be chosen; Except inverts the house
 	// filter, so House names the house that may not be played ("a non-Logos card").
@@ -46,18 +46,19 @@ func (e PlayFrom) validate() error {
 	if e.From != Hand && e.From != Discard && e.From != Archives {
 		return fmt.Errorf("PlayFrom: From must be Hand, Discard, or Archives, got %v", e.From)
 	}
-	if e.Player == Opponent && e.From != Discard {
-		return fmt.Errorf("PlayFrom: only the opponent's discard pile may be played from")
+	if e.Player == Opponent && e.From != Discard && e.From != Hand {
+		return fmt.Errorf("PlayFrom: only the opponent's hand or discard pile may be played from")
 	}
 	return nil
 }
 
 // Text renders the effect, e.g. "play a non-Logos card" or "play a creature from
-// your discard pile". Playing from hand is the default a printed card leaves
-// unsaid ("Play a non-Logos card"), so only another zone is named.
+// your discard pile". Playing from your own hand is the default a printed card
+// leaves unsaid ("Play a non-Logos card"), so only another zone — or the
+// opponent's hand — is named.
 func (e PlayFrom) Text() string {
 	text := "play " + indefinite(e.noun())
-	if e.From != Hand {
+	if e.From != Hand || e.Player == Opponent {
 		text += " from " + e.pileOwner() + " " + e.From.noun()
 	}
 	return text
@@ -91,16 +92,25 @@ func (e PlayFrom) noun() string {
 
 // Resolve has the controller choose a matching card in the source zone and plays
 // it.
-func (e PlayFrom) Resolve(ctx *EffectContext) {
+func (e PlayFrom) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
+
+// resolveGate has the controller choose a matching card in the source zone and
+// plays it, binding the played card in context (ctx.It) so a following effect can
+// act on "that creature" — Imperial Road plays a Saurian creature, then stuns it.
+// It reports whether a card was played, so a Then hangs its follow-up on the play
+// happening: an empty pile or a declined choice reports false.
+func (e PlayFrom) resolveGate(ctx *EffectContext) bool {
 	candidates := e.candidates(ctx)
 	if len(candidates) == 0 {
-		return
+		return false
 	}
 	id, ok := ctx.ChooseCreature("Choose "+indefinite(e.noun())+" to play", candidates)
 	if !ok {
-		return
+		return false
 	}
 	switch {
+	case e.From == Hand && e.Player == Opponent:
+		ctx.Resolver.PlayFromOpponentHand(ctx.Controller, id)
 	case e.From == Discard && e.Player == Opponent:
 		ctx.Resolver.PlayFromOpponentDiscard(ctx.Controller, id)
 	case e.From == Discard:
@@ -110,6 +120,8 @@ func (e PlayFrom) Resolve(ctx *EffectContext) {
 	default:
 		ctx.Resolver.PlayFromHand(ctx.Controller, id)
 	}
+	ctx.It, ctx.HasIt = id, true
+	return true
 }
 
 // candidates are the cards in the source zone the filters admit. The source is

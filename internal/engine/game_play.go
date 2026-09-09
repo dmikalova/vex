@@ -243,6 +243,21 @@ func (g *Game) PlayFromOpponentDiscard(player int, id LocalID) {
 	g.playFromPile(player, id, &g.State.Discard[1-player])
 }
 
+// PlayFromOpponentHand plays a specific card out of the opponent's hand as the
+// given player's own play — Lateral Shift plays a card out of the other player's
+// hand "as if it were yours." The play counts against the active player's own
+// card-play limit and, for a creature or artifact, the player takes control of it
+// (via playForeign) while its owner stays the opponent. It does nothing when the
+// card is not in that hand.
+func (g *Game) PlayFromOpponentHand(player int, id LocalID) {
+	hand := &g.State.Hand[1-player]
+	i := hand.indexOf(id)
+	if i < 0 {
+		return
+	}
+	g.playForeign(player, id, func() { hand.removeAt(i) })
+}
+
 // PlayFromUnder plays a specific card from under whatever host it sits under,
 // bypassing the active-house gate the same way PlayFromHand/PlayFromDiscard do —
 // Masterplan's and Jargogle's own "play the card under me." Where playFromPile
@@ -473,7 +488,7 @@ func (g *Game) playCreatureCard(player int, id LocalID, fl flank) {
 	// once — before bonus icons and before the after-play window — so the played
 	// creature's own ability never sees the doomed neighbor still in play.
 	g.settleDestroyed(player)
-	g.applyAemberBonus(id)
+	g.applyAemberBonus(player, id)
 	g.triggerAbilities(id, TriggerAfterPlay, 0, false)
 	g.emitCreatureEnters(id)
 	g.emitCreaturePlayedAdjacent(id)
@@ -529,7 +544,7 @@ func (g *Game) playArtifactCard(player int, id LocalID) {
 	}
 	g.State.Artifacts[player].add(id)
 	g.record(ArtifactPlayed{Player: player, Card: id})
-	g.applyAemberBonus(id)
+	g.applyAemberBonus(player, id)
 	g.triggerAbilities(id, TriggerAfterPlay, 0, false)
 	g.emitCardPlayed(player, id)
 	g.emitLasting(EventCardEntersPlay, player, id)
@@ -540,7 +555,7 @@ func (g *Game) playArtifactCard(player int, id LocalID) {
 // zone.
 func (g *Game) playActionCard(player int, id LocalID) {
 	g.record(ActionPlayed{Player: player, Card: id})
-	g.applyAemberBonus(id)
+	g.applyAemberBonus(player, id)
 	// The Play: ability resolves under the control of the player who played the
 	// card, not the card's owner. They differ only when one player plays another's
 	// card (Mimicry copies an action out of the opponent's discard pile).
@@ -570,7 +585,7 @@ func (g *Game) playActionCard(player int, id LocalID) {
 // playUpgradeCard attaches an upgrade to host and fires its standard play sequence
 // after the upgrade has been removed from its previous zone.
 func (g *Game) playUpgradeCard(player int, id, host LocalID, def *CardDefinition) {
-	g.applyAemberBonus(id)
+	g.applyAemberBonus(player, id)
 	g.AttachUpgrade(host, id)
 	g.record(UpgradeAttached{Player: player, Upgrade: id, Host: host})
 	g.resolveUpgradePlay(host, id, def)
@@ -767,12 +782,14 @@ func (g *Game) CanPlay(player int, id LocalID) error {
 	return nil
 }
 
-// applyAemberBonus grants a card's Æmber pips to its controller.
-func (g *Game) applyAemberBonus(id LocalID) {
+// applyAemberBonus grants a card's Æmber pips to the player who played it. For a
+// card played "as if it were yours" out of the opponent's zone (Murkens, Lateral
+// Shift, Fidgit) that player is not the card's owner, and KeyForge awards the pips
+// to the player playing the card.
+func (g *Game) applyAemberBonus(player int, id LocalID) {
 	def := g.cat.def(id)
 	if def.AemberBonus > 0 {
-		o := g.owner(id)
-		if capturer, ok := g.gainAember(o, def.AemberBonus); ok {
+		if capturer, ok := g.gainAember(player, def.AemberBonus); ok {
 			g.record(AemberBonusCaptured{
 				Creature: capturer,
 				Card:     id,
@@ -780,6 +797,6 @@ func (g *Game) applyAemberBonus(id LocalID) {
 			})
 			return
 		}
-		g.record(AemberBonusGained{Player: o, Card: id, Amount: def.AemberBonus})
+		g.record(AemberBonusGained{Player: player, Card: id, Amount: def.AemberBonus})
 	}
 }

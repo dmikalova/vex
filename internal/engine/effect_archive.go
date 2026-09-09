@@ -358,6 +358,33 @@ func (ArchiveSource) Resolve(ctx *EffectContext) {
 	ctx.Resolver.MarkPlayedActionArchived(ctx.Source)
 }
 
+// ArchiveGrantingUpgrade archives the upgrade whose granted ability this is
+// (ctx.Upgrade) — Ghostform grants its host "Fight/Reap: Archive Ghostform",
+// which sends Ghostform itself off its host to its owner's archives. Name is the
+// upgrade's printed name; the ability is printed on the upgrade, so the granted
+// text names it directly ("archive Ghostform") rather than through {self}, which
+// a granted ability renders as the host creature.
+type ArchiveGrantingUpgrade struct {
+	// Name is the upgrade's printed name, used to render the text.
+	Name string
+}
+
+// validate requires the upgrade's name.
+func (e ArchiveGrantingUpgrade) validate() error {
+	if e.Name == "" {
+		return fmt.Errorf("ArchiveGrantingUpgrade: Name must be set")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "archive Ghostform".
+func (e ArchiveGrantingUpgrade) Text() string { return "archive " + e.Name }
+
+// Resolve archives the granting upgrade off its host.
+func (ArchiveGrantingUpgrade) Resolve(ctx *EffectContext) {
+	ctx.Resolver.ArchiveUpgrade(ctx.Upgrade)
+}
+
 // DiscardArchives moves all of a player's archived cards into their discard pile.
 type DiscardArchives struct {
 	Player Player

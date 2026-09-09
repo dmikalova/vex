@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <title>Growth counter</title>
+  <circle cx="12" cy="14" r="7" fill="#2f9e44" stroke="#1b5e20" stroke-width="1"/>
+  <path d="M12 15V8" stroke="#1b5e20" stroke-width="1.4" stroke-linecap="round" fill="none"/>
+  <path d="M12 10c-1.6-.2-3-1.4-3.2-3.2 1.8.2 3 1.6 3.2 3.2z" fill="#69db7c"/>
+  <path d="M12 8.5c1.4-.4 2.5-1.7 2.5-3.3-1.6.2-2.7 1.5-2.5 3.3z" fill="#8ce99a"/>
+</svg>

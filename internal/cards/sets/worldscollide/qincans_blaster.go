@@ -6,7 +6,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Star Alliance
 //	Type:   Upgrade
-//	Rarity: Special
+//	Rarity: Rare
 //	Æmber:  1
 //
 //	This creature gains, "Fight/Reap: You may choose one:
@@ -17,9 +17,10 @@ var QincansBlaster = card.New(
 	card.House.StarAlliance,
 	card.Type.Upgrade,
 	// TODO(variant): rarity relabelled from Variant to Special — handle manually
-	card.Rarity.Special,
+	card.Rarity.Rare,
 	card.Provenance(card.WC, "351"),
 	card.WithAemberBonus(1),
+	card.Connects(card.Pull(SciOfficerQincan, 1)),
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightOrReap(card.May{Do: card.ChooseOne{Options: []card.Effect{
 			card.DealDamage{Amount: 2, Target: card.Target.Creature},

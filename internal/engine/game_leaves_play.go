@@ -133,6 +133,7 @@ func (g *Game) discardUpgrades(id LocalID) {
 	for _, up := range g.upgradesOf(id) {
 		g.detachUpgrade(up)
 		g.releaseControlHeldBy(up)
+		g.clearCounters(up)
 		g.State.Discard[g.owner(up)].add(up)
 	}
 }
@@ -145,11 +146,27 @@ func (g *Game) returnUpgradesToHand(host LocalID) {
 	for _, up := range g.upgradesOf(host) {
 		g.detachUpgrade(up)
 		g.releaseControlHeldBy(up)
+		g.clearCounters(up)
 		g.resetCore(up)
 		o := g.owner(up)
 		g.State.Hand[o].add(up)
 		g.record(CardReturnedToHand{Card: up, Owner: o})
 	}
+}
+
+// archiveUpgrade detaches an attached upgrade from its host and puts it into its
+// owner's archives — Ghostform grants its host "Fight/Reap: Archive Ghostform",
+// which sends the upgrade itself to the archives. An attached upgrade is not
+// listed in a battleline or artifact row, so it must be unlinked from its host's
+// chain rather than routed through the ordinary leave-play path.
+func (g *Game) archiveUpgrade(up LocalID) {
+	g.detachUpgrade(up)
+	g.releaseControlHeldBy(up)
+	g.clearCounters(up)
+	g.resetCore(up)
+	o := g.owner(up)
+	g.State.Archives[o].add(up)
+	g.record(CardPutIntoArchives{Card: up, Owner: o})
 }
 
 // discardUnder moves the cards placed under a host to their owners' discard
@@ -219,7 +236,8 @@ func (g *Game) destroyAttachedUpgrade(upgrade LocalID) {
 func (g *Game) filterUndestroyed(controller int, ids []LocalID) []LocalID {
 	var out []LocalID
 	for _, id := range ids {
-		if g.absorbedByWard(id) || g.applyDestructionReplacement(controller, id) {
+		if g.absorbedByWard(id) || g.hasKeyword(id, Invulnerable) ||
+			g.applyDestructionReplacement(controller, id) {
 			continue
 		}
 		out = append(out, id)
@@ -446,6 +464,26 @@ func (g *Game) putIntoDeckShuffled(id LocalID) {
 		return
 	}
 	g.record(CardShuffledIntoDeck{Card: id, Owner: o})
+}
+
+// shuffleFriendlyInPlayIntoDeck shuffles every card a player controls in play —
+// each creature and artifact, and every upgrade attached to them — into their
+// deck, and returns how many cards were shuffled. An upgrade is detached first so
+// it is shuffled back into the deck rather than shed to the discard pile. The
+// caller opens a shuffle batch around it, so the whole sweep narrates as one
+// grouped line.
+func (g *Game) shuffleFriendlyInPlayIntoDeck(player int) int {
+	count := 0
+	for _, host := range append(g.Battleline(player), g.Artifacts(player)...) {
+		for _, up := range g.upgradesOf(host) {
+			g.detachUpgrade(up)
+			g.putIntoDeckShuffled(up)
+			count++
+		}
+		g.putIntoDeckShuffled(host)
+		count++
+	}
+	return count
 }
 
 // Only three zones of yours may hold a card your opponent owns: your battleline,

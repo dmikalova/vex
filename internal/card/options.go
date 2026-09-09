@@ -53,6 +53,8 @@ var (
 	WithConstant = func(c ConstantAbility) Option { return gameplay(engine.WithConstantAbility(c)) }
 	// WithRestrictions adds constant restrictions (cannot fight, cannot reap, ...).
 	WithRestrictions = func(r Restrictions) Option { return gameplay(engine.WithRestrictions(r)) }
+	// WithCannotPlayWhile adds a symmetric play bar: any player who meets the condition cannot play that type.
+	WithCannotPlayWhile = func(b ConditionalPlayBar) Option { return gameplay(engine.WithCannotPlayWhile(b)) }
 	// WithHouseLock constrains a player's active-house choice while this card is in play.
 	WithHouseLock = func(l HouseLock) Option { return gameplay(engine.WithHouseLock(l)) }
 	// WithKeyCost adds a change to the cost of forging a key.
@@ -67,6 +69,11 @@ var (
 	// the source card is not on a flank (Streke).
 	WithDrawModifierOffFlank = func(p Player, amount int) Option {
 		return gameplay(engine.WithDrawModifierOffFlank(p, amount))
+	}
+	// WithDrawModifierInCenter changes how many cards a player draws, but only while
+	// the source sits in the center of its battleline (Zenzizenzizenzic).
+	WithDrawModifierInCenter = func(p Player, amount int) Option {
+		return gameplay(engine.WithDrawModifierInCenter(p, amount))
 	}
 	// WithAemberCannotBeStolen keeps the controller's Æmber from being stolen.
 	WithAemberCannotBeStolen = func() Option { return gameplay(engine.WithAemberCannotBeStolen()) }

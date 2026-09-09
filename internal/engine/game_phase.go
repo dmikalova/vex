@@ -72,6 +72,15 @@ func (g *Game) startOfTurnPhase(player int) {
 	for _, id := range g.allInPlay(player) {
 		g.triggerAbilities(id, TriggerStartOfTurn, 0, false)
 	}
+	// A start-of-turn artifact watches every turn, not only its owner's (Gambling
+	// Den, General Order 24). This window fires for both players' in-play cards, each
+	// resolving as the turn's active player so "they"/"that player" is the player
+	// whose turn is starting, not the artifact's controller.
+	for _, p := range [2]int{player, 1 - player} {
+		for _, id := range g.allInPlay(p) {
+			g.triggerAbilitiesAs(player, id, TriggerAfterAnyPlayerStartOfTurn, 0, false)
+		}
+	}
 	g.settleDestroyed(player)
 }
 
@@ -126,6 +135,7 @@ func (g *Game) readyPhase(player int) {
 	g.State.SideDamageImmune = [2]bool{}
 	g.State.CannotReap[player] = Bar[bool]{}
 	g.State.CannotReapHouse[player] = Bar[House]{}
+	g.State.CreaturesCannot[player] = Bar[CreatureBar]{}
 	g.State.CannotPlayTypeThis[player] = Bar[CardType]{}
 	// Roll this turn's history into "last turn" so the next player can ask what their
 	// opponent just did.

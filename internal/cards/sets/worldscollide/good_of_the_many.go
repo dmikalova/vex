@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// GoodOfTheMany
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Good of the Many
 //
 //	House:  Saurian
 //	Type:   Tactic
@@ -20,5 +15,8 @@ var GoodOfTheMany = card.New(
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "220"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Destroy{
+			Target: card.Target.EachCreature.Selector(card.WithoutSharedTrait()),
+		}),
 )

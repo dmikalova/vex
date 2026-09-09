@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// SowSalt
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Sow Salt
 //
 //	House:  Saurian
 //	Type:   Tactic
@@ -23,5 +18,10 @@ var SowSalt = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "230"),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Alpha),
+	card.WithAbility(
+		card.Trigger.Play, card.CreaturesCannot{
+			Action:   card.UseKind.Reap,
+			Duration: card.Duration.NextTurn,
+		}),
 )

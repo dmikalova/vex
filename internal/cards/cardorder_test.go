@@ -46,6 +46,8 @@ var optionRank = map[string]int{
 	"WithReplaces":                             7,
 	"WithDrawModifier":                         7,
 	"WithDrawModifierOffFlank":                 7,
+	"WithDrawModifierInCenter":                 7,
+	"WithCannotPlayWhile":                      7,
 	"WithAemberCannotBeStolen":                 7,
 	"WithAemberCannotBeStolenWhileItHasAember": 7,
 	"WithSpendableAember":                      7,

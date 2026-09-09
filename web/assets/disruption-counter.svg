@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <title>Disruption counter</title>
+  <circle cx="12" cy="12" r="8" fill="#1c7ed6" stroke="#10508f" stroke-width="1"/>
+  <path d="M13 5 7.5 13H11l-1 6 6-8.5H12Z" fill="#e7f5ff" stroke="#10508f" stroke-width="0.6" stroke-linejoin="round"/>
+</svg>

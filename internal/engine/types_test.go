@@ -108,8 +108,8 @@ func TestKeywords(t *testing.T) {
 		}
 		seen |= k.bit()
 	}
-	if all[0] != Skirmish || all[len(all)-1] != Treachery {
-		t.Errorf("Keywords() = %v, want Skirmish first and Treachery last", all)
+	if all[0] != Skirmish || all[len(all)-1] != Invulnerable {
+		t.Errorf("Keywords() = %v, want Skirmish first and Invulnerable last", all)
 	}
 }
 

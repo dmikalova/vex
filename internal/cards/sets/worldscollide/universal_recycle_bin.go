@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// UniversalRecycleBin
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Universal Recycle Bin
 //
 //	House:  Logos
 //	Type:   Artifact
@@ -24,5 +19,6 @@ var UniversalRecycleBin = card.New(
 	card.Provenance(card.WC, "179"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Item),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Action, card.ArchivePurgedCard{}),
 )

@@ -52,6 +52,8 @@ type EconomyReader interface {
 	AemberTakenFromSupply(player int) bool
 	// Keys returns the number of keys a player has forged.
 	Keys(player int) int
+	// KeyColors returns the colours of the keys a player has forged, in forge order.
+	KeyColors(player int) []KeyColor
 	// TurnHistory returns a player's running tally for a TurnStat.
 	TurnHistory(player int, of TurnStat) int
 }
@@ -159,6 +161,9 @@ type ZoneReader interface {
 	// Under returns the ids of the cards placed under a host, face up or face
 	// down, in the order they were placed (Masterplan, Jargogle, Graft).
 	Under(host LocalID) []LocalID
+	// UnderFaceDown reports whether a card placed under a host is facedown, as
+	// opposed to faceup (Graft always places its card faceup).
+	UnderFaceDown(id LocalID) bool
 }
 
 // TurnReader reads turn-scoped state: the active house and the cards played and
@@ -188,6 +193,10 @@ type EconomyResolver interface {
 	// can later ask whether they were robbed on their opponent's previous turn
 	// (Information Exchange).
 	NoteAemberStolenFrom(player, amount int)
+	// EmitAemberStolenFrom fires each of the victim's in-play After Æmber Is Stolen
+	// From You abilities, carrying the amount just stolen in this single theft
+	// (Molephin deals damage scaled by it).
+	EmitAemberStolenFrom(victim, amount int)
 	// GainAember adds Æmber from the common supply to a player's pool, allowing
 	// in-play replacements such as Ether Spider to capture it instead. It returns
 	// the capturer and true when the gain was replaced.
@@ -246,6 +255,14 @@ type CreatureResolver interface {
 	// counters are card-placed markers that only matter to cards that read them
 	// (a doom counter for Wretched Doll); they are shed when the card leaves play.
 	PlaceCounter(id LocalID, kind CounterKind, n int)
+	// RemoveCounters drops every generic counter of one kind from a card, leaving
+	// its other kinds untouched (Vineapple Tree sheds its growth counters after a
+	// key is forged).
+	RemoveCounters(id LocalID, kind CounterKind)
+	// RemoveCountersN takes just n generic counters of one kind off a card,
+	// dropping the entry once it reaches zero (The Colosseum removes six glory
+	// counters to forge a key).
+	RemoveCountersN(id LocalID, kind CounterKind, n int)
 	// BelongToHouseForRemainderOfTurn makes a card belong to house until its
 	// controller's turn ends.
 	BelongToHouseForRemainderOfTurn(id LocalID, house House)
@@ -357,6 +374,9 @@ type ZoneResolver interface {
 	// ReturnUpgradesToHand moves each upgrade attached to a host in play to its
 	// owner's hand, rather than shedding it to the discard pile.
 	ReturnUpgradesToHand(host LocalID)
+	// ArchiveUpgrade detaches an attached upgrade from its host and moves it to its
+	// owner's archives (Ghostform archives itself off its host).
+	ArchiveUpgrade(upgrade LocalID)
 	// PutIntoArchives moves a card from play to its owner's archives.
 	PutIntoArchives(id LocalID)
 	// PutIntoArchivesEach archives a snapshot of in-play cards simultaneously, so
@@ -367,6 +387,10 @@ type ZoneResolver interface {
 	PutIntoYourArchives(id LocalID, player int)
 	// PutIntoDeckShuffled moves a card from play into its owner's deck and shuffles.
 	PutIntoDeckShuffled(id LocalID)
+	// ShuffleFriendlyCardsInPlayIntoDeck moves every card player controls in play —
+	// each creature and artifact and their upgrades — into their deck, returning how
+	// many cards were shuffled. The caller opens a shuffle batch around it.
+	ShuffleFriendlyCardsInPlayIntoDeck(player int) int
 	// BeginShuffleBatch starts collecting the cards shuffled into a deck until
 	// EndShuffleBatch, so an effect that shuffles several creatures at once narrates
 	// them as one grouped line per owner attributed to source.
@@ -381,6 +405,9 @@ type ZoneResolver interface {
 	ArchiveRandomFromHand(owner int)
 	// ArchiveFromDiscard moves a card from a player's discard pile to their archives.
 	ArchiveFromDiscard(owner int, id LocalID)
+	// ArchiveFromPurge moves a card from a player's purge pile to their archives —
+	// a card recovered from out of the game (Universal Recycle Bin).
+	ArchiveFromPurge(owner int, id LocalID)
 	// ArchiveTopOfDeck moves the top card of a player's deck to their archives,
 	// reporting whether a card was available.
 	ArchiveTopOfDeck(player int) bool
@@ -450,6 +477,13 @@ type ZoneResolver interface {
 	// other player's discard). It does nothing when the card is not in that discard
 	// pile.
 	PlayFromOpponentDiscard(player int, id LocalID)
+	// PlayFromOpponentHand plays a card out of the given player's opponent's hand
+	// as that player's own play (Lateral Shift plays a card out of the other
+	// player's hand "as if it were yours"). The play counts against the active
+	// player's own card-play limit and, for a creature or artifact, that player
+	// takes control of it while its owner stays the opponent. It does nothing when
+	// the card is not in that hand.
+	PlayFromOpponentHand(player int, id LocalID)
 	// PlayFromHand plays a specific card from a player's hand, bypassing the
 	// active-house gate (Phase Shift's off-house card).
 	PlayFromHand(player int, id LocalID)
@@ -539,6 +573,11 @@ type TurnResolver interface {
 	// CannotReapHouseNextTurn bars a player from reaping with creatures of the given
 	// house throughout their next turn (Seismo-entangler).
 	CannotReapHouseNextTurn(player int, house House, source LocalID)
+	// CreaturesCannotUntilNextTurn arms a board-wide bar that stops both players
+	// using creatures one way — fighting or reaping — until the caster's next turn,
+	// sparing creatures of exceptHouse (HouseNone spares none): Into the Night,
+	// Sow Salt.
+	CreaturesCannotUntilNextTurn(caster int, action UseKind, exceptHouse House, source LocalID)
 	// BlankEnemyText blanks the text box of every creature the given player controls
 	// until the card's controller's next turn — its printed keywords, abilities, and
 	// constant grants are ignored (Shadow of Dis). Its traits and stats remain.
@@ -926,6 +965,9 @@ func (g *Game) PutIntoHand(id LocalID) { g.putIntoHand(id) }
 // ReturnUpgradesToHand is the Resolver entry point for returnUpgradesToHand.
 func (g *Game) ReturnUpgradesToHand(host LocalID) { g.returnUpgradesToHand(host) }
 
+// ArchiveUpgrade is the Resolver entry point for archiveUpgrade.
+func (g *Game) ArchiveUpgrade(upgrade LocalID) { g.archiveUpgrade(upgrade) }
+
 // PutIntoArchives is the Resolver entry point for putIntoArchives.
 func (g *Game) PutIntoArchives(id LocalID) { g.putIntoArchives(id) }
 
@@ -936,6 +978,12 @@ func (g *Game) PutIntoArchivesEach(controller int, ids []LocalID) {
 
 // PutIntoDeckShuffled is the Resolver entry point for putIntoDeckShuffled.
 func (g *Game) PutIntoDeckShuffled(id LocalID) { g.putIntoDeckShuffled(id) }
+
+// ShuffleFriendlyCardsInPlayIntoDeck is the Resolver entry point for
+// shuffleFriendlyInPlayIntoDeck.
+func (g *Game) ShuffleFriendlyCardsInPlayIntoDeck(player int) int {
+	return g.shuffleFriendlyInPlayIntoDeck(player)
+}
 
 // BeginShuffleBatch opens a shuffle batch: cards shuffled into a deck until
 // EndShuffleBatch are collected rather than narrated one by one.
@@ -975,6 +1023,9 @@ func (g *Game) ArchiveRandomFromHand(owner int) {
 	}
 	g.archiveFromHand(owner, hand.IDs[g.rng.Intn(int(hand.Count))])
 }
+
+// ArchiveFromPurge moves a card from a player's purge pile to their archives.
+func (g *Game) ArchiveFromPurge(owner int, id LocalID) { g.archiveFromPurge(owner, id) }
 
 // ArchiveFromDiscard moves a card from a player's discard pile to their archives.
 func (g *Game) ArchiveFromDiscard(owner int, id LocalID) { g.archiveFromDiscard(owner, id) }

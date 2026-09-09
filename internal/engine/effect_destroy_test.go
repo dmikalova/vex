@@ -130,3 +130,47 @@ func TestDestroySamePower(t *testing.T) {
 		t.Error("rejecting the choice should destroy nothing")
 	}
 }
+
+func TestDestroySamePowerEitherChosen(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	fChosen := g.AddToBattleline(testCreature("fChosen", 3), 0)
+	fShare := g.AddToBattleline(testCreature("fShare", 3), 0)       // shares friendly power
+	fEnemyPow := g.AddToBattleline(testCreature("fEnemyPow", 4), 0) // shares enemy power
+	fSurvive := g.AddToBattleline(testCreature("fSurvive", 6), 0)
+	eChosen := g.AddToBattleline(testCreature("eChosen", 4), 1)
+	eShare := g.AddToBattleline(testCreature("eShare", 4), 1) // shares enemy power
+	eSurvive := g.AddToBattleline(testCreature("eSurvive", 7), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	e := Destroy{Target: Target{Kind: TargetEachCreature}.Selector(SamePowerAsEitherChosen)}
+	want := "choose a friendly creature and an enemy creature - destroy each " +
+		"creature with the same power as either of the chosen creatures"
+	if got := e.Text(); got != want {
+		t.Errorf("text = %q", got)
+	}
+
+	// A declined choice records no power, so nothing is destroyed.
+	g.SetChooser(0, orderRejectChooser{})
+	e.Resolve(ctx)
+	for _, id := range []LocalID{fChosen, eChosen, fShare, eShare} {
+		if !g.inPlay(id) {
+			t.Fatal("declining the choices should destroy nothing")
+		}
+	}
+
+	// Choose fChosen (power 3) then eChosen (power 4); the union of both power
+	// brackets is destroyed, computed from the pre-destruction board.
+	g.SetChooser(0, &idQueueChooser{ids: []LocalID{fChosen, eChosen}})
+	e.Resolve(ctx)
+	for _, id := range []LocalID{fChosen, fShare, fEnemyPow, eChosen, eShare} {
+		if g.inPlay(id) {
+			t.Errorf("creature %d should have been destroyed", id)
+		}
+	}
+	if !g.inPlay(fSurvive) {
+		t.Error("the power-6 friendly matching neither chosen power should survive")
+	}
+	if !g.inPlay(eSurvive) {
+		t.Error("the power-7 enemy matching neither chosen power should survive")
+	}
+}

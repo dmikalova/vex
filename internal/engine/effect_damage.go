@@ -258,7 +258,10 @@ const (
 // follow-up effect on it, with After deciding whether the follow-up runs
 // unconditionally, only when the damage destroyed the creature, or only when the
 // creature survived. The creature is placed in context (ctx.It) so Then can refer
-// to it; an Always follow-up on a destroyed creature is a no-op.
+// to it; an Always follow-up on a destroyed creature is a no-op. The aftermath gate
+// is intrinsic — only this node knows whether *this* damage destroyed the creature,
+// and it snapshots the creature's neighbors before the hit — so it stays one node,
+// not Sequence + a generic Conditional.
 type DamageThen struct {
 	Amount int
 	Target Target
@@ -340,51 +343,51 @@ func validateSpread(s Spread) error {
 	return nil
 }
 
-// CreatureAndNeighbor deals Amount to a chosen creature and NeighborAmount to one
-// of its battleline neighbors (the controller picks when it has two), all at once
-// — Mighty Lance. A DealDamage Spread.
-type CreatureAndNeighbor struct {
-	Amount         int
-	NeighborAmount int
-}
+// NeighborScope selects how many of a struck creature's neighbors a spread hits.
+type NeighborScope uint8
 
-// spreadText renders the clause.
-func (s CreatureAndNeighbor) spreadText() string {
-	return fmt.Sprintf("deal %d damage to a creature and %d damage to a neighbor of that creature",
-		s.Amount, s.NeighborAmount)
-}
+const (
+	// AllNeighbors hits each of the struck creature's neighbors — the "with N splash"
+	// wording (Lava Ball). The zero value, so a spread need not name it.
+	AllNeighbors NeighborScope = iota
+	// OneNeighbor hits a single neighbor the controller chooses when the creature has
+	// two (Mighty Lance).
+	OneNeighbor
+)
 
-// hits chooses a creature and one chosen neighbor.
-func (s CreatureAndNeighbor) hits(ctx *EffectContext) []DamageTarget {
-	chosen := (Target{Kind: TargetChosenCreature}).Select(ctx)
-	if len(chosen) == 0 {
-		return nil
-	}
-	out := []DamageTarget{{ID: chosen[0], Amount: s.Amount}}
-	if ns := neighbors(ctx, chosen[0]); len(ns) > 0 {
-		n := ns[0]
-		if len(ns) > 1 {
-			if pick, ok := ctx.ChooseCreature("Choose a neighbor", ns); ok {
-				n = pick
-			}
-		}
-		out = append(out, DamageTarget{ID: n, Amount: s.NeighborAmount})
-	}
-	return out
-}
-
-// CreatureAndNeighbors deals Amount to a chosen creature and Splash to each of
-// that creature's neighbors, all at once — the "with N splash" wording (Lava
-// Ball). NotOnFlank narrows the choice to an interior creature, which always has
-// two neighbors (Booby Trap). A DealDamage Spread.
+// CreatureAndNeighbors deals Amount to a chosen creature and Splash to its
+// battleline neighbors, all at once — a DealDamage Spread. Scope picks whether it
+// hits each neighbor (AllNeighbors, the default) or one the controller chooses
+// (OneNeighbor, Mighty Lance). NotOnFlank narrows the AllNeighbors choice to an
+// interior creature, which always has two neighbors (Booby Trap).
 type CreatureAndNeighbors struct {
 	Amount     int
 	Splash     int
+	Scope      NeighborScope
 	NotOnFlank bool
+	// Target, when set, names the primary creature to hit instead of prompting the
+	// controller to choose one — Plasma Nozzle aims the spread at the creature its
+	// host fights (Target.CreatureFought). Its zero value falls back to the default
+	// chosen-creature behavior. It replaces the AllNeighbors chosen path; Scope
+	// still selects one neighbor or each.
+	Target Target
 }
 
-// spreadText renders the clause.
+// spreadText renders the clause, naming one neighbor or each depending on Scope.
 func (s CreatureAndNeighbors) spreadText() string {
+	if s.Target.Kind != targetUnset {
+		return fmt.Sprintf(
+			"deal %d damage to %s and %d damage to each of its neighbors",
+			s.Amount,
+			s.Target.Text(),
+			s.Splash,
+		)
+	}
+	if s.Scope == OneNeighbor {
+		return fmt.Sprintf(
+			"deal %d damage to a creature and %d damage to a neighbor of that creature",
+			s.Amount, s.Splash)
+	}
 	creature := "a creature"
 	if s.NotOnFlank {
 		creature = "a creature that is not on a flank"
@@ -397,9 +400,21 @@ func (s CreatureAndNeighbors) spreadText() string {
 	)
 }
 
-// hits chooses a creature, then hits it and its neighbors. NotOnFlank keeps the
-// choice to an interior creature.
+// hits picks the primary creature — a named Target when set, otherwise one the
+// controller chooses — then hits it and its neighbors: one chosen neighbor under
+// OneNeighbor, every neighbor otherwise. NotOnFlank keeps the choice to an
+// interior creature.
 func (s CreatureAndNeighbors) hits(ctx *EffectContext) []DamageTarget {
+	if s.Target.Kind != targetUnset {
+		var out []DamageTarget
+		for _, id := range s.Target.Select(ctx) {
+			out = append(out, DamageTarget{ID: id, Amount: s.Amount})
+			for _, n := range neighbors(ctx, id) {
+				out = append(out, DamageTarget{ID: n, Amount: s.Splash})
+			}
+		}
+		return out
+	}
 	target := Target{Kind: TargetChosenCreature}
 	if s.NotOnFlank {
 		target = target.NotOnFlank()
@@ -409,7 +424,20 @@ func (s CreatureAndNeighbors) hits(ctx *EffectContext) []DamageTarget {
 		return nil
 	}
 	out := []DamageTarget{{ID: chosen[0], Amount: s.Amount}}
-	for _, n := range neighbors(ctx, chosen[0]) {
+	ns := neighbors(ctx, chosen[0])
+	if s.Scope == OneNeighbor {
+		if len(ns) > 0 {
+			n := ns[0]
+			if len(ns) > 1 {
+				if pick, ok := ctx.ChooseCreature("Choose a neighbor", ns); ok {
+					n = pick
+				}
+			}
+			out = append(out, DamageTarget{ID: n, Amount: s.Splash})
+		}
+		return out
+	}
+	for _, n := range ns {
 		out = append(out, DamageTarget{ID: n, Amount: s.Splash})
 	}
 	return out

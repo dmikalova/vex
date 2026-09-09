@@ -1070,6 +1070,19 @@ func TestAemberOnThisAtLeast(t *testing.T) {
 	if !c.Met(ctx) {
 		t.Error("should be met at the threshold")
 	}
+
+	// Not flips the sense to "fewer than", met below the threshold and not above.
+	fewer := AemberOnThisAtLeast{Amount: 10, Not: true}
+	if got := fewer.CondText(); got != "if there are fewer than 10 Æmber on it" {
+		t.Errorf("negated text = %q", got)
+	}
+	if !fewer.Met(ctx) {
+		t.Error("fewer-than should be met below the threshold")
+	}
+	g.AddAmberOn(id, 6) // now 10 on the card
+	if fewer.Met(ctx) {
+		t.Error("fewer-than should not be met at the threshold")
+	}
 }
 
 // TestNamedCardPurged covers Igon the Terrible's gate: whether a card of a name

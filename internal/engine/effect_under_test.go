@@ -251,3 +251,152 @@ func TestArchiveCardUnderResolveMovesToOwnerArchives(t *testing.T) {
 		t.Errorf("player 1 archives = %v, want [%d]", got, theirs)
 	}
 }
+
+// TestPutUnderFromHandTypeText renders the "action card" noun a Tactic filter
+// gives (Infomancer, Memolith graft an action card).
+func TestPutUnderFromHandTypeText(t *testing.T) {
+	got := (PutUnderFromHand{Type: Tactic}).Text()
+	want := "put a Tactic from your hand faceup under {self}"
+	if got != want {
+		t.Errorf("text = %q, want %q", got, want)
+	}
+}
+
+// TestPutUnderFromHandTypeOnlyOffersMatchingType grafts only an action card when
+// Type is Tactic, leaving a creature in hand untouched even though it is the only
+// other hand card.
+func TestPutUnderFromHandTypeOnlyOffersMatchingType(t *testing.T) {
+	g := started(t)
+	host := g.AddArtifact(NewCard("Host", Brobnar, Artifact, Common), 0)
+	g.AddToHand(NewCard("Creature", Brobnar, Creature, Common, WithPower(2)), 0)
+	action := g.AddToHand(NewCard("Action", Brobnar, Tactic, Common), 0)
+
+	PutUnderFromHand{Type: Tactic}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0, Source: host},
+	)
+
+	if got := g.Under(host); len(got) != 1 || got[0] != action {
+		t.Errorf("under = %v, want the action card [%d]", got, action)
+	}
+	if g.UnderFaceDown(action) {
+		t.Error("a graft from hand places the card faceup")
+	}
+}
+
+// TestTriggerGraftedPlayEffectText renders the effect.
+func TestTriggerGraftedPlayEffectText(t *testing.T) {
+	got := (TriggerGraftedPlayEffect{}).Text()
+	want := "trigger the play effect of a Tactic grafted onto {self}"
+	if got != want {
+		t.Errorf("text = %q, want %q", got, want)
+	}
+}
+
+// TestTriggerGraftedPlayEffectFiresAndStaysGrafted fires the Play effect of a
+// grafted action and leaves the action grafted under the source — it does not move
+// to play or discard.
+func TestTriggerGraftedPlayEffectFiresAndStaysGrafted(t *testing.T) {
+	g := started(t)
+	host := g.AddArtifact(NewCard("Host", Brobnar, Artifact, Common), 0)
+	gift := g.Register(NewCard("Gift", Brobnar, Tactic, Common,
+		WithAbility(TriggerAfterPlay, GainAember{Amount: 2, Player: Controller})), 0)
+	g.AttachUnder(host, gift, false)
+
+	ctx := &EffectContext{Resolver: g, Controller: 0, Source: host}
+	TriggerGraftedPlayEffect{}.Resolve(ctx)
+
+	if g.Aember(0) != 2 {
+		t.Errorf("Æmber = %d, want 2 from the grafted action's play effect", g.Aember(0))
+	}
+	if got := g.Under(host); len(got) != 1 || got[0] != gift {
+		t.Errorf("under = %v, want the action still grafted [%d]", got, gift)
+	}
+	if g.inPlay(gift) {
+		t.Error("the grafted action should not enter play")
+	}
+	if !ctx.HasIt || ctx.It != gift {
+		t.Errorf("ctx.It = %d (has=%v), want the grafted action %d", ctx.It, ctx.HasIt, gift)
+	}
+}
+
+// TestTriggerGraftedPlayEffectChoosesAmongSeveral triggers the grafted action the
+// controller chooses when several are grafted, leaving both under the source.
+func TestTriggerGraftedPlayEffectChoosesAmongSeveral(t *testing.T) {
+	g := started(t)
+	host := g.AddArtifact(NewCard("Host", Brobnar, Artifact, Common), 0)
+	first := g.Register(NewCard("First", Brobnar, Tactic, Common,
+		WithAbility(TriggerAfterPlay, GainAember{Amount: 1, Player: Controller})), 0)
+	second := g.Register(NewCard("Second", Brobnar, Tactic, Common,
+		WithAbility(TriggerAfterPlay, GainAember{Amount: 3, Player: Controller})), 0)
+	g.AttachUnder(host, first, false)
+	g.AttachUnder(host, second, false)
+	g.SetChooser(0, &idQueueChooser{ids: []LocalID{second}})
+
+	TriggerGraftedPlayEffect{}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: host})
+
+	if g.Aember(0) != 3 {
+		t.Errorf("Æmber = %d, want 3 from the chosen action", g.Aember(0))
+	}
+	if got := g.Under(host); len(got) != 2 {
+		t.Errorf("under = %v, want both actions still grafted", got)
+	}
+}
+
+// TestTriggerGraftedPlayEffectVacuousWithNothingGrafted does nothing when no
+// action is grafted under the source.
+func TestTriggerGraftedPlayEffectVacuousWithNothingGrafted(t *testing.T) {
+	g := started(t)
+	host := g.AddArtifact(NewCard("Host", Brobnar, Artifact, Common), 0)
+
+	TriggerGraftedPlayEffect{}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: host})
+
+	if g.Aember(0) != 0 {
+		t.Errorf("Æmber = %d, want 0 with nothing grafted", g.Aember(0))
+	}
+}
+
+// TestTriggerGraftedPlayEffectSkipsFaceDown ignores a facedown card under the
+// source: only a faceup grafted action is triggered.
+func TestTriggerGraftedPlayEffectSkipsFaceDown(t *testing.T) {
+	g := started(t)
+	host := g.AddArtifact(NewCard("Host", Brobnar, Artifact, Common), 0)
+	hidden := g.Register(NewCard("Hidden", Brobnar, Tactic, Common,
+		WithAbility(TriggerAfterPlay, GainAember{Amount: 5, Player: Controller})), 0)
+	g.AttachUnder(host, hidden, true)
+
+	TriggerGraftedPlayEffect{}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: host})
+
+	if g.Aember(0) != 0 {
+		t.Errorf("Æmber = %d, want 0 — a facedown card is not a graft", g.Aember(0))
+	}
+}
+
+// TestTriggerGraftedPlayEffectDeclined fires nothing when the controller declines
+// the choice among several grafted actions.
+func TestTriggerGraftedPlayEffectDeclined(t *testing.T) {
+	g := started(t)
+	host := g.AddArtifact(NewCard("Host", Brobnar, Artifact, Common), 0)
+	first := g.Register(NewCard("First", Brobnar, Tactic, Common,
+		WithAbility(TriggerAfterPlay, GainAember{Amount: 1, Player: Controller})), 0)
+	second := g.Register(NewCard("Second", Brobnar, Tactic, Common,
+		WithAbility(TriggerAfterPlay, GainAember{Amount: 3, Player: Controller})), 0)
+	g.AttachUnder(host, first, false)
+	g.AttachUnder(host, second, false)
+	g.SetChooser(0, orderRejectChooser{})
+
+	TriggerGraftedPlayEffect{}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: host})
+
+	if g.Aember(0) != 0 {
+		t.Errorf("Æmber = %d, want 0 after declining the choice", g.Aember(0))
+	}
+}
+
+// TestPutUnderFromHandNonTacticTypeText renders the general "<type> card" noun for
+// a non-Tactic type filter.
+func TestPutUnderFromHandNonTacticTypeText(t *testing.T) {
+	got := (PutUnderFromHand{Type: Creature}).Text()
+	want := "put a creature card from your hand faceup under {self}"
+	if got != want {
+		t.Errorf("text = %q, want %q", got, want)
+	}
+}

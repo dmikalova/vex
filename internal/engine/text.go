@@ -89,21 +89,26 @@ func afterChooseHouseText(e Effect) (string, bool) {
 }
 
 // afterAnyPlayerChooseHouseText folds an AfterAnyPlayerChoosesHouse ability whose
-// effect is a Conditional gated on the chosen house (a ChoseHouse condition) into
-// the natural "after a player chooses <House> as their active house, <then>"
-// wording (the house plants' "after a player chooses Brobnar as their active
-// house, gain 1 Æmber"). Any other effect shape reports false and renders with
-// the ordinary prefix.
+// effect is a Conditional gated on the chosen house — a ChoseHouse condition, into
+// "after a player chooses <House> as their active house, <then>" (the house
+// plants' "after a player chooses Brobnar as their active house, gain 1 Æmber"),
+// or an ActiveHouseMatchesNoCardsInPlay condition, into "after a player chooses an
+// active house which matches no cards in play, <then>" (Sci. Officer Qincan). Any
+// other effect shape reports false and renders with the ordinary prefix.
 func afterAnyPlayerChooseHouseText(e Effect) (string, bool) {
 	cond, ok := e.(Conditional)
 	if !ok {
 		return "", false
 	}
-	ch, ok := cond.Cond.(ChoseHouse)
-	if !ok {
-		return "", false
+	switch c := cond.Cond.(type) {
+	case ChoseHouse:
+		return "after a player chooses " + c.House.String() +
+			" as their active house, " + cond.Then.Text(), true
+	case ActiveHouseMatchesNoCardsInPlay:
+		return "after a player chooses an active house " +
+			c.CondText() + ", " + cond.Then.Text(), true
 	}
-	return "after a player chooses " + ch.House.String() + " as their active house, " + cond.Then.Text(), true
+	return "", false
 }
 
 // entersPlayConditionalText folds an "enters play" ability whose effect is gated
@@ -426,6 +431,9 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 		rules = append(rules, s)
 	}
 	rules = append(rules, restrictionText(def.Restricts, def.Type == Upgrade)...)
+	if b := def.CannotPlayWhile; b.When != nil {
+		rules = append(rules, conditionalPlayBarText(b))
+	}
 	if def.AemberCannotBeStolen {
 		rules = append(rules, "Your Æmber cannot be stolen.")
 	}
@@ -550,6 +558,11 @@ func drawModifierText(m DrawModifier) string {
 	}
 	if m.OnlyWhileOffFlank {
 		s = "While " + SelfName + " is not on a flank, " + strings.ToLower(s[:1]) + s[1:]
+	}
+	if m.OnlyWhileInCenter {
+		s = "While " + SelfName + " is in the center of the battleline, " + strings.ToLower(
+			s[:1],
+		) + s[1:]
 	}
 	return s
 }
@@ -732,6 +745,10 @@ func constantText(def *CardDefinition) string {
 			line = "While " + SelfName + " is in the center of your battleline, " +
 				c.target().Text() + " gains " + oxfordAnd(parts)
 		}
+		if c.WhileCondition != nil {
+			line = "While " + trimCondPrefix(c.WhileCondition.CondText()) + ", " +
+				SelfName + " gains " + oxfordAnd(parts)
+		}
 		if c.Per != nil {
 			// A count read from the source names it, unless the buffed creature is the
 			// source itself, where a trailing "it" reads unambiguously (Centurion
@@ -781,10 +798,41 @@ func constantGrantedText(def *CardDefinition) []string {
 					" is in the center of your battleline, it gains, \""+body+`"`)
 				continue
 			}
+			if c.WhileCondition != nil {
+				lines = append(lines, "While "+trimCondPrefix(c.WhileCondition.CondText())+
+					", "+def.Name+` gains, "`+body+`"`)
+				continue
+			}
 			lines = append(lines, subject+` gains, "`+body+`"`)
 		}
 	}
 	return lines
+}
+
+// conditionalPlayBarText renders a symmetric, board-wide play bar as one line,
+// e.g. "If a player has more creatures in play than their opponent, they cannot
+// play creatures." (Quixxle Stone). It phrases the condition in the third person
+// because the bar names whichever player it applies to, not the controller.
+func conditionalPlayBarText(b ConditionalPlayBar) string {
+	return "If a player " + symmetricCondText(b.When) +
+		", they cannot play " + strings.ToLower(b.Type.String()) + "s."
+}
+
+// symmetricCondText renders a condition in the third-person, board-wide voice a
+// ConditionalPlayBar needs ("a player ... they"), rather than the controller voice
+// of CondText ("if you ...").
+func symmetricCondText(c Condition) string {
+	if _, ok := c.(ControlsMoreCreatures); ok {
+		return "has more creatures in play than their opponent"
+	}
+	return strings.TrimPrefix(c.CondText(), "if ")
+}
+
+// trimCondPrefix drops the leading "if " a CondText opens with, so a condition can
+// be reused after a different lead word — "While " + trimCondPrefix(...) reads
+// "While your red key is forged".
+func trimCondPrefix(s string) string {
+	return strings.TrimPrefix(s, "if ")
 }
 
 // restrictionText renders a card's constant "cannot" rules, one line each, e.g.

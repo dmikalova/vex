@@ -32,6 +32,13 @@ const (
 	// lifts. (Today artifact control is only ever Forever, so no such timed override
 	// exists yet; this rule is the invariant to preserve when one is added.)
 	Forever
+
+	// EndOfNextTurn lasts from now through the end of the affected player's next
+	// turn, then lifts. Unlike NextTurn — which waits for that next turn before it
+	// bites — this window is live the moment it is established and stays live
+	// across the intervening turns, so it suits a reduction a player wants in force
+	// immediately (We Can ALL Win's key-cost drop).
+	EndOfNextTurn
 )
 
 // valid reports whether d names a real duration (not the unset zero value).

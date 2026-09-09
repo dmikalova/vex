@@ -108,6 +108,56 @@ func TestMoveAember(t *testing.T) {
 	}
 }
 
+// TestMoveAemberBind checks that Bind selects through a Selector on the full
+// candidate set (not only the Æmber-bearers), moves all the Æmber, and leaves the
+// moved-from creature in context.
+func TestMoveAemberBind(t *testing.T) {
+	mostPowerful := Target{Kind: TargetEachCreature}.Selector(MostPowerful(1))
+
+	// The most powerful creature carries Æmber: it is emptied into the pool and
+	// bound as ctx.It.
+	g := NewGame("A", "B", 1)
+	big := g.AddToBattleline(testCreature("big", 6), 0)
+	small := g.AddToBattleline(testCreature("small", 3), 0)
+	g.AddAmberOn(big, 3)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	MoveAember{All: true, From: mostPowerful, To: Controller, Bind: true}.Resolve(ctx)
+	if g.AmberOn(big) != 0 || g.Aember(0) != 3 {
+		t.Errorf("after bind move: big=%d pool=%d, want 0/3", g.AmberOn(big), g.Aember(0))
+	}
+	if g.AmberOn(small) != 0 {
+		t.Errorf("weaker creature Æmber = %d, want 0", g.AmberOn(small))
+	}
+	if !ctx.HasIt || ctx.It != big {
+		t.Errorf("ctx.It = %v (HasIt %v), want %v bound", ctx.It, ctx.HasIt, big)
+	}
+
+	// The overall most powerful creature has no Æmber while a weaker one does: Bind
+	// still selects and binds the most powerful (moving nothing), never the
+	// Æmber-holder.
+	g2 := NewGame("A", "B", 1)
+	strong := g2.AddToBattleline(testCreature("strong", 6), 0)
+	weak := g2.AddToBattleline(testCreature("weak", 3), 0)
+	g2.AddAmberOn(weak, 2)
+	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
+	MoveAember{All: true, From: mostPowerful, To: Controller, Bind: true}.Resolve(ctx2)
+	if g2.AmberOn(strong) != 0 || g2.AmberOn(weak) != 2 || g2.Aember(0) != 0 {
+		t.Errorf("after bind of Æmber-less top: strong=%d weak=%d pool=%d, want 0/2/0",
+			g2.AmberOn(strong), g2.AmberOn(weak), g2.Aember(0))
+	}
+	if !ctx2.HasIt || ctx2.It != strong {
+		t.Errorf("ctx.It = %v (HasIt %v), want %v bound", ctx2.It, ctx2.HasIt, strong)
+	}
+
+	// No creatures at all: nothing is bound.
+	g3 := NewGame("A", "B", 1)
+	ctx3 := &EffectContext{Resolver: g3, Controller: 0}
+	MoveAember{All: true, From: mostPowerful, To: Controller, Bind: true}.Resolve(ctx3)
+	if ctx3.HasIt {
+		t.Error("binding with no creatures should leave ctx.It unset")
+	}
+}
+
 func TestMoveAemberDeclined(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	a := g.AddToBattleline(testCreature("a", 3), 0)

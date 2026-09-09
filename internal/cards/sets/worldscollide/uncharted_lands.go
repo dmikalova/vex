@@ -1,27 +1,34 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// UnchartedLands
+// Uncharted Lands
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Artifact
 //	Rarity: Rare
 //	Traits: Location
 //
-//	Play: Place 6A from the common supply on Uncharted Lands.
-//	Each Star Alliance creature gains, "Reap: Move 1A from Uncharted Lands to your pool."
+//	Each Star Alliance creature gains, "Reap: Move 1 Æmber from Uncharted Lands to your pool."
+//	Play: Place 6 Æmber from the common supply on Uncharted Lands.
 var UnchartedLands = card.New(
 	"Uncharted Lands",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "342"),
 	card.WithTraits(card.Traits.Location),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithConstant(card.ConstantAbility{
+		Target: card.Target.EachCreature.OfHouse(card.House.Self),
+		Granted: []card.Ability{{
+			Trigger: card.Trigger.Reap,
+			Effect: card.MoveAember{
+				Amount: 1,
+				From:   card.Target.FriendlyArtifact.Named("Uncharted Lands"),
+				To:     card.Controller,
+			},
+		}},
+	}),
+	card.WithAbility(
+		card.Trigger.Play, card.PlaceAemberOnThis{Amount: 6}),
 )

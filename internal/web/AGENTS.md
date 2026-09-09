@@ -212,6 +212,14 @@ Two go-app facts make it work, and neither is guessable:
 `app.HTMLString(g.Render())` draws the whole screen, nested components included,
 without mounting anything — which is how `view_test.go` asserts on markup.
 
+**Never assert a fixed attribute order on the drawn markup.** go-app writes an
+element's attributes by ranging its `attrs()` **map**, so their order is
+randomised per render: a fragment that fixes `class` before `src` on an icon
+matches only some of the time and is a flaky test waiting to happen. Match a
+single attribute (`src="/web/assets/shield.svg"`), or bind a value to its icon
+with a regex whose `[^>]*` skips the attributes without fixing their order, as
+`TestArmorShowsWhatIsLeftToAbsorb` does.
+
 What is out of reach is the DOM: `app.Window()` reads back empty off-browser, so
 the pieces that measure or scroll elements (the fly-into-play animation, the log
 auto-scroll, the picker's focus, `ctx.JSSrc()`) no-op rather than assert. Every

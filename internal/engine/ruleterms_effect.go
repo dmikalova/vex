@@ -373,6 +373,15 @@ the discard pile rather than surviving underneath it.`,
 		},
 		{
 			Section:    SectionEffect,
+			Title:      "Shuffle Friendly Cards In Play Into Deck",
+			Definition: "Shuffle each friendly card in play into your deck, then draw a card for each shuffled this way.",
+			Body: `ShuffleFriendlyCardsInPlayIntoDeck shuffles every card the controller has in play
+— each creature and artifact, and every upgrade attached to them — into their
+deck, then draws a card for each card shuffled this way (Timequake). The draw
+count always matches the number of cards that just left play.`,
+		},
+		{
+			Section:    SectionEffect,
 			Title:      "Steal Æmber",
 			Definition: "Move Æmber from the opponent's pool into your own, up to what they have.",
 			Body: `Stealing Æmber moves it from the opponent's pool into your own. You can only
@@ -421,6 +430,14 @@ single point of damage spends the whole ward. Ward intercepts every removal, eve
 the controller's own. It covers only damage and leaving play; it does not stop a
 stun, an enrage, a capture, a change of control, or a loss of power. Warding
 applies this status to each creature the effect targets.`,
+		},
+		{
+			Section:    SectionEffect,
+			Title:      "Move Ward",
+			Definition: "Take the ward off one warded creature and place it on another creature.",
+			Body: `Moving a ward takes the one-shot shield off a warded creature and places it on
+another creature. Only a warded creature can be the source; if none is warded,
+nothing happens. The source loses its ward and the destination gains one.`,
 		},
 		{
 			Section:    SectionEffect,
