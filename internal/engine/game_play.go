@@ -24,7 +24,7 @@ func (g *Game) PlayCreature(player, handIndex int, flankLeft bool) (LocalID, err
 		id,
 		func() { g.State.Hand[player].removeAt(handIndex) },
 		playCardOptions{
-			flankLeft:             flankLeft,
+			flank:                 flankFor(flankLeft),
 			consumePlayPermission: g.usesPlayPermission(player, def),
 		},
 	)
@@ -329,7 +329,10 @@ func (g *Game) playFromPile(player int, id LocalID, pile *deckList) {
 }
 
 type playCardOptions struct {
-	flankLeft             bool
+	// flank is where the creature enters the battleline. It is flankUnset for an
+	// effect-play that does not dictate a side, so the controller is prompted; a
+	// hand play sets it from the player's own choice (flankFor).
+	flank                 flank
 	consumePlayPermission bool
 }
 
@@ -389,7 +392,7 @@ func (g *Game) playCardFromZone(
 		}
 		g.recordCardPlayed(player, id, opts)
 		remove()
-		g.playCreatureCard(player, id, opts.flankLeft)
+		g.playCreatureCard(player, id, opts.flank)
 		g.applyTreachery(player, id)
 		return id, nil
 	case Artifact:
@@ -450,14 +453,14 @@ func (g *Game) hasUpgradeHost() bool {
 // playCreatureCard places a creature on a flank — or, for a Deploy creature,
 // anywhere in the battleline its controller chooses — and fires the standard play
 // sequence for a creature already removed from its previous zone.
-func (g *Game) playCreatureCard(player int, id LocalID, flankLeft bool) {
+func (g *Game) playCreatureCard(player int, id LocalID, fl flank) {
 	core := &g.State.Cards[id]
 	core.Exhausted = true // enters play exhausted; readies during the end-of-turn ready step
 	if g.entersPlayReady(g.controller(id), Creature) {
 		core.Exhausted = false
 	}
 	core.ArmorRemaining = int16(g.armor(id))
-	pos, interior := g.deployPosition(player, id, flankLeft)
+	pos, interior := g.deployPosition(player, id, fl, true)
 	g.State.Battleline[player].insertAt(pos, id)
 	g.record(CardPlayedToBattleline{
 		Player:    player,
@@ -484,13 +487,14 @@ func (g *Game) playCreatureCard(player int, id LocalID, flankLeft bool) {
 
 // putIntoPlay puts a card into play under controller's control without playing
 // it: the card is removed from wherever it rests and enters directly — a creature
-// onto the right flank of controller's battleline, an artifact into controller's
-// artifact row. Because it is not played, its bonus icons and Play: abilities do
-// not resolve; only "enters play" reactions fire. Ownership is unchanged, so the
-// card still returns to its owner's zone when it later leaves play. When it enters
-// under a player other than its owner, that control is held permanently: the card
-// names itself as the source of a control-stack entry, which only clears when the
-// card itself leaves play (never reverted by a leaving source).
+// onto a flank of controller's battleline that controller is prompted to choose,
+// an artifact into controller's artifact row. Because it is not played, its bonus
+// icons and Play: abilities do not resolve; only "enters play" reactions fire.
+// Ownership is unchanged, so the card still returns to its owner's zone when it
+// later leaves play. When it enters under a player other than its owner, that
+// control is held permanently: the card names itself as the source of a
+// control-stack entry, which only clears when the card itself leaves play (never
+// reverted by a leaving source).
 func (g *Game) putIntoPlay(id LocalID, controller int) {
 	if g.inPlay(id) {
 		return
@@ -505,7 +509,8 @@ func (g *Game) putIntoPlay(id LocalID, controller int) {
 	case Creature:
 		core.Exhausted = true
 		core.ArmorRemaining = int16(g.armor(id))
-		g.State.Battleline[controller].add(id)
+		pos, _ := g.deployPosition(controller, id, flankUnset, false)
+		g.State.Battleline[controller].insertAt(pos, id)
 		g.record(CardPutIntoPlay{Player: controller, Card: id})
 		g.emitCreatureEnters(id)
 	case Artifact:

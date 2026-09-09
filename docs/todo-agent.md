@@ -11,33 +11,46 @@ human's personal list, which agents never write into. Rules:
   built together: add the shared primitive once, then knock out the group.
 - Cite the ADR or doc that decided an item where one exists.
 
-## Flank / placement prompts (engine)
+## Card wording / authoring
 
-- **Exhume must ask for a flank, not silently pick right.** It still auto-places
-  on the right flank. Introduce an unset/invalid flank zero value so an
-  unspecified flank errors by default; a card that dictates a flank (e.g. Amasser)
-  sets it explicitly.
+- **Festering Touch** reword, e.g. "Play: Choose 2 creatures. Deal 1 damage to the
+  chosen creatures with no damage. Deal 3 damage to the chosen creatures with
+  damage."
+- **Orator Hissaro** could read: "Play: Exalt and ready each neighboring creature.
+  For the remainder of the turn, those creatures belong to house Saurian."
+- **Borr-Nit** and similar could be atomized and recomposed further (decompose
+  fused effects into shared nodes).
+- **Memory Chip**: after choosing self house, archive a card from hand (check the
+  original printed card text and match it).
 
-## Card behavior fixes
+## Card catalog / provenance
 
-_(All of the first batch are done: Triumph "6 or more", City-State Interest
-capture-from-opponent, Medic Ingram double-prompt, dying-creature Æmber
-recipient, Poltergeist constant-ability artifacts. Remaining card-behavior work
-lives under the other headings.)_
+_No outstanding items._
 
-## Card text / glyphs
+## Web — mobile, previews, layout
 
-## Logs (engine)
+- **Log hover preview on mobile = single tap.** Currently needs a double tap on the
+  card name to raise the preview; make it one tap.
+- **Facedown cards face down for BOTH players.** A facedown card shows its back to
+  everyone; only the controller can hover (desktop) / tap (mobile) to peek at its
+  face. Must be visually distinguishable from a faceup card.
+- **Card title dynamic shrink (QUESTION).** Yshi's title shrinks by a fixed step
+  rather than to the exact needed size. Explain whether we still use predetermined
+  shrink amounts, whether dynamic fit is possible, and why smooth fit is/ isn't
+  feasible.
+- **Glyph bar margin** — remove the margin around the glyph bar (or the surrounding
+  boxes) to save space.
+- **Glyph strip — residual effect-level unknowns.** Card-level features, all
+  triggers (incl. phase triggers), Static/Restrictions/Toll/Replaces/KeyCost, and
+  Splash-attack now transcribe. Still falling back to the abstract `glyph-unknown`
+  (`*`): the inner `.Then` effect of `ChooseHouseThen`/`ChooseCreatureThen`
+  (Restringuntus, Deep Probe, Niffle Grounds) and the granted-ability effects on
+  the Blasters, Evasion Sigil, and Rocket Boots. Map each inner effect to a glyph
+  (ADR 0022). The remaining empty strips (Dust Pixie, Toad, Mega, etc.) are
+  Æmber-bonus-pip-only creatures — the pips render on the card face, not the strip,
+  so those are intentional, not gaps.
 
-- Poison and Skirmish are not logged.
-- Æmber gains should name their source (e.g. "Harmonia …").
+## Tooling / tests
 
-## Web — zone views, prompts, action bar
-
-- Upgrade-attach prompt wording: change "Choose a creature to attach Stunner to"
-  to "Choose a creature to attach Stunner **onto**". BLOCKED web-side: the string is
-  produced by the engine (`AttachSelfTo.Text` / `game_play.go`'s
-  "Choose a creature to attach {self} to" prompt), and engine AGENTS notes the
-  prompt is deliberately kept identical to the printed card text. The mobile
-  single-line clickable-green-name presentation is done (the prompt source card's
-  face is dropped on mobile, leaving its green `prompt-source-name` token).
+- **Unused-asset test.** Add a test that fails when an asset in web/assets is not
+  referenced by the code (no dead assets).

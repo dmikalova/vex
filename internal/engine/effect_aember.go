@@ -73,7 +73,12 @@ func (e GainAember) gain(ctx *EffectContext, p int) {
 		})
 		return
 	}
-	ctx.Resolver.Record(AemberGained{Player: p, Amount: amount})
+	ctx.Resolver.Record(AemberGained{
+		Player:    p,
+		Amount:    amount,
+		Source:    ctx.Source,
+		HasSource: true,
+	})
 }
 
 // GainAemberEqualTo has a player gain Æmber equal to a running count rather than a
@@ -124,7 +129,12 @@ func (e GainAemberEqualTo) Resolve(ctx *EffectContext) {
 		})
 		return
 	}
-	ctx.Resolver.Record(AemberGained{Player: p, Amount: amount})
+	ctx.Resolver.Record(AemberGained{
+		Player:    p,
+		Amount:    amount,
+		Source:    ctx.Source,
+		HasSource: true,
+	})
 }
 
 // aemberLosers returns the players a lose-Æmber effect drains: both under

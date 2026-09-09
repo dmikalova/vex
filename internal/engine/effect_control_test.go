@@ -38,6 +38,31 @@ func TestTakeControl(t *testing.T) {
 	}
 }
 
+// TestTakeControlAndExhaust covers Forever control that also exhausts the seized
+// creature in one effect — Lord Invidius's "take control ... and exhaust it".
+func TestTakeControlAndExhaust(t *testing.T) {
+	take := TakeControl{
+		Target:     Target{Kind: TargetChosenEnemyCreature},
+		Duration:   Forever,
+		AndExhaust: true,
+	}
+	if got := take.Text(); got != "take control of an enemy creature and exhaust it" {
+		t.Fatalf("AndExhaust text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("src", 3), 0)
+	foe := g.AddToBattleline(testCreature("foe", 3), 1)
+	take.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+
+	if g.controller(foe) != 0 {
+		t.Fatalf("controller = %d, want P1", g.controller(foe))
+	}
+	if !g.Exhausted(foe) {
+		t.Fatal("seized creature should be exhausted")
+	}
+}
+
 // TestTakeControlPlacesSeizedCreatureOnChosenFlank pins that the player gaining
 // control places the seized creature on the flank they choose, and that an empty
 // taker line — the creature's only home — is not worth a prompt.

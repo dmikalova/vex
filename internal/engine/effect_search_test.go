@@ -156,3 +156,50 @@ func TestSearchForNameAll(t *testing.T) {
 		t.Error("resolveGate reported a find with no copies left")
 	}
 }
+
+func TestSearchDeck(t *testing.T) {
+	if got := (SearchDeck{}).Text(); got !=
+		"search your deck for a card and put it into your hand, then shuffle your deck" {
+		t.Errorf("unrestricted text = %q", got)
+	}
+	if got := (SearchDeck{House: Saurian}).Text(); got !=
+		"search your deck for a Saurian card, reveal it, and put it into your hand, then shuffle your deck" {
+		t.Errorf("house text = %q", got)
+	}
+
+	// House-restricted: only the Saurian card is eligible; it is revealed, put into
+	// hand, and the deck is shuffled.
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("rex", 6), 0)
+	want := g.Register(NewCard("ally", Saurian, Creature, Common, WithPower(2)), 0)
+	other := g.Register(NewCard("outsider", Logos, Creature, Common, WithPower(2)), 0)
+	g.State.Deck[0].add(want)
+	g.State.Deck[0].add(other)
+	SearchDeck{House: Saurian}.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+	if !g.State.Hand[0].contains(want) {
+		t.Error("the Saurian card should be in hand")
+	}
+	if g.State.Hand[0].contains(other) || !g.State.Deck[0].contains(other) {
+		t.Error("the non-Saurian card should stay in the deck")
+	}
+
+	// Unrestricted: the sole deck card is taken.
+	g2 := NewGame("A", "B", 1)
+	s2 := g2.AddToBattleline(testCreature("orb-holder", 1), 0)
+	only := g2.Register(NewCard("whatever", Logos, Tactic, Common), 0)
+	g2.State.Deck[0].add(only)
+	SearchDeck{}.Resolve(&EffectContext{Resolver: g2, Source: s2, Controller: 0})
+	if !g2.State.Hand[0].contains(only) {
+		t.Error("the sole deck card should be put into hand")
+	}
+
+	// No matching card: nothing is taken, but the deck is still shuffled.
+	g3 := NewGame("A", "B", 1)
+	s3 := g3.AddToBattleline(testCreature("lonely", 1), 0)
+	g3.State.Deck[0].add(g3.Register(NewCard("logos", Logos, Creature, Common, WithPower(1)), 0))
+	before := len(g3.Hand(0))
+	SearchDeck{House: Saurian}.Resolve(&EffectContext{Resolver: g3, Source: s3, Controller: 0})
+	if len(g3.Hand(0)) != before {
+		t.Error("a search that finds no match should put nothing into hand")
+	}
+}

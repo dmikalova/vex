@@ -576,8 +576,8 @@ compose (`Or{ItIsOfTrait{…}, ItHasAember{}}`) instead of baking each combinati
 into a one-off condition, and the rendered form names both amounts and the branch
 plainly.
 
-| Original                                                                                              | Curated                                                                                                                       |
-| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Original                                                                                              | Curated                                                                                                                        |
+| ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
 | `Deal 2 damage to a creature. Deal 6 damage instead if it is a Dinosaur creature or has Æmber on it.` | `Choose a creature - if it is a Dinosaur creature or it has Æmber on it, deal 6 damage to it. Otherwise, deal 2 damage to it.` |
 
 (Affected: Guji Dinosaur Hunter.)

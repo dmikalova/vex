@@ -13,6 +13,10 @@ type ArchiveFromHand struct {
 	Type CardType
 	// House filters which cards may be chosen; HouseNone allows any house.
 	House House
+	// ExceptHouse spares the cards of that house from the choice, rendering the
+	// "non-<house>" qualifier (Information Officer Gray reveals a non-Star Alliance
+	// card). HouseNone excludes nothing.
+	ExceptHouse House
 	// Revealed shows the chosen card to the opponent before archiving it, which
 	// is how a filtered choice is verified (Incubation Chamber).
 	Revealed bool
@@ -77,6 +81,9 @@ func (e ArchiveFromHand) handNoun() string {
 	if e.House != HouseNone {
 		noun = e.House.String() + " " + noun
 	}
+	if e.ExceptHouse != HouseNone {
+		noun = "non-" + e.ExceptHouse.String() + " " + noun
+	}
 	return noun
 }
 
@@ -84,6 +91,9 @@ func (e ArchiveFromHand) handNoun() string {
 func (e ArchiveFromHand) candidates(ctx *EffectContext) []LocalID {
 	return handCardsWhere(ctx, ctx.Controller, func(id LocalID) bool {
 		if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
+			return false
+		}
+		if e.ExceptHouse != HouseNone && ctx.Resolver.House(id) == e.ExceptHouse {
 			return false
 		}
 		return e.House == HouseNone || ctx.Resolver.House(id) == e.House

@@ -15,7 +15,7 @@ import (
 //	Power:  4
 //	Traits: Human • Scientist
 //
-//	Reap: Draw a card, or 2 cards if you control Velum.
+//	Reap: Draw a card. If you control Velum, draw a card.
 //	Destroyed: Archive Velum from your discard pile -> archive Hyde from play.
 func TestHyde(t *testing.T) {
 	t.Run("reaps to draw 1 without Velum", func(t *testing.T) {

@@ -50,6 +50,10 @@ func TestLogEntryText(t *testing.T) {
 
 		// Æmber.
 		{AemberGained{Player: 0, Amount: 2}, "P0 gains 2 Æmber"},
+		{
+			AemberGained{Player: 0, Amount: 1, Source: 7, HasSource: true},
+			"Card7 has P0 gain 1 Æmber",
+		},
 		{AemberLost{Player: 1, Amount: 1}, "P1 loses 1 Æmber"},
 		{AemberStolen{Player: 0, From: 1, Amount: 2}, "P0 steals 2 Æmber from P1"},
 		{
@@ -163,6 +167,11 @@ func TestLogEntryText(t *testing.T) {
 			"Card1 (4 power) fights Card2 (3 power)",
 		},
 		{ElusiveAvoidedFight{Defender: 2}, "Card2 is elusive — no fight damage is dealt"},
+		{
+			SkirmishAvoidedReturn{Attacker: 1},
+			"Card1 is skirmish — it takes no damage in return",
+		},
+		{PoisonKills{Source: 1, Victim: 2}, "Card1's poison is lethal to Card2"},
 		{DamageRefused{Creature: 2}, "Card2 cannot be dealt damage"},
 		{ArmorAbsorbed{Creature: 2, Amount: 1}, "Card2's armor absorbs 1 damage"},
 		{DamageTaken{Creature: 2, Amount: 3, Total: 4}, "Card2 takes 3 damage (4 total)"},

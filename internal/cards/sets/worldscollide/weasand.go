@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Weasand
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Shadows
 //	Type:   Creature
@@ -15,9 +10,9 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  1
 //	Traits: Beast • Thief
 //
-//	Deploy. Elusive.
-//	If Weasand is on a flank, destroy it.
-//	After a player forges a key, gain 2A.
+//	Deploy, Elusive.
+//	If Weasand is on a flank, destroy Weasand.
+//	After a player forges a key, gain 2 Æmber.
 var Weasand = card.New(
 	"Weasand",
 	card.House.Shadows,
@@ -26,5 +21,11 @@ var Weasand = card.New(
 	card.Provenance(card.WC, "285"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Beast, card.Traits.Thief),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Deploy, card.Keyword.Elusive),
+	card.WithDestroyedWhen(card.SourceOnFlank{}),
+	card.WithAbility(
+		card.Trigger.AfterPlayerForgesKey, card.GainAember{
+			Player: card.Controller,
+			Amount: 2,
+		}),
 )

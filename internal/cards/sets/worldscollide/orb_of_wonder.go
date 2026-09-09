@@ -1,27 +1,28 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// OrbOfWonder
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Orb of Wonder
 //
 //	House:  Brobnar
 //	Type:   Artifact
 //	Rarity: Special
 //	Traits: Item
 //
-//	Omni: Sacrifice Orb of Wonder. If you do, search your deck for a card and add it to your hand. Then, shuffle your deck.
+//	Versatile.
+//	Action: Destroy Orb of Wonder -> search your deck for a card and put it into your hand, then shuffle your deck.
 var OrbOfWonder = card.New(
 	"Orb of Wonder",
 	card.House.Brobnar,
 	card.Type.Artifact,
-	// TODO(variant): rarity relabelled from FIXED to Special — handle manually
+	// Rarity relabelled from FIXED to Special.
 	card.Rarity.Special,
 	card.Provenance(card.WC, "A06"),
 	card.WithTraits(card.Traits.Item),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Versatile),
+	card.WithAbility(
+		card.Trigger.Action, card.Then{
+			First:  card.Destroy{Target: card.Target.This},
+			Result: card.SearchDeck{},
+		}),
 )

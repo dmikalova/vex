@@ -350,6 +350,9 @@ func TestSkirmishAndArmorAndPoison(t *testing.T) {
 	if g.Damage(skirm) != 0 {
 		t.Errorf("skirmisher took %d damage, want 0", g.Damage(skirm))
 	}
+	if want := "skirm is skirmish — it takes no damage in return"; !hasLogLine(g, want) {
+		t.Errorf("log = %v, want a line %q", g.LogText(), want)
+	}
 
 	// Armor absorbs damage (raw application, no destruction).
 	armored := g.AddToBattleline(testCreature("armored", 5, WithArmor(2)), 0)
@@ -359,12 +362,83 @@ func TestSkirmishAndArmorAndPoison(t *testing.T) {
 	}
 	g.DealDamage(0, []DamageTarget{{ID: armored, Amount: 0}}) // no-op path
 
-	// Poison: dealing any damage destroys the creature as part of the process.
-	poison := g.AddToBattleline(testCreature("poison", 5, WithKeywords(Poison)), 1)
-	g.DealDamage(0, []DamageTarget{{ID: poison, Amount: 1}})
-	if g.inPlay(poison) {
-		t.Error("poisoned creature should be destroyed")
+	// Poison is offensive: a poison attacker destroys the creature it damages,
+	// however much power that creature had left, while the poison attacker itself
+	// survives (Skirmish spares it the return damage). The log names poison as the
+	// killer.
+	pois := g.AddToBattleline(testCreature("pois", 3, WithKeywords(Skirmish, Poison)), 0)
+	prey := g.AddToBattleline(testCreature("prey", 10), 1)
+	if err := g.Fight(0, pois, prey); err != nil {
+		t.Fatal(err)
 	}
+	if g.inPlay(prey) {
+		t.Error("a creature a poison attacker damaged should be destroyed")
+	}
+	if !g.inPlay(pois) {
+		t.Error("a poison creature is not destroyed by dealing damage")
+	}
+	if want := "pois's poison is lethal to prey"; !hasLogLine(g, want) {
+		t.Errorf("log = %v, want a line %q", g.LogText(), want)
+	}
+}
+
+// hasLogLine reports whether the game log holds a line exactly matching want.
+func hasLogLine(g *Game, want string) bool {
+	for _, line := range g.LogText() {
+		if line == want {
+			return true
+		}
+	}
+	return false
+}
+
+func TestPoisonIsOffensive(t *testing.T) {
+	// A poison defender's return damage destroys the attacker that fought into it.
+	t.Run("return damage from a poison defender kills the attacker", func(t *testing.T) {
+		g := started(t)
+		attacker := g.AddToBattleline(testCreature("attacker", 8), 0)
+		venom := g.AddToBattleline(testCreature("venom", 4, WithKeywords(Poison)), 1)
+		if err := g.Fight(0, attacker, venom); err != nil {
+			t.Fatal(err)
+		}
+		if g.inPlay(attacker) {
+			t.Error("an attacker that fought into poison should be destroyed")
+		}
+		if want := "venom's poison is lethal to attacker"; !hasLogLine(g, want) {
+			t.Errorf("log = %v, want a line %q", g.LogText(), want)
+		}
+	})
+
+	// Armor that soaks the whole hit leaves no landing damage, so poison does not
+	// destroy the creature.
+	t.Run("armor that absorbs the whole hit spares the target", func(t *testing.T) {
+		g := started(t)
+		pois := g.AddToBattleline(testCreature("pois", 1, WithKeywords(Skirmish, Poison)), 0)
+		walled := g.AddToBattleline(testCreature("walled", 5, WithArmor(3)), 1)
+		if err := g.Fight(0, pois, walled); err != nil {
+			t.Fatal(err)
+		}
+		if !g.inPlay(walled) {
+			t.Error("armor soaked the whole hit, so poison should not destroy the creature")
+		}
+	})
+
+	// Splash damage from a poison attacker destroys the neighbors it hits.
+	t.Run("splash damage carries poison to neighbors", func(t *testing.T) {
+		g := started(t)
+		pois := g.AddToBattleline(
+			testCreature("pois", 2, WithKeywords(Skirmish, Poison), WithSplashAttack(1)),
+			0,
+		)
+		target := g.AddToBattleline(testCreature("target", 9), 1)
+		bystander := g.AddToBattleline(testCreature("bystander", 9), 1)
+		if err := g.Fight(0, pois, target); err != nil {
+			t.Fatal(err)
+		}
+		if g.inPlay(bystander) {
+			t.Error("a neighbor a poison creature splashed should be destroyed")
+		}
+	})
 }
 
 func TestFightDamageRedirect(t *testing.T) {

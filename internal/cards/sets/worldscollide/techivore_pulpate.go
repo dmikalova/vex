@@ -1,15 +1,10 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// TechivorePulpate
+// Techivore Pulpate
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Creature
 //	Rarity: Rare
 //	Power:  5
@@ -18,11 +13,14 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	After a player chooses an active house, destroy each artifact of that house.
 var TechivorePulpate = card.New(
 	"Techivore Pulpate",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "341"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Jelly),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.AfterAnyPlayerChoosesHouse,
+		card.Destroy{Target: card.Target.EachArtifact.OfActiveHouse()},
+	),
 )

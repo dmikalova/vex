@@ -151,6 +151,9 @@ type PurgeFromHand struct {
 	Player Player
 	// House restricts the choice to cards of this house; HouseNone allows any card.
 	House House
+	// Mandatory forces the purge when the hand holds a matching card, dropping the
+	// "you may" — an empty hand still purges nothing (Greater Oxtet).
+	Mandatory bool
 }
 
 // validate rejects a PurgeFromHand whose player was left unset.
@@ -177,7 +180,11 @@ func (e PurgeFromHand) Text() string {
 	if e.Player == Opponent {
 		whose = "your opponent's hand"
 	}
-	return "you may purge " + indefinite(e.noun()) + " from " + whose
+	verb := "you may purge "
+	if e.Mandatory {
+		verb = "purge "
+	}
+	return verb + indefinite(e.noun()) + " from " + whose
 }
 
 // Resolve offers the matching cards in the player's hand as a declinable choice,
@@ -193,7 +200,14 @@ func (e PurgeFromHand) resolveGate(ctx *EffectContext) bool {
 	cands := handCardsWhere(ctx, owner, func(id LocalID) bool {
 		return e.House == HouseNone || ctx.Resolver.House(id) == e.House
 	})
-	chosen, ok := ctx.ChooseCardOptional("Choose a card to purge", cands)
+	choose := ctx.ChooseCardOptional
+	if e.Mandatory {
+		if len(cands) == 0 {
+			return false
+		}
+		choose = ctx.ChooseCard
+	}
+	chosen, ok := choose("Choose a card to purge", cands)
 	if !ok {
 		return false
 	}
@@ -201,9 +215,10 @@ func (e PurgeFromHand) resolveGate(ctx *EffectContext) bool {
 	return true
 }
 
-// declinable reports that the purge is a single optional card choice, so a May or
-// gate wrapping it is answered by clicking the card (or passing).
-func (e PurgeFromHand) declinable() bool { return true }
+// declinable reports whether the purge can be passed: a "you may" purge is a
+// single optional card choice answered by clicking the card (or passing); a
+// Mandatory purge cannot be declined.
+func (e PurgeFromHand) declinable() bool { return !e.Mandatory }
 
 // resolveOptional resolves the purge as its own optional choice under a May.
 func (e PurgeFromHand) resolveOptional(ctx *EffectContext) bool { return e.resolveGate(ctx) }

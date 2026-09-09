@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Steal 1 Æmber, or 2 if your opponent stole Æmber from you on their previous turn.
+//	Play: Steal 1 Æmber. If your opponent stole Æmber from you on their previous turn, steal 1 Æmber.
 var InformationExchange = card.New(
 	"Information Exchange",
 	card.House.Logos,
@@ -17,12 +17,12 @@ var InformationExchange = card.New(
 	card.Provenance(card.WC, "136"),
 	card.WithAbility(
 		card.Trigger.Play,
-		card.StealAember{
-			Amount: 1,
-			Or: card.OrAmount{
-				Amount: 2,
-				When:   card.AemberStolenFromYou{},
+		card.Sentences{Effects: []card.Effect{
+			card.StealAember{Amount: 1},
+			card.Conditional{
+				Cond: card.AemberStolenFromYou{},
+				Then: card.StealAember{Amount: 1},
 			},
-		},
+		}},
 	),
 )

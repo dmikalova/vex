@@ -85,6 +85,68 @@ func TestSwapChosen(t *testing.T) {
 	}
 }
 
+// rearrangeChooser scripts the optional first pick from a queue (declining when it
+// runs dry) and the second pick from another queue, falling back to the first
+// candidate and declining an empty pool.
+type rearrangeChooser struct {
+	FirstChooser
+	firsts  []LocalID
+	seconds []LocalID
+}
+
+func (c *rearrangeChooser) ChooseCardOrDecline(_, _ string, _ []LocalID) (LocalID, bool) {
+	if len(c.firsts) == 0 {
+		return 0, false
+	}
+	id := c.firsts[0]
+	c.firsts = c.firsts[1:]
+	return id, true
+}
+
+func (c *rearrangeChooser) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) {
+	if len(c.seconds) > 0 {
+		id := c.seconds[0]
+		c.seconds = c.seconds[1:]
+		return id, true
+	}
+	if len(cands) == 0 {
+		return 0, false
+	}
+	return cands[0], true
+}
+
+func TestRearrangeBattleline(t *testing.T) {
+	if got := (RearrangeBattleline{}).Text(); got != "rearrange the creatures in a player's battleline" {
+		t.Errorf("text = %q", got)
+	}
+
+	// An empty board is a no-op: the loop runs zero times.
+	empty := NewGame("A", "B", 1)
+	(RearrangeBattleline{}).Resolve(&EffectContext{Resolver: empty, Controller: 0})
+
+	// Swap two creatures, then stop.
+	g := NewGame("A", "B", 1)
+	a := g.AddToBattleline(testCreature("a", 2), 0)
+	b := g.AddToBattleline(testCreature("b", 2), 0)
+	c := g.AddToBattleline(testCreature("c", 2), 0)
+	g.SetChooser(0, &rearrangeChooser{firsts: []LocalID{a}, seconds: []LocalID{b}})
+	(RearrangeBattleline{}).Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if got, want := g.Battleline(0), []LocalID{b, a, c}; !slices.Equal(got, want) {
+		t.Fatalf("battleline after one swap = %v, want %v", got, want)
+	}
+
+	// A lone creature in a battleline has no partner to swap with: the second pick
+	// declines and the line is unchanged.
+	g2 := NewGame("A", "B", 1)
+	x := g2.AddToBattleline(testCreature("x", 2), 0)
+	g2.AddToBattleline(testCreature("y", 2), 1)
+	g2.SetChooser(0, &rearrangeChooser{firsts: []LocalID{x}})
+	(RearrangeBattleline{}).Resolve(&EffectContext{Resolver: g2, Controller: 0})
+	if got, want := g2.Battleline(0), []LocalID{x}; !slices.Equal(got, want) {
+		t.Fatalf("lone-creature line changed: %v, want %v", got, want)
+	}
+}
+
 func TestMoveToFlankGameMethod(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	left := g.AddToBattleline(testCreature("left", 2), 0)

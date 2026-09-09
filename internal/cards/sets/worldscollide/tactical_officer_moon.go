@@ -1,29 +1,25 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// TacticalOfficerMoon
+// Tactical Officer Moon
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Creature
 //	Rarity: Uncommon
 //	Power:  4
 //	Traits: Human
 //
-//	Assault 2. (Before this creature attacks, deal 2D to the attacked enemy.)
+//	Assault 2.
 //	Play: You may rearrange the creatures in a player's battleline.
 var TacticalOfficerMoon = card.New(
 	"Tactical Officer Moon",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "320"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Human),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAssault(2),
+	card.WithAbility(card.Trigger.Play, card.May{Do: card.RearrangeBattleline{}}),
 )

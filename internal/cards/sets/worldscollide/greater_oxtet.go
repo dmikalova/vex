@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon
 //
 //	Taunt.
-//	At the end of your "ready cards" step, you may purge a card from your hand -> give Greater Oxtet two +1 power counters.
+//	At the end of your "ready cards" step, purge a card from your hand -> give Greater Oxtet two +1 power counters.
 var GreaterOxtet = card.New(
 	"Greater Oxtet",
 	card.House.Dis,
@@ -23,7 +23,7 @@ var GreaterOxtet = card.New(
 	card.WithKeywords(card.Keyword.Taunt),
 	card.WithAbility(
 		card.Trigger.EndOfReadyStep, card.Then{
-			First:  card.PurgeFromHand{Player: card.Controller},
+			First:  card.PurgeFromHand{Player: card.Controller, Mandatory: true},
 			Result: card.AddPowerCounter{Target: card.Target.This, Amount: 2},
 		}),
 )

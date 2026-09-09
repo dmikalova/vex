@@ -305,6 +305,9 @@ body {
   .control-dock--floating .house-pick > .house-btn {
     flex: 1;
     width: auto;
+    /* the buttons share the dock width three-up here, so trim the side padding
+       to leave room for the longest house name ("Star Alliance") on one line. */
+    padding-inline: 0.375rem;
   }
   /* the other custom prompts (forge a key, an option list, a fight-target
      cancel) spend width instead of height the same way: their choices sit
@@ -1040,6 +1043,9 @@ body {
   text-align: center;
   font-size: var(--ctl-font);
   font-weight: 500;
+  /* a control label is one short verb or a house name, so it stays on one line
+     rather than wrapping "Star Alliance" onto a second row in a narrow button. */
+  white-space: nowrap;
   cursor: pointer;
 }
 .btn-primary,
@@ -3135,18 +3141,6 @@ button:disabled {
   width: 0.9rem;
   height: 0.9rem;
   margin-right: 0.05rem;
-}
-/* several action triggers (Play/Fight/Reap) sharing one effect, joined by "/" */
-.card-glyph-trigger-group {
-  display: inline-flex;
-  align-items: center;
-}
-.card-glyph-trigger-sep {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--nm-fg);
-  opacity: 0.55;
-  padding: 0 0.02rem;
 }
 /* the colon that closes a trigger glyph, as the printed card prints "Play:" */
 .card-glyph-trigger-colon {

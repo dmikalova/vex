@@ -315,6 +315,49 @@ func (e ReorderTop) Resolve(ctx *EffectContext) {
 	ctx.Resolver.SetDeckTop(ctx.Controller, order)
 }
 
+// LookAtTopSort looks at the top three cards of the controller's deck and sorts
+// them into three piles — one archived, one put into hand, and the last discarded
+// (Philophosaurus). The controller chooses which card fills each pile in that
+// order. With fewer than three cards it sorts as many as remain and stops when the
+// deck runs out; an empty deck does nothing.
+type LookAtTopSort struct{}
+
+// Text renders the effect.
+func (LookAtTopSort) Text() string {
+	return "look at the top 3 cards of your deck, archive 1, put 1 into your hand, and discard 1"
+}
+
+// Resolve has the controller choose one of the looked-at cards to archive and one
+// to put into their hand, discarding whatever is left.
+func (LookAtTopSort) Resolve(ctx *EffectContext) {
+	deck := ctx.Resolver.Deck(ctx.Controller)
+	if len(deck) == 0 {
+		return
+	}
+	remaining := append([]LocalID(nil), deck[:min(3, len(deck))]...)
+	steps := []struct {
+		prompt string
+		move   func(LocalID)
+	}{
+		{"Choose a card to archive", ctx.Resolver.ArchiveFromDeck},
+		{"Choose a card to put into your hand", ctx.Resolver.MoveFromDeckToHand},
+	}
+	for _, s := range steps {
+		if len(remaining) == 0 {
+			return
+		}
+		id, ok := ctx.ChooseCard(s.prompt, remaining)
+		if !ok {
+			return
+		}
+		s.move(id)
+		remaining = withoutID(remaining, id)
+	}
+	for _, id := range remaining {
+		ctx.Resolver.MoveFromDeckToDiscard(id)
+	}
+}
+
 // CancelFight makes the fight in progress not occur — a "Before Fight" effect
 // (Evasion Sigil, gated on the discarded card's house). The attacker was still used
 // to fight, so it stays exhausted; combat reads the cancellation and skips Assault,

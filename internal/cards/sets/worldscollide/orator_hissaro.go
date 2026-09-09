@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Dinosaur • Politician
 //
 //	Deploy.
-//	Play: Ready each neighboring creature. Exalt each neighboring creature. For the remainder of the turn, each neighboring creature belongs to house Saurian.
+//	Play: Ready each neighboring creature, exalt each neighboring creature, and for the remainder of the turn, each neighboring creature belongs to house Saurian.
 var OratorHissaro = card.New(
 	"Orator Hissaro",
 	card.House.Saurian,
@@ -22,7 +22,7 @@ var OratorHissaro = card.New(
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Politician),
 	card.WithKeywords(card.Keyword.Deploy),
 	card.WithAbility(
-		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.Ready{Target: card.Target.EachCreature.Neighboring()},
 			card.Exalt{
 				Target: card.Target.EachCreature.Neighboring(),

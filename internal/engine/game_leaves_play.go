@@ -137,6 +137,21 @@ func (g *Game) discardUpgrades(id LocalID) {
 	}
 }
 
+// returnUpgradesToHand detaches each upgrade attached to a host still in play and
+// puts it into its owner's hand instead of the discard pile — Transporter Platform
+// returns a creature and its upgrades together. Call it before the host leaves
+// play, so its upgrades are already gone when the host's own move would shed them.
+func (g *Game) returnUpgradesToHand(host LocalID) {
+	for _, up := range g.upgradesOf(host) {
+		g.detachUpgrade(up)
+		g.releaseControlHeldBy(up)
+		g.resetCore(up)
+		o := g.owner(up)
+		g.State.Hand[o].add(up)
+		g.record(CardReturnedToHand{Card: up, Owner: o})
+	}
+}
+
 // discardUnder moves the cards placed under a host to their owners' discard
 // piles when the host leaves play — generalizing Graft's own rule (if the card
 // onto which it is grafted leaves play, the grafted card is placed in its

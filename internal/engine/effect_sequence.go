@@ -41,13 +41,28 @@ func (e Sequence) Text() string {
 }
 
 // joinSequenceParts joins a Sequence's rendered children into one compound
-// instruction: "a, and b, and c". A card whose rules are separate statements
-// wants Sentences instead, which punctuates each child rather than conjoining.
+// instruction: "a", "a, and b", "a, b, and c" — a serial (Oxford) comma once
+// there are three or more, never the run-on "a, and b, and c". A card whose rules
+// are separate statements wants Sentences instead, which punctuates each child
+// rather than conjoining.
 func joinSequenceParts(parts []string) string {
-	if len(parts) == 0 {
+	return serialJoin(parts, ", and ")
+}
+
+// serialJoin renders parts as an English list. One item stands alone; two are
+// joined by two (", and " for independent clauses, " and " for a folded run of
+// verbs or targets); three or more take a serial (Oxford) comma, "a, b, and c".
+func serialJoin(parts []string, two string) string {
+	switch len(parts) {
+	case 0:
 		return ""
+	case 1:
+		return parts[0]
+	case 2:
+		return parts[0] + two + parts[1]
+	default:
+		return strings.Join(parts[:len(parts)-1], ", ") + ", and " + parts[len(parts)-1]
 	}
-	return strings.Join(parts, ", and ")
 }
 
 // foldCombinable folds the run of combinables starting at i into one phrase and
@@ -68,7 +83,7 @@ func foldCombinable(effects []Effect, i int, c combinable) (string, int) {
 			}
 			verbs = append(verbs, n.verb())
 		}
-		return strings.Join(verbs, " and ") + " " + target, i
+		return serialJoin(verbs, " and ") + " " + target, i
 	case ok && next.verb() == verb:
 		targets := []string{target}
 		i++
@@ -79,7 +94,7 @@ func foldCombinable(effects []Effect, i int, c combinable) (string, int) {
 			}
 			targets = append(targets, n.targetText())
 		}
-		return verb + " " + strings.Join(targets, " and "), i
+		return verb + " " + serialJoin(targets, " and "), i
 	default:
 		return verb + " " + target, i + 1
 	}

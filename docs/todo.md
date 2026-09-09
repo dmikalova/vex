@@ -35,23 +35,19 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - instead of having to manually bump the state version would it be possible to hash changes to how the state is written so it automatically bumps on such changes, but also not on irrelevant changes? re event sourcing. If the hash was based on the action signature rather than overall engine you could check when loading the event sourcing if any of the used actions changed
 - Maverick houses
 - Move the prompt generation and options into engine rather than web (eg when playing an upgrade, am prompted to "Choose a creature to attach Stunner onto")
+- mage tool to view connected cards and amounts etc
+- capture and bonus aember are both in the creature status area
 
 ## Things that can be done now
 
 - ? bdq (see screenshot) is doing the action bar with title cards thing
 - ? they're everywhere sequence
-- auteresolve button
-- gigantic, tide
-- have to double click to activate preview from logs
-- facedown cards should be facedown for both players - its just that the controller can hover over to peek at the card - its important to be able to visually distinguish what is a facedown or faceup card
-- test to make sure there are no unused assets
+- gigantic, tide, mimic gel
 - Instead of "OnIt" should we use "OnTarget"
 - Anomaly provenance
-- For house select on mobile, star alliance goes onto 2 lines instead of squeezing onto the house select button. In general the text for buttons should squeeze onto one line. Similarly, why does the title for Yshi shrink by a standard amount rather than just shrink to the right amount? Are we still doing predetermined shrink amounts for cards? Is it not possible to have the text dynamically shrink to the right amount? Can you explain to me what's going on and why this can't work smoothly?
 - creeping oblivion prompt
-- Igon the green can just play terrible - also connected 1 to 1
 - OneCopyPerDeck should be ordered higher up, check the rest of the ordering eg constant should be above play, then reap, then fight
-- festering touch
+- Philophosaurus implementation
 
 ## UI finesse
 

@@ -166,6 +166,37 @@ func TestPurgeFromHand(t *testing.T) {
 	if got := g4.Purge(1); len(got) != 1 || got[0] != card4 {
 		t.Errorf("May purge = %v, want [card4]", got)
 	}
+
+	// Mandatory: no "you may", cannot be declined, and forces the purge when a
+	// card is in hand; an empty hand still purges nothing (Greater Oxtet).
+	if got := (PurgeFromHand{Player: Controller, Mandatory: true}).Text(); got != "purge a card from your hand" {
+		t.Errorf("mandatory text = %q", got)
+	}
+	if (PurgeFromHand{Player: Controller, Mandatory: true}).declinable() {
+		t.Error("a mandatory purge should not be declinable")
+	}
+	g5 := NewGame("A", "B", 1)
+	forced := g5.Register(NewCard("fodder", Shadows, Creature, Common, WithPower(3)), 0)
+	g5.State.Hand[0].add(forced)
+	PurgeFromHand{
+		Player:    Controller,
+		Mandatory: true,
+	}.Resolve(
+		&EffectContext{Resolver: g5, Controller: 0},
+	)
+	if got := g5.Purge(0); len(got) != 1 || got[0] != forced {
+		t.Errorf("mandatory purge = %v, want [forced]", got)
+	}
+	g6 := NewGame("A", "B", 1)
+	PurgeFromHand{
+		Player:    Controller,
+		Mandatory: true,
+	}.Resolve(
+		&EffectContext{Resolver: g6, Controller: 0},
+	)
+	if len(g6.Purge(0)) != 0 {
+		t.Error("mandatory purge with empty hand should purge nothing")
+	}
 }
 
 func TestPurgeRandomFromHand(t *testing.T) {

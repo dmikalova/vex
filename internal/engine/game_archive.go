@@ -45,6 +45,15 @@ func (g *Game) archiveFromDiscard(player int, id LocalID) {
 	}
 }
 
+// archiveFromDeck moves a specific card the controller looked at — one of the top
+// few, not blindly the top one — from a player's deck to their archives.
+func (g *Game) archiveFromDeck(player int, id LocalID) {
+	if g.State.Deck[player].remove(id) {
+		g.State.Archives[player].add(id)
+		g.record(TopOfDeckArchived{Player: player, Card: id})
+	}
+}
+
 // archiveTopOfDeck moves the top card of a player's deck to their archives,
 // reporting whether a card was available to archive.
 func (g *Game) archiveTopOfDeck(player int) bool {

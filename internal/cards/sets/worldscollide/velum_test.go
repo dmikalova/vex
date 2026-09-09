@@ -11,11 +11,11 @@ import (
 //
 //	House:  Logos
 //	Type:   Creature
-//	Rarity: Special
+//	Rarity: Connected
 //	Power:  2
 //	Traits: Human • Scientist
 //
-//	Reap: Archive a card from your hand, or 2 cards if you control Hyde.
+//	Reap: Archive a card from your hand. If you control Hyde, archive a card from your hand.
 //	Destroyed: Archive Hyde from your discard pile -> archive Velum from play.
 func TestVelum(t *testing.T) {
 	t.Run("reaps to archive 1 without Hyde", func(t *testing.T) {

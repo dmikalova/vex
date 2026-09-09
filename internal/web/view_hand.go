@@ -18,9 +18,8 @@ func (g *game) renderHand() app.UI {
 	return app.Div().Class("board-row").Body(
 		app.Div().Class("row-label").Body(
 			app.Span().Class("row-label-zone").Text("Hand "),
-			app.Text(fmt.Sprintf("(%d", len(ids))),
+			app.Text(fmt.Sprintf("%d", len(ids))),
 			icon("zone-hand", "row-label-icon"),
-			app.Text(")"),
 		),
 		app.Div().Class("card-strip").Body(
 			app.Range(ids).Slice(func(i int) app.UI { return g.renderHandCard(ids[i]) }),

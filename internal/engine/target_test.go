@@ -475,6 +475,25 @@ func TestTargetOfHouse(t *testing.T) {
 	}
 }
 
+// TestTargetOfActiveHouse covers Techivore Pulpate's target: only artifacts of
+// the player's active house are selected, and the phrase reads "of that house".
+func TestTargetOfActiveHouse(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.State.ActiveHouse = Mars
+	mars := g.AddArtifact(NewCard("m", Mars, Artifact, Common), 0)
+	g.AddArtifact(NewCard("s", Sanctum, Artifact, Common), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	ids := (Target{Kind: TargetEachArtifact}).OfActiveHouse().Select(ctx)
+	if len(ids) != 1 || ids[0] != mars {
+		t.Errorf("OfActiveHouse = %v, want [%d] (Sanctum artifact filtered out)", ids, mars)
+	}
+	if got := (Target{Kind: TargetEachArtifact}).OfActiveHouse().
+		Text(); got != "each artifact of that house" {
+		t.Errorf("OfActiveHouse text = %q", got)
+	}
+}
+
 func TestTargetExceptTrait(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	agent := g.AddToBattleline(

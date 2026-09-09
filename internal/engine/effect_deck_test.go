@@ -631,6 +631,74 @@ func TestLookAtTop(t *testing.T) {
 	})
 }
 
+// TestLookAtTopSort covers "look at the top 3, archive 1, put 1 into your hand,
+// and discard 1": the controller sorts the looked-at cards into three piles, a
+// short deck sorts as many as remain, and an empty deck or a declined choice does
+// nothing.
+func TestLookAtTopSort(t *testing.T) {
+	if got := (LookAtTopSort{}).Text(); got !=
+		"look at the top 3 cards of your deck, archive 1, put 1 into your hand, and discard 1" {
+		t.Errorf("Text() = %q", got)
+	}
+
+	t.Run("sorts the top three into three piles", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		a := g.AddToDeck(NewCard("A Card", Logos, Creature, Common, WithPower(2)), 0)
+		b := g.AddToDeck(NewCard("B Card", Logos, Tactic, Common), 0)
+		c := g.AddToDeck(NewCard("C Card", Logos, Artifact, Common), 0)
+		bottom := g.AddToDeck(NewCard("Bottom", Logos, Creature, Common, WithPower(1)), 0)
+		g.SetChooser(0, &idQueueChooser{ids: []LocalID{a, b}})
+		LookAtTopSort{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if got := g.Archives(0); len(got) != 1 || got[0] != a {
+			t.Errorf("archives = %v, want [%d]", got, a)
+		}
+		if got := g.Hand(0); len(got) != 1 || got[0] != b {
+			t.Errorf("hand = %v, want [%d]", got, b)
+		}
+		if got := g.Discard(0); len(got) != 1 || got[0] != c {
+			t.Errorf("discard = %v, want [%d]", got, c)
+		}
+		if got := g.Deck(0); len(got) != 1 || got[0] != bottom {
+			t.Errorf("deck = %v, want [%d]", got, bottom)
+		}
+	})
+
+	t.Run("sorts as many as remain", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		a := g.AddToDeck(NewCard("A Card", Logos, Creature, Common, WithPower(2)), 0)
+		g.SetChooser(0, &idQueueChooser{ids: []LocalID{a}})
+		LookAtTopSort{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if got := g.Archives(0); len(got) != 1 || got[0] != a {
+			t.Errorf("archives = %v, want [%d]", got, a)
+		}
+		if got := g.Hand(0); len(got) != 0 {
+			t.Errorf("hand = %v, want empty", got)
+		}
+	})
+
+	t.Run("an empty deck does nothing", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		LookAtTopSort{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if got := g.Archives(0); len(got) != 0 {
+			t.Errorf("archives = %v, want empty", got)
+		}
+	})
+
+	t.Run("a declined choice leaves the deck untouched", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.AddToDeck(NewCard("A Card", Logos, Creature, Common, WithPower(2)), 0)
+		g.AddToDeck(NewCard("B Card", Logos, Tactic, Common), 0)
+		g.SetChooser(0, orderRejectChooser{})
+		LookAtTopSort{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if got := g.Deck(0); len(got) != 2 {
+			t.Errorf("deck = %v, want 2 cards", got)
+		}
+		if got := g.Archives(0); len(got) != 0 {
+			t.Errorf("archives = %v, want empty", got)
+		}
+	})
+}
+
 // TestReorderTop covers "look at the top N and put them back in any order": the
 // controller's chosen order becomes the new top, short decks are left alone, and a
 // declined choice leaves the order untouched.

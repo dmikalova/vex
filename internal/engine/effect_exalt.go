@@ -32,11 +32,18 @@ func (e Exalt) Text() string {
 }
 
 // Resolve chooses a creature (through the Target) and places Amount Æmber on it.
-func (e Exalt) Resolve(ctx *EffectContext) {
-	for _, id := range e.Target.Select(ctx) {
+func (e Exalt) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
+
+// resolveGate exalts each selected creature and reports whether any was exalted,
+// so an exalt can be the first half of a Then — Saurus Rex only searches its deck
+// when the optional exalt happens.
+func (e Exalt) resolveGate(ctx *EffectContext) bool {
+	ids := e.Target.Select(ctx)
+	for _, id := range ids {
 		ctx.Resolver.AddAmberOn(id, e.Amount)
 		ctx.Resolver.Record(AemberExalted{Creature: id, Amount: e.Amount})
 	}
+	return len(ids) > 0
 }
 
 // declinable reports that a self-exalt is one clickable card — the source — so

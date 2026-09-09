@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Destroy an artifact and a creature and an upgrade.
+//	Play: Destroy an artifact, a creature, and an upgrade.
 func TestDestroyThemAll(t *testing.T) {
 	var relic, victim, host, boon ct.Card
 	h := ct.Play(t, ct.Setup{

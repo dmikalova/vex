@@ -6,7 +6,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Brobnar
 //	Type:   Creature
-//	Rarity: Special
+//	Rarity: Connected
 //	Power:  8
 //	Traits: Giant
 //
@@ -16,7 +16,7 @@ var IgonTheTerrible = card.New(
 	"Igon the Terrible",
 	card.House.Brobnar,
 	card.Type.Creature,
-	card.Rarity.Special,
+	card.Rarity.Connected,
 	card.Provenance(card.WC, "53"),
 	card.WithPower(8),
 	card.WithTraits(card.Traits.Giant),

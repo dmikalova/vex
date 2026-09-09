@@ -322,8 +322,10 @@ const (
 	// A creature with Skirmish takes no damage when it is used to fight: it deals
 	// its power to the enemy creature but takes none back.
 	Skirmish
-	// Any amount of damage dealt to a creature with Poison destroys it, however
-	// much power it has left.
+	// A creature with Poison destroys any creature it deals fight damage to — from
+	// its power or its splash — once that damage lands past armor and immunity,
+	// however much power that creature had left. A poison creature is not destroyed
+	// by taking damage; only damage that reaches its power destroys it.
 	Poison
 	// Elusive: the first time this creature is chosen to be fought each turn, no
 	// pending fight damage is dealt by or to it. Later fights that same turn deal

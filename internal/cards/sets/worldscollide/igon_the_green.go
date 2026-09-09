@@ -19,7 +19,7 @@ var IgonTheGreen = card.New(
 	card.Provenance(card.WC, "39"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Giant),
-	card.Connects(card.Pull(IgonTheTerrible, 1)),
+	card.Connects(card.PullExact(IgonTheTerrible, 1)),
 	card.WithAbility(
 		card.Trigger.Destroyed, card.Sequence{Effects: []card.Effect{
 			card.PurgeCreature{Target: card.Target.This},

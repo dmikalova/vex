@@ -20,9 +20,9 @@ var HorsemanOfPestilence = card.New(
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Horseman, card.Traits.Spirit),
 	card.Connects(
-		card.Pull(HorsemanOfDeath, 1),
-		card.Pull(HorsemanOfFamine, 1),
-		card.Pull(HorsemanOfWar, 1),
+		card.PullExact(HorsemanOfDeath, 1),
+		card.PullExact(HorsemanOfFamine, 1),
+		card.PullExact(HorsemanOfWar, 1),
 	),
 	card.WithPlayFightReap(card.DealDamage{
 		Amount: 1,

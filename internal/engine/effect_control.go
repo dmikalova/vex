@@ -24,6 +24,9 @@ type TakeControl struct {
 	// taking it (Spangler Box).
 	Duration   Duration
 	ToOpponent bool
+	// AndExhaust exhausts the seized creature as part of the same effect, rendering
+	// "... and exhaust it" (Lord Invidius).
+	AndExhaust bool
 }
 
 // validate requires one of the supported durations.
@@ -47,10 +50,14 @@ func (e TakeControl) Text() string {
 	if e.ToOpponent {
 		return "your opponent gains control of " + e.Target.Text()
 	}
-	if e.Duration == Forever {
-		return "take control of " + e.Target.Text()
+	text := "take control of " + e.Target.Text()
+	if e.Duration != Forever {
+		text += " until " + SelfName + " leaves play"
 	}
-	return "take control of " + e.Target.Text() + " until " + SelfName + " leaves play"
+	if e.AndExhaust {
+		text += " and exhaust it"
+	}
+	return text
 }
 
 // Resolve changes control to the player resolving the ability, or to their
@@ -98,6 +105,9 @@ func (e TakeControl) resolveGate(ctx *EffectContext) bool {
 					"Choose a flank", []string{"left flank", "right flank"}) == 1
 				ctx.Resolver.MoveToFlank(id, right)
 			}
+		}
+		if e.AndExhaust {
+			ctx.Resolver.SetExhausted(id, true)
 		}
 		ctx.It, ctx.HasIt = id, true
 		moved = true

@@ -105,6 +105,16 @@ func (b bridgeChooser) ChooseOption(source, prompt string, options []string) int
 	if prompt == engine.KeyColorPrompt {
 		return 0
 	}
+	// A creature played or put into play onto a non-empty battleline is prompted
+	// for its flank. That placement is incidental to most card tests, so the harness
+	// answers it automatically with the right flank — the historical default — and
+	// never interrupts a test. The prompt prefix distinguishes this placement choice
+	// from the move-a-creature-to-a-flank effects that share the flank option labels
+	// but that a test does script. A test that cares about placement drives the
+	// engine through the flank at the board level instead.
+	if strings.HasPrefix(prompt, engine.FlankPromptPrefix) {
+		return 1
+	}
 	reply := make(chan int)
 	b.h.prompt <- promptReq{
 		player:   b.player,

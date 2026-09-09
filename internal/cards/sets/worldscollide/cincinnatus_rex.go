@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// CincinnatusRex
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Cincinnatus Rex
 //
 //	House:  Saurian
 //	Type:   Creature
@@ -16,8 +11,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  4
 //	Traits: Dinosaur • Soldier
 //
-//	If there are no enemy creatures, destroy Cincinnatus Rex.
-//	Fight: You may exalt Cincinnatus Rex. If you do, ready each other friendly card.
+//	If there are no enemy creatures in play, destroy Cincinnatus Rex.
+//	Fight: You may exalt Cincinnatus Rex. Ready each other friendly card.
 var CincinnatusRex = card.New(
 	"Cincinnatus Rex",
 	card.House.Saurian,
@@ -27,5 +22,17 @@ var CincinnatusRex = card.New(
 	card.WithPower(6),
 	card.WithArmor(4),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Soldier),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithDestroyedWhen(card.InPlay{
+		Player: card.Opponent,
+		Type:   card.Type.Creature,
+		None:   true,
+	}),
+	card.WithAbility(
+		card.Trigger.Fight, card.May{Do: card.Sentences{Effects: []card.Effect{
+			card.Exalt{
+				Target: card.Target.This,
+				Amount: 1,
+			},
+			card.Ready{Target: card.Target.EachFriendlyCardInPlay.Other()},
+		}}}),
 )

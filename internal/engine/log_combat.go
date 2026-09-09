@@ -36,6 +36,27 @@ func (e ElusiveAvoidedFight) Text(n Namer) string {
 	return fmt.Sprintf("%s is elusive — no fight damage is dealt", n.Name(e.Defender))
 }
 
+// SkirmishAvoidedReturn narrates skirmish sparing an attacker the return damage a
+// fight would otherwise deal it.
+type SkirmishAvoidedReturn struct{ Attacker LocalID }
+
+// Text renders skirmish sparing an attacker its return damage.
+func (e SkirmishAvoidedReturn) Text(n Namer) string {
+	return fmt.Sprintf("%s is skirmish — it takes no damage in return", n.Name(e.Attacker))
+}
+
+// PoisonKills narrates a poison creature's fight damage proving lethal: the
+// creature it damaged is destroyed, however much power it had left.
+type PoisonKills struct {
+	Source LocalID
+	Victim LocalID
+}
+
+// Text renders poison destroying a creature the poison combatant damaged.
+func (e PoisonKills) Text(n Namer) string {
+	return fmt.Sprintf("%s's poison is lethal to %s", n.Name(e.Source), n.Name(e.Victim))
+}
+
 // DamageRefused narrates damage that a creature could not be dealt at all.
 type DamageRefused struct{ Creature LocalID }
 

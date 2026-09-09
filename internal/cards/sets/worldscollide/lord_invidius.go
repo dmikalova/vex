@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon • Leader
 //
 //	Elusive.
-//	While Lord Invidius is in the center of your battleline, it gains, "Reap: Take control of an enemy flank creature until this creature leaves play. Exhaust it. It belongs to house Dis until it leaves play."
+//	While Lord Invidius is in the center of your battleline, it gains, "Reap: Take control of an enemy flank creature and exhaust it. It belongs to house Dis until it leaves play."
 var LordInvidius = card.New(
 	"Lord Invidius",
 	card.House.Dis,
@@ -28,10 +28,10 @@ var LordInvidius = card.New(
 			Trigger: card.Trigger.Reap,
 			Effect: card.Sentences{Effects: []card.Effect{
 				card.TakeControl{
-					Target:   card.Target.EnemyCreature.OnFlank(),
-					Duration: card.Duration.UntilThisLeavesPlay,
+					Target:     card.Target.EnemyCreature.OnFlank(),
+					Duration:   card.Duration.Forever,
+					AndExhaust: true,
 				},
-				card.Exhaust{Target: card.Target.Triggering},
 				card.BelongToHouse{
 					Target:   card.Target.Triggering,
 					House:    card.House.Self,

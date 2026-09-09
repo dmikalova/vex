@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Human • Scientist
 //
-//	Reap: Draw a card, or 2 cards if you control Velum.
+//	Reap: Draw a card. If you control Velum, draw a card.
 //	Destroyed: Archive Velum from your discard pile -> archive Hyde from play.
 var Hyde = card.New(
 	"Hyde",
@@ -20,14 +20,14 @@ var Hyde = card.New(
 	card.Provenance(card.WC, "167"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
-	card.Connects(card.Pull(Velum, 1)),
-	card.WithAbility(card.Trigger.Reap, card.Draw{
-		Amount: 1,
-		Or: card.OrAmount{
-			Amount: 2,
-			When:   card.ControlsNamed{Name: "Velum"},
+	card.Connects(card.PullExact(Velum, 1)),
+	card.WithAbility(card.Trigger.Reap, card.Sentences{Effects: []card.Effect{
+		card.Draw{Amount: 1},
+		card.Conditional{
+			Cond: card.ControlsNamed{Name: "Velum"},
+			Then: card.Draw{Amount: 1},
 		},
-	}),
+	}}),
 	card.WithAbility(card.Trigger.Destroyed, card.Then{
 		First:  card.ArchiveFromDiscard{Name: "Velum"},
 		Result: card.ArchiveFromPlay{Target: card.Target.This},

@@ -111,11 +111,13 @@ func (g *Game) fight(attacker, defender LocalID) {
 			if redirect != 0 {
 				dmgTarget = redirect
 			}
-			before := g.State.Cards[dmgTarget].Damage
 			targets := []DamageTarget{{ID: dmgTarget, Amount: g.fightDamage(attacker, defender)}}
-			if !g.hasKeyword(attacker, Skirmish) &&
+			skirmish := g.hasKeyword(attacker, Skirmish)
+			if !skirmish &&
 				!g.cat.def(defender).DealsNoDamageWhenAttacked {
 				targets = append(targets, DamageTarget{ID: attacker, Amount: dp})
+			} else if skirmish && dp > 0 {
+				g.record(SkirmishAvoidedReturn{Attacker: attacker})
 			}
 			// Splash-attack deals its damage to each neighbor of the creature the
 			// attacker fights, at the same time as fight damage.
@@ -124,14 +126,14 @@ func (g *Game) fight(attacker, defender LocalID) {
 					targets = append(targets, DamageTarget{ID: n, Amount: s})
 				}
 			}
-			g.dealDamage(g.controller(attacker), targets...)
-			// An attacker that gains poison for this fight destroys the creature it
-			// dealt fight damage to, if that creature took any damage and survived.
-			if g.attackGrantsPoison(attacker, defender) &&
-				g.inPlay(dmgTarget) &&
-				g.State.Cards[dmgTarget].Damage > before {
-				g.destroyEach(g.controller(attacker), []LocalID{dmgTarget})
+			// Snapshot each target's damage so poison can tell which creatures the
+			// fight's damage actually landed on, once armor and immunity had their say.
+			before := make([]int16, len(targets))
+			for i, t := range targets {
+				before[i] = g.State.Cards[t.ID].Damage
 			}
+			g.dealDamage(g.controller(attacker), targets...)
+			g.applyFightPoison(attacker, defender, dmgTarget, targets, before)
 
 		}
 	}
@@ -229,6 +231,44 @@ func (g *Game) attackGrantsPoison(attacker, defender LocalID) bool {
 		}
 	}
 	return false
+}
+
+// applyFightPoison destroys each creature a poison combatant dealt landing damage
+// to in the fight just resolved. Poison is offensive: the attacker poisons the
+// defender it fought — from its base Poison keyword, or one it gains for the fight
+// (Spyyyder) — and any creature its splash hit, while a poison defender poisons the
+// attacker with its return damage. A creature that merely has poison is not
+// destroyed by taking damage; only damage above its power destroys it. A target is
+// poisoned only when the fight's damage actually landed on it (its total rose above
+// the snapshot), so armor or immunity that soaked the whole hit spares it.
+func (g *Game) applyFightPoison(
+	attacker, defender, dmgTarget LocalID, targets []DamageTarget, before []int16,
+) {
+	attackerPoison := g.hasKeyword(attacker, Poison)
+	grantsPoison := g.attackGrantsPoison(attacker, defender)
+	defenderPoison := g.hasKeyword(defender, Poison)
+	var poisoned []LocalID
+	for i, t := range targets {
+		if !g.inPlay(t.ID) || g.State.Cards[t.ID].Damage <= before[i] {
+			continue
+		}
+		var source LocalID
+		switch t.ID {
+		case attacker:
+			if !defenderPoison {
+				continue
+			}
+			source = defender
+		default: // a creature the attacker dealt fight or splash damage to
+			if !attackerPoison && (t.ID != dmgTarget || !grantsPoison) {
+				continue
+			}
+			source = attacker
+		}
+		g.record(PoisonKills{Source: source, Victim: t.ID})
+		poisoned = append(poisoned, t.ID)
+	}
+	g.destroyEach(g.controller(attacker), poisoned)
 }
 
 func (g *Game) protectedByTaunt(attacker, target LocalID) bool {
@@ -493,9 +533,10 @@ func (g *Game) damageRedirect(id LocalID) LocalID {
 }
 
 // shouldDestroy reports whether a creature is currently in a destroyable state:
-// its damage meets or exceeds its power, its power is zero or less, it has
-// Poison and any damage on it, or its own text names a board state that destroys
-// it (Tireless Crocag while the opponent has no creatures).
+// its damage meets or exceeds its power, its power is zero or less, or its own
+// text names a board state that destroys it (Tireless Crocag while the opponent
+// has no creatures). Poison does not make a creature destroyable — it destroys
+// the creatures a poison creature damages in a fight, resolved in applyFightPoison.
 func (g *Game) shouldDestroy(id LocalID) bool {
 	def := g.cat.def(id)
 	if def.Type != Creature || !g.inPlay(id) {
@@ -508,8 +549,6 @@ func (g *Game) shouldDestroy(id LocalID) bool {
 		}
 	}
 	core := &g.State.Cards[id]
-	poisoned := g.hasKeyword(id, Poison) && core.Damage > 0
 	return int(core.Damage) >= g.Power(id) ||
-		g.Power(id) <= 0 ||
-		poisoned
+		g.Power(id) <= 0
 }

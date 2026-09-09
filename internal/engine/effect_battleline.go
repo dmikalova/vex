@@ -71,6 +71,49 @@ func (SwapChosen) Resolve(ctx *EffectContext) {
 	ctx.Resolver.SwapBattlelinePositions(first, second)
 }
 
+// RearrangeBattleline lets the controller reorder one player's battleline by
+// swapping pairs of creatures — Tactical Officer Moon. Each pass picks a creature
+// and another in the same battleline and trades their positions; the controller
+// keeps going until they stop, so doing nothing at all is allowed. Only positions
+// move; no card state travels. The number of passes is bounded by the total
+// creatures in play, enough to reach any arrangement and to keep the loop finite.
+type RearrangeBattleline struct{}
+
+// Text renders the effect.
+func (RearrangeBattleline) Text() string {
+	return "rearrange the creatures in a player's battleline"
+}
+
+// Resolve repeatedly swaps a chosen pair of creatures in one battleline until the
+// controller declines the next pair.
+func (RearrangeBattleline) Resolve(ctx *EffectContext) {
+	both := append(
+		append([]LocalID(nil), ctx.Resolver.Battleline(ctx.Controller)...),
+		ctx.Resolver.Battleline(ctx.Opponent())...,
+	)
+	for range len(both) {
+		all := append(
+			append([]LocalID(nil), ctx.Resolver.Battleline(ctx.Controller)...),
+			ctx.Resolver.Battleline(ctx.Opponent())...,
+		)
+		first, ok := ctx.ChooseCardOptional("Choose a creature to swap, or stop rearranging", all)
+		if !ok {
+			return
+		}
+		var others []LocalID
+		for _, id := range ctx.Resolver.Battleline(ctx.Resolver.Controller(first)) {
+			if id != first {
+				others = append(others, id)
+			}
+		}
+		second, ok := ctx.ChooseCreature("Choose the creature to swap it with", others)
+		if !ok {
+			return
+		}
+		ctx.Resolver.SwapBattlelinePositions(first, second)
+	}
+}
+
 // MoveToFlank moves the creature its Target selects to either flank of that
 // creature's controller's battleline, the controller of the effect choosing
 // which flank. Only the battleline slot moves; no card state travels. A Target

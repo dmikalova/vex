@@ -334,18 +334,37 @@ func RenderUpgradeOnCreature(def *CardDefinition) string {
 // hosted drops the "this creature" framing for a face already showing the host.
 func upgradeGrantLines(def *CardDefinition, hosted bool) []string {
 	var lines []string
-	if h := def.Static.HouseOverride; h != HouseNone {
-		lines = append(lines,
-			"If you control this creature, it belongs to house "+h.String()+
-				". (Instead of its original house.)")
+	if s := houseOverrideLine(def); s != "" {
+		lines = append(lines, s)
 	}
 	lines = append(lines, upgradeStaticLines(def, hosted)...)
 	if def.Static.ProtectsFromNonFlank {
 		lines = append(lines,
 			"Creatures not on a flank cannot fight this creature.")
 	}
-	lines = append(lines, grantedText(def.Static, hosted)...)
+	// A house-override line already folds in the granted abilities.
+	if def.Static.HouseOverride == HouseNone {
+		lines = append(lines, grantedText(def.Static, hosted)...)
+	}
 	return lines
+}
+
+// houseOverrideLine renders an Upgrade's house-override clause, folding in the
+// abilities the Upgrade grants so they read as one sentence, or "" when the
+// Upgrade overrides no house — `This creature belongs to Logos and this creature
+// gains "Reap: Draw a card."` (Academy Training). Because it carries the grants,
+// callers must not also print them through grantedText.
+func houseOverrideLine(def *CardDefinition) string {
+	m := def.Static
+	if m.HouseOverride == HouseNone {
+		return ""
+	}
+	line := "This creature belongs to " + m.HouseOverride.String()
+	frame := func(body string) string { return `this creature gains "` + body + `"` }
+	for _, g := range grantedLines(m, frame) {
+		line += " and " + g
+	}
+	return line
 }
 
 // playableAsUpgradeText renders the clause a creature played as an upgrade prints
@@ -393,7 +412,8 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 		rules = append(rules, def.Name+" cannot "+k.verb()+".")
 	}
 	if dw := def.DestroyedWhen; dw != nil {
-		rules = append(rules, capitalizeFirst(dw.CondText())+", destroy "+def.Name+".")
+		cond := strings.ReplaceAll(dw.CondText(), SelfName, def.Name)
+		rules = append(rules, capitalizeFirst(cond)+", destroy "+def.Name+".")
 	}
 	if t := def.TakesDamageFor; t.valid() {
 		rules = append(rules,
@@ -444,6 +464,9 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 	// A creature played as an upgrade folds its Static grant into the "may be played
 	// as an upgrade" clause below, so it does not also print as standalone lines.
 	if !def.PlayableAsUpgrade {
+		if s := houseOverrideLine(def); s != "" {
+			rules = append(rules, s)
+		}
 		rules = append(rules, upgradeStaticLines(def, hosted)...)
 		if def.Static.ProtectsFromNonFlank {
 			rules = append(rules,
@@ -454,7 +477,7 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 		rules = append(rules, s)
 	}
 	rules = append(rules, constantGrantedText(def)...)
-	if !def.PlayableAsUpgrade {
+	if !def.PlayableAsUpgrade && def.Static.HouseOverride == HouseNone {
 		rules = append(rules, grantedText(def.Static, hosted)...)
 	}
 	rules = append(rules, abilityLines(def)...)
@@ -642,6 +665,14 @@ func grantedText(m StaticModifier, hosted bool) []string {
 		}
 		return `This creature gains, "` + body + `"`
 	}
+	return grantedLines(m, frame)
+}
+
+// grantedLines renders the triggered abilities and static grants an Upgrade gives
+// its host, applying frame to each so the caller controls the surrounding phrase
+// (grantedText's "This creature gains, …" or the house-override line's lowercase
+// "this creature gains …").
+func grantedLines(m StaticModifier, frame func(string) string) []string {
 	lines := make([]string, 0, len(m.Granted))
 	for i := 0; i < len(m.Granted); i++ {
 		ab := m.Granted[i]

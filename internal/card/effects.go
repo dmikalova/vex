@@ -201,6 +201,9 @@ type (
 	ReturnNamedToHand = engine.ReturnNamedToHand
 	// SearchForName searches your deck and discard pile for a named card.
 	SearchForName = engine.SearchForName
+	// SearchDeck searches your deck for a card (any card, or one of a given house),
+	// puts it into your hand, and shuffles your deck.
+	SearchDeck = engine.SearchDeck
 	// ShuffleIntoDeck shuffles the controller's named zones (hand, discard, archives) into their deck.
 	ShuffleIntoDeck = engine.ShuffleIntoDeck
 	// ShuffleChosenCreaturesFromDiscard shuffles any number of chosen creatures from your discard pile into your deck.
@@ -267,6 +270,9 @@ type (
 	// LookAtTop looks at the top Amount cards of your deck, puts one into your
 	// hand, and discards the others.
 	LookAtTop = engine.LookAtTop
+	// LookAtTopSort looks at the top 3 cards of your deck, archiving one, putting
+	// one into your hand, and discarding one.
+	LookAtTopSort = engine.LookAtTopSort
 	// ReorderTop looks at the top Amount cards of your deck and puts them back in
 	// any order you choose.
 	ReorderTop = engine.ReorderTop
@@ -355,6 +361,8 @@ type (
 	Swap = engine.Swap
 	// SwapChosen swaps the positions of two creatures chosen from one battleline.
 	SwapChosen = engine.SwapChosen
+	// RearrangeBattleline reorders one player's battleline by swapping pairs of creatures.
+	RearrangeBattleline = engine.RearrangeBattleline
 	// MoveToFlank moves the targeted creature to either flank of its controller's battleline.
 	MoveToFlank = engine.MoveToFlank // MoveWithinBattleline repositions the targeted creature anywhere in its
 	// controller's battleline and leaves it in context (Malison).

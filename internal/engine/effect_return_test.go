@@ -226,6 +226,39 @@ func TestMoveFromPlayValidate(t *testing.T) {
 	if err := (PutFromPlay{Destination: ToHand}).validate(); err == nil {
 		t.Error("an unset target should be rejected")
 	}
+	if err := (PutFromPlay{Target: this, Destination: ToArchives, WithUpgrades: true}).validate(); err == nil {
+		t.Error("WithUpgrades should be rejected for a non-hand destination")
+	}
+	if err := (PutFromPlay{Target: this, Destination: ToHand, WithUpgrades: true}).validate(); err != nil {
+		t.Errorf("WithUpgrades to hand should be valid, got %v", err)
+	}
+}
+
+func TestPutFromPlayWithUpgrades(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("src", 3), 0)
+	up := attachUpgrade(g, src, NewCard("plating", Mars, Upgrade, Common))
+	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+
+	e := PutFromPlay{
+		Target:       Target{Kind: TargetThisCreature},
+		Destination:  ToHand,
+		WithUpgrades: true,
+	}
+	if e.Text() != "put "+SelfName+" and each upgrade attached to it into its owner's hand" {
+		t.Errorf("text = %q", e.Text())
+	}
+	e.Resolve(ctx)
+
+	if !g.State.Hand[0].contains(src) {
+		t.Error("the creature should be in its owner's hand")
+	}
+	if !g.State.Hand[0].contains(up) {
+		t.Error("the upgrade should follow the creature to hand, not the discard pile")
+	}
+	if len(g.Discard(0)) != 0 {
+		t.Errorf("nothing should be discarded; discard = %v", g.Discard(0))
+	}
 }
 
 func TestPutChosen(t *testing.T) {

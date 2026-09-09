@@ -14,7 +14,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Steal 1 Æmber, or 2 if your opponent stole Æmber from you on their previous turn.
+//	Play: Steal 1 Æmber. If your opponent stole Æmber from you on their previous turn, steal 1 Æmber.
 func TestInformationExchange(t *testing.T) {
 	t.Run("opponent robbed you last turn", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

@@ -45,9 +45,11 @@ its power to the enemy creature but takes none back.`,
 		{
 			Section:    SectionKeyword,
 			Title:      "Poison",
-			Definition: "Any damage dealt to the creature destroys it, whatever power it has left.",
-			Body: `Any amount of damage dealt to a creature with Poison destroys it, however
-much power it has left.`,
+			Definition: "The creatures this creature damages in a fight are destroyed, whatever power they have left.",
+			Body: `A creature with Poison destroys any creature it deals fight damage to — from
+its power or its splash — once that damage lands, however much power that creature
+had left. The poison creature is not destroyed by taking damage; only damage that
+reaches its power destroys it.`,
 		},
 		{
 			Section:    SectionKeyword,

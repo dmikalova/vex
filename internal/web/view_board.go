@@ -472,9 +472,8 @@ func (g *game) renderRow(
 		Body(
 			app.Div().Class("row-label").Body(
 				app.Span().Class("row-label-zone").Text(capitalizeFirst(zone)+" "),
-				app.Text(fmt.Sprintf("(%d", len(ids))),
+				app.Text(fmt.Sprintf("%d", len(ids))),
 				icon(zoneIcon, "row-label-icon"),
-				app.Text(")"),
 			),
 			app.Div().Class("card-strip").Body(
 				app.Range(ids).Slice(func(i int) app.UI {

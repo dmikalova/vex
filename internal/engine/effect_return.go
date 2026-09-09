@@ -16,23 +16,35 @@ import (
 type PutFromPlay struct {
 	Target      Target
 	Destination Destination
+	// WithUpgrades also returns each upgrade attached to a moved creature to its
+	// owner's hand, rather than shedding it to the discard pile (Transporter
+	// Platform). It is supported only for the hand.
+	WithUpgrades bool
 }
 
 // Text renders the effect, e.g. "put each artifact on top of its owner's deck" or
 // "put this creature into its owner's hand".
 func (e PutFromPlay) Text() string {
-	return e.Destination.clause(e.Target.Text(), false)
+	subject := e.Target.Text()
+	if e.WithUpgrades {
+		subject += " and each upgrade attached to it"
+	}
+	return e.Destination.clause(subject, false)
 }
 
 // validate rejects a destination this effect cannot move a card to; only the hand,
 // the top of the deck, and the archives are supported, and the destination must be
-// named.
+// named. Returning attached upgrades along with the creature is supported only for
+// the hand.
 func (e PutFromPlay) validate() error {
 	if !e.Target.valid() {
 		return errUnsetTarget("PutFromPlay")
 	}
 	if !e.Destination.movable() {
 		return fmt.Errorf("PutFromPlay: unsupported destination %d", e.Destination.zone)
+	}
+	if e.WithUpgrades && e.Destination != ToHand {
+		return fmt.Errorf("PutFromPlay: WithUpgrades is supported only for the hand")
 	}
 	return nil
 }
@@ -56,6 +68,9 @@ func (e PutFromPlay) resolveGate(ctx *EffectContext) bool {
 	for _, id := range ids {
 		if !resolverInPlay(ctx, id) {
 			continue
+		}
+		if e.WithUpgrades {
+			ctx.Resolver.ReturnUpgradesToHand(id)
 		}
 		controller := ctx.Resolver.Controller(id)
 		e.Destination.move(ctx, id)

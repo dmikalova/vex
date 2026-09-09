@@ -354,6 +354,9 @@ type ZoneResolver interface {
 	PutOnTopOfDeck(id LocalID)
 	// PutIntoHand moves a card from play to its owner's hand.
 	PutIntoHand(id LocalID)
+	// ReturnUpgradesToHand moves each upgrade attached to a host in play to its
+	// owner's hand, rather than shedding it to the discard pile.
+	ReturnUpgradesToHand(host LocalID)
 	// PutIntoArchives moves a card from play to its owner's archives.
 	PutIntoArchives(id LocalID)
 	// PutIntoArchivesEach archives a snapshot of in-play cards simultaneously, so
@@ -427,6 +430,9 @@ type ZoneResolver interface {
 	// MoveFromDeckToDiscard moves a card from its owner's deck to their discard
 	// pile — a card the controller looked at and chose not to keep (Eyegor).
 	MoveFromDeckToDiscard(id LocalID)
+	// ArchiveFromDeck moves a card from its owner's deck to their archives — a card
+	// the controller looked at and chose to archive (Philophosaurus).
+	ArchiveFromDeck(id LocalID)
 	// SetDeckTop rewrites the top len(order) cards of a player's deck to the given
 	// order (order[0] becomes the new top) — the controller reordering the cards
 	// they looked at (Navigator Ali). The ids must be exactly the cards currently
@@ -917,6 +923,9 @@ func (g *Game) PutOnTopOfDeck(id LocalID) { g.putOnTopOfDeck(id) }
 // PutIntoHand is the Resolver entry point for putIntoHand.
 func (g *Game) PutIntoHand(id LocalID) { g.putIntoHand(id) }
 
+// ReturnUpgradesToHand is the Resolver entry point for returnUpgradesToHand.
+func (g *Game) ReturnUpgradesToHand(host LocalID) { g.returnUpgradesToHand(host) }
+
 // PutIntoArchives is the Resolver entry point for putIntoArchives.
 func (g *Game) PutIntoArchives(id LocalID) { g.putIntoArchives(id) }
 
@@ -1054,6 +1063,9 @@ func (g *Game) MoveFromDeckToDiscard(id LocalID) {
 	g.State.Discard[o].add(id)
 	g.record(CardDiscardedFromDeck{Player: o, Card: id})
 }
+
+// ArchiveFromDeck moves a card from its owner's deck to their archives.
+func (g *Game) ArchiveFromDeck(id LocalID) { g.archiveFromDeck(g.owner(id), id) }
 
 // SetDeckTop rewrites the top len(order) cards of player's deck to order, with
 // order[0] on top. The reorder is private information, so it records no log line.

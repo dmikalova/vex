@@ -347,6 +347,15 @@ Self tutoring a Timetraveller. Nothing happens if no matching card is found.`,
 		},
 		{
 			Section:    SectionEffect,
+			Title:      "Search Your Deck",
+			Definition: "Search your deck for a card, put it into your hand, and shuffle your deck.",
+			Body: `SearchDeck is the KeyForge "search" keyword: the controller searches their deck
+for a card — any card, or one of a given House — puts it into their hand, and then
+shuffles their deck. A House-restricted search reveals the card it takes. The deck
+is always shuffled, even when nothing was taken.`,
+		},
+		{
+			Section:    SectionEffect,
 			Title:      "Shuffle Into Deck",
 			Definition: "Move the named zones' cards into your deck, then shuffle once.",
 			Body: `ShuffleIntoDeck shuffles the controller's named Zones into their deck — the

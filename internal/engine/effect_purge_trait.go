@@ -73,6 +73,11 @@ func (e PurgeEachOfChosenTrait) Resolve(ctx *EffectContext) {
 			})
 			continue
 		}
-		ctx.Resolver.Record(AemberGained{Player: p, Amount: purged[p]})
+		ctx.Resolver.Record(AemberGained{
+			Player:    p,
+			Amount:    purged[p],
+			Source:    ctx.Source,
+			HasSource: true,
+		})
 	}
 }

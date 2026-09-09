@@ -59,7 +59,7 @@ func TestSequenceCombinesSameTarget(t *testing.T) {
 		Exhaust{Target: Target{Kind: TargetEachEnemyCreature}},
 		GainAember{Player: Controller, Amount: 1},
 	}}
-	want := "stun " + SelfName + ", and exhaust each enemy creature, and gain 1 Æmber"
+	want := "stun " + SelfName + ", exhaust each enemy creature, and gain 1 Æmber"
 	if got := mixed.Text(); got != want {
 		t.Errorf("mixed text = %q, want %q", got, want)
 	}
@@ -81,7 +81,7 @@ func TestSequenceCombinesSameVerb(t *testing.T) {
 		Destroy{Target: Target{Kind: TargetChosenFriendlyCreature}},
 		Destroy{Target: Target{Kind: TargetEachCreature}},
 	}}
-	want := "destroy an enemy creature and a friendly creature and each creature"
+	want := "destroy an enemy creature, a friendly creature, and each creature"
 	if got := three.Text(); got != want {
 		t.Errorf("three text = %q, want %q", got, want)
 	}

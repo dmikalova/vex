@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestRenderPrompt(t *testing.T) {
 	prompt := "fully heal " + SelfName
@@ -877,9 +880,21 @@ func TestUpgradeGrantLinesHouseOverride(t *testing.T) {
 	def := NewCard("Academy Training", Logos, Creature, Uncommon, WithPower(1),
 		WithStatic(StaticModifier{HouseOverride: Logos}), WithPlayableAsUpgrade())
 	lines := upgradeGrantLines(&def, true)
-	want := "If you control this creature, it belongs to house Logos. (Instead of its original house.)"
+	want := "This creature belongs to Logos"
 	if len(lines) == 0 || lines[0] != want {
 		t.Errorf("grant lines = %v, want first %q", lines, want)
+	}
+}
+
+// TestCardRulesHouseOverride covers an Upgrade card's house-override line rendered
+// standalone from its own rules (Academy Training's printed text).
+func TestCardRulesHouseOverride(t *testing.T) {
+	def := NewCard("Academy Training", Logos, Upgrade, Rare,
+		WithStatic(StaticModifier{HouseOverride: Logos}))
+	got := RenderCardRules(&def)
+	want := "This creature belongs to Logos"
+	if !strings.Contains(got, want) {
+		t.Errorf("card rules missing the house-override line:\n%s", got)
 	}
 }
 

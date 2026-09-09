@@ -152,6 +152,7 @@ func TestArrivalKillsFlankNeighborBeforeAfterPlay(t *testing.T) {
 	)
 	g.State.ActivePlayer = 0
 	g.State.ActiveHouse = Brobnar
+	g.SetChooser(0, optionPicker{idx: 1}) // land the arrival on the right flank
 	g.PlayFromHand(0, id)
 
 	if neighborStillInPlay {

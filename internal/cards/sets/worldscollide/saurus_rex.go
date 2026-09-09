@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// SaurusRex
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Saurus Rex
 //
 //	House:  Saurian
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  6
 //	Traits: Dinosaur • Leader
 //
-//	Fight/Reap: If Saurus Rex is in the center of your battleline, you may exalt it. If you do, search your deck for a Saurian card, reveal it, and add it to your hand. Then, shuffle your deck.
+//	Fight/Reap: If Saurus Rex is in the center of your battleline, you may exalt Saurus Rex -> search your deck for a Saurian card, reveal it, and put it into your hand, then shuffle your deck.
 var SaurusRex = card.New(
 	"Saurus Rex",
 	card.House.Saurian,
@@ -24,5 +19,11 @@ var SaurusRex = card.New(
 	card.Provenance(card.WC, "227"),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Leader),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithFightOrReap(card.Conditional{
+		Cond: card.SourceInCenterOfBattleline{},
+		Then: card.May{Do: card.Then{
+			First:  card.Exalt{Target: card.Target.This, Amount: 1},
+			Result: card.SearchDeck{House: card.House.Self},
+		}},
+	}),
 )

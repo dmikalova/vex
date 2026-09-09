@@ -464,6 +464,35 @@ func TestArchiveFromHandFiltered(t *testing.T) {
 	}
 }
 
+// TestArchiveFromHandExceptHouse covers the "non-<house>" reveal (Information
+// Officer Gray): only cards outside the excluded house are offered, and the text
+// carries the "non-" qualifier.
+func TestArchiveFromHandExceptHouse(t *testing.T) {
+	e := ArchiveFromHand{Amount: 1, ExceptHouse: StarAlliance, Revealed: true}
+	want := "reveal a non-Star Alliance card from your hand and archive it"
+	if e.Text() != want {
+		t.Errorf("text = %q, want %q", e.Text(), want)
+	}
+
+	g := NewGame("A", "B", 1)
+	ally := g.AddToHand(NewCard("Ally", StarAlliance, Creature, Common, WithPower(3)), 0)
+	outsider := g.AddToHand(NewCard("Outsider", Logos, Creature, Common, WithPower(3)), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	if !e.resolveGate(ctx) {
+		t.Fatal("archiving a non-Star Alliance card should report success")
+	}
+	if g.State.Archives[0].Count != 1 || g.State.Archives[0].IDs[0] != outsider {
+		t.Errorf("archives = %v, want [%d]", g.State.Archives[0].slice(), outsider)
+	}
+	if len(g.Hand(0)) != 1 || g.Hand(0)[0] != ally {
+		t.Errorf("hand = %v, want the excluded Star Alliance card", g.Hand(0))
+	}
+	if e.resolveGate(ctx) {
+		t.Error("with only excluded-house cards left the gate should archive nothing")
+	}
+}
+
 func TestArchiveRandomFromHand(t *testing.T) {
 	if (ArchiveRandomFromHand{Amount: 1}).Text() != "archive a random card from your hand" {
 		t.Errorf("text = %q", (ArchiveRandomFromHand{Amount: 1}).Text())

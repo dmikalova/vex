@@ -7,14 +7,26 @@ import "fmt"
 // and cards. Each entry records the amount that actually moved, which is not
 // always the amount the card asked for.
 
-// AemberGained narrates Æmber arriving in a player's pool.
+// AemberGained narrates Æmber arriving in a player's pool. Source names the card
+// whose ability granted it, so the line reads "Harmonia has Player 1 gain 1 Æmber"
+// rather than a bare "Player 1 gains 1 Æmber"; HasSource is false for a gain with
+// no card to credit (forging and lasting-effect gains narrate their own cause),
+// which falls back to naming the player alone.
 type AemberGained struct {
 	Player int
 	Amount int
+	Source LocalID
+	// HasSource distinguishes a card named by LocalID 0 from no source at all.
+	HasSource bool
 }
 
-// Text renders the Æmber a player gained.
+// Text renders the Æmber a player gained, crediting the source card when there is
+// one and naming the player alone otherwise.
 func (e AemberGained) Text(n Namer) string {
+	if e.HasSource {
+		return fmt.Sprintf("%s has %s gain %d Æmber",
+			n.Name(e.Source), n.PlayerName(e.Player), e.Amount)
+	}
 	return fmt.Sprintf("%s gains %d Æmber", n.PlayerName(e.Player), e.Amount)
 }
 

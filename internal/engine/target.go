@@ -130,6 +130,10 @@ type Target struct {
 	house       House
 	exceptHouse House
 	chosenHouse bool
+	// activeHouse narrows the target to cards of the player's active house,
+	// rendering "of that house" — Techivore Pulpate destroys each artifact of
+	// the house a player just chose.
+	activeHouse bool
 	// contextualHouse narrows the target to cards sharing the house of the card in
 	// context (ctx.It), rendering "of that card's house" — ForEachDiscarded's Do.
 	contextualHouse bool
@@ -241,6 +245,14 @@ func (t Target) ExceptHouse(h House) Target {
 // ChooseHouseThen (read from the effect context at selection time).
 func (t Target) OfChosenHouse() Target {
 	t.chosenHouse = true
+	return t
+}
+
+// OfActiveHouse narrows the target to cards of the active house (read from the
+// effect context at selection time) — the house a player just chose, for
+// Techivore Pulpate's "each artifact of that house".
+func (t Target) OfActiveHouse() Target {
+	t.activeHouse = true
 	return t
 }
 
@@ -686,6 +698,9 @@ func (t Target) Text() string {
 	}
 	if t.chosenHouse {
 		phrase += " of the chosen house"
+	}
+	if t.activeHouse {
+		phrase += " of that house"
 	}
 	if t.contextualHouse {
 		phrase += " of that card's house"
@@ -1140,6 +1155,7 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 		t.house == HouseNone &&
 		t.exceptHouse == HouseNone &&
 		!t.chosenHouse &&
+		!t.activeHouse &&
 		!t.contextualHouse &&
 		!t.houseWithMostCreatures &&
 		!t.sharesTrait &&
@@ -1183,6 +1199,9 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 			continue
 		}
 		if t.chosenHouse && ctx.Resolver.House(id) != ctx.ChosenHouse {
+			continue
+		}
+		if t.activeHouse && ctx.Resolver.House(id) != ctx.Resolver.ActiveHouse() {
 			continue
 		}
 		if t.contextualHouse &&
