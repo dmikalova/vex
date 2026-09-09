@@ -2,14 +2,14 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// GleefulMayhem
+// Gleeful Mayhem
 //
 //	House:  Dis
-//	Type:   Action
+//	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: For each house, deal 5D to a creature of that house.
+//	Play: For each house, deal 5 damage to a creature of that house.
 var GleefulMayhem = card.New(
 	"Gleeful Mayhem",
 	card.House.Dis,

@@ -2,7 +2,7 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// GroupthinkTank
+// Groupthink Tank
 //
 //	House:  Logos
 //	Type:   Creature
@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  3
 //	Traits: Robot • Experiment
 //
-//	Action: Deal 4D to each creature that shares a house with at least 1 of its neighbors.
+//	Action: Deal 4 damage to each creature that shares a house with at least 1 of its neighbors.
 var GroupthinkTank = card.New(
 	"Groupthink Tank",
 	card.House.Logos,

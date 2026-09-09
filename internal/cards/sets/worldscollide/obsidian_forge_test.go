@@ -15,7 +15,7 @@ import (
 //	Æmber:  1
 //	Traits: Item
 //
-//	Action: Sacrifice any number of friendly creatures. Then, you may forge a key at +6A current cost, reduced by 1A for each creature sacrificed this way. If you do, destroy Obsidian Forge.
+//	Action: Destroy any number of friendly creatures. Then, you may forge a key at +6 Æmber current cost, reduced by 1 Æmber for each creature destroyed this way. If you do, destroy Obsidian Forge.
 func TestObsidianForge(t *testing.T) {
 	t.Run(
 		"sacrifices creatures, forges the reduced-cost key, and destroys itself",

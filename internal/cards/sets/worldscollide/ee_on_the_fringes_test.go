@@ -16,7 +16,7 @@ import (
 //	Traits: Imp
 //
 //	Elusive.
-//	During your turn, after you discard a Dis card from your hand, you may purge a Dis card from a discard pile. If you do, steal 1A.
+//	After you discard a Dis card, you may purge a Dis card from a discard pile -> steal 1 Æmber.
 func TestEeOnTheFringes(t *testing.T) {
 	t.Run("purging a Dis card steals 1 after a Dis discard", func(t *testing.T) {
 		var ee, fodder, victim ct.Card

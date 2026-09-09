@@ -29,6 +29,11 @@ func RenderAbility(a Ability) string {
 			return punctuate(capitalizeFirst(s))
 		}
 	}
+	if a.Trigger == TriggerAfterAnyPlayerChoosesHouse {
+		if s, ok := afterAnyPlayerChooseHouseText(a.Effect); ok {
+			return punctuate(capitalizeFirst(s))
+		}
+	}
 	if a.Trigger == TriggerEntersPlay {
 		if s, ok := entersPlayConditionalText(a.Effect); ok {
 			return punctuate(capitalizeFirst(s))
@@ -81,6 +86,24 @@ func afterChooseHouseText(e Effect) (string, bool) {
 		return "", false
 	}
 	return "after you choose " + ch.House.String() + " as your active house, " + cond.Then.Text(), true
+}
+
+// afterAnyPlayerChooseHouseText folds an AfterAnyPlayerChoosesHouse ability whose
+// effect is a Conditional gated on the chosen house (a ChoseHouse condition) into
+// the natural "after a player chooses <House> as their active house, <then>"
+// wording (the house plants' "after a player chooses Brobnar as their active
+// house, gain 1 Æmber"). Any other effect shape reports false and renders with
+// the ordinary prefix.
+func afterAnyPlayerChooseHouseText(e Effect) (string, bool) {
+	cond, ok := e.(Conditional)
+	if !ok {
+		return "", false
+	}
+	ch, ok := cond.Cond.(ChoseHouse)
+	if !ok {
+		return "", false
+	}
+	return "after a player chooses " + ch.House.String() + " as their active house, " + cond.Then.Text(), true
 }
 
 // entersPlayConditionalText folds an "enters play" ability whose effect is gated
@@ -386,6 +409,9 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 	if def.AemberCannotBeStolen {
 		rules = append(rules, "Your Æmber cannot be stolen.")
 	}
+	if def.AemberCannotBeStolenWhileItHasAember {
+		rules = append(rules, "While "+def.Name+" has Æmber on it, your Æmber cannot be stolen.")
+	}
 	if def.SpendableAember {
 		rules = append(rules, "You may spend Æmber on "+def.Name+" when forging keys.")
 	}
@@ -660,6 +686,9 @@ func constantText(def *CardDefinition) string {
 		}
 		if c.ArmorBonus != 0 {
 			parts = append(parts, fmt.Sprintf("%+d armor", c.ArmorBonus))
+		}
+		if c.HazardousBonus != 0 {
+			parts = append(parts, fmt.Sprintf("hazardous %d", c.HazardousBonus))
 		}
 		for _, k := range c.Keywords {
 			parts = append(parts, strings.ToLower(k.String()))

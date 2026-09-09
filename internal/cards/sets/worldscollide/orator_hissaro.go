@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// OratorHissaro
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Orator Hissaro
 //
 //	House:  Saurian
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Dinosaur • Politician
 //
 //	Deploy.
-//	Play: Ready and exalt each of Orator Hissaro's neighbors. For the remainder of the turn, they belong to house Saurian.
+//	Play: Ready each neighboring creature. Exalt each neighboring creature. For the remainder of the turn, each neighboring creature belongs to house Saurian.
 var OratorHissaro = card.New(
 	"Orator Hissaro",
 	card.House.Saurian,
@@ -25,5 +20,18 @@ var OratorHissaro = card.New(
 	card.Provenance(card.WC, "205"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Politician),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Deploy),
+	card.WithAbility(
+		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+			card.Ready{Target: card.Target.EachCreature.Neighboring()},
+			card.Exalt{
+				Target: card.Target.EachCreature.Neighboring(),
+				Amount: 1,
+			},
+			card.BelongToHouse{
+				Target:   card.Target.EachCreature.Neighboring(),
+				House:    card.House.Self,
+				Duration: card.Duration.EndOfTurn,
+			},
+		}}),
 )

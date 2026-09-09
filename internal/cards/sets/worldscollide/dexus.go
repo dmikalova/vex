@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Demon
 //
-//	After your opponent plays a creature on their right flank, they lose 1A.
+//	After your opponent plays a card, if it is on the right flank, your opponent loses 1 Æmber.
 var Dexus = card.New(
 	"Dexus",
 	card.House.Dis,

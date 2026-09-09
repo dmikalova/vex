@@ -15,8 +15,8 @@ import (
 //	Power:  2
 //	Traits: Human • Scientist
 //
-//	Reap: Archive a card. If you control Hyde, archive 2 cards instead.
-//	Destroyed: Archive Hyde from your discard pile. If you do, archive Velum.
+//	Reap: Archive a card from your hand, or 2 cards if you control Hyde.
+//	Destroyed: Archive Hyde from your discard pile -> archive Velum from play.
 func TestVelum(t *testing.T) {
 	t.Run("reaps to archive 1 without Hyde", func(t *testing.T) {
 		var velum, h1, h2 ct.Card

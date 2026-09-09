@@ -2,7 +2,7 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// BorrNit
+// Borr Nit
 //
 //	House:  Dis
 //	Type:   Creature

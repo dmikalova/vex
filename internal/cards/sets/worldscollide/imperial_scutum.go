@@ -2,14 +2,15 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ImperialScutum
+// Imperial Scutum
 //
 //	House:  Saurian
 //	Type:   Upgrade
 //	Rarity: Common
 //	Æmber:  1
 //
-//	This creature gets +2 armor and gains, "Destroyed: Move each A on this creature to the common supply."
+//	This creature gains +2 armor.
+//	This creature gains, "Destroyed: Move each Æmber on this creature to the common supply."
 var ImperialScutum = card.New(
 	"Imperial Scutum",
 	card.House.Saurian,

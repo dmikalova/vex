@@ -263,6 +263,38 @@ func TestConstantText(t *testing.T) {
 	}
 }
 
+// TestConstantHazardousGrant covers a constant ability that grants Hazardous to
+// the creatures it reaches, both in its printed text and the value it produces.
+func TestConstantHazardousGrant(t *testing.T) {
+	molina := NewCard(
+		"Arms",
+		StarAlliance,
+		Creature,
+		Common,
+		WithPower(4),
+		WithHazardous(3),
+		WithConstantAbility(ConstantAbility{
+			HazardousBonus: 3,
+			Target:         Target{Kind: TargetEachCreature}.Neighboring(),
+		}),
+	)
+	if got := constantText(&molina); got != "Each neighboring creature gains hazardous 3." {
+		t.Errorf("hazardous constant text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	left := g.AddToBattleline(testCreature("l", 3), 0)
+	g.AddToBattleline(molina, 0)
+	g.AddToBattleline(testCreature("r", 3), 0)
+	far := g.AddToBattleline(testCreature("f", 3), 1)
+	if got := g.Hazardous(left); got != 3 {
+		t.Errorf("neighbor hazardous = %d, want 3", got)
+	}
+	if got := g.Hazardous(far); got != 0 {
+		t.Errorf("distant creature hazardous = %d, want 0", got)
+	}
+}
+
 // TestConstantPerCount covers a constant ability whose bonus scales with a
 // running count, both in its printed text and in the power it produces.
 func TestConstantPerCount(t *testing.T) {

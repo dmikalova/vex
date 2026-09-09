@@ -9,7 +9,15 @@ import (
 
 // CALV-1N
 //
+//	House:  Star Alliance
+//	Type:   Creature
+//	Rarity: Uncommon
+//	Power:  2
+//	Armor:  1
+//	Traits: Robot
+//
 //	Fight/Reap: Draw a card.
+//	CALV-1N may be played as an upgrade instead of a creature, with the text: "This creature gains, 'Fight/Reap: Draw a card.'"
 func TestCALV1N(t *testing.T) {
 	var calvin ct.Card
 	h := ct.Play(t, ct.Setup{

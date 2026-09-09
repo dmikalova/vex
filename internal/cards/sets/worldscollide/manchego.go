@@ -10,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Human • Thief
 //
-//	Play: If you have 5 or fewer cards in your deck, steal 2A.
-//	Fight/Reap: You may shuffle Manchego into your deck.
+//	Play: If you have 5 or fewer cards in your deck, steal 2 Æmber.
+//	Fight/Reap: You may shuffle Manchego into its owner's deck.
 var Manchego = card.New(
 	"Manchego",
 	card.House.Shadows,

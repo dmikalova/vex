@@ -2,7 +2,7 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// BorrNitsTouch
+// Borr Nit's Touch
 //
 //	House:  Dis
 //	Type:   Tactic

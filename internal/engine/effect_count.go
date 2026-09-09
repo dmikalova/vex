@@ -919,6 +919,24 @@ func (c AemberInPool) CountText() string {
 	return "Æmber in " + who + " pool"
 }
 
+// AemberOnFriendlyCreatures counts the Æmber sitting on the controller's
+// creatures — Imperial Forge cuts its forge surcharge by it.
+type AemberOnFriendlyCreatures struct{}
+
+// Value sums the Æmber on each creature in the controller's battleline.
+func (c AemberOnFriendlyCreatures) Value(ctx *EffectContext) int {
+	total := 0
+	for _, id := range ctx.Resolver.Battleline(ctx.Controller) {
+		total += ctx.Resolver.AmberOn(id)
+	}
+	return total
+}
+
+// CountText renders the singular noun the "for each" clause repeats.
+func (c AemberOnFriendlyCreatures) CountText() string {
+	return "Æmber on friendly creatures"
+}
+
 // NeighborsOfThis counts the battleline neighbors of the creature holding the
 // ability — 0, 1, or 2. Knoxx grows by 3 power for each neighbor it has. Its
 // value only changes when the battleline does, so the destroyed sweep already

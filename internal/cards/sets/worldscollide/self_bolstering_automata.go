@@ -2,7 +2,7 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// SelfBolsteringAutomata
+// Self-Bolstering Automata
 //
 //	House:  Logos
 //	Type:   Creature
@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  1
 //	Traits: Robot
 //
-//	Destroyed: If you have any other creatures in play, instead of destroying Self-Bolstering Automata, fully heal it, exhaust it, and move it to a flank. If you do, give it two +1 power counters.
+//	Destroyed: If you have any other creatures in play, instead of destroying Self-Bolstering Automata, fully heal it, and exhaust it, and move it to either flank of its controller's battleline -> give it two +1 power counters.
 var SelfBolsteringAutomata = card.New(
 	"Self-Bolstering Automata",
 	card.House.Logos,

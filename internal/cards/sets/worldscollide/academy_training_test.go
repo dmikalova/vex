@@ -13,7 +13,6 @@ import (
 //	Type:   Upgrade
 //	Rarity: Rare
 //
-//	If you control this creature, it belongs to house Logos. (Instead of its original house.)
 //	This creature gains, "Reap: Draw a card."
 func TestAcademyTraining(t *testing.T) {
 	t.Run("host belongs to Logos and reaps to draw a card", func(t *testing.T) {

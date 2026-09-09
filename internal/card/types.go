@@ -326,37 +326,38 @@ func Types(t ...engine.CardType) []engine.CardType { return t }
 // Trigger groups the ability triggers, e.g. card.Trigger.Play or
 // card.Trigger.AfterForgeKey.
 var Trigger = triggers{
-	Play:                        engine.TriggerAfterPlay,
-	Reap:                        engine.TriggerAfterReap,
-	Fight:                       engine.TriggerAfterFight,
-	BeforeFight:                 engine.TriggerBeforeFight,
-	Action:                      engine.TriggerAction,
-	AfterForgeKey:               engine.TriggerAfterForgeKey,
-	AfterCreatureEnters:         engine.TriggerAfterCreatureEnters,
-	AfterCreaturePlayedAdjacent: engine.TriggerAfterCreaturePlayedAdjacent,
-	AfterNeighborFights:         engine.TriggerAfterNeighborFights,
-	Destroyed:                   engine.TriggerDestroyed,
-	AfterDestroyedFighting:      engine.TriggerAfterDestroyedFighting,
-	AfterAssaultDestroys:        engine.TriggerAfterAssaultDestroys,
-	AfterArmorPrevents:          engine.TriggerAfterArmorPrevents,
-	AfterCardPlayed:             engine.TriggerAfterCardPlayed,
-	EndOfTurn:                   engine.TriggerEndOfTurn,
-	StartOfTurn:                 engine.TriggerStartOfTurn,
-	EndOfReadyStep:              engine.TriggerEndOfReadyStep,
-	AfterChooseHouse:            engine.TriggerAfterChooseHouse,
-	AfterAnyPlayerChoosesHouse:  engine.TriggerAfterAnyPlayerChoosesHouse,
-	AfterEnemyCreatureDestroyed: engine.TriggerAfterEnemyCreatureDestroyed,
-	AfterCreatureDestroyed:      engine.TriggerAfterCreatureDestroyed,
-	AfterEnemyCardPlayed:        engine.TriggerAfterEnemyCardPlayed,
-	AfterUse:                    engine.TriggerAfterUse,
-	AfterDiscardFromHand:        engine.TriggerAfterDiscardFromHand,
-	UsedSelf:                    engine.TriggerAfterUsedSelf,
-	AfterCreatureReaps:          engine.TriggerAfterCreatureReaps,
-	AfterEnemyCreatureReaps:     engine.TriggerAfterEnemyCreatureReaps,
-	AfterCreatureFights:         engine.TriggerAfterCreatureFights,
-	AfterPlayerForgesKey:        engine.TriggerAfterPlayerForgesKey,
-	AfterCreaturePlayed:         engine.TriggerAfterCreaturePlayed,
-	LeavesPlay:                  engine.TriggerLeavesPlay,
+	Play:                           engine.TriggerAfterPlay,
+	Reap:                           engine.TriggerAfterReap,
+	Fight:                          engine.TriggerAfterFight,
+	BeforeFight:                    engine.TriggerBeforeFight,
+	Action:                         engine.TriggerAction,
+	AfterForgeKey:                  engine.TriggerAfterForgeKey,
+	AfterCreatureEnters:            engine.TriggerAfterCreatureEnters,
+	AfterCreaturePlayedAdjacent:    engine.TriggerAfterCreaturePlayedAdjacent,
+	AfterNeighborFights:            engine.TriggerAfterNeighborFights,
+	Destroyed:                      engine.TriggerDestroyed,
+	AfterDestroyedFighting:         engine.TriggerAfterDestroyedFighting,
+	AfterAssaultDestroys:           engine.TriggerAfterAssaultDestroys,
+	AfterArmorPrevents:             engine.TriggerAfterArmorPrevents,
+	AfterCardPlayed:                engine.TriggerAfterCardPlayed,
+	EndOfTurn:                      engine.TriggerEndOfTurn,
+	StartOfTurn:                    engine.TriggerStartOfTurn,
+	EndOfReadyStep:                 engine.TriggerEndOfReadyStep,
+	AfterChooseHouse:               engine.TriggerAfterChooseHouse,
+	AfterAnyPlayerChoosesHouse:     engine.TriggerAfterAnyPlayerChoosesHouse,
+	AfterEnemyCreatureDestroyed:    engine.TriggerAfterEnemyCreatureDestroyed,
+	AfterCreatureDestroyed:         engine.TriggerAfterCreatureDestroyed,
+	AfterFriendlyCreatureDestroyed: engine.TriggerAfterFriendlyCreatureDestroyed,
+	AfterEnemyCardPlayed:           engine.TriggerAfterEnemyCardPlayed,
+	AfterUse:                       engine.TriggerAfterUse,
+	AfterDiscardFromHand:           engine.TriggerAfterDiscardFromHand,
+	UsedSelf:                       engine.TriggerAfterUsedSelf,
+	AfterCreatureReaps:             engine.TriggerAfterCreatureReaps,
+	AfterEnemyCreatureReaps:        engine.TriggerAfterEnemyCreatureReaps,
+	AfterCreatureFights:            engine.TriggerAfterCreatureFights,
+	AfterPlayerForgesKey:           engine.TriggerAfterPlayerForgesKey,
+	AfterCreaturePlayed:            engine.TriggerAfterCreaturePlayed,
+	LeavesPlay:                     engine.TriggerLeavesPlay,
 }
 
 type triggers struct {
@@ -405,6 +406,10 @@ type triggers struct {
 	// AfterCreatureDestroyed fires after any creature is destroyed, with the
 	// destroyed creature as "it"; it fires only for cards that survive the batch.
 	AfterCreatureDestroyed engine.Trigger
+	// AfterFriendlyCreatureDestroyed fires after a friendly creature is destroyed,
+	// with the destroyed creature as "it" (Spartasaur); it fires only for cards
+	// that survive the batch.
+	AfterFriendlyCreatureDestroyed engine.Trigger
 	// AfterEnemyCardPlayed fires after the opponent plays a card.
 	AfterEnemyCardPlayed engine.Trigger
 	// AfterUse fires after the controller uses a card (reap, fight, or Action:).

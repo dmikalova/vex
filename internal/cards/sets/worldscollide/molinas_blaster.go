@@ -19,6 +19,7 @@ var MolinasBlaster = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.WC, "302"),
 	card.WithAemberBonus(1),
+	card.Connects(card.Pull(ArmsmasterMolina, 1)),
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightOrReap(card.May{Do: card.ChooseOne{Options: []card.Effect{
 			card.DealDamage{Amount: 2, Target: card.Target.Creature},

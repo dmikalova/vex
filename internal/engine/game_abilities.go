@@ -561,6 +561,18 @@ func (g *Game) emitAfterCreatureDestroyed(destroyed LocalID) {
 	}
 }
 
+// emitAfterFriendlyDestroyed fires the "after a friendly creature is destroyed"
+// reaction (Spartasaur) on the destroyed creature's controller's in-play cards,
+// with the destroyed creature as "it". Like emitAfterCreatureDestroyed it is
+// called once the batch has reached the discard piles, so a card destroyed in the
+// same batch does not react.
+func (g *Game) emitAfterFriendlyDestroyed(destroyed LocalID) {
+	controller := g.controller(destroyed)
+	for _, id := range g.allInPlay(controller) {
+		g.triggerAbilities(id, TriggerAfterFriendlyCreatureDestroyed, destroyed, true)
+	}
+}
+
 // emitCardPlayed fires "after you play a card" abilities on the playing player's
 // other in-play cards, with the played card as "it", and the EventCardPlayed
 // lasting reactions the player has armed (Library Access). Only an actual play from

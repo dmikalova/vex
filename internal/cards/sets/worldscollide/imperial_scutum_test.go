@@ -14,7 +14,8 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	This creature gets +2 armor and gains, "Destroyed: Move each A on this creature to the common supply."
+//	This creature gains +2 armor.
+//	This creature gains, "Destroyed: Move each Æmber on this creature to the common supply."
 func TestImperialScutum(t *testing.T) {
 	t.Run("grants +2 armor", func(t *testing.T) {
 		var host ct.Card

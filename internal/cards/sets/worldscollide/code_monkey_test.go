@@ -13,10 +13,10 @@ import (
 //	Type:   Creature
 //	Rarity: Uncommon
 //	Power:  3
-//	Traits: Ai • Beast
+//	Traits: AI • Beast
 //
-//	Deploy. (This creature can enter play anywhere in your battleline.)
-//	Play: Archive each neighboring creature. If those creatures share a house, gain 2A.
+//	Deploy.
+//	Play: Archive each neighboring creature from play. If those creatures share a house, gain 2 Æmber.
 func TestCodeMonkey(t *testing.T) {
 	t.Run("archives both neighbors and gains 2 when they share a house", func(t *testing.T) {
 		var left, right ct.Card

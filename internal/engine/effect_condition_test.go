@@ -84,6 +84,27 @@ func TestControlsMoreCreatures(t *testing.T) {
 	}
 }
 
+func TestOpponentHasMoreKeys(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	c := OpponentHasMoreKeys{}
+	if c.CondText() != "if your opponent has more forged keys than you" {
+		t.Errorf("CondText = %q", c.CondText())
+	}
+	if c.Met(ctx) {
+		t.Error("0 vs 0 should not be met")
+	}
+	g.State.Keys[1] = 1
+	if !c.Met(ctx) {
+		t.Error("opponent 1 vs you 0 should be met")
+	}
+	g.State.Keys[0] = 1
+	if c.Met(ctx) {
+		t.Error("1 vs 1 should not be met")
+	}
+}
+
 // TestUsedCreatureToReap covers the condition that a creature has reaped this turn
 // (Bramble Lynx), plus the "enters play ready" rendering when it gates an entry.
 func TestUsedCreatureToReap(t *testing.T) {
@@ -683,6 +704,28 @@ func TestAfterChooseHouseRendering(t *testing.T) {
 		t.Error("a non-conditional effect should not fold")
 	}
 	if _, ok := afterChooseHouseText(
+		Conditional{Cond: ControlsMoreCreatures{}, Then: GainAember{Player: Controller, Amount: 1}},
+	); ok {
+		t.Error("a conditional without ChoseHouse should not fold")
+	}
+}
+
+func TestAfterAnyPlayerChooseHouseRendering(t *testing.T) {
+	a := Ability{Trigger: TriggerAfterAnyPlayerChoosesHouse, Effect: Conditional{
+		Cond: ChoseHouse{House: Brobnar},
+		Then: GainAember{Player: Controller, Amount: 1},
+	}}
+	if got := RenderAbility(
+		a,
+	); got != "After a player chooses Brobnar as their active house, gain 1 Æmber." {
+		t.Errorf("render = %q", got)
+	}
+
+	// Effect shapes that are not a Conditional{ChoseHouse} do not fold.
+	if _, ok := afterAnyPlayerChooseHouseText(GainAember{Player: Controller, Amount: 1}); ok {
+		t.Error("a non-conditional effect should not fold")
+	}
+	if _, ok := afterAnyPlayerChooseHouseText(
 		Conditional{Cond: ControlsMoreCreatures{}, Then: GainAember{Player: Controller, Amount: 1}},
 	); ok {
 		t.Error("a conditional without ChoseHouse should not fold")

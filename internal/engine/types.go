@@ -557,6 +557,12 @@ const (
 	// controller or the opponent — with the chosen house available as the context
 	// house (Snag's Mirror bars the opponent from repeating a house).
 	TriggerAfterAnyPlayerChoosesHouse
+	// This ability resolves after a friendly creature is destroyed, with the
+	// destroyed creature as "it" (Spartasaur destroys each non-Dinosaur creature). It
+	// fires on the destroyed creature's controller's in-play cards once the whole
+	// destruction batch has reached the discard piles, so a card destroyed in the
+	// same batch does not react.
+	TriggerAfterFriendlyCreatureDestroyed
 	// triggerCount bounds the enum so Triggers can range it; it is not a trigger.
 	triggerCount
 )
@@ -633,6 +639,8 @@ func (t Trigger) String() string {
 		return "After a Creature Is Used to Fight"
 	case TriggerAfterCreatureDestroyed:
 		return "After a Creature Is Destroyed"
+	case TriggerAfterFriendlyCreatureDestroyed:
+		return "After a Friendly Creature Is Destroyed"
 	case TriggerAfterPlayerForgesKey:
 		return "After a Player Forges a Key"
 	case TriggerAfterCreaturePlayed:
@@ -712,6 +720,8 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return "After a creature is used to fight, ", false
 	case TriggerAfterCreatureDestroyed:
 		return "After a creature is destroyed, ", false
+	case TriggerAfterFriendlyCreatureDestroyed:
+		return "After a friendly creature is destroyed, ", false
 	case TriggerAfterCreaturePlayed:
 		return "After a creature is played, ", false
 	case TriggerLeavesPlay:

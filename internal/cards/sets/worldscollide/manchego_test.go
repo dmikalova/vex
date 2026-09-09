@@ -9,8 +9,14 @@ import (
 
 // Manchego
 //
-//	Play: If you have 5 or fewer cards in your deck, steal 2A.
-//	Fight/Reap: You may shuffle Manchego into your deck.
+//	House:  Shadows
+//	Type:   Creature
+//	Rarity: Rare
+//	Power:  3
+//	Traits: Human • Thief
+//
+//	Play: If you have 5 or fewer cards in your deck, steal 2 Æmber.
+//	Fight/Reap: You may shuffle Manchego into its owner's deck.
 func TestManchego(t *testing.T) {
 	t.Run("steals with a small deck", func(t *testing.T) {
 		var m ct.Card

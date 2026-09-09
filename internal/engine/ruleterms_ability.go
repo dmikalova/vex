@@ -203,6 +203,16 @@ react.`,
 		},
 		{
 			Section:    SectionAbility,
+			Title:      "After a Friendly Creature Is Destroyed",
+			Definition: "An ability that resolves after a friendly creature is destroyed, with that creature as \"it\".",
+			Body: `This ability resolves after a friendly creature is destroyed, with the
+destroyed creature as "it" (Spartasaur destroys each non-Dinosaur creature). It
+resolves only after the whole destruction is complete and the destroyed cards
+have reached their discard piles, so a card destroyed alongside them does not
+react.`,
+		},
+		{
+			Section:    SectionAbility,
 			Title:      "After Your Opponent Plays a Card",
 			Definition: "An ability that resolves after your opponent plays a card.",
 			Body: `This ability resolves after your opponent plays a card (Teliga gains its

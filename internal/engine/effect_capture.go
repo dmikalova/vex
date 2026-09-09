@@ -167,6 +167,7 @@ func (e CaptureAember) Resolve(ctx *EffectContext) {
 				Source:     ctx.Source,
 				FromSupply: fromSupply,
 			})
+			ctx.It, ctx.HasIt = id, true
 		}
 	}
 }

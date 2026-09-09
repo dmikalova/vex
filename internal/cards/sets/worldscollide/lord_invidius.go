@@ -2,7 +2,7 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// LordInvidius
+// Lord Invidius
 //
 //	House:  Dis
 //	Type:   Creature
@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon • Leader
 //
 //	Elusive.
-//	While Lord Invidius is in the center of your battleline, it gains, "Reap: Take control of an enemy flank creature and exhaust it. While under your control, it belongs to house Dis."
+//	While Lord Invidius is in the center of your battleline, it gains, "Reap: Take control of an enemy flank creature until this creature leaves play. Exhaust it. It belongs to house Dis until it leaves play."
 var LordInvidius = card.New(
 	"Lord Invidius",
 	card.House.Dis,

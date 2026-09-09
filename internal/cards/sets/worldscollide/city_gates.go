@@ -1,20 +1,15 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// CityGates
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// City Gates
 //
 //	House:  Saurian
 //	Type:   Artifact
 //	Rarity: Rare
 //	Traits: Location
 //
-//	Action: A friendly creature captures 1A. If that creature is a Dinosaur, it captures 2A instead.
+//	Action: A friendly creature captures 1 Æmber from your opponent. If it is a Dinosaur creature, the chosen creature captures 1 Æmber from your opponent.
 var CityGates = card.New(
 	"City Gates",
 	card.House.Saurian,
@@ -22,5 +17,20 @@ var CityGates = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "216"),
 	card.WithTraits(card.Traits.Location),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+			card.CaptureAember{
+				Amount: 1,
+				Target: card.Target.FriendlyCreature,
+				Source: card.Opponent,
+			},
+			card.Conditional{
+				Cond: card.ItIsOfTrait{Trait: card.Traits.Dinosaur},
+				Then: card.CaptureAember{
+					Amount: 1,
+					Target: card.Target.TheChosenCreature,
+					Source: card.Opponent,
+				},
+			},
+		}}),
 )

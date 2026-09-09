@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Choose a trait. Purge each card with that trait. Each player gains 1A for each card they controlled that was purged this way.
+//	Play: Choose a trait, then purge each card with that trait. Each player gains 1 Æmber for each card they controlled that was purged this way.
 func TestHarvestTime(t *testing.T) {
 	t.Run("purges every card of the chosen trait and pays each player", func(t *testing.T) {
 		var demon1, demon2, foe, survivor ct.Card

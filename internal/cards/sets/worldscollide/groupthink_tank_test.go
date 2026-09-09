@@ -16,8 +16,7 @@ import (
 //	Armor:  3
 //	Traits: Robot • Experiment
 //
-//	Action: Deal 4D to each creature that shares a house with at least 1 of its
-//	neighbors.
+//	Action: Deal 4 damage to each creature that shares a house with at least 1 of its neighbors.
 func TestGroupthinkTank(t *testing.T) {
 	var a, b, c ct.Card
 	h := ct.Play(t, ct.Setup{

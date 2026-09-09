@@ -2,7 +2,7 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// CALV1N
+// CALV-1N
 //
 //	House:  Star Alliance
 //	Type:   Creature

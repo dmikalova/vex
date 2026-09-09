@@ -491,6 +491,24 @@ func TestAemberInPool(t *testing.T) {
 	}
 }
 
+func TestAemberOnFriendlyCreatures(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	a := g.AddToBattleline(testCreature("a", 3), 0)
+	b := g.AddToBattleline(testCreature("b", 3), 0)
+	g.AddToBattleline(testCreature("e", 3), 1)
+	g.addAmberOn(a, 2)
+	g.addAmberOn(b, 3)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	c := AemberOnFriendlyCreatures{}
+	if got := c.Value(ctx); got != 5 {
+		t.Errorf("value = %d, want 5", got)
+	}
+	if got := c.CountText(); got != "Æmber on friendly creatures" {
+		t.Errorf("count text = %q", got)
+	}
+}
+
 func TestNeighborsOfThis(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	left := NewCard("left", Mars, Creature, Common, WithPower(2))

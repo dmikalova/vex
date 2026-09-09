@@ -1273,3 +1273,17 @@ func (c NamedCardPurged) Met(ctx *EffectContext) bool {
 	}
 	return purged != c.Not
 }
+
+// OpponentHasMoreKeys is met when the controller's opponent has forged strictly
+// more keys than the controller — Hugger Mugger steals only when behind on keys.
+type OpponentHasMoreKeys struct{}
+
+// CondText renders the clause.
+func (c OpponentHasMoreKeys) CondText() string {
+	return "if your opponent has more forged keys than you"
+}
+
+// Met reports whether the opponent's forged-key count exceeds the controller's.
+func (c OpponentHasMoreKeys) Met(ctx *EffectContext) bool {
+	return ctx.Resolver.Keys(ctx.Opponent()) > ctx.Resolver.Keys(ctx.Controller)
+}

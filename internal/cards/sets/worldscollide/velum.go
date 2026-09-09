@@ -10,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Human • Scientist
 //
-//	Reap: Archive a card. If you control Hyde, archive 2 cards instead.
-//	Destroyed: Archive Hyde from your discard pile. If you do, archive Velum.
+//	Reap: Archive a card from your hand, or 2 cards if you control Hyde.
+//	Destroyed: Archive Hyde from your discard pile -> archive Velum from play.
 var Velum = card.New(
 	"Velum",
 	card.House.Logos,

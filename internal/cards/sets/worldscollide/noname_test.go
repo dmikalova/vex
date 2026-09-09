@@ -15,8 +15,8 @@ import (
 //	Power:  1
 //	Traits: Demon
 //
-//	Noname gets +1 power for each purged card.
-//	Play/Fight/Reap: Purge a card in a discard pile.
+//	Noname gains +1 power for each purged card.
+//	Play/Fight/Reap: Purge a card from a discard pile.
 func TestNoname(t *testing.T) {
 	t.Run("reaping purges a discard-pile card and grows Noname", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

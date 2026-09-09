@@ -63,6 +63,40 @@ func TestAemberProtection(t *testing.T) {
 	}
 }
 
+// TestAemberProtectionWhileItHasAember covers protection that holds only while the
+// protecting card itself carries Æmber (Odoac the Patrician).
+func TestAemberProtectionWhileItHasAember(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.State.Aember[1] = 3
+	odoac := g.AddToBattleline(
+		NewCard("odoac", Saurian, Creature, Common,
+			WithPower(5), WithAemberCannotBeStolenWhileItHasAember()),
+		1,
+	)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	// With no Æmber on Odoac the pool is unprotected.
+	if !(StealAember{Amount: 1}).resolveGate(ctx) {
+		t.Error("without Æmber on the card the pool should be stealable")
+	}
+	g.State.Aember[1] = 3
+
+	// Once Æmber sits on Odoac the pool is protected.
+	cs := g.State.Cards[odoac]
+	cs.Amber = 1
+	g.State.Cards[odoac] = cs
+	if (StealAember{Amount: 1}).resolveGate(ctx) {
+		t.Error("with Æmber on the card the pool should be protected")
+	}
+
+	def := NewCard("odoac", Saurian, Creature, Common,
+		WithPower(5), WithAemberCannotBeStolenWhileItHasAember())
+	if !strings.Contains(RenderCardRules(&def),
+		"While odoac has Æmber on it, your Æmber cannot be stolen.") {
+		t.Error("card rules should render the conditional cannot-be-stolen line")
+	}
+}
+
 // TestAemberProtectionByUpgrade covers protection granted by an attached Upgrade
 // (Static.AemberCannotBeStolen) rather than the host's own field.
 func TestAemberProtectionByUpgrade(t *testing.T) {

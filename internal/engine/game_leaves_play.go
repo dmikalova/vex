@@ -318,6 +318,7 @@ func (g *Game) destroyTogether(controller int, ids []LocalID) {
 	for _, id := range ids {
 		if g.TypeOf(id) == Creature {
 			g.emitAfterEnemyDestroyed(id)
+			g.emitAfterFriendlyDestroyed(id)
 			g.emitAfterCreatureDestroyed(id)
 		}
 	}

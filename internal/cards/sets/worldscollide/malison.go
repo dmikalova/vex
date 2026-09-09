@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Demon
 //
-//	Fight: You may move an enemy creature anywhere in its controller's battleline. Then, if it is on a flank, it captures 1A from its own side.
+//	Fight: You may move an enemy creature anywhere in its controller's battleline -> if it is on a flank, the chosen creature captures 1 Æmber from your opponent.
 var Malison = card.New(
 	"Malison",
 	card.House.Dis,

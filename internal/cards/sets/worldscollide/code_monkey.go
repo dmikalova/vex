@@ -8,10 +8,10 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Creature
 //	Rarity: Uncommon
 //	Power:  3
-//	Traits: Ai • Beast
+//	Traits: AI • Beast
 //
-//	Deploy. (This creature can enter play anywhere in your battleline.)
-//	Play: Archive each neighboring creature. If those creatures share a house, gain 2A.
+//	Deploy.
+//	Play: Archive each neighboring creature from play. If those creatures share a house, gain 2 Æmber.
 var CodeMonkey = card.New(
 	"Code Monkey",
 	card.House.Logos,

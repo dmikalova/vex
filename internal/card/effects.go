@@ -514,6 +514,8 @@ type (
 	TurnCount = engine.TurnCount
 	// ForgedKey gates on whether a player forged a key this turn or their previous one.
 	ForgedKey = engine.ForgedKey
+	// OpponentHasMoreKeys is met when your opponent has forged more keys than you.
+	OpponentHasMoreKeys = engine.OpponentHasMoreKeys
 	// AemberStolenFromYou is met if your opponent stole Æmber from you last turn.
 	AemberStolenFromYou = engine.AemberStolenFromYou
 	// EnemyCreatureDestroyed is met once an enemy creature has been destroyed this turn.
@@ -567,6 +569,8 @@ type (
 	ProducedThisWay = engine.ProducedThisWay
 	// AemberInPool counts the Æmber currently in a player's pool.
 	AemberInPool = engine.AemberInPool
+	// AemberOnFriendlyCreatures counts the Æmber sitting on your creatures.
+	AemberOnFriendlyCreatures = engine.AemberOnFriendlyCreatures
 	// NeighborsOfThis counts the battleline neighbors of the source creature (0-2).
 	NeighborsOfThis = engine.NeighborsOfThis
 	// NeighborsSharingHouse counts the neighbors of the context creature (ctx.It)

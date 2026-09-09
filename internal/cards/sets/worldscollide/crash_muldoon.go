@@ -1,15 +1,10 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// CrashMuldoon
+// Crash Muldoon
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Creature
 //	Rarity: Rare
 //	Power:  3
@@ -20,11 +15,17 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Action: Use a neighboring non-Star Alliance creature.
 var CrashMuldoon = card.New(
 	"Crash Muldoon",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "327"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human, card.Traits.Pilot),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Deploy),
+	card.WithEntersPlay(card.Ready{Target: card.Target.This}),
+	card.WithAbility(
+		card.Trigger.Action, card.Use{
+			Max:    1,
+			Target: card.Target.EachFriendlyCreature.Neighboring().ExceptHouse(card.House.Self),
+		}),
 )

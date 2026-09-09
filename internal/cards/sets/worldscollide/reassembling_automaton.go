@@ -2,7 +2,7 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ReassemblingAutomaton
+// Reassembling Automaton
 //
 //	House:  Logos
 //	Type:   Creature
@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Robot • Experiment
 //
-//	Destroyed: If you have any other creatures in play, instead of destroying Reassembling Automaton, fully heal it, exhaust it, and move it to a flank.
+//	Destroyed: If you have any other creatures in play, instead of destroying Reassembling Automaton, fully heal it, and exhaust it, and move it to either flank of its controller's battleline.
 var ReassemblingAutomaton = card.New(
 	"Reassembling Automaton",
 	card.House.Logos,

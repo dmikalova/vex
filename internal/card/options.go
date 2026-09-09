@@ -70,6 +70,11 @@ var (
 	}
 	// WithAemberCannotBeStolen keeps the controller's Æmber from being stolen.
 	WithAemberCannotBeStolen = func() Option { return gameplay(engine.WithAemberCannotBeStolen()) }
+	// WithAemberCannotBeStolenWhileItHasAember keeps the controller's Æmber from
+	// being stolen while the card itself has Æmber on it.
+	WithAemberCannotBeStolenWhileItHasAember = func() Option {
+		return gameplay(engine.WithAemberCannotBeStolenWhileItHasAember())
+	}
 	// WithSpendableAember lets Æmber banked on this card be spent when forging.
 	WithSpendableAember = func() Option { return gameplay(engine.WithSpendableAember()) }
 	// WithGainsForgeAember gives this card's controller all the Æmber their

@@ -2,13 +2,13 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// InformationExchange
+// Information Exchange
 //
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Steal 1A. If your opponent stole A from you on their previous turn, steal 2A instead.
+//	Play: Steal 1 Æmber, or 2 if your opponent stole Æmber from you on their previous turn.
 var InformationExchange = card.New(
 	"Information Exchange",
 	card.House.Logos,

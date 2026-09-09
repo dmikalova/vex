@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// OdoacThePatrician
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Odoac the Patrician
 //
 //	House:  Saurian
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Dinosaur • Politician
 //
-//	Play: Capture 1A.
-//	While Odoac the Patrician has A on it, your A cannot be stolen.
+//	While Odoac the Patrician has Æmber on it, your Æmber cannot be stolen.
+//	Play: Odoac the Patrician captures 1 Æmber from your opponent.
 var OdoacThePatrician = card.New(
 	"Odoac the Patrician",
 	card.House.Saurian,
@@ -25,5 +20,11 @@ var OdoacThePatrician = card.New(
 	card.Provenance(card.WC, "188"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Politician),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAemberCannotBeStolenWhileItHasAember(),
+	card.WithAbility(
+		card.Trigger.Play, card.CaptureAember{
+			Amount: 1,
+			Target: card.Target.This,
+			Source: card.Opponent,
+		}),
 )

@@ -10,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  1
 //	Traits: Demon
 //
-//	Noname gets +1 power for each purged card.
-//	Play/Fight/Reap: Purge a card in a discard pile.
+//	Noname gains +1 power for each purged card.
+//	Play/Fight/Reap: Purge a card from a discard pile.
 var Noname = card.New(
 	"Noname",
 	card.House.Dis,

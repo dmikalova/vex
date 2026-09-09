@@ -2,13 +2,12 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// AcademyTraining
+// Academy Training
 //
 //	House:  Logos
 //	Type:   Upgrade
 //	Rarity: Rare
 //
-//	If you control this creature, it belongs to house Logos. (Instead of its original house.)
 //	This creature gains, "Reap: Draw a card."
 var AcademyTraining = card.New(
 	"Academy Training",

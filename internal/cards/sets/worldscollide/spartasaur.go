@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Spartasaur
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Saurian
 //	Type:   Creature
@@ -17,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Dinosaur • Soldier
 //
 //	After a friendly creature is destroyed, destroy each non-Dinosaur creature.
-//	Fight: Gain 2A.
+//	Fight: Gain 2 Æmber.
 var Spartasaur = card.New(
 	"Spartasaur",
 	card.House.Saurian,
@@ -27,5 +22,13 @@ var Spartasaur = card.New(
 	card.WithPower(6),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Soldier),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.AfterFriendlyCreatureDestroyed, card.Destroy{
+			Target: card.Target.EachCreature.ExceptTrait(card.Traits.Dinosaur),
+		}),
+	card.WithAbility(
+		card.Trigger.Fight, card.GainAember{
+			Player: card.Controller,
+			Amount: 2,
+		}),
 )

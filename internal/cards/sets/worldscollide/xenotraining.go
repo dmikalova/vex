@@ -1,26 +1,27 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Xenotraining
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: For each house represented among friendly creatures, a friendly creature captures 1A.
+//	Play: For each house represented among friendly creatures, a friendly creature captures 1 Æmber from your opponent.
 var Xenotraining = card.New(
 	"Xenotraining",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "323"),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.CaptureAember{
+			Amount: 1,
+			Target: card.Target.FriendlyCreature,
+			Source: card.Opponent,
+			Times:  card.HousesAmong{Player: card.Controller, Type: card.Type.Creature},
+		}),
 )

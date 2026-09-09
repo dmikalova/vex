@@ -2,7 +2,7 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// EeOnTheFringes
+// E'e on the Fringes
 //
 //	House:  Dis
 //	Type:   Creature
@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Imp
 //
 //	Elusive.
-//	During your turn, after you discard a Dis card from your hand, you may purge a Dis card from a discard pile. If you do, steal 1A.
+//	After you discard a Dis card, you may purge a Dis card from a discard pile -> steal 1 Æmber.
 var EeOnTheFringes = card.New(
 	"E'e on the Fringes",
 	card.House.Dis,

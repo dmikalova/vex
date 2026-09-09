@@ -16,7 +16,7 @@ import (
 //	Traits: Demon
 //
 //	Taunt.
-//	At the end of your "ready cards" step, purge a card from your hand. If you do, give Greater Oxtet two +1 power counters.
+//	At the end of your "ready cards" step, you may purge a card from your hand -> give Greater Oxtet two +1 power counters.
 func TestGreaterOxtet(t *testing.T) {
 	t.Run("purges a card to grow by two", func(t *testing.T) {
 		var fodder ct.Card

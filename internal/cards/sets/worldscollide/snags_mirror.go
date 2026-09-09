@@ -2,7 +2,7 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// SnagsMirror
+// Snag's Mirror
 //
 //	House:  Dis
 //	Type:   Artifact

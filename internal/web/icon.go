@@ -233,7 +233,8 @@ func triggerIcon(t engine.Trigger) string {
 	case engine.TriggerAction, engine.TriggerAfterUse, engine.TriggerAfterUsedSelf:
 		return "glyph-action"
 	case engine.TriggerDestroyed, engine.TriggerLeavesPlay,
-		engine.TriggerAfterCreatureDestroyed, engine.TriggerAfterEnemyCreatureDestroyed:
+		engine.TriggerAfterCreatureDestroyed, engine.TriggerAfterEnemyCreatureDestroyed,
+		engine.TriggerAfterFriendlyCreatureDestroyed:
 		return "glyph-destroyed"
 	case engine.TriggerAfterForgeKey:
 		return "forge"

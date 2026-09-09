@@ -179,6 +179,7 @@ func (g *Game) hazardous(id LocalID) int {
 	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
 		h += g.cat.def(up).Static.HazardousBonus
 	}
+	h += g.constantBonus(id, func(c ConstantAbility) int { return c.HazardousBonus })
 	return h
 }
 
@@ -563,6 +564,9 @@ func (g *Game) cannotPlayCard(player int) bool {
 func (g *Game) aemberProtected(player int) bool {
 	for _, id := range g.allInPlay(player) {
 		if g.cat.def(id).AemberCannotBeStolen {
+			return true
+		}
+		if g.cat.def(id).AemberCannotBeStolenWhileItHasAember && g.AmberOn(id) > 0 {
 			return true
 		}
 		for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {

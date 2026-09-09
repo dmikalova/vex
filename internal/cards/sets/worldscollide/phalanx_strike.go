@@ -1,20 +1,15 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// PhalanxStrike
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Phalanx Strike
 //
 //	House:  Saurian
 //	Type:   Tactic
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Choose a creature. Deal 1D to it for each friendly creature. You may exalt a friendly creature to repeat the preceding effect.
+//	Play: For each friendly creature in play, deal 1 damage to a creature. You may exalt a friendly creature to repeat the preceding effect.
 var PhalanxStrike = card.New(
 	"Phalanx Strike",
 	card.House.Saurian,
@@ -22,5 +17,16 @@ var PhalanxStrike = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.WC, "189"),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.ExaltToRepeat{
+			Do: card.DealDamage{
+				Amount: 1,
+				Per: card.InPlay{
+					Player: card.Controller,
+					Type:   card.Type.Creature,
+				},
+				Target: card.Target.Creature,
+			},
+			Exalt: card.Target.FriendlyCreature,
+		}),
 )

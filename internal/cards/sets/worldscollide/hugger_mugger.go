@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// HuggerMugger
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Hugger-Mugger
 //
 //	House:  Shadows
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Elf • Thief
 //
-//	Elusive. (The first time this creature is attacked each turn, no damage is dealt.)
-//	Play: Capture 1A. Then, if your opponent has more forged keys than you, steal 1A.
+//	Elusive.
+//	Play: Hugger-Mugger captures 1 Æmber from your opponent. If your opponent has more forged keys than you, steal 1 Æmber.
 var HuggerMugger = card.New(
 	"Hugger-Mugger",
 	card.House.Shadows,
@@ -25,5 +20,17 @@ var HuggerMugger = card.New(
 	card.Provenance(card.WC, "240"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithAbility(
+		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+			card.CaptureAember{
+				Amount: 1,
+				Target: card.Target.This,
+				Source: card.Opponent,
+			},
+			card.Conditional{
+				Cond: card.OpponentHasMoreKeys{},
+				Then: card.StealAember{Amount: 1},
+			},
+		}}),
 )

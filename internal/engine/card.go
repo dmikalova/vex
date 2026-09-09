@@ -140,6 +140,10 @@ type CardDefinition struct {
 	// impossible for the opponent to steal (The Vaultkeeper).
 	AemberCannotBeStolen bool
 
+	// AemberCannotBeStolenWhileItHasAember protects its controller's Æmber from
+	// theft only while the card itself has Æmber on it (Odoac the Patrician).
+	AemberCannotBeStolenWhileItHasAember bool
+
 	// SpendableAember lets the Æmber sitting on this card be put toward a key,
 	// so it is a private vault its controller can bank into (Safe Place).
 	SpendableAember bool
@@ -398,6 +402,9 @@ type ConstantAbility struct {
 	// Flat stat bonuses added to each creature the Target reaches.
 	PowerBonus int
 	ArmorBonus int
+	// HazardousBonus is Hazardous the ability grants each creature the Target
+	// reaches — Armsmaster Molina gives each of its neighbors hazardous 3.
+	HazardousBonus int
 	// Target says which cards the ability reaches, read from the source's point of
 	// view; the zero value reaches every card in play.
 	Target Target
@@ -737,6 +744,12 @@ func WithDrawModifierOffFlank(player Player, amount int) CardOption {
 // Æmber from being stolen (The Vaultkeeper).
 func WithAemberCannotBeStolen() CardOption {
 	return func(c *CardDefinition) { c.AemberCannotBeStolen = true }
+}
+
+// WithAemberCannotBeStolenWhileItHasAember keeps its controller's Æmber from
+// being stolen only while the card itself has Æmber on it (Odoac the Patrician).
+func WithAemberCannotBeStolenWhileItHasAember() CardOption {
+	return func(c *CardDefinition) { c.AemberCannotBeStolenWhileItHasAember = true }
 }
 
 // WithSpendableAember lets the Æmber banked on the card be spent when its

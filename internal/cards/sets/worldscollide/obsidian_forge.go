@@ -2,7 +2,7 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ObsidianForge
+// Obsidian Forge
 //
 //	House:  Dis
 //	Type:   Artifact
@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Item
 //
-//	Action: Sacrifice any number of friendly creatures. Then, you may forge a key at +6A current cost, reduced by 1A for each creature sacrificed this way. If you do, destroy Obsidian Forge.
+//	Action: Destroy any number of friendly creatures. Then, you may forge a key at +6 Æmber current cost, reduced by 1 Æmber for each creature destroyed this way. If you do, destroy Obsidian Forge.
 var ObsidianForge = card.New(
 	"Obsidian Forge",
 	card.House.Dis,
