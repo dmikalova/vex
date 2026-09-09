@@ -196,7 +196,7 @@ func (s *style) save(ctx app.Context) {
 // every branch of a Player bar at once, and a gallery that has to be played to
 // is a gallery nobody looks at.
 func styleHarness() *game {
-	g := &game{selHand: -1, zonesPlayer: -1, forgingKey: -1, handSlot: -1, deckOpen: -1}
+	g := &game{selHand: -1, zonesPlayer: -1, forgingKey: -1, handSlot: -1}
 	g.g = engine.NewGame("Player One", "Player Two", 1)
 	g.mavericks = map[engine.LocalID]bool{}
 	g.legacy = map[engine.LocalID]bool{}
@@ -241,7 +241,7 @@ func styleHarness() *game {
 // the active player is 0 so a facedown under-card on the opponent's host (owner
 // 1) reads as a card-back, which is the difference the section shows.
 func attachHarness() *game {
-	g := &game{selHand: -1, zonesPlayer: -1, forgingKey: -1, handSlot: -1, deckOpen: -1}
+	g := &game{selHand: -1, zonesPlayer: -1, forgingKey: -1, handSlot: -1}
 	g.g = engine.NewGame("Player One", "Player Two", 1)
 	g.mavericks = map[engine.LocalID]bool{}
 	g.legacy = map[engine.LocalID]bool{}
@@ -672,6 +672,8 @@ var cardStatuses = []struct {
 	set  func(*cardView)
 }{
 	{"Stunned", func(c *cardView) { c.Stunned = true }},
+	{"Warded", func(c *cardView) { c.Warded = true }},
+	{"Enraged", func(c *cardView) { c.Enraged = true }},
 	{"Exhausted", func(c *cardView) { c.Exhausted = true }},
 	{"Stunned and exhausted", func(c *cardView) { c.Stunned, c.Exhausted = true, true }},
 	{"One +1 power counter", func(c *cardView) { c.PowerCounters = 1 }},
@@ -869,8 +871,10 @@ var galleryIcons = []string{
 	"damage",
 	"deck-list",
 	"doom-counter",
+	"enrage",
 	"exhausted",
 	"forge",
+	"fuse-counter",
 	"glyph-action",
 	"glyph-ban",
 	"glyph-choose",
@@ -930,6 +934,7 @@ var galleryIcons = []string{
 	"type-creature",
 	"type-upgrade",
 	"undo",
+	"ward",
 	"wrench",
 	"zone-archives",
 	"zone-deck",

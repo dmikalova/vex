@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// CodeMonkey
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Code Monkey
 //
 //	House:  Logos
 //	Type:   Creature
@@ -25,5 +20,15 @@ var CodeMonkey = card.New(
 	card.Provenance(card.WC, "147"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Ai, card.Traits.Beast),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Deploy),
+	card.WithAbility(
+		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+			card.ArchiveFromPlay{
+				Target: card.Target.EachCreature.Neighboring(),
+			},
+			card.Conditional{
+				Cond: card.ArchivedCreaturesShareHouse{},
+				Then: card.GainAember{Player: card.Controller, Amount: 2},
+			},
+		}}),
 )

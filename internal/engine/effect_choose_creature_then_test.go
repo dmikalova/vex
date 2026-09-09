@@ -33,6 +33,26 @@ func TestChooseCreatureThen(t *testing.T) {
 	}
 }
 
+func TestChooseCreatureThenUnderMay(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	ally := g.AddToBattleline(testCreature("ally", 3), 0)
+	g.State.Cards[ally].Damage = 2
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	g.SetChooser(0, &idQueueChooser{ids: []LocalID{ally}})
+
+	e := ChooseCreatureThen{
+		Target: Target{Kind: TargetChosenCreature},
+		Then:   Heal{Fully: true, Target: Target{Kind: TargetTriggeringCreature}},
+	}
+	if !e.declinable() {
+		t.Error("a single chosen-creature decision should be declinable")
+	}
+	May{Do: e}.Resolve(ctx)
+	if g.State.Cards[ally].Damage != 0 {
+		t.Error("the chosen creature should have been healed under May")
+	}
+}
+
 func TestChooseCreatureThenNoCandidates(_ *testing.T) {
 	g := NewGame("A", "B", 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}

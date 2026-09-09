@@ -129,6 +129,7 @@ func TestLogEntryText(t *testing.T) {
 		{PositionsSwapped{A: 1, B: 2}, "Card1 swaps positions with Card2"},
 		{MovedToFlank{Creature: 2, Right: true}, "Card2 moves to the right flank"},
 		{MovedToFlank{Creature: 2}, "Card2 moves to the left flank"},
+		{MovedWithinBattleline{Creature: 2}, "Card2 moves within its battleline"},
 		{ControlTaken{Player: 1, Card: 3}, "P1 takes control of Card3"},
 		{ControlReturned{Card: 3, Owner: 0}, "Card3 returns to P0's control"},
 		{CardDestroyed{Card: 3}, "Card3 is destroyed"},
@@ -203,11 +204,13 @@ func TestLogEntryText(t *testing.T) {
 		{CardPurgedFromDiscard{Player: 0, Card: 6}, "P0 purges Card6 from a discard pile"},
 		{CardPurgedFromHand{Player: 1, Card: 6}, "P1 purges Card6 from a hand"},
 		{CardPurgedFromArchives{Player: 1, Card: 6}, "P1 purges Card6 from archives"},
+		{CardPurgedFromDeck{Player: 1, Card: 6}, "P1 purges Card6 from a deck"},
 		{CardPurged{Card: 6}, "Card6 is purged"},
 		{CardPutOnTopOfDeck{Card: 6, Owner: 0}, "Card6 is put on top of P0's deck"},
 		{CardReturnedToHand{Card: 6, Owner: 1}, "Card6 is returned to P1's hand"},
 		{CardPutIntoArchives{Card: 6, Owner: 0}, "Card6 is put into P0's archives"},
 		{CardShuffledIntoDeck{Card: 6, Owner: 1}, "Card6 is shuffled into P1's deck"},
+		{DeckShuffled{Player: 1}, "P1's deck is shuffled"},
 		{
 			CardsShuffledIntoDeckBy{Source: 5, Owner: 1, Cards: []LocalID{3, 8}},
 			"Card5 shuffles Card3 and Card8 into P1's deck",
@@ -321,6 +324,10 @@ func TestLogEntryText(t *testing.T) {
 		{
 			HouseForbiddenNextTurn{Player: 1, House: Logos},
 			"P1 cannot choose house Logos next turn",
+		},
+		{
+			HouseWagerArmed{Predictor: 0, Player: 1, House: Logos, Amount: 2},
+			"P0 steals 2 Æmber if P1 chooses house Logos next turn",
 		},
 		{
 			KeywordLostByAll{Keyword: Elusive},

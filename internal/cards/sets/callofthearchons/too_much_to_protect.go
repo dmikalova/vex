@@ -19,4 +19,5 @@ var TooMuchToProtect = card.New(
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.StealAember{By: card.AllBut(6)}),
+	card.OneCopyPerDeck(),
 )

@@ -46,6 +46,14 @@ ones whose name does not carry them):
 awk '/^type .* struct \{/{s=1;next} /^\}/{s=0} s && /^\t[A-Za-z]/ && prev !~ /^\t*\/\// {print FILENAME":"FNR": "$0} {prev=$0}' $(git ls-files '<area>/*.go' | grep -v _test)
 ```
 
+Atoms fused to an operator (a disjunction welded into one node's name — split into
+atoms plus a combinator), and types named for a card rather than a mechanic (a
+fusion tell):
+
+```sh
+grep -rnE 'type [A-Z][A-Za-z]*(Or|And)[A-Z]' <area> --include='*.go' | grep -v _test
+```
+
 Then read the area's files end to end. The greps find debris; the findings that
 matter — a fused effect, a rule reimplemented in the client, a file that has
 become two files — only show up in a read.
@@ -61,11 +69,39 @@ the card as `Sequence{A, Conditional{C, B}}`, with values threaded through
 bespoke effect. A node named after a card rather than a mechanic is the loudest
 tell.
 
+**Atomization.** A predicate or amount that welds two atoms to an operator is a
+combinator waiting to be extracted: a condition named for the two questions it
+asks (`TraitOrAember`) splits into atoms plus a shared `Or{…}` (over conditions)
+or `OrAmount` (over amounts), so any future pair composes for free. The operator
+has to compose at the **clause boundary** — each atom renders a self-contained
+clause under a shared prefix (every `CondText` starts `"if "`), so `Or` strips the
+prefix and rejoins (`"if A or B"`). Disjunction and a guarded alternate amount
+(`"steal 1, or 2 if …"`) qualify; **negation does not** — "it is not on a flank"
+infixes the "not" inside the clause, so a generic `Not{}` cannot build it from
+"it is on a flank", and the sense stays a `Not bool` on the atom that renders its
+own negated text. A `Not bool` field is a feature, not a fusion. The tell that a
+combinator exists but is unused is a fresh one-off whose job is a disjunction
+`Or` already expresses.
+
 **Duplication.** Two effects differing by a constant or a side are one effect
 parameterized over an enum; two conditions asking the same question of different
 subjects are one condition with a `Player`; two card files repeating a five-line
 ability want a shared composite. Retire the shape you replaced and re-express its
-callers in the same commit.
+callers in the same commit. But not every family is duplication. A **pure**
+predicate or count (a `Met`/`Value` plus its text, no side effect) folds onto an
+enum-keyed switch freely — `PoolAember{Player, Is}` is one node over five
+comparisons, and the per-player "... this way" tallies fold into
+`ProducedThisWay{Tally, Player}`. What stays separate is a family whose
+**resolution** diverges (a different `Resolve` path or side effect) or that
+**binds context** differently (one leaves `it`, another does not): merging those
+is a branchy blob switching inside `Resolve`, not one mechanic (the random/top
+discard verbs). A **partial convention** — merging a subset of a family and
+leaving siblings as focused types — is a caution to weigh, not a veto: the "...
+this way" tallies merged even though the simpler whole-tally counts
+(`CardsDestroyed`) stayed separate, because the merged subset shared one rendering
+shape. Merge an effect family only when the variants collapse to one render and
+one resolution bar a single enum-selected noun (`ArchiveTopOfDeck` +
+`ArchiveTopOfDiscard` → `ArchiveTop{From Zone}`).
 
 **Ladder violations.** A change belongs at the cheapest rung that can carry it: a
 field or Strategy on an existing effect (a `Count`, `Selector`, `Condition`,
@@ -162,6 +198,12 @@ that now contradicts the code is itself a finding.
 
 A one-off with no general rule behind it ratchets to nothing. Say so and move on
 rather than inventing a rule to have written one.
+
+A **rejected** refactor ratchets too. When you weigh a merge or a move and decide
+_against_ it — a consolidation that would become a branchy blob, an atomization no
+card yet needs — write the decision (and why) where the next sweep will read it,
+so it is not re-proposed every round. "Do not merge X and Y" is as much a rule as
+"merge X and Y."
 
 ## 6. Close green and report
 

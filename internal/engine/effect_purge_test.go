@@ -13,6 +13,9 @@ func TestPurge(t *testing.T) {
 	if got := (PurgeCard{Zone: Discard, Amount: 2}).Text(); got != "purge 2 cards from a discard pile" {
 		t.Errorf("count text = %q", got)
 	}
+	if got := (PurgeCard{Zone: Discard, House: Dis}).Text(); got != "purge a Dis card from a discard pile" {
+		t.Errorf("house text = %q", got)
+	}
 
 	// Standalone up-to purge: one zone, purge 2 of 3 (default chooser takes 0).
 	g := NewGame("A", "B", 1)
@@ -83,6 +86,20 @@ func TestPurge(t *testing.T) {
 	if (PurgeCard{Zone: Discard, Type: Creature}).resolveGate(ctx5) {
 		t.Error("no creature to purge should report failure")
 	}
+
+	// House filter: only the matching-house card is eligible.
+	g6 := NewGame("A", "B", 1)
+	dis := g6.Register(NewCard("dis", Dis, Creature, Common, WithPower(3)), 1)
+	logos := g6.Register(NewCard("logos", Logos, Creature, Common, WithPower(3)), 1)
+	g6.State.Discard[1].add(logos)
+	g6.State.Discard[1].add(dis)
+	ctx6 := &EffectContext{Resolver: g6, Controller: 0}
+	if !(PurgeCard{Zone: Discard, House: Dis}).resolveGate(ctx6) {
+		t.Error("purging a Dis card should report success")
+	}
+	if got := g6.Purge(1); len(got) != 1 || got[0] != dis {
+		t.Errorf("purge = %v, want [dis]", got)
+	}
 }
 
 func TestPurgeFromHand(t *testing.T) {
@@ -135,6 +152,53 @@ func TestPurgeFromHand(t *testing.T) {
 	PurgeFromHand{Player: Opponent, House: Sanctum}.Resolve(ctx3)
 	if len(g3.Purge(1)) != 0 {
 		t.Error("no matching card should purge nothing")
+	}
+
+	// Under a May the purge is offered as its own single optional choice.
+	if !(PurgeFromHand{Player: Opponent}).declinable() {
+		t.Error("PurgeFromHand should be declinable")
+	}
+	g4 := NewGame("A", "B", 1)
+	card4 := g4.Register(NewCard("dark", Shadows, Creature, Common, WithPower(3)), 1)
+	g4.State.Hand[1].add(card4)
+	ctx4 := &EffectContext{Resolver: g4, Controller: 0}
+	May{Do: PurgeFromHand{Player: Opponent}}.Resolve(ctx4)
+	if got := g4.Purge(1); len(got) != 1 || got[0] != card4 {
+		t.Errorf("May purge = %v, want [card4]", got)
+	}
+}
+
+func TestPurgeRandomFromHand(t *testing.T) {
+	// validate rejects an unset player.
+	if err := (PurgeRandomFromHand{}).validate(); err == nil {
+		t.Error("unset player should fail validation")
+	}
+	if err := (PurgeRandomFromHand{Player: Opponent}).validate(); err != nil {
+		t.Errorf("valid player should pass validation: %v", err)
+	}
+
+	// Text variants.
+	if got := (PurgeRandomFromHand{Player: Opponent}).Text(); got != "purge a random card from your opponent's hand" {
+		t.Errorf("opponent text = %q", got)
+	}
+	if got := (PurgeRandomFromHand{Player: Controller}).Text(); got != "purge a random card from your hand" {
+		t.Errorf("self text = %q", got)
+	}
+
+	// Resolve: the sole hand card is purged.
+	g := NewGame("A", "B", 1)
+	only := g.Register(NewCard("dark", Shadows, Creature, Common, WithPower(3)), 1)
+	g.State.Hand[1].add(only)
+	PurgeRandomFromHand{Player: Opponent}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if got := g.Purge(1); len(got) != 1 || got[0] != only {
+		t.Errorf("purge = %v, want [only]", got)
+	}
+
+	// An empty hand purges nothing.
+	g2 := NewGame("A", "B", 1)
+	PurgeRandomFromHand{Player: Opponent}.Resolve(&EffectContext{Resolver: g2, Controller: 0})
+	if len(g2.Purge(1)) != 0 {
+		t.Error("empty hand should purge nothing")
 	}
 }
 
@@ -210,6 +274,86 @@ func TestCardsPurgedCount(t *testing.T) {
 
 	if got := (CardsPurged{}).Value(ctx); got != 2 {
 		t.Errorf("purged = %d, want 2", got)
+	}
+}
+
+// A "you may purge a neighboring creature" is one clickable creature, so it is
+// asked declinably and asks nothing when the source has no neighbor (Buzzle at a
+// flank).
+func TestMayPurgeCreatureDeclinable(t *testing.T) {
+	neighboring := func() Target { return Target{Kind: TargetChosenCreature}.Neighboring() }
+
+	if !(PurgeCreature{Target: neighboring()}).declinable() {
+		t.Fatal("a chosen-target PurgeCreature should be declinable")
+	}
+
+	t.Run("accepted purges the clicked neighbor", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		ch := &cardDecliner{}
+		g.SetChooser(0, ch)
+		src := g.AddToBattleline(testCreature("src", 3), 0)
+		neighbor := g.AddToBattleline(testCreature("neighbor", 3), 0)
+		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+
+		May{Do: PurgeCreature{Target: neighboring()}}.Resolve(ctx)
+
+		if ch.asked != 1 {
+			t.Errorf("declinable prompts = %d, want 1", ch.asked)
+		}
+		if !g.State.Purge[0].contains(neighbor) {
+			t.Error("the clicked neighbor should have been purged")
+		}
+	})
+
+	t.Run("declined purges nothing", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.SetChooser(0, &cardDecliner{decline: true})
+		src := g.AddToBattleline(testCreature("src", 3), 0)
+		neighbor := g.AddToBattleline(testCreature("neighbor", 3), 0)
+		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+
+		May{Do: PurgeCreature{Target: neighboring()}}.Resolve(ctx)
+
+		if g.State.Purge[0].contains(neighbor) {
+			t.Error("a declined May should purge nothing")
+		}
+	})
+
+	t.Run("no neighbor is vacuous and asks nothing", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		ch := &cardDecliner{}
+		g.SetChooser(0, ch)
+		src := g.AddToBattleline(testCreature("src", 3), 0)
+		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+
+		if !(PurgeCreature{Target: neighboring()}).vacuous(ctx) {
+			t.Fatal("a lone creature's neighboring target should be vacuous")
+		}
+		May{Do: PurgeCreature{Target: neighboring()}}.Resolve(ctx)
+		if ch.asked != 0 {
+			t.Errorf("prompts with no neighbor = %d, want 0", ch.asked)
+		}
+	})
+}
+
+func TestPurgedAemberBonusCount(t *testing.T) {
+	if got := (PurgedAemberBonus{}).CountText(); got != "the total Æmber bonus of the purged cards" {
+		t.Errorf("count text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	two := g.Register(NewCard("two", Shadows, Creature, Common, WithAemberBonus(2)), 0)
+	one := g.Register(NewCard("one", Shadows, Creature, Common, WithAemberBonus(1)), 0)
+	none := g.Register(NewCard("none", Shadows, Creature, Common), 0)
+	g.State.Discard[0].add(two)
+	g.State.Discard[0].add(one)
+	g.State.Discard[0].add(none)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	// Default chooser purges the first two (bonuses 2 and 1).
+	PurgeCard{Zone: Discard, Amount: 2, UpTo: true}.Resolve(ctx)
+	if got := (PurgedAemberBonus{}).Value(ctx); got != 3 {
+		t.Errorf("purged bonus = %d, want 3", got)
 	}
 }
 

@@ -18,8 +18,9 @@ var SeekerNeedle = card.New(
 	card.Provenance(card.CotA, "290"),
 	card.WithTraits(card.Traits.Weapon),
 	card.WithAbility(
-		card.Trigger.Action, card.DamageThenIfDestroyed{
+		card.Trigger.Action, card.DamageThen{
 			Amount: 1,
+			After:  card.IfDestroyed,
 			Target: card.Target.Creature,
 			Then: card.GainAember{
 				Player: card.Controller,

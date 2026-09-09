@@ -133,10 +133,17 @@ a card is clicked. Therefore:
   way out; optional ones (`ChooseCardOrDecline`, set by `chooserDeclinable`)
   get a **Done** button, and Escape declines them.
 - A genuine yes/no or "choose one" stays an **option prompt** with buttons.
-- When a prompt's candidates are not on the board (a discard pile — World Tree,
-  Witch of the Eye), `openZoneForPrompt` opens that player's zone viewer, makes
-  only the candidates clickable, dims the rest, and scrolls to the row. The viewer
-  cannot be dismissed while it is the only place the prompt can be answered.
+- When a prompt's candidates are not on the board, `presentPrompt` routes it:
+  a bounded, mandatory "look at the top N cards of your deck" pick (Navigator Ali,
+  Lay of the Land) becomes a short list of **action-bar buttons**
+  (`promptCardButtons`), each naming its card and previewing it on hover; every
+  other out-of-play pick — a visible pile (World Tree, Witch of the Eye's discard),
+  or an unbounded one (declinable — Not Finished with You shuffles any number) —
+  opens that player's **zone viewer**, which makes only the candidates clickable,
+  dims the rest, and scrolls to the row. A viewer opened by a mandatory prompt
+  cannot be dismissed while it is the only place to answer; a declinable one is
+  finished with its **Done** affordance (or Escape), which submits the current
+  (possibly empty) selection.
 - Picking a fight target is not a card prompt (it runs on the UI goroutine, not
   behind a chooser), but it shares the same Tab cursor: `tabCandidates` hands
   both a chooser's candidates and `FightTargets` to `tabCandidate`/`isSelected`/
@@ -149,10 +156,16 @@ a card is clicked. Therefore:
 `phaseHouse` → `phaseMain` → (`phaseFlank` | `phaseFightTarget`) → `phaseOver`.
 
 A Deploy creature skips `phaseFlank`: playing it runs straight away, and the
-engine raises its `ChoosePosition` prompt (the `choosingPosition` overlay) so the
-player clicks a battleline creature to land beside — the direction toggle picks
-its left or right — or takes a flank button. A plain creature on a non-empty line
-still asks the which-flank question in `phaseFlank` first.
+engine raises its `ChoosePosition` prompt (`choosingPosition`). The creature is
+lifted while the prompt is up and its placement verbs sit on the lifted card
+(`deployActions`), like the flank question but extended for a creature that may
+enter anywhere: ordered left-to-right `[left flank] [deploy left] [deploy right]
+[right flank]`, the ends answer at once and the interior `deploy left`/`deploy
+right` arm which side of a clicked battleline creature it lands on (the line
+lights its creatures as the click targets). With no other friendly creatures in
+play there is only one placement, so `ChoosePosition` answers itself and no
+prompt is shown. A plain creature on a non-empty line still asks the which-flank
+question in `phaseFlank` first.
 
 Escape calls `dismiss`, which backs out **exactly one layer**, innermost first:
 picker → zone viewer → restart confirmation → key-forge picker → an escapable

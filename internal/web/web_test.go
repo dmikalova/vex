@@ -80,6 +80,28 @@ func TestHouseIconNamesHaveAssets(t *testing.T) {
 	}
 }
 
+// TestLogHouseIconsResolve guards the seam between the engine's log-icon keys and
+// the web assets they name. The engine keys a house emblem by its lowercased
+// printed name, so a house whose name carries a space — Star Alliance — arrives as
+// "house-star alliance", which has no matching asset stem and would render blank
+// unless the web side normalises it. This fails loudly if any house the log can
+// reference resolves to a missing asset, rather than shipping a silent gap.
+func TestLogHouseIconsResolve(t *testing.T) {
+	for h := engine.HouseNone + 1; int(h) < engine.NumHouses; h++ {
+		key := "house-" + strings.ToLower(h.String())
+		stem := logIconStem(key)
+		if !assetExists(t, stem) {
+			t.Errorf(
+				"house %v: log icon key %q resolves to stem %q, which has no web/assets/%s.svg",
+				h,
+				key,
+				stem,
+				stem,
+			)
+		}
+	}
+}
+
 func TestTypeAndKeyIconNamesHaveAssets(t *testing.T) {
 	for _, ct := range []engine.CardType{
 		engine.Creature, engine.Artifact, engine.Tactic, engine.Upgrade,

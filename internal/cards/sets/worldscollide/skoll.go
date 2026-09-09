@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Skoll
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Brobnar
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Beast
 //
-//	Assault 3. (Before this creature attacks, deal 3D to the attacked enemy.)
-//	After an enemy creature is destroyed by Skoll's assault damage, give a friendly creature a +1 power counter.
+//	Assault 3.
+//	After a creature is destroyed by Skoll's assault damage, give a friendly creature a +1 power counter.
 var Skoll = card.New(
 	"Skoll",
 	card.House.Brobnar,
@@ -25,5 +20,10 @@ var Skoll = card.New(
 	card.Provenance(card.WC, "29"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Beast),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAssault(3),
+	card.WithAbility(
+		card.Trigger.AfterAssaultDestroys, card.AddPowerCounter{
+			Target: card.Target.FriendlyCreature,
+			Amount: 1,
+		}),
 )

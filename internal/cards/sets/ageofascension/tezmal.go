@@ -25,4 +25,5 @@ var Tezmal = card.New(
 		card.Trigger.Reap, card.ChooseHouseThen{
 			Then: card.ForbidOpponentActiveHouse{},
 		}),
+	card.OneCopyPerDeck(),
 )

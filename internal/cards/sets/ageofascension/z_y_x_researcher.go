@@ -24,8 +24,8 @@ var ZYXResearcher = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseOne{
 			Options: []card.Effect{
-				card.ArchiveTopOfDeck{Amount: 1},
-				card.ArchiveTopOfDiscard{Amount: 1},
+				card.ArchiveTop{From: card.Deck, Amount: 1},
+				card.ArchiveTop{From: card.Discard, Amount: 1},
 			},
 		}),
 )

@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// IgonTheGreen
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Igon the Green
 //
 //	House:  Brobnar
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Giant
 //
-//	Destroyed: Purge Igon the Green. Return an Igon the Terrible from your discard pile to your hand.
+//	Destroyed: Purge Igon the Green, and put an Igon the Terrible from your discard pile into your hand.
 var IgonTheGreen = card.New(
 	"Igon the Green",
 	card.House.Brobnar,
@@ -24,5 +19,13 @@ var IgonTheGreen = card.New(
 	card.Provenance(card.WC, "39"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Giant),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.Connects(card.Pull(IgonTheTerrible, 1)),
+	card.WithAbility(
+		card.Trigger.Destroyed, card.Sequence{Effects: []card.Effect{
+			card.PurgeCreature{Target: card.Target.This},
+			card.PutFromDiscard{
+				Name:        "Igon the Terrible",
+				Destination: card.To.Hand,
+			},
+		}}),
 )

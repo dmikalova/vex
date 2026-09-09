@@ -243,11 +243,27 @@ func (g *game) playerStandingSegments(e engine.PlayerStanding) []app.UI {
 	}
 }
 
+// logIconStem resolves a log segment's icon concept key to its web/assets stem.
+// The engine keys a house emblem by the house's lowercased printed name, so a
+// house whose name carries a space — Star Alliance — arrives as
+// "house-star alliance", while its asset stem drops the space
+// ("house-staralliance"). Normalising here keeps every house resolving to its
+// web/assets/house-*.svg instead of pointing at a file that does not exist and
+// rendering blank. TestLogHouseIconsResolve guards that this holds for every
+// house the log can name.
+func logIconStem(key string) string {
+	if strings.HasPrefix(key, "house-") {
+		return strings.ReplaceAll(key, " ", "")
+	}
+	return key
+}
+
 // logIcon draws the emblem the engine flagged a keyword with, giving house
 // emblems the outline that keeps them legible against the log's background.
 func logIcon(key string) app.UI {
-	if strings.HasPrefix(key, "house-") {
-		return icon(key, "icon-inline", "icon-outline")
+	stem := logIconStem(key)
+	if strings.HasPrefix(stem, "house-") {
+		return icon(stem, "icon-inline", "icon-outline")
 	}
-	return icon(key, "icon-inline")
+	return icon(stem, "icon-inline")
 }

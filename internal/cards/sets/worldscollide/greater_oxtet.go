@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // GreaterOxtet
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Dis
 //	Type:   Creature
@@ -25,5 +20,10 @@ var GreaterOxtet = card.New(
 	card.Provenance(card.WC, "105"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Demon),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Taunt),
+	card.WithAbility(
+		card.Trigger.EndOfReadyStep, card.Then{
+			First:  card.PurgeFromHand{Player: card.Controller},
+			Result: card.AddPowerCounter{Target: card.Target.This, Amount: 2},
+		}),
 )

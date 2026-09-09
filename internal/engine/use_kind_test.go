@@ -162,7 +162,7 @@ func TestDestroyedWhenRejectsInvalidCondition(t *testing.T) {
 		}
 	}()
 	NewCard("Bad", Brobnar, Creature, Common, WithPower(1),
-		WithDestroyedWhen(OpponentAember{}))
+		WithDestroyedWhen(PoolAember{Player: Opponent}))
 }
 
 // The rules text a card prints for each new option reads the way the card does.

@@ -144,6 +144,34 @@ func TestLegacyCandidatesExcludesOwnSet(t *testing.T) {
 	}
 }
 
+// A card the set prints as a reprint stays in the legacy pool (ADR 0021), but when
+// a legacy slot draws it the slot is not tagged legacy: it is one of the set's own
+// cards, not a guest from another set.
+func TestLegacyDrawOfSetMemberNotTaggedLegacy(t *testing.T) {
+	tuning := DefaultTuning()
+	tuning.LegacyRate = 1 // every non-special slot draws from the legacy pool
+	// The legacy pool holds the set's own cards, tagged as another set — the
+	// shape of a reprint: the same card printed in this set and pooled as legacy
+	// from its native set.
+	entries := make([]LegacyEntry, 0)
+	for _, c := range synthCards() {
+		entries = append(entries, LegacyEntry{Card: c, Set: "Other"})
+	}
+	set := NewSet("Test", synthCards(), tuning).WithLegacy(NewLegacy(entries))
+
+	deck := Generate(set, 3)
+	for _, pod := range deck.Pods {
+		for _, s := range pod.Slots {
+			if s.Legacy {
+				t.Errorf("slot %q tagged legacy, but the set prints that card", s.Card.Name)
+			}
+		}
+	}
+	if got := len(deck.Cards()); got != DeckSize {
+		t.Fatalf("deck has %d cards, want %d", got, DeckSize)
+	}
+}
+
 func TestDeckShape(t *testing.T) {
 	deck := Generate(synthSet(), 7)
 	if got := len(deck.Cards()); got != DeckSize {

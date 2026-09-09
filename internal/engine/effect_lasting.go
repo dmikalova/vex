@@ -65,6 +65,8 @@ func lastingActionOf(e Effect) (lastingAction, int, bool) {
 	switch d := e.(type) {
 	case GainAember:
 		return actGainAember, d.Amount, true
+	case LoseAember:
+		return actLoseAember, d.Amount, true
 	case DealDamage:
 		return actDealDamage, d.Amount, true
 	case CaptureAember:
@@ -146,8 +148,9 @@ func (e GainAbility) Resolve(ctx *EffectContext) {
 // TakesExtraDamage makes each creature its Target selects take an additional
 // Amount damage whenever it takes damage, for the rest of the controller's turn —
 // Lethal Distraction's "for the remainder of the turn, whenever this creature takes
-// damage, it takes an additional 2 damage". It is a subject-scoped augmentation, so
-// only the chosen creature's own damage is boosted.
+// damage, it takes an additional 2 damage". It is the MODIFIER flavor of the
+// lasting spine (see game_lasting.go): subject-scoped to the chosen creature and
+// summed at the damage site rather than swapping an outcome like Instead.
 type TakesExtraDamage struct {
 	Target Target
 	Amount int
@@ -172,12 +175,13 @@ func (e TakesExtraDamage) Text() string {
 		e.Target.Text(), e.Amount)
 }
 
-// Resolve registers the augmentation on each selected creature for the rest of the
+// Resolve registers the modifier on each selected creature for the rest of the
 // controller's turn.
 func (e TakesExtraDamage) Resolve(ctx *EffectContext) {
 	for _, id := range e.Target.Select(ctx) {
 		ctx.Resolver.AddLasting(LastingEffect{
 			On:         EventCreatureTakesDamage,
+			Do:         actTakeExtraDamage,
 			Controller: int8(ctx.Controller),
 			Amount:     int8(e.Amount),
 			Subject:    id,

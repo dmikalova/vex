@@ -25,6 +25,48 @@ func TestExaltEffect(t *testing.T) {
 	e.Resolve(ctx)
 }
 
+// A "you may exalt <self>" is one clickable card — the source — so it is offered
+// declinably (Senator Shrix): clicking the source confirms, Done declines.
+func TestMayExaltSelfDeclinable(t *testing.T) {
+	self := Exalt{Target: Target{Kind: TargetThisCreature}, Amount: 1}
+	if !self.declinable() {
+		t.Fatal("a self-exalt should be declinable")
+	}
+	if (Exalt{Target: Target{Kind: TargetChosenEnemyCreature}}).declinable() {
+		t.Error("a chosen-target exalt is not offered as clicking the source")
+	}
+
+	t.Run("accepted exalts the clicked source", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		ch := &cardDecliner{}
+		g.SetChooser(0, ch)
+		src := g.AddToBattleline(testCreature("src", 3), 0)
+		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+
+		May{Do: self}.Resolve(ctx)
+
+		if ch.asked != 1 {
+			t.Errorf("declinable prompts = %d, want 1", ch.asked)
+		}
+		if g.State.Cards[src].Amber != 1 {
+			t.Errorf("amber on source = %d, want 1", g.State.Cards[src].Amber)
+		}
+	})
+
+	t.Run("declined exalts nothing", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.SetChooser(0, &cardDecliner{decline: true})
+		src := g.AddToBattleline(testCreature("src", 3), 0)
+		ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+
+		May{Do: self}.Resolve(ctx)
+
+		if g.State.Cards[src].Amber != 0 {
+			t.Errorf("a declined May should exalt nothing, amber = %d", g.State.Cards[src].Amber)
+		}
+	})
+}
+
 // exaltRepeater accepts the first exalt-to-repeat prompt and declines the next,
 // so the preceding effect resolves exactly twice.
 type exaltRepeater struct {

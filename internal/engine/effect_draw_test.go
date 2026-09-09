@@ -15,6 +15,10 @@ func TestDrawEffect(t *testing.T) {
 	if (Draw{Amount: 1, You: true}).Text() != "you draw a card" {
 		t.Errorf("you text = %q", (Draw{Amount: 1, You: true}).Text())
 	}
+	orDraw := Draw{Amount: 1, Or: OrAmount{Amount: 2, When: ControlsNamed{Name: "Hyde"}}}
+	if got := orDraw.Text(); got != "draw a card, or 2 cards if you control Hyde" {
+		t.Errorf("or text = %q", got)
+	}
 	e := Draw{Amount: 2}
 	if e.Text() != "draw 2 cards" {
 		t.Errorf("text = %q", e.Text())

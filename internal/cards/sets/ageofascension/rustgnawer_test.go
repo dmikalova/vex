@@ -16,7 +16,7 @@ import (
 //	Power:  4
 //	Traits: Beast • Insect
 //
-//	Fight: Destroy an artifact. For each Æmber bonus on the destroyed artifact, gain 1 Æmber.
+//	Fight: Destroy an artifact. For each Æmber bonus on it, gain 1 Æmber.
 func TestRustgnawer(t *testing.T) {
 	t.Run("destroys an artifact and gains its Æmber bonus", func(t *testing.T) {
 		var gnawer, foe ct.Card

@@ -14,6 +14,12 @@ import (
 type Use struct {
 	Max    int
 	Target Target
+	// EvenUnusable offers every artifact in the pool, not only the ready ones with
+	// an Action. Poltergeist sets it because its payload is the destroy that
+	// follows, not the use: it must be able to choose any artifact — one with no
+	// ability (Soul Snatcher), or one already exhausted — and use is incidental,
+	// firing only if the chosen artifact can still act.
+	EvenUnusable bool
 }
 
 // validate requires a target and a positive maximum.
@@ -53,7 +59,7 @@ func useNoun(phrase string) string {
 // (Poltergeist destroys the artifact it just used).
 func (e Use) Resolve(ctx *EffectContext) {
 	for i := 0; i < e.Max; i++ {
-		cands := usableCards(ctx, e.Target.Select(ctx))
+		cands := usableCards(ctx, e.Target.Select(ctx), e.EvenUnusable)
 		if len(cands) == 0 {
 			return
 		}
@@ -66,19 +72,24 @@ func (e Use) Resolve(ctx *EffectContext) {
 	}
 }
 
-// usableCards keeps the ready cards that can be used by an ability right now: any
-// creature, or an artifact with an Action.
-func usableCards(ctx *EffectContext, ids []LocalID) []LocalID {
+// usableCards keeps the members that this Use can offer. A creature is offered
+// while ready; an artifact is offered while ready and holding an Action. When
+// evenUnusable is set the artifact filter drops away entirely — every artifact is
+// offered, ready or exhausted, ability or none — because the effect's payload is
+// what follows the use (Poltergeist destroys the chosen artifact).
+func usableCards(ctx *EffectContext, ids []LocalID, evenUnusable bool) []LocalID {
 	out := make([]LocalID, 0, len(ids))
 	for _, id := range ids {
-		if ctx.Resolver.Exhausted(id) {
-			continue
-		}
 		switch ctx.Resolver.TypeOf(id) {
 		case Creature:
-			out = append(out, id)
+			if !ctx.Resolver.Exhausted(id) {
+				out = append(out, id)
+			}
 		case Artifact:
-			if ctx.Resolver.HasTrigger(id, TriggerAction) {
+			if evenUnusable {
+				out = append(out, id)
+			} else if !ctx.Resolver.Exhausted(id) &&
+				ctx.Resolver.HasTrigger(id, TriggerAction) {
 				out = append(out, id)
 			}
 		}
@@ -89,10 +100,14 @@ func usableCards(ctx *EffectContext, ids []LocalID) []LocalID {
 // useCard resolves a chosen card's use — an artifact fires its Action, a creature
 // is used by choosing how (reap, fight, or Action). Either way the ability
 // resolves for the effect's controller, so a card they do not control is used as
-// if it were theirs.
+// if it were theirs. An artifact that cannot act — exhausted, or with no Action,
+// both reachable only under EvenUnusable — is a no-op here; the effect that
+// offered it still acts on it.
 func useCard(ctx *EffectContext, id LocalID) {
 	if ctx.Resolver.TypeOf(id) == Artifact {
-		ctx.Resolver.UseActionOf(ctx.Controller, id)
+		if !ctx.Resolver.Exhausted(id) && ctx.Resolver.HasTrigger(id, TriggerAction) {
+			ctx.Resolver.UseActionOf(ctx.Controller, id)
+		}
 		return
 	}
 	UseVerb{}.Apply(ctx, id)

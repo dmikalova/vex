@@ -70,6 +70,8 @@ func (g *Game) StartTurn(player int) {
 	g.State.ForcedHouseNext[player] = Bar[House]{}
 	g.State.ForbiddenHouse[player] = g.State.ForbiddenHouseNext[player]
 	g.State.ForbiddenHouseNext[player] = Bar[House]{}
+	g.State.HouseWager[player] = g.State.HouseWagerNext[player]
+	g.State.HouseWagerNext[player] = HouseWager{}
 	g.State.SkipForge[player] = g.State.SkipForgeNext[player]
 	g.State.SkipForgeNext[player] = Bar[bool]{}
 	g.State.KeyCostBump[player] = g.State.KeyCostBumpNext[player]
@@ -106,11 +108,21 @@ func (g *Game) ChooseHouse(player int, house House) error {
 	}
 	g.State.ActiveHouse = house
 	g.record(HouseChosen{Player: player, House: house})
+	g.payOffHouseWager(player, house)
 	// The snapshot is taken once, but an earlier card's ability can remove a later
 	// one from play (Strange Gizmo destroys friendly artifacts); triggerAbilitiesAs
 	// drops the trigger of a card that has left play mid-window (ADR 0030).
 	for _, id := range g.allInPlay(player) {
 		g.triggerAbilities(id, TriggerAfterChooseHouse, 0, false)
+	}
+	// A house choice is public, so cards on either side may react to it (Snag's
+	// Mirror bars the chooser's opponent from the same house next turn). This
+	// window fires for both players' cards, unlike the controller-only
+	// AfterChooseHouse above.
+	for _, p := range [2]int{player, 1 - player} {
+		for _, id := range g.allInPlay(p) {
+			g.triggerAbilities(id, TriggerAfterAnyPlayerChoosesHouse, 0, false)
+		}
 	}
 	g.enterPhase(PhaseArchives)
 	g.runPhases()
@@ -221,6 +233,15 @@ func (g *Game) CannotReapNextTurn(player int, source LocalID) {
 	g.State.CannotReapNext[player] = Bar[bool]{Value: true, Source: source}
 }
 
+// CannotReapThisTurn bars a player from reaping with any creature for the rest of
+// the current turn (Ragnarok). It sets the reap bar directly rather than arming
+// the next-turn form, so the ready phase lifts it at the end of this turn. Only
+// the active player can reap on their own turn, so barring them stops reaping this
+// turn.
+func (g *Game) CannotReapThisTurn(player int, source LocalID) {
+	g.State.CannotReap[player] = Bar[bool]{Value: true, Source: source}
+}
+
 // CannotReapHouseNextTurn arms a bar that stops a player reaping with creatures
 // of house h throughout their next turn (Seismo-entangler). StartTurn promotes
 // the armed house.
@@ -240,6 +261,13 @@ func (g *Game) BlankEnemyText(player int, source LocalID) {
 // their next turn.
 func (g *Game) SkipForgePhaseNextTurn(player int, source LocalID) {
 	g.State.SkipForgeNext[player] = Bar[bool]{Value: true, Source: source}
+}
+
+// ScheduleDestroyEachCreatureAtEndOfTurn arms "destroy each creature" to resolve in
+// the active player's end-of-turn phase (Ragnarok). The flag must survive the ready
+// phase, which runs before end of turn, so endOfTurnPhase clears it as it fires.
+func (g *Game) ScheduleDestroyEachCreatureAtEndOfTurn(source LocalID) {
+	g.State.EndOfTurnDestroyAll = Bar[bool]{Value: true, Source: source}
 }
 
 // RaiseKeyCostNextTurn raises what a player's keys cost throughout their next turn
@@ -312,6 +340,31 @@ func (g *Game) ForbidActiveHouseNextTurn(player int, h House, source LocalID) {
 	g.record(HouseForbiddenNextTurn{Player: player, House: h})
 }
 
+// WagerOnHouseNextTurn arms a bet on player's next active house: if they choose h
+// then, predictor steals amount (Snaglet). StartTurn promotes it so the payoff
+// lands when player next chooses a house.
+func (g *Game) WagerOnHouseNextTurn(player int, h House, amount, predictor int, source LocalID) {
+	g.State.HouseWagerNext[player] = HouseWager{
+		House:     h,
+		Amount:    amount,
+		Predictor: predictor,
+		Source:    source,
+	}
+	g.record(HouseWagerArmed{Predictor: predictor, Player: player, House: h, Amount: amount})
+}
+
+// payOffHouseWager settles any wager armed on player once they lock in house: a
+// matching choice pays the predictor a steal, and either way the wager is spent.
+func (g *Game) payOffHouseWager(player int, house House) {
+	w := g.State.HouseWager[player]
+	g.State.HouseWager[player] = HouseWager{}
+	if w.Amount == 0 || w.House != house {
+		return
+	}
+	ctx := &EffectContext{Resolver: g, Controller: w.Predictor, Source: w.Source}
+	StealAember{Amount: w.Amount}.Resolve(ctx)
+}
+
 // RestrictionSources returns the cards imposing a turn-scoped restriction on a
 // player right now, so a frontend can remind them which cards are binding them.
 // It reads the bars themselves, so a bar that has been lifted stops naming its
@@ -352,20 +405,23 @@ func (g *Game) forgeKey(player int) {
 }
 
 // forgeKeyAtExtraCost forges one key at the current cost plus a surcharge for
-// this forge alone, doing nothing when the player cannot afford the total.
-func (g *Game) forgeKeyAtExtraCost(player, extra int) {
+// this forge alone, doing nothing when the player cannot afford the total. It
+// reports whether a key was forged, so "forge a key … if you do, destroy Obsidian
+// Forge" can gate on the forge actually happening.
+func (g *Game) forgeKeyAtExtraCost(player, extra int) bool {
 	if g.forgeKeyNumberBarred(player) {
-		return
+		return false
 	}
 	cost := g.keyCost(player) + extra
 	if g.spendableAember(player) < cost {
-		return
+		return false
 	}
 	// The colour is settled before the Æmber leaves the pool, so a forge is one
 	// step: a player looking at the colour prompt has not paid for anything yet.
 	color, ok := g.pickKeyColor(player)
 	g.payKeyCost(player, cost)
 	g.finishForgeKey(player, color, ok)
+	return true
 }
 
 // spendableAember is everything a player can put toward a key: their pool plus

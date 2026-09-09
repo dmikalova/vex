@@ -1,25 +1,34 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Ragnarok
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
 //	House:  Brobnar
 //	Type:   Tactic
 //	Rarity: Rare
 //
 //	Alpha.
-//	Play: For the remainder of the turn, creatures cannot reap and you gain 1A whenever a friendly creature fights. At the end of the turn, destroy each creature.
+//	Play: You cannot use creatures to reap for the remainder of the turn. For the remainder of the turn, each time a friendly creature fights, gain 1 Æmber. At the end of the turn, destroy each creature.
 var Ragnarok = card.New(
 	"Ragnarok",
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "47"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Alpha),
+	card.WithAbility(
+		card.Trigger.Play, card.Sentences{
+			Effects: []card.Effect{
+				card.CannotReap{
+					Player:   card.Controller,
+					Duration: card.Duration.EndOfTurn,
+				},
+				card.ForRemainderOfTurn{
+					On: card.Event.Fight,
+					Do: card.GainAember{Player: card.Controller, Amount: 1},
+				},
+				card.DestroyEachCreatureAtEndOfTurn{},
+			},
+		}),
 )

@@ -327,6 +327,56 @@ func (CancelFight) Text() string { return "the fight does not occur" }
 // Resolve cancels the current fight.
 func (CancelFight) Resolve(ctx *EffectContext) { ctx.Resolver.CancelCurrentFight() }
 
+// RevealPurgeShuffleDeck reveals the top Amount cards of a player's deck (the
+// controller chooses whose), has the controller purge one of the revealed cards,
+// then shuffles the deck — Borr Nit and Borr Nit's Touch. The revealed cards never
+// leave the deck, so shuffling puts the ones not purged back among it. It reveals
+// as many as remain when the deck holds fewer than Amount, and does nothing on an
+// empty deck.
+type RevealPurgeShuffleDeck struct {
+	// Amount is how many top cards to reveal; the zero value is an authoring error.
+	Amount int
+}
+
+// validate rejects a non-positive Amount.
+func (e RevealPurgeShuffleDeck) validate() error {
+	if e.Amount < 1 {
+		return fmt.Errorf("RevealPurgeShuffleDeck: Amount must be at least 1")
+	}
+	return nil
+}
+
+// Text renders the three printed sentences as one unit.
+func (e RevealPurgeShuffleDeck) Text() string {
+	return fmt.Sprintf(
+		"reveal the top %d cards of a player's deck. Purge a card revealed this "+
+			"way. Shuffle the other revealed cards into that deck",
+		e.Amount,
+	)
+}
+
+// Resolve reveals the top cards of the chosen deck, purges one, and shuffles.
+func (e RevealPurgeShuffleDeck) Resolve(ctx *EffectContext) {
+	player := ctx.Controller
+	if ctx.ChooseOption(
+		"Whose deck to reveal from?",
+		[]string{"your deck", "your opponent's deck"},
+	) == 1 {
+		player = ctx.Opponent()
+	}
+	deck := ctx.Resolver.Deck(player)
+	if len(deck) == 0 {
+		return
+	}
+	top := append([]LocalID(nil), deck[:min(e.Amount, len(deck))]...)
+	ctx.Resolver.Record(CardsRevealedToAll{Player: player, Cards: top})
+	if purge, ok := ctx.ChooseCard("Choose a revealed card to purge", top); ok {
+		ctx.Resolver.PurgeFromDeck(player, purge)
+	}
+	ctx.Resolver.Shuffle(player)
+	ctx.Resolver.Record(DeckShuffled{Player: player})
+}
+
 // resolverInPlay reports whether id appears in either player's battleline or
 // artifact row using only Resolver reads.
 func resolverInPlay(ctx *EffectContext, id LocalID) bool {
@@ -437,5 +487,60 @@ func discardedNoun(t CardType) string {
 func (e PutDiscardedIntoHand) Resolve(ctx *EffectContext) {
 	if ctx.HasIt {
 		ctx.Resolver.PutFromDiscardIntoHand(ctx.It)
+	}
+}
+
+// RevealDeckUntilHouse reveals cards from the top of the controller's deck one at
+// a time, archiving each as it is revealed, until it reveals a card of House or
+// the controller chooses to stop. It reports whether a card of House was revealed
+// (via resolveGate), so a Then can hang a follow-up on that — Old Boomy deals
+// itself 2 damage when it turns up a card of its own house.
+type RevealDeckUntilHouse struct {
+	// House ends the dig: revealing a card of this house stops it. It must be set.
+	House House
+}
+
+// validate requires a house to stop on.
+func (e RevealDeckUntilHouse) validate() error {
+	if e.House == HouseNone {
+		return fmt.Errorf("RevealDeckUntilHouse: House must be set")
+	}
+	return nil
+}
+
+// Text renders the dig, naming the house it stops on and the stop choice.
+func (e RevealDeckUntilHouse) Text() string {
+	return "reveal cards from the top of your deck until you reveal " +
+		indefinite(e.House.String()+" card") +
+		" or choose to stop, archiving each card revealed this way"
+}
+
+// Resolve digs, discarding the found-a-house report.
+func (e RevealDeckUntilHouse) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
+
+// resolveGate reveals and archives cards from the top of the deck until a card of
+// House turns up or the controller stops, reporting whether a card of House was
+// revealed so a Then can act on the dig succeeding.
+func (e RevealDeckUntilHouse) resolveGate(ctx *EffectContext) bool {
+	for {
+		id, ok := ctx.Resolver.TopOfDeck(ctx.Controller)
+		if !ok {
+			return false
+		}
+		ctx.Resolver.Record(CardsRevealedToAll{
+			Player: ctx.Controller,
+			Cards:  []LocalID{id},
+		})
+		matched := ctx.Resolver.House(id) == e.House
+		ctx.Resolver.ArchiveTopOfDeck(ctx.Controller)
+		if matched {
+			return true
+		}
+		if ctx.ChooseOption(
+			"Reveal another card from the top of your deck?",
+			[]string{"Reveal another card", "Stop"},
+		) == 1 {
+			return false
+		}
 	}
 }

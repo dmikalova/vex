@@ -24,6 +24,7 @@ var YxlyxStimrager = card.New(
 	card.WithAbility(
 		card.Trigger.Fight, card.DamageThen{
 			Amount: 2,
+			After:  card.Always,
 			Target: card.Target.Creature,
 			Then:   card.MoveToFlank{Target: card.Target.Triggering},
 		}),

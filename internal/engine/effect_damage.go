@@ -68,6 +68,55 @@ func (damageOnIt) perTargetValue(ctx *EffectContext, id LocalID) int {
 
 func (damageOnIt) perTargetText() string { return "point of damage on it" }
 
+// DealDamagePerHouse deals Amount damage to one creature of each house — Gleeful
+// Mayhem's "for each house, deal 5 damage to a creature of that house". It walks
+// the houses in order; for each with a creature in play the controller chooses one
+// of that house and it takes the damage, each house's hit resolving on its own so
+// a creature destroyed for one house cannot be picked again. Houses with no
+// creature in play are skipped.
+type DealDamagePerHouse struct {
+	// Amount is the damage dealt to each chosen creature; the zero value is an
+	// authoring error.
+	Amount int
+}
+
+// validate rejects a non-positive Amount.
+func (e DealDamagePerHouse) validate() error {
+	if e.Amount < 1 {
+		return fmt.Errorf("DealDamagePerHouse: Amount must be at least 1")
+	}
+	return nil
+}
+
+// Text renders the effect.
+func (e DealDamagePerHouse) Text() string {
+	return fmt.Sprintf("for each house, deal %d damage to a creature of that house", e.Amount)
+}
+
+// Resolve deals Amount damage to one chosen creature of each house that has one
+// in play, house by house in canonical order.
+func (e DealDamagePerHouse) Resolve(ctx *EffectContext) {
+	for h := Brobnar; h <= Untamed; h++ {
+		var cands []LocalID
+		for _, p := range []int{ctx.Controller, ctx.Opponent()} {
+			for _, id := range ctx.Resolver.Battleline(p) {
+				if ctx.Resolver.House(id) == h {
+					cands = append(cands, id)
+				}
+			}
+		}
+		if len(cands) == 0 {
+			continue
+		}
+		id, ok := ctx.ChooseCreature(
+			"Choose a "+h.String()+" creature to deal damage to", cands)
+		if !ok {
+			continue
+		}
+		ctx.Resolver.DealDamage(ctx.Controller, []DamageTarget{{ID: id, Amount: e.Amount}})
+	}
+}
+
 // validate requires an explicit target, or a Spread that supplies its own.
 func (e DealDamage) validate() error {
 	if e.Spread != nil {
@@ -186,125 +235,89 @@ func (e DealDamage) dealTo(ctx *EffectContext, amount int, ids []LocalID) {
 	ctx.Resolver.DealDamage(ctx.Controller, targets)
 }
 
-// DamageThenIfDestroyed deals damage to one chosen creature and, only if that damage
-// destroys it, resolves a follow-up effect with the destroyed creature in context
-// (ctx.It) — Seeker Needle's "deal 1 damage to a creature. If this damage destroys
-// that creature, gain 1 Æmber."
-type DamageThenIfDestroyed struct {
-	Amount int
-	Target Target
-	Then   Effect
-}
+// DamageAftermath decides when a DamageThen's follow-up resolves and how its two
+// clauses join in printed text. It has no valid zero value: a DamageThen must name
+// one so the branch is never left ambiguous.
+type DamageAftermath uint8
 
-// validate requires a target and a well-formed follow-up effect.
-func (e DamageThenIfDestroyed) validate() error {
-	if !e.Target.valid() {
-		return errUnsetTarget("DamageThenIfDestroyed")
-	}
-	return validateEffect(e.Then)
-}
+const (
+	// aftermathUnset is the invalid zero value: a DamageThen must name its After.
+	aftermathUnset DamageAftermath = iota
+	// Always runs the follow-up whether or not the damage destroyed the creature,
+	// joining the two clauses with "and" (Tyxl Beambuckler).
+	Always
+	// IfDestroyed runs the follow-up only if the damage destroyed the creature,
+	// reading ". If this damage destroys that creature, …" (Seeker Needle).
+	IfDestroyed
+	// IfSurvives runs the follow-up only if the creature is not destroyed, reading
+	// ". If it is not destroyed, …" (Gongoozle).
+	IfSurvives
+)
 
-// Text renders the effect, e.g. "deal 2 damage to a creature. If this damage
-// destroys that creature, steal 1 Æmber".
-func (e DamageThenIfDestroyed) Text() string {
-	return fmt.Sprintf("deal %d damage to %s. If this damage destroys that creature, %s",
-		e.Amount, e.Target.Text(), e.Then.Text())
-}
-
-// Resolve deals the damage to the chosen creature, then runs Then only if the
-// creature has left play. The destroyed creature is placed in context (ctx.It) so
-// Then can refer to it ("purge it").
-func (e DamageThenIfDestroyed) Resolve(ctx *EffectContext) {
-	ids := e.Target.Select(ctx)
-	if len(ids) == 0 {
-		return
-	}
-	id := ids[0]
-	ctx.Produced.Neighbors = neighbors(ctx, id)
-	ctx.Resolver.DealDamage(ctx.Controller, []DamageTarget{{ID: id, Amount: e.Amount}})
-	if !resolverInPlay(ctx, id) {
-		ctx.It, ctx.HasIt = id, true
-		e.Then.Resolve(ctx)
-	}
-}
-
-// DamageThenIfSurvives deals damage to one chosen creature and, only if the creature
-// is not destroyed, resolves a follow-up effect with the surviving creature in
-// context (ctx.It) — Gongoozle's "deal 3 damage to a creature. If it is not
-// destroyed, its owner discards a random card from their hand." This is a plain
-// state branch, not a result gate.
-type DamageThenIfSurvives struct {
-	Amount int
-	Target Target
-	Then   Effect
-}
-
-// validate requires a target and a well-formed follow-up effect.
-func (e DamageThenIfSurvives) validate() error {
-	if !e.Target.valid() {
-		return errUnsetTarget("DamageThenIfSurvives")
-	}
-	return validateEffect(e.Then)
-}
-
-// Text renders the effect, e.g. "deal 3 damage to a creature. If it is not
-// destroyed, its owner discards a random card from their hand".
-func (e DamageThenIfSurvives) Text() string {
-	return fmt.Sprintf("deal %d damage to %s. If it is not destroyed, %s",
-		e.Amount, e.Target.Text(), e.Then.Text())
-}
-
-// Resolve deals the damage to the chosen creature, then runs Then only if the
-// creature is still in play. The surviving creature is placed in context (ctx.It)
-// so Then can refer to it ("its owner").
-func (e DamageThenIfSurvives) Resolve(ctx *EffectContext) {
-	ids := e.Target.Select(ctx)
-	if len(ids) == 0 {
-		return
-	}
-	id := ids[0]
-	ctx.Resolver.DealDamage(ctx.Controller, []DamageTarget{{ID: id, Amount: e.Amount}})
-	if resolverInPlay(ctx, id) {
-		ctx.It, ctx.HasIt = id, true
-		e.Then.Resolve(ctx)
-	}
-}
-
-// DamageThen deals damage to one chosen creature and then resolves a follow-up
-// effect on that same creature, whether or not the damage destroyed it — Tyxl
-// Beambuckler's "deal 2 damage to a creature and move it to either flank of its
-// controller's battleline". The chosen creature is placed in context (ctx.It) so
-// Then can refer to it; a Then that acts on a destroyed creature is a no-op.
+// DamageThen deals Amount damage to one chosen creature and then resolves a
+// follow-up effect on it, with After deciding whether the follow-up runs
+// unconditionally, only when the damage destroyed the creature, or only when the
+// creature survived. The creature is placed in context (ctx.It) so Then can refer
+// to it; an Always follow-up on a destroyed creature is a no-op.
 type DamageThen struct {
 	Amount int
 	Target Target
 	Then   Effect
+	After  DamageAftermath
 }
 
-// validate requires a target and a well-formed follow-up effect.
+// validate requires a target, a named After branch, and a well-formed follow-up.
 func (e DamageThen) validate() error {
 	if !e.Target.valid() {
 		return errUnsetTarget("DamageThen")
 	}
+	switch e.After {
+	case Always, IfDestroyed, IfSurvives:
+	default:
+		return fmt.Errorf("DamageThen: After must be Always, IfDestroyed, or IfSurvives")
+	}
 	return validateEffect(e.Then)
 }
 
-// Text renders the effect, e.g. "deal 2 damage to a creature and move it to
-// either flank of its controller's battleline".
+// Text renders the effect; After chooses how the damage clause joins the follow-up,
+// e.g. "deal 1 damage to a creature. If this damage destroys that creature, gain 1
+// Æmber" or "deal 2 damage to a creature and move it to either flank …".
 func (e DamageThen) Text() string {
-	return fmt.Sprintf("deal %d damage to %s and %s",
-		e.Amount, e.Target.Text(), e.Then.Text())
+	damage := fmt.Sprintf("deal %d damage to %s", e.Amount, e.Target.Text())
+	switch e.After {
+	case IfDestroyed:
+		return damage + ". If this damage destroys that creature, " + e.Then.Text()
+	case IfSurvives:
+		return damage + ". If it is not destroyed, " + e.Then.Text()
+	default:
+		return damage + " and " + e.Then.Text()
+	}
 }
 
-// Resolve deals the damage to the chosen creature, records it as "it", then
-// resolves Then unconditionally.
+// Resolve deals the damage to the chosen creature, then resolves Then when After's
+// branch holds. IfDestroyed snapshots the creature's neighbors before the damage (a
+// following effect may hit the destroyed creature's former neighbors); the creature
+// is placed in context (ctx.It) for Then to refer to.
 func (e DamageThen) Resolve(ctx *EffectContext) {
 	ids := e.Target.Select(ctx)
 	if len(ids) == 0 {
 		return
 	}
 	id := ids[0]
+	if e.After == IfDestroyed {
+		ctx.Produced.Neighbors = neighbors(ctx, id)
+	}
 	ctx.Resolver.DealDamage(ctx.Controller, []DamageTarget{{ID: id, Amount: e.Amount}})
+	switch e.After {
+	case IfDestroyed:
+		if resolverInPlay(ctx, id) {
+			return
+		}
+	case IfSurvives:
+		if !resolverInPlay(ctx, id) {
+			return
+		}
+	}
 	ctx.It, ctx.HasIt = id, true
 	e.Then.Resolve(ctx)
 }
@@ -434,17 +447,24 @@ func (s DifferentCreatures) hits(ctx *EffectContext) []DamageTarget {
 // UpToCreatures deals Amount to up to Count different creatures the controller
 // chooses one at a time, declining any of them with Done — Throwing Stars deals 1
 // damage to up to 3 creatures. Undamaged narrows the choice to creatures that have
-// no damage on them (Unsuspecting Prey). A DealDamage Spread.
+// no damage on them (Unsuspecting Prey). WhenDamaged, when set, deals that larger
+// amount instead to any chosen creature that was already damaged before this batch
+// (Festering Touch deals 1, or 3 to an already-damaged creature). A DealDamage
+// Spread.
 type UpToCreatures struct {
-	Count     int
-	Amount    int
-	Undamaged bool
+	Count       int
+	Amount      int
+	Undamaged   bool
+	WhenDamaged int
 }
 
 // validate requires room for at least one creature.
 func (s UpToCreatures) validate() error {
 	if s.Count < 1 {
 		return fmt.Errorf("UpToCreatures: Count must be at least 1, got %d", s.Count)
+	}
+	if s.WhenDamaged != 0 && s.Undamaged {
+		return fmt.Errorf("UpToCreatures: WhenDamaged cannot combine with Undamaged")
 	}
 	return nil
 }
@@ -455,12 +475,20 @@ func (s UpToCreatures) spreadText() string {
 	if s.Undamaged {
 		noun = "undamaged creatures"
 	}
-	return fmt.Sprintf("deal %d damage to up to %d %s", s.Amount, s.Count, noun)
+	base := fmt.Sprintf("deal %d damage to up to %d %s", s.Amount, s.Count, noun)
+	if s.WhenDamaged != 0 {
+		base += fmt.Sprintf(
+			", dealing %d damage instead to a chosen creature that was already damaged",
+			s.WhenDamaged,
+		)
+	}
+	return base
 }
 
 // hits asks for creatures one at a time, up to Count, excluding those already
 // chosen (and, when Undamaged is set, any that already carry damage), stopping
-// when the controller declines or none remain.
+// when the controller declines or none remain. WhenDamaged raises the amount for a
+// creature that already carries damage before this batch resolves.
 func (s UpToCreatures) hits(ctx *EffectContext) []DamageTarget {
 	chosen := map[LocalID]bool{}
 	var out []DamageTarget
@@ -485,7 +513,11 @@ func (s UpToCreatures) hits(ctx *EffectContext) []DamageTarget {
 			break
 		}
 		chosen[id] = true
-		out = append(out, DamageTarget{ID: id, Amount: s.Amount})
+		amount := s.Amount
+		if s.WhenDamaged != 0 && ctx.Resolver.Damage(id) > 0 {
+			amount = s.WhenDamaged
+		}
+		out = append(out, DamageTarget{ID: id, Amount: amount})
 	}
 	return out
 }

@@ -1,24 +1,26 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// BarnRazing
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Barn Razing
 //
 //	House:  Brobnar
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: For the remainder of the turn, your opponent loses 1A each time a friendly creature fights.
+//	Play: For the remainder of the turn, each time a friendly creature fights, your opponent loses 1 Æmber.
 var BarnRazing = card.New(
 	"Barn Razing",
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "4"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.ForRemainderOfTurn{
+			On: card.Event.Fight,
+			Do: card.LoseAember{
+				Player: card.Opponent,
+				Amount: 1,
+			},
+		}),
 )

@@ -181,7 +181,15 @@ func (g *generator) fillSlot(house engine.House, placed []placedCard) (Slot, pla
 	rarity := g.rollRarity()
 	if g.chance(t.LegacyRate) {
 		if c, ok := g.drawLegacy(house, rarity); ok {
-			return g.commit(c, SlotContext{House: house, Rarity: c.Def.Rarity, Legacy: true})
+			// A legacy slot may land on a card this set also prints as a reprint
+			// (ADR 0021 keeps such cards in the legacy pool). A card the set prints
+			// is one of its own, so it is not tagged legacy even when a legacy slot
+			// drew it.
+			return g.commit(c, SlotContext{
+				House:  house,
+				Rarity: c.Def.Rarity,
+				Legacy: !g.set.member(c.Def.Name),
+			})
 		}
 	}
 	if c, ok := g.tryDuplicate(rarity, placed); ok {

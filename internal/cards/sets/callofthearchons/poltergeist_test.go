@@ -50,4 +50,35 @@ func TestPoltergeist(t *testing.T) {
 		h.Expect(drawn).At(ct.Hand)
 		h.Expect(mine).At(ct.Discard)
 	})
+
+	t.Run("destroys a constant-ability artifact with nothing to use", func(t *testing.T) {
+		var theirs ct.Card
+		h := ct.Play(t, ct.Setup{
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(Poltergeist),
+			},
+			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&theirs, SoulSnatcher))},
+		})
+
+		h.P1.Play(Poltergeist)
+
+		h.Expect(theirs).At(ct.Discard)
+	})
+
+	t.Run("destroys an already-exhausted artifact without using it", func(t *testing.T) {
+		var theirs ct.Card
+		h := ct.Play(t, ct.Setup{
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(Poltergeist),
+			},
+			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&theirs, LibraryOfBabble))},
+		})
+		theirs.Exhaust()
+
+		h.P1.Play(Poltergeist)
+
+		h.Expect(theirs).At(ct.Discard)
+	})
 }

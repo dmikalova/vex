@@ -19,7 +19,7 @@ var PerplexingSophistry = card.New(
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
-			Cond: card.YourAember{Is: card.MoreThanOpponent},
+			Cond: card.PoolAember{Player: card.Controller, Is: card.MoreThanOpponent},
 			Then: card.Sequence{
 				Effects: []card.Effect{
 					card.DiscardRandomFromHand{Player: card.Opponent},

@@ -34,6 +34,13 @@ const (
 	// the current turn — Alaka enters play ready once you have fought. It is kept from
 	// the attacking (active) player's side.
 	CreaturesFoughtThisTurn
+	// AemberStolenFromThisTurn counts the Æmber stolen from the player during the
+	// current turn — kept from the victim's side so a card can ask whether they were
+	// robbed. It rolls into AemberStolenFromLastTurn at the end of the thief's turn.
+	AemberStolenFromThisTurn
+	// AemberStolenFromLastTurn counts the Æmber stolen from the player during their
+	// opponent's previous turn — Information Exchange steals more if they were robbed.
+	AemberStolenFromLastTurn
 	// turnStatCount sizes GameState.TurnHistory and is not a tally itself.
 	turnStatCount
 )
@@ -47,4 +54,6 @@ var turnStatNoun = map[TurnStat]string{
 	EnemyCreaturesDestroyed:   "enemy creature that was destroyed this turn",
 	CreaturesReapedThisTurn:   "creature that has reaped this turn",
 	CreaturesFoughtThisTurn:   "creature that has fought this turn",
+	AemberStolenFromThisTurn:  "Æmber stolen from you this turn",
+	AemberStolenFromLastTurn:  "Æmber stolen from you on the previous turn",
 }

@@ -78,7 +78,7 @@ func (e PutFromDiscard) Text() string {
 }
 
 // moveTo moves one card from the discard pile to the destination and tallies it
-// for a following CardsReturnedThisWay.
+// for a following ProducedThisWay{Tally: TallyCardsReturned}.
 func (e PutFromDiscard) moveTo(ctx *EffectContext, id LocalID) {
 	if e.Destination == ToTopOfDeck {
 		ctx.Resolver.MoveFromDiscardToTopOfDeck(id)
@@ -88,45 +88,34 @@ func (e PutFromDiscard) moveTo(ctx *EffectContext, id LocalID) {
 	ctx.Produced.Returned++
 }
 
+// admits reports whether a discard-pile card passes the Type / Trait / Name
+// filters (the OfChosenHouse filter is applied separately, only with All).
+func (e PutFromDiscard) admits(ctx *EffectContext, id LocalID) bool {
+	if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
+		return false
+	}
+	if e.Trait != traitUnset && !ctx.Resolver.HasTrait(id, e.Trait) {
+		return false
+	}
+	return e.Name == "" || ctx.Resolver.Name(id) == e.Name
+}
+
 // Resolve moves a card from the controller's discard pile to the destination. With
 // All it moves every matching card; otherwise the controller chooses one, and
 // nothing happens if there is no candidate or the choice is declined.
 func (e PutFromDiscard) Resolve(ctx *EffectContext) {
 	if e.All {
-		for _, id := range ctx.Resolver.Discard(ctx.Controller) {
-			if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
-				continue
-			}
-			if e.Trait != traitUnset && !ctx.Resolver.HasTrait(id, e.Trait) {
-				continue
-			}
-			if e.Name != "" && ctx.Resolver.Name(id) != e.Name {
-				continue
-			}
-			if e.OfChosenHouse && ctx.Resolver.House(id) != ctx.ChosenHouse {
-				continue
-			}
+		for _, id := range discardCardsWhere(ctx, ctx.Controller, func(id LocalID) bool {
+			return e.admits(ctx, id) &&
+				(!e.OfChosenHouse || ctx.Resolver.House(id) == ctx.ChosenHouse)
+		}) {
 			e.moveTo(ctx, id)
 		}
 		return
 	}
-	discard := ctx.Resolver.Discard(ctx.Controller)
-	candidates := discard
-	if e.Type != TypeUnset || e.Trait != traitUnset || e.Name != "" {
-		candidates = nil
-		for _, id := range discard {
-			if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
-				continue
-			}
-			if e.Trait != traitUnset && !ctx.Resolver.HasTrait(id, e.Trait) {
-				continue
-			}
-			if e.Name != "" && ctx.Resolver.Name(id) != e.Name {
-				continue
-			}
-			candidates = append(candidates, id)
-		}
-	}
+	candidates := discardCardsWhere(ctx, ctx.Controller, func(id LocalID) bool {
+		return e.admits(ctx, id)
+	})
 	id, ok := ctx.ChooseCreature("Choose a "+e.noun()+" from your discard pile", candidates)
 	if !ok {
 		return
@@ -173,13 +162,12 @@ func (e DiscardHand) Text() string {
 // Resolve discards every matching card from the chosen player's hand.
 func (e DiscardHand) Resolve(ctx *EffectContext) {
 	owner := ctx.PlayerFor(e.Player)
-	for _, id := range ctx.Resolver.Hand(owner) {
+	for _, id := range handCardsWhere(ctx, owner, func(id LocalID) bool {
 		if !matchesTypes(e.Types, ctx.Resolver.TypeOf(id)) {
-			continue
+			return false
 		}
-		if e.OfChosenHouse && ctx.Resolver.House(id) != ctx.ChosenHouse {
-			continue
-		}
+		return !e.OfChosenHouse || ctx.Resolver.House(id) == ctx.ChosenHouse
+	}) {
 		ctx.Resolver.DiscardCardFromHand(owner, id)
 	}
 }
@@ -306,12 +294,9 @@ func (e DiscardFromHand) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 func (e DiscardFromHand) resolveGate(ctx *EffectContext) bool {
 	moved := false
 	for i := 0; e.AnyNumber || i < e.Amount; i++ {
-		var candidates []LocalID
-		for _, id := range ctx.Resolver.Hand(ctx.Controller) {
-			if matchesTypes(e.Types, ctx.Resolver.TypeOf(id)) {
-				candidates = append(candidates, id)
-			}
-		}
+		candidates := handCardsWhere(ctx, ctx.Controller, func(id LocalID) bool {
+			return matchesTypes(e.Types, ctx.Resolver.TypeOf(id))
+		})
 		if len(candidates) == 0 {
 			return moved
 		}

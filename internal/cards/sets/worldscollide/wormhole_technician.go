@@ -26,7 +26,7 @@ var WormholeTechnician = card.New(
 				card.Conditional{
 					Cond: card.ItIs{House: card.House.Self},
 					Then: card.PlayRevealedCard{},
-					Else: card.ArchiveTopOfDeck{Amount: 1},
+					Else: card.ArchiveTop{From: card.Deck, Amount: 1},
 				},
 			},
 		}),

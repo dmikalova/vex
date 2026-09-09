@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // BorrNit
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Dis
 //	Type:   Creature
@@ -21,8 +16,11 @@ var BorrNit = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, "86"),
+	card.Provenance(card.WC, "086"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Demon),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Reap,
+		card.RevealPurgeShuffleDeck{Amount: 5},
+	),
 )

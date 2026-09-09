@@ -1,7 +1,7 @@
 package engine
 
 // This file holds LASTING EFFECTS: "for the remainder of the turn" effects that
-// attach to a later game event. Two flavors share the same flat registry:
+// attach to a later game event. Three flavors share the same flat registry:
 //
 //   - a REACTION runs after an event (Full Moon gains Æmber after you play a
 //     creature, Charge! deals damage after you play a creature, Crystal Hive gains
@@ -11,6 +11,11 @@ package engine
 //   - a REPLACEMENT changes an event's own outcome before it happens (Dimension
 //     Door makes reaping steal Æmber instead of gaining it). The event site queries
 //     for a replacement (lastingReplacement) and applies it in place.
+//   - a MODIFIER adjusts an event's amount rather than swapping its outcome (Lethal
+//     Distraction makes a chosen creature take additional damage whenever it takes
+//     damage). Like a replacement it is queried at the event site, but the matches
+//     are summed (lastingExtraDamage) so modifiers stack, and it is subject-scoped
+//     to the one creature it names.
 //
 // Because the game state is a flat, pointerless value it cannot hold effect
 // closures, so a lasting effect is a small enum-tagged record (LastingEffect)
@@ -74,10 +79,10 @@ const (
 	// one that never enters play (a reaction point). Library Access attaches here,
 	// excepting itself so it draws only for another card.
 	EventCardPlayed
-	// EventCreatureTakesDamage is an amount of damage about to land on a creature (an
-	// augmentation point, always subject-scoped). Lethal Distraction attaches a "this
-	// creature takes an additional N damage whenever it takes damage" effect to one
-	// chosen creature; applyRawDamage queries the registry and adds the bonus.
+	// EventCreatureTakesDamage is an amount of damage about to land on a creature (a
+	// modifier point, always subject-scoped). Lethal Distraction attaches a "this
+	// creature takes an additional N damage whenever it takes damage" modifier to one
+	// chosen creature; applyRawDamage queries the registry and sums the bonuses.
 	EventCreatureTakesDamage
 )
 
@@ -125,6 +130,10 @@ const (
 	actGiveRemainingAember
 	actCapture
 	actDraw
+	actLoseAember
+	// actTakeExtraDamage is a modifier, not a reaction: it is never fired by
+	// emitLasting, only summed at the damage site by lastingExtraDamage.
+	actTakeExtraDamage
 )
 
 // describe is a short label for a reaction, used when the controller orders several
@@ -141,6 +150,8 @@ func (a lastingAction) describe() string {
 		return "give remaining Æmber"
 	case actDraw:
 		return "draw a card"
+	case actLoseAember:
+		return "opponent loses Æmber"
 	default:
 		return "gain Æmber"
 	}
@@ -307,6 +318,14 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 	case actDraw:
 		g.draw(actor, int(le.Amount))
 		g.record(LastingDraw{Player: actor, Amount: int(le.Amount), On: le.On})
+	case actLoseAember:
+		LoseAember{Player: Opponent, Amount: int(le.Amount)}.Resolve(
+			&EffectContext{
+				Resolver:   g,
+				Source:     subject,
+				Controller: actor,
+			},
+		)
 	case actGiveRemainingAember:
 		beneficiary := 1 - actor
 		amount := g.State.Aember[actor]
@@ -344,13 +363,13 @@ func (g *Game) lastingReplacement(player int, event Event) (lastingAction, bool)
 }
 
 // lastingExtraDamage sums the additional damage a creature takes from every
-// EventCreatureTakesDamage effect keyed to it — Lethal Distraction adds 2 to each
-// instance of damage the chosen creature takes for the rest of the turn.
+// modifier keyed to it — Lethal Distraction adds 2 to each instance of damage the
+// chosen creature takes for the rest of the turn.
 func (g *Game) lastingExtraDamage(id LocalID) int {
 	total := 0
 	for i := 0; i < int(g.State.LastingCount); i++ {
 		le := g.State.Lasting[i]
-		if le.On == EventCreatureTakesDamage && le.HasSubject && le.Subject == id {
+		if le.Do == actTakeExtraDamage && le.HasSubject && le.Subject == id {
 			total += int(le.Amount)
 		}
 	}

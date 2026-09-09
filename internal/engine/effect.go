@@ -120,37 +120,43 @@ type Produced struct {
 	Revealed int
 	// Destroyed[p] is how many cards player p controlled that this resolution has
 	// destroyed, read whole by CardsDestroyed / CardsDestroyedFewerThan and per
-	// side by CreaturesDestroyedThisWay (Hecatomb pays each player for their
-	// own dead).
+	// side by a ProducedThisWay{Tally: TallyCreaturesDestroyed} (Hecatomb pays each
+	// player for their own dead).
 	Destroyed [2]int
 	// Purged is how many cards the most recent purge removed, read by a CardsPurged
 	// count in a following effect of the same resolution (One Last Job steals for
 	// each creature it purged).
 	Purged int
+	// PurgedAemberBonus is the summed printed Æmber bonus of the cards the most
+	// recent PurgeCard removed this resolution, read by a PurgedAemberBonus count
+	// (Infurnace drains the opponent for the total bonus of the cards it purged).
+	PurgedAemberBonus int
 	// Discarded holds the cards a DiscardTopOfEachDeck discarded, read by a
 	// following ForEachDiscarded that acts on each (Bonkers Killing Machine
 	// destroys a creature or artifact of each discarded card's house).
 	Discarded []LocalID
 	// Moved[p] is how many cards player p controlled that a PutFromPlay took out of
-	// play — sent home rather than destroyed — this resolution, read by
-	// CreaturesShuffledIntoDeckThisWay (Mating Season).
+	// play — sent home rather than destroyed — this resolution, read by a
+	// ProducedThisWay{Tally: TallyCreaturesShuffledIntoDeck} (Mating Season).
 	Moved [2]int
 	// Returned is how many cards the most recent PutFromDiscard recovered this
-	// resolution, read by CardsReturnedThisWay (Ortannu the Chained deals damage
-	// for each Binding it returned).
+	// resolution, read by a ProducedThisWay{Tally: TallyCardsReturned} (Ortannu the
+	// Chained deals damage for each Binding it returned).
 	Returned int
 	// AemberLost[p] is how much Æmber a LoseAember has taken from player p's pool
-	// this resolution, read by AemberLostThisWay (Shatter Storm drains the opponent
-	// for triple what its controller lost).
+	// this resolution, read by a ProducedThisWay{Tally: TallyAemberLost} (Shatter
+	// Storm drains the opponent for triple what its controller lost).
 	AemberLost [2]int
 	// Neighbors are the battleline neighbors an effect snapshotted just before it
 	// removed a creature from play, read by a TargetFormerNeighbors in a following
 	// effect (Pain Reaction hits the destroyed creature's former neighbors).
 	Neighbors []LocalID
-	// AemberBonusDestroyed is the total Æmber pips printed on the cards this
-	// resolution has destroyed, read by an AemberBonusDestroyed count in a following
-	// effect (Rustgnawer gains the destroyed artifact's Æmber bonus).
-	AemberBonusDestroyed int
+	// Archived holds the creatures an ArchiveFromPlay targeted this resolution —
+	// the set it set aside, including any a ward kept in play. A following
+	// ArchivedCreaturesShareHouse condition reads it (Code Monkey gains 2 Æmber
+	// when the neighbors it archived share a house, whether or not they were
+	// actually archived).
+	Archived []LocalID
 	// ArmorPrevented is how much damage a creature just prevented with its own
 	// armor, set when an After This Creature Prevents Damage With Its Armor ability
 	// resolves and read by a DamagePrevented count (Maruck the Marked captures 1

@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // ReassemblingAutomaton
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Logos
 //	Type:   Creature
@@ -24,5 +19,14 @@ var ReassemblingAutomaton = card.New(
 	card.Provenance(card.WC, "158"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Robot, card.Traits.Experiment),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.Destroyed, card.Conditional{
+		Cond: card.HasOtherFriendlyCreatures{},
+		Then: card.SaveFromDestruction{
+			Do: card.Sequence{Effects: []card.Effect{
+				card.Heal{Fully: true, Target: card.Target.Triggering},
+				card.Exhaust{Target: card.Target.Triggering},
+				card.MoveToFlank{Target: card.Target.Triggering},
+			}},
+		},
+	}),
 )

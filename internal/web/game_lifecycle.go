@@ -616,10 +616,10 @@ func (g *game) installTipDrag() {
 		}
 		// A pinned deck list closes when the tap lands outside any deck icon, so a
 		// touchscreen can dismiss it the way a click-away or hover-out would.
-		if g.deckOpen >= 0 {
+		if g.deckOpen != ([2]bool{}) {
 			if t := args[0].Get("target"); !t.Truthy() ||
 				!t.Call("closest", ".deck-tip").Truthy() {
-				g.deckOpen = -1
+				g.deckOpen = [2]bool{}
 				if g.dispatch != nil {
 					g.dispatch(nil)
 				}

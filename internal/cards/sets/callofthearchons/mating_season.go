@@ -26,7 +26,10 @@ var MatingSeason = card.New(
 			card.GainAember{
 				Player: card.EachPlayer,
 				Amount: 1,
-				Per:    card.CreaturesShuffledIntoDeckThisWay{Player: card.Controller},
+				Per: card.ProducedThisWay{
+					Tally:  card.Tally.CreaturesShuffledIntoDeck,
+					Player: card.Controller,
+				},
 			},
 		}}),
 )

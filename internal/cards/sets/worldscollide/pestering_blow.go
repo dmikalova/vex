@@ -20,6 +20,7 @@ var PesteringBlow = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.DamageThen{
 			Amount: 1,
+			After:  card.Always,
 			Target: card.Target.Creature,
 			Then:   card.Enrage{Target: card.Target.Triggering},
 		}),

@@ -452,6 +452,114 @@ func TestDiscardDeckUntil(t *testing.T) {
 	PutDiscardedIntoHand{}.Resolve(ctx)
 }
 
+// TestRevealDeckUntilHouse covers the reveal-and-archive dig: it archives each
+// card revealed until one of the named house turns up (reporting success so a Then
+// can follow) or the controller stops, and runs safely on an empty deck.
+func TestRevealDeckUntilHouse(t *testing.T) {
+	want := "reveal cards from the top of your deck until you reveal a Brobnar card" +
+		" or choose to stop, archiving each card revealed this way"
+	if got := (RevealDeckUntilHouse{House: Brobnar}).Text(); got != want {
+		t.Errorf("text = %q, want %q", got, want)
+	}
+	if err := (RevealDeckUntilHouse{}).validate(); err == nil {
+		t.Error("want validate error for unset house")
+	}
+	if err := (RevealDeckUntilHouse{House: Brobnar}).validate(); err != nil {
+		t.Errorf("validate = %v, want nil", err)
+	}
+
+	// Keep revealing until a Brobnar card turns up: both cards above it and the
+	// Brobnar card itself are archived, the card below it stays on the deck.
+	g := NewGame("A", "B", 1)
+	g.SetChooser(0, optionPicker{idx: 0})
+	g.AddToDeck(NewCard("Trick", Logos, Tactic, Common), 0)
+	g.AddToDeck(NewCard("Brute", Brobnar, Creature, Common, WithPower(5)), 0)
+	deep := g.AddToDeck(NewCard("Deep", Logos, Creature, Common), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	if !(RevealDeckUntilHouse{House: Brobnar}).resolveGate(ctx) {
+		t.Error("resolveGate = false, want true when a Brobnar card is revealed")
+	}
+	if len(g.Archives(0)) != 2 {
+		t.Errorf("archives = %v, want 2 cards", g.Archives(0))
+	}
+	if len(g.Deck(0)) != 1 || g.Deck(0)[0] != deep {
+		t.Errorf("deck = %v, want [%d]", g.Deck(0), deep)
+	}
+
+	// Choosing to stop archives only the card revealed so far and reports failure.
+	g2 := NewGame("A", "B", 1)
+	g2.SetChooser(0, optionPicker{idx: 1})
+	g2.AddToDeck(NewCard("One", Logos, Creature, Common), 0)
+	kept := g2.AddToDeck(NewCard("Two", Logos, Creature, Common), 0)
+	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
+	if (RevealDeckUntilHouse{House: Brobnar}).resolveGate(ctx2) {
+		t.Error("resolveGate = true, want false when the controller stops")
+	}
+	if len(g2.Archives(0)) != 1 {
+		t.Errorf("archives = %v, want 1 card", g2.Archives(0))
+	}
+	if len(g2.Deck(0)) != 1 || g2.Deck(0)[0] != kept {
+		t.Errorf("deck = %v, want [%d]", g2.Deck(0), kept)
+	}
+
+	// An empty deck reports failure and moves nothing; the bare Resolve is a no-op.
+	g3 := NewGame("A", "B", 1)
+	ctx3 := &EffectContext{Resolver: g3, Controller: 0}
+	if (RevealDeckUntilHouse{House: Brobnar}).resolveGate(ctx3) {
+		t.Error("resolveGate = true, want false on an empty deck")
+	}
+	RevealDeckUntilHouse{House: Brobnar}.Resolve(ctx3)
+}
+
+// TestRevealPurgeShuffleDeck covers the reveal-top-N/purge-one/shuffle dig: it
+// purges one of the revealed top cards and leaves the rest in the deck. With the
+// default chooser it reveals from the controller's own deck and purges the top
+// card revealed.
+func TestRevealPurgeShuffleDeck(t *testing.T) {
+	want := "reveal the top 5 cards of a player's deck. Purge a card revealed this " +
+		"way. Shuffle the other revealed cards into that deck"
+	if got := (RevealPurgeShuffleDeck{Amount: 5}).Text(); got != want {
+		t.Errorf("text = %q, want %q", got, want)
+	}
+	if err := (RevealPurgeShuffleDeck{}).validate(); err == nil {
+		t.Error("want validate error for unset amount")
+	}
+	if err := (RevealPurgeShuffleDeck{Amount: 5}).validate(); err != nil {
+		t.Errorf("validate = %v, want nil", err)
+	}
+
+	g := NewGame("A", "B", 1)
+	top := g.AddToDeck(NewCard("Top", Logos, Creature, Common), 0)
+	g.AddToDeck(NewCard("Mid", Logos, Creature, Common), 0)
+	g.AddToDeck(NewCard("Low", Logos, Creature, Common), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	RevealPurgeShuffleDeck{Amount: 3}.Resolve(ctx)
+	if purge := g.Purge(0); len(purge) != 1 || purge[0] != top {
+		t.Errorf("purge = %v, want [%d]", purge, top)
+	}
+	if len(g.Deck(0)) != 2 {
+		t.Errorf("deck = %v, want 2 cards", g.Deck(0))
+	}
+
+	// An empty deck purges nothing and is a no-op.
+	g2 := NewGame("A", "B", 1)
+	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
+	RevealPurgeShuffleDeck{Amount: 3}.Resolve(ctx2)
+	if len(g2.Purge(0)) != 0 {
+		t.Errorf("purge = %v, want empty", g2.Purge(0))
+	}
+
+	// Choosing the opponent's deck digs there instead.
+	g3 := NewGame("A", "B", 1)
+	oppTop := g3.AddToDeck(NewCard("OppTop", Logos, Creature, Common), 1)
+	ctx3 := &EffectContext{Resolver: g3, Controller: 0}
+	g3.SetChooser(0, optionPicker{idx: 1})
+	RevealPurgeShuffleDeck{Amount: 3}.Resolve(ctx3)
+	if purge := g3.Purge(1); len(purge) != 1 || purge[0] != oppTop {
+		t.Errorf("opponent purge = %v, want [%d]", purge, oppTop)
+	}
+}
+
 // TestLookAtTop covers the "look at the top N, keep one, discard the rest" dig:
 // the chosen card goes to hand, the others to the discard pile, and short or empty
 // decks are handled.

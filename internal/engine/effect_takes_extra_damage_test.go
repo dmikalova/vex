@@ -51,7 +51,13 @@ func TestLastingExtraDamageQuery(t *testing.T) {
 	a := g.AddToBattleline(testCreature("a", 5), 0)
 	b := g.AddToBattleline(testCreature("b", 5), 0)
 	g.AddLasting(
-		LastingEffect{On: EventCreatureTakesDamage, Amount: 2, Subject: a, HasSubject: true},
+		LastingEffect{
+			On:         EventCreatureTakesDamage,
+			Do:         actTakeExtraDamage,
+			Amount:     2,
+			Subject:    a,
+			HasSubject: true,
+		},
 	)
 	if got := g.lastingExtraDamage(a); got != 2 {
 		t.Errorf("extra damage on a = %d, want 2", got)

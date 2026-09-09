@@ -25,6 +25,18 @@ func (g *Game) discardDestroyed(id LocalID) {
 	g.State.Discard[o].add(id)
 }
 
+// SaveFromDestruction marks a creature whose own "Destroyed:" ability replaced its
+// destruction, so the discard step of the current batch leaves it in play
+// (Reassembling Automaton). It records the replacement so the log narrates the
+// save.
+func (g *Game) SaveFromDestruction(id LocalID) {
+	if g.savedFromDestruction == nil {
+		g.savedFromDestruction = map[LocalID]bool{}
+	}
+	g.savedFromDestruction[id] = true
+	g.record(DestructionReplaced{Card: id, By: id})
+}
+
 // purgeFromPlay moves a card from play to its owner's purge pile (set aside out of
 // the game), shedding its upgrades, Æmber, and per-match state on the way — the
 // "purge this creature" a Destroyed ability can do (Annihilation Ritual). A card
@@ -55,17 +67,22 @@ func (g *Game) absorbedByWard(id LocalID) bool {
 
 // leavePlayDestroyed performs the shared teardown when a destroyed card leaves
 // play: it removes the card from the battle line and artifact row, discards its
-// upgrades, hands any Æmber on it to the owner's opponent, and resets its per-match
-// state. It returns the owner so the caller can file the card in the right zone.
+// upgrades, hands any Æmber on it to the controller's opponent, and resets its
+// per-match state. It returns the owner so the caller can file the card in the
+// right zone. The Æmber goes to the opponent of whoever controlled the creature
+// at the moment it died, not the owner's opponent — a creature taken by the
+// opponent (exiled into their control) gives its Æmber back to its owner when it
+// dies under that control.
 func (g *Game) leavePlayDestroyed(id LocalID) int {
 	o := g.owner(id)
+	to := 1 - g.controller(id)
 	g.removeFromPlay(id)
 	g.discardUpgrades(id)
 	g.discardUnder(id)
 	core := &g.State.Cards[id]
 	if core.Amber > 0 {
-		g.State.Aember[1-o] += int(core.Amber)
-		g.record(AemberOnCardReleased{Card: id, Amount: int(core.Amber), To: 1 - o})
+		g.State.Aember[to] += int(core.Amber)
+		g.record(AemberOnCardReleased{Card: id, Amount: int(core.Amber), To: to})
 	}
 	g.resetCore(id)
 	return o
@@ -285,9 +302,12 @@ func (g *Game) destroyTogether(controller int, ids []LocalID) {
 		closeFrame()
 	}
 	for _, id := range ids {
-		if g.inPlay(id) {
+		if g.inPlay(id) && !g.savedFromDestruction[id] {
 			g.discardDestroyed(id)
 		}
+	}
+	for _, id := range ids {
+		delete(g.savedFromDestruction, id)
 	}
 	// Only now, with the batch in the discard pile, do the "after ... destroyed"
 	// reactions fire — Neffru's "after a creature is destroyed" and Pile of Skulls'

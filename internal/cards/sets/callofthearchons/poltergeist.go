@@ -20,8 +20,9 @@ var Poltergeist = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.Use{
-				Max:    1,
-				Target: card.Target.EachArtifact,
+				Max:          1,
+				Target:       card.Target.EachArtifact,
+				EvenUnusable: true,
 			},
 			card.Destroy{Target: card.Target.Triggering},
 		}}),

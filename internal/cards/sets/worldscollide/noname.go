@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Noname
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Dis
 //	Type:   Creature
@@ -25,5 +20,12 @@ var Noname = card.New(
 	card.Provenance(card.WC, "112"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Demon),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithConstant(card.ConstantAbility{
+		Target:     card.Target.This,
+		PowerBonus: 1,
+		Per:        card.PurgedCards{},
+	}),
+	card.WithAbility(card.Trigger.Play, card.PurgeCard{Zone: card.Discard}),
+	card.WithAbility(card.Trigger.Fight, card.PurgeCard{Zone: card.Discard}),
+	card.WithAbility(card.Trigger.Reap, card.PurgeCard{Zone: card.Discard}),
 )

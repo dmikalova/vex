@@ -500,14 +500,15 @@ discarded a card this turn`.
 ## 27. "Gain that much Æmber" becomes a `for each Æmber bonus` clause
 
 A card that destroys a card and then gains Æmber equal to that card's Æmber bonus
-is authored as a `Destroy` followed by a `GainAember{Per: AemberBonusDestroyed}`,
-which the engine renders as an explicit per-pip clause rather than the printed
-back-reference `you gain that much Æmber`. The rendered form names what is being
-counted, so behavior and text cannot drift.
+is authored as a `Destroy` followed by a `GainAember{Per: AemberBonusOf{Target:
+Triggering}}`, which the engine renders as an explicit per-pip clause reading the
+destroyed card in context (`it`) rather than the printed back-reference `you gain
+that much Æmber`. The rendered form names what is being counted, so behavior and
+text cannot drift.
 
-| Original                                                                              | Curated                                                                              |
-| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `Destroy an artifact. If that artifact had an Æmber bonus, you gain that much Æmber.` | `Destroy an artifact. For each Æmber bonus on the destroyed artifact, gain 1 Æmber.` |
+| Original                                                                              | Curated                                                          |
+| ------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `Destroy an artifact. If that artifact had an Æmber bonus, you gain that much Æmber.` | `Destroy an artifact. For each Æmber bonus on it, gain 1 Æmber.` |
 
 (Affected: Rustgnawer.)
 
@@ -562,6 +563,24 @@ reads clean. This is a deliberate rules divergence, not just a wording change
 
 (Affected: Free Markets, Forging an Alliance, Trust No One, and the reprints
 that share their text.)
+
+---
+
+## 31. "Deal X, deal Y instead if …" is a choose-then-conditional
+
+A card that deals one amount of damage to a chosen creature and a larger amount
+instead when that creature meets a condition is authored as a `ChooseCreatureThen`
+whose `Then` is a `Conditional` — the condition picks which amount is dealt —
+rather than a bespoke damage-boost strategy on `DealDamage`. Compound conditions
+compose (`Or{ItIsOfTrait{…}, ItHasAember{}}`) instead of baking each combination
+into a one-off condition, and the rendered form names both amounts and the branch
+plainly.
+
+| Original                                                                                              | Curated                                                                                                                       |
+| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| `Deal 2 damage to a creature. Deal 6 damage instead if it is a Dinosaur creature or has Æmber on it.` | `Choose a creature - if it is a Dinosaur creature or it has Æmber on it, deal 6 damage to it. Otherwise, deal 2 damage to it.` |
+
+(Affected: Guji Dinosaur Hunter.)
 
 ---
 

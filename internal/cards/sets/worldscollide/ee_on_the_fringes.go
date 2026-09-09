@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // EeOnTheFringes
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Dis
 //	Type:   Creature
@@ -22,8 +17,17 @@ var EeOnTheFringes = card.New(
 	card.House.Dis,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, "88"),
+	card.Provenance(card.WC, "088"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Imp),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithAbility(card.Trigger.AfterDiscardFromHand, card.Conditional{
+		Cond: card.ItIs{House: card.House.Self},
+		Then: card.May{
+			Do: card.Then{
+				First:  card.PurgeCard{Zone: card.Discard, House: card.House.Self},
+				Result: card.StealAember{Amount: 1},
+			},
+		},
+	}),
 )

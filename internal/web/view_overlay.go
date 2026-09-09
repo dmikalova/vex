@@ -16,7 +16,10 @@ import (
 func (g *game) overPanel() app.UI {
 	winner := g.g.Winner()
 	return app.Div().Class("btn-col over-panel").Body(
-		app.Div().Class("section-title").Text(g.g.PlayerName(winner)+" wins!"),
+		app.Div().Class("section-title").Body(
+			app.Span().Class(playerNameCls(winner)).Text(g.g.PlayerName(winner)),
+			app.Text(" wins!"),
+		),
 		btn("New game", g.openSetup, "btn-primary"),
 	)
 }
@@ -35,7 +38,16 @@ func (g *game) zonesOverlay() app.UI {
 		app.Div().Class("zones-panel").OnClick(g.stopClick).Body(
 			app.Div().Class("zones-header").Body(
 				app.Button().Class("zones-close").Text("✕").OnClick(g.closeZones),
-				app.Div().Class("over-title").Text(g.g.PlayerName(p)+"'s Zones"),
+				app.Div().Class("over-title").Body(
+					app.Span().Class(playerNameCls(p)).Text(g.g.PlayerName(p)),
+					app.Text("'s Zones"),
+				),
+				// A declinable prompt drawn over the viewer (Not Finished with You —
+				// shuffle any number, including zero) is finished here: Done submits the
+				// current selection with no further pick. A mandatory prompt has no Done.
+				app.If(g.promptZone != "" && g.chooserDeclinable, func() app.UI {
+					return btn("Done", g.declineChooser, "btn-primary zones-done")
+				}),
 			),
 			app.Div().Class("zones-body").Body(
 				g.zoneRow("Deck", g.sortByHouseTypeName(g.g.Deck(p))),
@@ -52,8 +64,15 @@ func (g *game) zoneRow(label string, ids []engine.LocalID) app.UI {
 	if label == g.promptZone {
 		row = row.ID(promptZoneID)
 	}
+	// The label carries the zone's own symbol before the count — "Deck (⌸29)" — so
+	// a row reads as its pile at a glance, the way the score pills' zone counts do.
+	labelBody := []app.UI{app.Text(label + " (")}
+	if name := zoneIconName(label); name != "" {
+		labelBody = append(labelBody, icon(name, "icon-stat"))
+	}
+	labelBody = append(labelBody, app.Text(fmt.Sprintf("%d)", len(ids))))
 	return row.Body(
-		app.Div().Class("row-label").Text(fmt.Sprintf("%s (%d)", label, len(ids))),
+		app.Div().Class("row-label").Body(labelBody...),
 		app.If(len(ids) == 0, func() app.UI {
 			return app.Div().Class("row-empty")
 		}).Else(func() app.UI {
@@ -62,6 +81,24 @@ func (g *game) zoneRow(label string, ids []engine.LocalID) app.UI {
 			)
 		}),
 	)
+}
+
+// zoneIconName is the asset stem for an out-of-play zone's symbol, matching the
+// icons the score pills' zone counts use, or "" for a zone with no symbol.
+func zoneIconName(label string) string {
+	switch label {
+	case "Hand":
+		return "zone-hand"
+	case "Deck":
+		return "zone-deck"
+	case "Discard":
+		return "zone-discard"
+	case "Archives":
+		return "zone-archives"
+	case "Purge":
+		return "zone-purge"
+	}
+	return ""
 }
 
 // renderZoneCard renders a card face for a card in an out-of-play zone. It is

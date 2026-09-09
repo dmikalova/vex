@@ -139,7 +139,7 @@ func (c *webChooser) raise(
 		c.g.promptSource = source
 		c.g.promptCursor, c.g.hasCursor = 0, false
 		c.g.btnCursor, c.g.hasBtnCursor = 0, false
-		c.g.openZoneForPrompt(candidates)
+		c.g.presentPrompt(candidates, declinable)
 	})
 	var r chooseReply
 	select {
@@ -153,6 +153,7 @@ func (c *webChooser) raise(
 		c.g.chooserOrdering = false
 		c.g.chooserPrompt = ""
 		c.g.chooserCandidates = nil
+		c.g.promptAsButtons = false
 		c.g.promptSource = ""
 		c.g.promptCursor, c.g.hasCursor = 0, false
 		c.g.btnCursor, c.g.hasBtnCursor = 0, false
@@ -161,12 +162,35 @@ func (c *webChooser) raise(
 	return r
 }
 
-// openZoneForPrompt opens the out-of-play zone viewer when a prompt's candidates
-// live outside play. The board only draws cards in play, so a prompt over a
-// discard pile (World Tree, Witch of the Eye) would otherwise have nothing to
-// click; the viewer makes the pile the board, scrolled to the right row.
-func (g *game) openZoneForPrompt(candidates []engine.LocalID) {
-	first := candidates[0]
+// maxPromptButtons bounds how many out-of-play candidates a prompt lists as
+// action-bar buttons before it falls back to the zone viewer. A "look at the top
+// N cards" pick (Navigator Ali, Lay of the Land — N is 3) is a short enough list
+// to read as buttons; a choice over a whole discard pile is not.
+const maxPromptButtons = 6
+
+// presentPrompt decides how a card prompt's candidates are offered. Candidates in
+// play highlight where they stand, so nothing is set up here for them. A bounded,
+// mandatory pick from the top of the deck (a "look at the top N cards and put them
+// back" — Navigator Ali, Eyegore, Lay of the Land) is offered as a short list of
+// action-bar buttons, since the cards are hidden until the effect reveals them and
+// the set is small. Every other out-of-play pick — a visible pile (discard,
+// archives, purge), or an unbounded one (declinable — shuffle any number) — opens
+// the zone viewer, which shows the whole pile as full card faces.
+func (g *game) presentPrompt(candidates []engine.LocalID, declinable bool) {
+	p, label, inPile := g.zoneOfCard(candidates[0])
+	if !inPile {
+		return
+	}
+	if label == "Deck" && !declinable && len(candidates) <= maxPromptButtons {
+		g.promptAsButtons = true
+		return
+	}
+	g.zonesPlayer, g.promptZone, g.promptZoneScrolled = p, label, false
+}
+
+// zoneOfCard finds the out-of-play pile a card sits in, if any, so a prompt over
+// that pile knows which viewer row to open or which player's cards to name.
+func (g *game) zoneOfCard(id engine.LocalID) (player int, label string, ok bool) {
 	for p := range 2 {
 		for _, z := range []struct {
 			label string
@@ -177,13 +201,12 @@ func (g *game) openZoneForPrompt(candidates []engine.LocalID) {
 			{"Purge", g.g.Purge(p)},
 			{"Deck", g.g.Deck(p)},
 		} {
-			if !containsID(z.ids, first) {
-				continue
+			if containsID(z.ids, id) {
+				return p, z.label, true
 			}
-			g.zonesPlayer, g.promptZone, g.promptZoneScrolled = p, z.label, false
-			return
 		}
 	}
+	return 0, "", false
 }
 
 // closeZoneForPrompt closes a zone viewer that a prompt opened, leaving one the
@@ -233,11 +256,21 @@ func (c *webChooser) ChooseOption(source, prompt string, options []string) int {
 }
 
 // ChoosePosition implements the engine's PositionChooser: instead of a labeled
-// option per battleline gap, it lights the line's creatures and lets the player
-// place a Deploy creature by clicking one — to its left or right, per the armed
-// direction toggle — or by taking a flank button. It returns the position the new
-// creature enters before (0 the left flank, len(line) the right flank).
-func (c *webChooser) ChoosePosition(source, prompt string, line []engine.LocalID) int {
+// option per battleline gap, it lights the line's creatures and lifts the
+// creature being placed with its placement verbs on it (deployActions) — click a
+// creature to land beside it, to its left or right per the armed direction
+// toggle, or take a flank. It returns the position the new creature enters before
+// (0 the left flank, len(line) the right flank). The engine renders the prompt
+// text; the client speaks the choice through the lifted card and the lit line, so
+// the prompt string is unused here.
+func (c *webChooser) ChoosePosition(source, _ string, line []engine.LocalID) int {
+	// With no other friendly creatures in play there is only one placement (the
+	// lone spot), so place it without asking. The engine already skips the prompt
+	// for an empty line; this guards the web side against ever raising a choice
+	// that has no alternatives.
+	if len(line) == 0 {
+		return 0
+	}
 	// A manual-mode Cancel already in flight drains without showing the prompt.
 	select {
 	case <-c.cancel:
@@ -251,7 +284,6 @@ func (c *webChooser) ChoosePosition(source, prompt string, line []engine.LocalID
 	}
 	c.g.dispatch(func(app.Context) {
 		c.g.choosingPosition = true
-		c.g.positionPrompt = prompt
 		c.g.positionLine = line
 		c.g.positionRight = false
 		c.g.promptSource = source
@@ -264,7 +296,6 @@ func (c *webChooser) ChoosePosition(source, prompt string, line []engine.LocalID
 	}
 	c.g.dispatch(func(app.Context) {
 		c.g.choosingPosition = false
-		c.g.positionPrompt = ""
 		c.g.positionLine = nil
 		c.g.positionRight = false
 		c.g.promptSource = ""
@@ -283,6 +314,18 @@ func (g *game) chooseCandidate(_ app.Context, id engine.LocalID) {
 	case g.chooser.reply <- chooseReply{id: id, ok: true}:
 	default:
 	}
+}
+
+// onPromptButtonPick answers a bounded card prompt with the candidate its
+// action-bar button stands for. The id is read off the button's own dataset, so
+// the single stable handler stays valid across re-renders (go-app compares
+// handlers by pointer) — the same pattern the log's card mentions use.
+func (g *game) onPromptButtonPick(ctx app.Context, _ app.Event) {
+	id, err := strconv.Atoi(ctx.JSSrc().Get("dataset").Get("id").String())
+	if err != nil {
+		return
+	}
+	g.chooseCandidate(ctx, engine.LocalID(id))
 }
 
 // declineChooser answers a declinable card prompt with a pass — the Done button,
@@ -398,10 +441,15 @@ func (g *game) onScorePillClick(ctx app.Context, _ app.Event) {
 }
 
 // closeZones hides the out-of-play zone viewer.
-func (g *game) closeZones(_ app.Context, _ app.Event) {
+func (g *game) closeZones(ctx app.Context, e app.Event) {
 	// A viewer opened by a prompt is the only place its candidates are clickable,
-	// so it stays up until the prompt is answered.
+	// so it normally stays up until the prompt is answered. A declinable prompt
+	// (Not Finished with You — shuffle any number, including zero) can be finished
+	// from here: closing submits the current selection by declining the next pick.
 	if g.promptZone != "" {
+		if g.chooserDeclinable {
+			g.declineChooser(ctx, e)
+		}
 		return
 	}
 	g.zonesPlayer = -1

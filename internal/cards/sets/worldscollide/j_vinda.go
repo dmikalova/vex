@@ -22,8 +22,9 @@ var JVinda = card.New(
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
-		card.Trigger.Reap, card.DamageThenIfDestroyed{
+		card.Trigger.Reap, card.DamageThen{
 			Amount: 1,
+			After:  card.IfDestroyed,
 			Target: card.Target.Creature,
 			Then:   card.StealAember{Amount: 1},
 		}),

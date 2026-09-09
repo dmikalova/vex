@@ -28,7 +28,7 @@ func (g *game) deckTip(player int) app.UI {
 		return nil
 	}
 	return app.Span().
-		Class(cx("deck-tip", ifCls(g.deckOpen == player, "deck-tip--open"))).
+		Class(cx("deck-tip", ifCls(g.deckOpen[player], "deck-tip--open"))).
 		OnMouseEnter(g.onDeckHover).
 		Body(
 			app.Span().Class("deck-tip-btn").
@@ -44,17 +44,20 @@ func (g *game) onDeckHover(ctx app.Context, _ app.Event) {
 	g.clampPopover(ctx.JSSrc())
 }
 
-// clampOpenDeckList clamps a tap-opened popover on screen after a re-render,
+// clampOpenDeckList clamps every tap-opened popover on screen after a re-render,
 // since a tap opens it with no hover event to clamp against.
 func (g *game) clampOpenDeckList() {
-	if g.deckOpen < 0 {
+	if g.deckOpen == ([2]bool{}) {
 		return
 	}
 	doc := app.Window().Get("document")
 	if !doc.Truthy() {
 		return
 	}
-	g.clampPopover(doc.Call("querySelector", ".deck-tip--open"))
+	open := doc.Call("querySelectorAll", ".deck-tip--open")
+	for i := range open.Get("length").Int() {
+		g.clampPopover(open.Call("item", i))
+	}
 }
 
 // clampPopover keeps a centered deck-list popover on screen: it measures at the
@@ -62,10 +65,20 @@ func (g *game) clampOpenDeckList() {
 // back inward — favoring the left wall so the list is never cut off there. tip is
 // the .deck-tip container.
 func (g *game) clampPopover(tip app.Value) {
-	if !tip.Truthy() {
+	clampFloating(tip, ".deck-list")
+}
+
+// clampFloating keeps a centered popover (a child of container matched by sel) on
+// screen: it measures at the centered position and, only if an edge runs off the
+// viewport, nudges the popover back inward — favoring the left wall so it is never
+// cut off there. It is shared by the deck list and the zone-count rosters, both of
+// which float centered above a player-bar pill and so run off the right edge for a
+// pill near the screen's edge (the Purge count in particular).
+func clampFloating(container app.Value, sel string) {
+	if !container.Truthy() {
 		return
 	}
-	list := tip.Call("querySelector", ".deck-list")
+	list := container.Call("querySelector", sel)
 	if !list.Truthy() {
 		return
 	}
@@ -91,15 +104,12 @@ func (g *game) clampPopover(tip app.Value) {
 	}
 }
 
-// onDeckToggle pins the deck list open on a tap and closes it on a second tap, so
-// a touchscreen with no hover can still read it. Desktop hover works regardless.
+// onDeckToggle pins one player's deck list open on a tap and closes it on a second
+// tap, so a touchscreen with no hover can still read it. Each side toggles on its
+// own, leaving the other player's list as it was. Desktop hover works regardless.
 func (g *game) onDeckToggle(player int) app.EventHandler {
 	return func(_ app.Context, _ app.Event) {
-		if g.deckOpen == player {
-			g.deckOpen = -1
-			return
-		}
-		g.deckOpen = player
+		g.deckOpen[player] = !g.deckOpen[player]
 	}
 }
 
@@ -129,12 +139,15 @@ func (g *game) deckListPopover(player int) app.UI {
 		}
 		cols = append(cols, app.Div().Class("deck-list-col").Body(rows...))
 	}
-	header := g.g.PlayerName(player)
+	suffix := ""
 	if roster.Set != "" {
-		header += " • " + roster.Set
+		suffix = " • " + roster.Set
 	}
 	return app.Div().Class("deck-list").Body(
-		app.Div().Class("deck-list-head").Text(header),
+		app.Div().Class("deck-list-head").Body(
+			app.Span().Class(playerNameCls(player)).Text(g.g.PlayerName(player)),
+			app.Text(suffix),
+		),
 		app.Div().Class("deck-list-cols").Body(cols...),
 	)
 }

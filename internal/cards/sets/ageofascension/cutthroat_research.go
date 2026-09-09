@@ -19,7 +19,8 @@ var CutthroatResearch = card.New(
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
-			Cond: card.OpponentAember{
+			Cond: card.PoolAember{
+				Player: card.Opponent,
 				Is:     card.AtLeast,
 				Amount: 8,
 			},

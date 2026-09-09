@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // AcademyTraining
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Logos
 //	Type:   Upgrade
@@ -21,5 +16,11 @@ var AcademyTraining = card.New(
 	card.Type.Upgrade,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "161"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithStatic(card.StaticModifier{
+		HouseOverride: card.House.Self,
+		Granted: []card.Ability{{
+			Trigger: card.Trigger.Reap,
+			Effect:  card.Draw{Amount: 1},
+		}},
+	}),
 )

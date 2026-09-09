@@ -38,7 +38,7 @@ func TestTribunePompitus(t *testing.T) {
 
 		// Before Fight exalts Tribune, placing one Æmber on it; only Tribune grows.
 		h.P1.Fight(tribune, foe)
-		h.P1.ClickOption("Yes")
+		h.P1.ClickCard(tribune)
 
 		h.Expect(tribune).AmberOn(1)
 		h.Expect(tribune).Power(6)
@@ -56,7 +56,7 @@ func TestTribunePompitus(t *testing.T) {
 		})
 
 		h.P1.Fight(tribune, foe)
-		h.P1.ClickOption("No")
+		h.P1.ClickDone()
 
 		h.Expect(tribune).AmberOn(0)
 		h.Expect(tribune).Power(4)

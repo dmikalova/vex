@@ -498,6 +498,52 @@ func TestTargetExceptTrait(t *testing.T) {
 	}
 }
 
+// TestOfHouseWithMostCreatures covers Etaromme's target: it keeps only creatures
+// of the house with the most creatures in play, counting both battlelines, and
+// keeps every tied house eligible on a tie.
+func TestOfHouseWithMostCreatures(t *testing.T) {
+	if got := (Target{Kind: TargetChosenCreature}).OfHouseWithMostCreatures().
+		Text(); got != "a creature of the house with the most creatures in play" {
+		t.Errorf("text = %q", got)
+	}
+
+	t.Run("keeps only the most populous house", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		// Mars leads with three creatures; Brobnar has two, Dis has one.
+		for i := 0; i < 3; i++ {
+			g.AddToBattleline(NewCard("m", Mars, Creature, Common, WithPower(3)), 0)
+		}
+		g.AddToBattleline(NewCard("b", Brobnar, Creature, Common, WithPower(3)), 0)
+		g.AddToBattleline(NewCard("b2", Brobnar, Creature, Common, WithPower(3)), 1)
+		dis := g.AddToBattleline(NewCard("d", Dis, Creature, Common, WithPower(3)), 1)
+		ctx := &EffectContext{Resolver: g, Source: dis, Controller: 0}
+
+		ids := (Target{Kind: TargetEachCreature}).OfHouseWithMostCreatures().Select(ctx)
+		if len(ids) != 3 {
+			t.Fatalf("selected %v, want the 3 Mars creatures", ids)
+		}
+		for _, id := range ids {
+			if g.House(id) != Mars {
+				t.Errorf("selected %d of house %v, want Mars", id, g.House(id))
+			}
+		}
+	})
+
+	t.Run("keeps every tied house on a tie", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		m1 := g.AddToBattleline(NewCard("m", Mars, Creature, Common, WithPower(3)), 0)
+		g.AddToBattleline(NewCard("m2", Mars, Creature, Common, WithPower(3)), 0)
+		g.AddToBattleline(NewCard("b", Brobnar, Creature, Common, WithPower(3)), 1)
+		g.AddToBattleline(NewCard("b2", Brobnar, Creature, Common, WithPower(3)), 1)
+		ctx := &EffectContext{Resolver: g, Source: m1, Controller: 0}
+
+		ids := (Target{Kind: TargetEachCreature}).OfHouseWithMostCreatures().Select(ctx)
+		if len(ids) != 4 {
+			t.Fatalf("selected %v, want all 4 creatures of the two tied houses", ids)
+		}
+	})
+}
+
 func TestNeighbors(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	a := g.AddToBattleline(testCreature("a", 1), 0)

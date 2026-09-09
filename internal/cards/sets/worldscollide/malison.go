@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Malison
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Dis
 //	Type:   Creature
@@ -24,5 +19,17 @@ var Malison = card.New(
 	card.Provenance(card.WC, "80"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Demon),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Fight, card.May{Do: card.Then{
+			First: card.MoveWithinBattleline{Target: card.Target.EnemyCreature},
+			Result: card.Conditional{
+				Cond: card.ItIsOnFlank{},
+				Then: card.CaptureAember{
+					Amount: 1,
+					Target: card.Target.TheChosenCreature,
+					Source: card.Opponent,
+				},
+			},
+		}},
+	),
 )

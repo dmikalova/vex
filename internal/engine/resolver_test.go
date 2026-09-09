@@ -16,6 +16,18 @@ func TestSetAemberClampsAtZero(t *testing.T) {
 	}
 }
 
+// TestNoteAemberStolenFromClamps covers the running steal tally: it ignores
+// non-positive amounts and clamps at the int8 max the history holds.
+func TestNoteAemberStolenFromClamps(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.NoteAemberStolenFrom(0, 0) // ignored
+	g.NoteAemberStolenFrom(0, 100)
+	g.NoteAemberStolenFrom(0, 100) // 200 clamps to 127
+	if got := g.State.TurnHistory[0][AemberStolenFromThisTurn]; got != 127 {
+		t.Errorf("tally = %d, want 127 (clamped)", got)
+	}
+}
+
 // An ability keeps resolving after its target has left play, so every writer of
 // in-play state has to land on nothing rather than leave counters or a stun on a
 // card sitting in the discard pile.

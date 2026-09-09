@@ -109,3 +109,47 @@ func (e MoveToFlank) Resolve(ctx *EffectContext) {
 		ctx.Resolver.MoveToFlank(id, right)
 	}
 }
+
+// MoveWithinBattleline repositions the creature its Target selects anywhere in
+// that creature's own controller's battleline, the effect's controller choosing
+// the destination slot — Malison moves an enemy creature so its own controller may
+// end up putting it on a flank. The moved creature is left in context (ctx.It) so
+// a following effect can act on it. A Target that selects nothing, or a creature
+// no longer on a battleline, leaves the battleline unchanged. resolveGate reports
+// whether a creature was chosen, so a "you may" wrapper and a following Then read
+// the choice.
+type MoveWithinBattleline struct {
+	Target Target
+}
+
+// validate requires the creature to move.
+func (e MoveWithinBattleline) validate() error {
+	if !e.Target.valid() {
+		return errUnsetTarget("MoveWithinBattleline")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "move an enemy creature anywhere in its
+// controller's battleline".
+func (e MoveWithinBattleline) Text() string {
+	return "move " + e.Target.Text() + " anywhere in its controller's battleline"
+}
+
+// Resolve moves the selected creature within its battleline and leaves it in
+// context.
+func (e MoveWithinBattleline) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
+
+// resolveGate moves the selected creature and reports whether one was chosen.
+func (e MoveWithinBattleline) resolveGate(ctx *EffectContext) bool {
+	ids := e.Target.Select(ctx)
+	if len(ids) == 0 {
+		return false
+	}
+	id := ids[0]
+	if ctx.Resolver.InBattleline(id) {
+		ctx.Resolver.MoveWithinBattleline(ctx.Controller, id)
+	}
+	ctx.It, ctx.HasIt = id, true
+	return true
+}

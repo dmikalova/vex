@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: If there are 3 enemy Logos cards in play, steal 2 Æmber.
+//	Play: If there are 3 or more enemy Logos cards in play, steal 2 Æmber.
 func TestTakeThatSmartypants(t *testing.T) {
 	t.Run("steals 2 when opponent has 3 or more Logos cards in play", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

@@ -145,20 +145,31 @@ func TestArchiveTopOfDeckEffect(t *testing.T) {
 	g.AddToDeck(testCreature("next", 1), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	if (ArchiveTopOfDeck{Amount: 1}).Text() != "archive the top card of your deck" {
-		t.Errorf("text = %q", (ArchiveTopOfDeck{Amount: 1}).Text())
+	// From must name a pile a card can archive the top of.
+	if (ArchiveTop{Amount: 1}).validate() == nil {
+		t.Error("an unset From should not validate")
 	}
-	if (ArchiveTopOfDeck{Amount: 2}).Text() != "archive the top 2 cards of your deck" {
-		t.Errorf("plural text = %q", (ArchiveTopOfDeck{Amount: 2}).Text())
+	if (ArchiveTop{From: Hand, Amount: 1}).validate() == nil {
+		t.Error("From Hand should not validate")
+	}
+	if (ArchiveTop{From: Deck, Amount: 1}).validate() != nil {
+		t.Error("From Deck should validate")
 	}
 
-	(ArchiveTopOfDeck{Amount: 1}).Resolve(ctx)
+	if (ArchiveTop{From: Deck, Amount: 1}).Text() != "archive the top card of your deck" {
+		t.Errorf("text = %q", (ArchiveTop{From: Deck, Amount: 1}).Text())
+	}
+	if (ArchiveTop{From: Deck, Amount: 2}).Text() != "archive the top 2 cards of your deck" {
+		t.Errorf("plural text = %q", (ArchiveTop{From: Deck, Amount: 2}).Text())
+	}
+
+	(ArchiveTop{From: Deck, Amount: 1}).Resolve(ctx)
 	if g.State.Archives[0].Count != 1 || g.State.Archives[0].IDs[0] != top {
 		t.Errorf("archived %v, want the top card %d", g.State.Archives[0].slice(), top)
 	}
 
 	// Archiving more than the deck holds stops when the deck empties.
-	(ArchiveTopOfDeck{Amount: 5}).Resolve(ctx)
+	(ArchiveTop{From: Deck, Amount: 5}).Resolve(ctx)
 	if g.State.Deck[0].Count != 0 {
 		t.Errorf("deck should be empty, got %d", g.State.Deck[0].Count)
 	}
@@ -173,21 +184,21 @@ func TestArchiveTopOfDiscardEffect(t *testing.T) {
 	g.State.Discard[0].add(top)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	if (ArchiveTopOfDiscard{Amount: 1}).Text() != "archive the top card of your discard pile" {
-		t.Errorf("text = %q", (ArchiveTopOfDiscard{Amount: 1}).Text())
+	if (ArchiveTop{From: Discard, Amount: 1}).Text() != "archive the top card of your discard pile" {
+		t.Errorf("text = %q", (ArchiveTop{From: Discard, Amount: 1}).Text())
 	}
-	if (ArchiveTopOfDiscard{Amount: 2}).Text() != "archive the top 2 cards of your discard pile" {
-		t.Errorf("plural text = %q", (ArchiveTopOfDiscard{Amount: 2}).Text())
+	if (ArchiveTop{From: Discard, Amount: 2}).Text() != "archive the top 2 cards of your discard pile" {
+		t.Errorf("plural text = %q", (ArchiveTop{From: Discard, Amount: 2}).Text())
 	}
 
 	// The most recently discarded card is the top and archives first.
-	(ArchiveTopOfDiscard{Amount: 1}).Resolve(ctx)
+	(ArchiveTop{From: Discard, Amount: 1}).Resolve(ctx)
 	if g.State.Archives[0].Count != 1 || g.State.Archives[0].IDs[0] != top {
 		t.Errorf("archived %v, want the top card %d", g.State.Archives[0].slice(), top)
 	}
 
 	// Archiving more than the discard holds stops when the pile empties.
-	(ArchiveTopOfDiscard{Amount: 5}).Resolve(ctx)
+	(ArchiveTop{From: Discard, Amount: 5}).Resolve(ctx)
 	if g.State.Discard[0].Count != 0 {
 		t.Errorf("discard should be empty, got %d", g.State.Discard[0].Count)
 	}
@@ -488,5 +499,37 @@ func TestArchiveRandomFromHand(t *testing.T) {
 	}
 	if g.State.Archives[0].Count != 3 {
 		t.Errorf("archives count = %d, want 3", g.State.Archives[0].Count)
+	}
+}
+
+// TestArchiveFromHandOrAmount covers the alternate-amount tail ("archive a card,
+// or 2 cards if …", Velum) — its validate, Text, and the archiveHandObject noun.
+func TestArchiveFromHandOrAmount(t *testing.T) {
+	e := ArchiveFromHand{Amount: 1, Or: OrAmount{Amount: 2, When: ControlsNamed{Name: "Hyde"}}}
+	if got := e.Text(); got != "archive a card from your hand, or 2 cards if you control Hyde" {
+		t.Errorf("text = %q", got)
+	}
+	if err := e.validate(); err != nil {
+		t.Errorf("validate = %v", err)
+	}
+
+	// A singular alternate exercises archiveHandObject's n==1 branch.
+	one := ArchiveFromHand{Amount: 2, Or: OrAmount{Amount: 1, When: ControlsNamed{Name: "Hyde"}}}
+	if got := one.Text(); got != "archive 2 cards from your hand, or a card if you control Hyde" {
+		t.Errorf("singular alt text = %q", got)
+	}
+
+	// A Per count leads the sentence (Dr. Milli).
+	per := ArchiveFromHand{Amount: 1, Per: ExcessCreatures{Player: Opponent}}
+	if got := per.Text(); got != "for each creature your opponent controls in excess of you, archive a card from your hand" {
+		t.Errorf("per text = %q", got)
+	}
+}
+
+// TestArchiveFromDiscardNamed covers pinning the choice to a named card (Hyde
+// archives Velum).
+func TestArchiveFromDiscardNamed(t *testing.T) {
+	if got := (ArchiveFromDiscard{Name: "Velum"}).Text(); got != "archive Velum from your discard pile" {
+		t.Errorf("named text = %q", got)
 	}
 }

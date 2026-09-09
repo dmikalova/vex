@@ -63,6 +63,19 @@ func TestAemberProtection(t *testing.T) {
 	}
 }
 
+// TestAemberProtectionByUpgrade covers protection granted by an attached Upgrade
+// (Static.AemberCannotBeStolen) rather than the host's own field.
+func TestAemberProtectionByUpgrade(t *testing.T) {
+	g := started(t)
+	host := g.AddToBattleline(testCreature("host", 3), 0)
+	attachUpgrade(g, host,
+		NewCard("cloak", Sanctum, Upgrade, Common,
+			WithStatic(StaticModifier{AemberCannotBeStolen: true})))
+	if !g.aemberProtected(0) {
+		t.Error("an upgrade granting AemberCannotBeStolen should protect the pool")
+	}
+}
+
 func TestSkipsForgeConstant(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	if g.skipsForge(0) {

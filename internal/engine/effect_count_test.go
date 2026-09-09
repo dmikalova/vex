@@ -2,6 +2,27 @@ package engine
 
 import "testing"
 
+func TestPurgedCardsCount(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	a := g.AddToBattleline(testCreature("a", 1), 0)
+	b := g.AddToBattleline(testCreature("b", 1), 1)
+	c := g.AddToBattleline(testCreature("c", 1), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	if got := (PurgedCards{}).Value(ctx); got != 0 {
+		t.Errorf("empty purge piles: Value = %d, want 0", got)
+	}
+	g.purgeFromPlay(a)
+	g.purgeFromPlay(b)
+	g.purgeFromPlay(c)
+	if got := (PurgedCards{}).Value(ctx); got != 3 {
+		t.Errorf("across both players: Value = %d, want 3", got)
+	}
+	if got := (PurgedCards{}).CountText(); got != "purged card" {
+		t.Errorf("CountText = %q", got)
+	}
+}
+
 func TestInPlay(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.AddToBattleline(NewCard("m1", Mars, Creature, Common, WithPower(2)), 0)
@@ -55,7 +76,7 @@ func TestInPlay(t *testing.T) {
 	if got := (InPlay{Player: Controller, Type: Creature}).CondText(); got != "if there is a friendly creature in play" {
 		t.Errorf("singular CondText = %q", got)
 	}
-	if got := (InPlay{Player: Controller, Type: Creature, Amount: 2}).CondText(); got != "if there are 2 friendly creatures in play" {
+	if got := (InPlay{Player: Controller, Type: Creature, Amount: 2}).CondText(); got != "if there are 2 or more friendly creatures in play" {
 		t.Errorf("plural CondText = %q", got)
 	}
 
@@ -182,21 +203,27 @@ func TestCreaturesDestroyedCount(t *testing.T) {
 	}
 }
 
-func TestAemberBonusDestroyedCount(t *testing.T) {
+func TestAemberBonusOfCount(t *testing.T) {
 	g := NewGame("A", "B", 1)
+	survivor := g.AddArtifact(NewCard("relic", Brobnar, Artifact, Common, WithAemberBonus(2)), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-	ctx.Produced.AemberBonusDestroyed = 2
 
-	c := AemberBonusDestroyed{}
-	if got := c.CountText(); got != "Æmber bonus on the destroyed artifact" {
+	c := AemberBonusOf{Target: Target{Kind: TargetTriggeringCreature}}
+	if got := c.CountText(); got != "Æmber bonus on it" {
 		t.Errorf("count text = %q", got)
 	}
-	if got := c.Value(ctx); got != 2 {
-		t.Errorf("value = %d, want 2", got)
+	// No card in context: the target selects nothing.
+	if got := c.Value(ctx); got != 0 {
+		t.Errorf("value with no context card = %d, want 0", got)
+	}
+	// A card still in play (a destroy that was prevented) contributes nothing.
+	ctx.It, ctx.HasIt = survivor, true
+	if got := c.Value(ctx); got != 0 {
+		t.Errorf("value for a surviving card = %d, want 0", got)
 	}
 }
 
-func TestDestroyTalliesAemberBonus(t *testing.T) {
+func TestDestroyBindsDestroyedCardForAemberBonus(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	art := g.AddArtifact(NewCard("relic", Brobnar, Artifact, Common, WithAemberBonus(3)), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
@@ -205,8 +232,12 @@ func TestDestroyTalliesAemberBonus(t *testing.T) {
 		t.Errorf("AemberBonus = %d, want 3", got)
 	}
 	Destroy{Target: Target{Kind: TargetChosenEnemyArtifact}}.Resolve(ctx)
-	if got := ctx.Produced.AemberBonusDestroyed; got != 3 {
-		t.Errorf("tallied Æmber bonus = %d, want 3", got)
+	// The destroyed artifact is bound in context so the count reads its bonus.
+	if !ctx.HasIt || ctx.It != art {
+		t.Fatalf("ctx.It = %v (has %v), want the destroyed artifact %d", ctx.It, ctx.HasIt, art)
+	}
+	if got := (AemberBonusOf{Target: Target{Kind: TargetTriggeringCreature}}).Value(ctx); got != 3 {
+		t.Errorf("destroyed Æmber bonus = %d, want 3", got)
 	}
 }
 
@@ -215,7 +246,7 @@ func TestCardsReturnedThisWayCount(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 	ctx.Produced.Returned = 3
 
-	c := CardsReturnedThisWay{}
+	c := ProducedThisWay{Tally: TallyCardsReturned}
 	if got := c.CountText(); got != "card put into your hand this way" {
 		t.Errorf("count text = %q", got)
 	}
@@ -355,6 +386,60 @@ func TestExcessCreatures(t *testing.T) {
 	}
 }
 
+func TestExcessCreaturesNotCountingSelf(t *testing.T) {
+	// Dr. Milli: "in excess of you, not counting Dr. Milli". The source creature
+	// is excluded from its controller's side of the comparison.
+	opp := ExcessCreatures{Player: Opponent, NotCountingSelf: true}
+	if want := "creature your opponent controls in excess of you, not counting " + SelfName; opp.CountText() != want {
+		t.Errorf("count text = %q, want %q", opp.CountText(), want)
+	}
+	mine := ExcessCreatures{Player: Controller, NotCountingSelf: true}
+	if want := "creature you have in excess of your opponent, not counting " + SelfName; mine.CountText() != want {
+		t.Errorf("own count text = %q, want %q", mine.CountText(), want)
+	}
+
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(testCreature("o1", 3), 1)
+	g.AddToBattleline(testCreature("o2", 3), 1)
+	g.AddToBattleline(testCreature("m1", 3), 0)
+	g.AddToBattleline(testCreature("m2", 3), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	// Opponent side is "more"; the controller (the "less" side) drops one for self.
+	if got := opp.Value(ctx); got != 1 {
+		t.Errorf("opponent excess = %d, want 1 (opp 2 vs you 2-1)", got)
+	}
+	// Controller side is "more"; it drops one for self.
+	if got := mine.Value(ctx); got != 0 {
+		t.Errorf("own excess = %d, want 0 (you 2-1 vs opp 2)", got)
+	}
+}
+
+func TestNeighborsSharingHouse(t *testing.T) {
+	c := NeighborsSharingHouse{}
+	if got := c.CountText(); got != "neighbor that shares a house with it" {
+		t.Errorf("count text = %q", got)
+	}
+	if got := c.leadingCountText(); got != "neighbor that shares a house with the chosen creature" {
+		t.Errorf("leading count text = %q", got)
+	}
+
+	// With no creature in context the count is zero.
+	g := NewGame("A", "B", 1)
+	if got := c.Value(&EffectContext{Resolver: g, Controller: 0}); got != 0 {
+		t.Errorf("value with no context creature = %d, want 0", got)
+	}
+
+	left := g.AddToBattleline(NewCard("l", Mars, Creature, Common, WithPower(3)), 0)
+	mid := g.AddToBattleline(NewCard("m", Mars, Creature, Common, WithPower(3)), 0)
+	right := g.AddToBattleline(NewCard("r", Logos, Creature, Common, WithPower(3)), 0)
+	_, _ = left, right
+	ctx := &EffectContext{Resolver: g, Controller: 0, It: mid, HasIt: true}
+	if got := c.Value(ctx); got != 1 {
+		t.Errorf("shared-house neighbors = %d, want 1 (Mars left, Logos right)", got)
+	}
+}
+
 func TestInPlayByName(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	bear := g.Register(NewCard("Ancient Bear", Untamed, Creature, Common, WithPower(6)), 0)
@@ -381,7 +466,7 @@ func TestInPlayByName(t *testing.T) {
 		t.Errorf("cond text = %q, want %q", some.CondText(), want)
 	}
 	two := InPlay{Player: EachPlayer, Type: Creature, Name: "Ancient Bear", Amount: 2}
-	if want := "if there are 2 Ancient Bears in play"; two.CondText() != want {
+	if want := "if there are 2 or more Ancient Bears in play"; two.CondText() != want {
 		t.Errorf("cond text = %q, want %q", two.CondText(), want)
 	}
 }

@@ -120,14 +120,31 @@ func (e ChooseCreatureThen) Text() string {
 // Resolve asks for a creature, records it as "it", then resolves Then. A Target
 // that chooses nothing (no candidate) leaves Then unresolved.
 func (e ChooseCreatureThen) Resolve(ctx *EffectContext) {
-	ids := e.Target.Select(ctx)
+	e.resolveChosen(ctx, e.Target.Select(ctx))
+}
+
+// declinable reports that the whole decision is which single creature to choose,
+// so a May wrapping it offers one clickable choice rather than a Yes/No.
+func (e ChooseCreatureThen) declinable() bool { return e.Target.isChosen() }
+
+// resolveOptional is Resolve under a May: the creature is asked declinably, so
+// "you may choose a creature - heal it and ward it" is answered by clicking that
+// creature (or passing) rather than by a separate Yes/No then a forced pick.
+func (e ChooseCreatureThen) resolveOptional(ctx *EffectContext) bool {
+	return e.resolveChosen(ctx, e.Target.SelectOptional(ctx))
+}
+
+// resolveChosen records the chosen creature as "it" and resolves Then, reporting
+// whether a creature was chosen.
+func (e ChooseCreatureThen) resolveChosen(ctx *EffectContext, ids []LocalID) bool {
 	if len(ids) == 0 {
-		return
+		return false
 	}
 	for _, id := range ids {
 		ctx.It, ctx.HasIt = id, true
 	}
 	e.Then.Resolve(ctx)
+	return true
 }
 
 // OnChooseCreature picks a single creature named by its Target and applies one or

@@ -311,6 +311,11 @@ func RenderUpgradeOnCreature(def *CardDefinition) string {
 // hosted drops the "this creature" framing for a face already showing the host.
 func upgradeGrantLines(def *CardDefinition, hosted bool) []string {
 	var lines []string
+	if h := def.Static.HouseOverride; h != HouseNone {
+		lines = append(lines,
+			"If you control this creature, it belongs to house "+h.String()+
+				". (Instead of its original house.)")
+	}
 	lines = append(lines, upgradeStaticLines(def, hosted)...)
 	if def.Static.ProtectsFromNonFlank {
 		lines = append(lines,
@@ -627,6 +632,9 @@ func grantedText(m StaticModifier, hosted bool) []string {
 	}
 	if s := keyCostText(m.KeyCostChange); s != "" {
 		lines = append(lines, frame(s))
+	}
+	if m.AemberCannotBeStolen {
+		lines = append(lines, frame("Your Æmber cannot be stolen."))
 	}
 	return lines
 }

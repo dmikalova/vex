@@ -127,3 +127,20 @@ func TestCardGlyphsMergesActionTriggers(t *testing.T) {
 		t.Errorf("triggers = %v, want [glyph-play glyph-fight glyph-reap]", got)
 	}
 }
+
+// TestCardGlyphsShowsDrawModifier checks a card whose only mechanic is a continuous
+// hand-refill change (Mother: draw +1) still draws a glyph strip rather than none.
+func TestCardGlyphsShowsDrawModifier(t *testing.T) {
+	def := &engine.CardDefinition{
+		DrawModifier: engine.DrawModifier{Player: engine.Controller, Amount: 1},
+	}
+	lines := cardGlyphs(def)
+	if len(lines) != 1 {
+		t.Fatalf("want one draw-modifier line, got %d", len(lines))
+	}
+	if got := lines[0].glyphs; len(got) != 1 ||
+		got[0].asset != "zone-hand" || got[0].qty != 1 ||
+		got[0].decor&decorFriendly == 0 {
+		t.Errorf("draw-modifier glyphs = %+v, want a friendly zone-hand +1", got)
+	}
+}

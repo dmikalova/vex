@@ -66,25 +66,51 @@ var (
 	CallOfTheArchons  = SourceSet{"callofthearchons", "CotA", "Call of the Archons"}
 	AgeOfAscension    = SourceSet{"ageofascension", "AoA", "Age of Ascension"}
 	WorldsCollide     = SourceSet{"worldscollide", "WC", "Worlds Collide"}
+	AnomalyExpansion  = SourceSet{"anomalyexpansion", "AE", "Anomaly Expansion"}
 	MassMutation      = SourceSet{"massmutation", "MM", "Mass Mutation"}
 	DarkTidings       = SourceSet{"darktidings", "DT", "Dark Tidings"}
 	WindsOfExchange   = SourceSet{"windsofexchange", "WoE", "Winds of Exchange"}
+	Unchained2022     = SourceSet{"unchained2022", "UC22", "Unchained 2022"}
+	VaultMasters2023  = SourceSet{"vaultmasters2023", "VM23", "Vault Masters 2023"}
 	GrimReminders     = SourceSet{"grimreminders", "GR", "Grim Reminders"}
+	Menagerie         = SourceSet{"menagerie", "Men", "Menagerie"}
+	VaultMasters2024  = SourceSet{"vaultmasters2024", "VM24", "Vault Masters 2024"}
 	AemberSkies       = SourceSet{"aemberskies", "AS", "Æmber Skies"}
 	TokensOfChange    = SourceSet{"tokensofchange", "ToC", "Tokens of Change"}
 	MoreMutation      = SourceSet{"moremutation", "MoM", "More Mutation"}
-	Menagerie         = SourceSet{"menagerie", "Men", "Menagerie"}
-	VaultMasters2025  = SourceSet{"vaultmasters2025", "VM25", "Vault Masters 2025"}
 	PropheticVisions  = SourceSet{"propheticvisions", "PV", "Prophetic Visions"}
+	MartianCivilWar   = SourceSet{"martiancivilwar", "MCW", "Martian Civil War"}
+	Discovery         = SourceSet{"discovery", "D", "Discovery"}
 	CrucibleClash     = SourceSet{"crucibleclash", "CC", "Crucible Clash"}
 	DraconianMeasures = SourceSet{"draconianmeasures", "DM", "Draconian Measures"}
+	VaultMasters2025  = SourceSet{"vaultmasters2025", "VM25", "Vault Masters 2025"}
+	VaultMasters2026  = SourceSet{"vaultmasters2026", "VM26", "Vault Masters 2026"}
 )
 
 // order lists every known set; Sets() skips any without an embedded catalog.
 var order = []SourceSet{
-	CallOfTheArchons, AgeOfAscension, WorldsCollide, MassMutation, DarkTidings,
-	WindsOfExchange, GrimReminders, AemberSkies, TokensOfChange, MoreMutation,
-	Menagerie, VaultMasters2025, PropheticVisions, CrucibleClash, DraconianMeasures,
+	CallOfTheArchons,
+	AgeOfAscension,
+	WorldsCollide,
+	AnomalyExpansion,
+	MassMutation,
+	DarkTidings,
+	WindsOfExchange,
+	Unchained2022,
+	VaultMasters2023,
+	GrimReminders,
+	Menagerie,
+	VaultMasters2024,
+	AemberSkies,
+	TokensOfChange,
+	MoreMutation,
+	PropheticVisions,
+	MartianCivilWar,
+	Discovery,
+	CrucibleClash,
+	DraconianMeasures,
+	VaultMasters2025,
+	VaultMasters2026,
 }
 
 var (

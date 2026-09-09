@@ -79,3 +79,71 @@ func TestDestroyFriendlyCreaturesToForgeResolve(t *testing.T) {
 		t.Error("creature should not be sacrificed below the threshold")
 	}
 }
+
+func TestSacrificeToForge(t *testing.T) {
+	e := SacrificeToForge{Target: Target{Kind: TargetEachFriendlyCreature}, Extra: 6}
+	if (SacrificeToForge{Extra: 6}).validate() == nil {
+		t.Error("unset target should be rejected")
+	}
+	if (SacrificeToForge{Target: Target{Kind: TargetEachFriendlyCreature}}).validate() == nil {
+		t.Error("non-positive Extra should be rejected")
+	}
+	if got := e.Text(); !strings.Contains(
+		got,
+		"reduced by 1 Æmber for each creature destroyed this way",
+	) ||
+		!strings.Contains(got, "destroy {self}") {
+		t.Errorf("Text = %q", got)
+	}
+
+	// Sacrificing two creatures drops the +6 surcharge to +4, so 10 Æmber forges
+	// the key and Obsidian Forge destroys itself.
+	g := NewGame("A", "B", 1)
+	src := g.AddArtifact(NewCard("Obsidian", Dis, Artifact, Common), 0)
+	a := g.AddToBattleline(testCreature("a", 5), 0)
+	b := g.AddToBattleline(testCreature("b", 5), 0)
+	g.State.Aember[0] = 10
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: src})
+	if g.State.Keys[0] != 1 {
+		t.Errorf("keys = %d, want 1 (forged)", g.State.Keys[0])
+	}
+	if g.inPlay(a) || g.inPlay(b) {
+		t.Error("both creatures should be sacrificed")
+	}
+	if g.inPlay(src) {
+		t.Error("Obsidian Forge should destroy itself after forging")
+	}
+	if g.State.Aember[0] != 0 {
+		t.Errorf("aember = %d, want 0 (spent 6 + 6 - 2)", g.State.Aember[0])
+	}
+
+	if err := e.validate(); err != nil {
+		t.Errorf("valid effect rejected: %v", err)
+	}
+
+	// Declining the forge destroys nothing extra: no key, artifact stays.
+	g2 := NewGame("A", "B", 1)
+	src2 := g2.AddArtifact(NewCard("Obsidian", Dis, Artifact, Common), 0)
+	g2.AddToBattleline(testCreature("a", 5), 0)
+	g2.State.Aember[0] = 10
+	g2.SetChooser(0, optionPicker{idx: 1})
+	e.Resolve(&EffectContext{Resolver: g2, Controller: 0, Source: src2})
+	if g2.State.Keys[0] != 0 {
+		t.Errorf("keys = %d, want 0 (forge declined)", g2.State.Keys[0])
+	}
+	if !g2.inPlay(src2) {
+		t.Error("declining the forge should leave the artifact in play")
+	}
+
+	// Accepting but unable to pay the reduced cost leaves the artifact intact.
+	g3 := NewGame("A", "B", 1)
+	src3 := g3.AddArtifact(NewCard("Obsidian", Dis, Artifact, Common), 0)
+	g3.AddToBattleline(testCreature("a", 5), 0)
+	e.Resolve(&EffectContext{Resolver: g3, Controller: 0, Source: src3})
+	if g3.State.Keys[0] != 0 {
+		t.Errorf("keys = %d, want 0 (unaffordable)", g3.State.Keys[0])
+	}
+	if !g3.inPlay(src3) {
+		t.Error("an unaffordable forge should leave the artifact in play")
+	}
+}

@@ -77,6 +77,30 @@ func TestDrawingAPlayedTurn(t *testing.T) {
 		"board-area", "score-pill", "log-list", "End turn", testCreature)
 }
 
+// The lower (active-player) bar renders after the hand row, so a lifted card
+// growing up from the hand covers the board's empty space rather than the bar
+// (item 2 / ADR 0015). The bar is the last score-pill in the markup; the hand
+// row is the only row labelled "Hand".
+func TestTheLowerBarRendersBelowTheHand(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	c.playFromHand(c.deal(testCreature))
+
+	h := c.html()
+	hand := strings.Index(h, `row-label-zone">Hand`)
+	bar := strings.LastIndex(h, "score-pill")
+	if hand < 0 {
+		t.Fatal("the played turn shows no hand row")
+	}
+	if bar < hand {
+		t.Errorf(
+			"the lower player bar renders before the hand row (bar at %d, hand at %d)",
+			bar,
+			hand,
+		)
+	}
+}
+
 // The action bar carries an inline Undo icon beside End turn, so a misplay is one
 // click from being taken back. It rides with End turn: the opening house prompt
 // has no End turn and so shows no Undo either.
@@ -112,6 +136,10 @@ func TestDrawingTheLiftedCard(t *testing.T) {
 
 	c.g.selectBoardID(c.ctx, id)
 	c.wants("a ready creature selected", "card-focus", "Reap", "Fight")
+	// A lift that can still act is not dimmed.
+	if lift := liftMarkup(t, c.html()); strings.Contains(lift, "card--dimmed") {
+		t.Error("the lifted usable card was dimmed")
+	}
 }
 
 // Nothing selected lifts nothing.
@@ -172,6 +200,10 @@ func TestALiftedCardSaysWhyItCannotAct(t *testing.T) {
 	// The verb button renders as >Reap<; a card's printed "Reap:" rules text
 	// elsewhere on the board must not be mistaken for the button being offered.
 	c.lacks("an exhausted creature", ">Reap<")
+	// A lift with no verb it can take dims, so "cannot be used" reads at a glance.
+	if lift := liftMarkup(t, c.html()); !strings.Contains(lift, "card--dimmed") {
+		t.Error("the lifted unusable card was not dimmed")
+	}
 }
 
 // A prompt takes the controls over, and an optional one draws the way to pass.
@@ -276,6 +308,54 @@ func TestDrawingAPowerCounterToken(t *testing.T) {
 	c.g.g.AddPowerCounter(host, -5) // net -2
 	c.wants("a creature at net -2", "power-counter-minus.svg", ">2<")
 	c.lacks("a creature at net -2", "power-counter-plus.svg")
+}
+
+// Ward and Enrage show as condition tokens in a creature's status bar, the same
+// way stun does, so a warded or enraged creature reads at a glance.
+func TestDrawingWardAndEnrageTokens(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	id := c.deal(testCreature)
+	c.playFromHand(id)
+
+	c.lacks("an unwarded, unenraged creature", "ward.svg", "enrage.svg")
+
+	c.g.g.State.Cards[id].Warded = true
+	c.wants("a warded creature", "ward.svg")
+
+	c.g.g.State.Cards[id].Enraged = true
+	c.wants("an enraged creature", "enrage.svg")
+}
+
+// The armor shown on a creature is what it has left to absorb damage this turn,
+// so it falls as hits land rather than staying pinned at the printed maximum.
+func TestArmorShowsWhatIsLeftToAbsorb(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	id := c.deal(testCreature)
+	c.playFromHand(id)
+
+	// Whitespace is normalised so the count can be pinned to the shield icon it
+	// labels — the markup is pretty-printed across lines, and the power stat can
+	// carry the same number.
+	norm := func(s string) string { return strings.Join(strings.Fields(s), "") }
+	shield := func(n string) string {
+		return n + `<imgclass="iconicon-stat"src="/web/assets/shield.svg">`
+	}
+
+	c.g.g.State.Cards[id].ArmorRemaining = 5
+	if h := norm(c.html()); !strings.Contains(h, shield("5")) {
+		t.Error("a creature with armor intact did not show 5 armor remaining")
+	}
+
+	c.g.g.State.Cards[id].ArmorRemaining = 2
+	h := norm(c.html())
+	if !strings.Contains(h, shield("2")) {
+		t.Error("a creature after absorbing did not show 2 armor remaining")
+	}
+	if strings.Contains(h, shield("5")) {
+		t.Error("armor still showed 5 after falling to 2")
+	}
 }
 
 // Attached cards dim with an exhausted host and brighten when it readies, so an
@@ -428,6 +508,48 @@ func TestZoneTipNamesTheCardsInAFaceUpPile(t *testing.T) {
 	}
 }
 
+// TestArchivesPillHasARosterPopover checks the Archives pill gets the same
+// persistent roster popover the readable piles get — so a touchscreen can raise
+// its label the way it raises Discard/Purge — while still leaking no card names,
+// and that a truly hidden zone (an opponent's deck) gets no popover at all.
+func TestArchivesPillHasARosterPopover(t *testing.T) {
+	c := newClient(t)
+	def, ok := c.g.defByName[testCreature]
+	if !ok {
+		t.Fatalf("no card named %q", testCreature)
+	}
+	p := c.g.active()
+	id := c.g.g.AddToArchives(*def, p)
+	roster := c.g.zoneRoster(p, "Archives", []engine.LocalID{id})
+	if roster == nil {
+		t.Fatal("the Archives pill has no roster popover, so it shows nothing on touch")
+	}
+	html := app.HTMLString(roster)
+	if !strings.Contains(html, "zone-roster-label") || !strings.Contains(html, "Archives") {
+		t.Errorf("the Archives popover does not name the zone: %s", html)
+	}
+	if strings.Contains(html, testCreature) {
+		t.Errorf("the Archives popover leaked a card name: %s", html)
+	}
+	// An opponent's deck is hidden and not a labelled zone of its own, so it stays a
+	// plain tip with no popover.
+	if got := c.g.zoneRoster(1-p, "Deck", []engine.LocalID{id}); got != nil {
+		t.Error("a hidden opponent deck got a roster popover")
+	}
+}
+
+// TestZoneCountsWireTheRosterClamp checks the zone-count pills that open a roster
+// popover carry the hover handler that clamps it on screen, so the rightmost pill
+// (Purge) does not spill off the viewport edge.
+func TestZoneCountsWireTheRosterClamp(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	html := app.HTMLString(app.Div().Body(c.g.zoneCounts(c.g.active())...))
+	if !strings.Contains(html, "zone-has-roster") {
+		t.Fatal("no zone pill opened a roster to clamp")
+	}
+}
+
 func TestDrawingTheSetPicker(t *testing.T) {
 	c := newClient(t)
 	c.startTurn()
@@ -530,6 +652,59 @@ func TestDrawingWithTheSidebarAway(t *testing.T) {
 	c.wants("a collapsed sidebar",
 		"app--sidebar-collapsed", "control-dock--floating", "sidebar-reveal")
 	c.lacks("a collapsed sidebar", "log-list")
+}
+
+// The end-of-game banner names the winner in that player's own colour, so
+// "Player 1 wins!" reads in the winner's colour rather than a fixed one. Every
+// place a player's name is drawn wears the same per-player colour class.
+func TestWinBannerNamesTheWinnerInTheirColour(t *testing.T) {
+	c := newClient(t)
+	c.startTurn()
+	c.g.g.State.Winner = 0
+	c.g.phase = phaseOver
+	c.wants("the win banner in player 0's colour", "player-name--p0", "wins!")
+
+	c.g.g.State.Winner = 1
+	c.wants("the win banner in player 1's colour", "player-name--p1", "wins!")
+}
+
+// A Deploy creature's placement is asked on the lifted copy of the card being
+// placed — like the flank question — extended with the interior deploy options,
+// laid out left-to-right as [left flank] [deploy left] [deploy right] [right
+// flank] so the ends are the flanks and the middle slots it between creatures.
+func TestDeployPromptLiftsPlacementButtons(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	c.playFromHand(c.deal(testCreature))
+	c.playFromHand(c.deal(testCreature))
+	line := c.board()
+
+	// Stage the placement prompt on a lifted hand creature the way ChoosePosition
+	// posts it while the play action is parked, so the render is exercised without a
+	// background goroutine.
+	deployed := c.deal(testCreature)
+	c.g.selectHandID(c.ctx, deployed)
+	c.g.choosingPosition = true
+	c.g.positionLine = line
+	c.g.positionRight = false
+
+	c.wants("the deploy lift", "card-focus",
+		"Left flank", "Deploy left", "Deploy right", "Right flank")
+	// The dock stays out of it — the verbs are on the card, as with the flank prompt.
+	c.lacks("the deploy dock", "Deploy left of a creature")
+
+	h := c.html()
+	prev := -1
+	for _, label := range []string{"Left flank", "Deploy left", "Deploy right", "Right flank"} {
+		at := strings.Index(h, label)
+		if at < 0 {
+			t.Fatalf("the deploy lift is missing %q", label)
+		}
+		if at <= prev {
+			t.Errorf("%q is out of left-to-right order in the deploy lift", label)
+		}
+		prev = at
+	}
 }
 
 // A finished game replaces every control with the result rather than a modal
@@ -677,4 +852,24 @@ func TestDrawingTheMenu(t *testing.T) {
 	c.do(c.g.toggleMenu)
 	c.wants("the open menu",
 		"menu-panel", "Undo", "Redo", "Manual mode", "New game", "Keyboard shortcuts")
+}
+
+// A triggered ability's glyph line closes its trigger glyph with a colon, the
+// icon counterpart of the printed "Play:" before the effect.
+func TestTriggerGlyphLineShowsAColon(t *testing.T) {
+	line := iconLine(glyphLine{
+		triggers: []string{"glyph-play"},
+		glyphs:   []glyph{{asset: "damage"}},
+	})
+	if h := app.HTMLString(line); !strings.Contains(h, "card-glyph-trigger-colon") {
+		t.Errorf("a trigger glyph line does not close with a colon: %s", h)
+	}
+}
+
+// A triggerless line (a keyword-only strip) draws no colon.
+func TestKeywordGlyphLineHasNoColon(t *testing.T) {
+	line := iconLine(glyphLine{glyphs: []glyph{{asset: "kw-elusive"}}})
+	if h := app.HTMLString(line); strings.Contains(h, "card-glyph-trigger-colon") {
+		t.Errorf("a triggerless glyph line should draw no colon: %s", h)
+	}
 }

@@ -45,7 +45,7 @@ func TestRepeatOnCondition(t *testing.T) {
 	g3 := NewGame("A", "B", 1)
 	RepeatOnCondition{
 		Do:   GainAember{Amount: 1, Player: Controller},
-		Cond: OpponentAember{Is: AtLeast, Amount: 1},
+		Cond: PoolAember{Player: Opponent, Is: AtLeast, Amount: 1},
 	}.Resolve(&EffectContext{Resolver: g3, Controller: 0})
 	if g3.Aember(0) != 1 {
 		t.Errorf("aember = %d, want 1 (the condition fails after one pass)", g3.Aember(0))

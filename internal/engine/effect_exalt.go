@@ -39,6 +39,23 @@ func (e Exalt) Resolve(ctx *EffectContext) {
 	}
 }
 
+// declinable reports that a self-exalt is one clickable card — the source — so
+// "you may exalt Senator Shrix" is answered by clicking Shrix or passing, not by a
+// separate Yes/No.
+func (e Exalt) declinable() bool { return e.Target.Kind == TargetThisCreature }
+
+// resolveOptional is Resolve under a May: the source is offered as a clickable
+// card, so the exalt is confirmed by clicking it or declined with Done.
+func (e Exalt) resolveOptional(ctx *EffectContext) bool {
+	id, ok := ctx.ChooseCardOptional("Exalt "+e.Target.Text(), e.Target.Select(ctx))
+	if !ok {
+		return false
+	}
+	ctx.Resolver.AddAmberOn(id, e.Amount)
+	ctx.Resolver.Record(AemberExalted{Creature: id, Amount: e.Amount})
+	return true
+}
+
 // ExaltToRepeat resolves Do once, then lets the controller exalt a creature to
 // repeat it, for as long as they keep paying — the exalt is the cost of another
 // pass, bounded by the Rule of Six. It models "<do>. You may exalt <a creature>

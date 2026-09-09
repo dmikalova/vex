@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // InformationExchange
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Logos
 //	Type:   Tactic
@@ -20,5 +15,14 @@ var InformationExchange = card.New(
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "136"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play,
+		card.StealAember{
+			Amount: 1,
+			Or: card.OrAmount{
+				Amount: 2,
+				When:   card.AemberStolenFromYou{},
+			},
+		},
+	),
 )

@@ -9,60 +9,6 @@
     "text": "Play: Search your deck and discard pile for two halves of a gigantic creature, reveal them, and archive them."
   },
   {
-    "number": "001",
-    "name": "Build Your Champion",
-    "house": "mars",
-    "type": "action",
-    "rarity": "Special",
-    "amber": 1,
-    "text": "Play: Search your deck and discard pile for two halves of a gigantic creature, reveal them, and archive them."
-  },
-  {
-    "number": "001",
-    "name": "Build Your Champion",
-    "house": "geistoid",
-    "type": "action",
-    "rarity": "Special",
-    "amber": 1,
-    "text": "Play: Search your deck and discard pile for two halves of a gigantic creature, reveal them, and archive them."
-  },
-  {
-    "number": "001",
-    "name": "Build Your Champion",
-    "house": "ekwidon",
-    "type": "action",
-    "rarity": "Special",
-    "amber": 1,
-    "text": "Play: Search your deck and discard pile for two halves of a gigantic creature, reveal them, and archive them."
-  },
-  {
-    "number": "001",
-    "name": "Build Your Champion",
-    "house": "ouboros",
-    "type": "action",
-    "rarity": "Special",
-    "amber": 1,
-    "text": "Play: Search your deck and discard pile for two halves of a gigantic creature, reveal them, and archive them."
-  },
-  {
-    "number": "001",
-    "name": "Build Your Champion",
-    "house": "shadows",
-    "type": "action",
-    "rarity": "Special",
-    "amber": 1,
-    "text": "Play: Search your deck and discard pile for two halves of a gigantic creature, reveal them, and archive them."
-  },
-  {
-    "number": "001",
-    "name": "Build Your Champion",
-    "house": "unfathomable",
-    "type": "action",
-    "rarity": "Special",
-    "amber": 1,
-    "text": "Play: Search your deck and discard pile for two halves of a gigantic creature, reveal them, and archive them."
-  },
-  {
     "number": "002",
     "name": "Digging Up the Monster",
     "house": "ouboros",
@@ -72,117 +18,9 @@
     "text": "Play: Search your deck and discard pile for two halves of a gigantic creature and reveal them. Put them on top of your deck in any order."
   },
   {
-    "number": "002",
-    "name": "Digging Up the Monster",
-    "house": "geistoid",
-    "type": "action",
-    "rarity": "Special",
-    "amber": 1,
-    "text": "Play: Search your deck and discard pile for two halves of a gigantic creature and reveal them. Put them on top of your deck in any order."
-  },
-  {
-    "number": "002",
-    "name": "Digging Up the Monster",
-    "house": "unfathomable",
-    "type": "action",
-    "rarity": "Special",
-    "amber": 1,
-    "text": "Play: Search your deck and discard pile for two halves of a gigantic creature and reveal them. Put them on top of your deck in any order."
-  },
-  {
-    "number": "002",
-    "name": "Digging Up the Monster",
-    "house": "ekwidon",
-    "type": "action",
-    "rarity": "Special",
-    "amber": 1,
-    "text": "Play: Search your deck and discard pile for two halves of a gigantic creature and reveal them. Put them on top of your deck in any order."
-  },
-  {
-    "number": "002",
-    "name": "Digging Up the Monster",
-    "house": "skyborn",
-    "type": "action",
-    "rarity": "Special",
-    "amber": 1,
-    "text": "Play: Search your deck and discard pile for two halves of a gigantic creature and reveal them. Put them on top of your deck in any order."
-  },
-  {
-    "number": "002",
-    "name": "Digging Up the Monster",
-    "house": "mars",
-    "type": "action",
-    "rarity": "Special",
-    "amber": 1,
-    "text": "Play: Search your deck and discard pile for two halves of a gigantic creature and reveal them. Put them on top of your deck in any order."
-  },
-  {
-    "number": "002",
-    "name": "Digging Up the Monster",
-    "house": "shadows",
-    "type": "action",
-    "rarity": "Special",
-    "amber": 1,
-    "text": "Play: Search your deck and discard pile for two halves of a gigantic creature and reveal them. Put them on top of your deck in any order."
-  },
-  {
     "number": "003",
     "name": "Tomes Gigantica",
     "house": "ouboros",
-    "type": "action",
-    "rarity": "Special",
-    "amber": 1,
-    "text": "Play: Search your deck and discard pile for two halves of a gigantic creature, reveal them, and put them in your hand. Purge Tomes Gigantica."
-  },
-  {
-    "number": "003",
-    "name": "Tomes Gigantica",
-    "house": "ekwidon",
-    "type": "action",
-    "rarity": "Special",
-    "amber": 1,
-    "text": "Play: Search your deck and discard pile for two halves of a gigantic creature, reveal them, and put them in your hand. Purge Tomes Gigantica."
-  },
-  {
-    "number": "003",
-    "name": "Tomes Gigantica",
-    "house": "skyborn",
-    "type": "action",
-    "rarity": "Special",
-    "amber": 1,
-    "text": "Play: Search your deck and discard pile for two halves of a gigantic creature, reveal them, and put them in your hand. Purge Tomes Gigantica."
-  },
-  {
-    "number": "003",
-    "name": "Tomes Gigantica",
-    "house": "unfathomable",
-    "type": "action",
-    "rarity": "Special",
-    "amber": 1,
-    "text": "Play: Search your deck and discard pile for two halves of a gigantic creature, reveal them, and put them in your hand. Purge Tomes Gigantica."
-  },
-  {
-    "number": "003",
-    "name": "Tomes Gigantica",
-    "house": "shadows",
-    "type": "action",
-    "rarity": "Special",
-    "amber": 1,
-    "text": "Play: Search your deck and discard pile for two halves of a gigantic creature, reveal them, and put them in your hand. Purge Tomes Gigantica."
-  },
-  {
-    "number": "003",
-    "name": "Tomes Gigantica",
-    "house": "geistoid",
-    "type": "action",
-    "rarity": "Special",
-    "amber": 1,
-    "text": "Play: Search your deck and discard pile for two halves of a gigantic creature, reveal them, and put them in your hand. Purge Tomes Gigantica."
-  },
-  {
-    "number": "003",
-    "name": "Tomes Gigantica",
-    "house": "mars",
     "type": "action",
     "rarity": "Special",
     "amber": 1,
@@ -209,17 +47,14 @@
     "number": "006",
     "name": "Elenya the Charming",
     "house": "ekwidon",
-    "keywords": [
-      "treachery"
-    ],
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "human",
       "merchant"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 4,
-    "text": "Treachery. (This card enters play under your opponent's control.)\nAfter you forge a key, give control of the most powerful friendly creature to your opponent."
+    "text": "Treachery.\nAfter you forge a key, give control of the most powerful friendly creature to your opponent."
   },
   {
     "number": "007",
@@ -234,11 +69,11 @@
     "number": "008",
     "name": "Fiat Transcoder",
     "house": "ekwidon",
+    "type": "artifact",
+    "rarity": "Rare",
     "traits": [
       "item"
     ],
-    "type": "artifact",
-    "rarity": "Rare",
     "text": "Action: Lose 1 Aember. If you do, take control of an enemy creature."
   },
   {
@@ -262,14 +97,14 @@
     "number": "011",
     "name": "Game Changer",
     "house": "ekwidon",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "getrookya",
       "analyst"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 3,
-    "text": "Enhance Ekwidon Ekwidon. (These icons have already been added to cards in your deck.)\nEach friendly Ekwidon creature cannot reap and gains, \"Action: Steal 1 Aember.\""
+    "text": "Enhance Ekwidon Ekwidon.\nEach friendly Ekwidon creature cannot reap and gains, \"Action: Steal 1 Aember.\""
   },
   {
     "number": "012",
@@ -283,13 +118,14 @@
   {
     "number": "013",
     "name": "Ooni-Lars",
+    "printed": "Oŏni-Lars",
     "house": "ekwidon",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "getrookya",
       "politician"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 6,
     "text": "After Reap: You may pay your opponent 1 Aember. If you do, your opponent's keys cost +4 Aember during their next turn."
   },
@@ -297,42 +133,25 @@
     "number": "014",
     "name": "Talent Scout",
     "house": "ekwidon",
-    "keywords": [
-      "versatile"
-    ],
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "getrookya"
     ],
-    "type": "creature",
-    "rarity": "Rare",
-    "amber": 1,
     "power": 2,
-    "text": "Versatile. (This card may be used as if it belonged to the active house.)\nPlay: Look at your opponent's hand and play a creature from it as if it were yours. Your opponent takes control of Talent Scout."
+    "amber": 1,
+    "text": "Versatile.\nPlay: Look at your opponent's hand and play a creature from it as if it were yours. Your opponent takes control of Talent Scout."
   },
   {
     "number": "015",
     "name": "The Golden Queen",
     "house": "ekwidon",
-    "traits": [
-      "insect",
-      "cyborg"
-    ],
-    "type": "creature",
+    "type": "gigantic creature base",
     "rarity": "Special",
-    "power": 10,
-    "text": "(Play only with the other half of The Golden Queen.)\nEach player refills their hand to 1 additional card during their \"draw cards\" step.\nAfter Fight/After Reap: Each player discards a random card from their hand. For each non-Ekwidon card discarded this way, gain 1 Aember."
-  },
-  {
-    "number": "015",
-    "name": "The Golden Queen",
-    "house": "ekwidon",
     "traits": [
       "insect",
       "cyborg"
     ],
-    "type": "creature",
-    "rarity": "Rare",
-    "power": 10,
     "text": "(Play only with the other half of The Golden Queen.)\nEach player refills their hand to 1 additional card during their \"draw cards\" step.\nAfter Fight/After Reap: Each player discards a random card from their hand. For each non-Ekwidon card discarded this way, gain 1 Aember."
   },
   {
@@ -346,25 +165,27 @@
   {
     "number": "017",
     "name": "Zavel, \"Archaeologist\"",
+    "printed": "Zavel, “Archaeologist”",
     "house": "ekwidon",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "human",
       "scientist"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 4,
     "text": "Each time you play an artifact from your discard pile, gain 1 Aember.\nPlay/After Reap: You may play an artifact from your discard pile."
   },
   {
     "number": "018",
     "name": "Aembitrage",
+    "printed": "Æmbitrage",
     "house": "ekwidon",
+    "type": "artifact",
+    "rarity": "Rare",
     "traits": [
       "power"
     ],
-    "type": "artifact",
-    "rarity": "Rare",
     "text": "Your keys cost +1 Aember.\nDuring your \"draw cards\" step, refill your hand to 1 additional card."
   },
   {
@@ -380,14 +201,14 @@
     "number": "020",
     "name": "Change Agent",
     "house": "ekwidon",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "getrookya",
       "merchant"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
-    "armor": 1,
     "power": 4,
+    "armor": 1,
     "text": "After Fight/After Reap: For each card in your opponent's hand in excess of 5, they lose 1 Aember."
   },
   {
@@ -411,12 +232,12 @@
     "number": "023",
     "name": "Exeldon Yash",
     "house": "ekwidon",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "human",
       "merchant"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 3,
     "text": "After Reap: Capture 2 Aember. You may discard a card. If you do, move 1 Aember from Exeldon Yash to your pool."
   },
@@ -432,39 +253,40 @@
   {
     "number": "025",
     "name": "Gegrrokuu Sapper",
+    "printed": "Gegrrŏkŭŭ Sapper",
     "house": "ekwidon",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "getrookya",
       "soldier"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
-    "armor": 3,
     "power": 3,
+    "armor": 3,
     "text": "Play/After Fight: Take control of an enemy artifact. Give your opponent control of Gegrrokuu Sapper.\nScrap: Destroy a friendly artifact. If you do, destroy an enemy artifact."
   },
   {
     "number": "026",
     "name": "Krisper Ruld",
     "house": "ekwidon",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "human"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
-    "armor": 1,
     "power": 4,
+    "armor": 1,
     "text": "After Fight: Take control of an enemy artifact."
   },
   {
     "number": "027",
     "name": "Pen Pal",
     "house": "ekwidon",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "human"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 5,
     "text": "Action: Exhaust an enemy creature. If you do, each player gains 1 Aember."
   },
@@ -489,46 +311,40 @@
     "number": "030",
     "name": "Waspscream",
     "house": "ekwidon",
-    "keywords": [
-      "entrench",
-      "poison"
-    ],
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "insect",
       "cyborg"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 2,
     "text": "Entrench. Poison.\nAt the start of your turn, if Waspscream is exhausted, take control of an enemy creature."
   },
   {
     "number": "031",
     "name": "Blea-Forh",
+    "printed": "Bleă-Fŏrh",
     "house": "ekwidon",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "getrookya",
       "soldier"
     ],
-    "type": "creature",
-    "rarity": "Common",
-    "armor": 2,
     "power": 4,
+    "armor": 2,
     "text": "After Fight: Heal up to 2 damage from a creature. For each damage healed this way, exalt that creature."
   },
   {
     "number": "032",
     "name": "Bypass Burglar",
     "house": "ekwidon",
-    "keywords": [
-      "entrench"
-    ],
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "getrookya",
       "thief"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 2,
     "text": "Entrench.\nWhile Bypass Burglar is exhausted, each of its neighbors gains, \"Action: Steal 1 Aember. Deal 1 Damage to this creature.\""
   },
@@ -536,25 +352,26 @@
     "number": "033",
     "name": "Chromatic Guardian",
     "house": "ekwidon",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "getrookya",
       "soldier"
     ],
-    "type": "creature",
-    "rarity": "Common",
-    "armor": 1,
     "power": 4,
+    "armor": 1,
     "text": "After Fight/After Reap: If you are overwhelmed, destroy an enemy creature. Otherwise, destroy an enemy artifact."
   },
   {
     "number": "034",
     "name": "Conrad Fisique",
+    "printed": "Cŏnrăd Fisiquĕ",
     "house": "ekwidon",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "getrookya"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 2,
     "text": "Enhance Aember +1 power counter +1 power counter.\nPlay: You may move each +1 power counter from a creature to another creature."
   },
@@ -562,12 +379,12 @@
     "number": "035",
     "name": "Gemcoat Vendor",
     "house": "ekwidon",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "getrookya",
       "merchant"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 6,
     "text": "Action: Steal 1 Aember. Deal 1 Damage to Gemcoat Vendor."
   },
@@ -575,12 +392,12 @@
     "number": "036",
     "name": "Golden Dagger",
     "house": "ekwidon",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "getrookya",
       "merchant"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 3,
     "text": "After Reap: Deal 3 Damage to a creature. If this damage destroys that creature, its owner gains 1 Aember."
   },
@@ -630,29 +447,27 @@
   {
     "number": "042",
     "name": "Vast Stoik",
+    "printed": "Văst Stŏik",
     "house": "ekwidon",
-    "keywords": [
-      "taunt"
-    ],
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "getrookya",
       "soldier"
     ],
-    "type": "creature",
-    "rarity": "Common",
-    "armor": 1,
     "power": 4,
+    "armor": 1,
     "text": "Taunt.\nAfter Fight: Move 1 Aember from a creature to the common supply. If you do, draw a card."
   },
   {
     "number": "043",
     "name": "Aurascope",
     "house": "geistoid",
+    "type": "artifact",
+    "rarity": "Rare",
     "traits": [
       "item"
     ],
-    "type": "artifact",
-    "rarity": "Rare",
     "text": "Action: Discard a card. If you do, purge a card of the same type as the discarded card from a discard pile."
   },
   {
@@ -675,11 +490,11 @@
     "number": "046",
     "name": "Ghost Town",
     "house": "geistoid",
+    "type": "artifact",
+    "rarity": "Rare",
     "traits": [
       "location"
     ],
-    "type": "artifact",
-    "rarity": "Rare",
     "amber": 1,
     "text": "Action: If you are haunted, archive a card. Otherwise, discard a card."
   },
@@ -687,38 +502,24 @@
     "number": "047",
     "name": "Gigantor",
     "house": "geistoid",
-    "traits": [
-      "specter",
-      "robot"
-    ],
-    "type": "creature",
+    "type": "gigantic creature base",
     "rarity": "Special",
-    "power": 8,
-    "text": "(Play only with the other half of Gigantor.)\nAfter Fight/After Reap: Purge up to 3 cards from a discard pile. For each card purged this way, draw a card."
-  },
-  {
-    "number": "047",
-    "name": "Gigantor",
-    "house": "geistoid",
     "traits": [
       "specter",
       "robot"
     ],
-    "type": "creature",
-    "rarity": "Rare",
-    "power": 8,
     "text": "(Play only with the other half of Gigantor.)\nAfter Fight/After Reap: Purge up to 3 cards from a discard pile. For each card purged this way, draw a card."
   },
   {
     "number": "048",
     "name": "Holographic Banshee",
     "house": "geistoid",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "ai",
       "specter"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 3,
     "text": "Enhance Geistoid Geistoid.\nEach friendly Geistoid creature gains versatile."
   },
@@ -726,12 +527,12 @@
     "number": "049",
     "name": "Jahneerie",
     "house": "geistoid",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "specter",
       "robot"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 3,
     "text": "Enhance Capture Capture.\nEach friendly creature with Aember on it gains, \"After Reap: Move 1 Aember from this creature to your pool.\""
   },
@@ -739,12 +540,12 @@
     "number": "050",
     "name": "Miss Chievous",
     "house": "geistoid",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "specter",
       "robot"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 3,
     "text": "After a friendly Geistoid creature enters play, each player discards the top 2 cards of their deck.\nAfter Reap: Play the topmost creature from your discard pile."
   },
@@ -752,11 +553,11 @@
     "number": "051",
     "name": "P.K.E. Syphonator",
     "house": "geistoid",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "specter"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 2,
     "text": "Play: Gain 1 Aember for each card in your opponent's archives. Your opponent discards each card in their archives."
   },
@@ -781,14 +582,11 @@
     "number": "054",
     "name": "Protective Playmate",
     "house": "geistoid",
-    "keywords": [
-      "taunt"
-    ],
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "specter"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 3,
     "text": "Taunt.\nWhile you are haunted, Protective Playmate gets +6 power. Otherwise, Protective Playmate gains elusive."
   },
@@ -812,24 +610,25 @@
     "number": "057",
     "name": "Varad the Indulgent",
     "house": "geistoid",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "specter",
       "robot"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 4,
     "text": "Varad the Indulgent gets +1 power for each Aember on it.\nAfter another friendly Geistoid creature fights, Varad the Indulgent captures 1 Aember."
   },
   {
     "number": "058",
     "name": "Varghast's Vengeance",
+    "printed": "Varghast’s Vengeance",
     "house": "geistoid",
+    "type": "artifact",
+    "rarity": "Rare",
     "traits": [
       "power"
     ],
-    "type": "artifact",
-    "rarity": "Rare",
     "amber": 1,
     "text": "Omni: Name a card. Until the start of your next turn, cards with that name cannot be played or used. Gain 2 chains.\nScrap: Purge a card from your opponent's discard pile. Your opponent shuffles their discard pile into their deck."
   },
@@ -846,14 +645,14 @@
     "number": "060",
     "name": "Boiler",
     "house": "geistoid",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "specter",
       "robot"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
-    "armor": 4,
     "power": 2,
+    "armor": 4,
     "text": "Destroyed: Deal 6 Damage to each enemy flank creature.\nScrap: Deal 1 Damage to each enemy creature."
   },
   {
@@ -869,12 +668,12 @@
     "number": "062",
     "name": "Dammater",
     "house": "geistoid",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "specter",
       "ai"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 2,
     "text": "Play: Draw 3 cards. Discard 2 cards. Archive a card."
   },
@@ -891,15 +690,12 @@
     "number": "064",
     "name": "Paranormal Palisade",
     "house": "geistoid",
-    "keywords": [
-      "entrench"
-    ],
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "specter",
       "item"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 3,
     "text": "Entrench.\nWhile Paranormal Palisade is exhausted, it gets +4 armor and gains taunt."
   },
@@ -924,26 +720,26 @@
     "number": "067",
     "name": "Techno-Shade",
     "house": "geistoid",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "specter",
       "robot"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
-    "armor": 1,
     "power": 3,
+    "armor": 1,
     "text": "After Fight/After Reap: Your opponent shuffles a random card from their hand into their deck."
   },
   {
     "number": "068",
     "name": "Thoughtcatcher",
     "house": "geistoid",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "specter",
       "robot"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 5,
     "text": "Enhance Capture Capture.\nEach friendly creature with Aember on it gains, \"Destroyed: Draw 1 card.\""
   },
@@ -951,15 +747,12 @@
     "number": "069",
     "name": "Titan Apparition",
     "house": "geistoid",
-    "keywords": [
-      "taunt"
-    ],
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "specter",
       "cyborg"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 6,
     "text": "Taunt.\nDestroyed: If it is not your turn, your opponent discards 5 cards from the top of their deck. Otherwise, discard 5 cards from the top of your deck."
   },
@@ -967,17 +760,14 @@
     "number": "070",
     "name": "Tribute Collector",
     "house": "geistoid",
-    "keywords": [
-      "taunt"
-    ],
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "specter",
       "robot"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
-    "armor": 2,
     "power": 4,
+    "armor": 2,
     "text": "Taunt.\nPlay/After Fight: A friendly creature captures 1 Aember."
   },
   {
@@ -993,15 +783,12 @@
     "number": "072",
     "name": "Fading Apparition",
     "house": "geistoid",
-    "keywords": [
-      "entrench"
-    ],
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "specter",
       "robot"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 3,
     "text": "Entrench.\nWhile Fading Apparition is exhausted, any Aember you would gain by reaping may be taken from Aember among friendly creatures instead of the common supply."
   },
@@ -1009,12 +796,12 @@
     "number": "073",
     "name": "Hammer Smythe",
     "house": "geistoid",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "specter",
       "robot"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 2,
     "text": "After Reap: Deal 2 Damage to a creature. If this damage destroys that creature, give a friendly creature two +1 power counters."
   },
@@ -1025,7 +812,7 @@
     "type": "action",
     "rarity": "Common",
     "amber": 1,
-    "text": "Enhance Discard Discard. (These icons have already been added to cards in your deck.)\nPlay: If you are haunted, purge a card from a discard pile."
+    "text": "Enhance Discard Discard.\nPlay: If you are haunted, purge a card from a discard pile."
   },
   {
     "number": "075",
@@ -1040,32 +827,33 @@
     "number": "076",
     "name": "Janky Jimmy",
     "house": "geistoid",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "specter",
       "robot"
     ],
-    "type": "creature",
-    "rarity": "Common",
-    "armor": 2,
     "power": 3,
+    "armor": 2,
     "text": "After Fight: If you are overwhelmed, an enemy creature captures 1 Aember from its own side. Otherwise, capture 1 Aember."
   },
   {
     "number": "077",
     "name": "Memette",
     "house": "geistoid",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "specter",
       "faerie"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 1,
     "text": "Play/Destroyed: Archive the top card of your discard pile."
   },
   {
     "number": "078",
     "name": "Ol' Switcheroo",
+    "printed": "Ol’ Switcheroo",
     "house": "geistoid",
     "type": "action",
     "rarity": "Common",
@@ -1075,12 +863,12 @@
     "number": "079",
     "name": "Recyclops",
     "house": "geistoid",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "specter",
       "cyborg"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 2,
     "text": "Enhance Discard +1 power counter +1 power counter.\nAfter Reap: Discard a card. If you do, give a creature two +1 power counters."
   },
@@ -1096,15 +884,12 @@
     "number": "081",
     "name": "Spikey Goeff",
     "house": "geistoid",
-    "keywords": [
-      "taunt"
-    ],
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "specter",
       "robot"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 4,
     "text": "Taunt.\nIf you are overwhelmed, Spikey Goeff gains hazardous 2.\nScrap: Deal 2 Damage to a creature."
   },
@@ -1112,12 +897,12 @@
     "number": "082",
     "name": "Wraith Construct",
     "house": "geistoid",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "specter",
       "robot"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 4,
     "text": "At the start of your turn, discard a card from your hand."
   },
@@ -1125,12 +910,12 @@
     "number": "083",
     "name": "Bartos the Ruiner",
     "house": "mars",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "martian",
       "soldier"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 2,
     "text": "Each non-Mars creature and artifact gains, \"After this card is used, destroy it.\""
   },
@@ -1146,26 +931,26 @@
     "number": "085",
     "name": "Eldest Batchminder",
     "house": "mars",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "elder",
       "recruiter"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 3,
-    "text": "Enhance Mars Mars. (These icons have already been added to cards in your deck.)\nAt the end of your turn, give each other Mars creature two +1 power counters."
+    "text": "Enhance Mars Mars.\nAt the end of your turn, give each other Mars creature two +1 power counters."
   },
   {
     "number": "086",
     "name": "Emperor Memrox",
     "house": "mars",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "martian",
       "leader",
       "elder"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 5,
     "text": "While Emperor Memrox is in the center of your battleline, it gains invulnerable.\nAfter Reap: Archive a card. Gain 1 Aember for each card in your archives."
   },
@@ -1207,51 +992,34 @@
     "number": "091",
     "name": "Monster Zero",
     "house": "mars",
-    "keywords": [
-      "deploy"
-    ],
-    "traits": [
-      "beast",
-      "experiment"
-    ],
-    "type": "creature",
+    "type": "gigantic creature base",
     "rarity": "Special",
-    "power": 1,
-    "text": "(Play only with the other half of Monster Zero.)\nDeploy.\nEach of Monster Zero's neighbors belongs to house Mars (instead of its other houses).\nPlay: Give Monster Zero a number of +1 power counters equal to the most powerful friendly creature's power."
-  },
-  {
-    "number": "091",
-    "name": "Monster Zero",
-    "house": "mars",
     "traits": [
       "beast",
       "experiment"
     ],
-    "type": "creature",
-    "rarity": "Rare",
-    "power": 1,
     "text": "(Play only with the other half of Monster Zero.)\nDeploy.\nEach of Monster Zero's neighbors belongs to house Mars (instead of its other houses).\nPlay: Give Monster Zero a number of +1 power counters equal to the most powerful friendly creature's power."
   },
   {
     "number": "092",
     "name": "Psychic Haze",
     "house": "mars",
+    "type": "artifact",
+    "rarity": "Rare",
     "traits": [
       "power"
     ],
-    "type": "artifact",
-    "rarity": "Rare",
     "text": "Enraged creatures cannot be used to fight friendly Mars creatures.\nAction: Enrage each enemy creature."
   },
   {
     "number": "093",
     "name": "Tangrant",
     "house": "mars",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "beast"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 4,
     "text": "You may play a Mars card during each turn in which Mars is not your active house."
   },
@@ -1266,39 +1034,38 @@
   {
     "number": "095",
     "name": "Urxym the \"Diplomat\"",
+    "printed": "Urxym the “Diplomat”",
     "house": "mars",
-    "keywords": [
-      "elusive"
-    ],
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "martian",
       "politician"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 2,
     "text": "Elusive.\nAfter Reap: Lose all your Aember. Destroy an enemy non-Mars creature for each Aember lost this way."
   },
   {
     "number": "096",
     "name": "Zzyszz's Compactor",
+    "printed": "Zzyszz’s Compactor",
     "house": "mars",
+    "type": "artifact",
+    "rarity": "Rare",
     "traits": [
       "power"
     ],
-    "type": "artifact",
-    "rarity": "Rare",
     "text": "Action: Put a creature on the bottom of its owner's deck. If you do, give a creature two +1 power counters."
   },
   {
     "number": "097",
     "name": "All Are Mars",
     "house": "mars",
+    "type": "artifact",
+    "rarity": "Uncommon",
     "traits": [
       "power"
     ],
-    "type": "artifact",
-    "rarity": "Uncommon",
     "text": "Action: Ready and use a friendly creature."
   },
   {
@@ -1322,28 +1089,25 @@
     "number": "100",
     "name": "Empowered Zark",
     "house": "mars",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "martian",
       "agent"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
-    "armor": 2,
     "power": 3,
+    "armor": 2,
     "text": "After Fight: Capture 2 Aember. If there are 3 Aember or more on Empowered Zark, you may move 3 Aember from it to the common supply and ready each non-Agent Mars creature."
   },
   {
     "number": "101",
     "name": "Golden K1-TT13",
     "house": "mars",
-    "keywords": [
-      "entrench"
-    ],
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "beast"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 4,
     "text": "Entrench.\nWhile Golden K1-TT13 is exhausted, each of its neighbors gains, \"After Reap: Gain 1 Aember.\""
   },
@@ -1351,14 +1115,11 @@
     "number": "102",
     "name": "Iyxrenu the Clever",
     "house": "mars",
-    "keywords": [
-      "elusive"
-    ],
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "martian"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 3,
     "text": "Elusive. Enhance Capture Capture Capture.\nAction: Lose 1 Aember. If you do, move all Aember from a creature to your pool."
   },
@@ -1375,14 +1136,14 @@
     "number": "104",
     "name": "Nyzyk Resonator",
     "house": "mars",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "martian",
       "soldier"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
-    "armor": 1,
     "power": 2,
+    "armor": 1,
     "text": "For each neighbor Nyzyk Resonator has, your opponent's keys cost +2 Aember."
   },
   {
@@ -1407,11 +1168,11 @@
     "number": "107",
     "name": "The Red Death",
     "house": "mars",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "beast"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 12,
     "text": "Enhance Damage Discard Discard.\nThe Red Death cannot ready unless you are haunted.\nAfter Fight: Gain 1 Aember and draw a card."
   },
@@ -1419,15 +1180,12 @@
     "number": "108",
     "name": "lyylyug",
     "house": "mars",
-    "keywords": [
-      "elusive"
-    ],
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "martian",
       "elder"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 3,
     "text": "Elusive.\nAfter Reap: The least powerful enemy creature captures 1 Aember from its own side."
   },
@@ -1435,12 +1193,12 @@
     "number": "109",
     "name": "Agent Buuff",
     "house": "mars",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "martian",
       "agent"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 4,
     "text": "After Reap: If you are overwhelmed, give a friendly creature three +1 power counters. Otherwise, give each friendly creature a +1 power counter."
   },
@@ -1448,11 +1206,11 @@
     "number": "110",
     "name": "Arbiter Vyynx",
     "house": "mars",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "robot"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 3,
     "text": "After Reap: Destroy a friendly non-Mars creature. If you do, take control of an enemy creature."
   },
@@ -1460,13 +1218,13 @@
     "number": "111",
     "name": "Collector Worm",
     "house": "mars",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "beast"
     ],
-    "type": "creature",
-    "rarity": "Common",
-    "armor": 5,
     "power": 2,
+    "armor": 5,
     "text": "After Fight: Put the creature Collector Worm fights into your archives. (Both creatures must survive the fight.) If that creature leaves your archives, put it in its owner's hand instead."
   },
   {
@@ -1499,12 +1257,12 @@
     "number": "115",
     "name": "Klyyhnug",
     "house": "mars",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "martian",
       "soldier"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 3,
     "text": "Enhance Damage +1 power counter +1 power counter.\nAfter Reap: You may remove each +1 power counter from a creature. If one or more counters are removed this way, archive a card."
   },
@@ -1512,15 +1270,12 @@
     "number": "116",
     "name": "Operator Olluyyg",
     "house": "mars",
-    "keywords": [
-      "entrench"
-    ],
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "martian",
       "elder"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 3,
     "text": "Entrench.\nWhile Operator Olluyyg is exhausted, your opponent's keys cost +3 Aember."
   },
@@ -1536,15 +1291,12 @@
     "number": "118",
     "name": "Replacement Targ",
     "house": "mars",
-    "keywords": [
-      "deploy"
-    ],
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "martian",
       "soldier"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 3,
     "text": "Deploy.\nPlay: Put a neighboring non-Soldier creature into its owner's hand. If you do, the most powerful friendly creature captures 2 Aember."
   },
@@ -1561,12 +1313,12 @@
     "number": "120",
     "name": "Ujkyytr Prime",
     "house": "mars",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "martian",
       "soldier"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 2,
     "text": "After Fight/After Reap: If you are overwhelmed, stun an enemy creature and each of its neighbors. Otherwise, stun a creature."
   },
@@ -1574,12 +1326,12 @@
     "number": "121",
     "name": "Agorim",
     "house": "ouboros",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "dragon",
       "leader"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 7,
     "text": "While Agorim is in the center of your battleline, friendly creatures get +5 power."
   },
@@ -1604,25 +1356,22 @@
     "number": "124",
     "name": "Cyn Dynasty",
     "house": "ouboros",
+    "type": "artifact",
+    "rarity": "Rare",
     "traits": [
       "power"
     ],
-    "type": "artifact",
-    "rarity": "Rare",
     "text": "Keys cost +2 Aember.\nAfter your opponent forges a key, gain 2 Aember, draw 4 cards, and destroy Cyn Dynasty."
   },
   {
     "number": "125",
     "name": "Dray Conis",
     "house": "ouboros",
-    "keywords": [
-      "entrench"
-    ],
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "dragon"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 5,
     "text": "Entrench.\nAt the start of your turn, if Dray Conis is exhausted, destroy each creature."
   },
@@ -1648,36 +1397,19 @@
     "number": "128",
     "name": "Kulsha",
     "house": "ouboros",
-    "traits": [
-      "dragon"
-    ],
-    "type": "creature",
-    "rarity": "Rare",
-    "power": 15,
-    "text": "(Play only with the other half of Kulsha.)\nYour opponent's keys cost +2 Aember for each forged key they have.\nAfter Fight/After Reap: Exhaust up to 3 creatures."
-  },
-  {
-    "number": "128",
-    "name": "Kulsha",
-    "house": "ouboros",
-    "traits": [
-      "dragon"
-    ],
-    "type": "creature",
-    "rarity": "Special",
-    "power": 15,
-    "text": "(Play only with the other half of Kulsha.)\nYour opponent's keys cost +2 Aember for each forged key they have.\nAfter Fight/After Reap: Exhaust up to 3 creatures."
+    "type": "gigantic creature art",
+    "rarity": "Rare"
   },
   {
     "number": "129",
     "name": "Nizak, The Forgotten",
     "house": "ouboros",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "dragon",
       "psion"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 6,
     "text": "While fighting, Nizak, The Forgotten gains invulnerable. (It cannot be destroyed or dealt damage.)\nAfter an enemy creature is destroyed fighting Nizak, The Forgotten, return that creature to its owner's hand."
   },
@@ -1693,11 +1425,11 @@
     "number": "131",
     "name": "Seda the Sleeper",
     "house": "ouboros",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "dragon"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 6,
     "text": "While Seda the Sleeper is exhausted and on a flank, it gains invulnerable.\nAfter you ready Seda the Sleeper, you may deal 2 Damage to it. If you do, exhaust it.\nPlay: Capture 6 Aember."
   },
@@ -1713,11 +1445,11 @@
     "number": "133",
     "name": "Spherular Gem",
     "house": "ouboros",
+    "type": "artifact",
+    "rarity": "Rare",
     "traits": [
       "treasure"
     ],
-    "type": "artifact",
-    "rarity": "Rare",
     "amber": 1,
     "text": "Action: Destroy Spherular Gem. If you do, gain Aember equal to the number of forged keys."
   },
@@ -1725,11 +1457,11 @@
     "number": "134",
     "name": "Tranquil Reiner",
     "house": "ouboros",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "dragon"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 6,
     "text": "Tranquil Reiner does not ready during your \"ready cards\" step.\nAfter Fight/After Reap: Ready an exhausted non-Dragon creature. If you do, gain 3 Aember."
   },
@@ -1737,12 +1469,12 @@
     "number": "135",
     "name": "Treok, The Wise",
     "house": "ouboros",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "dragon",
       "sage"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 6,
     "text": "After Reap: Choose a creature. Until the start of your next turn, that creature gains invulnerable. (It cannot be destroyed or dealt damage.)"
   },
@@ -1750,27 +1482,24 @@
     "number": "136",
     "name": "Bastionclaw",
     "house": "ouboros",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "dragon"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
-    "armor": 1,
     "power": 4,
+    "armor": 1,
     "text": "Your keys cost -1 Aember for each forged key your opponent has."
   },
   {
     "number": "137",
     "name": "Caspart",
     "house": "ouboros",
-    "keywords": [
-      "entrench"
-    ],
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "dragon"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 3,
     "text": "Entrench.\nAt the end of your turn, if Caspart is exhausted, exhaust 2 other creatures."
   },
@@ -1805,27 +1534,24 @@
     "number": "141",
     "name": "Ignitus",
     "house": "ouboros",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "dragon"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
-    "armor": 1,
     "power": 4,
+    "armor": 1,
     "text": "Ignitus gains splash-attack X, where X is the number of exhausted creatures."
   },
   {
     "number": "142",
     "name": "Noxious Ionox",
     "house": "ouboros",
-    "keywords": [
-      "entrench"
-    ],
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "dragon"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 4,
     "text": "Entrench.\nAt the start of your turn, if Noxious Ionox is exhausted, destroy an enemy creature."
   },
@@ -1858,11 +1584,11 @@
     "number": "146",
     "name": "Voltash Coilbreath",
     "house": "ouboros",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "dragon"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 5,
     "text": "After Reap: Use an enemy artifact as if it were yours. Put that artifact on the bottom of its owner's deck."
   },
@@ -1870,11 +1596,11 @@
     "number": "147",
     "name": "Zartoo, the Swift",
     "house": "ouboros",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "dragon"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 5,
     "text": "After Reap: Ready and use a friendly non-Dragon creature."
   },
@@ -1900,25 +1626,25 @@
     "number": "150",
     "name": "Cosmicrux",
     "house": "ouboros",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "dragon"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 6,
     "text": "After a player readies a creature, deal 1 Damage to it."
   },
   {
     "number": "151",
-    "name": "Daring Dealt",
+    "name": "Daring Delt",
     "house": "ouboros",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "dragon"
     ],
-    "type": "creature",
-    "rarity": "Common",
-    "armor": 1,
     "power": 4,
+    "armor": 1,
     "text": "After Fight: Gain 1 Aember for each ready friendly creature of the active house."
   },
   {
@@ -1943,11 +1669,11 @@
     "number": "154",
     "name": "Pip the Pilferer",
     "house": "ouboros",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "dragon"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 2,
     "text": "Play: If your opponent has more forged keys than you, steal 2 Aember. Otherwise, capture 2 Aember."
   },
@@ -1955,28 +1681,24 @@
     "number": "155",
     "name": "Ria Bevy Gress",
     "house": "ouboros",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "dragon"
     ],
-    "type": "creature",
-    "rarity": "Common",
-    "armor": 2,
     "power": 2,
+    "armor": 2,
     "text": "Enhance +1 power counter +1 power counter +1 power counter.\nAfter Fight/After Reap: If you are overwhelmed, capture 1 Aember for each +1 power counter on friendly creatures. Otherwise, capture 1 Aember."
   },
   {
     "number": "156",
     "name": "Shadow Gloomcoil",
     "house": "ouboros",
-    "keywords": [
-      "treachery",
-      "versatile"
-    ],
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "dragon"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 4,
     "text": "Treachery. Versatile.\nAfter a friendly creature is used, deal 1 Damage to each friendly creature."
   },
@@ -1984,14 +1706,11 @@
     "number": "157",
     "name": "Snapper Dyn",
     "house": "ouboros",
-    "keywords": [
-      "entrench"
-    ],
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "dragon"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 3,
     "text": "Entrench.\nAt the end of your turn, if Snapper Dyn is exhausted, deal 1 Damage to an enemy creature for each Aember in your opponent's pool."
   },
@@ -1999,17 +1718,14 @@
     "number": "158",
     "name": "Sparkscheme",
     "house": "ouboros",
-    "keywords": [
-      "entrench"
-    ],
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "dragon",
       "cyborg"
     ],
-    "type": "creature",
-    "rarity": "Common",
-    "armor": 2,
     "power": 3,
+    "armor": 2,
     "text": "Entrench.\nAfter an enemy creature reaps, if Sparkscheme is exhausted, draw a card."
   },
   {
@@ -2024,53 +1740,35 @@
     "number": "160",
     "name": "Boosted B4-RRY",
     "house": "shadows",
-    "traits": [
-      "robot"
-    ],
-    "type": "creature",
+    "type": "gigantic creature base",
     "rarity": "Special",
-    "armor": 2,
-    "power": 7,
-    "text": "(Play only with the other half of Boosted B4-RRY.)\nPlay/After Fight/After Reap: Choose one:\nTake control of an enemy artifact. While under your control, it belongs to house Shadows (instead of its original house).\nPlay a random card from your opponent's archives as if it were yours."
-  },
-  {
-    "number": "160",
-    "name": "Boosted B4-RRY",
-    "house": "shadows",
     "traits": [
       "robot"
     ],
-    "type": "creature",
-    "rarity": "Rare",
-    "armor": 2,
-    "power": 7,
     "text": "(Play only with the other half of Boosted B4-RRY.)\nPlay/After Fight/After Reap: Choose one:\nTake control of an enemy artifact. While under your control, it belongs to house Shadows (instead of its original house).\nPlay a random card from your opponent's archives as if it were yours."
   },
   {
     "number": "161",
     "name": "Bulleteye",
     "house": "shadows",
-    "keywords": [
-      "elusive"
-    ],
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "elf",
       "thief"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 2,
-    "text": "Elusive. (The first time this creature is attacked each turn, no damage is dealt.)\nAfter Reap: Destroy a flank creature."
+    "text": "Elusive.\nAfter Reap: Destroy a flank creature."
   },
   {
     "number": "162",
     "name": "Cheval de Frise",
     "house": "shadows",
+    "type": "artifact",
+    "rarity": "Rare",
     "traits": [
       "item"
     ],
-    "type": "artifact",
-    "rarity": "Rare",
     "text": "Enhance Shadows Shadows.\nEach friendly Shadows creature gains hazardous 2."
   },
   {
@@ -2094,15 +1792,12 @@
     "number": "165",
     "name": "Honorable Abagnale",
     "house": "shadows",
-    "keywords": [
-      "elusive"
-    ],
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "elf",
       "politician"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 2,
     "text": "Elusive.\nYou may spend up to 3 Aember from your opponent's pool when forging keys."
   },
@@ -2118,16 +1813,14 @@
   {
     "number": "167",
     "name": "Luis Compere",
+    "printed": "Luis Compère",
     "house": "shadows",
-    "keywords": [
-      "elusive"
-    ],
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "elf",
       "thief"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 4,
     "text": "Elusive.\nAt the end of your opponent's turn, if they drew 2 or more cards during their \"draw cards\" step, steal 2 Aember."
   },
@@ -2168,12 +1861,12 @@
     "number": "172",
     "name": "Selwyn the Fence",
     "house": "shadows",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "elf",
       "thief"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 3,
     "text": "After Fight/After Reap: Move 1 Aember from a friendly card to your pool."
   },
@@ -2181,12 +1874,12 @@
     "number": "173",
     "name": "Sneklifter",
     "house": "shadows",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "elf",
       "thief"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 2,
     "text": "Play: Take control of an enemy artifact. While under your control, if it does not belong to one of your three houses, it belongs to house Shadows."
   },
@@ -2194,11 +1887,11 @@
     "number": "174",
     "name": "Widespread Corruption",
     "house": "shadows",
+    "type": "artifact",
+    "rarity": "Rare",
     "traits": [
       "power"
     ],
-    "type": "artifact",
-    "rarity": "Rare",
     "amber": 1,
     "text": "After a player gains Aember by reaping, a creature they do not control captures that Aember."
   },
@@ -2224,12 +1917,12 @@
     "number": "177",
     "name": "Chain Gang",
     "house": "shadows",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "elf",
       "thief"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 3,
     "text": "After you play Subtle Chain, ready Chain Gang.\nAction: Steal 1 Aember. Shuffle a Subtle Chain from your discard pile into your deck."
   },
@@ -2255,12 +1948,12 @@
     "number": "180",
     "name": "Ox Sarbane",
     "house": "shadows",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "elf",
       "politician"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 2,
     "text": "Each enemy creature gains, \"After Fight/After Reap: Exhaust each friendly creature that shares a house with this creature.\""
   },
@@ -2277,17 +1970,14 @@
     "number": "182",
     "name": "Reckless Rizzo",
     "house": "shadows",
-    "keywords": [
-      "elusive"
-    ],
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "elf",
       "thief"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 1,
-    "text": "Elusive. (The first time this creature is attacked each turn, no damage is dealt.)\nAction: Steal 2 Aember. Until the start of your next turn, Reckless Rizzo loses elusive."
+    "text": "Elusive.\nAction: Steal 2 Aember. Until the start of your next turn, Reckless Rizzo loses elusive."
   },
   {
     "number": "183",
@@ -2302,16 +1992,12 @@
     "number": "184",
     "name": "The Watch",
     "house": "shadows",
-    "keywords": [
-      "elusive",
-      "entrench"
-    ],
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "elf",
       "cyborg"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 2,
     "text": "Elusive. Entrench.\nWhile The Watch is exhausted, your Aember cannot be stolen."
   },
@@ -2328,12 +2014,12 @@
     "number": "186",
     "name": "Vaelra Whisperfang",
     "house": "shadows",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "elf",
       "thief"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 3,
     "text": "After your opponent plays a creature, deal 2 Damage to it."
   },
@@ -2341,12 +2027,12 @@
     "number": "187",
     "name": "Victor Flux",
     "house": "shadows",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "human",
       "scientist"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 3,
     "text": "After Reap: Purge a card from your discard pile. If you do, until the start of your next turn, your opponent cannot play cards of the purged card's type."
   },
@@ -2354,14 +2040,11 @@
     "number": "188",
     "name": "Achromatic Basilisk",
     "house": "shadows",
-    "keywords": [
-      "skirmish"
-    ],
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "beast"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 2,
     "text": "Skirmish.\nAfter Fight: Exhaust an enemy creature."
   },
@@ -2378,12 +2061,12 @@
     "number": "190",
     "name": "Clay More",
     "house": "shadows",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "elf",
       "soldier"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 1,
     "text": "Enhance Damage Damage.\nDestroyed: Deal 2 Damage to each enemy flank creature."
   },
@@ -2391,12 +2074,12 @@
     "number": "191",
     "name": "Colt Sleven",
     "house": "shadows",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "elf",
       "thief"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 2,
     "text": "Enhance Damage +1 power counter +1 power counter.\nPlay: For each +1 power counter on each creature, deal 1 Damage to a creature."
   },
@@ -2404,14 +2087,11 @@
     "number": "192",
     "name": "Fallguy",
     "house": "shadows",
-    "keywords": [
-      "taunt"
-    ],
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "elf"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 2,
     "text": "Taunt.\nDestroyed: Steal 1 Aember."
   },
@@ -2419,16 +2099,12 @@
     "number": "193",
     "name": "Grammy Taps",
     "house": "shadows",
-    "keywords": [
-      "elusive",
-      "entrench"
-    ],
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "elf",
       "thief"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 2,
     "text": "Elusive. Entrench.\nWhile Grammy Taps is exhausted, each of its neighbors gains elusive."
   },
@@ -2445,12 +2121,12 @@
     "number": "195",
     "name": "Nightmare Urchin",
     "house": "shadows",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "elf",
       "thief"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 2,
     "text": "After Reap: If you are overwhelmed, steal 2 Aember. Otherwise, steal 1 Aember."
   },
@@ -2458,12 +2134,12 @@
     "number": "196",
     "name": "Pincher Malloy",
     "house": "shadows",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "elf",
       "thief"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 2,
     "text": "Play: If your opponent has more Aember than you, steal 2 Aember."
   },
@@ -2496,15 +2172,12 @@
     "number": "200",
     "name": "Aviatrix Virtuosa",
     "house": "skyborn",
-    "keywords": [
-      "deploy"
-    ],
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "alien",
       "halyard"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 3,
     "text": "Deploy.\nPlay: Exhaust each non-flank creature."
   },
@@ -2512,22 +2185,22 @@
     "number": "201",
     "name": "Cloudburst Command",
     "house": "skyborn",
+    "type": "artifact",
+    "rarity": "Rare",
     "traits": [
       "location"
     ],
-    "type": "artifact",
-    "rarity": "Rare",
     "text": "Your opponent's keys cost +1 Aember for each Skyborn creature on a flank."
   },
   {
     "number": "202",
     "name": "Flip Stallard",
     "house": "skyborn",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "raptrix"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 4,
     "text": "Each enemy creature loses each of its destroyed abilities."
   },
@@ -2544,12 +2217,12 @@
     "number": "204",
     "name": "Han Peregrine",
     "house": "skyborn",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "dinosaur",
       "stormkin"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 6,
     "text": "After Fight/After Reap: You may exalt Han Peregrine. If you do, fully heal a damaged creature and move it to either flank of its controller's battleline."
   },
@@ -2566,16 +2239,12 @@
     "number": "206",
     "name": "Malforge",
     "house": "skyborn",
-    "keywords": [
-      "treachery",
-      "versatile"
-    ],
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "beast",
       "cyborg"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 5,
     "text": "Treachery. Versatile.\nYou cannot forge keys.\nAt the end of your turn, deal 2 Damage to Malforge."
   },
@@ -2590,13 +2259,14 @@
   {
     "number": "208",
     "name": "Razor's Gambit",
+    "printed": "Razor’s Gambit",
     "house": "skyborn",
+    "type": "artifact",
+    "rarity": "Rare",
     "traits": [
       "item"
     ],
-    "type": "artifact",
-    "rarity": "Rare",
-    "text": "Enhance Skyborn Skyborn. (These icons have already been added to cards in your deck.)\nAction: Ready and fight with a friendly Skyborn creature. If your blue key is forged, repeat the preceding effect."
+    "text": "Enhance Skyborn Skyborn.\nAction: Ready and fight with a friendly Skyborn creature. If your blue key is forged, repeat the preceding effect."
   },
   {
     "number": "209",
@@ -2627,12 +2297,12 @@
     "number": "212",
     "name": "Viscount of Aerys",
     "house": "skyborn",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "adagion",
       "artisan"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 2,
     "text": "While your yellow key is forged, each enemy creature enters play stunned.\nPlay: If your yellow key is forged, stun each enemy creature."
   },
@@ -2640,58 +2310,35 @@
     "number": "213",
     "name": "Zomok",
     "house": "skyborn",
-    "traits": [
-      "beast",
-      "cyborg"
-    ],
-    "type": "creature",
-    "rarity": "Rare",
-    "armor": 2,
-    "power": 16,
-    "text": "(Play only with the other half of Zomok.)\nWhile Zomok is attacking, ignore taunt, elusive, poison, hazardous, and invulnerable.\nAfter Fight: Deal 2 Damage to a creature for each forged key."
-  },
-  {
-    "number": "213",
-    "name": "Zomok",
-    "house": "skyborn",
-    "traits": [
-      "beast",
-      "cyborg"
-    ],
-    "type": "creature",
-    "rarity": "Special",
-    "armor": 2,
-    "power": 16,
-    "text": "(Play only with the other half of Zomok.)\nWhile Zomok is attacking, ignore taunt, elusive, poison, hazardous, and invulnerable.\nAfter Fight: Deal 2 Damage to a creature for each forged key."
+    "type": "gigantic creature art",
+    "rarity": "Rare"
   },
   {
     "number": "214",
     "name": "Aember Airhart",
+    "printed": "Æmber Airhart",
     "house": "skyborn",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "getrookya",
       "pilot"
     ],
-    "type": "creature",
-    "rarity": "Rare",
-    "amber": 1,
-    "armor": 1,
     "power": 2,
+    "armor": 1,
+    "amber": 1,
     "text": "After Fight/After Reap: Shuffle Aember Airhart into its owner's deck."
   },
   {
     "number": "215",
     "name": "Cabochon",
     "house": "skyborn",
-    "keywords": [
-      "entrench"
-    ],
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "halyard",
       "cyborg"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 3,
     "text": "Entrench.\nAt the start of your turn, if Cabochon is exhausted, gain 1 Aember for each friendly Skyborn flank creature."
   },
@@ -2714,6 +2361,7 @@
   {
     "number": "218",
     "name": "Gilt 'Em Good",
+    "printed": "Gilt ’Em Good",
     "house": "skyborn",
     "type": "action",
     "rarity": "Uncommon",
@@ -2722,6 +2370,7 @@
   {
     "number": "219",
     "name": "Hannibal's Mark",
+    "printed": "Hannibal’s Mark",
     "house": "skyborn",
     "type": "action",
     "rarity": "Uncommon",
@@ -2732,11 +2381,11 @@
     "number": "220",
     "name": "Navigator Ketarr",
     "house": "skyborn",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "j'reen"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 3,
     "text": "After Reap: If Navigator Ketarr is on a flank, draw 2 cards and archive a card."
   },
@@ -2744,14 +2393,11 @@
     "number": "221",
     "name": "Pirate Champion",
     "house": "skyborn",
-    "keywords": [
-      "taunt"
-    ],
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "stormkin"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 6,
     "text": "Taunt.\nAfter Fight: You may move Pirate Champion to a flank."
   },
@@ -2776,40 +2422,40 @@
     "number": "224",
     "name": "Sir Lorcas",
     "house": "skyborn",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "human",
       "knight"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
-    "armor": 1,
     "power": 5,
+    "armor": 1,
     "text": "If your red key is forged, Sir Lorcas gains skirmish.\nIf your yellow key is forged, Sir Lorcas gains elusive.\nIf your blue key is forged, Sir Lorcas gains taunt."
   },
   {
     "number": "225",
     "name": "Tur-bo-prop",
     "house": "skyborn",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "robot",
       "halyard"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
-    "armor": 1,
     "power": 4,
+    "armor": 1,
     "text": "After Reap: If a blue key is forged, draw 2 cards. Otherwise, draw a card."
   },
   {
     "number": "226",
     "name": "Ty Lourd",
     "house": "skyborn",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "human",
       "halyard"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 3,
     "text": "After your opponent discards a card from their hand, gain 1 Aember."
   },
@@ -2835,11 +2481,11 @@
     "number": "229",
     "name": "Bloodwing",
     "house": "skyborn",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "beast"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 2,
     "text": "Enhance Capture +1 power counter +1 power counter.\nAfter Fight/After Reap: Put a +1 power counter on each friendly flank creature."
   },
@@ -2856,12 +2502,12 @@
     "number": "231",
     "name": "Deep Blue Bryn",
     "house": "skyborn",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "human",
       "cyborg"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 4,
     "text": "After Fight: Steal 1 Aember. If a blue key is forged, ward Deep Blue Bryn."
   },
@@ -2869,12 +2515,12 @@
     "number": "232",
     "name": "Jeen Peary",
     "house": "skyborn",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "cyborg",
       "stormkin"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 4,
     "text": "After Reap: If Jeen Peary is on a flank, steal 1 Aember."
   },
@@ -2890,12 +2536,12 @@
     "number": "234",
     "name": "Leftenant Chars",
     "house": "skyborn",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "human",
       "stormkin"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 5,
     "text": "After Fight: If you are overwhelmed, steal 2 Aember. Otherwise capture 1 Aember."
   },
@@ -2911,15 +2557,12 @@
     "number": "236",
     "name": "Remmi Hound",
     "house": "skyborn",
-    "keywords": [
-      "entrench"
-    ],
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "dinosaur",
       "halyard"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 3,
     "text": "Entrench.\nWhile Remmi Hound is exhausted, each friendly flank creature gets +4 power."
   },
@@ -2927,28 +2570,25 @@
     "number": "237",
     "name": "Ruby Rackham",
     "house": "skyborn",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "human",
       "stormkin"
     ],
-    "type": "creature",
-    "rarity": "Common",
-    "armor": 1,
     "power": 3,
+    "armor": 1,
     "text": "After Fight: If a red key is forged, deal 4 Damage to each enemy flank creature. Otherwise, deal 1 Damage to each enemy flank creature."
   },
   {
     "number": "238",
     "name": "Skulking Saboteurs",
     "house": "skyborn",
-    "keywords": [
-      "elusive"
-    ],
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "stormkin"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 2,
     "text": "Elusive.\nAfter Reap: If your red key is forged, destroy an enemy creature. If your yellow key is forged, destroy an enemy artifact. If your blue key is forged, destroy an enemy upgrade."
   },
@@ -2956,11 +2596,11 @@
     "number": "239",
     "name": "Brackish Shoreline",
     "house": "unfathomable",
+    "type": "artifact",
+    "rarity": "Rare",
     "traits": [
       "location"
     ],
-    "type": "artifact",
-    "rarity": "Rare",
     "amber": 1,
     "text": "After a creature fights, it doesn't ready during the \"ready cards\" step this turn."
   },
@@ -2985,11 +2625,11 @@
     "number": "242",
     "name": "Deep Priest Glebe",
     "house": "unfathomable",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "aquan"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 5,
     "text": "After you play an Aquan creature, exhaust an enemy creature."
   },
@@ -3006,27 +2646,8 @@
     "number": "244",
     "name": "Hydrogan",
     "house": "unfathomable",
-    "traits": [
-      "beast",
-      "leviathan"
-    ],
-    "type": "creature",
-    "rarity": "Rare",
-    "power": 10,
-    "text": "(Play only with the other half of Hydrogan.)\nPlay: Put each other creature faceup under Hydrogan.\nAfter Fight/After Reap: Put a creature from under Hydrogan into play under your control.\nDestroyed: Purge each card under Hydrogan."
-  },
-  {
-    "number": "244",
-    "name": "Hydrogan",
-    "house": "unfathomable",
-    "traits": [
-      "beast",
-      "leviathan"
-    ],
-    "type": "creature",
-    "rarity": "Special",
-    "power": 10,
-    "text": "(Play only with the other half of Hydrogan.)\nPlay: Put each other creature faceup under Hydrogan.\nAfter Fight/After Reap: Put a creature from under Hydrogan into play under your control.\nDestroyed: Purge each card under Hydrogan."
+    "type": "gigantic creature art",
+    "rarity": "Rare"
   },
   {
     "number": "245",
@@ -3057,11 +2678,11 @@
     "number": "248",
     "name": "Sibyl Waimare",
     "house": "unfathomable",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "aquan"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 5,
     "text": "At the start of your opponent's turn, that player discards the top card of their deck and exhausts each creature of that card's house."
   },
@@ -3087,11 +2708,11 @@
     "number": "251",
     "name": "The Chosen One",
     "house": "unfathomable",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "aquan"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 9,
     "text": "Instead of readying creatures they control during their \"ready cards\" step, your opponent deals 1 Damage to The Chosen One for each exhausted creature they control."
   },
@@ -3099,11 +2720,11 @@
     "number": "252",
     "name": "Thing from the Deep",
     "house": "unfathomable",
+    "type": "creature",
+    "rarity": "Rare",
     "traits": [
       "beast"
     ],
-    "type": "creature",
-    "rarity": "Rare",
     "power": 30,
     "text": "Thing from the Deep cannot be played unless Open the Seal is in your discard pile.\nAfter Fight: Steal 2 Aember."
   },
@@ -3120,11 +2741,11 @@
     "number": "254",
     "name": "Addlefish",
     "house": "unfathomable",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "beast"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 5,
     "text": "After Fight: Your opponent discards\n2 random cards from their hand."
   },
@@ -3141,11 +2762,11 @@
     "number": "256",
     "name": "Azure Basin Outpost",
     "house": "unfathomable",
+    "type": "artifact",
+    "rarity": "Uncommon",
     "traits": [
       "location"
     ],
-    "type": "artifact",
-    "rarity": "Uncommon",
     "amber": 1,
     "text": "Action: Put a friendly creature on the bottom of its owner's deck. If you do, exhaust 3 enemy creatures."
   },
@@ -3179,12 +2800,12 @@
     "number": "260",
     "name": "Hukaru Icefin",
     "house": "unfathomable",
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "aquan",
       "scientist"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 3,
     "text": "After Reap: Choose a house. Exhaust each creature of that house.\nScrap: Exhaust a creature or an artifact."
   },
@@ -3192,30 +2813,24 @@
     "number": "261",
     "name": "Kaipo",
     "house": "unfathomable",
-    "keywords": [
-      "taunt"
-    ],
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "aquan"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
-    "armor": 1,
     "power": 5,
+    "armor": 1,
     "text": "Taunt.\nAt the end of your turn, fully heal each of Kaipo's neighbors."
   },
   {
     "number": "262",
     "name": "Malina",
     "house": "unfathomable",
-    "keywords": [
-      "entrench"
-    ],
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "aquan"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 4,
     "text": "Entrench.\nWhile Malina is exhausted, your opponent cannot play creatures more powerful than the most powerful creature in play."
   },
@@ -3223,16 +2838,13 @@
     "number": "263",
     "name": "Sparkfist",
     "house": "unfathomable",
-    "keywords": [
-      "skirmish"
-    ],
+    "type": "creature",
+    "rarity": "Uncommon",
     "traits": [
       "aquan"
     ],
-    "type": "creature",
-    "rarity": "Uncommon",
     "power": 2,
-    "text": "Skirmish. (When you use this creature to fight, it is dealt no damage in return.)\nAfter Fight: Stun and exhaust the creature Sparkfist fights."
+    "text": "Skirmish.\nAfter Fight: Stun and exhaust the creature Sparkfist fights."
   },
   {
     "number": "264",
@@ -3283,11 +2895,11 @@
     "number": "269",
     "name": "Frigorific Rod",
     "house": "unfathomable",
+    "type": "artifact",
+    "rarity": "Common",
     "traits": [
       "item"
     ],
-    "type": "artifact",
-    "rarity": "Common",
     "amber": 1,
     "text": "Action: Exhaust a creature or artifact."
   },
@@ -3295,11 +2907,11 @@
     "number": "270",
     "name": "Hemogrith",
     "house": "unfathomable",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "beast"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 2,
     "text": "Play: If there are no enemy exhausted creatures, your opponent loses 2 Aember."
   },
@@ -3307,11 +2919,11 @@
     "number": "271",
     "name": "Keenu",
     "house": "unfathomable",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "aquan"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 2,
     "text": "Enhance Draw +1 power counter +1 power counter.\nPlay: Choose an enemy creature with no +1 power counters on it. Exhaust that creature and each of its neighbors."
   },
@@ -3319,28 +2931,24 @@
     "number": "272",
     "name": "Knuckler",
     "house": "unfathomable",
-    "keywords": [
-      "deploy",
-      "entrench"
-    ],
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "beast"
     ],
-    "type": "creature",
-    "rarity": "Common",
-    "armor": 2,
     "power": 3,
+    "armor": 2,
     "text": "Deploy. Entrench.\nWhile Knuckler is exhausted, each of its neighbors gets +2 armor."
   },
   {
     "number": "273",
     "name": "Paralysis Synan",
     "house": "unfathomable",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "beast"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 3,
     "text": "After Reap: Stun, enrage, and exhaust a creature."
   },
@@ -3348,12 +2956,12 @@
     "number": "274",
     "name": "Priestess Leilani",
     "house": "unfathomable",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "aquan",
       "priest"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 3,
     "text": "After Reap: Exhaust an enemy creature. If you do, ready a non-Priest creature."
   },
@@ -3361,11 +2969,11 @@
     "number": "275",
     "name": "Siphon Maw",
     "house": "unfathomable",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "vehicle"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 4,
     "text": "After Fight/After Reap: Discard the top card of a player's deck. For each bonus icon on the discarded card, your opponent loses 1 Aember."
   },
@@ -3373,22 +2981,23 @@
     "number": "276",
     "name": "Slapdash Enamel",
     "house": "unfathomable",
+    "type": "artifact",
+    "rarity": "Common",
     "traits": [
       "item"
     ],
-    "type": "artifact",
-    "rarity": "Common",
     "text": "At the start of your turn, destroy each card with a corrosion counter on it.\nAction: Put a corrosion counter on a card in play."
   },
   {
     "number": "277",
     "name": "\"Bubbles\"",
+    "printed": "“Bubbles”",
     "house": "unfathomable",
+    "type": "creature",
+    "rarity": "Common",
     "traits": [
       "aquan"
     ],
-    "type": "creature",
-    "rarity": "Common",
     "power": 5,
     "text": "Play: Put an enemy creature on top of its owner's deck."
   },
@@ -3399,6 +3008,6 @@
     "type": "action",
     "rarity": "Special",
     "amber": 1,
-    "text": "Enhance Aember Discard Discard Discard. (These icons have already been added to cards in your deck.)"
+    "text": "Enhance Aember Discard Discard Discard."
   }
 ]

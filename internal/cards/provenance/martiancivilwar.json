@@ -1,0 +1,975 @@
+[
+  {
+    "number": "001",
+    "name": "Clone Home",
+    "house": "ironyxrebels",
+    "type": "action",
+    "rarity": "Common",
+    "text": "Play: Make a token creature. If there are more friendly creatures than enemy creatures, archive Clone Home."
+  },
+  {
+    "number": "002",
+    "name": "Chuff Ape",
+    "house": "elders",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "beast"
+    ],
+    "power": 11,
+    "text": "Taunt.\nChuff Ape enters play stunned.\nAfter Fight/After Reap: You may destroy another friendly creature. If you do, fully heal Chuff Ape."
+  },
+  {
+    "number": "003",
+    "name": "Curse of Disappearances",
+    "house": "elders",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "curse"
+    ],
+    "text": "Treachery.\nAt the end of your turn, put a friendly creature into your opponent's archives. If that card leaves their archives, put it into its owner's hand instead."
+  },
+  {
+    "number": "004",
+    "name": "Destructive Analysis",
+    "house": "elders",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Deal 2 Damage to a creature. You may purge any number of cards from your archives. Deal an additional 2 Damage to the same creature for each card purged this way."
+  },
+  {
+    "number": "005",
+    "name": "Elite Disruptzord",
+    "house": "elders",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "robot"
+    ],
+    "power": 6,
+    "text": "Creatures more powerful than Elite Disruptzord cannot be played."
+  },
+  {
+    "number": "006",
+    "name": "Extinction",
+    "house": "elders",
+    "type": "action",
+    "rarity": "Rare",
+    "text": "Play: Destroy a creature and each creature that shares a trait with it. Gain 1 chain."
+  },
+  {
+    "number": "007",
+    "name": "Grommid",
+    "house": "elders",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "beast"
+    ],
+    "power": 10,
+    "text": "While Grommid is in play, you cannot play creatures.\nAfter an enemy creature is destroyed fighting Grommid, your opponent\nloses 1 Aember."
+  },
+  {
+    "number": "008",
+    "name": "Grondal",
+    "house": "elders",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "beast"
+    ],
+    "power": 9,
+    "armor": 2,
+    "text": "At the start of your turn, destroy the least powerful creature.\nPlay: Make 2 token creatures."
+  },
+  {
+    "number": "009",
+    "name": "Hypnotic Command",
+    "house": "elders",
+    "type": "action",
+    "rarity": "Rare",
+    "text": "Play: For each friendly Mars creature, choose an enemy creature to capture 1 Aember from its own side."
+  },
+  {
+    "number": "010",
+    "name": "Invasion Portal",
+    "house": "elders",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "location"
+    ],
+    "text": "Action: Discard cards from the top of your deck until you discard a Mars creature or run out of cards. If you discard a Mars creature this way, put it into your hand."
+  },
+  {
+    "number": "011",
+    "name": "Martian Hounds",
+    "house": "elders",
+    "type": "action",
+    "rarity": "Rare",
+    "text": "Play: Choose a creature. For each damaged creature, give the chosen creature two +1 power counters."
+  },
+  {
+    "number": "012",
+    "name": "Mass Abduction",
+    "house": "elders",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Put up to 3 damaged enemy creatures into your archives. If any of these creatures leave your archives, they are put into their owner's hand instead."
+  },
+  {
+    "number": "013",
+    "name": "The Body Snatchers",
+    "house": "elders",
+    "type": "action",
+    "rarity": "Rare",
+    "text": "Play: For the remainder of the turn, each enemy creature gains, \"Destroyed: Fully heal this creature and give control of it to your opponent instead.\""
+  },
+  {
+    "number": "014",
+    "name": "Total Recall",
+    "house": "elders",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: For each friendly ready creature, gain 1 Aember. Return each friendly creature to your hand."
+  },
+  {
+    "number": "015",
+    "name": "Urxym the \"Diplomat\"",
+    "printed": "Urxym the “Diplomat”",
+    "house": "elders",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "politician",
+      "martian"
+    ],
+    "power": 2,
+    "text": "Elusive.\nAfter Reap: Lose all your Aember. Destroy an enemy non-Mars creature for each Aember lost this way."
+  },
+  {
+    "number": "016",
+    "name": "Yzphyz Knowdrone",
+    "house": "elders",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "martian",
+      "scientist"
+    ],
+    "power": 3,
+    "armor": 1,
+    "text": "Play: Archive a card. You may purge an archived card. If you do, stun a creature."
+  },
+  {
+    "number": "017",
+    "name": "Blypyp",
+    "house": "elders",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "martian",
+      "scientist"
+    ],
+    "power": 2,
+    "text": "After Reap: The next Mars creature you play this turn enters play ready."
+  },
+  {
+    "number": "018",
+    "name": "Crystal Hive",
+    "house": "elders",
+    "type": "artifact",
+    "rarity": "Uncommon",
+    "traits": [
+      "location"
+    ],
+    "text": "Action: For the remainder of the turn, gain 1 Aember after a creature reaps."
+  },
+  {
+    "number": "019",
+    "name": "Deep Probe",
+    "house": "elders",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Choose a house. Reveal your opponent's hand. Discard each creature of that house revealed this way."
+  },
+  {
+    "number": "020",
+    "name": "Ether Spider",
+    "house": "elders",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "beast"
+    ],
+    "power": 7,
+    "text": "Ether Spider deals no damage when fighting.\nEach Aember that would be added to your opponent's pool is captured by Ether Spider instead."
+  },
+  {
+    "number": "021",
+    "name": "Genetic Vault",
+    "house": "elders",
+    "type": "artifact",
+    "rarity": "Uncommon",
+    "traits": [
+      "location"
+    ],
+    "text": "At the end of your turn, you may put a card from your hand facedown under Genetic Vault.\nOmni: Put each card under Genetic Vault into play as a token creature."
+  },
+  {
+    "number": "022",
+    "name": "Memrox the Red",
+    "house": "elders",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "martian"
+    ],
+    "power": 5,
+    "text": "Your opponent's cards cannot leave your archives.\nAction: Gain 1 Aember for each card in your archives."
+  },
+  {
+    "number": "023",
+    "name": "Psychic Network",
+    "house": "elders",
+    "type": "action",
+    "rarity": "Uncommon",
+    "text": "Play: Steal 1 Aember for each friendly ready Mars creature."
+  },
+  {
+    "number": "024",
+    "name": "Space Invaders",
+    "house": "elders",
+    "type": "action",
+    "rarity": "Uncommon",
+    "text": "Play: Reveal any number of creatures from your hand. Make each creature revealed this way a token creature as if the card was on top of your deck."
+  },
+  {
+    "number": "025",
+    "name": "Storm Crawler",
+    "house": "elders",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "robot"
+    ],
+    "power": 6,
+    "armor": 1,
+    "text": "Storm Crawler only deals 1 Damage when fighting.\nAfter an enemy creature reaps, stun it."
+  },
+  {
+    "number": "026",
+    "name": "Uxlyx the Zookeeper",
+    "house": "elders",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "martian",
+      "scientist"
+    ],
+    "power": 2,
+    "text": "Elusive.\nAfter Reap: Put an enemy creature into your archives. If that creature leaves your archives, it is put into its owner's hand instead."
+  },
+  {
+    "number": "027",
+    "name": "War of the Worlds",
+    "house": "elders",
+    "type": "action",
+    "rarity": "Uncommon",
+    "text": "Play: Destroy all non-Mars creatures. Deal 2 Damage to each Mars creature."
+  },
+  {
+    "number": "028",
+    "name": "Zorg",
+    "house": "elders",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "beast"
+    ],
+    "power": 7,
+    "text": "Zorg enters play stunned.\nBefore Fight: Stun the creature Zorg fights and each of that creature's neighbors."
+  },
+  {
+    "number": "029",
+    "name": "Brash Grabber",
+    "house": "elders",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "scientist",
+      "martian"
+    ],
+    "power": 3,
+    "text": "If you are not haunted, Brash Grabber enters play enraged.\nOmni: Move 1 Aember from an enemy creature to your pool."
+  },
+  {
+    "number": "030",
+    "name": "Compliance",
+    "house": "elders",
+    "type": "action",
+    "rarity": "Common",
+    "text": "Play: A creature captures 1 Aember from its own side. For each Aember on that creature, make a token creature."
+  },
+  {
+    "number": "031",
+    "name": "Dr. Xyloxxzlphrex",
+    "house": "elders",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "scientist",
+      "martian"
+    ],
+    "power": 2,
+    "text": "Elusive.\nAfter Reap: Play a Mars creature from your discard pile and ready it."
+  },
+  {
+    "number": "032",
+    "name": "Mind Your Elders",
+    "house": "elders",
+    "type": "action",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "Play: If there are more friendly Mars creatures than enemy Mars creatures, a friendly creature captures 3 Aember."
+  },
+  {
+    "number": "033",
+    "name": "Mindwarper",
+    "house": "elders",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "martian",
+      "scientist"
+    ],
+    "power": 2,
+    "text": "Elusive.\nAction: An enemy creature captures 1 Aember from its own side."
+  },
+  {
+    "number": "034",
+    "name": "Mk.2 Generator",
+    "house": "elders",
+    "type": "artifact",
+    "rarity": "Common",
+    "traits": [
+      "item"
+    ],
+    "text": "Mk.2 Generator enters play ready.\nAction: Make a token creature."
+  },
+  {
+    "number": "035",
+    "name": "Pyloyx Strr",
+    "house": "elders",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "martian",
+      "scientist"
+    ],
+    "power": 3,
+    "text": "Play/After Reap: Choose a player. Gain 1 Aember for each card in that player's archive. That player discards each of their archived cards."
+  },
+  {
+    "number": "036",
+    "name": "Scoop Up",
+    "house": "elders",
+    "type": "action",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "Play: Put a friendly non-Mars creature and an enemy non-Mars creature into your archives. If either card leaves your archives and you are not the owner of it, put it into its owner's hand instead."
+  },
+  {
+    "number": "037",
+    "name": "Tyyryxn Delv",
+    "house": "elders",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "martian",
+      "scientist"
+    ],
+    "power": 3,
+    "text": "Elusive.\nAt the end of your turn, you may put a creature from play facedown under Tyyryxn Delv.\nAfter Reap: For each card under Tyyryxn Delv, make a token creature."
+  },
+  {
+    "number": "038",
+    "name": "Vezyma Thinkdrone",
+    "house": "elders",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "martian",
+      "scientist"
+    ],
+    "power": 3,
+    "text": "After Reap: You may archive a friendly creature or artifact from play."
+  },
+  {
+    "number": "039",
+    "name": "Xanotys Ploxx",
+    "house": "elders",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "martian",
+      "pilot"
+    ],
+    "power": 3,
+    "text": "After Reap: You may discard a non-Mars card from your hand. If you do, resolve the discarded card's bonus icons as if you had played it."
+  },
+  {
+    "number": "040",
+    "name": "Xarn Trax",
+    "house": "elders",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "martian",
+      "agent"
+    ],
+    "power": 2,
+    "text": "Elusive.\nAfter Reap: Move 1 Aember from a creature to your pool. If you do, deal 2 Damage that creature."
+  },
+  {
+    "number": "041",
+    "name": "Researcher",
+    "house": "elders",
+    "type": "token creature",
+    "rarity": "Token",
+    "traits": [
+      "martian",
+      "scientist"
+    ],
+    "text": "Omni: Reveal a Mars card from your hand and archive it."
+  },
+  {
+    "number": "042",
+    "name": "Aember Munch",
+    "printed": "Æmber Munch",
+    "house": "elders",
+    "type": "token creature",
+    "rarity": "Token",
+    "traits": [
+      "beast"
+    ],
+    "text": "After Fight: Your opponent loses 1 Aember."
+  },
+  {
+    "number": "043",
+    "name": "Aberrant Warp Event",
+    "house": "ironyxrebels",
+    "type": "action",
+    "rarity": "Rare",
+    "text": "Play: Discard cards from the top of your deck until you discard a creature or run out of cards. If you discard a creature this way, put it into play and destroy one of its neighbors. Repeat the preceding effect on your opponent."
+  },
+  {
+    "number": "044",
+    "name": "Big Magnet",
+    "house": "ironyxrebels",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Choose a friendly creature. Take control of each upgrade in play and move it to that creature."
+  },
+  {
+    "number": "045",
+    "name": "Borka Rikk",
+    "house": "ironyxrebels",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "martian",
+      "ironyx"
+    ],
+    "power": 4,
+    "text": "Each time a Mars card is discarded from your hand, make a token creature."
+  },
+  {
+    "number": "046",
+    "name": "Entropic Manipulator",
+    "house": "ironyxrebels",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Choose a player. You may redistribute the damage on the creatures that player controls among that player's creatures. (You may cause more damage to a creature than it has power.)"
+  },
+  {
+    "number": "047",
+    "name": "Ilxid Avenger",
+    "house": "ironyxrebels",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "martian",
+      "soldier"
+    ],
+    "power": 3,
+    "text": "Play/After Fight: Give Ilxid Avenger a +1 power counter for each Mars card in your discard pile.\nScrap: Give a friendly creature a +1 power counter for each Mars card in your discard pile."
+  },
+  {
+    "number": "048",
+    "name": "Incubation Chamber",
+    "house": "ironyxrebels",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "location"
+    ],
+    "text": "Omni: You may reveal a Mars creature from your hand. If you do, archive it."
+  },
+  {
+    "number": "049",
+    "name": "Martian Revolution",
+    "house": "ironyxrebels",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Destroy each friendly creature. For each creature destroyed this way, make a token creature."
+  },
+  {
+    "number": "050",
+    "name": "Martians Make Bad Allies",
+    "house": "ironyxrebels",
+    "type": "action",
+    "rarity": "Rare",
+    "text": "Play: Reveal your hand. Purge each revealed non-Mars creature and gain 1 Aember for each card purged this way."
+  },
+  {
+    "number": "051",
+    "name": "Mating Season",
+    "house": "ironyxrebels",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Shuffle each Mars creature into its owner's deck. Each player gains 1 Aember for each creature shuffled into their deck this way."
+  },
+  {
+    "number": "052",
+    "name": "Nautilixian",
+    "house": "ironyxrebels",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "robot"
+    ],
+    "power": 6,
+    "armor": 4,
+    "text": "Nautilixian cannot be used unless you have used 1 or more friendly Mars creatures this turn.\nEach friendly Pilot creature cannot be dealt damage or destroyed."
+  },
+  {
+    "number": "053",
+    "name": "Phylyx the Disintegrator",
+    "house": "ironyxrebels",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "soldier",
+      "martian"
+    ],
+    "power": 1,
+    "text": "Elusive.\nAction: Your opponent loses 1 Aember for each other friendly Mars creature."
+  },
+  {
+    "number": "054",
+    "name": "R-Evolution",
+    "house": "ironyxrebels",
+    "type": "upgrade",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "This creature and each creature with the same name as it gain, \"After Reap: Deal 2 Damage to an enemy creature.\""
+  },
+  {
+    "number": "055",
+    "name": "Revo Hooligans",
+    "house": "ironyxrebels",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "martian",
+      "ironyx"
+    ],
+    "power": 4,
+    "text": "Elusive.\nAfter Reap: Put a paint counter on an artifact. While that artifact has a paint counter, it belongs to house Mars (instead of its other houses)."
+  },
+  {
+    "number": "056",
+    "name": "Shatter Storm",
+    "house": "ironyxrebels",
+    "type": "action",
+    "rarity": "Rare",
+    "text": "Play: Lose all your Aember. Then, your opponent loses triple the amount of Aember you lost this way."
+  },
+  {
+    "number": "057",
+    "name": "Yxlyx Stimrager",
+    "house": "ironyxrebels",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "soldier",
+      "martian"
+    ],
+    "power": 4,
+    "armor": 2,
+    "text": "After Fight: Deal 2 Damage to a creature and move it to either flank of its controller's battleline."
+  },
+  {
+    "number": "058",
+    "name": "Agent Taengoo",
+    "house": "ironyxrebels",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "martian",
+      "agent"
+    ],
+    "power": 1,
+    "text": "Play: Choose a house. Return each creature of that house to its owner's hand."
+  },
+  {
+    "number": "059",
+    "name": "Destroy Them All!",
+    "house": "ironyxrebels",
+    "type": "action",
+    "rarity": "Uncommon",
+    "text": "Play: Destroy an artifact, a creature, and an upgrade."
+  },
+  {
+    "number": "060",
+    "name": "Exterminate! Exterminate!",
+    "house": "ironyxrebels",
+    "type": "action",
+    "rarity": "Uncommon",
+    "text": "Play: For each friendly Mars creature, destroy a non-Mars creature with lower power."
+  },
+  {
+    "number": "061",
+    "name": "Ironyx Banner",
+    "house": "ironyxrebels",
+    "type": "artifact",
+    "rarity": "Uncommon",
+    "traits": [
+      "item"
+    ],
+    "text": "Each friendly Ironyx creature gets +1 power and +1 armor.\nPlay: Make a token creature."
+  },
+  {
+    "number": "062",
+    "name": "Iyxrenu the Clever",
+    "house": "ironyxrebels",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "martian"
+    ],
+    "power": 3,
+    "text": "Elusive. Enhance Capture Capture Capture.\nAction: Lose 1 Aember. If you do, move all Aember from a creature to your pool."
+  },
+  {
+    "number": "063",
+    "name": "Nyyon Outpost",
+    "house": "ironyxrebels",
+    "type": "artifact",
+    "rarity": "Uncommon",
+    "traits": [
+      "location"
+    ],
+    "text": "Action: Put a friendly creature on the bottom of its owner's deck. If you do, make 2 token creatures."
+  },
+  {
+    "number": "064",
+    "name": "Nyzyk Resonator",
+    "house": "ironyxrebels",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "soldier",
+      "martian"
+    ],
+    "power": 2,
+    "armor": 1,
+    "text": "For each neighbor Nyzyk Resonator has, your opponent's keys cost +2 Aember."
+  },
+  {
+    "number": "065",
+    "name": "Red Planet Ray Gun",
+    "house": "ironyxrebels",
+    "type": "upgrade",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "This creature gains, \"After Reap: Choose a creature. Deal 1 Damage to that creature for each Mars creature in play.\""
+  },
+  {
+    "number": "066",
+    "name": "Shark Bait",
+    "house": "ironyxrebels",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Deal 2 Damage to a friendly non-Mars creature. If it is not destroyed, it captures 2 Aember."
+  },
+  {
+    "number": "067",
+    "name": "Yipyax Abductor",
+    "house": "ironyxrebels",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "martian"
+    ],
+    "power": 4,
+    "text": "Play/After Fight: Put an upgrade from play into your archives. If you are not the owner of that card and it leaves your archives, put it into its owner's hand instead."
+  },
+  {
+    "number": "068",
+    "name": "Yxl the Iron Captain",
+    "house": "ironyxrebels",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "martian",
+      "ironyx"
+    ],
+    "power": 4,
+    "armor": 1,
+    "text": "Play: Each friendly Ironyx creature captures 2 Aember."
+  },
+  {
+    "number": "069",
+    "name": "Zizok",
+    "house": "ironyxrebels",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "martian",
+      "soldier"
+    ],
+    "power": 3,
+    "text": "Skirmish. Splash-attack 1.\nAfter an enemy creature is destroyed by Zizok's splash-attack damage, ready Zizok."
+  },
+  {
+    "number": "070",
+    "name": "Exo Vanguard",
+    "house": "ironyxrebels",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "martian",
+      "pilot"
+    ],
+    "power": 2,
+    "armor": 2,
+    "text": "After Fight: Capture 1 Aember."
+  },
+  {
+    "number": "071",
+    "name": "For the Revolution!",
+    "house": "ironyxrebels",
+    "type": "action",
+    "rarity": "Common",
+    "text": "Play: You may destroy a friendly non-Mars creature. If you do, make a token creature and ready that token creature."
+  },
+  {
+    "number": "072",
+    "name": "Ironyx Propaganda",
+    "house": "ironyxrebels",
+    "type": "upgrade",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "This creature gains, \"After Fight/After Reap: Make a token creature.\""
+  },
+  {
+    "number": "073",
+    "name": "Ironyx Rebel",
+    "house": "ironyxrebels",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "martian",
+      "ironyx"
+    ],
+    "power": 2,
+    "text": "Deploy.\nPlay: Ready each of Ironyx Rebel's Mars neighbors."
+  },
+  {
+    "number": "074",
+    "name": "Ironyx Vatminder",
+    "house": "ironyxrebels",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "martian",
+      "ironyx"
+    ],
+    "power": 3,
+    "armor": 1,
+    "text": "Play/Destroyed: Make a token creature."
+  },
+  {
+    "number": "075",
+    "name": "Jynnux Boom",
+    "house": "ironyxrebels",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "martian",
+      "soldier"
+    ],
+    "power": 3,
+    "armor": 1,
+    "text": "After Fight: You may discard a non-Mars creature. If you do, deal damage to an enemy creature equal to the discarded creature's power."
+  },
+  {
+    "number": "076",
+    "name": "Mars First",
+    "house": "ironyxrebels",
+    "type": "action",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "Play: Ready and use a friendly Mars creature."
+  },
+  {
+    "number": "077",
+    "name": "Mk.3 \"Rookie\"",
+    "printed": "Mk.3 “Rookie”",
+    "house": "ironyxrebels",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "martian"
+    ],
+    "power": 2,
+    "armor": 1,
+    "text": "After Fight/After Reap: Ready and enrage a neighboring Mars creature."
+  },
+  {
+    "number": "078",
+    "name": "Myx, the Tallminded",
+    "house": "ironyxrebels",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "martian"
+    ],
+    "power": 5,
+    "text": "Your opponent's keys cost +1 Aember for each friendly Mars creature in play."
+  },
+  {
+    "number": "079",
+    "name": "Phlox 'em All!",
+    "printed": "Phlox ’em All!",
+    "house": "ironyxrebels",
+    "type": "action",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "Play: For each friendly Mars creature, deal 3 Damage to a creature."
+  },
+  {
+    "number": "080",
+    "name": "Ulyq Megamouth",
+    "house": "ironyxrebels",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "martian",
+      "scientist"
+    ],
+    "power": 3,
+    "text": "After Fight/After Reap: Use a friendly non-Mars creature."
+  },
+  {
+    "number": "081",
+    "name": "Zutrinyx, the Innovator",
+    "house": "ironyxrebels",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "martian",
+      "scientist"
+    ],
+    "power": 2,
+    "text": "Each friendly Mars creature gains splash-attack 2."
+  },
+  {
+    "number": "082",
+    "name": "Green Aeronaut",
+    "house": "ironyxrebels",
+    "type": "creature",
+    "rarity": "Special",
+    "traits": [
+      "martian",
+      "pilot"
+    ],
+    "power": 3,
+    "text": "Action: A friendly Nautilixian gains Splash-attack 3 for the remainder of the turn."
+  },
+  {
+    "number": "083",
+    "name": "Purple Aeronaut",
+    "house": "ironyxrebels",
+    "type": "creature",
+    "rarity": "Special",
+    "traits": [
+      "martian",
+      "pilot"
+    ],
+    "power": 3,
+    "text": "After 4 friendly Pilot creatures are used in the same turn, a friendly Nautilixian gains \"After Fight: Destroy each enemy creature\" for the remainder of that turn."
+  },
+  {
+    "number": "084",
+    "name": "Red Aeronaut",
+    "house": "ironyxrebels",
+    "type": "creature",
+    "rarity": "Special",
+    "traits": [
+      "martian",
+      "pilot"
+    ],
+    "power": 3,
+    "text": "Play: Search your deck and discard pile for a Nautilixian and put it into play, then shuffle your deck.\nAction: A friendly Nautilixian gets +5 power for the remainder of the turn."
+  },
+  {
+    "number": "085",
+    "name": "White Aeronaut",
+    "house": "ironyxrebels",
+    "type": "creature",
+    "rarity": "Special",
+    "traits": [
+      "martian",
+      "pilot"
+    ],
+    "power": 3,
+    "text": "Action: Ward and fully heal a friendly Nautilixian."
+  },
+  {
+    "number": "086",
+    "name": "Minutemartian",
+    "house": "ironyxrebels",
+    "type": "token creature",
+    "rarity": "Token",
+    "traits": [
+      "martian",
+      "ironyx"
+    ],
+    "text": "After Fight: Make a token creature."
+  },
+  {
+    "number": "087",
+    "name": "Rebel",
+    "house": "ironyxrebels",
+    "type": "token creature",
+    "rarity": "Token",
+    "traits": [
+      "martian",
+      "ironyx"
+    ],
+    "text": "After Reap: Deal 1 Damage to a creature."
+  }
+]

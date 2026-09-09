@@ -34,7 +34,6 @@ func TestMedicIngram(t *testing.T) {
 		wounded.Damaged(3)
 
 		h.P1.Play(MedicIngram)
-		h.P1.ClickOption("Yes")
 		h.P1.ClickCard(wounded)
 
 		h.Expect(wounded).Damage(0)

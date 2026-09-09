@@ -133,6 +133,28 @@ func TestUseEnemyArtifact(t *testing.T) {
 	}
 }
 
+func TestUseEvenUnusableOffersAnyArtifact(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("src", 3), 0)
+	// An exhausted enemy artifact with an Action: EvenUnusable still offers it, but
+	// its Action does not fire (it cannot act while exhausted); it is only chosen.
+	exhausted := g.AddArtifact(NewCard("exhausted", Logos, Artifact, Common,
+		WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 3})), 1)
+	g.State.Cards[exhausted].Exhausted = true
+	g.SetChooser(0, idChooser{id: exhausted})
+	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+
+	Use{Max: 1, Target: Target{Kind: TargetEachEnemyArtifact}, EvenUnusable: true}.
+		Resolve(ctx)
+
+	if g.Aember(0) != 0 {
+		t.Errorf("aember = %d, want 0 (an exhausted artifact's Action must not fire)", g.Aember(0))
+	}
+	if !ctx.HasIt || ctx.It != exhausted {
+		t.Errorf("it = %v/%v, want the chosen artifact %v", ctx.It, ctx.HasIt, exhausted)
+	}
+}
+
 func TestUseInSentences(t *testing.T) {
 	seq := Sentences{Effects: []Effect{
 		Destroy{Target: Target{Kind: TargetThisCreature}},

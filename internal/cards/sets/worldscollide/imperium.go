@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Imperium
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Saurian
 //	Type:   Tactic
@@ -22,5 +17,9 @@ var Imperium = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.WC, "186"),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Ward{
+			Target: card.Target.EachFriendlyCreature,
+			Amount: 2,
+		}),
 )

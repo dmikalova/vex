@@ -33,7 +33,7 @@ func TestLegatusRaptor(t *testing.T) {
 		ally.Exhaust()
 
 		h.P1.Fight(raptor, foe)
-		h.P1.ClickOption("Yes")
+		h.P1.ClickCard(raptor)
 
 		h.Expect(raptor).AmberOn(1)
 		h.P1.ExpectAmber(1)
@@ -54,7 +54,7 @@ func TestLegatusRaptor(t *testing.T) {
 		ally.Exhaust()
 
 		h.P1.Fight(raptor, foe)
-		h.P1.ClickOption("No")
+		h.P1.ClickDone()
 
 		h.Expect(raptor).AmberOn(0)
 		h.Expect(ally).Exhausted()

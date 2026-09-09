@@ -34,6 +34,33 @@ func TestDestroyOrderByCreature(t *testing.T) {
 	}
 }
 
+// TestSaveFromDestruction covers a creature's own "Destroyed:" replacement: it
+// marks itself saved so the discard step leaves it in play, and its Do resolves
+// (Reassembling Automaton).
+func TestSaveFromDestruction(t *testing.T) {
+	e := SaveFromDestruction{Do: GainAember{Player: Controller, Amount: 1}}
+	if got := e.Text(); got != "instead of destroying "+SelfName+", gain 1 Æmber" {
+		t.Errorf("text = %q", got)
+	}
+	if err := e.validate(); err != nil {
+		t.Errorf("validate = %v", err)
+	}
+
+	g := started(t)
+	before := g.Aember(0)
+	saved := g.AddToBattleline(testCreature("automaton", 3,
+		WithAbility(TriggerDestroyed, e)), 0)
+
+	g.DestroyEach(0, []LocalID{saved})
+
+	if !slices.Contains(g.Battleline(0), saved) {
+		t.Error("the saved creature should remain in play")
+	}
+	if g.Aember(0) != before+1 {
+		t.Errorf("aember = %d, want %d (the save's Do resolved)", g.Aember(0), before+1)
+	}
+}
+
 // orderMark is a test Destroyed effect that appends its tag to a shared log when
 // it resolves, so a test can read back the resolution order. Two marks with the
 // same tag render identical text, so orderTriggered treats them as one ability.

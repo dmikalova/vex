@@ -13,9 +13,9 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Each friendly creature captures 1 Æmber from your own side.
+//	Play: Each friendly creature captures 1 Æmber from your opponent.
 func TestCityStateInterest(t *testing.T) {
-	t.Run("each friendly creature captures 1 Æmber from your pool", func(t *testing.T) {
+	t.Run("each friendly creature captures 1 Æmber from your opponent", func(t *testing.T) {
 		var a, b ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
@@ -25,6 +25,8 @@ func TestCityStateInterest(t *testing.T) {
 					ct.Bind(&a, ct.Creature(ct.OfHouse(card.House.Saurian))),
 					ct.Bind(&b, ct.Creature(ct.OfHouse(card.House.Saurian))),
 				),
+			},
+			P2: ct.Side{
 				Amber: 3,
 			},
 		})
@@ -33,6 +35,6 @@ func TestCityStateInterest(t *testing.T) {
 
 		h.Expect(a).AmberOn(1)
 		h.Expect(b).AmberOn(1)
-		h.P1.ExpectAmber(1)
+		h.P2.ExpectAmber(1)
 	})
 }

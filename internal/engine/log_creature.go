@@ -193,6 +193,16 @@ func (e MovedToFlank) Text(n Namer) string {
 	return fmt.Sprintf("%s moves to the %s flank", n.Name(e.Creature), side)
 }
 
+// MovedWithinBattleline narrates a creature repositioned within its battleline.
+type MovedWithinBattleline struct {
+	Creature LocalID
+}
+
+// Text renders the creature that moved.
+func (e MovedWithinBattleline) Text(n Namer) string {
+	return fmt.Sprintf("%s moves within its battleline", n.Name(e.Creature))
+}
+
 // ControlTaken narrates a card moving into another player's rows without
 // changing owner.
 type ControlTaken struct {

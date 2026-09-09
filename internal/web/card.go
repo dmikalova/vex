@@ -48,6 +48,8 @@ type cardView struct {
 	// earlier set's pool).
 	Legacy  bool
 	Stunned bool // shows a stun token on the face
+	Warded  bool // shows a ward token on the face
+	Enraged bool // shows an enrage token on the face
 	// Exhausted shows an exhausted token on the face. Rotating the card the way a
 	// physical one turns would break the strip's grid, so the token stands in.
 	Exhausted bool
@@ -287,14 +289,14 @@ func (c *cardView) Render() app.UI {
 		// status leaves the art band — itself the house colour, like the name
 		// banner above it — running up to the title with no empty box or seam.
 		app.Div().Class("card-body").Body(
-			app.If(len(c.Stat) > 0 || c.Stunned || c.Exhausted || c.PowerCounters != 0 || c.InPlay, func() app.UI {
+			app.If(len(c.Stat) > 0 || c.Stunned || c.Exhausted || c.Warded || c.Enraged || c.PowerCounters != 0 || c.InPlay, func() app.UI {
 				return app.Div().Class("card-stat").Body(
 					app.Range(c.Stat).Slice(func(i int) app.UI { return c.Stat[i] }),
 					// Stun and exhaustion read as more of the card's current condition, so
 					// they sit at the end of the stat line rather than in its name banner.
 					// The row is reserved for an in-play card, so a token appearing or
 					// clearing never shifts the face below it.
-					app.If(c.Stunned || c.Exhausted || c.PowerCounters != 0 || c.InPlay, func() app.UI {
+					app.If(c.Stunned || c.Exhausted || c.Warded || c.Enraged || c.PowerCounters != 0 || c.InPlay, func() app.UI {
 						return app.Div().
 							Class(cx("card-tokens", ifCls(c.InPlay, "card-tokens--reserved"))).
 							Body(
@@ -305,6 +307,12 @@ func (c *cardView) Render() app.UI {
 									return icon("stun", "icon-token", "icon-outline",
 										ifCls(c.StunFlash && !c.FlashOdd, "icon--pulse-a"),
 										ifCls(c.StunFlash && c.FlashOdd, "icon--pulse-b"))
+								}),
+								app.If(c.Warded, func() app.UI {
+									return icon("ward", "icon-token", "icon-outline")
+								}),
+								app.If(c.Enraged, func() app.UI {
+									return icon("enrage", "icon-token", "icon-outline")
 								}),
 								app.If(c.Exhausted, func() app.UI {
 									return icon("exhausted", "icon-token", "icon-outline",

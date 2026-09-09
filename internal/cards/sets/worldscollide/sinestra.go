@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Sinestra
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Dis
 //	Type:   Creature
@@ -24,5 +19,8 @@ var Sinestra = card.New(
 	card.Provenance(card.WC, "116"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Demon),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.AfterEnemyCardPlayed, card.Conditional{
+		Cond: card.ItIsOnNamedFlank{},
+		Then: card.LoseAember{Player: card.Opponent, Amount: 1},
+	}),
 )

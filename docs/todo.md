@@ -31,6 +31,10 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - enemy creature should be indicated in archives and even under my control
 - Update card.New to be all opts
 - sequence vs sentences wording - eg sequence is obviously game, and sentences is textual, but they're both textual and game
+- Improve mega creatures
+- instead of having to manually bump the state version would it be possible to hash changes to how the state is written so it automatically bumps on such changes, but also not on irrelevant changes? re event sourcing. If the hash was based on the action signature rather than overall engine you could check when loading the event sourcing if any of the used actions changed
+- Maverick houses
+- Move the prompt generation and options into engine rather than web (eg when playing an upgrade, am prompted to "Choose a creature to attach Stunner onto")
 
 ## Things that can be done now
 
@@ -39,15 +43,24 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - auteresolve button
 - gigantic, tide
 - have to double click to activate preview from logs
-
+- facedown cards should be facedown for both players - its just that the controller can hover over to peek at the card - its important to be able to visually distinguish what is a facedown or faceup card
+- test to make sure there are no unused assets
 - Instead of "OnIt" should we use "OnTarget"
 - Anomaly provenance
-- tmtp and tezmal - max 1 copy
-- Repeatedly get error that comes back after fixing - seems to come back after lefthook so probably some auto formatting issue --- FAIL: TestDraggingTheLiftedCard (0.01s)
-    view_focus_test.go:240: the lifted copy of a playable hand card is not a drag source
+- For house select on mobile, star alliance goes onto 2 lines instead of squeezing onto the house select button. In general the text for buttons should squeeze onto one line. Similarly, why does the title for Yshi shrink by a standard amount rather than just shrink to the right amount? Are we still doing predetermined shrink amounts for cards? Is it not possible to have the text dynamically shrink to the right amount? Can you explain to me what's going on and why this can't work smoothly?
+- creeping oblivion prompt
+- Igon the green can just play terrible - also connected 1 to 1
+- OneCopyPerDeck should be ordered higher up, check the rest of the ordering eg constant should be above play, then reap, then fight
+- festering touch
 
 ## UI finesse
 
+- should rigged lottery log everything together
+- if cards are in action bar buttons - just have clickable preview toggle on right
+- split the zone dialog into each zone
+- the back button for house choice is under - could be in line with choose a house top right? Need to overall decide where the undo button goes on mobile
+- s curve fix
+- center card name and traits?
 - Manual mode should allow you to move deck card to hand etc
 - animation library and overhaul
 - playing an action card should have an animation - eg go to center, get big, go to discard
@@ -104,6 +117,8 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - Find the 100 longest card tests in keyteki and digest them down to what the test is trying to capture
 - manual mode - change card house, edit bonus icons/distortions - only on manual mode cards
 - Bonus icons don't resolve if the creature dies while resolving them, and they count as the creature dealing the effect, not the game
+- enhancements across CotA/AoA/WC
+- non-aember default bonus enhancements
 
 ## Bot support
 

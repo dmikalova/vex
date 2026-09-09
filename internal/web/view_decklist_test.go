@@ -56,16 +56,35 @@ func TestDeckListShowsRoster(t *testing.T) {
 // it, the touch path for a screen with no hover.
 func TestDeckListToggle(t *testing.T) {
 	c := newClient(t)
-	if c.g.deckOpen != -1 {
-		t.Fatalf("deck list starts open (%d)", c.g.deckOpen)
+	if c.g.deckOpen != ([2]bool{}) {
+		t.Fatalf("deck list starts open (%v)", c.g.deckOpen)
 	}
 	c.do(c.g.onDeckToggle(0))
-	if c.g.deckOpen != 0 {
-		t.Errorf("tap did not pin player 0's deck list open, got %d", c.g.deckOpen)
+	if !c.g.deckOpen[0] {
+		t.Errorf("tap did not pin player 0's deck list open, got %v", c.g.deckOpen)
 	}
 	c.do(c.g.onDeckToggle(0))
-	if c.g.deckOpen != -1 {
-		t.Errorf("second tap did not close the deck list, got %d", c.g.deckOpen)
+	if c.g.deckOpen[0] {
+		t.Errorf("second tap did not close the deck list, got %v", c.g.deckOpen)
+	}
+}
+
+// TestDeckListTogglesAreIndependent checks each player's deck list opens and
+// closes on its own tap without disturbing the other side, so a touch tap on one
+// bar never opens or closes the opponent's list.
+func TestDeckListTogglesAreIndependent(t *testing.T) {
+	c := newClient(t)
+	c.do(c.g.onDeckToggle(0))
+	if !c.g.deckOpen[0] || c.g.deckOpen[1] {
+		t.Fatalf("tapping player 0 changed player 1's list, got %v", c.g.deckOpen)
+	}
+	c.do(c.g.onDeckToggle(1))
+	if !c.g.deckOpen[0] || !c.g.deckOpen[1] {
+		t.Fatalf("tapping player 1 disturbed player 0's list, got %v", c.g.deckOpen)
+	}
+	c.do(c.g.onDeckToggle(0))
+	if c.g.deckOpen[0] || !c.g.deckOpen[1] {
+		t.Fatalf("closing player 0 disturbed player 1's list, got %v", c.g.deckOpen)
 	}
 }
 

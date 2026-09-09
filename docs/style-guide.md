@@ -189,10 +189,8 @@ would find easiest to build on — not the shortest path to a passing build.
 - **Ask the positive question.** A condition named for its negative case hides the
   membership test underneath it. `ItIsOffIdentity` — a card whose house is not one
   of your deck's — is really the positive question, _is it of one of your
-  identity's houses?_, with the branch negated; `AemberBonusDestroyed` on a fought
-  creature is really _does the creature it fought have Æmber bonus icons?_, a
-  condition reading `ctx.It`, not a count named for destruction. Invert the filter
-  to the question the card actually asks and reuse the membership condition.
+  identity's houses?_, with the branch negated. Invert the filter to the question
+  the card actually asks and reuse the membership condition.
 - **Self-reference through existing seams.** "Destroy this Upgrade" is
   `Destroy{Target: This}` (the destroy path detaches an attached upgrade), not a
   `DestroyThisUpgrade`. "This creature captures the Æmber" is a replacement of the

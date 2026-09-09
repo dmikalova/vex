@@ -534,6 +534,25 @@ func TestAssaultAndHazardous(t *testing.T) {
 	}
 }
 
+// TestAssaultDestroysTrigger covers the pre-fight "after a creature is destroyed
+// by this creature's assault damage" trigger (Skoll's Assault).
+func TestAssaultDestroysTrigger(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	att := g.AddToBattleline(
+		NewCard("skoll", Brobnar, Creature, Common, WithPower(3), WithAssault(5),
+			WithAbility(TriggerAfterAssaultDestroys, GainAember{Player: Controller, Amount: 1})),
+		0,
+	)
+	def := g.AddToBattleline(testCreature("prey", 4), 1)
+	g.fight(att, def)
+	if g.inPlay(def) {
+		t.Error("assault should destroy the defender before the fight")
+	}
+	if g.Aember(0) != 1 {
+		t.Errorf("aember = %d, want 1 (assault-destroys trigger fired)", g.Aember(0))
+	}
+}
+
 // TestPreFightDamageNarratesSource checks that Assault and Hazardous narrate the
 // creature and keyword value that dealt the pre-fight damage, not a bare
 // "takes N damage" line.

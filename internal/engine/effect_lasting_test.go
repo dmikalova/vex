@@ -2,6 +2,29 @@ package engine
 
 import "testing"
 
+func TestLastingActionOf(t *testing.T) {
+	cases := []struct {
+		do   Effect
+		want lastingAction
+	}{
+		{GainAember{Amount: 1}, actGainAember},
+		{LoseAember{Amount: 1}, actLoseAember},
+		{DealDamage{Amount: 2}, actDealDamage},
+		{CaptureAember{Amount: 1}, actCapture},
+		{Draw{Amount: 1}, actDraw},
+		{Ready{}, actReadyPlayed},
+	}
+	for _, c := range cases {
+		if got, _, ok := lastingActionOf(c.do); !ok || got != c.want {
+			t.Errorf("lastingActionOf(%T) = %v, %v; want %v", c.do, got, ok, c.want)
+		}
+	}
+	// An effect the registry cannot carry reports not-ok.
+	if _, _, ok := lastingActionOf(Heal{Amount: 1}); ok {
+		t.Error("an unsupported effect should report not-ok")
+	}
+}
+
 func TestNextPlayed(t *testing.T) {
 	e := NextPlayed{
 		Of:         Mars,

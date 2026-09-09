@@ -185,6 +185,16 @@ func (s Set) validateConnections() {
 // Houses returns the Set's selectable Houses, sorted by name.
 func (s Set) Houses() []engine.House { return append([]engine.House(nil), s.houses...) }
 
+// member reports whether the set prints a card of this name — either natively or
+// as a reprint it folds into its own pool (ADR 0021). A legacy draw uses it to
+// avoid tagging a card the set already prints as legacy: the legacy pool still
+// holds such cards, but one drawn from a legacy slot is one of the set's own
+// cards, not a guest from another set.
+func (s Set) member(name string) bool {
+	_, ok := s.byName[name]
+	return ok
+}
+
 // pickHouses selects PodCount distinct Houses, weighted and honoring exclusions,
 // and returns them sorted by name.
 func (s Set) pickHouses(r *rand.Rand) []engine.House {

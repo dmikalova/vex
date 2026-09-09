@@ -35,3 +35,22 @@ func (g *Game) MoveToFlank(id LocalID, right bool) {
 		return
 	}
 }
+
+// MoveWithinBattleline repositions a creature anywhere in its own controller's
+// battleline: it is removed from the line and reinserted before the creature now
+// at index pos (pos == len leaves it on the right flank). chooser is the player
+// making the placement decision, which may be the creature's opponent (Malison
+// moves an enemy creature). Only the ordered slot moves; the creature keeps all
+// its damage, upgrades, status, and control.
+func (g *Game) MoveWithinBattleline(chooser int, id LocalID) {
+	for player := range g.State.Battleline {
+		line := &g.State.Battleline[player]
+		if !line.remove(id) {
+			continue
+		}
+		pos := g.choosePosition(chooser, id, "Choose where to move "+g.Name(id), line.slice())
+		line.insertAt(pos, id)
+		g.record(MovedWithinBattleline{Creature: id})
+		return
+	}
+}

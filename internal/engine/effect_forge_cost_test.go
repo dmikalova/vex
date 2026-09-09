@@ -172,7 +172,7 @@ func TestRaiseKeyCostStacks(t *testing.T) {
 
 func TestConditionalElse(t *testing.T) {
 	effect := Conditional{
-		Cond: OpponentAember{Is: Exactly},
+		Cond: PoolAember{Player: Opponent, Is: Exactly},
 		Then: ForgeKey{Extra: 2},
 		Else: ForgeKey{Extra: 6},
 	}
@@ -185,7 +185,7 @@ func TestConditionalElse(t *testing.T) {
 		t.Errorf("validate = %v, want nil", err)
 	}
 	if err := (Conditional{
-		Cond: OpponentAember{Is: Exactly},
+		Cond: PoolAember{Player: Opponent, Is: Exactly},
 		Then: ForgeKey{},
 		Else: ForgeKey{FreeOfCost: true, Extra: 1},
 	}).validate(); err == nil {

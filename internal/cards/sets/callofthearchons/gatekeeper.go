@@ -23,7 +23,8 @@ var Gatekeeper = card.New(
 	card.WithTraits(card.Traits.Knight, card.Traits.Spirit),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
-			Cond: card.OpponentAember{
+			Cond: card.PoolAember{
+				Player: card.Opponent,
 				Is:     card.AtLeast,
 				Amount: 7,
 			},

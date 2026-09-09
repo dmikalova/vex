@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // GroupthinkTank
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Logos
 //	Type:   Creature
@@ -26,5 +21,8 @@ var GroupthinkTank = card.New(
 	card.WithPower(4),
 	card.WithArmor(3),
 	card.WithTraits(card.Traits.Robot, card.Traits.Experiment),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.Action, card.DealDamage{
+		Amount: 4,
+		Target: card.Target.EachCreature.SharesHouseWithNeighbors(1),
+	}),
 )

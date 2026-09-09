@@ -456,6 +456,11 @@ const (
 	// combatant was destroyed; the destroyed creature is the one referred to as
 	// "it".
 	TriggerAfterDestroyedFighting
+	// This ability resolves on a creature whose own Assault damage destroys the
+	// creature it attacks, before the fight itself would resolve (Skoll gives a
+	// friendly creature a power counter). The destroyed creature is referred to as
+	// "it". It fires only when the Assault is the kill, not the fight damage.
+	TriggerAfterAssaultDestroys
 	// This ability resolves after the card holding it prevents damage with its own
 	// armor — the amount just prevented is the total armor it spent absorbing the
 	// damage instance (Maruck the Marked captures 1 Æmber for each damage
@@ -521,6 +526,12 @@ const (
 	// as "it" (Pip Pip stuns the enemy that just reaped). Reaping happens only on the
 	// reaper's own turn, so this naturally fires only for the reaper's opponent.
 	TriggerAfterEnemyCreatureReaps
+	// This ability resolves after any creature is used to fight — friendly or enemy —
+	// with the fighting creature as "it" (Shattered Throne makes it capture 1 Æmber).
+	// It fires on every in-play card, including the fighting creature itself. Fighting
+	// happens only on the attacker's own turn, so the fighter is always the active
+	// player's creature.
+	TriggerAfterCreatureFights
 	// This ability resolves after any creature is destroyed — friendly or enemy —
 	// with the destroyed creature as "it" (Neffru gains its owner Æmber). It fires
 	// on every card still in play once the whole destruction batch has resolved and
@@ -531,6 +542,21 @@ const (
 	// the opponent — with the forging player as its actor, so "they" refers to
 	// whoever forged (Forgemaster Og drains the forger's pool).
 	TriggerAfterPlayerForgesKey
+	// This ability resolves after any creature is played from hand — friendly or
+	// enemy — with the played creature as "it" (The Big One accumulates a fuse
+	// counter each time). Unlike TriggerAfterCreatureEnters it fires only on an
+	// actual play, not on a creature put into play by another effect, and unlike
+	// TriggerAfterCreaturePlayedAdjacent it fires on every in-play card whatever its
+	// battleline position, so an artifact watches the whole board.
+	TriggerAfterCreaturePlayed
+	// A Start of Ready Step ability resolves at the end of its controller's "ready
+	// cards" step, after every card has readied (Greater Oxtet purges a card from
+	// hand to grow). It is a phase-boundary trigger like Start/End of Turn.
+	TriggerEndOfReadyStep
+	// This ability resolves after any player chooses their active house — its own
+	// controller or the opponent — with the chosen house available as the context
+	// house (Snag's Mirror bars the opponent from repeating a house).
+	TriggerAfterAnyPlayerChoosesHouse
 	// triggerCount bounds the enum so Triggers can range it; it is not a trigger.
 	triggerCount
 )
@@ -583,6 +609,8 @@ func (t Trigger) String() string {
 		return "Before Fight"
 	case TriggerAfterDestroyedFighting:
 		return "After a Creature Is Destroyed in a Fight With"
+	case TriggerAfterAssaultDestroys:
+		return "After a Creature Is Destroyed by This Creature's Assault Damage"
 	case TriggerAfterArmorPrevents:
 		return "After This Creature Prevents Damage With Its Armor"
 	case TriggerAfterCardPlayed:
@@ -601,14 +629,22 @@ func (t Trigger) String() string {
 		return "After a Creature Reaps"
 	case TriggerAfterEnemyCreatureReaps:
 		return "After an Enemy Creature Reaps"
+	case TriggerAfterCreatureFights:
+		return "After a Creature Is Used to Fight"
 	case TriggerAfterCreatureDestroyed:
 		return "After a Creature Is Destroyed"
 	case TriggerAfterPlayerForgesKey:
 		return "After a Player Forges a Key"
+	case TriggerAfterCreaturePlayed:
+		return "After a Creature Is Played"
 	case TriggerEndOfTurn:
 		return "End of Turn"
 	case TriggerStartOfTurn:
 		return "Start of Turn"
+	case TriggerEndOfReadyStep:
+		return "End of Ready Step"
+	case TriggerAfterAnyPlayerChoosesHouse:
+		return "After a Player Chooses a House"
 	case TriggerLeavesPlay:
 		return "Leaves Play"
 	case TriggerEntersPlay:
@@ -652,6 +688,8 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return "After a neighbor of " + SelfName + " is used to fight, ", false
 	case TriggerAfterDestroyedFighting:
 		return "After a creature is destroyed in a fight with " + SelfName + ", ", false
+	case TriggerAfterAssaultDestroys:
+		return "After a creature is destroyed by " + SelfName + "'s assault damage, ", false
 	case TriggerAfterArmorPrevents:
 		return "After " + SelfName + " prevents damage with its armor, ", false
 	case TriggerAfterEnemyCreatureDestroyed:
@@ -670,14 +708,22 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return "After a creature reaps, ", false
 	case TriggerAfterEnemyCreatureReaps:
 		return "After an enemy creature reaps, ", false
+	case TriggerAfterCreatureFights:
+		return "After a creature is used to fight, ", false
 	case TriggerAfterCreatureDestroyed:
 		return "After a creature is destroyed, ", false
+	case TriggerAfterCreaturePlayed:
+		return "After a creature is played, ", false
 	case TriggerLeavesPlay:
 		return "Leaves Play: ", true
 	case TriggerEndOfTurn:
 		return "At the end of your turn, ", false
 	case TriggerStartOfTurn:
 		return "At the start of your turn, ", false
+	case TriggerEndOfReadyStep:
+		return `At the end of your "ready cards" step, `, false
+	case TriggerAfterAnyPlayerChoosesHouse:
+		return "After a player chooses an active house, ", false
 	default:
 		return "", true
 	}

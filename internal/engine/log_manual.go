@@ -85,6 +85,20 @@ func (e HouseForbiddenNextTurn) Text(n Namer) string {
 	return fmt.Sprintf("%s cannot choose house %s next turn", n.PlayerName(e.Player), e.House)
 }
 
+// HouseWagerArmed narrates a card betting on a player's next active house.
+type HouseWagerArmed struct {
+	Predictor int
+	Player    int
+	House     House
+	Amount    int
+}
+
+// Text renders who stands to steal if the player chooses the named house next turn.
+func (e HouseWagerArmed) Text(n Namer) string {
+	return fmt.Sprintf("%s steals %d Æmber if %s chooses house %s next turn",
+		n.PlayerName(e.Predictor), e.Amount, n.PlayerName(e.Player), e.House)
+}
+
 // KeywordLostByAll narrates a keyword switched off across the whole board for
 // the rest of the turn.
 type KeywordLostByAll struct{ Keyword Keyword }

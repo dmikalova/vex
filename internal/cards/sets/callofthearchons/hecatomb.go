@@ -25,7 +25,10 @@ var Hecatomb = card.New(
 			card.GainAember{
 				Player: card.EachPlayer,
 				Amount: 1,
-				Per:    card.CreaturesDestroyedThisWay{Player: card.Controller},
+				Per: card.ProducedThisWay{
+					Tally:  card.Tally.CreaturesDestroyed,
+					Player: card.Controller,
+				},
 			},
 		}}),
 )

@@ -18,8 +18,9 @@ var PainReaction = card.New(
 	card.Provenance(card.AoA, "78"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.DamageThenIfDestroyed{
+		card.Trigger.Play, card.DamageThen{
 			Amount: 2,
+			After:  card.IfDestroyed,
 			Target: card.Target.EnemyCreature,
 			Then: card.DealDamage{
 				Amount: 2,

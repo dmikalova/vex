@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Quant
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Logos
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Human • Scientist
 //
-//	Reap: You may play one non-Logos action card this turn.
+//	Reap: Play a non-Logos tactic.
 var Quant = card.New(
 	"Quant",
 	card.House.Logos,
@@ -24,5 +19,11 @@ var Quant = card.New(
 	card.Provenance(card.WC, "137"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Reap, card.PlayFrom{
+			From:   card.Hand,
+			House:  card.House.Self,
+			Except: true,
+			Type:   card.Type.Tactic,
+		}),
 )

@@ -1,27 +1,34 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// PeaceAccord
+// Peace Accord
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Artifact
 //	Rarity: Rare
 //	Traits: Law
 //
-//	Play: Each player gains 2A.
-//	After a creature is used to fight, its controller loses 4A. Destroy Peace Accord.
+//	Play: Each player gains 2 Æmber.
+//	After a creature is used to fight, its controller loses 4 Æmber. Destroy Peace Accord.
 var PeaceAccord = card.New(
 	"Peace Accord",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "335"),
 	card.WithTraits(card.Traits.Law),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.GainAember{
+			Player: card.EachPlayer,
+			Amount: 2,
+		}),
+	card.WithAbility(
+		card.Trigger.AfterCreatureFights, card.Sentences{Effects: []card.Effect{
+			card.LoseAember{
+				Player: card.ItsOwner,
+				Amount: 4,
+			},
+			card.Destroy{Target: card.Target.This},
+		}}),
 )

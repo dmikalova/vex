@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // ObsidianForge
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Dis
 //	Type:   Artifact
@@ -21,8 +16,12 @@ var ObsidianForge = card.New(
 	card.House.Dis,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
-	card.Provenance(card.WC, "93"),
+	card.Provenance(card.WC, "093"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Item),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Action, card.SacrificeToForge{
+			Target: card.Target.EachFriendlyCreature,
+			Extra:  6,
+		}),
 )

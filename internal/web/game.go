@@ -39,7 +39,7 @@ const (
 // NewGame returns the root component for a fresh browser client session. The
 // match itself is seeded on the client in OnMount.
 func NewGame() app.Composer {
-	return &game{selHand: -1, zonesPlayer: -1, forgingKey: -1, handSlot: -1, deckOpen: -1}
+	return &game{selHand: -1, zonesPlayer: -1, forgingKey: -1, handSlot: -1}
 }
 
 // game is the root component: it owns the live engine.Game and all UI state.
@@ -60,10 +60,11 @@ type game struct {
 	// read-only roster so the deck-list popover shows the exact cards dealt (ADR
 	// 0025), never the live draw order.
 	rosters [2]match.Roster
-	// deckOpen is the player whose deck-list popover is pinned open by a tap, or -1.
-	// Desktop hover opens it without this; a touch tap toggles it and a tap outside
-	// clears it (see onDeckToggle and installTipDrag's outside-close).
-	deckOpen int
+	// deckOpen[p] is whether player p's deck-list popover is pinned open by a tap.
+	// Each side toggles independently, so opening one leaves the other alone. Desktop
+	// hover opens either without this; a touch tap toggles its own side and a tap
+	// outside clears both (see onDeckToggle and installTipDrag's outside-close).
+	deckOpen [2]bool
 
 	// dispatch schedules a mutation on the UI goroutine (captured from a Context).
 	// It lets the background chooser update fields safely.
@@ -129,6 +130,12 @@ type game struct {
 	choosing          bool
 	chooserPrompt     string
 	chooserCandidates []engine.LocalID
+	// promptAsButtons offers a bounded card prompt's candidates as a short list of
+	// action-bar buttons rather than opening the zone viewer — a "look at the top N
+	// cards" pick (Navigator Ali, Lay of the Land) reads as a few named buttons
+	// instead of a modal over the deck. Set for a small, mandatory out-of-play pick;
+	// an unbounded pick (declinable — shuffle any number) keeps the viewer.
+	promptAsButtons bool
 	// chooserDeclinable marks a prompt the player may pass on — a "you may" or an
 	// "up to N". It adds the Done button and lets Escape answer the prompt instead
 	// of being swallowed.
@@ -150,12 +157,12 @@ type game struct {
 	optionPrompt   string
 	optionLabels   []string
 
-	// engine position chooser: placing a Deploy creature by clicking the battleline
-	// rather than picking a labeled gap. positionLine is the battleline being
-	// placed into; a click on one of its creatures lands the new creature to that
-	// creature's left or right per positionRight (false = left, true = right).
+	// engine position chooser: placing a Deploy creature. The creature is lifted
+	// while the prompt is up and its placement verbs sit on it (deployActions);
+	// positionLine is the battleline being placed into, and a click on one of its
+	// creatures lands the new creature to that creature's left or right per
+	// positionRight (false = left, true = right).
 	choosingPosition bool
-	positionPrompt   string
 	positionLine     []engine.LocalID
 	positionRight    bool
 

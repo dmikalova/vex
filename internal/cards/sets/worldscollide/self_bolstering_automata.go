@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // SelfBolsteringAutomata
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Logos
 //	Type:   Creature
@@ -24,5 +19,17 @@ var SelfBolsteringAutomata = card.New(
 	card.Provenance(card.WC, "176"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Robot),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.Destroyed, card.Conditional{
+		Cond: card.HasOtherFriendlyCreatures{},
+		Then: card.Then{
+			First: card.SaveFromDestruction{
+				Do: card.Sequence{Effects: []card.Effect{
+					card.Heal{Fully: true, Target: card.Target.Triggering},
+					card.Exhaust{Target: card.Target.Triggering},
+					card.MoveToFlank{Target: card.Target.Triggering},
+				}},
+			},
+			Result: card.AddPowerCounter{Target: card.Target.Triggering, Amount: 2},
+		},
+	}),
 )

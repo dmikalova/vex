@@ -127,6 +127,77 @@ func (e GainAemberEqualTo) Resolve(ctx *EffectContext) {
 	ctx.Resolver.Record(AemberGained{Player: p, Amount: amount})
 }
 
+// aemberLosers returns the players a lose-Æmber effect drains: both under
+// EachPlayer, otherwise the one the relative Player resolves to.
+func aemberLosers(ctx *EffectContext, player Player) []int {
+	if player == EachPlayer {
+		return []int{ctx.Controller, ctx.Opponent()}
+	}
+	return []int{ctx.PlayerFor(player)}
+}
+
+// loseAemberFrom drains amountFor(p) Æmber from each player p, floored at their
+// pool so it never goes below zero, tallying each loss (read by a ProducedThisWay
+// with TallyAemberLost) and narrating it, and reports whether any Æmber left a
+// pool (so a LoseAember can gate a Then). It is the one loss step LoseAember and
+// LoseAemberEqualTo share.
+func loseAemberFrom(ctx *EffectContext, players []int, amountFor func(p int) int) bool {
+	moved := false
+	for _, p := range players {
+		lost := min(amountFor(p), ctx.Resolver.Aember(p))
+		if lost > 0 {
+			moved = true
+		}
+		ctx.Produced.AemberLost[p] += lost
+		ctx.Resolver.SetAember(p, ctx.Resolver.Aember(p)-lost)
+		ctx.Resolver.Record(AemberLost{Player: p, Amount: lost})
+	}
+	return moved
+}
+
+// LoseAemberEqualTo has a player lose Æmber equal to a running count rather than a
+// fixed amount, so the sentence reads "loses Æmber equal to <count>" (Power of Fire
+// makes each player lose half the sacrificed creature's power). Player may be
+// EachPlayer, so both players lose.
+type LoseAemberEqualTo struct {
+	Player Player
+	Count  Count
+}
+
+// validate rejects a LoseAemberEqualTo whose player or count was left unset.
+func (e LoseAemberEqualTo) validate() error {
+	if !e.Player.valid() {
+		return errUnsetPlayer("LoseAemberEqualTo")
+	}
+	if e.Count == nil {
+		return errors.New("LoseAemberEqualTo: Count is required")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "each player loses Æmber equal to half its power,
+// rounded down".
+func (e LoseAemberEqualTo) Text() string {
+	verb := "lose"
+	switch e.Player {
+	case Opponent:
+		verb = "your opponent loses"
+	case EachPlayer:
+		verb = "each player loses"
+	}
+	return verb + " Æmber equal to " + e.Count.CountText()
+}
+
+// Resolve removes Æmber equal to the count from each affected player's pool, never
+// taking a pool below zero. A zero or negative count loses nothing.
+func (e LoseAemberEqualTo) Resolve(ctx *EffectContext) {
+	amount := e.Count.Value(ctx)
+	if amount <= 0 {
+		return
+	}
+	loseAemberFrom(ctx, aemberLosers(ctx, e.Player), func(int) int { return amount })
+}
+
 // A Loss says how much Æmber to remove from a pool when the amount depends on the
 // pool's current size — half of it, or all but a fixed remainder. A LoseAember uses
 // one via its By field instead of a fixed Amount.
@@ -266,26 +337,9 @@ func (e LoseAember) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 // resolveGate removes the Æmber and reports whether any actually left a pool, so a
 // LoseAember can gate a Then — Key Charge only forges if Æmber was lost.
 func (e LoseAember) resolveGate(ctx *EffectContext) bool {
-	moved := false
-	for _, p := range e.losers(ctx) {
-		lost := min(e.amountFor(ctx, p), ctx.Resolver.Aember(p))
-		if lost > 0 {
-			moved = true
-		}
-		ctx.Produced.AemberLost[p] += lost
-		ctx.Resolver.SetAember(p, ctx.Resolver.Aember(p)-lost)
-		ctx.Resolver.Record(AemberLost{Player: p, Amount: lost})
-	}
-	return moved
-}
-
-// losers returns the players who lose Æmber — both for EachPlayer, otherwise the
-// one the relative Player resolves to.
-func (e LoseAember) losers(ctx *EffectContext) []int {
-	if e.Player == EachPlayer {
-		return []int{ctx.Controller, ctx.Opponent()}
-	}
-	return []int{ctx.PlayerFor(e.Player)}
+	return loseAemberFrom(ctx, aemberLosers(ctx, e.Player), func(p int) int {
+		return e.amountFor(ctx, p)
+	})
 }
 
 // amountFor is how much the given player loses: the By loss applied to their pool

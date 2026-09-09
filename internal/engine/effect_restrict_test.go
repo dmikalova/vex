@@ -421,6 +421,108 @@ func TestForceActiveHouseNextTurn(t *testing.T) {
 	}
 }
 
+func TestForceActiveHouseOfFoughtNextTurn(t *testing.T) {
+	e := ForceOpponentActiveHouseOfFought{}
+	if got := e.Text(); got != "your opponent must choose the house of the creature {self} fights as their active house on their next turn" {
+		t.Errorf("text = %q", got)
+	}
+	g := NewGame("A", "B", 1)
+	g.StartTurn(0)
+	if err := g.ChooseHouse(0, Dis); err != nil {
+		t.Fatal(err)
+	}
+	foe := g.AddToBattleline(NewCard("foe", Logos, Creature, Common, WithPower(3)), 1)
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0, It: foe, HasIt: true})
+	if g.State.ForcedHouseNext[1].Value != Logos {
+		t.Errorf(
+			"armed = %v, want Logos (the fought creature's house)",
+			g.State.ForcedHouseNext[1].Value,
+		)
+	}
+
+	// With no creature in context there is nothing to force.
+	g.State.ForcedHouseNext[1] = Bar[House]{}
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if g.State.ForcedHouseNext[1].Value != HouseNone {
+		t.Errorf(
+			"armed without a fought creature = %v, want none",
+			g.State.ForcedHouseNext[1].Value,
+		)
+	}
+}
+
+// TestWagerOpponentChoosesChosenHouse covers Snaglet's bet: arming the wager on
+// the opponent's next active house and the payoff when they match it.
+func TestWagerOpponentChoosesChosenHouse(t *testing.T) {
+	e := WagerOpponentChoosesChosenHouse{Amount: 2}
+	want := "if your opponent chooses that house as their active house on their next turn, steal 2 Æmber"
+	if got := e.Text(); got != want {
+		t.Errorf("text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	g.StartTurn(0)
+	if err := g.ChooseHouse(0, Brobnar); err != nil {
+		t.Fatal(err)
+	}
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0, ChosenHouse: Logos})
+	if w := g.State.HouseWagerNext[1]; w.House != Logos || w.Amount != 2 || w.Predictor != 0 {
+		t.Fatalf("armed = %+v, want Logos/2/predictor 0", w)
+	}
+
+	// The opponent locks in the wagered house next turn, so the predictor steals.
+	g.EndPlayPhase(0)
+	g.StartTurn(1)
+	g.SetAember(1, 5)
+	if err := g.ChooseHouse(1, Logos); err != nil {
+		t.Fatal(err)
+	}
+	if g.Aember(0) != 2 || g.Aember(1) != 3 {
+		t.Errorf("aember = %d/%d, want 2/3 (predictor stole 2)", g.Aember(0), g.Aember(1))
+	}
+}
+
+// TestWagerMissed covers the payoff that does not land: the opponent chooses a
+// house other than the wagered one, so the wager is spent for nothing.
+func TestWagerMissed(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.StartTurn(0)
+	if err := g.ChooseHouse(0, Brobnar); err != nil {
+		t.Fatal(err)
+	}
+	WagerOpponentChoosesChosenHouse{Amount: 2}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0, ChosenHouse: Logos},
+	)
+	g.EndPlayPhase(0)
+	g.StartTurn(1)
+	g.SetAember(1, 5)
+	if err := g.ChooseHouse(1, Mars); err != nil {
+		t.Fatal(err)
+	}
+	if g.Aember(0) != 0 || g.Aember(1) != 5 {
+		t.Errorf("aember = %d/%d, want 0/5 (no steal on a missed wager)", g.Aember(0), g.Aember(1))
+	}
+}
+
+// TestForbidSameActiveHouseNextTurn covers Snag's Mirror: after a player chooses
+// their active house, their opponent cannot choose that same house next turn.
+func TestForbidSameActiveHouseNextTurn(t *testing.T) {
+	e := ForbidSameActiveHouseNextTurn{}
+	if got := e.Text(); got != "their opponent cannot choose the same house as their active house on their next turn" {
+		t.Errorf("text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	g.StartTurn(0)
+	if err := g.ChooseHouse(0, Brobnar); err != nil {
+		t.Fatal(err)
+	}
+	e.Resolve(&EffectContext{Resolver: g})
+	if g.State.ForbiddenHouseNext[1].Value != Brobnar {
+		t.Errorf("armed = %v, want Brobnar", g.State.ForbiddenHouseNext[1].Value)
+	}
+}
+
 func TestForbidActiveHouseNextTurn(t *testing.T) {
 	if got := (ForbidOpponentActiveHouse{}).Text(); got != "your opponent cannot choose that house as their active house on their next turn" {
 		t.Errorf("text = %q", got)
@@ -607,13 +709,20 @@ func TestCannotUse(t *testing.T) {
 }
 
 // TestCannotReap covers the timed player-wide bar that stops a player reaping with
-// any creature throughout their next turn (Inky Gloom), while fighting stays open.
+// any creature — throughout their next turn (Inky Gloom) or for the rest of the
+// current turn (Ragnarok) — while fighting stays open.
 func TestCannotReap(t *testing.T) {
 	if got := (CannotReap{Player: Opponent, Duration: NextTurn}).Text(); got != "your opponent cannot use creatures to reap during their next turn" {
 		t.Errorf("opponent text = %q", got)
 	}
 	if got := (CannotReap{Player: Controller, Duration: NextTurn}).Text(); got != "you cannot use creatures to reap during your next turn" {
 		t.Errorf("controller text = %q", got)
+	}
+	if got := (CannotReap{Player: Controller, Duration: EndOfTurn}).Text(); got != "you cannot use creatures to reap for the remainder of the turn" {
+		t.Errorf("this-turn text = %q", got)
+	}
+	if got := (CannotReap{Player: Opponent, Duration: EndOfTurn}).Text(); got != "your opponent cannot use creatures to reap for the remainder of the turn" {
+		t.Errorf("this-turn opponent text = %q", got)
 	}
 	if (CannotReap{Duration: NextTurn}).validate() == nil {
 		t.Error("unset player should be invalid")
@@ -627,18 +736,29 @@ func TestCannotReap(t *testing.T) {
 
 	g := NewGame("A", "B", 1)
 	g.StartTurn(0)
+	if err := g.ChooseHouse(0, Brobnar); err != nil {
+		t.Fatal(err)
+	}
 	CannotReap{Player: Opponent, Duration: NextTurn}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
 	)
-	// A duration the effect does not handle arms nothing.
+	// EndOfTurn arms the current-turn reap bar directly on the resolving player.
 	CannotReap{Player: Controller, Duration: EndOfTurn}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
 	)
-	if g.State.CannotReap[0].Value {
-		t.Error("only NextTurn arms the reap bar")
+	if !g.State.CannotReap[0].Value {
+		t.Error("EndOfTurn should arm this turn's reap bar")
+	}
+	// A creature the barred player controls cannot reap while the bar is up.
+	mine := g.AddToBattleline(NewCard("mine", Brobnar, Creature, Common, WithPower(3)), 0)
+	if err := g.Reap(0, mine); err != ErrCannotUse {
+		t.Errorf("Reap while barred this turn = %v, want ErrCannotUse", err)
 	}
 	foe := g.AddToBattleline(NewCard("foe", Brobnar, Creature, Common, WithPower(3)), 0)
 	g.EndPlayPhase(0)
+	if g.State.CannotReap[0].Value {
+		t.Error("the this-turn reap bar should lift at the end of the turn")
+	}
 
 	g.StartTurn(1)
 	if err := g.ChooseHouse(1, Brobnar); err != nil {

@@ -474,6 +474,7 @@ func (g *Game) playCreatureCard(player int, id LocalID, flankLeft bool) {
 	g.triggerAbilities(id, TriggerAfterPlay, 0, false)
 	g.emitCreatureEnters(id)
 	g.emitCreaturePlayedAdjacent(id)
+	g.emitCreaturePlayed(id)
 	g.emitCardPlayed(player, id)
 	g.emitLasting(EventCreaturePlayed, player, id)
 	g.emitLasting(EventCardEntersPlay, player, id)

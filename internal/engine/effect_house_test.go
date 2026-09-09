@@ -2,6 +2,19 @@ package engine
 
 import "testing"
 
+// TestHouseFromUpgradeOverride covers an Upgrade that overrides its host's house
+// (Academy Training makes its creature a Logos creature).
+func TestHouseFromUpgradeOverride(t *testing.T) {
+	g := started(t)
+	host := g.AddToBattleline(NewCard("Host", Brobnar, Creature, Common, WithPower(3)), 0)
+	attachUpgrade(g, host,
+		NewCard("Academy Training", Logos, Upgrade, Common,
+			WithStatic(StaticModifier{HouseOverride: Logos})))
+	if g.House(host) != Logos {
+		t.Errorf("house = %s, want Logos (upgrade override)", g.House(host))
+	}
+}
+
 func TestBelongToHouseValidate(t *testing.T) {
 	if err := (BelongToHouse{House: Mars, Duration: EndOfTurn}).validate(); err == nil {
 		t.Error("an unset target should be rejected")

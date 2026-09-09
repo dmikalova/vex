@@ -8,7 +8,7 @@ import "testing"
 func TestOrAmountStealAember(t *testing.T) {
 	e := StealAember{
 		Amount: 1,
-		Or:     OrAmount{Amount: 2, When: OpponentAember{Is: AtLeast, Amount: 7}},
+		Or:     OrAmount{Amount: 2, When: PoolAember{Player: Opponent, Is: AtLeast, Amount: 7}},
 	}
 	if want := "steal 1 Æmber, or 2 if your opponent has 7 Æmber or more"; e.Text() != want {
 		t.Errorf("text = %q, want %q", e.Text(), want)
@@ -35,20 +35,20 @@ func TestOrAmountStealAember(t *testing.T) {
 func TestOrAmountStealValidate(t *testing.T) {
 	good := StealAember{
 		Amount: 1,
-		Or:     OrAmount{Amount: 2, When: OpponentAember{Is: AtLeast, Amount: 7}},
+		Or:     OrAmount{Amount: 2, When: PoolAember{Player: Opponent, Is: AtLeast, Amount: 7}},
 	}
 	if err := good.validate(); err != nil {
 		t.Errorf("valid steal rejected: %v", err)
 	}
 	if err := (StealAember{
-		Or: OrAmount{Amount: 2, When: OpponentAember{Is: AtLeast, Amount: 7}},
+		Or: OrAmount{Amount: 2, When: PoolAember{Player: Opponent, Is: AtLeast, Amount: 7}},
 		By: AllBut(6),
 	}).validate(); err == nil {
 		t.Error("Or and By together should not validate")
 	}
 	if err := (StealAember{
 		Amount: 1,
-		Or:     OrAmount{Amount: 2, When: OpponentAember{}},
+		Or:     OrAmount{Amount: 2, When: PoolAember{Player: Opponent}},
 	}).validate(); err == nil {
 		t.Error("an Or with an invalid guard should not validate")
 	}
@@ -59,7 +59,7 @@ func TestOrAmountStealValidate(t *testing.T) {
 func TestOrAmountForgeKey(t *testing.T) {
 	e := ForgeKey{
 		Extra: 6,
-		Or:    OrAmount{Amount: 2, When: OpponentAember{Is: Exactly, Amount: 0}},
+		Or:    OrAmount{Amount: 2, When: PoolAember{Player: Opponent, Is: Exactly, Amount: 0}},
 	}
 	want := "forge a key at +6 Æmber current cost, or +2 if your opponent has no Æmber"
 	if e.Text() != want {
@@ -89,13 +89,13 @@ func TestOrAmountForgeKey(t *testing.T) {
 func TestOrAmountForgeKeyValidate(t *testing.T) {
 	if err := (ForgeKey{
 		FreeOfCost: true,
-		Or:         OrAmount{Amount: 2, When: OpponentAember{Is: Exactly, Amount: 0}},
+		Or:         OrAmount{Amount: 2, When: PoolAember{Player: Opponent, Is: Exactly, Amount: 0}},
 	}).validate(); err == nil {
 		t.Error("a free forge with an Or surcharge should not validate")
 	}
 	if err := (ForgeKey{
 		Extra: 6,
-		Or:    OrAmount{Amount: 2, When: OpponentAember{}},
+		Or:    OrAmount{Amount: 2, When: PoolAember{Player: Opponent}},
 	}).validate(); err == nil {
 		t.Error("an Or with an invalid guard should not validate")
 	}

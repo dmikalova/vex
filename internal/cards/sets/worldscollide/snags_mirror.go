@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // SnagsMirror
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Dis
 //	Type:   Artifact
@@ -24,5 +19,8 @@ var SnagsMirror = card.New(
 	card.Provenance(card.WC, "117"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Item),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.AfterAnyPlayerChoosesHouse,
+		card.ForbidSameActiveHouseNextTurn{},
+	),
 )

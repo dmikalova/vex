@@ -33,6 +33,7 @@ func iconStrip(lines []glyphLine) app.UI {
 // iconLine renders one ability: its trigger glyph(s) and the glyphs it composes.
 // Several triggers sharing one effect (Play/Fight/Reap) render as their glyphs
 // joined by "/" separators, the icon counterpart of the "Play/Fight/Reap:" line.
+// A trailing colon follows the trigger glyph(s), mirroring the printed "Play:".
 func iconLine(l glyphLine) app.UI {
 	return app.Span().Class("card-icon-line").Body(
 		app.Range(l.triggers).Slice(func(i int) app.UI {
@@ -42,6 +43,9 @@ func iconLine(l glyphLine) app.UI {
 				}),
 				icon(l.triggers[i], "card-glyph-trigger", "icon-outline"),
 			)
+		}),
+		app.If(len(l.triggers) > 0, func() app.UI {
+			return app.Span().Class("card-glyph-trigger-colon").Text(":")
 		}),
 		app.Range(l.glyphs).Slice(func(i int) app.UI {
 			return iconGlyph(l.glyphs[i])

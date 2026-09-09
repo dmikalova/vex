@@ -184,6 +184,10 @@ type TurnReader interface {
 type EconomyResolver interface {
 	// SetAember sets a player's Æmber pool (never below zero).
 	SetAember(player, amount int)
+	// NoteAemberStolenFrom tallies Æmber stolen from a player this turn, so a card
+	// can later ask whether they were robbed on their opponent's previous turn
+	// (Information Exchange).
+	NoteAemberStolenFrom(player, amount int)
 	// GainAember adds Æmber from the common supply to a player's pool, allowing
 	// in-play replacements such as Ether Spider to capture it instead. It returns
 	// the capturer and true when the gain was replaced.
@@ -192,6 +196,10 @@ type EconomyResolver interface {
 	// surcharge for this forge only, if affordable (Key of Darkness forges at +6, an
 	// unmodified forge at +0).
 	ForgeKeyAtExtraCost(player, extra int)
+	// ForgeKeyAtExtraCostReport forges one key at the current cost plus a surcharge
+	// and reports whether a key was forged, so Obsidian Forge can destroy itself only
+	// when a key was actually forged.
+	ForgeKeyAtExtraCostReport(player, extra int) bool
 	// RaiseKeyCostNextTurn raises what a player's keys cost throughout their next
 	// turn (Lash of Broken Dreams).
 	RaiseKeyCostNextTurn(player, amount int, source LocalID)
@@ -260,6 +268,14 @@ type CreatureResolver interface {
 	// MoveToFlank moves one creature to a flank of its own controller's battleline:
 	// the right flank when right is true, otherwise the left.
 	MoveToFlank(id LocalID, right bool)
+	// MoveWithinBattleline repositions one creature anywhere in its own
+	// controller's battleline, chooser picking the destination slot (which may be
+	// the creature's opponent — Malison moves an enemy creature).
+	MoveWithinBattleline(chooser int, id LocalID)
+	// SaveFromDestruction marks a creature whose own "Destroyed:" ability replaced
+	// its destruction, so the current batch's discard step leaves it in play
+	// (Reassembling Automaton).
+	SaveFromDestruction(id LocalID)
 	// LoseKeyword takes a keyword away from every creature in play for the
 	// remainder of the turn.
 	LoseKeyword(k Keyword)
@@ -381,9 +397,15 @@ type ZoneResolver interface {
 	// PurgeFromHand moves a card from a player's hand to their purge pile (set aside
 	// out of the game).
 	PurgeFromHand(owner int, id LocalID)
+	// PurgeRandomFromHand moves one uniformly random card from a player's hand to
+	// their purge pile, doing nothing if the hand is empty.
+	PurgeRandomFromHand(owner int)
 	// PurgeFromArchives moves a card from a player's archives to their purge pile
 	// (set aside out of the game).
 	PurgeFromArchives(owner int, id LocalID)
+	// PurgeFromDeck moves a card from a player's deck to their purge pile (set aside
+	// out of the game).
+	PurgeFromDeck(owner int, id LocalID)
 	// PurgeFromPlay moves a card from play to its owner's purge pile (set aside out
 	// of the game).
 	PurgeFromPlay(id LocalID)
@@ -472,6 +494,8 @@ type ZoneResolver interface {
 	// ShuffleFromHandIntoDeck moves a card from its owner's hand into their deck and
 	// shuffles, collected into a shuffle batch when one is open.
 	ShuffleFromHandIntoDeck(id LocalID)
+	// Shuffle randomizes the order of a player's deck.
+	Shuffle(player int)
 	// DiscardCardFromHand moves a specific card from a player's hand to their discard
 	// zone.
 	DiscardCardFromHand(owner int, id LocalID)
@@ -503,6 +527,9 @@ type TurnResolver interface {
 	// CannotReapNextTurn bars a player from reaping with any creature throughout
 	// their next turn (Inky Gloom); fighting and "Action:" abilities stay open.
 	CannotReapNextTurn(player int, source LocalID)
+	// CannotReapThisTurn bars a player from reaping with any creature for the rest
+	// of the current turn (Ragnarok); fighting and "Action:" abilities stay open.
+	CannotReapThisTurn(player int, source LocalID)
 	// CannotReapHouseNextTurn bars a player from reaping with creatures of the given
 	// house throughout their next turn (Seismo-entangler).
 	CannotReapHouseNextTurn(player int, house House, source LocalID)
@@ -513,6 +540,10 @@ type TurnResolver interface {
 	// SkipForgePhaseNextTurn makes a player skip their "forge a key" phase at the start
 	// of their next turn (Miasma).
 	SkipForgePhaseNextTurn(player int, source LocalID)
+	// ScheduleDestroyEachCreatureAtEndOfTurn arms "destroy each creature" to resolve
+	// in the active player's end-of-turn phase (Ragnarok). source is the card that
+	// armed it, recorded for attribution.
+	ScheduleDestroyEachCreatureAtEndOfTurn(source LocalID)
 	// GrantFightForHouse lets a player use creatures of the given house to fight
 	// this turn even out of the active house.
 	GrantFightForHouse(player int, house House)
@@ -540,6 +571,9 @@ type TurnResolver interface {
 	// ForbidActiveHouseNextTurn makes a player unable to choose the given house as
 	// their active house on their next turn.
 	ForbidActiveHouseNextTurn(player int, house House, source LocalID)
+	// WagerOnHouseNextTurn arms a bet on a player's next active house: if they
+	// choose that house, the predictor steals amount (Snaglet).
+	WagerOnHouseNextTurn(player int, house House, amount, predictor int, source LocalID)
 }
 
 // ChoiceResolver asks a player to make a decision — ordering a set of cards, or
@@ -685,6 +719,12 @@ func (g *Game) GainStats(id LocalID, power, armor int) {
 // ForgeKeyAtExtraCost has a player forge one key at its current cost plus extra.
 func (g *Game) ForgeKeyAtExtraCost(player, extra int) { g.forgeKeyAtExtraCost(player, extra) }
 
+// ForgeKeyAtExtraCostReport forges one key at its current cost plus extra and
+// reports whether a key was forged (Obsidian Forge destroys itself only if it did).
+func (g *Game) ForgeKeyAtExtraCostReport(player, extra int) bool {
+	return g.forgeKeyAtExtraCost(player, extra)
+}
+
 // ForgeKeyFree has a player forge one key without paying its current cost.
 func (g *Game) ForgeKeyFree(player int) { g.forgeKeyFree(player) }
 
@@ -703,6 +743,20 @@ func (g *Game) SetAember(player, amount int) {
 		amount = 0
 	}
 	g.State.Aember[player] = amount
+}
+
+// NoteAemberStolenFrom adds to the running tally of Æmber stolen from a player
+// this turn, clamped to the int8 the history holds, so a later card can ask
+// whether their opponent robbed them on their previous turn.
+func (g *Game) NoteAemberStolenFrom(player, amount int) {
+	if amount <= 0 {
+		return
+	}
+	total := int(g.State.TurnHistory[player][AemberStolenFromThisTurn]) + amount
+	if total > 127 {
+		total = 127
+	}
+	g.State.TurnHistory[player][AemberStolenFromThisTurn] = int8(total)
 }
 
 // stateOf returns a card's mutable in-play state, or nil once it has left play.
@@ -935,8 +989,21 @@ func (g *Game) PurgeFromDiscard(owner int, id LocalID) { g.purgeFromDiscard(owne
 // PurgeFromHand moves a card from a player's hand to their purge pile.
 func (g *Game) PurgeFromHand(owner int, id LocalID) { g.purgeFromHand(owner, id) }
 
+// PurgeRandomFromHand moves one uniformly random card from a player's hand to
+// their purge pile, doing nothing if the hand is empty.
+func (g *Game) PurgeRandomFromHand(owner int) {
+	hand := g.State.Hand[owner]
+	if hand.Count == 0 {
+		return
+	}
+	g.purgeFromHand(owner, hand.IDs[g.rng.Intn(int(hand.Count))])
+}
+
 // PurgeFromArchives moves a card from a player's archives to their purge pile.
 func (g *Game) PurgeFromArchives(owner int, id LocalID) { g.purgeFromArchives(owner, id) }
+
+// PurgeFromDeck moves a card from a player's deck to their purge pile.
+func (g *Game) PurgeFromDeck(owner int, id LocalID) { g.purgeFromDeck(owner, id) }
 
 // PurgeFromPlay is the Resolver entry point for purgeFromPlay.
 func (g *Game) PurgeFromPlay(id LocalID) { g.purgeFromPlay(id) }

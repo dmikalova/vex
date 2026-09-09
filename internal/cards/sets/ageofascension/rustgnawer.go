@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Beast • Insect
 //
-//	Fight: Destroy an artifact. For each Æmber bonus on the destroyed artifact, gain 1 Æmber.
+//	Fight: Destroy an artifact. For each Æmber bonus on it, gain 1 Æmber.
 var Rustgnawer = card.New(
 	"Rustgnawer",
 	card.House.Untamed,
@@ -25,7 +25,7 @@ var Rustgnawer = card.New(
 			card.GainAember{
 				Player: card.Controller,
 				Amount: 1,
-				Per:    card.AemberBonusDestroyed{},
+				Per:    card.AemberBonusOf{Target: card.Target.Triggering},
 			},
 		}}),
 )

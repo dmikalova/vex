@@ -32,7 +32,7 @@ func TestDracoPraeco(t *testing.T) {
 		draco.Ready()
 
 		h.P1.Reap(draco)
-		h.P1.ClickOption("Yes")
+		h.P1.ClickCard(draco)
 		h.P1.ClickOption("Brobnar")
 
 		h.Expect(draco).AmberOn(1)

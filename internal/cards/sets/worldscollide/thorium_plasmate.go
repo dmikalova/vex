@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ThoriumPlasmate
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Thorium Plasmate
 //
 //	House:  Logos
 //	Type:   Tactic
@@ -22,5 +17,13 @@ var ThoriumPlasmate = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.WC, "140"),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Then{
+			First: card.MoveWithinBattleline{Target: card.Target.EnemyCreature},
+			Result: card.DealDamage{
+				Amount: 2,
+				Per:    card.NeighborsSharingHouse{},
+				Target: card.Target.TheChosenCreature,
+			},
+		}),
 )

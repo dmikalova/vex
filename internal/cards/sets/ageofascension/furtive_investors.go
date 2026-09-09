@@ -19,7 +19,7 @@ var FurtiveInvestors = card.New(
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
-			Cond: card.OpponentAember{Is: card.MoreThanYou},
+			Cond: card.PoolAember{Player: card.Opponent, Is: card.MoreThanYou},
 			Then: card.GainAember{
 				Player: card.Controller,
 				Amount: 1,

@@ -1,28 +1,28 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Aembertracker
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Creature
 //	Rarity: Rare
 //	Power:  4
 //	Traits: Beast
 //
-//	Play: Deal 2D to each enemy creature with A on it. This damage cannot be prevented by armor.
+//	Play: Deal 2 damage to each enemy creature with Æmber on it, ignoring armor.
 var Aembertracker = card.New(
 	"Aembertracker",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "324"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Beast),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.DealDamage{
+			Amount:      2,
+			Target:      card.Target.EachEnemyCreature.WithAember(),
+			IgnoreArmor: true,
+		}),
 )

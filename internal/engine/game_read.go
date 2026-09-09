@@ -40,6 +40,11 @@ func (g *Game) House(id LocalID) House {
 		if h := g.State.Cards[id].LastingHouse; h != HouseNone {
 			return h
 		}
+		for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
+			if h := g.cat.def(up).Static.HouseOverride; h != HouseNone {
+				return h
+			}
+		}
 	}
 	return g.cat.def(id).House
 }
@@ -559,6 +564,11 @@ func (g *Game) aemberProtected(player int) bool {
 	for _, id := range g.allInPlay(player) {
 		if g.cat.def(id).AemberCannotBeStolen {
 			return true
+		}
+		for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
+			if g.cat.def(up).Static.AemberCannotBeStolen {
+				return true
+			}
 		}
 	}
 	return false

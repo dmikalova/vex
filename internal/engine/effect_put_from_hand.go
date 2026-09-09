@@ -41,19 +41,16 @@ func (e PutFromHand) Text() string {
 // left in context (ctx.It) so a following effect can act on "it" (Swap Widget
 // readying the creature it just put into play).
 func (e PutFromHand) Resolve(ctx *EffectContext) {
-	var candidates []LocalID
-	for _, id := range ctx.Resolver.Hand(ctx.Controller) {
+	candidates := handCardsWhere(ctx, ctx.Controller, func(id LocalID) bool {
 		if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
-			continue
+			return false
 		}
 		if e.House != HouseNone && ctx.Resolver.House(id) != e.House {
-			continue
+			return false
 		}
-		if e.ExceptSameName && ctx.HasIt && ctx.Resolver.Name(id) == ctx.Resolver.Name(ctx.It) {
-			continue
-		}
-		candidates = append(candidates, id)
-	}
+		return !e.ExceptSameName || !ctx.HasIt ||
+			ctx.Resolver.Name(id) != ctx.Resolver.Name(ctx.It)
+	})
 	id, ok := ctx.ChooseCard("Choose a "+e.noun()+" from your hand to put into play", candidates)
 	if !ok {
 		return

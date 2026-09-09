@@ -120,6 +120,39 @@ func TestCounterInPlay(t *testing.T) {
 	}
 }
 
+// TestCountersOnThisAtLeast covers the threshold condition The Big One checks: it
+// is met once the source card carries at least N counters of the kind.
+func TestCountersOnThisAtLeast(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	bomb := g.AddArtifact(NewCard("The Big One", Brobnar, Artifact, Rare), 0)
+	ctx := &EffectContext{Resolver: g, Source: bomb, Controller: 0}
+
+	cond := CountersOnThisAtLeast{Kind: CounterFuse, N: 10}
+	if want := "if there are 10 or more fuse counters on " + SelfName; cond.CondText() != want {
+		t.Errorf("cond text = %q, want %q", cond.CondText(), want)
+	}
+	if cond.Met(ctx) {
+		t.Error("no fuse counters yet, should not be met")
+	}
+
+	g.PlaceCounter(bomb, CounterFuse, 9)
+	if cond.Met(ctx) {
+		t.Error("nine fuse counters is below the threshold of ten")
+	}
+
+	g.PlaceCounter(bomb, CounterFuse, 1)
+	if !cond.Met(ctx) {
+		t.Error("ten fuse counters should meet the threshold")
+	}
+}
+
+// TestCounterFuseNoun covers the fuse counter's rendered noun.
+func TestCounterFuseNoun(t *testing.T) {
+	if got := CounterFuse.noun(); got != "fuse counter" {
+		t.Errorf("CounterFuse.noun() = %q, want %q", got, "fuse counter")
+	}
+}
+
 // TestDestroyWithCounter covers the Target filter: destroying only the creatures
 // that carry a doom counter.
 func TestDestroyWithCounter(t *testing.T) {

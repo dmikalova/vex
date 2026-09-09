@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Manchego
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Shadows
 //	Type:   Creature
@@ -25,5 +20,13 @@ var Manchego = card.New(
 	card.Provenance(card.WC, "275"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human, card.Traits.Thief),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Conditional{
+			Cond: card.CardsInDeckAtMost{Amount: 5},
+			Then: card.StealAember{Amount: 2},
+		}),
+	card.WithFightOrReap(card.May{Do: card.PutFromPlay{
+		Target:      card.Target.This,
+		Destination: card.To.DeckShuffled,
+	}}),
 )

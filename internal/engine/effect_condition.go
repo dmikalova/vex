@@ -1,6 +1,9 @@
 package engine
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // A conditional gates an effect behind a check on the current game state — the
 // "If ..." clause a card opens with, e.g. "If your opponent has 7 or more Æmber,
@@ -31,88 +34,77 @@ const (
 	// real check that a bare integer field could not tell from "unset").
 	Exactly
 	// MoreThanYou is met when the opponent's pool holds strictly more Æmber than the
-	// controller's; it ignores Amount and applies only to OpponentAember.
+	// controller's; it ignores Amount and applies only to PoolAember{Player: Opponent}.
 	MoreThanYou
 	// MoreThanOpponent is met when the controller's pool holds strictly more Æmber
-	// than the opponent's; it ignores Amount and applies only to YourAember.
+	// than the opponent's; it ignores Amount and applies only to
+	// PoolAember{Player: Controller}.
 	MoreThanOpponent
 )
 
-// OpponentAember gates on the opponent's Æmber pool: Is names the comparison and
-// Amount the threshold it compares against (unused by MoreThanYou). It replaces
-// the separate at-least / exactly / more-than-you conditions with one node.
-type OpponentAember struct {
+// PoolAember gates on one player's Æmber pool: Player names whose pool (Controller
+// or Opponent), Is the comparison, and Amount the threshold it compares against
+// (unused by the relative MoreThanYou / MoreThanOpponent comparisons, which compare
+// the two pools). It replaces the mirror opponent-pool / your-pool conditions with
+// one node.
+type PoolAember struct {
+	Player Player
 	Is     Comparison
 	Amount int
 }
 
-// validate requires a comparison to be named (its zero value is invalid).
-func (c OpponentAember) validate() error {
+// validate requires a pool-owning player and a named comparison, and ties each
+// relative comparison to the side it reads from.
+func (c PoolAember) validate() error {
+	if c.Player != Controller && c.Player != Opponent {
+		return fmt.Errorf("PoolAember: Player must be Controller or Opponent")
+	}
 	switch c.Is {
-	case AtLeast, AtMost, Exactly, MoreThanYou:
+	case AtLeast, AtMost, Exactly:
 		return nil
-	default:
-		return fmt.Errorf("OpponentAember: Is must be AtLeast, AtMost, Exactly, or MoreThanYou")
-	}
-}
-
-// CondText renders the condition, e.g. "if your opponent has 7 Æmber or more".
-func (c OpponentAember) CondText() string {
-	switch {
-	case c.Is == Exactly && c.Amount == 0:
-		return "if your opponent has no Æmber"
-	case c.Is == Exactly:
-		return fmt.Sprintf("if your opponent has exactly %d Æmber", c.Amount)
-	case c.Is == MoreThanYou:
-		return "if your opponent has more Æmber than you"
-	case c.Is == AtMost:
-		return fmt.Sprintf("if your opponent has %d Æmber or fewer", c.Amount)
-	default:
-		return fmt.Sprintf("if your opponent has %d Æmber or more", c.Amount)
-	}
-}
-
-// Met reports whether the opponent's pool satisfies the comparison.
-func (c OpponentAember) Met(ctx *EffectContext) bool {
-	opp := ctx.Resolver.Aember(ctx.Opponent())
-	switch c.Is {
-	case Exactly:
-		return opp == c.Amount
-	case AtMost:
-		return opp <= c.Amount
 	case MoreThanYou:
-		return opp > ctx.Resolver.Aember(ctx.Controller)
-	default:
-		return opp >= c.Amount
-	}
-}
-
-// YourAember gates on the controller's own Æmber pool: Is names the comparison
-// and Amount the threshold it compares against (unused by MoreThanOpponent).
-type YourAember struct {
-	Is     Comparison
-	Amount int
-}
-
-// validate requires a comparison to be named (its zero value is invalid).
-func (c YourAember) validate() error {
-	switch c.Is {
-	case AtLeast, AtMost, Exactly, MoreThanOpponent:
+		if c.Player != Opponent {
+			return fmt.Errorf("PoolAember: MoreThanYou requires Player Opponent")
+		}
+		return nil
+	case MoreThanOpponent:
+		if c.Player != Controller {
+			return fmt.Errorf("PoolAember: MoreThanOpponent requires Player Controller")
+		}
 		return nil
 	default:
-		return fmt.Errorf("YourAember: Is must be AtLeast, AtMost, Exactly, or MoreThanOpponent")
+		return fmt.Errorf(
+			"PoolAember: Is must be AtLeast, AtMost, Exactly, MoreThanYou, or MoreThanOpponent",
+		)
 	}
 }
 
-// CondText renders the condition, e.g. "if you have 3 Æmber or more".
-func (c YourAember) CondText() string {
+// CondText renders the condition, e.g. "if your opponent has 7 Æmber or more" or
+// "if you have more Æmber than your opponent".
+func (c PoolAember) CondText() string {
+	switch c.Is {
+	case MoreThanYou:
+		return "if your opponent has more Æmber than you"
+	case MoreThanOpponent:
+		return "if you have more Æmber than your opponent"
+	}
+	if c.Player == Opponent {
+		switch {
+		case c.Is == Exactly && c.Amount == 0:
+			return "if your opponent has no Æmber"
+		case c.Is == Exactly:
+			return fmt.Sprintf("if your opponent has exactly %d Æmber", c.Amount)
+		case c.Is == AtMost:
+			return fmt.Sprintf("if your opponent has %d Æmber or fewer", c.Amount)
+		default:
+			return fmt.Sprintf("if your opponent has %d Æmber or more", c.Amount)
+		}
+	}
 	switch {
 	case c.Is == Exactly && c.Amount == 0:
 		return "if you have no Æmber"
 	case c.Is == Exactly:
 		return fmt.Sprintf("if you have exactly %d Æmber", c.Amount)
-	case c.Is == MoreThanOpponent:
-		return "if you have more Æmber than your opponent"
 	case c.Is == AtMost:
 		return fmt.Sprintf("if you have %d Æmber or fewer", c.Amount)
 	default:
@@ -120,23 +112,27 @@ func (c YourAember) CondText() string {
 	}
 }
 
-// Met reports whether the controller's pool satisfies the comparison.
-func (c YourAember) Met(ctx *EffectContext) bool {
-	you := ctx.Resolver.Aember(ctx.Controller)
+// Met reports whether the named player's pool satisfies the comparison.
+func (c PoolAember) Met(ctx *EffectContext) bool {
+	mine := ctx.Resolver.Aember(ctx.PlayerFor(c.Player))
 	switch c.Is {
 	case Exactly:
-		return you == c.Amount
+		return mine == c.Amount
 	case AtMost:
-		return you <= c.Amount
-	case MoreThanOpponent:
-		return you > ctx.Resolver.Aember(ctx.Opponent())
+		return mine <= c.Amount
+	case MoreThanYou, MoreThanOpponent:
+		other := ctx.Controller
+		if c.Player == Controller {
+			other = ctx.Opponent()
+		}
+		return mine > ctx.Resolver.Aember(other)
 	default:
-		return you >= c.Amount
+		return mine >= c.Amount
 	}
 }
 
 // validateCondition returns any configuration error a condition reports (an unset
-// OpponentAember comparison, say). Conditions that cannot be misconfigured
+// PoolAember comparison, say). Conditions that cannot be misconfigured
 // implement no validator and pass.
 func validateCondition(c Condition) error {
 	if v, ok := c.(validator); ok {
@@ -183,6 +179,97 @@ func (c SourceOnFlank) Met(ctx *EffectContext) bool {
 	return onFlank(ctx, ctx.Source) != c.Not
 }
 
+// HasOtherFriendlyCreatures is met when the source's controller has at least one
+// creature in play other than the source — Reassembling Automaton replaces its own
+// destruction only "if you have any other creatures in play".
+type HasOtherFriendlyCreatures struct{}
+
+// CondText renders the condition as the card prints it.
+func (HasOtherFriendlyCreatures) CondText() string {
+	return "if you have any other creatures in play"
+}
+
+// Met reports whether the controller has any creature in play besides the source.
+func (HasOtherFriendlyCreatures) Met(ctx *EffectContext) bool {
+	return InPlay{Player: Controller, Type: Creature, Other: true}.Met(ctx)
+}
+
+// CardsInDeckAtMost is met when the controller's deck holds at most Amount cards —
+// Manchego steals only "if you have 5 or fewer cards in your deck".
+type CardsInDeckAtMost struct {
+	Amount int
+}
+
+// CondText renders the condition as the card prints it.
+func (e CardsInDeckAtMost) CondText() string {
+	return fmt.Sprintf("if you have %d or fewer cards in your deck", e.Amount)
+}
+
+// Met reports whether the controller's deck size is at most Amount.
+func (e CardsInDeckAtMost) Met(ctx *EffectContext) bool {
+	return len(ctx.Resolver.Deck(ctx.Controller)) <= e.Amount
+}
+
+// ControlsNamed is met when the controller has a card of a given printed name in
+// play — Hyde draws an extra card while it controls Velum.
+type ControlsNamed struct {
+	Name string
+}
+
+// CondText renders the condition, e.g. "if you control Velum".
+func (c ControlsNamed) CondText() string {
+	return "if you control " + c.Name
+}
+
+// Met reports whether the controller has the named card in play.
+func (c ControlsNamed) Met(ctx *EffectContext) bool {
+	return InPlay{Player: Controller, Name: c.Name}.Met(ctx)
+}
+
+// ItIsOnFlank is met when the card in context (ctx.It — the creature a preceding
+// effect put in focus) sits on a flank of its battleline. Malison moves an enemy
+// creature, then, if it is on a flank, has it capture. With no context creature it
+// is not met.
+type ItIsOnFlank struct{}
+
+// CondText renders the condition naming the context creature.
+func (ItIsOnFlank) CondText() string { return "if it is on a flank" }
+
+// Met reports whether the context creature is on a flank.
+func (ItIsOnFlank) Met(ctx *EffectContext) bool {
+	return ctx.HasIt && onFlank(ctx, ctx.It)
+}
+
+// ItIsOnNamedFlank is met when the context creature (ctx.It) sits on one specific
+// flank — the left end of its controller's battleline, or the right when Right is
+// set. Sinestra keys off a creature the opponent plays on their left flank, Dexus
+// off the right. A lone creature is on both flanks, so it meets either side.
+type ItIsOnNamedFlank struct{ Right bool }
+
+// CondText renders the condition naming which flank.
+func (c ItIsOnNamedFlank) CondText() string {
+	if c.Right {
+		return "if it is on the right flank"
+	}
+	return "if it is on the left flank"
+}
+
+// Met reports whether the context creature is the end creature of its controller's
+// battleline on the named side.
+func (c ItIsOnNamedFlank) Met(ctx *EffectContext) bool {
+	if !ctx.HasIt || !ctx.Resolver.IsCreature(ctx.It) {
+		return false
+	}
+	line := ctx.Resolver.Battleline(ctx.Resolver.Controller(ctx.It))
+	if len(line) == 0 {
+		return false
+	}
+	if c.Right {
+		return line[len(line)-1] == ctx.It
+	}
+	return line[0] == ctx.It
+}
+
 // SourceInCenterOfBattleline is met while the source card sits in the center of
 // its controller's battleline — the middle creature of an odd-sized line, with
 // equal creatures to its left and right. An even-sized line has no center.
@@ -226,6 +313,32 @@ func (c SourceNeighborsAllOfHouse) CondText() string {
 func (c SourceNeighborsAllOfHouse) Met(ctx *EffectContext) bool {
 	for _, n := range neighbors(ctx, ctx.Source) {
 		if ctx.Resolver.House(n) != c.House {
+			return false
+		}
+	}
+	return true
+}
+
+// ArchivedCreaturesShareHouse is met when the creatures a preceding
+// ArchiveFromPlay set aside (ctx.Produced.Archived) all belong to one house —
+// Code Monkey gains 2 Æmber when the neighbors it archived share a house. Fewer
+// than two creatures cannot share a house, so it is not met.
+type ArchivedCreaturesShareHouse struct{}
+
+// CondText renders the condition naming the just-archived creatures.
+func (ArchivedCreaturesShareHouse) CondText() string {
+	return "if those creatures share a house"
+}
+
+// Met reports whether every archived creature belongs to the same house.
+func (ArchivedCreaturesShareHouse) Met(ctx *EffectContext) bool {
+	ids := ctx.Produced.Archived
+	if len(ids) < 2 {
+		return false
+	}
+	first := ctx.Resolver.House(ids[0])
+	for _, id := range ids[1:] {
+		if ctx.Resolver.House(id) != first {
 			return false
 		}
 	}
@@ -470,6 +583,71 @@ func (e ItIs) matches(ctx *EffectContext) bool {
 		return false
 	}
 	return true
+}
+
+// ItIsOfTrait is met when the creature in context (ctx.It) has the named trait.
+type ItIsOfTrait struct{ Trait Trait }
+
+// CondText renders the condition, e.g. "if it is a Dinosaur creature".
+func (c ItIsOfTrait) CondText() string {
+	return "if it is a " + c.Trait.String() + " creature"
+}
+
+// Met reports whether a creature is in context and has the trait.
+func (c ItIsOfTrait) Met(ctx *EffectContext) bool {
+	return ctx.HasIt && ctx.Resolver.HasTrait(ctx.It, c.Trait)
+}
+
+// ItHasAember is met when the creature in context (ctx.It) has any Æmber on it.
+type ItHasAember struct{}
+
+// CondText renders the condition.
+func (ItHasAember) CondText() string { return "if it has \u00c6mber on it" }
+
+// Met reports whether a creature is in context with Æmber on it.
+func (ItHasAember) Met(ctx *EffectContext) bool {
+	return ctx.HasIt && ctx.Resolver.AmberOn(ctx.It) > 0
+}
+
+// Or is met when any one of its Conditions is met, composing conditions instead of
+// baking each combination into a bespoke one — Guji Dinosaur Hunter boosts against
+// a Dinosaur creature or a creature with Æmber on it.
+type Or struct {
+	Conditions []Condition
+}
+
+// validate requires at least two conditions and rejects any invalid one.
+func (o Or) validate() error {
+	if len(o.Conditions) < 2 {
+		return fmt.Errorf("Or: needs at least two conditions")
+	}
+	for _, c := range o.Conditions {
+		if err := validateCondition(c); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// CondText joins the sub-clauses with "or", e.g. "if it is a Dinosaur creature or
+// it has Æmber on it". Each condition renders "if <clause>" (the shared
+// convention), so the leading "if " is dropped before the clauses are joined.
+func (o Or) CondText() string {
+	clauses := make([]string, len(o.Conditions))
+	for i, c := range o.Conditions {
+		clauses[i] = strings.TrimPrefix(c.CondText(), "if ")
+	}
+	return "if " + strings.Join(clauses, " or ")
+}
+
+// Met reports whether any of the conditions is met.
+func (o Or) Met(ctx *EffectContext) bool {
+	for _, c := range o.Conditions {
+		if c.Met(ctx) {
+			return true
+		}
+	}
+	return false
 }
 
 // ItIsOffIdentity is met when the card in context (ctx.It) belongs to none of the
@@ -896,6 +1074,20 @@ func (c ForgedKey) stat() TurnStat {
 	return KeysForgedThisTurn
 }
 
+// AemberStolenFromYou is met when the controller had Æmber stolen from them on
+// their opponent's previous turn — Information Exchange steals more if it was.
+type AemberStolenFromYou struct{}
+
+// CondText renders the condition.
+func (AemberStolenFromYou) CondText() string {
+	return "if your opponent stole Æmber from you on their previous turn"
+}
+
+// Met reports whether any Æmber was stolen from the controller last turn.
+func (AemberStolenFromYou) Met(ctx *EffectContext) bool {
+	return ctx.Resolver.TurnHistory(ctx.Controller, AemberStolenFromLastTurn) > 0
+}
+
 // EnemyCreatureDestroyed is met while at least one enemy creature has been
 // destroyed this turn — Foozle reaps for an extra Æmber once the opponent has
 // lost a creature.
@@ -1029,4 +1221,55 @@ func (c CounterInPlay) Met(ctx *EffectContext) bool {
 		}
 	}
 	return false
+}
+
+// CountersOnThisAtLeast is met when the source card carries at least N counters of
+// Kind — The Big One wipes the board once ten or more fuse counters sit on it.
+type CountersOnThisAtLeast struct {
+	// Kind is the counter to count.
+	Kind CounterKind
+	// N is the threshold the count must reach.
+	N int
+}
+
+// CondText renders the condition clause.
+func (c CountersOnThisAtLeast) CondText() string {
+	return fmt.Sprintf("if there are %d or more %ss on %s", c.N, c.Kind.noun(), SelfName)
+}
+
+// Met reports whether the source card holds at least N counters of Kind.
+func (c CountersOnThisAtLeast) Met(ctx *EffectContext) bool {
+	return ctx.Resolver.CountersOn(ctx.Source, c.Kind) >= c.N
+}
+
+// NamedCardPurged is met by whether a card of a given name sits in the
+// controller's purge pile — Igon the Terrible destroys itself unless Igon the
+// Green has already been purged (Not true reads "has not been purged"). It names
+// the other card by its printed name, not the source.
+type NamedCardPurged struct {
+	// Name is the card name to look for in the purge pile.
+	Name string
+	// Not flips the sense: false is met while a copy is purged, true while none is.
+	Not bool
+}
+
+// CondText renders the condition naming the card it looks for.
+func (c NamedCardPurged) CondText() string {
+	if c.Not {
+		return "if " + c.Name + " has not been purged"
+	}
+	return "if " + c.Name + " has been purged"
+}
+
+// Met reports whether a card of the name is in the controller's purge pile,
+// flipped by Not.
+func (c NamedCardPurged) Met(ctx *EffectContext) bool {
+	purged := false
+	for _, id := range ctx.Resolver.Purge(ctx.Controller) {
+		if ctx.Resolver.Name(id) == c.Name {
+			purged = true
+			break
+		}
+	}
+	return purged != c.Not
 }

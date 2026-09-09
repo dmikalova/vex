@@ -83,6 +83,16 @@ that is played.`,
 		},
 		{
 			Section:    SectionAbility,
+			Title:      "After a Creature Is Played",
+			Definition: "An ability that resolves after any creature is played from hand, including the opponent's.",
+			Body: `This ability resolves after any creature is played from hand, friendly or
+enemy, with the played creature referred to as "it". Unlike After a Creature
+Enters Play it fires only on an actual play, not on a creature put into play by
+another effect, and it reaches every card in play whatever its battleline
+position, so an artifact can watch the whole board.`,
+		},
+		{
+			Section:    SectionAbility,
 			Title:      "After a Neighbor Is Used to Fight",
 			Definition: "An ability that resolves after a battleline neighbor of this card is used to fight.",
 			Body: `This ability resolves after a battleline neighbor of the card holding it is
@@ -112,6 +122,16 @@ damage is exchanged between the two combatants. This ability resolves on a
 creature that survives a fight with the creature it is used against when that
 other combatant is destroyed in the exchange; the destroyed creature is the one
 referred to as "it".`,
+		},
+		{
+			Section:    SectionAbility,
+			Title:      "After a Creature Is Destroyed by This Creature's Assault Damage",
+			Definition: "An ability that resolves on a creature whose own Assault damage destroys the creature it attacks.",
+			Body: `Assault deals its damage before the fight itself resolves. When that Assault
+damage destroys the creature it attacks, the fight does not occur, and this
+ability resolves on the attacker; the destroyed creature is the one referred to
+as "it". It fires only when the Assault is the kill, not when the fight damage
+that follows is.`,
 		},
 		{
 			Section:    SectionAbility,
@@ -146,6 +166,22 @@ each turn's end).`,
 			Body: `A Start of Turn ability resolves at the start of its controller's turn,
 before they forge, so an ability that changes what a key costs still has time
 to.`,
+		},
+		{
+			Section:    SectionAbility,
+			Title:      "End of Ready Step",
+			Definition: `An ability that resolves at the end of its controller's "ready cards" step, after every card has readied.`,
+			Body: `An End of Ready Step ability resolves at the end of its controller's
+"ready cards" step, once every card has readied (Greater Oxtet purges a card
+from hand to grow).`,
+		},
+		{
+			Section:    SectionAbility,
+			Title:      "After a Player Chooses a House",
+			Definition: "An ability that resolves after any player chooses their active house, whoever's turn it is.",
+			Body: `This ability resolves after any player chooses their active house,
+whether the choice was made by its controller or their opponent (Snag's Mirror
+bars the chooser's opponent from that same house on their next turn).`,
 		},
 		{
 			Section:    SectionAbility,
@@ -213,6 +249,16 @@ on every in-play card, including the reaper itself.`,
 			Body: `This ability resolves after an enemy creature reaps, with the reaping creature
 as "it" (Pip Pip stuns the enemy that just reaped). Reaping happens only on the
 reaper's own turn, so this naturally fires only for the reaper's opponent.`,
+		},
+		{
+			Section:    SectionAbility,
+			Title:      "After a Creature Is Used to Fight",
+			Definition: "An ability that resolves after any creature is used to fight.",
+			Body: `This ability resolves after any creature is used to fight — friendly or enemy —
+with the fighting creature as "it" (Shattered Throne makes it capture 1 Æmber). It
+fires on every in-play card, including the fighting creature itself. Fighting
+happens only on the attacker's own turn, so the fighter is always the active
+player's creature.`,
 		},
 		{
 			Section:    SectionAbility,

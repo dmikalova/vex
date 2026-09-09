@@ -2,7 +2,10 @@ package web
 
 import (
 	"slices"
+	"strings"
 	"testing"
+
+	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
 	"github.com/dmikalova/vactrol/internal/engine"
 )
@@ -334,6 +337,72 @@ func TestAPromptOverAPileOpensTheViewer(t *testing.T) {
 	if c.g.promptZone != "" {
 		t.Errorf("the prompt's zone is still %q", c.g.promptZone)
 	}
+}
+
+// A bounded pick from the top of the deck (a "look at the top N cards" reveal —
+// Navigator Ali, Lay of the Land) is offered as a short list of action-bar buttons
+// rather than opening the zone viewer, and a reorder prompt notes that the last
+// pick ends up on top.
+func TestABoundedDeckPromptOffersButtons(t *testing.T) {
+	c := newClient(t)
+	c.manual()
+	id := c.deal(testCreature)
+	c.g.g.ManualMove(id, engine.ManualDeckTop)
+
+	answer := c.ask("Choose the next card to place on top of your deck",
+		false, []engine.LocalID{id})
+	c.await("the prompt to go up", func() bool { return c.g.choosing })
+
+	if !c.g.promptAsButtons {
+		t.Fatal("a bounded deck prompt did not switch to action-bar buttons")
+	}
+	if c.g.promptZone != "" {
+		t.Errorf("a bounded deck prompt opened the viewer at %q instead of buttons",
+			c.g.promptZone)
+	}
+	html := app.HTMLString(c.g.Render())
+	if !strings.Contains(html, "prompt-pick") {
+		t.Error("the prompt rendered no candidate buttons")
+	}
+	if !strings.Contains(html, "ends up on top") {
+		t.Error("the reorder prompt is missing the last-is-on-top note")
+	}
+	c.g.chooseCandidate(c.ctx, id)
+	if got := <-answer; !got.ok || got.id != id {
+		t.Errorf("the button answered with %+v, want id %d ok", got, id)
+	}
+}
+
+// A declinable pile prompt (Not Finished with You — shuffle any number, including
+// zero) keeps the zone viewer, but the viewer can be finished from a Done
+// affordance, and closing it submits the current selection by declining.
+func TestADeclinablePilePromptIsFinishedFromTheViewer(t *testing.T) {
+	c := newClient(t)
+	c.manual()
+	me := c.g.active()
+	id := c.deal(testCreature)
+	c.g.g.ManualMove(id, engine.ManualDiscard)
+
+	answer := c.ask("Choose a creature to shuffle into your deck",
+		true, []engine.LocalID{id})
+	c.await("the prompt to go up", func() bool { return c.g.choosing })
+
+	if c.g.zonesPlayer != me || c.g.promptZone != "Discard" {
+		t.Fatalf("a declinable pile prompt did not open the discard viewer")
+	}
+	if !c.g.chooserDeclinable {
+		t.Fatal("Not Finished with You's prompt is not marked declinable")
+	}
+	html := app.HTMLString(c.g.Render())
+	if !strings.Contains(html, "zones-done") {
+		t.Error("the declinable viewer has no Done affordance")
+	}
+	// Closing the viewer submits the current (empty) selection by declining.
+	c.do(c.g.closeZones)
+	if got := <-answer; got.ok {
+		t.Errorf("closing the declinable viewer answered %+v, want a decline", got)
+	}
+	c.await("the viewer to close", func() bool { return c.g.zonesPlayer == -1 })
 }
 
 // A prompt over cards on the board leaves the viewer alone: the board already

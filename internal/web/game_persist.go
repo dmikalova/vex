@@ -239,7 +239,7 @@ func (g *game) dealMatch(seed int64) {
 	g.phase = phaseHouse
 	g.clearSelection()
 	g.zonesPlayer = -1
-	g.deckOpen = -1
+	g.deckOpen = [2]bool{}
 	g.status = ""
 	// Run setup on a background goroutine so the interactive chooser can offer each
 	// player their one mulligan: StartGame deals both opening hands, prompts each

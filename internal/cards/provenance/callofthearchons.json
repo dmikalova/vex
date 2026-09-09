@@ -422,7 +422,7 @@
       "goblin"
     ],
     "power": 2,
-    "text": "Elusive. (The first time this creature is attacked each turn, no damage is dealt.)\nReap: For the remainder of the turn, gain 1 Aember each time an enemy creature is destroyed."
+    "text": "Elusive.\nReap: For the remainder of the turn, gain 1 Aember each time an enemy creature is destroyed."
   },
   {
     "number": "042",
@@ -446,7 +446,7 @@
       "goblin"
     ],
     "power": 2,
-    "text": "Elusive. (The first time this creature is attacked each turn, no damage is dealt.)\nDeal 1 Damage to each enemy creature after it enters play."
+    "text": "Elusive.\nDeal 1 Damage to each enemy creature after it enters play."
   },
   {
     "number": "044",
@@ -664,7 +664,7 @@
     "type": "action",
     "rarity": "Uncommon",
     "amber": 1,
-    "text": "Play: If your opponent forged a key on their previous turn, unforge it. Your opponent gains 6 Aember. "
+    "text": "Play: If your opponent forged a key on their previous turn, unforge it. Your opponent gains 6 Aember."
   },
   {
     "number": "067",
@@ -682,7 +682,7 @@
     "type": "action",
     "rarity": "Uncommon",
     "amber": 1,
-    "text": "Play: Each undamaged creature captures 1 Aember from its opponent. "
+    "text": "Play: Each undamaged creature captures 1 Aember from its opponent."
   },
   {
     "number": "069",
@@ -709,7 +709,7 @@
     "type": "action",
     "rarity": "Uncommon",
     "amber": 1,
-    "text": "Play: Destroy the 3 most powerful creatures. "
+    "text": "Play: Destroy the 3 most powerful creatures."
   },
   {
     "number": "072",
@@ -835,7 +835,7 @@
       "imp"
     ],
     "power": 2,
-    "text": "Elusive. (The first time this creature is attacked each turn, no damage is dealt.)\nPlay: If your opponent has 7 Aember or more, capture all of it."
+    "text": "Elusive.\nPlay: If your opponent has 7 Aember or more, capture all of it."
   },
   {
     "number": "083",
@@ -968,7 +968,7 @@
     ],
     "power": 9,
     "amber": 2,
-    "text": "Taunt. (This creature's neighbors cannot be attacked unless they have taunt.)\nWhile Pitlord is in play you must choose Dis as your active house."
+    "text": "Taunt.\nWhile Pitlord is in play you must choose Dis as your active house."
   },
   {
     "number": "094",
@@ -1089,7 +1089,7 @@
       "imp"
     ],
     "power": 1,
-    "text": "Elusive. (The first time this creature is attacked each turn, no damage is dealt.)\nEach time a creature is destroyed, its opponent gains 1 Aember."
+    "text": "Elusive.\nEach time a creature is destroyed, its opponent gains 1 Aember."
   },
   {
     "number": "104",
@@ -1101,7 +1101,7 @@
       "demon"
     ],
     "power": 7,
-    "text": "You must lose 3 Aember in order to play Truebaru.  \nTaunt. (This creature's neighbors cannot be attacked unless they have taunt.)\nDestroyed: Gain 5 Aember. "
+    "text": "You must lose 3 Aember in order to play Truebaru.\nTaunt.\nDestroyed: Gain 5 Aember."
   },
   {
     "number": "105",
@@ -1118,7 +1118,7 @@
     "type": "upgrade",
     "rarity": "Uncommon",
     "amber": 1,
-    "text": "This creature gets +2 power and gains hazardous 2. (Before this creature is attacked, deal 2 Damage to the attacking enemy.)"
+    "text": "This creature gets +2 power and gains hazardous 2."
   },
   {
     "number": "107",
@@ -1408,7 +1408,7 @@
       "robot"
     ],
     "power": 2,
-    "text": "Skirmish. (When you use this creature to fight, it is dealt no damage in return.)\nFight: Steal 1 Aember."
+    "text": "Skirmish.\nFight: Steal 1 Aember."
   },
   {
     "number": "137",
@@ -1512,7 +1512,7 @@
       "scientist"
     ],
     "power": 3,
-    "text": "Skirmish. (When you use this creature to fight, it is dealt no damage in return.)\nFight: Draw a card."
+    "text": "Skirmish.\nFight: Draw a card."
   },
   {
     "number": "145",
@@ -1564,7 +1564,7 @@
       "scientist"
     ],
     "power": 2,
-    "text": "Elusive. (The first time this creature is attacked each turn, no damage is dealt.)\nFight/Reap: Heal 3 damage from a Mars creature or stun a Mars creature. "
+    "text": "Elusive.\nFight/Reap: Heal 3 damage from a Mars creature or stun a Mars creature."
   },
   {
     "number": "149",
@@ -1628,7 +1628,7 @@
     ],
     "power": 2,
     "amber": 1,
-    "text": "Play: Draw 2 cards. \nAction: Shuffle Timetraveller into your deck."
+    "text": "Play: Draw 2 cards.\nAction: Shuffle Timetraveller into your deck."
   },
   {
     "number": "154",
@@ -1654,7 +1654,7 @@
       "scientist"
     ],
     "power": 2,
-    "text": "Elusive. (The first time this creature is attacked each turn, no damage is dealt.)\nReap: Choose a house. Reveal the top card of your deck. If it is of that house, archive it and gain 1 Aember. Otherwise, discard it."
+    "text": "Elusive.\nReap: Choose a house. Reveal the top card of your deck. If it is of that house, archive it and gain 1 Aember. Otherwise, discard it."
   },
   {
     "number": "156",
@@ -2002,7 +2002,7 @@
       "beast"
     ],
     "power": 11,
-    "text": "Taunt. (This creature's neighbors cannot be attacked unless they have taunt.)\nChuff Ape enters play stunned.\nFight/Reap: You may sacrifice another friendly creature. If you do, fully heal Chuff Ape."
+    "text": "Taunt.\nChuff Ape enters play stunned.\nFight/Reap: You may sacrifice another friendly creature. If you do, fully heal Chuff Ape."
   },
   {
     "number": "192",
@@ -2039,7 +2039,7 @@
       "beast"
     ],
     "power": 10,
-    "text": "You cannot play creatures.  \nAfter an enemy creature is destroyed fighting Grommid, your opponent loses 1 Aember."
+    "text": "You cannot play creatures.\nAfter an enemy creature is destroyed fighting Grommid, your opponent loses 1 Aember."
   },
   {
     "number": "195",
@@ -2053,7 +2053,7 @@
       "martian"
     ],
     "power": 2,
-    "text": "Elusive. (The first time this creature is attacked each turn, no damage is dealt.)\nFight/Reap: Ready a non-Agent Mars creature."
+    "text": "Elusive.\nFight/Reap: Ready a non-Agent Mars creature."
   },
   {
     "number": "196",
@@ -2066,7 +2066,7 @@
       "scientist"
     ],
     "power": 2,
-    "text": "Elusive. (The first time this creature is attacked each turn, no damage is dealt.)\nAction: Choose an enemy creature. It captures 1 Aember from its own side."
+    "text": "Elusive.\nAction: Choose an enemy creature. It captures 1 Aember from its own side."
   },
   {
     "number": "197",
@@ -2079,7 +2079,7 @@
       "soldier"
     ],
     "power": 1,
-    "text": "Elusive. (The first time this creature is attacked each turn, no damage is dealt.)\nAction: Your opponent loses 1 Aember for each other friendly Mars creature."
+    "text": "Elusive.\nAction: Your opponent loses 1 Aember for each other friendly Mars creature."
   },
   {
     "number": "198",
@@ -2131,7 +2131,7 @@
       "scientist"
     ],
     "power": 2,
-    "text": "Elusive. (The first time this creature is attacked each turn, no damage is dealt.)\nReap: Put an enemy creature into your archives. If that creature leaves your archives, it is put into its owner's hand instead."
+    "text": "Elusive.\nReap: Put an enemy creature into your archives. If that creature leaves your archives, it is put into its owner's hand instead."
   },
   {
     "number": "202",
@@ -2183,7 +2183,7 @@
     ],
     "power": 9,
     "armor": 1,
-    "text": "Taunt. (This creature's neighbors cannot be attacked unless they have taunt.)\nYxilx Dominator enters play stunned. "
+    "text": "Taunt.\nYxilx Dominator enters play stunned."
   },
   {
     "number": "206",
@@ -2195,7 +2195,7 @@
       "beast"
     ],
     "power": 7,
-    "text": "Zorg enters play stunned. \nBefore Fight: Stun the creature Zorg fights and each of that creature's neighbors."
+    "text": "Zorg enters play stunned.\nBefore Fight: Stun the creature Zorg fights and each of that creature's neighbors."
   },
   {
     "number": "207",
@@ -2217,7 +2217,7 @@
     "type": "upgrade",
     "rarity": "Common",
     "amber": 1,
-    "text": "This creature gains, \"Destroyed: You may put this creature into its owner's archives.\" "
+    "text": "This creature gains, \"Destroyed: You may put this creature into its owner's archives.\""
   },
   {
     "number": "209",
@@ -2516,7 +2516,7 @@
     ],
     "power": 6,
     "armor": 1,
-    "text": "Taunt. (This creature's neighbors cannot be attacked unless they have taunt.)"
+    "text": "Taunt."
   },
   {
     "number": "240",
@@ -2582,7 +2582,7 @@
       "priest"
     ],
     "power": 3,
-    "text": "Each friendly creature gets +1 armor. \nReap: Heal 2 damage from a creature."
+    "text": "Each friendly creature gets +1 armor.\nReap: Heal 2 damage from a creature."
   },
   {
     "number": "245",
@@ -2634,7 +2634,7 @@
       "spirit"
     ],
     "power": 5,
-    "text": "Play/Fight/Reap: Deal 1 Damage to each non-Horseman creature. "
+    "text": "Play/Fight/Reap: Deal 1 Damage to each non-Horseman creature."
   },
   {
     "number": "249",
@@ -2673,7 +2673,7 @@
     ],
     "power": 5,
     "armor": 2,
-    "text": "Play: Stun a creature. \nAction: Return Lady Maxena to its owner's hand."
+    "text": "Play: Stun a creature.\nAction: Return Lady Maxena to its owner's hand."
   },
   {
     "number": "252",
@@ -2740,7 +2740,7 @@
     ],
     "power": 6,
     "armor": 1,
-    "text": "Taunt. (This creature's neighbors cannot be attacked unless they have taunt.)\nFight/Reap: Swap Sanctum Guardian with another friendly creature in your battleline."
+    "text": "Taunt.\nFight/Reap: Swap Sanctum Guardian with another friendly creature in your battleline."
   },
   {
     "number": "257",
@@ -2849,7 +2849,7 @@
     "type": "upgrade",
     "rarity": "Common",
     "amber": 1,
-    "text": "This creature gets +1 armor and gains taunt. (This creature's neighbors cannot be attacked unless they have taunt.)"
+    "text": "This creature gets +1 armor and gains taunt."
   },
   {
     "number": "266",
@@ -3169,7 +3169,7 @@
       "thief"
     ],
     "power": 2,
-    "text": "Elusive. (The first time this creature is attacked each turn, no damage is dealt.)\nReap: Destroy a flank creature."
+    "text": "Elusive.\nReap: Destroy a flank creature."
   },
   {
     "number": "298",
@@ -3195,7 +3195,7 @@
       "thief"
     ],
     "power": 1,
-    "text": "Elusive. (The first time this creature is attacked each turn, no damage is dealt.)\nOmni: Choose a friendly creature. You may use that creature this turn."
+    "text": "Elusive.\nOmni: Choose a friendly creature. You may use that creature this turn."
   },
   {
     "number": "300",
@@ -3208,7 +3208,7 @@
       "thief"
     ],
     "power": 3,
-    "text": "Elusive. (The first time this creature is attacked each turn, no damage is dealt.)\nReap: Return an Urchin from play or from your discard pile to your hand."
+    "text": "Elusive.\nReap: Return an Urchin from play or from your discard pile to your hand."
   },
   {
     "number": "301",
@@ -3220,7 +3220,7 @@
       "beast"
     ],
     "power": 3,
-    "text": "Skirmish. (When you use this creature to fight, it is dealt no damage in return.)\nPoison. (Any damage dealt by this creature's power during a fight destroys the damaged creature.)"
+    "text": "Skirmish.\nPoison."
   },
   {
     "number": "302",
@@ -3246,7 +3246,7 @@
       "thief"
     ],
     "power": 4,
-    "text": "Elusive. (The first time this creature is attacked each turn, no damage is dealt.)\nPlay: Steal 2 Aember.\nLeaves Play: Your opponent steals 2 Aember."
+    "text": "Elusive.\nPlay: Steal 2 Aember.\nLeaves Play: Your opponent steals 2 Aember."
   },
   {
     "number": "304",
@@ -3272,7 +3272,7 @@
       "thief"
     ],
     "power": 3,
-    "text": "Elusive. (The first time this creature is attacked each turn, no damage is dealt.)\nReap: Use an opponent's artifact as if it were yours."
+    "text": "Elusive.\nReap: Use an opponent's artifact as if it were yours."
   },
   {
     "number": "306",
@@ -3285,7 +3285,7 @@
       "thief"
     ],
     "power": 2,
-    "text": "Elusive. (The first time this creature is attacked each turn, no damage is dealt.)\nAction: Steal 1 Aember."
+    "text": "Elusive.\nAction: Steal 1 Aember."
   },
   {
     "number": "307",
@@ -3298,7 +3298,7 @@
       "thief"
     ],
     "power": 3,
-    "text": "Elusive. (The first time this creature is attacked each turn, no damage is dealt.)\nPlay: Capture 3 Aember."
+    "text": "Elusive.\nPlay: Capture 3 Aember."
   },
   {
     "number": "308",
@@ -3336,7 +3336,7 @@
       "specter"
     ],
     "power": 9,
-    "text": "Shadow Self deals no damage when fighting.  \nDamage dealt to non-Specter neighbors is dealt to Shadow Self instead."
+    "text": "Shadow Self deals no damage when fighting.\nDamage dealt to non-Specter neighbors is dealt to Shadow Self instead."
   },
   {
     "number": "311",
@@ -3362,7 +3362,7 @@
       "thief"
     ],
     "power": 1,
-    "text": "Elusive. (The first time this creature is attacked each turn, no damage is dealt.)\nReap: If you forged a key this turn, take control of an enemy flank creature."
+    "text": "Elusive.\nReap: If you forged a key this turn, take control of an enemy flank creature."
   },
   {
     "number": "313",
@@ -3388,7 +3388,7 @@
       "thief"
     ],
     "power": 2,
-    "text": "Skirmish. (When you use this creature to fight, it is dealt no damage in return.)\nFight: Steal 1 Aember."
+    "text": "Skirmish.\nFight: Steal 1 Aember."
   },
   {
     "number": "315",
@@ -3401,7 +3401,7 @@
       "thief"
     ],
     "power": 1,
-    "text": "Elusive. (The first time this creature is attacked each turn, no damage is dealt.)\nPlay: Steal 1 Aember."
+    "text": "Elusive.\nPlay: Steal 1 Aember."
   },
   {
     "number": "316",
@@ -3409,7 +3409,7 @@
     "house": "shadows",
     "type": "upgrade",
     "rarity": "Uncommon",
-    "text": "This creature gains, \"Reap: Steal 1 Aember.\" "
+    "text": "This creature gains, \"Reap: Steal 1 Aember.\""
   },
   {
     "number": "317",
@@ -3680,7 +3680,7 @@
       "beast"
     ],
     "power": 5,
-    "text": "Assault 2.(Before this creature attacks, deal 2 Damage to the attacked enemy.)"
+    "text": "Assault 2."
   },
   {
     "number": "346",
@@ -3692,7 +3692,7 @@
       "beast"
     ],
     "power": 7,
-    "text": "Bigtwig can only fight stunned creatures. \nReap: Stun and exhaust a creature."
+    "text": "Bigtwig can only fight stunned creatures.\nReap: Stun and exhaust a creature."
   },
   {
     "number": "347",
@@ -3718,7 +3718,7 @@
       "insect"
     ],
     "power": 2,
-    "text": "Hazardous 5. (Before this creature is attacked, deal 5 Damage to the attacking enemy.)"
+    "text": "Hazardous 5."
   },
   {
     "number": "349",
@@ -3743,7 +3743,7 @@
       "faerie"
     ],
     "power": 2,
-    "text": "Elusive. (The first time this creature is attacked each turn, no damage is dealt.)\nReap: Gain 1 Aember."
+    "text": "Elusive.\nReap: Gain 1 Aember."
   },
   {
     "number": "351",
@@ -3805,7 +3805,7 @@
       "beast"
     ],
     "power": 4,
-    "text": "Each friendly flank creature gains skirmish. (When you use a creature with skirmish to fight, it is dealt no damage in return.)"
+    "text": "Each friendly flank creature gains skirmish."
   },
   {
     "number": "356",
@@ -3817,7 +3817,7 @@
       "beast"
     ],
     "power": 1,
-    "text": "Poison. (Any damage dealt by this creature's power during a fight destroys the damaged creature.)\nPlay/Reap: Stun a creature."
+    "text": "Poison.\nPlay/Reap: Stun a creature."
   },
   {
     "number": "357",
@@ -3842,7 +3842,7 @@
       "beast"
     ],
     "power": 4,
-    "text": "Skirmish. (When you use this creature to fight, it is dealt no damage in return.)"
+    "text": "Skirmish."
   },
   {
     "number": "359",
@@ -3854,7 +3854,7 @@
       "beast"
     ],
     "power": 6,
-    "text": "Skirmish. (When you use this creature to fight, it is dealt no damage in return.) \nPlay: Deal 2 Damage to an enemy creature."
+    "text": "Skirmish.\nPlay: Deal 2 Damage to an enemy creature."
   },
   {
     "number": "360",
@@ -3977,7 +3977,7 @@
     "type": "upgrade",
     "rarity": "Uncommon",
     "amber": 1,
-    "text": "This creature gains assault 2. (Before this creature attacks, deal 2 Damage to the attacked enemy.)"
+    "text": "This creature gains assault 2."
   },
   {
     "number": "370",
@@ -3986,6 +3986,6 @@
     "type": "upgrade",
     "rarity": "Uncommon",
     "amber": 1,
-    "text": "This creature gains skirmish.  (When you use this creature to fight, it is dealt no damage in return.)"
+    "text": "This creature gains skirmish."
   }
 ]

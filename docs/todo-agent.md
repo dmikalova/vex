@@ -11,32 +11,33 @@ human's personal list, which agents never write into. Rules:
   built together: add the shared primitive once, then knock out the group.
 - Cite the ADR or doc that decided an item where one exists.
 
-## Zone-movement consolidation (ADR 0031)
+## Flank / placement prompts (engine)
 
-Fold the Archive/Discard/Purge/Shuffle/Put families onto one unexported movement
-mechanism (source zone + selection + destination), with the KeyForge-verb sugar
-delegating to it.
+- **Exhume must ask for a flank, not silently pick right.** It still auto-places
+  on the right flank. Introduce an unset/invalid flank zero value so an
+  unspecified flank errors by default; a card that dictates a flank (e.g. Amasser)
+  sets it explicitly.
 
-- Fuse the `DamageThen` / `DamageThenIfDestroyed` / `DamageThenIfSurvives` trio
-  into `DealDamage{Then, After}` (`After` ∈ Always / IfDestroyed / IfSurvives).
-  ~11 card uses across all sets; preserve the pre-damage neighbor snapshot the
-  IfDestroyed variant relies on.
-- Absorb `PurgeFromHand` / `PurgeCreatureFromHand` / `PurgeEachFromHand` into
-  `PurgeCard` (House / ExceptHouse / All / bind-`it` fields).
-- Collapse `ArchiveTopOfDeck` / `ArchiveTopOfDiscard` into `ArchiveTop{From}`, and
-  the top/random discard variants into `Discard{Zone, Player, Amount, Random}`.
+## Card behavior fixes
 
-## Naming / modeling migrations (ADR 0031)
+_(All of the first batch are done: Triumph "6 or more", City-State Interest
+capture-from-opponent, Medic Ingram double-prompt, dying-creature Æmber
+recipient, Poltergeist constant-ability artifacts. Remaining card-behavior work
+lives under the other headings.)_
 
-- `PoolAember{Player, Is, Amount}` replacing the `OpponentAember` / `YourAember`
-  mirror pair (~21 uses across all sets; keep the relative `MoreThanYou` /
-  `MoreThanOpponent` comparisons, which compare two pools).
-- Invert `ItIsOffIdentity` (Sneklifter) and `AemberBonusDestroyed` (Rustgnawer)
-  into positive conditions reading `ctx.It` — "does the creature it fought have
-  Æmber bonus icons?" / "is it of one of your identity's houses?".
-- Standardize the `…ThisWay` produced-tally count names onto one `Produced`-keyed
-  convention.
-- Damage modification as a replacement on a "damage about to be dealt" event,
-  retiring `TakesExtraDamage` (extends the `Instead`/`Replace` spine like Po's
-  Pixies). Lower priority: `EventCreatureTakesDamage` + `lastingExtraDamage`
-  already add to the pending amount, so this is a re-homing, not a behavior fix.
+## Card text / glyphs
+
+## Logs (engine)
+
+- Poison and Skirmish are not logged.
+- Æmber gains should name their source (e.g. "Harmonia …").
+
+## Web — zone views, prompts, action bar
+
+- Upgrade-attach prompt wording: change "Choose a creature to attach Stunner to"
+  to "Choose a creature to attach Stunner **onto**". BLOCKED web-side: the string is
+  produced by the engine (`AttachSelfTo.Text` / `game_play.go`'s
+  "Choose a creature to attach {self} to" prompt), and engine AGENTS notes the
+  prompt is deliberately kept identical to the printed card text. The mobile
+  single-line clickable-green-name presentation is done (the prompt source card's
+  face is dropped on mobile, leaving its green `prompt-source-name` token).

@@ -28,3 +28,12 @@ func (g *Game) purgeFromArchives(owner int, id LocalID) {
 	g.State.Purge[owner].add(id)
 	g.record(CardPurgedFromArchives{Player: g.State.ActivePlayer, Card: id})
 }
+
+// purgeFromDeck moves a card from a player's deck to their purge pile. Callers
+// pass a card already in that deck (Borr Nit purges one of the cards it revealed
+// off the top).
+func (g *Game) purgeFromDeck(owner int, id LocalID) {
+	g.State.Deck[owner].remove(id)
+	g.State.Purge[owner].add(id)
+	g.record(CardPurgedFromDeck{Player: g.State.ActivePlayer, Card: id})
+}

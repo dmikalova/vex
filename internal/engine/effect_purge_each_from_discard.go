@@ -56,12 +56,7 @@ func (e PurgeEachFromDiscard) Resolve(ctx *EffectContext) {
 		return true
 	}
 	for _, owner := range []int{ctx.Controller, ctx.Opponent()} {
-		var doomed []LocalID
-		for _, id := range ctx.Resolver.Discard(owner) {
-			if matches(id) {
-				doomed = append(doomed, id)
-			}
-		}
+		doomed := discardCardsWhere(ctx, owner, matches)
 		for _, id := range doomed {
 			ctx.Resolver.PurgeFromDiscard(owner, id)
 			if e.GainOwnerAember {

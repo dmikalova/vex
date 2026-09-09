@@ -73,6 +73,14 @@ func (g *Game) fight(attacker, defender LocalID) {
 		}
 		if len(pre) > 0 {
 			g.dealDamage(g.controller(attacker), pre...)
+			// Skoll's Assault destroying the creature it attacks — before the fight
+			// itself — fires "after a creature is destroyed by this creature's assault
+			// damage" on the attacker, with the destroyed defender as "it". Assault is
+			// the only pre-fight damage aimed at the defender, so a defender no longer
+			// in play here was destroyed by it.
+			if a := g.assault(attacker); a > 0 && g.inPlay(attacker) && !g.inPlay(defender) {
+				g.triggerAbilities(attacker, TriggerAfterAssaultDestroys, defender, true)
+			}
 		}
 	}
 
@@ -160,6 +168,13 @@ func (g *Game) fight(attacker, defender LocalID) {
 	}
 	g.emitCardUsed(g.controller(attacker), attacker)
 	g.emitLasting(EventFight, g.controller(attacker), attacker)
+	// Fire "after a creature is used to fight" on every in-play card (Shattered
+	// Throne, Peace Accord), with the fighting creature as "it".
+	for player := 0; player < 2; player++ {
+		for _, id := range g.allInPlay(player) {
+			g.triggerAbilities(id, TriggerAfterCreatureFights, attacker, true)
+		}
+	}
 	// Fire "after a neighbor of this is used to fight" on the creatures that
 	// flanked the attacker when the fight began (Little Niff), with the attacker
 	// as "it". A neighbor destroyed by the fight is skipped.

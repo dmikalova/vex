@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <title>Enrage</title>
+  <circle cx="12" cy="12" r="10" fill="#e5484d" stroke="#6e1618" stroke-width="1"/>
+  <path d="M6.5 8.5 10.5 10M17.5 8.5 13.5 10" fill="none" stroke="#3a0c0d"
+        stroke-width="1.6" stroke-linecap="round"/>
+  <path d="M8 16c1.2-1.4 2.6-2.1 4-2.1s2.8.7 4 2.1" fill="none" stroke="#3a0c0d"
+        stroke-width="1.6" stroke-linecap="round"/>
+</svg>

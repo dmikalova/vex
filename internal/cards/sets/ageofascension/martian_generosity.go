@@ -26,7 +26,10 @@ var MartianGenerosity = card.New(
 				},
 				card.Draw{
 					Amount: 2,
-					Per:    card.AemberLostThisWay{Player: card.Controller},
+					Per: card.ProducedThisWay{
+						Tally:  card.Tally.AemberLost,
+						Player: card.Controller,
+					},
 				},
 			},
 		}),

@@ -133,6 +133,11 @@ type Target struct {
 	// contextualHouse narrows the target to cards sharing the house of the card in
 	// context (ctx.It), rendering "of that card's house" — ForEachDiscarded's Do.
 	contextualHouse bool
+	// houseWithMostCreatures narrows the target to creatures of the house with the
+	// most creatures in play, counting both players' battlelines; on a tie every
+	// tied house's creatures are eligible so the chooser picks among them
+	// (Etaromme). It renders "of the house with the most creatures in play".
+	houseWithMostCreatures bool
 	// sharesTrait narrows the target to cards sharing at least one trait with the
 	// card in context (ctx.It), rendering "that shares a trait with it".
 	sharesTrait   bool
@@ -244,6 +249,14 @@ func (t Target) OfChosenHouse() Target {
 // "of that card's house".
 func (t Target) OfContextualHouse() Target {
 	t.contextualHouse = true
+	return t
+}
+
+// OfHouseWithMostCreatures narrows the target to creatures of the house with the
+// most creatures in play across both battlelines, ties keeping every tied house
+// eligible (Etaromme).
+func (t Target) OfHouseWithMostCreatures() Target {
+	t.houseWithMostCreatures = true
 	return t
 }
 
@@ -677,6 +690,9 @@ func (t Target) Text() string {
 	if t.contextualHouse {
 		phrase += " of that card's house"
 	}
+	if t.houseWithMostCreatures {
+		phrase += " of the house with the most creatures in play"
+	}
 	if t.sharesTrait {
 		phrase += " that shares a trait with it"
 	}
@@ -1097,6 +1113,25 @@ func (t Target) isChosen() bool {
 		t.Kind == TargetChosenEnemyCreatureOrArtifact
 }
 
+// isOfMostPopulousHouse reports whether id's house is (tied for) the house with
+// the most creatures in play across both battlelines. Ties keep every tied house
+// eligible so the chooser may pick a creature of any of them (Etaromme).
+func isOfMostPopulousHouse(ctx *EffectContext, id LocalID) bool {
+	counts := map[House]int{}
+	for player := 0; player < 2; player++ {
+		for _, cid := range ctx.Resolver.Battleline(player) {
+			counts[ctx.Resolver.House(cid)]++
+		}
+	}
+	most := 0
+	for _, n := range counts {
+		if n > most {
+			most = n
+		}
+	}
+	return most > 0 && counts[ctx.Resolver.House(id)] == most
+}
+
 // filter narrows ids to those matching the target's trait, power, damaged, and
 // flank filters.
 func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
@@ -1106,6 +1141,7 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 		t.exceptHouse == HouseNone &&
 		!t.chosenHouse &&
 		!t.contextualHouse &&
+		!t.houseWithMostCreatures &&
 		!t.sharesTrait &&
 		!t.hasMaxPower &&
 		!t.hasMinPower &&
@@ -1151,6 +1187,9 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 		}
 		if t.contextualHouse &&
 			(!ctx.HasIt || ctx.Resolver.House(id) != ctx.Resolver.House(ctx.It)) {
+			continue
+		}
+		if t.houseWithMostCreatures && !isOfMostPopulousHouse(ctx, id) {
 			continue
 		}
 		if t.sharesTrait && (!ctx.HasIt || !ctx.Resolver.SharesTrait(ctx.It, id)) {

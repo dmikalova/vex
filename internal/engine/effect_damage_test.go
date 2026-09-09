@@ -45,8 +45,9 @@ func TestDamageThenIfDestroyed(t *testing.T) {
 		weak := g.AddToBattleline(testCreature("weak", 2), 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 
-		e := DamageThenIfDestroyed{
+		e := DamageThen{
 			Amount: 3,
+			After:  IfDestroyed,
 			Target: Target{Kind: TargetChosenEnemyCreature},
 			Then:   GainAember{Player: Controller, Amount: 1},
 		}
@@ -67,8 +68,9 @@ func TestDamageThenIfDestroyed(t *testing.T) {
 		tough := g.AddToBattleline(testCreature("tough", 6), 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 
-		DamageThenIfDestroyed{
+		DamageThen{
 			Amount: 2,
+			After:  IfDestroyed,
 			Target: Target{Kind: TargetChosenEnemyCreature},
 			Then:   GainAember{Player: Controller, Amount: 1},
 		}.Resolve(
@@ -87,8 +89,9 @@ func TestDamageThenIfDestroyed(t *testing.T) {
 		weak := g.AddToBattleline(testCreature("weak", 1), 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 
-		DamageThenIfDestroyed{
+		DamageThen{
 			Amount: 3,
+			After:  IfDestroyed,
 			Target: Target{Kind: TargetChosenEnemyCreature},
 			Then:   PurgeCreature{Target: Target{Kind: TargetTriggeringCreature}},
 		}.Resolve(
@@ -102,8 +105,9 @@ func TestDamageThenIfDestroyed(t *testing.T) {
 	t.Run("no target is a no-op", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
-		DamageThenIfDestroyed{
+		DamageThen{
 			Amount: 3,
+			After:  IfDestroyed,
 			Target: Target{Kind: TargetChosenEnemyCreature},
 			Then:   GainAember{Player: Controller, Amount: 1},
 		}.Resolve(
@@ -115,10 +119,13 @@ func TestDamageThenIfDestroyed(t *testing.T) {
 	})
 
 	t.Run("validate", func(t *testing.T) {
-		if (DamageThenIfDestroyed{Then: GainAember{Player: Controller, Amount: 1}}).validate() == nil {
+		if (DamageThen{After: IfDestroyed, Then: GainAember{Player: Controller, Amount: 1}}).validate() == nil {
 			t.Error("unset target should be invalid")
 		}
-		if (DamageThenIfDestroyed{Target: Target{Kind: TargetChosenCreature}, Then: GainAember{}}).validate() == nil {
+		if (DamageThen{Target: Target{Kind: TargetChosenCreature}, Then: GainAember{Player: Controller, Amount: 1}}).validate() == nil {
+			t.Error("unset After should be invalid")
+		}
+		if (DamageThen{Target: Target{Kind: TargetChosenCreature}, After: IfDestroyed, Then: GainAember{}}).validate() == nil {
 			t.Error("invalid follow-up should surface")
 		}
 	})
@@ -130,8 +137,9 @@ func TestDamageThenIfDestroyed(t *testing.T) {
 		right := g.AddToBattleline(testCreature("right", 6), 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 
-		e := DamageThenIfDestroyed{
+		e := DamageThen{
 			Amount: 3,
+			After:  IfDestroyed,
 			Target: Target{Kind: TargetChosenEnemyCreature}.PowerAtMost(2),
 			Then:   DealDamage{Amount: 2, Target: Target{Kind: TargetFormerNeighbors}},
 		}
@@ -156,6 +164,7 @@ func TestDamageThen(t *testing.T) {
 
 		e := DamageThen{
 			Amount: 2,
+			After:  Always,
 			Target: Target{Kind: TargetChosenCreature},
 			Then:   GainAember{Player: Controller, Amount: 1},
 		}
@@ -178,6 +187,7 @@ func TestDamageThen(t *testing.T) {
 
 		DamageThen{
 			Amount: 3,
+			After:  Always,
 			Target: Target{Kind: TargetChosenEnemyCreature},
 			Then:   PurgeCreature{Target: Target{Kind: TargetTriggeringCreature}},
 		}.Resolve(ctx)
@@ -191,6 +201,7 @@ func TestDamageThen(t *testing.T) {
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 		DamageThen{
 			Amount: 3,
+			After:  Always,
 			Target: Target{Kind: TargetChosenEnemyCreature},
 			Then:   GainAember{Player: Controller, Amount: 1},
 		}.Resolve(ctx)
@@ -200,13 +211,57 @@ func TestDamageThen(t *testing.T) {
 	})
 
 	t.Run("validate", func(t *testing.T) {
-		if (DamageThen{Then: GainAember{Player: Controller, Amount: 1}}).validate() == nil {
+		if (DamageThen{After: Always, Then: GainAember{Player: Controller, Amount: 1}}).validate() == nil {
 			t.Error("unset target should be invalid")
 		}
-		if (DamageThen{Target: Target{Kind: TargetChosenCreature}, Then: GainAember{}}).validate() == nil {
+		if (DamageThen{Target: Target{Kind: TargetChosenCreature}, After: Always, Then: GainAember{}}).validate() == nil {
 			t.Error("invalid follow-up should surface")
 		}
 	})
+}
+
+// TestDealDamagePerHouse covers Gleeful Mayhem: one chosen creature of each house
+// in play takes the damage, houses with no creature are skipped, and a second
+// creature of an already-hit house is left untouched.
+func TestDealDamagePerHouse(t *testing.T) {
+	if err := (DealDamagePerHouse{}).validate(); err == nil {
+		t.Error("want validate error for zero Amount")
+	}
+	e := DealDamagePerHouse{Amount: 5}
+	if got := e.Text(); got != "for each house, deal 5 damage to a creature of that house" {
+		t.Errorf("text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	dis := g.AddToBattleline(NewCard("dis", Dis, Creature, Common, WithPower(10)), 0)
+	otherDis := g.AddToBattleline(NewCard("dis2", Dis, Creature, Common, WithPower(10)), 0)
+	logos := g.AddToBattleline(NewCard("logos", Logos, Creature, Common, WithPower(10)), 1)
+	// The default chooser takes the first candidate for each house.
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	e.Resolve(ctx)
+	if g.Damage(dis) != 5 {
+		t.Errorf("dis damage = %d, want 5", g.Damage(dis))
+	}
+	if g.Damage(otherDis) != 0 {
+		t.Errorf("otherDis damage = %d, want 0 (only one per house)", g.Damage(otherDis))
+	}
+	if g.Damage(logos) != 5 {
+		t.Errorf("logos damage = %d, want 5", g.Damage(logos))
+	}
+
+	if err := e.validate(); err != nil {
+		t.Errorf("valid effect rejected: %v", err)
+	}
+
+	// Declining the choice for a house deals no damage to that house.
+	g2 := NewGame("A", "B", 1)
+	safe := g2.AddToBattleline(NewCard("safe", Dis, Creature, Common, WithPower(10)), 0)
+	g2.AddToBattleline(NewCard("safe2", Dis, Creature, Common, WithPower(10)), 0)
+	g2.SetChooser(0, orderRejectChooser{})
+	e.Resolve(&EffectContext{Resolver: g2, Controller: 0})
+	if g2.Damage(safe) != 0 {
+		t.Error("a declined house should take no damage")
+	}
 }
 
 func TestDealDamagePerCount(t *testing.T) {
@@ -525,6 +580,34 @@ func TestSpreadUpToCreatures(t *testing.T) {
 		}
 		if got := g.Damage(hurt); got != 1 {
 			t.Errorf("already-damaged creature = %d, want 1 (untouched)", got)
+		}
+	})
+
+	t.Run("WhenDamaged deals the larger amount to already-damaged creatures", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		hurt := g.AddToBattleline(testCreature("hurt", 9), 1)
+		clean := g.AddToBattleline(testCreature("clean", 9), 1)
+		g.SetDamage(hurt, 1)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+
+		e := DealDamage{Spread: UpToCreatures{Count: 3, Amount: 1, WhenDamaged: 3}}
+		if got := e.Text(); got !=
+			"deal 1 damage to up to 3 creatures, dealing 3 damage instead to a chosen creature that was already damaged" {
+			t.Errorf("text = %q", got)
+		}
+		e.Resolve(ctx)
+		if got := g.Damage(hurt); got != 4 {
+			t.Errorf("already-damaged creature = %d, want 4 (1+3)", got)
+		}
+		if got := g.Damage(clean); got != 1 {
+			t.Errorf("undamaged creature = %d, want 1", got)
+		}
+	})
+
+	t.Run("validate rejects WhenDamaged combined with Undamaged", func(t *testing.T) {
+		if (DealDamage{Spread: UpToCreatures{Count: 2, Amount: 1, WhenDamaged: 3, Undamaged: true}}).
+			validate() == nil {
+			t.Error("WhenDamaged + Undamaged should be invalid")
 		}
 	})
 }

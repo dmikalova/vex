@@ -20,6 +20,7 @@ var DestructiveAnalysis = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.DamageThen{
 			Amount: 2,
+			After:  card.Always,
 			Target: card.Target.Creature,
 			Then: card.PurgeArchivesForDamage{
 				Amount: 2,

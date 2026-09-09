@@ -84,17 +84,12 @@ func (e ShuffleChosenCreaturesFromDiscard) candidates(
 	ctx *EffectContext,
 	picked map[LocalID]bool,
 ) []LocalID {
-	var out []LocalID
-	for _, id := range ctx.Resolver.Discard(ctx.Controller) {
+	return discardCardsWhere(ctx, ctx.Controller, func(id LocalID) bool {
 		if picked[id] || !ctx.Resolver.IsCreature(id) {
-			continue
+			return false
 		}
-		if e.House != HouseNone && ctx.Resolver.House(id) != e.House {
-			continue
-		}
-		out = append(out, id)
-	}
-	return out
+		return e.House == HouseNone || ctx.Resolver.House(id) == e.House
+	})
 }
 
 // ShuffleCardsFromDiscard shuffles a fixed number of cards the controller chooses
@@ -129,12 +124,9 @@ func (e ShuffleCardsFromDiscard) Resolve(ctx *EffectContext) {
 	ctx.Resolver.BeginShuffleBatch()
 	picked := map[LocalID]bool{}
 	for i := 0; i < n; i++ {
-		var cands []LocalID
-		for _, id := range ctx.Resolver.Discard(ctx.Controller) {
-			if !picked[id] {
-				cands = append(cands, id)
-			}
-		}
+		cands := discardCardsWhere(ctx, ctx.Controller, func(id LocalID) bool {
+			return !picked[id]
+		})
 		if len(cands) == 0 {
 			break
 		}

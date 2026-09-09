@@ -19,6 +19,24 @@ func TestFightFiresLasting(t *testing.T) {
 	}
 }
 
+func TestFightFiresLastingLoseAember(t *testing.T) {
+	g := started(t)
+	g.AddLasting(LastingEffect{On: EventFight, Do: actLoseAember, Controller: 0, Amount: 1})
+	att := g.AddToBattleline(NewCard("att", Brobnar, Creature, Common, WithPower(4)), 0)
+	def := g.AddToBattleline(testCreature("def", 2), 1)
+	g.State.Aember[1] = 3
+
+	if err := g.Fight(0, att, def); err != nil {
+		t.Fatalf("Fight: %v", err)
+	}
+	if g.State.Aember[1] != 2 {
+		t.Errorf(
+			"opponent Æmber = %d, want 2 after a Barn Razing-style fight reaction",
+			g.State.Aember[1],
+		)
+	}
+}
+
 func TestEventFightIsReaction(t *testing.T) {
 	if !EventFight.isReaction() {
 		t.Error("EventFight should be a reaction point")

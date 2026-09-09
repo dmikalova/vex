@@ -22,8 +22,9 @@ var SpecialDelivery = card.New(
 	card.WithTraits(card.Traits.Item),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(
-		card.Trigger.Action, card.DamageThenIfDestroyed{
+		card.Trigger.Action, card.DamageThen{
 			Amount: 3,
+			After:  card.IfDestroyed,
 			Target: card.Target.Creature.OnFlank(),
 			Then:   card.PurgeCreature{Target: card.Target.Triggering},
 		}),

@@ -118,6 +118,26 @@ func TestControlledCreatureLeavesForOwner(t *testing.T) {
 	}
 }
 
+// A creature that captured Æmber and was then taken by the opponent gives that
+// Æmber to the opponent of whoever controls it at death, not the owner's
+// opponent: taken into enemy control, it returns its Æmber to its owner.
+func TestCapturedAemberGoesToControllersOpponentOnDeath(t *testing.T) {
+	g := started(t)
+	mine := g.AddToBattleline(testCreature("mine", 3), 0)
+	g.State.Cards[mine].Amber = 2 // captured Æmber sitting on the creature
+	seizer := g.Register(NewCard("seizer", Dis, Artifact, Rare), 1)
+	g.takeControl(mine, 1, seizer) // P2 takes control of P1's creature
+
+	g.DealDamage(0, []DamageTarget{{ID: mine, Amount: 3}}) // it dies under P2
+
+	if g.Aember(0) != 2 {
+		t.Errorf("P1 pool = %d, want 2 (Æmber returns to the controller's opponent)", g.Aember(0))
+	}
+	if g.Aember(1) != 0 {
+		t.Errorf("P2 pool = %d, want 0", g.Aember(1))
+	}
+}
+
 func TestTakeControlArtifact(t *testing.T) {
 	permArt := TakeControl{Target: Target{Kind: TargetChosenEnemyArtifact}, Duration: Forever}
 	if got := permArt.Text(); got != "take control of an enemy artifact" {

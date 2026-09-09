@@ -26,7 +26,7 @@ func TestSenatorShrix(t *testing.T) {
 		})
 
 		h.P1.Play(SenatorShrix)
-		h.P1.ClickOption("Yes")
+		h.P1.ClickCard(SenatorShrix)
 
 		h.Expect(SenatorShrix).AmberOn(1)
 	})
@@ -38,7 +38,7 @@ func TestSenatorShrix(t *testing.T) {
 		})
 
 		h.P1.Play(SenatorShrix)
-		h.P1.ClickOption("No")
+		h.P1.ClickDone()
 
 		h.Expect(SenatorShrix).AmberOn(0)
 	})

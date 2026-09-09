@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // ImperialScutum
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Saurian
 //	Type:   Upgrade
@@ -22,5 +17,11 @@ var ImperialScutum = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.WC, "185"),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithStatic(card.StaticModifier{
+		ArmorBonus: 2,
+		Granted: []card.Ability{{
+			Trigger: card.Trigger.Destroyed,
+			Effect:  card.MoveAemberToSupply{All: true, Target: card.Target.This},
+		}},
+	}),
 )

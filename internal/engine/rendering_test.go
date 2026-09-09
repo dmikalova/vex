@@ -103,7 +103,7 @@ func TestAfterYouPlayFolding(t *testing.T) {
 		Ability{
 			Trigger: TriggerAfterCardPlayed,
 			Effect: Conditional{
-				Cond: OpponentAember{Is: AtLeast, Amount: 1},
+				Cond: PoolAember{Player: Opponent, Is: AtLeast, Amount: 1},
 				Then: GainAember{Player: Controller, Amount: 1},
 			},
 		},
@@ -214,9 +214,11 @@ func TestAllTriggerPrefixes(t *testing.T) {
 		TriggerAfterForgeKey:          "After you forge a key, gain 1 Æmber.",
 		TriggerAfterCreatureEnters:    "After a creature enters play, gain 1 Æmber.",
 		TriggerAfterDestroyedFighting: "After a creature is destroyed in a fight with {self}, gain 1 Æmber.",
+		TriggerAfterAssaultDestroys:   "After a creature is destroyed by {self}'s assault damage, gain 1 Æmber.",
 		TriggerAfterArmorPrevents:     "After {self} prevents damage with its armor, gain 1 Æmber.",
 		TriggerAfterNeighborFights:    "After a neighbor of {self} is used to fight, gain 1 Æmber.",
 		TriggerAfterCardPlayed:        "After you play a card, gain 1 Æmber.",
+		TriggerAfterCreaturePlayed:    "After a creature is played, gain 1 Æmber.",
 	}
 	for tr, want := range cases {
 		got := RenderAbility(
@@ -850,11 +852,34 @@ func TestRenderUpgradeOnCreature(t *testing.T) {
 			),
 			"Creatures not on a flank cannot fight this creature.",
 		},
+		// A granted Æmber-protection reads as the rule itself, hosted on the creature.
+		{
+			NewCard(
+				"Guard",
+				Sanctum,
+				Upgrade,
+				Uncommon,
+				WithStatic(StaticModifier{AemberCannotBeStolen: true}),
+			),
+			"Your Æmber cannot be stolen.",
+		},
 	}
 	for _, tc := range cases {
 		if got := RenderUpgradeOnCreature(&tc.def); got != tc.want {
 			t.Errorf("%s hosted rules mismatch:\n got:  %q\n want: %q", tc.def.Name, got, tc.want)
 		}
+	}
+}
+
+// TestUpgradeGrantLinesHouseOverride covers a creature-as-upgrade's house-override
+// grant line (Academy Training makes its host a Logos creature).
+func TestUpgradeGrantLinesHouseOverride(t *testing.T) {
+	def := NewCard("Academy Training", Logos, Creature, Uncommon, WithPower(1),
+		WithStatic(StaticModifier{HouseOverride: Logos}), WithPlayableAsUpgrade())
+	lines := upgradeGrantLines(&def, true)
+	want := "If you control this creature, it belongs to house Logos. (Instead of its original house.)"
+	if len(lines) == 0 || lines[0] != want {
+		t.Errorf("grant lines = %v, want first %q", lines, want)
 	}
 }
 
@@ -975,6 +1000,7 @@ func TestNewTriggerPrefixes(t *testing.T) {
 		TriggerAfterUsedSelf:               "After " + SelfName + " is used, ",
 		TriggerAfterCreatureReaps:          "After a creature reaps, ",
 		TriggerAfterEnemyCreatureReaps:     "After an enemy creature reaps, ",
+		TriggerAfterCreatureFights:         "After a creature is used to fight, ",
 		TriggerAfterCreatureDestroyed:      "After a creature is destroyed, ",
 		TriggerLeavesPlay:                  "Leaves Play: ",
 	} {

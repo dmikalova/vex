@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // DrMilli
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Logos
 //	Type:   Creature
@@ -24,5 +19,8 @@ var DrMilli = card.New(
 	card.Provenance(card.WC, "150"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Scientist),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.Play, card.ArchiveFromHand{
+		Amount: 1,
+		Per:    card.ExcessCreatures{Player: card.Opponent, NotCountingSelf: true},
+	}),
 )

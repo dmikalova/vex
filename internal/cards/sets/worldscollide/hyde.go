@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Hyde
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Logos
 //	Type:   Creature
@@ -25,5 +20,16 @@ var Hyde = card.New(
 	card.Provenance(card.WC, "167"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.Connects(card.Pull(Velum, 1)),
+	card.WithAbility(card.Trigger.Reap, card.Draw{
+		Amount: 1,
+		Or: card.OrAmount{
+			Amount: 2,
+			When:   card.ControlsNamed{Name: "Velum"},
+		},
+	}),
+	card.WithAbility(card.Trigger.Destroyed, card.Then{
+		First:  card.ArchiveFromDiscard{Name: "Velum"},
+		Result: card.ArchiveFromPlay{Target: card.Target.This},
+	}),
 )

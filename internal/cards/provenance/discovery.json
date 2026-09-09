@@ -1,0 +1,4213 @@
+[
+  {
+    "number": "001",
+    "name": "Barehanded",
+    "house": "brobnar",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Put each artifact on top of its owner's deck."
+  },
+  {
+    "number": "002",
+    "name": "Belcher",
+    "house": "brobnar",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "weapon"
+    ],
+    "text": "Action: Discard cards from the top of your deck until you discard a creature or run out of cards. If you discarded a creature this way, deal Damage equal to the discarded creature's power to an enemy creature."
+  },
+  {
+    "number": "003",
+    "name": "Bilgum Avalanche",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "giant"
+    ],
+    "power": 5,
+    "text": "After you forge a key, deal 2 Damage to each enemy creature."
+  },
+  {
+    "number": "004",
+    "name": "Brothers in Battle",
+    "house": "brobnar",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Choose a house. For the remainder of the turn, each friendly creature of that house may fight."
+  },
+  {
+    "number": "005",
+    "name": "Champion's Challenge",
+    "printed": "Champion’s Challenge",
+    "house": "brobnar",
+    "type": "action",
+    "rarity": "Rare",
+    "text": "Play: Destroy each enemy creature except the most powerful enemy creature. Destroy each friendly creature except the most powerful friendly creature. Ready and fight with your remaining creature."
+  },
+  {
+    "number": "006",
+    "name": "Eruption",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "ship"
+    ],
+    "power": 8,
+    "armor": 1,
+    "text": "Versatile.\nPlay: Exalt Eruption 3 times. (Place 3 Aember from the common supply on this creature.)\nAfter Fight: Move 1 Aember from Eruption to your pool."
+  },
+  {
+    "number": "007",
+    "name": "Forgemaster Og",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "giant"
+    ],
+    "power": 4,
+    "text": "After a player forges a key, they lose all of their remaining Aember."
+  },
+  {
+    "number": "008",
+    "name": "Grumpus Tamer",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "giant"
+    ],
+    "power": 4,
+    "text": "After Reap: Search your deck and discard pile for a War Grumpus and add it to your hand. Then, shuffle your deck."
+  },
+  {
+    "number": "009",
+    "name": "Guji Dinosaur Hunter",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "hunter",
+      "giant"
+    ],
+    "power": 4,
+    "text": "Elusive.\nAction: Deal 2 Damage to a creature. Deal 6 Damage instead if it is a Dinosaur creature or has Aember on it."
+  },
+  {
+    "number": "010",
+    "name": "Harmal Atoon",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "giant",
+      "brakken"
+    ],
+    "power": 5,
+    "text": "Each other friendly Brobnar creature gains, \"Destroyed: Return this creature to its owner's hand.\""
+  },
+  {
+    "number": "011",
+    "name": "Lava Ball",
+    "house": "brobnar",
+    "type": "action",
+    "rarity": "Rare",
+    "text": "Play: Deal 4 Damage to a creature, with 2 Damage splash."
+  },
+  {
+    "number": "012",
+    "name": "Looter Goblin",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "goblin"
+    ],
+    "power": 2,
+    "text": "Elusive.\nAfter Reap: For the remainder of the turn, gain 1 Aember after an enemy creature is destroyed."
+  },
+  {
+    "number": "013",
+    "name": "Nogi Smartfist",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "scientist",
+      "giant"
+    ],
+    "power": 5,
+    "text": "After Fight: Draw 2 cards. Discard 2 random cards from your hand."
+  },
+  {
+    "number": "014",
+    "name": "On the Mark",
+    "house": "brobnar",
+    "type": "action",
+    "rarity": "Rare",
+    "text": "Play: Choose a friendly creature. Move each Aember on that creature to an enemy creature."
+  },
+  {
+    "number": "015",
+    "name": "Signal Fire",
+    "house": "brobnar",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "item"
+    ],
+    "amber": 1,
+    "text": "Omni: Destroy Signal Fire. For the remainder of the turn, friendly Brobnar creatures may fight as though they belonged to the active house."
+  },
+  {
+    "number": "016",
+    "name": "The Big One",
+    "house": "brobnar",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "weapon"
+    ],
+    "amber": 1,
+    "text": "After a creature is played, put a fuse counter on The Big One.\nIf there are 10 or more fuse counters on The Big One, destroy each creature and artifact."
+  },
+  {
+    "number": "017",
+    "name": "Tireless Crocag",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "giant"
+    ],
+    "power": 7,
+    "text": "Versatile.\nTireless Crocag cannot reap.\nIf there are no enemy creatures, destroy Tireless Crocag."
+  },
+  {
+    "number": "018",
+    "name": "War Grumpus",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "beast"
+    ],
+    "power": 3,
+    "text": "After Fight/After Reap: Ready and fight with a neighboring Giant."
+  },
+  {
+    "number": "019",
+    "name": "Yo Mama Mastery",
+    "house": "brobnar",
+    "type": "upgrade",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "This creature gains taunt.\nPlay: Fully heal this creature."
+  },
+  {
+    "number": "020",
+    "name": "Blood Money",
+    "house": "brobnar",
+    "type": "action",
+    "rarity": "Uncommon",
+    "text": "Play: Place 2 Aember from the common supply on an enemy creature."
+  },
+  {
+    "number": "021",
+    "name": "Blood of Titans",
+    "house": "brobnar",
+    "type": "upgrade",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "This creature gets +5 power."
+  },
+  {
+    "number": "022",
+    "name": "Burn the Stockpile",
+    "house": "brobnar",
+    "type": "action",
+    "rarity": "Uncommon",
+    "text": "Play: If your opponent has 7 Aember or more, they lose 4 Aember."
+  },
+  {
+    "number": "023",
+    "name": "Cannon",
+    "house": "brobnar",
+    "type": "artifact",
+    "rarity": "Uncommon",
+    "traits": [
+      "weapon"
+    ],
+    "text": "Action: Deal 2 Damage to a creature."
+  },
+  {
+    "number": "024",
+    "name": "Culf the Quiet",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "giant"
+    ],
+    "power": 6,
+    "text": "Elusive."
+  },
+  {
+    "number": "025",
+    "name": "Earthshaker",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "giant"
+    ],
+    "power": 7,
+    "text": "Play: Destroy each creature with power 3 or lower."
+  },
+  {
+    "number": "026",
+    "name": "Flamewake Shaman",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "human"
+    ],
+    "power": 4,
+    "text": "Play: Deal 2 Damage to a creature."
+  },
+  {
+    "number": "027",
+    "name": "Follow the Leader",
+    "house": "brobnar",
+    "type": "action",
+    "rarity": "Uncommon",
+    "text": "Play: For the remainder of the turn, each friendly creature may fight."
+  },
+  {
+    "number": "028",
+    "name": "Grenade Snib",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "goblin"
+    ],
+    "power": 2,
+    "text": "Destroyed: Your opponent loses 2 Aember."
+  },
+  {
+    "number": "029",
+    "name": "Hebe the Huge",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "knight",
+      "giant"
+    ],
+    "power": 6,
+    "text": "Play: Deal 2 Damage to each other undamaged creature."
+  },
+  {
+    "number": "030",
+    "name": "Mighty Javelin",
+    "house": "brobnar",
+    "type": "artifact",
+    "rarity": "Uncommon",
+    "traits": [
+      "weapon"
+    ],
+    "amber": 1,
+    "text": "Omni: Destroy Mighty Javelin. Deal 4 Damage to a creature."
+  },
+  {
+    "number": "031",
+    "name": "Power of Fire",
+    "house": "brobnar",
+    "type": "action",
+    "rarity": "Uncommon",
+    "text": "Play: Destroy a friendly creature. If you do, each player loses Aember equal to half that creature's power (rounding down the loss). Gain 1 chain."
+  },
+  {
+    "number": "032",
+    "name": "Screechbomb",
+    "house": "brobnar",
+    "type": "artifact",
+    "rarity": "Uncommon",
+    "traits": [
+      "weapon"
+    ],
+    "text": "Omni: Destroy Screechbomb. Your opponent loses 2 Aember."
+  },
+  {
+    "number": "033",
+    "name": "Smith",
+    "house": "brobnar",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Gain 2 Aember if you control more creatures than your opponent."
+  },
+  {
+    "number": "034",
+    "name": "Unguarded Camp",
+    "house": "brobnar",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: For each creature you control in excess of your opponent, a friendly creature captures 1 Aember. Each creature cannot capture more than 1 Aember this way."
+  },
+  {
+    "number": "035",
+    "name": "Vow of Blood",
+    "house": "brobnar",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Enhance Damage Damage.\nPlay: Deal 2 Damage to each damaged enemy creature."
+  },
+  {
+    "number": "036",
+    "name": "Alaka",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "giant"
+    ],
+    "power": 4,
+    "text": "If you have used a creature to fight this turn, Alaka enters play ready."
+  },
+  {
+    "number": "037",
+    "name": "Anger",
+    "house": "brobnar",
+    "type": "action",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "Play: Ready and fight with a friendly creature."
+  },
+  {
+    "number": "038",
+    "name": "Berserker Slam",
+    "house": "brobnar",
+    "type": "action",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "Play: Deal 4 Damage to a flank creature. If this damage destroys that creature, its controller loses 1 Aember."
+  },
+  {
+    "number": "039",
+    "name": "Bosch the Unyielding",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "giant"
+    ],
+    "power": 5,
+    "armor": 1,
+    "text": "Taunt.\nAfter Fight: Fully heal Bosch the Unyielding."
+  },
+  {
+    "number": "040",
+    "name": "Brammo",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "knight",
+      "giant"
+    ],
+    "power": 4,
+    "armor": 1,
+    "text": "Play: Deal 2 Damage to each enemy flank creature."
+  },
+  {
+    "number": "041",
+    "name": "Bumpsy",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "giant"
+    ],
+    "power": 5,
+    "text": "Play: Your opponent loses 1 Aember."
+  },
+  {
+    "number": "042",
+    "name": "Ganger Chieftain",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "giant"
+    ],
+    "power": 5,
+    "text": "Play: You may ready and fight with a neighboring creature."
+  },
+  {
+    "number": "043",
+    "name": "Groke",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "giant"
+    ],
+    "power": 5,
+    "text": "After Fight: Your opponent loses 1 Aember."
+  },
+  {
+    "number": "044",
+    "name": "Headhunter",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "giant"
+    ],
+    "power": 5,
+    "text": "After Fight: Gain 1 Aember."
+  },
+  {
+    "number": "045",
+    "name": "Memorialize the Fallen",
+    "house": "brobnar",
+    "type": "action",
+    "rarity": "Common",
+    "text": "Play: Each player loses Aember equal to the number of creatures in their discard pile."
+  },
+  {
+    "number": "046",
+    "name": "Mogghunter",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "giant"
+    ],
+    "power": 6,
+    "text": "After Fight: Deal 2 Damage to a flank creature."
+  },
+  {
+    "number": "047",
+    "name": "Pelf",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "goblin"
+    ],
+    "power": 3,
+    "text": "Skirmish.\nAfter Fight: Your opponent loses 1 Aember."
+  },
+  {
+    "number": "048",
+    "name": "Pound",
+    "house": "brobnar",
+    "type": "action",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "Play: Deal 2 Damage to a creature, with 1 Damage splash."
+  },
+  {
+    "number": "049",
+    "name": "Rant and Rive",
+    "house": "brobnar",
+    "type": "action",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "Play: If your opponent has 8 Aember or more, they lose half their Aember (rounding down the loss)."
+  },
+  {
+    "number": "050",
+    "name": "Rowdy Skald",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "goblin"
+    ],
+    "power": 4,
+    "text": "Enhance Aember Damage Damage."
+  },
+  {
+    "number": "051",
+    "name": "Troll",
+    "house": "brobnar",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "giant"
+    ],
+    "power": 8,
+    "text": "After Reap: Troll heals 3 damage."
+  },
+  {
+    "number": "052",
+    "name": "Armored Spikes",
+    "house": "brobnar",
+    "type": "upgrade",
+    "rarity": "Special",
+    "amber": 1,
+    "text": "This creature gets +2 armor and gains hazardous 2."
+  },
+  {
+    "number": "053",
+    "name": "Bigger Guns for Everyone",
+    "house": "brobnar",
+    "type": "upgrade",
+    "rarity": "Special",
+    "amber": 1,
+    "text": "This creature gains, \"After Fight: Deal 5 Damage to a creature.\""
+  },
+  {
+    "number": "054",
+    "name": "Shard of Strength",
+    "house": "brobnar",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "item",
+      "shard"
+    ],
+    "text": "Action: Give a friendly creature a +1 power counter for each friendly Shard."
+  },
+  {
+    "number": "055",
+    "name": "Collar of Subordination",
+    "house": "dis",
+    "type": "upgrade",
+    "rarity": "Rare",
+    "text": "You control this creature."
+  },
+  {
+    "number": "056",
+    "name": "Creeping Oblivion",
+    "house": "dis",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Purge up to 2 cards from a discard pile."
+  },
+  {
+    "number": "057",
+    "name": "Dance of Doom",
+    "house": "dis",
+    "type": "action",
+    "rarity": "Rare",
+    "text": "Play: Choose a number. Destroy each creature with power equal to that number."
+  },
+  {
+    "number": "058",
+    "name": "Delta P",
+    "house": "dis",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Destroy an enemy creature. If your opponent controls more creatures than you, repeat this effect."
+  },
+  {
+    "number": "059",
+    "name": "Greater Oxtet",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "demon"
+    ],
+    "power": 4,
+    "text": "Taunt.\nAt the end of your \"ready cards\" step, purge a card from your hand. If you do, give Greater Oxtet two +1 power counters."
+  },
+  {
+    "number": "060",
+    "name": "Guilty Hearts",
+    "house": "dis",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Destroy each creature with Aember on it."
+  },
+  {
+    "number": "061",
+    "name": "Harvest Time",
+    "house": "dis",
+    "type": "action",
+    "rarity": "Rare",
+    "text": "Play: Choose a trait. Purge each card with that trait. Each player gains 1 Aember for each card they controlled that was purged this way."
+  },
+  {
+    "number": "062",
+    "name": "Hecatomb",
+    "house": "dis",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Destroy each Dis creature. Each player gains 1 Aember for each creature they controlled that was destroyed this way."
+  },
+  {
+    "number": "063",
+    "name": "Key to Dis",
+    "house": "dis",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "item"
+    ],
+    "text": "Omni: Destroy Key to Dis. Destroy each creature."
+  },
+  {
+    "number": "064",
+    "name": "Lesser Oxtet",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "demon"
+    ],
+    "power": 3,
+    "text": "Elusive.\nPlay: Purge each card in your hand.\nAfter Reap: Keys cost +3 Aember during your opponent's next turn."
+  },
+  {
+    "number": "065",
+    "name": "Noname",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "demon"
+    ],
+    "power": 1,
+    "text": "Noname gets +1 power for each purged card.\nPlay/After Fight/After Reap: Purge a card in a discard pile."
+  },
+  {
+    "number": "066",
+    "name": "Onyx Knight",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "demon",
+      "knight"
+    ],
+    "power": 4,
+    "text": "Play: Destroy each creature with odd power."
+  },
+  {
+    "number": "067",
+    "name": "Ortannu the Chained",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "demon"
+    ],
+    "power": 7,
+    "text": "After Reap: Return each copy of Ortannu's Binding from your discard pile to your hand. For each one returned this way, deal 2 Damage to a creature, with 2 Damage splash."
+  },
+  {
+    "number": "068",
+    "name": "Restringuntus",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "demon"
+    ],
+    "power": 1,
+    "text": "Play: Choose a house. Your opponent cannot choose that house as their active house until Restringuntus leaves play."
+  },
+  {
+    "number": "069",
+    "name": "Ritual of Tognath",
+    "house": "dis",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 3,
+    "text": "Play: Destroy 2 friendly creatures."
+  },
+  {
+    "number": "070",
+    "name": "Screaming Cave",
+    "house": "dis",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "location"
+    ],
+    "text": "Action: Shuffle your hand and discard pile into your deck."
+  },
+  {
+    "number": "071",
+    "name": "Tolas",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "imp"
+    ],
+    "power": 1,
+    "text": "Elusive.\nAfter a creature is destroyed, its opponent gains 1 Aember."
+  },
+  {
+    "number": "072",
+    "name": "Truebaru",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "demon"
+    ],
+    "power": 7,
+    "text": "You must lose 3 Aember in order to play Truebaru.\nTaunt.\nDestroyed: Gain 5 Aember."
+  },
+  {
+    "number": "073",
+    "name": "Wretched Doll",
+    "house": "dis",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "item"
+    ],
+    "text": "Action: If there is a doom counter in play, destroy each creature with a doom counter. Otherwise, put a doom counter on a creature."
+  },
+  {
+    "number": "074",
+    "name": "Double Doom",
+    "house": "dis",
+    "type": "action",
+    "rarity": "Uncommon",
+    "text": "Play: Return an enemy creature to its owner's hand. Your opponent discards a random card from their hand."
+  },
+  {
+    "number": "075",
+    "name": "Drumble",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "imp"
+    ],
+    "power": 2,
+    "text": "Elusive.\nPlay: If your opponent has 7 Aember or more, capture all of it. (Move all Aember from your opponent's pool to this creature.)"
+  },
+  {
+    "number": "076",
+    "name": "Essence Scale",
+    "house": "dis",
+    "type": "artifact",
+    "rarity": "Uncommon",
+    "traits": [
+      "item"
+    ],
+    "amber": 1,
+    "text": "Action: Destroy a friendly creature. If you do, ready and use a friendly creature that shares a house with the destroyed creature."
+  },
+  {
+    "number": "077",
+    "name": "Flame-Wreathed",
+    "house": "dis",
+    "type": "upgrade",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "This creature gets +2 power and gains hazardous 2. (Before this creature is attacked, deal 2 Damage to the attacking enemy.)"
+  },
+  {
+    "number": "078",
+    "name": "Gleeful Mayhem",
+    "house": "dis",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: For each house, deal 5 Damage to a creature of that house."
+  },
+  {
+    "number": "079",
+    "name": "Gongoozle",
+    "house": "dis",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Deal 3 Damage to a creature. If it is not destroyed, its owner discards a random card from their hand."
+  },
+  {
+    "number": "080",
+    "name": "Hysteria",
+    "house": "dis",
+    "type": "action",
+    "rarity": "Uncommon",
+    "text": "Play: Return each creature to its owner's hand."
+  },
+  {
+    "number": "081",
+    "name": "Hystricog",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "mutant"
+    ],
+    "power": 4,
+    "text": "Enhance Damage Damage Damage.\nAction: Destroy a damaged creature."
+  },
+  {
+    "number": "082",
+    "name": "Library of the Damned",
+    "house": "dis",
+    "type": "artifact",
+    "rarity": "Uncommon",
+    "traits": [
+      "location"
+    ],
+    "text": "Action: Archive a card."
+  },
+  {
+    "number": "083",
+    "name": "Picaroon",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "mutant",
+      "changeling"
+    ],
+    "text": "Deploy.\nX is the combined power of Picaroon's non-Changeling neighbors."
+  },
+  {
+    "number": "084",
+    "name": "Poltergeist",
+    "house": "dis",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Use an artifact controlled by any player as if it were yours. Destroy that artifact."
+  },
+  {
+    "number": "085",
+    "name": "Skullion",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "demon"
+    ],
+    "power": 7,
+    "armor": 2,
+    "text": "Play: Destroy a friendly creature."
+  },
+  {
+    "number": "086",
+    "name": "Snudge",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "demon"
+    ],
+    "power": 4,
+    "text": "After Fight/After Reap: Return an artifact or flank creature to its owner's hand."
+  },
+  {
+    "number": "087",
+    "name": "Spyyyder",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "demon"
+    ],
+    "power": 2,
+    "text": "Skirmish.\nSpyyyder gains poison while attacking an enemy flank creature."
+  },
+  {
+    "number": "088",
+    "name": "Three Fates",
+    "house": "dis",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Destroy the 3 most powerful creatures."
+  },
+  {
+    "number": "089",
+    "name": "Wail of the Damned",
+    "house": "dis",
+    "type": "action",
+    "rarity": "Uncommon",
+    "text": "Enhance Capture.\nPlay: Destroy a creature with no bonus icons."
+  },
+  {
+    "number": "090",
+    "name": "Brabble",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "imp"
+    ],
+    "power": 2,
+    "text": "Destroyed: Your opponent loses 1 Aember. If it is not your turn, your opponent loses 3 Aember instead."
+  },
+  {
+    "number": "091",
+    "name": "Charette",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "demon"
+    ],
+    "power": 4,
+    "text": "Play: Capture 3 Aember. (Move 3 Aember from your opponent's pool to this creature)."
+  },
+  {
+    "number": "092",
+    "name": "Cull the Weak",
+    "house": "dis",
+    "type": "action",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "Play: Destroy the least powerful enemy creature."
+  },
+  {
+    "number": "093",
+    "name": "Dendrix",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "demon"
+    ],
+    "power": 5,
+    "text": "After Fight: Your opponent discards a random card from their hand."
+  },
+  {
+    "number": "094",
+    "name": "Dust Imp",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "imp"
+    ],
+    "power": 2,
+    "text": "Destroyed: Gain 2 Aember."
+  },
+  {
+    "number": "095",
+    "name": "Fear",
+    "house": "dis",
+    "type": "action",
+    "rarity": "Common",
+    "text": "Play: Return an enemy creature to its owner's hand."
+  },
+  {
+    "number": "096",
+    "name": "Imp-losion",
+    "house": "dis",
+    "type": "action",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "Play: Destroy a friendly creature and an enemy creature."
+  },
+  {
+    "number": "097",
+    "name": "Lash of Broken Dreams",
+    "house": "dis",
+    "type": "artifact",
+    "rarity": "Common",
+    "traits": [
+      "weapon"
+    ],
+    "text": "Action: Keys cost +3 Aember during your opponent's next turn."
+  },
+  {
+    "number": "098",
+    "name": "Lilithal",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "demon"
+    ],
+    "power": 5,
+    "text": "After Fight/After Reap: Capture 1 Aember. (Move 1 Aember from your opponent's pool to this creature.)"
+  },
+  {
+    "number": "099",
+    "name": "Misery Exploit",
+    "house": "dis",
+    "type": "action",
+    "rarity": "Common",
+    "text": "Play: Gain 1 Aember for each damaged enemy creature."
+  },
+  {
+    "number": "100",
+    "name": "Pit Demon",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "demon"
+    ],
+    "power": 5,
+    "text": "Action: Steal 1 Aember. (Move 1 Aember from your opponent's pool to your pool.)"
+  },
+  {
+    "number": "101",
+    "name": "Rotgrub",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "beast"
+    ],
+    "power": 1,
+    "text": "Play: Your opponent loses 1 Aember.\nAfter Reap: Archive Rotgrub."
+  },
+  {
+    "number": "102",
+    "name": "Sinder",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "demon"
+    ],
+    "power": 6,
+    "armor": 2,
+    "text": "Taunt.\nAfter Reap: Destroy a friendly creature."
+  },
+  {
+    "number": "103",
+    "name": "Stirring Grave",
+    "house": "dis",
+    "type": "action",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "Play: Archive a creature from your discard pile."
+  },
+  {
+    "number": "104",
+    "name": "The Terror",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "demon",
+      "knight"
+    ],
+    "power": 5,
+    "text": "Play: If your opponent has no Aember, gain 2 Aember."
+  },
+  {
+    "number": "105",
+    "name": "Tocsin",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "demon"
+    ],
+    "power": 3,
+    "text": "After Reap: Your opponent discards a random card from their hand."
+  },
+  {
+    "number": "106",
+    "name": "Dexus",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Special",
+    "traits": [
+      "demon"
+    ],
+    "power": 5,
+    "text": "After your opponent plays a creature on their right flank, they lose 1 Aember."
+  },
+  {
+    "number": "107",
+    "name": "Master of 1",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Special",
+    "traits": [
+      "demon"
+    ],
+    "power": 4,
+    "text": "After Reap: You may destroy a creature with 1 power."
+  },
+  {
+    "number": "108",
+    "name": "Master of 2",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Special",
+    "traits": [
+      "demon"
+    ],
+    "power": 4,
+    "text": "After Reap: You may destroy a creature with 2 power."
+  },
+  {
+    "number": "109",
+    "name": "Master of 3",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Special",
+    "traits": [
+      "demon"
+    ],
+    "power": 4,
+    "text": "After Reap: You may destroy a creature with 3 power."
+  },
+  {
+    "number": "110",
+    "name": "Sinestra",
+    "house": "dis",
+    "type": "creature",
+    "rarity": "Special",
+    "traits": [
+      "demon"
+    ],
+    "power": 5,
+    "text": "After your opponent plays a creature on their left flank, they lose 1 Aember."
+  },
+  {
+    "number": "111",
+    "name": "Ortannu's Binding",
+    "printed": "Ortannu’s Binding",
+    "house": "dis",
+    "type": "action",
+    "rarity": "Special",
+    "amber": 1,
+    "text": "Play: Deal 2 Damage to a friendly creature."
+  },
+  {
+    "number": "112",
+    "name": "Shard of Pain",
+    "house": "dis",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "item",
+      "shard"
+    ],
+    "text": "Action: Deal 1 Damage to an enemy creature for each friendly Shard."
+  },
+  {
+    "number": "113",
+    "name": "Chaos Portal",
+    "house": "logos",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "location"
+    ],
+    "text": "Action: Choose a house. Reveal the top card of your deck. If it is of that house, play it."
+  },
+  {
+    "number": "114",
+    "name": "Crazy Killing Machine",
+    "house": "logos",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "weapon"
+    ],
+    "text": "Action: Discard the top card of each player's deck. For each of those cards, destroy a creature or artifact of that card's house. If 2 cards are not destroyed this way, destroy Crazy Killing Machine."
+  },
+  {
+    "number": "115",
+    "name": "Dysania",
+    "house": "logos",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "mutant"
+    ],
+    "power": 4,
+    "text": "Play: Your opponent discards each card from their archives. You gain 1 Aember for each card discarded this way."
+  },
+  {
+    "number": "116",
+    "name": "Entropic Swirl",
+    "house": "logos",
+    "type": "action",
+    "rarity": "Rare",
+    "text": "Play: Choose a creature. For each trait that creature has, deal 2 Damage to it and gain 1 Aember."
+  },
+  {
+    "number": "117",
+    "name": "Hyde",
+    "house": "logos",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "human",
+      "scientist"
+    ],
+    "power": 4,
+    "text": "After Reap: Draw a card. If you control Velum, draw 2 cards instead.\nDestroyed: Archive Velum from your discard pile. If you do, archive Hyde."
+  },
+  {
+    "number": "118",
+    "name": "Knowledge is Power",
+    "house": "logos",
+    "type": "action",
+    "rarity": "Rare",
+    "text": "Play: Choose one:\nArchive a card.\nGain 1 Aember for each card in your archives."
+  },
+  {
+    "number": "119",
+    "name": "Mind Over Matter",
+    "house": "logos",
+    "type": "action",
+    "rarity": "Rare",
+    "text": "Play: Put each creature into its owner's archives."
+  },
+  {
+    "number": "120",
+    "name": "Project Z.Y.X.",
+    "house": "logos",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "mutant",
+      "cyborg"
+    ],
+    "power": 5,
+    "armor": 1,
+    "text": "After Fight/After Reap: You may play a card from your archives as if it were in your hand and in the active house."
+  },
+  {
+    "number": "121",
+    "name": "Psychic Bug",
+    "house": "logos",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "cyborg",
+      "insect"
+    ],
+    "power": 2,
+    "amber": 1,
+    "text": "Play/After Reap: Look at your opponent's hand."
+  },
+  {
+    "number": "122",
+    "name": "Random Access Archives",
+    "house": "logos",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Archive the top card of your deck."
+  },
+  {
+    "number": "123",
+    "name": "Replicator",
+    "house": "logos",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "mutant"
+    ],
+    "power": 2,
+    "text": "After Reap: Resolve the after reap effect of another creature in play as if you controlled that creature. (That creature does not exhaust.)"
+  },
+  {
+    "number": "124",
+    "name": "Reverse Time",
+    "house": "logos",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Swap your deck and your discard pile. Then, shuffle your deck."
+  },
+  {
+    "number": "125",
+    "name": "Skippy Timehog",
+    "house": "logos",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "mutant"
+    ],
+    "power": 1,
+    "text": "Play: Your opponent cannot use any cards during their next turn. (Cards can still be played and discarded.)"
+  },
+  {
+    "number": "126",
+    "name": "Strange Gizmo",
+    "house": "logos",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "item"
+    ],
+    "amber": 1,
+    "text": "After you forge a key, destroy each creature and artifact."
+  },
+  {
+    "number": "127",
+    "name": "The Howling Pit",
+    "house": "logos",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "location"
+    ],
+    "amber": 1,
+    "text": "Each player refills their hand to 1 additional card during their \"draw cards\" step."
+  },
+  {
+    "number": "128",
+    "name": "Timetraveller",
+    "house": "logos",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "human",
+      "scientist"
+    ],
+    "power": 2,
+    "amber": 1,
+    "text": "Play: Draw 2 cards.\nAction: Shuffle Timetraveller into your deck."
+  },
+  {
+    "number": "129",
+    "name": "Universal Keylock",
+    "house": "logos",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "item"
+    ],
+    "amber": 1,
+    "text": "Keys cost +3 Aember.\nAfter a player forges a key, destroy Universal Keylock."
+  },
+  {
+    "number": "130",
+    "name": "Vespilon Theorist",
+    "house": "logos",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "cyborg",
+      "scientist"
+    ],
+    "power": 2,
+    "text": "Elusive.\nAfter Reap: Choose a house. Reveal the top card of your deck. If it is of that house, archive it and gain 1 Aember. Otherwise, discard it."
+  },
+  {
+    "number": "131",
+    "name": "Zenzizenzizenzic",
+    "house": "logos",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "cyborg",
+      "leader"
+    ],
+    "power": 4,
+    "armor": 2,
+    "text": "While Zenzizenzizenzic is in the center of your battleline, refill your hand to 2 additional cards during your \"draw cards\" step."
+  },
+  {
+    "number": "132",
+    "name": "Anomaly Exploiter",
+    "house": "logos",
+    "type": "artifact",
+    "rarity": "Uncommon",
+    "traits": [
+      "item"
+    ],
+    "text": "Action: Destroy a damaged creature."
+  },
+  {
+    "number": "133",
+    "name": "Backup Copy",
+    "house": "logos",
+    "type": "upgrade",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "This creature gains, \"Destroyed: Put this creature on top of your deck.\""
+  },
+  {
+    "number": "134",
+    "name": "Bouncing Deathquark",
+    "house": "logos",
+    "type": "action",
+    "rarity": "Uncommon",
+    "text": "Play: Destroy an enemy creature and a friendly creature. You may repeat this effect as many times as you like, as long as it is possible to repeat the entire effect."
+  },
+  {
+    "number": "135",
+    "name": "Causal Loop",
+    "house": "logos",
+    "type": "action",
+    "rarity": "Uncommon",
+    "text": "Play: Archive a card. Archive Causal Loop."
+  },
+  {
+    "number": "136",
+    "name": "De-Doss",
+    "house": "logos",
+    "type": "upgrade",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "This creature gains, \"Your opponent cannot play creatures more powerful than this creature.\""
+  },
+  {
+    "number": "137",
+    "name": "Director of Z.Y.X.",
+    "house": "logos",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "cyborg",
+      "scientist"
+    ],
+    "power": 3,
+    "text": "Elusive.\nAt the start of your turn, archive the top card of your deck."
+  },
+  {
+    "number": "138",
+    "name": "Fila the Researcher",
+    "house": "logos",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "human",
+      "scientist"
+    ],
+    "power": 1,
+    "text": "Elusive.\nAfter a creature is played adjacent to Fila the Researcher, draw a card."
+  },
+  {
+    "number": "139",
+    "name": "Neuro Syphon",
+    "house": "logos",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: If your opponent has more Aember than you, steal 1 Aember and draw a card."
+  },
+  {
+    "number": "140",
+    "name": "Novu Archaeologist",
+    "house": "logos",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "cyborg",
+      "scientist"
+    ],
+    "power": 4,
+    "text": "Action: Archive a card from your discard pile."
+  },
+  {
+    "number": "141",
+    "name": "Positron Bolt",
+    "house": "logos",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Deal 3 Damage to a flank creature. Deal 2 Damage to its neighbor. Deal 1 Damage to the second creature's other neighbor."
+  },
+  {
+    "number": "142",
+    "name": "Prof. Garwynne",
+    "house": "logos",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "human",
+      "scientist"
+    ],
+    "power": 3,
+    "text": "Elusive.\nAfter Reap: You may choose a card in your archives and put it into your hand."
+  },
+  {
+    "number": "143",
+    "name": "Quantum Fingertrap",
+    "house": "logos",
+    "type": "artifact",
+    "rarity": "Uncommon",
+    "traits": [
+      "item"
+    ],
+    "amber": 1,
+    "text": "Action: Swap 2 creatures in a battleline."
+  },
+  {
+    "number": "144",
+    "name": "Remote Access",
+    "house": "logos",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Use an enemy artifact as if it were yours."
+  },
+  {
+    "number": "145",
+    "name": "Research Smoko",
+    "house": "logos",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "mutant"
+    ],
+    "power": 2,
+    "text": "Destroyed: Archive the top card of your deck."
+  },
+  {
+    "number": "146",
+    "name": "Seismo-entangler",
+    "house": "logos",
+    "type": "artifact",
+    "rarity": "Uncommon",
+    "traits": [
+      "item"
+    ],
+    "text": "Action: Choose a house. Creatures of the chosen house cannot reap during your opponent's next turn."
+  },
+  {
+    "number": "147",
+    "name": "Sloppy Labwork",
+    "house": "logos",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Archive a card. Discard a card from your hand."
+  },
+  {
+    "number": "148",
+    "name": "Armadrone",
+    "house": "logos",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "robot"
+    ],
+    "power": 1,
+    "armor": 3,
+    "text": "After Fight: Steal 1 Aember. (Move 1 Aember from your opponent's pool to your pool.)"
+  },
+  {
+    "number": "149",
+    "name": "Babbling Bibliophile",
+    "house": "logos",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "cyborg",
+      "scientist"
+    ],
+    "power": 1,
+    "text": "After Reap: Draw 2 cards."
+  },
+  {
+    "number": "150",
+    "name": "Cutthroat Research",
+    "house": "logos",
+    "type": "action",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "Play: Steal 2 Aember if your opponent has 8 Aember or more."
+  },
+  {
+    "number": "151",
+    "name": "Daughter",
+    "house": "logos",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "cyborg",
+      "scientist"
+    ],
+    "power": 2,
+    "text": "Elusive.\nRefill your hand to 1 additional card during your \"draw cards\" step."
+  },
+  {
+    "number": "152",
+    "name": "Diametric Charge",
+    "house": "logos",
+    "type": "action",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "Play: Deal 1 Damage to a creature, with 2 Damage splash."
+  },
+  {
+    "number": "153",
+    "name": "Effervescent Principle",
+    "house": "logos",
+    "type": "action",
+    "rarity": "Common",
+    "text": "Play: Each player loses half their Aember (rounding down the loss). Gain 1 chain."
+  },
+  {
+    "number": "154",
+    "name": "Eyegor",
+    "house": "logos",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "cyborg"
+    ],
+    "power": 2,
+    "text": "Play: Look at the top 3 cards of your deck. Put 1 into your hand and discard the others."
+  },
+  {
+    "number": "155",
+    "name": "Ganymede Archivist",
+    "house": "logos",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "human",
+      "scientist"
+    ],
+    "power": 3,
+    "text": "After Reap: Archive a card."
+  },
+  {
+    "number": "156",
+    "name": "Helper Bot",
+    "house": "logos",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "robot"
+    ],
+    "power": 1,
+    "text": "Play: You may play a non-Logos card this turn."
+  },
+  {
+    "number": "157",
+    "name": "Infomorph",
+    "house": "logos",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "mutant"
+    ],
+    "power": 4,
+    "text": "Enhance Draw Draw."
+  },
+  {
+    "number": "158",
+    "name": "Q-Mechs",
+    "house": "logos",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "robot"
+    ],
+    "power": 1,
+    "text": "Play: Draw a card.\nDestroyed: Archive Q-Mechs."
+  },
+  {
+    "number": "159",
+    "name": "Tautau Vapors",
+    "house": "logos",
+    "type": "action",
+    "rarity": "Common",
+    "text": "Play: Draw 2 cards. Archive a card."
+  },
+  {
+    "number": "160",
+    "name": "Titan Engineer",
+    "house": "logos",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "cyborg",
+      "scientist"
+    ],
+    "power": 6,
+    "text": "While Titan Engineer is not on a flank, keys cost +1 Aember."
+  },
+  {
+    "number": "161",
+    "name": "Twin Bolt Emission",
+    "house": "logos",
+    "type": "action",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "Play: Deal 2 Damage to a creature and deal 2 Damage to a different creature."
+  },
+  {
+    "number": "162",
+    "name": "Wild Wormhole",
+    "house": "logos",
+    "type": "action",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "Play: Play the top card of your deck."
+  },
+  {
+    "number": "163",
+    "name": "Z.Y.X. Researcher",
+    "house": "logos",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "scientist",
+      "human"
+    ],
+    "power": 2,
+    "text": "Play: Archive the top card of your deck or the top card of your discard pile."
+  },
+  {
+    "number": "164",
+    "name": "Help from Future Self",
+    "house": "logos",
+    "type": "action",
+    "rarity": "Special",
+    "amber": 1,
+    "text": "Play: Search your deck and discard pile for a Timetraveller, reveal it, and put it into your hand. Shuffle your discard pile into your deck."
+  },
+  {
+    "number": "165",
+    "name": "Velum",
+    "house": "logos",
+    "type": "creature",
+    "rarity": "Special",
+    "traits": [
+      "human",
+      "scientist"
+    ],
+    "power": 2,
+    "text": "After Reap: Archive a card. If you control Hyde, archive 2 cards instead.\nDestroyed: Archive Hyde from your discard pile. If you do, archive Velum."
+  },
+  {
+    "number": "166",
+    "name": "Shard of Knowledge",
+    "house": "logos",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "item",
+      "shard"
+    ],
+    "text": "Action: Draw a card for each friendly Shard."
+  },
+  {
+    "number": "167",
+    "name": "Anahita the Trader",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "human",
+      "merchant"
+    ],
+    "power": 2,
+    "text": "After Reap: Give control of a friendly artifact to your opponent. If you do, they must pay you 2 Aember."
+  },
+  {
+    "number": "168",
+    "name": "Begone!",
+    "house": "sanctum",
+    "type": "action",
+    "rarity": "Rare",
+    "text": "Play: Choose one:\nDestroy each Dis creature.\nGain 1 Aember."
+  },
+  {
+    "number": "169",
+    "name": "Call to Action",
+    "house": "sanctum",
+    "type": "action",
+    "rarity": "Rare",
+    "text": "Play: Ready each friendly Knight creature."
+  },
+  {
+    "number": "170",
+    "name": "Charge!",
+    "house": "sanctum",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: For the remainder of the turn, each creature you play gains, \"Play: Deal 2 Damage to an enemy creature.\""
+  },
+  {
+    "number": "171",
+    "name": "Duma the Martyr",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "human"
+    ],
+    "power": 3,
+    "text": "Destroyed: Fully heal each other friendly creature and draw 2 cards."
+  },
+  {
+    "number": "172",
+    "name": "Epic Quest",
+    "house": "sanctum",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "quest"
+    ],
+    "text": "Play: Archive each friendly Knight creature from play.\nOmni: If you have played 7 or more Sanctum cards this turn, destroy Epic Quest and forge a key at no cost."
+  },
+  {
+    "number": "173",
+    "name": "Eye of Judgment",
+    "house": "sanctum",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "item"
+    ],
+    "amber": 1,
+    "text": "Action: Purge a creature from a discard pile."
+  },
+  {
+    "number": "174",
+    "name": "Horseman of Pestilence",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "spirit",
+      "horseman"
+    ],
+    "power": 5,
+    "text": "Play/After Fight/After Reap: Deal 1 Damage to each non-Horseman creature."
+  },
+  {
+    "number": "175",
+    "name": "Lord Golgotha",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "knight",
+      "spirit"
+    ],
+    "power": 5,
+    "armor": 2,
+    "text": "Before Fight: Deal 3 Damage to each neighbor of the creature Lord Golgotha fights."
+  },
+  {
+    "number": "176",
+    "name": "Martyr's End",
+    "printed": "Martyr’s End",
+    "house": "sanctum",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Destroy any number of friendly creatures. Gain 1 Aember for each creature destroyed this way."
+  },
+  {
+    "number": "177",
+    "name": "Mighty Lance",
+    "house": "sanctum",
+    "type": "action",
+    "rarity": "Rare",
+    "text": "Play: Deal 3 Damage to a creature and 3 Damage to a neighbor of that creature."
+  },
+  {
+    "number": "178",
+    "name": "Mother Northelle",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "human",
+      "monk"
+    ],
+    "power": 2,
+    "text": "Elusive.\nAfter Reap: Move 1 Aember from a friendly creature to your pool."
+  },
+  {
+    "number": "179",
+    "name": "Numquid the Fair",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "human"
+    ],
+    "power": 3,
+    "text": "Play: Destroy an enemy creature. Repeat this effect if your opponent still controls more creatures than you."
+  },
+  {
+    "number": "180",
+    "name": "Oath of Poverty",
+    "house": "sanctum",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Destroy each friendly artifact. Gain 2 Aember for each artifact destroyed this way."
+  },
+  {
+    "number": "181",
+    "name": "One Stood Against Many",
+    "house": "sanctum",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Ready and fight with a friendly creature 3 times, each time against a different enemy creature. Resolve these fights one at a time."
+  },
+  {
+    "number": "182",
+    "name": "Opal Knight",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "knight",
+      "spirit"
+    ],
+    "power": 5,
+    "text": "Play: Destroy each creature with even power."
+  },
+  {
+    "number": "183",
+    "name": "Orb of Wonder",
+    "house": "sanctum",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "item"
+    ],
+    "text": "Omni: Destroy Orb of Wonder. If you do, search your deck for a card and put it into your hand. Shuffle your deck."
+  },
+  {
+    "number": "184",
+    "name": "Seraphic Armor",
+    "house": "sanctum",
+    "type": "upgrade",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "This creature gets +1 armor.\nPlay: Fully heal this creature."
+  },
+  {
+    "number": "185",
+    "name": "The Corpulent Collector",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "human"
+    ],
+    "power": 7,
+    "text": "Play: Capture all of your opponent's Aember. Deal 1 Damage to The Corpulent Collector for each Aember on it."
+  },
+  {
+    "number": "186",
+    "name": "Veemos Lightbringer",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "angel",
+      "spirit"
+    ],
+    "power": 6,
+    "text": "Play: Destroy each elusive creature."
+  },
+  {
+    "number": "187",
+    "name": "Angry Mob",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "human"
+    ],
+    "power": 4,
+    "text": "Before Fight: You may discard cards from the top of your deck until you discard an Angry Mob or run out of cards. If you discard an Angry Mob this way, put it into your hand."
+  },
+  {
+    "number": "188",
+    "name": "Bring Low",
+    "house": "sanctum",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Enhance Capture.\nPlay: Capture all but 5 of your opponent's Aember, distributed among any number of friendly creatures."
+  },
+  {
+    "number": "189",
+    "name": "Champion Tabris",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "human",
+      "knight"
+    ],
+    "power": 6,
+    "armor": 2,
+    "text": "After Fight: Capture 1 Aember. (Move 1 Aember from your opponent's pool to this creature.)"
+  },
+  {
+    "number": "190",
+    "name": "Doorstep to Heaven",
+    "house": "sanctum",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Each player with 6 Aember or more loses all but 5 of it."
+  },
+  {
+    "number": "191",
+    "name": "Free Markets",
+    "house": "sanctum",
+    "type": "action",
+    "rarity": "Uncommon",
+    "text": "Play: Gain 1 Aember (to a maximum of 6) for each house represented among cards in play, except for Sanctum."
+  },
+  {
+    "number": "192",
+    "name": "Gatekeeper",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "knight",
+      "spirit"
+    ],
+    "power": 5,
+    "armor": 1,
+    "text": "Play: If your opponent has 7 Aember or more, capture all but 5 of it. (Move each Aember from your opponent's pool to this creature.)"
+  },
+  {
+    "number": "193",
+    "name": "Glorious Few",
+    "house": "sanctum",
+    "type": "action",
+    "rarity": "Uncommon",
+    "text": "Play: For each creature your opponent controls in excess of you, gain 1 Aember."
+  },
+  {
+    "number": "194",
+    "name": "Gorm of Omm",
+    "house": "sanctum",
+    "type": "artifact",
+    "rarity": "Uncommon",
+    "traits": [
+      "item"
+    ],
+    "text": "Omni: Destroy Gorm of Omm. Destroy an artifact."
+  },
+  {
+    "number": "195",
+    "name": "Honor or Glory",
+    "house": "sanctum",
+    "type": "action",
+    "rarity": "Uncommon",
+    "text": "Play: Choose one:\nDeal 3 Damage to each flank creature.\nDeal 3 Damage to each creature not on a flank."
+  },
+  {
+    "number": "196",
+    "name": "Lightbringer Outpost",
+    "house": "sanctum",
+    "type": "artifact",
+    "rarity": "Uncommon",
+    "traits": [
+      "location"
+    ],
+    "amber": 1,
+    "text": "Action: Put a friendly creature on the bottom of its owner's deck. If you do, a friendly creature captures 3 Aember. (Move 3 Aember from your opponent's pool to this creature.)"
+  },
+  {
+    "number": "197",
+    "name": "Prince Derric, Unifier",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "human",
+      "knight"
+    ],
+    "power": 4,
+    "armor": 1,
+    "text": "Play: Gain 3 Aember if you control creatures from 3 different houses."
+  },
+  {
+    "number": "198",
+    "name": "Rothais the Fierce",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "human",
+      "knight"
+    ],
+    "power": 4,
+    "armor": 2,
+    "text": "Taunt.\nHazardous 4. (Before this creature is attacked, deal 4 Damage to the attacking enemy.)"
+  },
+  {
+    "number": "199",
+    "name": "Shoulder Armor",
+    "house": "sanctum",
+    "type": "upgrade",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "While this creature is on a flank, it gets +2 armor and +2 power."
+  },
+  {
+    "number": "200",
+    "name": "The Harder They Come",
+    "house": "sanctum",
+    "type": "action",
+    "rarity": "Uncommon",
+    "text": "Play: Purge a creature with power 5 or higher."
+  },
+  {
+    "number": "201",
+    "name": "The Spirit's Way",
+    "printed": "The Spirit’s Way",
+    "house": "sanctum",
+    "type": "action",
+    "rarity": "Uncommon",
+    "text": "Play: Destroy each creature with power 3 or higher."
+  },
+  {
+    "number": "202",
+    "name": "Virtuous Works",
+    "house": "sanctum",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 3
+  },
+  {
+    "number": "203",
+    "name": "Aubade the Grim",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "knight",
+      "spirit"
+    ],
+    "power": 4,
+    "armor": 1,
+    "text": "Play: Capture 3 Aember. (Move 3 Aember from your opponent's pool to this creature.)\nAfter Reap: Return 1 Aember from Aubade the Grim to the common supply."
+  },
+  {
+    "number": "204",
+    "name": "Bordan the Redeemed",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "human",
+      "thief"
+    ],
+    "power": 3,
+    "text": "Elusive.\nAction: Capture 2 Aember. (Move 2 Aember from your opponent's pool to this creature.)"
+  },
+  {
+    "number": "205",
+    "name": "Champion Anaphiel",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "knight",
+      "spirit"
+    ],
+    "power": 6,
+    "armor": 1,
+    "text": "Taunt."
+  },
+  {
+    "number": "206",
+    "name": "Cleansing Wave",
+    "house": "sanctum",
+    "type": "action",
+    "rarity": "Common",
+    "text": "Play: Heal 1 damage from each creature. Gain 1 Aember for each creature healed this way."
+  },
+  {
+    "number": "207",
+    "name": "General Xalvador",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "human",
+      "knight"
+    ],
+    "power": 4,
+    "armor": 2,
+    "text": "Enhance Capture Capture."
+  },
+  {
+    "number": "208",
+    "name": "Inspiration",
+    "house": "sanctum",
+    "type": "action",
+    "rarity": "Common",
+    "text": "Play: Ready and use a friendly creature."
+  },
+  {
+    "number": "209",
+    "name": "Knightapult",
+    "house": "sanctum",
+    "type": "artifact",
+    "rarity": "Common",
+    "traits": [
+      "weapon"
+    ],
+    "text": "Action: The next time a friendly creature enters play this turn, you may have it enter anywhere in your battleline, ready."
+  },
+  {
+    "number": "210",
+    "name": "Ostentatious Mount",
+    "house": "sanctum",
+    "type": "upgrade",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "This creature gains taunt.\nPlay: Move this creature anywhere in its controller's battleline."
+  },
+  {
+    "number": "211",
+    "name": "Raiding Knight",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "human",
+      "knight"
+    ],
+    "power": 4,
+    "armor": 2,
+    "text": "Play: Capture 1 Aember. (Move 1 Aember from your opponent's pool to this creature.)"
+  },
+  {
+    "number": "212",
+    "name": "Retribution",
+    "house": "sanctum",
+    "type": "action",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "Play: If there are more enemy creatures than friendly creatures, destroy an enemy creature."
+  },
+  {
+    "number": "213",
+    "name": "Seeker of Truth",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "human"
+    ],
+    "power": 3,
+    "armor": 1,
+    "text": "After Fight: You may fight with a friendly non-Sanctum creature."
+  },
+  {
+    "number": "214",
+    "name": "Shifting Battlefield",
+    "house": "sanctum",
+    "type": "action",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "Play: Move a friendly creature anywhere in your battleline. That creature captures 1 Aember. (Move 1 Aember from your opponent's pool to that creature.)"
+  },
+  {
+    "number": "215",
+    "name": "Sir Bevor",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "alien",
+      "knight"
+    ],
+    "power": 1,
+    "armor": 5,
+    "text": "Taunt."
+  },
+  {
+    "number": "216",
+    "name": "Terms of Redress",
+    "house": "sanctum",
+    "type": "action",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "Play: A friendly creature captures 2 Aember. (Move 2 Aember from your opponent's pool to any friendly creature.)"
+  },
+  {
+    "number": "217",
+    "name": "The Grey Rider",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "human",
+      "monk"
+    ],
+    "power": 2,
+    "text": "Deploy.\nPlay/After Fight/After Reap: You may ready and fight with a neighboring creature."
+  },
+  {
+    "number": "218",
+    "name": "\"Lion\" Bautrem",
+    "printed": "“Lion” Bautrem",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "human",
+      "knight"
+    ],
+    "power": 4,
+    "armor": 1,
+    "text": "Deploy.\n\"Lion\" Bautrem's neighbors get +2 Power."
+  },
+  {
+    "number": "219",
+    "name": "Horseman of Death",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Special",
+    "traits": [
+      "spirit",
+      "horseman"
+    ],
+    "power": 5,
+    "text": "Play: Return each Horseman creature from your discard pile to your hand."
+  },
+  {
+    "number": "220",
+    "name": "Horseman of Famine",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Special",
+    "traits": [
+      "spirit",
+      "horseman"
+    ],
+    "power": 5,
+    "text": "Play/After Fight/After Reap: Destroy the least powerful creature."
+  },
+  {
+    "number": "221",
+    "name": "Horseman of War",
+    "house": "sanctum",
+    "type": "creature",
+    "rarity": "Special",
+    "traits": [
+      "spirit",
+      "horseman"
+    ],
+    "power": 5,
+    "text": "Play: For the remainder of the turn, each friendly creature can be used as if they were in the active house, but can only fight."
+  },
+  {
+    "number": "222",
+    "name": "Shard of Hope",
+    "house": "sanctum",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "item",
+      "shard"
+    ],
+    "text": "Action: A friendly creature captures 1 Aember for each friendly Shard. (Move 1 Aember from your opponent's pool to a friendly creature.)"
+  },
+  {
+    "number": "223",
+    "name": "Bulleteye",
+    "house": "shadows",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "thief",
+      "elf"
+    ],
+    "power": 2,
+    "text": "Elusive.\nAfter Reap: Destroy a flank creature."
+  },
+  {
+    "number": "224",
+    "name": "Captain No-Beard",
+    "house": "shadows",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "thief",
+      "elf"
+    ],
+    "power": 3,
+    "text": "Each of Captain No-Beard's neighbors gains taunt.\nAfter Reap: Capture 1 Aember. (Move 1 Aember from your opponent's pool to this creature.)"
+  },
+  {
+    "number": "225",
+    "name": "Customs Office",
+    "house": "shadows",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "location"
+    ],
+    "text": "Your opponent must pay you 1 Aember in order to play an artifact."
+  },
+  {
+    "number": "226",
+    "name": "Deipno Spymaster",
+    "house": "shadows",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "thief",
+      "elf"
+    ],
+    "power": 1,
+    "text": "Elusive.\nOmni: Choose a friendly creature. You may use that creature this turn."
+  },
+  {
+    "number": "227",
+    "name": "Easy Marks",
+    "house": "shadows",
+    "type": "action",
+    "rarity": "Rare",
+    "text": "Play: Exalt each damaged enemy creature."
+  },
+  {
+    "number": "228",
+    "name": "Finch Cloak",
+    "house": "shadows",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "thief",
+      "elf"
+    ],
+    "power": 4,
+    "text": "After Fight/After Reap: If you have less Aember than your opponent, steal 1 Aember. Otherwise, each player gains 1 Aember."
+  },
+  {
+    "number": "229",
+    "name": "Finishing Blow",
+    "house": "shadows",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Destroy a damaged creature. If you do, steal 1 Aember."
+  },
+  {
+    "number": "230",
+    "name": "Guard Disguise",
+    "house": "shadows",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "item"
+    ],
+    "text": "Action: Destroy Guard Disguise. If your opponent has 3 Aember or fewer, steal 3 Aember."
+  },
+  {
+    "number": "231",
+    "name": "Longfused Mines",
+    "house": "shadows",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "weapon"
+    ],
+    "amber": 1,
+    "text": "Omni: Destroy Longfused Mines. Deal 3 Damage to each enemy creature not on a flank."
+  },
+  {
+    "number": "232",
+    "name": "Mack the Knife",
+    "house": "shadows",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "thief",
+      "elf"
+    ],
+    "power": 3,
+    "text": "Elusive. Versatile.\nAction: Deal 1 Damage to a creature. If this damage destroys that creature, gain 1 Aember."
+  },
+  {
+    "number": "233",
+    "name": "Manchego",
+    "house": "shadows",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "human",
+      "thief"
+    ],
+    "power": 3,
+    "text": "Play: If you have 5 or fewer cards in your deck, steal 2 Aember.\nAfter Fight/After Reap: You may shuffle Manchego into your deck."
+  },
+  {
+    "number": "234",
+    "name": "Plague Rat",
+    "house": "shadows",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "rat",
+      "beast"
+    ],
+    "power": 1,
+    "text": "Elusive.\nPlay: For each Rat creature in play, deal 1 Damage to each non-Rat creature."
+  },
+  {
+    "number": "235",
+    "name": "Rigged Lottery",
+    "house": "shadows",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Each player discards the top 5 cards of their deck. For each Shadows card discarded, its owner gains 1 Aember."
+  },
+  {
+    "number": "236",
+    "name": "Ring of Invisibility",
+    "house": "shadows",
+    "type": "upgrade",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "This creature gains elusive and skirmish."
+  },
+  {
+    "number": "237",
+    "name": "Routine Job",
+    "house": "shadows",
+    "type": "action",
+    "rarity": "Rare",
+    "text": "Play: Steal 1 Aember. Then, steal 1 Aember for each copy of Routine Job in your discard pile."
+  },
+  {
+    "number": "238",
+    "name": "Sack of Coins",
+    "house": "shadows",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Deal 1 Damage to a creature for each Aember you have."
+  },
+  {
+    "number": "239",
+    "name": "Selwyn the Fence",
+    "house": "shadows",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "thief",
+      "elf"
+    ],
+    "power": 3,
+    "text": "After Fight/After Reap: Move 1 Aember from a friendly card to your pool."
+  },
+  {
+    "number": "240",
+    "name": "Smiling Ruth",
+    "house": "shadows",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "thief",
+      "elf"
+    ],
+    "power": 1,
+    "text": "Elusive.\nAfter Reap: If you forged a key this turn, take control of an enemy flank creature."
+  },
+  {
+    "number": "241",
+    "name": "The Quiet Anvil",
+    "house": "shadows",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "item"
+    ],
+    "amber": 1,
+    "text": "Keys cost -2 Aember.\nAfter a player forges a key, destroy The Quiet Anvil."
+  },
+  {
+    "number": "242",
+    "name": "Boss Zarek",
+    "house": "shadows",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "mutant",
+      "thief"
+    ],
+    "power": 3,
+    "text": "Enhance Capture Capture Capture.\nEach friendly creature with Aember on it gains elusive."
+  },
+  {
+    "number": "243",
+    "name": "Brend the Fanatic",
+    "house": "shadows",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "thief",
+      "elf"
+    ],
+    "power": 3,
+    "text": "Skirmish.\nPlay: Your opponent gains 1 Aember.\nDestroyed: Steal 3 Aember."
+  },
+  {
+    "number": "244",
+    "name": "Chain Gang",
+    "house": "shadows",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "thief",
+      "elf"
+    ],
+    "power": 3,
+    "text": "After you play Subtle Chain, ready Chain Gang.\nAction: Steal 1 Aember. Shuffle a Subtle Chain from your discard pile into your deck."
+  },
+  {
+    "number": "245",
+    "name": "Hidden Stash",
+    "house": "shadows",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Archive a card."
+  },
+  {
+    "number": "246",
+    "name": "Lights Out",
+    "house": "shadows",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Return 2 enemy creatures to their owner's hand."
+  },
+  {
+    "number": "247",
+    "name": "Miasma Bomb",
+    "house": "shadows",
+    "type": "artifact",
+    "rarity": "Uncommon",
+    "traits": [
+      "weapon"
+    ],
+    "text": "Enhance Damage.\nAction: Destroy Miasma Bomb. Your opponent skips the \"forge a key\" step during their next turn."
+  },
+  {
+    "number": "248",
+    "name": "Murkens",
+    "house": "shadows",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "thief",
+      "elf"
+    ],
+    "power": 2,
+    "text": "Play: Choose a random card in your opponent's archives or the top card of your opponent's deck. Play that card as if it were yours."
+  },
+  {
+    "number": "249",
+    "name": "Old Bruno",
+    "house": "shadows",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "thief",
+      "elf"
+    ],
+    "power": 3,
+    "text": "Elusive.\nPlay: Capture 3 Aember. (Move 3 Aember from your opponent's pool to this creature.)"
+  },
+  {
+    "number": "250",
+    "name": "Oubliette",
+    "house": "shadows",
+    "type": "action",
+    "rarity": "Uncommon",
+    "text": "Play: Purge a creature with power 3 or lower."
+  },
+  {
+    "number": "251",
+    "name": "Ransack",
+    "house": "shadows",
+    "type": "action",
+    "rarity": "Uncommon",
+    "text": "Play: Steal 1 Aember. Discard the top card of your deck. If that card is a Shadows card, repeat this effect."
+  },
+  {
+    "number": "252",
+    "name": "Safe House",
+    "house": "shadows",
+    "type": "artifact",
+    "rarity": "Uncommon",
+    "traits": [
+      "location"
+    ],
+    "amber": 1,
+    "text": "Action: Archive a friendly creature from play."
+  },
+  {
+    "number": "253",
+    "name": "Skeleton Key",
+    "house": "shadows",
+    "type": "artifact",
+    "rarity": "Uncommon",
+    "traits": [
+      "item"
+    ],
+    "text": "Action: A friendly creature captures 1 Aember. (Move 1 Aember from your opponent's pool to and friendly creature.)"
+  },
+  {
+    "number": "254",
+    "name": "Subtle Chain",
+    "house": "shadows",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Your opponent discards a random card from their hand."
+  },
+  {
+    "number": "255",
+    "name": "Too Much to Protect",
+    "house": "shadows",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Steal all but 6 of your\nopponent's Aember."
+  },
+  {
+    "number": "256",
+    "name": "Whisper",
+    "house": "shadows",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "thief",
+      "elf"
+    ],
+    "power": 3,
+    "text": "Elusive.\nAction: Lose 1 Aember. If you do, destroy a creature."
+  },
+  {
+    "number": "257",
+    "name": "\"Borrow\"",
+    "printed": "“Borrow”",
+    "house": "shadows",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Take control of an enemy artifact. While under your control, it belongs to house Shadows. (Instead of its original house.)"
+  },
+  {
+    "number": "258",
+    "name": "Bo Nithing",
+    "house": "shadows",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "thief",
+      "elf"
+    ],
+    "power": 2,
+    "text": "Play: Steal 1 Aember for each forged key your opponent has."
+  },
+  {
+    "number": "259",
+    "name": "Dodger",
+    "house": "shadows",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "thief",
+      "elf"
+    ],
+    "power": 5,
+    "text": "After Fight: Steal 1 Aember. (Move 1 Aember from your opponent's pool to your pool.)"
+  },
+  {
+    "number": "260",
+    "name": "Francis the \"Economist\"",
+    "printed": "Francis the “Economist”",
+    "house": "shadows",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "thief",
+      "elf"
+    ],
+    "power": 3,
+    "text": "Skirmish.\nAfter Fight: Each player gains 1 Aember."
+  },
+  {
+    "number": "261",
+    "name": "Hugger-Mugger",
+    "house": "shadows",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "thief",
+      "elf"
+    ],
+    "power": 3,
+    "text": "Elusive.\nPlay: Capture 1 Aember. Then, if your opponent has more forged keys than you, steal 1 Aember."
+  },
+  {
+    "number": "262",
+    "name": "Kerwollop",
+    "house": "shadows",
+    "type": "action",
+    "rarity": "Common",
+    "text": "Play: Deal 1 Damage to each creature. Gain 1 Aember for each creature destroyed this way."
+  },
+  {
+    "number": "263",
+    "name": "Kymoor Eclipse",
+    "house": "shadows",
+    "type": "action",
+    "rarity": "Common",
+    "text": "Play: Shuffle each flank creature into its owner's deck."
+  },
+  {
+    "number": "264",
+    "name": "Life for a Life",
+    "house": "shadows",
+    "type": "action",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "Play: Destroy a friendly creature. If you do, deal 6 Damage to a creature."
+  },
+  {
+    "number": "265",
+    "name": "Look Over There!",
+    "house": "shadows",
+    "type": "action",
+    "rarity": "Common",
+    "text": "Play: Deal 2 Damage to a creature. If it is not destroyed, steal 1 Aember."
+  },
+  {
+    "number": "266",
+    "name": "Mutant Cutpurse",
+    "house": "shadows",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "mutant",
+      "thief"
+    ],
+    "power": 3,
+    "text": "Enhance Damage Damage Damage."
+  },
+  {
+    "number": "267",
+    "name": "Nexus",
+    "house": "shadows",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "cyborg",
+      "thief"
+    ],
+    "power": 3,
+    "text": "Elusive.\nAfter Reap: Use an enemy artifact as if it were yours."
+  },
+  {
+    "number": "268",
+    "name": "Opportunist",
+    "house": "shadows",
+    "type": "upgrade",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "This creature gains elusive.\nPlay: This creature captures 1 Aember from its opponent."
+  },
+  {
+    "number": "269",
+    "name": "Rad Penny",
+    "house": "shadows",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "mutant",
+      "thief"
+    ],
+    "power": 1,
+    "text": "Play: Steal 1 Aember. (Move 1 Aember from your opponent's pool to your pool.)\nDestroyed: Shuffle Rad Penny into your deck."
+  },
+  {
+    "number": "270",
+    "name": "Seeker Needle",
+    "house": "shadows",
+    "type": "artifact",
+    "rarity": "Common",
+    "traits": [
+      "weapon"
+    ],
+    "text": "Action: Deal 1 Damage to a creature. If this damage destroys that creature, gain 1 Aember."
+  },
+  {
+    "number": "271",
+    "name": "Silvertooth",
+    "house": "shadows",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "thief",
+      "elf"
+    ],
+    "power": 2,
+    "text": "Silvertooth enters play ready."
+  },
+  {
+    "number": "272",
+    "name": "Subtle Otto",
+    "house": "shadows",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "mutant",
+      "thief"
+    ],
+    "power": 1,
+    "text": "Play: Your opponent discards a random card from their hand."
+  },
+  {
+    "number": "273",
+    "name": "Umbra",
+    "house": "shadows",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "thief",
+      "elf"
+    ],
+    "power": 2,
+    "text": "Skirmish.\nAfter Fight: Steal 1 Aember. (Move 1 Aember from your opponent's pool to your pool.)"
+  },
+  {
+    "number": "274",
+    "name": "Shard of Greed",
+    "house": "shadows",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "item",
+      "shard"
+    ],
+    "text": "Action: Gain 1 Aember for each friendly Shard."
+  },
+  {
+    "number": "275",
+    "name": "Captain Val Jericho",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "leader",
+      "human"
+    ],
+    "power": 5,
+    "armor": 1,
+    "text": "While Captain Val Jericho is in the center of your battleline, you may play 1 card that is not of the active house during your turn."
+  },
+  {
+    "number": "276",
+    "name": "Ceaseforge",
+    "house": "staralliance",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "law"
+    ],
+    "amber": 1,
+    "text": "Players cannot forge keys.\nAt the start of your turn, remove a time counter from Ceaseforge, then destroy it if there are no time counters on it.\nPlay: Put 2 time counters on Ceaseforge."
+  },
+  {
+    "number": "277",
+    "name": "Cultural Exchange",
+    "house": "staralliance",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Your opponent puts each card from their archives into their hand."
+  },
+  {
+    "number": "278",
+    "name": "Doctor Driscoll",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "human",
+      "scientist"
+    ],
+    "power": 3,
+    "text": "Elusive.\nAction: Heal 2 damage from a creature. Gain 1 Aember for each damage healed this way."
+  },
+  {
+    "number": "279",
+    "name": "Ensign El-Samra",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "mutant"
+    ],
+    "power": 3,
+    "text": "Enhance Draw Draw Draw.\nAction: Reveal a card from your hand. Resolve its bonus icons as if you had played it."
+  },
+  {
+    "number": "280",
+    "name": "Forging an Alliance",
+    "house": "staralliance",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Forge a key at +7 Aember current cost, reduced by 1 Aember (to a maximum of 6) for each house represented among cards in play."
+  },
+  {
+    "number": "281",
+    "name": "Galactic Census",
+    "house": "staralliance",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: If there are exactly 3 or exactly\n4 houses represented among creatures in play, gain 1 Aember. If there are exactly 5, gain 2 Aember. If there are 6 or more, gain 3 Aember."
+  },
+  {
+    "number": "282",
+    "name": "Hapless Cadet",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "alien"
+    ],
+    "power": 3,
+    "text": "Taunt.\nDestroyed: Your opponent loses 3 Aember."
+  },
+  {
+    "number": "283",
+    "name": "Hold the Line",
+    "house": "staralliance",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: If there are more enemy creatures than friendly creatures, draw cards equal to the difference."
+  },
+  {
+    "number": "284",
+    "name": "Jackpot Greene",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "krxix",
+      "alien"
+    ],
+    "power": 2,
+    "text": "After a creature reaps, discard the top card of its controller's deck. If the discarded card is a Star Alliance card, you gain 1 Aember."
+  },
+  {
+    "number": "285",
+    "name": "Kartanoo",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "beast"
+    ],
+    "power": 1,
+    "text": "After Reap: Use an artifact controlled by any player as if it were yours."
+  },
+  {
+    "number": "286",
+    "name": "Operations Officer Yshi",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "spirit"
+    ],
+    "power": 4,
+    "armor": 2,
+    "text": "Taunt.\nEach of Operations Officer Yshi's neighbors gains \"After Fight/After Reap: Capture 1 Aember.\""
+  },
+  {
+    "number": "287",
+    "name": "Peace Accord",
+    "house": "staralliance",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "law"
+    ],
+    "text": "After a player fights with a creature, they lose 4 Aember. Destroy Peace Accord.\nPlay: Each player gains 2 Aember."
+  },
+  {
+    "number": "288",
+    "name": "Plasma Nozzle",
+    "house": "staralliance",
+    "type": "upgrade",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "This creature gains, \"Before Fight: Deal 2 Damage to the attacked creature, with 2 Damage splash.\""
+  },
+  {
+    "number": "289",
+    "name": "Psionic Officer Lang",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "human"
+    ],
+    "power": 3,
+    "text": "After an enemy creature reaps, archive the top card of your deck."
+  },
+  {
+    "number": "290",
+    "name": "Special Agent \"Fingers\"",
+    "printed": "Special Agent “Fingers”",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "thief",
+      "elf"
+    ],
+    "power": 1,
+    "text": "Elusive.\nAction: Steal 1 Aember."
+  },
+  {
+    "number": "291",
+    "name": "Tachyon Pulse",
+    "house": "staralliance",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Destroy each artifact. Exhaust each creature with an upgrade."
+  },
+  {
+    "number": "292",
+    "name": "Uncharted Lands",
+    "house": "staralliance",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "location"
+    ],
+    "text": "Each Star Alliance creature gains, \"After Reap: Move 1 Aember from Uncharted Lands to your pool.\"\nPlay: Place 6 Aember from the common supply on Uncharted Lands."
+  },
+  {
+    "number": "293",
+    "name": "We Can ALL Win",
+    "house": "staralliance",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Keys cost -2 Aember until the end of your next turn."
+  },
+  {
+    "number": "294",
+    "name": "Aembertracker",
+    "printed": "Æmbertracker",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "beast"
+    ],
+    "power": 4,
+    "text": "Play: Deal 2 Damage to each enemy creature with Aember on it. This damage cannot be prevented by armor."
+  },
+  {
+    "number": "295",
+    "name": "ANT1-10NY",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "robot"
+    ],
+    "power": 6,
+    "text": "At the end of your turn, move 1 Aember from ANT1-10NY to your opponent's pool.\nPlay: Capture all of your opponent's Aember."
+  },
+  {
+    "number": "296",
+    "name": "Away Team",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "alien",
+      "robot",
+      "human"
+    ],
+    "power": 5,
+    "text": "Destroyed: Put each upgrade on Away Team into its owner's archives."
+  },
+  {
+    "number": "297",
+    "name": "Badge of Unity",
+    "house": "staralliance",
+    "type": "upgrade",
+    "rarity": "Uncommon",
+    "text": "This creature belongs to house Star Alliance in addition to its other houses."
+  },
+  {
+    "number": "298",
+    "name": "CALV-1N",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "robot"
+    ],
+    "power": 2,
+    "armor": 1,
+    "text": "After Fight/After Reap: Draw a card.\nCALV-1N may be played as an upgrade instead of a creature, with the text: \"This creature gains, 'After Fight/After Reap: Draw a card.'\""
+  },
+  {
+    "number": "299",
+    "name": "Camaraderie",
+    "house": "staralliance",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Exhaust a friendly Star Alliance creature. If you do, draw 2 cards for each of its non-Star Alliance neighbors."
+  },
+  {
+    "number": "300",
+    "name": "Detention Coil",
+    "house": "staralliance",
+    "type": "upgrade",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "This creature cannot fight."
+  },
+  {
+    "number": "301",
+    "name": "Ganymede Outpost",
+    "house": "staralliance",
+    "type": "artifact",
+    "rarity": "Uncommon",
+    "traits": [
+      "location"
+    ],
+    "amber": 1,
+    "text": "Action: Put a friendly creature on the bottom of its owner's deck. If you do, archive 2 cards."
+  },
+  {
+    "number": "302",
+    "name": "Helmsman Spears",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "human"
+    ],
+    "power": 2,
+    "text": "After Fight/After Reap: Discard any number of cards from your hand. Draw a card for each card discarded this way."
+  },
+  {
+    "number": "303",
+    "name": "Information Officer Gray",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "human"
+    ],
+    "power": 4,
+    "text": "Play/After Fight/After Reap: You may reveal a non-Star Alliance card from your hand. If you do, archive it."
+  },
+  {
+    "number": "304",
+    "name": "Lay of the Land",
+    "house": "staralliance",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Look at the top 3 cards of your deck and put them back in any order. Draw a card."
+  },
+  {
+    "number": "305",
+    "name": "Mutagenesis Researcher",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "mutant",
+      "scientist"
+    ],
+    "power": 3,
+    "text": "Enhance Aember Capture Damage Draw."
+  },
+  {
+    "number": "306",
+    "name": "New Frontiers",
+    "house": "staralliance",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Choose a house. Reveal the top 3 cards of your deck. Archive each card of the chosen house and discard the others."
+  },
+  {
+    "number": "307",
+    "name": "Particle Sweep",
+    "house": "staralliance",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Deal 2 Damage to a creature. If it is a Mutant creature, destroy it instead."
+  },
+  {
+    "number": "308",
+    "name": "Quintrino Flux",
+    "house": "staralliance",
+    "type": "action",
+    "rarity": "Uncommon",
+    "text": "Play: Choose a friendly creature and an enemy creature. Destroy the chosen creatures and each creature with the same power as either of the chosen creatures."
+  },
+  {
+    "number": "309",
+    "name": "Universal Translator",
+    "house": "staralliance",
+    "type": "upgrade",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "This creature gains, \"After Fight/After Reap: Use a friendly non-Star Alliance creature.\""
+  },
+  {
+    "number": "310",
+    "name": "Xenotraining",
+    "house": "staralliance",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: For each house represented among friendly creatures, a friendly creature captures 1 Aember."
+  },
+  {
+    "number": "311",
+    "name": "Access Denied",
+    "house": "staralliance",
+    "type": "upgrade",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "This creature cannot reap."
+  },
+  {
+    "number": "312",
+    "name": "CPO Zytar",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "scientist",
+      "proximan",
+      "alien"
+    ],
+    "power": 4,
+    "armor": 1,
+    "text": "Enhance Damage Draw Draw."
+  },
+  {
+    "number": "313",
+    "name": "Com. Officer Kirby",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "human"
+    ],
+    "power": 3,
+    "text": "Play/After Fight/After Reap: You may play a non-Star Alliance artifact, upgrade, or action card this turn."
+  },
+  {
+    "number": "314",
+    "name": "Commander Chan",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "human"
+    ],
+    "power": 4,
+    "text": "After Fight/After Reap: Use another friendly creature."
+  },
+  {
+    "number": "315",
+    "name": "Explo-rover",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "robot"
+    ],
+    "power": 3,
+    "text": "Skirmish.\nExplo-rover may be played as an upgrade instead of a creature, with the text: \"This creature gains skirmish.\""
+  },
+  {
+    "number": "316",
+    "name": "First Officer Frane",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "human"
+    ],
+    "power": 4,
+    "text": "Play/After Fight/After Reap: A friendly creature captures 1 Aember. (Move 1 Aember from your opponent's pool to any friendly creature.)"
+  },
+  {
+    "number": "317",
+    "name": "Observ-u-Max",
+    "house": "staralliance",
+    "type": "upgrade",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "This creature gains, \"After Fight/After Reap: Capture 1 Aember.\""
+  },
+  {
+    "number": "318",
+    "name": "Rogue Operation",
+    "house": "staralliance",
+    "type": "action",
+    "rarity": "Common",
+    "text": "Play: Discard the top 2 cards of your deck. Steal 1 Aember for each house represented among the discarded cards."
+  },
+  {
+    "number": "319",
+    "name": "Scout Pete",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "alien"
+    ],
+    "power": 4,
+    "text": "Play/After Fight/After Reap: Look at the top card of your deck. You may discard that card."
+  },
+  {
+    "number": "320",
+    "name": "Securi-Droid",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "robot"
+    ],
+    "power": 4,
+    "text": "Taunt.\nSecuri-Droid may be played as an upgrade instead of a creature, with the text: \"This creature gains taunt.\""
+  },
+  {
+    "number": "321",
+    "name": "Shield-U-Later",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "robot"
+    ],
+    "power": 3,
+    "armor": 2,
+    "text": "Shield-U-Later may be played as an upgrade instead of a creature, with the text: \"This creature gets +2 armor.\""
+  },
+  {
+    "number": "322",
+    "name": "Survey",
+    "house": "staralliance",
+    "type": "action",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "Enhance Draw.\nPlay: Look at the top 2 cards of your deck. Discard 1 of them."
+  },
+  {
+    "number": "323",
+    "name": "Teleporter Chief Tink",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "alien"
+    ],
+    "power": 2,
+    "text": "Elusive.\nAction: Swap Teleporter Chief Tink with another friendly creature in the battleline. You may use that other creature this turn."
+  },
+  {
+    "number": "324",
+    "name": "Unity or Discord",
+    "house": "staralliance",
+    "type": "action",
+    "rarity": "Common",
+    "text": "Play: Choose one:\nUse a friendly non-Star Alliance creature.\nReturn up to 2 friendly creatures and each upgrade attached to them to their owners' hands."
+  },
+  {
+    "number": "325",
+    "name": "Zap",
+    "house": "staralliance",
+    "type": "action",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "Play: Deal 1 Damage to a creature for each house represented among creatures in play."
+  },
+  {
+    "number": "326",
+    "name": "Dino-Alien",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Special",
+    "traits": [
+      "alien",
+      "mutant"
+    ],
+    "power": 5,
+    "text": "Play: You may exalt Dino-Alien. If you do, deal 3 Damage to a creature.\nAfter Fight: Look at the top 3 cards of your deck. Put 1 into your hand and 1 on the bottom of your deck."
+  },
+  {
+    "number": "327",
+    "name": "Daemo-Alien",
+    "printed": "Dæmo-Alien",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Special",
+    "traits": [
+      "alien",
+      "mutant"
+    ],
+    "power": 3,
+    "text": "After Fight: Look at the top 3 cards of your deck. Put 1 into your hand and 1 on the bottom of your deck.\nDestroyed: Steal 1 Aember."
+  },
+  {
+    "number": "328",
+    "name": "Lyco-Alien",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Special",
+    "traits": [
+      "alien",
+      "mutant"
+    ],
+    "power": 4,
+    "text": "Skirmish.\nAfter Fight: Look at the top 3 cards of your deck. Put 1 into your hand and 1 on the bottom of your deck."
+  },
+  {
+    "number": "329",
+    "name": "Sacro-Alien",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Special",
+    "traits": [
+      "alien",
+      "mutant"
+    ],
+    "power": 5,
+    "armor": 2,
+    "text": "After Fight: Look at the top 3 cards of your deck. Put 1 into your hand and 1 on the bottom of your deck."
+  },
+  {
+    "number": "330",
+    "name": "Techno-Alien",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Special",
+    "traits": [
+      "alien",
+      "mutant"
+    ],
+    "power": 4,
+    "text": "After Fight: Look at the top 3 cards of your deck. Put 1 into your hand and 1 on the bottom of your deck.\nAfter Reap: Discard a card from your hand. If you do, draw a card."
+  },
+  {
+    "number": "331",
+    "name": "Umbra-Alien",
+    "house": "staralliance",
+    "type": "creature",
+    "rarity": "Special",
+    "traits": [
+      "alien",
+      "mutant"
+    ],
+    "power": 3,
+    "text": "Elusive.\nAfter Fight: Look at the top 3 cards of your deck. Put 1 into your hand and 1 on the bottom of your deck."
+  },
+  {
+    "number": "332",
+    "name": "Chonkers",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "mutant"
+    ],
+    "power": 1,
+    "text": "Skirmish.\nAfter an enemy creature is destroyed fighting Chonkers, double the number of +1 power counters on Chonkers.\nPlay: Give Chonkers a +1 power counter."
+  },
+  {
+    "number": "333",
+    "name": "Dark Queen Gloriana",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "mutant"
+    ],
+    "power": 3,
+    "text": "Enhance Aember Aember.\nPlay: Return a friendly non-Untamed creature to your hand."
+  },
+  {
+    "number": "334",
+    "name": "Fertility Chant",
+    "house": "untamed",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 4,
+    "text": "Play: Your opponent gains 2 Aember."
+  },
+  {
+    "number": "335",
+    "name": "Fuzzy Gruen",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "beast"
+    ],
+    "power": 5,
+    "amber": 2,
+    "text": "Play: Your opponent gains 1 Aember."
+  },
+  {
+    "number": "336",
+    "name": "Kindrith Longshot",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "ranger",
+      "human"
+    ],
+    "power": 3,
+    "text": "Elusive. Skirmish.\nAfter Reap: Deal 2 Damage to a creature."
+  },
+  {
+    "number": "337",
+    "name": "Lupo the Scarred",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "beast"
+    ],
+    "power": 6,
+    "text": "Skirmish.\nPlay: Deal 2 Damage to an enemy creature."
+  },
+  {
+    "number": "338",
+    "name": "Mighty Tiger",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "beast"
+    ],
+    "power": 4,
+    "text": "Play: Deal 4 Damage to an enemy creature."
+  },
+  {
+    "number": "339",
+    "name": "Moor Wolf",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "wolf",
+      "beast"
+    ],
+    "power": 2,
+    "text": "Skirmish.\nPlay: Ready each other Wolf creature."
+  },
+  {
+    "number": "340",
+    "name": "Perilous Wild",
+    "house": "untamed",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Destroy each elusive creature."
+  },
+  {
+    "number": "341",
+    "name": "Piranha Monkeys",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "beast"
+    ],
+    "power": 2,
+    "text": "Play/After Reap: Deal 2 Damage to each other creature."
+  },
+  {
+    "number": "342",
+    "name": "Punctuated Equilibrium",
+    "house": "untamed",
+    "type": "action",
+    "rarity": "Rare",
+    "text": "Play: Each player discards their hand, then refills their hand as if it were their \"draw cards\" step."
+  },
+  {
+    "number": "343",
+    "name": "Quicksand",
+    "house": "untamed",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Destroy the most powerful creature controlled by each player who does not control a ready Untamed creature."
+  },
+  {
+    "number": "344",
+    "name": "Ritual of Life",
+    "house": "untamed",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "power"
+    ],
+    "text": "Action: Destroy a friendly creature. If you do, return a different creature from your discard pile to your hand."
+  },
+  {
+    "number": "345",
+    "name": "Scout",
+    "house": "untamed",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: For the remainder of the turn, up to 2 friendly creatures gain skirmish. Fight with those creatures one at a time."
+  },
+  {
+    "number": "346",
+    "name": "Stampede",
+    "house": "untamed",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: If you used 3 or more creatures this turn, steal 2 Aember."
+  },
+  {
+    "number": "347",
+    "name": "Teliga",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "human",
+      "witch"
+    ],
+    "power": 3,
+    "text": "After your opponent plays a creature, gain 1 Aember."
+  },
+  {
+    "number": "348",
+    "name": "The Mysticeti",
+    "house": "untamed",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "ship",
+      "beast"
+    ],
+    "text": "Action: Exhaust 1 or more friendly Untamed creatures. If you do, give The Mysticeti three +1 power counters for each creature exhausted this way and move it anywhere in your battleline as a creature with 0 power and taunt."
+  },
+  {
+    "number": "349",
+    "name": "Word of Returning",
+    "house": "untamed",
+    "type": "action",
+    "rarity": "Rare",
+    "amber": 1,
+    "text": "Play: Deal 1 Damage to each enemy creature for each Aember on it. Move each Aember from those creatures to your pool."
+  },
+  {
+    "number": "350",
+    "name": "Aemberfin Shark",
+    "printed": "Æmberfin Shark",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Rare",
+    "traits": [
+      "beast"
+    ],
+    "power": 3,
+    "text": "At the end of your turn, remove a +1 power counter from Aemberfin Shark. If you do, each player gains 1 Aember.\nPlay: Give Aemberfin Shark three +1 power counters."
+  },
+  {
+    "number": "351",
+    "name": "Flaxia",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "faerie"
+    ],
+    "power": 4,
+    "text": "Play: Gain 2 Aember if you control more creatures than your opponent."
+  },
+  {
+    "number": "352",
+    "name": "Genetic Drift",
+    "house": "untamed",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Give a creature a +1 power counter. Then give each creature with a +1 power counter another +1 power counter."
+  },
+  {
+    "number": "353",
+    "name": "Grasping Vines",
+    "house": "untamed",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Return up to 3 artifacts to their owners' hands."
+  },
+  {
+    "number": "354",
+    "name": "Growth Surge",
+    "house": "untamed",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Give a flank creature three +1 power counters. Give its neighbor two +1 power counters. Give the second creature's other neighbor a +1 power counter."
+  },
+  {
+    "number": "355",
+    "name": "Instrument of Silence",
+    "house": "untamed",
+    "type": "upgrade",
+    "rarity": "Uncommon",
+    "text": "This creature gains skirmish and, \"After Fight: Gain 1 Aember.\""
+  },
+  {
+    "number": "356",
+    "name": "Mab the Mad",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "faerie"
+    ],
+    "power": 2,
+    "amber": 1,
+    "text": "After Reap: Shuffle Mab the Mad into your deck."
+  },
+  {
+    "number": "357",
+    "name": "Panpaca, Anga",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "beast"
+    ],
+    "power": 5,
+    "text": "Creatures to the right of Panpaca, Anga in the battleline get +2 power."
+  },
+  {
+    "number": "358",
+    "name": "Panpaca, Jaga",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "beast"
+    ],
+    "power": 3,
+    "text": "Skirmish.\nCreatures to the left of Panpaca, Jaga in the battleline gain skirmish."
+  },
+  {
+    "number": "359",
+    "name": "Ritual of Balance",
+    "house": "untamed",
+    "type": "artifact",
+    "rarity": "Uncommon",
+    "traits": [
+      "power"
+    ],
+    "text": "Action: If your opponent has 6 Aember or more, steal 1 Aember."
+  },
+  {
+    "number": "360",
+    "name": "Soldiers to Flowers",
+    "house": "untamed",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Purge each Untamed creature from each player's discard pile. For each card purged this way, its owner gains 1 Aember."
+  },
+  {
+    "number": "361",
+    "name": "Sporegorger",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "fungus",
+      "beast"
+    ],
+    "power": 4,
+    "text": "After Reap: Give Sporegorger a +1 power counter. You may remove each +1 power counter from Sporegorger. For each counter removed this way, deal 1 Damage to each other creature."
+  },
+  {
+    "number": "362",
+    "name": "Thin the Herd",
+    "house": "untamed",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Shuffle the 4 least powerful creatures into their owners' decks."
+  },
+  {
+    "number": "363",
+    "name": "Waste Not",
+    "house": "untamed",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Destroy a friendly creature. Draw cards equal to half that creature's power (rounding up)."
+  },
+  {
+    "number": "364",
+    "name": "Way of the Wolf",
+    "house": "untamed",
+    "type": "upgrade",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "This creature gains skirmish."
+  },
+  {
+    "number": "365",
+    "name": "Aembermancy",
+    "printed": "Æmbermancy",
+    "house": "untamed",
+    "type": "action",
+    "rarity": "Uncommon",
+    "amber": 1,
+    "text": "Play: Remove up to three +1 power counters from a creature. Gain 1 Aember for each counter removed this way."
+  },
+  {
+    "number": "366",
+    "name": "Aemberspine Mongrel",
+    "printed": "Æmberspine Mongrel",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Uncommon",
+    "traits": [
+      "beast"
+    ],
+    "power": 3,
+    "text": "Hazardous 3. (Before this creature is attacked, deal 3 Damage to the attacking enemy.)\nAfter an enemy creature reaps, gain 1 Aember."
+  },
+  {
+    "number": "367",
+    "name": "Bramble Lynx",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "beast"
+    ],
+    "power": 3,
+    "text": "Skirmish.\nIf you have used a creature to reap this turn, Bramble Lynx enters play ready."
+  },
+  {
+    "number": "368",
+    "name": "Dark Faerie",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "mutant"
+    ],
+    "power": 2,
+    "text": "Skirmish.\nAfter Fight: Gain 2 Aember."
+  },
+  {
+    "number": "369",
+    "name": "Floomf",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "cat",
+      "beast"
+    ],
+    "power": 3,
+    "text": "Skirmish.\nAfter Fight: Give a Beast creature two +1 power counters."
+  },
+  {
+    "number": "370",
+    "name": "Gloriana's Attendant",
+    "printed": "Gloriana’s Attendant",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "mutant"
+    ],
+    "power": 1,
+    "text": "Enhance Aember Aember."
+  },
+  {
+    "number": "371",
+    "name": "Keyfrog",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "beast"
+    ],
+    "power": 2,
+    "text": "Destroyed: Forge a key at current cost."
+  },
+  {
+    "number": "372",
+    "name": "Knoxx",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "beast"
+    ],
+    "power": 3,
+    "text": "Knoxx gets +3 power for each neighbor it has."
+  },
+  {
+    "number": "373",
+    "name": "Lost in the Woods",
+    "house": "untamed",
+    "type": "action",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "Play: Shuffle 2 friendly creatures and 2 enemy creatures into their owners' decks."
+  },
+  {
+    "number": "374",
+    "name": "Mollymawk",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "beast"
+    ],
+    "power": 5,
+    "text": "Play: Destroy an artifact."
+  },
+  {
+    "number": "375",
+    "name": "Musthic Murmook",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "beast"
+    ],
+    "power": 4,
+    "text": "Each player's keys cost +1 Aember.\nPlay: Deal 4 Damage to a creature."
+  },
+  {
+    "number": "376",
+    "name": "Nocturnal Maneuver",
+    "house": "untamed",
+    "type": "action",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "Play: Exhaust up to 3 creatures."
+  },
+  {
+    "number": "377",
+    "name": "Rapid Evolution",
+    "house": "untamed",
+    "type": "action",
+    "rarity": "Common",
+    "amber": 1,
+    "text": "Play: Choose a creature. Give it a +1 power counter for each Aember you have."
+  },
+  {
+    "number": "378",
+    "name": "Reap or Sow",
+    "house": "untamed",
+    "type": "action",
+    "rarity": "Common",
+    "text": "Play: Choose one:\nReady and reap with a friendly creature.\nGive three +1 power counters to creatures, distributed as you choose."
+  },
+  {
+    "number": "379",
+    "name": "Savage Clash",
+    "house": "untamed",
+    "type": "action",
+    "rarity": "Common",
+    "text": "Play: Destroy each creature except the most powerful enemy creature and the least powerful friendly creature."
+  },
+  {
+    "number": "380",
+    "name": "Snufflegator",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "beast"
+    ],
+    "power": 4,
+    "text": "Skirmish."
+  },
+  {
+    "number": "381",
+    "name": "Way of the Pixie",
+    "house": "untamed",
+    "type": "upgrade",
+    "rarity": "Common",
+    "text": "This creature gains, \"After Reap: Gain 1 Aember.\""
+  },
+  {
+    "number": "382",
+    "name": "Witch of the Eye",
+    "house": "untamed",
+    "type": "creature",
+    "rarity": "Common",
+    "traits": [
+      "human",
+      "witch"
+    ],
+    "power": 3,
+    "text": "After Reap: Return a card from your discard pile to your hand."
+  },
+  {
+    "number": "383",
+    "name": "Shard of Life",
+    "house": "untamed",
+    "type": "artifact",
+    "rarity": "Rare",
+    "traits": [
+      "item",
+      "shard"
+    ],
+    "text": "Action: Shuffle a card from your discard pile into your deck for each friendly Shard."
+  }
+]

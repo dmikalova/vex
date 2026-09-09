@@ -75,6 +75,39 @@ func TestForgedKeyCondition(t *testing.T) {
 	}
 }
 
+// TestAemberStolenFromYouCondition covers the tally a steal bumps, its rollover
+// into the victim's "previous turn" window, and the condition that reads it.
+func TestAemberStolenFromYouCondition(t *testing.T) {
+	c := AemberStolenFromYou{}
+	if got := c.CondText(); got != "if your opponent stole Æmber from you on their previous turn" {
+		t.Errorf("CondText = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	victim := &EffectContext{Resolver: g, Controller: 1}
+	if c.Met(victim) {
+		t.Error("nothing stolen yet, condition should be unmet")
+	}
+
+	// Player 0 steals from player 1 during player 0's turn.
+	g.SetAember(1, 3)
+	StealAember{Amount: 2}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if got := g.TurnHistory(1, AemberStolenFromThisTurn); got != 2 {
+		t.Fatalf("stolen-from this turn = %d, want 2", got)
+	}
+	if c.Met(victim) {
+		t.Error("the theft is only this turn, not yet the previous turn")
+	}
+
+	g.EndPlayPhase(0) // player 0's turn ends, arming player 1's previous-turn window
+	if got := g.TurnHistory(1, AemberStolenFromLastTurn); got != 2 {
+		t.Fatalf("stolen-from last turn = %d, want 2", got)
+	}
+	if !c.Met(victim) {
+		t.Error("player 1 was robbed on player 0's previous turn, condition should be met")
+	}
+}
+
 func TestEnemyCreatureDestroyedCondition(t *testing.T) {
 	c := EnemyCreatureDestroyed{}
 	if got := c.CondText(); got != "if an enemy creature has been destroyed this turn" {

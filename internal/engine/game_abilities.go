@@ -513,6 +513,22 @@ func (g *Game) emitCreaturePlayedAdjacent(played LocalID) {
 	}
 }
 
+// emitCreaturePlayed fires the "after a creature is played" reaction on every
+// in-play card of both players except the played creature, with the played
+// creature as "it" (The Big One). It fires only on an actual play from hand — the
+// play path calls it — so a creature put into play by another effect does not, and
+// it reaches the whole board, not only the played creature's neighbours.
+func (g *Game) emitCreaturePlayed(played LocalID) {
+	for player := 0; player < 2; player++ {
+		for _, id := range g.allInPlay(player) {
+			if id == played {
+				continue
+			}
+			g.triggerAbilities(id, TriggerAfterCreaturePlayed, played, true)
+		}
+	}
+}
+
 // emitAfterEnemyDestroyed fires the persistent "after an enemy creature is
 // destroyed during your turn" reaction (Pile of Skulls) on the active player's
 // in-play cards. It fires only for the active player, and only when the destroyed

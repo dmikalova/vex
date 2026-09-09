@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// GujiDinosaurHunter
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Guji Dinosaur Hunter
 //
 //	House:  Brobnar
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant • Hunter
 //
 //	Elusive.
-//	Action: Deal 2D to a creature. Deal 6D instead if it is a Dinosaur creature or has A on it.
+//	Action: Choose a creature - if it is a Dinosaur creature or it has Æmber on it, deal 6 damage to it. Otherwise, deal 2 damage to it.
 var GujiDinosaurHunter = card.New(
 	"Guji Dinosaur Hunter",
 	card.House.Brobnar,
@@ -25,5 +20,17 @@ var GujiDinosaurHunter = card.New(
 	card.Provenance(card.WC, "38"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Giant, card.Traits.Hunter),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithAbility(
+		card.Trigger.Action, card.ChooseCreatureThen{
+			Target: card.Target.Creature,
+			Then: card.Conditional{
+				Cond: card.Or{Conditions: []card.Condition{
+					card.ItIsOfTrait{Trait: card.Traits.Dinosaur},
+					card.ItHasAember{},
+				}},
+				Then: card.DealDamage{Amount: 6, Target: card.Target.Triggering},
+				Else: card.DealDamage{Amount: 2, Target: card.Target.Triggering},
+			},
+		}),
 )

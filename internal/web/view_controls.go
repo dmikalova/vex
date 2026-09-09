@@ -3,6 +3,8 @@ package web
 import (
 	"fmt"
 	"sort"
+	"strconv"
+	"strings"
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
@@ -50,6 +52,39 @@ func (g *game) promptSourceHeader() app.UI {
 			}),
 		)
 	})
+}
+
+// promptCardButtons lists a bounded out-of-play card prompt's candidates as
+// action-bar buttons — a "look at the top N cards" pick (Navigator Ali, Lay of
+// the Land) reads as a few named buttons instead of a modal over the deck. Each
+// button names its card, previews it on hover (the same preview a log mention
+// opens), and answers the prompt on click. A reorder-the-top prompt adds the note
+// that the last card picked ends up on top, since each pick is placed on top of
+// the one before it.
+func (g *game) promptCardButtons() app.UI {
+	body := make([]app.UI, 0, len(g.chooserCandidates)+1)
+	// The reorder prompt places each pick on top of the previous, so the last pick
+	// finishes on top; the note keys off that prompt's wording rather than the card.
+	if strings.Contains(g.chooserPrompt, "on top") {
+		body = append(body,
+			app.Div().Class("hint").Text("The last card you pick ends up on top."))
+	}
+	for _, id := range g.chooserCandidates {
+		def := g.g.Def(id)
+		cursor := ifCls(g.hasCursor && g.promptCursor == id, "btn-cursor")
+		body = append(body, app.Button().
+			Class(cx("btn-secondary", "prompt-pick", cursor)).
+			DataSet("id", strconv.Itoa(int(id))).
+			DataSet("card", def.Name).
+			OnMouseEnter(g.onLogCardHover).
+			OnMouseLeave(g.onCardHoverOut).
+			OnClick(g.onPromptButtonPick).
+			Body(
+				houseIcon(g.g.House(id), "icon-inline"),
+				app.Span().Class("prompt-pick-name").Text(def.Name),
+			))
+	}
+	return app.Div().Class("btn-col", "prompt-picks").Body(body...)
 }
 
 // promptSourceHouse looks up the live house of the card driving a prompt, so a
@@ -154,15 +189,12 @@ func (g *game) controls() app.UI {
 		}
 		return app.Div().Class("controls").Body(body...)
 	}
-	// A Deploy placement lights the battleline and asks the player to click a
-	// creature to land beside — or take a flank — so the controls become the
-	// direction toggle and flank shortcuts rather than a button per gap.
+	// Placing a Deploy creature lights the battleline as click targets and asks its
+	// where question on the lifted card (deployActions), exactly like the flank
+	// question, so the dock shows the resting controls disabled rather than a panel
+	// of its own.
 	if g.choosingPosition {
-		body := []app.UI{g.promptSourceHeader(), g.positionChooser()}
-		if g.g.Manual() {
-			body = append(body, btn("Cancel", g.cancelChooser, "btn-secondary"))
-		}
-		return app.Div().Class("controls").Body(body...)
+		return app.Div().Class("controls").Body(g.disabledEndTurnBar())
 	}
 	// While an engine chooser waits, the controls become the prompt itself: a
 	// green call to action to click one of the highlighted cards.
@@ -170,6 +202,12 @@ func (g *game) controls() app.UI {
 		body := []app.UI{
 			g.promptSourceHeader(),
 			app.Div().Class("prompt").Text(g.chooserPrompt),
+		}
+		// A bounded out-of-play pick (look at the top N cards) lists its candidates as
+		// buttons here rather than opening the zone viewer, so the whole choice reads
+		// in the action bar.
+		if g.promptAsButtons {
+			body = append(body, g.promptCardButtons())
 		}
 		// An optional prompt ("you may", "up to N") is passed on with Done. Manual mode
 		// adds a Cancel on every prompt — optional or mandatory — that backs the whole
@@ -368,28 +406,6 @@ func containsHouse(houses []engine.House, h engine.House) bool {
 // every option is a way of using a creature (a reap/fight/action prompt another
 // card raised) it shows the standard use buttons, so a triggered use reads like a
 // chosen one. Anything else falls back to plain primary buttons.
-// positionChooser renders the Deploy placement controls: a direction toggle
-// (place a clicked creature to its left or right, the armed side shown filled)
-// and the two flank shortcuts. The battleline itself is the rest of the picker —
-// its creatures light as click targets in cardVisual.
-func (g *game) positionChooser() app.UI {
-	dirClass := func(armed bool) string {
-		if armed {
-			return "btn-primary"
-		}
-		return "btn-secondary"
-	}
-	return app.Div().Class("btn-col").Body(
-		app.Div().Class("prompt").Text(g.positionPrompt),
-		btn("Deploy left of a creature", g.setPositionDir(false), dirClass(!g.positionRight)),
-		btn("Deploy right of a creature", g.setPositionDir(true), dirClass(g.positionRight)),
-		btn("Left flank", g.choosePositionFlank(true),
-			cx("btn-primary", "btn-flank", "btn-flank--left")),
-		btn("Right flank", g.choosePositionFlank(false),
-			cx("btn-primary", "btn-flank", "btn-flank--right")),
-	)
-}
-
 func (g *game) optionChooser() app.UI {
 	if g.keyColorOptions() {
 		return app.Div().Class("btn-col").Body(
@@ -528,6 +544,12 @@ func (g *game) selActions() ([]cardAction, string) {
 	if g.inspecting || g.boardInert() {
 		return nil, ""
 	}
+	// A Deploy creature is lifted while its position prompt is up: its placement
+	// verbs sit on the card being placed, like the flank question but extended with
+	// the interior deploy options.
+	if g.choosingPosition {
+		return g.deployActions()
+	}
 	if g.phase == phaseFlank {
 		return g.flankActions()
 	}
@@ -553,6 +575,36 @@ func (g *game) flankActions() ([]cardAction, string) {
 			ifCls(g.isButtonCursor(1), "btn-cursor")), g.playFlank(false)},
 		{"Cancel", "btn-secondary", g.cancelTargeting},
 	}, ""
+}
+
+// deployActions is the Deploy placement question, asked on the creature being
+// placed like the flank question but extended for a creature that may enter
+// anywhere in the line. Ordered left-to-right, the ends are the flanks (answered
+// at once) and the interior "deploy left"/"deploy right" arm which side of a
+// clicked battleline creature it lands on — the armed side reads filled, the
+// battleline lighting its creatures as the click targets. Cancel appears only in
+// manual mode, the one place a play can be backed out mid-action.
+func (g *game) deployActions() ([]cardAction, string) {
+	dirCls := func(armed bool) string {
+		if armed {
+			return "btn-primary"
+		}
+		return "btn-secondary"
+	}
+	acts := []cardAction{
+		{"Left flank", cx("btn-primary", "btn-flank", "btn-flank--left"),
+			g.choosePositionFlank(true)},
+		{"Deploy left", cx(dirCls(!g.positionRight), "btn-flank", "btn-flank--left"),
+			g.setPositionDir(false)},
+		{"Deploy right", cx(dirCls(g.positionRight), "btn-flank", "btn-flank--right"),
+			g.setPositionDir(true)},
+		{"Right flank", cx("btn-primary", "btn-flank", "btn-flank--right"),
+			g.choosePositionFlank(false)},
+	}
+	if g.g.Manual() {
+		acts = append(acts, cardAction{"Cancel", "btn-secondary", g.cancelChooser})
+	}
+	return acts, ""
 }
 
 func (g *game) handCardActions() ([]cardAction, string) {
@@ -645,11 +697,17 @@ func useVerbKindOfLabel(label string) (engine.UseKind, bool) {
 }
 
 func (g *game) artifactCardActions() ([]cardAction, string) {
-	switch {
-	case !g.g.HasTrigger(g.sel, engine.TriggerAction):
-		return nil, "No action ability."
-	case g.g.Exhausted(g.sel):
-		return nil, "Exhausted."
+	// An out-of-house artifact offers no Action at all, the way an out-of-house
+	// creature offers no reap or fight: CanUseArtifact carries the same house check
+	// creatures use, so the button is withheld rather than offered and then rejected.
+	if err := g.g.CanUseArtifact(g.active(), g.sel); err != nil {
+		switch {
+		case !g.g.HasTrigger(g.sel, engine.TriggerAction):
+			return nil, "No action ability."
+		case g.g.Exhausted(g.sel):
+			return nil, "Exhausted."
+		}
+		return nil, "Cannot act: " + err.Error() + "."
 	}
 	return []cardAction{{"Action", "btn-primary", g.useAction}}, ""
 }

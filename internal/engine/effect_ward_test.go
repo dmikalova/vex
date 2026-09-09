@@ -39,6 +39,41 @@ func TestWardValidate(t *testing.T) {
 	}
 }
 
+// TestWardAmount covers the choose-N ward: the controller picks Amount distinct
+// creatures from the target pool, and the effect renders the plural quantity.
+func TestWardAmount(t *testing.T) {
+	e := Ward{Target: Target{Kind: TargetEachFriendlyCreature}, Amount: 2}
+	if got := e.Text(); got != "ward 2 friendly creatures" {
+		t.Errorf("ward amount text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	a := g.AddToBattleline(testCreature("a", 3), 0)
+	b := g.AddToBattleline(testCreature("b", 3), 0)
+	c := g.AddToBattleline(testCreature("c", 3), 0)
+	g.SetChooser(0, &idQueueChooser{ids: []LocalID{a, c}})
+	e.Resolve(&EffectContext{Resolver: g, Source: a, Controller: 0})
+	if !g.Warded(a) || !g.Warded(c) {
+		t.Error("chosen creatures should be warded")
+	}
+	if g.Warded(b) {
+		t.Error("unchosen creature should not be warded")
+	}
+}
+
+// TestWardAmountRunsOut: when fewer creatures are available than Amount, the ward
+// stops early once the target pool is exhausted.
+func TestWardAmountRunsOut(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	a := g.AddToBattleline(testCreature("a", 3), 0)
+	Ward{Target: Target{Kind: TargetEachFriendlyCreature}, Amount: 2}.Resolve(
+		&EffectContext{Resolver: g, Source: a, Controller: 0},
+	)
+	if !g.Warded(a) {
+		t.Error("the only friendly creature should be warded")
+	}
+}
+
 // TestWardAbsorbsDamage: a warded creature refuses the next instance of damage,
 // takes none of it, and loses its ward — even a single point spends the whole
 // ward.

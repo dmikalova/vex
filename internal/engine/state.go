@@ -356,6 +356,13 @@ type GameState struct {
 	SkipForge     [2]Bar[bool]
 	SkipForgeNext [2]Bar[bool]
 
+	// EndOfTurnDestroyAll, while set, schedules "destroy each creature" to resolve
+	// in the active player's end-of-turn phase (Ragnarok). It is a one-shot armed
+	// during the play phase; unlike the turn bars it must survive the ready phase
+	// (which runs before end of turn), so it is cleared only when it fires. Its
+	// Source is the card that armed it, for attribution.
+	EndOfTurnDestroyAll Bar[bool]
+
 	// Key surcharges. KeyCostBump[p] raises player p's key cost for the current turn;
 	// KeyCostBumpNext[p] arms that raise for p's next turn (Lash of Broken Dreams
 	// makes keys cost +3 during the opponent's next turn). Unlike a card's
@@ -458,6 +465,13 @@ type GameState struct {
 	// turn. HouseNone means no house is forbidden.
 	ForbiddenHouse     [2]Bar[House]
 	ForbiddenHouseNext [2]Bar[House]
+
+	// HouseWager[p] is a bet on player p's active house this turn: if p chooses
+	// its House, the Predictor steals Amount (Snaglet). HouseWagerNext[p] arms
+	// that for p's next turn, and StartTurn promotes it so the payoff lands when p
+	// next chooses a house. A zero Amount means no wager is armed.
+	HouseWager     [2]HouseWager
+	HouseWagerNext [2]HouseWager
 
 	// FightDamageRedirect is the creature a "Before Fight" ability chose to receive
 	// the attacker's fight damage instead of the defender (Gabos Longarms). It is

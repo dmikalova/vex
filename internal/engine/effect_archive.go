@@ -19,6 +19,25 @@ type ArchiveFromHand struct {
 	// UpTo lets the controller archive fewer than Amount, down to none (Mobius
 	// Scroll's "up to 2 cards").
 	UpTo bool
+	// Per scales how many cards are archived by a running count — Dr. Milli
+	// archives Amount cards "for each creature your opponent controls in excess of
+	// you". The zero value archives exactly Amount.
+	Per Count
+	// Or switches Amount to an alternate when a condition holds, so the card reads
+	// "archive a card, or 2 cards if …" (Velum archives 2 while controlling Hyde).
+	Or OrAmount
+}
+
+// validate checks the Or guard, if one is set.
+func (e ArchiveFromHand) validate() error { return e.Or.validate() }
+
+// archiveHandObject renders the noun the archive acts on, e.g. "a card" or "2
+// cards" (or a filtered "2 Mars creatures").
+func archiveHandObject(n int, noun string) string {
+	if n == 1 {
+		return indefinite(noun)
+	}
+	return fmt.Sprintf("%d %ss", n, noun)
 }
 
 // Text renders the effect, e.g. "archive a card from your hand" or "archive 2
@@ -26,16 +45,24 @@ type ArchiveFromHand struct {
 // filtered choice reads as the reveal it is: "reveal a Mars creature from your
 // hand and archive it".
 func (e ArchiveFromHand) Text() string {
-	if e.Revealed {
-		return "reveal " + indefinite(e.handNoun()) + " from your hand and archive it"
+	if e.Per != nil {
+		return forEach(e.Per, "archive "+indefinite(e.handNoun())+" from your hand")
 	}
-	if e.UpTo {
-		return fmt.Sprintf("archive up to %d %ss from your hand", e.Amount, e.handNoun())
+	var body string
+	switch {
+	case e.Revealed:
+		body = "reveal " + indefinite(e.handNoun()) + " from your hand and archive it"
+	case e.UpTo:
+		body = fmt.Sprintf("archive up to %d %ss from your hand", e.Amount, e.handNoun())
+	case e.Amount == 1:
+		body = "archive " + indefinite(e.handNoun()) + " from your hand"
+	default:
+		body = fmt.Sprintf("archive %d %ss from your hand", e.Amount, e.handNoun())
 	}
-	if e.Amount == 1 {
-		return "archive " + indefinite(e.handNoun()) + " from your hand"
+	if e.Or.set() {
+		body += e.Or.tail(archiveHandObject(e.Or.Amount, e.handNoun()))
 	}
-	return fmt.Sprintf("archive %d %ss from your hand", e.Amount, e.handNoun())
+	return body
 }
 
 // handNoun names the cards the filters admit, e.g. "card" or "Mars creature".
@@ -55,17 +82,12 @@ func (e ArchiveFromHand) handNoun() string {
 
 // candidates returns the cards in hand the filters admit.
 func (e ArchiveFromHand) candidates(ctx *EffectContext) []LocalID {
-	var out []LocalID
-	for _, id := range ctx.Resolver.Hand(ctx.Controller) {
+	return handCardsWhere(ctx, ctx.Controller, func(id LocalID) bool {
 		if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
-			continue
+			return false
 		}
-		if e.House != HouseNone && ctx.Resolver.House(id) != e.House {
-			continue
-		}
-		out = append(out, id)
-	}
-	return out
+		return e.House == HouseNone || ctx.Resolver.House(id) == e.House
+	})
 }
 
 // Resolve has the controller choose and archive Amount cards from their hand,
@@ -76,7 +98,8 @@ func (e ArchiveFromHand) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 // "if you do" can follow a reveal (Zyzzix the Many).
 func (e ArchiveFromHand) resolveGate(ctx *EffectContext) bool {
 	archived := false
-	for i := 0; i < e.Amount; i++ {
+	amount := scaled(e.Or.pick(e.Amount, ctx), e.Per, ctx)
+	for i := 0; i < amount; i++ {
 		hand := e.candidates(ctx)
 		if len(hand) == 0 {
 			return archived
@@ -125,8 +148,19 @@ func (e ArchiveFromHand) archiveOne(
 			Cards:  []LocalID{id},
 		})
 	}
-	ctx.Resolver.ArchiveFromHand(id)
+	archiveFrom(ctx, Hand, ctx.Controller, id)
 	return true
+}
+
+// archiveFrom moves one card into archives, dispatching to the resolver method for
+// its current zone — the archive analog of purgeFrom (ADR 0031).
+func archiveFrom(ctx *EffectContext, from Zone, owner int, id LocalID) {
+	switch from {
+	case Discard:
+		ctx.Resolver.ArchiveFromDiscard(owner, id)
+	default: // Hand
+		ctx.Resolver.ArchiveFromHand(id)
+	}
 }
 
 // ArchiveRandomFromHand archives Amount uniformly random cards from the
@@ -160,61 +194,63 @@ func (e ArchiveRandomFromHand) Resolve(ctx *EffectContext) {
 	}
 }
 
-// ArchiveTopOfDeck moves the top Amount cards of the controller's deck into their
-// archives, with no choice involved.
-type ArchiveTopOfDeck struct {
+// ArchiveTop moves the top Amount cards of one of the controller's own piles —
+// their deck or their discard pile, named by From — into their archives, with no
+// choice involved.
+type ArchiveTop struct {
+	From   Zone
 	Amount int
+}
+
+// validate requires From to be a pile a card can archive the top of: the deck or
+// the discard pile.
+func (e ArchiveTop) validate() error {
+	if e.From != Deck && e.From != Discard {
+		return fmt.Errorf("ArchiveTop: From must be Deck or Discard")
+	}
+	return nil
 }
 
 // Text renders the effect, e.g. "archive the top card of your deck".
-func (e ArchiveTopOfDeck) Text() string {
+func (e ArchiveTop) Text() string {
 	if e.Amount == 1 {
-		return "archive the top card of your deck"
+		return "archive the top card of your " + e.From.noun()
 	}
-	return fmt.Sprintf("archive the top %d cards of your deck", e.Amount)
+	return fmt.Sprintf("archive the top %d cards of your %s", e.Amount, e.From.noun())
 }
 
-// Resolve archives the top cards in order, stopping early if the deck runs out.
-func (e ArchiveTopOfDeck) Resolve(ctx *EffectContext) {
+// Resolve archives the top cards in order, stopping early if the pile runs out.
+func (e ArchiveTop) Resolve(ctx *EffectContext) {
 	for i := 0; i < e.Amount; i++ {
-		if !ctx.Resolver.ArchiveTopOfDeck(ctx.Controller) {
+		if !e.archiveOneTop(ctx) {
 			return
 		}
 	}
 }
 
-// ArchiveTopOfDiscard moves the top Amount cards of the controller's discard pile
-// into their archives, with no choice involved.
-type ArchiveTopOfDiscard struct {
-	Amount int
-}
-
-// Text renders the effect, e.g. "archive the top card of your discard pile".
-func (e ArchiveTopOfDiscard) Text() string {
-	if e.Amount == 1 {
-		return "archive the top card of your discard pile"
+// archiveOneTop moves a single top card from the named pile to archives,
+// reporting whether one moved.
+func (e ArchiveTop) archiveOneTop(ctx *EffectContext) bool {
+	if e.From == Discard {
+		return ctx.Resolver.ArchiveTopOfDiscard(ctx.Controller)
 	}
-	return fmt.Sprintf("archive the top %d cards of your discard pile", e.Amount)
-}
-
-// Resolve archives the top cards in order, stopping early if the discard runs out.
-func (e ArchiveTopOfDiscard) Resolve(ctx *EffectContext) {
-	for i := 0; i < e.Amount; i++ {
-		if !ctx.Resolver.ArchiveTopOfDiscard(ctx.Controller) {
-			return
-		}
-	}
+	return ctx.Resolver.ArchiveTopOfDeck(ctx.Controller)
 }
 
 // ArchiveFromDiscard moves a card the controller chooses from their discard pile
 // into their archives. House filters which cards may be chosen; HouseNone allows
-// any card (Glyxl Proliferator archives only a Mars card).
+// any card (Glyxl Proliferator archives only a Mars card). Name pins the choice to
+// a specific card by printed name (Hyde archives Velum).
 type ArchiveFromDiscard struct {
 	House House
+	Name  string
 }
 
 // Text renders the effect, naming the source zone explicitly.
 func (e ArchiveFromDiscard) Text() string {
+	if e.Name != "" {
+		return "archive " + e.Name + " from your discard pile"
+	}
 	noun := "card"
 	if e.House != HouseNone {
 		noun = e.House.String() + " " + noun
@@ -222,23 +258,33 @@ func (e ArchiveFromDiscard) Text() string {
 	return "archive " + indefinite(noun) + " from your discard pile"
 }
 
-// Resolve has the controller choose one card from their discard pile and archive
-// it, doing nothing when the discard pile is empty or the choice is declined.
-func (e ArchiveFromDiscard) Resolve(ctx *EffectContext) {
-	var discard []LocalID
-	for _, id := range ctx.Resolver.Discard(ctx.Controller) {
-		if e.House == HouseNone || ctx.Resolver.House(id) == e.House {
-			discard = append(discard, id)
+// Resolve archives a matching card from the controller's discard pile.
+func (e ArchiveFromDiscard) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
+
+// resolveGate archives one matching card from the controller's discard pile and
+// reports whether one was, so a Then can hang a follow-up on it ("If you do, ...").
+// A named card is archived directly since its copies are interchangeable; an
+// unnamed archive lets the controller pick and may be declined.
+func (e ArchiveFromDiscard) resolveGate(ctx *EffectContext) bool {
+	discard := discardCardsWhere(ctx, ctx.Controller, func(id LocalID) bool {
+		if e.House != HouseNone && ctx.Resolver.House(id) != e.House {
+			return false
+		}
+		return e.Name == "" || ctx.Resolver.Name(id) == e.Name
+	})
+	if len(discard) == 0 {
+		return false
+	}
+	id := discard[0]
+	if e.Name == "" {
+		var ok bool
+		id, ok = ctx.ChooseCreature("Choose a card to archive", discard)
+		if !ok {
+			return false
 		}
 	}
-	if len(discard) == 0 {
-		return
-	}
-	id, ok := ctx.ChooseCreature("Choose a card to archive", discard)
-	if !ok {
-		return
-	}
-	ctx.Resolver.ArchiveFromDiscard(ctx.Controller, id)
+	archiveFrom(ctx, Discard, ctx.Controller, id)
+	return true
 }
 
 // ArchiveFromPlay moves each in-play card its Target selects into its owner's
@@ -279,6 +325,7 @@ func (e ArchiveFromPlay) resolveOptional(ctx *EffectContext) bool {
 // archives, and reports whether anything was. The cards leave play at the same
 // time, so archiving one that was buffing another does not destroy that other.
 func (e ArchiveFromPlay) archive(ctx *EffectContext, ids []LocalID) bool {
+	ctx.Produced.Archived = ids
 	ctx.Resolver.PutIntoArchivesEach(ctx.Resolver.ActivePlayer(), ids)
 	return len(ids) > 0
 }

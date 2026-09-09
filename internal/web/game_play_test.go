@@ -276,6 +276,20 @@ func TestDeployPlacementByClick(t *testing.T) {
 	})
 }
 
+// With no other friendly creatures in play a Deploy creature has only one
+// placement, so it is placed without asking: ChoosePosition answers itself with
+// position 0 and never raises the prompt.
+func TestDeploySkipsPromptWithNoOtherCreatures(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	if pos := c.g.chooser.ChoosePosition("Ranger", "deploy Ranger", nil); pos != 0 {
+		t.Errorf("empty-line deploy = position %d, want 0", pos)
+	}
+	if c.g.choosingPosition {
+		t.Error("an empty line raised the deploy placement prompt")
+	}
+}
+
 func TestFlankKeys(t *testing.T) {
 	for _, tt := range []struct {
 		key  string
@@ -730,6 +744,33 @@ func TestUsingAnArtifactsAction(t *testing.T) {
 	}
 	if !c.g.g.Exhausted(id) {
 		t.Error("using the artifact did not exhaust it")
+	}
+}
+
+// An out-of-house artifact offers no Action at all — the same way an out-of-house
+// creature offers no reap or fight — rather than offering it and then rejecting
+// the use. It asks the engine (CanUseArtifact carries the house check) instead of
+// inferring the answer.
+func TestOutOfHouseArtifactOffersNoAction(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse) // Untamed
+	id := c.deal(testArtifact)
+	c.playFromHand(id) // Safe Place is Shadows, played out of house in manual mode
+	c.ownNextTurn(testHouse)
+	c.do(c.g.toggleManual) // leave manual mode, so the house rules apply again
+	if c.g.g.Manual() {
+		t.Fatal("manual mode did not turn off")
+	}
+
+	c.g.selectBoardID(c.ctx, id)
+	acts, note := c.g.selActions()
+	for _, a := range acts {
+		if a.Label == "Action" {
+			t.Fatalf("an out-of-house artifact still offered its Action (note %q)", note)
+		}
+	}
+	if note == "" {
+		t.Error("an out-of-house artifact gave no reason for offering nothing")
 	}
 }
 

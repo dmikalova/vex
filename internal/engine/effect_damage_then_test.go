@@ -25,18 +25,19 @@ func TestDamageThenIfSurvives(t *testing.T) {
 	g.AddToHand(testCreature("h2", 1), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := DamageThenIfSurvives{
+	e := DamageThen{
 		Amount: 3,
+		After:  IfSurvives,
 		Target: Target{Kind: TargetChosenCreature},
 		Then:   DiscardRandomFromHand{Player: ItsOwner},
 	}
 	if e.Text() != "deal 3 damage to a creature. If it is not destroyed, its owner discards a random card from their hand" {
 		t.Errorf("text = %q", e.Text())
 	}
-	if (DamageThenIfSurvives{Then: DiscardRandomFromHand{Player: Opponent}}).validate() == nil {
+	if (DamageThen{After: IfSurvives, Then: DiscardRandomFromHand{Player: Opponent}}).validate() == nil {
 		t.Error("unset target should be invalid")
 	}
-	if (DamageThenIfSurvives{Target: Target{Kind: TargetChosenCreature}, Then: DiscardRandomFromHand{Player: Opponent}}).validate() != nil {
+	if (DamageThen{Target: Target{Kind: TargetChosenCreature}, After: IfSurvives, Then: DiscardRandomFromHand{Player: Opponent}}).validate() != nil {
 		t.Error("a set target with a valid follow-up should pass")
 	}
 
@@ -52,7 +53,7 @@ func TestDamageThenIfSurvives(t *testing.T) {
 	g2 := NewGame("A", "B", 1)
 	dead := g2.AddToBattleline(testCreature("d", 2), 1)
 	g2.AddToHand(testCreature("keep", 1), 1)
-	(DamageThenIfSurvives{Amount: 3, Target: Target{Kind: TargetChosenCreature}, Then: DiscardRandomFromHand{Player: ItsOwner}}).Resolve(
+	(DamageThen{Amount: 3, After: IfSurvives, Target: Target{Kind: TargetChosenCreature}, Then: DiscardRandomFromHand{Player: ItsOwner}}).Resolve(
 		&EffectContext{Resolver: g2, Controller: 0},
 	)
 	if g2.inPlay(dead) {
@@ -64,7 +65,7 @@ func TestDamageThenIfSurvives(t *testing.T) {
 
 	// No creature to target: nothing happens.
 	g3 := NewGame("A", "B", 1)
-	(DamageThenIfSurvives{Amount: 3, Target: Target{Kind: TargetChosenCreature}, Then: DiscardRandomFromHand{Player: ItsOwner}}).Resolve(
+	(DamageThen{Amount: 3, After: IfSurvives, Target: Target{Kind: TargetChosenCreature}, Then: DiscardRandomFromHand{Player: ItsOwner}}).Resolve(
 		&EffectContext{Resolver: g3, Controller: 0},
 	)
 }

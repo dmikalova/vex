@@ -20,8 +20,9 @@ var AVinda = card.New(
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithAbility(
-		card.Trigger.Reap, card.DamageThenIfDestroyed{
+		card.Trigger.Reap, card.DamageThen{
 			Amount: 1,
+			After:  card.IfDestroyed,
 			Target: card.Target.Creature,
 			Then:   card.DiscardRandomFromHand{Player: card.Opponent},
 		}),

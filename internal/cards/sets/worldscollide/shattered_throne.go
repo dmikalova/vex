@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ShatteredThrone
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Shattered Throne
 //
 //	House:  Brobnar
 //	Type:   Artifact
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Location
 //
-//	After a creature is used to fight, it captures 1A.
+//	After a creature is used to fight, it captures 1 Æmber from its opponent.
 var ShatteredThrone = card.New(
 	"Shattered Throne",
 	card.House.Brobnar,
@@ -24,5 +19,10 @@ var ShatteredThrone = card.New(
 	card.Provenance(card.WC, "28"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Location),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.AfterCreatureFights, card.CaptureAember{
+			Amount: 1,
+			Target: card.Target.Triggering,
+			Source: card.ItsOpponent,
+		}),
 )

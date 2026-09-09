@@ -63,21 +63,20 @@ func (e Destroy) resolveOptional(ctx *EffectContext) bool {
 // destroy carries out the destruction of an already-selected set.
 func (e Destroy) destroy(ctx *EffectContext, ids []LocalID) bool {
 	controllers := make(map[LocalID]int, len(ids))
-	bonuses := make(map[LocalID]int, len(ids))
 	for _, id := range ids {
 		controllers[id] = ctx.Resolver.Controller(id)
-		bonuses[id] = ctx.Resolver.AemberBonus(id)
 	}
 	ctx.Resolver.DestroyEachFrom(ctx.Controller, ctx.Source, ids)
 	if len(ids) == 1 {
-		// Remember who controlled the destroyed creature, so a following effect can
-		// pay "its controller" the right side even after it leaves play.
+		// Bind the destroyed card so a following effect can read it even after it
+		// leaves play — its controller ("its owner discards") or its printed Æmber
+		// bonus (Rustgnawer). Those are printed properties, so they survive.
+		ctx.It, ctx.HasIt = ids[0], true
 		ctx.ItController = controllers[ids[0]]
 	}
 	for _, id := range ids {
 		if !resolverInPlay(ctx, id) {
 			ctx.Produced.Destroyed[controllers[id]]++
-			ctx.Produced.AemberBonusDestroyed += bonuses[id]
 		}
 	}
 	return len(ids) > 0
@@ -178,4 +177,21 @@ func (e DestroyMostPowerfulUnlessReadyHouse) controlsReadyHouse(ctx *EffectConte
 		}
 	}
 	return false
+}
+
+// DestroyEachCreatureAtEndOfTurn schedules "destroy each creature" to resolve in
+// the active player's end-of-turn phase rather than now — Ragnarok wipes the board
+// only once the turn it is played is ending, after its owner has spent the turn
+// fighting for Æmber. It arms a flag that the end-of-turn phase reads and clears;
+// the flag deliberately survives the ready phase, which runs earlier.
+type DestroyEachCreatureAtEndOfTurn struct{}
+
+// Text renders the effect, e.g. "at the end of the turn, destroy each creature".
+func (e DestroyEachCreatureAtEndOfTurn) Text() string {
+	return "at the end of the turn, destroy each creature"
+}
+
+// Resolve arms the scheduled board wipe; the end-of-turn phase carries it out.
+func (e DestroyEachCreatureAtEndOfTurn) Resolve(ctx *EffectContext) {
+	ctx.Resolver.ScheduleDestroyEachCreatureAtEndOfTurn(ctx.Source)
 }

@@ -10,6 +10,7 @@ func TestLastingActionDescriptions(t *testing.T) {
 		actDealDamage:  "deal damage",
 		actReadyPlayed: "ready the creature",
 		actDraw:        "draw a card",
+		actLoseAember:  "opponent loses Æmber",
 	} {
 		if got := act.describe(); got != want {
 			t.Errorf("describe(%d) = %q, want %q", act, got, want)

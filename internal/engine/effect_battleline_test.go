@@ -158,3 +158,54 @@ func TestMoveToFlank(t *testing.T) {
 		t.Fatalf("moving a creature that left play changed the battleline: %v", got)
 	}
 }
+
+func TestMoveWithinBattleline(t *testing.T) {
+	if err := (MoveWithinBattleline{}).validate(); err == nil {
+		t.Fatal("an unset target should be rejected")
+	}
+	e := MoveWithinBattleline{Target: Target{Kind: TargetChosenEnemyCreature}}
+	if got, want := e.Text(),
+		"move an enemy creature anywhere in its controller's battleline"; got != want {
+		t.Fatalf("text = %q, want %q", got, want)
+	}
+	if err := e.validate(); err != nil {
+		t.Fatalf("a valid target should pass validation: %v", err)
+	}
+
+	g := NewGame("A", "B", 1)
+	a := g.AddToBattleline(testCreature("a", 2), 1)
+	b := g.AddToBattleline(testCreature("b", 2), 1)
+	mover := g.AddToBattleline(testCreature("mover", 2), 1)
+
+	// Player 0 chooses to move an enemy (player 1) creature. The default option
+	// chooser takes position 0 (the left flank), and picks the last candidate
+	// creature by default, so mover slides to the front and is left in context.
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	if !e.resolveGate(ctx) {
+		t.Fatal("moving a creature should report a choice was made")
+	}
+	if !ctx.HasIt {
+		t.Fatal("the moved creature should be left in context")
+	}
+	moved := ctx.It
+	got := g.Battleline(1)
+	if got[0] != moved {
+		t.Fatalf("battleline = %v, want the moved creature %d on the left flank", got, moved)
+	}
+	_ = a
+	_ = b
+	_ = mover
+
+	// A target that selects nothing leaves the line unchanged and reports no choice.
+	before := slices.Clone(g.Battleline(1))
+	if (MoveWithinBattleline{Target: Target{Kind: TargetTriggeringCreature}}).
+		resolveGate(&EffectContext{Resolver: g, Controller: 0}) {
+		t.Fatal("an empty target should report no choice")
+	}
+	if now := g.Battleline(1); !slices.Equal(now, before) {
+		t.Fatalf("empty target changed the battleline: %v", now)
+	}
+
+	// The public Resolve is the one-line wrapper over resolveGate.
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+}

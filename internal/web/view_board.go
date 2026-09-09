@@ -31,11 +31,14 @@ func (g *game) boardArea() []app.UI {
 			g.renderRow("battleline", g.g.Battleline(p), selYourCreature, false),
 			g.renderRow("artifacts", g.sortedArtifacts(p), selYourArtifact, false),
 		)
+	// The lower player bar sits below the hand row so a lifted/enlarged card
+	// (ADR 0015) — which grows upward from the hand — no longer covers it. The
+	// board grid's last two tracks (hand, then bar) are ordered to match.
 	return []app.UI{
 		g.scorePill(opp),
 		playZone,
-		g.scorePill(p),
 		g.renderHand(),
+		g.scorePill(p),
 	}
 }
 
@@ -52,7 +55,7 @@ func (g *game) turnHud() app.UI {
 	}
 	// Whose turn it is leads, since it is the thing a player re-reads most often.
 	items := []app.UI{
-		app.Span().Class("hud-player").Text(g.g.PlayerName(p)),
+		app.Span().Class(cx("hud-player", playerNameCls(p))).Text(g.g.PlayerName(p)),
 		app.Span().Class("hud-turn").Text(fmt.Sprintf("Turn %d", g.g.State.Turn)),
 		app.Span().Class("hud-step").Text(steps[g.phase]),
 	}
@@ -95,7 +98,9 @@ func (g *game) scorePill(player int) app.UI {
 			// Name and detail are one group so that a narrow bar wraps the zone counts
 			// onto their own line instead of reflowing the stats one icon at a time.
 			app.Span().Class("score-main").Body(
-				app.Span().Class("score-name").Text(g.g.PlayerName(player)),
+				app.Span().
+					Class(cx("score-name", playerNameCls(player))).
+					Text(g.g.PlayerName(player)),
 				app.Span().Class("score-detail").Body(detail...),
 			),
 			// Only the zone counts open the viewer, so misclicking a key or stepper
@@ -134,10 +139,13 @@ func (g *game) zoneCounts(player int) []app.UI {
 		body = append(body, g.flightsInto(player, z.name)...)
 		// A readable pile with cards opens a roster of house-coloured card headers,
 		// the same title bar an upgrade tab shows; every other zone just names
-		// itself in a plain hover tip.
+		// itself in a plain hover tip. Archives is hidden even from its owner, so it
+		// gets a label-only roster (see zoneRoster) rather than the finger-only tip,
+		// so a touchscreen can raise its name the way the readable piles show theirs.
 		if roster := g.zoneRoster(player, z.label, z.ids); roster != nil {
 			out = append(out,
 				app.Span().Class(cx("zone-count", "zone-has-roster", pulse)).
+					OnMouseEnter(g.onZoneRosterHover).
 					Body(append(body, roster)...),
 			)
 			continue
@@ -156,6 +164,14 @@ func (g *game) zoneCounts(player int) []app.UI {
 func (g *game) zoneRoster(player int, label string, ids []engine.LocalID) app.UI {
 	shown := g.readableZoneIDs(player, label, ids)
 	if len(shown) == 0 {
+		// Archives is hidden even from its owner, so it never has a readable roster;
+		// still give it the same persistent popover the readable piles get — naming
+		// only the zone, no cards — so a touchscreen can raise it like the others.
+		if label == "Archives" {
+			return app.Div().Class("zone-roster").Body(
+				app.Div().Class("zone-roster-label").Text(label),
+			)
+		}
 		return nil
 	}
 	rows := make([]app.UI, 0, len(shown)+1)
@@ -168,6 +184,14 @@ func (g *game) zoneRoster(player int, label string, ids []engine.LocalID) app.UI
 		)
 	}
 	return app.Div().Class("zone-roster").Body(rows...)
+}
+
+// onZoneRosterHover clamps a zone-count roster popover on screen as its hover
+// begins, before the centered popover can spill off the viewport edge — the Purge
+// count sits at the right end of the bar, so its centered roster would otherwise
+// run off the right side. It reuses the deck list's clamp (clampFloating).
+func (g *game) onZoneRosterHover(ctx app.Context, _ app.Event) {
+	clampFloating(ctx.JSSrc(), ".zone-roster")
 }
 
 // zoneNames lists the names of the cards in a zone, sorted, but only for the
@@ -353,7 +377,10 @@ func (g *game) keyForgePanel() app.UI {
 	player := g.forgingKey
 	remaining := g.remainingKeyColors(player)
 	return app.Div().Class("btn-col").Body(
-		app.Div().Class("section-title").Text("Forge a key for "+g.g.PlayerName(player)),
+		app.Div().Class("section-title").Body(
+			app.Text("Forge a key for "),
+			app.Span().Class(playerNameCls(player)).Text(g.g.PlayerName(player)),
+		),
 		app.Range(remaining).Slice(func(i int) app.UI {
 			c := remaining[i]
 			return keyChoiceButton(c, c.String(), g.isButtonCursor(i), g.pickForgeColor(c))

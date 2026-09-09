@@ -65,6 +65,18 @@ func TestMoveAemberToSupplyEffect(t *testing.T) {
 	if err := e.validate(); err != nil {
 		t.Errorf("valid effect rejected: %v", err)
 	}
+
+	// All mode renders "each Æmber" and rejects a combined Amount.
+	all := MoveAemberToSupply{All: true, Target: Target{Kind: TargetThisCreature}}
+	if got := all.Text(); got != "move each Æmber on {self} to the common supply" {
+		t.Errorf("all text = %q", got)
+	}
+	if err := all.validate(); err != nil {
+		t.Errorf("valid All effect rejected: %v", err)
+	}
+	if err := (MoveAemberToSupply{Amount: 1, All: true, Target: Target{Kind: TargetThisCreature}}).validate(); err == nil {
+		t.Error("Amount together with All should be rejected")
+	}
 }
 
 func TestCaptureAllAember(t *testing.T) {

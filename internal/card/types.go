@@ -337,11 +337,14 @@ var Trigger = triggers{
 	AfterNeighborFights:         engine.TriggerAfterNeighborFights,
 	Destroyed:                   engine.TriggerDestroyed,
 	AfterDestroyedFighting:      engine.TriggerAfterDestroyedFighting,
+	AfterAssaultDestroys:        engine.TriggerAfterAssaultDestroys,
 	AfterArmorPrevents:          engine.TriggerAfterArmorPrevents,
 	AfterCardPlayed:             engine.TriggerAfterCardPlayed,
 	EndOfTurn:                   engine.TriggerEndOfTurn,
 	StartOfTurn:                 engine.TriggerStartOfTurn,
+	EndOfReadyStep:              engine.TriggerEndOfReadyStep,
 	AfterChooseHouse:            engine.TriggerAfterChooseHouse,
+	AfterAnyPlayerChoosesHouse:  engine.TriggerAfterAnyPlayerChoosesHouse,
 	AfterEnemyCreatureDestroyed: engine.TriggerAfterEnemyCreatureDestroyed,
 	AfterCreatureDestroyed:      engine.TriggerAfterCreatureDestroyed,
 	AfterEnemyCardPlayed:        engine.TriggerAfterEnemyCardPlayed,
@@ -350,7 +353,9 @@ var Trigger = triggers{
 	UsedSelf:                    engine.TriggerAfterUsedSelf,
 	AfterCreatureReaps:          engine.TriggerAfterCreatureReaps,
 	AfterEnemyCreatureReaps:     engine.TriggerAfterEnemyCreatureReaps,
+	AfterCreatureFights:         engine.TriggerAfterCreatureFights,
 	AfterPlayerForgesKey:        engine.TriggerAfterPlayerForgesKey,
+	AfterCreaturePlayed:         engine.TriggerAfterCreaturePlayed,
 	LeavesPlay:                  engine.TriggerLeavesPlay,
 }
 
@@ -377,6 +382,8 @@ type triggers struct {
 	Destroyed engine.Trigger
 	// AfterDestroyedFighting fires when a creature is destroyed in a fight with this one.
 	AfterDestroyedFighting engine.Trigger
+	// AfterAssaultDestroys fires when this creature's Assault damage destroys the creature it attacks.
+	AfterAssaultDestroys engine.Trigger
 	// AfterArmorPrevents fires after this card prevents damage with its own armor.
 	AfterArmorPrevents engine.Trigger
 	// AfterCardPlayed fires after the controller plays a card.
@@ -385,8 +392,14 @@ type triggers struct {
 	EndOfTurn engine.Trigger
 	// StartOfTurn fires at the start of the controller's turn, before they forge.
 	StartOfTurn engine.Trigger
+	// EndOfReadyStep fires at the end of the controller's "ready cards" step, after
+	// every card has readied (Greater Oxtet).
+	EndOfReadyStep engine.Trigger
 	// AfterChooseHouse fires after the controller chooses their active house.
 	AfterChooseHouse engine.Trigger
+	// AfterAnyPlayerChoosesHouse fires after either player chooses their active
+	// house, whoever's turn it is (Snag's Mirror).
+	AfterAnyPlayerChoosesHouse engine.Trigger
 	// AfterEnemyCreatureDestroyed fires after an enemy creature is destroyed during your turn.
 	AfterEnemyCreatureDestroyed engine.Trigger
 	// AfterCreatureDestroyed fires after any creature is destroyed, with the
@@ -407,9 +420,15 @@ type triggers struct {
 	// AfterEnemyCreatureReaps fires after an enemy creature reaps, with the reaper
 	// as "it" (Pip Pip stuns the enemy that just reaped).
 	AfterEnemyCreatureReaps engine.Trigger
+	// AfterCreatureFights fires after any creature is used to fight (friendly or
+	// enemy), with the fighting creature as "it" (Shattered Throne makes it capture).
+	AfterCreatureFights engine.Trigger
 	// AfterPlayerForgesKey fires after any player forges a key, acting on the
 	// player who forged (Forgemaster Og).
 	AfterPlayerForgesKey engine.Trigger
+	// AfterCreaturePlayed fires after any creature is played from hand (friendly or
+	// enemy), with the played creature as "it" (The Big One).
+	AfterCreaturePlayed engine.Trigger
 	// LeavesPlay fires as this card leaves play by any route ("Leaves Play:").
 	LeavesPlay engine.Trigger
 }

@@ -241,6 +241,49 @@ func TestGainAemberEqualToAndHalfPower(t *testing.T) {
 	}
 }
 
+// TestLoseAemberEqualTo covers each player losing Æmber equal to half a creature's
+// power, floored, and never below zero (Power of Fire).
+func TestLoseAemberEqualTo(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.State.Aember[0] = 1 // loses 1, floored at zero (would lose 2)
+	g.State.Aember[1] = 5 // loses 2
+	beefy := g.AddToBattleline(testCreature("beefy", 5), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0, It: beefy, HasIt: true}
+
+	e := LoseAemberEqualTo{Player: EachPlayer, Count: PowerOfChosen{Of: Half}}
+	if got := e.Text(); got != "each player loses Æmber equal to half its power, rounded down" {
+		t.Errorf("text = %q", got)
+	}
+	e.Resolve(ctx)
+	if g.State.Aember[0] != 0 || g.State.Aember[1] != 3 {
+		t.Errorf("aember = %d/%d, want 0/3", g.State.Aember[0], g.State.Aember[1])
+	}
+
+	// The opponent form uses the "your opponent loses" verb.
+	if got := (LoseAemberEqualTo{Player: Opponent, Count: PowerOfChosen{Of: Half}}).Text(); got !=
+		"your opponent loses Æmber equal to half its power, rounded down" {
+		t.Errorf("opponent text = %q", got)
+	}
+	// Validation rejects an unset player or count, and accepts a fully set effect.
+	if (LoseAemberEqualTo{Count: PowerOfChosen{Of: Half}}).validate() == nil {
+		t.Error("unset player should be rejected")
+	}
+	if (LoseAemberEqualTo{Player: Controller}).validate() == nil {
+		t.Error("unset count should be rejected")
+	}
+	if (LoseAemberEqualTo{Player: Controller, Count: PowerOfChosen{Of: Half}}).validate() != nil {
+		t.Error("a fully set effect should be valid")
+	}
+	// A zero count loses nothing.
+	before := g.State.Aember[1]
+	LoseAemberEqualTo{Player: Opponent, Count: PowerOfChosen{Of: Half}}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0},
+	)
+	if g.State.Aember[1] != before {
+		t.Errorf("zero count lost Æmber: %d, want %d", g.State.Aember[1], before)
+	}
+}
+
 // TestGainAemberEqualToCaptured covers a gain-equal-to count that a continuous
 // replacement (Ether Spider) captures instead of adding to the pool.
 func TestGainAemberEqualToCaptured(t *testing.T) {

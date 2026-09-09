@@ -46,6 +46,13 @@ func (g *game) focusCardID() (engine.LocalID, bool) {
 	if g.inspecting {
 		return g.sel, true
 	}
+	// Placing a Deploy creature lifts it while its position prompt is up, so its
+	// placement verbs sit on the card being placed exactly like the flank question
+	// — even though the play action is still in flight (g.busy), which the general
+	// guard below would otherwise drop the lift for.
+	if g.choosingPosition {
+		return g.sel, true
+	}
 	if g.busy || g.choosing || g.choosingOption || g.forgingKey >= 0 {
 		return 0, false
 	}
@@ -72,10 +79,16 @@ func (g *game) cardFocus() app.UI {
 	}
 	acts, note := g.selActions()
 	face := g.cardFace(id)
+	// A card lifted with no verb it can take right now — only a note saying why —
+	// dims like an invalid board choice, so "cannot be used" reads at a glance
+	// rather than only from the note. A read-only inspect lift carries no note and
+	// stays bright for reading.
+	face.Dimmed = len(acts) == 0 && note != ""
 	// The copy is the card, so a drag has to start from it: it lies over its own
 	// neighbours, and a pointer that fell through would grab whichever card the
 	// enlarged face happens to cover.
-	if g.phase == phaseMain && g.selKind == selHand && g.playableFromHand(id) {
+	if g.phase == phaseMain && g.selKind == selHand && !g.choosingPosition &&
+		g.playableFromHand(id) {
 		face.ID = id
 		face.Draggable = true
 		face.OnDragStart = g.startHandDrag

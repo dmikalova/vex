@@ -19,6 +19,13 @@ import (
 func boardCardID(id engine.LocalID) string { return "card-" + strconv.Itoa(int(id)) }
 func handCardID(id engine.LocalID) string  { return "hand-" + strconv.Itoa(int(id)) }
 
+// playerNameCls is the colour class that tints a player's name in that player's
+// own colour (p0 green, p1 yellow), so who is named is read off the colour the
+// same way the log bubbles and score pill already are. Every place a player's
+// name is drawn wears it, so a name never renders in a neutral or the wrong
+// colour — including the end-of-game "wins!" banner.
+func playerNameCls(player int) string { return "player-name--p" + strconv.Itoa(player) }
+
 func btn(label string, h app.EventHandler, class string) app.UI {
 	return app.Button().Class(class).Text(label).OnClick(h)
 }
@@ -53,6 +60,8 @@ func (g *game) cardFace(id engine.LocalID) *cardView {
 		Maverick:      g.isMaverick(id),
 		Legacy:        g.isLegacy(id),
 		Stunned:       g.g.Stunned(id),
+		Warded:        g.g.Warded(id),
+		Enraged:       g.g.Enraged(id),
 		Exhausted:     g.g.Exhausted(id),
 		InPlay:        g.inPlay(id),
 		Bar:           bar,
@@ -97,7 +106,10 @@ func (g *game) statLine(id engine.LocalID) []app.UI {
 		if d := g.g.Damage(id); d > 0 {
 			segs = append(segs, statSeg(d, "damage", pulseClass(f.damage, f.odd, "dmg")))
 		}
-		if a := g.g.Armor(id); a > 0 {
+		// The armor a creature has left to absorb damage this turn (its full armor
+		// minus what it has already spent), so the shield count falls as hits land
+		// and refreshes when the creature readies — not the printed maximum.
+		if a := int(g.g.State.Cards[id].ArmorRemaining); a > 0 {
 			segs = append(segs, statSeg(a, "shield"))
 		}
 	}

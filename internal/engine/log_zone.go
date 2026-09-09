@@ -54,7 +54,7 @@ type TopOfDeckArchived struct {
 // Text renders the top of a deck archived sight unseen.
 func (e TopOfDeckArchived) Text(n Namer) string {
 	return fmt.Sprintf("%s archives %s from the top of their deck",
-		n.PlayerName(e.Player), nameMoved(n, e.Card, deck, Archives))
+		n.PlayerName(e.Player), nameMoved(n, e.Card, Deck, Archives))
 }
 
 // ArchivesDiscarded narrates archives emptying into a discard pile.
@@ -79,7 +79,7 @@ type TopOfDeckDiscarded struct {
 // the card lands face up and is named.
 func (e TopOfDeckDiscarded) Text(n Namer) string {
 	return fmt.Sprintf("%s discards %s from the top of their deck",
-		n.PlayerName(e.Player), nameMoved(n, e.Card, deck, Discard))
+		n.PlayerName(e.Player), nameMoved(n, e.Card, Deck, Discard))
 }
 
 // CardDiscardedFromDeck narrates a specific card going from a deck to the discard
@@ -93,7 +93,7 @@ type CardDiscardedFromDeck struct {
 // and is named.
 func (e CardDiscardedFromDeck) Text(n Namer) string {
 	return fmt.Sprintf("%s discards %s from their deck",
-		n.PlayerName(e.Player), nameMoved(n, e.Card, deck, Discard))
+		n.PlayerName(e.Player), nameMoved(n, e.Card, Deck, Discard))
 }
 
 // DeckAndDiscardSwapped narrates a deck and discard pile trading places.
@@ -167,6 +167,19 @@ func (e CardPurgedFromArchives) Text(n Namer) string {
 		n.PlayerName(e.Player), nameMoved(n, e.Card, Archives, purged))
 }
 
+// CardPurgedFromDeck narrates a card purged out of a deck. Purging turns it face
+// up, so naming it leaks nothing.
+type CardPurgedFromDeck struct {
+	Player int
+	Card   LocalID
+}
+
+// Text renders the card purged out of a deck.
+func (e CardPurgedFromDeck) Text(n Namer) string {
+	return fmt.Sprintf("%s purges %s from a deck",
+		n.PlayerName(e.Player), nameMoved(n, e.Card, Deck, purged))
+}
+
 // CardPurged narrates a card in play being purged.
 type CardPurged struct{ Card LocalID }
 
@@ -184,7 +197,7 @@ type CardPutOnTopOfDeck struct {
 // Text renders a card leaving play onto its owner's deck.
 func (e CardPutOnTopOfDeck) Text(n Namer) string {
 	return fmt.Sprintf("%s is put on top of %s's deck",
-		nameMoved(n, e.Card, inPlay, deck), n.PlayerName(e.Owner))
+		nameMoved(n, e.Card, inPlay, Deck), n.PlayerName(e.Owner))
 }
 
 // CardReturnedToHand narrates a card leaving play into its owner's hand.
@@ -221,7 +234,16 @@ type CardShuffledIntoDeck struct {
 // Text renders a card leaving play into its owner's shuffled deck.
 func (e CardShuffledIntoDeck) Text(n Namer) string {
 	return fmt.Sprintf("%s is shuffled into %s's deck",
-		nameMoved(n, e.Card, inPlay, deck), n.PlayerName(e.Owner))
+		nameMoved(n, e.Card, inPlay, Deck), n.PlayerName(e.Owner))
+}
+
+// DeckShuffled narrates a player's deck being shuffled (Borr Nit shuffles the
+// cards it revealed but did not purge back into that deck).
+type DeckShuffled struct{ Player int }
+
+// Text renders a player's deck being shuffled.
+func (e DeckShuffled) Text(n Namer) string {
+	return fmt.Sprintf("%s's deck is shuffled", n.PlayerName(e.Player))
 }
 
 // CardsShuffledIntoDeckBy narrates a source shuffling one owner's creatures into
@@ -277,7 +299,7 @@ type CardPutFromDeckIntoHand struct {
 // Text renders the card searched out of a deck into hand.
 func (e CardPutFromDeckIntoHand) Text(n Namer) string {
 	return fmt.Sprintf("%s puts %s from their deck into hand",
-		n.PlayerName(e.Player), nameMoved(n, e.Card, deck, Hand))
+		n.PlayerName(e.Player), nameMoved(n, e.Card, Deck, Hand))
 }
 
 // CardPutFromDiscardOnTopOfDeck narrates a card set back on the deck out of a
@@ -290,7 +312,7 @@ type CardPutFromDiscardOnTopOfDeck struct {
 // Text renders the card set from a discard pile back on the deck.
 func (e CardPutFromDiscardOnTopOfDeck) Text(n Namer) string {
 	return fmt.Sprintf("%s puts %s from their discard pile on top of their deck",
-		n.PlayerName(e.Player), nameMoved(n, e.Card, Discard, deck))
+		n.PlayerName(e.Player), nameMoved(n, e.Card, Discard, Deck))
 }
 
 // CardPutUnder narrates a card placed under a host (Masterplan, Jargogle,

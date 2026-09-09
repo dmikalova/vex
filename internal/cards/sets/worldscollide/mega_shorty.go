@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// MegaShorty
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Mega Shorty
 //
 //	House:  Brobnar
 //	Type:   Creature
@@ -15,16 +10,17 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  6
 //	Traits: Giant
 //
-//	Assault 4. (Before this creature attacks, deal 4D to the attacked enemy.)
+//	Assault 4.
 //	Reap: Enrage Mega Shorty.
 var MegaShorty = card.New(
 	"Mega Shorty",
 	card.House.Brobnar,
 	card.Type.Creature,
-	// TODO(variant): rarity relabelled from FIXED to Special — handle manually
 	card.Rarity.Special,
 	card.Provenance(card.WC, "61"),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Giant),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAssault(4),
+	card.WithAbility(
+		card.Trigger.Reap, card.Enrage{Target: card.Target.This}),
 )

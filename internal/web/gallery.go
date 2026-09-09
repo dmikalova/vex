@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
@@ -19,8 +20,10 @@ import (
 // for the query grammar), and by power/armor ranges, then ordered by a chosen
 // key. Facets are OR within a category and AND across categories. Template cards
 // (Master of X) are shown as their materialized variants (Master of 1…5), not the
-// placeholder face. The whole catalog stays mounted and rendering cost is bounded
-// in CSS with content-visibility, not by windowing.
+// placeholder face. Only the cards on or near the viewport are mounted as full
+// printed faces; the rest render as fixed-size text placeholders (see window and
+// galleryPlaceholder), so a large catalog keeps a correct scroll height and stays
+// find-in-page searchable without paying to lay out and paint every face.
 
 // NewGallery returns the root component for the /cards page.
 func NewGallery() app.Composer { return &gallery{} }
@@ -68,7 +71,36 @@ type gallery struct {
 	// ready is false until the async catalog build finishes; the page renders its
 	// shell immediately and fills the grid in once ready.
 	ready bool
+
+	// winFrom..winTo is the half-open index range of the shown cards drawn as full
+	// printed faces; every other shown card is a lightweight text placeholder (see
+	// window and galleryPlaceholder). A scroll or resize re-measures the viewport
+	// and slides the window (recomputeWindow), so only the cards on or near screen
+	// pay for a heavy face while the rest keep the scroll height and find-in-page
+	// text intact.
+	winFrom int
+	winTo   int
+	// dispatch schedules a re-render on the UI goroutine (captured in OnMount), so a
+	// scroll or resize callback can slide the window and repaint.
+	dispatch func(func(app.Context))
+	// scrollFunc is the document scroll listener that slides the window; measureFunc
+	// is the requestAnimationFrame callback a render queues to re-measure after the
+	// grid relays out (e.g. a filter change). measureQueued guards against queuing
+	// more than one frame at a time.
+	scrollFunc    app.Func
+	measureFunc   app.Func
+	measureQueued bool
 }
+
+// galleryInitialWindow is how many faces the grid draws before the first
+// measurement, so the initial paint mounts a screenful of real faces rather than
+// the whole catalog, then recomputeWindow narrows it to what is actually visible.
+const galleryInitialWindow = 60
+
+// galleryWindowBuffer is how many rows of cards beyond the viewport, on each side,
+// stay mounted as full faces, so a short scroll reveals painted cards rather than
+// bare placeholders while the next frame catches up.
+const galleryWindowBuffer = 4
 
 // rarityOrder gives each rarity its catalog rank, so the Rarity facet reads in
 // rulebook order rather than alphabetically.
@@ -92,6 +124,10 @@ func (g *gallery) OnMount(ctx app.Context) {
 	g.selKeyword = map[engine.Keyword]bool{}
 	g.selTrait = map[engine.Trait]bool{}
 	g.order = "name"
+	g.winFrom = 0
+	g.winTo = galleryInitialWindow
+	g.dispatch = ctx.Dispatch
+	g.installWindowing()
 
 	ctx.Async(func() {
 		cat := buildGalleryCatalog()
@@ -106,6 +142,152 @@ func (g *gallery) OnMount(ctx app.Context) {
 			g.ready = true
 		})
 	})
+}
+
+// installWindowing wires the scroll listener and the frame-measure callback that
+// keep the drawn window of full faces aligned with the viewport. The page scrolls
+// on the document, and a scroll event does not bubble, so the listener is
+// registered in the capture phase. It no-ops off-browser, where there is no page
+// to measure and the grid draws its initial window of faces unchanged.
+func (g *gallery) installWindowing() {
+	if !app.IsClient || g.scrollFunc != nil {
+		return
+	}
+	g.scrollFunc = app.FuncOf(func(app.Value, []app.Value) any {
+		g.recomputeWindow()
+		return nil
+	})
+	g.measureFunc = app.FuncOf(func(app.Value, []app.Value) any {
+		g.measureQueued = false
+		g.recomputeWindow()
+		return nil
+	})
+	app.Window().Get("document").Call("addEventListener", "scroll", g.scrollFunc, true)
+}
+
+// OnDismount releases the windowing listeners so a navigation away from the
+// gallery leaves nothing bound to the document.
+func (g *gallery) OnDismount() {
+	if g.scrollFunc != nil {
+		app.Window().Get("document").
+			Call("removeEventListener", "scroll", g.scrollFunc, true)
+		g.scrollFunc.Release()
+		g.scrollFunc = nil
+	}
+	if g.measureFunc != nil {
+		g.measureFunc.Release()
+		g.measureFunc = nil
+	}
+}
+
+// OnResize re-measures the window when the viewport changes, since the number of
+// columns and the visible row count both follow the width and height.
+func (g *gallery) OnResize(app.Context) { g.recomputeWindow() }
+
+// scheduleMeasure asks for one re-measure on the next frame, after the grid a
+// render just produced has laid out. It is how a filter change — which reflows the
+// grid without a scroll or resize — re-aligns the window. It queues at most one
+// frame at a time and no-ops off-browser.
+func (g *gallery) scheduleMeasure() {
+	if !app.IsClient || g.measureFunc == nil || g.measureQueued {
+		return
+	}
+	g.measureQueued = true
+	app.Window().Call("requestAnimationFrame", g.measureFunc)
+}
+
+// recomputeWindow measures the viewport against the laid-out grid and, when the
+// visible index range has changed, slides the window and repaints. It runs on the
+// UI goroutine (a scroll, resize, or frame callback), so it reads and writes the
+// window fields directly and only repaints on a real change, which keeps a scroll
+// from looping through renders that do not move the window.
+func (g *gallery) recomputeWindow() {
+	from, to, ok := g.measureWindow()
+	if !ok || (from == g.winFrom && to == g.winTo) {
+		return
+	}
+	g.winFrom, g.winTo = from, to
+	if g.dispatch != nil {
+		g.dispatch(func(app.Context) {})
+	}
+}
+
+// measureWindow reads the laid-out grid and viewport and returns the half-open
+// index range of cards on or near screen, given a uniform card box. It reports
+// ok=false when there is nothing to measure (off-browser, or before the grid has
+// mounted), so the caller leaves the current window in place.
+func (g *gallery) measureWindow() (from, to int, ok bool) {
+	if !app.IsClient {
+		return 0, 0, false
+	}
+	win := app.Window()
+	doc := win.Get("document")
+	if !doc.Truthy() {
+		return 0, 0, false
+	}
+	grid := doc.Call("querySelector", ".gallery-grid")
+	if !grid.Truthy() {
+		return 0, 0, false
+	}
+	slots := grid.Get("children")
+	if slots.Get("length").Int() == 0 {
+		return 0, 0, false
+	}
+	box := slots.Call("item", 0).Call("getBoundingClientRect")
+	cardW := box.Get("width").Float()
+	cardH := box.Get("height").Float()
+	if cardW <= 0 || cardH <= 0 {
+		return 0, 0, false
+	}
+	gridRect := grid.Call("getBoundingClientRect")
+	style := win.Call("getComputedStyle", grid)
+	rowGap := parsePx(style.Get("rowGap").String())
+	colGap := parsePx(style.Get("columnGap").String())
+	cols := int((gridRect.Get("width").Float() + colGap) / (cardW + colGap))
+	if cols < 1 {
+		cols = 1
+	}
+	rowH := cardH + rowGap
+	if rowH <= 0 {
+		return 0, 0, false
+	}
+	gridTop := gridRect.Get("top").Float()
+	innerH := win.Get("innerHeight").Float()
+	firstRow := int(-gridTop/rowH) - galleryWindowBuffer
+	lastRow := int((innerH-gridTop)/rowH) + galleryWindowBuffer
+	if firstRow < 0 {
+		firstRow = 0
+	}
+	if lastRow < firstRow {
+		lastRow = firstRow
+	}
+	return firstRow * cols, (lastRow + 1) * cols, true
+}
+
+// window clamps the drawn-face index range to the shown-card count, so a filter
+// that shrinks the list can never point the window past its end.
+func (g *gallery) window(n int) (from, to int) {
+	from, to = g.winFrom, g.winTo
+	if from < 0 {
+		from = 0
+	}
+	if from > n {
+		from = n
+	}
+	if to > n {
+		to = n
+	}
+	if to < from {
+		to = from
+	}
+	return from, to
+}
+
+// parsePx reads a CSS pixel length like "12px" as a float, treating an empty or
+// unparsable value as zero.
+func parsePx(s string) float64 {
+	f, _ := strconv.ParseFloat(strings.TrimSuffix(strings.TrimSpace(s), "px"), 64)
+	return f
 }
 
 // galleryCatalog is the built catalog: every card as a printed entry plus the
@@ -373,6 +555,9 @@ func (g *gallery) onExcludeReprints(ctx app.Context, _ app.Event) {
 
 // Render draws the filter sidebar and the ordered grid of matching card faces.
 func (g *gallery) Render() app.UI {
+	// A render reflows the grid (a filter may have changed the count), so ask for a
+	// re-measure on the next frame to re-align the drawn-face window with the view.
+	g.scheduleMeasure()
 	nameTerms := parseQuery(g.name)
 	textTerms := parseQuery(g.text)
 	shown := make([]galleryCard, 0, len(g.cards))
@@ -400,14 +585,21 @@ func (g *gallery) Render() app.UI {
 					app.If(!g.ready, func() app.UI {
 						return app.Div().Class("gallery-count").Text("Loading cards…")
 					}).Else(func() app.UI {
+						from, to := g.window(len(shown))
 						return app.Div().Body(
 							app.Div().Class("gallery-count").
 								Text(fmt.Sprintf("%d of %d cards", len(shown), len(g.cards))),
 							app.Div().Class("gallery-grid").Body(
 								app.Range(shown).Slice(func(i int) app.UI {
-									return app.Div().
-										Class("gallery-card").
-										Body(printedFace(shown[i].def))
+									// On/near-screen cards draw the heavy printed face; the rest
+									// draw a fixed-size text placeholder, so the scroll height and
+									// find-in-page text stay intact without mounting every face.
+									if i >= from && i < to {
+										return app.Div().
+											Class("gallery-card").
+											Body(printedFace(shown[i].def))
+									}
+									return galleryPlaceholder(shown[i].def)
 								}),
 							),
 						)
@@ -415,6 +607,19 @@ func (g *gallery) Render() app.UI {
 				),
 			),
 		),
+	)
+}
+
+// galleryPlaceholder is the lightweight stand-in an off-screen card draws instead
+// of its heavy printed face: the card's name and rules text in a box the same
+// fixed size as a face. It keeps the grid's geometry uniform — so the scroll
+// height stays exact and the drawn-face window's index math holds — and keeps the
+// card's text in the DOM, so the browser's find-in-page (Ctrl+F) still matches a
+// card whose full face has not been mounted.
+func galleryPlaceholder(def *engine.CardDefinition) app.UI {
+	return app.Div().Class("gallery-card", "gallery-card--placeholder").Body(
+		app.Div().Class("gallery-placeholder-name").Text(def.Name),
+		app.Div().Class("gallery-placeholder-text").Text(engine.RenderCardRules(def)),
 	)
 }
 

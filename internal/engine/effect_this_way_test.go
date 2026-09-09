@@ -11,19 +11,19 @@ func TestCreaturesRemovedThisWayCounts(t *testing.T) {
 		want  string
 	}{
 		{
-			CreaturesDestroyedThisWay{Player: Controller},
+			ProducedThisWay{Tally: TallyCreaturesDestroyed, Player: Controller},
 			"creature they controlled that was destroyed this way",
 		},
 		{
-			CreaturesShuffledIntoDeckThisWay{Player: Controller},
+			ProducedThisWay{Tally: TallyCreaturesShuffledIntoDeck, Player: Controller},
 			"creature shuffled into their deck this way",
 		},
 		{
-			CreaturesDestroyedThisWay{Player: Opponent},
+			ProducedThisWay{Tally: TallyCreaturesDestroyed, Player: Opponent},
 			"creature your opponent controlled that was destroyed this way",
 		},
 		{
-			CreaturesShuffledIntoDeckThisWay{Player: Opponent},
+			ProducedThisWay{Tally: TallyCreaturesShuffledIntoDeck, Player: Opponent},
 			"creature shuffled into your opponent's deck this way",
 		},
 	}
@@ -36,10 +36,14 @@ func TestCreaturesRemovedThisWayCounts(t *testing.T) {
 	ctx := &EffectContext{Controller: 1}
 	ctx.Produced.Destroyed = [2]int{4, 7}
 	ctx.Produced.Moved = [2]int{5, 9}
-	if got := (CreaturesDestroyedThisWay{Player: Controller}).Value(ctx); got != 7 {
+	if got := (ProducedThisWay{Tally: TallyCreaturesDestroyed, Player: Controller}).Value(
+		ctx,
+	); got != 7 {
 		t.Errorf("destroyed Value = %d, want 7", got)
 	}
-	if got := (CreaturesShuffledIntoDeckThisWay{Player: Controller}).Value(ctx); got != 9 {
+	if got := (ProducedThisWay{Tally: TallyCreaturesShuffledIntoDeck, Player: Controller}).Value(
+		ctx,
+	); got != 9 {
 		t.Errorf("shuffled Value = %d, want 9", got)
 	}
 	if got := ctx.Produced.TotalDestroyed(); got != 11 {
@@ -47,14 +51,14 @@ func TestCreaturesRemovedThisWayCounts(t *testing.T) {
 	}
 }
 
-// TestAemberLostThisWayCount covers the Æmber-lost tally LoseAember fills and
-// AemberLostThisWay reads (Shatter Storm).
+// TestAemberLostThisWayCount covers the Æmber-lost tally LoseAember fills and a
+// ProducedThisWay with TallyAemberLost reads (Shatter Storm).
 func TestAemberLostThisWayCount(t *testing.T) {
-	if got := (AemberLostThisWay{Player: Controller}).CountText(); got != "Æmber you lost this way" {
+	if got := (ProducedThisWay{Tally: TallyAemberLost, Player: Controller}).CountText(); got != "Æmber you lost this way" {
 		t.Errorf("CountText = %q", got)
 	}
 	want := "Æmber your opponent lost this way"
-	if got := (AemberLostThisWay{Player: Opponent}).CountText(); got != want {
+	if got := (ProducedThisWay{Tally: TallyAemberLost, Player: Opponent}).CountText(); got != want {
 		t.Errorf("opponent CountText = %q", got)
 	}
 
@@ -65,13 +69,13 @@ func TestAemberLostThisWayCount(t *testing.T) {
 
 	// Losing everything fills the tally, which the next loss triples.
 	LoseAember{Player: Controller, By: AllAember}.Resolve(ctx)
-	if got := (AemberLostThisWay{Player: Controller}).Value(ctx); got != 3 {
+	if got := (ProducedThisWay{Tally: TallyAemberLost, Player: Controller}).Value(ctx); got != 3 {
 		t.Errorf("tally = %d, want 3", got)
 	}
 	LoseAember{
 		Player: Opponent,
 		Amount: 3,
-		Per:    AemberLostThisWay{Player: Controller},
+		Per:    ProducedThisWay{Tally: TallyAemberLost, Player: Controller},
 	}.Resolve(ctx)
 	if got := g.Aember(1); got != 1 {
 		t.Errorf("opponent pool = %d, want 1", got)
@@ -159,7 +163,7 @@ func TestGainAemberEachPlayer(t *testing.T) {
 	gain := GainAember{
 		Player: EachPlayer,
 		Amount: 1,
-		Per:    CreaturesDestroyedThisWay{Player: Controller},
+		Per:    ProducedThisWay{Tally: TallyCreaturesDestroyed, Player: Controller},
 	}
 	if got, want := gain.Text(),
 		"for each creature they controlled that was destroyed this way, "+

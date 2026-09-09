@@ -20,6 +20,8 @@ type PurgeCard struct {
 	Zone Zone
 	// Type restricts the purge to cards of this type; the zero value allows any.
 	Type CardType
+	// House restricts the purge to cards of this house; HouseNone allows any card.
+	House House
 	// Amount is how many cards to purge; the zero value counts as one, so a bare
 	// Purge reads as "purge a card".
 	Amount int
@@ -44,12 +46,17 @@ func (e PurgeCard) count() int {
 	return e.Amount
 }
 
-// noun renders the kind of card purged: the lowercased type when set, else "card".
+// noun renders the kind of card purged: the lowercased type when set, else "card",
+// house-qualified when House is set (e.g. "Dis card").
 func (e PurgeCard) noun() string {
+	noun := "card"
 	if e.Type != TypeUnset {
-		return strings.ToLower(e.Type.String())
+		noun = strings.ToLower(e.Type.String())
 	}
-	return "card"
+	if e.House != HouseNone {
+		noun = e.House.String() + " " + noun
+	}
+	return noun
 }
 
 // Text renders the effect, e.g. "purge a creature from a discard pile" or "purge
@@ -73,16 +80,19 @@ func (e PurgeCard) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 // and reports whether any card was purged.
 func (e PurgeCard) resolveGate(ctx *EffectContext) bool {
 	matches := func(id LocalID) bool {
-		return e.Type == TypeUnset || ctx.Resolver.TypeOf(id) == e.Type
+		if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
+			return false
+		}
+		if e.House != HouseNone && ctx.Resolver.House(id) != e.House {
+			return false
+		}
+		return true
 	}
 	// The discard piles holding at least one matching card.
 	var piles []int
 	for _, p := range []int{ctx.Controller, ctx.Opponent()} {
-		for _, id := range ctx.Resolver.Discard(p) {
-			if matches(id) {
-				piles = append(piles, p)
-				break
-			}
+		if len(discardCardsWhere(ctx, p, matches)) > 0 {
+			piles = append(piles, p)
 		}
 	}
 	if len(piles) == 0 {
@@ -94,13 +104,9 @@ func (e PurgeCard) resolveGate(ctx *EffectContext) bool {
 			[]string{"your discard pile", "your opponent's discard pile"})]
 	}
 	purged := 0
+	bonus := 0
 	for i := 0; i < e.count(); i++ {
-		var cands []LocalID
-		for _, id := range ctx.Resolver.Discard(pile) {
-			if matches(id) {
-				cands = append(cands, id)
-			}
-		}
+		cands := discardCardsWhere(ctx, pile, matches)
 		if len(cands) == 0 {
 			break
 		}
@@ -114,10 +120,26 @@ func (e PurgeCard) resolveGate(ctx *EffectContext) bool {
 		if !ok {
 			break
 		}
-		ctx.Resolver.PurgeFromDiscard(pile, chosen)
+		bonus += ctx.Resolver.AemberBonus(chosen)
+		purgeFrom(ctx, Discard, pile, chosen)
 		purged++
 	}
+	ctx.Produced.Purged = purged
+	ctx.Produced.PurgedAemberBonus = bonus
 	return purged > 0
+}
+
+// purgeFrom sets one card aside out of the game, dispatching to the resolver
+// removal for its current zone — the single move behind every purge (ADR 0031).
+func purgeFrom(ctx *EffectContext, from Zone, owner int, id LocalID) {
+	switch from {
+	case Hand:
+		ctx.Resolver.PurgeFromHand(owner, id)
+	case Discard:
+		ctx.Resolver.PurgeFromDiscard(owner, id)
+	default: // inPlay
+		ctx.Resolver.PurgeFromPlay(id)
+	}
 }
 
 // PurgeFromHand lets the controller choose and purge one card from a player's
@@ -161,19 +183,60 @@ func (e PurgeFromHand) Text() string {
 // Resolve offers the matching cards in the player's hand as a declinable choice,
 // then purges the chosen one. It does nothing when no card matches or the
 // controller declines.
-func (e PurgeFromHand) Resolve(ctx *EffectContext) {
+func (e PurgeFromHand) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
+
+// resolveGate purges the chosen card and reports whether one was, so it can be the
+// first half of a Then ("purge a card from your hand -> give two power counters",
+// Greater Oxtet).
+func (e PurgeFromHand) resolveGate(ctx *EffectContext) bool {
 	owner := ctx.PlayerFor(e.Player)
-	var cands []LocalID
-	for _, id := range ctx.Resolver.Hand(owner) {
-		if e.House == HouseNone || ctx.Resolver.House(id) == e.House {
-			cands = append(cands, id)
-		}
-	}
+	cands := handCardsWhere(ctx, owner, func(id LocalID) bool {
+		return e.House == HouseNone || ctx.Resolver.House(id) == e.House
+	})
 	chosen, ok := ctx.ChooseCardOptional("Choose a card to purge", cands)
 	if !ok {
-		return
+		return false
 	}
-	ctx.Resolver.PurgeFromHand(owner, chosen)
+	purgeFrom(ctx, Hand, owner, chosen)
+	return true
+}
+
+// declinable reports that the purge is a single optional card choice, so a May or
+// gate wrapping it is answered by clicking the card (or passing).
+func (e PurgeFromHand) declinable() bool { return true }
+
+// resolveOptional resolves the purge as its own optional choice under a May.
+func (e PurgeFromHand) resolveOptional(ctx *EffectContext) bool { return e.resolveGate(ctx) }
+
+// PurgeRandomFromHand purges one uniformly random card from a player's hand —
+// Impspector's "purge a random card from your opponent's hand", where the purging
+// player does not choose which card leaves.
+type PurgeRandomFromHand struct {
+	// Player whose hand the card is purged from.
+	Player Player
+}
+
+// validate rejects a PurgeRandomFromHand whose player was left unset.
+func (e PurgeRandomFromHand) validate() error {
+	if !e.Player.valid() {
+		return errUnsetPlayer("PurgeRandomFromHand")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "purge a random card from your opponent's hand".
+func (e PurgeRandomFromHand) Text() string {
+	whose := "your hand"
+	if e.Player == Opponent {
+		whose = "your opponent's hand"
+	}
+	return "purge a random card from " + whose
+}
+
+// Resolve purges one uniformly random card from the player's hand, doing nothing
+// when the hand is empty.
+func (e PurgeRandomFromHand) Resolve(ctx *EffectContext) {
+	ctx.Resolver.PurgeRandomFromHand(ctx.PlayerFor(e.Player))
 }
 
 // PurgeEachFromHand purges every card in a player's hand that matches its filters
@@ -221,18 +284,17 @@ func (e PurgeEachFromHand) Text() string {
 // Resolve purges every matching card from the hand and records the tally.
 func (e PurgeEachFromHand) Resolve(ctx *EffectContext) {
 	owner := ctx.PlayerFor(e.Player)
-	var doomed []LocalID
-	for _, id := range ctx.Resolver.Hand(owner) {
+	doomed := handCardsWhere(ctx, owner, func(id LocalID) bool {
 		if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
-			continue
+			return false
 		}
 		if e.ExceptHouse != HouseNone && ctx.Resolver.House(id) == e.ExceptHouse {
-			continue
+			return false
 		}
-		doomed = append(doomed, id)
-	}
+		return true
+	})
 	for _, id := range doomed {
-		ctx.Resolver.PurgeFromHand(owner, id)
+		purgeFrom(ctx, Hand, owner, id)
 	}
 	ctx.Produced.Purged = len(doomed)
 }
@@ -266,17 +328,40 @@ func (e PurgeCreature) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 // can hang a follow-up off it (Sacrificial Altar only reaches into the discard
 // pile if there was a Human to purge).
 func (e PurgeCreature) resolveGate(ctx *EffectContext) bool {
+	return e.purge(ctx, e.Target.Select(ctx))
+}
+
+// declinable reports that the purge is a single clickable creature.
+func (e PurgeCreature) declinable() bool { return e.Target.isChosen() }
+
+// vacuous reports that there is nothing here to purge, so a "you may" wrapping it
+// need not ask (Buzzle at a flank with no neighbor purges nothing and asks
+// nothing).
+func (e PurgeCreature) vacuous(ctx *EffectContext) bool { return e.Target.empty(ctx) }
+
+// resolveOptional is resolveGate under a May: the creature is asked declinably, so
+// "you may purge a neighboring creature" is answered by clicking that creature
+// rather than by a separate Yes/No.
+func (e PurgeCreature) resolveOptional(ctx *EffectContext) bool {
+	return e.purge(ctx, e.Target.SelectOptional(ctx))
+}
+
+// purge carries out the purge of an already-selected set — each creature from play
+// if it is still there, or from its owner's discard pile if it has just been
+// destroyed (Yxilo Bolter purges the creature its damage killed). It records the
+// tally so a following effect can scale with how many were actually purged.
+func (e PurgeCreature) purge(ctx *EffectContext, ids []LocalID) bool {
 	purged := 0
-	for _, id := range e.Target.Select(ctx) {
+	for _, id := range ids {
 		if resolverInPlay(ctx, id) {
-			ctx.Resolver.PurgeFromPlay(id)
+			purgeFrom(ctx, inPlay, 0, id)
 			purged++
 			continue
 		}
 		owner := ctx.Resolver.Owner(id)
 		for _, d := range ctx.Resolver.Discard(owner) {
 			if d == id {
-				ctx.Resolver.PurgeFromDiscard(owner, id)
+				purgeFrom(ctx, Discard, owner, id)
 				purged++
 				break
 			}
@@ -297,6 +382,18 @@ func (CardsPurged) Value(ctx *EffectContext) int { return ctx.Produced.Purged }
 // CountText renders the singular noun the "for each" clause repeats.
 func (CardsPurged) CountText() string { return "creature purged this way" }
 
+// PurgedAemberBonus totals the printed Æmber bonus of the cards the most recent
+// PurgeCard removed this resolution — Infurnace's opponent loses Æmber equal to the
+// total Æmber bonus of the cards it purged. It reads as a whole phrase, not a "for
+// each" tally, so a LoseAemberEqualTo names the count directly.
+type PurgedAemberBonus struct{}
+
+// Value reads the summed bonus the preceding purge recorded.
+func (PurgedAemberBonus) Value(ctx *EffectContext) int { return ctx.Produced.PurgedAemberBonus }
+
+// CountText renders the phrase the loss is measured against.
+func (PurgedAemberBonus) CountText() string { return "the total Æmber bonus of the purged cards" }
+
 // PurgeCreatureFromHand purges a creature the controller chooses from their hand
 // and puts it in context (ctx.It) for a following effect to act on. It is the
 // first half of Custom Virus's "purge a creature from your hand, destroy each
@@ -315,12 +412,7 @@ func (PurgeCreatureFromHand) Text() string {
 // Resolve purges a chosen creature from the controller's hand and sets it as the
 // context card.
 func (PurgeCreatureFromHand) Resolve(ctx *EffectContext) {
-	var inHand []LocalID
-	for _, id := range ctx.Resolver.Hand(ctx.Controller) {
-		if ctx.Resolver.IsCreature(id) {
-			inHand = append(inHand, id)
-		}
-	}
+	inHand := handCardsWhere(ctx, ctx.Controller, ctx.Resolver.IsCreature)
 	if len(inHand) == 0 {
 		return
 	}
@@ -328,7 +420,7 @@ func (PurgeCreatureFromHand) Resolve(ctx *EffectContext) {
 	if !ok {
 		return
 	}
-	ctx.Resolver.PurgeFromHand(ctx.Controller, purged)
+	purgeFrom(ctx, Hand, ctx.Controller, purged)
 	ctx.It, ctx.HasIt = purged, true
 }
 

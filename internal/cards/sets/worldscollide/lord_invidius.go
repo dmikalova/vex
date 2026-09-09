@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // LordInvidius
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Dis
 //	Type:   Creature
@@ -25,5 +20,24 @@ var LordInvidius = card.New(
 	card.Provenance(card.WC, "110"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Demon, card.Traits.Leader),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithConstant(card.ConstantAbility{
+		WhileInCenter: true,
+		Target:        card.Target.This,
+		Granted: []card.Ability{{
+			Trigger: card.Trigger.Reap,
+			Effect: card.Sentences{Effects: []card.Effect{
+				card.TakeControl{
+					Target:   card.Target.EnemyCreature.OnFlank(),
+					Duration: card.Duration.UntilThisLeavesPlay,
+				},
+				card.Exhaust{Target: card.Target.Triggering},
+				card.BelongToHouse{
+					Target:   card.Target.Triggering,
+					House:    card.House.Self,
+					Duration: card.Duration.UntilThisLeavesPlay,
+				},
+			}},
+		}},
+	}),
 )

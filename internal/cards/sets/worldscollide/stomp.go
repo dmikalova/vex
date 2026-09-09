@@ -18,8 +18,9 @@ var Stomp = card.New(
 	card.Provenance(card.WC, "210"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.DamageThenIfDestroyed{
+		card.Trigger.Play, card.DamageThen{
 			Amount: 5,
+			After:  card.IfDestroyed,
 			Target: card.Target.Creature,
 			Then: card.Exalt{
 				Target: card.Target.FriendlyCreature,

@@ -342,6 +342,11 @@ type StaticModifier struct {
 	// the host imposes it (e.g. "Your opponent's keys cost +2 Æmber").
 	KeyCostChange KeyCostChange
 
+	// AemberCannotBeStolen, while the Upgrade is attached, keeps the host's
+	// controller's Æmber from being stolen (Discombobulator grants the host "Your
+	// Æmber cannot be stolen.").
+	AemberCannotBeStolen bool
+
 	// Replaces is a continuous replacement the Upgrade applies to a game event's
 	// outcome for its host while attached — Armageddon Cloak replaces the host's
 	// destruction (EventCreatureDestroyed) with an effect that fully heals it and
@@ -357,6 +362,11 @@ type StaticModifier struct {
 	// to fight the host creature — Camouflage. A creature on a flank may still
 	// fight it.
 	ProtectsFromNonFlank bool
+
+	// HouseOverride, while the Upgrade is attached and its controller controls the
+	// host, makes the host belong to this house instead of its printed one — Academy
+	// Training makes its creature a Logos creature. HouseNone carries no override.
+	HouseOverride House
 }
 
 // grants reports whether the modifier gives its host anything at all — a stat
@@ -373,7 +383,9 @@ func (m StaticModifier) grants() bool {
 		len(m.Keywords) > 0 ||
 		m.KeyCostChange.amount != 0 ||
 		m.Replaces.valid() ||
-		m.ProtectsFromNonFlank
+		m.ProtectsFromNonFlank ||
+		m.HouseOverride != HouseNone ||
+		m.AemberCannotBeStolen
 }
 
 // ConstantAbility is a continuous stat modifier a card in play applies to

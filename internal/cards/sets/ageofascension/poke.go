@@ -18,8 +18,9 @@ var Poke = card.New(
 	card.Provenance(card.AoA, "117"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.DamageThenIfDestroyed{
+		card.Trigger.Play, card.DamageThen{
 			Amount: 1,
+			After:  card.IfDestroyed,
 			Target: card.Target.EnemyCreature,
 			Then:   card.Draw{Amount: 1},
 		}),

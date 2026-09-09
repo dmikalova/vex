@@ -21,7 +21,7 @@ var GuardDisguise = card.New(
 		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
 			card.Destroy{Target: card.Target.This},
 			card.Conditional{
-				Cond: card.OpponentAember{Is: card.AtMost, Amount: 3},
+				Cond: card.PoolAember{Player: card.Opponent, Is: card.AtMost, Amount: 3},
 				Then: card.StealAember{Amount: 3},
 			},
 		}}),

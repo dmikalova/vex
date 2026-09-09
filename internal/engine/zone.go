@@ -14,11 +14,11 @@ const (
 	Hand
 	// Archives is a player's archives.
 	Archives
+	// Deck is a player's deck.
+	Deck
 	// The zones below are exported to no one: a card may not name them, but the
 	// engine still has to place a move's endpoints to know what the log may say.
 
-	// deck is a player's deck.
-	deck
 	// inPlay is the board — battleline, artifacts, and the upgrades on them.
 	inPlay
 	// purged is the pile a purged card is set aside in, out of the game.
@@ -37,6 +37,8 @@ func (z Zone) noun() string {
 		return "hand"
 	case Archives:
 		return "archives"
+	case Deck:
+		return "deck"
 	default: // Discard
 		return "discard pile"
 	}

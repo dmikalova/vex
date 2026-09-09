@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Velum
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Logos
 //	Type:   Creature
@@ -21,10 +16,19 @@ var Velum = card.New(
 	"Velum",
 	card.House.Logos,
 	card.Type.Creature,
-	// TODO(variant): rarity relabelled from FIXED to Special — handle manually
 	card.Rarity.Special,
 	card.Provenance(card.WC, "181"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.Reap, card.ArchiveFromHand{
+		Amount: 1,
+		Or: card.OrAmount{
+			Amount: 2,
+			When:   card.ControlsNamed{Name: "Hyde"},
+		},
+	}),
+	card.WithAbility(card.Trigger.Destroyed, card.Then{
+		First:  card.ArchiveFromDiscard{Name: "Hyde"},
+		Result: card.ArchiveFromPlay{Target: card.Target.This},
+	}),
 )

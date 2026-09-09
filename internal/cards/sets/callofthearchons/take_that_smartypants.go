@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: If there are 3 enemy Logos cards in play, steal 2 Æmber.
+//	Play: If there are 3 or more enemy Logos cards in play, steal 2 Æmber.
 var TakeThatSmartypants = card.New(
 	"Take that, Smartypants",
 	card.House.Brobnar,

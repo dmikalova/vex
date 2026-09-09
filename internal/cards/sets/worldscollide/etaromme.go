@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Etaromme
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Dis
 //	Type:   Creature
@@ -24,5 +19,8 @@ var Etaromme = card.New(
 	card.Provenance(card.WC, "73"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Demon),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Reap,
+		card.Destroy{Target: card.Target.Creature.OfHouseWithMostCreatures()},
+	),
 )

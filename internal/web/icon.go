@@ -66,6 +66,12 @@ func cardGlyphs(def *engine.CardDefinition) []glyphLine {
 			covered: true,
 		})
 	}
+	if def.DrawModifier.Amount != 0 {
+		lines = append(lines, glyphLine{
+			glyphs:  drawModifierGlyphs(def.DrawModifier),
+			covered: true,
+		})
+	}
 	for i := 0; i < len(def.Abilities); {
 		ab := def.Abilities[i]
 		gs, covered := effectGlyphs(ab.Effect)
@@ -183,6 +189,20 @@ func fightRestrictionGlyphs(fr engine.Target) []glyph {
 	return []glyph{{asset: "glyph-fight"}, arrowTo(targetGlyph(fr))}
 }
 
+// drawModifierGlyphs renders a card's continuous end-of-turn hand-refill change
+// (Mother draws +1, Succubus makes the opponent draw −1) as a hand glyph carrying
+// the signed amount, tinted to the player it affects. EachPlayer stays untinted.
+func drawModifierGlyphs(m engine.DrawModifier) []glyph {
+	g := glyph{asset: "zone-hand", qty: m.Amount}
+	switch m.Player {
+	case engine.Controller:
+		g.decor = decorFriendly
+	case engine.Opponent:
+		g.decor = decorEnemy
+	}
+	return []glyph{g}
+}
+
 // isActionTrigger reports whether a trigger is one of the three action triggers
 // (Play, Fight, Reap) that WithPlayFightReap and its pair variants merge onto one
 // line.
@@ -200,13 +220,15 @@ func isActionTrigger(t engine.Trigger) bool {
 func triggerIcon(t engine.Trigger) string {
 	switch t {
 	case engine.TriggerAfterPlay, engine.TriggerEntersPlay,
-		engine.TriggerAfterCreatureEnters, engine.TriggerAfterCreaturePlayedAdjacent:
+		engine.TriggerAfterCreatureEnters, engine.TriggerAfterCreaturePlayedAdjacent,
+		engine.TriggerAfterCreaturePlayed:
 		return "glyph-play"
 	case engine.TriggerAfterReap, engine.TriggerAfterCreatureReaps,
 		engine.TriggerAfterEnemyCreatureReaps:
 		return "glyph-reap"
 	case engine.TriggerAfterFight, engine.TriggerBeforeFight,
-		engine.TriggerAfterDestroyedFighting:
+		engine.TriggerAfterDestroyedFighting, engine.TriggerAfterCreatureFights,
+		engine.TriggerAfterAssaultDestroys:
 		return "glyph-fight"
 	case engine.TriggerAction, engine.TriggerAfterUse, engine.TriggerAfterUsedSelf:
 		return "glyph-action"
@@ -241,6 +263,11 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 			{asset: "damage", qty: v.Amount},
 			arrowTo(targetGlyph(v.Target)),
 		}, true
+	case engine.DealDamagePerHouse:
+		return []glyph{
+			{asset: "damage", qty: v.Amount},
+			arrowTo(glyph{asset: "type-creature"}),
+		}, true
 	case engine.GainAember:
 		if v.Per != nil {
 			return []glyph{{asset: "aember", decor: playerDecor(v.Player)}}, true
@@ -249,6 +276,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 	case engine.GainAemberEqualTo:
 		return []glyph{{asset: "aember", decor: playerDecor(v.Player)}}, true
 	case engine.LoseAember:
+		return []glyph{{asset: "aember", text: "−", decor: playerDecor(v.Player)}}, true
+	case engine.LoseAemberEqualTo:
 		return []glyph{{asset: "aember", text: "−", decor: playerDecor(v.Player)}}, true
 	case engine.StealAember:
 		return []glyph{{asset: "aember", qty: v.Amount, decor: decorEnemy | decorChosen}}, true
@@ -296,14 +325,19 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		gs := []glyph{{asset: "glyph-destroy"}, targetGlyph(v.Target)}
 		more, _ := effectGlyphs(v.Then)
 		return append(gs, more...), true
+	case engine.SacrificeToForge:
+		return []glyph{
+			{asset: "glyph-destroy"},
+			targetGlyph(v.Target),
+			arrowTo(glyph{asset: "forge"}),
+		}, true
 	case engine.PlaceCounter:
 		return []glyph{{asset: counterAsset(v.Kind)}, arrowTo(targetGlyph(v.Target))}, true
 	case engine.BlankEnemyText:
 		return []glyph{{asset: "type-creature", decor: decorEnemy | decorEach}}, true
 	case engine.ArchiveFromHand:
 		return []glyph{{asset: "zone-archives", qty: v.Amount}}, true
-	case engine.ArchiveFromDiscard, engine.ArchiveFromPlay, engine.ArchiveTopOfDeck,
-		engine.ArchiveTopOfDiscard:
+	case engine.ArchiveFromDiscard, engine.ArchiveFromPlay, engine.ArchiveTop:
 		return []glyph{{asset: "zone-archives"}}, true
 	case engine.ArchiveSource:
 		return []glyph{{asset: "zone-archives", decor: decorThis}}, true
@@ -313,6 +347,12 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "zone-discard"}}, true
 	case engine.PurgeCard:
 		return []glyph{{asset: "zone-purge"}}, true
+	case engine.PurgeEachOfChosenTrait:
+		return []glyph{
+			{asset: "glyph-choose"},
+			arrowTo(glyph{asset: "zone-purge"}),
+			arrowTo(glyph{asset: "aember", decor: decorEach}),
+		}, true
 	case engine.PurgeArchivesForDamage:
 		return []glyph{
 			{asset: "zone-purge"},
@@ -379,10 +419,6 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		}, true
 	case engine.DamageThen:
 		return damageThenGlyphs(v.Amount, v.Target, v.Then)
-	case engine.DamageThenIfDestroyed:
-		return damageThenGlyphs(v.Amount, v.Target, v.Then)
-	case engine.DamageThenIfSurvives:
-		return damageThenGlyphs(v.Amount, v.Target, v.Then)
 	case engine.RepeatWhile:
 		// A loop shows the effect it repeats; the "until" condition stays in text.
 		if inner, ok := v.Do.(engine.Effect); ok {
@@ -396,6 +432,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 	case engine.ExaltToRepeat:
 		return effectGlyphs(v.Do)
 	case engine.May:
+		return effectGlyphs(v.Do)
+	case engine.SaveFromDestruction:
 		return effectGlyphs(v.Do)
 	case engine.Then:
 		if first, ok := v.First.(engine.Effect); ok {
@@ -553,6 +591,18 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		}, true
 	case engine.DiscardDeckUntil:
 		return []glyph{{asset: "zone-deck"}, {asset: "zone-discard"}}, true
+	case engine.RevealDeckUntilHouse:
+		return []glyph{
+			{asset: "zone-deck"},
+			{asset: "glyph-look"},
+			arrowTo(glyph{asset: "zone-archives"}),
+		}, true
+	case engine.RevealPurgeShuffleDeck:
+		return []glyph{
+			{asset: "zone-deck"},
+			{asset: "glyph-look"},
+			arrowTo(glyph{asset: "zone-purge"}),
+		}, true
 	case engine.PutDiscardedIntoHand:
 		return []glyph{{asset: "zone-discard"}, arrowTo(glyph{asset: "zone-hand"})}, true
 	case engine.DiscardTopOfDeck:
@@ -587,6 +637,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "glyph-flank"}, arrowTo(targetGlyph(v.Target))}, true
 	case engine.MoveToFlank:
 		return []glyph{targetGlyph(v.Target), arrowTo(glyph{asset: "glyph-flank"})}, true
+	case engine.MoveWithinBattleline:
+		return []glyph{targetGlyph(v.Target), arrowTo(glyph{asset: "glyph-swap"})}, true
 	case engine.BelongToHouse:
 		if a := houseIconName(v.House); a != "" {
 			return []glyph{{asset: a}, arrowTo(targetGlyph(v.Target))}, true
@@ -612,6 +664,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "zone-deck"}, {asset: "glyph-look"}}, true
 	case engine.PurgeFromHand, engine.PurgeCreatureFromHand:
 		return []glyph{{asset: "zone-hand"}, arrowTo(glyph{asset: "zone-purge"})}, true
+	case engine.PurgeRandomFromHand:
+		return []glyph{{asset: "zone-hand"}, arrowTo(glyph{asset: "zone-purge"})}, true
 	case engine.PurgeEachFromHand:
 		return []glyph{
 			{asset: "zone-hand", decor: decorEach},
@@ -626,13 +680,24 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "zone-archives", qty: v.Amount}}, true
 	case engine.ForbidOpponentActiveHouse:
 		return []glyph{{asset: "glyph-choose", decor: decorEnemy}, {asset: "glyph-ban"}}, true
+	case engine.ForbidSameActiveHouseNextTurn:
+		return []glyph{{asset: "glyph-choose", decor: decorEnemy}, {asset: "glyph-ban"}}, true
+	case engine.WagerOpponentChoosesChosenHouse:
+		return []glyph{{asset: "aember", qty: v.Amount, decor: decorEnemy | decorChosen}}, true
 	case engine.ForceOpponentActiveHouse:
+		return []glyph{{asset: "glyph-choose", decor: decorEnemy}}, true
+	case engine.ForceOpponentActiveHouseOfFought:
 		return []glyph{{asset: "glyph-choose", decor: decorEnemy}}, true
 	case engine.ForDuration:
 		return composeGlyphs(v.Effects...)
 	case engine.DestroyChosen:
 		return []glyph{{asset: "glyph-destroy"}, arrowTo(targetGlyph(v.Target))}, true
 	case engine.DestroyMostPowerfulUnlessReadyHouse:
+		return []glyph{
+			{asset: "glyph-destroy"},
+			arrowTo(glyph{asset: "type-creature", decor: decorEach}),
+		}, true
+	case engine.DestroyEachCreatureAtEndOfTurn:
 		return []glyph{
 			{asset: "glyph-destroy"},
 			arrowTo(glyph{asset: "type-creature", decor: decorEach}),
@@ -739,6 +804,8 @@ func counterAsset(kind engine.CounterKind) string {
 	switch kind {
 	case engine.CounterDoom:
 		return "doom-counter"
+	case engine.CounterFuse:
+		return "fuse-counter"
 	default:
 		return ""
 	}

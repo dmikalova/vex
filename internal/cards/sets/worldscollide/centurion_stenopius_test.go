@@ -29,7 +29,7 @@ func TestCenturionStenopius(t *testing.T) {
 		})
 
 		h.P1.Play(CenturionStenopius)
-		h.P1.ClickOption("Yes")
+		h.P1.ClickCard(centurion)
 
 		h.Expect(centurion).AmberOn(1)
 		h.Expect(centurion).Power(6)

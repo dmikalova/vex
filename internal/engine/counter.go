@@ -21,6 +21,9 @@ const (
 	// CounterDoom is a doom counter — Wretched Doll destroys every creature
 	// carrying one when there is one in play, and otherwise places a fresh one.
 	CounterDoom
+	// CounterFuse is a fuse counter — The Big One accumulates one each time a
+	// creature is played and destroys the whole board once it holds ten or more.
+	CounterFuse
 	// NumCounterKinds is one past the last real kind, so callers can range over
 	// CounterNone+1 .. NumCounterKinds to visit every counter (the web icon
 	// completeness test does, to force a new kind to ship its own unique icon).
@@ -35,6 +38,8 @@ func (k CounterKind) noun() string {
 	switch k {
 	case CounterDoom:
 		return "doom counter"
+	case CounterFuse:
+		return "fuse counter"
 	default:
 		return "counter"
 	}

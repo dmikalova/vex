@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Dexus
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Dis
 //	Type:   Creature
@@ -20,10 +15,12 @@ var Dexus = card.New(
 	"Dexus",
 	card.House.Dis,
 	card.Type.Creature,
-	// TODO(variant): rarity relabelled from Variant to Special — handle manually
 	card.Rarity.Special,
 	card.Provenance(card.WC, "124"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Demon),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.AfterEnemyCardPlayed, card.Conditional{
+		Cond: card.ItIsOnNamedFlank{Right: true},
+		Then: card.LoseAember{Player: card.Opponent, Amount: 1},
+	}),
 )

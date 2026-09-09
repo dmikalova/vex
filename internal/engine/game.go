@@ -143,6 +143,12 @@ type Game struct {
 	// destroy each creature" re-selects Harbinger itself) skips it, so its Destroyed
 	// abilities fire once and it is discarded once. It nests with the call stack.
 	destroyingWindow []LocalID
+	// savedFromDestruction holds the creatures whose own "Destroyed:" ability
+	// replaced their destruction (Reassembling Automaton "instead of destroying it,
+	// ... move it to a flank"). Set while a destruction batch resolves its Destroyed
+	// abilities and consulted by the discard step, which skips a saved creature; it
+	// is cleared once the batch finishes discarding.
+	savedFromDestruction map[LocalID]bool
 }
 
 // NewGame creates a new two-player game seeded for deterministic play.

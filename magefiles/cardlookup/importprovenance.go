@@ -38,18 +38,25 @@ var importSets = []importSet{
 	{provenance.CallOfTheArchons, 341},
 	{provenance.AgeOfAscension, 435},
 	{provenance.WorldsCollide, 452},
+	{provenance.AnomalyExpansion, 453},
 	{provenance.MassMutation, 479},
 	{provenance.DarkTidings, 496},
 	{provenance.WindsOfExchange, 600},
+	{provenance.Unchained2022, 601},
+	{provenance.VaultMasters2023, 609},
 	{provenance.GrimReminders, 700},
+	{provenance.Menagerie, 722},
+	{provenance.VaultMasters2024, 737},
 	{provenance.AemberSkies, 800},
 	{provenance.TokensOfChange, 855},
 	{provenance.MoreMutation, 874},
-	{provenance.Menagerie, 722},
-	{provenance.VaultMasters2025, 939},
 	{provenance.PropheticVisions, 886},
+	{provenance.MartianCivilWar, 892},
+	{provenance.Discovery, 907},
 	{provenance.CrucibleClash, 918},
 	{provenance.DraconianMeasures, 928},
+	{provenance.VaultMasters2025, 939},
+	{provenance.VaultMasters2026, 964},
 }
 
 // importSetBySlug returns the importSet for a slug, or false when unknown.
@@ -121,18 +128,54 @@ func importProvenance(args []string) error {
 			TLSHandshakeTimeout: 15 * time.Second,
 		},
 	}
+	// One pacer for the whole run so an `all` import carries the throttle thresholds
+	// it learned from earlier sets into later ones, instead of every set restarting
+	// at the polite base pace and re-provoking the feed's throttling from scratch.
+	p := newPacer()
 	for _, is := range targets {
-		if err := importOneSet(client, is); err != nil {
+		if err := importOneSet(client, p, is); err != nil {
 			return fmt.Errorf("importing %s: %w", is.Set.Name, err)
 		}
 	}
 	return nil
 }
 
+// pacer holds the throttle thresholds the importer learns from the feed. It lives
+// for a whole import run, so during an `all` import each set resumes from the pace
+// and backoff floor earlier sets settled on rather than relearning them.
+type pacer struct {
+	// pace is the delay between successive pages. It starts polite and ratchets up
+	// one second per throttled group, settling below the throttle threshold; it
+	// never eases back down.
+	pace time.Duration
+	// longest is the longest throttle wait seen so far, the floor a fresh throttle
+	// resumes from instead of restarting at two seconds.
+	longest time.Duration
+}
+
+const (
+	pacerBasePace = time.Second
+	pacerMaxPace  = 20 * time.Second
+	pacerFloor    = 2 * time.Second
+)
+
+// newPacer returns a pacer at the polite starting thresholds.
+func newPacer() *pacer {
+	return &pacer{pace: pacerBasePace, longest: pacerFloor}
+}
+
+// throttled ratchets the inter-page pace up one second, capped at pacerMaxPace.
+func (p *pacer) throttled() {
+	p.pace += time.Second
+	if p.pace > pacerMaxPace {
+		p.pace = pacerMaxPace
+	}
+}
+
 // importOneSet fetches, transforms, and writes one set's catalog.
-func importOneSet(client *http.Client, is importSet) error {
+func importOneSet(client *http.Client, p *pacer, is importSet) error {
 	fmt.Printf("%s (expansion %d): fetching…\n", is.Set.Name, is.Expansion)
-	raw, err := fetchSetCards(client, is.Set.Slug, is.Expansion)
+	raw, err := fetchSetCards(client, p, is.Set.Slug, is.Expansion)
 	if err != nil {
 		return err
 	}
@@ -210,36 +253,22 @@ func (f *flexString) UnmarshalJSON(data []byte) error {
 // run of pages adds nothing new: a run of 10 empty pages with no interior gap in
 // the collected collector numbers (the set looks complete), or a hard cap of 100
 // empty pages (a lingering gap that never fills). Maverick cards are skipped; a
-// card belonging to another expansion (a cross-set maverick) is skipped too.
-func fetchSetCards(client *http.Client, slug string, expansion int) ([]mvCard, error) {
+// card belonging to another expansion (a cross-set maverick) is skipped too. The
+// pacer carries the throttle thresholds across sets, so an `all` import does not
+// relearn the feed's throttling for every set.
+func fetchSetCards(client *http.Client, p *pacer, slug string, expansion int) ([]mvCard, error) {
 	const pageSize = 25
 	seen := map[string]bool{}
 	var collected []mvCard
 
-	// The feed throttles heavily, so pace requests: start at a polite delay and
-	// slow down whenever a page gets throttled, easing back toward the baseline on
-	// clean pages. A 429 is never fatal — fetchDecksPage waits it out.
-	const basePace = time.Second
-	const maxPace = 20 * time.Second
-	pace := basePace
-
-	// longest is the longest throttle wait seen so far, kept across pages so a
-	// fresh throttle resumes from that floor instead of restarting at two seconds.
-	longest := 2 * time.Second
-
 	emptyStreak := 0
 	for page := 1; ; page++ {
-		resp, throttled, err := fetchDecksPage(client, &longest, expansion, page, pageSize)
+		resp, throttled, err := fetchDecksPage(client, &p.longest, expansion, page, pageSize)
 		if err != nil {
 			return nil, err
 		}
 		if throttled {
-			pace += 3 * time.Second
-			if pace > maxPace {
-				pace = maxPace
-			}
-		} else if pace > basePace {
-			pace -= time.Second
+			p.throttled()
 		}
 		added := 0
 		for _, c := range resp.Linked.Cards {
@@ -280,7 +309,7 @@ func fetchSetCards(client *http.Client, slug string, expansion int) ([]mvCard, e
 		if emptyStreak >= 10 && !hasInteriorGap(collected) {
 			break
 		}
-		time.Sleep(pace)
+		time.Sleep(p.pace)
 	}
 	return collected, nil
 }
@@ -345,6 +374,19 @@ func fetchDecksPage(
 			fmt.Printf(
 				"  page %d throttled (429), waiting %s then retrying…\n",
 				page, wait.Round(time.Second),
+			)
+			sleepBackoff()
+			continue
+		}
+		// A 5xx is a transient gateway blip (502/503/504 from the feed's proxy),
+		// not a problem with this set — wait it out and retry like a 429 rather
+		// than aborting the whole run.
+		if resp.StatusCode >= 500 {
+			_ = resp.Body.Close()
+			throttled = true
+			fmt.Printf(
+				"  page %d gateway error (%d), waiting %s then retrying…\n",
+				page, resp.StatusCode, wait.Round(time.Second),
 			)
 			sleepBackoff()
 			continue
@@ -505,53 +547,141 @@ func atoiSafe(s string) int {
 }
 
 // markupWords maps a Master Vault card-text icon token to the word the catalog
-// spells it as. Only the tokens the feed is known to use are listed; expandMarkup
-// fails on any other so a new icon surfaces instead of vanishing.
+// spells it as. These are the four enhancement bonus icons (Aember, Capture,
+// Damage, Draw), so an "Enhance" line reads "Enhance Aember Capture Damage Draw"
+// (Mutagenesis Researcher). Only the tokens the feed is known to use are listed;
+// expandMarkup fails on any other so a new icon surfaces instead of vanishing.
 var markupWords = map[string]string{
 	"A": "Aember",
+	"C": "Capture",
 	"D": "Damage",
+	"R": "Draw",
 }
 
-// expandAndFoldText expands a card's markup, ASCII-folds the result, strips the
-// templated keyword reminder text, and tidies stray whitespace.
+// glyphWords maps each KeyForge icon-font Private Use Area glyph the feed embeds
+// directly (rather than as an <A>-style token) to the word the catalog spells it
+// as: the resource and enhancement bonus icons, the house enhancement icons
+// introduced in Aember Skies, and Draconian Measures' power counter. Capture also
+// appears as an F36F+F560 pair and the tide icon (U+F566) carries no printed word;
+// both are handled in glyphWord, not here.
+var glyphWords = map[rune]string{
+	'\uF360': "Aember",
+	'\uF361': "Damage",
+	'\uF36E': "Draw",
+	'\uF565': "Capture",
+	'\uF372': "Discard",
+	'\uF379': "Brobnar",
+	'\uF37A': "Dis",
+	'\uF37B': "Ekwidon",
+	'\uF37C': "Geistoid",
+	'\uF37D': "Logos",
+	'\uF37E': "Mars",
+	'\uF37F': "Skyborn",
+	'\uF386': "Redemption",
+	'\uF387': "Sanctum",
+	'\uF388': "Saurian",
+	'\uF389': "Shadows",
+	'\uF38A': "Star Alliance",
+	'\uF38B': "Untamed",
+	'\uF390': "Unfathomable",
+	'\uF391': "Ouboros",
+	'\uF392': "+1 power counter",
+}
+
+// expandAndFoldText expands a card's markup, spells any bare-letter Enhance icon
+// codes, ASCII-folds the result, strips the templated keyword reminder text, and
+// tidies stray whitespace.
 func expandAndFoldText(s string) (string, error) {
 	expanded, err := expandMarkup(s)
 	if err != nil {
 		return "", err
 	}
-	return tidyText(stripKeywordReminders(asciiFold(expanded))), nil
+	return tidyText(stripKeywordReminders(asciiFold(expandEnhanceLetters(expanded)))), nil
+}
+
+// enhanceLetterRe matches an Enhance keyword followed by the run of bare letter
+// icon codes some feed rows use in place of glyphs (A, D, R, and the P+T pair for
+// Capture), up to the closing period.
+var enhanceLetterRe = regexp.MustCompile(`Enhance ([ACDRPT]+)\.`)
+
+// expandEnhanceLetters spells each bare-letter Enhance icon code: A Aember, D
+// Damage, R Draw, and the P+T pair Capture. It only rewrites a run that directly
+// follows Enhance and ends at a period, so ordinary prose is left untouched. An
+// unexpected letter leaves the run as-is rather than mangling it.
+func expandEnhanceLetters(s string) string {
+	return enhanceLetterRe.ReplaceAllStringFunc(s, func(m string) string {
+		codes := m[len("Enhance ") : len(m)-1]
+		var words []string
+		for i := 0; i < len(codes); i++ {
+			switch codes[i] {
+			case 'A':
+				words = append(words, "Aember")
+			case 'C':
+				words = append(words, "Capture")
+			case 'D':
+				words = append(words, "Damage")
+			case 'R':
+				words = append(words, "Draw")
+			case 'P':
+				if i+1 < len(codes) && codes[i+1] == 'T' {
+					words = append(words, "Capture")
+					i++
+					continue
+				}
+				return m
+			default:
+				return m
+			}
+		}
+		return "Enhance " + strings.Join(words, " ") + "."
+	})
 }
 
 // keywordReminderTexts is the exact parenthetical reminder text KeyForge prints
 // after a keyword. Only these templated blurbs are stripped; any other
-// parenthetical (a card-specific clarification) is left untouched.
+// parenthetical (a card-specific clarification such as "(rounding down the
+// loss)") is a rules clarification, not a keyword reminder, and is left untouched.
 var keywordReminderTexts = []string{
 	"The first time this creature is attacked each turn, no damage is dealt.",
 	"When you use this creature to fight, it is dealt no damage in return.",
 	"When you use a creature with skirmish to fight, it is dealt no damage in return.",
 	"This creature's neighbors cannot be attacked unless they have taunt.",
 	"Any damage dealt by this creature's power during a fight destroys the damaged creature.",
+	"You can only play this card before doing anything else this step.",
+	"After you play this card, end this step.",
+	"This creature can enter play anywhere in your battleline.",
+	"These icons have already been added to cards in your deck.",
+	"This card may be used as if it belonged to the active house.",
+	"This card enters play under your opponent's control.",
 }
 
 // keywordReminderPatterns matches the reminder texts that carry a number
-// (Assault N, Hazardous N), anchored so only the whole blurb qualifies.
+// (Assault N, Hazardous N, Splash-attack N), anchored so only the whole blurb
+// qualifies. The trailing period is optional because the feed sometimes prints it
+// outside the parenthesis.
 var keywordReminderPatterns = []*regexp.Regexp{
 	regexp.MustCompile(`^Before this creature attacks, deal \d+ Damage to the attacked enemy\.$`),
 	regexp.MustCompile(
 		`^Before this creature is attacked, deal \d+ Damage to the attacking enemy\.$`,
 	),
+	regexp.MustCompile(
+		`^When this creature attacks, also deal \d+ Damage to each of the attacked creature's neighbors\.?$`,
+	),
 }
 
-// parenReminderRe captures a parenthetical along with any spaces or tabs before
-// it, so removing a keyword reminder leaves no dangling separator.
-var parenReminderRe = regexp.MustCompile(`[ \t]*\([^)]*\)`)
+// parenReminderRe captures a parenthetical along with any spaces or tabs before it
+// and an optional period after it, so removing a keyword reminder leaves no
+// dangling separator when the feed prints the sentence's period outside the
+// parenthesis (Splash-attack's "…neighbors).").
+var parenReminderRe = regexp.MustCompile(`[ \t]*\([^)]*\)\.?`)
 
 // stripKeywordReminders removes each parenthetical whose text is a templated
 // keyword reminder, leaving card-specific parentheticals in place.
 func stripKeywordReminders(s string) string {
 	return parenReminderRe.ReplaceAllStringFunc(s, func(m string) string {
 		open := strings.IndexByte(m, '(')
-		inner := strings.TrimSpace(m[open+1 : len(m)-1])
+		closeIdx := strings.LastIndexByte(m, ')')
+		inner := strings.TrimSpace(m[open+1 : closeIdx])
 		if isKeywordReminder(inner) {
 			return ""
 		}
@@ -574,51 +704,106 @@ func isKeywordReminder(inner string) bool {
 	return false
 }
 
-// tidyText drops trailing whitespace from each line (including space left before a
-// newline) and trims the leading and trailing whitespace of the whole text.
+// multiSpaceRe matches a run of two or more spaces or tabs, which tidyText
+// collapses to one so a dropped icon or a stray double space reads cleanly.
+var multiSpaceRe = regexp.MustCompile(`[ \t]{2,}`)
+
+// tidyText collapses each line's runs of spaces to one, trims the leading and
+// trailing whitespace of every line, and trims the whole text.
 func tidyText(s string) string {
 	lines := strings.Split(s, "\n")
 	for i, ln := range lines {
-		lines[i] = strings.TrimRight(ln, " \t")
+		lines[i] = strings.TrimSpace(multiSpaceRe.ReplaceAllString(ln, " "))
 	}
 	return strings.TrimSpace(strings.Join(lines, "\n"))
 }
 
 // expandMarkup turns Master Vault card-text markup into plain words: the vertical
-// tab line break becomes a newline, and each icon token (<A>, <D>) becomes its
-// word, with a space inserted where the icon abutted a letter or digit so "2<A>"
-// reads "2 Aember". An unrecognized or unterminated token is an error.
+// tab line break becomes a newline, a carriage return (alone or as \r\n) becomes a
+// newline too, each icon token (<A>, <D>) becomes its word, and each icon-font
+// Private Use Area glyph the feed embeds directly (Aember, house enhancements, and
+// the like) becomes its word too, with a space inserted where an icon abutted a
+// letter or digit so "2<A>" reads "2 Aember". An unrecognized or unterminated
+// token, or an unrecognized glyph, is an error.
 func expandMarkup(s string) (string, error) {
 	s = strings.ReplaceAll(s, "\u000b", "\n")
+	s = strings.ReplaceAll(s, "\r\n", "\n")
+	s = strings.ReplaceAll(s, "\r", "\n")
 	var b strings.Builder
 	rs := []rune(s)
 	for i := 0; i < len(rs); i++ {
-		if rs[i] != '<' {
+		switch {
+		case rs[i] == '<':
+			j := i + 1
+			for j < len(rs) && rs[j] != '>' {
+				j++
+			}
+			if j >= len(rs) {
+				return "", fmt.Errorf("unterminated markup token in %q", s)
+			}
+			tok := string(rs[i+1 : j])
+			word, ok := markupWords[tok]
+			if !ok {
+				return "", fmt.Errorf("unknown markup token <%s> in %q", tok, s)
+			}
+			writeExpandedIcon(&b, word, j+1 < len(rs) && isAlnumASCII(rs[j+1]))
+			i = j
+		case isPrivateUse(rs[i]):
+			word, extra, err := glyphWord(rs, i)
+			if err != nil {
+				return "", err
+			}
+			i += extra
+			if word == "" { // tide icon: dropped
+				continue
+			}
+			writeExpandedIcon(&b, word, i+1 < len(rs) && isAlnumASCII(rs[i+1]))
+		default:
 			b.WriteRune(rs[i])
-			continue
 		}
-		j := i + 1
-		for j < len(rs) && rs[j] != '>' {
-			j++
-		}
-		if j >= len(rs) {
-			return "", fmt.Errorf("unterminated markup token in %q", s)
-		}
-		tok := string(rs[i+1 : j])
-		word, ok := markupWords[tok]
-		if !ok {
-			return "", fmt.Errorf("unknown markup token <%s> in %q", tok, s)
-		}
-		if out := b.String(); out != "" && isAlnumASCII(rune(out[len(out)-1])) {
-			b.WriteByte(' ')
-		}
-		b.WriteString(word)
-		if j+1 < len(rs) && isAlnumASCII(rs[j+1]) {
-			b.WriteByte(' ')
-		}
-		i = j
 	}
 	return b.String(), nil
+}
+
+// writeExpandedIcon appends an expanded icon word to b, inserting a space before
+// it when it abuts a preceding letter or digit and after it when nextAlnum is set,
+// so "2<A>" reads "2 Aember" and two adjacent icons read as two words.
+func writeExpandedIcon(b *strings.Builder, word string, nextAlnum bool) {
+	if out := b.String(); out != "" && isAlnumASCII(rune(out[len(out)-1])) {
+		b.WriteByte(' ')
+	}
+	b.WriteString(word)
+	if nextAlnum {
+		b.WriteByte(' ')
+	}
+}
+
+// isPrivateUse reports whether r is in the Basic Multilingual Plane Private Use
+// Area, where KeyForge's icon font places its glyphs.
+func isPrivateUse(r rune) bool {
+	return r >= '\uE000' && r <= '\uF8FF'
+}
+
+// glyphWord returns the word for the icon glyph at rs[i] and how many extra runes
+// it consumed (1 for the F36F+F560 Capture pair, 0 otherwise). The tide icon
+// (U+F566) returns an empty word so it is dropped. An unrecognized glyph is an
+// error so a new icon surfaces rather than vanishing.
+func glyphWord(rs []rune, i int) (word string, extra int, err error) {
+	switch rs[i] {
+	case '\uF566': // tide: an ability marker with no printed word
+		return "", 0, nil
+	case '\uF36F': // Capture, encoded as an F36F+F560 pair
+		if i+1 < len(rs) && rs[i+1] == '\uF560' {
+			return "Capture", 1, nil
+		}
+		return "", 0, fmt.Errorf("unpaired capture glyph U+F36F in %q", string(rs))
+	case '\uF560':
+		return "", 0, fmt.Errorf("unpaired capture glyph U+F560 in %q", string(rs))
+	}
+	if w, ok := glyphWords[rs[i]]; ok {
+		return w, 0, nil
+	}
+	return "", 0, fmt.Errorf("unknown icon glyph U+%04X in %q", rs[i], string(rs))
 }
 
 // isAlnumASCII reports whether r is a plain ASCII letter or digit.
@@ -627,9 +812,11 @@ func isAlnumASCII(r rune) bool {
 }
 
 // asciiFold rewrites a string into plain ASCII: curly quotes straighten, Æ becomes
-// Ae, the multiplication sign becomes x, en/em dashes and the minus sign become a
-// hyphen, and accented letters lose their diacritics (é -> e). English card text
-// and names fold cleanly; anything left non-ASCII is passed through unchanged.
+// Ae, the multiplication sign becomes x, en/em dashes, the minus sign, and the
+// non-breaking/figure hyphens become a hyphen, the non-breaking space becomes a
+// space, zero-width joiners and the byte-order mark are dropped, and accented
+// letters lose their diacritics (é -> e). English card text and names fold
+// cleanly; anything left non-ASCII is passed through unchanged.
 func asciiFold(s string) string {
 	s = strings.NewReplacer(
 		"\u2019", "'", // ’ right single quote
@@ -640,9 +827,14 @@ func asciiFold(s string) string {
 		"\u00c6", "Ae", // Æ
 		"\u00e6", "ae", // æ
 		"\u00d7", "x", // × multiplication sign
+		"\u2010", "-", // ‐ hyphen
+		"\u2011", "-", // ‑ non-breaking hyphen (feed's "non‑Mars", "Nine‑Toes")
 		"\u2013", "-", // – en dash
 		"\u2014", "-", // — em dash
 		"\u2212", "-", // − minus sign
+		"\u00a0", " ", //   non-breaking space
+		"\ufeff", "", // zero-width no-break space (BOM) the feed leaves at line ends
+		"\u200b", "", // zero-width space
 		"\u2026", "...", // … ellipsis
 	).Replace(s)
 	t := transform.Chain(norm.NFD, runes.Remove(runes.In(unicode.Mn)), norm.NFC)

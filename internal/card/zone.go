@@ -12,5 +12,9 @@ const Hand = engine.Hand
 // Archives is a player's archives, a zone card.ShuffleIntoDeck can name.
 const Archives = engine.Archives
 
+// Deck is a player's deck — the pile card.ArchiveTop can archive the top of,
+// e.g. card.ArchiveTop{From: card.Deck}.
+const Deck = engine.Deck
+
 // Zone names a card pile an effect acts on (see card.Discard).
 type Zone = engine.Zone

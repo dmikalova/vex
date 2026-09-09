@@ -76,18 +76,26 @@ func (e CannotReap) validate() error {
 }
 
 // Text renders the effect, e.g. "your opponent cannot use creatures to reap
-// during their next turn".
+// during their next turn", or the current-turn form "you cannot use creatures to
+// reap for the remainder of the turn" (Ragnarok).
 func (e CannotReap) Text() string {
 	who, whose := "you", "your"
 	if e.Player == Opponent {
 		who, whose = "your opponent", "their"
 	}
+	if e.Duration == EndOfTurn {
+		return who + " cannot use creatures to reap for the remainder of the turn"
+	}
 	return who + " cannot use creatures to reap during " + whose + " next turn"
 }
 
-// Resolve applies the timed bar to the chosen player.
+// Resolve applies the timed bar to the chosen player, for the current turn
+// (EndOfTurn) or the player's next turn (NextTurn).
 func (e CannotReap) Resolve(ctx *EffectContext) {
-	if e.Duration == NextTurn {
+	switch e.Duration {
+	case EndOfTurn:
+		ctx.Resolver.CannotReapThisTurn(ctx.PlayerFor(e.Player), ctx.Source)
+	case NextTurn:
 		ctx.Resolver.CannotReapNextTurn(ctx.PlayerFor(e.Player), ctx.Source)
 	}
 }
@@ -416,4 +424,66 @@ func (ForbidOpponentActiveHouse) Text() string {
 // Resolve arms the forbidden house on the opponent's next turn.
 func (ForbidOpponentActiveHouse) Resolve(ctx *EffectContext) {
 	ctx.Resolver.ForbidActiveHouseNextTurn(ctx.Opponent(), ctx.ChosenHouse, ctx.Source)
+}
+
+// WagerOpponentChoosesChosenHouse bets on the opponent matching the house an
+// enclosing ChooseHouseThen picked: if they choose it as their active house next
+// turn, the controller steals Amount — Snaglet's "if your opponent chooses that
+// house as their active house on their next turn, steal 2A."
+type WagerOpponentChoosesChosenHouse struct {
+	// Amount is how much Æmber the controller steals if the bet lands.
+	Amount int
+}
+
+// Text renders the effect.
+func (e WagerOpponentChoosesChosenHouse) Text() string {
+	return fmt.Sprintf(
+		"if your opponent chooses that house as their active house on their next turn, steal %d Æmber",
+		e.Amount,
+	)
+}
+
+// Resolve arms the wager on the opponent's next turn.
+func (e WagerOpponentChoosesChosenHouse) Resolve(ctx *EffectContext) {
+	ctx.Resolver.WagerOnHouseNextTurn(
+		ctx.Opponent(), ctx.ChosenHouse, e.Amount, ctx.Controller, ctx.Source,
+	)
+}
+
+// ForceOpponentActiveHouseOfFought is Snag's Fight ability: the opponent must
+// choose the house of the creature Snag fought (ctx.It) as their active house on
+// their next turn.
+type ForceOpponentActiveHouseOfFought struct{}
+
+// Text renders the effect.
+func (ForceOpponentActiveHouseOfFought) Text() string {
+	return "your opponent must choose the house of the creature " + SelfName +
+		" fights as their active house on their next turn"
+}
+
+// Resolve arms the fought creature's house on the opponent's next turn.
+func (ForceOpponentActiveHouseOfFought) Resolve(ctx *EffectContext) {
+	if !ctx.HasIt {
+		return
+	}
+	ctx.Resolver.ForceActiveHouseNextTurn(ctx.Opponent(), ctx.Resolver.House(ctx.It), ctx.Source)
+}
+
+// ForbidSameActiveHouseNextTurn is Snag's Mirror: keyed off the shared "after a
+// player chooses a house" window, it bars whoever chose from having their
+// opponent match that house next turn. It reads the active player and house from
+// the board rather than the source's point of view, so it works whichever player
+// made the choice.
+type ForbidSameActiveHouseNextTurn struct{}
+
+// Text renders the effect from the chooser's point of view, to follow the "after
+// a player chooses an active house, " trigger prefix.
+func (ForbidSameActiveHouseNextTurn) Text() string {
+	return "their opponent cannot choose the same house as their active house on their next turn"
+}
+
+// Resolve bars the chooser's opponent from the chosen house on their next turn.
+func (ForbidSameActiveHouseNextTurn) Resolve(ctx *EffectContext) {
+	chooser := ctx.Resolver.ActivePlayer()
+	ctx.Resolver.ForbidActiveHouseNextTurn(1-chooser, ctx.Resolver.ActiveHouse(), ctx.Source)
 }

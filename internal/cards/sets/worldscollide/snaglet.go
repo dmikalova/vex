@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Snaglet
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Dis
 //	Type:   Creature
@@ -25,5 +20,9 @@ var Snaglet = card.New(
 	card.Provenance(card.WC, "118"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Imp),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithAbility(
+		card.Trigger.Action, card.ChooseHouseThen{
+			Then: card.WagerOpponentChoosesChosenHouse{Amount: 2},
+		}),
 )
