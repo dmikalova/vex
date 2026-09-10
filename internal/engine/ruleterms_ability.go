@@ -163,6 +163,15 @@ AfterCardPlayed narrows it to a house and/or type.`,
 		},
 		{
 			Section:    SectionAbility,
+			Title:      "After a Tactic Is Played but Before It Resolves",
+			Definition: "An ability that resolves after a Tactic is played, before that Tactic's own effect resolves.",
+			Body: `This ability resolves after a Tactic is played — by either player —
+before that Tactic's own effect resolves, so the reaction acts on the board the
+Tactic is about to affect (Encounter Suit wards its host before the Tactic can
+reach it). It fires on every card in play whoever played the Tactic.`,
+		},
+		{
+			Section:    SectionAbility,
 			Title:      "End of Turn",
 			Definition: "An ability that resolves at the end of its controller's turn, after cards ready and they draw.",
 			Body: `An End of Turn ability resolves during the end of its controller's turn,

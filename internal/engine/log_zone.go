@@ -19,29 +19,65 @@ func (e ArchivesTakenIntoHand) Text(n Namer) string {
 		n.PlayerName(e.Player), countNoun(e.Count, "card"))
 }
 
-// CardArchivedFromHand narrates a card going from hand to archives.
-type CardArchivedFromHand struct {
+// CardMoved narrates one specific card moving between zones — archived (To
+// Archives), discarded (To Discard), or purged (To purged) from the zone named by
+// From. It renders "<player> <verb> <card> <from-phrase>": the verb comes from the
+// destination, the card is named only when nameMoved's public/hidden rule allows,
+// and the from-phrase varies with the move (purge says "a <zone>", archive and
+// discard say "their <zone>", and a move out of a hidden hand names no source).
+// The top-of-deck sight-unseen moves stay separate — they name no chosen card.
+type CardMoved struct {
 	Player int
 	Card   LocalID
+	From   Zone
+	To     Zone
 }
 
-// Text renders a card archived out of a hand, which stays hidden throughout.
-func (e CardArchivedFromHand) Text(n Namer) string {
-	return fmt.Sprintf("%s archives %s",
-		n.PlayerName(e.Player), nameMoved(n, e.Card, Hand, Archives))
+// Text renders the move.
+func (e CardMoved) Text(n Namer) string {
+	return fmt.Sprintf("%s %s %s%s",
+		n.PlayerName(e.Player), moveVerb(e.To),
+		nameMoved(n, e.Card, e.From, e.To), moveFromPhrase(e.To, e.From))
 }
 
-// CardArchivedFromDiscard narrates a card going from the discard pile to
-// archives.
-type CardArchivedFromDiscard struct {
-	Player int
-	Card   LocalID
+// moveVerb names the action from the destination zone.
+func moveVerb(to Zone) string {
+	switch to {
+	case Archives:
+		return "archives"
+	case purged:
+		return "purges"
+	default: // Discard
+		return "discards"
+	}
 }
 
-// Text renders a card archived out of a discard pile, where it was public.
-func (e CardArchivedFromDiscard) Text(n Namer) string {
-	return fmt.Sprintf("%s archives %s from their discard pile",
-		n.PlayerName(e.Player), nameMoved(n, e.Card, Discard, Archives))
+// moveFromPhrase names the source zone the way each verb prints it — purge says
+// "a <zone>", archive and discard say "their <zone>", and a move out of a hidden
+// hand prints no source.
+func moveFromPhrase(to, from Zone) string {
+	if to == purged {
+		switch from {
+		case Hand:
+			return " from a hand"
+		case Archives:
+			return " from archives"
+		case Deck:
+			return " from a deck"
+		default: // Discard
+			return " from a discard pile"
+		}
+	}
+	switch from {
+	case Discard:
+		return " from their discard pile"
+	case Archives:
+		return " from their archives"
+	case Deck:
+		return " from their deck"
+	default: // Hand
+		return ""
+	}
 }
 
 // TopOfDeckArchived narrates the top card of a deck going to archives sight
@@ -82,102 +118,12 @@ func (e TopOfDeckDiscarded) Text(n Namer) string {
 		n.PlayerName(e.Player), nameMoved(n, e.Card, Deck, Discard))
 }
 
-// CardDiscardedFromDeck narrates a specific card going from a deck to the discard
-// pile — a card the controller looked at and chose not to keep (Eyegor).
-type CardDiscardedFromDeck struct {
-	Player int
-	Card   LocalID
-}
-
-// Text renders the discarded card, which lands face up in the public discard pile
-// and is named.
-func (e CardDiscardedFromDeck) Text(n Namer) string {
-	return fmt.Sprintf("%s discards %s from their deck",
-		n.PlayerName(e.Player), nameMoved(n, e.Card, Deck, Discard))
-}
-
 // DeckAndDiscardSwapped narrates a deck and discard pile trading places.
 type DeckAndDiscardSwapped struct{ Player int }
 
 // Text renders a deck and discard pile trading places.
 func (e DeckAndDiscardSwapped) Text(n Namer) string {
 	return fmt.Sprintf("%s swaps their deck and discard pile", n.PlayerName(e.Player))
-}
-
-// CardDiscarded narrates a card going from a hand to a discard pile.
-type CardDiscarded struct {
-	Player int
-	Card   LocalID
-}
-
-// Text renders the card a player discarded, which the public discard pile names.
-func (e CardDiscarded) Text(n Namer) string {
-	return fmt.Sprintf("%s discards %s",
-		n.PlayerName(e.Player), nameMoved(n, e.Card, Hand, Discard))
-}
-
-// CardDiscardedFromArchives narrates a card going from an archives to a discard
-// pile, which is public, so the card lands face up and is named.
-type CardDiscardedFromArchives struct {
-	Player int
-	Card   LocalID
-}
-
-// Text renders the discarded card, revealed as it enters the public discard pile.
-func (e CardDiscardedFromArchives) Text(n Namer) string {
-	return fmt.Sprintf("%s discards %s from their archives",
-		n.PlayerName(e.Player), nameMoved(n, e.Card, Archives, Discard))
-}
-
-// CardPurgedFromDiscard narrates a card purged out of a discard pile.
-type CardPurgedFromDiscard struct {
-	Player int
-	Card   LocalID
-}
-
-// Text renders the card purged out of a discard pile.
-func (e CardPurgedFromDiscard) Text(n Namer) string {
-	return fmt.Sprintf("%s purges %s from a discard pile",
-		n.PlayerName(e.Player), nameMoved(n, e.Card, Discard, purged))
-}
-
-// CardPurgedFromHand narrates a card purged out of a hand. Purging turns it
-// face up, so naming it leaks nothing.
-type CardPurgedFromHand struct {
-	Player int
-	Card   LocalID
-}
-
-// Text renders the card purged out of a hand.
-func (e CardPurgedFromHand) Text(n Namer) string {
-	return fmt.Sprintf("%s purges %s from a hand",
-		n.PlayerName(e.Player), nameMoved(n, e.Card, Hand, purged))
-}
-
-// CardPurgedFromArchives narrates a card purged out of a player's archives.
-// Purging turns it face up, so naming it leaks nothing.
-type CardPurgedFromArchives struct {
-	Player int
-	Card   LocalID
-}
-
-// Text renders the card purged out of archives.
-func (e CardPurgedFromArchives) Text(n Namer) string {
-	return fmt.Sprintf("%s purges %s from archives",
-		n.PlayerName(e.Player), nameMoved(n, e.Card, Archives, purged))
-}
-
-// CardPurgedFromDeck narrates a card purged out of a deck. Purging turns it face
-// up, so naming it leaks nothing.
-type CardPurgedFromDeck struct {
-	Player int
-	Card   LocalID
-}
-
-// Text renders the card purged out of a deck.
-func (e CardPurgedFromDeck) Text(n Namer) string {
-	return fmt.Sprintf("%s purges %s from a deck",
-		n.PlayerName(e.Player), nameMoved(n, e.Card, Deck, purged))
 }
 
 // CardPurged narrates a card in play being purged.

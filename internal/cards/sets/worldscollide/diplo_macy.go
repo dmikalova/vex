@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// DiploMacy
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Diplo-Macy
 //
 //	House:  Saurian
 //	Type:   Tactic
@@ -23,5 +18,17 @@ var DiploMacy = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "218"),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Alpha),
+	card.WithAbility(
+		card.Trigger.Play, card.GainAbility{
+			Target:   card.Target.EachCreature,
+			Duration: card.Duration.NextTurn,
+			Ability: card.Ability{
+				Trigger: card.Trigger.BeforeFight,
+				Effect: card.Exalt{
+					Target: card.Target.This,
+					Amount: 1,
+				},
+			},
+		}),
 )

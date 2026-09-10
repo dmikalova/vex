@@ -22,7 +22,7 @@ var Weasand = card.New(
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Beast, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Deploy, card.Keyword.Elusive),
-	card.WithDestroyedWhen(card.SourceOnFlank{}),
+	card.WithDestroyedWhen(card.OnFlank{}),
 	card.WithAbility(
 		card.Trigger.AfterPlayerForgesKey, card.GainAember{
 			Player: card.Controller,

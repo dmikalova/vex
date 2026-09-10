@@ -552,6 +552,9 @@ func (g *game) installSwipeGestures() {
 		if len(args) == 0 {
 			return nil
 		}
+		// Any touch marks a touchscreen, so log mentions open on one tap rather than
+		// fighting the synthetic mouseenter (see onLogCardHover).
+		g.isTouch = true
 		touches := args[0].Get("touches")
 		if !touches.Truthy() || touches.Get("length").Int() != 1 {
 			g.swipeTracking = false

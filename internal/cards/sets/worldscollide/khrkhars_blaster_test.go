@@ -11,12 +11,12 @@ import (
 //
 //	House:  Star Alliance
 //	Type:   Upgrade
-//	Rarity: Special
+//	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains, "Fight/Reap: You may choose one:
+//	This creature gains, "Fight/Reap: Choose one:
 //	- Deal 2 damage to a creature
-//	- Attach this creature to Lieutenant Khrkhar, and ward Lieutenant Khrkhar."
+//	- Attach Khrkhar's Blaster to Lieutenant Khrkhar -> ward Lieutenant Khrkhar."
 func TestKhrkharsBlaster(t *testing.T) {
 	t.Run("attaches to Khrkhar and wards it", func(t *testing.T) {
 		var carrier, khrkhar ct.Card
@@ -37,7 +37,6 @@ func TestKhrkharsBlaster(t *testing.T) {
 		})
 
 		h.P1.Reap(carrier)
-		h.P1.ClickOption("Yes")
 		h.P1.ExpectPrompt("Choose one")
 		h.P1.ClickOption("attach")
 

@@ -125,6 +125,19 @@ func (e AemberGainedFromForging) Text(n Namer) string {
 		n.Name(e.Card), e.Amount, n.PlayerName(e.From))
 }
 
+// KeyForgePrevented narrates a key forge an in-play card interrupted before it
+// happened, leaving the player's Æmber unspent (Keyforgery).
+type KeyForgePrevented struct {
+	Player int
+	By     LocalID
+}
+
+// Text renders the forge a card prevented.
+func (e KeyForgePrevented) Text(n Namer) string {
+	return fmt.Sprintf("%s's forge a key is prevented by %s",
+		n.PlayerName(e.Player), n.Name(e.By))
+}
+
 // KeyForged narrates a forged key: its colour when the player picked one, and
 // where it puts them on the way to winning.
 type KeyForged struct {

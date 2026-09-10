@@ -17,6 +17,10 @@ type PutFromDiscard struct {
 	Type CardType
 	// Trait restricts the choice to cards with that trait; the zero value allows any.
 	Trait Trait
+	// OrTrait widens the choice to also admit cards carrying that trait, disjoined
+	// with Type: a card matches when its type is Type OR it has OrTrait (Chief
+	// Engineer Walls returns an upgrade or Robot card). The zero value adds nothing.
+	OrTrait Trait
 	// Name restricts the choice to cards with that exact name; the zero value allows
 	// any (Ortannu the Chained returns each copy of Ortannu's Binding).
 	Name string
@@ -40,6 +44,9 @@ func (e PutFromDiscard) noun() string {
 	base := "card"
 	if e.Type != TypeUnset {
 		base = strings.ToLower(e.Type.String())
+	}
+	if e.OrTrait != traitUnset {
+		return base + " or " + e.OrTrait.String() + " card"
 	}
 	if e.Trait != traitUnset {
 		base = e.Trait.String() + " " + base
@@ -91,6 +98,12 @@ func (e PutFromDiscard) moveTo(ctx *EffectContext, id LocalID) {
 // admits reports whether a discard-pile card passes the Type / Trait / Name
 // filters (the OfChosenHouse filter is applied separately, only with All).
 func (e PutFromDiscard) admits(ctx *EffectContext, id LocalID) bool {
+	if e.OrTrait != traitUnset {
+		if ctx.Resolver.TypeOf(id) != e.Type && !ctx.Resolver.HasTrait(id, e.OrTrait) {
+			return false
+		}
+		return e.Name == "" || ctx.Resolver.Name(id) == e.Name
+	}
 	if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
 		return false
 	}

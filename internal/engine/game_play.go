@@ -370,7 +370,7 @@ func (g *Game) playCardFromZone(
 		return 0, ErrCardPlayLimit
 	}
 	def := g.cat.def(id)
-	if !def.PlayRequirement.met(g.State.Aember[player]) {
+	if !g.meetsPlayRequirement(player, def) {
 		return 0, ErrPlayRequirement
 	}
 	switch def.Type {
@@ -556,6 +556,9 @@ func (g *Game) playArtifactCard(player int, id LocalID) {
 func (g *Game) playActionCard(player int, id LocalID) {
 	g.record(ActionPlayed{Player: player, Card: id})
 	g.applyAemberBonus(player, id)
+	// A reaction to a Tactic being played resolves before the Tactic's own effect
+	// (Encounter Suit wards its host before the Tactic can reach it).
+	g.emitActionPlayedBeforeResolve(player, id)
 	// The Play: ability resolves under the control of the player who played the
 	// card, not the card's owner. They differ only when one player plays another's
 	// card (Mimicry copies an action out of the opponent's discard pile).
@@ -604,20 +607,29 @@ func (g *Game) DiscardCardFromHand(owner int, id LocalID) {
 	hand.removeAt(i)
 	g.State.Discard[owner].add(id)
 	g.State.DiscardedThisTurn[owner].add(id)
-	g.record(CardDiscarded{Player: owner, Card: id})
+	g.record(CardMoved{Player: owner, Card: id, From: Hand, To: Discard})
 	for _, watcher := range g.allInPlay(owner) {
 		g.triggerAbilities(watcher, TriggerAfterDiscardFromHand, id, true)
 	}
 }
 
+// randomCardFromHand returns a uniformly random card from a player's hand,
+// reporting ok=false when the hand is empty. It is the shared pick behind the
+// DiscardRandomFromHand / ArchiveRandomFromHand / PurgeRandomFromHand verbs.
+func (g *Game) randomCardFromHand(owner int) (LocalID, bool) {
+	hand := &g.State.Hand[owner]
+	if hand.Count == 0 {
+		return 0, false
+	}
+	return hand.IDs[g.rng.Intn(int(hand.Count))], true
+}
+
 // DiscardRandomFromHand discards one uniformly random card from a player's hand,
 // doing nothing if the hand is empty.
 func (g *Game) DiscardRandomFromHand(owner int) {
-	hand := &g.State.Hand[owner]
-	if hand.Count == 0 {
-		return
+	if id, ok := g.randomCardFromHand(owner); ok {
+		g.DiscardCardFromHand(owner, id)
 	}
-	g.DiscardCardFromHand(owner, hand.IDs[g.rng.Intn(int(hand.Count))])
 }
 
 // inActiveHouse reports whether a card of the given definition matches the
@@ -632,7 +644,9 @@ func (g *Game) inActiveHouse(def *CardDefinition) bool {
 }
 
 // mayPlayFromHand reports whether player may play a hand card now by active-house
-// match or by a remaining continuous off-house play grant they control.
+// match or by a remaining off-house play grant they control — a continuous
+// permission (Witch of the Wilds, Captain Val Jericho) or a this-turn permit
+// (Com. Officer Kirby, CXO Taber, United Action).
 func (g *Game) mayPlayFromHand(player int, def *CardDefinition) bool {
 	if g.inActiveHouse(def) {
 		return true
@@ -640,13 +654,43 @@ func (g *Game) mayPlayFromHand(player int, def *CardDefinition) bool {
 	if def.House == g.State.MayPlayHouse[player] {
 		return true
 	}
-	return g.playPermissionRemaining(player, def.House) > 0
+	if g.playPermissionRemaining(player, def.House) > 0 {
+		return true
+	}
+	if g.offHousePlayPermit(player, def) >= 0 {
+		return true
+	}
+	return g.nonActivePlayRemaining(player) > 0
 }
 
 // usesPlayPermission reports whether playing def from hand would spend one of
-// player's continuous off-house permissions instead of matching the active house.
+// player's off-house play grants instead of matching the active house or an
+// unlimited Ambassador-style grant.
 func (g *Game) usesPlayPermission(player int, def *CardDefinition) bool {
-	return !g.inActiveHouse(def) && g.playPermissionRemaining(player, def.House) > 0
+	if g.inActiveHouse(def) || def.House == g.State.MayPlayHouse[player] {
+		return false
+	}
+	return g.playPermissionRemaining(player, def.House) > 0 ||
+		g.offHousePlayPermit(player, def) >= 0 ||
+		g.nonActivePlayRemaining(player) > 0
+}
+
+// consumeOffHousePlay spends the off-house grant that made an off-house hand play
+// legal, trying a continuous house-specific permission first (Witch of the Wilds),
+// then a this-turn permit (Kirby, Taber, United Action), then a continuous
+// "any non-active house" permission (Captain Val Jericho).
+func (g *Game) consumeOffHousePlay(player int, def *CardDefinition) {
+	if g.playPermissionRemaining(player, def.House) > 0 {
+		if int(def.House) < NumHouses {
+			g.State.PlayPermissionsUsedThisTurn[player][def.House]++
+		}
+		return
+	}
+	if i := g.offHousePlayPermit(player, def); i >= 0 {
+		g.consumeOffHousePermit(player, i)
+		return
+	}
+	g.State.NonActivePlaysUsedThisTurn[player]++
 }
 
 // playPermissionRemaining returns how many unspent permissions player controls
@@ -676,11 +720,17 @@ func (g *Game) playPermissionRemaining(player int, house House) int {
 func (g *Game) recordCardPlayed(player int, id LocalID, opts playCardOptions) {
 	def := g.cat.def(id)
 	if r := def.PlayRequirement; r.Spend && r.required() {
-		g.SetAember(player, g.State.Aember[player]-r.Aember)
+		// Draw the pool first, then fall back to creatures whose Æmber counts as pool
+		// (Senator Bracchus) for any shortfall.
+		fromPool := min(r.Aember, g.State.Aember[player])
+		g.SetAember(player, g.State.Aember[player]-fromPool)
+		if rest := r.Aember - fromPool; rest > 0 {
+			g.drawFromSpendAsPool(player, rest)
+		}
 		g.record(AemberSpentToPlay{Player: player, Card: id, Amount: r.Aember})
 	}
 	if opts.consumePlayPermission {
-		g.State.PlayPermissionsUsedThisTurn[player][g.cat.def(id).House]++
+		g.consumeOffHousePlay(player, def)
 	}
 	g.State.PlayedThisTurn[player].add(id)
 }
@@ -768,7 +818,7 @@ func (g *Game) CanPlay(player int, id LocalID) error {
 	if !g.mayPlayFromHand(player, def) {
 		return ErrWrongHouse
 	}
-	if !def.PlayRequirement.met(g.State.Aember[player]) {
+	if !g.meetsPlayRequirement(player, def) {
 		return ErrPlayRequirement
 	}
 	if def.Type == Artifact &&

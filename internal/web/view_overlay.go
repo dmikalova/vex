@@ -159,6 +159,21 @@ func printedFace(def *engine.CardDefinition) *cardView {
 	}
 }
 
+// cardBackFace is the full-size card back an opponent sees when previewing a
+// facedown Under-card they may not peek: the card frame filled with the dark VEX
+// back and its emblem, matching the card-back peeking tab. It carries no face,
+// since the hidden card's identity is not theirs to read.
+func cardBackFace() app.UI {
+	return app.Div().Class("card card--back").Body(
+		app.Div().Class("card-name").Body(
+			app.Span().Class("card-name-text").Text("VEX"),
+		),
+		app.Div().Class("card--back-body").Body(
+			icon("card-back", "card--back-mark", "icon-outline"),
+		),
+	)
+}
+
 // shortcuts is the keyboard sheet the ? key opens, in the order it is read:
 // moving around the board first, then acting, then the controls that frame a
 // game.

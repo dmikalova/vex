@@ -13,9 +13,9 @@ import (
 //	Type:   Tactic
 //	Rarity: Special
 //
-//	Play: Play a card from your opponent's hand.
+//	Play: Reveal your opponent's hand. Play a card from your opponent's hand.
 func TestLateralShift(t *testing.T) {
-	t.Run("plays a card out of the opponent's hand as your own", func(t *testing.T) {
+	t.Run("reveals the opponent's hand and plays a card out of it as your own", func(t *testing.T) {
 		var borrowed ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{

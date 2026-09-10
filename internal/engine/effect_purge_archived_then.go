@@ -4,7 +4,9 @@ package engine
 // own archives to pay for Then — Yzphyz Knowdrone's "you may purge an archived
 // card to stun a creature". The purge is the cost: Then resolves only if a card
 // is actually purged, and the controller may decline (or have no card to purge),
-// in which case nothing happens.
+// in which case nothing happens. The optional-purge gate is intrinsic — no
+// standalone purge-from-archives gate exists to compose with a general cost-then
+// combinator — so it stays one node rather than May + a gate + Then.
 type PurgeArchivedCardThen struct {
 	// Then is the benefit that resolves once a card is purged.
 	Then Effect

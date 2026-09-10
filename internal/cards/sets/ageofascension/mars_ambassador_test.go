@@ -17,7 +17,7 @@ import (
 //	Traits: Human
 //
 //	Elusive.
-//	Fight/Reap: You may play or use a Mars card this turn.
+//	Fight/Reap: For the remainder of the turn, you may play or use a Mars card.
 func TestMarsAmbassador(t *testing.T) {
 	t.Run("reap lets you play and use Mars cards this turn", func(t *testing.T) {
 		var marsInPlay, marsInHand ct.Card

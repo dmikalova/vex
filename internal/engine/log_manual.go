@@ -63,6 +63,18 @@ func (e PlayGrantedForHouse) Text(n Namer) string {
 	return fmt.Sprintf("%s may play %s cards this turn", n.PlayerName(e.Player), e.House)
 }
 
+// OffHousePlayGranted narrates permission to play or use a bounded number of cards
+// outside the active house this turn (Com. Officer Kirby, CXO Taber, United
+// Action).
+type OffHousePlayGranted struct {
+	Player int
+}
+
+// Text renders permission to act with cards outside the active house this turn.
+func (e OffHousePlayGranted) Text(n Namer) string {
+	return fmt.Sprintf("%s may play cards from other houses this turn", n.PlayerName(e.Player))
+}
+
 // HouseForcedNextTurn narrates a card dictating next turn's active house.
 type HouseForcedNextTurn struct {
 	Player int

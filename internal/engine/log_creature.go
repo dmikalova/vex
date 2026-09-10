@@ -54,6 +54,18 @@ func (e CreatureGainedStats) Text(n Namer) string {
 		staticBonuses(StaticModifier{PowerBonus: e.Power, ArmorBonus: e.Armor}))
 }
 
+// CreatureGainedAssault narrates a creature gaining Assault for the turn (Creed of
+// Nature grants assault equal to its power).
+type CreatureGainedAssault struct {
+	Creature LocalID
+	Amount   int
+}
+
+// Text renders the creature and the Assault it gained, e.g. "Card2 gains assault 3".
+func (e CreatureGainedAssault) Text(n Namer) string {
+	return fmt.Sprintf("%s gains assault %d", n.Name(e.Creature), e.Amount)
+}
+
 // CreatureConsideredFlank narrates a creature being treated as a flank creature
 // for the turn (Spectral Tunneler).
 type CreatureConsideredFlank struct{ Creature LocalID }
@@ -213,6 +225,23 @@ type MovedWithinBattleline struct {
 // Text renders the creature that moved.
 func (e MovedWithinBattleline) Text(n Namer) string {
 	return fmt.Sprintf("%s moves within its battleline", n.Name(e.Creature))
+}
+
+// TurnedIntoCreature narrates an artifact turning itself into a creature and
+// moving onto a flank of its battleline (Auto-Legionary).
+type TurnedIntoCreature struct {
+	Card  LocalID
+	Right bool
+}
+
+// Text renders the card and the flank it entered as a creature.
+func (e TurnedIntoCreature) Text(n Namer) string {
+	side := "left"
+	if e.Right {
+		side = "right"
+	}
+	return fmt.Sprintf(
+		"%s becomes a creature on the %s flank", n.Name(e.Card), side)
 }
 
 // ControlTaken narrates a card moving into another player's rows without

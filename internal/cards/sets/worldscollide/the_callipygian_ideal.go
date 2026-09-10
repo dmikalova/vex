@@ -1,25 +1,25 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// TheCallipygianIdeal
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// The Callipygian Ideal
 //
 //	House:  Saurian
 //	Type:   Upgrade
 //	Rarity: Uncommon
 //
+//	This creature gains, "You may spend Æmber on this creature as if it were in your pool."
 //	Play: Exalt this creature.
-//	This creature gains, "You may spend A on this creature as if it were in your pool."
 var TheCallipygianIdeal = card.New(
 	"The Callipygian Ideal",
 	card.House.Saurian,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "212"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithStatic(card.StaticModifier{SpendAsPool: true}),
+	card.WithAbility(
+		card.Trigger.Play, card.Exalt{
+			Target: card.Target.This,
+			Amount: 1,
+		}),
 )

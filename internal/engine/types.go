@@ -590,6 +590,12 @@ const (
 	// controller (Gambling Den, General Order 24). It is the whole-board companion
 	// to TriggerStartOfTurn, which fires only on its own controller's turn.
 	TriggerAfterAnyPlayerStartOfTurn
+	// This ability resolves after a Tactic is played, before that Tactic's own
+	// effect resolves, so a reaction can act on the board the Tactic is about to
+	// affect (Encounter Suit wards its host before the Tactic can reach it). It
+	// fires on every in-play card whoever played the Tactic — a Tactic either
+	// player plays reaches it.
+	TriggerAfterActionPlayedBeforeResolve
 	// triggerCount bounds the enum so Triggers can range it; it is not a trigger.
 	triggerCount
 )
@@ -692,6 +698,8 @@ func (t Trigger) String() string {
 		return "Enters Play"
 	case TriggerAfterChooseHouse:
 		return "After Choosing a House"
+	case TriggerAfterActionPlayedBeforeResolve:
+		return "After a Tactic Is Played but Before It Resolves"
 	default:
 		return ""
 	}
@@ -773,6 +781,8 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return "At the start of each player's turn, ", false
 	case TriggerAfterAnyPlayerChoosesHouse:
 		return "After a player chooses an active house, ", false
+	case TriggerAfterActionPlayedBeforeResolve:
+		return "After a Tactic is played but before it resolves, ", false
 	default:
 		return "", true
 	}

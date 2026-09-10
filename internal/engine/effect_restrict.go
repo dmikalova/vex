@@ -232,19 +232,26 @@ func (e CannotUse) validate() error {
 }
 
 // Text renders the effect, e.g. "your opponent cannot use any cards during their
-// next turn".
+// next turn", or for the EndOfTurn form "you cannot use cards this turn" (United
+// Action).
 func (e CannotUse) Text() string {
 	who, whose := "you", "your"
 	if e.Player == Opponent {
 		who, whose = "your opponent", "their"
 	}
+	if e.Duration == EndOfTurn {
+		return who + " cannot use cards this turn"
+	}
 	return who + " cannot use any cards during " + whose + " next turn"
 }
 
-// Resolve arms the use bar on the chosen player.
+// Resolve arms the use bar on the chosen player, this turn or their next.
 func (e CannotUse) Resolve(ctx *EffectContext) {
-	if e.Duration == NextTurn {
+	switch e.Duration {
+	case NextTurn:
 		ctx.Resolver.CannotUseNextTurn(ctx.PlayerFor(e.Player), ctx.Source)
+	case EndOfTurn:
+		ctx.Resolver.CannotUseThisTurn(ctx.PlayerFor(e.Player), ctx.Source)
 	}
 }
 
@@ -374,36 +381,66 @@ func (e GrantFightForFriendlyHouse) Resolve(ctx *EffectContext) {
 	ctx.Resolver.GrantFightForHouse(ctx.Controller, e.House)
 }
 
-// MayUseFriendlyHouse lets the controller fully use (fight, reap, or Action:) their
-// creatures of House this turn even out of the active house — Sigil of Brotherhood,
-// Ritual of the Hunt. The grant lasts only the current turn (the ready phase
-// clears it).
-type MayUseFriendlyHouse struct {
+// HouseGrant is a bitset of what a MayActFriendlyHouse frees for one house this
+// turn: playing the house's cards from hand, using its creatures in play, or both.
+type HouseGrant uint8
+
+const (
+	// GrantPlay lets the controller play the house's cards from hand.
+	GrantPlay HouseGrant = 1 << iota
+	// GrantUse lets the controller use (fight, reap, or Action:) the house's creatures.
+	GrantUse
+)
+
+// MayActFriendlyHouse lets the controller act with a friendly house's cards this
+// turn even out of the active house: Grant frees playing the house's cards from
+// hand (GrantPlay), using its creatures in play (GrantUse), or both — the
+// Ambassador cycle plays and uses, Sigil of Brotherhood and Ritual of the Hunt
+// only use. The grant lasts only the current turn (the ready phase clears it).
+type MayActFriendlyHouse struct {
 	House House
+	Grant HouseGrant
 }
 
-// validate rejects a MayUseFriendlyHouse whose house was left unset.
-func (e MayUseFriendlyHouse) validate() error {
+// validate rejects an unset house or an empty grant.
+func (e MayActFriendlyHouse) validate() error {
 	if e.House == HouseNone {
-		return fmt.Errorf("MayUseFriendlyHouse: house must be set")
+		return fmt.Errorf("MayActFriendlyHouse: house must be set")
+	}
+	if e.Grant == 0 {
+		return fmt.Errorf("MayActFriendlyHouse: at least one grant must be set")
 	}
 	return nil
 }
 
-// Text renders the effect, e.g. "for the remainder of the turn, you may use friendly
-// Sanctum creatures".
-func (e MayUseFriendlyHouse) Text() string {
-	return fmt.Sprintf("for the remainder of the turn, you may use friendly %s creatures", e.House)
+// Text builds the clause from the grant, e.g. "for the remainder of the turn, you
+// may play or use a Mars card" or "... you may use friendly Sanctum creatures".
+// Using frees creatures in play; playing frees cards from hand, so the object is a
+// card once GrantPlay is set.
+func (e MayActFriendlyHouse) Text() string {
+	verb, object := "use", "friendly "+e.House.String()+" creatures"
+	if e.Grant&GrantPlay != 0 {
+		verb, object = "play", "a "+e.House.String()+" card"
+		if e.Grant&GrantUse != 0 {
+			verb = "play or use"
+		}
+	}
+	return "for the remainder of the turn, you may " + verb + " " + object
 }
 
-// Resolve grants the controller full use of their House creatures this turn.
-func (e MayUseFriendlyHouse) Resolve(ctx *EffectContext) {
-	ctx.Resolver.GrantUseForHouse(ctx.Controller, e.House)
+// Resolve applies each grant the effect names for the controller this turn.
+func (e MayActFriendlyHouse) Resolve(ctx *EffectContext) {
+	if e.Grant&GrantPlay != 0 {
+		ctx.Resolver.GrantPlayForHouse(ctx.Controller, e.House)
+	}
+	if e.Grant&GrantUse != 0 {
+		ctx.Resolver.GrantUseForHouse(ctx.Controller, e.House)
+	}
 }
 
 // MayUseFriendlyArtifacts lets the controller use any friendly artifact this turn
 // as if it belonged to the active house — Scientifical Hack. Unlike
-// MayUseFriendlyHouse, which frees creatures of one named house, this frees every
+// MayActFriendlyHouse, which frees one named house's cards, this frees every
 // friendly artifact whatever its house. The grant lasts only the current turn (the
 // ready phase clears it).
 type MayUseFriendlyArtifacts struct{}
@@ -418,31 +455,75 @@ func (MayUseFriendlyArtifacts) Resolve(ctx *EffectContext) {
 	ctx.Resolver.GrantUseArtifactsAnyHouse(ctx.Controller)
 }
 
-// MayPlayOrUseFriendlyHouse lets the controller both play cards of House from hand
-// and fully use their House creatures this turn even out of the active house — the
-// Ambassador cycle's "you may play or use a <House> card this turn". Both grants
-// last only the current turn (the ready phase clears them).
-type MayPlayOrUseFriendlyHouse struct {
-	House House
+// MayPlayOffHouse lets the controller play or use a bounded number of cards this
+// turn from outside their active house — the Star Alliance "play a non-Star
+// Alliance card" cycle. Where MayActFriendlyHouse frees one named friendly house,
+// this frees cards by exclusion: every house but a named one (Except, a card's own
+// house for "non-Star Alliance"), or every house the controller has a card in play
+// for (Controlled, United Action). NotType excludes a card type (Com. Officer
+// Kirby frees a non-creature). Grant frees playing from hand (GrantPlay), using in
+// play (GrantUse), or both (CXO Taber). Count bounds how many cards; zero is
+// unbounded (United Action). The ready phase clears the grant.
+type MayPlayOffHouse struct {
+	Except     House
+	Controlled bool
+	NotType    CardType
+	Grant      HouseGrant
+	Count      int
 }
 
-// validate rejects a MayPlayOrUseFriendlyHouse whose house was left unset.
-func (e MayPlayOrUseFriendlyHouse) validate() error {
-	if e.House == HouseNone {
-		return fmt.Errorf("MayPlayOrUseFriendlyHouse: house must be set")
+// validate rejects a grant that frees nothing or names a negative count.
+func (e MayPlayOffHouse) validate() error {
+	if e.Grant == 0 {
+		return fmt.Errorf("MayPlayOffHouse: at least one grant must be set")
+	}
+	if e.Count < 0 {
+		return fmt.Errorf("MayPlayOffHouse: count must not be negative")
 	}
 	return nil
 }
 
-// Text renders the effect, e.g. "you may play or use a Mars card this turn".
-func (e MayPlayOrUseFriendlyHouse) Text() string {
-	return fmt.Sprintf("you may play or use a %s card this turn", e.House)
+// Text renders the grant. The Controlled form (United Action) names the whole
+// permission; the exclusion form reads "you may play a non-Star Alliance ... this
+// turn", playing "or use" when GrantUse is set (CXO Taber).
+func (e MayPlayOffHouse) Text() string {
+	if e.Controlled {
+		return "for the remainder of the turn, you may play cards from any house for which you have a card in play"
+	}
+	verb := "play"
+	if e.Grant&GrantUse != 0 {
+		verb = "play or use"
+	}
+	return "you may " + verb + " " + e.object() + " this turn"
 }
 
-// Resolve grants the controller both play and use of that house this turn.
-func (e MayPlayOrUseFriendlyHouse) Resolve(ctx *EffectContext) {
-	ctx.Resolver.GrantPlayForHouse(ctx.Controller, e.House)
-	ctx.Resolver.GrantUseForHouse(ctx.Controller, e.House)
+// object renders the card the grant frees: a bare "card", or the enumerated
+// non-creature types Com. Officer Kirby frees. The renamed Tactic type prints
+// capitalized (rule 19).
+func (e MayPlayOffHouse) object() string {
+	house := ""
+	if e.Except != HouseNone {
+		house = "non-" + e.Except.String() + " "
+	}
+	if e.NotType == Creature {
+		return "a " + house + "artifact, upgrade, or Tactic"
+	}
+	return "one " + house + "card"
+}
+
+// Resolve records the this-turn off-house grant for the controller.
+func (e MayPlayOffHouse) Resolve(ctx *EffectContext) {
+	rem := permitUnlimited
+	if e.Count > 0 {
+		rem = uint8(e.Count)
+	}
+	ctx.Resolver.GrantOffHousePermit(ctx.Controller, OffHousePermit{
+		Except:     e.Except,
+		Controlled: e.Controlled,
+		NotType:    e.NotType,
+		Grant:      e.Grant,
+		Remaining:  rem,
+	})
 }
 
 // ForceOpponentActiveHouse makes the opponent choose the house picked by an

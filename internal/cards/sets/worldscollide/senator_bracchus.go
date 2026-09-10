@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// SenatorBracchus
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Senator Bracchus
 //
 //	House:  Saurian
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Dinosaur • Politician
 //
-//	You may spend A on friendly creatures as if it were in your pool.
+//	You may spend Æmber on friendly creatures as if it were in your pool.
 //	Fight/Reap: Exalt Senator Bracchus.
 var SenatorBracchus = card.New(
 	"Senator Bracchus",
@@ -25,5 +20,12 @@ var SenatorBracchus = card.New(
 	card.Provenance(card.WC, "229"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Politician),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithConstant(card.ConstantAbility{
+		Target:      card.Target.EachFriendlyCreature,
+		SpendAsPool: true,
+	}),
+	card.WithFightOrReap(card.Exalt{
+		Target: card.Target.This,
+		Amount: 1,
+	}),
 )

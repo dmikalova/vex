@@ -24,7 +24,7 @@ var UnchartedLands = card.New(
 			Trigger: card.Trigger.Reap,
 			Effect: card.MoveAember{
 				Amount: 1,
-				From:   card.Target.FriendlyArtifact.Named("Uncharted Lands"),
+				From:   card.Target.GrantingArtifact.Named("Uncharted Lands"),
 				To:     card.Controller,
 			},
 		}},

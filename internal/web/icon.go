@@ -405,7 +405,7 @@ func triggerIcon(t engine.Trigger) string {
 	case engine.TriggerAfterPlay, engine.TriggerEntersPlay,
 		engine.TriggerAfterCreatureEnters, engine.TriggerAfterCreaturePlayedAdjacent,
 		engine.TriggerAfterCreaturePlayed, engine.TriggerAfterCardPlayed,
-		engine.TriggerAfterEnemyCardPlayed:
+		engine.TriggerAfterEnemyCardPlayed, engine.TriggerAfterActionPlayedBeforeResolve:
 		return "glyph-play"
 	case engine.TriggerAfterReap, engine.TriggerAfterCreatureReaps,
 		engine.TriggerAfterEnemyCreatureReaps:
@@ -500,6 +500,11 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 			{asset: "exhausted", decor: decorFriendly},
 			arrowTo(targetGlyph(v.Target)),
 		}, true
+	case engine.ReadyIfFirstUse:
+		return []glyph{
+			{asset: "exhausted", decor: decorFriendly},
+			arrowTo(targetGlyph(v.Target)),
+		}, true
 	case engine.Unstun:
 		return []glyph{
 			{asset: "stun", decor: decorFriendly},
@@ -512,7 +517,7 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 			{asset: "glyph-destroy"},
 			arrowTo(glyph{asset: "type-creature", decor: decorEach}),
 		}, true
-	case engine.Tertiate:
+	case engine.DestroyFractionOfEachBattleline:
 		return []glyph{
 			{asset: "glyph-destroy"},
 			arrowTo(glyph{asset: "type-creature", decor: decorEach}),
@@ -553,10 +558,17 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "zone-archives"}}, true
 	case engine.ArchiveSource:
 		return []glyph{{asset: "zone-archives", decor: decorThis}}, true
+	case engine.ArchiveGrantingUpgrade:
+		return []glyph{
+			{asset: "card-back", decor: decorThis},
+			arrowTo(glyph{asset: "zone-archives"}),
+		}, true
 	case engine.ArchivePurgedCard:
 		return []glyph{{asset: "zone-purge"}, arrowTo(glyph{asset: "zone-archives"})}, true
 	case engine.DiscardFromHand, engine.DiscardRandomFromHand:
 		return []glyph{{asset: "zone-discard"}}, true
+	case engine.DiscardHand:
+		return []glyph{{asset: "zone-hand"}, arrowTo(glyph{asset: "zone-discard"})}, true
 	case engine.DiscardRandomFromArchives:
 		return []glyph{{asset: "zone-discard"}}, true
 	case engine.PurgeCard:
@@ -584,7 +596,11 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "zone-discard"}, arrowTo(glyph{asset: "zone-deck"})}, true
 	case engine.ShuffleMatchingFromDiscardIntoDeck:
 		return []glyph{{asset: "zone-discard"}, arrowTo(glyph{asset: "zone-deck"})}, true
+	case engine.ShuffleNamedFromDiscardIntoDeck:
+		return []glyph{{asset: "zone-discard"}, arrowTo(glyph{asset: "zone-deck"})}, true
 	case engine.ReturnNamedToHand:
+		return []glyph{{asset: "glyph-return"}}, true
+	case engine.ReturnItToHand:
 		return []glyph{{asset: "glyph-return"}}, true
 	case engine.PlayFrom, engine.PlayTopOfDeck, engine.PutIntoPlay:
 		return []glyph{{asset: "glyph-play"}}, true
@@ -623,6 +639,15 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 			gs = append(gs, glyph{asset: "shield", qty: v.Armor})
 		}
 		return append(gs, arrowTo(targetGlyph(v.Target))), true
+	case engine.GainAssault:
+		return []glyph{{asset: "kw-assault"}, arrowTo(targetGlyph(v.Target))}, true
+	case engine.GainKeywordForTurn:
+		if a := keywordIcon(v.Keyword); a != "" {
+			return []glyph{{asset: a}, arrowTo(targetGlyph(v.Target))}, true
+		}
+		return fallbackGlyphs(e), false
+	case engine.FuseTriggersForTurn:
+		return []glyph{{asset: "glyph-reap"}, {asset: "glyph-swap"}, {asset: "glyph-fight"}}, true
 	case engine.AddPowerCounter:
 		if v.Per != nil {
 			return []glyph{{asset: "power"}, arrowTo(targetGlyph(v.Target))}, true
@@ -661,6 +686,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 	case engine.ExaltToRepeat:
 		return effectGlyphs(v.Do)
 	case engine.May:
+		return effectGlyphs(v.Do)
+	case engine.ByActivePlayer:
 		return effectGlyphs(v.Do)
 	case engine.SaveFromDestruction:
 		return effectGlyphs(v.Do)
@@ -754,6 +781,11 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 			return []glyph{{asset: "zone-discard"}, arrowTo(glyph{asset: a})}, true
 		}
 		return fallbackGlyphs(e), false
+	case engine.AttachSelfTo:
+		return []glyph{
+			{asset: "card-back", decor: decorThis},
+			arrowTo(glyph{asset: "type-creature"}),
+		}, true
 	case engine.PutUnderFromHand:
 		return []glyph{{asset: "zone-hand"}, arrowTo(glyph{asset: "card-back"})}, true
 	case engine.PutUnderIntoPlay:
@@ -773,6 +805,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 	case engine.SkipForgePhase:
 		return []glyph{{asset: "forge"}, {asset: "glyph-ban"}}, true
 	case engine.CannotFight:
+		return []glyph{{asset: "glyph-fight"}, {asset: "glyph-ban"}}, true
+	case engine.CancelFight:
 		return []glyph{{asset: "glyph-fight"}, {asset: "glyph-ban"}}, true
 	case engine.CannotPlay:
 		return []glyph{{asset: "glyph-play"}, {asset: "glyph-ban"}}, true
@@ -794,19 +828,33 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		}
 		return []glyph{{asset: "glyph-unknown"}, {asset: "glyph-ban"}}, true
 	case engine.LoseKeywords:
-		if len(v.Keywords) == 1 {
-			if a := keywordIcon(v.Keywords[0]); a != "" {
-				return []glyph{{asset: a}, {asset: "glyph-ban"}}, true
+		gs := make([]glyph, 0, len(v.Keywords)+1)
+		for _, k := range v.Keywords {
+			a := keywordIcon(k)
+			if a == "" {
+				return []glyph{{asset: "glyph-unknown"}, {asset: "glyph-ban"}}, true
 			}
+			gs = append(gs, glyph{asset: a})
 		}
-		return []glyph{{asset: "glyph-unknown"}, {asset: "glyph-ban"}}, true
+		return append(gs, glyph{asset: "glyph-ban"}), true
 	case engine.GainKeyword:
 		if a := keywordIcon(v.Keyword); a != "" {
 			return []glyph{{asset: a}}, true
 		}
 		return []glyph{{asset: "glyph-unknown"}}, true
-	case engine.MayPlayOrUseFriendlyHouse:
-		return []glyph{{asset: "glyph-play"}, {asset: "glyph-action"}}, true
+	case engine.MayActFriendlyHouse:
+		if v.Grant&engine.GrantPlay != 0 {
+			return []glyph{{asset: "glyph-play"}, {asset: "glyph-action"}}, true
+		}
+		return []glyph{{asset: "glyph-action", decor: decorFriendly}}, true
+	case engine.MayPlayOffHouse:
+		if v.Grant&engine.GrantUse != 0 {
+			return []glyph{{asset: "glyph-play"}, {asset: "glyph-action"}}, true
+		}
+		return []glyph{{asset: "glyph-play"}}, true
+	case engine.NameHouse:
+		// The chosen house is barred; ChooseHouseThen supplies the choose glyph.
+		return []glyph{{asset: "glyph-ban"}}, true
 	case engine.LookAtTop:
 		return []glyph{{asset: "zone-deck"}, {asset: "glyph-look"}}, true
 	case engine.LookAtTopSort:
@@ -825,8 +873,6 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "glyph-fight", decor: decorFriendly | decorEach}}, true
 	case engine.GrantFightForChosenHouse:
 		return []glyph{{asset: "glyph-fight", decor: decorEach}}, true
-	case engine.MayUseFriendlyHouse:
-		return []glyph{{asset: "glyph-action", decor: decorFriendly}}, true
 	case engine.MayUseFriendlyArtifacts:
 		return []glyph{
 			{asset: "type-artifact", decor: decorFriendly},
@@ -850,6 +896,12 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "zone-discard"}, arrowTo(glyph{asset: "zone-hand"})}, true
 	case engine.DiscardTopOfDeck:
 		return []glyph{{asset: "zone-discard", decor: playerDecor(v.Player)}}, true
+	case engine.ReanimateTopOfDeckInPlace:
+		return []glyph{
+			{asset: "zone-deck"},
+			arrowTo(glyph{asset: "zone-discard"}),
+			arrowTo(glyph{asset: "glyph-play"}),
+		}, true
 	case engine.DiscardTopOfEachDeck:
 		return []glyph{{asset: "zone-discard", decor: decorEach}}, true
 	case engine.EachPlayerDiscardsAndRefillsHand:
@@ -880,6 +932,12 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "glyph-flank"}, arrowTo(targetGlyph(v.Target))}, true
 	case engine.MoveToFlank:
 		return []glyph{targetGlyph(v.Target), arrowTo(glyph{asset: "glyph-flank"})}, true
+	case engine.TurnIntoCreature:
+		return []glyph{
+			targetGlyph(v.Target),
+			arrowTo(glyph{asset: "type-creature"}),
+			{asset: "glyph-flank"},
+		}, true
 	case engine.MoveWithinBattleline:
 		return []glyph{targetGlyph(v.Target), arrowTo(glyph{asset: "glyph-swap"})}, true
 	case engine.BelongToHouse:
@@ -905,6 +963,10 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "glyph-play"}}, true
 	case engine.RevealTopOfDeck:
 		return []glyph{{asset: "zone-deck"}, {asset: "glyph-look"}}, true
+	case engine.MakeItsHouseActive:
+		return []glyph{{asset: "glyph-choose"}}, true
+	case engine.EndTurn:
+		return []glyph{{asset: "phase-turn"}}, true
 	case engine.PurgeFromHand, engine.PurgeCreatureFromHand:
 		return []glyph{{asset: "zone-hand"}, arrowTo(glyph{asset: "zone-purge"})}, true
 	case engine.PurgeRandomFromHand:

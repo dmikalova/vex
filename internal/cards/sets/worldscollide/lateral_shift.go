@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Special
 //
-//	Play: Play a card from your opponent's hand.
+//	Play: Reveal your opponent's hand. Play a card from your opponent's hand.
 var LateralShift = card.New(
 	"Lateral Shift",
 	card.House.Brobnar,
@@ -17,5 +17,8 @@ var LateralShift = card.New(
 	card.Rarity.Special,
 	card.Provenance(card.WC, "A03"),
 	card.WithAbility(
-		card.Trigger.Play, card.PlayFrom{From: card.Hand, Player: card.Opponent}),
+		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+			card.RevealHand{Player: card.Opponent},
+			card.PlayFrom{From: card.Hand, Player: card.Opponent},
+		}}),
 )

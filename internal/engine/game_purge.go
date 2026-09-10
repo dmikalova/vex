@@ -10,7 +10,7 @@ package engine
 func (g *Game) purgeFromDiscard(owner int, id LocalID) {
 	g.State.Discard[owner].remove(id)
 	g.State.Purge[owner].add(id)
-	g.record(CardPurgedFromDiscard{Player: g.State.ActivePlayer, Card: id})
+	g.record(CardMoved{Player: g.State.ActivePlayer, Card: id, From: Discard, To: purged})
 }
 
 // purgeFromHand moves a card from a player's hand to their purge pile. Callers
@@ -18,7 +18,7 @@ func (g *Game) purgeFromDiscard(owner int, id LocalID) {
 func (g *Game) purgeFromHand(owner int, id LocalID) {
 	g.State.Hand[owner].remove(id)
 	g.State.Purge[owner].add(id)
-	g.record(CardPurgedFromHand{Player: g.State.ActivePlayer, Card: id})
+	g.record(CardMoved{Player: g.State.ActivePlayer, Card: id, From: Hand, To: purged})
 }
 
 // purgeFromArchives moves a card from a player's archives to their purge pile.
@@ -26,7 +26,7 @@ func (g *Game) purgeFromHand(owner int, id LocalID) {
 func (g *Game) purgeFromArchives(owner int, id LocalID) {
 	g.State.Archives[owner].remove(id)
 	g.State.Purge[owner].add(id)
-	g.record(CardPurgedFromArchives{Player: g.State.ActivePlayer, Card: id})
+	g.record(CardMoved{Player: g.State.ActivePlayer, Card: id, From: Archives, To: purged})
 }
 
 // purgeFromDeck moves a card from a player's deck to their purge pile. Callers
@@ -35,5 +35,5 @@ func (g *Game) purgeFromArchives(owner int, id LocalID) {
 func (g *Game) purgeFromDeck(owner int, id LocalID) {
 	g.State.Deck[owner].remove(id)
 	g.State.Purge[owner].add(id)
-	g.record(CardPurgedFromDeck{Player: g.State.ActivePlayer, Card: id})
+	g.record(CardMoved{Player: g.State.ActivePlayer, Card: id, From: Deck, To: purged})
 }

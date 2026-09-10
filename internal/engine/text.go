@@ -34,6 +34,11 @@ func RenderAbility(a Ability) string {
 			return punctuate(capitalizeFirst(s))
 		}
 	}
+	if a.Trigger == TriggerAfterCreaturePlayedAdjacent {
+		if s, ok := afterCreaturePlayedAdjacentText(a.Effect); ok {
+			return punctuate(capitalizeFirst(s))
+		}
+	}
 	if a.Trigger == TriggerEntersPlay {
 		if s, ok := entersPlayConditionalText(a.Effect); ok {
 			return punctuate(capitalizeFirst(s))
@@ -53,21 +58,46 @@ func RenderAbility(a Ability) string {
 // a <shape>, <then>" wording: Carlo Phantom's "after you play an artifact, steal
 // 1 Æmber", Veylan Analyst's "after you use an artifact, gain 1 Æmber", and Baron
 // Mengevin's "after you discard a Sanctum card, ...", rather than the literal
-// "after you <verb> a card, if it is a <shape>, ...". Any other effect renders
-// with the broad prefix, so an unconditional or state-gated reaction still reads
-// "After you <verb> a card, ...".
+// "after you <verb> a card, if it is a <shape>, ...". A Conditional{ItIsNamed}
+// folds the same way to a named card — Chain Gang's "after you play Subtle Chain,
+// ready Chain Gang". Any other effect renders with the broad prefix, so an
+// unconditional or state-gated reaction still reads "After you <verb> a card, ...".
 func afterYouActOnText(verb string, e Effect) (string, bool) {
 	cond, ok := e.(Conditional)
 	if !ok {
 		return "", false
 	}
-	it, ok := cond.Cond.(ItIs)
+	switch it := cond.Cond.(type) {
+	case ItIs:
+		return "after you " + verb + " " + indefinite(
+			houseTypeNoun(it.House, it.Type),
+		) + ", " + cond.Then.Text(), true
+	case ItIsNamed:
+		return "after you " + verb + " " + it.Name + ", " + cond.Then.Text(), true
+	default:
+		return "", false
+	}
+}
+
+// afterCreaturePlayedAdjacentText folds an "after a creature is played adjacent
+// to <self>" reaction gated only on the played creature's trait — a
+// Conditional{ItIsOfTrait} — into the natural "after a <Trait> creature is played
+// adjacent to <self>, <then>" wording (Stilt-Kin's "after a Giant creature is
+// played adjacent to Stilt-Kin, ready and fight with Stilt-Kin"), rather than the
+// literal "after a creature is played adjacent to <self>, if it is a <Trait>
+// creature, ...". Any other effect shape reports false and renders with the broad
+// prefix.
+func afterCreaturePlayedAdjacentText(e Effect) (string, bool) {
+	cond, ok := e.(Conditional)
 	if !ok {
 		return "", false
 	}
-	return "after you " + verb + " " + indefinite(
-		houseTypeNoun(it.House, it.Type),
-	) + ", " + cond.Then.Text(), true
+	trait, ok := cond.Cond.(ItIsOfTrait)
+	if !ok {
+		return "", false
+	}
+	return "after a " + trait.Trait.String() + " creature is played adjacent to " +
+		SelfName + ", " + cond.Then.Text(), true
 }
 
 // afterChooseHouseText folds an AfterChooseHouse ability, whose effect is a
@@ -349,7 +379,7 @@ func upgradeGrantLines(def *CardDefinition, hosted bool) []string {
 	}
 	// A house-override line already folds in the granted abilities.
 	if def.Static.HouseOverride == HouseNone {
-		lines = append(lines, grantedText(def.Static, hosted)...)
+		lines = append(lines, grantedText(def.Static, def.Name, hosted)...)
 	}
 	return lines
 }
@@ -366,7 +396,7 @@ func houseOverrideLine(def *CardDefinition) string {
 	}
 	line := "This creature belongs to " + m.HouseOverride.String()
 	frame := func(body string) string { return `this creature gains "` + body + `"` }
-	for _, g := range grantedLines(m, frame) {
+	for _, g := range grantedLines(m, def.Name, frame) {
 		line += " and " + g
 	}
 	return line
@@ -416,6 +446,10 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 	for _, k := range def.CannotBeUsedTo {
 		rules = append(rules, def.Name+" cannot "+k.verb()+".")
 	}
+	if c := def.CannotBeUsedWhile; c != nil {
+		rules = append(rules,
+			"While "+trimCondPrefix(c.CondText())+", "+def.Name+" cannot be used.")
+	}
 	if dw := def.DestroyedWhen; dw != nil {
 		cond := strings.ReplaceAll(dw.CondText(), SelfName, def.Name)
 		rules = append(rules, capitalizeFirst(cond)+", destroy "+def.Name+".")
@@ -458,7 +492,7 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 		rules = append(rules, strings.ReplaceAll(s, SelfName, def.Name))
 	}
 	if s := playPermissionText(def.PlayPermission); s != "" {
-		rules = append(rules, s)
+		rules = append(rules, strings.ReplaceAll(s, SelfName, def.Name))
 	}
 	if s := captureOpponentAemberText(def); s != "" {
 		rules = append(rules, s)
@@ -466,7 +500,13 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 	if s := takeFromSupplyText(def); s != "" {
 		rules = append(rules, s)
 	}
+	if s := captureStolenAemberText(def); s != "" {
+		rules = append(rules, s)
+	}
 	if s := gainsForgeAemberText(def); s != "" {
+		rules = append(rules, s)
+	}
+	if s := forgeGuardText(def); s != "" {
 		rules = append(rules, s)
 	}
 	// A creature played as an upgrade folds its Static grant into the "may be played
@@ -485,8 +525,9 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 		rules = append(rules, s)
 	}
 	rules = append(rules, constantGrantedText(def)...)
+	rules = append(rules, spendAsPoolLines(def, hosted)...)
 	if !def.PlayableAsUpgrade && def.Static.HouseOverride == HouseNone {
-		rules = append(rules, grantedText(def.Static, hosted)...)
+		rules = append(rules, grantedText(def.Static, def.Name, hosted)...)
 	}
 	rules = append(rules, abilityLines(def)...)
 	if s := playableAsUpgradeText(def); s != "" {
@@ -570,14 +611,35 @@ func drawModifierText(m DrawModifier) string {
 // staticText renders an Upgrade's continuous modifier, e.g.
 // "This creature gains +5 power."
 func staticText(m StaticModifier) string {
-	s := staticBonuses(m)
-	if s == "" {
+	var lines []string
+	if s := staticBonuses(m); s != "" {
+		if m.Per != nil {
+			s += " for each " + m.Per.perTargetText()
+		}
+		if m.WhileOnFlank {
+			lines = append(lines, "While this creature is on a flank, it gains "+s+".")
+		} else {
+			lines = append(lines, "This creature gains "+s+".")
+		}
+	}
+	if s := neighborKeywordsText(m); s != "" {
+		lines = append(lines, s)
+	}
+	return strings.Join(lines, " ")
+}
+
+// neighborKeywordsText renders the keywords an Upgrade grants its host and each of
+// the host's neighbors, e.g. "This creature and each of its neighbors gains
+// elusive." It is empty when the modifier grants no neighbor keywords.
+func neighborKeywordsText(m StaticModifier) string {
+	if len(m.KeywordsToNeighbors) == 0 {
 		return ""
 	}
-	if m.WhileOnFlank {
-		return "While this creature is on a flank, it gains " + s + "."
+	words := make([]string, len(m.KeywordsToNeighbors))
+	for i, kw := range m.KeywordsToNeighbors {
+		words[i] = strings.ToLower(kw.String())
 	}
-	return "This creature gains " + s + "."
+	return "This creature and each of its neighbors gains " + oxfordAnd(words) + "."
 }
 
 // staticBonuses lists what an Upgrade's continuous modifier adds, without the
@@ -635,6 +697,9 @@ func upgradeStaticLines(def *CardDefinition, hosted bool) []string {
 			}
 			lines = append(lines, capitalizeFirst(s)+".")
 		}
+		if s := neighborKeywordsText(def.Static); s != "" {
+			lines = append(lines, s)
+		}
 		if replacement != "" {
 			lines = append(lines, capitalizeFirst(replacement)+".")
 		}
@@ -671,33 +736,33 @@ func destructionReplacementText(def *CardDefinition) string {
 // e.g. `This creature gains, "Reap: Steal 1 Æmber."`. Self-references resolve to
 // "this creature" since the host is unknown when the Upgrade prints; hosted drops
 // the framing so the line reads as if printed on the creature.
-func grantedText(m StaticModifier, hosted bool) []string {
+func grantedText(m StaticModifier, upgrade string, hosted bool) []string {
 	frame := func(body string) string {
 		if hosted {
 			return body
 		}
 		return `This creature gains, "` + body + `"`
 	}
-	return grantedLines(m, frame)
+	return grantedLines(m, upgrade, frame)
 }
 
 // grantedLines renders the triggered abilities and static grants an Upgrade gives
 // its host, applying frame to each so the caller controls the surrounding phrase
 // (grantedText's "This creature gains, …" or the house-override line's lowercase
 // "this creature gains …").
-func grantedLines(m StaticModifier, frame func(string) string) []string {
+func grantedLines(m StaticModifier, upgrade string, frame func(string) string) []string {
 	lines := make([]string, 0, len(m.Granted))
 	for i := 0; i < len(m.Granted); i++ {
 		ab := m.Granted[i]
 		if i+1 < len(m.Granted) && isFightReapPair(ab, m.Granted[i+1]) {
 			body := capitalizeFirst(
-				abilityTextWithNames(ab.Effect.Text(), "this creature", "this upgrade"),
+				abilityTextWithNames(ab.Effect.Text(), "this creature", upgrade),
 			)
 			lines = append(lines, frame(`Fight/Reap: `+body+`.`))
 			i++ // the partner prints as part of this line
 			continue
 		}
-		body := abilityTextWithNames(RenderAbility(ab), "this creature", "this upgrade")
+		body := abilityTextWithNames(RenderAbility(ab), "this creature", upgrade)
 		lines = append(lines, frame(body))
 	}
 	if s := keyCostText(m.KeyCostChange); s != "" {
@@ -722,6 +787,11 @@ func constantText(def *CardDefinition) string {
 		who := capitalizeFirst(c.target().Text())
 		for _, k := range c.CannotBeUsedTo {
 			line := who + " cannot " + k.verb() + "."
+			lines = append(lines, strings.ReplaceAll(line, SelfName, def.Name))
+		}
+		for _, m := range c.Morphs {
+			from, onto := triggerEffectNoun(m.From), triggerEffectNoun(m.Onto)
+			line := who + "'s " + from + " effect is a " + from + "/" + onto + " effect."
 			lines = append(lines, strings.ReplaceAll(line, SelfName, def.Name))
 		}
 		var parts []string
@@ -953,10 +1023,31 @@ func keyCostText(kc KeyCostChange) string {
 // playPermissionText renders a continuous permission to play cards of a house
 // while that house is not active, e.g. Witch of the Wilds. The rendered text
 // drops the "not your active house" qualifier — a player can already play cards
-// of their active house — and reads as the plain standing permission it is.
+// of their active house — and reads as the plain standing permission it is. The
+// NonActive form (Captain Val Jericho) instead grants cards of any non-active
+// house, gated by an optional condition that names the source via SelfName.
 func playPermissionText(p PlayPermission) string {
 	if !p.granted() {
 		return ""
+	}
+	if p.NonActive {
+		noun := "card"
+		if p.count() != 1 {
+			noun += "s"
+		}
+		if p.Condition != nil {
+			return fmt.Sprintf(
+				"During your turn, %s, you may play %s %s that is not of the active house.",
+				p.Condition.CondText(),
+				countWord(p.count()),
+				noun,
+			)
+		}
+		return fmt.Sprintf(
+			"During your turn you may play %s %s that is not of the active house.",
+			countWord(p.count()),
+			noun,
+		)
 	}
 	noun := p.House.String() + " card"
 	if p.count() != 1 {
@@ -1004,6 +1095,18 @@ func takeFromSupplyText(def *CardDefinition) string {
 	return "Æmber stolen or captured from your pool is taken from the common supply instead."
 }
 
+// captureStolenAemberText renders a continuous replacement that captures every
+// stolen Æmber onto a creature the active player controls, e.g. "Each Æmber that
+// would be stolen is captured by a creature controlled by the active player
+// instead." (Gargantodon).
+func captureStolenAemberText(def *CardDefinition) string {
+	r := def.Replaces
+	if r.Of != EventAemberStolen || r.With != Capture {
+		return ""
+	}
+	return "Each Æmber that would be stolen is captured by a creature controlled by the active player instead."
+}
+
 // gainsForgeAemberText renders a card that gains all the Æmber its controller's
 // opponent spends forging a key, e.g. "You gain all Æmber your opponent spends
 // when forging a key."
@@ -1012,6 +1115,17 @@ func gainsForgeAemberText(def *CardDefinition) string {
 		return ""
 	}
 	return "You gain all Æmber your opponent spends when forging a key."
+}
+
+// forgeGuardText renders a card that interrupts the opponent's key forges,
+// naming the card itself so the destroyed subject is unambiguous (Keyforgery).
+func forgeGuardText(def *CardDefinition) string {
+	if !def.GuardsOpponentForge {
+		return ""
+	}
+	return "When your opponent would forge a key, they name a house. Reveal a " +
+		"random card from your hand. If that card is not of the named house, " +
+		"destroy " + def.Name + " and they do not forge that key."
 }
 
 // keywordText renders a card's keywords as a single leading sentence, e.g.
@@ -1113,9 +1227,14 @@ func capitalizeFirst(s string) string {
 }
 
 // indefinite prefixes a noun with the indefinite article "a" or "an", choosing
-// "an" before a word that starts with a vowel — e.g. "an Urchin", "a Knight".
+// "an" before a word that starts with a vowel — e.g. "an Urchin", "a Knight". A
+// noun already led by "another" carries its own article ("an other") and takes
+// none, so "another creature" is left as is rather than "an another creature".
 func indefinite(noun string) string {
 	if noun == "" {
+		return noun
+	}
+	if noun == "another" || strings.HasPrefix(noun, "another ") {
 		return noun
 	}
 	switch unicode.ToLower([]rune(noun)[0]) {

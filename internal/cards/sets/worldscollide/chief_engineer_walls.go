@@ -1,29 +1,31 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ChiefEngineerWalls
+// Chief Engineer Walls
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Creature
 //	Rarity: Common
 //	Power:  2
 //	Traits: Human
 //
-//	Elusive. (The first time this creature is attacked each turn, no damage is dealt.)
-//	Play/Fight/Reap: You may return an upgrade or Robot card from your discard pile to your hand.
+//	Elusive.
+//	Play/Fight/Reap: You may put an upgrade or Robot card from your discard pile into your hand.
 var ChiefEngineerWalls = card.New(
 	"Chief Engineer Walls",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "293"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithPlayFightReap(card.May{
+		Do: card.PutFromDiscard{
+			Type:        card.Type.Upgrade,
+			OrTrait:     card.Traits.Robot,
+			Destination: card.To.Hand,
+		},
+	}),
 )

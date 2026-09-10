@@ -106,6 +106,32 @@ func TestHasAnyUse(t *testing.T) {
 	}
 }
 
+// A card barred while a condition holds (Valoocanth while the tide is low) is open
+// every way while the condition is false and closed every way once it holds.
+func TestCannotBeUsedWhile(t *testing.T) {
+	g := started(t)
+	valoo := g.AddToBattleline(
+		testCreature("Valoo", 6, WithCannotBeUsedWhile(TideIsLow{})), 0)
+	g.AddToBattleline(testCreature("foe", 3), 1)
+
+	// Neutral tide: usable every way.
+	if err := g.CanUseTo(0, valoo, ReapUse); err != nil {
+		t.Errorf("CanUseTo(reap) while the tide is neutral = %v, want nil", err)
+	}
+	if err := g.CanUseTo(0, valoo, FightUse); err != nil {
+		t.Errorf("CanUseTo(fight) while the tide is neutral = %v, want nil", err)
+	}
+
+	// Tide high for player 1 is low for player 0: barred every way.
+	g.State.Tide = TideHighForP1
+	if err := g.CanUseTo(0, valoo, ReapUse); err != ErrCannotUse {
+		t.Errorf("CanUseTo(reap) while the tide is low = %v, want ErrCannotUse", err)
+	}
+	if err := g.CanUseTo(0, valoo, FightUse); err != ErrCannotUse {
+		t.Errorf("CanUseTo(fight) while the tide is low = %v, want ErrCannotUse", err)
+	}
+}
+
 // A creature with a DestroyedWhen condition survives while the condition is false
 // and dies the moment the board makes it true, wherever destruction next settles.
 func TestDestroyedWhen(t *testing.T) {

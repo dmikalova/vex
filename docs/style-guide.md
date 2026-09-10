@@ -207,6 +207,14 @@ would find easiest to build on — not the shortest path to a passing build.
   next card can build on. When a card genuinely needs something new, add the
   smallest general primitive and one card that uses it — never speculative, but
   always shaped so the next card can reach for it.
+- **Never name an effect (or its file) after a specific card.** `Tertiate`,
+  `Fidgit`, `UnnaturalSelection` — a card name as an effect type or an
+  `effect_<cardname>.go` filename is the anti-pattern above wearing a proper
+  noun. Name the effect for the generic mechanic it performs
+  (`DestroyFractionOfEachBattleline`, `PlayDiscardedTacticFromOpponent`,
+  `DestroyAllExceptChosen`) and put it in an `effect_<mechanic>.go` file, so the
+  next card printing the same mechanic reaches for the existing node instead of
+  cloning it under a new name.
 - **A phrasing helper belongs in the shared vocabulary, not beside its first
   caller.** `indefinite`, `plural`, `countNoun`, `singularNoun` and friends live
   in `internal/engine/text.go`; the log's equivalents (`namedCards`, `because`,

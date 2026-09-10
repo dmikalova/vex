@@ -2532,6 +2532,28 @@ button:disabled {
   color: #c9a876;
   letter-spacing: 0.1rem;
 }
+/* The full-size card back an opponent sees when previewing a facedown Under-card
+   they may not peek: the same dark VEX back as the peeking tab, its emblem centred
+   in the body where a face would be. */
+.card--back {
+  background-color: #1c1c1a;
+}
+.card--back .card-name-text {
+  color: #c9a876;
+  letter-spacing: 0.15rem;
+}
+.card--back-body {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+.card--back-mark {
+  width: 55%;
+  height: auto;
+  opacity: 0.85;
+}
 /* A tab that is a current chooser candidate — an attached card you may pick, such
    as an upgrade Destroy Them All can destroy. It wears the same green targetable
    ring the card faces use and turns the cursor to a pointer, so an attached card
@@ -3057,12 +3079,11 @@ button:disabled {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  /* a long title is condensed horizontally (scaleX, computed per title in Go —
-     see squeezeScale) rather than cut off, so the whole name stays readable and
-     every title keeps the same cap height; the ellipsis stays as the last
-     resort. Scaling from the left edge keeps the title's start put as it
-     condenses. The width/flex-shrink the squeeze needs are set inline per
-     title, since only a squeezed title needs the extra room. */
+  /* a long title is condensed horizontally (scaleX) rather than cut off, so the
+     whole name stays readable and every title keeps the same cap height; the
+     ellipsis stays as the last resort. cardFitScript (cmd/web) measures each title
+     client-side and sets the transform/width/flex-shrink inline to the exact fit.
+     Scaling from the left edge keeps the title's start put as it condenses. */
   transform-origin: left center;
 }
 /* the body is a transparent column laying out the face's three region boxes with
@@ -3076,13 +3097,18 @@ button:disabled {
   flex-direction: column;
   gap: 0.1rem;
   overflow: hidden;
-  margin: 0 3px;
+  /* full width so the glyph band can reach the card's side edges as a full-bleed
+     art band; the status and text boxes below re-inset themselves for readability. */
+  margin: 0;
 }
 /* the status box: the stat line and its tokens in their own rounded dark box */
 .card-stat {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  /* side inset off the full-width card body, so the status box keeps its gap from
+     the card edges (the glyph band is the only full-bleed row). */
+  margin: 0 3px;
   gap: 0.375rem;
   padding: 0.25rem 0.5rem;
   border-radius: 0.25rem;
@@ -3101,6 +3127,9 @@ button:disabled {
   min-height: 0;
   flex-direction: column;
   overflow: hidden;
+  /* side inset off the full-width card body, matching the status box, so the rules
+     text stays off the card edges while the glyph band above runs full-bleed. */
+  margin: 0 3px;
   border-radius: 0.25rem;
   background-color: var(--bg);
 }
@@ -3145,10 +3174,12 @@ button:disabled {
   display: flex;
   align-items: center;
   justify-content: center;
-  /* full-bleed to the card's side edges, like a card's art band. The body's gap
-     spaces it off the status and text boxes, so it carries no margin of its own. */
+  /* full-bleed to the card's side edges, like a card's art band: the card body is
+     full width and the status and text boxes carry the side inset, so this band
+     alone reaches the edges. The body's gap spaces it off those boxes, so it
+     carries no margin of its own. */
   margin: 0;
-  padding: 0.15rem 0.4rem;
+  padding: 0.1rem 0.4rem;
   max-height: 1.9rem;
   overflow: hidden;
   /* the house's primary colour, so the glyph band reads as part of the card's
@@ -3157,7 +3188,7 @@ button:disabled {
   color: var(--nm-fg);
 }
 /* the strip's content, kept on one line and scaled horizontally to fit by the
-   icon-fit script (iconFitScript) so a busy card squeezes instead of wrapping */
+   card-fit script (cardFitScript) so a busy card squeezes instead of wrapping */
 .card-icons-fit {
   display: inline-flex;
   flex-wrap: nowrap;

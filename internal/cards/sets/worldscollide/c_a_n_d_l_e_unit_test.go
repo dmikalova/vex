@@ -7,7 +7,7 @@ import (
 	ct "github.com/dmikalova/vactrol/internal/cards/cardtest"
 )
 
-// C.Ae.N.D.L.E. Unit
+// C.A.N.D.L.E. Unit
 //
 //	House:  Logos
 //	Type:   Creature
@@ -17,20 +17,20 @@ import (
 //	Traits: Robot
 //
 //	After an enemy creature reaps, draw a card.
-//	Action: C.Ae.N.D.L.E. Unit captures 1 Æmber from your opponent.
-func TestCAeNDLEUnit(t *testing.T) {
+//	Action: C.A.N.D.L.E. Unit captures 1 Æmber from your opponent.
+func TestCANDLEUnit(t *testing.T) {
 	t.Run("captures 1 Æmber from the opponent with its Action", func(t *testing.T) {
 		var unit ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
 				House:  card.House.Logos,
-				InPlay: ct.Cards(ct.Bind(&unit, CAeNDLEUnit)),
+				InPlay: ct.Cards(ct.Bind(&unit, CANDLEUnit)),
 			},
 			P2: ct.Side{Amber: 3},
 		})
 		unit.Ready()
 
-		h.P1.UseAction(CAeNDLEUnit)
+		h.P1.UseAction(CANDLEUnit)
 
 		h.Expect(unit).AmberOn(1)
 		h.P2.ExpectAmber(2)
@@ -41,7 +41,7 @@ func TestCAeNDLEUnit(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
 				House:  card.House.Logos,
-				InPlay: ct.Cards(CAeNDLEUnit),
+				InPlay: ct.Cards(CANDLEUnit),
 				Hand: ct.Cards(
 					ct.Creature(), ct.Creature(), ct.Creature(),
 					ct.Creature(), ct.Creature(), ct.Creature(),

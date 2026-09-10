@@ -67,6 +67,20 @@ func TestPlayableAsUpgradeChoosesUpgrade(t *testing.T) {
 	if slices.Contains(g.Battleline(0), rid) {
 		t.Error("a creature played as an upgrade must not be on the battleline")
 	}
+	// While attached it reads as an Upgrade, not a creature (ADR 0026): a
+	// creature-reaching effect must treat it as the upgrade it now is.
+	if got := g.TypeOf(rid); got != Upgrade {
+		t.Errorf("attached creature-as-upgrade TypeOf = %v, want Upgrade", got)
+	}
+	if g.IsCreature(rid) {
+		t.Error("an attached creature-as-upgrade must not read as a creature")
+	}
+	// "Destroy an upgrade" reaches it (it is now an upgrade).
+	cands := Target{Kind: TargetChosenUpgrade}.
+		selectBase(&EffectContext{Resolver: g, Controller: 0})
+	if !slices.Contains(cands, rid) {
+		t.Errorf("Destroy-upgrade candidates = %v, want to include %d", cands, rid)
+	}
 }
 
 // upgradeThenDecline chooses upgrade mode but then declines every host, so the

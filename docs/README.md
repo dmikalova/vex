@@ -79,6 +79,8 @@ together and **CONTEXT** for what the words mean.
     play takes no further part
   - [0031](adr/0031-zone-movement-is-one-mechanism.md) — zone movement is one
     mechanism; the KeyForge verbs are sugar over it
+  - [0033](adr/0033-runtime-type-conversion-via-lastingtype.md) — a card's runtime
+    type is `TypeOf`, overridable in play via `LastingType`
 
 ## Rules
 

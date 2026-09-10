@@ -18,18 +18,18 @@ var Hyde = card.New(
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "167"),
+	card.Connects(card.PullExact(Velum, 1)),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
-	card.Connects(card.PullExact(Velum, 1)),
 	card.WithAbility(card.Trigger.Reap, card.Sentences{Effects: []card.Effect{
 		card.Draw{Amount: 1},
 		card.Conditional{
-			Cond: card.ControlsNamed{Name: "Velum"},
+			Cond: card.ControlsNamed{Name: Velum.Name},
 			Then: card.Draw{Amount: 1},
 		},
 	}}),
 	card.WithAbility(card.Trigger.Destroyed, card.Then{
-		First:  card.ArchiveFromDiscard{Name: "Velum"},
+		First:  card.ArchiveFromDiscard{Name: Velum.Name},
 		Result: card.ArchiveFromPlay{Target: card.Target.This},
 	}),
 )

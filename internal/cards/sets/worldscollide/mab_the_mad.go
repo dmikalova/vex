@@ -18,8 +18,8 @@ var MabTheMad = card.New(
 	card.Type.Creature,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "378"),
-	card.WithPower(2),
 	card.WithAemberBonus(1),
+	card.WithPower(2),
 	card.WithTraits(card.Traits.Faerie),
 	card.WithAbility(
 		card.Trigger.Reap, card.PutFromPlay{

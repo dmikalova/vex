@@ -21,7 +21,7 @@ var TitanLibrarian = card.New(
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Scientist),
 	card.WithAbility(
 		card.Trigger.EndOfTurn, card.Conditional{
-			Cond: card.SourceOnFlank{Not: true},
+			Cond: card.OnFlank{Not: true},
 			Then: card.ArchiveFromHand{Amount: 1},
 		}),
 )

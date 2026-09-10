@@ -19,8 +19,8 @@ var Pitlord = card.New(
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "93"),
-	card.WithPower(9),
 	card.WithAemberBonus(2),
+	card.WithPower(9),
 	card.WithTraits(card.Traits.Demon),
 	card.WithKeywords(card.Keyword.Taunt),
 	card.WithHouseLock(card.HouseLock{

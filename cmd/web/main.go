@@ -75,7 +75,7 @@ func main() {
 			appleTouchIcon,
 			boardScript,
 			galleryScript,
-			iconFitScript,
+			cardFitScript,
 			devReloadScript,
 		},
 		// The icons are fetched one <img> at a time as the board draws, so without
@@ -413,14 +413,16 @@ const galleryScript = `<script>
 })();
 </script>`
 
-// iconFitScript keeps each card's icon strip (.card-icons) on a single line: when
-// its content (.card-icons-fit) is wider than the band, it scales the content
-// horizontally so the glyphs squeeze to fit instead of wrapping onto a second line
-// or clipping. It re-fits on load, on resize, and whenever the DOM changes (go-app
+// cardFitScript keeps a card's icon strip (.card-icons) and name banner
+// (.card-name-text) on a single line: when either's content is wider than the
+// space, it condenses it with scaleX instead of wrapping, clipping, or stepping a
+// title to a preset size. The title is measured and fit here rather than estimated
+// in Go, so it condenses to the exact rendered width regardless of which letters
+// it uses. It re-fits on load, on resize, and whenever the DOM changes (go-app
 // re-renders cards), coalescing bursts into one animation frame.
-const iconFitScript = `<script>
+const cardFitScript = `<script>
 (function () {
-  function fit(band) {
+  function fitBand(band) {
     var inner = band.firstElementChild;
     if (!inner) { return; }
     inner.style.transform = '';
@@ -429,13 +431,27 @@ const iconFitScript = `<script>
     var w = inner.scrollWidth;
     if (w > avail && w > 0) { inner.style.transform = 'scaleX(' + (avail / w) + ')'; }
   }
+  function fitTitle(el) {
+    // reset the prior fit so the measurement below reads the natural width.
+    el.style.transform = ''; el.style.width = ''; el.style.flexShrink = '';
+    var avail = el.clientWidth, natural = el.scrollWidth;
+    if (avail <= 0 || natural <= avail) { return; }
+    // grow the layout width by the inverse of the scale (and pin flex-shrink) so
+    // the ellipsis does not fire on a title the scaleX already fits; a 0.7 floor
+    // keeps a very long title legible and leaves the rest to the ellipsis.
+    var scale = Math.max(0.7, avail / natural);
+    el.style.transform = 'scaleX(' + scale + ')';
+    el.style.width = (100 / scale) + '%';
+    el.style.flexShrink = '0';
+  }
   var scheduled = false;
   function schedule() {
     if (scheduled) { return; }
     scheduled = true;
     requestAnimationFrame(function () {
       scheduled = false;
-      document.querySelectorAll('.card-icons').forEach(fit);
+      document.querySelectorAll('.card-icons').forEach(fitBand);
+      document.querySelectorAll('.card-name-text').forEach(fitTitle);
     });
   }
   window.addEventListener('load', schedule);

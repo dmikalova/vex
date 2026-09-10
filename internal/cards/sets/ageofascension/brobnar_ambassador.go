@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human
 //
 //	Elusive.
-//	Fight/Reap: You may play or use a Brobnar card this turn.
+//	Fight/Reap: For the remainder of the turn, you may play or use a Brobnar card.
 var BrobnarAmbassador = card.New(
 	"Brobnar Ambassador",
 	card.House.Sanctum,
@@ -22,5 +22,7 @@ var BrobnarAmbassador = card.New(
 	card.WithTraits(card.Traits.Human),
 	card.WithKeywords(card.Keyword.Elusive),
 	// TODO: planned rework of the Ambassador cycle.
-	card.WithFightOrReap(card.MayPlayOrUseFriendlyHouse{House: card.House.Brobnar}),
+	card.WithFightOrReap(
+		card.MayActFriendlyHouse{House: card.House.Brobnar, Grant: card.GrantPlay | card.GrantUse},
+	),
 )

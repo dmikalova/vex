@@ -54,6 +54,10 @@ type EconomyReader interface {
 	Keys(player int) int
 	// KeyColors returns the colours of the keys a player has forged, in forge order.
 	KeyColors(player int) []KeyColor
+	// TideIsHigh reports whether the tide is high for the given player.
+	TideIsHigh(player int) bool
+	// TideIsLow reports whether the tide is low for the given player.
+	TideIsLow(player int) bool
 	// TurnHistory returns a player's running tally for a TurnStat.
 	TurnHistory(player int, of TurnStat) int
 }
@@ -93,6 +97,10 @@ type CreatureReader interface {
 	// its controller's battleline — the middle creature of an odd-sized line, with
 	// equal creatures to its left and right. An even-sized line has no center.
 	InCenterOfBattleline(id LocalID) bool
+	// CurrentlyFighting reports whether a creature is one of the two combatants in
+	// the fight resolving right now — read by a "while fighting" self-grant (Nizak,
+	// The Forgotten gains invulnerable). It is false when no fight is in progress.
+	CurrentlyFighting(id LocalID) bool
 	// Armor is a creature's armor value, before any of it is spent or stripped.
 	Armor(id LocalID) int
 	// ArmorStripped is how much armor an effect has taken off a creature this turn,
@@ -201,6 +209,11 @@ type EconomyResolver interface {
 	// in-play replacements such as Ether Spider to capture it instead. It returns
 	// the capturer and true when the gain was replaced.
 	GainAember(player, amount int) (LocalID, bool)
+	// StolenAemberCaptor returns a creature player controls that captures Æmber a
+	// steal would otherwise add to player's pool, and true, when an in-play card
+	// redirects stolen Æmber (Gargantodon) and player has a creature to hold it;
+	// ok is false otherwise, leaving the steal to land in the pool as usual.
+	StolenAemberCaptor(player int) (LocalID, bool)
 	// ForgeKeyAtExtraCost has a player forge one key at the current cost plus a
 	// surcharge for this forge only, if affordable (Key of Darkness forges at +6, an
 	// unmodified forge at +0).
@@ -268,6 +281,11 @@ type CreatureResolver interface {
 	BelongToHouseForRemainderOfTurn(id LocalID, house House)
 	// SetLastingHouse makes a card belong to house until it leaves play.
 	SetLastingHouse(id LocalID, house House)
+	// PutIntoBattlelineAsCreature turns an in-play card (an artifact, Auto-Legionary)
+	// into a creature and moves it onto a flank of its controller's battleline, the
+	// right flank when right is true. The card keeps its exhaustion and any power
+	// counters, and reads as a creature until it leaves play.
+	PutIntoBattlelineAsCreature(id LocalID, right bool)
 	// SetNamedHouse records the house a card named as it entered play, which its
 	// HouseLock then constrains for as long as the card stays in play.
 	SetNamedHouse(id LocalID, house House)
@@ -313,6 +331,9 @@ type CreatureResolver interface {
 	// (Abond the Armorsmith grants +1 armor). Added armor also tops up the armor
 	// left to absorb damage this turn.
 	GainStats(id LocalID, power, armor int)
+	// GainAssault gives one creature Assault for the remainder of the turn (Creed of
+	// Nature grants assault equal to a chosen creature's power).
+	GainAssault(id LocalID, amount int)
 }
 
 // CombatResolver resolves damage, destruction, and the fights, reaps, and actions
@@ -564,6 +585,9 @@ type TurnResolver interface {
 	// CannotUseNextTurn bars a player from reaping, fighting, or using an "Action:"
 	// ability throughout their next turn (Skippy Timehog).
 	CannotUseNextTurn(player int, source LocalID)
+	// CannotUseThisTurn bars a player from reaping, fighting, or using an "Action:"
+	// ability for the rest of the current turn (United Action).
+	CannotUseThisTurn(player int, source LocalID)
 	// CannotReapNextTurn bars a player from reaping with any creature throughout
 	// their next turn (Inky Gloom); fighting and "Action:" abilities stay open.
 	CannotReapNextTurn(player int, source LocalID)
@@ -604,12 +628,20 @@ type TurnResolver interface {
 	// GrantUseArtifactsAnyHouse lets a player use any friendly artifact this turn as
 	// if it belonged to the active house (Scientifical Hack).
 	GrantUseArtifactsAnyHouse(player int)
+	// GrantOffHousePermit records a this-turn grant letting a player play or use a
+	// bounded number of cards outside their active house (Com. Officer Kirby, CXO
+	// Taber, United Action).
+	GrantOffHousePermit(player int, p OffHousePermit)
 	// AddLasting registers a "for the remainder of the turn" effect (Full Moon,
 	// Charge!, Crystal Hive reactions; Dimension Door's replacement) on a game event,
 	// instead of the effect hardcoding itself into the play or reap path. The record's
 	// own fields narrow when it fires: Once for a one-shot (Blypyp), House/Type for a
 	// matching subject, Except for the card that armed it (Library Access).
 	AddLasting(le LastingEffect)
+	// AddLastingMorph registers a "for the remainder of the turn" trigger morph
+	// (Livia the Elder's fight/reap fuse) on the owning player, so a creature's
+	// abilities under one trigger also fire on another until the turn ends.
+	AddLastingMorph(m LastingMorph)
 	// ForceActiveHouseNextTurn makes a player have to choose the given house as their
 	// active house on their next turn.
 	ForceActiveHouseNextTurn(player int, house House, source LocalID)
@@ -619,6 +651,13 @@ type TurnResolver interface {
 	// WagerOnHouseNextTurn arms a bet on a player's next active house: if they
 	// choose that house, the predictor steals amount (Snaglet).
 	WagerOnHouseNextTurn(player int, house House, amount, predictor int, source LocalID)
+	// SetActiveHouse reassigns the active player's active house for the current
+	// turn without a house choice (Book of leQ makes its revealed card's house
+	// active).
+	SetActiveHouse(house House)
+	// EndTurnNow ends the active player's turn in place, running the turn out the
+	// way the Omega keyword does (Book of leQ ends your turn).
+	EndTurnNow()
 }
 
 // ChoiceResolver asks a player to make a decision — ordering a set of cards, or
@@ -761,6 +800,17 @@ func (g *Game) GainStats(id LocalID, power, armor int) {
 	g.record(CreatureGainedStats{Creature: id, Power: power, Armor: armor})
 }
 
+// GainAssault gives one creature Assault for the remainder of the turn (Creed of
+// Nature grants assault equal to a chosen creature's power).
+func (g *Game) GainAssault(id LocalID, amount int) {
+	c := g.stateOf(id)
+	if c == nil {
+		return
+	}
+	c.TempAssaultBonus += int16(amount)
+	g.record(CreatureGainedAssault{Creature: id, Amount: amount})
+}
+
 // ForgeKeyAtExtraCost has a player forge one key at its current cost plus extra.
 func (g *Game) ForgeKeyAtExtraCost(player, extra int) { g.forgeKeyAtExtraCost(player, extra) }
 
@@ -773,11 +823,25 @@ func (g *Game) ForgeKeyAtExtraCostReport(player, extra int) bool {
 // ForgeKeyFree has a player forge one key without paying its current cost.
 func (g *Game) ForgeKeyFree(player int) { g.forgeKeyFree(player) }
 
-// IsCreature reports whether a card is a creature.
-func (g *Game) IsCreature(id LocalID) bool { return g.cat.def(id).Type == Creature }
+// IsCreature reports whether a card is a creature, by its current type.
+func (g *Game) IsCreature(id LocalID) bool { return g.TypeOf(id) == Creature }
 
-// TypeOf returns a card's type.
-func (g *Game) TypeOf(id LocalID) CardType { return g.cat.def(id).Type }
+// TypeOf returns a card's current type. A card in an upgrade chain reads as an
+// Upgrade whatever its printed type — a creature played as an upgrade (ADR 0026)
+// is an upgrade while attached. Otherwise an in-play card that converted its type
+// (Auto-Legionary turning into a creature) reads its LastingType, and everything
+// else reads its printed type.
+func (g *Game) TypeOf(id LocalID) CardType {
+	if g.State.Cards[id].HostPlus != 0 {
+		return Upgrade
+	}
+	if g.inPlay(id) {
+		if t := g.State.Cards[id].LastingType; t != TypeUnset {
+			return t
+		}
+	}
+	return g.cat.def(id).Type
+}
 
 // SetAember sets a player's Æmber pool, clamped at zero. Pool Æmber can feed a
 // creature's power (Marmo Swarm gains +1 power per Æmber in its controller's pool),
@@ -896,6 +960,26 @@ func (g *Game) SetLastingHouse(id LocalID, house House) {
 	if c := g.stateOf(id); c != nil {
 		c.LastingHouse = house
 	}
+}
+
+// PutIntoBattlelineAsCreature turns an in-play card into a creature and moves it to
+// a flank of its controller's battleline. Only artifacts convert this way today
+// (Auto-Legionary), so the card is pulled from the artifact row and inserted at the
+// chosen flank; it keeps its exhaustion, Æmber, and power counters, and its
+// LastingType makes it read as a creature until it leaves play. Its ArmorRemaining
+// is topped up to its full armor so it can absorb hits as a creature this turn.
+func (g *Game) PutIntoBattlelineAsCreature(id LocalID, right bool) {
+	controller := g.controller(id)
+	g.State.Artifacts[controller].remove(id)
+	c := &g.State.Cards[id]
+	c.LastingType = Creature
+	c.ArmorRemaining = int16(g.armor(id))
+	if right {
+		g.State.Battleline[controller].add(id)
+	} else {
+		g.State.Battleline[controller].insertAt(0, id)
+	}
+	g.record(TurnedIntoCreature{Card: id, Right: right})
 }
 
 // SetNamedHouse records the house a card named as it entered play, which its
@@ -1017,11 +1101,9 @@ func (g *Game) ArchiveFromHand(id LocalID) { g.archiveFromHand(g.owner(id), id) 
 // ArchiveRandomFromHand moves one uniformly random card from a player's hand to
 // their archives, doing nothing if the hand is empty.
 func (g *Game) ArchiveRandomFromHand(owner int) {
-	hand := &g.State.Hand[owner]
-	if hand.Count == 0 {
-		return
+	if id, ok := g.randomCardFromHand(owner); ok {
+		g.archiveFromHand(owner, id)
 	}
-	g.archiveFromHand(owner, hand.IDs[g.rng.Intn(int(hand.Count))])
 }
 
 // ArchiveFromPurge moves a card from a player's purge pile to their archives.
@@ -1052,11 +1134,9 @@ func (g *Game) PurgeFromHand(owner int, id LocalID) { g.purgeFromHand(owner, id)
 // PurgeRandomFromHand moves one uniformly random card from a player's hand to
 // their purge pile, doing nothing if the hand is empty.
 func (g *Game) PurgeRandomFromHand(owner int) {
-	hand := g.State.Hand[owner]
-	if hand.Count == 0 {
-		return
+	if id, ok := g.randomCardFromHand(owner); ok {
+		g.purgeFromHand(owner, id)
 	}
-	g.purgeFromHand(owner, hand.IDs[g.rng.Intn(int(hand.Count))])
 }
 
 // PurgeFromArchives moves a card from a player's archives to their purge pile.
@@ -1112,7 +1192,7 @@ func (g *Game) MoveFromDeckToDiscard(id LocalID) {
 	o := g.owner(id)
 	g.State.Deck[o].remove(id)
 	g.State.Discard[o].add(id)
-	g.record(CardDiscardedFromDeck{Player: o, Card: id})
+	g.record(CardMoved{Player: o, Card: id, From: Deck, To: Discard})
 }
 
 // ArchiveFromDeck moves a card from its owner's deck to their archives.

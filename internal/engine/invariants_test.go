@@ -96,11 +96,14 @@ func TestInvariantErrorDanglingUpgrade(t *testing.T) {
 	}
 }
 
-// A non-Upgrade card threaded into a creature's chain violates the chain's type.
+// A non-Upgrade, non-Creature card threaded into a creature's chain violates the
+// chain's type. A creature is a valid chain entry (played as an upgrade, ADR 0026),
+// so the intruder here is a Tactic, which can never occupy a chain.
 func TestInvariantErrorNonUpgradeInChain(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	host := g.AddToBattleline(testCreature("Guard", 5), 0)
-	intruder := g.Register(testCreature("Sneak", 2), 0)
+	intruder := g.Register(
+		NewCard("Sneak", Brobnar, Tactic, Common), 0)
 	g.AttachUpgrade(host, intruder)
 	err := g.InvariantError()
 	if err == nil {

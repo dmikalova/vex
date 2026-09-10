@@ -1,20 +1,16 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// CreedOfNature
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Creed of Nature
 //
 //	House:  Untamed
 //	Type:   Artifact
 //	Rarity: Rare
 //	Traits: Power
 //
-//	Omni: Sacrifice Creed of Nature. If you do, choose a creature. For the remainder of the turn, that creature gains skirmish and assault X. X is its power.
+//	Versatile.
+//	Action: Destroy Creed of Nature. Choose a creature - for the remainder of the turn, it gains skirmish and assault equal to its power.
 var CreedOfNature = card.New(
 	"Creed of Nature",
 	card.House.Untamed,
@@ -22,5 +18,27 @@ var CreedOfNature = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "385"),
 	card.WithTraits(card.Traits.Power),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Versatile),
+	card.WithAbility(
+		card.Trigger.Action, card.Sentences{
+			Effects: []card.Effect{
+				card.Destroy{Target: card.Target.This},
+				card.ChooseCreatureThen{
+					Target: card.Target.Creature,
+					Then: card.ForDuration{
+						Duration: card.Duration.EndOfTurn,
+						Effects: []card.Effect{
+							card.GainKeywordForTurn{
+								Target:  card.Target.Triggering,
+								Keyword: card.Keyword.Skirmish,
+							},
+							card.GainAssault{
+								Target: card.Target.Triggering,
+								Amount: card.PowerOfChosen{},
+							},
+						},
+					},
+				},
+			},
+		}),
 )

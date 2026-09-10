@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// GiantGnawbill
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Giant Gnawbill
 //
 //	House:  Untamed
 //	Type:   Creature
@@ -24,5 +19,8 @@ var GiantGnawbill = card.New(
 	card.Provenance(card.WC, "390"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Beast),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.AfterAnyPlayerChoosesHouse,
+		card.ByActivePlayer{Do: card.Destroy{Target: card.Target.Artifact.OfActiveHouse()}},
+	),
 )

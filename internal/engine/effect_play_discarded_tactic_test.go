@@ -10,6 +10,14 @@ func TestPlayDiscardedTacticFromOpponentText(t *testing.T) {
 	}
 }
 
+// TestPlayDiscardedTacticFromOpponentValidate covers the effect's validate, which
+// takes no target and so is always satisfied.
+func TestPlayDiscardedTacticFromOpponentValidate(t *testing.T) {
+	if err := (PlayDiscardedTacticFromOpponent{}).validate(); err != nil {
+		t.Errorf("validate = %v, want nil", err)
+	}
+}
+
 // TestPlayDiscardedTacticFromOpponentArchives covers Fidgit's reap taking a
 // Tactic out of the opponent's archives: the card is discarded and then played as
 // the reaping player's own — its Play: ability resolves under their control while

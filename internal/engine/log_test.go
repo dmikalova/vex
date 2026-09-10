@@ -131,10 +131,16 @@ func TestLogEntryText(t *testing.T) {
 		{WardAbsorbed{Creature: 2}, "Card2's ward absorbs the effect"},
 		{NoCreatureToFight{Creature: 2}, "Card2 has no creature to fight"},
 		{CardsRevealedToAll{Player: 0, Cards: []LocalID{1, 2}}, "P0 reveals Card1, Card2"},
+		{KeyForgePrevented{Player: 1, By: 3}, "P1's forge a key is prevented by Card3"},
 		{PositionsSwapped{A: 1, B: 2}, "Card1 swaps positions with Card2"},
 		{MovedToFlank{Creature: 2, Right: true}, "Card2 moves to the right flank"},
 		{MovedToFlank{Creature: 2}, "Card2 moves to the left flank"},
 		{MovedWithinBattleline{Creature: 2}, "Card2 moves within its battleline"},
+		{
+			TurnedIntoCreature{Card: 2, Right: true},
+			"Card2 becomes a creature on the right flank",
+		},
+		{TurnedIntoCreature{Card: 2}, "Card2 becomes a creature on the left flank"},
 		{ControlTaken{Player: 1, Card: 3}, "P1 takes control of Card3"},
 		{ControlReturned{Card: 3, Owner: 0}, "Card3 returns to P0's control"},
 		{CardDestroyed{Card: 3}, "Card3 is destroyed"},
@@ -190,9 +196,9 @@ func TestLogEntryText(t *testing.T) {
 			ArchivesTakenIntoHand{Player: 0, Count: 2},
 			"P0 takes 2 cards from their archives into hand",
 		},
-		{CardArchivedFromHand{Player: 0, Card: 6}, "P0 archives a card"},
+		{CardMoved{Player: 0, Card: 6, From: Hand, To: Archives}, "P0 archives a card"},
 		{
-			CardArchivedFromDiscard{Player: 1, Card: 6},
+			CardMoved{Player: 1, Card: 6, From: Discard, To: Archives},
 			"P1 archives Card6 from their discard pile",
 		},
 		{TopOfDeckArchived{Player: 0, Card: 6}, "P0 archives a card from the top of their deck"},
@@ -202,23 +208,33 @@ func TestLogEntryText(t *testing.T) {
 			"P0 discards Card6 from the top of their deck",
 		},
 		{
-			CardDiscardedFromDeck{Player: 0, Card: 6},
+			CardMoved{Player: 0, Card: 6, From: Deck, To: Discard},
 			"P0 discards Card6 from their deck",
 		},
 		{DeckAndDiscardSwapped{Player: 1}, "P1 swaps their deck and discard pile"},
-		{CardDiscarded{Player: 0, Card: 6}, "P0 discards Card6"},
+		{CardMoved{Player: 0, Card: 6, From: Hand, To: Discard}, "P0 discards Card6"},
 		{
-			CardDiscardedFromArchives{Player: 0, Card: 6},
+			CardMoved{Player: 0, Card: 6, From: Archives, To: Discard},
 			"P0 discards Card6 from their archives",
 		},
-		{CardPurgedFromDiscard{Player: 0, Card: 6}, "P0 purges Card6 from a discard pile"},
-		{CardPurgedFromHand{Player: 1, Card: 6}, "P1 purges Card6 from a hand"},
-		{CardPurgedFromArchives{Player: 1, Card: 6}, "P1 purges Card6 from archives"},
-		{CardPurgedFromDeck{Player: 1, Card: 6}, "P1 purges Card6 from a deck"},
+		{
+			CardMoved{Player: 0, Card: 6, From: Discard, To: purged},
+			"P0 purges Card6 from a discard pile",
+		},
+		{CardMoved{Player: 1, Card: 6, From: Hand, To: purged}, "P1 purges Card6 from a hand"},
+		{
+			CardMoved{Player: 1, Card: 6, From: Archives, To: purged},
+			"P1 purges Card6 from archives",
+		},
+		{CardMoved{Player: 1, Card: 6, From: Deck, To: purged}, "P1 purges Card6 from a deck"},
 		{CardPurged{Card: 6}, "Card6 is purged"},
 		{CardPutOnTopOfDeck{Card: 6, Owner: 0}, "Card6 is put on top of P0's deck"},
 		{CardReturnedToHand{Card: 6, Owner: 1}, "Card6 is returned to P1's hand"},
 		{CardPutIntoArchives{Card: 6, Owner: 0}, "Card6 is put into P0's archives"},
+		{
+			CardArchivedFromPurge{Player: 0, Card: 6},
+			"P0 archives Card6 from their purge pile",
+		},
 		{CardShuffledIntoDeck{Card: 6, Owner: 1}, "Card6 is shuffled into P1's deck"},
 		{DeckShuffled{Player: 1}, "P1's deck is shuffled"},
 		{
@@ -328,6 +344,10 @@ func TestLogEntryText(t *testing.T) {
 		{UseArtifactsGrantedAnyHouse{Player: 0}, "P0 may use friendly artifacts this turn"},
 		{PlayGrantedForHouse{Player: 0, House: Mars}, "P0 may play Mars cards this turn"},
 		{
+			OffHousePlayGranted{Player: 0},
+			"P0 may play cards from other houses this turn",
+		},
+		{
 			HouseForcedNextTurn{Player: 1, House: Logos},
 			"P1 must choose house Logos next turn",
 		},
@@ -432,7 +452,7 @@ func TestRenderEntryMatchesWholeNamesOnly(t *testing.T) {
 	}
 	// "Trollkin discards Troll": the player's name only starts with the card's,
 	// so the card is not linked until the card itself.
-	segs = RenderEntry(CardDiscarded{Player: 0, Card: 1}, prefixNamer{})
+	segs = RenderEntry(CardMoved{Player: 0, Card: 1, From: Hand, To: Discard}, prefixNamer{})
 	want := []LogSegment{
 		{Text: "Trollkin", Player: 0, HasPlayer: true},
 		{Text: " discards "},

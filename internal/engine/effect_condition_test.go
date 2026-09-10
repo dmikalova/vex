@@ -224,14 +224,14 @@ func TestSourceReadyCondition(t *testing.T) {
 	}
 }
 
-func TestSourceOnFlankCondition(t *testing.T) {
+func TestOnFlankSource(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	left := g.AddToBattleline(testCreature("left", 2), 0)
 	mid := g.AddToBattleline(testCreature("mid", 2), 0)
 	g.AddToBattleline(testCreature("right", 2), 0)
 
-	on := SourceOnFlank{}
-	off := SourceOnFlank{Not: true}
+	on := OnFlank{}
+	off := OnFlank{Not: true}
 	if on.CondText() != "if "+SelfName+" is on a flank" {
 		t.Errorf("on CondText = %q", on.CondText())
 	}
@@ -239,27 +239,27 @@ func TestSourceOnFlankCondition(t *testing.T) {
 		t.Errorf("off CondText = %q", off.CondText())
 	}
 	if !on.Met(&EffectContext{Resolver: g, Source: left}) {
-		t.Error("left flank creature should satisfy SourceOnFlank")
+		t.Error("left flank source should satisfy OnFlank{}")
 	}
 	if on.Met(&EffectContext{Resolver: g, Source: mid}) {
-		t.Error("interior creature should not satisfy SourceOnFlank")
+		t.Error("interior source should not satisfy OnFlank{}")
 	}
 	if !off.Met(&EffectContext{Resolver: g, Source: mid}) {
-		t.Error("interior creature should satisfy SourceOnFlank{Not}")
+		t.Error("interior source should satisfy OnFlank{Not}")
 	}
 	if off.Met(&EffectContext{Resolver: g, Source: left}) {
-		t.Error("flank creature should not satisfy SourceOnFlank{Not}")
+		t.Error("flank source should not satisfy OnFlank{Not}")
 	}
 }
 
-func TestItIsOnNamedFlankCondition(t *testing.T) {
+func TestOnFlankNamed(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	left := g.AddToBattleline(testCreature("left", 2), 1)
 	g.AddToBattleline(testCreature("mid", 2), 1)
 	right := g.AddToBattleline(testCreature("right", 2), 1)
 
-	leftCond := ItIsOnNamedFlank{}
-	rightCond := ItIsOnNamedFlank{Right: true}
+	leftCond := OnFlank{OfIt: true, Where: LeftFlank}
+	rightCond := OnFlank{OfIt: true, Where: RightFlank}
 	if leftCond.CondText() != "if it is on the left flank" {
 		t.Errorf("left CondText = %q", leftCond.CondText())
 	}
@@ -267,19 +267,19 @@ func TestItIsOnNamedFlankCondition(t *testing.T) {
 		t.Errorf("right CondText = %q", rightCond.CondText())
 	}
 	if !leftCond.Met(&EffectContext{Resolver: g, It: left, HasIt: true}) {
-		t.Error("left flank creature should satisfy ItIsOnNamedFlank{}")
+		t.Error("left flank creature should satisfy the left OnFlank")
 	}
 	if leftCond.Met(&EffectContext{Resolver: g, It: right, HasIt: true}) {
-		t.Error("right flank creature should not satisfy the left ItIsOnNamedFlank{}")
+		t.Error("right flank creature should not satisfy the left OnFlank")
 	}
 	if !rightCond.Met(&EffectContext{Resolver: g, It: right, HasIt: true}) {
-		t.Error("right flank creature should satisfy ItIsOnNamedFlank{Right}")
+		t.Error("right flank creature should satisfy the right OnFlank")
 	}
 	if rightCond.Met(&EffectContext{Resolver: g, It: left, HasIt: true}) {
-		t.Error("left flank creature should not satisfy ItIsOnNamedFlank{Right}")
+		t.Error("left flank creature should not satisfy the right OnFlank")
 	}
 	if leftCond.Met(&EffectContext{Resolver: g, HasIt: false}) {
-		t.Error("no context creature should not satisfy ItIsOnNamedFlank")
+		t.Error("no context creature should not satisfy a named OnFlank")
 	}
 
 	// A creature whose controller has no battleline is on no flank.
@@ -291,7 +291,7 @@ func TestItIsOnNamedFlankCondition(t *testing.T) {
 	// A non-creature context card is on no flank either.
 	art := g2.AddArtifact(NewCard("art", Logos, Artifact, Common), 0)
 	if leftCond.Met(&EffectContext{Resolver: g2, It: art, HasIt: true}) {
-		t.Error("an artifact should not satisfy ItIsOnNamedFlank")
+		t.Error("an artifact should not satisfy a named OnFlank")
 	}
 }
 
@@ -326,8 +326,8 @@ func TestControlsNamedCondition(t *testing.T) {
 	}
 }
 
-func TestItIsOnFlankCondition(t *testing.T) {
-	c := ItIsOnFlank{}
+func TestOnFlankIt(t *testing.T) {
+	c := OnFlank{OfIt: true}
 	if c.CondText() != "if it is on a flank" {
 		t.Errorf("CondText = %q", c.CondText())
 	}
@@ -336,13 +336,13 @@ func TestItIsOnFlankCondition(t *testing.T) {
 	mid := g.AddToBattleline(testCreature("mid", 2), 1)
 	g.AddToBattleline(testCreature("right", 2), 1)
 	if !c.Met(&EffectContext{Resolver: g, It: left, HasIt: true}) {
-		t.Error("flank creature should satisfy ItIsOnFlank")
+		t.Error("flank creature should satisfy OnFlank{OfIt}")
 	}
 	if c.Met(&EffectContext{Resolver: g, It: mid, HasIt: true}) {
-		t.Error("interior creature should not satisfy ItIsOnFlank")
+		t.Error("interior creature should not satisfy OnFlank{OfIt}")
 	}
 	if c.Met(&EffectContext{Resolver: g, HasIt: false}) {
-		t.Error("no context creature should not satisfy ItIsOnFlank")
+		t.Error("no context creature should not satisfy OnFlank{OfIt}")
 	}
 }
 

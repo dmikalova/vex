@@ -14,9 +14,9 @@ import (
 //	Rarity: Uncommon
 //	Traits: Item
 //
-//	Archive a card from your hand.
+//	After you choose Logos as your active house, archive a card from your hand.
 func TestMemoryChip(t *testing.T) {
-	t.Run("archives a card from your hand after you choose a house", func(t *testing.T) {
+	t.Run("archives a card from your hand after you choose Logos", func(t *testing.T) {
 		var other ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{

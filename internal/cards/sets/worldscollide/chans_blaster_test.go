@@ -11,12 +11,12 @@ import (
 //
 //	House:  Star Alliance
 //	Type:   Upgrade
-//	Rarity: Special
+//	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains, "Fight/Reap: You may choose one:
+//	This creature gains, "Fight/Reap: Choose one:
 //	- Deal 2 damage to a creature
-//	- Attach this creature to Commander Chan, and you may use an another creature."
+//	- Attach Chan's Blaster to Commander Chan -> use another creature."
 func TestChansBlaster(t *testing.T) {
 	t.Run("deals 2 damage with the blaster", func(t *testing.T) {
 		var carrier, victim ct.Card
@@ -39,7 +39,6 @@ func TestChansBlaster(t *testing.T) {
 		})
 
 		h.P1.Reap(carrier)
-		h.P1.ClickOption("Yes")
 		h.P1.ExpectPrompt("Choose one")
 		h.P1.ClickOption("deal 2")
 		h.P1.ClickCard(victim)

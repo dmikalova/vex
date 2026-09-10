@@ -14,9 +14,9 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains, "Fight/Reap: You may choose one:
+//	This creature gains, "Fight/Reap: Choose one:
 //	- Deal 2 damage to a creature
-//	- Attach this creature to Sci. Officer Qincan, and you may archive a creature from play."
+//	- Attach Qincan's Blaster to Sci. Officer Qincan -> archive a creature from play."
 func TestQincansBlaster(t *testing.T) {
 	t.Run("archives a creature on the attach payoff", func(t *testing.T) {
 		var carrier, prey ct.Card
@@ -31,13 +31,16 @@ func TestQincansBlaster(t *testing.T) {
 						),
 						QincansBlaster,
 					),
+					ct.Creature(
+						ct.OfHouse(card.House.StarAlliance),
+						ct.Named(SciOfficerQincan.Name),
+					),
 					ct.Bind(&prey, ct.Creature(ct.OfHouse(card.House.StarAlliance), ct.Power(3))),
 				),
 			},
 		})
 
 		h.P1.Reap(carrier)
-		h.P1.ClickOption("Yes")
 		h.P1.ExpectPrompt("Choose one")
 		h.P1.ClickOption("attach")
 		h.P1.ClickCard(prey)

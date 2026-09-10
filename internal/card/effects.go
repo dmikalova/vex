@@ -86,6 +86,13 @@ type (
 	// GainStats gives each targeted creature power and/or armor for the remainder
 	// of the turn (Abond the Armorsmith grants +1 armor).
 	GainStats = engine.GainStats
+	// GainAssault gives each targeted creature Assault equal to a count for the
+	// remainder of the turn (Creed of Nature grants assault equal to its power).
+	GainAssault = engine.GainAssault
+	// GainKeywordForTurn gives each targeted creature a keyword for the remainder
+	// of the turn (Creed of Nature grants skirmish), unlike GainKeyword's
+	// until-next-turn duration.
+	GainKeywordForTurn = engine.GainKeywordForTurn
 )
 
 // After branches for card.DamageThen.
@@ -98,6 +105,10 @@ const (
 	IfSurvives = engine.IfSurvives
 )
 
+// ByActivePlayer resolves its inner effect as the active player (the chooser),
+// not the ability's controller.
+type ByActivePlayer = engine.ByActivePlayer
+
 // Destruction and purging.
 type (
 	// Destroy removes the creatures its Target selects from play.
@@ -106,8 +117,8 @@ type (
 	DestroyChosen = engine.DestroyChosen
 	// DestroyAllExceptChosen keeps a chosen number of friendly and enemy creatures and destroys every other creature.
 	DestroyAllExceptChosen = engine.DestroyAllExceptChosen
-	// Tertiate destroys one third of all enemy creatures and one third of all friendly creatures (rounding up each time).
-	Tertiate = engine.Tertiate
+	// DestroyFractionOfEachBattleline destroys one Portion of all enemy creatures and the same Portion of all friendly creatures, rounding each count up (Tertiate is Portion OneThird).
+	DestroyFractionOfEachBattleline = engine.DestroyFractionOfEachBattleline
 	// DestroyMostPowerfulUnlessReadyHouse destroys the most powerful creature of
 	// each player who does not control a ready creature of House (Quicksand).
 	DestroyMostPowerfulUnlessReadyHouse = engine.DestroyMostPowerfulUnlessReadyHouse
@@ -208,6 +219,10 @@ type (
 	PutFromHand = engine.PutFromHand
 	// ReturnNamedToHand returns a chosen card of a given name to its owner's hand.
 	ReturnNamedToHand = engine.ReturnNamedToHand
+	// ReturnItToHand returns the creature in context ("it") to its owner's hand,
+	// recovering it from the discard pile when it was already destroyed (Nizak, The
+	// Forgotten returns an enemy destroyed fighting it).
+	ReturnItToHand = engine.ReturnItToHand
 	// SearchForName searches your deck and discard pile for a named card.
 	SearchForName = engine.SearchForName
 	// SearchDeck searches your deck for a card (any card, or one of a given house),
@@ -224,6 +239,9 @@ type (
 	// ShuffleMatchingFromDiscardIntoDeck shuffles each matching card from your
 	// discard pile into your deck.
 	ShuffleMatchingFromDiscardIntoDeck = engine.ShuffleMatchingFromDiscardIntoDeck
+	// ShuffleNamedFromDiscardIntoDeck shuffles one card of a given name from your
+	// discard pile into your deck.
+	ShuffleNamedFromDiscardIntoDeck = engine.ShuffleNamedFromDiscardIntoDeck
 	// ShuffleFriendlyCardsInPlayIntoDeck shuffles every friendly card in play into your deck, then draws a card for each shuffled this way.
 	ShuffleFriendlyCardsInPlayIntoDeck = engine.ShuffleFriendlyCardsInPlayIntoDeck
 	// SwapDeckAndDiscard exchanges the controller's deck with their discard pile,
@@ -261,6 +279,10 @@ type (
 	DiscardRandomFromArchives = engine.DiscardRandomFromArchives
 	// DiscardTopOfDeck discards the top card of a deck and puts it in context.
 	DiscardTopOfDeck = engine.DiscardTopOfDeck
+	// ReanimateTopOfDeckInPlace discards the top card of your deck and, when it is
+	// a creature, puts it into play in the source's former battleline slot after
+	// the source leaves play (Gebuk).
+	ReanimateTopOfDeckInPlace = engine.ReanimateTopOfDeckInPlace
 	// DiscardDeckUntil discards from the top of your deck until it turns up a
 	// card the filters admit, putting that card in context.
 	DiscardDeckUntil = engine.DiscardDeckUntil
@@ -279,6 +301,12 @@ type (
 	RevealDeckUntilHouse = engine.RevealDeckUntilHouse
 	// RevealTopOfDeck reveals the top card of the controller's deck.
 	RevealTopOfDeck = engine.RevealTopOfDeck
+	// MakeItsHouseActive makes the house of the card in context the active
+	// player's active house for the rest of the turn (Book of leQ).
+	MakeItsHouseActive = engine.MakeItsHouseActive
+	// EndTurn ends the active player's turn in place, running the turn out the way
+	// the Omega keyword does (Book of leQ).
+	EndTurn = engine.EndTurn
 	// RevealPurgeShuffleDeck reveals the top cards of a chosen player's deck, purges
 	// one revealed card, then shuffles that deck (Borr Nit).
 	RevealPurgeShuffleDeck = engine.RevealPurgeShuffleDeck
@@ -395,6 +423,9 @@ type (
 	MoveToFlank = engine.MoveToFlank // MoveWithinBattleline repositions the targeted creature anywhere in its
 	// controller's battleline and leaves it in context (Malison).
 	MoveWithinBattleline = engine.MoveWithinBattleline
+	// TurnIntoCreature turns the targeted card into a creature and moves it to a
+	// flank of its controller's battleline (Auto-Legionary).
+	TurnIntoCreature = engine.TurnIntoCreature
 )
 
 // Composites and control flow.
@@ -446,8 +477,9 @@ type (
 	CountIs = engine.CountIs
 	// ControlsMoreCreatures is met while you control more creatures than the opponent.
 	ControlsMoreCreatures = engine.ControlsMoreCreatures
-	// SourceOnFlank gates on the source card's flank position (Not inverts it).
-	SourceOnFlank = engine.SourceOnFlank
+	// OnFlank gates on a creature's flank position — the source card, or ctx.It when
+	// OfIt is set; Where picks any flank (Not inverts) or the left/right flank.
+	OnFlank = engine.OnFlank
 	// HasOtherFriendlyCreatures is met when the controller has any creature in play
 	// besides the source.
 	HasOtherFriendlyCreatures = engine.HasOtherFriendlyCreatures
@@ -459,16 +491,15 @@ type (
 	// Haunted is met while the controller has 10 or more cards in their discard pile.
 	Haunted = engine.Haunted
 	// ControlsNamed is met when the controller has a card of a given name in play.
-	ControlsNamed = engine.ControlsNamed // ItIsOnFlank gates on whether the context creature (ctx.It) is on a flank.
-	ItIsOnFlank   = engine.ItIsOnFlank
-	// ItIsOnNamedFlank gates on whether the context creature is on the left flank,
-	// or the right when Right is set (Sinestra, Dexus).
-	ItIsOnNamedFlank = engine.ItIsOnNamedFlank
+	ControlsNamed = engine.ControlsNamed
 	// SourceInCenterOfBattleline is met while the source card sits in the center
 	// of its controller's battleline (an even-sized line has no center).
 	SourceInCenterOfBattleline = engine.SourceInCenterOfBattleline
 	// SourceReady is met while the source card is ready (Bellowing Patrizate's gate).
 	SourceReady = engine.SourceReady
+	// SourceIsFighting is met while the source creature is one of the two combatants
+	// of the fight resolving right now (Nizak, The Forgotten's "while fighting" gate).
+	SourceIsFighting = engine.SourceIsFighting
 	// SourceNeighborsAllOfHouse is met while every neighbor of the source card
 	// belongs to House (Xanthyx Harvester's use gate).
 	SourceNeighborsAllOfHouse = engine.SourceNeighborsAllOfHouse
@@ -492,8 +523,17 @@ type (
 	ItIsOfHouse = engine.ItIsOfHouse
 	// ItIsFriendly is met when the card in context is controlled by you.
 	ItIsFriendly = engine.ItIsFriendly
+	// TideIsLow is met when the tide is low for you.
+	TideIsLow = engine.TideIsLow
+	// TideIsHigh is met when the tide is high for you.
+	TideIsHigh = engine.TideIsHigh
 	// ItIs is met when the card in context matches a concrete House and/or Type.
 	ItIs = engine.ItIs
+	// ItIsNamed is met when the card in context carries a given printed name.
+	ItIsNamed = engine.ItIsNamed
+	// ItIsNotOfHouse is met when the card in context is not of a named house — the
+	// "non-<house> card" idiom (Book of leQ).
+	ItIsNotOfHouse = engine.ItIsNotOfHouse
 	// ItIsOfTrait is met when the creature in context has the named trait.
 	ItIsOfTrait = engine.ItIsOfTrait
 	// ItHasAember is met when the creature in context has Æmber on it.
@@ -606,6 +646,9 @@ type (
 	// left play (Rustgnawer gains the destroyed artifact's Æmber bonus via Target:
 	// Triggering).
 	AemberBonusOf = engine.AemberBonusOf
+	// UpgradesOn counts the upgrades attached to the creature its Target names
+	// (Walls' Blaster stuns a creature for each upgrade on Chief Engineer Walls).
+	UpgradesOn = engine.UpgradesOn
 	// CardsPurged counts the creatures the most recent purge removed "this way".
 	CardsPurged = engine.CardsPurged
 	// PurgedAemberBonus totals the printed Æmber bonus of the cards the most recent
@@ -660,6 +703,12 @@ type (
 	Replace = engine.Replace
 	// NextPlayed makes the next creature of a house you play do something.
 	NextPlayed = engine.NextPlayed
+	// FuseTriggersForTurn makes each friendly creature's A and B effects each fire on
+	// the other for the rest of your turn (Livia the Elder fuses fight and reap).
+	FuseTriggersForTurn = engine.FuseTriggersForTurn
+	// TriggerMorph declares that an ability under one trigger also fires on another,
+	// for a ConstantAbility.Morphs (Kompsos Haruspex makes a play effect fire on reap).
+	TriggerMorph = engine.TriggerMorph
 )
 
 // Houses, keys, chains, and restrictions.
@@ -686,12 +735,19 @@ type (
 	// CannotBeDealtDamage marks the targeted creatures unable to be dealt damage
 	// for a Duration.
 	CannotBeDealtDamage = engine.CannotBeDealtDamage
-	// MayUseFriendlyHouse lets the controller use their House creatures this turn.
-	MayUseFriendlyHouse = engine.MayUseFriendlyHouse
+	// MayActFriendlyHouse lets the controller play and/or use a friendly house's
+	// cards this turn out of the active house — Grant is card.GrantPlay,
+	// card.GrantUse, or both.
+	MayActFriendlyHouse = engine.MayActFriendlyHouse
 	// MayUseFriendlyArtifacts lets the controller use any friendly artifact this turn.
 	MayUseFriendlyArtifacts = engine.MayUseFriendlyArtifacts
-	// MayPlayOrUseFriendlyHouse lets the controller play and use a House this turn.
-	MayPlayOrUseFriendlyHouse = engine.MayPlayOrUseFriendlyHouse
+	// MayPlayOffHouse lets the controller play or use a bounded number of cards this
+	// turn from outside their active house — the Star Alliance "non-Star Alliance
+	// card" cycle. Except names a house to exclude (card.House.Self for
+	// "non-Star Alliance"); Controlled frees every house you have a card in play for
+	// (United Action); NotType excludes a card type; Grant is card.GrantPlay,
+	// card.GrantUse, or both; Count bounds the cards (zero is unbounded).
+	MayPlayOffHouse = engine.MayPlayOffHouse
 	// GrantFightForChosenHouse lets your chosen-house creatures fight this turn.
 	GrantFightForChosenHouse = engine.GrantFightForChosenHouse
 	// GrantFightForFriendlyHouse lets your creatures of a named House fight this turn.
@@ -775,6 +831,7 @@ var Event = events{CreaturePlayed: engine.EventCreaturePlayed,
 	Destroyed:              engine.EventCreatureDestroyed,
 	AemberAddedToPool:      engine.EventAemberAddedToPool,
 	AemberTakenFromPool:    engine.EventAemberTakenFromPool,
+	AemberStolen:           engine.EventAemberStolen,
 	CardPlayed:             engine.EventCardPlayed,
 }
 
@@ -787,6 +844,7 @@ type events struct {
 	Destroyed,
 	AemberAddedToPool,
 	AemberTakenFromPool,
+	AemberStolen,
 	CardPlayed engine.Event
 }
 
@@ -814,9 +872,31 @@ var Yours = engine.ControlYours
 // card.LoseAember{Player: card.EachPlayer, By: card.Half}.
 var Half = engine.Half
 
+// OneThird is the Fraction that makes a DestroyFractionOfEachBattleline act on one
+// third of each side, rounded up: card.DestroyFractionOfEachBattleline{Portion: card.OneThird}.
+var OneThird = engine.OneThird
+
+// OneHalf is the Fraction that makes a DestroyFractionOfEachBattleline act on one
+// half of each side, rounded up: card.DestroyFractionOfEachBattleline{Portion: card.OneHalf}.
+var OneHalf = engine.OneHalf
+
 // OneNeighbor makes a CreatureAndNeighbors spread hit one chosen neighbor instead
 // of every neighbor (Mighty Lance): card.CreatureAndNeighbors{Scope: card.OneNeighbor}.
 var OneNeighbor = engine.OneNeighbor
+
+// GrantPlay and GrantUse compose a MayActFriendlyHouse grant, e.g.
+// card.MayActFriendlyHouse{House: ..., Grant: card.GrantPlay | card.GrantUse}.
+var GrantPlay = engine.GrantPlay
+
+// GrantUse — see GrantPlay.
+var GrantUse = engine.GrantUse
+
+// LeftFlank and RightFlank name a flank for an OnFlank predicate, e.g.
+// card.OnFlank{OfIt: true, Where: card.LeftFlank}.
+var LeftFlank = engine.LeftFlank
+
+// RightFlank — see LeftFlank.
+var RightFlank = engine.RightFlank
 
 // AllBut is the Loss that makes a LoseAember reduce a pool to keep, removing
 // everything above it: card.LoseAember{Player: card.EachPlayer, By: card.AllBut(5)}.
@@ -837,3 +917,7 @@ var DamageOnIt = engine.DamageOnIt
 // ArmorLostThisWay is the PerTarget that scales damage by the armor an effect has
 // stripped off each creature hit (Red-Hot Armor).
 var ArmorLostThisWay = engine.ArmorLostThisWay
+
+// UpgradesOnIt is the PerTarget that scales a bonus by the number of upgrades
+// attached to a creature (Light of the Archons, a StaticModifier with Per set).
+var UpgradesOnIt = engine.UpgradesOnIt

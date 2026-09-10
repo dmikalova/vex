@@ -17,12 +17,34 @@ import (
 // Versatile only relaxes using: a Versatile card is still played from hand only
 // when its own house is active.
 func (g *Game) usableInActiveHouse(id LocalID) bool {
+	return g.usableInActiveHouseWithoutPermit(id) ||
+		g.offHouseUsePermit(g.controller(id), id) >= 0
+}
+
+// usableInActiveHouseWithoutPermit is usableInActiveHouse minus the this-turn
+// off-house use permit (CXO Taber). It is the base house eligibility, so callers
+// can tell whether a use spent a permit — the creature was usable only because of
+// one — and charge it exactly once.
+func (g *Game) usableInActiveHouseWithoutPermit(id LocalID) bool {
 	return g.manual ||
 		g.State.ActiveHouse == HouseNone ||
 		g.House(id) == g.State.ActiveHouse ||
 		g.hasKeyword(id, Versatile) ||
-		(g.State.MayUseArtifactsAnyHouse[g.controller(id)] && g.cat.def(id).Type == Artifact) ||
+		(g.State.MayUseArtifactsAnyHouse[g.controller(id)] && g.TypeOf(id) == Artifact) ||
 		(g.State.MayUseHouse[g.controller(id)] != HouseNone && g.House(id) == g.State.MayUseHouse[g.controller(id)])
+}
+
+// spendOffHouseUse charges one use of a this-turn off-house use permit when the
+// creature was usable only because of it — a card in the active house, or freed by
+// Versatile or a house grant, spends nothing (CXO Taber lets its controller use
+// one non-Star Alliance card).
+func (g *Game) spendOffHouseUse(player int, id LocalID) {
+	if g.usableInActiveHouseWithoutPermit(id) {
+		return
+	}
+	if i := g.offHouseUsePermit(player, id); i >= 0 {
+		g.consumeOffHousePermit(player, i)
+	}
 }
 
 // usable runs the checks shared by reaping, fighting, and using an action
@@ -72,7 +94,7 @@ func (g *Game) canUse(player int, id LocalID) error {
 	if err := g.usable(player, id); err != nil {
 		return err
 	}
-	if g.cat.def(id).Type != Creature {
+	if g.TypeOf(id) != Creature {
 		return ErrWrongType
 	}
 	if !g.hasAnyUse(player, id) {
@@ -160,7 +182,7 @@ func (g *Game) CanUseArtifact(player int, id LocalID) error {
 	if err := g.usable(player, id); err != nil {
 		return err
 	}
-	if g.cat.def(id).Type != Artifact {
+	if g.TypeOf(id) != Artifact {
 		return ErrWrongType
 	}
 	if !g.hasTrigger(id, TriggerAction) {
@@ -174,6 +196,7 @@ func (g *Game) Reap(player int, id LocalID) error {
 	if err := g.canUseTo(player, id, ReapUse); err != nil {
 		return err
 	}
+	g.spendOffHouseUse(player, id)
 	g.reapWith(id)
 	// Boundary: the reap and any lasting reaction it fired can change power
 	// anywhere on the board (ADR 0029).
@@ -192,7 +215,7 @@ func (g *Game) Unstun(player int, id LocalID) error {
 	if err := g.usable(player, id); err != nil {
 		return err
 	}
-	if g.cat.def(id).Type != Creature || !g.State.Cards[id].Stunned {
+	if g.TypeOf(id) != Creature || !g.State.Cards[id].Stunned {
 		return ErrCannotUse
 	}
 	g.reapWith(id)
@@ -207,7 +230,7 @@ func (g *Game) Unstun(player int, id LocalID) error {
 // advances before that use resolves so Fight:/Reap: abilities see their first use
 // as count 1.
 func (g *Game) recordUse(id LocalID) {
-	if g.cat.def(id).Type == Creature {
+	if g.TypeOf(id) == Creature {
 		g.State.Cards[id].TimesUsedThisTurn++
 	}
 }
@@ -259,17 +282,18 @@ func (g *Game) UseAction(player int, id LocalID) error {
 	if g.cannotBeUsedTo(id, ActionUse) {
 		return ErrCannotUse
 	}
-	if g.cat.def(id).Type == Creature && g.mustFightWhenUsed(player, id) {
+	if g.TypeOf(id) == Creature && g.mustFightWhenUsed(player, id) {
 		return ErrCannotUse
 	}
 	if !g.hasTrigger(id, TriggerAction) {
 		return ErrWrongType
 	}
-	if g.cat.def(id).Type == Artifact {
+	if g.TypeOf(id) == Artifact {
 		if err := g.chargeToll(player, TollUseArtifact); err != nil {
 			return err
 		}
 	}
+	g.spendOffHouseUse(player, id)
 	g.useActionOf(player, id)
 	// Boundary: the action and any lasting reaction it fired can change power
 	// anywhere on the board (ADR 0029).
@@ -314,7 +338,7 @@ func (g *Game) Fight(player int, attacker, defender LocalID) error {
 		!g.fightErrorForgiven(err, attacker) {
 		return err
 	}
-	if g.cat.def(defender).Type != Creature ||
+	if g.TypeOf(defender) != Creature ||
 		g.controller(defender) == player ||
 		!g.inPlay(defender) ||
 		g.protectedByTaunt(attacker, defender) {
@@ -328,6 +352,7 @@ func (g *Game) Fight(player int, attacker, defender LocalID) error {
 		!fr.allows(&EffectContext{Resolver: g, Source: attacker, Controller: player}, defender) {
 		return ErrNoTarget
 	}
+	g.spendOffHouseUse(player, attacker)
 	g.fight(attacker, defender)
 	// Boundary: combat resolution and any lasting reaction it fired can change
 	// power anywhere on the board (ADR 0029).
@@ -591,6 +616,20 @@ func (g *Game) emitCardPlayed(player int, played LocalID) {
 	g.emitLasting(EventCardPlayed, player, played)
 }
 
+// emitActionPlayedBeforeResolve fires "after a Tactic is played but before it
+// resolves" abilities on every in-play card of both players, with the played
+// Tactic as "it". It runs before the Tactic's own Play: effect resolves, so a
+// reaction (Encounter Suit warding its host) acts on the board the Tactic is about
+// to affect. A Tactic either player plays fires it.
+func (g *Game) emitActionPlayedBeforeResolve(player int, played LocalID) {
+	for _, id := range g.allInPlay(player) {
+		g.triggerAbilities(id, TriggerAfterActionPlayedBeforeResolve, played, true)
+	}
+	for _, id := range g.allInPlay(1 - player) {
+		g.triggerAbilities(id, TriggerAfterActionPlayedBeforeResolve, played, true)
+	}
+}
+
 // emitCardUsed fires the used card's own "after this creature is used" abilities,
 // then the "after you use a card" abilities on the user's other in-play cards with
 // the used card as "it". Every route to using a card — reaping, fighting, or an
@@ -668,12 +707,16 @@ func (g *Game) triggerAbilitiesAs(
 			It:         it,
 			HasIt:      hasIt,
 		}
-		// A granted ability whose grantor is an attached upgrade still knows the
-		// upgrade itself (Source is the host), so an effect on the granted ability can
-		// move or anchor to that upgrade — a "blaster" attaching itself to its named
-		// creature.
-		if t.grantor != src && g.cat.def(t.grantor).Type == Upgrade {
-			ec.Upgrade = t.grantor
+		// A granted ability still knows the card that granted it (Source is the
+		// creature the ability now lives on), so an effect on the granted ability can
+		// move or anchor to that grantor — a "blaster" upgrade attaching itself to its
+		// named creature, or Uncharted Lands' reap moving Æmber off that one artifact.
+		if t.grantor != src {
+			ec.Grantor = t.grantor
+			ec.HasGrantor = true
+			if g.cat.def(t.grantor).Type == Upgrade {
+				ec.Upgrade = t.grantor
+			}
 		}
 		t.ability.Effect.Resolve(ec)
 		closeFrame()
@@ -718,6 +761,23 @@ func (g *Game) triggeredBy(src LocalID, trigger Trigger) []triggeredAbility {
 				}
 				for _, ab := range c.Granted {
 					keep(grantor, ab)
+				}
+			}
+		}
+	}
+	// A trigger morph (Kompsos Haruspex's constant, Livia the Elder's lasting fuse)
+	// makes src's own abilities under one trigger also fire on this one — its play
+	// effect on reap, its fight and reap effects on each other. Gather those printed
+	// abilities here so a morphed ability orders in the same window as a natural one.
+	if !g.textBlanked(src) {
+		for _, from := range g.morphedTriggers(src, trigger) {
+			for _, ab := range g.cat.def(src).Abilities {
+				if ab.Trigger == from {
+					pending = append(pending, triggeredAbility{
+						source:  src,
+						grantor: src,
+						ability: ab,
+					})
 				}
 			}
 		}

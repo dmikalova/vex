@@ -24,12 +24,20 @@ func (g *Game) fight(attacker, defender LocalID) {
 	if g.recoverFromStun(attacker) {
 		return
 	}
+	// While the fight resolves, both combatants count as "fighting", which a
+	// creature's "while fighting" self-grant reads (Nizak, The Forgotten gains
+	// invulnerable). Restored after the fight so a nested fight sees only its own
+	// pair and the grant lifts once combat ends.
+	prevFighters := g.State.FightersPlus
+	g.State.FightersPlus = [2]LocalID{attacker + 1, defender + 1}
+	defer func() { g.State.FightersPlus = prevFighters }()
 	g.State.TurnHistory[attackerSide][CreaturesFoughtThisTurn]++
 	// Using a creature to fight exhausts it before anything else resolves, so a
 	// "Before Fight" ability already sees the attacker exhausted. The defender is
 	// put in context, so an ability can act on "the creature this fights".
 	g.State.Cards[attacker].Exhausted = true
 	g.triggerAbilities(attacker, TriggerBeforeFight, defender, true)
+	g.fireLastingBeforeFight(attacker)
 
 	// A "Before Fight" ability may redirect the attacker's fight damage to another
 	// creature (Gabos Longarms) or make the fight not occur (Evasion Sigil). Read
@@ -553,7 +561,7 @@ func (g *Game) damageRedirect(id LocalID) LocalID {
 // the creatures a poison creature damages in a fight, resolved in applyFightPoison.
 func (g *Game) shouldDestroy(id LocalID) bool {
 	def := g.cat.def(id)
-	if def.Type != Creature || !g.inPlay(id) {
+	if g.TypeOf(id) != Creature || !g.inPlay(id) {
 		return false
 	}
 	if dw := def.DestroyedWhen; dw != nil {

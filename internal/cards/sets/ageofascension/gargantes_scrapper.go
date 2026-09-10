@@ -19,8 +19,8 @@ var GargantesScrapper = card.New(
 	card.Type.Creature,
 	card.Rarity.Uncommon,
 	card.Provenance(card.AoA, "23"),
-	card.WithPower(3),
 	card.WithAemberBonus(1),
+	card.WithPower(3),
 	card.WithTraits(card.Traits.Giant),
 	card.WithKeywords(card.Keyword.Alpha),
 	card.WithAbility(

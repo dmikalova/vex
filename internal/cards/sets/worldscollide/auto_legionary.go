@@ -1,20 +1,16 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// AutoLegionary
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Auto-Legionary
 //
 //	House:  Saurian
 //	Type:   Artifact
 //	Rarity: Rare
 //	Traits: Robot • Ally
 //
-//	Action: Put Auto-Legionary on a flank of your battleline. While in the battleline, it is considered a creature with 5 power and belongs to all houses.
+//	Versatile.
+//	Action: Give Auto-Legionary five +1 power counters. Move it to a flank of your battleline as a creature.
 var AutoLegionary = card.New(
 	"Auto-Legionary",
 	card.House.Saurian,
@@ -22,5 +18,10 @@ var AutoLegionary = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "214"),
 	card.WithTraits(card.Traits.Robot, card.Traits.Ally),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Versatile),
+	card.WithAbility(
+		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+			card.AddPowerCounter{Target: card.Target.This, Amount: 5},
+			card.TurnIntoCreature{Target: card.Target.This},
+		}}),
 )

@@ -336,6 +336,98 @@ func TestGainAbilityText(t *testing.T) {
 	}
 }
 
+// A NextTurn grant of "Before Fight: Exalt this creature" (Diplomacy) validates,
+// names its window first, and rejects the pairing with any other trigger.
+func TestGainAbilityBeforeFightExaltValidateAndText(t *testing.T) {
+	e := GainAbility{
+		Target:   Target{Kind: TargetEachCreature},
+		Duration: NextTurn,
+		Ability: Ability{
+			Trigger: TriggerBeforeFight,
+			Effect:  Exalt{Target: Target{Kind: TargetThisCreature}, Amount: 1},
+		},
+	}
+	if err := e.validate(); err != nil {
+		t.Fatalf("valid Before Fight/Exalt NextTurn grant = %v", err)
+	}
+	want := `until the start of your next turn, each creature gains, "Before Fight: Exalt this creature."`
+	if got := e.Text(); got != want {
+		t.Errorf("text = %q, want %q", got, want)
+	}
+
+	// A NextTurn grant is limited to a Before Fight ability.
+	bad := GainAbility{
+		Target:   Target{Kind: TargetEachCreature},
+		Duration: NextTurn,
+		Ability:  Ability{Trigger: TriggerAfterReap, Effect: Draw{Amount: 1}},
+	}
+	if err := bad.validate(); err == nil {
+		t.Error("a NextTurn grant on a non-Before-Fight trigger should be rejected")
+	}
+}
+
+// A NextTurn "Before Fight: Exalt this creature" grant is owned by the opponent so
+// it clears at their ready phase, and it exalts whichever granted creature fights —
+// friendly or enemy — regardless of whose turn it is (Diplomacy).
+func TestGainAbilityBeforeFightExaltResolveAndFire(t *testing.T) {
+	g := started(t)
+	friendly := g.AddToBattleline(testCreature("friendly", 3), 0)
+	enemy := g.AddToBattleline(testCreature("enemy", 3), 1)
+
+	GainAbility{
+		Target:   Target{Kind: TargetEachCreature},
+		Duration: NextTurn,
+		Ability: Ability{
+			Trigger: TriggerBeforeFight,
+			Effect:  Exalt{Target: Target{Kind: TargetThisCreature}, Amount: 1},
+		},
+	}.Resolve(&EffectContext{Resolver: g, Source: friendly, Controller: 0})
+
+	if g.State.LastingCount != 2 {
+		t.Fatalf("lasting count = %d, want 2 (one per creature)", g.State.LastingCount)
+	}
+	for i := 0; i < int(g.State.LastingCount); i++ {
+		le := g.State.Lasting[i]
+		if le.On != EventBeforeFight || le.Do != actExalt || !le.HasSubject {
+			t.Fatalf("entry %d = %+v, want a Subject-scoped before-fight exalt", i, le)
+		}
+		// Owned by the opponent (1) so it survives the caster's own turn end.
+		if le.Controller != 1 {
+			t.Errorf("entry %d controller = %d, want 1 (opponent-owned)", i, le.Controller)
+		}
+	}
+
+	// The caster's ready phase does not clear an opponent-owned grant.
+	g.clearLasting(0)
+	if g.State.LastingCount != 2 {
+		t.Fatalf("caster's ready cleared the grant, count = %d, want 2", g.State.LastingCount)
+	}
+
+	// Each granted creature exalts itself when it fights, whoever controls it.
+	g.fireLastingBeforeFight(friendly)
+	g.fireLastingBeforeFight(enemy)
+	if got := g.AmberOn(friendly); got != 1 {
+		t.Errorf("friendly Æmber-on-card = %d, want 1", got)
+	}
+	if got := g.AmberOn(enemy); got != 1 {
+		t.Errorf("enemy Æmber-on-card = %d, want 1", got)
+	}
+
+	// The opponent's ready phase lifts the grant.
+	g.clearLasting(1)
+	if g.State.LastingCount != 0 {
+		t.Fatalf("opponent's ready did not lift the grant, count = %d", g.State.LastingCount)
+	}
+}
+
+// actExalt describes itself for the ordering prompt, even though a before-fight
+// grant fires through fireLastingBeforeFight rather than emitLasting.
+func TestActExaltDescribe(t *testing.T) {
+	if got, want := actExalt.describe(), "exalt the creature"; got != want {
+		t.Errorf("actExalt.describe() = %q, want %q", got, want)
+	}
+}
+
 // GainAbility can grant a Fight reaction that readies the fighting creature, and
 // renders the granted self-reference as "this creature" rather than the source
 // card's name (Into the Fray).

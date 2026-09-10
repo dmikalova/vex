@@ -56,4 +56,34 @@ func TestUnchartedLands(t *testing.T) {
 			h.Expect(lands).AmberOn(5)
 		},
 	)
+
+	t.Run(
+		"two copies each grant their own reap, drawing from each artifact",
+		func(t *testing.T) {
+			var landsA, landsB, reaper ct.Card
+			h := ct.Play(t, ct.Setup{
+				P1: ct.Side{
+					House: card.House.StarAlliance,
+					InPlay: ct.Cards(
+						ct.Bind(&landsA, UnchartedLands),
+						ct.Bind(&landsB, UnchartedLands),
+						ct.Bind(
+							&reaper,
+							ct.Creature(ct.OfHouse(card.House.StarAlliance), ct.Power(3)),
+						),
+					),
+				},
+			})
+			h.Game().AddAmberOn(landsA.ID(), 6)
+			h.Game().AddAmberOn(landsB.ID(), 6)
+
+			h.P1.Reap(reaper)
+
+			// Base reap gains 1; each copy's granted reap moves 1 off its own
+			// artifact, so both drop to 5 rather than one dropping to 4.
+			h.P1.ExpectAmber(3)
+			h.Expect(landsA).AmberOn(5)
+			h.Expect(landsB).AmberOn(5)
+		},
+	)
 }

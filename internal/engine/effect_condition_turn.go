@@ -1,0 +1,207 @@
+package engine
+
+import "fmt"
+
+// ArchivedCreaturesShareHouse is met when the creatures a preceding
+// ArchiveFromPlay set aside (ctx.Produced.Archived) all belong to one house —
+// Code Monkey gains 2 Æmber when the neighbors it archived share a house. Fewer
+// than two creatures cannot share a house, so it is not met.
+type ArchivedCreaturesShareHouse struct{}
+
+// CondText renders the condition naming the just-archived creatures.
+func (ArchivedCreaturesShareHouse) CondText() string {
+	return "if those creatures share a house"
+}
+
+// Met reports whether every archived creature belongs to the same house.
+func (ArchivedCreaturesShareHouse) Met(ctx *EffectContext) bool {
+	ids := ctx.Produced.Archived
+	if len(ids) < 2 {
+		return false
+	}
+	first := ctx.Resolver.House(ids[0])
+	for _, id := range ids[1:] {
+		if ctx.Resolver.House(id) != first {
+			return false
+		}
+	}
+	return true
+}
+
+// FirstCreaturePlayedThisTurn is met when the card in context (ctx.It, the
+// creature that fired the trigger) is the first creature its player played this
+// turn — Speed Sigil readies it. It is a once-per-turn charge that needs no state
+// of its own: the turn's play record already says whether the charge is spent, and
+// the record is cleared when the next turn begins.
+//
+// A creature put into play by an effect rather than played never matches, so it
+// neither benefits nor spends the charge.
+type FirstCreaturePlayedThisTurn struct{}
+
+// CondText renders the condition.
+func (FirstCreaturePlayedThisTurn) CondText() string {
+	return "if it is the first creature played this turn"
+}
+
+// Met reports whether the context card is the earliest creature in the active
+// player's plays this turn.
+func (FirstCreaturePlayedThisTurn) Met(ctx *EffectContext) bool {
+	if !ctx.HasIt {
+		return false
+	}
+	for _, id := range ctx.Resolver.PlayedThisTurn(ctx.Resolver.ActivePlayer()) {
+		if ctx.Resolver.TypeOf(id) == Creature {
+			return id == ctx.It
+		}
+	}
+	return false
+}
+
+// NoCreaturesPlayedThisTurn is met when the controller has not played any
+// creatures during the current turn — Redlock pays out at end of turn only on a
+// turn its controller played no creatures. A creature put into play by an effect
+// rather than played does not count, so it does not spoil the payout.
+type NoCreaturesPlayedThisTurn struct{}
+
+// CondText renders the condition.
+func (NoCreaturesPlayedThisTurn) CondText() string {
+	return "if you did not play any creatures this turn"
+}
+
+// Met reports whether none of the controller's plays this turn were creatures.
+func (NoCreaturesPlayedThisTurn) Met(ctx *EffectContext) bool {
+	for _, id := range ctx.Resolver.PlayedThisTurn(ctx.Controller) {
+		if ctx.Resolver.TypeOf(id) == Creature {
+			return false
+		}
+	}
+	return true
+}
+
+// ItIsYourTurn is met when the ability's controller is the active player —
+// Jargogle plays the card under it when destroyed on its controller's turn, and
+// archives it otherwise.
+type ItIsYourTurn struct{}
+
+// CondText renders the condition.
+func (ItIsYourTurn) CondText() string { return "if it is your turn" }
+
+// Met reports whether the controller is the active player.
+func (ItIsYourTurn) Met(ctx *EffectContext) bool {
+	return ctx.Resolver.ActivePlayer() == ctx.Controller
+}
+
+// CardsDestroyedFewerThan is met when fewer than Amount cards were destroyed this
+// way — the tally a preceding effect records on the context. Bonkers Killing
+// Machine destroys itself when its house-driven destruction removed fewer than two.
+type CardsDestroyedFewerThan struct {
+	Amount int
+}
+
+// CondText renders the condition, e.g. "if fewer than 2 cards are destroyed this
+// way".
+func (c CardsDestroyedFewerThan) CondText() string {
+	return fmt.Sprintf("if fewer than %d cards are destroyed this way", c.Amount)
+}
+
+// Met reports whether fewer than Amount cards were destroyed this way.
+func (c CardsDestroyedFewerThan) Met(ctx *EffectContext) bool {
+	return ctx.Produced.TotalDestroyed() < c.Amount
+}
+
+// ChoseHouse is met when the controller's active house is House. It is the
+// condition behind an "After you choose <House> as your active house, ..."
+// ability (Jehu the Bureaucrat): the AfterChooseHouse trigger fires for the
+// active player as they pick their house, and this checks whether they picked
+// the house the ability watches for.
+type ChoseHouse struct {
+	House House
+}
+
+// CondText renders the condition clause.
+func (c ChoseHouse) CondText() string {
+	return "you choose " + c.House.String() + " as your active house"
+}
+
+// Met reports whether the active house is the one the ability watches for.
+func (c ChoseHouse) Met(ctx *EffectContext) bool {
+	return ctx.Resolver.ActiveHouse() == c.House
+}
+
+// AemberStolenFromYou is met when the controller had Æmber stolen from them on
+// their opponent's previous turn — Information Exchange steals more if it was.
+type AemberStolenFromYou struct{}
+
+// CondText renders the condition.
+func (AemberStolenFromYou) CondText() string {
+	return "if your opponent stole Æmber from you on their previous turn"
+}
+
+// Met reports whether any Æmber was stolen from the controller last turn.
+func (AemberStolenFromYou) Met(ctx *EffectContext) bool {
+	return ctx.Resolver.TurnHistory(ctx.Controller, AemberStolenFromLastTurn) > 0
+}
+
+// EnemyCreatureDestroyed is met while at least one enemy creature has been
+// destroyed this turn — Foozle reaps for an extra Æmber once the opponent has
+// lost a creature.
+type EnemyCreatureDestroyed struct{}
+
+// CondText renders the condition.
+func (EnemyCreatureDestroyed) CondText() string {
+	return "if an enemy creature has been destroyed this turn"
+}
+
+// Met reports whether the controller has seen an enemy creature destroyed this
+// turn.
+func (EnemyCreatureDestroyed) Met(ctx *EffectContext) bool {
+	return ctx.Resolver.TurnHistory(ctx.Controller, EnemyCreaturesDestroyed) > 0
+}
+
+// UsedCreatureToReap is met while the controller has used a creature to reap at
+// least once this turn — Bramble Lynx enters play ready once you have reaped.
+type UsedCreatureToReap struct{}
+
+// CondText renders the condition.
+func (UsedCreatureToReap) CondText() string {
+	return "if you have used a creature to reap this turn"
+}
+
+// Met reports whether the controller has reaped with a creature this turn.
+func (UsedCreatureToReap) Met(ctx *EffectContext) bool {
+	return ctx.Resolver.TurnHistory(ctx.Controller, CreaturesReapedThisTurn) > 0
+}
+
+// UsedCreatureToFight is met while the controller has used a creature to fight at
+// least once this turn — Alaka enters play ready once you have fought.
+type UsedCreatureToFight struct{}
+
+// CondText renders the condition.
+func (UsedCreatureToFight) CondText() string {
+	return "if you have used a creature to fight this turn"
+}
+
+// Met reports whether the controller has fought with a creature this turn.
+func (UsedCreatureToFight) Met(ctx *EffectContext) bool {
+	return ctx.Resolver.TurnHistory(ctx.Controller, CreaturesFoughtThisTurn) > 0
+}
+
+// FirstReapOfTurn is met when the reap in context is the first time a creature
+// has reaped this turn — Aember Conduction Unit stuns only the first enemy
+// creature to reap. It reads the reaping creature (ctx.It) so it asks about the
+// active player's tally, which counts one once this reap has been tallied.
+type FirstReapOfTurn struct{}
+
+// CondText renders the condition.
+func (FirstReapOfTurn) CondText() string {
+	return "if it is the first time a creature has reaped this turn"
+}
+
+// Met reports whether exactly one creature has reaped this turn, the reaping
+// creature in context being that one.
+func (FirstReapOfTurn) Met(ctx *EffectContext) bool {
+	if !ctx.HasIt {
+		return false
+	}
+	return ctx.Resolver.TurnHistory(ctx.Resolver.Controller(ctx.It), CreaturesReapedThisTurn) == 1
+}

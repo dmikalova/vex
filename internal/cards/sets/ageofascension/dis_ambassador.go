@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human
 //
 //	Elusive.
-//	Fight/Reap: You may play or use a Dis card this turn.
+//	Fight/Reap: For the remainder of the turn, you may play or use a Dis card.
 var DisAmbassador = card.New(
 	"Dis Ambassador",
 	card.House.Sanctum,
@@ -22,7 +22,9 @@ var DisAmbassador = card.New(
 	card.WithTraits(card.Traits.Human),
 	card.WithKeywords(card.Keyword.Elusive),
 	// TODO: planned rework of the Ambassador cycle.
-	card.WithFightOrReap(card.MayPlayOrUseFriendlyHouse{House: card.House.Dis}),
+	card.WithFightOrReap(
+		card.MayActFriendlyHouse{House: card.House.Dis, Grant: card.GrantPlay | card.GrantUse},
+	),
 )
 
 // TODO: should not be special

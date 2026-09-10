@@ -16,8 +16,8 @@ var TooMuchToProtect = card.New(
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "283"),
+	card.OneCopyPerDeck(),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.StealAember{By: card.AllBut(6)}),
-	card.OneCopyPerDeck(),
 )

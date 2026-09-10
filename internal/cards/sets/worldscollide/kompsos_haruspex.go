@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// KompsosHaruspex
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Kompsos Haruspex
 //
 //	House:  Saurian
 //	Type:   Creature
@@ -24,5 +19,11 @@ var KompsosHaruspex = card.New(
 	card.Provenance(card.WC, "224"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Priest),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithConstant(card.ConstantAbility{
+		Target: card.Target.EachFriendlyCreature,
+		Morphs: []card.TriggerMorph{{
+			From: card.Trigger.Play,
+			Onto: card.Trigger.Reap,
+		}},
+	}),
 )

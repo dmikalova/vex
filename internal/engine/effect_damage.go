@@ -499,18 +499,18 @@ func (s UpToCreatures) validate() error {
 
 // spreadText renders the clause.
 func (s UpToCreatures) spreadText() string {
+	if s.WhenDamaged != 0 {
+		return fmt.Sprintf(
+			"choose up to %d creatures. Deal %d damage to each chosen creature. "+
+				"If that creature was already damaged, deal %d damage instead",
+			s.Count, s.Amount, s.WhenDamaged,
+		)
+	}
 	noun := "creatures"
 	if s.Undamaged {
 		noun = "undamaged creatures"
 	}
-	base := fmt.Sprintf("deal %d damage to up to %d %s", s.Amount, s.Count, noun)
-	if s.WhenDamaged != 0 {
-		base += fmt.Sprintf(
-			", dealing %d damage instead to a chosen creature that was already damaged",
-			s.WhenDamaged,
-		)
-	}
-	return base
+	return fmt.Sprintf("deal %d damage to up to %d %s", s.Amount, s.Count, noun)
 }
 
 // hits asks for creatures one at a time, up to Count, excluding those already

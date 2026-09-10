@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestStealAemberEffect(t *testing.T) {
 	g := NewGame("A", "B", 1)
@@ -70,5 +73,98 @@ func TestStealAemberReversed(t *testing.T) {
 	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
 	if g.Aember(0) != 3 || g.Aember(1) != 2 {
 		t.Errorf("pools = %d/%d, want 3/2", g.Aember(0), g.Aember(1))
+	}
+}
+
+// TestStealAemberCapturedByRedirect covers Gargantodon's continuous replacement:
+// a steal's Æmber never reaches the thief's pool — it is captured onto a creature
+// the thief controls instead, while the victim's pool still drops.
+func TestStealAemberCapturedByRedirect(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(testCreature("garg", 16,
+		WithReplaces(Instead{Of: EventAemberStolen, With: Capture})), 1)
+	thief := g.AddToBattleline(testCreature("thief", 3), 0)
+	g.State.Aember[1] = 5
+	ctx := &EffectContext{Resolver: g, Source: thief, Controller: 0}
+
+	StealAember{Amount: 2}.Resolve(ctx)
+	if g.Aember(0) != 0 {
+		t.Errorf("thief pool = %d, want 0 (captured, not pooled)", g.Aember(0))
+	}
+	if g.Aember(1) != 3 {
+		t.Errorf("victim pool = %d, want 3", g.Aember(1))
+	}
+	if got := g.AmberOn(thief); got != 2 {
+		t.Errorf("captured on creature = %d, want 2", got)
+	}
+}
+
+// TestStealAemberRedirectNoCreatureFallsBack covers the redirect being active but
+// the thief controlling no creature to hold the capture: the steal lands in the
+// pool as usual.
+func TestStealAemberRedirectNoCreatureFallsBack(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	garg := g.AddToBattleline(testCreature("garg", 16,
+		WithReplaces(Instead{Of: EventAemberStolen, With: Capture})), 1)
+	g.State.Aember[1] = 5
+	ctx := &EffectContext{Resolver: g, Source: garg, Controller: 0}
+
+	StealAember{Amount: 2}.Resolve(ctx)
+	if g.Aember(0) != 2 {
+		t.Errorf("thief pool = %d, want 2 (normal steal)", g.Aember(0))
+	}
+	if g.Aember(1) != 3 {
+		t.Errorf("victim pool = %d, want 3", g.Aember(1))
+	}
+}
+
+// TestStealAemberRedirectChoosesCaptor covers the redirect with several friendly
+// creatures: the thief chooses which one captures the stolen Æmber.
+func TestStealAemberRedirectChoosesCaptor(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(testCreature("garg", 16,
+		WithReplaces(Instead{Of: EventAemberStolen, With: Capture})), 1)
+	first := g.AddToBattleline(testCreature("first", 3), 0)
+	second := g.AddToBattleline(testCreature("second", 3), 0)
+	g.State.Aember[1] = 5
+	g.SetChooser(0, idChooser{id: second})
+	ctx := &EffectContext{Resolver: g, Source: first, Controller: 0}
+
+	StealAember{Amount: 2}.Resolve(ctx)
+	if got := g.AmberOn(second); got != 2 {
+		t.Errorf("captured on chosen = %d, want 2", got)
+	}
+	if got := g.AmberOn(first); got != 0 {
+		t.Errorf("unchosen holds = %d, want 0", got)
+	}
+}
+
+// TestStealAemberRedirectDeclineFallsToFirst covers a declined choice among
+// several captors: the redirect falls back to the first friendly creature rather
+// than dropping the capture.
+func TestStealAemberRedirectDeclineFallsToFirst(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	garg := g.AddToBattleline(testCreature("garg", 16,
+		WithReplaces(Instead{Of: EventAemberStolen, With: Capture})), 1)
+	first := g.AddToBattleline(testCreature("first", 3), 0)
+	g.AddToBattleline(testCreature("second", 3), 0)
+	g.State.Aember[1] = 5
+	// A chooser that never matches a candidate declines, so the fallback applies.
+	g.SetChooser(0, idChooser{id: garg})
+	ctx := &EffectContext{Resolver: g, Source: first, Controller: 0}
+
+	StealAember{Amount: 2}.Resolve(ctx)
+	if got := g.AmberOn(first); got != 2 {
+		t.Errorf("captured on first (fallback) = %d, want 2", got)
+	}
+}
+
+// TestCaptureStolenAemberText renders Gargantodon's continuous replacement line.
+func TestCaptureStolenAemberText(t *testing.T) {
+	def := testCreature("garg", 16,
+		WithReplaces(Instead{Of: EventAemberStolen, With: Capture}))
+	want := "Each Æmber that would be stolen is captured by a creature controlled by the active player instead."
+	if got := RenderCardRules(&def); !strings.Contains(got, want) {
+		t.Errorf("rules missing redirect line:\n%s", got)
 	}
 }

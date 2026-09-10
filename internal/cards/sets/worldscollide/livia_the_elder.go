@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// LiviaTheElder
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Livia the Elder
 //
 //	House:  Saurian
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Dinosaur • Philosopher
 //
-//	Reap: You may exalt Livia the Elder. If you do, each friendly creature's fight effects and reap effects are fight/reap effects for the remainder of the turn.
+//	Reap: You may exalt Livia the Elder -> each friendly creature's fight effects and reap effects are fight/reap effects for the remainder of the turn.
 var LiviaTheElder = card.New(
 	"Livia the Elder",
 	card.House.Saurian,
@@ -24,5 +19,15 @@ var LiviaTheElder = card.New(
 	card.Provenance(card.WC, "225"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Philosopher),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Reap, card.May{Do: card.Then{
+			First: card.Exalt{
+				Target: card.Target.This,
+				Amount: 1,
+			},
+			Result: card.FuseTriggersForTurn{
+				A: card.Trigger.Fight,
+				B: card.Trigger.Reap,
+			},
+		}}),
 )

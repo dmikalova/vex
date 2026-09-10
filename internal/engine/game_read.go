@@ -60,7 +60,8 @@ func (g *Game) Power(id LocalID) int {
 	core := &g.State.Cards[id]
 	p := g.cat.def(id).Power
 	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
-		p += g.staticOn(id, up).PowerBonus
+		m := g.staticOn(id, up)
+		p += g.scaleStatic(m, m.PowerBonus, id)
 	}
 	p += int(core.PowerCounters)
 	p += int(core.TempPowerBonus)
@@ -76,7 +77,8 @@ func (g *Game) Power(id LocalID) int {
 func (g *Game) armor(id LocalID) int {
 	a := g.cat.def(id).Armor
 	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
-		a += g.staticOn(id, up).ArmorBonus
+		m := g.staticOn(id, up)
+		a += g.scaleStatic(m, m.ArmorBonus, id)
 	}
 	a += int(g.State.Cards[id].TempArmorBonus)
 	a += g.constantBonus(id, func(c ConstantAbility) int { return c.ArmorBonus })
@@ -158,7 +160,7 @@ func (g *Game) constantActive(src LocalID, c ConstantAbility) bool {
 // of Dis), so its printed keywords, abilities, and constant grants are ignored —
 // its traits and stats are untouched. Only creatures are blanked.
 func (g *Game) textBlanked(id LocalID) bool {
-	return g.State.TextBlank[g.controller(id)].Value && g.cat.def(id).Type == Creature
+	return g.State.TextBlank[g.controller(id)].Value && g.TypeOf(id) == Creature
 }
 
 // assault returns a creature's Assault value including attached upgrades.
@@ -170,6 +172,7 @@ func (g *Game) assault(id LocalID) int {
 	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
 		a += g.cat.def(up).Static.AssaultBonus
 	}
+	a += int(g.State.Cards[id].TempAssaultBonus)
 	return a
 }
 
@@ -230,9 +233,26 @@ func (g *Game) hasKeyword(id LocalID, k Keyword) bool {
 		return true
 	}
 	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
-		for _, kw := range g.staticOn(id, up).Keywords {
+		m := g.staticOn(id, up)
+		for _, kw := range m.Keywords {
 			if kw == k {
 				return true
+			}
+		}
+		for _, kw := range m.KeywordsToNeighbors {
+			if kw == k {
+				return true
+			}
+		}
+	}
+	// A neighbor's upgrade may grant its keywords to this creature — Cloaking
+	// Dongle gives Elusive to its host and both of the host's neighbors.
+	for _, nb := range neighbors(&EffectContext{Resolver: g}, id) {
+		for up, ok := g.firstUpgrade(nb); ok; up, ok = g.nextUpgrade(up) {
+			for _, kw := range g.staticOn(nb, up).KeywordsToNeighbors {
+				if kw == k {
+					return true
+				}
 			}
 		}
 	}
@@ -259,6 +279,16 @@ func (g *Game) staticOn(host, upgrade LocalID) StaticModifier {
 		return StaticModifier{}
 	}
 	return m
+}
+
+// scaleStatic multiplies a static bonus by the modifier's Per count, read off the
+// host creature — Light of the Archons scales +1 power/armor by the number of
+// upgrades on the host. A modifier with no Per leaves the bonus as is.
+func (g *Game) scaleStatic(m StaticModifier, bonus int, host LocalID) int {
+	if bonus == 0 || m.Per == nil {
+		return bonus
+	}
+	return bonus * m.Per.perTargetValue(g.constantContext(host), host)
 }
 
 // Damage returns the damage currently on a creature.
@@ -409,6 +439,13 @@ func (g *Game) InCenterOfBattleline(id LocalID) bool {
 		return false
 	}
 	return bl[n/2] == id
+}
+
+// CurrentlyFighting reports whether a creature is one of the two combatants in the
+// fight resolving right now — the flag a "while fighting" self-grant reads (Nizak,
+// The Forgotten gains invulnerable). It is false whenever no fight is in progress.
+func (g *Game) CurrentlyFighting(id LocalID) bool {
+	return g.State.FightersPlus[0] == id+1 || g.State.FightersPlus[1] == id+1
 }
 
 // cannotFight reports whether a player is barred from using creatures to fight,

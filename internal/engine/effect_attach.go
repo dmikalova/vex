@@ -14,28 +14,33 @@ type AttachSelfTo struct {
 	Host string
 }
 
-// Text renders the effect, e.g. "attach {self} to Commander Chan".
-func (e AttachSelfTo) Text() string { return "attach " + SelfName + " to " + e.Host }
+// Text renders the effect, e.g. "attach {upgrade} to Commander Chan".
+func (e AttachSelfTo) Text() string { return "attach " + UpgradeName + " to " + e.Host }
 
 // Resolve moves the resolving upgrade onto the controller's creature named Host.
-// It does nothing when no friendly creature with that name is in play, or when
-// the resolving ability was not granted by an attached upgrade.
+func (e AttachSelfTo) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
+
+// resolveGate moves the upgrade onto the host and reports whether it now sits
+// there, so an "attach {upgrade} to Y -> Z" gate runs Z only when a friendly
+// creature named Host is in play. It does nothing when none is, or when the
+// resolving ability was not granted by an attached upgrade.
 //
 // Binding is by instance, not by name: once the blaster already sits on a
 // creature named Host, it stays on that exact creature and never re-homes onto a
 // second same-named copy, so the payoff that follows always acts on the instance
-// it first bound to.
-func (e AttachSelfTo) Resolve(ctx *EffectContext) {
+// it first bound to. A blaster already on its named host counts as attached.
+func (e AttachSelfTo) resolveGate(ctx *EffectContext) bool {
 	if host, ok := ctx.Resolver.HostOf(ctx.Upgrade); ok &&
 		ctx.Resolver.Name(host) == e.Host {
-		return
+		return true
 	}
 	for _, id := range ctx.Resolver.Battleline(ctx.Controller) {
 		if ctx.Resolver.Name(id) == e.Host {
 			ctx.Resolver.MoveUpgrade(ctx.Upgrade, id)
-			return
+			return true
 		}
 	}
+	return false
 }
 
 // validate requires the host creature's name.

@@ -118,6 +118,13 @@ const (
 	// bound instance has left play (its upgrade is no longer attached). Named()
 	// supplies the printed name so the text still reads as the signature creature.
 	TargetAttachedHost
+	// TargetGrantingArtifact selects the in-play card that granted the resolving
+	// ability (ctx.Upgrade) — the exact artifact whose constant ability handed this
+	// creature its ability, identified by LocalID rather than by name. A creature
+	// reaping through Uncharted Lands' grant moves Æmber off that one artifact,
+	// never off a second same-named copy in play. Named() supplies the printed name
+	// so the granted text still reads as the artifact's own ("from Uncharted Lands").
+	TargetGrantingArtifact
 )
 
 // Target describes which cards an effect applies to. Kind picks the base set;
@@ -523,6 +530,11 @@ func (t Target) Text() string {
 			return t.named
 		}
 		return "the attached creature"
+	case TargetGrantingArtifact:
+		if t.named != "" {
+			return t.named
+		}
+		return "the granting artifact"
 	case TargetFormerNeighbors:
 		return "each of that creature's neighbors"
 	case TargetTheFoughtCreature:
@@ -1540,6 +1552,11 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 	case TargetAttachedHost:
 		if host, ok := ctx.Resolver.HostOf(ctx.Upgrade); ok {
 			return []LocalID{host}
+		}
+		return nil
+	case TargetGrantingArtifact:
+		if ctx.HasGrantor {
+			return []LocalID{ctx.Grantor}
 		}
 		return nil
 	case TargetTriggeringCreature, TargetTheOtherCreature, TargetTheChosenCreature,

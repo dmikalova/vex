@@ -11,12 +11,12 @@ import (
 //
 //	House:  Star Alliance
 //	Type:   Upgrade
-//	Rarity: Special
+//	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains, "Fight/Reap: You may choose one:
+//	This creature gains, "Fight/Reap: Choose one:
 //	- Deal 2 damage to a creature
-//	- Attach this creature to Com. Officer Kirby, and draw 2 cards."
+//	- Attach Kirby's Blaster to Com. Officer Kirby -> draw 2 cards."
 func TestKirbysBlaster(t *testing.T) {
 	t.Run("draws 2 cards on the attach payoff", func(t *testing.T) {
 		var carrier, top1, top2 ct.Card
@@ -31,6 +31,10 @@ func TestKirbysBlaster(t *testing.T) {
 						),
 						KirbysBlaster,
 					),
+					ct.Creature(
+						ct.OfHouse(card.House.StarAlliance),
+						ct.Named("Com. Officer Kirby"),
+					),
 				),
 				Deck: ct.Cards(
 					ct.Bind(&top1, ct.Creature(ct.OfHouse(card.House.StarAlliance), ct.Power(3))),
@@ -40,7 +44,6 @@ func TestKirbysBlaster(t *testing.T) {
 		})
 
 		h.P1.Reap(carrier)
-		h.P1.ClickOption("Yes")
 		h.P1.ExpectPrompt("Choose one")
 		h.P1.ClickOption("attach")
 

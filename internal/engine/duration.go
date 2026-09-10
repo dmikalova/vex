@@ -33,11 +33,14 @@ const (
 	// exists yet; this rule is the invariant to preserve when one is added.)
 	Forever
 
-	// EndOfNextTurn lasts from now through the end of the affected player's next
-	// turn, then lifts. Unlike NextTurn — which waits for that next turn before it
-	// bites — this window is live the moment it is established and stays live
-	// across the intervening turns, so it suits a reduction a player wants in force
-	// immediately (We Can ALL Win's key-cost drop).
+	// EndOfNextTurn lasts from now through the end of the affected player's own
+	// next turn, then lifts. "Next turn" is that player's next turn — not the next
+	// turn any player takes — so for the controller the window covers the rest of
+	// this turn, the opponent's intervening turn, and the whole of the controller's
+	// next turn, lifting only when that turn ends. Unlike NextTurn — which waits for
+	// that next turn before it bites — this window is live the moment it is
+	// established and stays live across the intervening turns, so it suits a
+	// reduction a player wants in force immediately (We Can ALL Win's key-cost drop).
 	EndOfNextTurn
 )
 

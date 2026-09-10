@@ -59,6 +59,23 @@ func TestLogMentionPreview(t *testing.T) {
 	}
 }
 
+// On a touchscreen a tap raises a synthetic mouseenter just before its click, so
+// onLogCardHover must ignore it once a touch has been seen — otherwise the enter
+// opens the preview and the same tap's click toggles it shut, taking two taps to
+// stick. With isTouch set the enter is a no-op, leaving the single tap
+// (onLogCardTap) to open it.
+func TestLogMentionHoverIgnoredOnTouch(t *testing.T) {
+	c := newClient(t)
+	c.startTurn()
+	c.g.isTouch = true
+
+	c.g.onLogCardHover(c.ctx, app.Event{})
+	if c.g.hoverDef != nil || c.g.previewUp() {
+		t.Errorf("a touch mouseenter opened the preview: hoverDef=%v up=%v",
+			c.g.hoverDef, c.g.previewUp())
+	}
+}
+
 // A card that leaves the zones the client draws vanishes from the DOM without
 // firing a leave, so the preview has to notice on its own that it is stale.
 func TestHoverOfAGoneCardIsNotLive(t *testing.T) {
@@ -138,6 +155,24 @@ func TestHoverLiveForAFacedownUnderCardDependsOnPeek(t *testing.T) {
 	}
 	if c.g.hoverLive() {
 		t.Error("the opponent should not be able to hover a facedown under-card they cannot peek")
+	}
+}
+
+// The opponent, who may not peek a facedown Under-card, still previews something
+// when they hover it: a plain card back, not nothing and not the hidden face.
+func TestOpponentPreviewsFacedownUnderAsCardBack(t *testing.T) {
+	c := newClient(t)
+	c.g.onCardBackHover(c.ctx, app.Event{})
+	if !c.g.hoverBack || !c.g.previewUp() {
+		t.Fatalf("hovering a hidden facedown under-card should preview a card back: "+
+			"hoverBack=%v previewUp=%v", c.g.hoverBack, c.g.previewUp())
+	}
+	if c.g.hoverLive() {
+		t.Error("a card-back preview must not read as a live hover of the hidden face")
+	}
+	c.g.hoverClear(c.ctx)
+	if c.g.hoverBack || c.g.previewUp() {
+		t.Error("leaving the tab should clear the card-back preview")
 	}
 }
 

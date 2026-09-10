@@ -1,26 +1,25 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// LightOfTheArchons
+// Light of the Archons
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Upgrade
 //	Rarity: Common
 //	Æmber:  1
 //
-//	This creature gets +1 power and +1 armor for each upgrade attached to it.
+//	This creature gains +1 power and +1 armor for each upgrade attached to it.
 var LightOfTheArchons = card.New(
 	"Light of the Archons",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Upgrade,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "300"),
 	card.WithAemberBonus(1),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithStatic(card.StaticModifier{
+		PowerBonus: 1,
+		ArmorBonus: 1,
+		Per:        card.UpgradesOnIt,
+	}),
 )

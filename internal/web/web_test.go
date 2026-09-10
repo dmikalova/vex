@@ -58,6 +58,83 @@ func TestIconNamesHaveAssets(t *testing.T) {
 	}
 }
 
+// stemLiteral matches a lowercase-hyphen string literal ("zone-hand") and the
+// same stem inside a .svg path ("/web/assets/favicon.svg"), which is how the code
+// names an asset.
+var stemLiteral = regexp.MustCompile(`([a-z][a-z0-9-]+)(?:\.svg)?"`)
+
+// stripGalleryIcons removes the galleryIcons declaration from style.go's source.
+// That list names every asset by design, so counting it as a reference would make
+// every asset trivially "used" and defeat TestNoDeadAssets.
+func stripGalleryIcons(src string) string {
+	const marker = "var galleryIcons = []string{"
+	i := strings.Index(src, marker)
+	if i < 0 {
+		return src
+	}
+	if j := strings.Index(src[i:], "}"); j >= 0 {
+		return src[:i] + src[i+j+1:]
+	}
+	return src
+}
+
+// TestNoDeadAssets is the reverse of TestIconNamesHaveAssets: every SVG in
+// web/assets is drawn by some functional code path, not just parked in the Style
+// gallery's showcase. The gallery lists every asset on purpose (galleryIcons), so
+// its declaration is excluded from the scan — otherwise a leftover asset from a
+// removed feature would count as "used" and never be caught. An asset is
+// considered referenced if the code names its stem: as a string literal or .svg
+// path in the package (icon("stem"), glyph{asset: "stem"}, every resolver that
+// returns a literal) or cmd/web (the favicon and PWA icons), plus the one computed
+// family — house emblems, whose stem is "house-"+slug.
+func TestNoDeadAssets(t *testing.T) {
+	referenced := map[string]bool{}
+	addStems := func(src string) {
+		for _, m := range stemLiteral.FindAllStringSubmatch(src, -1) {
+			referenced[m[1]] = true
+		}
+	}
+
+	// House emblems are the only stems built from a slug rather than a literal.
+	referenced["house-none"] = true
+	for h := engine.HouseNone + 1; int(h) < engine.NumHouses; h++ {
+		if name := houseIconName(h); name != "" {
+			referenced[name] = true
+		}
+	}
+
+	files, err := filepath.Glob("*.go")
+	if err != nil {
+		t.Fatalf("glob: %v", err)
+	}
+	for _, f := range files {
+		if strings.HasSuffix(f, "_test.go") {
+			continue
+		}
+		b, err := os.ReadFile(f)
+		if err != nil {
+			t.Fatalf("read %s: %v", f, err)
+		}
+		addStems(stripGalleryIcons(string(b)))
+	}
+	// The favicon and PWA icons are named in the server entrypoint, not the board.
+	addStems(repoFile(t, "cmd/web/main.go"))
+
+	assets, err := filepath.Glob(filepath.Join("..", "..", "web", "assets", "*.svg"))
+	if err != nil {
+		t.Fatalf("glob assets: %v", err)
+	}
+	for _, a := range assets {
+		stem := strings.TrimSuffix(filepath.Base(a), ".svg")
+		if !referenced[stem] {
+			t.Errorf(
+				"web/assets/%s.svg is a dead asset: no code outside galleryIcons draws it",
+				stem,
+			)
+		}
+	}
+}
+
 func TestHouseIconNamesHaveAssets(t *testing.T) {
 	if got := houseIconName(engine.HouseNone); got != "" {
 		t.Errorf("houseIconName(HouseNone) = %q, want empty", got)

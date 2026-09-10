@@ -846,6 +846,27 @@ func TestDrawingDamage(t *testing.T) {
 	}
 }
 
+// An artifact shows no power or armor stat — only creatures carry those values.
+// When a card turns into a creature (Auto-Legionary, ADR 0033) its power reads,
+// so the stat line follows the card's current type, not its printed one.
+func TestArtifactHidesPowerUntilItBecomesACreature(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	id := c.deal(testArtifact)
+	c.playFromHand(id)
+	statHTML := func() string {
+		return app.HTMLString(app.Div().Body(c.g.statLine(id)...))
+	}
+	if strings.Contains(statHTML(), "power.svg") {
+		t.Error("an artifact should not show a power stat")
+	}
+
+	c.g.g.PutIntoBattlelineAsCreature(id, true)
+	if !strings.Contains(statHTML(), "power.svg") {
+		t.Error("a card turned into a creature should show its power")
+	}
+}
+
 // The menu is drawn behind its button, and undo is offered as unavailable rather
 // than missing so the row does not move under the pointer.
 func TestDrawingTheMenu(t *testing.T) {

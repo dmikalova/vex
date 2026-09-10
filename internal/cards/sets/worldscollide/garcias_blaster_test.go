@@ -11,12 +11,12 @@ import (
 //
 //	House:  Star Alliance
 //	Type:   Upgrade
-//	Rarity: Special
+//	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains, "Fight/Reap: You may choose one:
+//	This creature gains, "Fight/Reap: Choose one:
 //	- Deal 2 damage to a creature
-//	- Attach this creature to Sensor Chief Garcia, and steal 1 Æmber."
+//	- Attach Garcia's Blaster to Sensor Chief Garcia -> steal 1 Æmber."
 func TestGarciasBlaster(t *testing.T) {
 	t.Run("attaches to Garcia and steals 1 Æmber", func(t *testing.T) {
 		var carrier ct.Card
@@ -38,7 +38,6 @@ func TestGarciasBlaster(t *testing.T) {
 		})
 
 		h.P1.Reap(carrier) // +1 Æmber
-		h.P1.ClickOption("Yes")
 		h.P1.ExpectPrompt("Choose one")
 		h.P1.ClickOption("attach")
 

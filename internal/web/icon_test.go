@@ -60,6 +60,26 @@ func TestIconFallbackAllowlistIsUsed(t *testing.T) {
 	}
 }
 
+// TestNoResidualUnknownGlyph renders every card's full Icon strip and fails if any
+// glyph is the abstract unknown. Unlike TestIconTotality — which only reads the
+// top-level covered flag — this walks the composed lines, so an unknown buried
+// inside a wrapper (a ChooseHouseThen's inner effect, a granted ability) that a
+// masking covered=true would hide is still caught (ADR 0022).
+func TestNoResidualUnknownGlyph(t *testing.T) {
+	regs := card.Cards()
+	for i := range regs {
+		for _, def := range materializedDefs(regs[i]) {
+			for _, line := range cardGlyphs(&def) {
+				for _, g := range line.glyphs {
+					if g.asset == "glyph-unknown" {
+						t.Errorf("%s renders an unknown glyph in its Icon strip", def.Name)
+					}
+				}
+			}
+		}
+	}
+}
+
 // TestEffectGlyphsTranscription binds the pass to a few worked examples so the
 // grammar cannot drift silently.
 func TestEffectGlyphsTranscription(t *testing.T) {

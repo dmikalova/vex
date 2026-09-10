@@ -626,7 +626,8 @@ func TestSpreadUpToCreatures(t *testing.T) {
 
 		e := DealDamage{Spread: UpToCreatures{Count: 3, Amount: 1, WhenDamaged: 3}}
 		if got := e.Text(); got !=
-			"deal 1 damage to up to 3 creatures, dealing 3 damage instead to a chosen creature that was already damaged" {
+			"choose up to 3 creatures. Deal 1 damage to each chosen creature. "+
+				"If that creature was already damaged, deal 3 damage instead" {
 			t.Errorf("text = %q", got)
 		}
 		e.Resolve(ctx)

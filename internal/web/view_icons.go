@@ -15,7 +15,7 @@ import (
 
 // iconStrip renders a card's glyph lines into the .card-icons band. Abilities flow
 // on one line separated by a "|" divider; the inner .card-icons-fit span is scaled
-// horizontally by iconFitScript when it is too wide, so a busy card squeezes to
+// horizontally by cardFitScript when it is too wide, so a busy card squeezes to
 // fit rather than wrapping into a second line or clipping.
 func iconStrip(lines []glyphLine) app.UI {
 	items := make([]app.UI, 0, len(lines)*2)

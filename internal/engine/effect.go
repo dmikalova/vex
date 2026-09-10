@@ -92,6 +92,14 @@ type EffectContext struct {
 	// lets that effect still refer to the Upgrade itself (e.g. as the source of a
 	// control change that lasts until the Upgrade leaves play).
 	Upgrade LocalID
+	// Grantor is the in-play card whose constant ability or upgrade granted the
+	// resolving ability, when the ability is not the source's own text (HasGrantor
+	// reports whether one is set). Source is the card the granted ability now lives
+	// on; Grantor is the card that handed it that ability — Uncharted Lands' reap
+	// moves Æmber off that one artifact, never a same-named copy. LocalID 0 is a
+	// valid card, so HasGrantor, not a zero check, distinguishes "no grantor".
+	Grantor    LocalID
+	HasGrantor bool
 	// ChosenHouse is a house picked by a ChooseHouseThen, read by
 	// Target.OfChosenHouse targets nested inside it.
 	ChosenHouse House

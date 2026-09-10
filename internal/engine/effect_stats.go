@@ -37,3 +37,16 @@ func (e GainStats) Resolve(ctx *EffectContext) {
 		ctx.Resolver.GainStats(id, e.Power, e.Armor)
 	}
 }
+
+// UpgradesOnIt scales a per-target bonus by the number of upgrades attached to
+// that creature — Light of the Archons gets +1 power and +1 armor for each
+// upgrade attached to it.
+var UpgradesOnIt PerTarget = upgradesOnIt{}
+
+type upgradesOnIt struct{}
+
+func (upgradesOnIt) perTargetValue(ctx *EffectContext, id LocalID) int {
+	return len(ctx.Resolver.Upgrades(id))
+}
+
+func (upgradesOnIt) perTargetText() string { return "upgrade attached to it" }

@@ -137,7 +137,7 @@ func TestTargetAttachedHostUnattached(t *testing.T) {
 
 // TestAttachSelfToText renders the effect and rejects a missing host name.
 func TestAttachSelfToText(t *testing.T) {
-	if got := (AttachSelfTo{Host: "Commander Chan"}).Text(); got != "attach "+SelfName+" to Commander Chan" {
+	if got := (AttachSelfTo{Host: "Commander Chan"}).Text(); got != "attach "+UpgradeName+" to Commander Chan" {
 		t.Errorf("text = %q", got)
 	}
 	if err := (AttachSelfTo{}).validate(); err == nil {

@@ -17,11 +17,11 @@ var GrumpusTamer = card.New(
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, "39"),
-	card.WithPower(4),
-	card.WithTraits(card.Traits.Giant),
 	card.Connects(
 		card.Pull(WarGrumpus, 2),
 	),
+	card.WithPower(4),
+	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(
-		card.Trigger.Reap, card.SearchForName{Name: "War Grumpus"}),
+		card.Trigger.Reap, card.SearchForName{Name: WarGrumpus.Name}),
 )

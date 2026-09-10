@@ -80,19 +80,33 @@ func (e StealAember) resolveGate(ctx *EffectContext) bool {
 	if !fromSupply {
 		ctx.Resolver.SetAember(opponent, ctx.Resolver.Aember(opponent)-amt)
 	}
-	ctx.Resolver.SetAember(player, ctx.Resolver.Aember(player)+amt)
+	// Gargantodon: a steal's Æmber never reaches the thief's pool — it is captured
+	// onto a creature the thief controls instead. The victim is still robbed, so the
+	// theft tally and the victim's reactions below fire either way; only where the
+	// Æmber lands changes.
+	if capturer, ok := ctx.Resolver.StolenAemberCaptor(player); ok {
+		ctx.Resolver.AddAmberOn(capturer, amt)
+		ctx.Resolver.Record(AemberCaptured{
+			Creature:   capturer,
+			Amount:     amt,
+			Source:     capturer,
+			FromSupply: fromSupply,
+		})
+	} else {
+		ctx.Resolver.SetAember(player, ctx.Resolver.Aember(player)+amt)
+		// Credit the card when the controller is the one stealing, so the line reads
+		// from the card's perspective; a turned-around steal (your opponent steals as
+		// the card leaves play) has no such agent, so it stays player-attributed.
+		ctx.Resolver.Record(AemberStolen{
+			Player:     player,
+			From:       opponent,
+			Amount:     amt,
+			Source:     ctx.Source,
+			HasSource:  e.Player != Opponent,
+			FromSupply: fromSupply,
+		})
+	}
 	ctx.Resolver.NoteAemberStolenFrom(opponent, amt)
-	// Credit the card when the controller is the one stealing, so the line reads
-	// from the card's perspective; a turned-around steal (your opponent steals as
-	// the card leaves play) has no such agent, so it stays player-attributed.
-	ctx.Resolver.Record(AemberStolen{
-		Player:     player,
-		From:       opponent,
-		Amount:     amt,
-		Source:     ctx.Source,
-		HasSource:  e.Player != Opponent,
-		FromSupply: fromSupply,
-	})
 	// The victim's After Æmber Is Stolen From You abilities react to the completed
 	// theft, so they fire after it is recorded.
 	ctx.Resolver.EmitAemberStolenFrom(opponent, amt)

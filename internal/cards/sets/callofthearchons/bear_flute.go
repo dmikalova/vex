@@ -16,25 +16,25 @@ var BearFlute = card.New(
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "340"),
-	card.WithTraits(card.Traits.Item),
 	card.Connects(
 		card.Pull(AncientBear, 2),
 	),
+	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
 			card.Heal{
 				Fully:  true,
-				Target: card.Target.Creature.Named("Ancient Bear"),
+				Target: card.Target.Creature.Named(AncientBear.Name),
 			},
 			card.Conditional{
 				Cond: card.InPlay{
 					Player: card.EachPlayer,
 					Type:   card.Type.Creature,
-					Name:   "Ancient Bear",
+					Name:   AncientBear.Name,
 					None:   true,
 				},
 				Then: card.Then{
-					First:  card.SearchForName{Name: "Ancient Bear", All: true},
+					First:  card.SearchForName{Name: AncientBear.Name, All: true},
 					Result: card.ShuffleIntoDeck{Zones: []card.Zone{card.Discard}},
 				},
 			},

@@ -53,7 +53,9 @@ func (g *Game) InvariantError() error {
 			for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
 				count[up]++
 				attached[up] = true
-				if t := g.cat.def(up).Type; t != Upgrade {
+				// A chain holds upgrades and — since ADR 0026 — creatures played as
+				// upgrades. Any other printed type threaded into a chain is corruption.
+				if t := g.cat.def(up).Type; t != Upgrade && t != Creature {
 					return fmt.Errorf(
 						"card %d (%s) is in %s's upgrade chain but is a %s, not an Upgrade",
 						up,

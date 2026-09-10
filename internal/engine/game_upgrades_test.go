@@ -2,6 +2,42 @@ package engine
 
 import "testing"
 
+// TestStaticModifierPerUpgrade attaches a Light-of-the-Archons-style upgrade whose
+// power/armor bonus scales by the number of upgrades on the host, then adds a
+// second upgrade and confirms the bonus grows with the count.
+func TestStaticModifierPerUpgrade(t *testing.T) {
+	g := started(t)
+	host := g.AddToBattleline(testCreature("host", 4), 0)
+	light := g.Register(
+		NewCard("light", StarAlliance, Upgrade, Common,
+			WithStatic(StaticModifier{PowerBonus: 1, ArmorBonus: 1, Per: UpgradesOnIt})),
+		0,
+	)
+	g.AttachUpgrade(host, light)
+
+	// One upgrade on the host: +1 power and +1 armor.
+	if p := g.Power(host); p != 5 {
+		t.Errorf("host power with one upgrade = %d, want 5", p)
+	}
+	if a := g.Armor(host); a != 1 {
+		t.Errorf("host armor with one upgrade = %d, want 1", a)
+	}
+
+	plain := g.Register(
+		NewCard("plain", StarAlliance, Upgrade, Common, WithAemberBonus(1)),
+		0,
+	)
+	g.AttachUpgrade(host, plain)
+
+	// Two upgrades on the host: the scaled bonus is now +2 power and +2 armor.
+	if p := g.Power(host); p != 6 {
+		t.Errorf("host power with two upgrades = %d, want 6", p)
+	}
+	if a := g.Armor(host); a != 2 {
+		t.Errorf("host armor with two upgrades = %d, want 2", a)
+	}
+}
+
 // TestUpgradeChainStitchesWhenMiddleLeaves attaches several upgrades to one host and
 // destroys the one in the middle, exercising the tail-append in AttachUpgrade and the
 // predecessor-stitch branch in detachUpgrade: the surviving upgrades stay on the host
@@ -59,5 +95,36 @@ func TestUpgradeChainStitchesWhenMiddleLeaves(t *testing.T) {
 
 	if got := g.Upgrades(other); len(got) != 2 || got[0] != a || got[1] != b {
 		t.Fatalf("upgrades after tail destroyed = %v, want [%d %d]", got, a, b)
+	}
+}
+
+// TestStaticModifierKeywordsToNeighbors attaches a Cloaking-Dongle-style upgrade to a
+// creature in the middle of the battleline and confirms its KeywordsToNeighbors reach
+// the host and both of its neighbors, but no farther.
+func TestStaticModifierKeywordsToNeighbors(t *testing.T) {
+	g := started(t)
+	far := g.AddToBattleline(testCreature("far", 3), 0)
+	left := g.AddToBattleline(testCreature("left", 3), 0)
+	host := g.AddToBattleline(testCreature("host", 3), 0)
+	right := g.AddToBattleline(testCreature("right", 3), 0)
+
+	dongle := g.Register(
+		NewCard("dongle", StarAlliance, Upgrade, Common,
+			WithStatic(StaticModifier{KeywordsToNeighbors: []Keyword{Elusive}})),
+		0,
+	)
+	g.AttachUpgrade(host, dongle)
+
+	if !g.HasKeyword(host, Elusive) {
+		t.Error("the host should gain elusive from its own upgrade")
+	}
+	if !g.HasKeyword(left, Elusive) {
+		t.Error("the left neighbor should gain elusive")
+	}
+	if !g.HasKeyword(right, Elusive) {
+		t.Error("the right neighbor should gain elusive")
+	}
+	if g.HasKeyword(far, Elusive) {
+		t.Error("a non-neighbor should not gain elusive")
 	}
 }

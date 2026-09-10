@@ -96,6 +96,10 @@ type CardCore struct {
 	// turn. Adding it also tops up ArmorRemaining so the extra armor can absorb
 	// damage this turn; the ready phase clears it for every creature.
 	TempArmorBonus int16
+	// TempAssaultBonus is Assault a creature gained for the remainder of the turn —
+	// Creed of Nature grants a chosen creature assault equal to its power. It adds to
+	// the creature's Assault value; the ready phase clears it for every creature.
+	TempAssaultBonus int16
 	// TempHouse is the house this in-play card belongs to until its controller's
 	// turn ends. HouseNone means it belongs to its printed house.
 	TempHouse House
@@ -103,6 +107,14 @@ type CardCore struct {
 	// (rather than only until end of turn). HouseNone means none. It is cleared by
 	// resetCore when the card leaves play.
 	LastingHouse House
+	// LastingType is the card type this in-play card has taken on until it leaves
+	// play, overriding its printed type — Auto-Legionary is an artifact that turns
+	// itself into a creature on the battleline. TypeUnset means it keeps its printed
+	// type. It is cleared by resetCore when the card leaves play. Upgrade mode is not
+	// stored here: a card in an upgrade chain reads as an Upgrade from its
+	// attachment (HostPlus), not this field, because the discard path for a shed
+	// upgrade does not reset the core.
+	LastingType CardType
 	// NamedHouse is a house this card named as it entered play and holds for as long
 	// as it stays there, for a HouseLock that constrains that house rather than one
 	// printed on the card — Restringuntus bars the house it named. It is the card's
@@ -293,6 +305,11 @@ type GameState struct {
 	ActivePlayer int
 	// ActiveHouse is the house the active player chose to act with this turn.
 	ActiveHouse House
+	// Tide is the game-wide tide state: neutral at the start of the game, then high
+	// for the player who raised it and low for their opponent. No implemented card
+	// raises the tide yet (the mechanic arrives in a later set), so the tide stays
+	// neutral and any "while the tide is low/high" check reads false.
+	Tide Tide
 	// Turn is the current turn number.
 	Turn   int
 	Winner int // -1 while the game is ongoing
@@ -442,6 +459,19 @@ type GameState struct {
 	Lasting      [maxLasting]LastingEffect
 	LastingCount uint8
 
+	// Reanimations holds the delayed put-into-play records armed by a creature's
+	// Destroyed ability (Gebuk), each fired by fireReanimations once its source has
+	// left play; ReanimationsCount is how many of the fixed array are in use.
+	Reanimations      [maxReanimations]ReanimateInPlace
+	ReanimationsCount uint8
+
+	// Morphs holds the "for the remainder of the turn" trigger morphs active now
+	// (Livia the Elder's fight/reap fuse), queried by game_abilities.go when a
+	// creature's abilities are gathered; MorphCount is how many of the fixed array
+	// are in use. The ready phase drops a player's entries.
+	Morphs     [maxMorph]LastingMorph
+	MorphCount uint8
+
 	// PlayedThisTurn[p] and DiscardedThisTurn[p] record, in order, the cards player p
 	// has played and discarded this turn; StartTurn clears both. Cards filter them
 	// themselves — by house for Epic Quest's "7 or more Sanctum cards this turn" and
@@ -453,6 +483,18 @@ type GameState struct {
 	// house h player p has spent this turn (Witch of the Wilds). StartTurn resets it.
 	// A turn cannot spend more than a hand's worth, so a byte per house is ample.
 	PlayPermissionsUsedThisTurn [2][NumHouses]uint8
+
+	// OffHousePermits[p] are the this-turn grants letting player p play or use a
+	// bounded number of cards outside their active house (Com. Officer Kirby, CXO
+	// Taber, United Action); OffHousePermitCount is how many of the fixed array are
+	// in use. The ready phase clears them.
+	OffHousePermits     [2][maxOffHousePermits]OffHousePermit
+	OffHousePermitCount [2]uint8
+
+	// NonActivePlaysUsedThisTurn[p] counts the off-house plays player p has made this
+	// turn using a continuous "any non-active house" permission (Captain Val
+	// Jericho). StartTurn resets it.
+	NonActivePlaysUsedThisTurn [2]uint8
 
 	// FirstTurnPlayLimit[p] holds the first-turn rule for player p: on the first
 	// player's first turn they may play or discard only one card from hand. StartGame
@@ -492,6 +534,13 @@ type GameState struct {
 	// (Evasion Sigil). It is set during the fight in progress and read and cleared
 	// before Assault, Hazardous, fight damage, and Fight: abilities would resolve.
 	FightCancelled bool
+	// FightersPlus holds the two creatures resolving the fight in progress — the
+	// attacker and the creature it fights — each +1 encoded so card 0 is
+	// distinguishable from "no fight" (the zero value). A creature counts as
+	// "fighting" (Nizak, The Forgotten gains invulnerable while fighting) only while
+	// it is one of these. It is set for the span of one fight and restored after, so
+	// a nested fight reads only its own pair, and is the zero value outside combat.
+	FightersPlus [2]LocalID
 	// PurgePlayedAction is the action card whose own "Play:" ability purges it
 	// (Library Access): it is set while that ability resolves and read when the
 	// played action would go to the discard pile, sending it to the purge pile

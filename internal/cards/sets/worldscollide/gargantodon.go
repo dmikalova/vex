@@ -1,13 +1,8 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Gargantodon
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Saurian
 //	Type:   Creature
@@ -15,9 +10,9 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  16
 //	Traits: Beast
 //
+//	Gargantodon deals 4 Damage when fighting.
+//	Each Æmber that would be stolen is captured by a creature controlled by the active player instead.
 //	Gargantodon enters play stunned.
-//	Gargantodon only deals 4D when fighting.
-//	Each A that would be stolen is captured by a creature controlled by the active player instead.
 var Gargantodon = card.New(
 	"Gargantodon",
 	card.House.Saurian,
@@ -26,5 +21,13 @@ var Gargantodon = card.New(
 	card.Provenance(card.WC, "203"),
 	card.WithPower(16),
 	card.WithTraits(card.Traits.Beast),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithEntersPlay(card.Stun{Target: card.Target.This}),
+	card.WithAttackDamage(card.AttackDamage{
+		Amount: 4,
+		Fixed:  true,
+	}),
+	card.WithReplaces(card.Instead{
+		Of:   card.Event.AemberStolen,
+		With: card.Capture,
+	}),
 )

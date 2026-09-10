@@ -18,6 +18,7 @@ var Tezmal = card.New(
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.AoA, "66"),
+	card.OneCopyPerDeck(),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Imp),
 	card.WithKeywords(card.Keyword.Elusive),
@@ -25,5 +26,4 @@ var Tezmal = card.New(
 		card.Trigger.Reap, card.ChooseHouseThen{
 			Then: card.ForbidOpponentActiveHouse{},
 		}),
-	card.OneCopyPerDeck(),
 )

@@ -11,12 +11,12 @@ import (
 //
 //	House:  Star Alliance
 //	Type:   Upgrade
-//	Rarity: Common
+//	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains, "Fight/Reap: You may choose one:
+//	This creature gains, "Fight/Reap: Choose one:
 //	- Deal 2 damage to a creature
-//	- Attach this creature to Armsmaster Molina, and you may deal 3 damage to a creature."
+//	- Attach Molina's Blaster to Armsmaster Molina -> deal 3 damage to a creature."
 func TestMolinasBlaster(t *testing.T) {
 	t.Run("deals 3 damage on the attach payoff", func(t *testing.T) {
 		var carrier, victim ct.Card
@@ -31,6 +31,10 @@ func TestMolinasBlaster(t *testing.T) {
 						),
 						MolinasBlaster,
 					),
+					ct.Creature(
+						ct.OfHouse(card.House.StarAlliance),
+						ct.Named(ArmsmasterMolina.Name),
+					),
 				),
 			},
 			P2: ct.Side{
@@ -39,7 +43,6 @@ func TestMolinasBlaster(t *testing.T) {
 		})
 
 		h.P1.Reap(carrier)
-		h.P1.ClickOption("Yes")
 		h.P1.ExpectPrompt("Choose one")
 		h.P1.ClickOption("attach")
 		h.P1.ClickCard(victim)

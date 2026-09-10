@@ -47,6 +47,7 @@ func (g *Game) StartTurn(player int) {
 	g.State.PlayedThisTurn[player].reset()
 	g.State.DiscardedThisTurn[player].reset()
 	g.State.PlayPermissionsUsedThisTurn[player] = [NumHouses]uint8{}
+	g.State.NonActivePlaysUsedThisTurn[player] = 0
 	g.State.FirstTurnPlayLimit[player] = false
 	for p := 0; p < 2; p++ {
 		for _, id := range g.State.Battleline[p].slice() {
@@ -230,6 +231,14 @@ func (g *Game) CannotUseNextTurn(player int, source LocalID) {
 	g.State.CannotUseNext[player] = Bar[bool]{Value: true, Source: source}
 }
 
+// CannotUseThisTurn bars a player from reaping, fighting, or using an "Action:"
+// ability for the rest of the current turn (United Action). It sets the use bar
+// directly rather than arming the next-turn form, so the ready phase lifts it at
+// the end of this turn.
+func (g *Game) CannotUseThisTurn(player int, source LocalID) {
+	g.State.CannotUse[player] = Bar[bool]{Value: true, Source: source}
+}
+
 // CannotReapNextTurn arms a bar that stops a player reaping with any creature
 // throughout their next turn (Inky Gloom). StartTurn promotes it and the ready
 // phase lifts it. It is narrower than CannotUseNextTurn: fighting and "Action:"
@@ -350,6 +359,14 @@ func (g *Game) GrantUseArtifactsAnyHouse(player int) {
 	g.record(UseArtifactsGrantedAnyHouse{Player: player})
 }
 
+// GrantOffHousePermit records a this-turn grant letting a player play or use a
+// bounded number of cards outside their active house (Com. Officer Kirby, CXO
+// Taber, United Action). The ready phase clears it.
+func (g *Game) GrantOffHousePermit(player int, p OffHousePermit) {
+	g.addOffHousePermit(player, p)
+	g.record(OffHousePlayGranted{Player: player})
+}
+
 // ForceActiveHouseNextTurn makes a player have to choose house h as their active
 // house on their next turn (Control the Weak). StartTurn promotes the armed house.
 func (g *Game) ForceActiveHouseNextTurn(player int, h House, source LocalID) {
@@ -440,6 +457,11 @@ func (g *Game) forgeKeyAtExtraCost(player, extra int) bool {
 	if g.spendableAember(player) < cost {
 		return false
 	}
+	// An opponent's forge guard (Keyforgery) may prevent the forge here, before any
+	// Æmber leaves the pool, so a prevented forge costs the player nothing.
+	if g.opponentForgeGuarded(player) {
+		return false
+	}
 	// The colour is settled before the Æmber leaves the pool, so a forge is one
 	// step: a player looking at the colour prompt has not paid for anything yet.
 	color, ok := g.pickKeyColor(player)
@@ -448,13 +470,15 @@ func (g *Game) forgeKeyAtExtraCost(player, extra int) bool {
 	return true
 }
 
-// spendableAember is everything a player can put toward a key: their pool plus
-// the Æmber banked on cards that let it be spent when forging (Safe Place).
+// spendableAember is everything a player can put toward a key: their pool, the
+// Æmber banked on cards that let it be spent when forging (Safe Place), and the
+// Æmber on creatures a spend-as-pool permission covers (Senator Bracchus).
 func (g *Game) spendableAember(player int) int {
 	total := g.State.Aember[player]
 	for _, id := range g.vaults(player) {
 		total += g.AmberOn(id)
 	}
+	total += g.spendAsPoolTotal(player)
 	return total
 }
 
@@ -475,6 +499,9 @@ func (g *Game) payKeyCost(player, cost int) {
 		taken := min(cost, g.AmberOn(id))
 		g.AddAmberOn(id, -taken)
 		cost -= taken
+	}
+	if cost > 0 {
+		g.drawFromSpendAsPool(player, cost)
 	}
 	if gainer, ok := g.forgeAemberGainer(player); ok && total > 0 {
 		beneficiary := g.controller(gainer)
@@ -497,6 +524,9 @@ func (g *Game) vaults(player int) []LocalID {
 // forgeKeyFree forges one key without paying its current cost.
 func (g *Game) forgeKeyFree(player int) {
 	if g.forgeKeyNumberBarred(player) {
+		return
+	}
+	if g.opponentForgeGuarded(player) {
 		return
 	}
 	color, ok := g.pickKeyColor(player)

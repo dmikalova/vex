@@ -6,28 +6,27 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Star Alliance
 //	Type:   Upgrade
-//	Rarity: Special
+//	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains, "Fight/Reap: You may choose one:
+//	This creature gains, "Fight/Reap: Choose one:
 //	- Deal 2 damage to a creature
-//	- Attach this creature to Lieutenant Khrkhar, and ward Lieutenant Khrkhar."
+//	- Attach Khrkhar's Blaster to Lieutenant Khrkhar -> ward Lieutenant Khrkhar."
 var KhrkharsBlaster = card.New(
 	"Khrkhar's Blaster",
 	card.House.StarAlliance,
 	card.Type.Upgrade,
-	// TODO(variant): rarity relabelled from Variant to Special — handle manually
-	card.Rarity.Special,
+	card.Rarity.Rare,
 	card.Provenance(card.WC, "349"),
-	card.WithAemberBonus(1),
 	card.Connects(card.Pull(LieutenantKhrkhar, 1)),
+	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
-		Granted: card.FightOrReap(card.May{Do: card.ChooseOne{Options: []card.Effect{
+		Granted: card.FightOrReap(card.ChooseOne{Options: []card.Effect{
 			card.DealDamage{Amount: 2, Target: card.Target.Creature},
-			card.Sequence{Effects: []card.Effect{
-				card.AttachSelfTo{Host: "Lieutenant Khrkhar"},
-				card.Ward{Target: card.Target.AttachedHost.Named("Lieutenant Khrkhar")},
-			}},
-		}}}),
+			card.Then{
+				First:  card.AttachSelfTo{Host: LieutenantKhrkhar.Name},
+				Result: card.Ward{Target: card.Target.AttachedHost.Named(LieutenantKhrkhar.Name)},
+			},
+		}}),
 	}),
 )

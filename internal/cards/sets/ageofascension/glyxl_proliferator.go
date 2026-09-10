@@ -21,7 +21,7 @@ var GlyxlProliferator = card.New(
 	card.WithTraits(card.Traits.Martian, card.Traits.Soldier),
 	card.WithAbility(
 		card.Trigger.Reap, card.Conditional{
-			Cond: card.SourceOnFlank{},
+			Cond: card.OnFlank{},
 			Then: card.ArchiveFromDiscard{House: card.House.Self},
 		}),
 )

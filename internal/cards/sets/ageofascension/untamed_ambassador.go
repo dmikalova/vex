@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human
 //
 //	Elusive.
-//	Fight/Reap: You may play or use a Untamed card this turn.
+//	Fight/Reap: For the remainder of the turn, you may play or use a Untamed card.
 var UntamedAmbassador = card.New(
 	"Untamed Ambassador",
 	card.House.Sanctum,
@@ -22,5 +22,7 @@ var UntamedAmbassador = card.New(
 	card.WithTraits(card.Traits.Human),
 	card.WithKeywords(card.Keyword.Elusive),
 	// TODO: planned rework of the Ambassador cycle.
-	card.WithFightOrReap(card.MayPlayOrUseFriendlyHouse{House: card.House.Untamed}),
+	card.WithFightOrReap(
+		card.MayActFriendlyHouse{House: card.House.Untamed, Grant: card.GrantPlay | card.GrantUse},
+	),
 )

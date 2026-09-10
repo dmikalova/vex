@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human
 //
 //	Elusive.
-//	Fight/Reap: You may play or use a Logos card this turn.
+//	Fight/Reap: For the remainder of the turn, you may play or use a Logos card.
 var LogosAmbassador = card.New(
 	"Logos Ambassador",
 	card.House.Sanctum,
@@ -22,5 +22,7 @@ var LogosAmbassador = card.New(
 	card.WithTraits(card.Traits.Human),
 	card.WithKeywords(card.Keyword.Elusive),
 	// TODO: planned rework of the Ambassador cycle.
-	card.WithFightOrReap(card.MayPlayOrUseFriendlyHouse{House: card.House.Logos}),
+	card.WithFightOrReap(
+		card.MayActFriendlyHouse{House: card.House.Logos, Grant: card.GrantPlay | card.GrantUse},
+	),
 )

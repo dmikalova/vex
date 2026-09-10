@@ -355,6 +355,10 @@ func (g *Game) destroyTogether(controller int, ids []LocalID) {
 			g.emitAfterCreatureDestroyed(id)
 		}
 	}
+	// A creature's Destroyed ability may have armed a discarded creature to enter
+	// play in its former slot (Gebuk); with the batch now in the discard pile, its
+	// source has left play, so the delayed put-into-play fires.
+	g.fireReanimations()
 }
 
 // destroyEach destroys each id simultaneously (KeyForge's shared Destroyed

@@ -21,11 +21,11 @@ var Terrordactyl = card.New(
 	card.Provenance(card.WC, "211"),
 	card.WithPower(12),
 	card.WithTraits(card.Traits.Beast),
+	card.WithEntersPlay(card.Stun{Target: card.Target.This}),
 	card.WithAttackDamage(card.AttackDamage{
 		Amount: 4,
 		Fixed:  true,
 	}),
-	card.WithEntersPlay(card.Stun{Target: card.Target.This}),
 	card.WithAbility(
 		card.Trigger.BeforeFight, card.DealDamage{
 			Amount: 4,

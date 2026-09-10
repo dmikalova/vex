@@ -63,6 +63,13 @@ const (
 	// have while the taker still gains it. It is the source end of the same Æmber-flow
 	// replacement spine EventAemberAddedToPool is the destination end of.
 	EventAemberTakenFromPool
+	// EventAemberStolen is Æmber a steal has just removed from a pool, about to be
+	// added to the thief's pool (a replacement point). A card that redirects the
+	// theft's destination — Gargantodon, capturing it onto a creature the active
+	// player controls — is queried here. Unlike the pool events it is global rather
+	// than pool-scoped: the redirect applies to every steal regardless of who
+	// controls the card.
+	EventAemberStolen
 	// EventForgeKey fires after a player forges a key (a reaction point). A reaction
 	// owned by that player fires during their turn; because the registry clears a
 	// player's own entries at their ready phase, a reaction armed on an opponent
@@ -84,6 +91,13 @@ const (
 	// creature takes an additional N damage whenever it takes damage" modifier to one
 	// chosen creature; applyRawDamage queries the registry and sums the bonuses.
 	EventCreatureTakesDamage
+	// EventBeforeFight fires just before a creature is used to fight, keyed to the
+	// attacker and always subject-scoped. Unlike the other reaction points it is fired
+	// by fireLastingBeforeFight, which matches on the subject alone rather than the
+	// acting player, so a grant that lasts into the opponent's turn (Diplomacy's "each
+	// creature gains 'Before Fight: Exalt this creature'") fires for an enemy attacker
+	// on the opponent's turn too.
+	EventBeforeFight
 )
 
 // isReaction reports whether the event is a reaction point (fired after) rather
@@ -131,6 +145,9 @@ const (
 	actCapture
 	actDraw
 	actLoseAember
+	// actExalt places Amount Æmber on the subject creature — the granted "Before
+	// Fight: Exalt this creature" (Diplomacy).
+	actExalt
 	// actTakeExtraDamage is a modifier, not a reaction: it is never fired by
 	// emitLasting, only summed at the damage site by lastingExtraDamage.
 	actTakeExtraDamage
@@ -152,6 +169,8 @@ func (a lastingAction) describe() string {
 		return "draw a card"
 	case actLoseAember:
 		return "opponent loses Æmber"
+	case actExalt:
+		return "exalt the creature"
 	default:
 		return "gain Æmber"
 	}
@@ -222,6 +241,7 @@ func (g *Game) clearLasting(player int) {
 		g.State.Lasting[i] = LastingEffect{}
 	}
 	g.State.LastingCount = uint8(n)
+	g.clearLastingMorphs(player)
 }
 
 // emitLasting resolves every reaction actor owns that responds to event. When
@@ -264,6 +284,23 @@ func (g *Game) emitLasting(event Event, actor int, subject LocalID) {
 			g.removeLasting(le)
 		}
 		pending = append(pending[:idx], pending[idx+1:]...)
+	}
+}
+
+// fireLastingBeforeFight resolves every lasting "Before Fight" ability granted to
+// the attacker, keyed to the attacker as subject and fired regardless of whose turn
+// it is. Diplomacy grants each creature "Before Fight: Exalt this creature" until
+// the granting player's next turn, so an enemy creature exalts when it fights on the
+// opponent's turn too — which is why this matches on the subject alone rather than
+// the acting player the way emitLasting does.
+func (g *Game) fireLastingBeforeFight(attacker LocalID) {
+	actor := g.controller(attacker)
+	for i := 0; i < int(g.State.LastingCount); i++ {
+		le := g.State.Lasting[i]
+		if le.On != EventBeforeFight || !le.HasSubject || le.Subject != attacker {
+			continue
+		}
+		g.resolveReaction(le, actor, attacker)
 	}
 }
 
@@ -315,6 +352,9 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 				HasIt:      true,
 			},
 		)
+	case actExalt:
+		g.addAmberOn(subject, int(le.Amount))
+		g.record(AemberExalted{Creature: subject, Amount: int(le.Amount)})
 	case actDraw:
 		g.draw(actor, int(le.Amount))
 		g.record(LastingDraw{Player: actor, Amount: int(le.Amount), On: le.On})

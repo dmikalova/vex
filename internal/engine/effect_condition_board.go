@@ -1,0 +1,445 @@
+package engine
+
+import (
+	"fmt"
+	"strings"
+)
+
+// PoolAember gates on one player's Æmber pool: Player names whose pool (Controller
+// or Opponent), Is the comparison, and Amount the threshold it compares against
+// (unused by the relative MoreThanYou / MoreThanOpponent comparisons, which compare
+// the two pools). It replaces the mirror opponent-pool / your-pool conditions with
+// one node.
+type PoolAember struct {
+	Player Player
+	Is     Comparison
+	Amount int
+}
+
+// validate requires a pool-owning player and a named comparison, and ties each
+// relative comparison to the side it reads from.
+func (c PoolAember) validate() error {
+	if c.Player != Controller && c.Player != Opponent {
+		return fmt.Errorf("PoolAember: Player must be Controller or Opponent")
+	}
+	switch c.Is {
+	case AtLeast, AtMost, Exactly:
+		return nil
+	case MoreThanYou:
+		if c.Player != Opponent {
+			return fmt.Errorf("PoolAember: MoreThanYou requires Player Opponent")
+		}
+		return nil
+	case MoreThanOpponent:
+		if c.Player != Controller {
+			return fmt.Errorf("PoolAember: MoreThanOpponent requires Player Controller")
+		}
+		return nil
+	default:
+		return fmt.Errorf(
+			"PoolAember: Is must be AtLeast, AtMost, Exactly, MoreThanYou, or MoreThanOpponent",
+		)
+	}
+}
+
+// CondText renders the condition, e.g. "if your opponent has 7 Æmber or more" or
+// "if you have more Æmber than your opponent".
+func (c PoolAember) CondText() string {
+	switch c.Is {
+	case MoreThanYou:
+		return "if your opponent has more Æmber than you"
+	case MoreThanOpponent:
+		return "if you have more Æmber than your opponent"
+	}
+	if c.Player == Opponent {
+		switch {
+		case c.Is == Exactly && c.Amount == 0:
+			return "if your opponent has no Æmber"
+		case c.Is == Exactly:
+			return fmt.Sprintf("if your opponent has exactly %d Æmber", c.Amount)
+		case c.Is == AtMost:
+			return fmt.Sprintf("if your opponent has %d Æmber or fewer", c.Amount)
+		default:
+			return fmt.Sprintf("if your opponent has %d Æmber or more", c.Amount)
+		}
+	}
+	switch {
+	case c.Is == Exactly && c.Amount == 0:
+		return "if you have no Æmber"
+	case c.Is == Exactly:
+		return fmt.Sprintf("if you have exactly %d Æmber", c.Amount)
+	case c.Is == AtMost:
+		return fmt.Sprintf("if you have %d Æmber or fewer", c.Amount)
+	default:
+		return fmt.Sprintf("if you have %d Æmber or more", c.Amount)
+	}
+}
+
+// Met reports whether the named player's pool satisfies the comparison.
+func (c PoolAember) Met(ctx *EffectContext) bool {
+	mine := ctx.Resolver.Aember(ctx.PlayerFor(c.Player))
+	switch c.Is {
+	case Exactly:
+		return mine == c.Amount
+	case AtMost:
+		return mine <= c.Amount
+	case MoreThanYou, MoreThanOpponent:
+		other := ctx.Controller
+		if c.Player == Controller {
+			other = ctx.Opponent()
+		}
+		return mine > ctx.Resolver.Aember(other)
+	default:
+		return mine >= c.Amount
+	}
+}
+
+// ControlsMoreCreatures is met while the controller has more creatures in play
+// than the opponent.
+type ControlsMoreCreatures struct{}
+
+// CondText renders the condition.
+func (ControlsMoreCreatures) CondText() string {
+	return "if you control more creatures than your opponent"
+}
+
+// Met reports whether the controller has more creatures in play than the opponent.
+func (ControlsMoreCreatures) Met(ctx *EffectContext) bool {
+	return len(
+		ctx.Resolver.Battleline(ctx.Controller),
+	) > len(
+		ctx.Resolver.Battleline(ctx.Opponent()),
+	)
+}
+
+// HasOtherFriendlyCreatures is met when the source's controller has at least one
+// creature in play other than the source — Reassembling Automaton replaces its own
+// destruction only "if you have any other creatures in play".
+type HasOtherFriendlyCreatures struct{}
+
+// CondText renders the condition as the card prints it.
+func (HasOtherFriendlyCreatures) CondText() string {
+	return "if you have any other creatures in play"
+}
+
+// Met reports whether the controller has any creature in play besides the source.
+func (HasOtherFriendlyCreatures) Met(ctx *EffectContext) bool {
+	return InPlay{Player: Controller, Type: Creature, Other: true}.Met(ctx)
+}
+
+// CardsInDeckAtMost is met when the controller's deck holds at most Amount cards —
+// Manchego steals only "if you have 5 or fewer cards in your deck".
+type CardsInDeckAtMost struct {
+	Amount int
+}
+
+// CondText renders the condition as the card prints it.
+func (e CardsInDeckAtMost) CondText() string {
+	return fmt.Sprintf("if you have %d or fewer cards in your deck", e.Amount)
+}
+
+// Met reports whether the controller's deck size is at most Amount.
+func (e CardsInDeckAtMost) Met(ctx *EffectContext) bool {
+	return len(ctx.Resolver.Deck(ctx.Controller)) <= e.Amount
+}
+
+// ControlsNamed is met when the controller has a card of a given printed name in
+// play — Hyde draws an extra card while it controls Velum.
+type ControlsNamed struct {
+	Name string
+}
+
+// CondText renders the condition, e.g. "if you control Velum".
+func (c ControlsNamed) CondText() string {
+	return "if you control " + c.Name
+}
+
+// Met reports whether the controller has the named card in play.
+func (c ControlsNamed) Met(ctx *EffectContext) bool {
+	return InPlay{Player: Controller, Name: c.Name}.Met(ctx)
+}
+
+// ControlsCreaturesOfHouses is met while the controller's creatures in play span
+// at least Amount different houses — Prince Derric, Unifier pays out when three
+// houses are represented.
+type ControlsCreaturesOfHouses struct {
+	// Amount is the number of different houses that must be represented.
+	Amount int
+}
+
+// validate requires a positive Count.
+func (c ControlsCreaturesOfHouses) validate() error {
+	if c.Amount <= 0 {
+		return fmt.Errorf("ControlsCreaturesOfHouses: Count must be positive")
+	}
+	return nil
+}
+
+// CondText renders the condition, e.g. "if you control creatures from 3 or more
+// houses".
+func (c ControlsCreaturesOfHouses) CondText() string {
+	return fmt.Sprintf("if you control creatures from %d or more houses", c.Amount)
+}
+
+// Met reports whether the controller's creatures span at least Amount houses.
+func (c ControlsCreaturesOfHouses) Met(ctx *EffectContext) bool {
+	seen := map[House]bool{}
+	for _, id := range ctx.Resolver.Battleline(ctx.Controller) {
+		seen[ctx.Resolver.House(id)] = true
+	}
+	return len(seen) >= c.Amount
+}
+
+// PlayerControlsFewerHousesThan is met while the chosen player controls creatures
+// from fewer than Amount distinct houses (Proclamation 346E taxes the opponent's
+// keys until they field three houses). It counts houses among creatures only, not
+// artifacts.
+type PlayerControlsFewerHousesThan struct {
+	Player Player
+	Amount int
+}
+
+// validate requires a positive threshold.
+func (c PlayerControlsFewerHousesThan) validate() error {
+	if c.Amount <= 0 {
+		return fmt.Errorf("PlayerControlsFewerHousesThan: Amount must be positive")
+	}
+	return nil
+}
+
+// CondText renders the condition as a "while" clause naming the player and the
+// house count, e.g. "while your opponent does not control creatures from 3 or
+// more different houses".
+func (c PlayerControlsFewerHousesThan) CondText() string {
+	whose := "you do"
+	if c.Player == Opponent {
+		whose = "your opponent does"
+	}
+	return fmt.Sprintf(
+		"while %s not control creatures from %d or more different houses", whose, c.Amount)
+}
+
+// Met counts the distinct houses among the chosen player's creatures and reports
+// whether that count is below the threshold.
+func (c PlayerControlsFewerHousesThan) Met(ctx *EffectContext) bool {
+	player := ctx.PlayerFor(c.Player)
+	seen := map[House]bool{}
+	for _, id := range ctx.Resolver.Battleline(player) {
+		seen[ctx.Resolver.House(id)] = true
+	}
+	return len(seen) < c.Amount
+}
+
+// Overwhelmed reports whether the controller is overwhelmed — their opponent
+// controls more creatures than they do. "Overwhelmed" is the keyword form of that
+// board state; Numquid the Fair repeats its destruction while overwhelmed.
+type Overwhelmed struct{}
+
+// CondText renders the condition.
+func (Overwhelmed) CondText() string { return "if you are overwhelmed" }
+
+// Met reports whether the opponent controls more creatures than the controller.
+func (Overwhelmed) Met(ctx *EffectContext) bool {
+	return len(
+		ctx.Resolver.Battleline(ctx.Opponent()),
+	) > len(
+		ctx.Resolver.Battleline(ctx.Controller),
+	)
+}
+
+// HousesRepresented is met when the distinct houses represented among a chosen
+// set of in-play cards compare (Is) to Amount — Galactic Census pays out more as
+// more houses share the board. Among carries no Max, so the raw house count is
+// compared.
+type HousesRepresented struct {
+	Among  HousesAmong
+	Is     Comparison
+	Amount int
+}
+
+// validate requires a comparison the condition supports.
+func (c HousesRepresented) validate() error {
+	switch c.Is {
+	case AtLeast, AtMost, Exactly:
+		return nil
+	default:
+		return fmt.Errorf("HousesRepresented: Is must be AtLeast, AtMost, or Exactly")
+	}
+}
+
+// Met compares the surveyed house count against Amount by Is.
+func (c HousesRepresented) Met(ctx *EffectContext) bool {
+	n := c.Among.Value(ctx)
+	switch c.Is {
+	case AtMost:
+		return n <= c.Amount
+	case Exactly:
+		return n == c.Amount
+	default:
+		return n >= c.Amount
+	}
+}
+
+// CondText renders the condition, e.g. "if there are 3 or more houses represented
+// among creatures in play".
+func (c HousesRepresented) CondText() string {
+	qty := fmt.Sprintf("%d or more", c.Amount)
+	switch c.Is {
+	case AtMost:
+		qty = fmt.Sprintf("%d or fewer", c.Amount)
+	case Exactly:
+		qty = fmt.Sprintf("exactly %d", c.Amount)
+	}
+	return fmt.Sprintf("if there are %s houses represented among %s", qty, c.Among.scope())
+}
+
+// CounterInPlay is met while at least one card in play carries a generic counter
+// of Kind — Wretched Doll destroys every doom-marked creature when there is one,
+// and otherwise marks a fresh one.
+type CounterInPlay struct {
+	// Kind is the counter to look for.
+	Kind CounterKind
+}
+
+// CondText renders the condition.
+func (c CounterInPlay) CondText() string {
+	return "if there is a " + c.Kind.noun() + " in play"
+}
+
+// Met reports whether any creature in either battleline carries the counter.
+func (c CounterInPlay) Met(ctx *EffectContext) bool {
+	for player := 0; player < 2; player++ {
+		for _, id := range ctx.Resolver.Battleline(player) {
+			if ctx.Resolver.CountersOn(id, c.Kind) > 0 {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// NamedCardPurged is met by whether a card of a given name sits in the
+// controller's purge pile — Igon the Terrible destroys itself unless Igon the
+// Green has already been purged (Not true reads "has not been purged"). It names
+// the other card by its printed name, not the source.
+type NamedCardPurged struct {
+	// Name is the card name to look for in the purge pile.
+	Name string
+	// Not flips the sense: false is met while a copy is purged, true while none is.
+	Not bool
+}
+
+// CondText renders the condition naming the card it looks for.
+func (c NamedCardPurged) CondText() string {
+	if c.Not {
+		return "if " + c.Name + " has not been purged"
+	}
+	return "if " + c.Name + " has been purged"
+}
+
+// Met reports whether a card of the name is in the controller's purge pile,
+// flipped by Not.
+func (c NamedCardPurged) Met(ctx *EffectContext) bool {
+	purged := false
+	for _, id := range ctx.Resolver.Purge(ctx.Controller) {
+		if ctx.Resolver.Name(id) == c.Name {
+			purged = true
+			break
+		}
+	}
+	return purged != c.Not
+}
+
+// ForgedKey is the condition on whether a player forged a key in a given window —
+// this turn (Smiling Ruth) or on their own previous turn (Tendrils of Pain, Key
+// Hammer). It reads the turn history rather than the running key total, so a key
+// forged several turns ago does not keep the condition true.
+type ForgedKey struct {
+	Player   Player
+	Previous bool
+	// Not inverts the condition, reading "if you have not forged a key this turn"
+	// (Nightforge).
+	Not bool
+}
+
+// validate requires the condition to name whose key it asks about.
+func (c ForgedKey) validate() error {
+	if !c.Player.valid() {
+		return fmt.Errorf("ForgedKey: Player must be set")
+	}
+	return nil
+}
+
+// CondText renders the clause, e.g. "if your opponent forged a key on their
+// previous turn".
+func (c ForgedKey) CondText() string {
+	subject, possessive := "you", "your"
+	if c.Player == Opponent {
+		subject, possessive = "your opponent", "their"
+	}
+	when := "this turn"
+	if c.Previous {
+		when = "on " + possessive + " previous turn"
+	}
+	if c.Not {
+		return fmt.Sprintf("if %s have not forged a key %s", subject, when)
+	}
+	return fmt.Sprintf("if %s forged a key %s", subject, when)
+}
+
+// Met reports whether the named player forged at least one key in the window.
+func (c ForgedKey) Met(ctx *EffectContext) bool {
+	return (ctx.Resolver.TurnHistory(ctx.PlayerFor(c.Player), c.stat()) > 0) != c.Not
+}
+
+// stat picks the tally the window corresponds to.
+func (c ForgedKey) stat() TurnStat {
+	if c.Previous {
+		return KeysForgedLastTurn
+	}
+	return KeysForgedThisTurn
+}
+
+// OpponentHasMoreKeys is met when the controller's opponent has forged strictly
+// more keys than the controller — Hugger Mugger steals only when behind on keys.
+type OpponentHasMoreKeys struct{}
+
+// CondText renders the clause.
+func (c OpponentHasMoreKeys) CondText() string {
+	return "if your opponent has more forged keys than you"
+}
+
+// Met reports whether the opponent's forged-key count exceeds the controller's.
+func (c OpponentHasMoreKeys) Met(ctx *EffectContext) bool {
+	return ctx.Resolver.Keys(ctx.Opponent()) > ctx.Resolver.Keys(ctx.Controller)
+}
+
+// KeyColorForged is met while the named player has forged a key of a given colour
+// — The Red Baron gains a reap while your red key is forged, and gains elusive
+// while your opponent's red key is forged.
+type KeyColorForged struct {
+	// Player is whose forged keys to look at: Controller or Opponent.
+	Player Player
+	// Color is the key colour that must be among that player's forged keys.
+	Color KeyColor
+}
+
+// CondText renders the clause, e.g. "if your red key is forged" or "if your
+// opponent's red key is forged".
+func (c KeyColorForged) CondText() string {
+	possessive := "your"
+	if c.Player == Opponent {
+		possessive = "your opponent's"
+	}
+	return fmt.Sprintf("if %s %s key is forged", possessive, strings.ToLower(c.Color.String()))
+}
+
+// Met reports whether the named player has forged a key of Color.
+func (c KeyColorForged) Met(ctx *EffectContext) bool {
+	for _, col := range ctx.Resolver.KeyColors(ctx.PlayerFor(c.Player)) {
+		if col == c.Color {
+			return true
+		}
+	}
+	return false
+}

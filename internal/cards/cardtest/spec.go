@@ -19,6 +19,7 @@ var vanillaCount atomic.Uint64
 // spec accumulates the options for a vanilla card before it is built into an
 // engine.CardDefinition. It is populated by Option values (OfHouse, Power, ...).
 type spec struct {
+	name        string
 	house       engine.House
 	power       int
 	armor       int
@@ -35,6 +36,11 @@ type Option func(*spec)
 
 // OfHouse sets a vanilla card's house (defaults to DefaultHouse).
 func OfHouse(h engine.House) Option { return func(s *spec) { s.house = h } }
+
+// Named overrides a vanilla card's generated name, so it can stand in for a
+// specific named card another card looks up by name — a blaster's host creature.
+// The caller is responsible for keeping the name unique within the scenario.
+func Named(name string) Option { return func(s *spec) { s.name = name } }
 
 // Power sets a vanilla creature's power.
 func Power(p int) Option { return func(s *spec) { s.power = p } }
@@ -69,6 +75,9 @@ func build(kind string, ct engine.CardType, defaultPower int, opts []Option) eng
 		o(&s)
 	}
 	name := fmt.Sprintf("Vanilla %s %d", kind, vanillaCount.Add(1))
+	if s.name != "" {
+		name = s.name
+	}
 	cardOpts := []engine.CardOption{
 		engine.WithPower(s.power),
 		engine.WithArmor(s.armor),

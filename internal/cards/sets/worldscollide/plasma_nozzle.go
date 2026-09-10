@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains, "Before Fight: Deal 2 damage to the creature this creature fought and 2 damage to each of its neighbors."
+//	This creature gains +2 assault and +2 splash-attack.
 var PlasmaNozzle = card.New(
 	"Plasma Nozzle",
 	card.House.StarAlliance,
@@ -18,13 +18,7 @@ var PlasmaNozzle = card.New(
 	card.Provenance(card.WC, "336"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
-		Granted: []card.Ability{{
-			Trigger: card.Trigger.BeforeFight,
-			Effect: card.DealDamage{Spread: card.CreatureAndNeighbors{
-				Amount: 2,
-				Splash: 2,
-				Target: card.Target.CreatureFought,
-			}},
-		}},
+		AssaultBonus:      2,
+		SplashAttackBonus: 2,
 	}),
 )

@@ -276,8 +276,9 @@ func buildAttachments(g *engine.Game) []attachSpecimen {
 		}
 	}
 
-	// Your own facedown under-card: you control the host, so you see it revealed
-	// rather than as a back — the one case the opponent rows cannot show.
+	// Your own facedown under-card: you control the host and so may Peek. It still
+	// reads as a card back on the board — facedown for everyone — but carries the
+	// peek id, so hovering it previews the real face rather than a card back.
 	yours := host(0)
 	g.AttachUnder(yours, g.Register(cur.next(), 0), true)
 	out = append(out, attachSpecimen{caption: "1 under, facedown (you peek)", host: yours})

@@ -3,7 +3,6 @@ package web
 import (
 	"fmt"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
@@ -280,7 +279,9 @@ func (c *cardView) Render() app.UI {
 				)
 		}),
 		app.Div().Class("card-name").Body(
-			squeezedTitle(c.Title),
+			// Condensed to fit its banner client-side by cardFitScript (cmd/web); a
+			// plain span here, sized only once measured too wide.
+			app.Span().Class("card-name-text").Text(c.Title),
 		),
 		// The face's three regions are their own boxes so each rounds its own
 		// corners: the status box (stat line, tokens), the art band (the icon
@@ -382,48 +383,6 @@ func (c *cardView) Render() app.UI {
 			return app.Div().Class("card-selection")
 		}),
 	)
-}
-
-// squeezeBaseChars is how many runes of the card font fit the name banner
-// unsqueezed, and squeezeMinScale is the floor below which a title is left to
-// the ellipsis instead of being squeezed illegibly thin. Both are calibrated
-// against the rendered banner (128px available at this font) rather than
-// measured per card, so a title's condensing is a continuous function of its
-// length instead of a few discrete steps that either under- or over-squeeze
-// whichever titles land near a step's edge.
-const (
-	squeezeBaseChars = 20
-	squeezeMinScale  = 0.7
-)
-
-// squeezeScale reports how much to horizontally condense a title that would
-// otherwise be cut off, 1 meaning no condensing at all.
-func squeezeScale(title string) float64 {
-	n := utf8.RuneCountInString(title)
-	if n <= squeezeBaseChars {
-		return 1
-	}
-	if scale := float64(squeezeBaseChars) / float64(n); scale > squeezeMinScale {
-		return scale
-	}
-	return squeezeMinScale
-}
-
-// squeezedTitle renders a card's name banner text, horizontally condensed via
-// scaleX when squeezeScale calls for it. The width is grown by the inverse of
-// the scale so the squeeze has the extra room to condense — flex-shrink must be
-// disabled alongside it, or the flex layout claws that extra width back before
-// the transform ever sees it.
-func squeezedTitle(title string) app.UI {
-	span := app.Span().Class("card-name-text").Text(title)
-	scale := squeezeScale(title)
-	if scale >= 1 {
-		return span
-	}
-	return span.
-		Style("transform", fmt.Sprintf("scaleX(%.3f)", scale)).
-		Style("width", fmt.Sprintf("%.2f%%", 100/scale)).
-		Style("flex-shrink", "0")
 }
 
 // cx joins non-empty class fragments with spaces.

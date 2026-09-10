@@ -153,6 +153,47 @@ func (e MoveToFlank) Resolve(ctx *EffectContext) {
 	}
 }
 
+// TurnIntoCreature turns the card its Target selects into a creature and moves it
+// onto a flank of its controller's battleline, the effect's controller choosing
+// the flank. It is how an artifact turns itself into a creature (Auto-Legionary):
+// the card keeps its exhaustion, Æmber, and power counters and reads as a creature
+// until it leaves play, so power counters placed on it before the turn now count
+// toward its power. A Target that selects nothing, or a card no longer in play, is
+// a safe no-op.
+type TurnIntoCreature struct {
+	Target Target
+}
+
+// validate requires the card to convert.
+func (e TurnIntoCreature) validate() error {
+	if !e.Target.valid() {
+		return errUnsetTarget("TurnIntoCreature")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "move it to a flank of your battleline as a
+// creature". The card is referred to as "it": this effect always follows an
+// effect that named the source (Auto-Legionary gives itself counters first), so
+// the second reference reads as a pronoun, matching KeyForge's own wording for
+// Effigy of Melerukh and The Mysticeti.
+func (e TurnIntoCreature) Text() string {
+	return "move it to a flank of your battleline as a creature"
+}
+
+// Resolve converts each selected card and moves it to the flank the controller
+// chooses.
+func (e TurnIntoCreature) Resolve(ctx *EffectContext) {
+	for _, id := range e.Target.Select(ctx) {
+		if !ctx.Resolver.InPlay(id) {
+			continue
+		}
+		right := ctx.ChooseOption(
+			"Choose a flank", []string{"left flank", "right flank"}) == 1
+		ctx.Resolver.PutIntoBattlelineAsCreature(id, right)
+	}
+}
+
 // MoveWithinBattleline repositions the creature its Target selects anywhere in
 // that creature's own controller's battleline, the effect's controller choosing
 // the destination slot — Malison moves an enemy creature so its own controller may

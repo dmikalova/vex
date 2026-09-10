@@ -13,11 +13,11 @@ import (
 
 // hoverCard previews a live board or hand card over the log.
 func (g *game) hoverCard(_ app.Context, id engine.LocalID) {
-	g.hoverID, g.hasHover, g.hoverDef, g.hoverInLog = id, true, nil, false
+	g.hoverID, g.hasHover, g.hoverBack, g.hoverDef, g.hoverInLog = id, true, false, nil, false
 }
 
 // hoverClear hides the hover preview (a card leave).
-func (g *game) hoverClear(_ app.Context) { g.hasHover, g.hoverDef = false, nil }
+func (g *game) hoverClear(_ app.Context) { g.hasHover, g.hoverBack, g.hoverDef = false, false, nil }
 
 // onCardTabHover previews the card a peeking tab represents. The id is read back
 // off the tab's own dataset rather than carried on a component field — see
@@ -34,6 +34,13 @@ func (g *game) onCardTabHover(ctx app.Context, _ app.Event) {
 // plain element needs (a component method like cardView's can drop the unused
 // event itself; a tab is not a component).
 func (g *game) onCardTabHoverOut(ctx app.Context, _ app.Event) { g.hoverClear(ctx) }
+
+// onCardBackHover previews a plain card back — what an opponent sees hovering a
+// facedown Under-card they may not peek: the card is there, but its face is not
+// theirs to read.
+func (g *game) onCardBackHover(_ app.Context, _ app.Event) {
+	g.hasHover, g.hoverBack, g.hoverDef, g.hoverInLog = false, true, nil, false
+}
 
 // onCardTabTap answers a chooser prompt with the card a peeking tab represents —
 // the only way to pick an attached card (an upgrade Destroy Them All may destroy)
@@ -84,12 +91,17 @@ func (g *game) previewUp() bool {
 	if id, ok := g.focusCardID(); ok && g.hasHover && g.hoverID == id {
 		return false
 	}
-	return g.hoverLive() || g.hoverDef != nil
+	return g.hoverBack || g.hoverLive() || g.hoverDef != nil
 }
 
 // onLogCardHover previews the printed card named by a log mention, placed to
-// clear the log line it was read from (see setLogPreview).
+// clear the log line it was read from (see setLogPreview). On a touchscreen the
+// tap's synthetic mouseenter is ignored so the preview opens on one tap through
+// onLogCardTap instead of being toggled shut by the same tap's click.
 func (g *game) onLogCardHover(ctx app.Context, _ app.Event) {
+	if g.isTouch {
+		return
+	}
 	if def, ok := g.defByName[ctx.JSSrc().Get("dataset").Get("card").String()]; ok {
 		g.setLogPreview(ctx, def)
 	}

@@ -59,6 +59,13 @@ type CardDefinition struct {
 	// restrictions in Restricts. Empty imposes no restriction.
 	CannotBeUsedTo []UseKind
 
+	// CannotBeUsedWhile, when set, bars the card from being used at all — reaped,
+	// fought with, or used for its Action ability — for as long as the condition
+	// holds for its controller (Valoocanth cannot be used while the tide is low).
+	// It is the conditional, all-ways counterpart to CannotBeUsedTo. The zero value
+	// (nil condition) imposes no restriction.
+	CannotBeUsedWhile Condition
+
 	// DestroyedWhen, when set, is a condition that puts this creature in a
 	// destroyable state for as long as it holds — Tireless Crocag dies while its
 	// controller's opponent has no creatures. It is read board-wide every time
@@ -158,6 +165,13 @@ type CardDefinition struct {
 	// GainsForgeAember gives this card's controller all the Æmber their opponent
 	// spends forging a key, for as long as it stays in play (The Sting).
 	GainsForgeAember bool
+
+	// GuardsOpponentForge lets this card, while in play, interrupt the opponent's
+	// key forges: when the opponent would forge a key, they name a house, a random
+	// card is revealed from this card's controller's hand, and if that card is not
+	// of the named house the card is destroyed and the forge is prevented
+	// (Keyforgery).
+	GuardsOpponentForge bool
 
 	// PlayRequirement is the Æmber the controller must have — and, when the
 	// requirement spends, gives up — to play this card from hand.
@@ -353,6 +367,12 @@ type StaticModifier struct {
 	HazardousBonus    int
 	SplashAttackBonus int
 
+	// Per scales the flat stat bonuses (PowerBonus, ArmorBonus) by a count read
+	// off the host creature — Light of the Archons gives its host +1 power and
+	// +1 armor for each upgrade attached to it (Per: UpgradesOnIt). The zero value
+	// leaves the bonuses flat.
+	Per PerTarget
+
 	// Granted are triggered abilities the Upgrade grants its host creature. The
 	// host fires them as if they were printed on it (see Game.triggerAbilities).
 	Granted []Ability
@@ -360,6 +380,12 @@ type StaticModifier struct {
 	// Keywords are keywords the Upgrade grants its host creature; the host has
 	// them in addition to its own (see Game.hasKeyword).
 	Keywords []Keyword
+
+	// KeywordsToNeighbors are keywords the Upgrade grants its host creature AND
+	// each of the host's battleline neighbors — Cloaking Dongle gives the host and
+	// both its neighbors Elusive. The host gains them in addition to Keywords (see
+	// Game.hasKeyword).
+	KeywordsToNeighbors []Keyword
 
 	// KeyCostChange is a key-cost change an Upgrade grants its host; while attached
 	// the host imposes it (e.g. "Your opponent's keys cost +2 Æmber").
@@ -390,6 +416,12 @@ type StaticModifier struct {
 	// host, makes the host belong to this house instead of its printed one — Academy
 	// Training makes its creature a Logos creature. HouseNone carries no override.
 	HouseOverride House
+
+	// SpendAsPool lets the Æmber sitting on the host creature be spent to pay Æmber
+	// costs as if it were in its controller's pool — The Callipygian Ideal grants the
+	// creature it upgrades this permission. The pay path (spendAsPoolCreatures)
+	// consults it; the zero value grants nothing.
+	SpendAsPool bool
 }
 
 // grants reports whether the modifier gives its host anything at all — a stat
@@ -404,11 +436,13 @@ func (m StaticModifier) grants() bool {
 		m.SplashAttackBonus != 0 ||
 		len(m.Granted) > 0 ||
 		len(m.Keywords) > 0 ||
+		len(m.KeywordsToNeighbors) > 0 ||
 		m.KeyCostChange.amount != 0 ||
 		m.Replaces.valid() ||
 		m.ProtectsFromNonFlank ||
 		m.HouseOverride != HouseNone ||
-		m.AemberCannotBeStolen
+		m.AemberCannotBeStolen ||
+		m.SpendAsPool
 }
 
 // ConstantAbility is a continuous stat modifier a card in play applies to
@@ -448,6 +482,11 @@ type ConstantAbility struct {
 	// used, for as long as the card stays in play — Narp stops its neighbors from
 	// reaping. It is the grantable form of CardDefinition.CannotBeUsedTo.
 	CannotBeUsedTo []UseKind
+	// Morphs are trigger morphs the card grants to every creature its Target reaches,
+	// for as long as it stays in play — Kompsos Haruspex makes each friendly
+	// creature's play effect also fire on reap. Each pair fires an ability under one
+	// trigger when another occurs (see Game.morphedTriggers).
+	Morphs []TriggerMorph
 	// WhileOffFlank suspends the whole ability unless the source card is off a
 	// flank (in the interior of its controller's battleline) — Gub's "While Gub is
 	// not on a flank, it gets +5 power and gains taunt."
@@ -460,6 +499,11 @@ type ConstantAbility struct {
 	// from the source's point of view — The Red Baron grants itself a reap only
 	// while your red key is forged. It is nil when the ability is always active.
 	WhileCondition Condition
+	// SpendAsPool lets the Æmber sitting on each creature the Target reaches be spent
+	// to pay Æmber costs as if it were in its controller's pool — Senator Bracchus
+	// grants this to every friendly creature. The pay path (spendAsPoolCreatures)
+	// consults it; the zero value grants nothing.
+	SpendAsPool bool
 }
 
 // target returns the constant ability's effective Target: an unset Target reaches
@@ -573,6 +617,14 @@ func NewCard(
 				))
 			}
 		}
+		for _, m := range ca.Morphs {
+			if !m.valid() {
+				panic(fmt.Sprintf(
+					"card %q: a constant ability's trigger morph names a non-action trigger",
+					name,
+				))
+			}
+		}
 	}
 	if c.PlayableAsUpgrade {
 		if c.Type != Creature {
@@ -591,6 +643,12 @@ func NewCard(
 // WithCannotBeUsedTo bars a card from the named ways of being used.
 func WithCannotBeUsedTo(kinds ...UseKind) CardOption {
 	return func(c *CardDefinition) { c.CannotBeUsedTo = append(c.CannotBeUsedTo, kinds...) }
+}
+
+// WithCannotBeUsedWhile bars a card from being used in any way for as long as cond
+// holds for its controller (Valoocanth cannot be used while the tide is low).
+func WithCannotBeUsedWhile(cond Condition) CardOption {
+	return func(c *CardDefinition) { c.CannotBeUsedWhile = cond }
 }
 
 // WithDestroyedWhen makes a creature destroyable for as long as cond holds.
@@ -799,6 +857,12 @@ func WithSpendableAember() CardOption {
 // spends forging a key, for as long as it stays in play (The Sting).
 func WithGainsForgeAember() CardOption {
 	return func(c *CardDefinition) { c.GainsForgeAember = true }
+}
+
+// WithGuardsOpponentForge makes the card interrupt the opponent's key forges
+// while it is in play (Keyforgery).
+func WithGuardsOpponentForge() CardOption {
+	return func(c *CardDefinition) { c.GuardsOpponentForge = true }
 }
 
 // WithPlayRequirement puts an Æmber requirement on playing the card, either a

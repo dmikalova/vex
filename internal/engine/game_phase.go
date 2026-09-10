@@ -106,7 +106,7 @@ func (g *Game) readyPhase(player int) {
 		}
 		core.Exhausted = false
 		core.TempHouse = HouseNone
-		if g.cat.def(id).Type == Creature {
+		if g.TypeOf(id) == Creature {
 			core.ArmorRemaining = int16(g.armor(id))
 			core.ArmorStripped = 0
 		}
@@ -124,6 +124,7 @@ func (g *Game) readyPhase(player int) {
 		g.State.Cards[id].ConsideredFlank = false
 		g.State.Cards[id].TempPowerBonus = 0
 		g.State.Cards[id].TempArmorBonus = 0
+		g.State.Cards[id].TempAssaultBonus = 0
 	}
 	// A keyword gained "until the start of your next turn" (Hideaway Hole) lifts
 	// only at the controller's own ready phase, so it survived the opponent's turn.
@@ -160,6 +161,7 @@ func (g *Game) readyPhase(player int) {
 	g.State.MayUseHouse[player] = HouseNone
 	g.State.MayPlayHouse[player] = HouseNone
 	g.State.MayUseArtifactsAnyHouse[player] = false
+	g.clearOffHousePermits(player)
 	g.State.KeyCostBump[player] = Bar[int]{}
 	g.State.KeywordsLost = 0
 	g.State.TextBlank[player] = Bar[bool]{}

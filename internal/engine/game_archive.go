@@ -34,14 +34,14 @@ func (g *Game) offerArchives(player int) {
 func (g *Game) archiveFromHand(player int, id LocalID) {
 	if g.State.Hand[player].remove(id) {
 		g.State.Archives[player].add(id)
-		g.record(CardArchivedFromHand{Player: player, Card: id})
+		g.record(CardMoved{Player: player, Card: id, From: Hand, To: Archives})
 	}
 }
 
 func (g *Game) archiveFromDiscard(player int, id LocalID) {
 	if g.State.Discard[player].remove(id) {
 		g.State.Archives[player].add(id)
-		g.record(CardArchivedFromDiscard{Player: player, Card: id})
+		g.record(CardMoved{Player: player, Card: id, From: Discard, To: Archives})
 	}
 }
 
@@ -86,7 +86,7 @@ func (g *Game) archiveTopOfDiscard(player int) bool {
 	}
 	id := discard.removeAt(int(discard.Count) - 1)
 	g.State.Archives[player].add(id)
-	g.record(CardArchivedFromDiscard{Player: player, Card: id})
+	g.record(CardMoved{Player: player, Card: id, From: Discard, To: Archives})
 	return true
 }
 
@@ -127,5 +127,5 @@ func (g *Game) discardRandomFromArchives(owner int) {
 	// A discard pile only ever holds its own player's cards, so an abducted card
 	// discarded out of these archives goes to its owner's pile.
 	g.State.Discard[g.owner(id)].add(id)
-	g.record(CardDiscardedFromArchives{Player: owner, Card: id})
+	g.record(CardMoved{Player: owner, Card: id, From: Archives, To: Discard})
 }

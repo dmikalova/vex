@@ -1,24 +1,24 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// EncounterSuit
+// Encounter Suit
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Upgrade
 //	Rarity: Rare
 //
-//	After an action card is played but before it resolves, ward this creature.
+//	This creature gains, "After a Tactic is played but before it resolves, ward this creature."
 var EncounterSuit = card.New(
 	"Encounter Suit",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Upgrade,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "330"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithStatic(card.StaticModifier{
+		Granted: []card.Ability{{
+			Trigger: card.Trigger.AfterActionPlayedBeforeResolve,
+			Effect:  card.Ward{Target: card.Target.This},
+		}},
+	}),
 )

@@ -17,11 +17,11 @@ var OrtannuTheChained = card.New(
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, "97"),
-	card.WithPower(7),
-	card.WithTraits(card.Traits.Demon),
 	card.Connects(
 		card.Pull(OrtannusBinding, 2),
 	),
+	card.WithPower(7),
+	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(
 		card.Trigger.Reap, card.Sentences{
 			Effects: []card.Effect{

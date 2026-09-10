@@ -60,3 +60,13 @@ interesting, or brings it in line with modern errata.
   cleaner. Only a forced branch whose gated arm is a strict bonus over a safe
   fallback converts this way; most `If … Otherwise …` cards (random reveals,
   target-dependent or whose-turn conditions) do not.
+- **Encounter Suit** is an upgrade that grants its host the reaction "After a
+  Tactic is played but before it resolves, ward this creature." KeyForge phrases
+  the reaction as the upgrade's own text and says "action card"; Vactrol renames
+  that type to `Tactic` (rule 19) and fires every granted upgrade ability through
+  the host, so it renders with the standard `This creature gains, "…"` wrapper
+  like every other granted-ability upgrade.
+- **Keyforgery** drops the trailing `(no Æmber is spent)` clarifier. Vactrol
+  prevents the forge before any Æmber leaves the pool, so the clause states a
+  consequence the mechanic already guarantees; the Rules voice omits such
+  parenthetical asides.

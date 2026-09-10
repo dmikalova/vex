@@ -62,13 +62,19 @@ it is an upgrade.
   card's own text, rather than which `PlayX` method was called. The branch lives
   in one spot (`playCardFromZone`), so every zone that can play a creature
   (hand, deck, discard) gets the choice for free.
-- Identity stays by type; mode is by attachment. `IsCreature(id)` still returns
-  true for a card that is currently attached as an upgrade, because its `Type`
-  is Creature. This is harmless: nothing enumerates the upgrade chain as
-  creatures, so an attached creature-as-upgrade is never treated as an in-play
-  creature — it is not on a battleline, does not fight or reap, and is not a
-  target of creature-reaching effects. Its `Static` still buffs its host like any
-  upgrade.
+- Identity is by attachment, not printed type. `TypeOf(id)` returns `Upgrade`
+  for a card that is currently attached in an upgrade chain, whatever its printed
+  type, so `IsCreature(id)` is false for a creature-as-upgrade while it is
+  attached. This is what a creature-reaching effect reads: `Destroy an artifact,
+a creature, and an upgrade` (Destroy Them All) targets an attached
+  creature-as-upgrade as the upgrade, and the view hides its power/armor, because
+  an attached card has no creature stats to show ("null power"). The type is read
+  from the attachment (`HostPlus != 0`), not a stored field, because the discard
+  path for a shed upgrade (`discardUpgrades`) does not reset the core — a stored
+  type would leak into the discard pile. Its `Static` still buffs its host like
+  any upgrade. The conservation invariant that guards the chain therefore checks
+  the **printed** type (a chain may hold an Upgrade or a Creature, ADR 0026;
+  anything else is corruption), not `TypeOf`, which would be tautological.
 - The choice is one-way per play. A card played as an upgrade is an upgrade until
   it leaves play; there is no flip back to a creature. When its host leaves play
   it is discarded like any upgrade (`discardUpgrades`, already type-agnostic).

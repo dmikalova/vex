@@ -380,6 +380,7 @@ var Trigger = triggers{
 	AfterAemberStolenFromYou:       engine.TriggerAfterAemberStolenFromYou,
 	AfterAnyPlayerStartOfTurn:      engine.TriggerAfterAnyPlayerStartOfTurn,
 	LeavesPlay:                     engine.TriggerLeavesPlay,
+	AfterActionPlayedBeforeResolve: engine.TriggerAfterActionPlayedBeforeResolve,
 }
 
 type triggers struct {
@@ -469,6 +470,9 @@ type triggers struct {
 	AfterAnyPlayerStartOfTurn engine.Trigger
 	// LeavesPlay fires as this card leaves play by any route ("Leaves Play:").
 	LeavesPlay engine.Trigger
+	// AfterActionPlayedBeforeResolve fires after a Tactic is played, by either
+	// player, before that Tactic's own effect resolves.
+	AfterActionPlayedBeforeResolve engine.Trigger
 }
 
 // Controller and Opponent are the two players an effect can target, relative to

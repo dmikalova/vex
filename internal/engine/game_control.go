@@ -99,7 +99,7 @@ func (g *Game) placeUnderController(id LocalID, controller int) {
 	} else {
 		g.State.Cards[id].ControlPlus = 0
 	}
-	if g.cat.def(id).Type == Artifact {
+	if g.TypeOf(id) == Artifact {
 		g.State.Artifacts[controller].add(id)
 	} else {
 		g.State.Battleline[controller].add(id)

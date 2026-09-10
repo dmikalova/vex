@@ -662,13 +662,20 @@ func TestCannotPlayBlanketThisTurn(t *testing.T) {
 }
 
 // TestCannotUse covers the bar that stops a player reaping, fighting, or firing an
-// "Action:" throughout their next turn (Skippy Timehog).
+// "Action:" — throughout their next turn (Skippy Timehog) or for the rest of the
+// current turn (United Action).
 func TestCannotUse(t *testing.T) {
 	if got := (CannotUse{Player: Opponent, Duration: NextTurn}).Text(); got != "your opponent cannot use any cards during their next turn" {
 		t.Errorf("opponent text = %q", got)
 	}
 	if got := (CannotUse{Player: Controller, Duration: NextTurn}).Text(); got != "you cannot use any cards during your next turn" {
 		t.Errorf("controller text = %q", got)
+	}
+	if got := (CannotUse{Player: Controller, Duration: EndOfTurn}).Text(); got != "you cannot use cards this turn" {
+		t.Errorf("this-turn text = %q", got)
+	}
+	if got := (CannotUse{Player: Opponent, Duration: EndOfTurn}).Text(); got != "your opponent cannot use cards this turn" {
+		t.Errorf("this-turn opponent text = %q", got)
 	}
 	if (CannotUse{Duration: NextTurn}).validate() == nil {
 		t.Error("unset player should be invalid")
@@ -685,12 +692,12 @@ func TestCannotUse(t *testing.T) {
 	CannotUse{Player: Opponent, Duration: NextTurn}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
 	)
-	// A duration the effect does not handle arms nothing.
+	// The EndOfTurn form arms the bar for the rest of the current turn.
 	CannotUse{Player: Controller, Duration: EndOfTurn}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
 	)
-	if g.State.CannotUse[0].Value {
-		t.Error("only NextTurn arms the use bar")
+	if !g.State.CannotUse[0].Value {
+		t.Error("EndOfTurn should arm the use bar this turn")
 	}
 	g.EndPlayPhase(0)
 
@@ -805,15 +812,18 @@ func TestGrantFightAnyHouse(t *testing.T) {
 	}
 }
 
-func TestMayUseFriendlyHouse(t *testing.T) {
-	if got := (MayUseFriendlyHouse{House: Sanctum}).Text(); got != "for the remainder of the turn, you may use friendly Sanctum creatures" {
+func TestMayActFriendlyHouseUse(t *testing.T) {
+	if got := (MayActFriendlyHouse{House: Sanctum, Grant: GrantUse}).Text(); got != "for the remainder of the turn, you may use friendly Sanctum creatures" {
 		t.Errorf("text = %q", got)
 	}
-	if (MayUseFriendlyHouse{}).validate() == nil {
+	if (MayActFriendlyHouse{Grant: GrantUse}).validate() == nil {
 		t.Error("unset house should be invalid")
 	}
-	if (MayUseFriendlyHouse{House: Sanctum}).validate() != nil {
-		t.Error("a set house should be valid")
+	if (MayActFriendlyHouse{House: Sanctum}).validate() == nil {
+		t.Error("an empty grant should be invalid")
+	}
+	if (MayActFriendlyHouse{House: Sanctum, Grant: GrantUse}).validate() != nil {
+		t.Error("a set house and grant should be valid")
 	}
 
 	g := NewGame("A", "B", 1)
@@ -826,7 +836,12 @@ func TestMayUseFriendlyHouse(t *testing.T) {
 		t.Fatal("an off-house creature should not be usable before the grant")
 	}
 
-	MayUseFriendlyHouse{House: Sanctum}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	MayActFriendlyHouse{
+		House: Sanctum,
+		Grant: GrantUse,
+	}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0},
+	)
 	if g.State.MayUseHouse[0] != Sanctum {
 		t.Fatal("the grant should record the house")
 	}
@@ -872,15 +887,15 @@ func TestMayUseFriendlyArtifacts(t *testing.T) {
 	}
 }
 
-func TestMayPlayOrUseFriendlyHouse(t *testing.T) {
-	if got := (MayPlayOrUseFriendlyHouse{House: Mars}).Text(); got != "you may play or use a Mars card this turn" {
+func TestMayActFriendlyHousePlayAndUse(t *testing.T) {
+	if got := (MayActFriendlyHouse{House: Mars, Grant: GrantPlay | GrantUse}).Text(); got != "for the remainder of the turn, you may play or use a Mars card" {
 		t.Errorf("text = %q", got)
 	}
-	if (MayPlayOrUseFriendlyHouse{}).validate() == nil {
+	if (MayActFriendlyHouse{Grant: GrantPlay | GrantUse}).validate() == nil {
 		t.Error("unset house should be invalid")
 	}
-	if (MayPlayOrUseFriendlyHouse{House: Mars}).validate() != nil {
-		t.Error("a set house should be valid")
+	if (MayActFriendlyHouse{House: Mars, Grant: GrantPlay | GrantUse}).validate() != nil {
+		t.Error("a set house and grant should be valid")
 	}
 
 	g := NewGame("A", "B", 1)
@@ -897,7 +912,12 @@ func TestMayPlayOrUseFriendlyHouse(t *testing.T) {
 		t.Fatal("an off-house creature should not be usable before the grant")
 	}
 
-	MayPlayOrUseFriendlyHouse{House: Mars}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	MayActFriendlyHouse{
+		House: Mars,
+		Grant: GrantPlay | GrantUse,
+	}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0},
+	)
 	if g.State.MayPlayHouse[0] != Mars {
 		t.Fatal("the grant should record the play house")
 	}

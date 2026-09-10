@@ -41,7 +41,14 @@ recorded as ADRs — read them for the full rationale and the rejected alternati
   (renders English) and `Resolve(ctx)` (carries it out); one value drives both, so
   printed card text can never desync from behavior. A new mechanic is almost always
   a new `Effect` node in `effect_<mechanic>.go`, not a new branch in the `Game`
-  runtime.
+  runtime. When a vocabulary file grows unwieldy (the `Condition` and `Count`
+  families each ran past a thousand lines), split it by category into
+  `<prefix>_*.go` files that keep the family prefix — `effect_condition.go` keeps
+  the framework (the interface, `Comparison`, `Conditional`, `Or`, `CountIs`) and
+  its conditions move to `effect_condition_board.go` / `_source.go` / `_it.go` /
+  `_turn.go`; `effect_count.go` splits the same way (`_board.go` / `_turn.go` /
+  `_produced.go`). A bare concept file splits without the `effect_` prefix
+  (`target.go` → `target_*.go`).
 - **Composite — `Sequence`, `Sentences`, `Conditional`, `ChooseHouseThen`,
   `MayRepeat`, …** compose child `Effect`s and recurse `validateEffect` into them.
   Prefer composing small nodes over one fused node (root `AGENTS.md`: "decompose

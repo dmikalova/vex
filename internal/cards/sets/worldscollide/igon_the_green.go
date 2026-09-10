@@ -17,14 +17,14 @@ var IgonTheGreen = card.New(
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "39"),
+	card.Connects(card.PullExact(IgonTheTerrible, 1)),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Giant),
-	card.Connects(card.PullExact(IgonTheTerrible, 1)),
 	card.WithAbility(
 		card.Trigger.Destroyed, card.Sequence{Effects: []card.Effect{
 			card.PurgeCreature{Target: card.Target.This},
 			card.PutFromDiscard{
-				Name:        "Igon the Terrible",
+				Name:        IgonTheTerrible.Name,
 				Destination: card.To.Hand,
 			},
 		}}),

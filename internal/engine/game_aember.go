@@ -61,7 +61,7 @@ func (g *Game) aemberCaptorFor(player int) (LocalID, bool) {
 		for _, id := range g.allInPlay(p) {
 			def := g.cat.def(id)
 			r := def.Replaces
-			if def.Type != Creature ||
+			if g.TypeOf(id) != Creature ||
 				r.Of != EventAemberAddedToPool ||
 				r.With != Capture {
 				continue
@@ -89,6 +89,49 @@ func (g *Game) aemberCaptorFor(player int) (LocalID, bool) {
 	)
 	if !ok {
 		return captors[0], true
+	}
+	return chosen, true
+}
+
+// stolenRedirectActive reports whether any in-play card of either controller
+// carries the continuous replacement that redirects stolen Æmber into a capture
+// (Gargantodon). The redirect is global — it applies to every steal regardless of
+// who controls the card — so no pool scoping is consulted.
+func (g *Game) stolenRedirectActive() bool {
+	for p := 0; p < 2; p++ {
+		for _, id := range g.allInPlay(p) {
+			r := g.cat.def(id).Replaces
+			if r.Of == EventAemberStolen && r.With == Capture {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// StolenAemberCaptor returns a creature player controls that captures Æmber a
+// steal would otherwise add to player's pool, or ok=false when no in-play card
+// redirects stolen Æmber or player controls no creature to hold it. When player
+// controls several creatures, player chooses which one captures.
+func (g *Game) StolenAemberCaptor(player int) (LocalID, bool) {
+	if !g.stolenRedirectActive() {
+		return 0, false
+	}
+	candidates := g.Battleline(player)
+	switch len(candidates) {
+	case 0:
+		return 0, false
+	case 1:
+		return candidates[0], true
+	}
+	chosen, ok := g.ChooseCreature(
+		player,
+		0,
+		"Choose which creature captures the stolen Æmber",
+		candidates,
+	)
+	if !ok {
+		return candidates[0], true
 	}
 	return chosen, true
 }

@@ -92,6 +92,11 @@ type game struct {
 	// otherwise read as an open-swipe, so a strip-anchored swipe never opens the
 	// sidebar; closing it (swipe right while open) is left alone.
 	swipeOnStrip bool
+	// isTouch marks that the client has fired a touch, so a log mention's synthetic
+	// mouseenter (which a tap raises just before its click) is ignored — otherwise
+	// the enter opens the preview and the click toggles it shut in the same tap,
+	// making it take two taps. Once set, a single tap opens through onLogCardTap.
+	isTouch bool
 
 	// tipDownFunc/tipMoveFunc/tipUpFunc back the touch-drag that shows the player
 	// bar's stat tooltips on a touchscreen; all three are released on dismount.
@@ -298,8 +303,11 @@ type game struct {
 	// instead of beside it, when the window is too narrow to show a whole card to the
 	// sidebar's left; hoverAtBottom anchors it to the bottom of the viewport when the
 	// tapped log line sits in the top half, so the preview never covers its source.
+	// hoverBack previews a plain card back rather than a face: what an opponent
+	// sees when hovering a facedown Under-card they may not peek.
 	hoverID          engine.LocalID
 	hasHover         bool
+	hoverBack        bool
 	hoverDef         *engine.CardDefinition
 	hoverInLog       bool
 	hoverOverSidebar bool

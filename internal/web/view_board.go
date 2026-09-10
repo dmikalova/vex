@@ -273,6 +273,8 @@ func (g *game) hoverPreview() app.UI {
 	switch {
 	case !g.previewUp():
 		return app.Div()
+	case g.hoverBack:
+		card = cardBackFace()
 	case g.hoverLive():
 		card = g.cardFace(g.hoverID)
 	case g.hoverDef != nil:
@@ -571,21 +573,49 @@ func (g *game) upgradeTabs(id engine.LocalID) []app.UI {
 }
 
 // underTabs renders each card placed under id as a peeking tab along its left
-// edge, in the order they were placed: its own house colour when revealed
-// (faceup, or facedown but the active player controls id and may Peek), a plain
-// card back otherwise, which previews nothing.
+// edge, in the order they were placed. A faceup card shows its own house colour
+// and previews its face. A facedown card always reads as a plain card back on the
+// board — it is facedown for everyone — but its hover preview differs: the
+// controller, who may Peek, sees the real face, while anyone else sees only a
+// card back.
 func (g *game) underTabs(id engine.LocalID) []app.UI {
 	buried := g.g.Under(id)
 	tabs := make([]app.UI, 0, len(buried))
 	for _, u := range buried {
-		if g.g.UnderFaceDown(u) && !g.g.Peekable(g.active(), id) {
-			tabs = append(tabs, app.Div().Class("card-tab card-tab--back").
-				Body(app.Span().Class("card-tab-title").Text("VEX")))
-			continue
+		switch {
+		case !g.g.UnderFaceDown(u):
+			tabs = append(tabs, g.cardTab(u))
+		case g.g.Peekable(g.active(), id):
+			tabs = append(tabs, g.peekBackTab(u))
+		default:
+			tabs = append(tabs, g.hiddenBackTab())
 		}
-		tabs = append(tabs, g.cardTab(u))
 	}
 	return tabs
+}
+
+// backTab renders the facedown card back both facedown tabs share: a dark VEX
+// banner filling the whole tab. onEnter wires the hover preview each variant wants.
+func backTab(onEnter, onLeave app.EventHandler) app.HTMLDiv {
+	return app.Div().Class("card-tab card-tab--back").
+		OnMouseEnter(onEnter).
+		OnMouseLeave(onLeave).
+		Body(app.Span().Class("card-tab-title").Text("VEX"))
+}
+
+// peekBackTab is a facedown under-card the active player controls: a card back on
+// the board, but hovering it previews the real face, since its controller may
+// Peek. The id rides the dataset the way cardTab's does, so onCardTabHover reads
+// it back and previews that card's face.
+func (g *game) peekBackTab(id engine.LocalID) app.UI {
+	return backTab(g.onCardTabHover, g.onCardTabHoverOut).
+		DataSet("id", strconv.Itoa(int(id)))
+}
+
+// hiddenBackTab is a facedown under-card the active player may not peek: a card
+// back on the board whose hover previews only a card back, never the hidden face.
+func (g *game) hiddenBackTab() app.UI {
+	return backTab(g.onCardBackHover, g.onCardTabHoverOut)
 }
 
 // cardTab renders one revealed peeking tab: a house-tinted sliver, its card's

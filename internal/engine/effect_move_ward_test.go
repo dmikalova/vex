@@ -72,3 +72,20 @@ func TestMoveWardNoWardedSource(t *testing.T) {
 		t.Error("with no warded source, no ward should move")
 	}
 }
+
+// TestMoveWardNoDestination: a warded source exists, but with no other creature to
+// move the ward onto the ward stays where it is.
+func TestMoveWardNoDestination(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	from := g.AddToBattleline(testCreature("from", 3), 0)
+	g.SetWarded(from, true)
+
+	MoveWard{
+		From: Target{Kind: TargetChosenCreature},
+		Onto: Target{Kind: TargetChosenOtherCreature},
+	}.Resolve(&EffectContext{Resolver: g, Source: from, Controller: 0})
+
+	if !g.Warded(from) {
+		t.Error("with no destination, the ward should stay on the source")
+	}
+}

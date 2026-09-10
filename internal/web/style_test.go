@@ -196,11 +196,12 @@ func TestTheAttachmentSectionReshufflesOnReload(t *testing.T) {
 	}
 }
 
-// TestGalleryHidesAFacedownUnderFromTheOpponent renders the specimens and checks
-// that a facedown under-card on the opponent's card draws as a card-back, while
-// the specimen for a card you control draws its face — the visible difference
-// between the two the section exists to show.
-func TestGalleryHidesAFacedownUnderFromTheOpponent(t *testing.T) {
+// TestGalleryDrawsAFacedownUnderAsACardBack renders the specimens and checks that
+// a facedown under-card draws as a card-back on the board whether or not you
+// control it — it is facedown for everyone. The controller's tab additionally
+// carries the peek id (data-id), so hovering it previews the real face, while the
+// opponent's carries none and previews only a card back.
+func TestGalleryDrawsAFacedownUnderAsACardBack(t *testing.T) {
 	h := attachHarness()
 	specs := buildAttachments(h.g)
 	var hidden, peeked string
@@ -216,8 +217,14 @@ func TestGalleryHidesAFacedownUnderFromTheOpponent(t *testing.T) {
 	if !strings.Contains(hidden, "card-tab--back") {
 		t.Error("a facedown under-card on the opponent's card is not drawn as a card-back")
 	}
-	if strings.Contains(peeked, "card-tab--back") {
-		t.Error("your own facedown under-card is drawn as a card-back instead of its face")
+	if !strings.Contains(peeked, "card-tab--back") {
+		t.Error("your own facedown under-card is not drawn as a card-back on the board")
+	}
+	if strings.Contains(hidden, "data-id") {
+		t.Error("a facedown under-card you cannot peek must not carry a peek id")
+	}
+	if !strings.Contains(peeked, "data-id") {
+		t.Error("your own facedown under-card must carry the peek id so hovering previews its face")
 	}
 }
 

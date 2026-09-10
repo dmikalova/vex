@@ -8,21 +8,33 @@ import "fmt"
 // it frees from the count (and, later, a card-type filter or a this-turn window)
 // keeps the several off-house-play cards expressible from one shape instead of a
 // bespoke field per variant. The zero value (HouseNone) grants nothing.
+//
+// NonActive frees any house that is not the active house rather than one named
+// House, and Condition gates the whole grant behind a live predicate read from the
+// source's point of view — together they express Captain Val Jericho, whose
+// SourceInCenterOfBattleline condition frees one non-active-house play only while
+// it is centered.
 type PlayPermission struct {
-	House  House
-	Amount int
+	House     House
+	Amount    int
+	NonActive bool
+	Condition Condition
 }
 
 // granted reports whether the permission frees any play.
-func (p PlayPermission) granted() bool { return p.House != HouseNone }
+func (p PlayPermission) granted() bool { return p.House != HouseNone || p.NonActive }
 
 // count is how many off-house plays the permission allows each turn.
 func (p PlayPermission) count() int { return p.Amount }
 
-// validate rejects a granted permission that did not state a positive count.
+// validate rejects a granted permission that did not state a positive count, or
+// that carries a misconfigured condition.
 func (p PlayPermission) validate() error {
 	if p.granted() && p.Amount < 1 {
 		return fmt.Errorf("PlayPermission: Count must be positive")
+	}
+	if p.Condition != nil {
+		return validateCondition(p.Condition)
 	}
 	return nil
 }

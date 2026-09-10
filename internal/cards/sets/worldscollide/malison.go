@@ -23,7 +23,7 @@ var Malison = card.New(
 		card.Trigger.Fight, card.May{Do: card.Then{
 			First: card.MoveWithinBattleline{Target: card.Target.EnemyCreature},
 			Result: card.Conditional{
-				Cond: card.ItIsOnFlank{},
+				Cond: card.OnFlank{OfIt: true},
 				Then: card.CaptureAember{
 					Amount: 1,
 					Target: card.Target.TheChosenCreature,

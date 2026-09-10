@@ -185,6 +185,43 @@ func TestReturnCreatureFromDiscardToDeck(t *testing.T) {
 	}
 }
 
+func TestPutFromDiscardTypeOrTrait(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	upgrade := g.Register(NewCard("chip", StarAlliance, Upgrade, Common), 0)
+	robot := g.Register(
+		NewCard("droid", StarAlliance, Creature, Common, WithPower(3), WithTraits(Robot)),
+		0,
+	)
+	human := g.Register(
+		NewCard("pilot", StarAlliance, Creature, Common, WithPower(3), WithTraits(Human)),
+		0,
+	)
+	for _, id := range []LocalID{upgrade, robot, human} {
+		g.State.Discard[0].add(id)
+	}
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	e := PutFromDiscard{Type: Upgrade, OrTrait: Robot, All: true, Destination: ToHand}
+	if e.Text() != "put each upgrade or Robot card from your discard pile into your hand" {
+		t.Errorf("text = %q", e.Text())
+	}
+	choose := PutFromDiscard{Type: Upgrade, OrTrait: Robot, Destination: ToHand}
+	if choose.Text() != "put an upgrade or Robot card from your discard pile into your hand" {
+		t.Errorf("choose text = %q", choose.Text())
+	}
+	e.Resolve(ctx)
+
+	// The upgrade (matches Type) and the Robot creature (matches OrTrait) return;
+	// the Human creature matches neither and stays in the discard pile.
+	hand := g.Hand(0)
+	if len(hand) != 2 || !containsID(hand, upgrade) || !containsID(hand, robot) {
+		t.Errorf("hand = %v, want the upgrade %d and the Robot %d", hand, upgrade, robot)
+	}
+	if d := g.Discard(0); len(d) != 1 || d[0] != human {
+		t.Errorf("discard = %v, want just the Human creature %d", d, human)
+	}
+}
+
 func TestDiscardHand(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	// Opponent (player 1) hand: a Mars creature, a Mars action, a Sanctum creature.

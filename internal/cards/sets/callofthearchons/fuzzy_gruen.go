@@ -18,8 +18,8 @@ var FuzzyGruen = card.New(
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "353"),
-	card.WithPower(5),
 	card.WithAemberBonus(2),
+	card.WithPower(5),
 	card.WithTraits(card.Traits.Beast),
 	card.WithAbility(
 		card.Trigger.Play, card.GainAember{

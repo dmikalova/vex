@@ -75,20 +75,25 @@ func lastingActionOf(e Effect) (lastingAction, int, bool) {
 		return actDraw, d.Amount, true
 	case Ready:
 		return actReadyPlayed, 0, true
+	case Exalt:
+		return actExalt, d.Amount, true
 	}
 	return 0, 0, false
 }
 
 // reactionEventOf maps a triggered ability's trigger to the reaction event that
 // fires it, reporting whether the trigger is one a lasting per-creature grant can
-// hang on. Reap (Spectral Tunneler) and Fight (Into the Fray) are supported; it
-// lives here so GainAbility and the registry agree on the mapping.
+// hang on. Reap (Spectral Tunneler) and Fight (Into the Fray) are supported, as is
+// Before Fight (Diplomacy); it lives here so GainAbility and the registry agree on
+// the mapping.
 func reactionEventOf(t Trigger) (Event, bool) {
 	switch t {
 	case TriggerAfterReap:
 		return EventReap, true
 	case TriggerAfterFight:
 		return EventFight, true
+	case TriggerBeforeFight:
+		return EventBeforeFight, true
 	}
 	return eventUnset, false
 }
@@ -98,14 +103,26 @@ func reactionEventOf(t Trigger) (Event, bool) {
 // card". Unlike ForRemainderOfTurn's controller-wide reaction, this one is scoped
 // to the single granted creature through the registry's Subject, so only that
 // creature's own trigger fires it. The ability is stored flat, so only triggers
-// and effects the registry can carry (a Reap or Fight reaction whose effect is a
-// Draw, damage, capture, or Ready) are allowed.
+// and effects the registry can carry (a Reap, Fight, or Before Fight reaction whose
+// effect is a Draw, damage, capture, Ready, or Exalt) are allowed.
+//
+// Duration widens the window past the current turn. Unset (the zero value) is the
+// remainder of the controller's turn. NextTurn lasts until the start of the
+// controller's next turn — through the opponent's whole turn — so an enemy creature
+// fires the grant on the opponent's turn too (Diplomacy). Because the registry
+// clears a player's own entries at their ready phase, a next-turn grant is owned by
+// the opponent, whose ready phase falls just before the controller's next turn,
+// and it fires only for a Before Fight ability, whose firing (fireLastingBeforeFight)
+// matches on the subject alone rather than the acting player.
 type GainAbility struct {
-	Target  Target
-	Ability Ability
+	Target   Target
+	Ability  Ability
+	Duration Duration
 }
 
-// validate requires a target and an ability the flat registry can carry.
+// validate requires a target and an ability the flat registry can carry. A
+// next-turn grant is limited to a Before Fight ability, the only trigger whose
+// firing ignores which player is acting.
 func (e GainAbility) validate() error {
 	if !e.Target.valid() {
 		return errUnsetTarget("GainAbility")
@@ -116,28 +133,45 @@ func (e GainAbility) validate() error {
 	if _, _, ok := lastingActionOf(e.Ability.Effect); !ok {
 		return fmt.Errorf("GainAbility: unsupported ability effect %T", e.Ability.Effect)
 	}
+	if e.Duration == NextTurn && e.Ability.Trigger != TriggerBeforeFight {
+		return fmt.Errorf(
+			"GainAbility: NextTurn grant supports only a Before Fight ability, got %v",
+			e.Ability.Trigger,
+		)
+	}
 	return validateEffect(e.Ability.Effect)
 }
 
 // Text renders the effect, e.g. `it gains, "Reap: Draw a card."` — a granted
 // ability takes a comma and quotes (card-wording rule 2), the period inside. A
 // self-reference in the granted ability names the creature that gains it, so it
-// renders "this creature" rather than the source card's name.
+// renders "this creature" rather than the source card's name. A next-turn grant
+// names its window first (Diplomacy).
 func (e GainAbility) Text() string {
 	granted := strings.ReplaceAll(RenderAbility(e.Ability), SelfName, "this creature")
-	return e.Target.Text() + ` gains, "` + granted + `"`
+	text := e.Target.Text() + ` gains, "` + granted + `"`
+	if e.Duration == NextTurn {
+		return "until the start of your next turn, " + text
+	}
+	return text
 }
 
 // Resolve registers the ability as a per-creature reaction on each selected
-// creature for the rest of the controller's turn.
+// creature for the rest of the controller's turn. A NextTurn grant is owned by the
+// opponent so it clears at their ready phase — the start of the controller's next
+// turn — rather than at the end of this one.
 func (e GainAbility) Resolve(ctx *EffectContext) {
 	event, _ := reactionEventOf(e.Ability.Trigger)
 	action, amount, _ := lastingActionOf(e.Ability.Effect)
+	owner := ctx.Controller
+	if e.Duration == NextTurn {
+		owner = ctx.Opponent()
+	}
 	for _, id := range e.Target.Select(ctx) {
 		ctx.Resolver.AddLasting(LastingEffect{
 			On:         event,
 			Do:         action,
-			Controller: int8(ctx.Controller),
+			Controller: int8(owner),
 			Amount:     int8(amount),
 			Subject:    id,
 			HasSubject: true,

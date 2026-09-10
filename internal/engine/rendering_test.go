@@ -37,6 +37,23 @@ func TestEntersStunnedText(t *testing.T) {
 	}
 }
 
+// TestCannotBeUsedWhileText covers the rules line for a card barred from use while
+// a condition holds — Valoocanth's "While the tide is low, ... cannot be used."
+func TestCannotBeUsedWhileText(t *testing.T) {
+	def := NewCard("Valoocanth", Untamed, Creature, Common, WithPower(6),
+		WithCannotBeUsedWhile(TideIsLow{}))
+	want := "While the tide is low, Valoocanth cannot be used."
+	found := false
+	for _, line := range cardRules(&def, false) {
+		if line == want {
+			found = true
+		}
+	}
+	if !found {
+		t.Errorf("cardRules missing %q; got %v", want, cardRules(&def, false))
+	}
+}
+
 func TestEntersPlayAbilityText(t *testing.T) {
 	// A Stun effect renders as the "stunned" state word.
 	stun := RenderAbility(
@@ -93,6 +110,19 @@ func TestAfterYouPlayFolding(t *testing.T) {
 	)
 	if want := "After you play an artifact, steal 1 Æmber."; folded != want {
 		t.Errorf("folded = %q, want %q", folded, want)
+	}
+	// A Conditional{ItIsNamed} folds into the natural "after you play <Name>" wording.
+	named := RenderAbility(
+		Ability{
+			Trigger: TriggerAfterCardPlayed,
+			Effect: Conditional{
+				Cond: ItIsNamed{Name: "Subtle Chain"},
+				Then: GainAember{Player: Controller, Amount: 1},
+			},
+		},
+	)
+	if want := "After you play Subtle Chain, gain 1 Æmber."; named != want {
+		t.Errorf("named = %q, want %q", named, want)
 	}
 	// A non-Conditional reaction keeps the broad prefix.
 	plain := RenderAbility(
@@ -169,6 +199,50 @@ func TestAfterYouDiscardFolding(t *testing.T) {
 	)
 	if want := "After you discard a card from your hand, gain 1 Æmber."; plain != want {
 		t.Errorf("plain = %q, want %q", plain, want)
+	}
+}
+
+func TestAfterCreaturePlayedAdjacentFolding(t *testing.T) {
+	// Stilt-Kin: a Conditional{ItIsOfTrait} on an AfterCreaturePlayedAdjacent
+	// reaction folds the trait into the trigger phrase.
+	folded := RenderAbility(
+		Ability{
+			Trigger: TriggerAfterCreaturePlayedAdjacent,
+			Effect: Conditional{
+				Cond: ItIsOfTrait{Trait: Giant},
+				Then: OnChooseCreature{
+					Target: Target{Kind: TargetThisCreature},
+					Verbs:  []CreatureVerb{ReadyVerb{}, FightVerb{}},
+				},
+			},
+		},
+	)
+	if want := "After a Giant creature is played adjacent to " + SelfName +
+		", ready and fight with " + SelfName + "."; folded != want {
+		t.Errorf("folded = %q, want %q", folded, want)
+	}
+	// A non-Conditional played-adjacent reaction keeps the broad prefix.
+	plain := RenderAbility(
+		Ability{Trigger: TriggerAfterCreaturePlayedAdjacent, Effect: Draw{Amount: 1}},
+	)
+	if want := "After a creature is played adjacent to " + SelfName +
+		", draw a card."; plain != want {
+		t.Errorf("plain = %q, want %q", plain, want)
+	}
+	// A Conditional gated on something other than the played creature's trait stays
+	// literal, keeping the broad prefix.
+	stateGated := RenderAbility(
+		Ability{
+			Trigger: TriggerAfterCreaturePlayedAdjacent,
+			Effect: Conditional{
+				Cond: PoolAember{Player: Opponent, Is: AtLeast, Amount: 1},
+				Then: Draw{Amount: 1},
+			},
+		},
+	)
+	if want := "After a creature is played adjacent to " + SelfName +
+		", if your opponent has 1 Æmber or more, draw a card."; stateGated != want {
+		t.Errorf("state-gated = %q, want %q", stateGated, want)
 	}
 }
 
@@ -954,11 +1028,12 @@ func TestCapitalizeFirst(t *testing.T) {
 
 func TestIndefinite(t *testing.T) {
 	cases := map[string]string{
-		"":         "",
-		"Urchin":   "an Urchin",
-		"elf":      "an elf",
-		"Knight":   "a Knight",
-		"creature": "a creature",
+		"":                 "",
+		"Urchin":           "an Urchin",
+		"elf":              "an elf",
+		"Knight":           "a Knight",
+		"creature":         "a creature",
+		"another creature": "another creature",
 	}
 	for in, want := range cases {
 		if got := indefinite(in); got != want {
@@ -1004,6 +1079,27 @@ func TestStaticText(t *testing.T) {
 		StaticModifier{ArmorBonus: 1, Keywords: []Keyword{Taunt}},
 	); got != "This creature gains +1 armor and taunt." {
 		t.Errorf("armor+keyword staticText = %q", got)
+	}
+	if got := staticText(
+		StaticModifier{PowerBonus: 1, ArmorBonus: 1, Per: UpgradesOnIt},
+	); got != "This creature gains +1 power and +1 armor for each upgrade attached to it." {
+		t.Errorf("per-upgrade staticText = %q", got)
+	}
+	if got := staticText(
+		StaticModifier{KeywordsToNeighbors: []Keyword{Elusive}},
+	); got != "This creature and each of its neighbors gains elusive." {
+		t.Errorf("neighbor-keyword staticText = %q", got)
+	}
+	if got := staticText(
+		StaticModifier{PowerBonus: 1, KeywordsToNeighbors: []Keyword{Elusive}},
+	); got != "This creature gains +1 power. This creature and each of its neighbors gains elusive." {
+		t.Errorf("bonus+neighbor-keyword staticText = %q", got)
+	}
+	dongle := NewCard("Cloaking Dongle", StarAlliance, Upgrade, Common,
+		WithStatic(StaticModifier{KeywordsToNeighbors: []Keyword{Elusive}}))
+	if got := upgradeStaticLines(&dongle, true); len(got) != 1 ||
+		got[0] != "This creature and each of its neighbors gains elusive." {
+		t.Errorf("hosted neighbor-keyword lines = %v", got)
 	}
 }
 

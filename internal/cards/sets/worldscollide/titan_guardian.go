@@ -25,7 +25,7 @@ var TitanGuardian = card.New(
 	card.WithKeywords(card.Keyword.Taunt),
 	card.WithAbility(
 		card.Trigger.Destroyed, card.Conditional{
-			Cond: card.SourceOnFlank{Not: true},
+			Cond: card.OnFlank{Not: true},
 			Then: card.Draw{Amount: 2},
 		}),
 )

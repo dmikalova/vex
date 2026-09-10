@@ -45,6 +45,12 @@ func (g *Game) cannotBeUsedTo(id LocalID, kind UseKind) bool {
 	if g.creaturesGloballyBarred(id, kind) {
 		return true
 	}
+	if c := g.cat.def(id).CannotBeUsedWhile; c != nil {
+		ctx := &EffectContext{Resolver: g, Source: id, Controller: g.controller(id)}
+		if c.Met(ctx) {
+			return true
+		}
+	}
 	for _, k := range g.cat.def(id).CannotBeUsedTo {
 		if k == kind {
 			return true

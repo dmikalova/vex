@@ -238,8 +238,9 @@ func styleHarness() *game {
 // attachHarness builds the near-empty game the "Attached and under" section
 // hangs its host cards on. It carries no zone fill of its own, so all of a
 // match's card slots are free for the section's many upgrades and under-cards;
-// the active player is 0 so a facedown under-card on the opponent's host (owner
-// 1) reads as a card-back, which is the difference the section shows.
+// the active player is 0, so a facedown under-card reads as a card-back whether it
+// sits on the opponent's host (owner 1) or the active player's own (a card is
+// facedown for everyone; the controller peeks its face by hovering).
 func attachHarness() *game {
 	g := &game{selHand: -1, zonesPlayer: -1, forgingKey: -1, handSlot: -1}
 	g.g = engine.NewGame("Player One", "Player Two", 1)

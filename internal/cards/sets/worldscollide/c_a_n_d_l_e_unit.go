@@ -2,7 +2,7 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// C.Ae.N.D.L.E. Unit
+// C.A.N.D.L.E. Unit
 //
 //	House:  Logos
 //	Type:   Creature
@@ -12,9 +12,9 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Robot
 //
 //	After an enemy creature reaps, draw a card.
-//	Action: C.Ae.N.D.L.E. Unit captures 1 Æmber from your opponent.
-var CAeNDLEUnit = card.New(
-	"C.Ae.N.D.L.E. Unit",
+//	Action: C.A.N.D.L.E. Unit captures 1 Æmber from your opponent.
+var CANDLEUnit = card.New(
+	"C.A.N.D.L.E. Unit",
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Uncommon,

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human
 //
 //	Elusive.
-//	Fight/Reap: You may play or use a Shadows card this turn.
+//	Fight/Reap: For the remainder of the turn, you may play or use a Shadows card.
 var ShadowsAmbassador = card.New(
 	"Shadows Ambassador",
 	card.House.Sanctum,
@@ -22,5 +22,7 @@ var ShadowsAmbassador = card.New(
 	card.WithTraits(card.Traits.Human),
 	card.WithKeywords(card.Keyword.Elusive),
 	// TODO: planned rework of the Ambassador cycle.
-	card.WithFightOrReap(card.MayPlayOrUseFriendlyHouse{House: card.House.Shadows}),
+	card.WithFightOrReap(
+		card.MayActFriendlyHouse{House: card.House.Shadows, Grant: card.GrantPlay | card.GrantUse},
+	),
 )

@@ -271,3 +271,80 @@ func TestMoveWithinBattleline(t *testing.T) {
 	// The public Resolve is the one-line wrapper over resolveGate.
 	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
 }
+
+func testArtifact(name string, opts ...CardOption) CardDefinition {
+	return NewCard(name, Brobnar, Artifact, Common, opts...)
+}
+
+func TestTurnIntoCreature(t *testing.T) {
+	if err := (TurnIntoCreature{}).validate(); err == nil {
+		t.Fatal("an unset target should be rejected")
+	}
+	e := TurnIntoCreature{Target: Target{Kind: TargetThisCreature}}
+	if err := validateEffect(e); err != nil {
+		t.Fatalf("validate = %v", err)
+	}
+	if got, want := e.Text(),
+		"move it to a flank of your battleline as a creature"; got != want {
+		t.Fatalf("text = %q, want %q", got, want)
+	}
+
+	g := NewGame("A", "B", 1)
+	existing := g.AddToBattleline(testCreature("existing", 2), 0)
+	art := g.AddArtifact(testArtifact("art", WithArmor(3)), 0)
+
+	// Default chooser has no preference, so index 0 (the left flank) is taken.
+	ctx := &EffectContext{Resolver: g, Source: art, Controller: 0}
+	e.Resolve(ctx)
+	if g.TypeOf(art) != Creature {
+		t.Fatalf("converted card should read as a creature, got %v", g.TypeOf(art))
+	}
+	if got, want := g.Battleline(0), []LocalID{art, existing}; !slices.Equal(got, want) {
+		t.Fatalf("battleline after left conversion = %v, want %v", got, want)
+	}
+	if g.Artifacts(0) != nil && len(g.Artifacts(0)) != 0 {
+		t.Fatalf("converted card should leave the artifact row: %v", g.Artifacts(0))
+	}
+	if got := int(g.State.Cards[art].ArmorRemaining); got != 3 {
+		t.Fatalf("converted creature armor = %d, want 3", got)
+	}
+
+	// A second card converts to the right flank when its controller picks index 1.
+	art2 := g.AddArtifact(testArtifact("art2"), 0)
+	g.SetChooser(0, optionPicker{idx: 1})
+	TurnIntoCreature{Target: Target{Kind: TargetThisCreature}}.
+		Resolve(&EffectContext{Resolver: g, Source: art2, Controller: 0})
+	if got, want := g.Battleline(0),
+		[]LocalID{art, existing, art2}; !slices.Equal(got, want) {
+		t.Fatalf("battleline after right conversion = %v, want %v", got, want)
+	}
+
+	// A source no longer in play is a safe no-op.
+	gone := g.AddArtifact(testArtifact("gone"), 0)
+	g.State.Artifacts[0].remove(gone)
+	before := slices.Clone(g.Battleline(0))
+	TurnIntoCreature{Target: Target{Kind: TargetThisCreature}}.
+		Resolve(&EffectContext{Resolver: g, Source: gone, Controller: 0})
+	if got := g.Battleline(0); !slices.Equal(got, before) {
+		t.Fatalf("converting a card not in play changed the battleline: %v", got)
+	}
+}
+
+func TestTypeOf(t *testing.T) {
+	g := NewGame("A", "B", 1)
+
+	// A printed artifact reads as an artifact until it converts.
+	art := g.AddArtifact(testArtifact("art"), 0)
+	if got := g.TypeOf(art); got != Artifact {
+		t.Fatalf("printed artifact TypeOf = %v, want Artifact", got)
+	}
+
+	// A card in an upgrade chain reads as an Upgrade whatever its printed type,
+	// from its attachment rather than a stored type.
+	host := g.AddToBattleline(testCreature("host", 3), 0)
+	creatureUpgrade := g.AddToBattleline(testCreature("worn", 2), 0)
+	g.State.Cards[creatureUpgrade].HostPlus = upgradePlus(host)
+	if got := g.TypeOf(creatureUpgrade); got != Upgrade {
+		t.Fatalf("attached creature TypeOf = %v, want Upgrade", got)
+	}
+}

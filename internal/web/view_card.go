@@ -98,10 +98,9 @@ func traitLabel(def *engine.CardDefinition) string {
 }
 
 func (g *game) statLine(id engine.LocalID) []app.UI {
-	def := g.g.Def(id)
 	f := g.flashes[id]
 	var segs []app.UI
-	if def.Type == engine.Creature {
+	if g.g.TypeOf(id) == engine.Creature {
 		segs = append(segs, statSeg(g.g.Power(id), "power", pulseClass(f.power, f.odd, "pow")))
 		if d := g.g.Damage(id); d > 0 {
 			segs = append(segs, statSeg(d, "damage", pulseClass(f.damage, f.odd, "dmg")))

@@ -17,7 +17,7 @@ import (
 //	Traits: Human
 //
 //	Elusive.
-//	Fight/Reap: You may play or use a Dis card this turn.
+//	Fight/Reap: For the remainder of the turn, you may play or use a Dis card.
 func TestDisAmbassador(t *testing.T) {
 	t.Run("reap grants playing and using Dis cards this turn", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{
