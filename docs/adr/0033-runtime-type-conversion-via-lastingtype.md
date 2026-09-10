@@ -52,6 +52,62 @@ The view shows power and armor only when `TypeOf(id) == Creature`, so an artifac
 power" is a display concern, not a change to `Power(id)`'s signature, which stays
 `int` for its 200-plus callers.
 
+## Two routes for a type change: stored vs. live
+
+`LastingType` is the right tool for **one** shape of type change, and the wrong
+tool for another. Pick the route by how the change ends, not by what type it
+produces.
+
+**Stored (`LastingType`) — a permanent self-conversion.** The card converts
+**itself**, the change never reverts, and it ends only when that card leaves
+play. Auto-Legionary, Effigy of Melerukh, and The Mysticeti are the whole set:
+each turns itself into a creature for good, so the type is a plain enum written on
+the card and zeroed by `resetCore` on exit. There is no external source, no
+duration, and no counter — nothing to unwind but the card leaving play. A single
+field holds every such card at once, because two of them can never fight over the
+same card (a card only ever converts itself, once, one way).
+
+**Live (a `ConstantAbility`, never stored) — a "considered an artifact" grant.**
+The card is a given type only while some other condition holds — a counter on
+it, a source card in play, a while-condition. Deanimator is the model: "each card
+that has a mineralize counter on it is considered an artifact." Per ADR 0024 this
+is a `ConstantAbility` composed on top of a `CounterInPlay{Kind, Target: This}`
+read, computed live at read time (the way `Power`/`Armor` fold `constantBonus`),
+**not** a `LastingType` write. It reverts for free: when Deanimator leaves play or
+the counter is removed, the next `TypeOf` read simply no longer sees the grant, so
+there is nothing to pop and no source lifetime to track. Two Deanimators compose
+the same way — each grant is recomputed every read.
+
+For the live route, `TypeOf` grows one step after the `HostPlus`/`LastingType`
+checks: ask whether any active constant ability converts this card's type, exactly
+as the stat reads scan for bonuses. Do not store the result.
+
+### What to look out for — signals you need the live route (or, later, a stack)
+
+When implementing a type-conversion card, read the card text for the ending
+condition and route on it:
+
+- **"becomes a creature" / "is an artifact until it leaves play", self-targeted →
+  stored `LastingType`.** Permanent, self-sourced, one-way.
+- **"is considered an artifact" (or any type) gated on anything — a counter, a card
+  in play, a while-condition → live `ConstantAbility`.** The tell is that the change must end
+  on a lifetime **other than the converted card's own** (a _source_ leaving play, a
+  counter being removed, a condition ceasing). Never store this; storing it would
+  need an unwind path the live layer gives for free.
+- **Two _stored_ overrides could apply to one card at once, on different lifetimes
+  → this ADR's single field is no longer enough.** No such card exists today —
+  every known type change is either a permanent self-conversion (stored) or a live
+  "considered" grant (not stored), so the two routes never overlap. If one ever
+  appears, do not add a second field: fold `LastingType` into a global, flat,
+  comparable `TypeEntry{Card, Type, Source}` LIFO side-table exactly like the
+  control stack (ADR 0028) — self-conversions become self-sourced entries (ended by
+  the card leaving play), gated conversions name their source, entries supersede by
+  `(card, source)` to stay board-bounded (ADR 0024), and `TypeOf` reads the top of
+  the stack. The one genuinely new decision at that point is the precedence between
+  a stored override and a live constant grant on the same card; KeyForge resolves
+  overlapping continuous effects by last-applied-wins, so record that rule when it
+  first matters.
+
 ## Consequences
 
 - One place decides a card's current type. Adding a new type-conversion mechanic

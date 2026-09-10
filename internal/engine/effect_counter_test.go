@@ -23,6 +23,27 @@ func TestAddPowerCounter(t *testing.T) {
 	}
 }
 
+// TestAddPowerCounterEqual covers Mimic Gel: the counter count is set equal to a
+// live count (a chosen creature's power) rather than a fixed Amount.
+func TestAddPowerCounterEqual(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	mimic := g.AddToBattleline(testCreature("mimic", 0), 0)
+	chosen := g.AddToBattleline(testCreature("chosen", 6), 0)
+	ctx := &EffectContext{Resolver: g, Source: mimic, Controller: 0, It: chosen, HasIt: true}
+
+	e := AddPowerCounter{Target: Target{Kind: TargetThisCreature}, Equal: PowerOfChosen{}}
+	if got := e.Text(); got != "give {self} +1 power counters equal to its power" {
+		t.Errorf("text = %q", got)
+	}
+	e.Resolve(ctx)
+	if g.Power(mimic) != 6 {
+		t.Errorf(
+			"power = %d, want 6 (counters equal to the chosen creature's power)",
+			g.Power(mimic),
+		)
+	}
+}
+
 // TestAddPowerCounterPer covers Martian Hounds: several counters at once, scaled
 // by a board count, with the target chosen only once.
 func TestAddPowerCounterPer(t *testing.T) {

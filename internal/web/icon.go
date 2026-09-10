@@ -641,6 +641,13 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return append(gs, arrowTo(targetGlyph(v.Target))), true
 	case engine.GainAssault:
 		return []glyph{{asset: "kw-assault"}, arrowTo(targetGlyph(v.Target))}, true
+	case engine.GainTextBox:
+		return []glyph{targetGlyph(v.Source), arrowTo(targetGlyph(v.Target))}, true
+	case engine.LendTextBoxFromHand:
+		return []glyph{
+			{asset: "type-creature", decor: decorChosen},
+			arrowTo(glyph{asset: "type-creature", decor: decorChosen}),
+		}, true
 	case engine.GainKeywordForTurn:
 		if a := keywordIcon(v.Keyword); a != "" {
 			return []glyph{{asset: a}, arrowTo(targetGlyph(v.Target))}, true
@@ -649,7 +656,7 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 	case engine.FuseTriggersForTurn:
 		return []glyph{{asset: "glyph-reap"}, {asset: "glyph-swap"}, {asset: "glyph-fight"}}, true
 	case engine.AddPowerCounter:
-		if v.Per != nil {
+		if v.Per != nil || v.Equal != nil {
 			return []glyph{{asset: "power"}, arrowTo(targetGlyph(v.Target))}, true
 		}
 		return []glyph{{asset: "power", qty: v.Amount}, arrowTo(targetGlyph(v.Target))}, true

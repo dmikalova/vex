@@ -108,11 +108,11 @@ func TestMoveAember(t *testing.T) {
 	}
 }
 
-// TestMoveAemberBind checks that Bind selects through a Selector on the full
+// TestMoveAemberBind checks that Bind selects through a Refinement on the full
 // candidate set (not only the Æmber-bearers), moves all the Æmber, and leaves the
 // moved-from creature in context.
 func TestMoveAemberBind(t *testing.T) {
-	mostPowerful := Target{Kind: TargetEachCreature}.Selector(MostPowerful(1))
+	mostPowerful := Target{Kind: TargetEachCreature}.Refine(MostPowerful(1))
 
 	// The most powerful creature carries Æmber: it is emptied into the pool and
 	// bound as ctx.It.

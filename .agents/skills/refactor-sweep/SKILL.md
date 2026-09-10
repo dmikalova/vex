@@ -104,7 +104,7 @@ one resolution bar a single enum-selected noun (`ArchiveTopOfDeck` +
 `ArchiveTopOfDiscard` → `ArchiveTop{From Zone}`).
 
 **Ladder violations.** A change belongs at the cheapest rung that can carry it: a
-field or Strategy on an existing effect (a `Count`, `Selector`, `Condition`,
+field or Strategy on an existing effect (a `Count`, `Refinement`, `Condition`,
 `Chooser`) beats a new node; a new node beats a new `Resolver` capability; that
 beats new state. A new node that only varies an existing one along one axis is a
 Strategy wearing a node's clothes.

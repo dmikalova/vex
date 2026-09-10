@@ -91,7 +91,7 @@ card:
    existing card to confirm a primitive's exact fields before using it. An easy
    card is built directly (_Implementing one card_ below).
 2. **A gated card needs a mechanic that does not exist yet** — a new effect,
-   target filter, count, selector, condition, or cross-turn hook. Build the
+   target filter, count, refinement, condition, or cross-turn hook. Build the
    mechanic (_Building a mechanic_ below), then implement the card on top of it.
 3. **After a mechanic lands, cash it in.** Before returning to strict `nextCard`
    order, implement any other unimplemented card that the same mechanic now

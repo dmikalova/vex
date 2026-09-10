@@ -93,6 +93,15 @@ type (
 	// of the turn (Creed of Nature grants skirmish), unlike GainKeyword's
 	// until-next-turn duration.
 	GainKeywordForTurn = engine.GainKeywordForTurn
+	// GainTextBox gives the creature its Target selects the printed text box of the
+	// creature its Source selects — that card's traits, keywords, and triggered
+	// abilities. RemainderOfTurn makes the gain last the turn; otherwise it lasts
+	// until the recipient leaves play (Mimic Gel copies a chosen creature).
+	GainTextBox = engine.GainTextBox
+	// LendTextBoxFromHand reveals a creature from your hand and gives a chosen
+	// creature in play that revealed card's text box for the remainder of the turn
+	// (Creed of Nurture).
+	LendTextBoxFromHand = engine.LendTextBoxFromHand
 )
 
 // After branches for card.DamageThen.

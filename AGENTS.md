@@ -229,7 +229,7 @@ engine seam. The load-bearing rules that affect how you add anything:
   `effect_<mechanic>.go`, not a new branch in the `Game` runtime.
 - **Vary behavior with a Strategy that also renders its own text.** When behavior
   changes along an axis, model the axis as a small strategy — a `Chooser` (or its
-  optional-capability interfaces `OptionChooser`/`Orderer`), a `Selector`, a
+  optional-capability interfaces `OptionChooser`/`Orderer`), a `Refinement`, a
   `Count`, or a `Condition` — each of which carries both its behavior and its text
   fragment. Reach for this before adding another `Target` field or a `bool`.
 - **The `Resolver` port is segregated into role interfaces** (ADR 0008)
@@ -418,7 +418,7 @@ sounds like:
   **midline**, **hand row**, **zone counts**, **sidebar**, **game log**,
   **turn HUD**, **prompt**, **action bar**, **zone viewer**, **card preview**.
 - **The engine** — a mechanic is an **effect node** in the **effect AST**; an
-  axis of behavior is a **Strategy** (a `Chooser`, `Selector`, `Count`, or
+  axis of behavior is a **Strategy** (a `Chooser`, `Refinement`, `Count`, or
   `Condition`); the `Resolver` is a **port** split into **role interfaces**; a
   "rest of the turn" effect is a **lasting effect**, either a **reaction** to an
   event or a **replacement** of its outcome.

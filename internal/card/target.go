@@ -4,8 +4,8 @@ import "github.com/dmikalova/vactrol/internal/engine"
 
 // Target groups ready-made targets, e.g. card.Target.EachEnemyCreature. Each is
 // an engine.Target value, so the filter methods (WithTrait, PowerAtMost, OnFlank,
-// Selector, ...) chain off them:
-// card.Target.EachEnemyCreature.Selector(card.ExceptMostPowerful).
+// Refine, ...) chain off them:
+// card.Target.EachEnemyCreature.Refine(card.ExceptMostPowerful).
 var Target = targets{
 	This:                 engine.Target{Kind: engine.TargetThisCreature},
 	Triggering:           engine.Target{Kind: engine.TargetTriggeringCreature},
@@ -110,56 +110,56 @@ type targets struct {
 	GrantingArtifact engine.Target
 }
 
-// Selector refines a Target relative to the whole selected set (see
-// ExceptMostPowerful); pass one to a target's Selector method.
-type Selector = engine.Selector
+// Refinement refines a Target relative to the whole selected set (see
+// ExceptMostPowerful); pass one to a target's Refine method.
+type Refinement = engine.Refinement
 
-// ExceptMostPowerful is a Selector that drops the single most powerful creature
-// from a set, e.g. card.Target.EachEnemyCreature.Selector(card.ExceptMostPowerful).
+// ExceptMostPowerful is a Refinement that drops the single most powerful creature
+// from a set, e.g. card.Target.EachEnemyCreature.Refine(card.ExceptMostPowerful).
 // When several tie for most powerful the controller chooses which one to keep.
 var ExceptMostPowerful = engine.ExceptMostPowerful
 
-// SamePowerAsChosen is a Selector that keeps every creature sharing the power of
+// SamePowerAsChosen is a Refinement that keeps every creature sharing the power of
 // one the controller chooses, e.g.
-// card.Target.EachCreature.Selector(card.SamePowerAsChosen) (Dance of Doom).
+// card.Target.EachCreature.Refine(card.SamePowerAsChosen) (Dance of Doom).
 var SamePowerAsChosen = engine.SamePowerAsChosen
 
-// SamePowerAsEitherChosen is a Selector that keeps every creature sharing the
+// SamePowerAsEitherChosen is a Refinement that keeps every creature sharing the
 // power of a chosen friendly or enemy creature, e.g.
-// card.Target.EachCreature.Selector(card.SamePowerAsEitherChosen) (Quintrino
+// card.Target.EachCreature.Refine(card.SamePowerAsEitherChosen) (Quintrino
 // Flux).
 var SamePowerAsEitherChosen = engine.SamePowerAsEitherChosen
 
-// LeastPowerful is a Selector that keeps only the single least powerful creature
-// of a set, e.g. card.Target.EachCreature.Selector(card.LeastPowerful) (Horseman
+// LeastPowerful is a Refinement that keeps only the single least powerful creature
+// of a set, e.g. card.Target.EachCreature.Refine(card.LeastPowerful) (Horseman
 // of Famine). When several tie the controller chooses which one to keep.
 var LeastPowerful = engine.LeastPowerful
 
-// MostPowerful returns a Selector that keeps the n most powerful creatures of a
-// set, e.g. card.Target.EachCreature.Selector(card.MostPowerful(3)) (Three Fates).
+// MostPowerful returns a Refinement that keeps the n most powerful creatures of a
+// set, e.g. card.Target.EachCreature.Refine(card.MostPowerful(3)) (Three Fates).
 // When more tie at the cutoff than there are slots, the controller chooses which.
 var MostPowerful = engine.MostPowerful
 
-// HouseWithAtLeast returns a Selector that keeps only creatures whose house has
+// HouseWithAtLeast returns a Refinement that keeps only creatures whose house has
 // at least n creatures in play, counting each house across both battlelines, e.g.
-// card.Target.EachCreature.Selector(card.HouseWithAtLeast(3)) (No Safety in
+// card.Target.EachCreature.Refine(card.HouseWithAtLeast(3)) (No Safety in
 // Numbers).
 var HouseWithAtLeast = engine.HouseWithAtLeast
 
-// LowestAndHighestPower is a Selector that keeps every creature tied for the
+// LowestAndHighestPower is a Refinement that keeps every creature tied for the
 // lowest power and every creature tied for the highest power, e.g.
-// card.Target.EachCreature.Selector(card.LowestAndHighestPower) (Standardized
+// card.Target.EachCreature.Refine(card.LowestAndHighestPower) (Standardized
 // Testing).
 var LowestAndHighestPower = engine.LowestAndHighestPower
 
-// WithoutSharedTrait returns a Selector that keeps only creatures that share no
+// WithoutSharedTrait returns a Refinement that keeps only creatures that share no
 // trait with another creature in the same controller's battleline, e.g.
-// card.Target.EachCreature.Selector(card.WithoutSharedTrait()) (Good of the Many).
+// card.Target.EachCreature.Refine(card.WithoutSharedTrait()) (Good of the Many).
 var WithoutSharedTrait = engine.WithoutSharedTrait
 
-// PowerLessThan is a Selector that keeps every creature of a set whose power is
+// PowerLessThan is a Refinement that keeps every creature of a set whose power is
 // below a running count, e.g.
-// card.Target.EachCreature.ExceptHouse(card.House.Self).Selector(card.PowerLessThan(count))
+// card.Target.EachCreature.ExceptHouse(card.House.Self).Refine(card.PowerLessThan(count))
 // (Exterminate! Exterminate!).
 var PowerLessThan = engine.PowerLessThan
 

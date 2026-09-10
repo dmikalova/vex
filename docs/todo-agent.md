@@ -17,21 +17,28 @@ File-naming decision for the splits: keep each family's existing top-level prefi
 so `ls` groupings stay intact — `target.go` is a bare concept file, so its splits
 are `target_*.go`; `effect_condition.go` / `effect_count.go` are part of the
 `effect_*` vocabulary, so their splits keep the prefix (`effect_condition_*.go`,
-`effect_count_*.go`). Ratchet the split convention into `internal/engine/AGENTS.md`.
+`effect_count_*.go`).
 
 Structural (decompose / atomize / recompose):
 
-- **A3** — Selection mode (chosen / random / each) is a `Selector` Strategy, not a
-  node per (verb × zone × mode): fold `PurgeFromHand` / `PurgeRandomFromHand` /
-  `PurgeEachFromHand` / `PurgeCreatureFromHand` (and the archive/discard mirrors)
-  onto one node per verb carrying a selector. **Do all zones**, not just hand.
-
-Cleanup (splits / comments / naming — not method refactors):
-
-- **B2** — Split `target.go` (1479 lines) into `target_*.go` (type + kinds vs
-  selection/filter helpers).
-- **B4** — Split `resolver.go` (1246) and `text.go` (1106): separate the role-
-  interface declarations from the `*Game` method bodies; group the text helpers.
+- **A3** — Selection mode (chosen / random / each) is a new `Selection` Strategy
+  (distinct from the set-relative `Refinement`), not a node per (verb × zone ×
+  mode). Concrete strategies `Chosen{House, Mandatory}` / `Random{}` /
+  `Each{Type, ExceptHouse}` each render their own fragment ("a card" / "a random
+  card" / "each creature") and carry their own mode-specific fields on the
+  strategy (no union fields on the node). Express declinable / `Then`-gate / tally
+  as optional-capability interfaces mirroring `leadingRefinement` /
+  `OptionChooser` / `Orderer`. Fold `PurgeFromHand` / `PurgeRandomFromHand` /
+  `PurgeEachFromHand` / `PurgeCreatureFromHand` (and the archive/discard mirrors,
+  absorbing the existing `PurgeCard{Zone,…}`) onto one node per verb carrying
+  `Zone` + `Selection`. **Do all zones**, not just hand.
+  - **Prereq (blocker):** the clean fold needs a resolver-port method
+    `RandomCardFrom(zone, owner) (LocalID, bool)` so the `Random` selection returns
+    an id the node moves like `Chosen`/`Each`, instead of the per-verb
+    `PurgeRandomFromHand` / `DiscardRandomFromHand` / `ArchiveRandomFromHand` doing
+    the pick-and-move inside the resolver (RNG lives in `Game`, not exposed to
+    effect nodes). Add that port method first, then fold. Do not split `Random`
+    off into a second node.
 
 ## Card wording / authoring
 

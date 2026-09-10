@@ -19,7 +19,7 @@ var ExterminateExterminate = card.New(
 		card.Trigger.Play, card.Destroy{
 			Target: card.Target.EachCreature.
 				ExceptHouse(card.House.Self).
-				Selector(card.PowerLessThan(card.InPlay{
+				Refine(card.PowerLessThan(card.InPlay{
 					Player: card.Controller,
 					Type:   card.Type.Creature,
 					House:  card.House.Self,

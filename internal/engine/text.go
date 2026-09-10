@@ -3,7 +3,6 @@ package engine
 import (
 	"fmt"
 	"strings"
-	"unicode"
 )
 
 // RenderAbility renders a single triggered ability to its printed card line,
@@ -169,23 +168,6 @@ func enterStateWord(e Effect) string {
 	default:
 		return e.Text()
 	}
-}
-
-// punctuate ends an ability body with a period. A body that already ends in a
-// period is left alone; one that ends in a closing quote (an embedded ability
-// such as Charge!'s granted "Play: ...") takes its period inside the quote, so
-// the line reads `... an enemy creature."` rather than doubling or misplacing it.
-func punctuate(body string) string {
-	if strings.HasSuffix(body, `"`) {
-		if inner := body[:len(body)-1]; !strings.HasSuffix(inner, ".") {
-			return inner + `."`
-		}
-		return body
-	}
-	if strings.HasSuffix(body, ".") {
-		return body
-	}
-	return body + "."
 }
 
 // abilityTextWithNames resolves the two placeholders an ability line may use: the
@@ -670,19 +652,6 @@ func staticBonuses(m StaticModifier) string {
 
 // oxfordAnd joins parts into one clause: "a" alone, "a and b" for two, and an
 // Oxford-comma list "a, b, and c" for three or more.
-func oxfordAnd(parts []string) string {
-	switch len(parts) {
-	case 0:
-		return ""
-	case 1:
-		return parts[0]
-	case 2:
-		return parts[0] + " and " + parts[1]
-	default:
-		return strings.Join(parts[:len(parts)-1], ", ") + ", and " + parts[len(parts)-1]
-	}
-}
-
 // upgradeStaticLines renders an Upgrade's continuous modifier and replacement
 // text, combining them when both are printed on the same Upgrade. On a host's
 // face (hosted) each stands on its own line, unframed.
@@ -972,21 +941,6 @@ func restrictionText(r Restrictions, isUpgrade bool) []string {
 	return lines
 }
 
-// ordinalWord renders a small positive integer as its English ordinal word,
-// covering the key ordinals the Key Imps bar (first, second, third).
-func ordinalWord(n int) string {
-	switch n {
-	case 1:
-		return "first"
-	case 2:
-		return "second"
-	case 3:
-		return "third"
-	default:
-		return fmt.Sprintf("%dth", n)
-	}
-}
-
 // keyCostText renders a card's key-cost change, e.g. "Your opponent's keys cost +1
 // Æmber." (or "Your keys cost…" / "Each player's keys cost…"). Returns "" when the
 // change is zero. Both a card that prints the rule and an Upgrade that grants it
@@ -1058,15 +1012,6 @@ func playPermissionText(p PlayPermission) string {
 		countWord(p.count()),
 		noun,
 	)
-}
-
-// countWord renders a small count as an English word ("one") for the common
-// single-card grant, falling back to the numeral for larger counts.
-func countWord(n int) string {
-	if n == 1 {
-		return "one"
-	}
-	return fmt.Sprintf("%d", n)
 }
 
 // captureOpponentAemberText renders a continuous replacement that captures Æmber
@@ -1214,60 +1159,4 @@ func attackKeywordsText(def *CardDefinition) string {
 		def.Name,
 		strings.Join(words, " and "),
 	)
-}
-
-// capitalizeFirst upper-cases the first rune of s.
-func capitalizeFirst(s string) string {
-	if s == "" {
-		return s
-	}
-	r := []rune(s)
-	r[0] = unicode.ToUpper(r[0])
-	return string(r)
-}
-
-// indefinite prefixes a noun with the indefinite article "a" or "an", choosing
-// "an" before a word that starts with a vowel — e.g. "an Urchin", "a Knight". A
-// noun already led by "another" carries its own article ("an other") and takes
-// none, so "another creature" is left as is rather than "an another creature".
-func indefinite(noun string) string {
-	if noun == "" {
-		return noun
-	}
-	if noun == "another" || strings.HasPrefix(noun, "another ") {
-		return noun
-	}
-	switch unicode.ToLower([]rune(noun)[0]) {
-	case 'a', 'e', 'i', 'o', 'u':
-		return "an " + noun
-	default:
-		return "a " + noun
-	}
-}
-
-// plural gives a noun the form a count of n calls for: "card" for one, "cards"
-// for any other number, including zero.
-func plural(n int, noun string) string {
-	if n == 1 {
-		return noun
-	}
-	return noun + "s"
-}
-
-// countNoun renders a quantity and the noun it counts, e.g. "1 card", "3 cards".
-func countNoun(n int, noun string) string {
-	return fmt.Sprintf("%d %s", n, plural(n, noun))
-}
-
-// singularNoun strips the leading article or quantifier from a Target's phrase,
-// leaving the bare noun a "ready a <noun>" or "up to 3 <noun>s" clause needs. The
-// adjectives stay: "an enemy damaged creature" becomes "enemy damaged creature",
-// which pluralizes correctly and keeps the "enemy" the card is scoped to.
-func singularNoun(phrase string) string {
-	for _, p := range []string{"each other ", "each ", "an ", "a "} {
-		if strings.HasPrefix(phrase, p) {
-			return strings.TrimPrefix(phrase, p)
-		}
-	}
-	return phrase
 }

@@ -18,7 +18,7 @@ var QuintrinoFlux = card.New(
 	card.WithAbility(
 		card.Trigger.Play,
 		card.Destroy{
-			Target: card.Target.EachCreature.Selector(card.SamePowerAsEitherChosen),
+			Target: card.Target.EachCreature.Refine(card.SamePowerAsEitherChosen),
 		},
 	),
 )

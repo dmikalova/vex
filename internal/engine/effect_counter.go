@@ -15,6 +15,10 @@ type AddPowerCounter struct {
 	// Per scales the counters by a board quantity, choosing the target only once
 	// (Martian Hounds counts the damaged creatures).
 	Per Count
+	// Equal sets the number of +1 counters to a live count rather than a fixed
+	// Amount — Mimic Gel gives itself counters equal to a chosen creature's power.
+	// When set it overrides Amount and renders "equal to <count>".
+	Equal Count
 }
 
 // validate requires an explicit target.
@@ -27,6 +31,10 @@ func (e AddPowerCounter) validate() error {
 
 // Text renders the effect, e.g. "give Eater of the Dead a +1 power counter".
 func (e AddPowerCounter) Text() string {
+	if e.Equal != nil {
+		return fmt.Sprintf("give %s +1 power counters equal to %s",
+			e.Target.Text(), e.Equal.CountText())
+	}
 	return forEach(e.Per, fmt.Sprintf("give %s %s", e.Target.Text(), e.counters()))
 }
 
@@ -61,6 +69,13 @@ func spellCounters(n int) string {
 
 // Resolve places the counters on each selected creature, scaled by Per.
 func (e AddPowerCounter) Resolve(ctx *EffectContext) {
+	if e.Equal != nil {
+		amount := e.Equal.Value(ctx)
+		for _, id := range e.Target.Select(ctx) {
+			ctx.Resolver.AddPowerCounter(id, amount)
+		}
+		return
+	}
 	amount := scaled(e.Amount, e.Per, ctx)
 	for _, id := range e.Target.Select(ctx) {
 		ctx.Resolver.AddPowerCounter(id, amount)

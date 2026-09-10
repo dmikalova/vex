@@ -20,6 +20,6 @@ var NoSafetyInNumbers = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{
 			Amount: 3,
-			Target: card.Target.EachCreature.Selector(card.HouseWithAtLeast(3)),
+			Target: card.Target.EachCreature.Refine(card.HouseWithAtLeast(3)),
 		}),
 )

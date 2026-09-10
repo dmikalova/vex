@@ -226,6 +226,16 @@ func (g *Game) hasKeyword(id LocalID, k Keyword) bool {
 	if !g.textBlanked(id) && g.cat.def(id).hasKeyword(k) {
 		return true
 	}
+	// A creature that has gained another card's text box also has that card's
+	// printed keywords (Mimic Gel, Creed of Nurture); a blanked text box ignores
+	// them just like its own.
+	if !g.textBlanked(id) {
+		for _, textSource := range g.grantedTextBoxSources(id) {
+			if g.cat.def(textSource).hasKeyword(k) {
+				return true
+			}
+		}
+	}
 	if g.State.Cards[id].GrantedKeywords&k.bit() != 0 {
 		return true
 	}

@@ -21,7 +21,7 @@ var Soulkeeper = card.New(
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Destroyed,
 			Effect: card.Destroy{
-				Target: card.Target.EachEnemyCreature.Selector(card.MostPowerful(1)),
+				Target: card.Target.EachEnemyCreature.Refine(card.MostPowerful(1)),
 			},
 		}},
 	}),

@@ -4,7 +4,7 @@ import "testing"
 
 func TestRepeatOnCondition(t *testing.T) {
 	e := RepeatOnCondition{
-		Do:   Destroy{Target: Target{Kind: TargetEachEnemyCreature}.Selector(LeastPowerful)},
+		Do:   Destroy{Target: Target{Kind: TargetEachEnemyCreature}.Refine(LeastPowerful)},
 		Cond: Overwhelmed{},
 	}
 	if e.Text() != "destroy the least powerful enemy creature -> if you are overwhelmed, repeat this effect" {

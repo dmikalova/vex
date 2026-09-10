@@ -45,31 +45,9 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - Tool to open 50 random cards for me to review - and then record which ones I've seen how many times, so the next time it selects a different 50 with the least amount of reviews
 - I really like this form: Grant: card.GrantPlay | card.GrantUse - where can we use it more?
 - A tool that can detect card.X usage across all cards, to help identify where specific effects or abilities are being underutilized as a sign of an overly specific method.
+- The way a lot of effects work is there is implied chaining between one effect to the next - is there a reasonable way to make this more explicit?
 
 ## Things that can be done now
-
-- Hunter or Hunted could be changed to "Remove a ward from a creature and ward a creature." Note - any creature could be targeted for removing the ward, even if it doesn't have a ward. This effectively makes it the same effect but a lot simpler.
-- Can WithPlayFightReap, WithFightOrReap, and WithPlayReap be consolidated into WithAbility(card.Trigger.PlayFightReap) etc?
-- Philophosaurus implementation - currently Philophosaurus uses "LookAtTopSort" which hard codes its behavior. However, there are a bunch of other cards that do a very similar thing - eyegor, lay of the land, vandalize in an upcoming set - I feel like all of these could be generalized into a "Look at the top x cards of deck, then do x (and optionally y, z, etc)"
-- counters should be named "generic-counter-$NAME" so that they all get organized together. eg effect_generic_counter_growth_test.go and generic-counter-growth.svg - also move effect_counter.svg to effect_generic_counter.svg
-- On the player bar, if I try swipe left/right on touch screen it does not scroll the player bar if I end up touching an icon
-- The tooltips on the player bar are now in the player bar rather than over it
-- phalanx strike repeats endlessly - it should be able to repeat one time (hence the "preceding effect" text.)
-- shadow self should not deal damage in a fight - eg when it fights or when something fights it
-- creature as upgrade prompts for flank then asks if you want to play it as a creature or upgrade. The play button itself above the lifted card could say "play creature" and "play upgrade" instead of just "play"
-- Is it possible for things like "AttachSelfTo" to take a type of card.Name instead of string? Similar for GrantingArtifact.Named() and anything else that currently accepts a stringly typed card name.
-- uncharted lands should be card.this or card.target.source to reference itself instead of a stringly typed card name.
-- Chief eng walls currently does Type: Type, OrTrait: Trait which is weird and inflexible. Can the zone movement methods just take a generic Target: card.Type.Upgrade | card.Trait(card.Trait.Robot) instead?
-- rename SpendAsPool (bracchus, calypigean) - eg "SpendAemberOnCard"
-- when I'm prompted to select a card from zone, after some short time the modal jumps to the top
-- In the sidebar, the stealth mode and garcia restriction warnings are on the same line - warnings should be one per line
-- Data forge doesn't need may
-- creature next to narp shouldn't have option to reap through universal translator
-- when universal translator selects a creature, have the normal use buttons appear above it (eg fight/reap, if an action is available, action)
-- The duration names can be more explicit - eg duration.NextTurn could be duration.UntilStartOfYourNextTurn or duration.UntilEndOfYourNextTurn.
-- Update the agents file so that when it writes tests it tests the positive and negative of a card's abilities. Simple rote abilities like keywords don't need to be tested, but combined conditionals should have both positive and negative test cases. Cards that handle numeric values should be tested at the 0, 1, n-1, n, and n+1 cases
-- Cards like virtuous works with no text should still have an empty black textbox that fills the card space
-- manual mode option to place card under/return card under to hand on a card that's selected/lifted
 
 - Cloaking Dongle: Target: Target and neighbors then gives the bonus
 - Kompsos Haurspex and Livia the elder can be atomized into each other

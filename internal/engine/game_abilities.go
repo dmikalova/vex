@@ -782,6 +782,17 @@ func (g *Game) triggeredBy(src LocalID, trigger Trigger) []triggeredAbility {
 			}
 		}
 	}
+	// A creature that has GAINED another card's text box (Mimic Gel copies a chosen
+	// creature; Creed of Nurture lends one for the turn) also fires that card's
+	// printed abilities as if they were its own. They keep src as their source, so
+	// self-referential text rebinds to the gaining creature.
+	if !g.textBlanked(src) {
+		for _, textSource := range g.grantedTextBoxSources(src) {
+			for _, ab := range g.cat.def(textSource).Abilities {
+				keep(src, ab)
+			}
+		}
+	}
 	return pending
 }
 

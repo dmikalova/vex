@@ -1,29 +1,38 @@
-//go:build todo
-
 package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// MimicGel
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Mimic Gel
 //
 //	House:  Logos
 //	Type:   Creature
 //	Rarity: Rare
-//	Power:  0
+//	Power:  1
 //	Traits: Shapeshifter • Mutant
 //
-//	Mimic Gel cannot be played unless there is another creature in play.
-//	Mimic Gel enters play as a copy of another creature in play, except it belongs to house Logos.
+//	Play: Choose another creature - give Mimic Gel +1 power counters equal to its power, and Mimic Gel gains the text box of the chosen creature.
 var MimicGel = card.New(
 	"Mimic Gel",
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "170"),
-	card.WithPower(0),
+	card.WithPower(1),
 	card.WithTraits(card.Traits.Shapeshifter, card.Traits.Mutant),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.ChooseCreatureThen{
+			Target: card.Target.Creature.Other(),
+			Then: card.Sequence{
+				Effects: []card.Effect{
+					card.AddPowerCounter{
+						Target: card.Target.This,
+						Equal:  card.PowerOfChosen{},
+					},
+					card.GainTextBox{
+						Target: card.Target.This,
+						Source: card.Target.TheChosenCreature,
+					},
+				},
+			},
+		}),
 )

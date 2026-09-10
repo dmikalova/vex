@@ -125,7 +125,7 @@ renders its own text, so it plugs into the AST without desync:
 - **`Chooser`** makes a player's decisions (swapped per frontend); its optional
   capabilities `OptionChooser` / `Orderer` are discovered by type assertion.
 - **`Target`** names the cards an effect applies to (a base kind plus filters);
-  **`Selector`** refines a target set relative to itself ("except the most
+  **`Refinement`** refines a target set relative to itself ("except the most
   powerful").
 - **`Count`** computes a board-scaled number; **`Condition`** is a branch
   predicate for `Conditional`.

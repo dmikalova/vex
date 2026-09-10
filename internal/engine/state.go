@@ -115,6 +115,19 @@ type CardCore struct {
 	// attachment (HostPlus), not this field, because the discard path for a shed
 	// upgrade does not reset the core.
 	LastingType CardType
+	// TextBoxSourcePlus records that this creature has gained the printed text box
+	// (traits, keywords, and triggered abilities) of another card until it leaves
+	// play — Mimic Gel copies a chosen creature. It stores that source's LocalID+1
+	// (0 means "no gained text box") so the zero value is cleanly "none", like
+	// HostPlus. resetCore clears it when the card leaves play. The source's def is
+	// read from the immutable catalog, so it stays available even after the source
+	// itself leaves play.
+	TextBoxSourcePlus uint8
+	// TextBoxTurnSourcePlus records that this creature has gained the printed text
+	// box of another card for the remainder of the turn — Creed of Nurture lends a
+	// hand creature's text box to a creature in play. It stores that source's
+	// LocalID+1 like TextBoxSourcePlus; the ready phase clears it for every creature.
+	TextBoxTurnSourcePlus uint8
 	// NamedHouse is a house this card named as it entered play and holds for as long
 	// as it stays there, for a HouseLock that constrains that house rather than one
 	// printed on the card — Restringuntus bars the house it named. It is the card's

@@ -17,6 +17,6 @@ var GoodOfTheMany = card.New(
 	card.Provenance(card.WC, "220"),
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{
-			Target: card.Target.EachCreature.Selector(card.WithoutSharedTrait()),
+			Target: card.Target.EachCreature.Refine(card.WithoutSharedTrait()),
 		}),
 )

@@ -108,7 +108,7 @@ func TestDestroySamePower(t *testing.T) {
 	c := g.AddToBattleline(testCreature("c", 3), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := Destroy{Target: Target{Kind: TargetEachCreature}.Selector(SamePowerAsChosen)}
+	e := Destroy{Target: Target{Kind: TargetEachCreature}.Refine(SamePowerAsChosen)}
 	if e.Text() != "choose a creature - destroy each creature with the same power as the chosen creature" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -142,7 +142,7 @@ func TestDestroySamePowerEitherChosen(t *testing.T) {
 	eSurvive := g.AddToBattleline(testCreature("eSurvive", 7), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := Destroy{Target: Target{Kind: TargetEachCreature}.Selector(SamePowerAsEitherChosen)}
+	e := Destroy{Target: Target{Kind: TargetEachCreature}.Refine(SamePowerAsEitherChosen)}
 	want := "choose a friendly creature and an enemy creature - destroy each " +
 		"creature with the same power as either of the chosen creatures"
 	if got := e.Text(); got != want {

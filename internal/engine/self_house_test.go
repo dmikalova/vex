@@ -16,7 +16,7 @@ func TestResolveSelfHouseThroughDefinition(t *testing.T) {
 			RevealHand{Player: Controller, House: SelfHouse},
 			Stun{Target: Target{Kind: TargetEachCreature}.
 				OfHouse(SelfHouse).
-				Selector(ExceptMostPowerful)},
+				Refine(ExceptMostPowerful)},
 			Exhaust{Target: Target{Kind: TargetEachCreature}.ExceptHouse(SelfHouse)},
 		}}),
 		WithPlayPermission(PlayPermission{House: SelfHouse, Amount: 1}),

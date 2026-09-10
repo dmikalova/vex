@@ -22,7 +22,7 @@ type MoveAember struct {
 	// Onto selects the card the Æmber moves onto. Leave unset (and set To) to move
 	// the Æmber into a pool instead.
 	Onto Target
-	// Bind selects sources without the "must carry Æmber" pre-filter, so a Selector
+	// Bind selects sources without the "must carry Æmber" pre-filter, so a Refinement
 	// on From (MostPowerful) picks from the true candidate set rather than only the
 	// Æmber-bearing ones, and leaves the moved-from creature in context (ctx.It) for
 	// a following effect — Sic Semper Tyrannosaurus empties the most powerful
@@ -80,7 +80,7 @@ func (e MoveAember) Text() string {
 
 // Resolve moves Æmber from the chosen source(s) to the destination. Without Bind
 // the source choice is restricted to cards carrying Æmber, so it never offers an
-// empty card; with Bind the Selector picks from the true candidate set (a source
+// empty card; with Bind the chooser picks from the true candidate set (a source
 // holding no Æmber simply moves none) and the moved-from creature is left in
 // context (ctx.It). A source holding fewer than Amount moves all it has.
 func (e MoveAember) Resolve(ctx *EffectContext) {

@@ -21,6 +21,6 @@ var FangtoothCavern = card.New(
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
 		card.Trigger.EndOfTurn, card.Destroy{
-			Target: card.Target.EachCreature.Selector(card.LeastPowerful),
+			Target: card.Target.EachCreature.Refine(card.LeastPowerful),
 		}),
 )

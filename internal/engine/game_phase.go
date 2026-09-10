@@ -125,6 +125,7 @@ func (g *Game) readyPhase(player int) {
 		g.State.Cards[id].TempPowerBonus = 0
 		g.State.Cards[id].TempArmorBonus = 0
 		g.State.Cards[id].TempAssaultBonus = 0
+		g.State.Cards[id].TextBoxTurnSourcePlus = 0
 	}
 	// A keyword gained "until the start of your next turn" (Hideaway Hole) lifts
 	// only at the controller's own ready phase, so it survived the opponent's turn.

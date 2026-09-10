@@ -177,7 +177,7 @@ would find easiest to build on — not the shortest path to a passing build.
   is `CannotReap` scoped by house for a duration, not a
   `ChosenHouseCannotReapNextTurn` type.
 - **Reuse the shared vocabularies.** `Target` already filters by house, trait,
-  type, chosen/active house, and set-relative selectors — reach for it (or extend
+  type, chosen/active house, and set-relative refinements — reach for it (or extend
   it) before inventing a parallel filter. Events (`EventCreaturePlayed`,
   `EventReap`, `EventCreatureDestroyed`, …) with a subject already drive triggers,
   lasting reactions (`ForRemainderOfTurn`), and replacements (`Instead`,
@@ -197,7 +197,7 @@ would find easiest to build on — not the shortest path to a passing build.
   add-to-pool event, not a `CapturesOpponentAember` bool.
 - **Vary behavior with a strategy that renders its own text.** When behavior
   changes along an axis, model the axis as a small strategy — a `Chooser`,
-  `Selector`, `Count`, or `Condition` — each carrying both its behavior and its
+  `Refinement`, `Count`, or `Condition` — each carrying both its behavior and its
   text fragment, so it plugs into the AST without the printed text ever drifting
   from the behavior. Reach for this before adding another `Target` field or a
   `bool`.

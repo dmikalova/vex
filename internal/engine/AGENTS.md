@@ -47,8 +47,13 @@ recorded as ADRs — read them for the full rationale and the rejected alternati
   the framework (the interface, `Comparison`, `Conditional`, `Or`, `CountIs`) and
   its conditions move to `effect_condition_board.go` / `_source.go` / `_it.go` /
   `_turn.go`; `effect_count.go` splits the same way (`_board.go` / `_turn.go` /
-  `_produced.go`). A bare concept file splits without the `effect_` prefix
-  (`target.go` → `target_*.go`).
+  `_produced.go`). A bare concept file splits without the `effect_` prefix but
+  still keeps its own top-level prefix so an `ls` groups the family together:
+  `target.go` → `target_refinement.go` (the `Refinement` strategies) + `target_select.go`
+  (the selection machinery); `resolver.go` → `resolver_game.go` (the `*Game`
+  implementation of the port, kept apart from the interface declarations);
+  `text.go` → `text_helpers.go` (the card-agnostic string helpers, kept apart from
+  the card-shaped renderers).
 - **Composite — `Sequence`, `Sentences`, `Conditional`, `ChooseHouseThen`,
   `MayRepeat`, …** compose child `Effect`s and recurse `validateEffect` into them.
   Prefer composing small nodes over one fused node (root `AGENTS.md`: "decompose
@@ -58,7 +63,7 @@ recorded as ADRs — read them for the full rationale and the rejected alternati
   printed card reads. Do **not** wrap individual children to change their
   punctuation — there is no per-child sentence wrapper, and a genuinely mixed card
   nests instead: `Sentences{A, Sequence{B, C}}` reads "A. B, and C."
-- **Strategy — the `Chooser` family, and the `Selector` / `Count` / `Condition`
+- **Strategy — the `Chooser` family, and the `Refinement` / `Count` / `Condition`
   trio.** See the next section; this is used heavily and should keep being the
   first tool reached for when behavior varies along an axis.
 - **Ports & Adapters — `Resolver`** (ADR 0008). See constraint 2 and the
@@ -83,11 +88,11 @@ it plugs into the AST without desync:
   interface** discovered by type assertion — `OptionChooser`, `Orderer` — with a
   graceful fallback when unimplemented. That is the idiomatic-Go form of Strategy
   (cf. `io.WriterTo`, `http.Flusher`); prefer it over widening the base `Chooser`.
-- **`Selector` (`target.go`)** is a set-relative refinement (`refine` + `clause`)
+- **`Refinement` (`target.go`)** is a set-relative refinement (`refine` + `clause`)
   such as `ExceptMostPowerful`. It narrows the ids _and_ contributes a phrase, so
   niche "compare candidates to each other" rules compose onto any `Target`
   **without a field per rule**. When you are tempted to add another `Target` bool
-  for a whole-set rule, add a `Selector` instead.
+  for a whole-set rule, add a `Refinement` instead.
 - **`Count` and `Condition`** are pluggable value/predicate strategies, each with
   paired text (`CountText` / `CondText`). A number that scales with the board is a
   `Count`, not a bespoke effect; a branch is a `Condition` fed to `Conditional`.
@@ -416,8 +421,8 @@ described; do not "fix" them into a regression of a constraint.
   stay comparable, which rules out a `[]filter` slice and `*int` optionals.
   Handled by: (a) route per-card filters through the existing builder methods
   (`WithTrait`, `OfHouse`, `PowerAtMost`, …); (b) route **set-relative** rules
-  through `Selector` instead of adding another field; (c) only add a new `Target`
-  field when a per-card filter genuinely has no `Selector` form. If the field count
+  through `Refinement` instead of adding another field; (c) only add a new `Target`
+  field when a per-card filter genuinely has no `Refinement` form. If the field count
   ever truly hurts, the in-constraint move is a single fixed-size comparable filter
   descriptor, **not** a slice.
 - **Enum-tagged lasting records instead of stored closures** (ADR 0007). Handled by
@@ -435,8 +440,8 @@ described; do not "fix" them into a regression of a constraint.
 ## Adding a mechanic: the decision order
 
 1. Can an existing `Effect` express it by changing a `Target`, `Count`,
-   `Condition`, or `Selector`? Prefer that — no new type.
-2. Is it a new _node_? Add an `Effect` (or `Condition`/`Count`/`Selector`) in the
+   `Condition`, or `Refinement`? Prefer that — no new type.
+2. Is it a new _node_? Add an `Effect` (or `Condition`/`Count`/`Refinement`) in the
    matching `effect_*.go` / `target.go`, with `Text()` + `Resolve()` (+ `validate()`
    if it has an illegal field combo), and a facade alias in `internal/card`.
 3. Does it need a new engine capability? Add the method to the right `Resolver`

@@ -25,7 +25,7 @@ func (e Destroy) verb() string       { return "destroy" }
 func (e Destroy) targetText() string { return e.Target.Text() }
 
 // Text renders the effect, e.g. "destroy each creature with power 3 or lower", or
-// "choose a creature - destroy …" when the target's selector leads with a choice.
+// "choose a creature - destroy …" when the target's refinement leads with a choice.
 func (e Destroy) Text() string {
 	body := e.verb() + " " + e.targetText()
 	if lead, ok := e.Target.leadIn(); ok {

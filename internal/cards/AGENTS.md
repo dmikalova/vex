@@ -223,7 +223,7 @@ When adding or reviewing a card, read its generated comment against those rules.
 obvious** — because the text is generated from the AST, a wording fix means
 changing the effect rendering, not hand-editing the comment (see
 [../engine/AGENTS.md](../engine/AGENTS.md) for how effects render their own text,
-and prefer reshaping a `Target`/`Count`/`Selector` over adding a new effect):
+and prefer reshaping a `Target`/`Count`/`Refinement` over adding a new effect):
 
 - If a whole family of cards renders wrong (e.g. a `for each` clause appearing at
   the end instead of the front), fix it once in the effect's `Text()` in
@@ -250,7 +250,7 @@ source zone, selection, or destination on that family — not a new bespoke type
 These families are being consolidated onto the one mechanism as their cards are
 touched, so shape a new movement effect to fit it rather than adding another
 one-off `…FromHand` / `…TopOfDeck` variant to unwind later. The same holds for the
-smaller shared vocabularies: prefer a `Target`/`Selector` filter, a `Count`, a
+smaller shared vocabularies: prefer a `Target`/`Refinement` filter, a `Count`, a
 `Duration` field, or a portion (`By: Half`) over a name that spells the whole card
 sentence (see [docs/style-guide.md](../../docs/style-guide.md), "Composition and
 design").
