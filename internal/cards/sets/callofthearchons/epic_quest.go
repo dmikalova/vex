@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Versatile.
 //	Play: Archive each friendly Knight creature from play.
-//	Action: If you have played 7 or more Sanctum cards this turn, destroy Epic Quest, and forge a key at no cost.
+//	Action: If you have played 7 or more Sanctum cards this turn, forge a key at no cost -> purge Epic Quest.
 var EpicQuest = card.New(
 	"Epic Quest",
 	card.House.Sanctum,
@@ -31,9 +31,6 @@ var EpicQuest = card.New(
 				House:  card.House.Self,
 				Amount: 7,
 			},
-			Then: card.Sequence{Effects: []card.Effect{
-				card.Destroy{Target: card.Target.This},
-				card.ForgeKey{FreeOfCost: true},
-			}},
+			Then: card.ForgeKey{FreeOfCost: true},
 		}),
 )

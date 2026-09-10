@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Forge a key at +6 Æmber current cost, or +2 if your opponent has no Æmber.
+//	Play: Forge a key at +6 Æmber current cost, or +2 if your opponent has no Æmber -> purge Key of Darkness.
 func TestKeyOfDarkness(t *testing.T) {
 	t.Run("forges at +6 while the opponent holds Æmber", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

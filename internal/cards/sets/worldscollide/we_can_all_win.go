@@ -21,6 +21,6 @@ var WeCanALLWin = card.New(
 		card.Trigger.Play, card.LowerKeyCost{
 			Player:   card.EachPlayer,
 			Amount:   2,
-			Duration: card.Duration.EndOfNextTurn,
+			Duration: card.Duration.EndOfPlayerNextTurn,
 		}),
 )

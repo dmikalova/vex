@@ -19,5 +19,5 @@ var NavigatorAli = card.New(
 	card.Provenance(card.WC, "314"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human),
-	card.WithPlayFightReap(card.ReorderTop{Amount: 3}),
+	card.WithAbility(card.Trigger.PlayFightReap, card.ReorderTop{Amount: 3}),
 )

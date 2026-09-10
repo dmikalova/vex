@@ -20,6 +20,6 @@ var HallowedShield = card.New(
 	card.WithAbility(
 		card.Trigger.Action, card.CannotBeDealtDamage{
 			Target:   card.Target.Creature,
-			Duration: card.Duration.EndOfTurn,
+			Duration: card.Duration.RemainderOfPlayerTurn,
 		}),
 )

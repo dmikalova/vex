@@ -597,8 +597,22 @@ func (g *Game) playUpgradeCard(player int, id, host LocalID, def *CardDefinition
 
 // DiscardCardFromHand moves a specific card from a player's hand to their discard
 // zone, with no active-player or house checks (an effect may discard from either
-// hand). It does nothing if the card is not in that hand.
+// hand). It does nothing if the card is not in that hand. The discard is logged as
+// the player's own, for a player discarding as their turn action.
 func (g *Game) DiscardCardFromHand(owner int, id LocalID) {
+	g.discardFromHand(owner, id, 0, false)
+}
+
+// DiscardCardFromHandBy is DiscardCardFromHand attributed to the card whose ability
+// forced the discard, so the log names that card (Old Yurk discards a card) rather
+// than the player.
+func (g *Game) DiscardCardFromHandBy(owner int, id, source LocalID) {
+	g.discardFromHand(owner, id, source, true)
+}
+
+// discardFromHand carries out a hand-to-discard move and its after-discard
+// reactions, recording the discard attributed to source when hasSource is set.
+func (g *Game) discardFromHand(owner int, id, source LocalID, hasSource bool) {
 	hand := &g.State.Hand[owner]
 	i := hand.indexOf(id)
 	if i < 0 {
@@ -607,7 +621,7 @@ func (g *Game) DiscardCardFromHand(owner int, id LocalID) {
 	hand.removeAt(i)
 	g.State.Discard[owner].add(id)
 	g.State.DiscardedThisTurn[owner].add(id)
-	g.record(CardMoved{Player: owner, Card: id, From: Hand, To: Discard})
+	g.record(CardDiscarded{Player: owner, Card: id, Source: source, HasSource: hasSource})
 	for _, watcher := range g.allInPlay(owner) {
 		g.triggerAbilities(watcher, TriggerAfterDiscardFromHand, id, true)
 	}

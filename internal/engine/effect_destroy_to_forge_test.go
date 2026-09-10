@@ -92,12 +92,12 @@ func TestSacrificeToForge(t *testing.T) {
 		got,
 		"reduced by 1 Æmber for each creature destroyed this way",
 	) ||
-		!strings.Contains(got, "destroy {self}") {
+		!strings.Contains(got, "purge {self}") {
 		t.Errorf("Text = %q", got)
 	}
 
 	// Sacrificing two creatures drops the +6 surcharge to +4, so 10 Æmber forges
-	// the key and Obsidian Forge destroys itself.
+	// the key and Obsidian Forge purges itself.
 	g := NewGame("A", "B", 1)
 	src := g.AddArtifact(NewCard("Obsidian", Dis, Artifact, Common), 0)
 	a := g.AddToBattleline(testCreature("a", 5), 0)
@@ -111,7 +111,7 @@ func TestSacrificeToForge(t *testing.T) {
 		t.Error("both creatures should be sacrificed")
 	}
 	if g.inPlay(src) {
-		t.Error("Obsidian Forge should destroy itself after forging")
+		t.Error("Obsidian Forge should purge itself after forging")
 	}
 	if g.State.Aember[0] != 0 {
 		t.Errorf("aember = %d, want 0 (spent 6 + 6 - 2)", g.State.Aember[0])
@@ -121,21 +121,7 @@ func TestSacrificeToForge(t *testing.T) {
 		t.Errorf("valid effect rejected: %v", err)
 	}
 
-	// Declining the forge destroys nothing extra: no key, artifact stays.
-	g2 := NewGame("A", "B", 1)
-	src2 := g2.AddArtifact(NewCard("Obsidian", Dis, Artifact, Common), 0)
-	g2.AddToBattleline(testCreature("a", 5), 0)
-	g2.State.Aember[0] = 10
-	g2.SetChooser(0, optionPicker{idx: 1})
-	e.Resolve(&EffectContext{Resolver: g2, Controller: 0, Source: src2})
-	if g2.State.Keys[0] != 0 {
-		t.Errorf("keys = %d, want 0 (forge declined)", g2.State.Keys[0])
-	}
-	if !g2.inPlay(src2) {
-		t.Error("declining the forge should leave the artifact in play")
-	}
-
-	// Accepting but unable to pay the reduced cost leaves the artifact intact.
+	// Unable to pay the reduced cost leaves the artifact intact.
 	g3 := NewGame("A", "B", 1)
 	src3 := g3.AddArtifact(NewCard("Obsidian", Dis, Artifact, Common), 0)
 	g3.AddToBattleline(testCreature("a", 5), 0)

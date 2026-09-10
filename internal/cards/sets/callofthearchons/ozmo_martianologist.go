@@ -23,7 +23,7 @@ var Ozmo = card.New(
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
 	card.WithKeywords(card.Keyword.Elusive),
-	card.WithFightOrReap(card.ChooseOne{
+	card.WithAbility(card.Trigger.FightOrReap, card.ChooseOne{
 		Options: []card.Effect{
 			card.Heal{
 				Amount: 3,

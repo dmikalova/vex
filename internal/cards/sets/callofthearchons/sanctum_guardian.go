@@ -21,5 +21,5 @@ var SanctumGuardian = card.New(
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Knight, card.Traits.Spirit),
 	card.WithKeywords(card.Keyword.Taunt),
-	card.WithFightOrReap(card.Swap{With: card.Target.OtherFriendlyCreature}),
+	card.WithAbility(card.Trigger.FightOrReap, card.Swap{With: card.Target.OtherFriendlyCreature}),
 )

@@ -650,7 +650,7 @@ func TestGeneratedCardText(t *testing.T) {
 											BelongToHouse{
 												Target:   Target{Kind: TargetThisCreature},
 												House:    Mars,
-												Duration: EndOfTurn,
+												Duration: RemainderOfPlayerTurn,
 											},
 										},
 									},

@@ -387,8 +387,8 @@ func drawModifierGlyphs(m engine.DrawModifier) []glyph {
 }
 
 // isActionTrigger reports whether a trigger is one of the three action triggers
-// (Play, Fight, Reap) that WithPlayFightReap and its pair variants merge onto one
-// line.
+// (Play, Fight, Reap) that the Trigger.PlayFightReap composite and its pair
+// variants merge onto one line.
 func isActionTrigger(t engine.Trigger) bool {
 	switch t {
 	case engine.TriggerAfterPlay, engine.TriggerAfterFight, engine.TriggerAfterReap:
@@ -491,8 +491,12 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "glyph-fight"}, arrowTo(targetGlyph(v.Target))}, true
 	case engine.Ward:
 		return []glyph{{asset: "shield"}, arrowTo(targetGlyph(v.Target))}, true
-	case engine.MoveWard:
-		return []glyph{{asset: "shield"}, arrowTo(targetGlyph(v.Onto))}, true
+	case engine.RemoveWard:
+		return []glyph{
+			{asset: "shield"},
+			{asset: "glyph-ban"},
+			arrowTo(targetGlyph(v.Target)),
+		}, true
 	case engine.Exhaust:
 		return []glyph{{asset: "exhausted"}, arrowTo(targetGlyph(v.Target))}, true
 	case engine.Ready:
@@ -1105,15 +1109,15 @@ func arrowTo(g glyph) glyph {
 func counterAsset(kind engine.CounterKind) string {
 	switch kind {
 	case engine.CounterDoom:
-		return "doom-counter"
+		return "generic-counter-doom"
 	case engine.CounterFuse:
-		return "fuse-counter"
+		return "generic-counter-fuse"
 	case engine.CounterGrowth:
-		return "growth-counter"
+		return "generic-counter-growth"
 	case engine.CounterGlory:
-		return "glory-counter"
+		return "generic-counter-glory"
 	case engine.CounterDisruption:
-		return "disruption-counter"
+		return "generic-counter-disruption"
 	default:
 		return ""
 	}

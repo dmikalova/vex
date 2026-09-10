@@ -22,7 +22,7 @@ var MarsAmbassador = card.New(
 	card.WithTraits(card.Traits.Human),
 	card.WithKeywords(card.Keyword.Elusive),
 	// TODO: planned rework of the Ambassador cycle.
-	card.WithFightOrReap(
+	card.WithAbility(card.Trigger.FightOrReap,
 		card.MayActFriendlyHouse{House: card.House.Mars, Grant: card.GrantPlay | card.GrantUse},
 	),
 )

@@ -4,19 +4,23 @@ import "testing"
 
 func TestForgeKeyEffect(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
+	src := g.AddArtifact(NewCard("Forge", Dis, Artifact, Common), 0)
+	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 	e := ForgeKey{}
-	if e.Text() != "forge a key at current cost" {
+	if e.Text() != "forge a key at current cost -> purge {self}" {
 		t.Errorf("text = %q", e.Text())
 	}
 
-	// Not enough Æmber: no key is forged.
+	// Not enough Æmber: no key is forged and the source stays in play.
 	e.Resolve(ctx)
 	if g.Keys(0) != 0 {
 		t.Errorf("keys = %d, want 0 (could not afford)", g.Keys(0))
 	}
+	if !g.inPlay(src) {
+		t.Error("source should stay in play when no key is forged")
+	}
 
-	// Enough Æmber: one key is forged and its cost paid.
+	// Enough Æmber: one key is forged, its cost paid, and the source purged.
 	g.State.Aember[0] = KeyCost + 2
 	e.Resolve(ctx)
 	if g.Keys(0) != 1 {
@@ -24,6 +28,9 @@ func TestForgeKeyEffect(t *testing.T) {
 	}
 	if g.Aember(0) != 2 {
 		t.Errorf("aember = %d, want 2 (paid the key cost)", g.Aember(0))
+	}
+	if g.inPlay(src) {
+		t.Error("source should be purged after forging")
 	}
 }
 
@@ -33,7 +40,7 @@ func TestForgeKeyFreeEffect(t *testing.T) {
 	foe := g.AddToBattleline(testCreature("foe", 4), 1)
 	ctx := &EffectContext{Resolver: g, Source: forger, Controller: 0}
 	e := ForgeKey{FreeOfCost: true}
-	if e.Text() != "forge a key at no cost" {
+	if e.Text() != "forge a key at no cost -> purge {self}" {
 		t.Errorf("text = %q", e.Text())
 	}
 
@@ -47,6 +54,9 @@ func TestForgeKeyFreeEffect(t *testing.T) {
 	}
 	if g.Damage(foe) != 2 {
 		t.Errorf("after-forge ability damage = %d, want 2", g.Damage(foe))
+	}
+	if g.inPlay(forger) {
+		t.Error("source should be purged after forging for free")
 	}
 }
 

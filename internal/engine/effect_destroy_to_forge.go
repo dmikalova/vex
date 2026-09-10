@@ -57,9 +57,8 @@ func (e DestroyFriendlyCreaturesToForge) Resolve(ctx *EffectContext) {
 }
 
 // SacrificeToForge is Obsidian Forge: the controller destroys any number of their
-// own creatures, then may forge a key at Extra surcharge reduced by one Æmber for
-// each creature destroyed this way. When a key is forged this way, the source
-// artifact is destroyed.
+// own creatures, then forges a key at Extra surcharge reduced by one Æmber for
+// each creature destroyed this way. A forge that lands purges the source artifact.
 type SacrificeToForge struct {
 	Target Target
 	Extra  int
@@ -76,31 +75,26 @@ func (e SacrificeToForge) validate() error {
 	return nil
 }
 
-// Text renders the effect across its three clauses.
+// Text renders the effect across its clauses.
 func (e SacrificeToForge) Text() string {
 	return fmt.Sprintf(
-		"destroy any number of %ss. Then, you may forge a key at +%d Æmber current cost, "+
-			"reduced by 1 Æmber for each creature destroyed this way. If you do, destroy %s",
+		"destroy any number of %ss, then forge a key at +%d Æmber current cost, "+
+			"reduced by 1 Æmber for each creature destroyed this way -> purge %s",
 		singularNoun(e.Target.Text()),
 		e.Extra,
 		SelfName,
 	)
 }
 
-// Resolve gathers the controller's picks one at a time, destroys them, then offers
-// the reduced-cost forge. Forging (which only happens when affordable and accepted)
-// destroys the source artifact.
+// Resolve gathers the controller's picks one at a time, destroys them, then forges
+// at the reduced cost. A forge that lands purges the source artifact.
 func (e SacrificeToForge) Resolve(ctx *EffectContext) {
 	chosen := pickCards(ctx, "Choose a creature to destroy", 0, true, func() []LocalID {
 		return e.Target.Select(ctx)
 	})
 	Destroy{}.destroy(ctx, chosen)
 	extra := max(e.Extra-len(chosen), 0)
-	prompt := fmt.Sprintf("You may forge a key at +%d Æmber current cost", extra)
-	if ctx.ChooseOption(prompt, []string{"Yes", "No"}) != 0 {
-		return
-	}
-	if ctx.Resolver.ForgeKeyAtExtraCostReport(ctx.Controller, extra) {
-		Destroy{}.destroy(ctx, []LocalID{ctx.Source})
+	if ctx.Resolver.ForgeKeyAtExtraCost(ctx.Controller, extra) {
+		PurgeSource{}.Resolve(ctx)
 	}
 }

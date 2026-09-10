@@ -21,6 +21,6 @@ var TheEvilEye = card.New(
 		card.Trigger.Play, card.RaiseKeyCost{
 			Player:   card.Opponent,
 			Amount:   3,
-			Duration: card.Duration.NextTurn,
+			Duration: card.Duration.OpponentNextTurn,
 		}),
 )

@@ -18,6 +18,6 @@ var InkyGloom = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.CannotReap{
 			Player:   card.Opponent,
-			Duration: card.Duration.NextTurn,
+			Duration: card.Duration.OpponentNextTurn,
 		}),
 )

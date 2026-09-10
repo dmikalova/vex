@@ -121,12 +121,13 @@ func (g *Game) PutCardUnder(owner int, id, host LocalID, faceDown bool) {
 // AttachUnder runs after resetCore because resetCore zeroes the very link fields
 // it sets. Spangler Box grafts a creature onto itself.
 func (g *Game) GraftUnder(id, host LocalID) {
-	if g.absorbedByWard(id) {
+	if g.absorbedByWard(id, wardLeavePlay, 0) {
 		return
 	}
 	g.removeFromPlay(id)
 	g.discardUpgrades(id)
 	g.discardUnder(id)
+	g.releaseAemberOnLeavePlay(id)
 	g.resetCore(id)
 	g.AttachUnder(host, id, false)
 	g.record(CardGrafted{Card: id, Host: host})

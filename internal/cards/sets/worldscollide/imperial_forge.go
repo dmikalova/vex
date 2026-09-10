@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Forge a key at +8 Æmber current cost, reduced by 1 Æmber for each Æmber on friendly creatures.
+//	Play: Forge a key at +8 Æmber current cost, reduced by 1 Æmber for each Æmber on friendly creatures -> purge Imperial Forge.
 var ImperialForge = card.New(
 	"Imperial Forge",
 	card.House.Saurian,

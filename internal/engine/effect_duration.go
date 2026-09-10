@@ -29,8 +29,8 @@ type durationScoped interface {
 // validate requires a supported duration and at least two body-renderable timed
 // children to combine, then descends into the children.
 func (e ForDuration) validate() error {
-	if e.Duration != EndOfTurn {
-		return fmt.Errorf("ForDuration: duration must be EndOfTurn")
+	if e.Duration != RemainderOfPlayerTurn {
+		return fmt.Errorf("ForDuration: duration must be RemainderOfPlayerTurn")
 	}
 	if len(e.Effects) < 2 {
 		return fmt.Errorf("ForDuration: needs at least two effects to combine")

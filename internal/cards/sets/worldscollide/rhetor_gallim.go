@@ -24,7 +24,7 @@ var RhetorGallim = card.New(
 		card.Trigger.Play, card.RaiseKeyCost{
 			Player:   card.Opponent,
 			Amount:   3,
-			Duration: card.Duration.NextTurn,
+			Duration: card.Duration.OpponentNextTurn,
 		}),
 	card.WithAbility(
 		card.Trigger.Reap, card.May{Do: card.Sentences{Effects: []card.Effect{
@@ -35,7 +35,7 @@ var RhetorGallim = card.New(
 			card.RaiseKeyCost{
 				Player:   card.Opponent,
 				Amount:   3,
-				Duration: card.Duration.NextTurn,
+				Duration: card.Duration.OpponentNextTurn,
 			},
 		}}}),
 )

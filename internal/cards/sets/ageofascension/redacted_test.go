@@ -36,7 +36,7 @@ func TestRedacted(t *testing.T) {
 		h.Expect(redacted).AmberOn(1)
 	})
 
-	t.Run("sacrifices itself and forges a key at four Æmber", func(t *testing.T) {
+	t.Run("purges itself and forges a key at four Æmber", func(t *testing.T) {
 		var redacted ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
@@ -54,7 +54,7 @@ func TestRedacted(t *testing.T) {
 		h.P2.EndTurn()
 		h.P1.ChooseHouse(card.House.Logos)
 
-		h.Expect(redacted).At(ct.Discard)
+		h.Expect(redacted).At(ct.Purge)
 		h.P1.ExpectKeys(1)
 	})
 }

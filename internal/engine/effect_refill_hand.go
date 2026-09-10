@@ -46,7 +46,7 @@ func (e DiscardHand) Text() string {
 func (e DiscardHand) Resolve(ctx *EffectContext) {
 	for _, p := range playersInOrder(ctx, e.Player) {
 		for _, id := range ctx.Resolver.Hand(p) {
-			ctx.Resolver.DiscardCardFromHand(p, id)
+			ctx.Resolver.DiscardCardFromHandBy(p, id, ctx.Source)
 		}
 	}
 }

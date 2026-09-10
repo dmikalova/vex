@@ -28,6 +28,7 @@ func TestLogEntryText(t *testing.T) {
 		{CardsDrawn{Player: 1, Count: 3, Hand: 6}, "P1 draws 3 cards, up to 6 in hand"},
 		{CardsDrawn{Player: 1, Count: 1, Hand: 6}, "P1 draws 1 card, up to 6 in hand"},
 		{CardsDrawn{Player: 0, Count: 0, Hand: 2}, "P0 draws nothing, holding 2"},
+		{CardsDrawnBy{Source: 1, Player: 0, Count: 1}, "Card1 has P0 draw 1 card"},
 		{HouseChosen{Player: 1, House: Brobnar}, "P1 chooses house Brobnar"},
 		{ForgeSkipped{Player: 0}, "P0 skips their forge a key phase"},
 		{
@@ -127,8 +128,17 @@ func TestLogEntryText(t *testing.T) {
 		{CreatureWarded{Creature: 2, By: 2}, "Card2 is warded"},
 		{CreatureWarded{Creature: 2, By: 5}, "Card5 warded Card2"},
 		{CreatureWarded{Creature: 2, By: 5, AlreadyWarded: true}, "Card2 is already warded"},
-		{WardMoved{From: 2, To: 3, By: 5}, "Card5 moves a ward from Card2 to Card3"},
-		{WardAbsorbed{Creature: 2}, "Card2's ward absorbs the effect"},
+		{WardRemoved{Creature: 2, By: 5}, "Card5 removes the ward from Card2"},
+		{WardRemoved{Creature: 2, By: 5, AlreadyUnwarded: true}, "Card2 has no ward to remove"},
+		{WardAbsorbed{Creature: 2}, "Card2's ward keeps it in play"},
+		{
+			WardAbsorbed{Creature: 2, Prevented: wardDestruction},
+			"Card2's ward prevents the destruction",
+		},
+		{
+			WardAbsorbed{Creature: 2, Prevented: wardDamage, Amount: 5},
+			"Card2's ward prevents the 5 damage",
+		},
 		{NoCreatureToFight{Creature: 2}, "Card2 has no creature to fight"},
 		{CardsRevealedToAll{Player: 0, Cards: []LocalID{1, 2}}, "P0 reveals Card1, Card2"},
 		{KeyForgePrevented{Player: 1, By: 3}, "P1's forge a key is prevented by Card3"},
@@ -190,6 +200,10 @@ func TestLogEntryText(t *testing.T) {
 			HazardousDealt{Source: 2, Value: 5, Amount: 5, Target: 1},
 			"Card2's 5 Hazardous deals 5 damage to Card1",
 		},
+		{
+			AbilityDamageDealt{Source: 1, Amount: 4, Target: 2},
+			"Card1 deals 4 damage to Card2",
+		},
 
 		// Zones.
 		{
@@ -212,7 +226,11 @@ func TestLogEntryText(t *testing.T) {
 			"P0 discards Card6 from their deck",
 		},
 		{DeckAndDiscardSwapped{Player: 1}, "P1 swaps their deck and discard pile"},
-		{CardMoved{Player: 0, Card: 6, From: Hand, To: Discard}, "P0 discards Card6"},
+		{CardDiscarded{Player: 0, Card: 6}, "P0 discards Card6"},
+		{
+			CardDiscarded{Player: 0, Card: 6, Source: 3, HasSource: true},
+			"Card3 discards Card6",
+		},
 		{
 			CardMoved{Player: 0, Card: 6, From: Archives, To: Discard},
 			"P0 discards Card6 from their archives",
@@ -222,6 +240,10 @@ func TestLogEntryText(t *testing.T) {
 			"P0 purges Card6 from a discard pile",
 		},
 		{CardMoved{Player: 1, Card: 6, From: Hand, To: purged}, "P1 purges Card6 from a hand"},
+		{
+			CardPurgedFromHand{Source: 1, Card: 6, Owner: 0},
+			"Card1 purges Card6 from P0's hand",
+		},
 		{
 			CardMoved{Player: 1, Card: 6, From: Archives, To: purged},
 			"P1 purges Card6 from archives",
@@ -452,7 +474,7 @@ func TestRenderEntryMatchesWholeNamesOnly(t *testing.T) {
 	}
 	// "Trollkin discards Troll": the player's name only starts with the card's,
 	// so the card is not linked until the card itself.
-	segs = RenderEntry(CardMoved{Player: 0, Card: 1, From: Hand, To: Discard}, prefixNamer{})
+	segs = RenderEntry(CardDiscarded{Player: 0, Card: 1}, prefixNamer{})
 	want := []LogSegment{
 		{Text: "Trollkin", Player: 0, HasPlayer: true},
 		{Text: " discards "},

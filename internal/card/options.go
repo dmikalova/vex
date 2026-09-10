@@ -102,42 +102,45 @@ var (
 	WithAemberCost = func(n int) Option {
 		return gameplay(engine.WithPlayRequirement(engine.AemberCost(n)))
 	}
-	// WithAbility adds an ability that resolves an effect on a trigger.
-	WithAbility = func(t engine.Trigger, e Effect) Option { return gameplay(engine.WithAbility(t, e)) }
-	// WithFightOrReap adds effect as both a Fight and a Reap ability, so it resolves
-	// whenever the creature is used to fight or to reap; the two print as one
-	// "Fight/Reap:" line.
-	WithFightOrReap = func(e Effect) Option {
+	// WithAbility adds an ability that resolves an effect on a trigger. A composite
+	// trigger (Trigger.PlayFightReap, Trigger.FightOrReap, Trigger.PlayReap) fans
+	// out into its atomic Play/Fight/Reap abilities, which text rendering merges
+	// back into one "Play/Fight/Reap:" line.
+	WithAbility = func(t engine.Trigger, e Effect) Option {
 		return gameplay(func(d *engine.CardDefinition) {
-			engine.WithAbility(engine.TriggerAfterReap, e)(d)
-			engine.WithAbility(engine.TriggerAfterFight, e)(d)
-		})
-	}
-	// WithPlayReap adds effect as both a Play and a Reap ability; the two print as
-	// one "Play/Reap:" line.
-	WithPlayReap = func(e Effect) Option {
-		return gameplay(func(d *engine.CardDefinition) {
-			engine.WithAbility(engine.TriggerAfterPlay, e)(d)
-			engine.WithAbility(engine.TriggerAfterReap, e)(d)
-		})
-	}
-	// WithPlayFightReap adds effect as a Play, a Fight, and a Reap ability; the
-	// three print as one "Play/Fight/Reap:" line.
-	WithPlayFightReap = func(e Effect) Option {
-		return gameplay(func(d *engine.CardDefinition) {
-			engine.WithAbility(engine.TriggerAfterPlay, e)(d)
-			engine.WithAbility(engine.TriggerAfterFight, e)(d)
-			engine.WithAbility(engine.TriggerAfterReap, e)(d)
+			for _, at := range fanOutTrigger(t) {
+				engine.WithAbility(at, e)(d)
+			}
 		})
 	}
 )
 
+// fanOutTrigger expands a composite trigger into the atomic engine triggers it
+// stands for, preserving the order the printed line reads; a plain trigger is
+// returned unchanged.
+func fanOutTrigger(t engine.Trigger) []engine.Trigger {
+	switch t {
+	case triggerPlayFightReap:
+		return []engine.Trigger{
+			engine.TriggerAfterPlay,
+			engine.TriggerAfterFight,
+			engine.TriggerAfterReap,
+		}
+	case triggerFightOrReap:
+		return []engine.Trigger{engine.TriggerAfterReap, engine.TriggerAfterFight}
+	case triggerPlayReap:
+		return []engine.Trigger{engine.TriggerAfterPlay, engine.TriggerAfterReap}
+	default:
+		return []engine.Trigger{t}
+	}
+}
+
 // FightOrReap grants effect as both a Fight and a Reap ability, so a creature
 // that gains these abilities resolves effect whenever it is used to fight or to
 // reap; the pair prints as one "Fight/Reap:" line. It is the granted-ability
-// analog of WithFightOrReap (which adds the pair to a card directly), for the
-// Granted list of a StaticModifier or ConstantAbility — Rocket Boots grants its
-// host "Fight/Reap: ready it".
+// analog of the Trigger.FightOrReap composite (which adds the pair to a card
+// directly), for the Granted list of a StaticModifier or ConstantAbility — Rocket
+// Boots grants its host "Fight/Reap: ready it".
 func FightOrReap(e Effect) []Ability {
 	return []Ability{
 		{Trigger: Trigger.Reap, Effect: e},

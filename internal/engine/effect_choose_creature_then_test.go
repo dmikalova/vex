@@ -14,7 +14,7 @@ func TestChooseCreatureThen(t *testing.T) {
 			Heal{Fully: true, Target: Target{Kind: TargetTriggeringCreature}},
 			CannotBeDealtDamage{
 				Target:   Target{Kind: TargetTriggeringCreature},
-				Duration: EndOfTurn,
+				Duration: RemainderOfPlayerTurn,
 			},
 		}},
 	}
@@ -63,7 +63,7 @@ func TestChooseCreatureThenNoCandidates(_ *testing.T) {
 		Target: Target{Kind: TargetChosenCreature},
 		Then: CannotBeDealtDamage{
 			Target:   Target{Kind: TargetTriggeringCreature},
-			Duration: EndOfTurn,
+			Duration: RemainderOfPlayerTurn,
 		},
 	}.Resolve(ctx)
 }
@@ -72,7 +72,7 @@ func TestChooseCreatureThenValidate(t *testing.T) {
 	unsetTarget := ChooseCreatureThen{
 		Then: CannotBeDealtDamage{
 			Target:   Target{Kind: TargetTriggeringCreature},
-			Duration: EndOfTurn,
+			Duration: RemainderOfPlayerTurn,
 		},
 	}
 	if validateEffect(unsetTarget) == nil {
@@ -91,7 +91,7 @@ func TestChooseCreatureThenValidate(t *testing.T) {
 		Target: Target{Kind: TargetChosenCreature},
 		Then: CannotBeDealtDamage{
 			Target:   Target{Kind: TargetTriggeringCreature},
-			Duration: EndOfTurn,
+			Duration: RemainderOfPlayerTurn,
 		},
 	}
 	if validateEffect(good) != nil {

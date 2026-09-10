@@ -19,7 +19,7 @@ var CXOTaber = card.New(
 	card.Provenance(card.WC, "309"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Alien, card.Traits.Krxix),
-	card.WithFightOrReap(card.MayPlayOffHouse{
+	card.WithAbility(card.Trigger.FightOrReap, card.MayPlayOffHouse{
 		Except: card.House.Self,
 		Grant:  card.GrantPlay | card.GrantUse,
 		Count:  1,

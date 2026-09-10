@@ -21,5 +21,5 @@ var InkaTheSpider = card.New(
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Beast),
 	card.WithKeywords(card.Keyword.Poison),
-	card.WithPlayReap(card.Stun{Target: card.Target.Creature}),
+	card.WithAbility(card.Trigger.PlayReap, card.Stun{Target: card.Target.Creature}),
 )

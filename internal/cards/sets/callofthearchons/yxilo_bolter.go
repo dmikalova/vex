@@ -19,7 +19,7 @@ var YxiloBolter = card.New(
 	card.Provenance(card.CotA, "204"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Martian, card.Traits.Soldier),
-	card.WithFightOrReap(card.DamageThen{
+	card.WithAbility(card.Trigger.FightOrReap, card.DamageThen{
 		Amount: 2,
 		After:  card.IfDestroyed,
 		Target: card.Target.Creature,

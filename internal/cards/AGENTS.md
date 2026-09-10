@@ -309,3 +309,16 @@ Ready/Stunned/At(zone)` (chainable) and `h.P1.ExpectAmber/ExpectKeys`. Reach
 - Set test packages import `card` (for `card.House.X`) and `ct`
   (`internal/cards/cardtest`); they use the public engine API and exported card
   `var`s (no reaching into engine internals).
+- **What a card's tests must cover:**
+  - A **combined or conditional** ability is tested on **both** sides — the
+    positive (the condition holds, every branch fires) and the negative (the
+    condition fails, nothing fires or the other branch fires). A conditional with
+    only its positive tested is under-tested.
+  - A **rote keyword-only** ability (a card whose whole text is stock keywords —
+    e.g. taunt, skirmish, hazardous N) needs **no** test: the keyword is exercised
+    by the engine's own keyword tests, so a per-card test only restates them.
+  - An ability that reads a **numeric value** (a count, an amount, a threshold) is
+    tested at the boundary cases — **0, 1, n-1, n, n+1** — so an off-by-one in the
+    count or the comparison is caught. Test the cases that exist for the card: a
+    threshold of `n` wants both sides of the boundary (n-1, n, n+1), while a plain
+    "deal N per X" wants the empty (0) and one (1) cases.

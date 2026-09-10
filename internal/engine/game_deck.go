@@ -58,13 +58,16 @@ func (g *Game) shuffleZonesIntoDeck(player int, zones []Zone) {
 }
 
 // draw draws count cards into the player's hand, stopping early only when the
-// deck and discard are both exhausted.
-func (g *Game) draw(player, count int) {
+// deck and discard are both exhausted. It returns how many cards were drawn.
+func (g *Game) draw(player, count int) int {
+	drawn := 0
 	for i := 0; i < count; i++ {
 		if !g.drawOne(player) {
 			break
 		}
+		drawn++
 	}
+	return drawn
 }
 
 // drawTo draws until the hand holds n cards (or nothing is left to draw).

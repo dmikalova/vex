@@ -27,7 +27,7 @@ var CenturionStenopius = card.New(
 		PowerBonus: 3,
 		Per:        card.AemberOnThis{},
 	}),
-	card.WithPlayFightReap(card.May{Do: card.Exalt{
+	card.WithAbility(card.Trigger.PlayFightReap, card.May{Do: card.Exalt{
 		Target: card.Target.This,
 		Amount: 1,
 	}}),

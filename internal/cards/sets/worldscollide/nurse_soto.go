@@ -21,7 +21,7 @@ var NurseSoto = card.New(
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human),
 	card.WithKeywords(card.Keyword.Deploy),
-	card.WithPlayFightReap(card.Heal{
+	card.WithAbility(card.Trigger.PlayFightReap, card.Heal{
 		Amount: 3,
 		Target: card.Target.EachCreature.Neighboring(),
 	}),

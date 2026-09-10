@@ -19,7 +19,7 @@ var FirstOfficerFrane = card.New(
 	card.Provenance(card.WC, "298"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Human),
-	card.WithPlayFightReap(card.CaptureAember{
+	card.WithAbility(card.Trigger.PlayFightReap, card.CaptureAember{
 		Amount: 1,
 		Target: card.Target.FriendlyCreature,
 		Source: card.Opponent,

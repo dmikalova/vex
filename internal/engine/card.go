@@ -417,11 +417,11 @@ type StaticModifier struct {
 	// Training makes its creature a Logos creature. HouseNone carries no override.
 	HouseOverride House
 
-	// SpendAsPool lets the Æmber sitting on the host creature be spent to pay Æmber
-	// costs as if it were in its controller's pool — The Callipygian Ideal grants the
-	// creature it upgrades this permission. The pay path (spendAsPoolCreatures)
-	// consults it; the zero value grants nothing.
-	SpendAsPool bool
+	// SpendAemberOnCard lets the Æmber sitting on the host creature be spent to pay
+	// Æmber costs as if it were in its controller's pool — The Callipygian Ideal
+	// grants the creature it upgrades this permission. The pay path
+	// (spendAsPoolCreatures) consults it; the zero value grants nothing.
+	SpendAemberOnCard bool
 }
 
 // grants reports whether the modifier gives its host anything at all — a stat
@@ -442,7 +442,7 @@ func (m StaticModifier) grants() bool {
 		m.ProtectsFromNonFlank ||
 		m.HouseOverride != HouseNone ||
 		m.AemberCannotBeStolen ||
-		m.SpendAsPool
+		m.SpendAemberOnCard
 }
 
 // ConstantAbility is a continuous stat modifier a card in play applies to
@@ -499,11 +499,11 @@ type ConstantAbility struct {
 	// from the source's point of view — The Red Baron grants itself a reap only
 	// while your red key is forged. It is nil when the ability is always active.
 	WhileCondition Condition
-	// SpendAsPool lets the Æmber sitting on each creature the Target reaches be spent
-	// to pay Æmber costs as if it were in its controller's pool — Senator Bracchus
-	// grants this to every friendly creature. The pay path (spendAsPoolCreatures)
-	// consults it; the zero value grants nothing.
-	SpendAsPool bool
+	// SpendAemberOnCard lets the Æmber sitting on each creature the Target reaches
+	// be spent to pay Æmber costs as if it were in its controller's pool — Senator
+	// Bracchus grants this to every friendly creature. The pay path
+	// (spendAsPoolCreatures) consults it; the zero value grants nothing.
+	SpendAemberOnCard bool
 }
 
 // target returns the constant ability's effective Target: an unset Target reaches

@@ -13,7 +13,7 @@ func TestTakeControlTargeted(t *testing.T) {
 	if got := tgt.Text(); got != "take control of an enemy flank creature until "+SelfName+" leaves play" {
 		t.Errorf("targeted text = %q", got)
 	}
-	if (TakeControl{Target: Target{Kind: TargetChosenEnemyCreature}, Duration: EndOfTurn}).validate() == nil {
+	if (TakeControl{Target: Target{Kind: TargetChosenEnemyCreature}, Duration: RemainderOfPlayerTurn}).validate() == nil {
 		t.Error("only UntilThisLeavesPlay should be valid")
 	}
 

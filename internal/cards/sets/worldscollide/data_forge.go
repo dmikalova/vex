@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Forge a key at +10 Æmber current cost, reduced by 1 Æmber for each card in your hand.
+//	Play: Forge a key at +10 Æmber current cost, reduced by 1 Æmber for each card in your hand -> purge Data Forge.
 var DataForge = card.New(
 	"Data Forge",
 	card.House.Logos,

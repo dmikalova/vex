@@ -375,7 +375,21 @@ var Trigger = triggers{
 	AfterAnyPlayerStartOfTurn:      engine.TriggerAfterAnyPlayerStartOfTurn,
 	LeavesPlay:                     engine.TriggerLeavesPlay,
 	AfterActionPlayedBeforeResolve: engine.TriggerAfterActionPlayedBeforeResolve,
+	PlayFightReap:                  triggerPlayFightReap,
+	FightOrReap:                    triggerFightOrReap,
+	PlayReap:                       triggerPlayReap,
 }
+
+// Composite triggers are facade-only fan-out markers: card.WithAbility expands
+// each into the atomic Play/Fight/Reap abilities, so the engine runtime only ever
+// sees atomic triggers (ADR 0006), and text rendering merges the atomic abilities
+// back into one "Play/Fight/Reap:" line. Their negative values can never collide
+// with the engine's non-negative Trigger constants.
+const (
+	triggerPlayFightReap engine.Trigger = -1 - iota
+	triggerFightOrReap
+	triggerPlayReap
+)
 
 type triggers struct {
 	// Play fires when the card is played ("Play:").
@@ -467,6 +481,16 @@ type triggers struct {
 	// AfterActionPlayedBeforeResolve fires after a Tactic is played, by either
 	// player, before that Tactic's own effect resolves.
 	AfterActionPlayedBeforeResolve engine.Trigger
+	// PlayFightReap fires the effect as a Play, a Fight, and a Reap ability, printed
+	// as one "Play/Fight/Reap:" line. It is a composite: card.WithAbility fans it
+	// into the three atomic abilities.
+	PlayFightReap engine.Trigger
+	// FightOrReap fires the effect as both a Fight and a Reap ability, printed as
+	// one "Fight/Reap:" line. It is a composite fanned out by card.WithAbility.
+	FightOrReap engine.Trigger
+	// PlayReap fires the effect as both a Play and a Reap ability, printed as one
+	// "Play/Reap:" line. It is a composite fanned out by card.WithAbility.
+	PlayReap engine.Trigger
 }
 
 // Controller and Opponent are the two players an effect can target, relative to

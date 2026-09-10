@@ -92,6 +92,21 @@ func (e CardsDrawn) Text(n Namer) string {
 		n.PlayerName(e.Player), countNoun(e.Count, "card"), e.Hand)
 }
 
+// CardsDrawnBy narrates a draw caused by a card's ability mid-turn (Candle Unit),
+// crediting the card so the line reads "Candle Unit has Player 1 draw 1 card"
+// rather than a bare draw. Count is how many cards were actually drawn.
+type CardsDrawnBy struct {
+	Source LocalID
+	Player int
+	Count  int
+}
+
+// Text renders the attributed draw, naming the source card and the drawer.
+func (e CardsDrawnBy) Text(n Namer) string {
+	return fmt.Sprintf("%s has %s draw %s",
+		n.Name(e.Source), n.PlayerName(e.Player), countNoun(e.Count, "card"))
+}
+
 // HouseChosen narrates the active house a player picked for the turn.
 type HouseChosen struct {
 	Player int

@@ -25,7 +25,7 @@ var Protectrix = card.New(
 			card.Heal{Fully: true, Target: card.Target.Triggering},
 			card.CannotBeDealtDamage{
 				Target:   card.Target.Triggering,
-				Duration: card.Duration.EndOfTurn,
+				Duration: card.Duration.RemainderOfPlayerTurn,
 			},
 		}},
 	}),

@@ -16,7 +16,7 @@ import (
 //
 //	Versatile.
 //	Play: Archive each friendly Knight creature from play.
-//	Action: If you have played 7 or more Sanctum cards this turn, destroy Epic Quest, and forge a key at no cost.
+//	Action: If you have played 7 or more Sanctum cards this turn, forge a key at no cost -> purge Epic Quest.
 func TestEpicQuest(t *testing.T) {
 	t.Run("archives each friendly Knight creature in play", func(t *testing.T) {
 		var knight, cleric, enemyKnight ct.Card
@@ -81,11 +81,11 @@ func TestEpicQuest(t *testing.T) {
 
 			h.P1.ExpectKeys(1)
 			h.P1.ExpectAmber(0)
-			h.Expect(quest).At(ct.Discard)
+			h.Expect(quest).At(ct.Purge)
 		},
 	)
 
-	t.Run("does not forge or destroy itself before seven Sanctum cards", func(t *testing.T) {
+	t.Run("does not forge or purge itself before seven Sanctum cards", func(t *testing.T) {
 		var quest ct.Card
 		a1 := ct.Tactic(ct.OfHouse(card.House.Sanctum))
 		a2 := ct.Tactic(ct.OfHouse(card.House.Sanctum))

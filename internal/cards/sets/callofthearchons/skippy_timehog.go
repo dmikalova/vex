@@ -22,6 +22,6 @@ var SkippyTimehog = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.CannotUse{
 			Player:   card.Opponent,
-			Duration: card.Duration.NextTurn,
+			Duration: card.Duration.OpponentNextTurn,
 		}),
 )

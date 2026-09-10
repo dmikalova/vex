@@ -26,7 +26,7 @@ var CreedOfNature = card.New(
 				card.ChooseCreatureThen{
 					Target: card.Target.Creature,
 					Then: card.ForDuration{
-						Duration: card.Duration.EndOfTurn,
+						Duration: card.Duration.RemainderOfPlayerTurn,
 						Effects: []card.Effect{
 							card.GainKeywordForTurn{
 								Target:  card.Target.Triggering,

@@ -20,6 +20,6 @@ var ShieldOfJustice = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.CannotBeDealtDamage{
 			Target:   card.Target.EachFriendlyCreature,
-			Duration: card.Duration.EndOfTurn,
+			Duration: card.Duration.RemainderOfPlayerTurn,
 		}),
 )

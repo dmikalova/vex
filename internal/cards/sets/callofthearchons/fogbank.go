@@ -21,6 +21,6 @@ var Fogbank = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.CannotFight{
 			Player:   card.Opponent,
-			Duration: card.Duration.NextTurn,
+			Duration: card.Duration.OpponentNextTurn,
 		}),
 )

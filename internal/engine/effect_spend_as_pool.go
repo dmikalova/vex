@@ -29,13 +29,13 @@ func (g *Game) spendAsPoolCreatures(player int) []LocalID {
 // ConstantAbility reaches it (Senator Bracchus).
 func (g *Game) creatureSpendableAsPool(player int, id LocalID) bool {
 	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
-		if g.cat.def(up).Static.SpendAsPool {
+		if g.cat.def(up).Static.SpendAemberOnCard {
 			return true
 		}
 	}
 	for _, src := range g.allInPlay(player) {
 		for _, c := range g.cat.def(src).ConstantAbilities {
-			if c.SpendAsPool && g.constantActive(src, c) && g.constantAffects(src, c, id) {
+			if c.SpendAemberOnCard && g.constantActive(src, c) && g.constantAffects(src, c, id) {
 				return true
 			}
 		}
@@ -91,7 +91,7 @@ func (g *Game) drawFromSpendAsPool(player, want int) int {
 // on friendly creatures …"). It is empty when the card grants no such permission.
 func spendAsPoolLines(def *CardDefinition, hosted bool) []string {
 	var lines []string
-	if def.Static.SpendAsPool {
+	if def.Static.SpendAemberOnCard {
 		body := "You may spend Æmber on this creature as if it were in your pool."
 		if hosted {
 			lines = append(lines, body)
@@ -100,7 +100,7 @@ func spendAsPoolLines(def *CardDefinition, hosted bool) []string {
 		}
 	}
 	for _, c := range def.ConstantAbilities {
-		if !c.SpendAsPool {
+		if !c.SpendAemberOnCard {
 			continue
 		}
 		lines = append(lines,

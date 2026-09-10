@@ -117,13 +117,15 @@ func TestRequiredTargetValidation(t *testing.T) {
 	}
 
 	// CannotFight needs both a player and a duration.
-	if err := validateEffect(CannotFight{Duration: NextTurn}); err == nil {
+	if err := validateEffect(CannotFight{Duration: OpponentNextTurn}); err == nil {
 		t.Error("CannotFight with an unset player should be rejected")
 	}
 	if err := validateEffect(CannotFight{Player: Opponent}); err == nil {
 		t.Error("CannotFight with an unset duration should be rejected")
 	}
-	if err := validateEffect(CannotFight{Player: Opponent, Duration: NextTurn}); err != nil {
+	if err := validateEffect(
+		CannotFight{Player: Opponent, Duration: OpponentNextTurn},
+	); err != nil {
 		t.Errorf("CannotFight fully set should pass, got %v", err)
 	}
 }

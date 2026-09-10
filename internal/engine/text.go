@@ -181,9 +181,10 @@ func abilityTextWithNames(line, self, upgrade string) string {
 // abilityLines renders a card's triggered abilities, one printed line each,
 // resolving self-references to the card's name (or "this creature" for an
 // upgrade's own abilities). Adjacent abilities that share one effect and fire on
-// distinct action triggers — the pairs/triples WithFightOrReap, WithPlayReap, and
-// WithPlayFightReap add — merge into one "Fight/Reap:" / "Play/Reap:" /
-// "Play/Fight/Reap:" line, the KeyForge shorthand.
+// distinct action triggers — the pairs/triples the composite triggers
+// Trigger.FightOrReap, Trigger.PlayReap, and Trigger.PlayFightReap fan out into —
+// merge into one "Fight/Reap:" / "Play/Reap:" / "Play/Fight/Reap:" line, the
+// KeyForge shorthand.
 func abilityLines(def *CardDefinition) []string {
 	self := def.Name
 	if def.Type == Upgrade {
@@ -246,9 +247,9 @@ func canonicalTriggerLabel(play, fight, reap bool) string {
 }
 
 // isFightReapPair reports whether two adjacent abilities are a Fight and a Reap
-// (in either order) that share one effect — the pair FightOrReap and
-// WithFightOrReap add. It prints as a single "Fight/Reap:" line regardless of
-// which of the two is listed first.
+// (in either order) that share one effect — the pair the FightOrReap granted
+// helper and the Trigger.FightOrReap composite add. It prints as a single
+// "Fight/Reap:" line regardless of which of the two is listed first.
 func isFightReapPair(a, b Ability) bool {
 	if a.Effect.Text() != b.Effect.Text() {
 		return false

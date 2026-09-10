@@ -107,13 +107,14 @@ func reactionEventOf(t Trigger) (Event, bool) {
 // effect is a Draw, damage, capture, Ready, or Exalt) are allowed.
 //
 // Duration widens the window past the current turn. Unset (the zero value) is the
-// remainder of the controller's turn. NextTurn lasts until the start of the
-// controller's next turn — through the opponent's whole turn — so an enemy creature
-// fires the grant on the opponent's turn too (Diplomacy). Because the registry
-// clears a player's own entries at their ready phase, a next-turn grant is owned by
-// the opponent, whose ready phase falls just before the controller's next turn,
-// and it fires only for a Before Fight ability, whose firing (fireLastingBeforeFight)
-// matches on the subject alone rather than the acting player.
+// remainder of the controller's turn. StartOfPlayerNextTurn lasts until the
+// start of the controller's next turn — through the opponent's whole turn — so an
+// enemy creature fires the grant on the opponent's turn too (Diplomacy). Because
+// the registry clears a player's own entries at their ready phase, a next-turn
+// grant is owned by the opponent, whose ready phase falls just before the
+// controller's next turn, and it fires only for a Before Fight ability, whose
+// firing (fireLastingBeforeFight) matches on the subject alone rather than the
+// acting player.
 type GainAbility struct {
 	Target   Target
 	Ability  Ability
@@ -133,9 +134,9 @@ func (e GainAbility) validate() error {
 	if _, _, ok := lastingActionOf(e.Ability.Effect); !ok {
 		return fmt.Errorf("GainAbility: unsupported ability effect %T", e.Ability.Effect)
 	}
-	if e.Duration == NextTurn && e.Ability.Trigger != TriggerBeforeFight {
+	if e.Duration == StartOfPlayerNextTurn && e.Ability.Trigger != TriggerBeforeFight {
 		return fmt.Errorf(
-			"GainAbility: NextTurn grant supports only a Before Fight ability, got %v",
+			"GainAbility: StartOfPlayerNextTurn grant supports only a Before Fight ability, got %v",
 			e.Ability.Trigger,
 		)
 	}
@@ -150,21 +151,21 @@ func (e GainAbility) validate() error {
 func (e GainAbility) Text() string {
 	granted := strings.ReplaceAll(RenderAbility(e.Ability), SelfName, "this creature")
 	text := e.Target.Text() + ` gains, "` + granted + `"`
-	if e.Duration == NextTurn {
+	if e.Duration == StartOfPlayerNextTurn {
 		return "until the start of your next turn, " + text
 	}
 	return text
 }
 
 // Resolve registers the ability as a per-creature reaction on each selected
-// creature for the rest of the controller's turn. A NextTurn grant is owned by the
-// opponent so it clears at their ready phase — the start of the controller's next
-// turn — rather than at the end of this one.
+// creature for the rest of the controller's turn. A next-turn grant is owned by
+// the opponent so it clears at their ready phase — the start of the controller's
+// next turn — rather than at the end of this one.
 func (e GainAbility) Resolve(ctx *EffectContext) {
 	event, _ := reactionEventOf(e.Ability.Trigger)
 	action, amount, _ := lastingActionOf(e.Ability.Effect)
 	owner := ctx.Controller
-	if e.Duration == NextTurn {
+	if e.Duration == StartOfPlayerNextTurn {
 		owner = ctx.Opponent()
 	}
 	for _, id := range e.Target.Select(ctx) {

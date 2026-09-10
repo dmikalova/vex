@@ -21,6 +21,6 @@ var Valoocanth = card.New(
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Aquan),
 	card.WithCannotBeUsedWhile(card.TideIsLow{}),
-	card.WithFightOrReap(
+	card.WithAbility(card.Trigger.FightOrReap,
 		card.Exhaust{Target: card.Target.EnemyCreature.AndNeighbors()}),
 )

@@ -19,7 +19,7 @@ var HelmsmanSpears = card.New(
 	card.Provenance(card.WC, "311"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human),
-	card.WithFightOrReap(card.Then{
+	card.WithAbility(card.Trigger.FightOrReap, card.Then{
 		First: card.DiscardCard{
 			Player:    card.Controller,
 			Zone:      card.Hand,

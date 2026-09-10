@@ -31,7 +31,7 @@ var OratorHissaro = card.New(
 			card.BelongToHouse{
 				Target:   card.Target.EachCreature.Neighboring(),
 				House:    card.House.Self,
-				Duration: card.Duration.EndOfTurn,
+				Duration: card.Duration.RemainderOfPlayerTurn,
 			},
 		}}),
 )

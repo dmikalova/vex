@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Traits: [redacted]
 //
-//	After you choose Logos as your active house, place 1 Æmber from the common supply on [REDACTED]. If there are 4 or more Æmber on it, destroy [REDACTED], and forge a key at no cost.
+//	After you choose Logos as your active house, place 1 Æmber from the common supply on [REDACTED]. If there are 4 or more Æmber on it, forge a key at no cost -> purge [REDACTED].
 var REDACTED = card.New(
 	"[REDACTED]",
 	card.House.Logos,
@@ -24,10 +24,7 @@ var REDACTED = card.New(
 				card.PlaceAemberOnThis{Amount: 1},
 				card.Conditional{
 					Cond: card.AemberOnThisAtLeast{Amount: 4},
-					Then: card.Sequence{Effects: []card.Effect{
-						card.Destroy{Target: card.Target.This},
-						card.ForgeKey{FreeOfCost: true},
-					}},
+					Then: card.ForgeKey{FreeOfCost: true},
 				},
 			}},
 		}),

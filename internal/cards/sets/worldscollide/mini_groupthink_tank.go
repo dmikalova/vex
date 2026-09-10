@@ -21,7 +21,7 @@ var MiniGroupthinkTank = card.New(
 	card.WithPower(3),
 	card.WithArmor(2),
 	card.WithTraits(card.Traits.Robot, card.Traits.Experiment),
-	card.WithPlayFightReap(card.DealDamage{
+	card.WithAbility(card.Trigger.PlayFightReap, card.DealDamage{
 		Amount: 8,
 		Target: card.Target.Creature.SharesHouseWithNeighbors(2),
 	}),

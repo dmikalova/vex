@@ -18,7 +18,7 @@ var KelifiDragon = card.New("Kelifi Dragon",
 	card.WithPower(12),
 	card.WithTraits(card.Traits.Dragon),
 	card.WithAemberThreshold(5),
-	card.WithFightOrReap(card.Sequence{Effects: []card.Effect{
+	card.WithAbility(card.Trigger.FightOrReap, card.Sequence{Effects: []card.Effect{
 		card.GainAember{Player: card.Controller, Amount: 1},
 		card.DealDamage{
 			Target: card.Target.Creature,

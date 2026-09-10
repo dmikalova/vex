@@ -113,7 +113,7 @@ func (e DealDamagePerHouse) Resolve(ctx *EffectContext) {
 		if !ok {
 			continue
 		}
-		ctx.Resolver.DealDamage(ctx.Controller, []DamageTarget{{ID: id, Amount: e.Amount}})
+		ctx.dealDamage([]DamageTarget{{ID: id, Amount: e.Amount}})
 	}
 }
 
@@ -178,7 +178,7 @@ func (e DealDamage) Resolve(ctx *EffectContext) {
 			for i, h := range hits {
 				owners[i] = ctx.Resolver.Controller(h.ID)
 			}
-			ctx.Resolver.DealDamage(ctx.Controller, hits)
+			ctx.dealDamage(hits)
 			for i, h := range hits {
 				if !resolverInPlay(ctx, h.ID) {
 					ctx.Produced.Destroyed[owners[i]]++
@@ -232,7 +232,7 @@ func (e DealDamage) dealTo(ctx *EffectContext, amount int, ids []LocalID) {
 		}
 		targets[i] = DamageTarget{ID: id, Amount: hit, IgnoreArmor: e.IgnoreArmor}
 	}
-	ctx.Resolver.DealDamage(ctx.Controller, targets)
+	ctx.dealDamage(targets)
 }
 
 // DamageAftermath decides when a DamageThen's follow-up resolves and how its two
@@ -310,7 +310,7 @@ func (e DamageThen) Resolve(ctx *EffectContext) {
 	if e.After == IfDestroyed {
 		ctx.Produced.Neighbors = neighbors(ctx, id)
 	}
-	ctx.Resolver.DealDamage(ctx.Controller, []DamageTarget{{ID: id, Amount: e.Amount}})
+	ctx.dealDamage([]DamageTarget{{ID: id, Amount: e.Amount}})
 	switch e.After {
 	case IfDestroyed:
 		if resolverInPlay(ctx, id) {

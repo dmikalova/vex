@@ -8,11 +8,14 @@ func TestCannotBeDealtDamage(t *testing.T) {
 	foe := g.AddToBattleline(testCreature("foe", 5), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := CannotBeDealtDamage{Target: Target{Kind: TargetEachFriendlyCreature}, Duration: EndOfTurn}
+	e := CannotBeDealtDamage{
+		Target:   Target{Kind: TargetEachFriendlyCreature},
+		Duration: RemainderOfPlayerTurn,
+	}
 	if e.Text() != "for the remainder of the turn, each friendly creature cannot be dealt damage" {
 		t.Errorf("text = %q", e.Text())
 	}
-	if (CannotBeDealtDamage{Duration: EndOfTurn}).validate() == nil {
+	if (CannotBeDealtDamage{Duration: RemainderOfPlayerTurn}).validate() == nil {
 		t.Error("unset target should be invalid")
 	}
 	if (CannotBeDealtDamage{Target: Target{Kind: TargetEachFriendlyCreature}}).validate() == nil {
@@ -38,7 +41,7 @@ func TestCannotBeDealtDamage(t *testing.T) {
 	// Protect the enemy side too, then confirm end of turn clears both.
 	CannotBeDealtDamage{
 		Target:   Target{Kind: TargetEachEnemyCreature},
-		Duration: EndOfTurn,
+		Duration: RemainderOfPlayerTurn,
 	}.Resolve(
 		ctx,
 	)

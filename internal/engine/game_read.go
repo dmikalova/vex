@@ -15,8 +15,14 @@ func (g *Game) owner(id LocalID) int { return g.cat.owner(id) }
 // ownership is immutable and decides where a card goes out of play; control is
 // temporary and is represented by which battleline/artifact row the card occupies.
 // ControlPlus uses 0 for "owner controls" and stores controller+1 otherwise so
-// player 0 can be represented.
+// player 0 can be represented. An attached upgrade has no control of its own — it
+// acts through its host — so a controller read on one resolves through the host,
+// and generic machinery that asks an upgrade for its controller gets the right
+// answer without special-casing upgrades.
 func (g *Game) controller(id LocalID) int {
+	if host, ok := g.hostOf(id); ok {
+		return g.controller(host)
+	}
 	if c := g.State.Cards[id].ControlPlus; c != 0 {
 		return int(c - 1)
 	}

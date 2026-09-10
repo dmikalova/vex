@@ -131,17 +131,15 @@ func (g *Game) GainAssault(id LocalID, amount int) {
 	g.record(CreatureGainedAssault{Creature: id, Amount: amount})
 }
 
-// ForgeKeyAtExtraCost has a player forge one key at its current cost plus extra.
-func (g *Game) ForgeKeyAtExtraCost(player, extra int) { g.forgeKeyAtExtraCost(player, extra) }
-
-// ForgeKeyAtExtraCostReport forges one key at its current cost plus extra and
-// reports whether a key was forged (Obsidian Forge destroys itself only if it did).
-func (g *Game) ForgeKeyAtExtraCostReport(player, extra int) bool {
+// ForgeKeyAtExtraCost forges one key at its current cost plus extra and reports
+// whether a key was forged, so a forge card purges itself only when it did.
+func (g *Game) ForgeKeyAtExtraCost(player, extra int) bool {
 	return g.forgeKeyAtExtraCost(player, extra)
 }
 
-// ForgeKeyFree has a player forge one key without paying its current cost.
-func (g *Game) ForgeKeyFree(player int) { g.forgeKeyFree(player) }
+// ForgeKeyFree forges one key without paying its current cost and reports whether
+// a key was forged.
+func (g *Game) ForgeKeyFree(player int) bool { return g.forgeKeyFree(player) }
 
 // IsCreature reports whether a card is a creature, by its current type.
 func (g *Game) IsCreature(id LocalID) bool { return g.TypeOf(id) == Creature }
@@ -354,7 +352,11 @@ func (g *Game) PlayerHasHouse(player int, house House) bool {
 }
 
 // Draw is the Resolver entry point for the internal draw.
-func (g *Game) Draw(controller, count int) { g.draw(controller, count) }
+func (g *Game) Draw(controller, count int, source LocalID) {
+	if n := g.draw(controller, count); n > 0 {
+		g.record(CardsDrawnBy{Source: source, Player: controller, Count: n})
+	}
+}
 
 // RefillHand refills a player's hand as if it were the end of their turn,
 // honoring their chains and draw modifiers (Punctuated Equilibrium).
@@ -445,7 +447,7 @@ func (g *Game) DiscardArchives(owner int) { g.discardArchives(owner) }
 func (g *Game) PurgeFromDiscard(owner int, id LocalID) { g.purgeFromDiscard(owner, id) }
 
 // PurgeFromHand moves a card from a player's hand to their purge pile.
-func (g *Game) PurgeFromHand(owner int, id LocalID) { g.purgeFromHand(owner, id) }
+func (g *Game) PurgeFromHand(owner int, id, source LocalID) { g.purgeFromHand(owner, id, source) }
 
 // PurgeFromArchives moves a card from a player's archives to their purge pile.
 func (g *Game) PurgeFromArchives(owner int, id LocalID) { g.purgeFromArchives(owner, id) }

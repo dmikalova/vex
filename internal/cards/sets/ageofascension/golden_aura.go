@@ -20,16 +20,16 @@ var GoldenAura = card.New(
 		Then: card.Sequence{Effects: []card.Effect{
 			card.Heal{Fully: true, Target: card.Target.Triggering},
 			card.ForDuration{
-				Duration: card.Duration.EndOfTurn,
+				Duration: card.Duration.RemainderOfPlayerTurn,
 				Effects: []card.Effect{
 					card.BelongToHouse{
 						Target:   card.Target.Triggering,
 						House:    card.House.Self,
-						Duration: card.Duration.EndOfTurn,
+						Duration: card.Duration.RemainderOfPlayerTurn,
 					},
 					card.CannotBeDealtDamage{
 						Target:   card.Target.Triggering,
-						Duration: card.Duration.EndOfTurn,
+						Duration: card.Duration.RemainderOfPlayerTurn,
 					},
 				},
 			},

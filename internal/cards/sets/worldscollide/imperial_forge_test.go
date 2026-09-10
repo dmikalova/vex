@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Forge a key at +8 Æmber current cost, reduced by 1 Æmber for each Æmber on friendly creatures.
+//	Play: Forge a key at +8 Æmber current cost, reduced by 1 Æmber for each Æmber on friendly creatures -> purge Imperial Forge.
 func TestImperialForge(t *testing.T) {
 	var creature ct.Card
 	h := ct.Play(t, ct.Setup{

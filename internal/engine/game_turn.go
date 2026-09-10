@@ -521,16 +521,18 @@ func (g *Game) vaults(player int) []LocalID {
 	return out
 }
 
-// forgeKeyFree forges one key without paying its current cost.
-func (g *Game) forgeKeyFree(player int) {
+// forgeKeyFree forges one key without paying its current cost, reporting whether
+// a key was forged.
+func (g *Game) forgeKeyFree(player int) bool {
 	if g.forgeKeyNumberBarred(player) {
-		return
+		return false
 	}
 	if g.opponentForgeGuarded(player) {
-		return
+		return false
 	}
 	color, ok := g.pickKeyColor(player)
 	g.finishForgeKey(player, color, ok)
+	return true
 }
 
 // finishForgeKey records a newly forged key in the colour already picked, fires

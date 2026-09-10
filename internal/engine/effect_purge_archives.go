@@ -59,6 +59,6 @@ func (e PurgeArchivesForDamage) Resolve(ctx *EffectContext) {
 		hits = append(hits, DamageTarget{ID: id, Amount: e.Amount * len(chosen)})
 	}
 	if len(hits) > 0 {
-		ctx.Resolver.DealDamage(ctx.Controller, hits)
+		ctx.dealDamage(hits)
 	}
 }

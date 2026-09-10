@@ -50,7 +50,7 @@ func (e CannotFight) Text() string {
 
 // Resolve applies the timed bar to the chosen player.
 func (e CannotFight) Resolve(ctx *EffectContext) {
-	if e.Duration == NextTurn {
+	if e.Duration == OpponentNextTurn {
 		ctx.Resolver.CannotFightNextTurn(ctx.PlayerFor(e.Player), ctx.Source)
 	}
 }
@@ -83,19 +83,19 @@ func (e CannotReap) Text() string {
 	if e.Player == Opponent {
 		who, whose = "your opponent", "their"
 	}
-	if e.Duration == EndOfTurn {
+	if e.Duration == RemainderOfPlayerTurn {
 		return who + " cannot use creatures to reap for the remainder of the turn"
 	}
 	return who + " cannot use creatures to reap during " + whose + " next turn"
 }
 
 // Resolve applies the timed bar to the chosen player, for the current turn
-// (EndOfTurn) or the player's next turn (NextTurn).
+// (RemainderOfPlayerTurn) or the player's next turn (OpponentNextTurn).
 func (e CannotReap) Resolve(ctx *EffectContext) {
 	switch e.Duration {
-	case EndOfTurn:
+	case RemainderOfPlayerTurn:
 		ctx.Resolver.CannotReapThisTurn(ctx.PlayerFor(e.Player), ctx.Source)
-	case NextTurn:
+	case OpponentNextTurn:
 		ctx.Resolver.CannotReapNextTurn(ctx.PlayerFor(e.Player), ctx.Source)
 	}
 }
@@ -141,7 +141,7 @@ func (e CreaturesCannot) Text() string {
 // for the rest of their turn and the opponent throughout their next turn, so it
 // lifts at the start of the caster's next turn.
 func (e CreaturesCannot) Resolve(ctx *EffectContext) {
-	if e.Duration == NextTurn {
+	if e.Duration == StartOfPlayerNextTurn {
 		ctx.Resolver.CreaturesCannotUntilNextTurn(
 			ctx.Controller,
 			e.Action,
@@ -195,7 +195,7 @@ func (e CannotPlay) Text() string {
 		noun = "Tactics"
 	}
 	when := "during " + whose + " next turn"
-	if e.Duration == EndOfTurn {
+	if e.Duration == RemainderOfPlayerTurn {
 		when = "for the remainder of the turn"
 	}
 	return who + " cannot play " + noun + " " + when
@@ -204,9 +204,9 @@ func (e CannotPlay) Text() string {
 // Resolve arms the play-type bar on the chosen player for the Duration.
 func (e CannotPlay) Resolve(ctx *EffectContext) {
 	switch e.Duration {
-	case NextTurn:
+	case OpponentNextTurn:
 		ctx.Resolver.CannotPlayTypeNextTurn(ctx.PlayerFor(e.Player), e.barred(), ctx.Source)
-	case EndOfTurn:
+	case RemainderOfPlayerTurn:
 		ctx.Resolver.CannotPlayTypeThisTurn(ctx.PlayerFor(e.Player), e.barred(), ctx.Source)
 	}
 }
@@ -232,14 +232,14 @@ func (e CannotUse) validate() error {
 }
 
 // Text renders the effect, e.g. "your opponent cannot use any cards during their
-// next turn", or for the EndOfTurn form "you cannot use cards this turn" (United
-// Action).
+// next turn", or for the RemainderOfPlayerTurn form "you cannot use cards this
+// turn" (United Action).
 func (e CannotUse) Text() string {
 	who, whose := "you", "your"
 	if e.Player == Opponent {
 		who, whose = "your opponent", "their"
 	}
-	if e.Duration == EndOfTurn {
+	if e.Duration == RemainderOfPlayerTurn {
 		return who + " cannot use cards this turn"
 	}
 	return who + " cannot use any cards during " + whose + " next turn"
@@ -248,9 +248,9 @@ func (e CannotUse) Text() string {
 // Resolve arms the use bar on the chosen player, this turn or their next.
 func (e CannotUse) Resolve(ctx *EffectContext) {
 	switch e.Duration {
-	case NextTurn:
+	case OpponentNextTurn:
 		ctx.Resolver.CannotUseNextTurn(ctx.PlayerFor(e.Player), ctx.Source)
-	case EndOfTurn:
+	case RemainderOfPlayerTurn:
 		ctx.Resolver.CannotUseThisTurn(ctx.PlayerFor(e.Player), ctx.Source)
 	}
 }

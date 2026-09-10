@@ -417,7 +417,7 @@ func (g *Game) mitigateDamage(id LocalID, amount int, ignoreArmor bool) int {
 		g.record(DamageRefused{Creature: id})
 		return 0
 	}
-	if g.absorbedByWard(id) {
+	if g.absorbedByWard(id, wardDamage, amount) {
 		return 0
 	}
 	if !ignoreArmor {
@@ -439,18 +439,18 @@ type DamageTarget struct {
 	Amount int
 	// IgnoreArmor makes this instance of damage bypass the creature's armor.
 	IgnoreArmor bool
-	// Source, when SourceKeyword is set, credits this damage to a creature's
-	// pre-fight keyword — its Assault, or its Hazardous — so the hit narrates
-	// "<Source>'s N <keyword> deals N damage to <ID>" instead of the bare
-	// "<ID> takes N damage" line, naming where the pre-fight damage came from.
+	// Source, when SourceKeyword is set, credits this damage to the card that dealt
+	// it — a creature's pre-fight Assault or Hazardous, or the card whose ability
+	// dealt it — so the hit narrates "<Source> ... deals N damage to <ID>" instead
+	// of the bare "<ID> takes N damage" line, naming where the damage came from.
 	Source        LocalID
 	SourceKeyword combatKeyword
 }
 
-// combatKeyword names the pre-fight keyword crediting a DamageTarget's damage, so
-// applyRawDamage narrates the striking creature and its keyword value rather than
-// a bare "takes N damage" line. The zero value credits no source: the hit narrates
-// as the plain DamageTaken line.
+// combatKeyword names the source crediting a DamageTarget's damage, so the hit
+// narrates the striking creature — its pre-fight keyword and value, or the card
+// whose ability dealt it — rather than a bare "takes N damage" line. The zero
+// value credits no source: the hit narrates as the plain DamageTaken line.
 type combatKeyword int
 
 const (
@@ -458,6 +458,9 @@ const (
 	assaultDamage combatKeyword = iota + 1
 	// hazardousDamage credits the defender's Hazardous striking its attacker.
 	hazardousDamage
+	// abilityDamage credits the card whose ability dealt the damage (Musthic
+	// Murmook deals 4 damage to a creature).
+	abilityDamage
 )
 
 // dealDamage deals damage to every target simultaneously: each creature takes its

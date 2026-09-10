@@ -173,7 +173,7 @@ func TestAbsorbedByWardOnCardOutOfPlay(t *testing.T) {
 	gone := g.Register(testCreature("gone", 3), 0)
 	g.State.Discard[0].add(gone)
 
-	if g.absorbedByWard(gone) {
+	if g.absorbedByWard(gone, wardLeavePlay, 0) {
 		t.Error("a card out of play has no ward to absorb a removal")
 	}
 }

@@ -336,39 +336,43 @@ func TestGainAbilityText(t *testing.T) {
 	}
 }
 
-// A NextTurn grant of "Before Fight: Exalt this creature" (Diplomacy) validates,
-// names its window first, and rejects the pairing with any other trigger.
+// A StartOfPlayerNextTurn grant of "Before Fight: Exalt this creature"
+// (Diplomacy) validates, names its window first, and rejects the pairing with any
+// other trigger.
 func TestGainAbilityBeforeFightExaltValidateAndText(t *testing.T) {
 	e := GainAbility{
 		Target:   Target{Kind: TargetEachCreature},
-		Duration: NextTurn,
+		Duration: StartOfPlayerNextTurn,
 		Ability: Ability{
 			Trigger: TriggerBeforeFight,
 			Effect:  Exalt{Target: Target{Kind: TargetThisCreature}, Amount: 1},
 		},
 	}
 	if err := e.validate(); err != nil {
-		t.Fatalf("valid Before Fight/Exalt NextTurn grant = %v", err)
+		t.Fatalf("valid Before Fight/Exalt StartOfPlayerNextTurn grant = %v", err)
 	}
 	want := `until the start of your next turn, each creature gains, "Before Fight: Exalt this creature."`
 	if got := e.Text(); got != want {
 		t.Errorf("text = %q, want %q", got, want)
 	}
 
-	// A NextTurn grant is limited to a Before Fight ability.
+	// A StartOfPlayerNextTurn grant is limited to a Before Fight ability.
 	bad := GainAbility{
 		Target:   Target{Kind: TargetEachCreature},
-		Duration: NextTurn,
+		Duration: StartOfPlayerNextTurn,
 		Ability:  Ability{Trigger: TriggerAfterReap, Effect: Draw{Amount: 1}},
 	}
 	if err := bad.validate(); err == nil {
-		t.Error("a NextTurn grant on a non-Before-Fight trigger should be rejected")
+		t.Error(
+			"a StartOfPlayerNextTurn grant on a non-Before-Fight trigger should be rejected",
+		)
 	}
 }
 
-// A NextTurn "Before Fight: Exalt this creature" grant is owned by the opponent so
-// it clears at their ready phase, and it exalts whichever granted creature fights —
-// friendly or enemy — regardless of whose turn it is (Diplomacy).
+// A StartOfPlayerNextTurn "Before Fight: Exalt this creature" grant is owned
+// by the opponent so it clears at their ready phase, and it exalts whichever
+// granted creature fights — friendly or enemy — regardless of whose turn it is
+// (Diplomacy).
 func TestGainAbilityBeforeFightExaltResolveAndFire(t *testing.T) {
 	g := started(t)
 	friendly := g.AddToBattleline(testCreature("friendly", 3), 0)
@@ -376,7 +380,7 @@ func TestGainAbilityBeforeFightExaltResolveAndFire(t *testing.T) {
 
 	GainAbility{
 		Target:   Target{Kind: TargetEachCreature},
-		Duration: NextTurn,
+		Duration: StartOfPlayerNextTurn,
 		Ability: Ability{
 			Trigger: TriggerBeforeFight,
 			Effect:  Exalt{Target: Target{Kind: TargetThisCreature}, Amount: 1},

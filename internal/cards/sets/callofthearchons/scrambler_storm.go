@@ -20,6 +20,6 @@ var ScramblerStorm = card.New(
 	card.WithAbility(card.Trigger.Play, card.CannotPlay{
 		Player:   card.Opponent,
 		Type:     card.Type.Tactic,
-		Duration: card.Duration.NextTurn,
+		Duration: card.Duration.OpponentNextTurn,
 	}),
 )

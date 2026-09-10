@@ -78,3 +78,30 @@ interesting, or brings it in line with modern errata.
   A random discard is the discarding player's own act, so Vactrol renders it in
   the actor's voice — the same voice Mind Barb already uses for a random hand
   discard. The effect is identical; only the voice changes.
+- **Hunter or Hunted?** reads `Remove a ward from a creature, and ward a creature`
+  rather than KeyForge's `Choose one: Ward a creature / Move a ward from a creature
+to another creature`. The two branches collapse into one linear sequence:
+  removing a ward and then placing a fresh one reproduces the "move a ward" branch
+  when the same source and destination are chosen, and the "ward only" branch when
+  the removal finds no ward. Vactrol keeps the two atomic effects — `RemoveWard`
+  (any creature, warded or not) then `Ward` — instead of a bespoke `MoveWard` node,
+  so there is one fewer one-off mechanic to carry.
+
+## Mechanic rule changes
+
+- **Key cheats purge themselves.** Any card that forges a key outside the normal
+  start-of-turn step spends itself when it succeeds: a forge that actually lands
+  purges the card that made it, gated with the `->` result arrow (rule 5) as
+  `… forge a key … -> purge <self>`. A forge that is barred or unaffordable does
+  not purge — the card stays. This keeps a single key cheat from looping a body
+  back into play to forge again and again in one turn (Chota Hazri regrowth), while
+  leaving its ordinary tactical use intact. The rule lives on the `ForgeKey` effect
+  node, so every forge card carries it uniformly (Data Forge, Imperial Forge,
+  Forging an Alliance, Key of Darkness, Key Charge, Chota Hazri, The Colosseum,
+  Nightforge, Key Abduction, Triumph, Might Makes Right, [REDACTED], Epic Quest,
+  Obsidian Forge). Because the forge is now its own cost, the optional wrapper is
+  dropped from the two key cheats that carried one — **Nightforge** and **Obsidian
+  Forge** are mandatory when affordable (the `you may` is gone) — and the cards
+  that used to **destroy** themselves on forging (**Epic Quest**, **[REDACTED]**,
+  **Obsidian Forge**) now **purge** instead, removing them from the game rather
+  than sending them to the discard pile where they could return.

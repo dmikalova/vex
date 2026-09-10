@@ -23,7 +23,7 @@ var SenatorShrix = card.New(
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Politician),
 	card.WithSpendableAember(),
-	card.WithPlayReap(card.May{Do: card.Exalt{
+	card.WithAbility(card.Trigger.PlayReap, card.May{Do: card.Exalt{
 		Target: card.Target.This,
 		Amount: 1,
 	}}),

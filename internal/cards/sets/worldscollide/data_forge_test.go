@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Forge a key at +10 Æmber current cost, reduced by 1 Æmber for each card in your hand.
+//	Play: Forge a key at +10 Æmber current cost, reduced by 1 Æmber for each card in your hand -> purge Data Forge.
 func TestDataForge(t *testing.T) {
 	t.Run("forges at +10 reduced by 1 per card in hand", func(t *testing.T) {
 		var df ct.Card

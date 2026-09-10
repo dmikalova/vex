@@ -21,7 +21,7 @@ var DeepwoodDruid = card.New(
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Elf, card.Traits.Witch),
 	card.WithKeywords(card.Keyword.Deploy),
-	card.WithPlayReap(card.Heal{
+	card.WithAbility(card.Trigger.PlayReap, card.Heal{
 		Fully:  true,
 		Target: card.Target.Creature.Neighboring(),
 	}),

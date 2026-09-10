@@ -19,6 +19,6 @@ var IntoTheNight = card.New(
 		card.Trigger.Play, card.CreaturesCannot{
 			Action:      card.UseKind.Fight,
 			ExceptHouse: card.House.Self,
-			Duration:    card.Duration.NextTurn,
+			Duration:    card.Duration.StartOfPlayerNextTurn,
 		}),
 )

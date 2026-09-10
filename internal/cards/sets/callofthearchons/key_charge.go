@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Lose 1 Æmber -> forge a key at current cost.
+//	Play: Lose 1 Æmber -> forge a key at current cost -> purge Key Charge.
 var KeyCharge = card.New(
 	"Key Charge",
 	card.House.Untamed,

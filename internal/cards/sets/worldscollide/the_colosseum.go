@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Versatile.
 //	After an enemy creature is destroyed while fighting, put a glory counter on The Colosseum.
-//	Action: If there are 6 or more glory counters on The Colosseum, remove 6 glory counters from The Colosseum, and forge a key at current cost.
+//	Action: If there are 6 or more glory counters on The Colosseum, remove 6 glory counters from The Colosseum, and forge a key at current cost -> purge The Colosseum.
 var TheColosseum = card.New(
 	"The Colosseum",
 	card.House.Saurian,

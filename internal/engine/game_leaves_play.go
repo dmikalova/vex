@@ -42,7 +42,7 @@ func (g *Game) SaveFromDestruction(id LocalID) {
 // "purge this creature" a Destroyed ability can do (Annihilation Ritual). A card
 // purged as it is destroyed leaves play, so destroyTogether then skips discarding it.
 func (g *Game) purgeFromPlay(id LocalID) {
-	if g.absorbedByWard(id) {
+	if g.absorbedByWard(id, wardLeavePlay, 0) {
 		return
 	}
 	o := g.leavePlayDestroyed(id)
@@ -55,37 +55,52 @@ func (g *Game) purgeFromPlay(id LocalID) {
 // stays; the effect that tried to remove or damage it still resolves, just with no
 // effect on the creature. Ward covers only leaving play and damage — not stun,
 // enrage, capture, control, or power loss — so only those funnels ask it.
-func (g *Game) absorbedByWard(id LocalID) bool {
+// prevented names what the ward stopped (and amount the damage it refused) so the
+// log can say what it saved the creature from.
+func (g *Game) absorbedByWard(id LocalID, prevented wardPrevented, amount int) bool {
 	c := g.stateOf(id)
 	if c == nil || !c.Warded {
 		return false
 	}
 	c.Warded = false
-	g.record(WardAbsorbed{Creature: id})
+	g.record(WardAbsorbed{Creature: id, Prevented: prevented, Amount: amount})
 	return true
 }
 
 // leavePlayDestroyed performs the shared teardown when a destroyed card leaves
 // play: it removes the card from the battle line and artifact row, discards its
-// upgrades, hands any Æmber on it to the controller's opponent, and resets its
+// upgrades, releases any Æmber on it (releaseAemberOnLeavePlay), and resets its
 // per-match state. It returns the owner so the caller can file the card in the
-// right zone. The Æmber goes to the opponent of whoever controlled the creature
-// at the moment it died, not the owner's opponent — a creature taken by the
-// opponent (exiled into their control) gives its Æmber back to its owner when it
-// dies under that control.
+// right zone.
 func (g *Game) leavePlayDestroyed(id LocalID) int {
 	o := g.owner(id)
-	to := 1 - g.controller(id)
 	g.removeFromPlay(id)
 	g.discardUpgrades(id)
 	g.discardUnder(id)
-	core := &g.State.Cards[id]
-	if core.Amber > 0 {
-		g.State.Aember[to] += int(core.Amber)
-		g.record(AemberOnCardReleased{Card: id, Amount: int(core.Amber), To: to})
-	}
+	g.releaseAemberOnLeavePlay(id)
 	g.resetCore(id)
 	return o
+}
+
+// releaseAemberOnLeavePlay hands the Æmber sitting on a card that is leaving play
+// to its destination, before resetCore zeroes it. A creature's Æmber goes to the
+// pool of its controller's opponent — the side it was captured from, so a creature
+// taken into the opponent's control gives its Æmber back to its owner — while a
+// non-creature card's Æmber returns to the common supply (Master Rulebook line
+// 927). Every exit funnels through here, so bouncing, archiving, or shuffling a
+// laden creature away releases its Æmber just as destroying it does.
+func (g *Game) releaseAemberOnLeavePlay(id LocalID) {
+	amt := int(g.State.Cards[id].Amber)
+	if amt <= 0 {
+		return
+	}
+	if g.TypeOf(id) == Creature {
+		to := 1 - g.controller(id)
+		g.State.Aember[to] += amt
+		g.record(AemberOnCardReleased{Card: id, Amount: amt, To: to})
+		return
+	}
+	g.record(AemberMovedToCommonSupply{Creature: id, Amount: amt})
 }
 
 // removeFromPlay takes a card out of play for good: it fires the card's Leaves
@@ -236,7 +251,7 @@ func (g *Game) destroyAttachedUpgrade(upgrade LocalID) {
 func (g *Game) filterUndestroyed(controller int, ids []LocalID) []LocalID {
 	var out []LocalID
 	for _, id := range ids {
-		if g.absorbedByWard(id) || g.hasKeyword(id, Invulnerable) ||
+		if g.absorbedByWard(id, wardDestruction, 0) || g.hasKeyword(id, Invulnerable) ||
 			g.applyDestructionReplacement(controller, id) {
 			continue
 		}
@@ -393,13 +408,14 @@ func (g *Game) destroyBatch(controller int, ids []LocalID) {
 // putOnTopOfDeck removes a card from play and places it on top of its owner's
 // deck, clearing the per-match state it accrued while in play.
 func (g *Game) putOnTopOfDeck(id LocalID) {
-	if g.absorbedByWard(id) {
+	if g.absorbedByWard(id, wardLeavePlay, 0) {
 		return
 	}
 	o := g.owner(id)
 	g.removeFromPlay(id)
 	g.discardUpgrades(id)
 	g.discardUnder(id)
+	g.releaseAemberOnLeavePlay(id)
 	g.resetCore(id)
 	g.State.Deck[o].addFront(id)
 	g.record(CardPutOnTopOfDeck{Card: id, Owner: o})
@@ -408,13 +424,14 @@ func (g *Game) putOnTopOfDeck(id LocalID) {
 // putIntoHand removes a card from play and places it into its owner's hand,
 // clearing the per-match state it accrued while in play.
 func (g *Game) putIntoHand(id LocalID) {
-	if g.absorbedByWard(id) {
+	if g.absorbedByWard(id, wardLeavePlay, 0) {
 		return
 	}
 	o := g.owner(id)
 	g.removeFromPlay(id)
 	g.discardUpgrades(id)
 	g.discardUnder(id)
+	g.releaseAemberOnLeavePlay(id)
 	g.resetCore(id)
 	g.State.Hand[o].add(id)
 	g.record(CardReturnedToHand{Card: id, Owner: o})
@@ -423,13 +440,14 @@ func (g *Game) putIntoHand(id LocalID) {
 // putIntoArchives removes a card from play and places it into its owner's
 // archives, clearing the per-match state it accrued while in play.
 func (g *Game) putIntoArchives(id LocalID) {
-	if g.absorbedByWard(id) {
+	if g.absorbedByWard(id, wardLeavePlay, 0) {
 		return
 	}
 	o := g.owner(id)
 	g.removeFromPlay(id)
 	g.discardUpgrades(id)
 	g.discardUnder(id)
+	g.releaseAemberOnLeavePlay(id)
 	g.resetCore(id)
 	g.State.Archives[o].add(id)
 	g.record(CardPutIntoArchives{Card: id, Owner: o})
@@ -453,13 +471,14 @@ func (g *Game) putIntoArchivesEach(controller int, ids []LocalID) {
 // putIntoDeckShuffled removes a card from play and shuffles it into its owner's
 // deck, clearing the per-match state it accrued while in play.
 func (g *Game) putIntoDeckShuffled(id LocalID) {
-	if g.absorbedByWard(id) {
+	if g.absorbedByWard(id, wardLeavePlay, 0) {
 		return
 	}
 	o := g.owner(id)
 	g.removeFromPlay(id)
 	g.discardUpgrades(id)
 	g.discardUnder(id)
+	g.releaseAemberOnLeavePlay(id)
 	g.resetCore(id)
 	g.State.Deck[o].add(id)
 	g.Shuffle(o)
@@ -501,13 +520,14 @@ func (g *Game) shuffleFriendlyInPlayIntoDeck(player int) int {
 // Uxlyx the Zookeeper all abduct this way. Nothing is marked on the card: the
 // ownership rule above sends it home the moment it leaves those archives.
 func (g *Game) PutIntoYourArchives(id LocalID, player int) {
-	if g.absorbedByWard(id) {
+	if g.absorbedByWard(id, wardLeavePlay, 0) {
 		return
 	}
 	o := g.owner(id)
 	g.removeFromPlay(id)
 	g.discardUpgrades(id)
 	g.discardUnder(id)
+	g.releaseAemberOnLeavePlay(id)
 	g.resetCore(id)
 	g.State.Archives[player].add(id)
 	g.record(CardAbducted{Player: player, Card: id, Owner: o})

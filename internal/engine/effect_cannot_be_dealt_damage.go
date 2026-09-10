@@ -4,9 +4,9 @@ import "fmt"
 
 // CannotBeDealtDamage marks each creature its Target selects unable to be dealt
 // damage for the given Duration — Shield of Justice protects each friendly
-// creature for the remainder of the turn. Only EndOfTurn is supported today (the
-// mark is cleared by the ready phase); the field is explicit so a longer window
-// can be added without reshaping the callers.
+// creature for the remainder of the turn. Only RemainderOfPlayerTurn is supported
+// today (the mark is cleared by the ready phase); the field is explicit so a
+// longer window can be added without reshaping the callers.
 type CannotBeDealtDamage struct {
 	Target   Target
 	Duration Duration
@@ -17,8 +17,8 @@ func (e CannotBeDealtDamage) validate() error {
 	if !e.Target.valid() {
 		return errUnsetTarget("CannotBeDealtDamage")
 	}
-	if e.Duration != EndOfTurn {
-		return fmt.Errorf("CannotBeDealtDamage: duration must be EndOfTurn")
+	if e.Duration != RemainderOfPlayerTurn {
+		return fmt.Errorf("CannotBeDealtDamage: duration must be RemainderOfPlayerTurn")
 	}
 	return nil
 }

@@ -21,7 +21,7 @@ var TheGreyRider = card.New(
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Monk),
 	card.WithKeywords(card.Keyword.Deploy),
-	card.WithPlayFightReap(card.May{
+	card.WithAbility(card.Trigger.PlayFightReap, card.May{
 		Do: card.OnChooseCreature{
 			Target: card.Target.Creature.Neighboring(),
 			Verbs:  []card.CreatureVerb{card.ReadyVerb{}, card.FightVerb{}},

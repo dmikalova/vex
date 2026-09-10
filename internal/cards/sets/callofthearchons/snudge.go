@@ -19,7 +19,7 @@ var Snudge = card.New(
 	card.Provenance(card.CotA, "97"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Demon),
-	card.WithFightOrReap(card.PutFromPlay{
+	card.WithAbility(card.Trigger.FightOrReap, card.PutFromPlay{
 		Target:      card.Target.CreatureOrArtifact.OnFlank(),
 		Destination: card.To.Hand,
 	}),

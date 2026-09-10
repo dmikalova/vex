@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Put each Mars creature into its owner's hand. Forge a key at +9 Æmber current cost, reduced by 1 Æmber for each card in your hand.
+//	Play: Put each Mars creature into its owner's hand. Forge a key at +9 Æmber current cost, reduced by 1 Æmber for each card in your hand -> purge Key Abduction.
 var KeyAbduction = card.New(
 	"Key Abduction",
 	card.House.Mars,

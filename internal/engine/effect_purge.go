@@ -134,7 +134,7 @@ func (e PurgeCard) resolveGate(ctx *EffectContext) bool {
 func purgeFrom(ctx *EffectContext, from Zone, owner int, id LocalID) {
 	switch from {
 	case Hand:
-		ctx.Resolver.PurgeFromHand(owner, id)
+		ctx.Resolver.PurgeFromHand(owner, id, ctx.Source)
 	case Discard:
 		ctx.Resolver.PurgeFromDiscard(owner, id)
 	default: // inPlay

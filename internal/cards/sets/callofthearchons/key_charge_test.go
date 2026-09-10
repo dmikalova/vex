@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Lose 1 Æmber -> forge a key at current cost.
+//	Play: Lose 1 Æmber -> forge a key at current cost -> purge Key Charge.
 func TestKeyCharge(t *testing.T) {
 	t.Run("loses 1 Æmber then forges a key at current cost", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

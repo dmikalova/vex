@@ -25,7 +25,7 @@ var UnitedAction = card.New(
 			},
 			card.CannotUse{
 				Player:   card.Controller,
-				Duration: card.Duration.EndOfTurn,
+				Duration: card.Duration.RemainderOfPlayerTurn,
 			},
 		}}),
 )

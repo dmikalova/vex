@@ -33,7 +33,7 @@ var TreasureMap = card.New(
 				},
 				card.CannotPlay{
 					Player:   card.Controller,
-					Duration: card.Duration.EndOfTurn,
+					Duration: card.Duration.RemainderOfPlayerTurn,
 				},
 			},
 		}),

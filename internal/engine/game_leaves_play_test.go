@@ -296,6 +296,51 @@ func TestDestroyGivesAmberToOpponent(t *testing.T) {
 	}
 }
 
+// TestLeavePlayReleasesCapturedAember covers the non-destruction exits: a creature
+// carrying captured Æmber that is bounced, archived, decked, shuffled, abducted, or
+// grafted away releases that Æmber to its controller's opponent, just as destroying
+// it does (Master Rulebook line 378).
+func TestLeavePlayReleasesCapturedAember(t *testing.T) {
+	exits := map[string]func(*Game, LocalID){
+		"return to hand": func(g *Game, id LocalID) { g.putIntoHand(id) },
+		"archive":        func(g *Game, id LocalID) { g.putIntoArchives(id) },
+		"deck top":       func(g *Game, id LocalID) { g.putOnTopOfDeck(id) },
+		"shuffle":        func(g *Game, id LocalID) { g.putIntoDeckShuffled(id) },
+		"abduct":         func(g *Game, id LocalID) { g.PutIntoYourArchives(id, 1) },
+		"graft":          func(g *Game, id LocalID) { g.GraftUnder(id, g.AddArtifact(NewCard("box", Mars, Artifact, Rare), 0)) },
+	}
+	for name, exit := range exits {
+		t.Run(name, func(t *testing.T) {
+			g := NewGame("A", "B", 1)
+			c := g.AddToBattleline(testCreature("c", 3), 0) // owned by player 0
+			g.State.Cards[c].Amber = 2
+			exit(g, c)
+			if g.Aember(1) != 2 {
+				t.Errorf("opponent aember = %d, want 2", g.Aember(1))
+			}
+			if g.AmberOn(c) != 0 {
+				t.Errorf("amber not cleared: %d", g.AmberOn(c))
+			}
+		})
+	}
+}
+
+// TestNonCreatureAemberReturnsToSupply covers rule 927's second clause: a
+// non-creature card leaving play with Æmber on it returns that Æmber to the common
+// supply, so neither pool grows.
+func TestNonCreatureAemberReturnsToSupply(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	art := g.AddArtifact(NewCard("relic", Dis, Artifact, Rare), 0)
+	g.State.Cards[art].Amber = 3
+	g.putIntoHand(art)
+	if g.Aember(0) != 0 || g.Aember(1) != 0 {
+		t.Errorf("pools = %d/%d, want 0/0 (Æmber to the common supply)", g.Aember(0), g.Aember(1))
+	}
+	if g.AmberOn(art) != 0 {
+		t.Errorf("amber not cleared: %d", g.AmberOn(art))
+	}
+}
+
 func TestPurgesDestroyed(t *testing.T) {
 	g := started(t)
 	ritual := g.AddArtifact(NewCard("ritual", Dis, Artifact, Rare,

@@ -64,10 +64,6 @@ var optionRank = map[string]int{
 	"WithConstant":                             14,
 	// Standard abilities	.
 	"WithAbility": 15,
-	// Can these be consolidated into WithAbility(card.Trigger.PlayFightReap) etc?
-	"WithPlayFightReap": 16,
-	"WithFightOrReap":   16,
-	"WithPlayReap":      16,
 }
 
 // TestOptionsAreInCanonicalOrder enforces a single authoring order for the

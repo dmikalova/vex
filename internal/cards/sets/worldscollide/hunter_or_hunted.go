@@ -9,9 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Choose one:
-//	- Ward a creature
-//	- Move a ward from a creature to another creature.
+//	Play: Remove a ward from a creature, and ward a creature.
 var HunterOrHunted = card.New(
 	"Hunter or Hunted?",
 	card.House.Shadows,
@@ -20,13 +18,8 @@ var HunterOrHunted = card.New(
 	card.Provenance(card.WC, "269"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.ChooseOne{
-			Options: []card.Effect{
-				card.Ward{Target: card.Target.Creature},
-				card.MoveWard{
-					From: card.Target.Creature,
-					Onto: card.Target.OtherCreature,
-				},
-			},
-		}),
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
+			card.RemoveWard{Target: card.Target.Creature},
+			card.Ward{Target: card.Target.Creature},
+		}}),
 )

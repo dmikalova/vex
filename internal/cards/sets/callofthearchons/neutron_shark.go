@@ -19,7 +19,7 @@ var NeutronShark = card.New(
 	card.Provenance(card.CotA, "146"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Beast, card.Traits.Mutant),
-	card.WithPlayFightReap(card.RepeatOnCondition{
+	card.WithAbility(card.Trigger.PlayFightReap, card.RepeatOnCondition{
 		Do: card.Sequence{Effects: []card.Effect{
 			card.Destroy{Target: card.Target.EnemyCreatureOrArtifact},
 			card.Destroy{Target: card.Target.FriendlyCreatureOrArtifact},

@@ -80,6 +80,29 @@ func moveFromPhrase(to, from Zone) string {
 	}
 }
 
+// CardDiscarded narrates one card discarded from a hand. A discard forced by a
+// card's ability names that card (Old Yurk discards a card); a discard a player
+// makes as their own turn action carries no source and names the player.
+type CardDiscarded struct {
+	// Player is whose hand the card left.
+	Player int
+	// Card is the discarded card.
+	Card LocalID
+	// Source is the card whose ability forced the discard, named when HasSource.
+	Source LocalID
+	// HasSource marks a discard forced by an ability, as opposed to a player's own.
+	HasSource bool
+}
+
+// Text renders the discard, naming the forcing card when there is one.
+func (e CardDiscarded) Text(n Namer) string {
+	who := n.PlayerName(e.Player)
+	if e.HasSource {
+		who = n.Name(e.Source)
+	}
+	return fmt.Sprintf("%s discards %s", who, nameMoved(n, e.Card, Hand, Discard))
+}
+
 // TopOfDeckArchived narrates the top card of a deck going to archives sight
 // unseen.
 type TopOfDeckArchived struct {
@@ -132,6 +155,21 @@ type CardPurged struct{ Card LocalID }
 // Text renders the card in play that was purged.
 func (e CardPurged) Text(n Namer) string {
 	return fmt.Sprintf("%s is purged", nameMoved(n, e.Card, inPlay, purged))
+}
+
+// CardPurgedFromHand narrates a card purged from a hand, naming the card whose
+// ability purged it and the player whose hand it left (Impspecter purges a card
+// from an opponent's hand).
+type CardPurgedFromHand struct {
+	Source LocalID
+	Card   LocalID
+	Owner  int
+}
+
+// Text renders the purge, naming the purging card and the hand's owner.
+func (e CardPurgedFromHand) Text(n Namer) string {
+	return fmt.Sprintf("%s purges %s from %s's hand",
+		n.Name(e.Source), nameMoved(n, e.Card, Hand, purged), n.PlayerName(e.Owner))
 }
 
 // CardPutOnTopOfDeck narrates a card leaving play onto its owner's deck.

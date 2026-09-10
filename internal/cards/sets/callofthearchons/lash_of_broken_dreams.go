@@ -21,6 +21,6 @@ var LashOfBrokenDreams = card.New(
 		card.Trigger.Action, card.RaiseKeyCost{
 			Player:   card.Opponent,
 			Amount:   3,
-			Duration: card.Duration.NextTurn,
+			Duration: card.Duration.OpponentNextTurn,
 		}),
 )

@@ -197,8 +197,8 @@ type (
 	// absorbs the next instance of damage or the next time the creature leaves
 	// play, then is spent.
 	Ward = engine.Ward
-	// MoveWard takes the ward off one warded creature and places it on another (Hunter or Hunted?).
-	MoveWard = engine.MoveWard
+	// RemoveWard takes the ward off a creature — any creature, warded or not (Hunter or Hunted?).
+	RemoveWard = engine.RemoveWard
 	// Exhaust turns the targeted creatures sideways so they cannot be used.
 	Exhaust = engine.Exhaust
 	// ExhaustCreatures exhausts up to Max creatures the controller chooses.

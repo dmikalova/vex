@@ -223,8 +223,9 @@ no damage is unaffected), and it never changes a creature's power.`,
 			Body: `BelongToHouse makes each creature its Target selects belong to House for the
 given Duration, overriding the house it counts as for active-house checks (Brain
 Stem Antenna's host counts as Mars for the rest of the turn). The change is
-per-match state, dropped when the creature leaves play; EndOfTurn also drops it at
-end of turn, while UntilThisLeavesPlay keeps it until the creature leaves play.`,
+per-match state, dropped when the creature leaves play; RemainderOfPlayerTurn
+also drops it at end of turn, while UntilThisLeavesPlay keeps it until the
+creature leaves play.`,
 		},
 		{
 			Section:    SectionEffect,

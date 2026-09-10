@@ -22,6 +22,6 @@ var SowSalt = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.CreaturesCannot{
 			Action:   card.UseKind.Reap,
-			Duration: card.Duration.NextTurn,
+			Duration: card.Duration.StartOfPlayerNextTurn,
 		}),
 )

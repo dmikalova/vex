@@ -26,7 +26,7 @@ var Lifeward = card.New(
 		card.CannotPlay{
 			Player:   card.Opponent,
 			Type:     card.Type.Creature,
-			Duration: card.Duration.NextTurn,
+			Duration: card.Duration.OpponentNextTurn,
 		},
 	}}),
 )

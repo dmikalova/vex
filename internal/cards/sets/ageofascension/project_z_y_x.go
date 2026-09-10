@@ -21,5 +21,5 @@ var ProjectZYX = card.New(
 	card.WithPower(5),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Mutant),
-	card.WithFightOrReap(card.May{Do: card.PlayFrom{From: card.Archives}}),
+	card.WithAbility(card.Trigger.FightOrReap, card.May{Do: card.PlayFrom{From: card.Archives}}),
 )

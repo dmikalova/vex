@@ -3,27 +3,27 @@ package engine
 import "testing"
 
 func TestCannotPlay(t *testing.T) {
-	if got := (CannotPlay{Player: Opponent, Type: Creature, Duration: NextTurn}).Text(); got != "your opponent cannot play creatures during their next turn" {
+	if got := (CannotPlay{Player: Opponent, Type: Creature, Duration: OpponentNextTurn}).Text(); got != "your opponent cannot play creatures during their next turn" {
 		t.Errorf("creature text = %q", got)
 	}
-	if got := (CannotPlay{Player: Controller, Type: Tactic, Duration: NextTurn}).Text(); got != "you cannot play Tactics during your next turn" {
+	if got := (CannotPlay{Player: Controller, Type: Tactic, Duration: OpponentNextTurn}).Text(); got != "you cannot play Tactics during your next turn" {
 		t.Errorf("tactic text = %q", got)
 	}
-	if got := (CannotPlay{Player: Controller, Duration: EndOfTurn}).Text(); got != "you cannot play cards for the remainder of the turn" {
+	if got := (CannotPlay{Player: Controller, Duration: RemainderOfPlayerTurn}).Text(); got != "you cannot play cards for the remainder of the turn" {
 		t.Errorf("blanket text = %q", got)
 	}
-	if (CannotPlay{Type: Creature, Duration: NextTurn}).validate() == nil {
+	if (CannotPlay{Type: Creature, Duration: OpponentNextTurn}).validate() == nil {
 		t.Error("unset player should be invalid")
 	}
 	// An unset Type is deliberately legal: it bars every type (Treasure Map's "you
 	// cannot play cards"), which the AnyType wildcard carries into the bar.
-	if (CannotPlay{Player: Opponent, Duration: NextTurn}).validate() != nil {
+	if (CannotPlay{Player: Opponent, Duration: OpponentNextTurn}).validate() != nil {
 		t.Error("unset card type should mean every type, not be invalid")
 	}
 	if (CannotPlay{Player: Opponent, Type: Creature}).validate() == nil {
 		t.Error("unset duration should be invalid")
 	}
-	if (CannotPlay{Player: Opponent, Type: Creature, Duration: NextTurn}).validate() != nil {
+	if (CannotPlay{Player: Opponent, Type: Creature, Duration: OpponentNextTurn}).validate() != nil {
 		t.Error("a fully set effect should be valid")
 	}
 
@@ -36,7 +36,7 @@ func TestCannotPlay(t *testing.T) {
 	CannotPlay{
 		Player:   Opponent,
 		Type:     Creature,
-		Duration: NextTurn,
+		Duration: OpponentNextTurn,
 	}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
 	)
@@ -97,7 +97,7 @@ func TestCannotFight(t *testing.T) {
 	// Player 0 arms the bar on the opponent during player 0's own turn.
 	CannotFight{
 		Player:   Opponent,
-		Duration: NextTurn,
+		Duration: OpponentNextTurn,
 	}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
 	)
@@ -650,7 +650,7 @@ func TestCannotPlayBlanketThisTurn(t *testing.T) {
 	}
 	beast := g.AddToHand(NewCard("beast", Brobnar, Creature, Common, WithPower(3)), 0)
 
-	CannotPlay{Player: Controller, Duration: EndOfTurn}.Resolve(
+	CannotPlay{Player: Controller, Duration: RemainderOfPlayerTurn}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
 	)
 	if g.State.CannotPlayTypeThis[0].Value != AnyType {
@@ -673,39 +673,39 @@ func TestCannotPlayBlanketThisTurn(t *testing.T) {
 // "Action:" — throughout their next turn (Skippy Timehog) or for the rest of the
 // current turn (United Action).
 func TestCannotUse(t *testing.T) {
-	if got := (CannotUse{Player: Opponent, Duration: NextTurn}).Text(); got != "your opponent cannot use any cards during their next turn" {
+	if got := (CannotUse{Player: Opponent, Duration: OpponentNextTurn}).Text(); got != "your opponent cannot use any cards during their next turn" {
 		t.Errorf("opponent text = %q", got)
 	}
-	if got := (CannotUse{Player: Controller, Duration: NextTurn}).Text(); got != "you cannot use any cards during your next turn" {
+	if got := (CannotUse{Player: Controller, Duration: OpponentNextTurn}).Text(); got != "you cannot use any cards during your next turn" {
 		t.Errorf("controller text = %q", got)
 	}
-	if got := (CannotUse{Player: Controller, Duration: EndOfTurn}).Text(); got != "you cannot use cards this turn" {
+	if got := (CannotUse{Player: Controller, Duration: RemainderOfPlayerTurn}).Text(); got != "you cannot use cards this turn" {
 		t.Errorf("this-turn text = %q", got)
 	}
-	if got := (CannotUse{Player: Opponent, Duration: EndOfTurn}).Text(); got != "your opponent cannot use cards this turn" {
+	if got := (CannotUse{Player: Opponent, Duration: RemainderOfPlayerTurn}).Text(); got != "your opponent cannot use cards this turn" {
 		t.Errorf("this-turn opponent text = %q", got)
 	}
-	if (CannotUse{Duration: NextTurn}).validate() == nil {
+	if (CannotUse{Duration: OpponentNextTurn}).validate() == nil {
 		t.Error("unset player should be invalid")
 	}
 	if (CannotUse{Player: Opponent}).validate() == nil {
 		t.Error("unset duration should be invalid")
 	}
-	if (CannotUse{Player: Opponent, Duration: NextTurn}).validate() != nil {
+	if (CannotUse{Player: Opponent, Duration: OpponentNextTurn}).validate() != nil {
 		t.Error("a fully set effect should be valid")
 	}
 
 	g := NewGame("A", "B", 1)
 	g.StartTurn(0)
-	CannotUse{Player: Opponent, Duration: NextTurn}.Resolve(
+	CannotUse{Player: Opponent, Duration: OpponentNextTurn}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
 	)
-	// The EndOfTurn form arms the bar for the rest of the current turn.
-	CannotUse{Player: Controller, Duration: EndOfTurn}.Resolve(
+	// The RemainderOfPlayerTurn form arms the bar for the rest of the current turn.
+	CannotUse{Player: Controller, Duration: RemainderOfPlayerTurn}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
 	)
 	if !g.State.CannotUse[0].Value {
-		t.Error("EndOfTurn should arm the use bar this turn")
+		t.Error("RemainderOfPlayerTurn should arm the use bar this turn")
 	}
 	g.EndPlayPhase(0)
 
@@ -727,25 +727,25 @@ func TestCannotUse(t *testing.T) {
 // any creature — throughout their next turn (Inky Gloom) or for the rest of the
 // current turn (Ragnarok) — while fighting stays open.
 func TestCannotReap(t *testing.T) {
-	if got := (CannotReap{Player: Opponent, Duration: NextTurn}).Text(); got != "your opponent cannot use creatures to reap during their next turn" {
+	if got := (CannotReap{Player: Opponent, Duration: OpponentNextTurn}).Text(); got != "your opponent cannot use creatures to reap during their next turn" {
 		t.Errorf("opponent text = %q", got)
 	}
-	if got := (CannotReap{Player: Controller, Duration: NextTurn}).Text(); got != "you cannot use creatures to reap during your next turn" {
+	if got := (CannotReap{Player: Controller, Duration: OpponentNextTurn}).Text(); got != "you cannot use creatures to reap during your next turn" {
 		t.Errorf("controller text = %q", got)
 	}
-	if got := (CannotReap{Player: Controller, Duration: EndOfTurn}).Text(); got != "you cannot use creatures to reap for the remainder of the turn" {
+	if got := (CannotReap{Player: Controller, Duration: RemainderOfPlayerTurn}).Text(); got != "you cannot use creatures to reap for the remainder of the turn" {
 		t.Errorf("this-turn text = %q", got)
 	}
-	if got := (CannotReap{Player: Opponent, Duration: EndOfTurn}).Text(); got != "your opponent cannot use creatures to reap for the remainder of the turn" {
+	if got := (CannotReap{Player: Opponent, Duration: RemainderOfPlayerTurn}).Text(); got != "your opponent cannot use creatures to reap for the remainder of the turn" {
 		t.Errorf("this-turn opponent text = %q", got)
 	}
-	if (CannotReap{Duration: NextTurn}).validate() == nil {
+	if (CannotReap{Duration: OpponentNextTurn}).validate() == nil {
 		t.Error("unset player should be invalid")
 	}
 	if (CannotReap{Player: Opponent}).validate() == nil {
 		t.Error("unset duration should be invalid")
 	}
-	if (CannotReap{Player: Opponent, Duration: NextTurn}).validate() != nil {
+	if (CannotReap{Player: Opponent, Duration: OpponentNextTurn}).validate() != nil {
 		t.Error("a fully set effect should be valid")
 	}
 
@@ -754,15 +754,15 @@ func TestCannotReap(t *testing.T) {
 	if err := g.ChooseHouse(0, Brobnar); err != nil {
 		t.Fatal(err)
 	}
-	CannotReap{Player: Opponent, Duration: NextTurn}.Resolve(
+	CannotReap{Player: Opponent, Duration: OpponentNextTurn}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
 	)
-	// EndOfTurn arms the current-turn reap bar directly on the resolving player.
-	CannotReap{Player: Controller, Duration: EndOfTurn}.Resolve(
+	// RemainderOfPlayerTurn arms the current-turn reap bar directly on the resolving player.
+	CannotReap{Player: Controller, Duration: RemainderOfPlayerTurn}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
 	)
 	if !g.State.CannotReap[0].Value {
-		t.Error("EndOfTurn should arm this turn's reap bar")
+		t.Error("RemainderOfPlayerTurn should arm this turn's reap bar")
 	}
 	// A creature the barred player controls cannot reap while the bar is up.
 	mine := g.AddToBattleline(NewCard("mine", Brobnar, Creature, Common, WithPower(3)), 0)
@@ -996,25 +996,29 @@ func TestChosenHouseCannotReapNextTurn(t *testing.T) {
 // fighting until the caster's next turn, while reaping and the spared house stay
 // open.
 func TestCreaturesCannotFight(t *testing.T) {
-	withHouse := CreaturesCannot{Action: FightUse, ExceptHouse: Shadows, Duration: NextTurn}
+	withHouse := CreaturesCannot{
+		Action:      FightUse,
+		ExceptHouse: Shadows,
+		Duration:    StartOfPlayerNextTurn,
+	}
 	if got := withHouse.Text(); got != "until the start of your next turn, non-Shadows creatures cannot be used to fight" {
 		t.Errorf("house-exception text = %q", got)
 	}
-	noHouse := CreaturesCannot{Action: ReapUse, Duration: NextTurn}
+	noHouse := CreaturesCannot{Action: ReapUse, Duration: StartOfPlayerNextTurn}
 	if got := noHouse.Text(); got != "until the start of your next turn, creatures cannot be used to reap" {
 		t.Errorf("no-exception text = %q", got)
 	}
 
-	if (CreaturesCannot{Duration: NextTurn}).validate() == nil {
+	if (CreaturesCannot{Duration: StartOfPlayerNextTurn}).validate() == nil {
 		t.Error("unset action should be invalid")
 	}
-	if (CreaturesCannot{Action: ActionUse, Duration: NextTurn}).validate() == nil {
+	if (CreaturesCannot{Action: ActionUse, Duration: StartOfPlayerNextTurn}).validate() == nil {
 		t.Error("an Action-ability bar should be invalid")
 	}
 	if (CreaturesCannot{Action: FightUse}).validate() == nil {
 		t.Error("unset duration should be invalid")
 	}
-	if (CreaturesCannot{Action: FightUse, Duration: NextTurn}).validate() != nil {
+	if (CreaturesCannot{Action: FightUse, Duration: StartOfPlayerNextTurn}).validate() != nil {
 		t.Error("a fully set effect should be valid")
 	}
 
@@ -1098,7 +1102,7 @@ func TestCreaturesCannotReap(t *testing.T) {
 	if err := g.ChooseHouse(0, Brobnar); err != nil {
 		t.Fatal(err)
 	}
-	CreaturesCannot{Action: ReapUse, Duration: NextTurn}.Resolve(
+	CreaturesCannot{Action: ReapUse, Duration: StartOfPlayerNextTurn}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
 	)
 

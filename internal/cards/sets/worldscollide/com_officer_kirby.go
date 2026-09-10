@@ -19,7 +19,7 @@ var ComOfficerKirby = card.New(
 	card.Provenance(card.WC, "295"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human),
-	card.WithPlayFightReap(card.MayPlayOffHouse{
+	card.WithAbility(card.Trigger.PlayFightReap, card.MayPlayOffHouse{
 		Except:  card.House.Self,
 		NotType: card.Type.Creature,
 		Grant:   card.GrantPlay,

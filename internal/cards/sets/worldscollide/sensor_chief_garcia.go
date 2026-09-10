@@ -19,9 +19,9 @@ var SensorChiefGarcia = card.New(
 	card.Provenance(card.WC, "305"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human),
-	card.WithPlayFightReap(card.RaiseKeyCost{
+	card.WithAbility(card.Trigger.PlayFightReap, card.RaiseKeyCost{
 		Player:   card.Opponent,
 		Amount:   2,
-		Duration: card.Duration.NextTurn,
+		Duration: card.Duration.OpponentNextTurn,
 	}),
 )

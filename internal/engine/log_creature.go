@@ -151,25 +151,55 @@ func (e CreatureWarded) Text(n Namer) string {
 	return fmt.Sprintf("%s is warded", n.Name(e.Creature))
 }
 
-// WardMoved narrates a ward being taken off one creature and placed on another.
-type WardMoved struct {
-	From LocalID
-	To   LocalID
-	By   LocalID
+// WardRemoved narrates a ward being taken off a creature. AlreadyUnwarded marks a
+// removal that found its target carrying no ward: the source still chose it, so
+// the choice is worth a line even though nothing changed.
+type WardRemoved struct {
+	Creature        LocalID
+	By              LocalID
+	AlreadyUnwarded bool
 }
 
-// Text renders the creature the ward left and the creature it moved to.
-func (e WardMoved) Text(n Namer) string {
-	return fmt.Sprintf("%s moves a ward from %s to %s", n.Name(e.By), n.Name(e.From), n.Name(e.To))
+// Text renders the creature whose ward was removed and the card that removed it.
+func (e WardRemoved) Text(n Namer) string {
+	if e.AlreadyUnwarded {
+		return fmt.Sprintf("%s has no ward to remove", n.Name(e.Creature))
+	}
+	return fmt.Sprintf("%s removes the ward from %s", n.Name(e.By), n.Name(e.Creature))
 }
+
+// wardPrevented names what a spent ward stopped, so the log can say what it saved
+// the creature from: an instance of damage, a destruction, or another way of
+// leaving play (returned to hand, archived, shuffled or put back on the deck,
+// purged, or grafted under a host).
+type wardPrevented uint8
+
+const (
+	wardLeavePlay wardPrevented = iota
+	wardDestruction
+	wardDamage
+)
 
 // WardAbsorbed narrates a creature's ward being spent: it absorbed an instance of
 // damage or a removal from play, so the creature stays and loses its ward.
-type WardAbsorbed struct{ Creature LocalID }
+// Prevented names what it stopped; Amount is the damage it refused when the ward
+// spent on damage.
+type WardAbsorbed struct {
+	Creature  LocalID
+	Prevented wardPrevented
+	Amount    int
+}
 
-// Text renders the creature whose ward was spent.
+// Text renders the creature whose ward was spent and what the ward stopped.
 func (e WardAbsorbed) Text(n Namer) string {
-	return fmt.Sprintf("%s's ward absorbs the effect", n.Name(e.Creature))
+	switch e.Prevented {
+	case wardDamage:
+		return fmt.Sprintf("%s's ward prevents the %d damage", n.Name(e.Creature), e.Amount)
+	case wardDestruction:
+		return fmt.Sprintf("%s's ward prevents the destruction", n.Name(e.Creature))
+	default:
+		return fmt.Sprintf("%s's ward keeps it in play", n.Name(e.Creature))
+	}
 }
 
 // NoCreatureToFight narrates a fight that found no enemy creature to attack, so

@@ -22,7 +22,7 @@ var DiploMacy = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.GainAbility{
 			Target:   card.Target.EachCreature,
-			Duration: card.Duration.NextTurn,
+			Duration: card.Duration.StartOfPlayerNextTurn,
 			Ability: card.Ability{
 				Trigger: card.Trigger.BeforeFight,
 				Effect: card.Exalt{

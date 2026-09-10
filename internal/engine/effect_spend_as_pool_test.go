@@ -10,8 +10,8 @@ import (
 func spendAsPoolCreature() CardDefinition {
 	return NewCard("Bracchus", Brobnar, Creature, Rare, WithPower(4),
 		WithConstantAbility(ConstantAbility{
-			Target:      Target{Kind: TargetEachFriendlyCreature},
-			SpendAsPool: true,
+			Target:            Target{Kind: TargetEachFriendlyCreature},
+			SpendAemberOnCard: true,
 		}))
 }
 
@@ -19,7 +19,7 @@ func spendAsPoolCreature() CardDefinition {
 // Æmber may be spent as if it were in the controller's pool.
 func spendAsPoolUpgrade() CardDefinition {
 	return NewCard("Ideal", Brobnar, Upgrade, Uncommon,
-		WithStatic(StaticModifier{SpendAsPool: true}))
+		WithStatic(StaticModifier{SpendAemberOnCard: true}))
 }
 
 // TestSpendAsPoolForgesFromCreatureConstant covers the forge path: a friendly

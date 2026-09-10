@@ -5,7 +5,9 @@ import "fmt"
 // ForgeKey has the controller forge a key outside the normal start-of-turn step.
 // By default they pay the current key cost, if they can afford it; FreeOfCost
 // forges without paying. Both paths fire "after you forge a key" abilities and,
-// on the final key, win the game.
+// on the final key, win the game. A forge that lands purges the card that made it
+// — every forge outside the normal step spends its source (a Vactrol divergence;
+// see docs/keyforge-divergences.md).
 type ForgeKey struct {
 	// FreeOfCost forges without paying the key cost.
 	FreeOfCost bool
@@ -36,12 +38,13 @@ func (e ForgeKey) validate() error {
 	return e.Or.validate()
 }
 
-// Text renders the effect.
+// Text renders the effect. The forge gates a self-purge: the card that made it is
+// spent only if a key is actually forged.
 func (e ForgeKey) Text() string {
 	var body string
 	switch {
 	case e.FreeOfCost:
-		return "forge a key at no cost"
+		body = "forge a key at no cost"
 	case e.ReducedBy != nil:
 		body = fmt.Sprintf(
 			"forge a key at +%d Æmber current cost, reduced by 1 Æmber for each %s",
@@ -55,30 +58,38 @@ func (e ForgeKey) Text() string {
 	if e.Or.set() {
 		body += e.Or.tail(fmt.Sprintf("+%d", e.Or.Amount))
 	}
-	return body
+	return body + " -> purge " + SelfName
 }
 
-// Resolve forges one key for the controller if affordable.
+// Resolve forges one key for the controller if affordable, then purges the source
+// card when a key was actually forged.
 func (e ForgeKey) Resolve(ctx *EffectContext) {
+	var forged bool
 	if e.FreeOfCost {
-		ctx.Resolver.ForgeKeyFree(ctx.Controller)
-		return
+		forged = ctx.Resolver.ForgeKeyFree(ctx.Controller)
+	} else {
+		extra := e.Extra
+		if e.Or.set() {
+			extra = e.Or.pick(e.Extra, ctx)
+		}
+		if e.ReducedBy != nil {
+			extra -= e.ReducedBy.Value(ctx)
+		}
+		forged = ctx.Resolver.ForgeKeyAtExtraCost(ctx.Controller, max(extra, 0))
 	}
-	extra := e.Extra
-	if e.Or.set() {
-		extra = e.Or.pick(e.Extra, ctx)
+	if forged {
+		PurgeSource{}.Resolve(ctx)
 	}
-	if e.ReducedBy != nil {
-		extra -= e.ReducedBy.Value(ctx)
-	}
-	ctx.Resolver.ForgeKeyAtExtraCost(ctx.Controller, max(extra, 0))
 }
 
 // RaiseKeyCost makes a player's keys cost Amount more Æmber for the Duration —
-// Lash of Broken Dreams taxes the opponent through their next turn. It mirrors
-// the bars (CannotPlay, CannotUse): NextTurn waits for the affected player's own
-// next turn whoever plays in between, while EndOfTurn bites at once and lifts
-// when the current turn ends.
+// Lash of Broken Dreams taxes the opponent during their next turn. It mirrors
+// LowerKeyCost's windows: OpponentNextTurn stays dormant until the affected
+// player's own next turn, whoever plays in between (the window every "during
+// your opponent's next turn" surcharge wants); EndOfPlayerNextTurn is instead
+// live the moment it resolves and again on the affected player's next turn, so
+// a forge forced this turn (Keyfrog) already pays the surcharge; and
+// RemainderOfPlayerTurn bites at once and lifts when the current turn ends.
 //
 // A surcharge that should last as long as its card is in play is not this
 // effect: print it on the card as a KeyCostChange (WithKeyCost), which the key
@@ -98,7 +109,7 @@ func (e RaiseKeyCost) validate() error {
 		return fmt.Errorf("RaiseKeyCost: Amount must be positive")
 	}
 	switch e.Duration {
-	case NextTurn, EndOfTurn:
+	case OpponentNextTurn, RemainderOfPlayerTurn, EndOfPlayerNextTurn:
 		return nil
 	case durationUnset:
 		return errUnsetDuration("RaiseKeyCost")
@@ -118,7 +129,7 @@ func (e RaiseKeyCost) Text() string {
 	if e.Player == Opponent {
 		whose = "your opponent's"
 	}
-	if e.Duration == EndOfTurn {
+	if e.Duration == RemainderOfPlayerTurn {
 		return fmt.Sprintf("%s keys cost +%d Æmber for the remainder of the turn", whose, e.Amount)
 	}
 	return fmt.Sprintf("keys cost +%d Æmber during %s next turn", e.Amount, whose)
@@ -126,11 +137,17 @@ func (e RaiseKeyCost) Text() string {
 
 // Resolve arms the surcharge on the named player for the Duration.
 func (e RaiseKeyCost) Resolve(ctx *EffectContext) {
+	p := ctx.PlayerFor(e.Player)
 	switch e.Duration {
-	case NextTurn:
-		ctx.Resolver.RaiseKeyCostNextTurn(ctx.PlayerFor(e.Player), e.Amount, ctx.Source)
-	case EndOfTurn:
-		ctx.Resolver.RaiseKeyCostThisTurn(ctx.PlayerFor(e.Player), e.Amount, ctx.Source)
+	case OpponentNextTurn:
+		ctx.Resolver.RaiseKeyCostNextTurn(p, e.Amount, ctx.Source)
+	case RemainderOfPlayerTurn:
+		ctx.Resolver.RaiseKeyCostThisTurn(p, e.Amount, ctx.Source)
+	case EndOfPlayerNextTurn:
+		// Live the moment it resolves and again on the affected player's next turn,
+		// so a forge forced this turn (Keyfrog) already pays the surcharge.
+		ctx.Resolver.RaiseKeyCostThisTurn(p, e.Amount, ctx.Source)
+		ctx.Resolver.RaiseKeyCostNextTurn(p, e.Amount, ctx.Source)
 	}
 }
 
@@ -141,9 +158,10 @@ func (e RaiseKeyCost) Resolve(ctx *EffectContext) {
 // lower and raise on the same player sum, and the key cost read floors the total
 // at 0 before a key is forged.
 //
-// Player may be EachPlayer, lowering both players' keys at once. EndOfNextTurn is
-// live the moment it resolves, unlike RaiseKeyCost's NextTurn, which waits for the
-// affected player's next turn before it bites.
+// Player may be EachPlayer, lowering both players' keys at once.
+// EndOfPlayerNextTurn is live the moment it resolves, unlike RaiseKeyCost's
+// OpponentNextTurn, which waits for the affected player's next turn
+// before it bites.
 type LowerKeyCost struct {
 	Player   Player
 	Amount   int
@@ -159,7 +177,7 @@ func (e LowerKeyCost) validate() error {
 		return fmt.Errorf("LowerKeyCost: Amount must be positive")
 	}
 	switch e.Duration {
-	case EndOfTurn, NextTurn, EndOfNextTurn:
+	case RemainderOfPlayerTurn, OpponentNextTurn, EndOfPlayerNextTurn:
 		return nil
 	case durationUnset:
 		return errUnsetDuration("LowerKeyCost")
@@ -187,11 +205,11 @@ func (e LowerKeyCost) Text() string {
 // next turn ends the window even when EachPlayer lowers both sides.
 func (e LowerKeyCost) window() string {
 	switch e.Duration {
-	case EndOfTurn:
+	case RemainderOfPlayerTurn:
 		return "for the remainder of the turn"
-	case NextTurn:
+	case OpponentNextTurn:
 		return "during your next turn"
-	default: // EndOfNextTurn
+	default: // EndOfPlayerNextTurn
 		return "until the end of your next turn"
 	}
 }
@@ -207,13 +225,14 @@ func (e LowerKeyCost) Resolve(ctx *EffectContext) {
 	e.arm(ctx, ctx.PlayerFor(e.Player))
 }
 
-// arm records the negative bump on player p. EndOfNextTurn sets both the current
-// turn and next turn bars so the drop is live now and again on p's next turn.
+// arm records the negative bump on player p. EndOfPlayerNextTurn sets both the
+// current turn and next turn bars so the drop is live now and again on p's next
+// turn.
 func (e LowerKeyCost) arm(ctx *EffectContext, p int) {
-	if e.Duration == EndOfTurn || e.Duration == EndOfNextTurn {
+	if e.Duration == RemainderOfPlayerTurn || e.Duration == EndOfPlayerNextTurn {
 		ctx.Resolver.RaiseKeyCostThisTurn(p, -e.Amount, ctx.Source)
 	}
-	if e.Duration == NextTurn || e.Duration == EndOfNextTurn {
+	if e.Duration == OpponentNextTurn || e.Duration == EndOfPlayerNextTurn {
 		ctx.Resolver.RaiseKeyCostNextTurn(p, -e.Amount, ctx.Source)
 	}
 }

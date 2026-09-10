@@ -145,18 +145,6 @@ with them. Grouped by mechanic so the shared primitive lands once.
 
 ## Engine — effects & mechanics
 
-- **Hunter or Hunted → Sequence, and retire `MoveWard`.** Replace its
-  `ChooseOne[Ward | MoveWard]` with `Sequence{RemoveWard{Target: any creature},
-Ward{Target: a creature}}` — the removal target is any creature, warded or not.
-  This is the only card that moves a ward, so **delete the `MoveWard` node** once it
-  is unused. Deliberate divergence from KeyForge's printed text: record it in
-  [keyforge-divergences.md](keyforge-divergences.md).
-- **Composite triggers.** Add composite `card.Trigger` constants
-  (`PlayFightReap`, `FightOrReap`, `PlayReap`) that the `card` facade fans out into
-  the atomic `Play`/`Fight`/`Reap` abilities (engine runtime stays atomic — ADR
-  0006). Replace the `WithPlayFightReap` / `WithFightOrReap` / `WithPlayReap`
-  helpers with `card.WithAbility(card.Trigger.PlayFightReap, e)` etc. Text must
-  still render `Play/Fight/Reap:`.
 - **Generalize top-of-deck look (`LookAtTop{Amount, Then}`).** Replace
   Philophosaurus's hardcoded `LookAtTopSort` with a general `LookAtTop{Amount,
 Then}` that composes existing zone-routing sub-effects (hand / archive / discard
@@ -194,12 +182,6 @@ Then}` that composes existing zone-routing sub-effects (hand / archive / discard
   from their own entrance. Sequence play as: enter play → constant abilities live
   → resolve bonus icons → open the Play/after-play window (with the new card
   already counted).
-- **Captured Æmber returns to the opponent's pool on leave-play.** When a creature
-  with captured Æmber leaves play, that Æmber is placed in the pool of the
-  creature's controller's **opponent** (the player it was captured from) — Master
-  Rulebook lines 232/378/927. Today it is not returned. Add this to the leave-play
-  cleanup path (`game_leaves_play.go`) with a 0/1/n test; non-creature cards with
-  Æmber return it to the common supply instead (line 927).
 - **Cooperative Hunting → an iterator over `DealDamage`.** "Deal 1 damage X
   times, choosing any creature each time" is distinct from Sack of Coins ("deal X
   to one creature"): Cooperative Hunting reuses the `DealDamage` primitive wrapped
@@ -227,11 +209,6 @@ string` port stays `string`. Rationale (durable): a card that references another
   trait `Robot`). Gives one place to test "any match in the discard" — which also
   fixes **Chief Engineer Walls**: skip the prompt as a vacuous choice when the
   discard has no upgrades or robots.
-- **Rename `SpendAsPool` → `SpendAemberOnCard`** on `ConstantAbility` and
-  `StaticModifier` (Senator Bracchus, The Callipygian Ideal).
-- **Duration renames (more explicit):** `EndOfTurn` → `UntilEndOfCurrentTurn`,
-  `NextTurn` → `UntilStartOfYourNextTurn`, `EndOfNextTurn` →
-  `UntilEndOfYourNextTurn`; `UntilThisLeavesPlay` and `Forever` unchanged.
 
 - **Orator Hissaro** could read: "Play: Exalt and ready each neighboring creature.
   For the remainder of the turn, those creatures belong to house Saurian."
@@ -297,41 +274,8 @@ _No outstanding items._
   creature selection. (Engine already models Deploy via
   `deployPosition`/`chooseFlank`/`choosePosition`; this is the client prompt flow.)
 
-## Logging
-
-- **Attributed, un-grouped discard log.** Make discards log an attributed line
-  "<source> discards X" (fixes Old Yurk's anonymous logging). Do **not** batch
-  multiple discards into one line — discards happen one at a time (load-bearing for
-  the future scrap mechanic), so each discard is its own attributed line.
-- **Source-attributed damage log.** `DamageTaken` renders "X takes N damage (M
-  total)" with no source. Add the dealing card so it reads "Musthic Murmook deals
-  4 damage to Harmonia" — thread the source `LocalID` through the `DealDamage`
-  path into the log record (Assault/Hazardous already carry their source, so match
-  their shape).
-- **Impspecter purge-from-hand log names source and victim.** Should read
-  "Impspecter purges X from Y's hand" — attributed like the source-attributed
-  damage log above (same source-threading effort; do them together).
-- **Candle Unit's draw is unlogged.** Candle Unit causes a draw that produces no
-  log line; it should read "Candle Unit has Player 1 draw 1 card" — an attributed
-  draw log.
-- **Ward names what it prevented.** `WardAbsorbed` renders "X's ward absorbs the
-  effect"; it should name the specific thing prevented — "X's ward prevents the
-  destruction" / "prevents the 5 damage". Carry an enum/description on
-  `WardAbsorbed` (damage N / destruction / leave-play) and set it at each site
-  that spends a ward. Follow the Rules voice (ADR 0019).
-
 ## Tooling / tests / docs
 
-- **Rename the named-token counters to a `generic-counter-<kind>` scheme.** The
-  generic (named-token) counters — growth, doom, fuse, glory, disruption (ADR 0024) — should sort together: rename their SVGs to `generic-counter-<kind>.svg`
-  and their tests to `effect_generic_counter_<kind>_test.go`. **Power counters are
-  a distinct mechanic — leave them named as-is.** Update the `galleryIcons` list +
-  `TestGalleryShowsEveryIcon`, and `counterAsset` + `TestCounterIconNamesHaveAssets`,
-  to the new stems.
-- **AGENTS test-coverage rule.** Update [../internal/cards/AGENTS.md](../internal/cards/AGENTS.md):
-  tests must cover the **positive and negative** of combined/conditional abilities;
-  rote keyword-only abilities need no test; abilities over a numeric value must be
-  tested at the **0, 1, n-1, n, n+1** cases.
 - **Design-patterns audit + doc.** Inventory the patterns actually in use
   (Interpreter/effect AST, Visitor, Strategy — Chooser/Refinement/Count/Condition,
   interface-segregated Resolver port, functional-options builder, value-type undo

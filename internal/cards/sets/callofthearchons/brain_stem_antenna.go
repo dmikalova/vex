@@ -25,7 +25,7 @@ var BrainStemAntenna = card.New(
 						card.BelongToHouse{
 							Target:   card.Target.This,
 							House:    card.House.Self,
-							Duration: card.Duration.EndOfTurn,
+							Duration: card.Duration.RemainderOfPlayerTurn,
 						},
 					},
 				},

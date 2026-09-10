@@ -21,10 +21,10 @@ var SenatorBracchus = card.New(
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Politician),
 	card.WithConstant(card.ConstantAbility{
-		Target:      card.Target.EachFriendlyCreature,
-		SpendAsPool: true,
+		Target:            card.Target.EachFriendlyCreature,
+		SpendAemberOnCard: true,
 	}),
-	card.WithFightOrReap(card.Exalt{
+	card.WithAbility(card.Trigger.FightOrReap, card.Exalt{
 		Target: card.Target.This,
 		Amount: 1,
 	}),

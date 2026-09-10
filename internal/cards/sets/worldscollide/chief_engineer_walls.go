@@ -21,7 +21,7 @@ var ChiefEngineerWalls = card.New(
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human),
 	card.WithKeywords(card.Keyword.Elusive),
-	card.WithPlayFightReap(card.May{
+	card.WithAbility(card.Trigger.PlayFightReap, card.May{
 		Do: card.PutFromDiscard{
 			Type:        card.Type.Upgrade,
 			OrTrait:     card.Traits.Robot,

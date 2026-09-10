@@ -22,7 +22,7 @@ var Ragnarok = card.New(
 			Effects: []card.Effect{
 				card.CannotReap{
 					Player:   card.Controller,
-					Duration: card.Duration.EndOfTurn,
+					Duration: card.Duration.RemainderOfPlayerTurn,
 				},
 				card.ForRemainderOfTurn{
 					On: card.Event.Fight,

@@ -8,13 +8,13 @@ func TestForgeKeyExtraCost(t *testing.T) {
 		effect ForgeKey
 		want   string
 	}{
-		{"current cost", ForgeKey{}, "forge a key at current cost"},
-		{"free", ForgeKey{FreeOfCost: true}, "forge a key at no cost"},
-		{"surcharge", ForgeKey{Extra: 6}, "forge a key at +6 Æmber current cost"},
+		{"current cost", ForgeKey{}, "forge a key at current cost -> purge {self}"},
+		{"free", ForgeKey{FreeOfCost: true}, "forge a key at no cost -> purge {self}"},
+		{"surcharge", ForgeKey{Extra: 6}, "forge a key at +6 Æmber current cost -> purge {self}"},
 		{
 			"reduced surcharge",
 			ForgeKey{Extra: 9, ReducedBy: CardsInHand{Player: Controller, House: AnyHouse}},
-			"forge a key at +9 Æmber current cost, reduced by 1 Æmber for each card in your hand",
+			"forge a key at +9 Æmber current cost, reduced by 1 Æmber for each card in your hand -> purge {self}",
 		},
 	}
 	for _, tc := range cases {
@@ -79,15 +79,15 @@ func TestForgeKeyReducedBelowTheSurcharge(t *testing.T) {
 }
 
 func TestRaiseKeyCost(t *testing.T) {
-	effect := RaiseKeyCost{Player: Opponent, Amount: 3, Duration: NextTurn}
+	effect := RaiseKeyCost{Player: Opponent, Amount: 3, Duration: OpponentNextTurn}
 	if got := effect.Text(); got != "keys cost +3 Æmber during your opponent's next turn" {
 		t.Errorf("text = %q", got)
 	}
-	if got := (RaiseKeyCost{Player: Controller, Amount: 1, Duration: NextTurn}).Text(); got !=
+	if got := (RaiseKeyCost{Player: Controller, Amount: 1, Duration: OpponentNextTurn}).Text(); got !=
 		"keys cost +1 Æmber during your next turn" {
 		t.Errorf("controller text = %q", got)
 	}
-	if err := (RaiseKeyCost{Amount: 3, Duration: NextTurn}).validate(); err == nil {
+	if err := (RaiseKeyCost{Amount: 3, Duration: OpponentNextTurn}).validate(); err == nil {
 		t.Error("an unset player should not validate")
 	}
 	if err := (RaiseKeyCost{Player: Opponent}).validate(); err == nil {
@@ -108,17 +108,18 @@ func TestRaiseKeyCost(t *testing.T) {
 	}
 }
 
-// TestRaiseKeyCostThisTurn checks the EndOfTurn duration bites immediately and
-// lifts when the current turn ends, rather than waiting for a turn boundary.
+// TestRaiseKeyCostThisTurn checks the RemainderOfPlayerTurn duration bites
+// immediately and lifts when the current turn ends, rather than waiting for a
+// turn boundary.
 func TestRaiseKeyCostThisTurn(t *testing.T) {
-	effect := RaiseKeyCost{Player: Controller, Amount: 2, Duration: EndOfTurn}
+	effect := RaiseKeyCost{Player: Controller, Amount: 2, Duration: RemainderOfPlayerTurn}
 	if got := effect.Text(); got != "your keys cost +2 Æmber for the remainder of the turn" {
 		t.Errorf("text = %q", got)
 	}
 	if got := (RaiseKeyCost{
 		Player:   Opponent,
 		Amount:   2,
-		Duration: EndOfTurn,
+		Duration: RemainderOfPlayerTurn,
 	}).Text(); got != "your opponent's keys cost +2 Æmber for the remainder of the turn" {
 		t.Errorf("opponent text = %q", got)
 	}
@@ -140,7 +141,7 @@ func TestRaiseKeyCostLandsOnTheNextTurn(t *testing.T) {
 	g := started(t)
 	source := g.AddToBattleline(NewCard("Lash", Dis, Creature, Common, WithPower(1)), 0)
 
-	RaiseKeyCost{Player: Opponent, Amount: 3, Duration: NextTurn}.
+	RaiseKeyCost{Player: Opponent, Amount: 3, Duration: OpponentNextTurn}.
 		Resolve(&EffectContext{Resolver: g, Controller: 0, Source: source})
 
 	if got := g.CurrentKeyCost(1); got != KeyCost {
@@ -163,40 +164,65 @@ func TestRaiseKeyCostLandsOnTheNextTurn(t *testing.T) {
 func TestRaiseKeyCostStacks(t *testing.T) {
 	g := started(t)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-	RaiseKeyCost{Player: Opponent, Amount: 3, Duration: NextTurn}.Resolve(ctx)
-	RaiseKeyCost{Player: Opponent, Amount: 3, Duration: NextTurn}.Resolve(ctx)
+	RaiseKeyCost{Player: Opponent, Amount: 3, Duration: OpponentNextTurn}.Resolve(ctx)
+	RaiseKeyCost{Player: Opponent, Amount: 3, Duration: OpponentNextTurn}.Resolve(ctx)
 	if got := g.State.KeyCostBumpNext[1].Value; got != 6 {
 		t.Errorf("armed raise = %d, want 6", got)
 	}
 }
 
+// TestRaiseKeyCostUntilEndOfNextTurnIsLiveNow proves the EndOfPlayerNextTurn
+// window bites the moment it resolves — so a forge forced on the controller's own
+// turn (Keyfrog) already pays the surcharge — and stays live through the affected
+// player's next turn.
+func TestRaiseKeyCostUntilEndOfNextTurnIsLiveNow(t *testing.T) {
+	g := started(t)
+	source := g.AddToBattleline(NewCard("Lash", Dis, Creature, Common, WithPower(1)), 0)
+
+	RaiseKeyCost{Player: Opponent, Amount: 3, Duration: EndOfPlayerNextTurn}.
+		Resolve(&EffectContext{Resolver: g, Controller: 0, Source: source})
+
+	if got := g.CurrentKeyCost(1); got != KeyCost+3 {
+		t.Errorf("key cost = %d, want %d live on the controller's turn", got, KeyCost+3)
+	}
+	g.EndPlayPhase(0)
+	g.StartTurn(1)
+	if got := g.CurrentKeyCost(1); got != KeyCost+3 {
+		t.Errorf("key cost = %d, want %d during the opponent's next turn", got, KeyCost+3)
+	}
+	g.EndPlayPhase(1)
+	if got := g.CurrentKeyCost(1); got != KeyCost {
+		t.Errorf("key cost = %d, want %d after the opponent's turn ends", got, KeyCost)
+	}
+}
+
 // TestLowerKeyCostText covers the rendered sentence and validation.
 func TestLowerKeyCostText(t *testing.T) {
-	each := LowerKeyCost{Player: EachPlayer, Amount: 2, Duration: EndOfNextTurn}
+	each := LowerKeyCost{Player: EachPlayer, Amount: 2, Duration: EndOfPlayerNextTurn}
 	if got := each.Text(); got != "each player's keys cost -2 Æmber until the end of your next turn" {
 		t.Errorf("text = %q", got)
 	}
 	if got := (LowerKeyCost{
 		Player:   Controller,
 		Amount:   1,
-		Duration: EndOfTurn,
+		Duration: RemainderOfPlayerTurn,
 	}).Text(); got != "your keys cost -1 Æmber for the remainder of the turn" {
 		t.Errorf("controller text = %q", got)
 	}
 	if got := (LowerKeyCost{
 		Player:   Opponent,
 		Amount:   3,
-		Duration: NextTurn,
+		Duration: OpponentNextTurn,
 	}).Text(); got != "your opponent's keys cost -3 Æmber during your next turn" {
 		t.Errorf("opponent text = %q", got)
 	}
 	if err := each.validate(); err != nil {
 		t.Errorf("validate = %v, want nil", err)
 	}
-	if err := (LowerKeyCost{Amount: 2, Duration: EndOfNextTurn}).validate(); err == nil {
+	if err := (LowerKeyCost{Amount: 2, Duration: EndOfPlayerNextTurn}).validate(); err == nil {
 		t.Error("an unset player should not validate")
 	}
-	if err := (LowerKeyCost{Player: EachPlayer, Duration: EndOfNextTurn}).validate(); err == nil {
+	if err := (LowerKeyCost{Player: EachPlayer, Duration: EndOfPlayerNextTurn}).validate(); err == nil {
 		t.Error("a zero drop should not validate")
 	}
 	if err := (LowerKeyCost{Player: EachPlayer, Amount: 2}).validate(); err == nil {
@@ -217,7 +243,7 @@ func TestLowerKeyCostEachPlayer(t *testing.T) {
 	g := started(t)
 	source := g.AddToBattleline(NewCard("Win", StarAlliance, Creature, Common, WithPower(1)), 0)
 
-	LowerKeyCost{Player: EachPlayer, Amount: 2, Duration: EndOfNextTurn}.
+	LowerKeyCost{Player: EachPlayer, Amount: 2, Duration: EndOfPlayerNextTurn}.
 		Resolve(&EffectContext{Resolver: g, Controller: 0, Source: source})
 
 	// Both players see the -2 immediately.
@@ -253,14 +279,14 @@ func TestLowerKeyCostSumsWithRaiseAndFloorsAtZero(t *testing.T) {
 	g := started(t)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	LowerKeyCost{Player: Controller, Amount: 2, Duration: EndOfTurn}.Resolve(ctx)
-	RaiseKeyCost{Player: Controller, Amount: 3, Duration: EndOfTurn}.Resolve(ctx)
+	LowerKeyCost{Player: Controller, Amount: 2, Duration: RemainderOfPlayerTurn}.Resolve(ctx)
+	RaiseKeyCost{Player: Controller, Amount: 3, Duration: RemainderOfPlayerTurn}.Resolve(ctx)
 	if got := g.CurrentKeyCost(0); got != KeyCost+1 {
 		t.Errorf("key cost = %d, want %d (a -2 and a +3 sum)", got, KeyCost+1)
 	}
 
 	// A drop larger than the base cost floors the key cost at 0, never negative.
-	LowerKeyCost{Player: Controller, Amount: 20, Duration: EndOfTurn}.Resolve(ctx)
+	LowerKeyCost{Player: Controller, Amount: 20, Duration: RemainderOfPlayerTurn}.Resolve(ctx)
 	if got := g.CurrentKeyCost(0); got != 0 {
 		t.Errorf("key cost = %d, want 0 (floored, never negative)", got)
 	}
@@ -272,8 +298,8 @@ func TestConditionalElse(t *testing.T) {
 		Then: ForgeKey{Extra: 2},
 		Else: ForgeKey{Extra: 6},
 	}
-	want := "if your opponent has no Æmber, forge a key at +2 Æmber current cost. " +
-		"Otherwise, forge a key at +6 Æmber current cost"
+	want := "if your opponent has no Æmber, forge a key at +2 Æmber current cost -> purge {self}. " +
+		"Otherwise, forge a key at +6 Æmber current cost -> purge {self}"
 	if got := effect.Text(); got != want {
 		t.Errorf("text = %q, want %q", got, want)
 	}

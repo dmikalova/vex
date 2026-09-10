@@ -19,7 +19,7 @@ var InformationOfficerGray = card.New(
 	card.Provenance(card.WC, "312"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Human),
-	card.WithPlayFightReap(card.May{
+	card.WithAbility(card.Trigger.PlayFightReap, card.May{
 		Do: card.ArchiveFromHand{
 			Amount:      1,
 			Revealed:    true,

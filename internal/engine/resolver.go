@@ -216,20 +216,18 @@ type EconomyResolver interface {
 	StolenAemberCaptor(player int) (LocalID, bool)
 	// ForgeKeyAtExtraCost has a player forge one key at the current cost plus a
 	// surcharge for this forge only, if affordable (Key of Darkness forges at +6, an
-	// unmodified forge at +0).
-	ForgeKeyAtExtraCost(player, extra int)
-	// ForgeKeyAtExtraCostReport forges one key at the current cost plus a surcharge
-	// and reports whether a key was forged, so Obsidian Forge can destroy itself only
-	// when a key was actually forged.
-	ForgeKeyAtExtraCostReport(player, extra int) bool
+	// unmodified forge at +0). It reports whether a key was forged, so a forge card
+	// purges itself only when it did.
+	ForgeKeyAtExtraCost(player, extra int) bool
 	// RaiseKeyCostNextTurn raises what a player's keys cost throughout their next
 	// turn (Lash of Broken Dreams).
 	RaiseKeyCostNextTurn(player, amount int, source LocalID)
 	// RaiseKeyCostThisTurn raises what a player's keys cost for the remainder of
 	// the current turn, biting immediately rather than waiting for a turn boundary.
 	RaiseKeyCostThisTurn(player, amount int, source LocalID)
-	// ForgeKeyFree has a player forge one key without paying its current cost.
-	ForgeKeyFree(player int)
+	// ForgeKeyFree has a player forge one key without paying its current cost. It
+	// reports whether a key was forged, so a forge card purges itself only when it did.
+	ForgeKeyFree(player int) bool
 	// UnforgeKey takes one forged key back off a player (Key Hammer).
 	UnforgeKey(player int)
 	// GainChains adds chains to a player, penalizing their future draws.
@@ -387,8 +385,9 @@ type CombatResolver interface {
 // ZoneResolver moves cards between zones — drawing, and shuffling a card between
 // play, hand, deck, discard, archives, and purge.
 type ZoneResolver interface {
-	// Draw makes a player draw count cards.
-	Draw(controller, count int)
+	// Draw makes a player draw count cards, crediting the card whose ability drew
+	// them.
+	Draw(controller, count int, source LocalID)
 	// RefillHand refills a player's hand as if it were the end of their turn,
 	// honoring their chains and draw modifiers (Punctuated Equilibrium).
 	RefillHand(player int)
@@ -450,8 +449,8 @@ type ZoneResolver interface {
 	// (set aside out of the game).
 	PurgeFromDiscard(owner int, id LocalID)
 	// PurgeFromHand moves a card from a player's hand to their purge pile (set aside
-	// out of the game).
-	PurgeFromHand(owner int, id LocalID)
+	// out of the game), crediting the card whose ability purged it.
+	PurgeFromHand(owner int, id, source LocalID)
 	// PurgeFromArchives moves a card from a player's archives to their purge pile
 	// (set aside out of the game).
 	PurgeFromArchives(owner int, id LocalID)
@@ -556,8 +555,11 @@ type ZoneResolver interface {
 	// Shuffle randomizes the order of a player's deck.
 	Shuffle(player int)
 	// DiscardCardFromHand moves a specific card from a player's hand to their discard
-	// zone.
+	// zone, logged as the player's own discard (a player's turn action).
 	DiscardCardFromHand(owner int, id LocalID)
+	// DiscardCardFromHandBy is DiscardCardFromHand attributed to the card whose
+	// ability forced the discard, so the log names that card, not the player.
+	DiscardCardFromHandBy(owner int, id, source LocalID)
 	// DiscardCardFromArchives moves a specific card from a player's archives to a
 	// discard pile (its owner's, since archives may hold abducted cards).
 	DiscardCardFromArchives(owner int, id LocalID)

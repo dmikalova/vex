@@ -61,7 +61,7 @@ func TestOrAmountForgeKey(t *testing.T) {
 		Extra: 6,
 		Or:    OrAmount{Amount: 2, When: PoolAember{Player: Opponent, Is: Exactly, Amount: 0}},
 	}
-	want := "forge a key at +6 Æmber current cost, or +2 if your opponent has no Æmber"
+	want := "forge a key at +6 Æmber current cost, or +2 if your opponent has no Æmber -> purge {self}"
 	if e.Text() != want {
 		t.Errorf("text = %q, want %q", e.Text(), want)
 	}

@@ -16,16 +16,16 @@ func TestHouseFromUpgradeOverride(t *testing.T) {
 }
 
 func TestBelongToHouseValidate(t *testing.T) {
-	if err := (BelongToHouse{House: Mars, Duration: EndOfTurn}).validate(); err == nil {
+	if err := (BelongToHouse{House: Mars, Duration: RemainderOfPlayerTurn}).validate(); err == nil {
 		t.Error("an unset target should be rejected")
 	}
-	if err := (BelongToHouse{Target: Target{Kind: TargetThisCreature}, Duration: EndOfTurn}).validate(); err == nil {
+	if err := (BelongToHouse{Target: Target{Kind: TargetThisCreature}, Duration: RemainderOfPlayerTurn}).validate(); err == nil {
 		t.Error("an unset house should be rejected")
 	}
 	if err := (BelongToHouse{Target: Target{Kind: TargetThisCreature}, House: Mars}).validate(); err == nil {
 		t.Error("an unset duration should be rejected")
 	}
-	if err := (BelongToHouse{Target: Target{Kind: TargetThisCreature}, House: Mars, Duration: EndOfTurn}).validate(); err != nil {
+	if err := (BelongToHouse{Target: Target{Kind: TargetThisCreature}, House: Mars, Duration: RemainderOfPlayerTurn}).validate(); err != nil {
 		t.Errorf("valid BelongToHouse = %v", err)
 	}
 }
@@ -33,7 +33,11 @@ func TestBelongToHouseValidate(t *testing.T) {
 func TestBelongToHouseEndOfTurn(t *testing.T) {
 	g := started(t)
 	host := g.AddToBattleline(NewCard("Host", Brobnar, Creature, Common, WithPower(3)), 0)
-	e := BelongToHouse{Target: Target{Kind: TargetThisCreature}, House: Mars, Duration: EndOfTurn}
+	e := BelongToHouse{
+		Target:   Target{Kind: TargetThisCreature},
+		House:    Mars,
+		Duration: RemainderOfPlayerTurn,
+	}
 	if got := e.Text(); got != "for the remainder of the turn, {self} belongs to house Mars" {
 		t.Errorf("text = %q", got)
 	}

@@ -213,6 +213,17 @@ func (ctx *EffectContext) ChooseCreature(prompt string, candidates []LocalID) (L
 	return ctx.Resolver.ChooseCreature(ctx.Controller, ctx.Source, prompt, candidates)
 }
 
+// dealDamage deals a batch of ability damage, crediting the resolving card so each
+// hit narrates "<source> deals N damage to <target>" rather than a bare "takes N
+// damage" line. Damage a card deals itself keeps the bare line (see damageEntry).
+func (ctx *EffectContext) dealDamage(targets []DamageTarget) {
+	for i := range targets {
+		targets[i].Source = ctx.Source
+		targets[i].SourceKeyword = abilityDamage
+	}
+	ctx.Resolver.DealDamage(ctx.Controller, targets)
+}
+
 // ChooseCard asks the controlling player to pick one card from candidates,
 // attributing the prompt to this ability's source card. It is the common form of
 // Resolver.ChooseCard; call the Resolver directly only when a different player

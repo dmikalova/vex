@@ -19,7 +19,7 @@ var MedicIngram = card.New(
 	card.Provenance(card.WC, "301"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human),
-	card.WithPlayFightReap(card.May{Do: card.ChooseCreatureThen{
+	card.WithAbility(card.Trigger.PlayFightReap, card.May{Do: card.ChooseCreatureThen{
 		Target: card.Target.Creature,
 		Then: card.Sequence{Effects: []card.Effect{
 			card.Heal{
