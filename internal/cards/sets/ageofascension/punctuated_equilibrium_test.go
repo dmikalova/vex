@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Each player discards their hand, then refills their hand as if it were the end of their turn.
+//	Play: Each player discards their hand. Each player refills their hand as if it were the end of their turn.
 func TestPunctuatedEquilibrium(t *testing.T) {
 	var mine, theirs ct.Card
 	h := ct.Play(t, ct.Setup{

@@ -211,8 +211,9 @@ would find easiest to build on — not the shortest path to a passing build.
   `Fidgit`, `UnnaturalSelection` — a card name as an effect type or an
   `effect_<cardname>.go` filename is the anti-pattern above wearing a proper
   noun. Name the effect for the generic mechanic it performs
-  (`DestroyFractionOfEachBattleline`, `PlayDiscardedTacticFromOpponent`,
-  `DestroyAllExceptChosen`) and put it in an `effect_<mechanic>.go` file, so the
+  (`PlayDiscardedTacticFromOpponent`), or model the varying axis as a shared
+  Refinement (Unnatural Selection and Tertiate are `Destroy` over
+  `Target.EachCreature` refined by `KeepPerSide(n)` / `PortionPerSide(f)`), so the
   next card printing the same mechanic reaches for the existing node instead of
   cloning it under a new name.
 - **A phrasing helper belongs in the shared vocabulary, not beside its first
@@ -276,7 +277,7 @@ avoiding per-turn allocation on hot paths.
   two concepts causes exactly the confusion you'd expect.
 - **Speak KeyForge, not generic game-speak.** Names — types, methods, fields,
   effects, targets — must stay within KeyForge's own vocabulary. Say
-  `ExceptMostPowerfulCreature`, not `ExceptStrongest`; `AemberCannotBeStolen`,
+  `MostPowerful`, not `Strongest`; `AemberCannotBeStolen`,
   not `AemberTheftImmune` — _theft_ and _immunity_ are not KeyForge words, and
   the card itself says "cannot be stolen". A standing restriction or immunity is
   **cannot** (`CannotFight`, `CannotBeDealtDamage`, `AemberCannotBeStolen`).

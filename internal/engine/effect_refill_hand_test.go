@@ -2,21 +2,41 @@ package engine
 
 import "testing"
 
-// TestEachPlayerDiscardsAndRefillsHandText covers the rendered sentence.
-func TestEachPlayerDiscardsAndRefillsHandText(t *testing.T) {
-	want := "each player discards their hand, then refills their hand as if it " +
-		"were the end of their turn"
-	if got := (EachPlayerDiscardsAndRefillsHand{}).Text(); got != want {
-		t.Errorf("Text = %q, want %q", got, want)
+// TestDiscardHandText covers the per-player rendering and the unset-player guard.
+func TestDiscardHandText(t *testing.T) {
+	if got := (DiscardHand{Player: Controller}).Text(); got != "discard your hand" {
+		t.Errorf("controller = %q", got)
 	}
-	if err := (EachPlayerDiscardsAndRefillsHand{}).validate(); err != nil {
-		t.Errorf("validate = %v, want nil", err)
+	if got := (DiscardHand{Player: Opponent}).Text(); got != "your opponent discards their hand" {
+		t.Errorf("opponent = %q", got)
+	}
+	if got := (DiscardHand{Player: EachPlayer}).Text(); got != "each player discards their hand" {
+		t.Errorf("each = %q", got)
+	}
+	if err := (DiscardHand{}).validate(); err == nil {
+		t.Error("an unset player should be rejected")
 	}
 }
 
-// TestEachPlayerDiscardsAndRefillsHand checks both players discard their hand and
-// draw a fresh full one.
-func TestEachPlayerDiscardsAndRefillsHand(t *testing.T) {
+// TestRefillHandText covers the per-player rendering and the unset-player guard.
+func TestRefillHandText(t *testing.T) {
+	if got := (RefillHand{Player: Controller}).Text(); got != "refill your hand as if it were the end of the turn" {
+		t.Errorf("controller = %q", got)
+	}
+	if got := (RefillHand{Player: Opponent}).Text(); got != "your opponent refills their hand as if it were the end of their turn" {
+		t.Errorf("opponent = %q", got)
+	}
+	if got := (RefillHand{Player: EachPlayer}).Text(); got != "each player refills their hand as if it were the end of their turn" {
+		t.Errorf("each = %q", got)
+	}
+	if err := (RefillHand{}).validate(); err == nil {
+		t.Error("an unset player should be rejected")
+	}
+}
+
+// TestDiscardAndRefillHandEachPlayer checks both players discard their hand and
+// draw a fresh full one (Punctuated Equilibrium's two passes).
+func TestDiscardAndRefillHandEachPlayer(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	old := g.AddToHand(testCreature("old", 3), 0)
 	for i := 0; i < HandSize+2; i++ {
@@ -28,7 +48,8 @@ func TestEachPlayerDiscardsAndRefillsHand(t *testing.T) {
 	g.AddToHand(testCreature("theirOld", 3), 1)
 
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-	EachPlayerDiscardsAndRefillsHand{}.Resolve(ctx)
+	DiscardHand{Player: EachPlayer}.Resolve(ctx)
+	RefillHand{Player: EachPlayer}.Resolve(ctx)
 
 	if g.State.Discard[0].Count == 0 || !g.State.Discard[0].contains(old) {
 		t.Error("the controller's old hand should have been discarded")
@@ -41,9 +62,9 @@ func TestEachPlayerDiscardsAndRefillsHand(t *testing.T) {
 	}
 }
 
-// TestEachPlayerDiscardsAndRefillsHandRespectsChains checks a chained player draws
-// fewer cards and sheds one chain, exactly like an end-of-turn draw.
-func TestEachPlayerDiscardsAndRefillsHandRespectsChains(t *testing.T) {
+// TestDiscardAndRefillHandRespectsChains checks a chained player draws fewer cards
+// and sheds one chain, exactly like an end-of-turn draw.
+func TestDiscardAndRefillHandRespectsChains(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.State.Chains[0] = 6 // reduces the draw by one card
 	for i := 0; i < HandSize; i++ {
@@ -52,12 +73,23 @@ func TestEachPlayerDiscardsAndRefillsHandRespectsChains(t *testing.T) {
 	}
 
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-	EachPlayerDiscardsAndRefillsHand{}.Resolve(ctx)
+	DiscardHand{Player: EachPlayer}.Resolve(ctx)
+	RefillHand{Player: EachPlayer}.Resolve(ctx)
 
 	if got := int(g.State.Hand[0].Count); got != HandSize-1 {
 		t.Errorf("chained hand = %d, want %d", got, HandSize-1)
 	}
 	if g.State.Chains[0] != 5 {
 		t.Errorf("chains = %d, want 5 (one shed)", g.State.Chains[0])
+	}
+}
+
+// TestDiscardHandControllerOnly covers the single-player (non-EachPlayer) path.
+func TestDiscardHandControllerOnly(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	c := g.AddToHand(testCreature("c", 2), 0)
+	DiscardHand{Player: Controller}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if !g.State.Discard[0].contains(c) {
+		t.Error("the controller's hand should be discarded")
 	}
 }

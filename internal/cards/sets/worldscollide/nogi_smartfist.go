@@ -22,6 +22,11 @@ var NogiSmartfist = card.New(
 	card.WithAbility(
 		card.Trigger.Fight, card.Sentences{Effects: []card.Effect{
 			card.Draw{Amount: 2},
-			card.DiscardRandomFromHand{Player: card.Controller, Amount: 2},
+			card.DiscardCard{
+				Player:    card.Controller,
+				Zone:      card.Hand,
+				Selection: card.Random{},
+				Amount:    2,
+			},
 		}}),
 )

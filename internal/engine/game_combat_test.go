@@ -123,6 +123,22 @@ func TestAttackDamage(t *testing.T) {
 	if g3.Damage(foe) != 0 {
 		t.Errorf("fixed-0 attacker dealt %d damage, want 0", g3.Damage(foe))
 	}
+
+	// A Fixed amount also replaces the retaliation damage a defender deals back to
+	// an attacker (Shadow Self deals none when fought, not only when it fights).
+	g4 := started(t)
+	att4 := g4.AddToBattleline(testCreature("attacker", 4), 0)
+	spider4 := g4.AddToBattleline(NewCard("spider", Brobnar, Creature, Common, WithPower(7),
+		WithAttackDamage(AttackDamage{Fixed: true, Amount: 0})), 1)
+	if err := g4.Fight(0, att4, spider4); err != nil {
+		t.Fatalf("Fight: %v", err)
+	}
+	if g4.Damage(att4) != 0 {
+		t.Errorf("attacker took %d retaliation from a fixed-0 defender, want 0", g4.Damage(att4))
+	}
+	if g4.Damage(spider4) != 4 {
+		t.Errorf("fixed-0 defender took %d damage, want 4", g4.Damage(spider4))
+	}
 }
 
 func TestAttackKeywordsPoison(t *testing.T) {

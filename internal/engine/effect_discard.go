@@ -136,237 +136,119 @@ func (e PutFromDiscard) Resolve(ctx *EffectContext) {
 	e.moveTo(ctx, id)
 }
 
-// DiscardHand discards cards from a player's hand: the chosen player's cards,
-// optionally only creatures and only those of the house picked by an enclosing
-// ChooseHouseThen. It models "discard each creature of the chosen house from your
-// opponent's hand."
-type DiscardHand struct {
-	// Player names whose hand is discarded from.
+// DiscardCard discards cards from a player's hand or archives, with a Selection
+// deciding how each card is picked — the controller chooses one (Chosen,
+// restrictable to a type), or a uniformly random card leaves a hidden zone
+// (Random, for Mind Barb and Tantadlin). Zone names the source, Hand or Archives.
+// Amount discards that many (Old Yurk discards 2); the zero value discards one.
+// AnyNumber instead lets the controller discard as many matching cards as they
+// like, declining when done (Helmsman Spears). Every card discarded this way is
+// recorded on the context so a following ForEachDiscarded can act once per card,
+// and it gates a Then (Feeding Pit only gains Æmber if a creature was discarded).
+type DiscardCard struct {
+	// Player whose zone the cards are discarded from.
 	Player Player
-	// Types restricts the discard to cards of the listed types; empty discards any card.
-	Types []CardType
-	// OfChosenHouse limits the discard to cards of the house picked by an enclosing
-	// ChooseHouseThen.
-	OfChosenHouse bool
+	// Zone names the source the cards are discarded from: Hand or Archives.
+	Zone Zone
+	// Selection decides how each card is picked; it must be set.
+	Selection Selection
+	// Amount is how many cards to discard; the zero value counts as one.
+	Amount int
+	// AnyNumber lets the controller discard as many cards as they like instead of a
+	// fixed Amount, declining when done.
+	AnyNumber bool
 }
 
-// validate rejects a DiscardHand whose player was left unset.
-func (e DiscardHand) validate() error {
+// validate rejects a DiscardCard whose player or selection was left unset, an
+// Amount paired with AnyNumber (the two count modes are mutually exclusive), or a
+// source zone other than the hand or archives.
+func (e DiscardCard) validate() error {
 	if !e.Player.valid() {
-		return errUnsetPlayer("DiscardHand")
+		return errUnsetPlayer("DiscardCard")
+	}
+	if e.Selection == nil {
+		return fmt.Errorf("DiscardCard: selection must be set")
+	}
+	if e.AnyNumber && e.Amount != 0 {
+		return fmt.Errorf("DiscardCard: AnyNumber and Amount are exclusive")
+	}
+	if e.Zone != Hand && e.Zone != Archives {
+		return fmt.Errorf("DiscardCard: zone must be Hand or Archives")
 	}
 	return nil
 }
 
-// Text renders the effect, e.g. "discard each creature of the chosen house from
-// your opponent's hand".
-func (e DiscardHand) Text() string {
-	what := "each " + typeNoun(e.Types)
-	if e.OfChosenHouse {
-		what += " of the chosen house"
-	}
-	whose := "your hand"
-	if e.Player == Opponent {
-		whose = "your opponent's hand"
-	}
-	return "discard " + what + " from " + whose
-}
-
-// Resolve discards every matching card from the chosen player's hand.
-func (e DiscardHand) Resolve(ctx *EffectContext) {
-	owner := ctx.PlayerFor(e.Player)
-	for _, id := range handCardsWhere(ctx, owner, func(id LocalID) bool {
-		if !matchesTypes(e.Types, ctx.Resolver.TypeOf(id)) {
-			return false
-		}
-		return !e.OfChosenHouse || ctx.Resolver.House(id) == ctx.ChosenHouse
-	}) {
-		ctx.Resolver.DiscardCardFromHand(owner, id)
-	}
-}
-
-// DiscardRandomFromHand discards one or more uniformly random cards from a player's
-// hand — the "discard a random card" effect on cards like Mind Barb and Tocsin,
-// where the discarding player does not choose which card leaves a hidden hand.
-// Amount discards that many (Nogi Smartfist discards 2); an unset zero means one.
-type DiscardRandomFromHand struct {
-	Player Player
-	Amount int
-}
-
-// count is how many cards to discard: the named Amount, or one when left unset.
-func (e DiscardRandomFromHand) count() int {
+// count is Amount with the zero value treated as one.
+func (e DiscardCard) count() int {
 	if e.Amount < 1 {
 		return 1
 	}
 	return e.Amount
 }
 
-// validate rejects a DiscardRandomFromHand whose player was left unset.
-func (e DiscardRandomFromHand) validate() error {
-	if !e.Player.valid() {
-		return errUnsetPlayer("DiscardRandomFromHand")
+// object renders the count-bearing noun phrase the discard acts on, e.g. "a card",
+// "2 random cards", or "each creature of the chosen house".
+func (e DiscardCard) object() string {
+	switch {
+	case e.AnyNumber:
+		return "any number of " + e.Selection.noun() + "s"
+	case e.count() > 1:
+		return countNoun(e.count(), e.Selection.noun())
+	default:
+		return e.Selection.object()
 	}
-	return nil
 }
 
-// Text renders the effect, e.g. "your opponent discards a random card from their
-// hand" or "discard 2 random cards from your hand".
-func (e DiscardRandomFromHand) Text() string {
-	object := "a random card"
-	if e.count() > 1 {
-		object = fmt.Sprintf("%d random cards", e.count())
-	}
+// Text renders the effect, naming the source zone explicitly (rule 17). The voice
+// depends on who discards: a random pick from a player's hidden zone reads "your
+// opponent discards …", while a discard the controller directs reads "discard …
+// from your opponent's hand" (Deep Probe).
+func (e DiscardCard) Text() string {
+	obj := e.object()
+	zone := e.Zone.noun()
 	switch e.Player {
 	case Opponent:
-		return "your opponent discards " + object + " from their hand"
+		if selectionOwnerActs(e.Selection) {
+			return "your opponent discards " + obj + " from their " + zone
+		}
+		return "discard " + obj + " from your opponent's " + zone
 	case ItsOwner:
-		return "its owner discards " + object + " from their hand"
+		return "its owner discards " + obj + " from their " + zone
 	default:
-		return "discard " + object + " from your hand"
+		return "discard " + obj + " from your " + zone
 	}
 }
 
-// Resolve discards count() random cards from the chosen player's hand, one at a
-// time (a smaller hand simply discards fewer).
-func (e DiscardRandomFromHand) Resolve(ctx *EffectContext) {
-	p := ctx.PlayerFor(e.Player)
-	for i := 0; i < e.count(); i++ {
-		ctx.Resolver.DiscardRandomFromHand(p)
-	}
-}
-
-// DiscardRandomFromArchives discards one uniformly random card from a player's
-// archives — Tantadlin's "discard a random card from your opponent's archives",
-// where the discarding player cannot see the facedown archives to choose.
-type DiscardRandomFromArchives struct {
-	Player Player
-}
-
-// validate rejects a DiscardRandomFromArchives whose player was left unset.
-func (e DiscardRandomFromArchives) validate() error {
-	if !e.Player.valid() {
-		return errUnsetPlayer("DiscardRandomFromArchives")
-	}
-	return nil
-}
-
-// Text renders the effect, e.g. "discard a random card from your opponent's
-// archives".
-func (e DiscardRandomFromArchives) Text() string {
-	switch e.Player {
-	case Opponent:
-		return "discard a random card from your opponent's archives"
-	case ItsOwner:
-		return "its owner discards a random card from their archives"
-	default:
-		return "discard a random card from your archives"
-	}
-}
-
-// Resolve discards one random card from the chosen player's archives.
-func (e DiscardRandomFromArchives) Resolve(ctx *EffectContext) {
-	ctx.Resolver.DiscardRandomFromArchives(ctx.PlayerFor(e.Player))
-}
-
-// DiscardFromHand has the controller choose and discard Amount cards from their own
-// hand — the "discard a card" effect where the player picks which card leaves
-// (Sloppy Labwork), distinct from DiscardHand (which discards every matching card)
-// and DiscardRandomFromHand (which the player does not choose). Types limits the
-// choice to the listed card types (Feeding Pit's "discard a creature from your
-// hand"); an empty Types allows any card. AnyNumber lets the controller discard as
-// many matching cards as they like, declining when done — Helmsman Spears discards
-// any number of cards. Every card discarded this way is recorded on the context so
-// a following ForEachDiscarded can act once per card.
-type DiscardFromHand struct {
-	Amount    int
-	Types     []CardType
-	AnyNumber bool
-}
-
-// Text renders the effect, e.g. "discard a card from your hand", naming the source
-// zone explicitly (rule 17).
-func (e DiscardFromHand) Text() string {
-	noun := typeNoun(e.Types)
-	if e.AnyNumber {
-		return "discard any number of " + noun + "s from your hand"
-	}
-	if e.Amount == 1 {
-		return "discard " + indefinite(noun) + " from your hand"
-	}
-	return "discard " + countNoun(e.Amount, noun) + " from your hand"
-}
-
-// Resolve has the controller choose and discard Amount cards from their hand,
-// stopping early if the hand runs out or the choice is declined.
-func (e DiscardFromHand) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
+// Resolve discards the selected cards from the player's zone, stopping early if
+// the source runs out or a choice is declined.
+func (e DiscardCard) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 
 // resolveGate performs the discards and reports whether any card was discarded, so
-// DiscardFromHand can gate a Then — Feeding Pit only gains Æmber if a creature was
-// discarded. Each discarded card is appended to ctx.Produced.Discarded.
-func (e DiscardFromHand) resolveGate(ctx *EffectContext) bool {
+// DiscardCard can gate a Then. Each discarded card is appended to
+// ctx.Produced.Discarded and moved through the zone's discard method — from the
+// hand it fires the after-discard reactions; from the hidden archives it does not.
+func (e DiscardCard) resolveGate(ctx *EffectContext) bool {
+	owner := ctx.PlayerFor(e.Player)
+	fromArchives := e.Zone == Archives
 	moved := false
-	for i := 0; e.AnyNumber || i < e.Amount; i++ {
-		candidates := handCardsWhere(ctx, ctx.Controller, func(id LocalID) bool {
-			return matchesTypes(e.Types, ctx.Resolver.TypeOf(id))
-		})
-		if len(candidates) == 0 {
-			return moved
+	for i := 0; e.AnyNumber || i < e.count(); i++ {
+		source := ctx.Resolver.Hand(owner)
+		if fromArchives {
+			source = ctx.Resolver.Archives(owner)
 		}
-		var (
-			id LocalID
-			ok bool
-		)
-		if e.AnyNumber {
-			id, ok = ctx.ChooseCardOptional("Choose a card to discard", candidates)
-		} else {
-			id, ok = ctx.ChooseCreature("Choose a card to discard", candidates)
+		ids := e.Selection.pick(ctx, source)
+		if len(ids) == 0 {
+			break
 		}
-		if !ok {
-			return moved
+		for _, id := range ids {
+			if fromArchives {
+				ctx.Resolver.DiscardCardFromArchives(owner, id)
+			} else {
+				ctx.Resolver.DiscardCardFromHand(owner, id)
+			}
+			ctx.Produced.Discarded = append(ctx.Produced.Discarded, id)
+			moved = true
 		}
-		ctx.Resolver.DiscardCardFromHand(ctx.Controller, id)
-		ctx.Produced.Discarded = append(ctx.Produced.Discarded, id)
-		moved = true
 	}
 	return moved
-}
-
-// matchesTypes reports whether a card of type t passes a type filter: an empty
-// filter allows any card, otherwise t must be one of the listed types.
-func matchesTypes(types []CardType, t CardType) bool {
-	if len(types) == 0 {
-		return true
-	}
-	for _, want := range types {
-		if want == t {
-			return true
-		}
-	}
-	return false
-}
-
-// typeNoun renders a card-type filter as a noun for discard text — the type nouns
-// joined with "or" ("creature", "creature or artifact"), or "card" for no filter.
-func typeNoun(types []CardType) string {
-	if len(types) == 0 {
-		return "card"
-	}
-	nouns := make([]string, len(types))
-	for i, t := range types {
-		nouns[i] = cardTypeNoun(t)
-	}
-	return strings.Join(nouns, " or ")
-}
-
-// cardTypeNoun renders a single card type as its discard noun.
-func cardTypeNoun(t CardType) string {
-	switch t {
-	case Artifact:
-		return "artifact"
-	case Creature:
-		return "creature"
-	default:
-		return "card"
-	}
 }

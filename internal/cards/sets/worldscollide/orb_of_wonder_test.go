@@ -15,7 +15,7 @@ import (
 //	Traits: Item
 //
 //	Versatile.
-//	Action: Destroy Orb of Wonder -> search your deck for a card and put it into your hand, then shuffle your deck.
+//	Action: Destroy Orb of Wonder -> search your deck for a card and put it into your hand. Shuffle your deck.
 func TestOrbOfWonder(t *testing.T) {
 	var wanted, other ct.Card
 	h := ct.Play(t, ct.Setup{

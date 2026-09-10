@@ -52,7 +52,10 @@ disagree.
   a card that may not be there is a dead card most games. Always **prompt for what
   the connection should be** (which cards, how many copies, always via `Pull` or
   by chance via `PullSometimes`) before authoring it; do not guess. Bear Flute, for
-  instance, pulls at least two Ancient Bears (`card.Pull(AncientBear, 2)`).
+  instance, pulls at least two Ancient Bears (`card.Pull(AncientBear, 2)`). If the
+  partner is not implemented yet (a `//go:build todo` stub), gate the card that
+  pulls it behind the same build tag — `NewSet` panics when a `Connects` partner is
+  absent from the set (`TestConnectionMissingPartner`).
 
 ## Doc comments and authoring layout
 

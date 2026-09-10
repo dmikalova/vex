@@ -380,6 +380,76 @@ func TestConnectedCardIsPulled(t *testing.T) {
 	}
 }
 
+// TestSearchIsFollowedByShuffle enforces the KeyForge rule that a deck search is
+// always followed by a shuffle: whenever an ability's effect tree contains a
+// search effect (SearchForName or SearchDeck), the same tree must also contain a
+// shuffle effect (any Shuffle* effect — ShuffleDeck, ShuffleIntoDeck, etc.). The
+// search and the shuffle are deliberately separate effects, so this lint is what
+// keeps a search from silently skipping its shuffle.
+func TestSearchIsFollowedByShuffle(t *testing.T) {
+	searches := map[string]bool{"SearchForName": true, "SearchDeck": true}
+	for _, rc := range card.Cards() {
+		for _, ab := range rc.Def.Abilities {
+			types := effectTypeNames(reflect.ValueOf(ab.Effect))
+			searched := false
+			for name := range searches {
+				if types[name] {
+					searched = true
+				}
+			}
+			if !searched {
+				continue
+			}
+			shuffled := false
+			for name := range types {
+				if strings.HasPrefix(name, "Shuffle") {
+					shuffled = true
+				}
+			}
+			if !shuffled {
+				t.Errorf(
+					"%s searches its deck but the ability has no following shuffle; "+
+						"a search must be followed by a shuffle (add card.ShuffleDeck{} "+
+						"or a Shuffle...IntoDeck effect)",
+					rc.Def.Name,
+				)
+			}
+		}
+	}
+}
+
+// effectTypeNames collects the type name of every struct that appears anywhere in
+// v's tree (effect nodes, targets, nested effects). It only reads types and
+// descends into fields, slices, interfaces, pointers, and maps, so it works on
+// unexported fields too.
+func effectTypeNames(v reflect.Value) map[string]bool {
+	found := map[string]bool{}
+	var walk func(v reflect.Value)
+	walk = func(v reflect.Value) {
+		switch v.Kind() {
+		case reflect.Struct:
+			found[v.Type().Name()] = true
+			for i := range v.NumField() {
+				walk(v.Field(i))
+			}
+		case reflect.Slice, reflect.Array:
+			for i := range v.Len() {
+				walk(v.Index(i))
+			}
+		case reflect.Interface, reflect.Pointer:
+			if !v.IsNil() {
+				walk(v.Elem())
+			}
+		case reflect.Map:
+			for iter := v.MapRange(); iter.Next(); {
+				walk(iter.Value())
+			}
+		}
+	}
+	walk(v)
+	return found
+}
+
 // referencedCardNames collects every registered card name (a key of names) that
 // appears as a string value anywhere in def's effect tree, targets, and other
 // fields. It reads unexported fields too, so a name tucked inside a Target's

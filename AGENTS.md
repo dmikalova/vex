@@ -337,7 +337,7 @@ to its discard pile. Never implement this kind of card as a global override in
 ## KeyForge vernacular
 
 Names must stay within KeyForge's own vocabulary, not generic gaming terms —
-`ExceptMostPowerfulCreature`, not `ExceptStrongest`; `AemberCannotBeStolen`, not
+`MostPowerful`, not `Strongest`; `AemberCannotBeStolen`, not
 `AemberTheftImmune` (theft and immunity are not KeyForge words). Use `cannot` for
 a standing restriction or immunity, and reserve `prevent` for armor absorbing
 damage ("prevents damage with its armor"). The full sourcing order (provenance

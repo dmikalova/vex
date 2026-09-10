@@ -89,10 +89,10 @@ it plugs into the AST without desync:
   graceful fallback when unimplemented. That is the idiomatic-Go form of Strategy
   (cf. `io.WriterTo`, `http.Flusher`); prefer it over widening the base `Chooser`.
 - **`Refinement` (`target.go`)** is a set-relative refinement (`refine` + `clause`)
-  such as `ExceptMostPowerful`. It narrows the ids _and_ contributes a phrase, so
-  niche "compare candidates to each other" rules compose onto any `Target`
-  **without a field per rule**. When you are tempted to add another `Target` bool
-  for a whole-set rule, add a `Refinement` instead.
+  such as `MostPowerful` (or `Not(MostPowerful)`). It narrows the ids _and_
+  contributes a phrase, so niche "compare candidates to each other" rules compose
+  onto any `Target` **without a field per rule**. When you are tempted to add
+  another `Target` bool for a whole-set rule, add a `Refinement` instead.
 - **`Count` and `Condition`** are pluggable value/predicate strategies, each with
   paired text (`CountText` / `CondText`). A number that scales with the board is a
   `Count`, not a bespoke effect; a branch is a `Condition` fed to `Conditional`.
@@ -145,6 +145,15 @@ far:
   effect adds a selection filter or a destination, never a new bespoke type. The
   mechanism stays unexported — authors write the verb the card prints, not a
   generic `Move`.
+- **Pick any number of cards one at a time.** "Destroy any number of ...", "purge
+  any number of ...", "keep N ..." all gather the controller's picks from a
+  shrinking pool one prompt at a time. That loop is one helper —
+  `pickCards(ctx, prompt, limit, optional, avail)` (`target_select.go`): `limit <= 0`
+  is unbounded, `optional` makes each prompt declinable, and `avail` is re-read each
+  round so a pool that shifts as cards leave stays current. An effect that spends or
+  keeps a variable number of cards calls it and acts on the returned slice (Obsidian
+  Forge, Destructive Analysis, Unnatural Selection, Tertiate); it does not re-roll
+  the pick-until-decline loop.
 
 Prefer a shared **helper** over a shared embeddable value type. Now that `Per`
 means one thing everywhere, `{Amount, By, Per}` genuinely is uniform across
@@ -385,6 +394,11 @@ to)` names a card once either end of the move is public and calls it "a card"
   `nameMoved`; it never calls `Namer.Name` directly, so no one entry can leak a
   hand or a deck on its own initiative. A card in a hidden zone becomes nameable
   only through a `Reveal`, which records its own entry.
+- **Discards resolve one at a time, so each is its own log line.** A "discard N"
+  effect discards its cards individually, never as a batch, and the log reflects
+  that — do not group several discards into one "discards X and Y" line. This is
+  load-bearing for the (not-yet-built) scrap mechanic, which acts on each discard
+  as it happens.
 - Recording is switchable (`SetRecording`), so a search that plays thousands of
   games pays nothing for narration.
 

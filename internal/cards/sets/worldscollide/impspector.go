@@ -20,7 +20,8 @@ var Impspector = card.New(
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Imp),
 	card.WithAbility(
-		card.Trigger.Destroyed, card.PurgeRandomFromHand{
-			Player: card.Opponent,
+		card.Trigger.Destroyed, card.PurgeFromHand{
+			Player:    card.Opponent,
+			Selection: card.Random{},
 		}),
 )

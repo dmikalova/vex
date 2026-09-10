@@ -452,9 +452,6 @@ type ZoneResolver interface {
 	// PurgeFromHand moves a card from a player's hand to their purge pile (set aside
 	// out of the game).
 	PurgeFromHand(owner int, id LocalID)
-	// PurgeRandomFromHand moves one uniformly random card from a player's hand to
-	// their purge pile, doing nothing if the hand is empty.
-	PurgeRandomFromHand(owner int)
 	// PurgeFromArchives moves a card from a player's archives to their purge pile
 	// (set aside out of the game).
 	PurgeFromArchives(owner int, id LocalID)
@@ -520,14 +517,11 @@ type ZoneResolver interface {
 	// active-house gate (Project Z.Y.X.). It does nothing when the card is not in
 	// that player's archives.
 	PlayFromArchives(player int, id LocalID)
-	// PlayRandomFromOpponentArchives plays a uniformly random card from player's
-	// opponent's archives as player's own play, giving player control of it if it
-	// stays in play (Murkens). It does nothing when those archives are empty.
-	PlayRandomFromOpponentArchives(player int)
-	// PlayTopOfOpponentDeck plays the top card of player's opponent's deck as
-	// player's own play, giving player control of it if it stays in play (Murkens).
-	// It does nothing when that deck is empty.
-	PlayTopOfOpponentDeck(player int)
+	// PlayFromOpponent plays a card from a zone of player's opponent as player's own
+	// play, giving player control of it if it stays in play (Murkens): the top card
+	// of their deck (from Deck) or a uniformly random card from their facedown
+	// archives (from Archives). It does nothing when that zone is empty.
+	PlayFromOpponent(player int, from Zone)
 	// PutCardUnder removes a card from a player's hand and places it under host,
 	// face up or face down (Masterplan, Jargogle).
 	PutCardUnder(owner int, id, host LocalID, faceDown bool)
@@ -564,12 +558,9 @@ type ZoneResolver interface {
 	// DiscardCardFromHand moves a specific card from a player's hand to their discard
 	// zone.
 	DiscardCardFromHand(owner int, id LocalID)
-	// DiscardRandomFromHand discards one uniformly random card from a player's hand,
-	// doing nothing if the hand is empty.
-	DiscardRandomFromHand(owner int)
-	// DiscardRandomFromArchives discards one uniformly random card from a player's
-	// archives, doing nothing if the archives are empty.
-	DiscardRandomFromArchives(owner int)
+	// DiscardCardFromArchives moves a specific card from a player's archives to a
+	// discard pile (its owner's, since archives may hold abducted cards).
+	DiscardCardFromArchives(owner int, id LocalID)
 }
 
 // TurnResolver installs turn-scoped and lasting effects: restrictions and grants
@@ -692,6 +683,10 @@ type ChoiceResolver interface {
 	// its index (0 when the player's chooser expresses no preference). source is the
 	// card whose ability is asking (usually ctx.Source), for prompt attribution.
 	ChooseOption(player int, source LocalID, prompt string, options []string) int
+	// ChooseRandom picks one uniformly random card from candidates, returning it
+	// and whether any candidate was available. The pick advances the game's RNG, so
+	// it is the shared draw behind a Random selection.
+	ChooseRandom(candidates []LocalID) (LocalID, bool)
 }
 
 // Logger narrates resolved outcomes to the game log (ADR 0011). An effect does

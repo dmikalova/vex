@@ -40,56 +40,85 @@ func (t Target) leadIn() (string, bool) {
 	return "", false
 }
 
-// ExceptMostPowerful is a Refinement that drops the single most powerful creature
-// from the set, letting the controller choose which one to keep when several tie
-// for most powerful. A set of one or none keeps its (only, most powerful) member,
-// so nothing is selected.
-var ExceptMostPowerful Refinement = exceptMostPowerful{}
+// Not is a Refinement that keeps every creature its inner Refinement drops — the
+// complement over the selected set. It composes with the singular selectors to
+// spare one creature and take the rest: Not(MostPowerful) is "each creature
+// except the most powerful creature" (Champion's Challenge). The inner refinement
+// runs first, so any choice it makes (which tied creature is the most powerful)
+// decides which creature Not spares.
+func Not(inner Refinement) Refinement { return not{inner: inner} }
 
-// exceptMostPowerful implements the ExceptMostPowerful refinement.
-type exceptMostPowerful struct{}
+// not implements the Not combinator.
+type not struct{ inner Refinement }
 
-// clause renders "<phrase> except the most powerful <noun>", e.g. "each enemy
-// creature except the most powerful enemy creature".
-func (exceptMostPowerful) clause(phrase string) string {
-	return phrase + " except the most powerful " + strings.TrimPrefix(phrase, "each ")
+// clause renders "<phrase> except <inner clause>", e.g. Not(MostPowerful) over
+// "each enemy creature" -> "each enemy creature except the most powerful enemy
+// creature".
+func (n not) clause(phrase string) string {
+	return phrase + " except " + n.inner.clause(phrase)
 }
 
-// refine returns ids without the single most powerful creature, letting the
-// controller choose which to keep when several tie. A set of one or none keeps
-// its (most powerful) member, so nothing is selected.
-func (exceptMostPowerful) refine(ctx *EffectContext, ids []LocalID) []LocalID {
-	if len(ids) <= 1 {
+// refine keeps the creatures the inner refinement does not, preserving the
+// original order. An empty result selects nothing.
+func (n not) refine(ctx *EffectContext, ids []LocalID) []LocalID {
+	dropped := n.inner.refine(ctx, ids)
+	drop := make(map[LocalID]bool, len(dropped))
+	for _, id := range dropped {
+		drop[id] = true
+	}
+	kept := make([]LocalID, 0, len(ids))
+	for _, id := range ids {
+		if !drop[id] {
+			kept = append(kept, id)
+		}
+	}
+	if len(kept) == 0 {
 		return nil
 	}
-	highest := ctx.Resolver.Power(ids[0])
-	for _, id := range ids[1:] {
-		if p := ctx.Resolver.Power(id); p > highest {
-			highest = p
+	return kept
+}
+
+// AnyOf is a Refinement that keeps every creature any one of its Refinements
+// keeps — the union over the selected set. It composes the tier selectors to take
+// several extremes at once: AnyOf(LowestPower, HighestPower) is "each creature
+// with the lowest power and each creature with the highest power" (Standardized
+// Testing). The union preserves the original order and keeps each creature once.
+func AnyOf(refinements ...Refinement) Refinement {
+	return anyOf{refinements: refinements}
+}
+
+// anyOf implements the AnyOf combinator.
+type anyOf struct{ refinements []Refinement }
+
+// clause joins each member's clause with " and ", e.g. "each creature with the
+// lowest power and each creature with the highest power".
+func (a anyOf) clause(phrase string) string {
+	clauses := make([]string, len(a.refinements))
+	for i, r := range a.refinements {
+		clauses[i] = r.clause(phrase)
+	}
+	return strings.Join(clauses, " and ")
+}
+
+// refine keeps every creature any member keeps, preserving the original order and
+// keeping each creature once. An empty result selects nothing.
+func (a anyOf) refine(ctx *EffectContext, ids []LocalID) []LocalID {
+	keep := make(map[LocalID]bool)
+	for _, r := range a.refinements {
+		for _, id := range r.refine(ctx, ids) {
+			keep[id] = true
 		}
 	}
-	mostPowerful := make([]LocalID, 0, len(ids))
+	kept := make([]LocalID, 0, len(ids))
 	for _, id := range ids {
-		if ctx.Resolver.Power(id) == highest {
-			mostPowerful = append(mostPowerful, id)
+		if keep[id] {
+			kept = append(kept, id)
 		}
 	}
-	spared := mostPowerful[0]
-	if len(mostPowerful) > 1 {
-		if chosen, ok := ctx.ChooseCreature(
-			"Choose the most powerful creature to keep",
-			mostPowerful,
-		); ok {
-			spared = chosen
-		}
+	if len(kept) == 0 {
+		return nil
 	}
-	out := make([]LocalID, 0, len(ids)-1)
-	for _, id := range ids {
-		if id != spared {
-			out = append(out, id)
-		}
-	}
-	return out
+	return kept
 }
 
 // SamePowerAsChosen is a Refinement that keeps every creature sharing the power of
@@ -153,14 +182,7 @@ func (samePowerAsEitherChosen) clause(phrase string) string {
 // in the set matching either chosen power. Both choices are made first, so the
 // kept set unions the two power brackets from the pre-narrowing board.
 func (samePowerAsEitherChosen) refine(ctx *EffectContext, ids []LocalID) []LocalID {
-	var friendly, enemy []LocalID
-	for _, id := range ids {
-		if ctx.Resolver.Controller(id) == ctx.Controller {
-			friendly = append(friendly, id)
-		} else {
-			enemy = append(enemy, id)
-		}
-	}
+	friendly, enemy := creaturesBySide(ctx, ids)
 	powers := map[int]bool{}
 	if fc, ok := ctx.ChooseCreature("Choose a friendly creature", friendly); ok {
 		powers[ctx.Resolver.Power(fc)] = true
@@ -178,6 +200,114 @@ func (samePowerAsEitherChosen) refine(ctx *EffectContext, ids []LocalID) []Local
 		}
 	}
 	return out
+}
+
+// creaturesBySide splits ids into the controller's creatures and the opponent's,
+// preserving each side's original order — the both-battlelines refinements
+// (SamePowerAsEitherChosen, KeepPerSide, PortionPerSide) act on each side in turn.
+func creaturesBySide(ctx *EffectContext, ids []LocalID) (friendly, enemy []LocalID) {
+	for _, id := range ids {
+		if ctx.Resolver.Controller(id) == ctx.Controller {
+			friendly = append(friendly, id)
+		} else {
+			enemy = append(enemy, id)
+		}
+	}
+	return friendly, enemy
+}
+
+// KeepPerSide returns a Refinement that spares a chosen number of creatures on
+// each battleline and selects every other creature — Unnatural Selection keeps 3
+// per side and destroys the rest, as Refine on card.Target.EachCreature. It splits
+// the set by side, has the controller choose up to n keepers on each, and returns
+// the creatures left over. A side no larger than the keep count is spared whole
+// with no prompt, since keeping cannot change which creatures survive. It leads
+// with the pair of choices so the printed phrase reads left to right.
+func KeepPerSide(n int) Refinement { return keepPerSide{n: n} }
+
+// keepPerSide implements the KeepPerSide refinement.
+type keepPerSide struct{ n int }
+
+// lead renders the pair of keep choices ahead of the effect's verb, e.g. "choose 3
+// friendly creatures and 3 enemy creatures".
+func (k keepPerSide) lead() string {
+	return fmt.Sprintf("choose %d friendly creatures and %d enemy creatures", k.n, k.n)
+}
+
+// clause renders the leftover set, e.g. "each creature" -> "each other creature".
+func (k keepPerSide) clause(phrase string) string {
+	return strings.Replace(phrase, "each ", "each other ", 1)
+}
+
+// refine keeps up to n creatures on each side, chosen by the controller, and
+// returns every other creature. The sides are read from the pre-narrowing board so
+// the whole leftover set selects at once — the controller keeps the friendly side
+// first, then the enemy side.
+func (k keepPerSide) refine(ctx *EffectContext, ids []LocalID) []LocalID {
+	friendly, enemy := creaturesBySide(ctx, ids)
+	return append(k.leftover(ctx, friendly), k.leftover(ctx, enemy)...)
+}
+
+// leftover has the controller keep up to n of side, returning the rest. A side no
+// larger than the keep count is spared whole without a prompt: every creature is
+// kept, so the choice would be vacuous.
+func (k keepPerSide) leftover(ctx *EffectContext, side []LocalID) []LocalID {
+	if len(side) <= k.n {
+		return nil
+	}
+	kept := map[LocalID]bool{}
+	for _, id := range pickCards(ctx, "Choose a creature to keep", k.n, false, func() []LocalID {
+		return side
+	}) {
+		kept[id] = true
+	}
+	var rest []LocalID
+	for _, id := range side {
+		if !kept[id] {
+			rest = append(rest, id)
+		}
+	}
+	return rest
+}
+
+// PortionPerSide returns a Refinement that selects a fraction of the creatures on
+// each battleline, chosen by the controller — Tertiate takes one third of each
+// side, rounding up, as Refine on card.Target.EachCreature. It reads both sides
+// from the pre-narrowing board and selects the whole chosen set at once.
+func PortionPerSide(f Fraction) Refinement { return portionPerSide{f: f} }
+
+// portionPerSide implements the PortionPerSide refinement.
+type portionPerSide struct{ f Fraction }
+
+// clause renders the printed phrase from the fraction, ignoring the base noun,
+// e.g. "one third of all enemy creatures and one third of all friendly creatures
+// (rounding up each time)".
+func (p portionPerSide) clause(string) string {
+	return fmt.Sprintf(
+		"one %s of all enemy creatures and one %s of all friendly creatures (%s each time)",
+		p.f.word(), p.f.word(), p.f.roundingPhrase(),
+	)
+}
+
+// refine selects the fraction of each side, the enemy side first, chosen by the
+// controller. Both sides are read from the pre-narrowing board so the whole chosen
+// set selects at once.
+func (p portionPerSide) refine(ctx *EffectContext, ids []LocalID) []LocalID {
+	friendly, enemy := creaturesBySide(ctx, ids)
+	return append(p.share(ctx, enemy), p.share(ctx, friendly)...)
+}
+
+// share has the controller choose the fraction of side, returning the chosen ids.
+func (p portionPerSide) share(ctx *EffectContext, side []LocalID) []LocalID {
+	return pickCards(
+		ctx,
+		"Choose a creature to destroy",
+		p.f.of(len(side)),
+		false,
+		func() []LocalID {
+			return side
+		},
+	)
 }
 
 // LeastPowerful is a Refinement that keeps only the single least powerful creature
@@ -221,11 +351,18 @@ func (leastPowerful) refine(ctx *EffectContext, ids []LocalID) []LocalID {
 	return []LocalID{pick}
 }
 
-// MostPowerful returns a Refinement that keeps the n most powerful creatures of a
-// set, e.g. card.Target.EachCreature.Refine(card.MostPowerful(3)) (Three Fates).
+// MostPowerful is a Refinement that keeps the single most powerful creature of a
+// set, letting the controller choose which to keep when several tie — the
+// highest-power mirror of LeastPowerful, e.g.
+// card.Target.EachCreature.Refine(card.MostPowerful). For the "keep the top N"
+// form use MostPowerfulN.
+var MostPowerful Refinement = mostPowerfulN{n: 1}
+
+// MostPowerfulN returns a Refinement that keeps the n most powerful creatures of a
+// set, e.g. card.Target.EachCreature.Refine(card.MostPowerfulN(3)) (Three Fates).
 // When more creatures tie at the cutoff than there are remaining slots, the
 // controller chooses which of the tied creatures to include.
-func MostPowerful(n int) Refinement { return mostPowerfulN{n: n} }
+func MostPowerfulN(n int) Refinement { return mostPowerfulN{n: n} }
 
 // mostPowerfulN implements the MostPowerful refinement.
 type mostPowerfulN struct{ n int }
@@ -356,40 +493,68 @@ func (withoutSharedTrait) refine(ctx *EffectContext, ids []LocalID) []LocalID {
 	return kept
 }
 
-// LowestAndHighestPower is a Refinement that keeps every creature tied for the
-// lowest power together with every creature tied for the highest power, selecting
-// both extremes at once so they resolve simultaneously (Standardized Testing
-// destroys each creature with the lowest power and each with the highest).
-var LowestAndHighestPower Refinement = lowestAndHighestPower{}
+// HighestPower is a Refinement that keeps every creature tied for the highest
+// power of a set — a tier, not a single creature, so it makes no choice (contrast
+// MostPowerful, which keeps exactly one). An empty set selects nothing.
+var HighestPower Refinement = highestPower{}
 
-// lowestAndHighestPower implements the LowestAndHighestPower refinement.
-type lowestAndHighestPower struct{}
+// highestPower implements the HighestPower refinement.
+type highestPower struct{}
 
-// clause renders "<phrase> with the lowest power and <phrase> with the highest
-// power", e.g. "each creature" -> "each creature with the lowest power and each
-// creature with the highest power".
-func (lowestAndHighestPower) clause(phrase string) string {
-	return phrase + " with the lowest power and " + phrase + " with the highest power"
+// clause renders "<phrase> with the highest power".
+func (highestPower) clause(phrase string) string {
+	return phrase + " with the highest power"
 }
 
-// refine keeps every creature whose power equals the set's minimum or maximum, so
-// a set with a single power keeps all of it. An empty set selects nothing.
-func (lowestAndHighestPower) refine(ctx *EffectContext, ids []LocalID) []LocalID {
+// refine keeps every creature whose power equals the set's maximum, so a set with
+// a single power keeps all of it. An empty set selects nothing.
+func (highestPower) refine(ctx *EffectContext, ids []LocalID) []LocalID {
 	if len(ids) == 0 {
 		return nil
 	}
-	low, high := ctx.Resolver.Power(ids[0]), ctx.Resolver.Power(ids[0])
+	high := ctx.Resolver.Power(ids[0])
 	for _, id := range ids[1:] {
-		switch p := ctx.Resolver.Power(id); {
-		case p < low:
-			low = p
-		case p > high:
+		if p := ctx.Resolver.Power(id); p > high {
 			high = p
 		}
 	}
 	kept := make([]LocalID, 0, len(ids))
 	for _, id := range ids {
-		if p := ctx.Resolver.Power(id); p == low || p == high {
+		if ctx.Resolver.Power(id) == high {
+			kept = append(kept, id)
+		}
+	}
+	return kept
+}
+
+// LowestPower is a Refinement that keeps every creature tied for the lowest power
+// of a set — a tier, not a single creature, so it makes no choice (contrast
+// LeastPowerful, which keeps exactly one). An empty set selects nothing.
+var LowestPower Refinement = lowestPower{}
+
+// lowestPower implements the LowestPower refinement.
+type lowestPower struct{}
+
+// clause renders "<phrase> with the lowest power".
+func (lowestPower) clause(phrase string) string {
+	return phrase + " with the lowest power"
+}
+
+// refine keeps every creature whose power equals the set's minimum, so a set with
+// a single power keeps all of it. An empty set selects nothing.
+func (lowestPower) refine(ctx *EffectContext, ids []LocalID) []LocalID {
+	if len(ids) == 0 {
+		return nil
+	}
+	low := ctx.Resolver.Power(ids[0])
+	for _, id := range ids[1:] {
+		if p := ctx.Resolver.Power(id); p < low {
+			low = p
+		}
+	}
+	kept := make([]LocalID, 0, len(ids))
+	for _, id := range ids {
+		if ctx.Resolver.Power(id) == low {
 			kept = append(kept, id)
 		}
 	}

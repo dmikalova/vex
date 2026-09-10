@@ -48,6 +48,9 @@ interesting, or brings it in line with modern errata.
 - **Imperial Traitor** reads `Reveal`, not `Look at`. This is the modern wording.
 - **Ganger Chieftain** and **Biomatrix Backup** are mandatory. The `you may`
   clause is dropped.
+- **Malison** is mandatory. The `you may` clause is dropped, so its Fight moves an
+  enemy creature every time (the flank capture still only fires when the moved
+  creature ends on a flank).
 - **Hypnotic Command** leans on the base rule that the active player makes all
   decisions, so `an enemy creature captures …` needs no explicit `choose`.
 - **Phase Shift** and **Kirby** play their off-house card immediately rather than
@@ -70,3 +73,8 @@ interesting, or brings it in line with modern errata.
   prevents the forge before any Æmber leaves the pool, so the clause states a
   consequence the mechanic already guarantees; the Rules voice omits such
   parenthetical asides.
+- **Tantadlin** reads `Your opponent discards a random card from their archives`,
+  not KeyForge's imperative `Discard a random card from your opponent's archives`.
+  A random discard is the discarding player's own act, so Vactrol renders it in
+  the actor's voice — the same voice Mind Barb already uses for a random hand
+  discard. The effect is identical; only the voice changes.

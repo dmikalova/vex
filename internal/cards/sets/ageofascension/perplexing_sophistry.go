@@ -22,7 +22,11 @@ var PerplexingSophistry = card.New(
 			Cond: card.PoolAember{Player: card.Controller, Is: card.MoreThanOpponent},
 			Then: card.Sequence{
 				Effects: []card.Effect{
-					card.DiscardRandomFromHand{Player: card.Opponent},
+					card.DiscardCard{
+						Player:    card.Opponent,
+						Zone:      card.Hand,
+						Selection: card.Random{},
+					},
 					card.Draw{
 						Amount: 1,
 						You:    true,

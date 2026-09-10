@@ -233,9 +233,9 @@ func (DamageOnThis) Value(ctx *EffectContext) int { return ctx.Resolver.Damage(c
 func (DamageOnThis) CountText() string { return "damage on it" }
 
 // portionPhraser is the optional capability of a Loss that can also phrase a
-// fraction of a count rather than a pool — "half its power, rounded down". Half
-// implements it, so the same portion vocabulary serves both LoseAember{By: Half}
-// and PowerOfChosen{Of: Half}.
+// fraction of a count rather than a pool — "half its power, rounded down". Fraction
+// implements it, so the same portion vocabulary serves both LoseAember{By:
+// HalfRoundedDown} and PowerOfChosen{Of: HalfRoundedDown}.
 type portionPhraser interface {
 	countPhrase(noun string) string
 }
@@ -243,8 +243,8 @@ type portionPhraser interface {
 // PowerOfChosen is the power of the creature in context (ctx.It) — the creature a
 // fight or a ChooseCreatureThen put in context. Mindworm makes the creature it
 // fights deal damage equal to its power to each of its neighbors. Of takes a
-// fraction of that power (Of: Half is half, rounded down — The Flex); the zero
-// value is the full power.
+// fraction of that power (Of: HalfRoundedDown is half, rounded down — The Flex);
+// the zero value is the full power.
 type PowerOfChosen struct {
 	Of Loss
 }

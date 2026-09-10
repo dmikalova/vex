@@ -21,10 +21,10 @@ var DeepProbe = card.New(
 		card.Trigger.Play, card.ChooseHouseThen{
 			Then: card.Sequence{Effects: []card.Effect{
 				card.RevealHand{Player: card.Opponent},
-				card.DiscardHand{
-					Player:        card.Opponent,
-					Types:         card.Types(card.Type.Creature),
-					OfChosenHouse: true,
+				card.DiscardCard{
+					Player:    card.Opponent,
+					Zone:      card.Hand,
+					Selection: card.Each{Type: card.Type.Creature, OfChosenHouse: true},
 				},
 			}},
 		}),

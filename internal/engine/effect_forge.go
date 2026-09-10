@@ -269,3 +269,32 @@ func (e UnforgeKey) Text() string {
 func (e UnforgeKey) Resolve(ctx *EffectContext) {
 	ctx.Resolver.UnforgeKey(ctx.PlayerFor(e.Player))
 }
+
+// SkipForgePhase makes a player skip their "forge a key" phase at the start of their
+// next turn (Miasma).
+type SkipForgePhase struct {
+	Player Player
+}
+
+// validate rejects a SkipForgePhase whose player was left unset.
+func (e SkipForgePhase) validate() error {
+	if !e.Player.valid() {
+		return errUnsetPlayer("SkipForgePhase")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. `your opponent skips the "forge a key" phase during
+// their next turn`.
+func (e SkipForgePhase) Text() string {
+	who, whose, verb := "you", "your", "skip"
+	if e.Player == Opponent {
+		who, whose, verb = "your opponent", "their", "skips"
+	}
+	return fmt.Sprintf("%s %s the %q phase during %s next turn", who, verb, "forge a key", whose)
+}
+
+// Resolve arms the skip on the chosen player's next turn.
+func (e SkipForgePhase) Resolve(ctx *EffectContext) {
+	ctx.Resolver.SkipForgePhaseNextTurn(ctx.PlayerFor(e.Player), ctx.Source)
+}

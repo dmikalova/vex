@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item
 //
 //	Versatile.
-//	Action: Destroy Orb of Wonder -> search your deck for a card and put it into your hand, then shuffle your deck.
+//	Action: Destroy Orb of Wonder -> search your deck for a card and put it into your hand. Shuffle your deck.
 var OrbOfWonder = card.New(
 	"Orb of Wonder",
 	card.House.Brobnar,
@@ -22,7 +22,12 @@ var OrbOfWonder = card.New(
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(
 		card.Trigger.Action, card.Then{
-			First:  card.Destroy{Target: card.Target.This},
-			Result: card.SearchDeck{},
+			First: card.Destroy{Target: card.Target.This},
+			Result: card.Sentences{
+				Effects: []card.Effect{
+					card.SearchDeck{},
+					card.ShuffleDeck{},
+				},
+			},
 		}),
 )

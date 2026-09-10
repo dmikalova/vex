@@ -22,7 +22,7 @@ var TheFlex = card.New(
 				card.Exhaust{Target: card.Target.Triggering},
 				card.GainAemberEqualTo{
 					Player: card.Controller,
-					Count:  card.PowerOfChosen{Of: card.Half},
+					Count:  card.PowerOfChosen{Of: card.HalfRoundedDown},
 				},
 			}},
 		}),

@@ -15,7 +15,7 @@ import (
 //	Power:  4
 //	Traits: Giant
 //
-//	Reap: Search your deck and discard pile for a War Grumpus, reveal it, and put it into your hand.
+//	Reap: Search your deck and discard pile for a War Grumpus, reveal it, and put it into your hand. Shuffle your deck.
 func TestGrumpusTamer(t *testing.T) {
 	t.Run("tutors a War Grumpus from the deck into hand", func(t *testing.T) {
 		var grumpus ct.Card

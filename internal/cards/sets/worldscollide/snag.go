@@ -19,5 +19,8 @@ var Snag = card.New(
 	card.Provenance(card.WC, "096"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Demon),
-	card.WithAbility(card.Trigger.Fight, card.ForceOpponentActiveHouseOfFought{}),
+	card.WithAbility(
+		card.Trigger.Fight,
+		card.OpponentMustChooseHouse{Source: card.FoughtActiveHouse},
+	),
 )

@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/engine"
 // Target groups ready-made targets, e.g. card.Target.EachEnemyCreature. Each is
 // an engine.Target value, so the filter methods (WithTrait, PowerAtMost, OnFlank,
 // Refine, ...) chain off them:
-// card.Target.EachEnemyCreature.Refine(card.ExceptMostPowerful).
+// card.Target.EachEnemyCreature.Refine(card.Not(card.MostPowerful)).
 var Target = targets{
 	This:                 engine.Target{Kind: engine.TargetThisCreature},
 	Triggering:           engine.Target{Kind: engine.TargetTriggeringCreature},
@@ -111,13 +111,42 @@ type targets struct {
 }
 
 // Refinement refines a Target relative to the whole selected set (see
-// ExceptMostPowerful); pass one to a target's Refine method.
+// MostPowerful); pass one to a target's Refine method.
 type Refinement = engine.Refinement
 
-// ExceptMostPowerful is a Refinement that drops the single most powerful creature
-// from a set, e.g. card.Target.EachEnemyCreature.Refine(card.ExceptMostPowerful).
-// When several tie for most powerful the controller chooses which one to keep.
-var ExceptMostPowerful = engine.ExceptMostPowerful
+// Power selectors come in two kinds. A tier keeps every creature tied at the
+// extreme and makes no choice: HighestPower / LowestPower. A singular selector
+// keeps exactly one creature and lets the controller break ties: MostPowerful /
+// LeastPowerful. Compose them with the Not (complement) and AnyOf (union)
+// combinators — Not(MostPowerful) spares one creature and takes the rest,
+// AnyOf(LowestPower, HighestPower) takes both extremes at once.
+
+// HighestPower is a Refinement that keeps every creature tied for the highest
+// power of a set (a tier, so no choice), e.g.
+// card.Target.EachCreature.Refine(card.HighestPower).
+var HighestPower = engine.HighestPower
+
+// LowestPower is a Refinement that keeps every creature tied for the lowest power
+// of a set (a tier, so no choice), e.g.
+// card.Target.EachCreature.Refine(card.LowestPower).
+var LowestPower = engine.LowestPower
+
+// MostPowerful is a Refinement that keeps the single most powerful creature of a
+// set, the controller breaking ties, e.g.
+// card.Target.EachCreature.Refine(card.MostPowerful) (Soulkeeper). For the top-N
+// form use MostPowerfulN.
+var MostPowerful = engine.MostPowerful
+
+// Not returns a Refinement that keeps every creature the inner Refinement drops —
+// the complement, e.g. card.Target.EachEnemyCreature.Refine(
+// card.Not(card.MostPowerful)) is "each enemy creature except the most powerful"
+// (Champion's Challenge).
+var Not = engine.Not
+
+// AnyOf returns a Refinement that keeps every creature any member keeps — the
+// union, e.g. card.Target.EachCreature.Refine(
+// card.AnyOf(card.LowestPower, card.HighestPower)) (Standardized Testing).
+var AnyOf = engine.AnyOf
 
 // SamePowerAsChosen is a Refinement that keeps every creature sharing the power of
 // one the controller chooses, e.g.
@@ -135,22 +164,26 @@ var SamePowerAsEitherChosen = engine.SamePowerAsEitherChosen
 // of Famine). When several tie the controller chooses which one to keep.
 var LeastPowerful = engine.LeastPowerful
 
-// MostPowerful returns a Refinement that keeps the n most powerful creatures of a
-// set, e.g. card.Target.EachCreature.Refine(card.MostPowerful(3)) (Three Fates).
+// KeepPerSide returns a Refinement that spares a chosen number of creatures on
+// each battleline and selects every other creature, e.g.
+// card.Target.EachCreature.Refine(card.KeepPerSide(3)) (Unnatural Selection).
+var KeepPerSide = engine.KeepPerSide
+
+// PortionPerSide returns a Refinement that selects a Fraction of the creatures on
+// each battleline, chosen by the controller, e.g.
+// card.Target.EachCreature.Refine(card.PortionPerSide(card.ThirdRoundedUp)) (Tertiate).
+var PortionPerSide = engine.PortionPerSide
+
+// MostPowerfulN returns a Refinement that keeps the n most powerful creatures of a
+// set, e.g. card.Target.EachCreature.Refine(card.MostPowerfulN(3)) (Three Fates).
 // When more tie at the cutoff than there are slots, the controller chooses which.
-var MostPowerful = engine.MostPowerful
+var MostPowerfulN = engine.MostPowerfulN
 
 // HouseWithAtLeast returns a Refinement that keeps only creatures whose house has
 // at least n creatures in play, counting each house across both battlelines, e.g.
 // card.Target.EachCreature.Refine(card.HouseWithAtLeast(3)) (No Safety in
 // Numbers).
 var HouseWithAtLeast = engine.HouseWithAtLeast
-
-// LowestAndHighestPower is a Refinement that keeps every creature tied for the
-// lowest power and every creature tied for the highest power, e.g.
-// card.Target.EachCreature.Refine(card.LowestAndHighestPower) (Standardized
-// Testing).
-var LowestAndHighestPower = engine.LowestAndHighestPower
 
 // WithoutSharedTrait returns a Refinement that keeps only creatures that share no
 // trait with another creature in the same controller's battleline, e.g.

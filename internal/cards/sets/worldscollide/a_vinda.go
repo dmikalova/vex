@@ -24,6 +24,10 @@ var AVinda = card.New(
 			Amount: 1,
 			After:  card.IfDestroyed,
 			Target: card.Target.Creature,
-			Then:   card.DiscardRandomFromHand{Player: card.Opponent},
+			Then: card.DiscardCard{
+				Player:    card.Opponent,
+				Zone:      card.Hand,
+				Selection: card.Random{},
+			},
 		}),
 )

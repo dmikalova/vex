@@ -124,6 +124,15 @@ func (c *idQueueChooser) ChooseCreature(_, _ string, cands []LocalID) (LocalID, 
 	return cands[0], true
 }
 
+// countingChooser takes the first candidate and counts how many times it is asked,
+// so a test can assert a vacuous choice prompts for nothing.
+type countingChooser struct{ calls int }
+
+func (c *countingChooser) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) {
+	c.calls++
+	return cands[0], true
+}
+
 // orderAllChooser implements Orderer, arranging ids in a single call (reversing
 // them) instead of being asked to pick the next id repeatedly.
 type orderAllChooser struct{}

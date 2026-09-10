@@ -142,177 +142,68 @@ func purgeFrom(ctx *EffectContext, from Zone, owner int, id LocalID) {
 	}
 }
 
-// PurgeFromHand lets the controller choose and purge one card from a player's
-// hand, optionally restricted to a house — the "you may choose and purge a
-// Sanctum card" of Imperial Traitor. It is a "may": the controller can always
-// decline, so nothing is purged when they pass or no card matches.
+// PurgeFromHand purges cards from a player's hand, with a Selection deciding how
+// the cards are picked: chosen by the controller, optionally restricted to a
+// house (Imperial Traitor, Greater Oxtet); a random card (Impspector); or each
+// matching card (Martians Make Bad Allies, Lesser Oxtet). It reports whether it
+// purged anything and records the tally, so it can gate a Then and a following
+// effect can scale with it (CardsPurged).
 type PurgeFromHand struct {
-	// Player whose hand the card is purged from.
+	// Player whose hand the cards are purged from.
 	Player Player
-	// House restricts the choice to cards of this house; HouseNone allows any card.
-	House House
-	// Mandatory forces the purge when the hand holds a matching card, dropping the
-	// "you may" — an empty hand still purges nothing (Greater Oxtet).
-	Mandatory bool
+	// Selection decides which cards are purged; it must be set.
+	Selection Selection
 }
 
-// validate rejects a PurgeFromHand whose player was left unset.
+// validate rejects a PurgeFromHand whose player or selection was left unset.
 func (e PurgeFromHand) validate() error {
 	if !e.Player.valid() {
 		return errUnsetPlayer("PurgeFromHand")
 	}
-	return nil
-}
-
-// noun renders the kind of card purged: the house-qualified card when House is
-// set (e.g. "Sanctum card"), else the generic "card".
-func (e PurgeFromHand) noun() string {
-	if e.House != HouseNone {
-		return e.House.String() + " card"
+	if e.Selection == nil {
+		return fmt.Errorf("PurgeFromHand: selection must be set")
 	}
-	return "card"
+	return nil
 }
 
 // Text renders the effect, e.g. "you may purge a Sanctum card from your
-// opponent's hand".
+// opponent's hand" or "purge each non-Mars creature from your hand".
 func (e PurgeFromHand) Text() string {
-	whose := "your hand"
-	if e.Player == Opponent {
-		whose = "your opponent's hand"
+	verb := "purge "
+	if selectionDeclinable(e.Selection) {
+		verb = "you may purge "
 	}
-	verb := "you may purge "
-	if e.Mandatory {
-		verb = "purge "
-	}
-	return verb + indefinite(e.noun()) + " from " + whose
+	return verb + e.Selection.object() + " from " + whoseHand(e.Player)
 }
 
-// Resolve offers the matching cards in the player's hand as a declinable choice,
-// then purges the chosen one. It does nothing when no card matches or the
-// controller declines.
+// Resolve purges the selected cards from the player's hand.
 func (e PurgeFromHand) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 
-// resolveGate purges the chosen card and reports whether one was, so it can be the
-// first half of a Then ("purge a card from your hand -> give two power counters",
-// Greater Oxtet).
+// resolveGate purges the selected cards and reports whether any were, recording
+// the tally so a Then ("purge a card from your hand -> give two power counters",
+// Greater Oxtet) and a following "for each" (CardsPurged) can hang off it. When a
+// single card is purged it is put in context (ctx.It) so a following effect can
+// name it — Custom Virus destroys each creature sharing a trait with it.
 func (e PurgeFromHand) resolveGate(ctx *EffectContext) bool {
 	owner := ctx.PlayerFor(e.Player)
-	cands := handCardsWhere(ctx, owner, func(id LocalID) bool {
-		return e.House == HouseNone || ctx.Resolver.House(id) == e.House
-	})
-	choose := ctx.ChooseCardOptional
-	if e.Mandatory {
-		if len(cands) == 0 {
-			return false
-		}
-		choose = ctx.ChooseCard
+	ids := e.Selection.pick(ctx, ctx.Resolver.Hand(owner))
+	for _, id := range ids {
+		purgeFrom(ctx, Hand, owner, id)
 	}
-	chosen, ok := choose("Choose a card to purge", cands)
-	if !ok {
-		return false
+	if len(ids) == 1 {
+		ctx.It, ctx.HasIt = ids[0], true
 	}
-	purgeFrom(ctx, Hand, owner, chosen)
-	return true
+	ctx.Produced.Purged = len(ids)
+	return len(ids) > 0
 }
 
-// declinable reports whether the purge can be passed: a "you may" purge is a
-// single optional card choice answered by clicking the card (or passing); a
-// Mandatory purge cannot be declined.
-func (e PurgeFromHand) declinable() bool { return !e.Mandatory }
+// declinable reports whether the purge can be passed — true only for a
+// non-mandatory Chosen, whose single card choice is answered by clicking the card
+// (or passing) under a May.
+func (e PurgeFromHand) declinable() bool { return selectionDeclinable(e.Selection) }
 
 // resolveOptional resolves the purge as its own optional choice under a May.
 func (e PurgeFromHand) resolveOptional(ctx *EffectContext) bool { return e.resolveGate(ctx) }
-
-// PurgeRandomFromHand purges one uniformly random card from a player's hand —
-// Impspector's "purge a random card from your opponent's hand", where the purging
-// player does not choose which card leaves.
-type PurgeRandomFromHand struct {
-	// Player whose hand the card is purged from.
-	Player Player
-}
-
-// validate rejects a PurgeRandomFromHand whose player was left unset.
-func (e PurgeRandomFromHand) validate() error {
-	if !e.Player.valid() {
-		return errUnsetPlayer("PurgeRandomFromHand")
-	}
-	return nil
-}
-
-// Text renders the effect, e.g. "purge a random card from your opponent's hand".
-func (e PurgeRandomFromHand) Text() string {
-	whose := "your hand"
-	if e.Player == Opponent {
-		whose = "your opponent's hand"
-	}
-	return "purge a random card from " + whose
-}
-
-// Resolve purges one uniformly random card from the player's hand, doing nothing
-// when the hand is empty.
-func (e PurgeRandomFromHand) Resolve(ctx *EffectContext) {
-	ctx.Resolver.PurgeRandomFromHand(ctx.PlayerFor(e.Player))
-}
-
-// PurgeEachFromHand purges every card in a player's hand that matches its filters
-// — Martians Make Bad Allies purges each non-Mars creature out of the hand it
-// just revealed. Unlike PurgeFromHand there is no choice: the filters decide, and
-// the tally is recorded so a following effect can scale with it (CardsPurged).
-type PurgeEachFromHand struct {
-	// Player whose hand the cards are purged from.
-	Player Player
-	// Type restricts the purge to cards of this type; the zero value allows any.
-	Type CardType
-	// ExceptHouse spares the cards of that house; HouseNone spares nothing.
-	ExceptHouse House
-}
-
-// validate rejects a PurgeEachFromHand whose player was left unset.
-func (e PurgeEachFromHand) validate() error {
-	if !e.Player.valid() {
-		return errUnsetPlayer("PurgeEachFromHand")
-	}
-	return nil
-}
-
-// noun renders the kind of card purged, e.g. "non-Mars creature".
-func (e PurgeEachFromHand) noun() string {
-	noun := "card"
-	if e.Type != TypeUnset {
-		noun = strings.ToLower(e.Type.String())
-	}
-	if e.ExceptHouse != HouseNone {
-		noun = "non-" + e.ExceptHouse.String() + " " + noun
-	}
-	return noun
-}
-
-// Text renders the effect, e.g. "purge each non-Mars creature from your hand".
-func (e PurgeEachFromHand) Text() string {
-	whose := "your hand"
-	if e.Player == Opponent {
-		whose = "your opponent's hand"
-	}
-	return "purge each " + e.noun() + " from " + whose
-}
-
-// Resolve purges every matching card from the hand and records the tally.
-func (e PurgeEachFromHand) Resolve(ctx *EffectContext) {
-	owner := ctx.PlayerFor(e.Player)
-	doomed := handCardsWhere(ctx, owner, func(id LocalID) bool {
-		if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
-			return false
-		}
-		if e.ExceptHouse != HouseNone && ctx.Resolver.House(id) == e.ExceptHouse {
-			return false
-		}
-		return true
-	})
-	for _, id := range doomed {
-		purgeFrom(ctx, Hand, owner, id)
-	}
-	ctx.Produced.Purged = len(doomed)
-}
 
 // PurgeCreature purges each creature its Target selects from play into its owner's
 // purge pile — the "purge this creature" a card gains (Annihilation Ritual grants
@@ -408,36 +299,6 @@ func (PurgedAemberBonus) Value(ctx *EffectContext) int { return ctx.Produced.Pur
 
 // CountText renders the phrase the loss is measured against.
 func (PurgedAemberBonus) CountText() string { return "the total Æmber bonus of the purged cards" }
-
-// PurgeCreatureFromHand purges a creature the controller chooses from their hand
-// and puts it in context (ctx.It) for a following effect to act on. It is the
-// first half of Custom Virus's "purge a creature from your hand, destroy each
-// creature that shares a trait with the purged creature": the purge here, the
-// destruction a Destroy whose Target is EachCreature.SharingTrait. The purged
-// creature is out of play but its traits still decide what a later effect selects;
-// with no creature in hand, or the choice declined, nothing is purged and It stays
-// unset (so the following effect finds nothing).
-type PurgeCreatureFromHand struct{}
-
-// Text renders the effect.
-func (PurgeCreatureFromHand) Text() string {
-	return "purge a creature from your hand"
-}
-
-// Resolve purges a chosen creature from the controller's hand and sets it as the
-// context card.
-func (PurgeCreatureFromHand) Resolve(ctx *EffectContext) {
-	inHand := handCardsWhere(ctx, ctx.Controller, ctx.Resolver.IsCreature)
-	if len(inHand) == 0 {
-		return
-	}
-	purged, ok := ctx.ChooseCreature("Choose a creature to purge from your hand", inHand)
-	if !ok {
-		return
-	}
-	purgeFrom(ctx, Hand, ctx.Controller, purged)
-	ctx.It, ctx.HasIt = purged, true
-}
 
 // PurgeSource purges the card whose ability this is (Library Access purges
 // itself). A source still in play — a creature or artifact — is purged from play;

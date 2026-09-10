@@ -26,7 +26,8 @@ type (
 	MoveAemberFromPool = engine.MoveAemberFromPool
 	// PlaceAemberOnThis places Æmber from the common supply on this card.
 	PlaceAemberOnThis = engine.PlaceAemberOnThis
-	// LoseAember returns Æmber from a player's pool to the supply (see By: Half, AllBut).
+	// LoseAember returns Æmber from a player's pool to the supply (see By:
+	// HalfRoundedDown, AllBut).
 	LoseAember = engine.LoseAember
 	// LoseAemberEqualTo loses Æmber equal to a running count (Power of Fire loses
 	// half the sacrificed creature's power).
@@ -118,16 +119,27 @@ const (
 // not the ability's controller.
 type ByActivePlayer = engine.ByActivePlayer
 
+// Selection is how a purge or zone-movement effect picks its cards: the
+// controller chooses one (Chosen), one is random (Random), or every match is
+// taken (Each).
+type (
+	// Selection is the axis a movement verb varies along; set it on PurgeFromHand.
+	Selection = engine.Selection
+	// Chosen has the controller pick one card, optionally by house; a non-mandatory
+	// Chosen is a "you may".
+	Chosen = engine.Chosen
+	// Random takes one uniformly random card.
+	Random = engine.Random
+	// Each takes every card the filters admit.
+	Each = engine.Each
+)
+
 // Destruction and purging.
 type (
 	// Destroy removes the creatures its Target selects from play.
 	Destroy = engine.Destroy
 	// DestroyChosen destroys any number of creatures the controller picks from its Target.
 	DestroyChosen = engine.DestroyChosen
-	// DestroyAllExceptChosen keeps a chosen number of friendly and enemy creatures and destroys every other creature.
-	DestroyAllExceptChosen = engine.DestroyAllExceptChosen
-	// DestroyFractionOfEachBattleline destroys one Portion of all enemy creatures and the same Portion of all friendly creatures, rounding each count up (Tertiate is Portion OneThird).
-	DestroyFractionOfEachBattleline = engine.DestroyFractionOfEachBattleline
 	// DestroyMostPowerfulUnlessReadyHouse destroys the most powerful creature of
 	// each player who does not control a ready creature of House (Quicksand).
 	DestroyMostPowerfulUnlessReadyHouse = engine.DestroyMostPowerfulUnlessReadyHouse
@@ -144,15 +156,12 @@ type (
 	SacrificeToForge = engine.SacrificeToForge
 	// PurgeCard sets cards aside out of the game, from a named zone.
 	PurgeCard = engine.PurgeCard
-	// PurgeFromHand purges one card the controller chooses from a player's hand.
+	// PurgeFromHand purges cards from a player's hand, with a Selection deciding how
+	// they are picked (chosen / random / each).
 	PurgeFromHand = engine.PurgeFromHand
 	// PurgeEachOfChosenTrait purges every card of a chosen trait, paying each player
 	// for their losses (Harvest Time).
 	PurgeEachOfChosenTrait = engine.PurgeEachOfChosenTrait
-	// PurgeRandomFromHand purges one uniformly random card from a player's hand.
-	PurgeRandomFromHand = engine.PurgeRandomFromHand
-	// PurgeEachFromHand purges every matching card from a player's hand.
-	PurgeEachFromHand = engine.PurgeEachFromHand
 	// PurgeEachFromDiscard purges every matching card from both discard piles.
 	PurgeEachFromDiscard = engine.PurgeEachFromDiscard
 	// PurgeCreature purges each creature its Target selects from play.
@@ -167,8 +176,6 @@ type (
 	// GainKeyword gives each targeted creature a keyword until the start of your
 	// next turn (Hideaway Hole grants your creatures elusive).
 	GainKeyword = engine.GainKeyword
-	// PurgeCreatureFromHand purges a chosen creature from your hand and puts it in context.
-	PurgeCreatureFromHand = engine.PurgeCreatureFromHand
 	// PurgeArchivesForDamage purges any number of cards from your archives to deal
 	// damage to a creature for each card purged.
 	PurgeArchivesForDamage = engine.PurgeArchivesForDamage
@@ -239,6 +246,9 @@ type (
 	SearchDeck = engine.SearchDeck
 	// ShuffleIntoDeck shuffles the controller's named zones (hand, discard, archives) into their deck.
 	ShuffleIntoDeck = engine.ShuffleIntoDeck
+	// ShuffleDeck shuffles the controller's deck — the "shuffle your deck" that
+	// always follows a deck search (a search must be followed by a shuffle).
+	ShuffleDeck = engine.ShuffleDeck
 	// ShuffleChosenCreaturesFromDiscard shuffles any number of chosen creatures from your discard pile into your deck.
 	ShuffleChosenCreaturesFromDiscard = engine.ShuffleChosenCreaturesFromDiscard
 	// ShuffleChosenCreaturesFromZones shuffles any number of chosen friendly creatures from your hand, discard pile, or battleline into your deck.
@@ -276,16 +286,16 @@ type (
 	ArchivePurgedCard = engine.ArchivePurgedCard
 	// DiscardArchives moves all of a player's archived cards into their discard pile.
 	DiscardArchives = engine.DiscardArchives
-	// DiscardHand discards cards from a player's hand.
+	// DiscardHand discards a player's whole hand, one card at a time (Player may be
+	// card.EachPlayer). RefillHand redraws it as if the turn had ended. Punctuated
+	// Equilibrium composes both over EachPlayer.
 	DiscardHand = engine.DiscardHand
-	// EachPlayerDiscardsAndRefillsHand makes both players discard and redraw their hand.
-	EachPlayerDiscardsAndRefillsHand = engine.EachPlayerDiscardsAndRefillsHand
-	// DiscardFromHand has the controller choose and discard Amount cards.
-	DiscardFromHand = engine.DiscardFromHand
-	// DiscardRandomFromHand discards one uniformly random card from a player's hand.
-	DiscardRandomFromHand = engine.DiscardRandomFromHand
-	// DiscardRandomFromArchives discards one uniformly random card from a player's archives.
-	DiscardRandomFromArchives = engine.DiscardRandomFromArchives
+	// RefillHand — see DiscardHand.
+	RefillHand = engine.RefillHand
+	// DiscardCard discards cards from a player's hand or archives, with a Selection
+	// deciding how each is picked (Chosen or Random), Zone the source, and
+	// Amount / AnyNumber how many.
+	DiscardCard = engine.DiscardCard
 	// DiscardTopOfDeck discards the top card of a deck and puts it in context.
 	DiscardTopOfDeck = engine.DiscardTopOfDeck
 	// ReanimateTopOfDeckInPlace discards the top card of your deck and, when it is
@@ -335,12 +345,10 @@ type (
 	// (From), ignoring the active house. Set Except to make House the house that
 	// may not be played.
 	PlayFrom = engine.PlayFrom
-	// PlayRandomFromOpponentArchives plays a random card from the opponent's
-	// archives as your own (a Murkens option).
-	PlayRandomFromOpponentArchives = engine.PlayRandomFromOpponentArchives
-	// PlayTopOfOpponentDeck plays the top card of the opponent's deck as your own
-	// (a Murkens option).
-	PlayTopOfOpponentDeck = engine.PlayTopOfOpponentDeck
+	// PlayFromOpponent plays a card from the opponent's deck (From: card.Deck, its
+	// top card) or archives (From: card.Archives, a random card) as your own play
+	// (Murkens).
+	PlayFromOpponent = engine.PlayFromOpponent
 	// PlayDiscardedTacticFromOpponent is Fidgit's reap: discard a random card from
 	// the opponent's archives or their deck top, then play it as your own if it is a
 	// Tactic.
@@ -694,7 +702,7 @@ type (
 	// DamageOnThis counts the damage sitting on the source card.
 	DamageOnThis = engine.DamageOnThis
 	// PowerOfChosen is the power of the creature in context, optionally a fraction
-	// of it (Of: Half — The Flex).
+	// of it (Of: HalfRoundedDown — The Flex).
 	PowerOfChosen = engine.PowerOfChosen
 	// TraitsOfChosen counts the traits of the creature just chosen.
 	TraitsOfChosen = engine.TraitsOfChosen
@@ -757,10 +765,10 @@ type (
 	// (United Action); NotType excludes a card type; Grant is card.GrantPlay,
 	// card.GrantUse, or both; Count bounds the cards (zero is unbounded).
 	MayPlayOffHouse = engine.MayPlayOffHouse
-	// GrantFightForChosenHouse lets your chosen-house creatures fight this turn.
-	GrantFightForChosenHouse = engine.GrantFightForChosenHouse
-	// GrantFightForFriendlyHouse lets your creatures of a named House fight this turn.
-	GrantFightForFriendlyHouse = engine.GrantFightForFriendlyHouse
+	// GrantFight lets your creatures of one house fight this turn even out of the
+	// active house — House names the house, or HouseNone (the zero value) reads the
+	// chosen house (Brothers in Battle chosen, Signal Fire card.House.Self).
+	GrantFight = engine.GrantFight
 	// GrantFightAnyHouse lets every friendly creature fight this turn.
 	GrantFightAnyHouse = engine.GrantFightAnyHouse
 	// BelongToHouse makes the targeted creatures belong to a House for a Duration.
@@ -768,16 +776,14 @@ type (
 	// NameHouse remembers the house an enclosing ChooseHouseThen picked on this card,
 	// feeding the card's HouseLock for as long as it stays in play.
 	NameHouse = engine.NameHouse
-	// ForceOpponentActiveHouse forces the opponent's active house next turn.
-	ForceOpponentActiveHouse = engine.ForceOpponentActiveHouse
-	// ForceOpponentActiveHouseOfFought forces the opponent to the house of the
-	// creature this card fought as their active house next turn (Snag).
-	ForceOpponentActiveHouseOfFought = engine.ForceOpponentActiveHouseOfFought
-	// ForbidOpponentActiveHouse bars the opponent's chosen house next turn (Tezmal).
-	ForbidOpponentActiveHouse = engine.ForbidOpponentActiveHouse
-	// ForbidSameActiveHouseNextTurn bars the chooser's opponent from matching the
-	// just-chosen house next turn (Snag's Mirror).
-	ForbidSameActiveHouseNextTurn = engine.ForbidSameActiveHouseNextTurn
+	// OpponentMustChooseHouse forces the opponent's active house next turn, read from
+	// Source (card.ChosenActiveHouse — Control the Weak; card.FoughtActiveHouse — Snag
+	// forces the fought creature's house).
+	OpponentMustChooseHouse = engine.OpponentMustChooseHouse
+	// OpponentCannotChooseHouse bars the opponent's active house next turn, read from
+	// Source (card.ChosenActiveHouse — Tezmal; card.JustChosenActiveHouse — Snag's
+	// Mirror, keyed off the after-a-player-chooses-a-house trigger).
+	OpponentCannotChooseHouse = engine.OpponentCannotChooseHouse
 	// WagerOpponentChoosesChosenHouse steals if the opponent picks the chosen house
 	// as their active house next turn (Snaglet).
 	WagerOpponentChoosesChosenHouse = engine.WagerOpponentChoosesChosenHouse
@@ -877,17 +883,22 @@ var Owner = engine.ControlOwner
 // card.PutIntoPlay{Control: card.Yours} (Overlord Greking).
 var Yours = engine.ControlYours
 
-// Half is the Loss that makes a LoseAember remove half the pool, rounded down:
-// card.LoseAember{Player: card.EachPlayer, By: card.Half}.
-var Half = engine.Half
+// HalfRoundedDown, HalfRoundedUp, ThirdRoundedDown, and ThirdRoundedUp are the
+// Fractions the game uses — a half or a third of a quantity, with rounding stated
+// explicitly. One Fraction serves an Æmber-pool share (card.LoseAember{By:
+// card.HalfRoundedDown}), a creature's power (card.PowerOfChosen{Of:
+// card.HalfRoundedDown}), and a battleline count
+// (card.Target.EachCreature.Refine(card.PortionPerSide(card.ThirdRoundedUp))).
+var HalfRoundedDown = engine.HalfRoundedDown
 
-// OneThird is the Fraction that makes a DestroyFractionOfEachBattleline act on one
-// third of each side, rounded up: card.DestroyFractionOfEachBattleline{Portion: card.OneThird}.
-var OneThird = engine.OneThird
+// HalfRoundedUp — see HalfRoundedDown.
+var HalfRoundedUp = engine.HalfRoundedUp
 
-// OneHalf is the Fraction that makes a DestroyFractionOfEachBattleline act on one
-// half of each side, rounded up: card.DestroyFractionOfEachBattleline{Portion: card.OneHalf}.
-var OneHalf = engine.OneHalf
+// ThirdRoundedDown — see HalfRoundedDown.
+var ThirdRoundedDown = engine.ThirdRoundedDown
+
+// ThirdRoundedUp — see HalfRoundedDown.
+var ThirdRoundedUp = engine.ThirdRoundedUp
 
 // OneNeighbor makes a CreatureAndNeighbors spread hit one chosen neighbor instead
 // of every neighbor (Mighty Lance): card.CreatureAndNeighbors{Scope: card.OneNeighbor}.
@@ -899,6 +910,18 @@ var GrantPlay = engine.GrantPlay
 
 // GrantUse — see GrantPlay.
 var GrantUse = engine.GrantUse
+
+// ChosenActiveHouse, FoughtActiveHouse, and JustChosenActiveHouse name where an
+// OpponentMustChooseHouse / OpponentCannotChooseHouse reads its house: the chosen
+// house, the house of the creature this card fought, or the house a player just
+// chose (read from the board, for Snag's Mirror).
+var ChosenActiveHouse = engine.ChosenActiveHouse
+
+// FoughtActiveHouse — see ChosenActiveHouse.
+var FoughtActiveHouse = engine.FoughtActiveHouse
+
+// JustChosenActiveHouse — see ChosenActiveHouse.
+var JustChosenActiveHouse = engine.JustChosenActiveHouse
 
 // LeftFlank and RightFlank name a flank for an OnFlank predicate, e.g.
 // card.OnFlank{OfIt: true, Where: card.LeftFlank}.

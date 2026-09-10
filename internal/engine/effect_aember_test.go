@@ -165,7 +165,7 @@ func TestLoseAemberHalfAndEachPlayer(t *testing.T) {
 	g.State.Aember[1] = 4 // loses 2, keeps 2
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	each := LoseAember{Player: EachPlayer, By: Half}
+	each := LoseAember{Player: EachPlayer, By: HalfRoundedDown}
 	if each.Text() != "each player loses half of their Æmber, rounded down" {
 		t.Errorf("each text = %q", each.Text())
 	}
@@ -175,7 +175,7 @@ func TestLoseAemberHalfAndEachPlayer(t *testing.T) {
 	}
 
 	// A controller losing half uses the "your" possessive.
-	me := LoseAember{Player: Controller, By: Half}
+	me := LoseAember{Player: Controller, By: HalfRoundedDown}
 	if me.Text() != "lose half of your Æmber, rounded down" {
 		t.Errorf("controller-half text = %q", me.Text())
 	}
@@ -192,7 +192,7 @@ func TestGainAemberEqualToAndHalfPower(t *testing.T) {
 	beefy := g.AddToBattleline(testCreature("beefy", 5), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0, It: beefy, HasIt: true}
 
-	e := GainAemberEqualTo{Player: Controller, Count: PowerOfChosen{Of: Half}}
+	e := GainAemberEqualTo{Player: Controller, Count: PowerOfChosen{Of: HalfRoundedDown}}
 	if got := e.Text(); got != "gain Æmber equal to half its power, rounded down" {
 		t.Errorf("text = %q", got)
 	}
@@ -202,38 +202,38 @@ func TestGainAemberEqualToAndHalfPower(t *testing.T) {
 	}
 
 	// With no creature in context the count is zero and nothing is gained.
-	if got := (PowerOfChosen{Of: Half}).Value(
+	if got := (PowerOfChosen{Of: HalfRoundedDown}).Value(
 		&EffectContext{Resolver: g, Controller: 0},
 	); got != 0 {
-		t.Errorf("PowerOfChosen{Of: Half} with no It = %d, want 0", got)
+		t.Errorf("PowerOfChosen{Of: HalfRoundedDown} with no It = %d, want 0", got)
 	}
-	if got := (PowerOfChosen{Of: Half}).CountText(); got != "half its power, rounded down" {
+	if got := (PowerOfChosen{Of: HalfRoundedDown}).CountText(); got != "half its power, rounded down" {
 		t.Errorf("count text = %q", got)
 	}
 
 	// The opponent form uses the "your opponent gains" verb.
-	if got := (GainAemberEqualTo{Player: Opponent, Count: PowerOfChosen{Of: Half}}).Text(); got !=
+	if got := (GainAemberEqualTo{Player: Opponent, Count: PowerOfChosen{Of: HalfRoundedDown}}).Text(); got !=
 		"your opponent gains Æmber equal to half its power, rounded down" {
 		t.Errorf("opponent text = %q", got)
 	}
 	// The each-player form uses the "each player gains" verb.
-	if got := (GainAemberEqualTo{Player: EachPlayer, Count: PowerOfChosen{Of: Half}}).Text(); got !=
+	if got := (GainAemberEqualTo{Player: EachPlayer, Count: PowerOfChosen{Of: HalfRoundedDown}}).Text(); got !=
 		"each player gains Æmber equal to half its power, rounded down" {
 		t.Errorf("each-player text = %q", got)
 	}
 	// Validation rejects an unset player or count, and accepts a fully set effect.
-	if (GainAemberEqualTo{Count: PowerOfChosen{Of: Half}}).validate() == nil {
+	if (GainAemberEqualTo{Count: PowerOfChosen{Of: HalfRoundedDown}}).validate() == nil {
 		t.Error("unset player should be rejected")
 	}
 	if (GainAemberEqualTo{Player: Controller}).validate() == nil {
 		t.Error("unset count should be rejected")
 	}
-	if (GainAemberEqualTo{Player: Controller, Count: PowerOfChosen{Of: Half}}).validate() != nil {
+	if (GainAemberEqualTo{Player: Controller, Count: PowerOfChosen{Of: HalfRoundedDown}}).validate() != nil {
 		t.Error("a fully set effect should be valid")
 	}
 	// With no creature in context the count is zero and nothing is gained.
 	before := g.State.Aember[0]
-	GainAemberEqualTo{Player: Controller, Count: PowerOfChosen{Of: Half}}.Resolve(
+	GainAemberEqualTo{Player: Controller, Count: PowerOfChosen{Of: HalfRoundedDown}}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
 	)
 	if g.State.Aember[0] != before {
@@ -250,7 +250,7 @@ func TestLoseAemberEqualTo(t *testing.T) {
 	beefy := g.AddToBattleline(testCreature("beefy", 5), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0, It: beefy, HasIt: true}
 
-	e := LoseAemberEqualTo{Player: EachPlayer, Count: PowerOfChosen{Of: Half}}
+	e := LoseAemberEqualTo{Player: EachPlayer, Count: PowerOfChosen{Of: HalfRoundedDown}}
 	if got := e.Text(); got != "each player loses Æmber equal to half its power, rounded down" {
 		t.Errorf("text = %q", got)
 	}
@@ -260,23 +260,23 @@ func TestLoseAemberEqualTo(t *testing.T) {
 	}
 
 	// The opponent form uses the "your opponent loses" verb.
-	if got := (LoseAemberEqualTo{Player: Opponent, Count: PowerOfChosen{Of: Half}}).Text(); got !=
+	if got := (LoseAemberEqualTo{Player: Opponent, Count: PowerOfChosen{Of: HalfRoundedDown}}).Text(); got !=
 		"your opponent loses Æmber equal to half its power, rounded down" {
 		t.Errorf("opponent text = %q", got)
 	}
 	// Validation rejects an unset player or count, and accepts a fully set effect.
-	if (LoseAemberEqualTo{Count: PowerOfChosen{Of: Half}}).validate() == nil {
+	if (LoseAemberEqualTo{Count: PowerOfChosen{Of: HalfRoundedDown}}).validate() == nil {
 		t.Error("unset player should be rejected")
 	}
 	if (LoseAemberEqualTo{Player: Controller}).validate() == nil {
 		t.Error("unset count should be rejected")
 	}
-	if (LoseAemberEqualTo{Player: Controller, Count: PowerOfChosen{Of: Half}}).validate() != nil {
+	if (LoseAemberEqualTo{Player: Controller, Count: PowerOfChosen{Of: HalfRoundedDown}}).validate() != nil {
 		t.Error("a fully set effect should be valid")
 	}
 	// A zero count loses nothing.
 	before := g.State.Aember[1]
-	LoseAemberEqualTo{Player: Opponent, Count: PowerOfChosen{Of: Half}}.Resolve(
+	LoseAemberEqualTo{Player: Opponent, Count: PowerOfChosen{Of: HalfRoundedDown}}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
 	)
 	if g.State.Aember[1] != before {
@@ -290,7 +290,7 @@ func TestGainAemberEqualToCaptured(t *testing.T) {
 	g := started(t)
 	src := g.AddToBattleline(testCreature("src", 4), 0)
 	spider := g.AddToBattleline(testEtherSpider(), 1)
-	GainAemberEqualTo{Player: Controller, Count: PowerOfChosen{Of: Half}}.Resolve(
+	GainAemberEqualTo{Player: Controller, Count: PowerOfChosen{Of: HalfRoundedDown}}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0, It: src, HasIt: true},
 	)
 	if g.Aember(0) != 0 {
@@ -302,10 +302,10 @@ func TestGainAemberEqualToCaptured(t *testing.T) {
 }
 
 func TestLoseAemberValidate(t *testing.T) {
-	if err := (LoseAember{Player: Controller, Amount: 2, By: Half}).validate(); err == nil {
+	if err := (LoseAember{Player: Controller, Amount: 2, By: HalfRoundedDown}).validate(); err == nil {
 		t.Error("setting both Amount and By should be rejected")
 	}
-	if err := (LoseAember{Player: Controller, By: Half}).validate(); err != nil {
+	if err := (LoseAember{Player: Controller, By: HalfRoundedDown}).validate(); err != nil {
 		t.Errorf("By alone should be valid, got %v", err)
 	}
 	if err := (LoseAember{Player: Controller, Amount: 2}).validate(); err != nil {

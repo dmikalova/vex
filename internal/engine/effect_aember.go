@@ -209,8 +209,9 @@ func (e LoseAemberEqualTo) Resolve(ctx *EffectContext) {
 }
 
 // A Loss says how much Æmber to remove from a pool when the amount depends on the
-// pool's current size — half of it, or all but a fixed remainder. A LoseAember uses
-// one via its By field instead of a fixed Amount.
+// pool's current size — a Fraction of it (Half/Third, with explicit rounding), or
+// all but a fixed remainder. A LoseAember uses one via its By field instead of a
+// fixed Amount.
 type Loss interface {
 	// lose returns how much to remove from a pool of the given size.
 	lose(pool int) int
@@ -221,22 +222,6 @@ type Loss interface {
 	// "" when every player is.
 	qualifier() string
 }
-
-// Half removes half a pool, rounded down.
-var Half Loss = half{}
-
-type half struct{}
-
-func (half) lose(pool int) int { return pool / 2 }
-func (half) object(possessive string) string {
-	return "half of " + possessive + " Æmber, rounded down"
-}
-func (half) qualifier() string { return "" }
-
-// countPhrase renders a fraction of a count rather than a pool (PowerOfChosen's
-// Of), e.g. "half its power, rounded down", so the same Half serves both
-// LoseAember{By: Half} and PowerOfChosen{Of: Half}.
-func (half) countPhrase(noun string) string { return "half " + noun + ", rounded down" }
 
 // AllAember empties a pool entirely, whatever its size — Shatter Storm's "lose
 // all your Æmber".
@@ -289,7 +274,7 @@ func aemberObject(amount int, by Loss, possessive string) string {
 // To lose Æmber, a player returns that many Æmber from their pool to the common
 // supply. A pool can never go below zero, so a player told to lose more Æmber than
 // they have simply loses all of it. Player may be EachPlayer, so both players lose.
-// The amount lost is either a fixed Amount or a By loss of the pool (By: Half,
+// The amount lost is either a fixed Amount or a By loss of the pool (By: HalfRoundedDown,
 // By: AllBut(5)) — set one, not both.
 type LoseAember struct {
 	// Player is whose pool loses; the amount is either a fixed Amount or a By loss of

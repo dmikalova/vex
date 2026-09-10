@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Demon
 //
-//	Fight: You may move an enemy creature anywhere in its controller's battleline -> if it is on a flank, the chosen creature captures 1 Æmber from your opponent.
+//	Fight: Move an enemy creature anywhere in its controller's battleline -> if it is on a flank, the chosen creature captures 1 Æmber from your opponent.
 var Malison = card.New(
 	"Malison",
 	card.House.Dis,
@@ -20,7 +20,7 @@ var Malison = card.New(
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(
-		card.Trigger.Fight, card.May{Do: card.Then{
+		card.Trigger.Fight, card.Then{
 			First: card.MoveWithinBattleline{Target: card.Target.EnemyCreature},
 			Result: card.Conditional{
 				Cond: card.OnFlank{OfIt: true},
@@ -30,6 +30,5 @@ var Malison = card.New(
 					Source: card.Opponent,
 				},
 			},
-		}},
-	),
+		}),
 )

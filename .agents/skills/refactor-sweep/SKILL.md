@@ -141,6 +141,31 @@ same class. List the gaps with:
 grep -Ln 'rulebook:' internal/engine/effect_*.go | grep -v _test
 ```
 
+**Voice drift.** Every player-facing string is written in one controlled Rules
+voice (ADR 0019): a card's `Text()`, a log entry's `Text(Namer)`, a rulebook
+`Body`, a prompt — short declarative sentences, one instruction each, controlled
+vocabulary (one word per meaning), the resource spelled Æmber. A finding is any
+string that breaks the voice or renders the same act two ways. Read a card's
+`Text()` beside the log its `Resolve()` emits and check they name the same act the
+same way: the same **grammatical voice** for the same mechanic (a random discard
+is the discarding player's own act — "your opponent discards a random card," not
+the imperative "discard a random card from your opponent's hand" one sibling away;
+this is exactly the discard fold's unified voice), the same **verb** for the same
+mechanic (never a synonym the KeyForge vernacular already fixes — `exhaust` not
+"tap", `purge` not "exile", `return` not "bounce", `Æmber` not "mana"), and a log
+that narrates the **resolved outcome**, not the intent (ADR 0011 — "gains 2Æ," not
+"tries to gain 2Æ"). The wording authority order is Vactrol's own conventions
+([card-wording-rules.md](../../../docs/card-wording-rules.md)) → the divergence
+register ([keyforge-divergences.md](../../../docs/keyforge-divergences.md)) → the
+KeyForge Master Rulebook; a deliberate departure not in the register is a finding,
+and so is a "match KeyForge" that silently overwrites a departure the register
+records. A cheap first pass for the banned synonyms (read each hit — some are
+legitimate, e.g. a Mana trait name):
+
+```sh
+grep -rniE '\b(tap|untap|exile|bounce|mana|strongest|weakest)\b' <area> --include='*.go' | grep -v _test
+```
+
 **Bugs and loopholes.** Read for the ones tests miss: a zero value that is a legal
 value and so cannot signal "unset" (ADR 0010 — validate at init, pair a value with
 `hasX`), an unchecked bound or index, a `Target` compared against state that has

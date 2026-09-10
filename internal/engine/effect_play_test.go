@@ -328,24 +328,27 @@ func TestGamePlayFromArchivesIgnoresACardElsewhere(t *testing.T) {
 
 func TestPlayRandomFromOpponentArchivesText(t *testing.T) {
 	want := "play a random card from your opponent's archives"
-	if got := (PlayRandomFromOpponentArchives{}).Text(); got != want {
+	if got := (PlayFromOpponent{From: Archives}).Text(); got != want {
 		t.Errorf("text = %q", got)
 	}
 }
 
 func TestPlayTopOfOpponentDeckText(t *testing.T) {
 	want := "play the top card of your opponent's deck"
-	if got := (PlayTopOfOpponentDeck{}).Text(); got != want {
+	if got := (PlayFromOpponent{From: Deck}).Text(); got != want {
 		t.Errorf("text = %q", got)
 	}
 }
 
 func TestPlayFromOpponentEffectsValidate(t *testing.T) {
-	if err := validateEffect(PlayRandomFromOpponentArchives{}); err != nil {
+	if err := validateEffect(PlayFromOpponent{From: Archives}); err != nil {
 		t.Errorf("archives validate = %v", err)
 	}
-	if err := validateEffect(PlayTopOfOpponentDeck{}); err != nil {
+	if err := validateEffect(PlayFromOpponent{From: Deck}); err != nil {
 		t.Errorf("deck validate = %v", err)
+	}
+	if err := validateEffect(PlayFromOpponent{From: Hand}); err == nil {
+		t.Error("an unsupported zone should not validate")
 	}
 }
 
@@ -358,7 +361,7 @@ func TestPlayTopOfOpponentDeckCreature(t *testing.T) {
 	foe := g.AddToDeck(NewCard("Foe", Logos, Creature, Common, WithPower(3),
 		WithAbility(TriggerAfterPlay, GainAember{Player: Controller, Amount: 2})), 1)
 
-	g.PlayTopOfOpponentDeck(0)
+	g.PlayFromOpponent(0, Deck)
 
 	if !g.inPlay(foe) {
 		t.Fatal("the creature should be in play")
@@ -385,7 +388,7 @@ func TestPlayRandomFromOpponentArchives(t *testing.T) {
 	act := g.AddToArchives(NewCard("Snatched", Logos, Tactic, Common,
 		WithAbility(TriggerAfterPlay, GainAember{Player: Controller, Amount: 3})), 1)
 
-	g.PlayRandomFromOpponentArchives(0)
+	g.PlayFromOpponent(0, Archives)
 
 	if got := g.State.Aember[0]; got != 3 {
 		t.Errorf("player 0 Æmber = %d, want 3", got)
@@ -400,12 +403,12 @@ func TestPlayRandomFromOpponentArchives(t *testing.T) {
 
 func TestPlayRandomFromOpponentArchivesEmpty(t *testing.T) {
 	g := started(t)
-	g.PlayRandomFromOpponentArchives(0) // no panic on empty archives
+	g.PlayFromOpponent(0, Archives) // no panic on empty archives
 }
 
 func TestPlayTopOfOpponentDeckEmpty(t *testing.T) {
 	g := started(t)
-	g.PlayTopOfOpponentDeck(0) // no panic on empty deck
+	g.PlayFromOpponent(0, Deck) // no panic on empty deck
 }
 
 // TestPlayForeignRevertsRejectedPlay covers a foreign play the gates reject: the
@@ -416,7 +419,7 @@ func TestPlayForeignRevertsRejectedPlay(t *testing.T) {
 	foe := g.AddToDeck(NewCard("Foe", Logos, Creature, Common, WithPower(3)), 0)
 
 	// Player 1 is not active, so the play is rejected before the card is removed.
-	g.PlayTopOfOpponentDeck(1)
+	g.PlayFromOpponent(1, Deck)
 
 	if got := g.controller(foe); got != 0 {
 		t.Errorf("controller = %d, want 0 (control reverted)", got)
@@ -436,7 +439,7 @@ func TestPlayRandomFromOpponentArchivesResolve(t *testing.T) {
 	act := g.AddToArchives(NewCard("A", Logos, Tactic, Common,
 		WithAbility(TriggerAfterPlay, GainAember{Player: Controller, Amount: 1})), 1)
 
-	PlayRandomFromOpponentArchives{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	PlayFromOpponent{From: Archives}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 
 	if g.State.Archives[1].contains(act) {
 		t.Error("archives card should have been played")
@@ -452,7 +455,7 @@ func TestPlayTopOfOpponentDeckResolve(t *testing.T) {
 	g := started(t)
 	top := g.AddToDeck(NewCard("D", Logos, Creature, Common, WithPower(2)), 1)
 
-	PlayTopOfOpponentDeck{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	PlayFromOpponent{From: Deck}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 
 	if !g.inPlay(top) || g.controller(top) != 0 {
 		t.Error("deck top should be in play under player 0")

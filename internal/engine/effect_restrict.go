@@ -286,57 +286,43 @@ func (e ChosenHouseCannotReapNextTurn) Resolve(ctx *EffectContext) {
 	ctx.Resolver.CannotReapHouseNextTurn(ctx.PlayerFor(e.Player), ctx.ChosenHouse, ctx.Source)
 }
 
-// SkipForgePhase makes a player skip their "forge a key" phase at the start of their
-// next turn (Miasma).
-type SkipForgePhase struct {
-	Player Player
+// GrantFight lets the controller's creatures of one house fight this turn even out
+// of the active house. House reads the house an enclosing ChooseHouseThen picked
+// when left HouseNone (Brothers in Battle's "each friendly creature of that house
+// may fight") or a named house otherwise (Signal Fire's "friendly Brobnar creatures
+// may fight"). The grant lasts only the current turn (the ready phase clears it).
+// For every friendly creature whatever its house, see GrantFightAnyHouse.
+type GrantFight struct {
+	// House is the house whose creatures may fight; HouseNone reads the chosen house.
+	House House
 }
 
-// validate rejects a SkipForgePhase whose player was left unset.
-func (e SkipForgePhase) validate() error {
-	if !e.Player.valid() {
-		return errUnsetPlayer("SkipForgePhase")
+// Text renders the effect: the chosen house when House is unset, else the named
+// house.
+func (e GrantFight) Text() string {
+	if e.House == HouseNone {
+		return "for the remainder of the turn, each friendly creature of the chosen house may fight"
 	}
-	return nil
+	return fmt.Sprintf(
+		"for the remainder of the turn, each friendly %s creature may fight",
+		e.House,
+	)
 }
 
-// Text renders the effect, e.g. `your opponent skips the "forge a key" phase during
-// their next turn`.
-func (e SkipForgePhase) Text() string {
-	who, whose, verb := "you", "your", "skip"
-	if e.Player == Opponent {
-		who, whose, verb = "your opponent", "their", "skips"
+// Resolve grants the controller's house creatures the right to fight this turn,
+// reading the chosen house when House is unset.
+func (e GrantFight) Resolve(ctx *EffectContext) {
+	house := e.House
+	if house == HouseNone {
+		house = ctx.ChosenHouse
 	}
-	return fmt.Sprintf("%s %s the %q phase during %s next turn", who, verb, "forge a key", whose)
-}
-
-// Resolve arms the skip on the chosen player's next turn.
-func (e SkipForgePhase) Resolve(ctx *EffectContext) {
-	ctx.Resolver.SkipForgePhaseNextTurn(ctx.PlayerFor(e.Player), ctx.Source)
-}
-
-// GrantFightForChosenHouse lets the controller's creatures of the house picked by
-// an enclosing ChooseHouseThen fight this turn even out of the active house —
-// Brothers in Battle's "each friendly creature of that house may fight." The
-// grant lasts only the current turn (the ready phase clears it).
-type GrantFightForChosenHouse struct{}
-
-// Text renders the effect.
-func (GrantFightForChosenHouse) Text() string {
-	return "for the remainder of the turn, each friendly creature of the chosen house may fight"
-}
-
-// Resolve grants the controller's chosen-house creatures the right to fight this
-// turn.
-func (GrantFightForChosenHouse) Resolve(ctx *EffectContext) {
-	ctx.Resolver.GrantFightForHouse(ctx.Controller, ctx.ChosenHouse)
+	ctx.Resolver.GrantFightForHouse(ctx.Controller, house)
 }
 
 // GrantFightAnyHouse lets every creature the controller has fight this turn, whatever
 // its house — Follow the Leader's "each friendly creature may fight", and Horseman
-// of War's longer wording for the same rule. It is GrantFightForChosenHouse with the
-// house filter dropped. The grant lasts only the current turn (the ready phase
-// clears it).
+// of War's longer wording for the same rule. It is GrantFight with the house filter
+// dropped. The grant lasts only the current turn (the ready phase clears it).
 type GrantFightAnyHouse struct{}
 
 // Text renders the effect.
@@ -347,38 +333,6 @@ func (GrantFightAnyHouse) Text() string {
 // Resolve grants the controller's creatures the right to fight this turn.
 func (GrantFightAnyHouse) Resolve(ctx *EffectContext) {
 	ctx.Resolver.GrantFightAnyHouse(ctx.Controller)
-}
-
-// GrantFightForFriendlyHouse lets the controller's creatures of a fixed House fight
-// this turn even out of the active house — Signal Fire's "friendly Brobnar creatures
-// may fight as though they belonged to the active house." Unlike
-// GrantFightForChosenHouse, which reads the house from an enclosing ChooseHouseThen,
-// this names the house on the card. The grant lasts only the current turn (the ready
-// phase clears it).
-type GrantFightForFriendlyHouse struct {
-	House House
-}
-
-// validate rejects a GrantFightForFriendlyHouse whose house was left unset.
-func (e GrantFightForFriendlyHouse) validate() error {
-	if e.House == HouseNone {
-		return fmt.Errorf("GrantFightForFriendlyHouse: house must be set")
-	}
-	return nil
-}
-
-// Text renders the effect, e.g. "for the remainder of the turn, each friendly
-// Brobnar creature may fight".
-func (e GrantFightForFriendlyHouse) Text() string {
-	return fmt.Sprintf(
-		"for the remainder of the turn, each friendly %s creature may fight",
-		e.House,
-	)
-}
-
-// Resolve grants the controller's House creatures the right to fight this turn.
-func (e GrantFightForFriendlyHouse) Resolve(ctx *EffectContext) {
-	ctx.Resolver.GrantFightForHouse(ctx.Controller, e.House)
 }
 
 // HouseGrant is a bitset of what a MayActFriendlyHouse frees for one house this
@@ -526,35 +480,104 @@ func (e MayPlayOffHouse) Resolve(ctx *EffectContext) {
 	})
 }
 
-// ForceOpponentActiveHouse makes the opponent choose the house picked by an
-// enclosing ChooseHouseThen as their active house on their next turn — Control the
-// Weak's "your opponent must choose that house as their active house during their
-// next turn."
-type ForceOpponentActiveHouse struct{}
+// ActiveHouseSource names where an active-house constraint reads the house it
+// applies (and, for JustChosen, whose next turn it binds): the house an enclosing
+// ChooseHouseThen picked (Chosen), the house of the creature the source fought
+// (Fought), or the house a player just chose this turn, read from the board
+// (JustChosen — Snag's Mirror, keyed off the "after a player chooses a house"
+// trigger).
+type ActiveHouseSource uint8
 
-// Text renders the effect.
-func (ForceOpponentActiveHouse) Text() string {
-	return "your opponent must choose that house as their active house during their next turn"
+const (
+	activeHouseUnset ActiveHouseSource = iota
+	// ChosenActiveHouse reads the house an enclosing ChooseHouseThen picked.
+	ChosenActiveHouse
+	// FoughtActiveHouse reads the house of the creature the source fought (ctx.It).
+	FoughtActiveHouse
+	// JustChosenActiveHouse reads the house a player just chose, from the board.
+	JustChosenActiveHouse
+)
+
+// OpponentMustChooseHouse makes the opponent choose a house as their active house
+// on their next turn — the house an enclosing ChooseHouseThen picked (Control the
+// Weak, Source Chosen) or the house of the creature the source fought (Snag,
+// Source Fought).
+type OpponentMustChooseHouse struct {
+	// Source names where the forced house is read from (Chosen or Fought).
+	Source ActiveHouseSource
 }
 
-// Resolve arms the forced house on the opponent's next turn.
-func (ForceOpponentActiveHouse) Resolve(ctx *EffectContext) {
-	ctx.Resolver.ForceActiveHouseNextTurn(ctx.Opponent(), ctx.ChosenHouse, ctx.Source)
+// validate requires a Chosen or Fought source.
+func (e OpponentMustChooseHouse) validate() error {
+	switch e.Source {
+	case ChosenActiveHouse, FoughtActiveHouse:
+		return nil
+	default:
+		return fmt.Errorf("OpponentMustChooseHouse: Source must be Chosen or Fought")
+	}
 }
 
-// ForbidOpponentActiveHouse bars the opponent from choosing the house picked by
-// an enclosing ChooseHouseThen as their active house on their next turn — Tezmal's
-// "your opponent cannot choose that house as their active house on their next
-// turn."
-type ForbidOpponentActiveHouse struct{}
+// Text renders the effect, e.g. "your opponent must choose that house as their
+// active house during their next turn".
+func (e OpponentMustChooseHouse) Text() string {
+	house, when := "that house", "during their next turn"
+	if e.Source == FoughtActiveHouse {
+		house, when = "the house of the creature "+SelfName+" fights", "on their next turn"
+	}
+	return "your opponent must choose " + house + " as their active house " + when
+}
 
-// Text renders the effect.
-func (ForbidOpponentActiveHouse) Text() string {
+// Resolve arms the forced house on the opponent's next turn. A Fought source with
+// no creature in context does nothing.
+func (e OpponentMustChooseHouse) Resolve(ctx *EffectContext) {
+	house := ctx.ChosenHouse
+	if e.Source == FoughtActiveHouse {
+		if !ctx.HasIt {
+			return
+		}
+		house = ctx.Resolver.House(ctx.It)
+	}
+	ctx.Resolver.ForceActiveHouseNextTurn(ctx.Opponent(), house, ctx.Source)
+}
+
+// OpponentCannotChooseHouse bars a player from choosing a house as their active
+// house on their next turn — the source's opponent from the chosen house (Tezmal,
+// Source Chosen) or the chooser's opponent from the house a player just chose
+// (Snag's Mirror, Source JustChosen, keyed off the "after a player chooses a
+// house" trigger so it works whichever player chose).
+type OpponentCannotChooseHouse struct {
+	// Source names where the barred house is read from (Chosen or JustChosen).
+	Source ActiveHouseSource
+}
+
+// validate requires a Chosen or JustChosen source.
+func (e OpponentCannotChooseHouse) validate() error {
+	switch e.Source {
+	case ChosenActiveHouse, JustChosenActiveHouse:
+		return nil
+	default:
+		return fmt.Errorf("OpponentCannotChooseHouse: Source must be Chosen or JustChosen")
+	}
+}
+
+// Text renders the effect. A JustChosen source follows the "after a player chooses
+// an active house, " trigger prefix, so it speaks from the chooser's point of view.
+func (e OpponentCannotChooseHouse) Text() string {
+	if e.Source == JustChosenActiveHouse {
+		return "their opponent cannot choose the same house as their active house on their next turn"
+	}
 	return "your opponent cannot choose that house as their active house on their next turn"
 }
 
-// Resolve arms the forbidden house on the opponent's next turn.
-func (ForbidOpponentActiveHouse) Resolve(ctx *EffectContext) {
+// Resolve bars the house on the barred player's next turn. A JustChosen source
+// reads the active player and house from the board, so it bars the chooser's
+// opponent whichever player made the choice.
+func (e OpponentCannotChooseHouse) Resolve(ctx *EffectContext) {
+	if e.Source == JustChosenActiveHouse {
+		chooser := ctx.Resolver.ActivePlayer()
+		ctx.Resolver.ForbidActiveHouseNextTurn(1-chooser, ctx.Resolver.ActiveHouse(), ctx.Source)
+		return
+	}
 	ctx.Resolver.ForbidActiveHouseNextTurn(ctx.Opponent(), ctx.ChosenHouse, ctx.Source)
 }
 
@@ -580,42 +603,4 @@ func (e WagerOpponentChoosesChosenHouse) Resolve(ctx *EffectContext) {
 	ctx.Resolver.WagerOnHouseNextTurn(
 		ctx.Opponent(), ctx.ChosenHouse, e.Amount, ctx.Controller, ctx.Source,
 	)
-}
-
-// ForceOpponentActiveHouseOfFought is Snag's Fight ability: the opponent must
-// choose the house of the creature Snag fought (ctx.It) as their active house on
-// their next turn.
-type ForceOpponentActiveHouseOfFought struct{}
-
-// Text renders the effect.
-func (ForceOpponentActiveHouseOfFought) Text() string {
-	return "your opponent must choose the house of the creature " + SelfName +
-		" fights as their active house on their next turn"
-}
-
-// Resolve arms the fought creature's house on the opponent's next turn.
-func (ForceOpponentActiveHouseOfFought) Resolve(ctx *EffectContext) {
-	if !ctx.HasIt {
-		return
-	}
-	ctx.Resolver.ForceActiveHouseNextTurn(ctx.Opponent(), ctx.Resolver.House(ctx.It), ctx.Source)
-}
-
-// ForbidSameActiveHouseNextTurn is Snag's Mirror: keyed off the shared "after a
-// player chooses a house" window, it bars whoever chose from having their
-// opponent match that house next turn. It reads the active player and house from
-// the board rather than the source's point of view, so it works whichever player
-// made the choice.
-type ForbidSameActiveHouseNextTurn struct{}
-
-// Text renders the effect from the chooser's point of view, to follow the "after
-// a player chooses an active house, " trigger prefix.
-func (ForbidSameActiveHouseNextTurn) Text() string {
-	return "their opponent cannot choose the same house as their active house on their next turn"
-}
-
-// Resolve bars the chooser's opponent from the chosen house on their next turn.
-func (ForbidSameActiveHouseNextTurn) Resolve(ctx *EffectContext) {
-	chooser := ctx.Resolver.ActivePlayer()
-	ctx.Resolver.ForbidActiveHouseNextTurn(1-chooser, ctx.Resolver.ActiveHouse(), ctx.Source)
 }

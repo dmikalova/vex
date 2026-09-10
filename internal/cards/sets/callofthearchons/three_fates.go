@@ -19,6 +19,6 @@ var ThreeFates = card.New(
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play,
-		card.Destroy{Target: card.Target.EachCreature.Refine(card.MostPowerful(3))},
+		card.Destroy{Target: card.Target.EachCreature.Refine(card.MostPowerfulN(3))},
 	),
 )

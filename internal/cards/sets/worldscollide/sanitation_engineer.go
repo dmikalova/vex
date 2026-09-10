@@ -22,5 +22,10 @@ var SanitationEngineer = card.New(
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Scientist),
 	card.WithHazardous(1),
 	card.WithAbility(
-		card.Trigger.Reap, card.DiscardFromHand{Amount: 1}),
+		card.Trigger.Reap, card.DiscardCard{
+			Player:    card.Controller,
+			Zone:      card.Hand,
+			Selection: card.Chosen{Mandatory: true},
+			Amount:    1,
+		}),
 )

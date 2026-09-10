@@ -441,23 +441,11 @@ func (g *Game) ArchiveTopOfDiscard(player int) bool { return g.archiveTopOfDisca
 // DiscardArchives moves all of a player's archived cards to their discard pile.
 func (g *Game) DiscardArchives(owner int) { g.discardArchives(owner) }
 
-// DiscardRandomFromArchives discards one uniformly random card from a player's
-// archives, doing nothing if the archives are empty.
-func (g *Game) DiscardRandomFromArchives(owner int) { g.discardRandomFromArchives(owner) }
-
 // PurgeFromDiscard moves a card from a player's discard pile to their purge pile.
 func (g *Game) PurgeFromDiscard(owner int, id LocalID) { g.purgeFromDiscard(owner, id) }
 
 // PurgeFromHand moves a card from a player's hand to their purge pile.
 func (g *Game) PurgeFromHand(owner int, id LocalID) { g.purgeFromHand(owner, id) }
-
-// PurgeRandomFromHand moves one uniformly random card from a player's hand to
-// their purge pile, doing nothing if the hand is empty.
-func (g *Game) PurgeRandomFromHand(owner int) {
-	if id, ok := g.randomCardFromHand(owner); ok {
-		g.purgeFromHand(owner, id)
-	}
-}
 
 // PurgeFromArchives moves a card from a player's archives to their purge pile.
 func (g *Game) PurgeFromArchives(owner int, id LocalID) { g.purgeFromArchives(owner, id) }
@@ -623,6 +611,16 @@ func (g *Game) ChooseCardOptional(
 // (does not implement OptionChooser), the first option is taken.
 func (g *Game) ChooseOption(player int, source LocalID, prompt string, options []string) int {
 	return g.chooseOption(player, g.sourceName(source), prompt, options)
+}
+
+// ChooseRandom picks one uniformly random card from candidates using the game's
+// RNG, reporting ok=false for an empty slice. It is the shared draw behind a
+// Random selection and the per-verb *RandomFromHand moves.
+func (g *Game) ChooseRandom(candidates []LocalID) (LocalID, bool) {
+	if len(candidates) == 0 {
+		return 0, false
+	}
+	return candidates[g.rng.Intn(len(candidates))], true
 }
 
 // chooseOption is the shared option-choice path: it attributes the prompt to a

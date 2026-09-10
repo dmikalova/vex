@@ -64,4 +64,25 @@ func TestShadowSelf(t *testing.T) {
 		h.Expect(specter).At(ct.PlayArea).Damage(3)
 		h.Expect(shadow).At(ct.PlayArea).Damage(0)
 	})
+
+	t.Run("deals no damage back to an attacker that fights it", func(t *testing.T) {
+		var shadow, foe ct.Card
+		h := ct.Play(t, ct.Setup{
+			P1: ct.Side{House: card.House.Shadows, InPlay: ct.Cards(
+				ct.Bind(&shadow, ShadowSelf),
+			)},
+			P2: ct.Side{InPlay: ct.Cards(
+				ct.Bind(&foe, ct.Creature(ct.OfHouse(card.House.Mars), ct.Power(3))),
+			)},
+		})
+
+		// The enemy attacks Shadow Self directly. Shadow Self deals no damage when
+		// fighting — including the retaliation it would deal back — so the attacker
+		// is untouched while Shadow Self still takes the attacker's power.
+		h.P1.EndTurn()
+		h.P2.ChooseHouse(card.House.Mars)
+		h.P2.Fight(foe, shadow)
+		h.Expect(foe).At(ct.PlayArea).Damage(0)
+		h.Expect(shadow).At(ct.PlayArea).Damage(3)
+	})
 }

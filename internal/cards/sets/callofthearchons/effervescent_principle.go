@@ -20,7 +20,7 @@ var EffervescentPrinciple = card.New(
 			Effects: []card.Effect{
 				card.LoseAember{
 					Player: card.EachPlayer,
-					By:     card.Half,
+					By:     card.HalfRoundedDown,
 				},
 				card.GainChains{Amount: 1},
 			},

@@ -21,6 +21,6 @@ var SnagsMirror = card.New(
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.AfterAnyPlayerChoosesHouse,
-		card.ForbidSameActiveHouseNextTurn{},
+		card.OpponentCannotChooseHouse{Source: card.JustChosenActiveHouse},
 	),
 )

@@ -120,11 +120,20 @@ func (g *Game) fight(attacker, defender LocalID) {
 				dmgTarget = redirect
 			}
 			targets := []DamageTarget{{ID: dmgTarget, Amount: g.fightDamage(attacker, defender)}}
+			// Retaliation damage equals the defender's power, unless a Fixed
+			// AttackDamage replaces it: Shadow Self and Ether Spider "deal no damage
+			// when fighting", so they deal none back to an attacker either. An
+			// additive AttackDamage bonus (Valdr's flank +2) is an attack-only bonus
+			// and never adds to retaliation.
+			retaliation := dp
+			if ad := g.cat.def(defender).AttackDamage; ad.Fixed {
+				retaliation = ad.Amount
+			}
 			skirmish := g.hasKeyword(attacker, Skirmish)
 			if !skirmish &&
 				!g.cat.def(defender).DealsNoDamageWhenAttacked {
-				targets = append(targets, DamageTarget{ID: attacker, Amount: dp})
-			} else if skirmish && dp > 0 {
+				targets = append(targets, DamageTarget{ID: attacker, Amount: retaliation})
+			} else if skirmish && retaliation > 0 {
 				g.record(SkirmishAvoidedReturn{Attacker: attacker})
 			}
 			// Splash-attack deals its damage to each neighbor of the creature the

@@ -19,6 +19,6 @@ var ControlTheWeak = card.New(
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseHouseThen{
-			Then: card.ForceOpponentActiveHouse{},
+			Then: card.OpponentMustChooseHouse{Source: card.ChosenActiveHouse},
 		}),
 )

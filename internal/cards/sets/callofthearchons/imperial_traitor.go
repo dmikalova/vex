@@ -22,8 +22,8 @@ var ImperialTraitor = card.New(
 			Effects: []card.Effect{
 				card.RevealHand{Player: card.Opponent},
 				card.PurgeFromHand{
-					Player: card.Opponent,
-					House:  card.House.Sanctum,
+					Player:    card.Opponent,
+					Selection: card.Chosen{House: card.House.Sanctum},
 				},
 			},
 		}),

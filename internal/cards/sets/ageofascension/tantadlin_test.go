@@ -16,7 +16,7 @@ import (
 //	Traits: Tree
 //
 //	Tantadlin deals 2 Damage when fighting.
-//	Fight: Discard a random card from your opponent's archives.
+//	Fight: Your opponent discards a random card from their archives.
 func TestTantadlin(t *testing.T) {
 	t.Run("deals only 2 fight damage", func(t *testing.T) {
 		var foe ct.Card

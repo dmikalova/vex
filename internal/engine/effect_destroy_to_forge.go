@@ -42,26 +42,12 @@ func (e DestroyFriendlyCreaturesToForge) Text() string {
 // they stop, the creatures are destroyed and Then resolves only if the tally
 // reached the threshold; below it, nothing is destroyed.
 func (e DestroyFriendlyCreaturesToForge) Resolve(ctx *EffectContext) {
-	picked := map[LocalID]bool{}
-	var chosen []LocalID
+	chosen := pickCards(ctx, "Choose a creature to destroy", 0, true, func() []LocalID {
+		return e.Target.Select(ctx)
+	})
 	total := 0
-	for {
-		var cands []LocalID
-		for _, id := range e.Target.Select(ctx) {
-			if !picked[id] {
-				cands = append(cands, id)
-			}
-		}
-		if len(cands) == 0 {
-			break
-		}
-		pick, ok := ctx.ChooseCardOptional("Choose a creature to destroy", cands)
-		if !ok {
-			break
-		}
-		picked[pick] = true
-		chosen = append(chosen, pick)
-		total += ctx.Resolver.Power(pick)
+	for _, id := range chosen {
+		total += ctx.Resolver.Power(id)
 	}
 	if total < e.MinTotalPower {
 		return
@@ -105,25 +91,9 @@ func (e SacrificeToForge) Text() string {
 // the reduced-cost forge. Forging (which only happens when affordable and accepted)
 // destroys the source artifact.
 func (e SacrificeToForge) Resolve(ctx *EffectContext) {
-	picked := map[LocalID]bool{}
-	var chosen []LocalID
-	for {
-		var cands []LocalID
-		for _, id := range e.Target.Select(ctx) {
-			if !picked[id] {
-				cands = append(cands, id)
-			}
-		}
-		if len(cands) == 0 {
-			break
-		}
-		pick, ok := ctx.ChooseCardOptional("Choose a creature to destroy", cands)
-		if !ok {
-			break
-		}
-		picked[pick] = true
-		chosen = append(chosen, pick)
-	}
+	chosen := pickCards(ctx, "Choose a creature to destroy", 0, true, func() []LocalID {
+		return e.Target.Select(ctx)
+	})
 	Destroy{}.destroy(ctx, chosen)
 	extra := max(e.Extra-len(chosen), 0)
 	prompt := fmt.Sprintf("You may forge a key at +%d Æmber current cost", extra)

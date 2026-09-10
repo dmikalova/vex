@@ -26,7 +26,7 @@ card says so. A "for each" clause multiplies the amount by a running count.`,
 			Body: `To lose Æmber, a player returns that many Æmber from their pool to the common
 supply. A pool can never go below zero, so a player told to lose more Æmber than
 they have simply loses all of it. Player may be EachPlayer, so both players lose.
-The amount lost is either a fixed Amount or a By loss of the pool (By: Half,
+The amount lost is either a fixed Amount or a By loss of the pool (By: HalfRoundedDown,
 By: AllBut(5)) — set one, not both.`,
 		},
 		{
@@ -348,11 +348,21 @@ Self tutoring a Timetraveller. Nothing happens if no matching card is found.`,
 		{
 			Section:    SectionEffect,
 			Title:      "Search Your Deck",
-			Definition: "Search your deck for a card, put it into your hand, and shuffle your deck.",
-			Body: `SearchDeck is the KeyForge "search" keyword: the controller searches their deck
-for a card — any card, or one of a given House — puts it into their hand, and then
-shuffles their deck. A House-restricted search reveals the card it takes. The deck
-is always shuffled, even when nothing was taken.`,
+			Definition: "Search your deck for a card and put it into your hand.",
+			Body: `SearchDeck is the KeyForge "search" keyword's deck search: the controller
+searches their deck for a card — any card, or one of a given House — and puts it
+into their hand. A House-restricted search reveals the card it takes. It does not
+shuffle: a search is always followed by a separate ShuffleDeck, enforced by a
+card lint.`,
+		},
+		{
+			Section:    SectionEffect,
+			Title:      "Shuffle Your Deck",
+			Definition: "Shuffle your deck.",
+			Body: `ShuffleDeck shuffles the controller's deck — the plain "shuffle your deck" that
+always follows a search of the deck (Orb of Wonder, Saurus Rex, Grumpus Tamer).
+It is a standalone effect so a search never bundles its own shuffle; that a
+search is always followed by a shuffle is enforced by a card lint.`,
 		},
 		{
 			Section:    SectionEffect,

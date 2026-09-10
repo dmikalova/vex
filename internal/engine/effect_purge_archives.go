@@ -39,26 +39,24 @@ func (e PurgeArchivesForDamage) Text() string {
 // decline, then deals Amount damage to each targeted creature for every card
 // purged.
 func (e PurgeArchivesForDamage) Resolve(ctx *EffectContext) {
-	purged := 0
-	for {
-		cands := ctx.Resolver.Archives(ctx.Controller)
-		if len(cands) == 0 {
-			break
-		}
-		chosen, ok := ctx.ChooseCardOptional(
-			"Choose a card to purge from your archives", cands)
-		if !ok {
-			break
-		}
-		ctx.Resolver.PurgeFromArchives(ctx.Controller, chosen)
-		purged++
-	}
-	if purged == 0 {
+	chosen := pickCards(
+		ctx,
+		"Choose a card to purge from your archives",
+		0,
+		true,
+		func() []LocalID {
+			return ctx.Resolver.Archives(ctx.Controller)
+		},
+	)
+	if len(chosen) == 0 {
 		return
+	}
+	for _, id := range chosen {
+		ctx.Resolver.PurgeFromArchives(ctx.Controller, id)
 	}
 	var hits []DamageTarget
 	for _, id := range e.Target.Select(ctx) {
-		hits = append(hits, DamageTarget{ID: id, Amount: e.Amount * purged})
+		hits = append(hits, DamageTarget{ID: id, Amount: e.Amount * len(chosen)})
 	}
 	if len(hits) > 0 {
 		ctx.Resolver.DealDamage(ctx.Controller, hits)

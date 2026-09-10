@@ -152,42 +152,37 @@ func (e PlayFrom) candidates(ctx *EffectContext) []LocalID {
 	return out
 }
 
-// PlayRandomFromOpponentArchives has the controller play a random card from their
-// opponent's archives as their own (a Murkens option). The card is played as the
-// controller's own play — it counts against their card-play limit — and, if it
-// stays in play, the controller controls it while its owner stays the opponent.
-// With the opponent's archives empty it does nothing.
-type PlayRandomFromOpponentArchives struct{}
+// PlayFromOpponent has the controller play a card from a zone of their opponent's
+// as their own (the Murkens options): the top card of the opponent's deck (From
+// Deck), or a uniformly random card from their facedown archives (From Archives).
+// The card is played as the controller's own play — it counts against their
+// card-play limit — and, if it stays in play, the controller controls it while its
+// owner stays the opponent. An empty source zone does nothing.
+type PlayFromOpponent struct {
+	// From is the opponent's zone the card comes from: Deck (its top card) or
+	// Archives (a uniformly random card, since the archives are facedown).
+	From Zone
+}
 
-// validate accepts the effect; it has no configuration.
-func (PlayRandomFromOpponentArchives) validate() error { return nil }
+// validate requires a supported source zone.
+func (e PlayFromOpponent) validate() error {
+	switch e.From {
+	case Deck, Archives:
+		return nil
+	default:
+		return fmt.Errorf("PlayFromOpponent: From must be Deck or Archives")
+	}
+}
 
 // Text renders the effect's printed clause.
-func (PlayRandomFromOpponentArchives) Text() string {
+func (e PlayFromOpponent) Text() string {
+	if e.From == Deck {
+		return "play the top card of your opponent's deck"
+	}
 	return "play a random card from your opponent's archives"
 }
 
-// Resolve plays a random card out of the opponent's archives as the controller's.
-func (PlayRandomFromOpponentArchives) Resolve(ctx *EffectContext) {
-	ctx.Resolver.PlayRandomFromOpponentArchives(ctx.Controller)
-}
-
-// PlayTopOfOpponentDeck has the controller play the top card of their opponent's
-// deck as their own (a Murkens option). The card is played as the controller's own
-// play — it counts against their card-play limit — and, if it stays in play, the
-// controller controls it while its owner stays the opponent. With the opponent's
-// deck empty it does nothing.
-type PlayTopOfOpponentDeck struct{}
-
-// validate accepts the effect; it has no configuration.
-func (PlayTopOfOpponentDeck) validate() error { return nil }
-
-// Text renders the effect's printed clause.
-func (PlayTopOfOpponentDeck) Text() string {
-	return "play the top card of your opponent's deck"
-}
-
-// Resolve plays the top card of the opponent's deck as the controller's.
-func (PlayTopOfOpponentDeck) Resolve(ctx *EffectContext) {
-	ctx.Resolver.PlayTopOfOpponentDeck(ctx.Controller)
+// Resolve plays the card from the opponent's zone as the controller's own.
+func (e PlayFromOpponent) Resolve(ctx *EffectContext) {
+	ctx.Resolver.PlayFromOpponent(ctx.Controller, e.From)
 }

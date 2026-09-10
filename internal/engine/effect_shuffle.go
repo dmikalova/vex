@@ -40,6 +40,22 @@ func (e ShuffleIntoDeck) Resolve(ctx *EffectContext) {
 	ctx.Resolver.ShuffleZonesIntoDeck(ctx.Controller, e.Zones)
 }
 
+// ShuffleDeck shuffles the controller's deck — the plain "shuffle your deck" that
+// always follows a search of the deck (Orb of Wonder, Saurus Rex, Grumpus Tamer).
+// It is a standalone effect so a search never bundles its own shuffle; that a
+// search is always followed by a shuffle is enforced by a card lint
+// (TestSearchIsFollowedByShuffle).
+type ShuffleDeck struct{}
+
+// Text renders the effect.
+func (ShuffleDeck) Text() string { return "shuffle your deck" }
+
+// Resolve shuffles the controller's deck.
+func (ShuffleDeck) Resolve(ctx *EffectContext) {
+	ctx.Resolver.Shuffle(ctx.Controller)
+	ctx.Resolver.Record(DeckShuffled{Player: ctx.Controller})
+}
+
 // ShuffleChosenCreaturesFromDiscard shuffles any number of creatures the
 // controller chooses from their discard pile back into their deck, one grouped
 // shuffle (Not Finished with You). An optional House filter narrows the eligible

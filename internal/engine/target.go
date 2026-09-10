@@ -296,8 +296,8 @@ func (t Target) selfHouseResolved(house House) any {
 
 // SharingTrait narrows the target to cards that share at least one trait with the
 // card in context (ctx.It), rendering "that shares a trait with it" — the purged
-// creature after PurgeCreatureFromHand (Custom Virus), or whatever an earlier
-// effect put in context.
+// creature after a PurgeFromHand that moves a single card (Custom Virus), or
+// whatever an earlier effect put in context.
 func (t Target) SharingTrait() Target {
 	t.sharesTrait = true
 	return t

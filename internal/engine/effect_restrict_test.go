@@ -54,11 +54,11 @@ func TestCannotPlay(t *testing.T) {
 }
 
 func TestGrantFightForChosenHouse(t *testing.T) {
-	if got := (GrantFightForChosenHouse{}).Text(); got != "for the remainder of the turn, each friendly creature of the chosen house may fight" {
+	if got := (GrantFight{}).Text(); got != "for the remainder of the turn, each friendly creature of the chosen house may fight" {
 		t.Errorf("text = %q", got)
 	}
 	g := NewGame("A", "B", 1)
-	GrantFightForChosenHouse{}.Resolve(
+	GrantFight{}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0, ChosenHouse: Untamed},
 	)
 	if g.State.MayFightHouse[0] != Untamed {
@@ -67,13 +67,7 @@ func TestGrantFightForChosenHouse(t *testing.T) {
 }
 
 func TestGrantFightForFriendlyHouse(t *testing.T) {
-	if err := (GrantFightForFriendlyHouse{}).validate(); err == nil {
-		t.Error("an unset house should be rejected")
-	}
-	e := GrantFightForFriendlyHouse{House: Brobnar}
-	if err := e.validate(); err != nil {
-		t.Errorf("validate = %v, want nil", err)
-	}
+	e := GrantFight{House: Brobnar}
 	if got := e.Text(); got != "for the remainder of the turn, each friendly Brobnar creature may fight" {
 		t.Errorf("text = %q", got)
 	}
@@ -381,8 +375,15 @@ func TestToll(t *testing.T) {
 }
 
 func TestForceActiveHouseNextTurn(t *testing.T) {
-	if got := (ForceOpponentActiveHouse{}).Text(); got != "your opponent must choose that house as their active house during their next turn" {
+	e := OpponentMustChooseHouse{Source: ChosenActiveHouse}
+	if got := e.Text(); got != "your opponent must choose that house as their active house during their next turn" {
 		t.Errorf("text = %q", got)
+	}
+	if err := e.validate(); err != nil {
+		t.Errorf("a Chosen source should validate for must-choose: %v", err)
+	}
+	if err := (OpponentMustChooseHouse{Source: JustChosenActiveHouse}).validate(); err == nil {
+		t.Error("a JustChosen source should not validate for must-choose")
 	}
 	g := NewGame("A", "B", 1)
 	g.StartTurn(0)
@@ -390,7 +391,7 @@ func TestForceActiveHouseNextTurn(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ForceOpponentActiveHouse{}.Resolve(
+	e.Resolve(
 		&EffectContext{Resolver: g, Controller: 0, ChosenHouse: Mars},
 	)
 	if g.State.ForcedHouseNext[1].Value != Mars {
@@ -422,7 +423,7 @@ func TestForceActiveHouseNextTurn(t *testing.T) {
 }
 
 func TestForceActiveHouseOfFoughtNextTurn(t *testing.T) {
-	e := ForceOpponentActiveHouseOfFought{}
+	e := OpponentMustChooseHouse{Source: FoughtActiveHouse}
 	if got := e.Text(); got != "your opponent must choose the house of the creature {self} fights as their active house on their next turn" {
 		t.Errorf("text = %q", got)
 	}
@@ -507,9 +508,15 @@ func TestWagerMissed(t *testing.T) {
 // TestForbidSameActiveHouseNextTurn covers Snag's Mirror: after a player chooses
 // their active house, their opponent cannot choose that same house next turn.
 func TestForbidSameActiveHouseNextTurn(t *testing.T) {
-	e := ForbidSameActiveHouseNextTurn{}
+	e := OpponentCannotChooseHouse{Source: JustChosenActiveHouse}
 	if got := e.Text(); got != "their opponent cannot choose the same house as their active house on their next turn" {
 		t.Errorf("text = %q", got)
+	}
+	if err := e.validate(); err != nil {
+		t.Errorf("a JustChosen source should validate for cannot-choose: %v", err)
+	}
+	if err := (OpponentCannotChooseHouse{Source: FoughtActiveHouse}).validate(); err == nil {
+		t.Error("a Fought source should not validate for cannot-choose")
 	}
 
 	g := NewGame("A", "B", 1)
@@ -524,7 +531,8 @@ func TestForbidSameActiveHouseNextTurn(t *testing.T) {
 }
 
 func TestForbidActiveHouseNextTurn(t *testing.T) {
-	if got := (ForbidOpponentActiveHouse{}).Text(); got != "your opponent cannot choose that house as their active house on their next turn" {
+	e := OpponentCannotChooseHouse{Source: ChosenActiveHouse}
+	if got := e.Text(); got != "your opponent cannot choose that house as their active house on their next turn" {
 		t.Errorf("text = %q", got)
 	}
 	g := NewGame("A", "B", 1)
@@ -533,7 +541,7 @@ func TestForbidActiveHouseNextTurn(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	ForbidOpponentActiveHouse{}.Resolve(
+	e.Resolve(
 		&EffectContext{Resolver: g, Controller: 0, ChosenHouse: Mars},
 	)
 	if g.State.ForbiddenHouseNext[1].Value != Mars {

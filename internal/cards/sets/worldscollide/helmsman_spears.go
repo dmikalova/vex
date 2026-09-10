@@ -20,7 +20,12 @@ var HelmsmanSpears = card.New(
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human),
 	card.WithFightOrReap(card.Then{
-		First:  card.DiscardFromHand{AnyNumber: true},
+		First: card.DiscardCard{
+			Player:    card.Controller,
+			Zone:      card.Hand,
+			Selection: card.Chosen{},
+			AnyNumber: true,
+		},
 		Result: card.ForEachDiscarded{Do: card.Draw{Amount: 1}},
 	}),
 )

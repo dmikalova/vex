@@ -24,6 +24,6 @@ var Tezmal = card.New(
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
 		card.Trigger.Reap, card.ChooseHouseThen{
-			Then: card.ForbidOpponentActiveHouse{},
+			Then: card.OpponentCannotChooseHouse{Source: card.ChosenActiveHouse},
 		}),
 )

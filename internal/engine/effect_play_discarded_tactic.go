@@ -43,15 +43,13 @@ func (PlayDiscardedTacticFromOpponent) Resolve(ctx *EffectContext) {
 	ctx.Resolver.PlayFromOpponentDiscard(ctx.Controller, id)
 }
 
-// discardRandomArchivesCard discards a random card from player's archives and
-// reports it. The engine's random discard reveals no card, so the discarded card
-// is read back as the freshly added top of that player's discard pile — where a
-// following play must find it anyway. Empty archives discard nothing.
+// discardRandomArchivesCard picks a random card from player's archives, discards
+// it, and reports it. Empty archives discard nothing.
 func discardRandomArchivesCard(ctx *EffectContext, player int) (LocalID, bool) {
-	if len(ctx.Resolver.Archives(player)) == 0 {
+	id, ok := ctx.Resolver.ChooseRandom(ctx.Resolver.Archives(player))
+	if !ok {
 		return 0, false
 	}
-	ctx.Resolver.DiscardRandomFromArchives(player)
-	discard := ctx.Resolver.Discard(player)
-	return discard[len(discard)-1], true
+	ctx.Resolver.DiscardCardFromArchives(player, id)
+	return id, true
 }

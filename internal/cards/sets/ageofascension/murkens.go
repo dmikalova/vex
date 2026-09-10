@@ -24,8 +24,8 @@ var Murkens = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseOne{
 			Options: []card.Effect{
-				card.PlayRandomFromOpponentArchives{},
-				card.PlayTopOfOpponentDeck{},
+				card.PlayFromOpponent{From: card.Archives},
+				card.PlayFromOpponent{From: card.Deck},
 			},
 		}),
 )

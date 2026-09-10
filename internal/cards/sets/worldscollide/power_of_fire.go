@@ -21,7 +21,7 @@ var PowerOfFire = card.New(
 				First: card.Destroy{Target: card.Target.FriendlyCreature},
 				Result: card.LoseAemberEqualTo{
 					Player: card.EachPlayer,
-					Count:  card.PowerOfChosen{Of: card.Half},
+					Count:  card.PowerOfChosen{Of: card.HalfRoundedDown},
 				},
 			},
 			card.GainChains{Amount: 1},

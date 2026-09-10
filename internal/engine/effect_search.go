@@ -67,32 +67,29 @@ func (e SearchForName) take(ctx *EffectContext, inDeck []LocalID, id LocalID) {
 	}
 }
 
-// SearchDeck is the KeyForge "search" keyword: the controller searches their deck
-// for a card — any card, or one of a given House — puts it into their hand, and
-// then shuffles their deck (Orb of Wonder searches for any card, Saurus Rex for a
-// Saurian card). A House-restricted search reveals the card it takes. The deck is
-// always shuffled, even when nothing was taken.
+// SearchDeck is the KeyForge "search" keyword's deck search: the controller
+// searches their deck for a card — any card, or one of a given House — and puts it
+// into their hand (Orb of Wonder searches for any card, Saurus Rex for a Saurian
+// card). A House-restricted search reveals the card it takes. It does not shuffle:
+// a search is always followed by a separate ShuffleDeck, enforced by a card lint.
 type SearchDeck struct {
 	// House restricts the search to cards of that house; HouseNone searches for any
 	// card and does not reveal what it takes.
 	House House
 }
 
-// Text renders the effect, ending in "then shuffle your deck" so the shuffle is
-// always stated (e.g. "search your deck for a Saurian card, reveal it, and put it
-// into your hand, then shuffle your deck").
+// Text renders the effect, e.g. "search your deck for a Saurian card, reveal it,
+// and put it into your hand".
 func (e SearchDeck) Text() string {
 	if e.House == HouseNone {
-		return "search your deck for a card and put it into your hand" +
-			", then shuffle your deck"
+		return "search your deck for a card and put it into your hand"
 	}
 	return "search your deck for " + indefinite(e.House.String()+" card") +
-		", reveal it, and put it into your hand, then shuffle your deck"
+		", reveal it, and put it into your hand"
 }
 
-// Resolve gathers the deck cards matching the House filter, lets the controller
-// choose one to put into their hand (revealing it when the search was restricted),
-// and then shuffles the deck regardless of whether a card was taken.
+// Resolve gathers the deck cards matching the House filter and lets the controller
+// choose one to put into their hand, revealing it when the search was restricted.
 func (e SearchDeck) Resolve(ctx *EffectContext) {
 	var cands []LocalID
 	for _, id := range ctx.Resolver.Deck(ctx.Controller) {
@@ -106,6 +103,4 @@ func (e SearchDeck) Resolve(ctx *EffectContext) {
 		}
 		ctx.Resolver.MoveFromDeckToHand(id)
 	}
-	ctx.Resolver.Shuffle(ctx.Controller)
-	ctx.Resolver.Record(DeckShuffled{Player: ctx.Controller})
 }

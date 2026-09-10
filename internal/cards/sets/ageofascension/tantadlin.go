@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Tree
 //
 //	Tantadlin deals 2 Damage when fighting.
-//	Fight: Discard a random card from your opponent's archives.
+//	Fight: Your opponent discards a random card from their archives.
 var Tantadlin = card.New(
 	"Tantadlin",
 	card.House.Untamed,
@@ -25,5 +25,9 @@ var Tantadlin = card.New(
 		Fixed:  true,
 	}),
 	card.WithAbility(
-		card.Trigger.Fight, card.DiscardRandomFromArchives{Player: card.Opponent}),
+		card.Trigger.Fight, card.DiscardCard{
+			Player:    card.Opponent,
+			Zone:      card.Archives,
+			Selection: card.Random{},
+		}),
 )

@@ -2,23 +2,23 @@ package engine
 
 import "testing"
 
-// TestPurgeEachFromHandText covers the rendered phrase for each filter
-// combination and the validation of its player.
-func TestPurgeEachFromHandText(t *testing.T) {
+// TestPurgeFromHandEachText covers the rendered phrase for each filter
+// combination of an Each selection.
+func TestPurgeFromHandEachText(t *testing.T) {
 	cases := []struct {
-		e    PurgeEachFromHand
+		e    PurgeFromHand
 		want string
 	}{
 		{
-			PurgeEachFromHand{Player: Controller},
+			PurgeFromHand{Player: Controller, Selection: Each{}},
 			"purge each card from your hand",
 		},
 		{
-			PurgeEachFromHand{Player: Opponent, Type: Creature},
+			PurgeFromHand{Player: Opponent, Selection: Each{Type: Creature}},
 			"purge each creature from your opponent's hand",
 		},
 		{
-			PurgeEachFromHand{Player: Controller, Type: Creature, ExceptHouse: Mars},
+			PurgeFromHand{Player: Controller, Selection: Each{Type: Creature, ExceptHouse: Mars}},
 			"purge each non-Mars creature from your hand",
 		},
 	}
@@ -30,14 +30,11 @@ func TestPurgeEachFromHandText(t *testing.T) {
 			t.Errorf("validate = %v, want nil", err)
 		}
 	}
-	if err := (PurgeEachFromHand{}).validate(); err == nil {
-		t.Error("a playerless PurgeEachFromHand should not validate")
-	}
 }
 
-// TestPurgeEachFromHandPurgesEveryMatch checks the filters decide what goes,
+// TestPurgeFromHandEachPurgesEveryMatch checks the filters decide what goes,
 // that nothing else is touched, and that the tally feeds a following count.
-func TestPurgeEachFromHandPurgesEveryMatch(t *testing.T) {
+func TestPurgeFromHandEachPurgesEveryMatch(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	martian := g.AddToHand(NewCard("martian", Mars, Creature, Common, WithPower(3)), 0)
 	brobnar := g.AddToHand(NewCard("brobnar", Brobnar, Creature, Common, WithPower(3)), 0)
@@ -45,7 +42,7 @@ func TestPurgeEachFromHandPurgesEveryMatch(t *testing.T) {
 	tactic := g.AddToHand(NewCard("tactic", Shadows, Tactic, Common), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	PurgeEachFromHand{Player: Controller, Type: Creature, ExceptHouse: Mars}.
+	PurgeFromHand{Player: Controller, Selection: Each{Type: Creature, ExceptHouse: Mars}}.
 		Resolve(ctx)
 
 	if got := g.Purge(0); len(got) != 2 {

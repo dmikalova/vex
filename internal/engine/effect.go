@@ -227,6 +227,12 @@ func (ctx *EffectContext) ChooseOption(prompt string, options []string) int {
 	return ctx.Resolver.ChooseOption(ctx.Controller, ctx.Source, prompt, options)
 }
 
+// ChooseRandom picks one uniformly random card from candidates, delegating to the
+// resolver's RNG so a Random selection is deterministic under a fixed seed.
+func (ctx *EffectContext) ChooseRandom(candidates []LocalID) (LocalID, bool) {
+	return ctx.Resolver.ChooseRandom(candidates)
+}
+
 // ChooseCardOptional asks the controlling player to pick one card from candidates
 // or to decline, attributing the prompt to this ability's source card. Use it for
 // every "you may" and "up to N" choice so the player picks a card rather than a

@@ -79,8 +79,15 @@ together and **CONTEXT** for what the words mean.
     play takes no further part
   - [0031](adr/0031-zone-movement-is-one-mechanism.md) — zone movement is one
     mechanism; the KeyForge verbs are sugar over it
+  - [0032](adr/0032-collector-numbers-are-strings.md) — collector numbers are
+    strings
   - [0033](adr/0033-runtime-type-conversion-via-lastingtype.md) — a card's runtime
     type is `TypeOf`, overridable in play via `LastingType`
+  - [0034](adr/0034-gaining-a-text-box.md) — a card that gains an ability gains a
+    text box
+  - [0035](adr/0035-house-choice-is-a-delayed-constraint-table.md) — house choice
+    is a delayed constraint table; must and cannot stack, cannot overrides must,
+    and wagers are reactions to the choice
 
 ## Rules
 

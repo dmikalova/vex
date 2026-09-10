@@ -285,26 +285,26 @@ func (g *Game) PlayFromArchives(player int, id LocalID) {
 	_, _ = g.playCardFromZone(player, id, func() { arc.remove(id) }, playCardOptions{})
 }
 
-// PlayRandomFromOpponentArchives plays a uniformly random card from player's
-// opponent's archives as player's own play (Murkens). The card is drawn at random
-// because a player's archives are facedown and hidden.
-func (g *Game) PlayRandomFromOpponentArchives(player int) {
-	arc := &g.State.Archives[1-player]
-	if arc.Count == 0 {
-		return
+// PlayFromOpponent plays a card from a zone of player's opponent as player's own
+// play (Murkens): the top card of their deck, or a uniformly random card from
+// their facedown archives (drawn at random because the archives are hidden). An
+// empty source zone does nothing.
+func (g *Game) PlayFromOpponent(player int, from Zone) {
+	switch from {
+	case Deck:
+		deck := &g.State.Deck[1-player]
+		if deck.Count == 0 {
+			return
+		}
+		g.playForeign(player, deck.IDs[0], func() { deck.removeAt(0) })
+	case Archives:
+		arc := &g.State.Archives[1-player]
+		if arc.Count == 0 {
+			return
+		}
+		id := arc.IDs[g.rng.Intn(int(arc.Count))]
+		g.playForeign(player, id, func() { arc.remove(id) })
 	}
-	id := arc.IDs[g.rng.Intn(int(arc.Count))]
-	g.playForeign(player, id, func() { arc.remove(id) })
-}
-
-// PlayTopOfOpponentDeck plays the top card of player's opponent's deck as player's
-// own play (Murkens).
-func (g *Game) PlayTopOfOpponentDeck(player int) {
-	deck := &g.State.Deck[1-player]
-	if deck.Count == 0 {
-		return
-	}
-	g.playForeign(player, deck.IDs[0], func() { deck.removeAt(0) })
 }
 
 // playForeign plays a card that player may not own as player's own play. When the
@@ -615,21 +615,13 @@ func (g *Game) DiscardCardFromHand(owner int, id LocalID) {
 
 // randomCardFromHand returns a uniformly random card from a player's hand,
 // reporting ok=false when the hand is empty. It is the shared pick behind the
-// DiscardRandomFromHand / ArchiveRandomFromHand / PurgeRandomFromHand verbs.
+// ArchiveRandomFromHand verb.
 func (g *Game) randomCardFromHand(owner int) (LocalID, bool) {
 	hand := &g.State.Hand[owner]
 	if hand.Count == 0 {
 		return 0, false
 	}
 	return hand.IDs[g.rng.Intn(int(hand.Count))], true
-}
-
-// DiscardRandomFromHand discards one uniformly random card from a player's hand,
-// doing nothing if the hand is empty.
-func (g *Game) DiscardRandomFromHand(owner int) {
-	if id, ok := g.randomCardFromHand(owner); ok {
-		g.DiscardCardFromHand(owner, id)
-	}
 }
 
 // inActiveHouse reports whether a card of the given definition matches the

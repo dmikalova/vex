@@ -18,7 +18,7 @@ var Tertiate = card.New(
 	card.Provenance(card.WC, "232"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.DestroyFractionOfEachBattleline{
-			Portion: card.OneThird,
+		card.Trigger.Play, card.Destroy{
+			Target: card.Target.EachCreature.Refine(card.PortionPerSide(card.ThirdRoundedUp)),
 		}),
 )

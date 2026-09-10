@@ -71,11 +71,10 @@ func TestRequiredTargetValidation(t *testing.T) {
 		{"GainAember", GainAember{Amount: 1}, GainAember{Player: Controller, Amount: 1}},
 		{"LoseAember", LoseAember{Amount: 1}, LoseAember{Player: Controller, Amount: 1}},
 		{"DiscardArchives", DiscardArchives{}, DiscardArchives{Player: Controller}},
-		{"DiscardHand", DiscardHand{}, DiscardHand{Player: Controller}},
 		{
-			"DiscardRandomFromArchives",
-			DiscardRandomFromArchives{},
-			DiscardRandomFromArchives{Player: Opponent},
+			"DiscardCard",
+			DiscardCard{Zone: Hand, Selection: Random{}},
+			DiscardCard{Player: Opponent, Zone: Hand, Selection: Random{}},
 		},
 		{"Reveal", RevealHand{}, RevealHand{Player: Controller}},
 	}

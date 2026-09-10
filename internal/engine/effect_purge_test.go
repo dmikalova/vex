@@ -103,20 +103,29 @@ func TestPurge(t *testing.T) {
 }
 
 func TestPurgeFromHand(t *testing.T) {
-	// validate rejects an unset player.
+	// validate rejects an unset player or an unset selection.
 	if err := (PurgeFromHand{}).validate(); err == nil {
 		t.Error("unset player should fail validation")
 	}
-	if err := (PurgeFromHand{Player: Opponent}).validate(); err != nil {
-		t.Errorf("valid player should pass validation: %v", err)
+	if err := (PurgeFromHand{Player: Opponent}).validate(); err == nil {
+		t.Error("unset selection should fail validation")
+	}
+	if err := (PurgeFromHand{Player: Opponent, Selection: Chosen{}}).validate(); err != nil {
+		t.Errorf("valid player and selection should pass validation: %v", err)
 	}
 
-	// Text and noun variants.
-	if got := (PurgeFromHand{Player: Opponent, House: Sanctum}).Text(); got != "you may purge a Sanctum card from your opponent's hand" {
-		t.Errorf("house text = %q", got)
+	// Text and object variants across the three selections.
+	if got := (PurgeFromHand{Player: Opponent, Selection: Chosen{House: Sanctum}}).Text(); got != "you may purge a Sanctum card from your opponent's hand" {
+		t.Errorf("chosen house text = %q", got)
 	}
-	if got := (PurgeFromHand{Player: Controller}).Text(); got != "you may purge a card from your hand" {
-		t.Errorf("any-card text = %q", got)
+	if got := (PurgeFromHand{Player: Controller, Selection: Chosen{}}).Text(); got != "you may purge a card from your hand" {
+		t.Errorf("chosen any-card text = %q", got)
+	}
+	if got := (PurgeFromHand{Player: Opponent, Selection: Random{}}).Text(); got != "purge a random card from your opponent's hand" {
+		t.Errorf("random text = %q", got)
+	}
+	if got := (PurgeFromHand{Player: Controller, Selection: Each{Type: Creature, ExceptHouse: Mars}}).Text(); got != "purge each non-Mars creature from your hand" {
+		t.Errorf("each text = %q", got)
 	}
 
 	// Resolve: only the Sanctum card is eligible; the default chooser purges it.
@@ -126,7 +135,7 @@ func TestPurgeFromHand(t *testing.T) {
 	g.State.Hand[1].add(sanctum)
 	g.State.Hand[1].add(other)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-	PurgeFromHand{Player: Opponent, House: Sanctum}.Resolve(ctx)
+	PurgeFromHand{Player: Opponent, Selection: Chosen{House: Sanctum}}.Resolve(ctx)
 	if got := g.Purge(1); len(got) != 1 || got[0] != sanctum {
 		t.Errorf("purge = %v, want [sanctum]", got)
 	}
@@ -140,7 +149,7 @@ func TestPurgeFromHand(t *testing.T) {
 	g2.State.Hand[1].add(holy)
 	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
 	g2.SetChooser(0, optionPicker{idx: 1}) // options [holy, Done] -> idx 1 is Done
-	PurgeFromHand{Player: Opponent, House: Sanctum}.Resolve(ctx2)
+	PurgeFromHand{Player: Opponent, Selection: Chosen{House: Sanctum}}.Resolve(ctx2)
 	if len(g2.Purge(1)) != 0 || len(g2.Hand(1)) != 1 {
 		t.Error("declining should purge nothing")
 	}
@@ -149,30 +158,30 @@ func TestPurgeFromHand(t *testing.T) {
 	g3 := NewGame("A", "B", 1)
 	g3.State.Hand[1].add(g3.Register(NewCard("dark", Shadows, Creature, Common, WithPower(3)), 1))
 	ctx3 := &EffectContext{Resolver: g3, Controller: 0}
-	PurgeFromHand{Player: Opponent, House: Sanctum}.Resolve(ctx3)
+	PurgeFromHand{Player: Opponent, Selection: Chosen{House: Sanctum}}.Resolve(ctx3)
 	if len(g3.Purge(1)) != 0 {
 		t.Error("no matching card should purge nothing")
 	}
 
-	// Under a May the purge is offered as its own single optional choice.
-	if !(PurgeFromHand{Player: Opponent}).declinable() {
-		t.Error("PurgeFromHand should be declinable")
+	// Under a May a Chosen purge is offered as its own single optional choice.
+	if !(PurgeFromHand{Player: Opponent, Selection: Chosen{}}).declinable() {
+		t.Error("a non-mandatory Chosen purge should be declinable")
 	}
 	g4 := NewGame("A", "B", 1)
 	card4 := g4.Register(NewCard("dark", Shadows, Creature, Common, WithPower(3)), 1)
 	g4.State.Hand[1].add(card4)
 	ctx4 := &EffectContext{Resolver: g4, Controller: 0}
-	May{Do: PurgeFromHand{Player: Opponent}}.Resolve(ctx4)
+	May{Do: PurgeFromHand{Player: Opponent, Selection: Chosen{}}}.Resolve(ctx4)
 	if got := g4.Purge(1); len(got) != 1 || got[0] != card4 {
 		t.Errorf("May purge = %v, want [card4]", got)
 	}
 
 	// Mandatory: no "you may", cannot be declined, and forces the purge when a
 	// card is in hand; an empty hand still purges nothing (Greater Oxtet).
-	if got := (PurgeFromHand{Player: Controller, Mandatory: true}).Text(); got != "purge a card from your hand" {
+	if got := (PurgeFromHand{Player: Controller, Selection: Chosen{Mandatory: true}}).Text(); got != "purge a card from your hand" {
 		t.Errorf("mandatory text = %q", got)
 	}
-	if (PurgeFromHand{Player: Controller, Mandatory: true}).declinable() {
+	if (PurgeFromHand{Player: Controller, Selection: Chosen{Mandatory: true}}).declinable() {
 		t.Error("a mandatory purge should not be declinable")
 	}
 	g5 := NewGame("A", "B", 1)
@@ -180,7 +189,7 @@ func TestPurgeFromHand(t *testing.T) {
 	g5.State.Hand[0].add(forced)
 	PurgeFromHand{
 		Player:    Controller,
-		Mandatory: true,
+		Selection: Chosen{Mandatory: true},
 	}.Resolve(
 		&EffectContext{Resolver: g5, Controller: 0},
 	)
@@ -190,7 +199,7 @@ func TestPurgeFromHand(t *testing.T) {
 	g6 := NewGame("A", "B", 1)
 	PurgeFromHand{
 		Player:    Controller,
-		Mandatory: true,
+		Selection: Chosen{Mandatory: true},
 	}.Resolve(
 		&EffectContext{Resolver: g6, Controller: 0},
 	)
@@ -199,42 +208,37 @@ func TestPurgeFromHand(t *testing.T) {
 	}
 }
 
-func TestPurgeRandomFromHand(t *testing.T) {
-	// validate rejects an unset player.
-	if err := (PurgeRandomFromHand{}).validate(); err == nil {
-		t.Error("unset player should fail validation")
-	}
-	if err := (PurgeRandomFromHand{Player: Opponent}).validate(); err != nil {
-		t.Errorf("valid player should pass validation: %v", err)
-	}
-
-	// Text variants.
-	if got := (PurgeRandomFromHand{Player: Opponent}).Text(); got != "purge a random card from your opponent's hand" {
-		t.Errorf("opponent text = %q", got)
-	}
-	if got := (PurgeRandomFromHand{Player: Controller}).Text(); got != "purge a random card from your hand" {
-		t.Errorf("self text = %q", got)
-	}
-
-	// Resolve: the sole hand card is purged.
+func TestPurgeFromHandRandom(t *testing.T) {
+	// Resolve: the sole hand card is purged, records the tally, and gates a Then.
 	g := NewGame("A", "B", 1)
 	only := g.Register(NewCard("dark", Shadows, Creature, Common, WithPower(3)), 1)
 	g.State.Hand[1].add(only)
-	PurgeRandomFromHand{Player: Opponent}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	if !(PurgeFromHand{Player: Opponent, Selection: Random{}}).resolveGate(ctx) {
+		t.Error("purging a card should report true")
+	}
 	if got := g.Purge(1); len(got) != 1 || got[0] != only {
 		t.Errorf("purge = %v, want [only]", got)
 	}
+	if ctx.Produced.Purged != 1 {
+		t.Errorf("tally = %d, want 1", ctx.Produced.Purged)
+	}
 
-	// An empty hand purges nothing.
+	// An empty hand purges nothing and reports false.
 	g2 := NewGame("A", "B", 1)
-	PurgeRandomFromHand{Player: Opponent}.Resolve(&EffectContext{Resolver: g2, Controller: 0})
+	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
+	if (PurgeFromHand{Player: Opponent, Selection: Random{}}).resolveGate(ctx2) {
+		t.Error("empty hand should report false")
+	}
 	if len(g2.Purge(1)) != 0 {
 		t.Error("empty hand should purge nothing")
 	}
 }
 
-func TestPurgeCreatureFromHand(t *testing.T) {
-	e := PurgeCreatureFromHand{}
+func TestPurgeFromHandChosenCreature(t *testing.T) {
+	// A mandatory Chosen restricted to creatures is Custom Virus's "purge a
+	// creature from your hand", which puts the purged card in context (ctx.It).
+	e := PurgeFromHand{Player: Controller, Selection: Chosen{Type: Creature, Mandatory: true}}
 	if e.Text() != "purge a creature from your hand" {
 		t.Errorf("text = %q", e.Text())
 	}

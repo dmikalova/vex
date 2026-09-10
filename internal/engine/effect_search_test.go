@@ -159,16 +159,16 @@ func TestSearchForNameAll(t *testing.T) {
 
 func TestSearchDeck(t *testing.T) {
 	if got := (SearchDeck{}).Text(); got !=
-		"search your deck for a card and put it into your hand, then shuffle your deck" {
+		"search your deck for a card and put it into your hand" {
 		t.Errorf("unrestricted text = %q", got)
 	}
 	if got := (SearchDeck{House: Saurian}).Text(); got !=
-		"search your deck for a Saurian card, reveal it, and put it into your hand, then shuffle your deck" {
+		"search your deck for a Saurian card, reveal it, and put it into your hand" {
 		t.Errorf("house text = %q", got)
 	}
 
-	// House-restricted: only the Saurian card is eligible; it is revealed, put into
-	// hand, and the deck is shuffled.
+	// House-restricted: only the Saurian card is eligible; it is revealed and put
+	// into hand.
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("rex", 6), 0)
 	want := g.Register(NewCard("ally", Saurian, Creature, Common, WithPower(2)), 0)
@@ -193,7 +193,7 @@ func TestSearchDeck(t *testing.T) {
 		t.Error("the sole deck card should be put into hand")
 	}
 
-	// No matching card: nothing is taken, but the deck is still shuffled.
+	// No matching card: nothing is taken.
 	g3 := NewGame("A", "B", 1)
 	s3 := g3.AddToBattleline(testCreature("lonely", 1), 0)
 	g3.State.Deck[0].add(g3.Register(NewCard("logos", Logos, Creature, Common, WithPower(1)), 0))
@@ -201,5 +201,31 @@ func TestSearchDeck(t *testing.T) {
 	SearchDeck{House: Saurian}.Resolve(&EffectContext{Resolver: g3, Source: s3, Controller: 0})
 	if len(g3.Hand(0)) != before {
 		t.Error("a search that finds no match should put nothing into hand")
+	}
+}
+
+func TestShuffleDeck(t *testing.T) {
+	if got := (ShuffleDeck{}).Text(); got != "shuffle your deck" {
+		t.Errorf("text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	src := g.AddToBattleline(testCreature("shuffler", 1), 0)
+	for range 3 {
+		g.State.Deck[0].add(g.Register(NewCard("c", Logos, Creature, Common, WithPower(1)), 0))
+	}
+	before := g.State.Deck[0].Count
+	ShuffleDeck{}.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+	if g.State.Deck[0].Count != before {
+		t.Errorf("shuffle changed deck size: %d, want %d", g.State.Deck[0].Count, before)
+	}
+	var shuffled bool
+	for _, rec := range g.Log {
+		if _, ok := rec.Entry.(DeckShuffled); ok {
+			shuffled = true
+		}
+	}
+	if !shuffled {
+		t.Error("ShuffleDeck should record a DeckShuffled log")
 	}
 }

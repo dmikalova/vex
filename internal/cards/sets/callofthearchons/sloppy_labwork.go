@@ -20,7 +20,12 @@ var SloppyLabwork = card.New(
 	card.WithAbility(card.Trigger.Play, card.Sentences{
 		Effects: []card.Effect{
 			card.ArchiveFromHand{Amount: 1},
-			card.DiscardFromHand{Amount: 1},
+			card.DiscardCard{
+				Player:    card.Controller,
+				Zone:      card.Hand,
+				Selection: card.Chosen{Mandatory: true},
+				Amount:    1,
+			},
 		},
 	}),
 )

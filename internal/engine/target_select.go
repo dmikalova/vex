@@ -378,6 +378,43 @@ func creaturesExcept(ctx *EffectContext, exclude LocalID) []LocalID {
 	return out
 }
 
+// pickCards has the controller choose cards one at a time from the pool avail
+// returns, never repeating a pick, until they decline or the pool runs dry. limit
+// caps how many are chosen; limit <= 0 is unbounded ("any number"). optional makes
+// each prompt declinable, so the controller can stop early; a mandatory pick still
+// stops when they pass or nothing matches. avail is re-read each round, so a pool
+// that shifts as cards are picked stays current. It backs every "destroy/purge any
+// number of ..." and "keep N ..." effect (Obsidian Forge, Destructive Analysis,
+// Unnatural Selection, Tertiate).
+func pickCards(
+	ctx *EffectContext, prompt string, limit int, optional bool, avail func() []LocalID,
+) []LocalID {
+	picked := map[LocalID]bool{}
+	var chosen []LocalID
+	for limit <= 0 || len(chosen) < limit {
+		var cands []LocalID
+		for _, id := range avail() {
+			if !picked[id] {
+				cands = append(cands, id)
+			}
+		}
+		if len(cands) == 0 {
+			break
+		}
+		choose := ctx.ChooseCard
+		if optional {
+			choose = ctx.ChooseCardOptional
+		}
+		pick, ok := choose(prompt, cands)
+		if !ok {
+			break
+		}
+		picked[pick] = true
+		chosen = append(chosen, pick)
+	}
+	return chosen
+}
+
 func battlelineContaining(ctx *EffectContext, id LocalID) []LocalID {
 	for p := 0; p < 2; p++ {
 		bl := ctx.Resolver.Battleline(p)

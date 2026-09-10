@@ -49,7 +49,7 @@ Grubbling, Way of the Bear, Way of the Wolf.)
 
 ### Articles in front of a computed noun
 
-Whenever the noun in a phrase comes from a helper — `typeNoun(e.Types)`,
+Whenever the noun in a phrase comes from a helper — a `Selection`'s `noun()`,
 `e.noun()`, a `Target`'s noun form — build the article with `indefinite(noun)`
 rather than concatenating `"a " + noun`. The card types include _artifact_ and
 _action_, so a hardcoded `"a "` prints "a artifact" the moment someone points an

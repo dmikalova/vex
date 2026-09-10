@@ -222,7 +222,7 @@ func TestPutFromDiscardTypeOrTrait(t *testing.T) {
 	}
 }
 
-func TestDiscardHand(t *testing.T) {
+func TestDiscardFromHandEach(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	// Opponent (player 1) hand: a Mars creature, a Mars action, a Sanctum creature.
 	marsCreature := g.AddToHand(NewCard("mc", Mars, Creature, Common, WithPower(2)), 1)
@@ -230,11 +230,17 @@ func TestDiscardHand(t *testing.T) {
 	sanctumCreature := g.AddToHand(NewCard("sc", Sanctum, Creature, Common, WithPower(2)), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0, ChosenHouse: Mars}
 
-	e := DiscardHand{Player: Opponent, Types: []CardType{Creature}, OfChosenHouse: true}
+	// Each from an opponent's hand reads as a controller-directed discard, not
+	// "your opponent discards".
+	e := DiscardCard{
+		Player:    Opponent,
+		Zone:      Hand,
+		Selection: Each{Type: Creature, OfChosenHouse: true},
+	}
 	if e.Text() != "discard each creature of the chosen house from your opponent's hand" {
 		t.Errorf("text = %q", e.Text())
 	}
-	if plain := (DiscardHand{Player: Controller}).Text(); plain != "discard each card from your hand" {
+	if plain := (DiscardCard{Player: Controller, Zone: Hand, Selection: Each{}}).Text(); plain != "discard each card from your hand" {
 		t.Errorf("plain text = %q", plain)
 	}
 
@@ -265,17 +271,17 @@ func TestDiscardRandomFromHand(t *testing.T) {
 	b := g.AddToHand(NewCard("b", Mars, Tactic, Common), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := DiscardRandomFromHand{Player: Opponent}
+	e := DiscardCard{Player: Opponent, Zone: Hand, Selection: Random{}}
 	if e.Text() != "your opponent discards a random card from their hand" {
 		t.Errorf("text = %q", e.Text())
 	}
-	if self := (DiscardRandomFromHand{Player: Controller}).Text(); self != "discard a random card from your hand" {
+	if self := (DiscardCard{Player: Controller, Zone: Hand, Selection: Random{}}).Text(); self != "discard a random card from your hand" {
 		t.Errorf("self text = %q", self)
 	}
-	if (DiscardRandomFromHand{}).validate() == nil {
+	if (DiscardCard{Zone: Hand, Selection: Random{}}).validate() == nil {
 		t.Error("unset player should be invalid")
 	}
-	if (DiscardRandomFromHand{Player: Opponent}).validate() != nil {
+	if (DiscardCard{Player: Opponent, Zone: Hand, Selection: Random{}}).validate() != nil {
 		t.Error("set player should be valid")
 	}
 
@@ -292,9 +298,9 @@ func TestDiscardRandomFromHand(t *testing.T) {
 	}
 
 	// An empty hand is a no-op.
-	g.DiscardRandomFromHand(1)
-	g.DiscardRandomFromHand(1) // hand now empty
-	g.DiscardRandomFromHand(1)
+	e.Resolve(ctx)
+	e.Resolve(ctx) // hand now empty
+	e.Resolve(ctx)
 	if g.State.Discard[1].Count != 2 {
 		t.Errorf(
 			"discard count = %d, want 2 (empty-hand discards are no-ops)",
@@ -310,7 +316,7 @@ func TestDiscardRandomFromHandAmount(t *testing.T) {
 	g.AddToHand(NewCard("c", Mars, Tactic, Common), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := DiscardRandomFromHand{Player: Controller, Amount: 2}
+	e := DiscardCard{Player: Controller, Zone: Hand, Selection: Random{}, Amount: 2}
 	if got := e.Text(); got != "discard 2 random cards from your hand" {
 		t.Errorf("text = %q", got)
 	}
@@ -323,26 +329,26 @@ func TestDiscardRandomFromHandAmount(t *testing.T) {
 	}
 }
 
-func TestDiscardRandomFromArchives(t *testing.T) {
+func TestDiscardFromArchives(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	a := g.AddToArchives(NewCard("a", Mars, Tactic, Common), 1)
 	b := g.AddToArchives(NewCard("b", Mars, Tactic, Common), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := DiscardRandomFromArchives{Player: Opponent}
-	if e.Text() != "discard a random card from your opponent's archives" {
+	e := DiscardCard{Player: Opponent, Zone: Archives, Selection: Random{}}
+	if e.Text() != "your opponent discards a random card from their archives" {
 		t.Errorf("text = %q", e.Text())
 	}
-	if self := (DiscardRandomFromArchives{Player: Controller}).Text(); self != "discard a random card from your archives" {
+	if self := (DiscardCard{Player: Controller, Zone: Archives, Selection: Random{}}).Text(); self != "discard a random card from your archives" {
 		t.Errorf("self text = %q", self)
 	}
-	if owner := (DiscardRandomFromArchives{Player: ItsOwner}).Text(); owner != "its owner discards a random card from their archives" {
+	if owner := (DiscardCard{Player: ItsOwner, Zone: Archives, Selection: Random{}}).Text(); owner != "its owner discards a random card from their archives" {
 		t.Errorf("owner text = %q", owner)
 	}
-	if (DiscardRandomFromArchives{}).validate() == nil {
+	if (DiscardCard{Zone: Archives, Selection: Random{}}).validate() == nil {
 		t.Error("unset player should be invalid")
 	}
-	if (DiscardRandomFromArchives{Player: Opponent}).validate() != nil {
+	if (DiscardCard{Player: Opponent, Zone: Archives, Selection: Random{}}).validate() != nil {
 		t.Error("set player should be valid")
 	}
 
@@ -359,9 +365,9 @@ func TestDiscardRandomFromArchives(t *testing.T) {
 	}
 
 	// Empty archives is a no-op.
-	g.DiscardRandomFromArchives(1)
-	g.DiscardRandomFromArchives(1) // archives now empty
-	g.DiscardRandomFromArchives(1)
+	e.Resolve(ctx)
+	e.Resolve(ctx) // archives now empty
+	e.Resolve(ctx)
 	if g.State.Discard[1].Count != 2 {
 		t.Errorf(
 			"discard count = %d, want 2 (empty-archives discards are no-ops)",
@@ -376,21 +382,35 @@ func TestDiscardFromHandEffect(t *testing.T) {
 	g.AddToHand(NewCard("b", Logos, Tactic, Common), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	if (DiscardFromHand{Amount: 1}).Text() != "discard a card from your hand" {
-		t.Errorf("text = %q", (DiscardFromHand{Amount: 1}).Text())
+	one := DiscardCard{
+		Player:    Controller,
+		Zone:      Hand,
+		Selection: Chosen{Mandatory: true},
+		Amount:    1,
 	}
-	if (DiscardFromHand{Amount: 2}).Text() != "discard 2 cards from your hand" {
-		t.Errorf("plural text = %q", (DiscardFromHand{Amount: 2}).Text())
+	if one.Text() != "discard a card from your hand" {
+		t.Errorf("text = %q", one.Text())
+	}
+	two := DiscardCard{
+		Player:    Controller,
+		Zone:      Hand,
+		Selection: Chosen{Mandatory: true},
+		Amount:    2,
+	}
+	if two.Text() != "discard 2 cards from your hand" {
+		t.Errorf("plural text = %q", two.Text())
 	}
 
 	// The default chooser discards the first hand card (a).
-	(DiscardFromHand{Amount: 1}).Resolve(ctx)
+	one.Resolve(ctx)
 	if g.State.Hand[0].contains(a) || !g.State.Discard[0].contains(a) {
 		t.Error("chosen card should be discarded")
 	}
 
 	// Discarding more than the hand holds stops when the hand empties.
-	(DiscardFromHand{Amount: 5}).Resolve(ctx)
+	(DiscardCard{Player: Controller, Zone: Hand, Selection: Chosen{Mandatory: true}, Amount: 5}).Resolve(
+		ctx,
+	)
 	if g.State.Hand[0].Count != 0 {
 		t.Errorf("hand should be empty, got %d", g.State.Hand[0].Count)
 	}
@@ -402,7 +422,9 @@ func TestDiscardFromHandEffectDeclined(t *testing.T) {
 	g.AddToHand(NewCard("d", Logos, Tactic, Common), 0)
 	g.SetChooser(0, orderRejectChooser{})
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-	(DiscardFromHand{Amount: 1}).Resolve(ctx)
+	(DiscardCard{Player: Controller, Zone: Hand, Selection: Chosen{Mandatory: true}, Amount: 1}).Resolve(
+		ctx,
+	)
 	if g.State.Discard[0].Count != 0 {
 		t.Error("a declined discard choice should discard nothing")
 	}
@@ -410,7 +432,8 @@ func TestDiscardFromHandEffectDeclined(t *testing.T) {
 
 func TestDiscardFromHandAnyNumber(t *testing.T) {
 	t.Run("text renders any number", func(t *testing.T) {
-		if got := (DiscardFromHand{AnyNumber: true}).Text(); got != "discard any number of cards from your hand" {
+		e := DiscardCard{Player: Controller, Zone: Hand, Selection: Chosen{}, AnyNumber: true}
+		if got := e.Text(); got != "discard any number of cards from your hand" {
 			t.Errorf("text = %q", got)
 		}
 	})
@@ -421,7 +444,9 @@ func TestDiscardFromHandAnyNumber(t *testing.T) {
 		g.AddToHand(NewCard("b", Logos, Tactic, Common), 0)
 		g.AddToHand(NewCard("c", Logos, Tactic, Common), 0)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
-		(DiscardFromHand{AnyNumber: true}).Resolve(ctx)
+		(DiscardCard{Player: Controller, Zone: Hand, Selection: Chosen{}, AnyNumber: true}).Resolve(
+			ctx,
+		)
 		if g.State.Hand[0].Count != 0 {
 			t.Errorf("hand = %d, want 0", g.State.Hand[0].Count)
 		}
@@ -435,7 +460,9 @@ func TestDiscardFromHandAnyNumber(t *testing.T) {
 		g.AddToHand(NewCard("d", Logos, Tactic, Common), 0)
 		g.SetChooser(0, &declineAfterChooser{})
 		ctx := &EffectContext{Resolver: g, Controller: 0}
-		(DiscardFromHand{AnyNumber: true}).Resolve(ctx)
+		(DiscardCard{Player: Controller, Zone: Hand, Selection: Chosen{}, AnyNumber: true}).Resolve(
+			ctx,
+		)
 		if g.State.Discard[0].Count != 0 {
 			t.Error("a declined discard should discard nothing")
 		}
@@ -451,19 +478,23 @@ func TestDiscardFromHandCreaturesOnlyGate(t *testing.T) {
 	g.AddToHand(NewCard("tactic", Mars, Tactic, Common), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := DiscardFromHand{Amount: 1, Types: []CardType{Creature}}
+	e := DiscardCard{
+		Player:    Controller,
+		Zone:      Hand,
+		Selection: Chosen{Mandatory: true, Type: Creature},
+		Amount:    1,
+	}
 	if e.Text() != "discard a creature from your hand" {
 		t.Errorf("text = %q", e.Text())
 	}
-	if plural := (DiscardFromHand{Amount: 2, Types: []CardType{Creature}}).Text(); plural != "discard 2 creatures from your hand" {
-		t.Errorf("plural text = %q", plural)
+	plural := DiscardCard{
+		Player:    Controller,
+		Zone:      Hand,
+		Selection: Chosen{Mandatory: true, Type: Creature},
+		Amount:    2,
 	}
-	// Type-filter rendering: multiple types join with "or"; other types read "card".
-	if got := (DiscardFromHand{Amount: 1, Types: []CardType{Creature, Artifact}}).Text(); got != "discard a creature or artifact from your hand" {
-		t.Errorf("multi-type text = %q", got)
-	}
-	if got := (DiscardFromHand{Amount: 1, Types: []CardType{Upgrade}}).Text(); got != "discard a card from your hand" {
-		t.Errorf("other-type text = %q", got)
+	if plural.Text() != "discard 2 creatures from your hand" {
+		t.Errorf("plural text = %q", plural.Text())
 	}
 
 	// Only the creature is a candidate, so it is discarded and the gate reports true.
@@ -477,5 +508,23 @@ func TestDiscardFromHandCreaturesOnlyGate(t *testing.T) {
 	// With no creatures left in hand, the gate reports false.
 	if e.resolveGate(ctx) {
 		t.Error("gate should report false when no creature can be discarded")
+	}
+}
+
+func TestDiscardFromHandValidate(t *testing.T) {
+	if (DiscardCard{Zone: Hand, Selection: Random{}}).validate() == nil {
+		t.Error("an unset player should be invalid")
+	}
+	if (DiscardCard{Player: Controller, Zone: Hand}).validate() == nil {
+		t.Error("a nil selection should be invalid")
+	}
+	if (DiscardCard{Player: Controller, Selection: Random{}}).validate() == nil {
+		t.Error("an unset zone should be invalid")
+	}
+	if (DiscardCard{Player: Controller, Zone: Hand, Selection: Random{}, AnyNumber: true, Amount: 2}).validate() == nil {
+		t.Error("AnyNumber paired with Amount should be invalid")
+	}
+	if (DiscardCard{Player: Controller, Zone: Hand, Selection: Random{}, Amount: 2}).validate() != nil {
+		t.Error("a fixed amount should be valid")
 	}
 }

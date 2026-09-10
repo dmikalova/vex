@@ -15,7 +15,7 @@ import (
 //	Power:  6
 //	Traits: Dinosaur • Leader
 //
-//	Fight/Reap: If Saurus Rex is in the center of your battleline, you may exalt Saurus Rex -> search your deck for a Saurian card, reveal it, and put it into your hand, then shuffle your deck.
+//	Fight/Reap: If Saurus Rex is in the center of your battleline, you may exalt Saurus Rex -> search your deck for a Saurian card, reveal it, and put it into your hand. Shuffle your deck.
 func TestSaurusRex(t *testing.T) {
 	t.Run("centered: exalts and tutors a Saurian card", func(t *testing.T) {
 		var rex, ally, outsider ct.Card

@@ -24,7 +24,10 @@ var CustomVirus = card.New(
 	card.WithAbility(
 		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
 			card.Destroy{Target: card.Target.This},
-			card.PurgeCreatureFromHand{},
+			card.PurgeFromHand{
+				Player:    card.Controller,
+				Selection: card.Chosen{Type: card.Type.Creature, Mandatory: true},
+			},
 			card.Destroy{Target: card.Target.EachCreature.SharingTrait()},
 		}}),
 )

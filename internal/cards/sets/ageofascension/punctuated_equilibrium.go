@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Each player discards their hand, then refills their hand as if it were the end of their turn.
+//	Play: Each player discards their hand. Each player refills their hand as if it were the end of their turn.
 var PunctuatedEquilibrium = card.New(
 	"Punctuated Equilibrium",
 	card.House.Untamed,
@@ -16,5 +16,10 @@ var PunctuatedEquilibrium = card.New(
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, "363"),
 	card.WithAbility(
-		card.Trigger.Play, card.EachPlayerDiscardsAndRefillsHand{}),
+		card.Trigger.Play, card.Sentences{
+			Effects: []card.Effect{
+				card.DiscardHand{Player: card.EachPlayer},
+				card.RefillHand{Player: card.EachPlayer},
+			},
+		}),
 )

@@ -336,12 +336,6 @@ type useKinds struct {
 // be written directly. E.g. card.UseKinds(card.UseKind.Reap).
 func UseKinds(k ...engine.UseKind) []engine.UseKind { return k }
 
-// Types builds the card-type slice for a Types filter, e.g.
-// card.DiscardFromHand{Types: card.Types(card.Type.Creature)}. Like Keywords, it
-// exists because card.Type is the value namespace, so a []card.CardType literal
-// can't be written directly.
-func Types(t ...engine.CardType) []engine.CardType { return t }
-
 // Trigger groups the ability triggers, e.g. card.Trigger.Play or
 // card.Trigger.AfterForgeKey.
 var Trigger = triggers{
