@@ -19,7 +19,7 @@ var ZyzzixTheMany = card.New(
 	card.Provenance(card.CotA, "207"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Martian, card.Traits.Soldier),
-	card.WithAbility(card.Trigger.FightOrReap, card.May{
+	card.WithAbility(card.Trigger.FightReap, card.May{
 		Do: card.Then{
 			First: card.ArchiveFromHand{
 				Amount:   1,

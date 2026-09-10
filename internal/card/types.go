@@ -376,7 +376,7 @@ var Trigger = triggers{
 	LeavesPlay:                     engine.TriggerLeavesPlay,
 	AfterActionPlayedBeforeResolve: engine.TriggerAfterActionPlayedBeforeResolve,
 	PlayFightReap:                  triggerPlayFightReap,
-	FightOrReap:                    triggerFightOrReap,
+	FightReap:                      triggerFightReap,
 	PlayReap:                       triggerPlayReap,
 }
 
@@ -387,7 +387,7 @@ var Trigger = triggers{
 // with the engine's non-negative Trigger constants.
 const (
 	triggerPlayFightReap engine.Trigger = -1 - iota
-	triggerFightOrReap
+	triggerFightReap
 	triggerPlayReap
 )
 
@@ -485,9 +485,9 @@ type triggers struct {
 	// as one "Play/Fight/Reap:" line. It is a composite: card.WithAbility fans it
 	// into the three atomic abilities.
 	PlayFightReap engine.Trigger
-	// FightOrReap fires the effect as both a Fight and a Reap ability, printed as
+	// FightReap fires the effect as both a Fight and a Reap ability, printed as
 	// one "Fight/Reap:" line. It is a composite fanned out by card.WithAbility.
-	FightOrReap engine.Trigger
+	FightReap engine.Trigger
 	// PlayReap fires the effect as both a Play and a Reap ability, printed as one
 	// "Play/Reap:" line. It is a composite fanned out by card.WithAbility.
 	PlayReap engine.Trigger

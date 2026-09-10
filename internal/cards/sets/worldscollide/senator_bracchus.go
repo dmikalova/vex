@@ -24,7 +24,7 @@ var SenatorBracchus = card.New(
 		Target:            card.Target.EachFriendlyCreature,
 		SpendAemberOnCard: true,
 	}),
-	card.WithAbility(card.Trigger.FightOrReap, card.Exalt{
+	card.WithAbility(card.Trigger.FightReap, card.Exalt{
 		Target: card.Target.This,
 		Amount: 1,
 	}),

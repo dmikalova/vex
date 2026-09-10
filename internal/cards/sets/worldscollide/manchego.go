@@ -25,7 +25,7 @@ var Manchego = card.New(
 			Cond: card.CardsInDeckAtMost{Amount: 5},
 			Then: card.StealAember{Amount: 2},
 		}),
-	card.WithAbility(card.Trigger.FightOrReap, card.May{Do: card.PutFromPlay{
+	card.WithAbility(card.Trigger.FightReap, card.May{Do: card.PutFromPlay{
 		Target:      card.Target.This,
 		Destination: card.To.DeckShuffled,
 	}}),

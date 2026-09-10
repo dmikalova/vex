@@ -23,7 +23,7 @@ var ChuffApe = card.New(
 	card.WithTraits(card.Traits.Beast),
 	card.WithKeywords(card.Keyword.Taunt),
 	card.WithEntersPlay(card.Stun{Target: card.Target.This}),
-	card.WithAbility(card.Trigger.FightOrReap, card.May{
+	card.WithAbility(card.Trigger.FightReap, card.May{
 		Do: card.Then{
 			First: card.Destroy{Target: card.Target.OtherFriendlyCreature},
 			Result: card.Heal{

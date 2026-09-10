@@ -18,6 +18,6 @@ var Stunner = card.New(
 	card.Provenance(card.WC, "319"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
-		Granted: card.FightOrReap(card.May{Do: card.Stun{Target: card.Target.Creature}}),
+		Granted: card.FightReap(card.May{Do: card.Stun{Target: card.Target.Creature}}),
 	}),
 )

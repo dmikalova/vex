@@ -22,7 +22,7 @@ var TheFeatheredShaman = card.New(
 	card.WithTraits(card.Traits.Human, card.Traits.Witch),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
-		card.Trigger.FightOrReap,
+		card.Trigger.FightReap,
 		card.Ward{Target: card.Target.EachCreature.Neighboring()},
 	),
 )

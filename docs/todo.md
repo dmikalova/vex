@@ -49,6 +49,8 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 ## Things that can be done now
 
+- More updates on the row - left side should go under, not have invis gradient, right side should go to edge, spacing and parens on icons
+
 - Cloaking Dongle: Target: Target and neighbors then gives the bonus
 - Kompsos Haurspex and Livia the elder can be atomized into each other
 - Gebuk can be simplified

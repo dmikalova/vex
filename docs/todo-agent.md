@@ -274,6 +274,10 @@ _No outstanding items._
   creature selection. (Engine already models Deploy via
   `deployPosition`/`chooseFlank`/`choosePosition`; this is the client prompt flow.)
 
+## Logging
+
+_No outstanding items._
+
 ## Tooling / tests / docs
 
 - **Design-patterns audit + doc.** Inventory the patterns actually in use

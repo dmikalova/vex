@@ -19,7 +19,7 @@ var QyxxlyxPlagueMaster = card.New(
 	card.Provenance(card.CotA, "198"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Martian, card.Traits.Scientist),
-	card.WithAbility(card.Trigger.FightOrReap, card.DealDamage{
+	card.WithAbility(card.Trigger.FightReap, card.DealDamage{
 		Amount:      3,
 		Target:      card.Target.EachCreature.WithTrait(card.Traits.Human),
 		IgnoreArmor: true,

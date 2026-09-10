@@ -29,5 +29,5 @@ var CALV1N = card.New(
 		},
 	}),
 	card.WithPlayableAsUpgrade(),
-	card.WithAbility(card.Trigger.FightOrReap, card.Draw{Amount: 1}),
+	card.WithAbility(card.Trigger.FightReap, card.Draw{Amount: 1}),
 )

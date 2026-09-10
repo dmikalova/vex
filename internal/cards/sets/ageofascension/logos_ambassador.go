@@ -22,7 +22,7 @@ var LogosAmbassador = card.New(
 	card.WithTraits(card.Traits.Human),
 	card.WithKeywords(card.Keyword.Elusive),
 	// TODO: planned rework of the Ambassador cycle.
-	card.WithAbility(card.Trigger.FightOrReap,
+	card.WithAbility(card.Trigger.FightReap,
 		card.MayActFriendlyHouse{House: card.House.Logos, Grant: card.GrantPlay | card.GrantUse},
 	),
 )

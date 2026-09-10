@@ -19,7 +19,7 @@ var WarGrumpus = card.New(
 	card.Provenance(card.AoA, "52"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Beast),
-	card.WithAbility(card.Trigger.FightOrReap, card.OnChooseCreature{
+	card.WithAbility(card.Trigger.FightReap, card.OnChooseCreature{
 		Target: card.Target.Creature.Neighboring().WithTrait(card.Traits.Giant),
 		Verbs:  []card.CreatureVerb{card.ReadyVerb{}, card.FightVerb{}},
 	}),

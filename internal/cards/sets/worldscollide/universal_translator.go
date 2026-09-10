@@ -18,7 +18,7 @@ var UniversalTranslator = card.New(
 	card.Provenance(card.WC, "322"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
-		Granted: card.FightOrReap(card.Use{
+		Granted: card.FightReap(card.Use{
 			Max:    1,
 			Target: card.Target.EachFriendlyCreature.ExceptHouse(card.House.Self),
 		}),

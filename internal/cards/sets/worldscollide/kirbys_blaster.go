@@ -21,7 +21,7 @@ var KirbysBlaster = card.New(
 	card.Connects(card.Pull(ComOfficerKirby, 1)),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
-		Granted: card.FightOrReap(card.ChooseOne{Options: []card.Effect{
+		Granted: card.FightReap(card.ChooseOne{Options: []card.Effect{
 			card.DealDamage{Amount: 2, Target: card.Target.Creature},
 			card.Then{
 				First:  card.AttachSelfTo{Host: ComOfficerKirby.Name},

@@ -19,7 +19,7 @@ var SelwynTheFence = card.New(
 	card.Provenance(card.CotA, "309"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
-	card.WithAbility(card.Trigger.FightOrReap, card.MoveAember{
+	card.WithAbility(card.Trigger.FightReap, card.MoveAember{
 		Amount: 1,
 		From:   card.Target.FriendlyCreatureOrArtifact,
 		To:     card.Controller,

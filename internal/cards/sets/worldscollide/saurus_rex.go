@@ -19,7 +19,7 @@ var SaurusRex = card.New(
 	card.Provenance(card.WC, "227"),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Leader),
-	card.WithAbility(card.Trigger.FightOrReap, card.Conditional{
+	card.WithAbility(card.Trigger.FightReap, card.Conditional{
 		Cond: card.SourceInCenterOfBattleline{},
 		Then: card.May{Do: card.Then{
 			First: card.Exalt{Target: card.Target.This, Amount: 1},

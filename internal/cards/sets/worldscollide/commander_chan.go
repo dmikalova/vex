@@ -19,7 +19,7 @@ var CommanderChan = card.New(
 	card.Provenance(card.WC, "296"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Human),
-	card.WithAbility(card.Trigger.FightOrReap, card.Use{
+	card.WithAbility(card.Trigger.FightReap, card.Use{
 		Max:    1,
 		Target: card.Target.EachOtherFriendlyCreature,
 	}),
