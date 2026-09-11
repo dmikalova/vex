@@ -4,7 +4,7 @@ import "strings"
 
 // Selection is how a zone-movement effect picks the cards it acts on from a
 // zone: the controller chooses one (Chosen), one is uniformly random (Random),
-// or every matching card is taken (Each). Each mode filters and picks its own
+// every matching card is taken (Each), or a named card is pinned (Named). Each mode filters and picks its own
 // cards and renders its own object phrase ("a card" / "a random card" / "each
 // creature"), so a movement verb varies along this one axis instead of spawning
 // a node per (verb x mode). See ADR 0031.
@@ -12,6 +12,10 @@ type Selection interface {
 	// pick returns the cards to act on, given every card in the source zone. It
 	// may prompt the controller (Chosen) or draw on the RNG (Random).
 	pick(ctx *EffectContext, cands []LocalID) []LocalID
+	// candidates returns the cards this Selection could act on — the filtered set,
+	// before any choice or draw. A verb uses it to tell whether a zone holds
+	// anything to act on (PurgeCard picks a discard pile only among those that do).
+	candidates(ctx *EffectContext, cands []LocalID) []LocalID
 	// noun renders the bare kind of card the verb acts on, without article or
 	// count, e.g. "card" / "random card" / "non-Mars creature". A count-bearing
 	// verb pluralizes it; object decorates it for the single case.
@@ -20,8 +24,8 @@ type Selection interface {
 	object() string
 }
 
-// declinableSelection is a Selection the controller may pass without acting — a
-// non-mandatory Chosen. A Selection that does not implement it can never be
+// declinableSelection is a Selection the controller may pass without acting — an
+// Optional Chosen. A Selection that does not implement it can never be
 // declined, so its verb never reads "you may".
 type declinableSelection interface {
 	declinable() bool
@@ -31,6 +35,47 @@ type declinableSelection interface {
 func selectionDeclinable(s Selection) bool {
 	d, ok := s.(declinableSelection)
 	return ok && d.declinable()
+}
+
+// positionalSelection is a Selection that picks by position in an ordered zone —
+// the top or bottom card — rather than by identity or filter. edge names which
+// end ("top" / "bottom"). Only ordered zones (Deck, Discard) have a top and
+// bottom, so a node pairing a positional selection with an unordered zone fails
+// validation, and the node hands cands top-first (see topFirst).
+type positionalSelection interface {
+	positional() bool
+	edge() string
+}
+
+// selectionPositional reports whether a Selection picks by position.
+func selectionPositional(s Selection) bool {
+	p, ok := s.(positionalSelection)
+	return ok && p.positional()
+}
+
+// positionalObject renders a positional selection's count-bearing noun phrase,
+// e.g. "the top card" or "the top 2 cards".
+func positionalObject(s Selection, n int) string {
+	if n == 1 {
+		return s.object()
+	}
+	edge := s.(positionalSelection).edge()
+	return "the " + edge + " " + countNoun(n, s.noun())
+}
+
+// topFirst returns a zone's cards ordered top-to-bottom, so a positional
+// selection can read the top at index 0. A deck is stored top-first already; a
+// discard pile is stored bottom-first (its top is the most recently discarded,
+// at the end), so it is reversed.
+func topFirst(z Zone, cards []LocalID) []LocalID {
+	if z != Discard {
+		return cards
+	}
+	out := make([]LocalID, len(cards))
+	for i, id := range cards {
+		out[len(cards)-1-i] = id
+	}
+	return out
 }
 
 // ownerActsSelection is a Selection where the hand's owner is the one who
@@ -59,17 +104,26 @@ func filterIDs(ids []LocalID, keep func(LocalID) bool) []LocalID {
 }
 
 // Chosen has the controller pick one card, optionally restricted to a house or a
-// type. A non-mandatory Chosen is a "you may": the controller can always decline,
-// and an empty candidate set picks nothing. Mandatory forces the pick when a card
-// matches (Greater Oxtet).
+// type. A Chosen is mandatory by default: the controller must pick when a card
+// matches (Greater Oxtet). Optional makes it a "you may" — the controller can
+// always decline, and an empty candidate set picks nothing. An Optional Chosen is
+// also what drives an "up to N" effect: a node archiving or purging Amount cards
+// with an Optional Selection lets the controller stop early, which reads as "up to
+// N" (Mobius Scroll, Creeping Oblivion). This means Optional is the single knob
+// for "may do fewer" — a card that must do either none or exactly N (all-or-
+// nothing) cannot be expressed this way; no card currently needs that.
 type Chosen struct {
 	// House restricts the choice to cards of this house; HouseNone allows any.
 	House House
 	// Type restricts the choice to cards of this type; the zero value allows any.
 	Type CardType
-	// Mandatory forces the pick and drops the "you may"; an empty hand still picks
-	// nothing.
-	Mandatory bool
+	// ExceptHouse spares the cards of that house from the choice, rendering a
+	// "non-<house>" qualifier (Information Officer Gray reveals a non-Star Alliance
+	// card). HouseNone excludes nothing.
+	ExceptHouse House
+	// Optional makes the pick a "you may" the controller can decline; the default is
+	// a mandatory pick that forces the choice when a card matches.
+	Optional bool
 }
 
 // noun renders the bare kind of card chosen, qualified by type when set and by
@@ -82,21 +136,26 @@ func (s Chosen) noun() string {
 	if s.House != HouseNone {
 		noun = s.House.String() + " " + noun
 	}
+	if s.ExceptHouse != HouseNone {
+		noun = "non-" + s.ExceptHouse.String() + " " + noun
+	}
 	return noun
 }
 
 // object renders the single card chosen, e.g. "a Sanctum creature".
 func (s Chosen) object() string { return indefinite(s.noun()) }
 
-// declinable reports that a non-mandatory Chosen may be passed.
-func (s Chosen) declinable() bool { return !s.Mandatory }
+// declinable reports that an Optional Chosen may be passed.
+func (s Chosen) declinable() bool { return s.Optional }
 
-// pick offers the matching cards as a card choice — declinable unless Mandatory —
-// and returns the single chosen card, or none when the controller declines or no
-// card matches.
-func (s Chosen) pick(ctx *EffectContext, cands []LocalID) []LocalID {
-	matching := filterIDs(cands, func(id LocalID) bool {
+// candidates keeps the cards the house and type filters admit.
+func (s Chosen) candidates(ctx *EffectContext, cands []LocalID) []LocalID {
+	return filterIDs(cands, func(id LocalID) bool {
 		if s.House != HouseNone && ctx.Resolver.House(id) != s.House {
+			return false
+		}
+		if s.ExceptHouse != HouseNone &&
+			ctx.Resolver.House(id) == s.ExceptHouse {
 			return false
 		}
 		if s.Type != TypeUnset && ctx.Resolver.TypeOf(id) != s.Type {
@@ -104,8 +163,15 @@ func (s Chosen) pick(ctx *EffectContext, cands []LocalID) []LocalID {
 		}
 		return true
 	})
+}
+
+// pick offers the matching cards as a card choice — declinable only when Optional —
+// and returns the single chosen card, or none when the controller declines or no
+// card matches.
+func (s Chosen) pick(ctx *EffectContext, cands []LocalID) []LocalID {
+	matching := s.candidates(ctx, cands)
 	choose := ctx.ChooseCardOptional
-	if s.Mandatory {
+	if !s.Optional {
 		if len(matching) == 0 {
 			return nil
 		}
@@ -128,13 +194,21 @@ func (Random) noun() string { return "random card" }
 // object renders the random card the verb acts on.
 func (Random) object() string { return "a random card" }
 
+// candidates returns every card — a random pick applies no filter.
+func (Random) candidates(
+	_ *EffectContext,
+	cands []LocalID,
+) []LocalID {
+	return cands
+}
+
 // ownerActs reports that a random pick from a hidden hand is attributed to the
 // hand's owner, so an opponent's random discard reads "your opponent discards …".
 func (Random) ownerActs() bool { return true }
 
 // pick draws one uniformly random card from the candidates, or none when empty.
-func (Random) pick(ctx *EffectContext, cands []LocalID) []LocalID {
-	id, ok := ctx.ChooseRandom(cands)
+func (s Random) pick(ctx *EffectContext, cands []LocalID) []LocalID {
+	id, ok := ctx.ChooseRandom(s.candidates(ctx, cands))
 	if !ok {
 		return nil
 	}
@@ -145,6 +219,9 @@ func (Random) pick(ctx *EffectContext, cands []LocalID) []LocalID {
 // (Martians Make Bad Allies purges each non-Mars creature). A following effect
 // can scale with the tally the verb records.
 type Each struct {
+	// House restricts to cards of this house; HouseNone admits any (Soldiers to
+	// Flowers purges each Untamed creature). Mutually exclusive with ExceptHouse.
+	House House
 	// Type restricts to cards of this type; the zero value admits any.
 	Type CardType
 	// ExceptHouse spares the cards of that house; HouseNone spares nothing.
@@ -161,6 +238,9 @@ func (s Each) noun() string {
 	if s.Type != TypeUnset {
 		noun = strings.ToLower(s.Type.String())
 	}
+	if s.House != HouseNone {
+		noun = s.House.String() + " " + noun
+	}
 	if s.ExceptHouse != HouseNone {
 		noun = "non-" + s.ExceptHouse.String() + " " + noun
 	}
@@ -173,13 +253,17 @@ func (s Each) noun() string {
 // object renders the kind of card taken, e.g. "each non-Mars creature".
 func (s Each) object() string { return "each " + s.noun() }
 
-// pick returns every candidate the filters admit.
-func (s Each) pick(ctx *EffectContext, cands []LocalID) []LocalID {
+// candidates returns every card the filters admit — Each takes all of them.
+func (s Each) candidates(ctx *EffectContext, cands []LocalID) []LocalID {
 	return filterIDs(cands, func(id LocalID) bool {
 		if s.Type != TypeUnset && ctx.Resolver.TypeOf(id) != s.Type {
 			return false
 		}
-		if s.ExceptHouse != HouseNone && ctx.Resolver.House(id) == s.ExceptHouse {
+		if s.House != HouseNone && ctx.Resolver.House(id) != s.House {
+			return false
+		}
+		if s.ExceptHouse != HouseNone &&
+			ctx.Resolver.House(id) == s.ExceptHouse {
 			return false
 		}
 		if s.OfChosenHouse && ctx.Resolver.House(id) != ctx.ChosenHouse {
@@ -187,6 +271,102 @@ func (s Each) pick(ctx *EffectContext, cands []LocalID) []LocalID {
 		}
 		return true
 	})
+}
+
+// pick returns every candidate the filters admit.
+func (s Each) pick(ctx *EffectContext, cands []LocalID) []LocalID {
+	return s.candidates(ctx, cands)
+}
+
+// Named pins the pick to the first card of a given name, taken without a choice —
+// Hyde archives Velum from the discard pile, Velum archives Hyde. It renders as
+// the bare card name.
+type Named struct {
+	// Name is the exact card name to pick; the first matching card is taken.
+	Name string
+}
+
+// noun renders the pinned card's name.
+func (s Named) noun() string { return s.Name }
+
+// object renders the pinned card's name — a proper name takes no article.
+func (s Named) object() string { return s.Name }
+
+// candidates keeps the cards whose name matches.
+func (s Named) candidates(ctx *EffectContext, cands []LocalID) []LocalID {
+	return filterIDs(cands, func(id LocalID) bool {
+		return ctx.Resolver.Name(id) == s.Name
+	})
+}
+
+// pick takes the first card of the name, or none when none is present.
+func (s Named) pick(ctx *EffectContext, cands []LocalID) []LocalID {
+	if matching := s.candidates(ctx, cands); len(matching) > 0 {
+		return matching[:1]
+	}
+	return nil
+}
+
+// Top pins the pick to the top card of an ordered zone (Deck or Discard), taken
+// without a choice. A node's Amount loops it for the top N, each pass taking the
+// new top after the last moved — ArchiveCard{Zone: Deck, Selection: Top{}}
+// archives the top card of the deck (Random Access Archives). The node hands
+// cands top-first (see topFirst), so the top is index 0.
+type Top struct{}
+
+// noun renders the bare kind of card taken.
+func (Top) noun() string { return "card" }
+
+// object renders the positioned card the verb acts on.
+func (Top) object() string { return "the top card" }
+
+// positional reports that Top picks by position, not by identity or filter.
+func (Top) positional() bool { return true }
+
+// edge names the end of the zone Top picks from.
+func (Top) edge() string { return "top" }
+
+// candidates returns the top card, or none when the zone is empty.
+func (Top) candidates(_ *EffectContext, cands []LocalID) []LocalID {
+	if len(cands) == 0 {
+		return nil
+	}
+	return cands[:1]
+}
+
+// pick takes the top card.
+func (s Top) pick(ctx *EffectContext, cands []LocalID) []LocalID {
+	return s.candidates(ctx, cands)
+}
+
+// Bottom pins the pick to the bottom card of an ordered zone (Deck or Discard),
+// taken without a choice — the positional sibling of Top. The node hands cands
+// top-first (see topFirst), so the bottom is the last card.
+type Bottom struct{}
+
+// noun renders the bare kind of card taken.
+func (Bottom) noun() string { return "card" }
+
+// object renders the positioned card the verb acts on.
+func (Bottom) object() string { return "the bottom card" }
+
+// positional reports that Bottom picks by position, not by identity or filter.
+func (Bottom) positional() bool { return true }
+
+// edge names the end of the zone Bottom picks from.
+func (Bottom) edge() string { return "bottom" }
+
+// candidates returns the bottom card, or none when the zone is empty.
+func (Bottom) candidates(_ *EffectContext, cands []LocalID) []LocalID {
+	if len(cands) == 0 {
+		return nil
+	}
+	return cands[len(cands)-1:]
+}
+
+// pick takes the bottom card.
+func (s Bottom) pick(ctx *EffectContext, cands []LocalID) []LocalID {
+	return s.candidates(ctx, cands)
 }
 
 // whoseHand renders the possessive for a player's hand from the controller's

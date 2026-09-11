@@ -22,5 +22,6 @@ var DirectorOfZYX = card.New(
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Scientist),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(
-		card.Trigger.StartOfTurn, card.ArchiveTop{From: card.Deck, Amount: 1}),
+		card.Trigger.StartOfTurn,
+		card.ArchiveCard{Zone: card.Deck, Selection: card.Top{}}),
 )

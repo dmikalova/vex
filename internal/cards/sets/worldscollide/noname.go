@@ -25,7 +25,16 @@ var Noname = card.New(
 		PowerBonus: 1,
 		Per:        card.PurgedCards{},
 	}),
-	card.WithAbility(card.Trigger.Play, card.PurgeCard{Zone: card.Discard}),
-	card.WithAbility(card.Trigger.Fight, card.PurgeCard{Zone: card.Discard}),
-	card.WithAbility(card.Trigger.Reap, card.PurgeCard{Zone: card.Discard}),
+	card.WithAbility(card.Trigger.Play, card.PurgeCard{
+		Player:    card.ChosenPlayer,
+		Selection: card.Chosen{},
+	}),
+	card.WithAbility(card.Trigger.Fight, card.PurgeCard{
+		Player:    card.ChosenPlayer,
+		Selection: card.Chosen{},
+	}),
+	card.WithAbility(card.Trigger.Reap, card.PurgeCard{
+		Player:    card.ChosenPlayer,
+		Selection: card.Chosen{},
+	}),
 )

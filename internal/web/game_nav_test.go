@@ -279,6 +279,27 @@ func TestTabAndEnterAnswerAFightTarget(t *testing.T) {
 	}
 }
 
+// Enter finishes a declinable "up to N" prompt (Festering Touch) the same way
+// its Done button does, without first tabbing over to that button.
+func TestEnterPressesDoneOnADeclinablePrompt(t *testing.T) {
+	c := newClient(t)
+	c.manual()
+	id := c.deal(testCreature)
+	c.g.g.ManualMove(id, engine.ManualDiscard)
+
+	answer := c.ask("Choose up to 2 creatures", true, []engine.LocalID{id})
+	c.await("the prompt to go up", func() bool { return c.g.choosing })
+	if !c.g.chooserDeclinable {
+		t.Fatal("the staged prompt is not declinable")
+	}
+
+	c.press("Enter")
+	if got := <-answer; got.ok {
+		t.Error("Enter should press Done and decline, not pick a candidate")
+	}
+	c.await("the prompt to come down", func() bool { return !c.g.choosing })
+}
+
 // Tab over the house prompt walks its buttons, and Enter presses the one it
 // stopped on.
 func TestTabAndEnterAnswerTheHousePrompt(t *testing.T) {

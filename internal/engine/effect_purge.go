@@ -2,38 +2,46 @@ package engine
 
 import (
 	"fmt"
-	"strings"
 )
 
 // Purging a card sets it aside out of the game entirely, in the purge pile, where
 // no ability can reach it unless that ability names the purge pile. It is the most
 // permanent way a card leaves play: a purged card never enters a discard pile and
 // can never be drawn, played, or destroyed again.
-// PurgeCard sets cards aside out of the game, taken from a zone the controller
-// picks.
+// PurgeCard sets cards aside out of the game, taken from a discard pile, with a
+// Selection deciding which cards leave (a chosen card, restricted by house or
+// type; or each matching card) and Player deciding which pile: ChosenPlayer picks
+// among the piles holding a matching card (Creeping Oblivion's "a discard pile"),
+// EachPlayer purges from both piles at once (Soldiers to Flowers). GainOwnerAember
+// gives each purged card's owner 1 Æmber.
 // It serves both as a standalone effect (Creeping Oblivion purges up to 2 cards)
 // and as the first half of a Then ("purge a creature -> give a +1 power counter"),
-// so it reports whether it purged anything.
+// so it reports whether it purged anything, and it records the tally and the total
+// Æmber bonus of the purged cards so a following effect can scale with them
+// (Noname's power, Infurnace's Æmber loss).
 type PurgeCard struct {
-	// Zone is the pile the purge pulls from. It has no default: a Purge must name
-	// where it purges from. Only the discard pile is supported today.
-	Zone Zone
-	// Type restricts the purge to cards of this type; the zero value allows any.
-	Type CardType
-	// House restricts the purge to cards of this house; HouseNone allows any card.
-	House House
-	// Amount is how many cards to purge; the zero value counts as one, so a bare
-	// Purge reads as "purge a card".
+	// Player chooses which discard pile(s) the purge pulls from: ChosenPlayer for a
+	// pile the controller picks, EachPlayer for both piles at once.
+	Player Player
+	// Selection decides which cards are purged; it must be set.
+	Selection Selection
+	// Amount is how many cards to purge from the pile; the zero value counts as one.
+	// It is ignored by an Each Selection, which takes every matching card. An Optional
+	// Selection lets the controller purge fewer, down to none, reading as "up to N"
+	// (Creeping Oblivion's "up to 2").
 	Amount int
-	// UpTo lets the controller purge fewer than Amount, down to none (Creeping
-	// Oblivion's "up to 2"). Without it they purge Amount when that many match.
-	UpTo bool
+	// GainOwnerAember gives each purged card's owner 1 Æmber per purged card
+	// (Soldiers to Flowers).
+	GainOwnerAember bool
 }
 
-// validate rejects a Purge that does not name the zone it pulls from.
+// validate rejects a Purge whose player or selection was left unset.
 func (e PurgeCard) validate() error {
-	if !e.Zone.valid() {
-		return fmt.Errorf("Purge: zone must be set")
+	if !e.Player.valid() {
+		return errUnsetPlayer("PurgeCard")
+	}
+	if e.Selection == nil {
+		return fmt.Errorf("PurgeCard: selection must be set")
 	}
 	return nil
 }
@@ -46,83 +54,86 @@ func (e PurgeCard) count() int {
 	return e.Amount
 }
 
-// noun renders the kind of card purged: the lowercased type when set, else "card",
-// house-qualified when House is set (e.g. "Dis card").
-func (e PurgeCard) noun() string {
-	noun := "card"
-	if e.Type != TypeUnset {
-		noun = strings.ToLower(e.Type.String())
+// object renders the noun phrase purged, e.g. "a creature", "up to 2 cards", or
+// "each Untamed creature".
+func (e PurgeCard) object() string {
+	switch {
+	case selectionDeclinable(e.Selection) && e.count() > 1:
+		return "up to " + countNoun(e.count(), e.Selection.noun())
+	case e.count() > 1:
+		return countNoun(e.count(), e.Selection.noun())
+	default:
+		return e.Selection.object()
 	}
-	if e.House != HouseNone {
-		noun = e.House.String() + " " + noun
-	}
-	return noun
 }
 
-// Text renders the effect, e.g. "purge a creature from a discard pile" or "purge
-// up to 2 cards from a discard pile".
-func (e PurgeCard) Text() string {
-	switch {
-	case e.UpTo:
-		return "purge up to " + countNoun(e.count(), e.noun()) + " from a discard pile"
-	case e.count() == 1:
-		return "purge " + indefinite(e.noun()) + " from a discard pile"
-	default:
-		return "purge " + countNoun(e.count(), e.noun()) + " from a discard pile"
+// pileText renders which discard pile(s) the purge names.
+func (e PurgeCard) pileText() string {
+	if e.Player == EachPlayer {
+		return "each player's discard pile"
 	}
+	return "a discard pile"
+}
+
+// Text renders the effect, e.g. "purge a creature from a discard pile", "purge up
+// to 2 cards from a discard pile", or "purge each Untamed creature from each
+// player's discard pile. For each card purged this way, its owner gains 1 Æmber".
+func (e PurgeCard) Text() string {
+	text := "purge " + e.object() + " from " + e.pileText()
+	if e.GainOwnerAember {
+		text += ". For each card purged this way, its owner gains 1 Æmber"
+	}
+	return text
 }
 
 // Resolve purges the cards, ignoring the report used when Purge gates a Then.
 func (e PurgeCard) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 
-// resolveGate purges up to count matching cards from one discard pile the
-// controller picks — the cards one at a time, with a "Done" opt-out when UpTo —
-// and reports whether any card was purged.
-func (e PurgeCard) resolveGate(ctx *EffectContext) bool {
-	matches := func(id LocalID) bool {
-		if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
-			return false
-		}
-		if e.House != HouseNone && ctx.Resolver.House(id) != e.House {
-			return false
-		}
-		return true
+// piles returns the discard piles the purge acts on: both piles for EachPlayer, or
+// — for ChosenPlayer — the one pile the controller picks among those holding a
+// card the Selection would take (prompting only when both do).
+func (e PurgeCard) piles(ctx *EffectContext) []int {
+	if e.Player == EachPlayer {
+		return []int{ctx.Controller, ctx.Opponent()}
 	}
-	// The discard piles holding at least one matching card.
-	var piles []int
+	var eligible []int
 	for _, p := range []int{ctx.Controller, ctx.Opponent()} {
-		if len(discardCardsWhere(ctx, p, matches)) > 0 {
-			piles = append(piles, p)
+		if len(e.Selection.candidates(ctx, ctx.Resolver.Discard(p))) > 0 {
+			eligible = append(eligible, p)
 		}
 	}
-	if len(piles) == 0 {
-		return false
+	if len(eligible) < 2 {
+		return eligible
 	}
-	pile := piles[0]
-	if len(piles) == 2 {
-		pile = piles[ctx.ChooseOption("Choose a discard pile to purge from",
-			[]string{"your discard pile", "your opponent's discard pile"})]
-	}
+	chosen := ctx.ChooseOption("Choose a discard pile to purge from",
+		[]string{"your discard pile", "your opponent's discard pile"})
+	return eligible[chosen : chosen+1]
+}
+
+// resolveGate purges up to count matching cards from each named pile — the cards
+// one at a time for a Chosen Selection, with a "Done" opt-out for an Optional
+// Selection, and every
+// match at once for an Each Selection — records the tally and the total Æmber
+// bonus, pays each owner when GainOwnerAember, and reports whether any card was
+// purged (so a Then can gate on it).
+func (e PurgeCard) resolveGate(ctx *EffectContext) bool {
 	purged := 0
 	bonus := 0
-	for i := 0; i < e.count(); i++ {
-		cands := discardCardsWhere(ctx, pile, matches)
-		if len(cands) == 0 {
-			break
+	for _, pile := range e.piles(ctx) {
+		for i := 0; i < e.count(); i++ {
+			ids := e.Selection.pick(ctx, ctx.Resolver.Discard(pile))
+			if len(ids) == 0 {
+				break
+			}
+			for _, id := range ids {
+				bonus += ctx.Resolver.AemberBonus(id)
+				purgeFrom(ctx, Discard, pile, id)
+				purged++
+				if e.GainOwnerAember {
+					ctx.Resolver.GainAember(pile, 1)
+				}
+			}
 		}
-		var chosen LocalID
-		var ok bool
-		if e.UpTo {
-			chosen, ok = ctx.ChooseCardOptional("Choose a card to purge", cands)
-		} else {
-			chosen, ok = ctx.ChooseCard("Choose a card to purge", cands)
-		}
-		if !ok {
-			break
-		}
-		bonus += ctx.Resolver.AemberBonus(chosen)
-		purgeFrom(ctx, Discard, pile, chosen)
-		purged++
 	}
 	ctx.Produced.Purged = purged
 	ctx.Produced.PurgedAemberBonus = bonus
@@ -197,13 +208,17 @@ func (e PurgeFromHand) resolveGate(ctx *EffectContext) bool {
 	return len(ids) > 0
 }
 
-// declinable reports whether the purge can be passed — true only for a
-// non-mandatory Chosen, whose single card choice is answered by clicking the card
+// declinable reports whether the purge can be passed — true only for an
+// Optional Chosen, whose single card choice is answered by clicking the card
 // (or passing) under a May.
 func (e PurgeFromHand) declinable() bool { return selectionDeclinable(e.Selection) }
 
 // resolveOptional resolves the purge as its own optional choice under a May.
-func (e PurgeFromHand) resolveOptional(ctx *EffectContext) bool { return e.resolveGate(ctx) }
+func (e PurgeFromHand) resolveOptional(
+	ctx *EffectContext,
+) bool {
+	return e.resolveGate(ctx)
+}
 
 // PurgeCreature purges each creature its Target selects from play into its owner's
 // purge pile — the "purge this creature" a card gains (Annihilation Ritual grants
@@ -243,7 +258,11 @@ func (e PurgeCreature) declinable() bool { return e.Target.isChosen() }
 // vacuous reports that there is nothing here to purge, so a "you may" wrapping it
 // need not ask (Buzzle at a flank with no neighbor purges nothing and asks
 // nothing).
-func (e PurgeCreature) vacuous(ctx *EffectContext) bool { return e.Target.empty(ctx) }
+func (e PurgeCreature) vacuous(
+	ctx *EffectContext,
+) bool {
+	return e.Target.empty(ctx)
+}
 
 // resolveOptional is resolveGate under a May: the creature is asked declinably, so
 // "you may purge a neighboring creature" is answered by clicking that creature
@@ -295,7 +314,11 @@ func (CardsPurged) CountText() string { return "creature purged this way" }
 type PurgedAemberBonus struct{}
 
 // Value reads the summed bonus the preceding purge recorded.
-func (PurgedAemberBonus) Value(ctx *EffectContext) int { return ctx.Produced.PurgedAemberBonus }
+func (PurgedAemberBonus) Value(
+	ctx *EffectContext,
+) int {
+	return ctx.Produced.PurgedAemberBonus
+}
 
 // CountText renders the phrase the loss is measured against.
 func (PurgedAemberBonus) CountText() string { return "the total Æmber bonus of the purged cards" }

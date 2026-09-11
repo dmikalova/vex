@@ -154,22 +154,12 @@ func (g *Game) fight(attacker, defender LocalID) {
 
 		}
 	}
-	// A creature the fight destroyed has left play, so its "After Fight:" ability
-	// does not resolve — and must not, since its per-match state is already gone.
-	// A defender that survived the fight is passed as "it" so an after-fight
-	// ability can name "the creature <self> fights" (Roxador stuns it); a defender
-	// the fight destroyed leaves no such target.
-	if g.inPlay(attacker) {
-		if g.inPlay(defender) {
-			g.triggerAbilities(attacker, TriggerAfterFight, defender, true)
-		} else {
-			g.triggerAbilities(attacker, TriggerAfterFight, 0, false)
-		}
-	}
-
-	// "After a creature is destroyed in a fight with X": when exactly one combatant is
-	// removed by the fight, the survivor's ability fires with the destroyed
-	// creature as `it`.
+	// The whole post-combat reaction set resolves as one ordered window (ADR 0013):
+	// the attacker's own "Fight:", the after-destroyed-in-a-fight reactions, the
+	// after-use reactions, the board-wide "after a creature fights", and the
+	// neighbor reactions are gathered before any resolves so the active player orders
+	// them together. Tallies are read first because they are bookkeeping, not
+	// reactions, and a later reaction must see them settled.
 	attackerDead, defenderDead := !g.inPlay(attacker), !g.inPlay(defender)
 	// A creature destroyed in a fight is an enemy kill from the other side's point of
 	// view, which is the tally The Warchest is paid for.
@@ -179,42 +169,96 @@ func (g *Game) fight(attacker, defender LocalID) {
 	if defenderDead {
 		g.State.TurnHistory[1-defenderSide][EnemyCreaturesFightKilled]++
 	}
-	if defenderDead && !attackerDead {
-		g.triggerAbilities(attacker, TriggerAfterDestroyedFighting, defender, true)
+	g.resolveWindow(g.orderTriggered(
+		attackerSide,
+		TriggerAfterFight,
+		append(
+			g.fightReactions(attacker, defender, attackerSide, defenderSide, neighborsAtFight),
+			g.lastingReactions(EventFight, attackerSide, attacker)...,
+		),
+	))
+}
+
+// fightReactions gathers, in default resolution order, every card-sourced ability
+// that reacts to a fight that has just resolved: the attacker's own "Fight:"
+// (bound to a surviving defender as "it"), the "after a creature is destroyed in a
+// fight" reactions on the survivor and on the enemies of a slain fighter, the
+// attacker's "after I am used" and the "after you use a card" reactions on its
+// controller's other cards, the board-wide "after a creature fights", and the
+// "after a neighbor fights" reactions on the attacker's flankmates. Every entry
+// carries its own actor and "it" so the whole set orders as one window while each
+// bystander reaction resolves for its owner.
+func (g *Game) fightReactions(
+	attacker, defender LocalID,
+	attackerSide, defenderSide int,
+	neighborsAtFight []LocalID,
+) []triggeredAbility {
+	var pending []triggeredAbility
+	add := func(src LocalID, trigger Trigger, it LocalID, hasIt bool) {
+		got := g.triggeredBy(src, trigger)
+		for i := range got {
+			got[i].actor = int8(g.controller(src))
+			got[i].it, got[i].hasIt = it, hasIt
+		}
+		pending = append(pending, got...)
 	}
-	if attackerDead && !defenderDead {
-		g.triggerAbilities(defender, TriggerAfterDestroyedFighting, attacker, true)
+	attackerAlive, defenderAlive := g.inPlay(attacker), g.inPlay(defender)
+	// A creature the fight destroyed has left play, so its "After Fight:" ability
+	// does not resolve. A defender that survived is passed as "it" so an after-fight
+	// ability can name "the creature <self> fights" (Roxador stuns it).
+	if attackerAlive {
+		if defenderAlive {
+			add(attacker, TriggerAfterFight, defender, true)
+		} else {
+			add(attacker, TriggerAfterFight, 0, false)
+		}
+	}
+	// "After a creature is destroyed in a fight with X": when exactly one combatant
+	// is removed by the fight, the survivor's ability fires with the destroyed
+	// creature as "it".
+	if !defenderAlive && attackerAlive {
+		add(attacker, TriggerAfterDestroyedFighting, defender, true)
+	}
+	if !attackerAlive && defenderAlive {
+		add(defender, TriggerAfterDestroyedFighting, attacker, true)
 	}
 	// "After an enemy creature is destroyed while fighting": a bystander (The
 	// Colosseum) whose controller is the enemy of a combatant killed in the fight
 	// reacts, with the destroyed creature as "it".
-	if defenderDead {
+	if !defenderAlive {
 		for _, id := range g.allInPlay(1 - defenderSide) {
-			g.triggerAbilities(id, TriggerAfterEnemyDestroyedFighting, defender, true)
+			add(id, TriggerAfterEnemyDestroyedFighting, defender, true)
 		}
 	}
-	if attackerDead {
+	if !attackerAlive {
 		for _, id := range g.allInPlay(1 - attackerSide) {
-			g.triggerAbilities(id, TriggerAfterEnemyDestroyedFighting, attacker, true)
+			add(id, TriggerAfterEnemyDestroyedFighting, attacker, true)
 		}
 	}
-	g.emitCardUsed(g.controller(attacker), attacker)
-	g.emitLasting(EventFight, g.controller(attacker), attacker)
-	// Fire "after a creature is used to fight" on every in-play card (Shattered
-	// Throne, Peace Accord), with the fighting creature as "it".
+	// The used card's own "after I am used", then "after you use a card" on the
+	// attacking player's other cards, with the attacker as "it".
+	add(attacker, TriggerAfterUsedSelf, 0, false)
+	for _, id := range g.allInPlay(attackerSide) {
+		if id != attacker {
+			add(id, TriggerAfterUse, attacker, true)
+		}
+	}
+	// "After a creature is used to fight" on every in-play card (Shattered Throne,
+	// Peace Accord), with the fighting creature as "it".
 	for player := 0; player < 2; player++ {
 		for _, id := range g.allInPlay(player) {
-			g.triggerAbilities(id, TriggerAfterCreatureFights, attacker, true)
+			add(id, TriggerAfterCreatureFights, attacker, true)
 		}
 	}
-	// Fire "after a neighbor of this is used to fight" on the creatures that
-	// flanked the attacker when the fight began (Little Niff), with the attacker
-	// as "it". A neighbor destroyed by the fight is skipped.
+	// "After a neighbor of this is used to fight" on the creatures that flanked the
+	// attacker when the fight began (Little Niff), with the attacker as "it". A
+	// neighbor destroyed by the fight is skipped.
 	for _, neighbor := range neighborsAtFight {
 		if g.inPlay(neighbor) {
-			g.triggerAbilities(neighbor, TriggerAfterNeighborFights, attacker, true)
+			add(neighbor, TriggerAfterNeighborFights, attacker, true)
 		}
 	}
+	return pending
 }
 
 // spendElusive reports whether the defender's Elusive keyword stops the pending

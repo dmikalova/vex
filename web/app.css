@@ -1745,19 +1745,17 @@ button:disabled {
   line-height: 1;
   gap: 0.15rem;
 }
-/* an unlabelled icon names itself on hover: a CSS bubble rather than title= so it
-   appears immediately. The label is the element's data-tip, styled to read like a
-   zone roster's title bar (quiet, spaced) rather than a plain tooltip. */
-.tip {
-  position: relative;
-}
-.tip::after {
-  content: attr(data-tip);
-  position: absolute;
-  bottom: calc(100% + 0.25rem);
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 30;
+/* an unlabelled icon names itself on hover or touch: a single floating label
+   (#tip-float) that installTips fills from whatever data-tip the pointer is over
+   and places with position:fixed. It is one element rather than a per-icon
+   ::after so it escapes the player bar's overflow clip, which a bubble anchored
+   inside .score-pill could not. left/top/transform are set inline from a
+   measurement; app.css owns only how it looks. */
+.tip-float {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 60;
   padding: 0.1rem 0.35rem;
   border-radius: var(--ctl-radius);
   background: var(--surface-hover);
@@ -1770,20 +1768,14 @@ button:disabled {
   opacity: 0;
   pointer-events: none;
 }
-.tip:hover::after {
+.tip-float--on {
   opacity: 1;
 }
-/* .tip--active is the touch equivalent of :hover — installTipDrag sets it on the
-   player-bar stat under a finger press, so a tooltip that only a real hover would
-   raise is reachable on a touchscreen. */
-.tip--active::after {
-  opacity: 1;
-}
-/* player-bar stats claim the vertical touch gesture so dragging a finger across
-   them moves the tooltip instead of scrolling the page out from under it, while
-   leaving horizontal panning to the browser so the bar still scrolls sideways
-   when a swipe starts on an icon. */
-.score-pill .tip {
+/* the player bar is a horizontal scroller; claim the pan gesture for the whole
+   bar so a swipe anywhere along it scrolls the bar rather than the page, and the
+   icons no longer swallow the drag. The tip touch handlers are passive, so this
+   does not fight them. */
+.score-pill {
   touch-action: pan-x;
 }
 /* a zone whose contents may be read opens a roster popover of house-coloured
@@ -1793,10 +1785,9 @@ button:disabled {
   position: relative;
 }
 .zone-roster {
-  position: absolute;
-  bottom: calc(100% + 0.25rem);
-  left: 50%;
-  transform: translateX(-50%);
+  position: fixed;
+  left: 0;
+  top: 0;
   z-index: 30;
   display: none;
   flex-direction: column;
@@ -1813,12 +1804,6 @@ button:disabled {
 }
 .zone-has-roster:hover .zone-roster {
   display: flex;
-}
-/* the top bar has nothing above it, so its roster drops below instead of being
-   clipped off the top of the board */
-.board-area > .score-pill:first-child .zone-roster {
-  top: calc(100% + 0.25rem);
-  bottom: auto;
 }
 .zone-roster-label {
   color: var(--ink-quiet);
@@ -1860,10 +1845,9 @@ button:disabled {
   height: 1.25em;
 }
 .deck-list {
-  position: absolute;
-  bottom: calc(100% + 0.35rem);
-  left: 50%;
-  transform: translateX(-50%);
+  position: fixed;
+  left: 0;
+  top: 0;
   z-index: 40;
   display: none;
   flex-direction: column;
@@ -1880,12 +1864,6 @@ button:disabled {
 .deck-tip:hover .deck-list,
 .deck-tip--open .deck-list {
   display: flex;
-}
-/* the top bar has nothing above it, so its deck list drops below rather than
-   being clipped off the top of the board */
-.board-area > .score-pill:first-child .deck-list {
-  top: calc(100% + 0.35rem);
-  bottom: auto;
 }
 .deck-list-head {
   color: var(--ink-quiet);
@@ -1948,12 +1926,6 @@ button:disabled {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-/* the top bar has nothing above it, so its tips drop below instead of being
-   clipped off the top of the board */
-.board-area > .score-pill:first-child .tip::after {
-  top: calc(100% + 0.25rem);
-  bottom: auto;
 }
 .score-zones:hover {
   color: var(--ink-quiet);
@@ -3338,6 +3310,107 @@ button:disabled {
 .rarity-connected-icon {
   width: 0.95em;
   height: 0.95em;
+}
+
+/* ---- selection badges (BadgeChooser preview) ---- */
+/* While an effect's choose loop runs, each creature it is about to affect is
+   badged with the status it will receive — the running damage a Festering Touch
+   pick deals, a ward an Imperium "ward N" places — and the pointer carries a
+   small marker of the same icon. The host is a positioned wrapper so the badge
+   floats centred over the card face. */
+.sel-badge-host {
+  position: relative;
+  display: flex;
+  height: 100%;
+  min-height: 0;
+}
+.sel-badge {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.1em;
+  font-size: 2.6rem;
+  font-weight: 800;
+  color: #fff;
+  text-shadow:
+    0 0 6px #000,
+    0 0 3px #000;
+  opacity: 0.6;
+  pointer-events: none;
+}
+.sel-badge-icon {
+  width: 1em;
+  height: 1em;
+  opacity: 0.85;
+  filter: drop-shadow(0 0 4px #000);
+}
+.sel-badge-num {
+  line-height: 1;
+}
+/* When the loop ends the badges grow and fade away rather than blinking out. */
+.sel-badge--clearing {
+  animation: selBadgeClear var(--sel-badge-fade, 450ms) ease-out forwards;
+}
+@keyframes selBadgeClear {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+/* The cursor marker is one fixed element the pointermove listener repositions
+   (like #tip-float), showing what a click will do during a preview. While it is
+   active the system cursor is hidden so the icon stands in for the pointer. */
+.sel-cursor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 65;
+  font-size: 2.6rem;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  pointer-events: none;
+}
+body:has(.sel-cursor--on) .board-area {
+  cursor: none;
+}
+/* Keep the real cursor over the player bars and sidebar, where normal controls
+   live, and suppress a selectable card's own pointer so only the icon shows. */
+body:has(.sel-cursor--on) .score-pill {
+  cursor: auto;
+}
+body:has(.sel-cursor--on) .card--targetable,
+body:has(.sel-cursor--on) .card--clickable,
+body:has(.sel-cursor--on) .card-tab {
+  cursor: none;
+}
+.sel-cursor--on {
+  opacity: 1;
+}
+/* Over the player bars and sidebar the marker steps aside for the real cursor. */
+.sel-cursor--hidden.sel-cursor--on {
+  opacity: 0;
+}
+.sel-cursor-icon {
+  width: 1em;
+  height: 1em;
+  filter: drop-shadow(0 0 3px #000);
+}
+/* Over a selectable card the marker gains a green ring so it reads as clickable.
+   The outline is traced with shadows on all eight directions (axes and diagonals)
+   so the corners close up rather than leaving a gap. */
+.sel-cursor--bordered .sel-cursor-icon {
+  filter: drop-shadow(0.5px 0 0 var(--p0)) drop-shadow(-0.5px 0 0 var(--p0))
+    drop-shadow(0 0.5px 0 var(--p0)) drop-shadow(0 -0.5px 0 var(--p0))
+    drop-shadow(0.5px 0.5px 0 var(--p0)) drop-shadow(-0.5px 0.5px 0 var(--p0))
+    drop-shadow(0.5px -0.5px 0 var(--p0)) drop-shadow(-0.5px -0.5px 0 var(--p0))
+    drop-shadow(0 0 3px #000);
 }
 
 /* ---- icons (static SVGs from web/assets) ---- */

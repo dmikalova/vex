@@ -17,6 +17,7 @@ var MedicIngram = card.New(
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "301"),
+	card.InCluster(card.Pulled(ingramsBlasterCluster, 1, 1.25)),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human),
 	card.WithAbility(card.Trigger.PlayFightReap, card.May{Do: card.ChooseCreatureThen{

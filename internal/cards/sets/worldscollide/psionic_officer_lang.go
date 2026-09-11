@@ -20,5 +20,6 @@ var PsionicOfficerLang = card.New(
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human),
 	card.WithAbility(
-		card.Trigger.AfterEnemyCreatureReaps, card.ArchiveTop{From: card.Deck, Amount: 1}),
+		card.Trigger.AfterEnemyCreatureReaps,
+		card.ArchiveCard{Zone: card.Deck, Selection: card.Top{}}),
 )

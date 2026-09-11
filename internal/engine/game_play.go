@@ -452,6 +452,10 @@ func (g *Game) playCardFromZone(
 func (g *Game) applyTreachery(player int, id LocalID) {
 	if g.hasKeyword(id, Treachery) {
 		g.takeControl(id, 1-player, id)
+		// The active player chose to play it, so they choose which flank of the
+		// opponent's battleline it enters (a control change; the active player always
+		// places).
+		g.placeGainedOnFlank(id, 1-player)
 		// The handoff re-forms neighbors on both battlelines, so a creature that
 		// lost a flank or neighbor power bonus in the move must settle now.
 		g.settleDestroyed(player)
@@ -489,13 +493,16 @@ func (g *Game) playCreatureCard(player int, id LocalID, fl flank) {
 	// creature's own ability never sees the doomed neighbor still in play.
 	g.settleDestroyed(player)
 	g.applyAemberBonus(player, id)
-	g.triggerAbilities(id, TriggerAfterPlay, 0, false)
-	g.emitCreatureEnters(id)
-	g.emitCreaturePlayedAdjacent(id)
-	g.emitCreaturePlayed(id)
-	g.emitCardPlayed(player, id)
-	g.emitLasting(EventCreaturePlayed, player, id)
-	g.emitLasting(EventCardEntersPlay, player, id)
+	// Playing a creature opens one window: its own "Play:" and "enters play"
+	// abilities, every bystander's "after a creature enters play / is played /
+	// is played adjacent", every "after you play a card" reaction, and the
+	// duration reactions on playing a card, a creature, and a card entering play
+	// all trigger at once, so the active player orders the whole set (ADR 0013).
+	pending := g.playCreatureReactions(player, id)
+	pending = append(pending, g.lastingReactions(EventCardPlayed, player, id)...)
+	pending = append(pending, g.lastingReactions(EventCreaturePlayed, player, id)...)
+	pending = append(pending, g.lastingReactions(EventCardEntersPlay, player, id)...)
+	g.resolveWindow(g.orderTriggered(player, TriggerAfterPlay, pending))
 	// The arrival may have walked into a power-reducing constant ability, or been one.
 	g.settleDestroyed(player)
 }
@@ -545,9 +552,13 @@ func (g *Game) playArtifactCard(player int, id LocalID) {
 	g.State.Artifacts[player].add(id)
 	g.record(ArtifactPlayed{Player: player, Card: id})
 	g.applyAemberBonus(player, id)
-	g.triggerAbilities(id, TriggerAfterPlay, 0, false)
-	g.emitCardPlayed(player, id)
-	g.emitLasting(EventCardEntersPlay, player, id)
+	// The artifact's own "Play:", every "after you play a card" reaction, and the
+	// duration reactions on playing a card and a card entering play trigger at once,
+	// so the active player orders the set (ADR 0013).
+	pending := g.afterPlayReactions(player, id)
+	pending = append(pending, g.lastingReactions(EventCardPlayed, player, id)...)
+	pending = append(pending, g.lastingReactions(EventCardEntersPlay, player, id)...)
+	g.resolveWindow(g.orderTriggered(player, TriggerAfterPlay, pending))
 	g.settleDestroyed(player)
 }
 
@@ -559,11 +570,15 @@ func (g *Game) playActionCard(player int, id LocalID) {
 	// A reaction to a Tactic being played resolves before the Tactic's own effect
 	// (Encounter Suit wards its host before the Tactic can reach it).
 	g.emitActionPlayedBeforeResolve(player, id)
-	// The Play: ability resolves under the control of the player who played the
-	// card, not the card's owner. They differ only when one player plays another's
-	// card (Mimicry copies an action out of the opponent's discard pile).
-	g.triggerAbilitiesAs(player, id, TriggerAfterPlay, 0, false)
-	g.emitCardPlayed(player, id)
+	// The Tactic's own "Play:", every "after you play a card" reaction, and the
+	// duration reactions on playing a card trigger at once, so the active player
+	// orders the set (ADR 0013). The "Play:" resolves under the control of the player
+	// who played the card, not its owner; they differ only when one player plays
+	// another's card (Mimicry copies an action out of the opponent's discard pile),
+	// which afterPlayReactions carries as the entry actor.
+	pending := g.afterPlayReactions(player, id)
+	pending = append(pending, g.lastingReactions(EventCardPlayed, player, id)...)
+	g.resolveWindow(g.orderTriggered(player, TriggerAfterPlay, pending))
 	// A played action goes to the top of its owner's discard pile — unless its own
 	// "Play:" ability purged it (Library Access), in which case it is set aside out
 	// of the game instead. Owner and player differ only when one player plays
@@ -628,8 +643,8 @@ func (g *Game) discardFromHand(owner int, id, source LocalID, hasSource bool) {
 }
 
 // randomCardFromHand returns a uniformly random card from a player's hand,
-// reporting ok=false when the hand is empty. It is the shared pick behind the
-// ArchiveRandomFromHand verb.
+// reporting ok=false when the hand is empty. It is the shared pick behind
+// revealing a random card from hand (Forge Guard).
 func (g *Game) randomCardFromHand(owner int) (LocalID, bool) {
 	hand := &g.State.Hand[owner]
 	if hand.Count == 0 {

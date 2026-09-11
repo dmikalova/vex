@@ -23,7 +23,7 @@ var ImperialTraitor = card.New(
 				card.RevealHand{Player: card.Opponent},
 				card.PurgeFromHand{
 					Player:    card.Opponent,
-					Selection: card.Chosen{House: card.House.Sanctum},
+					Selection: card.Chosen{House: card.House.Sanctum, Optional: true},
 				},
 			},
 		}),

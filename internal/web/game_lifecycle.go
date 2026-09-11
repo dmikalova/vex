@@ -37,7 +37,7 @@ func (g *game) OnMount(ctx app.Context) {
 	g.installKeyShortcuts()
 	g.installScrollTracking()
 	g.installSwipeGestures()
-	g.installTipDrag()
+	g.installTips()
 	g.scrollLogToBottom()
 }
 
@@ -495,6 +495,11 @@ func (g *game) installKeyShortcuts() {
 					g.dispatch(func(ctx app.Context) { g.undoAction(ctx, app.Event{}) })
 				}
 			}
+			// Ctrl/Cmd+G opens the new-game set picker.
+			if key == "g" || key == "G" {
+				e.Call("preventDefault")
+				g.dispatch(func(ctx app.Context) { g.openSetup(ctx, app.Event{}) })
+			}
 			return nil
 		}
 		// Tab and the arrows move the selection, so the browser must not also move
@@ -566,7 +571,7 @@ func (g *game) installSwipeGestures() {
 		g.swipeTracking = true
 		target := args[0].Get("target")
 		// A press that begins on the player bar drives its stat tooltip (see
-		// installTipDrag), so it must not also swipe the sidebar.
+		// installTips), so it must not also swipe the sidebar.
 		if target.Truthy() && target.Call("closest", ".score-pill").Truthy() {
 			g.swipeTracking = false
 			return nil
@@ -633,41 +638,98 @@ func (g *game) installSwipeGestures() {
 	)
 }
 
-// installTipDrag makes the player bar's stat tooltips reachable by touch: a press
-// on a stat shows its tooltip at once, and dragging the finger along the bar moves
-// the tooltip to whichever stat is under it; releasing clears it. The tips are CSS
-// hover bubbles, which a touchscreen never triggers, so this drives the same
-// .tip--active state a real hover would. It is scoped to stats inside a
-// .score-pill, and a press here suppresses the sidebar edge-swipe.
-func (g *game) installTipDrag() {
+// tipGap is the space, in pixels, between a floating tip label and the element it
+// names.
+const tipGap = 4.0
+
+// installTips shows a single floating label for whatever element the pointer is
+// over that carries a data-tip. One fixed element (#tip-float, in Render) is
+// filled from that element's tip, so it escapes the player bar's overflow clip —
+// which a per-element CSS ::after bubble could not — and works for both a mouse
+// hover and a finger dragged along the bar. A touch press inside a .score-pill
+// also suppresses the sidebar edge-swipe. Positioning is done straight on the DOM
+// rather than through a render, so following the pointer costs no re-render.
+func (g *game) installTips() {
 	if g.tipDownFunc != nil {
 		return
 	}
-	g.tipActive = app.Null()
-	// activate moves the shown tooltip to el (a null el clears it), toggling the
-	// .tip--active class the CSS reveals the bubble on.
-	activate := func(el app.Value) {
-		if g.tipActive.Truthy() {
-			g.tipActive.Get("classList").Call("remove", "tip--active")
+	doc := app.Window().Get("document")
+	// show fills the floating label from el's data-tip and places it centred above
+	// el — flipping below when it would leave the top of the window, and clamped so
+	// it never runs off either side.
+	show := func(el app.Value) {
+		tip := el.Get("dataset").Get("tip")
+		if !tip.Truthy() {
+			return
 		}
-		g.tipActive = el
-		if el.Truthy() {
-			el.Get("classList").Call("add", "tip--active")
+		float := doc.Call("getElementById", "tip-float")
+		if !float.Truthy() {
+			return
+		}
+		float.Set("textContent", tip.String())
+		float.Get("classList").Call("add", "tip-float--on")
+		style := float.Get("style")
+		r := el.Call("getBoundingClientRect")
+		mid := r.Get("left").Float() + r.Get("width").Float()/2
+		style.Set("left", px(mid))
+		style.Set("top", px(r.Get("top").Float()-tipGap))
+		style.Set("transform", "translate(-50%, -100%)")
+		// Now that the label has a measured box, clamp it inside the window.
+		const margin = 8.0
+		fr := float.Call("getBoundingClientRect")
+		vw := app.Window().Get("innerWidth").Float()
+		if left := fr.Get("left").Float(); left < margin {
+			mid += margin - left
+			style.Set("left", px(mid))
+		} else if right := fr.Get("right").Float(); right > vw-margin {
+			mid -= right - (vw - margin)
+			style.Set("left", px(mid))
+		}
+		if fr.Get("top").Float() < margin {
+			style.Set("top", px(r.Get("bottom").Float()+tipGap))
+			style.Set("transform", "translate(-50%, 0)")
 		}
 	}
-	// tipUnder returns the player-bar stat tooltip under a viewport point, or a null
-	// value when the point is off every stat.
+	hide := func() {
+		if float := doc.Call("getElementById", "tip-float"); float.Truthy() {
+			float.Get("classList").Call("remove", "tip-float--on")
+		}
+	}
+	// tipUnder returns the data-tip element under a viewport point, or a null value
+	// when the point is off every tip.
 	tipUnder := func(x, y float64) app.Value {
-		el := app.Window().Get("document").Call("elementFromPoint", x, y)
+		el := doc.Call("elementFromPoint", x, y)
 		if !el.Truthy() {
 			return app.Null()
 		}
-		tip := el.Call("closest", ".tip")
-		if !tip.Truthy() || !tip.Call("closest", ".score-pill").Truthy() {
-			return app.Null()
-		}
-		return tip
+		return el.Call("closest", "[data-tip]")
 	}
+	// Mouse hover raises the label; touch drives the handlers below instead, so the
+	// hover pair ignores a non-mouse pointer. A pointerout whose pointer is still on
+	// a tip (moving onto a child, or across to the next tip) leaves the label up —
+	// the matching pointerover re-places it — so only leaving tips entirely hides.
+	g.tipOverFunc = app.FuncOf(func(_ app.Value, args []app.Value) any {
+		if len(args) == 0 || args[0].Get("pointerType").String() != "mouse" {
+			return nil
+		}
+		if t := args[0].Get("target"); t.Truthy() {
+			if el := t.Call("closest", "[data-tip]"); el.Truthy() {
+				show(el)
+			}
+		}
+		return nil
+	})
+	g.tipOutFunc = app.FuncOf(func(_ app.Value, args []app.Value) any {
+		if len(args) == 0 || args[0].Get("pointerType").String() != "mouse" {
+			return nil
+		}
+		if rel := args[0].Get("relatedTarget"); rel.Truthy() &&
+			rel.Call("closest", "[data-tip]").Truthy() {
+			return nil
+		}
+		hide()
+		return nil
+	})
 	g.tipDownFunc = app.FuncOf(func(_ app.Value, args []app.Value) any {
 		if len(args) == 0 {
 			return nil
@@ -691,7 +753,7 @@ func (g *game) installTipDrag() {
 			return nil
 		}
 		g.tipTracking = true
-		activate(tip)
+		show(tip)
 		return nil
 	})
 	g.tipMoveFunc = app.FuncOf(func(_ app.Value, args []app.Value) any {
@@ -703,13 +765,10 @@ func (g *game) installTipDrag() {
 			args[0].Get("clientY").Float(),
 		)
 		if !tip.Truthy() {
-			activate(app.Null())
+			hide()
 			return nil
 		}
-		if !g.tipActive.Truthy() ||
-			!tip.Call("isSameNode", g.tipActive).Bool() {
-			activate(tip)
-		}
+		show(tip)
 		return nil
 	})
 	g.tipUpFunc = app.FuncOf(func(_ app.Value, _ []app.Value) any {
@@ -717,34 +776,17 @@ func (g *game) installTipDrag() {
 			return nil
 		}
 		g.tipTracking = false
-		activate(app.Null())
+		hide()
 		return nil
 	})
-	doc := app.Window().Get("document")
-	doc.Call(
-		"addEventListener",
-		"pointerdown",
-		g.tipDownFunc,
-		map[string]any{"passive": true},
-	)
-	doc.Call(
-		"addEventListener",
-		"pointermove",
-		g.tipMoveFunc,
-		map[string]any{"passive": true},
-	)
-	doc.Call(
-		"addEventListener",
-		"pointerup",
-		g.tipUpFunc,
-		map[string]any{"passive": true},
-	)
-	doc.Call(
-		"addEventListener",
-		"pointercancel",
-		g.tipUpFunc,
-		map[string]any{"passive": true},
-	)
+	passive := map[string]any{"passive": true}
+	doc.Call("addEventListener", "pointerover", g.tipOverFunc, passive)
+	doc.Call("addEventListener", "pointerout", g.tipOutFunc, passive)
+	doc.Call("addEventListener", "pointerdown", g.tipDownFunc, passive)
+	doc.Call("addEventListener", "pointermove", g.tipMoveFunc, passive)
+	doc.Call("addEventListener", "pointerup", g.tipUpFunc, passive)
+	doc.Call("addEventListener", "pointercancel", g.tipUpFunc, passive)
+	g.installSelCursor(doc, passive)
 }
 
 // OnResize re-places the lifted card copy, which is positioned from a measurement
@@ -830,14 +872,25 @@ func (g *game) OnDismount() {
 	}
 	if g.tipDownFunc != nil {
 		doc := app.Window().Get("document")
+		doc.Call("removeEventListener", "pointerover", g.tipOverFunc)
+		doc.Call("removeEventListener", "pointerout", g.tipOutFunc)
 		doc.Call("removeEventListener", "pointerdown", g.tipDownFunc)
 		doc.Call("removeEventListener", "pointermove", g.tipMoveFunc)
 		doc.Call("removeEventListener", "pointerup", g.tipUpFunc)
 		doc.Call("removeEventListener", "pointercancel", g.tipUpFunc)
+		g.tipOverFunc.Release()
+		g.tipOutFunc.Release()
 		g.tipDownFunc.Release()
 		g.tipMoveFunc.Release()
 		g.tipUpFunc.Release()
+		g.tipOverFunc, g.tipOutFunc = nil, nil
 		g.tipDownFunc, g.tipMoveFunc, g.tipUpFunc = nil, nil, nil
+	}
+	if g.selCursorFunc != nil {
+		app.Window().Get("document").
+			Call("removeEventListener", "pointermove", g.selCursorFunc)
+		g.selCursorFunc.Release()
+		g.selCursorFunc = nil
 	}
 }
 

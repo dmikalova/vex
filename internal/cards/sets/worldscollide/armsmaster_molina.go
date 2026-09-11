@@ -18,6 +18,7 @@ var ArmsmasterMolina = card.New(
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "292"),
+	card.InCluster(card.Pulled(molinasBlasterCluster, 1, 1.25)),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Human),
 	card.WithHazardous(3),

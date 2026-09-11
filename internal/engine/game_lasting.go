@@ -244,11 +244,11 @@ func (g *Game) clearLasting(player int) {
 	g.clearLastingMorphs(player)
 }
 
-// emitLasting resolves every reaction actor owns that responds to event. When
-// several fire at once the controller chooses the order (KeyForge lets the active
-// player order simultaneous triggers). subject is the card that caused the event —
-// the played creature — for reactions that need a source.
-func (g *Game) emitLasting(event Event, actor int, subject LocalID) {
+// matchingLasting collects every registry reaction actor owns that responds to
+// event for subject, applying the house, type, subject, and except filters. It is
+// the shared gather behind emitLasting (standalone resolution) and lastingReactions
+// (folding into a trigger window).
+func (g *Game) matchingLasting(event Event, actor int, subject LocalID) []LastingEffect {
 	var pending []LastingEffect
 	for i := 0; i < int(g.State.LastingCount); i++ {
 		le := g.State.Lasting[i]
@@ -269,6 +269,37 @@ func (g *Game) emitLasting(event Event, actor int, subject LocalID) {
 		}
 		pending = append(pending, le)
 	}
+	return pending
+}
+
+// lastingReactions gathers the registry reactions responding to event as window
+// entries, so they order together with the card abilities that fire on the same
+// event rather than in a trailing window of their own (ADR 0013). Each carries its
+// LastingEffect and resolves through resolveWindow's duration branch, crediting
+// actor with subject as its subject.
+func (g *Game) lastingReactions(event Event, actor int, subject LocalID) []triggeredAbility {
+	matched := g.matchingLasting(event, actor, subject)
+	pending := make([]triggeredAbility, len(matched))
+	for i, le := range matched {
+		pending[i] = triggeredAbility{
+			actor:   int8(actor),
+			it:      subject,
+			hasIt:   true,
+			lasting: true,
+			le:      le,
+		}
+	}
+	return pending
+}
+
+// emitLasting resolves every reaction actor owns that responds to event. When
+// several fire at once the controller chooses the order (KeyForge lets the active
+// player order simultaneous triggers). subject is the card that caused the event —
+// the played creature — for reactions that need a source. Windows that also carry
+// card abilities fold their reactions in through lastingReactions instead; this
+// standalone path serves the events that have no card window of their own.
+func (g *Game) emitLasting(event Event, actor int, subject LocalID) {
+	pending := g.matchingLasting(event, actor, subject)
 	for len(pending) > 0 {
 		idx := 0
 		if len(pending) > 1 {

@@ -17,6 +17,7 @@ var WarGrumpus = card.New(
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, "52"),
+	card.InCluster(card.Pulled(grumpusTamerCluster, 2, 3)),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Beast),
 	card.WithAbility(card.Trigger.FightReap, card.OnChooseCreature{

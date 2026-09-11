@@ -165,10 +165,11 @@ func TestArrivalKillsFlankNeighborBeforeAfterPlay(t *testing.T) {
 }
 
 // TestTreacheryHandoffSettlesTheNewController pins that handing a Treachery
-// creature to the opponent settles the board it lands in: the seized creature
-// joins the new controller's right flank and pushes that side's flank creature
-// interior, so a creature that loses its "+2 while on a flank" bonus and drops to
-// or below its damage must be destroyed in the same action, not left lingering.
+// creature to the opponent settles the board it lands in: the active player lands
+// the seized creature on the new controller's right flank, pushing that side's
+// flank creature interior, so a creature that loses its "+2 while on a flank" bonus
+// and drops to or below its damage must be destroyed in the same action, not left
+// lingering.
 func TestTreacheryHandoffSettlesTheNewController(t *testing.T) {
 	g := started(t)
 	g.AddToBattleline(testCreature("left", 3), 0)
@@ -185,6 +186,7 @@ func TestTreacheryHandoffSettlesTheNewController(t *testing.T) {
 	seized := g.AddToHand(testCreature("treachery", 3, WithKeywords(Treachery)), 1)
 	g.State.ActivePlayer = 1
 	g.State.ActiveHouse = Brobnar
+	g.SetChooser(1, optionPicker{idx: 1}) // the active player lands it on the right flank
 	g.PlayFromHand(1, seized)
 
 	if g.controller(seized) != 0 {

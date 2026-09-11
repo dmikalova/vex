@@ -32,6 +32,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/dmikalova/vactrol/internal/card"
 	"github.com/dmikalova/vactrol/internal/cards"
 	"github.com/dmikalova/vactrol/internal/engine"
 )
@@ -48,6 +49,7 @@ func main() {
 
 func run() error {
 	defs := definitionsByName()
+	templates := templateNames()
 	srcFiles, err := cardFiles(setsRoot)
 	if err != nil {
 		return err
@@ -62,7 +64,7 @@ func run() error {
 	}
 	changed := 0
 	for _, path := range srcFiles {
-		ok, err := rewriteFile(path, defs)
+		ok, err := rewriteFile(path, defs, templates)
 		if err != nil {
 			return fmt.Errorf("%s: %w", path, err)
 		}
@@ -71,7 +73,7 @@ func run() error {
 		}
 	}
 	for _, path := range testFiles {
-		ok, err := rewriteTestFile(path, defs, names[filepath.Dir(path)])
+		ok, err := rewriteTestFile(path, defs, names[filepath.Dir(path)], templates)
 		if err != nil {
 			return fmt.Errorf("%s: %w", path, err)
 		}
@@ -89,6 +91,21 @@ func definitionsByName() map[string]engine.CardDefinition {
 	out := make(map[string]engine.CardDefinition)
 	for _, d := range cards.All() {
 		out[d.Name] = d
+	}
+	return out
+}
+
+// templateNames is the set of printed names whose card is a generative template
+// (it carries a Materializer, see card.Template): the card in the file is a
+// placeholder face, and the concrete card is chosen per deck at generation. The
+// comment box flags this so a reader does not mistake the sparse face for a
+// finished card.
+func templateNames() map[string]bool {
+	out := map[string]bool{}
+	for _, rc := range card.Cards() {
+		if rc.Materializer != nil {
+			out[rc.Def.Name] = true
+		}
 	}
 	return out
 }
@@ -187,7 +204,11 @@ func applyEdits(src []byte, edits []edit) []byte {
 // one file, reporting whether anything changed. Edits are applied to the raw
 // source bytes from the end backwards so earlier offsets stay valid, which keeps
 // the rest of the file — including hand-written formatting — untouched.
-func rewriteFile(path string, defs map[string]engine.CardDefinition) (bool, error) {
+func rewriteFile(
+	path string,
+	defs map[string]engine.CardDefinition,
+	templates map[string]bool,
+) (bool, error) {
 	src, err := os.ReadFile(path)
 	if err != nil {
 		return false, err
@@ -221,7 +242,7 @@ func rewriteFile(path string, defs map[string]engine.CardDefinition) (bool, erro
 		if gd.Doc != nil {
 			start = int(gd.Doc.Pos()) - base
 		}
-		edits = append(edits, edit{start, end, renderComment(&def)})
+		edits = append(edits, edit{start, end, renderComment(&def, templates[name])})
 	}
 	out := applyEdits(src, edits)
 	if bytes.Equal(out, src) {
@@ -239,6 +260,7 @@ func rewriteTestFile(
 	path string,
 	defs map[string]engine.CardDefinition,
 	varToName map[string]string,
+	templates map[string]bool,
 ) (bool, error) {
 	if len(varToName) == 0 {
 		return false, nil
@@ -272,7 +294,7 @@ func rewriteTestFile(
 		if fd.Doc != nil {
 			start = int(fd.Doc.Pos()) - base
 		}
-		edits = append(edits, edit{start, end, renderComment(&def)})
+		edits = append(edits, edit{start, end, renderComment(&def, templates[name])})
 	}
 	out := applyEdits(src, edits)
 	if bytes.Equal(out, src) {
@@ -477,7 +499,7 @@ func cardNameOf(gd *ast.GenDecl, wrappers map[string]nameTemplate) (string, bool
 // renderComment builds a card's whole doc comment, ending in the newline that
 // butts it against the var declaration. The detail block is tab-indented so godoc
 // renders it preformatted; gofmt requires the blank `//` line after the title.
-func renderComment(def *engine.CardDefinition) string {
+func renderComment(def *engine.CardDefinition, isTemplate bool) string {
 	var b strings.Builder
 	b.WriteString("// " + def.Name + "\n//\n")
 	for _, line := range strings.Split(engine.RenderCardText(def), "\n") {
@@ -486,6 +508,11 @@ func renderComment(def *engine.CardDefinition) string {
 			continue
 		}
 		b.WriteString("//\t" + line + "\n")
+	}
+	if isTemplate {
+		b.WriteString(
+			"//\n//\tTemplate: its concrete card is materialized per deck at generation.\n",
+		)
 	}
 	return b.String()
 }

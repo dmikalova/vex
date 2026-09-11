@@ -161,6 +161,17 @@ func (e ManualExhaustSet) Text(n Namer) string {
 	return fmt.Sprintf("%s is manually readied", n.Name(e.Card))
 }
 
+// ManualPlacedInPlay narrates manual mode dropping a card straight into play.
+type ManualPlacedInPlay struct {
+	Player int
+	Card   LocalID
+}
+
+// Text renders the card manual mode put into play.
+func (e ManualPlacedInPlay) Text(n Namer) string {
+	return fmt.Sprintf("%s manually puts %s into play", n.PlayerName(e.Player), n.Name(e.Card))
+}
+
 // ManualMatchFull narrates a card manual mode could not add, because a match's
 // id space is finite.
 type ManualMatchFull struct{ Player int }

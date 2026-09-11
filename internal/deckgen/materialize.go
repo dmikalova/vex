@@ -26,6 +26,11 @@ type GenerationProfile struct {
 	// less) means the default. Five Master-of-N variants at 0.2 draft as often as
 	// one ordinary Rare card.
 	RarityWeight float64
+	// Cluster marks the card a member of a card family placed by strategy, and
+	// carries that family's strategy and trigger (ADR 0036). The Shards' cluster
+	// (OnePerHouse) places one Shard in each of the deck's Houses whenever any
+	// Shard is drawn; the zero value belongs to no cluster.
+	Cluster ClusterMembership
 }
 
 // Connection is the set of connected cards a puller card brings into its pod.
@@ -65,13 +70,16 @@ func (c Connection) Empty() bool { return len(c.Cards) == 0 }
 
 // SlotContext is what a Materializer needs to produce a concrete card for a Slot.
 // House is the pod's House — the card's final House, so a Maverick is rehoused to
-// it and a self-house reference binds to it.
+// it and a self-house reference binds to it. DeckHouses is the deck's three pod
+// Houses (HouseNone for an unfilled pod), so a template can bind a partner house —
+// one of the deck's other Houses, as an Ambassador or Plant does (ADR 0036).
 type SlotContext struct {
-	House    engine.House
-	Rarity   engine.Rarity
-	Maverick bool
-	Legacy   bool
-	Special  bool
+	House      engine.House
+	Rarity     engine.Rarity
+	Maverick   bool
+	Legacy     bool
+	Special    bool
+	DeckHouses [PodCount]engine.House
 }
 
 // Materializer turns a pool entry into a concrete, engine-ready card at

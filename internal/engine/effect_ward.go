@@ -55,6 +55,8 @@ func (e Ward) applyWard(ctx *EffectContext, id LocalID) {
 // creature is warded.
 func (e Ward) Resolve(ctx *EffectContext) {
 	if e.Amount > 0 {
+		ctx.previewBadge(SelectionBadge{Icon: WardIcon})
+		defer ctx.previewBadge(SelectionBadge{})
 		chosen := make([]LocalID, 0, e.Amount)
 		for i := 0; i < e.Amount; i++ {
 			remaining := make([]LocalID, 0)

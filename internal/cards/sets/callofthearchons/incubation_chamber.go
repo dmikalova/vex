@@ -20,10 +20,12 @@ var IncubationChamber = card.New(
 	card.WithTraits(card.Traits.Location),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(
-		card.Trigger.Action, card.ArchiveFromHand{
-			Amount:   1,
-			Type:     card.Type.Creature,
-			House:    card.House.Self,
+		card.Trigger.Action, card.ArchiveCard{
+			Zone: card.Hand,
+			Selection: card.Chosen{
+				Type:  card.Type.Creature,
+				House: card.House.Self,
+			},
 			Revealed: true,
 		}),
 )

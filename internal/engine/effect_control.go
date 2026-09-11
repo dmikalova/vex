@@ -107,11 +107,13 @@ func (e TakeControl) resolveGate(ctx *EffectContext) bool {
 	return moved
 }
 
-// placeSeizedOnFlank lets the player gaining control place a seized creature on
-// the flank they choose (Harland Mindlock, Collar of Subordination). The engine
-// never assumes a flank: with another creature already in the taker's battleline
-// the flank is asked, and with only one home there is nothing to ask. A seized
-// artifact has no flank, so it is left where control placed it.
+// placeSeizedOnFlank places a seized creature on the flank the active player
+// chooses (Harland Mindlock, Collar of Subordination). The active player always
+// makes the placement call, even for a give-to-opponent seize where the gaining
+// controller is the opponent. The engine never assumes a flank: with another
+// creature already in the taker's battleline the flank is asked, and with only one
+// home there is nothing to ask. A seized artifact has no flank, so it is left where
+// control placed it.
 func placeSeizedOnFlank(ctx *EffectContext, controller int, id LocalID) {
 	if !ctx.Resolver.IsCreature(id) {
 		return
@@ -119,7 +121,7 @@ func placeSeizedOnFlank(ctx *EffectContext, controller int, id LocalID) {
 	if len(ctx.Resolver.Battleline(controller)) <= 1 {
 		return
 	}
-	right := ctx.Resolver.ChooseOption(controller, ctx.Source,
-		"Choose a flank", []string{"left flank", "right flank"}) == 1
+	right := ctx.Resolver.ChooseOption(ctx.Resolver.ActivePlayer(), ctx.Source,
+		"Choose a flank", []string{FlankLeftLabel, FlankRightLabel}) == 1
 	ctx.Resolver.MoveToFlank(id, right)
 }

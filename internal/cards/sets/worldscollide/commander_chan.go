@@ -17,6 +17,7 @@ var CommanderChan = card.New(
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "296"),
+	card.InCluster(card.Pulled(chansBlasterCluster, 1, 1.25)),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Human),
 	card.WithAbility(card.Trigger.FightReap, card.Use{

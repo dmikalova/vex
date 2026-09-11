@@ -1,7 +1,9 @@
 package deckgen
 
 import (
+	"math"
 	"math/rand"
+	"sort"
 
 	"github.com/dmikalova/vactrol/internal/engine"
 )
@@ -14,19 +16,24 @@ func Generate(set Set, seed int64) Deck {
 	}
 	g := &generator{set: set, r: rand.New(rand.NewSource(seed)), placed: map[string]bool{}}
 	houses := set.pickHouses(g.r)
+	for i := 0; i < PodCount && i < len(houses); i++ {
+		g.deckHouses[i] = houses[i]
+	}
 	deck := Deck{Set: set.Name, Seed: seed}
 	for i := 0; i < PodCount && i < len(houses); i++ {
-		deck.Pods[i] = g.expandConnections(g.fillPod(houses[i]))
+		deck.Pods[i] = g.expandPodClusters(g.expandConnections(g.fillPod(houses[i])))
 	}
+	g.expandClusters(&deck)
 	return deck
 }
 
 // generator threads the single RNG and the deck-wide "already placed" set (for
 // one-copy-per-deck) through the pipeline.
 type generator struct {
-	set    Set
-	r      *rand.Rand
-	placed map[string]bool
+	set        Set
+	r          *rand.Rand
+	placed     map[string]bool
+	deckHouses [PodCount]engine.House
 }
 
 // placedCard remembers a filled slot's pool entry and rolled rarity so the
@@ -67,7 +74,7 @@ func (g *generator) expandConnections(pod HousePod) HousePod {
 	for {
 		var order []string
 		for i := 0; i < PodSize; i++ {
-			c, ok := g.set.byName[pod.Slots[i].Card.Name]
+			c, ok, _ := g.set.lookup(pod.Slots[i].Card.Name)
 			if !ok || c.Profile.Connection.Empty() {
 				continue
 			}
@@ -138,7 +145,7 @@ func (g *generator) placePartners(
 	placed := false
 	for _, name := range order {
 		for present[name] < wanted[name] {
-			partner := g.set.byName[name]
+			partner, _, fromLegacy := g.set.lookup(name)
 			slot := freeSlot(protected)
 			if slot < 0 {
 				return placed
@@ -147,9 +154,15 @@ func (g *generator) placePartners(
 				House:    pod.House,
 				Rarity:   partner.Def.Rarity,
 				Maverick: rehouse[name],
+				Legacy:   fromLegacy,
 			}
 			def := g.materialize(partner, ctx)
-			pod.Slots[slot] = Slot{Rarity: partner.Def.Rarity, Maverick: rehouse[name], Card: def}
+			pod.Slots[slot] = Slot{
+				Rarity:   partner.Def.Rarity,
+				Maverick: rehouse[name],
+				Legacy:   fromLegacy,
+				Card:     def,
+			}
 			protected[slot] = true
 			present[name]++
 			placed = true
@@ -166,6 +179,270 @@ func freeSlot(protected []bool) int {
 		}
 	}
 	return -1
+}
+
+// expandPodClusters resolves the pod-local cluster strategies for one filled pod:
+// WholePool (place every member), RandomCount (a random count of distinct
+// members), SelfPull (a random count of copies of the single triggering member),
+// PullExact (one of each partner per lead instance), and Pull (a per-partner
+// random count of each partner when the lead rolls in). A cluster fires when its
+// trigger is met in the pod — ByLead when its lead is present, ByAnyMember when any
+// member is. Each strategy tops the pod up by overwriting slots that hold no member
+// of the cluster, so the fired member and any siblings already placed stay put.
+// OnePerHouse is deck-wide and resolved in expandClusters, not here. Clusters are
+// visited in name order so the fill is deterministic when a set has several.
+func (g *generator) expandPodClusters(pod HousePod) HousePod {
+	for _, name := range g.clusterNames() {
+		ci := g.set.clusters[name]
+		if ci.strategy == OnePerHouse || !podClusterFires(pod, ci) {
+			continue
+		}
+		switch ci.strategy {
+		case WholePool:
+			for _, m := range ci.members {
+				g.placeMemberCopies(&pod, ci, m, 1)
+			}
+		case RandomCount:
+			for _, m := range g.randomMembers(ci) {
+				g.placeMemberCopies(&pod, ci, m, 1)
+			}
+		case SelfPull:
+			g.placeMemberCopies(&pod, ci, ci.members[0], g.selfPullCount(ci))
+		case PullExact:
+			leads := countMember(pod, ci.lead)
+			for _, m := range ci.members {
+				if m.Def.Name != ci.lead {
+					g.placeMemberCopies(&pod, ci, m, leads)
+				}
+			}
+		case Pull:
+			for _, m := range ci.members {
+				if m.Def.Name != ci.lead {
+					g.placeMemberCopies(&pod, ci, m, g.pullCount(m.Profile.Cluster))
+				}
+			}
+		}
+	}
+	return pod
+}
+
+// clusterNames returns the set's cluster names in sorted order, so pod-local
+// cluster expansion is deterministic when a set has several.
+func (g *generator) clusterNames() []string {
+	names := make([]string, 0, len(g.set.clusters))
+	for name := range g.set.clusters {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
+}
+
+// podClusterFires reports whether a cluster's trigger is met in the pod: for
+// ByLead, that its lead member is present; for ByAnyMember, that any member is.
+func podClusterFires(pod HousePod, ci clusterIndex) bool {
+	for _, s := range pod.Slots {
+		name := s.Card.Name
+		if ci.trigger == ByLead {
+			if name == ci.lead {
+				return true
+			}
+			continue
+		}
+		if inCluster(ci, name) {
+			return true
+		}
+	}
+	return false
+}
+
+// randomMembers picks a random count of distinct members in [min, max] for a
+// RandomCount cluster, by shuffling the members and taking that many.
+func (g *generator) randomMembers(ci clusterIndex) []Card {
+	k := ci.min
+	if ci.max > ci.min {
+		k += g.r.Intn(ci.max - ci.min + 1)
+	}
+	shuffled := append([]Card(nil), ci.members...)
+	g.r.Shuffle(len(shuffled), func(i, j int) {
+		shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
+	})
+	return shuffled[:k]
+}
+
+// selfPullCount rolls a SelfPull copy count: Min + Poisson(Mean − Min), capped at
+// PodSize — at least Min, averaging about Mean, reaching a whole pod only on the
+// thin tail.
+func (g *generator) selfPullCount(ci clusterIndex) int {
+	n := ci.min + poisson(g.r, ci.mean-float64(ci.min))
+	if n > PodSize {
+		n = PodSize
+	}
+	return n
+}
+
+// pullCount rolls a Pull partner count from that partner's own rate: Min +
+// Poisson(Mean − Min), capped at PodSize. A partner with Min 0 (Niffle Queen)
+// often rolls none.
+func (g *generator) pullCount(m ClusterMembership) int {
+	n := m.Min + poisson(g.r, m.Mean-float64(m.Min))
+	if n > PodSize {
+		n = PodSize
+	}
+	return n
+}
+
+// poisson draws from a Poisson distribution with the given mean using Knuth's
+// algorithm; a mean of 0 always returns 0.
+func poisson(r *rand.Rand, lambda float64) int {
+	l := math.Exp(-lambda)
+	k, p := 0, 1.0
+	for {
+		k++
+		p *= r.Float64()
+		if p <= l {
+			return k - 1
+		}
+	}
+}
+
+// placeMemberCopies tops the pod up to want copies of member m, overwriting slots
+// that hold no member of the cluster so the triggering member and its placed
+// siblings are never displaced. A member whose native House differs from the pod's
+// is rehoused as a maverick; a OneCopyPerDeck member is recorded as placed.
+func (g *generator) placeMemberCopies(pod *HousePod, ci clusterIndex, m Card, want int) {
+	for countMember(*pod, m.Def.Name) < want {
+		slot := freeClusterSlot(pod, ci)
+		if slot < 0 {
+			return
+		}
+		maverick := m.Def.House != pod.House
+		def := g.materialize(
+			m,
+			SlotContext{House: pod.House, Rarity: m.Def.Rarity, Maverick: maverick},
+		)
+		if m.Profile.OneCopyPerDeck {
+			g.placed[m.Def.Name] = true
+		}
+		pod.Slots[slot] = Slot{Rarity: m.Def.Rarity, Maverick: maverick, Card: def}
+	}
+}
+
+// freeClusterSlot returns the first slot holding no member of the cluster, or -1
+// when every slot already holds one.
+func freeClusterSlot(pod *HousePod, ci clusterIndex) int {
+	for i := range pod.Slots {
+		if !inCluster(ci, pod.Slots[i].Card.Name) {
+			return i
+		}
+	}
+	return -1
+}
+
+// countMember counts how many of the pod's slots hold the named card.
+func countMember(pod HousePod, name string) int {
+	n := 0
+	for _, s := range pod.Slots {
+		if s.Card.Name == name {
+			n++
+		}
+	}
+	return n
+}
+
+// expandClusters resolves the deck-wide cluster strategies once every pod is
+// filled. Today that is OnePerHouse (the Shards): when any Shard has been drawn
+// into the deck, each pod is given its House's Shard, so a single Shard pulls the
+// whole cycle in. The pod-local strategies (WholePool, RandomCount) resolve in
+// the pod pass, not here.
+func (g *generator) expandClusters(deck *Deck) {
+	for _, ci := range g.set.clusters {
+		if ci.strategy != OnePerHouse {
+			continue
+		}
+		if !g.clusterTriggered(deck, ci) {
+			continue
+		}
+		for i := 0; i < PodCount; i++ {
+			pod := &deck.Pods[i]
+			if pod.House == engine.HouseNone {
+				continue
+			}
+			// validateClusters guarantees every deckable House has a member, so
+			// the pod's House indexes one.
+			g.ensureClusterMember(pod, ci, ci.byHouse[pod.House])
+		}
+	}
+}
+
+// clusterTriggered reports whether a cluster has fired: for ByAnyMember, that any
+// member has been drawn into the deck; for ByLead, that the lead member has.
+func (g *generator) clusterTriggered(deck *Deck, ci clusterIndex) bool {
+	for i := 0; i < PodCount; i++ {
+		for _, s := range deck.Pods[i].Slots {
+			name := s.Card.Name
+			if ci.trigger == ByLead {
+				if name == ci.lead {
+					return true
+				}
+				continue
+			}
+			if inCluster(ci, name) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// ensureClusterMember gives a pod its House's cluster member, unless the pod
+// already holds a member of the cluster (the Shard that fired the cycle stays put
+// in its own pod). It overwrites a random slot. At the Set's MaverickRate the pod
+// instead receives another House's member, rehoused as a maverick — the printed-
+// house rule KeyForge uses for a maverick card.
+func (g *generator) ensureClusterMember(pod *HousePod, ci clusterIndex, member Card) {
+	for _, s := range pod.Slots {
+		if inCluster(ci, s.Card.Name) {
+			return
+		}
+	}
+	place, maverick := member, false
+	if g.chance(g.set.Tuning.MaverickRate) {
+		place, maverick = g.otherClusterMember(ci, member), true
+	}
+	ctx := SlotContext{House: pod.House, Rarity: place.Def.Rarity, Maverick: maverick}
+	def := g.materialize(place, ctx)
+	if place.Profile.OneCopyPerDeck {
+		g.placed[place.Def.Name] = true
+	}
+	pod.Slots[g.r.Intn(PodSize)] = Slot{
+		Rarity:   place.Def.Rarity,
+		Maverick: maverick,
+		Card:     def,
+	}
+}
+
+// otherClusterMember picks a member of the cluster whose name differs from the
+// excluded one, for a maverick substitution. It is only reached for a cluster
+// with more than one member (a triggered OnePerHouse cluster deckable in a
+// multi-House deck always has at least two), so the pick is never empty.
+func (g *generator) otherClusterMember(ci clusterIndex, exclude Card) Card {
+	alts := make([]Card, 0, len(ci.members))
+	for _, m := range ci.members {
+		if m.Def.Name != exclude.Def.Name {
+			alts = append(alts, m)
+		}
+	}
+	return alts[g.r.Intn(len(alts))]
+}
+
+// inCluster reports whether a card name is a member of the cluster.
+func inCluster(ci clusterIndex, name string) bool {
+	for _, m := range ci.members {
+		if m.Def.Name == name {
+			return true
+		}
+	}
+	return false
 }
 
 // fillSlot resolves one slot: a rare Special overlay, else a rarity roll followed
@@ -224,8 +501,10 @@ func (g *generator) commit(c Card, ctx SlotContext) (Slot, placedCard) {
 
 // materialize produces the final playable definition. A template binds itself via
 // its Materializer; a concrete card is used as-is. Either way a Maverick or
-// Special card adopts the pod's House.
+// Special card adopts the pod's House. The deck's Houses are threaded in so a
+// template can bind a partner house (ADR 0036).
 func (g *generator) materialize(c Card, ctx SlotContext) engine.CardDefinition {
+	ctx.DeckHouses = g.deckHouses
 	def := c.Def
 	if c.Materializer != nil {
 		def = c.Materializer.Materialize(ctx, g.r)

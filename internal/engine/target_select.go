@@ -44,6 +44,17 @@ func (t Target) SelectOptional(ctx *EffectContext) []LocalID {
 	return t.selectWith(ctx, true, nil)
 }
 
+// candidates returns the filtered, refined creatures a chosen target would pick
+// from, without making the choice — for an effect that repeats the choice itself,
+// like a "for each" DealDamage that picks a creature per instance.
+func (t Target) candidates(ctx *EffectContext) []LocalID {
+	ids := t.filter(ctx, t.selectBase(ctx))
+	if t.refinement != nil {
+		ids = t.refinement.refine(ctx, ids)
+	}
+	return ids
+}
+
 // empty reports that nothing matches this target, reading only the candidates a
 // refinement would narrow: with nothing to narrow there is nothing to select, and
 // unlike Select it asks the controller nothing.

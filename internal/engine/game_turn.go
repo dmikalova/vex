@@ -430,9 +430,6 @@ func (g *Game) RestrictionSources(player int) []LocalID {
 	if g.State.SkipForge[player].Value {
 		name(g.State.SkipForge[player].Source)
 	}
-	if g.State.KeyCostBump[player].Value != 0 {
-		name(g.State.KeyCostBump[player].Source)
-	}
 	// A symmetric CannotPlayWhile bar (Quixxle Stone) is continuous, not
 	// turn-scoped, so it is not in State; name each in-play card whose bar
 	// currently holds against this player.
@@ -444,6 +441,30 @@ func (g *Game) RestrictionSources(player int) []LocalID {
 			}
 			ctx := &EffectContext{Resolver: g, Source: id, Controller: player}
 			if bar.When.Met(ctx) {
+				name(id)
+			}
+		}
+	}
+	return out
+}
+
+// KeyCostSources returns the cards changing a player's key cost right now — the
+// turn-scoped bump (RaiseKeyCost) plus every in-play card whose continuous
+// key-cost change currently applies to that player — so a frontend can name them
+// on the key-cost pill rather than mixing them into the restriction list.
+func (g *Game) KeyCostSources(player int) []LocalID {
+	var out []LocalID
+	name := func(id LocalID) {
+		if !slices.Contains(out, id) {
+			out = append(out, id)
+		}
+	}
+	if g.State.KeyCostBump[player].Value != 0 {
+		name(g.State.KeyCostBump[player].Source)
+	}
+	for controller := 0; controller < 2; controller++ {
+		for _, id := range g.allInPlay(controller) {
+			if g.keyCostChangeFor(id, controller, player) != 0 {
 				name(id)
 			}
 		}
@@ -567,21 +588,37 @@ func (g *Game) finishForgeKey(player int, color KeyColor, hasColor bool) {
 		Keys:     g.State.Keys[player],
 		Needed:   KeysToWin,
 	})
-	for _, id := range g.allInPlay(player) {
-		g.triggerAbilities(id, TriggerAfterForgeKey, 0, false)
-	}
-	for _, p := range []int{player, 1 - player} {
-		for _, id := range g.allInPlay(p) {
-			g.triggerAbilitiesAs(player, id, TriggerAfterPlayerForgesKey, 0, false)
-		}
-	}
-	g.emitLasting(EventForgeKey, player, 0)
+	// Forging opens one window: the forger's own "after you forge a key" abilities,
+	// every card's "after a player forges a key" abilities, and the forge-key lasting
+	// reactions all trigger at once, so the forger orders the whole set (ADR 0013).
+	pending := g.forgeKeyReactions(player)
+	pending = append(pending, g.lastingReactions(EventForgeKey, player, 0)...)
+	g.resolveWindow(g.orderTriggered(player, TriggerAfterForgeKey, pending))
 	// Forging changes the unforged-key count some creatures draw their power from.
 	g.settleDestroyed(player)
 	if g.State.Keys[player] >= KeysToWin {
 		g.State.Winner = player
 		g.record(GameWon{Player: player})
 	}
+}
+
+// forgeKeyReactions gathers, as one ordered window, every reaction to the forger
+// forging a key: the forger's own "after you forge a key" abilities (Redeemer
+// Amara) and every card's "after a player forges a key" abilities (Forgemaster Og),
+// the latter resolving for the forger so its "that player" names whoever forged.
+// Gathering them lets the forger order the set when several fire at once (ADR 0013);
+// the EventForgeKey lasting reactions are folded in by the caller.
+func (g *Game) forgeKeyReactions(forger int) []triggeredAbility {
+	w := g.window()
+	for _, id := range g.allInPlay(forger) {
+		w.add(id, TriggerAfterForgeKey, 0, false)
+	}
+	for _, p := range []int{forger, 1 - forger} {
+		for _, id := range g.allInPlay(p) {
+			w.addAs(id, TriggerAfterPlayerForgesKey, forger, 0, false)
+		}
+	}
+	return w.pending
 }
 
 // Concede forfeits the game for player: their opponent becomes the winner. It is

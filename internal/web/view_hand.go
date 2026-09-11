@@ -43,9 +43,11 @@ func (g *game) sortedArtifacts(p int) []engine.LocalID {
 	return g.sortByHouseTypeName(g.g.Artifacts(p))
 }
 
-// sortByHouseTypeName returns a copy of ids ordered by house, then card type,
-// then name — the stable reading order shared by the hand and the deck view. The
-// deck in particular must not reveal its shuffled order, so it is always sorted.
+// sortByHouseTypeName returns a copy of ids ordered by house, then card type in
+// the deck list's order (typeRank — creatures, artifacts, upgrades, Tactics last;
+// ADR 0025), then name — the stable reading order shared by the hand, the deck
+// view, and the deck list. The deck in particular must not reveal its shuffled
+// order, so it is always sorted.
 func (g *game) sortByHouseTypeName(ids []engine.LocalID) []engine.LocalID {
 	ids = append([]engine.LocalID(nil), ids...)
 	sort.SliceStable(ids, func(i, j int) bool {
@@ -53,8 +55,8 @@ func (g *game) sortByHouseTypeName(ids []engine.LocalID) []engine.LocalID {
 		if a.House != b.House {
 			return a.House < b.House
 		}
-		if a.Type != b.Type {
-			return a.Type < b.Type
+		if ra, rb := typeRank(a.Type), typeRank(b.Type); ra != rb {
+			return ra < rb
 		}
 		return a.Name < b.Name
 	})

@@ -19,5 +19,8 @@ var GanymedeArchivist = card.New(
 	card.Provenance(card.CotA, "142"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
-	card.WithAbility(card.Trigger.Reap, card.ArchiveFromHand{Amount: 1}),
+	card.WithAbility(
+		card.Trigger.Reap,
+		card.ArchiveCard{Zone: card.Hand, Selection: card.Chosen{}},
+	),
 )

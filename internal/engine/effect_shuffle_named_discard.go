@@ -2,9 +2,10 @@ package engine
 
 // ShuffleNamedFromDiscardIntoDeck shuffles one card of the given printed name from
 // the controller's discard pile back into their deck — Chain Gang returns a Subtle
-// Chain from the discard so it can be played again. Where
-// ShuffleMatchingFromDiscardIntoDeck moves every House/Type match, this moves a
-// single named card.
+// Chain from the discard so it can be played again. Where a ShuffleFromDiscard with
+// an Each selection moves every House/Type match, this moves a single named card;
+// it stays its own node because its printed article ("a Subtle Chain") belongs to
+// the verb rather than to the Selection (a Named renders bare).
 type ShuffleNamedFromDiscardIntoDeck struct {
 	Name string
 }
@@ -17,9 +18,8 @@ func (e ShuffleNamedFromDiscardIntoDeck) Text() string {
 
 // Resolve moves the first discard-pile card of the given name into the deck.
 func (e ShuffleNamedFromDiscardIntoDeck) Resolve(ctx *EffectContext) {
-	cards := discardCardsWhere(ctx, ctx.Controller, func(id LocalID) bool {
-		return ctx.Resolver.Name(id) == e.Name
-	})
+	name := e.Name
+	cards := Named{Name: name}.pick(ctx, ctx.Resolver.Discard(ctx.Controller))
 	if len(cards) == 0 {
 		return
 	}

@@ -15,7 +15,7 @@ import (
 //	Power:  2
 //	Traits: Human • Witch
 //
-//	After you play a creature, gain 1 Æmber.
+//	After you play another creature, gain 1 Æmber.
 func TestHuntingWitch(t *testing.T) {
 	t.Run("gains 1 Æmber after you play another creature", func(t *testing.T) {
 		var ally ct.Card
@@ -30,5 +30,19 @@ func TestHuntingWitch(t *testing.T) {
 		h.P1.Play(ally)
 
 		h.P1.ExpectAmber(1)
+	})
+
+	t.Run("gains nothing from its own entrance", func(t *testing.T) {
+		var witch ct.Card
+		h := ct.Play(t, ct.Setup{
+			P1: ct.Side{
+				House: card.House.Untamed,
+				Hand:  ct.Cards(ct.Bind(&witch, HuntingWitch)),
+			},
+		})
+
+		h.P1.Play(witch)
+
+		h.P1.ExpectAmber(0)
 	})
 }

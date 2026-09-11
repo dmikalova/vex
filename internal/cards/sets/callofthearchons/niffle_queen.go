@@ -18,6 +18,7 @@ var NiffleQueen = card.New(
 	card.Type.Creature,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "364"),
+	card.InCluster(card.Pulled(troopCallCluster, 0, 0.85)),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Beast, card.Traits.Niffle),
 	card.WithConstant(card.ConstantAbility{

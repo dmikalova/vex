@@ -119,6 +119,30 @@ func (g *Game) ManualSetExhausted(id LocalID, exhausted bool) {
 	g.record(ManualExhaustSet{Card: id, Exhausted: exhausted})
 }
 
+// ManualPlaceInPlay drops a card straight into play for its owner outside the
+// normal play flow — no play effects, no bonus Æmber. A creature enters its
+// owner's battleline before index (0 the left flank, the line length the right
+// flank), so a playtester can deploy it anywhere; anything else enters the
+// artifact row. The card sheds its old zone first (removeFromAnyZone).
+func (g *Game) ManualPlaceInPlay(id LocalID, index int) {
+	o := g.owner(id)
+	g.removeFromAnyZone(id)
+	g.State.Cards[id].ArmorRemaining = int16(g.Def(id).Armor)
+	if g.Def(id).Type == Creature {
+		line := &g.State.Battleline[o]
+		if index < 0 {
+			index = 0
+		}
+		if index > int(line.Count) {
+			index = int(line.Count)
+		}
+		line.insertAt(index, id)
+	} else {
+		g.State.Artifacts[o].add(id)
+	}
+	g.record(ManualPlacedInPlay{Player: o, Card: id})
+}
+
 // ManualAddCard registers def as a new card owned by player and places it in
 // their hand, returning its id — so manual mode can pull any card from the pool.
 // A match's LocalID space is finite, so it reports false and adds nothing once it

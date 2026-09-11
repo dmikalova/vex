@@ -19,6 +19,8 @@ var optionRank = map[string]int{
 	"Provenance":     1,
 	"RarityWeight":   2,
 	"Connects":       3,
+	"InCluster":      3,
+	"LeadsCluster":   3,
 	"OneCopyPerDeck": 4,
 	// Creature stats.
 	"WithAemberBonus": 5,
@@ -64,6 +66,9 @@ var optionRank = map[string]int{
 	"WithConstant":                             14,
 	// Standard abilities	.
 	"WithAbility": 15,
+	// Generative template last: it replaces the face with a materialized variant,
+	// so it wraps everything the face declares above it.
+	"Template": 16,
 }
 
 // TestOptionsAreInCanonicalOrder enforces a single authoring order for the

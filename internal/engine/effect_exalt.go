@@ -64,9 +64,10 @@ func (e Exalt) resolveOptional(ctx *EffectContext) bool {
 }
 
 // ExaltToRepeat resolves Do once, then lets the controller exalt a creature to
-// repeat it, for as long as they keep paying — the exalt is the cost of another
-// pass, bounded by the Rule of Six. It models "<do>. You may exalt <a creature>
-// to repeat the preceding effect." (Phalanx Strike).
+// repeat it a single time — the exalt pays for one repeat. "Repeat the preceding
+// effect" repeats only the effect before the exalt clause, so the offer is made
+// once and does not chain. It models "<do>. You may exalt <a creature> to repeat
+// the preceding effect." (Phalanx Strike, Tribute).
 type ExaltToRepeat struct {
 	// Do is the preceding effect each exalt repeats.
 	Do Effect
@@ -91,22 +92,20 @@ func (e ExaltToRepeat) Text() string {
 		" You may exalt " + e.Exalt.Text() + " to repeat the preceding effect"
 }
 
-// Resolve runs Do once, then repeats it each time the controller exalts a chosen
-// creature (a declinable choice), up to the Rule of Six. Declining the exalt ends
-// the loop.
+// Resolve runs Do once, then offers a single exalt-to-repeat (a declinable
+// choice). Declining exalts nothing and ends there; accepting exalts the chosen
+// creature and resolves Do one more time.
 func (e ExaltToRepeat) Resolve(ctx *EffectContext) {
 	e.Do.Resolve(ctx)
-	for range RuleOfSix - 1 {
-		ids := e.exaltChoice(ctx)
-		if len(ids) == 0 {
-			return
-		}
-		for _, id := range ids {
-			ctx.Resolver.AddAmberOn(id, 1)
-			ctx.Resolver.Record(AemberExalted{Creature: id, Amount: 1})
-		}
-		e.Do.Resolve(ctx)
+	ids := e.exaltChoice(ctx)
+	if len(ids) == 0 {
+		return
 	}
+	for _, id := range ids {
+		ctx.Resolver.AddAmberOn(id, 1)
+		ctx.Resolver.Record(AemberExalted{Creature: id, Amount: 1})
+	}
+	e.Do.Resolve(ctx)
 }
 
 // exaltChoice offers the exalt that pays for another repeat, or none to stop. A

@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: If your opponent has more Æmber than you, steal 1 Æmber -> repeat this effect.
+//	Play: Steal 1 Æmber -> if your opponent has more Æmber than you, repeat this effect.
 func TestBaitAndSwitch(t *testing.T) {
 	t.Run("steals 1 Æmber at a time while the opponent still leads", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

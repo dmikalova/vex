@@ -19,7 +19,7 @@ var TautauVapors = card.New(
 		card.Trigger.Play, card.Sentences{
 			Effects: []card.Effect{
 				card.Draw{Amount: 2},
-				card.ArchiveFromHand{Amount: 1},
+				card.ArchiveCard{Zone: card.Hand, Selection: card.Chosen{}},
 			},
 		}),
 )

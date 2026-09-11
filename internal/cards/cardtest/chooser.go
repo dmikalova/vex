@@ -143,6 +143,36 @@ func (b bridgeChooser) OrderCreatures(_, _ string, ids []engine.LocalID) []engin
 	return b.h.reorder(ids, script)
 }
 
+// OrderReactions arranges a mixed trigger window — card abilities together with
+// duration reactions (Full Moon, Charge!, Crystal Hive) — into a resolution order.
+// By default it keeps the engine's order (returning nil, which the engine reads as
+// "leave it"), so a duration reaction firing alongside a card ability never
+// interrupts a test. A test takes control of the card abilities for the next
+// ordering with Player.Order, exactly as for OrderCreatures; the duration
+// reactions, which name no card, keep their place after the scripted cards.
+func (b bridgeChooser) OrderReactions(_ string, reactions []engine.OrderableReaction) []int {
+	script := b.h.orderScript[b.player]
+	b.h.orderScript[b.player] = nil
+	if len(script) == 0 {
+		return nil
+	}
+	remaining := make([]int, len(reactions))
+	for i := range reactions {
+		remaining[i] = i
+	}
+	out := make([]int, 0, len(reactions))
+	for _, want := range script {
+		for j, idx := range remaining {
+			if reactions[idx].HasCard && b.h.matchesCard(want, reactions[idx].Card) {
+				out = append(out, idx)
+				remaining = append(remaining[:j], remaining[j+1:]...)
+				break
+			}
+		}
+	}
+	return append(out, remaining...)
+}
+
 // run starts an engine action on a goroutine and advances to the first stop
 // point (a prompt, or completion). The action and the test never touch the game
 // concurrently: while a prompt is pending the goroutine is parked on its reply

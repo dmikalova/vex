@@ -10,9 +10,7 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 ### Next focus
 
-- shards should pull in shards for the other houses
-- House Ambassador (eg Brobnar Amassador) as a materialization - make it work as a legacy/maverick to swap with a card in another house
-- bane, brew (common), plant, and blaster variant
+- shards should pull in shards for the other houses, House Ambassador (eg Brobnar Amassador) as a materialization - make it work as a legacy/maverick to swap with a card in another house, bane, plant
 - Way to always settle damage anytime power could change, instead of having to have settles strewn about the codebase. Similarly, way to settle that a card is no longer in play, so its abilities don't proc, and things that it may have triggered can no longer target it consistently instead of having to know all the call sites - eg redacted strange gizmo forge a key was putting amber back on redacted
 - event sourcing
 - drag and drop creature directly into battleline flank (or deploy, with dynamic moving as you go across), upgrade onto creature, artifact into artifact line
@@ -47,10 +45,16 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - A tool that can detect card.X usage across all cards, to help identify where specific effects or abilities are being underutilized as a sign of an overly specific method.
 - The way a lot of effects work is there is implied chaining between one effect to the next - is there a reasonable way to make this more explicit?
 - Be able to load a test situation from a saved state or scenario file
+- I've noticed that there are some UI sugars in the engine - I was wondering if it makes sense for there to be an intermediate layer - eg the engine handles state changes, the wrapper handles relevant trackers for the UI, and then the UI on top imports the wrapper and renders what it gives. For example, there are badges for counting how much damage is about to be dealt to each creature in a selection like gargantes scrapper. That seems purely UI, but also makes sense near the engine. My concern is performance when there is no UI - eg for MCTS - if MCTS is calculating the badges and never using them then that's potentially lost performance.
 
 ## Things that can be done now
 
-- More updates on the row - left side should go under, not have invis gradient, right side should go to edge, spacing and parens on icons
+- // TODOs
+- reproduce zone modal jump
+- Plague rats
+- Make each brew unique to its card
+- More updates on the board row - left side should go under, not have invis gradient, right side should go to edge, spacing and parens on icons
+- Hovering over the key cost should show any modifiers to key cost instead of them being in the warning/restricted area
 
 - Cloaking Dongle: Target: Target and neighbors then gives the bonus
 - Kompsos Haurspex and Livia the elder can be atomized into each other
@@ -99,6 +103,7 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - after implementing all cards, identify cards that have unique effects and decide if they can be reworded for simplicity - is it possibility to introspect and see how many times each card facet is used?
 - Renaming the draw pile to reserve so that deck list, the full deck itself, and the deck pile are distinct and clearly named
 - Choose one: rewrites
+- After implementing all cards - pull 20 decks of each card from DoK and see which cards cannot be in multiples (eg tmtp)
 
 ## Full two-player support
 

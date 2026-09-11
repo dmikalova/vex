@@ -245,6 +245,77 @@ func TestSelectingFromTheZoneViewer(t *testing.T) {
 	}
 }
 
+// Put into play arms the Deploy placement picker on a selected hand creature and
+// a clicked position drops it there without any play effects.
+func TestManualPutIntoPlayByClick(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	c.playFromHand(c.deal(testCreature))
+	c.playFromHand(c.deal(testCreature))
+	line := c.board()
+
+	hid := c.deal(testCreature)
+	c.g.selectHandID(c.ctx, hid)
+	c.do(c.g.manualPlay)
+	if !c.g.manualPlacing || !c.g.choosingPosition {
+		t.Fatal("Put into play did not arm the placement picker")
+	}
+
+	c.do(c.g.chooseDeploySide(true)) // right of the clicked creature
+	c.g.choosePositionCandidate(c.ctx, line[0])
+
+	nb := c.board()
+	if len(nb) != 3 || nb[1] != hid {
+		t.Errorf("board = %v, want the hand card at index 1", nb)
+	}
+	if c.g.manualPlacing || c.g.choosingPosition {
+		t.Error("placement state was not cleared after placing")
+	}
+	if containsID(c.hand(), hid) {
+		t.Error("the placed card is still in hand")
+	}
+}
+
+// With an empty battleline Put into play drops the creature straight in without
+// raising the placement picker.
+func TestManualPutIntoPlaySkipsPickerOnEmptyLine(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+
+	hid := c.deal(testCreature)
+	c.g.selectHandID(c.ctx, hid)
+	c.do(c.g.manualPlay)
+
+	if c.g.manualPlacing || c.g.choosingPosition {
+		t.Error("an empty line raised the placement picker")
+	}
+	if !containsID(c.board(), hid) {
+		t.Error("the creature was not placed into play")
+	}
+}
+
+// Cancel backs out of a manual placement without placing, leaving the card in hand.
+func TestManualPutIntoPlayCancel(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	c.playFromHand(c.deal(testCreature))
+
+	hid := c.deal(testCreature)
+	c.g.selectHandID(c.ctx, hid)
+	c.do(c.g.manualPlay)
+	if !c.g.manualPlacing {
+		t.Fatal("Put into play did not arm the placement picker")
+	}
+
+	c.do(c.g.cancelManualPlace)
+	if c.g.manualPlacing || c.g.choosingPosition {
+		t.Error("Cancel did not clear the placement state")
+	}
+	if !containsID(c.hand(), hid) {
+		t.Error("Cancel should leave the card in hand")
+	}
+}
+
 func TestThePickerOpensAndCloses(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)

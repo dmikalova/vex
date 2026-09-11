@@ -59,7 +59,6 @@ func TestTribute(t *testing.T) {
 
 		h.P1.Play(Tribute)
 		h.P1.ClickOption("Yes") // exalt the chosen creature to repeat
-		h.P1.ClickOption("No")  // decline further exalts
 
 		h.Expect(big).AmberOn(5) // 2 captured + 1 exalted + 2 captured
 		h.P2.ExpectAmber(2)
@@ -91,7 +90,6 @@ func TestTribute(t *testing.T) {
 			h.P1.ClickCard(first)   // tie-break: first captures 2
 			h.P1.ClickOption("Yes") // exalt that same creature to repeat
 			h.P1.ClickCard(second)  // tie-break on the repeat: a different creature captures
-			h.P1.ClickOption("No")  // stop
 
 			h.Expect(first).AmberOn(3)  // 2 captured + 1 exalted
 			h.Expect(second).AmberOn(2) // 2 captured on the repeat

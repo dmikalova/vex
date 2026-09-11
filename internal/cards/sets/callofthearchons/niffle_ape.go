@@ -17,6 +17,7 @@ var NiffleApe = card.New(
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, "363"),
+	card.InCluster(card.Pulled(troopCallCluster, 2, 3)),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Beast, card.Traits.Niffle),
 	card.WithAttackIgnores(card.Keyword.Taunt, card.Keyword.Elusive),

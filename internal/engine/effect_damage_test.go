@@ -287,6 +287,82 @@ func TestDealDamagePerCount(t *testing.T) {
 	}
 }
 
+// A "for each" DealDamage aimed at a single chosen creature makes one target
+// choice per instance — each free to name a different creature, a creature named
+// twice taking both hits at once — rather than one target taking the whole scaled
+// amount (which is Sack of Coins' ChooseCreatureThen shape instead).
+func TestDealDamagePerInstanceChoosesEachTarget(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	// Three friendly creatures set the count to three instances of 1 damage.
+	g.AddToBattleline(testCreature("f1", 5), 0)
+	g.AddToBattleline(testCreature("f2", 5), 0)
+	g.AddToBattleline(testCreature("f3", 5), 0)
+	e1 := g.AddToBattleline(testCreature("e1", 10), 1)
+	e2 := g.AddToBattleline(testCreature("e2", 10), 1)
+	g.SetChooser(0, &idQueueChooser{ids: []LocalID{e1, e1, e2}})
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	e := DealDamage{
+		Amount: 1,
+		Per:    InPlay{Player: Controller, Type: Creature},
+		Target: Target{Kind: TargetChosenEnemyCreature},
+	}
+	e.Resolve(ctx)
+	if g.Damage(e1) != 2 {
+		t.Errorf("e1 damage = %d, want 2 (chosen for two instances)", g.Damage(e1))
+	}
+	if g.Damage(e2) != 1 {
+		t.Errorf("e2 damage = %d, want 1", g.Damage(e2))
+	}
+}
+
+func TestDealDamagePerInstanceDegenerate(t *testing.T) {
+	base := DealDamage{
+		Amount: 1,
+		Per:    InPlay{Player: Controller, Type: Creature},
+		Target: Target{Kind: TargetChosenEnemyCreature},
+	}
+
+	t.Run("a zero count asks nothing and deals nothing", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.AddToBattleline(testCreature("e1", 10), 1)
+		ch := &countingChooser{}
+		g.SetChooser(0, ch)
+		base.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if ch.calls != 0 {
+			t.Errorf("chooser asked %d times, want 0 (no friendly creatures to count)", ch.calls)
+		}
+	})
+
+	t.Run("no candidate asks nothing and deals nothing", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.AddToBattleline(testCreature("f1", 5), 0) // count is one, but there is no enemy
+		ch := &countingChooser{}
+		g.SetChooser(0, ch)
+		base.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if ch.calls != 0 {
+			t.Errorf("chooser asked %d times, want 0 (no enemy creature to choose)", ch.calls)
+		}
+	})
+
+	t.Run("declining every instance deals nothing", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.AddToBattleline(testCreature("f1", 5), 0)
+		g.AddToBattleline(testCreature("f2", 5), 0) // count is two instances
+		e1 := g.AddToBattleline(testCreature("e1", 10), 1)
+		e2 := g.AddToBattleline(
+			testCreature("e2", 10),
+			1,
+		) // two candidates, so the chooser is asked
+		g.SetChooser(0, orderRejectChooser{}) // always declines
+		base.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if g.Damage(e1) != 0 || g.Damage(e2) != 0 {
+			t.Errorf("damage e1=%d e2=%d, want 0 and 0 when every choice is declined",
+				g.Damage(e1), g.Damage(e2))
+		}
+	})
+}
+
 func TestSpreadCreatureAndNeighbors(t *testing.T) {
 	// Without NotOnFlank, any creature is a legal target.
 	g := NewGame("A", "B", 1)

@@ -76,7 +76,7 @@ type game struct {
 	// deckOpen[p] is whether player p's deck-list popover is pinned open by a tap.
 	// Each side toggles independently, so opening one leaves the other alone. Desktop
 	// hover opens either without this; a touch tap toggles its own side and a tap
-	// outside clears both (see onDeckToggle and installTipDrag's outside-close).
+	// outside clears both (see onDeckToggle and installTips's outside-close).
 	deckOpen [2]bool
 
 	// dispatch schedules a mutation on the UI goroutine (captured from a Context).
@@ -111,15 +111,20 @@ type game struct {
 	// making it take two taps. Once set, a single tap opens through onLogCardTap.
 	isTouch bool
 
-	// tipDownFunc/tipMoveFunc/tipUpFunc back the touch-drag that shows the player
-	// bar's stat tooltips on a touchscreen; all three are released on dismount.
-	// tipTracking marks a press in progress (which also suppresses the sidebar
-	// swipe), and tipActive is the stat element whose tooltip is currently shown.
+	// tipOverFunc/tipOutFunc raise the floating tip label on a mouse hover;
+	// tipDownFunc/tipMoveFunc/tipUpFunc drive it from a finger dragged along the
+	// player bar. All are released on dismount. tipTracking marks a press in
+	// progress, which also suppresses the sidebar edge-swipe.
+	tipOverFunc app.Func
+	tipOutFunc  app.Func
 	tipDownFunc app.Func
 	tipMoveFunc app.Func
 	tipUpFunc   app.Func
 	tipTracking bool
-	tipActive   app.Value
+	// selCursorFunc follows the pointer with the selection-badge marker (the small
+	// icon at the cursor's corner showing what a click will do during a badge
+	// preview). Released on dismount with the tip funcs.
+	selCursorFunc app.Func
 
 	phase phase
 	busy  bool // an action goroutine is resolving; input is ignored
@@ -188,6 +193,20 @@ type game struct {
 	useTarget    engine.LocalID
 	hasUseTarget bool
 
+	// selection badge preview (engine BadgeChooser): while an effect's choose loop
+	// runs it previews the status each pick lands — the damage a Festering Touch
+	// pick deals, the ward an Imperium "ward N" places. selBadge is the active badge
+	// (its zero clears the preview); badgeTotals accumulates the amount landed on
+	// each creature as it is picked, so a creature chosen twice shows the sum (a
+	// zero-amount badge like a ward still records the key, drawing a numberless
+	// icon); badgeClearing keeps the last badges on screen for the grow-and-fade
+	// once the loop ends; badgeGen retires a stale fade timer when a new preview
+	// begins mid-fade.
+	selBadge      engine.SelectionBadge
+	badgeTotals   map[engine.LocalID]int
+	badgeClearing bool
+	badgeGen      int
+
 	// engine position chooser: placing a Deploy creature. The creature is lifted
 	// while the prompt is up and its placement verbs sit on it (deployActions). The
 	// placement is a two-step: first choose a side with the Deploy left / Deploy
@@ -212,6 +231,13 @@ type game struct {
 	// was picked — false grafts face up, true places under face down.
 	hostTargeting bool
 	hostFaceDown  bool
+
+	// manualPlacing is set in manual mode after the player picks Put into play for
+	// a selected hand creature: it reuses the Deploy placement picker (choosingPosition
+	// with positionLine set to the owner's battleline) to drop the creature anywhere
+	// in the line, but a clicked position calls ManualPlaceInPlay instead of answering
+	// a real prompt goroutine.
+	manualPlacing bool
 
 	// zonesPlayer, when >= 0, opens the out-of-play zone viewer (discard, archives,
 	// and purge piles) for that player. -1 keeps the viewer closed.

@@ -2,6 +2,14 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
+// khrkharsBlasterCluster pulls a Lieutenant Khrkhar into Khrkhar's Blaster's pod —
+// a Pull cluster, at least one averaging about one and a quarter (ADR 0036).
+var khrkharsBlasterCluster = card.Cluster{
+	Name:     "Khrkhar's Blaster",
+	Strategy: card.ClusterStrategy.Pull,
+	Trigger:  card.ClusterTrigger.ByLead,
+}
+
 // Khrkhar's Blaster
 //
 //	House:  Star Alliance
@@ -18,7 +26,7 @@ var KhrkharsBlaster = card.New(
 	card.Type.Upgrade,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "349"),
-	card.Connects(card.Pull(LieutenantKhrkhar, 1)),
+	card.LeadsCluster(khrkharsBlasterCluster),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightReap(card.ChooseOne{Options: []card.Effect{

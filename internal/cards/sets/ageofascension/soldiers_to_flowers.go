@@ -18,9 +18,12 @@ var SoldiersToFlowers = card.New(
 	card.Provenance(card.AoA, "349"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.PurgeEachFromDiscard{
-			House:           card.House.Self,
-			Type:            card.Type.Creature,
+		card.Trigger.Play, card.PurgeCard{
+			Player: card.EachPlayer,
+			Selection: card.Each{
+				House: card.House.Self,
+				Type:  card.Type.Creature,
+			},
 			GainOwnerAember: true,
 		}),
 )

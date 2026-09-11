@@ -23,7 +23,7 @@ var OldYurk = card.New(
 		card.Trigger.Play, card.DiscardCard{
 			Player:    card.Controller,
 			Zone:      card.Hand,
-			Selection: card.Chosen{Mandatory: true},
+			Selection: card.Chosen{},
 			Amount:    2,
 		}),
 )

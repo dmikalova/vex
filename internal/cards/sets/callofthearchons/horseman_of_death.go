@@ -17,6 +17,7 @@ var HorsemanOfDeath = card.New(
 	card.Type.Creature,
 	card.Rarity.Connected,
 	card.Provenance(card.CotA, "246"),
+	card.InCluster(horsemenCluster),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Horseman, card.Traits.Spirit),
 	card.WithAbility(

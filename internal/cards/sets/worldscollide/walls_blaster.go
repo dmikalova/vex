@@ -2,6 +2,14 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
+// wallsBlasterCluster pulls a Chief Engineer Walls into Walls' Blaster's pod — a
+// Pull cluster, at least one averaging about one and a quarter (ADR 0036).
+var wallsBlasterCluster = card.Cluster{
+	Name:     "Walls' Blaster",
+	Strategy: card.ClusterStrategy.Pull,
+	Trigger:  card.ClusterTrigger.ByLead,
+}
+
 // Walls' Blaster
 //
 //	House:  Star Alliance
@@ -18,7 +26,7 @@ var WallsBlaster = card.New(
 	card.Type.Upgrade,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "352"),
-	card.Connects(card.Pull(ChiefEngineerWalls, 1)),
+	card.LeadsCluster(wallsBlasterCluster),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightReap(card.ChooseOne{Options: []card.Effect{

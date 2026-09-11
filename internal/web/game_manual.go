@@ -87,6 +87,51 @@ func (g *game) cancelHostTargeting(_ app.Context, _ app.Event) {
 	g.hostTargeting = false
 }
 
+// manualPlay drops the selected hand card straight into play in manual mode,
+// without its play effects or bonus Æmber. A creature enters the placement picker
+// (reusing the Deploy line) so it can land anywhere in the battleline; with no
+// other creatures to place it beside, and for a non-creature, it goes in at once.
+func (g *game) manualPlay(ctx app.Context, _ app.Event) {
+	if !g.hasSel || !g.g.Manual() || g.selKind != selHand {
+		return
+	}
+	if g.g.IsCreature(g.sel) && len(g.g.Battleline(g.g.Owner(g.sel))) > 0 {
+		g.manualPlacing = true
+		g.choosingPosition = true
+		g.positionLine = g.g.Battleline(g.g.Owner(g.sel))
+		g.positionRight = false
+		g.positionSideChosen = false
+		return
+	}
+	g.manualPlaceInPlay(ctx, 0)
+}
+
+// manualPlaceInPlay commits a manual put-into-play at battleline position pos and
+// clears the placement picker. It is the manual counterpart to answerPosition: a
+// clicked position lands the creature here instead of replying to a prompt.
+func (g *game) manualPlaceInPlay(ctx app.Context, pos int) {
+	if !g.hasSel || !g.g.Manual() {
+		return
+	}
+	g.beginAction()
+	g.g.ManualPlaceInPlay(g.sel, pos)
+	g.manualPlacing = false
+	g.choosingPosition = false
+	g.positionLine = nil
+	g.positionSideChosen = false
+	g.clearSelection()
+	g.save(ctx)
+}
+
+// cancelManualPlace backs out of a manual put-into-play placement without placing,
+// leaving the card selected in hand.
+func (g *game) cancelManualPlace(_ app.Context, _ app.Event) {
+	g.manualPlacing = false
+	g.choosingPosition = false
+	g.positionLine = nil
+	g.positionSideChosen = false
+}
+
 // manualToHand sends the selected upgrade or under-card to its owner's hand,
 // detaching it from its host first. It is offered only when the selection is
 // actually attached (isAttached).

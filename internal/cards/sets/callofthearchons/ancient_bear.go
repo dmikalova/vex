@@ -17,6 +17,7 @@ var AncientBear = card.New(
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, "345"),
+	card.InCluster(card.Pulled(bearFluteCluster, 2, 2.5)),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Beast),
 	card.WithAssault(2),

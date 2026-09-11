@@ -67,22 +67,17 @@ func TestMayExaltSelfDeclinable(t *testing.T) {
 	})
 }
 
-// exaltRepeater accepts the first exalt-to-repeat prompt and declines the next,
-// so the preceding effect resolves exactly twice.
+// exaltRepeater accepts the exalt-to-repeat prompt, so the preceding effect
+// resolves twice: once up front and once for the single allowed repeat.
 type exaltRepeater struct {
 	FirstChooser
-	calls int
 }
 
-func (c *exaltRepeater) ChooseCardOrDecline(
+func (exaltRepeater) ChooseCardOrDecline(
 	_, _ string,
 	candidates []LocalID,
 ) (LocalID, bool) {
-	c.calls++
-	if c.calls == 1 {
-		return candidates[0], true
-	}
-	return 0, false
+	return candidates[0], true
 }
 
 func TestExaltToRepeatResolvesThenStopsWhenDeclined(t *testing.T) {
@@ -111,18 +106,22 @@ func TestExaltToRepeatResolvesThenStopsWhenDeclined(t *testing.T) {
 	}
 }
 
-// exaltConfirmer answers the Yes/No exalt-to-repeat confirm: accept the first
-// prompt (Yes) and decline the next (No), so a back-reference exalt repeats once.
+// exaltConfirmer accepts the Yes/No exalt-to-repeat confirm, so a back-reference
+// exalt repeats once.
 type exaltConfirmer struct {
 	FirstChooser
-	calls int
 }
 
-func (c *exaltConfirmer) ChooseOption(_, _ string, _ []string) int {
-	c.calls++
-	if c.calls == 1 {
-		return 0 // Yes
-	}
+func (exaltConfirmer) ChooseOption(_, _ string, _ []string) int {
+	return 0 // Yes
+}
+
+// exaltDecliner declines the Yes/No exalt-to-repeat confirm.
+type exaltDecliner struct {
+	FirstChooser
+}
+
+func (exaltDecliner) ChooseOption(_, _ string, _ []string) int {
 	return 1 // No
 }
 
@@ -149,6 +148,27 @@ func TestExaltToRepeatConfirmsBackReference(t *testing.T) {
 	// The confirmed exalt placed 1 Æmber on the context creature.
 	if got := g.State.Cards[that].Amber; got != 1 {
 		t.Errorf("exalted amber = %d, want 1", got)
+	}
+}
+
+func TestExaltToRepeatDeclinesBackReference(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	that := g.AddToBattleline(testCreature("that", 3), 0)
+	g.SetChooser(0, &exaltDecliner{})
+	ctx := &EffectContext{Resolver: g, Source: that, Controller: 0, It: that, HasIt: true}
+
+	e := ExaltToRepeat{
+		Do:    GainAember{Player: Controller, Amount: 1},
+		Exalt: Target{Kind: TargetTheChosenCreature},
+	}
+	e.Resolve(ctx)
+
+	// Declining the confirm resolves Do only once and exalts nothing.
+	if got := g.State.Aember[0]; got != 1 {
+		t.Errorf("pool = %d, want 1 (Do resolved once)", got)
+	}
+	if got := g.State.Cards[that].Amber; got != 0 {
+		t.Errorf("exalted amber = %d, want 0", got)
 	}
 }
 

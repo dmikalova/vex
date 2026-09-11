@@ -18,6 +18,7 @@ var Urchin = card.New(
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, "315"),
+	card.InCluster(card.Pulled(fayginCluster, 2, 2.5)),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),

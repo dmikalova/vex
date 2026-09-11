@@ -174,10 +174,12 @@ func (e ReturnNamedToHand) Text() string {
 // name, lets the controller choose one, and moves it to their hand from whichever
 // zone it is in.
 func (e ReturnNamedToHand) Resolve(ctx *EffectContext) {
-	inPlay := nameMatches(ctx, ctx.Resolver.Battleline(ctx.Controller), e.Name)
+	name := e.Name
+	pick := Named{Name: name}
+	inPlay := pick.candidates(ctx, ctx.Resolver.Battleline(ctx.Controller))
 	candidates := slices.Concat(
 		inPlay,
-		nameMatches(ctx, ctx.Resolver.Discard(ctx.Controller), e.Name),
+		pick.candidates(ctx, ctx.Resolver.Discard(ctx.Controller)),
 	)
 	id, ok := ctx.ChooseCreature("Choose "+indefinite(e.Name)+" to put into your hand", candidates)
 	if !ok {
@@ -188,15 +190,4 @@ func (e ReturnNamedToHand) Resolve(ctx *EffectContext) {
 	} else {
 		ctx.Resolver.PutFromDiscardIntoHand(id)
 	}
-}
-
-// nameMatches returns the ids whose card has the given name, in order.
-func nameMatches(ctx *EffectContext, ids []LocalID, name string) []LocalID {
-	var out []LocalID
-	for _, id := range ids {
-		if ctx.Resolver.Name(id) == name {
-			out = append(out, id)
-		}
-	}
-	return out
 }

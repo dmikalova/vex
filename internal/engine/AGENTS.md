@@ -224,15 +224,18 @@ Dimension Door) is a second, deliberately smaller interpreter, because flat stat
 cannot store an `Effect` closure — the decision and its rationale are ADR 0007.
 State holds flat `LastingEffect{On Event, Do lastingAction, Controller, Amount}`
 records; `lastingActionOf` maps a composed effect to an enum tag and
-`game_lasting.go` fires/queries them. A **reaction** runs after an event
-(`AddLasting` + `emitLasting`, ordered when several fire); a **replacement**
-changes an event's outcome (`lastingReplacement` + `Instead{Of, With}`).
+`game_lasting.go` fires/queries them. A **reaction** runs after an event: a site
+with its own trigger window folds the reactions into it with `lastingReactions`
+(ordered together with the card abilities through the `ReactionOrderer` port,
+ADR 0013), and a site without one emits a standalone `emitLasting`; a
+**replacement** changes an event's outcome (`lastingReplacement` + `Instead{Of,
+With}`).
 
 To add one: a reaction on an existing event = support its `Do` in `lastingActionOf`
-and `resolveReaction`; a new event = an `Event` value, one
-`emitLasting`/`lastingReplacement` call at the site, and its `clause`/`gerund`
-text. You never restructure the play/reap hot path. Keep the enum dispatch
-centralized.
+and `resolveReaction`; a new event = an `Event` value, one `lastingReactions`
+(folded into a window) or `emitLasting`/`lastingReplacement` call at the site, and
+its `clause`/`gerund` text. You never restructure the play/reap hot path. Keep the
+enum dispatch centralized.
 
 **Modifying pending damage is a replacement, not a reaction.** "Whenever a
 creature takes damage, it takes an additional N" (Lethal Distraction) reads as a
@@ -346,9 +349,11 @@ inside the destruction window; wait until the batch is in the discard.
 Three tiers of verb, kept distinct so a method name says which level it works at:
 
 - **`emit<Event>`** announces a game event and fans out to everything listening —
-  `emitCardPlayed`, `emitCreatureEnters`, `emitAfterEnemyDestroyed`, `emitLasting`. Use
-  it at an event site that dispatches to responders (triggered abilities and the
-  lasting registry).
+  `emitReapWindow`, `emitCreatureEnters`, `emitActionPlayedBeforeResolve`,
+  `emitLasting`. Use it at an event site that dispatches to responders (triggered
+  abilities and the lasting registry). A site with its own trigger window folds its
+  duration reactions into that window with `lastingReactions` rather than a trailing
+  `emitLasting`.
 - **`trigger…`** resolves a _single card's_ abilities matching a trigger —
   `triggerAbilities(id, TriggerAfterReap, …)`. The emitters call into it per card.
 - **`resolve…`** carries out one specific effect or ability — `Effect.Resolve`,
@@ -407,6 +412,19 @@ to)` names a card once either end of the move is public and calls it "a card"
 Every prompt the engine raises reaches a human, so write it as the card's own
 sentence and route it through the channel a UI can render as a board interaction.
 
+- **The active player makes every choice, always** — an unbreakable KeyForge rule.
+  The chooser for a placement, a target, an order, or an option is `ActivePlayer`,
+  even when the choice lands in the opponent's play area: which flank a Treachery
+  creature or a give-to-opponent seize enters the opponent's battleline on, and
+  where a creature put into play under the opponent lands, are all the active
+  player's calls (rulebook: any time a creature enters play or changes control the
+  active player chooses its flank). Never pass a controller that is not the active
+  player as the chooser. A creature moving into a battleline funnels through one of
+  the placement seams — `deployPosition`/`chooseFlank` (play and put-into-play),
+  `placeGainedOnFlank` (control gains and gifts), `placeSeizedOnFlank` (the seize
+  effect) — each of which asks the active player and never silently assumes a flank
+  (ADR 0010). A new placement site routes through a seam rather than calling
+  `Battleline[...].add` itself.
 - **Ask through `pickCreature`/`pickCard`, not `ChooseOption`, whenever the answer
   is a card.** A card choice is made by clicking the card, so a frontend
   highlights the candidates and takes a click. A list of card _names_ as buttons is

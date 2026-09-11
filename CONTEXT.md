@@ -382,13 +382,36 @@ A named axis a card _provides_ or _consumes_ with a weight. Deck synergy is the
 weighted match of providers to consumers across the Deck; antisynergy is a
 negative weight.
 
+**Cluster**:
+A family of related cards that deck generation places together. A card is a
+**member** of a cluster; the cluster carries a **strategy** (how it fills out) and
+a **trigger mode** (what causes it to fill). Clusters subsume Connections — a
+fixed-count pull is just one strategy. Examples: the seven sins (any member drawn
+tops the pod up to a random 3–7 of them), the four Horsemen (a lead member pulls
+the whole family), the per-House Shards (any Shard drawn places one Shard in every
+House pod of the Deck).
+
+**Cluster strategy**:
+How a cluster fills once triggered: **one per House** (one member in each of the
+Deck's Houses — deck-wide, and complete by construction: every House must have a
+member or the build fails), the **whole pool** (every member — the four Horsemen),
+a **random count** in a range of distinct members (the seven sins), a **self pull**
+(a random count of copies of the triggering member itself — Plague Rat pulls more
+Plague Rats, at least a minimum, averaging a mean, only very rarely a whole pod), a
+**pull exact** (one of each partner per lead instance — two Timetravellers pull two
+Help from Future Self), or a **pull** (a per-partner random count of each partner
+when the lead rolls in, each partner at its own rate — Troop Call pulls a couple of
+Niffle Apes and, much less often, a Niffle Queen).
+
+**Trigger mode**:
+What fires a cluster: a designated **lead** member (Horseman of Pestilence pulls
+the other Horsemen) or **any member** (any sin, any Shard, or a Plague Rat pulls
+its family).
+
 **Connection**:
-A relationship where selecting one card pulls additional cards into the same
-House. Parameterized by a pool of candidates, a count (fixed or variable), and
-whether duplicates are allowed: Plague Rat pulls a variable number of copies from
-a one-card pool (duplicates); Timetraveller pulls exactly one specific partner; a
-sin slot pulls a variable number from the seven sins without duplicates;
-Groundbreaking Discovery pulls exactly one of each of its three partners.
+The older name for a cluster placed by a fixed-count pull from a named partner
+list. Subsumed by Cluster.
+_Avoid_ for the general concept: say Cluster.
 
 ## Templates
 
@@ -404,12 +427,18 @@ _Avoid_: Generator, factory.
 **Materialize**:
 To resolve a Slot into a concrete, engine-ready card at generation time — binding
 any template parameters, rehousing a Maverick to the Slot's House, and binding
-Home-house references. The engine only ever sees materialized cards.
+Home-house references. Materialize may read the Deck's three Houses (an Ambassador
+binds to another House in the Deck). The engine only ever sees materialized cards.
 
 **Home house**:
 A template parameter for a card that references its own House in its text or
 effect. Bound at generation to the Slot's House, so a Maverick reads and plays
 correctly.
+
+**Partner house**:
+A template parameter bound at generation to one of the _other_ Houses in the Deck.
+An Ambassador (Sanctum) and a Plant (Shadows) each name a Partner house — one of
+the Deck's two other Houses — chosen when the Slot materializes.
 
 ## The client
 

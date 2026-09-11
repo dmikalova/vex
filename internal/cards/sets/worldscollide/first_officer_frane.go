@@ -17,6 +17,7 @@ var FirstOfficerFrane = card.New(
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "298"),
+	card.InCluster(card.Pulled(franesBlasterCluster, 1, 1.25)),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Human),
 	card.WithAbility(card.Trigger.PlayFightReap, card.CaptureAember{

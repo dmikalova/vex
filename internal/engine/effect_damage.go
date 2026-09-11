@@ -168,6 +168,8 @@ func (e DealDamage) Text() string {
 // Resolve deals the damage to every selected creature simultaneously, resolving
 // destruction as part of it. A Per count multiplies the amount dealt; an AmountFrom
 // count sources the amount directly; a Spread deals its own related batch of hits.
+// A "for each" count aimed at a single chosen creature instead makes one target
+// choice per instance and deals them all at once (see resolvePerInstance).
 // A computed amount of zero deals nothing, so the target is never selected — a
 // chosen one would otherwise be a vacuous prompt (Guardian Demon's follow-up when
 // its heal removed no damage).
@@ -187,9 +189,54 @@ func (e DealDamage) Resolve(ctx *EffectContext) {
 		}
 		return
 	}
+	if e.Per != nil && e.Target.isChosen() {
+		e.resolvePerInstance(ctx)
+		return
+	}
 	if amount := e.amount(ctx); amount > 0 {
 		e.dealTo(ctx, amount, e.Target.Select(ctx))
 	}
+}
+
+// resolvePerInstance resolves a "for each" DealDamage whose target is a single
+// chosen creature: it makes one choice per unit of the count — each an Amount hit
+// on a creature the controller picks, and each free to name a different creature —
+// then deals the whole batch at once (KeyForge's independent-target ruling; a
+// creature named twice takes both hits together). Sack of Coins is the opposite
+// shape — one creature chosen first takes all the damage — authored with
+// ChooseCreatureThen and Target.TheChosenCreature.
+func (e DealDamage) resolvePerInstance(ctx *EffectContext) {
+	n := e.Per.Value(ctx)
+	if n <= 0 || e.Amount <= 0 {
+		return
+	}
+	cands := e.Target.candidates(ctx)
+	if len(cands) == 0 {
+		return
+	}
+	prompt := "Choose " + e.Target.Text()
+	ctx.previewBadge(SelectionBadge{Icon: DamageIcon, Amount: e.Amount})
+	defer ctx.previewBadge(SelectionBadge{})
+	assigned := map[LocalID]int{}
+	order := []LocalID{}
+	for i := 0; i < n; i++ {
+		id, ok := ctx.ChooseCreature(prompt, cands)
+		if !ok {
+			continue
+		}
+		if _, seen := assigned[id]; !seen {
+			order = append(order, id)
+		}
+		assigned[id] += e.Amount
+	}
+	if len(order) == 0 {
+		return
+	}
+	targets := make([]DamageTarget, len(order))
+	for i, id := range order {
+		targets[i] = DamageTarget{ID: id, Amount: assigned[id], IgnoreArmor: e.IgnoreArmor}
+	}
+	ctx.dealDamage(targets)
 }
 
 // declinable reports that the damage lands on a single clickable creature, so a

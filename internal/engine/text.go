@@ -69,7 +69,7 @@ func afterYouActOnText(verb string, e Effect) (string, bool) {
 	switch it := cond.Cond.(type) {
 	case ItIs:
 		return "after you " + verb + " " + indefinite(
-			houseTypeNoun(it.House, it.Type),
+			it.shapeNoun(),
 		) + ", " + cond.Then.Text(), true
 	case ItIsNamed:
 		return "after you " + verb + " " + it.Name + ", " + cond.Then.Text(), true

@@ -86,6 +86,14 @@ to another creature`. The two branches collapse into one linear sequence:
   the removal finds no ward. Vactrol keeps the two atomic effects — `RemoveWard`
   (any creature, warded or not) then `Ward` — instead of a bespoke `MoveWard` node,
   so there is one fewer one-off mechanic to carry.
+- **Bait and Switch** reads `Steal 1 Æmber -> if your opponent has more Æmber than
+you, repeat this effect`, not KeyForge's `If your opponent has more Æmber than
+you, steal 1 Æmber. Repeat this effect`. Vactrol uniformly writes a self-repeat as
+  `<do> -> if <cond>, repeat this effect` (the same shape Numquid the Fair and
+  Neutron Shark use), so the steal leads and the condition gates the repeat. The
+  first steal is therefore unconditional: with equal pools KeyForge steals nothing
+  while Vactrol steals 1, then stops. In every case where the opponent already
+  leads the two are identical.
 
 ## Mechanic rule changes
 

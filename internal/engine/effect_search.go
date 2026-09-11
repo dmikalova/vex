@@ -38,10 +38,11 @@ func (e SearchForName) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 // resolveGate searches and reports whether it found anything, so a Then can hang
 // a follow-up off the search succeeding (Bear Flute reshuffles only if it did).
 func (e SearchForName) resolveGate(ctx *EffectContext) bool {
-	inDeck := nameMatches(ctx, ctx.Resolver.Deck(ctx.Controller), e.Name)
+	pick := Named{Name: e.Name}
+	inDeck := pick.candidates(ctx, ctx.Resolver.Deck(ctx.Controller))
 	candidates := slices.Concat(
 		inDeck,
-		nameMatches(ctx, ctx.Resolver.Discard(ctx.Controller), e.Name),
+		pick.candidates(ctx, ctx.Resolver.Discard(ctx.Controller)),
 	)
 	if e.All {
 		for _, id := range candidates {

@@ -52,3 +52,36 @@ frontend.
   `Orderer` implementation adds an Auto-resolve button that answers with a random
   order in one click. The engine is unchanged: the default chooser still keeps
   scan order.
+- **A printed `Reap:`/`Fight:`/`Action:`/`Play:` ability orders in the same window
+  as the bystander reactions to that action.** Each printed timing ability is
+  semantically a reaction to its own event ("after this creature reaps, do …"), so
+  a use/play verb gathers the acting card's own printed ability together with every
+  bystander "after a creature reaps/is used/fights/is played" reaction into one
+  `orderTriggered` pass (`reapReactions`, `fightReactions`, `actionReactions`,
+  `playCreatureReactions`, `afterPlayReactions` in `game_abilities.go`), rather than
+  firing the printed ability first as a separate step. Every entry is ordered by the
+  active player but resolves for its own controller, so a bystander's "after an enemy
+  creature reaps: gain Æmber" still credits its owner. Triggering a named ability
+  directly (Replicator makes a creature reap) is not performing the action, so it
+  resolves the ability alone and opens no window (`TriggerAbilityOf`).
+- **Duration reactions order in the same window as the card-sourced set, through
+  the `ReactionOrderer` port.** A "for the remainder of the turn" reaction (Full
+  Moon, Charge!, Crystal Hive) lives in the flat lasting registry (ADR 0007) and has
+  no in-play source card, so it cannot flow through `orderTriggered`'s card-based
+  two-level ordering ("the Chooser port speaks in cards"). Each unified window folds
+  its duration reactions into the same `orderTriggered` pass as window entries
+  (`lastingReactions` builds them; `resolveWindow` resolves them through
+  `resolveReaction`) rather than resolving them in a trailing `emitLasting(…)` window
+  of its own. When a window mixes card abilities with duration reactions, ordering
+  runs through the optional `ReactionOrderer` capability — which takes the whole set
+  (each rendered as an `OrderableReaction`, a card or a label) and returns a
+  permutation — so a client may interleave a duration reaction between two card
+  reactions. A `Chooser` without `ReactionOrderer` (the AI, the simulator) keeps the
+  default order: the card abilities first (in their card-based two-level order), then
+  the duration reactions in registry order, so folding never reorders the card
+  abilities that already resolved there. Pure-card windows keep the card-based
+  two-level `Orderer` path untouched. The cardtest harness (`bridgeChooser.OrderReactions`,
+  scripted by `Player.Order(cards…)`) and the web client (`webChooser.OrderReactions`,
+  ordering the card abilities by clicking and resolving the duration reactions after)
+  both implement the port. `emitLasting` remains for the events that have no card
+  window of their own (an enemy creature destroyed).

@@ -21,6 +21,16 @@ request into concrete, grouped work items. When an item is **done, delete it**
 reads as a live surface for coordinating with the human on what you mean to do
 next. Group items by area or mechanic so related work is built together.
 
+A `todo-agent.md` item is a **handoff to a future agent who was not in the
+conversation that wrote it**, so it must carry the decision, not just the task.
+When you record an item, write down *what was decided and why* — the chosen
+behavior, the cards affected, the expected text — so the next agent does not have
+to reconstruct it from code that may already be stale. When you pick an item up,
+the recorded decision **wins over a contradicting code comment**: a comment that
+disagrees with the item is out of date (it describes the behavior the item exists
+to change), so fix the comment to match the decision — do not treat the comment as
+evidence the item is wrong and re-litigate it.
+
 ## Build, test, and lint through `mage`
 
 Run all build/test/format/coverage tasks through `mage`, not raw `go`
@@ -289,15 +299,20 @@ lastingAction, Controller, Amount}`.
 
 There are two flavors:
 
-- A **reaction** runs _after_ an event. The event site emits **one** dispatch —
-  `g.emitLasting(EventCreaturePlayed, actor, subject)` / `g.emitLasting(EventReap,
-…)` — which gathers every reaction the actor owns for that event and, when several
-  fire at once, lets the controller **order** them (KeyForge lets the active player
-  order simultaneous triggers), resolving each via `resolveReaction`. So "gain Æmber
-  after you play a creature" and "deal damage after you play a creature" order for
-  free. Authored as `card.ForRemainderOfTurn{On: card.Event.CreaturePlayed, Do:
-card.GainAember{...}}` (Do is a small composed effect — `GainAember` or
-  `DealDamage` to an enemy creature).
+- A **reaction** runs _after_ an event. A site that has its own trigger window (a
+  creature reaps, fights, is played) folds the actor's reactions into that window
+  with `g.lastingReactions(event, actor, subject)`, so they order together with the
+  card abilities that fire on the same event (ADR 0013): a window that mixes them
+  orders the whole set through the `ReactionOrderer` port, defaulting to the card
+  abilities then the duration reactions. A site with no card window of its own (an
+  enemy creature destroyed) emits **one** standalone dispatch instead —
+  `g.emitLasting(EventEnemyCreatureDestroyed, actor, subject)` — which gathers every
+  reaction the actor owns for that event and, when several fire at once, lets the
+  controller **order** them. Either path resolves each reaction via `resolveReaction`,
+  so "gain Æmber after you play a creature" and "deal damage after you play a
+  creature" order for free. Authored as `card.ForRemainderOfTurn{On:
+card.Event.CreaturePlayed, Do: card.GainAember{...}}` (Do is a small composed
+  effect — `GainAember` or `DealDamage` to an enemy creature).
 - A **replacement** changes an event's _own outcome_ before it happens. The event
   site queries the registry (`g.lastingReplacement(player, EventReapAember)`) and
   applies the replacement in place — `gainReapAember` steals instead of gaining when
@@ -305,9 +320,10 @@ card.GainAember{...}}` (Do is a small composed effect — `GainAember` or
 With: card.Steal}`.
 
 Adding a reaction on an existing event = supporting its `Do` in `lastingActionOf` +
-`resolveReaction`; a new event = an `Event` value, one `emitLasting`/
-`lastingReplacement` call at that site, and the `clause`/`gerund` text. You never
-touch the play/reap path's structure. The ready phase drops a player's entries via
+`resolveReaction`; a new event = an `Event` value, one `lastingReactions` (folded
+into a window) or `emitLasting`/`lastingReplacement` call at that site, and the
+`clause`/`gerund` text. You never touch the play/reap path's structure. The ready
+phase drops a player's entries via
 `clearLasting`.
 
 ## Constant-granted abilities

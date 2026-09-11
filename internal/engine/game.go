@@ -83,6 +83,39 @@ type Orderer interface {
 	OrderCreatures(source, prompt string, ids []LocalID) []LocalID
 }
 
+// OrderableReaction is one entry the active player may arrange in a trigger
+// window: either a card's triggered ability (HasCard, Card its source) or a
+// duration reaction from the lasting registry (Full Moon, Charge!, Crystal Hive),
+// which has no card in play. Label is a display string for both — the source
+// card's name, or the duration reaction's rendered effect. A duration reaction is
+// carried alongside the card abilities so the whole window orders as one.
+type OrderableReaction struct {
+	Card    LocalID
+	HasCard bool
+	Label   string
+}
+
+// ReactionOrderer is an optional Chooser capability: arranging a whole trigger
+// window — card abilities and duration reactions together — into a resolution
+// order, returning a permutation of the given reactions' indices. It is asked only
+// when a window mixes card abilities with duration reactions, because a duration
+// reaction has no card and so cannot flow through the card-based Orderer. A Chooser
+// that does not implement it leaves the default order, which resolves the card
+// abilities before the duration reactions.
+type ReactionOrderer interface {
+	OrderReactions(prompt string, reactions []OrderableReaction) []int
+}
+
+// BadgeChooser is an optional Chooser capability: a client that previews the
+// status a creature it is about to choose will receive — the "3 damage" a
+// Festering Touch pick deals, the ward an Imperium "ward N" places. The effect
+// sends the badge before its choose loop and the zero badge after, so the client
+// can badge each candidate as it is picked and animate the badges away when the
+// loop ends. It is display-only; a Chooser that does not implement it ignores it.
+type BadgeChooser interface {
+	PreviewBadge(badge SelectionBadge)
+}
+
 // Game bundles the flat GameState with the read-only Catalog and the surrounding
 // engine services (player names, choosers, RNG, log). Cloning a state for MCTS
 // only needs GameState.FastCopy; this wrapper is the live match harness.

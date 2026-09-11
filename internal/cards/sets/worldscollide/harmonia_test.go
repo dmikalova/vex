@@ -52,4 +52,23 @@ func TestHarmonia(t *testing.T) {
 
 		h.P1.ExpectAmber(0)
 	})
+
+	t.Run("gains 1 Æmber from its own entrance while overwhelmed", func(t *testing.T) {
+		var harmonia ct.Card
+		h := ct.Play(t, ct.Setup{
+			P1: ct.Side{
+				House: card.House.Untamed,
+				Hand:  ct.Cards(ct.Bind(&harmonia, Harmonia)),
+			},
+			P2: ct.Side{InPlay: ct.Cards(
+				ct.Creature(),
+				ct.Creature(),
+				ct.Creature(),
+			)},
+		})
+
+		h.P1.Play(harmonia)
+
+		h.P1.ExpectAmber(1)
+	})
 }

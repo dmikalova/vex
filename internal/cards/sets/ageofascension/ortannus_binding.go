@@ -16,6 +16,7 @@ var OrtannusBinding = card.New(
 	card.Type.Tactic,
 	card.Rarity.Connected,
 	card.Provenance(card.AoA, "98"),
+	card.InCluster(card.Pulled(ortannuCluster, 2, 3)),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{

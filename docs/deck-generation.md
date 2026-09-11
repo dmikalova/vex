@@ -88,7 +88,11 @@ flowchart LR
    honoring exclusion constraints (in some Sets two Houses are mutually exclusive)
    and per-House weights (the draw need not be uniform). Rare whole-pod overlays
    also roll here — a _legacy House pod_ (same House, pool from another Set) or a
-   _maverick House pod_ (a House not in this Set at all).
+   _maverick House pod_ (a House not in this Set at all). Neither is implemented
+   yet; when the maverick pod lands it must complete every `OnePerHouse` cluster to
+   all nine Houses, since a maverick pod can drop a House the Set never printed a
+   member for (see `docs/todo-agent.md`, "Maverick houses complete every
+   OnePerHouse cycle").
 2. **Per-slot roll.** For each of the 12 Slots in each pod, roll a rarity, then
    independent overlays for Special, Maverick, and Legacy (see §4).
 3. **Draw.** Pull a card from the pool the rolls point at (House dimension × Set

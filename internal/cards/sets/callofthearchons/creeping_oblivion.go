@@ -17,8 +17,8 @@ var CreepingOblivion = card.New(
 	card.Provenance(card.CotA, "56"),
 	card.WithAbility(
 		card.Trigger.Play, card.PurgeCard{
-			Zone:   card.Discard,
-			Amount: 2,
-			UpTo:   true,
+			Player:    card.ChosenPlayer,
+			Selection: card.Chosen{Optional: true},
+			Amount:    2,
 		}),
 )

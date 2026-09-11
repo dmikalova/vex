@@ -23,7 +23,7 @@ var HelmsmanSpears = card.New(
 		First: card.DiscardCard{
 			Player:    card.Controller,
 			Zone:      card.Hand,
-			Selection: card.Chosen{},
+			Selection: card.Chosen{Optional: true},
 			AnyNumber: true,
 		},
 		Result: card.ForEachDiscarded{Do: card.Draw{Amount: 1}},

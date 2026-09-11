@@ -25,9 +25,6 @@ const (
 	purged
 )
 
-// valid reports whether the zone is a real one (not the unset zero value).
-func (z Zone) valid() bool { return z != zoneUnset }
-
 // noun names the zone as printed card text says it, so every effect that has to
 // name a zone ("shuffle your discard pile into your deck", "play a creature from
 // your discard pile") phrases it the same way.
@@ -49,3 +46,8 @@ func (z Zone) noun() string {
 // and the purged pile are open, while a hand, archives, and deck are not, so a
 // move between two hidden zones is narrated without naming what moved.
 func (z Zone) public() bool { return z == Discard || z == inPlay || z == purged }
+
+// ordered reports whether the zone is a stack with a top and a bottom, so a
+// positional selection (Top / Bottom) can name an end of it. Only the deck and
+// the discard pile are ordered; a hand, archives, and the purge pile are not.
+func (z Zone) ordered() bool { return z == Deck || z == Discard }

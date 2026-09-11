@@ -212,3 +212,134 @@ func TestLastingOnceOrdersWithPersistentReaction(t *testing.T) {
 		t.Errorf("count = %d, want 2 (both persistent reactions remain)", g.State.LastingCount)
 	}
 }
+
+// recordAember is a test effect that records its controller's Æmber pool at the
+// moment it resolves, so a test can tell whether another reaction in the same
+// window resolved before or after it.
+type recordAember struct{ got *int }
+
+func (recordAember) Text() string { return "record Æmber" }
+func (e recordAember) Resolve(ctx *EffectContext) {
+	*e.got = ctx.Resolver.Aember(ctx.Controller)
+}
+
+// reactionOrderRecorder is a ReactionOrderer test chooser: it records the window
+// it was handed and reverses it, so a test can prove a duration reaction was
+// ordered against a card ability in one window. An invalid result is returned when
+// invalid is set, to exercise the malformed-permutation fallback.
+type reactionOrderRecorder struct {
+	got     []OrderableReaction
+	invalid bool
+}
+
+func (reactionOrderRecorder) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) {
+	if len(cands) == 0 {
+		return 0, false
+	}
+	return cands[0], true
+}
+
+func (r *reactionOrderRecorder) OrderReactions(_ string, rs []OrderableReaction) []int {
+	r.got = rs
+	if r.invalid {
+		return []int{0} // wrong length: forces the default-order fallback
+	}
+	out := make([]int, len(rs))
+	for i := range rs {
+		out[i] = len(rs) - 1 - i
+	}
+	return out
+}
+
+// TestReapWindowInterleavesLastingReaction proves a duration reaction (Crystal
+// Hive's "after a creature reaps: gain Æmber") is ordered in the same window as a
+// creature's own "Reap:" ability, not a trailing one: a ReactionOrderer that
+// reverses the window resolves the duration reaction before the card ability, so
+// the card ability sees the duration Æmber already gained.
+func TestReapWindowInterleavesLastingReaction(t *testing.T) {
+	g := started(t)
+	var recorded int
+	reaper := g.AddToBattleline(
+		testCreature("reaper", 3, WithAbility(TriggerAfterReap, recordAember{&recorded})),
+		0,
+	)
+	g.AddLasting(
+		LastingEffect{On: EventReap, Do: actGainAember, Controller: 0, Amount: 1, Once: true},
+	)
+	rec := &reactionOrderRecorder{}
+	g.SetChooser(0, rec)
+
+	before := g.Aember(0)
+	g.reapWith(reaper)
+
+	// The reaper gains 1 for reaping, then the reversed window resolves the duration
+	// gain (before + 2) before the card ability records the pool.
+	if recorded != before+2 {
+		t.Errorf(
+			"recorded pool = %d, want %d (duration reaction resolved first)",
+			recorded,
+			before+2,
+		)
+	}
+	if len(rec.got) != 2 {
+		t.Fatalf(
+			"ordered %d reactions, want 2 (the card ability and the duration reaction)",
+			len(rec.got),
+		)
+	}
+	if !rec.got[0].HasCard || rec.got[0].Card != reaper {
+		t.Errorf("first reaction = %+v, want the reaper's card ability", rec.got[0])
+	}
+	if rec.got[1].HasCard || rec.got[1].Label != actGainAember.describe() {
+		t.Errorf("second reaction = %+v, want the duration reaction", rec.got[1])
+	}
+	if g.State.LastingCount != 0 {
+		t.Errorf("lasting count = %d, want 0 (the one-shot removed itself)", g.State.LastingCount)
+	}
+}
+
+// TestReapWindowFallsBackOnBadOrder checks that a ReactionOrderer returning a
+// malformed permutation is ignored: the window resolves in its default order (card
+// ability before the duration reaction), so the card ability records the pool
+// before the duration gain lands.
+func TestReapWindowFallsBackOnBadOrder(t *testing.T) {
+	g := started(t)
+	var recorded int
+	reaper := g.AddToBattleline(
+		testCreature("reaper", 3, WithAbility(TriggerAfterReap, recordAember{&recorded})),
+		0,
+	)
+	g.AddLasting(
+		LastingEffect{On: EventReap, Do: actGainAember, Controller: 0, Amount: 1},
+	)
+	g.SetChooser(0, &reactionOrderRecorder{invalid: true})
+
+	before := g.Aember(0)
+	g.reapWith(reaper)
+
+	if recorded != before+1 {
+		t.Errorf(
+			"recorded pool = %d, want %d (default order: card ability first)",
+			recorded,
+			before+1,
+		)
+	}
+}
+
+// TestIsPermutation pins the guard that rejects a malformed ReactionOrderer result
+// — wrong length, an out-of-range index, or a duplicate — so a bad client falls
+// back to the default order rather than dropping or repeating a reaction.
+func TestIsPermutation(t *testing.T) {
+	if !isPermutation([]int{1, 0}, 2) {
+		t.Error("[1 0] is a valid permutation of 0..1")
+	}
+	if isPermutation([]int{0}, 2) {
+		t.Error("a wrong-length result is not a permutation")
+	}
+	if isPermutation([]int{0, 2}, 2) {
+		t.Error("an out-of-range index is not a permutation")
+	}
+	if isPermutation([]int{0, 0}, 2) {
+		t.Error("a duplicated index is not a permutation")
+	}
+}

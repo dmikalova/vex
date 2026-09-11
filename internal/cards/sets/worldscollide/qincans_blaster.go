@@ -2,6 +2,14 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
+// qincansBlasterCluster pulls a Sci Officer Qincan into Qincan's Blaster's pod — a
+// Pull cluster, at least one averaging about one and a quarter (ADR 0036).
+var qincansBlasterCluster = card.Cluster{
+	Name:     "Qincan's Blaster",
+	Strategy: card.ClusterStrategy.Pull,
+	Trigger:  card.ClusterTrigger.ByLead,
+}
+
 // Qincan's Blaster
 //
 //	House:  Star Alliance
@@ -18,7 +26,7 @@ var QincansBlaster = card.New(
 	card.Type.Upgrade,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "351"),
-	card.Connects(card.Pull(SciOfficerQincan, 1)),
+	card.LeadsCluster(qincansBlasterCluster),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightReap(card.ChooseOne{Options: []card.Effect{

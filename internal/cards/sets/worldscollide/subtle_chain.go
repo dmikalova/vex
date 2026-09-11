@@ -16,6 +16,7 @@ var SubtleChain = card.New(
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "262"),
+	card.InCluster(card.Pulled(chainGangCluster, 1, 2)),
 	// TODO(duplicate): mechanically identical to Mind Barb (Dis) — fold/handle manually.
 	card.WithAemberBonus(1),
 	card.WithAbility(

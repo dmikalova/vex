@@ -21,10 +21,10 @@ var ZyzzixTheMany = card.New(
 	card.WithTraits(card.Traits.Martian, card.Traits.Soldier),
 	card.WithAbility(card.Trigger.FightReap, card.May{
 		Do: card.Then{
-			First: card.ArchiveFromHand{
-				Amount:   1,
-				Type:     card.Type.Creature,
-				Revealed: true,
+			First: card.ArchiveCard{
+				Zone:      card.Hand,
+				Selection: card.Chosen{Type: card.Type.Creature, Optional: true},
+				Revealed:  true,
 			},
 			Result: card.AddPowerCounter{
 				Target: card.Target.This,

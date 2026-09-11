@@ -22,6 +22,9 @@ var GlyxlProliferator = card.New(
 	card.WithAbility(
 		card.Trigger.Reap, card.Conditional{
 			Cond: card.OnFlank{},
-			Then: card.ArchiveFromDiscard{House: card.House.Self},
+			Then: card.ArchiveCard{
+				Zone:      card.Discard,
+				Selection: card.Chosen{House: card.House.Self},
+			},
 		}),
 )

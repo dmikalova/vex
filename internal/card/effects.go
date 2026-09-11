@@ -125,13 +125,19 @@ type ByActivePlayer = engine.ByActivePlayer
 type (
 	// Selection is the axis a movement verb varies along; set it on PurgeFromHand.
 	Selection = engine.Selection
-	// Chosen has the controller pick one card, optionally by house; a non-mandatory
-	// Chosen is a "you may".
+	// Chosen has the controller pick one card, optionally by house; it is mandatory
+	// by default, and Optional makes it a "you may".
 	Chosen = engine.Chosen
 	// Random takes one uniformly random card.
 	Random = engine.Random
 	// Each takes every card the filters admit.
 	Each = engine.Each
+	// Named pins the pick to the first card of a given name (Hyde archives Velum).
+	Named = engine.Named
+	// Top pins the pick to the top card of an ordered zone (deck or discard pile).
+	Top = engine.Top
+	// Bottom pins the pick to the bottom card of an ordered zone.
+	Bottom = engine.Bottom
 )
 
 // Destruction and purging.
@@ -154,7 +160,9 @@ type (
 	// key at a surcharge reduced per creature destroyed, destroying the source
 	// artifact on forge (Obsidian Forge).
 	SacrificeToForge = engine.SacrificeToForge
-	// PurgeCard sets cards aside out of the game, from a named zone.
+	// PurgeCard sets cards aside out of the game, from a discard pile, with a
+	// Selection deciding which cards leave and Player choosing the pile(s):
+	// card.ChosenPlayer for one the controller picks, card.EachPlayer for both.
 	PurgeCard = engine.PurgeCard
 	// PurgeFromHand purges cards from a player's hand, with a Selection deciding how
 	// they are picked (chosen / random / each).
@@ -162,8 +170,6 @@ type (
 	// PurgeEachOfChosenTrait purges every card of a chosen trait, paying each player
 	// for their losses (Harvest Time).
 	PurgeEachOfChosenTrait = engine.PurgeEachOfChosenTrait
-	// PurgeEachFromDiscard purges every matching card from both discard piles.
-	PurgeEachFromDiscard = engine.PurgeEachFromDiscard
 	// PurgeCreature purges each creature its Target selects from play.
 	PurgeCreature = engine.PurgeCreature
 	// PurgeSource purges the card whose ability this is (Library Access purges itself).
@@ -249,15 +255,11 @@ type (
 	// ShuffleDeck shuffles the controller's deck — the "shuffle your deck" that
 	// always follows a deck search (a search must be followed by a shuffle).
 	ShuffleDeck = engine.ShuffleDeck
-	// ShuffleChosenCreaturesFromDiscard shuffles any number of chosen creatures from your discard pile into your deck.
-	ShuffleChosenCreaturesFromDiscard = engine.ShuffleChosenCreaturesFromDiscard
+	// ShuffleFromDiscard shuffles the cards a Selection picks from your discard pile
+	// into your deck — each match, any number of a chosen kind, or a counted number.
+	ShuffleFromDiscard = engine.ShuffleFromDiscard
 	// ShuffleChosenCreaturesFromZones shuffles any number of chosen friendly creatures from your hand, discard pile, or battleline into your deck.
 	ShuffleChosenCreaturesFromZones = engine.ShuffleChosenCreaturesFromZones
-	// ShuffleCardsFromDiscard shuffles a counted number of chosen cards from your discard pile into your deck.
-	ShuffleCardsFromDiscard = engine.ShuffleCardsFromDiscard
-	// ShuffleMatchingFromDiscardIntoDeck shuffles each matching card from your
-	// discard pile into your deck.
-	ShuffleMatchingFromDiscardIntoDeck = engine.ShuffleMatchingFromDiscardIntoDeck
 	// ShuffleNamedFromDiscardIntoDeck shuffles one card of a given name from your
 	// discard pile into your deck.
 	ShuffleNamedFromDiscardIntoDeck = engine.ShuffleNamedFromDiscardIntoDeck
@@ -266,15 +268,10 @@ type (
 	// SwapDeckAndDiscard exchanges the controller's deck with their discard pile,
 	// then shuffles.
 	SwapDeckAndDiscard = engine.SwapDeckAndDiscard
-	// ArchiveFromHand moves cards from a hand into the controller's archives.
-	ArchiveFromHand = engine.ArchiveFromHand
-	// ArchiveRandomFromHand archives Amount random cards from your hand (Eureka!).
-	ArchiveRandomFromHand = engine.ArchiveRandomFromHand
-	// ArchiveFromDiscard moves a chosen card from the discard pile into archives.
-	ArchiveFromDiscard = engine.ArchiveFromDiscard
-	// ArchiveTop moves the top Amount cards of a pile named by From (card.Deck or
-	// card.Discard) into archives.
-	ArchiveTop = engine.ArchiveTop
+	// ArchiveCard sets cards aside into the controller's own archives, with a
+	// Selection deciding how each is picked (Chosen, Random, Named, or Top), Zone
+	// the source (Hand, Discard, or Deck), and Amount / Revealed / Per / Or the rest.
+	ArchiveCard = engine.ArchiveCard
 	// ArchiveFromPlay moves each targeted in-play card into its owner's archives.
 	ArchiveFromPlay = engine.ArchiveFromPlay
 	// ArchiveSource archives the card whose ability this is (Sucker Punch).
@@ -466,8 +463,6 @@ type (
 	// SaveFromDestruction is a creature's own "Destroyed:" replacement: it stays in
 	// play and Do resolves on it instead of being destroyed.
 	SaveFromDestruction = engine.SaveFromDestruction
-	// RepeatWhile resolves Do again and again while Cond holds.
-	RepeatWhile = engine.RepeatWhile
 	// RepeatOnCondition resolves Do and repeats it while it succeeds and Cond holds.
 	RepeatOnCondition = engine.RepeatOnCondition
 	// MayRepeat resolves Do, then lets the controller repeat it.
@@ -482,7 +477,7 @@ type (
 	OrAmount = engine.OrAmount
 )
 
-// Conditions gate a Conditional, RepeatWhile, or MayRepeat.
+// Conditions gate a Conditional, RepeatOnCondition, or MayRepeat.
 type (
 	// PoolAember gates on one player's Æmber pool (Player + Is + Amount).
 	PoolAember = engine.PoolAember

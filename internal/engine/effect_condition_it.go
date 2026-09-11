@@ -42,24 +42,42 @@ type ItIs struct {
 	// Not inverts the match, so the condition is met when the card in context does
 	// NOT fit the filters — Neutron Shark repeats until it discards a Logos card.
 	Not bool
+	// Other excludes the source card itself, so "it" must be a different card and
+	// the noun reads "another" — Hunting Witch gains only when you play another
+	// creature, never on its own entrance (Harmonia, which says "a creature", omits
+	// it and gains from its own play).
+	Other bool
 	// Subject names the card outright when "it" has drifted too far from the trigger
 	// that set it. Unset says "it".
 	Subject Subject
+}
+
+// shapeNoun renders the house/type shape the contextual card must match, prefixed
+// "another" when Other bars the source card itself.
+func (e ItIs) shapeNoun() string {
+	if e.Other {
+		return "another " + houseTypeNoun(e.House, e.Type)
+	}
+	return houseTypeNoun(e.House, e.Type)
 }
 
 // CondText renders the condition, e.g. "if it is a Mars creature", "if it is an
 // artifact", or, inverted and named, "if the discarded card is not a Logos card".
 func (e ItIs) CondText() string {
 	if e.Not {
-		return "if " + e.Subject.noun() + " is not " + indefinite(houseTypeNoun(e.House, e.Type))
+		return "if " + e.Subject.noun() + " is not " + indefinite(e.shapeNoun())
 	}
-	return "if " + e.Subject.noun() + " is " + indefinite(houseTypeNoun(e.House, e.Type))
+	return "if " + e.Subject.noun() + " is " + indefinite(e.shapeNoun())
 }
 
 // Met reports whether a card is in context and matches the house and type
-// filters, inverting the match under Not.
+// filters, inverting the match under Not. Other additionally bars the source card
+// itself, so a card never counts its own play.
 func (e ItIs) Met(ctx *EffectContext) bool {
 	if !ctx.HasIt {
+		return false
+	}
+	if e.Other && ctx.It == ctx.Source {
 		return false
 	}
 	return e.matches(ctx) != e.Not

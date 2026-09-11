@@ -18,6 +18,7 @@ var SciOfficerQincan = card.New(
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "304"),
+	card.InCluster(card.Pulled(qincansBlasterCluster, 1, 1.25)),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Alien, card.Traits.Proximan, card.Traits.Scientist),
 	card.WithKeywords(card.Keyword.Elusive),

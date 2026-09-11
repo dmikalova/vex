@@ -2,6 +2,14 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
+// chainGangCluster pulls a Subtle Chain or two into Chain Gang's pod — a Pull
+// cluster, at least one averaging two (ADR 0036).
+var chainGangCluster = card.Cluster{
+	Name:     "Chain Gang",
+	Strategy: card.ClusterStrategy.Pull,
+	Trigger:  card.ClusterTrigger.ByLead,
+}
+
 // Chain Gang
 //
 //	House:  Shadows
@@ -18,7 +26,7 @@ var ChainGang = card.New(
 	card.Type.Creature,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "252"),
-	card.Connects(card.Pull(SubtleChain, 1)),
+	card.LeadsCluster(chainGangCluster),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 	card.WithAbility(

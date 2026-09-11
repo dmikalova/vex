@@ -21,7 +21,11 @@ var Infurnace = card.New(
 	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
-			card.PurgeCard{Zone: card.Discard, Amount: 2, UpTo: true},
+			card.PurgeCard{
+				Player:    card.ChosenPlayer,
+				Selection: card.Chosen{Optional: true},
+				Amount:    2,
+			},
 			card.LoseAemberEqualTo{
 				Player: card.Opponent,
 				Count:  card.PurgedAemberBonus{},

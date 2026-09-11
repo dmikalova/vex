@@ -517,4 +517,8 @@ var (
 	// ThatPlayer is the player named by the ability's trigger — for a cross-player
 	// reaction, whoever caused it (Forgemaster Og drains the player who forged).
 	ThatPlayer = engine.ThatPlayer
+	// ChosenPlayer is a player the controller chooses at resolution — used where a
+	// zone-movement effect acts on "a discard pile" the controller picks (Creeping
+	// Oblivion purges up to 2 cards from a discard pile).
+	ChosenPlayer = engine.ChosenPlayer
 )

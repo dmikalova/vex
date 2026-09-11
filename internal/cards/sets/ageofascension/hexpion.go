@@ -22,6 +22,6 @@ var Hexpion = card.New(
 	card.WithAbility(
 		card.Trigger.Destroyed, card.Sentences{Effects: []card.Effect{
 			card.ArchiveFromPlay{Target: card.Target.This},
-			card.ArchiveTop{From: card.Deck, Amount: 1},
+			card.ArchiveCard{Zone: card.Deck, Selection: card.Top{}},
 		}}),
 )

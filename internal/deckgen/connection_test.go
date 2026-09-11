@@ -57,6 +57,34 @@ func TestConnectionPullsPartner(t *testing.T) {
 	}
 }
 
+// A legacy puller drawn into another set's pod resolves its connection from the
+// shared legacy pool: it pulls its connected partner in, tagged legacy to match
+// the puller (a legacy Troop Call pulls legacy Niffle Apes), even though neither
+// card is in the drawing set's own pool.
+func TestConnectionLegacyPullerPullsPartner(t *testing.T) {
+	puller := connCard("Troop Call", engine.Untamed, pulls("Niffle Ape"))
+	partner := connectedCard("Niffle Ape", engine.Untamed)
+	legacy := NewLegacy([]LegacyEntry{
+		{Card: puller, Set: "Other"},
+		{Card: partner, Set: "Other"},
+	})
+	set := NewSet("S", []Card{
+		mkCard("Filler", engine.Untamed, engine.Common),
+	}, DefaultTuning()).WithLegacy(legacy)
+	g := gen(set)
+	pod := HousePod{House: engine.Untamed}
+	pod.Slots[0] = Slot{Card: puller.Def, Legacy: true}
+	out := g.expandConnections(pod)
+	if countName(out, "Niffle Ape") != 1 {
+		t.Fatalf("Niffle Ape count = %d, want 1", countName(out, "Niffle Ape"))
+	}
+	for _, s := range out.Slots {
+		if s.Card.Name == "Niffle Ape" && !s.Legacy {
+			t.Error("a partner pulled by a legacy puller should be tagged legacy")
+		}
+	}
+}
+
 // A Connected card never rolls into a deck without a puller.
 func TestConnectedExcludedFromPool(t *testing.T) {
 	set := NewSet("S", []Card{

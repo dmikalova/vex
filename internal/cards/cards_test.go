@@ -359,6 +359,7 @@ func TestReferencedCardIsConnected(t *testing.T) {
 	regs := card.Cards()
 	names := make(map[string]bool, len(regs))
 	pulls := make(map[string]map[string]bool, len(regs))
+	cluster := make(map[string]string, len(regs))
 	for _, rc := range regs {
 		names[rc.Def.Name] = true
 		links := make(map[string]bool, len(rc.Profile.Connection.Cards))
@@ -366,10 +367,15 @@ func TestReferencedCardIsConnected(t *testing.T) {
 			links[cc.Name] = true
 		}
 		pulls[rc.Def.Name] = links
+		if !rc.Profile.Cluster.Empty() {
+			cluster[rc.Def.Name] = rc.Profile.Cluster.Name
+		}
 	}
 	for _, rc := range regs {
 		for ref := range referencedCardNames(reflect.ValueOf(rc.Def), names) {
-			if ref == rc.Def.Name || pulls[rc.Def.Name][ref] || pulls[ref][rc.Def.Name] {
+			sameCluster := cluster[rc.Def.Name] != "" && cluster[rc.Def.Name] == cluster[ref]
+			if ref == rc.Def.Name || pulls[rc.Def.Name][ref] || pulls[ref][rc.Def.Name] ||
+				sameCluster {
 				continue
 			}
 			t.Errorf(
@@ -385,9 +391,11 @@ func TestReferencedCardIsConnected(t *testing.T) {
 // TestConnectedCardIsPulled is the mirror of TestReferencedCardIsConnected: a
 // card of Rarity.Connected is kept out of the pool and never rolls on its own
 // (deck generation indexes it by name and only places it through a puller), so
-// some other card must pull it in with card.Connects — otherwise it can never
-// reach a deck. Unlike a named reference, the puller need not mention the card in
-// its text: the three Connected Horsemen ride in on Horseman of Pestilence, which
+// some other card must pull it in — otherwise it can never reach a deck. It is
+// reachable either through a connection (card.Connects) or as a member of a
+// cluster, whose validated rolling trigger guarantees a rollable card places it.
+// Unlike a named reference, the puller need not mention the card in its text: the
+// three Connected Horsemen ride in on Horseman of Pestilence's cluster, which
 // names none of them.
 func TestConnectedCardIsPulled(t *testing.T) {
 	regs := card.Cards()
@@ -398,12 +406,14 @@ func TestConnectedCardIsPulled(t *testing.T) {
 		}
 	}
 	for _, rc := range regs {
-		if rc.Def.Rarity != engine.Connected || pulled[rc.Def.Name] {
+		if rc.Def.Rarity != engine.Connected || pulled[rc.Def.Name] ||
+			!rc.Profile.Cluster.Empty() {
 			continue
 		}
 		t.Errorf(
 			"%s is Rarity.Connected but nothing pulls it in, so it can never reach "+
-				"a deck; give its partner card.Connects(card.Pull(%s, n))",
+				"a deck; give its partner card.Connects(card.Pull(%s, n)) or add it to "+
+				"a cluster with card.InCluster",
 			rc.Def.Name, rc.Def.Name,
 		)
 	}

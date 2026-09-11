@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: If your opponent has more Æmber than you, steal 1 Æmber -> repeat this effect.
+//	Play: Steal 1 Æmber -> if your opponent has more Æmber than you, repeat this effect.
 var BaitAndSwitch = card.New(
 	"Bait and Switch",
 	card.House.Shadows,
@@ -16,8 +16,8 @@ var BaitAndSwitch = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, "267"),
 	card.WithAbility(
-		card.Trigger.Play, card.RepeatWhile{
-			Cond: card.PoolAember{Player: card.Opponent, Is: card.MoreThanYou},
+		card.Trigger.Play, card.RepeatOnCondition{
 			Do:   card.StealAember{Amount: 1},
+			Cond: card.PoolAember{Player: card.Opponent, Is: card.MoreThanYou},
 		}),
 )

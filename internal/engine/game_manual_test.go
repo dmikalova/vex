@@ -124,6 +124,49 @@ func TestManualMoveToEachZone(t *testing.T) {
 	}
 }
 
+func TestManualPlaceInPlay(t *testing.T) {
+	g := started(t)
+	// Two creatures already in the line: a new one placed before index 1 lands
+	// between them, and an armor value carries onto the board.
+	left := g.AddToBattleline(testCreature("left", 3), 0)
+	right := g.AddToBattleline(testCreature("right", 3), 0)
+	mid := g.AddToHand(testCreature("mid", 3, WithArmor(2)), 0)
+
+	g.ManualPlaceInPlay(mid, 1)
+
+	line := g.Battleline(0)
+	if len(line) != 3 || line[0] != left || line[1] != mid || line[2] != right {
+		t.Fatalf("battleline = %v, want [left mid right]", line)
+	}
+	if a := g.State.Cards[mid].ArmorRemaining; a != 2 {
+		t.Errorf("armor = %d, want 2", a)
+	}
+	if len(g.Hand(0)) != 0 {
+		t.Errorf("card should have left the hand")
+	}
+
+	// An out-of-range index clamps to the right flank.
+	far := g.AddToHand(testCreature("far", 3), 0)
+	g.ManualPlaceInPlay(far, 99)
+	if line = g.Battleline(0); line[len(line)-1] != far {
+		t.Errorf("clamped placement should land on the right flank, got %v", line)
+	}
+
+	// A negative index clamps to the left flank.
+	neg := g.AddToHand(testCreature("neg", 3), 0)
+	g.ManualPlaceInPlay(neg, -5)
+	if line = g.Battleline(0); line[0] != neg {
+		t.Errorf("negative index should land on the left flank, got %v", line)
+	}
+
+	// A non-creature enters the artifact row instead of the battleline.
+	art := g.AddToHand(testArtifact("relic"), 0)
+	g.ManualPlaceInPlay(art, 0)
+	if arts := g.Artifacts(0); len(arts) != 1 || arts[0] != art {
+		t.Errorf("artifact should enter the artifact row, got %v", arts)
+	}
+}
+
 func TestManualMoveFromPlayResetsAndShedsUpgrades(t *testing.T) {
 	g := started(t)
 	host := g.AddToBattleline(testCreature("host", 3), 0)

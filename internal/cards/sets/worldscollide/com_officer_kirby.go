@@ -17,6 +17,7 @@ var ComOfficerKirby = card.New(
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "295"),
+	card.InCluster(card.Pulled(kirbysBlasterCluster, 1, 1.25)),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human),
 	card.WithAbility(card.Trigger.PlayFightReap, card.MayPlayOffHouse{

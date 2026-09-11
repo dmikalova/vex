@@ -31,6 +31,8 @@ func TestPhalanxStrike(t *testing.T) {
 		})
 
 		h.P1.Play(PhalanxStrike)
+		// Two friendly creatures, so two instances of 1 damage; both on enemy.
+		h.P1.ClickCard(enemy)
 		h.P1.ClickCard(enemy)
 		h.P1.ClickDone() // decline the exalt
 
@@ -52,10 +54,11 @@ func TestPhalanxStrike(t *testing.T) {
 		})
 
 		h.P1.Play(PhalanxStrike)
-		h.P1.ClickCard(enemy) // first hit: 2 damage
+		h.P1.ClickCard(enemy) // first pass, instance 1
+		h.P1.ClickCard(enemy) // first pass, instance 2
 		h.P1.ClickCard(pay)   // exalt pay to repeat
-		h.P1.ClickCard(enemy) // second hit: 2 more damage
-		h.P1.ClickDone()      // decline further exalts
+		h.P1.ClickCard(enemy) // second pass, instance 1
+		h.P1.ClickCard(enemy) // second pass, instance 2
 
 		h.Expect(enemy).Damage(4)
 		if got := h.Game().State.Cards[pay.ID()].Amber; got != 1 {

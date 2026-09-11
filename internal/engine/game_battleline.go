@@ -54,3 +54,20 @@ func (g *Game) MoveWithinBattleline(chooser int, id LocalID) {
 		return
 	}
 }
+
+// placeGainedOnFlank moves a creature that just entered controller's battleline
+// through a control gain or a gift — a Treachery creature entering the opponent's
+// line, a seized creature reverting to its owner — onto the flank the active
+// player chooses. It is the seam these raw control movers route through so none
+// silently assumes a flank: the active player always makes the placement call
+// (even onto the opponent's line), an artifact has no flank, and a one-creature
+// line offers no choice. The creature is already listed under controller (the raw
+// mover appended it); this only repositions it to the chosen flank.
+func (g *Game) placeGainedOnFlank(id LocalID, controller int) {
+	if g.TypeOf(id) != Creature || len(g.State.Battleline[controller].slice()) <= 1 {
+		return
+	}
+	right := g.ChooseOption(g.State.ActivePlayer, id,
+		FlankPromptPrefix+g.Name(id), []string{FlankLeftLabel, FlankRightLabel}) == 1
+	g.MoveToFlank(id, right)
+}

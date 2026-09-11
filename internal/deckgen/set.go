@@ -30,6 +30,11 @@ type Set struct {
 	byName  map[string]Card
 	special []Card
 
+	// clusters groups the set's cards into card families placed by strategy
+	// (ADR 0036): the Horsemen (WholePool), the sins (RandomCount), the Shards
+	// (OnePerHouse). It is keyed by cluster name and built from members' profiles.
+	clusters map[string]clusterIndex
+
 	// legacy is the shared cross-set pool a slot may draw from at
 	// Tuning.LegacyRate, keeping the pod's House. It is nil for a single-set build
 	// and attached by WithLegacy; the same *Legacy is shared by every Set, which
@@ -77,7 +82,9 @@ func NewSet(name string, cards []Card, tuning Tuning) Set {
 		s.houses = append(s.houses, h)
 	}
 	sort.Slice(s.houses, func(i, j int) bool { return s.houses[i].String() < s.houses[j].String() })
+	s.clusters = buildClusters(cards)
 	s.validateConnections()
+	s.validateClusters()
 	return s
 }
 
@@ -101,19 +108,30 @@ type Legacy struct {
 	// rolled rarity that House has no legacy card of.
 	byHouseRarity map[engine.House]map[engine.Rarity][]LegacyEntry
 	byHouse       map[engine.House][]LegacyEntry
+	// byName indexes every legacy card by name, including the Connected ones the
+	// draw buckets omit, so a legacy puller drawn into another set's pod can
+	// resolve its Connection and materialize its connected partners from the
+	// shared pool (Set.lookup falls back here).
+	byName map[string]Card
 }
 
-// NewLegacy buckets legacy entries by House and rarity. Only housed, non-Connected
-// cards are pooled — a legacy card keeps its own House and rarity, since it is not
-// rehoused the way a maverick is. Houseless Specials, Connected cards, and cards
-// with no House are skipped.
+// NewLegacy buckets legacy entries by House and rarity, and indexes every entry by
+// name. Only housed, non-Connected cards are pooled — a legacy card keeps its own
+// House and rarity, since it is not rehoused the way a maverick is; Houseless
+// Specials, Connected cards, and cards with no House are skipped for drawing. The
+// byName index keeps all of them, though, so a legacy puller's connected partners
+// (including Connected-rarity ones) remain reachable for a connection to pull.
 func NewLegacy(entries []LegacyEntry) *Legacy {
 	l := &Legacy{
 		byHouseRarity: map[engine.House]map[engine.Rarity][]LegacyEntry{},
 		byHouse:       map[engine.House][]LegacyEntry{},
+		byName:        map[string]Card{},
 	}
 	for _, e := range entries {
 		c := e.Card
+		if c.Def.Name != "" {
+			l.byName[c.Def.Name] = c
+		}
 		if c.Profile.Houseless || c.Def.Rarity == engine.Connected {
 			continue
 		}
@@ -193,6 +211,24 @@ func (s Set) Houses() []engine.House { return append([]engine.House(nil), s.hous
 func (s Set) member(name string) bool {
 	_, ok := s.byName[name]
 	return ok
+}
+
+// lookup resolves a card by name for connection expansion: the set's own card if
+// it prints one, else a card of that name from the shared legacy pool. The final
+// bool reports whether the card came from the legacy pool, so a partner a legacy
+// puller pulls in is tagged legacy to match its puller (a legacy Troop Call pulls
+// legacy Niffle Apes). A name the set prints resolves natively even when a legacy
+// puller pulled it, matching the member rule for a legacy draw.
+func (s Set) lookup(name string) (Card, bool, bool) {
+	if c, ok := s.byName[name]; ok {
+		return c, true, false
+	}
+	if s.legacy != nil {
+		if c, ok := s.legacy.byName[name]; ok {
+			return c, true, true
+		}
+	}
+	return Card{}, false, false
 }
 
 // pickHouses selects PodCount distinct Houses, weighted and honoring exclusions,

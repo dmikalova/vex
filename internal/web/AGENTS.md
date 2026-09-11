@@ -260,7 +260,12 @@ last stretch is the DOM-bound code above.
 - **A card that overhangs its row has to leave the board's coordinate space**
   (`position: fixed`): `.card-strip` is `overflow-x: auto`, which per spec forces
   `overflow-y: hidden`, and `.board-area` is `overflow: hidden` — anything inside
-  either one is clipped.
+  either one is clipped. The same trap catches a tooltip: `.score-pill` is
+  `overflow-x: auto` (it scrolls sideways), so a per-icon `::after` bubble is
+  clipped inside the bar. Every `data-tip` shares **one** floating label
+  (`#tip-float`, `installTips`) placed with `position: fixed` from a measurement of
+  the element under the pointer — one fixed element the pointer fills, not a bubble
+  per icon.
 - **Place a content-sized overlay from the edge it is nearest**, not from its own
   centre. Its height is not known until it has been laid out, and measuring it
   needs a second render pass that a frozen tab (or any dropped frame) will not

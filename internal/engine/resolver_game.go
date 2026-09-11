@@ -420,14 +420,6 @@ func (g *Game) EndShuffleBatch(source LocalID) {
 // ArchiveFromHand moves a card from its owner's hand to their archives.
 func (g *Game) ArchiveFromHand(id LocalID) { g.archiveFromHand(g.owner(id), id) }
 
-// ArchiveRandomFromHand moves one uniformly random card from a player's hand to
-// their archives, doing nothing if the hand is empty.
-func (g *Game) ArchiveRandomFromHand(owner int) {
-	if id, ok := g.randomCardFromHand(owner); ok {
-		g.archiveFromHand(owner, id)
-	}
-}
-
 // ArchiveFromPurge moves a card from a player's purge pile to their archives.
 func (g *Game) ArchiveFromPurge(owner int, id LocalID) { g.archiveFromPurge(owner, id) }
 
@@ -436,9 +428,6 @@ func (g *Game) ArchiveFromDiscard(owner int, id LocalID) { g.archiveFromDiscard(
 
 // ArchiveTopOfDeck moves the top card of a player's deck to their archives.
 func (g *Game) ArchiveTopOfDeck(player int) bool { return g.archiveTopOfDeck(player) }
-
-// ArchiveTopOfDiscard moves the top card of a player's discard pile to their archives.
-func (g *Game) ArchiveTopOfDiscard(player int) bool { return g.archiveTopOfDiscard(player) }
 
 // DiscardArchives moves all of a player's archived cards to their discard pile.
 func (g *Game) DiscardArchives(owner int) { g.discardArchives(owner) }
@@ -518,7 +507,19 @@ func (g *Game) SetDeckTop(player int, order []LocalID) {
 // ShuffleZonesIntoDeck moves each named zone's cards into a player's deck and
 // shuffles once.
 func (g *Game) ShuffleZonesIntoDeck(player int, zones []Zone) {
+	rec := ShuffledIntoDeck{Player: player}
+	for _, z := range zones {
+		switch z {
+		case Hand:
+			rec.HandCount += int(g.State.Hand[player].Count)
+		case Archives:
+			rec.ArchivesCount += int(g.State.Archives[player].Count)
+		default: // Discard
+			rec.DiscardCards = append(rec.DiscardCards, g.State.Discard[player].slice()...)
+		}
+	}
 	g.shuffleZonesIntoDeck(player, zones)
+	g.record(rec)
 }
 
 // MoveFromDiscardToTopOfDeck moves a card from its owner's discard pile to the
@@ -617,12 +618,21 @@ func (g *Game) ChooseOption(player int, source LocalID, prompt string, options [
 
 // ChooseRandom picks one uniformly random card from candidates using the game's
 // RNG, reporting ok=false for an empty slice. It is the shared draw behind a
-// Random selection and the per-verb *RandomFromHand moves.
+// Random selection.
 func (g *Game) ChooseRandom(candidates []LocalID) (LocalID, bool) {
 	if len(candidates) == 0 {
 		return 0, false
 	}
 	return candidates[g.rng.Intn(len(candidates))], true
+}
+
+// PreviewBadge forwards a selection-badge hint to a player's client if it can
+// show one (implements BadgeChooser). It is display-only, so a chooser without
+// the capability ignores it.
+func (g *Game) PreviewBadge(player int, badge SelectionBadge) {
+	if bc, ok := g.chooserFor(player).(BadgeChooser); ok {
+		bc.PreviewBadge(badge)
+	}
 }
 
 // chooseOption is the shared option-choice path: it attributes the prompt to a

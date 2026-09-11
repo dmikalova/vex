@@ -18,6 +18,13 @@ var PlagueRat = card.New(
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, "308"),
+	card.InCluster(card.Cluster{
+		Name:     "Plague Rat",
+		Strategy: card.ClusterStrategy.SelfPull,
+		Trigger:  card.ClusterTrigger.ByAnyMember,
+		Min:      3,
+		Mean:     5,
+	}),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Beast, card.Traits.Rat),
 	card.WithKeywords(card.Keyword.Elusive),

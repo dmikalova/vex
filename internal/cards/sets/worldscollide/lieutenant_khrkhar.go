@@ -17,6 +17,7 @@ var LieutenantKhrkhar = card.New(
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "299"),
+	card.InCluster(card.Pulled(khrkharsBlasterCluster, 1, 1.25)),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Alien, card.Traits.Handuhan),
 	card.WithKeywords(card.Keyword.Taunt),

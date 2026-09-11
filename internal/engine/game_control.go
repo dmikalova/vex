@@ -121,6 +121,9 @@ func (g *Game) releaseControlHeldBy(source LocalID) {
 	for _, id := range affected {
 		controller := g.controllerFromStack(id)
 		g.placeUnderController(id, controller)
+		// Reverting control is a control change, so the active player chooses which
+		// flank the creature returns to (it never silently keeps the old slot).
+		g.placeGainedOnFlank(id, controller)
 		g.record(ControlReturned{Card: id, Owner: controller})
 	}
 }

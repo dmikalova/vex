@@ -132,11 +132,20 @@ func (e ArchivesDiscarded) Text(n Namer) string {
 type TopOfDeckDiscarded struct {
 	Player int
 	Card   LocalID
+	// Source is the card whose ability discarded the top card, named as the subject
+	// when HasSource; the deck is then named by its owner ("Player 2's deck").
+	Source LocalID
+	// HasSource marks a discard forced by an ability, as opposed to a player's own.
+	HasSource bool
 }
 
 // Text renders the top of a deck going to the discard pile, which is public, so
 // the card lands face up and is named.
 func (e TopOfDeckDiscarded) Text(n Namer) string {
+	if e.HasSource {
+		return fmt.Sprintf("%s discards %s from the top of %s's deck",
+			n.Name(e.Source), nameMoved(n, e.Card, Deck, Discard), n.PlayerName(e.Player))
+	}
 	return fmt.Sprintf("%s discards %s from the top of their deck",
 		n.PlayerName(e.Player), nameMoved(n, e.Card, Deck, Discard))
 }
@@ -147,6 +156,38 @@ type DeckAndDiscardSwapped struct{ Player int }
 // Text renders a deck and discard pile trading places.
 func (e DeckAndDiscardSwapped) Text(n Namer) string {
 	return fmt.Sprintf("%s swaps their deck and discard pile", n.PlayerName(e.Player))
+}
+
+// ShuffledIntoDeck narrates one or more zones shuffling into a deck (Screaming
+// Cave, Help from Future Self). The discard pile is public, so its cards are
+// named; the hand and archives are hidden, so they are only counted (ADR 0011).
+type ShuffledIntoDeck struct {
+	Player int
+	// DiscardCards are the named discard cards that went into the deck.
+	DiscardCards []LocalID
+	// HandCount and ArchivesCount are the hidden cards, reported as counts only.
+	HandCount     int
+	ArchivesCount int
+}
+
+// Text renders the shuffle, naming the public discard cards and counting the
+// hidden ones. With no cards to move it is a bare deck shuffle.
+func (e ShuffledIntoDeck) Text(n Namer) string {
+	who := n.PlayerName(e.Player)
+	var clauses []string
+	if len(e.DiscardCards) > 0 {
+		clauses = append(clauses, namedCardsAnd(n, e.DiscardCards)+" from their discard pile")
+	}
+	if e.HandCount > 0 {
+		clauses = append(clauses, countNoun(e.HandCount, "card")+" from their hand")
+	}
+	if e.ArchivesCount > 0 {
+		clauses = append(clauses, countNoun(e.ArchivesCount, "card")+" from their archives")
+	}
+	if len(clauses) == 0 {
+		return fmt.Sprintf("%s shuffles their deck", who)
+	}
+	return fmt.Sprintf("%s shuffles %s into their deck", who, oxfordAnd(clauses))
 }
 
 // CardPurged narrates a card in play being purged.

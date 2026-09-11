@@ -3,7 +3,11 @@ package engine
 import "testing"
 
 func TestEffectValidation(t *testing.T) {
-	bad := Heal{Fully: true, Amount: 1, Target: Target{Kind: TargetThisCreature}}
+	bad := Heal{
+		Fully:  true,
+		Amount: 1,
+		Target: Target{Kind: TargetThisCreature},
+	}
 	good := Heal{Fully: true, Target: Target{Kind: TargetThisCreature}}
 
 	if err := validateEffect(GainAember{Player: Controller, Amount: 1}); err != nil {
@@ -28,17 +32,30 @@ func TestEffectValidation(t *testing.T) {
 		t.Errorf("conditional with a valid effect should pass, got %v", err)
 	}
 	if err := validateEffect(PutFromDiscard{Destination: ToBottomOfDeck}); err == nil {
-		t.Error("PutFromDiscard to an unsupported destination should be rejected")
+		t.Error(
+			"PutFromDiscard to an unsupported destination should be rejected",
+		)
 	}
 	if err := validateEffect(PutFromDiscard{Destination: ToTopOfDeck}); err != nil {
-		t.Errorf("PutFromDiscard to the top of the deck should pass, got %v", err)
+		t.Errorf(
+			"PutFromDiscard to the top of the deck should pass, got %v",
+			err,
+		)
 	}
-	// Purge must name the zone it pulls from.
+	// Purge must name its player and selection.
 	if err := validateEffect(PurgeCard{}); err == nil {
-		t.Error("a Purge with no zone should be rejected")
+		t.Error("a Purge with no player should be rejected")
 	}
-	if err := validateEffect(PurgeCard{Zone: Discard, Type: Creature}); err != nil {
-		t.Errorf("a Purge naming its zone should pass, got %v", err)
+	if err := validateEffect(PurgeCard{Player: ChosenPlayer}); err == nil {
+		t.Error("a Purge with no selection should be rejected")
+	}
+	if err := validateEffect(
+		PurgeCard{Player: ChosenPlayer, Selection: Chosen{Type: Creature}},
+	); err != nil {
+		t.Errorf(
+			"a Purge naming its player and selection should pass, got %v",
+			err,
+		)
 	}
 	// A result gate surfaces a bad first action or a bad follow-up.
 	if err := validateEffect(
@@ -49,12 +66,20 @@ func TestEffectValidation(t *testing.T) {
 	); err == nil {
 		t.Error("result gate should surface a bad first action")
 	}
-	if err := validateEffect(Then{First: PurgeCard{Zone: Discard}, Result: bad}); err == nil {
+	if err := validateEffect(
+		Then{
+			First:  PurgeCard{Player: ChosenPlayer, Selection: Chosen{}},
+			Result: bad,
+		},
+	); err == nil {
 		t.Error("result gate should surface a bad follow-up")
 	}
 	if err := validateEffect(
 		Then{
-			First:  PurgeCard{Zone: Discard, Type: Creature},
+			First: PurgeCard{
+				Player:    ChosenPlayer,
+				Selection: Chosen{Type: Creature},
+			},
 			Result: AddPowerCounter{Target: Target{Kind: TargetThisCreature}, Amount: 1},
 		},
 	); err != nil {
@@ -68,9 +93,21 @@ func TestRequiredTargetValidation(t *testing.T) {
 		name       string
 		unset, set Effect
 	}{
-		{"GainAember", GainAember{Amount: 1}, GainAember{Player: Controller, Amount: 1}},
-		{"LoseAember", LoseAember{Amount: 1}, LoseAember{Player: Controller, Amount: 1}},
-		{"DiscardArchives", DiscardArchives{}, DiscardArchives{Player: Controller}},
+		{
+			"GainAember",
+			GainAember{Amount: 1},
+			GainAember{Player: Controller, Amount: 1},
+		},
+		{
+			"LoseAember",
+			LoseAember{Amount: 1},
+			LoseAember{Player: Controller, Amount: 1},
+		},
+		{
+			"DiscardArchives",
+			DiscardArchives{},
+			DiscardArchives{Player: Controller},
+		},
 		{
 			"DiscardCard",
 			DiscardCard{Zone: Hand, Selection: Random{}},
@@ -93,7 +130,11 @@ func TestRequiredTargetValidation(t *testing.T) {
 		name       string
 		unset, set Effect
 	}{
-		{"DealDamage", DealDamage{Amount: 1}, DealDamage{Amount: 1, Target: this}},
+		{
+			"DealDamage",
+			DealDamage{Amount: 1},
+			DealDamage{Amount: 1, Target: this},
+		},
 		{"Destroy", Destroy{}, Destroy{Target: this}},
 		{"Exalt", Exalt{Amount: 1}, Exalt{Amount: 1, Target: this}},
 		{"Exhaust", Exhaust{}, Exhaust{Target: this}},
@@ -103,9 +144,21 @@ func TestRequiredTargetValidation(t *testing.T) {
 		{"Stun", Stun{}, Stun{Target: this}},
 		{"Unstun", Unstun{}, Unstun{Target: this}},
 		{"PurgeCreature", PurgeCreature{}, PurgeCreature{Target: this}},
-		{"OnChooseCreature", OnChooseCreature{}, OnChooseCreature{Target: this}},
-		{"AddPowerCounter", AddPowerCounter{Amount: 1}, AddPowerCounter{Amount: 1, Target: this}},
-		{"RedirectFightDamage", RedirectFightDamage{}, RedirectFightDamage{Target: this}},
+		{
+			"OnChooseCreature",
+			OnChooseCreature{},
+			OnChooseCreature{Target: this},
+		},
+		{
+			"AddPowerCounter",
+			AddPowerCounter{Amount: 1},
+			AddPowerCounter{Amount: 1, Target: this},
+		},
+		{
+			"RedirectFightDamage",
+			RedirectFightDamage{},
+			RedirectFightDamage{Target: this},
+		},
 	}
 	for _, tc := range targetCases {
 		if err := validateEffect(tc.unset); err == nil {
@@ -162,7 +215,11 @@ func TestNewCardRejectsConflictingHeal(t *testing.T) {
 		Common,
 		WithAbility(
 			TriggerAfterPlay,
-			Heal{Amount: 2, Fully: true, Target: Target{Kind: TargetThisCreature}},
+			Heal{
+				Amount: 2,
+				Fully:  true,
+				Target: Target{Kind: TargetThisCreature},
+			},
 		),
 	)
 }
@@ -170,13 +227,19 @@ func TestNewCardRejectsConflictingHeal(t *testing.T) {
 func TestNewCardRejectsInvalidReplace(t *testing.T) {
 	defer func() {
 		if recover() == nil {
-			t.Error("NewCard should panic on a StaticModifier.Replaces with a bad effect")
+			t.Error(
+				"NewCard should panic on a StaticModifier.Replaces with a bad effect",
+			)
 		}
 	}()
 	NewCard("bad", Sanctum, Upgrade, Rare, WithStatic(StaticModifier{
 		Replaces: Replace{
 			When: EventCreatureDestroyed,
-			With: Heal{Amount: 2, Fully: true, Target: Target{Kind: TargetTriggeringCreature}},
+			With: Heal{
+				Amount: 2,
+				Fully:  true,
+				Target: Target{Kind: TargetTriggeringCreature},
+			},
 		},
 	}))
 }
@@ -184,7 +247,9 @@ func TestNewCardRejectsInvalidReplace(t *testing.T) {
 func TestNewCardRejectsInvalidReplaces(t *testing.T) {
 	defer func() {
 		if recover() == nil {
-			t.Error("NewCard should panic on a continuous Replaces using a reaction event")
+			t.Error(
+				"NewCard should panic on a continuous Replaces using a reaction event",
+			)
 		}
 	}()
 	NewCard(
@@ -199,8 +264,16 @@ func TestNewCardRejectsInvalidReplaces(t *testing.T) {
 func TestNewCardRejectsInvalidPlayPermission(t *testing.T) {
 	defer func() {
 		if recover() == nil {
-			t.Error("NewCard should panic on a granted PlayPermission with no count")
+			t.Error(
+				"NewCard should panic on a granted PlayPermission with no count",
+			)
 		}
 	}()
-	NewCard("bad", Untamed, Creature, Rare, WithPlayPermission(PlayPermission{House: Untamed}))
+	NewCard(
+		"bad",
+		Untamed,
+		Creature,
+		Rare,
+		WithPlayPermission(PlayPermission{House: Untamed}),
+	)
 }

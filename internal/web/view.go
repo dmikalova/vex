@@ -26,6 +26,13 @@ func (g *game) Render() app.UI {
 		// started or ended.
 		g.cardFocus(),
 		g.hoverPreview(),
+		// One floating tip label the pointer fills from any element's data-tip
+		// (installTips). It is a fixed sibling so it escapes the player bar's overflow
+		// clip; a per-element ::after bubble could not.
+		app.Div().ID("tip-float").Class("tip-float"),
+		// The selection-badge marker the pointer carries during a badge preview
+		// (installSelCursor), a fixed sibling for the same reason as tip-float.
+		g.selCursor(),
 		app.If(!g.sidebarCollapsed, func() app.UI {
 			return app.Div().Class("sidebar").Body(
 				g.brandBar(),

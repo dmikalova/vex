@@ -18,17 +18,20 @@ var Velum = card.New(
 	card.Type.Creature,
 	card.Rarity.Connected,
 	card.Provenance(card.WC, "181"),
+	card.InCluster(hydeCluster),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
 	card.WithAbility(card.Trigger.Reap, card.Sentences{Effects: []card.Effect{
-		card.ArchiveFromHand{Amount: 1},
+		card.ArchiveCard{Zone: card.Hand, Selection: card.Chosen{}},
 		card.Conditional{
 			Cond: card.ControlsNamed{Name: "Hyde"},
-			Then: card.ArchiveFromHand{Amount: 1},
+			Then: card.ArchiveCard{Zone: card.Hand, Selection: card.Chosen{}},
 		},
 	}}),
 	card.WithAbility(card.Trigger.Destroyed, card.Then{
-		First:  card.ArchiveFromDiscard{Name: "Hyde"},
+		// "Hyde" as a string literal, not Hyde.Name: Hyde references Velum.Name, so
+		// naming it back by variable would close a package init cycle.
+		First:  card.ArchiveCard{Zone: card.Discard, Selection: card.Named{Name: "Hyde"}},
 		Result: card.ArchiveFromPlay{Target: card.Target.This},
 	}),
 )

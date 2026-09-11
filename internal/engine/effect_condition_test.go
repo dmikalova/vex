@@ -464,62 +464,6 @@ func TestCardsPlayed(t *testing.T) {
 	}
 }
 
-func TestRepeatWhile(t *testing.T) {
-	g := NewGame("A", "B", 1)
-	g.State.Aember[0], g.State.Aember[1] = 0, 5 // opponent leads
-	ctx := &EffectContext{Resolver: g, Controller: 0}
-
-	e := RepeatWhile{
-		Cond: PoolAember{Player: Opponent, Is: MoreThanYou},
-		Do:   StealAember{Amount: 1},
-	}
-	if e.Text() != "if your opponent has more Æmber than you, steal 1 Æmber -> repeat this effect" {
-		t.Errorf("text = %q", e.Text())
-	}
-	e.Resolve(ctx)
-	// 5/0 -> 4/1 -> 3/2 -> 2/3 (opponent no longer leads): 3 steals.
-	if g.Aember(0) != 3 || g.Aember(1) != 2 {
-		t.Errorf("after repeat: you=%d opp=%d, want 3/2", g.Aember(0), g.Aember(1))
-	}
-
-	// Condition false from the start: the loop never runs.
-	g2 := NewGame("A", "B", 1)
-	g2.State.Aember[0], g2.State.Aember[1] = 3, 3
-	e.Resolve(&EffectContext{Resolver: g2, Controller: 0})
-	if g2.Aember(0) != 3 || g2.Aember(1) != 3 {
-		t.Errorf("equal pools should not steal: you=%d opp=%d", g2.Aember(0), g2.Aember(1))
-	}
-
-	if err := validateEffect(RepeatWhile{Do: StealAember{Amount: 1}}); err != nil {
-		t.Errorf("validate = %v", err)
-	}
-}
-
-func TestRepeatWhileStopsWhenActionPrevented(t *testing.T) {
-	// The opponent leads on Æmber but their pool is protected, so the steal moves
-	// nothing. The condition stays true forever, so the loop must stop on the
-	// action making no progress rather than spin.
-	g := NewGame("A", "B", 1)
-	g.State.Aember[0], g.State.Aember[1] = 0, 5
-	g.AddToBattleline(
-		NewCard("keeper", Sanctum, Creature, Rare, WithPower(4), WithAemberCannotBeStolen()),
-		1,
-	)
-
-	e := RepeatWhile{
-		Cond: PoolAember{Player: Opponent, Is: MoreThanYou},
-		Do:   StealAember{Amount: 1},
-	}
-	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
-	if g.Aember(0) != 0 || g.Aember(1) != 5 {
-		t.Errorf(
-			"protected pool: you=%d opp=%d, want 0/5 (nothing stolen)",
-			g.Aember(0),
-			g.Aember(1),
-		)
-	}
-}
-
 func TestMayRepeat(t *testing.T) {
 	e := MayRepeat{Cond: PoolAember{Player: Opponent, Is: MoreThanYou}, Do: StealAember{Amount: 1}}
 	if got := e.Text(); got != "steal 1 Æmber -> if your opponent has more Æmber than you, you may repeat this effect" {
@@ -606,6 +550,7 @@ func TestItIs(t *testing.T) {
 			Not:     true,
 			Subject: DiscardedCard,
 		},
+		"if it is another creature": {Type: Creature, Other: true},
 	}
 	for want, e := range cases {
 		if got := e.CondText(); got != want {
@@ -631,6 +576,17 @@ func TestItIs(t *testing.T) {
 	if (ItIs{Type: Artifact}).Met(ctx) {
 		t.Error("a creature should not match an artifact filter")
 	}
+
+	// Other bars the source card itself: a creature never counts its own play.
+	ctx.Source = mars + 1 // any card that is not the context card
+	if !(ItIs{Type: Creature, Other: true}).Met(ctx) {
+		t.Error("another creature should meet an Other filter")
+	}
+	ctx.Source = mars
+	if (ItIs{Type: Creature, Other: true}).Met(ctx) {
+		t.Error("the source card should not meet an Other filter")
+	}
+	ctx.Source = 0
 
 	// Not inverts the match, so the condition holds for everything that does not fit.
 	if !(ItIs{House: Logos, Not: true}).Met(ctx) {

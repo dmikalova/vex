@@ -236,6 +236,28 @@ func TestDrawingAnOptionPrompt(t *testing.T) {
 	<-out
 }
 
+// A "move it to a flank" prompt (Reassembling Automaton) draws the standard flank
+// buttons with capitalised labels, not the plain option list.
+func TestAFlankOptionPromptDrawsTheFlankButtons(t *testing.T) {
+	c := newClient(t)
+	c.startTurn()
+	out := make(chan int, 1)
+	labels := []string{engine.FlankLeftLabel, engine.FlankRightLabel}
+	go func() { out <- c.g.chooser.ChooseOption("Reassembling Automaton", "Choose a flank", labels) }()
+	c.await("the prompt to go up", func() bool { return c.g.choosingOption })
+
+	c.wants(
+		"a flank prompt",
+		">Left flank<",
+		">Right flank<",
+		"btn-flank--left",
+		"btn-flank--right",
+	)
+	c.lacks("a lowercase flank prompt", ">left flank<", ">right flank<")
+	c.do(c.g.chooseOptionIdx(0))
+	<-out
+}
+
 // A reap/fight/action prompt another card raised (Inspiration's "use a friendly
 // creature") draws the standard use buttons — capitalised labels in their own
 // colours — rather than the plain lowercase option list a generic prompt would.
@@ -580,11 +602,12 @@ func TestZoneTipNamesTheCardsInAFaceUpPile(t *testing.T) {
 	}
 }
 
-// TestArchivesPillHasARosterPopover checks the Archives pill gets the same
-// persistent roster popover the readable piles get — so a touchscreen can raise
-// its label the way it raises Discard/Purge — while still leaking no card names,
-// and that a truly hidden zone (an opponent's deck) gets no popover at all.
-func TestArchivesPillHasARosterPopover(t *testing.T) {
+// TestArchivesPillNamesItselfWithAPlainTip checks the Archives pill — hidden even
+// from its owner, so it never lists cards — falls through to the same plain
+// floating tip every other label-only icon uses, rather than a roster box, so all
+// label-only tooltips look alike. It still leaks no card names, and a truly hidden
+// zone (an opponent's deck) likewise gets no roster popover.
+func TestArchivesPillNamesItselfWithAPlainTip(t *testing.T) {
 	c := newClient(t)
 	def, ok := c.g.defByName[testCreature]
 	if !ok {
@@ -592,22 +615,102 @@ func TestArchivesPillHasARosterPopover(t *testing.T) {
 	}
 	p := c.g.active()
 	id := c.g.g.AddToArchives(*def, p)
-	roster := c.g.zoneRoster(p, "Archives", []engine.LocalID{id})
-	if roster == nil {
-		t.Fatal("the Archives pill has no roster popover, so it shows nothing on touch")
+	if roster := c.g.zoneRoster(p, "Archives", []engine.LocalID{id}); roster != nil {
+		t.Fatal("the Archives pill got a roster box; it should use the plain tip")
 	}
-	html := app.HTMLString(roster)
-	if !strings.Contains(html, "zone-roster-label") || !strings.Contains(html, "Archives") {
-		t.Errorf("the Archives popover does not name the zone: %s", html)
+	// The pill still names the zone (and only the zone) through the plain tip.
+	html := app.HTMLString(app.Div().Body(c.g.zoneCounts(p)...))
+	if !strings.Contains(html, `data-tip="Archives"`) {
+		t.Errorf("the Archives pill has no plain tip naming it: %s", html)
 	}
 	if strings.Contains(html, testCreature) {
-		t.Errorf("the Archives popover leaked a card name: %s", html)
+		t.Errorf("the Archives pill leaked a card name: %s", html)
 	}
 	// An opponent's deck is hidden and not a labelled zone of its own, so it stays a
 	// plain tip with no popover.
 	if got := c.g.zoneRoster(1-p, "Deck", []engine.LocalID{id}); got != nil {
 		t.Error("a hidden opponent deck got a roster popover")
 	}
+}
+
+// TestKeyCostPillNamesItsModifier checks a card changing a player's key cost is
+// named on the key-cost pill (as a roster popover), not in the sidebar restriction
+// notes, and that an unmodified pill stays a plain tip.
+func TestKeyCostPillNamesItsModifier(t *testing.T) {
+	c := newClient(t)
+	c.startTurn()
+	p := c.g.active()
+
+	// Unmodified: a plain "Key cost" tip, no roster popover.
+	plain := app.HTMLString(c.g.keyCostSeg(p))
+	if !strings.Contains(plain, `data-tip="Key cost"`) {
+		t.Errorf("the unmodified key-cost pill is not a plain tip: %s", plain)
+	}
+	if strings.Contains(plain, "zone-roster") {
+		t.Errorf("the unmodified key-cost pill drew a roster: %s", plain)
+	}
+
+	// A continuous modifier against p: the pill names the card, restrictions do not.
+	def := engine.NewCard("Test Jammer", engine.Logos, engine.Artifact, engine.Common,
+		engine.WithKeyCost(engine.NewKeyCostChange(engine.Opponent, 1)))
+	c.g.g.AddArtifact(def, 1-p)
+	seg := app.HTMLString(c.g.keyCostSeg(p))
+	if !strings.Contains(seg, "zone-roster") || !strings.Contains(seg, "Test Jammer") {
+		t.Errorf("the key-cost pill did not name its modifier: %s", seg)
+	}
+	if notes := app.HTMLString(c.g.restrictionNotes()); strings.Contains(notes, "Test Jammer") {
+		t.Errorf("the key-cost modifier leaked into the restriction notes: %s", notes)
+	}
+}
+
+// TestDeckReadingOrderMatchesDeckList checks the deck pile — its tooltip roster
+// (zoneNames/readableZoneIDs) and the zone modal (sortByHouseTypeName) — sorts
+// like the deck list: within a house, creatures, then artifacts and upgrades, then
+// one-shot Tactics last (ADR 0025), never draw order or plain name order.
+func TestDeckReadingOrderMatchesDeckList(t *testing.T) {
+	c := newClient(t)
+	me := c.g.active()
+	// Names chosen so a plain name sort would lead with the Tactic — only the
+	// deck-list type order puts it last.
+	tac := engine.NewCard("Aaa Tactic", engine.Logos, engine.Tactic, engine.Common)
+	cre := engine.NewCard(
+		"Bbb Beast",
+		engine.Logos,
+		engine.Creature,
+		engine.Common,
+		engine.WithPower(1),
+	)
+	art := engine.NewCard("Ccc Relic", engine.Logos, engine.Artifact, engine.Common)
+	ids := []engine.LocalID{
+		c.g.g.AddToDeck(tac, me),
+		c.g.g.AddToDeck(art, me),
+		c.g.g.AddToDeck(cre, me),
+	}
+	want := []string{"Bbb Beast", "Ccc Relic", "Aaa Tactic"}
+
+	got := c.g.zoneNames(me, "Deck", ids)
+	if !equalStrings(got, want) {
+		t.Errorf("deck tooltip order = %v, want %v (Tactic last)", got, want)
+	}
+	modal := make([]string, 0, len(ids))
+	for _, id := range c.g.sortByHouseTypeName(ids) {
+		modal = append(modal, c.g.g.Def(id).Name)
+	}
+	if !equalStrings(modal, want) {
+		t.Errorf("deck modal order = %v, want %v (Tactic last)", modal, want)
+	}
+}
+
+func equalStrings(a, b []string) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }
 
 // TestZoneCountsWireTheRosterClamp checks the zone-count pills that open a roster

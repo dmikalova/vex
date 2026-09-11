@@ -138,10 +138,9 @@ func (g *game) zoneCounts(player int) []app.UI {
 		body := []app.UI{icon(z.name, "icon-stat"), app.Text(strconv.Itoa(len(z.ids)))}
 		body = append(body, g.flightsInto(player, z.name)...)
 		// A readable pile with cards opens a roster of house-coloured card headers,
-		// the same title bar an upgrade tab shows; every other zone just names
-		// itself in a plain hover tip. Archives is hidden even from its owner, so it
-		// gets a label-only roster (see zoneRoster) rather than the finger-only tip,
-		// so a touchscreen can raise its name the way the readable piles show theirs.
+		// the same title bar an upgrade tab shows; every other zone — including a
+		// hidden or empty one — just names itself in the plain floating tip, which
+		// names itself on touch too, so all label-only tooltips look alike.
 		if roster := g.zoneRoster(player, z.label, z.ids); roster != nil {
 			out = append(out,
 				app.Span().Class(cx("zone-count", "zone-has-roster", pulse)).
@@ -160,18 +159,11 @@ func (g *game) zoneCounts(player int) []app.UI {
 // zoneRoster renders the readable cards in a zone as house-coloured header rows —
 // the same title bar an upgrade tab shows — for the popover that opens when the
 // zone count is hovered. It returns nil for a zone this player may not read or one
-// with no cards, so hovering a hidden or empty pile shows only its label.
+// with no cards, so hovering a hidden or empty pile shows only the plain floating
+// tip that names it (the same tip every other label-only icon uses).
 func (g *game) zoneRoster(player int, label string, ids []engine.LocalID) app.UI {
 	shown := g.readableZoneIDs(player, label, ids)
 	if len(shown) == 0 {
-		// Archives is hidden even from its owner, so it never has a readable roster;
-		// still give it the same persistent popover the readable piles get — naming
-		// only the zone, no cards — so a touchscreen can raise it like the others.
-		if label == "Archives" {
-			return app.Div().Class("zone-roster").Body(
-				app.Div().Class("zone-roster-label").Text(label),
-			)
-		}
 		return nil
 	}
 	rows := make([]app.UI, 0, len(shown)+1)
@@ -186,12 +178,12 @@ func (g *game) zoneRoster(player int, label string, ids []engine.LocalID) app.UI
 	return app.Div().Class("zone-roster").Body(rows...)
 }
 
-// onZoneRosterHover clamps a zone-count roster popover on screen as its hover
-// begins, before the centered popover can spill off the viewport edge — the Purge
-// count sits at the right end of the bar, so its centered roster would otherwise
-// run off the right side. It reuses the deck list's clamp (clampFloating).
+// onZoneRosterHover places a zone-count roster popover on screen as its hover
+// begins, so the wide roster does not spill off a viewport edge — the Purge count
+// sits at the right end of the bar, where a centered roster would otherwise run
+// off the right side. It reuses the deck list's placement (placeFloating).
 func (g *game) onZoneRosterHover(ctx app.Context, _ app.Event) {
-	clampFloating(ctx.JSSrc(), ".zone-roster")
+	placeFloating(ctx.JSSrc(), ".zone-roster")
 }
 
 // zoneNames lists the names of the cards in a zone, sorted, but only for the
@@ -208,12 +200,13 @@ func (g *game) zoneNames(player int, label string, ids []engine.LocalID) []strin
 	return names
 }
 
-// readableZoneIDs returns a zone's cards sorted by house then name, but only for
+// readableZoneIDs returns a zone's cards sorted by house, then card type in the
+// deck list's order (typeRank — Tactics last; ADR 0025), then name, but only for
 // the zones this player may read: the face-up discard and purge piles of either
 // player, and their own hand and deck. Sorting the deck by house rather than draw
-// order lets a player review their own remaining deck without its order leaking. A
-// hidden zone (face-down archives, an opponent's hand or deck) returns nil, so
-// hovering it never leaks its contents.
+// order lets a player review their own remaining deck without its order leaking,
+// and matches the deck list's order. A hidden zone (face-down archives, an
+// opponent's hand or deck) returns nil, so hovering it never leaks its contents.
 func (g *game) readableZoneIDs(player int, label string, ids []engine.LocalID) []engine.LocalID {
 	switch label {
 	case "Discard", "Purge":
@@ -225,10 +218,13 @@ func (g *game) readableZoneIDs(player int, label string, ids []engine.LocalID) [
 		return nil
 	}
 	sorted := append([]engine.LocalID(nil), ids...)
-	sort.Slice(sorted, func(i, j int) bool {
+	sort.SliceStable(sorted, func(i, j int) bool {
 		a, b := g.g.Def(sorted[i]), g.g.Def(sorted[j])
 		if a.House != b.House {
 			return a.House < b.House
+		}
+		if ra, rb := typeRank(a.Type), typeRank(b.Type); ra != rb {
+			return ra < rb
 		}
 		return a.Name < b.Name
 	})
@@ -258,12 +254,31 @@ func (g *game) flightsInto(player int, zone string) []app.UI {
 }
 
 // keyCostSeg shows the Æmber a player must spend to forge their next key: the
-// cost followed by the forge icon.
+// cost followed by the forge icon. When a card is changing that cost, the pill
+// opens a roster naming those cards (the same popover the readable zones use), so
+// the modifier is read off the key cost it changes rather than the sidebar
+// restriction list.
 func (g *game) keyCostSeg(player int) app.UI {
-	return app.Span().Class("stat-seg tip").DataSet("tip", "Key cost").Body(
+	body := []app.UI{
 		app.Text(strconv.Itoa(g.g.CurrentKeyCost(player))),
 		icon("forge", "icon-stat"),
-	)
+	}
+	sources := g.g.KeyCostSources(player)
+	if len(sources) == 0 {
+		return app.Span().Class("stat-seg tip").DataSet("tip", "Key cost").Body(body...)
+	}
+	rows := make([]app.UI, 0, len(sources)+1)
+	rows = append(rows, app.Div().Class("zone-roster-label").Text("Key cost"))
+	for _, id := range sources {
+		def := g.g.Def(id)
+		rows = append(rows,
+			app.Div().Class(cx("zone-roster-item", houseClasses(def.House))).
+				Body(app.Span().Class("zone-roster-name").Text(def.Name)),
+		)
+	}
+	return app.Span().Class("stat-seg zone-has-roster").
+		OnMouseEnter(g.onZoneRosterHover).
+		Body(append(body, app.Div().Class("zone-roster").Body(rows...))...)
 }
 
 // hoverPreview renders the hovered card enlarged: a live board/hand card over the
@@ -522,7 +537,13 @@ func (g *game) renderCard(id engine.LocalID, boardKind selKind, opposing bool) a
 	face.OnHover = g.hoverCard
 	face.OnHoverOut = g.hoverClear
 	face.OnContextMenu = g.liftCard
-	return g.hostWithTabs(id, face, dimmed)
+	card := g.hostWithTabs(id, face, dimmed)
+	if badge := g.cardBadge(id); badge != nil {
+		// The badge floats over the card as an overlay sibling in a positioned host,
+		// so the running damage or ward icon sits centred on the chosen creature.
+		return app.Div().Class("sel-badge-host").Body(card, badge)
+	}
+	return card
 }
 
 // hostWithTabs wraps a rendered face in the peeking-tab host when the card

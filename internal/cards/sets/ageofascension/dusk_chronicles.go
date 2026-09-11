@@ -26,7 +26,10 @@ var DuskChronicles = card.New(
 				},
 				card.Conditional{
 					Cond: card.PoolAember{Player: card.Controller, Is: card.MoreThanOpponent},
-					Then: card.ArchiveFromHand{Amount: 1},
+					Then: card.ArchiveCard{
+						Zone:      card.Hand,
+						Selection: card.Chosen{},
+					},
 				},
 			},
 		}),

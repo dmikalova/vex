@@ -152,12 +152,37 @@ func TestRaiseKeyCostLandsOnTheNextTurn(t *testing.T) {
 	if got := g.CurrentKeyCost(1); got != KeyCost+3 {
 		t.Errorf("key cost = %d, want %d", got, KeyCost+3)
 	}
-	if reasons := g.RestrictionSources(1); len(reasons) == 0 {
-		t.Error("the raise should name its source as a turn restriction")
+	if sources := g.KeyCostSources(1); len(sources) == 0 {
+		t.Error("the raise should name its source on the key-cost pill")
+	}
+	if reasons := g.RestrictionSources(1); len(reasons) != 0 {
+		t.Errorf("a key-cost raise should not be a restriction note, got %v", reasons)
 	}
 	g.EndPlayPhase(1)
 	if got := g.CurrentKeyCost(1); got != KeyCost {
 		t.Errorf("key cost = %d, want %d after the turn ends", got, KeyCost)
+	}
+}
+
+// TestKeyCostSourcesNamesContinuousModifier checks the key-cost pill's reader
+// names an in-play card whose continuous key-cost change binds a player, and
+// names nothing for a player no modifier touches.
+func TestKeyCostSourcesNamesContinuousModifier(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	if got := g.KeyCostSources(1); len(got) != 0 {
+		t.Errorf("sources with no modifier = %v, want none", got)
+	}
+	jammer := g.AddArtifact(
+		NewCard("Test Jammer", Logos, Artifact, Common,
+			WithKeyCost(NewKeyCostChange(Opponent, 1))),
+		0,
+	)
+	if got := g.KeyCostSources(1); len(got) != 1 || got[0] != jammer {
+		t.Errorf("sources against the opponent = %v, want [%d]", got, jammer)
+	}
+	// The controller's own key cost is untouched, so nothing is named for them.
+	if got := g.KeyCostSources(0); len(got) != 0 {
+		t.Errorf("sources for the controller = %v, want none", got)
 	}
 }
 

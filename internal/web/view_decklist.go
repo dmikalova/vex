@@ -1,7 +1,6 @@
 package web
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
@@ -38,14 +37,14 @@ func (g *game) deckTip(player int) app.UI {
 		)
 }
 
-// onDeckHover clamps the popover on screen as soon as a hover begins to open it,
-// before the wide list can spill off the viewport edge.
+// onDeckHover places the popover on screen as soon as a hover begins to open it,
+// before the wide list can spill off a viewport edge.
 func (g *game) onDeckHover(ctx app.Context, _ app.Event) {
-	g.clampPopover(ctx.JSSrc())
+	g.placePopover(ctx.JSSrc())
 }
 
-// clampOpenDeckList clamps every tap-opened popover on screen after a re-render,
-// since a tap opens it with no hover event to clamp against.
+// clampOpenDeckList places every tap-opened popover on screen after a re-render,
+// since a tap opens it with no hover event to place against.
 func (g *game) clampOpenDeckList() {
 	if g.deckOpen == ([2]bool{}) {
 		return
@@ -56,60 +55,70 @@ func (g *game) clampOpenDeckList() {
 	}
 	open := doc.Call("querySelectorAll", ".deck-tip--open")
 	for i := range open.Get("length").Int() {
-		g.clampPopover(open.Call("item", i))
+		g.placePopover(open.Call("item", i))
 	}
 }
 
-// clampPopover keeps a centered deck-list popover on screen: it measures at the
-// centered position and, only if an edge runs off the viewport, nudges the list
-// back inward — favoring the left wall so the list is never cut off there. tip is
-// the .deck-tip container.
-func (g *game) clampPopover(tip app.Value) {
-	clampFloating(tip, ".deck-list")
+// placePopover positions the deck-list popover for one .deck-tip. tip is the
+// .deck-tip container.
+func (g *game) placePopover(tip app.Value) {
+	placeFloating(tip, ".deck-list")
 }
 
-// clampFloating keeps a centered popover (a child of container matched by sel) on
-// screen: it measures at the centered position and, only if an edge runs off the
-// viewport, nudges the popover back inward — favoring the left wall so it is never
-// cut off there. It is shared by the deck list and the zone-count rosters, both of
-// which float centered above a player-bar pill and so run off the right edge for a
-// pill near the screen's edge (the Purge count in particular).
-func clampFloating(container app.Value, sel string) {
-	if !container.Truthy() {
+// placeFloating positions a popover (a child of anchor matched by sel) with
+// position: fixed, so it escapes the player bar's overflow clip the way a floating
+// tip does. It opens away from the bar the anchor sits in — up from a bottom-half
+// anchor, down from a top-half one — centred on the anchor and clamped inside the
+// window; the popover's own max-height and scroll handle a list taller than the
+// gap to the edge. It is shared by the deck list and the zone-count rosters.
+func placeFloating(anchor app.Value, sel string) {
+	if !anchor.Truthy() {
 		return
 	}
-	list := container.Call("querySelector", sel)
-	if !list.Truthy() {
+	pop := anchor.Call("querySelector", sel)
+	if !pop.Truthy() {
 		return
 	}
-	style := list.Get("style")
-	style.Set("transform", "translateX(-50%)")
-	rect := list.Call("getBoundingClientRect")
-	const margin = 8.0
+	const gap, margin = 6.0, 8.0
+	a := anchor.Call("getBoundingClientRect")
+	style := pop.Get("style")
+	// Measure the popover at the origin — its natural size, unaffected by a prior
+	// placement — then set left/top from the anchor.
+	style.Set("left", "0")
+	style.Set("top", "0")
+	p := pop.Call("getBoundingClientRect")
 	vw := app.Window().Get("innerWidth").Float()
-	left := rect.Get("left").Float()
-	right := rect.Get("right").Float()
-	shift := 0.0
-	switch {
-	case left < margin:
-		shift = margin - left
-	case right > vw-margin:
-		shift = -(right - (vw - margin))
-		if left+shift < margin {
-			shift = margin - left
+	vh := app.Window().Get("innerHeight").Float()
+	w := p.Get("width").Float()
+	mid := a.Get("left").Float() + a.Get("width").Float()/2
+	left := mid - w/2
+	if left < margin {
+		left = margin
+	} else if left+w > vw-margin {
+		if left = vw - margin - w; left < margin {
+			left = margin
 		}
 	}
-	if shift != 0 {
-		style.Set("transform", fmt.Sprintf("translateX(calc(-50%% + %.0fpx))", shift))
+	var top float64
+	if a.Get("top").Float() > vh/2 {
+		if top = a.Get("top").Float() - gap - p.Get("height").Float(); top < margin {
+			top = margin
+		}
+	} else {
+		top = a.Get("bottom").Float() + gap
 	}
+	style.Set("left", px(left))
+	style.Set("top", px(top))
 }
 
 // onDeckToggle pins one player's deck list open on a tap and closes it on a second
 // tap, so a touchscreen with no hover can still read it. Each side toggles on its
 // own, leaving the other player's list as it was. Desktop hover works regardless.
+// It routes through dispatch so OnUpdate runs afterward and places the pinned
+// popover (clampOpenDeckList) — a plain handler's re-render never fires OnUpdate.
 func (g *game) onDeckToggle(player int) app.EventHandler {
 	return func(_ app.Context, _ app.Event) {
-		g.deckOpen[player] = !g.deckOpen[player]
+		g.dispatch(func(app.Context) { g.deckOpen[player] = !g.deckOpen[player] })
 	}
 }
 

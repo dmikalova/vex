@@ -17,6 +17,7 @@ var SensorChiefGarcia = card.New(
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "305"),
+	card.InCluster(card.Pulled(garciasBlasterCluster, 1, 1.25)),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human),
 	card.WithAbility(card.Trigger.PlayFightReap, card.RaiseKeyCost{

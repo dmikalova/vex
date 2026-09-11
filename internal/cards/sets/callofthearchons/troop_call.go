@@ -2,6 +2,15 @@ package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
+// troopCallCluster pulls Niffle creatures into Troop Call's pod — a Pull cluster
+// with a per-partner rate: a couple of Niffle Apes (averaging three) and, much
+// less often, a Niffle Queen (min zero, averaging under one) (ADR 0036).
+var troopCallCluster = card.Cluster{
+	Name:     "Troop Call",
+	Strategy: card.ClusterStrategy.Pull,
+	Trigger:  card.ClusterTrigger.ByLead,
+}
+
 // Troop Call
 //
 //	House:  Untamed
@@ -16,10 +25,7 @@ var TroopCall = card.New(
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "337"),
-	card.Connects(
-		card.Pull(NiffleApe, 2),
-		card.PullSometimes(NiffleQueen, 0.15),
-	),
+	card.LeadsCluster(troopCallCluster),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{

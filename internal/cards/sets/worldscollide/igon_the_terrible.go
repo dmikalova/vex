@@ -18,6 +18,7 @@ var IgonTheTerrible = card.New(
 	card.Type.Creature,
 	card.Rarity.Connected,
 	card.Provenance(card.WC, "53"),
+	card.InCluster(igonCluster),
 	card.WithPower(8),
 	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(

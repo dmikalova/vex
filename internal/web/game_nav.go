@@ -290,15 +290,22 @@ func (g *game) confirmPrompt(ctx app.Context) bool {
 		return true
 	}
 	cands, ok := g.tabCandidates()
-	if !ok || !g.hasCursor || !containsID(cands, g.promptCursor) {
-		return false
-	}
-	if g.phase == phaseFightTarget {
-		g.fightTargetID(ctx, g.promptCursor)
+	if ok && g.hasCursor && containsID(cands, g.promptCursor) {
+		if g.phase == phaseFightTarget {
+			g.fightTargetID(ctx, g.promptCursor)
+			return true
+		}
+		g.chooseCandidate(ctx, g.promptCursor)
 		return true
 	}
-	g.chooseCandidate(ctx, g.promptCursor)
-	return true
+	// With no card picked out, Enter/Space on a declinable prompt means Done, so an
+	// "up to N" selection (Festering Touch) is finished by the same key that
+	// confirms everything else rather than by tabbing over to its Done button.
+	if g.choosing && g.chooserDeclinable {
+		g.declineChooser(ctx, app.Event{})
+		return true
+	}
+	return false
 }
 
 // cycleIdx returns the button index one step on from cur in a row of n, wrapping

@@ -2,6 +2,15 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
+// igonCluster pulls one Igon the Terrible per Igon the Green: the two are a
+// PullExact pair, so the Terrible (Rarity.Connected) rides in with the Green
+// (ADR 0036).
+var igonCluster = card.Cluster{
+	Name:     "Igon the Green",
+	Strategy: card.ClusterStrategy.PullExact,
+	Trigger:  card.ClusterTrigger.ByLead,
+}
+
 // Igon the Green
 //
 //	House:  Brobnar
@@ -17,7 +26,7 @@ var IgonTheGreen = card.New(
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "39"),
-	card.Connects(card.PullExact(IgonTheTerrible, 1)),
+	card.LeadsCluster(igonCluster),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(

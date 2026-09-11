@@ -148,7 +148,7 @@ func (e MoveToFlank) Resolve(ctx *EffectContext) {
 			continue
 		}
 		right := ctx.ChooseOption(
-			"Choose a flank", []string{"left flank", "right flank"}) == 1
+			"Choose a flank", []string{FlankLeftLabel, FlankRightLabel}) == 1
 		ctx.Resolver.MoveToFlank(id, right)
 	}
 }
@@ -189,7 +189,7 @@ func (e TurnIntoCreature) Resolve(ctx *EffectContext) {
 			continue
 		}
 		right := ctx.ChooseOption(
-			"Choose a flank", []string{"left flank", "right flank"}) == 1
+			"Choose a flank", []string{FlankLeftLabel, FlankRightLabel}) == 1
 		ctx.Resolver.PutIntoBattlelineAsCreature(id, right)
 	}
 }

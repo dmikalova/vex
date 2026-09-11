@@ -2,6 +2,15 @@ package ageofascension
 
 import "github.com/dmikalova/vactrol/internal/card"
 
+// ortannuCluster pulls a couple of Ortannu's Bindings into Ortannu the Chained's
+// pod — a Pull cluster, at least two averaging three (ADR 0036). The Binding is
+// Rarity.Connected, reachable only through its lead.
+var ortannuCluster = card.Cluster{
+	Name:     "Ortannu the Chained",
+	Strategy: card.ClusterStrategy.Pull,
+	Trigger:  card.ClusterTrigger.ByLead,
+}
+
 // Ortannu the Chained
 //
 //	House:  Dis
@@ -17,9 +26,7 @@ var OrtannuTheChained = card.New(
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, "97"),
-	card.Connects(
-		card.Pull(OrtannusBinding, 2),
-	),
+	card.LeadsCluster(ortannuCluster),
 	card.WithPower(7),
 	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(

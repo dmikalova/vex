@@ -16,6 +16,8 @@ var ShardOfPain = card.New(
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, "104"),
+	card.InCluster(shardCluster),
+	card.OneCopyPerDeck(),
 	card.WithTraits(card.Traits.Item, card.Traits.Shard),
 	card.WithAbility(
 		card.Trigger.Action, card.DealDamage{

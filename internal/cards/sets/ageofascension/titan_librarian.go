@@ -22,6 +22,6 @@ var TitanLibrarian = card.New(
 	card.WithAbility(
 		card.Trigger.EndOfTurn, card.Conditional{
 			Cond: card.OnFlank{Not: true},
-			Then: card.ArchiveFromHand{Amount: 1},
+			Then: card.ArchiveCard{Zone: card.Hand, Selection: card.Chosen{}},
 		}),
 )

@@ -202,6 +202,7 @@ var shortcuts = []struct{ keys, what string }{
 	{"m", "Toggle manual mode"},
 	{"Ctrl+Z", "Undo"},
 	{"Ctrl+Shift+Z", "Redo"},
+	{"Ctrl+G", "New game"},
 	{"?", "Open or close this sheet"},
 }
 

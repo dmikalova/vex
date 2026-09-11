@@ -19,8 +19,9 @@ var DrMilli = card.New(
 	card.Provenance(card.WC, "150"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Scientist),
-	card.WithAbility(card.Trigger.Play, card.ArchiveFromHand{
-		Amount: 1,
-		Per:    card.ExcessCreatures{Player: card.Opponent, NotCountingSelf: true},
+	card.WithAbility(card.Trigger.Play, card.ArchiveCard{
+		Zone:      card.Hand,
+		Selection: card.Chosen{},
+		Per:       card.ExcessCreatures{Player: card.Opponent, NotCountingSelf: true},
 	}),
 )

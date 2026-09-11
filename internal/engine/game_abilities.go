@@ -250,11 +250,81 @@ func (g *Game) reapWith(id LocalID) {
 	p := g.controller(id)
 	g.State.Cards[id].Exhausted = true
 	g.gainReapAember(p, id)
-	g.triggerAbilities(id, TriggerAfterReap, 0, false)
-	g.emitCardUsed(p, id)
-	g.emitLasting(EventReap, p, id)
+	// A reaction that asks "is this the first reap this turn?" (Aember Conduction
+	// Unit) must count this reap, so the tally is raised before the window opens.
 	g.State.TurnHistory[p][CreaturesReapedThisTurn]++
-	g.emitCreatureReaped(p, id)
+	g.emitReapWindow(p, id)
+}
+
+// emitReapWindow resolves everything that reacts to reaper's creature reaping as
+// one ordered window: the creature's own "Reap:" and "after I am used" abilities,
+// the "after you use a card" reactions on the user's other cards, and the
+// board-wide "after a creature reaps" / "after an enemy creature reaps" reactions
+// (Orb of Invidius, Pip Pip). They are gathered before any resolves so the active
+// player orders the whole set (ADR 0013), collapsing identical abilities. The
+// lasting-registry reactions (Crystal Hive) are folded into the same window, so a
+// capable client interleaves them with the card abilities.
+func (g *Game) emitReapWindow(reaper int, reaped LocalID) {
+	pending := g.reapReactions(reaper, reaped)
+	pending = append(pending, g.lastingReactions(EventReap, reaper, reaped)...)
+	g.resolveWindow(g.orderTriggered(reaper, TriggerAfterReap, pending))
+}
+
+// abilityWindow accumulates the triggered abilities that fire in one trigger
+// window. The several gatherers (reap, action, creature-play, other-play) share it
+// instead of each re-declaring the "collect the abilities, stamp their actor and
+// it, append" closure.
+type abilityWindow struct {
+	g       *Game
+	pending []triggeredAbility
+}
+
+// window starts an empty gather.
+func (g *Game) window() *abilityWindow { return &abilityWindow{g: g} }
+
+// add collects src's abilities under trigger, each resolving for src's own
+// controller against it — the common case where a card's reaction resolves for
+// whoever controls it.
+func (w *abilityWindow) add(src LocalID, trigger Trigger, it LocalID, hasIt bool) {
+	w.addAs(src, trigger, w.g.controller(src), it, hasIt)
+}
+
+// addAs is add with the resolving actor named explicitly, for an ability used on
+// behalf of someone other than its controller (a borrowed Tactic's "Play:").
+func (w *abilityWindow) addAs(src LocalID, trigger Trigger, actor int, it LocalID, hasIt bool) {
+	got := w.g.triggeredBy(src, trigger)
+	for i := range got {
+		got[i].actor = int8(actor)
+		got[i].it, got[i].hasIt = it, hasIt
+	}
+	w.pending = append(w.pending, got...)
+}
+
+// reapReactions gathers, in default resolution order, every card-sourced ability
+// that reacts to reaped being used to reap: its own "Reap:" and "after I am used"
+// abilities (bound to no "it"), the "after you use a card" reactions on the user's
+// other in-play cards, and the "after a creature reaps" and "after an enemy
+// creature reaps" reactions across the board — the last three bound to the reaping
+// creature as "it". Every entry carries its own actor and "it" so the whole set
+// can order as one window while each bystander reaction resolves for its owner.
+func (g *Game) reapReactions(reaper int, reaped LocalID) []triggeredAbility {
+	w := g.window()
+	w.add(reaped, TriggerAfterReap, 0, false)
+	w.add(reaped, TriggerAfterUsedSelf, 0, false)
+	for _, id := range g.allInPlay(reaper) {
+		if id != reaped {
+			w.add(id, TriggerAfterUse, reaped, true)
+		}
+	}
+	for player := 0; player < 2; player++ {
+		for _, id := range g.allInPlay(player) {
+			w.add(id, TriggerAfterCreatureReaps, reaped, true)
+		}
+	}
+	for _, id := range g.allInPlay(1 - reaper) {
+		w.add(id, TriggerAfterEnemyCreatureReaps, reaped, true)
+	}
+	return w.pending
 }
 
 // gainReapAember pays out the Æmber a reap grants to player p, applying any lasting
@@ -313,8 +383,24 @@ func (g *Game) useActionOf(actor int, id LocalID) {
 	}
 	g.State.Cards[id].Exhausted = true
 	g.record(ActionAbilityUsed{Player: actor, Card: id})
-	g.triggerAbilitiesAs(actor, id, TriggerAction, 0, false)
-	g.emitCardUsed(actor, id)
+	g.resolveWindow(g.orderTriggered(actor, TriggerAction, g.actionReactions(actor, id)))
+}
+
+// actionReactions gathers the "Action:" ability and the reactions to using the
+// card as one ordered window: the card's own "Action:" (resolving for actor, who
+// may be borrowing the card via Remote Access), its "after I am used" (resolving
+// for its own controller), and the "after you use a card" reactions on the acting
+// player's other in-play cards, with the used card as "it".
+func (g *Game) actionReactions(actor int, id LocalID) []triggeredAbility {
+	w := g.window()
+	w.addAs(id, TriggerAction, actor, 0, false)
+	w.add(id, TriggerAfterUsedSelf, 0, false)
+	for _, o := range g.allInPlay(actor) {
+		if o != id {
+			w.add(o, TriggerAfterUse, id, true)
+		}
+	}
+	return w.pending
 }
 
 // Fight uses attacker to fight the enemy creature defender.
@@ -526,18 +612,6 @@ func (g *Game) emitCreatureEnters(entered LocalID) {
 	}
 }
 
-// emitCreaturePlayedAdjacent fires the "after a creature is played adjacent to
-// this" reaction on each creature sitting beside the just-played creature, with
-// the played creature as the trigger target ("it"). Only a creature's own
-// controller plays onto its battleline, so this naturally reaches only the
-// controller's neighbours (Fila the Researcher).
-func (g *Game) emitCreaturePlayedAdjacent(played LocalID) {
-	ctx := &EffectContext{Resolver: g}
-	for _, neighbor := range neighbors(ctx, played) {
-		g.triggerAbilities(neighbor, TriggerAfterCreaturePlayedAdjacent, played, true)
-	}
-}
-
 // emitCreaturePlayed fires the "after a creature is played" reaction on every
 // in-play card of both players except the played creature, with the played
 // creature as "it" (The Big One). It fires only on an actual play from hand — the
@@ -598,22 +672,65 @@ func (g *Game) emitAfterFriendlyDestroyed(destroyed LocalID) {
 	}
 }
 
-// emitCardPlayed fires "after you play a card" abilities on the playing player's
-// other in-play cards, with the played card as "it", and the EventCardPlayed
-// lasting reactions the player has armed (Library Access). Only an actual play from
-// hand fires it; a card put into play by another effect enters (emitCreatureEnters)
-// but is not played.
-func (g *Game) emitCardPlayed(player int, played LocalID) {
+// afterPlayReactions gathers, as one ordered window, the "Play:" ability of a
+// just-played non-creature card and the "after you play a card" reactions on the
+// board. The card's own "Play:" resolves for player, who may be borrowing it (a
+// Tactic played from the opponent's discard via Mimicry); the after-card-played
+// reactions resolve for their own controllers, with the played card as "it". The
+// played card is one of its own targets for a friendly "after you play a card"
+// reaction: an artifact's abilities are live the moment it enters play, so it
+// counts as a card you played (Harmonia, Hunting Witch; rulebook Harmonia 357 FAQ).
+// The caller appends the EventCardPlayed lasting reactions (Library Access) to this
+// window, so they order together with the card abilities rather than in a trailing
+// window of their own (ADR 0013).
+func (g *Game) afterPlayReactions(player int, played LocalID) []triggeredAbility {
+	w := g.window()
+	w.addAs(played, TriggerAfterPlay, player, 0, false)
 	for _, id := range g.allInPlay(player) {
-		if id == played {
-			continue
-		}
-		g.triggerAbilities(id, TriggerAfterCardPlayed, played, true)
+		w.add(id, TriggerAfterCardPlayed, played, true)
 	}
 	for _, id := range g.allInPlay(1 - player) {
-		g.triggerAbilities(id, TriggerAfterEnemyCardPlayed, played, true)
+		w.add(id, TriggerAfterEnemyCardPlayed, played, true)
 	}
-	g.emitLasting(EventCardPlayed, player, played)
+	return w.pending
+}
+
+// playCreatureReactions gathers every ability that triggers when a creature is
+// played into one ordered window: the creature's own "Play:" and "enters play",
+// every other card's "after a creature enters play" and "after a creature is
+// played", each neighbour's "after a creature is played adjacent", and the
+// playing player's "after you play a card" (with the opponent's "after an enemy
+// plays a card"). The played creature is "it" for the bystander reactions. Every
+// entry resolves for its own controller — a creature is always played by its
+// controller, so there is no borrower asymmetry here.
+func (g *Game) playCreatureReactions(player int, played LocalID) []triggeredAbility {
+	w := g.window()
+	w.add(played, TriggerAfterPlay, 0, false)
+	w.add(played, TriggerEntersPlay, 0, false)
+	for p := 0; p < 2; p++ {
+		for _, id := range g.allInPlay(p) {
+			if id != played {
+				w.add(id, TriggerAfterCreatureEnters, played, true)
+			}
+		}
+	}
+	for _, neighbor := range neighbors(&EffectContext{Resolver: g}, played) {
+		w.add(neighbor, TriggerAfterCreaturePlayedAdjacent, played, true)
+	}
+	for p := 0; p < 2; p++ {
+		for _, id := range g.allInPlay(p) {
+			if id != played {
+				w.add(id, TriggerAfterCreaturePlayed, played, true)
+			}
+		}
+	}
+	for _, id := range g.allInPlay(player) {
+		w.add(id, TriggerAfterCardPlayed, played, true)
+	}
+	for _, id := range g.allInPlay(1 - player) {
+		w.add(id, TriggerAfterEnemyCardPlayed, played, true)
+	}
+	return w.pending
 }
 
 // emitActionPlayedBeforeResolve fires "after a Tactic is played but before it
@@ -627,38 +744,6 @@ func (g *Game) emitActionPlayedBeforeResolve(player int, played LocalID) {
 	}
 	for _, id := range g.allInPlay(1 - player) {
 		g.triggerAbilities(id, TriggerAfterActionPlayedBeforeResolve, played, true)
-	}
-}
-
-// emitCardUsed fires the used card's own "after this creature is used" abilities,
-// then the "after you use a card" abilities on the user's other in-play cards with
-// the used card as "it". Every route to using a card — reaping, fighting, or an
-// "Action:" — ends here, so both reactions to using are wired in one place rather
-// than into each verb separately.
-func (g *Game) emitCardUsed(player int, used LocalID) {
-	g.triggerAbilities(used, TriggerAfterUsedSelf, 0, false)
-	for _, id := range g.allInPlay(player) {
-		if id == used {
-			continue
-		}
-		g.triggerAbilities(id, TriggerAfterUse, used, true)
-	}
-}
-
-// emitCreatureReaped fires the persistent reap reactions after a creature reaps:
-// "after a creature reaps" on every in-play card (Orb of Invidius, including the
-// reaper itself), and "after an enemy creature reaps" on the reaper's opponent's
-// cards (Pip Pip), each with the reaping creature as "it". Reaping only happens on
-// the reaper's own turn, so the enemy reaction naturally fires only for the
-// non-active player.
-func (g *Game) emitCreatureReaped(reaper int, reaped LocalID) {
-	for player := 0; player < 2; player++ {
-		for _, id := range g.allInPlay(player) {
-			g.triggerAbilities(id, TriggerAfterCreatureReaps, reaped, true)
-		}
-	}
-	for _, id := range g.allInPlay(1 - reaper) {
-		g.triggerAbilities(id, TriggerAfterEnemyCreatureReaps, reaped, true)
 	}
 }
 
@@ -681,7 +766,41 @@ func (g *Game) triggerAbilitiesAs(
 	it LocalID,
 	hasIt bool,
 ) {
-	for _, t := range g.orderTriggered(actor, trigger, g.triggeredBy(src, trigger)) {
+	pending := g.triggeredBy(src, trigger)
+	for i := range pending {
+		pending[i].actor = int8(actor)
+		pending[i].it, pending[i].hasIt = it, hasIt
+	}
+	g.resolveWindow(g.orderTriggered(actor, trigger, pending))
+}
+
+// resolveWindow resolves an already-ordered window of triggered abilities in
+// order, each for its own actor and against its own source, grantor, and "it"
+// binding. It is the single resolve loop every trigger window flows through: a
+// lone trigger from triggerAbilitiesAs, and the unified use/play windows that
+// gather one card's own printed ability together with the bystander "after ..."
+// reactions so the active player orders the whole set as one (ADR 0013), while each
+// bystander reaction still resolves for its own controller. A window may also carry
+// duration reactions from the lasting registry, which resolve through
+// resolveReaction rather than as card abilities.
+func (g *Game) resolveWindow(ordered []triggeredAbility) {
+	for _, t := range ordered {
+		if t.lasting {
+			// A duration reaction has no source card and never checks in-play: its
+			// subject may have left mid-window (a played creature destroyed by an
+			// earlier reaction) yet the controller's economy reaction (Full Moon's
+			// Æmber) still fires, matching how emitLasting resolved it standalone. It
+			// opens no card Frame — there is no card to attribute it to — and settles
+			// after like every other entry (ADR 0029).
+			g.resolveReaction(t.le, int(t.actor), t.it)
+			if t.le.Once {
+				g.removeLasting(t.le)
+			}
+			g.settleDestroyed(int(t.actor))
+			continue
+		}
+		src := t.source
+		actor := int(t.actor)
 		// An earlier ability in the same window can take src out of play (Strange
 		// Gizmo destroys friendly artifacts as its house is chosen; a forge-key
 		// reactor destroys itself), and a card that has left play resolves nothing
@@ -696,7 +815,7 @@ func (g *Game) triggerAbilitiesAs(
 			Actor:      actor,
 			Source:     src,
 			HasSource:  true,
-			Trigger:    trigger,
+			Trigger:    t.ability.Trigger,
 			Grantor:    t.grantor,
 			HasGrantor: t.grantor != src,
 		})
@@ -704,8 +823,8 @@ func (g *Game) triggerAbilitiesAs(
 			Resolver:   g,
 			Source:     src,
 			Controller: actor,
-			It:         it,
-			HasIt:      hasIt,
+			It:         t.it,
+			HasIt:      t.hasIt,
 		}
 		// A granted ability still knows the card that granted it (Source is the
 		// creature the ability now lives on), so an effect on the granted ability can
@@ -823,6 +942,11 @@ const orderGrantorPrompt = "Choose which ability resolves next"
 // entry is forced and never prompts, so an event on one card with one ability is
 // silent, as is a batch of creatures that each carry the same one. The trigger
 // names the window so a Destroyed batch reads as "Resolve destroyed abilities".
+//
+// When a window also carries duration reactions from the lasting registry, the
+// card-based two levels cannot order them — a duration reaction has no card — so
+// the whole mixed set is arranged through the ReactionOrderer capability instead,
+// defaulting to the card abilities before the duration reactions.
 func (g *Game) orderTriggered(
 	actor int,
 	trigger Trigger,
@@ -839,16 +963,121 @@ func (g *Game) orderTriggered(
 	if trigger == TriggerDestroyed {
 		prompt = orderDestroyedPrompt
 	}
+	if anyLasting(reps) {
+		return expandMembers(g.orderMixed(actor, prompt, reps), members)
+	}
 	ordered := make([]triggeredAbility, 0, len(pending))
 	for _, src := range g.orderByChoice(actor, prompt, distinctBy(reps, sourceOf)) {
 		of := filterBy(reps, sourceOf, src)
 		for _, grantor := range g.orderByChoice(actor, orderGrantorPrompt, distinctBy(of, grantorOf)) {
 			for _, r := range filterBy(of, grantorOf, grantor) {
-				ordered = append(ordered, members[abilityIdentity(r.ability)]...)
+				ordered = append(ordered, members[identityOf(r)]...)
 			}
 		}
 	}
 	return ordered
+}
+
+// anyLasting reports whether any representative is a duration reaction, which is
+// what tips orderTriggered from the card-based two-level ordering to the mixed
+// ReactionOrderer path.
+func anyLasting(reps []triggeredAbility) bool {
+	for _, r := range reps {
+		if r.lasting {
+			return true
+		}
+	}
+	return false
+}
+
+// orderMixed arranges a window that mixes card abilities with duration reactions.
+// It first builds the default order — the card abilities in their card-based
+// two-level order, then the duration reactions in registry order — and offers the
+// whole set to a ReactionOrderer, which may interleave them freely. A Chooser that
+// does not implement ReactionOrderer keeps the default order, so the AI and the
+// simulator resolve the card abilities before the duration reactions.
+func (g *Game) orderMixed(actor int, prompt string, reps []triggeredAbility) []triggeredAbility {
+	def := defaultRepOrder(reps)
+	ro, ok := g.chooserFor(actor).(ReactionOrderer)
+	if !ok {
+		return def
+	}
+	reactions := make([]OrderableReaction, len(def))
+	for i, r := range def {
+		reactions[i] = g.orderableFor(r)
+	}
+	perm := ro.OrderReactions(prompt, reactions)
+	if !isPermutation(perm, len(def)) {
+		return def
+	}
+	out := make([]triggeredAbility, len(def))
+	for i, idx := range perm {
+		out[i] = def[idx]
+	}
+	return out
+}
+
+// defaultRepOrder is the fallback order for a mixed window: the card abilities
+// first, grouped the same way the card-based path groups them (by triggering card,
+// then by granting card), then the duration reactions in registry order. It is
+// what a Chooser without ReactionOrderer resolves, so folding duration reactions
+// into a window never reorders the card abilities that already resolved there.
+func defaultRepOrder(reps []triggeredAbility) []triggeredAbility {
+	var cards, lasting []triggeredAbility
+	for _, r := range reps {
+		if r.lasting {
+			lasting = append(lasting, r)
+		} else {
+			cards = append(cards, r)
+		}
+	}
+	ordered := make([]triggeredAbility, 0, len(reps))
+	for _, src := range distinctBy(cards, sourceOf) {
+		of := filterBy(cards, sourceOf, src)
+		for _, grantor := range distinctBy(of, grantorOf) {
+			ordered = append(ordered, filterBy(of, grantorOf, grantor)...)
+		}
+	}
+	return append(ordered, lasting...)
+}
+
+// orderableFor renders a representative for the ReactionOrderer: a card ability
+// shows its source card, a duration reaction its rendered effect.
+func (g *Game) orderableFor(r triggeredAbility) OrderableReaction {
+	if r.lasting {
+		return OrderableReaction{Label: r.le.Do.describe()}
+	}
+	return OrderableReaction{Card: r.source, HasCard: true, Label: g.cat.def(r.source).Name}
+}
+
+// expandMembers expands each ordered representative back to every pending ability
+// sharing its identity, so a collapsed batch resolves together in the chosen slot.
+func expandMembers(
+	ordered []triggeredAbility,
+	members map[string][]triggeredAbility,
+) []triggeredAbility {
+	out := make([]triggeredAbility, 0, len(ordered))
+	for _, r := range ordered {
+		out = append(out, members[identityOf(r)]...)
+	}
+	return out
+}
+
+// isPermutation reports whether perm is a permutation of 0..n-1, so a malformed
+// ReactionOrderer result falls back to the default order rather than dropping or
+// duplicating a reaction.
+func isPermutation(perm []int, n int) bool {
+	if len(perm) != n {
+		return false
+	}
+	seen := make([]bool, n)
+	for _, i := range perm {
+		if i < 0 || i >= n || seen[i] {
+			return false
+		}
+		seen[i] = true
+	}
+	return true
 }
 
 // abilityIdentity keys an ability by what it will do — its trigger and rendered
@@ -857,6 +1086,18 @@ func (g *Game) orderTriggered(
 // that would actually resolve differently.
 func abilityIdentity(a Ability) string {
 	return strconv.Itoa(int(a.Trigger)) + "\x00" + a.Effect.Text()
+}
+
+// identityOf keys any representative — a card ability by abilityIdentity, a
+// duration reaction by its event, amount, and rendered effect. The duration key is
+// prefixed so it can never collide with a card ability's, keeping the two kinds
+// from collapsing into one representative.
+func identityOf(t triggeredAbility) string {
+	if t.lasting {
+		return "L\x00" + strconv.Itoa(int(t.le.On)) + "\x00" +
+			strconv.Itoa(int(t.le.Amount)) + "\x00" + t.le.Do.describe()
+	}
+	return abilityIdentity(t.ability)
 }
 
 // collapseIdentical groups pending by ability identity in first-seen order,
@@ -869,7 +1110,7 @@ func collapseIdentical(
 	members := map[string][]triggeredAbility{}
 	var reps []triggeredAbility
 	for _, t := range pending {
-		k := abilityIdentity(t.ability)
+		k := identityOf(t)
 		if _, seen := members[k]; !seen {
 			reps = append(reps, t)
 		}
@@ -911,11 +1152,29 @@ func filterBy(
 // triggeredAbility is an ability waiting to resolve in a trigger window. It
 // retains the triggering card as source so a granted "purge this creature"
 // resolves against the creature that gained it rather than the card that granted
-// it, and the granting card as grantor for ordering and attribution.
+// it, and the granting card as grantor for ordering and attribution. it/hasIt is
+// the "it" the ability resolves against — unset for a card's own "after I ..."
+// ability, and the acting card for a bystander's "after a creature ..." reaction,
+// so a unified window can carry both self and bystander reactions at once. actor
+// is the player the ability resolves for: its own controller for a natural
+// trigger, or someone acting on its behalf (Remote Access). A window is ordered by
+// the active player but each entry still resolves for its own actor, so a
+// bystander's "after an enemy creature reaps: gain Æmber" credits its owner.
 type triggeredAbility struct {
 	source  LocalID
 	grantor LocalID
 	ability Ability
+	actor   int8
+	it      LocalID
+	hasIt   bool
+	// lasting marks a duration reaction from the lasting registry (Full Moon,
+	// Charge!, Crystal Hive) rather than a card's printed ability. It has no source
+	// card in play, so it carries its LastingEffect in le and resolves through
+	// resolveReaction; its subject is it and its controller is actor. Carrying it in
+	// the same slice lets a window order duration reactions together with the card
+	// abilities that fire on the same event (ADR 0013).
+	lasting bool
+	le      LastingEffect
 }
 
 // destroyedAbilities collects every Destroyed ability the creatures about to be

@@ -25,7 +25,10 @@ var EeOnTheFringes = card.New(
 		Cond: card.ItIs{House: card.House.Self},
 		Then: card.May{
 			Do: card.Then{
-				First:  card.PurgeCard{Zone: card.Discard, House: card.House.Self},
+				First: card.PurgeCard{
+					Player:    card.ChosenPlayer,
+					Selection: card.Chosen{House: card.House.Self},
+				},
 				Result: card.StealAember{Amount: 1},
 			},
 		},

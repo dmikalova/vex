@@ -17,11 +17,7 @@ var HorsemanOfPestilence = card.New(
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "248"),
-	card.Connects(
-		card.PullExact(HorsemanOfDeath, 1),
-		card.PullExact(HorsemanOfFamine, 1),
-		card.PullExact(HorsemanOfWar, 1),
-	),
+	card.LeadsCluster(horsemenCluster),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Horseman, card.Traits.Spirit),
 	card.WithAbility(card.Trigger.PlayFightReap, card.DealDamage{

@@ -16,6 +16,7 @@ var HelpFromFutureSelf = card.New(
 	card.Type.Tactic,
 	card.Rarity.Connected,
 	card.Provenance(card.CotA, "111"),
+	card.InCluster(timetravellerCluster),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{

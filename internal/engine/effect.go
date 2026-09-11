@@ -213,6 +213,14 @@ func (ctx *EffectContext) ChooseCreature(prompt string, candidates []LocalID) (L
 	return ctx.Resolver.ChooseCreature(ctx.Controller, ctx.Source, prompt, candidates)
 }
 
+// previewBadge hints the controller's client at the status the creature it is
+// about to choose will receive, so the client can badge each candidate as it is
+// picked. Send the badge before a choose loop and the zero badge after it, to
+// begin and end the preview. Display-only.
+func (ctx *EffectContext) previewBadge(badge SelectionBadge) {
+	ctx.Resolver.PreviewBadge(ctx.Controller, badge)
+}
+
 // dealDamage deals a batch of ability damage, crediting the resolving card so each
 // hit narrates "<source> deals N damage to <target>" rather than a bare "takes N
 // damage" line. Damage a card deals itself keeps the bare line (see damageEntry).
@@ -299,6 +307,12 @@ const (
 	// player" and is how a cross-player reaction refers back to whoever caused it
 	// (Forgemaster Og drains "that player", the one who just forged).
 	ThatPlayer
+	// ChosenPlayer is a player the controller chooses at resolution — used where a
+	// zone-movement effect acts on "a discard pile" the controller picks (Creeping
+	// Oblivion). It names no fixed side, so PlayerFor cannot resolve it; the effect
+	// that uses it resolves the choice itself (PurgeCard picks among the piles that
+	// hold a matching card).
+	ChosenPlayer
 )
 
 // valid reports whether p names a real player (not the unset zero value).

@@ -2,6 +2,14 @@ package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
+// fayginCluster pulls a couple of Urchins into Faygin's pod — a Pull cluster, at
+// least two averaging about two and a half (ADR 0036).
+var fayginCluster = card.Cluster{
+	Name:     "Faygin",
+	Strategy: card.ClusterStrategy.Pull,
+	Trigger:  card.ClusterTrigger.ByLead,
+}
+
 // Faygin
 //
 //	House:  Shadows
@@ -18,9 +26,7 @@ var Faygin = card.New(
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "300"),
-	card.Connects(
-		card.Pull(Urchin, 2),
-	),
+	card.LeadsCluster(fayginCluster),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human, card.Traits.Thief),
 	card.WithKeywords(card.Keyword.Elusive),

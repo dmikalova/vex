@@ -2,6 +2,14 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
+// garciasBlasterCluster pulls a Sensor Chief Garcia into Garcia's Blaster's pod —
+// a Pull cluster, at least one averaging about one and a quarter (ADR 0036).
+var garciasBlasterCluster = card.Cluster{
+	Name:     "Garcia's Blaster",
+	Strategy: card.ClusterStrategy.Pull,
+	Trigger:  card.ClusterTrigger.ByLead,
+}
+
 // Garcia's Blaster
 //
 //	House:  Star Alliance
@@ -18,7 +26,7 @@ var GarciasBlaster = card.New(
 	card.Type.Upgrade,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "347"),
-	card.Connects(card.Pull(SensorChiefGarcia, 1)),
+	card.LeadsCluster(garciasBlasterCluster),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightReap(card.ChooseOne{Options: []card.Effect{

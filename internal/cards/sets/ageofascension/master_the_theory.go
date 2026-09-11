@@ -29,7 +29,12 @@ var MasterTheTheory = card.New(
 					Player: card.Opponent,
 					Type:   card.Type.Creature,
 				},
-				Do: card.May{Do: card.ArchiveFromHand{Amount: 1}},
+				Do: card.May{
+					Do: card.ArchiveCard{
+						Zone:      card.Hand,
+						Selection: card.Chosen{Optional: true},
+					},
+				},
 			},
 		}),
 )

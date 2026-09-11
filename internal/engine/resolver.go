@@ -424,9 +424,6 @@ type ZoneResolver interface {
 	EndShuffleBatch(source LocalID)
 	// ArchiveFromHand moves a card from its owner's hand to their archives.
 	ArchiveFromHand(id LocalID)
-	// ArchiveRandomFromHand moves one uniformly random card from a player's hand
-	// to their archives (Eureka!).
-	ArchiveRandomFromHand(owner int)
 	// ArchiveFromDiscard moves a card from a player's discard pile to their archives.
 	ArchiveFromDiscard(owner int, id LocalID)
 	// ArchiveFromPurge moves a card from a player's purge pile to their archives —
@@ -435,9 +432,6 @@ type ZoneResolver interface {
 	// ArchiveTopOfDeck moves the top card of a player's deck to their archives,
 	// reporting whether a card was available.
 	ArchiveTopOfDeck(player int) bool
-	// ArchiveTopOfDiscard moves the top card of a player's discard pile to their
-	// archives, reporting whether a card was available.
-	ArchiveTopOfDiscard(player int) bool
 	// DiscardTopOfDeck moves the top card of a player's deck to their discard pile,
 	// returning that card and whether one was available.
 	DiscardTopOfDeck(player int) (LocalID, bool)
@@ -689,6 +683,11 @@ type ChoiceResolver interface {
 	// and whether any candidate was available. The pick advances the game's RNG, so
 	// it is the shared draw behind a Random selection.
 	ChooseRandom(candidates []LocalID) (LocalID, bool)
+	// PreviewBadge hints the choosing player's client at the status the creature it
+	// is about to choose will receive (the damage a per-instance pick deals, the
+	// ward a "ward N" places), so the client can badge the candidate. Display-only:
+	// a chooser that cannot show a badge ignores it.
+	PreviewBadge(player int, badge SelectionBadge)
 }
 
 // Logger narrates resolved outcomes to the game log (ADR 0011). An effect does

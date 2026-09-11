@@ -36,6 +36,9 @@ func TestRedPlanetRayGun(t *testing.T) {
 		})
 
 		h.P1.Reap(host)
+		// Three Mars creatures in play, so three instances of 1 damage; all on enemy.
+		h.P1.ClickCard(enemy)
+		h.P1.ClickCard(enemy)
 		h.P1.ClickCard(enemy)
 
 		h.Expect(enemy).Damage(3) // three Mars creatures in play

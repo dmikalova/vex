@@ -2,6 +2,14 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
+// ingramsBlasterCluster pulls a Medic Ingram into Ingram's Blaster's pod — a Pull
+// cluster, at least one averaging about one and a quarter (ADR 0036).
+var ingramsBlasterCluster = card.Cluster{
+	Name:     "Ingram's Blaster",
+	Strategy: card.ClusterStrategy.Pull,
+	Trigger:  card.ClusterTrigger.ByLead,
+}
+
 // Ingram's Blaster
 //
 //	House:  Star Alliance
@@ -18,7 +26,7 @@ var IngramsBlaster = card.New(
 	card.Type.Upgrade,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "348"),
-	card.Connects(card.Pull(MedicIngram, 1)),
+	card.LeadsCluster(ingramsBlasterCluster),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightReap(card.ChooseOne{Options: []card.Effect{

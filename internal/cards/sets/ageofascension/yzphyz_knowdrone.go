@@ -23,7 +23,7 @@ var YzphyzKnowdrone = card.New(
 	card.WithTraits(card.Traits.Martian, card.Traits.Scientist),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
-			card.ArchiveFromHand{Amount: 1},
+			card.ArchiveCard{Zone: card.Hand, Selection: card.Chosen{}},
 			card.PurgeArchivedCardThen{
 				Then: card.Stun{Target: card.Target.Creature},
 			},

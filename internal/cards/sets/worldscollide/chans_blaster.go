@@ -2,6 +2,15 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
+// chansBlasterCluster pulls a Commander Chan into Chan's Blaster's pod — a Pull
+// cluster, at least one averaging about one and a quarter (ADR 0036). The officer
+// is a Common that rolls on its own too, so this tops the pod up.
+var chansBlasterCluster = card.Cluster{
+	Name:     "Chan's Blaster",
+	Strategy: card.ClusterStrategy.Pull,
+	Trigger:  card.ClusterTrigger.ByLead,
+}
+
 // Chan's Blaster
 //
 //	House:  Star Alliance
@@ -18,7 +27,7 @@ var ChansBlaster = card.New(
 	card.Type.Upgrade,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "345"),
-	card.Connects(card.Pull(CommanderChan, 1)),
+	card.LeadsCluster(chansBlasterCluster),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightReap(card.ChooseOne{Options: []card.Effect{

@@ -18,6 +18,7 @@ var ChiefEngineerWalls = card.New(
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "293"),
+	card.InCluster(card.Pulled(wallsBlasterCluster, 1, 1.25)),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human),
 	card.WithKeywords(card.Keyword.Elusive),

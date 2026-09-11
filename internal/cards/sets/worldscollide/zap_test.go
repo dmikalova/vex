@@ -33,6 +33,9 @@ func TestZap(t *testing.T) {
 		})
 
 		h.P1.Play(Zap)
+		// Star Alliance, Logos, Brobnar = 3 houses, so three instances of 1 damage.
+		h.P1.ClickCard(foe)
+		h.P1.ClickCard(foe)
 		h.P1.ClickCard(foe)
 
 		// Star Alliance, Logos, Brobnar = 3 houses in play.

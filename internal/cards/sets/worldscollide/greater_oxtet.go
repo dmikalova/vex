@@ -25,7 +25,7 @@ var GreaterOxtet = card.New(
 		card.Trigger.EndOfReadyStep, card.Then{
 			First: card.PurgeFromHand{
 				Player:    card.Controller,
-				Selection: card.Chosen{Mandatory: true},
+				Selection: card.Chosen{},
 			},
 			Result: card.AddPowerCounter{Target: card.Target.This, Amount: 2},
 		}),

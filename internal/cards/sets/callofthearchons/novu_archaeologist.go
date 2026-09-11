@@ -19,5 +19,8 @@ var NovuArchaeologist = card.New(
 	card.Provenance(card.CotA, "147"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Scientist),
-	card.WithAbility(card.Trigger.Action, card.ArchiveFromDiscard{}),
+	card.WithAbility(
+		card.Trigger.Action,
+		card.ArchiveCard{Zone: card.Discard, Selection: card.Chosen{}},
+	),
 )

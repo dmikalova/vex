@@ -38,3 +38,30 @@ func TestForgemasterOgDrainsForger(t *testing.T) {
 		t.Errorf("controller's pool after their forge = %d, want 0", got)
 	}
 }
+
+// TestForgeKeyOrdersMultipleReactions proves the "after you forge a key" reactions
+// on two different cards are gathered into one window the forger orders, not fired
+// one at a time in board order. A reversing chooser resolves the later card's
+// reaction first, which it could not do if each fired in its own window.
+func TestForgeKeyOrdersMultipleReactions(t *testing.T) {
+	g := started(t)
+	var log []string
+	g.SetChooser(0, &countingReverseChooser{})
+	g.AddToBattleline(
+		testCreature("first", 3, WithAbility(TriggerAfterForgeKey, orderMark{&log, "first"})),
+		0,
+	)
+	g.AddToBattleline(
+		testCreature("second", 3, WithAbility(TriggerAfterForgeKey, orderMark{&log, "second"})),
+		0,
+	)
+
+	g.forgeKeyFree(0)
+
+	if len(log) != 2 || log[0] != "second" || log[1] != "first" {
+		t.Errorf(
+			"forge reaction order = %v, want [second first] (the forger orders one window)",
+			log,
+		)
+	}
+}

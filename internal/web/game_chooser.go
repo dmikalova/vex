@@ -105,6 +105,41 @@ func (c *webChooser) OrderCreatures(
 	return append(ordered, remaining...)
 }
 
+// OrderReactions implements the engine's ReactionOrderer: a trigger window that
+// mixes card abilities with duration reactions (Full Moon, Charge!, Crystal Hive)
+// is ordered here as a whole. The card abilities are ordered by clicking their
+// cards on the board, exactly like any trigger window, and the duration reactions
+// — which have no card to click — resolve after in the order the engine gave. A
+// card that appears more than once (two differently-worded abilities) makes the
+// click ordering ambiguous, so that window is left in its default order.
+func (c *webChooser) OrderReactions(
+	prompt string,
+	reactions []engine.OrderableReaction,
+) []int {
+	byCard := make(map[engine.LocalID]int, len(reactions))
+	var ids []engine.LocalID
+	for i, r := range reactions {
+		if !r.HasCard {
+			continue
+		}
+		if _, dup := byCard[r.Card]; dup {
+			return nil // ambiguous: fall back to the engine's default order
+		}
+		byCard[r.Card] = i
+		ids = append(ids, r.Card)
+	}
+	ordered := make([]int, 0, len(reactions))
+	for _, id := range c.OrderCreatures("", prompt, ids) {
+		ordered = append(ordered, byCard[id])
+	}
+	for i, r := range reactions {
+		if !r.HasCard {
+			ordered = append(ordered, i)
+		}
+	}
+	return ordered
+}
+
 // raise shows a card prompt on the UI goroutine and blocks the action goroutine
 // until a candidate is clicked, the prompt is declined or Auto-resolved, or it is
 // cancelled. ordering marks an Orderer prompt so the controls offer Auto-resolve.
@@ -341,6 +376,7 @@ func (g *game) chooseCandidate(_ app.Context, id engine.LocalID) {
 	// follows (Universal Translator uses a creature, then asks how) can lift it and
 	// put its use buttons on it rather than in the sidebar.
 	g.useTarget, g.hasUseTarget = id, true
+	g.recordBadge(id)
 	select {
 	case g.chooser.reply <- chooseReply{id: id, ok: true}:
 	default:
@@ -404,7 +440,7 @@ func (g *game) chooseOptionIdx(i int) app.EventHandler {
 // (index + 1), per the side the player chose first. It does nothing until a side
 // has been chosen, so the line is only answerable once the player has said which
 // way the new creature lands.
-func (g *game) choosePositionCandidate(_ app.Context, id engine.LocalID) {
+func (g *game) choosePositionCandidate(ctx app.Context, id engine.LocalID) {
 	if !g.choosingPosition || !g.positionSideChosen {
 		return
 	}
@@ -420,6 +456,10 @@ func (g *game) choosePositionCandidate(_ app.Context, id engine.LocalID) {
 	}
 	if g.positionRight {
 		pos++
+	}
+	if g.manualPlacing {
+		g.manualPlaceInPlay(ctx, pos)
+		return
 	}
 	g.answerPosition(pos)
 }

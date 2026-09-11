@@ -10,7 +10,7 @@ package engine
 // left flank, the right flank, or between any two creatures — so it can enter
 // mid-line; interior reports a between-two-creatures landing, which the log
 // narrates differently. Otherwise the creature lands on a flank: the flank fl
-// names when the play dictated one, or the flank its controller is prompted for
+// names when the play dictated one, or the flank the active player is prompted for
 // when fl is flankUnset. The engine never assumes a flank — an effect that puts a
 // creature into play without naming a side always asks (ADR 0010's invalid-zero
 // discipline, applied to placement).
@@ -34,21 +34,28 @@ func (g *Game) deployPosition(
 		return 0, false
 	case flankRightmost:
 		return n, false
-	default: // flankUnset: the play did not dictate a side, so the controller chooses.
-		if g.chooseFlank(player, id) == flankLeftmost {
+	default: // flankUnset: the play did not dictate a side, so the active player chooses.
+		if g.chooseFlank(id) == flankLeftmost {
 			return 0, false
 		}
 		return n, false
 	}
 }
 
-// chooseFlank asks a player which flank a creature entering a non-empty battleline
-// takes, when the play did not dictate one. A non-Deploy creature can only land on
-// a flank, so it offers just the two ends rather than the Deploy chooser's full
-// set of interior gaps.
-func (g *Game) chooseFlank(player int, id LocalID) flank {
+// chooseFlank asks the active player which flank a creature entering a non-empty
+// battleline takes, when the play did not dictate one. The active player always
+// makes this call, even when the creature enters the opponent's line (a creature
+// put into play under the opponent). A non-Deploy creature can only land on a
+// flank, so it offers just the two ends rather than the Deploy chooser's full set
+// of interior gaps.
+func (g *Game) chooseFlank(id LocalID) flank {
 	prompt := FlankPromptPrefix + g.Name(id)
-	if g.ChooseOption(player, id, prompt, []string{FlankLeftLabel, FlankRightLabel}) == 0 {
+	if g.ChooseOption(
+		g.State.ActivePlayer,
+		id,
+		prompt,
+		[]string{FlankLeftLabel, FlankRightLabel},
+	) == 0 {
 		return flankLeftmost
 	}
 	return flankRightmost

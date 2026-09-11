@@ -21,7 +21,7 @@ var FeedingPit = card.New(
 		First: card.DiscardCard{
 			Player:    card.Controller,
 			Zone:      card.Hand,
-			Selection: card.Chosen{Mandatory: true, Type: card.Type.Creature},
+			Selection: card.Chosen{Type: card.Type.Creature},
 			Amount:    1,
 		},
 		Result: card.GainAember{

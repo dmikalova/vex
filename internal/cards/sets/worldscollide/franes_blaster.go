@@ -2,6 +2,14 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
+// franesBlasterCluster pulls a First Officer Frane into Frane's Blaster's pod — a
+// Pull cluster, at least one averaging about one and a quarter (ADR 0036).
+var franesBlasterCluster = card.Cluster{
+	Name:     "Frane's Blaster",
+	Strategy: card.ClusterStrategy.Pull,
+	Trigger:  card.ClusterTrigger.ByLead,
+}
+
 // Frane's Blaster
 //
 //	House:  Star Alliance
@@ -18,7 +26,7 @@ var FranesBlaster = card.New(
 	card.Type.Upgrade,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "346"),
-	card.Connects(card.Pull(FirstOfficerFrane, 1)),
+	card.LeadsCluster(franesBlasterCluster),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightReap(card.ChooseOne{Options: []card.Effect{

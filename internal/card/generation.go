@@ -22,7 +22,90 @@ type (
 	// ConnectedCard is one card a connection pulls; build one with card.Pull or
 	// card.PullSometimes.
 	ConnectedCard = deckgen.ConnectedCard
+	// Cluster declares a card family deck generation places together (ADR 0036):
+	// its name, the strategy that fills it, and the trigger that fires it. Declare
+	// one shared value and hand it to every member with card.InCluster, so all
+	// members carry identical placement rules that cannot drift.
+	//
+	//	var shardCluster = card.Cluster{
+	//	  Name:     "Shard",
+	//	  Strategy: card.ClusterStrategy.OnePerHouse,
+	//	  Trigger:  card.ClusterTrigger.ByAnyMember,
+	//	}
+	Cluster = deckgen.ClusterMembership
 )
+
+// ClusterStrategy groups the cluster fill strategies, e.g.
+// card.ClusterStrategy.OnePerHouse.
+var ClusterStrategy = clusterStrategies{
+	WholePool:   deckgen.WholePool,
+	RandomCount: deckgen.RandomCount,
+	SelfPull:    deckgen.SelfPull,
+	PullExact:   deckgen.PullExact,
+	Pull:        deckgen.Pull,
+	OnePerHouse: deckgen.OnePerHouse,
+}
+
+type clusterStrategies struct {
+	// WholePool places every member of the cluster (the four Horsemen).
+	WholePool deckgen.ClusterStrategy
+	// RandomCount places a random number of members in [Cluster.Min, Cluster.Max]
+	// (the seven sins).
+	RandomCount deckgen.ClusterStrategy
+	// SelfPull places a random number of copies of the single triggering member
+	// itself — Cluster.Min at least, averaging about Cluster.Mean, with a thin tail
+	// to a full pod (Plague Rat pulls more Plague Rats).
+	SelfPull deckgen.ClusterStrategy
+	// PullExact places one copy of each non-lead member per lead instance in the
+	// pod (two Timetravellers pull two Help from Future Self). It is always ByLead.
+	PullExact deckgen.ClusterStrategy
+	// Pull places a per-partner random count of each non-lead member when the lead
+	// rolls in (Troop Call pulls Niffle Apes, less often a Niffle Queen). It is
+	// always ByLead; each pulled partner sets its own rate with card.Pulled.
+	Pull deckgen.ClusterStrategy
+	// OnePerHouse places one member in each of the deck's Houses; it is deck-wide
+	// and gated complete-by-construction — every House must have a member (the
+	// Shards).
+	OnePerHouse deckgen.ClusterStrategy
+}
+
+// ClusterTrigger groups the cluster triggers, e.g.
+// card.ClusterTrigger.ByAnyMember.
+var ClusterTrigger = clusterTriggers{
+	ByLead:      deckgen.ByLead,
+	ByAnyMember: deckgen.ByAnyMember,
+}
+
+type clusterTriggers struct {
+	// ByLead fires the cluster only when its lead member is placed (the Horseman
+	// that pulls the others).
+	ByLead deckgen.ClusterTrigger
+	// ByAnyMember fires the cluster when any member is placed (any Shard, any sin).
+	ByAnyMember deckgen.ClusterTrigger
+}
+
+// InCluster marks the card a member of the given cluster, copying the cluster's
+// strategy and trigger onto it so deck generation can resolve the whole family
+// from any one member.
+func InCluster(c Cluster) Option {
+	return func(b *builder) { b.profile.Cluster = c }
+}
+
+// LeadsCluster marks the card the lead member of a ByLead cluster — the Horseman
+// whose placement pulls the rest — in addition to making it a member.
+func LeadsCluster(c Cluster) Option {
+	c.Lead = true
+	return func(b *builder) { b.profile.Cluster = c }
+}
+
+// Pulled returns a copy of a Pull cluster carrying this partner's own pull rate:
+// at least min copies when the lead rolls in, averaging about mean, on a Poisson
+// tail (min 0 pulls none most of the time). Hand it to card.InCluster on each
+// pulled partner; the lead carries the plain cluster via card.LeadsCluster.
+func Pulled(c Cluster, min int, mean float64) Cluster {
+	c.Min, c.Mean = min, mean
+	return c
+}
 
 // MaterializeFunc adapts a plain function to a Materializer, so a template can be
 // written inline: card.Template(func(ctx card.SlotContext, r *rand.Rand) card.Definition { ... }).

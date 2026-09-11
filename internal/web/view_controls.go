@@ -469,6 +469,17 @@ func (g *game) optionChooser() app.UI {
 		}
 		return app.Div().Class("btn-col").Body(body...)
 	}
+	if g.flankOptions() {
+		return app.Div().Class("btn-col").Body(
+			app.Div().Class("prompt").Text(g.optionPrompt),
+			btn(engine.FlankLeftLabel, g.chooseOptionIdx(0),
+				cx("btn-primary", "btn-flank", "btn-flank--left",
+					ifCls(g.isButtonCursor(0), "btn-cursor"))),
+			btn(engine.FlankRightLabel, g.chooseOptionIdx(1),
+				cx("btn-primary", "btn-flank", "btn-flank--right",
+					ifCls(g.isButtonCursor(1), "btn-cursor"))),
+		)
+	}
 	if g.houseOptions() {
 		return app.Div().Class("btn-col").Body(
 			app.Div().Class("section-title").Text("Choose a house:"),
@@ -498,6 +509,15 @@ func (g *game) optionChooser() app.UI {
 				cx(kind, ifCls(g.isButtonCursor(i), "btn-cursor")))
 		}),
 	)
+}
+
+// flankOptions reports whether the current option labels are exactly the two
+// battleline flanks, so a "move it to a flank" prompt (Reassembling Automaton,
+// Harland Mindlock) is drawn with the same flank buttons as placing a creature.
+func (g *game) flankOptions() bool {
+	return len(g.optionLabels) == 2 &&
+		g.optionLabels[0] == engine.FlankLeftLabel &&
+		g.optionLabels[1] == engine.FlankRightLabel
 }
 
 // houseOptions reports whether every current option label names a house, so the
@@ -692,7 +712,11 @@ func (g *game) deployActions() ([]cardAction, string) {
 		)
 	}
 	if g.g.Manual() {
-		acts = append(acts, cardAction{"Cancel", "btn-secondary", g.cancelChooser})
+		cancel := g.cancelChooser
+		if g.manualPlacing {
+			cancel = g.cancelManualPlace
+		}
+		acts = append(acts, cardAction{"Cancel", "btn-secondary", cancel})
 	}
 	return acts, note
 }
@@ -718,6 +742,12 @@ func (g *game) handCardActions() ([]cardAction, string) {
 	// barred by the first-turn one-card rule).
 	if g.discardableFromHand(g.sel) {
 		acts = append(acts, cardAction{"Discard", "btn-danger", g.discard})
+	}
+	// Manual mode adds a "Put into play" that stages the card straight onto the
+	// board — no play effects, no bonus Æmber — deploying a creature anywhere in
+	// the line.
+	if g.g.Manual() {
+		acts = append(acts, cardAction{"Put into play", "btn-secondary", g.manualPlay})
 	}
 	return acts, note
 }

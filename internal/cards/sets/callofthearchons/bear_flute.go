@@ -2,6 +2,14 @@ package callofthearchons
 
 import "github.com/dmikalova/vactrol/internal/card"
 
+// bearFluteCluster pulls a couple of Ancient Bears into Bear Flute's pod — a Pull
+// cluster, at least two averaging about two and a half (ADR 0036).
+var bearFluteCluster = card.Cluster{
+	Name:     "Bear Flute",
+	Strategy: card.ClusterStrategy.Pull,
+	Trigger:  card.ClusterTrigger.ByLead,
+}
+
 // Bear Flute
 //
 //	House:  Untamed
@@ -16,9 +24,7 @@ var BearFlute = card.New(
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "340"),
-	card.Connects(
-		card.Pull(AncientBear, 2),
-	),
+	card.LeadsCluster(bearFluteCluster),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.Action, card.Sentences{Effects: []card.Effect{

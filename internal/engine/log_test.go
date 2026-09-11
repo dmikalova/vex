@@ -222,10 +222,27 @@ func TestLogEntryText(t *testing.T) {
 			"P0 discards Card6 from the top of their deck",
 		},
 		{
+			TopOfDeckDiscarded{Player: 1, Card: 6, Source: 3, HasSource: true},
+			"Card3 discards Card6 from the top of P1's deck",
+		},
+		{
 			CardMoved{Player: 0, Card: 6, From: Deck, To: Discard},
 			"P0 discards Card6 from their deck",
 		},
 		{DeckAndDiscardSwapped{Player: 1}, "P1 swaps their deck and discard pile"},
+		{
+			ShuffledIntoDeck{Player: 0, DiscardCards: []LocalID{6}, HandCount: 2},
+			"P0 shuffles Card6 from their discard pile and 2 cards from their hand into their deck",
+		},
+		{
+			ShuffledIntoDeck{Player: 1, DiscardCards: []LocalID{4, 6}},
+			"P1 shuffles Card4 and Card6 from their discard pile into their deck",
+		},
+		{
+			ShuffledIntoDeck{Player: 0, ArchivesCount: 1},
+			"P0 shuffles 1 card from their archives into their deck",
+		},
+		{ShuffledIntoDeck{Player: 1}, "P1 shuffles their deck"},
 		{CardDiscarded{Player: 0, Card: 6}, "P0 discards Card6"},
 		{
 			CardDiscarded{Player: 0, Card: 6, Source: 3, HasSource: true},
@@ -392,6 +409,7 @@ func TestLogEntryText(t *testing.T) {
 		},
 		{ManualExhaustSet{Card: 3, Exhausted: true}, "Card3 is manually exhausted"},
 		{ManualExhaustSet{Card: 3}, "Card3 is manually readied"},
+		{ManualPlacedInPlay{Player: 0, Card: 3}, "P0 manually puts Card3 into play"},
 		{ManualMatchFull{Player: 1}, "P1 cannot add a card: this match is full"},
 		{ManualCardAdded{Player: 0, Card: 3}, "P0 manually adds Card3 to hand"},
 		{ManualAemberSet{Player: 0, Amount: 7}, "P0 now has 7 Æmber (manual)"},
