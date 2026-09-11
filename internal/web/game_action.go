@@ -169,6 +169,7 @@ func (g *game) snapshot() undoEntry {
 func (g *game) beginAction() {
 	g.confirmEndTurn = false
 	g.btnCursor, g.hasBtnCursor = 0, false
+	g.hasUseTarget = false
 	g.handSlot = g.selHandSlot()
 	g.clearFlashes()
 	g.undo = append(g.undo, g.snapshot())

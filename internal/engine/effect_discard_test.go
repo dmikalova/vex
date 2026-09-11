@@ -222,6 +222,41 @@ func TestPutFromDiscardTypeOrTrait(t *testing.T) {
 	}
 }
 
+// May{PutFromDiscard} with no matching card in the discard is vacuous, so the
+// controller is never asked (Chief Engineer Walls with no upgrade or Robot in the
+// discard prompts for nothing).
+func TestPutFromDiscardVacuousUnderMay(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	human := g.Register(
+		NewCard("pilot", StarAlliance, Creature, Common, WithPower(3), WithTraits(Human)),
+		0,
+	)
+	g.State.Discard[0].add(human)
+	ch := &optionRecorder{}
+	g.SetChooser(0, ch)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	may := May{Do: PutFromDiscard{Type: Upgrade, OrTrait: Robot, Destination: ToHand}}
+	may.Resolve(ctx)
+	if ch.asked != 0 {
+		t.Errorf("prompts with nothing to recover = %d, want 0", ch.asked)
+	}
+	if len(g.Hand(0)) != 0 {
+		t.Error("nothing should have moved to hand")
+	}
+
+	// Add a Robot: the choice becomes real, so the card is offered and recovered.
+	robot := g.Register(
+		NewCard("droid", StarAlliance, Creature, Common, WithPower(3), WithTraits(Robot)),
+		0,
+	)
+	g.State.Discard[0].add(robot)
+	may.Resolve(ctx)
+	if !g.State.Hand[0].contains(robot) {
+		t.Error("the Robot should be recovered once the choice is real")
+	}
+}
+
 func TestDiscardFromHandEach(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	// Opponent (player 1) hand: a Mars creature, a Mars action, a Sanctum creature.

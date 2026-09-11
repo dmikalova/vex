@@ -48,6 +48,81 @@ func (g *game) manualReady(ctx app.Context, _ app.Event) {
 	g.save(ctx)
 }
 
+// manualGraft begins host targeting to thread the selected card face up under an
+// in-play host (a graft). manualPlaceUnder is its face-down counterpart. Both
+// only arm the targeting; the actual attach happens when a host is clicked
+// (attachToHost).
+func (g *game) manualGraft(_ app.Context, _ app.Event) {
+	if !g.hasSel || !g.g.Manual() {
+		return
+	}
+	g.hostTargeting, g.hostFaceDown = true, false
+}
+
+// manualPlaceUnder begins host targeting to place the selected card face down
+// under an in-play host.
+func (g *game) manualPlaceUnder(_ app.Context, _ app.Event) {
+	if !g.hasSel || !g.g.Manual() {
+		return
+	}
+	g.hostTargeting, g.hostFaceDown = true, true
+}
+
+// attachToHost threads the selected card under the clicked host — face up for a
+// graft, face down for a place-under — then clears the targeting and selection.
+func (g *game) attachToHost(ctx app.Context, host engine.LocalID) {
+	if !g.hostTargeting || !g.hasSel || !g.g.Manual() || host == g.sel {
+		return
+	}
+	g.beginAction()
+	g.g.ManualAttachUnder(host, g.sel, g.hostFaceDown)
+	g.hostTargeting = false
+	g.clearSelection()
+	g.save(ctx)
+}
+
+// cancelHostTargeting backs out of a Graft / Place under host pick without
+// attaching, leaving the card selected.
+func (g *game) cancelHostTargeting(_ app.Context, _ app.Event) {
+	g.hostTargeting = false
+}
+
+// manualToHand sends the selected upgrade or under-card to its owner's hand,
+// detaching it from its host first. It is offered only when the selection is
+// actually attached (isAttached).
+func (g *game) manualToHand(ctx app.Context, _ app.Event) {
+	if !g.hasSel || !g.g.Manual() {
+		return
+	}
+	g.beginAction()
+	g.g.ManualDetachToHand(g.sel)
+	g.clearSelection()
+	g.save(ctx)
+}
+
+// isAttached reports whether a card in play is an upgrade of, or placed under, a
+// host — the two states ManualDetachToHand can send back to hand. Upgrades are
+// found directly (HostOf); under-cards have no back-link reader, so the hosts'
+// Under chains are scanned.
+func (g *game) isAttached(id engine.LocalID) bool {
+	if _, ok := g.g.HostOf(id); ok {
+		return true
+	}
+	for p := 0; p < 2; p++ {
+		for _, host := range g.g.Battleline(p) {
+			if containsID(g.g.Under(host), id) {
+				return true
+			}
+		}
+		for _, host := range g.g.Artifacts(p) {
+			if containsID(g.g.Under(host), id) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // manualExhaust sets the selected card's exhausted flag.
 func (g *game) manualExhaust(ctx app.Context, _ app.Event) {
 	if !g.hasSel || !g.g.Manual() {

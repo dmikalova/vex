@@ -337,14 +337,20 @@ printed wording on toll cards) is retired so every player-to-player transfer rea
 the same way, matching Interdimensional Graft's "they must give you their
 remaining Æmber".
 
-| Original                                                           | Curated                                                             |
-| ------------------------------------------------------------------ | ------------------------------------------------------------------- |
-| `Your opponent must pay you 1 Æmber in order to play an artifact.` | `Your opponent must give you 1 Æmber in order to play an artifact.` |
-| `…they must pay you their remaining Æmber.`                        | `…they must give you their remaining Æmber.`                        |
+| Original                                                           | Curated                                                              |
+| ------------------------------------------------------------------ | -------------------------------------------------------------------- |
+| `Your opponent must pay you 1 Æmber in order to play an artifact.` | `In order to play an artifact, your opponent must give you 1 Æmber.` |
+| `…they must pay you their remaining Æmber.`                        | `…they must give you their remaining Æmber.`                         |
 
 The engine keeps the mechanic named `Toll` (the thing a card charges), but its
 rendered text says `give`. (Affected: Customs Office, Tentacus,
 Interdimensional Graft.)
+
+An `in order to` requirement states the requirement **up front**: `In order to do
+X, you must do Y` — the price comes after the thing it gates, so the reader learns
+what is restricted before what it costs, rather than having to backtrack. This
+applies to every toll (`In order to use an artifact, your opponent must give you 1
+Æmber.`) and to a play cost (`In order to play Truebaru, you must lose 3 Æmber.`).
 
 ## 19. The `action` card type is renamed `Tactic`
 

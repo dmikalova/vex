@@ -188,7 +188,17 @@ Then}` that composes existing zone-routing sub-effects (hand / archive / discard
   in a repeat/iterator that re-prompts for a target each iteration. All selections
   are made first, then all the damage is dealt **simultaneously**. Model as the
   generic `Repeat{}` node (above) wrapping `DealDamage{Amount: 1}` with a
-  per-iteration target choice and deferred simultaneous application.
+  per-iteration target choice and deferred simultaneous application.- **No engine path may auto-assume a flank when a creature changes battleline.**
+  The `TakeControl` effect now prompts for the flank on both its targeted and
+  host-creature (Collar) paths via `placeSeizedOnFlank`, but the raw engine mover
+  `placeUnderController` still `add`s the seized creature to the end of the
+  battleline (a flank) and other direct `takeControl` callers do not prompt — e.g.
+  the give-to-opponent play path in `game_play.go` (`g.takeControl(id, 1-player,
+id)`). Audit every path that moves a creature into a battleline (control changes,
+  gift-to-opponent, put-into-play) so the flank is either **prompted** (the player
+  gaining the creature chooses) or **explicitly declared by the card**, never
+  silently assumed. Fold the shared prompt into one seam so a new placement site
+  cannot forget it.
 
 ## Card wording / authoring
 
@@ -200,15 +210,31 @@ Then}` that composes existing zone-routing sub-effects (hand / archive / discard
 string` port stays `string`. Rationale (durable): a card that references another
   card by name is always within its own set and connected to it, so the value set is
   closed — the type prevents arbitrary strings.
+  NEEDS A DECISION (attempted, reverted): the change does **not** compose with the
+  codebase's actual authoring pattern. Cards reference another card not by a string
+  literal but by `OtherCard.Name` — the referenced card's `CardDefinition.Name`,
+  which is `string`. A named `CardName` field does **not** accept a typed `string`
+  variable, so every reference (~30 call sites across the set packages) would need
+  `card.Name(OtherCard.Name)` wrapping — uglier authoring, defeating the ergonomic
+  goal. The only clean alternative is to make `CardDefinition.Name` itself a
+  `CardName`, but `def.Name` is consumed as a plain `string` in 50+ engine sites
+  (logs, text rendering, invariants, the `Name(id) string` resolver), so that
+  ripples `string(...)` conversions through the whole engine for marginal type
+  safety. Pick one before implementing: (a) accept `card.Name("Literal")`-style
+  references and drop the `OtherCard.Name` pattern; (b) make `CardDefinition.Name` a
+  `CardName` and chase the engine-wide `string()` ripple; or (c) drop the item.
 - **Uncharted Lands self-reference.** Replace `Named("Uncharted Lands")` with a
   self-referencing target (`card.Target.Source`) that resolves to the granting card
   and renders its own name. Depends on the `card.Name` work.
 - **Generic zone-move `Match` predicate.** Replace the `Type` / `Trait` / `OrTrait`
   triple on `PutFromDiscard` (and its zone-movement siblings) with one composable
   `Match` predicate expressing a union of type/trait clauses (e.g. `Upgrade` OR
-  trait `Robot`). Gives one place to test "any match in the discard" — which also
-  fixes **Chief Engineer Walls**: skip the prompt as a vacuous choice when the
-  discard has no upgrades or robots.
+  trait `Robot`). Gives one place to test "any match in the discard".
+  DEFERRED (nicety, not a bug): the concrete **Chief Engineer Walls** bug — the
+  `May` prompt appearing when the discard has no upgrade or Robot — is already
+  fixed; `PutFromDiscard` now implements `vacuous()` (shared `matches` helper), so
+  `May` skips the empty choice. The `Match`-predicate consolidation across the
+  zone-movement siblings remains as an optional refactor.
 
 - **Orator Hissaro** could read: "Play: Exalt and ready each neighboring creature.
   For the remainder of the turn, those creatures belong to house Saurian."
@@ -219,13 +245,6 @@ string` port stays `string`. Rationale (durable): a card that references another
   target. Today it renders correctly but verbosely (target repeated three times).
 - **Borr-Nit** and similar could be atomized and recomposed further (decompose
   fused effects into shared nodes).
-- **Tentacus — reverse the clause direction.** Its ability is a cost the opponent
-  pays to act, so it should read as an "in order to" restriction:
-  "In order to use an artifact, your opponent must give you 1 Æmber" — the
-  restriction clause names the price and who pays it, rather than framing it from
-  the controller's side. Check the wording conventions in
-  [card-wording-rules.md](card-wording-rules.md) and whether a reversed-clause
-  restriction node already exists before adding one.
 
 ## Card catalog / provenance
 
@@ -233,55 +252,47 @@ _No outstanding items._
 
 ## Web — mobile, previews, layout
 
-- **Player-bar swipe through icons.** A touch that begins inside `.score-pill`
-  disables swipe tracking, so ending on an icon/`.tip` kills the horizontal scroll.
-  Let the player bar scroll horizontally on swipe even when the touch starts on an
-  icon.
 - **Player-bar tooltips render inside the bar.** Tooltips (CSS `.tip::after`,
   z-index 30) should overlay above the bar but now appear clipped inside it — fix
-  the overflow/stacking regression so they float over the bar again.
-- **Creature-as-upgrade play buttons.** Replace the single `Play` button above a
-  lifted creature-that-can-be-an-upgrade with two explicit buttons, `Play creature`
-  and `Play upgrade`. `Play upgrade` skips the flank step (upgrades take no flank);
-  `Play creature` keeps the flank prompt. Removes the later Creature/Upgrade sidebar
-  prompt.
+  the overflow/stacking regression so they float over the bar again. **BLOCKED /
+  needs bigger change:** `.score-pill` uses `overflow-x: auto` for scrolling, which
+  forces `overflow-y: hidden` (CSS rule) and clips every upward popover (`.tip`,
+  `.zone-roster`, deck list) — and that scroll is load-bearing for the swipe fix
+  above, so you cannot make it `overflow-y: visible`. The only correct fix is the
+  blessed JS-measured `position: fixed` popover pattern (extend the `clampFloating`
+  seam, convert the pure-CSS `::after` tips to positioned elements). Substantial
+  Go/JS change, not a CSS one-liner.
 - **Zone-select modal jumps to top.** After selecting a card from the zone viewer,
   a deferred `OnUpdate` remeasure repositions the modal/lifted card so it jumps to
-  the top a moment later. Stop the jump.
-- **Sidebar warnings one per line.** `.restrictions` is a wrapping flex row, so
-  Stealth Mode and Sensor Chief Garcia share a line when wide. Make each warning its
-  own line (column layout).
-- **Narp + Universal Translator illegal reap.** Universal Translator's "use" path
-  offers Reap on a creature neighboring Narp even though Narp forbids it; gate the
-  offered actions through the restriction check (`CanUseTo`) so the illegal Reap is
-  omitted.
-- **Universal Translator use-buttons above the creature.** When Universal
-  Translator selects a creature, show the normal use buttons (Fight / Reap / Action)
-  **above the creature**, like a normal selection, instead of as sidebar option
-  buttons.
-- **Text-less cards keep an empty textbox.** Cards with no trait/rules text (e.g.
-  Virtuous Works) currently skip the textbox; render an empty black textbox that
-  fills the card space instead.
-- **Manual mode: graft / place under / to hand.** With a card selected, add zone
-  options **"Graft"** (face up) and **"Place under"** (face down) that then prompt
-  the user to click an in-play host (creature or artifact). Add a **"To hand"**
-  action available when an upgrade or a card-under-a-host is selected, sending it to
-  hand.
-- **Deploy: choose the side first, then the creature.** Today the prompt is
-  {left-flank button, deploy-left toggle, deploy-right toggle, right-flank button}
-  and you deploy by clicking a creature with the toggle set. Replace it with a
-  {Deploy left, Deploy right} button pair; once the side is chosen, present the
-  creature selection. (Engine already models Deploy via
-  `deployPosition`/`chooseFlank`/`choosePosition`; this is the client prompt flow.)
+  the top a moment later. Stop the jump. **COULD NOT REPRODUCE:** in manual mode
+  (open zone viewer → select a deck card) the lifted copy stayed centered and
+  stable (no `--placed`, no style mutations over ~1.2s). The candidate fix (a
+  synchronous `measureFocus` in `selectZoneCard`) is a no-op for deck/discard cards
+  (never on the board). Re-verify the exact repro before touching it.
+- **Card iconography glyph sweep (blank/missing asset gaps).** Sweep every card
+  for missing/blank glyph assets (use the totality test that names uncovered
+  effects, and eyeball the strips) and fill the gaps. Goal: no card renders a blank
+  or broken glyph in its icon strip. (The Collar of Subordination zero-Target
+  `TakeControl` glyph is fixed — it now renders the "this creature" host noun.)
+- **A card is occasionally not dimmed on a new turn (stale selection carryover).**
+  Sometimes a card that should be dimmed/unplayable at the start of a turn stays
+  lit. Suspected cause: a per-slot selection/highlight state from the previous turn
+  is not cleared when the turn advances, so the slot keeps its old dimmed/lit
+  computation. Find where the client resets per-slot selection on turn change and
+  ensure the dim state is recomputed (not carried over) when a new turn starts.
+  Needs a concrete repro first.
 
 ## Logging
 
-_No outstanding items._
+- **Effect-use logs should narrate the outcome, not just "uses X's action
+  ability" (ADR 0011).** `ActionAbilityUsed` prints the generic "P0 uses Screaming
+  Cave's action ability" with no detail of what happened. Per ADR 0011 (logs
+  narrate resolved outcomes), the effect should record what it did — e.g. Screaming
+  Cave: "shuffles cards X, Y, and Z from discard, and 4 cards from hand into the
+  deck". Needs a `ShuffleIntoDeck` outcome record (name the revealed discard cards,
+  count the hidden hand cards) plus its `Text` rendering, then a sweep of other
+  effects that lean on the bare `ActionAbilityUsed` line for their narration.
 
 ## Tooling / tests / docs
 
-- **Design-patterns audit + doc.** Inventory the patterns actually in use
-  (Interpreter/effect AST, Visitor, Strategy — Chooser/Refinement/Count/Condition,
-  interface-segregated Resolver port, functional-options builder, value-type undo
-  snapshot), check which are already documented (ADRs, style-guide, engine AGENTS),
-  and fill the gaps in one place.
+_No outstanding items._

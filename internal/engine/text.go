@@ -920,9 +920,9 @@ func restrictionText(r Restrictions, isUpgrade bool) []string {
 		lines = append(
 			lines,
 			fmt.Sprintf(
-				"Your opponent must give you %d Æmber in order to %s.",
-				t.Amount,
+				"In order to %s, your opponent must give you %d Æmber.",
 				t.Action.phrase(),
+				t.Amount,
 			),
 		)
 	}

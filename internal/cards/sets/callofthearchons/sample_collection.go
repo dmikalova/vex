@@ -16,7 +16,7 @@ var SampleCollection = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "175"),
 	card.WithAbility(
-		card.Trigger.Play, card.Repeat{
+		card.Trigger.Play, card.ForEach{
 			Times: card.OpponentForgedKeys{},
 			Do: card.PutFromPlay{
 				Target:      card.Target.EnemyCreature,

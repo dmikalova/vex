@@ -25,7 +25,7 @@ var WallsBlaster = card.New(
 			card.DealDamage{Amount: 2, Target: card.Target.Creature},
 			card.Then{
 				First: card.AttachSelfTo{Host: ChiefEngineerWalls.Name},
-				Result: card.Repeat{
+				Result: card.ForEach{
 					Times: card.UpgradesOn{
 						Target: card.Target.AttachedHost.Named(ChiefEngineerWalls.Name),
 					},

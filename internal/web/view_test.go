@@ -253,6 +253,74 @@ func TestAUseVerbPromptDrawsTheStandardButtons(t *testing.T) {
 	<-out
 }
 
+// Universal Translator uses a friendly creature and then asks how to use it. That
+// "choose how to use X" prompt lifts the chosen creature and puts its use buttons
+// on the lifted copy — like an ordinary use — rather than listing them in the
+// sidebar, which stays a disabled dock while the verbs sit on the card.
+func TestAUseVerbPromptLiftsTheChosenCreature(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	id := c.deal(testCreature)
+	c.playFromHand(id)
+
+	// Stand in for the client mid "use a friendly creature": the creature was chosen
+	// (so it is the use target) and the used card stays selected while the engine
+	// asks how to use it.
+	c.g.hasSel, c.g.sel = true, id
+	c.g.useTarget, c.g.hasUseTarget = id, true
+
+	out := make(chan int, 1)
+	labels := []string{"reap", "fight", "use its action"}
+	go func() {
+		out <- c.g.chooser.ChooseOption("Universal Translator", "Choose how to use it", labels)
+	}()
+	c.await("the prompt to go up", func() bool { return c.g.choosingOption })
+
+	// The chosen creature is lifted, with its use buttons on the lifted copy.
+	if got, ok := c.g.focusCardID(); !ok || got != id {
+		t.Fatalf("focusCardID = %v,%v; want %v,true", got, ok, id)
+	}
+	c.wants("the use buttons on the lifted creature",
+		"card-focus-acts", ">Reap<", ">Fight<", ">Action<")
+	// The dock shows the resting controls disabled rather than a second copy of the
+	// buttons.
+	c.wants("a disabled dock", "end-turn-bar")
+	c.do(c.g.chooseOptionIdx(1))
+	<-out
+}
+
+// A "choose how to use X" verb prompt omits a verb the chosen creature cannot be
+// used for — Narp bars its neighbors from reaping, so Universal Translator must
+// not offer Reap on them. The barred creature carries the restriction on its own
+// card here; the client asks the engine (CannotBeUsedTo) and drops the button.
+func TestAUseVerbPromptOmitsABarredVerb(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	def := engine.NewCard("Barred Reaper", testHouse, engine.Creature, engine.Common,
+		engine.WithPower(3), engine.WithCannotBeUsedTo(engine.ReapUse))
+	id, ok := c.g.g.ManualAddCard(def, c.g.active())
+	if !ok {
+		t.Fatal("the barred creature was not added to hand")
+	}
+	c.playFromHand(id)
+
+	c.g.hasSel, c.g.sel = true, id
+	c.g.useTarget, c.g.hasUseTarget = id, true
+
+	out := make(chan int, 1)
+	labels := []string{"reap", "fight", "use its action"}
+	go func() {
+		out <- c.g.chooser.ChooseOption("Universal Translator", "Choose how to use it", labels)
+	}()
+	c.await("the prompt to go up", func() bool { return c.g.choosingOption })
+
+	// Fight and Action stand; Reap is dropped because the creature cannot reap.
+	c.wants("the still-legal use buttons", ">Fight<", ">Action<")
+	c.lacks("the barred Reap button", ">Reap<")
+	c.do(c.g.chooseOptionIdx(1))
+	<-out
+}
+
 // An Upgrade attached to a creature draws as a peeking tab on the board rather
 // than only as a rules-text line, so it reads as an attached card at a glance.
 func TestDrawingAnUpgradeTab(t *testing.T) {
@@ -673,9 +741,9 @@ func TestWinBannerNamesTheWinnerInTheirColour(t *testing.T) {
 }
 
 // A Deploy creature's placement is asked on the lifted copy of the card being
-// placed — like the flank question — extended with the interior deploy options,
-// laid out left-to-right as [left flank] [deploy left] [deploy right] [right
-// flank] so the ends are the flanks and the middle slots it between creatures.
+// placed — like the flank question — in two steps: first the Deploy left / Deploy
+// right pair naming the side, then, once a side is chosen, a "click a creature"
+// prompt with a Back button to re-pick the side.
 func TestDeployPromptLiftsPlacementButtons(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
@@ -691,24 +759,22 @@ func TestDeployPromptLiftsPlacementButtons(t *testing.T) {
 	c.g.choosingPosition = true
 	c.g.positionLine = line
 	c.g.positionRight = false
+	c.g.positionSideChosen = false
 
-	c.wants("the deploy lift", "card-focus",
-		"Left flank", "Deploy left", "Deploy right", "Right flank")
-	// The dock stays out of it — the verbs are on the card, as with the flank prompt.
-	c.lacks("the deploy dock", "Deploy left of a creature")
-
+	// First step: the side pair on the lifted card, laid out left-to-right.
+	c.wants("the deploy side choice", "card-focus", "Deploy left", "Deploy right")
 	h := c.html()
-	prev := -1
-	for _, label := range []string{"Left flank", "Deploy left", "Deploy right", "Right flank"} {
-		at := strings.Index(h, label)
-		if at < 0 {
-			t.Fatalf("the deploy lift is missing %q", label)
-		}
-		if at <= prev {
-			t.Errorf("%q is out of left-to-right order in the deploy lift", label)
-		}
-		prev = at
+	if l, r := strings.Index(h, "Deploy left"), strings.Index(h, "Deploy right"); l < 0 ||
+		r < 0 || l > r {
+		t.Errorf("Deploy left/right are out of order: left=%d right=%d", l, r)
 	}
+
+	// Second step: choosing a side gives way to the click-a-creature prompt and a
+	// Back button.
+	c.do(c.g.chooseDeploySide(true))
+	c.wants("the deploy creature step", "card-focus",
+		"Click a creature to deploy right of it", "Back")
+	c.lacks("the side pair after a side is chosen", "Deploy left")
 }
 
 // A finished game replaces every control with the result rather than a modal

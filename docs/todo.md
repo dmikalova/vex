@@ -46,6 +46,7 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - I really like this form: Grant: card.GrantPlay | card.GrantUse - where can we use it more?
 - A tool that can detect card.X usage across all cards, to help identify where specific effects or abilities are being underutilized as a sign of an overly specific method.
 - The way a lot of effects work is there is implied chaining between one effect to the next - is there a reasonable way to make this more explicit?
+- Be able to load a test situation from a saved state or scenario file
 
 ## Things that can be done now
 
@@ -57,6 +58,11 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - Nizak should be "While in a fight,"
 - How could Encounter suit can be simplified? "This creature is invulnerable while resolving a Tactic card"?
 - KeyForgery...
+
+## Sites of all the things
+
+- types.go
+- options.go
 
 ## UI finesse
 
@@ -118,7 +124,7 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - translations
 - Display multiple houses
 - resolution zone
-- stadiums
+- stadiums/arenas
 - future/ancient cards set like evil twins
 - Change enters play ready/stunned/enraged to Play: Stun X - would change timing for dominator etc
 - MM mutants - have a common, uncommon, and rare variant
@@ -129,6 +135,9 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - Bonus icons don't resolve if the creature dies while resolving them, and they count as the creature dealing the effect, not the game
 - enhancements across CotA/AoA/WC
 - non-aember default bonus enhancements
+- Austin's house of silicates
+- A full house worth of enhancements (eg you have a normal 36 card deck, but then there are 12 house enhancements of a fourth house that are randomly assigned)
+- Weather effects - eg 4 sided reference card that turns
 
 ## Bot support
 

@@ -15,7 +15,7 @@ var MothershipSupport = card.New("Mothership Support",
 	card.Provenance(card.CotA, "171"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.Repeat{
+		card.Trigger.Play, card.ForEach{
 			Times: card.InPlay{
 				Player: card.Controller,
 				Type:   card.Type.Creature,

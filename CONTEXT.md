@@ -115,6 +115,16 @@ is a +1/-1 token that changes a creature's power, and — like damage and
 Æmber the opponent must pay a card's controller in order to play or use an
 artifact.
 
+**For each** (vs **repeat**):
+KeyForge distinguishes two kinds of repetition. **"For each X, do Y"** resolves an
+effect once per X, choosing afresh every time (Mothership Support deals 2 damage
+for each friendly ready Mars creature) — the engine's `ForEach{Times, Do}` node.
+It is distinct from a card that says **"repeat this effect"** or **"repeat the
+preceding effect"**, which re-runs an ability itself a bounded number of times;
+those are the repeat family, not `ForEach`.
+_Avoid_: naming the for-each node "Repeat" — that word is reserved for the
+repeat-the-ability family.
+
 **Rule of 6**:
 A player cannot play and/or use the same card — or other copies of that card _by
 name_ — more than six times during a given turn. The count is keyed by card name

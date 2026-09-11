@@ -38,7 +38,7 @@ func (r PlayRequirement) text() string {
 		return ""
 	}
 	if r.Spend {
-		return fmt.Sprintf("You must lose %d Æmber in order to play %s.", r.Aember, SelfName)
+		return fmt.Sprintf("In order to play %s, you must lose %d Æmber.", SelfName, r.Aember)
 	}
 	return fmt.Sprintf(
 		"%s cannot be played unless you have %d Æmber or more.",

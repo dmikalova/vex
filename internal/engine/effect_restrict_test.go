@@ -304,7 +304,7 @@ func TestToll(t *testing.T) {
 	); len(
 		got,
 	) != 1 ||
-		got[0] != "Your opponent must give you 1 Æmber in order to play an artifact." {
+		got[0] != "In order to play an artifact, your opponent must give you 1 Æmber." {
 		t.Errorf("play-toll text = %v", got)
 	}
 	if got := restrictionText(
@@ -312,7 +312,7 @@ func TestToll(t *testing.T) {
 	); len(
 		got,
 	) != 1 ||
-		got[0] != "Your opponent must give you 2 Æmber in order to use an artifact." {
+		got[0] != "In order to use an artifact, your opponent must give you 2 Æmber." {
 		t.Errorf("use-toll text = %v", got)
 	}
 
@@ -599,6 +599,40 @@ func TestRestrictionSources(t *testing.T) {
 	g.EndPlayPhase(1)
 	if got := g.RestrictionSources(1); len(got) != 2 {
 		t.Errorf("sources after the fight bar lifts = %v, want the other two", got)
+	}
+}
+
+// TestRestrictionSourcesConditionalPlayBar checks that a continuous
+// CannotPlayWhile bar (Quixxle Stone) names its card only while its condition
+// currently holds against the player, and stops once it lifts.
+func TestRestrictionSourcesConditionalPlayBar(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.StartTurn(0)
+	stone := g.AddArtifact(
+		NewCard(
+			"Quixxle Stone",
+			StarAlliance,
+			Artifact,
+			Rare,
+			WithCannotPlayWhile(ConditionalPlayBar{Type: Creature, When: ControlsMoreCreatures{}}),
+		),
+		1, // the opponent controls it, yet it bars whichever side is ahead
+	)
+
+	// Equal creature counts: nobody is ahead, so the bar names no card.
+	if got := g.RestrictionSources(0); len(got) != 0 {
+		t.Errorf("sources with equal counts = %v, want none", got)
+	}
+
+	// Player 0 pulls ahead: the bar now binds player 0 and names the stone.
+	g.AddToBattleline(testCreature("ahead", 3), 0)
+	got := g.RestrictionSources(0)
+	if len(got) != 1 || got[0] != stone {
+		t.Errorf("sources while ahead = %v, want [%d]", got, stone)
+	}
+	// The opponent, who is behind, is not bound.
+	if got := g.RestrictionSources(1); len(got) != 0 {
+		t.Errorf("sources for the behind player = %v, want none", got)
 	}
 }
 

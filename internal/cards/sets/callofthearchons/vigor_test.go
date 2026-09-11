@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Heal 3 damage from a creature. If you healed exactly 3 damage, gain 1 Æmber.
+//	Play: Heal 3 damage from a creature. If you healed 3 or more damage, gain 1 Æmber.
 func TestVigor(t *testing.T) {
 	t.Run("gains 1 Æmber when it heals the full 3 damage", func(t *testing.T) {
 		var hurt ct.Card

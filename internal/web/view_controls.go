@@ -181,6 +181,12 @@ func (g *game) controls() app.UI {
 	}
 	// A labeled option prompt (e.g. "take archives?") shows its choices as buttons.
 	if g.choosingOption {
+		// A "choose how to use X" verb prompt lifts the chosen creature and draws its
+		// use buttons on it (like an ordinary use), so the dock shows the resting
+		// controls disabled rather than repeating the buttons in the sidebar.
+		if _, ok := g.liftUseTarget(); ok {
+			return app.Div().Class("controls").Body(g.disabledEndTurnBar())
+		}
 		body := []app.UI{g.promptSourceHeader(), g.optionChooser()}
 		// Manual mode adds a Cancel that backs the whole action out — an option prompt
 		// has no decline of its own, so this is the only way out of a stuck one.
@@ -195,6 +201,22 @@ func (g *game) controls() app.UI {
 	// of its own.
 	if g.choosingPosition {
 		return app.Div().Class("controls").Body(g.disabledEndTurnBar())
+	}
+	// A manual Graft / Place under is waiting for the player to click the in-play
+	// host to thread the selected card under; the board lights its hosts and the
+	// dock shows the pick's prompt with a Cancel.
+	if g.hostTargeting {
+		verb := "graft"
+		if g.hostFaceDown {
+			verb = "place"
+		}
+		return app.Div().Class("controls").Body(
+			app.Div().Class("btn-col").Body(
+				app.Div().Class("prompt").Text(
+					"Click a card to "+verb+" "+g.g.Def(g.sel).Name+" under it"),
+				btn("Cancel", g.cancelHostTargeting, "btn-secondary"),
+			),
+		)
 	}
 	// While an engine chooser waits, the controls become the prompt itself: a
 	// green call to action to click one of the highlighted cards.
@@ -286,9 +308,20 @@ func (g *game) manualPanel() app.UI {
 				items = append(items, btn("Exhaust "+name, g.manualExhaust, "btn-secondary"))
 			}
 		}
+		// An attached card (upgrade or under-card) can only leave to hand by
+		// detaching first, so it gets a To hand of its own rather than the Move
+		// buttons' Hand, which would leave it attached and duplicated.
+		if g.isAttached(g.sel) {
+			items = append(items, btn("To hand", g.manualToHand, "btn-secondary"))
+		}
 		items = append(items,
 			app.Div().Class("hint").Text("Move "+name+" to:"),
 			g.moveButtons(),
+			app.Div().Class("hint").Text("Thread "+name+" under a host:"),
+			app.Div().Class("btn-wrap").Body(
+				btn("Graft", g.manualGraft, "btn-mini"),
+				btn("Place under", g.manualPlaceUnder, "btn-mini"),
+			),
 		)
 	}
 	return app.Div().Class("btn-col manual-panel").Body(items...)
@@ -422,15 +455,19 @@ func (g *game) optionChooser() app.UI {
 		)
 	}
 	if g.useVerbOptions() {
-		return app.Div().Class("btn-col").Body(
-			app.Div().Class("prompt").Text(g.optionPrompt),
-			app.Range(g.optionLabels).Slice(func(i int) app.UI {
-				k, _ := useVerbKindOfLabel(g.optionLabels[i])
-				s := useVerbSpec(k)
-				return btn(s.text, g.chooseOptionIdx(i),
-					cx(s.class, ifCls(g.isButtonCursor(i), "btn-cursor")))
-			}),
-		)
+		body := []app.UI{app.Div().Class("prompt").Text(g.optionPrompt)}
+		for i, label := range g.optionLabels {
+			// A verb the chosen creature cannot be used for (Narp bars its neighbors
+			// from reaping) is omitted, so an illegal use is never offered.
+			if g.useVerbBarred(label) {
+				continue
+			}
+			k, _ := useVerbKindOfLabel(label)
+			s := useVerbSpec(k)
+			body = append(body, btn(s.text, g.chooseOptionIdx(i),
+				cx(s.class, ifCls(g.isButtonCursor(i), "btn-cursor"))))
+		}
+		return app.Div().Class("btn-col").Body(body...)
 	}
 	if g.houseOptions() {
 		return app.Div().Class("btn-col").Body(
@@ -506,6 +543,49 @@ func (g *game) useVerbOptions() bool {
 	return true
 }
 
+// liftUseTarget is the creature a "choose how to use X" verb prompt should lift,
+// if one is up: the creature this action last chose to use, still in play. When it
+// is known the use buttons go on that creature (like an ordinary use) rather than
+// in the sidebar; when it is not (the target was auto-picked with no prompt) the
+// sidebar option list stands in.
+func (g *game) liftUseTarget() (engine.LocalID, bool) {
+	if !g.choosingOption || !g.hasUseTarget || !g.useVerbOptions() {
+		return 0, false
+	}
+	if !containsID(g.g.Battleline(0), g.useTarget) &&
+		!containsID(g.g.Battleline(1), g.useTarget) {
+		return 0, false
+	}
+	return g.useTarget, true
+}
+
+// useVerbCardActions draws the current use-verb option prompt as the standard
+// reap/fight/action buttons on the lifted creature. Each button answers the
+// engine's option prompt at that label's own index, so the buttons on the card
+// drive the same choice the sidebar list would have. Manual mode adds a Cancel
+// that backs the whole action out, the option prompt's only way out.
+func (g *game) useVerbCardActions() []cardAction {
+	acts := make([]cardAction, 0, len(g.optionLabels)+1)
+	for i, label := range g.optionLabels {
+		// A verb the chosen creature cannot be used for (Narp bars its neighbors from
+		// reaping) is omitted, so Universal Translator never offers an illegal use.
+		if g.useVerbBarred(label) {
+			continue
+		}
+		k, _ := useVerbKindOfLabel(label)
+		s := useVerbSpec(k)
+		acts = append(acts, cardAction{
+			s.text,
+			cx(s.class, ifCls(g.isButtonCursor(i), "btn-cursor")),
+			g.chooseOptionIdx(i),
+		})
+	}
+	if g.g.Manual() {
+		acts = append(acts, cardAction{"Cancel", "btn-secondary", g.cancelChooser})
+	}
+	return acts
+}
+
 // targetingPrompt is the dock's mid-action question: which enemy to fight. A
 // card's own verbs are not here — they are drawn on the lifted copy of the card
 // itself (cardFocus), which leaves the dock to the questions whose answer is some
@@ -538,6 +618,13 @@ type cardAction struct {
 func (g *game) selActions() ([]cardAction, string) {
 	if !g.hasSel {
 		return nil, ""
+	}
+	// A "choose how to use X" verb prompt lifts the just-chosen creature and puts
+	// its reap/fight/action buttons on it, so a use another card raised (Universal
+	// Translator) reads like an ordinary use. This wins over the inert/boardInert
+	// bail below, which the in-flight prompt would otherwise trip.
+	if _, ok := g.liftUseTarget(); ok {
+		return g.useVerbCardActions(), ""
 	}
 	// A peek lift, or the lift raised while choosing a house, only enlarges the
 	// card to read it — there is no turn action to offer yet, so it carries no verbs.
@@ -578,33 +665,36 @@ func (g *game) flankActions() ([]cardAction, string) {
 }
 
 // deployActions is the Deploy placement question, asked on the creature being
-// placed like the flank question but extended for a creature that may enter
-// anywhere in the line. Ordered left-to-right, the ends are the flanks (answered
-// at once) and the interior "deploy left"/"deploy right" arm which side of a
-// clicked battleline creature it lands on — the armed side reads filled, the
-// battleline lighting its creatures as the click targets. Cancel appears only in
-// manual mode, the one place a play can be backed out mid-action.
+// placed like the flank question but in two steps for a creature that may enter
+// anywhere in the line. First it offers the Deploy left / Deploy right pair,
+// naming which side of a battleline creature the new one lands on. Once a side is
+// chosen the pair gives way to a "click a creature" prompt with a Back button to
+// re-pick the side, and the battleline lights its creatures as the click targets.
+// The ends of the line are the flanks (left of the leftmost, right of the
+// rightmost), so both flanks are reachable without their own buttons. Cancel
+// appears only in manual mode, the one place a play can be backed out mid-action.
 func (g *game) deployActions() ([]cardAction, string) {
-	dirCls := func(armed bool) string {
-		if armed {
-			return "btn-primary"
+	var acts []cardAction
+	note := ""
+	if g.positionSideChosen {
+		side := "left"
+		if g.positionRight {
+			side = "right"
 		}
-		return "btn-secondary"
-	}
-	acts := []cardAction{
-		{"Left flank", cx("btn-primary", "btn-flank", "btn-flank--left"),
-			g.choosePositionFlank(true)},
-		{"Deploy left", cx(dirCls(!g.positionRight), "btn-flank", "btn-flank--left"),
-			g.setPositionDir(false)},
-		{"Deploy right", cx(dirCls(g.positionRight), "btn-flank", "btn-flank--right"),
-			g.setPositionDir(true)},
-		{"Right flank", cx("btn-primary", "btn-flank", "btn-flank--right"),
-			g.choosePositionFlank(false)},
+		note = "Click a creature to deploy " + side + " of it."
+		acts = append(acts, cardAction{"Back", "btn-secondary", g.deploySideBack})
+	} else {
+		acts = append(acts,
+			cardAction{"Deploy left", cx("btn-primary", "btn-flank", "btn-flank--left"),
+				g.chooseDeploySide(false)},
+			cardAction{"Deploy right", cx("btn-primary", "btn-flank", "btn-flank--right"),
+				g.chooseDeploySide(true)},
+		)
 	}
 	if g.g.Manual() {
 		acts = append(acts, cardAction{"Cancel", "btn-secondary", g.cancelChooser})
 	}
-	return acts, ""
+	return acts, note
 }
 
 func (g *game) handCardActions() ([]cardAction, string) {
@@ -612,6 +702,15 @@ func (g *game) handCardActions() ([]cardAction, string) {
 	var note string
 	if err := g.g.CanPlay(g.active(), g.sel); err != nil {
 		note = "Cannot play: " + err.Error() + "."
+	} else if g.canPlayAsUpgrade() {
+		// A creature that may go down as a creature or an upgrade offers the choice
+		// as two explicit buttons, so it is made before the play instead of by a
+		// later sidebar prompt. Play upgrade skips the flank step (upgrades take no
+		// flank); Play creature keeps the flank question.
+		acts = append(acts,
+			cardAction{"Play creature", "btn-primary", g.playAsCreature},
+			cardAction{"Play upgrade", "btn-primary", g.playAsUpgrade},
+		)
 	} else {
 		acts = append(acts, cardAction{"Play", "btn-primary", g.play})
 	}
@@ -694,6 +793,22 @@ func useVerbKindOfLabel(label string) (engine.UseKind, bool) {
 		return engine.ActionUse, true
 	}
 	return 0, false
+}
+
+// useVerbBarred reports whether the use-verb option should be omitted because the
+// chosen creature cannot be used that way — Narp bars its neighbors from reaping,
+// so Universal Translator must not offer Reap on them. It applies only when the
+// target creature is known (a use another card chose, set by chooseCandidate);
+// with no known target every verb stands, since there is nothing to check against.
+func (g *game) useVerbBarred(label string) bool {
+	if !g.hasUseTarget {
+		return false
+	}
+	k, ok := useVerbKindOfLabel(label)
+	if !ok {
+		return false
+	}
+	return g.g.CannotBeUsedTo(g.useTarget, k)
 }
 
 func (g *game) artifactCardActions() ([]cardAction, string) {

@@ -21,7 +21,7 @@ func TestPlayRequirement(t *testing.T) {
 
 	truebaru := NewCard("Truebaru", Dis, Creature, Rare, WithPower(7),
 		WithPlayRequirement(AemberCost(3)))
-	wantTruebaru := "You must lose 3 Æmber in order to play Truebaru."
+	wantTruebaru := "In order to play Truebaru, you must lose 3 Æmber."
 	if text := RenderCardText(&truebaru); !strings.Contains(text, wantTruebaru) {
 		t.Errorf("cost text = %q, want it to contain %q", text, wantTruebaru)
 	}

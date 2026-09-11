@@ -48,6 +48,35 @@ func TestAllIsAValidDatabase(t *testing.T) {
 	}
 }
 
+// TestNoDuplicateActionTrigger enforces that a card never carries more than one
+// ability on the same action trigger (Play, Fight, or Reap). A card that shares
+// one effect across several of these triggers must declare it once with a
+// composite trigger (Trigger.PlayReap, Trigger.FightReap, Trigger.PlayFightReap),
+// which fans out into the atomic triggers; declaring both an atomic ability and a
+// composite that also covers it — e.g. Trigger.Play and Trigger.PlayReap — would
+// silently give the card two Play abilities that both fire.
+func TestNoDuplicateActionTrigger(t *testing.T) {
+	actionTriggers := map[engine.Trigger]string{
+		engine.TriggerAfterPlay:  "Play",
+		engine.TriggerAfterFight: "Fight",
+		engine.TriggerAfterReap:  "Reap",
+	}
+	for _, c := range All() {
+		counts := make(map[engine.Trigger]int)
+		for _, ab := range c.Abilities {
+			counts[ab.Trigger]++
+		}
+		for trig, name := range actionTriggers {
+			if counts[trig] > 1 {
+				t.Errorf(
+					"%s has %d %s abilities; consolidate them into one (composite trigger)",
+					c.Name, counts[trig], name,
+				)
+			}
+		}
+	}
+}
+
 // TestEveryCreatureAndArtifactHasTrait enforces the card-database policy that
 // every creature and artifact carries at least one trait (e.g. Giant, Beast,
 // Weapon). Actions and upgrades are exempt.

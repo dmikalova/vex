@@ -298,3 +298,150 @@ func TestIsInPlay(t *testing.T) {
 		t.Error("a creature on the battleline does not read as in play")
 	}
 }
+
+// Graft threads the selected card face up under an in-play host: the player picks
+// Graft, then clicks the host to land it there.
+func TestManualGraftsACardUnderAHost(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	host := c.deal(testCreature)
+	c.playFromHand(host)
+	sub := c.deal(testCreature)
+	c.g.selectHandID(c.ctx, sub)
+
+	c.do(c.g.manualGraft)
+	if !c.g.hostTargeting || c.g.hostFaceDown {
+		t.Fatalf("Graft armed hostTargeting=%v hostFaceDown=%v, want true,false",
+			c.g.hostTargeting, c.g.hostFaceDown)
+	}
+	c.g.attachToHost(c.ctx, host)
+	c.settle()
+
+	if !containsID(c.g.g.Under(host), sub) {
+		t.Error("the grafted card was not placed under the host")
+	}
+	if c.g.g.UnderFaceDown(sub) {
+		t.Error("a graft placed the card face down, want face up")
+	}
+	if containsID(c.hand(), sub) {
+		t.Error("the grafted card is still in hand")
+	}
+	if c.g.hostTargeting || c.g.hasSel {
+		t.Error("host targeting or the selection lingered after the graft")
+	}
+}
+
+// Place under threads the selected card face down under a host — the facedown
+// counterpart to Graft.
+func TestManualPlacesACardUnderAHostFaceDown(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	host := c.deal(testCreature)
+	c.playFromHand(host)
+	sub := c.deal(testCreature)
+	c.g.selectHandID(c.ctx, sub)
+
+	c.do(c.g.manualPlaceUnder)
+	if !c.g.hostTargeting || !c.g.hostFaceDown {
+		t.Fatalf("Place under armed hostTargeting=%v hostFaceDown=%v, want true,true",
+			c.g.hostTargeting, c.g.hostFaceDown)
+	}
+	c.g.attachToHost(c.ctx, host)
+	c.settle()
+
+	if !containsID(c.g.g.Under(host), sub) {
+		t.Error("the card was not placed under the host")
+	}
+	if !c.g.g.UnderFaceDown(sub) {
+		t.Error("Place under left the card face up, want face down")
+	}
+}
+
+// A host pick will not thread a card under itself, so clicking the selected card
+// as its own host does nothing.
+func TestManualGraftIgnoresSelfAsHost(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	sub := c.deal(testCreature)
+	c.playFromHand(sub)
+	c.g.selectBoardID(c.ctx, sub)
+
+	c.do(c.g.manualGraft)
+	c.g.attachToHost(c.ctx, sub)
+	c.settle()
+
+	if containsID(c.g.g.Under(sub), sub) {
+		t.Error("a card was grafted under itself")
+	}
+}
+
+// To hand detaches a selected upgrade from its host and returns it to hand.
+func TestManualSendsAnUpgradeToHand(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	host := c.deal(testCreature)
+	c.playFromHand(host)
+	up := c.g.g.Register(
+		engine.NewCard("Test Upgrade", testHouse, engine.Upgrade, engine.Common), c.g.active())
+	c.g.g.AttachUpgrade(host, up)
+
+	c.g.selectTab(up)
+	if !c.g.isAttached(up) {
+		t.Fatal("the attached upgrade does not read as attached")
+	}
+	c.do(c.g.manualToHand)
+
+	if !containsID(c.hand(), up) {
+		t.Error("the upgrade was not sent to hand")
+	}
+	if containsID(c.g.g.Upgrades(host), up) {
+		t.Error("the upgrade is still attached to its host")
+	}
+}
+
+// To hand also returns a card placed under a host, the other attached state
+// isAttached recognises.
+func TestManualSendsAnUnderCardToHand(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	host := c.deal(testCreature)
+	c.playFromHand(host)
+	sub := c.deal(testCreature)
+	c.g.selectHandID(c.ctx, sub)
+	c.do(c.g.manualPlaceUnder)
+	c.g.attachToHost(c.ctx, host)
+	c.settle()
+
+	if !c.g.isAttached(sub) {
+		t.Fatal("the under-card does not read as attached")
+	}
+	c.g.selectTab(sub)
+	c.do(c.g.manualToHand)
+
+	if !containsID(c.hand(), sub) {
+		t.Error("the under-card was not sent to hand")
+	}
+	if containsID(c.g.g.Under(host), sub) {
+		t.Error("the card is still under its host")
+	}
+}
+
+// The graft, place-under, and to-hand controls are inert outside manual mode, so
+// an ordinary match is not quietly editable through them.
+func TestManualAttachControlsNeedManualMode(t *testing.T) {
+	c := newClient(t)
+	c.startTurn()
+	id := c.hand()[0]
+	c.g.selectHandID(c.ctx, id)
+
+	c.do(c.g.manualGraft)
+	c.do(c.g.manualPlaceUnder)
+	if c.g.hostTargeting {
+		t.Error("host targeting armed outside manual mode")
+	}
+	before := len(c.g.undo)
+	c.do(c.g.manualToHand)
+	if len(c.g.undo) != before {
+		t.Error("To hand acted outside manual mode")
+	}
+}

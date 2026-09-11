@@ -720,7 +720,7 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return effectGlyphs(v.Do)
 	case engine.NextPlayed:
 		return append([]glyph{{asset: "glyph-play"}}, mustCompose(v.EntersPlay)...), true
-	case engine.Repeat:
+	case engine.ForEach:
 		return effectGlyphs(v.Do)
 	case engine.TriggerAbility:
 		return []glyph{
@@ -765,8 +765,14 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 			arrowTo(targetGlyph(v.Target)),
 		}, true
 	case engine.TakeControl:
+		// The host-creature form (Collar of Subordination) has no Target; it takes
+		// this creature, so render the "this creature" noun rather than a blank.
+		subject := targetGlyph(v.Target)
+		if v.Target == (engine.Target{}) {
+			subject = glyph{asset: "type-creature", decor: decorThis}
+		}
 		return []glyph{
-			targetGlyph(v.Target),
+			subject,
 			arrowTo(glyph{asset: "type-creature", decor: decorFriendly}),
 		}, true
 	case engine.PutChosen:

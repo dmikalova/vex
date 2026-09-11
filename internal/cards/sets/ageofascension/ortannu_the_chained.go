@@ -30,7 +30,7 @@ var OrtannuTheChained = card.New(
 					All:         true,
 					Destination: card.To.Hand,
 				},
-				card.Repeat{
+				card.ForEach{
 					Times: card.ProducedThisWay{Tally: card.Tally.CardsReturned},
 					Do: card.DealDamage{Spread: card.CreatureAndNeighbors{
 						Amount: 2,

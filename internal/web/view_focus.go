@@ -53,6 +53,13 @@ func (g *game) focusCardID() (engine.LocalID, bool) {
 	if g.choosingPosition {
 		return g.sel, true
 	}
+	// A "choose how to use X" verb prompt lifts the creature the action just chose
+	// to use, so its use buttons sit on it — even though the action is still in
+	// flight (g.busy) and an option prompt is up (g.choosingOption), which the
+	// general guard below would otherwise drop the lift for.
+	if id, ok := g.liftUseTarget(); ok {
+		return id, true
+	}
 	if g.busy || g.choosing || g.choosingOption || g.forgingKey >= 0 {
 		return 0, false
 	}

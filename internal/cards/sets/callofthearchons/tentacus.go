@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Demon
 //
-//	Your opponent must give you 1 Æmber in order to use an artifact.
+//	In order to use an artifact, your opponent must give you 1 Æmber.
 var Tentacus = card.New(
 	"Tentacus",
 	card.House.Dis,

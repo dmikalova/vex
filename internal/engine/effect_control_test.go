@@ -103,6 +103,36 @@ func TestTakeControlPlacesSeizedCreatureOnChosenFlank(t *testing.T) {
 	}
 }
 
+// TestCollarPromptsForFlankOnTakeControl pins that the host-creature (no-Target)
+// take-control path — Collar of Subordination seizing the creature it upgrades —
+// asks the taker which flank the seized creature enters rather than assuming one,
+// exactly as the targeted path does.
+func TestCollarPromptsForFlankOnTakeControl(t *testing.T) {
+	take := TakeControl{Duration: UntilThisLeavesPlay}
+
+	// The taker already has a creature, so the flank is asked and honored.
+	g := NewGame("A", "B", 1)
+	mine := g.AddToBattleline(testCreature("mine", 3), 0)
+	host := g.AddToBattleline(testCreature("host", 3), 1)
+	collar := g.Register(NewCard("collar", Dis, Upgrade, Rare), 0)
+	g.AttachUpgrade(host, collar)
+	g.SetChooser(0, optionPicker{idx: 0}) // left flank
+	take.Resolve(&EffectContext{Resolver: g, Source: host, Upgrade: collar, Controller: 0})
+	if got, want := g.Battleline(0), []LocalID{host, mine}; !slices.Equal(got, want) {
+		t.Fatalf("left-flank placement = %v, want %v", got, want)
+	}
+
+	// An empty taker line: the seized creature has one home, so no flank is asked.
+	g2 := NewGame("A", "B", 1)
+	host2 := g2.AddToBattleline(testCreature("host2", 3), 1)
+	collar2 := g2.Register(NewCard("collar2", Dis, Upgrade, Rare), 0)
+	g2.AttachUpgrade(host2, collar2)
+	take.Resolve(&EffectContext{Resolver: g2, Source: host2, Upgrade: collar2, Controller: 0})
+	if got, want := g2.Battleline(0), []LocalID{host2}; !slices.Equal(got, want) {
+		t.Fatalf("single placement = %v, want %v", got, want)
+	}
+}
+
 func TestControlRevertsWhenTakingUpgradeLeaves(t *testing.T) {
 	g := started(t)
 	host := g.AddToBattleline(testCreature("host", 3), 1)

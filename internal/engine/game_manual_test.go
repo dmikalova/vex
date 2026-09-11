@@ -148,6 +148,84 @@ func TestManualMoveFromPlayResetsAndShedsUpgrades(t *testing.T) {
 	}
 }
 
+// ManualAttachUnder takes a card from hand or from play and threads it under a
+// host; a card from play sheds its state and upgrades on the way under.
+func TestManualAttachUnder(t *testing.T) {
+	g := started(t)
+	host := g.AddToBattleline(testCreature("host", 3), 0)
+
+	// From hand, face down.
+	fromHand := g.AddToHand(testCreature("buried", 2), 0)
+	g.ManualAttachUnder(host, fromHand, true)
+	if u, ok := g.firstUnder(host); !ok || u != fromHand {
+		t.Fatalf("firstUnder = %d,%v, want %d", u, ok, fromHand)
+	}
+	if !g.State.Cards[fromHand].UnderFaceDown {
+		t.Error("card from hand should be placed face down")
+	}
+	if len(g.Hand(0)) != 0 {
+		t.Error("card should have left the hand")
+	}
+
+	// From play, face up (graft): it sheds its damage and its upgrade.
+	inPlay := g.AddToBattleline(testCreature("grafted", 4), 0)
+	g.State.Cards[inPlay].Damage = 2
+	up := g.Register(exBruteStrength(), 0)
+	g.AttachUpgrade(inPlay, up)
+	g.ManualAttachUnder(host, inPlay, false)
+	if g.inPlay(inPlay) {
+		t.Error("card should have left the battleline")
+	}
+	if g.State.Cards[inPlay].UnderFaceDown {
+		t.Error("a graft should be face up")
+	}
+	if under := g.underOf(host); len(under) != 2 || under[1] != inPlay {
+		t.Errorf("underOf = %v, want [%d %d]", under, fromHand, inPlay)
+	}
+	if d := g.Discard(0); len(d) != 1 || d[0] != up {
+		t.Errorf("the upgrade should be discarded, discard = %v", d)
+	}
+}
+
+// ManualDetachToHand sends a selected upgrade or under-card to hand; a card that
+// is neither is left where it is.
+func TestManualDetachToHand(t *testing.T) {
+	g := started(t)
+	host := g.AddToBattleline(testCreature("host", 3), 0)
+
+	// An upgrade detaches to hand.
+	up := g.Register(exBruteStrength(), 0)
+	g.AttachUpgrade(host, up)
+	g.ManualDetachToHand(up)
+	if _, ok := g.hostOf(up); ok {
+		t.Error("the upgrade should be detached from its host")
+	}
+	if len(g.Hand(0)) != 1 || g.Hand(0)[0] != up {
+		t.Errorf("hand = %v, want [%d]", g.Hand(0), up)
+	}
+
+	// An under-card detaches to hand and sheds its state.
+	buried := g.Register(testCreature("buried", 2), 0)
+	g.AttachUnder(host, buried, true)
+	g.ManualDetachToHand(buried)
+	if _, ok := g.underHostOf(buried); ok {
+		t.Error("the under-card should be detached from its host")
+	}
+	if !g.State.Hand[0].contains(buried) {
+		t.Error("the under-card should be in hand")
+	}
+	if g.State.Cards[buried] != (CardCore{}) {
+		t.Errorf("the under-card's state should be reset, got %+v", g.State.Cards[buried])
+	}
+
+	// A card that is neither an upgrade nor under a host is left in play.
+	loose := g.AddToBattleline(testCreature("loose", 3), 0)
+	g.ManualDetachToHand(loose)
+	if !g.inPlay(loose) {
+		t.Error("a card that is neither attached nor placed under a host should be left alone")
+	}
+}
+
 func TestManualSetExhausted(t *testing.T) {
 	g := started(t)
 	id := g.AddToBattleline(testCreature("c", 3), 0)

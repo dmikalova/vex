@@ -24,7 +24,7 @@ var MasterTheTheory = card.New(
 				Type:   card.Type.Creature,
 				None:   true,
 			},
-			Then: card.Repeat{
+			Then: card.ForEach{
 				Times: card.InPlay{
 					Player: card.Opponent,
 					Type:   card.Type.Creature,

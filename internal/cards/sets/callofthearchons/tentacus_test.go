@@ -15,7 +15,7 @@ import (
 //	Power:  5
 //	Traits: Demon
 //
-//	Your opponent must give you 1 Æmber in order to use an artifact.
+//	In order to use an artifact, your opponent must give you 1 Æmber.
 func TestTentacus(t *testing.T) {
 	t.Run("opponent pays the controller 1 Æmber to use an artifact", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

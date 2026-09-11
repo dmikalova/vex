@@ -55,6 +55,26 @@ func (g *game) onCardTabTap(ctx app.Context, _ app.Event) {
 	g.chooseCandidate(ctx, engine.LocalID(id))
 }
 
+// onCardTabSelect selects the attached card a peeking tab represents, so manual
+// mode can act on an upgrade or under-card that shares its host's slot and so has
+// no face of its own — the To hand button then detaches it. The id is read off
+// the tab's dataset, the same way onCardTabTap reads it.
+func (g *game) onCardTabSelect(ctx app.Context, _ app.Event) {
+	id, err := strconv.Atoi(ctx.JSSrc().Get("dataset").Get("id").String())
+	if err != nil {
+		return
+	}
+	g.selectTab(engine.LocalID(id))
+}
+
+// selectTab makes an attached card (an upgrade or under-card) the selection. It
+// is the selection itself, without a click's DOM read, so a test can drive it.
+func (g *game) selectTab(id engine.LocalID) {
+	g.sel, g.selKind, g.selHand, g.hasSel = id, selOther, -1, true
+	g.inspecting = false
+	g.status = ""
+}
+
 // hoverLive reports whether the hovered live card is still somewhere the client
 // draws it. A card that leaves play (destroyed, purged, put into hand) vanishes
 // from the DOM without firing a leave, so the preview has to drop it itself.

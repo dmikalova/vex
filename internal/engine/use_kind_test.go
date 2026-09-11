@@ -30,6 +30,23 @@ func TestCannotBeUsedToReap(t *testing.T) {
 	}
 }
 
+// CannotBeUsedTo is the restriction-only check a client uses to omit an illegal
+// verb from the buttons it offers: it reports the bar without CanUseTo's house or
+// exhaustion gate, so it stays true for a creature barred by its own text and
+// false for a verb that is open.
+func TestCannotBeUsedToRestrictionOnly(t *testing.T) {
+	g := started(t)
+	crocag := g.AddToBattleline(
+		testCreature("Crocag", 7, WithCannotBeUsedTo(ReapUse)), 0)
+
+	if !g.CannotBeUsedTo(crocag, ReapUse) {
+		t.Error("CannotBeUsedTo(reap) = false, want true")
+	}
+	if g.CannotBeUsedTo(crocag, FightUse) {
+		t.Error("CannotBeUsedTo(fight) = true, want false")
+	}
+}
+
 // A house-scoped reap bar (Seismo-entangler) refuses the reap of a creature of
 // that house while leaving it free to fight.
 func TestCannotReapHouseLeavesFightUsable(t *testing.T) {

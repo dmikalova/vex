@@ -69,3 +69,13 @@ func (g *Game) cannotBeUsedTo(id LocalID, kind UseKind) bool {
 	}
 	return false
 }
+
+// CannotBeUsedTo reports whether this way of using the card is barred by a
+// restriction — the card's own text or a constant ability that reaches it (Narp
+// bars its neighbors from reaping). It is the restriction-only check a client uses
+// to omit an illegal verb from the buttons it offers. Unlike CanUseTo it applies no
+// house, exhaustion, or ownership gate, so it stays correct for a granted off-house
+// use (Universal Translator's "use as if it were yours").
+func (g *Game) CannotBeUsedTo(id LocalID, kind UseKind) bool {
+	return g.cannotBeUsedTo(id, kind)
+}

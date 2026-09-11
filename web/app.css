@@ -1779,10 +1779,12 @@ button:disabled {
 .tip--active::after {
   opacity: 1;
 }
-/* player-bar stats claim the touch gesture so dragging a finger across them moves
-   the tooltip instead of scrolling the page out from under it. */
+/* player-bar stats claim the vertical touch gesture so dragging a finger across
+   them moves the tooltip instead of scrolling the page out from under it, while
+   leaving horizontal panning to the browser so the bar still scrolls sideways
+   when a swipe starts on an icon. */
 .score-pill .tip {
-  touch-action: none;
+  touch-action: pan-x;
 }
 /* a zone whose contents may be read opens a roster popover of house-coloured
    card headers — the same title bar an upgrade tab shows — instead of a plain
@@ -2047,10 +2049,11 @@ button:disabled {
 .prompt-pick-name {
   color: var(--p0);
 }
-/* the cards restricting the active player, named above the turn HUD */
+/* the cards restricting the active player, named above the turn HUD; one warning
+   per line so two restrictions never share a row and read as one */
 .restrictions {
   display: flex;
-  flex-wrap: wrap;
+  flex-direction: column;
   gap: 0.5rem;
   padding: 0.35rem var(--ctl-pad-x);
   border-bottom: 1px solid var(--line);

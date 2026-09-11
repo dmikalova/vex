@@ -1060,6 +1060,8 @@ func (g *game) dismiss(ctx app.Context) {
 		}
 	case g.phase == phaseFlank || g.phase == phaseFightTarget:
 		g.cancelTargeting(ctx, app.Event{})
+	case g.hostTargeting:
+		g.cancelHostTargeting(ctx, app.Event{})
 	case g.confirmEndTurn:
 		g.confirmEndTurn = false
 	case g.hasSel:

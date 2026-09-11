@@ -5,7 +5,7 @@ import "testing"
 // TestRepeat covers running an effect once per count, with the choices made
 // afresh each time, and the two ways a repetition can be misconfigured.
 func TestRepeat(t *testing.T) {
-	e := Repeat{
+	e := ForEach{
 		Times: InPlay{Player: Controller, Type: Creature, House: Mars, Ready: true},
 		Do:    DealDamage{Target: Target{Kind: TargetChosenCreature}, Amount: 2},
 	}
@@ -13,10 +13,10 @@ func TestRepeat(t *testing.T) {
 	if got := e.Text(); got != want {
 		t.Errorf("text = %q, want %q", got, want)
 	}
-	if err := (Repeat{Do: e.Do}).validate(); err == nil {
+	if err := (ForEach{Do: e.Do}).validate(); err == nil {
 		t.Error("a repetition with no count should be rejected")
 	}
-	if err := (Repeat{Times: e.Times}).validate(); err == nil {
+	if err := (ForEach{Times: e.Times}).validate(); err == nil {
 		t.Error("a repetition with no effect should be rejected")
 	}
 	if err := e.validate(); err != nil {
@@ -31,7 +31,7 @@ func TestRepeat(t *testing.T) {
 
 	// The default chooser takes the first candidate each time, so both
 	// repetitions land on the same creature: 2 damage twice.
-	atEnemy := Repeat{
+	atEnemy := ForEach{
 		Times: e.Times,
 		Do:    DealDamage{Target: Target{Kind: TargetChosenEnemyCreature}, Amount: 2},
 	}

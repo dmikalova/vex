@@ -406,9 +406,10 @@ func (g *Game) payOffHouseWager(player int, house House) {
 	StealAember{Amount: w.Amount}.Resolve(ctx)
 }
 
-// RestrictionSources returns the cards imposing a turn-scoped restriction on a
-// player right now, so a frontend can remind them which cards are binding them.
-// It reads the bars themselves, so a bar that has been lifted stops naming its
+// RestrictionSources returns the cards restricting a player right now, so a
+// frontend can remind them which cards are binding them. It reads the bars
+// themselves — the turn-scoped State bars plus any continuous CannotPlayWhile bar
+// whose condition currently holds — so a bar that has been lifted stops naming its
 // card, and one card imposing two bars is named once.
 func (g *Game) RestrictionSources(player int) []LocalID {
 	var out []LocalID
@@ -431,6 +432,21 @@ func (g *Game) RestrictionSources(player int) []LocalID {
 	}
 	if g.State.KeyCostBump[player].Value != 0 {
 		name(g.State.KeyCostBump[player].Source)
+	}
+	// A symmetric CannotPlayWhile bar (Quixxle Stone) is continuous, not
+	// turn-scoped, so it is not in State; name each in-play card whose bar
+	// currently holds against this player.
+	for p := 0; p < 2; p++ {
+		for _, id := range g.allInPlay(p) {
+			bar := g.cat.def(id).CannotPlayWhile
+			if bar.When == nil {
+				continue
+			}
+			ctx := &EffectContext{Resolver: g, Source: id, Controller: player}
+			if bar.When.Met(ctx) {
+				name(id)
+			}
+		}
 	}
 	return out
 }

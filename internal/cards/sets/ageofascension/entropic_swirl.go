@@ -18,7 +18,7 @@ var EntropicSwirl = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseCreatureThen{
 			Target: card.Target.Creature,
-			Then: card.Repeat{
+			Then: card.ForEach{
 				Times: card.TraitsOfChosen{},
 				Do: card.Sequence{Effects: []card.Effect{
 					card.DealDamage{

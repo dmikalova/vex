@@ -452,9 +452,9 @@ type (
 	// ForDuration applies several timed effects sharing one duration and
 	// renders their shared "for the remainder of the turn, ..." clause once.
 	ForDuration = engine.ForDuration
-	// Repeat resolves an effect once for each of a running count, choosing
+	// ForEach resolves an effect once for each of a running count, choosing
 	// afresh each time.
-	Repeat = engine.Repeat
+	ForEach = engine.ForEach
 	// Sentences resolves several effects in order, each rendered as its own
 	// sentence rather than joined with ", and".
 	Sentences = engine.Sentences // ChooseOne offers the controller a set of alternative effects to pick from.

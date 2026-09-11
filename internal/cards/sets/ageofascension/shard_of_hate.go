@@ -18,7 +18,7 @@ var ShardOfHate = card.New(
 	card.Provenance(card.AoA, "205"),
 	card.WithTraits(card.Traits.Item, card.Traits.Shard),
 	card.WithAbility(
-		card.Trigger.Action, card.Repeat{
+		card.Trigger.Action, card.ForEach{
 			Times: card.InPlay{
 				Player: card.Controller,
 				Trait:  card.Traits.Shard,

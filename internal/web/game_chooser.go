@@ -229,6 +229,12 @@ func (c *webChooser) ChooseOption(source, prompt string, options []string) int {
 		return 0
 	default:
 	}
+	// The Play creature / Play upgrade buttons already made the creature-as-upgrade
+	// choice, so answer the engine's play-as-which prompt from the armed choice
+	// rather than raising it a second time in the sidebar.
+	if i, ok := c.armedUpgradeChoice(options); ok {
+		return i
+	}
 	// Drop any stale reply so a leftover click cannot answer this prompt.
 	select {
 	case <-c.optionReply:
@@ -253,6 +259,25 @@ func (c *webChooser) ChooseOption(source, prompt string, options []string) int {
 		c.g.promptSource = ""
 	})
 	return i
+}
+
+// armedUpgradeChoice answers the engine's "play as a creature or an upgrade?"
+// prompt from the choice the Play creature / Play upgrade buttons armed. It fires
+// only for that exact prompt — the ["Creature", "Upgrade"] option pair — and only
+// while a choice is armed, so every other option prompt still asks the player.
+// The armed choice is set on the UI goroutine before the play's goroutine starts,
+// so reading it here (off that goroutine) sees the value set before the play ran.
+func (c *webChooser) armedUpgradeChoice(options []string) (int, bool) {
+	if c.g.upgradeChoice == choiceNone {
+		return 0, false
+	}
+	if len(options) != 2 || options[0] != "Creature" || options[1] != "Upgrade" {
+		return 0, false
+	}
+	if c.g.upgradeChoice == choiceUpgrade {
+		return 1, true
+	}
+	return 0, true
 }
 
 // ChoosePosition implements the engine's PositionChooser: instead of a labeled
@@ -286,6 +311,7 @@ func (c *webChooser) ChoosePosition(source, _ string, line []engine.LocalID) int
 		c.g.choosingPosition = true
 		c.g.positionLine = line
 		c.g.positionRight = false
+		c.g.positionSideChosen = false
 		c.g.promptSource = source
 	})
 	var pos int
@@ -298,6 +324,7 @@ func (c *webChooser) ChoosePosition(source, _ string, line []engine.LocalID) int
 		c.g.choosingPosition = false
 		c.g.positionLine = nil
 		c.g.positionRight = false
+		c.g.positionSideChosen = false
 		c.g.promptSource = ""
 	})
 	return pos
@@ -310,6 +337,10 @@ func (g *game) chooseCandidate(_ app.Context, id engine.LocalID) {
 		return
 	}
 	g.inspecting = false
+	// Remember the creature just chosen so a "choose how to use X" verb prompt that
+	// follows (Universal Translator uses a creature, then asks how) can lift it and
+	// put its use buttons on it rather than in the sidebar.
+	g.useTarget, g.hasUseTarget = id, true
 	select {
 	case g.chooser.reply <- chooseReply{id: id, ok: true}:
 	default:
@@ -370,9 +401,11 @@ func (g *game) chooseOptionIdx(i int) app.EventHandler {
 
 // choosePositionCandidate answers a Deploy placement prompt with the position the
 // clicked battleline creature implies: to its left (its own index) or its right
-// (index + 1), per the armed direction toggle.
+// (index + 1), per the side the player chose first. It does nothing until a side
+// has been chosen, so the line is only answerable once the player has said which
+// way the new creature lands.
 func (g *game) choosePositionCandidate(_ app.Context, id engine.LocalID) {
-	if !g.choosingPosition {
+	if !g.choosingPosition || !g.positionSideChosen {
 		return
 	}
 	pos := -1
@@ -391,29 +424,28 @@ func (g *game) choosePositionCandidate(_ app.Context, id engine.LocalID) {
 	g.answerPosition(pos)
 }
 
-// choosePositionFlank answers a Deploy placement prompt with a flank: the left
-// flank is position 0, the right flank the end of the line.
-func (g *game) choosePositionFlank(left bool) app.EventHandler {
-	return func(_ app.Context, _ app.Event) {
-		if !g.choosingPosition {
-			return
-		}
-		if left {
-			g.answerPosition(0)
-			return
-		}
-		g.answerPosition(len(g.positionLine))
-	}
-}
-
-// setPositionDir arms whether a clicked creature is placed to its left or right.
-func (g *game) setPositionDir(right bool) app.EventHandler {
+// chooseDeploySide arms which side of a clicked creature the Deploy creature
+// lands on — the first step of placement — and marks the side chosen so the
+// battleline becomes clickable for the second step. Left of the leftmost creature
+// is the left flank and right of the rightmost is the right flank, so both flanks
+// stay reachable without their own buttons.
+func (g *game) chooseDeploySide(right bool) app.EventHandler {
 	return func(_ app.Context, _ app.Event) {
 		if !g.choosingPosition {
 			return
 		}
 		g.positionRight = right
+		g.positionSideChosen = true
 	}
+}
+
+// deploySideBack undoes the side choice, returning the placement to its first
+// step so the player can pick the other side.
+func (g *game) deploySideBack(_ app.Context, _ app.Event) {
+	if !g.choosingPosition {
+		return
+	}
+	g.positionSideChosen = false
 }
 
 // answerPosition sends a resolved battleline position back to the parked action

@@ -79,6 +79,7 @@ func (e TakeControl) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 func (e TakeControl) resolveGate(ctx *EffectContext) bool {
 	if !e.Target.valid() {
 		ctx.Resolver.TakeControl(ctx.Source, ctx.Controller, ctx.Upgrade)
+		placeSeizedOnFlank(ctx, ctx.Controller, ctx.Source)
 		ctx.It, ctx.HasIt = ctx.Source, true
 		return true
 	}
@@ -96,16 +97,7 @@ func (e TakeControl) resolveGate(ctx *EffectContext) bool {
 			source = id
 		}
 		ctx.Resolver.TakeControl(id, newController, source)
-		if ctx.Resolver.IsCreature(id) {
-			// The player gaining control places the seized creature on a flank of
-			// their battleline (Harland Mindlock). With no other creature there it
-			// has only one home, so the flank is not worth asking.
-			if len(ctx.Resolver.Battleline(newController)) > 1 {
-				right := ctx.Resolver.ChooseOption(newController, ctx.Source,
-					"Choose a flank", []string{"left flank", "right flank"}) == 1
-				ctx.Resolver.MoveToFlank(id, right)
-			}
-		}
+		placeSeizedOnFlank(ctx, newController, id)
 		if e.AndExhaust {
 			ctx.Resolver.SetExhausted(id, true)
 		}
@@ -113,4 +105,21 @@ func (e TakeControl) resolveGate(ctx *EffectContext) bool {
 		moved = true
 	}
 	return moved
+}
+
+// placeSeizedOnFlank lets the player gaining control place a seized creature on
+// the flank they choose (Harland Mindlock, Collar of Subordination). The engine
+// never assumes a flank: with another creature already in the taker's battleline
+// the flank is asked, and with only one home there is nothing to ask. A seized
+// artifact has no flank, so it is left where control placed it.
+func placeSeizedOnFlank(ctx *EffectContext, controller int, id LocalID) {
+	if !ctx.Resolver.IsCreature(id) {
+		return
+	}
+	if len(ctx.Resolver.Battleline(controller)) <= 1 {
+		return
+	}
+	right := ctx.Resolver.ChooseOption(controller, ctx.Source,
+		"Choose a flank", []string{"left flank", "right flank"}) == 1
+	ctx.Resolver.MoveToFlank(id, right)
 }

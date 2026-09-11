@@ -24,7 +24,7 @@ var OrbitalBombardment = card.New(
 					Player: card.Controller,
 					House:  card.House.Self,
 				},
-				card.Repeat{
+				card.ForEach{
 					Times: card.CardsRevealed{},
 					Do: card.DealDamage{
 						Target: card.Target.Creature,

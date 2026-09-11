@@ -329,16 +329,17 @@ func (c *cardView) Render() app.UI {
 			app.If(len(c.Icons) > 0, func() app.UI {
 				return iconStrip(c.Icons)
 			}),
-			app.If(c.Trait != "" || c.Rules != "", func() app.UI {
-				return app.Div().Class("card-text").Body(
-					app.If(c.Trait != "", func() app.UI {
-						return app.Div().Class("card-traits").Text(c.Trait)
-					}),
-					app.If(c.Rules != "", func() app.UI {
-						return app.Div().Class("card-rules").Text(c.Rules)
-					}),
-				)
-			}),
+			// Always render the text box, even with no trait or rules text, so a
+			// text-less card keeps the empty box filling the normal text space rather
+			// than leaving a stub of bare art below the glyph band.
+			app.Div().Class("card-text").Body(
+				app.If(c.Trait != "", func() app.UI {
+					return app.Div().Class("card-traits").Text(c.Trait)
+				}),
+				app.If(c.Rules != "", func() app.UI {
+					return app.Div().Class("card-rules").Text(c.Rules)
+				}),
+			),
 		),
 		app.Div().Class("card-kind").Body(
 			app.If(c.Emblem != "", func() app.UI {

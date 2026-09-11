@@ -85,6 +85,33 @@ func (g *Game) removeFromAnyZone(id LocalID) {
 	g.State.Purge[o].remove(id)
 }
 
+// ManualAttachUnder removes a card from wherever it rests or sits in play and
+// places it under host, face up (graft) or face down (place under). Like every
+// manual operation it performs no rule checks; a card taken from play sheds its
+// upgrades and per-match state on the way under (removeFromAnyZone).
+func (g *Game) ManualAttachUnder(host, id LocalID, faceDown bool) {
+	o := g.owner(id)
+	g.removeFromAnyZone(id)
+	g.AttachUnder(host, id, faceDown)
+	g.record(CardPutUnder{Player: o, Card: id, Host: host, FaceDown: faceDown})
+}
+
+// ManualDetachToHand sends a selected upgrade or under-card to its owner's hand,
+// detaching it from its host first and shedding its per-match state. It is the
+// manual counterpart to "return to hand" for an attached card; a card that is
+// neither an upgrade nor placed under a host is left where it is.
+func (g *Game) ManualDetachToHand(id LocalID) {
+	if _, ok := g.detachUpgrade(id); !ok {
+		if _, ok := g.detachUnder(id); !ok {
+			return
+		}
+	}
+	o := g.owner(id)
+	g.resetCore(id)
+	g.State.Hand[o].add(id)
+	g.record(ManualCardMoved{Player: o, Card: id, To: ManualHand})
+}
+
 // ManualSetExhausted sets or clears a card's exhausted flag — readying an
 // exhausted creature, or exhausting a ready one.
 func (g *Game) ManualSetExhausted(id LocalID, exhausted bool) {

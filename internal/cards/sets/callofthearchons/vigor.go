@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Heal 3 damage from a creature. If you healed exactly 3 damage, gain 1 Æmber.
+//	Play: Heal 3 damage from a creature. If you healed 3 or more damage, gain 1 Æmber.
 var Vigor = card.New(
 	"Vigor",
 	card.House.Untamed,
@@ -26,7 +26,7 @@ var Vigor = card.New(
 			card.Conditional{
 				Cond: card.CountIs{
 					Count:  card.DamageHealed{},
-					Is:     card.Exactly,
+					Is:     card.AtLeast,
 					Amount: 3,
 				},
 				Then: card.GainAember{

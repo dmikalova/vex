@@ -270,23 +270,16 @@ func (g *game) play(ctx app.Context, _ app.Event) {
 	if g.busy || g.choosing || g.phase != phaseMain || g.selKind != selHand {
 		return
 	}
+	// An ordinary play makes no creature-as-upgrade choice, so clear any armed by a
+	// previous Play creature / Play upgrade press.
+	g.upgradeChoice = choiceNone
 	p := g.active()
 	idx := g.selHand
 	def := g.g.Def(g.sel)
 	g.markTakeoff(g.sel)
 	switch def.Type {
 	case engine.Creature:
-		// An empty line has one spot, and a Deploy creature is placed by the
-		// click-to-place position prompt the engine raises (not a flank) — both play
-		// straight away rather than asking the which-flank question first.
-		if len(g.g.Battleline(p)) == 0 || g.g.HasKeyword(g.sel, engine.Deploy) {
-			g.runAction(
-				ctx,
-				func() error { _, err := g.g.PlayCreature(p, idx, false); return playTypeError(err, def.Type) },
-			)
-			return
-		}
-		g.phase = phaseFlank
+		g.playCreature(ctx)
 	case engine.Artifact:
 		g.runAction(
 			ctx,
@@ -300,6 +293,71 @@ func (g *game) play(ctx app.Context, _ app.Event) {
 			func() error { _, err := g.g.PlayUpgrade(p, idx); return playTypeError(err, def.Type) },
 		)
 	}
+}
+
+// playCreature places the selected creature. An empty line has one spot, and a
+// Deploy creature is placed by the click-to-place position prompt the engine
+// raises (not a flank) — both play straight away rather than asking the
+// which-flank question first. It does not touch upgradeChoice, so a Play creature
+// press (which arms choiceCreature) reaches the engine's play-as-which prompt with
+// its answer already set.
+func (g *game) playCreature(ctx app.Context) {
+	p, idx := g.active(), g.selHand
+	def := g.g.Def(g.sel)
+	if len(g.g.Battleline(p)) == 0 || g.g.HasKeyword(g.sel, engine.Deploy) {
+		g.runAction(
+			ctx,
+			func() error { _, err := g.g.PlayCreature(p, idx, false); return playTypeError(err, def.Type) },
+		)
+		return
+	}
+	g.phase = phaseFlank
+}
+
+// canPlayAsUpgrade reports whether the selected hand card is a creature the player
+// may play either as a creature or as an upgrade right now: its definition allows
+// it and there is a host in play to attach to. When true the lifted card offers
+// explicit Play creature / Play upgrade buttons instead of a single Play, and the
+// choice pre-answers the engine's play-as-which prompt (see upgradeChoice).
+func (g *game) canPlayAsUpgrade() bool {
+	if g.selKind != selHand || g.phase != phaseMain {
+		return false
+	}
+	def := g.g.Def(g.sel)
+	if def.Type != engine.Creature || !def.PlayableAsUpgrade {
+		return false
+	}
+	return len(g.g.Battleline(0)) > 0 || len(g.g.Battleline(1)) > 0
+}
+
+// playAsCreature plays the creature-that-could-be-an-upgrade as a creature: it
+// arms the creature answer so the engine's play-as-which prompt resolves itself,
+// then follows the normal creature flow (a flank question unless the line is
+// empty or the creature Deploys).
+func (g *game) playAsCreature(ctx app.Context, _ app.Event) {
+	if g.busy || g.choosing || !g.canPlayAsUpgrade() {
+		return
+	}
+	g.upgradeChoice = choiceCreature
+	g.markTakeoff(g.sel)
+	g.playCreature(ctx)
+}
+
+// playAsUpgrade plays the creature-that-could-be-an-upgrade as an upgrade: it arms
+// the upgrade answer so the engine's play-as-which prompt resolves itself and the
+// engine routes the card onto a host. Upgrades take no flank, so it skips the
+// flank step and plays straight away.
+func (g *game) playAsUpgrade(ctx app.Context, _ app.Event) {
+	if g.busy || g.choosing || !g.canPlayAsUpgrade() {
+		return
+	}
+	p, idx := g.active(), g.selHand
+	g.upgradeChoice = choiceUpgrade
+	g.markTakeoff(g.sel)
+	g.runAction(
+		ctx,
+		func() error { _, err := g.g.PlayCreature(p, idx, false); return playTypeError(err, engine.Creature) },
+	)
 }
 
 // playTypeError makes the generic "cannot play this type" restriction explicit

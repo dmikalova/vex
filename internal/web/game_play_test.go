@@ -211,10 +211,11 @@ func TestCancellingTheFlankPrompt(t *testing.T) {
 }
 
 // A Deploy creature skips the flank prompt and instead raises the click-to-place
-// position prompt: the player clicks a battleline creature to land beside it, on
-// the side the direction toggle arms, or takes a flank button. These drive the
-// answer handlers directly against a staged prompt (the state ChoosePosition
-// posts), so no background goroutine is needed to test the click-to-position map.
+// position prompt: the player first chooses a side (Deploy left / Deploy right),
+// then clicks a battleline creature to land beside it on that side. The ends of
+// the line are the flanks. These drive the answer handlers directly against a
+// staged prompt (the state ChoosePosition posts), so no background goroutine is
+// needed to test the click-to-position map.
 func TestDeployPlacementByClick(t *testing.T) {
 	stage := func(t *testing.T) (*client, []engine.LocalID) {
 		t.Helper()
@@ -226,6 +227,7 @@ func TestDeployPlacementByClick(t *testing.T) {
 		c.g.choosingPosition = true
 		c.g.positionLine = line
 		c.g.positionRight = false
+		c.g.positionSideChosen = false
 		return c, line
 	}
 	answered := func(t *testing.T, c *client) int {
@@ -239,33 +241,59 @@ func TestDeployPlacementByClick(t *testing.T) {
 		}
 	}
 
-	t.Run("clicking a creature deploys to its left by default", func(t *testing.T) {
+	t.Run("choosing left then clicking a creature deploys to its left", func(t *testing.T) {
 		c, line := stage(t)
+		c.do(c.g.chooseDeploySide(false))
 		c.g.choosePositionCandidate(c.ctx, line[1]) // before the second creature
 		if got := answered(t, c); got != 1 {
 			t.Errorf("deploy-left of index 1 = position %d, want 1", got)
 		}
 	})
 
-	t.Run("arming deploy right places after the clicked creature", func(t *testing.T) {
+	t.Run("choosing right places after the clicked creature", func(t *testing.T) {
 		c, line := stage(t)
-		c.do(c.g.setPositionDir(true))
+		c.do(c.g.chooseDeploySide(true))
 		c.g.choosePositionCandidate(c.ctx, line[0]) // after the first creature
 		if got := answered(t, c); got != 1 {
 			t.Errorf("deploy-right of index 0 = position %d, want 1", got)
 		}
 	})
 
-	t.Run("the flank buttons answer the ends of the line", func(t *testing.T) {
+	t.Run("deploy right of the last creature is the right flank", func(t *testing.T) {
 		c, line := stage(t)
-		c.do(c.g.choosePositionFlank(false)) // right flank
+		c.do(c.g.chooseDeploySide(true))
+		c.g.choosePositionCandidate(c.ctx, line[len(line)-1])
 		if got := answered(t, c); got != len(line) {
-			t.Errorf("the right flank = position %d, want %d", got, len(line))
+			t.Errorf("deploy-right of the last creature = position %d, want %d",
+				got, len(line))
+		}
+	})
+
+	t.Run("clicking a creature before a side is chosen is ignored", func(t *testing.T) {
+		c, line := stage(t)
+		c.g.choosePositionCandidate(c.ctx, line[0])
+		select {
+		case <-c.g.chooser.positionReply:
+			t.Fatal("a click before choosing a side answered the prompt")
+		default:
+		}
+	})
+
+	t.Run("Back returns to the side choice", func(t *testing.T) {
+		c, _ := stage(t)
+		c.do(c.g.chooseDeploySide(true))
+		if !c.g.positionSideChosen {
+			t.Fatal("choosing a side did not mark it chosen")
+		}
+		c.do(c.g.deploySideBack)
+		if c.g.positionSideChosen {
+			t.Error("Back did not return to the side choice")
 		}
 	})
 
 	t.Run("clicking a creature not on the line is ignored", func(t *testing.T) {
 		c, _ := stage(t)
+		c.do(c.g.chooseDeploySide(false))
 		offLine := c.deal(testCreature) // in hand, not on the battleline
 		c.g.choosePositionCandidate(c.ctx, offLine)
 		select {
@@ -787,5 +815,105 @@ func TestUsingWhatCannotBeUsed(t *testing.T) {
 	c.do(c.g.useAction)
 	if c.g.status == "" {
 		t.Error("using a creature with no Action ability reported nothing")
+	}
+}
+
+// asUpgradeCreature is a creature that may be played either as a creature or as
+// an upgrade (WithPlayableAsUpgrade), so selecting it with a host in play offers
+// the two explicit play buttons.
+const asUpgradeCreature = "CALV-1N"
+
+// A creature that may go down as a creature or as an upgrade, with a host in
+// play, offers two explicit buttons — Play creature and Play upgrade — in place
+// of the single Play, so the choice is made up front rather than by a later
+// sidebar prompt.
+func TestPlayableAsUpgradeOffersBothPlayButtons(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	c.playFromHand(c.deal(asUpgradeCreature)) // a host in play
+	c.g.selectHandID(c.ctx, c.deal(asUpgradeCreature))
+
+	acts, note := c.g.handCardActions()
+	if note != "" {
+		t.Fatalf("the play offer carried a note: %q", note)
+	}
+	var haveCreature, haveUpgrade bool
+	for _, a := range acts {
+		switch a.Label {
+		case "Play creature":
+			haveCreature = true
+		case "Play upgrade":
+			haveUpgrade = true
+		case "Play":
+			t.Error("the single Play button is still offered alongside the split ones")
+		}
+	}
+	if !haveCreature || !haveUpgrade {
+		t.Errorf("play offer is missing a split button: creature=%v upgrade=%v",
+			haveCreature, haveUpgrade)
+	}
+}
+
+// With no host in play the creature-or-upgrade choice does not arise, so an
+// ordinary single Play button is offered.
+func TestPlayableAsUpgradeWithoutAHostOffersPlainPlay(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	c.g.selectHandID(c.ctx, c.deal(asUpgradeCreature))
+
+	if c.g.canPlayAsUpgrade() {
+		t.Fatal("a creature-as-upgrade with no host in play offered the split")
+	}
+	acts, _ := c.g.handCardActions()
+	var havePlain bool
+	for _, a := range acts {
+		if a.Label == "Play" {
+			havePlain = true
+		}
+		if a.Label == "Play creature" || a.Label == "Play upgrade" {
+			t.Errorf("a split button %q was offered with no host in play", a.Label)
+		}
+	}
+	if !havePlain {
+		t.Error("no plain Play button was offered")
+	}
+}
+
+// The armed Play creature / Play upgrade choice answers the engine's "as a
+// creature or an upgrade?" prompt for it, and only for it: an unarmed choice or a
+// different prompt is left for the player.
+func TestArmedUpgradeChoiceAnswersOnlyItsPrompt(t *testing.T) {
+	c := newClient(t)
+	pair := []string{"Creature", "Upgrade"}
+
+	c.g.upgradeChoice = choiceUpgrade
+	if i, ok := c.g.chooser.armedUpgradeChoice(pair); !ok || i != 1 {
+		t.Errorf("upgrade answered (%d,%v), want (1,true)", i, ok)
+	}
+	c.g.upgradeChoice = choiceCreature
+	if i, ok := c.g.chooser.armedUpgradeChoice(pair); !ok || i != 0 {
+		t.Errorf("creature answered (%d,%v), want (0,true)", i, ok)
+	}
+	c.g.upgradeChoice = choiceNone
+	if _, ok := c.g.chooser.armedUpgradeChoice(pair); ok {
+		t.Error("an unarmed choice answered the prompt")
+	}
+	c.g.upgradeChoice = choiceUpgrade
+	if _, ok := c.g.chooser.armedUpgradeChoice([]string{"Yes", "No"}); ok {
+		t.Error("an armed choice answered an unrelated prompt")
+	}
+}
+
+// An ordinary play clears any armed creature-as-upgrade choice, so a later prompt
+// is never answered by a stale one.
+func TestPlayClearsAnArmedUpgradeChoice(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	c.g.upgradeChoice = choiceUpgrade
+	c.g.selectHandID(c.ctx, c.deal(testCreature))
+	c.do(c.g.play)
+	if c.g.upgradeChoice != choiceNone {
+		t.Errorf("an ordinary play left the armed choice at %v, want choiceNone",
+			c.g.upgradeChoice)
 	}
 }

@@ -637,8 +637,13 @@ func (g *game) cardTab(id engine.LocalID) app.UI {
 		DataSet("id", strconv.Itoa(int(id))).
 		OnMouseEnter(g.onCardTabHover).
 		OnMouseLeave(g.onCardTabHoverOut)
-	if target {
+	switch {
+	case target:
 		tab = tab.OnClick(g.onCardTabTap)
+	case g.g.Manual() && !g.choosing && !g.hostTargeting:
+		// In manual mode an attached card has no face to click, so its tab is how it
+		// is selected (to send it to hand, say). Off manual mode a tab only previews.
+		tab = tab.OnClick(g.onCardTabSelect)
 	}
 	return tab.Body(app.Span().Class("card-tab-title").Text(def.Name))
 }
@@ -721,9 +726,10 @@ func (g *game) cardVisual(
 ) (activate func(app.Context, engine.LocalID), targetable, dimmed bool) {
 	switch {
 	case g.choosingPosition:
-		// Placing a Deploy creature: its battleline creatures are the click targets
-		// (click one to land beside it); everything else dims.
-		if containsID(g.positionLine, id) {
+		// Placing a Deploy creature: once a side is chosen its battleline creatures
+		// are the click targets (click one to land beside it); before that, and for
+		// everything else, the board dims.
+		if g.positionSideChosen && containsID(g.positionLine, id) {
 			return g.choosePositionCandidate, true, false
 		}
 		return nil, false, true
@@ -732,6 +738,14 @@ func (g *game) cardVisual(
 		// choosing case must come first or the candidates would not be clickable.
 		if containsID(g.chooserCandidates, id) {
 			return g.chooseCandidate, true, false
+		}
+		return nil, false, true
+	case g.hostTargeting:
+		// A manual Graft / Place under is choosing the host to thread the selected
+		// card under: every other in-play card is a click target; the rest dims. It
+		// comes before boardInert because manual mode may act from the house phase.
+		if id != g.sel && g.inPlay(id) {
+			return g.attachToHost, true, false
 		}
 		return nil, false, true
 	case g.boardInert():

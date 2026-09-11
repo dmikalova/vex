@@ -16,7 +16,7 @@ import (
 //	Traits: Demon
 //
 //	Taunt.
-//	You must lose 3 Æmber in order to play Truebaru.
+//	In order to play Truebaru, you must lose 3 Æmber.
 //	Destroyed: Gain 5 Æmber.
 func TestTruebaru(t *testing.T) {
 	t.Run("costs 3 Æmber to play", func(t *testing.T) {

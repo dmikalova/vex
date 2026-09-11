@@ -113,21 +113,37 @@ func (e PutFromDiscard) admits(ctx *EffectContext, id LocalID) bool {
 	return e.Name == "" || ctx.Resolver.Name(id) == e.Name
 }
 
+// matches reports whether a discard-pile card is a candidate this effect could
+// move — the admits filters plus the OfChosenHouse restriction (which applies only
+// with All).
+func (e PutFromDiscard) matches(ctx *EffectContext, id LocalID) bool {
+	return e.admits(ctx, id) &&
+		(!e.All || !e.OfChosenHouse || ctx.Resolver.House(id) == ctx.ChosenHouse)
+}
+
+// vacuous reports that no card in the controller's discard pile matches, so a
+// "you may" wrapping this effect asks nothing (Chief Engineer Walls prompts only
+// when an upgrade or Robot card is actually in the discard).
+func (e PutFromDiscard) vacuous(ctx *EffectContext) bool {
+	return len(discardCardsWhere(ctx, ctx.Controller, func(id LocalID) bool {
+		return e.matches(ctx, id)
+	})) == 0
+}
+
 // Resolve moves a card from the controller's discard pile to the destination. With
 // All it moves every matching card; otherwise the controller chooses one, and
 // nothing happens if there is no candidate or the choice is declined.
 func (e PutFromDiscard) Resolve(ctx *EffectContext) {
 	if e.All {
 		for _, id := range discardCardsWhere(ctx, ctx.Controller, func(id LocalID) bool {
-			return e.admits(ctx, id) &&
-				(!e.OfChosenHouse || ctx.Resolver.House(id) == ctx.ChosenHouse)
+			return e.matches(ctx, id)
 		}) {
 			e.moveTo(ctx, id)
 		}
 		return
 	}
 	candidates := discardCardsWhere(ctx, ctx.Controller, func(id LocalID) bool {
-		return e.admits(ctx, id)
+		return e.matches(ctx, id)
 	})
 	id, ok := ctx.ChooseCreature("Choose a "+e.noun()+" from your discard pile", candidates)
 	if !ok {

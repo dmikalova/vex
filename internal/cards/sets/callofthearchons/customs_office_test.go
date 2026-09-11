@@ -15,7 +15,7 @@ import (
 //	Rarity: Rare
 //	Traits: Location
 //
-//	Your opponent must give you 1 Æmber in order to play an artifact.
+//	In order to play an artifact, your opponent must give you 1 Æmber.
 func TestCustomsOffice(t *testing.T) {
 	t.Run("opponent pays the controller 1 Æmber to play an artifact", func(t *testing.T) {
 		var toll ct.Card

@@ -36,6 +36,19 @@ const (
 	selOther                // any other card (read-only: opponent's, an upgrade)
 )
 
+// upgradePlayChoice pre-answers the engine's "play this creature as a creature or
+// an upgrade?" option prompt for a creature that may be played either way. The
+// lifted card offers explicit Play creature / Play upgrade buttons, so the choice
+// is made before the play runs and the engine's prompt answers itself rather than
+// asking again in the sidebar.
+type upgradePlayChoice int
+
+const (
+	choiceNone     upgradePlayChoice = iota // no creature-as-upgrade choice armed
+	choiceCreature                          // play it as a creature (keep the flank step)
+	choiceUpgrade                           // play it as an upgrade (skip the flank step)
+)
+
 // NewGame returns the root component for a fresh browser client session. The
 // match itself is seeded on the client in OnMount.
 func NewGame() app.Composer {
@@ -130,6 +143,12 @@ type game struct {
 	selHand  int // hand index when selKind == selHand, else -1
 	hasSel   bool
 	attacker engine.LocalID // creature declared to fight, during phaseFightTarget
+	// upgradeChoice pre-answers the engine's "as a creature or an upgrade?" prompt
+	// for a creature the player is playing that may go down either way. It is armed
+	// on the UI goroutine by the Play creature / Play upgrade buttons before the
+	// play runs, then read by the webChooser off that goroutine; g.play resets it so
+	// an ordinary play never inherits a stale choice.
+	upgradeChoice upgradePlayChoice
 
 	// engine chooser overlay
 	choosing          bool
@@ -161,20 +180,38 @@ type game struct {
 	choosingOption bool
 	optionPrompt   string
 	optionLabels   []string
+	// useTarget is the creature the current action last chose to use, so a "choose
+	// how to use X" verb prompt (Universal Translator) can lift that creature and
+	// put the reap/fight/action buttons on it — like an ordinary use — rather than
+	// listing them in the sidebar. hasUseTarget guards it; it is cleared at the
+	// start of each action and set by chooseCandidate when a creature is picked.
+	useTarget    engine.LocalID
+	hasUseTarget bool
 
 	// engine position chooser: placing a Deploy creature. The creature is lifted
-	// while the prompt is up and its placement verbs sit on it (deployActions);
-	// positionLine is the battleline being placed into, and a click on one of its
-	// creatures lands the new creature to that creature's left or right per
-	// positionRight (false = left, true = right).
-	choosingPosition bool
-	positionLine     []engine.LocalID
-	positionRight    bool
+	// while the prompt is up and its placement verbs sit on it (deployActions). The
+	// placement is a two-step: first choose a side with the Deploy left / Deploy
+	// right pair (which arms positionRight and sets positionSideChosen), then the
+	// battleline lights up and a click on one of its creatures lands the new
+	// creature on the chosen side of it. positionLine is the battleline being placed
+	// into; positionRight is the armed side (false = left, true = right);
+	// positionSideChosen gates the creature-picking step until a side is picked.
+	choosingPosition   bool
+	positionLine       []engine.LocalID
+	positionRight      bool
+	positionSideChosen bool
 
 	// cancelling marks a manual-mode Cancel in flight: the current prompt (and any
 	// that follow it as the effect drains) answers itself, and when the action
 	// goroutine returns runAction rolls the whole action back to its start snapshot.
 	cancelling bool
+
+	// hostTargeting is set in manual mode after the player picks Graft or Place
+	// under for the selected card: the board's in-play cards light up as hosts and
+	// clicking one threads the selected card under it. hostFaceDown carries which
+	// was picked — false grafts face up, true places under face down.
+	hostTargeting bool
+	hostFaceDown  bool
 
 	// zonesPlayer, when >= 0, opens the out-of-play zone viewer (discard, archives,
 	// and purge piles) for that player. -1 keeps the viewer closed.
