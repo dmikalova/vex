@@ -226,7 +226,7 @@ State holds flat `LastingEffect{On Event, Do lastingAction, Controller, Amount}`
 records; `lastingActionOf` maps a composed effect to an enum tag and
 `game_lasting.go` fires/queries them. A **reaction** runs after an event: a site
 with its own trigger window folds the reactions into it with `lastingReactions`
-(ordered together with the card abilities through the `ReactionOrderer` port,
+(ordered together with the card abilities through the flat `ReactionChooser` port,
 ADR 0013), and a site without one emits a standalone `emitLasting`; a
 **replacement** changes an event's outcome (`lastingReplacement` + `Instead{Of,
 With}`).

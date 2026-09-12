@@ -8,7 +8,7 @@ import (
 
 func TestChaosPortalComposition(t *testing.T) {
 	effect := ChooseHouseThen{Then: Sentences{Effects: []Effect{
-		RevealTopOfDeck{},
+		RevealTopOfDeck{Amount: 1},
 		Conditional{Cond: ItIsOfHouse{House: TheChosenHouse}, Then: PlayRevealedCard{}},
 	}}}
 	if got := effect.Text(); got != "choose a house - reveal the top card of your deck. If it is of the chosen house, play it." {
@@ -21,7 +21,7 @@ func TestChaosPortalComposition(t *testing.T) {
 
 	Sequence{
 		Effects: []Effect{
-			RevealTopOfDeck{},
+			RevealTopOfDeck{Amount: 1},
 			Conditional{Cond: ItIsOfHouse{House: TheChosenHouse}, Then: PlayRevealedCard{}},
 		},
 	}.Resolve(
@@ -50,7 +50,7 @@ func TestChaosPortalMissesAndGuards(t *testing.T) {
 	top := g.AddToDeck(NewCard("Wrong House", Dis, Tactic, Common), 0)
 	reveal := Sequence{
 		Effects: []Effect{
-			RevealTopOfDeck{},
+			RevealTopOfDeck{Amount: 1},
 			Conditional{Cond: ItIsOfHouse{House: TheChosenHouse}, Then: PlayRevealedCard{}},
 		},
 	}
@@ -511,78 +511,214 @@ func TestRevealDeckUntilHouse(t *testing.T) {
 	RevealDeckUntilHouse{House: Brobnar}.Resolve(ctx3)
 }
 
-// TestRevealPurgeShuffleDeck covers the reveal-top-N/purge-one/shuffle dig: it
-// purges one of the revealed top cards and leaves the rest in the deck. With the
-// default chooser it reveals from the controller's own deck and purges the top
-// card revealed.
-func TestRevealPurgeShuffleDeck(t *testing.T) {
-	want := "reveal the top 5 cards of a player's deck. Purge a card revealed this " +
-		"way. Shuffle the other revealed cards into that deck"
-	if got := (RevealPurgeShuffleDeck{Amount: 5}).Text(); got != want {
-		t.Errorf("text = %q, want %q", got, want)
-	}
-	if err := (RevealPurgeShuffleDeck{}).validate(); err == nil {
-		t.Error("want validate error for unset amount")
-	}
-	if err := (RevealPurgeShuffleDeck{Amount: 5}).validate(); err != nil {
-		t.Errorf("validate = %v, want nil", err)
-	}
+// TestRevealTopOfDeckRouting covers the reveal-and-route node: the text it renders,
+// the validation that rejects a bad Amount, a bad step, or a ShuffleRest that is not
+// last, and a resolve that reveals the top cards of a chosen deck, purges one, and
+// shuffles the rest — from the controller's own deck, the opponent's deck, an empty
+// deck, and with a declined purge.
+func TestRevealTopOfDeckRouting(t *testing.T) {
+	borrNit := RevealTopOfDeck{Amount: 5, ChooseWhoseDeck: true, Then: []TopAct{
+		ChooseAndMove{Count: 1, Dest: IntoPurge}, ShuffleRest{},
+	}}
 
-	g := NewGame("A", "B", 1)
-	top := g.AddToDeck(NewCard("Top", Logos, Creature, Common), 0)
-	g.AddToDeck(NewCard("Mid", Logos, Creature, Common), 0)
-	g.AddToDeck(NewCard("Low", Logos, Creature, Common), 0)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
-	RevealPurgeShuffleDeck{Amount: 3}.Resolve(ctx)
-	if purge := g.Purge(0); len(purge) != 1 || purge[0] != top {
-		t.Errorf("purge = %v, want [%d]", purge, top)
-	}
-	if len(g.Deck(0)) != 2 {
-		t.Errorf("deck = %v, want 2 cards", g.Deck(0))
-	}
+	t.Run("text", func(t *testing.T) {
+		want := "reveal the top 5 cards of a player's deck. Purge a card revealed this " +
+			"way. Shuffle the other revealed cards into that deck"
+		if got := borrNit.Text(); got != want {
+			t.Errorf("text = %q, want %q", got, want)
+		}
+		if got := (ChooseAndMove{Count: 2, Dest: IntoPurge}).clause(); got !=
+			"purge 2 cards revealed this way" {
+			t.Errorf("plural purge clause = %q", got)
+		}
+	})
 
-	// An empty deck purges nothing and is a no-op.
-	g2 := NewGame("A", "B", 1)
-	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
-	RevealPurgeShuffleDeck{Amount: 3}.Resolve(ctx2)
-	if len(g2.Purge(0)) != 0 {
-		t.Errorf("purge = %v, want empty", g2.Purge(0))
-	}
+	t.Run("validate", func(t *testing.T) {
+		if (RevealTopOfDeck{}).validate() == nil {
+			t.Error("an Amount of 0 should be rejected")
+		}
+		if err := borrNit.validate(); err != nil {
+			t.Errorf("validate() = %v", err)
+		}
+		if (ChooseAndMove{Dest: IntoPurge}).validate() == nil {
+			t.Error("a Count of 0 should be rejected")
+		}
+		if err := (ShuffleRest{}).validate(); err != nil {
+			t.Errorf("ShuffleRest validate() = %v", err)
+		}
+		badStep := RevealTopOfDeck{Amount: 5, ChooseWhoseDeck: true, Then: []TopAct{
+			ChooseAndMove{Dest: IntoPurge},
+		}}
+		if badStep.validate() == nil {
+			t.Error("a step with a bad Count should be rejected")
+		}
+		notLast := RevealTopOfDeck{Amount: 5, ChooseWhoseDeck: true, Then: []TopAct{
+			ShuffleRest{}, ChooseAndMove{Count: 1, Dest: IntoPurge},
+		}}
+		if notLast.validate() == nil {
+			t.Error("a ShuffleRest that is not last should be rejected")
+		}
+	})
 
-	// Choosing the opponent's deck digs there instead.
-	g3 := NewGame("A", "B", 1)
-	oppTop := g3.AddToDeck(NewCard("OppTop", Logos, Creature, Common), 1)
-	ctx3 := &EffectContext{Resolver: g3, Controller: 0}
-	g3.SetChooser(0, optionPicker{idx: 1})
-	RevealPurgeShuffleDeck{Amount: 3}.Resolve(ctx3)
-	if purge := g3.Purge(1); len(purge) != 1 || purge[0] != oppTop {
-		t.Errorf("opponent purge = %v, want [%d]", purge, oppTop)
-	}
+	t.Run("purges one of the revealed cards and shuffles the rest", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		top := g.AddToDeck(NewCard("Top", Logos, Creature, Common), 0)
+		g.AddToDeck(NewCard("Mid", Logos, Creature, Common), 0)
+		g.AddToDeck(NewCard("Low", Logos, Creature, Common), 0)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+		RevealTopOfDeck{Amount: 3, ChooseWhoseDeck: true, Then: []TopAct{
+			ChooseAndMove{Count: 1, Dest: IntoPurge}, ShuffleRest{},
+		}}.Resolve(ctx)
+		if purge := g.Purge(0); len(purge) != 1 || purge[0] != top {
+			t.Errorf("purge = %v, want [%d]", purge, top)
+		}
+		if len(g.Deck(0)) != 2 {
+			t.Errorf("deck = %v, want 2 cards", g.Deck(0))
+		}
+	})
+
+	t.Run("an empty deck is a no-op", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+		RevealTopOfDeck{Amount: 3, ChooseWhoseDeck: true, Then: []TopAct{
+			ChooseAndMove{Count: 1, Dest: IntoPurge}, ShuffleRest{},
+		}}.Resolve(ctx)
+		if len(g.Purge(0)) != 0 {
+			t.Errorf("purge = %v, want empty", g.Purge(0))
+		}
+	})
+
+	t.Run("choosing the opponent's deck digs there", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		oppTop := g.AddToDeck(NewCard("OppTop", Logos, Creature, Common), 1)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+		g.SetChooser(0, optionPicker{idx: 1})
+		RevealTopOfDeck{Amount: 3, ChooseWhoseDeck: true, Then: []TopAct{
+			ChooseAndMove{Count: 1, Dest: IntoPurge}, ShuffleRest{},
+		}}.Resolve(ctx)
+		if purge := g.Purge(1); len(purge) != 1 || purge[0] != oppTop {
+			t.Errorf("opponent purge = %v, want [%d]", purge, oppTop)
+		}
+	})
+
+	t.Run("a declined purge purges nothing but still shuffles", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.AddToDeck(NewCard("Top", Logos, Creature, Common), 0)
+		g.AddToDeck(NewCard("Mid", Logos, Creature, Common), 0)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+		g.SetChooser(0, orderRejectChooser{})
+		RevealTopOfDeck{Amount: 3, ChooseWhoseDeck: true, Then: []TopAct{
+			ChooseAndMove{Count: 1, Dest: IntoPurge}, ShuffleRest{},
+		}}.Resolve(ctx)
+		if len(g.Purge(0)) != 0 {
+			t.Errorf("purge = %v, want empty", g.Purge(0))
+		}
+		if len(g.Deck(0)) != 2 {
+			t.Errorf("deck = %v, want 2 cards", g.Deck(0))
+		}
+	})
+
+	t.Run("purging more than remain stops early", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		only := g.AddToDeck(NewCard("Only", Logos, Creature, Common), 0)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+		RevealTopOfDeck{Amount: 3, ChooseWhoseDeck: true, Then: []TopAct{
+			ChooseAndMove{Count: 2, Dest: IntoPurge},
+		}}.Resolve(ctx)
+		if purge := g.Purge(0); len(purge) != 1 || purge[0] != only {
+			t.Errorf("purge = %v, want [%d]", purge, only)
+		}
+	})
 }
 
-// TestLookAtTop covers the "look at the top N, keep one, discard the rest" dig:
-// the chosen card goes to hand, the others to the discard pile, and short or empty
-// decks are handled.
-func TestLookAtTop(t *testing.T) {
-	if got := (LookAtTop{Amount: 3}).Text(); got !=
-		"look at the top 3 cards of your deck, put 1 into your hand, and discard the others" {
-		t.Errorf("Text() = %q", got)
-	}
-	if (LookAtTop{}).validate() == nil {
-		t.Error("a Count of 0 should be rejected")
-	}
-	if err := (LookAtTop{Amount: 3}).validate(); err != nil {
-		t.Errorf("validate() = %v", err)
-	}
+// TestLookAtTopOfDeck covers the peek-and-route node: a pure peek that puts the
+// looked-at cards back untouched, the routing steps that draw, archive, and discard
+// them, a closing reorder, short and empty decks, declined choices, and the
+// validation that rejects a bad Amount or a ReorderRest that is not last.
+func TestLookAtTopOfDeck(t *testing.T) {
+	t.Run("text", func(t *testing.T) {
+		peek := LookAtTopOfDeck{Amount: 3}
+		if got := peek.Text(); got != "look at the top 3 cards of your deck" {
+			t.Errorf("peek Text() = %q", got)
+		}
+		if got := (LookAtTopOfDeck{Amount: 1}).Text(); got !=
+			"look at the top 1 card of your deck" {
+			t.Errorf("singular Text() = %q", got)
+		}
+		eyegor := LookAtTopOfDeck{Amount: 3, Then: []TopAct{
+			ChooseAndMove{Count: 1, Dest: IntoHand}, ChooseAndMove{Count: 2, Dest: IntoDiscard},
+		}}
+		if got := eyegor.Text(); got !=
+			"look at the top 3 cards of your deck, put 1 into your hand, and discard 2" {
+			t.Errorf("Eyegor Text() = %q", got)
+		}
+		philo := LookAtTopOfDeck{Amount: 3, Then: []TopAct{
+			ChooseAndMove{Count: 1, Dest: IntoArchives},
+			ChooseAndMove{Count: 1, Dest: IntoHand},
+			ChooseAndMove{Count: 1, Dest: IntoDiscard},
+		}}
+		if got := philo.Text(); got !=
+			"look at the top 3 cards of your deck, archive 1, put 1 into your hand, and discard 1" {
+			t.Errorf("Philophosaurus Text() = %q", got)
+		}
+		reorder := LookAtTopOfDeck{Amount: 3, Then: []TopAct{ReorderRest{}}}
+		if got := reorder.Text(); got !=
+			"look at the top 3 cards of your deck and put them back in any order" {
+			t.Errorf("reorder Text() = %q", got)
+		}
+	})
 
-	t.Run("keeps the chosen card and discards the rest", func(t *testing.T) {
+	t.Run("validate", func(t *testing.T) {
+		if (LookAtTopOfDeck{}).validate() == nil {
+			t.Error("an Amount of 0 should be rejected")
+		}
+		if err := (LookAtTopOfDeck{Amount: 3}).validate(); err != nil {
+			t.Errorf("validate() = %v", err)
+		}
+		if (ChooseAndMove{}).validate() == nil {
+			t.Error("a Count of 0 should be rejected")
+		}
+		if err := (ReorderRest{}).validate(); err != nil {
+			t.Errorf("ReorderRest validate() = %v", err)
+		}
+		badStep := LookAtTopOfDeck{Amount: 3, Then: []TopAct{ChooseAndMove{}}}
+		if badStep.validate() == nil {
+			t.Error("a step with a bad Count should be rejected")
+		}
+		notLast := LookAtTopOfDeck{Amount: 3, Then: []TopAct{
+			ReorderRest{}, ChooseAndMove{Count: 1, Dest: IntoHand},
+		}}
+		if notLast.validate() == nil {
+			t.Error("a ReorderRest that is not last should be rejected")
+		}
+		last := LookAtTopOfDeck{Amount: 3, Then: []TopAct{
+			ChooseAndMove{Count: 1, Dest: IntoHand}, ReorderRest{},
+		}}
+		if err := last.validate(); err != nil {
+			t.Errorf("a trailing ReorderRest = %v", err)
+		}
+	})
+
+	t.Run("a pure peek leaves the deck untouched", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		a := g.AddToDeck(NewCard("A Card", Logos, Creature, Common, WithPower(2)), 0)
+		b := g.AddToDeck(NewCard("B Card", Logos, Tactic, Common), 0)
+		LookAtTopOfDeck{Amount: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if got := g.Deck(0); len(got) != 2 || got[0] != a || got[1] != b {
+			t.Errorf("deck = %v, want [%d %d]", got, a, b)
+		}
+	})
+
+	t.Run("draws one and discards the rest", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		a := g.AddToDeck(NewCard("A Card", Logos, Creature, Common, WithPower(2)), 0)
 		b := g.AddToDeck(NewCard("B Card", Logos, Tactic, Common), 0)
 		c := g.AddToDeck(NewCard("C Card", Logos, Artifact, Common), 0)
 		bottom := g.AddToDeck(NewCard("Bottom", Logos, Creature, Common, WithPower(1)), 0)
 		g.SetChooser(0, &idQueueChooser{ids: []LocalID{b}})
-		LookAtTop{Amount: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		LookAtTopOfDeck{Amount: 3, Then: []TopAct{
+			ChooseAndMove{Count: 1, Dest: IntoHand}, ChooseAndMove{Count: 2, Dest: IntoDiscard},
+		}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 		if got := g.Hand(0); len(got) != 1 || got[0] != b {
 			t.Errorf("hand = %v, want [%d]", got, b)
 		}
@@ -594,53 +730,6 @@ func TestLookAtTop(t *testing.T) {
 		}
 	})
 
-	t.Run("looks at as many as remain", func(t *testing.T) {
-		g := NewGame("A", "B", 1)
-		a := g.AddToDeck(NewCard("A Card", Logos, Creature, Common, WithPower(2)), 0)
-		b := g.AddToDeck(NewCard("B Card", Logos, Tactic, Common), 0)
-		g.SetChooser(0, &idQueueChooser{ids: []LocalID{a}})
-		LookAtTop{Amount: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
-		if got := g.Hand(0); len(got) != 1 || got[0] != a {
-			t.Errorf("hand = %v, want [%d]", got, a)
-		}
-		if got := g.Discard(0); len(got) != 1 || got[0] != b {
-			t.Errorf("discard = %v, want [%d]", got, b)
-		}
-	})
-
-	t.Run("an empty deck does nothing", func(t *testing.T) {
-		g := NewGame("A", "B", 1)
-		LookAtTop{Amount: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
-		if got := g.Hand(0); len(got) != 0 {
-			t.Errorf("hand = %v, want empty", got)
-		}
-	})
-
-	t.Run("a declined choice keeps everything in the deck", func(t *testing.T) {
-		g := NewGame("A", "B", 1)
-		g.AddToDeck(NewCard("A Card", Logos, Creature, Common, WithPower(2)), 0)
-		g.AddToDeck(NewCard("B Card", Logos, Tactic, Common), 0)
-		g.SetChooser(0, orderRejectChooser{})
-		LookAtTop{Amount: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
-		if got := g.Hand(0); len(got) != 0 {
-			t.Errorf("hand = %v, want empty", got)
-		}
-		if got := g.Deck(0); len(got) != 2 {
-			t.Errorf("deck = %v, want 2 cards", got)
-		}
-	})
-}
-
-// TestLookAtTopSort covers "look at the top 3, archive 1, put 1 into your hand,
-// and discard 1": the controller sorts the looked-at cards into three piles, a
-// short deck sorts as many as remain, and an empty deck or a declined choice does
-// nothing.
-func TestLookAtTopSort(t *testing.T) {
-	if got := (LookAtTopSort{}).Text(); got !=
-		"look at the top 3 cards of your deck, archive 1, put 1 into your hand, and discard 1" {
-		t.Errorf("Text() = %q", got)
-	}
-
 	t.Run("sorts the top three into three piles", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		a := g.AddToDeck(NewCard("A Card", Logos, Creature, Common, WithPower(2)), 0)
@@ -648,7 +737,11 @@ func TestLookAtTopSort(t *testing.T) {
 		c := g.AddToDeck(NewCard("C Card", Logos, Artifact, Common), 0)
 		bottom := g.AddToDeck(NewCard("Bottom", Logos, Creature, Common, WithPower(1)), 0)
 		g.SetChooser(0, &idQueueChooser{ids: []LocalID{a, b}})
-		LookAtTopSort{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		LookAtTopOfDeck{Amount: 3, Then: []TopAct{
+			ChooseAndMove{Count: 1, Dest: IntoArchives},
+			ChooseAndMove{Count: 1, Dest: IntoHand},
+			ChooseAndMove{Count: 1, Dest: IntoDiscard},
+		}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 		if got := g.Archives(0); len(got) != 1 || got[0] != a {
 			t.Errorf("archives = %v, want [%d]", got, a)
 		}
@@ -663,97 +756,80 @@ func TestLookAtTopSort(t *testing.T) {
 		}
 	})
 
-	t.Run("sorts as many as remain", func(t *testing.T) {
+	t.Run("routes as many as remain", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		a := g.AddToDeck(NewCard("A Card", Logos, Creature, Common, WithPower(2)), 0)
+		b := g.AddToDeck(NewCard("B Card", Logos, Tactic, Common), 0)
 		g.SetChooser(0, &idQueueChooser{ids: []LocalID{a}})
-		LookAtTopSort{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
-		if got := g.Archives(0); len(got) != 1 || got[0] != a {
-			t.Errorf("archives = %v, want [%d]", got, a)
+		LookAtTopOfDeck{Amount: 3, Then: []TopAct{
+			ChooseAndMove{Count: 1, Dest: IntoHand}, ChooseAndMove{Count: 2, Dest: IntoDiscard},
+		}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if got := g.Hand(0); len(got) != 1 || got[0] != a {
+			t.Errorf("hand = %v, want [%d]", got, a)
 		}
-		if got := g.Hand(0); len(got) != 0 {
-			t.Errorf("hand = %v, want empty", got)
+		if got := g.Discard(0); len(got) != 1 || got[0] != b {
+			t.Errorf("discard = %v, want [%d]", got, b)
 		}
 	})
 
 	t.Run("an empty deck does nothing", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
-		LookAtTopSort{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
-		if got := g.Archives(0); len(got) != 0 {
-			t.Errorf("archives = %v, want empty", got)
+		LookAtTopOfDeck{Amount: 3, Then: []TopAct{
+			ChooseAndMove{Count: 1, Dest: IntoHand},
+		}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if got := g.Hand(0); len(got) != 0 {
+			t.Errorf("hand = %v, want empty", got)
 		}
 	})
 
-	t.Run("a declined choice leaves the deck untouched", func(t *testing.T) {
+	t.Run("a declined draw keeps everything in the deck", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		g.AddToDeck(NewCard("A Card", Logos, Creature, Common, WithPower(2)), 0)
 		g.AddToDeck(NewCard("B Card", Logos, Tactic, Common), 0)
 		g.SetChooser(0, orderRejectChooser{})
-		LookAtTopSort{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		LookAtTopOfDeck{Amount: 3, Then: []TopAct{
+			ChooseAndMove{Count: 1, Dest: IntoHand}, ChooseAndMove{Count: 2, Dest: IntoDiscard},
+		}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if got := g.Hand(0); len(got) != 0 {
+			t.Errorf("hand = %v, want empty", got)
+		}
 		if got := g.Deck(0); len(got) != 2 {
 			t.Errorf("deck = %v, want 2 cards", got)
 		}
-		if got := g.Archives(0); len(got) != 0 {
-			t.Errorf("archives = %v, want empty", got)
-		}
 	})
-}
 
-// TestReorderTop covers "look at the top N and put them back in any order": the
-// controller's chosen order becomes the new top, short decks are left alone, and a
-// declined choice leaves the order untouched.
-func TestReorderTop(t *testing.T) {
-	if got := (ReorderTop{Amount: 3}).Text(); got !=
-		"look at the top 3 cards of your deck and put them back in any order" {
-		t.Errorf("Text() = %q", got)
-	}
-	if (ReorderTop{}).validate() == nil {
-		t.Error("a Count of 0 should be rejected")
-	}
-	if err := (ReorderTop{Amount: 3}).validate(); err != nil {
-		t.Errorf("validate() = %v", err)
-	}
-
-	t.Run("places the chosen order on top, leaving the rest", func(t *testing.T) {
+	t.Run("reorder places the chosen order on top, leaving the rest", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		a := g.AddToDeck(NewCard("A Card", Logos, Creature, Common, WithPower(2)), 0)
 		b := g.AddToDeck(NewCard("B Card", Logos, Tactic, Common), 0)
 		c := g.AddToDeck(NewCard("C Card", Logos, Artifact, Common), 0)
 		bottom := g.AddToDeck(NewCard("Bottom", Logos, Creature, Common, WithPower(1)), 0)
 		g.SetChooser(0, &idQueueChooser{ids: []LocalID{c, a}})
-		ReorderTop{Amount: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		LookAtTopOfDeck{Amount: 3, Then: []TopAct{ReorderRest{}}}.
+			Resolve(&EffectContext{Resolver: g, Controller: 0})
 		if got := g.Deck(0); len(got) != 4 ||
 			got[0] != c || got[1] != a || got[2] != b || got[3] != bottom {
 			t.Errorf("deck = %v, want [%d %d %d %d]", got, c, a, b, bottom)
 		}
 	})
 
-	t.Run("reorders as many as remain", func(t *testing.T) {
-		g := NewGame("A", "B", 1)
-		a := g.AddToDeck(NewCard("A Card", Logos, Creature, Common, WithPower(2)), 0)
-		b := g.AddToDeck(NewCard("B Card", Logos, Tactic, Common), 0)
-		g.SetChooser(0, &idQueueChooser{ids: []LocalID{b}})
-		ReorderTop{Amount: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
-		if got := g.Deck(0); len(got) != 2 || got[0] != b || got[1] != a {
-			t.Errorf("deck = %v, want [%d %d]", got, b, a)
-		}
-	})
-
-	t.Run("fewer than two cards does nothing", func(t *testing.T) {
+	t.Run("reorder with fewer than two cards does nothing", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		only := g.AddToDeck(NewCard("Only", Logos, Creature, Common, WithPower(2)), 0)
-		ReorderTop{Amount: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		LookAtTopOfDeck{Amount: 3, Then: []TopAct{ReorderRest{}}}.
+			Resolve(&EffectContext{Resolver: g, Controller: 0})
 		if got := g.Deck(0); len(got) != 1 || got[0] != only {
 			t.Errorf("deck = %v, want [%d]", got, only)
 		}
 	})
 
-	t.Run("a declined choice keeps the original order", func(t *testing.T) {
+	t.Run("a declined reorder keeps the original order", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		a := g.AddToDeck(NewCard("A Card", Logos, Creature, Common, WithPower(2)), 0)
 		b := g.AddToDeck(NewCard("B Card", Logos, Tactic, Common), 0)
 		g.SetChooser(0, orderRejectChooser{})
-		ReorderTop{Amount: 3}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		LookAtTopOfDeck{Amount: 3, Then: []TopAct{ReorderRest{}}}.
+			Resolve(&EffectContext{Resolver: g, Controller: 0})
 		if got := g.Deck(0); len(got) != 2 || got[0] != a || got[1] != b {
 			t.Errorf("deck = %v, want [%d %d]", got, a, b)
 		}

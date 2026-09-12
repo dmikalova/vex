@@ -2,6 +2,9 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
+// HydeName is the card name "Hyde".
+const HydeName = "Hyde"
+
 // hydeCluster pulls one Velum per Hyde: the two are a PullExact pair, so Velum
 // (Rarity.Connected) rides in whenever Hyde is placed (ADR 0036).
 var hydeCluster = card.Cluster{
@@ -21,7 +24,7 @@ var hydeCluster = card.Cluster{
 //	Reap: Draw a card. If you control Velum, draw a card.
 //	Destroyed: Archive Velum from your discard pile -> archive Hyde from play.
 var Hyde = card.New(
-	"Hyde",
+	HydeName,
 	card.House.Logos,
 	card.Type.Creature,
 	card.Rarity.Rare,

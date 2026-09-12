@@ -7,10 +7,12 @@
 //
 // What is built today is the core spine: weighted House selection, per-slot
 // rarity rolls with Maverick/Special overlays, drawing from the pool, the
-// duplicate-pull draw modifier, and per-slot Materialize (identity plus maverick
-// rehousing). Legacy pools, connections, the enhancement/distortion finishing
-// pass, templates, and scoring are documented seams that stay inert until the
-// data and engine support them (a second set, generation profiles, distortions).
+// duplicate-pull draw modifier, per-slot Materialize (identity, maverick
+// rehousing, and templates that bind a card per pod — Ambassadors, Plants,
+// banes), cross-set Legacy pools, and cluster placement (ADR 0036). The
+// enhancement/distortion finishing pass and scoring remain documented seams that
+// stay inert until the engine supports them (distortions, a game-playing
+// evaluator).
 package deckgen
 
 import "github.com/dmikalova/vactrol/internal/engine"

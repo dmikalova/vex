@@ -128,11 +128,14 @@ together, so no creature's destruction changes another's.`,
 		{
 			Section:    SectionEffect,
 			Title:      "Reveal Top of Deck",
-			Definition: "Reveal the top card of your deck so a following effect can inspect or play it; the card does not move.",
-			Body: `RevealTopOfDeck reveals the top card of the controller's deck — logging it and
-putting it in context (ctx.It) so a following effect can inspect or play it (Chaos
-Portal plays it when it is of the chosen house). Revealing does not move the card;
-an empty deck reveals nothing.`,
+			Definition: "Reveal the top cards of a deck to both players so a following effect can inspect or play the top one, or route the revealed cards.",
+			Body: `RevealTopOfDeck reveals the top Amount cards of a deck to both players and binds
+the top one in context (ctx.It) so a following effect can inspect or play it (Chaos
+Portal plays it when it is of the chosen house). Set ChooseWhoseDeck to have the
+controller pick whose deck. Ordered routing steps then send chosen cards to a
+destination — hand, archives, discard pile, or purge — and a final step reorders or
+shuffles whatever the earlier steps left. It reveals as many as remain when the deck
+holds fewer than Amount, and does nothing on an empty deck.`,
 		},
 		{
 			Section:    SectionEffect,

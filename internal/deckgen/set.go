@@ -1,7 +1,6 @@
 package deckgen
 
 import (
-	"fmt"
 	"math/rand"
 	"sort"
 
@@ -45,7 +44,7 @@ type Set struct {
 // NewSet builds a Set from a flat list of pool entries, bucketing them by House
 // and rarity. Houseless cards go to the Special pool; cards with no House are
 // dropped; Connected cards are indexed by name but never pooled (they enter a
-// deck only when a connection pulls them). The selectable Houses are those
+// deck only when a cluster places them). The selectable Houses are those
 // present in the pool, sorted by name.
 func NewSet(name string, cards []Card, tuning Tuning) Set {
 	s := Set{
@@ -83,7 +82,6 @@ func NewSet(name string, cards []Card, tuning Tuning) Set {
 	}
 	sort.Slice(s.houses, func(i, j int) bool { return s.houses[i].String() < s.houses[j].String() })
 	s.clusters = buildClusters(cards)
-	s.validateConnections()
 	s.validateClusters()
 	return s
 }
@@ -108,30 +106,19 @@ type Legacy struct {
 	// rolled rarity that House has no legacy card of.
 	byHouseRarity map[engine.House]map[engine.Rarity][]LegacyEntry
 	byHouse       map[engine.House][]LegacyEntry
-	// byName indexes every legacy card by name, including the Connected ones the
-	// draw buckets omit, so a legacy puller drawn into another set's pod can
-	// resolve its Connection and materialize its connected partners from the
-	// shared pool (Set.lookup falls back here).
-	byName map[string]Card
 }
 
-// NewLegacy buckets legacy entries by House and rarity, and indexes every entry by
-// name. Only housed, non-Connected cards are pooled — a legacy card keeps its own
-// House and rarity, since it is not rehoused the way a maverick is; Houseless
-// Specials, Connected cards, and cards with no House are skipped for drawing. The
-// byName index keeps all of them, though, so a legacy puller's connected partners
-// (including Connected-rarity ones) remain reachable for a connection to pull.
+// NewLegacy buckets legacy entries by House and rarity. Only housed, non-Connected
+// cards are pooled — a legacy card keeps its own House and rarity, since it is not
+// rehoused the way a maverick is; Houseless Specials, Connected cards, and cards
+// with no House are skipped for drawing.
 func NewLegacy(entries []LegacyEntry) *Legacy {
 	l := &Legacy{
 		byHouseRarity: map[engine.House]map[engine.Rarity][]LegacyEntry{},
 		byHouse:       map[engine.House][]LegacyEntry{},
-		byName:        map[string]Card{},
 	}
 	for _, e := range entries {
 		c := e.Card
-		if c.Def.Name != "" {
-			l.byName[c.Def.Name] = c
-		}
 		if c.Profile.Houseless || c.Def.Rarity == engine.Connected {
 			continue
 		}
@@ -171,35 +158,6 @@ func (s Set) WithLegacy(l *Legacy) Set {
 	return s
 }
 
-// validateConnections fails loudly if any card connects to a card absent from the
-// set, or pulls it an impossible number of times or at an impossible rate: a
-// connection to a card that does not exist is an authoring error, never a link to
-// silently drop at generation time.
-func (s Set) validateConnections() {
-	for _, cards := range s.byName {
-		for _, cc := range cards.Profile.Connection.Cards {
-			if _, ok := s.byName[cc.Name]; !ok {
-				panic(fmt.Sprintf(
-					"deckgen: card %q connects to %q, which is not in set %q",
-					cards.Def.Name, cc.Name, s.Name,
-				))
-			}
-			if cc.Copies < 1 {
-				panic(fmt.Sprintf(
-					"deckgen: card %q pulls %d copies of %q; a connection pulls at least one",
-					cards.Def.Name, cc.Copies, cc.Name,
-				))
-			}
-			if cc.Chance <= 0 || cc.Chance > 1 {
-				panic(fmt.Sprintf(
-					"deckgen: card %q pulls %q at chance %v; a connection fires in (0, 1]",
-					cards.Def.Name, cc.Name, cc.Chance,
-				))
-			}
-		}
-	}
-}
-
 // Houses returns the Set's selectable Houses, sorted by name.
 func (s Set) Houses() []engine.House { return append([]engine.House(nil), s.houses...) }
 
@@ -211,24 +169,6 @@ func (s Set) Houses() []engine.House { return append([]engine.House(nil), s.hous
 func (s Set) member(name string) bool {
 	_, ok := s.byName[name]
 	return ok
-}
-
-// lookup resolves a card by name for connection expansion: the set's own card if
-// it prints one, else a card of that name from the shared legacy pool. The final
-// bool reports whether the card came from the legacy pool, so a partner a legacy
-// puller pulls in is tagged legacy to match its puller (a legacy Troop Call pulls
-// legacy Niffle Apes). A name the set prints resolves natively even when a legacy
-// puller pulled it, matching the member rule for a legacy draw.
-func (s Set) lookup(name string) (Card, bool, bool) {
-	if c, ok := s.byName[name]; ok {
-		return c, true, false
-	}
-	if s.legacy != nil {
-		if c, ok := s.legacy.byName[name]; ok {
-			return c, true, true
-		}
-	}
-	return Card{}, false, false
 }
 
 // pickHouses selects PodCount distinct Houses, weighted and honoring exclusions,

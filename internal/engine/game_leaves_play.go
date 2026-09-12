@@ -291,22 +291,57 @@ func (g *Game) inDestroyingWindow(id LocalID) bool {
 // destroyTogether destroys several creatures as one simultaneous event, matching
 // KeyForge timing. Every creature remains in play while all of their Destroyed
 // abilities are collected; the active player resolves those abilities in an order
-// they choose — one creature at a time (its creatures highlight for selection),
-// and, for a creature carrying more than one Destroyed ability, choosing which of
-// its abilities resolves next. A creature that leaves play (e.g. Annihilation
-// Ritual purges it) cannot resolve any of its remaining abilities. Then every
-// creature still in play goes to its discard pile.
+// they choose — one ability at a time, and for a creature carrying more than one
+// Destroyed ability, choosing which resolves next. A Destroyed ability that
+// destroys more creatures folds their Destroyed abilities into this same window, so
+// a whole chain of deaths resolves together and only then reaches the discard pile
+// (point 1; ADR 0013). A creature that leaves play mid-window (Annihilation Ritual
+// purges it) cannot resolve its remaining abilities. Once every enrolled creature
+// is in the discard pile — and so counts as destroyed — the "after ... destroyed"
+// reactions fire (Neffru, Pile of Skulls, Loot the Bodies).
+//
+// The first destruction to run opens the window and owns it; a destruction that
+// runs while it is open (a Destroyed ability's own destruction) enrolls its
+// creatures and returns, leaving the owner to resolve, discard, and fire the
+// after-destruction reactions for the whole window.
 func (g *Game) destroyTogether(controller int, ids []LocalID) {
 	ids = g.filterUndestroyed(controller, ids)
-	// A creature caught by a nested destruction while its own Destroyed window is
-	// still open (Harbinger of Doom's "Destroyed: destroy each creature" re-selects
-	// Harbinger) is already being destroyed by the enclosing batch; drop it here so
-	// its Destroyed abilities do not fire twice and it is discarded once.
+	// A creature caught by a nested destruction while its Destroyed window is still
+	// open (Harbinger of Doom's "Destroyed: destroy each creature" re-selects
+	// Harbinger) is already enrolled; drop it so its Destroyed abilities do not fire
+	// twice and it is discarded once.
 	ids = g.excludeOpenWindows(ids)
-	g.destroyingWindow = append(g.destroyingWindow, ids...)
-	defer func() {
-		g.destroyingWindow = g.destroyingWindow[:len(g.destroyingWindow)-len(ids)]
-	}()
+
+	owner := !g.destroyWindowOpen
+	if owner {
+		g.destroyWindowOpen = true
+		g.destroyWindowController = controller
+	}
+	g.enrollDestroyed(ids)
+	if !owner {
+		return
+	}
+	g.resolveDestroyedWindow()
+	members := append([]LocalID(nil), g.destroyingWindow...)
+	g.discardDestroyWindow()
+	// Close the window before the after-destruction reactions: they are a fresh
+	// event, so a destruction one of them causes opens its own new window.
+	g.destroyWindowOpen = false
+	g.destroyingWindow = nil
+	g.destroyPending = nil
+	g.afterDestroyedWindow(members)
+	// A creature's Destroyed ability may have armed a discarded creature to enter
+	// play in its former slot (Gebuk); with the batch now in the discard pile, its
+	// source has left play, so the delayed put-into-play fires.
+	g.fireReanimations()
+}
+
+// enrollDestroyed adds a batch of creatures to the open Destroyed window: it
+// records their destruction, raises the enemy-destroyed tally, adds them to the
+// window's membership, and queues their Destroyed abilities. The window owner
+// resolves the queued abilities, discards every member, and fires the
+// after-destruction reactions once for the whole window.
+func (g *Game) enrollDestroyed(ids []LocalID) {
 	// The source is consumed by the batch it directly targets; any state-based
 	// deaths that follow (a creature that lost a buff) narrate passively.
 	source, hasSource := g.destroyingSource, g.hasDestroyingSource
@@ -318,21 +353,33 @@ func (g *Game) destroyTogether(controller int, ids []LocalID) {
 			g.record(CardDestroyed{Card: id})
 		}
 	}
-	// "Each time an enemy creature is destroyed": the destroyed creature's controller
-	// is the enemy of whoever watches, so the reaction fires for that opponent. The
-	// count and the lasting "each time destroyed" event fire here, in the destruction
-	// window; the "after ... destroyed" reactions wait until the batch reaches the
-	// discard pile (below), because a card is not destroyed until it lands there.
+	// "Each time an enemy creature is destroyed": the enemy-destroyed tally rises now,
+	// in the destruction window, so a Destroyed ability resolving mid-window reads the
+	// deaths that have already happened. The Æmber reactions that respond to the
+	// destruction (Loot the Bodies) wait for the after-destruction window, which fires
+	// once the batch reaches the discard pile.
 	for _, id := range ids {
 		if g.TypeOf(id) == Creature {
 			g.State.TurnHistory[1-g.controller(id)][EnemyCreaturesDestroyed]++
 		}
-		g.emitLasting(EventEnemyCreatureDestroyed, 1-g.controller(id), id)
 	}
-	// The whole window is ordered once, up front, by the active player (ADR 0013).
-	// A creature that leaves play mid-window (Annihilation Ritual purges it) simply
-	// drops its remaining abilities as they come up.
-	for _, t := range g.orderTriggered(controller, TriggerDestroyed, g.destroyedAbilities(ids)) {
+	g.destroyingWindow = append(g.destroyingWindow, ids...)
+	g.destroyPending = append(g.destroyPending, g.destroyedAbilities(ids)...)
+}
+
+// resolveDestroyedWindow resolves the open window's Destroyed abilities one at a
+// time, re-gathering the queue after each so a Destroyed ability that destroys more
+// creatures folds their abilities into the same window (enrollDestroyed queued
+// them). The window's controller picks the order (ADR 0013); a creature taken out
+// of play mid-window (Annihilation Ritual purges it) drops its remaining abilities,
+// since a card out of play resolves nothing more (RAW §190, ADR 0030). Nothing is
+// discarded until the queue drains, so every creature stays in play — and can be
+// seen by the abilities that fire — for the whole event.
+func (g *Game) resolveDestroyedWindow() {
+	for len(g.destroyPending) > 0 {
+		i := g.pickNextReaction(g.destroyWindowController, orderDestroyedPrompt, g.destroyPending)
+		t := g.destroyPending[i]
+		g.destroyPending = append(g.destroyPending[:i], g.destroyPending[i+1:]...)
 		if !g.inPlay(t.source) {
 			continue
 		}
@@ -349,31 +396,30 @@ func (g *Game) destroyTogether(controller int, ids []LocalID) {
 		)
 		closeFrame()
 	}
-	for _, id := range ids {
+}
+
+// discardDestroyWindow moves every enrolled creature still in play to its discard
+// pile, skipping one whose own Destroyed ability saved it (Reassembling Automaton)
+// or that already left play mid-window, then clears the saved marks for the window.
+func (g *Game) discardDestroyWindow() {
+	for _, id := range g.destroyingWindow {
 		if g.inPlay(id) && !g.savedFromDestruction[id] {
 			g.discardDestroyed(id)
 		}
 	}
-	for _, id := range ids {
+	for _, id := range g.destroyingWindow {
 		delete(g.savedFromDestruction, id)
 	}
-	// Only now, with the batch in the discard pile, do the "after ... destroyed"
-	// reactions fire — Neffru's "after a creature is destroyed" and Pile of Skulls'
-	// "after an enemy creature is destroyed" — so a card destroyed in this same batch
-	// is out of play and cannot be chosen or react to the deaths alongside it (e.g.
-	// Pile of Skulls cannot capture onto a friendly creature that died in the same
-	// combat).
-	for _, id := range ids {
-		if g.TypeOf(id) == Creature {
-			g.emitAfterEnemyDestroyed(id)
-			g.emitAfterFriendlyDestroyed(id)
-			g.emitAfterCreatureDestroyed(id)
-		}
-	}
-	// A creature's Destroyed ability may have armed a discarded creature to enter
-	// play in its former slot (Gebuk); with the batch now in the discard pile, its
-	// source has left play, so the delayed put-into-play fires.
-	g.fireReanimations()
+}
+
+// afterDestroyedWindow fires, as one ordered window, every reaction to the window's
+// creatures now reaching their discard piles — so a card destroyed in the same
+// window is out of play and cannot be chosen or react to the deaths alongside it
+// (e.g. Pile of Skulls cannot capture onto a friendly creature that died in the
+// same combat).
+func (g *Game) afterDestroyedWindow(members []LocalID) {
+	pending := g.afterDestroyedReactions(members)
+	g.resolveWindow(g.orderTriggered(g.State.ActivePlayer, pending))
 }
 
 // destroyEach destroys each id simultaneously (KeyForge's shared Destroyed

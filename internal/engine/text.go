@@ -171,11 +171,11 @@ func enterStateWord(e Effect) string {
 }
 
 // abilityTextWithNames resolves the two placeholders an ability line may use: the
-// card/creature named by "this", and, for an Upgrade resolving on its host, the
-// Upgrade's own name.
-func abilityTextWithNames(line, self, upgrade string) string {
+// host creature named by {self}, and the card's own name ({card}) for text that
+// must name the card itself rather than the host it acts on.
+func abilityTextWithNames(line, self, card string) string {
 	line = strings.ReplaceAll(line, SelfName, self)
-	return strings.ReplaceAll(line, UpgradeName, upgrade)
+	return strings.ReplaceAll(line, CardName, card)
 }
 
 // abilityLines renders a card's triggered abilities, one printed line each,

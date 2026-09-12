@@ -55,7 +55,7 @@ because they redistribute across cards.
 ## Update (ADR 0036)
 
 `SlotContext` gains `DeckHouses [3]House` (the three resolved pod Houses) so a
-template can bind a **partner house** — one of the deck's *other* Houses. The first
+template can bind a **partner house** — one of the deck's _other_ Houses. The first
 real users of this seam are ambassadors and plants (bind a partner house), banes
 (trait-derived text from a computed most-common-Trait table), and master-of-N
 (migrated from register-all-and-down-weight to a single template entry for

@@ -65,23 +65,24 @@ frontend.
   directly (Replicator makes a creature reap) is not performing the action, so it
   resolves the ability alone and opens no window (`TriggerAbilityOf`).
 - **Duration reactions order in the same window as the card-sourced set, through
-  the `ReactionOrderer` port.** A "for the remainder of the turn" reaction (Full
+  the flat `ReactionChooser` port.** A "for the remainder of the turn" reaction (Full
   Moon, Charge!, Crystal Hive) lives in the flat lasting registry (ADR 0007) and has
-  no in-play source card, so it cannot flow through `orderTriggered`'s card-based
-  two-level ordering ("the Chooser port speaks in cards"). Each unified window folds
-  its duration reactions into the same `orderTriggered` pass as window entries
-  (`lastingReactions` builds them; `resolveWindow` resolves them through
-  `resolveReaction`) rather than resolving them in a trailing `emitLasting(…)` window
-  of its own. When a window mixes card abilities with duration reactions, ordering
-  runs through the optional `ReactionOrderer` capability — which takes the whole set
-  (each rendered as an `OrderableReaction`, a card or a label) and returns a
-  permutation — so a client may interleave a duration reaction between two card
-  reactions. A `Chooser` without `ReactionOrderer` (the AI, the simulator) keeps the
-  default order: the card abilities first (in their card-based two-level order), then
-  the duration reactions in registry order, so folding never reorders the card
-  abilities that already resolved there. Pure-card windows keep the card-based
-  two-level `Orderer` path untouched. The cardtest harness (`bridgeChooser.OrderReactions`,
-  scripted by `Player.Order(cards…)`) and the web client (`webChooser.OrderReactions`,
-  ordering the card abilities by clicking and resolving the duration reactions after)
+  no in-play source card. Each unified window folds its duration reactions into the
+  same `orderTriggered` pass as window entries (`lastingReactions` builds them;
+  `resolveWindow` resolves them through `resolveReaction`) rather than resolving them
+  in a trailing `emitLasting(…)` window of its own. The whole window — card abilities
+  and duration reactions alike — is one flat labeled list: `orderTriggered` renders
+  each entry as an `OrderableReaction` (a card ability shows its source card and
+  rendered text, a duration reaction its rendered effect) and asks the active player,
+  through the optional `ReactionChooser` capability, to pick the next reaction to
+  resolve, repeating until one remains. A window whose entries are _all_ identical is
+  auto-ordered and never prompts, since their order cannot matter; any distinct entry
+  makes the whole window ordered in full (identical entries included), because
+  resolving one entry can change what another would do. A `Chooser` without
+  `ReactionChooser` (the AI, the simulator) keeps the gathered order — the card
+  abilities in collection order, then the duration reactions in registry order — so
+  folding never reorders the card abilities that already resolved there. The cardtest
+  harness (`bridgeChooser.ChooseReaction`, scripted by `Player.Order(cards…)`) and the
+  web client (`webChooser.ChooseReaction`, rendering the reactions as a labeled list)
   both implement the port. `emitLasting` remains for the events that have no card
   window of their own (an enemy creature destroyed).

@@ -11,6 +11,10 @@ func mkCard(name string, h engine.House, rr engine.Rarity) Card {
 	return Card{Def: engine.NewCard(name, h, engine.Creature, rr, engine.WithPower(3))}
 }
 
+func gen(set Set) *generator {
+	return &generator{set: set, r: rand.New(rand.NewSource(1)), placed: map[string]bool{}}
+}
+
 type matFunc func(SlotContext, *rand.Rand) engine.CardDefinition
 
 func (f matFunc) Materialize(

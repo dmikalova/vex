@@ -2,16 +2,16 @@
 
 ## Context
 
-Four card groups want deck generation to place a *family* of related cards, and
+Four card groups want deck generation to place a _family_ of related cards, and
 today's connection mechanism (ADR-less, documented in `docs/deck-generation.md`
 §5) covers only one of the four shapes:
 
-- **Sins** — seven cards in one House; drawing *any* one should top the pod up to a
+- **Sins** — seven cards in one House; drawing _any_ one should top the pod up to a
   random 3–7 distinct sins. No single card leads it.
 - **Horsemen** — four cards; a lead member (Horseman of Pestilence) pulls the other
   three.
-- **Shards** — one card per House; drawing *any* Shard should place that House's
-  Shard in *every* House pod of the deck. This is **deck-wide**, not pod-local, and
+- **Shards** — one card per House; drawing _any_ Shard should place that House's
+  Shard in _every_ House pod of the deck. This is **deck-wide**, not pod-local, and
   needs a member for every real House or it cannot complete.
 - Existing pullers — Timetraveller (`Pull(HelpFromFutureSelf, 1)`), Troop Call
   (`Pull(NiffleApe, 2)` + `PullSometimes(NiffleQueen, 0.15)`) — a fixed count from a
@@ -19,13 +19,13 @@ today's connection mechanism (ADR-less, documented in `docs/deck-generation.md`
 
 Today's `Connection`/`Connects`/`Pull`/`PullSometimes` express only the last shape.
 It is **pod-local** (`Generate` runs `expandConnections` per pod), the trigger is
-implicit ("this slot's card carries a `Connection`") so there is no *any-member*
+implicit ("this slot's card carries a `Connection`") so there is no _any-member_
 trigger, and the count is a fixed number or a single chance — no whole-pool, no
 random count, no one-per-House. Adding each of the four as its own special case
 would fork the fill path four ways.
 
 Separately, none of this reaches the second axis these cards also need — a card
-whose *identity* (not its companions) depends on the deck's other Houses. That is
+whose _identity_ (not its companions) depends on the deck's other Houses. That is
 the Template/Materialize seam (ADR 0004), extended here only by adding the deck's
 Houses to `SlotContext`.
 
@@ -42,8 +42,8 @@ Strategies:
 - **`WholePool`** — place every member (Horsemen).
 - **`RandomCount(min, max)`** — place a random number of distinct members in the
   range (sins, 3–7).
-- **`SelfPull(min, mean)`** — place a random number of *copies of the single
-  triggering member itself*, not distinct members (Plague Rat pulls more Plague
+- **`SelfPull(min, mean)`** — place a random number of _copies of the single
+  triggering member itself_, not distinct members (Plague Rat pulls more Plague
   Rats). The count is `min + Poisson(mean − min)`, capped at `PodSize`: at least
   `min`, averaging about `mean`, with a thin tail that reaches a whole pod only very
   rarely. Its cluster has exactly one member, and `validateClusters` enforces
@@ -94,8 +94,8 @@ strategies keep running per pod as before.
 **`SlotContext` gains `DeckHouses [3]House`** (the three resolved pod Houses) so the
 Template/Materialize seam (ADR 0004) can bind a **partner house** — an Ambassador
 (Sanctum) or Plant (Shadows) bound to one of the deck's other two Houses. This is
-the second axis and is orthogonal to clusters: clusters decide *which other cards*
-are placed; templates decide *what one drawn card becomes*.
+the second axis and is orthogonal to clusters: clusters decide _which other cards_
+are placed; templates decide _what one drawn card becomes_.
 
 ## Consequences
 

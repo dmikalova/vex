@@ -18,17 +18,16 @@ func TestLastingActionDescriptions(t *testing.T) {
 	}
 }
 
-func TestEmitLastingOrders(t *testing.T) {
+func TestLastingReactionsResolveOnPlay(t *testing.T) {
 	g := started(t) // player 0 active, Brobnar
 	foe := g.AddToBattleline(testCreature("foe", 5), 1)
-	// Two reactions fire on the same event; the controller orders them.
+	// Two reactions fire on the same event; both resolve when a creature is played.
 	g.AddLasting(
 		LastingEffect{On: EventCreaturePlayed, Do: actGainAember, Controller: 0, Amount: 1},
 	)
 	g.AddLasting(
 		LastingEffect{On: EventCreaturePlayed, Do: actDealDamage, Controller: 0, Amount: 2},
 	)
-	g.SetChooser(0, optionPicker{idx: 1}) // resolve "deal damage" first
 
 	g.AddToHand(testCreature("minion", 4), 0)
 	before := g.Aember(0)
@@ -121,7 +120,7 @@ func TestLastingOnceReadiesMatchingHouseAndSelfRemoves(t *testing.T) {
 	)
 
 	// A non-Mars subject is filtered out: not readied, and the entry stays armed.
-	g.emitLasting(EventCreaturePlayed, 0, sanc)
+	g.resolveLastingWindow(EventCreaturePlayed, 0, sanc)
 	if !g.State.Cards[sanc].Exhausted {
 		t.Error("a non-Mars creature should not be readied")
 	}
@@ -130,7 +129,7 @@ func TestLastingOnceReadiesMatchingHouseAndSelfRemoves(t *testing.T) {
 	}
 
 	// A Mars subject is readied, and the one-shot entry removes itself.
-	g.emitLasting(EventCreaturePlayed, 0, mars)
+	g.resolveLastingWindow(EventCreaturePlayed, 0, mars)
 	if g.State.Cards[mars].Exhausted {
 		t.Error("the next Mars creature should enter ready")
 	}
@@ -161,12 +160,12 @@ func TestLastingOnceFiltersByCardType(t *testing.T) {
 		},
 	)
 
-	g.emitLasting(EventCardEntersPlay, 0, up)
+	g.resolveLastingWindow(EventCardEntersPlay, 0, up)
 	if g.State.LastingCount != 1 {
 		t.Errorf("an upgrade should not satisfy the entry, count = %d", g.State.LastingCount)
 	}
 
-	g.emitLasting(EventCardEntersPlay, 0, artifact)
+	g.resolveLastingWindow(EventCardEntersPlay, 0, artifact)
 	if g.State.Cards[artifact].Exhausted {
 		t.Error("the artifact should enter ready")
 	}
@@ -200,7 +199,7 @@ func TestLastingOnceOrdersWithPersistentReaction(t *testing.T) {
 		LastingEffect{On: EventCreaturePlayed, Do: actGainAember, Controller: 0, Amount: 1},
 	)
 
-	g.emitLasting(EventCreaturePlayed, 0, mars) // three reactions fire; ordering path runs
+	g.resolveLastingWindow(EventCreaturePlayed, 0, mars) // three reactions fire; ordering path runs
 
 	if g.Aember(0) != 2 {
 		t.Errorf("aember = %d, want 2", g.Aember(0))
@@ -223,13 +222,15 @@ func (e recordAember) Resolve(ctx *EffectContext) {
 	*e.got = ctx.Resolver.Aember(ctx.Controller)
 }
 
-// reactionOrderRecorder is a ReactionOrderer test chooser: it records the window
-// it was handed and reverses it, so a test can prove a duration reaction was
-// ordered against a card ability in one window. An invalid result is returned when
-// invalid is set, to exercise the malformed-permutation fallback.
+// reactionOrderRecorder is a ReactionChooser test chooser: it records the first
+// window it is handed and picks the last reaction each call, reversing the window,
+// so a test can prove a duration reaction was ordered against a card ability in one
+// window. It returns an out-of-range index when invalid is set, to exercise the
+// gathered-order fallback.
 type reactionOrderRecorder struct {
 	got     []OrderableReaction
 	invalid bool
+	asked   bool
 }
 
 func (reactionOrderRecorder) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) {
@@ -239,21 +240,20 @@ func (reactionOrderRecorder) ChooseCreature(_, _ string, cands []LocalID) (Local
 	return cands[0], true
 }
 
-func (r *reactionOrderRecorder) OrderReactions(_ string, rs []OrderableReaction) []int {
-	r.got = rs
+func (r *reactionOrderRecorder) ChooseReaction(_ string, rs []OrderableReaction) int {
+	if !r.asked {
+		r.got = rs
+		r.asked = true
+	}
 	if r.invalid {
-		return []int{0} // wrong length: forces the default-order fallback
+		return -1 // out of range: forces the gathered-order fallback
 	}
-	out := make([]int, len(rs))
-	for i := range rs {
-		out[i] = len(rs) - 1 - i
-	}
-	return out
+	return len(rs) - 1 // pick the last, reversing the window
 }
 
 // TestReapWindowInterleavesLastingReaction proves a duration reaction (Crystal
 // Hive's "after a creature reaps: gain Æmber") is ordered in the same window as a
-// creature's own "Reap:" ability, not a trailing one: a ReactionOrderer that
+// creature's own "Reap:" ability, not a trailing one: a ReactionChooser that
 // reverses the window resolves the duration reaction before the card ability, so
 // the card ability sees the duration Æmber already gained.
 func TestReapWindowInterleavesLastingReaction(t *testing.T) {
@@ -298,8 +298,8 @@ func TestReapWindowInterleavesLastingReaction(t *testing.T) {
 	}
 }
 
-// TestReapWindowFallsBackOnBadOrder checks that a ReactionOrderer returning a
-// malformed permutation is ignored: the window resolves in its default order (card
+// TestReapWindowFallsBackOnBadOrder checks that a ReactionChooser returning an
+// out-of-range index is ignored: the window resolves in its gathered order (card
 // ability before the duration reaction), so the card ability records the pool
 // before the duration gain lands.
 func TestReapWindowFallsBackOnBadOrder(t *testing.T) {
@@ -323,23 +323,5 @@ func TestReapWindowFallsBackOnBadOrder(t *testing.T) {
 			recorded,
 			before+1,
 		)
-	}
-}
-
-// TestIsPermutation pins the guard that rejects a malformed ReactionOrderer result
-// — wrong length, an out-of-range index, or a duplicate — so a bad client falls
-// back to the default order rather than dropping or repeating a reaction.
-func TestIsPermutation(t *testing.T) {
-	if !isPermutation([]int{1, 0}, 2) {
-		t.Error("[1 0] is a valid permutation of 0..1")
-	}
-	if isPermutation([]int{0}, 2) {
-		t.Error("a wrong-length result is not a permutation")
-	}
-	if isPermutation([]int{0, 2}, 2) {
-		t.Error("an out-of-range index is not a permutation")
-	}
-	if isPermutation([]int{0, 0}, 2) {
-		t.Error("a duplicated index is not a permutation")
 	}
 }

@@ -52,7 +52,7 @@ func TestEndTurnNowIgnoresWonGame(t *testing.T) {
 // reveal, active-house, and end-turn nodes fold into the printed rules text.
 func TestBookOfLeQComposition(t *testing.T) {
 	a := Ability{Trigger: TriggerAction, Effect: Sentences{Effects: []Effect{
-		RevealTopOfDeck{},
+		RevealTopOfDeck{Amount: 1},
 		Conditional{
 			Cond: ItIsNotOfHouse{House: StarAlliance},
 			Then: MakeItsHouseActive{},

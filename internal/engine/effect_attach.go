@@ -14,14 +14,14 @@ type AttachSelfTo struct {
 	Host string
 }
 
-// Text renders the effect, e.g. "attach {upgrade} to Commander Chan".
-func (e AttachSelfTo) Text() string { return "attach " + UpgradeName + " to " + e.Host }
+// Text renders the effect, e.g. "attach {card} to Commander Chan".
+func (e AttachSelfTo) Text() string { return "attach " + CardName + " to " + e.Host }
 
 // Resolve moves the resolving upgrade onto the controller's creature named Host.
 func (e AttachSelfTo) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 
 // resolveGate moves the upgrade onto the host and reports whether it now sits
-// there, so an "attach {upgrade} to Y -> Z" gate runs Z only when a friendly
+// there, so an "attach {card} to Y -> Z" gate runs Z only when a friendly
 // creature named Host is in play. It does nothing when none is, or when the
 // resolving ability was not granted by an attached upgrade.
 //

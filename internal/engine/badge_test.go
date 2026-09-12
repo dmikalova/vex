@@ -25,7 +25,7 @@ func (c *recordingBadgeChooser) PreviewBadge(b SelectionBadge) {
 
 // TestPreviewBadgeIgnoredWithoutCapability covers PreviewBadge forwarding to a
 // chooser that cannot show a badge: it is a silent no-op.
-func TestPreviewBadgeIgnoredWithoutCapability(t *testing.T) {
+func TestPreviewBadgeIgnoredWithoutCapability(_ *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.SetChooser(0, FirstChooser{})
 	g.PreviewBadge(0, SelectionBadge{Icon: DamageIcon, Amount: 3})

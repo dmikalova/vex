@@ -215,10 +215,9 @@ func (s Set) validateClusters() {
 }
 
 // clusterCanFire reports whether a cluster has a triggering member that rolls in
-// the pool. A cluster placed only by connection-style pulling — every triggering
-// member Rarity.Connected — can never be drawn to fire itself. For ByLead only the
-// lead fires it, so the lead must roll; for ByAnyMember any non-Connected member
-// suffices.
+// the pool. A cluster whose every triggering member is Rarity.Connected can never
+// be drawn to fire itself. For ByLead only the lead fires it, so the lead must
+// roll; for ByAnyMember any non-Connected member suffices.
 func clusterCanFire(ci clusterIndex) bool {
 	if ci.trigger == ByLead {
 		for _, m := range ci.members {

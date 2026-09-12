@@ -9,7 +9,7 @@ import (
 // GenerationProfile is the deck-building-only metadata a card carries, kept out
 // of the pure engine definition (a facade sidecar, like Provenance). Its zero
 // value is an ordinary card. Enhancement sources and multiples are future
-// fields; today the flags and the connection below are read.
+// fields; today the flags and the cluster below are read.
 type GenerationProfile struct {
 	// OneCopyPerDeck bars a second copy in the same deck: once placed, draws and
 	// duplicate-pulls skip the card.
@@ -17,10 +17,6 @@ type GenerationProfile struct {
 	// Houseless marks a Special card with no House until it fills a Slot, when it
 	// is stamped with that Slot's House.
 	Houseless bool
-	// Connection names the connected cards this card pulls into its pod when it is
-	// placed (Timetraveller pulls Help from Future Self; Troop Call pulls the Niffle
-	// Apes it calls). See Connection.
-	Connection Connection
 	// RarityWeight scales how often deck generation draws this card among its
 	// house+rarity peers, relative to the default weight of 1; a value of 0 (or
 	// less) means the default. Five Master-of-N variants at 0.2 draft as often as
@@ -32,41 +28,6 @@ type GenerationProfile struct {
 	// Shard is drawn; the zero value belongs to no cluster.
 	Cluster ClusterMembership
 }
-
-// Connection is the set of connected cards a puller card brings into its pod.
-// Each entry is ensured present at its copy count, overwriting other
-// (unprotected) slots. A maverick puller still fires its connection, and its
-// partners are rehoused to the pod's House along with it (the printed-house
-// rule KeyForge itself uses for a Maverick's connected cards).
-type Connection struct {
-	// Cards are the connected cards, each pulled at its own count and rate.
-	Cards []ConnectedCard
-}
-
-// ConnectedCard is one card a connection pulls: how many copies the pod ends up
-// holding, and how often the pull happens at all. A guaranteed partner
-// (Timetraveller's Help from Future Self) carries Chance 1; a flavourful one
-// (Troop Call's Niffle Queen) carries less, and is rolled once per pod.
-//
-// A connected card need not be rarity Connected: Troop Call guarantees Niffle
-// Apes that roll on their own too. Author a card Connected only when it should
-// never appear without its puller, since the pool skips those entirely.
-type ConnectedCard struct {
-	// Name is the connected card's name, as it appears in the set.
-	Name string
-	// Copies is how many of it the pod ends up holding; at least one.
-	Copies int
-	// Chance is how often the pull fires, in (0, 1]; 1 is every time.
-	Chance float64
-	// Exact makes the pull fire once per puller instance rather than once per
-	// pod: a pod with N pullers ends up holding N*Copies of the connected card,
-	// so each Timetraveller pulls its own Help from Future Self. Left false, the
-	// pull is a pod-wide "at least Copies", the flavour Troop Call needs.
-	Exact bool
-}
-
-// Empty reports whether the connection pulls nothing.
-func (c Connection) Empty() bool { return len(c.Cards) == 0 }
 
 // SlotContext is what a Materializer needs to produce a concrete card for a Slot.
 // House is the pod's House — the card's final House, so a Maverick is rehoused to
@@ -84,9 +45,10 @@ type SlotContext struct {
 
 // Materializer turns a pool entry into a concrete, engine-ready card at
 // generation time (see ADR 0004). Concrete cards use the identity materializer (a
-// nil Materializer on a Card); templates — a future addition — bind their
-// parameters, name, and self-house references here. The returned definition must
-// be flat and pointerless, exactly what the engine consumes.
+// nil Materializer on a Card); a template binds its parameters, name, and
+// self-house references here — an Ambassador or Plant keys on the pod's partner
+// House, a bane on three random Houses. The returned definition must be flat and
+// pointerless, exactly what the engine consumes.
 type Materializer interface {
 	Materialize(ctx SlotContext, r *rand.Rand) engine.CardDefinition
 }

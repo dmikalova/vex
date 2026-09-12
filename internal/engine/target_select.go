@@ -449,7 +449,7 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 			return []LocalID{host}
 		}
 		return nil
-	case TargetGrantingArtifact:
+	case TargetGrantingCard:
 		if ctx.HasGrantor {
 			return []LocalID{ctx.Grantor}
 		}

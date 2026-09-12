@@ -24,7 +24,7 @@ var GamblingDen = card.New(
 			Do: card.ChooseHouseThen{
 				Then: card.Sentences{
 					Effects: []card.Effect{
-						card.RevealTopOfDeck{},
+						card.RevealTopOfDeck{Amount: 1},
 						card.Conditional{
 							Cond: card.ItIsOfHouse{House: card.TheChosenHouse},
 							Then: card.GainAember{Player: card.Controller, Amount: 2},

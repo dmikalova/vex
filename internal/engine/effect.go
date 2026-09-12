@@ -323,6 +323,8 @@ func (p Player) valid() bool { return p != playerUnset }
 // text like "{self} captures 1 Æmber" prints as "Charette captures 1 Æmber".
 const SelfName = "{self}"
 
-// UpgradeName is a placeholder an Upgrade's own Play effect uses when the text
-// must name the Upgrade rather than its host creature.
-const UpgradeName = "{upgrade}"
+// CardName is a placeholder a card's text uses to name the card itself rather
+// than the host creature it acts on — an upgrade or an artifact naming itself
+// where {self} has been redirected to "this creature". The renderer substitutes
+// it with the card's name.
+const CardName = "{card}"

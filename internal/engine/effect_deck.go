@@ -2,27 +2,6 @@ package engine
 
 import "fmt"
 
-// RevealTopOfDeck reveals the top card of the controller's deck — logging it and
-// putting it in context (ctx.It) so a following effect can inspect or play it (Chaos
-// Portal plays it when it is of the chosen house). Revealing does not move the card;
-// an empty deck reveals nothing.
-type RevealTopOfDeck struct{}
-
-// Text renders the effect.
-func (RevealTopOfDeck) Text() string { return "reveal the top card of your deck" }
-
-// Resolve reveals the top card, putting it in context.
-func (RevealTopOfDeck) Resolve(ctx *EffectContext) {
-	id, ok := ctx.Resolver.TopOfDeck(ctx.Controller)
-	ctx.It, ctx.HasIt = id, ok
-	if ok {
-		ctx.Resolver.Record(CardsRevealedToAll{
-			Player: ctx.Controller,
-			Cards:  []LocalID{id},
-		})
-	}
-}
-
 // PlayRevealedCard plays the card in context (put there by a preceding
 // RevealTopOfDeck) from the controller's deck — Chaos Portal. It does nothing when
 // no card is in context.
@@ -217,146 +196,316 @@ func (e DiscardTop) Resolve(ctx *EffectContext) {
 	}
 }
 
-// LookAtTop looks at the top Amount cards of the controller's deck, puts one the
-// controller chooses into their hand, and discards the others — Eyegor. It looks
-// at as many as remain when the deck holds fewer than Amount, and does nothing on
-// an empty deck.
-type LookAtTop struct {
-	Amount int
+// chooseFromTopOfDeck is the shared core behind LookAtTopOfDeck and RevealTopOfDeck.
+// It reads the top amount cards of a deck and runs an ordered list of routing steps
+// over them, each step seeing only the cards earlier steps left behind. chooseDeck
+// has the controller pick whose deck to read (their own or the opponent's); public
+// reveals the cards to both players and binds the top one in context (ctx.It) so a
+// following effect can inspect or play it. It reads as many as remain when the deck
+// holds fewer than amount, and does nothing on an empty deck.
+type chooseFromTopOfDeck struct {
+	amount     int
+	chooseDeck bool
+	public     bool
+	then       []TopAct
 }
 
-// validate rejects a non-positive Count: looking at zero cards is meaningless, so
-// an omitted count is an authoring error, not a silent default.
-func (e LookAtTop) validate() error {
-	if e.Amount < 1 {
-		return fmt.Errorf("LookAtTop: Count must be at least 1")
+// validate rejects a non-positive amount, validates each step, and enforces that a
+// terminal step is last: a terminal step consumes whatever earlier steps left, so
+// nothing may follow it (and, since it must be last, only one may appear).
+func (e chooseFromTopOfDeck) validate() error {
+	if e.amount < 1 {
+		return fmt.Errorf("chooseFromTopOfDeck: amount must be at least 1")
 	}
-	return nil
-}
-
-// Text renders the effect.
-func (e LookAtTop) Text() string {
-	return fmt.Sprintf(
-		"look at the top %d cards of your deck, put 1 into your hand, and discard the others",
-		e.Amount,
-	)
-}
-
-// Resolve looks at the top Amount cards, moves the one the controller chooses to
-// their hand, and discards the rest.
-func (e LookAtTop) Resolve(ctx *EffectContext) {
-	deck := ctx.Resolver.Deck(ctx.Controller)
-	if len(deck) == 0 {
-		return
-	}
-	top := deck[:min(e.Amount, len(deck))]
-	keep, ok := ctx.ChooseCard("Choose a card to put into your hand", top)
-	if !ok {
-		return
-	}
-	ctx.Resolver.MoveFromDeckToHand(keep)
-	for _, id := range top {
-		if id != keep {
-			ctx.Resolver.MoveFromDeckToDiscard(id)
+	for i, act := range e.then {
+		if err := act.validate(); err != nil {
+			return err
+		}
+		if act.terminal() && i != len(e.then)-1 {
+			return fmt.Errorf("chooseFromTopOfDeck: a terminal step must be last")
 		}
 	}
+	return nil
 }
 
-// ReorderTop looks at the top Amount cards of the controller's deck and puts them
-// back in any order the controller chooses — Navigator Ali. It looks at as many as
-// remain when the deck holds fewer than Amount, and reorders nothing when fewer
-// than two cards are there to reorder.
-type ReorderTop struct {
-	Amount int
+// resolve reads the top amount cards of the chosen deck and runs each routing step
+// over them so a step sees only the cards earlier steps left behind.
+func (e chooseFromTopOfDeck) resolve(ctx *EffectContext) {
+	player := ctx.Controller
+	if e.chooseDeck && ctx.ChooseOption(
+		"Whose deck to reveal from?",
+		[]string{"your deck", "your opponent's deck"},
+	) == 1 {
+		player = ctx.Opponent()
+	}
+	top := append([]LocalID(nil), deckTop(ctx, player, e.amount)...)
+	if e.public {
+		if len(top) > 0 {
+			ctx.It, ctx.HasIt = top[0], true
+			ctx.Resolver.Record(CardsRevealedToAll{Player: player, Cards: top})
+		} else {
+			ctx.HasIt = false
+		}
+	}
+	if len(top) == 0 {
+		return
+	}
+	tr := &topRead{player: player, remaining: top}
+	for _, act := range e.then {
+		act.apply(ctx, tr)
+	}
 }
 
-// validate rejects a non-positive Amount: reordering zero cards is meaningless.
-func (e ReorderTop) validate() error {
-	if e.Amount < 1 {
-		return fmt.Errorf("ReorderTop: Amount must be at least 1")
+// deckTop returns the top n cards of player's deck, or as many as remain.
+func deckTop(ctx *EffectContext, player, n int) []LocalID {
+	deck := ctx.Resolver.Deck(player)
+	return deck[:min(n, len(deck))]
+}
+
+// topRead tracks the cards a chooseFromTopOfDeck read that are still in the deck as
+// routing steps consume them, alongside whose deck they are — so a step moves,
+// purges, reorders, or shuffles the right player's deck.
+type topRead struct {
+	player    int
+	remaining []LocalID
+}
+
+// choose moves up to count of the still-read cards, one the controller chooses at a
+// time, via move; an empty run or a declined choice stops it early.
+func (tr *topRead) choose(ctx *EffectContext, count int, prompt string, move func(LocalID)) {
+	for range count {
+		if len(tr.remaining) == 0 {
+			return
+		}
+		id, ok := ctx.ChooseCard(prompt, tr.remaining)
+		if !ok {
+			return
+		}
+		move(id)
+		tr.remaining = withoutID(tr.remaining, id)
+	}
+}
+
+// positiveCount rejects a non-positive routing count: routing zero cards is meaningless.
+func positiveCount(name string, count int) error {
+	if count < 1 {
+		return fmt.Errorf("%s: Count must be at least 1", name)
 	}
 	return nil
 }
 
-// Text renders the effect.
-func (e ReorderTop) Text() string {
-	return fmt.Sprintf(
-		"look at the top %d cards of your deck and put them back in any order",
-		e.Amount,
-	)
+// TopAct is one routing step over the cards a chooseFromTopOfDeck read. It renders
+// its own text clause, moves (or reorders/shuffles) some of the still-read cards
+// seeing only what earlier steps left, and reports whether it is terminal — a
+// terminal step consumes the rest, so it must be the last step.
+type TopAct interface {
+	// clause renders this step's lowercase text, e.g. "put 1 into your hand".
+	clause() string
+	validate() error
+	terminal() bool
+	// apply routes this step's share of the cards still in tr.
+	apply(ctx *EffectContext, tr *topRead)
 }
 
-// Resolve has the controller choose the new order of the top cards, placing the
-// chosen card on top each step until one remains.
-func (e ReorderTop) Resolve(ctx *EffectContext) {
-	deck := ctx.Resolver.Deck(ctx.Controller)
-	top := deck[:min(e.Amount, len(deck))]
-	if len(top) < 2 {
+// DeckDest is where a ChooseAndMove step sends the cards it takes from the deck.
+type DeckDest int
+
+const (
+	// IntoHand puts the chosen cards into the controller's hand.
+	IntoHand DeckDest = iota
+	// IntoArchives archives the chosen cards.
+	IntoArchives
+	// IntoDiscard puts the chosen cards into the discard pile.
+	IntoDiscard
+	// IntoPurge purges the chosen cards.
+	IntoPurge
+)
+
+// ChooseAndMove takes Count of the read cards the controller chooses and sends them
+// to Dest — their hand, archives, discard pile, or the purge pile.
+type ChooseAndMove struct {
+	Count int
+	Dest  DeckDest
+}
+
+// clause renders the step, phrased per destination the way the printed cards read.
+func (a ChooseAndMove) clause() string {
+	switch a.Dest {
+	case IntoArchives:
+		return fmt.Sprintf("archive %d", a.Count)
+	case IntoDiscard:
+		return fmt.Sprintf("discard %d", a.Count)
+	case IntoPurge:
+		if a.Count == 1 {
+			return "purge a card revealed this way"
+		}
+		return fmt.Sprintf("purge %d cards revealed this way", a.Count)
+	default:
+		return fmt.Sprintf("put %d into your hand", a.Count)
+	}
+}
+
+// validate rejects a non-positive Count.
+func (a ChooseAndMove) validate() error { return positiveCount("ChooseAndMove", a.Count) }
+
+// terminal reports false: a move takes only Count cards, not the rest.
+func (ChooseAndMove) terminal() bool { return false }
+
+// apply moves the chosen cards from the deck to Dest.
+func (a ChooseAndMove) apply(ctx *EffectContext, tr *topRead) {
+	switch a.Dest {
+	case IntoArchives:
+		tr.choose(ctx, a.Count, "Choose a card to archive", ctx.Resolver.ArchiveFromDeck)
+	case IntoDiscard:
+		tr.choose(ctx, a.Count, "Choose a card to discard", ctx.Resolver.MoveFromDeckToDiscard)
+	case IntoPurge:
+		tr.choose(ctx, a.Count, "Choose a revealed card to purge", func(id LocalID) {
+			ctx.Resolver.PurgeFromDeck(tr.player, id)
+		})
+	default:
+		tr.choose(
+			ctx,
+			a.Count,
+			"Choose a card to put into your hand",
+			ctx.Resolver.MoveFromDeckToHand,
+		)
+	}
+}
+
+// ReorderRest puts the read cards no earlier step took back on top in any order the
+// controller chooses. It is terminal, so it must be the last step.
+type ReorderRest struct{}
+
+// clause renders the step.
+func (ReorderRest) clause() string { return "put them back in any order" }
+
+// validate always passes: a reorder carries no count.
+func (ReorderRest) validate() error { return nil }
+
+// terminal reports true: it consumes whatever earlier steps left.
+func (ReorderRest) terminal() bool { return true }
+
+// apply has the controller place the remaining read cards on top in a chosen order;
+// fewer than two cards leaves nothing to reorder, and a declined choice keeps the
+// original order.
+func (ReorderRest) apply(ctx *EffectContext, tr *topRead) {
+	if len(tr.remaining) < 2 {
 		return
 	}
-	remaining := append([]LocalID(nil), top...)
-	order := make([]LocalID, 0, len(top))
-	for len(remaining) > 1 {
+	order := make([]LocalID, 0, len(tr.remaining))
+	for len(tr.remaining) > 1 {
 		id, ok := ctx.ChooseCard(
-			"Choose the next card to place on top of your deck", remaining,
+			"Choose the next card to place on top of your deck", tr.remaining,
 		)
 		if !ok {
 			return
 		}
 		order = append(order, id)
-		for i, r := range remaining {
-			if r == id {
-				remaining = append(remaining[:i], remaining[i+1:]...)
-				break
-			}
-		}
+		tr.remaining = withoutID(tr.remaining, id)
 	}
-	order = append(order, remaining[0])
-	ctx.Resolver.SetDeckTop(ctx.Controller, order)
+	order = append(order, tr.remaining[0])
+	ctx.Resolver.SetDeckTop(tr.player, order)
 }
 
-// LookAtTopSort looks at the top three cards of the controller's deck and sorts
-// them into three piles — one archived, one put into hand, and the last discarded
-// (Philophosaurus). The controller chooses which card fills each pile in that
-// order. With fewer than three cards it sorts as many as remain and stops when the
-// deck runs out; an empty deck does nothing.
-type LookAtTopSort struct{}
+// ShuffleRest shuffles the read player's deck, mixing in the cards no earlier step
+// took. It is terminal, so it must be the last step.
+type ShuffleRest struct{}
 
-// Text renders the effect.
-func (LookAtTopSort) Text() string {
-	return "look at the top 3 cards of your deck, archive 1, put 1 into your hand, and discard 1"
+// clause renders the step.
+func (ShuffleRest) clause() string {
+	return "shuffle the other revealed cards into that deck"
 }
 
-// Resolve has the controller choose one of the looked-at cards to archive and one
-// to put into their hand, discarding whatever is left.
-func (LookAtTopSort) Resolve(ctx *EffectContext) {
-	deck := ctx.Resolver.Deck(ctx.Controller)
-	if len(deck) == 0 {
-		return
+// validate always passes: a shuffle carries no count.
+func (ShuffleRest) validate() error { return nil }
+
+// terminal reports true: it consumes whatever earlier steps left.
+func (ShuffleRest) terminal() bool { return true }
+
+// apply shuffles that player's deck and logs it.
+func (ShuffleRest) apply(ctx *EffectContext, tr *topRead) {
+	ctx.Resolver.Shuffle(tr.player)
+	ctx.Resolver.Record(DeckShuffled{Player: tr.player})
+}
+
+// LookAtTopOfDeck looks privately at the top Amount cards of the controller's deck,
+// then routes them through the ordered Then steps (see chooseFromTopOfDeck). With no
+// steps it is a pure peek — the cards never move. A card no step routes stays on top
+// in its original position — Eyegor, Philophosaurus, Navigator Ali, Lay of the Land.
+type LookAtTopOfDeck struct {
+	Amount int
+	Then   []TopAct
+}
+
+// core builds the private, own-deck read this sugar wraps.
+func (e LookAtTopOfDeck) core() chooseFromTopOfDeck {
+	return chooseFromTopOfDeck{amount: e.Amount, then: e.Then}
+}
+
+// validate delegates to the core read.
+func (e LookAtTopOfDeck) validate() error { return e.core().validate() }
+
+// Text names the peek and folds each routing step's clause into one instruction.
+func (e LookAtTopOfDeck) Text() string {
+	noun := "cards"
+	if e.Amount == 1 {
+		noun = "card"
 	}
-	remaining := append([]LocalID(nil), deck[:min(3, len(deck))]...)
-	steps := []struct {
-		prompt string
-		move   func(LocalID)
-	}{
-		{"Choose a card to archive", ctx.Resolver.ArchiveFromDeck},
-		{"Choose a card to put into your hand", ctx.Resolver.MoveFromDeckToHand},
+	parts := []string{fmt.Sprintf("look at the top %d %s of your deck", e.Amount, noun)}
+	for _, act := range e.Then {
+		parts = append(parts, act.clause())
 	}
-	for _, s := range steps {
-		if len(remaining) == 0 {
-			return
-		}
-		id, ok := ctx.ChooseCard(s.prompt, remaining)
-		if !ok {
-			return
-		}
-		s.move(id)
-		remaining = withoutID(remaining, id)
-	}
-	for _, id := range remaining {
-		ctx.Resolver.MoveFromDeckToDiscard(id)
+	return serialJoin(parts, " and ")
+}
+
+// Resolve carries out the private read.
+func (e LookAtTopOfDeck) Resolve(ctx *EffectContext) { e.core().resolve(ctx) }
+
+// RevealTopOfDeck reveals the top Amount cards of a deck to both players and binds
+// the top one in context (ctx.It) so a following effect can inspect or play it, then
+// routes the revealed cards through the ordered Then steps (see chooseFromTopOfDeck).
+// With ChooseWhoseDeck the controller picks whose deck to reveal. Revealing a single
+// card with no steps is the classic inspect-and-play primitive — Chaos Portal, Book
+// of leQ, Wormhole Technician, Vespilon Theorist, Gambling Den; Borr Nit and Borr
+// Nit's Touch reveal five from a chosen deck, purge one, and shuffle the rest.
+type RevealTopOfDeck struct {
+	Amount          int
+	ChooseWhoseDeck bool
+	Then            []TopAct
+}
+
+// core builds the public read this sugar wraps.
+func (e RevealTopOfDeck) core() chooseFromTopOfDeck {
+	return chooseFromTopOfDeck{
+		amount:     e.Amount,
+		chooseDeck: e.ChooseWhoseDeck,
+		public:     true,
+		then:       e.Then,
 	}
 }
+
+// validate delegates to the core read.
+func (e RevealTopOfDeck) validate() error { return e.core().validate() }
+
+// Text names the reveal and punctuates each routing step as its own sentence, the
+// way the printed cards read.
+func (e RevealTopOfDeck) Text() string {
+	deck := "your deck"
+	if e.ChooseWhoseDeck {
+		deck = "a player's deck"
+	}
+	text := "reveal the top card of " + deck
+	if e.Amount != 1 {
+		text = fmt.Sprintf("reveal the top %d cards of %s", e.Amount, deck)
+	}
+	for _, act := range e.Then {
+		text += ". " + capitalizeFirst(act.clause())
+	}
+	return text
+}
+
+// Resolve carries out the public read.
+func (e RevealTopOfDeck) Resolve(ctx *EffectContext) { e.core().resolve(ctx) }
 
 // CancelFight makes the fight in progress not occur — a "Before Fight" effect
 // (Evasion Sigil, gated on the discarded card's house). The attacker was still used
@@ -369,56 +518,6 @@ func (CancelFight) Text() string { return "the fight does not occur" }
 
 // Resolve cancels the current fight.
 func (CancelFight) Resolve(ctx *EffectContext) { ctx.Resolver.CancelCurrentFight() }
-
-// RevealPurgeShuffleDeck reveals the top Amount cards of a player's deck (the
-// controller chooses whose), has the controller purge one of the revealed cards,
-// then shuffles the deck — Borr Nit and Borr Nit's Touch. The revealed cards never
-// leave the deck, so shuffling puts the ones not purged back among it. It reveals
-// as many as remain when the deck holds fewer than Amount, and does nothing on an
-// empty deck.
-type RevealPurgeShuffleDeck struct {
-	// Amount is how many top cards to reveal; the zero value is an authoring error.
-	Amount int
-}
-
-// validate rejects a non-positive Amount.
-func (e RevealPurgeShuffleDeck) validate() error {
-	if e.Amount < 1 {
-		return fmt.Errorf("RevealPurgeShuffleDeck: Amount must be at least 1")
-	}
-	return nil
-}
-
-// Text renders the three printed sentences as one unit.
-func (e RevealPurgeShuffleDeck) Text() string {
-	return fmt.Sprintf(
-		"reveal the top %d cards of a player's deck. Purge a card revealed this "+
-			"way. Shuffle the other revealed cards into that deck",
-		e.Amount,
-	)
-}
-
-// Resolve reveals the top cards of the chosen deck, purges one, and shuffles.
-func (e RevealPurgeShuffleDeck) Resolve(ctx *EffectContext) {
-	player := ctx.Controller
-	if ctx.ChooseOption(
-		"Whose deck to reveal from?",
-		[]string{"your deck", "your opponent's deck"},
-	) == 1 {
-		player = ctx.Opponent()
-	}
-	deck := ctx.Resolver.Deck(player)
-	if len(deck) == 0 {
-		return
-	}
-	top := append([]LocalID(nil), deck[:min(e.Amount, len(deck))]...)
-	ctx.Resolver.Record(CardsRevealedToAll{Player: player, Cards: top})
-	if purge, ok := ctx.ChooseCard("Choose a revealed card to purge", top); ok {
-		ctx.Resolver.PurgeFromDeck(player, purge)
-	}
-	ctx.Resolver.Shuffle(player)
-	ctx.Resolver.Record(DeckShuffled{Player: player})
-}
 
 // resolverInPlay reports whether id appears in either player's battleline or
 // artifact row using only Resolver reads.

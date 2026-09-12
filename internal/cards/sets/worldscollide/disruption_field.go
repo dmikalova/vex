@@ -25,7 +25,7 @@ var DisruptionField = card.New(
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightReap(card.PlaceCounter{
 			Kind:   card.Counter.Disruption,
-			Target: card.Target.Upgrade.Named("Disruption Field"),
+			Target: card.Target.GrantingCard,
 		}),
 	}),
 )

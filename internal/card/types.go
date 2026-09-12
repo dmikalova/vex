@@ -128,8 +128,8 @@ type rarities struct {
 	Rare engine.Rarity
 	// Special is the special rarity.
 	Special engine.Rarity
-	// Connected is the rarity of a card that only enters a deck through another
-	// card's connection (see card.Connects).
+	// Connected is the rarity of a card that only enters a deck through a cluster
+	// (see card.InCluster).
 	Connected engine.Rarity
 }
 

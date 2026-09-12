@@ -143,34 +143,32 @@ func (b bridgeChooser) OrderCreatures(_, _ string, ids []engine.LocalID) []engin
 	return b.h.reorder(ids, script)
 }
 
-// OrderReactions arranges a mixed trigger window — card abilities together with
-// duration reactions (Full Moon, Charge!, Crystal Hive) — into a resolution order.
-// By default it keeps the engine's order (returning nil, which the engine reads as
-// "leave it"), so a duration reaction firing alongside a card ability never
-// interrupts a test. A test takes control of the card abilities for the next
-// ordering with Player.Order, exactly as for OrderCreatures; the duration
-// reactions, which name no card, keep their place after the scripted cards.
-func (b bridgeChooser) OrderReactions(_ string, reactions []engine.OrderableReaction) []int {
+// ChooseReaction picks which reaction in a trigger window — card abilities and
+// duration reactions (Full Moon, Charge!, Crystal Hive) together — resolves next.
+// By default it keeps the engine's gathered order (returning 0, the first pending
+// reaction), so a window firing alongside a test never interrupts it. A test takes
+// control with Player.Order, exactly as for OrderCreatures: each call returns the
+// index of the earliest scripted card still pending, consuming that entry, and a
+// duration reaction or an unscripted card keeps its gathered place after them.
+func (b bridgeChooser) ChooseReaction(_ string, reactions []engine.OrderableReaction) int {
 	script := b.h.orderScript[b.player]
-	b.h.orderScript[b.player] = nil
 	if len(script) == 0 {
-		return nil
+		return 0
 	}
-	remaining := make([]int, len(reactions))
-	for i := range reactions {
-		remaining[i] = i
-	}
-	out := make([]int, 0, len(reactions))
-	for _, want := range script {
-		for j, idx := range remaining {
-			if reactions[idx].HasCard && b.h.matchesCard(want, reactions[idx].Card) {
-				out = append(out, idx)
-				remaining = append(remaining[:j], remaining[j+1:]...)
-				break
+	for i, want := range script {
+		for j, r := range reactions {
+			if r.HasCard && b.h.matchesCard(want, r.Card) {
+				b.h.orderScript[b.player] = append(
+					append([]any(nil), script[:i]...),
+					script[i+1:]...)
+				return j
 			}
 		}
 	}
-	return append(out, remaining...)
+	// No scripted card remains in this window; stop steering it so the script does
+	// not leak into a later one.
+	b.h.orderScript[b.player] = nil
+	return 0
 }
 
 // run starts an engine action on a goroutine and advances to the first stop

@@ -97,6 +97,17 @@ func handIdxByID(g *Game, player int, want LocalID) int {
 	return -1
 }
 
+// resolveLastingWindow resolves the registry reactions responding to event for
+// subject as a standalone window — the test path for exercising a lasting reaction
+// in isolation, routed through the same order-and-resolve machinery a card window
+// folds them into (lastingReactions gathers, orderTriggered orders, resolveWindow
+// resolves).
+func (g *Game) resolveLastingWindow(event Event, actor int, subject LocalID) {
+	g.resolveWindow(
+		g.orderTriggered(actor, g.lastingReactions(event, actor, subject)),
+	)
+}
+
 // orderLastChooser always picks the last candidate, reversing an ordering.
 type orderLastChooser struct{}
 

@@ -315,7 +315,10 @@ type (
 	// until you reveal a card of a house or choose to stop, reporting whether one
 	// was revealed.
 	RevealDeckUntilHouse = engine.RevealDeckUntilHouse
-	// RevealTopOfDeck reveals the top card of the controller's deck.
+	// RevealTopOfDeck reveals the top Amount cards of a deck to both players, binds
+	// the top one in context, and routes them through the ordered Then steps. Set
+	// ChooseWhoseDeck to have the controller pick whose deck (Borr Nit). Revealing
+	// one card with no steps is the inspect-and-play primitive (Chaos Portal).
 	RevealTopOfDeck = engine.RevealTopOfDeck
 	// MakeItsHouseActive makes the house of the card in context the active
 	// player's active house for the rest of the turn (Book of leQ).
@@ -323,22 +326,28 @@ type (
 	// EndTurn ends the active player's turn in place, running the turn out the way
 	// the Omega keyword does (Book of leQ).
 	EndTurn = engine.EndTurn
-	// RevealPurgeShuffleDeck reveals the top cards of a chosen player's deck, purges
-	// one revealed card, then shuffles that deck (Borr Nit).
-	RevealPurgeShuffleDeck = engine.RevealPurgeShuffleDeck
 	// PlayRevealedCard plays the card a preceding reveal put in context.
 	PlayRevealedCard = engine.PlayRevealedCard
 	// PlayTopOfDeck plays the top card of the controller's deck outright.
 	PlayTopOfDeck = engine.PlayTopOfDeck
-	// LookAtTop looks at the top Amount cards of your deck, puts one into your
-	// hand, and discards the others.
-	LookAtTop = engine.LookAtTop
-	// LookAtTopSort looks at the top 3 cards of your deck, archiving one, putting
-	// one into your hand, and discarding one.
-	LookAtTopSort = engine.LookAtTopSort
-	// ReorderTop looks at the top Amount cards of your deck and puts them back in
-	// any order you choose.
-	ReorderTop = engine.ReorderTop
+	// LookAtTopOfDeck looks privately at the top Amount cards of your deck and
+	// routes them through the ordered Then steps (Eyegor, Philophosaurus, Navigator
+	// Ali, Lay of the Land). With no steps it is a pure peek.
+	LookAtTopOfDeck = engine.LookAtTopOfDeck
+	// TopAct is one routing step of a LookAtTopOfDeck or RevealTopOfDeck Then list.
+	TopAct = engine.TopAct
+	// ChooseAndMove takes Count of the read cards and sends them to Dest (see
+	// card.Into).
+	ChooseAndMove = engine.ChooseAndMove
+	// DeckDest is where a ChooseAndMove step sends the cards it takes (see
+	// card.Into).
+	DeckDest = engine.DeckDest
+	// ReorderRest puts the cards no earlier step took back in any order; it must be
+	// the last step.
+	ReorderRest = engine.ReorderRest
+	// ShuffleRest shuffles the read player's deck, mixing in the cards no earlier
+	// step took; it must be the last step.
+	ShuffleRest = engine.ShuffleRest
 	// (From), ignoring the active house. Set Except to make House the house that
 	// may not be played.
 	PlayFrom = engine.PlayFrom

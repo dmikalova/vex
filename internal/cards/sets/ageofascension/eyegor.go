@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Cyborg
 //
-//	Play: Look at the top 3 cards of your deck, put 1 into your hand, and discard the others.
+//	Play: Look at the top 3 cards of your deck, put 1 into your hand, and discard 2.
 var Eyegor = card.New(
 	"Eyegor",
 	card.House.Logos,
@@ -20,5 +20,11 @@ var Eyegor = card.New(
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Cyborg),
 	card.WithAbility(
-		card.Trigger.Play, card.LookAtTop{Amount: 3}),
+		card.Trigger.Play, card.LookAtTopOfDeck{
+			Amount: 3,
+			Then: []card.TopAct{
+				card.ChooseAndMove{Count: 1, Dest: card.Into.Hand},
+				card.ChooseAndMove{Count: 2, Dest: card.Into.Discard},
+			},
+		}),
 )

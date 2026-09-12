@@ -17,64 +17,7 @@ human's personal list, which agents never write into. Rules:
   "work autonomously" and the human never sees it. Plain-text questions at the end
   of the turn are the channel the human actually reads.
 
-## Clusters + deck-house templates (ADR 0036, ADR 0004)
-
-Design settled with the human (grill). Two orthogonal axes: **clusters** decide
-which other cards are placed; **templates/materialize** decide what one drawn card
-becomes. Build one piece at a time, in this order.
-
-**Done:** `DeckHouses [3]House` on `SlotContext`; the cluster framework
-(`deckgen/cluster.go` types + `card.Cluster`/`card.InCluster`/`card.LeadsCluster`
-/`card.ClusterStrategy`/`card.ClusterTrigger` facade); the deck-wide `OnePerHouse`
-pass with maverick substitution (`generator.expandClusters`); the
-complete-by-construction gate (`Set.validateClusters` panics if a set can deck a
-House with no member); the seven Age of Ascension Shards wired onto the cluster
-(`shard_cluster.go`, each Shard `card.InCluster(shardCluster)` + `OneCopyPerDeck`);
-the pod-local cluster pass (`generator.expandPodClusters`) placing `WholePool`,
-`RandomCount`, `SelfPull`, `PullExact`, and `Pull`; the `SelfPull(Min, Mean)`
-strategy (a Min-plus-Poisson count capped at `PodSize`); the `PullExact` strategy
-(one partner per lead instance, always `ByLead`); the `Pull` strategy (a per-partner
-Min-plus-Poisson count, each pulled partner setting its own rate with `card.Pulled`,
-always `ByLead`); the four Horsemen migrated to a `WholePool`/`ByLead` cluster
-(`callofthearchons/horsemen_cluster.go`, Pestilence leads); Plague Rat wired to an
-inline `SelfPull(3, 5)` cluster (`ageofascension/plague_rat.go`); the three exact
-pullers migrated to `PullExact` clusters — Timetraveller→Help from Future Self
-(`callofthearchons`, `timetravellerCluster`), Hyde→Velum and Igon the Green→Igon the
-Terrible (`worldscollide`); and **every** remaining puller migrated to `Pull`
-clusters — Grumpus Tamer→War Grumpus, Ortannu→Ortannu's Binding, Bear Flute→Ancient
-Bear, Faygin→Urchin, Troop Call→Niffle Ape/Queen, Chain Gang→Subtle Chain, and the
-nine ship blasters→their officers. No card uses `card.Connects` any more.
-
-### 1. Retire the dead Connection type
-
-Every puller is now a cluster, so the whole `Connection` mechanism is dead code kept
-alive only by its own tests. Retire it for one placement mechanism, not two:
-
-- Remove the `card.Connects`/`card.Pull`/`card.PullSometimes` facade
-  (`internal/card/generation.go`), the `Connection`/`ConnectedCard` types and
-  `GenerationProfile.Connection` (`deckgen/materialize.go`), and the
-  `expandConnections`/`pullCopies`/`placePartners`/`freeSlot`/`pullCopies` legacy
-  path plus its `g.expandConnections(...)` call site in `generate.go`.
-- Drop `connection_test.go` and the `Connection`-branch of the reachability tests in
-  `cards_test.go` (`TestReferencedCardIsConnected`/`TestConnectedCardIsPulled` now
-  only need the cluster branch).
-- Keep 100% coverage as the dead code and its tests come out together.
-
-### 2. Plants (template, partner house)
-
-The Ambassador cycle is **done**: the six concrete AoA Ambassadors are collapsed
-into one Sanctum template (`ageofascension/house_ambassador.go`, "House Ambassador")
-that materializes the partner House's Ambassador from `DeckHouses`, keyed on the
-engine House enum so a new House gets its Ambassador for free. **Plants (Shadows)
-remain unimplemented** — build them as the same kind of template. Plant's ability
-is a `TriggerAfterChooseHouse` reaction (already exists, ADR 0035); the novel part
-is only the partner-house binding (materialize per non-Shadows House in
-`DeckHouses`, mirroring `ambassadorFor`). First find the plant source cards — grep
-the set
-provenance JSONs (esp. `ageofascension.json`) for the plant cycle to confirm the
-concrete names, home House, and collector numbers before authoring the template.
-
-### 3. Maverick houses complete every OnePerHouse cycle to all 9 Houses
+## Maverick houses complete every OnePerHouse cycle to all 9 Houses (ADR 0036)
 
 Deck generation will grow a **maverick House pod** (deck-generation.md §1): very
 rarely a whole pod is a House not in the deck's Set at all, drawn wholesale from
@@ -98,43 +41,6 @@ Until then, a legacy-drawn Shard does not fire the cycle either: `expandClusters
 reads only the drawing set's own `clusters`. Revisit both together when maverick/
 legacy whole-pod overlays are built.
 
-### 4. Plain per-House bane (template, trait-derived)
-
-- Compute most-common-Trait per House **once at init** from the registry, cached
-  (no committed `mage gen` table — the registry is already frozen per binary, same
-  as the pool). O(1) at generation; no MCTS cost.
-- **Deterministic tie-break** among tied top Traits: seed a shuffle from
-  `hash(sorted(names of the cards in the tied top Traits))` — order-independent, and
-  not alphabetical (which would bias low letters). Pick from the shuffle.
-- Migrate master-of-N onto a single template entry too, for Axis-B consistency.
-- Plain bane name = `"<Trait>'s Bane"` ("Demon's Bane"); handle trait word-form
-  corner cases (already-possessive, plural, multi-word) as they arise.
-
-### Deferred (own ADR)
-
-- **Boosted combinatorial bane**: choose 3 Houses, "Play: Destroy an x, y, and z
-  creature", C(9,3)=84 variants, rarity `1/84·Rare`, generative name by splicing
-  consonant-vowel-consonant sections of the three Traits. Persistence rides the
-  same computed-at-init table + `snapshotVersion` discipline. Write its ADR before
-  building.
-
-### Cleanup found in current deckgen/materialize/connections (do during the migration)
-
-- `expandConnections` (internal/deckgen/generate.go) fuses gather-pullers,
-  roll-counts, count-present, and place into one long method with intertwined
-  `wanted`/`present`/`counted`/`protected`/`rehouse` bookkeeping. Decompose while
-  generalizing to deck scope, or it gets worse. Candidate for the refactor-sweep
-  skill.
-- `Connection`/`ConnectedCard` are stringly-typed (`Name string`, resolved via
-  `set.lookup`); the cluster API should keep the compile-time card-symbol linkage
-  `Connects`/`Pull` already give and not regress to raw strings.
-- `docs/deck-generation.md` §5 still describes the "connections" model — rewrite to
-  "clusters + strategies" as part of the migration so the doc does not diverge from
-  ADR 0036 / CONTEXT.md.
-- `deckgen.SlotContext`'s `Maverick/Legacy/Special` bools and the "templates — a
-  future addition" comments in materialize.go / generation.go become stale once the
-  first real templates land; refresh the comments then (ADR 0006/0020).
-
 ## Engine distillation sweep — 20 findings (one-off nodes → cohesive systems)
 
 The theme: three sets now cover the game's surface, so card-named one-off nodes
@@ -142,39 +48,69 @@ that fuse several effects for a single card should collapse into small
 parameterized systems, and the Resolver/log families they spawned should collapse
 with them. Grouped by mechanic so the shared primitive lands once.
 
-### Deferred, with the reason (so they are not re-proposed blindly)
+### House-permission system pass — implement ADR 0037 (`MayPlayOrUse`)
 
-- **H2 / H3 / H6** — collapsing the house-permission Resolver methods and the
-  mirror log records (`FightGrantedForHouse` … `HouseForcedNextTurn` …) only pays
-  off done _together_ with a fuller house-system pass (H1/H5 fully generalized,
-  including the any-house and wager variants). Doing the logs now, while the
-  effects are only partially merged, is churn. Bundle into one deliberate
-  house-system ADR + pass.
-- **H8** — the highest-value de-fusion (spend N cards → benefit scaled by N), but
-  it needs a new `ctx.Produced`-style "cards spent this way" tally and careful
-  100%-coverage work; worth doing with a review, not unattended.
-- **H9** — `PlayFromOpponent{Source}`: modest (one node saved), touches the web
-  client icon map, and the two behaviors genuinely diverge (random-from-archives
-  vs top-of-deck). Low priority.
-- **H10** — `NeighborsOfThis` + `NeighborsSharingHouse` already share the
-  `neighbors()` helper; a merged `Neighbors{Subject, SameHouseOnly}` adds two
-  unused subject×filter combos for near-zero dedup. **Keep separate** (rejected).
-- **H11** — `SourceNeighborsAllOfHouse` is a lone one-off; fold only if a second
-  neighbor-condition card appears. No rule to write yet.
-- **H16 / H17** — rejected: the "discard-random / owner-gain-purge stragglers"
-  have no clean pile-`Selection` target. The candidates (`PurgeEachOfChosenTrait`,
-  Harvest Time; `PurgeArchivesForDamage`, Destructive Analysis = H8) are
-  in-play / spend-cards composites, not `Selection`-over-a-pile nodes. (H13's
-  shuffle-from-discard fold is done; `ShuffleNamedFromDiscardIntoDeck` stays its
-  own node because its printed article "a Subtle Chain" is card-specific — the
-  reason is a code comment there.)
-- **H14** — `EachPlayer{Do}` combinator: the card discards _all_ hands then refills
-  _all_, so `EachPlayer{Sequence{...}}` is wrong ordering; a correct `EachPlayer`
-  is a controller-rescoping wrapper (subtle around "you", frames, and trigger
-  ordering). Design deliberately, not unattended.
-- **H20** — `Fraction` (creature count) vs the Æmber-pool "half loss": different
-  subjects, different rounding contexts. **Keep separate** unless a card wants a
-  pool `Fraction`; record as rejected for now.
+The out-of-house permission grants are spread across five effect nodes —
+`GrantFight` (house-filtered), `GrantFightAnyHouse`, `MayActFriendlyHouse` + its
+`HouseGrant` bitset, `MayPlayOffHouse` (exclusion/count/type), and
+`MayUseFriendlyArtifacts` — each with its own Resolver method (`GrantFightForHouse`,
+`GrantFightAnyHouse`, `GrantUseForHouse`, `GrantPlayForHouse`,
+`GrantUseArtifactsAnyHouse`, `GrantOffHousePermit`) and log record
+(`FightGrantedForHouse` …). H1/H5 turned out only **partially** generalized, so
+folding the Resolver methods and logs (H2/H3/H6) on their own would be churn.
+ADR 0037 decides the target shape: one `MayPlayOrUse{Houses, Grant, Types, Count}`
+node — `Houses` = named / chosen / any / all-but-a-named / houses-you-control;
+`Grant` = a GrantPlay|GrantFight|GrantUse bitset; `Types` = a card-type filter whose
+**zero value means all types** (opt in to creatures/artifacts); `Count` = 0 for
+unlimited. One `GrantMayPlayOrUse` resolver seam, one `MayPlayOrUseGranted` log.
+Implement it: fold **all five** nodes (the exclusion/count of `MayPlayOffHouse` and
+the artifact subject of `MayUseFriendlyArtifacts` are now the `Houses`/`Count`/`Types`
+axes, not siblings), add `GrantFight` to the bitset, collapse the resolver/log/state
+families. Keep engine coverage at 100%.
+
+### Spend-N-cards scaling — producer→consumer count (folds old H8, H16, H17)
+
+De-fuse "spend N cards, then a benefit scaled by N" into one shared mechanic: a
+**producer** sub-effect (discard / purge / archive / destroy / sacrifice / return /
+lose Æmber …) records how many things it acted on, and the **consumer** that
+immediately follows reads that count to scale its amount. Model it as a
+producer→consumer link (a `Then`/`Sequence`-threaded `ctx.Produced` tally), **scoped
+per-effect, not per-ability**: every KeyForge "… this way" clause binds to exactly
+one preceding same-verb spend, so per-effect scoping keeps a card with two spends in
+one ability unambiguous (Codex of True Names destroys itself _and_ returns Fiends;
+"for each card returned this way" must count only the Fiends). It is **generic** —
+the count scales any consumer effect, not just damage.
+
+Card examples confirming the shape (all "this way" = only what this effect moved):
+
+- Destructive Analysis / Martian Civil War — purge N from archives, deal 2 damage
+  per (`PurgeArchivesForDamage`).
+- Harvest Time — choose a trait, purge each, gain Æmber per
+  (`PurgeEachOfChosenTrait`).
+- "Discard your hand, deal 1 damage to each creature for each card discarded this
+  way"; "discard your hand, draw a card per"; "discard any number, steal 1 Æmber
+  per"; Obsidian Forge — sacrifice any number, reduce a key's cost per.
+
+Both former H16/H17 stragglers are this pattern, not `Selection`-over-a-pile nodes,
+so they resolve once the tally exists. Needs careful 100%-coverage work; do with a
+review, not unattended.
+
+### Generalize `PlayFromOpponent{Source}` (was H9)
+
+One node for "play a card from your opponent," parameterized over the source zone
+(random-from-archives vs top-of-deck) and touching the web icon map once. Worth
+building ahead of the cards so they drop in effortlessly. Cards: Murkens and Fidget
+(today); Gracchan Reform, Talent Scout, Blank Check, and likely more (later). Design
+the `Source` axis to cover archives-random and deck-top up front.
+
+### `EachPlayer{Do}` combinator (was H14)
+
+A controller-rescoping wrapper so "each player does X" authors as one effect. A bare
+`EachPlayer{Sequence{...}}` is the wrong shape for cards that run a phase for **all**
+players before the next (discard all hands, then refill all), so the wrapper must
+rescope "you" / frames / trigger ordering per player, not just loop a `Sequence`.
+~10 cards need it; build the wrapper now so they drop in later. Design deliberately
+— the subtlety is pronouns and trigger windows.
 
 ## Engine — effects & mechanics
 
@@ -196,42 +132,45 @@ Then}` that composes existing zone-routing sub-effects (hand / archive / discard
   are made first, then all the damage is dealt **simultaneously**. Model as a
   `ForEach`-style iterator wrapping `DealDamage{Amount: 1}` with a per-iteration
   target choice and deferred simultaneous application.
+- **Unify the deck "dig until" family — Old Boomy folds in with Lethologica
+  (deferred).** There are two dig-until-a-match nodes that share one shape (walk the
+  top of a deck one card at a time, do something to each, stop on a match or when the
+  deck runs out, then optionally act on the found card): `DiscardDeckUntil` +
+  `PutDiscardedIntoHand` (Sound the Horns, Invasion Portal, and unimplemented
+  **Lethologica** — "Discard from the top of your deck until you discard a Logos card
+  … put it into your hand") and `RevealDeckUntilHouse` (**Old Boomy** — reveal and
+  archive each until a Brobnar card or you choose to stop). Fold them into one
+  parameterized dig — axes: **per-card fate** (discard vs archive), **terminator**
+  (type/house filter), **stop choice** (Old Boomy lets the player stop; the discard
+  digs do not), **visibility** (reveal-to-both vs private discard), and **found-card
+  fate** (leave in `ctx.It` for a follow-up vs nothing). Deliberately **kept out of
+  the `chooseFromTop` read-and-route consolidation** (that core is fixed-N; this is a
+  variable-count gated loop returning a bool — cramming it in bloats both). Do it
+  when Lethologica is implemented, alongside Old Boomy, with a review — not
+  unattended.
 
 ## Card wording / authoring
 
-- **`card.Name` typed card references.** Introduce a `card.Name` named string and
-  convert the authoring-facing name fields (`AttachSelfTo.Host`, `Target.Named`,
-  `ArchiveGrantingUpgrade`, `ControlsNamed`, `NamedCardPurged`, `ItIsNamed`,
-  `InPlay.Name`, `PutFromDiscard.Name`, `ReturnNamedToHand`, `SearchForName`,
-  `ShuffleNamedFromDiscardIntoDeck`). The engine-internal resolver `Name(id)
-string` port stays `string`. Rationale (durable): a card that references another
-  card by name is always within its own set and connected to it, so the value set is
-  closed — the type prevents arbitrary strings.
-  NEEDS A DECISION (attempted, reverted): the change does **not** compose with the
-  codebase's actual authoring pattern. Cards reference another card not by a string
-  literal but by `OtherCard.Name` — the referenced card's `CardDefinition.Name`,
-  which is `string`. A named `CardName` field does **not** accept a typed `string`
-  variable, so every reference (~30 call sites across the set packages) would need
-  `card.Name(OtherCard.Name)` wrapping — uglier authoring, defeating the ergonomic
-  goal. The only clean alternative is to make `CardDefinition.Name` itself a
-  `CardName`, but `def.Name` is consumed as a plain `string` in 50+ engine sites
-  (logs, text rendering, invariants, the `Name(id) string` resolver), so that
-  ripples `string(...)` conversions through the whole engine for marginal type
-  safety. Pick one before implementing: (a) accept `card.Name("Literal")`-style
-  references and drop the `OtherCard.Name` pattern; (b) make `CardDefinition.Name` a
-  `CardName` and chase the engine-wide `string()` ripple; or (c) drop the item.
-- **Uncharted Lands self-reference.** Replace `Named("Uncharted Lands")` with a
-  self-referencing target (`card.Target.Source`) that resolves to the granting card
-  and renders its own name. Depends on the `card.Name` work.
-- **Generic zone-move `Match` predicate.** Replace the `Type` / `Trait` / `OrTrait`
-  triple on `PutFromDiscard` (and its zone-movement siblings) with one composable
-  `Match` predicate expressing a union of type/trait clauses (e.g. `Upgrade` OR
-  trait `Robot`). Gives one place to test "any match in the discard".
-  DEFERRED (nicety, not a bug): the concrete **Chief Engineer Walls** bug — the
-  `May` prompt appearing when the discard has no upgrade or Robot — is already
-  fixed; `PutFromDiscard` now implements `vacuous()` (shared `matches` helper), so
-  `May` skips the empty choice. The `Match`-predicate consolidation across the
-  zone-movement siblings remains as an optional refactor.
+- **Typed card-name references — convert remaining literals + add a guard.**
+  Decision taken (option a): cards reference another card by `OtherCard.Name`, or by
+  a `const XName` the lead card declares when a plain `.Name` would form a package
+  var-init cycle (the Hyde/Velum and Igon Green/Terrible pattern — the follower
+  reads the lead's const). **Done:** Help from Future Self → `Timetraveller.Name`;
+  Igon the Terrible → `IgonTheGreenName` const; the two self-references (Disruption
+  Field, Uncharted Lands) now use `card.Target.GrantingCard`, which resolves to the
+  granting card and renders the `{card}` placeholder (its own name) — no literal.
+  **Remaining:** add a source-scanning test that fails on a string literal in any
+  card-name field (`SearchForName.Name`, `ControlsNamed.Name`, `NamedCardPurged.Name`,
+  `ItIsNamed.Name`, `ReturnNamedToHand.Name`, `PutFromDiscard.Name`,
+  `AttachSelfTo.Host`, `.Named(...)`), allow-listing `card.New`'s own-name literal,
+  the `const XName` declarations, and `Cluster.Name`.
+- **Generic zone-move `Match` predicate — do now.** Replace the `Type` / `Trait` /
+  `OrTrait` triple on `PutFromDiscard` (and its zone-movement siblings) with one
+  composable `Match` predicate expressing a union of type/trait clauses (e.g.
+  `Upgrade` OR trait `Robot`), so there is one place to test "any match in the
+  discard". The Chief Engineer Walls empty-`May` bug is already fixed via
+  `vacuous()`; this is the consolidation refactor on top, keeping the shared
+  `matches` / `vacuous` helper.
 
 - **Orator Hissaro** could read: "Play: Exalt and ready each neighboring creature.
   For the remainder of the turn, those creatures belong to house Saurian."

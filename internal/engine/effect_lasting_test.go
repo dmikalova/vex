@@ -189,7 +189,7 @@ func TestForRemainderOfTurnExceptsItsOwnPlay(t *testing.T) {
 	g.AddToDeck(testCreature("drawn", 1), 0)
 	before := len(g.Hand(0))
 
-	g.emitLasting(EventCardPlayed, 0, armer)
+	g.resolveLastingWindow(EventCardPlayed, 0, armer)
 
 	if got := len(g.Hand(0)); got != before {
 		t.Errorf("hand = %d, want %d (the arming card draws nothing for itself)", got, before)
@@ -425,7 +425,7 @@ func TestGainAbilityBeforeFightExaltResolveAndFire(t *testing.T) {
 }
 
 // actExalt describes itself for the ordering prompt, even though a before-fight
-// grant fires through fireLastingBeforeFight rather than emitLasting.
+// grant fires through fireLastingBeforeFight rather than resolveLastingWindow.
 func TestActExaltDescribe(t *testing.T) {
 	if got, want := actExalt.describe(), "exalt the creature"; got != want {
 		t.Errorf("actExalt.describe() = %q, want %q", got, want)
@@ -463,7 +463,7 @@ func TestGainAbilityFightReady(t *testing.T) {
 	}
 
 	g.State.Cards[granted].Exhausted = true
-	g.emitLasting(EventFight, 0, granted)
+	g.resolveLastingWindow(EventFight, 0, granted)
 	if g.State.Cards[granted].Exhausted {
 		t.Error("the granted creature should be readied after it fights")
 	}
@@ -496,14 +496,14 @@ func TestGainAbilityResolveSubjectScoped(t *testing.T) {
 
 	// The granted creature's reap draws.
 	before := len(g.Hand(0))
-	g.emitLasting(EventReap, 0, granted)
+	g.resolveLastingWindow(EventReap, 0, granted)
 	if got := len(g.Hand(0)); got != before+1 {
 		t.Errorf("hand after the granted creature reaps = %d, want %d", got, before+1)
 	}
 
 	// A different creature's reap does not (the Subject filter skips it).
 	before = len(g.Hand(0))
-	g.emitLasting(EventReap, 0, other)
+	g.resolveLastingWindow(EventReap, 0, other)
 	if got := len(g.Hand(0)); got != before {
 		t.Errorf("hand after another creature reaps = %d, want %d (no draw)", got, before)
 	}

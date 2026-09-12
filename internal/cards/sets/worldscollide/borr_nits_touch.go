@@ -19,6 +19,13 @@ var BorrNitsTouch = card.New(
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play,
-		card.RevealPurgeShuffleDeck{Amount: 5},
+		card.RevealTopOfDeck{
+			Amount:          5,
+			ChooseWhoseDeck: true,
+			Then: []card.TopAct{
+				card.ChooseAndMove{Count: 1, Dest: card.Into.Purge},
+				card.ShuffleRest{},
+			},
+		},
 	),
 )

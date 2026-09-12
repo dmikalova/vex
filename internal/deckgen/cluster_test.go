@@ -289,7 +289,7 @@ func TestClusterValidation(t *testing.T) {
 
 // A valid WholePool cluster and a valid RandomCount cluster pass validation, and
 // the deck-wide pass leaves them alone (they resolve in the pod pass, not here).
-func TestNonOnePerHouseClustersSkipDeckWide(t *testing.T) {
+func TestNonOnePerHouseClustersSkipDeckWide(_ *testing.T) {
 	whole := ClusterMembership{Name: "Horsemen", Strategy: WholePool, Trigger: ByLead}
 	lead := clusterMember("Lead", engine.Brobnar, whole)
 	lead.Profile.Cluster.Lead = true

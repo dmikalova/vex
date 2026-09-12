@@ -85,7 +85,7 @@ const (
 	Rare     Rarity = "Rare"
 	Special  Rarity = "Special"
 	// Connected is the rarity of a card that never rolls on its own; it enters a
-	// deck only when another card's connection pulls it into the same pod.
+	// deck only when another card's cluster places it into the same pod.
 	Connected Rarity = "Connected"
 )
 
@@ -308,6 +308,17 @@ func (t Trait) String() string {
 		return ""
 	}
 	return traitNames[t]
+}
+
+// ParseTrait resolves a trait's printed word (case-insensitive) to its Trait
+// value. The boolean result is false when the name matches no enumerated trait.
+func ParseTrait(name string) (Trait, bool) {
+	for t := traitUnset + 1; t < traitCount; t++ {
+		if strings.EqualFold(traitNames[t], name) {
+			return t, true
+		}
+	}
+	return traitUnset, false
 }
 
 // Keyword is a rules shorthand a card can have (e.g. Skirmish, Poison). Unlike

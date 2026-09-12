@@ -16,12 +16,6 @@ type (
 	// SlotContext is what a Materializer is given: the pod's house and the slot's
 	// rolled rarity and provenance flags.
 	SlotContext = deckgen.SlotContext
-	// Connection is the set of connected cards a puller card brings into its pod;
-	// build one with card.Connects.
-	Connection = deckgen.Connection
-	// ConnectedCard is one card a connection pulls; build one with card.Pull or
-	// card.PullSometimes.
-	ConnectedCard = deckgen.ConnectedCard
 	// Cluster declares a card family deck generation places together (ADR 0036):
 	// its name, the strategy that fills it, and the trigger that fires it. Declare
 	// one shared value and hand it to every member with card.InCluster, so all
@@ -99,11 +93,11 @@ func LeadsCluster(c Cluster) Option {
 }
 
 // Pulled returns a copy of a Pull cluster carrying this partner's own pull rate:
-// at least min copies when the lead rolls in, averaging about mean, on a Poisson
-// tail (min 0 pulls none most of the time). Hand it to card.InCluster on each
-// pulled partner; the lead carries the plain cluster via card.LeadsCluster.
-func Pulled(c Cluster, min int, mean float64) Cluster {
-	c.Min, c.Mean = min, mean
+// at least minCopies when the lead rolls in, averaging about mean, on a Poisson
+// tail (minCopies 0 pulls none most of the time). Hand it to card.InCluster on
+// each pulled partner; the lead carries the plain cluster via card.LeadsCluster.
+func Pulled(c Cluster, minCopies int, mean float64) Cluster {
+	c.Min, c.Mean = minCopies, mean
 	return c
 }
 
@@ -128,42 +122,3 @@ func OneCopyPerDeck() Option { return func(b *builder) { b.profile.OneCopyPerDec
 // its rarity: the five Master-of-N variants each carry card.RarityWeight(0.2), so
 // the family drafts about as often as one ordinary Rare card.
 func RarityWeight(w float64) Option { return func(b *builder) { b.profile.RarityWeight = w } }
-
-// Connects marks the card as a connection puller: when it is placed in a pod,
-// deck generation pulls the given cards into that pod. Each pull is built with
-// card.Pull or card.PullSometimes, which name the connected card by its own
-// definition symbol, so a connection to a card that does not exist is a compile
-// error rather than a silently dropped link.
-//
-//	card.Connects(
-//	  card.Pull(NiffleApe, 2),
-//	  card.PullSometimes(NiffleQueen, 0.15),
-//	)
-//
-// A card that should never roll without its puller is additionally authored with
-// card.Rarity.Connected, which keeps it out of the pool; an ordinary card can be
-// pulled too, and still rolls on its own.
-func Connects(cards ...ConnectedCard) Option {
-	return func(b *builder) { b.profile.Connection = deckgen.Connection{Cards: cards} }
-}
-
-// Pull is one connected card brought into the pod every time, in the given number
-// of copies.
-func Pull(c Definition, copies int) ConnectedCard {
-	return ConnectedCard{Name: c.Name, Copies: copies, Chance: 1}
-}
-
-// PullExact is one connected card brought into the pod once per copy of the
-// puller, so N pullers guarantee N partners — e.g. two Timetravellers pull two
-// Help From Future Self. Use it where an ordinary Pull would collapse several
-// pullers onto a single shared partner.
-func PullExact(c Definition, copies int) ConnectedCard {
-	return ConnectedCard{Name: c.Name, Copies: copies, Chance: 1, Exact: true}
-}
-
-// PullSometimes is one connected card brought into the pod with the given
-// probability, rolled once per pod. It is how a card guarantees a flourish
-// without guaranteeing it every deck.
-func PullSometimes(c Definition, chance float64) ConnectedCard {
-	return ConnectedCard{Name: c.Name, Copies: 1, Chance: chance}
-}

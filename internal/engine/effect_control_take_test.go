@@ -3,7 +3,7 @@ package engine
 import "testing"
 
 func TestTakeControlTargeted(t *testing.T) {
-	if got := (TakeControl{Duration: UntilThisLeavesPlay}).Text(); got != "take control of this creature until "+UpgradeName+" leaves play" {
+	if got := (TakeControl{Duration: UntilThisLeavesPlay}).Text(); got != "take control of this creature until "+CardName+" leaves play" {
 		t.Errorf("host text = %q", got)
 	}
 	tgt := TakeControl{

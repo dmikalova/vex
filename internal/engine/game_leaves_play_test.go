@@ -73,20 +73,26 @@ func (m orderMark) Text() string             { return "mark " + m.tag }
 func (m orderMark) Resolve(_ *EffectContext) { *m.log = append(*m.log, m.tag) }
 
 // countingReverseChooser records how many ordering picks it is asked to make and
-// reverses each list, so a test can prove identical abilities are never ordered.
+// picks the last reaction each time, reversing the window, so a test can prove
+// identical abilities are never prompted while distinct ones are ordered in full.
 type countingReverseChooser struct{ picks int }
 
 func (c *countingReverseChooser) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) {
-	c.picks++
 	return cands[len(cands)-1], true
 }
 
-// TestOrderTriggeredCollapsesIdenticalAbilities checks that identical Destroyed
-// abilities are auto-ordered — never prompted — while a distinct ability is still
-// ordered against them. Two creatures carry the same mark and a third a different
-// one, so ordering asks a single pick (the two distinct abilities), and the
-// identical pair resolves together behind whichever end the pick chose.
-func TestOrderTriggeredCollapsesIdenticalAbilities(t *testing.T) {
+func (c *countingReverseChooser) ChooseReaction(_ string, reactions []OrderableReaction) int {
+	c.picks++
+	return len(reactions) - 1
+}
+
+// TestOrderTriggeredOrdersEveryDistinctWindow checks that a window carrying a
+// distinct ability lets the player order it against the rest, and stops prompting
+// the moment only identical abilities remain — since those resolve the same in any
+// order. Two creatures carry the same mark and a third a different one; the
+// reversing chooser resolves the distinct mark first, after which the identical
+// pair is auto-resolved with no further prompt (one pick in all).
+func TestOrderTriggeredOrdersEveryDistinctWindow(t *testing.T) {
 	g := started(t)
 	var log []string
 	ch := &countingReverseChooser{}
@@ -108,11 +114,12 @@ func TestOrderTriggeredCollapsesIdenticalAbilities(t *testing.T) {
 
 	if ch.picks != 1 {
 		t.Errorf(
-			"ordering picks = %d, want 1 (only the two distinct abilities are ordered)",
+			"ordering picks = %d, want 1 (the distinct ability is ordered; the identical remainder is not prompted)",
 			ch.picks,
 		)
 	}
-	// The chooser reverses, so the later-seen distinct ability resolves first.
+	// The chooser reverses, so the distinct mark resolves first, then the identical
+	// pair in their gathered order.
 	want := []string{"diff", "same", "same"}
 	if !slices.Equal(log, want) {
 		t.Errorf("resolution order = %v, want %v", log, want)
@@ -343,7 +350,7 @@ func TestNonCreatureAemberReturnsToSupply(t *testing.T) {
 
 func TestPurgesDestroyed(t *testing.T) {
 	g := started(t)
-	ritual := g.AddArtifact(NewCard("ritual", Dis, Artifact, Rare,
+	g.AddArtifact(NewCard("ritual", Dis, Artifact, Rare,
 		WithConstantAbility(ConstantAbility{
 			Target: Target{Kind: TargetEachCreature},
 			Granted: []Ability{
@@ -355,9 +362,11 @@ func TestPurgesDestroyed(t *testing.T) {
 		})), 0)
 	enemy := g.AddToBattleline(NewCard("v", Brobnar, Creature, Common, WithPower(3),
 		WithAbility(TriggerDestroyed, GainAember{Player: Controller, Amount: 1})), 1)
-	// The active player orders the ritual's granted ability before the creature's
-	// printed one. Purging the creature stops its remaining Destroyed abilities.
-	g.SetChooser(0, idChooser{id: ritual})
+	// The active player orders the ritual's granted purge before the creature's
+	// printed gain; the reversing chooser picks the last-gathered ability first, and
+	// the constant-granted purge is gathered after the printed gain. Purging the
+	// creature stops its remaining Destroyed abilities.
+	g.SetChooser(0, &countingReverseChooser{})
 
 	g.DestroyEach(0, []LocalID{enemy})
 

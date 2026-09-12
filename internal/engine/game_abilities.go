@@ -1,7 +1,6 @@
 package engine
 
 import (
-	"slices"
 	"strconv"
 )
 
@@ -267,7 +266,7 @@ func (g *Game) reapWith(id LocalID) {
 func (g *Game) emitReapWindow(reaper int, reaped LocalID) {
 	pending := g.reapReactions(reaper, reaped)
 	pending = append(pending, g.lastingReactions(EventReap, reaper, reaped)...)
-	g.resolveWindow(g.orderTriggered(reaper, TriggerAfterReap, pending))
+	g.resolveWindow(g.orderTriggered(reaper, pending))
 }
 
 // abilityWindow accumulates the triggered abilities that fire in one trigger
@@ -383,7 +382,7 @@ func (g *Game) useActionOf(actor int, id LocalID) {
 	}
 	g.State.Cards[id].Exhausted = true
 	g.record(ActionAbilityUsed{Player: actor, Card: id})
-	g.resolveWindow(g.orderTriggered(actor, TriggerAction, g.actionReactions(actor, id)))
+	g.resolveWindow(g.orderTriggered(actor, g.actionReactions(actor, id)))
 }
 
 // actionReactions gathers the "Action:" ability and the reactions to using the
@@ -628,48 +627,48 @@ func (g *Game) emitCreaturePlayed(played LocalID) {
 	}
 }
 
-// emitAfterEnemyDestroyed fires the persistent "after an enemy creature is
-// destroyed during your turn" reaction (Pile of Skulls) on the active player's
-// in-play cards. It fires only for the active player, and only when the destroyed
-// creature is one of their enemies, so the reaction is naturally limited to your
-// own turn and to enemy creatures. Like emitAfterCreatureDestroyed it is called
-// once the destruction batch has reached the discard pile, so a friendly creature
-// that died in the same batch is no longer in play to be chosen (a card is not
-// destroyed — and does not open the "after destroyed" window — until it lands in
-// the discard).
-func (g *Game) emitAfterEnemyDestroyed(destroyed LocalID) {
+// afterDestroyedReactions gathers, as one ordered window, every reaction to the
+// creatures of a finished Destroyed window now reaching their discard piles: "after
+// an enemy creature is destroyed during your turn" (Pile of Skulls) on the active
+// player's cards for an enemy death, "after a friendly creature is destroyed"
+// (Spartasaur) on the dead creature's controller's cards, "after a creature is
+// destroyed" (Neffru) on every card, and the lasting "each time an enemy creature
+// is destroyed" reactions (Loot the Bodies) from the registry. Every entry carries
+// its own actor and the destroyed creature as "it", so the active player orders the
+// whole set while each reaction resolves for its owner (ADR 0013). It runs once the
+// creatures have reached the discard pile, so a card destroyed in the same window is
+// out of play and neither reacts nor can be chosen.
+func (g *Game) afterDestroyedReactions(members []LocalID) []triggeredAbility {
+	w := g.window()
 	active := g.State.ActivePlayer
-	if g.controller(destroyed) == active {
-		return
-	}
-	for _, id := range g.allInPlay(active) {
-		g.triggerAbilities(id, TriggerAfterEnemyCreatureDestroyed, destroyed, true)
-	}
-}
-
-// emitAfterCreatureDestroyed fires the "after a creature is destroyed" reaction
-// (Neffru) on every card still in play, with the destroyed creature as "it". It is
-// called once the destruction batch has finished resolving Destroyed abilities and
-// the destroyed cards have reached their discard piles, so a card destroyed in the
-// same batch is no longer in play and does not react.
-func (g *Game) emitAfterCreatureDestroyed(destroyed LocalID) {
-	for player := 0; player < 2; player++ {
-		for _, id := range g.allInPlay(player) {
-			g.triggerAbilities(id, TriggerAfterCreatureDestroyed, destroyed, true)
+	for _, id := range members {
+		if g.TypeOf(id) != Creature {
+			continue
 		}
+		// Pile of Skulls fires only for the active player and only for an enemy death,
+		// so it is naturally limited to your own turn and to enemy creatures.
+		if g.controller(id) != active {
+			for _, c := range g.allInPlay(active) {
+				w.add(c, TriggerAfterEnemyCreatureDestroyed, id, true)
+			}
+		}
+		for _, c := range g.allInPlay(g.controller(id)) {
+			w.add(c, TriggerAfterFriendlyCreatureDestroyed, id, true)
+		}
+		for p := 0; p < 2; p++ {
+			for _, c := range g.allInPlay(p) {
+				w.add(c, TriggerAfterCreatureDestroyed, id, true)
+			}
+		}
+		// Loot the Bodies' "each time an enemy creature is destroyed: gain Æmber" is a
+		// registry reaction the enemy of the dead creature's controller owns; fold it
+		// into the same window so it orders with the card reactions (ADR 0013).
+		w.pending = append(
+			w.pending,
+			g.lastingReactions(EventEnemyCreatureDestroyed, 1-g.controller(id), id)...,
+		)
 	}
-}
-
-// emitAfterFriendlyDestroyed fires the "after a friendly creature is destroyed"
-// reaction (Spartasaur) on the destroyed creature's controller's in-play cards,
-// with the destroyed creature as "it". Like emitAfterCreatureDestroyed it is
-// called once the batch has reached the discard piles, so a card destroyed in the
-// same batch does not react.
-func (g *Game) emitAfterFriendlyDestroyed(destroyed LocalID) {
-	controller := g.controller(destroyed)
-	for _, id := range g.allInPlay(controller) {
-		g.triggerAbilities(id, TriggerAfterFriendlyCreatureDestroyed, destroyed, true)
-	}
+	return w.pending
 }
 
 // afterPlayReactions gathers, as one ordered window, the "Play:" ability of a
@@ -771,7 +770,7 @@ func (g *Game) triggerAbilitiesAs(
 		pending[i].actor = int8(actor)
 		pending[i].it, pending[i].hasIt = it, hasIt
 	}
-	g.resolveWindow(g.orderTriggered(actor, trigger, pending))
+	g.resolveWindow(g.orderTriggered(actor, pending))
 }
 
 // resolveWindow resolves an already-ordered window of triggered abilities in
@@ -789,9 +788,8 @@ func (g *Game) resolveWindow(ordered []triggeredAbility) {
 			// A duration reaction has no source card and never checks in-play: its
 			// subject may have left mid-window (a played creature destroyed by an
 			// earlier reaction) yet the controller's economy reaction (Full Moon's
-			// Æmber) still fires, matching how emitLasting resolved it standalone. It
-			// opens no card Frame — there is no card to attribute it to — and settles
-			// after like every other entry (ADR 0029).
+			// Æmber) still fires. It opens no card Frame — there is no card to
+			// attribute it to — and settles after like every other entry (ADR 0029).
 			g.resolveReaction(t.le, int(t.actor), t.it)
 			if t.le.Once {
 				g.removeLasting(t.le)
@@ -921,232 +919,125 @@ const orderTriggerPrompt = "Choose which card's ability resolves next"
 
 // orderDestroyedPrompt names the destroyed-ability window plainly, since the
 // player is arranging the Destroyed abilities of several cards leaving play at
-// once rather than picking one card off a generic list.
+// once rather than picking one card off a generic list. The Destroyed window
+// orders itself through pickNextReaction as it re-gathers, so it never routes
+// through orderTriggered.
 const orderDestroyedPrompt = "Resolve destroyed abilities"
 
-// orderGrantorPrompt is the prompt shown when one card has several abilities in
-// the same trigger window (its own text plus one an upgrade or a constant ability
-// granted it) and the active player must say which resolves next.
-const orderGrantorPrompt = "Choose which ability resolves next"
-
 // orderTriggered lets the active player arrange a trigger window's abilities into
-// a resolution order (ADR 0013). Identical abilities — same trigger and same
-// rendered text, even from different cards — resolve the same in any order, so
-// they are collapsed to one representative that carries them all: the player is
-// asked to order only the distinct abilities, and a window whose abilities are all
-// identical is auto-ordered and never prompts. (Identity is compared, not card,
-// because the same card can resolve differently as the board changes.) Ordering of
-// the distinct abilities then runs at two levels, because the Chooser port speaks
-// in cards: first the distinct triggering cards, then — within one card — the
-// distinct cards whose text granted it each ability. Either level with a single
-// entry is forced and never prompts, so an event on one card with one ability is
-// silent, as is a batch of creatures that each carry the same one. The trigger
-// names the window so a Destroyed batch reads as "Resolve destroyed abilities".
-//
-// When a window also carries duration reactions from the lasting registry, the
-// card-based two levels cannot order them — a duration reaction has no card — so
-// the whole mixed set is arranged through the ReactionOrderer capability instead,
-// defaulting to the card abilities before the duration reactions.
+// a resolution order (ADR 0013). The window is one flat list: every pending
+// ability — a card's printed or granted ability and a duration reaction from the
+// lasting registry alike — is one entry the player orders through the flat
+// ReactionChooser port, picking the next to resolve until one remains. Identical
+// abilities (same trigger and same rendered text, even from different cards)
+// resolve the same in any order, so the player is prompted only while the pending
+// entries are not all identical: a window whose entries are all identical is
+// auto-ordered and never prompts, and once a series of picks leaves only identical
+// entries the remainder auto-resolves too. (Identity is compared, not card, because
+// the same card can resolve differently as the board changes.) A Chooser without
+// the ReactionChooser port keeps the gathered order, so the AI and the simulator
+// resolve a window in the order it was collected.
 func (g *Game) orderTriggered(
 	actor int,
-	trigger Trigger,
 	pending []triggeredAbility,
 ) []triggeredAbility {
-	if len(pending) <= 1 {
+	if len(pending) <= 1 || g.allIdentical(pending) {
 		return pending
 	}
-	reps, members := collapseIdentical(pending)
-	if len(reps) == 1 {
-		return pending
-	}
-	prompt := orderTriggerPrompt
-	if trigger == TriggerDestroyed {
-		prompt = orderDestroyedPrompt
-	}
-	if anyLasting(reps) {
-		return expandMembers(g.orderMixed(actor, prompt, reps), members)
-	}
-	ordered := make([]triggeredAbility, 0, len(pending))
-	for _, src := range g.orderByChoice(actor, prompt, distinctBy(reps, sourceOf)) {
-		of := filterBy(reps, sourceOf, src)
-		for _, grantor := range g.orderByChoice(actor, orderGrantorPrompt, distinctBy(of, grantorOf)) {
-			for _, r := range filterBy(of, grantorOf, grantor) {
-				ordered = append(ordered, members[identityOf(r)]...)
-			}
-		}
-	}
-	return ordered
+	return g.orderReactionsFlat(actor, orderTriggerPrompt, pending)
 }
 
-// anyLasting reports whether any representative is a duration reaction, which is
-// what tips orderTriggered from the card-based two-level ordering to the mixed
-// ReactionOrderer path.
-func anyLasting(reps []triggeredAbility) bool {
-	for _, r := range reps {
-		if r.lasting {
-			return true
-		}
-	}
-	return false
-}
-
-// orderMixed arranges a window that mixes card abilities with duration reactions.
-// It first builds the default order — the card abilities in their card-based
-// two-level order, then the duration reactions in registry order — and offers the
-// whole set to a ReactionOrderer, which may interleave them freely. A Chooser that
-// does not implement ReactionOrderer keeps the default order, so the AI and the
-// simulator resolve the card abilities before the duration reactions.
-func (g *Game) orderMixed(actor int, prompt string, reps []triggeredAbility) []triggeredAbility {
-	def := defaultRepOrder(reps)
-	ro, ok := g.chooserFor(actor).(ReactionOrderer)
-	if !ok {
-		return def
-	}
-	reactions := make([]OrderableReaction, len(def))
-	for i, r := range def {
-		reactions[i] = g.orderableFor(r)
-	}
-	perm := ro.OrderReactions(prompt, reactions)
-	if !isPermutation(perm, len(def)) {
-		return def
-	}
-	out := make([]triggeredAbility, len(def))
-	for i, idx := range perm {
-		out[i] = def[idx]
-	}
-	return out
-}
-
-// defaultRepOrder is the fallback order for a mixed window: the card abilities
-// first, grouped the same way the card-based path groups them (by triggering card,
-// then by granting card), then the duration reactions in registry order. It is
-// what a Chooser without ReactionOrderer resolves, so folding duration reactions
-// into a window never reorders the card abilities that already resolved there.
-func defaultRepOrder(reps []triggeredAbility) []triggeredAbility {
-	var cards, lasting []triggeredAbility
-	for _, r := range reps {
-		if r.lasting {
-			lasting = append(lasting, r)
-		} else {
-			cards = append(cards, r)
-		}
-	}
-	ordered := make([]triggeredAbility, 0, len(reps))
-	for _, src := range distinctBy(cards, sourceOf) {
-		of := filterBy(cards, sourceOf, src)
-		for _, grantor := range distinctBy(of, grantorOf) {
-			ordered = append(ordered, filterBy(of, grantorOf, grantor)...)
-		}
-	}
-	return append(ordered, lasting...)
-}
-
-// orderableFor renders a representative for the ReactionOrderer: a card ability
-// shows its source card, a duration reaction its rendered effect.
-func (g *Game) orderableFor(r triggeredAbility) OrderableReaction {
-	if r.lasting {
-		return OrderableReaction{Label: r.le.Do.describe()}
-	}
-	return OrderableReaction{Card: r.source, HasCard: true, Label: g.cat.def(r.source).Name}
-}
-
-// expandMembers expands each ordered representative back to every pending ability
-// sharing its identity, so a collapsed batch resolves together in the chosen slot.
-func expandMembers(
-	ordered []triggeredAbility,
-	members map[string][]triggeredAbility,
-) []triggeredAbility {
-	out := make([]triggeredAbility, 0, len(ordered))
-	for _, r := range ordered {
-		out = append(out, members[identityOf(r)]...)
-	}
-	return out
-}
-
-// isPermutation reports whether perm is a permutation of 0..n-1, so a malformed
-// ReactionOrderer result falls back to the default order rather than dropping or
-// duplicating a reaction.
-func isPermutation(perm []int, n int) bool {
-	if len(perm) != n {
-		return false
-	}
-	seen := make([]bool, n)
-	for _, i := range perm {
-		if i < 0 || i >= n || seen[i] {
+// allIdentical reports whether every pending ability shares one identity, so the
+// window resolves the same in any order and never needs a prompt.
+func (g *Game) allIdentical(pending []triggeredAbility) bool {
+	first := identityOf(pending[0])
+	for _, t := range pending[1:] {
+		if identityOf(t) != first {
 			return false
 		}
-		seen[i] = true
 	}
 	return true
 }
 
+// orderReactionsFlat asks the active player to arrange the whole window by picking
+// the next reaction to resolve, dropping it, and repeating until one remains (the
+// last is forced). Card abilities and duration reactions are offered together in
+// one labeled list. A Chooser without the ReactionChooser port, or one that
+// returns an out-of-range index, keeps the reactions in their gathered order.
+func (g *Game) orderReactionsFlat(
+	actor int,
+	prompt string,
+	pending []triggeredAbility,
+) []triggeredAbility {
+	remaining := append([]triggeredAbility(nil), pending...)
+	ordered := make([]triggeredAbility, 0, len(pending))
+	for len(remaining) > 1 {
+		i := g.pickNextReaction(actor, prompt, remaining)
+		ordered = append(ordered, remaining[i])
+		remaining = append(remaining[:i], remaining[i+1:]...)
+	}
+	return append(ordered, remaining...)
+}
+
+// pickNextReaction returns the index of the next reaction to resolve from pending.
+// It answers without a prompt — index 0, the gathered front — when one entry
+// remains, every entry is identical (they resolve the same in any order), the
+// Chooser lacks the ReactionChooser port, or the Chooser returns an out-of-range
+// index. Otherwise the active player picks from the flat labeled list. It is the
+// one-step primitive behind both a whole window ordered up front (orderReactionsFlat)
+// and the Destroyed window that re-gathers as it resolves (resolveDestroyedWindow).
+func (g *Game) pickNextReaction(actor int, prompt string, pending []triggeredAbility) int {
+	if len(pending) <= 1 || g.allIdentical(pending) {
+		return 0
+	}
+	rc, ok := g.chooserFor(actor).(ReactionChooser)
+	if !ok {
+		return 0
+	}
+	reactions := make([]OrderableReaction, len(pending))
+	for i, t := range pending {
+		reactions[i] = g.orderableFor(t)
+	}
+	i := rc.ChooseReaction(prompt, reactions)
+	if i < 0 || i >= len(pending) {
+		return 0
+	}
+	return i
+}
+
+// orderableFor renders a pending ability for the flat reaction list: a card
+// ability shows its source card and rendered ability text, a duration reaction its
+// rendered effect. HasCard/Card let a client that highlights the board point at
+// the source card as well.
+func (g *Game) orderableFor(r triggeredAbility) OrderableReaction {
+	if r.lasting {
+		return OrderableReaction{Label: r.le.Do.describe()}
+	}
+	return OrderableReaction{
+		Card:    r.source,
+		HasCard: true,
+		Label:   g.cat.def(r.source).Name + ": " + r.ability.Effect.Text(),
+	}
+}
+
 // abilityIdentity keys an ability by what it will do — its trigger and rendered
 // text — so two abilities that resolve identically share a key. It is what
-// collapseIdentical groups by, so ordering is only ever asked between abilities
-// that would actually resolve differently.
+// allIdentical compares, so a window only auto-orders when every entry would
+// resolve the same.
 func abilityIdentity(a Ability) string {
 	return strconv.Itoa(int(a.Trigger)) + "\x00" + a.Effect.Text()
 }
 
-// identityOf keys any representative — a card ability by abilityIdentity, a
+// identityOf keys any pending ability — a card ability by abilityIdentity, a
 // duration reaction by its event, amount, and rendered effect. The duration key is
 // prefixed so it can never collide with a card ability's, keeping the two kinds
-// from collapsing into one representative.
+// from ever being treated as identical.
 func identityOf(t triggeredAbility) string {
 	if t.lasting {
 		return "L\x00" + strconv.Itoa(int(t.le.On)) + "\x00" +
 			strconv.Itoa(int(t.le.Amount)) + "\x00" + t.le.Do.describe()
 	}
 	return abilityIdentity(t.ability)
-}
-
-// collapseIdentical groups pending by ability identity in first-seen order,
-// returning one representative per distinct ability and a map from each identity
-// to every pending ability sharing it. Ordering runs over the representatives;
-// each is expanded back to its members once the order is fixed.
-func collapseIdentical(
-	pending []triggeredAbility,
-) ([]triggeredAbility, map[string][]triggeredAbility) {
-	members := map[string][]triggeredAbility{}
-	var reps []triggeredAbility
-	for _, t := range pending {
-		k := identityOf(t)
-		if _, seen := members[k]; !seen {
-			reps = append(reps, t)
-		}
-		members[k] = append(members[k], t)
-	}
-	return reps, members
-}
-
-// sourceOf and grantorOf name the two card fields orderTriggered orders by.
-func sourceOf(t triggeredAbility) LocalID  { return t.source }
-func grantorOf(t triggeredAbility) LocalID { return t.grantor }
-
-// distinctBy lists the distinct values of key across pending, first-seen order.
-func distinctBy(pending []triggeredAbility, key func(triggeredAbility) LocalID) []LocalID {
-	var out []LocalID
-	for _, t := range pending {
-		if !slices.Contains(out, key(t)) {
-			out = append(out, key(t))
-		}
-	}
-	return out
-}
-
-// filterBy keeps the pending abilities whose key equals want, in collection order.
-func filterBy(
-	pending []triggeredAbility,
-	key func(triggeredAbility) LocalID,
-	want LocalID,
-) []triggeredAbility {
-	var out []triggeredAbility
-	for _, t := range pending {
-		if key(t) == want {
-			out = append(out, t)
-		}
-	}
-	return out
 }
 
 // triggeredAbility is an ability waiting to resolve in a trigger window. It

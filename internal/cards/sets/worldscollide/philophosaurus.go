@@ -20,5 +20,12 @@ var Philophosaurus = card.New(
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Philosopher),
 	card.WithAbility(
-		card.Trigger.Reap, card.May{Do: card.LookAtTopSort{}}),
+		card.Trigger.Reap, card.May{Do: card.LookAtTopOfDeck{
+			Amount: 3,
+			Then: []card.TopAct{
+				card.ChooseAndMove{Count: 1, Dest: card.Into.Archives},
+				card.ChooseAndMove{Count: 1, Dest: card.Into.Hand},
+				card.ChooseAndMove{Count: 1, Dest: card.Into.Discard},
+			},
+		}}),
 )

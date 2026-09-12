@@ -37,7 +37,7 @@ var Target = targets{
 	FormerNeighbors:            engine.Target{Kind: engine.TargetFormerNeighbors},
 	TheFoughtCreature:          engine.Target{Kind: engine.TargetTheFoughtCreature},
 	AttachedHost:               engine.Target{Kind: engine.TargetAttachedHost},
-	GrantingArtifact:           engine.Target{Kind: engine.TargetGrantingArtifact},
+	GrantingCard:               engine.Target{Kind: engine.TargetGrantingCard},
 }
 
 type targets struct {
@@ -104,10 +104,10 @@ type targets struct {
 	// instance a blaster bound to when AttachSelfTo homed it, not a same-named copy.
 	// Chain Named() to give it the signature creature's printed name.
 	AttachedHost engine.Target
-	// GrantingArtifact selects the in-play artifact whose constant ability granted
-	// the resolving ability — the exact artifact, not a same-named copy. Chain
-	// Named() to give it the artifact's printed name (Uncharted Lands).
-	GrantingArtifact engine.Target
+	// GrantingCard selects the in-play card whose constant ability or static modifier
+	// granted the resolving ability — the exact card, not a same-named copy. Its text
+	// renders the granting card's own name (Uncharted Lands).
+	GrantingCard engine.Target
 }
 
 // Refinement refines a Target relative to the whole selected set (see

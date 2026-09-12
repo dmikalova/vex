@@ -6,7 +6,7 @@ import (
 )
 
 func TestTakeControl(t *testing.T) {
-	if got := (TakeControl{Duration: UntilThisLeavesPlay}).Text(); got != "take control of this creature until {upgrade} leaves play" {
+	if got := (TakeControl{Duration: UntilThisLeavesPlay}).Text(); got != "take control of this creature until {card} leaves play" {
 		t.Fatalf("TakeControl text = %q", got)
 	}
 	if err := (TakeControl{}).validate(); err == nil {

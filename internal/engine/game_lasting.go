@@ -5,9 +5,9 @@ package engine
 //
 //   - a REACTION runs after an event (Full Moon gains Æmber after you play a
 //     creature, Charge! deals damage after you play a creature, Crystal Hive gains
-//     Æmber after a creature reaps). Reactions are fired by emitLasting, which
-//     gathers every reaction responding to an event and lets the controller order
-//     them when several fire at once.
+//     Æmber after a creature reaps). Reactions fold into the event's trigger window
+//     through lastingReactions, so they order together with the card abilities that
+//     fire on the same event when several fire at once (ADR 0013).
 //   - a REPLACEMENT changes an event's own outcome before it happens (Dimension
 //     Door makes reaping steal Æmber instead of gaining it). The event site queries
 //     for a replacement (lastingReplacement) and applies it in place.
@@ -148,8 +148,8 @@ const (
 	// actExalt places Amount Æmber on the subject creature — the granted "Before
 	// Fight: Exalt this creature" (Diplomacy).
 	actExalt
-	// actTakeExtraDamage is a modifier, not a reaction: it is never fired by
-	// emitLasting, only summed at the damage site by lastingExtraDamage.
+	// actTakeExtraDamage is a modifier, not a reaction: it never resolves in a
+	// trigger window, only summed at the damage site by lastingExtraDamage.
 	actTakeExtraDamage
 )
 
@@ -246,8 +246,8 @@ func (g *Game) clearLasting(player int) {
 
 // matchingLasting collects every registry reaction actor owns that responds to
 // event for subject, applying the house, type, subject, and except filters. It is
-// the shared gather behind emitLasting (standalone resolution) and lastingReactions
-// (folding into a trigger window).
+// the shared gather behind lastingReactions, which turns the matches into window
+// entries that order alongside the card abilities firing on the same event.
 func (g *Game) matchingLasting(event Event, actor int, subject LocalID) []LastingEffect {
 	var pending []LastingEffect
 	for i := 0; i < int(g.State.LastingCount); i++ {
@@ -292,38 +292,12 @@ func (g *Game) lastingReactions(event Event, actor int, subject LocalID) []trigg
 	return pending
 }
 
-// emitLasting resolves every reaction actor owns that responds to event. When
-// several fire at once the controller chooses the order (KeyForge lets the active
-// player order simultaneous triggers). subject is the card that caused the event —
-// the played creature — for reactions that need a source. Windows that also carry
-// card abilities fold their reactions in through lastingReactions instead; this
-// standalone path serves the events that have no card window of their own.
-func (g *Game) emitLasting(event Event, actor int, subject LocalID) {
-	pending := g.matchingLasting(event, actor, subject)
-	for len(pending) > 0 {
-		idx := 0
-		if len(pending) > 1 {
-			labels := make([]string, len(pending))
-			for i, le := range pending {
-				labels[i] = le.Do.describe()
-			}
-			idx = g.chooseOption(actor, "", "Choose the next effect to resolve", labels)
-		}
-		le := pending[idx]
-		g.resolveReaction(le, actor, subject)
-		if le.Once {
-			g.removeLasting(le)
-		}
-		pending = append(pending[:idx], pending[idx+1:]...)
-	}
-}
-
 // fireLastingBeforeFight resolves every lasting "Before Fight" ability granted to
 // the attacker, keyed to the attacker as subject and fired regardless of whose turn
 // it is. Diplomacy grants each creature "Before Fight: Exalt this creature" until
 // the granting player's next turn, so an enemy creature exalts when it fights on the
 // opponent's turn too — which is why this matches on the subject alone rather than
-// the acting player the way emitLasting does.
+// on the acting player the way the event windows gather their reactions.
 func (g *Game) fireLastingBeforeFight(attacker LocalID) {
 	actor := g.controller(attacker)
 	for i := 0; i < int(g.State.LastingCount); i++ {

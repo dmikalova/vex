@@ -341,32 +341,20 @@ func houseName(expr ast.Node) string {
 }
 
 // TestReferencedCardIsConnected enforces that a card naming another card in its
-// text — Grumpus Tamer tutoring a War Grumpus, Faygin returning an Urchin — is
-// linked to that card by a card.Connects pull, so a generated deck never deals
-// the tutor without its target. The link counts in either direction: the namer
-// may pull its target (Grumpus Tamer pulls War Grumpus), or the target may pull
-// the namer (Timetraveller pulls Help from Future Self, which names Timetraveller
-// back), since a card that is only ever pulled in by X always shares X's pod.
-// References are read straight from the definition: card text is generated from
-// the effect tree rather than stored, so the only strings that equal another
-// card's name are genuine references (an effect's SearchForName, a Target's Named
-// filter, …).
-//
-// How many copies to pull and at what chance is a judgment call the author makes
-// (how many Urchins a Faygin deck wants), which the test cannot infer, so it only
-// checks that the link exists — not its count.
+// text — Grumpus Tamer tutoring a War Grumpus, Faygin returning an Urchin — shares
+// a cluster with that card, so a generated deck never deals the tutor without its
+// target. Co-membership counts in either direction: a puller and its pulled
+// partner (Grumpus Tamer and War Grumpus) sit in one cluster, and a card only ever
+// pulled in by X always shares X's pod. References are read straight from the
+// definition: card text is generated from the effect tree rather than stored, so
+// the only strings that equal another card's name are genuine references (an
+// effect's SearchForName, a Target's Named filter, …).
 func TestReferencedCardIsConnected(t *testing.T) {
 	regs := card.Cards()
 	names := make(map[string]bool, len(regs))
-	pulls := make(map[string]map[string]bool, len(regs))
 	cluster := make(map[string]string, len(regs))
 	for _, rc := range regs {
 		names[rc.Def.Name] = true
-		links := make(map[string]bool, len(rc.Profile.Connection.Cards))
-		for _, cc := range rc.Profile.Connection.Cards {
-			links[cc.Name] = true
-		}
-		pulls[rc.Def.Name] = links
 		if !rc.Profile.Cluster.Empty() {
 			cluster[rc.Def.Name] = rc.Profile.Cluster.Name
 		}
@@ -374,14 +362,12 @@ func TestReferencedCardIsConnected(t *testing.T) {
 	for _, rc := range regs {
 		for ref := range referencedCardNames(reflect.ValueOf(rc.Def), names) {
 			sameCluster := cluster[rc.Def.Name] != "" && cluster[rc.Def.Name] == cluster[ref]
-			if ref == rc.Def.Name || pulls[rc.Def.Name][ref] || pulls[ref][rc.Def.Name] ||
-				sameCluster {
+			if ref == rc.Def.Name || sameCluster {
 				continue
 			}
 			t.Errorf(
-				"%s names %q but neither card connects to the other; add "+
-					"card.Connects(card.Pull(...)) on one of them (ask the author "+
-					"for the copy count and chance)",
+				"%s names %q but they share no cluster; add both to one cluster "+
+					"with card.InCluster (ask the author for the pull rate)",
 				rc.Def.Name, ref,
 			)
 		}
@@ -390,31 +376,20 @@ func TestReferencedCardIsConnected(t *testing.T) {
 
 // TestConnectedCardIsPulled is the mirror of TestReferencedCardIsConnected: a
 // card of Rarity.Connected is kept out of the pool and never rolls on its own
-// (deck generation indexes it by name and only places it through a puller), so
-// some other card must pull it in — otherwise it can never reach a deck. It is
-// reachable either through a connection (card.Connects) or as a member of a
-// cluster, whose validated rolling trigger guarantees a rollable card places it.
-// Unlike a named reference, the puller need not mention the card in its text: the
-// three Connected Horsemen ride in on Horseman of Pestilence's cluster, which
-// names none of them.
+// (deck generation indexes it by name and only places it through a cluster), so it
+// must be a member of a cluster whose validated rolling trigger guarantees a
+// rollable card places it — otherwise it can never reach a deck. Unlike a named
+// reference, the puller need not mention the card in its text: the three Connected
+// Horsemen ride in on Horseman of Pestilence's cluster, which names none of them.
 func TestConnectedCardIsPulled(t *testing.T) {
-	regs := card.Cards()
-	pulled := make(map[string]bool)
-	for _, rc := range regs {
-		for _, cc := range rc.Profile.Connection.Cards {
-			pulled[cc.Name] = true
-		}
-	}
-	for _, rc := range regs {
-		if rc.Def.Rarity != engine.Connected || pulled[rc.Def.Name] ||
-			!rc.Profile.Cluster.Empty() {
+	for _, rc := range card.Cards() {
+		if rc.Def.Rarity != engine.Connected || !rc.Profile.Cluster.Empty() {
 			continue
 		}
 		t.Errorf(
-			"%s is Rarity.Connected but nothing pulls it in, so it can never reach "+
-				"a deck; give its partner card.Connects(card.Pull(%s, n)) or add it to "+
-				"a cluster with card.InCluster",
-			rc.Def.Name, rc.Def.Name,
+			"%s is Rarity.Connected but no cluster pulls it in, so it can never reach "+
+				"a deck; add it to a cluster with card.InCluster",
+			rc.Def.Name,
 		)
 	}
 }

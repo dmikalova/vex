@@ -78,7 +78,7 @@ flowchart LR
   roll"]
   R --> D["Draw"]
   D --> M["Materialize"]
-  M --> C["Connections
+  M --> C["Clusters
   + validate loop"]
   C --> F["Finish:
   enhance / distort"]
@@ -101,8 +101,8 @@ flowchart LR
 4. **Materialize.** Compile the Slot to a concrete, engine-ready card: bind any
    template parameters, rehouse a maverick to the pod's House, and bind
    self-referential "your House" text to that House (see §5 and ADR 0004).
-5. **Connections + validate loop.** A drawn card may _pull_ other cards into the
-   pod. Resolve these to a fixpoint, then validate; on failure, repair or reseed
+5. **Clusters + validate loop.** A drawn card may _pull_ a family of related cards
+   into the pod. Resolve these, then validate; on failure, repair or reseed
    (see §5).
 6. **Finish.** Once the deck is valid, run the deck-wide enhancement and
    distortion pass (see §5).
@@ -139,7 +139,7 @@ averages _and_ the right variance for free.**
 All of these live in a `Tuning` block with package-level defaults; a Set inherits
 the defaults and overrides only what it wants to change.
 
-## 5. Templates, connections, and finishing
+## 5. Templates, clusters, and finishing
 
 Three mechanisms handle the cards that ordinary drawing cannot express directly.
 
@@ -153,37 +153,50 @@ for bucketing, but defer their effects, name, and parameters to a per-Slot
 lives in the card layer and runs at generation time; it never enters the engine's
 game state. This is the subject of ADR 0004.
 
-**Connections.** A card can pull others into its pod: Timetraveller pulls exactly
-one Help From Future Self; Plague Rat pulls a variable number of copies of itself;
-a "sin" slot pulls several distinct cards from the seven sins; Groundbreaking
-Discovery pulls exactly one of each of its three partners. Each connection is
-parameterized by its pool, its count (fixed or a distribution), and whether
-duplicates are allowed. Resolution is a **protected-slot fixpoint loop**: a pulled
-card overwrites a random _unprotected_ Slot in the same pod, and every member of a
-connection is then marked protected so a later connection cannot bump it. The loop
-repeats until nothing is unsatisfied and nothing was overwritten. A maverick puller
-fires its connection too, and the pulled partners are rehoused to the pod's House
-and marked maverick themselves — the same rule KeyForge uses for a Maverick's
-connected cards — so a Sanctum pod that mavericks in Troop Call still gets its
-Niffle Apes, rehoused to Sanctum.
+**Clusters.** A card can pull a family of related cards into its pod: the four
+Horsemen (a lead member pulls the whole family), Plague Rat (pulls a variable
+number of copies of itself), a "sin" slot (a random count of distinct cards from
+the seven sins), Timetraveller (pulls exactly one Help From Future Self per copy),
+Troop Call (pulls a couple of Niffle Apes and, less often, a Niffle Queen). These
+are all one mechanism — a **cluster**, a named family whose members share a
+**strategy** (how it fills) and a **trigger** (what fires it). This is the subject
+of ADR 0036, which replaced the earlier ad-hoc connection mechanism.
 
-_Implemented (v1)._ The puller declares its links with `card.Connects(…)`, one
-entry per pulled card, and after a pod is filled the fixpoint loop tops the pod up
-to each entry's copy count from an unprotected slot, rehousing to the pod's House
-when the puller itself is a maverick. Two entry shapes exist: `card.Pull(Partner,
-n)` pulls `n` copies every time, and `card.PullSometimes(Partner, p)` pulls one
-copy with probability `p`, rolled once per pod. A copy already in the pod counts
-toward the total, so a pull tops up rather than duplicating.
+A card joins a cluster with `card.InCluster(cluster)`; the lead of a `ByLead`
+cluster carries `card.LeadsCluster(cluster)`. All members share one declared
+`card.Cluster` value, so their placement rules cannot drift. The strategies are:
+
+- **OnePerHouse** — deck-wide: places one member in each of the deck's Houses when
+  any member is drawn (the per-House Shards). It is gated complete-by-construction,
+  so a set that can deck a House with no member fails the build.
+- **WholePool** — places every member (the four Horsemen).
+- **RandomCount** — places a random count of distinct members in `[Min, Max]` (the
+  seven sins).
+- **SelfPull** — places `Min + Poisson(Mean − Min)` copies of the single triggering
+  member itself, capped at a full pod (Plague Rat pulls more Plague Rats).
+- **PullExact** — places one copy of each non-lead member per lead instance, so N
+  leads pull N partners (two Timetravellers pull two Help From Future Self). Always
+  `ByLead`.
+- **Pull** — places a per-partner `Min + Poisson(Mean − Min)` count of each non-lead
+  member when the lead rolls in, each partner setting its own rate with
+  `card.Pulled(cluster, min, mean)` (Troop Call pulls Niffle Apes at one rate, a
+  Niffle Queen at a lower one). Always `ByLead`.
+
+Each pod-local strategy tops the pod up by overwriting slots that hold no member of
+the cluster, so the fired member and any siblings already placed stay put. A member
+whose native House differs from the pod's is rehoused as a maverick — the same rule
+KeyForge uses for a Maverick's family — so a Sanctum pod that mavericks in Troop
+Call still gets its Niffle Apes, rehoused to Sanctum. Clusters are visited in name
+order, so a set with several fills deterministically.
 
 A pulled card is usually authored `card.Rarity.Connected`, which keeps it out of
-the pool so it never rolls without its puller — `NewSet` indexes Connected cards by
-name only. That is not required, though: Troop Call
-(`card.Pull(NiffleApe, 2)` plus `card.PullSometimes(NiffleQueen, 0.15)`) guarantees
-Niffle Apes that also roll on their own, which is how the card's flavour survives
-into deck generation. Timetraveller (`card.Pull(HelpFromFutureSelf, 1)`) and
-Horseman of Pestilence are the guaranteed-partner users.
-A pool distinct from a single named list (drawing a "sin" from all seven) is the
-deferred axis.
+the pool so it never rolls without its cluster — `NewSet` indexes Connected cards by
+name only. That is not required, though: Troop Call guarantees Niffle Apes that also
+roll on their own, which is how the card's flavour survives into deck generation.
+`Set.validateClusters` fails the build if a cluster can never fire (every triggering
+member is Connected, so nothing rollable places it) or, for OnePerHouse, if it
+leaves a deckable House with no member. A pool distinct from a single named list
+(drawing a "sin" from all seven) is the deferred axis.
 
 **Deadlock.** Constraints can genuinely conflict — too many protected slots, or
 mutually exclusive requirements. Rather than backtracking, the loop is capped at a

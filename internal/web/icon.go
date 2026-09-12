@@ -851,11 +851,7 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 	case engine.NameHouse:
 		// The chosen house is barred; ChooseHouseThen supplies the choose glyph.
 		return []glyph{{asset: "glyph-ban"}}, true
-	case engine.LookAtTop:
-		return []glyph{{asset: "zone-deck"}, {asset: "glyph-look"}}, true
-	case engine.LookAtTopSort:
-		return []glyph{{asset: "zone-deck"}, {asset: "glyph-look"}}, true
-	case engine.ReorderTop:
+	case engine.LookAtTopOfDeck:
 		return []glyph{{asset: "zone-deck"}, {asset: "glyph-look"}}, true
 	case engine.RevealHand:
 		return []glyph{{asset: "zone-hand"}, {asset: "glyph-look"}}, true
@@ -883,12 +879,6 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 			{asset: "zone-deck"},
 			{asset: "glyph-look"},
 			arrowTo(glyph{asset: "zone-archives"}),
-		}, true
-	case engine.RevealPurgeShuffleDeck:
-		return []glyph{
-			{asset: "zone-deck"},
-			{asset: "glyph-look"},
-			arrowTo(glyph{asset: "zone-purge"}),
 		}, true
 	case engine.PutDiscardedIntoHand:
 		return []glyph{{asset: "zone-discard"}, arrowTo(glyph{asset: "zone-hand"})}, true
@@ -964,7 +954,13 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 	case engine.PlayRevealedCard:
 		return []glyph{{asset: "glyph-play"}}, true
 	case engine.RevealTopOfDeck:
-		return []glyph{{asset: "zone-deck"}, {asset: "glyph-look"}}, true
+		g := []glyph{{asset: "zone-deck"}, {asset: "glyph-look"}}
+		for _, act := range v.Then {
+			if m, ok := act.(engine.ChooseAndMove); ok && m.Dest == engine.IntoPurge {
+				g = append(g, arrowTo(glyph{asset: "zone-purge"}))
+			}
+		}
+		return g, true
 	case engine.MakeItsHouseActive:
 		return []glyph{{asset: "glyph-choose"}}, true
 	case engine.EndTurn:

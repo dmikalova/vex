@@ -15,7 +15,7 @@ import (
 //	Power:  2
 //	Traits: Cyborg
 //
-//	Play: Look at the top 3 cards of your deck, put 1 into your hand, and discard the others.
+//	Play: Look at the top 3 cards of your deck, put 1 into your hand, and discard 2.
 func TestEyegor(t *testing.T) {
 	t.Run("keeps the chosen card and discards the others", func(t *testing.T) {
 		var top, middle, third, bottom ct.Card
@@ -34,6 +34,7 @@ func TestEyegor(t *testing.T) {
 
 		h.P1.Play(Eyegor)
 		h.P1.ClickCard(middle) // keep one of the top three
+		h.P1.ClickCard(top)    // discard one of the rest; the last auto-resolves
 
 		h.Expect(middle).At(ct.Hand)
 		h.Expect(top).At(ct.Discard)

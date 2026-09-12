@@ -23,7 +23,7 @@ var IgonTheTerrible = card.New(
 	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
-			Cond: card.NamedCardPurged{Name: "Igon the Green", Not: true},
+			Cond: card.NamedCardPurged{Name: IgonTheGreenName, Not: true},
 			Then: card.Destroy{Target: card.Target.This},
 		}),
 	card.WithAbility(card.Trigger.Fight, card.StealAember{Amount: 1}),

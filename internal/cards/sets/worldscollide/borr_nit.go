@@ -21,6 +21,13 @@ var BorrNit = card.New(
 	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(
 		card.Trigger.Reap,
-		card.RevealPurgeShuffleDeck{Amount: 5},
+		card.RevealTopOfDeck{
+			Amount:          5,
+			ChooseWhoseDeck: true,
+			Then: []card.TopAct{
+				card.ChooseAndMove{Count: 1, Dest: card.Into.Purge},
+				card.ShuffleRest{},
+			},
+		},
 	),
 )

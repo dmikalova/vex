@@ -171,7 +171,6 @@ func (g *Game) fight(attacker, defender LocalID) {
 	}
 	g.resolveWindow(g.orderTriggered(
 		attackerSide,
-		TriggerAfterFight,
 		append(
 			g.fightReactions(attacker, defender, attackerSide, defenderSide, neighborsAtFight),
 			g.lastingReactions(EventFight, attackerSide, attacker)...,
@@ -570,7 +569,7 @@ func (g *Game) emitArmorPrevented(watchers []LocalID, armorBefore map[LocalID]in
 		}
 		actor := g.controller(id)
 		for _, t := range g.orderTriggered(
-			actor, TriggerAfterArmorPrevents, g.triggeredBy(id, TriggerAfterArmorPrevents),
+			actor, g.triggeredBy(id, TriggerAfterArmorPrevents),
 		) {
 			closeFrame := g.openFrame(Frame{
 				Actor:      actor,

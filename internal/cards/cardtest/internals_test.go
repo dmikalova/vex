@@ -195,3 +195,46 @@ func TestSetupRejectsAnImpossibleHouse(t *testing.T) {
 	})
 	wants(t, got, "is not one of the")
 }
+
+// A Player.Order script steers a trigger window one pick at a time: each
+// ChooseReaction returns the pending reaction whose card matches the earliest
+// scripted card still pending and consumes that entry, and once no scripted card
+// remains it stops steering the window so the script does not leak into a later
+// one. No card fires two distinct reactions on one event in a way a card test can
+// script, so the bridge is asserted directly here.
+func TestBridgeChooseReactionFollowsScript(t *testing.T) {
+	var first, second Card
+	h := Play(t, Setup{P1: Side{InPlay: []Entry{
+		Bind(&first, Creature()),
+		Bind(&second, Creature()),
+	}}})
+	b := bridgeChooser{h: h, player: 0}
+	reactions := []engine.OrderableReaction{
+		{Card: first.ID(), HasCard: true, Label: "first"},
+		{Card: second.ID(), HasCard: true, Label: "second"},
+	}
+
+	// Scripting second before first picks the second reaction, then the first.
+	h.P1.Order(second, first)
+	if got := b.ChooseReaction("prompt", reactions); got != 1 {
+		t.Errorf("first pick = %d, want 1 (second)", got)
+	}
+	if got := b.ChooseReaction("prompt", reactions); got != 0 {
+		t.Errorf("second pick = %d, want 0 (first)", got)
+	}
+	// The script is spent, so the window keeps its gathered order.
+	if got := b.ChooseReaction("prompt", reactions); got != 0 {
+		t.Errorf("spent pick = %d, want 0", got)
+	}
+
+	// A script naming a card absent from the window stops steering it, returning 0
+	// and clearing the script.
+	h.P1.Order(second)
+	only := []engine.OrderableReaction{{Card: first.ID(), HasCard: true, Label: "first"}}
+	if got := b.ChooseReaction("prompt", only); got != 0 {
+		t.Errorf("no-match pick = %d, want 0", got)
+	}
+	if h.orderScript[0] != nil {
+		t.Error("an unmatched script leaked into a later window")
+	}
+}

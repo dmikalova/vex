@@ -105,39 +105,20 @@ func (c *webChooser) OrderCreatures(
 	return append(ordered, remaining...)
 }
 
-// OrderReactions implements the engine's ReactionOrderer: a trigger window that
-// mixes card abilities with duration reactions (Full Moon, Charge!, Crystal Hive)
-// is ordered here as a whole. The card abilities are ordered by clicking their
-// cards on the board, exactly like any trigger window, and the duration reactions
-// — which have no card to click — resolve after in the order the engine gave. A
-// card that appears more than once (two differently-worded abilities) makes the
-// click ordering ambiguous, so that window is left in its default order.
-func (c *webChooser) OrderReactions(
+// ChooseReaction implements the engine's ReactionChooser: a trigger window that
+// needs ordering — several card abilities, duration reactions, or a mix — is shown
+// as a flat labeled list, and the player clicks which resolves next. It reuses the
+// labeled-option prompt (ChooseOption), so the reactions read as a menu of their
+// rendered ability text rather than asking the player to click cards on the board.
+func (c *webChooser) ChooseReaction(
 	prompt string,
 	reactions []engine.OrderableReaction,
-) []int {
-	byCard := make(map[engine.LocalID]int, len(reactions))
-	var ids []engine.LocalID
+) int {
+	options := make([]string, len(reactions))
 	for i, r := range reactions {
-		if !r.HasCard {
-			continue
-		}
-		if _, dup := byCard[r.Card]; dup {
-			return nil // ambiguous: fall back to the engine's default order
-		}
-		byCard[r.Card] = i
-		ids = append(ids, r.Card)
+		options[i] = r.Label
 	}
-	ordered := make([]int, 0, len(reactions))
-	for _, id := range c.OrderCreatures("", prompt, ids) {
-		ordered = append(ordered, byCard[id])
-	}
-	for i, r := range reactions {
-		if !r.HasCard {
-			ordered = append(ordered, i)
-		}
-	}
-	return ordered
+	return c.ChooseOption("", prompt, options)
 }
 
 // raise shows a card prompt on the UI goroutine and blocks the action goroutine

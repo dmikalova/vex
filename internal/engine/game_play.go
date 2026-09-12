@@ -502,7 +502,7 @@ func (g *Game) playCreatureCard(player int, id LocalID, fl flank) {
 	pending = append(pending, g.lastingReactions(EventCardPlayed, player, id)...)
 	pending = append(pending, g.lastingReactions(EventCreaturePlayed, player, id)...)
 	pending = append(pending, g.lastingReactions(EventCardEntersPlay, player, id)...)
-	g.resolveWindow(g.orderTriggered(player, TriggerAfterPlay, pending))
+	g.resolveWindow(g.orderTriggered(player, pending))
 	// The arrival may have walked into a power-reducing constant ability, or been one.
 	g.settleDestroyed(player)
 }
@@ -558,7 +558,7 @@ func (g *Game) playArtifactCard(player int, id LocalID) {
 	pending := g.afterPlayReactions(player, id)
 	pending = append(pending, g.lastingReactions(EventCardPlayed, player, id)...)
 	pending = append(pending, g.lastingReactions(EventCardEntersPlay, player, id)...)
-	g.resolveWindow(g.orderTriggered(player, TriggerAfterPlay, pending))
+	g.resolveWindow(g.orderTriggered(player, pending))
 	g.settleDestroyed(player)
 }
 
@@ -578,7 +578,7 @@ func (g *Game) playActionCard(player int, id LocalID) {
 	// which afterPlayReactions carries as the entry actor.
 	pending := g.afterPlayReactions(player, id)
 	pending = append(pending, g.lastingReactions(EventCardPlayed, player, id)...)
-	g.resolveWindow(g.orderTriggered(player, TriggerAfterPlay, pending))
+	g.resolveWindow(g.orderTriggered(player, pending))
 	// A played action goes to the top of its owner's discard pile — unless its own
 	// "Play:" ability purged it (Library Access), in which case it is set aside out
 	// of the game instead. Owner and player differ only when one player plays

@@ -21,7 +21,7 @@ func Generate(set Set, seed int64) Deck {
 	}
 	deck := Deck{Set: set.Name, Seed: seed}
 	for i := 0; i < PodCount && i < len(houses); i++ {
-		deck.Pods[i] = g.expandPodClusters(g.expandConnections(g.fillPod(houses[i])))
+		deck.Pods[i] = g.expandPodClusters(g.fillPod(houses[i]))
 	}
 	g.expandClusters(&deck)
 	return deck
@@ -52,133 +52,6 @@ func (g *generator) fillPod(house engine.House) HousePod {
 		placed = append(placed, pc)
 	}
 	return pod
-}
-
-// expandConnections resolves a pod's connections: every puller card ensures its
-// connected partners are present at their copy counts, overwriting other
-// (unprotected) slots with them. A maverick puller's partners are rehoused to the
-// pod's House too — the printed-house rule KeyForge uses for a Maverick's
-// connected cards — which lets a rehoused partner's own connection chain further
-// mavericks in on a later pass. Puller and partner slots are protected, and the
-// pass repeats to a fixpoint so a pulled partner's own connection also resolves.
-// A chancy pull is rolled once per pod and remembered, so a later pass cannot
-// re-roll it. An exact pull instead fires once per puller instance, so N pullers
-// pull N partners (each Timetraveller its own Help from Future Self). The loop
-// always terminates: each productive pass consumes one of the finitely many
-// unprotected slots, so placePartners eventually places nothing.
-func (g *generator) expandConnections(pod HousePod) HousePod {
-	protected := make([]bool, PodSize)
-	counted := make([]bool, PodSize)
-	wanted := map[string]int{}
-	rehouse := map[string]bool{}
-	for {
-		var order []string
-		for i := 0; i < PodSize; i++ {
-			c, ok, _ := g.set.lookup(pod.Slots[i].Card.Name)
-			if !ok || c.Profile.Connection.Empty() {
-				continue
-			}
-			protected[i] = true
-			for _, cc := range c.Profile.Connection.Cards {
-				if pod.Slots[i].Maverick {
-					rehouse[cc.Name] = true
-				}
-				if cc.Exact {
-					// An exact pull fires once per puller instance: count this
-					// slot's copies a single time (counted guards the fixpoint's
-					// later passes), so N pullers pull N partners.
-					if !counted[i] {
-						if n := g.pullCopies(cc); n > 0 {
-							wanted[cc.Name] += n
-							order = append(order, cc.Name)
-						}
-					}
-					continue
-				}
-				if _, rolled := wanted[cc.Name]; !rolled {
-					wanted[cc.Name] = g.pullCopies(cc)
-					if wanted[cc.Name] > 0 {
-						order = append(order, cc.Name)
-					}
-				}
-			}
-			counted[i] = true
-		}
-		if len(order) == 0 {
-			return pod
-		}
-		present := map[string]int{}
-		for i := 0; i < PodSize; i++ {
-			name := pod.Slots[i].Card.Name
-			if present[name] < wanted[name] {
-				present[name]++
-				protected[i] = true
-			}
-		}
-		if !g.placePartners(&pod, order, wanted, present, protected, rehouse) {
-			return pod
-		}
-	}
-}
-
-// pullCopies decides how many copies of a connected card a pod pulls: its full
-// count when the pull fires, none when its chance does not come up.
-func (g *generator) pullCopies(c ConnectedCard) int {
-	if c.Chance < 1 && !g.chance(c.Chance) {
-		return 0
-	}
-	return c.Copies
-}
-
-// placePartners overwrites unprotected slots with the missing connected
-// partners, protecting each as it lands. A name in rehouse materializes as a
-// maverick of the pod's House, matching the puller that pulled it in. It
-// reports whether it placed anything (a fixpoint pass that places nothing ends
-// the loop).
-func (g *generator) placePartners(
-	pod *HousePod,
-	order []string,
-	wanted, present map[string]int,
-	protected []bool,
-	rehouse map[string]bool,
-) bool {
-	placed := false
-	for _, name := range order {
-		for present[name] < wanted[name] {
-			partner, _, fromLegacy := g.set.lookup(name)
-			slot := freeSlot(protected)
-			if slot < 0 {
-				return placed
-			}
-			ctx := SlotContext{
-				House:    pod.House,
-				Rarity:   partner.Def.Rarity,
-				Maverick: rehouse[name],
-				Legacy:   fromLegacy,
-			}
-			def := g.materialize(partner, ctx)
-			pod.Slots[slot] = Slot{
-				Rarity:   partner.Def.Rarity,
-				Maverick: rehouse[name],
-				Legacy:   fromLegacy,
-				Card:     def,
-			}
-			protected[slot] = true
-			present[name]++
-			placed = true
-		}
-	}
-	return placed
-}
-
-// freeSlot returns the first unprotected slot index, or -1 when the pod is full.
-func freeSlot(protected []bool) int {
-	for i := range protected {
-		if !protected[i] {
-			return i
-		}
-	}
-	return -1
 }
 
 // expandPodClusters resolves the pod-local cluster strategies for one filled pod:

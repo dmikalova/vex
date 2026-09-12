@@ -38,6 +38,17 @@ func TestTraitString(t *testing.T) {
 	}
 }
 
+func TestParseTrait(t *testing.T) {
+	// Case-insensitive match.
+	if tr, ok := ParseTrait("bEaSt"); !ok || tr != Beast {
+		t.Errorf("ParseTrait(bEaSt) = %v, %v; want Beast, true", tr, ok)
+	}
+	// Unknown name.
+	if tr, ok := ParseTrait("nonsense"); ok || tr != traitUnset {
+		t.Errorf("ParseTrait(nonsense) = %v, %v; want traitUnset, false", tr, ok)
+	}
+}
+
 // TestCardTypeReacts covers the three filter modes a lasting entry's card type
 // has: unset matches anything, AnyType means creature-or-artifact, and a named
 // type matches only itself.

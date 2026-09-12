@@ -385,11 +385,11 @@ negative weight.
 **Cluster**:
 A family of related cards that deck generation places together. A card is a
 **member** of a cluster; the cluster carries a **strategy** (how it fills out) and
-a **trigger mode** (what causes it to fill). Clusters subsume Connections — a
-fixed-count pull is just one strategy. Examples: the seven sins (any member drawn
-tops the pod up to a random 3–7 of them), the four Horsemen (a lead member pulls
-the whole family), the per-House Shards (any Shard drawn places one Shard in every
-House pod of the Deck).
+a **trigger mode** (what causes it to fill). A cluster is the one mechanism that
+pulls a card family into a pod — a fixed-count pull is just one strategy. Examples:
+the seven sins (any member drawn tops the pod up to a random 3–7 of them), the
+four Horsemen (a lead member pulls the whole family), the per-House Shards (any
+Shard drawn places one Shard in every House pod of the Deck).
 
 **Cluster strategy**:
 How a cluster fills once triggered: **one per House** (one member in each of the

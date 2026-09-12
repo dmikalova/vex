@@ -18,7 +18,6 @@ var optionRank = map[string]int{
 	// Origin tag first.
 	"Provenance":     1,
 	"RarityWeight":   2,
-	"Connects":       3,
 	"InCluster":      3,
 	"LeadsCluster":   3,
 	"OneCopyPerDeck": 4,

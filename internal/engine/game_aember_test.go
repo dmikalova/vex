@@ -148,7 +148,7 @@ func TestCaptureOpponentAemberReplacement(t *testing.T) {
 				LastingEffect{On: EventCreaturePlayed, Do: actGainAember, Controller: 0, Amount: 2},
 			)
 
-			g.emitLasting(EventCreaturePlayed, 0, played)
+			g.resolveLastingWindow(EventCreaturePlayed, 0, played)
 
 			if g.Aember(0) != 0 {
 				t.Errorf("player Æmber = %d, want 0", g.Aember(0))

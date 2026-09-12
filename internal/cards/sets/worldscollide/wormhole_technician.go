@@ -22,7 +22,7 @@ var WormholeTechnician = card.New(
 	card.WithAbility(
 		card.Trigger.Reap, card.Sentences{
 			Effects: []card.Effect{
-				card.RevealTopOfDeck{},
+				card.RevealTopOfDeck{Amount: 1},
 				card.Conditional{
 					Cond: card.ItIs{House: card.House.Self},
 					Then: card.PlayRevealedCard{},

@@ -24,14 +24,12 @@ var Velum = card.New(
 	card.WithAbility(card.Trigger.Reap, card.Sentences{Effects: []card.Effect{
 		card.ArchiveCard{Zone: card.Hand, Selection: card.Chosen{}},
 		card.Conditional{
-			Cond: card.ControlsNamed{Name: "Hyde"},
+			Cond: card.ControlsNamed{Name: HydeName},
 			Then: card.ArchiveCard{Zone: card.Hand, Selection: card.Chosen{}},
 		},
 	}}),
 	card.WithAbility(card.Trigger.Destroyed, card.Then{
-		// "Hyde" as a string literal, not Hyde.Name: Hyde references Velum.Name, so
-		// naming it back by variable would close a package init cycle.
-		First:  card.ArchiveCard{Zone: card.Discard, Selection: card.Named{Name: "Hyde"}},
+		First:  card.ArchiveCard{Zone: card.Discard, Selection: card.Named{Name: HydeName}},
 		Result: card.ArchiveFromPlay{Target: card.Target.This},
 	}),
 )

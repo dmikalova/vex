@@ -20,7 +20,7 @@ var BookOfLeQ = card.New(
 	card.WithAbility(
 		card.Trigger.Action, card.Sentences{
 			Effects: []card.Effect{
-				card.RevealTopOfDeck{},
+				card.RevealTopOfDeck{Amount: 1},
 				card.Conditional{
 					Cond: card.ItIsNotOfHouse{House: card.House.Self},
 					Then: card.MakeItsHouseActive{},

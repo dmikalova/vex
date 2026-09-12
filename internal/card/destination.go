@@ -29,3 +29,23 @@ type destinations struct {
 
 // Destination names where an effect puts a card it moves (see card.To).
 type Destination = engine.Destination
+
+// Into groups the destinations a card.ChooseAndMove step sends the cards it takes
+// off the top of a deck, e.g. card.Into.Purge. It mirrors the engine's DeckDest.
+var Into = deckDests{
+	Hand:     engine.IntoHand,
+	Archives: engine.IntoArchives,
+	Discard:  engine.IntoDiscard,
+	Purge:    engine.IntoPurge,
+}
+
+type deckDests struct {
+	// Hand puts the chosen cards into your hand.
+	Hand engine.DeckDest
+	// Archives archives the chosen cards.
+	Archives engine.DeckDest
+	// Discard puts the chosen cards into the discard pile.
+	Discard engine.DeckDest
+	// Purge purges the chosen cards.
+	Purge engine.DeckDest
+}

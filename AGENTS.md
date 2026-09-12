@@ -302,9 +302,10 @@ There are two flavors:
 - A **reaction** runs _after_ an event. A site that has its own trigger window (a
   creature reaps, fights, is played) folds the actor's reactions into that window
   with `g.lastingReactions(event, actor, subject)`, so they order together with the
-  card abilities that fire on the same event (ADR 0013): a window that mixes them
-  orders the whole set through the `ReactionOrderer` port, defaulting to the card
-  abilities then the duration reactions. A site with no card window of its own (an
+  card abilities that fire on the same event (ADR 0013): the whole window — card
+  abilities and duration reactions alike — is one flat labeled list the active
+  player orders through the `ReactionChooser` port, defaulting to the gathered
+  order. A site with no card window of its own (an
   enemy creature destroyed) emits **one** standalone dispatch instead —
   `g.emitLasting(EventEnemyCreatureDestroyed, actor, subject)` — which gathers every
   reaction the actor owns for that event and, when several fire at once, lets the

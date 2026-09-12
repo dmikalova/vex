@@ -83,27 +83,29 @@ type Orderer interface {
 	OrderCreatures(source, prompt string, ids []LocalID) []LocalID
 }
 
-// OrderableReaction is one entry the active player may arrange in a trigger
-// window: either a card's triggered ability (HasCard, Card its source) or a
-// duration reaction from the lasting registry (Full Moon, Charge!, Crystal Hive),
-// which has no card in play. Label is a display string for both — the source
-// card's name, or the duration reaction's rendered effect. A duration reaction is
-// carried alongside the card abilities so the whole window orders as one.
+// OrderableReaction is one entry the active player may pick as the next to
+// resolve in a trigger window: either a card's triggered ability (HasCard, Card
+// its source) or a duration reaction from the lasting registry (Full Moon,
+// Charge!, Crystal Hive), which has no card in play. Label is the rendered display
+// string for both — the source card's name and ability text, or the duration
+// reaction's rendered effect. Card abilities and duration reactions are offered in
+// one flat labeled list so the whole window orders as one.
 type OrderableReaction struct {
 	Card    LocalID
 	HasCard bool
 	Label   string
 }
 
-// ReactionOrderer is an optional Chooser capability: arranging a whole trigger
-// window — card abilities and duration reactions together — into a resolution
-// order, returning a permutation of the given reactions' indices. It is asked only
-// when a window mixes card abilities with duration reactions, because a duration
-// reaction has no card and so cannot flow through the card-based Orderer. A Chooser
-// that does not implement it leaves the default order, which resolves the card
-// abilities before the duration reactions.
-type ReactionOrderer interface {
-	OrderReactions(prompt string, reactions []OrderableReaction) []int
+// ReactionChooser is an optional Chooser capability: picking which reaction in a
+// trigger window resolves next, from a flat labeled list of the window's pending
+// reactions — card abilities and duration reactions together. The engine asks
+// repeatedly, dropping the picked reaction each time, until one remains (which is
+// forced). Returning an out-of-range index leaves the remaining reactions in their
+// gathered order. A Chooser that does not implement it resolves the whole window in
+// its gathered order. The engine never asks when every pending reaction is
+// identical, since their order cannot matter.
+type ReactionChooser interface {
+	ChooseReaction(prompt string, reactions []OrderableReaction) int
 }
 
 // BadgeChooser is an optional Chooser capability: a client that previews the
@@ -170,12 +172,27 @@ type Game struct {
 	// shuffles A and B into P2's deck") instead of a passive line per creature.
 	shuffleBatch    []LocalID
 	batchingShuffle bool
-	// destroyingWindow holds the creatures whose "Destroyed:" window is currently
-	// open — those already being destroyed by an enclosing batch. A nested
-	// destruction that re-selects one of them (Harbinger of Doom's "Destroyed:
-	// destroy each creature" re-selects Harbinger itself) skips it, so its Destroyed
-	// abilities fire once and it is discarded once. It nests with the call stack.
+	// destroyingWindow holds every creature enrolled in the currently open
+	// "Destroyed:" window — those being destroyed together, whether by the batch
+	// that opened the window or by a Destroyed ability that destroyed more creatures
+	// mid-window. A nested destruction that re-selects one of them (Harbinger of
+	// Doom's "Destroyed: destroy each creature" re-selects Harbinger itself) skips
+	// it, so its Destroyed abilities fire once and it is discarded once. The batch
+	// that opened the window owns it and clears the field once every enrolled
+	// creature has reached the discard pile.
 	destroyingWindow []LocalID
+	// destroyWindowOpen is true while a "Destroyed:" window is open, so a nested
+	// destruction (a Destroyed ability destroying more creatures) enrolls its
+	// creatures in the same window rather than opening its own — a whole chain of
+	// deaths shares one simultaneous window (KeyForge timing; ADR 0013).
+	destroyWindowOpen bool
+	// destroyWindowController is the player who orders the open window's Destroyed
+	// abilities — the one who caused the destruction that opened it.
+	destroyWindowController int
+	// destroyPending is the open window's queue of Destroyed abilities still to
+	// resolve. A Destroyed ability that destroys more creatures appends theirs here,
+	// so the resolve loop re-gathers and keeps going until the queue drains.
+	destroyPending []triggeredAbility
 	// savedFromDestruction holds the creatures whose own "Destroyed:" ability
 	// replaced their destruction (Reassembling Automaton "instead of destroying it,
 	// ... move it to a flank"). Set while a destruction batch resolves its Destroyed

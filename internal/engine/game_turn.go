@@ -593,7 +593,7 @@ func (g *Game) finishForgeKey(player int, color KeyColor, hasColor bool) {
 	// reactions all trigger at once, so the forger orders the whole set (ADR 0013).
 	pending := g.forgeKeyReactions(player)
 	pending = append(pending, g.lastingReactions(EventForgeKey, player, 0)...)
-	g.resolveWindow(g.orderTriggered(player, TriggerAfterForgeKey, pending))
+	g.resolveWindow(g.orderTriggered(player, pending))
 	// Forging changes the unforged-key count some creatures draw their power from.
 	g.settleDestroyed(player)
 	if g.State.Keys[player] >= KeysToWin {

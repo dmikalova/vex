@@ -55,6 +55,8 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - Make each brew unique to its card
 - More updates on the board row - left side should go under, not have invis gradient, right side should go to edge, spacing and parens on icons
 - Hovering over the key cost should show any modifiers to key cost instead of them being in the warning/restricted area
+- list all the cards with multiple provenances. For non-clusters, make them unique. Remove the duplicate allowances.
+- decompose all the neighbor stuff
 
 - Cloaking Dongle: Target: Target and neighbors then gives the bonus
 - Kompsos Haurspex and Livia the elder can be atomized into each other

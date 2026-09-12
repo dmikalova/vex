@@ -14,7 +14,7 @@ func (g *Game) EmitAemberStolenFrom(victim, amount int) {
 		if len(pending) == 0 || !g.inPlay(id) {
 			continue
 		}
-		for _, t := range g.orderTriggered(victim, TriggerAfterAemberStolenFromYou, pending) {
+		for _, t := range g.orderTriggered(victim, pending) {
 			closeFrame := g.openFrame(Frame{
 				Actor:      victim,
 				Source:     id,
