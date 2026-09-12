@@ -20,9 +20,10 @@ type OffHousePermit struct {
 	Except House
 	// Controlled frees only houses the player has a card in play for (United Action).
 	Controlled bool
-	// NotType frees every card type but this one — Com. Officer Kirby frees a
-	// non-creature, so NotType: Creature. TypeUnset excludes no type.
-	NotType CardType
+	// Types narrows the card types the permit frees — Com. Officer Kirby frees only a
+	// non-creature, so Types is artifact, upgrade, and Tactic. The zero value frees
+	// every type.
+	Types CardTypes
 	// Grant is what the permit frees: playing the card from hand (GrantPlay), using
 	// the creature in play (GrantUse), or both (CXO Taber plays or uses).
 	Grant HouseGrant
@@ -32,7 +33,7 @@ type OffHousePermit struct {
 
 // frees reports whether the permit still frees a card of the given house and type
 // for the player: it has a use left, the house is not excluded, and the type is
-// not excluded.
+// admitted.
 func (p OffHousePermit) frees(g *Game, player int, house House, typ CardType) bool {
 	if p.Remaining == 0 {
 		return false
@@ -43,7 +44,7 @@ func (p OffHousePermit) frees(g *Game, player int, house House, typ CardType) bo
 	if p.Controlled && !g.controlsHouseInPlay(player, house) {
 		return false
 	}
-	if p.NotType != TypeUnset && typ == p.NotType {
+	if !p.Types.has(typ) {
 		return false
 	}
 	return true

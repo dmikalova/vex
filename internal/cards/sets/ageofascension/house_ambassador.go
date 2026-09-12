@@ -48,8 +48,13 @@ func ambassadorFor(ctx card.SlotContext, r *rand.Rand) card.Definition {
 		card.WithPower(1),
 		card.WithTraits(card.Traits.Human),
 		card.WithKeywords(card.Keyword.Elusive),
-		card.WithAbility(card.Trigger.FightReap,
-			card.MayActFriendlyHouse{House: partner, Grant: card.GrantPlay | card.GrantUse}),
+		card.WithAbility(
+			card.Trigger.FightReap,
+			card.MayPlayOrUse{
+				Houses: card.Houses.Named(partner),
+				Grant:  card.GrantPlay | card.GrantUse,
+			},
+		),
 	)
 }
 

@@ -44,7 +44,7 @@ func TestGrantFightForHouse(t *testing.T) {
 	}
 
 	// The grant lets creatures of that house fight this turn.
-	g.GrantFightForHouse(0, Untamed)
+	g.GrantMayPlayOrUse(0, HouseSelector{Kind: SelectHouse, House: Untamed}, GrantFight, 0, 0)
 	if err := g.Fight(0, att, def); err != nil {
 		t.Fatalf("with grant: %v", err)
 	}

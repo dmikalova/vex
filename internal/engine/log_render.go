@@ -34,7 +34,21 @@ type LogSegment struct {
 // together with the id or player it asked by, and no client has to guess which
 // words in a sentence are cards, players, or emblems.
 func RenderEntry(e LogEntry, n Namer) []LogSegment {
-	spy := &namerSpy{Namer: n}
+	return renderWatched(e, n, Frame{})
+}
+
+// RenderRecord renders a record under its frame, so a card ability's outcome is
+// split with the source card as its subject segment (ADR 0011). A client draws
+// log lines from this rather than RenderEntry so the framed subject is linked.
+func RenderRecord(r Record, n Namer) []LogSegment {
+	return renderWatched(r.Entry, n, r.Frame)
+}
+
+// renderWatched renders an entry through a spy namer and splits the result into
+// name, player, and keyword segments. The frame gives the spy the source card an
+// entry subjects itself to, so a card ability's outcome renders card-first.
+func renderWatched(e LogEntry, n Namer, frame Frame) []LogSegment {
+	spy := &namerSpy{Namer: n, frame: frame}
 	text := e.Text(spy)
 	var out []LogSegment
 	plain := 0
@@ -172,6 +186,7 @@ func (t namedThing) segment() LogSegment {
 // text can be split back into the ids that produced it.
 type namerSpy struct {
 	Namer
+	frame Frame
 	named []namedThing
 }
 
@@ -187,6 +202,12 @@ func (s *namerSpy) PlayerName(player int) string {
 	name := s.Namer.PlayerName(player)
 	s.named = append(s.named, namedThing{name: name, player: player})
 	return name
+}
+
+// frameSource reports the source card the spy's frame carries, so an entry
+// rendered through the spy subjects itself to it (ADR 0011).
+func (s *namerSpy) frameSource() (LocalID, bool) {
+	return s.frame.Source, s.frame.HasSource
 }
 
 // nameAt returns the longest name that starts at text[i] on a word boundary,

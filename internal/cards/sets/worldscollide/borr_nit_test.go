@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Demon
 //
-//	Reap: Reveal the top 5 cards of a player's deck. Purge a card revealed this way. Shuffle the other revealed cards into that deck.
+//	Reap: Reveal the top 5 cards of a player's deck. Purge a card revealed this way. Shuffle that deck.
 func TestBorrNit(t *testing.T) {
 	var borr, victim, keep ct.Card
 	h := ct.Play(t, ct.Setup{

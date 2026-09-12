@@ -74,10 +74,8 @@ func (e GainAember) gain(ctx *EffectContext, p int) {
 		return
 	}
 	ctx.Resolver.Record(AemberGained{
-		Player:    p,
-		Amount:    amount,
-		Source:    ctx.Source,
-		HasSource: true,
+		Player: p,
+		Amount: amount,
 	})
 }
 
@@ -130,10 +128,8 @@ func (e GainAemberEqualTo) Resolve(ctx *EffectContext) {
 		return
 	}
 	ctx.Resolver.Record(AemberGained{
-		Player:    p,
-		Amount:    amount,
-		Source:    ctx.Source,
-		HasSource: true,
+		Player: p,
+		Amount: amount,
 	})
 }
 

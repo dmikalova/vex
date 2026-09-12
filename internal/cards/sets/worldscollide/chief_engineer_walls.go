@@ -24,8 +24,10 @@ var ChiefEngineerWalls = card.New(
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(card.Trigger.PlayFightReap, card.May{
 		Do: card.PutFromDiscard{
-			Type:        card.Type.Upgrade,
-			OrTrait:     card.Traits.Robot,
+			Match: card.Match{
+				Type: card.Type.Upgrade,
+				Or:   []card.Match{{Trait: card.Traits.Robot}},
+			},
 			Destination: card.To.Hand,
 		},
 	}),

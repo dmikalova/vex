@@ -508,6 +508,22 @@ func (t Target) valid() bool {
 	return t.Kind != targetUnset
 }
 
+// plural reports whether the target names more than one card — exactly the
+// "each ..." phrasing, read off Text rather than a parallel switch.
+func (t Target) plural() bool {
+	return strings.HasPrefix(t.Text(), "each")
+}
+
+// pronoun renders the target as a back-reference for a sentence whose antecedent
+// already named these creatures — "those creatures" for a plural (each) set, "that
+// creature" for a single one.
+func (t Target) pronoun() string {
+	if t.plural() {
+		return "those creatures"
+	}
+	return "that creature"
+}
+
 // Text renders the target as an English noun phrase, e.g. "each enemy creature",
 // "each Scientist creature", or "each creature with power 3 or lower".
 func (t Target) Text() string {

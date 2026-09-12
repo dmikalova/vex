@@ -5,14 +5,14 @@ import (
 	"testing"
 )
 
-func TestSwapBattlelinePositions(t *testing.T) {
+func TestSwapCards(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	left := g.AddToBattleline(testCreature("left", 2), 0)
 	middle := g.AddToBattleline(testCreature("middle", 2), 0)
 	right := g.AddToBattleline(testCreature("right", 2), 0)
 	enemy := g.AddToBattleline(testCreature("enemy", 2), 1)
 
-	g.SwapBattlelinePositions(left, right)
+	g.SwapCards(left, right)
 	if got, want := g.Battleline(0), []LocalID{right, middle, left}; !slices.Equal(got, want) {
 		t.Fatalf("battleline after swap = %v, want %v", got, want)
 	}
@@ -20,13 +20,108 @@ func TestSwapBattlelinePositions(t *testing.T) {
 		t.Fatalf("enemy battleline after friendly swap = %v, want %v", got, want)
 	}
 
-	g.SwapBattlelinePositions(left, enemy)
+	g.SwapCards(left, enemy)
 	if got, want := g.Battleline(0), []LocalID{right, middle, left}; !slices.Equal(got, want) {
 		t.Fatalf("battleline after cross-battleline swap = %v, want %v", got, want)
 	}
 	if got, want := g.Battleline(1), []LocalID{enemy}; !slices.Equal(got, want) {
 		t.Fatalf("enemy battleline after cross-battleline swap = %v, want %v", got, want)
 	}
+}
+
+// TestSwapCardsAcrossZones covers a creature on the board trading places with one
+// resting in a discard pile: the resting creature enters play in the board
+// creature's slot while the board creature leaves to that discard pile.
+func TestSwapCardsAcrossZones(t *testing.T) {
+	t.Run("resting creature enters play in the board creature's slot", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		left := g.AddToBattleline(testCreature("left", 2), 0)
+		host := g.AddToBattleline(testCreature("host", 2), 0)
+		right := g.AddToBattleline(testCreature("right", 2), 0)
+		reborn := g.AddToDiscard(testCreature("reborn", 3), 0)
+
+		g.SwapCards(host, reborn)
+
+		if got, want := g.Battleline(0), []LocalID{left, reborn, right}; !slices.Equal(got, want) {
+			t.Fatalf("battleline after cross-zone swap = %v, want %v", got, want)
+		}
+		if !g.State.Discard[0].contains(host) {
+			t.Errorf("host should have left play to the discard pile")
+		}
+		if g.State.Discard[0].contains(reborn) {
+			t.Errorf("reborn should have left the discard pile")
+		}
+		if !g.State.Cards[reborn].Exhausted {
+			t.Errorf("reborn should enter play exhausted")
+		}
+	})
+
+	t.Run("the board creature sheds its Æmber to its opponent on the way out", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		host := g.AddToBattleline(testCreature("host", 2), 0)
+		reborn := g.AddToDiscard(testCreature("reborn", 3), 0)
+		g.State.Cards[host].Amber = 2
+
+		g.SwapCards(host, reborn)
+
+		if got := g.State.Aember[1]; got != 2 {
+			t.Errorf("opponent pool = %d, want 2 (Æmber on the departing creature)", got)
+		}
+	})
+
+	t.Run("does nothing when neither card is in play", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		a := g.AddToDiscard(testCreature("a", 2), 0)
+		b := g.AddToDiscard(testCreature("b", 2), 0)
+
+		g.SwapCards(a, b)
+
+		if !g.State.Discard[0].contains(a) || !g.State.Discard[0].contains(b) {
+			t.Errorf("two resting cards should be left in the discard pile")
+		}
+	})
+
+	t.Run("resolves regardless of argument order", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		host := g.AddToBattleline(testCreature("host", 2), 0)
+		reborn := g.AddToDiscard(testCreature("reborn", 3), 0)
+
+		g.SwapCards(reborn, host) // resting card passed first
+
+		if got, want := g.Battleline(0), []LocalID{reborn}; !slices.Equal(got, want) {
+			t.Fatalf("battleline = %v, want %v", got, want)
+		}
+	})
+
+	t.Run("does nothing when the resting card is not in a discard pile", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		host := g.AddToBattleline(testCreature("host", 2), 0)
+		inHand := g.AddToHand(testCreature("hand", 3), 0)
+
+		g.SwapCards(host, inHand)
+
+		if got, want := g.Battleline(0), []LocalID{host}; !slices.Equal(got, want) {
+			t.Fatalf("battleline = %v, want %v (no swap)", got, want)
+		}
+		if !g.State.Hand[0].contains(inHand) {
+			t.Errorf("card in hand should stay in hand")
+		}
+	})
+
+	t.Run("does nothing when the in-play card is an artifact", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		art := g.AddArtifact(testArtifact("relic"), 0)
+		reborn := g.AddToDiscard(testCreature("reborn", 3), 0)
+
+		g.SwapCards(art, reborn)
+
+		if !g.State.Artifacts[0].contains(art) {
+			t.Errorf("artifact should stay in play")
+		}
+		if !g.State.Discard[0].contains(reborn) {
+			t.Errorf("resting creature should stay in the discard pile")
+		}
+	})
 }
 
 func TestSwap(t *testing.T) {
@@ -45,6 +140,9 @@ func TestSwap(t *testing.T) {
 	}
 	if got, want := e.Text(), "swap this creature with another friendly creature in your battleline"; got != want {
 		t.Fatalf("text = %q, want %q", got, want)
+	}
+	if got, want := (Swap{FromContext: true}).Text(), "swap it with "+SelfName; got != want {
+		t.Fatalf("FromContext text = %q, want %q", got, want)
 	}
 
 	e.Resolve(ctx)

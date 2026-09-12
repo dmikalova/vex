@@ -407,23 +407,22 @@ func (ReorderRest) apply(ctx *EffectContext, tr *topRead) {
 	ctx.Resolver.SetDeckTop(tr.player, order)
 }
 
-// ShuffleRest shuffles the read player's deck, mixing in the cards no earlier step
-// took. It is terminal, so it must be the last step.
-type ShuffleRest struct{}
+// ShuffleDeck also serves as a routing terminal (the type is the "shuffle your
+// deck" effect in effect_shuffle.go): as a terminal it shuffles the whole read
+// deck, since the cards revealed this way are still in that deck. It must be the
+// last step.
 
 // clause renders the step.
-func (ShuffleRest) clause() string {
-	return "shuffle the other revealed cards into that deck"
-}
+func (ShuffleDeck) clause() string { return "shuffle that deck" }
 
 // validate always passes: a shuffle carries no count.
-func (ShuffleRest) validate() error { return nil }
+func (ShuffleDeck) validate() error { return nil }
 
 // terminal reports true: it consumes whatever earlier steps left.
-func (ShuffleRest) terminal() bool { return true }
+func (ShuffleDeck) terminal() bool { return true }
 
-// apply shuffles that player's deck and logs it.
-func (ShuffleRest) apply(ctx *EffectContext, tr *topRead) {
+// apply shuffles the read player's deck — the revealed cards among them — and logs it.
+func (ShuffleDeck) apply(ctx *EffectContext, tr *topRead) {
 	ctx.Resolver.Shuffle(tr.player)
 	ctx.Resolver.Record(DeckShuffled{Player: tr.player})
 }

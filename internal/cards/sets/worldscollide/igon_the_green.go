@@ -37,7 +37,7 @@ var IgonTheGreen = card.New(
 		card.Trigger.Destroyed, card.Sequence{Effects: []card.Effect{
 			card.PurgeCreature{Target: card.Target.This},
 			card.PutFromDiscard{
-				Name:        IgonTheTerrible.Name,
+				Match:       card.Match{Name: IgonTheTerrible.Name},
 				Destination: card.To.Hand,
 			},
 		}}),

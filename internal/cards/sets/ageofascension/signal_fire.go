@@ -24,6 +24,6 @@ var SignalFire = card.New(
 	card.WithAbility(
 		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
 			card.Destroy{Target: card.Target.This},
-			card.GrantFight{House: card.House.Self},
+			card.MayPlayOrUse{Houses: card.Houses.Named(card.House.Self), Grant: card.GrantFight},
 		}}),
 )

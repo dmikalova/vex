@@ -87,6 +87,28 @@ func TestSequenceCombinesSameVerb(t *testing.T) {
 	}
 }
 
+// A single exalt folds with a neighbour on the same target, but "exalt N times"
+// keeps its own shape (foldable opt-out) and stands as its own clause.
+func TestSequenceExaltFoldsOnlyWhenSingle(t *testing.T) {
+	target := Target{Kind: TargetEachCreature}
+	single := Sequence{Effects: []Effect{
+		Ready{Target: target},
+		Exalt{Target: target, Amount: 1},
+	}}
+	if got, want := single.Text(), "ready and exalt each creature"; got != want {
+		t.Errorf("single exalt text = %q, want %q", got, want)
+	}
+
+	repeated := Sequence{Effects: []Effect{
+		Ready{Target: target},
+		Exalt{Target: target, Amount: 2},
+	}}
+	want := "ready each creature, and exalt each creature 2 times"
+	if got := repeated.Text(); got != want {
+		t.Errorf("repeated exalt text = %q, want %q", got, want)
+	}
+}
+
 // A sequence that leads with a single clickable choice is declinable, so a May or
 // MayRepeat wrapping it is driven by that click.
 func TestSequenceDeclinable(t *testing.T) {

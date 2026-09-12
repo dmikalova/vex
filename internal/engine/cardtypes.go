@@ -1,0 +1,59 @@
+package engine
+
+import "strings"
+
+// CardTypes is a set of card types a grant reaches — the Types axis of MayPlayOrUse.
+// The zero value is the empty set, which every reader treats as "all card types":
+// a grant names types only to narrow itself (Scientifical Hack to artifacts, Com.
+// Officer Kirby to everything but creatures). It is flat, comparable state (a
+// bitset), so it lives in the snapshotable GameState (ADR 0005).
+type CardTypes uint8
+
+// CardTypesOf builds a set from the given card types.
+func CardTypesOf(types ...CardType) CardTypes {
+	var s CardTypes
+	for _, t := range types {
+		s |= 1 << t
+	}
+	return s
+}
+
+// all reports that the set names no type, so it admits every card type.
+func (s CardTypes) all() bool { return s == 0 }
+
+// has reports whether the set admits a card of the given type; the empty set
+// admits every type.
+func (s CardTypes) has(t CardType) bool {
+	return s.all() || s&(1<<t) != 0
+}
+
+// list renders the admitted types as a printed noun phrase in rulebook order,
+// e.g. "artifact, upgrade, or Tactic" or "artifact". The empty set renders "card".
+func (s CardTypes) list() string {
+	if s.all() {
+		return "card"
+	}
+	var words []string
+	for _, t := range []CardType{Creature, Artifact, Upgrade, Tactic} {
+		if s.has(t) {
+			words = append(words, typeWord(t))
+		}
+	}
+	switch len(words) {
+	case 1:
+		return words[0]
+	case 2:
+		return words[0] + " or " + words[1]
+	default:
+		return strings.Join(words[:len(words)-1], ", ") + ", or " + words[len(words)-1]
+	}
+}
+
+// typeWord is a card type's printed word in a grant clause: lowercased, except the
+// renamed Tactic type, which stays capitalized (card-wording rule 19).
+func typeWord(t CardType) string {
+	if t == Tactic {
+		return "Tactic"
+	}
+	return strings.ToLower(t.String())
+}

@@ -133,8 +133,9 @@ together, so no creature's destruction changes another's.`,
 the top one in context (ctx.It) so a following effect can inspect or play it (Chaos
 Portal plays it when it is of the chosen house). Set ChooseWhoseDeck to have the
 controller pick whose deck. Ordered routing steps then send chosen cards to a
-destination — hand, archives, discard pile, or purge — and a final step reorders or
-shuffles whatever the earlier steps left. It reveals as many as remain when the deck
+destination — hand, archives, discard pile, or purge — and a final step either
+reorders whatever the earlier steps left, or shuffles that deck (the revealed cards
+are still in it). It reveals as many as remain when the deck
 holds fewer than Amount, and does nothing on an empty deck.`,
 		},
 		{

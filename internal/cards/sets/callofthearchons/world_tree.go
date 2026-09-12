@@ -19,7 +19,7 @@ var WorldTree = card.New(
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
 		card.Trigger.Action, card.PutFromDiscard{
-			Type:        card.Type.Creature,
+			Match:       card.Match{Type: card.Type.Creature},
 			Destination: card.To.TopOfDeck,
 		}),
 )

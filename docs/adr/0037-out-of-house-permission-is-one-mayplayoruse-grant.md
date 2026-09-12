@@ -46,7 +46,7 @@ axes**, backed by one resolver-method family and one log record.
 type MayPlayOrUse struct {
     Houses HouseSelector // named / chosen / any / all-but-a-named / houses-you-control
     Grant  HouseGrant    // GrantPlay | GrantFight | GrantUse (a bitset)
-    Types  CardTypes     // zero value = all card types; narrow to creatures or artifacts
+    Types  CardTypes    // zero value = all card types; narrow to creatures or artifacts
     Count  int           // 0 = unlimited; N bounds how many cards the grant frees
 }
 ```
@@ -65,7 +65,12 @@ type MayPlayOrUse struct {
   types** — the common case ("a Mars card", "a non-Star-Alliance card") frees
   everything, so a card must _opt in_ to a narrower subject (creatures only, or
   artifacts only). This axis absorbs `MayUseFriendlyArtifacts` (any house +
-  `GrantUse` + artifacts) and `MayPlayOffHouse`'s `NotType`.
+  `GrantUse` + artifacts) and `MayPlayOffHouse`'s `NotType`. It is a new bitset type
+  **`CardTypes`** (a set of allowed types); the helper that lists every real type,
+  formerly `CardTypes()`, was renamed to the unexported `allCardTypes()` to free the
+  name. `OffHousePermit.NotType` (a single excluded `CardType`) became
+  `OffHousePermit.Types CardTypes` to store it, so the permit frees a card only when
+  its type is admitted rather than not-excluded.
 - **`Count`** bounds how many cards the grant frees; **zero means unlimited**, the
   common case. Only the Star Alliance cycle sets it.
 

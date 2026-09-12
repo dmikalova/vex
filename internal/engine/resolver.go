@@ -295,9 +295,11 @@ type CreatureResolver interface {
 	// stacks LIFO, so a later take takes precedence and removing it falls back to
 	// the one beneath.
 	TakeControl(id LocalID, controller int, source LocalID)
-	// SwapBattlelinePositions exchanges two creatures' positions in the same
-	// battleline without moving any state between the creatures.
-	SwapBattlelinePositions(a, b LocalID)
+	// SwapCards exchanges two cards' places: two creatures in the same battleline
+	// trade slots, or an in-play creature and one resting in a discard pile trade
+	// zones (the resting card enters play in the creature's slot, the creature
+	// leaves to that pile).
+	SwapCards(a, b LocalID)
 	// MoveToFlank moves one creature to a flank of its own controller's battleline:
 	// the right flank when right is true, otherwise the left.
 	MoveToFlank(id LocalID, right bool)
@@ -604,25 +606,19 @@ type TurnResolver interface {
 	// in the active player's end-of-turn phase (Ragnarok). source is the card that
 	// armed it, recorded for attribution.
 	ScheduleDestroyEachCreatureAtEndOfTurn(source LocalID)
-	// GrantFightForHouse lets a player use creatures of the given house to fight
-	// this turn even out of the active house.
-	GrantFightForHouse(player int, house House)
-	// GrantFightAnyHouse lets every creature a player controls fight this turn,
-	// whatever its house (Follow the Leader).
-	GrantFightAnyHouse(player int)
-	// GrantUseForHouse lets a player fully use (fight, reap, or Action:) creatures of
-	// the given house this turn even out of the active house.
-	GrantUseForHouse(player int, house House)
-	// GrantPlayForHouse lets a player play cards of the given house from hand this
-	// turn even out of the active house (the Ambassador cycle).
-	GrantPlayForHouse(player int, house House)
-	// GrantUseArtifactsAnyHouse lets a player use any friendly artifact this turn as
-	// if it belonged to the active house (Scientifical Hack).
-	GrantUseArtifactsAnyHouse(player int)
-	// GrantOffHousePermit records a this-turn grant letting a player play or use a
-	// bounded number of cards outside their active house (Com. Officer Kirby, CXO
-	// Taber, United Action).
-	GrantOffHousePermit(player int, p OffHousePermit)
+	// GrantMayPlayOrUse records a this-turn grant letting a player act with cards
+	// outside their active house: houses selects whose cards it frees (a named or
+	// chosen house, any house, every house but one, or every house you control),
+	// grant the verbs (play, use, or fight), types narrows the card types (zero frees
+	// all), and count bounds how many cards (zero is unlimited). It folds the whole
+	// out-of-house permission family (ADR 0037).
+	GrantMayPlayOrUse(
+		player int,
+		houses HouseSelector,
+		grant HouseGrant,
+		types CardTypes,
+		count int,
+	)
 	// AddLasting registers a "for the remainder of the turn" effect (Full Moon,
 	// Charge!, Crystal Hive reactions; Dimension Door's replacement) on a game event,
 	// instead of the effect hardcoding itself into the play or reap path. The record's

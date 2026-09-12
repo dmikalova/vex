@@ -48,26 +48,6 @@ that fuse several effects for a single card should collapse into small
 parameterized systems, and the Resolver/log families they spawned should collapse
 with them. Grouped by mechanic so the shared primitive lands once.
 
-### House-permission system pass — implement ADR 0037 (`MayPlayOrUse`)
-
-The out-of-house permission grants are spread across five effect nodes —
-`GrantFight` (house-filtered), `GrantFightAnyHouse`, `MayActFriendlyHouse` + its
-`HouseGrant` bitset, `MayPlayOffHouse` (exclusion/count/type), and
-`MayUseFriendlyArtifacts` — each with its own Resolver method (`GrantFightForHouse`,
-`GrantFightAnyHouse`, `GrantUseForHouse`, `GrantPlayForHouse`,
-`GrantUseArtifactsAnyHouse`, `GrantOffHousePermit`) and log record
-(`FightGrantedForHouse` …). H1/H5 turned out only **partially** generalized, so
-folding the Resolver methods and logs (H2/H3/H6) on their own would be churn.
-ADR 0037 decides the target shape: one `MayPlayOrUse{Houses, Grant, Types, Count}`
-node — `Houses` = named / chosen / any / all-but-a-named / houses-you-control;
-`Grant` = a GrantPlay|GrantFight|GrantUse bitset; `Types` = a card-type filter whose
-**zero value means all types** (opt in to creatures/artifacts); `Count` = 0 for
-unlimited. One `GrantMayPlayOrUse` resolver seam, one `MayPlayOrUseGranted` log.
-Implement it: fold **all five** nodes (the exclusion/count of `MayPlayOffHouse` and
-the artifact subject of `MayUseFriendlyArtifacts` are now the `Houses`/`Count`/`Types`
-axes, not siblings), add `GrantFight` to the bitset, collapse the resolver/log/state
-families. Keep engine coverage at 100%.
-
 ### Spend-N-cards scaling — producer→consumer count (folds old H8, H16, H17)
 
 De-fuse "spend N cards, then a benefit scaled by N" into one shared mechanic: a
@@ -151,36 +131,7 @@ Then}` that composes existing zone-routing sub-effects (hand / archive / discard
 
 ## Card wording / authoring
 
-- **Typed card-name references — convert remaining literals + add a guard.**
-  Decision taken (option a): cards reference another card by `OtherCard.Name`, or by
-  a `const XName` the lead card declares when a plain `.Name` would form a package
-  var-init cycle (the Hyde/Velum and Igon Green/Terrible pattern — the follower
-  reads the lead's const). **Done:** Help from Future Self → `Timetraveller.Name`;
-  Igon the Terrible → `IgonTheGreenName` const; the two self-references (Disruption
-  Field, Uncharted Lands) now use `card.Target.GrantingCard`, which resolves to the
-  granting card and renders the `{card}` placeholder (its own name) — no literal.
-  **Remaining:** add a source-scanning test that fails on a string literal in any
-  card-name field (`SearchForName.Name`, `ControlsNamed.Name`, `NamedCardPurged.Name`,
-  `ItIsNamed.Name`, `ReturnNamedToHand.Name`, `PutFromDiscard.Name`,
-  `AttachSelfTo.Host`, `.Named(...)`), allow-listing `card.New`'s own-name literal,
-  the `const XName` declarations, and `Cluster.Name`.
-- **Generic zone-move `Match` predicate — do now.** Replace the `Type` / `Trait` /
-  `OrTrait` triple on `PutFromDiscard` (and its zone-movement siblings) with one
-  composable `Match` predicate expressing a union of type/trait clauses (e.g.
-  `Upgrade` OR trait `Robot`), so there is one place to test "any match in the
-  discard". The Chief Engineer Walls empty-`May` bug is already fixed via
-  `vacuous()`; this is the consolidation refactor on top, keeping the shared
-  `matches` / `vacuous` helper.
-
-- **Orator Hissaro** could read: "Play: Exalt and ready each neighboring creature.
-  For the remainder of the turn, those creatures belong to house Saurian."
-  Blocked on two engine additions: making `Exalt` a `combinable` (so `Ready`+`Exalt`
-  fold to "ready and exalt each neighboring creature" — but the fold must keep
-  "exalt N times" for `Amount > 1`), and a pronoun form of `BelongToHouse` so the
-  second sentence reads "those creatures belong to …" instead of repeating the
-  target. Today it renders correctly but verbosely (target repeated three times).
-- **Borr-Nit** and similar could be atomized and recomposed further (decompose
-  fused effects into shared nodes).
+_No outstanding items._
 
 ## Card catalog / provenance
 
@@ -203,12 +154,46 @@ _No outstanding items._
 
 ## Logging
 
-- **Effect-use logs should narrate the outcome, not just "uses X's action
-  ability" (ADR 0011).** `ActionAbilityUsed` prints the generic "P0 uses X's action
-  ability" with no detail of what happened. `ShuffleIntoDeck` now records a
-  `ShuffledIntoDeck` outcome (naming the public discard cards, counting the hidden
-  hand/archives cards). Remaining: sweep the other effects that still lean on the
-  bare `ActionAbilityUsed` line for their narration.
+- Every card-ability outcome is subjected to its source card, not the player
+  (ADR 0011). Decided sweep (grill answered): a **bubble header** names what the
+  player concretely did — plays / uses / discards a card (`HasSource` false, player
+  subject). **Every line nested inside a card ability** reads "Card does X"
+  (`Batdrone deals 2 damage to Troll`; a resource outcome names the card acting on
+  the pool, `Harmonia has Player 1 gain 2 Æmber`), never "Player 1 does X". The
+  subject is derived from the record's `Frame.Source` — which the frame
+  already carries — so per-entry `Source`/`HasSource` fields on outcome entries are
+  redundant with the frame and are dropped as each family converts. A player cannot
+  produce a resource outcome alone, so a lasting/constant ability's payout is also
+  attributed to its card: the lasting registry carries a `Source`/`HasSource`, and
+  `resolveReaction` opens a frame for it, so its outcomes read "Full Moon has Player
+  1 gain 2 Æmber after playing a creature". Only turn/rules events with no card
+  behind them (a player's own play, forging) stay player-subject.
+  - Mechanism: `framedNamer` wraps the base `Namer` with the record's `Frame`;
+    `framedSource(n)` names the frame's source card when `HasSource`. Pool-change
+    outcomes (gain/lose) always name **both** the source card and the affected
+    player when framed ("Card has Player X gain/lose N Æmber"), because a player
+    cannot move their own pool without a card behind it; `subject(n, player)` names
+    the card as the direct subject for steal/move outcomes. `Record.Text` and a new
+    `RenderRecord` (frame-aware `RenderEntry`) thread the frame; the render spy
+    carries the frame so a rendered outcome subjects itself to the source card too;
+    web `logSegments` renders from the `Record`, not the bare `Entry`.
+  - Guard (Q4): a property-game test asserting that **every record with
+    `Frame.HasSource` renders with its source card as the first named segment** —
+    never a player subject — so an unconverted or regressed outcome fails the build.
+  - `snapshotVersion` (web/game.go) bump: the persisted log stores the rendered
+    `Text` and `Frame`, so the format is unchanged and old snapshots restore, but the
+    wording of newly-logged card-ability lines changed. Bump **once** at the end of
+    the whole sweep so a resumed old game does not mix old- and new-worded lines.
+  - Sweep order (Q5): one verb family at a time, each landing green. **Æmber family
+    DONE** (gain/lose always name card + player when framed; steal names the card;
+    per-entry `Source`/`HasSource` dropped from `AemberGained`/`AemberStolen` and
+    their construction sites in effect_aember.go / effect_purge_trait.go /
+    effect_steal.go; lasting reactions carry a `Source` and frame their payout via
+    `resolveReaction`; framed Text + render tests added). Remaining: play/use/discard
+    headers (verify they stay player-subject), then damage, destroy/leave-play, zones
+    (draw / discard / archive / deck), creatures (ready / exhaust / stun / heal /
+    capture / exalt), keywords/counters, control/upgrades, combat. The guard lands
+    last, once every family is card-subjected.
 
 ## Tooling / tests / docs
 

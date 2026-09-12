@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"strings"
 )
 
 // PutFromDiscard moves a card the controller chooses from their own discard pile
@@ -12,18 +11,10 @@ import (
 // of a house). This is how cards recur from the discard pile, e.g. "Put a creature
 // from your discard pile on top of your deck." The destination is required.
 type PutFromDiscard struct {
-	// Type restricts the choice to cards of that type; the zero value (an unset
-	// CardType) allows any card.
-	Type CardType
-	// Trait restricts the choice to cards with that trait; the zero value allows any.
-	Trait Trait
-	// OrTrait widens the choice to also admit cards carrying that trait, disjoined
-	// with Type: a card matches when its type is Type OR it has OrTrait (Chief
-	// Engineer Walls returns an upgrade or Robot card). The zero value adds nothing.
-	OrTrait Trait
-	// Name restricts the choice to cards with that exact name; the zero value allows
-	// any (Ortannu the Chained returns each copy of Ortannu's Binding).
-	Name string
+	// Match restricts the choice to cards the predicate admits; the zero value
+	// admits any card. Chief Engineer Walls returns an upgrade or Robot card,
+	// Ortannu the Chained returns each copy of Ortannu's Binding by name.
+	Match Match
 	// Destination is where the card goes: ToHand or ToTopOfDeck.
 	Destination Destination
 	// All moves every matching card instead of one chosen card (Arise! returning
@@ -34,24 +25,9 @@ type PutFromDiscard struct {
 	OfChosenHouse bool
 }
 
-// noun renders the kind of card the effect moves — the card's own name when Name
-// is set (e.g. "Ortannu's Binding"), the lowercased card type when Type is set
-// (e.g. "creature"), otherwise the generic "card".
+// noun renders the kind of card the effect moves, delegating to the match.
 func (e PutFromDiscard) noun() string {
-	if e.Name != "" {
-		return e.Name
-	}
-	base := "card"
-	if e.Type != TypeUnset {
-		base = strings.ToLower(e.Type.String())
-	}
-	if e.OrTrait != traitUnset {
-		return base + " or " + e.OrTrait.String() + " card"
-	}
-	if e.Trait != traitUnset {
-		base = e.Trait.String() + " " + base
-	}
-	return base
+	return e.Match.noun()
 }
 
 // destPhrase renders where the card goes, e.g. "into your hand".
@@ -95,22 +71,10 @@ func (e PutFromDiscard) moveTo(ctx *EffectContext, id LocalID) {
 	ctx.Produced.Returned++
 }
 
-// admits reports whether a discard-pile card passes the Type / Trait / Name
-// filters (the OfChosenHouse filter is applied separately, only with All).
+// admits reports whether a discard-pile card passes the Match filter (the
+// OfChosenHouse filter is applied separately, only with All).
 func (e PutFromDiscard) admits(ctx *EffectContext, id LocalID) bool {
-	if e.OrTrait != traitUnset {
-		if ctx.Resolver.TypeOf(id) != e.Type && !ctx.Resolver.HasTrait(id, e.OrTrait) {
-			return false
-		}
-		return e.Name == "" || ctx.Resolver.Name(id) == e.Name
-	}
-	if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
-		return false
-	}
-	if e.Trait != traitUnset && !ctx.Resolver.HasTrait(id, e.Trait) {
-		return false
-	}
-	return e.Name == "" || ctx.Resolver.Name(id) == e.Name
+	return e.Match.admits(ctx.Resolver, id)
 }
 
 // matches reports whether a discard-pile card is a candidate this effect could

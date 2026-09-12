@@ -19,7 +19,7 @@ var Regrowth = card.New(
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.PutFromDiscard{
-			Type:        card.Type.Creature,
+			Match:       card.Match{Type: card.Type.Creature},
 			Destination: card.To.Hand,
 		}),
 )

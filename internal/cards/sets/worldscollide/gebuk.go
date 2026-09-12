@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Beast
 //
-//	Destroyed: Discard the top card of your deck. If it is a creature, after Gebuk leaves play, put that creature into play in Gebuk's position in the battleline.
+//	Destroyed: Discard the top card of your deck. If it is a creature, swap it with Gebuk.
 var Gebuk = card.New(
 	"Gebuk",
 	card.House.Untamed,
@@ -20,6 +20,15 @@ var Gebuk = card.New(
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Beast),
 	card.WithAbility(
-		card.Trigger.Destroyed, card.ReanimateTopOfDeckInPlace{},
+		card.Trigger.Destroyed, card.Sentences{Effects: []card.Effect{
+			card.DiscardTopOfDeck{Player: card.Controller},
+			card.Conditional{
+				Cond: card.ItIs{Type: card.Type.Creature},
+				Then: card.Swap{
+					With:        card.Target.TheOtherCreature,
+					FromContext: true,
+				},
+			},
+		}},
 	),
 )

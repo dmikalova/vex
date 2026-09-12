@@ -56,6 +56,8 @@ func (e ForRemainderOfTurn) Resolve(ctx *EffectContext) {
 		Amount:     int8(amount),
 		Except:     ctx.Source,
 		HasExcept:  e.On == EventCardPlayed,
+		Source:     ctx.Source,
+		HasSource:  true,
 	})
 }
 
@@ -176,6 +178,8 @@ func (e GainAbility) Resolve(ctx *EffectContext) {
 			Amount:     int8(amount),
 			Subject:    id,
 			HasSubject: true,
+			Source:     ctx.Source,
+			HasSource:  true,
 		})
 	}
 }
@@ -381,6 +385,8 @@ func (e NextPlayed) Resolve(ctx *EffectContext) {
 		House:      e.Of,
 		Type:       e.Type,
 		Once:       true,
+		Source:     ctx.Source,
+		HasSource:  true,
 	})
 }
 

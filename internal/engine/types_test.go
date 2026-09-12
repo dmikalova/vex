@@ -72,24 +72,24 @@ func TestCardTypeReacts(t *testing.T) {
 	}
 }
 
-// TestCardTypes pins the real-type enumeration: CardTypes lists exactly the four
-// types a card can be, each renders its printed word, and neither the TypeUnset
-// nor AnyType sentinel leaks in.
-func TestCardTypes(t *testing.T) {
-	all := CardTypes()
+// TestAllCardTypes pins the real-type enumeration: allCardTypes lists exactly the
+// four types a card can be, each renders its printed word, and neither the
+// TypeUnset nor AnyType sentinel leaks in.
+func TestAllCardTypes(t *testing.T) {
+	all := allCardTypes()
 	want := []CardType{Creature, Tactic, Artifact, Upgrade}
 	if len(all) != len(want) {
-		t.Fatalf("CardTypes() has %d entries, want %d", len(all), len(want))
+		t.Fatalf("allCardTypes() has %d entries, want %d", len(all), len(want))
 	}
 	for i, ct := range all {
 		if ct != want[i] {
-			t.Errorf("CardTypes()[%d] = %v, want %v", i, ct, want[i])
+			t.Errorf("allCardTypes()[%d] = %v, want %v", i, ct, want[i])
 		}
 		if ct.String() == "" {
 			t.Errorf("card type %d renders empty", ct)
 		}
 		if ct == TypeUnset || ct == AnyType {
-			t.Errorf("CardTypes() leaked the sentinel %v", ct)
+			t.Errorf("allCardTypes() leaked the sentinel %v", ct)
 		}
 	}
 }

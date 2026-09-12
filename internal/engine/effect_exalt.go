@@ -31,6 +31,14 @@ func (e Exalt) Text() string {
 	return fmt.Sprintf("exalt %s %d times", e.Target.Text(), e.Amount)
 }
 
+// verb and targetText let a single exalt fold with a neighbouring combinable on
+// the same target in a Sequence — "ready and exalt each neighboring creature".
+func (e Exalt) verb() string       { return "exalt" }
+func (e Exalt) targetText() string { return e.Target.Text() }
+
+// foldable folds only a single exalt; "exalt X 2 times" keeps its own shape.
+func (e Exalt) foldable() bool { return e.Amount == 1 }
+
 // Resolve chooses a creature (through the Target) and places Amount Æmber on it.
 func (e Exalt) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 

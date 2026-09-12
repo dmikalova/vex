@@ -132,11 +132,11 @@ var cardTypeNames = map[CardType]string{
 // String renders the type as its printed word.
 func (t CardType) String() string { return cardTypeNames[t] }
 
-// CardTypes lists every real card type in rulebook order. It excludes the
+// allCardTypes lists every real card type in rulebook order. It excludes the
 // TypeUnset and AnyType sentinels (which are not types a card can be), so
 // anything that must cover all card types — the rulebook completeness check —
 // ranges over this and cannot silently miss one.
-func CardTypes() []CardType {
+func allCardTypes() []CardType {
 	return []CardType{Creature, Tactic, Artifact, Upgrade}
 }
 

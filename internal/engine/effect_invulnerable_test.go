@@ -40,23 +40,17 @@ func TestInvulnerableKeyword(t *testing.T) {
 }
 
 // TestArchiveGrantingUpgrade covers Ghostform archiving itself: the effect
-// validates its name, renders it, and sends the granting upgrade off its host to
+// renders the {card} placeholder and sends the granting upgrade off its host to
 // the owner's archives while the host stays in play.
 func TestArchiveGrantingUpgrade(t *testing.T) {
-	if got := (ArchiveGrantingUpgrade{Name: "Ghostform"}).Text(); got != "archive Ghostform" {
+	if got := (ArchiveGrantingUpgrade{}).Text(); got != "archive "+CardName {
 		t.Errorf("text = %q", got)
-	}
-	if err := (ArchiveGrantingUpgrade{}).validate(); err == nil {
-		t.Error("ArchiveGrantingUpgrade without a name should not validate")
-	}
-	if err := (ArchiveGrantingUpgrade{Name: "Ghostform"}).validate(); err != nil {
-		t.Errorf("valid ArchiveGrantingUpgrade should validate, got %v", err)
 	}
 
 	g := NewGame("A", "B", 1)
 	host := g.AddToBattleline(testCreature("host", 3), 0)
 	up := attachUpgrade(g, host, NewCard("Ghostform", Brobnar, Upgrade, Rare, WithAemberBonus(1)))
-	ArchiveGrantingUpgrade{Name: "Ghostform"}.Resolve(
+	ArchiveGrantingUpgrade{}.Resolve(
 		&EffectContext{Resolver: g, Source: host, Controller: 0, Upgrade: up},
 	)
 	if !containsID(g.Archives(0), up) {

@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Reveal the top 5 cards of a player's deck. Purge a card revealed this way. Shuffle the other revealed cards into that deck.
+//	Play: Reveal the top 5 cards of a player's deck. Purge a card revealed this way. Shuffle that deck.
 func TestBorrNitsTouch(t *testing.T) {
 	var touch, victim, keep ct.Card
 	h := ct.Play(t, ct.Setup{

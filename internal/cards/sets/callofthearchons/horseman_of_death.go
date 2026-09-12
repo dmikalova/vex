@@ -22,8 +22,7 @@ var HorsemanOfDeath = card.New(
 	card.WithTraits(card.Traits.Horseman, card.Traits.Spirit),
 	card.WithAbility(
 		card.Trigger.Play, card.PutFromDiscard{
-			Type:        card.Type.Creature,
-			Trait:       card.Traits.Horseman,
+			Match:       card.Match{Type: card.Type.Creature, Trait: card.Traits.Horseman},
 			All:         true,
 			Destination: card.To.Hand,
 		}),

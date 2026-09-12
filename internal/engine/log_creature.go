@@ -232,6 +232,21 @@ func (e PositionsSwapped) Text(n Namer) string {
 	return fmt.Sprintf("%s swaps positions with %s", n.Name(e.A), n.Name(e.B))
 }
 
+// CardsSwapped narrates a card entering play in another card's place while that
+// card leaves to the zone the entering card came from — a swap across zones
+// (Gebuk). A names the card that stayed on the board; B the card that entered it.
+type CardsSwapped struct {
+	A, B       LocalID
+	FromPlayer int
+	FromZone   Zone
+}
+
+// Text renders the swap, naming the zone the entering card came from.
+func (e CardsSwapped) Text(n Namer) string {
+	return fmt.Sprintf("%s swaps places with %s from %s's %s",
+		n.Name(e.A), n.Name(e.B), n.PlayerName(e.FromPlayer), e.FromZone.noun())
+}
+
 // MovedToFlank narrates a creature moving to a flank of its battleline.
 type MovedToFlank struct {
 	Creature LocalID

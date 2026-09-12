@@ -93,7 +93,21 @@ you, steal 1 Æmber. Repeat this effect`. Vactrol uniformly writes a self-repeat
   Neutron Shark use), so the steal leads and the condition gates the repeat. The
   first steal is therefore unconditional: with equal pools KeyForge steals nothing
   while Vactrol steals 1, then stops. In every case where the opponent already
-  leads the two are identical.
+  leads the two are identical.- **Gebuk** swaps the discarded creature into play immediately rather than waiting
+  until it has left play. KeyForge reads "Destroyed: ... **after Gebuk leaves
+  play**, put that creature into play in Gebuk's position"; Vactrol reads
+  "Destroyed: Discard the top card of your deck. If it is a creature, swap it with
+  Gebuk." The discarded creature and Gebuk exchange places in one step during
+  Gebuk's Destroyed ability — Gebuk leaves to the discard pile (still counting as
+  destroyed, since the destruction window already enrolled it) and the creature
+  enters play in Gebuk's slot. This drops the deferred "after ... leaves play"
+  ability memory in favor of an immediate, self-contained swap, and reuses the
+  shared swap mechanic (SwapCards) instead of a bespoke delayed put-into-play
+  registry. Because the swap resolves mid-window, a second Destroyed ability on
+  Gebuk would fizzle (Gebuk is already out of play), and the swapped-in creature
+  is on the board in time to be caught by the same destruction window (an
+  enters-play "deal damage" can destroy it, and its own Destroyed ability then
+  resolves in that window).
 
 ## Mechanic rule changes
 

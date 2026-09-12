@@ -21,13 +21,21 @@ type combinable interface {
 	targetText() string
 }
 
+// foldable optionally refines combinable: a combinable that only folds under some
+// condition reports it here (Exalt folds a single exalt but keeps "exalt X 2
+// times" standing alone). A combinable that does not implement foldable always
+// folds.
+type foldable interface {
+	foldable() bool
+}
+
 // Text joins the child effect texts, folding each run of combinables that shares
 // a verb or a target into a single "verb and verb ... target" or "verb target and
 // target ..." phrase.
 func (e Sequence) Text() string {
 	parts := make([]string, 0, len(e.Effects))
 	for i := 0; i < len(e.Effects); {
-		c, ok := e.Effects[i].(combinable)
+		c, ok := peekCombinable(e.Effects, i)
 		if !ok {
 			parts = append(parts, e.Effects[i].Text())
 			i++
@@ -106,7 +114,13 @@ func peekCombinable(effects []Effect, i int) (combinable, bool) {
 		return nil, false
 	}
 	c, ok := effects[i].(combinable)
-	return c, ok
+	if !ok {
+		return nil, false
+	}
+	if f, isFoldable := c.(foldable); isFoldable && !f.foldable() {
+		return nil, false
+	}
+	return c, true
 }
 
 // Resolve resolves each child effect in order.

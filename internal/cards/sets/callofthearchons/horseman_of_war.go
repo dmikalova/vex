@@ -20,5 +20,8 @@ var HorsemanOfWar = card.New(
 	card.InCluster(horsemenCluster),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Horseman, card.Traits.Spirit),
-	card.WithAbility(card.Trigger.Play, card.GrantFightAnyHouse{}),
+	card.WithAbility(
+		card.Trigger.Play,
+		card.MayPlayOrUse{Houses: card.Houses.Any, Grant: card.GrantFight},
+	),
 )

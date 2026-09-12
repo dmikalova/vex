@@ -330,10 +330,6 @@ func (g *Game) destroyTogether(controller int, ids []LocalID) {
 	g.destroyingWindow = nil
 	g.destroyPending = nil
 	g.afterDestroyedWindow(members)
-	// A creature's Destroyed ability may have armed a discarded creature to enter
-	// play in its former slot (Gebuk); with the batch now in the discard pile, its
-	// source has left play, so the delayed put-into-play fires.
-	g.fireReanimations()
 }
 
 // enrollDestroyed adds a batch of creatures to the open Destroyed window: it

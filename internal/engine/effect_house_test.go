@@ -51,6 +51,32 @@ func TestBelongToHouseEndOfTurn(t *testing.T) {
 	}
 }
 
+// A plural pronoun subject reads "those creatures belong" (agreeing verb), while
+// a singular one keeps "that creature belongs".
+func TestBelongToHousePronoun(t *testing.T) {
+	plural := BelongToHouse{
+		Target:   Target{Kind: TargetEachCreature}.Neighboring(),
+		House:    Saurian,
+		Duration: RemainderOfPlayerTurn,
+		Pronoun:  true,
+	}
+	if got, want := plural.Text(),
+		"for the remainder of the turn, those creatures belong to house Saurian"; got != want {
+		t.Errorf("plural pronoun text = %q, want %q", got, want)
+	}
+
+	singular := BelongToHouse{
+		Target:   Target{Kind: TargetChosenFriendlyCreature},
+		House:    Saurian,
+		Duration: RemainderOfPlayerTurn,
+		Pronoun:  true,
+	}
+	if got, want := singular.Text(),
+		"for the remainder of the turn, that creature belongs to house Saurian"; got != want {
+		t.Errorf("singular pronoun text = %q, want %q", got, want)
+	}
+}
+
 func TestBelongToHouseUntilLeavesPlay(t *testing.T) {
 	g := started(t)
 	host := g.AddToBattleline(NewCard("Host", Brobnar, Creature, Common, WithPower(3)), 0)

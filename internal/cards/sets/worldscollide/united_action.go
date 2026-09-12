@@ -19,9 +19,9 @@ var UnitedAction = card.New(
 	card.WithKeywords(card.Keyword.Alpha),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
-			card.MayPlayOffHouse{
-				Controlled: true,
-				Grant:      card.GrantPlay,
+			card.MayPlayOrUse{
+				Houses: card.Houses.Controlled,
+				Grant:  card.GrantPlay,
 			},
 			card.CannotUse{
 				Player:   card.Controller,

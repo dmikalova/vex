@@ -24,6 +24,10 @@ var ScientificalHack = card.New(
 	card.WithAbility(
 		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
 			card.Destroy{Target: card.Target.This},
-			card.MayUseFriendlyArtifacts{},
+			card.MayPlayOrUse{
+				Houses: card.Houses.Any,
+				Grant:  card.GrantUse,
+				Types:  card.Types.Artifacts,
+			},
 		}}),
 )

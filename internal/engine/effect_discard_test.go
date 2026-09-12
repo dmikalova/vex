@@ -56,8 +56,7 @@ func TestPutFromDiscardByTrait(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	e := PutFromDiscard{
-		Type:        Creature,
-		Trait:       Horseman,
+		Match:       Match{Type: Creature, Trait: Horseman},
 		All:         true,
 		Destination: ToHand,
 	}
@@ -103,7 +102,7 @@ func TestPutFromDiscardByTraitChoose(t *testing.T) {
 
 	// Not All: the non-Horseman card is filtered out of the candidates, leaving
 	// only the Horseman for the controller to choose.
-	e := PutFromDiscard{Type: Creature, Trait: Horseman, Destination: ToHand}
+	e := PutFromDiscard{Match: Match{Type: Creature, Trait: Horseman}, Destination: ToHand}
 	e.Resolve(ctx)
 	if !g.State.Hand[0].contains(horseman) {
 		t.Error("the Horseman creature should return to hand")
@@ -128,7 +127,7 @@ func TestMoveFromDiscardAll(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Controller: 0, ChosenHouse: Dis}
 
 	e := PutFromDiscard{
-		Type:          Creature,
+		Match:         Match{Type: Creature},
 		Destination:   ToHand,
 		All:           true,
 		OfChosenHouse: true,
@@ -163,7 +162,7 @@ func TestPutFromDiscardByName(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	e := PutFromDiscard{
-		Name:        "Ortannu's Binding",
+		Match:       Match{Name: "Ortannu's Binding"},
 		All:         true,
 		Destination: ToHand,
 	}
@@ -194,7 +193,7 @@ func TestPutFromDiscardByNameChoose(t *testing.T) {
 
 	// Not All: the differently named card is filtered out of the candidates,
 	// leaving only the Binding for the controller to choose.
-	e := PutFromDiscard{Name: "Ortannu's Binding", Destination: ToHand}
+	e := PutFromDiscard{Match: Match{Name: "Ortannu's Binding"}, Destination: ToHand}
 	e.Resolve(ctx)
 	if !g.State.Hand[0].contains(bind) {
 		t.Error("the named card should return to hand")
@@ -215,7 +214,7 @@ func TestReturnCreatureFromDiscardToDeck(t *testing.T) {
 	g.State.Discard[0].add(crea)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := PutFromDiscard{Type: Creature, Destination: ToTopOfDeck}
+	e := PutFromDiscard{Match: Match{Type: Creature}, Destination: ToTopOfDeck}
 	if e.Text() != "put a creature from your discard pile on top of your deck" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -264,15 +263,17 @@ func TestPutFromDiscardTypeOrTrait(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	e := PutFromDiscard{
-		Type:        Upgrade,
-		OrTrait:     Robot,
+		Match:       Match{Type: Upgrade, Or: []Match{{Trait: Robot}}},
 		All:         true,
 		Destination: ToHand,
 	}
 	if e.Text() != "put each upgrade or Robot card from your discard pile into your hand" {
 		t.Errorf("text = %q", e.Text())
 	}
-	choose := PutFromDiscard{Type: Upgrade, OrTrait: Robot, Destination: ToHand}
+	choose := PutFromDiscard{
+		Match:       Match{Type: Upgrade, Or: []Match{{Trait: Robot}}},
+		Destination: ToHand,
+	}
 	if choose.Text() != "put an upgrade or Robot card from your discard pile into your hand" {
 		t.Errorf("choose text = %q", choose.Text())
 	}
@@ -317,7 +318,10 @@ func TestPutFromDiscardVacuousUnderMay(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	may := May{
-		Do: PutFromDiscard{Type: Upgrade, OrTrait: Robot, Destination: ToHand},
+		Do: PutFromDiscard{
+			Match:       Match{Type: Upgrade, Or: []Match{{Trait: Robot}}},
+			Destination: ToHand,
+		},
 	}
 	may.Resolve(ctx)
 	if ch.asked != 0 {

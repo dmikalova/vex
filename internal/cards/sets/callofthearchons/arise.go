@@ -20,7 +20,7 @@ var Arise = card.New(
 			Then: card.Sentences{
 				Effects: []card.Effect{
 					card.PutFromDiscard{
-						Type:          card.Type.Creature,
+						Match:         card.Match{Type: card.Type.Creature},
 						Destination:   card.To.Hand,
 						All:           true,
 						OfChosenHouse: true,

@@ -33,7 +33,7 @@ var OrtannuTheChained = card.New(
 		card.Trigger.Reap, card.Sentences{
 			Effects: []card.Effect{
 				card.PutFromDiscard{
-					Name:        OrtannusBinding.Name,
+					Match:       card.Match{Name: OrtannusBinding.Name},
 					All:         true,
 					Destination: card.To.Hand,
 				},

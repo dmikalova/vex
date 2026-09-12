@@ -12,6 +12,11 @@ type BelongToHouse struct {
 	Target   Target
 	House    House
 	Duration Duration
+	// Pronoun renders the subject as a back-reference pronoun ("those creatures")
+	// for a sentence whose antecedent already named these creatures — Orator
+	// Hissaro readies and exalts each neighboring creature, then "those creatures
+	// belong to house Saurian". Selection is unchanged; only the text differs.
+	Pronoun bool
 }
 
 // validate requires a target, a house, and a duration this effect supports.
@@ -40,10 +45,20 @@ func (e BelongToHouse) Text() string {
 }
 
 // durationSubject and durationPredicate split the body so ForDuration can state
-// the shared clause and subject once: "it" / "belongs to house Sanctum".
-func (e BelongToHouse) durationSubject() string { return e.Target.Text() }
+// the shared clause and subject once: "it" / "belongs to house Sanctum". A plural
+// pronoun subject takes the plural verb ("those creatures belong").
+func (e BelongToHouse) durationSubject() string {
+	if e.Pronoun {
+		return e.Target.pronoun()
+	}
+	return e.Target.Text()
+}
 func (e BelongToHouse) durationPredicate() string {
-	return "belongs to house " + e.House.String()
+	verb := "belongs"
+	if e.Pronoun && e.Target.plural() {
+		verb = "belong"
+	}
+	return verb + " to house " + e.House.String()
 }
 
 // Resolve makes each selected creature belong to House for the Duration.

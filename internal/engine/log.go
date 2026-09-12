@@ -110,8 +110,58 @@ type Record struct {
 	Entry LogEntry
 }
 
-// Text renders the record's outcome.
-func (r Record) Text(n Namer) string { return r.Entry.Text(n) }
+// Text renders the record's outcome under its frame, so a card ability's outcome
+// reads with the source card as its subject ("Batdrone deals 2 damage") rather
+// than the acting player (ADR 0011).
+func (r Record) Text(n Namer) string {
+	return r.Entry.Text(framedNamer{Namer: n, frame: r.Frame})
+}
+
+// sourced is a Namer that knows the source card of the frame an entry is
+// rendering under. An outcome entry asks for its subject through subject, which
+// resolves to that card when a card ability is resolving.
+type sourced interface {
+	frameSource() (LocalID, bool)
+}
+
+// framedNamer names an outcome under the frame it was recorded in. It resolves
+// subject to the frame's source card, so an ability's line reads "Batdrone deals
+// 2 damage" instead of "Player 0 deals 2 damage"; an outcome recorded outside a
+// card frame — a player's own play, a turn event, a lasting effect — has no
+// source and falls back to the player.
+type framedNamer struct {
+	Namer
+	frame Frame
+}
+
+// frameSource reports the source card of the frame, if any.
+func (f framedNamer) frameSource() (LocalID, bool) {
+	return f.frame.Source, f.frame.HasSource
+}
+
+// framedSource names the source card of the frame an outcome renders under, when
+// a card ability is behind it. An entry whose affected player is never its own
+// actor — a pool a card drains, a hand a card forces discarded — uses this to
+// read "Card has Player 1 …" under an ability and "Player 1 …" on its own.
+func framedSource(n Namer) (string, bool) {
+	if s, ok := n.(sourced); ok {
+		if id, has := s.frameSource(); has {
+			return n.Name(id), true
+		}
+	}
+	return "", false
+}
+
+// subject renders the subject of an outcome: the frame's source card when a card
+// ability is resolving, and the acting player otherwise. An outcome entry names
+// its subject through this so its line reads "Card does X" inside a bubble whose
+// header already named the player who acted.
+func subject(n Namer, player int) string {
+	if s, ok := framedSource(n); ok {
+		return s
+	}
+	return n.PlayerName(player)
+}
 
 // openFrame pushes an attribution frame; every entry recorded until the returned
 // function runs inherits it. Frames nest, so an ability that causes another to

@@ -237,6 +237,9 @@ type (
 	PutChosen = engine.PutChosen
 	// PutFromDiscard moves a chosen card from your discard pile to a Destination.
 	PutFromDiscard = engine.PutFromDiscard
+	// Match is a predicate selecting cards by type, trait, and/or name, with Or
+	// alternatives — e.g. an upgrade or a Robot card. It filters PutFromDiscard.
+	Match = engine.Match
 	// PutFromHand puts a chosen card from your hand directly into play.
 	PutFromHand = engine.PutFromHand
 	// ReturnNamedToHand returns a chosen card of a given name to its owner's hand.
@@ -253,7 +256,8 @@ type (
 	// ShuffleIntoDeck shuffles the controller's named zones (hand, discard, archives) into their deck.
 	ShuffleIntoDeck = engine.ShuffleIntoDeck
 	// ShuffleDeck shuffles the controller's deck — the "shuffle your deck" that
-	// always follows a deck search (a search must be followed by a shuffle).
+	// always follows a deck search (a search must be followed by a shuffle). It also
+	// serves as a RevealTopOfDeck/LookAtTopOfDeck routing terminal (Borr Nit).
 	ShuffleDeck = engine.ShuffleDeck
 	// ShuffleFromDiscard shuffles the cards a Selection picks from your discard pile
 	// into your deck — each match, any number of a chosen kind, or a counted number.
@@ -295,10 +299,6 @@ type (
 	DiscardCard = engine.DiscardCard
 	// DiscardTopOfDeck discards the top card of a deck and puts it in context.
 	DiscardTopOfDeck = engine.DiscardTopOfDeck
-	// ReanimateTopOfDeckInPlace discards the top card of your deck and, when it is
-	// a creature, puts it into play in the source's former battleline slot after
-	// the source leaves play (Gebuk).
-	ReanimateTopOfDeckInPlace = engine.ReanimateTopOfDeckInPlace
 	// DiscardDeckUntil discards from the top of your deck until it turns up a
 	// card the filters admit, putting that card in context.
 	DiscardDeckUntil = engine.DiscardDeckUntil
@@ -345,9 +345,6 @@ type (
 	// ReorderRest puts the cards no earlier step took back in any order; it must be
 	// the last step.
 	ReorderRest = engine.ReorderRest
-	// ShuffleRest shuffles the read player's deck, mixing in the cards no earlier
-	// step took; it must be the last step.
-	ShuffleRest = engine.ShuffleRest
 	// (From), ignoring the active house. Set Except to make House the house that
 	// may not be played.
 	PlayFrom = engine.PlayFrom
@@ -756,25 +753,14 @@ type (
 	// CannotBeDealtDamage marks the targeted creatures unable to be dealt damage
 	// for a Duration.
 	CannotBeDealtDamage = engine.CannotBeDealtDamage
-	// MayActFriendlyHouse lets the controller play and/or use a friendly house's
-	// cards this turn out of the active house — Grant is card.GrantPlay,
-	// card.GrantUse, or both.
-	MayActFriendlyHouse = engine.MayActFriendlyHouse
-	// MayUseFriendlyArtifacts lets the controller use any friendly artifact this turn.
-	MayUseFriendlyArtifacts = engine.MayUseFriendlyArtifacts
-	// MayPlayOffHouse lets the controller play or use a bounded number of cards this
-	// turn from outside their active house — the Star Alliance "non-Star Alliance
-	// card" cycle. Except names a house to exclude (card.House.Self for
-	// "non-Star Alliance"); Controlled frees every house you have a card in play for
-	// (United Action); NotType excludes a card type; Grant is card.GrantPlay,
-	// card.GrantUse, or both; Count bounds the cards (zero is unbounded).
-	MayPlayOffHouse = engine.MayPlayOffHouse
-	// GrantFight lets your creatures of one house fight this turn even out of the
-	// active house — House names the house, or HouseNone (the zero value) reads the
-	// chosen house (Brothers in Battle chosen, Signal Fire card.House.Self).
-	GrantFight = engine.GrantFight
-	// GrantFightAnyHouse lets every friendly creature fight this turn.
-	GrantFightAnyHouse = engine.GrantFightAnyHouse
+	// MayPlayOrUse lets the controller act with cards outside their active house for
+	// the remainder of the turn — the one node for every out-of-house permission
+	// grant. Houses selects whose cards it frees (card.Houses.Named/Chosen/Any/
+	// Except/Controlled), Grant the verbs (card.GrantPlay, card.GrantUse,
+	// card.GrantFight, or a combination), Types narrows the card types (the zero
+	// value frees all — card.Types.Artifacts, card.Types.NonCreature), and Count
+	// bounds how many cards (zero is unlimited).
+	MayPlayOrUse = engine.MayPlayOrUse
 	// BelongToHouse makes the targeted creatures belong to a House for a Duration.
 	BelongToHouse = engine.BelongToHouse
 	// NameHouse remembers the house an enclosing ChooseHouseThen picked on this card,
@@ -908,12 +894,56 @@ var ThirdRoundedUp = engine.ThirdRoundedUp
 // of every neighbor (Mighty Lance): card.CreatureAndNeighbors{Scope: card.OneNeighbor}.
 var OneNeighbor = engine.OneNeighbor
 
-// GrantPlay and GrantUse compose a MayActFriendlyHouse grant, e.g.
-// card.MayActFriendlyHouse{House: ..., Grant: card.GrantPlay | card.GrantUse}.
+// GrantPlay, GrantUse, and GrantFight compose a MayPlayOrUse grant's verbs, e.g.
+// card.MayPlayOrUse{Houses: ..., Grant: card.GrantPlay | card.GrantUse}.
 var GrantPlay = engine.GrantPlay
 
 // GrantUse — see GrantPlay.
 var GrantUse = engine.GrantUse
+
+// GrantFight — see GrantPlay. Frees the freed creatures to fight only.
+var GrantFight = engine.GrantFight
+
+// HouseSelector is the Houses axis of a MayPlayOrUse; build one with the card.Houses
+// helpers.
+type HouseSelector = engine.HouseSelector
+
+// Houses builds the HouseSelector for a MayPlayOrUse grant: Named frees one house,
+// Chosen the house an enclosing ChooseHouseThen picked, Any every house, Except
+// every house but one, and Controlled every house you have a card in play for.
+var Houses = houseSelectors{
+	Chosen:     engine.HouseSelector{Kind: engine.SelectHouse},
+	Any:        engine.HouseSelector{Kind: engine.SelectAny},
+	Controlled: engine.HouseSelector{Kind: engine.SelectControlled},
+}
+
+type houseSelectors struct {
+	Chosen     engine.HouseSelector
+	Any        engine.HouseSelector
+	Controlled engine.HouseSelector
+}
+
+// Named frees one named house.
+func (houseSelectors) Named(h engine.House) engine.HouseSelector {
+	return engine.HouseSelector{Kind: engine.SelectHouse, House: h}
+}
+
+// Except frees every house but the named one (card.House.Self for "non-Star
+// Alliance").
+func (houseSelectors) Except(h engine.House) engine.HouseSelector {
+	return engine.HouseSelector{Kind: engine.SelectExcept, House: h}
+}
+
+// Types names the card types a MayPlayOrUse grant reaches: Artifacts frees only
+// artifacts (Scientifical Hack), NonCreature every type but creatures (Com. Officer
+// Kirby). The zero value frees all.
+var Types = struct {
+	Artifacts   engine.CardTypes
+	NonCreature engine.CardTypes
+}{
+	Artifacts:   engine.CardTypesOf(engine.Artifact),
+	NonCreature: engine.CardTypesOf(engine.Artifact, engine.Upgrade, engine.Tactic),
+}
 
 // ChosenActiveHouse, FoughtActiveHouse, and JustChosenActiveHouse name where an
 // OpponentMustChooseHouse / OpponentCannotChooseHouse reads its house: the chosen

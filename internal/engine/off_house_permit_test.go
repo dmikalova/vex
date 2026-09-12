@@ -2,87 +2,6 @@ package engine
 
 import "testing"
 
-// TestMayPlayOffHouseText covers the rendered text and validation of the
-// off-house play grant across its Controlled, exclusion, type-filter, and
-// play-or-use forms.
-func TestMayPlayOffHouseText(t *testing.T) {
-	cases := []struct {
-		name string
-		e    MayPlayOffHouse
-		want string
-	}{
-		{
-			"controlled",
-			MayPlayOffHouse{Controlled: true, Grant: GrantPlay},
-			"for the remainder of the turn, you may play cards from any house for which you have a card in play",
-		},
-		{
-			"exclusion play one card",
-			MayPlayOffHouse{Except: StarAlliance, Grant: GrantPlay, Count: 1},
-			"you may play one non-Star Alliance card this turn",
-		},
-		{
-			"play or use",
-			MayPlayOffHouse{Except: StarAlliance, Grant: GrantPlay | GrantUse, Count: 1},
-			"you may play or use one non-Star Alliance card this turn",
-		},
-		{
-			"non-creature types",
-			MayPlayOffHouse{Except: StarAlliance, NotType: Creature, Grant: GrantPlay, Count: 1},
-			"you may play a non-Star Alliance artifact, upgrade, or Tactic this turn",
-		},
-		{
-			"no excluded house",
-			MayPlayOffHouse{Grant: GrantPlay, Count: 1},
-			"you may play one card this turn",
-		},
-	}
-	for _, c := range cases {
-		if got := c.e.Text(); got != c.want {
-			t.Errorf("%s: Text() = %q, want %q", c.name, got, c.want)
-		}
-	}
-
-	if (MayPlayOffHouse{Count: 1}).validate() == nil {
-		t.Error("a grant with no capability should be invalid")
-	}
-	if (MayPlayOffHouse{Grant: GrantPlay, Count: -1}).validate() == nil {
-		t.Error("a negative count should be invalid")
-	}
-	if (MayPlayOffHouse{Grant: GrantPlay}).validate() != nil {
-		t.Error("an unbounded play grant should be valid")
-	}
-}
-
-// TestMayPlayOffHouseResolve confirms resolving the effect stores a permit whose
-// Remaining tracks the count (unbounded stays permitUnlimited), records the log,
-// and that the ready phase clears it.
-func TestMayPlayOffHouseResolve(t *testing.T) {
-	g := started(t)
-	MayPlayOffHouse{Except: StarAlliance, Grant: GrantPlay, Count: 2}.Resolve(
-		&EffectContext{Resolver: g, Controller: 0},
-	)
-	if g.State.OffHousePermitCount[0] != 1 {
-		t.Fatalf("permit count = %d, want 1", g.State.OffHousePermitCount[0])
-	}
-	if got := g.State.OffHousePermits[0][0].Remaining; got != 2 {
-		t.Errorf("bounded Remaining = %d, want 2", got)
-	}
-
-	MayPlayOffHouse{Controlled: true, Grant: GrantPlay}.Resolve(
-		&EffectContext{Resolver: g, Controller: 0},
-	)
-	if got := g.State.OffHousePermits[0][1].Remaining; got != permitUnlimited {
-		t.Errorf("unbounded Remaining = %d, want permitUnlimited", got)
-	}
-
-	g.EndPlayPhase(0)
-	g.StartTurn(0)
-	if g.State.OffHousePermitCount[0] != 0 {
-		t.Error("ready phase should clear off-house permits")
-	}
-}
-
 // TestOffHousePermitFrees exercises each reason a permit refuses a card.
 func TestOffHousePermitFrees(t *testing.T) {
 	g := started(t)
@@ -114,12 +33,12 @@ func TestOffHousePermitFrees(t *testing.T) {
 		t.Error("Controlled frees a house the player has in play")
 	}
 	notCreature := base
-	notCreature.NotType = Creature
+	notCreature.Types = CardTypesOf(Artifact, Upgrade, Tactic)
 	if notCreature.frees(g, 0, Mars, Creature) {
-		t.Error("the excluded type is not freed")
+		t.Error("a type outside the permit's set is not freed")
 	}
 	if !notCreature.frees(g, 0, Mars, Artifact) {
-		t.Error("a type other than the excluded one is freed")
+		t.Error("a type in the permit's set is freed")
 	}
 }
 

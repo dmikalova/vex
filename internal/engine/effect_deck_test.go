@@ -512,18 +512,18 @@ func TestRevealDeckUntilHouse(t *testing.T) {
 }
 
 // TestRevealTopOfDeckRouting covers the reveal-and-route node: the text it renders,
-// the validation that rejects a bad Amount, a bad step, or a ShuffleRest that is not
-// last, and a resolve that reveals the top cards of a chosen deck, purges one, and
-// shuffles the rest — from the controller's own deck, the opponent's deck, an empty
-// deck, and with a declined purge.
+// the validation that rejects a bad Amount, a bad step, or a ShuffleDeck terminal that
+// is not last, and a resolve that reveals the top cards of a chosen deck, purges one,
+// and shuffles the deck — from the controller's own deck, the opponent's deck, an
+// empty deck, and with a declined purge.
 func TestRevealTopOfDeckRouting(t *testing.T) {
 	borrNit := RevealTopOfDeck{Amount: 5, ChooseWhoseDeck: true, Then: []TopAct{
-		ChooseAndMove{Count: 1, Dest: IntoPurge}, ShuffleRest{},
+		ChooseAndMove{Count: 1, Dest: IntoPurge}, ShuffleDeck{},
 	}}
 
 	t.Run("text", func(t *testing.T) {
 		want := "reveal the top 5 cards of a player's deck. Purge a card revealed this " +
-			"way. Shuffle the other revealed cards into that deck"
+			"way. Shuffle that deck"
 		if got := borrNit.Text(); got != want {
 			t.Errorf("text = %q, want %q", got, want)
 		}
@@ -543,8 +543,8 @@ func TestRevealTopOfDeckRouting(t *testing.T) {
 		if (ChooseAndMove{Dest: IntoPurge}).validate() == nil {
 			t.Error("a Count of 0 should be rejected")
 		}
-		if err := (ShuffleRest{}).validate(); err != nil {
-			t.Errorf("ShuffleRest validate() = %v", err)
+		if err := (ShuffleDeck{}).validate(); err != nil {
+			t.Errorf("ShuffleDeck validate() = %v", err)
 		}
 		badStep := RevealTopOfDeck{Amount: 5, ChooseWhoseDeck: true, Then: []TopAct{
 			ChooseAndMove{Dest: IntoPurge},
@@ -553,10 +553,10 @@ func TestRevealTopOfDeckRouting(t *testing.T) {
 			t.Error("a step with a bad Count should be rejected")
 		}
 		notLast := RevealTopOfDeck{Amount: 5, ChooseWhoseDeck: true, Then: []TopAct{
-			ShuffleRest{}, ChooseAndMove{Count: 1, Dest: IntoPurge},
+			ShuffleDeck{}, ChooseAndMove{Count: 1, Dest: IntoPurge},
 		}}
 		if notLast.validate() == nil {
-			t.Error("a ShuffleRest that is not last should be rejected")
+			t.Error("a ShuffleDeck terminal that is not last should be rejected")
 		}
 	})
 
@@ -567,7 +567,7 @@ func TestRevealTopOfDeckRouting(t *testing.T) {
 		g.AddToDeck(NewCard("Low", Logos, Creature, Common), 0)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 		RevealTopOfDeck{Amount: 3, ChooseWhoseDeck: true, Then: []TopAct{
-			ChooseAndMove{Count: 1, Dest: IntoPurge}, ShuffleRest{},
+			ChooseAndMove{Count: 1, Dest: IntoPurge}, ShuffleDeck{},
 		}}.Resolve(ctx)
 		if purge := g.Purge(0); len(purge) != 1 || purge[0] != top {
 			t.Errorf("purge = %v, want [%d]", purge, top)
@@ -581,7 +581,7 @@ func TestRevealTopOfDeckRouting(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 		RevealTopOfDeck{Amount: 3, ChooseWhoseDeck: true, Then: []TopAct{
-			ChooseAndMove{Count: 1, Dest: IntoPurge}, ShuffleRest{},
+			ChooseAndMove{Count: 1, Dest: IntoPurge}, ShuffleDeck{},
 		}}.Resolve(ctx)
 		if len(g.Purge(0)) != 0 {
 			t.Errorf("purge = %v, want empty", g.Purge(0))
@@ -594,7 +594,7 @@ func TestRevealTopOfDeckRouting(t *testing.T) {
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 		g.SetChooser(0, optionPicker{idx: 1})
 		RevealTopOfDeck{Amount: 3, ChooseWhoseDeck: true, Then: []TopAct{
-			ChooseAndMove{Count: 1, Dest: IntoPurge}, ShuffleRest{},
+			ChooseAndMove{Count: 1, Dest: IntoPurge}, ShuffleDeck{},
 		}}.Resolve(ctx)
 		if purge := g.Purge(1); len(purge) != 1 || purge[0] != oppTop {
 			t.Errorf("opponent purge = %v, want [%d]", purge, oppTop)
@@ -608,7 +608,7 @@ func TestRevealTopOfDeckRouting(t *testing.T) {
 		ctx := &EffectContext{Resolver: g, Controller: 0}
 		g.SetChooser(0, orderRejectChooser{})
 		RevealTopOfDeck{Amount: 3, ChooseWhoseDeck: true, Then: []TopAct{
-			ChooseAndMove{Count: 1, Dest: IntoPurge}, ShuffleRest{},
+			ChooseAndMove{Count: 1, Dest: IntoPurge}, ShuffleDeck{},
 		}}.Resolve(ctx)
 		if len(g.Purge(0)) != 0 {
 			t.Errorf("purge = %v, want empty", g.Purge(0))

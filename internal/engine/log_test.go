@@ -49,32 +49,15 @@ func TestLogEntryText(t *testing.T) {
 			"P0 has 4 Æmber and 1 keys",
 		},
 
-		// Æmber.
+		// Æmber. The source-card subject is exercised in
+		// TestRecordTextSubjectsToSourceCard; here the entries render unframed, so
+		// they name the player.
 		{AemberGained{Player: 0, Amount: 2}, "P0 gains 2 Æmber"},
-		{
-			AemberGained{Player: 0, Amount: 1, Source: 7, HasSource: true},
-			"Card7 has P0 gain 1 Æmber",
-		},
 		{AemberLost{Player: 1, Amount: 1}, "P1 loses 1 Æmber"},
 		{AemberStolen{Player: 0, From: 1, Amount: 2}, "P0 steals 2 Æmber from P1"},
 		{
-			AemberStolen{Player: 0, From: 1, Amount: 2, Source: 7, HasSource: true},
-			"Card7 steals 2 Æmber from P1",
-		},
-		{
 			AemberStolen{Player: 0, From: 1, Amount: 2, FromSupply: true},
 			"P0 steals 2 Æmber from the common supply",
-		},
-		{
-			AemberStolen{
-				Player:     0,
-				From:       1,
-				Amount:     2,
-				Source:     7,
-				HasSource:  true,
-				FromSupply: true,
-			},
-			"Card7 steals 2 Æmber from the common supply",
 		},
 		{AemberCaptured{Creature: 7, Amount: 3, Source: 7}, "Card7 captures 3 Æmber"},
 		{
@@ -143,6 +126,10 @@ func TestLogEntryText(t *testing.T) {
 		{CardsRevealedToAll{Player: 0, Cards: []LocalID{1, 2}}, "P0 reveals Card1, Card2"},
 		{KeyForgePrevented{Player: 1, By: 3}, "P1's forge a key is prevented by Card3"},
 		{PositionsSwapped{A: 1, B: 2}, "Card1 swaps positions with Card2"},
+		{
+			CardsSwapped{A: 1, B: 2, FromPlayer: 1, FromZone: Discard},
+			"Card1 swaps places with Card2 from P1's discard pile",
+		},
 		{MovedToFlank{Creature: 2, Right: true}, "Card2 moves to the right flank"},
 		{MovedToFlank{Creature: 2}, "Card2 moves to the left flank"},
 		{MovedWithinBattleline{Creature: 2}, "Card2 moves within its battleline"},
@@ -355,15 +342,9 @@ func TestLogEntryText(t *testing.T) {
 		},
 		{ActionAbilityUsed{Player: 1, Card: 2}, "P1 uses Card2's action ability"},
 
-		// Lasting effects.
-		{
-			LastingAemberGained{Player: 0, Amount: 1, On: EventReap},
-			"P0 gains 1 Æmber (after a creature reaps)",
-		},
-		{
-			LastingAemberCaptured{Creature: 7, Player: 0, Amount: 1, On: EventForgeKey},
-			"Card7 captures 1 Æmber instead of P0 gaining it (after forging a key)",
-		},
+		// Lasting effects. A lasting Æmber gain records the plain AemberGained/
+		// AemberCapturedInsteadOfGain entry under its source-card frame, so only the
+		// draw keeps its own lasting entry (and its event context).
 		{
 			LastingDraw{Player: 1, Amount: 2, On: EventFight},
 			"P1 draws 2 cards (each time a friendly creature fights)",
@@ -375,15 +356,61 @@ func TestLogEntryText(t *testing.T) {
 
 		// Grants, chains, and manual mode.
 		{
-			FightGrantedForHouse{Player: 0, House: Brobnar},
+			MayPlayOrUseGranted{
+				Player: 0,
+				Houses: HouseSelector{Kind: SelectHouse, House: Brobnar},
+				Grant:  GrantFight,
+			},
 			"P0's Brobnar creatures may fight this turn",
 		},
-		{FightGrantedAnyHouse{Player: 1}, "P1's creatures may all fight this turn"},
-		{UseGrantedForHouse{Player: 0, House: Dis}, "P0 may use Dis creatures this turn"},
-		{UseArtifactsGrantedAnyHouse{Player: 0}, "P0 may use friendly artifacts this turn"},
-		{PlayGrantedForHouse{Player: 0, House: Mars}, "P0 may play Mars cards this turn"},
 		{
-			OffHousePlayGranted{Player: 0},
+			MayPlayOrUseGranted{
+				Player: 1,
+				Houses: HouseSelector{Kind: SelectAny},
+				Grant:  GrantFight,
+			},
+			"P1's creatures may all fight this turn",
+		},
+		{
+			MayPlayOrUseGranted{
+				Player: 0,
+				Houses: HouseSelector{Kind: SelectHouse, House: Dis},
+				Grant:  GrantUse,
+			},
+			"P0 may use Dis creatures this turn",
+		},
+		{
+			MayPlayOrUseGranted{
+				Player: 0,
+				Houses: HouseSelector{Kind: SelectAny},
+				Grant:  GrantUse,
+				Types:  CardTypesOf(Artifact),
+			},
+			"P0 may use friendly artifacts this turn",
+		},
+		{
+			MayPlayOrUseGranted{
+				Player: 0,
+				Houses: HouseSelector{Kind: SelectHouse, House: Mars},
+				Grant:  GrantPlay,
+			},
+			"P0 may play Mars cards this turn",
+		},
+		{
+			MayPlayOrUseGranted{
+				Player: 0,
+				Houses: HouseSelector{Kind: SelectHouse, House: Mars},
+				Grant:  GrantPlay | GrantUse,
+			},
+			"P0 may play or use Mars cards this turn",
+		},
+		{
+			MayPlayOrUseGranted{
+				Player: 0,
+				Houses: HouseSelector{Kind: SelectExcept, House: StarAlliance},
+				Grant:  GrantPlay,
+				Count:  1,
+			},
 			"P0 may play cards from other houses this turn",
 		},
 		{
@@ -430,6 +457,60 @@ func TestLogEntryText(t *testing.T) {
 	for _, c := range cases {
 		if got := c.entry.Text(n); got != c.want {
 			t.Errorf("%T.Text() = %q, want %q", c.entry, got, c.want)
+		}
+	}
+}
+
+// TestRecordTextSubjectsToSourceCard pins the wording of the Æmber entries whose
+// subject is the source card the record's frame carries. Under a card ability the
+// card is the subject ("Card7 gains 1 Æmber"); when the ability acts on the other
+// player's pool the affected player is named too ("Card7 has P1 gain 2 Æmber").
+func TestRecordTextSubjectsToSourceCard(t *testing.T) {
+	n := stubNamer{}
+	// A frame opened for a card ability P0 controls, sourced to Card7.
+	fr := Frame{Actor: 0, Source: 7, HasSource: true}
+	cases := []struct {
+		entry LogEntry
+		want  string
+	}{
+		{AemberGained{Player: 0, Amount: 1}, "Card7 has P0 gain 1 Æmber"},
+		{AemberGained{Player: 1, Amount: 2}, "Card7 has P1 gain 2 Æmber"},
+		{AemberLost{Player: 1, Amount: 1}, "Card7 has P1 lose 1 Æmber"},
+		{AemberStolen{Player: 0, From: 1, Amount: 2}, "Card7 steals 2 Æmber from P1"},
+		{
+			AemberStolen{Player: 0, From: 1, Amount: 2, FromSupply: true},
+			"Card7 steals 2 Æmber from the common supply",
+		},
+	}
+	for _, c := range cases {
+		if got := (Record{Frame: fr, Entry: c.entry}).Text(n); got != c.want {
+			t.Errorf("%T framed Text() = %q, want %q", c.entry, got, c.want)
+		}
+	}
+}
+
+// TestRenderRecordSubjectsToSourceCard checks that rendering a record under a
+// frame that carries a source card splits the source card out as the subject
+// segment, so a client links it (ADR 0011).
+func TestRenderRecordSubjectsToSourceCard(t *testing.T) {
+	rec := Record{
+		Frame: Frame{Actor: 0, Source: 7, HasSource: true},
+		Entry: AemberGained{Player: 0, Amount: 1},
+	}
+	segs := RenderRecord(rec, stubNamer{})
+	want := []LogSegment{
+		{Text: "Card7", Card: 7, HasCard: true},
+		{Text: " has "},
+		{Text: "P0", Player: 0, HasPlayer: true},
+		{Text: " gain 1 "},
+		{Text: "Æmber", Icon: "aember"},
+	}
+	if len(segs) != len(want) {
+		t.Fatalf("segments = %+v, want %+v", segs, want)
+	}
+	for i := range want {
+		if segs[i] != want[i] {
+			t.Errorf("segment %d = %+v, want %+v", i, segs[i], want[i])
 		}
 	}
 }

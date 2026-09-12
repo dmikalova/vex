@@ -20,10 +20,10 @@ var ComOfficerKirby = card.New(
 	card.InCluster(card.Pulled(kirbysBlasterCluster, 1, 1.25)),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human),
-	card.WithAbility(card.Trigger.PlayFightReap, card.MayPlayOffHouse{
-		Except:  card.House.Self,
-		NotType: card.Type.Creature,
-		Grant:   card.GrantPlay,
-		Count:   1,
+	card.WithAbility(card.Trigger.PlayFightReap, card.MayPlayOrUse{
+		Houses: card.Houses.Except(card.House.Self),
+		Grant:  card.GrantPlay,
+		Types:  card.Types.NonCreature,
+		Count:  1,
 	}),
 )

@@ -746,8 +746,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 			{asset: "forge", decor: decorEnemy},
 			arrowTo(glyph{asset: "aember", decor: decorFriendly}),
 		}, true
-	case engine.GrantFightAnyHouse:
-		return []glyph{{asset: "glyph-fight", decor: decorFriendly | decorEach}}, true
+	case engine.MayPlayOrUse:
+		return mayPlayOrUseGlyphs(v), true
 	case engine.CannotBeDealtDamage:
 		return []glyph{{asset: "shield"}, arrowTo(targetGlyph(v.Target))}, true
 	case engine.RedirectFightDamage:
@@ -838,16 +838,6 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 			return []glyph{{asset: a}}, true
 		}
 		return []glyph{{asset: "glyph-unknown"}}, true
-	case engine.MayActFriendlyHouse:
-		if v.Grant&engine.GrantPlay != 0 {
-			return []glyph{{asset: "glyph-play"}, {asset: "glyph-action"}}, true
-		}
-		return []glyph{{asset: "glyph-action", decor: decorFriendly}}, true
-	case engine.MayPlayOffHouse:
-		if v.Grant&engine.GrantUse != 0 {
-			return []glyph{{asset: "glyph-play"}, {asset: "glyph-action"}}, true
-		}
-		return []glyph{{asset: "glyph-play"}}, true
 	case engine.NameHouse:
 		// The chosen house is barred; ChooseHouseThen supplies the choose glyph.
 		return []glyph{{asset: "glyph-ban"}}, true
@@ -861,17 +851,6 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "zone-deck"}, {asset: "glyph-search"}}, true
 	case engine.Instead:
 		return []glyph{{asset: "glyph-swap"}}, true
-	case engine.GrantFight:
-		d := decorEach
-		if v.House != engine.HouseNone {
-			d |= decorFriendly
-		}
-		return []glyph{{asset: "glyph-fight", decor: d}}, true
-	case engine.MayUseFriendlyArtifacts:
-		return []glyph{
-			{asset: "type-artifact", decor: decorFriendly},
-			{asset: "glyph-action"},
-		}, true
 	case engine.DiscardDeckUntil:
 		return []glyph{{asset: "zone-deck"}, {asset: "zone-discard"}}, true
 	case engine.RevealDeckUntilHouse:
@@ -884,12 +863,6 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "zone-discard"}, arrowTo(glyph{asset: "zone-hand"})}, true
 	case engine.DiscardTopOfDeck:
 		return []glyph{{asset: "zone-discard", decor: playerDecor(v.Player)}}, true
-	case engine.ReanimateTopOfDeckInPlace:
-		return []glyph{
-			{asset: "zone-deck"},
-			arrowTo(glyph{asset: "zone-discard"}),
-			arrowTo(glyph{asset: "glyph-play"}),
-		}, true
 	case engine.DiscardTopOfEachDeck:
 		return []glyph{{asset: "zone-discard", decor: decorEach}}, true
 	case engine.DiscardHand:
@@ -1008,6 +981,41 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 func mustCompose(effects ...engine.Effect) []glyph {
 	gs, _ := composeGlyphs(effects...)
 	return gs
+}
+
+// mayPlayOrUseGlyphs renders an out-of-house permission grant, narrowing to the
+// verbs and houses its axes select: a fight grant to a fight glyph, an
+// artifacts-any-house grant to an artifact-and-action pair, a named-house grant to
+// play/action, and an exclusion or controlled grant to play (plus action when it
+// also frees use).
+func mayPlayOrUseGlyphs(e engine.MayPlayOrUse) []glyph {
+	switch e.Houses.Kind {
+	case engine.SelectExcept, engine.SelectControlled:
+		if e.Grant&engine.GrantUse != 0 {
+			return []glyph{{asset: "glyph-play"}, {asset: "glyph-action"}}
+		}
+		return []glyph{{asset: "glyph-play"}}
+	case engine.SelectAny:
+		if e.Grant&engine.GrantFight != 0 {
+			return []glyph{{asset: "glyph-fight", decor: decorFriendly | decorEach}}
+		}
+		return []glyph{
+			{asset: "type-artifact", decor: decorFriendly},
+			{asset: "glyph-action"},
+		}
+	default: // SelectHouse
+		if e.Grant == engine.GrantFight {
+			d := decorEach
+			if e.Houses.House != engine.HouseNone {
+				d |= decorFriendly
+			}
+			return []glyph{{asset: "glyph-fight", decor: d}}
+		}
+		if e.Grant&engine.GrantPlay != 0 {
+			return []glyph{{asset: "glyph-play"}, {asset: "glyph-action"}}
+		}
+		return []glyph{{asset: "glyph-action", decor: decorFriendly}}
+	}
 }
 
 // verbGlyphs renders the verbs a chosen-creature effect applies in order — ready,

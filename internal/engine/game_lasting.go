@@ -207,6 +207,12 @@ type LastingEffect struct {
 	// playing Library Access itself is not another card.
 	Except    LocalID
 	HasExcept bool
+	// Source, when HasSource is set, is the card whose ability installed the
+	// reaction, so its payout attributes to that card ("Full Moon has Player 1 gain
+	// 2 Æmber") rather than to the player, who cannot produce the outcome alone. A
+	// zero HasSource — a test-built effect — falls back to the player.
+	Source    LocalID
+	HasSource bool
 }
 
 // maxLasting bounds how many lasting effects can be active at once — generous for
@@ -328,6 +334,9 @@ func (g *Game) removeLasting(target LastingEffect) {
 // resolveReaction resolves a single reaction for actor, using subject as the
 // triggering card where one is needed.
 func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
+	if le.HasSource {
+		defer g.openFrame(Frame{Actor: actor, Source: le.Source, HasSource: true})()
+	}
 	switch le.Do {
 	case actDealDamage:
 		DealDamage{
@@ -383,15 +392,14 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 		})
 	default: // actGainAember
 		if capturer, ok := g.gainAember(actor, int(le.Amount)); ok {
-			g.record(LastingAemberCaptured{
+			g.record(AemberCapturedInsteadOfGain{
 				Creature: capturer,
 				Player:   actor,
 				Amount:   int(le.Amount),
-				On:       le.On,
 			})
 			return
 		}
-		g.record(LastingAemberGained{Player: actor, Amount: int(le.Amount), On: le.On})
+		g.record(AemberGained{Player: actor, Amount: int(le.Amount)})
 	}
 }
 

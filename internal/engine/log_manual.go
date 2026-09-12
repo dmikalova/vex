@@ -9,70 +9,43 @@ import (
 // the turn-scoped permissions and restrictions cards hand out, chains, and the
 // direct edits manual mode makes to a match.
 
-// FightGrantedForHouse narrates permission to fight out of house this turn.
-type FightGrantedForHouse struct {
+// MayPlayOrUseGranted narrates a this-turn grant to act with cards outside the
+// active house — the one log record for the whole out-of-house permission family
+// (ADR 0037). Its wording narrows to the axes the grant selects: fighting,
+// using, or playing a named or every house's cards.
+type MayPlayOrUseGranted struct {
 	Player int
-	House  House
+	Houses HouseSelector
+	Grant  HouseGrant
+	Types  CardTypes
+	Count  int
 }
 
-// Text renders permission to fight out of house this turn.
-func (e FightGrantedForHouse) Text(n Namer) string {
-	return fmt.Sprintf("%s's %s creatures may fight this turn", n.PlayerName(e.Player), e.House)
-}
-
-// FightGrantedAnyHouse narrates permission for every creature to fight this turn.
-type FightGrantedAnyHouse struct{ Player int }
-
-// Text renders permission for every creature to fight this turn.
-func (e FightGrantedAnyHouse) Text(n Namer) string {
-	return fmt.Sprintf("%s's creatures may all fight this turn", n.PlayerName(e.Player))
-}
-
-// UseGrantedForHouse narrates permission to fully use creatures out of house
-// this turn.
-type UseGrantedForHouse struct {
-	Player int
-	House  House
-}
-
-// Text renders permission to use a house's creatures this turn.
-func (e UseGrantedForHouse) Text(n Namer) string {
-	return fmt.Sprintf("%s may use %s creatures this turn", n.PlayerName(e.Player), e.House)
-}
-
-// UseArtifactsGrantedAnyHouse narrates permission to use any friendly artifact
-// out of the active house this turn (Scientifical Hack).
-type UseArtifactsGrantedAnyHouse struct {
-	Player int
-}
-
-// Text renders permission to use any friendly artifact this turn.
-func (e UseArtifactsGrantedAnyHouse) Text(n Namer) string {
-	return fmt.Sprintf("%s may use friendly artifacts this turn", n.PlayerName(e.Player))
-}
-
-// PlayGrantedForHouse narrates permission to play a house's cards from hand this
-// turn out of the active house.
-type PlayGrantedForHouse struct {
-	Player int
-	House  House
-}
-
-// Text renders permission to play a house's cards this turn.
-func (e PlayGrantedForHouse) Text(n Namer) string {
-	return fmt.Sprintf("%s may play %s cards this turn", n.PlayerName(e.Player), e.House)
-}
-
-// OffHousePlayGranted narrates permission to play or use a bounded number of cards
-// outside the active house this turn (Com. Officer Kirby, CXO Taber, United
-// Action).
-type OffHousePlayGranted struct {
-	Player int
-}
-
-// Text renders permission to act with cards outside the active house this turn.
-func (e OffHousePlayGranted) Text(n Namer) string {
-	return fmt.Sprintf("%s may play cards from other houses this turn", n.PlayerName(e.Player))
+// Text renders the grant, narrowing to the houses and verbs it frees.
+func (e MayPlayOrUseGranted) Text(n Namer) string {
+	p := n.PlayerName(e.Player)
+	switch e.Houses.Kind {
+	case SelectExcept, SelectControlled:
+		return fmt.Sprintf("%s may play cards from other houses this turn", p)
+	case SelectAny:
+		if e.Grant&GrantFight != 0 {
+			return fmt.Sprintf("%s's creatures may all fight this turn", p)
+		}
+		return fmt.Sprintf("%s may use friendly artifacts this turn", p)
+	default: // SelectHouse
+		h := e.Houses.House
+		if e.Grant == GrantFight {
+			return fmt.Sprintf("%s's %s creatures may fight this turn", p, h)
+		}
+		switch {
+		case e.Grant&GrantPlay != 0 && e.Grant&GrantUse != 0:
+			return fmt.Sprintf("%s may play or use %s cards this turn", p, h)
+		case e.Grant&GrantPlay != 0:
+			return fmt.Sprintf("%s may play %s cards this turn", p, h)
+		default:
+			return fmt.Sprintf("%s may use %s creatures this turn", p, h)
+		}
+	}
 }
 
 // HouseForcedNextTurn narrates a card dictating next turn's active house.

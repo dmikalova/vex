@@ -321,50 +321,62 @@ func (g *Game) RaiseKeyCostThisTurn(player, amount int, source LocalID) {
 	}
 }
 
-// GrantFightForHouse lets a player use creatures of house h to fight this turn
-// even when h is not the active house. The ready phase clears the grant.
-func (g *Game) GrantFightForHouse(player int, h House) {
-	g.State.MayFightHouse[player] = h
-	g.record(FightGrantedForHouse{Player: player, House: h})
-}
-
-// GrantFightAnyHouse lets every creature a player controls fight this turn, whatever
-// its house (Follow the Leader). The ready phase clears the grant.
-func (g *Game) GrantFightAnyHouse(player int) {
-	g.State.MayFightAny[player] = true
-	g.record(FightGrantedAnyHouse{Player: player})
-}
-
-// GrantUseForHouse lets a player fully use (fight, reap, or Action:) creatures of
-// house h this turn even when h is not the active house. The ready phase clears
-// the grant.
-func (g *Game) GrantUseForHouse(player int, h House) {
-	g.State.MayUseHouse[player] = h
-	g.record(UseGrantedForHouse{Player: player, House: h})
-}
-
-// GrantPlayForHouse lets a player play cards of house h from hand this turn even
-// when h is not the active house — the Ambassador cycle. The ready phase clears
-// the grant.
-func (g *Game) GrantPlayForHouse(player int, h House) {
-	g.State.MayPlayHouse[player] = h
-	g.record(PlayGrantedForHouse{Player: player, House: h})
-}
-
-// GrantUseArtifactsAnyHouse lets a player use any friendly artifact this turn as
-// if it belonged to the active house (Scientifical Hack). The ready phase clears
-// the grant.
-func (g *Game) GrantUseArtifactsAnyHouse(player int) {
-	g.State.MayUseArtifactsAnyHouse[player] = true
-	g.record(UseArtifactsGrantedAnyHouse{Player: player})
-}
-
-// GrantOffHousePermit records a this-turn grant letting a player play or use a
-// bounded number of cards outside their active house (Com. Officer Kirby, CXO
-// Taber, United Action). The ready phase clears it.
-func (g *Game) GrantOffHousePermit(player int, p OffHousePermit) {
-	g.addOffHousePermit(player, p)
-	g.record(OffHousePlayGranted{Player: player})
+// GrantMayPlayOrUse records a this-turn grant letting a player act with cards
+// outside their active house, folding the whole out-of-house permission family
+// (ADR 0037). It dispatches the axes onto the flat this-turn state slots — a fight
+// grant onto MayFightHouse/MayFightAny, a use/play grant onto MayUseHouse/
+// MayPlayHouse or MayUseArtifactsAnyHouse, and an exclusion or controlled grant
+// onto an off-house permit — and records one MayPlayOrUseGranted. The ready phase
+// clears every slot.
+func (g *Game) GrantMayPlayOrUse(
+	player int,
+	houses HouseSelector,
+	grant HouseGrant,
+	types CardTypes,
+	count int,
+) {
+	switch houses.Kind {
+	case SelectAny:
+		if grant&GrantFight != 0 {
+			g.State.MayFightAny[player] = true
+		}
+		if grant&GrantUse != 0 {
+			g.State.MayUseArtifactsAnyHouse[player] = true
+		}
+	case SelectHouse:
+		if grant&GrantFight != 0 {
+			g.State.MayFightHouse[player] = houses.House
+		}
+		if grant&GrantUse != 0 {
+			g.State.MayUseHouse[player] = houses.House
+		}
+		if grant&GrantPlay != 0 {
+			g.State.MayPlayHouse[player] = houses.House
+		}
+	case SelectExcept, SelectControlled:
+		rem := permitUnlimited
+		if count > 0 {
+			rem = uint8(count)
+		}
+		except := HouseNone
+		if houses.Kind == SelectExcept {
+			except = houses.House
+		}
+		g.addOffHousePermit(player, OffHousePermit{
+			Except:     except,
+			Controlled: houses.Kind == SelectControlled,
+			Types:      types,
+			Grant:      grant,
+			Remaining:  rem,
+		})
+	}
+	g.record(MayPlayOrUseGranted{
+		Player: player,
+		Houses: houses,
+		Grant:  grant,
+		Types:  types,
+		Count:  count,
+	})
 }
 
 // ForceActiveHouseNextTurn makes a player have to choose house h as their active

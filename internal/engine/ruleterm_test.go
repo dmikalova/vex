@@ -31,7 +31,7 @@ func TestClosedCatalogsAreComplete(t *testing.T) {
 
 	t.Run("card types", func(t *testing.T) {
 		have := titled(SectionCardType)
-		for _, ct := range CardTypes() {
+		for _, ct := range allCardTypes() {
 			if name := ct.String(); !have[name] {
 				t.Errorf("card type %q has no rulebook term (ADR 0018)", name)
 			}

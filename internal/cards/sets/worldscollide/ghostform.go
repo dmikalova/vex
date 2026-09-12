@@ -21,6 +21,6 @@ var Ghostform = card.New(
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
 		Keywords: card.Keywords(card.Keyword.Invulnerable),
-		Granted:  card.FightReap(card.ArchiveGrantingUpgrade{Name: "Ghostform"}),
+		Granted:  card.FightReap(card.ArchiveGrantingUpgrade{}),
 	}),
 )

@@ -10,6 +10,11 @@ package engine
 // can swap with an enemy creature rather than a friendly one.
 type Swap struct {
 	With Target
+	// FromContext renders the swap as "swap it with {self}" instead of "swap this
+	// creature with <With> in your battleline": the card swapped in is the contextual
+	// card (ctx.It), which may rest off the battleline — Gebuk swaps in the creature
+	// it just discarded — so naming a battleline position would be wrong.
+	FromContext bool
 }
 
 // validate requires the creature to swap with.
@@ -21,16 +26,22 @@ func (e Swap) validate() error {
 }
 
 // Text renders the effect, e.g. "swap this creature with another friendly creature
-// in your battleline".
+// in your battleline", or "swap it with {self}" when the swapped-in card is the
+// contextual card resting off the battleline.
 func (e Swap) Text() string {
+	if e.FromContext {
+		return "swap it with " + SelfName
+	}
 	return "swap this creature with " + e.With.Text() + " in your battleline"
 }
 
-// Resolve swaps this creature's position with the selected creature and puts that
-// creature in context.
+// Resolve swaps this creature with the selected card and puts that card in
+// context. The two exchange places even across zones: a card selected from a
+// discard pile enters play in this creature's slot while this creature leaves to
+// that pile (Gebuk).
 func (e Swap) Resolve(ctx *EffectContext) {
 	for _, other := range e.With.Select(ctx) {
-		ctx.Resolver.SwapBattlelinePositions(ctx.Source, other)
+		ctx.Resolver.SwapCards(ctx.Source, other)
 		ctx.It, ctx.HasIt = other, true
 	}
 }
@@ -68,7 +79,7 @@ func (SwapChosen) Resolve(ctx *EffectContext) {
 	if !ok {
 		return
 	}
-	ctx.Resolver.SwapBattlelinePositions(first, second)
+	ctx.Resolver.SwapCards(first, second)
 }
 
 // RearrangeBattleline lets the controller reorder one player's battleline by
@@ -110,7 +121,7 @@ func (RearrangeBattleline) Resolve(ctx *EffectContext) {
 		if !ok {
 			return
 		}
-		ctx.Resolver.SwapBattlelinePositions(first, second)
+		ctx.Resolver.SwapCards(first, second)
 	}
 }
 

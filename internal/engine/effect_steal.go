@@ -94,15 +94,10 @@ func (e StealAember) resolveGate(ctx *EffectContext) bool {
 		})
 	} else {
 		ctx.Resolver.SetAember(player, ctx.Resolver.Aember(player)+amt)
-		// Credit the card when the controller is the one stealing, so the line reads
-		// from the card's perspective; a turned-around steal (your opponent steals as
-		// the card leaves play) has no such agent, so it stays player-attributed.
 		ctx.Resolver.Record(AemberStolen{
 			Player:     player,
 			From:       opponent,
 			Amount:     amt,
-			Source:     ctx.Source,
-			HasSource:  e.Player != Opponent,
 			FromSupply: fromSupply,
 		})
 	}

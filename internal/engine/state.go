@@ -472,12 +472,6 @@ type GameState struct {
 	Lasting      [maxLasting]LastingEffect
 	LastingCount uint8
 
-	// Reanimations holds the delayed put-into-play records armed by a creature's
-	// Destroyed ability (Gebuk), each fired by fireReanimations once its source has
-	// left play; ReanimationsCount is how many of the fixed array are in use.
-	Reanimations      [maxReanimations]ReanimateInPlace
-	ReanimationsCount uint8
-
 	// Morphs holds the "for the remainder of the turn" trigger morphs active now
 	// (Livia the Elder's fight/reap fuse), queried by game_abilities.go when a
 	// creature's abilities are gathered; MorphCount is how many of the fixed array

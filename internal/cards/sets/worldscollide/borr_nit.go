@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Demon
 //
-//	Reap: Reveal the top 5 cards of a player's deck. Purge a card revealed this way. Shuffle the other revealed cards into that deck.
+//	Reap: Reveal the top 5 cards of a player's deck. Purge a card revealed this way. Shuffle that deck.
 var BorrNit = card.New(
 	"Borr Nit",
 	card.House.Dis,
@@ -26,7 +26,7 @@ var BorrNit = card.New(
 			ChooseWhoseDeck: true,
 			Then: []card.TopAct{
 				card.ChooseAndMove{Count: 1, Dest: card.Into.Purge},
-				card.ShuffleRest{},
+				card.ShuffleDeck{},
 			},
 		},
 	),

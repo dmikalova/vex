@@ -163,7 +163,8 @@ func (g *game) logBlockView(b logBlock) app.UI {
 				ifCls(b.player == 1, "log-rule--p1"),
 				ifCls(b.rule == ruleTurn, "log-rule--turn"),
 			)).
-			Body(app.Span().Class("log-rule-label").Body(g.logSegments(b.header)...))
+			Body(app.Span().Class("log-rule-label").
+				Body(g.logSegments(engine.Record{Entry: b.header})...))
 	}
 	cls := cx("log-group",
 		ifCls(b.player == 0, "log-group--p0"),
@@ -174,7 +175,7 @@ func (g *game) logBlockView(b logBlock) app.UI {
 	for _, rec := range b.lines {
 		body = append(body, app.Div().
 			Class(cx("log-line", logToneClass(rec.Entry))).
-			Body(g.logSegments(rec.Entry)...))
+			Body(g.logSegments(rec)...))
 	}
 	return app.Div().Class(cls).Body(body...)
 }
@@ -195,18 +196,19 @@ func logToneClass(entry engine.LogEntry) string {
 	return ""
 }
 
-// logSegments draws one log entry, turning the card names, player names, and
+// logSegments draws one log record, turning the card names, player names, and
 // keywords the entry itself reported into clickable spans, tinted names, and
-// emblems. The engine hands back what every marked span stands for (ADR 0011),
-// so nothing here matches prose against a card index or a word list.
-func (g *game) logSegments(entry engine.LogEntry) []app.UI {
+// emblems. It renders under the record's frame, so a card ability's outcome is
+// subjected to its source card (ADR 0011). The engine hands back what every
+// marked span stands for, so nothing here matches prose against a card index.
+func (g *game) logSegments(rec engine.Record) []app.UI {
 	// PlayerStanding carries the actual forged colours, so the end-of-turn tally
 	// draws three coloured key slots instead of a plain count.
-	if ps, ok := entry.(engine.PlayerStanding); ok {
+	if ps, ok := rec.Entry.(engine.PlayerStanding); ok {
 		return g.playerStandingSegments(ps)
 	}
 	var out []app.UI
-	for _, seg := range engine.RenderEntry(entry, g.g) {
+	for _, seg := range engine.RenderRecord(rec, g.g) {
 		switch {
 		case seg.HasCard:
 			out = append(out, app.Span().

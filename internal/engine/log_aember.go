@@ -7,25 +7,22 @@ import "fmt"
 // and cards. Each entry records the amount that actually moved, which is not
 // always the amount the card asked for.
 
-// AemberGained narrates Æmber arriving in a player's pool. Source names the card
-// whose ability granted it, so the line reads "Harmonia has Player 1 gain 1 Æmber"
-// rather than a bare "Player 1 gains 1 Æmber"; HasSource is false for a gain with
-// no card to credit (forging and lasting-effect gains narrate their own cause),
-// which falls back to naming the player alone.
+// AemberGained narrates Æmber arriving in a player's pool. Under a card ability
+// the source card acts on the pool ("Nexus has Player 1 gain 2 Æmber") — a player
+// cannot gain Æmber on their own, so a card is always behind it; a gain with no
+// card frame (a test-built entry) names the player alone ("Player 1 gains 2
+// Æmber"). The credited card comes from the record's frame, so no card is named
+// here.
 type AemberGained struct {
 	Player int
 	Amount int
-	Source LocalID
-	// HasSource distinguishes a card named by LocalID 0 from no source at all.
-	HasSource bool
 }
 
-// Text renders the Æmber a player gained, crediting the source card when there is
-// one and naming the player alone otherwise.
+// Text renders the Æmber a player gained, naming the source card acting on the
+// player's pool when a card ability is behind it and the player alone otherwise.
 func (e AemberGained) Text(n Namer) string {
-	if e.HasSource {
-		return fmt.Sprintf("%s has %s gain %d Æmber",
-			n.Name(e.Source), n.PlayerName(e.Player), e.Amount)
+	if s, ok := framedSource(n); ok {
+		return fmt.Sprintf("%s has %s gain %d Æmber", s, n.PlayerName(e.Player), e.Amount)
 	}
 	return fmt.Sprintf("%s gains %d Æmber", n.PlayerName(e.Player), e.Amount)
 }
@@ -36,45 +33,41 @@ type AemberLost struct {
 	Amount int
 }
 
-// Text renders the Æmber a player lost to the common supply.
+// Text renders the Æmber a player lost to the common supply, subjected to the
+// source card when a card ability drained it ("Gongdozer has Player 1 lose 2
+// Æmber") and naming the player alone otherwise.
 func (e AemberLost) Text(n Namer) string {
+	if s, ok := framedSource(n); ok {
+		return fmt.Sprintf("%s has %s lose %d Æmber", s, n.PlayerName(e.Player), e.Amount)
+	}
 	return fmt.Sprintf("%s loses %d Æmber", n.PlayerName(e.Player), e.Amount)
 }
 
 // AemberStolen narrates Æmber moving from one pool to the other. Amount is what
 // was actually taken, which is less than asked for when the victim's pool runs
-// out — and zero when it was already empty. Source names the card whose ability
-// stole, so the line reads from the card's perspective ("Magda the Rat steals 2
-// Æmber from Player 1") rather than the controller's; HasSource is false for a
-// steal with no card to credit, which falls back to the player.
+// out — and zero when it was already empty. Under a card ability the source card
+// is the subject ("Magda the Rat steals 2 Æmber from Player 1"); a steal with no
+// card behind it names the thief.
 type AemberStolen struct {
-	// Player is who stole, From is who lost, Amount is what was actually taken, and
-	// Source is the card credited (see HasSource).
+	// Player is who stole, From is who lost, Amount is what was actually taken.
 	Player int
 	From   int
 	Amount int
-	Source LocalID
-	// HasSource distinguishes a card named by LocalID 0 from no source at all.
-	HasSource bool
 	// FromSupply marks a steal whose victim keeps their Æmber because a card they
 	// control redirected the theft's source to the common supply (Po's Pixies): the
 	// thief still gains the Æmber, so the line reads "from the common supply".
 	FromSupply bool
 }
 
-// Text renders the steal, and how much it actually took, crediting the source
-// card when there is one and the controller otherwise.
+// Text renders the steal, and how much it actually took, subjected to the source
+// card when a card ability stole and the thief otherwise.
 func (e AemberStolen) Text(n Namer) string {
 	from := n.PlayerName(e.From)
 	if e.FromSupply {
 		from = "the common supply"
 	}
-	if e.HasSource {
-		return fmt.Sprintf("%s steals %d Æmber from %s",
-			n.Name(e.Source), e.Amount, from)
-	}
 	return fmt.Sprintf("%s steals %d Æmber from %s",
-		n.PlayerName(e.Player), e.Amount, from)
+		subject(n, e.Player), e.Amount, from)
 }
 
 // AemberCaptured narrates Æmber moved onto a creature, where it stays out of
@@ -150,10 +143,11 @@ type AemberMovedToPool struct {
 	Amount int
 }
 
-// Text renders Æmber moved off a card into a player's pool.
+// Text renders Æmber moved off a card into a player's pool, subjected to the
+// source card when a card ability moved it.
 func (e AemberMovedToPool) Text(n Namer) string {
 	return fmt.Sprintf("%s moves %d Æmber from %s to %s's pool",
-		n.PlayerName(e.Player), e.Amount, n.Name(e.From), n.PlayerName(e.To))
+		subject(n, e.Player), e.Amount, n.Name(e.From), n.PlayerName(e.To))
 }
 
 // AemberMovedToCard narrates Æmber moved from one card to another.
@@ -164,10 +158,11 @@ type AemberMovedToCard struct {
 	Amount int
 }
 
-// Text renders Æmber moved from one card to another.
+// Text renders Æmber moved from one card to another, subjected to the source
+// card when a card ability moved it.
 func (e AemberMovedToCard) Text(n Namer) string {
 	return fmt.Sprintf("%s moves %d Æmber from %s to %s",
-		n.PlayerName(e.Player), e.Amount, n.Name(e.From), n.Name(e.To))
+		subject(n, e.Player), e.Amount, n.Name(e.From), n.Name(e.To))
 }
 
 // AemberLostToCeiling narrates Æmber that never landed on a card because the

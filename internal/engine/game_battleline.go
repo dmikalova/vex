@@ -1,9 +1,13 @@
 package engine
 
-// SwapBattlelinePositions exchanges two creatures' positions in the same
-// battleline. Only the ordered battleline slots move; the creatures keep all
-// damage, upgrades, status, control, and other card state.
-func (g *Game) SwapBattlelinePositions(a, b LocalID) {
+// SwapCards exchanges two cards' places. When both sit in the same battleline,
+// only the ordered slots move and the creatures keep all their card state. When
+// one card is in play and the other rests in a discard pile, the two exchange
+// places across zones: the resting card enters play in the in-play card's slot,
+// and the in-play card leaves to that discard pile (swapAcrossZones). A pair the
+// swap cannot place — two creatures on opposite battlelines, or two resting cards
+// — is left where it is.
+func (g *Game) SwapCards(a, b LocalID) {
 	for player := range g.State.Battleline {
 		line := &g.State.Battleline[player]
 		ai := line.indexOf(a)
@@ -15,6 +19,49 @@ func (g *Game) SwapBattlelinePositions(a, b LocalID) {
 		g.record(PositionsSwapped{A: a, B: b})
 		return
 	}
+	g.swapAcrossZones(a, b)
+}
+
+// swapAcrossZones exchanges an in-play creature with one resting in a discard
+// pile: the resting card enters play in the creature's battleline slot, exhausted
+// with full armor and firing its enters-play abilities (not its Play: ability),
+// while the creature leaves play to the discard pile the resting card came from.
+// The creature sheds all its card state on the way out exactly as any creature
+// leaving play does — its Æmber goes to its opponent, its upgrades and counters
+// are discarded (leavePlayDestroyed). The move is a plain relocation, not a
+// destruction of its own: a creature leaving play this way counts as destroyed
+// only when an open Destroyed window already enrolled it (Gebuk). It does nothing
+// unless exactly one card is in a battleline and the other rests in a discard.
+func (g *Game) swapAcrossZones(a, b LocalID) {
+	inPlay, resting := a, b
+	if !g.inPlay(inPlay) {
+		inPlay, resting = b, a
+	}
+	if !g.inPlay(inPlay) || g.inPlay(resting) {
+		return
+	}
+	restingOwner := g.owner(resting)
+	if !g.State.Discard[restingOwner].contains(resting) {
+		return
+	}
+	controller := g.controller(inPlay)
+	line := &g.State.Battleline[controller]
+	idx := line.indexOf(inPlay)
+	if idx < 0 {
+		return // the in-play card is an artifact; cross-zone artifact swap is unsupported
+	}
+	g.record(CardsSwapped{A: inPlay, B: resting, FromPlayer: restingOwner, FromZone: Discard})
+	o := g.leavePlayDestroyed(inPlay)
+	g.State.Discard[o].add(inPlay)
+	g.State.Discard[restingOwner].remove(resting)
+	core := &g.State.Cards[resting]
+	core.Exhausted = true
+	core.ArmorRemaining = int16(g.armor(resting))
+	// leavePlayDestroyed may cascade and shrink the line below the slot idx
+	// captured before removal; clamp so the reinsert lands on the flank.
+	line.insertAt(min(idx, int(line.Count)), resting)
+	g.emitCreatureEnters(resting)
+	g.settleDestroyed(controller)
 }
 
 // MoveToFlank moves a creature to a flank of its own controller's battleline: the

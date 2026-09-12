@@ -57,6 +57,7 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - Hovering over the key cost should show any modifiers to key cost instead of them being in the warning/restricted area
 - list all the cards with multiple provenances. For non-clusters, make them unique. Remove the duplicate allowances.
 - decompose all the neighbor stuff
+- Granted:  card.FightReap(card.ArchiveGrantingUpgrade{}), should be card.Archive{Target: GrantingUpgrade}
 
 - Cloaking Dongle: Target: Target and neighbors then gives the bonus
 - Kompsos Haurspex and Livia the elder can be atomized into each other
@@ -67,8 +68,9 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 ## Sites of all the things
 
-- types.go
+- effects.go
 - options.go
+- types.go
 
 ## UI finesse
 
