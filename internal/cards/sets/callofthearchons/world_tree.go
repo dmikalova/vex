@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Traits: Location
 //
-//	Action: Put a creature from your discard pile on top of your deck.
+//	Action: Put a Creature from your discard pile on top of your deck.
 var WorldTree = card.New(
 	"World Tree",
 	card.House.Untamed,

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Shuffle any number of creatures from your discard pile into your deck.
+//	Play: Shuffle any number of Creatures from your discard pile into your deck.
 var NotFinishedWithYou = card.New(
 	"Not Finished with You",
 	card.House.Dis,

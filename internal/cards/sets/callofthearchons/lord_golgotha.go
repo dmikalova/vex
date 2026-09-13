@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  2
 //	Traits: Knight • Spirit
 //
-//	Before Fight: Deal 3 damage to each neighbor of the creature Lord Golgotha fights.
+//	Before Fight: Deal 3 damage to each neighbor of the Creature Lord Golgotha fights.
 var LordGolgotha = card.New(
 	"Lord Golgotha",
 	card.House.Sanctum,

@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: A friendly Brobnar creature gains, "Fight: Ready this creature."
+//	Play: A friendly Brobnar Creature gains, "Fight: Ready this Creature."
 var IntoTheFray = card.New(
 	"Into the Fray",
 	card.House.Brobnar,

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Deal 1 damage to each enemy creature for each Æmber on it, and move all Æmber from each enemy creature to your pool.
+//	Play: Deal 1 damage to each enemy Creature for each Æmber on it, and move all Æmber from each enemy Creature to your pool.
 var WordOfReturning = card.New(
 	"Word of Returning",
 	card.House.Untamed,

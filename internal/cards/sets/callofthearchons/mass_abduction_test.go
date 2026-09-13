@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Put up to 3 enemy damaged creatures into your archives.
+//	Play: Put up to 3 enemy damaged Creatures into your archives.
 func TestMassAbduction(t *testing.T) {
 	t.Run("abducts the damaged enemy creatures the controller chooses", func(t *testing.T) {
 		var abduction, hurt, alsoHurt, healthy ct.Card

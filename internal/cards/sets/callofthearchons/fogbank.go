@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Your opponent cannot use creatures to fight during their next turn.
+//	Play: Your opponent cannot use Creatures to fight during their next turn.
 var Fogbank = card.New(
 	"Fogbank",
 	card.House.Untamed,

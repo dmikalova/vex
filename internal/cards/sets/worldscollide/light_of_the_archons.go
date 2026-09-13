@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	This creature gains +1 power and +1 armor for each upgrade attached to it.
+//	This Creature gains +1 power and +1 armor for each Upgrade attached to it.
 var LightOfTheArchons = card.New(
 	"Light of the Archons",
 	card.House.StarAlliance,

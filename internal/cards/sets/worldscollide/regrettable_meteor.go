@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Destroy each Dinosaur creature and each creature with power 6 or higher.
+//	Play: Destroy each Dinosaur Creature and each Creature with power 6 or higher.
 var RegrettableMeteor = card.New(
 	"Regrettable Meteor",
 	card.House.Saurian,

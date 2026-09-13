@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  6
 //	Traits: Giant
 //
-//	After you discard a Brobnar card, you may deal 4 damage to a creature.
+//	After you discard a Brobnar card, you may deal 4 damage to a Creature.
 var RockHurlingGiant = card.New(
 	"Rock-Hurling Giant",
 	card.House.Brobnar,

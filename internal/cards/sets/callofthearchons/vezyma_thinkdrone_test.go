@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Martian • Scientist
 //
-//	Reap: You may archive a friendly creature or artifact from play.
+//	Reap: You may archive a friendly Creature or Artifact from play.
 func TestVezymaThinkdrone(t *testing.T) {
 	t.Run("may archive a friendly creature from play on reap", func(t *testing.T) {
 		var ally ct.Card

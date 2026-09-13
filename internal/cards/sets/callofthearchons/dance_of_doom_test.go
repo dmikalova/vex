@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Choose a creature - destroy each creature with the same power as the chosen creature.
+//	Play: Choose a Creature - destroy each Creature with the same power as the chosen Creature.
 func TestDanceOfDoom(t *testing.T) {
 	t.Run("destroys every creature sharing the chosen creature's power", func(t *testing.T) {
 		var weak, strong, enemy ct.Card

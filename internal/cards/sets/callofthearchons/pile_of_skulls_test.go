@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Traits: Location
 //
-//	After an enemy creature is destroyed during your turn, a friendly creature captures 1 Æmber from your opponent.
+//	After an enemy Creature is destroyed during your turn, a friendly Creature captures 1 Æmber from your opponent.
 func TestPileOfSkulls(t *testing.T) {
 	t.Run(
 		"a friendly creature captures 1 when an enemy creature is destroyed on your turn",

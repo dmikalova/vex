@@ -15,8 +15,8 @@ import (
 //	Æmber:  1
 //	Traits: Vehicle
 //
-//	Your opponent's keys cost +1 Æmber for each friendly creature with power 5 or higher.
-//	Your keys cost +1 Æmber for each enemy creature with power 5 or higher.
+//	Your opponent's keys cost +1 Æmber for each friendly Creature with power 5 or higher.
+//	Your keys cost +1 Æmber for each enemy Creature with power 5 or higher.
 func TestGrumpBuggy(t *testing.T) {
 	t.Run(
 		"raises each player's key cost per power-5 creature the other side threatens",

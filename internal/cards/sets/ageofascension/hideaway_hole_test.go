@@ -16,7 +16,7 @@ import (
 //	Traits: Location
 //
 //	Versatile.
-//	Action: Destroy Hideaway Hole. Each friendly creature gains elusive until the start of your next turn.
+//	Action: Destroy Hideaway Hole. Each friendly Creature gains elusive until the start of your next turn.
 func TestHideawayHole(t *testing.T) {
 	var friend ct.Card
 	h := ct.Play(t, ct.Setup{

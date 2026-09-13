@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Dragon • Psion
 //
 //	While fighting, Nizak, The Forgotten gains invulnerable.
-//	After a creature is destroyed in a fight with Nizak, The Forgotten, put it into its owner's hand.
+//	After a Creature is destroyed in a fight with Nizak, The Forgotten, put it into its owner's hand.
 var NizakTheForgotten = card.New(
 	"Nizak, The Forgotten",
 	card.House.Brobnar,

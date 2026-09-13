@@ -163,7 +163,7 @@ func TestStealAemberRedirectDeclineFallsToFirst(t *testing.T) {
 func TestCaptureStolenAemberText(t *testing.T) {
 	def := testCreature("garg", 16,
 		WithReplaces(Instead{Of: EventAemberStolen, With: Capture}))
-	want := "Each Æmber that would be stolen is captured by a creature controlled by the active player instead."
+	want := "Each Æmber that would be stolen is captured by a Creature controlled by the active player instead."
 	if got := RenderCardRules(&def); !strings.Contains(got, want) {
 		t.Errorf("rules missing redirect line:\n%s", got)
 	}

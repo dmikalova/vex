@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Stun each enemy creature that is not on a flank.
+//	Play: Stun each enemy Creature that is not on a flank.
 var RadiantTruth = card.New(
 	"Radiant Truth",
 	card.House.Sanctum,

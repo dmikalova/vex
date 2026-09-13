@@ -16,7 +16,7 @@ import (
 //	Armor:  5
 //	Traits: Beast
 //
-//	Fight: Put the creature Collector Worm fought into your archives.
+//	Fight: Put the Creature Collector Worm fought into your archives.
 func TestCollectorWorm(t *testing.T) {
 	var worm, prey ct.Card
 	h := ct.Play(t, ct.Setup{

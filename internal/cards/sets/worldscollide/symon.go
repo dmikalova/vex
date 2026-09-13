@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Alien • Thief
 //
 //	Skirmish.
-//	Fight: Put the creature Symon fought on top of its owner's deck.
+//	Fight: Put the Creature Symon fought on top of its owner's deck.
 var Symon = card.New(
 	"Symon",
 	card.House.Shadows,

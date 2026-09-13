@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Deal 1 damage to up to 3 creatures. For each creature destroyed this way, gain 1 Æmber.
+//	Play: Deal 1 damage to up to 3 Creatures. For each Creature destroyed this way, gain 1 Æmber.
 func TestThrowingStars(t *testing.T) {
 	t.Run("gains 1 Æmber per creature it destroys", func(t *testing.T) {
 		var a, b ct.Card

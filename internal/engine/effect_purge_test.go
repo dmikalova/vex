@@ -172,8 +172,8 @@ func TestPurgeEachFromBothPiles(t *testing.T) {
 			g.State.Aember[1],
 		)
 	}
-	if ctx.Produced.Purged != 2 {
-		t.Errorf("purged tally = %d, want 2", ctx.Produced.Purged)
+	if got := ctx.Produced.Purged[0] + ctx.Produced.Purged[1]; got != 2 {
+		t.Errorf("purged tally = %d, want 2", got)
 	}
 }
 
@@ -342,8 +342,8 @@ func TestPurgeFromHandRandom(t *testing.T) {
 	if got := g.Purge(1); len(got) != 1 || got[0] != only {
 		t.Errorf("purge = %v, want [only]", got)
 	}
-	if ctx.Produced.Purged != 1 {
-		t.Errorf("tally = %d, want 1", ctx.Produced.Purged)
+	if got := ctx.Produced.Purged[0] + ctx.Produced.Purged[1]; got != 1 {
+		t.Errorf("tally = %d, want 1", got)
 	}
 
 	// An empty hand purges nothing and reports false.
@@ -436,8 +436,11 @@ func TestCardsPurgedCount(t *testing.T) {
 	)
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
-	if got := (CardsPurged{}).CountText(); got != "creature purged this way" {
+	if got := (CardsPurged{}).CountText(); got != "card purged this way" {
 		t.Errorf("count text = %q", got)
+	}
+	if got := (CardsPurged{Type: Creature}).CountText(); got != "creature purged this way" {
+		t.Errorf("creature count text = %q", got)
 	}
 	PurgeCreature{
 		Target: Target{Kind: TargetEachFriendlyCreature}.OfHouse(Shadows),

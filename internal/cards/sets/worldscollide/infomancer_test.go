@@ -16,7 +16,7 @@ import (
 //	Traits: Human • Cyborg
 //
 //	Elusive.
-//	Play: Put a Tactic from your hand faceup under Infomancer.
+//	Play: Put a Tactic card from your hand faceup under Infomancer.
 //	Reap: Trigger the play effect of a Tactic grafted onto Infomancer.
 func TestInfomancer(t *testing.T) {
 	// Playing Infomancer grafts an action from hand, and reaping triggers that

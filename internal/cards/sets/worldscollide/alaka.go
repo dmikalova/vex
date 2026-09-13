@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Giant
 //
-//	If you have used a creature to fight this turn, Alaka enters play ready.
+//	If you have used a Creature to fight this turn, Alaka enters play ready.
 var Alaka = card.New(
 	"Alaka",
 	card.House.Brobnar,

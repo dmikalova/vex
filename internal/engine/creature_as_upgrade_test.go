@@ -190,15 +190,15 @@ func TestPlayableAsUpgradeText(t *testing.T) {
 		{
 			exRover(),
 			"Skirmish.\n" +
-				`Rover may be played as an upgrade instead of a creature, ` +
-				`with the text: "This creature gains skirmish."`,
+				`Rover may be played as an Upgrade instead of a Creature, ` +
+				`with the text: "This Creature gains skirmish."`,
 			"Skirmish.",
 		},
 		{
 			exCalv(),
 			"Fight/Reap: Draw a card.\n" +
-				`CALV may be played as an upgrade instead of a creature, ` +
-				`with the text: "This creature gains, 'Fight/Reap: Draw a card.'"`,
+				`CALV may be played as an Upgrade instead of a Creature, ` +
+				`with the text: "This Creature gains, 'Fight/Reap: Draw a card.'"`,
 			"Fight/Reap: Draw a card.",
 		},
 		{
@@ -207,9 +207,9 @@ func TestPlayableAsUpgradeText(t *testing.T) {
 				WithPower(2),
 				WithStatic(StaticModifier{ProtectsFromNonFlank: true}),
 				WithPlayableAsUpgrade()),
-			`Scout may be played as an upgrade instead of a creature, ` +
-				`with the text: "Creatures not on a flank cannot fight this creature."`,
-			"Creatures not on a flank cannot fight this creature.",
+			`Scout may be played as an Upgrade instead of a Creature, ` +
+				`with the text: "Creatures not on a flank cannot fight this Creature."`,
+			"Creatures not on a flank cannot fight this Creature.",
 		},
 	}
 	for _, tc := range cases {

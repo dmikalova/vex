@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Poison.
-//	Play/Reap: Stun a creature.
+//	Play/Reap: Stun a Creature.
 var InkaTheSpider = card.New(
 	"Inka the Spider",
 	card.House.Untamed,

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Traits: Item
 //
-//	Action: Enrage a creature.
+//	Action: Enrage a Creature.
 var SoulFiddle = card.New(
 	"Soul Fiddle",
 	card.House.Dis,

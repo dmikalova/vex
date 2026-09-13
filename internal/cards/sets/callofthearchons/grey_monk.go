@@ -10,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Human • Priest
 //
-//	Each friendly creature gains +1 armor.
-//	Reap: Heal 2 damage from a creature.
+//	Each friendly Creature gains +1 armor.
+//	Reap: Heal 2 damage from a Creature.
 var GreyMonk = card.New(
 	"Grey Monk",
 	card.House.Sanctum,

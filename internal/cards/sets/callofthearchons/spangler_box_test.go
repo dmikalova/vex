@@ -16,7 +16,7 @@ import (
 //	Rarity: Rare
 //	Traits: Item
 //
-//	Action: Graft a creature from play, and your opponent gains control of Spangler Box.
+//	Action: Graft a Creature from play, and your opponent gains control of Spangler Box.
 //	Destroyed: Put each card under Spangler Box into play under its owner's control.
 func TestSpanglerBox(t *testing.T) {
 	t.Run("action grafts a creature and hands the box to the opponent", func(t *testing.T) {

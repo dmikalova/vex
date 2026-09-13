@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature cannot be used unless you have discarded a card from your hand this turn.
+//	This Creature cannot be used unless you have discarded a card from your hand this turn.
 var Earthbind = card.New(
 	"Earthbind",
 	card.House.Untamed,

@@ -15,7 +15,7 @@ import (
 //	Power:  5
 //	Traits: Beast
 //
-//	After a player chooses an active house, that player destroys an artifact of that house.
+//	After a player chooses an active house, that player destroys an Artifact of that house.
 func TestGiantGnawbill(t *testing.T) {
 	t.Run("the chooser destroys an artifact of the chosen house", func(t *testing.T) {
 		var relic, other ct.Card

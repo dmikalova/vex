@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: For the remainder of the turn, each time you play a creature, deal 2 damage to an enemy creature.
+//	Play: For the remainder of the turn, each time you play a Creature, deal 2 damage to an enemy Creature.
 func TestCharge(t *testing.T) {
 	t.Run("each creature played after it deals 2 damage to a chosen enemy", func(t *testing.T) {
 		var minion, foe ct.Card

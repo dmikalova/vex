@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Traits: Item • Shard
 //
-//	Action: For each friendly Shard, a friendly creature captures 1 Æmber from your opponent.
+//	Action: For each friendly Shard, a friendly Creature captures 1 Æmber from your opponent.
 var ShardOfHope = card.New(
 	"Shard of Hope",
 	card.House.Sanctum,

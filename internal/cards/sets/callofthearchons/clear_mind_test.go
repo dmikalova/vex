@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Unstun each friendly creature.
+//	Play: Unstun each friendly Creature.
 func TestClearMind(t *testing.T) {
 	t.Run("unstuns each friendly creature but not the opponent's", func(t *testing.T) {
 		var ally1, ally2, foe ct.Card

@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Destroy an artifact, a creature, and an upgrade.
+//	Play: Destroy an Artifact, a Creature, and an Upgrade.
 var DestroyThemAll = card.New(
 	"Destroy Them All!",
 	card.House.Mars,

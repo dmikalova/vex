@@ -66,6 +66,18 @@ number axis: never write `noun + "s"` or a `card(s)` placeholder by hand.
 - **`Damage` casing follows rule 15, not the individual card**: a number of
   damage dealt is always capitalized (`deals 5 Damage`, `deals +2 Damage`), and
   `deals no damage` stays lowercase because no icon is printed there.
+- **Card-type nouns are capitalized in card text, lowercased in the effect
+  layer.** In rendered card text the four card types read as proper nouns —
+  `Creature`, `Artifact`, `Upgrade`, `Tactic` (and their plurals) — while the
+  generic word `card`/`cards` stays lowercase. Do **not** capitalize these at the
+  effect layer: every `Effect.Text()`, `Target` render, trigger prefix, and
+  helper (`constantText`, `spendAsPoolLines`, `upgradeGrantLines`, …) emits the
+  lowercase noun. A single presentation-layer normalizer, `capitalizeCardTypes`
+  in `internal/engine/text.go`, capitalizes them on the way out of
+  `RenderCardText`, `RenderCardRules`, and `RenderUpgradeOnCreature`. This keeps
+  one source of truth for the casing rule instead of scattering capital nouns
+  across ~130 effect nodes, so raw-helper unit tests assert the lowercase form
+  and card-text tests assert the capitalized form.
 
 ## 2. `gains` for everything grantable — retire `gets`
 

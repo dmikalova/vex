@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: For each friendly ready creature in play, gain 1 Æmber. Put each friendly creature into its owner's hand.
+//	Play: For each friendly ready Creature in play, gain 1 Æmber. Put each friendly Creature into its owner's hand.
 var TotalRecall = card.New(
 	"Total Recall",
 	card.House.Mars,

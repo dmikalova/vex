@@ -35,9 +35,10 @@ type CardMoved struct {
 
 // Text renders the move.
 func (e CardMoved) Text(n Namer) string {
+	who, owner := actorPossessive(n, e.Player)
 	return fmt.Sprintf("%s %s %s%s",
-		n.PlayerName(e.Player), moveVerb(e.To),
-		nameMoved(n, e.Card, e.From, e.To), moveFromPhrase(e.To, e.From))
+		who, moveVerb(e.To),
+		nameMoved(n, e.Card, e.From, e.To), moveFromPhrase(e.To, e.From, owner))
 }
 
 // moveVerb names the action from the destination zone.
@@ -53,9 +54,9 @@ func moveVerb(to Zone) string {
 }
 
 // moveFromPhrase names the source zone the way each verb prints it — purge says
-// "a <zone>", archive and discard say "their <zone>", and a move out of a hidden
-// hand prints no source.
-func moveFromPhrase(to, from Zone) string {
+// "a <zone>", archive and discard name the zone's owner ("their <zone>" or
+// "Player 2's <zone>"), and a move out of a hidden hand prints no source.
+func moveFromPhrase(to, from Zone, owner string) string {
 	if to == purged {
 		switch from {
 		case Hand:
@@ -70,37 +71,30 @@ func moveFromPhrase(to, from Zone) string {
 	}
 	switch from {
 	case Discard:
-		return " from their discard pile"
+		return " from " + owner + " discard pile"
 	case Archives:
-		return " from their archives"
+		return " from " + owner + " archives"
 	case Deck:
-		return " from their deck"
+		return " from " + owner + " deck"
 	default: // Hand
 		return ""
 	}
 }
 
 // CardDiscarded narrates one card discarded from a hand. A discard forced by a
-// card's ability names that card (Old Yurk discards a card); a discard a player
-// makes as their own turn action carries no source and names the player.
+// card's ability names that card (Old Yurk discards a card) through the record's
+// frame; a discard a player makes as their own turn action has no frame and names
+// the player.
 type CardDiscarded struct {
 	// Player is whose hand the card left.
 	Player int
 	// Card is the discarded card.
 	Card LocalID
-	// Source is the card whose ability forced the discard, named when HasSource.
-	Source LocalID
-	// HasSource marks a discard forced by an ability, as opposed to a player's own.
-	HasSource bool
 }
 
-// Text renders the discard, naming the forcing card when there is one.
+// Text renders the discard, subjected to the forcing card when a frame carries one.
 func (e CardDiscarded) Text(n Namer) string {
-	who := n.PlayerName(e.Player)
-	if e.HasSource {
-		who = n.Name(e.Source)
-	}
-	return fmt.Sprintf("%s discards %s", who, nameMoved(n, e.Card, Hand, Discard))
+	return fmt.Sprintf("%s discards %s", subject(n, e.Player), nameMoved(n, e.Card, Hand, Discard))
 }
 
 // TopOfDeckArchived narrates the top card of a deck going to archives sight
@@ -112,8 +106,9 @@ type TopOfDeckArchived struct {
 
 // Text renders the top of a deck archived sight unseen.
 func (e TopOfDeckArchived) Text(n Namer) string {
-	return fmt.Sprintf("%s archives %s from the top of their deck",
-		n.PlayerName(e.Player), nameMoved(n, e.Card, Deck, Archives))
+	who, owner := actorPossessive(n, e.Player)
+	return fmt.Sprintf("%s archives %s from the top of %s deck",
+		who, nameMoved(n, e.Card, Deck, Archives), owner)
 }
 
 // ArchivesDiscarded narrates archives emptying into a discard pile.
@@ -125,29 +120,25 @@ type ArchivesDiscarded struct {
 // Text renders how many archived cards were discarded.
 func (e ArchivesDiscarded) Text(n Namer) string {
 	return fmt.Sprintf("%s discards %s",
-		n.PlayerName(e.Player), countNoun(e.Count, "archived card"))
+		subject(n, e.Player), countNoun(e.Count, "archived card"))
 }
 
 // TopOfDeckDiscarded narrates the top card of a deck going to the discard pile.
+// Under a card's ability the source card is the subject and the deck is named by
+// its owner ("Card discards X from the top of Player 2's deck"); on a player's own
+// action the player is the subject ("Player 2 discards X from the top of their
+// deck"). The subject comes from the record's frame, not a field on the entry.
 type TopOfDeckDiscarded struct {
 	Player int
 	Card   LocalID
-	// Source is the card whose ability discarded the top card, named as the subject
-	// when HasSource; the deck is then named by its owner ("Player 2's deck").
-	Source LocalID
-	// HasSource marks a discard forced by an ability, as opposed to a player's own.
-	HasSource bool
 }
 
 // Text renders the top of a deck going to the discard pile, which is public, so
 // the card lands face up and is named.
 func (e TopOfDeckDiscarded) Text(n Namer) string {
-	if e.HasSource {
-		return fmt.Sprintf("%s discards %s from the top of %s's deck",
-			n.Name(e.Source), nameMoved(n, e.Card, Deck, Discard), n.PlayerName(e.Player))
-	}
-	return fmt.Sprintf("%s discards %s from the top of their deck",
-		n.PlayerName(e.Player), nameMoved(n, e.Card, Deck, Discard))
+	who, owner := actorPossessive(n, e.Player)
+	return fmt.Sprintf("%s discards %s from the top of %s deck",
+		who, nameMoved(n, e.Card, Deck, Discard), owner)
 }
 
 // DeckAndDiscardSwapped narrates a deck and discard pile trading places.
@@ -155,7 +146,8 @@ type DeckAndDiscardSwapped struct{ Player int }
 
 // Text renders a deck and discard pile trading places.
 func (e DeckAndDiscardSwapped) Text(n Namer) string {
-	return fmt.Sprintf("%s swaps their deck and discard pile", n.PlayerName(e.Player))
+	who, owner := actorPossessive(n, e.Player)
+	return fmt.Sprintf("%s swaps %s deck and discard pile", who, owner)
 }
 
 // ShuffledIntoDeck narrates one or more zones shuffling into a deck (Screaming
@@ -173,21 +165,21 @@ type ShuffledIntoDeck struct {
 // Text renders the shuffle, naming the public discard cards and counting the
 // hidden ones. With no cards to move it is a bare deck shuffle.
 func (e ShuffledIntoDeck) Text(n Namer) string {
-	who := n.PlayerName(e.Player)
+	who, owner := actorPossessive(n, e.Player)
 	var clauses []string
 	if len(e.DiscardCards) > 0 {
-		clauses = append(clauses, namedCardsAnd(n, e.DiscardCards)+" from their discard pile")
+		clauses = append(clauses, namedCardsAnd(n, e.DiscardCards)+" from "+owner+" discard pile")
 	}
 	if e.HandCount > 0 {
-		clauses = append(clauses, countNoun(e.HandCount, "card")+" from their hand")
+		clauses = append(clauses, countNoun(e.HandCount, "card")+" from "+owner+" hand")
 	}
 	if e.ArchivesCount > 0 {
-		clauses = append(clauses, countNoun(e.ArchivesCount, "card")+" from their archives")
+		clauses = append(clauses, countNoun(e.ArchivesCount, "card")+" from "+owner+" archives")
 	}
 	if len(clauses) == 0 {
-		return fmt.Sprintf("%s shuffles their deck", who)
+		return fmt.Sprintf("%s shuffles %s deck", who, owner)
 	}
-	return fmt.Sprintf("%s shuffles %s into their deck", who, oxfordAnd(clauses))
+	return fmt.Sprintf("%s shuffles %s into %s deck", who, oxfordAnd(clauses), owner)
 }
 
 // CardPurged narrates a card in play being purged.
@@ -199,18 +191,21 @@ func (e CardPurged) Text(n Namer) string {
 }
 
 // CardPurgedFromHand narrates a card purged from a hand, naming the card whose
-// ability purged it and the player whose hand it left (Impspecter purges a card
-// from an opponent's hand).
+// ability purged it (from the record's frame) and the player whose hand it left
+// (Impspecter purges a card from an opponent's hand).
 type CardPurgedFromHand struct {
-	Source LocalID
-	Card   LocalID
-	Owner  int
+	Card  LocalID
+	Owner int
 }
 
 // Text renders the purge, naming the purging card and the hand's owner.
 func (e CardPurgedFromHand) Text(n Namer) string {
-	return fmt.Sprintf("%s purges %s from %s's hand",
-		n.Name(e.Source), nameMoved(n, e.Card, Hand, purged), n.PlayerName(e.Owner))
+	if s, ok := framedSource(n); ok {
+		return fmt.Sprintf("%s purges %s from %s's hand",
+			s, nameMoved(n, e.Card, Hand, purged), n.PlayerName(e.Owner))
+	}
+	return fmt.Sprintf("%s is purged from %s's hand",
+		nameMoved(n, e.Card, Hand, purged), n.PlayerName(e.Owner))
 }
 
 // CardPutOnTopOfDeck narrates a card leaving play onto its owner's deck.
@@ -271,20 +266,24 @@ func (e DeckShuffled) Text(n Namer) string {
 	return fmt.Sprintf("%s's deck is shuffled", n.PlayerName(e.Player))
 }
 
-// CardsShuffledIntoDeckBy narrates a source shuffling one owner's creatures into
+// CardsShuffledIntoDeckBy narrates a card shuffling one owner's creatures into
 // that owner's deck as one grouped line ("Lost in the Woods shuffles Murmook and
 // Chota Hazri into P2's deck"), so a card that shuffles several creatures at once
-// reads as one act rather than a passive line per creature.
+// reads as one act rather than a passive line per creature. The source card comes
+// from the record's frame.
 type CardsShuffledIntoDeckBy struct {
-	Source LocalID
-	Owner  int
-	Cards  []LocalID
+	Owner int
+	Cards []LocalID
 }
 
 // Text renders the grouped shuffle attributed to its source.
 func (e CardsShuffledIntoDeckBy) Text(n Namer) string {
-	return fmt.Sprintf("%s shuffles %s into %s's deck",
-		n.Name(e.Source), namedCardsAnd(n, e.Cards), n.PlayerName(e.Owner))
+	if s, ok := framedSource(n); ok {
+		return fmt.Sprintf("%s shuffles %s into %s's deck",
+			s, namedCardsAnd(n, e.Cards), n.PlayerName(e.Owner))
+	}
+	return fmt.Sprintf("%s shuffles %s into their deck",
+		n.PlayerName(e.Owner), namedCardsAnd(n, e.Cards))
 }
 
 // CardAbducted narrates a creature taken into the abductor's archives, which is
@@ -310,8 +309,9 @@ type CardReturnedFromDiscardToHand struct {
 
 // Text renders the card recovered from a discard pile to hand.
 func (e CardReturnedFromDiscardToHand) Text(n Namer) string {
-	return fmt.Sprintf("%s returns %s from their discard pile to hand",
-		n.PlayerName(e.Player), nameMoved(n, e.Card, Discard, Hand))
+	who, owner := actorPossessive(n, e.Player)
+	return fmt.Sprintf("%s returns %s from %s discard pile to hand",
+		who, nameMoved(n, e.Card, Discard, Hand), owner)
 }
 
 // CardPutFromDeckIntoHand narrates a card searched out of a deck. Both zones are
@@ -323,8 +323,9 @@ type CardPutFromDeckIntoHand struct {
 
 // Text renders the card searched out of a deck into hand.
 func (e CardPutFromDeckIntoHand) Text(n Namer) string {
-	return fmt.Sprintf("%s puts %s from their deck into hand",
-		n.PlayerName(e.Player), nameMoved(n, e.Card, Deck, Hand))
+	who, owner := actorPossessive(n, e.Player)
+	return fmt.Sprintf("%s puts %s from %s deck into hand",
+		who, nameMoved(n, e.Card, Deck, Hand), owner)
 }
 
 // CardPutFromDiscardOnTopOfDeck narrates a card set back on the deck out of a
@@ -336,8 +337,9 @@ type CardPutFromDiscardOnTopOfDeck struct {
 
 // Text renders the card set from a discard pile back on the deck.
 func (e CardPutFromDiscardOnTopOfDeck) Text(n Namer) string {
-	return fmt.Sprintf("%s puts %s from their discard pile on top of their deck",
-		n.PlayerName(e.Player), nameMoved(n, e.Card, Discard, Deck))
+	who, owner := actorPossessive(n, e.Player)
+	return fmt.Sprintf("%s puts %s from %s discard pile on top of %s deck",
+		who, nameMoved(n, e.Card, Discard, Deck), owner, owner)
 }
 
 // CardPutUnder narrates a card placed under a host (Masterplan, Jargogle,
@@ -360,7 +362,7 @@ func (e CardPutUnder) Text(n Namer) string {
 		what, face = "a card", "facedown"
 	}
 	return fmt.Sprintf("%s puts %s %s under %s",
-		n.PlayerName(e.Player), what, face, n.Name(e.Host))
+		subject(n, e.Player), what, face, n.Name(e.Host))
 }
 
 // CardGrafted narrates a card in play being grafted faceup under a host, out of

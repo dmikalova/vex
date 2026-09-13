@@ -16,7 +16,7 @@ import (
 //	Armor:  1
 //	Traits: Human • Knight
 //
-//	Enemy creatures cannot reap.
+//	Enemy Creatures cannot reap.
 func TestBarristerJoya(t *testing.T) {
 	t.Run("enemy creatures cannot reap", func(t *testing.T) {
 		var joya, enemy ct.Card

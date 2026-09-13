@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Traits: Location
 //
-//	Each Star Alliance creature gains, "Reap: Move 1 Æmber from Uncharted Lands to your pool."
+//	Each Star Alliance Creature gains, "Reap: Move 1 Æmber from Uncharted Lands to your pool."
 //	Play: Place 6 Æmber from the common supply on Uncharted Lands.
 var UnchartedLands = card.New(
 	"Uncharted Lands",

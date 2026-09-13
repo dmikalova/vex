@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Mutant
 //
-//	Reap: Trigger the reap effect of another creature.
+//	Reap: Trigger the reap effect of another Creature.
 var Replicator = card.New(
 	"Replicator",
 	card.House.Logos,

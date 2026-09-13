@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Destroy each friendly artifact. For each card destroyed this way, gain 2 Æmber.
+//	Play: Destroy each friendly Artifact. For each card destroyed this way, gain 2 Æmber.
 var OathOfPoverty = card.New(
 	"Oath of Poverty",
 	card.House.Sanctum,

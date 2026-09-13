@@ -15,7 +15,7 @@ import (
 //	Æmber:  1
 //	Traits: Item
 //
-//	Action: Destroy any number of friendly creatures, then forge a key at +6 Æmber current cost, reduced by 1 Æmber for each creature destroyed this way -> purge Obsidian Forge.
+//	Action: Destroy any number of friendly Creatures, then forge a key at +6 Æmber current cost, reduced by 1 Æmber for each Creature destroyed this way -> purge Obsidian Forge.
 func TestObsidianForge(t *testing.T) {
 	t.Run(
 		"sacrifices creatures, forges the reduced-cost key, and purges itself",

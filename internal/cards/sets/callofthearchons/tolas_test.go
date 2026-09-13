@@ -16,7 +16,7 @@ import (
 //	Traits: Imp
 //
 //	Elusive.
-//	Each creature gains, "Destroyed: Your opponent gains 1 Æmber."
+//	Each Creature gains, "Destroyed: Your opponent gains 1 Æmber."
 func TestTolas(t *testing.T) {
 	t.Run("a destroyed creature's opponent gains 1 Æmber", func(t *testing.T) {
 		var attacker, foe ct.Card

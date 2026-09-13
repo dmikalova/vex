@@ -163,6 +163,19 @@ func subject(n Namer, player int) string {
 	return n.PlayerName(player)
 }
 
+// actorPossessive names the party acting on a zone and the possessive determiner
+// for zones that party owns: under a card's ability the source card acts and the
+// owner is named ("Dew Faerie … from Player 2's discard pile"), while on a
+// player's own action the player acts and owns ("Player 2 … from their discard
+// pile"). A zone move names the owner outright rather than "their" so a card
+// acting on its own or an opponent's zone both read right.
+func actorPossessive(n Namer, player int) (who, owner string) {
+	if s, ok := framedSource(n); ok {
+		return s, n.PlayerName(player) + "'s"
+	}
+	return n.PlayerName(player), "their"
+}
+
 // openFrame pushes an attribution frame; every entry recorded until the returned
 // function runs inherits it. Frames nest, so an ability that causes another to
 // resolve keeps its own attribution on its own entries.

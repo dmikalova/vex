@@ -16,7 +16,7 @@ import (
 //	Traits: Weapon
 //
 //	Versatile.
-//	Action: Destroy Longfused Mines, and deal 3 damage to each enemy creature that is not on a flank.
+//	Action: Destroy Longfused Mines, and deal 3 damage to each enemy Creature that is not on a flank.
 func TestLongfusedMines(t *testing.T) {
 	t.Run("sacrifices itself and deals 3 to each non-flank enemy", func(t *testing.T) {
 		var left, mid, right ct.Card

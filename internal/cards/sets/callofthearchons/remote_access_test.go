@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Use an enemy artifact.
+//	Play: Use an enemy Artifact.
 func TestRemoteAccess(t *testing.T) {
 	t.Run("uses an enemy artifact, resolving it for you", func(t *testing.T) {
 		var theirs, drawn ct.Card

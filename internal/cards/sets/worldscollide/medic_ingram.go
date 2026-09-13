@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Human
 //
-//	Play/Fight/Reap: You may choose a creature - heal 3 damage from it, and ward it.
+//	Play/Fight/Reap: You may choose a Creature - heal 3 damage from it, and ward it.
 var MedicIngram = card.New(
 	"Medic Ingram",
 	card.House.StarAlliance,

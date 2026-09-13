@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Beast
 //
-//	Play/Reap: Deal 2 damage to each other creature.
+//	Play/Reap: Deal 2 damage to each other Creature.
 var PiranhaMonkeys = card.New(
 	"Piranha Monkeys",
 	card.House.Untamed,

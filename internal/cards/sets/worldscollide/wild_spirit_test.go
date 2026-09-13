@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains, "Reap: this creature captures 1 Æmber from your opponent."
+//	This Creature gains, "Reap: this Creature captures 1 Æmber from your opponent."
 func TestWildSpirit(t *testing.T) {
 	t.Run("its host captures 1 Æmber when it reaps", func(t *testing.T) {
 		var host ct.Card

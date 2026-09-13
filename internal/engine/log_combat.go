@@ -122,18 +122,21 @@ func (e HazardousDealt) Text(n Namer) string {
 
 // AbilityDamageDealt narrates damage a card's ability dealt another creature,
 // naming the card that dealt it — the ability-damage counterpart to AssaultDealt
-// and HazardousDealt. Damage a card deals itself is left to the passive
-// DamageTaken line, which reads better than naming the card twice.
+// and HazardousDealt. The dealing card is the record's frame source, not a field
+// on the entry. Damage a card deals itself is left to the passive DamageTaken
+// line, which reads better than naming the card twice.
 type AbilityDamageDealt struct {
-	Source LocalID
 	Amount int
 	Target LocalID
 }
 
-// Text renders the ability damage, naming the card that dealt it.
+// Text renders the ability damage, naming the card that dealt it as the frame's
+// source; with no frame it degrades to the passive line naming only the target.
 func (e AbilityDamageDealt) Text(n Namer) string {
-	return fmt.Sprintf("%s deals %d damage to %s",
-		n.Name(e.Source), e.Amount, n.Name(e.Target))
+	if s, ok := framedSource(n); ok {
+		return fmt.Sprintf("%s deals %d damage to %s", s, e.Amount, n.Name(e.Target))
+	}
+	return fmt.Sprintf("%s takes %d damage", n.Name(e.Target), e.Amount)
 }
 
 // damageEntry chooses how a landed hit narrates: pre-fight Assault or Hazardous
@@ -149,7 +152,7 @@ func (t DamageTarget) damageEntry(target LocalID, dealt, total int) LogEntry {
 		return HazardousDealt{Source: t.Source, Value: t.Amount, Amount: dealt, Target: target}
 	case abilityDamage:
 		if t.Source != target {
-			return AbilityDamageDealt{Source: t.Source, Amount: dealt, Target: target}
+			return AbilityDamageDealt{Amount: dealt, Target: target}
 		}
 		return DamageTaken{Creature: target, Amount: dealt, Total: total}
 	default:

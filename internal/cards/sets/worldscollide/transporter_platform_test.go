@@ -15,7 +15,7 @@ import (
 //	Æmber:  1
 //	Traits: Location
 //
-//	Action: Put a friendly creature and each upgrade attached to it into its owner's hand.
+//	Action: Put a friendly Creature and each Upgrade attached to it into its owner's hand.
 func TestTransporterPlatform(t *testing.T) {
 	var creature, upgrade ct.Card
 	h := ct.Play(t, ct.Setup{

@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Human • Witch
 //
-//	At the end of your turn, give each neighboring creature a +1 power counter.
+//	At the end of your turn, give each neighboring Creature a +1 power counter.
 func TestGrovekeeper(t *testing.T) {
 	t.Run("adds a power counter to each neighbor at the end of the turn", func(t *testing.T) {
 		var left, right ct.Card

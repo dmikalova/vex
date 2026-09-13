@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Shuffle any number of friendly Untamed creatures from your hand, discard pile, or battleline into your deck.
+//	Play: Shuffle any number of friendly Untamed Creatures from your hand, discard pile, or battleline into your deck.
 var SongOfSpring = card.New(
 	"Song of Spring",
 	card.House.Untamed,

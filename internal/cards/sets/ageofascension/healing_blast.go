@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Fully heal a creature. If you healed 4 or more damage, gain 2 Æmber.
+//	Play: Fully heal a Creature. If you healed 4 or more damage, gain 2 Æmber.
 var HealingBlast = card.New(
 	"Healing Blast",
 	card.House.Sanctum,

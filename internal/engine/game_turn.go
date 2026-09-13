@@ -296,13 +296,6 @@ func (g *Game) SkipForgePhaseNextTurn(player int, source LocalID) {
 	g.State.SkipForgeNext[player] = Bar[bool]{Value: true, Source: source}
 }
 
-// ScheduleDestroyEachCreatureAtEndOfTurn arms "destroy each creature" to resolve in
-// the active player's end-of-turn phase (Ragnarok). The flag must survive the ready
-// phase, which runs before end of turn, so endOfTurnPhase clears it as it fires.
-func (g *Game) ScheduleDestroyEachCreatureAtEndOfTurn(source LocalID) {
-	g.State.EndOfTurnDestroyAll = Bar[bool]{Value: true, Source: source}
-}
-
 // RaiseKeyCostNextTurn raises what a player's keys cost throughout their next turn
 // (Lash of Broken Dreams). Successive raises stack.
 func (g *Game) RaiseKeyCostNextTurn(player, amount int, source LocalID) {

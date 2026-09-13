@@ -396,12 +396,14 @@ type GameState struct {
 	SkipForge     [2]Bar[bool]
 	SkipForgeNext [2]Bar[bool]
 
-	// EndOfTurnDestroyAll, while set, schedules "destroy each creature" to resolve
-	// in the active player's end-of-turn phase (Ragnarok). It is a one-shot armed
-	// during the play phase; unlike the turn bars it must survive the ready phase
-	// (which runs before end of turn), so it is cleared only when it fires. Its
-	// Source is the card that armed it, for attribution.
-	EndOfTurnDestroyAll Bar[bool]
+	// Scheduled holds the effects armed to resolve in the active player's end-of-turn
+	// window (Ragnarok's board wipe), fired alongside the in-play "at the end of your
+	// turn" abilities (ADR 0013); ScheduledCount is how many of the fixed array are in
+	// use. Each is a one-shot armed during the play phase; unlike the turn bars it must
+	// survive the ready phase (which runs before end of turn), so it is cleared only as
+	// the window fires.
+	Scheduled      [maxScheduled]ScheduledEffect
+	ScheduledCount uint8
 
 	// Key surcharges. KeyCostBump[p] raises player p's key cost for the current turn;
 	// KeyCostBumpNext[p] arms that raise for p's next turn (Lash of Broken Dreams

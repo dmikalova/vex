@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Destroy each Scientist creature.
+//	Play: Destroy each Scientist Creature.
 var Curiosity = card.New(
 	"Curiosity",
 	card.House.Untamed,

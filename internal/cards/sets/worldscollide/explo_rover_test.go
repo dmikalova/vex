@@ -16,7 +16,7 @@ import (
 //	Traits: Robot
 //
 //	Skirmish.
-//	Explo-rover may be played as an upgrade instead of a creature, with the text: "This creature gains skirmish."
+//	Explo-rover may be played as an Upgrade instead of a Creature, with the text: "This Creature gains skirmish."
 func TestExploRover(t *testing.T) {
 	t.Run("played as a creature deals no retaliation damage when it fights", func(t *testing.T) {
 		var rover, foe ct.Card

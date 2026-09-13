@@ -15,7 +15,7 @@ import (
 //	Æmber:  1
 //	Traits: Location
 //
-//	After a creature is used to fight, it captures 1 Æmber from its opponent.
+//	After a Creature is used to fight, it captures 1 Æmber from its opponent.
 func TestShatteredThrone(t *testing.T) {
 	t.Run("the fighting creature captures 1 Æmber after it fights", func(t *testing.T) {
 		var attacker ct.Card

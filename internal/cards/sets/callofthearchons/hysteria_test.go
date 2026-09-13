@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Put each creature into its owner's hand.
+//	Play: Put each Creature into its owner's hand.
 func TestHysteria(t *testing.T) {
 	t.Run("puts each creature into its owner's hand", func(t *testing.T) {
 		var ally, foe ct.Card

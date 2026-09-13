@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Beast
 //
-//	After a player chooses an active house, that player destroys an artifact of that house.
+//	After a player chooses an active house, that player destroys an Artifact of that house.
 var GiantGnawbill = card.New(
 	"Giant Gnawbill",
 	card.House.Untamed,

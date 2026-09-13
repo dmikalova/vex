@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: For the remainder of the turn, each friendly creature cannot be dealt damage.
+//	Play: For the remainder of the turn, each friendly Creature cannot be dealt damage.
 var ShieldOfJustice = card.New(
 	"Shield of Justice",
 	card.House.Sanctum,

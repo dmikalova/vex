@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Destroy each creature with Æmber on it.
+//	Play: Destroy each Creature with Æmber on it.
 var GuiltyHearts = card.New(
 	"Guilty Hearts",
 	card.House.Dis,

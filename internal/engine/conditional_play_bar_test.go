@@ -14,7 +14,7 @@ func TestConditionalPlayBarText(t *testing.T) {
 		WithCannotPlayWhile(ConditionalPlayBar{Type: Creature, When: ControlsMoreCreatures{}}),
 	)
 	rules := cardRules(&def, false)
-	want := "If a player has more creatures in play than their opponent, they cannot play creatures."
+	want := "If a player has more Creatures in play than their opponent, they cannot play Creatures."
 	found := false
 	for _, r := range rules {
 		if r == want {

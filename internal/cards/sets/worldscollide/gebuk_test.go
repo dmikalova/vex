@@ -17,7 +17,7 @@ import (
 //	Power:  5
 //	Traits: Beast
 //
-//	Destroyed: Discard the top card of your deck. If it is a creature, swap it with Gebuk.
+//	Destroyed: Discard the top card of your deck. If it is a Creature, swap it with Gebuk.
 func TestGebuk(t *testing.T) {
 	t.Run("a creature off the top of the deck enters play in Gebuk's slot", func(t *testing.T) {
 		var gebuk, left, right, reborn ct.Card

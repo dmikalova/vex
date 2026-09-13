@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Traits: Location
 //
-//	Each friendly flank creature gains +2 power.
+//	Each friendly flank Creature gains +2 power.
 func TestHaedrothsWall(t *testing.T) {
 	t.Run("gives friendly flank creatures +2 power while in play", func(t *testing.T) {
 		var left, middle, right, enemy ct.Card

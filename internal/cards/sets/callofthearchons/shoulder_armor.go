@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	While this creature is on a flank, it gains +2 power and +2 armor.
+//	While this Creature is on a flank, it gains +2 power and +2 armor.
 var ShoulderArmor = card.New(
 	"Shoulder Armor",
 	card.House.Sanctum,

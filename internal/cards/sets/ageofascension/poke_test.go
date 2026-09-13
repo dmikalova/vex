@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Deal 1 damage to an enemy creature. If this damage destroys that creature, draw a card.
+//	Play: Deal 1 damage to an enemy Creature. If this damage destroys that Creature, draw a card.
 func TestPoke(t *testing.T) {
 	t.Run("draws a card when the damage destroys the creature", func(t *testing.T) {
 		var enemy, top ct.Card

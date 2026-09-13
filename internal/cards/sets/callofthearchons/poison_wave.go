@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Deal 2 damage to each creature.
+//	Play: Deal 2 damage to each Creature.
 var PoisonWave = card.New(
 	"Poison Wave",
 	card.House.Shadows,

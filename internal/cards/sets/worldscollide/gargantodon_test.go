@@ -17,7 +17,7 @@ import (
 //	Traits: Beast
 //
 //	Gargantodon deals 4 Damage when fighting.
-//	Each Æmber that would be stolen is captured by a creature controlled by the active player instead.
+//	Each Æmber that would be stolen is captured by a Creature controlled by the active player instead.
 //	Gargantodon enters play stunned.
 func TestGargantodon(t *testing.T) {
 	t.Run("enters play stunned", func(t *testing.T) {

@@ -15,7 +15,7 @@ import (
 //	Power:  5
 //	Traits: Giant
 //
-//	Play: Ready and fight with a neighboring creature.
+//	Play: Ready and fight with a neighboring Creature.
 func TestGangerChieftain(t *testing.T) {
 	t.Run("readies and fights with a neighboring creature when played", func(t *testing.T) {
 		var neighbor, foe ct.Card

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  2
 //	Traits: Robot • Experiment
 //
-//	Play/Fight/Reap: Deal 8 damage to a creature that shares a house with 2 of its neighbors.
+//	Play/Fight/Reap: Deal 8 damage to a Creature that shares a house with 2 of its neighbors.
 var MiniGroupthinkTank = card.New(
 	"Mini Groupthink Tank",
 	card.House.Logos,

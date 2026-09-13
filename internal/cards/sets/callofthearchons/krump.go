@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  6
 //	Traits: Giant
 //
-//	After a creature is destroyed in a fight with Krump, your opponent loses 1 Æmber.
+//	After a Creature is destroyed in a fight with Krump, your opponent loses 1 Æmber.
 var Krump = card.New(
 	"Krump",
 	card.House.Brobnar,

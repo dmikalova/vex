@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Destroy a creature with no Æmber on it.
+//	Play: Destroy a Creature with no Æmber on it.
 var DrainingTouch = card.New(
 	"Draining Touch",
 	card.House.Dis,

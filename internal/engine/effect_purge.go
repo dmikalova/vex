@@ -129,13 +129,13 @@ func (e PurgeCard) resolveGate(ctx *EffectContext) bool {
 				bonus += ctx.Resolver.AemberBonus(id)
 				purgeFrom(ctx, Discard, pile, id)
 				purged++
+				ctx.Produced.Purged[pile]++
 				if e.GainOwnerAember {
 					ctx.Resolver.GainAember(pile, 1)
 				}
 			}
 		}
 	}
-	ctx.Produced.Purged = purged
 	ctx.Produced.PurgedAemberBonus = bonus
 	return purged > 0
 }
@@ -145,7 +145,7 @@ func (e PurgeCard) resolveGate(ctx *EffectContext) bool {
 func purgeFrom(ctx *EffectContext, from Zone, owner int, id LocalID) {
 	switch from {
 	case Hand:
-		ctx.Resolver.PurgeFromHand(owner, id, ctx.Source)
+		ctx.Resolver.PurgeFromHand(owner, id)
 	case Discard:
 		ctx.Resolver.PurgeFromDiscard(owner, id)
 	default: // inPlay
@@ -204,7 +204,7 @@ func (e PurgeFromHand) resolveGate(ctx *EffectContext) bool {
 	if len(ids) == 1 {
 		ctx.It, ctx.HasIt = ids[0], true
 	}
-	ctx.Produced.Purged = len(ids)
+	ctx.Produced.Purged[owner] = len(ids)
 	return len(ids) > 0
 }
 
@@ -279,6 +279,7 @@ func (e PurgeCreature) purge(ctx *EffectContext, ids []LocalID) bool {
 	purged := 0
 	for _, id := range ids {
 		if resolverInPlay(ctx, id) {
+			ctx.Produced.Purged[ctx.Resolver.Controller(id)]++
 			purgeFrom(ctx, inPlay, 0, id)
 			purged++
 			continue
@@ -286,26 +287,37 @@ func (e PurgeCreature) purge(ctx *EffectContext, ids []LocalID) bool {
 		owner := ctx.Resolver.Owner(id)
 		for _, d := range ctx.Resolver.Discard(owner) {
 			if d == id {
+				ctx.Produced.Purged[owner]++
 				purgeFrom(ctx, Discard, owner, id)
 				purged++
 				break
 			}
 		}
 	}
-	ctx.Produced.Purged = purged
 	return purged > 0
 }
 
-// CardsPurged counts the cards the most recent purge in this resolution removed —
-// the "for each creature purged this way" tally (One Last Job steals 1 Æmber for
-// each creature it purged).
-type CardsPurged struct{}
+// CardsPurged counts the cards the most recent purge in this resolution removed,
+// both players' shares together — the "for each card purged this way" tally. Type
+// names the noun the clause repeats: unset it reads "card", Creature it reads
+// "creature" (One Last Job steals 1 Æmber for each creature it purged).
+type CardsPurged struct {
+	Type CardType
+}
 
-// Value reads the tally the preceding purge recorded.
-func (CardsPurged) Value(ctx *EffectContext) int { return ctx.Produced.Purged }
+// Value reads the whole tally the preceding purge recorded, both sides together.
+func (CardsPurged) Value(ctx *EffectContext) int {
+	return ctx.Produced.Purged[0] + ctx.Produced.Purged[1]
+}
 
 // CountText renders the singular noun the "for each" clause repeats.
-func (CardsPurged) CountText() string { return "creature purged this way" }
+func (c CardsPurged) CountText() string {
+	noun := "card"
+	if c.Type == Creature {
+		noun = "creature"
+	}
+	return noun + " purged this way"
+}
 
 // PurgedAemberBonus totals the printed Æmber bonus of the cards the most recent
 // PurgeCard removed this resolution — Infurnace's opponent loses Æmber equal to the

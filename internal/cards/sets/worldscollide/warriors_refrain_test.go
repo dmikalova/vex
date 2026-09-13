@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Stun each creature with power 3 or lower.
+//	Play: Stun each Creature with power 3 or lower.
 func TestWarriorsRefrain(t *testing.T) {
 	t.Run("stuns each creature with power 3 or lower", func(t *testing.T) {
 		var weak, strong ct.Card

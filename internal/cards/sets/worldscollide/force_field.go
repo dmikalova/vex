@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains, "Reap: Ward this creature."
+//	This Creature gains, "Reap: Ward this Creature."
 var ForceField = card.New(
 	"Force Field",
 	card.House.StarAlliance,

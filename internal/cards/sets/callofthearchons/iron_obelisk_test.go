@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Traits: Location
 //
-//	Your opponent's keys cost +1 Æmber for each friendly damaged Brobnar creature.
+//	Your opponent's keys cost +1 Æmber for each friendly damaged Brobnar Creature.
 func TestIronObelisk(t *testing.T) {
 	t.Run("charges the opponent 1 more per friendly damaged Brobnar creature", func(t *testing.T) {
 		var hurt, healthy, offHouse ct.Card

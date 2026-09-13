@@ -21,11 +21,13 @@ type CardPlayedToBattleline struct {
 
 // Text renders the creature played and the flank it landed on.
 func (e CardPlayedToBattleline) Text(n Namer) string {
+	who, owner := actorPossessive(n, e.Player)
 	if e.Interior {
 		return fmt.Sprintf(
-			"%s plays %s into their battleline",
-			n.PlayerName(e.Player),
+			"%s plays %s into %s battleline",
+			who,
 			n.Name(e.Card),
+			owner,
 		)
 	}
 	side := "right"
@@ -33,9 +35,10 @@ func (e CardPlayedToBattleline) Text(n Namer) string {
 		side = "left"
 	}
 	return fmt.Sprintf(
-		"%s plays %s on their %s flank",
-		n.PlayerName(e.Player),
+		"%s plays %s on %s %s flank",
+		who,
 		n.Name(e.Card),
+		owner,
 		side,
 	)
 }
@@ -48,7 +51,7 @@ type ArtifactPlayed struct {
 
 // Text renders the artifact a player played.
 func (e ArtifactPlayed) Text(n Namer) string {
-	return fmt.Sprintf("%s plays artifact %s", n.PlayerName(e.Player), n.Name(e.Card))
+	return fmt.Sprintf("%s plays artifact %s", subject(n, e.Player), n.Name(e.Card))
 }
 
 // ActionPlayed narrates a tactic resolving on its way to the discard pile.
@@ -59,7 +62,7 @@ type ActionPlayed struct {
 
 // Text renders the tactic a player played.
 func (e ActionPlayed) Text(n Namer) string {
-	return fmt.Sprintf("%s plays action %s", n.PlayerName(e.Player), n.Name(e.Card))
+	return fmt.Sprintf("%s plays action %s", subject(n, e.Player), n.Name(e.Card))
 }
 
 // UpgradeAttached narrates an upgrade going onto a creature.
@@ -72,7 +75,7 @@ type UpgradeAttached struct {
 // Text renders the upgrade, and the creature it went onto.
 func (e UpgradeAttached) Text(n Namer) string {
 	return fmt.Sprintf("%s attaches %s to %s",
-		n.PlayerName(e.Player), n.Name(e.Upgrade), n.Name(e.Host))
+		subject(n, e.Player), n.Name(e.Upgrade), n.Name(e.Host))
 }
 
 // CardPutIntoPlay narrates a card entering play without being played from hand.
@@ -83,23 +86,28 @@ type CardPutIntoPlay struct {
 
 // Text renders a card put into play under a player's control.
 func (e CardPutIntoPlay) Text(n Namer) string {
-	return fmt.Sprintf("%s puts %s into play under their control",
-		n.PlayerName(e.Player), n.Name(e.Card))
+	who, owner := actorPossessive(n, e.Player)
+	return fmt.Sprintf("%s puts %s into play under %s control",
+		who, n.Name(e.Card), owner)
 }
 
 // PlayedFromTopOfDeck narrates a card an ability played off the top of a deck
-// (Wild Wormhole), crediting the ability's card and naming whose deck it came
-// from, so the following placement line reads as the consequence of that play.
+// (Wild Wormhole), crediting the ability's card from the record's frame and
+// naming whose deck it came from, so the following placement line reads as the
+// consequence of that play.
 type PlayedFromTopOfDeck struct {
-	Source LocalID
 	Card   LocalID
 	Player int
 }
 
 // Text renders the ability, the card it played, and whose deck it came off.
 func (e PlayedFromTopOfDeck) Text(n Namer) string {
+	who, ok := framedSource(n)
+	if !ok {
+		who = n.PlayerName(e.Player)
+	}
 	return fmt.Sprintf("%s plays %s from the top of %s's deck",
-		n.Name(e.Source), n.Name(e.Card), n.PlayerName(e.Player))
+		who, n.Name(e.Card), n.PlayerName(e.Player))
 }
 
 // AemberBonusGained narrates the Æmber bonus printed on a card being collected.
@@ -140,20 +148,6 @@ type AemberSpentToPlay struct {
 func (e AemberSpentToPlay) Text(n Namer) string {
 	return fmt.Sprintf("%s loses %d Æmber to play %s",
 		n.PlayerName(e.Player), e.Amount, n.Name(e.Card))
-}
-
-// TollPaid narrates a toll an opponent's card levied on an action.
-type TollPaid struct {
-	Player int
-	Payee  int
-	Amount int
-	Action TollAction
-}
-
-// Text renders the toll paid, to whom, and the action it bought.
-func (e TollPaid) Text(n Namer) string {
-	return fmt.Sprintf("%s gives %d Æmber to %s to %s",
-		n.PlayerName(e.Player), e.Amount, n.PlayerName(e.Payee), e.Action.phrase())
 }
 
 // Reaped narrates a reap that put its Æmber in the pool.

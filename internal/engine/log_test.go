@@ -28,7 +28,7 @@ func TestLogEntryText(t *testing.T) {
 		{CardsDrawn{Player: 1, Count: 3, Hand: 6}, "P1 draws 3 cards, up to 6 in hand"},
 		{CardsDrawn{Player: 1, Count: 1, Hand: 6}, "P1 draws 1 card, up to 6 in hand"},
 		{CardsDrawn{Player: 0, Count: 0, Hand: 2}, "P0 draws nothing, holding 2"},
-		{CardsDrawnBy{Source: 1, Player: 0, Count: 1}, "Card1 has P0 draw 1 card"},
+		{CardsDrawnBy{Player: 0, Count: 1}, "P0 draws 1 card"},
 		{HouseChosen{Player: 1, House: Brobnar}, "P1 chooses house Brobnar"},
 		{ForgeSkipped{Player: 0}, "P0 skips their forge a key phase"},
 		{
@@ -105,6 +105,10 @@ func TestLogEntryText(t *testing.T) {
 		{CreatureStunned{Creature: 2, By: 2}, "Card2 is stunned"},
 		{CreatureStunned{Creature: 2, By: 5}, "Card5 stunned Card2"},
 		{CreatureStunned{Creature: 2, By: 5, AlreadyStunned: true}, "Card2 is already stunned"},
+		{
+			CreaturesUnstunned{Player: 0, Creatures: []LocalID{2, 5}},
+			"P0 unstuns Card2 and Card5",
+		},
 		{CreatureEnraged{Creature: 2, By: 2}, "Card2 is enraged"},
 		{CreatureEnraged{Creature: 2, By: 5}, "Card5 enraged Card2"},
 		{CreatureEnraged{Creature: 2, By: 5, AlreadyEnraged: true}, "Card2 is already enraged"},
@@ -188,8 +192,8 @@ func TestLogEntryText(t *testing.T) {
 			"Card2's 5 Hazardous deals 5 damage to Card1",
 		},
 		{
-			AbilityDamageDealt{Source: 1, Amount: 4, Target: 2},
-			"Card1 deals 4 damage to Card2",
+			AbilityDamageDealt{Amount: 4, Target: 2},
+			"Card2 takes 4 damage",
 		},
 
 		// Zones.
@@ -207,10 +211,6 @@ func TestLogEntryText(t *testing.T) {
 		{
 			TopOfDeckDiscarded{Player: 0, Card: 6},
 			"P0 discards Card6 from the top of their deck",
-		},
-		{
-			TopOfDeckDiscarded{Player: 1, Card: 6, Source: 3, HasSource: true},
-			"Card3 discards Card6 from the top of P1's deck",
 		},
 		{
 			CardMoved{Player: 0, Card: 6, From: Deck, To: Discard},
@@ -232,10 +232,6 @@ func TestLogEntryText(t *testing.T) {
 		{ShuffledIntoDeck{Player: 1}, "P1 shuffles their deck"},
 		{CardDiscarded{Player: 0, Card: 6}, "P0 discards Card6"},
 		{
-			CardDiscarded{Player: 0, Card: 6, Source: 3, HasSource: true},
-			"Card3 discards Card6",
-		},
-		{
 			CardMoved{Player: 0, Card: 6, From: Archives, To: Discard},
 			"P0 discards Card6 from their archives",
 		},
@@ -245,8 +241,8 @@ func TestLogEntryText(t *testing.T) {
 		},
 		{CardMoved{Player: 1, Card: 6, From: Hand, To: purged}, "P1 purges Card6 from a hand"},
 		{
-			CardPurgedFromHand{Source: 1, Card: 6, Owner: 0},
-			"Card1 purges Card6 from P0's hand",
+			CardPurgedFromHand{Card: 6, Owner: 0},
+			"Card6 is purged from P0's hand",
 		},
 		{
 			CardMoved{Player: 1, Card: 6, From: Archives, To: purged},
@@ -264,8 +260,8 @@ func TestLogEntryText(t *testing.T) {
 		{CardShuffledIntoDeck{Card: 6, Owner: 1}, "Card6 is shuffled into P1's deck"},
 		{DeckShuffled{Player: 1}, "P1's deck is shuffled"},
 		{
-			CardsShuffledIntoDeckBy{Source: 5, Owner: 1, Cards: []LocalID{3, 8}},
-			"Card5 shuffles Card3 and Card8 into P1's deck",
+			CardsShuffledIntoDeckBy{Owner: 1, Cards: []LocalID{3, 8}},
+			"P1 shuffles Card3 and Card8 into their deck",
 		},
 		{
 			CardAbducted{Player: 0, Card: 6, Owner: 1},
@@ -314,8 +310,8 @@ func TestLogEntryText(t *testing.T) {
 			"P1 puts Card9 into play under their control",
 		},
 		{
-			PlayedFromTopOfDeck{Source: 3, Card: 9, Player: 0},
-			"Card3 plays Card9 from the top of P0's deck",
+			PlayedFromTopOfDeck{Card: 9, Player: 0},
+			"P0 plays Card9 from the top of P0's deck",
 		},
 		{AemberBonusGained{Player: 0, Card: 9, Amount: 2}, "P0 gains 2 Æmber from Card9"},
 		{
@@ -323,10 +319,6 @@ func TestLogEntryText(t *testing.T) {
 			"Card7 captures 2 Æmber from Card9's bonus",
 		},
 		{AemberSpentToPlay{Player: 0, Card: 9, Amount: 1}, "P0 loses 1 Æmber to play Card9"},
-		{
-			TollPaid{Player: 0, Payee: 1, Amount: 1, Action: TollUseArtifact},
-			"P0 gives 1 Æmber to P1 to use an artifact",
-		},
 		{Reaped{Player: 0, Card: 2}, "P0 reaps with Card2 (+1 Æmber)"},
 		{
 			ReapedStealing{Player: 0, Card: 2, Amount: 1},
@@ -352,6 +344,14 @@ func TestLogEntryText(t *testing.T) {
 		{
 			AemberGivenAfterForging{Player: 0, To: 1, Amount: 3},
 			"P0 gives 3 Æmber to P1 after forging a key",
+		},
+		{
+			AemberGiven{Giver: 0, Receiver: 1, Amount: 1},
+			"P0 gives 1 Æmber to P1",
+		},
+		{
+			AemberGiven{Giver: 0, Receiver: 1, Amount: 1, Reason: TollUseArtifact},
+			"P0 gives 1 Æmber to P1 to use an artifact",
 		},
 
 		// Grants, chains, and manual mode.
@@ -461,10 +461,11 @@ func TestLogEntryText(t *testing.T) {
 	}
 }
 
-// TestRecordTextSubjectsToSourceCard pins the wording of the Æmber entries whose
+// TestRecordTextSubjectsToSourceCard pins the wording of the entries whose
 // subject is the source card the record's frame carries. Under a card ability the
-// card is the subject ("Card7 gains 1 Æmber"); when the ability acts on the other
-// player's pool the affected player is named too ("Card7 has P1 gain 2 Æmber").
+// card is the subject ("Card7 deals 4 damage to Card2"); when the ability acts on
+// the other player's pool the affected player is named too ("Card7 has P1 gain 2
+// Æmber").
 func TestRecordTextSubjectsToSourceCard(t *testing.T) {
 	n := stubNamer{}
 	// A frame opened for a card ability P0 controls, sourced to Card7.
@@ -480,6 +481,86 @@ func TestRecordTextSubjectsToSourceCard(t *testing.T) {
 		{
 			AemberStolen{Player: 0, From: 1, Amount: 2, FromSupply: true},
 			"Card7 steals 2 Æmber from the common supply",
+		},
+		{AbilityDamageDealt{Amount: 4, Target: 2}, "Card7 deals 4 damage to Card2"},
+		{
+			TopOfDeckDiscarded{Player: 1, Card: 6},
+			"Card7 discards Card6 from the top of P1's deck",
+		},
+		{
+			PlayedFromTopOfDeck{Card: 9, Player: 0},
+			"Card7 plays Card9 from the top of P0's deck",
+		},
+		{
+			ChainsGained{Player: 1, Amount: 2, Total: 2},
+			"Card7 has P1 gain 2 chains (2 total)",
+		},
+		{
+			CardMoved{Player: 0, Card: 6, From: Discard, To: Archives},
+			"Card7 archives Card6 from P0's discard pile",
+		},
+		{
+			CardMoved{Player: 1, Card: 6, From: Deck, To: Discard},
+			"Card7 discards Card6 from P1's deck",
+		},
+		{
+			TopOfDeckArchived{Player: 0, Card: 6},
+			"Card7 archives a card from the top of P0's deck",
+		},
+		{DeckAndDiscardSwapped{Player: 1}, "Card7 swaps P1's deck and discard pile"},
+		{
+			ShuffledIntoDeck{Player: 0, DiscardCards: []LocalID{6}, HandCount: 2},
+			"Card7 shuffles Card6 from P0's discard pile and 2 cards from P0's hand into P0's deck",
+		},
+		{ShuffledIntoDeck{Player: 1}, "Card7 shuffles P1's deck"},
+		{
+			CardReturnedFromDiscardToHand{Player: 0, Card: 6},
+			"Card7 returns Card6 from P0's discard pile to hand",
+		},
+		{
+			CardPutFromDeckIntoHand{Player: 1, Card: 6},
+			"Card7 puts a card from P1's deck into hand",
+		},
+		{
+			CardPutFromDiscardOnTopOfDeck{Player: 0, Card: 6},
+			"Card7 puts Card6 from P0's discard pile on top of P0's deck",
+		},
+		{
+			CardArchivedFromPurge{Player: 0, Card: 6},
+			"Card7 archives Card6 from P0's purge pile",
+		},
+		{
+			CardPlayedToBattleline{Player: 0, Card: 9},
+			"Card7 plays Card9 on P0's right flank",
+		},
+		{
+			CardPlayedToBattleline{Player: 0, Card: 9, Interior: true},
+			"Card7 plays Card9 into P0's battleline",
+		},
+		{
+			CardPutIntoPlay{Player: 1, Card: 9},
+			"Card7 puts Card9 into play under P1's control",
+		},
+		{
+			CreaturesUnstunned{Player: 0, Creatures: []LocalID{2, 5}},
+			"Card7 unstuns Card2 and Card5",
+		},
+		{CardsDrawnBy{Player: 0, Count: 1}, "Card7 has P0 draw 1 card"},
+		{
+			AemberGiven{Giver: 0, Receiver: 1, Amount: 1, Reason: TollUseArtifact},
+			"Card7 has P0 give 1 Æmber to P1 to use an artifact",
+		},
+		{
+			CardDiscarded{Player: 0, Card: 6},
+			"Card7 discards Card6",
+		},
+		{
+			CardPurgedFromHand{Card: 6, Owner: 0},
+			"Card7 purges Card6 from P0's hand",
+		},
+		{
+			CardsShuffledIntoDeckBy{Owner: 1, Cards: []LocalID{3, 8}},
+			"Card7 shuffles Card3 and Card8 into P1's deck",
 		},
 	}
 	for _, c := range cases {

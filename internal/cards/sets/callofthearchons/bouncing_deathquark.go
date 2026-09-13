@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Destroy an enemy creature and a friendly creature -> if there is a friendly creature in play, you may repeat this effect.
+//	Play: Destroy an enemy Creature and a friendly Creature -> if there is a friendly Creature in play, you may repeat this effect.
 var BouncingDeathquark = card.New(
 	"Bouncing Deathquark",
 	card.House.Logos,
@@ -16,11 +16,11 @@ var BouncingDeathquark = card.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "107"),
 	card.WithAbility(
-		card.Trigger.Play, card.MayRepeat{
-			Cond: card.InPlay{
+		card.Trigger.Play, card.Repeat{
+			Gate: card.MayWhile{Cond: card.InPlay{
 				Player: card.Controller,
 				Type:   card.Type.Creature,
-			},
+			}},
 			Do: card.Sequence{
 				Effects: []card.Effect{
 					card.Destroy{Target: card.Target.EnemyCreature},

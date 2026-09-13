@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Your opponent's keys cost +1 Æmber for each disruption counter on Disruption Field.
-//	This creature gains, "Fight/Reap: Put a disruption counter on Disruption Field."
+//	This Creature gains, "Fight/Reap: Put a disruption counter on Disruption Field."
 var DisruptionField = card.New(
 	"Disruption Field",
 	card.House.StarAlliance,

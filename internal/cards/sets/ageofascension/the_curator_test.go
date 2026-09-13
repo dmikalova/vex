@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Human • Scientist
 //
-//	Friendly artifacts enter play ready.
+//	Friendly Artifacts enter play ready.
 func TestTheCurator(t *testing.T) {
 	var art ct.Card
 	h := ct.Play(t, ct.Setup{

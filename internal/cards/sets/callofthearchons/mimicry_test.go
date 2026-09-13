@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Play a tactic from your opponent's discard pile.
+//	Play: Play a Tactic from your opponent's discard pile.
 func TestMimicry(t *testing.T) {
 	t.Run("plays an action from the opponent's discard and puts it on top", func(t *testing.T) {
 		var copied, buried, prey ct.Card

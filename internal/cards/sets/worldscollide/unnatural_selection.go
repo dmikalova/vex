@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Choose 3 friendly creatures and 3 enemy creatures - destroy each other creature.
+//	Play: Choose 3 friendly Creatures and 3 enemy Creatures - destroy each other Creature.
 var UnnaturalSelection = card.New(
 	"Unnatural Selection",
 	card.House.Untamed,

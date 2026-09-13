@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Move all Æmber from the most powerful creature to your pool. Destroy the chosen creature.
+//	Play: Move all Æmber from the most powerful Creature to your pool. Destroy the chosen Creature.
 func TestSicSemperTyrannosaurus(t *testing.T) {
 	t.Run("empties the most powerful creature into your pool and destroys it", func(t *testing.T) {
 		var big, small ct.Card

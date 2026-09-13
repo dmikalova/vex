@@ -16,7 +16,7 @@ import (
 //	Traits: Weapon
 //
 //	Versatile.
-//	Action: Destroy Mighty Javelin. Deal 4 damage to a creature.
+//	Action: Destroy Mighty Javelin. Deal 4 damage to a Creature.
 func TestMightyJavelin(t *testing.T) {
 	t.Run("destroys itself and deals 4 damage to a creature", func(t *testing.T) {
 		var foe ct.Card

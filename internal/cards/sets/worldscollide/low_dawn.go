@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: If there are 3 or more Untamed creatures in your discard pile, gain 2 Æmber. Shuffle each Untamed creature from your discard pile into your deck.
+//	Play: If there are 3 or more Untamed Creatures in your discard pile, gain 2 Æmber. Shuffle each Untamed Creature from your discard pile into your deck.
 var LowDawn = card.New(
 	"Low Dawn",
 	card.House.Untamed,

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Use an enemy artifact.
+//	Play: Use an enemy Artifact.
 var RemoteAccess = card.New(
 	"Remote Access",
 	card.House.Logos,

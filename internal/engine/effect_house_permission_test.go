@@ -63,7 +63,7 @@ func TestMayPlayOrUseText(t *testing.T) {
 				Types:  CardTypesOf(Artifact, Upgrade, Tactic),
 				Count:  1,
 			},
-			"you may play a non-Star Alliance artifact, upgrade, or Tactic this turn",
+			"you may play a non-Star Alliance artifact, upgrade, or tactic this turn",
 		},
 		{
 			"exclusion play or use (CXO Taber)",
@@ -267,7 +267,7 @@ func TestCardTypes(t *testing.T) {
 	if got := CardTypesOf(Artifact, Upgrade).list(); got != "artifact or upgrade" {
 		t.Errorf("two-type list = %q, want %q", got, "artifact or upgrade")
 	}
-	if got := CardTypesOf(Artifact, Upgrade, Tactic).list(); got != "artifact, upgrade, or Tactic" {
-		t.Errorf("three-type list = %q, want %q", got, "artifact, upgrade, or Tactic")
+	if got := CardTypesOf(Artifact, Upgrade, Tactic).list(); got != "artifact, upgrade, or tactic" {
+		t.Errorf("three-type list = %q, want %q", got, "artifact, upgrade, or tactic")
 	}
 }

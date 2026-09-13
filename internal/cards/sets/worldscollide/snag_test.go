@@ -15,7 +15,7 @@ import (
 //	Power:  5
 //	Traits: Demon
 //
-//	Fight: Your opponent must choose the house of the creature Snag fights as their active house on their next turn.
+//	Fight: Your opponent must choose the house of the Creature Snag fights as their active house on their next turn.
 func TestSnag(t *testing.T) {
 	var snag, foe ct.Card
 	h := ct.Play(t, ct.Setup{

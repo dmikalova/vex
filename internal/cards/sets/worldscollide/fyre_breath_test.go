@@ -14,8 +14,8 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains +3 power.
-//	This creature gains, "Before Fight: Deal 2 damage to each neighbor of the creature this creature fights."
+//	This Creature gains +3 power.
+//	This Creature gains, "Before Fight: Deal 2 damage to each neighbor of the Creature this Creature fights."
 func TestFyreBreath(t *testing.T) {
 	t.Run("host deals 2 damage to each neighbor of the creature it fights", func(t *testing.T) {
 		var host, left, target, right ct.Card

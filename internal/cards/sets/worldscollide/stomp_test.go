@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Deal 5 damage to a creature. If this damage destroys that creature, exalt a friendly creature.
+//	Play: Deal 5 damage to a Creature. If this damage destroys that Creature, exalt a friendly Creature.
 func TestStomp(t *testing.T) {
 	t.Run("exalts a friendly creature when the damage destroys the target", func(t *testing.T) {
 		var foe, ally ct.Card

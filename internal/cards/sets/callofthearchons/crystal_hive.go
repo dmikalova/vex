@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Traits: Location
 //
-//	Action: For the remainder of the turn, after a creature reaps, gain 1 Æmber.
+//	Action: For the remainder of the turn, after a Creature reaps, gain 1 Æmber.
 var CrystalHive = card.New(
 	"Crystal Hive",
 	card.House.Mars,

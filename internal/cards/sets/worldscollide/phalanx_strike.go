@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: For each friendly creature in play, deal 1 damage to a creature. You may exalt a friendly creature to repeat the preceding effect.
+//	Play: For each friendly Creature in play, deal 1 damage to a Creature. You may exalt a friendly Creature to repeat the preceding effect.
 var PhalanxStrike = card.New(
 	"Phalanx Strike",
 	card.House.Saurian,
@@ -18,7 +18,7 @@ var PhalanxStrike = card.New(
 	card.Provenance(card.WC, "189"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.ExaltToRepeat{
+		card.Trigger.Play, card.Repeat{
 			Do: card.DealDamage{
 				Amount: 1,
 				Per: card.InPlay{
@@ -27,6 +27,6 @@ var PhalanxStrike = card.New(
 				},
 				Target: card.Target.Creature,
 			},
-			Exalt: card.Target.FriendlyCreature,
+			Gate: card.ByExalting{Creature: card.Target.FriendlyCreature},
 		}),
 )

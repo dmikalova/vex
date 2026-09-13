@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Deal 2 damage to a creature and purge any number of cards from your archives to deal an additional 2 damage to it for each card purged this way.
+//	Play: Deal 2 damage to a Creature and purge any number of cards from your archives, and for each card purged this way, deal 2 damage to it.
 var DestructiveAnalysis = card.New(
 	"Destructive Analysis",
 	card.House.Mars,
@@ -22,11 +22,13 @@ var DestructiveAnalysis = card.New(
 			Amount: 2,
 			After:  card.Always,
 			Target: card.Target.Creature,
-			Then: card.PurgeArchivesForDamage{
-				Amount: 2,
-				Target: card.Target.Triggering,
-			},
+			Then: card.Sequence{Effects: []card.Effect{
+				card.PurgeArchives{},
+				card.DealDamage{
+					Target: card.Target.Triggering,
+					Amount: 2,
+					Per:    card.CardsPurged{},
+				},
+			}},
 		}),
 )
-
-// TODO: why is damage then needed instead of a sequence. PurgeArchivesForDamage is ridiculous

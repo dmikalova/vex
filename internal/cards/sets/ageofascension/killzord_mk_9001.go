@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Upgrade
 //	Rarity: Rare
 //
-//	This creature gains +2 power, +2 armor, and skirmish.
+//	This Creature gains +2 power, +2 armor, and skirmish.
 var KillzordMk9001 = card.New(
 	"Killzord Mk. 9001",
 	card.House.Mars,

@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Deal 1 damage to a creature and enrage it.
+//	Play: Deal 1 damage to a Creature and enrage it.
 func TestPesteringBlow(t *testing.T) {
 	t.Run("deals 1 damage to a creature and enrages it", func(t *testing.T) {
 		var foe ct.Card

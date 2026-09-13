@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: For each creature you have in excess of your opponent, a friendly creature captures 1 Æmber from your opponent. Each creature cannot capture more than 1 Æmber this way.
+//	Play: For each Creature you have in excess of your opponent, a friendly Creature captures 1 Æmber from your opponent. Each Creature cannot capture more than 1 Æmber this way.
 var UnguardedCamp = card.New(
 	"Unguarded Camp",
 	card.House.Brobnar,

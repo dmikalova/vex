@@ -16,7 +16,7 @@ import (
 //	Traits: Beast
 //
 //	Skirmish.
-//	Play/Fight: You may purge a neighboring creature -> ready Buzzle.
+//	Play/Fight: You may purge a neighboring Creature -> ready Buzzle.
 func TestBuzzle(t *testing.T) {
 	t.Run("purging a neighbor readies Buzzle when played", func(t *testing.T) {
 		var buzzle, neighbor ct.Card

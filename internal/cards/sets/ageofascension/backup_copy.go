@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains, "Destroyed: Put this creature on top of its owner's deck."
+//	This Creature gains, "Destroyed: Put this Creature on top of its owner's deck."
 var BackupCopy = card.New(
 	"Backup Copy",
 	card.House.Logos,

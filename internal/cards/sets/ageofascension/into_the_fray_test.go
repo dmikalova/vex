@@ -14,7 +14,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: A friendly Brobnar creature gains, "Fight: Ready this creature."
+//	Play: A friendly Brobnar Creature gains, "Fight: Ready this Creature."
 func TestIntoTheFray(t *testing.T) {
 	var fray, brute, foe ct.Card
 	h := ct.Play(t, ct.Setup{

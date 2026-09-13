@@ -16,7 +16,7 @@ import (
 //	Traits: Human
 //
 //	Hazardous 3.
-//	Each neighboring creature gains hazardous 3.
+//	Each neighboring Creature gains hazardous 3.
 func TestArmsmasterMolina(t *testing.T) {
 	var neighbor ct.Card
 	h := ct.Play(t, ct.Setup{

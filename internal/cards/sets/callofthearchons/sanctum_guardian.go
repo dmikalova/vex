@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Knight • Spirit
 //
 //	Taunt.
-//	Fight/Reap: Swap this creature with another friendly creature in your battleline.
+//	Fight/Reap: Swap this Creature with another friendly Creature in your battleline.
 var SanctumGuardian = card.New(
 	"Sanctum Guardian",
 	card.House.Sanctum,

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Give each friendly creature a +1 power counter.
+//	Play: Give each friendly Creature a +1 power counter.
 var TheFittest = card.New(
 	"The Fittest",
 	card.House.Untamed,

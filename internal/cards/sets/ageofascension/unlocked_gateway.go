@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //
 //	Omega.
-//	Play: Destroy each creature.
+//	Play: Destroy each Creature.
 var UnlockedGateway = card.New(
 	"Unlocked Gateway",
 	card.House.Dis,

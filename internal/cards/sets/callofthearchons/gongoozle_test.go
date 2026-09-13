@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Deal 3 damage to a creature. If it is not destroyed, its owner discards a random card from their hand.
+//	Play: Deal 3 damage to a Creature. If it is not destroyed, its owner discards a random card from their hand.
 func TestGongoozle(t *testing.T) {
 	t.Run("a surviving creature's owner discards a random card", func(t *testing.T) {
 		var foe ct.Card

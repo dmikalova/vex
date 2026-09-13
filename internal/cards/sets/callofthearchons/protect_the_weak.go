@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	This creature gains +1 armor and taunt.
+//	This Creature gains +1 armor and taunt.
 var ProtectTheWeak = card.New(
 	"Protect the Weak",
 	card.House.Sanctum,

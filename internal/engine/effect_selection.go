@@ -1,7 +1,5 @@
 package engine
 
-import "strings"
-
 // Selection is how a zone-movement effect picks the cards it acts on from a
 // zone: the controller chooses one (Chosen), one is uniformly random (Random),
 // every matching card is taken (Each), or a named card is pinned (Named). Each mode filters and picks its own
@@ -131,7 +129,7 @@ type Chosen struct {
 func (s Chosen) noun() string {
 	noun := "card"
 	if s.Type != TypeUnset {
-		noun = strings.ToLower(s.Type.String())
+		noun = typeWord(s.Type)
 	}
 	if s.House != HouseNone {
 		noun = s.House.String() + " " + noun
@@ -236,7 +234,7 @@ type Each struct {
 func (s Each) noun() string {
 	noun := "card"
 	if s.Type != TypeUnset {
-		noun = strings.ToLower(s.Type.String())
+		noun = typeWord(s.Type)
 	}
 	if s.House != HouseNone {
 		noun = s.House.String() + " " + noun

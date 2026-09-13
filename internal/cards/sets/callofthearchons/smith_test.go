@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: If you control more creatures than your opponent, gain 2 Æmber.
+//	Play: If you control more Creatures than your opponent, gain 2 Æmber.
 func TestSmith(t *testing.T) {
 	t.Run("gains 2 Æmber when you control more creatures", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

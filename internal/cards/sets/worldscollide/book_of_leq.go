@@ -23,7 +23,7 @@ var BookOfLeQ = card.New(
 				card.RevealTopOfDeck{Amount: 1},
 				card.Conditional{
 					Cond: card.ItIsNotOfHouse{House: card.House.Self},
-					Then: card.MakeItsHouseActive{},
+					Then: card.ChangeActiveHouse{To: card.TheContextualHouse},
 					Else: card.EndTurn{},
 				},
 			},

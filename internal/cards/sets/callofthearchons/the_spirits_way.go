@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Destroy each creature with power 3 or higher.
+//	Play: Destroy each Creature with power 3 or higher.
 var TheSpiritsWay = card.New(
 	"The Spirit's Way",
 	card.House.Sanctum,

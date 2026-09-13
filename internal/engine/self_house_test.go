@@ -33,11 +33,11 @@ func TestResolveSelfHouseThroughDefinition(t *testing.T) {
 	}
 	for _, want := range []string{
 		"Mars cards from your hand",
-		"each Mars creature except the most powerful",
-		"each non-Mars creature",
+		"each Mars Creature except the most powerful",
+		"each non-Mars Creature",
 		"you may play one Mars card",
 		"must choose Mars",
-		"for each friendly Mars creature",
+		"for each friendly Mars Creature",
 	} {
 		if !strings.Contains(text, want) {
 			t.Errorf("printed text is missing %q:\n%s", want, text)

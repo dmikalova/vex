@@ -107,6 +107,19 @@ func (e CreatureStunned) Text(n Namer) string {
 	return fmt.Sprintf("%s is stunned", n.Name(e.Creature))
 }
 
+// CreaturesUnstunned narrates a card ability lifting the stun from one or more
+// creatures at once (Clear Mind), named together as the single act the ability is.
+type CreaturesUnstunned struct {
+	Player    int
+	Creatures []LocalID
+}
+
+// Text renders the unstun, subjected to the source card when a card ability lifted
+// the stun.
+func (e CreaturesUnstunned) Text(n Namer) string {
+	return fmt.Sprintf("%s unstuns %s", subject(n, e.Player), namedCardsAnd(n, e.Creatures))
+}
+
 // CreatureEnraged narrates a card being enraged, and by what — unless the source
 // is the card itself, which reads better left passive. AlreadyEnraged marks an
 // enrage that found its target already enraged: the source still had to choose it,
@@ -221,7 +234,7 @@ type CardsRevealedToAll struct {
 
 // Text renders the cards a player revealed, each by name.
 func (e CardsRevealedToAll) Text(n Namer) string {
-	return fmt.Sprintf("%s reveals %s", n.PlayerName(e.Player), namedCards(n, e.Cards))
+	return fmt.Sprintf("%s reveals %s", subject(n, e.Player), namedCards(n, e.Cards))
 }
 
 // PositionsSwapped narrates two creatures trading places in a battleline.
@@ -298,7 +311,7 @@ type ControlTaken struct {
 
 // Text renders the card a player took control of.
 func (e ControlTaken) Text(n Namer) string {
-	return fmt.Sprintf("%s takes control of %s", n.PlayerName(e.Player), n.Name(e.Card))
+	return fmt.Sprintf("%s takes control of %s", subject(n, e.Player), n.Name(e.Card))
 }
 
 // ControlReturned narrates borrowed control lapsing when its source left play.

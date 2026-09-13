@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Martian • Scientist
 //
-//	Fight/Reap: Use a friendly non-Mars creature.
+//	Fight/Reap: Use a friendly non-Mars Creature.
 func TestUlyqMegamouth(t *testing.T) {
 	t.Run("uses a friendly non-Mars creature when it reaps", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

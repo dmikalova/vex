@@ -16,7 +16,7 @@ import (
 //	Traits: Elf • Witch
 //
 //	Deploy.
-//	Play/Reap: Fully heal a neighboring creature.
+//	Play/Reap: Fully heal a neighboring Creature.
 func TestDeepwoodDruid(t *testing.T) {
 	t.Run("reaping fully heals a neighboring creature", func(t *testing.T) {
 		var druid, neighbor ct.Card

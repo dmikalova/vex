@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Destroy a creature -> its controller gains 1 Æmber.
+//	Play: Destroy a Creature -> its controller gains 1 Æmber.
 func TestSauryAboutThat(t *testing.T) {
 	t.Run("destroys a creature and its controller gains 1 Æmber", func(t *testing.T) {
 		var target ct.Card

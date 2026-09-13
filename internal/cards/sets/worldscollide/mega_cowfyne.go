@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  7
 //	Traits: Giant
 //
-//	Before Fight: Deal 2 damage to each neighbor of the creature Mega Cowfyne fights.
+//	Before Fight: Deal 2 damage to each neighbor of the Creature Mega Cowfyne fights.
 var MegaCowfyne = card.New(
 	"Mega Cowfyne",
 	card.House.Brobnar,

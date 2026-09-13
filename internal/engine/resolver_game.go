@@ -352,9 +352,9 @@ func (g *Game) PlayerHasHouse(player int, house House) bool {
 }
 
 // Draw is the Resolver entry point for the internal draw.
-func (g *Game) Draw(controller, count int, source LocalID) {
+func (g *Game) Draw(controller, count int) {
 	if n := g.draw(controller, count); n > 0 {
-		g.record(CardsDrawnBy{Source: source, Player: controller, Count: n})
+		g.record(CardsDrawnBy{Player: controller, Count: n})
 	}
 }
 
@@ -398,9 +398,9 @@ func (g *Game) BeginShuffleBatch() {
 }
 
 // EndShuffleBatch closes the batch and narrates the collected cards grouped by
-// owner as one CardsShuffledIntoDeckBy line each, attributed to source, in the
-// order the owners were first shuffled.
-func (g *Game) EndShuffleBatch(source LocalID) {
+// owner as one CardsShuffledIntoDeckBy line each, attributed to the frame's source,
+// in the order the owners were first shuffled.
+func (g *Game) EndShuffleBatch() {
 	batch := g.shuffleBatch
 	g.shuffleBatch, g.batchingShuffle = nil, false
 	byOwner := map[int][]LocalID{}
@@ -413,7 +413,7 @@ func (g *Game) EndShuffleBatch(source LocalID) {
 		byOwner[o] = append(byOwner[o], id)
 	}
 	for _, o := range owners {
-		g.record(CardsShuffledIntoDeckBy{Source: source, Owner: o, Cards: byOwner[o]})
+		g.record(CardsShuffledIntoDeckBy{Owner: o, Cards: byOwner[o]})
 	}
 }
 
@@ -426,9 +426,6 @@ func (g *Game) ArchiveFromPurge(owner int, id LocalID) { g.archiveFromPurge(owne
 // ArchiveFromDiscard moves a card from a player's discard pile to their archives.
 func (g *Game) ArchiveFromDiscard(owner int, id LocalID) { g.archiveFromDiscard(owner, id) }
 
-// ArchiveTopOfDeck moves the top card of a player's deck to their archives.
-func (g *Game) ArchiveTopOfDeck(player int) bool { return g.archiveTopOfDeck(player) }
-
 // DiscardArchives moves all of a player's archived cards to their discard pile.
 func (g *Game) DiscardArchives(owner int) { g.discardArchives(owner) }
 
@@ -436,7 +433,7 @@ func (g *Game) DiscardArchives(owner int) { g.discardArchives(owner) }
 func (g *Game) PurgeFromDiscard(owner int, id LocalID) { g.purgeFromDiscard(owner, id) }
 
 // PurgeFromHand moves a card from a player's hand to their purge pile.
-func (g *Game) PurgeFromHand(owner int, id, source LocalID) { g.purgeFromHand(owner, id, source) }
+func (g *Game) PurgeFromHand(owner int, id LocalID) { g.purgeFromHand(owner, id) }
 
 // PurgeFromArchives moves a card from a player's archives to their purge pile.
 func (g *Game) PurgeFromArchives(owner int, id LocalID) { g.purgeFromArchives(owner, id) }

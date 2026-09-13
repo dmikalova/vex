@@ -224,7 +224,7 @@ func (e DiscardCard) resolveGate(ctx *EffectContext) bool {
 			if fromArchives {
 				ctx.Resolver.DiscardCardFromArchives(owner, id)
 			} else {
-				ctx.Resolver.DiscardCardFromHandBy(owner, id, ctx.Source)
+				ctx.Resolver.DiscardCardFromHand(owner, id)
 			}
 			ctx.Produced.Discarded = append(ctx.Produced.Discarded, id)
 			moved = true

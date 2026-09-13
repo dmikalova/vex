@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Each enemy creature with armor loses all of its armor. Deal 1 damage to each enemy creature with armor for each point of armor it lost this way.
+//	Play: Each enemy Creature with armor loses all of its armor. Deal 1 damage to each enemy Creature with armor for each point of armor it lost this way.
 var RedHotArmor = card.New(
 	"Red-Hot Armor",
 	card.House.Dis,

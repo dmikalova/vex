@@ -44,7 +44,7 @@ func (e ShuffleChosenCreaturesFromZones) Resolve(ctx *EffectContext) {
 		picked[id] = true
 		e.shuffle(ctx, id)
 	}
-	ctx.Resolver.EndShuffleBatch(ctx.Source)
+	ctx.Resolver.EndShuffleBatch()
 }
 
 // candidates lists the controller's not-yet-chosen creatures in their hand,

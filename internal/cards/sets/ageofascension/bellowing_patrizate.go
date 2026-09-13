@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  7
 //	Traits: Giant
 //
-//	After a creature enters play, if Bellowing Patrizate is ready, deal 1 damage to it.
+//	After a Creature enters play, if Bellowing Patrizate is ready, deal 1 damage to it.
 var BellowingPatrizate = card.New(
 	"Bellowing Patrizate",
 	card.House.Brobnar,

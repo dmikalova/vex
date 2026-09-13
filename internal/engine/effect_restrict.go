@@ -184,16 +184,14 @@ func (e CannotPlay) validate() error {
 }
 
 // Text renders the effect, e.g. "your opponent cannot play creatures during their
-// next turn". The renamed Tactic type prints capitalized as "Tactics" (rule 19).
+// next turn". Card text raises the type noun to its proper-noun capitalization at
+// the presentation layer, so this keeps it lowercase.
 func (e CannotPlay) Text() string {
 	who, whose := "you", "your"
 	if e.Player == Opponent {
 		who, whose = "your opponent", "their"
 	}
 	noun := strings.ToLower(e.barred().String()) + "s"
-	if e.Type == Tactic {
-		noun = "Tactics"
-	}
 	when := "during " + whose + " next turn"
 	if e.Duration == RemainderOfPlayerTurn {
 		when = "for the remainder of the turn"

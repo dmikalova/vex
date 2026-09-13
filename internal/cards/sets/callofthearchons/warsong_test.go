@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: For the remainder of the turn, each time a friendly creature fights, gain 1 Æmber.
+//	Play: For the remainder of the turn, each time a friendly Creature fights, gain 1 Æmber.
 func TestWarsong(t *testing.T) {
 	t.Run("gains 1 Æmber each time a friendly creature fights this turn", func(t *testing.T) {
 		var ally, foe ct.Card

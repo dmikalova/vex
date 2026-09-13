@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Give a creature two +1 power counters.
+//	Play: Give a Creature two +1 power counters.
 func TestAlakasBrew(t *testing.T) {
 	t.Run("gives a creature two +1 power counters", func(t *testing.T) {
 		var troll ct.Card

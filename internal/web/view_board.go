@@ -564,21 +564,38 @@ func (g *game) hostWithTabs(id engine.LocalID, face app.UI, dimmed bool) app.UI 
 	// Attached cards dim with their host: an exhausted creature has already acted,
 	// so its upgrades and under-cards read as spent alongside it rather than
 	// standing out beside a greyed face; a host dimmed as an invalid choice greys
-	// its attachments the same way. During a chooser prompt the strips are left
-	// undimmed, so an attached candidate (an upgrade Destroy Them All may destroy)
-	// keeps its targetable ring instead of being greyed out with its host.
-	dim := ifCls(
-		!g.choosing && (dimmed || (g.inPlay(id) && g.g.Exhausted(id))),
-		"card-tabs--dim",
-	)
+	// its attachments the same way. During a chooser prompt a strip keeps its light
+	// only when it holds a candidate (an upgrade Destroy Them All may destroy), so
+	// that tab keeps its targetable ring; a strip on a non-candidate host still dims
+	// with it rather than lighting every attachment on the board.
+	hostDim := dimmed || (g.inPlay(id) && g.g.Exhausted(id))
+	underDim := ifCls(
+		len(left) > 0 && hostDim && !g.stripHasCandidate(g.g.Under(id)), "card-tabs--dim")
+	upDim := ifCls(
+		len(right) > 0 && hostDim && !g.stripHasCandidate(g.g.Upgrades(id)), "card-tabs--dim")
 	return app.Div().Class("card-host").
 		Style("--under-tabs", strconv.Itoa(len(left))).
 		Style("--up-tabs", strconv.Itoa(len(right))).
 		Body(
-			app.Div().Class(cx("card-tabs", "card-tabs--left", dim)).Body(left...),
-			app.Div().Class(cx("card-tabs", "card-tabs--right", dim)).Body(right...),
+			app.Div().Class(cx("card-tabs", "card-tabs--left", underDim)).Body(left...),
+			app.Div().Class(cx("card-tabs", "card-tabs--right", upDim)).Body(right...),
 			face,
 		)
+}
+
+// stripHasCandidate reports whether any card in a tab strip is a current chooser
+// candidate, so the strip stays lit through a prompt instead of dimming with a
+// non-candidate host and greying the candidate's targetable tab.
+func (g *game) stripHasCandidate(ids []engine.LocalID) bool {
+	if !g.choosing {
+		return false
+	}
+	for _, id := range ids {
+		if containsID(g.chooserCandidates, id) {
+			return true
+		}
+	}
+	return false
 }
 
 // upgradeTabs renders each upgrade attached to id as a peeking tab along its

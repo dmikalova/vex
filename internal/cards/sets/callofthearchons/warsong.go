@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: For the remainder of the turn, each time a friendly creature fights, gain 1 Æmber.
+//	Play: For the remainder of the turn, each time a friendly Creature fights, gain 1 Æmber.
 var Warsong = card.New(
 	"Warsong",
 	card.House.Brobnar,

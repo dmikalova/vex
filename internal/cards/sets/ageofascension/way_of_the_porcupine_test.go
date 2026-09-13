@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains +3 hazardous.
+//	This Creature gains +3 hazardous.
 func TestWayOfThePorcupine(t *testing.T) {
 	t.Run("deals hazardous damage to an attacker", func(t *testing.T) {
 		var attacker, host ct.Card

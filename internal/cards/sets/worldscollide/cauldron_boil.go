@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Deal 1 damage to each creature for each point of damage on it.
+//	Play: Deal 1 damage to each Creature for each point of damage on it.
 var CauldronBoil = card.New(
 	"Cauldron Boil",
 	card.House.Untamed,

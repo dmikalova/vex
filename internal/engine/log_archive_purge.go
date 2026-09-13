@@ -11,6 +11,7 @@ type CardArchivedFromPurge struct {
 
 // Text renders a card archived out of the purge pile.
 func (e CardArchivedFromPurge) Text(n Namer) string {
-	return fmt.Sprintf("%s archives %s from their purge pile",
-		n.PlayerName(e.Player), nameMoved(n, e.Card, purged, Archives))
+	who, owner := actorPossessive(n, e.Player)
+	return fmt.Sprintf("%s archives %s from %s purge pile",
+		who, nameMoved(n, e.Card, purged, Archives), owner)
 }

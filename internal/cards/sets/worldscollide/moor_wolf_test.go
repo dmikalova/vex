@@ -16,7 +16,7 @@ import (
 //	Traits: Beast • Wolf
 //
 //	Skirmish.
-//	Play: Ready each other friendly Wolf creature.
+//	Play: Ready each other friendly Wolf Creature.
 func TestMoorWolf(t *testing.T) {
 	t.Run("readies each other friendly Wolf creature when played", func(t *testing.T) {
 		var wolf ct.Card

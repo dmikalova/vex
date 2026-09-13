@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Purge a creature with power 3 or lower.
+//	Play: Purge a Creature with power 3 or lower.
 var Oubliette = card.New(
 	"Oubliette",
 	card.House.Shadows,

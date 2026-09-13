@@ -16,7 +16,7 @@ import (
 //	Traits: Elf • Thief
 //
 //	Elusive.
-//	Reap: Destroy a flank creature.
+//	Reap: Destroy a flank Creature.
 func TestBulleteye(t *testing.T) {
 	t.Run("Reap destroys a chosen flank creature, not a middle one", func(t *testing.T) {
 		var left, middle ct.Card

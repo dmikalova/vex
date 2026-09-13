@@ -16,7 +16,7 @@ import (
 //	Armor:  2
 //	Traits: Human • Knight
 //
-//	Each neighboring creature gains +2 armor.
+//	Each neighboring Creature gains +2 armor.
 func TestBulwark(t *testing.T) {
 	t.Run("gives each battleline neighbor +2 armor but not distant creatures", func(t *testing.T) {
 		var left, right, far ct.Card

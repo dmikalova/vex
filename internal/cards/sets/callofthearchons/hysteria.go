@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Put each creature into its owner's hand.
+//	Play: Put each Creature into its owner's hand.
 var Hysteria = card.New(
 	"Hysteria",
 	card.House.Dis,

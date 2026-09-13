@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  6
 //	Traits: Robot
 //
-//	After you play a Mars creature, fully heal Tunk.
+//	After you play a Mars Creature, fully heal Tunk.
 var Tunk = card.New(
 	"Tunk",
 	card.House.Mars,

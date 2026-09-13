@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: For each house, deal 5 damage to a creature of that house.
+//	Play: For each house, deal 5 damage to a Creature of that house.
 var GleefulMayhem = card.New(
 	"Gleeful Mayhem",
 	card.House.Dis,

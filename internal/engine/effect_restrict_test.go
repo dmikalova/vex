@@ -6,7 +6,7 @@ func TestCannotPlay(t *testing.T) {
 	if got := (CannotPlay{Player: Opponent, Type: Creature, Duration: OpponentNextTurn}).Text(); got != "your opponent cannot play creatures during their next turn" {
 		t.Errorf("creature text = %q", got)
 	}
-	if got := (CannotPlay{Player: Controller, Type: Tactic, Duration: OpponentNextTurn}).Text(); got != "you cannot play Tactics during your next turn" {
+	if got := (CannotPlay{Player: Controller, Type: Tactic, Duration: OpponentNextTurn}).Text(); got != "you cannot play tactics during your next turn" {
 		t.Errorf("tactic text = %q", got)
 	}
 	if got := (CannotPlay{Player: Controller, Duration: RemainderOfPlayerTurn}).Text(); got != "you cannot play cards for the remainder of the turn" {

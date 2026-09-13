@@ -18,6 +18,6 @@ func (ShuffleFriendlyCardsInPlayIntoDeck) Text() string {
 func (ShuffleFriendlyCardsInPlayIntoDeck) Resolve(ctx *EffectContext) {
 	ctx.Resolver.BeginShuffleBatch()
 	n := ctx.Resolver.ShuffleFriendlyCardsInPlayIntoDeck(ctx.Controller)
-	ctx.Resolver.EndShuffleBatch(ctx.Source)
-	ctx.Resolver.Draw(ctx.Controller, n, ctx.Source)
+	ctx.Resolver.EndShuffleBatch()
+	ctx.Resolver.Draw(ctx.Controller, n)
 }

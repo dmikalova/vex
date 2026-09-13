@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Human
 //
-//	Play: Destroy an enemy creature -> if you are overwhelmed, repeat this effect.
+//	Play: Destroy an enemy Creature -> if you are overwhelmed, repeat this effect.
 func TestNumquidTheFair(t *testing.T) {
 	t.Run("destroys enemy creatures while overwhelmed", func(t *testing.T) {
 		var foe1, foe2 ct.Card

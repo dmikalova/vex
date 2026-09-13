@@ -15,7 +15,7 @@ import (
 //	Æmber:  1
 //	Traits: Item
 //
-//	Action: Purge a creature from a discard pile.
+//	Action: Purge a Creature from a discard pile.
 func TestEyeOfJudgment(t *testing.T) {
 	t.Run("purges a creature from a discard pile", func(t *testing.T) {
 		var prey ct.Card

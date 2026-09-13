@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Destroy the most powerful creature controlled by each player who does not control a ready Untamed creature.
+//	Play: Destroy the most powerful Creature controlled by each player who does not control a ready Untamed Creature.
 var Quicksand = card.New(
 	"Quicksand",
 	card.House.Untamed,

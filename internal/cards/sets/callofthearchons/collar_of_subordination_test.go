@@ -15,7 +15,7 @@ import (
 //	Type:   Upgrade
 //	Rarity: Rare
 //
-//	Play: Take control of this creature until Collar of Subordination leaves play.
+//	Play: Take control of this Creature until Collar of Subordination leaves play.
 func TestCollarOfSubordination(t *testing.T) {
 	t.Run("takes control of an enemy creature while the collar stays attached", func(t *testing.T) {
 		var host ct.Card

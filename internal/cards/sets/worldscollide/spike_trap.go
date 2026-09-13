@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Weapon
 //
 //	Versatile.
-//	Action: Destroy Spike Trap -> deal 3 damage to each flank creature.
+//	Action: Destroy Spike Trap -> deal 3 damage to each flank Creature.
 var SpikeTrap = card.New(
 	"Spike Trap",
 	card.House.Shadows,

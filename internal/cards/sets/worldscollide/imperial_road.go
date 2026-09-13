@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Location
 //
 //	Versatile.
-//	Action: Play a Saurian creature -> stun it.
+//	Action: Play a Saurian Creature -> stun it.
 var ImperialRoad = card.New(
 	"Imperial Road",
 	card.House.Saurian,

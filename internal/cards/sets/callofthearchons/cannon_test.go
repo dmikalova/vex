@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Traits: Weapon
 //
-//	Action: Deal 2 damage to a creature.
+//	Action: Deal 2 damage to a Creature.
 func TestCannon(t *testing.T) {
 	t.Run("deals 2 damage to a chosen creature", func(t *testing.T) {
 		var target ct.Card

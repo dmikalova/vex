@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains +2 assault and +2 splash-attack.
+//	This Creature gains +2 assault and +2 splash-attack.
 var PlasmaNozzle = card.New(
 	"Plasma Nozzle",
 	card.House.StarAlliance,

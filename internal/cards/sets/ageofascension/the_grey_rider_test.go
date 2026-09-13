@@ -16,7 +16,7 @@ import (
 //	Traits: Human • Monk
 //
 //	Deploy.
-//	Play/Fight/Reap: You may ready and fight with a neighboring creature.
+//	Play/Fight/Reap: You may ready and fight with a neighboring Creature.
 func TestTheGreyRider(t *testing.T) {
 	t.Run("gains aember when reaping and may decline the bonus effect", func(t *testing.T) {
 		var rider, neighbor ct.Card

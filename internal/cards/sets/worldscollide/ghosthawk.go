@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Deploy.
-//	Play: You may reap with up to 2 different neighboring creatures, one at a time.
+//	Play: You may reap with up to 2 different neighboring Creatures, one at a time.
 var Ghosthawk = card.New(
 	"Ghosthawk",
 	card.House.Untamed,

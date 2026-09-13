@@ -16,7 +16,7 @@ import (
 //	Traits: AI • Beast
 //
 //	Deploy.
-//	Play: Archive each neighboring creature from play. If those creatures share a house, gain 2 Æmber.
+//	Play: Archive each neighboring Creature from play. If those Creatures share a house, gain 2 Æmber.
 func TestCodeMonkey(t *testing.T) {
 	t.Run("archives both neighbors and gains 2 when they share a house", func(t *testing.T) {
 		var left, right ct.Card

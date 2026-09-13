@@ -16,7 +16,7 @@ import (
 //	Traits: Elf • Thief
 //
 //	Deploy, Elusive.
-//	Each neighboring creature gains elusive.
+//	Each neighboring Creature gains elusive.
 func TestLamindra(t *testing.T) {
 	t.Run("grants elusive to a neighbor so its first attack deals no damage", func(t *testing.T) {
 		var neighbor, foe ct.Card

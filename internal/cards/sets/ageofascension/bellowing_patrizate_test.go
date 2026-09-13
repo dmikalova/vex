@@ -15,7 +15,7 @@ import (
 //	Power:  7
 //	Traits: Giant
 //
-//	After a creature enters play, if Bellowing Patrizate is ready, deal 1 damage to it.
+//	After a Creature enters play, if Bellowing Patrizate is ready, deal 1 damage to it.
 func TestBellowingPatrizate(t *testing.T) {
 	t.Run("zaps each creature that enters play while ready", func(t *testing.T) {
 		var newcomer ct.Card

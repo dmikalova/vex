@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Item
 //
-//	After you forge a key, destroy each creature and each artifact.
+//	After you forge a key, destroy each Creature and each Artifact.
 var StrangeGizmo = card.New(
 	"Strange Gizmo",
 	card.House.Logos,

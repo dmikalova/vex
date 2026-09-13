@@ -16,7 +16,7 @@ import (
 //	Traits: Item
 //
 //	Versatile.
-//	Action: Deal 3 damage to a flank creature. If this damage destroys that creature, purge it.
+//	Action: Deal 3 damage to a flank Creature. If this damage destroys that Creature, purge it.
 func TestSpecialDelivery(t *testing.T) {
 	t.Run("purges a flank creature its damage destroys", func(t *testing.T) {
 		var foe ct.Card

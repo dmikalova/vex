@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains, "Reap: For each Mars creature in play, deal 1 damage to a creature."
+//	This Creature gains, "Reap: For each Mars Creature in play, deal 1 damage to a Creature."
 func TestRedPlanetRayGun(t *testing.T) {
 	t.Run("deals 1 damage per Mars creature in play, counting both players", func(t *testing.T) {
 		var host, enemy ct.Card

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains, "Action: Swap this creature with another friendly creature in your battleline. Use the other creature."
+//	This Creature gains, "Action: Swap this Creature with another friendly Creature in your battleline. Use the other Creature."
 var TranspositionSandals = card.New(
 	"Transposition Sandals",
 	card.House.Logos,

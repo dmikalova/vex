@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Deal 1 damage to a creature and enrage it.
+//	Play: Deal 1 damage to a Creature and enrage it.
 var PesteringBlow = card.New(
 	"Pestering Blow",
 	card.House.Shadows,

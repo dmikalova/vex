@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Choose a creature - for each Æmber in your pool, deal 1 damage to the chosen creature.
+//	Play: Choose a Creature - for each Æmber in your pool, deal 1 damage to the chosen Creature.
 var SackOfCoins = card.New(
 	"Sack of Coins",
 	card.House.Shadows,

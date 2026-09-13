@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains, "Fight/Reap: Use a non-Star Alliance creature."
+//	This Creature gains, "Fight/Reap: Use a non-Star Alliance Creature."
 var UniversalTranslator = card.New(
 	"Universal Translator",
 	card.House.StarAlliance,

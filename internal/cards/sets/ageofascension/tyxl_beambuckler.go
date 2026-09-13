@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Martian • Soldier
 //
-//	Play: Deal 2 damage to a creature and move it to either flank of its controller's battleline.
+//	Play: Deal 2 damage to a Creature and move it to either flank of its controller's battleline.
 var TyxlBeambuckler = card.New(
 	"Tyxl Beambuckler",
 	card.House.Mars,

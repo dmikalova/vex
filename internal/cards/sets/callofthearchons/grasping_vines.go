@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Put up to 3 artifacts into their owners' hands.
+//	Play: Put up to 3 Artifacts into their owners' hands.
 var GraspingVines = card.New(
 	"Grasping Vines",
 	card.House.Untamed,

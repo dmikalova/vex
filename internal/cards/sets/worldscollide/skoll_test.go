@@ -16,7 +16,7 @@ import (
 //	Traits: Beast
 //
 //	Assault 3.
-//	After a creature is destroyed by Skoll's assault damage, give a friendly creature a +1 power counter.
+//	After a Creature is destroyed by Skoll's assault damage, give a friendly Creature a +1 power counter.
 func TestSkoll(t *testing.T) {
 	t.Run(
 		"gives a friendly creature a +1 power counter when its Assault kills",

@@ -17,7 +17,7 @@ import (
 //	Traits: Power
 //
 //	Versatile.
-//	Action: Destroy Lifeward. Your opponent cannot play creatures during their next turn.
+//	Action: Destroy Lifeward. Your opponent cannot play Creatures during their next turn.
 func TestLifeward(t *testing.T) {
 	t.Run(
 		"destroys itself and bars the opponent from playing creatures next turn",

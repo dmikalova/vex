@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Use an artifact. Destroy it.
+//	Play: Use an Artifact. Destroy it.
 var Poltergeist = card.New(
 	"Poltergeist",
 	card.House.Dis,

@@ -15,7 +15,7 @@ import (
 //	Power:  1
 //	Traits: Shapeshifter • Mutant
 //
-//	Play: Choose another creature - give Mimic Gel +1 power counters equal to its power, and Mimic Gel gains the text box of the chosen creature.
+//	Play: Choose another Creature - give Mimic Gel +1 power counters equal to its power, and Mimic Gel gains the text box of the chosen Creature.
 func TestMimicGel(t *testing.T) {
 	t.Run("copies the chosen creature's power and text box", func(t *testing.T) {
 		var model ct.Card

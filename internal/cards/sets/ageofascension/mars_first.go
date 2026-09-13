@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Ready and use a friendly Mars creature.
+//	Play: Ready and use a friendly Mars Creature.
 var MarsFirst = card.New(
 	"Mars First",
 	card.House.Mars,

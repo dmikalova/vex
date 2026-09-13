@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Destroy each friendly artifact. For each card destroyed this way, gain 2 Æmber.
+//	Play: Destroy each friendly Artifact. For each card destroyed this way, gain 2 Æmber.
 func TestOathOfPoverty(t *testing.T) {
 	t.Run("destroys your artifacts and gains 2 Æmber for each", func(t *testing.T) {
 		var mine, theirs ct.Card

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Knight • Spirit
 //
-//	Reap: Choose a creature - fully heal it. For the remainder of the turn, it cannot be dealt damage.
+//	Reap: Choose a Creature - fully heal it. For the remainder of the turn, it cannot be dealt damage.
 var Protectrix = card.New(
 	"Protectrix",
 	card.House.Sanctum,

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Each player's keys cost +1 Æmber.
-//	Play: Deal 4 damage to a creature.
+//	Play: Deal 4 damage to a Creature.
 var MusthicMurmook = card.New(
 	"Musthic Murmook",
 	card.House.Untamed,

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: For the remainder of the turn, each time you play a creature, deal 2 damage to an enemy creature.
+//	Play: For the remainder of the turn, each time you play a Creature, deal 2 damage to an enemy Creature.
 var Charge = card.New(
 	"Charge!",
 	card.House.Sanctum,

@@ -15,7 +15,7 @@ import (
 //	Æmber:  1
 //	Traits: Item
 //
-//	Action: Choose a creature - for the remainder of the turn, it is considered a flank creature, and it gains, "Reap: Draw a card."
+//	Action: Choose a Creature - for the remainder of the turn, it is considered a flank Creature, and it gains, "Reap: Draw a card."
 func TestSpectralTunneler(t *testing.T) {
 	// The chosen creature keeps its normal reap (1 Æmber) and, thanks to the
 	// granted "Reap: Draw a card", also draws.

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: If you control more creatures than your opponent, gain 2 Æmber.
+//	Play: If you control more Creatures than your opponent, gain 2 Æmber.
 var Smith = card.New(
 	"Smith",
 	card.House.Brobnar,

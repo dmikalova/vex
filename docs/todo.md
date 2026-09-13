@@ -49,16 +49,20 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 ## Things that can be done now
 
-- // TODOs
 - reproduce zone modal jump
-- Plague rats
+
+- // TODOs
 - Make each brew unique to its card
 - More updates on the board row - left side should go under, not have invis gradient, right side should go to edge, spacing and parens on icons
 - Hovering over the key cost should show any modifiers to key cost instead of them being in the warning/restricted area
 - list all the cards with multiple provenances. For non-clusters, make them unique. Remove the duplicate allowances.
 - decompose all the neighbor stuff
 - Granted:  card.FightReap(card.ArchiveGrantingUpgrade{}), should be card.Archive{Target: GrantingUpgrade}
+- snags mirror / house restrictions should just remove the house from the list of options
+- snags mirror and tezmal not stacking right
 
+- Why is DamageThen and ChooseCreatureThen needed? Why can't these just be sequences that pass along the effect context?
+- decompose fidgit
 - Cloaking Dongle: Target: Target and neighbors then gives the bonus
 - Kompsos Haurspex and Livia the elder can be atomized into each other
 - Gebuk can be simplified
@@ -133,7 +137,7 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - translations
 - Display multiple houses
 - resolution zone
-- stadiums/arenas
+- stadiums/arenas - terrains - similar to stadiums but not exclusive, bonus and penalty
 - future/ancient cards set like evil twins
 - Change enters play ready/stunned/enraged to Play: Stun X - would change timing for dominator etc
 - MM mutants - have a common, uncommon, and rare variant
@@ -186,7 +190,6 @@ The ideal pipeline: Use an AlphaZero-style architecture. Use a neural network to
 
 - Minimize simultaneous effects — resolve one at a time, matching the physical
   game.
-  still seems worth keeping).
 
 ## Houses & intended playstyles
 

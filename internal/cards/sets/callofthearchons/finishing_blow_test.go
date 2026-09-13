@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Destroy a damaged creature -> steal 1 Æmber.
+//	Play: Destroy a damaged Creature -> steal 1 Æmber.
 func TestFinishingBlow(t *testing.T) {
 	t.Run("destroys a damaged creature and steals 1 Æmber", func(t *testing.T) {
 		var dmg ct.Card

@@ -15,7 +15,7 @@ import (
 //	Power:  5
 //	Traits: Mutant • Scientist
 //
-//	After a creature is destroyed in a fight with Hapsis, ward Hapsis, and draw a card.
+//	After a Creature is destroyed in a fight with Hapsis, ward Hapsis, and draw a card.
 func TestHapsis(t *testing.T) {
 	t.Run("wards itself and draws when an enemy dies fighting it", func(t *testing.T) {
 		var hapsis, foe ct.Card

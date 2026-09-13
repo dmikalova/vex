@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Robot • Ally
 //
 //	Versatile.
-//	Action: Give Auto-Legionary five +1 power counters. Move it to a flank of your battleline as a creature.
+//	Action: Give Auto-Legionary five +1 power counters. Move it to a flank of your battleline as a Creature.
 var AutoLegionary = card.New(
 	"Auto-Legionary",
 	card.House.Saurian,

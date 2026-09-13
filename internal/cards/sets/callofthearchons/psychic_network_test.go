@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: For each friendly ready Mars creature, steal 1 Æmber.
+//	Play: For each friendly ready Mars Creature, steal 1 Æmber.
 func TestPsychicNetwork(t *testing.T) {
 	t.Run("steals 1 Æmber for each friendly ready Mars creature", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

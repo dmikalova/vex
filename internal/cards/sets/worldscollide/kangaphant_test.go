@@ -15,7 +15,7 @@ import (
 //	Power:  5
 //	Traits: Beast
 //
-//	Each creature gains, "Reap: Destroy this creature."
+//	Each Creature gains, "Reap: Destroy this Creature."
 func TestKangaphant(t *testing.T) {
 	t.Run("each creature gains Reap: Destroy this creature", func(t *testing.T) {
 		var reaper ct.Card

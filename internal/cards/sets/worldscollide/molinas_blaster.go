@@ -17,9 +17,9 @@ var molinasBlasterCluster = card.Cluster{
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains, "Fight/Reap: Choose one:
-//	- Deal 2 damage to a creature
-//	- Attach Molina's Blaster to Armsmaster Molina -> deal 3 damage to a creature."
+//	This Creature gains, "Fight/Reap: Choose one:
+//	- Deal 2 damage to a Creature
+//	- Attach Molina's Blaster to Armsmaster Molina -> deal 3 damage to a Creature."
 var MolinasBlaster = card.New(
 	"Molina's Blaster",
 	card.House.StarAlliance,

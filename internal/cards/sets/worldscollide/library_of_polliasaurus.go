@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Traits: Location
 //
-//	Action: Move 1 Æmber from a friendly creature to your pool.
+//	Action: Move 1 Æmber from a friendly Creature to your pool.
 var LibraryOfPolliasaurus = card.New(
 	"Library of Polliasaurus",
 	card.House.Saurian,

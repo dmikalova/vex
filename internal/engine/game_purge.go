@@ -13,12 +13,13 @@ func (g *Game) purgeFromDiscard(owner int, id LocalID) {
 	g.record(CardMoved{Player: g.State.ActivePlayer, Card: id, From: Discard, To: purged})
 }
 
-// purgeFromHand moves a card from a player's hand to their purge pile, crediting
-// the card whose ability purged it. Callers pass a card already in that hand.
-func (g *Game) purgeFromHand(owner int, id, source LocalID) {
+// purgeFromHand moves a card from a player's hand to their purge pile. The card
+// whose ability purged it is credited through the record's frame. Callers pass a
+// card already in that hand.
+func (g *Game) purgeFromHand(owner int, id LocalID) {
 	g.State.Hand[owner].remove(id)
 	g.State.Purge[owner].add(id)
-	g.record(CardPurgedFromHand{Source: source, Card: id, Owner: owner})
+	g.record(CardPurgedFromHand{Card: id, Owner: owner})
 }
 
 // purgeFromArchives moves a card from a player's archives to their purge pile.

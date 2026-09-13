@@ -17,7 +17,7 @@ import (
 //	Traits: Giant
 //
 //	Alpha.
-//	Play: For each Æmber in your pool, deal 3 damage to an enemy creature.
+//	Play: For each Æmber in your pool, deal 3 damage to an enemy Creature.
 func TestGargantesScrapper(t *testing.T) {
 	t.Run("deals 3 damage for each Æmber in your pool", func(t *testing.T) {
 		var foe ct.Card

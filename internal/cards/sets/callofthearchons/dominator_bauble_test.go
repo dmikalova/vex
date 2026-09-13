@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Traits: Item
 //
-//	Action: Use a friendly creature.
+//	Action: Use a friendly Creature.
 func TestDominatorBauble(t *testing.T) {
 	t.Run("uses the only friendly creature to reap for 1 Æmber", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

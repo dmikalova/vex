@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Put up to 3 enemy damaged creatures into your archives.
+//	Play: Put up to 3 enemy damaged Creatures into your archives.
 var MassAbduction = card.New(
 	"Mass Abduction",
 	card.House.Mars,

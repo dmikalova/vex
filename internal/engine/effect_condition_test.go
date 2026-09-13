@@ -464,8 +464,11 @@ func TestCardsPlayed(t *testing.T) {
 	}
 }
 
-func TestMayRepeat(t *testing.T) {
-	e := MayRepeat{Cond: PoolAember{Player: Opponent, Is: MoreThanYou}, Do: StealAember{Amount: 1}}
+func TestRepeatMayWhile(t *testing.T) {
+	e := Repeat{
+		Do:   StealAember{Amount: 1},
+		Gate: MayWhile{Cond: PoolAember{Player: Opponent, Is: MoreThanYou}},
+	}
 	if got := e.Text(); got != "steal 1 Æmber -> if your opponent has more Æmber than you, you may repeat this effect" {
 		t.Errorf("text = %q", got)
 	}
@@ -490,7 +493,10 @@ func TestMayRepeat(t *testing.T) {
 	}
 
 	if err := validateEffect(
-		MayRepeat{Cond: InPlay{Player: Controller, Type: Creature}, Do: StealAember{Amount: 1}},
+		Repeat{
+			Do:   StealAember{Amount: 1},
+			Gate: MayWhile{Cond: InPlay{Player: Controller, Type: Creature}},
+		},
 	); err != nil {
 		t.Errorf("validate = %v", err)
 	}
@@ -498,9 +504,9 @@ func TestMayRepeat(t *testing.T) {
 
 // When Do is a single clickable choice, the repeat is offered by letting the
 // player keep picking rather than answering Yes/No.
-func TestMayRepeatDrivenByChoice(t *testing.T) {
-	e := MayRepeat{
-		Cond: InPlay{Player: Controller, Type: Creature},
+func TestRepeatMayWhileDrivenByChoice(t *testing.T) {
+	e := Repeat{
+		Gate: MayWhile{Cond: InPlay{Player: Controller, Type: Creature}},
 		Do: Sequence{Effects: []Effect{
 			Destroy{Target: Target{Kind: TargetChosenEnemyCreature}},
 			Destroy{Target: Target{Kind: TargetChosenFriendlyCreature}},

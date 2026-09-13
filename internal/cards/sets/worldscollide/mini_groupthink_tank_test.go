@@ -16,7 +16,7 @@ import (
 //	Armor:  2
 //	Traits: Robot • Experiment
 //
-//	Play/Fight/Reap: Deal 8 damage to a creature that shares a house with 2 of its neighbors.
+//	Play/Fight/Reap: Deal 8 damage to a Creature that shares a house with 2 of its neighbors.
 func TestMiniGroupthinkTank(t *testing.T) {
 	var a, b, c ct.Card
 	h := ct.Play(t, ct.Setup{

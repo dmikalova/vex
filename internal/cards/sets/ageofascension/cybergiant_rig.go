@@ -9,8 +9,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains, "At the end of your turn, give this creature a -1 power counter."
-//	Play: Fully heal this creature, and for each damage healed this way, give this creature a +1 power counter.
+//	This Creature gains, "At the end of your turn, give this Creature a -1 power counter."
+//	Play: Fully heal this Creature, and for each damage healed this way, give this Creature a +1 power counter.
 var CybergiantRig = card.New(
 	"Cybergiant Rig",
 	card.House.Brobnar,

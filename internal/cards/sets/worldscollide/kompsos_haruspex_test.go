@@ -15,7 +15,7 @@ import (
 //	Power:  4
 //	Traits: Dinosaur • Priest
 //
-//	Each friendly creature's play effect is a play/reap effect.
+//	Each friendly Creature's play effect is a play/reap effect.
 func TestKompsosHaruspex(t *testing.T) {
 	// playGainer is a friendly creature whose play effect gains 1 Æmber, so the
 	// morph is visible: with Kompsos in play, reaping it fires that play effect.

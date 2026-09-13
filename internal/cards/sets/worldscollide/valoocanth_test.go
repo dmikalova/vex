@@ -16,7 +16,7 @@ import (
 //	Traits: Aquan
 //
 //	While the tide is low, Valoocanth cannot be used.
-//	Fight/Reap: Exhaust an enemy creature and each of its neighbors.
+//	Fight/Reap: Exhaust an enemy Creature and each of its neighbors.
 func TestValoocanth(t *testing.T) {
 	mars := ct.OfHouse(card.House.Mars)
 

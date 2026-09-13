@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Put a creature from your discard pile into your hand.
+//	Play: Put a Creature from your discard pile into your hand.
 var Regrowth = card.New(
 	"Regrowth",
 	card.House.Untamed,

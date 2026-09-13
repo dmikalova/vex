@@ -15,7 +15,7 @@ import (
 //	Power:  4
 //	Traits: Faerie
 //
-//	Play: If you control more creatures than your opponent, gain 2 Æmber.
+//	Play: If you control more Creatures than your opponent, gain 2 Æmber.
 func TestFlaxia(t *testing.T) {
 	t.Run("gains 2 Æmber when you control more creatures", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

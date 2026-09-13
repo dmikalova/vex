@@ -78,5 +78,5 @@ func (e ShuffleFromDiscard) Resolve(ctx *EffectContext) {
 			ctx.Resolver.ShuffleFromDiscardIntoDeck(id)
 		}
 	}
-	ctx.Resolver.EndShuffleBatch(ctx.Source)
+	ctx.Resolver.EndShuffleBatch()
 }

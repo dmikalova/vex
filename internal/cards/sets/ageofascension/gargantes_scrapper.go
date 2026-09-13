@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant
 //
 //	Alpha.
-//	Play: For each Æmber in your pool, deal 3 damage to an enemy creature.
+//	Play: For each Æmber in your pool, deal 3 damage to an enemy Creature.
 var GargantesScrapper = card.New(
 	"Gargantes Scrapper",
 	card.House.Brobnar,

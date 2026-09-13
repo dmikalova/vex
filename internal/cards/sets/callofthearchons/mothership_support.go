@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: For each friendly ready Mars creature, deal 2 damage to a creature.
+//	Play: For each friendly ready Mars Creature, deal 2 damage to a Creature.
 var MothershipSupport = card.New("Mothership Support",
 	card.House.Mars, card.Type.Tactic, card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "171"),

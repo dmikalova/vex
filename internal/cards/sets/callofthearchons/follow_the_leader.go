@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: For the remainder of the turn, each friendly creature may fight.
+//	Play: For the remainder of the turn, each friendly Creature may fight.
 var FollowTheLeader = card.New(
 	"Follow the Leader",
 	card.House.Brobnar,

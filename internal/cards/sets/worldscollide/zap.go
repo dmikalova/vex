@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: For each house represented among creatures in play, deal 1 damage to a creature.
+//	Play: For each house represented among Creatures in play, deal 1 damage to a Creature.
 var Zap = card.New(
 	"Zap",
 	card.House.StarAlliance,

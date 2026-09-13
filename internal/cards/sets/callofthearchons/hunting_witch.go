@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Human • Witch
 //
-//	After you play another creature, gain 1 Æmber.
+//	After you play another Creature, gain 1 Æmber.
 var HuntingWitch = card.New(
 	"Hunting Witch",
 	card.House.Untamed,

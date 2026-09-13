@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Steal 1 Æmber -> deal 2 damage to a creature.
+//	Play: Steal 1 Æmber -> deal 2 damage to a Creature.
 func TestNerveBlast(t *testing.T) {
 	t.Run("steals 1 Æmber and, if it does, deals 2 damage", func(t *testing.T) {
 		var foe ct.Card

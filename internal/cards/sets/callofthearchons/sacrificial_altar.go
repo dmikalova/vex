@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Location
 //
-//	Action: Purge a friendly Human creature -> play a creature from your discard pile.
+//	Action: Purge a friendly Human Creature -> play a Creature from your discard pile.
 var SacrificialAltar = card.New(
 	"Sacrificial Altar",
 	card.House.Dis,

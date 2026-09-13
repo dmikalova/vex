@@ -15,7 +15,7 @@ import (
 //	Æmber:  1
 //	Traits: Weapon
 //
-//	After a creature enters play, deal 1 damage to it.
+//	After a Creature enters play, deal 1 damage to it.
 func TestAutocannon(t *testing.T) {
 	t.Run("deals 1 damage to a creature as it enters play", func(t *testing.T) {
 		var newcomer ct.Card

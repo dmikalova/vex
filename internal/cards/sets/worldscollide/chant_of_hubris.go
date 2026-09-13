@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Move 1 Æmber from a creature to another creature.
+//	Play: Move 1 Æmber from a Creature to another Creature.
 var ChantOfHubris = card.New(
 	"Chant of Hubris",
 	card.House.Saurian,

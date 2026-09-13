@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Each friendly creature captures 1 Æmber from your opponent.
+//	Play: Each friendly Creature captures 1 Æmber from your opponent.
 func TestCityStateInterest(t *testing.T) {
 	t.Run("each friendly creature captures 1 Æmber from your opponent", func(t *testing.T) {
 		var a, b ct.Card

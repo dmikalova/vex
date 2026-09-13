@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Human • Knight
 //
-//	Reap: Use a friendly non-Sanctum creature.
+//	Reap: Use a friendly non-Sanctum Creature.
 var CommanderRemiel = card.New(
 	"Commander Remiel",
 	card.House.Sanctum,

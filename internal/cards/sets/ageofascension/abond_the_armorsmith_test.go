@@ -15,8 +15,8 @@ import (
 //	Power:  3
 //	Traits: Human
 //
-//	Each other friendly creature gains +1 armor.
-//	Action: For the remainder of the turn, each other friendly creature gains +1 armor.
+//	Each other friendly Creature gains +1 armor.
+//	Action: For the remainder of the turn, each other friendly Creature gains +1 armor.
 func TestAbondTheArmorsmith(t *testing.T) {
 	t.Run("constant: other friendly creatures have +1 armor", func(t *testing.T) {
 		var ally ct.Card

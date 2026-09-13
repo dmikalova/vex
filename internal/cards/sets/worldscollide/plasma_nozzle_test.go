@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains +2 assault and +2 splash-attack.
+//	This Creature gains +2 assault and +2 splash-attack.
 func TestPlasmaNozzle(t *testing.T) {
 	t.Run(
 		"host deals 2 assault to the fought creature and 2 splash to its neighbors",

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Elusive.
-//	Before Fight: Deal damage equal to its power to each neighbor of the creature Mindworm fights.
+//	Before Fight: Deal damage equal to its power to each neighbor of the Creature Mindworm fights.
 var Mindworm = card.New(
 	"Mindworm",
 	card.House.Mars,

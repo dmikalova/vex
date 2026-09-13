@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Weapon
 //
 //	Versatile.
-//	Action: Destroy Mighty Javelin. Deal 4 damage to a creature.
+//	Action: Destroy Mighty Javelin. Deal 4 damage to a Creature.
 var MightyJavelin = card.New(
 	"Mighty Javelin",
 	card.House.Brobnar,

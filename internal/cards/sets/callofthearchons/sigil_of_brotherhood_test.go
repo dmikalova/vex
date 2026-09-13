@@ -17,7 +17,7 @@ import (
 //	Traits: Power
 //
 //	Versatile.
-//	Action: Destroy Sigil of Brotherhood. For the remainder of the turn, you may use friendly Sanctum creatures.
+//	Action: Destroy Sigil of Brotherhood. For the remainder of the turn, you may use friendly Sanctum Creatures.
 func TestSigilOfBrotherhood(t *testing.T) {
 	t.Run("destroys itself and grants use of friendly Sanctum creatures", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

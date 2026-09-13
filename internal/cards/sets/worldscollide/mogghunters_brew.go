@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Special
 //	Æmber:  1
 //
-//	Play: Give a creature two +1 power counters.
+//	Play: Give a Creature two +1 power counters.
 var MogghuntersBrew = card.New(
 	"Mogghunter's Brew",
 	card.House.Brobnar,

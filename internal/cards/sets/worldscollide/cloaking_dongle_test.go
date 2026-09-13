@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	This creature and each of its neighbors gains elusive.
+//	This Creature and each of its neighbors gains elusive.
 func TestCloakingDongle(t *testing.T) {
 	t.Run("grants elusive to its host and both neighbors", func(t *testing.T) {
 		var far, left, host, right ct.Card

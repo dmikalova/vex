@@ -14,8 +14,8 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains taunt.
-//	Play: Fully heal this creature.
+//	This Creature gains taunt.
+//	Play: Fully heal this Creature.
 func TestYoMamaMastery(t *testing.T) {
 	t.Run("fully heals its host when played", func(t *testing.T) {
 		var host ct.Card

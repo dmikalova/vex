@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human
 //
 //	Deploy.
-//	Play/Fight/Reap: Heal 3 damage from each neighboring creature.
+//	Play/Fight/Reap: Heal 3 damage from each neighboring Creature.
 var NurseSoto = card.New(
 	"Nurse Soto",
 	card.House.StarAlliance,

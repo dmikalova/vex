@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Dinosaur • Soldier
 //
-//	Fight: You may exalt Legatus Raptor, and ready and use another friendly creature.
+//	Fight: You may exalt Legatus Raptor, and ready and use another friendly Creature.
 var LegatusRaptor = card.New(
 	"Legatus Raptor",
 	card.House.Saurian,

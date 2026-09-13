@@ -17,9 +17,9 @@ var ingramsBlasterCluster = card.Cluster{
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains, "Fight/Reap: Choose one:
-//	- Deal 2 damage to a creature
-//	- Attach Ingram's Blaster to Medic Ingram -> fully heal a creature."
+//	This Creature gains, "Fight/Reap: Choose one:
+//	- Deal 2 damage to a Creature
+//	- Attach Ingram's Blaster to Medic Ingram -> fully heal a Creature."
 var IngramsBlaster = card.New(
 	"Ingram's Blaster",
 	card.House.StarAlliance,

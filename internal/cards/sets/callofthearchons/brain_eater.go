@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  6
 //	Traits: Cyborg • Beast
 //
-//	After a creature is destroyed in a fight with Brain Eater, draw a card.
+//	After a Creature is destroyed in a fight with Brain Eater, draw a card.
 var BrainEater = card.New(
 	"Brain Eater",
 	card.House.Logos,

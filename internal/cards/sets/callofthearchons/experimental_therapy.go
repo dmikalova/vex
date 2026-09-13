@@ -8,8 +8,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Upgrade
 //	Rarity: Uncommon
 //
-//	This creature gains versatile.
-//	Play: Stun and exhaust this creature.
+//	This Creature gains versatile.
+//	Play: Stun and exhaust this Creature.
 var ExperimentalTherapy = card.New(
 	"Experimental Therapy",
 	card.House.Logos,

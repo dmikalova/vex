@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Demon • Knight
 //
-//	Play: Destroy each creature with odd power.
+//	Play: Destroy each Creature with odd power.
 var OnyxKnight = card.New(
 	"Onyx Knight",
 	card.House.Dis,

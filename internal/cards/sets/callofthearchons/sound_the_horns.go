@@ -9,14 +9,14 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Discard cards from the top of your deck until you discard a Brobnar creature or run out of cards -> put the discarded creature into your hand.
+//	Play: Discard cards from the top of your deck until you discard a Brobnar Creature or run out of cards -> put the discarded Creature into your hand.
 var SoundTheHorns = card.New("Sound the Horns",
 	card.House.Brobnar, card.Type.Tactic, card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "15"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Then{
-			First: card.DiscardDeckUntil{
+			First: card.DiscardTopOfDeckUntil{
 				Type:  card.Type.Creature,
 				House: card.House.Self,
 			},

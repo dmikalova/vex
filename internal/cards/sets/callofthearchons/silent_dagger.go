@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains, "Reap: Deal 4 damage to a flank creature."
+//	This Creature gains, "Reap: Deal 4 damage to a flank Creature."
 var SilentDagger = card.New(
 	"Silent Dagger",
 	card.House.Shadows,

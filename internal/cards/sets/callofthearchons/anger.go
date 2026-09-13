@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Ready and fight with a friendly creature.
+//	Play: Ready and fight with a friendly Creature.
 var Anger = card.New(
 	"Anger",
 	card.House.Brobnar,

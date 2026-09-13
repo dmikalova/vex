@@ -3,8 +3,8 @@ package engine
 import "testing"
 
 // TestDestroyEachCreatureAtEndOfTurn covers Ragnarok's scheduled board wipe: the
-// effect arms a flag during the play phase, the flag survives the ready phase, and
-// the end-of-turn phase destroys every creature and clears the flag.
+// effect schedules the wipe during the play phase, the schedule survives the ready
+// phase, and the end-of-turn window destroys every creature and clears the schedule.
 func TestDestroyEachCreatureAtEndOfTurn(t *testing.T) {
 	if got := (DestroyEachCreatureAtEndOfTurn{}).Text(); got != "at the end of the turn, destroy each creature" {
 		t.Errorf("text = %q", got)
@@ -22,11 +22,14 @@ func TestDestroyEachCreatureAtEndOfTurn(t *testing.T) {
 	DestroyEachCreatureAtEndOfTurn{}.Resolve(
 		&EffectContext{Resolver: g, Source: src, Controller: 0},
 	)
-	if !g.State.EndOfTurnDestroyAll.Value {
-		t.Fatal("Resolve should arm the end-of-turn wipe")
+	if g.State.ScheduledCount != 1 {
+		t.Fatalf("Resolve should schedule one effect, got count %d", g.State.ScheduledCount)
 	}
-	if g.State.EndOfTurnDestroyAll.Source != src {
-		t.Errorf("armed source = %d, want %d", g.State.EndOfTurnDestroyAll.Source, src)
+	if g.State.Scheduled[0].Source != src {
+		t.Errorf("scheduled source = %d, want %d", g.State.Scheduled[0].Source, src)
+	}
+	if g.State.Scheduled[0].Do != schedDestroyEachCreature {
+		t.Errorf("scheduled action = %d, want schedDestroyEachCreature", g.State.Scheduled[0].Do)
 	}
 	// The wipe is scheduled, not immediate: both creatures are still in play.
 	if len(g.Battleline(0)) != 1 || len(g.Battleline(1)) != 1 {
@@ -42,8 +45,23 @@ func TestDestroyEachCreatureAtEndOfTurn(t *testing.T) {
 			g.Battleline(1),
 		)
 	}
-	if g.State.EndOfTurnDestroyAll.Value {
-		t.Error("the wipe flag should be cleared once it fires")
+	if g.State.ScheduledCount != 0 {
+		t.Error("the schedule should be cleared once its window fires")
 	}
 	_, _ = mine, theirs
+}
+
+// TestScheduleAtEndOfTurnFull covers the schedule silently dropping entries once
+// the fixed array is full, and the scheduledEffectOf fallback for an unset action.
+func TestScheduleAtEndOfTurnFull(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	for i := 0; i < maxScheduled+2; i++ {
+		g.ScheduleAtEndOfTurn(LocalID(i), schedDestroyEachCreature)
+	}
+	if int(g.State.ScheduledCount) != maxScheduled {
+		t.Errorf("scheduled count = %d, want capped at %d", g.State.ScheduledCount, maxScheduled)
+	}
+	if scheduledEffectOf(schedUnset) != nil {
+		t.Error("scheduledEffectOf(schedUnset) should be nil")
+	}
 }

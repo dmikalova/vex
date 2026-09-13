@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Reveal any number of Mars cards from your hand. For each card revealed this way, deal 2 damage to a creature.
+//	Play: Reveal any number of Mars cards from your hand. For each card revealed this way, deal 2 damage to a Creature.
 var OrbitalBombardment = card.New(
 	"Orbital Bombardment",
 	card.House.Mars,

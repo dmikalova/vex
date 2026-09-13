@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Power
 //
-//	Each creature gains, "Before Fight: Discard the top card of its controller's deck. If it is of the active house, the fight does not occur."
+//	Each Creature gains, "Before Fight: Discard the top card of its controller's deck. If it is of the active house, the fight does not occur."
 var EvasionSigil = card.New(
 	"Evasion Sigil",
 	card.House.Shadows,

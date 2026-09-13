@@ -16,8 +16,8 @@ import (
 //	Power:  7
 //	Traits: Beast
 //
-//	Bigtwig can only fight stunned creatures.
-//	Reap: Stun and exhaust a creature.
+//	Bigtwig can only fight stunned Creatures.
+//	Reap: Stun and exhaust a Creature.
 func TestBigtwig(t *testing.T) {
 	t.Run("reap stuns and exhausts a chosen creature", func(t *testing.T) {
 		var foe ct.Card

@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains, "Destroyed: Destroy the most powerful enemy creature."
+//	This Creature gains, "Destroyed: Destroy the most powerful enemy Creature."
 func TestSoulkeeper(t *testing.T) {
 	t.Run(
 		"destroys the most powerful enemy creature when its host is destroyed",

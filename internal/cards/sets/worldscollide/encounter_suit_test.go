@@ -13,7 +13,7 @@ import (
 //	Type:   Upgrade
 //	Rarity: Rare
 //
-//	This creature gains, "After a Tactic is played but before it resolves, ward this creature."
+//	This Creature gains, "After a Tactic is played but before it resolves, ward this Creature."
 func TestEncounterSuit(t *testing.T) {
 	t.Run("wards its host after an action card is played", func(t *testing.T) {
 		var host ct.Card

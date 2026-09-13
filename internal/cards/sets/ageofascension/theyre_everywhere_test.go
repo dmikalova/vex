@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Deal 2 damage to each enemy flank creature. Deal 1 damage to each enemy creature that is not on a flank.
+//	Play: Deal 2 damage to each enemy flank Creature. Deal 1 damage to each enemy Creature that is not on a flank.
 func TestTheyreEverywhere(t *testing.T) {
 	t.Run("deals 2 damage to flank enemies and 1 damage to the rest", func(t *testing.T) {
 		var left, middle, right ct.Card

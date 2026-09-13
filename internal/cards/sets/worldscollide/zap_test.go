@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: For each house represented among creatures in play, deal 1 damage to a creature.
+//	Play: For each house represented among Creatures in play, deal 1 damage to a Creature.
 func TestZap(t *testing.T) {
 	t.Run("deals 1 damage per house represented among creatures in play", func(t *testing.T) {
 		var foe ct.Card

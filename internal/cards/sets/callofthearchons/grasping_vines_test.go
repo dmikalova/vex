@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Put up to 3 artifacts into their owners' hands.
+//	Play: Put up to 3 Artifacts into their owners' hands.
 func TestGraspingVines(t *testing.T) {
 	t.Run("returns artifacts from either player to their owners' hands", func(t *testing.T) {
 		var a1, a2 ct.Card

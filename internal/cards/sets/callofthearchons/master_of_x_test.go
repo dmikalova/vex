@@ -15,7 +15,7 @@ import (
 //	Power:  4
 //	Traits: Demon
 //
-//	Reap: You may destroy a creature with power 1.
+//	Reap: You may destroy a Creature with power 1.
 func TestMasterOf1(t *testing.T) { testMaster(t, MasterOf1, 1) }
 
 // Master of 2
@@ -26,7 +26,7 @@ func TestMasterOf1(t *testing.T) { testMaster(t, MasterOf1, 1) }
 //	Power:  4
 //	Traits: Demon
 //
-//	Reap: You may destroy a creature with power 2.
+//	Reap: You may destroy a Creature with power 2.
 func TestMasterOf2(t *testing.T) { testMaster(t, MasterOf2, 2) }
 
 // Master of 3
@@ -37,7 +37,7 @@ func TestMasterOf2(t *testing.T) { testMaster(t, MasterOf2, 2) }
 //	Power:  4
 //	Traits: Demon
 //
-//	Reap: You may destroy a creature with power 3.
+//	Reap: You may destroy a Creature with power 3.
 func TestMasterOf3(t *testing.T) { testMaster(t, MasterOf3, 3) }
 
 // Master of 4
@@ -48,7 +48,7 @@ func TestMasterOf3(t *testing.T) { testMaster(t, MasterOf3, 3) }
 //	Power:  4
 //	Traits: Demon
 //
-//	Reap: You may destroy a creature with power 4.
+//	Reap: You may destroy a Creature with power 4.
 func TestMasterOf4(t *testing.T) { testMaster(t, MasterOf4, 4) }
 
 // Master of 5
@@ -59,7 +59,7 @@ func TestMasterOf4(t *testing.T) { testMaster(t, MasterOf4, 4) }
 //	Power:  4
 //	Traits: Demon
 //
-//	Reap: You may destroy a creature with power 5.
+//	Reap: You may destroy a Creature with power 5.
 func TestMasterOf5(t *testing.T) { testMaster(t, MasterOf5, 5) }
 
 // testMaster exercises one Master of N variant: its Reap destroys only a

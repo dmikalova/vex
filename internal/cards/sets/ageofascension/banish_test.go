@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Archive an enemy creature from play.
+//	Play: Archive an enemy Creature from play.
 func TestBanish(t *testing.T) {
 	t.Run("archives an enemy creature", func(t *testing.T) {
 		var foe ct.Card

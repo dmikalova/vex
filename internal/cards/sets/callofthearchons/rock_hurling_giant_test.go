@@ -15,7 +15,7 @@ import (
 //	Power:  6
 //	Traits: Giant
 //
-//	After you discard a Brobnar card, you may deal 4 damage to a creature.
+//	After you discard a Brobnar card, you may deal 4 damage to a Creature.
 func TestRockHurlingGiant(t *testing.T) {
 	t.Run("may deal 4 damage when a Brobnar card is discarded", func(t *testing.T) {
 		var giant, fodder, enemy ct.Card

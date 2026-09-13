@@ -17,8 +17,8 @@ var franesBlasterCluster = card.Cluster{
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains, "Fight/Reap: Choose one:
-//	- Deal 2 damage to a creature
+//	This Creature gains, "Fight/Reap: Choose one:
+//	- Deal 2 damage to a Creature
 //	- Attach Frane's Blaster to First Officer Frane -> move all Æmber from First Officer Frane to your pool."
 var FranesBlaster = card.New(
 	"Frane's Blaster",

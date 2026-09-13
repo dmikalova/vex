@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Scientist
 //
 //	Elusive.
-//	After a creature is played adjacent to Fila the Researcher, draw a card.
+//	After a Creature is played adjacent to Fila the Researcher, draw a card.
 var FilaTheResearcher = card.New(
 	"Fila the Researcher",
 	card.House.Logos,

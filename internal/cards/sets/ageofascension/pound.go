@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Deal 2 damage to a creature that is not on a flank and 1 damage to each of its neighbors.
+//	Play: Deal 2 damage to a Creature that is not on a flank and 1 damage to each of its neighbors.
 var Pound = card.New(
 	"Pound",
 	card.House.Brobnar,

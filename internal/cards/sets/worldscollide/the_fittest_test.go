@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Give each friendly creature a +1 power counter.
+//	Play: Give each friendly Creature a +1 power counter.
 func TestTheFittest(t *testing.T) {
 	t.Run("gives each friendly creature a +1 power counter", func(t *testing.T) {
 		var ally ct.Card

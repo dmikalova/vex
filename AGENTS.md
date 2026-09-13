@@ -23,13 +23,19 @@ next. Group items by area or mechanic so related work is built together.
 
 A `todo-agent.md` item is a **handoff to a future agent who was not in the
 conversation that wrote it**, so it must carry the decision, not just the task.
-When you record an item, write down *what was decided and why* — the chosen
+When you record an item, write down _what was decided and why_ — the chosen
 behavior, the cards affected, the expected text — so the next agent does not have
 to reconstruct it from code that may already be stale. When you pick an item up,
 the recorded decision **wins over a contradicting code comment**: a comment that
 disagrees with the item is out of date (it describes the behavior the item exists
 to change), so fix the comment to match the decision — do not treat the comment as
 evidence the item is wrong and re-litigate it.
+
+Work that is decided but has **no consuming card in an implemented set yet** goes
+in [docs/todo-future-set.md](docs/todo-future-set.md) instead, keyed to the set
+that first needs it. When you implement or stub a set, scan that file for items
+naming it and build the primitive alongside its first real consumer (the
+`implement-cards` and `stub-cards` skills both point there).
 
 ## Build, test, and lint through `mage`
 

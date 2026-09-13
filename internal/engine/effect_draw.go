@@ -47,5 +47,5 @@ func (e Draw) Text() string {
 
 // Resolve draws the cards, scaling by the Per count when one is set.
 func (e Draw) Resolve(ctx *EffectContext) {
-	ctx.Resolver.Draw(ctx.Controller, scaled(e.Or.pick(e.Amount, ctx), e.Per, ctx), ctx.Source)
+	ctx.Resolver.Draw(ctx.Controller, scaled(e.Or.pick(e.Amount, ctx), e.Per, ctx))
 }

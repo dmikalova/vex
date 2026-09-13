@@ -15,7 +15,7 @@ import (
 //	Traits: Item
 //
 //	Versatile.
-//	Action: Destroy Gorm of Omm and an artifact.
+//	Action: Destroy Gorm of Omm and an Artifact.
 func TestGormOfOmm(t *testing.T) {
 	t.Run("sacrifices itself and destroys another artifact", func(t *testing.T) {
 		var cannon ct.Card

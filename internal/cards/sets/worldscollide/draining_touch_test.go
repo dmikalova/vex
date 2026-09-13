@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Destroy a creature with no Æmber on it.
+//	Play: Destroy a Creature with no Æmber on it.
 func TestDrainingTouch(t *testing.T) {
 	t.Run("destroys a creature with no Æmber on it", func(t *testing.T) {
 		var bare, rich ct.Card

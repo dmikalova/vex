@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Elf • Thief
 //
 //	Elusive.
-//	Each neighboring creature gains, "Action: Steal 1 Æmber."
+//	Each neighboring Creature gains, "Action: Steal 1 Æmber."
 var BreakerHill = card.New(
 	"Breaker Hill",
 	card.House.Shadows,

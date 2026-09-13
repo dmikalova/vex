@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Choose an enemy creature - if that creature was already stunned, destroy it. Otherwise, stun it.
+//	Play: Choose an enemy Creature - if that Creature was already stunned, destroy it. Otherwise, stun it.
 var Card12Punch = card.New(
 	"1-2 Punch",
 	card.House.Brobnar,

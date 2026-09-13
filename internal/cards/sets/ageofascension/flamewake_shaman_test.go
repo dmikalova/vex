@@ -15,7 +15,7 @@ import (
 //	Power:  4
 //	Traits: Human
 //
-//	Play: Deal 2 damage to a creature.
+//	Play: Deal 2 damage to a Creature.
 func TestFlamewakeShaman(t *testing.T) {
 	t.Run("deals 2 damage to a chosen creature", func(t *testing.T) {
 		var enemy ct.Card

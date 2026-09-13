@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Unstun each friendly creature.
+//	Play: Unstun each friendly Creature.
 var ClearMind = card.New(
 	"Clear Mind",
 	card.House.Sanctum,

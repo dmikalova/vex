@@ -148,6 +148,11 @@ func (c *webChooser) raise(
 	}
 	c.g.dispatch(func(app.Context) {
 		c.g.choosing = true
+		// A prompt taking over the board owns the highlight: drop any card the player
+		// had selected before it opened so a stale selection ring does not linger on a
+		// non-candidate card (e.g. behind Fangtooth Cavern's end-of-turn destroy
+		// prompt), reading as still-active while the board dims around the candidates.
+		c.g.clearSelection()
 		c.g.chooserDeclinable = declinable
 		c.g.chooserOrdering = ordering
 		c.g.chooserPrompt = prompt

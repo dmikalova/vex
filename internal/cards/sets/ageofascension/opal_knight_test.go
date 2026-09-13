@@ -15,7 +15,7 @@ import (
 //	Power:  5
 //	Traits: Spirit • Knight
 //
-//	Play: Destroy each creature with even power.
+//	Play: Destroy each Creature with even power.
 func TestOpalKnight(t *testing.T) {
 	t.Run("destroys each creature with even power", func(t *testing.T) {
 		var even, odd ct.Card

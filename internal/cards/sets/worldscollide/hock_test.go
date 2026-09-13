@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Destroy an artifact -> gain 1 Æmber.
+//	Play: Destroy an Artifact -> gain 1 Æmber.
 func TestHock(t *testing.T) {
 	t.Run("destroys an artifact and gains 1 Æmber", func(t *testing.T) {
 		var relic ct.Card

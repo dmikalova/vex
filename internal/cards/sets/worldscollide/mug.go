@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Choose a creature - move 1 Æmber from it to your pool. Deal 2 damage to it.
+//	Play: Choose a Creature - move 1 Æmber from it to your pool. Deal 2 damage to it.
 var Mug = card.New(
 	"Mug",
 	card.House.Shadows,

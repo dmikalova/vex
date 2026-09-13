@@ -46,7 +46,7 @@ func TestConstantAbilityWhileInCenter(t *testing.T) {
 
 	if !strings.Contains(
 		RenderCardRules(&def),
-		"While Kaloch is in the center of your battleline, each friendly creature gains skirmish.",
+		"While Kaloch is in the center of your battleline, each friendly Creature gains skirmish.",
 	) {
 		t.Error("card rules should render the while-in-center line")
 	}

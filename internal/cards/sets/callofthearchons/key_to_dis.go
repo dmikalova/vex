@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item
 //
 //	Versatile.
-//	Action: Destroy Key to Dis and each creature.
+//	Action: Destroy Key to Dis and each Creature.
 var KeyToDis = card.New(
 	"Key to Dis",
 	card.House.Dis,

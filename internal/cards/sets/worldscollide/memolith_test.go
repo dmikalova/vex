@@ -15,7 +15,7 @@ import (
 //	Traits: Location
 //
 //	Action: Choose one:
-//	- Put a Tactic from your hand faceup under Memolith
+//	- Put a Tactic card from your hand faceup under Memolith
 //	- Trigger the play effect of a Tactic grafted onto Memolith.
 func TestMemolith(t *testing.T) {
 	// Memolith's action grafts an action from hand; readied and used again, it

@@ -9,8 +9,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains taunt.
-//	Play: Fully heal this creature.
+//	This Creature gains taunt.
+//	Play: Fully heal this Creature.
 var YoMamaMastery = card.New(
 	"Yo Mama Mastery",
 	card.House.Brobnar,

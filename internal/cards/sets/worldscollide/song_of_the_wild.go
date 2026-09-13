@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Each friendly creature gains, "Reap: Gain 1 Æmber."
+//	Play: Each friendly Creature gains, "Reap: Gain 1 Æmber."
 var SongOfTheWild = card.New(
 	"Song of the Wild",
 	card.House.Untamed,

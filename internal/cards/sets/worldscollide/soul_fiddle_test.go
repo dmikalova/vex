@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Traits: Item
 //
-//	Action: Enrage a creature.
+//	Action: Enrage a Creature.
 func TestSoulFiddle(t *testing.T) {
 	t.Run("enrages a chosen creature", func(t *testing.T) {
 		var foe ct.Card

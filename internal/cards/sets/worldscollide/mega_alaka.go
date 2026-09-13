@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  6
 //	Traits: Giant
 //
-//	If you have used a creature to fight this turn, Mega Alaka enters play ready.
+//	If you have used a Creature to fight this turn, Mega Alaka enters play ready.
 var MegaAlaka = card.New(
 	"Mega Alaka",
 	card.House.Brobnar,

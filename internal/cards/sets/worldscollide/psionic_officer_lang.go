@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Human
 //
-//	After an enemy creature reaps, archive the top card of your deck.
+//	After an enemy Creature reaps, archive the top card of your deck.
 var PsionicOfficerLang = card.New(
 	"Psionic Officer Lang",
 	card.House.StarAlliance,

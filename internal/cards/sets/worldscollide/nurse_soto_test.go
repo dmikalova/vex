@@ -16,7 +16,7 @@ import (
 //	Traits: Human
 //
 //	Deploy.
-//	Play/Fight/Reap: Heal 3 damage from each neighboring creature.
+//	Play/Fight/Reap: Heal 3 damage from each neighboring Creature.
 func TestNurseSoto(t *testing.T) {
 	t.Run("reaping heals 3 damage from each neighbor", func(t *testing.T) {
 		var left, soto, right ct.Card

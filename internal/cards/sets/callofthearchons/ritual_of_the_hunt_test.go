@@ -17,7 +17,7 @@ import (
 //	Traits: Power
 //
 //	Versatile.
-//	Action: Destroy Ritual of the Hunt. For the remainder of the turn, you may use friendly Untamed creatures.
+//	Action: Destroy Ritual of the Hunt. For the remainder of the turn, you may use friendly Untamed Creatures.
 func TestRitualOfTheHunt(t *testing.T) {
 	t.Run("destroys itself and grants use of friendly Untamed creatures", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

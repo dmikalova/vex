@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: If you used 3 or more creatures this turn, steal 2 Æmber.
+//	Play: If you used 3 or more Creatures this turn, steal 2 Æmber.
 func TestStampede(t *testing.T) {
 	setup := func() ct.Setup {
 		return ct.Setup{

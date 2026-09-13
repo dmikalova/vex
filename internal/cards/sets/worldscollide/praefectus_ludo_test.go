@@ -15,7 +15,7 @@ import (
 //	Power:  5
 //	Traits: Dinosaur • Politician
 //
-//	Each other friendly creature gains, "Destroyed: Move each Æmber on this creature to the common supply."
+//	Each other friendly Creature gains, "Destroyed: Move each Æmber on this Creature to the common supply."
 func TestPraefectusLudo(t *testing.T) {
 	t.Run("a destroyed friendly creature moves its Æmber to the common supply", func(t *testing.T) {
 		var ally, enemy ct.Card

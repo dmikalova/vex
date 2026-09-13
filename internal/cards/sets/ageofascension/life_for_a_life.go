@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Destroy a friendly creature -> deal 6 damage to a creature.
+//	Play: Destroy a friendly Creature -> deal 6 damage to a Creature.
 var LifeForALife = card.New(
 	"Life for a Life",
 	card.House.Shadows,

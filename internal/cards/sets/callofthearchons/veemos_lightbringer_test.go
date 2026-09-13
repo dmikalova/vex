@@ -15,7 +15,7 @@ import (
 //	Power:  6
 //	Traits: Angel • Spirit
 //
-//	Play: Destroy each elusive creature.
+//	Play: Destroy each elusive Creature.
 func TestVeemosLightbringer(t *testing.T) {
 	t.Run("destroys each elusive creature when played", func(t *testing.T) {
 		var elusive, plain ct.Card

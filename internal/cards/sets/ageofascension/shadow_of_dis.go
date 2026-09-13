@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Until your next turn, enemy creatures' text boxes are considered blank (except for traits).
+//	Play: Until your next turn, enemy Creatures' text boxes are considered blank (except for traits).
 var ShadowOfDis = card.New(
 	"Shadow of Dis",
 	card.House.Dis,

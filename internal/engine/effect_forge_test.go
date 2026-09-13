@@ -60,9 +60,12 @@ func TestForgeKeyFreeEffect(t *testing.T) {
 	}
 }
 
-func TestGiveRemainingAemberAfterOpponentForgeKey(t *testing.T) {
-	e := GiveRemainingAemberAfterOpponentForgeKey{}
-	if e.Text() != "if an opponent forges a key on their next turn, they must give you their remaining Æmber" {
+func TestForOpponentNextTurnForgeGivesAember(t *testing.T) {
+	e := ForOpponentNextTurn{
+		On: EventForgeKey,
+		Do: GiveAember{All: true},
+	}
+	if e.Text() != "during your opponent's next turn, after forging a key, your opponent gives you all their Æmber" {
 		t.Errorf("text = %q", e.Text())
 	}
 
@@ -98,12 +101,18 @@ func TestGiveRemainingAemberAfterOpponentForgeKey(t *testing.T) {
 	}
 }
 
-func TestGiveRemainingAemberAfterOpponentForgeKeyEveryForge(t *testing.T) {
+func TestForOpponentNextTurnForgeGivesAemberEveryForge(t *testing.T) {
 	// A key cheat can forge more than one key in a turn; the opponent must give
 	// their remaining Æmber each time.
 	g := NewGame("A", "B", 1)
 	g.StartTurn(0)
-	GiveRemainingAemberAfterOpponentForgeKey{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	ForOpponentNextTurn{
+		On: EventForgeKey,
+		Do: GiveAember{All: true},
+	}.
+		Resolve(
+			&EffectContext{Resolver: g, Controller: 0},
+		)
 	g.EndPlayPhase(0)
 	g.StartTurn(1) // the start-of-turn forge is skipped (no Æmber), reaction still armed
 
@@ -120,10 +129,16 @@ func TestGiveRemainingAemberAfterOpponentForgeKeyEveryForge(t *testing.T) {
 	}
 }
 
-func TestGiveRemainingAemberAfterOpponentForgeKeyExpiresIfNoForge(t *testing.T) {
+func TestForOpponentNextTurnForgeGivesAemberExpiresIfNoForge(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.StartTurn(0)
-	GiveRemainingAemberAfterOpponentForgeKey{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	ForOpponentNextTurn{
+		On: EventForgeKey,
+		Do: GiveAember{All: true},
+	}.
+		Resolve(
+			&EffectContext{Resolver: g, Controller: 0},
+		)
 
 	g.State.Aember[1] = KeyCost - 1
 	g.EndPlayPhase(0)
@@ -147,10 +162,16 @@ func TestGiveRemainingAemberAfterOpponentForgeKeyExpiresIfNoForge(t *testing.T) 
 	}
 }
 
-func TestGiveRemainingAemberAfterOpponentForgeKeyAppliesToCardForge(t *testing.T) {
+func TestForOpponentNextTurnForgeGivesAemberAppliesToCardForge(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.StartTurn(0)
-	GiveRemainingAemberAfterOpponentForgeKey{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	ForOpponentNextTurn{
+		On: EventForgeKey,
+		Do: GiveAember{All: true},
+	}.
+		Resolve(
+			&EffectContext{Resolver: g, Controller: 0},
+		)
 	g.EndPlayPhase(0)
 	g.StartTurn(1)
 

@@ -15,7 +15,7 @@ import (
 //	Power:  1
 //	Traits: Beast • Mutant
 //
-//	Play/Fight/Reap: Destroy an enemy creature or artifact and a friendly creature or artifact, and discard the top card of your deck -> if the discarded card is not a Logos card, repeat this effect.
+//	Play/Fight/Reap: Destroy an enemy Creature or Artifact and a friendly Creature or Artifact, and discard the top card of your deck -> if the discarded card is not a Logos card, repeat this effect.
 func TestNeutronShark(t *testing.T) {
 	t.Run("stops once the discarded card is a Logos card", func(t *testing.T) {
 		var friend, foe, logos ct.Card

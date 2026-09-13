@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Traits: Item
 //
-//	Action: Put an artifact into its owner's hand.
+//	Action: Put an Artifact into its owner's hand.
 var WhisperingReliquary = card.New(
 	"Whispering Reliquary",
 	card.House.Sanctum,

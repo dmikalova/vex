@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains, "Reap: Ward this creature."
+//	This Creature gains, "Reap: Ward this Creature."
 func TestForceField(t *testing.T) {
 	t.Run("wards its host when the host reaps", func(t *testing.T) {
 		var host ct.Card

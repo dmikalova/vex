@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Deploy.
 //	Crash Muldoon enters play ready.
-//	Action: Use a neighboring non-Star Alliance creature.
+//	Action: Use a neighboring non-Star Alliance Creature.
 var CrashMuldoon = card.New(
 	"Crash Muldoon",
 	card.House.StarAlliance,

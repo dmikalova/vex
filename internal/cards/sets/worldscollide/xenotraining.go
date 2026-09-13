@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: For each house represented among friendly creatures, a friendly creature captures 1 Æmber from your opponent.
+//	Play: For each house represented among friendly Creatures, a friendly Creature captures 1 Æmber from your opponent.
 var Xenotraining = card.New(
 	"Xenotraining",
 	card.House.StarAlliance,

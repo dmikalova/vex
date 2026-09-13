@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Human
 //
-//	Play/Fight/Reap: You may play a non-Star Alliance artifact, upgrade, or Tactic this turn.
+//	Play/Fight/Reap: You may play a non-Star Alliance Artifact, Upgrade, or Tactic this turn.
 func TestComOfficerKirby(t *testing.T) {
 	t.Run("reaping frees one off-house non-creature this turn", func(t *testing.T) {
 		var kirby ct.Card

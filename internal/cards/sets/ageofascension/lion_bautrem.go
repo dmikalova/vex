@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Knight
 //
 //	Deploy.
-//	Each neighboring creature gains +2 power.
+//	Each neighboring Creature gains +2 power.
 var LionBautrem = card.New(
 	"\"Lion\" Bautrem",
 	card.House.Sanctum,

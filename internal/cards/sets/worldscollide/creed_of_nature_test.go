@@ -15,7 +15,7 @@ import (
 //	Traits: Power
 //
 //	Versatile.
-//	Action: Destroy Creed of Nature. Choose a creature - for the remainder of the turn, it gains skirmish and assault equal to its power.
+//	Action: Destroy Creed of Nature. Choose a Creature - for the remainder of the turn, it gains skirmish and assault equal to its power.
 func TestCreedOfNature(t *testing.T) {
 	t.Run(
 		"sacrifices itself, then a chosen creature gains skirmish and assault equal to its power",

@@ -34,3 +34,30 @@ func (e AemberGivenAfterForging) Text(n Namer) string {
 	return fmt.Sprintf("%s gives %d Æmber to %s after forging a key",
 		n.PlayerName(e.Player), e.Amount, n.PlayerName(e.To))
 }
+
+// AemberGiven narrates one player giving Æmber to another from their pool — the
+// GiveAember effect. A toll sets Reason to the action it charged for (Customs
+// Office, Tentacus), so the line names it and reads under the toll card's frame;
+// a plain give leaves Reason unset.
+type AemberGiven struct {
+	Giver    int
+	Receiver int
+	Amount   int
+	Reason   TollAction
+}
+
+// Text renders the Æmber one player gives another, naming the card behind it as
+// the subject when a frame carries one ("Customs Office has P0 give 1 Æmber to P1
+// to use an artifact") and the giver alone otherwise.
+func (e AemberGiven) Text(n Namer) string {
+	reason := ""
+	if e.Reason != tollActionUnset {
+		reason = " to " + e.Reason.phrase()
+	}
+	if s, ok := framedSource(n); ok {
+		return fmt.Sprintf("%s has %s give %d Æmber to %s%s",
+			s, n.PlayerName(e.Giver), e.Amount, n.PlayerName(e.Receiver), reason)
+	}
+	return fmt.Sprintf("%s gives %d Æmber to %s%s",
+		n.PlayerName(e.Giver), e.Amount, n.PlayerName(e.Receiver), reason)
+}

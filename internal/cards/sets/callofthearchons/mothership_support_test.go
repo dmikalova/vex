@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: For each friendly ready Mars creature, deal 2 damage to a creature.
+//	Play: For each friendly ready Mars Creature, deal 2 damage to a Creature.
 func TestMothershipSupport(t *testing.T) {
 	t.Run("deals 2 damage per friendly ready Mars creature", func(t *testing.T) {
 		var support, exhausted, first, second ct.Card

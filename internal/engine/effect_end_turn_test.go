@@ -55,7 +55,7 @@ func TestBookOfLeQComposition(t *testing.T) {
 		RevealTopOfDeck{Amount: 1},
 		Conditional{
 			Cond: ItIsNotOfHouse{House: StarAlliance},
-			Then: MakeItsHouseActive{},
+			Then: ChangeActiveHouse{To: TheContextualHouse},
 			Else: EndTurn{},
 		},
 	}}}

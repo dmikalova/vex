@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Destroy a friendly creature -> each player loses Æmber equal to half its power, rounded down. Gain 1 chain.
+//	Play: Destroy a friendly Creature -> each player loses Æmber equal to half its power, rounded down. Gain 1 chain.
 var PowerOfFire = card.New(
 	"Power of Fire",
 	card.House.Brobnar,

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: If you used 3 or more creatures this turn, steal 2 Æmber.
+//	Play: If you used 3 or more Creatures this turn, steal 2 Æmber.
 var Stampede = card.New(
 	"Stampede",
 	card.House.Untamed,

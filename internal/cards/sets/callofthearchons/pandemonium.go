@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Each undamaged creature captures 1 Æmber from its opponent.
+//	Play: Each undamaged Creature captures 1 Æmber from its opponent.
 var Pandemonium = card.New(
 	"Pandemonium",
 	card.House.Dis,

@@ -15,8 +15,8 @@ import (
 //	Power:  2
 //	Traits: Elf • Witch
 //
-//	Play: For each friendly damaged creature in play, gain 1 Æmber.
-//	Reap: Heal 2 damage from a friendly creature.
+//	Play: For each friendly damaged Creature in play, gain 1 Æmber.
+//	Reap: Heal 2 damage from a friendly Creature.
 func TestDharna(t *testing.T) {
 	t.Run("gains 1 aember for each damaged friendly creature when played", func(t *testing.T) {
 		var ally ct.Card

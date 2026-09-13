@@ -43,6 +43,8 @@ const (
 	TallyAemberLost
 	// TallyCardsReturned is ctx.Produced.Returned, a whole tally not split by player.
 	TallyCardsReturned
+	// TallyCardsPurged is a player's share of ctx.Produced.Purged.
+	TallyCardsPurged
 )
 
 // ProducedThisWay counts a "... this way" tally an earlier effect in the same
@@ -66,6 +68,8 @@ func (c ProducedThisWay) Value(ctx *EffectContext) int {
 		return ctx.Produced.Moved[ctx.PlayerFor(c.Player)]
 	case TallyAemberLost:
 		return ctx.Produced.AemberLost[ctx.PlayerFor(c.Player)]
+	case TallyCardsPurged:
+		return ctx.Produced.Purged[ctx.PlayerFor(c.Player)]
 	default:
 		return ctx.Produced.Returned
 	}
@@ -92,6 +96,12 @@ func (c ProducedThisWay) CountText() string {
 			who = "your opponent"
 		}
 		return "Æmber " + who + " lost this way"
+	case TallyCardsPurged:
+		who := "they"
+		if c.Player == Opponent {
+			who = "your opponent"
+		}
+		return "card " + who + " controlled that was purged this way"
 	default:
 		return "card put into your hand this way"
 	}

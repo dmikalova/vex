@@ -16,8 +16,8 @@ var BaitAndSwitch = card.New(
 	card.Rarity.Common,
 	card.Provenance(card.CotA, "267"),
 	card.WithAbility(
-		card.Trigger.Play, card.RepeatOnCondition{
+		card.Trigger.Play, card.Repeat{
 			Do:   card.StealAember{Amount: 1},
-			Cond: card.PoolAember{Player: card.Opponent, Is: card.MoreThanYou},
+			Gate: card.While{Cond: card.PoolAember{Player: card.Opponent, Is: card.MoreThanYou}},
 		}),
 )

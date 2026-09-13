@@ -110,7 +110,7 @@ func TestSequenceExaltFoldsOnlyWhenSingle(t *testing.T) {
 }
 
 // A sequence that leads with a single clickable choice is declinable, so a May or
-// MayRepeat wrapping it is driven by that click.
+// a Repeat's MayWhile gate wrapping it is driven by that click.
 func TestSequenceDeclinable(t *testing.T) {
 	led := Sequence{Effects: []Effect{
 		Destroy{Target: Target{Kind: TargetChosenEnemyCreature}},

@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Steal 1 Æmber -> deal 2 damage to a creature.
+//	Play: Steal 1 Æmber -> deal 2 damage to a Creature.
 var NerveBlast = card.New(
 	"Nerve Blast",
 	card.House.Shadows,

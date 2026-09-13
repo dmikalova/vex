@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains, "Destroyed: Destroy the most powerful enemy creature."
+//	This Creature gains, "Destroyed: Destroy the most powerful enemy Creature."
 var Soulkeeper = card.New(
 	"Soulkeeper",
 	card.House.Dis,

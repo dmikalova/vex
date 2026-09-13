@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  2
 //	Traits: Human • Knight
 //
-//	After an enemy creature reaps, Sir Marrows captures 1 Æmber from your opponent.
+//	After an enemy Creature reaps, Sir Marrows captures 1 Æmber from your opponent.
 var SirMarrows = card.New(
 	"Sir Marrows",
 	card.House.Sanctum,

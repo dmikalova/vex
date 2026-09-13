@@ -15,7 +15,7 @@ import (
 //	Power:  6
 //	Traits: Giant
 //
-//	After a creature is destroyed in a fight with Krump, your opponent loses 1 Æmber.
+//	After a Creature is destroyed in a fight with Krump, your opponent loses 1 Æmber.
 func TestKrump(t *testing.T) {
 	t.Run(
 		"opponent loses 1 Æmber when a creature is destroyed in a fight with Krump",

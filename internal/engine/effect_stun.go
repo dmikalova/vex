@@ -62,9 +62,18 @@ func (e Unstun) targetText() string { return e.Target.Text() }
 // Text renders the effect, e.g. "unstun each friendly creature".
 func (e Unstun) Text() string { return e.verb() + " " + e.targetText() }
 
-// Resolve clears the stun on each selected creature.
+// Resolve clears the stun on each selected creature and logs the ones it freed as
+// one act, so a card that unstuns several creatures reads as one line.
 func (e Unstun) Resolve(ctx *EffectContext) {
+	var freed []LocalID
 	for _, id := range e.Target.Select(ctx) {
+		if !ctx.Resolver.Stunned(id) {
+			continue
+		}
 		ctx.Resolver.SetStunned(id, false)
+		freed = append(freed, id)
+	}
+	if len(freed) > 0 {
+		ctx.Resolver.Record(CreaturesUnstunned{Player: ctx.Controller, Creatures: freed})
 	}
 }

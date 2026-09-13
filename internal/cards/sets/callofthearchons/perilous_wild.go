@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Destroy each elusive creature.
+//	Play: Destroy each elusive Creature.
 var PerilousWild = card.New(
 	"Perilous Wild",
 	card.House.Untamed,

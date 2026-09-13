@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Goblin
 //
 //	Elusive.
-//	Play: Deal 1 damage to each enemy creature.
+//	Play: Deal 1 damage to each enemy Creature.
 var PingleWhoAnnoys = card.New(
 	"Pingle Who Annoys",
 	card.House.Brobnar,

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Choose a house - exhaust each enemy creature of the chosen house.
+//	Play: Choose a house - exhaust each enemy Creature of the chosen house.
 var PersistenceHunting = card.New(
 	"Persistence Hunting",
 	card.House.Untamed,

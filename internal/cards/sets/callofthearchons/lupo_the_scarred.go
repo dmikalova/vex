@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Skirmish.
-//	Play: Deal 2 damage to a creature.
+//	Play: Deal 2 damage to a Creature.
 var LupoTheScarred = card.New(
 	"Lupo the Scarred",
 	card.House.Untamed,

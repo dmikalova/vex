@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  6
 //	Traits: Giant
 //
-//	Fight: Deal 2 damage to a flank creature.
+//	Fight: Deal 2 damage to a flank Creature.
 var Mogghunter = card.New(
 	"Mogghunter",
 	card.House.Brobnar,

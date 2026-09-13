@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Traits: Location
 //
-//	Action: Discard a creature from your hand -> gain 1 Æmber.
+//	Action: Discard a Creature from your hand -> gain 1 Æmber.
 var FeedingPit = card.New(
 	"Feeding Pit",
 	card.House.Mars,

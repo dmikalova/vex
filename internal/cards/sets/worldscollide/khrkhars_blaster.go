@@ -17,8 +17,8 @@ var khrkharsBlasterCluster = card.Cluster{
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains, "Fight/Reap: Choose one:
-//	- Deal 2 damage to a creature
+//	This Creature gains, "Fight/Reap: Choose one:
+//	- Deal 2 damage to a Creature
 //	- Attach Khrkhar's Blaster to Lieutenant Khrkhar -> ward Lieutenant Khrkhar."
 var KhrkharsBlaster = card.New(
 	"Khrkhar's Blaster",

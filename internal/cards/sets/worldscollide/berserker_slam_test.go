@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Deal 4 damage to a flank creature. If this damage destroys that creature, its controller loses 1 Æmber.
+//	Play: Deal 4 damage to a flank Creature. If this damage destroys that Creature, its controller loses 1 Æmber.
 func TestBerserkerSlam(t *testing.T) {
 	t.Run("destroys a flank creature and its controller loses 1 Æmber", func(t *testing.T) {
 		var flank ct.Card

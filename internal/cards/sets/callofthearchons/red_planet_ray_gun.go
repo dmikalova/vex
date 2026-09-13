@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains, "Reap: For each Mars creature in play, deal 1 damage to a creature."
+//	This Creature gains, "Reap: For each Mars Creature in play, deal 1 damage to a Creature."
 var RedPlanetRayGun = card.New(
 	"Red Planet Ray Gun",
 	card.House.Mars,

@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Take control of an enemy creature.
+//	Play: Take control of an enemy Creature.
 func TestHypnobeam(t *testing.T) {
 	t.Run("takes control of an enemy creature when played", func(t *testing.T) {
 		var foe ct.Card

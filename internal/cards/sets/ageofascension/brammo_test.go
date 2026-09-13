@@ -16,7 +16,7 @@ import (
 //	Armor:  1
 //	Traits: Giant • Knight
 //
-//	Play: Deal 2 damage to each enemy flank creature.
+//	Play: Deal 2 damage to each enemy flank Creature.
 func TestBrammo(t *testing.T) {
 	t.Run("deals 2 damage to each enemy flank creature", func(t *testing.T) {
 		var left, middle, right ct.Card

@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: For each friendly creature in play, deal 1 damage to a creature. You may exalt a friendly creature to repeat the preceding effect.
+//	Play: For each friendly Creature in play, deal 1 damage to a Creature. You may exalt a friendly Creature to repeat the preceding effect.
 func TestPhalanxStrike(t *testing.T) {
 	t.Run("deals 1 damage per friendly creature, then declines the exalt", func(t *testing.T) {
 		var enemy ct.Card

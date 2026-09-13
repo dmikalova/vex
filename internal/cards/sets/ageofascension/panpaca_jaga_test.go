@@ -17,7 +17,7 @@ import (
 //	Traits: Beast
 //
 //	Skirmish.
-//	Each creature to the left of Panpaca, Jaga gains skirmish.
+//	Each Creature to the left of Panpaca, Jaga gains skirmish.
 func TestPanpacaJaga(t *testing.T) {
 	var left, right ct.Card
 	h := ct.Play(t, ct.Setup{

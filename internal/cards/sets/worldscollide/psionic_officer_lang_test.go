@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Human
 //
-//	After an enemy creature reaps, archive the top card of your deck.
+//	After an enemy Creature reaps, archive the top card of your deck.
 func TestPsionicOfficerLang(t *testing.T) {
 	t.Run("archives the top card of your deck after an enemy creature reaps", func(t *testing.T) {
 		var topCard, foe ct.Card

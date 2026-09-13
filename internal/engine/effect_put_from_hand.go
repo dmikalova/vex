@@ -1,7 +1,5 @@
 package engine
 
-import "strings"
-
 // PutFromHand puts a card the controller chooses from their own hand directly
 // into play — Swap Widget swapping in a replacement creature. Type restricts the
 // choice to cards of that type; House restricts it to that house; either's zero
@@ -19,7 +17,7 @@ type PutFromHand struct {
 func (e PutFromHand) noun() string {
 	base := "card"
 	if e.Type != TypeUnset {
-		base = strings.ToLower(e.Type.String())
+		base = typeWord(e.Type)
 	}
 	if e.House != HouseNone {
 		base = e.House.String() + " " + base

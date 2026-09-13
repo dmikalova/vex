@@ -16,7 +16,7 @@ import (
 //	Traits: Human • Witch
 //
 //	Elusive.
-//	Fight/Reap: Ward each neighboring creature.
+//	Fight/Reap: Ward each neighboring Creature.
 func TestTheFeatheredShaman(t *testing.T) {
 	t.Run("reaping wards each neighbor", func(t *testing.T) {
 		var left, shaman, right ct.Card

@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains +5 power.
+//	This Creature gains +5 power.
 func TestBloodOfTitans(t *testing.T) {
 	t.Run("grants its host +5 power while attached", func(t *testing.T) {
 		var host ct.Card

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Horseman • Spirit
 //
-//	Play: For the remainder of the turn, each friendly creature may fight.
+//	Play: For the remainder of the turn, each friendly Creature may fight.
 var HorsemanOfWar = card.New(
 	"Horseman of War",
 	card.House.Sanctum,

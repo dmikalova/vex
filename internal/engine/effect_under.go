@@ -1,7 +1,5 @@
 package engine
 
-import "strings"
-
 // This file holds the effects that place a card under another card, and that
 // play it back out from there — Masterplan puts a card from hand facedown under
 // itself then later plays it; Jargogle and Graft do the same shape of thing (see
@@ -25,11 +23,8 @@ type PutUnderFromHand struct {
 // noun renders the kind of card the effect places, e.g. "Tactic" for a
 // Tactic filter, "card" for none.
 func (e PutUnderFromHand) noun() string {
-	if e.Type == Tactic {
-		return "Tactic"
-	}
 	if e.Type != TypeUnset {
-		return strings.ToLower(e.Type.String()) + " card"
+		return typeWord(e.Type) + " card"
 	}
 	return "card"
 }

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Deal 2 damage to an enemy creature. If this damage destroys that creature, deal 2 damage to each of that creature's neighbors.
+//	Play: Deal 2 damage to an enemy Creature. If this damage destroys that Creature, deal 2 damage to each of that Creature's neighbors.
 var PainReaction = card.New(
 	"Pain Reaction",
 	card.House.Dis,

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Martian • Soldier
 //
 //	Yxili Marauder gains +1 power for each Æmber on it.
-//	Play: For each friendly ready Mars creature, Yxili Marauder captures 1 Æmber from your opponent.
+//	Play: For each friendly ready Mars Creature, Yxili Marauder captures 1 Æmber from your opponent.
 var YxiliMarauder = card.New(
 	"Yxili Marauder",
 	card.House.Mars,

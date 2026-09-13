@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Destroy a friendly creature -> deal 6 damage to a creature.
+//	Play: Destroy a friendly Creature -> deal 6 damage to a Creature.
 func TestLifeForALife(t *testing.T) {
 	t.Run("destroys a friendly creature to deal 6 damage to a creature", func(t *testing.T) {
 		var sacrifice, foe ct.Card

@@ -17,7 +17,7 @@ import (
 //	Traits: Beast
 //
 //	Hazardous 3.
-//	After Æmber is stolen from you, for each Æmber stolen, deal 1 damage to each enemy creature.
+//	After Æmber is stolen from you, for each Æmber stolen, deal 1 damage to each enemy Creature.
 func TestMolephin(t *testing.T) {
 	var molephin, enemy ct.Card
 	h := ct.Play(t, ct.Setup{

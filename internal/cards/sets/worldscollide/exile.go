@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Your opponent gains control of a friendly creature.
+//	Play: Your opponent gains control of a friendly Creature.
 var Exile = card.New(
 	"Exile",
 	card.House.Saurian,

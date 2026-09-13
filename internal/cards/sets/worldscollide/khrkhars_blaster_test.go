@@ -14,8 +14,8 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains, "Fight/Reap: Choose one:
-//	- Deal 2 damage to a creature
+//	This Creature gains, "Fight/Reap: Choose one:
+//	- Deal 2 damage to a Creature
 //	- Attach Khrkhar's Blaster to Lieutenant Khrkhar -> ward Lieutenant Khrkhar."
 func TestKhrkharsBlaster(t *testing.T) {
 	t.Run("attaches to Khrkhar and wards it", func(t *testing.T) {

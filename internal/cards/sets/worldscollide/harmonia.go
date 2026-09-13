@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Witch
 //
 //	Elusive.
-//	After you play a creature, if you are overwhelmed, gain 1 Æmber.
+//	After you play a Creature, if you are overwhelmed, gain 1 Æmber.
 var Harmonia = card.New(
 	"Harmonia",
 	card.House.Untamed,

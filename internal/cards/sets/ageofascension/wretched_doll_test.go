@@ -14,8 +14,8 @@ import (
 //	Rarity: Rare
 //	Traits: Item
 //
-//	Play: Put a doom counter on a creature.
-//	Action: Destroy each creature with a doom counter. Put a doom counter on a creature.
+//	Play: Put a doom counter on a Creature.
+//	Action: Destroy each Creature with a doom counter. Put a doom counter on a Creature.
 func TestWretchedDoll(t *testing.T) {
 	t.Run("play puts a doom counter on a creature", func(t *testing.T) {
 		var target ct.Card

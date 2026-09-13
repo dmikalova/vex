@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains, "Fight/Reap: Use a non-Star Alliance creature."
+//	This Creature gains, "Fight/Reap: Use a non-Star Alliance Creature."
 func TestUniversalTranslator(t *testing.T) {
 	t.Run(
 		"its host may use a friendly non-Star Alliance creature when it reaps",

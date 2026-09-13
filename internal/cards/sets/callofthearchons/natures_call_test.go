@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Put up to 3 creatures into their owners' hands.
+//	Play: Put up to 3 Creatures into their owners' hands.
 func TestNaturesCall(t *testing.T) {
 	t.Run("puts up to 3 creatures into their owners' hands", func(t *testing.T) {
 		var ally, foe ct.Card

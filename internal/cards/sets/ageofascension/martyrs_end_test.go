@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Destroy any number of friendly creatures. For each creature destroyed this way, gain 1 Æmber.
+//	Play: Destroy any number of friendly Creatures. For each Creature destroyed this way, gain 1 Æmber.
 func TestMartyrsEnd(t *testing.T) {
 	var a, b ct.Card
 	h := ct.Play(t, ct.Setup{

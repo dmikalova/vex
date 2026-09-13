@@ -388,8 +388,8 @@ type CombatResolver interface {
 // play, hand, deck, discard, archives, and purge.
 type ZoneResolver interface {
 	// Draw makes a player draw count cards, crediting the card whose ability drew
-	// them.
-	Draw(controller, count int, source LocalID)
+	// them through the record's frame.
+	Draw(controller, count int)
 	// RefillHand refills a player's hand as if it were the end of their turn,
 	// honoring their chains and draw modifiers (Punctuated Equilibrium).
 	RefillHand(player int)
@@ -419,11 +419,12 @@ type ZoneResolver interface {
 	ShuffleFriendlyCardsInPlayIntoDeck(player int) int
 	// BeginShuffleBatch starts collecting the cards shuffled into a deck until
 	// EndShuffleBatch, so an effect that shuffles several creatures at once narrates
-	// them as one grouped line per owner attributed to source.
+	// them as one grouped line per owner attributed to the frame's source.
 	BeginShuffleBatch()
 	// EndShuffleBatch closes the batch opened by BeginShuffleBatch, narrating the
-	// collected cards grouped by owner as CardsShuffledIntoDeckBy from source.
-	EndShuffleBatch(source LocalID)
+	// collected cards grouped by owner as CardsShuffledIntoDeckBy from the frame's
+	// source.
+	EndShuffleBatch()
 	// ArchiveFromHand moves a card from its owner's hand to their archives.
 	ArchiveFromHand(id LocalID)
 	// ArchiveFromDiscard moves a card from a player's discard pile to their archives.
@@ -431,9 +432,6 @@ type ZoneResolver interface {
 	// ArchiveFromPurge moves a card from a player's purge pile to their archives —
 	// a card recovered from out of the game (Universal Recycle Bin).
 	ArchiveFromPurge(owner int, id LocalID)
-	// ArchiveTopOfDeck moves the top card of a player's deck to their archives,
-	// reporting whether a card was available.
-	ArchiveTopOfDeck(player int) bool
 	// DiscardTopOfDeck moves the top card of a player's deck to their discard pile,
 	// returning that card and whether one was available.
 	DiscardTopOfDeck(player int) (LocalID, bool)
@@ -445,8 +443,8 @@ type ZoneResolver interface {
 	// (set aside out of the game).
 	PurgeFromDiscard(owner int, id LocalID)
 	// PurgeFromHand moves a card from a player's hand to their purge pile (set aside
-	// out of the game), crediting the card whose ability purged it.
-	PurgeFromHand(owner int, id, source LocalID)
+	// out of the game), crediting the card whose ability purged it through the frame.
+	PurgeFromHand(owner int, id LocalID)
 	// PurgeFromArchives moves a card from a player's archives to their purge pile
 	// (set aside out of the game).
 	PurgeFromArchives(owner int, id LocalID)
@@ -551,11 +549,9 @@ type ZoneResolver interface {
 	// Shuffle randomizes the order of a player's deck.
 	Shuffle(player int)
 	// DiscardCardFromHand moves a specific card from a player's hand to their discard
-	// zone, logged as the player's own discard (a player's turn action).
+	// zone. The discard is subjected to the card whose ability forced it through the
+	// record's frame, or to the player when there is none (their own turn action).
 	DiscardCardFromHand(owner int, id LocalID)
-	// DiscardCardFromHandBy is DiscardCardFromHand attributed to the card whose
-	// ability forced the discard, so the log names that card, not the player.
-	DiscardCardFromHandBy(owner int, id, source LocalID)
 	// DiscardCardFromArchives moves a specific card from a player's archives to a
 	// discard pile (its owner's, since archives may hold abducted cards).
 	DiscardCardFromArchives(owner int, id LocalID)
@@ -602,10 +598,10 @@ type TurnResolver interface {
 	// SkipForgePhaseNextTurn makes a player skip their "forge a key" phase at the start
 	// of their next turn (Miasma).
 	SkipForgePhaseNextTurn(player int, source LocalID)
-	// ScheduleDestroyEachCreatureAtEndOfTurn arms "destroy each creature" to resolve
-	// in the active player's end-of-turn phase (Ragnarok). source is the card that
-	// armed it, recorded for attribution.
-	ScheduleDestroyEachCreatureAtEndOfTurn(source LocalID)
+	// ScheduleAtEndOfTurn arms an effect to resolve in the active player's end-of-turn
+	// window, alongside the in-play "at the end of your turn" abilities (Ragnarok's
+	// board wipe). source is the card that armed it, recorded for attribution.
+	ScheduleAtEndOfTurn(source LocalID, do scheduledAction)
 	// GrantMayPlayOrUse records a this-turn grant letting a player act with cards
 	// outside their active house: houses selects whose cards it frees (a named or
 	// chosen house, any house, every house but one, or every house you control),

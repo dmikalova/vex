@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: The most powerful friendly creature captures 2 Æmber from your opponent. You may exalt the chosen creature to repeat the preceding effect.
+//	Play: The most powerful friendly Creature captures 2 Æmber from your opponent. You may exalt the chosen Creature to repeat the preceding effect.
 var Tribute = card.New(
 	"Tribute",
 	card.House.Saurian,
@@ -18,13 +18,13 @@ var Tribute = card.New(
 	card.Provenance(card.WC, "196"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.ExaltToRepeat{
+		card.Trigger.Play, card.Repeat{
 			Do: card.CaptureAember{
 				Amount: 2,
 				Target: card.Target.EachFriendlyCreature.
 					Refine(card.MostPowerful),
 				Source: card.Opponent,
 			},
-			Exalt: card.Target.TheChosenCreature,
+			Gate: card.ByExalting{Creature: card.Target.TheChosenCreature},
 		}),
 )

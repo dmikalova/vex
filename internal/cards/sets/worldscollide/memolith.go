@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Location
 //
 //	Action: Choose one:
-//	- Put a Tactic from your hand faceup under Memolith
+//	- Put a Tactic card from your hand faceup under Memolith
 //	- Trigger the play effect of a Tactic grafted onto Memolith.
 var Memolith = card.New(
 	"Memolith",

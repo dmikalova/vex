@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Human • Scientist
 //
-//	Reap: Play a non-Logos tactic.
+//	Reap: Play a non-Logos Tactic.
 func TestQuant(t *testing.T) {
 	t.Run("reap plays a non-Logos tactic from hand", func(t *testing.T) {
 		var brobnar, logos ct.Card

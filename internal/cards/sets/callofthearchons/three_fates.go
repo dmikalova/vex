@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Destroy the 3 most powerful creatures.
+//	Play: Destroy the 3 most powerful Creatures.
 var ThreeFates = card.New(
 	"Three Fates",
 	card.House.Dis,

@@ -15,7 +15,7 @@ import (
 //	Power:  6
 //	Traits: Giant
 //
-//	If you have used a creature to fight this turn, Mega Alaka enters play ready.
+//	If you have used a Creature to fight this turn, Mega Alaka enters play ready.
 func TestMegaAlaka(t *testing.T) {
 	t.Run("enters play ready once you have fought this turn", func(t *testing.T) {
 		var alaka, attacker, enemy ct.Card

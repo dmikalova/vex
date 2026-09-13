@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Traits: Item • Shard
 //
-//	Action: For each friendly Shard, deal 1 damage to an enemy creature.
+//	Action: For each friendly Shard, deal 1 damage to an enemy Creature.
 var ShardOfPain = card.New(
 	"Shard of Pain",
 	card.House.Dis,

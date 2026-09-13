@@ -16,7 +16,7 @@ import (
 //	Power:  4
 //	Traits: Dinosaur • Politician
 //
-//	You may spend Æmber on friendly creatures as if it were in your pool.
+//	You may spend Æmber on friendly Creatures as if it were in your pool.
 //	Fight/Reap: Exalt Senator Bracchus.
 func TestSenatorBracchus(t *testing.T) {
 	t.Run("reaping exalts Senator Bracchus", func(t *testing.T) {

@@ -15,7 +15,7 @@ import (
 //	Æmber:  1
 //
 //	Alpha.
-//	Play: Until the start of your next turn, each creature gains, "Before Fight: Exalt this creature."
+//	Play: Until the start of your next turn, each Creature gains, "Before Fight: Exalt this Creature."
 func TestDiploMacy(t *testing.T) {
 	t.Run("a friendly creature exalts itself when it fights", func(t *testing.T) {
 		var attacker, prey ct.Card

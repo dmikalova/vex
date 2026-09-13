@@ -16,7 +16,7 @@ import (
 //	Traits: Weapon
 //
 //	Versatile.
-//	Action: Destroy Spike Trap -> deal 3 damage to each flank creature.
+//	Action: Destroy Spike Trap -> deal 3 damage to each flank Creature.
 func TestSpikeTrap(t *testing.T) {
 	t.Run("destroys itself and deals 3 damage to each flank creature", func(t *testing.T) {
 		var trap, left, mid, right ct.Card

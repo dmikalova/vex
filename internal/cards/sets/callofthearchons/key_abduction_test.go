@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Put each Mars creature into its owner's hand. Forge a key at +9 Æmber current cost, reduced by 1 Æmber for each card in your hand -> purge Key Abduction.
+//	Play: Put each Mars Creature into its owner's hand. Forge a key at +9 Æmber current cost, reduced by 1 Æmber for each card in your hand -> purge Key Abduction.
 func TestKeyAbduction(t *testing.T) {
 	mars := ct.OfHouse(card.House.Mars)
 

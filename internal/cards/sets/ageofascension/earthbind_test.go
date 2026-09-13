@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature cannot be used unless you have discarded a card from your hand this turn.
+//	This Creature cannot be used unless you have discarded a card from your hand this turn.
 func TestEarthbind(t *testing.T) {
 	setup := func(t *testing.T, host *ct.Card) *ct.Harness {
 		t.Helper()

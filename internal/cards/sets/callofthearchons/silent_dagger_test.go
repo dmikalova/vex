@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains, "Reap: Deal 4 damage to a flank creature."
+//	This Creature gains, "Reap: Deal 4 damage to a flank Creature."
 func TestSilentDagger(t *testing.T) {
 	t.Run("grants the host Reap: deal 4 to a flank creature", func(t *testing.T) {
 		var host, foe ct.Card

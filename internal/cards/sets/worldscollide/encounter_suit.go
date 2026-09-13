@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Upgrade
 //	Rarity: Rare
 //
-//	This creature gains, "After a Tactic is played but before it resolves, ward this creature."
+//	This Creature gains, "After a Tactic is played but before it resolves, ward this Creature."
 var EncounterSuit = card.New(
 	"Encounter Suit",
 	card.House.StarAlliance,

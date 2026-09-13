@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: If your opponent played 3 or more creatures on their previous turn, steal 2 Æmber.
+//	Play: If your opponent played 3 or more Creatures on their previous turn, steal 2 Æmber.
 func TestLifeweb(t *testing.T) {
 	t.Run("steals when the opponent played three creatures last turn", func(t *testing.T) {
 		var web, a, b, c ct.Card

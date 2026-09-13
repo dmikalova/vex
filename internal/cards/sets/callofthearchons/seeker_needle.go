@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Traits: Weapon
 //
-//	Action: Deal 1 damage to a creature. If this damage destroys that creature, gain 1 Æmber.
+//	Action: Deal 1 damage to a Creature. If this damage destroys that Creature, gain 1 Æmber.
 var SeekerNeedle = card.New(
 	"Seeker Needle",
 	card.House.Shadows,

@@ -55,6 +55,12 @@ The backlog must already be stubbed — every unimplemented card is a
 `//go:build todo` file that `mage tool:nextCard` can hand you. If a set has not
 been stubbed yet, run the **stub-cards** skill first.
 
+**Scan [docs/todo-future-set.md](../../../docs/todo-future-set.md) before you
+start.** It holds decided work parked against a future set — primitives with no
+consumer in an implemented set yet. If an item names the set you are implementing
+(or a card it introduces), fold it into the run and build the primitive alongside
+its first real consumer, then delete the item when it lands.
+
 Then, once per run:
 
 ```sh

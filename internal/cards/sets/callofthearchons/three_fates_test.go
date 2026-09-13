@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Destroy the 3 most powerful creatures.
+//	Play: Destroy the 3 most powerful Creatures.
 func TestThreeFates(t *testing.T) {
 	t.Run("destroys the three most powerful creatures", func(t *testing.T) {
 		var big, mid, small, weak ct.Card

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Weapon
 //
 //	Versatile.
-//	Action: Destroy Longfused Mines, and deal 3 damage to each enemy creature that is not on a flank.
+//	Action: Destroy Longfused Mines, and deal 3 damage to each enemy Creature that is not on a flank.
 var LongfusedMines = card.New(
 	"Longfused Mines",
 	card.House.Shadows,

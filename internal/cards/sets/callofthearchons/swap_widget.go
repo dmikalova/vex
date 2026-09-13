@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Traits: Item
 //
-//	Action: Put a friendly ready Mars creature into its owner's hand -> put a Mars creature with a different name from your hand into play, and ready it.
+//	Action: Put a friendly ready Mars Creature into its owner's hand -> put a Mars Creature with a different name from your hand into play, and ready it.
 var SwapWidget = card.New(
 	"Swap Widget",
 	card.House.Mars,

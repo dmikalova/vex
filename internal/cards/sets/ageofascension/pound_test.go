@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Deal 2 damage to a creature that is not on a flank and 1 damage to each of its neighbors.
+//	Play: Deal 2 damage to a Creature that is not on a flank and 1 damage to each of its neighbors.
 func TestPound(t *testing.T) {
 	t.Run("deals 2 damage to a creature and 1 to each neighbor", func(t *testing.T) {
 		var left, middle, right ct.Card

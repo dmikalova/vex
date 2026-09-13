@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Put an enemy creature into its owner's hand.
+//	Play: Put an enemy Creature into its owner's hand.
 func TestFear(t *testing.T) {
 	t.Run("puts a chosen enemy creature into its owner's hand", func(t *testing.T) {
 		var enemy ct.Card

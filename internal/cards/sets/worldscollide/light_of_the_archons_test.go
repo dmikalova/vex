@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	This creature gains +1 power and +1 armor for each upgrade attached to it.
+//	This Creature gains +1 power and +1 armor for each Upgrade attached to it.
 func TestLightOfTheArchons(t *testing.T) {
 	t.Run("with one upgrade attached the host gains +1 power and +1 armor", func(t *testing.T) {
 		var host ct.Card

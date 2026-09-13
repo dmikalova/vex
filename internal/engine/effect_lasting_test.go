@@ -133,6 +133,17 @@ func TestForRemainderOfTurnValidate(t *testing.T) {
 	}
 }
 
+// TestForOpponentNextTurnValidate checks the opponent-turn reaction shares the same
+// gate: a reaction event with a supported Do passes, a replacement event fails.
+func TestForOpponentNextTurnValidate(t *testing.T) {
+	if err := (ForOpponentNextTurn{On: EventForgeKey, Do: GiveAember{All: true}}).validate(); err != nil {
+		t.Errorf("valid reaction should pass: %v", err)
+	}
+	if err := (ForOpponentNextTurn{On: EventReapAember, Do: GiveAember{All: true}}).validate(); err == nil {
+		t.Error("non-reaction event should fail")
+	}
+}
+
 func TestForRemainderOfTurnGainsOnPlay(t *testing.T) {
 	g := started(t) // player 0 active, Brobnar
 	ForRemainderOfTurn{On: EventCreaturePlayed, Do: GainAember{Player: Controller, Amount: 1}}.

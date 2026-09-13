@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Traits: Item
 //
-//	Each friendly creature gains +1 power.
+//	Each friendly Creature gains +1 power.
 var BannerOfBattle = card.New(
 	"Banner of Battle",
 	card.House.Brobnar,

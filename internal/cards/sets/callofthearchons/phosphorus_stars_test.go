@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Stun each non-Mars creature. Gain 2 chains.
+//	Play: Stun each non-Mars Creature. Gain 2 chains.
 func TestPhosphorusStars(t *testing.T) {
 	t.Run("stuns each non-Mars creature and gains 2 chains", func(t *testing.T) {
 		var marsAlly, foe ct.Card

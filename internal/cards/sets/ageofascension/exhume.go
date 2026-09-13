@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Play a creature from your discard pile.
+//	Play: Play a Creature from your discard pile.
 var Exhume = card.New(
 	"Exhume",
 	card.House.Dis,

@@ -256,7 +256,7 @@ func TestArchiveCardUnderResolveMovesToOwnerArchives(t *testing.T) {
 // gives (Infomancer, Memolith graft an action card).
 func TestPutUnderFromHandTypeText(t *testing.T) {
 	got := (PutUnderFromHand{Type: Tactic}).Text()
-	want := "put a Tactic from your hand faceup under {self}"
+	want := "put a tactic card from your hand faceup under {self}"
 	if got != want {
 		t.Errorf("text = %q, want %q", got, want)
 	}

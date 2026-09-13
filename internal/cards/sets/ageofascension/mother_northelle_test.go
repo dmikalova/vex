@@ -16,7 +16,7 @@ import (
 //	Traits: Human • Monk
 //
 //	Elusive.
-//	Reap: Move 1 Æmber from a friendly creature to your pool.
+//	Reap: Move 1 Æmber from a friendly Creature to your pool.
 func TestMotherNorthelle(t *testing.T) {
 	t.Run("moves 1 aember from a friendly creature to your pool when reaping", func(t *testing.T) {
 		var northelle, ally ct.Card

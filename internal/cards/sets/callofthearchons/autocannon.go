@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Weapon
 //
-//	After a creature enters play, deal 1 damage to it.
+//	After a Creature enters play, deal 1 damage to it.
 var Autocannon = card.New(
 	"Autocannon",
 	card.House.Brobnar,

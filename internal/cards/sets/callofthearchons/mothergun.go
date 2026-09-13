@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Traits: Weapon
 //
-//	Action: Reveal any number of Mars cards from your hand, and for each card revealed this way, deal 1 damage to a creature.
+//	Action: Reveal any number of Mars cards from your hand, and for each card revealed this way, deal 1 damage to a Creature.
 var Mothergun = card.New(
 	"Mothergun",
 	card.House.Mars,

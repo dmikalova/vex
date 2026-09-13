@@ -16,7 +16,7 @@ import (
 //	Traits: Dinosaur • Politician
 //
 //	Deploy.
-//	Play: Ready and exalt each neighboring creature. For the remainder of the turn, those creatures belong to house Saurian.
+//	Play: Ready and exalt each neighboring Creature. For the remainder of the turn, those Creatures belong to house Saurian.
 func TestOratorHissaro(t *testing.T) {
 	var left, right ct.Card
 	h := ct.Play(t, ct.Setup{

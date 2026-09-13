@@ -15,7 +15,7 @@ import (
 //	Power:  6
 //	Traits: Giant
 //
-//	Fight: Deal 2 damage to a flank creature.
+//	Fight: Deal 2 damage to a flank Creature.
 func TestMogghunter(t *testing.T) {
 	t.Run("deals 2 damage to a flank creature when it fights", func(t *testing.T) {
 		var bruiser, squishy ct.Card

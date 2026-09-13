@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Traits: Item
 //
-//	Action: Ready and fight with a friendly creature.
+//	Action: Ready and fight with a friendly Creature.
 var GauntletOfCommand = card.New(
 	"Gauntlet of Command",
 	card.House.Brobnar,

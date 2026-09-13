@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Giant
 //
-//	Before Fight: Deal 1 damage to each enemy creature.
+//	Before Fight: Deal 1 damage to each enemy Creature.
 var Firespitter = card.New(
 	"Firespitter",
 	card.House.Brobnar,

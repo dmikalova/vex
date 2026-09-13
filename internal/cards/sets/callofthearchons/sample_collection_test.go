@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: For each forged key your opponent has, put an enemy creature into your archives.
+//	Play: For each forged key your opponent has, put an enemy Creature into your archives.
 func TestSampleCollection(t *testing.T) {
 	t.Run("abducts one enemy creature per key the opponent has forged", func(t *testing.T) {
 		var collection, first, second, third ct.Card

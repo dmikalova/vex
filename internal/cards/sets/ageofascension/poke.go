@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Deal 1 damage to an enemy creature. If this damage destroys that creature, draw a card.
+//	Play: Deal 1 damage to an enemy Creature. If this damage destroys that Creature, draw a card.
 var Poke = card.New(
 	"Poke",
 	card.House.Logos,

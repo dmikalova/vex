@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Trigger the play effect of a creature.
+//	Play: Trigger the play effect of a Creature.
 func TestFavorOfRex(t *testing.T) {
 	var dux ct.Card
 	h := ct.Play(t, ct.Setup{

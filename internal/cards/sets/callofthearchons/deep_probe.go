@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Choose a house - reveal your opponent's hand, and discard each creature of the chosen house from your opponent's hand.
+//	Play: Choose a house - reveal your opponent's hand, and discard each Creature of the chosen house from your opponent's hand.
 var DeepProbe = card.New(
 	"Deep Probe",
 	card.House.Mars,

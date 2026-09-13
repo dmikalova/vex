@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Deal 1 damage to each creature. You may destroy each Mars creature.
+//	Play: Deal 1 damage to each Creature. You may destroy each Mars Creature.
 var TheCommonCold = card.New(
 	"The Common Cold",
 	card.House.Untamed,

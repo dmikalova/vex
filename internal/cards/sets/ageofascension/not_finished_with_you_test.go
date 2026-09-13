@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Shuffle any number of creatures from your discard pile into your deck.
+//	Play: Shuffle any number of Creatures from your discard pile into your deck.
 func TestNotFinishedWithYou(t *testing.T) {
 	var a, b ct.Card
 	h := ct.Play(t, ct.Setup{

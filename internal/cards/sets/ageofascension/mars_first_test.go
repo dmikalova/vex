@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Ready and use a friendly Mars creature.
+//	Play: Ready and use a friendly Mars Creature.
 func TestMarsFirst(t *testing.T) {
 	t.Run("readies and uses a friendly Mars creature", func(t *testing.T) {
 		var trooper ct.Card

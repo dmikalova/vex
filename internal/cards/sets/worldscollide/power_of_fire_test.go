@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Destroy a friendly creature -> each player loses Æmber equal to half its power, rounded down. Gain 1 chain.
+//	Play: Destroy a friendly Creature -> each player loses Æmber equal to half its power, rounded down. Gain 1 chain.
 func TestPowerOfFire(t *testing.T) {
 	t.Run(
 		"each player loses half the sacrificed creature's power and gains a chain",

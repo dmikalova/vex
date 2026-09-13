@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Destroy the least powerful enemy creature.
+//	Play: Destroy the least powerful enemy Creature.
 func TestCullTheWeak(t *testing.T) {
 	t.Run("destroys the least powerful enemy creature", func(t *testing.T) {
 		var weak, strong ct.Card

@@ -392,22 +392,26 @@ func TestEvasionSigilCompositionMiss(t *testing.T) {
 	}
 }
 
-// TestDiscardDeckUntil covers the dig through the top of the deck: it stops at a
-// card the filters admit, reports success so a Then can follow, and runs the deck
-// out when nothing matches.
-func TestDiscardDeckUntil(t *testing.T) {
-	e := DiscardDeckUntil{Type: Creature, House: Brobnar}
+// TestDiscardTopOfDeckUntil covers the dig through the top of the deck: it stops at
+// a card the filters admit, reports success so a Then can follow, records the run it
+// discarded, and runs the deck out when nothing matches.
+func TestDiscardTopOfDeckUntil(t *testing.T) {
+	e := DiscardTopOfDeckUntil{Type: Creature, House: Brobnar}
 	want := "discard cards from the top of your deck until you discard a Brobnar creature or run out of cards"
 	if e.Text() != want {
 		t.Errorf("text = %q, want %q", e.Text(), want)
 	}
-	if got := (DiscardDeckUntil{Type: Artifact}).Text(); got !=
+	if got := (DiscardTopOfDeckUntil{Type: Artifact}).Text(); got !=
 		"discard cards from the top of your deck until you discard an artifact or run out of cards" {
 		t.Errorf("artifact text = %q", got)
 	}
-	if got := (DiscardDeckUntil{}).Text(); got !=
+	if got := (DiscardTopOfDeckUntil{}).Text(); got !=
 		"discard cards from the top of your deck until you discard a card or run out of cards" {
 		t.Errorf("plain text = %q", got)
+	}
+	if got := (DiscardTopOfDeckUntil{House: Brobnar, MayStop: true}).Text(); got !=
+		"discard cards from the top of your deck until you discard a Brobnar card or choose to stop" {
+		t.Errorf("may-stop text = %q", got)
 	}
 
 	if got := (PutDiscardedIntoHand{}).Text(); got != "put the discarded card into your hand" {
@@ -438,9 +442,13 @@ func TestDiscardDeckUntil(t *testing.T) {
 	if len(g.Deck(0)) != 1 || g.Deck(0)[0] != buried {
 		t.Errorf("deck = %v, want [%d]", g.Deck(0), buried)
 	}
+	// The whole discarded run is recorded, matching card last.
+	if got := ctx.Produced.Discarded; len(got) != 2 || got[0] != skipped || got[1] != brute {
+		t.Errorf("recorded run = %v, want [%d %d]", got, skipped, brute)
+	}
 
 	// Nothing matching left: the dig empties the deck and the tail does nothing.
-	Then{First: DiscardDeckUntil{Type: Artifact}, Result: PutDiscardedIntoHand{}}.Resolve(ctx)
+	Then{First: DiscardTopOfDeckUntil{Type: Artifact}, Result: PutDiscardedIntoHand{}}.Resolve(ctx)
 	if len(g.Deck(0)) != 0 {
 		t.Errorf("deck should be empty, got %v", g.Deck(0))
 	}
@@ -448,67 +456,75 @@ func TestDiscardDeckUntil(t *testing.T) {
 		t.Errorf("hand should be untouched, got %v", g.Hand(0))
 	}
 	// Resolved bare, the dig still runs; it just has no tail to gate.
-	DiscardDeckUntil{Type: Artifact}.Resolve(ctx)
+	DiscardTopOfDeckUntil{Type: Artifact}.Resolve(ctx)
 	PutDiscardedIntoHand{}.Resolve(ctx)
 }
 
-// TestRevealDeckUntilHouse covers the reveal-and-archive dig: it archives each
-// card revealed until one of the named house turns up (reporting success so a Then
-// can follow) or the controller stops, and runs safely on an empty deck.
-func TestRevealDeckUntilHouse(t *testing.T) {
-	want := "reveal cards from the top of your deck until you reveal a Brobnar card" +
-		" or choose to stop, archiving each card revealed this way"
-	if got := (RevealDeckUntilHouse{House: Brobnar}).Text(); got != want {
-		t.Errorf("text = %q, want %q", got, want)
-	}
-	if err := (RevealDeckUntilHouse{}).validate(); err == nil {
-		t.Error("want validate error for unset house")
-	}
-	if err := (RevealDeckUntilHouse{House: Brobnar}).validate(); err != nil {
-		t.Errorf("validate = %v, want nil", err)
-	}
-
-	// Keep revealing until a Brobnar card turns up: both cards above it and the
-	// Brobnar card itself are archived, the card below it stays on the deck.
+// TestDiscardTopOfDeckUntilMayStop covers the optional stop: the controller may end
+// the dig before a match, which reports failure and leaves the rest of the deck,
+// while still recording the run discarded so far.
+func TestDiscardTopOfDeckUntilMayStop(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	g.SetChooser(0, optionPicker{idx: 0})
-	g.AddToDeck(NewCard("Trick", Logos, Tactic, Common), 0)
-	g.AddToDeck(NewCard("Brute", Brobnar, Creature, Common, WithPower(5)), 0)
-	deep := g.AddToDeck(NewCard("Deep", Logos, Creature, Common), 0)
+	g.SetChooser(0, optionPicker{idx: 1})
+	first := g.AddToDeck(NewCard("One", Logos, Creature, Common), 0)
+	kept := g.AddToDeck(NewCard("Two", Logos, Creature, Common), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-	if !(RevealDeckUntilHouse{House: Brobnar}).resolveGate(ctx) {
-		t.Error("resolveGate = false, want true when a Brobnar card is revealed")
-	}
-	if len(g.Archives(0)) != 2 {
-		t.Errorf("archives = %v, want 2 cards", g.Archives(0))
-	}
-	if len(g.Deck(0)) != 1 || g.Deck(0)[0] != deep {
-		t.Errorf("deck = %v, want [%d]", g.Deck(0), deep)
-	}
 
-	// Choosing to stop archives only the card revealed so far and reports failure.
-	g2 := NewGame("A", "B", 1)
-	g2.SetChooser(0, optionPicker{idx: 1})
-	g2.AddToDeck(NewCard("One", Logos, Creature, Common), 0)
-	kept := g2.AddToDeck(NewCard("Two", Logos, Creature, Common), 0)
-	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
-	if (RevealDeckUntilHouse{House: Brobnar}).resolveGate(ctx2) {
+	if (DiscardTopOfDeckUntil{House: Brobnar, MayStop: true}).resolveGate(ctx) {
 		t.Error("resolveGate = true, want false when the controller stops")
 	}
-	if len(g2.Archives(0)) != 1 {
-		t.Errorf("archives = %v, want 1 card", g2.Archives(0))
+	if len(g.Discard(0)) != 1 || g.Discard(0)[0] != first {
+		t.Errorf("discard = %v, want [%d]", g.Discard(0), first)
 	}
-	if len(g2.Deck(0)) != 1 || g2.Deck(0)[0] != kept {
-		t.Errorf("deck = %v, want [%d]", g2.Deck(0), kept)
+	if len(g.Deck(0)) != 1 || g.Deck(0)[0] != kept {
+		t.Errorf("deck = %v, want [%d]", g.Deck(0), kept)
+	}
+	if got := ctx.Produced.Discarded; len(got) != 1 || got[0] != first {
+		t.Errorf("recorded run = %v, want [%d]", got, first)
 	}
 
 	// An empty deck reports failure and moves nothing; the bare Resolve is a no-op.
-	g3 := NewGame("A", "B", 1)
-	ctx3 := &EffectContext{Resolver: g3, Controller: 0}
-	if (RevealDeckUntilHouse{House: Brobnar}).resolveGate(ctx3) {
+	g2 := NewGame("A", "B", 1)
+	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
+	if (DiscardTopOfDeckUntil{House: Brobnar, MayStop: true}).resolveGate(ctx2) {
 		t.Error("resolveGate = true, want false on an empty deck")
 	}
-	RevealDeckUntilHouse{House: Brobnar}.Resolve(ctx3)
+	DiscardTopOfDeckUntil{House: Brobnar, MayStop: true}.Resolve(ctx2)
+}
+
+// TestArchiveDiscardedThisWay covers archiving the run a preceding dig discarded:
+// every recorded card moves from the discard pile to archives, and an empty run
+// archives nothing.
+func TestArchiveDiscardedThisWay(t *testing.T) {
+	if got := (ArchiveDiscardedThisWay{}).Text(); got != "archive each card discarded this way" {
+		t.Errorf("text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	a := g.Register(testCreature("a", 1), 0)
+	b := g.Register(testCreature("b", 1), 0)
+	g.State.Discard[0].add(a)
+	g.State.Discard[0].add(b)
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Produced:   Produced{Discarded: []LocalID{a, b}},
+	}
+
+	ArchiveDiscardedThisWay{}.Resolve(ctx)
+	if g.State.Archives[0].Count != 2 {
+		t.Errorf("archives = %d, want 2", g.State.Archives[0].Count)
+	}
+	if g.State.Discard[0].Count != 0 {
+		t.Errorf("discard = %d, want 0", g.State.Discard[0].Count)
+	}
+
+	// An empty run archives nothing.
+	ctx.Produced.Discarded = nil
+	ArchiveDiscardedThisWay{}.Resolve(ctx)
+	if g.State.Archives[0].Count != 2 {
+		t.Errorf("archives after empty run = %d, want 2", g.State.Archives[0].Count)
+	}
 }
 
 // TestRevealTopOfDeckRouting covers the reveal-and-route node: the text it renders,

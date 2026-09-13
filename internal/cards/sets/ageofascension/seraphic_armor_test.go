@@ -14,8 +14,8 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains +1 armor.
-//	Play: Fully heal this creature.
+//	This Creature gains +1 armor.
+//	Play: Fully heal this Creature.
 func TestSeraphicArmor(t *testing.T) {
 	t.Run("fully heals its host and grants armor when played", func(t *testing.T) {
 		var host ct.Card

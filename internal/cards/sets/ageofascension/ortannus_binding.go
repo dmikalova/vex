@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Connected
 //	Æmber:  1
 //
-//	Play: Deal 2 damage to a friendly creature.
+//	Play: Deal 2 damage to a friendly Creature.
 var OrtannusBinding = card.New(
 	"Ortannu's Binding",
 	card.House.Dis,

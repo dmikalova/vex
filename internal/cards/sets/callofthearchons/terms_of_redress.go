@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: A friendly creature captures 2 Æmber from your opponent.
+//	Play: A friendly Creature captures 2 Æmber from your opponent.
 var TermsOfRedress = card.New(
 	"Terms of Redress",
 	card.House.Sanctum,

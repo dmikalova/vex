@@ -34,6 +34,9 @@ type (
 	LoseAemberEqualTo = engine.LoseAemberEqualTo
 	// StealAember moves Æmber from the opponent's pool into yours.
 	StealAember = engine.StealAember
+	// GiveAember moves Æmber from your opponent's pool into yours — the opponent
+	// gives you a fixed Amount (a toll) or All their remaining Æmber.
+	GiveAember = engine.GiveAember
 	// CaptureAember moves Æmber from a pool onto a capturing creature.
 	CaptureAember = engine.CaptureAember
 	// CaptureFromAnyPlayer captures Æmber onto this creature from both pools in any split.
@@ -42,8 +45,6 @@ type (
 	MoveAemberToSupply = engine.MoveAemberToSupply
 	// Exalt places Æmber from the common supply onto a chosen card.
 	Exalt = engine.Exalt
-	// ExaltToRepeat resolves Do, then lets the controller exalt a creature to repeat it.
-	ExaltToRepeat = engine.ExaltToRepeat
 	// Loss says how much Æmber a LoseAember removes (Half, AllBut).
 	Loss = engine.Loss
 	// MoveAember moves Æmber off a card into a pool or onto another card.
@@ -167,9 +168,6 @@ type (
 	// PurgeFromHand purges cards from a player's hand, with a Selection deciding how
 	// they are picked (chosen / random / each).
 	PurgeFromHand = engine.PurgeFromHand
-	// PurgeEachOfChosenTrait purges every card of a chosen trait, paying each player
-	// for their losses (Harvest Time).
-	PurgeEachOfChosenTrait = engine.PurgeEachOfChosenTrait
 	// PurgeCreature purges each creature its Target selects from play.
 	PurgeCreature = engine.PurgeCreature
 	// PurgeSource purges the card whose ability this is (Library Access purges itself).
@@ -182,9 +180,9 @@ type (
 	// GainKeyword gives each targeted creature a keyword until the start of your
 	// next turn (Hideaway Hole grants your creatures elusive).
 	GainKeyword = engine.GainKeyword
-	// PurgeArchivesForDamage purges any number of cards from your archives to deal
-	// damage to a creature for each card purged.
-	PurgeArchivesForDamage = engine.PurgeArchivesForDamage
+	// PurgeArchives purges any number of cards from your archives, recording the
+	// tally a following CardsPurged scales by (Destructive Analysis).
+	PurgeArchives = engine.PurgeArchives
 	// PurgeArchivedCardThen optionally purges a card from your archives to pay for
 	// a follow-up effect (Yzphyz Knowdrone purges to stun a creature).
 	PurgeArchivedCardThen = engine.PurgeArchivedCardThen
@@ -299,9 +297,9 @@ type (
 	DiscardCard = engine.DiscardCard
 	// DiscardTopOfDeck discards the top card of a deck and puts it in context.
 	DiscardTopOfDeck = engine.DiscardTopOfDeck
-	// DiscardDeckUntil discards from the top of your deck until it turns up a
-	// card the filters admit, putting that card in context.
-	DiscardDeckUntil = engine.DiscardDeckUntil
+	// DiscardTopOfDeckUntil discards from the top of your deck until it turns up a
+	// card the filters admit, recording the run and putting that card in context.
+	DiscardTopOfDeckUntil = engine.DiscardTopOfDeckUntil
 	// PutDiscardedIntoHand puts the card in context from the discard pile into
 	// its owner's hand.
 	PutDiscardedIntoHand = engine.PutDiscardedIntoHand
@@ -311,18 +309,17 @@ type (
 	DiscardTop = engine.DiscardTop
 	// ForEachDiscarded resolves Do once for each card a preceding discard removed.
 	ForEachDiscarded = engine.ForEachDiscarded
-	// RevealDeckUntilHouse reveals and archives cards from the top of your deck
-	// until you reveal a card of a house or choose to stop, reporting whether one
-	// was revealed.
-	RevealDeckUntilHouse = engine.RevealDeckUntilHouse
+	// ArchiveDiscardedThisWay archives every card a preceding deck dig discarded.
+	ArchiveDiscardedThisWay = engine.ArchiveDiscardedThisWay
 	// RevealTopOfDeck reveals the top Amount cards of a deck to both players, binds
 	// the top one in context, and routes them through the ordered Then steps. Set
 	// ChooseWhoseDeck to have the controller pick whose deck (Borr Nit). Revealing
 	// one card with no steps is the inspect-and-play primitive (Chaos Portal).
 	RevealTopOfDeck = engine.RevealTopOfDeck
-	// MakeItsHouseActive makes the house of the card in context the active
-	// player's active house for the rest of the turn (Book of leQ).
-	MakeItsHouseActive = engine.MakeItsHouseActive
+	// ChangeActiveHouse changes the active player's active house for the rest of
+	// the turn to the house To names — TheContextualHouse, the card in context
+	// (Book of leQ).
+	ChangeActiveHouse = engine.ChangeActiveHouse
 	// EndTurn ends the active player's turn in place, running the turn out the way
 	// the Omega keyword does (Book of leQ).
 	EndTurn = engine.EndTurn
@@ -469,10 +466,18 @@ type (
 	// SaveFromDestruction is a creature's own "Destroyed:" replacement: it stays in
 	// play and Do resolves on it instead of being destroyed.
 	SaveFromDestruction = engine.SaveFromDestruction
-	// RepeatOnCondition resolves Do and repeats it while it succeeds and Cond holds.
-	RepeatOnCondition = engine.RepeatOnCondition
-	// MayRepeat resolves Do, then lets the controller repeat it.
-	MayRepeat = engine.MayRepeat
+	// Repeat resolves Do and repeats it as its Gate allows — While (automatically
+	// while a condition holds), MayWhile (optionally at the controller's choice), or
+	// ByExalting (once, paid by exalting a creature).
+	Repeat = engine.Repeat
+	// While repeats automatically while its Cond holds (Numquid the Fair).
+	While = engine.While
+	// MayWhile repeats at the controller's choice while its Cond holds (Bouncing
+	// Deathquark).
+	MayWhile = engine.MayWhile
+	// ByExalting repeats once if the controller exalts its Creature to pay for it
+	// (Phalanx Strike, Tribute).
+	ByExalting = engine.ByExalting
 	// May makes an effect optional — the controller chooses whether to resolve it.
 	May = engine.May
 	// Then is the A -> B result gate: resolves Result only when First did something.
@@ -483,7 +488,7 @@ type (
 	OrAmount = engine.OrAmount
 )
 
-// Conditions gate a Conditional, RepeatOnCondition, or MayRepeat.
+// Conditions gate a Conditional or a Repeat's While/MayWhile gate.
 type (
 	// PoolAember gates on one player's Æmber pool (Player + Is + Amount).
 	PoolAember = engine.PoolAember
@@ -667,7 +672,9 @@ type (
 	// UpgradesOn counts the upgrades attached to the creature its Target names
 	// (Walls' Blaster stuns a creature for each upgrade on Chief Engineer Walls).
 	UpgradesOn = engine.UpgradesOn
-	// CardsPurged counts the creatures the most recent purge removed "this way".
+	// CardsPurged counts the cards the most recent purge removed "this way", both
+	// sides together; its Type names the noun (unset "card", card.Type.Creature
+	// "creature").
 	CardsPurged = engine.CardsPurged
 	// PurgedAemberBonus totals the printed Æmber bonus of the cards the most recent
 	// purge removed (Infurnace).
@@ -715,6 +722,8 @@ type (
 type (
 	// ForRemainderOfTurn installs a reaction that runs for the rest of your turn.
 	ForRemainderOfTurn = engine.ForRemainderOfTurn
+	// ForOpponentNextTurn installs a reaction that fires during your opponent's next turn.
+	ForOpponentNextTurn = engine.ForOpponentNextTurn
 	// Instead installs a replacement that changes an event's outcome for the turn.
 	Instead = engine.Instead
 	// Replace is a continuous replacement an Upgrade applies to a game event.
@@ -785,8 +794,6 @@ type (
 	RaiseKeyCost = engine.RaiseKeyCost
 	// LowerKeyCost drops keys' cost (a negative bump) for a Duration; may be EachPlayer.
 	LowerKeyCost = engine.LowerKeyCost
-	// GiveRemainingAemberAfterOpponentForgeKey arms Interdimensional Graft's delayed gift.
-	GiveRemainingAemberAfterOpponentForgeKey = engine.GiveRemainingAemberAfterOpponentForgeKey
 	// GainChains gives a player chains (a draw penalty).
 	GainChains = engine.GainChains
 )
@@ -816,6 +823,7 @@ var Tally = tallies{
 	CreaturesShuffledIntoDeck: engine.TallyCreaturesShuffledIntoDeck,
 	AemberLost:                engine.TallyAemberLost,
 	CardsReturned:             engine.TallyCardsReturned,
+	CardsPurged:               engine.TallyCardsPurged,
 }
 
 type tallies struct {
@@ -823,6 +831,7 @@ type tallies struct {
 	CreaturesShuffledIntoDeck engine.ProducedTally
 	AemberLost                engine.ProducedTally
 	CardsReturned             engine.ProducedTally
+	CardsPurged               engine.ProducedTally
 }
 
 // Event groups the game events a lasting "for the remainder of the turn" effect
@@ -838,6 +847,7 @@ var Event = events{CreaturePlayed: engine.EventCreaturePlayed,
 	AemberTakenFromPool:    engine.EventAemberTakenFromPool,
 	AemberStolen:           engine.EventAemberStolen,
 	CardPlayed:             engine.EventCardPlayed,
+	Forge:                  engine.EventForgeKey,
 }
 
 type events struct {
@@ -850,7 +860,8 @@ type events struct {
 	AemberAddedToPool,
 	AemberTakenFromPool,
 	AemberStolen,
-	CardPlayed engine.Event
+	CardPlayed,
+	Forge engine.Event
 }
 
 // Steal is the replacement that makes gaining Æmber steal it from the opponent

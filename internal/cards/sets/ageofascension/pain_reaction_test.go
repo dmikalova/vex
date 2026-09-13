@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Deal 2 damage to an enemy creature. If this damage destroys that creature, deal 2 damage to each of that creature's neighbors.
+//	Play: Deal 2 damage to an enemy Creature. If this damage destroys that Creature, deal 2 damage to each of that Creature's neighbors.
 func TestPainReaction(t *testing.T) {
 	t.Run("destroying the creature damages its neighbors", func(t *testing.T) {
 		var left, middle, right ct.Card

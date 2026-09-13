@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Ally
 //
-//	Action: For the remainder of the turn, each creature loses elusive.
+//	Action: For the remainder of the turn, each Creature loses elusive.
 var Sniffer = card.New(
 	"Sniffer",
 	card.House.Mars,

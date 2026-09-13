@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: For each house, deal 5 damage to a creature of that house.
+//	Play: For each house, deal 5 damage to a Creature of that house.
 func TestGleefulMayhem(t *testing.T) {
 	var mayhem, dis, logos, otherDis ct.Card
 	h := ct.Play(t, ct.Setup{

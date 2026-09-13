@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Destroy any number of friendly creatures. For each creature destroyed this way, gain 1 Æmber.
+//	Play: Destroy any number of friendly Creatures. For each Creature destroyed this way, gain 1 Æmber.
 var MartyrsEnd = card.New(
 	"Martyr's End",
 	card.House.Sanctum,

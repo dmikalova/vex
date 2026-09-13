@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: If your opponent has 6 Æmber or more, deal 3 damage to each enemy creature.
+//	Play: If your opponent has 6 Æmber or more, deal 3 damage to each enemy Creature.
 func TestIrradiatedAember(t *testing.T) {
 	t.Run("deals 3 to each enemy creature when the opponent has 6 or more", func(t *testing.T) {
 		var toughFoe, weakFoe ct.Card

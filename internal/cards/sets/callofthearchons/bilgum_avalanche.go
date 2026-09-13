@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Giant
 //
-//	After you forge a key, deal 2 damage to each enemy creature.
+//	After you forge a key, deal 2 damage to each enemy Creature.
 var BilgumAvalanche = card.New(
 	"Bilgum Avalanche",
 	card.House.Brobnar,

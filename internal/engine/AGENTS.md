@@ -55,7 +55,7 @@ recorded as ADRs — read them for the full rationale and the rejected alternati
   `text.go` → `text_helpers.go` (the card-agnostic string helpers, kept apart from
   the card-shaped renderers).
 - **Composite — `Sequence`, `Sentences`, `Conditional`, `ChooseHouseThen`,
-  `MayRepeat`, …** compose child `Effect`s and recurse `validateEffect` into them.
+  `Repeat`, …** compose child `Effect`s and recurse `validateEffect` into them.
   Prefer composing small nodes over one fused node (root `AGENTS.md`: "decompose
   fused effects"). The two ordered composites differ only in how they _read_:
   `Sequence` conjoins its children into one compound instruction ("a, and b"),
@@ -97,6 +97,11 @@ it plugs into the AST without desync:
   paired text (`CountText` / `CondText`). A number that scales with the board is a
   `Count`, not a bespoke effect; a branch is a `Condition` fed to `Conditional`.
 - **`CreatureVerb`** is a per-creature verb strategy for `OnChooseCreature`.
+- **`RepeatGate` (`effect_repeat.go`)** is the strategy a `Repeat` varies along:
+  `While` (repeat automatically while a `Condition` holds), `MayWhile` (repeat at
+  the controller's choice while a `Condition` holds), and `ByExalting` (repeat once,
+  paid by exalting a creature). Each gate carries both its loop and its trailing
+  "repeat" clause, so a new repeat shape is a new gate, not a new node.
 
 Rule of thumb: when behavior varies along an axis, model the axis as a small
 strategy interface that also renders its own text — not a new `Effect`/`Target`

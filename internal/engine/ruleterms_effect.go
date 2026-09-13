@@ -142,18 +142,19 @@ holds fewer than Amount, and does nothing on an empty deck.`,
 			Section:    SectionEffect,
 			Title:      "Discard",
 			Definition: "Dig through the top of your deck, discarding as you go, until you turn up a card the filters admit or the deck runs out.",
-			Body: `DiscardDeckUntil digs through the top of your deck, discarding as it goes,
-until it turns up a card the filters admit or the deck runs out. The card it
-finds stays in the discard pile and goes into context (ctx.It), so what happens
-to it is a separate effect gated on the dig succeeding — Sound the Horns and
-Invasion Portal both pair it with PutDiscardedIntoHand.`,
+			Body: `DiscardTopOfDeckUntil digs through the top of your deck, discarding as it goes,
+until it turns up a card the filters admit or the deck runs out. With MayStop the
+controller may stop before a match. Every discarded card is recorded on the context
+and the matching card is left in context (ctx.It), so a following effect can act on
+the found card or the whole discarded run — Sound the Horns and Invasion Portal pair
+it with PutDiscardedIntoHand; Old Boomy archives the run with ArchiveDiscardedThisWay.`,
 		},
 		{
 			Section:    SectionEffect,
 			Title:      "Return",
 			Definition: "Take the card just found in the discard pile into its owner's hand.",
 			Body: `PutDiscardedIntoHand takes the card in context out of the discard pile and
-into its owner's hand. It is the tail of a dig through the deck (DiscardDeckUntil)
+into its owner's hand. It is the tail of a dig through the deck (DiscardTopOfDeckUntil)
 that just discarded the card. Type names what the dig stopped on so the tail
 reads "put the discarded creature into your hand" rather than a bare "it".`,
 		},

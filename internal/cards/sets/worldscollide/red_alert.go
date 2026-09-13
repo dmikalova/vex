@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: For each creature your opponent controls in excess of you, deal 1 damage to each enemy creature.
+//	Play: For each Creature your opponent controls in excess of you, deal 1 damage to each enemy Creature.
 var RedAlert = card.New(
 	"Red Alert",
 	card.House.StarAlliance,

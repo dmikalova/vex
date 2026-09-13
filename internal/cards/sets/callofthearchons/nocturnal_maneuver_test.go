@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Exhaust up to 3 creatures.
+//	Play: Exhaust up to 3 Creatures.
 func TestNocturnalManeuver(t *testing.T) {
 	t.Run("exhausts up to 3 creatures", func(t *testing.T) {
 		var a, b ct.Card

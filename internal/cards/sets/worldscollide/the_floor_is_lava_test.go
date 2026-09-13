@@ -15,7 +15,7 @@ import (
 //	Æmber:  1
 //	Traits: Location
 //
-//	At the start of your turn, deal 1 damage to a friendly creature, and deal 1 damage to an enemy creature.
+//	At the start of your turn, deal 1 damage to a friendly Creature, and deal 1 damage to an enemy Creature.
 func TestTheFloorIsLava(t *testing.T) {
 	t.Run(
 		"deals 1 damage to a friendly and an enemy creature at the start of your turn",

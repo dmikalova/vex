@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Upgrade
 //	Rarity: Rare
 //
-//	This creature belongs to Logos and this creature gains "Reap: Draw a card."
+//	This Creature belongs to Logos and this Creature gains "Reap: Draw a card."
 var AcademyTraining = card.New(
 	"Academy Training",
 	card.House.Logos,

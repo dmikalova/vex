@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Exhaust up to 3 creatures.
+//	Play: Exhaust up to 3 Creatures.
 var NocturnalManeuver = card.New(
 	"Nocturnal Maneuver",
 	card.House.Untamed,

@@ -176,15 +176,25 @@ func (g *Game) readyPhase(player int) {
 	g.settleDestroyed(player)
 }
 
-// endOfTurnPhase resolves the active player's "at the end of your turn" abilities.
-// It is the last phase, after ready and draw, so those abilities see the board and
-// hand the turn actually ends with (ADR 0013).
+// endOfTurnPhase resolves the active player's "at the end of your turn" abilities
+// and the effects scheduled into this turn's end-of-turn window (Ragnarok's board
+// wipe). It is the last phase, after ready and draw, so those abilities see the
+// board and hand the turn actually ends with, and the whole window — in-play
+// abilities and scheduled effects alike — is gathered up front and ordered as one
+// (ADR 0013).
 func (g *Game) endOfTurnPhase(player int) {
+	var pending []triggeredAbility
 	for _, id := range g.allInPlay(player) {
-		g.triggerAbilities(id, TriggerEndOfTurn, 0, false)
+		abilities := g.triggeredBy(id, TriggerEndOfTurn)
+		for i := range abilities {
+			abilities[i].actor = int8(player)
+		}
+		pending = append(pending, abilities...)
 	}
+	pending = append(pending, g.scheduledEndOfTurn(player)...)
+	g.resolveWindow(g.orderTriggered(player, pending))
 	g.settleDestroyed(player)
-	g.resolveScheduledEndOfTurn(player)
+	g.clearScheduled()
 	// The turn is handed over on a shared scoreboard: the player who just played,
 	// then the one about to.
 	for _, p := range [2]int{player, 1 - player} {
@@ -195,29 +205,4 @@ func (g *Game) endOfTurnPhase(player int) {
 		})
 	}
 	g.assertInvariants()
-}
-
-// resolveScheduledEndOfTurn carries out any board wipe armed earlier in the turn
-// (Ragnarok) and clears the flag. It runs in the end-of-turn phase, after the
-// ready phase that would otherwise have cleared a turn bar, so the wipe lands on
-// the board the turn actually ends with.
-func (g *Game) resolveScheduledEndOfTurn(player int) {
-	if !g.State.EndOfTurnDestroyAll.Value {
-		return
-	}
-	src := g.State.EndOfTurnDestroyAll.Source
-	g.State.EndOfTurnDestroyAll = Bar[bool]{}
-	closeFrame := g.openFrame(Frame{
-		Actor:     player,
-		Source:    src,
-		HasSource: true,
-		Trigger:   TriggerEndOfTurn,
-	})
-	Destroy{Target: Target{Kind: TargetEachCreature}}.Resolve(&EffectContext{
-		Resolver:   g,
-		Source:     src,
-		Controller: player,
-	})
-	closeFrame()
-	g.settleDestroyed(player)
 }

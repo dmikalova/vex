@@ -15,7 +15,7 @@ import (
 //	Power:  6
 //	Traits: Demon
 //
-//	After a creature is destroyed in a fight with Stealer of Souls, purge it, and gain 1 Æmber.
+//	After a Creature is destroyed in a fight with Stealer of Souls, purge it, and gain 1 Æmber.
 func TestStealerOfSouls(t *testing.T) {
 	t.Run("purges an enemy destroyed in a fight with it and gains 1 Æmber", func(t *testing.T) {
 		var foe ct.Card

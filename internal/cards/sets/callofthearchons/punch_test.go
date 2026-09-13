@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Deal 3 damage to a creature.
+//	Play: Deal 3 damage to a Creature.
 func TestPunch(t *testing.T) {
 	t.Run("deals 3 damage to a chosen creature", func(t *testing.T) {
 		var foe ct.Card

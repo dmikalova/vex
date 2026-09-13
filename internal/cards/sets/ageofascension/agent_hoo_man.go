@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Martian • Agent
 //
 //	Elusive.
-//	Reap: Stun a friendly non-Mars creature and an enemy non-Mars creature.
+//	Reap: Stun a friendly non-Mars Creature and an enemy non-Mars Creature.
 var AgentHooMan = card.New(
 	"Agent Hoo-man",
 	card.House.Mars,

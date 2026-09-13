@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Zorg enters play stunned.
-//	Before Fight: Stun the creature Zorg fights and each of its neighbors.
+//	Before Fight: Stun the Creature Zorg fights and each of its neighbors.
 var Zorg = card.New(
 	"Zorg",
 	card.House.Mars,

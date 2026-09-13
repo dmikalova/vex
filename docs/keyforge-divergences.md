@@ -108,6 +108,27 @@ you, steal 1 Æmber. Repeat this effect`. Vactrol uniformly writes a self-repeat
   is on the board in time to be caught by the same destruction window (an
   enters-play "deal damage" can destroy it, and its own Destroyed ability then
   resolves in that window).
+- **Harvest Time** reads `Choose a creature. Purge each creature that shares a
+trait with the chosen creature`, not KeyForge's `Choose a trait. Purge each card
+with that trait`. Vactrol reuses the shared choose-a-creature-then-fold-on-a-
+  shared-trait mechanic (the same `ChooseCreatureThen` + `SharingTrait` pair
+  Extinction uses) instead of a bespoke choose-a-trait purge, so the purge is
+  anchored to a creature on the board and hits creatures only (artifacts are no
+  longer swept). The chosen creature shares every trait with itself, so it is
+  always among the purged. The per-player payout is unchanged: each player gains 1
+  Æmber for each card they controlled that was purged this way.
+- **Old Boomy** reads `Discard cards from the top of your deck until you discard a
+Brobnar card or choose to stop -> deal 2 damage to Old Boomy. Archive each card
+discarded this way`, not KeyForge's `Reveal cards from the top of your deck until
+you reveal a Brobnar card or choose to stop. Deal 2 damage to Old Boomy if a
+Brobnar card was revealed. Archive each card revealed this way`. Vactrol folds the
+  card into the shared deck-dig family (`DiscardTopOfDeckUntil`, the same node Sound
+  the Horns and Invasion Portal use) instead of a bespoke reveal-and-archive loop:
+  each card is discarded as the dig walks the deck, then the whole run is archived as
+  a distinct step (`ArchiveDiscardedThisWay`). The end state is identical — every
+  walked card ends in archives and Old Boomy takes 2 damage only when a Brobnar card
+  is turned up — but the cards pass through the discard pile en route to archives
+  rather than being archived directly on reveal.
 
 ## Mechanic rule changes
 

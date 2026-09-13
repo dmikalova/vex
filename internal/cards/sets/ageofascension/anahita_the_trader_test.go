@@ -16,7 +16,7 @@ import (
 //	Power:  2
 //	Traits: Human • Merchant
 //
-//	Reap: Your opponent gains control of a friendly artifact -> steal 2 Æmber.
+//	Reap: Your opponent gains control of a friendly Artifact -> steal 2 Æmber.
 func TestAnahitaTheTrader(t *testing.T) {
 	t.Run("gives an artifact away and takes 2 Æmber for it", func(t *testing.T) {
 		var anahita, relic ct.Card

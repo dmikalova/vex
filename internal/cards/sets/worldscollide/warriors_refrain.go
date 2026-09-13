@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Stun each creature with power 3 or lower.
+//	Play: Stun each Creature with power 3 or lower.
 var WarriorsRefrain = card.New(
 	"Warriors' Refrain",
 	card.House.Brobnar,

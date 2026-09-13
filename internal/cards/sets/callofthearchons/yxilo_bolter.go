@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Martian • Soldier
 //
-//	Fight/Reap: Deal 2 damage to a creature. If this damage destroys that creature, purge it.
+//	Fight/Reap: Deal 2 damage to a Creature. If this damage destroys that Creature, purge it.
 var YxiloBolter = card.New(
 	"Yxilo Bolter",
 	card.House.Mars,

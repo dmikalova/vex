@@ -9,8 +9,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	This creature gains +2 armor.
-//	This creature gains, "Destroyed: Move each Æmber on this creature to the common supply."
+//	This Creature gains +2 armor.
+//	This Creature gains, "Destroyed: Move each Æmber on this Creature to the common supply."
 var ImperialScutum = card.New(
 	"Imperial Scutum",
 	card.House.Saurian,

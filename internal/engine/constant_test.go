@@ -186,7 +186,7 @@ func TestConstantText(t *testing.T) {
 	if got := constantText(&banner); got != "Each friendly creature gains +1 power." {
 		t.Errorf("friendly constant text = %q", got)
 	}
-	if !strings.Contains(RenderCardText(&banner), "Each friendly creature gains +1 power.") {
+	if !strings.Contains(RenderCardText(&banner), "Each friendly Creature gains +1 power.") {
 		t.Error("RenderCardText should include the constant-ability line")
 	}
 

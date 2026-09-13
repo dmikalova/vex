@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Deal 3 damage to a creature and 3 damage to a neighbor of that creature.
+//	Play: Deal 3 damage to a Creature and 3 damage to a neighbor of that Creature.
 func TestMightyLance(t *testing.T) {
 	t.Run("deals 3 to a creature and 3 to a chosen neighbor", func(t *testing.T) {
 		var left, mid, right ct.Card

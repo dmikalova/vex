@@ -15,7 +15,7 @@ import (
 //	Æmber:  1
 //	Traits: Power
 //
-//	Each creature gains, "Destroyed: Purge this creature."
+//	Each Creature gains, "Destroyed: Purge this Creature."
 func TestAnnihilationRitual(t *testing.T) {
 	t.Run("destroyed creatures are purged instead of discarded", func(t *testing.T) {
 		var attacker, enemy ct.Card

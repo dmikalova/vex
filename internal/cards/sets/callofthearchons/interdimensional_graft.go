@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: If an opponent forges a key on their next turn, they must give you their remaining Æmber.
+//	Play: During your opponent's next turn, after forging a key, your opponent gives you all their Æmber.
 var InterdimensionalGraft = card.New(
 	"Interdimensional Graft",
 	card.House.Logos,
@@ -18,5 +18,8 @@ var InterdimensionalGraft = card.New(
 	card.Provenance(card.CotA, "112"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.GiveRemainingAemberAfterOpponentForgeKey{}),
+		card.Trigger.Play, card.ForOpponentNextTurn{
+			On: card.Event.Forge,
+			Do: card.GiveAember{All: true},
+		}),
 )

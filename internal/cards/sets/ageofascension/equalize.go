@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Redistribute the Æmber on friendly creatures among friendly creatures. Redistribute the Æmber on enemy creatures among enemy creatures.
+//	Play: Redistribute the Æmber on friendly Creatures among friendly Creatures. Redistribute the Æmber on enemy Creatures among enemy Creatures.
 var Equalize = card.New(
 	"Equalize",
 	card.House.Sanctum,

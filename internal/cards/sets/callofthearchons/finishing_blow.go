@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Destroy a damaged creature -> steal 1 Æmber.
+//	Play: Destroy a damaged Creature -> steal 1 Æmber.
 var FinishingBlow = card.New(
 	"Finishing Blow",
 	card.House.Shadows,

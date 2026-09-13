@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains +2 assault.
+//	This Creature gains +2 assault.
 func TestWayOfTheBear(t *testing.T) {
 	t.Run("grants its host +2 assault before fight damage", func(t *testing.T) {
 		var host, foe ct.Card

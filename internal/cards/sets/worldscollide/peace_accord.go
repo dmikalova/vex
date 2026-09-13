@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Law
 //
 //	Play: Each player gains 2 Æmber.
-//	After a creature is used to fight, its controller loses 4 Æmber. Destroy Peace Accord.
+//	After a Creature is used to fight, its controller loses 4 Æmber. Destroy Peace Accord.
 var PeaceAccord = card.New(
 	"Peace Accord",
 	card.House.StarAlliance,

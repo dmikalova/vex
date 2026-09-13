@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Martian • Scientist
 //
-//	Fight/Reap: Use a friendly non-Mars creature.
+//	Fight/Reap: Use a friendly non-Mars Creature.
 var UlyqMegamouth = card.New(
 	"Ulyq Megamouth",
 	card.House.Mars,

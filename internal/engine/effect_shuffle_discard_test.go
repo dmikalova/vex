@@ -83,14 +83,11 @@ func TestShuffleFromDiscardEach(t *testing.T) {
 		t.Error("the Mars creature should stay in the discard pile")
 	}
 
-	// The batch narrates one grouped, source-attributed line.
+	// The batch narrates one grouped line.
 	var grouped int
 	for _, rec := range g.Log {
-		if e, ok := rec.Entry.(CardsShuffledIntoDeckBy); ok {
+		if _, ok := rec.Entry.(CardsShuffledIntoDeckBy); ok {
 			grouped++
-			if e.Source != src {
-				t.Errorf("grouped shuffle source = %v, want %v", e.Source, src)
-			}
 		}
 		if _, ok := rec.Entry.(CardShuffledIntoDeck); ok {
 			t.Error("a batched shuffle should not narrate a passive per-card line")

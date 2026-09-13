@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: If your opponent played 3 or more creatures on their previous turn, steal 2 Æmber.
+//	Play: If your opponent played 3 or more Creatures on their previous turn, steal 2 Æmber.
 var Lifeweb = card.New(
 	"Lifeweb",
 	card.House.Untamed,

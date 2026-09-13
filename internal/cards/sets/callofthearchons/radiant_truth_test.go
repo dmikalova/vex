@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Stun each enemy creature that is not on a flank.
+//	Play: Stun each enemy Creature that is not on a flank.
 func TestRadiantTruth(t *testing.T) {
 	t.Run("stuns each enemy creature that is not on a flank", func(t *testing.T) {
 		var left, mid, right ct.Card

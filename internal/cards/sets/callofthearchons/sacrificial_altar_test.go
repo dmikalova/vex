@@ -15,7 +15,7 @@ import (
 //	Æmber:  1
 //	Traits: Location
 //
-//	Action: Purge a friendly Human creature -> play a creature from your discard pile.
+//	Action: Purge a friendly Human Creature -> play a Creature from your discard pile.
 func TestSacrificialAltar(t *testing.T) {
 	t.Run("trades a Human for a creature in the discard pile", func(t *testing.T) {
 		var altar, human, risen ct.Card

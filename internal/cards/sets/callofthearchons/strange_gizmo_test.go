@@ -15,7 +15,7 @@ import (
 //	Æmber:  1
 //	Traits: Item
 //
-//	After you forge a key, destroy each creature and each artifact.
+//	After you forge a key, destroy each Creature and each Artifact.
 func TestStrangeGizmo(t *testing.T) {
 	t.Run(
 		"destroys each creature and artifact after its controller forges a key",

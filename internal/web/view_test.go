@@ -379,6 +379,30 @@ func TestChoosingAnAttachedUpgrade(t *testing.T) {
 	c.g.chooserCandidates = []engine.LocalID{up}
 
 	c.wants("an upgrade candidate", "card-tab--target")
+	c.lacks("a candidate upgrade's own strip", "card-tabs--dim")
+}
+
+// During a chooser, an upgrade on a creature that is not itself a candidate dims
+// with its host instead of lighting up; only a strip that holds a candidate stays
+// lit (see TestChoosingAnAttachedUpgrade). Fangtooth Cavern's end-of-turn destroy
+// prompt used to undim every attachment on the board.
+func TestAttachedTabsDimForANonCandidateHostDuringAChooser(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	host := c.deal(testCreature)
+	c.playFromHand(host)
+	other := c.deal(testCreature)
+	c.playFromHand(other)
+
+	up := c.g.g.Register(
+		engine.NewCard("Test Upgrade", testHouse, engine.Upgrade, engine.Common), c.g.active())
+	c.g.g.AttachUpgrade(host, up)
+
+	// The prompt is choosing among creatures; the upgrade's host is not a candidate.
+	c.g.choosing = true
+	c.g.chooserCandidates = []engine.LocalID{other}
+
+	c.wants("a non-candidate host's upgrade strip during a chooser", "card-tabs--dim")
 }
 
 // A power counter on a creature shows a +1 (or -1) token in its status row, with

@@ -81,7 +81,7 @@ type HouseWagerArmed struct {
 // Text renders who stands to steal if the player chooses the named house next turn.
 func (e HouseWagerArmed) Text(n Namer) string {
 	return fmt.Sprintf("%s steals %d Æmber if %s chooses house %s next turn",
-		n.PlayerName(e.Predictor), e.Amount, n.PlayerName(e.Player), e.House)
+		subject(n, e.Predictor), e.Amount, n.PlayerName(e.Player), e.House)
 }
 
 // KeywordLostByAll narrates a keyword switched off across the whole board for
@@ -101,8 +101,13 @@ type ChainsGained struct {
 	Total  int
 }
 
-// Text renders the chains put on a player, and their total.
+// Text renders the chains put on a player, and their total. Under a card ability
+// the card that imposed them is named too, as a pool change is (ADR 0011).
 func (e ChainsGained) Text(n Namer) string {
+	if s, ok := framedSource(n); ok {
+		return fmt.Sprintf("%s has %s gain %d %s (%d total)",
+			s, n.PlayerName(e.Player), e.Amount, chainNoun(e.Amount), e.Total)
+	}
 	return fmt.Sprintf("%s gains %d %s (%d total)",
 		n.PlayerName(e.Player), e.Amount, chainNoun(e.Amount), e.Total)
 }

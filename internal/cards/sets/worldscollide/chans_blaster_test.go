@@ -14,9 +14,9 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains, "Fight/Reap: Choose one:
-//	- Deal 2 damage to a creature
-//	- Attach Chan's Blaster to Commander Chan -> use another creature."
+//	This Creature gains, "Fight/Reap: Choose one:
+//	- Deal 2 damage to a Creature
+//	- Attach Chan's Blaster to Commander Chan -> use another Creature."
 func TestChansBlaster(t *testing.T) {
 	t.Run("deals 2 damage with the blaster", func(t *testing.T) {
 		var carrier, victim ct.Card

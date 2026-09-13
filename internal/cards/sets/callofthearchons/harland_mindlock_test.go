@@ -15,7 +15,7 @@ import (
 //	Power:  1
 //	Traits: Cyborg • Scientist
 //
-//	Play: Take control of an enemy flank creature until Harland Mindlock leaves play.
+//	Play: Take control of an enemy flank Creature until Harland Mindlock leaves play.
 func TestHarlandMindlock(t *testing.T) {
 	t.Run("takes control of an enemy flank creature", func(t *testing.T) {
 		var foe ct.Card

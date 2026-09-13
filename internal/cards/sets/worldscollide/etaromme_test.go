@@ -15,7 +15,7 @@ import (
 //	Power:  4
 //	Traits: Demon
 //
-//	Reap: Destroy a creature of the house with the most creatures in play.
+//	Reap: Destroy a Creature of the house with the most Creatures in play.
 func TestEtaromme(t *testing.T) {
 	t.Run("destroys a chosen creature of the most populous house", func(t *testing.T) {
 		var etaromme, brob, brob2, dis ct.Card

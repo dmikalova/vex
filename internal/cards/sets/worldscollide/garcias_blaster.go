@@ -17,8 +17,8 @@ var garciasBlasterCluster = card.Cluster{
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains, "Fight/Reap: Choose one:
-//	- Deal 2 damage to a creature
+//	This Creature gains, "Fight/Reap: Choose one:
+//	- Deal 2 damage to a Creature
 //	- Attach Garcia's Blaster to Sensor Chief Garcia -> steal 1 Æmber."
 var GarciasBlaster = card.New(
 	"Garcia's Blaster",

@@ -9,8 +9,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Special
 //	Æmber:  1
 //
-//	This creature gains invulnerable.
-//	This creature gains, "Fight/Reap: Archive Ghostform."
+//	This Creature gains invulnerable.
+//	This Creature gains, "Fight/Reap: Archive Ghostform."
 var Ghostform = card.New(
 	"Ghostform",
 	card.House.Brobnar,

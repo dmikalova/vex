@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: If 3 or more enemy creatures have been destroyed this turn, your opponent loses 2 Æmber.
+//	Play: If 3 or more enemy Creatures have been destroyed this turn, your opponent loses 2 Æmber.
 var Overrun = card.New(
 	"Overrun",
 	card.House.Brobnar,

@@ -15,8 +15,8 @@ import (
 //	Power:  3
 //	Traits: Human • Priest
 //
-//	Each friendly creature gains +1 armor.
-//	Reap: Heal 2 damage from a creature.
+//	Each friendly Creature gains +1 armor.
+//	Reap: Heal 2 damage from a Creature.
 func TestGreyMonk(t *testing.T) {
 	t.Run("gives each friendly creature +1 armor", func(t *testing.T) {
 		var ally ct.Card

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Deal 2 damage to a creature. If this damage destroys that creature, steal 1 Æmber.
+//	Play: Deal 2 damage to a Creature. If this damage destroys that Creature, steal 1 Æmber.
 var RelentlessWhispers = card.New(
 	"Relentless Whispers",
 	card.House.Shadows,

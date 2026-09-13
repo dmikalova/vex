@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: For each house represented among friendly creatures, a friendly creature captures 1 Æmber from your opponent.
+//	Play: For each house represented among friendly Creatures, a friendly Creature captures 1 Æmber from your opponent.
 func TestXenotraining(t *testing.T) {
 	var a, b ct.Card
 	h := ct.Play(t, ct.Setup{

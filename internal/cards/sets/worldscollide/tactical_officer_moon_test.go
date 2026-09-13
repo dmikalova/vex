@@ -16,7 +16,7 @@ import (
 //	Traits: Human
 //
 //	Assault 2.
-//	Play: You may rearrange the creatures in a player's battleline.
+//	Play: You may rearrange the Creatures in a player's battleline.
 func TestTacticalOfficerMoon(t *testing.T) {
 	var a, b ct.Card
 	h := ct.Play(t, ct.Setup{

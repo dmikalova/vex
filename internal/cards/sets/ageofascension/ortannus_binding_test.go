@@ -14,7 +14,7 @@ import (
 //	Rarity: Connected
 //	Æmber:  1
 //
-//	Play: Deal 2 damage to a friendly creature.
+//	Play: Deal 2 damage to a friendly Creature.
 func TestOrtannusBinding(t *testing.T) {
 	t.Run("deals 2 damage to a friendly creature when played", func(t *testing.T) {
 		var friend ct.Card

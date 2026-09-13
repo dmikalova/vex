@@ -14,6 +14,12 @@ implement one, remove the build tag and write the real ability (the
 This is a one-shot setup step. Once a set is stubbed, `mage tool:nextCard` can
 hand out the cards one at a time.
 
+**Scan [docs/todo-future-set.md](../../../docs/todo-future-set.md) when stubbing a
+set.** It holds decided work parked against a future set — primitives with no
+consumer in an implemented set yet. If an item names the set you are stubbing (or
+a card it introduces), flag it so the `implement-cards` run builds the primitive
+alongside its first real consumer.
+
 ## Run it
 
 ```sh

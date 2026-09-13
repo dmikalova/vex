@@ -19,7 +19,7 @@ var ortannuCluster = card.Cluster{
 //	Power:  7
 //	Traits: Demon
 //
-//	Reap: Put each Ortannu's Binding from your discard pile into your hand. For each card put into your hand this way, deal 2 damage to a creature and 2 damage to each of its neighbors.
+//	Reap: Put each Ortannu's Binding from your discard pile into your hand. For each card put into your hand this way, deal 2 damage to a Creature and 2 damage to each of its neighbors.
 var OrtannuTheChained = card.New(
 	"Ortannu the Chained",
 	card.House.Dis,

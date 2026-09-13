@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains, "Your Æmber cannot be stolen."
+//	This Creature gains, "Your Æmber cannot be stolen."
 var Discombobulator = card.New(
 	"Discombobulator",
 	card.House.Logos,

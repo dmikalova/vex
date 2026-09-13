@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains +2 power and +2 hazardous.
+//	This Creature gains +2 power and +2 hazardous.
 var FlameWreathed = card.New(
 	"Flame-Wreathed",
 	card.House.Dis,

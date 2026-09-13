@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Weapon
 //
 //	Versatile.
-//	Action: Destroy Custom Virus. Purge a creature from your hand. Destroy each creature that shares a trait with it.
+//	Action: Destroy Custom Virus. Purge a Creature from your hand. Destroy each Creature that shares a trait with it.
 var CustomVirus = card.New(
 	"Custom Virus",
 	card.House.Mars,

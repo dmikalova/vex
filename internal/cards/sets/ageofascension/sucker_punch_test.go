@@ -17,7 +17,7 @@ import (
 //	Æmber:  1
 //
 //	Alpha.
-//	Play: Deal 2 damage to an enemy creature. If this damage destroys that creature, archive Sucker Punch.
+//	Play: Deal 2 damage to an enemy Creature. If this damage destroys that Creature, archive Sucker Punch.
 func TestSuckerPunch(t *testing.T) {
 	t.Run("archives itself when the damage destroys the creature", func(t *testing.T) {
 		var punch ct.Card

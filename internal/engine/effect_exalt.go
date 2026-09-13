@@ -1,9 +1,6 @@
 package engine
 
-import (
-	"errors"
-	"fmt"
-)
+import "fmt"
 
 // To exalt a creature is to place 1 Æmber from the common supply onto a chosen
 // friendly or enemy creature. The Æmber sits on the creature, belonging to no
@@ -69,68 +66,4 @@ func (e Exalt) resolveOptional(ctx *EffectContext) bool {
 	ctx.Resolver.AddAmberOn(id, e.Amount)
 	ctx.Resolver.Record(AemberExalted{Creature: id, Amount: e.Amount})
 	return true
-}
-
-// ExaltToRepeat resolves Do once, then lets the controller exalt a creature to
-// repeat it a single time — the exalt pays for one repeat. "Repeat the preceding
-// effect" repeats only the effect before the exalt clause, so the offer is made
-// once and does not chain. It models "<do>. You may exalt <a creature> to repeat
-// the preceding effect." (Phalanx Strike, Tribute).
-type ExaltToRepeat struct {
-	// Do is the preceding effect each exalt repeats.
-	Do Effect
-	// Exalt names the creature exalted to pay for a repeat.
-	Exalt Target
-}
-
-// validate requires an effect to repeat and an explicit exalt target.
-func (e ExaltToRepeat) validate() error {
-	if e.Do == nil {
-		return errors.New("ExaltToRepeat needs an effect to Do")
-	}
-	if !e.Exalt.valid() {
-		return errUnsetTarget("ExaltToRepeat")
-	}
-	return validateEffect(e.Do)
-}
-
-// Text renders Do as its own sentence, then the optional exalt-to-repeat gate.
-func (e ExaltToRepeat) Text() string {
-	return punctuate(e.Do.Text()) +
-		" You may exalt " + e.Exalt.Text() + " to repeat the preceding effect"
-}
-
-// Resolve runs Do once, then offers a single exalt-to-repeat (a declinable
-// choice). Declining exalts nothing and ends there; accepting exalts the chosen
-// creature and resolves Do one more time.
-func (e ExaltToRepeat) Resolve(ctx *EffectContext) {
-	e.Do.Resolve(ctx)
-	ids := e.exaltChoice(ctx)
-	if len(ids) == 0 {
-		return
-	}
-	for _, id := range ids {
-		ctx.Resolver.AddAmberOn(id, 1)
-		ctx.Resolver.Record(AemberExalted{Creature: id, Amount: 1})
-	}
-	e.Do.Resolve(ctx)
-}
-
-// exaltChoice offers the exalt that pays for another repeat, or none to stop. A
-// chosen target is its own declinable prompt (pick a creature or decline); a
-// back-reference like the chosen creature has nothing to pick, so it is offered
-// as a Yes/No confirm on the creature Do just acted on.
-func (e ExaltToRepeat) exaltChoice(ctx *EffectContext) []LocalID {
-	if e.Exalt.isChosen() {
-		return e.Exalt.SelectOptional(ctx)
-	}
-	ids := e.Exalt.Select(ctx)
-	if len(ids) == 0 {
-		return nil
-	}
-	prompt := "Exalt " + e.Exalt.Text() + " to repeat the preceding effect?"
-	if ctx.ChooseOption(prompt, []string{"Yes", "No"}) != 0 {
-		return nil
-	}
-	return ids
 }

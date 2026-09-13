@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Alpha.
-//	Play: Until the start of your next turn, creatures cannot be used to reap.
+//	Play: Until the start of your next turn, Creatures cannot be used to reap.
 var SowSalt = card.New(
 	"Sow Salt",
 	card.House.Saurian,

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Witch
 //
 //	Elusive.
-//	Fight/Reap: Ward each neighboring creature.
+//	Fight/Reap: Ward each neighboring Creature.
 var TheFeatheredShaman = card.New(
 	"The Feathered Shaman",
 	card.House.Untamed,

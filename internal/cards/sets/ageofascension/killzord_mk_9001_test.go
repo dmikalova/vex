@@ -13,7 +13,7 @@ import (
 //	Type:   Upgrade
 //	Rarity: Rare
 //
-//	This creature gains +2 power, +2 armor, and skirmish.
+//	This Creature gains +2 power, +2 armor, and skirmish.
 func TestKillzordMk9001(t *testing.T) {
 	t.Run(
 		"boosts its host's power and armor",

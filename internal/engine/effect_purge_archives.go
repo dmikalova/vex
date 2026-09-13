@@ -1,64 +1,32 @@
 package engine
 
-import "fmt"
+// PurgeArchives lets the controller purge any number of cards from their own
+// archives, one at a time, and records how many were purged for a following
+// effect to scale by — the producer half of Destructive Analysis's "purge any
+// number ... to deal an additional 2 damage for each card purged this way".
+// Purging none is allowed and records nothing.
+type PurgeArchives struct{}
 
-// PurgeArchivesForDamage lets the controller purge any number of cards from their
-// own archives, then deals Amount damage to Target for each card purged this way —
-// Destructive Analysis's "you may purge any number of cards from your archives to
-// deal an additional 2 damage to the same creature for each card purged this way".
-// The controller purges one card at a time and may stop at any point, so purging
-// none is allowed and deals no additional damage.
-type PurgeArchivesForDamage struct {
-	// Amount is the damage dealt to Target for each card purged.
-	Amount int
-	// Target is the creature the additional damage lands on.
-	Target Target
-}
+// validate has nothing to reject: the effect takes no fields.
+func (PurgeArchives) validate() error { return nil }
 
-// validate requires a target and a positive per-card amount.
-func (e PurgeArchivesForDamage) validate() error {
-	if !e.Target.valid() {
-		return errUnsetTarget("PurgeArchivesForDamage")
-	}
-	if e.Amount < 1 {
-		return fmt.Errorf("PurgeArchivesForDamage: amount must be positive")
-	}
-	return nil
-}
-
-// Text renders the effect, e.g. "purge any number of cards from your archives to
-// deal an additional 2 damage to it for each card purged this way".
-func (e PurgeArchivesForDamage) Text() string {
-	return fmt.Sprintf(
-		"purge any number of cards from your archives to deal an additional %d "+
-			"damage to %s for each card purged this way",
-		e.Amount, e.Target.Text())
+// Text renders the effect.
+func (PurgeArchives) Text() string {
+	return "purge any number of cards from your archives"
 }
 
 // Resolve purges cards from the controller's archives one at a time until they
-// decline, then deals Amount damage to each targeted creature for every card
-// purged.
-func (e PurgeArchivesForDamage) Resolve(ctx *EffectContext) {
+// decline, recording the per-player tally a following CardsPurged reads.
+func (PurgeArchives) Resolve(ctx *EffectContext) {
 	chosen := pickCards(
 		ctx,
 		"Choose a card to purge from your archives",
 		0,
 		true,
-		func() []LocalID {
-			return ctx.Resolver.Archives(ctx.Controller)
-		},
+		func() []LocalID { return ctx.Resolver.Archives(ctx.Controller) },
 	)
-	if len(chosen) == 0 {
-		return
-	}
 	for _, id := range chosen {
 		ctx.Resolver.PurgeFromArchives(ctx.Controller, id)
-	}
-	var hits []DamageTarget
-	for _, id := range e.Target.Select(ctx) {
-		hits = append(hits, DamageTarget{ID: id, Amount: e.Amount * len(chosen)})
-	}
-	if len(hits) > 0 {
-		ctx.dealDamage(hits)
+		ctx.Produced.Purged[ctx.Controller]++
 	}
 }

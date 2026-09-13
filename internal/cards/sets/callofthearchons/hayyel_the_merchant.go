@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Human • Merchant
 //
-//	After you play an artifact, gain 1 Æmber.
+//	After you play an Artifact, gain 1 Æmber.
 var HayyelTheMerchant = card.New(
 	"Hayyel the Merchant",
 	card.House.Sanctum,

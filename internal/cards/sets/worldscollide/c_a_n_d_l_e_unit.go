@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Robot
 //
-//	After an enemy creature reaps, draw a card.
+//	After an enemy Creature reaps, draw a card.
 //	Action: C.A.N.D.L.E. Unit captures 1 Æmber from your opponent.
 var CANDLEUnit = card.New(
 	"C.A.N.D.L.E. Unit",

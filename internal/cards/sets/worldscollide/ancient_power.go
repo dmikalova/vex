@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Ward each friendly creature with Æmber on it.
+//	Play: Ward each friendly Creature with Æmber on it.
 var AncientPower = card.New(
 	"Ancient Power",
 	card.House.Saurian,

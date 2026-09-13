@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Ward 2 friendly creatures.
+//	Play: Ward 2 friendly Creatures.
 var Imperium = card.New(
 	"Imperium",
 	card.House.Saurian,

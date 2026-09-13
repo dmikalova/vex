@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Archive an enemy creature from play.
+//	Play: Archive an enemy Creature from play.
 var Banish = card.New(
 	"Banish",
 	card.House.Dis,

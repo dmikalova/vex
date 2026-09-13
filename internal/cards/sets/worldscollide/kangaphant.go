@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Beast
 //
-//	Each creature gains, "Reap: Destroy this creature."
+//	Each Creature gains, "Reap: Destroy this Creature."
 var Kangaphant = card.New(
 	"Kangaphant",
 	card.House.Untamed,

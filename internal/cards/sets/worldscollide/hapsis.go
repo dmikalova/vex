@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Mutant • Scientist
 //
-//	After a creature is destroyed in a fight with Hapsis, ward Hapsis, and draw a card.
+//	After a Creature is destroyed in a fight with Hapsis, ward Hapsis, and draw a card.
 var Hapsis = card.New(
 	"Hapsis",
 	card.House.Logos,

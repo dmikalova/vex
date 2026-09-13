@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Traits: Item
 //
-//	Action: For each enemy creature that was destroyed in a fight this turn, gain 1 Æmber.
+//	Action: For each enemy Creature that was destroyed in a fight this turn, gain 1 Æmber.
 func TestTheWarchest(t *testing.T) {
 	t.Run("pays for each enemy creature killed in a fight this turn", func(t *testing.T) {
 		var chest, brute, enemy ct.Card

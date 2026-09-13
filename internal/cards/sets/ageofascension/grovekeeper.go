@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Human • Witch
 //
-//	At the end of your turn, give each neighboring creature a +1 power counter.
+//	At the end of your turn, give each neighboring Creature a +1 power counter.
 var Grovekeeper = card.New(
 	"Grovekeeper",
 	card.House.Untamed,

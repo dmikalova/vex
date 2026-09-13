@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains +3 hazardous.
+//	This Creature gains +3 hazardous.
 var WayOfThePorcupine = card.New(
 	"Way of the Porcupine",
 	card.House.Untamed,

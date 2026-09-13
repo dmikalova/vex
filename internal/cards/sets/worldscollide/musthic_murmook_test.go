@@ -17,7 +17,7 @@ import (
 //	Traits: Beast
 //
 //	Each player's keys cost +1 Æmber.
-//	Play: Deal 4 damage to a creature.
+//	Play: Deal 4 damage to a Creature.
 func TestMusthicMurmook(t *testing.T) {
 	t.Run("deals 4 damage to a creature when played", func(t *testing.T) {
 		var foe ct.Card

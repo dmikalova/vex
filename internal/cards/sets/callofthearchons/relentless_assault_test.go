@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Ready and fight with up to 3 different friendly creatures, one at a time.
+//	Play: Ready and fight with up to 3 different friendly Creatures, one at a time.
 func TestRelentlessAssault(t *testing.T) {
 	brobnar := ct.OfHouse(card.House.Brobnar)
 

@@ -15,7 +15,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	While this creature is on a flank, it gains +2 power and +2 armor.
+//	While this Creature is on a flank, it gains +2 power and +2 armor.
 func TestShoulderArmor(t *testing.T) {
 	var flanker, middle ct.Card
 	h := ct.Play(t, ct.Setup{

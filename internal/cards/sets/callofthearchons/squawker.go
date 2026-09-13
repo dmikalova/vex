@@ -10,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Choose one:
-//	- Ready a Mars creature
-//	- Stun a non-Mars creature.
+//	- Ready a Mars Creature
+//	- Stun a non-Mars Creature.
 var Squawker = card.New(
 	"Squawker",
 	card.House.Mars,

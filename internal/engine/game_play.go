@@ -57,10 +57,12 @@ func (g *Game) PlayArtifact(player, handIndex int) (LocalID, error) {
 	return result, err
 }
 
-// chargeToll makes player pay every toll an opponent's in-play card imposes for
-// action (Customs Office, Tentacus), moving that Æmber to the opponent. It is the
-// single cost gate the play and use sites share: it changes nothing and returns
-// ErrCannotPayToll when player cannot pay the full amount owed.
+// chargeToll makes player give every toll an opponent's in-play card imposes for
+// action (Customs Office, Tentacus), moving that Æmber to the opponent. It checks
+// the full amount owed up front and returns ErrCannotPayToll (changing nothing)
+// when player cannot pay it, then gives each toll card's share under that card's
+// frame so the log names the card. It is the single cost gate the play and use
+// sites share.
 func (g *Game) chargeToll(player int, action TollAction) error {
 	owed := g.tollOwed(player, action)
 	if owed == 0 {
@@ -70,9 +72,17 @@ func (g *Game) chargeToll(player int, action TollAction) error {
 		return ErrCannotPayToll
 	}
 	payee := 1 - player
-	g.SetAember(player, g.State.Aember[player]-owed)
-	g.SetAember(payee, g.State.Aember[payee]+owed)
-	g.record(TollPaid{Player: player, Payee: payee, Amount: owed, Action: action})
+	for _, id := range g.allInPlay(payee) {
+		t := g.cat.def(id).Restricts.Toll
+		if t.Amount <= 0 || t.Action != action {
+			continue
+		}
+		g.SetAember(player, g.State.Aember[player]-t.Amount)
+		g.SetAember(payee, g.State.Aember[payee]+t.Amount)
+		closeFrame := g.openFrame(Frame{Actor: payee, Source: id, HasSource: true})
+		g.record(AemberGiven{Giver: player, Receiver: payee, Amount: t.Amount, Reason: action})
+		closeFrame()
+	}
 	return nil
 }
 
@@ -612,22 +622,16 @@ func (g *Game) playUpgradeCard(player int, id, host LocalID, def *CardDefinition
 
 // DiscardCardFromHand moves a specific card from a player's hand to their discard
 // zone, with no active-player or house checks (an effect may discard from either
-// hand). It does nothing if the card is not in that hand. The discard is logged as
-// the player's own, for a player discarding as their turn action.
+// hand). It does nothing if the card is not in that hand. The discard is subjected
+// to the card whose ability forced it through the record's frame, or to the player
+// when there is none (a player discarding as their turn action).
 func (g *Game) DiscardCardFromHand(owner int, id LocalID) {
-	g.discardFromHand(owner, id, 0, false)
-}
-
-// DiscardCardFromHandBy is DiscardCardFromHand attributed to the card whose ability
-// forced the discard, so the log names that card (Old Yurk discards a card) rather
-// than the player.
-func (g *Game) DiscardCardFromHandBy(owner int, id, source LocalID) {
-	g.discardFromHand(owner, id, source, true)
+	g.discardFromHand(owner, id)
 }
 
 // discardFromHand carries out a hand-to-discard move and its after-discard
-// reactions, recording the discard attributed to source when hasSource is set.
-func (g *Game) discardFromHand(owner int, id, source LocalID, hasSource bool) {
+// reactions.
+func (g *Game) discardFromHand(owner int, id LocalID) {
 	hand := &g.State.Hand[owner]
 	i := hand.indexOf(id)
 	if i < 0 {
@@ -636,7 +640,7 @@ func (g *Game) discardFromHand(owner int, id, source LocalID, hasSource bool) {
 	hand.removeAt(i)
 	g.State.Discard[owner].add(id)
 	g.State.DiscardedThisTurn[owner].add(id)
-	g.record(CardDiscarded{Player: owner, Card: id, Source: source, HasSource: hasSource})
+	g.record(CardDiscarded{Player: owner, Card: id})
 	for _, watcher := range g.allInPlay(owner) {
 		g.triggerAbilities(watcher, TriggerAfterDiscardFromHand, id, true)
 	}

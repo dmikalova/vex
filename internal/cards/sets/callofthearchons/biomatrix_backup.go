@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	This creature gains, "Destroyed: Put this creature into its owner's archives."
+//	This Creature gains, "Destroyed: Put this Creature into its owner's archives."
 var BiomatrixBackup = card.New(
 	"Biomatrix Backup",
 	card.House.Mars,

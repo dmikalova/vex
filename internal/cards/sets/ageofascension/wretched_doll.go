@@ -9,8 +9,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Traits: Item
 //
-//	Play: Put a doom counter on a creature.
-//	Action: Destroy each creature with a doom counter. Put a doom counter on a creature.
+//	Play: Put a doom counter on a Creature.
+//	Action: Destroy each Creature with a doom counter. Put a doom counter on a Creature.
 var WretchedDoll = card.New(
 	"Wretched Doll",
 	card.House.Dis,

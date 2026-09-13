@@ -16,7 +16,7 @@ import (
 //	Æmber:  1
 //	Traits: Ally
 //
-//	Action: For the remainder of the turn, each creature loses elusive.
+//	Action: For the remainder of the turn, each Creature loses elusive.
 func TestSniffer(t *testing.T) {
 	var sniffer, hunter, hider ct.Card
 	h := ct.Play(t, ct.Setup{

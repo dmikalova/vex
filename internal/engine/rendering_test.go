@@ -315,19 +315,19 @@ func TestGeneratedCardText(t *testing.T) {
 	}{
 		{
 			exGiant(),
-			"House:  Brobnar\nType:   Creature\nRarity: Rare\nPower:  5\nTraits: Giant\n\nAfter you forge a key, deal 2 damage to each enemy creature.",
+			"House:  Brobnar\nType:   Creature\nRarity: Rare\nPower:  5\nTraits: Giant\n\nAfter you forge a key, deal 2 damage to each enemy Creature.",
 		},
 		{
 			exBruteStrength(),
-			"House:  Brobnar\nType:   Upgrade\nRarity: Uncommon\nÆmber:  1\n\nThis creature gains +5 power.",
+			"House:  Brobnar\nType:   Upgrade\nRarity: Uncommon\nÆmber:  1\n\nThis Creature gains +5 power.",
 		},
 		{
 			exBattleFury(),
-			"House:  Brobnar\nType:   Tactic\nRarity: Common\nÆmber:  1\n\nPlay: Ready and fight with a friendly creature.",
+			"House:  Brobnar\nType:   Tactic\nRarity: Common\nÆmber:  1\n\nPlay: Ready and fight with a friendly Creature.",
 		},
 		{
 			exAutocannon(),
-			"House:  Brobnar\nType:   Artifact\nRarity: Rare\nÆmber:  1\nTraits: Weapon\n\nAfter a creature enters play, deal 1 damage to it.",
+			"House:  Brobnar\nType:   Artifact\nRarity: Rare\nÆmber:  1\nTraits: Weapon\n\nAfter a Creature enters play, deal 1 damage to it.",
 		},
 		{
 			NewCard(
@@ -361,7 +361,7 @@ func TestGeneratedCardText(t *testing.T) {
 				Uncommon,
 				WithStatic(StaticModifier{ProtectsFromNonFlank: true}),
 			),
-			"House:  Untamed\nType:   Upgrade\nRarity: Uncommon\n\nCreatures not on a flank cannot fight this creature.",
+			"House:  Untamed\nType:   Upgrade\nRarity: Uncommon\n\nCreatures not on a flank cannot fight this Creature.",
 		},
 		{
 			NewCard(
@@ -435,7 +435,7 @@ func TestGeneratedCardText(t *testing.T) {
 				WithTraits(Giant),
 				WithAttackDamage(AttackDamage{Amount: 2, FlankOnly: true}),
 			),
-			"House:  Brobnar\nType:   Creature\nRarity: Common\nPower:  6\nTraits: Giant\n\nValdr deals +2 Damage while attacking an enemy creature on the flank.",
+			"House:  Brobnar\nType:   Creature\nRarity: Common\nPower:  6\nTraits: Giant\n\nValdr deals +2 Damage while attacking an enemy Creature on the flank.",
 		},
 		{
 			NewCard(
@@ -496,7 +496,7 @@ func TestGeneratedCardText(t *testing.T) {
 					},
 				),
 			),
-			"House:  Shadows\nType:   Upgrade\nRarity: Uncommon\n\nThis creature gains, \"Reap: Steal 1 Æmber.\"",
+			"House:  Shadows\nType:   Upgrade\nRarity: Uncommon\n\nThis Creature gains, \"Reap: Steal 1 Æmber.\"",
 		},
 		{
 			NewCard(
@@ -519,7 +519,7 @@ func TestGeneratedCardText(t *testing.T) {
 					},
 				),
 			),
-			"House:  Logos\nType:   Upgrade\nRarity: Uncommon\n\nThis creature gains, \"Fight/Reap: If this is the first time this creature was used this turn, ready it.\"",
+			"House:  Logos\nType:   Upgrade\nRarity: Uncommon\n\nThis Creature gains, \"Fight/Reap: If this is the first time this Creature was used this turn, ready it.\"",
 		},
 		{
 			NewCard(
@@ -538,7 +538,7 @@ func TestGeneratedCardText(t *testing.T) {
 					},
 				),
 			),
-			"House:  Logos\nType:   Upgrade\nRarity: Uncommon\n\nThis creature gains versatile.\nPlay: Stun and exhaust this creature.",
+			"House:  Logos\nType:   Upgrade\nRarity: Uncommon\n\nThis Creature gains versatile.\nPlay: Stun and exhaust this Creature.",
 		},
 		{
 			NewCard(
@@ -578,7 +578,7 @@ func TestGeneratedCardText(t *testing.T) {
 				WithAemberBonus(1),
 				WithStatic(StaticModifier{KeyCostChange: NewKeyCostChange(Opponent, 2)}),
 			),
-			"House:  Mars\nType:   Upgrade\nRarity: Uncommon\nÆmber:  1\n\nThis creature gains, \"Your opponent's keys cost +2 Æmber.\"",
+			"House:  Mars\nType:   Upgrade\nRarity: Uncommon\nÆmber:  1\n\nThis Creature gains, \"Your opponent's keys cost +2 Æmber.\"",
 		},
 		{
 			NewCard(
@@ -603,7 +603,7 @@ func TestGeneratedCardText(t *testing.T) {
 					},
 				),
 			),
-			"House:  Sanctum\nType:   Upgrade\nRarity: Rare\n\nThis creature gains, \"If this creature would be destroyed, instead fully heal it, and destroy Shield.\"",
+			"House:  Sanctum\nType:   Upgrade\nRarity: Rare\n\nThis Creature gains, \"If this Creature would be destroyed, instead fully heal it, and destroy Shield.\"",
 		},
 		{
 			NewCard(
@@ -629,7 +629,7 @@ func TestGeneratedCardText(t *testing.T) {
 					},
 				),
 			),
-			"House:  Sanctum\nType:   Upgrade\nRarity: Rare\n\nThis creature gains +2 hazardous and, \"If this creature would be destroyed, instead fully heal it, and destroy Cloak.\"",
+			"House:  Sanctum\nType:   Upgrade\nRarity: Rare\n\nThis Creature gains +2 hazardous and, \"If this Creature would be destroyed, instead fully heal it, and destroy Cloak.\"",
 		},
 		{
 			NewCard(
@@ -660,7 +660,7 @@ func TestGeneratedCardText(t *testing.T) {
 					},
 				),
 			),
-			"House:  Mars\nType:   Upgrade\nRarity: Rare\n\nThis creature gains, \"After you play a Mars creature, ready this creature, and for the remainder of the turn, this creature belongs to house Mars.\"",
+			"House:  Mars\nType:   Upgrade\nRarity: Rare\n\nThis Creature gains, \"After you play a Mars Creature, ready this Creature, and for the remainder of the turn, this Creature belongs to house Mars.\"",
 		},
 		{
 			NewCard(
@@ -730,7 +730,7 @@ func TestGeneratedCardText(t *testing.T) {
 				WithTraits(Beast),
 				WithFightRestriction(Target{Kind: TargetEachCreature}.Stunned()),
 			),
-			"House:  Untamed\nType:   Creature\nRarity: Common\nPower:  7\nTraits: Beast\n\nTwig can only fight stunned creatures.",
+			"House:  Untamed\nType:   Creature\nRarity: Common\nPower:  7\nTraits: Beast\n\nTwig can only fight stunned Creatures.",
 		},
 		{
 			NewCard(
@@ -751,7 +751,7 @@ func TestGeneratedCardText(t *testing.T) {
 					},
 				),
 			),
-			"House:  Dis\nType:   Artifact\nRarity: Rare\nTraits: Power\n\nEach creature gains, \"Destroyed: Purge this creature.\"",
+			"House:  Dis\nType:   Artifact\nRarity: Rare\nTraits: Power\n\nEach Creature gains, \"Destroyed: Purge this Creature.\"",
 		},
 	}
 	for _, tc := range cases {
@@ -789,7 +789,7 @@ func TestRenderCardRules(t *testing.T) {
 			"Skirmish, Poison.",
 		},
 		// Upgrade static modifier (no own ability): the face still shows its text.
-		{exBruteStrength(), "This creature gains +5 power."},
+		{exBruteStrength(), "This Creature gains +5 power."},
 		// Triggered ability with a self-reference resolved to the card's name.
 		{
 			NewCard(
@@ -819,7 +819,7 @@ func TestRenderCardRules(t *testing.T) {
 				WithPower(5),
 				WithTakesDamageFor(Target{Kind: TargetEachCreature}.Neighboring()),
 			),
-			"Damage dealt to each neighboring creature is dealt to Ward instead.",
+			"Damage dealt to each neighboring Creature is dealt to Ward instead.",
 		},
 		// A card that gains a keyword only while attacking renders that clause.
 		{
@@ -887,7 +887,7 @@ func TestRenderUpgradeOnCreature(t *testing.T) {
 					},
 				),
 			),
-			"Fight/Reap: If this is the first time this creature was used this turn, ready it.",
+			"Fight/Reap: If this is the first time this Creature was used this turn, ready it.",
 		},
 		// A granted key-cost change too.
 		{
@@ -917,7 +917,7 @@ func TestRenderUpgradeOnCreature(t *testing.T) {
 					},
 				),
 			),
-			"+2 hazardous.\nIf this creature would be destroyed, instead destroy Cloak.",
+			"+2 hazardous.\nIf this Creature would be destroyed, instead destroy Cloak.",
 		},
 		// Non-flank fight protection reads as the rule itself, hosted on the creature.
 		{
@@ -928,7 +928,7 @@ func TestRenderUpgradeOnCreature(t *testing.T) {
 				Uncommon,
 				WithStatic(StaticModifier{ProtectsFromNonFlank: true}),
 			),
-			"Creatures not on a flank cannot fight this creature.",
+			"Creatures not on a flank cannot fight this Creature.",
 		},
 		// A granted Æmber-protection reads as the rule itself, hosted on the creature.
 		{
@@ -983,7 +983,7 @@ func TestCardRulesHouseOverride(t *testing.T) {
 	def := NewCard("Academy Training", Logos, Upgrade, Rare,
 		WithStatic(StaticModifier{HouseOverride: Logos}))
 	got := RenderCardRules(&def)
-	want := "This creature belongs to Logos"
+	want := "This Creature belongs to Logos"
 	if !strings.Contains(got, want) {
 		t.Errorf("card rules missing the house-override line:\n%s", got)
 	}
@@ -996,7 +996,7 @@ func TestCardDocComment(t *testing.T) {
 	}{
 		{
 			exGiant(),
-			"// Brobnar Giant\n//\n//\tHouse:  Brobnar\n//\tType:   Creature\n//\tRarity: Rare\n//\tPower:  5\n//\tTraits: Giant\n//\n//\tAfter you forge a key, deal 2 damage to each enemy creature.",
+			"// Brobnar Giant\n//\n//\tHouse:  Brobnar\n//\tType:   Creature\n//\tRarity: Rare\n//\tPower:  5\n//\tTraits: Giant\n//\n//\tAfter you forge a key, deal 2 damage to each enemy Creature.",
 		},
 		{
 			NewCard(

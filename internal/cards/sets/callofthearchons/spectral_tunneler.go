@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Item
 //
-//	Action: Choose a creature - for the remainder of the turn, it is considered a flank creature, and it gains, "Reap: Draw a card."
+//	Action: Choose a Creature - for the remainder of the turn, it is considered a flank Creature, and it gains, "Reap: Draw a card."
 var SpectralTunneler = card.New(
 	"Spectral Tunneler",
 	card.House.Logos,

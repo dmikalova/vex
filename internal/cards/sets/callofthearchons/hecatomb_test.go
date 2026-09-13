@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Destroy each Dis creature. For each creature they controlled that was destroyed this way, each player gains 1 Æmber.
+//	Play: Destroy each Dis Creature. For each Creature they controlled that was destroyed this way, each player gains 1 Æmber.
 func TestHecatomb(t *testing.T) {
 	dis := ct.OfHouse(card.House.Dis)
 

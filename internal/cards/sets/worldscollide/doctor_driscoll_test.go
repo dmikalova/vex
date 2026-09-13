@@ -16,7 +16,7 @@ import (
 //	Traits: Human • Scientist
 //
 //	Elusive.
-//	Action: Heal 2 damage from a creature. For each damage healed this way, gain 1 Æmber.
+//	Action: Heal 2 damage from a Creature. For each damage healed this way, gain 1 Æmber.
 func TestDoctorDriscoll(t *testing.T) {
 	t.Run("heals 2 damage from a creature and gains 1 Æmber per damage healed", func(t *testing.T) {
 		var target ct.Card

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Goblin
 //
 //	Skirmish.
-//	After a Giant creature is played adjacent to Stilt-Kin, ready and fight with Stilt-Kin.
+//	After a Giant Creature is played adjacent to Stilt-Kin, ready and fight with Stilt-Kin.
 var StiltKin = card.New(
 	"Stilt-Kin",
 	card.House.Brobnar,

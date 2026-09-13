@@ -16,7 +16,7 @@ import (
 //	Traits: Martian • Agent
 //
 //	Elusive.
-//	Reap: Stun a friendly non-Mars creature and an enemy non-Mars creature.
+//	Reap: Stun a friendly non-Mars Creature and an enemy non-Mars Creature.
 func TestAgentHooMan(t *testing.T) {
 	t.Run("stuns a friendly and an enemy non-mars creature", func(t *testing.T) {
 		var ally, foe ct.Card

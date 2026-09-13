@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Deal 1 damage to each creature. You may destroy each Mars creature.
+//	Play: Deal 1 damage to each Creature. You may destroy each Mars Creature.
 func TestTheCommonCold(t *testing.T) {
 	t.Run("damages each creature and may destroy each Mars creature", func(t *testing.T) {
 		var marsFoe, brobFoe ct.Card

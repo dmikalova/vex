@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: If there are no friendly creatures in play, for each enemy creature in play, you may archive a card from your hand.
+//	Play: If there are no friendly Creatures in play, for each enemy Creature in play, you may archive a card from your hand.
 var MasterTheTheory = card.New(
 	"Master the Theory",
 	card.House.Logos,

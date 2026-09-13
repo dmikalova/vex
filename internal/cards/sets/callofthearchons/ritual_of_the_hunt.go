@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Power
 //
 //	Versatile.
-//	Action: Destroy Ritual of the Hunt. For the remainder of the turn, you may use friendly Untamed creatures.
+//	Action: Destroy Ritual of the Hunt. For the remainder of the turn, you may use friendly Untamed Creatures.
 var RitualOfTheHunt = card.New(
 	"Ritual of the Hunt",
 	card.House.Untamed,

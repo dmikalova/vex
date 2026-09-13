@@ -16,7 +16,7 @@ import (
 //	Traits: Martian • Soldier
 //
 //	Yxili Marauder gains +1 power for each Æmber on it.
-//	Play: For each friendly ready Mars creature, Yxili Marauder captures 1 Æmber from your opponent.
+//	Play: For each friendly ready Mars Creature, Yxili Marauder captures 1 Æmber from your opponent.
 func TestYxiliMarauder(t *testing.T) {
 	t.Run(
 		"captures 1 Æmber per friendly ready Mars creature and grows with it",

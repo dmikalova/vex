@@ -12,8 +12,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Fight/Reap: Choose one:
-//	- Heal 3 damage from a Mars creature
-//	- Stun a Mars creature.
+//	- Heal 3 damage from a Mars Creature
+//	- Stun a Mars Creature.
 var Ozmo = card.New(
 	"Ozmo, Martianologist",
 	card.House.Logos,

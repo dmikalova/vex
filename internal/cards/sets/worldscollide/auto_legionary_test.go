@@ -16,7 +16,7 @@ import (
 //	Traits: Robot • Ally
 //
 //	Versatile.
-//	Action: Give Auto-Legionary five +1 power counters. Move it to a flank of your battleline as a creature.
+//	Action: Give Auto-Legionary five +1 power counters. Move it to a flank of your battleline as a Creature.
 func TestAutoLegionary(t *testing.T) {
 	t.Run("turns itself into a 5-power creature on the chosen flank", func(t *testing.T) {
 		var auto, ally ct.Card

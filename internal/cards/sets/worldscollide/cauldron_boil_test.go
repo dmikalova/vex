@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Deal 1 damage to each creature for each point of damage on it.
+//	Play: Deal 1 damage to each Creature for each point of damage on it.
 func TestCauldronBoil(t *testing.T) {
 	var big, unhurt, doomed ct.Card
 	h := ct.Play(t, ct.Setup{

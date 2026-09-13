@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Put each Niffle creature from your discard pile into your hand. Put each friendly Niffle creature into its owner's hand.
+//	Play: Put each Niffle Creature from your discard pile into your hand. Put each friendly Niffle Creature into its owner's hand.
 func TestTroopCall(t *testing.T) {
 	t.Run("returns friendly Niffle creatures from discard and play to hand", func(t *testing.T) {
 		var buried, inPlay, other ct.Card

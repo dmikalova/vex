@@ -14,7 +14,7 @@ import (
 //	Type:   Upgrade
 //	Rarity: Rare
 //
-//	This creature gains, "Destroyed: Put this creature into its owner's hand, and deal 3 damage to each creature."
+//	This Creature gains, "Destroyed: Put this Creature into its owner's hand, and deal 3 damage to each Creature."
 func TestPhoenixHeart(t *testing.T) {
 	t.Run(
 		"returns its host to hand and deals 3 to each creature when the host is destroyed",

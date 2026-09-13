@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Creatures not on a flank cannot fight this creature.
+//	Creatures not on a flank cannot fight this Creature.
 var Camouflage = card.New(
 	"Camouflage",
 	card.House.Untamed,

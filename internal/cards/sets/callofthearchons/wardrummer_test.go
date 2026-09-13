@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Goblin
 //
-//	Play: Put each other friendly Brobnar creature into its owner's hand.
+//	Play: Put each other friendly Brobnar Creature into its owner's hand.
 func TestWardrummer(t *testing.T) {
 	t.Run("returns each other friendly Brobnar creature to hand", func(t *testing.T) {
 		var brobAlly, marsAlly ct.Card

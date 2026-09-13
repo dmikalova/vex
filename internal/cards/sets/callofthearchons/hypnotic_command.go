@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: For each friendly Mars creature, an enemy creature captures 1 Æmber from their own side.
+//	Play: For each friendly Mars Creature, an enemy Creature captures 1 Æmber from their own side.
 var HypnoticCommand = card.New(
 	"Hypnotic Command",
 	card.House.Mars,

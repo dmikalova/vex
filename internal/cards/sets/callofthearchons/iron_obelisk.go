@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Traits: Location
 //
-//	Your opponent's keys cost +1 Æmber for each friendly damaged Brobnar creature.
+//	Your opponent's keys cost +1 Æmber for each friendly damaged Brobnar Creature.
 var IronObelisk = card.New(
 	"Iron Obelisk",
 	card.House.Brobnar,

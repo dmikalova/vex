@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Jelly
 //
-//	After a player chooses an active house, destroy each artifact of that house.
+//	After a player chooses an active house, destroy each Artifact of that house.
 var TechivorePulpate = card.New(
 	"Techivore Pulpate",
 	card.House.StarAlliance,

@@ -17,7 +17,7 @@ import (
 //	Traits: Dinosaur • Soldier
 //
 //	Taunt.
-//	Play: Ward a friendly creature.
+//	Play: Ward a friendly Creature.
 func TestTricerianLegionary(t *testing.T) {
 	t.Run("wards a chosen friendly creature when played", func(t *testing.T) {
 		var ally ct.Card

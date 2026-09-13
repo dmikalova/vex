@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  6
 //	Traits: Giant • Knight
 //
-//	Play: Deal 2 damage to each other undamaged creature.
+//	Play: Deal 2 damage to each other undamaged Creature.
 var HebeTheHuge = card.New(
 	"Hebe the Huge",
 	card.House.Brobnar,

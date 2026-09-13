@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Demon
 //
-//	Play/Fight/Reap: Heal 2 damage from a creature. Deal that amount of damage to another creature.
+//	Play/Fight/Reap: Heal 2 damage from a Creature. Deal that amount of damage to another Creature.
 var GuardianDemon = card.New(
 	"Guardian Demon",
 	card.House.Dis,

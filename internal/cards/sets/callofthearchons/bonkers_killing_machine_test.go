@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Traits: Weapon
 //
-//	Action: Discard the top card of each player's deck. For each card discarded this way, destroy a creature or artifact of that card's house. If fewer than 2 cards are destroyed this way, destroy Bonkers Killing Machine.
+//	Action: Discard the top card of each player's deck. For each card discarded this way, destroy a Creature or Artifact of that card's house. If fewer than 2 cards are destroyed this way, destroy Bonkers Killing Machine.
 func TestBonkersKillingMachine(t *testing.T) {
 	t.Run(
 		"destroys one matching card for each discarded house and stays in play",

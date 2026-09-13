@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Cyborg • Thief
 //
 //	Elusive.
-//	Reap: Use an enemy artifact.
+//	Reap: Use an enemy Artifact.
 var Nexus = card.New(
 	"Nexus",
 	card.House.Shadows,

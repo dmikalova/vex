@@ -15,7 +15,7 @@ import (
 //	Power:  6
 //	Traits: Giant • Leader
 //
-//	While Kaloch Stonefather is in the center of your battleline, each friendly creature gains skirmish.
+//	While Kaloch Stonefather is in the center of your battleline, each friendly Creature gains skirmish.
 func TestKalochStonefather(t *testing.T) {
 	t.Run("centered, friendly creatures gain skirmish and take no retaliation", func(t *testing.T) {
 		var fighter, enemy ct.Card

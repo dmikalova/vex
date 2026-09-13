@@ -15,7 +15,7 @@ import (
 //	Æmber:  1
 //	Traits: Item
 //
-//	After a creature reaps, stun it.
+//	After a Creature reaps, stun it.
 func TestOrbOfInvidius(t *testing.T) {
 	t.Run("stuns whatever creature just reaped", func(t *testing.T) {
 		var reaper ct.Card

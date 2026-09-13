@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Deal 4 damage to a flank creature. If this damage destroys that creature, its controller loses 1 Æmber.
+//	Play: Deal 4 damage to a flank Creature. If this damage destroys that Creature, its controller loses 1 Æmber.
 var BerserkerSlam = card.New(
 	"Berserker Slam",
 	card.House.Brobnar,

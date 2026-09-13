@@ -130,7 +130,7 @@ func (e PutChosen) Resolve(ctx *EffectContext) {
 	if e.Destination == ToDeckShuffled {
 		ctx.Resolver.BeginShuffleBatch()
 		e.resolveMoves(ctx)
-		ctx.Resolver.EndShuffleBatch(ctx.Source)
+		ctx.Resolver.EndShuffleBatch()
 		return
 	}
 	e.resolveMoves(ctx)

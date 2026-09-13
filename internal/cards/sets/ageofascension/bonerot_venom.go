@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains, "After this creature is used, deal 2 damage to this creature."
+//	This Creature gains, "After this Creature is used, deal 2 damage to this Creature."
 var BonerotVenom = card.New(
 	"Bonerot Venom",
 	card.House.Shadows,

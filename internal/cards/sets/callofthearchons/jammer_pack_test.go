@@ -15,7 +15,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains, "Your opponent's keys cost +2 Æmber."
+//	This Creature gains, "Your opponent's keys cost +2 Æmber."
 func TestJammerPack(t *testing.T) {
 	t.Run("raises the opponent's key cost by 2 while attached", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

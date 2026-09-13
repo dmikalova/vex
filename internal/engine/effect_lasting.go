@@ -16,9 +16,9 @@ import (
 // Charge! (deal damage when you play a creature), Crystal Hive (gain Æmber after a
 // creature reaps), Library Access (draw a card each time you play another card).
 // Do is the effect that runs each time; the supported effects are GainAember
-// (crediting the controller), DealDamage to an enemy creature, CaptureAember, and
-// Draw. The card that installs the reaction never triggers it itself, so an event
-// phrased as "another card" excludes the play that armed it.
+// (crediting the controller), DealDamage to an enemy creature, CaptureAember,
+// GiveAember, and Draw. The card that installs the reaction never triggers it
+// itself, so an event phrased as "another card" excludes the play that armed it.
 type ForRemainderOfTurn struct {
 	On Event
 	Do Effect
@@ -26,16 +26,7 @@ type ForRemainderOfTurn struct {
 
 // validate rejects a non-reaction event or a Do the reaction cannot carry.
 func (e ForRemainderOfTurn) validate() error {
-	if !e.On.isReaction() {
-		return fmt.Errorf("ForRemainderOfTurn: On must be a reaction event")
-	}
-	if _, _, ok := lastingActionOf(e.Do); !ok {
-		return fmt.Errorf("ForRemainderOfTurn: unsupported Do %T", e.Do)
-	}
-	if d, ok := e.Do.(DealDamage); ok && d.Target != (Target{Kind: TargetChosenEnemyCreature}) {
-		return fmt.Errorf("ForRemainderOfTurn: DealDamage must target an enemy creature")
-	}
-	return validateEffect(e.Do)
+	return validateLastingReaction("ForRemainderOfTurn", e.On, e.Do)
 }
 
 // Text renders the effect, e.g. "for the remainder of the turn, each time you play
@@ -44,18 +35,69 @@ func (e ForRemainderOfTurn) Text() string {
 	return "for the remainder of the turn, " + e.On.clause() + ", " + e.Do.Text()
 }
 
-// Resolve registers the reaction on the controller for the rest of the turn. On
+// Resolve registers the reaction on the controller for the rest of their turn. On
 // EventCardPlayed the installing card is excepted, so "each time you play another
 // card" does not count the play that armed it.
 func (e ForRemainderOfTurn) Resolve(ctx *EffectContext) {
-	action, amount, _ := lastingActionOf(e.Do)
+	installLastingReaction(ctx, e.On, e.Do, ctx.Controller)
+}
+
+// ForOpponentNextTurn installs a reaction that lies dormant for the rest of this
+// turn and fires only during the opponent's next turn, clearing at the end of that
+// turn — Interdimensional Graft (after the opponent forges a key, they give the
+// controller all their Æmber). It carries the same reaction Do as ForRemainderOfTurn
+// but arms it on the opponent, so the window is the opponent's next turn rather than
+// the rest of this one.
+type ForOpponentNextTurn struct {
+	On Event
+	Do Effect
+}
+
+// validate rejects a non-reaction event or a Do the reaction cannot carry.
+func (e ForOpponentNextTurn) validate() error {
+	return validateLastingReaction("ForOpponentNextTurn", e.On, e.Do)
+}
+
+// Text renders the effect, e.g. "during your opponent's next turn, after forging a
+// key, your opponent gives you all their Æmber".
+func (e ForOpponentNextTurn) Text() string {
+	return "during your opponent's next turn, " + e.On.clause() + ", " + e.Do.Text()
+}
+
+// Resolve arms the reaction on the opponent, so it lies dormant this turn and fires
+// on the opponent's next turn.
+func (e ForOpponentNextTurn) Resolve(ctx *EffectContext) {
+	installLastingReaction(ctx, e.On, e.Do, ctx.Opponent())
+}
+
+// validateLastingReaction is the shared gate for the lasting-reaction nodes: the
+// event must be a reaction, and Do must be an effect the flat registry can carry
+// (and, for DealDamage, must target an enemy creature). name labels the error.
+func validateLastingReaction(name string, on Event, do Effect) error {
+	if !on.isReaction() {
+		return fmt.Errorf("%s: On must be a reaction event", name)
+	}
+	if _, _, ok := lastingActionOf(do); !ok {
+		return fmt.Errorf("%s: unsupported Do %T", name, do)
+	}
+	if d, ok := do.(DealDamage); ok && d.Target != (Target{Kind: TargetChosenEnemyCreature}) {
+		return fmt.Errorf("%s: DealDamage must target an enemy creature", name)
+	}
+	return validateEffect(do)
+}
+
+// installLastingReaction registers a reaction owned by owner (whose ready phase
+// clears it). On EventCardPlayed the installing card is excepted, so an event
+// phrased as "another card" does not count the play that armed it.
+func installLastingReaction(ctx *EffectContext, on Event, do Effect, owner int) {
+	action, amount, _ := lastingActionOf(do)
 	ctx.Resolver.AddLasting(LastingEffect{
-		On:         e.On,
+		On:         on,
 		Do:         action,
-		Controller: int8(ctx.Controller),
+		Controller: int8(owner),
 		Amount:     int8(amount),
 		Except:     ctx.Source,
-		HasExcept:  e.On == EventCardPlayed,
+		HasExcept:  on == EventCardPlayed,
 		Source:     ctx.Source,
 		HasSource:  true,
 	})
@@ -73,6 +115,8 @@ func lastingActionOf(e Effect) (lastingAction, int, bool) {
 		return actDealDamage, d.Amount, true
 	case CaptureAember:
 		return actCapture, d.Amount, true
+	case GiveAember:
+		return actGiveRemainingAember, d.Amount, true
 	case Draw:
 		return actDraw, d.Amount, true
 	case Ready:
@@ -363,7 +407,7 @@ func (e NextPlayed) validate() error {
 func (e NextPlayed) Text() string {
 	noun := "creature or artifact"
 	if e.Type != AnyType {
-		noun = strings.ToLower(e.Type.String())
+		noun = typeWord(e.Type)
 	}
 	if e.Of != HouseNone {
 		noun = e.Of.String() + " " + noun

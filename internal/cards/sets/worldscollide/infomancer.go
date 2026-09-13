@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Cyborg
 //
 //	Elusive.
-//	Play: Put a Tactic from your hand faceup under Infomancer.
+//	Play: Put a Tactic card from your hand faceup under Infomancer.
 //	Reap: Trigger the play effect of a Tactic grafted onto Infomancer.
 var Infomancer = card.New(
 	"Infomancer",

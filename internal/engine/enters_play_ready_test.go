@@ -78,12 +78,12 @@ func TestEntersPlayReady(t *testing.T) {
 	t.Run("renders the printed line for each type", func(t *testing.T) {
 		creat := &CardDefinition{Name: "Duskwitch", GrantsEntersReady: Creature}
 		if rules := cardRules(creat, false); len(rules) != 1 ||
-			rules[0] != "Your creatures enter play ready." {
+			rules[0] != "Your Creatures enter play ready." {
 			t.Errorf("creature rules = %v", rules)
 		}
 		art := &CardDefinition{Name: "The Curator", GrantsEntersReady: Artifact}
 		if rules := cardRules(art, false); len(rules) != 1 ||
-			rules[0] != "Friendly artifacts enter play ready." {
+			rules[0] != "Friendly Artifacts enter play ready." {
 			t.Errorf("artifact rules = %v", rules)
 		}
 	})

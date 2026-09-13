@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Deal 1 damage to each creature, and if your opponent forged a key on their previous turn, deal 3 damage to each creature.
+//	Play: Deal 1 damage to each Creature, and if your opponent forged a key on their previous turn, deal 3 damage to each Creature.
 func TestTendrilsOfPain(t *testing.T) {
 	t.Run("deals only 1 damage when the opponent forged nothing", func(t *testing.T) {
 		var tendrils, beast ct.Card

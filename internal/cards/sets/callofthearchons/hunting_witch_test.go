@@ -15,7 +15,7 @@ import (
 //	Power:  2
 //	Traits: Human • Witch
 //
-//	After you play another creature, gain 1 Æmber.
+//	After you play another Creature, gain 1 Æmber.
 func TestHuntingWitch(t *testing.T) {
 	t.Run("gains 1 Æmber after you play another creature", func(t *testing.T) {
 		var ally ct.Card

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Skirmish.
-//	Play/Fight: You may purge a neighboring creature -> ready Buzzle.
+//	Play/Fight: You may purge a neighboring Creature -> ready Buzzle.
 var Buzzle = card.New(
 	"Buzzle",
 	card.House.Dis,

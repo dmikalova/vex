@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: For each damaged creature in play, give a creature two +1 power counters.
+//	Play: For each damaged Creature in play, give a Creature two +1 power counters.
 var MartianHounds = card.New(
 	"Martian Hounds",
 	card.House.Mars,

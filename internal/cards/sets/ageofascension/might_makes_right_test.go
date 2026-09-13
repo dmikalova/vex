@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: You may destroy any number of friendly creatures with total power of 25 or more - forge a key at no cost -> purge Might Makes Right.
+//	Play: You may destroy any number of friendly Creatures with total power of 25 or more - forge a key at no cost -> purge Might Makes Right.
 func TestMightMakesRight(t *testing.T) {
 	t.Run("sacrificing 25 total power forges a key for free", func(t *testing.T) {
 		var big, med ct.Card

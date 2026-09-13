@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Purge each friendly Shadows creature. For each creature purged this way, steal 1 Æmber.
+//	Play: Purge each friendly Shadows Creature. For each Creature purged this way, steal 1 Æmber.
 var OneLastJob = card.New(
 	"One Last Job",
 	card.House.Shadows,
@@ -24,7 +24,7 @@ var OneLastJob = card.New(
 			},
 			card.StealAember{
 				Amount: 1,
-				Per:    card.CardsPurged{},
+				Per:    card.CardsPurged{Type: card.Type.Creature},
 			},
 		}}),
 )

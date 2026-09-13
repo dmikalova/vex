@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Destroy each undamaged creature. Gain 3 chains.
+//	Play: Destroy each undamaged Creature. Gain 3 chains.
 func TestCowardsEnd(t *testing.T) {
 	t.Run("destroys each undamaged creature and gains 3 chains", func(t *testing.T) {
 		var healthy, hurt ct.Card

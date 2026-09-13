@@ -11,13 +11,20 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast • Wolf
 //
 //	Skirmish.
-//	Play: Ready each other friendly Wolf creature.
+//	Play: Ready each other friendly Wolf Creature.
 var MoorWolf = card.New(
 	"Moor Wolf",
 	card.House.Untamed,
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "393"),
+	card.InCluster(card.Cluster{
+		Name:     "Moor Wolf",
+		Strategy: card.ClusterStrategy.SelfPull,
+		Trigger:  card.ClusterTrigger.ByAnyMember,
+		Min:      3,
+		Mean:     5,
+	}),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Beast, card.Traits.Wolf),
 	card.WithKeywords(card.Keyword.Skirmish),

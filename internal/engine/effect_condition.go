@@ -89,7 +89,7 @@ func (h HouseChoice) resolveHouse(ctx *EffectContext) House {
 }
 
 // houseTypeNoun renders a card filtered by house and type as a noun, e.g. "Mars
-// creature", "artifact", or the bare "card" when neither is set.
+// Creature", "Artifact", or the bare "card" when neither is set.
 func houseTypeNoun(house House, typ CardType) string {
 	n := "card"
 	switch typ {

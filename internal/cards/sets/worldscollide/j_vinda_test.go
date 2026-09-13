@@ -16,7 +16,7 @@ import (
 //	Traits: Elf • Thief
 //
 //	Elusive.
-//	Reap: Deal 1 damage to a creature. If this damage destroys that creature, steal 1 Æmber.
+//	Reap: Deal 1 damage to a Creature. If this damage destroys that Creature, steal 1 Æmber.
 func TestJVinda(t *testing.T) {
 	t.Run("reaps to destroy a creature and steal 1 Æmber", func(t *testing.T) {
 		var vinda, foe ct.Card

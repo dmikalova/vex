@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Purge a creature with power 5 or higher.
+//	Play: Purge a Creature with power 5 or higher.
 var TheHarderTheyCome = card.New(
 	"The Harder They Come",
 	card.House.Sanctum,

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains skirmish.
+//	This Creature gains skirmish.
 var WayOfTheWolf = card.New(
 	"Way of the Wolf",
 	card.House.Untamed,

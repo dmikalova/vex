@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Destroy each elusive creature.
+//	Play: Destroy each elusive Creature.
 func TestPerilousWild(t *testing.T) {
 	t.Run("destroys each elusive creature", func(t *testing.T) {
 		var elusive, plain ct.Card

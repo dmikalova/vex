@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Choose a flank creature. Deal 3 damage to it, 2 damage to its neighbor, and 1 damage to the neighbor's other neighbor.
+//	Play: Choose a flank Creature. Deal 3 damage to it, 2 damage to its neighbor, and 1 damage to the neighbor's other neighbor.
 func TestPositronBolt(t *testing.T) {
 	t.Run("deals 3/2/1 walking inward from the chosen flank creature", func(t *testing.T) {
 		var left, mid, right ct.Card

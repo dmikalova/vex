@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Traits: Weapon
 //
-//	Action: Deal 1 damage to a creature that is not on a flank and 1 damage to each of its neighbors.
+//	Action: Deal 1 damage to a Creature that is not on a flank and 1 damage to each of its neighbors.
 func TestFlamethrower(t *testing.T) {
 	t.Run("action deals 1 damage to a creature and 1 to each neighbor", func(t *testing.T) {
 		var left, middle, right ct.Card

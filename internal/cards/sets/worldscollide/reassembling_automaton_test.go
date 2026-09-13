@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Robot • Experiment
 //
-//	Destroyed: If you have any other creatures in play, instead of destroying Reassembling Automaton, fully heal it, exhaust it, and move it to either flank of its controller's battleline.
+//	Destroyed: If you have any other Creatures in play, instead of destroying Reassembling Automaton, fully heal it, exhaust it, and move it to either flank of its controller's battleline.
 func TestReassemblingAutomaton(t *testing.T) {
 	t.Run("with another creature, survives fully healed on a flank", func(t *testing.T) {
 		var automaton, enemy ct.Card

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Elf • Thief
 //
 //	Deploy, Elusive.
-//	Each neighboring creature gains elusive.
+//	Each neighboring Creature gains elusive.
 var Lamindra = card.New(
 	"Lamindra",
 	card.House.Shadows,

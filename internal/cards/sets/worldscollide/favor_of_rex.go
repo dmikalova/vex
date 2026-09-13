@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Trigger the play effect of a creature.
+//	Play: Trigger the play effect of a Creature.
 var FavorOfRex = card.New(
 	"Favor of Rex",
 	card.House.Saurian,

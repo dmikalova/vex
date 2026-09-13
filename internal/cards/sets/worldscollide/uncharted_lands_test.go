@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Traits: Location
 //
-//	Each Star Alliance creature gains, "Reap: Move 1 Æmber from Uncharted Lands to your pool."
+//	Each Star Alliance Creature gains, "Reap: Move 1 Æmber from Uncharted Lands to your pool."
 //	Play: Place 6 Æmber from the common supply on Uncharted Lands.
 func TestUnchartedLands(t *testing.T) {
 	t.Run("play places 6 Æmber on it", func(t *testing.T) {

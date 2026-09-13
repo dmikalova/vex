@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Power
 //
-//	Each creature gains, "Destroyed: Purge this creature."
+//	Each Creature gains, "Destroyed: Purge this Creature."
 var AnnihilationRitual = card.New(
 	"Annihilation Ritual",
 	card.House.Dis,

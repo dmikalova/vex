@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Dinosaur • Soldier
 //
 //	Taunt.
-//	Play: Ward a friendly creature.
+//	Play: Ward a friendly Creature.
 var TricerianLegionary = card.New(
 	"Tricerian Legionary",
 	card.House.Saurian,

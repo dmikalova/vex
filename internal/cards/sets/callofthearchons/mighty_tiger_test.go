@@ -15,7 +15,7 @@ import (
 //	Power:  4
 //	Traits: Beast
 //
-//	Play: Deal 4 damage to an enemy creature.
+//	Play: Deal 4 damage to an enemy Creature.
 func TestMightyTiger(t *testing.T) {
 	t.Run("deals 4 damage to an enemy creature", func(t *testing.T) {
 		var foe ct.Card

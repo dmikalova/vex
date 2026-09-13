@@ -16,7 +16,7 @@ import (
 //	Power:  4
 //	Traits: Demon
 //
-//	Fight/Reap: Put an artifact or flank creature into its owner's hand.
+//	Fight/Reap: Put an Artifact or flank Creature into its owner's hand.
 func TestSnudge(t *testing.T) {
 	t.Run("returns an enemy artifact", func(t *testing.T) {
 		var snudge, relic ct.Card

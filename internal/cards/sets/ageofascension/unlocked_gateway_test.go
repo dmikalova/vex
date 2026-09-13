@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //
 //	Omega.
-//	Play: Destroy each creature.
+//	Play: Destroy each Creature.
 func TestUnlockedGateway(t *testing.T) {
 	t.Run("destroys every creature", func(t *testing.T) {
 		var ally, foe ct.Card

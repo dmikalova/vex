@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Human • Knight
 //
-//	Play: You may ready and fight with a neighboring creature.
+//	Play: You may ready and fight with a neighboring Creature.
 var SergeantZakiel = card.New(
 	"Sergeant Zakiel",
 	card.House.Sanctum,

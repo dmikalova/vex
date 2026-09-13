@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains elusive and skirmish.
+//	This Creature gains elusive and skirmish.
 func TestRingOfInvisibility(t *testing.T) {
 	t.Run("grants skirmish so the host takes no retaliation when it fights", func(t *testing.T) {
 		var host, wall ct.Card

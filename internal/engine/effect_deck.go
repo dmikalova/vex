@@ -29,7 +29,6 @@ func (PlayTopOfDeck) Text() string { return "play the top card of your deck" }
 func (PlayTopOfDeck) Resolve(ctx *EffectContext) {
 	if id, ok := ctx.Resolver.TopOfDeck(ctx.Controller); ok {
 		ctx.Resolver.Record(PlayedFromTopOfDeck{
-			Source: ctx.Source,
 			Card:   id,
 			Player: ctx.Controller,
 		})
@@ -536,26 +535,37 @@ func resolverInPlay(ctx *EffectContext, id LocalID) bool {
 	return false
 }
 
-// DiscardDeckUntil digs through the top of your deck, discarding as it goes,
-// until it turns up a card the filters admit or the deck runs out. The card it
-// finds stays in the discard pile and goes into context (ctx.It), so what happens
-// to it is a separate effect gated on the dig succeeding — Sound the Horns and
-// Invasion Portal both pair it with PutDiscardedIntoHand.
-type DiscardDeckUntil struct {
+// DiscardTopOfDeckUntil digs through the top of your deck, discarding as it goes,
+// until it turns up a card the filters admit or the deck runs out. With MayStop the
+// controller may also stop the dig before a match, so the terminator reads "or
+// choose to stop". Every discarded card is recorded on the context
+// (ctx.Produced.Discarded) and the matching card is left in context (ctx.It), so a
+// following effect can act on the found card or the whole discarded run — Sound the
+// Horns and Invasion Portal pair it with PutDiscardedIntoHand; Old Boomy archives
+// the run with ArchiveDiscardedThisWay and, when it discards a card of its house,
+// deals itself damage.
+type DiscardTopOfDeckUntil struct {
 	// Type filters what ends the dig; the zero value stops at any card.
 	Type CardType
 	// House filters what ends the dig; HouseNone stops at any house.
 	House House
+	// MayStop lets the controller stop the dig before a match; the terminator then
+	// reads "or choose to stop" instead of "or run out of cards".
+	MayStop bool
 }
 
 // Text renders the dig and names both ways it can end, as the cards do.
-func (e DiscardDeckUntil) Text() string {
+func (e DiscardTopOfDeckUntil) Text() string {
+	end := "run out of cards"
+	if e.MayStop {
+		end = "choose to stop"
+	}
 	return "discard cards from the top of your deck until you discard " +
-		indefinite(e.noun()) + " or run out of cards"
+		indefinite(e.noun()) + " or " + end
 }
 
-// noun names the cards the filters admit, e.g. "card" or "Brobnar creature".
-func (e DiscardDeckUntil) noun() string {
+// noun names the cards the filters admit, e.g. "card" or "Brobnar Creature".
+func (e DiscardTopOfDeckUntil) noun() string {
 	noun := "card"
 	switch e.Type {
 	case Creature:
@@ -570,34 +580,44 @@ func (e DiscardDeckUntil) noun() string {
 }
 
 // matches reports whether a discarded card is the one the dig was looking for.
-func (e DiscardDeckUntil) matches(ctx *EffectContext, id LocalID) bool {
+func (e DiscardTopOfDeckUntil) matches(ctx *EffectContext, id LocalID) bool {
 	if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
 		return false
 	}
 	return e.House == HouseNone || ctx.Resolver.House(id) == e.House
 }
 
-// Resolve digs, leaving the found card in context.
-func (e DiscardDeckUntil) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
+// Resolve digs, recording the run and leaving the found card in context.
+func (e DiscardTopOfDeckUntil) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 
-// resolveGate digs and reports whether it found a matching card, so a Then can
-// hang "put it into your hand" off the dig succeeding.
-func (e DiscardDeckUntil) resolveGate(ctx *EffectContext) bool {
+// resolveGate digs, recording every discarded card on the context, and reports
+// whether it found a matching card so a Then can hang a follow-up on the dig
+// succeeding. When MayStop is set it offers the controller a stop after each
+// non-matching discard.
+func (e DiscardTopOfDeckUntil) resolveGate(ctx *EffectContext) bool {
 	ctx.It, ctx.HasIt = 0, false
+	ctx.Produced.Discarded = nil
 	for {
 		id, ok := ctx.Resolver.DiscardTopOfDeck(ctx.Controller)
 		if !ok {
 			return false
 		}
+		ctx.Produced.Discarded = append(ctx.Produced.Discarded, id)
 		if e.matches(ctx, id) {
 			ctx.It, ctx.HasIt = id, true
 			return true
+		}
+		if e.MayStop && ctx.ChooseOption(
+			"Discard another card from the top of your deck?",
+			[]string{"Discard another card", "Stop"},
+		) == 1 {
+			return false
 		}
 	}
 }
 
 // PutDiscardedIntoHand takes the card in context out of the discard pile and
-// into its owner's hand. It is the tail of a dig through the deck (DiscardDeckUntil)
+// into its owner's hand. It is the tail of a dig through the deck (DiscardTopOfDeckUntil)
 // that just discarded the card. Type names what the dig stopped on so the tail
 // reads "put the discarded creature into your hand" rather than a bare "it"; the
 // zero value stays the generic "card".
@@ -631,57 +651,18 @@ func (e PutDiscardedIntoHand) Resolve(ctx *EffectContext) {
 	}
 }
 
-// RevealDeckUntilHouse reveals cards from the top of the controller's deck one at
-// a time, archiving each as it is revealed, until it reveals a card of House or
-// the controller chooses to stop. It reports whether a card of House was revealed
-// (via resolveGate), so a Then can hang a follow-up on that — Old Boomy deals
-// itself 2 damage when it turns up a card of its own house.
-type RevealDeckUntilHouse struct {
-	// House ends the dig: revealing a card of this house stops it. It must be set.
-	House House
-}
+// ArchiveDiscardedThisWay archives every card a preceding deck dig discarded
+// (recorded on ctx.Produced.Discarded), moving each from the controller's discard
+// pile into their archives — Old Boomy archives the run it dug from the top of its
+// deck. An empty run archives nothing.
+type ArchiveDiscardedThisWay struct{}
 
-// validate requires a house to stop on.
-func (e RevealDeckUntilHouse) validate() error {
-	if e.House == HouseNone {
-		return fmt.Errorf("RevealDeckUntilHouse: House must be set")
-	}
-	return nil
-}
+// Text renders the effect.
+func (ArchiveDiscardedThisWay) Text() string { return "archive each card discarded this way" }
 
-// Text renders the dig, naming the house it stops on and the stop choice.
-func (e RevealDeckUntilHouse) Text() string {
-	return "reveal cards from the top of your deck until you reveal " +
-		indefinite(e.House.String()+" card") +
-		" or choose to stop, archiving each card revealed this way"
-}
-
-// Resolve digs, discarding the found-a-house report.
-func (e RevealDeckUntilHouse) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
-
-// resolveGate reveals and archives cards from the top of the deck until a card of
-// House turns up or the controller stops, reporting whether a card of House was
-// revealed so a Then can act on the dig succeeding.
-func (e RevealDeckUntilHouse) resolveGate(ctx *EffectContext) bool {
-	for {
-		id, ok := ctx.Resolver.TopOfDeck(ctx.Controller)
-		if !ok {
-			return false
-		}
-		ctx.Resolver.Record(CardsRevealedToAll{
-			Player: ctx.Controller,
-			Cards:  []LocalID{id},
-		})
-		matched := ctx.Resolver.House(id) == e.House
-		ctx.Resolver.ArchiveTopOfDeck(ctx.Controller)
-		if matched {
-			return true
-		}
-		if ctx.ChooseOption(
-			"Reveal another card from the top of your deck?",
-			[]string{"Reveal another card", "Stop"},
-		) == 1 {
-			return false
-		}
+// Resolve archives each recorded discarded card from the controller's discard pile.
+func (ArchiveDiscardedThisWay) Resolve(ctx *EffectContext) {
+	for _, id := range ctx.Produced.Discarded {
+		archiveFrom(ctx, Discard, ctx.Controller, id)
 	}
 }

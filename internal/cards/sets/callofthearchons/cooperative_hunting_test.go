@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: For each friendly creature in play, deal 1 damage to a creature.
+//	Play: For each friendly Creature in play, deal 1 damage to a Creature.
 func TestCooperativeHunting(t *testing.T) {
 	t.Run(
 		"concentrates every instance on one chosen creature",

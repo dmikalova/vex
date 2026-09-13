@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //
 //	Alpha.
-//	Play: For each friendly Thief creature, steal 1 Æmber.
+//	Play: For each friendly Thief Creature, steal 1 Æmber.
 func TestHeistNight(t *testing.T) {
 	t.Run("steals 1 aember for each friendly thief creature", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

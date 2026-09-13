@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: For the remainder of the turn, whenever a creature takes damage, it takes an additional 2 damage.
+//	Play: For the remainder of the turn, whenever a Creature takes damage, it takes an additional 2 damage.
 var LethalDistraction = card.New(
 	"Lethal Distraction",
 	card.House.Shadows,

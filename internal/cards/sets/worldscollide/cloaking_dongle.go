@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	This creature and each of its neighbors gains elusive.
+//	This Creature and each of its neighbors gains elusive.
 var CloakingDongle = card.New(
 	"Cloaking Dongle",
 	card.House.StarAlliance,

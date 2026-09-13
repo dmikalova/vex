@@ -16,7 +16,7 @@ import (
 //	Traits: Martian • Scientist
 //
 //	Elusive.
-//	Action: An enemy creature captures 1 Æmber from their own side.
+//	Action: An enemy Creature captures 1 Æmber from their own side.
 func TestMindwarper(t *testing.T) {
 	t.Run("an enemy creature captures 1 Æmber from its own side", func(t *testing.T) {
 		var foe ct.Card

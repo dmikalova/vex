@@ -15,7 +15,7 @@ import (
 //	Power:  4
 //	Traits: Human
 //
-//	Fight/Reap: Use an other creature.
+//	Fight/Reap: Use an other Creature.
 func TestCommanderChan(t *testing.T) {
 	t.Run("reaps and uses another friendly creature", func(t *testing.T) {
 		var cmdr, ally ct.Card

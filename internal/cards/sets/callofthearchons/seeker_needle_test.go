@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Traits: Weapon
 //
-//	Action: Deal 1 damage to a creature. If this damage destroys that creature, gain 1 Æmber.
+//	Action: Deal 1 damage to a Creature. If this damage destroys that Creature, gain 1 Æmber.
 func TestSeekerNeedle(t *testing.T) {
 	t.Run("gains 1 Æmber when its damage destroys the creature", func(t *testing.T) {
 		var foe ct.Card

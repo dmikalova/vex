@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Redistribute the damage among a player's creatures.
+//	Play: Redistribute the damage among a player's Creatures.
 var EntropicManipulator = card.New(
 	"Entropic Manipulator",
 	card.House.Mars,

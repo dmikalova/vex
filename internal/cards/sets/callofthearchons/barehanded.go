@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Put each artifact on top of its owner's deck.
+//	Play: Put each Artifact on top of its owner's deck.
 var Barehanded = card.New(
 	"Barehanded",
 	card.House.Brobnar,

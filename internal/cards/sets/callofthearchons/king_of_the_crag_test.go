@@ -15,7 +15,7 @@ import (
 //	Power:  7
 //	Traits: Giant
 //
-//	Each enemy Brobnar creature gains -2 power.
+//	Each enemy Brobnar Creature gains -2 power.
 func TestKingOfTheCrag(t *testing.T) {
 	t.Run("gives each enemy Brobnar creature -2 power", func(t *testing.T) {
 		var brobFoe, marsFoe ct.Card

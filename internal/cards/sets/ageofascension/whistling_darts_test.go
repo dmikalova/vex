@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Deal 1 damage to each enemy creature.
+//	Play: Deal 1 damage to each enemy Creature.
 func TestWhistlingDarts(t *testing.T) {
 	t.Run("deals 1 damage to each enemy creature when played", func(t *testing.T) {
 		var foe1, foe2 ct.Card

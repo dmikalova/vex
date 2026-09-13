@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Destroy an artifact -> gain 1 Æmber.
+//	Play: Destroy an Artifact -> gain 1 Æmber.
 var Hock = card.New(
 	"Hock",
 	card.House.Shadows,

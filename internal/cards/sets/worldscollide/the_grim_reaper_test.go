@@ -16,7 +16,7 @@ import (
 //	Traits: Robot • Specter
 //
 //	If you are haunted, The Grim Reaper enters play ready.
-//	Reap: Purge an enemy creature, and purge a friendly creature.
+//	Reap: Purge an enemy Creature, and purge a friendly Creature.
 func TestTheGrimReaper(t *testing.T) {
 	t.Run("enters play ready while haunted", func(t *testing.T) {
 		var reaper ct.Card

@@ -69,6 +69,33 @@ func TestAnsweringACardPrompt(t *testing.T) {
 	}
 }
 
+// A prompt taking over the board clears any card the player had selected, so no
+// stale selection ring lingers on a non-candidate card behind the prompt — the
+// artifact whose end-of-turn ability (Fangtooth Cavern) raised the prompt should
+// not read as still selected while the board dims around the candidates.
+func TestOpeningAPromptClearsTheSelection(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	first := c.deal(testCreature)
+	second := c.deal(testCreature)
+	c.playFromHand(first)
+	c.playFromHand(second)
+	cands := c.board()
+
+	c.g.hasSel, c.g.sel = true, first
+
+	answer := c.ask("Choose a creature", false, cands)
+	c.await("the prompt to go up", func() bool { return c.g.choosing })
+
+	if c.g.hasSel {
+		t.Error("opening a prompt left a stale selection on the board")
+	}
+
+	c.g.chooseCandidate(c.ctx, cands[1])
+	<-answer
+	c.await("the prompt to come down", func() bool { return !c.g.choosing })
+}
+
 // An optional prompt can be passed on, which is what its Done button and Escape
 // both mean.
 func TestDecliningACardPrompt(t *testing.T) {

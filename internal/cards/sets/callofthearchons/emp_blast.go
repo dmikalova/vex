@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Stun each Mars creature and each Robot creature, and destroy each artifact.
+//	Play: Stun each Mars Creature and each Robot Creature, and destroy each Artifact.
 var EMPBlast = card.New(
 	"EMP Blast",
 	card.House.Mars,

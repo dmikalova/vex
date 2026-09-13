@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Human
 //
-//	Play/Fight/Reap: You may play a non-Star Alliance artifact, upgrade, or Tactic this turn.
+//	Play/Fight/Reap: You may play a non-Star Alliance Artifact, Upgrade, or Tactic this turn.
 var ComOfficerKirby = card.New(
 	"Com. Officer Kirby",
 	card.House.StarAlliance,

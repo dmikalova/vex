@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: If there are 3 or more Untamed creatures in your discard pile, gain 2 Æmber. Shuffle each Untamed creature from your discard pile into your deck.
+//	Play: If there are 3 or more Untamed Creatures in your discard pile, gain 2 Æmber. Shuffle each Untamed Creature from your discard pile into your deck.
 func TestLowDawn(t *testing.T) {
 	t.Run("three Untamed creatures gain Æmber and shuffle away", func(t *testing.T) {
 		var u1, u2, u3, mars, tactic ct.Card

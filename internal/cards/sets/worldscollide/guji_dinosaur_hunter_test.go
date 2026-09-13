@@ -16,7 +16,7 @@ import (
 //	Traits: Giant • Hunter
 //
 //	Elusive.
-//	Action: Choose a creature - if it is a Dinosaur creature or it has Æmber on it, deal 6 damage to it. Otherwise, deal 2 damage to it.
+//	Action: Choose a Creature - if it is a Dinosaur Creature or it has Æmber on it, deal 6 damage to it. Otherwise, deal 2 damage to it.
 func TestGujiDinosaurHunter(t *testing.T) {
 	t.Run("deals 2 to an ordinary creature", func(t *testing.T) {
 		var foe ct.Card

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: If there are no friendly creatures in play, deal 4 damage to each creature.
+//	Play: If there are no friendly Creatures in play, deal 4 damage to each Creature.
 var CarpetPhloxem = card.New(
 	"Carpet Phloxem",
 	card.House.Mars,

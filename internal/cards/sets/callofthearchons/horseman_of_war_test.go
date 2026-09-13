@@ -15,7 +15,7 @@ import (
 //	Power:  5
 //	Traits: Horseman • Spirit
 //
-//	Play: For the remainder of the turn, each friendly creature may fight.
+//	Play: For the remainder of the turn, each friendly Creature may fight.
 func TestHorsemanOfWar(t *testing.T) {
 	t.Run("lets an out-of-house friendly creature fight", func(t *testing.T) {
 		var horseman, outsider, enemy ct.Card

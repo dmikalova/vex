@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Dinosaur • Politician
 //
-//	You may spend Æmber on friendly creatures as if it were in your pool.
+//	You may spend Æmber on friendly Creatures as if it were in your pool.
 //	Fight/Reap: Exalt Senator Bracchus.
 var SenatorBracchus = card.New(
 	"Senator Bracchus",

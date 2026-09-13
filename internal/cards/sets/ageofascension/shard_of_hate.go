@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Traits: Item • Shard
 //
-//	Action: For each friendly Shard, stun an enemy creature.
+//	Action: For each friendly Shard, stun an enemy Creature.
 var ShardOfHate = card.New(
 	"Shard of Hate",
 	card.House.Mars,

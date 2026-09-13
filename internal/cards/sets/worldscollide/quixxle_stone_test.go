@@ -15,7 +15,7 @@ import (
 //	Æmber:  1
 //	Traits: Item
 //
-//	If a player has more creatures in play than their opponent, they cannot play creatures.
+//	If a player has more Creatures in play than their opponent, they cannot play Creatures.
 func TestQuixxleStone(t *testing.T) {
 	t.Run("bars the player who controls more creatures from playing creatures", func(t *testing.T) {
 		var mine ct.Card

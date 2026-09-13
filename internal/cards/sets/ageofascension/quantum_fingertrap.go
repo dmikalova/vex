@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Item
 //
-//	Action: Swap the positions of two creatures in a battleline.
+//	Action: Swap the positions of two Creatures in a battleline.
 var QuantumFingertrap = card.New(
 	"Quantum Fingertrap",
 	card.House.Logos,

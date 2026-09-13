@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Deal 1 damage to each creature, and if your opponent forged a key on their previous turn, deal 3 damage to each creature.
+//	Play: Deal 1 damage to each Creature, and if your opponent forged a key on their previous turn, deal 3 damage to each Creature.
 var TendrilsOfPain = card.New(
 	"Tendrils of Pain",
 	card.House.Dis,

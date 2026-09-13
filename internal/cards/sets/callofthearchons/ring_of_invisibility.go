@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains elusive and skirmish.
+//	This Creature gains elusive and skirmish.
 var RingOfInvisibility = card.New(
 	"Ring of Invisibility",
 	card.House.Shadows,

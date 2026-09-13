@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Destroy each non-Mars creature with power less than the number of friendly Mars creatures you control.
+//	Play: Destroy each non-Mars Creature with power less than the number of friendly Mars Creatures you control.
 var ExterminateExterminate = card.New(
 	"Exterminate! Exterminate!",
 	card.House.Mars,

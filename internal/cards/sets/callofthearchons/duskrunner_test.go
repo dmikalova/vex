@@ -13,7 +13,7 @@ import (
 //	Type:   Upgrade
 //	Rarity: Uncommon
 //
-//	This creature gains, "Reap: Steal 1 Æmber."
+//	This Creature gains, "Reap: Steal 1 Æmber."
 func TestDuskrunner(t *testing.T) {
 	t.Run("grants the host Reap: Steal 1 Æmber", func(t *testing.T) {
 		var host ct.Card

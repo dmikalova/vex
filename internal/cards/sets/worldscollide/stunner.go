@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains, "Fight/Reap: You may stun a creature."
+//	This Creature gains, "Fight/Reap: You may stun a Creature."
 var Stunner = card.New(
 	"Stunner",
 	card.House.StarAlliance,

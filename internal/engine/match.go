@@ -1,7 +1,5 @@
 package engine
 
-import "strings"
-
 // Match is a predicate over a card, selecting it by type, trait, and/or name. It
 // is the shared vocabulary for "which cards does this effect act on" when the
 // choice is filtered by what a card is rather than where it sits — a card
@@ -75,7 +73,7 @@ func (m Match) noun() string {
 	}
 	base := "card"
 	if m.Type != TypeUnset {
-		base = strings.ToLower(m.Type.String())
+		base = typeWord(m.Type)
 	}
 	if m.Trait != traitUnset {
 		base = m.Trait.String() + " " + base

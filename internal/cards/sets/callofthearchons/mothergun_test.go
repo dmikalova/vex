@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Traits: Weapon
 //
-//	Action: Reveal any number of Mars cards from your hand, and for each card revealed this way, deal 1 damage to a creature.
+//	Action: Reveal any number of Mars cards from your hand, and for each card revealed this way, deal 1 damage to a Creature.
 func TestMothergun(t *testing.T) {
 	t.Run("deals damage equal to the number of Mars cards revealed", func(t *testing.T) {
 		var foe, m1, m2 ct.Card

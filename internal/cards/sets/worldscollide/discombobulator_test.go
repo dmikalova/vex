@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains, "Your Æmber cannot be stolen."
+//	This Creature gains, "Your Æmber cannot be stolen."
 func TestDiscombobulator(t *testing.T) {
 	t.Run("protects its controller's Æmber while attached", func(t *testing.T) {
 		var host ct.Card

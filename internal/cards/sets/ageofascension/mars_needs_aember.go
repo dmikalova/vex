@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Each enemy damaged non-Mars creature captures 1 Æmber from your opponent.
+//	Play: Each enemy damaged non-Mars Creature captures 1 Æmber from your opponent.
 var MarsNeedsAember = card.New(
 	"Mars Needs Aember",
 	card.House.Mars,

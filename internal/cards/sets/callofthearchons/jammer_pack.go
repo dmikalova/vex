@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains, "Your opponent's keys cost +2 Æmber."
+//	This Creature gains, "Your opponent's keys cost +2 Æmber."
 var JammerPack = card.New(
 	"Jammer Pack",
 	card.House.Mars,

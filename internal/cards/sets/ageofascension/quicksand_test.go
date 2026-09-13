@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Destroy the most powerful creature controlled by each player who does not control a ready Untamed creature.
+//	Play: Destroy the most powerful Creature controlled by each player who does not control a ready Untamed Creature.
 func TestQuicksand(t *testing.T) {
 	var mine, theirBig, theirSmall ct.Card
 	h := ct.Play(t, ct.Setup{

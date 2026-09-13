@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: For the remainder of the turn, each time a friendly creature fights, your opponent loses 1 Æmber.
+//	Play: For the remainder of the turn, each time a friendly Creature fights, your opponent loses 1 Æmber.
 func TestBarnRazing(t *testing.T) {
 	t.Run(
 		"opponent loses 1 Æmber each time a friendly creature fights this turn",

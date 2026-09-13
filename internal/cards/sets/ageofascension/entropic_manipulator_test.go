@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Redistribute the damage among a player's creatures.
+//	Play: Redistribute the damage among a player's Creatures.
 func TestEntropicManipulator(t *testing.T) {
 	t.Run("redistributes damage among the chosen player's creatures", func(t *testing.T) {
 		var a, b ct.Card

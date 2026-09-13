@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Destroy each creature. Gain 3 chains.
+//	Play: Destroy each Creature. Gain 3 chains.
 func TestGatewayToDis(t *testing.T) {
 	t.Run("destroys each creature and gains 3 chains", func(t *testing.T) {
 		var ally, foe ct.Card

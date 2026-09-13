@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //
 //	Play: Choose one:
-//	- Destroy each Dis creature
+//	- Destroy each Dis Creature
 //	- Gain 1 Æmber.
 func TestBegone(t *testing.T) {
 	t.Run("first option destroys each Dis creature", func(t *testing.T) {

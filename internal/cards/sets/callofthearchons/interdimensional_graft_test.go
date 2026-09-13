@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: If an opponent forges a key on their next turn, they must give you their remaining Æmber.
+//	Play: During your opponent's next turn, after forging a key, your opponent gives you all their Æmber.
 func TestInterdimensionalGraft(t *testing.T) {
 	t.Run(
 		"gives the opponent's remaining Æmber after they forge on their next turn",

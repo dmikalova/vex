@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Choose a house - stun each creature of the chosen house.
+//	Play: Choose a house - stun each Creature of the chosen house.
 var BlindingLight = card.New(
 	"Blinding Light",
 	card.House.Sanctum,

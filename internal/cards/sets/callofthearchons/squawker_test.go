@@ -15,8 +15,8 @@ import (
 //	Æmber:  1
 //
 //	Play: Choose one:
-//	- Ready a Mars creature
-//	- Stun a non-Mars creature.
+//	- Ready a Mars Creature
+//	- Stun a non-Mars Creature.
 func TestSquawker(t *testing.T) {
 	t.Run("can stun a non-Mars creature", func(t *testing.T) {
 		var foe ct.Card

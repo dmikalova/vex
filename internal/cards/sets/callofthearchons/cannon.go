@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Traits: Weapon
 //
-//	Action: Deal 2 damage to a creature.
+//	Action: Deal 2 damage to a Creature.
 var Cannon = card.New(
 	"Cannon",
 	card.House.Brobnar,

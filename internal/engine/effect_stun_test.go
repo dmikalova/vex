@@ -36,6 +36,15 @@ func TestStunEffects(t *testing.T) {
 	if g.State.Cards[src].Stunned || g.State.Cards[friend].Stunned {
 		t.Error("unstun should clear the stun on each friendly creature")
 	}
+	if got := g.Log[len(g.Log)-1].Text(g); got != "A unstuns src and friend" {
+		t.Errorf("unstun log = %q, want %q", got, "A unstuns src and friend")
+	}
+	// An unstun that frees no one — nothing was stunned — records nothing.
+	entries = len(g.Log)
+	unstun.Resolve(ctx)
+	if len(g.Log) != entries {
+		t.Error("unstunning creatures that are not stunned should record nothing")
+	}
 }
 
 func TestStunAndNeighbors(t *testing.T) {

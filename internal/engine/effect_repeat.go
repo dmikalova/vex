@@ -43,61 +43,96 @@ func (e ForEach) Resolve(ctx *EffectContext) {
 // five repeats, so it steals six at most however far ahead the opponent is.
 const RuleOfSix = 6
 
-// RepeatOnCondition performs an effect and repeats it while the effect keeps
-// succeeding and a condition holds — Numquid the Fair's "destroy an enemy creature
-// -> if you are overwhelmed, repeat this effect." Do runs at least once; the loop
-// stops as soon as Do does nothing (its gate is false) or Cond is not met. When Do
-// cannot report progress the Rule of Six alone bounds the loop.
-type RepeatOnCondition struct {
+// Repeat resolves Do and repeats it as its Gate allows — automatically while a
+// board condition holds (While), optionally at the controller's choice (MayWhile),
+// or once if they pay by exalting a creature (ByExalting). The gate carries both
+// the continue decision and the trailing "repeat" clause, so the axis a repeat
+// varies along is one pluggable strategy rather than a family of near-duplicate
+// nodes.
+type Repeat struct {
 	Do   Effect
-	Cond Condition
+	Gate RepeatGate
 }
 
-// validate checks the repeated effect.
-func (e RepeatOnCondition) validate() error {
+// validate checks the repeated effect and the gate.
+func (e Repeat) validate() error {
+	if e.Do == nil {
+		return errors.New("Repeat needs an effect to Do")
+	}
+	if e.Gate == nil {
+		return errors.New("Repeat needs a Gate")
+	}
+	if err := e.Gate.validate(); err != nil {
+		return err
+	}
 	return validateEffect(e.Do)
 }
 
-// Text renders the effect, e.g. "destroy an enemy creature -> if you are
-// overwhelmed, repeat this effect".
-func (e RepeatOnCondition) Text() string {
-	return e.Do.Text() + " -> " + e.Cond.CondText() + ", repeat this effect"
+// Text renders the effect, closing with the gate's own "repeat" clause.
+func (e Repeat) Text() string { return e.Gate.text(e.Do) }
+
+// Resolve runs Do and repeats it however the gate allows.
+func (e Repeat) Resolve(ctx *EffectContext) { e.Gate.run(ctx, e.Do) }
+
+// RepeatGate is the axis a Repeat varies along: it drives the loop that reruns the
+// effect and renders the trailing clause that describes when it repeats. Three
+// gates cover the shapes in play — While (automatic), MayWhile (optional), and
+// ByExalting (paid, once).
+type RepeatGate interface {
+	// run resolves the effect once and then again for as long as the gate allows,
+	// bounded by the Rule of Six.
+	run(ctx *EffectContext, do Effect)
+	// text renders the repeated effect's phrase plus the gate's "repeat" clause.
+	text(do Effect) string
+	// validate reports a misconfigured gate.
+	validate() error
 }
 
-// Resolve runs Do, repeating while it keeps doing something, Cond holds, and the
-// Rule of Six allows another pass.
-func (e RepeatOnCondition) Resolve(ctx *EffectContext) {
+// While repeats the effect automatically while it keeps doing something and Cond
+// holds — Numquid the Fair's "destroy an enemy creature -> if you are overwhelmed,
+// repeat this effect." Do runs at least once; the loop stops as soon as Do does
+// nothing (its gate is false) or Cond is not met. When Do cannot report progress
+// the Rule of Six alone bounds the loop.
+type While struct {
+	Cond Condition
+}
+
+func (g While) validate() error { return nil }
+
+func (g While) text(do Effect) string {
+	return do.Text() + " -> " + g.Cond.CondText() + ", repeat this effect"
+}
+
+func (g While) run(ctx *EffectContext, do Effect) {
 	for range RuleOfSix {
-		if !resolveGateOf(ctx, e.Do) || !e.Cond.Met(ctx) {
+		if !resolveGateOf(ctx, do) || !g.Cond.Met(ctx) {
 			return
 		}
 	}
 }
 
-// MayRepeat resolves Do once, then offers the controller the choice to resolve it
-// again for as long as Cond holds and they keep accepting — the optional
-// counterpart to RepeatOnCondition, modelling "<do>. If <cond>, you may repeat
-// this effect." Do should make progress toward failing Cond so the loop can end.
-type MayRepeat struct {
+// MayWhile repeats the effect at the controller's choice for as long as Cond holds
+// — Bouncing Deathquark's "-> if there is a friendly creature in play, you may
+// repeat this effect." Do should make progress toward failing Cond so the loop can
+// end. When Do leads with a single clickable choice, each repeat is driven by that
+// choice — the controller keeps picking to repeat, or passes with Done — rather
+// than a separate Yes/No question.
+type MayWhile struct {
 	Cond Condition
-	Do   Effect
 }
 
-// Text renders the effect, closing with the optional self-repeat gate.
-func (e MayRepeat) Text() string {
-	return e.Do.Text() + " -> " + e.Cond.CondText() + ", you may repeat this effect"
+func (g MayWhile) validate() error { return nil }
+
+func (g MayWhile) text(do Effect) string {
+	return do.Text() + " -> " + g.Cond.CondText() + ", you may repeat this effect"
 }
 
-// Resolve runs Do once, then repeats it while Cond holds and the Rule of Six
-// allows another pass. When Do leads with a single clickable choice, each repeat
-// is driven by that choice — the controller keeps picking to repeat, or passes
-// with Done — rather than a separate Yes/No question.
-func (e MayRepeat) Resolve(ctx *EffectContext) {
-	e.Do.Resolve(ctx)
-	d, byChoice := e.Do.(declinableEffect)
+func (g MayWhile) run(ctx *EffectContext, do Effect) {
+	do.Resolve(ctx)
+	d, byChoice := do.(declinableEffect)
 	byChoice = byChoice && d.declinable()
 	for range RuleOfSix - 1 {
-		if !e.Cond.Met(ctx) {
+		if !g.Cond.Met(ctx) {
 			return
 		}
 		if byChoice {
@@ -109,11 +144,59 @@ func (e MayRepeat) Resolve(ctx *EffectContext) {
 		if ctx.ChooseOption("Repeat this effect?", []string{"Yes", "No"}) != 0 {
 			return
 		}
-		e.Do.Resolve(ctx)
+		do.Resolve(ctx)
 	}
 }
 
-// validate checks the repeated effect for configuration errors.
-func (e MayRepeat) validate() error {
-	return validateEffect(e.Do)
+// ByExalting repeats the effect once if the controller exalts Creature to pay for
+// it — Phalanx Strike's "You may exalt a friendly creature to repeat the preceding
+// effect." "Repeat the preceding effect" repeats only the effect before the exalt
+// clause, so the offer is made once and does not chain.
+type ByExalting struct {
+	// Creature names the creature exalted to pay for the single repeat.
+	Creature Target
+}
+
+func (g ByExalting) validate() error {
+	if !g.Creature.valid() {
+		return errUnsetTarget("Repeat.ByExalting")
+	}
+	return nil
+}
+
+func (g ByExalting) text(do Effect) string {
+	return punctuate(do.Text()) +
+		" You may exalt " + g.Creature.Text() + " to repeat the preceding effect"
+}
+
+func (g ByExalting) run(ctx *EffectContext, do Effect) {
+	do.Resolve(ctx)
+	ids := g.exaltChoice(ctx)
+	if len(ids) == 0 {
+		return
+	}
+	for _, id := range ids {
+		ctx.Resolver.AddAmberOn(id, 1)
+		ctx.Resolver.Record(AemberExalted{Creature: id, Amount: 1})
+	}
+	do.Resolve(ctx)
+}
+
+// exaltChoice offers the exalt that pays for the one repeat, or none to stop. A
+// chosen target is its own declinable prompt (pick a creature or decline); a
+// back-reference like the chosen creature has nothing to pick, so it is offered as
+// a Yes/No confirm on the creature Do just acted on.
+func (g ByExalting) exaltChoice(ctx *EffectContext) []LocalID {
+	if g.Creature.isChosen() {
+		return g.Creature.SelectOptional(ctx)
+	}
+	ids := g.Creature.Select(ctx)
+	if len(ids) == 0 {
+		return nil
+	}
+	prompt := "Exalt " + g.Creature.Text() + " to repeat the preceding effect?"
+	if ctx.ChooseOption(prompt, []string{"Yes", "No"}) != 0 {
+		return nil
+	}
+	return ids
 }

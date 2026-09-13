@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Choose up to 2 creatures. Deal 1 damage to each chosen creature. If that creature was already damaged, deal 3 damage instead.
+//	Play: Choose up to 2 Creatures. Deal 1 damage to each chosen Creature. If that Creature was already damaged, deal 3 damage instead.
 var FesteringTouch = card.New(
 	"Festering Touch",
 	card.House.Dis,

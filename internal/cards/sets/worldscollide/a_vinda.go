@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Elf • Thief
 //
-//	Reap: Deal 1 damage to a creature. If this damage destroys that creature, your opponent discards a random card from their hand.
+//	Reap: Deal 1 damage to a Creature. If this damage destroys that Creature, your opponent discards a random card from their hand.
 var AVinda = card.New(
 	"A. Vinda",
 	card.House.Shadows,

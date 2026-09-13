@@ -15,7 +15,7 @@ import (
 //	Æmber:  1
 //	Traits: Item
 //
-//	Action: Ward a creature.
+//	Action: Ward a Creature.
 func TestHologrammophone(t *testing.T) {
 	t.Run("wards a chosen creature", func(t *testing.T) {
 		var friend ct.Card

@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Choose a friendly ready Brobnar creature - exhaust it, and gain Æmber equal to half its power, rounded down.
+//	Play: Choose a friendly ready Brobnar Creature - exhaust it, and gain Æmber equal to half its power, rounded down.
 func TestTheFlex(t *testing.T) {
 	var beefy ct.Card
 	h := ct.Play(t, ct.Setup{

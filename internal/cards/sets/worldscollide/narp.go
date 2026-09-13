@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Giant
 //
-//	Each neighboring creature cannot reap.
+//	Each neighboring Creature cannot reap.
 var Narp = card.New(
 	"Narp",
 	card.House.Brobnar,

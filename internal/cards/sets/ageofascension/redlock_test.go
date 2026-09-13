@@ -16,7 +16,7 @@ import (
 //	Traits: Elf • Thief
 //
 //	Skirmish.
-//	At the end of your turn, if you did not play any creatures this turn, gain 1 Æmber.
+//	At the end of your turn, if you did not play any Creatures this turn, gain 1 Æmber.
 func TestRedlock(t *testing.T) {
 	var beef ct.Card
 	h := ct.Play(t, ct.Setup{

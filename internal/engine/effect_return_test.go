@@ -364,11 +364,8 @@ func TestPutChosenGroupsShufflesByOwnerInLog(t *testing.T) {
 	}
 	var grouped int
 	for _, rec := range g.Log {
-		if e, ok := rec.Entry.(CardsShuffledIntoDeckBy); ok {
+		if _, ok := rec.Entry.(CardsShuffledIntoDeckBy); ok {
 			grouped++
-			if e.Source != src {
-				t.Errorf("grouped shuffle source = %v, want %v", e.Source, src)
-			}
 		}
 		if _, ok := rec.Entry.(CardShuffledIntoDeck); ok {
 			t.Error("a batched shuffle should not also narrate a passive per-card line")

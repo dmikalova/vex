@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human
 //
 //	Elusive.
-//	Play/Fight/Reap: You may put an upgrade or Robot card from your discard pile into your hand.
+//	Play/Fight/Reap: You may put an Upgrade or Robot card from your discard pile into your hand.
 var ChiefEngineerWalls = card.New(
 	"Chief Engineer Walls",
 	card.House.StarAlliance,

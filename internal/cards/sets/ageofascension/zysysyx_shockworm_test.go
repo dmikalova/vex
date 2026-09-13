@@ -16,7 +16,7 @@ import (
 //	Armor:  1
 //	Traits: Martian • Soldier
 //
-//	After an enemy creature reaps, stun it.
+//	After an enemy Creature reaps, stun it.
 func TestZysysyxShockworm(t *testing.T) {
 	t.Run("stuns an enemy creature after it reaps", func(t *testing.T) {
 		var reaper ct.Card

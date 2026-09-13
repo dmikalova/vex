@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -342,7 +343,11 @@ func RenderCardRules(def *CardDefinition) string {
 // keywords and abilities, which do not apply while it is an upgrade.
 func RenderUpgradeOnCreature(def *CardDefinition) string {
 	if def.PlayableAsUpgrade {
-		return strings.Join(upgradeGrantLines(def, true), "\n")
+		lines := upgradeGrantLines(def, true)
+		for i, line := range lines {
+			lines[i] = capitalizeCardTypes(line)
+		}
+		return strings.Join(lines, "\n")
 	}
 	return strings.Join(cardRules(def, true), "\n")
 }
@@ -516,7 +521,28 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 	if s := playableAsUpgradeText(def); s != "" {
 		rules = append(rules, s)
 	}
+	for i, line := range rules {
+		rules[i] = capitalizeCardTypes(line)
+	}
 	return rules
+}
+
+// cardTypeWordRe matches the four card-type nouns as whole lowercase words, so
+// capitalizeCardTypes can raise them to KeyForge's proper-noun capitalization. It
+// is anchored on word boundaries so it never touches a larger word ("tactical")
+// or a name or trait that is already capitalized.
+var cardTypeWordRe = regexp.MustCompile(`\b(creatures?|artifacts?|upgrades?|tactics?)\b`)
+
+// capitalizeCardTypes raises Creature, Artifact, Upgrade, and Tactic to their
+// capitalized form in a line of printed card text. Card text names each card type
+// as a proper noun while the generic "card" stays lowercase, so this runs over
+// every assembled rules line as the last presentation step — the same layer that
+// already sentence-cases each line — rather than being smeared across every
+// effect's Text().
+func capitalizeCardTypes(s string) string {
+	return cardTypeWordRe.ReplaceAllStringFunc(s, func(m string) string {
+		return strings.ToUpper(m[:1]) + m[1:]
+	})
 }
 
 // CardDocComment renders a card's details as a Go doc comment block, the form
@@ -681,7 +707,7 @@ func upgradeStaticLines(def *CardDefinition, hosted bool) []string {
 	case static != "":
 		return []string{static}
 	case replacement != "":
-		return []string{`This creature gains, "` + replacement + `."`}
+		return []string{`This Creature gains, "` + replacement + `."`}
 	default:
 		return nil
 	}
@@ -711,7 +737,7 @@ func grantedText(m StaticModifier, upgrade string, hosted bool) []string {
 		if hosted {
 			return body
 		}
-		return `This creature gains, "` + body + `"`
+		return `This Creature gains, "` + body + `"`
 	}
 	return grantedLines(m, upgrade, frame)
 }
@@ -855,7 +881,7 @@ func constantGrantedText(def *CardDefinition) []string {
 // because the bar names whichever player it applies to, not the controller.
 func conditionalPlayBarText(b ConditionalPlayBar) string {
 	return "If a player " + symmetricCondText(b.When) +
-		", they cannot play " + strings.ToLower(b.Type.String()) + "s."
+		", they cannot play " + typeWord(b.Type) + "s."
 }
 
 // symmetricCondText renders a condition in the third-person, board-wide voice a

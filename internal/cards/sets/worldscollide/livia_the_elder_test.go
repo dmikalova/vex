@@ -15,7 +15,7 @@ import (
 //	Power:  4
 //	Traits: Dinosaur • Philosopher
 //
-//	Reap: You may exalt Livia the Elder -> each friendly creature's fight effects and reap effects are fight/reap effects for the remainder of the turn.
+//	Reap: You may exalt Livia the Elder -> each friendly Creature's fight effects and reap effects are fight/reap effects for the remainder of the turn.
 func TestLiviaTheElder(t *testing.T) {
 	// fightGainer is a friendly creature whose fight effect gains 1 Æmber, so the
 	// fuse is visible: while it is active, reaping the creature fires that fight

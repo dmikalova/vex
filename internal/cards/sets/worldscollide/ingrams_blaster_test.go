@@ -14,9 +14,9 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains, "Fight/Reap: Choose one:
-//	- Deal 2 damage to a creature
-//	- Attach Ingram's Blaster to Medic Ingram -> fully heal a creature."
+//	This Creature gains, "Fight/Reap: Choose one:
+//	- Deal 2 damage to a Creature
+//	- Attach Ingram's Blaster to Medic Ingram -> fully heal a Creature."
 func TestIngramsBlaster(t *testing.T) {
 	t.Run("attaches to Ingram and fully heals a creature", func(t *testing.T) {
 		var carrier, wounded ct.Card

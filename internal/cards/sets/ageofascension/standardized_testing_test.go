@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Destroy each creature with the lowest power and each creature with the highest power.
+//	Play: Destroy each Creature with the lowest power and each Creature with the highest power.
 func TestStandardizedTesting(t *testing.T) {
 	var low, mid, high ct.Card
 	h := ct.Play(t, ct.Setup{

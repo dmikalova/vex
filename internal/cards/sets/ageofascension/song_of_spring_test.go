@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Shuffle any number of friendly Untamed creatures from your hand, discard pile, or battleline into your deck.
+//	Play: Shuffle any number of friendly Untamed Creatures from your hand, discard pile, or battleline into your deck.
 func TestSongOfSpring(t *testing.T) {
 	var inHand, inDiscard, onBoard ct.Card
 	h := ct.Play(t, ct.Setup{

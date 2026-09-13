@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains, "Fight/Reap: You may stun a creature."
+//	This Creature gains, "Fight/Reap: You may stun a Creature."
 func TestStunner(t *testing.T) {
 	t.Run("its host may stun a creature when it reaps", func(t *testing.T) {
 		var host, foe ct.Card

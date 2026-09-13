@@ -17,7 +17,7 @@ import (
 //
 //	Terrordactyl deals 4 Damage when fighting.
 //	Terrordactyl enters play stunned.
-//	Before Fight: Deal 4 damage to each neighbor of the creature Terrordactyl fights.
+//	Before Fight: Deal 4 damage to each neighbor of the Creature Terrordactyl fights.
 func TestTerrordactyl(t *testing.T) {
 	t.Run("enters play stunned", func(t *testing.T) {
 		var terror ct.Card

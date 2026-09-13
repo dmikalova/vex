@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  2
 //	Traits: Dinosaur • Politician
 //
-//	Each friendly creature gains +2 power for each Æmber on it.
+//	Each friendly Creature gains +2 power for each Æmber on it.
 //	Before Fight: You may exalt Tribune Pompitus.
 var TribunePompitus = card.New(
 	"Tribune Pompitus",

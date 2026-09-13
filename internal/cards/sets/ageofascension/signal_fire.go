@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item
 //
 //	Versatile.
-//	Action: Destroy Signal Fire. For the remainder of the turn, each friendly Brobnar creature may fight.
+//	Action: Destroy Signal Fire. For the remainder of the turn, each friendly Brobnar Creature may fight.
 var SignalFire = card.New(
 	"Signal Fire",
 	card.House.Brobnar,

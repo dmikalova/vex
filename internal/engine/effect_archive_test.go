@@ -258,23 +258,6 @@ func TestArchiveTopOfDiscardEffect(t *testing.T) {
 	}
 }
 
-// TestArchiveTopOfDeckResolver covers archiveTopOfDeck directly, including the
-// empty-deck branch that reports no card was available (RevealDeckUntilHouse is
-// its only caller and never drains the deck in play).
-func TestArchiveTopOfDeckResolver(t *testing.T) {
-	g := NewGame("A", "B", 1)
-	if g.archiveTopOfDeck(0) {
-		t.Error("archiving from an empty deck should report false")
-	}
-	top := g.AddToDeck(testCreature("top", 1), 0)
-	if !g.archiveTopOfDeck(0) {
-		t.Error("archiving from a stocked deck should report true")
-	}
-	if g.State.Archives[0].Count != 1 || g.State.Archives[0].IDs[0] != top {
-		t.Errorf("archived %v, want the top card %d", g.State.Archives[0].slice(), top)
-	}
-}
-
 // TestArchiveBottomSelection covers the Bottom positional selection, which picks
 // the far end of an ordered zone.
 func TestArchiveBottomSelection(t *testing.T) {

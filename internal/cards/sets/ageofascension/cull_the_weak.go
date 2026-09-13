@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Destroy the least powerful enemy creature.
+//	Play: Destroy the least powerful enemy Creature.
 var CullTheWeak = card.New(
 	"Cull the Weak",
 	card.House.Dis,

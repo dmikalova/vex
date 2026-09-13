@@ -205,13 +205,13 @@ func TestDrawFromSpendAsPoolStopsWhenSatisfied(t *testing.T) {
 // non-friendly Target fallback of the subject phrasing.
 func TestSpendAsPoolText(t *testing.T) {
 	bracchus := spendAsPoolCreature()
-	wantB := "You may spend Æmber on friendly creatures as if it were in your pool."
+	wantB := "You may spend Æmber on friendly Creatures as if it were in your pool."
 	if got := RenderCardText(&bracchus); !strings.Contains(got, wantB) {
 		t.Errorf("constant text = %q, want it to contain %q", got, wantB)
 	}
 
 	ideal := spendAsPoolUpgrade()
-	wantI := `This creature gains, "You may spend Æmber on this creature as if it were in your pool."`
+	wantI := `This Creature gains, "You may spend Æmber on this Creature as if it were in your pool."`
 	if got := RenderCardText(&ideal); !strings.Contains(got, wantI) {
 		t.Errorf("upgrade text = %q, want it to contain %q", got, wantI)
 	}

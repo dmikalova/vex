@@ -14,9 +14,9 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains, "Fight/Reap: Choose one:
-//	- Deal 2 damage to a creature
-//	- Attach Walls' Blaster to Chief Engineer Walls -> for each upgrade on Chief Engineer Walls, stun a creature."
+//	This Creature gains, "Fight/Reap: Choose one:
+//	- Deal 2 damage to a Creature
+//	- Attach Walls' Blaster to Chief Engineer Walls -> for each Upgrade on Chief Engineer Walls, stun a Creature."
 func TestWallsBlaster(t *testing.T) {
 	t.Run("the deal 2 damage branch damages a chosen creature", func(t *testing.T) {
 		var carrier, victim ct.Card

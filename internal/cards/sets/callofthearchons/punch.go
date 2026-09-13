@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Deal 3 damage to a creature.
+//	Play: Deal 3 damage to a Creature.
 var Punch = card.New(
 	"Punch",
 	card.House.Brobnar,

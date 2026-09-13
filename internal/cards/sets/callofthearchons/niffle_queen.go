@@ -10,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  6
 //	Traits: Beast • Niffle
 //
-//	Each other friendly Beast creature gains +1 power.
-//	Each other friendly Niffle creature gains +1 power.
+//	Each other friendly Beast Creature gains +1 power.
+//	Each other friendly Niffle Creature gains +1 power.
 var NiffleQueen = card.New(
 	"Niffle Queen",
 	card.House.Untamed,

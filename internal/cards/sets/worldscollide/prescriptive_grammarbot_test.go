@@ -16,7 +16,7 @@ import (
 //	Traits: Robot
 //
 //	Taunt, Hazardous 3.
-//	Reap: Enrage a creature.
+//	Reap: Enrage a Creature.
 func TestPrescriptiveGrammarbot(t *testing.T) {
 	t.Run("enrages a chosen creature when it reaps", func(t *testing.T) {
 		var bot, foe ct.Card

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Goblin • Scientist
 //
-//	Reap: Reveal cards from the top of your deck until you reveal a Brobnar card or choose to stop, archiving each card revealed this way -> deal 2 damage to Old Boomy.
+//	Reap: Discard cards from the top of your deck until you discard a Brobnar card or choose to stop -> deal 2 damage to Old Boomy. Archive each card discarded this way.
 var OldBoomy = card.New(
 	"Old Boomy",
 	card.House.Brobnar,
@@ -20,8 +20,14 @@ var OldBoomy = card.New(
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Goblin, card.Traits.Scientist),
 	card.WithAbility(
-		card.Trigger.Reap, card.Then{
-			First:  card.RevealDeckUntilHouse{House: card.House.Self},
-			Result: card.DealDamage{Target: card.Target.This, Amount: 2},
-		}),
+		card.Trigger.Reap, card.Sentences{Effects: []card.Effect{
+			card.Then{
+				First: card.DiscardTopOfDeckUntil{
+					House:   card.House.Self,
+					MayStop: true,
+				},
+				Result: card.DealDamage{Target: card.Target.This, Amount: 2},
+			},
+			card.ArchiveDiscardedThisWay{},
+		}}),
 )

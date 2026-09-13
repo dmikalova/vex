@@ -28,7 +28,7 @@ func (s CardTypes) has(t CardType) bool {
 }
 
 // list renders the admitted types as a printed noun phrase in rulebook order,
-// e.g. "artifact, upgrade, or Tactic" or "artifact". The empty set renders "card".
+// e.g. "Artifact, Upgrade, or Tactic" or "Artifact". The empty set renders "card".
 func (s CardTypes) list() string {
 	if s.all() {
 		return "card"
@@ -49,11 +49,10 @@ func (s CardTypes) list() string {
 	}
 }
 
-// typeWord is a card type's printed word in a grant clause: lowercased, except the
-// renamed Tactic type, which stays capitalized (card-wording rule 19).
+// typeWord is a card type's printed word in a filter or listing: the lowercase
+// type name (creature, artifact, upgrade, tactic). Card text raises these type
+// nouns to their proper-noun capitalization at the presentation layer, so the
+// effect layer keeps them lowercase like every other rendered noun.
 func typeWord(t CardType) string {
-	if t == Tactic {
-		return "Tactic"
-	}
 	return strings.ToLower(t.String())
 }

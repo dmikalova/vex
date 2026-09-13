@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Upgrade
 //	Rarity: Rare
 //
-//	This creature gains, "After you play a Mars creature, ready this creature, and for the remainder of the turn, this creature belongs to house Mars."
+//	This Creature gains, "After you play a Mars Creature, ready this Creature, and for the remainder of the turn, this Creature belongs to house Mars."
 var BrainStemAntenna = card.New(
 	"Brain Stem Antenna",
 	card.House.Mars,

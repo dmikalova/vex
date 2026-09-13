@@ -180,10 +180,11 @@ func (e DestroyMostPowerfulUnlessReadyHouse) controlsReadyHouse(ctx *EffectConte
 }
 
 // DestroyEachCreatureAtEndOfTurn schedules "destroy each creature" to resolve in
-// the active player's end-of-turn phase rather than now — Ragnarok wipes the board
+// the active player's end-of-turn window rather than now — Ragnarok wipes the board
 // only once the turn it is played is ending, after its owner has spent the turn
-// fighting for Æmber. It arms a flag that the end-of-turn phase reads and clears;
-// the flag deliberately survives the ready phase, which runs earlier.
+// fighting for Æmber. The wipe orders alongside the in-play "at the end of your
+// turn" abilities (ADR 0013); the schedule survives the ready phase, which runs
+// earlier.
 type DestroyEachCreatureAtEndOfTurn struct{}
 
 // Text renders the effect, e.g. "at the end of the turn, destroy each creature".
@@ -191,7 +192,8 @@ func (e DestroyEachCreatureAtEndOfTurn) Text() string {
 	return "at the end of the turn, destroy each creature"
 }
 
-// Resolve arms the scheduled board wipe; the end-of-turn phase carries it out.
+// Resolve schedules the board wipe into the end-of-turn window; that window carries
+// it out.
 func (e DestroyEachCreatureAtEndOfTurn) Resolve(ctx *EffectContext) {
-	ctx.Resolver.ScheduleDestroyEachCreatureAtEndOfTurn(ctx.Source)
+	ctx.Resolver.ScheduleAtEndOfTurn(ctx.Source, schedDestroyEachCreature)
 }

@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Deal 2 damage to a creature. If this damage destroys that creature, steal 1 Æmber.
+//	Play: Deal 2 damage to a Creature. If this damage destroys that Creature, steal 1 Æmber.
 func TestRelentlessWhispers(t *testing.T) {
 	t.Run("steals 1 Æmber when its damage destroys the creature", func(t *testing.T) {
 		var foe ct.Card

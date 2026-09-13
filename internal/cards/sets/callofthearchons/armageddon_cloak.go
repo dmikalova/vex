@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains +2 hazardous and, "If this creature would be destroyed, instead fully heal it, and destroy Armageddon Cloak."
+//	This Creature gains +2 hazardous and, "If this Creature would be destroyed, instead fully heal it, and destroy Armageddon Cloak."
 var ArmageddonCloak = card.New(
 	"Armageddon Cloak",
 	card.House.Sanctum,

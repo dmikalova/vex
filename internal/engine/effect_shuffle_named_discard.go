@@ -25,5 +25,5 @@ func (e ShuffleNamedFromDiscardIntoDeck) Resolve(ctx *EffectContext) {
 	}
 	ctx.Resolver.BeginShuffleBatch()
 	ctx.Resolver.ShuffleFromDiscardIntoDeck(cards[0])
-	ctx.Resolver.EndShuffleBatch(ctx.Source)
+	ctx.Resolver.EndShuffleBatch()
 }

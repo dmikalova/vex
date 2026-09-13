@@ -9,8 +9,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains +1 armor.
-//	Play: Fully heal this creature.
+//	This Creature gains +1 armor.
+//	Play: Fully heal this Creature.
 var SeraphicArmor = card.New(
 	"Seraphic Armor",
 	card.House.Sanctum,

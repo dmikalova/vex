@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Ready and fight with a friendly creature.
+//	Play: Ready and fight with a friendly Creature.
 func TestAnger(t *testing.T) {
 	setup := func(t *testing.T) (h *ct.Harness, troll, witch ct.Card) {
 		h = ct.Play(t, ct.Setup{

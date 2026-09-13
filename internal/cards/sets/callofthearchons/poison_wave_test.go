@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Deal 2 damage to each creature.
+//	Play: Deal 2 damage to each Creature.
 func TestPoisonWave(t *testing.T) {
 	t.Run("deals 2 damage to each creature", func(t *testing.T) {
 		var ally, foe, weakFoe ct.Card

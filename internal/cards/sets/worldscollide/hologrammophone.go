@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Item
 //
-//	Action: Ward a creature.
+//	Action: Ward a Creature.
 var Hologrammophone = card.New(
 	"Hologrammophone",
 	card.House.Logos,

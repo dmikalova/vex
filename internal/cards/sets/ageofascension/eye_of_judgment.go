@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Item
 //
-//	Action: Purge a creature from a discard pile.
+//	Action: Purge a Creature from a discard pile.
 var EyeOfJudgment = card.New(
 	"Eye of Judgment",
 	card.House.Sanctum,

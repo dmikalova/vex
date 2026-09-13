@@ -15,7 +15,7 @@ import (
 //	Power:  2
 //	Traits: Goblin • Scientist
 //
-//	Reap: Reveal cards from the top of your deck until you reveal a Brobnar card or choose to stop, archiving each card revealed this way -> deal 2 damage to Old Boomy.
+//	Reap: Discard cards from the top of your deck until you discard a Brobnar card or choose to stop -> deal 2 damage to Old Boomy. Archive each card discarded this way.
 func TestOldBoomy(t *testing.T) {
 	t.Run("reveals until a Brobnar card, archives them, and takes 2 damage", func(t *testing.T) {
 		var filler, brobnar ct.Card
@@ -31,7 +31,7 @@ func TestOldBoomy(t *testing.T) {
 		})
 
 		h.P1.Reap(OldBoomy)
-		h.P1.ClickOption("Reveal another card")
+		h.P1.ClickOption("Discard another card")
 
 		// Both revealed cards are archived; the Brobnar card ends the dig and Old
 		// Boomy (power 2) takes 2 damage and is destroyed.

@@ -14,7 +14,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Choose a creature - for each trait that creature has, deal 2 damage to the chosen creature, and gain 1 Æmber.
+//	Play: Choose a Creature - for each trait that Creature has, deal 2 damage to the chosen Creature, and gain 1 Æmber.
 func TestEntropicSwirl(t *testing.T) {
 	var foe ct.Card
 	h := ct.Play(t, ct.Setup{

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Goblin
 //
 //	Skirmish, Elusive.
-//	Fight: Enrage the creature Slimy Jark fought.
+//	Fight: Enrage the Creature Slimy Jark fought.
 var SlimyJark = card.New(
 	"Slimy Jark",
 	card.House.Brobnar,

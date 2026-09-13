@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains +2 assault.
+//	This Creature gains +2 assault.
 var WayOfTheBear = card.New(
 	"Way of the Bear",
 	card.House.Untamed,

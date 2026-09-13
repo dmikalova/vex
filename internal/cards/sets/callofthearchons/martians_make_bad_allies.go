@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Reveal your hand, purge each non-Mars creature from your hand, and for each creature purged this way, gain 1 Æmber.
+//	Play: Reveal your hand, purge each non-Mars Creature from your hand, and for each Creature purged this way, gain 1 Æmber.
 var MartiansMakeBadAllies = card.New(
 	"Martians Make Bad Allies",
 	card.House.Mars,
@@ -28,7 +28,7 @@ var MartiansMakeBadAllies = card.New(
 			card.GainAember{
 				Player: card.Controller,
 				Amount: 1,
-				Per:    card.CardsPurged{},
+				Per:    card.CardsPurged{Type: card.Type.Creature},
 			},
 		}}),
 )

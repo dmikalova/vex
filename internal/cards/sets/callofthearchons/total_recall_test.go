@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: For each friendly ready creature in play, gain 1 Æmber. Put each friendly creature into its owner's hand.
+//	Play: For each friendly ready Creature in play, gain 1 Æmber. Put each friendly Creature into its owner's hand.
 func TestTotalRecall(t *testing.T) {
 	t.Run("gains 1 Æmber per ready friendly creature and returns them all", func(t *testing.T) {
 		var spent, ready ct.Card

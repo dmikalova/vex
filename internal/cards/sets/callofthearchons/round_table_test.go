@@ -15,7 +15,7 @@ import (
 //	Æmber:  1
 //	Traits: Location
 //
-//	Each friendly Knight creature gains +1 power and taunt.
+//	Each friendly Knight Creature gains +1 power and taunt.
 func TestRoundTable(t *testing.T) {
 	t.Run("gives friendly Knights +1 power", func(t *testing.T) {
 		var knight, other ct.Card

@@ -131,10 +131,11 @@ type Produced struct {
 	// side by a ProducedThisWay{Tally: TallyCreaturesDestroyed} (Hecatomb pays each
 	// player for their own dead).
 	Destroyed [2]int
-	// Purged is how many cards the most recent purge removed, read by a CardsPurged
-	// count in a following effect of the same resolution (One Last Job steals for
-	// each creature it purged).
-	Purged int
+	// Purged[p] is how many cards player p controlled — or owned, for a discard or
+	// hand purge — that this resolution has purged, read whole by CardsPurged and per
+	// side by a ProducedThisWay{Tally: TallyCardsPurged} (Harvest Time pays each
+	// player for their own losses).
+	Purged [2]int
 	// PurgedAemberBonus is the summed printed Æmber bonus of the cards the most
 	// recent PurgeCard removed this resolution, read by a PurgedAemberBonus count
 	// (Infurnace drains the opponent for the total bonus of the cards it purged).

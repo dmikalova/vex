@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Monk
 //
 //	Deploy.
-//	Play/Fight/Reap: You may ready and fight with a neighboring creature.
+//	Play/Fight/Reap: You may ready and fight with a neighboring Creature.
 var TheGreyRider = card.New(
 	"The Grey Rider",
 	card.House.Sanctum,

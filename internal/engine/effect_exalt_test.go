@@ -80,15 +80,15 @@ func (exaltRepeater) ChooseCardOrDecline(
 	return candidates[0], true
 }
 
-func TestExaltToRepeatResolvesThenStopsWhenDeclined(t *testing.T) {
+func TestRepeatByExaltingResolvesThenStopsWhenDeclined(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	pay := g.AddToBattleline(testCreature("pay", 3), 0)
 	g.SetChooser(0, &exaltRepeater{})
 	ctx := &EffectContext{Resolver: g, Source: pay, Controller: 0}
 
-	e := ExaltToRepeat{
-		Do:    GainAember{Player: Controller, Amount: 1},
-		Exalt: Target{Kind: TargetChosenFriendlyCreature},
+	e := Repeat{
+		Do:   GainAember{Player: Controller, Amount: 1},
+		Gate: ByExalting{Creature: Target{Kind: TargetChosenFriendlyCreature}},
 	}
 	if got := e.Text(); got !=
 		"gain 1 \u00c6mber. You may exalt a friendly creature to repeat the preceding effect" {
@@ -125,15 +125,15 @@ func (exaltDecliner) ChooseOption(_, _ string, _ []string) int {
 	return 1 // No
 }
 
-func TestExaltToRepeatConfirmsBackReference(t *testing.T) {
+func TestRepeatByExaltingConfirmsBackReference(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	that := g.AddToBattleline(testCreature("that", 3), 0)
 	g.SetChooser(0, &exaltConfirmer{})
 	ctx := &EffectContext{Resolver: g, Source: that, Controller: 0, It: that, HasIt: true}
 
-	e := ExaltToRepeat{
-		Do:    GainAember{Player: Controller, Amount: 1},
-		Exalt: Target{Kind: TargetTheChosenCreature},
+	e := Repeat{
+		Do:   GainAember{Player: Controller, Amount: 1},
+		Gate: ByExalting{Creature: Target{Kind: TargetTheChosenCreature}},
 	}
 	if got := e.Text(); got !=
 		"gain 1 \u00c6mber. You may exalt the chosen creature to repeat the preceding effect" {
@@ -151,15 +151,15 @@ func TestExaltToRepeatConfirmsBackReference(t *testing.T) {
 	}
 }
 
-func TestExaltToRepeatDeclinesBackReference(t *testing.T) {
+func TestRepeatByExaltingDeclinesBackReference(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	that := g.AddToBattleline(testCreature("that", 3), 0)
 	g.SetChooser(0, &exaltDecliner{})
 	ctx := &EffectContext{Resolver: g, Source: that, Controller: 0, It: that, HasIt: true}
 
-	e := ExaltToRepeat{
-		Do:    GainAember{Player: Controller, Amount: 1},
-		Exalt: Target{Kind: TargetTheChosenCreature},
+	e := Repeat{
+		Do:   GainAember{Player: Controller, Amount: 1},
+		Gate: ByExalting{Creature: Target{Kind: TargetTheChosenCreature}},
 	}
 	e.Resolve(ctx)
 
@@ -172,14 +172,14 @@ func TestExaltToRepeatDeclinesBackReference(t *testing.T) {
 	}
 }
 
-func TestExaltToRepeatBackReferenceStopsWithoutContext(t *testing.T) {
+func TestRepeatByExaltingBackReferenceStopsWithoutContext(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("src", 3), 0)
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 
-	e := ExaltToRepeat{
-		Do:    GainAember{Player: Controller, Amount: 1},
-		Exalt: Target{Kind: TargetTheChosenCreature},
+	e := Repeat{
+		Do:   GainAember{Player: Controller, Amount: 1},
+		Gate: ByExalting{Creature: Target{Kind: TargetTheChosenCreature}},
 	}
 	e.Resolve(ctx)
 
@@ -189,18 +189,18 @@ func TestExaltToRepeatBackReferenceStopsWithoutContext(t *testing.T) {
 	}
 }
 
-func TestExaltToRepeatValidate(t *testing.T) {
-	full := ExaltToRepeat{
-		Do:    GainAember{Player: Controller, Amount: 1},
-		Exalt: Target{Kind: TargetChosenFriendlyCreature},
+func TestRepeatByExaltingValidate(t *testing.T) {
+	full := Repeat{
+		Do:   GainAember{Player: Controller, Amount: 1},
+		Gate: ByExalting{Creature: Target{Kind: TargetChosenFriendlyCreature}},
 	}
 	if err := validateEffect(full); err != nil {
 		t.Errorf("valid effect rejected: %v", err)
 	}
-	if (ExaltToRepeat{Exalt: Target{Kind: TargetChosenFriendlyCreature}}).validate() == nil {
-		t.Error("missing Do should be rejected")
+	if (ByExalting{Creature: Target{Kind: TargetChosenFriendlyCreature}}).validate() != nil {
+		t.Error("valid exalt gate rejected")
 	}
-	if (ExaltToRepeat{Do: GainAember{Player: Controller, Amount: 1}}).validate() == nil {
+	if (ByExalting{}).validate() == nil {
 		t.Error("unset exalt target should be rejected")
 	}
 }

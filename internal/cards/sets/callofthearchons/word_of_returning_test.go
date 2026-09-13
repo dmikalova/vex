@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Deal 1 damage to each enemy creature for each Æmber on it, and move all Æmber from each enemy creature to your pool.
+//	Play: Deal 1 damage to each enemy Creature for each Æmber on it, and move all Æmber from each enemy Creature to your pool.
 func TestWordOfReturning(t *testing.T) {
 	t.Run("damages each enemy creature per Æmber on it, then takes that Æmber", func(t *testing.T) {
 		var laden, bare ct.Card

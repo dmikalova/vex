@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Monk
 //
 //	Elusive.
-//	Reap: Move 1 Æmber from a friendly creature to your pool.
+//	Reap: Move 1 Æmber from a friendly Creature to your pool.
 var MotherNorthelle = card.New(
 	"Mother Northelle",
 	card.House.Sanctum,

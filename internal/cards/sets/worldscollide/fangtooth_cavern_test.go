@@ -15,7 +15,7 @@ import (
 //	Æmber:  1
 //	Traits: Location
 //
-//	At the end of your turn, destroy the least powerful creature.
+//	At the end of your turn, destroy the least powerful Creature.
 func TestFangtoothCavern(t *testing.T) {
 	t.Run("destroys the least powerful creature at the end of your turn", func(t *testing.T) {
 		var weak, strong ct.Card

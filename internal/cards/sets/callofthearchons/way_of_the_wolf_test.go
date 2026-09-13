@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains skirmish.
+//	This Creature gains skirmish.
 func TestWayOfTheWolf(t *testing.T) {
 	t.Run("grants the host skirmish, sparing it return damage", func(t *testing.T) {
 		var host, wall ct.Card

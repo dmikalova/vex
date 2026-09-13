@@ -16,7 +16,7 @@ import (
 //	Traits: Beast
 //
 //	Poison.
-//	Play/Reap: Stun a creature.
+//	Play/Reap: Stun a Creature.
 func TestInkaTheSpider(t *testing.T) {
 	t.Run("stuns a chosen creature when played", func(t *testing.T) {
 		var foe ct.Card

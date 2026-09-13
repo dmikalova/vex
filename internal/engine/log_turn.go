@@ -93,18 +93,21 @@ func (e CardsDrawn) Text(n Namer) string {
 }
 
 // CardsDrawnBy narrates a draw caused by a card's ability mid-turn (Candle Unit),
-// crediting the card so the line reads "Candle Unit has Player 1 draw 1 card"
-// rather than a bare draw. Count is how many cards were actually drawn.
+// crediting the card from the record's frame so the line reads "Candle Unit has
+// Player 1 draw 1 card" rather than a bare draw. Count is how many cards were
+// actually drawn.
 type CardsDrawnBy struct {
-	Source LocalID
 	Player int
 	Count  int
 }
 
 // Text renders the attributed draw, naming the source card and the drawer.
 func (e CardsDrawnBy) Text(n Namer) string {
-	return fmt.Sprintf("%s has %s draw %s",
-		n.Name(e.Source), n.PlayerName(e.Player), countNoun(e.Count, "card"))
+	if s, ok := framedSource(n); ok {
+		return fmt.Sprintf("%s has %s draw %s",
+			s, n.PlayerName(e.Player), countNoun(e.Count, "card"))
+	}
+	return fmt.Sprintf("%s draws %s", n.PlayerName(e.Player), countNoun(e.Count, "card"))
 }
 
 // HouseChosen narrates the active house a player picked for the turn.
@@ -115,7 +118,7 @@ type HouseChosen struct {
 
 // Text renders the house a player chose for the turn.
 func (e HouseChosen) Text(n Namer) string {
-	return fmt.Sprintf("%s chooses house %s", n.PlayerName(e.Player), e.House)
+	return fmt.Sprintf("%s chooses house %s", subject(n, e.Player), e.House)
 }
 
 // ForgeSkipped narrates a forge phase an effect made the player sit out (Miasma).

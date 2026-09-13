@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Elf • Witch
 //
 //	Deploy.
-//	Play/Reap: Fully heal a neighboring creature.
+//	Play/Reap: Fully heal a neighboring Creature.
 var DeepwoodDruid = card.New(
 	"Deepwood Druid",
 	card.House.Untamed,

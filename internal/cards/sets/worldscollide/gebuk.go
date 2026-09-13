@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Beast
 //
-//	Destroyed: Discard the top card of your deck. If it is a creature, swap it with Gebuk.
+//	Destroyed: Discard the top card of your deck. If it is a Creature, swap it with Gebuk.
 var Gebuk = card.New(
 	"Gebuk",
 	card.House.Untamed,

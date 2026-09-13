@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: If there are no friendly creatures in play, destroy each creature that is not on a flank.
+//	Play: If there are no friendly Creatures in play, destroy each Creature that is not on a flank.
 func TestPhloxemSpike(t *testing.T) {
 	t.Run("destroys each non-flank creature when you control no creatures", func(t *testing.T) {
 		var left, middle, right ct.Card

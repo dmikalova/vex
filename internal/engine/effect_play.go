@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"strings"
 )
 
 // This file holds the effects that play a card out of one of a player's piles as
@@ -78,7 +77,7 @@ func (e PlayFrom) pileOwner() string {
 func (e PlayFrom) noun() string {
 	noun := "card"
 	if e.Type != TypeUnset && e.Type != AnyType {
-		noun = strings.ToLower(e.Type.String())
+		noun = typeWord(e.Type)
 	}
 	switch {
 	case e.Except:

@@ -14,8 +14,8 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	This creature gains, "Fight/Reap: Choose one:
-//	- Deal 2 damage to a creature
+//	This Creature gains, "Fight/Reap: Choose one:
+//	- Deal 2 damage to a Creature
 //	- Attach Kirby's Blaster to Com. Officer Kirby -> draw 2 cards."
 func TestKirbysBlaster(t *testing.T) {
 	t.Run("draws 2 cards on the attach payoff", func(t *testing.T) {

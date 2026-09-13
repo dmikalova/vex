@@ -16,7 +16,7 @@ import (
 //	Traits: Goblin
 //
 //	Elusive.
-//	Reap: For the remainder of the turn, each time an enemy creature is destroyed, gain 1 Æmber.
+//	Reap: For the remainder of the turn, each time an enemy Creature is destroyed, gain 1 Æmber.
 func TestLooterGoblin(t *testing.T) {
 	t.Run("reaping gains 1 Æmber per enemy creature destroyed this turn", func(t *testing.T) {
 		var goblin, ally, foe ct.Card

@@ -14,8 +14,8 @@ import (
 //	Type:   Upgrade
 //	Rarity: Uncommon
 //
-//	This creature gains, "You may spend Æmber on this creature as if it were in your pool."
-//	Play: Exalt this creature.
+//	This Creature gains, "You may spend Æmber on this Creature as if it were in your pool."
+//	Play: Exalt this Creature.
 func TestTheCallipygianIdeal(t *testing.T) {
 	t.Run("playing it exalts the creature it upgrades", func(t *testing.T) {
 		var host ct.Card

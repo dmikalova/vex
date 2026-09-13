@@ -16,7 +16,7 @@ import (
 //	Traits: Beast
 //
 //	Deploy.
-//	Play: You may reap with up to 2 different neighboring creatures, one at a time.
+//	Play: You may reap with up to 2 different neighboring Creatures, one at a time.
 func TestGhosthawk(t *testing.T) {
 	untamed := ct.OfHouse(card.House.Untamed)
 

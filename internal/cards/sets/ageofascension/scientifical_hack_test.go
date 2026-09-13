@@ -17,7 +17,7 @@ import (
 //	Traits: Equation
 //
 //	Versatile.
-//	Action: Destroy Scientifical Hack. For the remainder of the turn, you may use friendly artifacts as if they belonged to the active house.
+//	Action: Destroy Scientifical Hack. For the remainder of the turn, you may use friendly Artifacts as if they belonged to the active house.
 func TestScientificalHack(t *testing.T) {
 	offRelic := engine.NewCard(
 		"Off Relic",

@@ -15,7 +15,7 @@ import (
 //	Traits: Item
 //
 //	Versatile.
-//	Action: Destroy Key to Dis and each creature.
+//	Action: Destroy Key to Dis and each Creature.
 func TestKeyToDis(t *testing.T) {
 	t.Run("sacrifices itself to destroy every creature in play", func(t *testing.T) {
 		var friend, foe ct.Card

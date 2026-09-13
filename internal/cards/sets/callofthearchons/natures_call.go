@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Put up to 3 creatures into their owners' hands.
+//	Play: Put up to 3 Creatures into their owners' hands.
 var NaturesCall = card.New(
 	"Nature's Call",
 	card.House.Untamed,

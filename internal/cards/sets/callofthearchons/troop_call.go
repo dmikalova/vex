@@ -18,7 +18,7 @@ var troopCallCluster = card.Cluster{
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Put each Niffle creature from your discard pile into your hand. Put each friendly Niffle creature into its owner's hand.
+//	Play: Put each Niffle Creature from your discard pile into your hand. Put each friendly Niffle Creature into its owner's hand.
 var TroopCall = card.New(
 	"Troop Call",
 	card.House.Untamed,

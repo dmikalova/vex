@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Upgrade
 //	Rarity: Rare
 //
-//	Play: Take control of this creature until Collar of Subordination leaves play.
+//	Play: Take control of this Creature until Collar of Subordination leaves play.
 var CollarOfSubordination = card.New(
 	"Collar of Subordination",
 	card.House.Dis,

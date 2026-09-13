@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Dinosaur • Soldier
 //
-//	After a friendly creature is destroyed, destroy each non-Dinosaur creature.
+//	After a friendly Creature is destroyed, destroy each non-Dinosaur Creature.
 //	Fight: Gain 2 Æmber.
 var Spartasaur = card.New(
 	"Spartasaur",

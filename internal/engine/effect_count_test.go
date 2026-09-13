@@ -255,6 +255,28 @@ func TestCardsReturnedThisWayCount(t *testing.T) {
 	}
 }
 
+func TestCardsPurgedThisWayCount(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx.Produced.Purged = [2]int{2, 1}
+
+	mine := ProducedThisWay{Tally: TallyCardsPurged, Player: Controller}
+	if got := mine.CountText(); got != "card they controlled that was purged this way" {
+		t.Errorf("count text = %q", got)
+	}
+	if got := mine.Value(ctx); got != 2 {
+		t.Errorf("value = %d, want 2", got)
+	}
+
+	theirs := ProducedThisWay{Tally: TallyCardsPurged, Player: Opponent}
+	if got := theirs.CountText(); got != "card your opponent controlled that was purged this way" {
+		t.Errorf("opponent count text = %q", got)
+	}
+	if got := theirs.Value(ctx); got != 1 {
+		t.Errorf("opponent value = %d, want 1", got)
+	}
+}
+
 func TestHousesInPlay(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.AddToBattleline(NewCard("m", Mars, Creature, Common, WithPower(4)), 0)

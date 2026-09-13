@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Move all Æmber from the most powerful creature to your pool. Destroy the chosen creature.
+//	Play: Move all Æmber from the most powerful Creature to your pool. Destroy the chosen Creature.
 var SicSemperTyrannosaurus = card.New(
 	"Sic Semper Tyrannosaurus",
 	card.House.Saurian,

@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Stun a creature and each of its neighbors.
+//	Play: Stun a Creature and each of its neighbors.
 func TestTremor(t *testing.T) {
 	t.Run("stuns a chosen creature and each of its neighbors", func(t *testing.T) {
 		var left, mid, right ct.Card

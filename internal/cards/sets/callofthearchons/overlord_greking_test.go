@@ -16,7 +16,7 @@ import (
 //	Power:  7
 //	Traits: Demon
 //
-//	After a creature is destroyed in a fight with Overlord Greking, put it into play under your control.
+//	After a Creature is destroyed in a fight with Overlord Greking, put it into play under your control.
 func TestOverlordGreking(t *testing.T) {
 	t.Run(
 		"reanimates an enemy creature destroyed in a fight with it, under your control",

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Traits: Item
 //
-//	Action: Use a friendly creature.
+//	Action: Use a friendly Creature.
 var DominatorBauble = card.New(
 	"Dominator Bauble",
 	card.House.Dis,

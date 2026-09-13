@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	This creature gains +5 power.
+//	This Creature gains +5 power.
 var BloodOfTitans = card.New(
 	"Blood of Titans",
 	card.House.Brobnar,

@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Put an enemy creature into its owner's hand.
+//	Play: Put an enemy Creature into its owner's hand.
 var Fear = card.New(
 	"Fear",
 	card.House.Dis,

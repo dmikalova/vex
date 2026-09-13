@@ -24,7 +24,7 @@ func camouflageCanFight(g *engine.Game, attacker, defender ct.Card) bool {
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Creatures not on a flank cannot fight this creature.
+//	Creatures not on a flank cannot fight this Creature.
 func TestCamouflage(t *testing.T) {
 	var flank, interior, hidden ct.Card
 	h := ct.Play(t, ct.Setup{

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Traits: Item
 //
-//	Action: Choose a house - during your opponent's next turn, creatures of the chosen house cannot be used to reap.
+//	Action: Choose a house - during your opponent's next turn, Creatures of the chosen house cannot be used to reap.
 var SeismoEntangler = card.New(
 	"Seismo-entangler",
 	card.House.Logos,

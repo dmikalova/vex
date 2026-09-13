@@ -219,7 +219,7 @@ func TestCannotBeUsedToText(t *testing.T) {
 		"Crocag cannot reap.",
 		"Crocag cannot fight.",
 		"Crocag cannot use its Action ability.",
-		"If there are no enemy creatures in play, destroy Crocag.",
+		"If there are no enemy Creatures in play, destroy Crocag.",
 	}
 	for _, w := range want {
 		if !containsLine(got, w) {

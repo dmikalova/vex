@@ -16,7 +16,7 @@ import (
 //	Traits: Cyborg • Beast
 //
 //	Elusive.
-//	Each neighboring creature gains, "Destroyed: Archive this creature from play."
+//	Each neighboring Creature gains, "Destroyed: Archive this Creature from play."
 func TestArchimedes(t *testing.T) {
 	t.Run("a destroyed neighbor is archived instead of discarded", func(t *testing.T) {
 		var neighbor, enemy ct.Card

@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Traits: Item • Shard
 //
-//	Action: For each friendly Shard, stun an enemy creature.
+//	Action: For each friendly Shard, stun an enemy Creature.
 func TestShardOfHate(t *testing.T) {
 	t.Run("stuns an enemy creature for each friendly shard", func(t *testing.T) {
 		var enemy ct.Card

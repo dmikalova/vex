@@ -17,7 +17,7 @@ import (
 //	Traits: Human • Knight
 //
 //	Deploy.
-//	Each neighboring creature gains +2 power.
+//	Each neighboring Creature gains +2 power.
 func TestLionBautrem(t *testing.T) {
 	t.Run("gives each battleline neighbor +2 power but not distant creatures", func(t *testing.T) {
 		var left, right, far ct.Card

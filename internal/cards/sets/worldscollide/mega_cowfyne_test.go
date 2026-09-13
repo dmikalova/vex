@@ -15,7 +15,7 @@ import (
 //	Power:  7
 //	Traits: Giant
 //
-//	Before Fight: Deal 2 damage to each neighbor of the creature Mega Cowfyne fights.
+//	Before Fight: Deal 2 damage to each neighbor of the Creature Mega Cowfyne fights.
 func TestMegaCowfyne(t *testing.T) {
 	t.Run("deals 2 damage to each neighbor of the creature it fights", func(t *testing.T) {
 		var target, left, right ct.Card

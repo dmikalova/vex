@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Your opponent gains control of a friendly creature.
+//	Play: Your opponent gains control of a friendly Creature.
 func TestExile(t *testing.T) {
 	t.Run("gives control of a friendly creature to the opponent", func(t *testing.T) {
 		var pet ct.Card

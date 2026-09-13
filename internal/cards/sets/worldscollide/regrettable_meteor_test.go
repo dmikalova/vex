@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Æmber:  1
 //
-//	Play: Destroy each Dinosaur creature and each creature with power 6 or higher.
+//	Play: Destroy each Dinosaur Creature and each Creature with power 6 or higher.
 func TestRegrettableMeteor(t *testing.T) {
 	t.Run(
 		"destroys every Dinosaur and every power-6+ creature, sparing the rest",

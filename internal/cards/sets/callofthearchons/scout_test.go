@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Give skirmish to, ready, and fight with up to 2 different friendly creatures, one at a time.
+//	Play: Give skirmish to, ready, and fight with up to 2 different friendly Creatures, one at a time.
 func TestScout(t *testing.T) {
 	brobnar := ct.OfHouse(card.House.Brobnar)
 
