@@ -314,10 +314,6 @@ type CreatureResolver interface {
 	// controller's battleline, chooser picking the destination slot (which may be
 	// the creature's opponent — Malison moves an enemy creature).
 	MoveWithinBattleline(chooser int, id LocalID)
-	// SaveFromDestruction marks a creature whose own "Destroyed:" ability replaced
-	// its destruction, so the current batch's discard step leaves it in play
-	// (Reassembling Automaton).
-	SaveFromDestruction(id LocalID)
 	// LoseKeyword takes a keyword away from every creature in play for the
 	// remainder of the turn.
 	LoseKeyword(k Keyword)

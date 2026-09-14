@@ -256,6 +256,21 @@ func TestNewCardRejectsInvalidReplace(t *testing.T) {
 	}))
 }
 
+func TestNewCardRejectsReplaceWithInvalidCond(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Error("NewCard should panic on a Replace with an invalid condition")
+		}
+	}()
+	NewCard("bad", Logos, Creature, Uncommon, WithPower(3), WithStatic(StaticModifier{
+		Replaces: Replace{
+			When: EventCreatureDestroyed,
+			Cond: PoolAember{Player: Opponent},
+			With: Destroy{Target: Target{Kind: TargetTriggeringCreature}},
+		},
+	}))
+}
+
 func TestNewCardRejectsInvalidReplaces(t *testing.T) {
 	defer func() {
 		if recover() == nil {

@@ -34,30 +34,82 @@ func TestDestroyOrderByCreature(t *testing.T) {
 	}
 }
 
-// TestSaveFromDestruction covers a creature's own "Destroyed:" replacement: it
-// marks itself saved so the discard step leaves it in play, and its Do resolves
-// (Reassembling Automaton).
-func TestSaveFromDestruction(t *testing.T) {
-	e := SaveFromDestruction{Do: GainAember{Player: Controller, Amount: 1}}
-	if got := e.Text(); got != "instead of destroying "+SelfName+", gain 1 Æmber" {
-		t.Errorf("text = %q", got)
-	}
-	if err := e.validate(); err != nil {
-		t.Errorf("validate = %v", err)
+// TestDestructionReplacedByOwnStatic covers a creature carrying its own
+// destruction replacement (Reassembling Automaton): when its condition holds the
+// replacement stands in for the destruction before enrollment, so the creature
+// stays in play, its replacement resolves, and — because it was never enrolled —
+// it does not count as an enemy creature destroyed this turn. When the condition
+// fails it is destroyed normally and counts.
+func TestDestructionReplacedByOwnStatic(t *testing.T) {
+	newAutomaton := func() CardDefinition {
+		return testCreature("automaton", 3, WithStatic(StaticModifier{
+			Replaces: Replace{
+				When: EventCreatureDestroyed,
+				Cond: InPlay{Player: Controller, Type: Creature, Other: true},
+				With: GainAember{Player: Controller, Amount: 1},
+			},
+		}))
 	}
 
-	g := started(t)
-	before := g.Aember(0)
-	saved := g.AddToBattleline(testCreature("automaton", 3,
-		WithAbility(TriggerDestroyed, e)), 0)
+	t.Run("with another friendly creature, the destruction is replaced", func(t *testing.T) {
+		g := started(t)
+		saved := g.AddToBattleline(newAutomaton(), 0)
+		g.AddToBattleline(testCreature("ally", 3), 0)
+		before := g.Aember(0)
 
-	g.DestroyEach(0, []LocalID{saved})
+		g.DestroyEach(1, []LocalID{saved})
 
-	if !slices.Contains(g.Battleline(0), saved) {
-		t.Error("the saved creature should remain in play")
-	}
-	if g.Aember(0) != before+1 {
-		t.Errorf("aember = %d, want %d (the save's Do resolved)", g.Aember(0), before+1)
+		if !slices.Contains(g.Battleline(0), saved) {
+			t.Error("the saved creature should remain in play")
+		}
+		if g.Aember(0) != before+1 {
+			t.Errorf("aember = %d, want %d (the replacement resolved)", g.Aember(0), before+1)
+		}
+		if n := g.State.TurnHistory[1][EnemyCreaturesDestroyed]; n != 0 {
+			t.Errorf(
+				"EnemyCreaturesDestroyed = %d, want 0 (a replaced destruction does not count)",
+				n,
+			)
+		}
+	})
+
+	t.Run("alone, it is destroyed and counts", func(t *testing.T) {
+		g := started(t)
+		alone := g.AddToBattleline(newAutomaton(), 0)
+
+		g.DestroyEach(1, []LocalID{alone})
+
+		if slices.Contains(g.Battleline(0), alone) {
+			t.Error("with no other friendly creature the automaton should be destroyed")
+		}
+		if n := g.State.TurnHistory[1][EnemyCreaturesDestroyed]; n != 1 {
+			t.Errorf("EnemyCreaturesDestroyed = %d, want 1", n)
+		}
+	})
+}
+
+// TestCreatureSelfDestructionReplacementText renders a creature carrying its own
+// conditional destruction replacement in its own voice — folding the condition
+// into the "would be destroyed" clause — rather than the "This creature gains, …"
+// framing an Upgrade uses to grant the replacement to its host.
+func TestCreatureSelfDestructionReplacementText(t *testing.T) {
+	def := NewCard("Automaton", Logos, Creature, Uncommon, WithPower(3),
+		WithStatic(StaticModifier{
+			Replaces: Replace{
+				When: EventCreatureDestroyed,
+				Cond: InPlay{Player: Controller, Type: Creature, Other: true},
+				With: Sequence{Effects: []Effect{
+					Heal{Fully: true, Target: Target{Kind: TargetTriggeringCreature}},
+					MoveToFlank{Target: Target{Kind: TargetTriggeringCreature}},
+				}},
+			},
+		}))
+	got := cardRules(&def, false)
+	want := "If this Creature would be destroyed and there is another friendly " +
+		"Creature in play, instead fully heal it, and move it to either flank of " +
+		"its controller's battleline."
+	if !containsLine(got, want) {
+		t.Errorf("cardRules = %q, want a line %q", got, want)
 	}
 }
 

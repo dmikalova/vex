@@ -193,12 +193,6 @@ type Game struct {
 	// resolve. A Destroyed ability that destroys more creatures appends theirs here,
 	// so the resolve loop re-gathers and keeps going until the queue drains.
 	destroyPending []triggeredAbility
-	// savedFromDestruction holds the creatures whose own "Destroyed:" ability
-	// replaced their destruction (Reassembling Automaton "instead of destroying it,
-	// ... move it to a flank"). Set while a destruction batch resolves its Destroyed
-	// abilities and consulted by the discard step, which skips a saved creature; it
-	// is cleared once the batch finishes discarding.
-	savedFromDestruction map[LocalID]bool
 }
 
 // NewGame creates a new two-player game seeded for deterministic play.

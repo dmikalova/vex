@@ -91,10 +91,22 @@ func (g *Game) MoveToFlank(id LocalID, right bool) {
 func (g *Game) MoveWithinBattleline(chooser int, id LocalID) {
 	for player := range g.State.Battleline {
 		line := &g.State.Battleline[player]
-		if !line.remove(id) {
+		idx := line.indexOf(id)
+		if idx < 0 {
 			continue
 		}
-		pos := g.choosePosition(chooser, id, "Choose where to move "+g.Name(id), line.slice())
+		// Choose the slot against the line without the moved creature, but do
+		// not remove it yet. Removing it first exposes an intermediate board
+		// whose settle boundary (ADR 0029, raised when the placement prompt is
+		// presented) can destroy a neighbor the moved creature was holding up by
+		// position, shrinking the line and leaving the chosen slot out of range.
+		// Snapshot the other creatures, choose, then move atomically.
+		full := line.slice()
+		others := make([]LocalID, 0, len(full)-1)
+		others = append(others, full[:idx]...)
+		others = append(others, full[idx+1:]...)
+		pos := g.choosePosition(chooser, id, "Choose where to move "+g.Name(id), others)
+		line.remove(id)
 		line.insertAt(pos, id)
 		g.record(MovedWithinBattleline{Creature: id})
 		return

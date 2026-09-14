@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Robot • Experiment
 //
-//	Destroyed: If there is another friendly Creature in play, instead of destroying Reassembling Automaton, fully heal it, exhaust it, and move it to either flank of its controller's battleline.
+//	If this Creature would be destroyed and there is another friendly Creature in play, instead fully heal it, exhaust it, and move it to either flank of its controller's battleline.
 var ReassemblingAutomaton = set.New(
 	"Reassembling Automaton",
 	card.House.Logos,
@@ -19,10 +19,11 @@ var ReassemblingAutomaton = set.New(
 	card.Provenance(card.WC, "158"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Robot, card.Traits.Experiment),
-	card.WithAbility(card.Trigger.Destroyed, card.Conditional{
-		Cond: card.InPlay{Player: card.Controller, Type: card.Type.Creature, Other: true},
-		Then: card.SaveFromDestruction{
-			Do: card.Sequence{Effects: []card.Effect{
+	card.WithStatic(card.StaticModifier{
+		Replaces: card.Replace{
+			When: card.Event.Destroyed,
+			Cond: card.InPlay{Player: card.Controller, Type: card.Type.Creature, Other: true},
+			With: card.Sequence{Effects: []card.Effect{
 				card.Heal{Fully: true, Target: card.Target.Triggering},
 				card.Exhaust{Target: card.Target.Triggering},
 				card.MoveToFlank{Target: card.Target.Triggering},

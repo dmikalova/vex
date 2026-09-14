@@ -661,8 +661,6 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return effectGlyphs(v.Do)
 	case engine.ByActivePlayer:
 		return effectGlyphs(v.Do)
-	case engine.SaveFromDestruction:
-		return effectGlyphs(v.Do)
 	case engine.Then:
 		if first, ok := v.First.(engine.Effect); ok {
 			return composeGlyphs(first, v.Result)

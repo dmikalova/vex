@@ -303,15 +303,19 @@ func (Replacement) action() lastingAction { return actSteal }
 // text renders the replacement clause, e.g. "steal the same amount".
 func (Replacement) text() string { return "steal the same amount" }
 
-// Replace is a continuous replacement an Upgrade applies to a game event for its
-// host while attached: when the event When would happen to the host, the effect
-// With resolves in its place. Unlike the turn-scoped Instead — a flat outcome swap
-// kept in the pointerless game state — a Replace lives in the card definition, so
-// its With is a full effect tree. Armageddon Cloak replaces its host's destruction
-// (EventCreatureDestroyed) with "fully heal it and destroy Armageddon Cloak", the
-// self-destruction spelled out as an effect rather than implied by the event site.
+// Replace is a continuous replacement a card applies to a game event while in
+// play: when the event When would happen, the effect With resolves in its place.
+// An Upgrade carries it to replace the event for its host (Armageddon Cloak
+// replaces its host's destruction with "fully heal it and destroy Armageddon
+// Cloak"); a creature carries it to replace the event for itself (Reassembling
+// Automaton replaces its own destruction with "fully heal it, exhaust it, and move
+// it to a flank"). Unlike the turn-scoped Instead — a flat outcome swap kept in
+// the pointerless game state — a Replace lives in the card definition, so its With
+// is a full effect tree. When Cond is set, the replacement applies only while that
+// condition holds; a nil Cond always applies.
 type Replace struct {
 	When Event
+	Cond Condition
 	With Effect
 }
 
@@ -319,11 +323,17 @@ type Replace struct {
 // carries a Replace from the zero value that carries none.
 func (r Replace) valid() bool { return r.When != eventUnset }
 
-// validate surfaces a configuration error in the replacement effect, ignoring the
-// zero value (a StaticModifier with no replacement).
+// validate surfaces a configuration error in the replacement effect (and its
+// condition, if any), ignoring the zero value (a StaticModifier with no
+// replacement).
 func (r Replace) validate() error {
 	if !r.valid() {
 		return nil
+	}
+	if r.Cond != nil {
+		if err := validateCondition(r.Cond); err != nil {
+			return err
+		}
 	}
 	return validateEffect(r.With)
 }

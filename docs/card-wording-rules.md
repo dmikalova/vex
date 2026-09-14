@@ -157,20 +157,33 @@ creature` when a creature was just chosen.
 When an effect replaces what _would_ happen, the `would` cue comes first and
 `instead` heads the replacement clause — the twist is never buried at the end.
 
-| Original                                                                                      | Curated                                                                                    |
-| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| `…any Æmber you would gain from reaping is stolen from your opponent instead.`                | `…instead of gaining Æmber from reaping, steal the same amount.`                           |
-| `Each Æmber that would be added to your opponent's pool is captured by Ether Spider instead.` | `If Æmber would be added to your opponent's pool, instead Ether Spider captures it.`       |
-| `Destroyed: Fully heal this creature and destroy Armageddon Cloak instead.`                   | `If this creature would be destroyed, instead fully heal it and destroy Armageddon Cloak.` |
+| Original                                                                                              | Curated                                                                                         |
+| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `…any Æmber you would gain from reaping is stolen from your opponent instead.`                        | `…instead of gaining Æmber from reaping, steal the same amount.`                                |
+| `Each Æmber that would be added to your opponent's pool is captured by Ether Spider instead.`         | `If Æmber would be added to your opponent's pool, instead Ether Spider captures it.`            |
+| `Destroyed: Fully heal this creature and destroy Armageddon Cloak instead.`                           | `If this creature would be destroyed, instead fully heal it and destroy Armageddon Cloak.`      |
+| `Destroyed: If you have any other creatures in play, instead of destroying Reassembling Automaton, …` | `If this creature would be destroyed and there is another friendly creature in play, instead …` |
 
 Two shapes:
 
 - **Passive event:** `If X would …, instead Y` (Ether Spider, Armageddon Cloak).
 - **Named action:** `Instead of X, Y` (Dimension Door).
 
-Maps to a `Replace{when, with}` interceptor, distinct from a trigger. Note
+Maps to a `Replace{when, cond, with}` interceptor, distinct from a trigger. Note
 Armageddon Cloak drops the `Destroyed:` trigger label — a destruction _save_ is a
-replacement, not a post-destruction trigger.
+replacement, not a post-destruction trigger. An Upgrade carries the `Replace` to
+save its host; a creature carries it (in its own `Static`) to save itself
+(Reassembling Automaton, Self-Bolstering Automata), reading in its own voice
+rather than through the `This creature gains, "…"` framing. A conditional save
+folds its condition into the `would` clause (`If this creature would be destroyed
+**and** there is another friendly creature in play, instead …`).
+
+Because the replacement stands in _before_ the destruction is enrolled, a saved
+creature never counts as destroyed — it does not bump the enemy-creatures-destroyed
+tally, the creatures-destroyed-this-way count, or fire "after … destroyed"
+reactions. (Authoring a destruction save as a `Destroyed:` trigger — as the Automata
+once were — wrongly counted the creature as destroyed; the `Replace` path fixes
+that.)
 
 ## 7. Self-reference by card name
 

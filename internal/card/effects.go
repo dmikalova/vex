@@ -482,9 +482,6 @@ type (
 	OpponentNamesHouse = engine.OpponentNamesHouse
 	// Conditional resolves Then only when Cond is met.
 	Conditional = engine.Conditional
-	// SaveFromDestruction is a creature's own "Destroyed:" replacement: it stays in
-	// play and Do resolves on it instead of being destroyed.
-	SaveFromDestruction = engine.SaveFromDestruction
 	// Repeat resolves Do and repeats it as its Gate allows — While (automatically
 	// while a condition holds), MayWhile (optionally at the controller's choice), or
 	// ByExalting (once, paid by exalting a creature).

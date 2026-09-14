@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  1
 //	Traits: Robot
 //
-//	Destroyed: If there is another friendly Creature in play, instead of destroying Self-Bolstering Automata, fully heal it, exhaust it, and move it to either flank of its controller's battleline -> give it two +1 power counters.
+//	If this Creature would be destroyed and there is another friendly Creature in play, instead fully heal it, exhaust it, move it to either flank of its controller's battleline, and give it two +1 power counters.
 var SelfBolsteringAutomata = set.New(
 	"Self-Bolstering Automata",
 	card.House.Logos,
@@ -19,17 +19,16 @@ var SelfBolsteringAutomata = set.New(
 	card.Provenance(card.WC, "176"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Robot),
-	card.WithAbility(card.Trigger.Destroyed, card.Conditional{
-		Cond: card.InPlay{Player: card.Controller, Type: card.Type.Creature, Other: true},
-		Then: card.Then{
-			First: card.SaveFromDestruction{
-				Do: card.Sequence{Effects: []card.Effect{
-					card.Heal{Fully: true, Target: card.Target.Triggering},
-					card.Exhaust{Target: card.Target.Triggering},
-					card.MoveToFlank{Target: card.Target.Triggering},
-				}},
-			},
-			Result: card.AddPowerCounter{Target: card.Target.Triggering, Amount: 2},
+	card.WithStatic(card.StaticModifier{
+		Replaces: card.Replace{
+			When: card.Event.Destroyed,
+			Cond: card.InPlay{Player: card.Controller, Type: card.Type.Creature, Other: true},
+			With: card.Sequence{Effects: []card.Effect{
+				card.Heal{Fully: true, Target: card.Target.Triggering},
+				card.Exhaust{Target: card.Target.Triggering},
+				card.MoveToFlank{Target: card.Target.Triggering},
+				card.AddPowerCounter{Target: card.Target.Triggering, Amount: 2},
+			}},
 		},
 	}),
 )

@@ -703,6 +703,13 @@ func staticBonuses(m StaticModifier) string {
 func upgradeStaticLines(def *CardDefinition, hosted bool) []string {
 	static := staticText(def.Static)
 	replacement := destructionReplacementText(def)
+	// A creature carrying its own destruction replacement (Reassembling Automaton)
+	// states it plainly in its own voice — "If this creature would be destroyed,
+	// instead …" — rather than through the "This creature gains, …" framing an
+	// Upgrade uses to grant the replacement to its host.
+	if replacement != "" && def.Type != Upgrade {
+		return []string{capitalizeFirst(replacement) + "."}
+	}
 	if hosted {
 		var lines []string
 		if s := staticBonuses(def.Static); s != "" {
@@ -731,14 +738,20 @@ func upgradeStaticLines(def *CardDefinition, hosted bool) []string {
 	}
 }
 
-// destructionReplacementText renders an Upgrade-granted replacement for its host
-// being destroyed, naming the Upgrade that is destroyed instead.
+// destructionReplacementText renders a replacement for a creature being destroyed
+// — an Upgrade granting it to its host, or a creature carrying its own
+// (Reassembling Automaton) — naming the card that resolves the replacement. A
+// conditional replacement folds its condition into the "would be destroyed" clause.
 func destructionReplacementText(def *CardDefinition) string {
 	r := def.Static.Replaces
 	if !r.valid() || r.When != EventCreatureDestroyed {
 		return ""
 	}
-	return "If this creature would be destroyed, instead " + strings.ReplaceAll(
+	cond := ""
+	if r.Cond != nil {
+		cond = " and " + strings.TrimPrefix(r.Cond.CondText(), "if ")
+	}
+	return "If this creature would be destroyed" + cond + ", instead " + strings.ReplaceAll(
 		r.With.Text(),
 		SelfName,
 		def.Name,

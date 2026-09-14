@@ -25,18 +25,6 @@ func (g *Game) discardDestroyed(id LocalID) {
 	g.State.Discard[o].add(id)
 }
 
-// SaveFromDestruction marks a creature whose own "Destroyed:" ability replaced its
-// destruction, so the discard step of the current batch leaves it in play
-// (Reassembling Automaton). It records the replacement so the log narrates the
-// save.
-func (g *Game) SaveFromDestruction(id LocalID) {
-	if g.savedFromDestruction == nil {
-		g.savedFromDestruction = map[LocalID]bool{}
-	}
-	g.savedFromDestruction[id] = true
-	g.record(DestructionReplaced{Card: id, By: id})
-}
-
 // purgeFromPlay moves a card from play to its owner's purge pile (set aside out of
 // the game), shedding its upgrades, Æmber, and per-match state on the way — the
 // "purge this creature" a Destroyed ability can do (Annihilation Ritual). A card
@@ -199,36 +187,63 @@ func (g *Game) discardUnder(id LocalID) {
 	}
 }
 
-// applyDestructionReplacement runs the first attached Upgrade that replaces its
-// host's destruction (Armageddon Cloak). The Upgrade's replacement effect resolves
-// with the host as "it" and the Upgrade as its source, so a Sequence of "fully heal
-// it" and "destroy this Upgrade" saves the host and consumes the Upgrade. It reports
+// applyDestructionReplacement runs the replacement that stands in for a creature's
+// destruction, if one applies — the creature's own definition-level Replace
+// (Reassembling Automaton "instead of destroying it, ... move it to a flank") or an
+// attached Upgrade's (Armageddon Cloak). The replacement resolves with the creature
+// as "it" and its carrier as the source, so a Sequence of "fully heal it" and
+// "destroy this Upgrade" saves the creature and consumes the Upgrade. It reports
 // whether the destruction was replaced.
-func (g *Game) applyDestructionReplacement(controller int, id LocalID) bool {
-	up, r, ok := g.destructionReplacement(id)
+func (g *Game) applyDestructionReplacement(id LocalID) bool {
+	src, r, ok := g.destructionReplacement(id)
 	if !ok {
 		return false
 	}
-	g.record(DestructionReplaced{Card: id, By: up})
+	g.record(DestructionReplaced{Card: id, By: src})
 	r.With.Resolve(&EffectContext{
 		Resolver:   g,
-		Source:     up,
+		Source:     src,
 		It:         id,
 		HasIt:      true,
-		Controller: controller,
+		Controller: g.controller(id),
 	})
 	return true
 }
 
-// destructionReplacement finds the first attached Upgrade whose StaticModifier
-// replaces this creature's destruction, returning the Upgrade and its replacement.
+// destructionReplacement finds the replacement that stands in for this creature's
+// destruction, returning its carrier and the Replace. The creature's own
+// definition-level replacement takes precedence over an attached Upgrade's; a
+// replacement whose condition is not met (Reassembling Automaton with no other
+// friendly creature) does not apply.
 func (g *Game) destructionReplacement(id LocalID) (LocalID, Replace, bool) {
+	if r := g.cat.def(id).Static.Replaces; g.replacesDestruction(id, r) {
+		return id, r, true
+	}
 	for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
-		if r := g.cat.def(up).Static.Replaces; r.valid() && r.When == EventCreatureDestroyed {
+		if r := g.cat.def(up).Static.Replaces; g.replacesDestruction(id, r) {
 			return up, r, true
 		}
 	}
 	return 0, Replace{}, false
+}
+
+// replacesDestruction reports whether r replaces the destruction of creature id: it
+// must target destruction and, when it carries a condition, that condition must
+// hold read from the creature's own controller's perspective (so "there is another
+// friendly creature" counts the creature owner's board even when an enemy destroys
+// it).
+func (g *Game) replacesDestruction(id LocalID, r Replace) bool {
+	if !r.valid() || r.When != EventCreatureDestroyed {
+		return false
+	}
+	if r.Cond != nil && !r.Cond.Met(&EffectContext{
+		Resolver:   g,
+		Source:     id,
+		Controller: g.controller(id),
+	}) {
+		return false
+	}
+	return true
 }
 
 // destroyAttachedUpgrade detaches an Upgrade from its host and discards it — an
@@ -247,13 +262,14 @@ func (g *Game) destroyAttachedUpgrade(upgrade LocalID) {
 
 // filterUndestroyed drops creatures whose destruction does not happen from the
 // pending set before any Destroyed abilities are collected, so a saved creature
-// never counts as destroyed. A ward absorbs the destruction (spent first), or an
-// attached Upgrade replaces it (Armageddon Cloak).
-func (g *Game) filterUndestroyed(controller int, ids []LocalID) []LocalID {
+// never counts as destroyed. A ward absorbs the destruction (spent first), or a
+// replacement stands in for it — the creature's own (Reassembling Automaton) or an
+// attached Upgrade's (Armageddon Cloak).
+func (g *Game) filterUndestroyed(ids []LocalID) []LocalID {
 	var out []LocalID
 	for _, id := range ids {
 		if g.absorbedByWard(id, wardDestruction, 0) || g.hasKeyword(id, Invulnerable) ||
-			g.applyDestructionReplacement(controller, id) {
+			g.applyDestructionReplacement(id) {
 			continue
 		}
 		out = append(out, id)
@@ -306,7 +322,7 @@ func (g *Game) inDestroyingWindow(id LocalID) bool {
 // creatures and returns, leaving the owner to resolve, discard, and fire the
 // after-destruction reactions for the whole window.
 func (g *Game) destroyTogether(controller int, ids []LocalID) {
-	ids = g.filterUndestroyed(controller, ids)
+	ids = g.filterUndestroyed(ids)
 	// A creature caught by a nested destruction while its Destroyed window is still
 	// open (Harbinger of Doom's "Destroyed: destroy each creature" re-selects
 	// Harbinger) is already enrolled; drop it so its Destroyed abilities do not fire
@@ -385,16 +401,14 @@ func (g *Game) resolveDestroyedWindow() {
 }
 
 // discardDestroyWindow moves every enrolled creature still in play to its discard
-// pile, skipping one whose own Destroyed ability saved it (Reassembling Automaton)
-// or that already left play mid-window, then clears the saved marks for the window.
+// pile, skipping one that already left play mid-window (Annihilation Ritual purged
+// it). A creature whose destruction was replaced was dropped before enrollment, so
+// it never reaches this window.
 func (g *Game) discardDestroyWindow() {
 	for _, id := range g.destroyingWindow {
-		if g.inPlay(id) && !g.savedFromDestruction[id] {
+		if g.inPlay(id) {
 			g.discardDestroyed(id)
 		}
-	}
-	for _, id := range g.destroyingWindow {
-		delete(g.savedFromDestruction, id)
 	}
 }
 
