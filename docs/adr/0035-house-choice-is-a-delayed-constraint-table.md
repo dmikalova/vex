@@ -148,10 +148,17 @@ different arm-next-turn resolver methods.
   and the `payOffHouseWager` call; the constraint logic lives in one place that is
   exercised by the stacking cases directly.
 - The choosable set widens from the identity card's three houses to identity houses
-  plus the houses of cards the player controls, read at choice time. `PlayerHasHouse`
-  (the resolver port) widens with it: controlling an enemy off-house creature makes
-  its house legal to choose, and losing that creature makes it illegal again — the
-  same live read that voids a must the creature was granting.
+  plus the houses of cards the player controls, read at choice time: controlling an
+  enemy off-house creature makes its house legal to choose, and losing that creature
+  makes it illegal again — the same live read that voids a must the creature was
+  granting. This widened read is a **new** `StateReader.AllowedHouses(player)` port
+  method (the choosable set minus cannots, then surviving musts), which `ChooseHouse`
+  and the client's house picker both consult. `PlayerHasHouse` deliberately stays
+  **identity-only** and does not widen: it answers "is this house on the player's
+  identity card", which is what `ItIsOffIdentity` (Sneklifter's off-identity check)
+  means by house — a controlled off-house card must not make a creature count as
+  in-identity. Widening the choice and answering the identity question are two
+  different reads, so they are two methods.
 - "No active house" becomes a first-class resolved outcome: when cannots bar every
   choosable house, the turn proceeds with no active house rather than blocking the
   choice, and the player relies on out-of-house permissions for the turn.

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //
 //	Play: The next Creature or Artifact you play this turn enters play ready.
-var SoftLanding = card.New(
+var SoftLanding = set.New(
 	"Soft Landing",
 	card.House.Mars,
 	card.Type.Tactic,

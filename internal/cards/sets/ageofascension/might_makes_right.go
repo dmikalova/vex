@@ -9,8 +9,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: You may destroy any number of friendly Creatures with total power of 25 or more - forge a key at no cost -> purge Might Makes Right.
-var MightMakesRight = card.New(
+//	Play: Destroy any number of friendly Creatures. If the total power of Creatures destroyed this way is 25 or more, forge a key at no cost -> purge Might Makes Right.
+var MightMakesRight = set.New(
 	"Might Makes Right",
 	card.House.Brobnar,
 	card.Type.Tactic,
@@ -18,9 +18,15 @@ var MightMakesRight = card.New(
 	card.Provenance(card.AoA, "43"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.DestroyFriendlyCreaturesToForge{
-			Target:        card.Target.EachFriendlyCreature,
-			MinTotalPower: 25,
-			Then:          card.ForgeKey{FreeOfCost: true},
-		}),
+		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+			card.DestroyChosen{Target: card.Target.EachFriendlyCreature},
+			card.Conditional{
+				Cond: card.CountIs{
+					Count:  card.PowerDestroyedThisWay{},
+					Is:     card.AtLeast,
+					Amount: 25,
+				},
+				Then: card.ForgeKey{FreeOfCost: true},
+			},
+		}}),
 )

@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Taunt.
 //	Fight/Reap: Swap this Creature with another friendly Creature in your battleline.
-var SanctumGuardian = card.New(
+var SanctumGuardian = set.New(
 	"Sanctum Guardian",
 	card.House.Sanctum,
 	card.Type.Creature,

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: If there are no friendly Creatures in play, destroy each Creature that is not on a flank.
-var PhloxemSpike = card.New(
+var PhloxemSpike = set.New(
 	"Phloxem Spike",
 	card.House.Mars,
 	card.Type.Tactic,

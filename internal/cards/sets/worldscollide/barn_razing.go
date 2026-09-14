@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //
 //	Play: For the remainder of the turn, each time a friendly Creature fights, your opponent loses 1 Æmber.
-var BarnRazing = card.New(
+var BarnRazing = set.New(
 	"Barn Razing",
 	card.House.Brobnar,
 	card.Type.Tactic,

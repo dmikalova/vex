@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Destroyed: Discard the top card of your deck. If it is a Creature, swap it with Gebuk.
-var Gebuk = card.New(
+var Gebuk = set.New(
 	"Gebuk",
 	card.House.Untamed,
 	card.Type.Creature,
@@ -21,7 +21,7 @@ var Gebuk = card.New(
 	card.WithTraits(card.Traits.Beast),
 	card.WithAbility(
 		card.Trigger.Destroyed, card.Sentences{Effects: []card.Effect{
-			card.DiscardTopOfDeck{Player: card.Controller},
+			card.DiscardTop{Player: card.Controller},
 			card.Conditional{
 				Cond: card.ItIs{Type: card.Type.Creature},
 				Then: card.Swap{

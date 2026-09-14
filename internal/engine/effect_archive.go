@@ -1,6 +1,9 @@
 package engine
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // ArchiveCard sets cards aside into the controller's own archives: they go
 // face-down, out of the opponent's reach, and the controller may take them into
@@ -18,6 +21,10 @@ import "fmt"
 type ArchiveCard struct {
 	// Zone names the source the cards are archived from: Hand or Discard.
 	Zone Zone
+	// From names whose zone the cards are drawn from. The zero value (playerUnset)
+	// is the controller's own zone; Opponent draws from the opponent's hand into
+	// the controller's archives (Hidden Stash), an abduction from hand.
+	From Player
 	// Selection decides how each card is picked; it must be set.
 	Selection Selection
 	// Amount is how many cards to archive; the zero value counts as one.
@@ -49,6 +56,9 @@ func (e ArchiveCard) validate() error {
 	}
 	if e.Zone == Deck && !selectionPositional(e.Selection) {
 		return fmt.Errorf("ArchiveCard: a deck archive must be positional")
+	}
+	if e.From == Opponent && e.Zone != Hand {
+		return fmt.Errorf("ArchiveCard: an opponent archive must be from the hand")
 	}
 	return e.Or.validate()
 }
@@ -84,6 +94,9 @@ func (e ArchiveCard) Text() string {
 	prep := " from your "
 	if selectionPositional(e.Selection) {
 		prep = " of your "
+	}
+	if e.From == Opponent {
+		prep = strings.TrimSuffix(prep, "your ") + "your opponent's "
 	}
 	from := prep + e.Zone.noun()
 	if e.Per != nil {
@@ -158,12 +171,21 @@ func (e ArchiveCard) source(ctx *EffectContext) []LocalID {
 	case Deck:
 		cards = ctx.Resolver.Deck(ctx.Controller)
 	default:
-		cards = ctx.Resolver.Hand(ctx.Controller)
+		cards = ctx.Resolver.Hand(e.sourcePlayer(ctx))
 	}
 	if selectionPositional(e.Selection) {
 		cards = topFirst(e.Zone, cards)
 	}
 	return cards
+}
+
+// sourcePlayer is the player whose zone the archive draws from: the opponent when
+// From is Opponent, otherwise the controller.
+func (e ArchiveCard) sourcePlayer(ctx *EffectContext) int {
+	if e.From == Opponent {
+		return ctx.Opponent()
+	}
+	return ctx.Controller
 }
 
 // archive reveals the picked cards when Revealed is set, then moves each into
@@ -176,21 +198,21 @@ func (e ArchiveCard) archive(ctx *EffectContext, ids []LocalID) {
 				Cards:  []LocalID{id},
 			})
 		}
+		if e.From == Opponent {
+			// Abduction from hand: the enemy card goes into the controller's own
+			// archives, not its owner's, and returns home when it leaves them.
+			ctx.Resolver.ArchiveEnemyFromHand(ctx.Controller, id)
+			continue
+		}
 		archiveFrom(ctx, e.Zone, ctx.Controller, id)
 	}
 }
 
-// archiveFrom moves one card into archives, dispatching to the resolver method for
-// its current zone — the archive analog of purgeFrom (ADR 0031).
+// archiveFrom moves one card into its owner's archives — the archive verb is the
+// movement matrix with its destination fixed to archives, so it moves through the
+// shared ToArchives destination rather than its own switch (ADR 0031).
 func archiveFrom(ctx *EffectContext, from Zone, owner int, id LocalID) {
-	switch from {
-	case Discard:
-		ctx.Resolver.ArchiveFromDiscard(owner, id)
-	case Deck:
-		ctx.Resolver.ArchiveFromDeck(id)
-	default: // Hand
-		ctx.Resolver.ArchiveFromHand(id)
-	}
+	ToArchives.moveFrom(ctx, from, owner, id)
 }
 
 // ArchiveFromPlay moves each in-play card its Target selects into its owner's

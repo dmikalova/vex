@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Before Fight: Deal damage equal to its power to each neighbor of the Creature Mindworm fights.
-var Mindworm = card.New(
+var Mindworm = set.New(
 	"Mindworm",
 	card.House.Mars,
 	card.Type.Creature,

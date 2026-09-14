@@ -16,6 +16,9 @@ func TestDiscardHandText(t *testing.T) {
 	if err := (DiscardHand{}).validate(); err == nil {
 		t.Error("an unset player should be rejected")
 	}
+	if err := (DiscardHand{Player: Controller}).validate(); err != nil {
+		t.Errorf("a set player should validate, got %v", err)
+	}
 }
 
 // TestRefillHandText covers the per-player rendering and the unset-player guard.
@@ -31,6 +34,9 @@ func TestRefillHandText(t *testing.T) {
 	}
 	if err := (RefillHand{}).validate(); err == nil {
 		t.Error("an unset player should be rejected")
+	}
+	if err := (RefillHand{Player: Controller}).validate(); err != nil {
+		t.Errorf("a set player should validate, got %v", err)
 	}
 }
 

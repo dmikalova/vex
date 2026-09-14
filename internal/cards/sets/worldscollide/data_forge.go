@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Forge a key at +10 Æmber current cost, reduced by 1 Æmber for each card in your hand -> purge Data Forge.
-var DataForge = card.New(
+var DataForge = set.New(
 	"Data Forge",
 	card.House.Logos,
 	card.Type.Tactic,

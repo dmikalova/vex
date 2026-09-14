@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Knight
 //
 //	Fight: Champion Tabris captures 1 Æmber from your opponent.
-var ChampionTabris = card.New(
+var ChampionTabris = set.New(
 	"Champion Tabris",
 	card.House.Sanctum,
 	card.Type.Creature,

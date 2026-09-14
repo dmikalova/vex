@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Martian • Scientist
 //
 //	Play: Archive a card from your hand. You may purge a card from your archives to stun a Creature.
-var YzphyzKnowdrone = card.New(
+var YzphyzKnowdrone = set.New(
 	"Yzphyz Knowdrone",
 	card.House.Mars,
 	card.Type.Creature,

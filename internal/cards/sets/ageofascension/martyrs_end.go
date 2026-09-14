@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Destroy any number of friendly Creatures. For each Creature destroyed this way, gain 1 Æmber.
-var MartyrsEnd = card.New(
+var MartyrsEnd = set.New(
 	"Martyr's End",
 	card.House.Sanctum,
 	card.Type.Tactic,

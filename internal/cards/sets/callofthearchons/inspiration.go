@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //
 //	Play: Ready and use a friendly Creature.
-var Inspiration = card.New(
+var Inspiration = set.New(
 	"Inspiration",
 	card.House.Sanctum,
 	card.Type.Tactic,

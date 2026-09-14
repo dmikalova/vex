@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Knight
 //
 //	Staunch Knight gains +2 power while it is on a flank.
-var StaunchKnight = card.New(
+var StaunchKnight = set.New(
 	"Staunch Knight",
 	card.House.Sanctum,
 	card.Type.Creature,

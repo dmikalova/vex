@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Versatile.
 //	Action: Reveal a Mars Creature from your hand and archive it.
-var IncubationChamber = card.New(
+var IncubationChamber = set.New(
 	"Incubation Chamber",
 	card.House.Mars,
 	card.Type.Artifact,
@@ -24,7 +24,7 @@ var IncubationChamber = card.New(
 			Zone: card.Hand,
 			Selection: card.Chosen{
 				Type:  card.Type.Creature,
-				House: card.House.Self,
+				House: card.Houses.Named(card.House.Self),
 			},
 			Revealed: true,
 		}),

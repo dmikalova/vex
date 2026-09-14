@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant
 //
 //	Fight: Deal 2 damage to a flank Creature.
-var Mogghunter = card.New(
+var Mogghunter = set.New(
 	"Mogghunter",
 	card.House.Brobnar,
 	card.Type.Creature,

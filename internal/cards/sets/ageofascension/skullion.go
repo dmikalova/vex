@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon
 //
 //	Play: Destroy a friendly Creature.
-var Skullion = card.New(
+var Skullion = set.New(
 	"Skullion",
 	card.House.Dis,
 	card.Type.Creature,

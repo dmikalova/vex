@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Scientist
 //
 //	Friendly Artifacts enter play ready.
-var TheCurator = card.New(
+var TheCurator = set.New(
 	"The Curator",
 	card.House.Logos,
 	card.Type.Creature,

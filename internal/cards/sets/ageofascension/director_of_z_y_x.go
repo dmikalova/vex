@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	At the start of your turn, archive the top card of your deck.
-var DirectorOfZYX = card.New(
+var DirectorOfZYX = set.New(
 	"Director of Z.Y.X.",
 	card.House.Logos,
 	card.Type.Creature,

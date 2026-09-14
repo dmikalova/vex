@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Choose a house - for the remainder of the turn, each friendly Creature of the chosen house may fight.
-var BrothersInBattle = card.New(
+var BrothersInBattle = set.New(
 	"Brothers in Battle",
 	card.House.Brobnar,
 	card.Type.Tactic,
@@ -19,6 +19,6 @@ var BrothersInBattle = card.New(
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseHouseThen{
-			Then: card.MayPlayOrUse{Houses: card.Houses.Chosen, Grant: card.GrantFight},
+			Then: card.MayPlayOrUse{Houses: card.GrantHouses.Chosen, Grant: card.GrantFight},
 		}),
 )

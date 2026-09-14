@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Choose a house - reveal your opponent's hand, and discard each Creature of the chosen house from your opponent's hand.
-var DeepProbe = card.New(
+var DeepProbe = set.New(
 	"Deep Probe",
 	card.House.Mars,
 	card.Type.Tactic,
@@ -24,7 +24,7 @@ var DeepProbe = card.New(
 				card.DiscardCard{
 					Player:    card.Opponent,
 					Zone:      card.Hand,
-					Selection: card.Each{Type: card.Type.Creature, OfChosenHouse: true},
+					Selection: card.Each{Type: card.Type.Creature, House: card.Houses.Chosen},
 				},
 			}},
 		}),

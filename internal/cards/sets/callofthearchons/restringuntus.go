@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon
 //
 //	Play: Choose a house - your opponent cannot choose that house as their active house until Restringuntus leaves play.
-var Restringuntus = card.New(
+var Restringuntus = set.New(
 	"Restringuntus",
 	card.House.Dis,
 	card.Type.Creature,

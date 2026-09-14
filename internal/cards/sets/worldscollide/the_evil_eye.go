@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Keys cost +3 Æmber during your opponent's next turn.
-var TheEvilEye = card.New(
+var TheEvilEye = set.New(
 	"The Evil Eye",
 	card.House.Dis,
 	card.Type.Tactic,

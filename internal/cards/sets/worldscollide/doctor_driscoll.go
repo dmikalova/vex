@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Action: Heal 2 damage from a Creature. For each damage healed this way, gain 1 Æmber.
-var DoctorDriscoll = card.New(
+var DoctorDriscoll = set.New(
 	"Doctor Driscoll",
 	card.House.StarAlliance,
 	card.Type.Creature,

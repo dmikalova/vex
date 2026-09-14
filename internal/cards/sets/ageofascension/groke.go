@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant
 //
 //	Fight: Your opponent loses 1 Æmber.
-var Groke = card.New(
+var Groke = set.New(
 	"Groke",
 	card.House.Brobnar,
 	card.Type.Creature,

@@ -6,7 +6,7 @@ import "fmt"
 type FlankPosition uint8
 
 const (
-	// AnyFlank is met on either end of the battleline; Not inverts it.
+	// AnyFlank is met on either end of the battleline; wrap in Not for off-flank.
 	AnyFlank FlankPosition = iota
 	// LeftFlank is met only on the left end.
 	LeftFlank
@@ -16,33 +16,43 @@ const (
 
 // OnFlank is met by a creature's position in its battleline. OfIt names the
 // subject: the source card (false) or the context creature ctx.It (true). Where
-// names which flank: AnyFlank (either end, invertible with Not — Glyxl Proliferator
-// on a flank, Titan Librarian not, Malison's ctx.It on a flank), or a specific
-// LeftFlank / RightFlank (Sinestra left, Dexus right). With OfIt set and no context
-// creature it is not met.
+// names which flank: AnyFlank (either end — Glyxl Proliferator on a flank,
+// Not{OnFlank{}} for Titan Librarian not on a flank, Malison's ctx.It on a flank),
+// or a specific LeftFlank / RightFlank (Sinestra left, Dexus right). With OfIt set
+// and no context creature it is not met.
 type OnFlank struct {
 	OfIt  bool
 	Where FlankPosition
-	Not   bool
+}
+
+// subject names the card the position is read on.
+func (c OnFlank) subject() string {
+	if c.OfIt {
+		return "it"
+	}
+	return SelfName
+}
+
+// flankPhrase names the flank the position asks about.
+func (c OnFlank) flankPhrase() string {
+	switch c.Where {
+	case LeftFlank:
+		return "the left flank"
+	case RightFlank:
+		return "the right flank"
+	default:
+		return "a flank"
+	}
 }
 
 // CondText renders the condition naming the subject and flank.
 func (c OnFlank) CondText() string {
-	subject := SelfName
-	if c.OfIt {
-		subject = "it"
-	}
-	switch c.Where {
-	case LeftFlank:
-		return "if " + subject + " is on the left flank"
-	case RightFlank:
-		return "if " + subject + " is on the right flank"
-	default:
-		if c.Not {
-			return "if " + subject + " is not on a flank"
-		}
-		return "if " + subject + " is on a flank"
-	}
+	return "if " + c.subject() + " is on " + c.flankPhrase()
+}
+
+// negatedText renders the off-flank clause a Not wrapper prints.
+func (c OnFlank) negatedText() string {
+	return "if " + c.subject() + " is not on " + c.flankPhrase()
 }
 
 // Met reports whether the subject sits on the named flank.
@@ -55,7 +65,7 @@ func (c OnFlank) Met(ctx *EffectContext) bool {
 		subject = ctx.It
 	}
 	if c.Where == AnyFlank {
-		return onFlank(ctx, subject) != c.Not
+		return onFlank(ctx, subject)
 	}
 	if !ctx.Resolver.IsCreature(subject) {
 		return false
@@ -120,26 +130,26 @@ func (c SourceNeighborsAllOfHouse) Met(ctx *EffectContext) bool {
 }
 
 // AemberOnThisAtLeast is met when at least Amount Æmber sits on the source card —
-// [REDACTED] sacrifices itself once it has hoarded four or more. Not flips the
-// sense to "fewer than Amount", so Crassosaurus purges itself when it captured too
+// [REDACTED] sacrifices itself once it has hoarded four or more. Wrap in Not for
+// the "fewer than Amount" sense, so Crassosaurus purges itself when it captured too
 // little.
 type AemberOnThisAtLeast struct {
 	Amount int
-	// Not flips the sense: false is met at or above the threshold, true below it.
-	Not bool
 }
 
-// CondText renders the condition clause, "fewer than" when Not flips the sense.
+// CondText renders the at-or-above-threshold clause.
 func (c AemberOnThisAtLeast) CondText() string {
-	if c.Not {
-		return fmt.Sprintf("if there are fewer than %d Æmber on it", c.Amount)
-	}
 	return fmt.Sprintf("if there are %d or more Æmber on it", c.Amount)
 }
 
-// Met reports whether the source card holds at least Amount Æmber, flipped by Not.
+// negatedText renders the below-threshold clause a Not wrapper prints.
+func (c AemberOnThisAtLeast) negatedText() string {
+	return fmt.Sprintf("if there are fewer than %d Æmber on it", c.Amount)
+}
+
+// Met reports whether the source card holds at least Amount Æmber.
 func (c AemberOnThisAtLeast) Met(ctx *EffectContext) bool {
-	return (ctx.Resolver.AmberOn(ctx.Source) >= c.Amount) != c.Not
+	return ctx.Resolver.AmberOn(ctx.Source) >= c.Amount
 }
 
 // CountersOnThisAtLeast is met when the source card carries at least N counters of

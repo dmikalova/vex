@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: If your opponent played 3 or more Creatures on their previous turn, steal 2 Æmber.
-var Lifeweb = card.New(
+var Lifeweb = set.New(
 	"Lifeweb",
 	card.House.Untamed,
 	card.Type.Tactic,

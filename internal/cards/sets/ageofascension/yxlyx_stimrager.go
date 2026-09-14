@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Martian • Soldier
 //
 //	Fight: Deal 2 damage to a Creature and move it to either flank of its controller's battleline.
-var YxlyxStimrager = card.New(
+var YxlyxStimrager = set.New(
 	"Yxlyx Stimrager",
 	card.House.Mars,
 	card.Type.Creature,

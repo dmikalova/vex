@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Choose a house - your opponent must choose that house as their active house during their next turn.
-var ControlTheWeak = card.New(
+var ControlTheWeak = set.New(
 	"Control the Weak",
 	card.House.Dis,
 	card.Type.Tactic,

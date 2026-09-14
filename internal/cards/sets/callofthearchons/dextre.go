@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Play: Dextre captures 1 Æmber from your opponent.
 //	Destroyed: Put Dextre on top of its owner's deck.
-var Dextre = card.New(
+var Dextre = set.New(
 	"Dextre",
 	card.House.Logos,
 	card.Type.Creature,

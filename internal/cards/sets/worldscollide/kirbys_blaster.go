@@ -20,7 +20,7 @@ var kirbysBlasterCluster = card.Cluster{
 //	This Creature gains, "Fight/Reap: Choose one:
 //	- Deal 2 damage to a Creature
 //	- Attach Kirby's Blaster to Com. Officer Kirby -> draw 2 cards."
-var KirbysBlaster = card.New(
+var KirbysBlaster = set.New(
 	"Kirby's Blaster",
 	card.House.StarAlliance,
 	card.Type.Upgrade,

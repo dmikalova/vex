@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon • Knight
 //
 //	Play: If your opponent has no Æmber, gain 2 Æmber.
-var TheTerror = card.New(
+var TheTerror = set.New(
 	"The Terror",
 	card.House.Dis,
 	card.Type.Creature,

@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Taunt.
 //	Yxilx Dominator enters play stunned.
-var YxilxDominator = card.New(
+var YxilxDominator = set.New(
 	"Yxilx Dominator",
 	card.House.Mars,
 	card.Type.Creature,

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon
 //
 //	Play: If your opponent has 4 Æmber or more, steal 1 Æmber.
-var Shooler = card.New(
+var Shooler = set.New(
 	"Shooler",
 	card.House.Dis,
 	card.Type.Creature,

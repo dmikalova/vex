@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Location
 //
 //	Action: Choose a friendly Creature - exalt the chosen Creature. Ready and use the chosen Creature.
-var TheGoldenSpiral = card.New(
+var TheGoldenSpiral = set.New(
 	"The Golden Spiral",
 	card.House.Saurian,
 	card.Type.Artifact,

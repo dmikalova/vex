@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Redistribute the Æmber on friendly Creatures among friendly Creatures. Redistribute the Æmber on enemy Creatures among enemy Creatures.
-var Equalize = card.New(
+var Equalize = set.New(
 	"Equalize",
 	card.House.Sanctum,
 	card.Type.Tactic,

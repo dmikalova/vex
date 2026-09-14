@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Cyborg • Insect
 //
 //	Play/Reap: Reveal your opponent's hand.
-var PsychicBug = card.New(
+var PsychicBug = set.New(
 	"Psychic Bug",
 	card.House.Logos,
 	card.Type.Creature,

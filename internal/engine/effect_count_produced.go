@@ -28,6 +28,28 @@ func (CreaturesDestroyed) Value(ctx *EffectContext) int { return ctx.Produced.To
 // CountText renders the singular noun the "for each" clause repeats.
 func (CreaturesDestroyed) CountText() string { return "creature destroyed this way" }
 
+// PowerDestroyedThisWay is the summed board power of the creatures the most recent
+// destruction in this resolution removed from play, each measured just before it
+// left — the "total power of creatures destroyed this way" a following CountIs
+// gates on (Might Makes Right forges only above 25).
+type PowerDestroyedThisWay struct{}
+
+// Value returns the summed board power of the creatures the preceding Destroy
+// removed.
+func (PowerDestroyedThisWay) Value(ctx *EffectContext) int {
+	return ctx.Produced.DestroyedPower
+}
+
+// CountText renders the singular noun a "for each" clause would repeat.
+func (PowerDestroyedThisWay) CountText() string { return "power of creatures destroyed this way" }
+
+// CountClause renders the clause CountIs puts after "if", e.g. "the total power of
+// creatures destroyed this way is 25 or more". Power is a mass total, so the
+// plural flag does not change it.
+func (PowerDestroyedThisWay) CountClause(quantity string, _ bool) string {
+	return "the total power of creatures destroyed this way is " + quantity
+}
+
 // ProducedTally names a "... this way" tally an earlier effect in the same
 // resolution records in ctx.Produced for a following ProducedThisWay count.
 type ProducedTally uint8

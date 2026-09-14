@@ -5,13 +5,13 @@ import "testing"
 func TestDiscardTopOfDeckPlayer(t *testing.T) {
 	// Text renders from each perspective: the granted default names "its
 	// controller", while Controller and Opponent are direct first/second person.
-	if got := (DiscardTopOfDeck{}).Text(); got != "discard the top card of its controller's deck" {
+	if got := (DiscardTop{}).Text(); got != "discard the top card of its controller's deck" {
 		t.Errorf("granted text = %q", got)
 	}
-	if got := (DiscardTopOfDeck{Player: Controller}).Text(); got != "discard the top card of your deck" {
+	if got := (DiscardTop{Player: Controller}).Text(); got != "discard the top card of your deck" {
 		t.Errorf("controller text = %q", got)
 	}
-	if got := (DiscardTopOfDeck{Player: Opponent}).Text(); got != "discard the top card of your opponent's deck" {
+	if got := (DiscardTop{Player: Opponent}).Text(); got != "discard the top card of your opponent's deck" {
 		t.Errorf("opponent text = %q", got)
 	}
 
@@ -20,7 +20,7 @@ func TestDiscardTopOfDeckPlayer(t *testing.T) {
 	next := g.AddToDeck(NewCard("Opp Next", Logos, Tactic, Common), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	DiscardTopOfDeck{Player: Opponent}.Resolve(ctx)
+	DiscardTop{Player: Opponent}.Resolve(ctx)
 	if !ctx.HasIt || ctx.It != top {
 		t.Errorf("context card = %d (has %v), want opponent top %d", ctx.It, ctx.HasIt, top)
 	}
@@ -35,7 +35,7 @@ func TestDiscardTopOfDeckPlayer(t *testing.T) {
 func TestDiscardTopOfDeckEmpty(t *testing.T) {
 	g := NewGame("Alice", "Bob", 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0, HasIt: true, It: 42}
-	DiscardTopOfDeck{Player: Controller}.Resolve(ctx)
+	DiscardTop{Player: Controller}.Resolve(ctx)
 	if ctx.HasIt {
 		t.Errorf("empty deck should leave no card in context, got It=%d", ctx.It)
 	}
@@ -67,7 +67,7 @@ func TestCardsInHand(t *testing.T) {
 	}
 
 	// Discard sets the context card, so the count matches the opponent's Mars cards.
-	DiscardTopOfDeck{Player: Opponent}.Resolve(ctx)
+	DiscardTop{Player: Opponent}.Resolve(ctx)
 	if ctx.It != discarded {
 		t.Fatalf("context card = %d, want %d", ctx.It, discarded)
 	}

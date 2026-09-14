@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Scientist
 //
 //	Reap: Draw a card.
-var DocBookton = card.New(
+var DocBookton = set.New(
 	"Doc Bookton",
 	card.House.Logos,
 	card.Type.Creature,

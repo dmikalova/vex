@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Mutant
 //
 //	Play: Your opponent cannot use any cards during their next turn.
-var SkippyTimehog = card.New(
+var SkippyTimehog = set.New(
 	"Skippy Timehog",
 	card.House.Logos,
 	card.Type.Creature,

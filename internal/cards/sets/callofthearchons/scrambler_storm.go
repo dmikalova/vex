@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Your opponent cannot play Tactics during their next turn.
-var ScramblerStorm = card.New(
+var ScramblerStorm = set.New(
 	"Scrambler Storm",
 	card.House.Logos,
 	card.Type.Tactic,

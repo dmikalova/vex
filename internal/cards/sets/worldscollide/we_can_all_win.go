@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Each player's keys cost -2 Æmber until the end of your next turn.
-var WeCanALLWin = card.New(
+var WeCanALLWin = set.New(
 	"We Can ALL Win",
 	card.House.StarAlliance,
 	card.Type.Tactic,

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //
 //	Play: For each house represented among cards in play, except for Sanctum, gain 1 Æmber.
-var FreeMarkets = card.New(
+var FreeMarkets = set.New(
 	"Free Markets",
 	card.House.Sanctum,
 	card.Type.Tactic,

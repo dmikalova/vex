@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Mutant
 //
 //	Destroyed: Archive the top card of your deck.
-var ResearchSmoko = card.New(
+var ResearchSmoko = set.New(
 	"Research Smoko",
 	card.House.Logos,
 	card.Type.Creature,

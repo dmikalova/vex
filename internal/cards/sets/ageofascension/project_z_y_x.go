@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Cyborg • Mutant
 //
 //	Fight/Reap: You may play a card from your archives.
-var ProjectZYX = card.New(
+var ProjectZYX = set.New(
 	"Project Z.Y.X.",
 	card.House.Logos,
 	card.Type.Creature,

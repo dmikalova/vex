@@ -10,11 +10,7 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 ### Next focus
 
-- shards should pull in shards for the other houses, House Ambassador (eg Brobnar Amassador) as a materialization - make it work as a legacy/maverick to swap with a card in another house, bane, plant
-- Way to always settle damage anytime power could change, instead of having to have settles strewn about the codebase. Similarly, way to settle that a card is no longer in play, so its abilities don't proc, and things that it may have triggered can no longer target it consistently instead of having to know all the call sites - eg redacted strange gizmo forge a key was putting amber back on redacted
 - event sourcing
-- drag and drop creature directly into battleline flank (or deploy, with dynamic moving as you go across), upgrade onto creature, artifact into artifact line
-- The action panel (context.md could have wording for this) could be the actual card and text, and then play/reap/ etc buttons within
 - using property testing to find unused code paths and then force specific tests there
 - Is there a way to validate that the UI handles and presents all possible game states/prompts? eg if I add a new prompt route, can the UI then automatically fail bc its not handled?
 - On the style page add a section with all of the Log and Text usages rendered out. The easiest wayt to do this might be to create a dedicated preview area that dynamically displays these elements as they are used in the engine (eg show a set of cards that covers every rendering element, and a log that does the same for all log entries)
@@ -23,8 +19,6 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - Be able to set up situation and then run it in the engine UI for playwright
 - rename to Vex
 - remove abduct / simplify to archive targets - the rules already naturally handle how archiving your opponent's cards works
-- can splash and splashattack be combined?
-- enemy creature should be indicated in archives and even under my control
 - Update card.New to be all opts
 - sequence vs sentences wording - eg sequence is obviously game, and sentences is textual, but they're both textual and game
 - Improve mega creatures
@@ -46,20 +40,14 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - The way a lot of effects work is there is implied chaining between one effect to the next - is there a reasonable way to make this more explicit?
 - Be able to load a test situation from a saved state or scenario file
 - I've noticed that there are some UI sugars in the engine - I was wondering if it makes sense for there to be an intermediate layer - eg the engine handles state changes, the wrapper handles relevant trackers for the UI, and then the UI on top imports the wrapper and renders what it gives. For example, there are badges for counting how much damage is about to be dealt to each creature in a selection like gargantes scrapper. That seems purely UI, but also makes sense near the engine. My concern is performance when there is no UI - eg for MCTS - if MCTS is calculating the badges and never using them then that's potentially lost performance.
+- Consolidate Destination and DeckDest - apparently the voicing would be a whole thing to add into this
 
 ## Things that can be done now
 
-- reproduce zone modal jump
+- WithAemberCost and Toll could be combined into MustPay
 
-- // TODOs
-- Make each brew unique to its card
-- More updates on the board row - left side should go under, not have invis gradient, right side should go to edge, spacing and parens on icons
-- Hovering over the key cost should show any modifiers to key cost instead of them being in the warning/restricted area
-- list all the cards with multiple provenances. For non-clusters, make them unique. Remove the duplicate allowances.
 - decompose all the neighbor stuff
 - Granted:  card.FightReap(card.ArchiveGrantingUpgrade{}), should be card.Archive{Target: GrantingUpgrade}
-- snags mirror / house restrictions should just remove the house from the list of options
-- snags mirror and tezmal not stacking right
 
 - Why is DamageThen and ChooseCreatureThen needed? Why can't these just be sequences that pass along the effect context?
 - decompose fidgit
@@ -69,15 +57,23 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - Nizak should be "While in a fight,"
 - How could Encounter suit can be simplified? "This creature is invulnerable while resolving a Tactic card"?
 - KeyForgery...
+- Rework Wormhole Technician
 
 ## Sites of all the things
 
 - effects.go
 - options.go
+- target.go
 - types.go
 
 ## UI finesse
 
+- Move the manual mode dialog into the zones modal
+- Make the zones modal not a modal - just have it be a full screen panel
+- enemy creature should be indicated in archives and even under my control
+- The action panel (context.md could have wording for this) could be the actual card and text, and then play/reap/ etc buttons within
+- drag and drop creature directly into battleline flank (or deploy, with dynamic moving as you go across), upgrade onto creature, artifact into artifact line
+- molina's blaster and glyph spacing
 - creeping oblivion prompt - currently has a done button at the top of the zone modal - should be at bottom outside the modal
 - Eliminate iconFallbackAllowed for glyphs
 - should rigged lottery log everything together
@@ -112,6 +108,7 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - Renaming the draw pile to reserve so that deck list, the full deck itself, and the deck pile are distinct and clearly named
 - Choose one: rewrites
 - After implementing all cards - pull 20 decks of each card from DoK and see which cards cannot be in multiples (eg tmtp)
+- "Play a card from your archives"
 
 ## Full two-player support
 
@@ -132,6 +129,7 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 ## Wild ideas
 
+- can splash and splashattack be combined?
 - aember on artifacts goes to opponent?
 - generate 10k decks, score them, and graph their scores with average, mean, std dev, and 95/99/99.9%iles
 - translations

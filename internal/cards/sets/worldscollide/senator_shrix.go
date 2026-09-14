@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	You may spend Æmber on Senator Shrix when forging keys.
 //	Play/Reap: You may exalt Senator Shrix.
-var SenatorShrix = card.New(
+var SenatorShrix = set.New(
 	"Senator Shrix",
 	card.House.Saurian,
 	card.Type.Creature,

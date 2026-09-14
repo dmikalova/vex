@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Faerie
 //
 //	Reap: Shuffle Mab the Mad into its owner's deck.
-var MabTheMad = card.New(
+var MabTheMad = set.New(
 	"Mab the Mad",
 	card.House.Untamed,
 	card.Type.Creature,

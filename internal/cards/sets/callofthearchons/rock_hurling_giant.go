@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant
 //
 //	After you discard a Brobnar card, you may deal 4 damage to a Creature.
-var RockHurlingGiant = card.New(
+var RockHurlingGiant = set.New(
 	"Rock-Hurling Giant",
 	card.House.Brobnar,
 	card.Type.Creature,
@@ -20,7 +20,7 @@ var RockHurlingGiant = card.New(
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(card.Trigger.AfterDiscardFromHand, card.Conditional{
-		Cond: card.ItIs{House: card.House.Self},
+		Cond: card.ItIs{House: card.Houses.Named(card.House.Self)},
 		Then: card.May{
 			Do: card.DealDamage{
 				Target: card.Target.Creature,

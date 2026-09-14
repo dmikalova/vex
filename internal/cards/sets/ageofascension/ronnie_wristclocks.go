@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Elf • Thief
 //
 //	Play: Steal 1 Æmber, or 2 if your opponent has 7 Æmber or more.
-var RonnieWristclocks = card.New(
+var RonnieWristclocks = set.New(
 	"Ronnie Wristclocks",
 	card.House.Shadows,
 	card.Type.Creature,

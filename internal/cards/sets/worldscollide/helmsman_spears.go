@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human
 //
 //	Fight/Reap: Discard any number of cards from your hand -> for each card discarded this way, draw a card.
-var HelmsmanSpears = card.New(
+var HelmsmanSpears = set.New(
 	"Helmsman Spears",
 	card.House.StarAlliance,
 	card.Type.Creature,

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Deal 2 damage to a Creature and purge any number of cards from your archives, and for each card purged this way, deal 2 damage to it.
-var DestructiveAnalysis = card.New(
+var DestructiveAnalysis = set.New(
 	"Destructive Analysis",
 	card.House.Mars,
 	card.Type.Tactic,

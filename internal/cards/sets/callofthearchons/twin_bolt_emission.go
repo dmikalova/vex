@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Deal 2 damage to a Creature and deal 2 damage to a different Creature.
-var TwinBoltEmission = card.New(
+var TwinBoltEmission = set.New(
 	"Twin Bolt Emission",
 	card.House.Logos,
 	card.Type.Tactic,

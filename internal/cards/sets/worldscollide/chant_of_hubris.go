@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Move 1 Æmber from a Creature to another Creature.
-var ChantOfHubris = card.New(
+var ChantOfHubris = set.New(
 	"Chant of Hubris",
 	card.House.Saurian,
 	card.Type.Tactic,

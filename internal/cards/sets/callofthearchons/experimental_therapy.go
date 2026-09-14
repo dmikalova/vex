@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	This Creature gains versatile.
 //	Play: Stun and exhaust this Creature.
-var ExperimentalTherapy = card.New(
+var ExperimentalTherapy = set.New(
 	"Experimental Therapy",
 	card.House.Logos,
 	card.Type.Upgrade,

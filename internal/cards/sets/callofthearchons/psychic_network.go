@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //
 //	Play: For each friendly ready Mars Creature, steal 1 Æmber.
-var PsychicNetwork = card.New(
+var PsychicNetwork = set.New(
 	"Psychic Network",
 	card.House.Mars,
 	card.Type.Tactic,

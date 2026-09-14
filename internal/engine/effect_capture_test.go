@@ -476,7 +476,7 @@ func TestCrassosaurusSelfPurge(t *testing.T) {
 	play := Sentences{Effects: []Effect{
 		CaptureFromAnyPlayer{Amount: 10},
 		Conditional{
-			Cond: AemberOnThisAtLeast{Amount: 10, Not: true},
+			Cond: Not{Cond: AemberOnThisAtLeast{Amount: 10}},
 			Then: PurgeCreature{Target: Target{Kind: TargetThisCreature}},
 		},
 	}}

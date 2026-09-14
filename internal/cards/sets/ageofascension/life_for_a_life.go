@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Destroy a friendly Creature -> deal 6 damage to a Creature.
-var LifeForALife = card.New(
+var LifeForALife = set.New(
 	"Life for a Life",
 	card.House.Shadows,
 	card.Type.Tactic,

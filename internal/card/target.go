@@ -5,7 +5,7 @@ import "github.com/dmikalova/vactrol/internal/engine"
 // Target groups ready-made targets, e.g. card.Target.EachEnemyCreature. Each is
 // an engine.Target value, so the filter methods (WithTrait, PowerAtMost, OnFlank,
 // Refine, ...) chain off them:
-// card.Target.EachEnemyCreature.Refine(card.Not(card.MostPowerful)).
+// card.Target.EachEnemyCreature.Refine(card.Except(card.MostPowerful)).
 var Target = targets{
 	This:                 engine.Target{Kind: engine.TargetThisCreature},
 	Triggering:           engine.Target{Kind: engine.TargetTriggeringCreature},
@@ -35,6 +35,7 @@ var Target = targets{
 	FriendlyArtifact:           engine.Target{Kind: engine.TargetChosenFriendlyArtifact},
 	EnemyArtifact:              engine.Target{Kind: engine.TargetChosenEnemyArtifact},
 	FormerNeighbors:            engine.Target{Kind: engine.TargetFormerNeighbors},
+	EachNeighbor:               engine.Target{Kind: engine.TargetEachNeighbor},
 	TheFoughtCreature:          engine.Target{Kind: engine.TargetTheFoughtCreature},
 	AttachedHost:               engine.Target{Kind: engine.TargetAttachedHost},
 	GrantingCard:               engine.Target{Kind: engine.TargetGrantingCard},
@@ -96,6 +97,9 @@ type targets struct {
 	// removing a creature ("each of that creature's neighbors"), for a follow-up
 	// that hits a destroyed creature's former neighbors (Pain Reaction).
 	FormerNeighbors engine.Target
+	// EachNeighbor selects the source card's live battleline neighbors ("each of
+	// <self>'s neighbors") — Ghosthawk reaps with each of its neighbors.
+	EachNeighbor engine.Target
 	// TheFoughtCreature selects the creature a preceding effect had a chosen creature
 	// fight ("the fought creature"), naming no fighter — Smite makes a friendly
 	// creature fight, then damages the fought creature's neighbors.
@@ -117,8 +121,8 @@ type Refinement = engine.Refinement
 // Power selectors come in two kinds. A tier keeps every creature tied at the
 // extreme and makes no choice: HighestPower / LowestPower. A singular selector
 // keeps exactly one creature and lets the controller break ties: MostPowerful /
-// LeastPowerful. Compose them with the Not (complement) and AnyOf (union)
-// combinators — Not(MostPowerful) spares one creature and takes the rest,
+// LeastPowerful. Compose them with the Except (complement) and AnyOf (union)
+// combinators — Except(MostPowerful) spares one creature and takes the rest,
 // AnyOf(LowestPower, HighestPower) takes both extremes at once.
 
 // HighestPower is a Refinement that keeps every creature tied for the highest
@@ -137,11 +141,11 @@ var LowestPower = engine.LowestPower
 // form use MostPowerfulN.
 var MostPowerful = engine.MostPowerful
 
-// Not returns a Refinement that keeps every creature the inner Refinement drops —
-// the complement, e.g. card.Target.EachEnemyCreature.Refine(
-// card.Not(card.MostPowerful)) is "each enemy creature except the most powerful"
+// Except returns a Refinement that keeps every creature the inner Refinement drops
+// — the complement, e.g. card.Target.EachEnemyCreature.Refine(
+// card.Except(card.MostPowerful)) is "each enemy creature except the most powerful"
 // (Champion's Challenge).
-var Not = engine.Not
+var Except = engine.Except
 
 // AnyOf returns a Refinement that keeps every creature any member keeps — the
 // union, e.g. card.Target.EachCreature.Refine(
@@ -192,7 +196,7 @@ var WithoutSharedTrait = engine.WithoutSharedTrait
 
 // PowerLessThan is a Refinement that keeps every creature of a set whose power is
 // below a running count, e.g.
-// card.Target.EachCreature.ExceptHouse(card.House.Self).Refine(card.PowerLessThan(count))
+// card.Target.EachCreature.House(card.Houses.Except(card.House.Self)).Refine(card.PowerLessThan(count))
 // (Exterminate! Exterminate!).
 var PowerLessThan = engine.PowerLessThan
 

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Cyborg • Scientist
 //
 //	Reap: Draw 2 cards.
-var BabblingBibliophile = card.New(
+var BabblingBibliophile = set.New(
 	"Babbling Bibliophile",
 	card.House.Logos,
 	card.Type.Creature,

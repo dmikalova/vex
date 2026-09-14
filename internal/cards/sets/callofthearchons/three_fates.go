@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Destroy the 3 most powerful Creatures.
-var ThreeFates = card.New(
+var ThreeFates = set.New(
 	"Three Fates",
 	card.House.Dis,
 	card.Type.Tactic,

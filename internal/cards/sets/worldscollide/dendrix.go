@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon
 //
 //	Fight: Your opponent discards a random card from their hand.
-var Dendrix = card.New(
+var Dendrix = set.New(
 	"Dendrix",
 	card.House.Dis,
 	card.Type.Creature,

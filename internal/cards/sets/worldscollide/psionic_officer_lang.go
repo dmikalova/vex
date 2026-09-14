@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human
 //
 //	After an enemy Creature reaps, archive the top card of your deck.
-var PsionicOfficerLang = card.New(
+var PsionicOfficerLang = set.New(
 	"Psionic Officer Lang",
 	card.House.StarAlliance,
 	card.Type.Creature,

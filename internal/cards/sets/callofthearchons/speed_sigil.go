@@ -11,12 +11,13 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Power
 //
 //	After a Creature enters play, if it is the first Creature played this turn, ready it.
-var SpeedSigil = card.New(
+var SpeedSigil = set.New(
 	"Speed Sigil",
 	card.House.Shadows,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "293"),
+	card.OneCopyPerDeck(),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Power),
 	card.WithAbility(

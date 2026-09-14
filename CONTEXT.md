@@ -334,13 +334,32 @@ House. Combines freely with Maverick ("Legacy Maverick").
 **Legacy pool**:
 For a Deck of Set X and House H, the cards of House H belonging to any Set ≠ X.
 
-**Legacy house**:
+**Interloper pod**:
 A very rare House pod whose 12 Slots draw from the same House in a different Set
-(the House matches the Set, but its pool does not).
+(the House matches the Set, but its pool does not). Implemented as
+`Tuning.InterloperRate`, rolled once per pod; every Slot is tagged Legacy.
 
-**Maverick house**:
-An even rarer House pod that is a House not present in the Deck's Set at all, drawn
-wholesale from another Set.
+**Errant pod**:
+An even rarer House pod whose House is not native to the Deck's Set at all, drawn
+wholesale from the cross-set legacy pool as that foreign House. Implemented as
+`Tuning.ErrantRate`, rolled once per pod (before the interloper roll); every Slot
+is tagged Legacy. The foreign House is one of the Set's **errant Houses** — Houses
+present in the legacy pool but not native to the Set (`Set.errantHouses`). Because
+an errant pod can bring in a House the Set never printed a member for, the
+deck-wide Shard cycle resolves from a catalog-wide `ClusterPool` (see below), whose
+gate requires a member for every House the Set can deck, native or errant.
+
+**Errant House**:
+A House present in the legacy pool but not native to a Set — one an errant pod can
+bring into a Deck of that Set. `Set.errantHouses`, computed in `WithLegacy`.
+
+**Cluster pool**:
+The catalog-wide cluster index (`deckgen.ClusterPool`, built by `NewClusterPool`
+from every registered card and attached with `WithClusters`) used to resolve
+deck-wide `OnePerHouse` clusters — the Shards — across every House a Deck can
+reach, including an errant House drawn from another Set. The two Shards no base set
+printed (Saurian, Star Alliance) live in the **Anomaly Expansion** reservoir set so
+the cycle completes across all nine Houses (ADR 0036).
 
 ## Card modification
 

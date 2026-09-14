@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	This Creature gains, "You may spend Æmber on this Creature as if it were in your pool."
 //	Play: Exalt this Creature.
-var TheCallipygianIdeal = card.New(
+var TheCallipygianIdeal = set.New(
 	"The Callipygian Ideal",
 	card.House.Saurian,
 	card.Type.Upgrade,

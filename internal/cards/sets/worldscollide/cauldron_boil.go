@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Deal 1 damage to each Creature for each point of damage on it.
-var CauldronBoil = card.New(
+var CauldronBoil = set.New(
 	"Cauldron Boil",
 	card.House.Untamed,
 	card.Type.Tactic,

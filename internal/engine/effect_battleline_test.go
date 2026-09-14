@@ -390,6 +390,9 @@ func TestTurnIntoCreature(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	existing := g.AddToBattleline(testCreature("existing", 2), 0)
 	art := g.AddArtifact(testArtifact("art", WithArmor(3)), 0)
+	// A converted card's power is its power counters; without any it would be a
+	// 0-power creature the next boundary sweeps (ADR 0029), so give it one.
+	g.AddPowerCounter(art, 1)
 
 	// Default chooser has no preference, so index 0 (the left flank) is taken.
 	ctx := &EffectContext{Resolver: g, Source: art, Controller: 0}
@@ -409,6 +412,7 @@ func TestTurnIntoCreature(t *testing.T) {
 
 	// A second card converts to the right flank when its controller picks index 1.
 	art2 := g.AddArtifact(testArtifact("art2"), 0)
+	g.AddPowerCounter(art2, 1)
 	g.SetChooser(0, optionPicker{idx: 1})
 	TurnIntoCreature{Target: Target{Kind: TargetThisCreature}}.
 		Resolve(&EffectContext{Resolver: g, Source: art2, Controller: 0})

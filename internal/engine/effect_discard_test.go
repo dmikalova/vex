@@ -8,7 +8,7 @@ func TestMoveFromDiscardToHand(t *testing.T) {
 	g.State.Discard[0].add(c)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := PutFromDiscard{Destination: ToHand}
+	e := PutFromDiscard{Selection: Chosen{}, Destination: ToHand}
 	if e.Text() != "put a card from your discard pile into your hand" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -56,8 +56,7 @@ func TestPutFromDiscardByTrait(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	e := PutFromDiscard{
-		Match:       Match{Type: Creature, Trait: Horseman},
-		All:         true,
+		Selection:   Each{Type: Creature, Trait: Horseman},
 		Destination: ToHand,
 	}
 	if e.Text() != "put each Horseman creature from your discard pile into your hand" {
@@ -102,7 +101,7 @@ func TestPutFromDiscardByTraitChoose(t *testing.T) {
 
 	// Not All: the non-Horseman card is filtered out of the candidates, leaving
 	// only the Horseman for the controller to choose.
-	e := PutFromDiscard{Match: Match{Type: Creature, Trait: Horseman}, Destination: ToHand}
+	e := PutFromDiscard{Selection: Chosen{Type: Creature, Trait: Horseman}, Destination: ToHand}
 	e.Resolve(ctx)
 	if !g.State.Hand[0].contains(horseman) {
 		t.Error("the Horseman creature should return to hand")
@@ -127,10 +126,8 @@ func TestMoveFromDiscardAll(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Controller: 0, ChosenHouse: Dis}
 
 	e := PutFromDiscard{
-		Match:         Match{Type: Creature},
-		Destination:   ToHand,
-		All:           true,
-		OfChosenHouse: true,
+		Selection:   Each{Type: Creature, House: chosenHouse},
+		Destination: ToHand,
 	}
 	if e.Text() != "put each creature of the chosen house from your discard pile into your hand" {
 		t.Errorf("text = %q", e.Text())
@@ -162,8 +159,7 @@ func TestPutFromDiscardByName(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	e := PutFromDiscard{
-		Match:       Match{Name: "Ortannu's Binding"},
-		All:         true,
+		Selection:   Each{Name: "Ortannu's Binding"},
 		Destination: ToHand,
 	}
 	if e.Text() != "put each Ortannu's Binding from your discard pile into your hand" {
@@ -193,7 +189,7 @@ func TestPutFromDiscardByNameChoose(t *testing.T) {
 
 	// Not All: the differently named card is filtered out of the candidates,
 	// leaving only the Binding for the controller to choose.
-	e := PutFromDiscard{Match: Match{Name: "Ortannu's Binding"}, Destination: ToHand}
+	e := PutFromDiscard{Selection: Chosen{Name: "Ortannu's Binding"}, Destination: ToHand}
 	e.Resolve(ctx)
 	if !g.State.Hand[0].contains(bind) {
 		t.Error("the named card should return to hand")
@@ -214,7 +210,7 @@ func TestReturnCreatureFromDiscardToDeck(t *testing.T) {
 	g.State.Discard[0].add(crea)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := PutFromDiscard{Match: Match{Type: Creature}, Destination: ToTopOfDeck}
+	e := PutFromDiscard{Selection: Chosen{Type: Creature}, Destination: ToTopOfDeck}
 	if e.Text() != "put a creature from your discard pile on top of your deck" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -263,15 +259,14 @@ func TestPutFromDiscardTypeOrTrait(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	e := PutFromDiscard{
-		Match:       Match{Type: Upgrade, Or: []Match{{Trait: Robot}}},
-		All:         true,
+		Selection:   Each{Type: Upgrade, Or: []CardFilter{{Trait: Robot}}},
 		Destination: ToHand,
 	}
 	if e.Text() != "put each upgrade or Robot card from your discard pile into your hand" {
 		t.Errorf("text = %q", e.Text())
 	}
 	choose := PutFromDiscard{
-		Match:       Match{Type: Upgrade, Or: []Match{{Trait: Robot}}},
+		Selection:   Chosen{Type: Upgrade, Or: []CardFilter{{Trait: Robot}}},
 		Destination: ToHand,
 	}
 	if choose.Text() != "put an upgrade or Robot card from your discard pile into your hand" {
@@ -319,7 +314,7 @@ func TestPutFromDiscardVacuousUnderMay(t *testing.T) {
 
 	may := May{
 		Do: PutFromDiscard{
-			Match:       Match{Type: Upgrade, Or: []Match{{Trait: Robot}}},
+			Selection:   Chosen{Type: Upgrade, Or: []CardFilter{{Trait: Robot}}},
 			Destination: ToHand,
 		},
 	}
@@ -369,7 +364,7 @@ func TestDiscardFromHandEach(t *testing.T) {
 	e := DiscardCard{
 		Player:    Opponent,
 		Zone:      Hand,
-		Selection: Each{Type: Creature, OfChosenHouse: true},
+		Selection: Each{Type: Creature, House: chosenHouse},
 	}
 	if e.Text() != "discard each creature of the chosen house from your opponent's hand" {
 		t.Errorf("text = %q", e.Text())
@@ -521,6 +516,14 @@ func TestDiscardFromArchives(t *testing.T) {
 			"discard count = %d, want 2 (empty-archives discards are no-ops)",
 			g.State.Discard[1].Count,
 		)
+	}
+
+	// A card that is not in the named archives is left where it is.
+	loose := g.AddToHand(NewCard("loose", Mars, Tactic, Common), 0)
+	before := g.State.Discard[0].Count
+	g.DiscardCardFromArchives(0, loose)
+	if g.State.Discard[0].Count != before || !g.State.Hand[0].contains(loose) {
+		t.Error("discarding a card absent from archives should be a no-op")
 	}
 }
 

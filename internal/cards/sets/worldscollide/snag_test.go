@@ -5,6 +5,7 @@ import (
 
 	"github.com/dmikalova/vactrol/internal/card"
 	ct "github.com/dmikalova/vactrol/internal/cards/cardtest"
+	"github.com/dmikalova/vactrol/internal/engine"
 )
 
 // Snag
@@ -32,7 +33,16 @@ func TestSnag(t *testing.T) {
 
 	h.P1.Fight(snag, foe)
 
-	if got := h.Game().State.ForcedHouseNext[1].Value; got != card.House.Logos {
-		t.Errorf("forced house = %v, want Logos (the house of the creature Snag fought)", got)
+	if h.Game().State.HouseConstraintCountNext[1] != 1 {
+		t.Fatalf("armed constraints = %d, want 1", h.Game().State.HouseConstraintCountNext[1])
 	}
+
+	h.P1.EndTurn() // the opponent's turn begins, promoting the must
+
+	// The must reads the fought creature's house live at choice time (Logos), so
+	// any other house is rejected and Logos is required.
+	if err := h.Game().ChooseHouse(1, card.House.Mars); err != engine.ErrHouseNotAllowed {
+		t.Errorf("a house other than the fought creature's = %v, want ErrHouseNotAllowed", err)
+	}
+	h.P2.ChooseHouse(card.House.Logos)
 }

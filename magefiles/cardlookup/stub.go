@@ -87,19 +87,15 @@ func stub(args []string) error {
 	return nil
 }
 
-// writeSetConfig (re)generates the set package's 0set.go: the catalog of the
-// cards this set reprints from earlier sets, so they join its deck-generation pool
-// as full members without this package importing another set. It returns the
-// reprint count. With no reprints it removes any stale 0set.go and writes nothing.
+// writeSetConfig (re)generates the set package's 0set.go: the set's registrar
+// (`var set = card.NewSet(card.XX)`, through which every card in the package
+// declares its home set) plus the catalog of the cards this set reprints from
+// earlier sets, so they join its deck-generation pool as full members without this
+// package importing another set. It returns the reprint count, and always writes
+// 0set.go — even with no reprints it declares the set registrar.
 func writeSetConfig(dir string, set provenance.Set) (int, error) {
 	reprints := reprintsForSet(set)
 	path := filepath.Join(dir, "0set.go")
-	if len(reprints) == 0 {
-		if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
-			return 0, fmt.Errorf("removing stale %q: %w", path, err)
-		}
-		return 0, nil
-	}
 	src, err := format.Source([]byte(setConfigSource(set, reprints)))
 	if err != nil {
 		return 0, fmt.Errorf("formatting 0set.go for %q: %w", set.Name, err)
@@ -157,27 +153,36 @@ func setConfigSource(set provenance.Set, reprints []provenance.Card) string {
 	b.WriteString("package " + set.Slug + "\n\n")
 	b.WriteString("import \"github.com/dmikalova/vactrol/internal/card\"\n\n")
 	b.WriteString(
-		"// " + set.Name + " reprints these cards from earlier sets. Each is implemented\n",
-	)
-	b.WriteString("// in the set that introduced it; here it is claimed as a full member of this\n")
-	b.WriteString(
-		"// set's deck-generation pool, resolved by name in the cards aggregator so this\n",
+		"// set is " + set.Name + "'s registrar: every card in this package declares its\n",
 	)
 	b.WriteString(
-		"// package imports no other set. The list is this set's provenance catalog minus\n",
+		"// home set by registering through set.New, so deck generation groups the card\n",
 	)
-	b.WriteString("// its own new cards; regenerate with `mage tool:stub " + set.Slug + "`.\n")
-	b.WriteString("func init() {\n")
-	for _, c := range reprints {
-		fmt.Fprintf(
-			&b,
-			"\tcard.Reprint(card.%s, %q, %s)\n",
-			provCodeVar(set.SourceSet),
-			c.Number,
-			quote(c.Name),
+	b.WriteString(
+		"// by this set alone and never infers it from provenance (ADR 0003).\n",
+	)
+	fmt.Fprintf(&b, "var set = card.NewSet(card.%s)\n", provCodeVar(set.SourceSet))
+	if len(reprints) > 0 {
+		b.WriteString("\n")
+		b.WriteString(
+			"// " + set.Name + " reprints these cards from earlier sets. Each is implemented\n",
 		)
+		b.WriteString(
+			"// in the set that introduced it; here it is claimed as a full member of this\n",
+		)
+		b.WriteString(
+			"// set's deck-generation pool, resolved by name in the cards aggregator so this\n",
+		)
+		b.WriteString(
+			"// package imports no other set. The list is this set's provenance catalog minus\n",
+		)
+		b.WriteString("// its own new cards; regenerate with `mage tool:stub " + set.Slug + "`.\n")
+		b.WriteString("func init() {\n")
+		for _, c := range reprints {
+			fmt.Fprintf(&b, "\tset.Reprint(%q, %s)\n", c.Number, quote(c.Name))
+		}
+		b.WriteString("}\n")
 	}
-	b.WriteString("}\n")
 	return b.String()
 }
 
@@ -217,7 +222,7 @@ func stubSource(pkg string, set provenance.SourceSet, c provenance.Card) string 
 
 	// A vanilla card.New skeleton with stats — compiles as-is once the build tag
 	// is removed, leaving only the ability to add.
-	b.WriteString("var " + varName(c.Name) + " = card.New(\n")
+	b.WriteString("var " + varName(c.Name) + " = set.New(\n")
 	b.WriteString("\t" + quote(c.Name) + ",\n")
 	b.WriteString("\tcard.House." + titleWord(c.House) + ",\n")
 	b.WriteString("\tcard.Type." + cardTypeName(c.Type) + ",\n")

@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Play: Your opponent loses 1 Æmber.
 //	Reap: Archive Rotgrub.
-var Rotgrub = card.New(
+var Rotgrub = set.New(
 	"Rotgrub",
 	card.House.Dis,
 	card.Type.Creature,

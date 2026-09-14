@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: For the remainder of the turn, each time you play a Creature, deal 2 damage to an enemy Creature.
-var Charge = card.New(
+var Charge = set.New(
 	"Charge!",
 	card.House.Sanctum,
 	card.Type.Tactic,

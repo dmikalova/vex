@@ -6,7 +6,7 @@ import (
 )
 
 func TestReveal(t *testing.T) {
-	if got := (RevealHand{Player: Controller, House: Mars}).Text(); got != "reveal any number of Mars cards from your hand" {
+	if got := (RevealHand{Player: Controller, House: namedHouse(Mars)}).Text(); got != "reveal any number of Mars cards from your hand" {
 		t.Errorf("house text = %q", got)
 	}
 	if got := (RevealHand{Player: Opponent}).Text(); got != "reveal your opponent's hand" {
@@ -20,7 +20,7 @@ func TestReveal(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	// Revealing your Mars cards counts and logs both; the Brobnar card is untouched.
-	RevealHand{Player: Controller, House: Mars}.Resolve(ctx)
+	RevealHand{Player: Controller, House: namedHouse(Mars)}.Resolve(ctx)
 	if ctx.Produced.Revealed != 2 {
 		t.Errorf("revealed = %d, want 2", ctx.Produced.Revealed)
 	}
@@ -51,7 +51,7 @@ func TestReveal(t *testing.T) {
 	g3 := NewGame("A", "B", 1)
 	ctx3 := &EffectContext{Resolver: g3, Controller: 0}
 	before := len(g3.Log)
-	RevealHand{Player: Controller, House: Mars}.Resolve(ctx3)
+	RevealHand{Player: Controller, House: namedHouse(Mars)}.Resolve(ctx3)
 	if ctx3.Produced.Revealed != 0 {
 		t.Errorf("revealed = %d, want 0", ctx3.Produced.Revealed)
 	}
@@ -66,7 +66,7 @@ func TestReveal(t *testing.T) {
 	g4.SetChooser(0, &cardDecliner{decline: true})
 	ctx4 := &EffectContext{Resolver: g4, Controller: 0}
 	before4 := len(g4.Log)
-	RevealHand{Player: Controller, House: Mars}.Resolve(ctx4)
+	RevealHand{Player: Controller, House: namedHouse(Mars)}.Resolve(ctx4)
 	if ctx4.Produced.Revealed != 0 {
 		t.Errorf("declined reveal = %d, want 0", ctx4.Produced.Revealed)
 	}

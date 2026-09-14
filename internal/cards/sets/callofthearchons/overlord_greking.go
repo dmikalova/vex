@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon
 //
 //	After a Creature is destroyed in a fight with Overlord Greking, put it into play under your control.
-var OverlordGreking = card.New(
+var OverlordGreking = set.New(
 	"Overlord Greking",
 	card.House.Dis,
 	card.Type.Creature,

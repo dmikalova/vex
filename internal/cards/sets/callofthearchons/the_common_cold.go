@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Deal 1 damage to each Creature. You may destroy each Mars Creature.
-var TheCommonCold = card.New(
+var TheCommonCold = set.New(
 	"The Common Cold",
 	card.House.Untamed,
 	card.Type.Tactic,
@@ -25,7 +25,9 @@ var TheCommonCold = card.New(
 					Target: card.Target.EachCreature,
 				},
 				card.May{
-					Do: card.Destroy{Target: card.Target.EachCreature.OfHouse(card.House.Mars)},
+					Do: card.Destroy{
+						Target: card.Target.EachCreature.House(card.Houses.Named(card.House.Mars)),
+					},
 				},
 			},
 		}),

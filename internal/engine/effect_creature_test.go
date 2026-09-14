@@ -209,7 +209,7 @@ func TestOnChooseCreatureExcludeHouse(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Source: sanc, Controller: 0}
 
 	e := OnChooseCreature{
-		Target: Target{Kind: TargetChosenFriendlyCreature}.ExceptHouse(Sanctum),
+		Target: Target{Kind: TargetChosenFriendlyCreature}.House(exceptHouse(Sanctum)),
 		Verbs:  []CreatureVerb{ReadyVerb{}},
 	}
 	if e.Text() != "ready a friendly non-Sanctum creature" {

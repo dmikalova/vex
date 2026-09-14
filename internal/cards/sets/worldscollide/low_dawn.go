@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: If there are 3 or more Untamed Creatures in your discard pile, gain 2 Æmber. Shuffle each Untamed Creature from your discard pile into your deck.
-var LowDawn = card.New(
+var LowDawn = set.New(
 	"Low Dawn",
 	card.House.Untamed,
 	card.Type.Tactic,
@@ -20,14 +20,14 @@ var LowDawn = card.New(
 	card.WithAbility(card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 		card.Conditional{
 			Cond: card.CardsInDiscardAtLeast{
-				House:  card.House.Self,
+				House:  card.Houses.Named(card.House.Self),
 				Type:   card.Type.Creature,
 				Amount: 3,
 			},
 			Then: card.GainAember{Player: card.Controller, Amount: 2},
 		},
 		card.ShuffleFromDiscard{Selection: card.Each{
-			House: card.House.Self,
+			House: card.Houses.Named(card.House.Self),
 			Type:  card.Type.Creature,
 		}},
 	}}),

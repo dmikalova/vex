@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Archive a card from your hand. Discard a card from your hand.
-var SloppyLabwork = card.New(
+var SloppyLabwork = set.New(
 	"Sloppy Labwork",
 	card.House.Logos,
 	card.Type.Tactic,

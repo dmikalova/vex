@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant • Scientist
 //
 //	Fight: Draw 2 cards. Discard 2 random cards from your hand.
-var NogiSmartfist = card.New(
+var NogiSmartfist = set.New(
 	"Nogi Smartfist",
 	card.House.Brobnar,
 	card.Type.Creature,

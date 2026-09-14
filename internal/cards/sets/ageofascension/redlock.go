@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Skirmish.
 //	At the end of your turn, if you did not play any Creatures this turn, gain 1 Æmber.
-var Redlock = card.New(
+var Redlock = set.New(
 	"Redlock",
 	card.House.Shadows,
 	card.Type.Creature,

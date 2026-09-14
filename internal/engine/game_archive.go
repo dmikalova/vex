@@ -38,6 +38,17 @@ func (g *Game) archiveFromHand(player int, id LocalID) {
 	}
 }
 
+// archiveEnemyFromHand moves a card from its owner's hand into a different player's
+// archives — an abduction from hand (Hidden Stash). Your archives may hold an enemy
+// card, and the ownership rule returns it home the moment it leaves them.
+func (g *Game) archiveEnemyFromHand(player int, id LocalID) {
+	o := g.owner(id)
+	if g.State.Hand[o].remove(id) {
+		g.State.Archives[player].add(id)
+		g.record(CardAbducted{Player: player, Card: id, Owner: o})
+	}
+}
+
 func (g *Game) archiveFromDiscard(player int, id LocalID) {
 	if g.State.Discard[player].remove(id) {
 		g.State.Archives[player].add(id)

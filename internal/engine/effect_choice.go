@@ -48,7 +48,7 @@ func (e ChooseOne) validate() error {
 
 // ChooseHouseThen asks the controller to choose a house, records it on the effect
 // context, and resolves Then — which typically acts on creatures of that house
-// through Target.OfChosenHouse(). It models "Choose a house. <do something to that
+// through Target.House(chosenHouse). It models "Choose a house. <do something to that
 // house>."
 type ChooseHouseThen struct {
 	Then Effect

@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Taunt.
 //	In order to play Truebaru, you must lose 3 Æmber.
 //	Destroyed: Gain 5 Æmber.
-var Truebaru = card.New("Truebaru",
+var Truebaru = set.New("Truebaru",
 	card.House.Dis, card.Type.Creature, card.Rarity.Rare,
 	card.Provenance(card.CotA, "104"),
 	card.WithPower(7),

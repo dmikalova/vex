@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Horseman • Spirit
 //
 //	Play: For the remainder of the turn, each friendly Creature may fight.
-var HorsemanOfWar = card.New(
+var HorsemanOfWar = set.New(
 	"Horseman of War",
 	card.House.Sanctum,
 	card.Type.Creature,
@@ -22,6 +22,6 @@ var HorsemanOfWar = card.New(
 	card.WithTraits(card.Traits.Horseman, card.Traits.Spirit),
 	card.WithAbility(
 		card.Trigger.Play,
-		card.MayPlayOrUse{Houses: card.Houses.Any, Grant: card.GrantFight},
+		card.MayPlayOrUse{Houses: card.GrantHouses.Any, Grant: card.GrantFight},
 	),
 )

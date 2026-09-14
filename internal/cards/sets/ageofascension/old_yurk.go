@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon
 //
 //	Play: Discard 2 cards from your hand.
-var OldYurk = card.New(
+var OldYurk = set.New(
 	"Old Yurk",
 	card.House.Dis,
 	card.Type.Creature,

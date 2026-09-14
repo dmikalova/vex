@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Skirmish.
 //	Fight: Steal 1 Æmber.
-var Umbra = card.New(
+var Umbra = set.New(
 	"Umbra",
 	card.House.Shadows,
 	card.Type.Creature,

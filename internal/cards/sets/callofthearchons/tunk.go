@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Robot
 //
 //	After you play a Mars Creature, fully heal Tunk.
-var Tunk = card.New(
+var Tunk = set.New(
 	"Tunk",
 	card.House.Mars,
 	card.Type.Creature,
@@ -21,7 +21,7 @@ var Tunk = card.New(
 	card.WithTraits(card.Traits.Robot),
 	card.WithAbility(card.Trigger.AfterCardPlayed, card.Conditional{
 		Cond: card.ItIs{
-			House: card.House.Self,
+			House: card.Houses.Named(card.House.Self),
 			Type:  card.Type.Creature,
 		},
 		Then: card.Heal{

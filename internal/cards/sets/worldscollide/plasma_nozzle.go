@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	This Creature gains +2 assault and +2 splash-attack.
-var PlasmaNozzle = card.New(
+var PlasmaNozzle = set.New(
 	"Plasma Nozzle",
 	card.House.StarAlliance,
 	card.Type.Upgrade,

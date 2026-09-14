@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Play: Choose one:
 //	- Play a random card from your opponent's archives
 //	- Play the top card of your opponent's deck.
-var Murkens = card.New(
+var Murkens = set.New(
 	"Murkens",
 	card.House.Shadows,
 	card.Type.Creature,

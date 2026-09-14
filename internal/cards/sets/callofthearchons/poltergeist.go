@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Use an Artifact. Destroy it.
-var Poltergeist = card.New(
+var Poltergeist = set.New(
 	"Poltergeist",
 	card.House.Dis,
 	card.Type.Tactic,

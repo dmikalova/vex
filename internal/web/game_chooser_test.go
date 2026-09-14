@@ -368,8 +368,8 @@ func TestAPromptOverAPileOpensTheViewer(t *testing.T) {
 
 // A bounded pick from the top of the deck (a "look at the top N cards" reveal —
 // Navigator Ali, Lay of the Land) is offered as a short list of action-bar buttons
-// rather than opening the zone viewer, and a reorder prompt notes that the last
-// pick ends up on top.
+// rather than opening the zone viewer, and a reorder prompt notes that the first
+// pick ends up on the bottom.
 func TestABoundedDeckPromptOffersButtons(t *testing.T) {
 	c := newClient(t)
 	c.manual()
@@ -391,8 +391,8 @@ func TestABoundedDeckPromptOffersButtons(t *testing.T) {
 	if !strings.Contains(html, "prompt-pick") {
 		t.Error("the prompt rendered no candidate buttons")
 	}
-	if !strings.Contains(html, "ends up on top") {
-		t.Error("the reorder prompt is missing the last-is-on-top note")
+	if !strings.Contains(html, "ends up on the bottom") {
+		t.Error("the reorder prompt is missing the first-is-on-the-bottom note")
 	}
 	c.g.chooseCandidate(c.ctx, id)
 	if got := <-answer; !got.ok || got.id != id {

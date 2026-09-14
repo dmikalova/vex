@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Trigger the play effect of a Creature.
-var FavorOfRex = card.New(
+var FavorOfRex = set.New(
 	"Favor of Rex",
 	card.House.Saurian,
 	card.Type.Tactic,

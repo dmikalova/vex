@@ -102,12 +102,13 @@ func TestTheLowerBarRendersBelowTheHand(t *testing.T) {
 	}
 }
 
-// The action bar carries an inline Undo icon beside End turn, so a misplay is one
-// click from being taken back. It rides with End turn: the opening house prompt
-// has no End turn and so shows no Undo either.
+// The action area carries an Undo icon in its top-right, so a misplay is one
+// click from being taken back. It shows on the house prompt (where it steps back
+// to the previous turn) as well as above End turn in ordinary play.
 func TestTheActionBarShowsAnInlineUndo(t *testing.T) {
 	c := newClient(t)
-	c.lacks("the house prompt", "end-turn-bar", "undo.svg")
+	c.wants("the house prompt", "undo.svg")
+	c.lacks("the house prompt", "end-turn-bar")
 
 	c.manualTurn(testHouse)
 	c.playFromHand(c.deal(testCreature))

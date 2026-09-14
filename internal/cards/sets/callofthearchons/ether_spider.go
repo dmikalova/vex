@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Ether Spider deals no damage when fighting.
 //	If Æmber would be added to your opponent's pool, instead Ether Spider captures it.
-var EtherSpider = card.New(
+var EtherSpider = set.New(
 	"Ether Spider",
 	card.House.Mars,
 	card.Type.Creature,

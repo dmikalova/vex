@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Vehicle
 //
 //	Each Creature gains, "Destroyed: Gain 1 Æmber."
-var SoulSnatcher = card.New(
+var SoulSnatcher = set.New(
 	"Soul Snatcher",
 	card.House.Dis,
 	card.Type.Artifact,

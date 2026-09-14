@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Location
 //
 //	Action: Put a Creature from your discard pile on top of your deck.
-var WorldTree = card.New(
+var WorldTree = set.New(
 	"World Tree",
 	card.House.Untamed,
 	card.Type.Artifact,
@@ -19,7 +19,7 @@ var WorldTree = card.New(
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
 		card.Trigger.Action, card.PutFromDiscard{
-			Match:       card.Match{Type: card.Type.Creature},
+			Selection:   card.Chosen{Type: card.Type.Creature},
 			Destination: card.To.TopOfDeck,
 		}),
 )

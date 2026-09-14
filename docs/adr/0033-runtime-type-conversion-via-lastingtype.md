@@ -76,7 +76,10 @@ read, computed live at read time (the way `Power`/`Armor` fold `constantBonus`),
 **not** a `LastingType` write. It reverts for free: when Deanimator leaves play or
 the counter is removed, the next `TypeOf` read simply no longer sees the grant, so
 there is nothing to pop and no source lifetime to track. Two Deanimators compose
-the same way — each grant is recomputed every read.
+the same way — each grant is recomputed every read. The live route is **not built
+yet** — no implemented set has a card that needs it — so it is parked in
+[todo-future-set.md](../todo-future-set.md), to build alongside Deanimator (or the
+first live-conversion card) when its set is stood up.
 
 For the live route, `TypeOf` grows one step after the `HostPlus`/`LastingType`
 checks: ask whether any active constant ability converts this card's type, exactly

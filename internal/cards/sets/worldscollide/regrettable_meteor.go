@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Destroy each Dinosaur Creature and each Creature with power 6 or higher.
-var RegrettableMeteor = card.New(
+var RegrettableMeteor = set.New(
 	"Regrettable Meteor",
 	card.House.Saurian,
 	card.Type.Tactic,

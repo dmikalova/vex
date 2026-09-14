@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item
 //
 //	Action: Discard the top 2 cards of your deck. For each Logos card discarded this way, a friendly Creature captures 2 Æmber from your opponent.
-var Fetchdrones = card.New(
+var Fetchdrones = set.New(
 	"Fetchdrones",
 	card.House.Logos,
 	card.Type.Artifact,

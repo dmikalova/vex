@@ -10,24 +10,31 @@ import (
 // Shorty's Brew
 //
 //	House:  Brobnar
-//	Type:   Tactic
-//	Rarity: Special
+//	Type:   Upgrade
+//	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Give a Creature two +1 power counters.
+//	This Creature gains +4 assault.
 func TestShortysBrew(t *testing.T) {
-	t.Run("gives a creature two +1 power counters", func(t *testing.T) {
-		var troll ct.Card
+	t.Run("host deals 4 assault damage before fight damage", func(t *testing.T) {
+		var host, foe ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.Brobnar,
-				Hand:   ct.Cards(ShortysBrew),
-				InPlay: ct.Cards(ct.Bind(&troll, ct.Creature(ct.Power(4)))),
+				House: card.House.Brobnar,
+				InPlay: ct.Cards(
+					ct.Upgraded(
+						ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(5))),
+						ShortysBrew,
+					),
+				),
 			},
+			P2: ct.Side{InPlay: ct.Cards(
+				ct.Bind(&foe, ct.Creature(ct.Power(10))),
+			)},
 		})
 
-		h.P1.Play(ShortysBrew)
+		h.P1.Fight(host, foe)
 
-		h.Expect(troll).Power(6)
+		h.Expect(foe).Damage(9) // 4 assault + 5 fight
 	})
 }

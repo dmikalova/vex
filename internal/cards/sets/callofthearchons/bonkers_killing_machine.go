@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Weapon
 //
 //	Action: Discard the top card of each player's deck. For each card discarded this way, destroy a Creature or Artifact of that card's house. If fewer than 2 cards are destroyed this way, destroy Bonkers Killing Machine.
-var BonkersKillingMachine = card.New(
+var BonkersKillingMachine = set.New(
 	"Bonkers Killing Machine",
 	card.House.Logos,
 	card.Type.Artifact,
@@ -20,9 +20,11 @@ var BonkersKillingMachine = card.New(
 	card.WithAbility(
 		card.Trigger.Action, card.Sentences{
 			Effects: []card.Effect{
-				card.DiscardTopOfEachDeck{},
+				card.DiscardTop{Player: card.EachPlayer},
 				card.ForEachDiscarded{
-					Do: card.Destroy{Target: card.Target.CreatureOrArtifact.OfContextualHouse()},
+					Do: card.Destroy{
+						Target: card.Target.CreatureOrArtifact.House(card.Houses.Contextual),
+					},
 				},
 				card.Conditional{
 					Cond: card.CardsDestroyedFewerThan{Amount: 2},

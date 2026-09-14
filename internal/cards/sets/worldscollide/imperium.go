@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Ward 2 friendly Creatures.
-var Imperium = card.New(
+var Imperium = set.New(
 	"Imperium",
 	card.House.Saurian,
 	card.Type.Tactic,

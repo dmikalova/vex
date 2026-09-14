@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Put each Artifact on top of its owner's deck.
-var Barehanded = card.New(
+var Barehanded = set.New(
 	"Barehanded",
 	card.House.Brobnar,
 	card.Type.Tactic,

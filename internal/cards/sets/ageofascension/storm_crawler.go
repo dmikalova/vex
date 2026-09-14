@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Storm Crawler deals 1 Damage when fighting.
 //	After an enemy Creature reaps, stun it.
-var StormCrawler = card.New(
+var StormCrawler = set.New(
 	"Storm Crawler",
 	card.House.Mars,
 	card.Type.Creature,

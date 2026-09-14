@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Put up to 3 enemy damaged Creatures into your archives.
-var MassAbduction = card.New(
+var MassAbduction = set.New(
 	"Mass Abduction",
 	card.House.Mars,
 	card.Type.Tactic,

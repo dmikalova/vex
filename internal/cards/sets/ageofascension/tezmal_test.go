@@ -28,14 +28,16 @@ func TestTezmal(t *testing.T) {
 	h.P1.ExpectPrompt("Choose a house").Source("Tezmal")
 	h.P1.ClickOption("Mars")
 
-	if got := h.Game().State.ForbiddenHouseNext[1].Value; got != card.House.Mars {
-		t.Fatalf("armed forbidden house = %v, want Mars", got)
+	if got := h.Game().State.HouseConstraintsNext[1]; h.Game().State.HouseConstraintCountNext[1] != 1 ||
+		got[0].House != card.House.Mars {
+		t.Fatalf("armed constraint = %+v (count %d), want one on Mars",
+			got[0], h.Game().State.HouseConstraintCountNext[1])
 	}
 
 	h.P1.EndTurn() // the opponent's turn begins, promoting the forbidden house
 
-	if err := h.Game().ChooseHouse(1, card.House.Mars); err != engine.ErrHouseForbidden {
-		t.Errorf("forbidden house = %v, want ErrHouseForbidden", err)
+	if err := h.Game().ChooseHouse(1, card.House.Mars); err != engine.ErrHouseNotAllowed {
+		t.Errorf("forbidden house = %v, want ErrHouseNotAllowed", err)
 	}
 	h.P2.ChooseHouse(card.House.Sanctum) // any other house is allowed
 }

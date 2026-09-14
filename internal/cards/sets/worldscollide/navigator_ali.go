@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human
 //
 //	Play/Fight/Reap: Look at the top 3 cards of your deck and put them back in any order.
-var NavigatorAli = card.New(
+var NavigatorAli = set.New(
 	"Navigator Ali",
 	card.House.StarAlliance,
 	card.Type.Creature,

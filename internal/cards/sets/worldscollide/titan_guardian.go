@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Taunt.
 //	Destroyed: If Titan Guardian is not on a flank, draw 2 cards.
-var TitanGuardian = card.New(
+var TitanGuardian = set.New(
 	"Titan Guardian",
 	card.House.Logos,
 	card.Type.Creature,
@@ -25,7 +25,7 @@ var TitanGuardian = card.New(
 	card.WithKeywords(card.Keyword.Taunt),
 	card.WithAbility(
 		card.Trigger.Destroyed, card.Conditional{
-			Cond: card.OnFlank{Not: true},
+			Cond: card.Not{Cond: card.OnFlank{}},
 			Then: card.Draw{Amount: 2},
 		}),
 )

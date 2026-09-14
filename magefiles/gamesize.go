@@ -146,8 +146,8 @@ var _ io.Writer = (*countWriter)(nil)
 func printTally(label string, t assetTally) {
 	fmt.Printf("%s:\n", label)
 	fmt.Printf("  raw:    %10s\n", humanBytes(t.raw))
-	fmt.Printf("  brotli: %10s\n", humanBytes(t.brotli))
-	fmt.Printf("  gzip:   %10s\n\n", humanBytes(t.gzip))
+	fmt.Printf("  gzip:   %10s\n", humanBytes(t.gzip))
+	fmt.Printf("  brotli: %10s\n\n", humanBytes(t.brotli))
 }
 
 // humanBytes renders a byte count in binary units (KiB, MiB) with one decimal,

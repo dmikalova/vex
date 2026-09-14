@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Deal 1 damage to an enemy Creature. If this damage destroys that Creature, draw a card.
-var Poke = card.New(
+var Poke = set.New(
 	"Poke",
 	card.House.Logos,
 	card.Type.Tactic,

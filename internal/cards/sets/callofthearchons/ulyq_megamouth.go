@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Martian • Scientist
 //
 //	Fight/Reap: Use a friendly non-Mars Creature.
-var UlyqMegamouth = card.New(
+var UlyqMegamouth = set.New(
 	"Ulyq Megamouth",
 	card.House.Mars,
 	card.Type.Creature,
@@ -20,7 +20,7 @@ var UlyqMegamouth = card.New(
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Martian, card.Traits.Scientist),
 	card.WithAbility(card.Trigger.FightReap, card.OnChooseCreature{
-		Target: card.Target.FriendlyCreature.ExceptHouse(card.House.Self),
+		Target: card.Target.FriendlyCreature.House(card.Houses.Except(card.House.Self)),
 		Verbs:  []card.CreatureVerb{card.UseVerb{}},
 	}),
 )

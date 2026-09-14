@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Versatile.
 //	Action: Destroy Signal Fire. For the remainder of the turn, each friendly Brobnar Creature may fight.
-var SignalFire = card.New(
+var SignalFire = set.New(
 	"Signal Fire",
 	card.House.Brobnar,
 	card.Type.Artifact,
@@ -24,6 +24,9 @@ var SignalFire = card.New(
 	card.WithAbility(
 		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
 			card.Destroy{Target: card.Target.This},
-			card.MayPlayOrUse{Houses: card.Houses.Named(card.House.Self), Grant: card.GrantFight},
+			card.MayPlayOrUse{
+				Houses: card.GrantHouses.Named(card.House.Self),
+				Grant:  card.GrantFight,
+			},
 		}}),
 )

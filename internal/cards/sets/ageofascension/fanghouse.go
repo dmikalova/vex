@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Assault 3, Hazardous 3.
-var Fanghouse = card.New(
+var Fanghouse = set.New(
 	"Fanghouse",
 	card.House.Untamed,
 	card.Type.Creature,

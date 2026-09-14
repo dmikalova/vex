@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Versatile.
 //	Action: Deal 3 damage to a flank Creature. If this damage destroys that Creature, purge it.
-var SpecialDelivery = card.New(
+var SpecialDelivery = set.New(
 	"Special Delivery",
 	card.House.Shadows,
 	card.Type.Artifact,

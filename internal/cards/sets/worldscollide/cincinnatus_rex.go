@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	If there are no enemy Creatures in play, destroy Cincinnatus Rex.
 //	Fight: You may exalt Cincinnatus Rex. Ready each other friendly card.
-var CincinnatusRex = card.New(
+var CincinnatusRex = set.New(
 	"Cincinnatus Rex",
 	card.House.Saurian,
 	card.Type.Creature,

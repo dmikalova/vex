@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Alpha.
 //	Play: Give each other friendly Untamed Creature two +1 power counters.
-var Bumblebird = card.New(
+var Bumblebird = set.New(
 	"Bumblebird",
 	card.House.Untamed,
 	card.Type.Creature,
@@ -23,7 +23,7 @@ var Bumblebird = card.New(
 	card.WithKeywords(card.Keyword.Alpha),
 	card.WithAbility(
 		card.Trigger.Play, card.AddPowerCounter{
-			Target: card.Target.EachOtherFriendlyCreature.OfHouse(card.House.Self),
+			Target: card.Target.EachOtherFriendlyCreature.House(card.Houses.Named(card.House.Self)),
 			Amount: 2,
 		}),
 )

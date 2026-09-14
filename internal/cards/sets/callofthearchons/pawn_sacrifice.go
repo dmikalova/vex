@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Destroy a friendly Creature -> deal 3 damage to a Creature and deal 3 damage to a different Creature.
-var PawnSacrifice = card.New(
+var PawnSacrifice = set.New(
 	"Pawn Sacrifice",
 	card.House.Shadows,
 	card.Type.Tactic,

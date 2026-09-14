@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Martian • Scientist
 //
 //	Fight/Reap: Deal 3 damage to each Human Creature, ignoring armor.
-var QyxxlyxPlagueMaster = card.New(
+var QyxxlyxPlagueMaster = set.New(
 	"Qyxxlyx Plague Master",
 	card.House.Mars,
 	card.Type.Creature,

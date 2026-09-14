@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //
 //	Play: Deal 1 damage to up to 3 Creatures. For each Creature destroyed this way, gain 1 Æmber.
-var ThrowingStars = card.New(
+var ThrowingStars = set.New(
 	"Throwing Stars",
 	card.House.Shadows,
 	card.Type.Tactic,

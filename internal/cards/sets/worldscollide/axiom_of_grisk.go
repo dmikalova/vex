@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //
 //	Play: Ward a Creature. Destroy each Creature with no Æmber on it. Gain 2 chains.
-var AxiomOfGrisk = card.New(
+var AxiomOfGrisk = set.New(
 	"Axiom of Grisk",
 	card.House.Saurian,
 	card.Type.Tactic,

@@ -89,7 +89,7 @@ it plugs into the AST without desync:
   graceful fallback when unimplemented. That is the idiomatic-Go form of Strategy
   (cf. `io.WriterTo`, `http.Flusher`); prefer it over widening the base `Chooser`.
 - **`Refinement` (`target.go`)** is a set-relative refinement (`refine` + `clause`)
-  such as `MostPowerful` (or `Not(MostPowerful)`). It narrows the ids _and_
+  such as `MostPowerful` (or `Except(MostPowerful)`). It narrows the ids _and_
   contributes a phrase, so niche "compare candidates to each other" rules compose
   onto any `Target` **without a field per rule**. When you are tempted to add
   another `Target` bool for a whole-set rule, add a `Refinement` instead.
@@ -139,7 +139,15 @@ far:
 - **Count what the previous effect produced.** A "for each ... this way" magnitude
   is a `Count` reading a tally the prior effect left on `ctx.Produced` —
   `CreaturesHealed`, `DamageHealed`, `CardsDestroyed`. A new such tally is a field
-  on `Produced` plus a small `Count`, never a bespoke fused effect.
+  on `Produced` plus a small `Count`, never a bespoke fused effect. A tally about a
+  card that _leaves play_ during the effect must be measured **just before** the
+  card is removed, so a modifier it carried still counts and a ward that keeps it in
+  play does not: `Destroy.destroy` snapshots each creature's board `Power` before
+  `DestroyEachFrom` and adds it to `Produced.DestroyedPower` only for creatures that
+  actually left, which `PowerDestroyedThisWay` reads (Might Makes Right forges when
+  the creatures it destroyed totalled 25 board power). A `Count` used only by a
+  `CountIs` threshold still implements `CountText` for the `Count` interface even
+  though only its `CountClause` renders.
 - **Move a card between zones.** Archive, Discard, Purge, Shuffle, and Put are one
   mechanism — a source zone, a selection strategy (chosen / any-number / all /
   random / top-N, with house/type/name/trait filters), a destination, and the
@@ -150,6 +158,20 @@ far:
   effect adds a selection filter or a destination, never a new bespoke type. The
   mechanism stays unexported — authors write the verb the card prints, not a
   generic `Move`.
+- **Move a card that could be in several zones to one destination.** A verb that
+  gathers a player's cards across a _set_ of source zones (play, hand, discard,
+  deck) and sends the picked card to one destination — Faygin (`ReturnNamedToHand`:
+  play/discard -> hand), the search tutors (`SearchForName`: deck/discard -> hand),
+  Chain Gang (`ShuffleNamedFromDiscardIntoDeck`: discard -> deck), Song of Spring
+  (`ShuffleChosenCreaturesFromZones`: play/hand/discard -> deck) — shares one
+  internal mechanism, `crossZoneMover{Player, Dest, Sources}` (`effect_cross_zone.go`).
+  It gathers with a `keep` predicate (`gather`) and dispatches each picked card
+  through the per-`(origin, Dest)` move that reaches the destination from the zone
+  the card actually sits in (`move`/`originOf`). The **destination is passed
+  explicitly**; a mover never infers it from where the card sat. Each verb stays a
+  thin node keeping its own printed text, filter (`Named` vs creature/house), prompt,
+  reveal, and `All`/gate specifics — only the "which move lands zone X in zone Y"
+  matrix is shared. This is the general shape of the rule below it.
 - **Pick any number of cards one at a time.** "Destroy any number of ...", "purge
   any number of ...", "keep N ..." all gather the controller's picks from a
   shrinking pool one prompt at a time. That loop is one helper —
@@ -159,6 +181,18 @@ far:
   keeps a variable number of cards calls it and acts on the returned slice (Obsidian
   Forge, Destructive Analysis, Unnatural Selection, Tertiate); it does not re-roll
   the pick-until-decline loop.
+- **Redistribute a resource among a side's creatures.** Equalize (Æmber) and
+  Entropic Manipulator (damage) both drain a resource off a set of creatures into
+  a pool, then hand the pool back one unit at a time onto a chooser-picked creature
+  (falling back to the first). That inner loop is one helper —
+  `placeAmong(ctx, creatures, prompt, pool, place)` (`effect_redistribute.go`). The
+  two effects keep **separate nodes** (`RedistributeCapturedAember`,
+  `RedistributeDamage`), because everything around the shared loop diverges: the
+  drain (Æmber vs damage accessors), the side selection (a `Side` field vs a
+  runtime player prompt), the accept gate (damage only), and the lethal follow-up
+  pass (damage only). Merging them into one `Resource`-switched node would be a
+  branchy blob switching inside `Resolve`, not one mechanic — do **not** collapse
+  the two nodes; share only the loop.
 
 Prefer a shared **helper** over a shared embeddable value type. Now that `Per`
 means one thing everywhere, `{Amount, By, Per}` genuinely is uniform across
@@ -229,16 +263,17 @@ Dimension Door) is a second, deliberately smaller interpreter, because flat stat
 cannot store an `Effect` closure — the decision and its rationale are ADR 0007.
 State holds flat `LastingEffect{On Event, Do lastingAction, Controller, Amount}`
 records; `lastingActionOf` maps a composed effect to an enum tag and
-`game_lasting.go` fires/queries them. A **reaction** runs after an event: a site
-with its own trigger window folds the reactions into it with `lastingReactions`
-(ordered together with the card abilities through the flat `ReactionChooser` port,
-ADR 0013), and a site without one emits a standalone `emitLasting`; a
-**replacement** changes an event's outcome (`lastingReplacement` + `Instead{Of,
-With}`).
+`game_lasting.go` fires/queries them. A **reaction** runs after an event: every
+site that fires the event folds its reactions into that event's trigger window with
+`lastingReactions` (ordered together with the card abilities through the flat
+`ReactionChooser` port, ADR 0013) — even an event with no card ability of its own,
+like an enemy creature destroyed, still gets a window (`afterDestroyedReactions`
+folds `EventEnemyCreatureDestroyed` reactions in). A **replacement** changes an
+event's outcome (`lastingReplacement` + `Instead{Of, With}`).
 
 To add one: a reaction on an existing event = support its `Do` in `lastingActionOf`
 and `resolveReaction`; a new event = an `Event` value, one `lastingReactions`
-(folded into a window) or `emitLasting`/`lastingReplacement` call at the site, and
+(folded into that event's window) or `lastingReplacement` call at the site, and
 its `clause`/`gerund` text. You never restructure the play/reap hot path. Keep the
 enum dispatch centralized.
 
@@ -260,6 +295,36 @@ resolved) by a scanner scoped to the watched pool: `aemberCaptorFor` on the
 destination, `AemberTakenFromSupply` on the source. A new redirect of where taken
 or added Æmber comes from or goes to is a `Replaces` on the matching event plus a
 member on the `Replacement` enum — never a bespoke `CardDefinition` bool.
+
+## Forward house choice is one delayed constraint table
+
+Cards that reach forward to a player's **next house choice** — Control the Weak and
+Snag (must a house), Tezmal and Snag's Mirror (cannot a house), Snaglet (a wager on
+the house) — do **not** each grow a paired state slot and resolver method. They all
+arm entries in one flat table, `State.HouseConstraints[player]` /
+`HouseConstraintCount` for this turn and `…Next` for the pending one, the same
+fixed-cap-array-plus-count shape as the lasting registry (ADR 0005; `maxHouseConstraints`).
+`StartTurn` promotes the starting player's `…Next` entries and clears them, the one
+lifecycle all four cards share (ADR 0035).
+
+A `HouseConstraint` is a comparable enum-tagged record (`Kind`: must-house,
+must-creature, cannot-house, or wager). `ChooseHouse` resolves the **whole table at
+choice time** through `allowedHouses`: start from `choosableHouses` (identity houses
+plus the houses of cards the player controls in play in their own right, read now —
+a controlled off-house creature widens the choice), remove every cannot (cannot
+overrides must), and if any must survives, restrict to the surviving musts. A
+must-creature entry stores a `LocalID` and reads that creature's house **now**, so
+Snag respects house changes between the fight and the choice — never freeze a house
+at arm time. Empty allowed set = **no active house** (a valid outcome, chosen
+explicitly as No House). Wagers are scanned by `resolveHouseWagers` at the same
+choice and pay their predictor when the chosen house matches.
+
+Two reads, kept separate on purpose: `AllowedHouses` (the widened choosable-minus-
+cannot set) drives the choice and the client's picker; `PlayerHasHouse` stays
+**identity-only** because `ItIsOffIdentity` (Sneklifter) means "on the identity
+card", and a controlled off-house card must not make a creature count as in-identity.
+A new forward-choice mechanic is a new `Kind` on the table plus its handling in
+`allowedHouses`/`resolveHouseWagers`, not a new state slot.
 
 ## Generic counters are a global side-table, not a field per kind
 
@@ -355,10 +420,9 @@ Three tiers of verb, kept distinct so a method name says which level it works at
 
 - **`emit<Event>`** announces a game event and fans out to everything listening —
   `emitReapWindow`, `emitCreatureEnters`, `emitActionPlayedBeforeResolve`,
-  `emitLasting`. Use it at an event site that dispatches to responders (triggered
-  abilities and the lasting registry). A site with its own trigger window folds its
-  duration reactions into that window with `lastingReactions` rather than a trailing
-  `emitLasting`.
+  `emitLeavesPlay`. Use it at an event site that dispatches to responders (triggered
+  abilities and the lasting registry). The site folds its duration reactions into
+  that event's trigger window with `lastingReactions`.
 - **`trigger…`** resolves a _single card's_ abilities matching a trigger —
   `triggerAbilities(id, TriggerAfterReap, …)`. The emitters call into it per card.
 - **`resolve…`** carries out one specific effect or ability — `Effect.Resolve`,

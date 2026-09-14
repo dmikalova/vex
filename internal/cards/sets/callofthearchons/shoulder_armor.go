@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	While this Creature is on a flank, it gains +2 power and +2 armor.
-var ShoulderArmor = card.New(
+var ShoulderArmor = set.New(
 	"Shoulder Armor",
 	card.House.Sanctum,
 	card.Type.Upgrade,

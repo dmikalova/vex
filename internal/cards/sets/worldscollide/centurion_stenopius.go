@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Centurion Stenopius gains +3 power for each Æmber on it.
 //	Play/Fight/Reap: You may exalt Centurion Stenopius.
-var CenturionStenopius = card.New(
+var CenturionStenopius = set.New(
 	"Centurion Stenopius",
 	card.House.Saurian,
 	card.Type.Creature,

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Dinosaur • Philosopher
 //
 //	Reap: You may exalt Livia the Elder -> each friendly Creature's fight effects and reap effects are fight/reap effects for the remainder of the turn.
-var LiviaTheElder = card.New(
+var LiviaTheElder = set.New(
 	"Livia the Elder",
 	card.House.Saurian,
 	card.Type.Creature,

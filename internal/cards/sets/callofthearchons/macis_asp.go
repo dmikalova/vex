@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Skirmish, Poison.
-var MacisAsp = card.New(
+var MacisAsp = set.New(
 	"Macis Asp",
 	card.House.Shadows,
 	card.Type.Creature,

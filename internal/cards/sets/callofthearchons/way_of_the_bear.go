@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	This Creature gains +2 assault.
-var WayOfTheBear = card.New(
+var WayOfTheBear = set.New(
 	"Way of the Bear",
 	card.House.Untamed,
 	card.Type.Upgrade,

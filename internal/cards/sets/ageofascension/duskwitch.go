@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Omega, Elusive.
 //	Your Creatures enter play ready.
-var Duskwitch = card.New(
+var Duskwitch = set.New(
 	"Duskwitch",
 	card.House.Untamed,
 	card.Type.Creature,

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: For each friendly ready Creature in play, gain 1 Æmber. Put each friendly Creature into its owner's hand.
-var TotalRecall = card.New(
+var TotalRecall = set.New(
 	"Total Recall",
 	card.House.Mars,
 	card.Type.Tactic,

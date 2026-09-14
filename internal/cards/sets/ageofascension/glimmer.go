@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Alpha.
 //	Play: Put a card from your discard pile into your hand.
-var Glimmer = card.New(
+var Glimmer = set.New(
 	"Glimmer",
 	card.House.Untamed,
 	card.Type.Creature,
@@ -22,5 +22,7 @@ var Glimmer = card.New(
 	card.WithTraits(card.Traits.Faerie),
 	card.WithKeywords(card.Keyword.Alpha),
 	card.WithAbility(
-		card.Trigger.Play, card.PutFromDiscard{Destination: card.To.Hand}),
+		card.Trigger.Play,
+		card.PutFromDiscard{Selection: card.Chosen{}, Destination: card.To.Hand},
+	),
 )

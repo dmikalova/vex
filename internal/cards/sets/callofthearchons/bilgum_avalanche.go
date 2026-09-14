@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant
 //
 //	After you forge a key, deal 2 damage to each enemy Creature.
-var BilgumAvalanche = card.New(
+var BilgumAvalanche = set.New(
 	"Bilgum Avalanche",
 	card.House.Brobnar,
 	card.Type.Creature,

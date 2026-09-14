@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Location
 //
 //	After a Creature is used to fight, it captures 1 Æmber from its opponent.
-var ShatteredThrone = card.New(
+var ShatteredThrone = set.New(
 	"Shattered Throne",
 	card.House.Brobnar,
 	card.Type.Artifact,

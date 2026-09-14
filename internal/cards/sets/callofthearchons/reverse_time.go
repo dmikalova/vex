@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Swap your deck and your discard pile, then shuffle your deck.
-var ReverseTime = card.New(
+var ReverseTime = set.New(
 	"Reverse Time",
 	card.House.Logos,
 	card.Type.Tactic,

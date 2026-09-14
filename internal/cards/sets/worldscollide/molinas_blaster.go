@@ -20,7 +20,7 @@ var molinasBlasterCluster = card.Cluster{
 //	This Creature gains, "Fight/Reap: Choose one:
 //	- Deal 2 damage to a Creature
 //	- Attach Molina's Blaster to Armsmaster Molina -> deal 3 damage to a Creature."
-var MolinasBlaster = card.New(
+var MolinasBlaster = set.New(
 	"Molina's Blaster",
 	card.House.StarAlliance,
 	card.Type.Upgrade,

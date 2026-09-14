@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //
 //	Play: Ready and fight with up to 3 different friendly Creatures, one at a time.
-var RelentlessAssault = card.New(
+var RelentlessAssault = set.New(
 	"Relentless Assault",
 	card.House.Brobnar,
 	card.Type.Tactic,

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //
 //	Play: For the remainder of the turn, instead of gaining Æmber from reaping, steal the same amount.
-var DimensionDoor = card.New(
+var DimensionDoor = set.New(
 	"Dimension Door",
 	card.House.Logos,
 	card.Type.Tactic,

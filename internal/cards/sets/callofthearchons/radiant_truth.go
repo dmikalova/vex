@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Stun each enemy Creature that is not on a flank.
-var RadiantTruth = card.New(
+var RadiantTruth = set.New(
 	"Radiant Truth",
 	card.House.Sanctum,
 	card.Type.Tactic,

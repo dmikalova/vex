@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  2
 //
 //	Play: If your opponent has exactly 1 Æmber, steal 1 Æmber.
-var GhostlyHand = card.New(
+var GhostlyHand = set.New(
 	"Ghostly Hand",
 	card.House.Shadows,
 	card.Type.Tactic,

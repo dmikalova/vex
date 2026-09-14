@@ -358,43 +358,29 @@ Self tutoring a Timetraveller. Nothing happens if no matching card is found.`,
 			Body: `SearchDeck is the KeyForge "search" keyword's deck search: the controller
 searches their deck for a card — any card, or one of a given House — and puts it
 into their hand. A House-restricted search reveals the card it takes. It does not
-shuffle: a search is always followed by a separate ShuffleDeck, enforced by a
+shuffle: a search is always followed by a separate Shuffle, enforced by a
 card lint.`,
 		},
 		{
 			Section:    SectionEffect,
-			Title:      "Shuffle Your Deck",
-			Definition: "Shuffle your deck.",
-			Body: `ShuffleDeck shuffles the controller's deck — the plain "shuffle your deck" that
-always follows a search of the deck (Orb of Wonder, Saurus Rex, Grumpus Tamer).
-It is a standalone effect so a search never bundles its own shuffle; that a
-search is always followed by a shuffle is enforced by a card lint.`,
+			Title:      "Shuffle",
+			Definition: "Shuffle your deck, optionally folding whole zones or your cards in play into it first.",
+			Body: `Shuffle shuffles the controller's deck. With no source it is the plain "shuffle
+your deck" that follows a deck search (Orb of Wonder, Saurus Rex, Grumpus Tamer),
+kept a standalone effect so a search never bundles its own shuffle. Zones folds
+whole piles in first — the discard pile (Help from Future Self), the hand and
+discard pile (Screaming Cave), the archives and discard pile. FromPlay folds every
+friendly card in play and its upgrades in, then draws a card for each card
+shuffled this way (Timequake).`,
 		},
 		{
 			Section:    SectionEffect,
-			Title:      "Shuffle Into Deck",
-			Definition: "Move the named zones' cards into your deck, then shuffle once.",
-			Body: `ShuffleIntoDeck shuffles the controller's named Zones into their deck — the
-discard pile (Help from Future Self), the hand and discard pile (Screaming
-Cave), or the archives and discard pile. It moves every named zone's cards into
-the deck, then shuffles once.`,
-		},
-		{
-			Section: SectionEffect,
-			Title:   "Shuffle Into Deck",
+			Title:      "Swap Deck And Discard",
+			Definition: "Exchange your deck with your discard pile, then shuffle the new deck.",
 			Body: `SwapDeckAndDiscard exchanges the controller's deck with their discard pile and
 shuffles the new deck — Reverse Time turns a spent deck back into a fresh one.
-It differs from ShuffleIntoDeck{Discard} in that the old deck goes away into
-the discard pile rather than surviving underneath it.`,
-		},
-		{
-			Section:    SectionEffect,
-			Title:      "Shuffle Friendly Cards In Play Into Deck",
-			Definition: "Shuffle each friendly card in play into your deck, then draw a card for each shuffled this way.",
-			Body: `ShuffleFriendlyCardsInPlayIntoDeck shuffles every card the controller has in play
-— each creature and artifact, and every upgrade attached to them — into their
-deck, then draws a card for each card shuffled this way (Timequake). The draw
-count always matches the number of cards that just left play.`,
+It differs from Shuffle{Zones: []Zone{Discard}} in that the old deck goes away
+into the discard pile rather than surviving underneath it.`,
 		},
 		{
 			Section:    SectionEffect,

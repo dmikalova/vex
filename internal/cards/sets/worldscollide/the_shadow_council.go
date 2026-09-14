@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	While The Shadow Council is in the center of your battleline, it gains, "Action: Steal 2 Æmber."
-var TheShadowCouncil = card.New(
+var TheShadowCouncil = set.New(
 	"The Shadow Council",
 	card.House.Shadows,
 	card.Type.Creature,

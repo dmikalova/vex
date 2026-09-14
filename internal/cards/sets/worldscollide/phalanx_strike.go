@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: For each friendly Creature in play, deal 1 damage to a Creature. You may exalt a friendly Creature to repeat the preceding effect.
-var PhalanxStrike = card.New(
+var PhalanxStrike = set.New(
 	"Phalanx Strike",
 	card.House.Saurian,
 	card.Type.Tactic,

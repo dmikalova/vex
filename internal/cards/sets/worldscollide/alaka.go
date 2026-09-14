@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant
 //
 //	If you have used a Creature to fight this turn, Alaka enters play ready.
-var Alaka = card.New(
+var Alaka = set.New(
 	"Alaka",
 	card.House.Brobnar,
 	card.Type.Creature,

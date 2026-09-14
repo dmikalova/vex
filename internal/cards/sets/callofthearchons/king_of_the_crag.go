@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant
 //
 //	Each enemy Brobnar Creature gains -2 power.
-var KingOfTheCrag = card.New(
+var KingOfTheCrag = set.New(
 	"King of the Crag",
 	card.House.Brobnar,
 	card.Type.Creature,
@@ -21,6 +21,6 @@ var KingOfTheCrag = card.New(
 	card.WithTraits(card.Traits.Giant),
 	card.WithConstant(card.ConstantAbility{
 		PowerBonus: -2,
-		Target:     card.Target.EachEnemyCreature.OfHouse(card.House.Self),
+		Target:     card.Target.EachEnemyCreature.House(card.Houses.Named(card.House.Self)),
 	}),
 )

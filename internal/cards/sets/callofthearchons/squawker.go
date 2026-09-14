@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Play: Choose one:
 //	- Ready a Mars Creature
 //	- Stun a non-Mars Creature.
-var Squawker = card.New(
+var Squawker = set.New(
 	"Squawker",
 	card.House.Mars,
 	card.Type.Tactic,
@@ -22,8 +22,8 @@ var Squawker = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseOne{
 			Options: []card.Effect{
-				card.Ready{Target: card.Target.Creature.OfHouse(card.House.Self)},
-				card.Stun{Target: card.Target.Creature.ExceptHouse(card.House.Self)},
+				card.Ready{Target: card.Target.Creature.House(card.Houses.Named(card.House.Self))},
+				card.Stun{Target: card.Target.Creature.House(card.Houses.Except(card.House.Self))},
 			},
 		}),
 )

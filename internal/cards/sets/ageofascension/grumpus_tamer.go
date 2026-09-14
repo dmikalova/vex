@@ -20,7 +20,7 @@ var grumpusTamerCluster = card.Cluster{
 //	Traits: Giant
 //
 //	Reap: Search your deck and discard pile for a War Grumpus, reveal it, and put it into your hand. Shuffle your deck.
-var GrumpusTamer = card.New(
+var GrumpusTamer = set.New(
 	"Grumpus Tamer",
 	card.House.Brobnar,
 	card.Type.Creature,
@@ -33,7 +33,7 @@ var GrumpusTamer = card.New(
 		card.Trigger.Reap, card.Sentences{
 			Effects: []card.Effect{
 				card.SearchForName{Name: WarGrumpus.Name},
-				card.ShuffleDeck{},
+				card.Shuffle{},
 			},
 		}),
 )

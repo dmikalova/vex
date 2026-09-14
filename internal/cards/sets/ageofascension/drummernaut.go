@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant
 //
 //	Play/Fight/Reap: Put another friendly Giant Creature into its owner's hand.
-var Drummernaut = card.New(
+var Drummernaut = set.New(
 	"Drummernaut",
 	card.House.Brobnar,
 	card.Type.Creature,

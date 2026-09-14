@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Cyborg • Leader
 //
 //	While Zenzizenzizenzic is in the center of the battleline, during your "draw cards" phase, refill your hand to 2 additional cards.
-var Zenzizenzizenzic = card.New(
+var Zenzizenzizenzic = set.New(
 	"Zenzizenzizenzic",
 	card.House.Logos,
 	card.Type.Creature,

@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Creatures must fight when used, if able.
-var LittleRapscal = card.New(
+var LittleRapscal = set.New(
 	"Little Rapscal",
 	card.House.Brobnar,
 	card.Type.Creature,

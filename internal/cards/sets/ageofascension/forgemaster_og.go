@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant
 //
 //	After a player forges a key, that player loses all their Æmber.
-var ForgemasterOg = card.New(
+var ForgemasterOg = set.New(
 	"Forgemaster Og",
 	card.House.Brobnar,
 	card.Type.Creature,

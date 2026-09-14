@@ -1,47 +1,17 @@
 package engine
 
-// ItIsOfHouse is met when the card in context (ctx.It — a revealed, discarded, or
-// triggering card) belongs to a referenced house. It replaces the one-off
-// "revealed card of the chosen house" (Chaos Portal) and "discarded card of the
-// active house" (Evasion Sigil) with a single filter on the contextual card.
-type ItIsOfHouse struct {
-	House HouseChoice
-}
-
-// CondText renders the condition, e.g. "if it is of the chosen house".
-func (e ItIsOfHouse) CondText() string {
-	if e.House == TheActiveHouse {
-		return "if it is of the active house"
-	}
-	return "if it is of the chosen house"
-}
-
-// Met reports whether a card is in context and belongs to the referenced house.
-func (e ItIsOfHouse) Met(ctx *EffectContext) bool {
-	if !ctx.HasIt {
-		return false
-	}
-	house := ctx.Resolver.House(ctx.It)
-	if e.House == TheActiveHouse {
-		return house == ctx.Resolver.ActiveHouse()
-	}
-	return house == ctx.ChosenHouse
-}
-
 // ItIs is met when the card in context (ctx.It — a just-played, revealed, or
-// discarded card) matches a concrete House and/or Type filter, e.g. "if it is a
-// Mars creature" (Brain Stem Antenna reacting to a played card) or "if it is an
-// artifact" (Carlo Phantom). Either filter may be left unset to match any. It is
-// the concrete-value counterpart to ItIsOfHouse, which names the house by
-// reference (the chosen or active house).
+// discarded card) matches a House and/or Type filter, e.g. "if it is a Mars
+// creature" (Brain Stem Antenna reacting to a played card), "if it is an artifact"
+// (Carlo Phantom), or "if it is of the chosen house" (Chaos Portal). The House
+// matcher is the one house-filter vocabulary (ADR 0038): a named house, a
+// non-<house> ("if it is a non-Star Alliance card" — Book of leQ), or a referenced
+// house (the chosen or active house). Either filter may be left unset to match any.
 type ItIs struct {
 	// House and Type are the filters the card in context must match; either one
-	// left unset matches any.
-	House House
+	// left unset (the zero HouseMatcher / TypeUnset) matches any.
+	House HouseMatcher
 	Type  CardType
-	// Not inverts the match, so the condition is met when the card in context does
-	// NOT fit the filters — Neutron Shark repeats until it discards a Logos card.
-	Not bool
 	// Other excludes the source card itself, so "it" must be a different card and
 	// the noun reads "another" — Hunting Witch gains only when you play another
 	// creature, never on its own entrance (Harmonia, which says "a creature", omits
@@ -52,27 +22,46 @@ type ItIs struct {
 	Subject Subject
 }
 
-// shapeNoun renders the house/type shape the contextual card must match, prefixed
+// shapeNoun renders the house/type shape the contextual card must match for a
+// prefix-kind matcher, e.g. "Mars creature" or "non-Logos card", prefixed
 // "another" when Other bars the source card itself.
 func (e ItIs) shapeNoun() string {
+	noun := e.House.qualifyNoun(typeNoun(e.Type))
 	if e.Other {
-		return "another " + houseTypeNoun(e.House, e.Type)
+		return "another " + noun
 	}
-	return houseTypeNoun(e.House, e.Type)
+	return noun
 }
 
-// CondText renders the condition, e.g. "if it is a Mars creature", "if it is an
-// artifact", or, inverted and named, "if the discarded card is not a Logos card".
-func (e ItIs) CondText() string {
-	if e.Not {
-		return "if " + e.Subject.noun() + " is not " + indefinite(e.shapeNoun())
+// predicate renders what the card in context must be. A referenced house reads as
+// a trailing phrase ("of the chosen house"); every other matcher reads as an
+// article-and-noun ("a Mars creature", "a non-Logos card").
+func (e ItIs) predicate() string {
+	switch e.House.Kind {
+	case MatchChosenHouse:
+		return "of the chosen house"
+	case MatchActiveHouse:
+		return "of the active house"
+	default:
+		return indefinite(e.shapeNoun())
 	}
-	return "if " + e.Subject.noun() + " is " + indefinite(e.shapeNoun())
+}
+
+// CondText renders the condition, e.g. "if it is a Mars creature" or "if it is of
+// the chosen house".
+func (e ItIs) CondText() string {
+	return "if " + e.Subject.noun() + " is " + e.predicate()
+}
+
+// negatedText renders the inverted clause a Not wrapper prints, e.g. "if the
+// discarded card is not a Logos card" (Neutron Shark).
+func (e ItIs) negatedText() string {
+	return "if " + e.Subject.noun() + " is not " + e.predicate()
 }
 
 // Met reports whether a card is in context and matches the house and type
-// filters, inverting the match under Not. Other additionally bars the source card
-// itself, so a card never counts its own play.
+// filters. Other additionally bars the source card itself, so a card never counts
+// its own play.
 func (e ItIs) Met(ctx *EffectContext) bool {
 	if !ctx.HasIt {
 		return false
@@ -80,12 +69,12 @@ func (e ItIs) Met(ctx *EffectContext) bool {
 	if e.Other && ctx.It == ctx.Source {
 		return false
 	}
-	return e.matches(ctx) != e.Not
+	return e.matches(ctx)
 }
 
 // matches reports whether the card in context fits the house and type filters.
 func (e ItIs) matches(ctx *EffectContext) bool {
-	if e.House != HouseNone && ctx.Resolver.House(ctx.It) != e.House {
+	if !e.House.matches(ctx, ctx.It) {
 		return false
 	}
 	if e.Type != TypeUnset && ctx.Resolver.TypeOf(ctx.It) != e.Type {

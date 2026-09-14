@@ -52,9 +52,13 @@ func validateCondition(c Condition) error {
 	return nil
 }
 
-// HouseChoice names a house a condition compares against by reference rather than
-// by a fixed value — the house chosen this turn, or the active house — so one
-// condition works wherever such a house is meaningful.
+// HouseChoice names one house by reference — the house chosen this turn, the
+// active house, the house of the card in context, or no house at all — for an
+// effect that must resolve it to a single concrete house: ChangeActiveHouse
+// switches the active house to it, CardsInHand counts a hand by it. It is the
+// deliberate sibling of HouseMatcher (ADR 0038), which is a predicate over a set
+// of houses (a named house, a non-<house>): a HouseChoice resolves to one house,
+// so its Except/named-set notions would be meaningless and it stays separate.
 type HouseChoice uint8
 
 const (
@@ -88,20 +92,16 @@ func (h HouseChoice) resolveHouse(ctx *EffectContext) House {
 	}
 }
 
-// houseTypeNoun renders a card filtered by house and type as a noun, e.g. "Mars
-// Creature", "Artifact", or the bare "card" when neither is set.
-func houseTypeNoun(house House, typ CardType) string {
-	n := "card"
+// typeNoun renders the bare card-type noun — "creature", "artifact", or "card"
+// when the type is unset — without any house qualifier.
+func typeNoun(typ CardType) string {
 	switch typ {
 	case Creature:
-		n = "creature"
+		return "creature"
 	case Artifact:
-		n = "artifact"
+		return "artifact"
 	}
-	if house != HouseNone {
-		n = house.String() + " " + n
-	}
-	return n
+	return "card"
 }
 
 // Or is met when any one of its Conditions is met, composing conditions instead of
@@ -123,6 +123,39 @@ func (o Or) validate() error {
 	}
 	return nil
 }
+
+// negatable is a Condition that can render its own negation — the clause a Not
+// wrapper prints. Negated wording is not uniform across conditions (a flank reads
+// "is not on a flank", a threshold flips to "fewer than"), so each negatable
+// condition owns its negated text rather than a wrapper deriving it by string
+// surgery.
+type negatable interface {
+	Condition
+	negatedText() string
+}
+
+// Not is met when its Condition is not met, composing negation instead of a
+// per-condition Not flag. Its Condition must be negatable (render its own negated
+// clause): Not{OnFlank{}} reads "if it is not on a flank", Not{ForgedKey{...}}
+// "if you have not forged a key this turn".
+type Not struct {
+	Cond Condition
+}
+
+// validate rejects a Condition that cannot render its own negation, and rejects an
+// invalid inner condition.
+func (n Not) validate() error {
+	if _, ok := n.Cond.(negatable); !ok {
+		return fmt.Errorf("Not: %T cannot be negated", n.Cond)
+	}
+	return validateCondition(n.Cond)
+}
+
+// CondText renders the inner condition's negated clause.
+func (n Not) CondText() string { return n.Cond.(negatable).negatedText() }
+
+// Met reports whether the inner condition is not met.
+func (n Not) Met(ctx *EffectContext) bool { return !n.Cond.Met(ctx) }
 
 // CondText joins the sub-clauses with "or", e.g. "if it is a Dinosaur creature or
 // it has Æmber on it". Each condition renders "if <clause>" (the shared

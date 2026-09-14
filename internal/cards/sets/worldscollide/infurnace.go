@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon
 //
 //	Play: Purge up to 2 cards from a discard pile. Your opponent loses Æmber equal to the total Æmber bonus of the purged cards.
-var Infurnace = card.New(
+var Infurnace = set.New(
 	"Infurnace",
 	card.House.Dis,
 	card.Type.Creature,

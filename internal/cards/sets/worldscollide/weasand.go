@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Deploy, Elusive.
 //	If Weasand is on a flank, destroy Weasand.
 //	After a player forges a key, gain 2 Æmber.
-var Weasand = card.New(
+var Weasand = set.New(
 	"Weasand",
 	card.House.Shadows,
 	card.Type.Creature,

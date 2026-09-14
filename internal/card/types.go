@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/engine"
 // effect field, whose values are card.Controller / card.Opponent below).
 type (
 	// Trait is the value type for a card.Traits.X constant, e.g. as the field type
-	// of an effect that filters by trait (card.Match.Trait).
+	// of an effect that filters by trait (card.Filter.Trait).
 	Trait = engine.Trait
 	// KeywordValue is the value type for a card.Keyword.X constant, e.g. as an
 	// element of card.AttackKeywords.Keywords.

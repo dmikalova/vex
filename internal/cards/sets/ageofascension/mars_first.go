@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Ready and use a friendly Mars Creature.
-var MarsFirst = card.New(
+var MarsFirst = set.New(
 	"Mars First",
 	card.House.Mars,
 	card.Type.Tactic,
@@ -19,7 +19,7 @@ var MarsFirst = card.New(
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.OnChooseCreature{
-			Target: card.Target.FriendlyCreature.OfHouse(card.House.Self),
+			Target: card.Target.FriendlyCreature.House(card.Houses.Named(card.House.Self)),
 			Verbs:  []card.CreatureVerb{card.ReadyVerb{}, card.UseVerb{}},
 		}),
 )

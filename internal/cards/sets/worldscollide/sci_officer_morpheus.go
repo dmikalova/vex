@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Shapeshifter • Scientist
 //
 //	After a Creature is played, if it is a friendly Creature, trigger the play effect of it.
-var SciOfficerMorpheus = card.New(
+var SciOfficerMorpheus = set.New(
 	"Sci. Officer Morpheus",
 	card.House.StarAlliance,
 	card.Type.Creature,

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Alpha.
 //	Play: Until the start of your next turn, each Creature gains, "Before Fight: Exalt this Creature."
-var DiploMacy = card.New(
+var DiploMacy = set.New(
 	"Diplo-Macy",
 	card.House.Saurian,
 	card.Type.Tactic,

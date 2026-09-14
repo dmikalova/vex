@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Reap: You may exalt Questor Jarta. Gain 1 Æmber.
-var QuestorJarta = card.New(
+var QuestorJarta = set.New(
 	"Questor Jarta",
 	card.House.Saurian,
 	card.Type.Creature,

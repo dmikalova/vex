@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Play: Steal 1 Æmber.
-var Urchin = card.New(
+var Urchin = set.New(
 	"Urchin",
 	card.House.Shadows,
 	card.Type.Creature,

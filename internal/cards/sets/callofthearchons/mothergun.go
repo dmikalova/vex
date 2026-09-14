@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Weapon
 //
 //	Action: Reveal any number of Mars cards from your hand, and for each card revealed this way, deal 1 damage to a Creature.
-var Mothergun = card.New(
+var Mothergun = set.New(
 	"Mothergun",
 	card.House.Mars,
 	card.Type.Artifact,
@@ -22,7 +22,7 @@ var Mothergun = card.New(
 			Effects: []card.Effect{
 				card.RevealHand{
 					Player: card.Controller,
-					House:  card.House.Self,
+					House:  card.Houses.Named(card.House.Self),
 				},
 				card.DealDamage{
 					Amount: 1,

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Elf • Thief
 //
 //	Fight/Reap: Move 1 Æmber from a friendly Creature or Artifact to your pool.
-var SelwynTheFence = card.New(
+var SelwynTheFence = set.New(
 	"Selwyn the Fence",
 	card.House.Shadows,
 	card.Type.Creature,

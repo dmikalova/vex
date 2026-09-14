@@ -24,7 +24,7 @@ var igonCluster = card.Cluster{
 //	Traits: Giant
 //
 //	Destroyed: Purge Igon the Green, and put an Igon the Terrible from your discard pile into your hand.
-var IgonTheGreen = card.New(
+var IgonTheGreen = set.New(
 	IgonTheGreenName,
 	card.House.Brobnar,
 	card.Type.Creature,
@@ -37,7 +37,7 @@ var IgonTheGreen = card.New(
 		card.Trigger.Destroyed, card.Sequence{Effects: []card.Effect{
 			card.PurgeCreature{Target: card.Target.This},
 			card.PutFromDiscard{
-				Match:       card.Match{Name: IgonTheTerrible.Name},
+				Selection:   card.Chosen{Name: IgonTheTerrible.Name},
 				Destination: card.To.Hand,
 			},
 		}}),

@@ -20,7 +20,7 @@ var khrkharsBlasterCluster = card.Cluster{
 //	This Creature gains, "Fight/Reap: Choose one:
 //	- Deal 2 damage to a Creature
 //	- Attach Khrkhar's Blaster to Lieutenant Khrkhar -> ward Lieutenant Khrkhar."
-var KhrkharsBlaster = card.New(
+var KhrkharsBlaster = set.New(
 	"Khrkhar's Blaster",
 	card.House.StarAlliance,
 	card.Type.Upgrade,

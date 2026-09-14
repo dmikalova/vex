@@ -12,44 +12,44 @@ func TestMayPlayOrUseText(t *testing.T) {
 	}{
 		{
 			"fight chosen house (Brothers in Battle)",
-			MayPlayOrUse{Houses: HouseSelector{Kind: SelectHouse}, Grant: GrantFight},
+			MayPlayOrUse{Houses: HouseSelector{Match: chosenHouse}, Grant: GrantFight},
 			"for the remainder of the turn, each friendly creature of the chosen house may fight",
 		},
 		{
 			"fight named house (Signal Fire)",
 			MayPlayOrUse{
-				Houses: HouseSelector{Kind: SelectHouse, House: Brobnar},
+				Houses: HouseSelector{Match: namedHouse(Brobnar)},
 				Grant:  GrantFight,
 			},
 			"for the remainder of the turn, each friendly Brobnar creature may fight",
 		},
 		{
 			"fight any house (Follow the Leader)",
-			MayPlayOrUse{Houses: HouseSelector{Kind: SelectAny}, Grant: GrantFight},
+			MayPlayOrUse{Houses: HouseSelector{Match: anyHouse}, Grant: GrantFight},
 			"for the remainder of the turn, each friendly creature may fight",
 		},
 		{
 			"use named house (Ritual of the Hunt)",
-			MayPlayOrUse{Houses: HouseSelector{Kind: SelectHouse, House: Sanctum}, Grant: GrantUse},
+			MayPlayOrUse{Houses: HouseSelector{Match: namedHouse(Sanctum)}, Grant: GrantUse},
 			"for the remainder of the turn, you may use friendly Sanctum creatures",
 		},
 		{
 			"play or use named house (House Ambassador)",
 			MayPlayOrUse{
-				Houses: HouseSelector{Kind: SelectHouse, House: Mars},
+				Houses: HouseSelector{Match: namedHouse(Mars)},
 				Grant:  GrantPlay | GrantUse,
 			},
 			"for the remainder of the turn, you may play or use a Mars card",
 		},
 		{
 			"play named house only",
-			MayPlayOrUse{Houses: HouseSelector{Kind: SelectHouse, House: Mars}, Grant: GrantPlay},
+			MayPlayOrUse{Houses: HouseSelector{Match: namedHouse(Mars)}, Grant: GrantPlay},
 			"for the remainder of the turn, you may play a Mars card",
 		},
 		{
 			"use artifacts any house (Scientifical Hack)",
 			MayPlayOrUse{
-				Houses: HouseSelector{Kind: SelectAny},
+				Houses: HouseSelector{Match: anyHouse},
 				Grant:  GrantUse,
 				Types:  CardTypesOf(Artifact),
 			},
@@ -58,7 +58,7 @@ func TestMayPlayOrUseText(t *testing.T) {
 		{
 			"exclusion non-creature (Com. Officer Kirby)",
 			MayPlayOrUse{
-				Houses: HouseSelector{Kind: SelectExcept, House: StarAlliance},
+				Houses: HouseSelector{Match: exceptHouse(StarAlliance)},
 				Grant:  GrantPlay,
 				Types:  CardTypesOf(Artifact, Upgrade, Tactic),
 				Count:  1,
@@ -68,7 +68,7 @@ func TestMayPlayOrUseText(t *testing.T) {
 		{
 			"exclusion play or use (CXO Taber)",
 			MayPlayOrUse{
-				Houses: HouseSelector{Kind: SelectExcept, House: StarAlliance},
+				Houses: HouseSelector{Match: exceptHouse(StarAlliance)},
 				Grant:  GrantPlay | GrantUse,
 				Count:  1,
 			},
@@ -76,12 +76,16 @@ func TestMayPlayOrUseText(t *testing.T) {
 		},
 		{
 			"exclusion no excluded house",
-			MayPlayOrUse{Houses: HouseSelector{Kind: SelectExcept}, Grant: GrantPlay, Count: 1},
+			MayPlayOrUse{
+				Houses: HouseSelector{Match: HouseMatcher{Kind: MatchExceptHouse}},
+				Grant:  GrantPlay,
+				Count:  1,
+			},
 			"you may play one card this turn",
 		},
 		{
 			"controlled (United Action)",
-			MayPlayOrUse{Houses: HouseSelector{Kind: SelectControlled}, Grant: GrantPlay},
+			MayPlayOrUse{Houses: HouseSelector{Controlled: true}, Grant: GrantPlay},
 			"for the remainder of the turn, you may play cards from any house for which you have a card in play",
 		},
 	}
@@ -92,22 +96,22 @@ func TestMayPlayOrUseText(t *testing.T) {
 	}
 }
 
-// TestMayPlayOrUseValidate covers each reason a grant is rejected.
+// TestMayPlayOrUseValidate covers each reason a grant is rejected. There is no
+// "no houses" case: HouseSelector embeds a HouseMatcher whose zero value is
+// MatchAnyHouse, so an unset selector is a valid any-house grant (Follow the
+// Leader), not an error.
 func TestMayPlayOrUseValidate(t *testing.T) {
-	if (MayPlayOrUse{Grant: GrantPlay}).validate() == nil {
-		t.Error("a grant with no houses should be invalid")
-	}
-	if (MayPlayOrUse{Houses: HouseSelector{Kind: SelectAny}}).validate() == nil {
+	if (MayPlayOrUse{Houses: HouseSelector{Match: anyHouse}}).validate() == nil {
 		t.Error("a grant with no verb should be invalid")
 	}
 	if (MayPlayOrUse{
-		Houses: HouseSelector{Kind: SelectExcept},
+		Houses: HouseSelector{Match: HouseMatcher{Kind: MatchExceptHouse}},
 		Grant:  GrantPlay,
 		Count:  -1,
 	}).validate() == nil {
 		t.Error("a negative count should be invalid")
 	}
-	if (MayPlayOrUse{Houses: HouseSelector{Kind: SelectAny}, Grant: GrantFight}).validate() != nil {
+	if (MayPlayOrUse{Houses: HouseSelector{Match: anyHouse}, Grant: GrantFight}).validate() != nil {
 		t.Error("a set house and grant should be valid")
 	}
 }
@@ -117,7 +121,7 @@ func TestMayPlayOrUseValidate(t *testing.T) {
 // the SelectHouse-with-no-house form.
 func TestMayPlayOrUseResolveFight(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	MayPlayOrUse{Houses: HouseSelector{Kind: SelectHouse}, Grant: GrantFight}.Resolve(
+	MayPlayOrUse{Houses: HouseSelector{Match: chosenHouse}, Grant: GrantFight}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0, ChosenHouse: Untamed},
 	)
 	if g.State.MayFightHouse[0] != Untamed {
@@ -125,7 +129,7 @@ func TestMayPlayOrUseResolveFight(t *testing.T) {
 	}
 
 	MayPlayOrUse{
-		Houses: HouseSelector{Kind: SelectHouse, House: Brobnar},
+		Houses: HouseSelector{Match: namedHouse(Brobnar)},
 		Grant:  GrantFight,
 	}.Resolve(
 		&EffectContext{Resolver: g, Controller: 1},
@@ -144,7 +148,7 @@ func TestMayPlayOrUseResolveFight(t *testing.T) {
 	if err := g2.Fight(0, outsider, enemy); err != ErrWrongHouse {
 		t.Fatalf("Fight before the grant = %v, want ErrWrongHouse", err)
 	}
-	MayPlayOrUse{Houses: HouseSelector{Kind: SelectAny}, Grant: GrantFight}.Resolve(
+	MayPlayOrUse{Houses: HouseSelector{Match: anyHouse}, Grant: GrantFight}.Resolve(
 		&EffectContext{Resolver: g2, Controller: 0},
 	)
 	if !g2.State.MayFightAny[0] {
@@ -173,7 +177,7 @@ func TestMayPlayOrUseResolveUsePlay(t *testing.T) {
 		t.Fatal("an off-house creature should not be usable before the grant")
 	}
 	MayPlayOrUse{
-		Houses: HouseSelector{Kind: SelectHouse, House: Mars},
+		Houses: HouseSelector{Match: namedHouse(Mars)},
 		Grant:  GrantPlay | GrantUse,
 	}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
@@ -199,7 +203,7 @@ func TestMayPlayOrUseResolveUsePlay(t *testing.T) {
 		t.Fatal("an off-house artifact should not be usable before the grant")
 	}
 	MayPlayOrUse{
-		Houses: HouseSelector{Kind: SelectAny},
+		Houses: HouseSelector{Match: anyHouse},
 		Grant:  GrantUse,
 		Types:  CardTypesOf(Artifact),
 	}.Resolve(
@@ -218,7 +222,7 @@ func TestMayPlayOrUseResolveUsePlay(t *testing.T) {
 func TestMayPlayOrUseResolvePermit(t *testing.T) {
 	g := started(t)
 	MayPlayOrUse{
-		Houses: HouseSelector{Kind: SelectExcept, House: StarAlliance},
+		Houses: HouseSelector{Match: exceptHouse(StarAlliance)},
 		Grant:  GrantPlay,
 		Count:  2,
 	}.Resolve(&EffectContext{Resolver: g, Controller: 0})
@@ -229,7 +233,7 @@ func TestMayPlayOrUseResolvePermit(t *testing.T) {
 		t.Errorf("bounded permit = %+v, want Remaining 2 Except StarAlliance", got)
 	}
 
-	MayPlayOrUse{Houses: HouseSelector{Kind: SelectControlled}, Grant: GrantPlay}.Resolve(
+	MayPlayOrUse{Houses: HouseSelector{Controlled: true}, Grant: GrantPlay}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
 	)
 	if got := g.State.OffHousePermits[0][1]; got.Remaining != permitUnlimited || !got.Controlled {

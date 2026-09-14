@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Knoxx gains +3 power for each neighbor it has.
-var Knoxx = card.New(
+var Knoxx = set.New(
 	"Knoxx",
 	card.House.Untamed,
 	card.Type.Creature,

@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Skirmish, Elusive.
 //	Fight: Enrage the Creature Slimy Jark fought.
-var SlimyJark = card.New(
+var SlimyJark = set.New(
 	"Slimy Jark",
 	card.House.Brobnar,
 	card.Type.Creature,

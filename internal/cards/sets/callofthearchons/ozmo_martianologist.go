@@ -14,7 +14,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Fight/Reap: Choose one:
 //	- Heal 3 damage from a Mars Creature
 //	- Stun a Mars Creature.
-var Ozmo = card.New(
+var Ozmo = set.New(
 	"Ozmo, Martianologist",
 	card.House.Logos,
 	card.Type.Creature,
@@ -27,9 +27,9 @@ var Ozmo = card.New(
 		Options: []card.Effect{
 			card.Heal{
 				Amount: 3,
-				Target: card.Target.Creature.OfHouse(card.House.Mars),
+				Target: card.Target.Creature.House(card.Houses.Named(card.House.Mars)),
 			},
-			card.Stun{Target: card.Target.Creature.OfHouse(card.House.Mars)},
+			card.Stun{Target: card.Target.Creature.House(card.Houses.Named(card.House.Mars))},
 		},
 	}),
 )

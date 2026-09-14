@@ -44,14 +44,10 @@ func (RedistributeDamage) Resolve(ctx *EffectContext) {
 	for _, id := range creatures {
 		r.SetDamage(id, 0)
 	}
-	for ; pool > 0; pool-- {
-		id, ok := ctx.ChooseCreature("Place 1 damage", creatures)
-		if !ok {
-			id = creatures[0]
-		}
+	placeAmong(ctx, creatures, "Place 1 damage", pool, func(id LocalID) {
 		assigned[id]++
 		r.SetDamage(id, assigned[id])
-	}
+	})
 	var dying []LocalID
 	for _, id := range creatures {
 		if p := r.Power(id); p > 0 && r.Damage(id) >= p {

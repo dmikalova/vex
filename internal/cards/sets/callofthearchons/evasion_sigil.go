@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Power
 //
 //	Each Creature gains, "Before Fight: Discard the top card of its controller's deck. If it is of the active house, the fight does not occur."
-var EvasionSigil = card.New(
+var EvasionSigil = set.New(
 	"Evasion Sigil",
 	card.House.Shadows,
 	card.Type.Artifact,
@@ -25,9 +25,9 @@ var EvasionSigil = card.New(
 			Trigger: card.Trigger.BeforeFight,
 			Effect: card.Sentences{
 				Effects: []card.Effect{
-					card.DiscardTopOfDeck{},
+					card.DiscardTop{},
 					card.Conditional{
-						Cond: card.ItIsOfHouse{House: card.TheActiveHouse},
+						Cond: card.ItIs{House: card.Houses.Active},
 						Then: card.CancelFight{},
 					},
 				},

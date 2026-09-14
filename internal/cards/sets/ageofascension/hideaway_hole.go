@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Versatile.
 //	Action: Destroy Hideaway Hole. Each friendly Creature gains elusive until the start of your next turn.
-var HideawayHole = card.New(
+var HideawayHole = set.New(
 	"Hideaway Hole",
 	card.House.Shadows,
 	card.Type.Artifact,

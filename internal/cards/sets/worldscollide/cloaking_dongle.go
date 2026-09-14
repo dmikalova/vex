@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	This Creature and each of its neighbors gains elusive.
-var CloakingDongle = card.New(
+var CloakingDongle = set.New(
 	"Cloaking Dongle",
 	card.House.StarAlliance,
 	card.Type.Upgrade,

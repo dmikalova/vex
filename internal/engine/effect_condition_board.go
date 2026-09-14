@@ -320,46 +320,41 @@ func (c CounterInPlay) Met(ctx *EffectContext) bool {
 
 // NamedCardPurged is met by whether a card of a given name sits in the
 // controller's purge pile — Igon the Terrible destroys itself unless Igon the
-// Green has already been purged (Not true reads "has not been purged"). It names
+// Green has already been purged (wrap in Not for "has not been purged"). It names
 // the other card by its printed name, not the source.
 type NamedCardPurged struct {
 	// Name is the card name to look for in the purge pile.
 	Name string
-	// Not flips the sense: false is met while a copy is purged, true while none is.
-	Not bool
 }
 
 // CondText renders the condition naming the card it looks for.
 func (c NamedCardPurged) CondText() string {
-	if c.Not {
-		return "if " + c.Name + " has not been purged"
-	}
 	return "if " + c.Name + " has been purged"
 }
 
-// Met reports whether a card of the name is in the controller's purge pile,
-// flipped by Not.
+// negatedText renders the not-purged clause a Not wrapper prints.
+func (c NamedCardPurged) negatedText() string {
+	return "if " + c.Name + " has not been purged"
+}
+
+// Met reports whether a card of the name is in the controller's purge pile.
 func (c NamedCardPurged) Met(ctx *EffectContext) bool {
-	purged := false
 	for _, id := range ctx.Resolver.Purge(ctx.Controller) {
 		if ctx.Resolver.Name(id) == c.Name {
-			purged = true
-			break
+			return true
 		}
 	}
-	return purged != c.Not
+	return false
 }
 
 // ForgedKey is the condition on whether a player forged a key in a given window —
 // this turn (Smiling Ruth) or on their own previous turn (Tendrils of Pain, Key
 // Hammer). It reads the turn history rather than the running key total, so a key
-// forged several turns ago does not keep the condition true.
+// forged several turns ago does not keep the condition true. Wrap in Not for "has
+// not forged a key" (Nightforge).
 type ForgedKey struct {
 	Player   Player
 	Previous bool
-	// Not inverts the condition, reading "if you have not forged a key this turn"
-	// (Nightforge).
-	Not bool
 }
 
 // validate requires the condition to name whose key it asks about.
@@ -370,26 +365,38 @@ func (c ForgedKey) validate() error {
 	return nil
 }
 
+// subject names the player and their possessive, e.g. "you"/"your".
+func (c ForgedKey) subject() (string, string) {
+	if c.Player == Opponent {
+		return "your opponent", "their"
+	}
+	return "you", "your"
+}
+
+// window names the turn the condition asks about.
+func (c ForgedKey) window(possessive string) string {
+	if c.Previous {
+		return "on " + possessive + " previous turn"
+	}
+	return "this turn"
+}
+
 // CondText renders the clause, e.g. "if your opponent forged a key on their
 // previous turn".
 func (c ForgedKey) CondText() string {
-	subject, possessive := "you", "your"
-	if c.Player == Opponent {
-		subject, possessive = "your opponent", "their"
-	}
-	when := "this turn"
-	if c.Previous {
-		when = "on " + possessive + " previous turn"
-	}
-	if c.Not {
-		return fmt.Sprintf("if %s have not forged a key %s", subject, when)
-	}
-	return fmt.Sprintf("if %s forged a key %s", subject, when)
+	subject, possessive := c.subject()
+	return fmt.Sprintf("if %s forged a key %s", subject, c.window(possessive))
+}
+
+// negatedText renders the not-forged clause a Not wrapper prints.
+func (c ForgedKey) negatedText() string {
+	subject, possessive := c.subject()
+	return fmt.Sprintf("if %s have not forged a key %s", subject, c.window(possessive))
 }
 
 // Met reports whether the named player forged at least one key in the window.
 func (c ForgedKey) Met(ctx *EffectContext) bool {
-	return (ctx.Resolver.TurnHistory(ctx.PlayerFor(c.Player), c.stat()) > 0) != c.Not
+	return ctx.Resolver.TurnHistory(ctx.PlayerFor(c.Player), c.stat()) > 0
 }
 
 // stat picks the tally the window corresponds to.

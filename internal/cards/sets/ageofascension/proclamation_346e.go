@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Law
 //
 //	While your opponent does not control Creatures from 3 or more different houses, your opponent's keys cost +2 Æmber.
-var Proclamation346E = card.New(
+var Proclamation346E = set.New(
 	"Proclamation 346E",
 	card.House.Sanctum,
 	card.Type.Artifact,

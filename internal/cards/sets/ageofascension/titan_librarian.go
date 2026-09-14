@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Cyborg • Scientist
 //
 //	At the end of your turn, if Titan Librarian is not on a flank, archive a card from your hand.
-var TitanLibrarian = card.New(
+var TitanLibrarian = set.New(
 	"Titan Librarian",
 	card.House.Logos,
 	card.Type.Creature,
@@ -21,7 +21,7 @@ var TitanLibrarian = card.New(
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Scientist),
 	card.WithAbility(
 		card.Trigger.EndOfTurn, card.Conditional{
-			Cond: card.OnFlank{Not: true},
+			Cond: card.Not{Cond: card.OnFlank{}},
 			Then: card.ArchiveCard{Zone: card.Hand, Selection: card.Chosen{}},
 		}),
 )

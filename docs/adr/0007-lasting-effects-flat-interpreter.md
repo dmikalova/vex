@@ -20,11 +20,12 @@ deliberately smaller interpreter. State holds enum-tagged records
 translates a composed effect into an action tag, and `game_lasting.go` fires and
 queries the records. Two flavors:
 
-- A **reaction** runs after an event — `AddLasting` registers it. At a site with
-  its own trigger window (reap, fight, play) `lastingReactions` folds it into that
-  window so it orders together with the card abilities (ADR 0013); at a site without
-  one, `emitLasting` gathers every reaction the actor owns and, when several fire at
-  once, lets the active player order them.
+- A **reaction** runs after an event — `AddLasting` registers it. Every site that
+  fires the event folds its reactions into that event's trigger window with
+  `lastingReactions`, so they order together with the card abilities (ADR 0013).
+  Even an event with no card ability of its own (an enemy creature destroyed) still
+  has a window: `afterDestroyedReactions` gathers the destroy triggers and folds the
+  `EventEnemyCreatureDestroyed` reactions into the same ordered list.
 - A **replacement** changes an event's own outcome — the event site queries
   `lastingReplacement` and applies `Instead{Of, With}` in place.
 
@@ -34,7 +35,7 @@ queries the records. Two flavors:
   them), because they all route through one dispatch.
 - Adding a reaction on an existing event = support its `Do` in `lastingActionOf`
   and `resolveReaction`; a new event = one `Event` value, one `lastingReactions`
-  (folded into a window) or `emitLasting`/`lastingReplacement` call at the site, and
+  (folded into that event's window) or `lastingReplacement` call at the site, and
   its text. The play/reap path's structure never changes.
 - This is a real sub-language, not an ad-hoc pile of `if`s — keep the enum dispatch
   centralized; if the action set grows, formalize it as a tiny instruction set with

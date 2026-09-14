@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item
 //
 //	Action: Reveal the top card of your deck. If it is a non-Star Alliance card, its house becomes your active house. Otherwise, end your turn.
-var BookOfLeQ = card.New(
+var BookOfLeQ = set.New(
 	"Book of leQ",
 	card.House.StarAlliance,
 	card.Type.Artifact,
@@ -22,7 +22,7 @@ var BookOfLeQ = card.New(
 			Effects: []card.Effect{
 				card.RevealTopOfDeck{Amount: 1},
 				card.Conditional{
-					Cond: card.ItIsNotOfHouse{House: card.House.Self},
+					Cond: card.ItIs{House: card.Houses.Except(card.House.Self)},
 					Then: card.ChangeActiveHouse{To: card.TheContextualHouse},
 					Else: card.EndTurn{},
 				},

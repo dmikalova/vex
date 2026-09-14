@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Deal 1 damage to each Creature, and if your opponent forged a key on their previous turn, deal 3 damage to each Creature.
-var TendrilsOfPain = card.New(
+var TendrilsOfPain = set.New(
 	"Tendrils of Pain",
 	card.House.Dis,
 	card.Type.Tactic,

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Location
 //
 //	Action: Discard cards from the top of your deck until you discard a Mars Creature or run out of cards -> put the discarded Creature into your hand.
-var InvasionPortal = card.New("Invasion Portal",
+var InvasionPortal = set.New("Invasion Portal",
 	card.House.Mars, card.Type.Artifact, card.Rarity.Rare,
 	card.Provenance(card.CotA, "185"),
 	card.WithTraits(card.Traits.Location),

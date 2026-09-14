@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	While Streke is not on a flank, during their "draw cards" phase, your opponent refills their hand to 1 less card.
-var Streke = card.New(
+var Streke = set.New(
 	"Streke",
 	card.House.Dis,
 	card.Type.Creature,

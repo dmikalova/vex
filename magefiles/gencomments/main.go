@@ -396,16 +396,17 @@ func wrapperTemplates(f *ast.File) map[string]nameTemplate {
 	return out
 }
 
-// cardNewNameArg returns the first argument of the card.New call in a wrapper
-// body — the expression that builds the printed name.
+// cardNewNameArg returns the first argument of the card-building New call in a
+// wrapper body — the expression that builds the printed name. The call is either
+// card.New (the facade) or set.New (a set package's registrar).
 func cardNewNameArg(body *ast.BlockStmt) (ast.Expr, bool) {
 	var arg ast.Expr
 	ast.Inspect(body, func(n ast.Node) bool {
 		if arg != nil {
 			return false
 		}
-		if call, ok := n.(*ast.CallExpr); ok && isSelector(call.Fun, "card", "New") &&
-			len(call.Args) > 0 {
+		if call, ok := n.(*ast.CallExpr); ok && len(call.Args) > 0 &&
+			(isSelector(call.Fun, "card", "New") || isSelector(call.Fun, "set", "New")) {
 			arg = call.Args[0]
 			return false
 		}

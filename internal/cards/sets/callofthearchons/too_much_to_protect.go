@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Steal all but 6 Æmber from your opponent.
-var TooMuchToProtect = card.New(
+var TooMuchToProtect = set.New(
 	"Too Much to Protect",
 	card.House.Shadows,
 	card.Type.Tactic,

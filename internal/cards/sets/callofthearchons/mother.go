@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Robot • Scientist
 //
 //	During your "draw cards" phase, refill your hand to 1 additional card.
-var Mother = card.New(
+var Mother = set.New(
 	"Mother",
 	card.House.Logos,
 	card.Type.Creature,

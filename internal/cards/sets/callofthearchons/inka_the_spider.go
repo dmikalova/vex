@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Poison.
 //	Play/Reap: Stun a Creature.
-var InkaTheSpider = card.New(
+var InkaTheSpider = set.New(
 	"Inka the Spider",
 	card.House.Untamed,
 	card.Type.Creature,

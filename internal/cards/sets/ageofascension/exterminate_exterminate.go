@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //
 //	Play: Destroy each non-Mars Creature with power less than the number of friendly Mars Creatures you control.
-var ExterminateExterminate = card.New(
+var ExterminateExterminate = set.New(
 	"Exterminate! Exterminate!",
 	card.House.Mars,
 	card.Type.Tactic,
@@ -18,7 +18,7 @@ var ExterminateExterminate = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{
 			Target: card.Target.EachCreature.
-				ExceptHouse(card.House.Self).
+				House(card.Houses.Except(card.House.Self)).
 				Refine(card.PowerLessThan(card.InPlay{
 					Player: card.Controller,
 					Type:   card.Type.Creature,

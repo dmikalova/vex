@@ -8,7 +8,7 @@ package engine
 // follow a gate that left a card in context, e.g. Then{PutFromPlay, PutFromHand}.
 type PutFromHand struct {
 	Type           CardType
-	House          House
+	House          HouseMatcher
 	ExceptSameName bool
 }
 
@@ -19,9 +19,7 @@ func (e PutFromHand) noun() string {
 	if e.Type != TypeUnset {
 		base = typeWord(e.Type)
 	}
-	if e.House != HouseNone {
-		base = e.House.String() + " " + base
-	}
+	base = e.House.qualify(base)
 	if e.ExceptSameName {
 		base += " with a different name"
 	}
@@ -43,7 +41,7 @@ func (e PutFromHand) Resolve(ctx *EffectContext) {
 		if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
 			return false
 		}
-		if e.House != HouseNone && ctx.Resolver.House(id) != e.House {
+		if !e.House.matches(ctx, id) {
 			return false
 		}
 		return !e.ExceptSameName || !ctx.HasIt ||

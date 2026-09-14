@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant
 //
 //	Play: Stun a Creature.
-var Smaaash = card.New(
+var Smaaash = set.New(
 	"Smaaash",
 	card.House.Brobnar,
 	card.Type.Creature,

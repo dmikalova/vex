@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Choose an enemy Creature - if that Creature was already stunned, destroy it. Otherwise, stun it.
-var Card12Punch = card.New(
+var Card12Punch = set.New(
 	"1-2 Punch",
 	card.House.Brobnar,
 	card.Type.Tactic,

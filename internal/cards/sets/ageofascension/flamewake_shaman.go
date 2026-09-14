@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human
 //
 //	Play: Deal 2 damage to a Creature.
-var FlamewakeShaman = card.New(
+var FlamewakeShaman = set.New(
 	"Flamewake Shaman",
 	card.House.Brobnar,
 	card.Type.Creature,

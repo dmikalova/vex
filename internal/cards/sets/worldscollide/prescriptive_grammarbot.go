@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Taunt, Hazardous 3.
 //	Reap: Enrage a Creature.
-var PrescriptiveGrammarbot = card.New(
+var PrescriptiveGrammarbot = set.New(
 	"Prescriptive Grammarbot",
 	card.House.Logos,
 	card.Type.Creature,

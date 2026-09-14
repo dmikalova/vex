@@ -61,7 +61,6 @@ func (g *Game) swapAcrossZones(a, b LocalID) {
 	// captured before removal; clamp so the reinsert lands on the flank.
 	line.insertAt(min(idx, int(line.Count)), resting)
 	g.emitCreatureEnters(resting)
-	g.settleDestroyed(controller)
 }
 
 // MoveToFlank moves a creature to a flank of its own controller's battleline: the

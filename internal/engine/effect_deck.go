@@ -17,6 +17,30 @@ func (PlayRevealedCard) Resolve(ctx *EffectContext) {
 	}
 }
 
+// PutRevealedCard moves the card in context (put there by a preceding
+// RevealTopOfDeck) from its owner's deck to To — Wormhole Technician archives the
+// revealed card when it is not a Logos card, Vespilon Theorist discards it when it
+// is not of the chosen house. It renders the terse verb its destination reads
+// ("archive it", "discard it") and does nothing when no card is in context.
+type PutRevealedCard struct {
+	// To names where the revealed card goes: its owner's archives, discard pile,
+	// hand, or the purge pile.
+	To DeckDest
+}
+
+// validate rejects an unknown destination.
+func (e PutRevealedCard) validate() error { return e.To.validate() }
+
+// Text renders the effect.
+func (e PutRevealedCard) Text() string { return e.To.itClause() }
+
+// Resolve moves the context card from its owner's deck to To.
+func (e PutRevealedCard) Resolve(ctx *EffectContext) {
+	if ctx.HasIt {
+		e.To.mover(ctx, ctx.Resolver.Owner(ctx.It))(ctx.It)
+	}
+}
+
 // PlayTopOfDeck plays the top card of the controller's deck outright (Wild
 // Wormhole), resolving that card's own play effect. It does nothing when the deck
 // is empty.
@@ -36,86 +60,93 @@ func (PlayTopOfDeck) Resolve(ctx *EffectContext) {
 	}
 }
 
-// DiscardTopOfDeck discards the top card of a deck and puts it in context (ctx.It)
-// so a following effect can react to it — Evasion Sigil cancels the fight when it
-// is of the active house; A Fair Game gains Æmber for hand cards of its house.
+// DiscardTop discards the top cards of one or both decks. It records every card
+// discarded this way on the context so a following ForEachDiscarded can act once
+// per card (Fetchdrones, Bonkers Killing Machine), and when exactly one card is
+// discarded it also binds that card as ctx.It so a single-card follow-up can react
+// to it — Evasion Sigil cancels the fight when it is of the active house, A Fair
+// Game gains Æmber for hand cards of its house, Gebuk swaps with it.
 //
-// Player picks whose deck, and its rendering follows the two ways a card names a
-// player. Left unset it speaks from a granted ability's card-neutral perspective
-// ("its controller's deck"), resolving against the creature's controller — the
-// only sensible default for an ability every creature gains (Evasion Sigil).
-// Controller and Opponent are the direct first/second-person perspectives ("your
-// deck", "your opponent's deck") a card played from hand uses (A Fair Game). An
-// empty deck discards nothing.
-type DiscardTopOfDeck struct {
+// Player picks whose deck. Controller and Opponent are the direct
+// first/second-person perspectives ("your deck", "your opponent's deck") a card
+// played from hand uses; EachPlayer discards from both decks at once, the
+// controller's first (Rigged Lottery, Bonkers Killing Machine). Left unset it
+// speaks from a granted ability's card-neutral perspective ("its controller's
+// deck"), resolving against the creature's controller — the only sensible default
+// for an ability every creature gains (Evasion Sigil). Amount discards that many
+// top cards per deck; the zero value discards one. An empty deck discards nothing.
+type DiscardTop struct {
 	Player Player
-}
-
-// Text renders the effect from the chosen player's perspective.
-func (e DiscardTopOfDeck) Text() string {
-	switch e.Player {
-	case Controller:
-		return "discard the top card of your deck"
-	case Opponent:
-		return "discard the top card of your opponent's deck"
-	default:
-		return "discard the top card of its controller's deck"
-	}
-}
-
-// Resolve discards the top card of the chosen deck (the controller's when Player
-// is unset), putting it in context.
-func (e DiscardTopOfDeck) Resolve(ctx *EffectContext) {
-	player := ctx.Controller
-	if e.Player.valid() {
-		player = ctx.PlayerFor(e.Player)
-	}
-	id, ok := ctx.Resolver.DiscardTopOfDeck(player)
-	ctx.It, ctx.HasIt = id, ok
-}
-
-// DiscardTopOfEachDeck discards the top card of each player's deck — the
-// controller's first, then the opponent's — and records each discarded card on
-// the context so a following ForEachDiscarded can act on it. An empty deck
-// contributes no card. Bonkers Killing Machine pairs it with ForEachDiscarded.
-// Amount discards that many top cards of each deck (Rigged Lottery discards five);
-// the zero value discards one.
-type DiscardTopOfEachDeck struct {
-	// Amount is how many top cards of each deck to discard; the zero value is one.
+	// Amount is how many top cards of each named deck to discard; the zero value
+	// discards one.
 	Amount int
 }
 
 // count is Amount with the zero value treated as one.
-func (e DiscardTopOfEachDeck) count() int {
+func (e DiscardTop) count() int {
 	if e.Amount < 1 {
 		return 1
 	}
 	return e.Amount
 }
 
-// Text renders the effect.
-func (e DiscardTopOfEachDeck) Text() string {
-	if e.count() == 1 {
-		return "discard the top card of each player's deck"
+// decks names the decks the discard acts on: both under EachPlayer, the
+// controller's when Player is unset (a granted ability's perspective), else the
+// named one.
+func (e DiscardTop) decks(ctx *EffectContext) []int {
+	switch e.Player {
+	case EachPlayer:
+		return []int{ctx.Controller, ctx.Opponent()}
+	case Controller, Opponent:
+		return []int{ctx.PlayerFor(e.Player)}
+	default:
+		return []int{ctx.Controller}
 	}
-	return fmt.Sprintf(
-		"discard the top %d cards of each player's deck", e.count())
 }
 
-// Resolve discards the controller's top deck cards, then the opponent's,
-// recording the discarded cards on the context.
-func (e DiscardTopOfEachDeck) Resolve(ctx *EffectContext) {
+// deckPhrase renders whose deck the cards come off, from the chosen perspective.
+func (e DiscardTop) deckPhrase() string {
+	switch e.Player {
+	case Controller:
+		return "your deck"
+	case Opponent:
+		return "your opponent's deck"
+	case EachPlayer:
+		return "each player's deck"
+	default:
+		return "its controller's deck"
+	}
+}
+
+// Text renders the effect from the chosen player's perspective.
+func (e DiscardTop) Text() string {
+	if e.count() == 1 {
+		return "discard the top card of " + e.deckPhrase()
+	}
+	return fmt.Sprintf(
+		"discard the top %d cards of %s", e.count(), e.deckPhrase())
+}
+
+// Resolve discards the top cards of each named deck, recording them on the context
+// and, when exactly one card is discarded, binding it as ctx.It for a single-card
+// follow-up.
+func (e DiscardTop) Resolve(ctx *EffectContext) {
 	ctx.Produced.Discarded = nil
-	for _, player := range []int{ctx.Controller, ctx.Opponent()} {
+	for _, player := range e.decks(ctx) {
 		for range e.count() {
-			if discarded, ok := ctx.Resolver.DiscardTopOfDeck(player); ok {
-				ctx.Produced.Discarded = append(ctx.Produced.Discarded, discarded)
+			if id, ok := ctx.Resolver.DiscardTopOfDeck(player); ok {
+				ctx.Produced.Discarded = append(ctx.Produced.Discarded, id)
 			}
 		}
 	}
+	if len(ctx.Produced.Discarded) == 1 {
+		ctx.It, ctx.HasIt = ctx.Produced.Discarded[0], true
+	} else {
+		ctx.It, ctx.HasIt = 0, false
+	}
 }
 
-// ForEachDiscarded resolves Do once for each card a preceding DiscardTopOfEachDeck
+// ForEachDiscarded resolves Do once for each card a preceding DiscardTop
 // discarded, putting that card in context (ctx.It) so Do can refer to it — Bonkers
 // Killing Machine destroys a creature or artifact of each discarded card's house
 // (Do targets Target.OfContextualHouse). A House filter narrows the iteration to
@@ -148,50 +179,6 @@ func (e ForEachDiscarded) Resolve(ctx *EffectContext) {
 		}
 		ctx.It, ctx.HasIt = id, true
 		e.Do.Resolve(ctx)
-	}
-}
-
-// DiscardTop discards the top Amount cards of one player's deck, recording each on
-// the context so a following ForEachDiscarded can act on it — Fetchdrones discards
-// the top two cards of your deck. An empty deck contributes no card.
-type DiscardTop struct {
-	Player Player
-	Amount int
-}
-
-// validate rejects a non-positive Amount.
-func (e DiscardTop) validate() error {
-	if e.Amount < 1 {
-		return fmt.Errorf("DiscardTop: Amount must be at least 1")
-	}
-	return nil
-}
-
-// Text renders the effect from the chosen player's perspective.
-func (e DiscardTop) Text() string {
-	noun := "cards"
-	if e.Amount == 1 {
-		noun = "card"
-	}
-	deck := "your deck"
-	if e.Player == Opponent {
-		deck = "your opponent's deck"
-	}
-	return fmt.Sprintf("discard the top %d %s of %s", e.Amount, noun, deck)
-}
-
-// Resolve discards the top Amount cards of the chosen deck (the controller's when
-// Player is unset), recording the discarded cards on the context.
-func (e DiscardTop) Resolve(ctx *EffectContext) {
-	ctx.Produced.Discarded = nil
-	player := ctx.Controller
-	if e.Player.valid() {
-		player = ctx.PlayerFor(e.Player)
-	}
-	for range e.Amount {
-		if id, ok := ctx.Resolver.DiscardTopOfDeck(player); ok {
-			ctx.Produced.Discarded = append(ctx.Produced.Discarded, id)
-		}
 	}
 }
 
@@ -320,6 +307,58 @@ const (
 	IntoPurge
 )
 
+// validate rejects a DeckDest outside the known routing destinations.
+func (d DeckDest) validate() error {
+	if d < IntoHand || d > IntoPurge {
+		return fmt.Errorf("DeckDest: unknown destination %d", d)
+	}
+	return nil
+}
+
+// mover returns the resolver call that moves one card from player's deck to d —
+// the single deck-routing dispatch shared by ChooseAndMove and PutRevealedCard.
+func (d DeckDest) mover(ctx *EffectContext, player int) func(LocalID) {
+	switch d {
+	case IntoArchives:
+		return ctx.Resolver.ArchiveFromDeck
+	case IntoDiscard:
+		return ctx.Resolver.MoveFromDeckToDiscard
+	case IntoPurge:
+		return func(id LocalID) { ctx.Resolver.PurgeFromDeck(player, id) }
+	default: // IntoHand
+		return ctx.Resolver.MoveFromDeckToHand
+	}
+}
+
+// choosePrompt is the pick prompt a ChooseAndMove step shows for routing to d.
+func (d DeckDest) choosePrompt() string {
+	switch d {
+	case IntoArchives:
+		return "Choose a card to archive"
+	case IntoDiscard:
+		return "Choose a card to discard"
+	case IntoPurge:
+		return "Choose a revealed card to purge"
+	default: // IntoHand
+		return "Choose a card to put into your hand"
+	}
+}
+
+// itClause is the terse verb PutRevealedCard prints for the single context card,
+// e.g. "archive it" or "discard it".
+func (d DeckDest) itClause() string {
+	switch d {
+	case IntoArchives:
+		return "archive it"
+	case IntoDiscard:
+		return "discard it"
+	case IntoPurge:
+		return "purge it"
+	default: // IntoHand
+		return "put it into your hand"
+	}
+}
+
 // ChooseAndMove takes Count of the read cards the controller chooses and sends them
 // to Dest — their hand, archives, discard pile, or the purge pile.
 type ChooseAndMove struct {
@@ -350,25 +389,9 @@ func (a ChooseAndMove) validate() error { return positiveCount("ChooseAndMove", 
 // terminal reports false: a move takes only Count cards, not the rest.
 func (ChooseAndMove) terminal() bool { return false }
 
-// apply moves the chosen cards from the deck to Dest.
+// apply moves the chosen cards from the deck to Dest through the shared dispatch.
 func (a ChooseAndMove) apply(ctx *EffectContext, tr *topRead) {
-	switch a.Dest {
-	case IntoArchives:
-		tr.choose(ctx, a.Count, "Choose a card to archive", ctx.Resolver.ArchiveFromDeck)
-	case IntoDiscard:
-		tr.choose(ctx, a.Count, "Choose a card to discard", ctx.Resolver.MoveFromDeckToDiscard)
-	case IntoPurge:
-		tr.choose(ctx, a.Count, "Choose a revealed card to purge", func(id LocalID) {
-			ctx.Resolver.PurgeFromDeck(tr.player, id)
-		})
-	default:
-		tr.choose(
-			ctx,
-			a.Count,
-			"Choose a card to put into your hand",
-			ctx.Resolver.MoveFromDeckToHand,
-		)
-	}
+	tr.choose(ctx, a.Count, a.Dest.choosePrompt(), a.Dest.mover(ctx, tr.player))
 }
 
 // ReorderRest puts the read cards no earlier step took back on top in any order the
@@ -384,9 +407,10 @@ func (ReorderRest) validate() error { return nil }
 // terminal reports true: it consumes whatever earlier steps left.
 func (ReorderRest) terminal() bool { return true }
 
-// apply has the controller place the remaining read cards on top in a chosen order;
-// fewer than two cards leaves nothing to reorder, and a declined choice keeps the
-// original order.
+// apply has the controller place the remaining read cards back one at a time,
+// each on top of the last, so the card chosen first ends up deepest and the card
+// left over rides on top (drawn next). Fewer than two cards leaves nothing to
+// reorder, and a declined choice keeps the original order.
 func (ReorderRest) apply(ctx *EffectContext, tr *topRead) {
 	if len(tr.remaining) < 2 {
 		return
@@ -403,25 +427,28 @@ func (ReorderRest) apply(ctx *EffectContext, tr *topRead) {
 		tr.remaining = withoutID(tr.remaining, id)
 	}
 	order = append(order, tr.remaining[0])
+	// Each pick was placed on top of the previous, so the pick order runs
+	// top-of-deck-last; reverse it into deck order (order[0] is the top card).
+	for i, j := 0, len(order)-1; i < j; i, j = i+1, j-1 {
+		order[i], order[j] = order[j], order[i]
+	}
 	ctx.Resolver.SetDeckTop(tr.player, order)
 }
 
-// ShuffleDeck also serves as a routing terminal (the type is the "shuffle your
-// deck" effect in effect_shuffle.go): as a terminal it shuffles the whole read
-// deck, since the cards revealed this way are still in that deck. It must be the
-// last step.
+// Shuffle also serves as a routing terminal (the type is the "shuffle your deck"
+// effect in effect_shuffle.go): as a terminal it shuffles the whole read deck,
+// since the cards revealed this way are still in that deck. It must be the last
+// step, and only the zero value Shuffle{} is used here (its validate lives with
+// the effect in effect_shuffle.go).
 
 // clause renders the step.
-func (ShuffleDeck) clause() string { return "shuffle that deck" }
-
-// validate always passes: a shuffle carries no count.
-func (ShuffleDeck) validate() error { return nil }
+func (Shuffle) clause() string { return "shuffle that deck" }
 
 // terminal reports true: it consumes whatever earlier steps left.
-func (ShuffleDeck) terminal() bool { return true }
+func (Shuffle) terminal() bool { return true }
 
 // apply shuffles the read player's deck — the revealed cards among them — and logs it.
-func (ShuffleDeck) apply(ctx *EffectContext, tr *topRead) {
+func (Shuffle) apply(ctx *EffectContext, tr *topRead) {
 	ctx.Resolver.Shuffle(tr.player)
 	ctx.Resolver.Record(DeckShuffled{Player: tr.player})
 }

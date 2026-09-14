@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Each friendly Knight Creature captures 1 Æmber from your opponent.
-var HonorableClaim = card.New(
+var HonorableClaim = set.New(
 	"Honorable Claim",
 	card.House.Sanctum,
 	card.Type.Tactic,

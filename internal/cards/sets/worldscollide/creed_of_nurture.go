@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Versatile.
 //	Action: Destroy Creed of Nurture. Reveal a Creature from your hand and choose a Creature in play - for the remainder of the turn, the chosen Creature gains the text box of the revealed Creature.
-var CreedOfNurture = card.New(
+var CreedOfNurture = set.New(
 	"Creed of Nurture",
 	card.House.Untamed,
 	card.Type.Artifact,

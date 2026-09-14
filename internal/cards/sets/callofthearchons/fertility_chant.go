@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  4
 //
 //	Play: Your opponent gains 2 Æmber.
-var FertilityChant = card.New(
+var FertilityChant = set.New(
 	"Fertility Chant",
 	card.House.Untamed,
 	card.Type.Tactic,

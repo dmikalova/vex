@@ -16,7 +16,7 @@ import (
 //	Traits: Beast
 //
 //	Deploy.
-//	Play: You may reap with up to 2 different neighboring Creatures, one at a time.
+//	Play: Reap with each of Ghosthawk's neighbors, one at a time.
 func TestGhosthawk(t *testing.T) {
 	untamed := ct.OfHouse(card.House.Untamed)
 
@@ -34,11 +34,9 @@ func TestGhosthawk(t *testing.T) {
 
 	h.P1.Play(Ghosthawk)
 	h.P1.ClickOption("Between") // deploy between the two neighbors
-	h.P1.ClickOption("Yes")     // accept the May
 
-	// Reap with each neighbor, one at a time.
+	// Reap with each neighbor, one at a time: pick the first, the last is automatic.
 	h.P1.ClickCard(left)
-	h.P1.ClickCard(right)
 
 	h.Expect(left).At(ct.PlayArea).Exhausted()
 	h.Expect(right).At(ct.PlayArea).Exhausted()

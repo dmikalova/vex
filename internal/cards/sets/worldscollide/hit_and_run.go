@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //
 //	Play: Deal 2 damage to a Creature. Put a friendly Creature into its owner's hand.
-var HitAndRun = card.New(
+var HitAndRun = set.New(
 	"Hit and Run",
 	card.House.Shadows,
 	card.Type.Tactic,

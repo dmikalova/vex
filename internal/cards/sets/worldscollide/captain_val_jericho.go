@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Leader
 //
 //	During your turn, if Captain Val Jericho is in the center of your battleline, you may play one card that is not of the active house.
-var CaptainValJericho = card.New(
+var CaptainValJericho = set.New(
 	"Captain Val Jericho",
 	card.House.StarAlliance,
 	card.Type.Creature,

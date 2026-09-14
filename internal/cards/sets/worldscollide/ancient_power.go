@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Ward each friendly Creature with Æmber on it.
-var AncientPower = card.New(
+var AncientPower = set.New(
 	"Ancient Power",
 	card.House.Saurian,
 	card.Type.Tactic,

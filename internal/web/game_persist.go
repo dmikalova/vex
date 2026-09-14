@@ -216,6 +216,12 @@ func (g *game) newMatch() { g.dealMatch(time.Now().UnixNano()) }
 // id in them.
 func (g *game) dealMatch(seed int64) {
 	g.seed = seed
+	// A new deal may abandon a prompt the previous match left blocked on its chooser
+	// (a mulligan, or a mid-action pick): release that goroutine so it returns
+	// rather than leaking, and so its stale UI dispatches no-op against this deal.
+	if g.chooser != nil {
+		g.chooser.drain()
+	}
 	eg, houses, mavericks, legacies, rosters := match.NewWithSets(
 		"Player 1",
 		"Player 2",
@@ -247,9 +253,17 @@ func (g *game) dealMatch(seed int64) {
 	// then begins the first turn and pauses at the house choice. The finish hops
 	// back to the UI goroutine through g.dispatch.
 	g.busy = true
+	// Capture this deal's engine and chooser so an abandoned setup (a new game
+	// started from the mulligan prompt) does not drive the game that replaced it:
+	// the goroutine runs its own engine, and its finish no-ops once a newer deal
+	// has installed a different chooser.
+	ch := g.chooser
 	go func() {
-		g.g.StartGame(0)
+		eg.StartGame(0)
 		g.dispatch(func(ctx app.Context) {
+			if g.chooser != ch {
+				return
+			}
 			g.busy = false
 			g.clearFlashes()
 			g.inPlayPrev = g.inPlaySet()

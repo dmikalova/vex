@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  1
 //	Æmber:  2
 //	Traits: Faerie
-var DustPixie = card.New(
+var DustPixie = set.New(
 	"Dust Pixie",
 	card.House.Untamed,
 	card.Type.Creature,

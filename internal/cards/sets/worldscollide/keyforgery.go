@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item
 //
 //	When your opponent would forge a key, they name a house. Reveal a random card from your hand. If that card is not of the named house, destroy Keyforgery and they do not forge that key.
-var Keyforgery = card.New(
+var Keyforgery = set.New(
 	"Keyforgery",
 	card.House.Shadows,
 	card.Type.Artifact,

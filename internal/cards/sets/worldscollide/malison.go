@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon
 //
 //	Fight: Move an enemy Creature anywhere in its controller's battleline -> if it is on a flank, the chosen Creature captures 1 Æmber from your opponent.
-var Malison = card.New(
+var Malison = set.New(
 	"Malison",
 	card.House.Dis,
 	card.Type.Creature,

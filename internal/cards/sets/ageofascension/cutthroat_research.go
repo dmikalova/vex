@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: If your opponent has 8 Æmber or more, steal 2 Æmber.
-var CutthroatResearch = card.New(
+var CutthroatResearch = set.New(
 	"Cutthroat Research",
 	card.House.Logos,
 	card.Type.Tactic,

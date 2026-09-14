@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Hazardous 3.
 //	After Æmber is stolen from you, for each Æmber stolen, deal 1 damage to each enemy Creature.
-var Molephin = card.New(
+var Molephin = set.New(
 	"Molephin",
 	card.House.Untamed,
 	card.Type.Creature,

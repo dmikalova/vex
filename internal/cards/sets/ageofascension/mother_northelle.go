@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Reap: Move 1 Æmber from a friendly Creature to your pool.
-var MotherNorthelle = card.New(
+var MotherNorthelle = set.New(
 	"Mother Northelle",
 	card.House.Sanctum,
 	card.Type.Creature,

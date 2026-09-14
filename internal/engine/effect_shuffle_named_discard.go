@@ -18,12 +18,17 @@ func (e ShuffleNamedFromDiscardIntoDeck) Text() string {
 
 // Resolve moves the first discard-pile card of the given name into the deck.
 func (e ShuffleNamedFromDiscardIntoDeck) Resolve(ctx *EffectContext) {
+	mover := crossZoneMover{
+		Player:  ctx.Controller,
+		Dest:    ToDeckShuffled,
+		Sources: []Zone{Discard},
+	}
 	name := e.Name
 	cards := Named{Name: name}.pick(ctx, ctx.Resolver.Discard(ctx.Controller))
 	if len(cards) == 0 {
 		return
 	}
 	ctx.Resolver.BeginShuffleBatch()
-	ctx.Resolver.ShuffleFromDiscardIntoDeck(cards[0])
+	mover.move(ctx, cards[0])
 	ctx.Resolver.EndShuffleBatch()
 }

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: [redacted]
 //
 //	After you choose Logos as your active house, place 1 Æmber from the common supply on [REDACTED]. If there are 4 or more Æmber on it, forge a key at no cost -> purge [REDACTED].
-var REDACTED = card.New(
+var REDACTED = set.New(
 	"[REDACTED]",
 	card.House.Logos,
 	card.Type.Artifact,

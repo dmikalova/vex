@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Your opponent skips the "forge a key" phase during their next turn.
-var Miasma = card.New(
+var Miasma = set.New(
 	"Miasma",
 	card.House.Shadows,
 	card.Type.Tactic,

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //
 //	Play: Stun each non-Mars Creature. Gain 2 chains.
-var PhosphorusStars = card.New(
+var PhosphorusStars = set.New(
 	"Phosphorus Stars",
 	card.House.Mars,
 	card.Type.Tactic,
@@ -19,7 +19,7 @@ var PhosphorusStars = card.New(
 		card.Trigger.Play, card.Sentences{
 			Effects: []card.Effect{
 				card.Stun{
-					Target: card.Target.EachCreature.ExceptHouse(card.House.Self),
+					Target: card.Target.EachCreature.House(card.Houses.Except(card.House.Self)),
 				},
 				card.GainChains{Amount: 2},
 			},

@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	After a Creature is played adjacent to Fila the Researcher, draw a card.
-var FilaTheResearcher = card.New(
+var FilaTheResearcher = set.New(
 	"Fila the Researcher",
 	card.House.Logos,
 	card.Type.Creature,

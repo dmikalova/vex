@@ -11,7 +11,7 @@ import (
 //
 //	House:  Dis
 //	Type:   Creature
-//	Rarity: Special
+//	Rarity: Rare
 //	Power:  5
 //	Traits: Demon
 //

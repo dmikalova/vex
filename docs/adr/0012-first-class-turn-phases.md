@@ -48,8 +48,9 @@ game log — rather than carrying two words for one concept.
 
 ## Consequences
 
-- `BeginTurn`, `ChooseHouse`, and `EndTurn` split apart, changing the public turn
-  API and every test that drove a turn through them.
+- The old `BeginTurn`/`ChooseHouse`/`EndTurn` methods split apart into the phase
+  loop; the public turn API is now `StartTurn`, `ChooseHouse`, and `EndPlayPhase`
+  (the three points a turn waits for input), changing every test that drove a turn.
 - Forging gains a seam it did not have, so a forge-cancelling effect becomes
   expressible rather than needing a special case.
 - `TriggerStartOfTurn` exists and has a defined place to resolve.

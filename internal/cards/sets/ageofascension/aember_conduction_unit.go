@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item
 //
 //	After an enemy Creature reaps, if it is the first time a Creature has reaped this turn, stun it.
-var AemberConductionUnit = card.New(
+var AemberConductionUnit = set.New(
 	"Aember Conduction Unit",
 	card.House.Mars,
 	card.Type.Artifact,

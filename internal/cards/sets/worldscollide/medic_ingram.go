@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human
 //
 //	Play/Fight/Reap: You may choose a Creature - heal 3 damage from it, and ward it.
-var MedicIngram = card.New(
+var MedicIngram = set.New(
 	"Medic Ingram",
 	card.House.StarAlliance,
 	card.Type.Creature,

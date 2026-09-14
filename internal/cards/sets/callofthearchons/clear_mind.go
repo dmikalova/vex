@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Unstun each friendly Creature.
-var ClearMind = card.New(
+var ClearMind = set.New(
 	"Clear Mind",
 	card.House.Sanctum,
 	card.Type.Tactic,

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //
 //	This Creature gains, "Destroyed: Put this Creature into its owner's hand, and deal 3 damage to each Creature."
-var PhoenixHeart = card.New(
+var PhoenixHeart = set.New(
 	"Phoenix Heart",
 	card.House.Brobnar,
 	card.Type.Upgrade,

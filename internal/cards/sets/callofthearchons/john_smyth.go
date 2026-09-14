@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Fight/Reap: Ready a non-Agent Mars Creature.
-var JohnSmyth = card.New(
+var JohnSmyth = set.New(
 	"\"John Smyth\"",
 	card.House.Mars,
 	card.Type.Creature,
@@ -22,7 +22,8 @@ var JohnSmyth = card.New(
 	card.WithTraits(card.Traits.Agent, card.Traits.Martian),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(card.Trigger.FightReap, card.OnChooseCreature{
-		Target: card.Target.Creature.OfHouse(card.House.Self).ExceptTrait(card.Traits.Agent),
-		Verbs:  []card.CreatureVerb{card.ReadyVerb{}},
+		Target: card.Target.Creature.House(card.Houses.Named(card.House.Self)).
+			ExceptTrait(card.Traits.Agent),
+		Verbs: []card.CreatureVerb{card.ReadyVerb{}},
 	}),
 )

@@ -126,12 +126,14 @@ type ByActivePlayer = engine.ByActivePlayer
 type (
 	// Selection is the axis a movement verb varies along; set it on PurgeFromHand.
 	Selection = engine.Selection
-	// Chosen has the controller pick one card, optionally by house; it is mandatory
-	// by default, and Optional makes it a "you may".
+	// Chosen has the controller pick one card, narrowed by House and an identity
+	// filter (Type, Trait, Name, or an Or disjunction); it is mandatory by default,
+	// and Optional makes it a "you may".
 	Chosen = engine.Chosen
 	// Random takes one uniformly random card.
 	Random = engine.Random
-	// Each takes every card the filters admit.
+	// Each takes every card the House and identity filters (Type, Trait, Name, Or)
+	// admit.
 	Each = engine.Each
 	// Named pins the pick to the first card of a given name (Hyde archives Velum).
 	Named = engine.Named
@@ -153,14 +155,6 @@ type (
 	// DestroyEachCreatureAtEndOfTurn schedules "destroy each creature" to resolve in
 	// the end-of-turn phase rather than now (Ragnarok).
 	DestroyEachCreatureAtEndOfTurn = engine.DestroyEachCreatureAtEndOfTurn
-	// DestroyFriendlyCreaturesToForge destroys any number of friendly creatures
-	// totalling a power threshold to trigger a follow-up effect (Might Makes Right
-	// forges free).
-	DestroyFriendlyCreaturesToForge = engine.DestroyFriendlyCreaturesToForge
-	// SacrificeToForge destroys any number of friendly creatures then may forge a
-	// key at a surcharge reduced per creature destroyed, destroying the source
-	// artifact on forge (Obsidian Forge).
-	SacrificeToForge = engine.SacrificeToForge
 	// PurgeCard sets cards aside out of the game, from a discard pile, with a
 	// Selection deciding which cards leave and Player choosing the pile(s):
 	// card.ChosenPlayer for one the controller picks, card.EachPlayer for both.
@@ -233,11 +227,12 @@ type (
 	// PutChosen moves Amount cards the controller chooses into a Destination,
 	// declinably when UpTo is set.
 	PutChosen = engine.PutChosen
-	// PutFromDiscard moves a chosen card from your discard pile to a Destination.
+	// PutFromDiscard moves cards from your discard pile to a Destination, with a
+	// Selection (Chosen or Each) deciding which cards.
 	PutFromDiscard = engine.PutFromDiscard
-	// Match is a predicate selecting cards by type, trait, and/or name, with Or
-	// alternatives — e.g. an upgrade or a Robot card. It filters PutFromDiscard.
-	Match = engine.Match
+	// Filter is a predicate selecting cards by type, trait, and/or name, with Or
+	// alternatives — e.g. an upgrade or a Robot card. It is a Chosen/Each Or element.
+	Filter = engine.CardFilter
 	// PutFromHand puts a chosen card from your hand directly into play.
 	PutFromHand = engine.PutFromHand
 	// ReturnNamedToHand returns a chosen card of a given name to its owner's hand.
@@ -251,12 +246,12 @@ type (
 	// SearchDeck searches your deck for a card (any card, or one of a given house),
 	// puts it into your hand, and shuffles your deck.
 	SearchDeck = engine.SearchDeck
-	// ShuffleIntoDeck shuffles the controller's named zones (hand, discard, archives) into their deck.
-	ShuffleIntoDeck = engine.ShuffleIntoDeck
-	// ShuffleDeck shuffles the controller's deck — the "shuffle your deck" that
-	// always follows a deck search (a search must be followed by a shuffle). It also
-	// serves as a RevealTopOfDeck/LookAtTopOfDeck routing terminal (Borr Nit).
-	ShuffleDeck = engine.ShuffleDeck
+	// Shuffle shuffles your deck, optionally folding one bulk source of your cards
+	// into it first: nothing (the bare "shuffle your deck" a search ends on, also a
+	// RevealTopOfDeck/LookAtTopOfDeck routing terminal — Borr Nit), whole Zones
+	// (hand, discard, archives), or FromPlay (every friendly card in play plus its
+	// upgrades, then draw a card for each shuffled this way — Timequake).
+	Shuffle = engine.Shuffle
 	// ShuffleFromDiscard shuffles the cards a Selection picks from your discard pile
 	// into your deck — each match, any number of a chosen kind, or a counted number.
 	ShuffleFromDiscard = engine.ShuffleFromDiscard
@@ -265,8 +260,6 @@ type (
 	// ShuffleNamedFromDiscardIntoDeck shuffles one card of a given name from your
 	// discard pile into your deck.
 	ShuffleNamedFromDiscardIntoDeck = engine.ShuffleNamedFromDiscardIntoDeck
-	// ShuffleFriendlyCardsInPlayIntoDeck shuffles every friendly card in play into your deck, then draws a card for each shuffled this way.
-	ShuffleFriendlyCardsInPlayIntoDeck = engine.ShuffleFriendlyCardsInPlayIntoDeck
 	// SwapDeckAndDiscard exchanges the controller's deck with their discard pile,
 	// then shuffles.
 	SwapDeckAndDiscard = engine.SwapDeckAndDiscard
@@ -295,17 +288,15 @@ type (
 	// deciding how each is picked (Chosen or Random), Zone the source, and
 	// Amount / AnyNumber how many.
 	DiscardCard = engine.DiscardCard
-	// DiscardTopOfDeck discards the top card of a deck and puts it in context.
-	DiscardTopOfDeck = engine.DiscardTopOfDeck
 	// DiscardTopOfDeckUntil discards from the top of your deck until it turns up a
 	// card the filters admit, recording the run and putting that card in context.
 	DiscardTopOfDeckUntil = engine.DiscardTopOfDeckUntil
 	// PutDiscardedIntoHand puts the card in context from the discard pile into
 	// its owner's hand.
 	PutDiscardedIntoHand = engine.PutDiscardedIntoHand
-	// DiscardTopOfEachDeck discards the top card of each player's deck.
-	DiscardTopOfEachDeck = engine.DiscardTopOfEachDeck
-	// DiscardTop discards the top Amount cards of one player's deck.
+	// DiscardTop discards the top cards of one or both decks (Player EachPlayer for
+	// both, unset for a granted ability's own deck), records each discarded card,
+	// and binds a lone discard as context for a single-card follow-up.
 	DiscardTop = engine.DiscardTop
 	// ForEachDiscarded resolves Do once for each card a preceding discard removed.
 	ForEachDiscarded = engine.ForEachDiscarded
@@ -325,6 +316,10 @@ type (
 	EndTurn = engine.EndTurn
 	// PlayRevealedCard plays the card a preceding reveal put in context.
 	PlayRevealedCard = engine.PlayRevealedCard
+	// PutRevealedCard moves the card a preceding reveal put in context from its
+	// owner's deck to To (card.Into.Archives → "archive it", card.Into.Discard →
+	// "discard it").
+	PutRevealedCard = engine.PutRevealedCard
 	// PlayTopOfDeck plays the top card of the controller's deck outright.
 	PlayTopOfDeck = engine.PlayTopOfDeck
 	// LookAtTopOfDeck looks privately at the top Amount cards of your deck and
@@ -345,6 +340,10 @@ type (
 	// (From), ignoring the active house. Set Except to make House the house that
 	// may not be played.
 	PlayFrom = engine.PlayFrom
+	// PlayOrUse immediately either plays a matching card from the controller's hand
+	// or uses a matching card they have in play, in one prompt (CXO Taber's
+	// non-Star Alliance card). Except makes House the house that may not be chosen.
+	PlayOrUse = engine.PlayOrUse
 	// PlayFromOpponent plays a card from the opponent's deck (From: card.Deck, its
 	// top card) or archives (From: card.Archives, a random card) as your own play
 	// (Murkens).
@@ -501,7 +500,8 @@ type (
 	// ControlsMoreCreatures is met while you control more creatures than the opponent.
 	ControlsMoreCreatures = engine.ControlsMoreCreatures
 	// OnFlank gates on a creature's flank position — the source card, or ctx.It when
-	// OfIt is set; Where picks any flank (Not inverts) or the left/right flank.
+	// OfIt is set; Where picks any flank or the left/right flank. Wrap in card.Not
+	// for the off-flank sense.
 	OnFlank = engine.OnFlank
 	// HasOtherFriendlyCreatures is met when the controller has any creature in play
 	// besides the source.
@@ -542,21 +542,17 @@ type (
 	AemberOnThisAtLeast = engine.AemberOnThisAtLeast
 	// Overwhelmed is met while the opponent controls more creatures than you.
 	Overwhelmed = engine.Overwhelmed
-	// ItIsOfHouse is met when the card in context belongs to a referenced house.
-	ItIsOfHouse = engine.ItIsOfHouse
 	// ItIsFriendly is met when the card in context is controlled by you.
 	ItIsFriendly = engine.ItIsFriendly
 	// TideIsLow is met when the tide is low for you.
 	TideIsLow = engine.TideIsLow
 	// TideIsHigh is met when the tide is high for you.
 	TideIsHigh = engine.TideIsHigh
-	// ItIs is met when the card in context matches a concrete House and/or Type.
+	// ItIs is met when the card in context matches a House (named, non-<house>, or
+	// the chosen/active house) and/or Type filter.
 	ItIs = engine.ItIs
 	// ItIsNamed is met when the card in context carries a given printed name.
 	ItIsNamed = engine.ItIsNamed
-	// ItIsNotOfHouse is met when the card in context is not of a named house — the
-	// "non-<house> card" idiom (Book of leQ).
-	ItIsNotOfHouse = engine.ItIsNotOfHouse
 	// ItIsOfTrait is met when the creature in context has the named trait.
 	ItIsOfTrait = engine.ItIsOfTrait
 	// ItHasAember is met when the creature in context has Æmber on it.
@@ -564,6 +560,10 @@ type (
 	// Or is met when any of its Conditions is met, composing conditions (e.g. a
 	// Dinosaur creature or one with Æmber, for Guji Dinosaur Hunter).
 	Or = engine.Or
+	// Not is met when its inner Condition is not met, composing negation instead of
+	// a per-condition flag (card.Not{Cond: card.OnFlank{}} → "if it is not on a
+	// flank"). The inner condition must render its own negated clause.
+	Not = engine.Not
 	// ItIsOffIdentity is met when the card in context is off your identity houses.
 	ItIsOffIdentity = engine.ItIsOffIdentity
 	// ItIsStunned is met when the creature in context is already stunned.
@@ -665,6 +665,10 @@ type (
 	// way", rendered as creatures. Use it when only creatures can be destroyed;
 	// use CardsDestroyed when artifacts can be too.
 	CreaturesDestroyed = engine.CreaturesDestroyed
+	// PowerDestroyedThisWay totals the board power of the creatures the most recent
+	// destruction removed "this way", each measured just before it left play, for a
+	// CountIs threshold (Might Makes Right forges only above 25 power).
+	PowerDestroyedThisWay = engine.PowerDestroyedThisWay
 	// AemberBonusOf counts the Æmber pips on the card its Target names, once it has
 	// left play (Rustgnawer gains the destroyed artifact's Æmber bonus via Target:
 	// Triggering).
@@ -742,8 +746,15 @@ type (
 type (
 	// CannotFight bars a player from using creatures to fight for a Duration.
 	CannotFight = engine.CannotFight
+	// StunEnemyFighters arms the stun-fighter bar on the opponent for their next
+	// turn (Foggify): each creature they use to fight is stunned after the fight.
+	StunEnemyFighters = engine.StunEnemyFighters
 	// CannotPlay bars a player from playing cards of a Type for a Duration.
 	CannotPlay = engine.CannotPlay
+	// PlayersCannotPlay bars both players from playing cards of a Type until the
+	// end of the caster's next turn (Stealth Mode stops either player playing
+	// Tactics).
+	PlayersCannotPlay = engine.PlayersCannotPlay
 	// CannotUse bars a player from reaping, fighting, or using Action: abilities.
 	CannotUse = engine.CannotUse
 	// CannotReap bars a player from using creatures to reap for a Duration.
@@ -764,10 +775,10 @@ type (
 	CannotBeDealtDamage = engine.CannotBeDealtDamage
 	// MayPlayOrUse lets the controller act with cards outside their active house for
 	// the remainder of the turn — the one node for every out-of-house permission
-	// grant. Houses selects whose cards it frees (card.Houses.Named/Chosen/Any/
+	// grant. Houses selects whose cards it frees (card.GrantHouses.Named/Chosen/Any/
 	// Except/Controlled), Grant the verbs (card.GrantPlay, card.GrantUse,
 	// card.GrantFight, or a combination), Types narrows the card types (the zero
-	// value frees all — card.Types.Artifacts, card.Types.NonCreature), and Count
+	// value frees all — card.Types.Of(card.Type.Artifact, ...)), and Count
 	// bounds how many cards (zero is unlimited).
 	MayPlayOrUse = engine.MayPlayOrUse
 	// BelongToHouse makes the targeted creatures belong to a House for a Duration.
@@ -915,17 +926,18 @@ var GrantUse = engine.GrantUse
 // GrantFight — see GrantPlay. Frees the freed creatures to fight only.
 var GrantFight = engine.GrantFight
 
-// HouseSelector is the Houses axis of a MayPlayOrUse; build one with the card.Houses
-// helpers.
+// HouseSelector is the Houses axis of a MayPlayOrUse; build one with the
+// card.GrantHouses helpers.
 type HouseSelector = engine.HouseSelector
 
-// Houses builds the HouseSelector for a MayPlayOrUse grant: Named frees one house,
-// Chosen the house an enclosing ChooseHouseThen picked, Any every house, Except
-// every house but one, and Controlled every house you have a card in play for.
-var Houses = houseSelectors{
-	Chosen:     engine.HouseSelector{Kind: engine.SelectHouse},
-	Any:        engine.HouseSelector{Kind: engine.SelectAny},
-	Controlled: engine.HouseSelector{Kind: engine.SelectControlled},
+// GrantHouses builds the HouseSelector for a MayPlayOrUse grant: Named frees one
+// house, Chosen the house an enclosing ChooseHouseThen picked, Any every house,
+// Except every house but one, and Controlled every house you have a card in play
+// for.
+var GrantHouses = houseSelectors{
+	Chosen:     engine.HouseSelector{Match: engine.HouseMatcher{Kind: engine.MatchChosenHouse}},
+	Any:        engine.HouseSelector{Match: engine.HouseMatcher{Kind: engine.MatchAnyHouse}},
+	Controlled: engine.HouseSelector{Controlled: true},
 }
 
 type houseSelectors struct {
@@ -936,24 +948,58 @@ type houseSelectors struct {
 
 // Named frees one named house.
 func (houseSelectors) Named(h engine.House) engine.HouseSelector {
-	return engine.HouseSelector{Kind: engine.SelectHouse, House: h}
+	return engine.HouseSelector{Match: engine.HouseMatcher{Kind: engine.MatchNamedHouse, House: h}}
 }
 
 // Except frees every house but the named one (card.House.Self for "non-Star
 // Alliance").
 func (houseSelectors) Except(h engine.House) engine.HouseSelector {
-	return engine.HouseSelector{Kind: engine.SelectExcept, House: h}
+	return engine.HouseSelector{Match: engine.HouseMatcher{Kind: engine.MatchExceptHouse, House: h}}
 }
 
-// Types names the card types a MayPlayOrUse grant reaches: Artifacts frees only
-// artifacts (Scientifical Hack), NonCreature every type but creatures (Com. Officer
-// Kirby). The zero value frees all.
-var Types = struct {
-	Artifacts   engine.CardTypes
-	NonCreature engine.CardTypes
-}{
-	Artifacts:   engine.CardTypesOf(engine.Artifact),
-	NonCreature: engine.CardTypesOf(engine.Artifact, engine.Upgrade, engine.Tactic),
+// HouseMatcher is the house filter a per-card effect or target names — which
+// houses it admits (ADR 0038). Build one with the card.Houses helpers.
+type HouseMatcher = engine.HouseMatcher
+
+// Houses builds the HouseMatcher that narrows a per-card effect or target to a
+// house: Named admits one house, Except every house but one, Chosen the house an
+// enclosing ChooseHouseThen picked, Active the active house, Contextual the house
+// of the card in context (ctx.It), and Any (the zero value) every house.
+var Houses = houseMatchers{
+	Any:        engine.HouseMatcher{Kind: engine.MatchAnyHouse},
+	Chosen:     engine.HouseMatcher{Kind: engine.MatchChosenHouse},
+	Active:     engine.HouseMatcher{Kind: engine.MatchActiveHouse},
+	Contextual: engine.HouseMatcher{Kind: engine.MatchContextualHouse},
+}
+
+type houseMatchers struct {
+	Any        engine.HouseMatcher
+	Chosen     engine.HouseMatcher
+	Active     engine.HouseMatcher
+	Contextual engine.HouseMatcher
+}
+
+// Named admits only the named house ("a Mars card").
+func (houseMatchers) Named(h engine.House) engine.HouseMatcher {
+	return engine.HouseMatcher{Kind: engine.MatchNamedHouse, House: h}
+}
+
+// Except admits every house but the named one (card.House.Self for "a non-Star
+// Alliance card").
+func (houseMatchers) Except(h engine.House) engine.HouseMatcher {
+	return engine.HouseMatcher{Kind: engine.MatchExceptHouse, House: h}
+}
+
+// Types names the card types an effect admits: card.Types.Of(card.Type.Artifact,
+// card.Type.Upgrade, card.Type.Tactic). The zero value (an unset Types field)
+// admits every type.
+var Types = typeSets{}
+
+type typeSets struct{}
+
+// Of builds the set of card types an effect admits.
+func (typeSets) Of(types ...engine.CardType) engine.CardTypes {
+	return engine.CardTypesOf(types...)
 }
 
 // ChosenActiveHouse, FoughtActiveHouse, and JustChosenActiveHouse name where an

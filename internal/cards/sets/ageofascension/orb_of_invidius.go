@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item
 //
 //	After a Creature reaps, stun it.
-var OrbOfInvidius = card.New(
+var OrbOfInvidius = set.New(
 	"Orb of Invidius",
 	card.House.Dis,
 	card.Type.Artifact,

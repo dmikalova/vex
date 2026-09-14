@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Versatile.
 //	Action: Give Auto-Legionary five +1 power counters. Move it to a flank of your battleline as a Creature.
-var AutoLegionary = card.New(
+var AutoLegionary = set.New(
 	"Auto-Legionary",
 	card.House.Saurian,
 	card.Type.Artifact,

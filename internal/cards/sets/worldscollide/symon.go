@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Skirmish.
 //	Fight: Put the Creature Symon fought on top of its owner's deck.
-var Symon = card.New(
+var Symon = set.New(
 	"Symon",
 	card.House.Shadows,
 	card.Type.Creature,

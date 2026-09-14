@@ -63,7 +63,9 @@ func TestChooseHouseThen(t *testing.T) {
 	sanc := g.AddToBattleline(NewCard("s", Sanctum, Creature, Common, WithPower(3)), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := ChooseHouseThen{Then: Stun{Target: Target{Kind: TargetEachEnemyCreature}.OfChosenHouse()}}
+	e := ChooseHouseThen{
+		Then: Stun{Target: Target{Kind: TargetEachEnemyCreature}.House(chosenHouse)},
+	}
 	if e.Text() != "choose a house - stun each enemy creature of the chosen house" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -86,7 +88,7 @@ func TestChooseHouseThenGuardsAndValidate(t *testing.T) {
 	// An out-of-range house choice resolves nothing.
 	g.SetChooser(0, optionPicker{idx: 99})
 	ChooseHouseThen{
-		Then: Stun{Target: Target{Kind: TargetEachCreature}.OfChosenHouse()},
+		Then: Stun{Target: Target{Kind: TargetEachCreature}.House(chosenHouse)},
 	}.Resolve(
 		ctx,
 	)

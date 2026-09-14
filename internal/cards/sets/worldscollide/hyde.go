@@ -23,7 +23,7 @@ var hydeCluster = card.Cluster{
 //
 //	Reap: Draw a card. If you control Velum, draw a card.
 //	Destroyed: Archive Velum from your discard pile -> archive Hyde from play.
-var Hyde = card.New(
+var Hyde = set.New(
 	HydeName,
 	card.House.Logos,
 	card.Type.Creature,

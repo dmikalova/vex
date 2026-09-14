@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Your opponent's keys cost +1 Æmber for each card in your archives.
 //	Play: Archive a card from your hand.
-var EDAIEdie4x4 = card.New(
+var EDAIEdie4x4 = set.New(
 	"EDAI \"Edie\" 4x4",
 	card.House.Logos,
 	card.Type.Creature,

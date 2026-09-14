@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Each player with 6 Æmber or more loses all but 5 Æmber.
-var DoorstepToHeaven = card.New(
+var DoorstepToHeaven = set.New(
 	"Doorstep to Heaven",
 	card.House.Sanctum,
 	card.Type.Tactic,

@@ -20,7 +20,7 @@ var chainGangCluster = card.Cluster{
 //
 //	After you play Subtle Chain, ready Chain Gang.
 //	Action: Steal 1 Æmber. Shuffle a Subtle Chain from your discard pile into your deck.
-var ChainGang = card.New(
+var ChainGang = set.New(
 	"Chain Gang",
 	card.House.Shadows,
 	card.Type.Creature,

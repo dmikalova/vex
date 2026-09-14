@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Deal 1 damage to each enemy Creature.
-var WhistlingDarts = card.New(
+var WhistlingDarts = set.New(
 	"Whistling Darts",
 	card.House.Shadows,
 	card.Type.Tactic,

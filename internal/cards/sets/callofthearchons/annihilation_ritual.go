@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Power
 //
 //	Each Creature gains, "Destroyed: Purge this Creature."
-var AnnihilationRitual = card.New(
+var AnnihilationRitual = set.New(
 	"Annihilation Ritual",
 	card.House.Dis,
 	card.Type.Artifact,

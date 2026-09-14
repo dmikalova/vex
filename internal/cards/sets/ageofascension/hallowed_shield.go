@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item
 //
 //	Action: For the remainder of the turn, a Creature cannot be dealt damage.
-var HallowedShield = card.New(
+var HallowedShield = set.New(
 	"Hallowed Shield",
 	card.House.Sanctum,
 	card.Type.Artifact,

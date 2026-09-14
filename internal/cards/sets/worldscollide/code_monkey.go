@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Deploy.
 //	Play: Archive each neighboring Creature from play. If those Creatures share a house, gain 2 Æmber.
-var CodeMonkey = card.New(
+var CodeMonkey = set.New(
 	"Code Monkey",
 	card.House.Logos,
 	card.Type.Creature,

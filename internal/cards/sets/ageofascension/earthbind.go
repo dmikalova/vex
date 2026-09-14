@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	This Creature cannot be used unless you have discarded a card from your hand this turn.
-var Earthbind = card.New(
+var Earthbind = set.New(
 	"Earthbind",
 	card.House.Untamed,
 	card.Type.Upgrade,

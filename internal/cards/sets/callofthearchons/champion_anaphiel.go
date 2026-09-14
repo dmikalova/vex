@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Knight • Spirit
 //
 //	Taunt.
-var ChampionAnaphiel = card.New(
+var ChampionAnaphiel = set.New(
 	"Champion Anaphiel",
 	card.House.Sanctum,
 	card.Type.Creature,

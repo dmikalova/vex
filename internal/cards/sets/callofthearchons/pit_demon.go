@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon
 //
 //	Action: Steal 1 Æmber.
-var PitDemon = card.New(
+var PitDemon = set.New(
 	"Pit Demon",
 	card.House.Dis,
 	card.Type.Creature,

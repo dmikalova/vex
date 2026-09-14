@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Uncommon
 //	Æmber:  3
-var VirtuousWorks = card.New(
+var VirtuousWorks = set.New(
 	"Virtuous Works",
 	card.House.Sanctum,
 	card.Type.Tactic,

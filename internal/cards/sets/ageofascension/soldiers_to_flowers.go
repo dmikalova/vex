@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Purge each Untamed Creature from each player's discard pile. For each card purged this way, its owner gains 1 Æmber.
-var SoldiersToFlowers = card.New(
+var SoldiersToFlowers = set.New(
 	"Soldiers to Flowers",
 	card.House.Untamed,
 	card.Type.Tactic,
@@ -21,7 +21,7 @@ var SoldiersToFlowers = card.New(
 		card.Trigger.Play, card.PurgeCard{
 			Player: card.EachPlayer,
 			Selection: card.Each{
-				House: card.House.Self,
+				House: card.Houses.Named(card.House.Self),
 				Type:  card.Type.Creature,
 			},
 			GainOwnerAember: true,

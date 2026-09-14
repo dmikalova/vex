@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Deploy.
 //	Play/Fight/Reap: You may ready and fight with a neighboring Creature.
-var TheGreyRider = card.New(
+var TheGreyRider = set.New(
 	"The Grey Rider",
 	card.House.Sanctum,
 	card.Type.Creature,

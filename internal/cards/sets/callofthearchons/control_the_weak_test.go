@@ -27,15 +27,17 @@ func TestControlTheWeak(t *testing.T) {
 		h.P1.ExpectPrompt("Choose a house").Source("Control the Weak")
 		h.P1.ClickOption("Mars")
 
-		if got := h.Game().State.ForcedHouseNext[1].Value; got != card.House.Mars {
-			t.Fatalf("armed house = %v, want Mars", got)
+		if got := h.Game().State.HouseConstraintsNext[1]; h.Game().State.HouseConstraintCountNext[1] != 1 ||
+			got[0].House != card.House.Mars {
+			t.Fatalf("armed constraint = %+v (count %d), want one on Mars",
+				got[0], h.Game().State.HouseConstraintCountNext[1])
 		}
 
 		h.P1.EndTurn() // the opponent's turn begins, promoting the forced house
 
 		if err := h.Game().
-			ChooseHouse(1, card.House.Sanctum); err != engine.ErrMustChooseForcedHouse {
-			t.Errorf("wrong house = %v, want ErrMustChooseForcedHouse", err)
+			ChooseHouse(1, card.House.Sanctum); err != engine.ErrHouseNotAllowed {
+			t.Errorf("wrong house = %v, want ErrHouseNotAllowed", err)
 		}
 		h.P2.ChooseHouse(card.House.Mars) // the forced house is allowed
 	})

@@ -62,8 +62,8 @@ func TestChooseHouseLockRequires(t *testing.T) {
 	g.SetPlayerHouses(1, []House{Brobnar, Mars, Shadows})
 	g.AddToBattleline(lockedCreature("Pit", HouseLock{Player: Controller, House: Dis}), 0)
 	g.State.ActivePlayer = 0
-	if err := g.ChooseHouse(0, Logos); err != ErrHouseLocked {
-		t.Errorf("choosing another house = %v, want ErrHouseLocked", err)
+	if err := g.ChooseHouse(0, Logos); err != ErrHouseNotAllowed {
+		t.Errorf("choosing another house = %v, want ErrHouseNotAllowed", err)
 	}
 	if err := g.ChooseHouse(0, Dis); err != nil {
 		t.Errorf("choosing the locked house = %v, want nil", err)
@@ -101,8 +101,8 @@ func TestChooseHouseLockBars(t *testing.T) {
 	}
 
 	g.SetNamedHouse(id, Mars)
-	if err := g.ChooseHouse(1, Mars); err != ErrHouseLocked {
-		t.Errorf("choosing the barred house = %v, want ErrHouseLocked", err)
+	if err := g.ChooseHouse(1, Mars); err != ErrHouseNotAllowed {
+		t.Errorf("choosing the barred house = %v, want ErrHouseNotAllowed", err)
 	}
 	if err := g.ChooseHouse(1, Brobnar); err != nil {
 		t.Errorf("choosing another house = %v, want nil", err)

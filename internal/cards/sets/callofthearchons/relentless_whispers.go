@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Deal 2 damage to a Creature. If this damage destroys that Creature, steal 1 Æmber.
-var RelentlessWhispers = card.New(
+var RelentlessWhispers = set.New(
 	"Relentless Whispers",
 	card.House.Shadows,
 	card.Type.Tactic,

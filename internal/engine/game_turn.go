@@ -21,12 +21,12 @@ var (
 	ErrFirstTurnOneCard   = errors.New(
 		"the first player may play or discard only one card on their first turn",
 	)
-	ErrCannotPayToll         = errors.New("cannot pay the toll for this action")
-	ErrPlayRequirement       = errors.New("not enough Æmber to play this card")
-	ErrMustChooseForcedHouse = errors.New("must choose the forced active house this turn")
-	ErrHouseLocked           = errors.New("a card in play locks the active house choice")
-	ErrHouseForbidden        = errors.New("a card forbids choosing this active house this turn")
-	ErrCannotUse             = errors.New("card's use condition is not met")
+	ErrCannotPayToll   = errors.New("cannot pay the toll for this action")
+	ErrPlayRequirement = errors.New("not enough Æmber to play this card")
+	ErrHouseNotAllowed = errors.New(
+		"that house is not an allowed active-house choice this turn",
+	)
+	ErrCannotUse = errors.New("card's use condition is not met")
 )
 
 // This file holds the turn lifecycle entry points — the three points at which a
@@ -59,6 +59,8 @@ func (g *Game) StartTurn(player int) {
 	// the card that imposed it along so a reminder can name the reason.
 	g.State.CannotFight[player] = g.State.CannotFightNext[player]
 	g.State.CannotFightNext[player] = Bar[bool]{}
+	g.State.StunFighter[player] = g.State.StunFighterNext[player]
+	g.State.StunFighterNext[player] = Bar[bool]{}
 	g.State.CannotPlayTypeThis[player] = g.State.CannotPlayTypeNext[player]
 	g.State.CannotPlayTypeNext[player] = Bar[CardType]{}
 	g.State.CannotUse[player] = g.State.CannotUseNext[player]
@@ -69,12 +71,10 @@ func (g *Game) StartTurn(player int) {
 	g.State.CannotReapHouseNext[player] = Bar[House]{}
 	g.State.CreaturesCannot[player] = g.State.CreaturesCannotNext[player]
 	g.State.CreaturesCannotNext[player] = Bar[CreatureBar]{}
-	g.State.ForcedHouse[player] = g.State.ForcedHouseNext[player]
-	g.State.ForcedHouseNext[player] = Bar[House]{}
-	g.State.ForbiddenHouse[player] = g.State.ForbiddenHouseNext[player]
-	g.State.ForbiddenHouseNext[player] = Bar[House]{}
-	g.State.HouseWager[player] = g.State.HouseWagerNext[player]
-	g.State.HouseWagerNext[player] = HouseWager{}
+	g.State.HouseConstraints[player] = g.State.HouseConstraintsNext[player]
+	g.State.HouseConstraintCount[player] = g.State.HouseConstraintCountNext[player]
+	g.State.HouseConstraintsNext[player] = [maxHouseConstraints]HouseConstraint{}
+	g.State.HouseConstraintCountNext[player] = 0
 	g.State.SkipForge[player] = g.State.SkipForgeNext[player]
 	g.State.SkipForgeNext[player] = Bar[bool]{}
 	g.State.KeyCostBump[player] = g.State.KeyCostBumpNext[player]
@@ -96,37 +96,43 @@ func (g *Game) ChooseHouse(player int, house House) error {
 	if g.State.ActivePlayer != player {
 		return ErrNotActivePlayer
 	}
-	// A forced house (Control the Weak) only binds when the player actually has it;
-	// if they cannot choose it, cannot overrides must and any house is allowed.
-	if fh := g.State.ForcedHouse[player].Value; fh != HouseNone &&
-		house != fh &&
-		g.playerHasHouse(player, fh) {
-		return ErrMustChooseForcedHouse
-	}
-	if g.State.ForbiddenHouse[player].Value == house && house != HouseNone {
-		return ErrHouseForbidden
-	}
-	if !g.houseLockAllows(player, house) {
-		return ErrHouseLocked
+	// The whole constraint table resolves here into the set of houses the player may
+	// choose (ADR 0035): musts and cannots stack, cannot overrides must, and the
+	// choosable set already excludes houses the player neither has nor controls. An
+	// empty allowed set means the player has no active house — HouseNone is then the
+	// only legal choice ("No House").
+	allowed := g.allowedHouses(player)
+	if house == HouseNone {
+		if len(allowed) != 0 {
+			return ErrHouseNotAllowed
+		}
+	} else if !slices.Contains(allowed, house) {
+		return ErrHouseNotAllowed
 	}
 	g.State.ActiveHouse = house
 	g.record(HouseChosen{Player: player, House: house})
-	g.payOffHouseWager(player, house)
+	g.resolveHouseWagers(player, house)
 	// The snapshot is taken once, but an earlier card's ability can remove a later
-	// one from play (Strange Gizmo destroys friendly artifacts); triggerAbilitiesAs
-	// drops the trigger of a card that has left play mid-window (ADR 0030).
+	// one from play (Strange Gizmo destroys friendly artifacts); resolveWindow drops
+	// the trigger of a card that has left play mid-window (ADR 0030). Every card that
+	// reacts to the choice is one window the active player orders (ADR 0013), not a
+	// per-card sequence.
+	choose := g.window()
 	for _, id := range g.allInPlay(player) {
-		g.triggerAbilities(id, TriggerAfterChooseHouse, 0, false)
+		choose.add(id, TriggerAfterChooseHouse, 0, false)
 	}
+	g.resolveWindow(g.orderTriggered(player, choose.pending))
 	// A house choice is public, so cards on either side may react to it (Snag's
 	// Mirror bars the chooser's opponent from the same house next turn). This
 	// window fires for both players' cards, unlike the controller-only
-	// AfterChooseHouse above.
+	// AfterChooseHouse above; the active player still orders it (ADR 0013).
+	public := g.window()
 	for _, p := range [2]int{player, 1 - player} {
 		for _, id := range g.allInPlay(p) {
-			g.triggerAbilities(id, TriggerAfterAnyPlayerChoosesHouse, 0, false)
+			public.add(id, TriggerAfterAnyPlayerChoosesHouse, 0, false)
 		}
 	}
+	g.resolveWindow(g.orderTriggered(player, public.pending))
 	g.enterPhase(PhaseArchives)
 	g.runPhases()
 	return nil
@@ -212,6 +218,12 @@ func (g *Game) drawModifier(player int) int {
 // CannotFightNextTurn arms a fight bar on a player for their next turn.
 func (g *Game) CannotFightNextTurn(player int, source LocalID) {
 	g.State.CannotFightNext[player] = Bar[bool]{Value: true, Source: source}
+}
+
+// StunFighterNextTurn arms the stun-fighter bar on a player for their next turn,
+// so each creature they use to fight is stunned right after that fight (Foggify).
+func (g *Game) StunFighterNextTurn(player int, source LocalID) {
+	g.State.StunFighterNext[player] = Bar[bool]{Value: true, Source: source}
 }
 
 // CannotPlayTypeNextTurn arms a play-type bar on a player for their next turn.
@@ -328,40 +340,40 @@ func (g *Game) GrantMayPlayOrUse(
 	types CardTypes,
 	count int,
 ) {
-	switch houses.Kind {
-	case SelectAny:
+	switch {
+	case houses.Controlled:
+		g.addOffHousePermit(player, OffHousePermit{
+			Except:     HouseNone,
+			Controlled: true,
+			Types:      types,
+			Grant:      grant,
+			Remaining:  offHousePermitRemaining(count),
+		})
+	case houses.Match.Kind == MatchExceptHouse:
+		g.addOffHousePermit(player, OffHousePermit{
+			Except:     houses.Match.House,
+			Controlled: false,
+			Types:      types,
+			Grant:      grant,
+			Remaining:  offHousePermitRemaining(count),
+		})
+	case houses.Match.Kind == MatchAnyHouse:
 		if grant&GrantFight != 0 {
 			g.State.MayFightAny[player] = true
 		}
 		if grant&GrantUse != 0 {
 			g.State.MayUseArtifactsAnyHouse[player] = true
 		}
-	case SelectHouse:
+	default: // MatchNamedHouse, MatchChosenHouse (resolved to a concrete house)
 		if grant&GrantFight != 0 {
-			g.State.MayFightHouse[player] = houses.House
+			g.State.MayFightHouse[player] = houses.Match.House
 		}
 		if grant&GrantUse != 0 {
-			g.State.MayUseHouse[player] = houses.House
+			g.State.MayUseHouse[player] = houses.Match.House
 		}
 		if grant&GrantPlay != 0 {
-			g.State.MayPlayHouse[player] = houses.House
+			g.State.MayPlayHouse[player] = houses.Match.House
 		}
-	case SelectExcept, SelectControlled:
-		rem := permitUnlimited
-		if count > 0 {
-			rem = uint8(count)
-		}
-		except := HouseNone
-		if houses.Kind == SelectExcept {
-			except = houses.House
-		}
-		g.addOffHousePermit(player, OffHousePermit{
-			Except:     except,
-			Controlled: houses.Kind == SelectControlled,
-			Types:      types,
-			Grant:      grant,
-			Remaining:  rem,
-		})
 	}
 	g.record(MayPlayOrUseGranted{
 		Player: player,
@@ -372,17 +384,58 @@ func (g *Game) GrantMayPlayOrUse(
 	})
 }
 
-// ForceActiveHouseNextTurn makes a player have to choose house h as their active
-// house on their next turn (Control the Weak). StartTurn promotes the armed house.
-func (g *Game) ForceActiveHouseNextTurn(player int, h House, source LocalID) {
-	g.State.ForcedHouseNext[player] = Bar[House]{Value: h, Source: source}
+// offHousePermitRemaining maps a grant's Count onto an OffHousePermit's Remaining:
+// a positive count bounds the permit to that many cards, and zero leaves it
+// unlimited.
+func offHousePermitRemaining(count int) uint8 {
+	if count > 0 {
+		return uint8(count)
+	}
+	return permitUnlimited
+}
+
+// addHouseConstraintNext appends c to the entries arming player's next turn,
+// dropping it silently when the table is full (see maxHouseConstraints).
+func (g *Game) addHouseConstraintNext(player int, c HouseConstraint) {
+	n := g.State.HouseConstraintCountNext[player]
+	if int(n) >= maxHouseConstraints {
+		return
+	}
+	g.State.HouseConstraintsNext[player][n] = c
+	g.State.HouseConstraintCountNext[player] = n + 1
+}
+
+// MustChooseHouseNextTurn arms a must on player's next turn to choose house h as
+// their active house (Control the Weak). StartTurn promotes the entry.
+func (g *Game) MustChooseHouseNextTurn(player int, h House, source LocalID) {
+	g.addHouseConstraintNext(player, HouseConstraint{
+		Kind:   constraintMustHouse,
+		House:  h,
+		Source: source,
+	})
 	g.record(HouseForcedNextTurn{Player: player, House: h})
 }
 
-// ForbidActiveHouseNextTurn makes a player unable to choose house h as their
-// active house on their next turn (Tezmal). StartTurn promotes the armed house.
-func (g *Game) ForbidActiveHouseNextTurn(player int, h House, source LocalID) {
-	g.State.ForbiddenHouseNext[player] = Bar[House]{Value: h, Source: source}
+// MustChooseFoughtHouseNextTurn arms a must on player's next turn to choose the
+// house of creature — read live at choice time, so a house change between now and
+// the choice is respected (Snag). StartTurn promotes the entry.
+func (g *Game) MustChooseFoughtHouseNextTurn(player int, creature, source LocalID) {
+	g.addHouseConstraintNext(player, HouseConstraint{
+		Kind:     constraintMustCreature,
+		Creature: creature,
+		Source:   source,
+	})
+	g.record(HouseForcedNextTurn{Player: player, House: g.House(creature)})
+}
+
+// CannotChooseHouseNextTurn arms a cannot on player's next turn barring house h
+// from their active house choice (Tezmal, Snag's Mirror). StartTurn promotes it.
+func (g *Game) CannotChooseHouseNextTurn(player int, h House, source LocalID) {
+	g.addHouseConstraintNext(player, HouseConstraint{
+		Kind:   constraintCannotHouse,
+		House:  h,
+		Source: source,
+	})
 	g.record(HouseForbiddenNextTurn{Player: player, House: h})
 }
 
@@ -390,25 +443,30 @@ func (g *Game) ForbidActiveHouseNextTurn(player int, h House, source LocalID) {
 // then, predictor steals amount (Snaglet). StartTurn promotes it so the payoff
 // lands when player next chooses a house.
 func (g *Game) WagerOnHouseNextTurn(player int, h House, amount, predictor int, source LocalID) {
-	g.State.HouseWagerNext[player] = HouseWager{
+	g.addHouseConstraintNext(player, HouseConstraint{
+		Kind:      constraintWager,
 		House:     h,
 		Amount:    amount,
 		Predictor: predictor,
 		Source:    source,
-	}
+	})
 	g.record(HouseWagerArmed{Predictor: predictor, Player: player, House: h, Amount: amount})
 }
 
-// payOffHouseWager settles any wager armed on player once they lock in house: a
-// matching choice pays the predictor a steal, and either way the wager is spent.
-func (g *Game) payOffHouseWager(player int, house House) {
-	w := g.State.HouseWager[player]
-	g.State.HouseWager[player] = HouseWager{}
-	if w.Amount == 0 || w.House != house {
-		return
+// resolveHouseWagers settles every wager in player's table once they lock in
+// house: it is the reaction to the house-chosen event (ADR 0035). A wager whose
+// predicted house matches pays its predictor a steal; a No House choice matches
+// none, so every wager resolves as lost. The entries are consumed with the rest of
+// the table at the player's next StartTurn.
+func (g *Game) resolveHouseWagers(player int, house House) {
+	for i := 0; i < int(g.State.HouseConstraintCount[player]); i++ {
+		c := g.State.HouseConstraints[player][i]
+		if c.Kind != constraintWager || house == HouseNone || c.House != house {
+			continue
+		}
+		ctx := &EffectContext{Resolver: g, Controller: c.Predictor, Source: c.Source}
+		StealAember{Amount: c.Amount}.Resolve(ctx)
 	}
-	ctx := &EffectContext{Resolver: g, Controller: w.Predictor, Source: w.Source}
-	StealAember{Amount: w.Amount}.Resolve(ctx)
 }
 
 // RestrictionSources returns the cards restricting a player right now, so a
@@ -429,8 +487,14 @@ func (g *Game) RestrictionSources(player int) []LocalID {
 	if g.State.CannotPlayTypeThis[player].Value != TypeUnset {
 		name(g.State.CannotPlayTypeThis[player].Source)
 	}
-	if g.State.ForcedHouse[player].Value != HouseNone {
-		name(g.State.ForcedHouse[player].Source)
+	// A must in the house-constraint table restricts which house the player may
+	// choose, so name the card that imposed it (a cannot or wager does not force a
+	// choice, so it is not named here).
+	for i := 0; i < int(g.State.HouseConstraintCount[player]); i++ {
+		c := g.State.HouseConstraints[player][i]
+		if c.Kind == constraintMustHouse || c.Kind == constraintMustCreature {
+			name(c.Source)
+		}
 	}
 	if g.State.SkipForge[player].Value {
 		name(g.State.SkipForge[player].Source)

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Deal 4 damage to a Creature that is not on a flank and 2 damage to each of its neighbors.
-var BoobyTrap = card.New(
+var BoobyTrap = set.New(
 	"Booby Trap",
 	card.House.Shadows,
 	card.Type.Tactic,

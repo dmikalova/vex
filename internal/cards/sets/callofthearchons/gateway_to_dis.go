@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //
 //	Play: Destroy each Creature. Gain 3 chains.
-var GatewayToDis = card.New(
+var GatewayToDis = set.New(
 	"Gateway to Dis",
 	card.House.Dis,
 	card.Type.Tactic,

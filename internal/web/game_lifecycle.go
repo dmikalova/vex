@@ -13,8 +13,9 @@ import (
 // dismounting, the post-render scrolling, the keyboard shortcuts, and the
 // hot-reload hand-off.
 
-// OnMount resumes the saved match if there is one, else deals a fresh game. It
-// runs on the UI goroutine once the component is inserted into the page.
+// OnMount resumes the saved match if there is one, else opens the new-game set
+// picker so a first-time load chooses its sets rather than silently dealing the
+// base set. It runs on the UI goroutine once the component is inserted.
 func (g *game) OnMount(ctx app.Context) {
 	// go-app only calls a component's OnUpdate when its *parent* re-renders it
 	// with changed exported fields; a root route like this one flags and
@@ -29,11 +30,15 @@ func (g *game) OnMount(ctx app.Context) {
 			c.Defer(g.OnUpdate)
 		})
 	}
-	if !g.resume(ctx) {
-		g.newMatch()
+	if g.resume(ctx) {
+		g.inPlayPrev = g.inPlaySet()
+		g.save(ctx)
+	} else {
+		// Nothing to resume: open the set picker with no game dealt (g.g stays nil).
+		// The player picks two sets and only then is the first match dealt, so a
+		// fresh visit never assumes the base set.
+		g.beginSetup()
 	}
-	g.inPlayPrev = g.inPlaySet()
-	g.save(ctx)
 	g.installKeyShortcuts()
 	g.installScrollTracking()
 	g.installSwipeGestures()
@@ -49,6 +54,11 @@ const logScrollSlack = 48
 // already at the bottom — someone who has scrolled back to read an earlier turn
 // is not yanked forward every time a line is appended.
 func (g *game) OnUpdate(app.Context) {
+	// Before the first deal (the set picker on a fresh load) there is no game to
+	// read: every helper below reaches into g.g, so bail until a match exists.
+	if g.g == nil {
+		return
+	}
 	g.flyIntoPlay()
 	g.scrollPromptZoneIntoView()
 	g.scrollCursorIntoView()
@@ -477,6 +487,25 @@ func (g *game) installKeyShortcuts() {
 					func(ctx app.Context) { g.onPickerKey(ctx, key, shift) },
 				)
 				return nil
+			}
+			return nil
+		}
+		// While the new-game set picker is up it is a strip of ordinary buttons, so
+		// the browser owns Tab (move focus between sets) and Enter/Space (activate the
+		// focused one). Only the shortcut sheet (?) and backing out (Escape) are taken
+		// here; everything else falls through untouched so native focus still works.
+		if g.awaitingSetup {
+			switch e.Get("key").String() {
+			case "Escape":
+				// Close the shortcut sheet if it is up; otherwise back out of the picker,
+				// but only when there is a game behind it to return to (not on first load).
+				if g.keysOpen {
+					g.dispatch(func(ctx app.Context) { g.closeKeys(ctx, app.Event{}) })
+				} else if g.g != nil {
+					g.dispatch(func(ctx app.Context) { g.dismiss(ctx) })
+				}
+			case "?":
+				g.dispatch(func(ctx app.Context) { g.toggleKeys(ctx, app.Event{}) })
 			}
 			return nil
 		}
@@ -914,14 +943,6 @@ func isTextInput(target app.Value) bool {
 // must all work while a prompt blocks every other key.
 func (g *game) onKey(ctx app.Context, key string, shift bool) {
 	if g.g == nil {
-		return
-	}
-	// While the set picker is up every game key is inert; only Escape works, to
-	// back out of it.
-	if g.awaitingSetup {
-		if key == "Escape" {
-			g.dismiss(ctx)
-		}
 		return
 	}
 	switch key {

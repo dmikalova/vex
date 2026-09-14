@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Elf • Thief
 //
 //	Silvertooth enters play ready.
-var Silvertooth = card.New(
+var Silvertooth = set.New(
 	"Silvertooth",
 	card.House.Shadows,
 	card.Type.Creature,

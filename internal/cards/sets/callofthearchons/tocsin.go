@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon
 //
 //	Reap: Your opponent discards a random card from their hand.
-var Tocsin = card.New(
+var Tocsin = set.New(
 	"Tocsin",
 	card.House.Dis,
 	card.Type.Creature,

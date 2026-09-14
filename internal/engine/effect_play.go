@@ -11,8 +11,7 @@ import (
 // PlayFrom has the controller play a card out of their own hand or discard pile
 // right now, ignoring the active-house gate — Phase Shift's off-house card,
 // Sacrificial Altar's creature back from the discard pile. From names the source
-// pile; House and Type narrow which cards may be chosen; Except inverts the house
-// filter, so House names the house that may *not* be played ("a non-Logos card").
+// pile; House and Types narrow which cards may be chosen.
 //
 // KeyForge prints the from-hand form as a permission held open for the rest of the
 // turn ("you may play one non-Logos card this turn"); it is rendered and resolved
@@ -29,18 +28,19 @@ type PlayFrom struct {
 	// the opponent's pile is still your play — it counts against your own card-play
 	// limit — but is owned by, and returns to, the opponent.
 	Player Player
-	// House and Type narrow which cards may be chosen; Except inverts the house
-	// filter, so House names the house that may not be played ("a non-Logos card").
-	House  House
-	Except bool
-	Type   CardType
+	// House narrows which houses may be chosen; the zero value admits every house
+	// (Com. Officer Kirby plays a non-Star Alliance card).
+	House HouseMatcher
+	// Types narrows the admitted card types — Com. Officer Kirby plays a non-Star
+	// Alliance Artifact, Upgrade, or Tactic. The zero value admits every type.
+	Types CardTypes
 }
 
-// validate rejects an inverted filter that names no house to exclude, and a
-// source zone a card may not be played from.
+// validate rejects a malformed house filter and a source zone a card may not be
+// played from.
 func (e PlayFrom) validate() error {
-	if e.Except && e.House == HouseNone {
-		return fmt.Errorf("PlayFrom: Except needs a house to exclude")
+	if err := e.House.validate(); err != nil {
+		return fmt.Errorf("PlayFrom: %w", err)
 	}
 	if e.From != Hand && e.From != Discard && e.From != Archives {
 		return fmt.Errorf("PlayFrom: From must be Hand, Discard, or Archives, got %v", e.From)
@@ -76,17 +76,10 @@ func (e PlayFrom) pileOwner() string {
 // "Mars creature".
 func (e PlayFrom) noun() string {
 	noun := "card"
-	if e.Type != TypeUnset && e.Type != AnyType {
-		noun = typeWord(e.Type)
+	if !e.Types.all() {
+		noun = e.Types.list()
 	}
-	switch {
-	case e.Except:
-		return "non-" + e.House.String() + " " + noun
-	case e.House != HouseNone:
-		return e.House.String() + " " + noun
-	default:
-		return noun
-	}
+	return e.House.qualify(noun)
 }
 
 // Resolve has the controller choose a matching card in the source zone and plays
@@ -140,10 +133,10 @@ func (e PlayFrom) candidates(ctx *EffectContext) []LocalID {
 	}
 	var out []LocalID
 	for _, id := range source {
-		if e.Type != TypeUnset && e.Type != AnyType && ctx.Resolver.TypeOf(id) != e.Type {
+		if !e.Types.all() && !e.Types.has(ctx.Resolver.TypeOf(id)) {
 			continue
 		}
-		if e.House != HouseNone && (ctx.Resolver.House(id) == e.House) == e.Except {
+		if !e.House.matches(ctx, id) {
 			continue
 		}
 		out = append(out, id)

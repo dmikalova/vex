@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item
 //
 //	Action: Enrage a Creature.
-var SoulFiddle = card.New(
+var SoulFiddle = set.New(
 	"Soul Fiddle",
 	card.House.Dis,
 	card.Type.Artifact,

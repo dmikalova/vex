@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Martian • Soldier
 //
 //	Fight/Reap: Deal 2 damage to a Creature. If this damage destroys that Creature, purge it.
-var YxiloBolter = card.New(
+var YxiloBolter = set.New(
 	"Yxilo Bolter",
 	card.House.Mars,
 	card.Type.Creature,

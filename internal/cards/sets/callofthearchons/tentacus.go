@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon
 //
 //	In order to use an Artifact, your opponent must give you 1 Æmber.
-var Tentacus = card.New(
+var Tentacus = set.New(
 	"Tentacus",
 	card.House.Dis,
 	card.Type.Creature,

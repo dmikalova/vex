@@ -258,11 +258,42 @@ func TestNewGameSameSets(t *testing.T) {
 	}
 }
 
-// Every one of these guards exists so a prompt the player must answer is not
-// walked away from by a stray click behind it. Manual mode is the exception: it
-// may be toggled mid-prompt, since turning it on is how the player reaches the
-// Cancel that backs out of a prompt with no clickable answer.
-func TestBusyAndPromptGuards(t *testing.T) {
+// Starting a new game while a prompt is still up — here the opening mulligan —
+// re-deals cleanly: the abandoned match's blocked chooser goroutine is drained
+// and its completion no-ops, so the new match settles at its own house choice
+// rather than hanging or being clobbered by the old game finishing behind it.
+func TestNewGameDuringMulliganPrompt(t *testing.T) {
+	c := newBlankClient(t)
+	c.g.dealMatch(testSeed)
+	c.await("the first mulligan prompt", func() bool { return c.g.choosingOption })
+
+	c.do(c.g.openSetup)
+	if !c.g.awaitingSetup {
+		t.Fatal("New game did not open the picker during the mulligan prompt")
+	}
+	set := cards.DeckSetNames()[0]
+	c.do(func(ctx app.Context, _ app.Event) { c.g.pickSet(ctx, set) })
+	c.do(func(ctx app.Context, _ app.Event) { c.g.pickSet(ctx, set) })
+
+	// The new match runs its own opening mulligans and rests at the house choice.
+	c.keepOpeningHands()
+	if c.g.phase != phaseHouse {
+		t.Errorf("the re-dealt match is at phase %v, want phaseHouse", c.g.phase)
+	}
+	if c.g.awaitingSetup {
+		t.Error("the picker stayed open after the new match was dealt")
+	}
+}
+
+// Opening the set picker is allowed from any state — including behind a prompt or
+// a resolving action — because it only offers a new game and discards nothing
+// until sets are confirmed; confirming then re-deals, which safely abandons any
+// prompt the match left in flight (drained chooser, identity-guarded completion).
+// (Previously openSetup was refused while busy/choosing to protect the blocked
+// chooser goroutine; that protection now lives in dealMatch, so the guard is gone.)
+// Manual mode stays the exception it always was: it may be toggled mid-prompt so
+// the player can reach the Cancel that backs out of an answerless prompt.
+func TestOpenSetupIsAlwaysAllowed(t *testing.T) {
 	tests := []struct {
 		name          string
 		arm           func(g *game)
@@ -276,11 +307,15 @@ func TestBusyAndPromptGuards(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			c := newClient(t)
 			c.startTurn()
+			seed := c.g.seed
 			tt.arm(c.g)
 
 			c.do(c.g.openSetup)
-			if c.g.awaitingSetup {
-				t.Error("openSetup went through")
+			if !c.g.awaitingSetup {
+				t.Error("openSetup did not open the picker")
+			}
+			if c.g.seed != seed {
+				t.Error("opening the picker dealt a new match before sets were confirmed")
 			}
 			wasManual := c.g.g.Manual()
 			c.do(c.g.toggleManual)
@@ -288,22 +323,6 @@ func TestBusyAndPromptGuards(t *testing.T) {
 				t.Errorf("toggleManual changed=%v, want %v", toggled, tt.manualToggles)
 			}
 		})
-	}
-}
-
-// Opening the set picker is guarded: it is refused while an action is resolving,
-// so a match is never thrown away behind a prompt.
-func TestNewGameIsGuarded(t *testing.T) {
-	c := newClient(t)
-	c.startTurn()
-	seed := c.g.seed
-	c.g.busy = true
-	c.do(c.g.openSetup)
-	if c.g.awaitingSetup {
-		t.Error("openSetup went through while an action was resolving")
-	}
-	if c.g.seed != seed {
-		t.Error("a new match was dealt while an action was resolving")
 	}
 }
 

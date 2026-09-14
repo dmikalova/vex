@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	You skip your "forge a key" phase.
 //	You gain all Æmber your opponent spends when forging a key.
 //	Action: Destroy The Sting.
-var TheSting = card.New(
+var TheSting = set.New(
 	"The Sting",
 	card.House.Shadows,
 	card.Type.Artifact,

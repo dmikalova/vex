@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //
 //	Play: Choose a Creature - destroy each Creature with the same power as the chosen Creature.
-var DanceOfDoom = card.New(
+var DanceOfDoom = set.New(
 	"Dance of Doom",
 	card.House.Dis,
 	card.Type.Tactic,

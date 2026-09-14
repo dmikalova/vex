@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Your keys cost -1 Æmber.
-var ImprintedMurmook = card.New(
+var ImprintedMurmook = set.New(
 	"Imprinted Murmook",
 	card.House.Untamed,
 	card.Type.Creature,

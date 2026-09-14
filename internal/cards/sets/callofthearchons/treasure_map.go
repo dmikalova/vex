@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: If you played exactly 1 card this turn, gain 3 Æmber, and you cannot play cards for the remainder of the turn.
-var TreasureMap = card.New(
+var TreasureMap = set.New(
 	"Treasure Map",
 	card.House.Shadows,
 	card.Type.Tactic,

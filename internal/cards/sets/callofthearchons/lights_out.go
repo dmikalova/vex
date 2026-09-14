@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Put up to 2 enemy Creatures into their owners' hands.
-var LightsOut = card.New(
+var LightsOut = set.New(
 	"Lights Out",
 	card.House.Shadows,
 	card.Type.Tactic,

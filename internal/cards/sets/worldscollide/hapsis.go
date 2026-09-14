@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Mutant • Scientist
 //
 //	After a Creature is destroyed in a fight with Hapsis, ward Hapsis, and draw a card.
-var Hapsis = card.New(
+var Hapsis = set.New(
 	"Hapsis",
 	card.House.Logos,
 	card.Type.Creature,

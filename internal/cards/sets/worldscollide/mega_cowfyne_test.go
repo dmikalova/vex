@@ -11,13 +11,13 @@ import (
 //
 //	House:  Brobnar
 //	Type:   Creature
-//	Rarity: Special
+//	Rarity: Connected
 //	Power:  7
 //	Traits: Giant
 //
-//	Before Fight: Deal 2 damage to each neighbor of the Creature Mega Cowfyne fights.
+//	Splash-attack 2.
 func TestMegaCowfyne(t *testing.T) {
-	t.Run("deals 2 damage to each neighbor of the creature it fights", func(t *testing.T) {
+	t.Run("deals 2 splash damage to each neighbor of the creature it fights", func(t *testing.T) {
 		var target, left, right ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{House: card.House.Brobnar, InPlay: ct.Cards(MegaCowfyne)},

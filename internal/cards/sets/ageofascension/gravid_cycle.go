@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Omega.
 //	Play: Put a card from your discard pile into your hand.
-var GravidCycle = card.New(
+var GravidCycle = set.New(
 	"Gravid Cycle",
 	card.House.Untamed,
 	card.Type.Tactic,
@@ -20,5 +20,7 @@ var GravidCycle = card.New(
 	card.WithAemberBonus(1),
 	card.WithKeywords(card.Keyword.Omega),
 	card.WithAbility(
-		card.Trigger.Play, card.PutFromDiscard{Destination: card.To.Hand}),
+		card.Trigger.Play,
+		card.PutFromDiscard{Selection: card.Chosen{}, Destination: card.To.Hand},
+	),
 )

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Ally
 //
 //	Action: For the remainder of the turn, each Creature loses elusive.
-var Sniffer = card.New(
+var Sniffer = set.New(
 	"Sniffer",
 	card.House.Mars,
 	card.Type.Artifact,

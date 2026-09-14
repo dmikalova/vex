@@ -1,6 +1,9 @@
 package ageofascension
 
-import "github.com/dmikalova/vactrol/internal/card"
+import (
+	"github.com/dmikalova/vactrol/internal/card"
+	"github.com/dmikalova/vactrol/internal/cards/clusters"
+)
 
 // Shard of Life
 //
@@ -10,13 +13,13 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item • Shard
 //
 //	Action: For each friendly Shard, shuffle a card from your discard pile into your deck.
-var ShardOfLife = card.New(
+var ShardOfLife = set.New(
 	"Shard of Life",
 	card.House.Untamed,
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, "366"),
-	card.InCluster(shardCluster),
+	card.InCluster(clusters.Shard),
 	card.OneCopyPerDeck(),
 	card.WithTraits(card.Traits.Item, card.Traits.Shard),
 	card.WithAbility(

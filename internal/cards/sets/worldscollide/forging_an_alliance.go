@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Forge a key at +7 Æmber current cost, reduced by 1 Æmber for each house represented among cards in play -> purge Forging an Alliance.
-var ForgingAnAlliance = card.New(
+var ForgingAnAlliance = set.New(
 	"Forging an Alliance",
 	card.House.StarAlliance,
 	card.Type.Tactic,

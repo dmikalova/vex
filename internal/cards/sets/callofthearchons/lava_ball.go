@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //
 //	Play: Deal 4 damage to a Creature that is not on a flank and 2 damage to each of its neighbors.
-var LavaBall = card.New(
+var LavaBall = set.New(
 	"Lava Ball",
 	card.House.Brobnar,
 	card.Type.Tactic,

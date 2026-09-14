@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Choose up to 2 Creatures. Deal 1 damage to each chosen Creature. If that Creature was already damaged, deal 3 damage instead.
-var FesteringTouch = card.New(
+var FesteringTouch = set.New(
 	"Festering Touch",
 	card.House.Dis,
 	card.Type.Tactic,

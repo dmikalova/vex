@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: For the remainder of the turn, each friendly Creature cannot be dealt damage.
-var ShieldOfJustice = card.New(
+var ShieldOfJustice = set.New(
 	"Shield of Justice",
 	card.House.Sanctum,
 	card.Type.Tactic,

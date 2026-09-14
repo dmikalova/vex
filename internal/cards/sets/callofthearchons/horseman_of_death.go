@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Horseman • Spirit
 //
 //	Play: Put each Horseman Creature from your discard pile into your hand.
-var HorsemanOfDeath = card.New(
+var HorsemanOfDeath = set.New(
 	"Horseman of Death",
 	card.House.Sanctum,
 	card.Type.Creature,
@@ -22,8 +22,10 @@ var HorsemanOfDeath = card.New(
 	card.WithTraits(card.Traits.Horseman, card.Traits.Spirit),
 	card.WithAbility(
 		card.Trigger.Play, card.PutFromDiscard{
-			Match:       card.Match{Type: card.Type.Creature, Trait: card.Traits.Horseman},
-			All:         true,
+			Selection: card.Each{
+				Type:  card.Type.Creature,
+				Trait: card.Traits.Horseman,
+			},
 			Destination: card.To.Hand,
 		}),
 )

@@ -244,17 +244,18 @@ body {
    the floating dock with no way to bring it back out, so each strip keeps a
    dock's width of scrollable room past its last card. Rows the dock does not
    reach pay only an empty scroll range, which moves no card. */
-.app--sidebar-collapsed .card-strip {
+.app--sidebar-collapsed .board-row > .card-strip {
   padding-inline-end: calc(20rem + var(--shell-pad));
   scroll-padding-inline-end: calc(20rem + var(--shell-pad));
 }
 /* the floating dock also sits over the bottom-right corner, on top of the lower
-   player bar. That bar scrolls sideways, so it keeps a dock's width of trailing
-   room the same way the card rows do, holding its stats and keys out from under
-   the buttons rather than letting them hide behind the dock. */
+   player bar. The bar stops short of the dock the way the top bar stops before
+   the reveal button, so its box no longer runs underneath the buttons; it
+   scrolls sideways within the room that is left. --dock-reserve is the dock's
+   live width, measured in JS (boardScript), so the bar ends at the dock's current
+   edge rather than at the widest a prompt could ever open it. */
 .app--sidebar-collapsed .board-area > .score-pill:last-child {
-  padding-inline-end: calc(20rem + var(--shell-pad));
-  scroll-padding-inline-end: calc(20rem + var(--shell-pad));
+  margin-right: calc(var(--dock-reserve, 20rem) + var(--shell-pad));
 }
 
 /* A phone held upright has height to spare and no width, so the dock spans the
@@ -307,7 +308,7 @@ body {
   .control-dock--floating .house-pick {
     flex-flow: row wrap;
   }
-  .control-dock--floating .house-pick > .section-title {
+  .control-dock--floating .house-pick > .action-head {
     flex-basis: 100%;
   }
   .control-dock--floating .house-pick > .house-btn {
@@ -325,6 +326,7 @@ body {
     flex-flow: row wrap;
   }
   .control-dock--floating .btn-col:not(:has(> .prompt-card)) > .section-title,
+  .control-dock--floating .btn-col:not(:has(> .prompt-card)) > .action-head,
   .control-dock--floating .btn-col:not(:has(> .prompt-card)) > .prompt,
   .control-dock--floating .btn-col:not(:has(> .prompt-card)) > .hint,
   .control-dock--floating .btn-col:not(:has(> .prompt-card)) > .house-grid,
@@ -344,20 +346,18 @@ body {
     scroll-padding-inline-end: 0;
   }
   /* the dock no longer takes the bottom-right corner here either, so the lower
-     player bar drops its reserved room. */
+     player bar reclaims the room it held clear of the dock. */
   .app--sidebar-collapsed .board-area > .score-pill:last-child {
-    padding-inline-end: var(--ctl-pad-x);
-    scroll-padding-inline-end: 0;
+    margin-right: 0;
   }
-  /* on a portrait phone the prompt bar stays minimal: the source card's face is
-     dropped entirely, leaving just its green name token — a single clickable line
-     that pops the full card in the preview — so the bar reads name + prompt + Done
-     rather than a card face crowding out the board the player is choosing from. */
-  .control-dock--floating .prompt-card {
+  /* on a portrait phone the prompt bar stays minimal: the source card's whole
+     block — the face and its wrapper — is dropped, so the bar reads prompt + Done
+     with no card face crowding out the board, and no empty wrapper leaving a
+     stray gap that would make the prompt taller than the End turn bar it swaps
+     with. The card's green name token rides inside the prompt line, so it stays
+     one tap from the preview. */
+  .control-dock--floating .prompt-source-block {
     display: none;
-  }
-  .control-dock--floating .prompt-source-name {
-    display: block;
   }
 }
 
@@ -1055,7 +1055,13 @@ body {
 .prompt {
   font-size: var(--ctl-font);
   font-weight: 600;
-  color: var(--p0);
+  color: var(--ink);
+  /* one control-height row so a prompt and the End turn bar's header row are the
+     same size and the dock does not jitter when it swaps one for the other. Set
+     with line-height, not flex, so the space before the card-name token survives
+     (flex trims trailing whitespace off anonymous items). */
+  min-height: var(--ctl-h);
+  line-height: var(--ctl-h);
 }
 
 /* ---- buttons ----
@@ -1217,15 +1223,22 @@ body {
   height: var(--ctl-h);
   padding: 0;
 }
-/* End turn with its inline Undo: the undo stays a fixed square on the left and
-   End turn takes the rest of the row, so the pair reads as one control. */
-.end-turn-bar {
+/* The top row of the action area: an optional section title on the left and the
+   Undo icon (plus the manual wrench) pinned to the right. The spacer holds the
+   left slot when there is no title, so the icons stay hard right either way. */
+.action-head {
   display: flex;
   gap: 0.5rem;
-  align-items: stretch;
+  align-items: center;
+  justify-content: space-between;
 }
-.end-turn-bar > :not(.btn-icon) {
-  flex: 1;
+.action-head-spacer {
+  min-height: var(--ctl-h);
+}
+.action-head-icons {
+  display: flex;
+  gap: 0.5rem;
+  margin-inline-start: auto;
 }
 .icon-nav {
   width: 1.15em;
@@ -1370,6 +1383,25 @@ button:disabled {
   justify-content: flex-start;
   border-left: 4px solid var(--set-accent, var(--line));
 }
+/* ---- first-load setup: before any match is dealt the set picker fills the
+   viewport on its own, centred, so a fresh visit chooses its sets rather than
+   dropping straight into a game. ---- */
+.setup-screen {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100vh; /* fallback for browsers without dvh */
+  height: 100dvh;
+  padding: 1rem;
+  box-sizing: border-box;
+  overflow: auto;
+  background-color: var(--bg);
+  color: var(--ink);
+}
+.setup-panel {
+  width: 100%;
+  max-width: 22rem;
+}
 /* the emblem is one shared silhouette flooded with the set's accent through a
    mask, so every set shows the same mark in its own colour without a per-set
    asset. */
@@ -1388,6 +1420,25 @@ button:disabled {
 .btn-cursor {
   outline: 2px solid var(--p1);
   outline-offset: 1px;
+}
+/* The board draws its own keyboard cursor (.btn-cursor), so a control button never
+   shows the browser's native focus ring — otherwise a set button go-app later
+   reuses as a house button (same DOM node, next prompt) would keep a stray ring
+   across the deal. The :not(.btn-cursor) leaves the app's own yellow ring alone. */
+.btn-primary:focus-visible:not(.btn-cursor),
+.btn-secondary:focus-visible:not(.btn-cursor),
+.btn-warning:focus-visible:not(.btn-cursor),
+.btn-danger:focus-visible:not(.btn-cursor),
+.btn-unstun:focus-visible:not(.btn-cursor),
+.btn-nav:focus-visible:not(.btn-cursor),
+.house-btn:focus-visible:not(.btn-cursor) {
+  outline: none;
+}
+/* The set picker is the exception: it is keyboard-driven by native Tab focus, so
+   the focused set lights up in the same yellow the .btn-cursor uses elsewhere. */
+.set-pick button:focus-visible {
+  outline: 2px solid var(--p1);
+  outline-offset: 2px;
 }
 
 /* ---- key colour choice: the button is the colour it forges. These three are a
@@ -1545,17 +1596,20 @@ button:disabled {
 }
 
 /* ---- board: rows squeeze vertically; each strip scrolls horizontally ----
-   The row label sits on the left edge, rotated, so it costs width (of which there
-   is plenty) instead of the height the card strips are competing for. */
+   The row label is the first item in the scrolling strip, rotated so it costs
+   width (of which there is plenty) instead of the height the card strips are
+   competing for. */
 .board-row {
   display: flex;
   min-height: 0;
   flex-direction: row;
   align-items: stretch;
   gap: var(--board-gap);
-  /* the label overlays the left edge (see .board-row > .row-label), so the row is
-     the positioning context it anchors to */
   position: relative;
+  /* the row runs to the pane edges, bleeding past the board's shell padding, so a
+     scrolled strip can reach the very left and right edges instead of stopping a
+     shell-pad short of them */
+  margin-inline: calc(var(--shell-pad) * -1);
   /* the row is the query container for its own label: how much of the label fits
      depends on this row's height, not the window's */
   container-type: size;
@@ -1571,16 +1625,12 @@ button:disabled {
   line-height: 1.4;
   color: var(--ink-faint);
 }
-/* The label overlays the row's left edge rather than taking flex width from it, so
-   the card strip spans the whole row and the cards can scroll clear to the end;
-   the cards pass under the label as the strip scrolls. It fades into the board
-   background so a card sliding beneath it does not clash with the faint text. */
-.board-row > .row-label {
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  z-index: 3;
+/* The label is the first item in the scrolling strip, rotated on its side. It
+   scrolls off the start of the row with the cards rather than overlaying the edge
+   for the cards to slide under, so nothing peeks out past it on the far left. */
+.board-row .row-label {
+  flex: 0 0 auto;
+  align-self: stretch;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1589,15 +1639,21 @@ button:disabled {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  padding-inline-end: 0.35rem;
-  background: linear-gradient(to left, transparent, var(--bg) 0.35rem);
-  pointer-events: none;
 }
-/* the strip clears the overlaid label at rest, so the first card is not hidden
-   under it; scrolling then draws cards under the label toward the row's start */
+/* the flex layout trims the trailing space inside the zone word, so its own margin
+   keeps the word off the count ("Hand 6") while the count still butts the icon */
+.row-label-zone {
+  margin-inline-end: 0.25rem;
+}
+/* the strip holds a shell-pad of scroll-away inset at each end, so at rest the
+   label and cards line up with the player bars, but a scrolled strip runs its
+   cards flush to the pane edge (the row's negative inline margin above). The end
+   inset is overridden by a dock's width when the sidebar is collapsed. */
 .board-row > .card-strip {
-  scroll-padding-inline-start: 1.1rem;
-  padding-inline-start: 1.1rem;
+  padding-inline-start: calc(var(--ring) + var(--shell-pad));
+  padding-inline-end: calc(var(--ring) + var(--shell-pad));
+  scroll-padding-inline-start: var(--shell-pad);
+  scroll-padding-inline-end: var(--shell-pad);
 }
 .row-label-icon {
   display: none;
@@ -1615,10 +1671,10 @@ button:disabled {
    thresholds are the lengths of the vertical text, so a word is dropped just
    before it would have to be truncated */
 @container (max-height: 11rem) {
-  .board-row > .row-label .row-label-zone {
+  .board-row .row-label .row-label-zone {
     display: none;
   }
-  .board-row > .row-label .row-label-icon {
+  .board-row .row-label .row-label-icon {
     display: inline-block;
   }
 }
@@ -1638,6 +1694,8 @@ button:disabled {
 }
 .midline {
   border-top: 1px dashed var(--line);
+  /* match the rows, which bleed past the board's shell padding to the pane edges */
+  margin-inline: calc(var(--shell-pad) * -1);
 }
 
 /* the player bar wears the same box as a control, so it lines up across the
@@ -1978,21 +2036,7 @@ button:disabled {
 .key-btn:hover {
   filter: brightness(1.35);
 }
-/* the card being resolved, named above a prompt's buttons */
-.prompt-source {
-  font-weight: 700;
-  color: var(--ink-soft);
-  padding-bottom: 0.25rem;
-}
-/* the source card's name as a green token: tap or hover it to enlarge the card in
-   the preview, the same as a log mention. On mobile it is the only source
-   affordance, since the face below is dropped for room. */
-.prompt-source-name {
-  display: inline-block;
-  font-weight: 700;
-  padding-bottom: 0.25rem;
-}
-/* the source card's face beneath its name, so the ability being resolved can be
+/* the source card's face beneath the prompt, so the ability being resolved can be
    read without finding the card on the board */
 .prompt-card {
   display: flex;

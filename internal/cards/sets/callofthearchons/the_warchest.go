@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item
 //
 //	Action: For each enemy Creature that was destroyed in a fight this turn, gain 1 Æmber.
-var TheWarchest = card.New(
+var TheWarchest = set.New(
 	"The Warchest",
 	card.House.Brobnar,
 	card.Type.Artifact,

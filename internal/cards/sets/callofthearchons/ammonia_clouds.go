@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //
 //	Play: Deal 3 damage to each Creature.
-var AmmoniaClouds = card.New(
+var AmmoniaClouds = set.New(
 	"Ammonia Clouds",
 	card.House.Mars,
 	card.Type.Tactic,

@@ -122,7 +122,7 @@ func TestForRemainderOfTurnValidate(t *testing.T) {
 	// An unsupported Do effect.
 	unsupported := ForRemainderOfTurn{
 		On: EventCreaturePlayed,
-		Do: ShuffleIntoDeck{Zones: []Zone{Discard}},
+		Do: Shuffle{Zones: []Zone{Discard}},
 	}
 	if err := unsupported.validate(); err == nil {
 		t.Error("unsupported Do should fail")

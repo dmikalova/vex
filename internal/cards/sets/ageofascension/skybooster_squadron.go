@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Martian • Soldier
 //
 //	Reap: Put Skybooster Squadron into its owner's hand.
-var SkyboosterSquadron = card.New(
+var SkyboosterSquadron = set.New(
 	"Skybooster Squadron",
 	card.House.Mars,
 	card.Type.Creature,

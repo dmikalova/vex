@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Alpha.
 //	Play: You cannot use Creatures to reap for the remainder of the turn. For the remainder of the turn, each time a friendly Creature fights, gain 1 Æmber. At the end of the turn, destroy each Creature.
-var Ragnarok = card.New(
+var Ragnarok = set.New(
 	"Ragnarok",
 	card.House.Brobnar,
 	card.Type.Tactic,

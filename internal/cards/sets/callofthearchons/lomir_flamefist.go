@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant
 //
 //	Play: If your opponent has 7 Æmber or more, your opponent loses 2 Æmber.
-var LomirFlamefist = card.New(
+var LomirFlamefist = set.New(
 	"Lomir Flamefist",
 	card.House.Brobnar,
 	card.Type.Creature,

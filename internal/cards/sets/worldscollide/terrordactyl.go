@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Terrordactyl deals 4 Damage when fighting.
 //	Terrordactyl enters play stunned.
 //	Before Fight: Deal 4 damage to each neighbor of the Creature Terrordactyl fights.
-var Terrordactyl = card.New(
+var Terrordactyl = set.New(
 	"Terrordactyl",
 	card.House.Saurian,
 	card.Type.Creature,

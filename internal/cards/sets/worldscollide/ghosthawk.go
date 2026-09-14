@@ -11,8 +11,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Deploy.
-//	Play: You may reap with up to 2 different neighboring Creatures, one at a time.
-var Ghosthawk = card.New(
+//	Play: Reap with each of Ghosthawk's neighbors, one at a time.
+var Ghosthawk = set.New(
 	"Ghosthawk",
 	card.House.Untamed,
 	card.Type.Creature,
@@ -22,9 +22,8 @@ var Ghosthawk = card.New(
 	card.WithTraits(card.Traits.Beast),
 	card.WithKeywords(card.Keyword.Deploy),
 	card.WithAbility(
-		card.Trigger.Play, card.May{Do: card.OneAtATime{
-			Times:  card.Fixed(2),
-			Target: card.Target.Creature.Neighboring(),
+		card.Trigger.Play, card.OneAtATime{
+			Target: card.Target.EachNeighbor,
 			Verbs:  []card.CreatureVerb{card.ReapVerb{}},
-		}}),
+		}),
 )

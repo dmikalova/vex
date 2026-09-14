@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Knight
 //
 //	After you discard a Sanctum card, Baron Mengevin captures 1 Æmber from your opponent.
-var BaronMengevin = card.New(
+var BaronMengevin = set.New(
 	"Baron Mengevin",
 	card.House.Sanctum,
 	card.Type.Creature,
@@ -22,7 +22,7 @@ var BaronMengevin = card.New(
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),
 	card.WithAbility(card.Trigger.AfterDiscardFromHand, card.Conditional{
-		Cond: card.ItIs{House: card.House.Self},
+		Cond: card.ItIs{House: card.Houses.Named(card.House.Self)},
 		Then: card.CaptureAember{
 			Target: card.Target.This,
 			Amount: 1,

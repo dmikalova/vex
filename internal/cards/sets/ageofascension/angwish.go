@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon
 //
 //	Your opponent's keys cost +1 Æmber for each damage on it.
-var Angwish = card.New(
+var Angwish = set.New(
 	"Angwish",
 	card.House.Dis,
 	card.Type.Creature,

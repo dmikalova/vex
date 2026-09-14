@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	This Creature gains, "Reap: this Creature captures 1 Æmber from your opponent."
-var WildSpirit = card.New(
+var WildSpirit = set.New(
 	"Wild Spirit",
 	card.House.Untamed,
 	card.Type.Upgrade,

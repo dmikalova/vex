@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human
 //
 //	Play/Fight/Reap: You may reveal a non-Star Alliance card from your hand and archive it.
-var InformationOfficerGray = card.New(
+var InformationOfficerGray = set.New(
 	"Information Officer Gray",
 	card.House.StarAlliance,
 	card.Type.Creature,
@@ -22,7 +22,7 @@ var InformationOfficerGray = card.New(
 	card.WithAbility(card.Trigger.PlayFightReap, card.May{
 		Do: card.ArchiveCard{
 			Zone:      card.Hand,
-			Selection: card.Chosen{ExceptHouse: card.House.Self, Optional: true},
+			Selection: card.Chosen{House: card.Houses.Except(card.House.Self), Optional: true},
 			Revealed:  true,
 		},
 	}),

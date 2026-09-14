@@ -6,18 +6,19 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Brobnar
 //	Type:   Creature
-//	Rarity: Special
+//	Rarity: Connected
 //	Power:  10
 //	Armor:  1
 //	Traits: Giant
 //
 //	Each neighboring Creature cannot reap.
-var MegaNarp = card.New(
+var MegaNarp = set.New(
 	"Mega Narp",
 	card.House.Brobnar,
 	card.Type.Creature,
-	card.Rarity.Special,
+	card.Rarity.Connected,
 	card.Provenance(card.WC, "60"),
+	card.InCluster(card.Pulled(narpsBrewCluster, 1, 1.25)),
 	card.WithPower(10),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Giant),

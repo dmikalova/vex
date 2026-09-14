@@ -43,6 +43,7 @@ func (g *game) runAction(ctx app.Context, fn func() error) {
 			cancelled := g.cancelling
 			g.cancelling = false
 			g.chooser.cancel = make(chan struct{})
+			g.chooser.cancelled = false
 			if crashed {
 				// A corrupt engine state can panic mid-action (e.g. an
 				// out-of-range card id). Roll back to the snapshot beginAction
@@ -413,11 +414,17 @@ func (g *game) inPlaySet() map[engine.LocalID]bool {
 // is over, a new turn needs a house, or play continues. Transient phases (picking
 // a flank or a fight target) depend on a live selection, so they are never a
 // resting phase and a resumed match always lands on one of these.
+//
+// The turn only needs a house while the engine still waits at PhaseChooseHouse; a
+// player locked out of every house chooses No House, which leaves ActiveHouse at
+// HouseNone but advances the engine past the choice — so key off the phase, not
+// ActiveHouse, or a No-House turn would loop back to the picker with no way to end.
 func (g *game) settlePhase() {
 	switch {
 	case g.g.Winner() >= 0:
 		g.phase = phaseOver
-	case g.g.State.ActiveHouse == engine.HouseNone:
+	case g.g.State.ActiveHouse == engine.HouseNone &&
+		g.g.Phase() == engine.PhaseChooseHouse:
 		g.phase = phaseHouse
 	default:
 		g.phase = phaseMain

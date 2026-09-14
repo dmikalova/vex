@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Dinosaur • Soldier
 //
 //	Reap: You may exalt Paraguardian. Ward Paraguardian.
-var Paraguardian = card.New(
+var Paraguardian = set.New(
 	"Paraguardian",
 	card.House.Saurian,
 	card.Type.Creature,

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Skirmish.
-var Snufflegator = card.New(
+var Snufflegator = set.New(
 	"Snufflegator",
 	card.House.Untamed,
 	card.Type.Creature,

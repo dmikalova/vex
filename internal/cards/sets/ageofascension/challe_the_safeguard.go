@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Knight
 //
 //	Deploy, Taunt.
-var ChalleTheSafeguard = card.New(
+var ChalleTheSafeguard = set.New(
 	"Challe the Safeguard",
 	card.House.Sanctum,
 	card.Type.Creature,

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant • Mutant
 //
 //	At the end of your turn, if you played exactly 1 card this turn, heal 2 damage from Rogue Ogre, and Rogue Ogre captures 1 Æmber from your opponent.
-var RogueOgre = card.New(
+var RogueOgre = set.New(
 	"Rogue Ogre",
 	card.House.Brobnar,
 	card.Type.Creature,

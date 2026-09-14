@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: If there are no friendly Creatures in play, for each enemy Creature in play, you may archive a card from your hand.
-var MasterTheTheory = card.New(
+var MasterTheTheory = set.New(
 	"Master the Theory",
 	card.House.Logos,
 	card.Type.Tactic,

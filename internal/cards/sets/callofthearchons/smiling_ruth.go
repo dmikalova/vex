@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Reap: If you forged a key this turn, take control of an enemy flank Creature.
-var SmilingRuth = card.New(
+var SmilingRuth = set.New(
 	"Smiling Ruth",
 	card.House.Shadows,
 	card.Type.Creature,

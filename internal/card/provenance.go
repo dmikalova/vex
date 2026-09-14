@@ -15,6 +15,16 @@ func Provenance(set provenance.SourceSet, number string) Option {
 	return func(b *builder) { b.prov = append(b.prov, provenance.Ref{Set: set, Number: number}) }
 }
 
+// InSet declares the source set a card belongs to for deck generation, decoupled
+// from Provenance. Deck generation groups a card into its set's pool by this set
+// alone; it never reads Provenance (ADR 0003). Every card declares its set — a set
+// package's registrar (set.New) stamps InSet for it — so the set is always
+// explicit and never inferred. This option is the low-level primitive that
+// registrar applies; author cards through set.New rather than calling it directly.
+func InSet(set provenance.SourceSet) Option {
+	return func(b *builder) { b.set = set }
+}
+
 // Source sets to tag a card's Provenance with, e.g. card.Provenance(card.CotA, "001").
 var (
 	// CotA is Call of the Archons.
@@ -23,6 +33,11 @@ var (
 	AoA = provenance.AgeOfAscension
 	// WC is Worlds Collide.
 	WC = provenance.WorldsCollide
+	// AE is Anomaly Expansion, a reservoir set (never itself draftable): it holds
+	// the Vactrol-invented Shards that enter a deck only through a cross-set
+	// cluster, plus the housed anomaly cards, which stay legacy-drawable by other
+	// sets.
+	AE = provenance.AnomalyExpansion
 	// MM is Mass Mutation.
 	MM = provenance.MassMutation
 	// DT is Dark Tidings.

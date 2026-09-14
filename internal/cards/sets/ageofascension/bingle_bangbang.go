@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Goblin
 //
 //	Before Fight: Deal 5 damage to each neighbor of the Creature Bingle Bangbang fights.
-var BingleBangbang = card.New(
+var BingleBangbang = set.New(
 	"Bingle Bangbang",
 	card.House.Brobnar,
 	card.Type.Creature,

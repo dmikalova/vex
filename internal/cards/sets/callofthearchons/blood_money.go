@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //
 //	Play: Exalt an enemy Creature 2 times.
-var BloodMoney = card.New(
+var BloodMoney = set.New(
 	"Blood Money",
 	card.House.Brobnar,
 	card.Type.Tactic,

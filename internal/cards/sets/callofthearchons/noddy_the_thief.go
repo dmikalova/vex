@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Action: Steal 1 Æmber.
-var NoddyTheThief = card.New(
+var NoddyTheThief = set.New(
 	"Noddy the Thief",
 	card.House.Shadows,
 	card.Type.Creature,

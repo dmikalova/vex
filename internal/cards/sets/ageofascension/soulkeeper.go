@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	This Creature gains, "Destroyed: Destroy the most powerful enemy Creature."
-var Soulkeeper = card.New(
+var Soulkeeper = set.New(
 	"Soulkeeper",
 	card.House.Dis,
 	card.Type.Upgrade,

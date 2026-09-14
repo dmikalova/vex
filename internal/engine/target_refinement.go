@@ -40,27 +40,27 @@ func (t Target) leadIn() (string, bool) {
 	return "", false
 }
 
-// Not is a Refinement that keeps every creature its inner Refinement drops — the
-// complement over the selected set. It composes with the singular selectors to
-// spare one creature and take the rest: Not(MostPowerful) is "each creature
+// Except is a Refinement that keeps every creature its inner Refinement drops —
+// the complement over the selected set. It composes with the singular selectors to
+// spare one creature and take the rest: Except(MostPowerful) is "each creature
 // except the most powerful creature" (Champion's Challenge). The inner refinement
 // runs first, so any choice it makes (which tied creature is the most powerful)
-// decides which creature Not spares.
-func Not(inner Refinement) Refinement { return not{inner: inner} }
+// decides which creature Except spares.
+func Except(inner Refinement) Refinement { return except{inner: inner} }
 
-// not implements the Not combinator.
-type not struct{ inner Refinement }
+// except implements the Except combinator.
+type except struct{ inner Refinement }
 
-// clause renders "<phrase> except <inner clause>", e.g. Not(MostPowerful) over
+// clause renders "<phrase> except <inner clause>", e.g. Except(MostPowerful) over
 // "each enemy creature" -> "each enemy creature except the most powerful enemy
 // creature".
-func (n not) clause(phrase string) string {
+func (n except) clause(phrase string) string {
 	return phrase + " except " + n.inner.clause(phrase)
 }
 
 // refine keeps the creatures the inner refinement does not, preserving the
 // original order. An empty result selects nothing.
-func (n not) refine(ctx *EffectContext, ids []LocalID) []LocalID {
+func (n except) refine(ctx *EffectContext, ids []LocalID) []LocalID {
 	dropped := n.inner.refine(ctx, ids)
 	drop := make(map[LocalID]bool, len(dropped))
 	for _, id := range dropped {

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	This Creature gains +1 armor and taunt.
-var ProtectTheWeak = card.New(
+var ProtectTheWeak = set.New(
 	"Protect the Weak",
 	card.House.Sanctum,
 	card.Type.Upgrade,

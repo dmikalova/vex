@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human
 //
 //	Play/Fight/Reap: A friendly Creature captures 1 Æmber from your opponent.
-var FirstOfficerFrane = card.New(
+var FirstOfficerFrane = set.New(
 	"First Officer Frane",
 	card.House.StarAlliance,
 	card.Type.Creature,

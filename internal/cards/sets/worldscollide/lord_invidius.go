@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	While Lord Invidius is in the center of your battleline, it gains, "Reap: Take control of an enemy flank Creature and exhaust it. It belongs to house Dis until it leaves play."
-var LordInvidius = card.New(
+var LordInvidius = set.New(
 	"Lord Invidius",
 	card.House.Dis,
 	card.Type.Creature,

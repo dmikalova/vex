@@ -40,11 +40,7 @@ func (e RedistributeCapturedAember) Resolve(ctx *EffectContext) {
 			pool += held
 		}
 	}
-	for ; pool > 0; pool-- {
-		id, ok := ctx.ChooseCreature("Place 1 Æmber", creatures)
-		if !ok {
-			id = creatures[0]
-		}
+	placeAmong(ctx, creatures, "Place 1 Æmber", pool, func(id LocalID) {
 		ctx.Resolver.AddAmberOn(id, 1)
-	}
+	})
 }

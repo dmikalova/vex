@@ -363,20 +363,32 @@ func (v GainKeywordVerb) Apply(ctx *EffectContext, target LocalID) {
 // (including any fight it triggers) before the next choice is offered, which is
 // what "one at a time" means: the controller sees the board each pass and may
 // stop early by declining.
+//
+// A whole-set target (any "each ..." kind, e.g. TargetEachNeighbor) switches the
+// effect to its mandatory form: the controller acts with every creature the
+// target names, one at a time in an order they choose, and cannot stop early —
+// Ghosthawk reaps with each of its neighbors, one at a time. Times is ignored in
+// this form (the set size bounds the passes).
 type OneAtATime struct {
-	// Times is how many passes the controller may take at most.
+	// Times is how many passes the controller may take at most. It is required for
+	// a chosen-creature target and ignored for a whole-set ("each ...") target.
 	Times Count
 	// Target picks the creature each pass; Verbs are the actions applied to it.
 	Target Target
 	Verbs  []CreatureVerb
 }
 
-// validate requires an explicit target and a positive number of passes.
+// eachSet reports whether the target names a whole set (an "each ..." kind), which
+// switches the effect to its mandatory, controller-ordered form.
+func (e OneAtATime) eachSet() bool { return !e.Target.isChosen() }
+
+// validate requires an explicit target and, for a chosen-creature target, a
+// positive number of passes. A whole-set target bounds its own passes.
 func (e OneAtATime) validate() error {
 	if !e.Target.valid() {
 		return errUnsetTarget("OneAtATime")
 	}
-	if fixedValue(e.Times) <= 0 {
+	if !e.eachSet() && fixedValue(e.Times) <= 0 {
 		return fmt.Errorf("OneAtATime: Times must be a positive fixed count")
 	}
 	return nil
@@ -388,11 +400,16 @@ func (e OneAtATime) each() OnChooseCreature {
 }
 
 // Text renders the effect, e.g.
-// "ready and fight with up to 3 different friendly creatures, one at a time".
+// "ready and fight with up to 3 different friendly creatures, one at a time", or,
+// for a whole-set target, "reap with each of Ghosthawk's neighbors, one at a time".
 func (e OneAtATime) Text() string {
 	verbs := make([]string, 0, len(e.Verbs))
 	for _, v := range e.Verbs {
 		verbs = append(verbs, v.VerbText())
+	}
+	if e.eachSet() {
+		return fmt.Sprintf(
+			"%s %s, one at a time", joinVerbs(verbs), e.Target.Text())
 	}
 	return fmt.Sprintf(
 		"%s up to %d different %ss, one at a time",
@@ -403,8 +420,13 @@ func (e OneAtATime) Text() string {
 }
 
 // Resolve takes up to Times passes, stopping as soon as a pass acts on nobody —
-// the pool ran dry or the controller declined.
+// the pool ran dry or the controller declined. A whole-set target instead acts on
+// every creature it names, one at a time in an order the controller chooses.
 func (e OneAtATime) Resolve(ctx *EffectContext) {
+	if e.eachSet() {
+		e.resolveEach(ctx)
+		return
+	}
 	pass := e.each()
 	var used []LocalID
 	for range e.Times.Value(ctx) {
@@ -413,6 +435,38 @@ func (e OneAtATime) Resolve(ctx *EffectContext) {
 			return
 		}
 		used = append(used, chosen...)
+	}
+}
+
+// resolveEach acts with every creature the whole-set target names, one at a time:
+// each pass the controller picks which of the still-in-play, not-yet-acted
+// creatures to act on next, and the pass resolves fully before the next choice.
+// The controller orders the set but cannot skip a creature.
+func (e OneAtATime) resolveEach(ctx *EffectContext) {
+	ids := e.Target.Select(ctx)
+	pass := e.each()
+	verbs := make([]string, 0, len(e.Verbs))
+	for _, v := range e.Verbs {
+		verbs = append(verbs, v.VerbText())
+	}
+	prompt := "Choose a creature to " + joinVerbs(verbs)
+	var used []LocalID
+	for len(used) < len(ids) {
+		var remaining []LocalID
+		for _, id := range ids {
+			if !slices.Contains(used, id) && ctx.Resolver.InPlay(id) {
+				remaining = append(remaining, id)
+			}
+		}
+		if len(remaining) == 0 {
+			return
+		}
+		id, ok := ctx.ChooseCreature(prompt, remaining)
+		if !ok {
+			return
+		}
+		pass.applyTo(ctx, []LocalID{id})
+		used = append(used, id)
 	}
 }
 

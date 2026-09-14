@@ -12,7 +12,7 @@ func TestPutFromHand(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
 	ctx.It, ctx.HasIt = returned, true
 
-	e := PutFromHand{Type: Creature, House: Mars, ExceptSameName: true}
+	e := PutFromHand{Type: Creature, House: namedHouse(Mars), ExceptSameName: true}
 	if e.Text() != "put a Mars creature with a different name from your hand into play" {
 		t.Errorf("text = %q", e.Text())
 	}

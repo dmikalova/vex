@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Each undamaged Creature captures 1 Æmber from its opponent.
-var Pandemonium = card.New(
+var Pandemonium = set.New(
 	"Pandemonium",
 	card.House.Dis,
 	card.Type.Tactic,

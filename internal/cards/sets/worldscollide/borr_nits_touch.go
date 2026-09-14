@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Reveal the top 5 cards of a player's deck. Purge a card revealed this way. Shuffle that deck.
-var BorrNitsTouch = card.New(
+var BorrNitsTouch = set.New(
 	"Borr Nit's Touch",
 	card.House.Dis,
 	card.Type.Tactic,
@@ -24,7 +24,7 @@ var BorrNitsTouch = card.New(
 			ChooseWhoseDeck: true,
 			Then: []card.TopAct{
 				card.ChooseAndMove{Count: 1, Dest: card.Into.Purge},
-				card.ShuffleDeck{},
+				card.Shuffle{},
 			},
 		},
 	),

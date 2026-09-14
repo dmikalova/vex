@@ -13,6 +13,7 @@ import (
 type RegisteredCard struct {
 	Def          Definition
 	Provenance   []provenance.Ref
+	Set          provenance.SourceSet
 	Profile      deckgen.GenerationProfile
 	Materializer deckgen.Materializer
 }
@@ -45,10 +46,20 @@ func New(
 	registry = append(registry, RegisteredCard{
 		Def:          d,
 		Provenance:   b.prov,
+		Set:          nativeSet(b),
 		Profile:      b.profile,
 		Materializer: b.materializer,
 	})
 	return d
+}
+
+// nativeSet returns a card's home set for deck generation: the set declared with
+// InSet, which a set package's registrar (set.New) always stamps. Deck generation
+// groups a card by this set alone and never infers it from provenance (ADR 0003);
+// a card registered through the bare New without InSet belongs to no pool (the
+// zero set) and is filtered out downstream.
+func nativeSet(b builder) provenance.SourceSet {
+	return b.set
 }
 
 // Build assembles a card Definition WITHOUT registering it, for a template's

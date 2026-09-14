@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Deal 2 damage to a friendly Creature.
-var OrtannusBinding = card.New(
+var OrtannusBinding = set.New(
 	"Ortannu's Binding",
 	card.House.Dis,
 	card.Type.Tactic,

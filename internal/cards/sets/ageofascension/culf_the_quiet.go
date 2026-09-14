@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant
 //
 //	Elusive.
-var CulfTheQuiet = card.New(
+var CulfTheQuiet = set.New(
 	"Culf the Quiet",
 	card.House.Brobnar,
 	card.Type.Creature,

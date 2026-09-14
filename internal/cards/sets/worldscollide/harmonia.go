@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	After you play a Creature, if you are overwhelmed, gain 1 Æmber.
-var Harmonia = card.New(
+var Harmonia = set.New(
 	"Harmonia",
 	card.House.Untamed,
 	card.Type.Creature,

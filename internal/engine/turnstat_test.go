@@ -38,7 +38,7 @@ func TestForgedKeyCondition(t *testing.T) {
 
 	mine := ForgedKey{Player: Controller}
 	theirs := ForgedKey{Player: Opponent, Previous: true}
-	notMine := ForgedKey{Player: Controller, Not: true}
+	notMine := Not{Cond: ForgedKey{Player: Controller}}
 	if got := mine.CondText(); got != "if you forged a key this turn" {
 		t.Errorf("CondText = %q", got)
 	}

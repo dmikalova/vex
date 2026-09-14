@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Mutant
 //
 //	Play: For each card in your opponent's archives, gain 1 Æmber, and your opponent discards each of their archived cards.
-var Dysania = card.New(
+var Dysania = set.New(
 	"Dysania",
 	card.House.Logos,
 	card.Type.Creature,

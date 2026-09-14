@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Play: If your opponent has 7 Æmber or more, Drumble captures all your opponent's Æmber.
-var Drumble = card.New(
+var Drumble = set.New(
 	"Drumble",
 	card.House.Dis,
 	card.Type.Creature,

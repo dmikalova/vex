@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	This Creature gains taunt.
 //	Play: Fully heal this Creature.
-var YoMamaMastery = card.New(
+var YoMamaMastery = set.New(
 	"Yo Mama Mastery",
 	card.House.Brobnar,
 	card.Type.Upgrade,

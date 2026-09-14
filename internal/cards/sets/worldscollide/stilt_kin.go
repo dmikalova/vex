@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Skirmish.
 //	After a Giant Creature is played adjacent to Stilt-Kin, ready and fight with Stilt-Kin.
-var StiltKin = card.New(
+var StiltKin = set.New(
 	"Stilt-Kin",
 	card.House.Brobnar,
 	card.Type.Creature,

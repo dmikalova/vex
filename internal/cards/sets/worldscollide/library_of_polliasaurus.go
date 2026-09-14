@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Location
 //
 //	Action: Move 1 Æmber from a friendly Creature to your pool.
-var LibraryOfPolliasaurus = card.New(
+var LibraryOfPolliasaurus = set.New(
 	"Library of Polliasaurus",
 	card.House.Saurian,
 	card.Type.Artifact,

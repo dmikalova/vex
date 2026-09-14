@@ -344,6 +344,33 @@ func TestPutChosen(t *testing.T) {
 	}
 }
 
+// A card the settle-before-choice boundary (ADR 0029) destroys after the pool was
+// gathered — its buff left with an earlier pick — is skipped rather than moved into
+// a second zone (ADR 0030), exactly as PutFromPlay skips one an earlier move took
+// out. Two enemy creatures make the choice present (so it settles); the 0-power one
+// is swept there, and the stale pool must not abduct it on top of its discard.
+func TestPutChosenSkipsACardSettledOutOfPlay(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	dead := g.AddToBattleline(testCreature("dead", 0), 1)
+	alive := g.AddToBattleline(testCreature("alive", 3), 1)
+	g.SetChooser(0, FirstChooser{})
+	PutChosen{
+		Amount:      2,
+		Target:      Target{Kind: TargetEachEnemyCreature},
+		Destination: ToArchives.Yours(),
+	}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+
+	if g.State.Archives[0].contains(dead) {
+		t.Error("a creature settled out of play must not be abducted into archives")
+	}
+	if !g.State.Discard[1].contains(dead) {
+		t.Error("the 0-power creature should have been destroyed to its owner's discard")
+	}
+	if !g.State.Archives[0].contains(alive) {
+		t.Error("the surviving creature should have been abducted into archives")
+	}
+}
+
 // Shuffling several creatures into their owners' decks with one effect narrates
 // one grouped, source-attributed line per owner instead of a passive line each.
 func TestPutChosenGroupsShufflesByOwnerInLog(t *testing.T) {

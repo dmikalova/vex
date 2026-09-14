@@ -63,8 +63,10 @@ func (e Destroy) resolveOptional(ctx *EffectContext) bool {
 // destroy carries out the destruction of an already-selected set.
 func (e Destroy) destroy(ctx *EffectContext, ids []LocalID) bool {
 	controllers := make(map[LocalID]int, len(ids))
+	powers := make(map[LocalID]int, len(ids))
 	for _, id := range ids {
 		controllers[id] = ctx.Resolver.Controller(id)
+		powers[id] = ctx.Resolver.Power(id)
 	}
 	ctx.Resolver.DestroyEachFrom(ctx.Controller, ctx.Source, ids)
 	if len(ids) == 1 {
@@ -77,6 +79,7 @@ func (e Destroy) destroy(ctx *EffectContext, ids []LocalID) bool {
 	for _, id := range ids {
 		if !resolverInPlay(ctx, id) {
 			ctx.Produced.Destroyed[controllers[id]]++
+			ctx.Produced.DestroyedPower += powers[id]
 		}
 	}
 	return len(ids) > 0

@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Reap: Choose a house - your opponent cannot choose that house as their active house on their next turn.
-var Tezmal = card.New(
+var Tezmal = set.New(
 	"Tezmal",
 	card.House.Dis,
 	card.Type.Creature,

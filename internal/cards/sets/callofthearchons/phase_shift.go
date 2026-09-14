@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //
 //	Play: Play a non-Logos card.
-var PhaseShift = card.New(
+var PhaseShift = set.New(
 	"Phase Shift",
 	card.House.Logos,
 	card.Type.Tactic,
@@ -17,8 +17,7 @@ var PhaseShift = card.New(
 	card.Provenance(card.CotA, "117"),
 	card.WithAbility(
 		card.Trigger.Play, card.PlayFrom{
-			From:   card.Hand,
-			House:  card.House.Self,
-			Except: true,
+			From:  card.Hand,
+			House: card.Houses.Except(card.House.Self),
 		}),
 )

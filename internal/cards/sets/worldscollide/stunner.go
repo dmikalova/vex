@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	This Creature gains, "Fight/Reap: You may stun a Creature."
-var Stunner = card.New(
+var Stunner = set.New(
 	"Stunner",
 	card.House.StarAlliance,
 	card.Type.Upgrade,

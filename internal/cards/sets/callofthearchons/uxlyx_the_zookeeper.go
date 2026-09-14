@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Reap: Put an enemy Creature into your archives.
-var UxlyxTheZookeeper = card.New(
+var UxlyxTheZookeeper = set.New(
 	"Uxlyx the Zookeeper",
 	card.House.Mars,
 	card.Type.Creature,

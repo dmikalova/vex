@@ -10,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Human
 //
-//	Play/Fight/Reap: You may play a non-Star Alliance Artifact, Upgrade, or Tactic this turn.
-var ComOfficerKirby = card.New(
+//	Play/Fight/Reap: Play a non-Star Alliance Artifact, Upgrade, or Tactic.
+var ComOfficerKirby = set.New(
 	"Com. Officer Kirby",
 	card.House.StarAlliance,
 	card.Type.Creature,
@@ -20,10 +20,9 @@ var ComOfficerKirby = card.New(
 	card.InCluster(card.Pulled(kirbysBlasterCluster, 1, 1.25)),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human),
-	card.WithAbility(card.Trigger.PlayFightReap, card.MayPlayOrUse{
-		Houses: card.Houses.Except(card.House.Self),
-		Grant:  card.GrantPlay,
-		Types:  card.Types.NonCreature,
-		Count:  1,
+	card.WithAbility(card.Trigger.PlayFightReap, card.PlayFrom{
+		From:  card.Hand,
+		House: card.Houses.Except(card.House.Self),
+		Types: card.Types.Of(card.Type.Artifact, card.Type.Upgrade, card.Type.Tactic),
 	}),
 )

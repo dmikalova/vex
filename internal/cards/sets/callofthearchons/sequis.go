@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Knight
 //
 //	Reap: Sequis captures 1 Æmber from your opponent.
-var Sequis = card.New(
+var Sequis = set.New(
 	"Sequis",
 	card.House.Sanctum,
 	card.Type.Creature,

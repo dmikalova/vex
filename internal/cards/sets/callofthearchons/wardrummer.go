@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Goblin
 //
 //	Play: Put each other friendly Brobnar Creature into its owner's hand.
-var Wardrummer = card.New(
+var Wardrummer = set.New(
 	"Wardrummer",
 	card.House.Brobnar,
 	card.Type.Creature,
@@ -21,7 +21,9 @@ var Wardrummer = card.New(
 	card.WithTraits(card.Traits.Goblin),
 	card.WithAbility(
 		card.Trigger.Play, card.PutFromPlay{
-			Target:      card.Target.EachOtherFriendlyCreature.OfHouse(card.House.Self),
+			Target: card.Target.EachOtherFriendlyCreature.House(
+				card.Houses.Named(card.House.Self),
+			),
 			Destination: card.To.Hand,
 		}),
 )

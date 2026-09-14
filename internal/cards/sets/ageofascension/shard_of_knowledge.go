@@ -1,6 +1,9 @@
 package ageofascension
 
-import "github.com/dmikalova/vactrol/internal/card"
+import (
+	"github.com/dmikalova/vactrol/internal/card"
+	"github.com/dmikalova/vactrol/internal/cards/clusters"
+)
 
 // Shard of Knowledge
 //
@@ -10,13 +13,13 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item • Shard
 //
 //	Action: For each friendly Shard, draw a card.
-var ShardOfKnowledge = card.New(
+var ShardOfKnowledge = set.New(
 	"Shard of Knowledge",
 	card.House.Logos,
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, "155"),
-	card.InCluster(shardCluster),
+	card.InCluster(clusters.Shard),
 	card.OneCopyPerDeck(),
 	card.WithTraits(card.Traits.Item, card.Traits.Shard),
 	card.WithAbility(

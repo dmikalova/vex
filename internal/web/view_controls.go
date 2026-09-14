@@ -16,28 +16,20 @@ import (
 // looks at — the prompts (card picker, house picker, option chooser), the action
 // bar for the selected card, and the manual-mode panel.
 
-// promptSourceHeader names the card driving the current prompt and shows its
-// face, so the player can read the ability they are resolving without hunting for
-// the card on the board. The name is a green token wired to the same preview a
-// log mention uses (tap or hover to enlarge the card), which is the only source
-// affordance on mobile, where the face is dropped for room. The name is spelled
-// out as plain text only when there is no matching card to preview.
+// promptSourceHeader shows the face of the card driving the current prompt, so
+// the player can read the ability they are resolving without hunting for the card
+// on the board. The card's name is not repeated here — it rides inside the prompt
+// line itself as a green token (see promptLine) — so the face stands alone on
+// desktop and is dropped for room on mobile, where the token is the only source
+// affordance.
 func (g *game) promptSourceHeader() app.UI {
 	return app.If(g.promptSource != "", func() app.UI {
 		def := g.defByName[g.promptSource]
 		if def == nil {
-			return app.Div().Class("prompt-source-block").Body(
-				app.Div().Class("prompt-source").Text(g.promptSource),
-			)
+			return app.Div()
 		}
 		house, changed := g.promptSourceHouse(def)
 		return app.Div().Class("prompt-source-block").Body(
-			app.Span().Class("prompt-source-name log-card").
-				DataSet("card", g.promptSource).
-				OnMouseEnter(g.onLogCardHover).
-				OnMouseLeave(g.onCardHoverOut).
-				OnClick(g.onLogCardTap).
-				Text(g.promptSource),
 			app.Div().Class("prompt-card").Body(&cardView{
 				Title:        def.Name,
 				HouseCls:     houseClasses(house),
@@ -54,20 +46,59 @@ func (g *game) promptSourceHeader() app.UI {
 	})
 }
 
+// promptLine draws a prompt's text, turning every mention of the card driving the
+// prompt into a green log-card token — tap or hover to enlarge the card, the same
+// affordance a log mention gives — so the prompt reads as one line ("Exalt
+// <Centurion Stenopius>") instead of repeating the name as a heading above it.
+func (g *game) promptLine(text string) app.UI {
+	return app.Div().Class("prompt").Body(g.promptTextSegments(text)...)
+}
+
+// promptTextSegments splits a prompt's text around each mention of its source
+// card, wrapping every mention in a log-card token and leaving the rest plain.
+// With no source card, or none named in the text, the whole line is plain text.
+func (g *game) promptTextSegments(text string) []app.UI {
+	name := g.promptSource
+	if name == "" || !strings.Contains(text, name) {
+		return []app.UI{app.Text(text)}
+	}
+	var out []app.UI
+	for {
+		i := strings.Index(text, name)
+		if i < 0 {
+			if text != "" {
+				out = append(out, app.Text(text))
+			}
+			return out
+		}
+		if i > 0 {
+			out = append(out, app.Text(text[:i]))
+		}
+		out = append(out, app.Span().
+			Class("log-card").
+			DataSet("card", name).
+			OnMouseEnter(g.onLogCardHover).
+			OnMouseLeave(g.onCardHoverOut).
+			OnClick(g.onLogCardTap).
+			Text(name))
+		text = text[i+len(name):]
+	}
+}
+
 // promptCardButtons lists a bounded out-of-play card prompt's candidates as
 // action-bar buttons — a "look at the top N cards" pick (Navigator Ali, Lay of
 // the Land) reads as a few named buttons instead of a modal over the deck. Each
 // button names its card, previews it on hover (the same preview a log mention
 // opens), and answers the prompt on click. A reorder-the-top prompt adds the note
-// that the last card picked ends up on top, since each pick is placed on top of
-// the one before it.
+// that the first card picked ends up on the bottom, since each pick is placed on
+// top of the one before it and the card left over rides on top.
 func (g *game) promptCardButtons() app.UI {
 	body := make([]app.UI, 0, len(g.chooserCandidates)+1)
-	// The reorder prompt places each pick on top of the previous, so the last pick
-	// finishes on top; the note keys off that prompt's wording rather than the card.
+	// The reorder prompt places each pick on top of the previous, so the first pick
+	// finishes deepest; the note keys off that prompt's wording rather than the card.
 	if strings.Contains(g.chooserPrompt, "on top") {
 		body = append(body,
-			app.Div().Class("hint").Text("The last card you pick ends up on top."))
+			app.Div().Class("hint").Text("The first card you pick ends up on the bottom."))
 	}
 	for _, id := range g.chooserCandidates {
 		def := g.g.Def(id)
@@ -121,42 +152,69 @@ func (g *game) endTurnButton() app.UI {
 	return btn("End turn", g.endTurn, cx("btn-secondary", ready, cursor))
 }
 
-// endTurnBar is the End turn control with the undo shortcut sitting to its left,
-// so a card played by mistake is one icon-click from being taken back without
-// opening the menu. The undo button rides with End turn — it appears only in the
-// same resting controls — and is disabled when there is nothing to undo.
-func (g *game) endTurnBar() app.UI {
-	undo := app.Button().
+// undoIcon is the icon-only Undo that rides in the top-right of the action area,
+// so a card played by mistake is one click from being taken back without opening
+// the menu. It is disabled when there is nothing to undo.
+func (g *game) undoIcon() app.UI {
+	return app.Button().
 		Class(cx("btn-secondary", "btn-icon")).
 		Title("Undo").
 		Disabled(!g.canUndo()).
 		OnClick(g.undoAction).
 		Body(icon("undo", "icon-nav"))
-	body := []app.UI{undo, g.endTurnButton()}
-	// In manual mode a green wrench rides to the right of End turn (mirroring Undo on
-	// the left) so the mode that is on is one click from off without opening the menu.
+}
+
+// actionHeader is the top row of the action area: an optional section title on the
+// left and the Undo icon pinned to the right, with any extra right-side icons (the
+// manual-mode wrench) sitting beside Undo.
+func (g *game) actionHeader(title string, extra ...app.UI) app.UI {
+	left := app.UI(app.Div().Class("action-head-spacer"))
+	if title != "" {
+		left = app.Div().Class("section-title").Text(title)
+	}
+	icons := make([]app.UI, 0, len(extra)+1)
+	icons = append(icons, extra...)
+	icons = append(icons, g.undoIcon())
+	return app.Div().Class("action-head").Body(
+		left,
+		app.Div().Class("action-head-icons").Body(icons...),
+	)
+}
+
+// endTurnBar is the resting End turn control with the Undo icon in the top-right
+// above it. In manual mode a green wrench rides beside Undo, so the mode that is
+// on is one click from off without opening the menu.
+func (g *game) endTurnBar() app.UI {
+	var extra []app.UI
 	if g.g.Manual() {
-		body = append(body, app.Button().
+		extra = append(extra, app.Button().
 			Class(cx("btn-nav", "btn-icon", "btn-nav-on")).
 			Title("Manual mode is on — click to turn it off").
 			OnClick(g.toggleManual).
 			Body(icon("wrench", "icon-nav")))
 	}
-	return app.Div().Class("end-turn-bar").Body(body...)
+	return app.Div().Class("btn-col", "end-turn-bar").Body(
+		g.actionHeader("", extra...),
+		g.endTurnButton(),
+	)
 }
 
-// disabledEndTurnBar draws the resting Undo + End turn controls greyed out and
-// non-clickable. It fills the dock during a mid-action step (placing a creature)
-// whose own controls live on the lifted card, so the dock reads as the controls
-// paused rather than a blank box.
+// disabledEndTurnBar draws the resting Undo header + End turn control greyed out
+// and non-clickable. It fills the dock during a mid-action step (placing a
+// creature) whose own controls live on the lifted card, so the dock reads as the
+// controls paused rather than a blank box.
 func (g *game) disabledEndTurnBar() app.UI {
 	undo := app.Button().
 		Class(cx("btn-secondary", "btn-icon")).
 		Title("Undo").
 		Disabled(true).
 		Body(icon("undo", "icon-nav"))
+	head := app.Div().Class("action-head").Body(
+		app.Div().Class("action-head-spacer"),
+		app.Div().Class("action-head-icons").Body(undo),
+	)
 	end := app.Button().Class("btn-secondary").Disabled(true).Text("End turn")
-	return app.Div().Class("end-turn-bar").Body(undo, end)
+	return app.Div().Class("btn-col", "end-turn-bar").Body(head, end)
 }
 
 // controls is the bottom of the sidebar: the contextual controls (house picker or
@@ -223,7 +281,7 @@ func (g *game) controls() app.UI {
 	if g.choosing {
 		body := []app.UI{
 			g.promptSourceHeader(),
-			app.Div().Class("prompt").Text(g.chooserPrompt),
+			g.promptLine(g.chooserPrompt),
 		}
 		// A bounded out-of-play pick (look at the top N cards) lists its candidates as
 		// buttons here rather than opening the zone viewer, so the whole choice reads
@@ -280,7 +338,14 @@ func (g *game) setChooser() app.UI {
 			func(ctx app.Context, _ app.Event) { g.continueSameSets(ctx) }, "btn-primary"))
 	}
 	body = append(body,
-		app.Div().Class("prompt").Text(fmt.Sprintf("Player %d — choose a set", g.setPick+1)),
+		// "Player N" wears that player's colour like every other place a player is
+		// named; the rest of the line is ordinary prompt text.
+		app.Div().Class("prompt").Body(
+			app.Span().
+				Class(playerNameCls(g.setPick)).
+				Text(fmt.Sprintf("Player %d", g.setPick+1)),
+			app.Text(" — choose a set"),
+		),
 	)
 	for _, name := range names {
 		body = append(body, app.Button().
@@ -288,8 +353,26 @@ func (g *game) setChooser() app.UI {
 			OnClick(func(ctx app.Context, _ app.Event) { g.pickSet(ctx, name) }).
 			Body(app.Span().Class("set-emblem"), app.Text(name)))
 	}
-	body = append(body, btn("Cancel", g.cancelSetup, "btn-secondary"))
+	// Cancel only makes sense when there is a running game to fall back to. On a
+	// first-time load the picker is the whole screen with nothing behind it, so
+	// there is nothing to cancel to.
+	if g.g != nil {
+		body = append(body, btn("Cancel", g.cancelSetup, "btn-secondary"))
+	}
 	return app.Div().Class("btn-col", "set-pick").Body(body...)
+}
+
+// setupScreen fills the viewport with the new-game set picker for a first-time
+// load, before any match is dealt. It reuses the action-bar picker (setChooser)
+// centered on its own so the player chooses their sets rather than being dropped
+// into a silently dealt base-set game.
+func (g *game) setupScreen() app.UI {
+	return app.Div().Class("setup-screen").Body(
+		app.Div().Class("setup-panel").Body(g.setChooser()),
+		// The shortcut sheet is a fixed overlay, so it works here before any match
+		// exists too — ? opens it on the very first load.
+		app.If(g.keysOpen, func() app.UI { return g.keysOverlay() }),
+	)
 }
 
 // manualPanel is the manual-mode control block: add an arbitrary card, and (for a
@@ -382,17 +465,18 @@ func (g *game) cardPicker() app.UI {
 	)
 }
 
-// pickableHouses is the set of houses the active player may choose from, sorted
-// by house name so the choice reads the same every turn. When a card has forced a
-// house on them, only that house is offered — showing all three and then
-// rejecting two of them makes the restriction look like a bug.
+// pickableHouses is the set of houses the active player may choose from, sorted by
+// house name so the choice reads the same every turn. In ordinary play it is the
+// engine's allowed set — the delayed constraint table already resolved, so a forced
+// house shows alone and a barred house is absent rather than shown and then rejected
+// (ADR 0035). When the allowed set is empty the player has no active house; the
+// picker offers a single "No House" choice (see houseButtons). In manual mode the
+// operator drives both sides, so every deck house is offered.
 func (g *game) pickableHouses() []engine.House {
 	p := g.active()
 	houses := g.deckHouses[p]
-	if forced := g.g.State.ForcedHouse[p].Value; forced != engine.HouseNone && !g.g.Manual() {
-		if containsHouse(houses, forced) {
-			return []engine.House{forced}
-		}
+	if !g.g.Manual() {
+		houses = g.g.AllowedHouses(p)
 	}
 	sorted := append([]engine.House(nil), houses...)
 	sort.Slice(sorted, func(i, j int) bool {
@@ -401,35 +485,48 @@ func (g *game) pickableHouses() []engine.House {
 	return sorted
 }
 
-// housePicker offers the houses the active player may choose from.
-func (g *game) housePicker() app.UI {
+// houseButtons is the buttons the house picker draws, in order. It is the pickable
+// houses, or — when no house is choosable — a single HouseNone entry rendered as the
+// "No House" choice, so the phase always has a button to advance it. A full lockout
+// (the constraint table bars every choosable house) leaves No House the only legal
+// choice in manual mode too, even though manual play otherwise offers every deck
+// house: ChooseHouse still enforces the allowed set, so offering a barred house
+// would only be rejected, and the operator can still force a house from the score
+// pill (ManualSetActiveHouse) if they mean to override the rules (ADR 0035).
+func (g *game) houseButtons() []engine.House {
+	if len(g.g.AllowedHouses(g.active())) == 0 {
+		return []engine.House{engine.HouseNone}
+	}
 	houses := g.pickableHouses()
+	if len(houses) == 0 {
+		return []engine.House{engine.HouseNone}
+	}
+	return houses
+}
+
+// housePicker offers the houses the active player may choose from, or a single "No
+// House" choice when the constraint table leaves no house choosable (ADR 0035).
+func (g *game) housePicker() app.UI {
+	houses := g.houseButtons()
 	return app.Div().Class("btn-col", "house-pick").Body(
-		app.Div().Class("section-title").Text("Choose a house"),
+		// Undo sits on the title row and steps out of the state that put the player at
+		// house selection (the previous turn); it greys out on the first turn, when
+		// there is nothing to step back to.
+		g.actionHeader("Choose a house"),
 		app.Range(houses).Slice(func(i int) app.UI {
 			h := houses[i]
+			if h == engine.HouseNone {
+				return app.Button().
+					Class(cx("house-btn", ifCls(g.isButtonCursor(i), "btn-cursor"))).
+					OnClick(g.pickHouse(h)).
+					Text("No House")
+			}
 			return app.Button().
 				Class(cx("house-btn", houseAccent(h), ifCls(g.isButtonCursor(i), "btn-cursor"))).
 				OnClick(g.pickHouse(h)).
 				Body(houseIcon(h, "icon-inline"), app.Text(h.String()))
 		}),
-		// Back steps out of the state that put the player at house selection — the
-		// previous turn, reached by undo. On the game's very first turn there is
-		// nothing to undo, so it greys out rather than vanishing.
-		app.Button().Class("btn-secondary").
-			Disabled(!g.canUndo()).
-			OnClick(g.undoAction).
-			Text("Back"),
 	)
-}
-
-func containsHouse(houses []engine.House, h engine.House) bool {
-	for _, x := range houses {
-		if x == h {
-			return true
-		}
-	}
-	return false
 }
 
 // optionChooser renders a labeled multiple-choice prompt. When every option is a
@@ -455,7 +552,7 @@ func (g *game) optionChooser() app.UI {
 		)
 	}
 	if g.useVerbOptions() {
-		body := []app.UI{app.Div().Class("prompt").Text(g.optionPrompt)}
+		body := []app.UI{g.promptLine(g.optionPrompt)}
 		for i, label := range g.optionLabels {
 			// A verb the chosen creature cannot be used for (Narp bars its neighbors
 			// from reaping) is omitted, so an illegal use is never offered.
@@ -471,7 +568,7 @@ func (g *game) optionChooser() app.UI {
 	}
 	if g.flankOptions() {
 		return app.Div().Class("btn-col").Body(
-			app.Div().Class("prompt").Text(g.optionPrompt),
+			g.promptLine(g.optionPrompt),
 			btn(engine.FlankLeftLabel, g.chooseOptionIdx(0),
 				cx("btn-primary", "btn-flank", "btn-flank--left",
 					ifCls(g.isButtonCursor(0), "btn-cursor"))),
@@ -497,7 +594,7 @@ func (g *game) optionChooser() app.UI {
 		)
 	}
 	return app.Div().Class("btn-col").Body(
-		app.Div().Class("prompt").Text(g.optionPrompt),
+		g.promptLine(g.optionPrompt),
 		app.Range(g.optionLabels).Slice(func(i int) app.UI {
 			// A declining "No" or a hand-shedding "Mulligan" is the
 			// destructive-looking choice, so it reads red.

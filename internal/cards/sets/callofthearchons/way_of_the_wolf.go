@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	This Creature gains skirmish.
-var WayOfTheWolf = card.New(
+var WayOfTheWolf = set.New(
 	"Way of the Wolf",
 	card.House.Untamed,
 	card.Type.Upgrade,

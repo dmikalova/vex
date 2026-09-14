@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //
 //	This Creature gains, "Reap: Steal 1 Æmber."
-var Duskrunner = card.New(
+var Duskrunner = set.New(
 	"Duskrunner",
 	card.House.Shadows,
 	card.Type.Upgrade,

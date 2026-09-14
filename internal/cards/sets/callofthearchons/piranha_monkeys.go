@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Play/Reap: Deal 2 damage to each other Creature.
-var PiranhaMonkeys = card.New(
+var PiranhaMonkeys = set.New(
 	"Piranha Monkeys",
 	card.House.Untamed,
 	card.Type.Creature,

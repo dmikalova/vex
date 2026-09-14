@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Location
 //
 //	Each friendly Knight Creature gains +1 power and taunt.
-var RoundTable = card.New(
+var RoundTable = set.New(
 	"Round Table",
 	card.House.Sanctum,
 	card.Type.Artifact,

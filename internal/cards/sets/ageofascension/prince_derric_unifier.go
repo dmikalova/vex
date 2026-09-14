@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Knight
 //
 //	Play: If you control Creatures from 3 or more houses, gain 3 Æmber.
-var PrinceDerricUnifier = card.New(
+var PrinceDerricUnifier = set.New(
 	"Prince Derric, Unifier",
 	card.House.Sanctum,
 	card.Type.Creature,

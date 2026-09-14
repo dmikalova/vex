@@ -28,7 +28,7 @@ is a wide flag struct rather than a `[]filter`, and an "optional int" is a paire
   to be flat, enum-tagged data. That constraint is what forces the lasting-effects
   registry (ADR 0007).
 - `Target` is a comparable flag-soup, not a slice of filters; per-card filters go
-  through builder methods and set-relative rules through a `Selector`, not new
+  through builder methods and set-relative rules through a `Refinement`, not new
   slice fields.
 - Fixed capacities mean zones are sized to their own bounds (ADR 0002) and an
   unbounded per-card collection (a creature's upgrades) needs an intrusive linked

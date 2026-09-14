@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Witch
 //
 //	After your opponent plays a card, if it is a Creature, gain 1 Æmber.
-var Teliga = card.New(
+var Teliga = set.New(
 	"Teliga",
 	card.House.Untamed,
 	card.Type.Creature,

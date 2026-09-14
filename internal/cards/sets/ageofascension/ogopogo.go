@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant
 //
 //	After a Creature is destroyed in a fight with Ogopogo, you may deal 2 damage to a Creature.
-var Ogopogo = card.New(
+var Ogopogo = set.New(
 	"Ogopogo",
 	card.House.Brobnar,
 	card.Type.Creature,

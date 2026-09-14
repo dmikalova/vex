@@ -18,7 +18,10 @@ func TestPurgeFromHandEachText(t *testing.T) {
 			"purge each creature from your opponent's hand",
 		},
 		{
-			PurgeFromHand{Player: Controller, Selection: Each{Type: Creature, ExceptHouse: Mars}},
+			PurgeFromHand{
+				Player:    Controller,
+				Selection: Each{Type: Creature, House: exceptHouse(Mars)},
+			},
 			"purge each non-Mars creature from your hand",
 		},
 	}
@@ -42,7 +45,7 @@ func TestPurgeFromHandEachPurgesEveryMatch(t *testing.T) {
 	tactic := g.AddToHand(NewCard("tactic", Shadows, Tactic, Common), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	PurgeFromHand{Player: Controller, Selection: Each{Type: Creature, ExceptHouse: Mars}}.
+	PurgeFromHand{Player: Controller, Selection: Each{Type: Creature, House: exceptHouse(Mars)}}.
 		Resolve(ctx)
 
 	if got := g.Purge(0); len(got) != 2 {

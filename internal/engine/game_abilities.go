@@ -23,10 +23,13 @@ func (g *Game) usableInActiveHouse(id LocalID) bool {
 // usableInActiveHouseWithoutPermit is usableInActiveHouse minus the this-turn
 // off-house use permit (CXO Taber). It is the base house eligibility, so callers
 // can tell whether a use spent a permit — the creature was usable only because of
-// one — and charge it exactly once.
+// one — and charge it exactly once. A player at No House — locked out of every
+// house and resolved to no active house for their play phase (ADR 0035) — matches
+// nothing, so only Versatile cards and explicit off-house grants are usable.
+// Before the choice resolves (HouseNone outside the play phase) nothing is gated.
 func (g *Game) usableInActiveHouseWithoutPermit(id LocalID) bool {
 	return g.manual ||
-		g.State.ActiveHouse == HouseNone ||
+		(g.State.ActiveHouse == HouseNone && g.State.Phase != PhasePlay) ||
 		g.House(id) == g.State.ActiveHouse ||
 		g.hasKeyword(id, Versatile) ||
 		(g.State.MayUseArtifactsAnyHouse[g.controller(id)] && g.TypeOf(id) == Artifact) ||
@@ -797,54 +800,67 @@ func (g *Game) resolveWindow(ordered []triggeredAbility) {
 			g.settleDestroyed(int(t.actor))
 			continue
 		}
-		src := t.source
-		actor := int(t.actor)
-		// An earlier ability in the same window can take src out of play (Strange
-		// Gizmo destroys friendly artifacts as its house is chosen; a forge-key
-		// reactor destroys itself), and a card that has left play resolves nothing
-		// more (RAW §190, ADR 0030). A tactic is the one source that resolves its
-		// own ability while not in play — it never enters play, so "source in play"
-		// does not apply to it; its Play: still resolves. The destruction window
-		// keeps its own copy of this guard because it resolves in destroyTogether.
-		if !g.inPlay(src) && g.cat.def(src).Type != Tactic {
-			continue
+		if g.resolveTriggered(t) {
+			// Boundary: a resolved ability can change power anywhere on the board (a
+			// buff left, a counter moved, Æmber spent off a creature that draws power
+			// from it), so settle here rather than making each effect settle itself.
+			// New mechanics rely on this boundary and must not hand-call
+			// settleDestroyed (ADR 0029). The settling flag collapses nested sweeps,
+			// so a batch still leaves together.
+			g.settleDestroyed(int(t.actor))
 		}
-		closeFrame := g.openFrame(Frame{
-			Actor:      actor,
-			Source:     src,
-			HasSource:  true,
-			Trigger:    t.ability.Trigger,
-			Grantor:    t.grantor,
-			HasGrantor: t.grantor != src,
-		})
-		ec := &EffectContext{
-			Resolver:   g,
-			Source:     src,
-			Controller: actor,
-			It:         t.it,
-			HasIt:      t.hasIt,
-		}
-		// A granted ability still knows the card that granted it (Source is the
-		// creature the ability now lives on), so an effect on the granted ability can
-		// move or anchor to that grantor — a "blaster" upgrade attaching itself to its
-		// named creature, or Uncharted Lands' reap moving Æmber off that one artifact.
-		if t.grantor != src {
-			ec.Grantor = t.grantor
-			ec.HasGrantor = true
-			if g.cat.def(t.grantor).Type == Upgrade {
-				ec.Upgrade = t.grantor
-			}
-		}
-		t.ability.Effect.Resolve(ec)
-		closeFrame()
-		// Boundary: a resolved ability can change power anywhere on the board (a buff
-		// left, a counter moved, Æmber spent off a creature that draws power from
-		// it), so settle here rather than making each effect settle itself. New
-		// mechanics rely on this boundary and must not hand-call settleDestroyed
-		// (ADR 0029). The settling flag collapses nested sweeps, so a batch still
-		// leaves together.
-		g.settleDestroyed(actor)
 	}
+}
+
+// resolveTriggered resolves one triggered ability against its own source, grantor,
+// and "it" binding, inside its own Frame, and reports whether it resolved. It is
+// the single per-entry step every trigger window shares — the up-front-ordered
+// windows (resolveWindow) and the Destroyed window that re-gathers as it resolves
+// (resolveDestroyedWindow) — so ordering is the only thing that differs between
+// them, and the source guard and Frame are identical everywhere.
+//
+// The source-in-play guard is applied here (RAW §190, ADR 0030): an earlier ability
+// in the same window can take src out of play (Strange Gizmo destroys friendly
+// artifacts as its house is chosen; a forge-key reactor destroys itself), and a
+// card that has left play resolves nothing more, so it is skipped and false
+// returned. A tactic is the one source that resolves its own ability while not in
+// play — it never enters play, so "source in play" does not apply to it; its Play:
+// still resolves.
+func (g *Game) resolveTriggered(t triggeredAbility) bool {
+	src := t.source
+	actor := int(t.actor)
+	if !g.inPlay(src) && g.cat.def(src).Type != Tactic {
+		return false
+	}
+	closeFrame := g.openFrame(Frame{
+		Actor:      actor,
+		Source:     src,
+		HasSource:  true,
+		Trigger:    t.ability.Trigger,
+		Grantor:    t.grantor,
+		HasGrantor: t.grantor != src,
+	})
+	ec := &EffectContext{
+		Resolver:   g,
+		Source:     src,
+		Controller: actor,
+		It:         t.it,
+		HasIt:      t.hasIt,
+	}
+	// A granted ability still knows the card that granted it (Source is the
+	// creature the ability now lives on), so an effect on the granted ability can
+	// move or anchor to that grantor — a "blaster" upgrade attaching itself to its
+	// named creature, or Uncharted Lands' reap moving Æmber off that one artifact.
+	if t.grantor != src {
+		ec.Grantor = t.grantor
+		ec.HasGrantor = true
+		if g.cat.def(t.grantor).Type == Upgrade {
+			ec.Upgrade = t.grantor
+		}
+	}
+	t.ability.Effect.Resolve(ec)
+	closeFrame()
+	return true
 }
 
 // triggeredBy collects every ability matching the trigger that src carries itself,
@@ -920,8 +936,11 @@ const orderTriggerPrompt = "Choose which card's ability resolves next"
 // orderDestroyedPrompt names the destroyed-ability window plainly, since the
 // player is arranging the Destroyed abilities of several cards leaving play at
 // once rather than picking one card off a generic list. The Destroyed window
-// orders itself through pickNextReaction as it re-gathers, so it never routes
-// through orderTriggered.
+// orders itself through pickNextReaction as it re-gathers (a Destroyed ability can
+// destroy more creatures, folding their abilities into the same window), so it
+// cannot pre-order the whole window up front the way orderTriggered does — but it
+// resolves each picked entry through the same resolveTriggered step every other
+// window uses, so the source guard and Frame stay identical.
 const orderDestroyedPrompt = "Resolve destroyed abilities"
 
 // orderTriggered lets the active player arrange a trigger window's abilities into
@@ -1069,13 +1088,19 @@ type triggeredAbility struct {
 }
 
 // destroyedAbilities collects every Destroyed ability the creatures about to be
-// destroyed carry: printed, upgrade-granted, and constant-granted. The collection
-// happens before any resolves, then destroyTogether lets the active player order
-// the whole set as KeyForge requires.
+// destroyed carry: printed, upgrade-granted, and constant-granted. Each ability
+// resolves for its creature's controller, so the actor is set at gather time (the
+// creatures are all still in play). The collection happens before any resolves,
+// then destroyTogether lets the active player order the whole set as KeyForge
+// requires.
 func (g *Game) destroyedAbilities(ids []LocalID) []triggeredAbility {
 	var pending []triggeredAbility
 	for _, id := range ids {
-		pending = append(pending, g.triggeredBy(id, TriggerDestroyed)...)
+		got := g.triggeredBy(id, TriggerDestroyed)
+		for i := range got {
+			got[i].actor = int8(g.controller(id))
+		}
+		pending = append(pending, got...)
 	}
 	return pending
 }

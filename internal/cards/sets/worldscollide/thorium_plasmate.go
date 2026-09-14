@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Move an enemy Creature anywhere in its controller's battleline -> for each neighbor that shares a house with the chosen Creature, deal 2 damage to the chosen Creature.
-var ThoriumPlasmate = card.New(
+var ThoriumPlasmate = set.New(
 	"Thorium Plasmate",
 	card.House.Logos,
 	card.Type.Tactic,

@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Assault 3.
 //	After a Creature is destroyed by Skoll's assault damage, give a friendly Creature a +1 power counter.
-var Skoll = card.New(
+var Skoll = set.New(
 	"Skoll",
 	card.House.Brobnar,
 	card.Type.Creature,

@@ -6,17 +6,18 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Brobnar
 //	Type:   Creature
-//	Rarity: Special
+//	Rarity: Connected
 //	Power:  6
 //	Traits: Giant
 //
 //	If you have used a Creature to fight this turn, Mega Alaka enters play ready.
-var MegaAlaka = card.New(
+var MegaAlaka = set.New(
 	"Mega Alaka",
 	card.House.Brobnar,
 	card.Type.Creature,
-	card.Rarity.Special,
+	card.Rarity.Connected,
 	card.Provenance(card.WC, "54"),
+	card.InCluster(card.Pulled(alakasBrewCluster, 1, 1.25)),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Giant),
 	card.WithEntersPlay(card.Conditional{

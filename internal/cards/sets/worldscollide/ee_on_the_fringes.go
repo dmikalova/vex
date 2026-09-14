@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	After you discard a Dis card, you may purge a Dis card from a discard pile -> steal 1 Æmber.
-var EeOnTheFringes = card.New(
+var EeOnTheFringes = set.New(
 	"E'e on the Fringes",
 	card.House.Dis,
 	card.Type.Creature,
@@ -22,12 +22,12 @@ var EeOnTheFringes = card.New(
 	card.WithTraits(card.Traits.Imp),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(card.Trigger.AfterDiscardFromHand, card.Conditional{
-		Cond: card.ItIs{House: card.House.Self},
+		Cond: card.ItIs{House: card.Houses.Named(card.House.Self)},
 		Then: card.May{
 			Do: card.Then{
 				First: card.PurgeCard{
 					Player:    card.ChosenPlayer,
-					Selection: card.Chosen{House: card.House.Self},
+					Selection: card.Chosen{House: card.Houses.Named(card.House.Self)},
 				},
 				Result: card.StealAember{Amount: 1},
 			},

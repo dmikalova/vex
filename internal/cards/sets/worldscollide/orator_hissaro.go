@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Deploy.
 //	Play: Ready and exalt each neighboring Creature. For the remainder of the turn, those Creatures belong to house Saurian.
-var OratorHissaro = card.New(
+var OratorHissaro = set.New(
 	"Orator Hissaro",
 	card.House.Saurian,
 	card.Type.Creature,

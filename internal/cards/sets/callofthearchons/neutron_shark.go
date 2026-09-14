@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast • Mutant
 //
 //	Play/Fight/Reap: Destroy an enemy Creature or Artifact and a friendly Creature or Artifact, and discard the top card of your deck -> if the discarded card is not a Logos card, repeat this effect.
-var NeutronShark = card.New(
+var NeutronShark = set.New(
 	"Neutron Shark",
 	card.House.Logos,
 	card.Type.Creature,
@@ -23,12 +23,11 @@ var NeutronShark = card.New(
 		Do: card.Sequence{Effects: []card.Effect{
 			card.Destroy{Target: card.Target.EnemyCreatureOrArtifact},
 			card.Destroy{Target: card.Target.FriendlyCreatureOrArtifact},
-			card.DiscardTopOfDeck{Player: card.Controller},
+			card.DiscardTop{Player: card.Controller},
 		}},
-		Gate: card.While{Cond: card.ItIs{
-			House:   card.House.Self,
-			Not:     true,
+		Gate: card.While{Cond: card.Not{Cond: card.ItIs{
+			House:   card.Houses.Named(card.House.Self),
 			Subject: card.Subject.DiscardedCard,
-		}},
+		}}},
 	}),
 )

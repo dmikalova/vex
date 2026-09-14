@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: The most powerful friendly Creature captures 2 Æmber from your opponent. You may exalt the chosen Creature to repeat the preceding effect.
-var Tribute = card.New(
+var Tribute = set.New(
 	"Tribute",
 	card.House.Saurian,
 	card.Type.Tactic,

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Imp
 //
 //	At the end of your turn, your opponent loses 1 Æmber.
-var Shaffles = card.New(
+var Shaffles = set.New(
 	"Shaffles",
 	card.House.Dis,
 	card.Type.Creature,

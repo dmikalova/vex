@@ -11,7 +11,7 @@ import (
 //
 //	House:  Brobnar
 //	Type:   Creature
-//	Rarity: Special
+//	Rarity: Connected
 //	Power:  10
 //	Armor:  1
 //	Traits: Giant

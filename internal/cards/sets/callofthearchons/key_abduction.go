@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Put each Mars Creature into its owner's hand. Forge a key at +9 Æmber current cost, reduced by 1 Æmber for each card in your hand -> purge Key Abduction.
-var KeyAbduction = card.New(
+var KeyAbduction = set.New(
 	"Key Abduction",
 	card.House.Mars,
 	card.Type.Tactic,
@@ -20,7 +20,7 @@ var KeyAbduction = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.PutFromPlay{
-				Target:      card.Target.EachCreature.OfHouse(card.House.Self),
+				Target:      card.Target.EachCreature.House(card.Houses.Named(card.House.Self)),
 				Destination: card.To.Hand,
 			},
 			card.ForgeKey{

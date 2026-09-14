@@ -214,12 +214,12 @@ func (g *game) remainingKeyColors(player int) []engine.KeyColor {
 	return out
 }
 
-// openSetup opens the new-game set picker in the action bar, unless an action or
-// prompt owns the screen.
+// openSetup opens the new-game set picker in the action bar. It is reachable from
+// any state — including a prompt such as the opening mulligan — because the picker
+// only offers a new game; nothing is thrown away until sets are confirmed, and
+// Cancel returns to the game untouched. Confirming re-deals, which safely abandons
+// any prompt the current match left in flight (see dealMatch).
 func (g *game) openSetup(_ app.Context, _ app.Event) {
-	if g.busy || g.choosing || g.choosingOption {
-		return
-	}
 	g.beginSetup()
 }
 

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Versatile.
 //	Action: Destroy Key to Dis and each Creature.
-var KeyToDis = card.New(
+var KeyToDis = set.New(
 	"Key to Dis",
 	card.House.Dis,
 	card.Type.Artifact,

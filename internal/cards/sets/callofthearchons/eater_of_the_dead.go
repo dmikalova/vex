@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon
 //
 //	Fight/Reap: Purge a Creature from a discard pile -> give Eater of the Dead a +1 power counter.
-var EaterOfTheDead = card.New(
+var EaterOfTheDead = set.New(
 	"Eater of the Dead",
 	card.House.Dis,
 	card.Type.Creature,

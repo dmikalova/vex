@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Give each friendly Creature a +1 power counter.
-var TheFittest = card.New(
+var TheFittest = set.New(
 	"The Fittest",
 	card.House.Untamed,
 	card.Type.Tactic,

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Horseman • Spirit
 //
 //	Play/Fight/Reap: Destroy the least powerful Creature.
-var HorsemanOfFamine = card.New(
+var HorsemanOfFamine = set.New(
 	"Horseman of Famine",
 	card.House.Sanctum,
 	card.Type.Creature,

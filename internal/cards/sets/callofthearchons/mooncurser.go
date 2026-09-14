@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Skirmish, Poison.
 //	Fight: Steal 1 Æmber.
-var Mooncurser = card.New(
+var Mooncurser = set.New(
 	"Mooncurser",
 	card.House.Shadows,
 	card.Type.Creature,

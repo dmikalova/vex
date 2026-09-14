@@ -111,11 +111,22 @@ func TestSettlePhase(t *testing.T) {
 		t.Errorf("a turn under way settles at %v, want phaseMain", c.g.phase)
 	}
 
-	c.manual()
-	c.g.g.ManualSetActiveHouse(engine.HouseNone)
+	// Start of turn: no house chosen yet and the engine still waits at the choice,
+	// so the picker comes up.
+	c.g.g.State.ActiveHouse = engine.HouseNone
+	c.g.g.State.Phase = engine.PhaseChooseHouse
 	c.g.settlePhase()
 	if c.g.phase != phaseHouse {
-		t.Errorf("a turn with no house settles at %v, want phaseHouse", c.g.phase)
+		t.Errorf("a turn awaiting a house settles at %v, want phaseHouse", c.g.phase)
+	}
+
+	// A player locked out of every house chooses No House: ActiveHouse stays None
+	// but the engine advances past the choice, so play continues (and the turn can
+	// be ended) rather than looping back to the picker.
+	c.g.g.State.Phase = engine.PhasePlay
+	c.g.settlePhase()
+	if c.g.phase != phaseMain {
+		t.Errorf("a No-House turn settles at %v, want phaseMain", c.g.phase)
 	}
 
 	// A won game outranks the house prompt: the match is over whether or not the

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Reveal any number of Mars cards from your hand. For each card revealed this way, deal 2 damage to a Creature.
-var OrbitalBombardment = card.New(
+var OrbitalBombardment = set.New(
 	"Orbital Bombardment",
 	card.House.Mars,
 	card.Type.Tactic,
@@ -22,7 +22,7 @@ var OrbitalBombardment = card.New(
 			Effects: []card.Effect{
 				card.RevealHand{
 					Player: card.Controller,
-					House:  card.House.Self,
+					House:  card.Houses.Named(card.House.Self),
 				},
 				card.ForEach{
 					Times: card.CardsRevealed{},

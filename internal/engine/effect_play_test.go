@@ -11,20 +11,27 @@ func TestPlayFromText(t *testing.T) {
 		{"any card", PlayFrom{From: Hand}, "play a card"},
 		{
 			"excluded house",
-			PlayFrom{From: Hand, House: Logos, Except: true},
+			PlayFrom{From: Hand, House: HouseMatcher{Kind: MatchExceptHouse, House: Logos}},
 			"play a non-Logos card",
 		},
-		{"named house", PlayFrom{From: Hand, House: Mars}, "play a Mars card"},
-		{"typed", PlayFrom{From: Hand, Type: Creature}, "play a creature"},
-		{"any type", PlayFrom{From: Hand, Type: AnyType}, "play a card"},
+		{
+			"named house",
+			PlayFrom{From: Hand, House: HouseMatcher{Kind: MatchNamedHouse, House: Mars}},
+			"play a Mars card",
+		},
+		{"typed", PlayFrom{From: Hand, Types: CardTypesOf(Creature)}, "play a creature"},
 		{
 			"house and type",
-			PlayFrom{From: Hand, House: Untamed, Type: Artifact},
+			PlayFrom{
+				From:  Hand,
+				House: HouseMatcher{Kind: MatchNamedHouse, House: Untamed},
+				Types: CardTypesOf(Artifact),
+			},
 			"play an Untamed artifact",
 		},
 		{
 			"opponent's discard pile",
-			PlayFrom{From: Discard, Player: Opponent, Type: Tactic},
+			PlayFrom{From: Discard, Player: Opponent, Types: CardTypesOf(Tactic)},
 			"play a tactic from your opponent's discard pile",
 		},
 		{
@@ -43,10 +50,10 @@ func TestPlayFromText(t *testing.T) {
 }
 
 func TestPlayFromValidate(t *testing.T) {
-	if err := (PlayFrom{Except: true}).validate(); err == nil {
-		t.Error("Except without a house should not validate")
+	if err := (PlayFrom{From: Hand, House: HouseMatcher{Kind: MatchExceptHouse}}).validate(); err == nil {
+		t.Error("an except-house matcher without a house should not validate")
 	}
-	if err := (PlayFrom{From: Hand, House: Logos, Except: true}).validate(); err != nil {
+	if err := (PlayFrom{From: Hand, House: HouseMatcher{Kind: MatchExceptHouse, House: Logos}}).validate(); err != nil {
 		t.Errorf("validate = %v, want nil", err)
 	}
 	if err := (PlayFrom{From: Hand, Player: Opponent}).validate(); err != nil {
@@ -66,7 +73,7 @@ func TestPlayFromOpponentDiscard(t *testing.T) {
 		WithAbility(TriggerAfterPlay, GainAember{Player: Controller, Amount: 2})), 1)
 	buried := g.AddToDiscard(NewCard("Buried", Logos, Creature, Common, WithPower(1)), 1)
 
-	PlayFrom{From: Discard, Player: Opponent, Type: Tactic}.Resolve(
+	PlayFrom{From: Discard, Player: Opponent, Types: CardTypesOf(Tactic)}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
 	)
 
@@ -101,7 +108,7 @@ func TestPlayFromBindsIt(t *testing.T) {
 
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 	Then{
-		First:  PlayFrom{From: Hand, Type: Creature},
+		First:  PlayFrom{From: Hand, Types: CardTypesOf(Creature)},
 		Result: Stun{Target: Target{Kind: TargetTriggeringCreature}},
 	}.Resolve(ctx)
 
@@ -123,7 +130,7 @@ func TestPlayFromGateFalseWithNoCandidate(t *testing.T) {
 	bystander := g.AddToBattleline(NewCard("Bystander", Brobnar, Creature, Common, WithPower(2)), 0)
 
 	Then{
-		First:  PlayFrom{From: Hand, Type: Creature},
+		First:  PlayFrom{From: Hand, Types: CardTypesOf(Creature)},
 		Result: Stun{Target: Target{Kind: TargetEachFriendlyCreature}},
 	}.Resolve(&EffectContext{Resolver: g, Controller: 0})
 
@@ -176,9 +183,8 @@ func TestPlayFromPlaysAChosenCard(t *testing.T) {
 	g.AddToHand(NewCard("On House", Brobnar, Creature, Common, WithPower(2)), 0)
 
 	PlayFrom{
-		From:   Hand,
-		House:  Brobnar,
-		Except: true,
+		From:  Hand,
+		House: HouseMatcher{Kind: MatchExceptHouse, House: Brobnar},
 	}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
 	)
@@ -193,9 +199,8 @@ func TestPlayFromWithNoCandidate(t *testing.T) {
 	g.AddToHand(NewCard("On House", Brobnar, Creature, Common, WithPower(2)), 0)
 
 	PlayFrom{
-		From:   Hand,
-		House:  Brobnar,
-		Except: true,
+		From:  Hand,
+		House: HouseMatcher{Kind: MatchExceptHouse, House: Brobnar},
 	}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
 	)
@@ -211,10 +216,45 @@ func TestPlayFromDeclined(t *testing.T) {
 	g.AddToHand(NewCard("Second", Logos, Creature, Common, WithPower(2)), 0)
 	g.SetChooser(0, orderRejectChooser{})
 
-	PlayFrom{From: Hand, Type: Creature}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	PlayFrom{
+		From:  Hand,
+		Types: CardTypesOf(Creature),
+	}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0},
+	)
 
 	if got := len(g.Battleline(0)); got != 0 {
 		t.Errorf("battleline holds %d creatures, want none after declining", got)
+	}
+}
+
+// TestPlayFromTypesText covers the multi-type filter's rendered noun — Com.
+// Officer Kirby frees a non-creature card.
+func TestPlayFromTypesText(t *testing.T) {
+	e := PlayFrom{
+		From:  Hand,
+		House: HouseMatcher{Kind: MatchExceptHouse, House: StarAlliance},
+		Types: CardTypesOf(Artifact, Upgrade, Tactic),
+	}
+	if got, want := e.Text(), "play a non-Star Alliance artifact, upgrade, or tactic"; got != want {
+		t.Errorf("Text = %q, want %q", got, want)
+	}
+}
+
+// TestPlayFromTypesFiltersCandidates covers the multi-type filter dropping cards
+// of an excluded type: a creature is not offered when only non-creatures qualify.
+func TestPlayFromTypesFiltersCandidates(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	art := g.AddToHand(NewCard("art", Mars, Artifact, Common), 0)
+	g.AddToHand(NewCard("creat", Mars, Creature, Common, WithPower(2)), 0)
+
+	cands := PlayFrom{
+		From:  Hand,
+		Types: CardTypesOf(Artifact, Upgrade, Tactic),
+	}.candidates(&EffectContext{Resolver: g, Controller: 0})
+
+	if len(cands) != 1 || cands[0] != art {
+		t.Errorf("candidates = %v, want [%d] (the creature filtered out)", cands, art)
 	}
 }
 
@@ -223,7 +263,12 @@ func TestPlayFromFiltersByType(t *testing.T) {
 	artifact := g.AddToHand(NewCard("Gadget", Logos, Artifact, Common), 0)
 	g.AddToHand(NewCard("Thinker", Logos, Creature, Common, WithPower(2)), 0)
 
-	PlayFrom{From: Hand, Type: Artifact}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	PlayFrom{
+		From:  Hand,
+		Types: CardTypesOf(Artifact),
+	}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0},
+	)
 
 	if got := g.Artifacts(0); len(got) != 1 || got[0] != artifact {
 		t.Errorf("artifacts = %v, want [%d]", got, artifact)
@@ -249,7 +294,7 @@ func TestActivePlayer(t *testing.T) {
 }
 
 func TestPlayFromDiscardPile(t *testing.T) {
-	e := PlayFrom{From: Discard, Type: Creature}
+	e := PlayFrom{From: Discard, Types: CardTypesOf(Creature)}
 	want := "play a creature from your discard pile"
 	if e.Text() != want {
 		t.Errorf("text = %q, want %q", e.Text(), want)
@@ -292,7 +337,7 @@ func TestPlayFromValidatesItsSourcePile(t *testing.T) {
 // TestPlayFromArchives covers Project Z.Y.X.: a creature plays a card out of its
 // controller's archives, bypassing the active-house gate.
 func TestPlayFromArchives(t *testing.T) {
-	e := PlayFrom{From: Archives, Type: Creature}
+	e := PlayFrom{From: Archives, Types: CardTypesOf(Creature)}
 	want := "play a creature from your archives"
 	if e.Text() != want {
 		t.Errorf("text = %q, want %q", e.Text(), want)

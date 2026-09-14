@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	This Creature gains, "Your opponent's keys cost +2 Æmber."
-var JammerPack = card.New(
+var JammerPack = set.New(
 	"Jammer Pack",
 	card.House.Mars,
 	card.Type.Upgrade,

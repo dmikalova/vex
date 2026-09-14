@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Fungus • Human
 //
 //	Mushroom Man gains +3 power for each unforged key you have.
-var MushroomMan = card.New(
+var MushroomMan = set.New(
 	"Mushroom Man",
 	card.House.Untamed,
 	card.Type.Creature,

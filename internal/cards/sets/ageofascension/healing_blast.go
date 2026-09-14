@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Fully heal a Creature. If you healed 4 or more damage, gain 2 Æmber.
-var HealingBlast = card.New(
+var HealingBlast = set.New(
 	"Healing Blast",
 	card.House.Sanctum,
 	card.Type.Tactic,

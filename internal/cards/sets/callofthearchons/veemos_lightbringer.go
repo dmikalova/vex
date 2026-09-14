@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Angel • Spirit
 //
 //	Play: Destroy each elusive Creature.
-var VeemosLightbringer = card.New(
+var VeemosLightbringer = set.New(
 	"Veemos Lightbringer",
 	card.House.Sanctum,
 	card.Type.Creature,

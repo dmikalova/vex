@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Each other friendly Creature gains +1 armor.
 //	Action: For the remainder of the turn, each other friendly Creature gains +1 armor.
-var AbondTheArmorsmith = card.New(
+var AbondTheArmorsmith = set.New(
 	"Abond the Armorsmith",
 	card.House.Sanctum,
 	card.Type.Creature,

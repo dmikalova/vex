@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //
 //	Play: A friendly Brobnar Creature gains, "Fight: Ready this Creature."
-var IntoTheFray = card.New(
+var IntoTheFray = set.New(
 	"Into the Fray",
 	card.House.Brobnar,
 	card.Type.Tactic,
@@ -17,7 +17,7 @@ var IntoTheFray = card.New(
 	card.Provenance(card.AoA, "13"),
 	card.WithAbility(
 		card.Trigger.Play, card.GainAbility{
-			Target: card.Target.FriendlyCreature.OfHouse(card.House.Self),
+			Target: card.Target.FriendlyCreature.House(card.Houses.Named(card.House.Self)),
 			Ability: card.Ability{
 				Trigger: card.Trigger.Fight,
 				Effect:  card.Ready{Target: card.Target.This},

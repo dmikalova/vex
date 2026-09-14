@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: If your opponent has more Æmber than you, steal 1 Æmber, and draw a card.
-var NeuroSyphon = card.New(
+var NeuroSyphon = set.New(
 	"Neuro Syphon",
 	card.House.Logos,
 	card.Type.Tactic,

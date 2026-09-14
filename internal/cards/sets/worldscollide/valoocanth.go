@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	While the tide is low, Valoocanth cannot be used.
 //	Fight/Reap: Exhaust an enemy Creature and each of its neighbors.
-var Valoocanth = card.New(
+var Valoocanth = set.New(
 	"Valoocanth",
 	card.House.Brobnar,
 	card.Type.Creature,

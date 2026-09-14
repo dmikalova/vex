@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Versatile.
 //	Action: Destroy Screechbomb. Your opponent loses 2 Æmber.
-var Screechbomb = card.New(
+var Screechbomb = set.New(
 	"Screechbomb",
 	card.House.Brobnar,
 	card.Type.Artifact,

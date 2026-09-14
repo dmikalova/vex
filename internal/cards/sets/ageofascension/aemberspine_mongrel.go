@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Hazardous 3.
 //	After an enemy Creature reaps, gain 1 Æmber.
-var AemberspineMongrel = card.New(
+var AemberspineMongrel = set.New(
 	"Aemberspine Mongrel",
 	card.House.Untamed,
 	card.Type.Creature,

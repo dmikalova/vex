@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Shadow Self deals no damage when fighting.
 //	Damage dealt to each neighboring non-Specter Creature is dealt to Shadow Self instead.
-var ShadowSelf = card.New(
+var ShadowSelf = set.New(
 	"Shadow Self",
 	card.House.Shadows,
 	card.Type.Creature,

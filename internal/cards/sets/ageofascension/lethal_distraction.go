@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: For the remainder of the turn, whenever a Creature takes damage, it takes an additional 2 damage.
-var LethalDistraction = card.New(
+var LethalDistraction = set.New(
 	"Lethal Distraction",
 	card.House.Shadows,
 	card.Type.Tactic,

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Elf • Thief
 //
 //	Fight/Reap: If your opponent has more Æmber than you, steal 1 Æmber. Otherwise, each player gains 1 Æmber.
-var FinchCloak = card.New(
+var FinchCloak = set.New(
 	"Finch Cloak",
 	card.House.Shadows,
 	card.Type.Creature,

@@ -18,7 +18,7 @@ import (
 //	Æmber:  1
 //
 //	Template: its concrete card is materialized per deck at generation.
-var TraitBane = card.New(
+var TraitBane = set.New(
 	"Trait Bane",
 	card.House.Dis,
 	card.Type.Tactic,

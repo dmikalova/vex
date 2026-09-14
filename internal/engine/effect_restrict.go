@@ -55,6 +55,34 @@ func (e CannotFight) Resolve(ctx *EffectContext) {
 	}
 }
 
+// StunEnemyFighters arms the stun-fighter bar on the opponent for their next turn:
+// throughout that turn, each creature they use to fight is stunned right after the
+// fight resolves (Foggify). Unlike CannotFight, which forbids the action outright,
+// this lets the fight happen and then punishes the fighter.
+type StunEnemyFighters struct {
+	Duration Duration
+}
+
+// validate rejects a StunEnemyFighters whose duration is not the opponent's next
+// turn — the only span the stun-fighter bar models.
+func (e StunEnemyFighters) validate() error {
+	if e.Duration != OpponentNextTurn {
+		return fmt.Errorf("StunEnemyFighters: duration must be OpponentNextTurn")
+	}
+	return nil
+}
+
+// Text renders the effect: "during your opponent's next turn, after an enemy
+// creature is used to fight, stun it".
+func (e StunEnemyFighters) Text() string {
+	return "during your opponent's next turn, after an enemy creature is used to fight, stun it"
+}
+
+// Resolve arms the stun-fighter bar on the opponent for their next turn.
+func (e StunEnemyFighters) Resolve(ctx *EffectContext) {
+	ctx.Resolver.StunFighterNextTurn(ctx.Opponent(), ctx.Source)
+}
+
 // CannotReap bars a player from using creatures to reap. As an effect it is a
 // timed bar — Inky Gloom stops an opponent for the Duration of their next turn.
 // It is narrower than CannotUse: only reaping is barred, so the affected player's
@@ -209,6 +237,52 @@ func (e CannotPlay) Resolve(ctx *EffectContext) {
 	}
 }
 
+// PlayersCannotPlay bars both players from playing cards of a Type until the end
+// of the caster's next turn — Stealth Mode stops either player playing Tactics.
+// Where CannotPlay bars one named player, this is a board-wide rule spanning both
+// sides: it arms the bar on the caster for the rest of this turn and their next
+// turn, and on the opponent throughout their next turn, so it lifts once the
+// caster's next turn ends. An unset Type bars every type.
+type PlayersCannotPlay struct {
+	Type     CardType
+	Duration Duration
+}
+
+// barred is the type this bar installs: the named one, or the AnyType wildcard
+// when the author left Type unset to bar everything.
+func (e PlayersCannotPlay) barred() CardType {
+	if e.Type == TypeUnset {
+		return AnyType
+	}
+	return e.Type
+}
+
+// validate rejects a PlayersCannotPlay whose duration is not the only span it
+// models. An unset Type is allowed and means every type.
+func (e PlayersCannotPlay) validate() error {
+	if e.Duration != EndOfPlayerNextTurn {
+		return fmt.Errorf("PlayersCannotPlay: duration must be EndOfPlayerNextTurn")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "until the end of your next turn, players cannot
+// play tactics". The type noun is raised to its proper-noun capitalization at the
+// presentation layer, so this keeps it lowercase.
+func (e PlayersCannotPlay) Text() string {
+	noun := strings.ToLower(e.barred().String()) + "s"
+	return "until the end of your next turn, players cannot play " + noun
+}
+
+// Resolve arms the play-type bar on both players: the caster for the rest of this
+// turn and their next turn, the opponent throughout their next turn.
+func (e PlayersCannotPlay) Resolve(ctx *EffectContext) {
+	t := e.barred()
+	ctx.Resolver.CannotPlayTypeThisTurn(ctx.Controller, t, ctx.Source)
+	ctx.Resolver.CannotPlayTypeNextTurn(ctx.Controller, t, ctx.Source)
+	ctx.Resolver.CannotPlayTypeNextTurn(ctx.Opponent(), t, ctx.Source)
+}
+
 // CannotUse bars a player from using any card — reaping, fighting, or an "Action:"
 // ability — for the Duration (Skippy Timehog). It is the broadest of the bars:
 // where CannotFight stops one verb and CannotPlay stops cards leaving hand, this
@@ -331,17 +405,18 @@ func (e OpponentMustChooseHouse) Text() string {
 	return "your opponent must choose " + house + " as their active house " + when
 }
 
-// Resolve arms the forced house on the opponent's next turn. A Fought source with
-// no creature in context does nothing.
+// Resolve arms the must on the opponent's next turn. A Fought source stores a live
+// reference to the fought creature, resolved to its current house at choice time,
+// and does nothing when no creature is in context.
 func (e OpponentMustChooseHouse) Resolve(ctx *EffectContext) {
-	house := ctx.ChosenHouse
 	if e.Source == FoughtActiveHouse {
 		if !ctx.HasIt {
 			return
 		}
-		house = ctx.Resolver.House(ctx.It)
+		ctx.Resolver.MustChooseFoughtHouseNextTurn(ctx.Opponent(), ctx.It, ctx.Source)
+		return
 	}
-	ctx.Resolver.ForceActiveHouseNextTurn(ctx.Opponent(), house, ctx.Source)
+	ctx.Resolver.MustChooseHouseNextTurn(ctx.Opponent(), ctx.ChosenHouse, ctx.Source)
 }
 
 // OpponentCannotChooseHouse bars a player from choosing a house as their active
@@ -379,10 +454,10 @@ func (e OpponentCannotChooseHouse) Text() string {
 func (e OpponentCannotChooseHouse) Resolve(ctx *EffectContext) {
 	if e.Source == JustChosenActiveHouse {
 		chooser := ctx.Resolver.ActivePlayer()
-		ctx.Resolver.ForbidActiveHouseNextTurn(1-chooser, ctx.Resolver.ActiveHouse(), ctx.Source)
+		ctx.Resolver.CannotChooseHouseNextTurn(1-chooser, ctx.Resolver.ActiveHouse(), ctx.Source)
 		return
 	}
-	ctx.Resolver.ForbidActiveHouseNextTurn(ctx.Opponent(), ctx.ChosenHouse, ctx.Source)
+	ctx.Resolver.CannotChooseHouseNextTurn(ctx.Opponent(), ctx.ChosenHouse, ctx.Source)
 }
 
 // WagerOpponentChoosesChosenHouse bets on the opponent matching the house an

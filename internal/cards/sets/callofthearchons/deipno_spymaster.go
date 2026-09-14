@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive, Versatile.
 //	Action: Use a friendly Creature.
-var DeipnoSpymaster = card.New(
+var DeipnoSpymaster = set.New(
 	"Deipno Spymaster",
 	card.House.Shadows,
 	card.Type.Creature,

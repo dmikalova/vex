@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast • Witch
 //
 //	Each turn you may play one Untamed card.
-var WitchOfTheWilds = card.New(
+var WitchOfTheWilds = set.New(
 	"Witch of the Wilds",
 	card.House.Untamed,
 	card.Type.Creature,

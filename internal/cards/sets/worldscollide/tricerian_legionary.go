@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Taunt.
 //	Play: Ward a friendly Creature.
-var TricerianLegionary = card.New(
+var TricerianLegionary = set.New(
 	"Tricerian Legionary",
 	card.House.Saurian,
 	card.Type.Creature,

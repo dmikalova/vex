@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human
 //
 //	After you choose Sanctum as your active house, gain 2 Æmber.
-var JehuTheBureaucrat = card.New(
+var JehuTheBureaucrat = set.New(
 	"Jehu the Bureaucrat",
 	card.House.Sanctum,
 	card.Type.Creature,

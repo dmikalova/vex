@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item
 //
 //	If a player has more Creatures in play than their opponent, they cannot play Creatures.
-var QuixxleStone = card.New(
+var QuixxleStone = set.New(
 	"Quixxle Stone",
 	card.House.StarAlliance,
 	card.Type.Artifact,

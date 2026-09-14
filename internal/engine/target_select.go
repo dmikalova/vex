@@ -156,11 +156,7 @@ func isOfMostPopulousHouse(ctx *EffectContext, id LocalID) bool {
 func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 	if t.trait == traitUnset &&
 		t.exceptTrait == traitUnset &&
-		t.house == HouseNone &&
-		t.exceptHouse == HouseNone &&
-		!t.chosenHouse &&
-		!t.activeHouse &&
-		!t.contextualHouse &&
+		!t.house.filters() &&
 		!t.houseWithMostCreatures &&
 		!t.sharesTrait &&
 		!t.hasMaxPower &&
@@ -196,20 +192,7 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 		if t.exceptTrait != traitUnset && ctx.Resolver.HasTrait(id, t.exceptTrait) {
 			continue
 		}
-		if t.house != HouseNone && ctx.Resolver.House(id) != t.house {
-			continue
-		}
-		if t.exceptHouse != HouseNone && ctx.Resolver.House(id) == t.exceptHouse {
-			continue
-		}
-		if t.chosenHouse && ctx.Resolver.House(id) != ctx.ChosenHouse {
-			continue
-		}
-		if t.activeHouse && ctx.Resolver.House(id) != ctx.Resolver.ActiveHouse() {
-			continue
-		}
-		if t.contextualHouse &&
-			(!ctx.HasIt || ctx.Resolver.House(id) != ctx.Resolver.House(ctx.It)) {
+		if !t.house.matches(ctx, id) {
 			continue
 		}
 		if t.houseWithMostCreatures && !isOfMostPopulousHouse(ctx, id) {
@@ -519,6 +502,8 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 		return creaturesExcept(ctx, ctx.It)
 	case TargetFormerNeighbors:
 		return ctx.Produced.Neighbors
+	case TargetEachNeighbor:
+		return neighbors(ctx, ctx.Source)
 	default:
 		return nil
 	}

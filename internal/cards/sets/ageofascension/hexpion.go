@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Robot
 //
 //	Destroyed: Archive Hexpion from play. Archive the top card of your deck.
-var Hexpion = card.New(
+var Hexpion = set.New(
 	"Hexpion",
 	card.House.Logos,
 	card.Type.Creature,

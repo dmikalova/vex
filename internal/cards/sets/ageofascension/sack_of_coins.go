@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Choose a Creature - for each Æmber in your pool, deal 1 damage to the chosen Creature.
-var SackOfCoins = card.New(
+var SackOfCoins = set.New(
 	"Sack of Coins",
 	card.House.Shadows,
 	card.Type.Tactic,

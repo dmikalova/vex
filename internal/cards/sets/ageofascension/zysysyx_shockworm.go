@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Martian • Soldier
 //
 //	After an enemy Creature reaps, stun it.
-var ZysysyxShockworm = card.New(
+var ZysysyxShockworm = set.New(
 	"Zysysyx Shockworm",
 	card.House.Mars,
 	card.Type.Creature,

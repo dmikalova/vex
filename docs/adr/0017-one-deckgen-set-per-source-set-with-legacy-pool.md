@@ -1,5 +1,14 @@
 # One deck-generation Set per source set, cross-set cards as its legacy pool
 
+> **Status: superseded in part by [ADR 0021](0021-reprints-are-full-set-members.md).**
+> This ADR treats a set's own cards as its pool and _every other set's_ cards as a
+> same-House **legacy** pool drawn on a per-slot `Tuning.LegacyRate` roll. ADR 0021
+> then decided that a card **reprinted** into a set is a full member of that set's
+> own pool, not a legacy draw — so a reprint is native to every set that prints it,
+> and legacy stays reserved for cards that a set never reprinted. Read the legacy
+> mechanism below as it still stands; read "each set's own cards form its pool"
+> through ADR 0021's lens (own pool = printed **or reprinted** here).
+
 ## Context
 
 deckgen was built around a single `Set` — the pool a deck draws from (ADR 0003,
@@ -19,8 +28,8 @@ printed House and only fills a slot of that same House in another set's deck.
 ## Decision
 
 A **source set is one `internal/cards/sets/<slug>` package**, identified by a
-card's first provenance `Ref` (`rc.Provenance[0].Set.Name`). The `cards`
-aggregator groups every registered card by that name (`bySet`), walks the sets in
+card's declared **home set** (`rc.Set`). The `cards`
+aggregator groups every registered card by that set (`bySet`), walks the sets in
 release order (`provenance.Sets()`), and builds **one `deckgen.Set` per source
 set** — `DeckSets()`. Each set's own cards form its pool; the cards of _every
 other_ set are its **legacy pool**, supplied as one shared `Legacy` value built
@@ -29,6 +38,13 @@ once for the whole catalog and attached to every set with a builder step:
 ```go
 deckgen.NewSet(name, own, deckgen.DefaultTuning()).WithLegacy(shared)
 ```
+
+> **Amended:** membership was originally keyed on a card's _first provenance_
+> `Ref` (`rc.Provenance[0]`). It is now keyed on an explicit home set — `card.InSet`,
+> defaulting to the first provenance tag when a card declares none — so deck
+> generation **never reads `Provenance`** (which is pure coverage bookkeeping) and a
+> Vactrol-invented card with no provenance (Master of 4/5, an Anomaly Expansion
+> Shard) still joins a pool. `setName` reads `rc.Set`; `nativeSet` resolves it.
 
 `NewLegacy` buckets every registered card by House **and rarity** (with a flat
 per-House fallback), tagging each with the set it came from and **skipping**

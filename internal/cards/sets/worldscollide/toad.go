@@ -6,17 +6,18 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Untamed
 //	Type:   Creature
-//	Rarity: Special
+//	Rarity: Connected
 //	Power:  1
 //	Traits: Beast
 //
 //	Toad cannot reap.
-var Toad = card.New(
+var Toad = set.New(
 	"Toad",
 	card.House.Untamed,
 	card.Type.Creature,
-	card.Rarity.Special,
+	card.Rarity.Connected,
 	card.Provenance(card.WC, "405"),
+	card.InCluster(card.Pulled(xenosBloodshadowCluster, 1, 1)),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Beast),
 	card.WithCannotBeUsedTo(card.UseKind.Reap),

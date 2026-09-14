@@ -17,9 +17,11 @@ import (
 var optionRank = map[string]int{
 	// Origin tag first.
 	"Provenance":     1,
+	"InSet":          1,
 	"RarityWeight":   2,
 	"InCluster":      3,
 	"LeadsCluster":   3,
+	"PullsMatching":  3,
 	"OneCopyPerDeck": 4,
 	// Creature stats.
 	"WithAemberBonus": 5,

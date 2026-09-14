@@ -487,12 +487,12 @@ func (g *game) renderRow(
 	return app.Div().
 		Class(cx("board-row", ifCls(opposing, "board-row--opposing"))).
 		Body(
-			app.Div().Class("row-label").Body(
-				app.Span().Class("row-label-zone").Text(capitalizeFirst(zone)+" "),
-				app.Text(fmt.Sprintf("%d", len(ids))),
-				icon(zoneIcon, "row-label-icon"),
-			),
 			app.Div().Class("card-strip").Body(
+				app.Div().Class("row-label").Body(
+					app.Span().Class("row-label-zone").Text(capitalizeFirst(zone)),
+					app.Text(fmt.Sprintf("%d", len(ids))),
+					icon(zoneIcon, "row-label-icon"),
+				),
 				app.Range(ids).Slice(func(i int) app.UI {
 					return g.renderCard(ids[i], boardKind, opposing)
 				}),

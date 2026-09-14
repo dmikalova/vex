@@ -12,7 +12,7 @@ package engine
 // whole hand, which is not a choice.
 type RevealHand struct {
 	Player Player
-	House  House
+	House  HouseMatcher
 }
 
 // validate rejects a Reveal whose player was left unset.
@@ -30,10 +30,10 @@ func (e RevealHand) Text() string {
 	if e.Player == Opponent {
 		whose = "your opponent's"
 	}
-	if e.House == HouseNone {
+	if !e.House.filters() {
 		return "reveal " + whose + " hand"
 	}
-	return "reveal any number of " + e.House.String() + " cards from " + whose + " hand"
+	return "reveal any number of " + e.House.qualify("cards") + " from " + whose + " hand"
 }
 
 // Resolve shows the matching cards, logs them, and records how many were revealed.
@@ -51,12 +51,12 @@ func (e RevealHand) Resolve(ctx *EffectContext) {
 // reveal is "any number of <house> cards".
 func (e RevealHand) reveal(ctx *EffectContext, owner int) []LocalID {
 	hand := ctx.Resolver.Hand(owner)
-	if e.House == HouseNone {
+	if !e.House.filters() {
 		return hand
 	}
 	var remaining []LocalID
 	for _, id := range hand {
-		if ctx.Resolver.House(id) == e.House {
+		if e.House.matches(ctx, id) {
 			remaining = append(remaining, id)
 		}
 	}

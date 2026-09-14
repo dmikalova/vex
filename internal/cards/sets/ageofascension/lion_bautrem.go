@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Deploy.
 //	Each neighboring Creature gains +2 power.
-var LionBautrem = card.New(
+var LionBautrem = set.New(
 	"\"Lion\" Bautrem",
 	card.House.Sanctum,
 	card.Type.Creature,

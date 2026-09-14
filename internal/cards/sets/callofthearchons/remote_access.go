@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Use an enemy Artifact.
-var RemoteAccess = card.New(
+var RemoteAccess = set.New(
 	"Remote Access",
 	card.House.Logos,
 	card.Type.Tactic,

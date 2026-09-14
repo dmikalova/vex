@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Alpha.
 //	Play: For each Æmber in your pool, deal 3 damage to an enemy Creature.
-var GargantesScrapper = card.New(
+var GargantesScrapper = set.New(
 	"Gargantes Scrapper",
 	card.House.Brobnar,
 	card.Type.Creature,

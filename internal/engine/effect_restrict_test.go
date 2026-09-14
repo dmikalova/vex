@@ -115,6 +115,94 @@ func TestCannotFight(t *testing.T) {
 	}
 }
 
+func TestPlayersCannotPlay(t *testing.T) {
+	if got := (PlayersCannotPlay{Type: Tactic, Duration: EndOfPlayerNextTurn}).Text(); got != "until the end of your next turn, players cannot play tactics" {
+		t.Errorf("tactic text = %q", got)
+	}
+	// An unset Type bars every type, carried by the AnyType wildcard.
+	if got := (PlayersCannotPlay{Duration: EndOfPlayerNextTurn}).Text(); got != "until the end of your next turn, players cannot play cards" {
+		t.Errorf("blanket text = %q", got)
+	}
+	if (PlayersCannotPlay{Type: Tactic}).validate() == nil {
+		t.Error("a duration other than EndOfPlayerNextTurn should be invalid")
+	}
+	if (PlayersCannotPlay{Type: Tactic, Duration: EndOfPlayerNextTurn}).validate() != nil {
+		t.Error("EndOfPlayerNextTurn should be valid")
+	}
+
+	g := NewGame("A", "B", 1)
+	g.StartTurn(0)
+	if err := g.ChooseHouse(0, Brobnar); err != nil {
+		t.Fatal(err)
+	}
+	// Player 0 arms the board-wide bar: their own this turn and next, the opponent's
+	// next turn.
+	PlayersCannotPlay{Type: Tactic, Duration: EndOfPlayerNextTurn}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0},
+	)
+	if g.State.CannotPlayTypeThis[0].Value != Tactic {
+		t.Error("the caster should be barred this turn")
+	}
+	if g.State.CannotPlayTypeNext[0].Value != Tactic {
+		t.Error("the caster's next turn should be armed")
+	}
+	if g.State.CannotPlayTypeNext[1].Value != Tactic {
+		t.Error("the opponent's next turn should be armed")
+	}
+}
+
+func TestStunEnemyFighters(t *testing.T) {
+	if got := (StunEnemyFighters{Duration: OpponentNextTurn}).Text(); got != "during your opponent's next turn, after an enemy creature is used to fight, stun it" {
+		t.Errorf("text = %q", got)
+	}
+	if (StunEnemyFighters{}).validate() == nil {
+		t.Error("an unset duration should be invalid")
+	}
+	if (StunEnemyFighters{Duration: OpponentNextTurn}).validate() != nil {
+		t.Error("OpponentNextTurn should be valid")
+	}
+
+	g := NewGame("A", "B", 1)
+	g.StartTurn(0)
+	if err := g.ChooseHouse(0, Brobnar); err != nil {
+		t.Fatal(err)
+	}
+	// Player 0 arms the stun-fighter bar on the opponent for their next turn.
+	StunEnemyFighters{Duration: OpponentNextTurn}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0},
+	)
+	if !g.State.StunFighterNext[1].Value {
+		t.Fatal("should arm the opponent's next turn")
+	}
+	if g.State.StunFighterNext[0].Value {
+		t.Error("should not arm the caster")
+	}
+	g.EndPlayPhase(0)
+
+	// The opponent's turn: the bar activates, and a creature they use to fight is
+	// stunned right after the fight.
+	g.StartTurn(1)
+	if err := g.ChooseHouse(1, Brobnar); err != nil {
+		t.Fatal(err)
+	}
+	if !g.State.StunFighter[1].Value || g.State.StunFighterNext[1].Value {
+		t.Fatal("the bar should be active and disarmed on the opponent's turn")
+	}
+	att := g.AddToBattleline(testCreature("att", 6), 1)
+	def := g.AddToBattleline(testCreature("def", 2), 0)
+	if err := g.Fight(1, att, def); err != nil {
+		t.Fatalf("Fight = %v", err)
+	}
+	if !g.State.Cards[att].Stunned {
+		t.Error("the fighting creature should be stunned")
+	}
+	// It lifts when player 1 ends the turn.
+	g.EndPlayPhase(1)
+	if g.State.StunFighter[1].Value {
+		t.Error("the ready phase should lift the active bar")
+	}
+}
+
 func TestCannotFightConstant(t *testing.T) {
 	g := started(t) // player 0 active, Brobnar
 	att := g.AddToBattleline(testCreature("att", 4), 0)
@@ -369,18 +457,21 @@ func TestForceActiveHouseNextTurn(t *testing.T) {
 	e.Resolve(
 		&EffectContext{Resolver: g, Controller: 0, ChosenHouse: Mars},
 	)
-	if g.State.ForcedHouseNext[1].Value != Mars {
-		t.Fatalf("armed = %v, want Mars", g.State.ForcedHouseNext[1].Value)
+	if got := g.State.HouseConstraintsNext[1][0]; g.State.HouseConstraintCountNext[1] != 1 ||
+		got.Kind != constraintMustHouse || got.House != Mars {
+		t.Fatalf("armed = %+v (count %d), want one must-Mars",
+			got, g.State.HouseConstraintCountNext[1])
 	}
 
 	// Player 0's own choice is unaffected this turn.
 	g.EndPlayPhase(0)
 	g.StartTurn(1)
-	if g.State.ForcedHouse[1].Value != Mars {
-		t.Errorf("promoted = %v, want Mars", g.State.ForcedHouse[1].Value)
+	if got := g.State.HouseConstraints[1][0]; g.State.HouseConstraintCount[1] != 1 ||
+		got.Kind != constraintMustHouse || got.House != Mars {
+		t.Errorf("promoted = %+v, want must-Mars", got)
 	}
-	if err := g.ChooseHouse(1, Sanctum); err != ErrMustChooseForcedHouse {
-		t.Errorf("wrong house = %v, want ErrMustChooseForcedHouse", err)
+	if err := g.ChooseHouse(1, Sanctum); err != ErrHouseNotAllowed {
+		t.Errorf("wrong house = %v, want ErrHouseNotAllowed", err)
 	}
 	if err := g.ChooseHouse(1, Mars); err != nil {
 		t.Fatalf("forced house: %v", err)
@@ -389,8 +480,8 @@ func TestForceActiveHouseNextTurn(t *testing.T) {
 	// The restriction lasts only that one turn.
 	g.EndPlayPhase(1)
 	g.StartTurn(1)
-	if g.State.ForcedHouse[1].Value != HouseNone {
-		t.Errorf("still forced = %v, want none", g.State.ForcedHouse[1].Value)
+	if g.State.HouseConstraintCount[1] != 0 {
+		t.Errorf("still forced (count %d), want none", g.State.HouseConstraintCount[1])
 	}
 	if err := g.ChooseHouse(1, Sanctum); err != nil {
 		t.Errorf("free choice = %v, want nil", err)
@@ -409,20 +500,21 @@ func TestForceActiveHouseOfFoughtNextTurn(t *testing.T) {
 	}
 	foe := g.AddToBattleline(NewCard("foe", Logos, Creature, Common, WithPower(3)), 1)
 	e.Resolve(&EffectContext{Resolver: g, Controller: 0, It: foe, HasIt: true})
-	if g.State.ForcedHouseNext[1].Value != Logos {
+	if got := g.State.HouseConstraintsNext[1][0]; g.State.HouseConstraintCountNext[1] != 1 ||
+		got.Kind != constraintMustCreature || got.Creature != foe {
 		t.Errorf(
-			"armed = %v, want Logos (the fought creature's house)",
-			g.State.ForcedHouseNext[1].Value,
+			"armed = %+v, want a live must referencing the fought creature %d",
+			got, foe,
 		)
 	}
 
 	// With no creature in context there is nothing to force.
-	g.State.ForcedHouseNext[1] = Bar[House]{}
+	g.State.HouseConstraintCountNext[1] = 0
 	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
-	if g.State.ForcedHouseNext[1].Value != HouseNone {
+	if g.State.HouseConstraintCountNext[1] != 0 {
 		t.Errorf(
-			"armed without a fought creature = %v, want none",
-			g.State.ForcedHouseNext[1].Value,
+			"armed without a fought creature (count %d), want none",
+			g.State.HouseConstraintCountNext[1],
 		)
 	}
 }
@@ -442,8 +534,9 @@ func TestWagerOpponentChoosesChosenHouse(t *testing.T) {
 		t.Fatal(err)
 	}
 	e.Resolve(&EffectContext{Resolver: g, Controller: 0, ChosenHouse: Logos})
-	if w := g.State.HouseWagerNext[1]; w.House != Logos || w.Amount != 2 || w.Predictor != 0 {
-		t.Fatalf("armed = %+v, want Logos/2/predictor 0", w)
+	if got := g.State.HouseConstraintsNext[1][0]; g.State.HouseConstraintCountNext[1] != 1 ||
+		got.Kind != constraintWager || got.House != Logos || got.Amount != 2 || got.Predictor != 0 {
+		t.Fatalf("armed = %+v, want wager Logos/2/predictor 0", got)
 	}
 
 	// The opponent locks in the wagered house next turn, so the predictor steals.
@@ -500,8 +593,9 @@ func TestForbidSameActiveHouseNextTurn(t *testing.T) {
 		t.Fatal(err)
 	}
 	e.Resolve(&EffectContext{Resolver: g})
-	if g.State.ForbiddenHouseNext[1].Value != Brobnar {
-		t.Errorf("armed = %v, want Brobnar", g.State.ForbiddenHouseNext[1].Value)
+	if got := g.State.HouseConstraintsNext[1][0]; g.State.HouseConstraintCountNext[1] != 1 ||
+		got.Kind != constraintCannotHouse || got.House != Brobnar {
+		t.Errorf("armed = %+v, want cannot-Brobnar", got)
 	}
 }
 
@@ -519,18 +613,20 @@ func TestForbidActiveHouseNextTurn(t *testing.T) {
 	e.Resolve(
 		&EffectContext{Resolver: g, Controller: 0, ChosenHouse: Mars},
 	)
-	if g.State.ForbiddenHouseNext[1].Value != Mars {
-		t.Fatalf("armed = %v, want Mars", g.State.ForbiddenHouseNext[1].Value)
+	if got := g.State.HouseConstraintsNext[1][0]; g.State.HouseConstraintCountNext[1] != 1 ||
+		got.Kind != constraintCannotHouse || got.House != Mars {
+		t.Fatalf("armed = %+v, want cannot-Mars", got)
 	}
 
 	// Player 0's own choice is unaffected this turn.
 	g.EndPlayPhase(0)
 	g.StartTurn(1)
-	if g.State.ForbiddenHouse[1].Value != Mars {
-		t.Errorf("promoted = %v, want Mars", g.State.ForbiddenHouse[1].Value)
+	if got := g.State.HouseConstraints[1][0]; g.State.HouseConstraintCount[1] != 1 ||
+		got.Kind != constraintCannotHouse || got.House != Mars {
+		t.Errorf("promoted = %+v, want cannot-Mars", got)
 	}
-	if err := g.ChooseHouse(1, Mars); err != ErrHouseForbidden {
-		t.Errorf("forbidden house = %v, want ErrHouseForbidden", err)
+	if err := g.ChooseHouse(1, Mars); err != ErrHouseNotAllowed {
+		t.Errorf("forbidden house = %v, want ErrHouseNotAllowed", err)
 	}
 	if err := g.ChooseHouse(1, Sanctum); err != nil {
 		t.Fatalf("allowed house: %v", err)
@@ -539,8 +635,8 @@ func TestForbidActiveHouseNextTurn(t *testing.T) {
 	// The restriction lasts only that one turn.
 	g.EndPlayPhase(1)
 	g.StartTurn(1)
-	if g.State.ForbiddenHouse[1].Value != HouseNone {
-		t.Errorf("still forbidden = %v, want none", g.State.ForbiddenHouse[1].Value)
+	if g.State.HouseConstraintCount[1] != 0 {
+		t.Errorf("still forbidden (count %d), want none", g.State.HouseConstraintCount[1])
 	}
 	if err := g.ChooseHouse(1, Mars); err != nil {
 		t.Errorf("free choice = %v, want nil", err)
@@ -553,7 +649,7 @@ func TestRestrictionSources(t *testing.T) {
 	weak := g.AddToBattleline(testCreature("Control the Weak", 1), 0)
 	fog := g.AddToBattleline(testCreature("Fogbank", 1), 0)
 
-	g.ForceActiveHouseNextTurn(1, Mars, weak)
+	g.MustChooseHouseNextTurn(1, Mars, weak)
 	// A card imposing three bars is named once.
 	g.CannotFightNextTurn(1, fog)
 	g.SkipForgePhaseNextTurn(1, fog)
@@ -612,7 +708,7 @@ func TestRestrictionSourcesConditionalPlayBar(t *testing.T) {
 }
 
 func TestUseConditionRestriction(t *testing.T) {
-	cond := CardsDiscarded{Player: Controller, House: Untamed, Amount: 1}
+	cond := CardsDiscarded{Player: Controller, House: namedHouse(Untamed), Amount: 1}
 	want := "You cannot use this card unless you have discarded an Untamed card " +
 		"from your hand this turn."
 	if got := restrictionText(

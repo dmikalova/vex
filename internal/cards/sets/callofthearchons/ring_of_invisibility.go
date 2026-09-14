@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	This Creature gains elusive and skirmish.
-var RingOfInvisibility = card.New(
+var RingOfInvisibility = set.New(
 	"Ring of Invisibility",
 	card.House.Shadows,
 	card.Type.Upgrade,

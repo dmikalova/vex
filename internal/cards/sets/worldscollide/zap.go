@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: For each house represented among Creatures in play, deal 1 damage to a Creature.
-var Zap = card.New(
+var Zap = set.New(
 	"Zap",
 	card.House.StarAlliance,
 	card.Type.Tactic,

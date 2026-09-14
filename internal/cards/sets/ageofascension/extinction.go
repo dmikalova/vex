@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //
 //	Play: Choose a Creature - destroy each Creature that shares a trait with it. Gain 1 chain.
-var Extinction = card.New(
+var Extinction = set.New(
 	"Extinction",
 	card.House.Mars,
 	card.Type.Tactic,

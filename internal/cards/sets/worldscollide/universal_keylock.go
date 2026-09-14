@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Each player's keys cost +3 Æmber.
 //	After a player forges a key, destroy Universal Keylock.
-var UniversalKeylock = card.New(
+var UniversalKeylock = set.New(
 	"Universal Keylock",
 	card.House.Logos,
 	card.Type.Artifact,

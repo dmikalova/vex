@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Versatile.
 //	Action: Destroy Mighty Javelin. Deal 4 damage to a Creature.
-var MightyJavelin = card.New(
+var MightyJavelin = set.New(
 	"Mighty Javelin",
 	card.House.Brobnar,
 	card.Type.Artifact,

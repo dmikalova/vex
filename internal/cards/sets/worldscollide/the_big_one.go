@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Weapon
 //
 //	After a Creature is played, put a fuse counter on The Big One. If there are 10 or more fuse counters on The Big One, destroy each Creature and each Artifact.
-var TheBigOne = card.New(
+var TheBigOne = set.New(
 	"The Big One",
 	card.House.Brobnar,
 	card.Type.Artifact,

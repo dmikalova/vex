@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Robot • Experiment
 //
 //	Destroyed: If you have any other Creatures in play, instead of destroying Reassembling Automaton, fully heal it, exhaust it, and move it to either flank of its controller's battleline.
-var ReassemblingAutomaton = card.New(
+var ReassemblingAutomaton = set.New(
 	"Reassembling Automaton",
 	card.House.Logos,
 	card.Type.Creature,

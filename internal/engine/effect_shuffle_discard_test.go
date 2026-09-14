@@ -4,7 +4,7 @@ import "testing"
 
 // TestShuffleFromDiscardText covers the three selection modes' printed text.
 func TestShuffleFromDiscardText(t *testing.T) {
-	each := ShuffleFromDiscard{Selection: Each{House: Untamed, Type: Creature}}
+	each := ShuffleFromDiscard{Selection: Each{House: namedHouse(Untamed), Type: Creature}}
 	if got := each.Text(); got !=
 		"shuffle each Untamed creature from your discard pile into your deck" {
 		t.Errorf("Each text = %q", got)
@@ -19,7 +19,7 @@ func TestShuffleFromDiscardText(t *testing.T) {
 		t.Errorf("AnyNumber text = %q", got)
 	}
 	anyHouse := ShuffleFromDiscard{
-		Selection: Chosen{House: Untamed, Type: Creature, Optional: true},
+		Selection: Chosen{House: namedHouse(Untamed), Type: Creature, Optional: true},
 		AnyNumber: true,
 	}
 	if got := anyHouse.Text(); got !=
@@ -58,7 +58,7 @@ func TestShuffleFromDiscardValidate(t *testing.T) {
 // TestShuffleFromDiscardEach covers Low Dawn: every Untamed creature leaves the
 // discard for the deck as one grouped line while other cards stay put.
 func TestShuffleFromDiscardEach(t *testing.T) {
-	sel := Each{House: Untamed, Type: Creature}
+	sel := Each{House: namedHouse(Untamed), Type: Creature}
 
 	g := NewGame("A", "B", 1)
 	src := g.AddToDiscard(NewCard("src", Untamed, Tactic, Common), 0)
@@ -136,7 +136,7 @@ func TestShuffleFromDiscardAnyNumber(t *testing.T) {
 	}
 
 	// The house filter narrows the eligible creatures.
-	houseSel := Chosen{House: Untamed, Type: Creature, Optional: true}
+	houseSel := Chosen{House: namedHouse(Untamed), Type: Creature, Optional: true}
 	g2 := NewGame("A", "B", 1)
 	untamed := g2.AddToDiscard(NewCard("u", Untamed, Creature, Common, WithPower(1)), 0)
 	g2.AddToDiscard(NewCard("d", Dis, Creature, Common, WithPower(1)), 0)

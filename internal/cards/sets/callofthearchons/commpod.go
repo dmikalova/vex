@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item
 //
 //	Action: Reveal any number of Mars cards from your hand, and for each card revealed this way, ready a friendly Mars Creature.
-var Commpod = card.New(
+var Commpod = set.New(
 	"Commpod",
 	card.House.Mars,
 	card.Type.Artifact,
@@ -22,11 +22,13 @@ var Commpod = card.New(
 			Effects: []card.Effect{
 				card.RevealHand{
 					Player: card.Controller,
-					House:  card.House.Self,
+					House:  card.Houses.Named(card.House.Self),
 				},
 				card.ReadyCreatures{
-					Max:    card.CardsRevealed{},
-					Target: card.Target.EachFriendlyCreature.OfHouse(card.House.Self),
+					Max: card.CardsRevealed{},
+					Target: card.Target.EachFriendlyCreature.House(
+						card.Houses.Named(card.House.Self),
+					),
 				},
 			},
 		}),

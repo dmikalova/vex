@@ -11,13 +11,13 @@ import (
 //
 //	House:  Brobnar
 //	Type:   Creature
-//	Rarity: Special
+//	Rarity: Connected
 //	Power:  7
 //	Traits: Giant
 //
-//	Play: You may ready and fight with a neighboring Creature.
+//	Play: Ready and fight with a neighboring Creature.
 func TestMegaGangerChieftain(t *testing.T) {
-	t.Run("may ready and fight with a neighboring creature", func(t *testing.T) {
+	t.Run("readies and fights with a neighboring creature", func(t *testing.T) {
 		var neighbor, foe ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
@@ -35,7 +35,6 @@ func TestMegaGangerChieftain(t *testing.T) {
 		})
 
 		h.P1.Play(MegaGangerChieftain)
-		h.P1.ClickCard(neighbor)
 
 		h.Expect(foe).At(ct.Discard)
 		h.Expect(neighbor).Exhausted()

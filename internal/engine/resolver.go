@@ -37,6 +37,9 @@ type StateReader interface {
 	PlayerName(player int) string
 	// PlayerHasHouse reports whether house is one of the player's identity houses.
 	PlayerHasHouse(player int, house House) bool
+	// AllowedHouses returns the houses the player may legally choose as their active
+	// house right now; an empty result means they have no active house this turn.
+	AllowedHouses(player int) []House
 }
 
 // EconomyReader reads the scoring economy: Æmber pools and forged keys. It mirrors
@@ -427,6 +430,9 @@ type ZoneResolver interface {
 	EndShuffleBatch()
 	// ArchiveFromHand moves a card from its owner's hand to their archives.
 	ArchiveFromHand(id LocalID)
+	// ArchiveEnemyFromHand moves a card from its owner's hand into player's
+	// archives — an abduction from hand (Hidden Stash).
+	ArchiveEnemyFromHand(player int, id LocalID)
 	// ArchiveFromDiscard moves a card from a player's discard pile to their archives.
 	ArchiveFromDiscard(owner int, id LocalID)
 	// ArchiveFromPurge moves a card from a player's purge pile to their archives —
@@ -565,6 +571,10 @@ type TurnResolver interface {
 	// their next turn. source is the card imposing the bar, recorded so a frontend
 	// can name it.
 	CannotFightNextTurn(player int, source LocalID)
+	// StunFighterNextTurn arms the stun-fighter bar on a player for their next
+	// turn, so each creature they use to fight is stunned right after that fight
+	// (Foggify). source is the card imposing it.
+	StunFighterNextTurn(player int, source LocalID)
 	// CannotPlayTypeNextTurn bars a player from playing cards of the given type
 	// throughout their next turn (Lifeward, Scrambler Storm).
 	CannotPlayTypeNextTurn(player int, t CardType, source LocalID)
@@ -626,11 +636,15 @@ type TurnResolver interface {
 	// abilities under one trigger also fire on another until the turn ends.
 	AddLastingMorph(m LastingMorph)
 	// ForceActiveHouseNextTurn makes a player have to choose the given house as their
-	// active house on their next turn.
-	ForceActiveHouseNextTurn(player int, house House, source LocalID)
-	// ForbidActiveHouseNextTurn makes a player unable to choose the given house as
-	// their active house on their next turn.
-	ForbidActiveHouseNextTurn(player int, house House, source LocalID)
+	// active house on their next turn (Control the Weak).
+	MustChooseHouseNextTurn(player int, house House, source LocalID)
+	// MustChooseFoughtHouseNextTurn makes a player have to choose the house of the
+	// given creature — read live at choice time — as their active house on their
+	// next turn (Snag).
+	MustChooseFoughtHouseNextTurn(player int, creature, source LocalID)
+	// CannotChooseHouseNextTurn makes a player unable to choose the given house as
+	// their active house on their next turn (Tezmal, Snag's Mirror).
+	CannotChooseHouseNextTurn(player int, house House, source LocalID)
 	// WagerOnHouseNextTurn arms a bet on a player's next active house: if they
 	// choose that house, the predictor steals amount (Snaglet).
 	WagerOnHouseNextTurn(player int, house House, amount, predictor int, source LocalID)

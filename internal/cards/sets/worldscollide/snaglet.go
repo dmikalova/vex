@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Action: Choose a house - if your opponent chooses that house as their active house on their next turn, steal 2 Æmber.
-var Snaglet = card.New(
+var Snaglet = set.New(
 	"Snaglet",
 	card.House.Dis,
 	card.Type.Creature,

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: If your opponent has 6 Æmber or more, deal 3 damage to each enemy Creature.
-var IrradiatedAember = card.New(
+var IrradiatedAember = set.New(
 	"Irradiated Aember",
 	card.House.Mars,
 	card.Type.Tactic,

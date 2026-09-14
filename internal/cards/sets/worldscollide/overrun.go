@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: If 3 or more enemy Creatures have been destroyed this turn, your opponent loses 2 Æmber.
-var Overrun = card.New(
+var Overrun = set.New(
 	"Overrun",
 	card.House.Brobnar,
 	card.Type.Tactic,

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Cyborg • Scientist
 //
 //	While Titan Mechanic is on a flank, each player's keys cost -1 Æmber.
-var TitanMechanic = card.New(
+var TitanMechanic = set.New(
 	"Titan Mechanic",
 	card.House.Logos,
 	card.Type.Creature,

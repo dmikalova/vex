@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Location
 //
 //	Action: Shuffle your hand and discard pile into your deck.
-var ScreamingCave = card.New(
+var ScreamingCave = set.New(
 	"Screaming Cave",
 	card.House.Dis,
 	card.Type.Artifact,
@@ -19,6 +19,6 @@ var ScreamingCave = card.New(
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
 		card.Trigger.Action,
-		card.ShuffleIntoDeck{Zones: []card.Zone{card.Hand, card.Discard}},
+		card.Shuffle{Zones: []card.Zone{card.Hand, card.Discard}},
 	),
 )

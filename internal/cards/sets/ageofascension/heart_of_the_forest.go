@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Location
 //
 //	Each player cannot forge keys while they have more forged keys than their opponent.
-var HeartOfTheForest = card.New(
+var HeartOfTheForest = set.New(
 	"Heart of the Forest",
 	card.House.Untamed,
 	card.Type.Artifact,

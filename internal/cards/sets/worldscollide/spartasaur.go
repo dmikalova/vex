@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	After a friendly Creature is destroyed, destroy each non-Dinosaur Creature.
 //	Fight: Gain 2 Æmber.
-var Spartasaur = card.New(
+var Spartasaur = set.New(
 	"Spartasaur",
 	card.House.Saurian,
 	card.Type.Creature,

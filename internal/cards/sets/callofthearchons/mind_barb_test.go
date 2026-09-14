@@ -14,16 +14,21 @@ import (
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: Your opponent discards a random card from their hand.
+//	Play: Discard a card from your hand. Your opponent discards a random card from their hand.
 func TestMindBarb(t *testing.T) {
-	t.Run("opponent discards a random card from hand", func(t *testing.T) {
+	t.Run("discards a chosen card and the opponent discards a random one", func(t *testing.T) {
+		var mine ct.Card
 		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Dis, Hand: ct.Cards(MindBarb)},
+			P1: ct.Side{
+				House: card.House.Dis,
+				Hand:  ct.Cards(MindBarb, ct.Bind(&mine, ct.Creature())),
+			},
 			P2: ct.Side{Hand: ct.Cards(ct.Creature(), ct.Creature())},
 		})
 
 		h.P1.Play(MindBarb)
 
+		h.Expect(mine).At(ct.Discard) // the only other card in hand, chosen to discard
 		if got := h.Game().State.Hand[1].Count; got != 1 {
 			t.Fatalf("opponent hand = %d, want 1", got)
 		}

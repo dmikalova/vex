@@ -87,12 +87,21 @@ flowchart LR
 1. **House selection.** Draw 3 distinct Houses from the Set's selectable Houses,
    honoring exclusion constraints (in some Sets two Houses are mutually exclusive)
    and per-House weights (the draw need not be uniform). Rare whole-pod overlays
-   also roll here — a _legacy House pod_ (same House, pool from another Set) or a
-   _maverick House pod_ (a House not in this Set at all). Neither is implemented
-   yet; when the maverick pod lands it must complete every `OnePerHouse` cluster to
-   all nine Houses, since a maverick pod can drop a House the Set never printed a
-   member for (see `docs/todo-agent.md`, "Maverick houses complete every
-   OnePerHouse cycle").
+   also roll here — an _interloper pod_ (a native House whose whole pool is
+   drawn from other Sets, the House-level counterpart of the per-slot Legacy
+   overlay) or an _errant pod_ (a House not in this Set at all, drawn wholly from
+   the cross-set legacy pool). Both are implemented: the interloper pod via
+   `Tuning.InterloperRate` and the errant pod via `Tuning.ErrantRate`, each rolled
+   per pod in `planPods` (errant first, then interloper), after which `fillSlot`
+   forces the legacy draw for every slot. An errant pod swaps its picked native
+   House for one of the Set's _errant Houses_ — Houses present in the legacy pool
+   but not native to the Set (`Set.errantHouses`, computed in `WithLegacy`). Since
+   an errant pod can bring in a House the Set never printed a member for, deck-wide
+   `OnePerHouse` clusters (the Shards) resolve from a catalog-wide `ClusterPool`
+   attached with `WithClusters`, and its completeness gate (`validateCrossClusters`)
+   requires a member for every House the Set can deck — native or errant. The two
+   Shards no earlier set printed (Saurian, Star Alliance) live in the Anomaly
+   Expansion reservoir set so the cycle completes across all nine Houses (ADR 0036).
 2. **Per-slot roll.** For each of the 12 Slots in each pod, roll a rarity, then
    independent overlays for Special, Maverick, and Legacy (see §4).
 3. **Draw.** Pull a card from the pool the rolls point at (House dimension × Set
@@ -168,7 +177,14 @@ cluster carries `card.LeadsCluster(cluster)`. All members share one declared
 
 - **OnePerHouse** — deck-wide: places one member in each of the deck's Houses when
   any member is drawn (the per-House Shards). It is gated complete-by-construction,
-  so a set that can deck a House with no member fails the build.
+  so a set that can deck a House with no member fails the build. This deck-wide pass
+  runs after every pod is filled, and `Generate` then runs a final well-formedness
+  check (`Deck.validate`): every filled slot of a real pod must hold a card housed
+  in that pod. Because cluster expansion overwrites slots (never adds) and the pod
+  shape is a fixed `[PodCount][PodSize]` array, the card count and pod capacity are
+  guaranteed structurally, so the check guards the one invariant those cannot — a
+  cluster or maverick forcing a mis-housed card into a pod — and panics if it is
+  violated rather than emitting an illegal deck (ADR 0036).
 - **WholePool** — places every member (the four Horsemen).
 - **RandomCount** — places a random count of distinct members in `[Min, Max]` (the
   seven sins).

@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Play: Choose one:
 //	- Archive the top card of your deck
 //	- Archive the top card of your discard pile.
-var ZYXResearcher = card.New(
+var ZYXResearcher = set.New(
 	"Z.Y.X. Researcher",
 	card.House.Logos,
 	card.Type.Creature,

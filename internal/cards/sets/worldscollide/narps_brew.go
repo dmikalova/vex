@@ -2,26 +2,32 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
+// narpsBrewCluster pulls a Mega Narp into Narp's Brew's pod — a Pull cluster the
+// brew leads, so the giant it is brewed for rides along.
+var narpsBrewCluster = card.Cluster{
+	Name:     "Narp's Brew",
+	Strategy: card.ClusterStrategy.Pull,
+	Trigger:  card.ClusterTrigger.ByLead,
+}
+
 // Narp's Brew
 //
 //	House:  Brobnar
-//	Type:   Tactic
-//	Rarity: Special
+//	Type:   Upgrade
+//	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Give a Creature two +1 power counters.
-var NarpsBrew = card.New(
+//	This Creature gains +2 armor and taunt.
+var NarpsBrew = set.New(
 	"Narp's Brew",
 	card.House.Brobnar,
-	card.Type.Tactic,
-	// TODO(variant): rarity relabelled from Variant to Special — handle manually
-	card.Rarity.Special,
-	// TODO(duplicate): mechanically identical to Alaka's Brew — fold/handle manually
+	card.Type.Upgrade,
+	card.Rarity.Rare,
 	card.Provenance(card.WC, "67"),
+	card.LeadsCluster(narpsBrewCluster),
 	card.WithAemberBonus(1),
-	card.WithAbility(
-		card.Trigger.Play, card.AddPowerCounter{
-			Target: card.Target.Creature,
-			Amount: 2,
-		}),
+	card.WithStatic(card.StaticModifier{
+		ArmorBonus: 2,
+		Keywords:   card.Keywords(card.Keyword.Taunt),
+	}),
 )

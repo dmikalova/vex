@@ -37,22 +37,66 @@ func TestChooseHouseStartsTheTurn(t *testing.T) {
 	}
 }
 
-// The start-of-turn house picker offers a Back button that steps out of the turn
+// lockOutHouses bars the active player from every one of their deck houses, so
+// the constraint table (ADR 0035) leaves No House the only legal choice this turn
+// — the situation Tezmal creates.
+func lockOutHouses(c *client) {
+	p := c.g.active()
+	for _, h := range c.g.deckHouses[p] {
+		c.g.g.CannotChooseHouseNextTurn(p, h, 0)
+	}
+	// CannotChooseHouseNextTurn arms the next turn; promote the armed table onto the
+	// current one so the lockout binds the choice the picker is about to offer.
+	c.g.g.State.HouseConstraints[p] = c.g.g.State.HouseConstraintsNext[p]
+	c.g.g.State.HouseConstraintCount[p] = c.g.g.State.HouseConstraintCountNext[p]
+}
+
+// A player locked out of every house is offered a single "No House" button, in
+// manual mode as well as ordinary play — offering a barred house would only be
+// rejected by ChooseHouse. Choosing No House advances to the main phase so the
+// turn can be ended.
+func TestLockedOutOfEveryHouseOffersNoHouse(t *testing.T) {
+	for _, manual := range []bool{false, true} {
+		name := "ordinary"
+		if manual {
+			name = "manual"
+		}
+		t.Run(name, func(t *testing.T) {
+			c := newClient(t)
+			if manual {
+				c.manual()
+			}
+			lockOutHouses(c)
+			buttons := c.g.houseButtons()
+			if len(buttons) != 1 || buttons[0] != engine.HouseNone {
+				t.Fatalf("the picker offers %v, want [No House]", buttons)
+			}
+			c.do(c.g.pickHouse(engine.HouseNone))
+			if c.g.g.State.ActiveHouse != engine.HouseNone {
+				t.Errorf("the active house is %v, want No House", c.g.g.State.ActiveHouse)
+			}
+			if c.g.phase != phaseMain {
+				t.Errorf("after choosing No House the phase is %v, want phaseMain", c.g.phase)
+			}
+		})
+	}
+}
+
 // via undo. On the game's first turn there is nothing to step back to, so Back is
 // greyed out; once a turn has been taken, Back undoes it.
-func TestHousePickerBack(t *testing.T) {
+func TestHousePickerUndo(t *testing.T) {
 	c := newClient(t)
 	if c.g.phase != phaseHouse {
 		t.Fatalf("a fresh deal is at phase %v, want phaseHouse", c.g.phase)
 	}
 	c.g.undo = nil
-	c.wants("the first-turn house picker", "Back")
+	c.wants("the first-turn house picker", `title="Undo"`)
 	if c.g.canUndo() {
 		t.Error("a first-turn house pick has nothing to step back to")
 	}
 
 	// Choose a house and end the turn; the opponent then faces the house picker with
-	// a turn to step back to, so Back is live and undoing it returns to that turn.
+	// a turn to step back to, so Undo is live and undoing it returns to that turn.
 	c.do(c.g.pickHouse(c.g.pickableHouses()[0]))
 	c.pass()
 	c.await("the opponent's house choice", func() bool {
@@ -63,7 +107,7 @@ func TestHousePickerBack(t *testing.T) {
 	}
 	c.do(c.g.undoAction)
 	if c.g.phase != phaseMain {
-		t.Errorf("Back from the house picker left the phase at %v, want phaseMain", c.g.phase)
+		t.Errorf("Undo from the house picker left the phase at %v, want phaseMain", c.g.phase)
 	}
 }
 

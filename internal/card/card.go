@@ -94,6 +94,7 @@ type Option func(*builder)
 type builder struct {
 	opts         []engine.CardOption
 	prov         []provenance.Ref
+	set          provenance.SourceSet
 	profile      deckgen.GenerationProfile
 	materializer deckgen.Materializer
 }

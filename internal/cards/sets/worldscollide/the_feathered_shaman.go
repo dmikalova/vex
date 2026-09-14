@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Fight/Reap: Ward each neighboring Creature.
-var TheFeatheredShaman = card.New(
+var TheFeatheredShaman = set.New(
 	"The Feathered Shaman",
 	card.House.Untamed,
 	card.Type.Creature,

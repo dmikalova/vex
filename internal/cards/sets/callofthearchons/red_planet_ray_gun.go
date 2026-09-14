@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	This Creature gains, "Reap: For each Mars Creature in play, deal 1 damage to a Creature."
-var RedPlanetRayGun = card.New(
+var RedPlanetRayGun = set.New(
 	"Red Planet Ray Gun",
 	card.House.Mars,
 	card.Type.Upgrade,

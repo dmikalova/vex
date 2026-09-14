@@ -13,7 +13,7 @@ import "fmt"
 type CardsPlayed struct {
 	// Player names whose plays to count; House filters by the played card's house.
 	Player Player
-	House  House
+	House  HouseMatcher
 	// Amount is the minimum the Condition role requires; zero means at least one.
 	Amount int
 }
@@ -23,17 +23,14 @@ func (e CardsPlayed) Value(ctx *EffectContext) int {
 	return countOfHouse(ctx, ctx.Resolver.PlayedThisTurn(ctx.PlayerFor(e.Player)), e.House)
 }
 
-// countOfHouse counts how many of the ids belong to a house — the filter a
-// turn-log Count applies to the unfiltered record the engine keeps. An unset
-// house counts every card, so a Count can ask "how many cards" as well as "how
+// countOfHouse counts how many of the ids the matcher admits — the filter a
+// turn-log Count applies to the unfiltered record the engine keeps. An any-house
+// matcher admits every card, so a Count can ask "how many cards" as well as "how
 // many Sanctum cards".
-func countOfHouse(ctx *EffectContext, ids []LocalID, house House) int {
-	if house == HouseNone {
-		return len(ids)
-	}
+func countOfHouse(ctx *EffectContext, ids []LocalID, house HouseMatcher) int {
 	n := 0
 	for _, id := range ids {
-		if ctx.Resolver.House(id) == house {
+		if house.matches(ctx, id) {
 			n++
 		}
 	}
@@ -59,10 +56,7 @@ func (e CardsPlayed) CountText() string {
 // cardNoun is the noun the count repeats, house-qualified when the count filters
 // by house and a plain "card" when it counts every card played.
 func (e CardsPlayed) cardNoun() string {
-	if e.House == HouseNone {
-		return "card"
-	}
-	return e.House.String() + " card"
+	return e.House.qualifyNoun("card")
 }
 
 // CondText renders the condition, e.g. "if you have played 7 or more Sanctum cards

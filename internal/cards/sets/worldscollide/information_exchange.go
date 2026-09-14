@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //
 //	Play: Steal 1 Æmber. If your opponent stole Æmber from you on their previous turn, steal 1 Æmber.
-var InformationExchange = card.New(
+var InformationExchange = set.New(
 	"Information Exchange",
 	card.House.Logos,
 	card.Type.Tactic,

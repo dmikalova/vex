@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Scientist
 //
 //	After an enemy Creature reaps, stun it.
-var PipPip = card.New(
+var PipPip = set.New(
 	"Pip Pip",
 	card.House.Logos,
 	card.Type.Creature,

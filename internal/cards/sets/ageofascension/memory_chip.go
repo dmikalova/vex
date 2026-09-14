@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item
 //
 //	After you choose Logos as your active house, archive a card from your hand.
-var MemoryChip = card.New(
+var MemoryChip = set.New(
 	"Memory Chip",
 	card.House.Logos,
 	card.Type.Artifact,

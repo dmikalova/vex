@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	This Creature gains, "Reap: Deal 4 damage to a flank Creature."
-var SilentDagger = card.New(
+var SilentDagger = set.New(
 	"Silent Dagger",
 	card.House.Shadows,
 	card.Type.Upgrade,

@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Fight: Put the Creature Collector Worm fought into your archives.
-var CollectorWorm = card.New(
+var CollectorWorm = set.New(
 	"Collector Worm",
 	card.House.Mars,
 	card.Type.Creature,

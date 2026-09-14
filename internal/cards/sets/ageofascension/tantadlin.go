@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Tantadlin deals 2 Damage when fighting.
 //	Fight: Your opponent discards a random card from their archives.
-var Tantadlin = card.New(
+var Tantadlin = set.New(
 	"Tantadlin",
 	card.House.Untamed,
 	card.Type.Creature,

@@ -36,6 +36,32 @@ func TestArchiveEffect(t *testing.T) {
 	}
 }
 
+// TestArchiveEnemyHand covers archiving from the opponent's hand into the
+// caster's own archives — the abduction-from-hand path (Hidden Stash).
+func TestArchiveEnemyHand(t *testing.T) {
+	e := ArchiveCard{From: Opponent, Zone: Hand, Selection: Chosen{}}
+	if got := e.Text(); got != "archive a card from your opponent's hand" {
+		t.Errorf("text = %q", got)
+	}
+	// An opponent archive is only defined for the hand.
+	if (ArchiveCard{From: Opponent, Zone: Discard, Selection: Chosen{}}).validate() == nil {
+		t.Error("an opponent archive from the discard pile should be invalid")
+	}
+	if e.validate() != nil {
+		t.Error("an opponent hand archive should be valid")
+	}
+
+	g := NewGame("A", "B", 1)
+	enemy := g.AddToHand(testCreature("enemy", 1), 1)
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if g.State.Archives[0].Count != 1 || g.State.Archives[0].IDs[0] != enemy {
+		t.Errorf("caster archives = %v, want [%d]", g.State.Archives[0].slice(), enemy)
+	}
+	if len(g.Hand(1)) != 0 {
+		t.Errorf("opponent hand = %v, want empty", g.Hand(1))
+	}
+}
+
 // TestArchiveCardValidate covers ArchiveCard's guards: a selection must be set
 // and the source zone must be the hand or discard pile.
 func TestArchiveCardValidate(t *testing.T) {
@@ -163,7 +189,7 @@ func TestArchiveFromDiscardHouseFilter(t *testing.T) {
 	)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	e := ArchiveCard{Zone: Discard, Selection: Chosen{House: Mars}}
+	e := ArchiveCard{Zone: Discard, Selection: Chosen{House: namedHouse(Mars)}}
 	if e.Text() != "archive a Mars card from your discard pile" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -552,7 +578,7 @@ func TestArchivesDeclinedOnChooseHouse(t *testing.T) {
 func TestArchiveFromHandFiltered(t *testing.T) {
 	e := ArchiveCard{
 		Zone:      Hand,
-		Selection: Chosen{Type: Creature, House: Mars},
+		Selection: Chosen{Type: Creature, House: namedHouse(Mars)},
 		Revealed:  true,
 	}
 	want := "reveal a Mars creature from your hand and archive it"
@@ -602,7 +628,7 @@ func TestArchiveFromHandFiltered(t *testing.T) {
 func TestArchiveFromHandExceptHouse(t *testing.T) {
 	e := ArchiveCard{
 		Zone:      Hand,
-		Selection: Chosen{ExceptHouse: StarAlliance},
+		Selection: Chosen{House: exceptHouse(StarAlliance)},
 		Revealed:  true,
 	}
 	want := "reveal a non-Star Alliance card from your hand and archive it"

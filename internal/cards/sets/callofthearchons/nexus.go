@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Reap: Use an enemy Artifact.
-var Nexus = card.New(
+var Nexus = set.New(
 	"Nexus",
 	card.House.Shadows,
 	card.Type.Creature,

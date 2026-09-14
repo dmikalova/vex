@@ -6,17 +6,18 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Brobnar
 //	Type:   Creature
-//	Rarity: Special
+//	Rarity: Connected
 //	Power:  8
 //	Traits: Giant
 //
 //	Fight: Deal 2 damage to a flank Creature.
-var MegaMogghunter = card.New(
+var MegaMogghunter = set.New(
 	"Mega Mogghunter",
 	card.House.Brobnar,
 	card.Type.Creature,
-	card.Rarity.Special,
+	card.Rarity.Connected,
 	card.Provenance(card.WC, "59"),
+	card.InCluster(card.Pulled(mogghuntersBrewCluster, 1, 1.25)),
 	card.WithPower(8),
 	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(

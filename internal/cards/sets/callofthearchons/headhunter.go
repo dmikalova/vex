@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant
 //
 //	Fight: Gain 1 Æmber.
-var Headhunter = card.New(
+var Headhunter = set.New(
 	"Headhunter",
 	card.House.Brobnar,
 	card.Type.Creature,

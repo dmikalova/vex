@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	You may spend Æmber on friendly Creatures as if it were in your pool.
 //	Fight/Reap: Exalt Senator Bracchus.
-var SenatorBracchus = card.New(
+var SenatorBracchus = set.New(
 	"Senator Bracchus",
 	card.House.Saurian,
 	card.Type.Creature,

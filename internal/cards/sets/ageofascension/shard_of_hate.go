@@ -1,6 +1,9 @@
 package ageofascension
 
-import "github.com/dmikalova/vactrol/internal/card"
+import (
+	"github.com/dmikalova/vactrol/internal/card"
+	"github.com/dmikalova/vactrol/internal/cards/clusters"
+)
 
 // Shard of Hate
 //
@@ -10,13 +13,13 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item • Shard
 //
 //	Action: For each friendly Shard, stun an enemy Creature.
-var ShardOfHate = card.New(
+var ShardOfHate = set.New(
 	"Shard of Hate",
 	card.House.Mars,
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, "205"),
-	card.InCluster(shardCluster),
+	card.InCluster(clusters.Shard),
 	card.OneCopyPerDeck(),
 	card.WithTraits(card.Traits.Item, card.Traits.Shard),
 	card.WithAbility(

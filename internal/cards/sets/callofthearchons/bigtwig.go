@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Bigtwig can only fight stunned Creatures.
 //	Reap: Stun and exhaust a Creature.
-var Bigtwig = card.New(
+var Bigtwig = set.New(
 	"Bigtwig",
 	card.House.Untamed,
 	card.Type.Creature,

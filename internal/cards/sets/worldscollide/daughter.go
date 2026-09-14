@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	During your "draw cards" phase, refill your hand to 1 additional card.
-var Daughter = card.New(
+var Daughter = set.New(
 	"Daughter",
 	card.House.Logos,
 	card.Type.Creature,

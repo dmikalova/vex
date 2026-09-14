@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: For each house, deal 5 damage to a Creature of that house.
-var GleefulMayhem = card.New(
+var GleefulMayhem = set.New(
 	"Gleeful Mayhem",
 	card.House.Dis,
 	card.Type.Tactic,

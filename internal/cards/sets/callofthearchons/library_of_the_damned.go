@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Location
 //
 //	Action: Archive a card from your hand.
-var LibraryOfTheDamned = card.New(
+var LibraryOfTheDamned = set.New(
 	"Library of the Damned",
 	card.House.Dis,
 	card.Type.Artifact,

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //
 //	Play: Your opponent cannot use Creatures to reap during their next turn.
-var InkyGloom = card.New(
+var InkyGloom = set.New(
 	"Inky Gloom",
 	card.House.Shadows,
 	card.Type.Tactic,

@@ -17,6 +17,19 @@ type GenerationProfile struct {
 	// Houseless marks a Special card with no House until it fills a Slot, when it
 	// is stamped with that Slot's House.
 	Houseless bool
+	// Reservoir marks a card whose set builds no draw pool of its own: it belongs
+	// to a reservoir set (declared once by that set) and is undraftable regardless
+	// of House or Rarity, so its set gets no Set of its own (ADR 0036). It can
+	// still reach a deck through a cross-set mechanism: a cluster, or — when it is
+	// housed and non-Connected — the legacy pool, which other sets' legacy and
+	// legacy-maverick slots draw from.
+	Reservoir bool
+	// Leads, when non-nil, marks this card the lead of a deck-wide filtered pull
+	// (ADR 0036): whenever it is in a generated deck, generation guarantees at
+	// least the FilteredCluster's Floor of cards matching its predicate, in any
+	// House, topping up from the pool. A card can lead a filtered pull and also
+	// belong to a named Cluster, so the two live in separate fields.
+	Leads *FilteredCluster
 	// RarityWeight scales how often deck generation draws this card among its
 	// house+rarity peers, relative to the default weight of 1; a value of 0 (or
 	// less) means the default. Five Master-of-N variants at 0.2 draft as often as

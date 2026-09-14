@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Destroy the least powerful enemy Creature.
-var CullTheWeak = card.New(
+var CullTheWeak = set.New(
 	"Cull the Weak",
 	card.House.Dis,
 	card.Type.Tactic,

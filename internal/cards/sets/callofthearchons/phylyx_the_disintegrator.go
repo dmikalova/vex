@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Action: For each other friendly Mars Creature, your opponent loses 1 Æmber.
-var PhylyxTheDisintegrator = card.New("Phylyx the Disintegrator",
+var PhylyxTheDisintegrator = set.New("Phylyx the Disintegrator",
 	card.House.Mars, card.Type.Creature, card.Rarity.Rare,
 	card.Provenance(card.CotA, "197"),
 	card.WithPower(1),

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Versatile.
 //	Action: Destroy Nepenthe Seed, and put a card from your discard pile into your hand.
-var NepentheSeed = card.New(
+var NepentheSeed = set.New(
 	"Nepenthe Seed",
 	card.House.Untamed,
 	card.Type.Artifact,
@@ -22,6 +22,6 @@ var NepentheSeed = card.New(
 	card.WithAbility(
 		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
 			card.Destroy{Target: card.Target.This},
-			card.PutFromDiscard{Destination: card.To.Hand},
+			card.PutFromDiscard{Selection: card.Chosen{}, Destination: card.To.Hand},
 		}}),
 )

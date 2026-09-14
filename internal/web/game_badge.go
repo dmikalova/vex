@@ -21,6 +21,9 @@ const badgeFadeDur = 450 * time.Millisecond
 // leaving the badges on screen to grow and fade.
 func (c *webChooser) PreviewBadge(badge engine.SelectionBadge) {
 	c.g.dispatch(func(app.Context) {
+		if c.stale() {
+			return
+		}
 		if badge.Icon == engine.NoStatusIcon {
 			c.g.endBadgePreview()
 			return

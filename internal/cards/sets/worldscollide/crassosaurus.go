@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Play: Crassosaurus captures 10 Æmber from any combination of players. If there are fewer than 10 Æmber on it, purge Crassosaurus.
-var Crassosaurus = card.New(
+var Crassosaurus = set.New(
 	"Crassosaurus",
 	card.House.Saurian,
 	card.Type.Creature,
@@ -27,7 +27,7 @@ var Crassosaurus = card.New(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.CaptureFromAnyPlayer{Amount: 10},
 			card.Conditional{
-				Cond: card.AemberOnThisAtLeast{Amount: 10, Not: true},
+				Cond: card.Not{Cond: card.AemberOnThisAtLeast{Amount: 10}},
 				Then: card.PurgeCreature{Target: card.Target.This},
 			},
 		}},

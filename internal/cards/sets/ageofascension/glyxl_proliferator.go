@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Martian • Soldier
 //
 //	Reap: If Glyxl Proliferator is on a flank, archive a Mars card from your discard pile.
-var GlyxlProliferator = card.New(
+var GlyxlProliferator = set.New(
 	"Glyxl Proliferator",
 	card.House.Mars,
 	card.Type.Creature,
@@ -24,7 +24,7 @@ var GlyxlProliferator = card.New(
 			Cond: card.OnFlank{},
 			Then: card.ArchiveCard{
 				Zone:      card.Discard,
-				Selection: card.Chosen{House: card.House.Self},
+				Selection: card.Chosen{House: card.Houses.Named(card.House.Self)},
 			},
 		}),
 )

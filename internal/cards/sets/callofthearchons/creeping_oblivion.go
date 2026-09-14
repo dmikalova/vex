@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //
 //	Play: Purge up to 2 cards from a discard pile.
-var CreepingOblivion = card.New(
+var CreepingOblivion = set.New(
 	"Creeping Oblivion",
 	card.House.Dis,
 	card.Type.Tactic,

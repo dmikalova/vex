@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //
 //	Play: For each forged key your opponent has, put an enemy Creature into your archives.
-var SampleCollection = card.New(
+var SampleCollection = set.New(
 	"Sample Collection",
 	card.House.Mars,
 	card.Type.Tactic,

@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Skirmish.
 //	Explo-rover may be played as an Upgrade instead of a Creature, with the text: "This Creature gains skirmish."
-var ExploRover = card.New(
+var ExploRover = set.New(
 	"Explo-rover",
 	card.House.StarAlliance,
 	card.Type.Creature,

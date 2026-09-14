@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Choose a flank Creature. Deal 3 damage to it, 2 damage to its neighbor, and 1 damage to the neighbor's other neighbor.
-var PositronBolt = card.New(
+var PositronBolt = set.New(
 	"Positron Bolt",
 	card.House.Logos,
 	card.Type.Tactic,

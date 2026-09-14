@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Taunt, Hazardous 2.
-var BrutodonAuxiliary = card.New(
+var BrutodonAuxiliary = set.New(
 	"Brutodon Auxiliary",
 	card.House.Saurian,
 	card.Type.Creature,

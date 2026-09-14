@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Purge each friendly Shadows Creature. For each Creature purged this way, steal 1 Æmber.
-var OneLastJob = card.New(
+var OneLastJob = set.New(
 	"One Last Job",
 	card.House.Shadows,
 	card.Type.Tactic,
@@ -20,7 +20,7 @@ var OneLastJob = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.PurgeCreature{
-				Target: card.Target.EachFriendlyCreature.OfHouse(card.House.Self),
+				Target: card.Target.EachFriendlyCreature.House(card.Houses.Named(card.House.Self)),
 			},
 			card.StealAember{
 				Amount: 1,

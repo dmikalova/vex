@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Location
 //
 //	Action: For the remainder of the turn, after a Creature reaps, gain 1 Æmber.
-var CrystalHive = card.New(
+var CrystalHive = set.New(
 	"Crystal Hive",
 	card.House.Mars,
 	card.Type.Artifact,

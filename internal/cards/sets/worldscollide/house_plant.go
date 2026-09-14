@@ -11,18 +11,18 @@ import (
 //
 //	House:  Shadows
 //	Type:   Creature
-//	Rarity: Special
+//	Rarity: Rare
 //	Power:  1
 //	Traits: Elf • Thief
 //
 //	Elusive.
 //
 //	Template: its concrete card is materialized per deck at generation.
-var HousePlant = card.New(
+var HousePlant = set.New(
 	"House Plant",
 	card.House.Shadows,
 	card.Type.Creature,
-	card.Rarity.Special,
+	card.Rarity.Rare,
 	card.Provenance(card.WC, "286"),
 	card.Provenance(card.WC, "287"),
 	card.Provenance(card.WC, "288"),
@@ -44,7 +44,7 @@ func plantFor(ctx card.SlotContext, r *rand.Rand) card.Definition {
 		partner.String()+" Plant",
 		card.House.Shadows,
 		card.Type.Creature,
-		card.Rarity.Special,
+		card.Rarity.Rare,
 		card.WithPower(1),
 		card.WithTraits(card.Traits.Elf, card.Traits.Thief),
 		card.WithKeywords(card.Keyword.Elusive),

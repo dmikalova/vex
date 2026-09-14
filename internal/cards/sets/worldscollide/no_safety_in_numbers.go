@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Deal 3 damage to each Creature that belongs to a house that has 3 or more Creatures in play.
-var NoSafetyInNumbers = card.New(
+var NoSafetyInNumbers = set.New(
 	"No Safety in Numbers",
 	card.House.Shadows,
 	card.Type.Tactic,

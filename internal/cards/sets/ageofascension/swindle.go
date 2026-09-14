@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Alpha, Omega.
 //	Play: Steal 3 Æmber.
-var Swindle = card.New(
+var Swindle = set.New(
 	"Swindle",
 	card.House.Shadows,
 	card.Type.Tactic,

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon
 //
 //	During their "draw cards" phase, your opponent refills their hand to 1 less card.
-var Succubus = card.New(
+var Succubus = set.New(
 	"Succubus",
 	card.House.Dis,
 	card.Type.Creature,

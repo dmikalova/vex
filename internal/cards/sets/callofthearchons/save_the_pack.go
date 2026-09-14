@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //
 //	Play: Destroy each damaged Creature. Gain 1 chain.
-var SaveThePack = card.New(
+var SaveThePack = set.New(
 	"Save the Pack",
 	card.House.Untamed,
 	card.Type.Tactic,

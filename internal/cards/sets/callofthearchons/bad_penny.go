@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Thief
 //
 //	Destroyed: Put Bad Penny into its owner's hand.
-var BadPenny = card.New(
+var BadPenny = set.New(
 	"Bad Penny",
 	card.House.Shadows,
 	card.Type.Creature,

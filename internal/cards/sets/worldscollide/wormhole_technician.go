@@ -10,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Cyborg • Scientist
 //
-//	Reap: Reveal the top card of your deck. If it is a Logos card, play it. Otherwise, archive the top card of your deck.
-var WormholeTechnician = card.New(
+//	Reap: Reveal the top card of your deck. If it is a Logos card, play it. Otherwise, archive it.
+var WormholeTechnician = set.New(
 	"Wormhole Technician",
 	card.House.Logos,
 	card.Type.Creature,
@@ -24,9 +24,9 @@ var WormholeTechnician = card.New(
 			Effects: []card.Effect{
 				card.RevealTopOfDeck{Amount: 1},
 				card.Conditional{
-					Cond: card.ItIs{House: card.House.Self},
+					Cond: card.ItIs{House: card.Houses.Named(card.House.Self)},
 					Then: card.PlayRevealedCard{},
-					Else: card.ArchiveCard{Zone: card.Deck, Selection: card.Top{}},
+					Else: card.PutRevealedCard{To: card.Into.Archives},
 				},
 			},
 		}),

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Versatile.
 //	Action: Destroy Creed of Nature. Choose a Creature - for the remainder of the turn, it gains skirmish and assault equal to its power.
-var CreedOfNature = card.New(
+var CreedOfNature = set.New(
 	"Creed of Nature",
 	card.House.Untamed,
 	card.Type.Artifact,

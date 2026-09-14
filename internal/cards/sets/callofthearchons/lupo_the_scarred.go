@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Skirmish.
 //	Play: Deal 2 damage to a Creature.
-var LupoTheScarred = card.New(
+var LupoTheScarred = set.New(
 	"Lupo the Scarred",
 	card.House.Untamed,
 	card.Type.Creature,

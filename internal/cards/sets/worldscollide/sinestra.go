@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon
 //
 //	After your opponent plays a card, if it is on the left flank, your opponent loses 1 Æmber.
-var Sinestra = card.New(
+var Sinestra = set.New(
 	"Sinestra",
 	card.House.Dis,
 	card.Type.Creature,

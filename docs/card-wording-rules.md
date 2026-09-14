@@ -414,8 +414,14 @@ from hand, and it is played there and then.
 
 The general rule: **`... you may play an X card this turn` renders as `Play an X
 card`.** Both `you may` and `this turn` go — a play with no legal card in hand
-simply does nothing, so the permission needs no explicit opt-out. (Affected: Phase
-Shift, Kirby.)
+simply does nothing, so the permission needs no explicit opt-out. The rule extends
+to a grant that may be spent on **playing or using** a card. Taber's _"You may
+play or use a non-Star Alliance card this turn"_ becomes:
+
+> Fight/Reap: Play or use a non-Star Alliance card.
+
+The play-or-use resolves now against the cards in hand and in play. (Affected:
+Phase Shift, Kirby, Taber.)
 
 ## 22. A number-only branch collapses to `or <alt> if <cond>`
 

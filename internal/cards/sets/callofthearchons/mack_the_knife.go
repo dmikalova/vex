@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive, Versatile.
 //	Action: Deal 1 damage to a Creature. If this damage destroys that Creature, gain 1 Æmber.
-var MackTheKnife = card.New(
+var MackTheKnife = set.New(
 	"Mack the Knife",
 	card.House.Shadows,
 	card.Type.Creature,

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: During your opponent's next turn, after forging a key, your opponent gives you all their Æmber.
-var InterdimensionalGraft = card.New(
+var InterdimensionalGraft = set.New(
 	"Interdimensional Graft",
 	card.House.Logos,
 	card.Type.Tactic,

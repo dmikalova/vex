@@ -20,7 +20,7 @@ var garciasBlasterCluster = card.Cluster{
 //	This Creature gains, "Fight/Reap: Choose one:
 //	- Deal 2 damage to a Creature
 //	- Attach Garcia's Blaster to Sensor Chief Garcia -> steal 1 Æmber."
-var GarciasBlaster = card.New(
+var GarciasBlaster = set.New(
 	"Garcia's Blaster",
 	card.House.StarAlliance,
 	card.Type.Upgrade,

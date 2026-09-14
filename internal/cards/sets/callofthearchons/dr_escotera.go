@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Cyborg • Scientist
 //
 //	Play: For each forged key your opponent has, gain 1 Æmber.
-var DrEscotera = card.New(
+var DrEscotera = set.New(
 	"Dr. Escotera",
 	card.House.Logos,
 	card.Type.Creature,

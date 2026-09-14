@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Action: Bordan the Redeemed captures 2 Æmber from your opponent.
-var BordanTheRedeemed = card.New(
+var BordanTheRedeemed = set.New(
 	"Bordan the Redeemed",
 	card.House.Sanctum,
 	card.Type.Creature,

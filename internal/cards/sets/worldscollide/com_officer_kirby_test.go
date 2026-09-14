@@ -15,9 +15,9 @@ import (
 //	Power:  3
 //	Traits: Human
 //
-//	Play/Fight/Reap: You may play a non-Star Alliance Artifact, Upgrade, or Tactic this turn.
+//	Play/Fight/Reap: Play a non-Star Alliance Artifact, Upgrade, or Tactic.
 func TestComOfficerKirby(t *testing.T) {
-	t.Run("reaping frees one off-house non-creature this turn", func(t *testing.T) {
+	t.Run("reaping plays one off-house non-creature immediately", func(t *testing.T) {
 		var kirby ct.Card
 		marsArtifact := ct.Artifact(ct.OfHouse(card.House.Mars))
 		marsCreature := ct.Creature(ct.OfHouse(card.House.Mars))
@@ -29,13 +29,14 @@ func TestComOfficerKirby(t *testing.T) {
 			},
 		})
 
-		// A non-Star Alliance card cannot be played before the grant.
+		// A non-Star Alliance card cannot be played on its own before reaping.
 		h.P1.ExpectCannotPlay(marsArtifact)
 
+		// Reaping plays a non-creature at once: only the artifact qualifies (the
+		// creature is barred), so it is played automatically and enters play.
 		h.P1.Reap(kirby)
 
-		// The freed non-creature may now be played; the creature stays barred.
-		h.P1.ExpectCannotPlay(marsCreature)
-		h.P1.Play(marsArtifact)
+		h.Expect(marsArtifact).At(ct.PlayArea)
+		h.Expect(marsCreature).At(ct.Hand)
 	})
 }

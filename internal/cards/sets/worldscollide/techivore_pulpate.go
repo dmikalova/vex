@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Jelly
 //
 //	After a player chooses an active house, destroy each Artifact of that house.
-var TechivorePulpate = card.New(
+var TechivorePulpate = set.New(
 	"Techivore Pulpate",
 	card.House.StarAlliance,
 	card.Type.Creature,
@@ -21,6 +21,6 @@ var TechivorePulpate = card.New(
 	card.WithTraits(card.Traits.Jelly),
 	card.WithAbility(
 		card.Trigger.AfterAnyPlayerChoosesHouse,
-		card.Destroy{Target: card.Target.EachArtifact.OfActiveHouse()},
+		card.Destroy{Target: card.Target.EachArtifact.House(card.Houses.Active)},
 	),
 )

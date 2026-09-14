@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: A friendly Creature captures 2 Æmber from your opponent.
-var TermsOfRedress = card.New(
+var TermsOfRedress = set.New(
 	"Terms of Redress",
 	card.House.Sanctum,
 	card.Type.Tactic,

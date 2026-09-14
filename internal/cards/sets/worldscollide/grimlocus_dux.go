@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Taunt.
 //	Play: Exalt Grimlocus Dux 2 times.
-var GrimlocusDux = card.New(
+var GrimlocusDux = set.New(
 	"Grimlocus Dux",
 	card.House.Saurian,
 	card.Type.Creature,

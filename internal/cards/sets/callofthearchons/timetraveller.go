@@ -21,7 +21,7 @@ var timetravellerCluster = card.Cluster{
 //
 //	Play: Draw 2 cards.
 //	Action: Shuffle Timetraveller into its owner's deck.
-var Timetraveller = card.New(
+var Timetraveller = set.New(
 	"Timetraveller",
 	card.House.Logos,
 	card.Type.Creature,

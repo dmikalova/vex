@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Each friendly Creature gains +1 armor.
 //	Reap: Heal 2 damage from a Creature.
-var GreyMonk = card.New(
+var GreyMonk = set.New(
 	"Grey Monk",
 	card.House.Sanctum,
 	card.Type.Creature,

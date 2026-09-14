@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //
 //	Play: Choose a Creature - purge each Creature that shares a trait with it. For each card they controlled that was purged this way, each player gains 1 Æmber.
-var HarvestTime = card.New(
+var HarvestTime = set.New(
 	"Harvest Time",
 	card.House.Dis,
 	card.Type.Tactic,

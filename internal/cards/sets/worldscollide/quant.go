@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Scientist
 //
 //	Reap: Play a non-Logos Tactic.
-var Quant = card.New(
+var Quant = set.New(
 	"Quant",
 	card.House.Logos,
 	card.Type.Creature,
@@ -21,9 +21,8 @@ var Quant = card.New(
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
 	card.WithAbility(
 		card.Trigger.Reap, card.PlayFrom{
-			From:   card.Hand,
-			House:  card.House.Self,
-			Except: true,
-			Type:   card.Type.Tactic,
+			From:  card.Hand,
+			House: card.Houses.Except(card.House.Self),
+			Types: card.Types.Of(card.Type.Tactic),
 		}),
 )

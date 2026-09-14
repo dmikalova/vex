@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Play: Stun a Creature.
 //	Action: Put Lady Maxena into its owner's hand.
-var LadyMaxena = card.New(
+var LadyMaxena = set.New(
 	"Lady Maxena",
 	card.House.Sanctum,
 	card.Type.Creature,

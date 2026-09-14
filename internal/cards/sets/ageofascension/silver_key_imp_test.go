@@ -12,7 +12,7 @@ import (
 //
 //	House:  Dis
 //	Type:   Creature
-//	Rarity: Special
+//	Rarity: Rare
 //	Power:  2
 //	Traits: Imp
 //

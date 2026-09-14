@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Cyborg
 //
 //	Play: Look at the top 3 cards of your deck, put 1 into your hand, and discard 2.
-var Eyegor = card.New(
+var Eyegor = set.New(
 	"Eyegor",
 	card.House.Logos,
 	card.Type.Creature,

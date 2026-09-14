@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Alpha.
 //	Play: For the remainder of the turn, you may play cards from any house for which you have a card in play. You cannot use cards this turn.
-var UnitedAction = card.New(
+var UnitedAction = set.New(
 	"United Action",
 	card.House.StarAlliance,
 	card.Type.Tactic,
@@ -20,7 +20,7 @@ var UnitedAction = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.MayPlayOrUse{
-				Houses: card.Houses.Controlled,
+				Houses: card.GrantHouses.Controlled,
 				Grant:  card.GrantPlay,
 			},
 			card.CannotUse{

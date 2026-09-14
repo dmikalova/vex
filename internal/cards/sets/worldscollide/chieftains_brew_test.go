@@ -10,24 +10,33 @@ import (
 // Chieftain's Brew
 //
 //	House:  Brobnar
-//	Type:   Tactic
-//	Rarity: Special
+//	Type:   Upgrade
+//	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Give a Creature two +1 power counters.
+//	This Creature gains, "Fight: Ready and fight with a neighboring Creature."
 func TestChieftainsBrew(t *testing.T) {
-	t.Run("gives a creature two +1 power counters", func(t *testing.T) {
-		var troll ct.Card
+	t.Run("host fighting readies and fights a neighboring creature", func(t *testing.T) {
+		var host, neighbor, weakFoe, bigFoe ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.Brobnar,
-				Hand:   ct.Cards(ChieftainsBrew),
-				InPlay: ct.Cards(ct.Bind(&troll, ct.Creature(ct.Power(4)))),
+				House: card.House.Brobnar,
+				InPlay: ct.Cards(
+					ct.Bind(&neighbor, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(4))),
+					ct.Upgraded(
+						ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(4))),
+						ChieftainsBrew,
+					),
+				),
 			},
+			P2: ct.Side{InPlay: ct.Cards(
+				ct.Bind(&weakFoe, ct.Creature(ct.Power(1))),
+				ct.Bind(&bigFoe, ct.Creature(ct.Power(10))),
+			)},
 		})
 
-		h.P1.Play(ChieftainsBrew)
+		h.P1.Fight(host, weakFoe)
 
-		h.Expect(troll).Power(6)
+		h.Expect(bigFoe).Damage(4)
 	})
 }

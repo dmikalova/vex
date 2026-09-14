@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Imp
 //
 //	Your opponent cannot play more than 2 cards each turn.
-var EmberImp = card.New(
+var EmberImp = set.New(
 	"Ember Imp",
 	card.House.Dis,
 	card.Type.Creature,

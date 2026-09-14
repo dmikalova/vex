@@ -2,26 +2,31 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
+// cowfynesBrewCluster pulls a Mega Cowfyne into Cowfyne's Brew's pod — a Pull
+// cluster the brew leads, so the giant it is brewed for rides along.
+var cowfynesBrewCluster = card.Cluster{
+	Name:     "Cowfyne's Brew",
+	Strategy: card.ClusterStrategy.Pull,
+	Trigger:  card.ClusterTrigger.ByLead,
+}
+
 // Cowfyne's Brew
 //
 //	House:  Brobnar
-//	Type:   Tactic
-//	Rarity: Special
+//	Type:   Upgrade
+//	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Give a Creature two +1 power counters.
-var CowfynesBrew = card.New(
+//	This Creature gains +2 splash-attack.
+var CowfynesBrew = set.New(
 	"Cowfyne's Brew",
 	card.House.Brobnar,
-	card.Type.Tactic,
-	// TODO(variant): rarity relabelled from Variant to Special — handle manually
-	card.Rarity.Special,
-	// TODO(duplicate): mechanically identical to Alaka's Brew — fold/handle manually
+	card.Type.Upgrade,
+	card.Rarity.Rare,
 	card.Provenance(card.WC, "63"),
+	card.LeadsCluster(cowfynesBrewCluster),
 	card.WithAemberBonus(1),
-	card.WithAbility(
-		card.Trigger.Play, card.AddPowerCounter{
-			Target: card.Target.Creature,
-			Amount: 2,
-		}),
+	card.WithStatic(card.StaticModifier{
+		SplashAttackBonus: 2,
+	}),
 )

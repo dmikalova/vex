@@ -10,7 +10,7 @@ import (
 // threshold is rejected at registration rather than silently treated as one.
 type CardsDiscarded struct {
 	Player Player
-	House  House
+	House  HouseMatcher
 	Amount int
 }
 
@@ -46,17 +46,12 @@ func (e CardsDiscarded) CondText() string {
 }
 
 // discardPhrase renders the required discards: "an Untamed card" for one, or
-// "3 Untamed cards" for more. With HouseNone the house is omitted ("a card",
-// "3 cards"), so an Earthbind-style "discarded a card" reads naturally.
+// "3 Untamed cards" for more. With an any-house matcher the house is omitted ("a
+// card", "3 cards"), so an Earthbind-style "discarded a card" reads naturally.
 func (e CardsDiscarded) discardPhrase() string {
-	if e.House == HouseNone {
-		if e.Amount == 1 {
-			return "a card"
-		}
-		return fmt.Sprintf("%d cards", e.Amount)
-	}
+	noun := e.House.qualifyNoun("card")
 	if e.Amount == 1 {
-		return indefinite(e.House.String() + " card")
+		return indefinite(noun)
 	}
-	return fmt.Sprintf("%d %s cards", e.Amount, e.House.String())
+	return fmt.Sprintf("%d %ss", e.Amount, noun)
 }

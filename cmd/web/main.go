@@ -337,11 +337,13 @@ const bootStyle = `<style>
 </style>`
 
 // card strips (convenient when a battleline runs off-screen) and keeps the game
-// log pinned to its newest entry.
+// log pinned to its newest entry. A player bar (.score-pill) scrolls sideways the
+// same way, so a squeezed bar's stats and keys are reached by wheeling over it.
 const boardScript = `<script>
 (function () {
   document.addEventListener('wheel', function (e) {
-    var strip = e.target && e.target.closest ? e.target.closest('.card-strip') : null;
+    var strip = e.target && e.target.closest
+      ? e.target.closest('.card-strip, .score-pill') : null;
     if (strip && strip.scrollWidth > strip.clientWidth && e.deltaY !== 0) {
       strip.scrollLeft += e.deltaY;
       e.preventDefault();
@@ -359,6 +361,30 @@ const boardScript = `<script>
     var log = document.getElementById('gamelog');
     if (log && stick) { log.scrollTop = log.scrollHeight; }
   }).observe(document.documentElement, { childList: true, subtree: true });
+
+  // Publish the floating dock's live width as --dock-reserve so the lower player
+  // bar ends at the dock's current edge, not at the widest a prompt could open it
+  // to. A ResizeObserver tracks the dock as its content changes size; a
+  // MutationObserver re-finds it whenever go-app re-renders it, and clears the
+  // reserve when it is gone. Only a floating (fixed) dock reserves room — spanned
+  // across the bottom in portrait it is static and the bar keeps the full width.
+  var root = document.documentElement;
+  function syncDockReserve() {
+    var dock = document.querySelector('.control-dock--floating');
+    var reserve = 0;
+    if (dock && getComputedStyle(dock).position === 'fixed') {
+      reserve = dock.getBoundingClientRect().width;
+    }
+    root.style.setProperty('--dock-reserve', reserve + 'px');
+  }
+  var dockSize = new ResizeObserver(syncDockReserve);
+  new MutationObserver(function () {
+    dockSize.disconnect();
+    var dock = document.querySelector('.control-dock--floating');
+    if (dock) { dockSize.observe(dock); }
+    syncDockReserve();
+  }).observe(document.documentElement, { childList: true, subtree: true });
+  syncDockReserve();
 
   // Drag hand cards onto the board: seed the drag (Firefox needs data on it) and
   // mark the board a valid drop target so the drop fires. The play logic runs in

@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Elusive.
 //	Play: Purge each card from your hand.
 //	Reap: Keys cost +3 Æmber during your opponent's next turn.
-var LesserOxtet = card.New(
+var LesserOxtet = set.New(
 	"Lesser Oxtet",
 	card.House.Dis,
 	card.Type.Creature,

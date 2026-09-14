@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Your opponent's keys cost +1 Æmber.
 //	Fight/Reap: Grabber Jammer captures 1 Æmber from your opponent.
-var GrabberJammer = card.New(
+var GrabberJammer = set.New(
 	"Grabber Jammer",
 	card.House.Mars,
 	card.Type.Creature,

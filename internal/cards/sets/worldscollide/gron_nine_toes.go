@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant
 //
 //	Gron Nine-Toes gains +4 power while it is damaged.
-var GronNineToes = card.New(
+var GronNineToes = set.New(
 	"Gron Nine-Toes",
 	card.House.Brobnar,
 	card.Type.Creature,

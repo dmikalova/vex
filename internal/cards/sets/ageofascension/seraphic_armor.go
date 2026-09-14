@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	This Creature gains +1 armor.
 //	Play: Fully heal this Creature.
-var SeraphicArmor = card.New(
+var SeraphicArmor = set.New(
 	"Seraphic Armor",
 	card.House.Sanctum,
 	card.Type.Upgrade,

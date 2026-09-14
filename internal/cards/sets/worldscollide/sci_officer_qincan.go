@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	After a player chooses an active house which matches no cards in play, steal 1 Æmber.
-var SciOfficerQincan = card.New(
+var SciOfficerQincan = set.New(
 	"Sci. Officer Qincan",
 	card.House.StarAlliance,
 	card.Type.Creature,

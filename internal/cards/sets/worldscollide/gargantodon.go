@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Gargantodon deals 4 Damage when fighting.
 //	Each Æmber that would be stolen is captured by a Creature controlled by the active player instead.
 //	Gargantodon enters play stunned.
-var Gargantodon = card.New(
+var Gargantodon = set.New(
 	"Gargantodon",
 	card.House.Saurian,
 	card.Type.Creature,

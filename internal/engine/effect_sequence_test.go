@@ -26,7 +26,7 @@ func TestSequenceEffect(t *testing.T) {
 
 func TestSentencesRendersEachChildAsItsOwnSentence(t *testing.T) {
 	seq := Sentences{Effects: []Effect{
-		DiscardTopOfDeck{Player: Opponent},
+		DiscardTop{Player: Opponent},
 		RevealHand{Player: Opponent},
 		GainAember{
 			Player: Controller,

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Deal 4 damage to a flank Creature. If this damage destroys that Creature, its controller loses 1 Æmber.
-var BerserkerSlam = card.New(
+var BerserkerSlam = set.New(
 	"Berserker Slam",
 	card.House.Brobnar,
 	card.Type.Tactic,

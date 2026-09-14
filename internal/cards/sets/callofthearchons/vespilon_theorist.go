@@ -11,8 +11,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Cyborg • Scientist
 //
 //	Elusive.
-//	Reap: Choose a house - reveal the top card of your deck. If it is of the chosen house, archive the top card of your deck, and gain 1 Æmber. Otherwise, discard the top card of your deck.
-var VespilonTheorist = card.New(
+//	Reap: Choose a house - reveal the top card of your deck. If it is of the chosen house, archive it, and gain 1 Æmber. Otherwise, discard it.
+var VespilonTheorist = set.New(
 	"Vespilon Theorist",
 	card.House.Logos,
 	card.Type.Creature,
@@ -27,17 +27,17 @@ var VespilonTheorist = card.New(
 				Effects: []card.Effect{
 					card.RevealTopOfDeck{Amount: 1},
 					card.Conditional{
-						Cond: card.ItIsOfHouse{House: card.TheChosenHouse},
+						Cond: card.ItIs{House: card.Houses.Chosen},
 						Then: card.Sequence{
 							Effects: []card.Effect{
-								card.ArchiveCard{Zone: card.Deck, Selection: card.Top{}},
+								card.PutRevealedCard{To: card.Into.Archives},
 								card.GainAember{
 									Player: card.Controller,
 									Amount: 1,
 								},
 							},
 						},
-						Else: card.DiscardTopOfDeck{Player: card.Controller},
+						Else: card.PutRevealedCard{To: card.Into.Discard},
 					},
 				},
 			},

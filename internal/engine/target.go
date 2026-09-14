@@ -125,6 +125,10 @@ const (
 	// {card} placeholder, which the granted-text renderer resolves to the granting
 	// card's own name ("from Uncharted Lands").
 	TargetGrantingCard
+	// TargetEachNeighbor selects the source card's live battleline neighbors and
+	// renders them as "each of <self>'s neighbors" — Ghosthawk reaps with each of
+	// its neighbors, one at a time.
+	TargetEachNeighbor
 )
 
 // Target describes which cards an effect applies to. Kind picks the base set;
@@ -134,16 +138,12 @@ type Target struct {
 	Kind        TargetKind
 	trait       Trait
 	exceptTrait Trait
-	house       House
-	exceptHouse House
-	chosenHouse bool
-	// activeHouse narrows the target to cards of the player's active house,
-	// rendering "of that house" — Techivore Pulpate destroys each artifact of
-	// the house a player just chose.
-	activeHouse bool
-	// contextualHouse narrows the target to cards sharing the house of the card in
-	// context (ctx.It), rendering "of that card's house" — ForEachDiscarded's Do.
-	contextualHouse bool
+	// house narrows the target to the cards the matcher admits — a named house, every
+	// house but one, the chosen house, the active house, or the house of the card in
+	// context (ctx.It). The zero value (any house) narrows nothing. Because the field
+	// is unexported, a SelfHouse sentinel in it resolves through selfHouseResolved
+	// rather than by reflection.
+	house HouseMatcher
 	// houseWithMostCreatures narrows the target to creatures of the house with the
 	// most creatures in play, counting both players' battlelines; on a tie every
 	// tied house's creatures are eligible so the chooser picks among them
@@ -233,41 +233,14 @@ func (t Target) ExceptTrait(trait Trait) Target {
 	return t
 }
 
-// OfHouse narrows the target to cards of the given house, e.g.
-// Target{Kind: TargetEachCreature}.OfHouse(Mars).
-func (t Target) OfHouse(h House) Target {
-	t.house = h
-	return t
-}
-
-// ExceptHouse narrows the target to cards NOT of the given house, rendering the
-// "non-<house>" qualifier, e.g. a chosen friendly creature ExceptHouse(Sanctum)
-// reads "a friendly non-Sanctum creature".
-func (t Target) ExceptHouse(h House) Target {
-	t.exceptHouse = h
-	return t
-}
-
-// OfChosenHouse narrows the target to cards of the house picked by an enclosing
-// ChooseHouseThen (read from the effect context at selection time).
-func (t Target) OfChosenHouse() Target {
-	t.chosenHouse = true
-	return t
-}
-
-// OfActiveHouse narrows the target to cards of the active house (read from the
-// effect context at selection time) — the house a player just chose, for
-// Techivore Pulpate's "each artifact of that house".
-func (t Target) OfActiveHouse() Target {
-	t.activeHouse = true
-	return t
-}
-
-// OfContextualHouse narrows the target to cards sharing the house of the card in
-// context (ctx.It) — the discarded card ForEachDiscarded puts in focus — rendering
-// "of that card's house".
-func (t Target) OfContextualHouse() Target {
-	t.contextualHouse = true
+// House narrows the target to the cards a HouseMatcher admits — a named house,
+// every house but one, the chosen house, the active house, or the house of the
+// card in context. Target{Kind: TargetEachCreature}.House(namedHouse(Mars)) reads
+// "each Mars creature"; .House(exceptHouse(Sanctum)) reads "each non-Sanctum
+// creature"; .House(HouseMatcher{Kind: MatchChosenHouse}) reads "each creature of
+// the chosen house".
+func (t Target) House(m HouseMatcher) Target {
+	t.house = m
 	return t
 }
 
@@ -279,15 +252,13 @@ func (t Target) OfHouseWithMostCreatures() Target {
 	return t
 }
 
-// selfHouseResolved fills the card's own house in for any SelfHouse sentinel the
-// target narrows on. A Target keeps its houses and refinement unexported, so it
-// resolves itself rather than being rewritten by reflection (see self_house.go).
+// selfHouseResolved fills the card's own house in for a SelfHouse sentinel the
+// target narrows on. A Target keeps its house matcher and refinement unexported,
+// so it resolves itself rather than being rewritten by reflection (see
+// self_house.go).
 func (t Target) selfHouseResolved(house House) any {
-	if t.house == SelfHouse {
-		t.house = house
-	}
-	if t.exceptHouse == SelfHouse {
-		t.exceptHouse = house
+	if t.house.House == SelfHouse {
+		t.house.House = house
 	}
 	if t.refinement != nil {
 		t.refinement = resolvedIn(t.refinement, house)
@@ -550,6 +521,8 @@ func (t Target) Text() string {
 		return CardName
 	case TargetFormerNeighbors:
 		return "each of that creature's neighbors"
+	case TargetEachNeighbor:
+		return "each of " + SelfName + "'s neighbors"
 	case TargetTheFoughtCreature:
 		return t.decorateNeighbors("the fought creature")
 	}
@@ -575,15 +548,10 @@ func (t Target) Text() string {
 	if t.named != "" {
 		noun = t.named
 	}
-	if t.exceptHouse != HouseNone {
-		noun = "non-" + t.exceptHouse.String() + " " + noun
-	}
 	if t.trait != traitUnset {
 		noun = t.trait.String() + " " + noun
 	}
-	if t.house != HouseNone {
-		noun = t.house.String() + " " + noun
-	}
+	noun = t.house.qualifyNoun(noun)
 	if t.exceptTrait != traitUnset {
 		noun = "non-" + t.exceptTrait.String() + " " + noun
 	}
@@ -721,15 +689,7 @@ func (t Target) Text() string {
 	if t.toLeftOfSource {
 		phrase += " to the left of " + SelfName
 	}
-	if t.chosenHouse {
-		phrase += " of the chosen house"
-	}
-	if t.activeHouse {
-		phrase += " of that house"
-	}
-	if t.contextualHouse {
-		phrase += " of that card's house"
-	}
+	phrase = t.house.qualifyPhrase(phrase)
 	if t.houseWithMostCreatures {
 		phrase += " of the house with the most creatures in play"
 	}

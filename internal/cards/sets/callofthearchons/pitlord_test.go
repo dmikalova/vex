@@ -30,8 +30,8 @@ func TestPitlord(t *testing.T) {
 		h.P2.ChooseHouse(card.House.Mars)
 		h.P2.EndTurn()
 
-		if err := h.Game().ChooseHouse(0, card.House.Brobnar); err != engine.ErrHouseLocked {
-			t.Errorf("choosing another house = %v, want ErrHouseLocked", err)
+		if err := h.Game().ChooseHouse(0, card.House.Brobnar); err != engine.ErrHouseNotAllowed {
+			t.Errorf("choosing another house = %v, want ErrHouseNotAllowed", err)
 		}
 		h.P1.ChooseHouse(card.House.Dis) // the locked house is allowed
 	})

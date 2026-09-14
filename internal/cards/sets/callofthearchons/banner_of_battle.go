@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item
 //
 //	Each friendly Creature gains +1 power.
-var BannerOfBattle = card.New(
+var BannerOfBattle = set.New(
 	"Banner of Battle",
 	card.House.Brobnar,
 	card.Type.Artifact,

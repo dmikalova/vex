@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //
 //	This Creature gains, "Your opponent's keys cost +1 Æmber for each house represented among friendly Creatures."
-var Quadracorder = card.New(
+var Quadracorder = set.New(
 	"Quadracorder",
 	card.House.StarAlliance,
 	card.Type.Upgrade,

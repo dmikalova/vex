@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Reveal your opponent's hand, and you may purge a Sanctum card from your opponent's hand.
-var ImperialTraitor = card.New(
+var ImperialTraitor = set.New(
 	"Imperial Traitor",
 	card.House.Shadows,
 	card.Type.Tactic,
@@ -22,8 +22,11 @@ var ImperialTraitor = card.New(
 			Effects: []card.Effect{
 				card.RevealHand{Player: card.Opponent},
 				card.PurgeFromHand{
-					Player:    card.Opponent,
-					Selection: card.Chosen{House: card.House.Sanctum, Optional: true},
+					Player: card.Opponent,
+					Selection: card.Chosen{
+						House:    card.Houses.Named(card.House.Sanctum),
+						Optional: true,
+					},
 				},
 			},
 		}),

@@ -131,6 +131,156 @@ func TestLegacyDraws(t *testing.T) {
 	}
 }
 
+// An interloper House pod is drawn entirely from the legacy pool: every slot a
+// same-House card from another Set. With InterloperRate at 1 every pod is an
+// interloper, so every slot is tagged legacy and keeps its pod's House.
+func TestInterloperHousePod(t *testing.T) {
+	tuning := DefaultTuning()
+	tuning.InterloperRate = 1 // force every pod to draw from the legacy pool
+	entries := make([]LegacyEntry, 0)
+	for _, c := range legacyPool() {
+		entries = append(entries, LegacyEntry{Card: c, Set: "Other"})
+	}
+	set := NewSet("Test", synthCards(), tuning).WithLegacy(NewLegacy(entries))
+
+	deck := Generate(set, 3)
+	for _, pod := range deck.Pods {
+		for i, s := range pod.Slots {
+			if !s.Legacy {
+				t.Errorf("pod %v slot %d not legacy in an interloper pod", pod.House, i)
+			}
+			if s.Card.House != pod.House {
+				t.Errorf("pod %v slot %d house = %v, want pod house",
+					pod.House, i, s.Card.House)
+			}
+		}
+	}
+	if got := len(deck.Cards()); got != DeckSize {
+		t.Fatalf("deck has %d cards, want %d", got, DeckSize)
+	}
+}
+
+// With no legacy pool the interloper roll never fires, so a single-set build
+// draws exactly the deck it did before the overlay existed.
+func TestInterloperNeedsLegacyPool(t *testing.T) {
+	tuning := DefaultTuning()
+	tuning.InterloperRate = 1
+	set := NewSet("Test", synthCards(), tuning) // no legacy pool
+
+	deck := Generate(set, 3)
+	for _, pod := range deck.Pods {
+		for i, s := range pod.Slots {
+			if s.Legacy {
+				t.Errorf("pod %v slot %d tagged legacy without a legacy pool", pod.House, i)
+			}
+		}
+	}
+}
+
+// foreignLegacyPool builds a legacy pool of Houses foreign to synthSet — Houses an
+// errant pod can bring into a deck.
+func foreignLegacyPool() []Card {
+	houses := []engine.House{engine.Shadows, engine.Untamed, engine.Saurian}
+	var cs []Card
+	for _, h := range houses {
+		for i := 0; i < 4; i++ {
+			name := "Foreign-" + h.String() + "-" + string(rune('a'+i))
+			cs = append(cs, Card{Def: engine.NewCard(
+				name, h, engine.Creature, engine.Common, engine.WithPower(2),
+			)})
+		}
+	}
+	return cs
+}
+
+// An errant House pod replaces its native House with a foreign one (present in the
+// legacy pool but not native to the Set) and draws every slot from the legacy pool
+// as that foreign House. With ErrantRate at 1 and three foreign Houses available,
+// every pod is an errant foreign pod, all-legacy, keeping its foreign House.
+func TestErrantHousePod(t *testing.T) {
+	tuning := DefaultTuning()
+	tuning.ErrantRate = 1     // force every pod errant
+	tuning.InterloperRate = 0 // isolate the errant overlay
+	entries := make([]LegacyEntry, 0)
+	for _, c := range foreignLegacyPool() {
+		entries = append(entries, LegacyEntry{Card: c, Set: "Other"})
+	}
+	set := NewSet("Test", synthCards(), tuning).WithLegacy(NewLegacy(entries))
+
+	foreign := map[engine.House]bool{
+		engine.Shadows: true, engine.Untamed: true, engine.Saurian: true,
+	}
+	deck := Generate(set, 3)
+	for _, pod := range deck.Pods {
+		if !foreign[pod.House] {
+			t.Errorf("pod House %v is not a foreign errant House", pod.House)
+		}
+		for i, s := range pod.Slots {
+			if !s.Legacy {
+				t.Errorf("pod %v slot %d not legacy in an errant pod", pod.House, i)
+			}
+			if s.Card.House != pod.House {
+				t.Errorf("pod %v slot %d House = %v, want pod House", pod.House, i, s.Card.House)
+			}
+		}
+	}
+	if got := len(deck.Cards()); got != DeckSize {
+		t.Fatalf("deck has %d cards, want %d", got, DeckSize)
+	}
+}
+
+// With no foreign House in the legacy pool the errant roll never fires, so every
+// pod keeps a native House even at ErrantRate 1.
+func TestErrantNeedsForeignHouse(t *testing.T) {
+	tuning := DefaultTuning()
+	tuning.ErrantRate = 1
+	tuning.InterloperRate = 0
+	entries := make([]LegacyEntry, 0)
+	for _, c := range legacyPool() { // same Houses as synthSet: no foreign House
+		entries = append(entries, LegacyEntry{Card: c, Set: "Other"})
+	}
+	set := NewSet("Test", synthCards(), tuning).WithLegacy(NewLegacy(entries))
+
+	native := map[engine.House]bool{}
+	for _, h := range set.Houses() {
+		native[h] = true
+	}
+	deck := Generate(set, 3)
+	for _, pod := range deck.Pods {
+		if !native[pod.House] {
+			t.Errorf("pod House %v is foreign, but the legacy pool has none", pod.House)
+		}
+	}
+}
+
+// A deck's Houses stay distinct: when more pods roll errant than there are foreign
+// Houses, the surplus rolls find no free foreign House and fall back to a native
+// pod. With a single foreign House, exactly one pod becomes errant.
+func TestErrantExhaustsForeignHouses(t *testing.T) {
+	tuning := DefaultTuning()
+	tuning.ErrantRate = 1
+	tuning.InterloperRate = 0
+	entries := make([]LegacyEntry, 0)
+	for i := 0; i < 4; i++ {
+		entries = append(entries, LegacyEntry{
+			Card: mkCard("Sau-"+string(rune('a'+i)), engine.Saurian, engine.Common),
+			Set:  "Other",
+		})
+	}
+	set := NewSet("Test", synthCards(), tuning).WithLegacy(NewLegacy(entries))
+
+	deck := Generate(set, 3)
+	saurian := 0
+	for _, pod := range deck.Pods {
+		if pod.House == engine.Saurian {
+			saurian++
+		}
+	}
+	if saurian != 1 {
+		t.Fatalf("errant deck has %d Saurian pods, want exactly 1", saurian)
+	}
+}
+
 // candidates drops the entries belonging to the drawing set and keeps the rest, so
 // a Set never draws one of its own cards as a legacy card.
 func TestLegacyCandidatesExcludesOwnSet(t *testing.T) {
@@ -169,6 +319,28 @@ func TestLegacyDrawOfSetMemberNotTaggedLegacy(t *testing.T) {
 	}
 	if got := len(deck.Cards()); got != DeckSize {
 		t.Fatalf("deck has %d cards, want %d", got, DeckSize)
+	}
+}
+
+// A reservoir card is undraftable — its set builds no draw pool of its own (that
+// is what makes a set like the Anomaly Expansion "not offered for deck
+// generation") — but a housed, non-Connected reservoir card is still a legal
+// legacy guest: legacy and legacy-maverick slots in other sets can draw it. This
+// is what lets Anomaly Expansion cards appear in decks without the set ever being
+// draftable. NewLegacy gates only on Houseless/Connected/HouseNone, never on the
+// reservoir flag, so the card is kept.
+func TestNewLegacyKeepsReservoirCard(t *testing.T) {
+	reservoir := Card{
+		Def:     engine.NewCard("Anomaly", engine.Brobnar, engine.Creature, engine.Special),
+		Profile: GenerationProfile{Reservoir: true},
+	}
+	if Draftable(reservoir) {
+		t.Fatal("a reservoir card must not be draftable")
+	}
+	l := NewLegacy([]LegacyEntry{{Card: reservoir, Set: "Anomaly Expansion"}})
+	got := l.candidates(l.byHouse[engine.Brobnar], "Some Other Set")
+	if len(got) != 1 || got[0].Def.Name != "Anomaly" {
+		t.Fatalf("legacy pool = %v, want the reservoir card kept as a legacy guest", got)
 	}
 }
 

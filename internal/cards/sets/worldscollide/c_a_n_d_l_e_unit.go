@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	After an enemy Creature reaps, draw a card.
 //	Action: C.A.N.D.L.E. Unit captures 1 Æmber from your opponent.
-var CANDLEUnit = card.New(
+var CANDLEUnit = set.New(
 	"C.A.N.D.L.E. Unit",
 	card.House.Logos,
 	card.Type.Creature,

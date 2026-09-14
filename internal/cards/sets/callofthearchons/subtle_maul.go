@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Weapon
 //
 //	Action: Your opponent discards a random card from their hand.
-var SubtleMaul = card.New(
+var SubtleMaul = set.New(
 	"Subtle Maul",
 	card.House.Shadows,
 	card.Type.Artifact,

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Versatile.
 //	Action: Play a Saurian Creature -> stun it.
-var ImperialRoad = card.New(
+var ImperialRoad = set.New(
 	"Imperial Road",
 	card.House.Saurian,
 	card.Type.Artifact,
@@ -23,8 +23,8 @@ var ImperialRoad = card.New(
 		card.Trigger.Action, card.Then{
 			First: card.PlayFrom{
 				From:  card.Hand,
-				House: card.House.Self,
-				Type:  card.Type.Creature,
+				House: card.Houses.Named(card.House.Self),
+				Types: card.Types.Of(card.Type.Creature),
 			},
 			Result: card.Stun{Target: card.Target.Triggering},
 		}),

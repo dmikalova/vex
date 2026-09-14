@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Remove a ward from a Creature, and ward a Creature.
-var HunterOrHunted = card.New(
+var HunterOrHunted = set.New(
 	"Hunter or Hunted?",
 	card.House.Shadows,
 	card.Type.Tactic,

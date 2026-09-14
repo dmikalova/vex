@@ -41,12 +41,13 @@ frontend.
   back to scan order, which is the previous behavior.
 - The game log can state the order a player chose, because there now is one
   (ADR 0011).
-- **Identical abilities are auto-ordered, never prompted.** Ordering compares
-  ability _identity_ — trigger plus rendered text — not card, because the same
-  card can resolve differently as the board changes. Abilities that would resolve
-  identically are collapsed to one representative before the prompt, so a window
-  of only identical abilities is silent and a window with a distinct one asks only
-  about the distinct abilities. See `orderTriggered` in `game_abilities.go`.
+- **A window of only identical abilities is auto-ordered, never prompted.**
+  Ordering compares ability _identity_ — trigger plus rendered text — not card,
+  because the same card can resolve differently as the board changes. When every
+  pending ability shares one identity the window resolves the same in any order, so
+  it is silent; a single distinct entry makes the whole window ordered in full
+  (identical entries included), because resolving one can change what another does.
+  See `orderTriggered` in `game_abilities.go`.
 - **A frontend may offer Auto-resolve on an ordering prompt.** Whether an order is
   worth arranging is the player's call, not the engine's, so the client's
   `Orderer` implementation adds an Auto-resolve button that answers with a random
@@ -70,7 +71,7 @@ frontend.
   no in-play source card. Each unified window folds its duration reactions into the
   same `orderTriggered` pass as window entries (`lastingReactions` builds them;
   `resolveWindow` resolves them through `resolveReaction`) rather than resolving them
-  in a trailing `emitLasting(…)` window of its own. The whole window — card abilities
+  in a trailing dispatch of its own. The whole window — card abilities
   and duration reactions alike — is one flat labeled list: `orderTriggered` renders
   each entry as an `OrderableReaction` (a card ability shows its source card and
   rendered text, a duration reaction its rendered effect) and asks the active player,
@@ -84,5 +85,6 @@ frontend.
   folding never reorders the card abilities that already resolved there. The cardtest
   harness (`bridgeChooser.ChooseReaction`, scripted by `Player.Order(cards…)`) and the
   web client (`webChooser.ChooseReaction`, rendering the reactions as a labeled list)
-  both implement the port. `emitLasting` remains for the events that have no card
-  window of their own (an enemy creature destroyed).
+  both implement the port. An event with no card ability of its own (an enemy
+  creature destroyed) still gets a window: `afterDestroyedReactions` folds its
+  `lastingReactions` into the same ordered list.

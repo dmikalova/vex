@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"slices"
 )
 
 // PutFromPlay takes each card its Target selects out of play and puts it in a
@@ -148,6 +147,14 @@ func (e PutChosen) resolveMoves(ctx *EffectContext) {
 		if !ok {
 			return
 		}
+		// Settling before the choice (ADR 0029) can destroy a creature that was in
+		// the pool when it was gathered — the buff it relied on left with an earlier
+		// pick — so a chosen card no longer in play is skipped rather than moved into
+		// a second zone (ADR 0030), exactly as PutFromPlay skips one an earlier move
+		// took out.
+		if !resolverInPlay(ctx, chosen) {
+			continue
+		}
 		e.Destination.move(ctx, chosen)
 	}
 }
@@ -170,24 +177,17 @@ func (e ReturnNamedToHand) Text() string {
 	)
 }
 
-// Resolve gathers every friendly in-play creature and discard-pile card with the
-// name, lets the controller choose one, and moves it to their hand from whichever
-// zone it is in.
+// Resolve gathers every friendly in-play creature and discard-pile card, then
+// lets the controller pick the named one through the shared Selection vocabulary
+// (Chosen{Name}) and moves it to their hand from whichever zone it is in.
 func (e ReturnNamedToHand) Resolve(ctx *EffectContext) {
-	name := e.Name
-	pick := Named{Name: name}
-	inPlay := pick.candidates(ctx, ctx.Resolver.Battleline(ctx.Controller))
-	candidates := slices.Concat(
-		inPlay,
-		pick.candidates(ctx, ctx.Resolver.Discard(ctx.Controller)),
-	)
-	id, ok := ctx.ChooseCreature("Choose "+indefinite(e.Name)+" to put into your hand", candidates)
-	if !ok {
-		return
+	mover := crossZoneMover{
+		Player:  ctx.Controller,
+		Dest:    ToHand,
+		Sources: []Zone{inPlay, Discard},
 	}
-	if slices.Contains(inPlay, id) {
-		ctx.Resolver.PutIntoHand(id)
-	} else {
-		ctx.Resolver.PutFromDiscardIntoHand(id)
+	pool := mover.gather(ctx, func(LocalID) bool { return true })
+	for _, id := range (Chosen{Name: e.Name}).pick(ctx, pool) {
+		mover.move(ctx, id)
 	}
 }

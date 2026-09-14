@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Choose a house - exhaust each enemy Creature of the chosen house.
-var PersistenceHunting = card.New(
+var PersistenceHunting = set.New(
 	"Persistence Hunting",
 	card.House.Untamed,
 	card.Type.Tactic,
@@ -19,6 +19,6 @@ var PersistenceHunting = card.New(
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseHouseThen{
-			Then: card.Exhaust{Target: card.Target.EachEnemyCreature.OfChosenHouse()},
+			Then: card.Exhaust{Target: card.Target.EachEnemyCreature.House(card.Houses.Chosen)},
 		}),
 )

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Weapon
 //
 //	Action: Deal 2 damage to a Creature.
-var Cannon = card.New(
+var Cannon = set.New(
 	"Cannon",
 	card.House.Brobnar,
 	card.Type.Artifact,

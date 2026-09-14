@@ -140,17 +140,12 @@ func (e PurgeCard) resolveGate(ctx *EffectContext) bool {
 	return purged > 0
 }
 
-// purgeFrom sets one card aside out of the game, dispatching to the resolver
-// removal for its current zone — the single move behind every purge (ADR 0031).
+// purgeFrom sets one card aside out of the game from its current zone — the purge
+// verb is the movement matrix with its destination fixed to out-of-the-game, so it
+// moves through the shared toPurged destination rather than its own switch (ADR
+// 0031).
 func purgeFrom(ctx *EffectContext, from Zone, owner int, id LocalID) {
-	switch from {
-	case Hand:
-		ctx.Resolver.PurgeFromHand(owner, id)
-	case Discard:
-		ctx.Resolver.PurgeFromDiscard(owner, id)
-	default: // inPlay
-		ctx.Resolver.PurgeFromPlay(id)
-	}
+	toPurged.moveFrom(ctx, from, owner, id)
 }
 
 // PurgeFromHand purges cards from a player's hand, with a Selection deciding how

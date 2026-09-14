@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Play the top card of your deck.
-var WildWormhole = card.New(
+var WildWormhole = set.New(
 	"Wild Wormhole",
 	card.House.Logos,
 	card.Type.Tactic,

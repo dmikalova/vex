@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Play: For each Rat Creature in play, deal 1 damage to each non-Rat Creature.
-var PlagueRat = card.New(
+var PlagueRat = set.New(
 	"Plague Rat",
 	card.House.Shadows,
 	card.Type.Creature,

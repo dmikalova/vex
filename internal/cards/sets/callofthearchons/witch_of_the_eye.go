@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Witch
 //
 //	Reap: Put a card from your discard pile into your hand.
-var WitchOfTheEye = card.New(
+var WitchOfTheEye = set.New(
 	"Witch of the Eye",
 	card.House.Untamed,
 	card.Type.Creature,
@@ -20,5 +20,7 @@ var WitchOfTheEye = card.New(
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human, card.Traits.Witch),
 	card.WithAbility(
-		card.Trigger.Reap, card.PutFromDiscard{Destination: card.To.Hand}),
+		card.Trigger.Reap,
+		card.PutFromDiscard{Selection: card.Chosen{}, Destination: card.To.Hand},
+	),
 )

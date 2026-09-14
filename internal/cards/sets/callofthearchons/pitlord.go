@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Taunt.
 //	While Pitlord is in play you must choose Dis as your active house.
-var Pitlord = card.New(
+var Pitlord = set.New(
 	"Pitlord",
 	card.House.Dis,
 	card.Type.Creature,

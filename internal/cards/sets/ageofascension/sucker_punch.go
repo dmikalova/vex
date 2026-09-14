@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Alpha.
 //	Play: Deal 2 damage to an enemy Creature. If this damage destroys that Creature, archive Sucker Punch.
-var SuckerPunch = card.New(
+var SuckerPunch = set.New(
 	"Sucker Punch",
 	card.House.Shadows,
 	card.Type.Tactic,

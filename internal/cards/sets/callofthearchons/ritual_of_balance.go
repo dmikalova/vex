@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Power
 //
 //	Action: If your opponent has 6 Æmber or more, steal 1 Æmber.
-var RitualOfBalance = card.New(
+var RitualOfBalance = set.New(
 	"Ritual of Balance",
 	card.House.Untamed,
 	card.Type.Artifact,

@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Versatile.
 //	Action: Destroy Lifeward. Your opponent cannot play Creatures during their next turn.
-var Lifeward = card.New(
+var Lifeward = set.New(
 	"Lifeward",
 	card.House.Dis,
 	card.Type.Artifact,

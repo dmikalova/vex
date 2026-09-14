@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Weapon
 //
 //	Action: Keys cost +3 Æmber during your opponent's next turn.
-var LashOfBrokenDreams = card.New(
+var LashOfBrokenDreams = set.New(
 	"Lash of Broken Dreams",
 	card.House.Dis,
 	card.Type.Artifact,

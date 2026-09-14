@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Your opponent's keys cost +1 Æmber.
-var Murmook = card.New(
+var Murmook = set.New(
 	"Murmook",
 	card.House.Untamed,
 	card.Type.Creature,

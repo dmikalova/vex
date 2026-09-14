@@ -11,18 +11,18 @@ import (
 //
 //	House:  Sanctum
 //	Type:   Creature
-//	Rarity: Special
+//	Rarity: Rare
 //	Power:  1
 //	Traits: Human
 //
 //	Elusive.
 //
 //	Template: its concrete card is materialized per deck at generation.
-var HouseAmbassador = card.New(
+var HouseAmbassador = set.New(
 	"House Ambassador",
 	card.House.Sanctum,
 	card.Type.Creature,
-	card.Rarity.Special,
+	card.Rarity.Rare,
 	card.Provenance(card.AoA, "229"),
 	card.Provenance(card.AoA, "230"),
 	card.Provenance(card.AoA, "237"),
@@ -44,14 +44,14 @@ func ambassadorFor(ctx card.SlotContext, r *rand.Rand) card.Definition {
 		partner.String()+" Ambassador",
 		card.House.Sanctum,
 		card.Type.Creature,
-		card.Rarity.Special,
+		card.Rarity.Rare,
 		card.WithPower(1),
 		card.WithTraits(card.Traits.Human),
 		card.WithKeywords(card.Keyword.Elusive),
 		card.WithAbility(
 			card.Trigger.FightReap,
 			card.MayPlayOrUse{
-				Houses: card.Houses.Named(partner),
+				Houses: card.GrantHouses.Named(partner),
 				Grant:  card.GrantPlay | card.GrantUse,
 			},
 		),

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Omega.
 //	Play: Destroy each Creature.
-var UnlockedGateway = card.New(
+var UnlockedGateway = set.New(
 	"Unlocked Gateway",
 	card.House.Dis,
 	card.Type.Tactic,

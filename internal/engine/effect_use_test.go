@@ -3,7 +3,7 @@ package engine
 import "testing"
 
 func TestUseTextAndValidation(t *testing.T) {
-	pool := Target{Kind: TargetEachFriendlyCardInPlay}.OfHouse(Mars).Other()
+	pool := Target{Kind: TargetEachFriendlyCardInPlay}.House(namedHouse(Mars)).Other()
 	if got := (Use{Max: 2, Target: pool}).Text(); got != "use 2 other Mars cards, one at a time" {
 		t.Errorf("text = %q", got)
 	}
@@ -31,7 +31,7 @@ func TestUseUsesCreaturesSequentially(t *testing.T) {
 
 	Use{
 		Max:    2,
-		Target: Target{Kind: TargetEachFriendlyCardInPlay}.OfHouse(Mars).Other(),
+		Target: Target{Kind: TargetEachFriendlyCardInPlay}.House(namedHouse(Mars)).Other(),
 	}.Resolve(
 		ctx,
 	)
@@ -57,7 +57,7 @@ func TestUseUsesArtifactAction(t *testing.T) {
 
 	Use{
 		Max:    1,
-		Target: Target{Kind: TargetEachFriendlyCardInPlay}.OfHouse(Mars).Other(),
+		Target: Target{Kind: TargetEachFriendlyCardInPlay}.House(namedHouse(Mars)).Other(),
 	}.Resolve(
 		ctx,
 	)
@@ -80,7 +80,7 @@ func TestUseStopsWhenNoChoice(t *testing.T) {
 
 	Use{
 		Max:    1,
-		Target: Target{Kind: TargetEachFriendlyCardInPlay}.OfHouse(Mars).Other(),
+		Target: Target{Kind: TargetEachFriendlyCardInPlay}.House(namedHouse(Mars)).Other(),
 	}.Resolve(
 		ctx,
 	)
@@ -97,7 +97,7 @@ func TestUseStopsWhenNoneUsable(t *testing.T) {
 
 	Use{
 		Max:    1,
-		Target: Target{Kind: TargetEachFriendlyCardInPlay}.OfHouse(Mars).Other(),
+		Target: Target{Kind: TargetEachFriendlyCardInPlay}.House(namedHouse(Mars)).Other(),
 	}.Resolve(
 		ctx,
 	)
@@ -158,7 +158,10 @@ func TestUseEvenUnusableOffersAnyArtifact(t *testing.T) {
 func TestUseInSentences(t *testing.T) {
 	seq := Sentences{Effects: []Effect{
 		Destroy{Target: Target{Kind: TargetThisCreature}},
-		Use{Max: 2, Target: Target{Kind: TargetEachFriendlyCardInPlay}.OfHouse(Mars).Other()},
+		Use{
+			Max:    2,
+			Target: Target{Kind: TargetEachFriendlyCardInPlay}.House(namedHouse(Mars)).Other(),
+		},
 	}}
 	if got := seq.Text(); got != "destroy "+SelfName+". Use 2 other Mars cards, one at a time." {
 		t.Errorf("sequence text = %q", got)

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant
 //
 //	Reap: Heal 3 damage from Troll.
-var Troll = card.New(
+var Troll = set.New(
 	"Troll",
 	card.House.Brobnar,
 	card.Type.Creature,

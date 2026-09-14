@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //
 //	Play: Take control of an enemy Creature.
-var Hypnobeam = card.New(
+var Hypnobeam = set.New(
 	"Hypnobeam",
 	card.House.Mars,
 	card.Type.Tactic,

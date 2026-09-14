@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item
 //
 //	Action: Archive a purged card you own.
-var UniversalRecycleBin = card.New(
+var UniversalRecycleBin = set.New(
 	"Universal Recycle Bin",
 	card.House.Logos,
 	card.Type.Artifact,

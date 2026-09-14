@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Skirmish.
 //	Play: Ready each other friendly Wolf Creature.
-var MoorWolf = card.New(
+var MoorWolf = set.New(
 	"Moor Wolf",
 	card.House.Untamed,
 	card.Type.Creature,

@@ -75,7 +75,7 @@ func (e ShuffleFromDiscard) Resolve(ctx *EffectContext) {
 			break
 		}
 		for _, id := range ids {
-			ctx.Resolver.ShuffleFromDiscardIntoDeck(id)
+			ToDeckShuffled.moveFrom(ctx, Discard, ctx.Controller, id)
 		}
 	}
 	ctx.Resolver.EndShuffleBatch()

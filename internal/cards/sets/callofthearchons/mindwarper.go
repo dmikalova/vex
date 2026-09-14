@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Action: An enemy Creature captures 1 Æmber from their own side.
-var Mindwarper = card.New(
+var Mindwarper = set.New(
 	"Mindwarper",
 	card.House.Mars,
 	card.Type.Creature,

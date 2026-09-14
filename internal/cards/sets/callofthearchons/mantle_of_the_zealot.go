@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //
 //	This Creature gains versatile.
-var MantleOfTheZealot = card.New(
+var MantleOfTheZealot = set.New(
 	"Mantle of the Zealot",
 	card.House.Sanctum,
 	card.Type.Upgrade,

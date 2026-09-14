@@ -13,10 +13,10 @@ func TestPurge(t *testing.T) {
 	if got := (PurgeCard{Player: ChosenPlayer, Selection: Chosen{}, Amount: 2}).Text(); got != "purge 2 cards from a discard pile" {
 		t.Errorf("count text = %q", got)
 	}
-	if got := (PurgeCard{Player: ChosenPlayer, Selection: Chosen{House: Dis}}).Text(); got != "purge a Dis card from a discard pile" {
+	if got := (PurgeCard{Player: ChosenPlayer, Selection: Chosen{House: namedHouse(Dis)}}).Text(); got != "purge a Dis card from a discard pile" {
 		t.Errorf("house text = %q", got)
 	}
-	if got := (PurgeCard{Player: EachPlayer, Selection: Each{House: Untamed, Type: Creature}, GainOwnerAember: true}).Text(); got != "purge each Untamed creature from each player's discard pile. For each card purged this way, its owner gains 1 Æmber" {
+	if got := (PurgeCard{Player: EachPlayer, Selection: Each{House: namedHouse(Untamed), Type: Creature}, GainOwnerAember: true}).Text(); got != "purge each Untamed creature from each player's discard pile. For each card purged this way, its owner gains 1 Æmber" {
 		t.Errorf("each text = %q", got)
 	}
 
@@ -120,7 +120,7 @@ func TestPurge(t *testing.T) {
 	g6.State.Discard[1].add(logos)
 	g6.State.Discard[1].add(dis)
 	ctx6 := &EffectContext{Resolver: g6, Controller: 0}
-	if !(PurgeCard{Player: ChosenPlayer, Selection: Chosen{House: Dis}}).resolveGate(
+	if !(PurgeCard{Player: ChosenPlayer, Selection: Chosen{House: namedHouse(Dis)}}).resolveGate(
 		ctx6,
 	) {
 		t.Error("purging a Dis card should report success")
@@ -152,7 +152,7 @@ func TestPurgeEachFromBothPiles(t *testing.T) {
 
 	(PurgeCard{
 		Player:          EachPlayer,
-		Selection:       Each{House: Untamed, Type: Creature},
+		Selection:       Each{House: namedHouse(Untamed), Type: Creature},
 		GainOwnerAember: true,
 	}).Resolve(ctx)
 
@@ -190,7 +190,7 @@ func TestPurgeFromHand(t *testing.T) {
 	}
 
 	// Text and object variants across the three selections.
-	if got := (PurgeFromHand{Player: Opponent, Selection: Chosen{House: Sanctum, Optional: true}}).Text(); got != "you may purge a Sanctum card from your opponent's hand" {
+	if got := (PurgeFromHand{Player: Opponent, Selection: Chosen{House: namedHouse(Sanctum), Optional: true}}).Text(); got != "you may purge a Sanctum card from your opponent's hand" {
 		t.Errorf("chosen house text = %q", got)
 	}
 	if got := (PurgeFromHand{Player: Controller, Selection: Chosen{Optional: true}}).Text(); got != "you may purge a card from your hand" {
@@ -199,7 +199,7 @@ func TestPurgeFromHand(t *testing.T) {
 	if got := (PurgeFromHand{Player: Opponent, Selection: Random{}}).Text(); got != "purge a random card from your opponent's hand" {
 		t.Errorf("random text = %q", got)
 	}
-	if got := (PurgeFromHand{Player: Controller, Selection: Each{Type: Creature, ExceptHouse: Mars}}).Text(); got != "purge each non-Mars creature from your hand" {
+	if got := (PurgeFromHand{Player: Controller, Selection: Each{Type: Creature, House: exceptHouse(Mars)}}).Text(); got != "purge each non-Mars creature from your hand" {
 		t.Errorf("each text = %q", got)
 	}
 
@@ -218,7 +218,7 @@ func TestPurgeFromHand(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 	PurgeFromHand{
 		Player:    Opponent,
-		Selection: Chosen{House: Sanctum, Optional: true},
+		Selection: Chosen{House: namedHouse(Sanctum), Optional: true},
 	}.Resolve(
 		ctx,
 	)
@@ -243,7 +243,7 @@ func TestPurgeFromHand(t *testing.T) {
 	) // options [holy, Done] -> idx 1 is Done
 	PurgeFromHand{
 		Player:    Opponent,
-		Selection: Chosen{House: Sanctum, Optional: true},
+		Selection: Chosen{House: namedHouse(Sanctum), Optional: true},
 	}.Resolve(
 		ctx2,
 	)
@@ -262,7 +262,7 @@ func TestPurgeFromHand(t *testing.T) {
 	ctx3 := &EffectContext{Resolver: g3, Controller: 0}
 	PurgeFromHand{
 		Player:    Opponent,
-		Selection: Chosen{House: Sanctum, Optional: true},
+		Selection: Chosen{House: namedHouse(Sanctum), Optional: true},
 	}.Resolve(
 		ctx3,
 	)
@@ -443,7 +443,7 @@ func TestCardsPurgedCount(t *testing.T) {
 		t.Errorf("creature count text = %q", got)
 	}
 	PurgeCreature{
-		Target: Target{Kind: TargetEachFriendlyCreature}.OfHouse(Shadows),
+		Target: Target{Kind: TargetEachFriendlyCreature}.House(namedHouse(Shadows)),
 	}.Resolve(ctx)
 
 	if got := (CardsPurged{}).Value(ctx); got != 2 {

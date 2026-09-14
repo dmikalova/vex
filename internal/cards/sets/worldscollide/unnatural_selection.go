@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Choose 3 friendly Creatures and 3 enemy Creatures - destroy each other Creature.
-var UnnaturalSelection = card.New(
+var UnnaturalSelection = set.New(
 	"Unnatural Selection",
 	card.House.Untamed,
 	card.Type.Tactic,

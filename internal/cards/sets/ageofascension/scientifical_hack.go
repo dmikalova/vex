@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Versatile.
 //	Action: Destroy Scientifical Hack. For the remainder of the turn, you may use friendly Artifacts as if they belonged to the active house.
-var ScientificalHack = card.New(
+var ScientificalHack = set.New(
 	"Scientifical Hack",
 	card.House.Logos,
 	card.Type.Artifact,
@@ -25,9 +25,9 @@ var ScientificalHack = card.New(
 		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
 			card.Destroy{Target: card.Target.This},
 			card.MayPlayOrUse{
-				Houses: card.Houses.Any,
+				Houses: card.GrantHouses.Any,
 				Grant:  card.GrantUse,
-				Types:  card.Types.Artifacts,
+				Types:  card.Types.Of(card.Type.Artifact),
 			},
 		}}),
 )

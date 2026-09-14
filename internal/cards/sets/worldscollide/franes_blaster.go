@@ -20,7 +20,7 @@ var franesBlasterCluster = card.Cluster{
 //	This Creature gains, "Fight/Reap: Choose one:
 //	- Deal 2 damage to a Creature
 //	- Attach Frane's Blaster to First Officer Frane -> move all Æmber from First Officer Frane to your pool."
-var FranesBlaster = card.New(
+var FranesBlaster = set.New(
 	"Frane's Blaster",
 	card.House.StarAlliance,
 	card.Type.Upgrade,

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Play a Creature from your discard pile.
-var Exhume = card.New(
+var Exhume = set.New(
 	"Exhume",
 	card.House.Dis,
 	card.Type.Tactic,
@@ -19,7 +19,7 @@ var Exhume = card.New(
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.PlayFrom{
-			From: card.Discard,
-			Type: card.Type.Creature,
+			From:  card.Discard,
+			Types: card.Types.Of(card.Type.Creature),
 		}),
 )

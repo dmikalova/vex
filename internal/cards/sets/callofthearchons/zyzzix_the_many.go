@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Martian • Soldier
 //
 //	Fight/Reap: You may reveal a Creature from your hand and archive it -> give Zyzzix the Many three +1 power counters.
-var ZyzzixTheMany = card.New(
+var ZyzzixTheMany = set.New(
 	"Zyzzix the Many",
 	card.House.Mars,
 	card.Type.Creature,

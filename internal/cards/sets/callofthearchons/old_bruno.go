@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Play: Old Bruno captures 3 Æmber from your opponent.
-var OldBruno = card.New(
+var OldBruno = set.New(
 	"Old Bruno",
 	card.House.Shadows,
 	card.Type.Creature,

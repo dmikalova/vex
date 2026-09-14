@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Dinosaur • Soldier
 //
 //	Play/Fight: Thero Centurion captures 1 Æmber from your opponent.
-var TheroCenturion = card.New(
+var TheroCenturion = set.New(
 	"Thero Centurion",
 	card.House.Saurian,
 	card.Type.Creature,

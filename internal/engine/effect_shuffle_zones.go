@@ -29,10 +29,17 @@ func (e ShuffleChosenCreaturesFromZones) Text() string {
 // decline or none remain, shuffling each into their deck from whichever zone it
 // sits in as one grouped batch.
 func (e ShuffleChosenCreaturesFromZones) Resolve(ctx *EffectContext) {
+	mover := crossZoneMover{
+		Player:  ctx.Controller,
+		Dest:    ToDeckShuffled,
+		Sources: []Zone{Hand, Discard, inPlay},
+	}
 	ctx.Resolver.BeginShuffleBatch()
 	picked := map[LocalID]bool{}
 	for {
-		cands := e.candidates(ctx, picked)
+		cands := mover.gather(ctx, func(id LocalID) bool {
+			return !picked[id] && e.eligible(ctx, id)
+		})
 		if len(cands) == 0 {
 			break
 		}
@@ -42,46 +49,15 @@ func (e ShuffleChosenCreaturesFromZones) Resolve(ctx *EffectContext) {
 			break
 		}
 		picked[id] = true
-		e.shuffle(ctx, id)
+		mover.move(ctx, id)
 	}
 	ctx.Resolver.EndShuffleBatch()
 }
 
-// candidates lists the controller's not-yet-chosen creatures in their hand,
-// discard pile, and battleline that match the optional house filter.
-func (e ShuffleChosenCreaturesFromZones) candidates(
-	ctx *EffectContext,
-	picked map[LocalID]bool,
-) []LocalID {
-	var out []LocalID
-	consider := func(ids []LocalID) {
-		for _, id := range ids {
-			if picked[id] || !ctx.Resolver.IsCreature(id) {
-				continue
-			}
-			if e.House != HouseNone && ctx.Resolver.House(id) != e.House {
-				continue
-			}
-			out = append(out, id)
-		}
+// eligible reports whether one card is a creature the optional house filter admits.
+func (e ShuffleChosenCreaturesFromZones) eligible(ctx *EffectContext, id LocalID) bool {
+	if !ctx.Resolver.IsCreature(id) {
+		return false
 	}
-	consider(ctx.Resolver.Hand(ctx.Controller))
-	consider(ctx.Resolver.Discard(ctx.Controller))
-	consider(ctx.Resolver.Battleline(ctx.Controller))
-	return out
-}
-
-// shuffle moves one chosen creature into the deck from whichever zone it is in.
-func (e ShuffleChosenCreaturesFromZones) shuffle(ctx *EffectContext, id LocalID) {
-	if resolverInPlay(ctx, id) {
-		ctx.Resolver.PutIntoDeckShuffled(id)
-		return
-	}
-	for _, h := range ctx.Resolver.Hand(ctx.Controller) {
-		if h == id {
-			ctx.Resolver.ShuffleFromHandIntoDeck(id)
-			return
-		}
-	}
-	ctx.Resolver.ShuffleFromDiscardIntoDeck(id)
+	return e.House == HouseNone || ctx.Resolver.House(id) == e.House
 }

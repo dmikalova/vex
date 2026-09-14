@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Shuffle each Mars Creature into its owner's deck. For each Creature shuffled into their deck this way, each player gains 1 Æmber.
-var MatingSeason = card.New(
+var MatingSeason = set.New(
 	"Mating Season",
 	card.House.Mars,
 	card.Type.Tactic,
@@ -20,7 +20,7 @@ var MatingSeason = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.PutFromPlay{
-				Target:      card.Target.EachCreature.OfHouse(card.House.Self),
+				Target:      card.Target.EachCreature.House(card.Houses.Named(card.House.Self)),
 				Destination: card.To.DeckShuffled,
 			},
 			card.GainAember{

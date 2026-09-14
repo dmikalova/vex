@@ -20,7 +20,7 @@ var ingramsBlasterCluster = card.Cluster{
 //	This Creature gains, "Fight/Reap: Choose one:
 //	- Deal 2 damage to a Creature
 //	- Attach Ingram's Blaster to Medic Ingram -> fully heal a Creature."
-var IngramsBlaster = card.New(
+var IngramsBlaster = set.New(
 	"Ingram's Blaster",
 	card.House.StarAlliance,
 	card.Type.Upgrade,

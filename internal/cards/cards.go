@@ -19,6 +19,8 @@ import (
 	// Blank-imported so each set's cards self-register through its package init.
 	_ "github.com/dmikalova/vactrol/internal/cards/sets/ageofascension"
 	// Blank-imported so each set's cards self-register through its package init.
+	_ "github.com/dmikalova/vactrol/internal/cards/sets/anomalyexpansion"
+	// Blank-imported so each set's cards self-register through its package init.
 	_ "github.com/dmikalova/vactrol/internal/cards/sets/callofthearchons"
 	// Blank-imported so each set's cards self-register through its package init.
 	_ "github.com/dmikalova/vactrol/internal/cards/sets/worldscollide"
@@ -30,14 +32,12 @@ func All() []card.Definition {
 	return card.Registered()
 }
 
-// setName is the display name of the source set a card belongs to, taken from its
-// first provenance tag. A card with no provenance (a wholly original card) is
-// grouped under the empty name.
+// setName is the source set a card belongs to for deck generation, taken from its
+// declared home set (InSet, or its first provenance tag as a default). A card that
+// declares neither — belonging to no set's pool — is grouped under the empty name.
+// Deck generation never reads Provenance directly; it groups by this set alone.
 func setName(rc card.RegisteredCard) string {
-	if len(rc.Provenance) == 0 {
-		return ""
-	}
-	return rc.Provenance[0].Set.Name
+	return rc.Set.Name
 }
 
 // deckgenCard adapts a registered card to a deckgen pool entry.
@@ -93,18 +93,44 @@ func buildDeckSets() []deckgen.Set {
 	groups := bySet()
 	reprints := reprintsBySet()
 	legacy := buildLegacy(groups)
+	clusters := deckgen.NewClusterPool(catalogCards())
 	var sets []deckgen.Set
 	for _, name := range setOrder() {
 		own := ownPool(groups[name], reprints[name])
-		if len(own) == 0 {
+		if !hasDraftable(own) {
+			// A reservoir set (e.g. Anomaly Expansion) has no draw pool of its own —
+			// its cards enter decks only through a cross-set cluster — so it gets no
+			// Set. Its cards still reach the catalog cluster pool and the legacy pool.
 			continue
 		}
-		sets = append(
-			sets,
-			deckgen.NewSet(name, own, deckgen.DefaultTuning()).WithLegacy(legacy),
-		)
+		sets = append(sets, deckgen.NewSet(name, own, deckgen.DefaultTuning()).
+			WithLegacy(legacy).
+			WithClusters(clusters))
 	}
 	return sets
+}
+
+// catalogCards adapts every registered card to a deckgen pool entry, for the
+// catalog-wide cluster pool that resolves deck-wide clusters across every House a
+// deck can reach (ADR 0036).
+func catalogCards() []deckgen.Card {
+	regs := card.Cards()
+	out := make([]deckgen.Card, 0, len(regs))
+	for _, rc := range regs {
+		out = append(out, deckgenCard(rc))
+	}
+	return out
+}
+
+// hasDraftable reports whether any of a set's own pool cards would enter its draw
+// pool. A set with none is a reservoir set and gets no Set of its own.
+func hasDraftable(pool []deckgen.Card) bool {
+	for _, c := range pool {
+		if deckgen.Draftable(c) {
+			return true
+		}
+	}
+	return false
 }
 
 // buildLegacy assembles the single cross-set legacy pool shared by every set: each

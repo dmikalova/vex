@@ -10,14 +10,13 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Your opponent discards a random card from their hand.
-var SubtleChain = card.New(
+var SubtleChain = set.New(
 	"Subtle Chain",
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "262"),
 	card.InCluster(card.Pulled(chainGangCluster, 1, 2)),
-	// TODO(duplicate): mechanically identical to Mind Barb (Dis) — fold/handle manually.
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play,

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	This Creature gains +2 power and +2 hazardous.
-var FlameWreathed = card.New(
+var FlameWreathed = set.New(
 	"Flame-Wreathed",
 	card.House.Dis,
 	card.Type.Upgrade,

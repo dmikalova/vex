@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	This Creature gains, "Destroyed: Put this Creature into its owner's archives."
-var BiomatrixBackup = card.New(
+var BiomatrixBackup = set.New(
 	"Biomatrix Backup",
 	card.House.Mars,
 	card.Type.Upgrade,

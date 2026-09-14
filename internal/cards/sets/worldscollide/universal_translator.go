@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	This Creature gains, "Fight/Reap: Use a non-Star Alliance Creature."
-var UniversalTranslator = card.New(
+var UniversalTranslator = set.New(
 	"Universal Translator",
 	card.House.StarAlliance,
 	card.Type.Upgrade,
@@ -20,7 +20,7 @@ var UniversalTranslator = card.New(
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightReap(card.Use{
 			Max:    1,
-			Target: card.Target.EachFriendlyCreature.ExceptHouse(card.House.Self),
+			Target: card.Target.EachFriendlyCreature.House(card.Houses.Except(card.House.Self)),
 		}),
 	}),
 )

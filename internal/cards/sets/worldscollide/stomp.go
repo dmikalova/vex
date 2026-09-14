@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Deal 5 damage to a Creature. If this damage destroys that Creature, exalt a friendly Creature.
-var Stomp = card.New(
+var Stomp = set.New(
 	"Stomp",
 	card.House.Saurian,
 	card.Type.Tactic,

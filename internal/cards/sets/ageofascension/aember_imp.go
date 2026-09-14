@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	After a Creature reaps, stun it.
-var AemberImp = card.New(
+var AemberImp = set.New(
 	"Aember Imp",
 	card.House.Dis,
 	card.Type.Creature,

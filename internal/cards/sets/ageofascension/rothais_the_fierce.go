@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Knight
 //
 //	Taunt, Hazardous 4.
-var RothaisTheFierce = card.New(
+var RothaisTheFierce = set.New(
 	"Rothais the Fierce",
 	card.House.Sanctum,
 	card.Type.Creature,

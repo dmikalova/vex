@@ -13,11 +13,11 @@ import (
 func TestResolveSelfHouseThroughDefinition(t *testing.T) {
 	def := NewCard("Probe", Mars, Creature, Common,
 		WithAbility(TriggerAfterPlay, Sequence{Effects: []Effect{
-			RevealHand{Player: Controller, House: SelfHouse},
+			RevealHand{Player: Controller, House: namedHouse(SelfHouse)},
 			Stun{Target: Target{Kind: TargetEachCreature}.
-				OfHouse(SelfHouse).
-				Refine(Not(MostPowerful))},
-			Exhaust{Target: Target{Kind: TargetEachCreature}.ExceptHouse(SelfHouse)},
+				House(namedHouse(SelfHouse)).
+				Refine(Except(MostPowerful))},
+			Exhaust{Target: Target{Kind: TargetEachCreature}.House(exceptHouse(SelfHouse))},
 		}}),
 		WithPlayPermission(PlayPermission{House: SelfHouse, Amount: 1}),
 		WithHouseLock(HouseLock{Player: Controller, House: SelfHouse}),

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Martian • Scientist
 //
 //	Reap: The next Mars Creature you play this turn enters play ready.
-var Blypyp = card.New(
+var Blypyp = set.New(
 	"Blypyp",
 	card.House.Mars,
 	card.Type.Creature,

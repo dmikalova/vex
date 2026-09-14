@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Spirit • Knight
 //
 //	After Maruck the Marked prevents damage with its armor, for each damage just prevented, Maruck the Marked captures 1 Æmber from your opponent.
-var MaruckTheMarked = card.New(
+var MaruckTheMarked = set.New(
 	"Maruck the Marked",
 	card.House.Sanctum,
 	card.Type.Creature,

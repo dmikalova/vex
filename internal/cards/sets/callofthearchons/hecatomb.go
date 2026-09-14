@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Destroy each Dis Creature. For each Creature they controlled that was destroyed this way, each player gains 1 Æmber.
-var Hecatomb = card.New(
+var Hecatomb = set.New(
 	"Hecatomb",
 	card.House.Dis,
 	card.Type.Tactic,
@@ -20,7 +20,7 @@ var Hecatomb = card.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.Destroy{
-				Target: card.Target.EachCreature.OfHouse(card.House.Self),
+				Target: card.Target.EachCreature.House(card.Houses.Named(card.House.Self)),
 			},
 			card.GainAember{
 				Player: card.EachPlayer,

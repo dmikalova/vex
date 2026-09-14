@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Play: Keys cost +3 Æmber during your opponent's next turn.
 //	Reap: You may exalt Rhetor Gallim. Keys cost +3 Æmber during your opponent's next turn.
-var RhetorGallim = card.New(
+var RhetorGallim = set.New(
 	"Rhetor Gallim",
 	card.House.Saurian,
 	card.Type.Creature,

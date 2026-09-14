@@ -28,9 +28,12 @@ function:
 func Generate(set Set, seed int64) Deck
 ```
 
-Final layering: `cards → card → deckgen → engine`, with `bot/scoring → deckgen`
-later. `match` remains the only code that pushes a generated `Deck` into a live
-`*engine.Game`.
+Final layering: `deckgen → engine` at the base, with the `card`/`cards` facade and
+`internal/match` depending on `deckgen`, and `bot/scoring → deckgen` later. `cards`
+builds the `deckgen.Set`s (`DeckSets`), `match` pushes a generated `Deck` into a
+live `*engine.Game`, and `internal/web/gallery` materializes template cards through
+the same seam to show their concrete faces — all of them depending only on
+`deckgen`'s pure types, never the other way around.
 
 ## Consequences
 
@@ -42,7 +45,13 @@ later. `match` remains the only code that pushes a generated `Deck` into a live
   implementer, un-idiomatic in Go. "Orthogonal to the engine" means orthogonal to
   the _runtime_, not to its value types.
 - Provenance never enters generation; set membership is derived from the set
-  packages, not from provenance refs.
+  packages, not from provenance refs. Each set package declares a registrar in its
+  `0set.go` (`var set = card.NewSet(card.XX)`, or `card.ReservoirSet` for an
+  undraftable reservoir set) and every card registers through `set.New(...)`, which
+  stamps the card's home set. Membership is therefore always explicit and declared
+  by the set itself; the card facade never infers a set from a provenance tag, and
+  a card registered without one belongs to no pool (guarded by
+  `TestEveryCardDeclaresItsSet`).
 - The inversion is the reason templates and scoring can define their types in
   `deckgen`/`scoring` and have the card facade adapt to them, rather than the other
   way around — see ADR 0004.

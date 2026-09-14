@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Reap: Discard a random card from your opponent's archives or the top card of their deck. If that card is a Tactic, play it as if it were yours.
-var Fidgit = card.New(
+var Fidgit = set.New(
 	"Fidgit",
 	card.House.Shadows,
 	card.Type.Creature,

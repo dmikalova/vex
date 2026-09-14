@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Destroy an Artifact -> gain 1 Æmber.
-var Hock = card.New(
+var Hock = set.New(
 	"Hock",
 	card.House.Shadows,
 	card.Type.Tactic,

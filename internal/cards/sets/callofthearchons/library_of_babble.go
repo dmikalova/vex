@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Location
 //
 //	Action: Draw a card.
-var LibraryOfBabble = card.New(
+var LibraryOfBabble = set.New(
 	"Library of Babble",
 	card.House.Logos,
 	card.Type.Artifact,

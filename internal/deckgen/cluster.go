@@ -88,6 +88,34 @@ type clusterIndex struct {
 	lead     string
 }
 
+// ClusterPool is the catalog-wide cluster index: the clusters of the whole card
+// catalog, built once from every registered card and attached to each base Set
+// with WithClusters, so a deck-wide OnePerHouse cluster (the Shards) resolves
+// across every House a deck can reach — including a House an errant pod brings in
+// from another set — not only the Houses of the drawing set (ADR 0036).
+type ClusterPool struct {
+	clusters map[string]clusterIndex
+}
+
+// NewClusterPool builds a ClusterPool from a flat list of every catalog card. It
+// indexes the same way NewSet does, but over the whole catalog rather than one
+// set and with no draw-pool filtering: a Connected member (a reservoir Shard) is a
+// cluster member here just as it is in a set's own clusters.
+func NewClusterPool(cards []Card) *ClusterPool {
+	return &ClusterPool{clusters: buildClusters(cards)}
+}
+
+// Draftable reports whether a pool Card would enter a Set's draw pool: it is
+// housed, neither Houseless nor Connected, and not a reservoir card. A set whose
+// whole pool is undraftable is a reservoir set — its cards enter decks only
+// through a cross-set cluster — and gets no Set of its own (ADR 0036).
+func Draftable(c Card) bool {
+	if c.Profile.Houseless || c.Profile.Reservoir {
+		return false
+	}
+	return c.Def.House != engine.HouseNone && c.Def.Rarity != engine.Connected
+}
+
 // buildClusters groups a set's cards into clusters by membership name. Each
 // member contributes its identical strategy/trigger; a member's own House keys it
 // in byHouse (for OnePerHouse placement); the Lead flag records the ByLead lead.
@@ -240,4 +268,55 @@ func clusterTriggerDesc(t ClusterTrigger) string {
 		return "its lead member is Rarity.Connected"
 	}
 	return "every member is Rarity.Connected"
+}
+
+// validateCrossClusters gates the attached catalog ClusterPool against this set:
+// every OnePerHouse cluster must have a member for each House the set can deck —
+// its native Houses and the foreign Houses an errant pod can bring in — or it
+// panics, the same complete-by-construction gate validateClusters applies to a
+// set's own OnePerHouse clusters (ADR 0036 / ADR 0018), widened to the Houses an
+// errant pod reaches. It is a no-op when no ClusterPool is attached.
+func (s Set) validateCrossClusters() {
+	if s.crossClusters == nil {
+		return
+	}
+	houses := append(append([]engine.House(nil), s.houses...), s.errantHouses...)
+	for name, ci := range s.crossClusters.clusters {
+		if ci.strategy != OnePerHouse {
+			continue
+		}
+		for _, h := range houses {
+			if _, ok := ci.byHouse[h]; !ok {
+				panic(fmt.Sprintf(
+					"deckgen: cross-set OnePerHouse cluster %q has no member for House %s "+
+						"deckable by set %q (native or errant)",
+					name, h, s.Name,
+				))
+			}
+		}
+	}
+}
+
+// onePerHouseClusters returns the OnePerHouse clusters to resolve deck-wide, in
+// name order: from the attached catalog ClusterPool when one is set, else the
+// set's own clusters. The catalog pool lets a deck-wide cluster complete across
+// every House a deck can reach (including an errant House), where the set's own
+// clusters cover only its native Houses.
+func (s Set) onePerHouseClusters() []clusterIndex {
+	src := s.clusters
+	if s.crossClusters != nil {
+		src = s.crossClusters.clusters
+	}
+	names := make([]string, 0, len(src))
+	for name, ci := range src {
+		if ci.strategy == OnePerHouse {
+			names = append(names, name)
+		}
+	}
+	sort.Strings(names)
+	out := make([]clusterIndex, 0, len(names))
+	for _, name := range names {
+		out = append(out, src[name])
+	}
+	return out
 }

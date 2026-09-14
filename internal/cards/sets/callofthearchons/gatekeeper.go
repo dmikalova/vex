@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Knight • Spirit
 //
 //	Play: If your opponent has 7 Æmber or more, Gatekeeper captures all but 5 Æmber from your opponent.
-var Gatekeeper = card.New(
+var Gatekeeper = set.New(
 	"Gatekeeper",
 	card.House.Sanctum,
 	card.Type.Creature,

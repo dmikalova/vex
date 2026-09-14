@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Martian • Soldier
 //
 //	For each neighbor Nyzyk Resonator has, your opponent's keys cost +2 Æmber.
-var NyzykResonator = card.New(
+var NyzykResonator = set.New(
 	"Nyzyk Resonator",
 	card.House.Mars,
 	card.Type.Creature,

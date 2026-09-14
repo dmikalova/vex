@@ -464,11 +464,9 @@ func (g *Game) applyTreachery(player int, id LocalID) {
 		g.takeControl(id, 1-player, id)
 		// The active player chose to play it, so they choose which flank of the
 		// opponent's battleline it enters (a control change; the active player always
-		// places).
+		// places). The handoff re-forms neighbors on both battlelines, but the play
+		// boundary settles the power that shifts, not this move (ADR 0029).
 		g.placeGainedOnFlank(id, 1-player)
-		// The handoff re-forms neighbors on both battlelines, so a creature that
-		// lost a flank or neighbor power bonus in the move must settle now.
-		g.settleDestroyed(player)
 	}
 }
 
@@ -549,7 +547,6 @@ func (g *Game) putIntoPlay(id LocalID, controller int) {
 		g.State.Artifacts[controller].add(id)
 		g.record(CardPutIntoPlay{Player: controller, Card: id})
 	}
-	g.settleDestroyed(controller)
 }
 
 // playArtifactCard places an artifact and fires the standard play sequence for an
@@ -659,12 +656,16 @@ func (g *Game) randomCardFromHand(owner int) (LocalID, bool) {
 
 // inActiveHouse reports whether a card of the given definition matches the
 // active house for the purpose of PLAYING or discarding it from hand: true when
-// no house has been chosen or the card's own house is the active house. Manual
-// mode lifts the restriction. Versatile does not apply here — it only
-// relaxes using a card already in play (see usableInActiveHouse).
+// the card's own house is the active house. A player at No House — locked out of
+// every house and resolved to no active house for their play phase (ADR 0035) —
+// matches nothing, so they play only the cards an out-of-house allowance permits.
+// Before the choice resolves (HouseNone outside the play phase: setup and manual
+// board building) nothing is house-gated yet. Manual mode lifts the restriction.
+// Versatile does not apply here — it only relaxes using a card already in play
+// (see usableInActiveHouse).
 func (g *Game) inActiveHouse(def *CardDefinition) bool {
 	return g.manual ||
-		g.State.ActiveHouse == HouseNone ||
+		(g.State.ActiveHouse == HouseNone && g.State.Phase != PhasePlay) ||
 		def.House == g.State.ActiveHouse
 }
 

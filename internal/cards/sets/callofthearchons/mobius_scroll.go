@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item
 //
 //	Action: Archive Mobius Scroll from play, and archive up to 2 cards from your hand.
-var MobiusScroll = card.New(
+var MobiusScroll = set.New(
 	"Mobius Scroll",
 	card.House.Logos,
 	card.Type.Artifact,

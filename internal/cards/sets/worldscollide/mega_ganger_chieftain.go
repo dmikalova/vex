@@ -6,24 +6,23 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Brobnar
 //	Type:   Creature
-//	Rarity: Special
+//	Rarity: Connected
 //	Power:  7
 //	Traits: Giant
 //
-//	Play: You may ready and fight with a neighboring Creature.
-var MegaGangerChieftain = card.New(
+//	Play: Ready and fight with a neighboring Creature.
+var MegaGangerChieftain = set.New(
 	"Mega Ganger Chieftain",
 	card.House.Brobnar,
 	card.Type.Creature,
-	card.Rarity.Special,
+	card.Rarity.Connected,
 	card.Provenance(card.WC, "56"),
+	card.InCluster(card.Pulled(chieftainsBrewCluster, 1, 1.25)),
 	card.WithPower(7),
 	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(
-		card.Trigger.Play, card.May{
-			Do: card.OnChooseCreature{
-				Target: card.Target.Creature.Neighboring(),
-				Verbs:  []card.CreatureVerb{card.ReadyVerb{}, card.FightVerb{}},
-			},
+		card.Trigger.Play, card.OnChooseCreature{
+			Target: card.Target.Creature.Neighboring(),
+			Verbs:  []card.CreatureVerb{card.ReadyVerb{}, card.FightVerb{}},
 		}),
 )

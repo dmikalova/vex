@@ -10,24 +10,29 @@ import (
 // Narp's Brew
 //
 //	House:  Brobnar
-//	Type:   Tactic
-//	Rarity: Special
+//	Type:   Upgrade
+//	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Give a Creature two +1 power counters.
+//	This Creature gains +2 armor and taunt.
 func TestNarpsBrew(t *testing.T) {
-	t.Run("gives a creature two +1 power counters", func(t *testing.T) {
-		var troll ct.Card
+	t.Run("host gains +2 armor and Taunt", func(t *testing.T) {
+		var host ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.Brobnar,
-				Hand:   ct.Cards(NarpsBrew),
-				InPlay: ct.Cards(ct.Bind(&troll, ct.Creature(ct.Power(4)))),
+				House: card.House.Brobnar,
+				InPlay: ct.Cards(
+					ct.Upgraded(
+						ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Brobnar))),
+						NarpsBrew,
+					),
+				),
 			},
 		})
 
-		h.P1.Play(NarpsBrew)
-
-		h.Expect(troll).Power(6)
+		h.Expect(host).Armor(2)
+		if !h.Game().HasKeyword(host.ID(), card.Keyword.Taunt) {
+			t.Error("the host should gain Taunt")
+		}
 	})
 }

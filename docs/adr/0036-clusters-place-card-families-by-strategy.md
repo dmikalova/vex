@@ -115,3 +115,94 @@ are placed; templates decide _what one drawn card becomes_.
   weighting, generative name-splicing) is deliberately **out of scope** here and
   deferred to its own ADR; the plain per-House Bane proves the trait-table mechanism
   first.
+
+## Cross-set clusters and errant pods (extension)
+
+`OnePerHouse` was first built per-set: `NewSet` indexed a set's own cards, and its
+gate required a member for each of that set's Houses. Two forces broke that scope:
+
+- **The Shards are a cross-set family.** Age of Ascension prints seven (one per its
+  Houses); the last two Houses (Saurian, Star Alliance) never got a Shard. A per-set
+  index can never complete the nine-House cycle, and a Shard drawn as a legacy card
+  into a set that prints none would not fire the cycle at all.
+- **The errant pod** (`docs/deck-generation.md` §1) lets a pod take a **foreign
+  House** — one not native to the deck's set — drawn wholesale from the cross-set
+  legacy pool. A deck can therefore reach a House its set never printed a Shard for,
+  which the per-set gate cannot see.
+
+Decisions:
+
+- **The Shard cluster declaration is hoisted to a shared package**
+  (`internal/cards/clusters`), imported by every set that prints a Shard, so its
+  strategy and trigger are declared once and cannot drift between members printed in
+  different sets. Single-set clusters stay in their own set package.
+- **Deck-wide clusters resolve from a catalog-wide `ClusterPool`.** Because cluster
+  identity is the `Name` string and cards self-register globally, `NewClusterPool`
+  builds one index over the whole registered catalog, with **no set→set import**.
+  It is attached to each base set with `WithClusters`; `expandClusters` resolves
+  `OnePerHouse` from it when present, so a legacy-drawn or errant-House Shard
+  completes the cycle across every House the deck reaches.
+- **The gate is derived from _deckable_ Houses.** `validateCrossClusters` requires
+  an `OnePerHouse` member for every House a set can deck — its native Houses **plus**
+  its errant Houses (Houses present in the legacy pool but not native,
+  `Set.errantHouses`, computed in `WithLegacy`). Still complete-by-construction
+  (ADR 0018), now widened to the Houses an errant pod introduces, not hardcoded to
+  nine.
+- **The two missing Shards are real `Connected` cards in a reservoir set.** Shard of
+  Glory (Saurian) and Shard of Unity (Star Alliance) are Vactrol-invented cards in
+  `internal/cards/sets/anomalyexpansion`, declaring their home set with
+  `card.InSet(card.AE)` (no provenance — set membership is decoupled from provenance).
+  Being `Connected`, they stay out of the draw pool and the legacy pool and enter a
+  deck **only** through the Shard cluster. Anomaly Expansion is a **reservoir set**:
+  its cards register and feed the catalog cluster pool, but it has no draw pool of
+  its own, so `buildDeckSets` deals no deck from it (a set with no `Draftable` card
+  is skipped). Reservoir does not mean "out of every draw pool", though: the set
+  also holds the housed, non-`Connected` anomaly cards, and those remain eligible
+  for the legacy pool, so other sets' legacy and legacy-maverick slots can draw an
+  anomaly even though the Anomaly Expansion is never itself draftable. Their
+  abilities are provisional Vactrol inventions (see
+  `docs/keyforge-divergences.md`).
+- **The Ambassador and Plant templates already cover errant Houses for free** — they
+  materialize per partner House from `DeckHouses`, so an errant House gets its
+  Ambassador / Plant with no new card. Only the Shard cycle needed the two new cards.
+
+## Filtered pulls: a lead card guarantees a floor of predicate-matching cards (extension)
+
+Clusters place _named members_. A second, orthogonal shape appeared with Chief
+Engineer Walls: a card whose deck-building payoff is a whole open-ended _category_
+of cards — "any Upgrade or Robot card" — that no fixed member list can name. Walls
+retrieves Upgrades and Robots from the discard pile, so a deck that runs Walls
+wants a couple guaranteed to retrieve, drawn from **any** House, not a specific
+partner.
+
+Decisions:
+
+- **A filtered pull is a `FilteredCluster`, kept in a separate field from
+  `ClusterMembership`.** It carries a `Name`, a `Lead` (stamped from the declaring
+  card at `NewSet`), a `Floor`, and a `Match func(CardDefinition) bool` predicate.
+  It names no members — the pulled cards are whatever the pool offers that `Match` —
+  so it cannot be a `ClusterStrategy` (those enumerate members). Because a card
+  carries only one `ClusterMembership`, the filtered pull lives in its own
+  `GenerationProfile.Leads *FilteredCluster` field, so **a card can lead a filtered
+  pull and still belong to a named cluster** (Walls both partners its blaster's
+  `Pull` cluster and leads the Upgrade/Robot filtered pull). Authored with
+  `card.PullsMatching(name, floor, match)`.
+- **The floor counts cards already in the deck.** `expandFilteredClusters` runs
+  after `expandClusters` (so it never disturbs the OnePerHouse cycle), counts the
+  slots already matching the predicate, and tops up only the shortfall from the
+  pool — a deck that rolls enough Upgrades on its own pulls nothing, and the pull is
+  a floor, not a fixed add.
+- **Top-up is any-House, rehousing off-House pulls as mavericks.** Candidates are
+  the set's draftable pool cards that `Match`, minus those already in the deck and
+  minus placed one-copy-per-deck cards, shuffled by the deck seed. Each lands in a
+  pod of its own House when the deck has one (a natural card) else any pod as a
+  maverick, overwriting a slot that is not the lead, not a cluster/OnePerHouse
+  member (`protectedNames`), and does not already match — so the pull never reduces
+  the match count, displaces a Shard, or evicts the lead.
+- **Complete-by-construction, like every other cluster.** `validateFilteredClusters`
+  fails the build on a nil predicate, a `Floor < 1`, or a pool that cannot satisfy
+  the `Floor` — the same gate discipline as `validateClusters` (ADR 0018), so a deck
+  can never silently come up short.
+- **Zero blast radius when unused.** A set with no filtered pull makes no extra RNG
+  draws (`filteredNames` is empty), so existing decks are byte-for-byte unchanged;
+  only a deck that actually contains the lead and is short of the floor pulls.

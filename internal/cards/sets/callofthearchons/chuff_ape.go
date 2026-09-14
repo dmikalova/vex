@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Taunt.
 //	Chuff Ape enters play stunned.
 //	Fight/Reap: You may destroy another friendly Creature -> fully heal Chuff Ape.
-var ChuffApe = card.New(
+var ChuffApe = set.New(
 	"Chuff Ape",
 	card.House.Mars,
 	card.Type.Creature,

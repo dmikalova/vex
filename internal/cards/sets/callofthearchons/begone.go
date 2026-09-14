@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Play: Choose one:
 //	- Destroy each Dis Creature
 //	- Gain 1 Æmber.
-var Begone = card.New(
+var Begone = set.New(
 	"Begone!",
 	card.House.Sanctum,
 	card.Type.Tactic,
@@ -19,7 +19,7 @@ var Begone = card.New(
 	card.Provenance(card.CotA, "212"),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseOne{Options: []card.Effect{
-			card.Destroy{Target: card.Target.EachCreature.OfHouse(card.House.Dis)},
+			card.Destroy{Target: card.Target.EachCreature.House(card.Houses.Named(card.House.Dis))},
 			card.GainAember{
 				Player: card.Controller,
 				Amount: 1,

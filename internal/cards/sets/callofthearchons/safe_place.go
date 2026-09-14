@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	You may spend Æmber on Safe Place when forging keys.
 //	Action: Move 1 Æmber from your pool to Safe Place.
-var SafePlace = card.New("Safe Place",
+var SafePlace = set.New("Safe Place",
 	card.House.Shadows, card.Type.Artifact, card.Rarity.Rare,
 	card.Provenance(card.CotA, "289"),
 	card.WithAemberBonus(1),

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: If your opponent has more Æmber than you, for each forged key your opponent has, gain 1 Æmber.
-var FurtiveInvestors = card.New(
+var FurtiveInvestors = set.New(
 	"Furtive Investors",
 	card.House.Shadows,
 	card.Type.Tactic,

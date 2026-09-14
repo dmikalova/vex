@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Elusive.
 //	Play: Steal 2 Æmber.
 //	Leaves Play: Your opponent steals 2 Æmber.
-var MagdaTheRat = card.New(
+var MagdaTheRat = set.New(
 	"Magda the Rat",
 	card.House.Shadows,
 	card.Type.Creature,

@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Action: Choose a Creature - if it is a Dinosaur Creature or it has Æmber on it, deal 6 damage to it. Otherwise, deal 2 damage to it.
-var GujiDinosaurHunter = card.New(
+var GujiDinosaurHunter = set.New(
 	"Guji Dinosaur Hunter",
 	card.House.Brobnar,
 	card.Type.Creature,

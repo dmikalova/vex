@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Deal 1 damage to each enemy Creature for each Æmber on it, and move all Æmber from each enemy Creature to your pool.
-var WordOfReturning = card.New(
+var WordOfReturning = set.New(
 	"Word of Returning",
 	card.House.Untamed,
 	card.Type.Tactic,

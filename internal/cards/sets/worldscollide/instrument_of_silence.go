@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	This Creature gains skirmish.
 //	This Creature gains, "Fight: Gain 1 Æmber."
-var InstrumentOfSilence = card.New(
+var InstrumentOfSilence = set.New(
 	"Instrument of Silence",
 	card.House.Untamed,
 	card.Type.Upgrade,

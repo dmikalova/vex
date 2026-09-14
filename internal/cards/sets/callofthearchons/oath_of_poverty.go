@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Destroy each friendly Artifact. For each card destroyed this way, gain 2 Æmber.
-var OathOfPoverty = card.New(
+var OathOfPoverty = set.New(
 	"Oath of Poverty",
 	card.House.Sanctum,
 	card.Type.Tactic,

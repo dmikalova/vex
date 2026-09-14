@@ -6,22 +6,19 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Brobnar
 //	Type:   Creature
-//	Rarity: Special
+//	Rarity: Connected
 //	Power:  7
 //	Traits: Giant
 //
-//	Before Fight: Deal 2 damage to each neighbor of the Creature Mega Cowfyne fights.
-var MegaCowfyne = card.New(
+//	Splash-attack 2.
+var MegaCowfyne = set.New(
 	"Mega Cowfyne",
 	card.House.Brobnar,
 	card.Type.Creature,
-	card.Rarity.Special,
+	card.Rarity.Connected,
 	card.Provenance(card.WC, "55"),
+	card.InCluster(card.Pulled(cowfynesBrewCluster, 1, 1.25)),
 	card.WithPower(7),
 	card.WithTraits(card.Traits.Giant),
-	card.WithAbility(
-		card.Trigger.BeforeFight, card.DealDamage{
-			Amount: 2,
-			Target: card.Target.CreatureFought.NeighborsOf(),
-		}),
+	card.WithSplashAttack(2),
 )

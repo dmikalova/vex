@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Reap: Stun a friendly non-Mars Creature and an enemy non-Mars Creature.
-var AgentHooMan = card.New(
+var AgentHooMan = set.New(
 	"Agent Hoo-man",
 	card.House.Mars,
 	card.Type.Creature,
@@ -24,8 +24,12 @@ var AgentHooMan = card.New(
 	card.WithAbility(
 		card.Trigger.Reap, card.Sequence{
 			Effects: []card.Effect{
-				card.Stun{Target: card.Target.FriendlyCreature.ExceptHouse(card.House.Self)},
-				card.Stun{Target: card.Target.EnemyCreature.ExceptHouse(card.House.Self)},
+				card.Stun{
+					Target: card.Target.FriendlyCreature.House(card.Houses.Except(card.House.Self)),
+				},
+				card.Stun{
+					Target: card.Target.EnemyCreature.House(card.Houses.Except(card.House.Self)),
+				},
 			},
 		}),
 )

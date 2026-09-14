@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Play: Your opponent gains 1 Æmber.
-var FuzzyGruen = card.New(
+var FuzzyGruen = set.New(
 	"Fuzzy Gruen",
 	card.House.Untamed,
 	card.Type.Creature,

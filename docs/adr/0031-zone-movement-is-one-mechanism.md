@@ -33,7 +33,7 @@ the largest.
 **All movement of a card between zones is one engine mechanism**, parameterized by
 the four axes above: source zone, selection strategy, destination, and the optional
 `ctx.It`/`ctx.Produced` side effects. Where the source is play the selection is the
-existing `Target`/`Selector` vocabulary; from a pile it is a small zone-selection
+existing `Target`/`Selection` vocabulary; from a pile it is a small zone-selection
 strategy (chosen / any-number / all / random / top-N, plus the house/type/name/trait
 filters). The destination is the existing `Destination` (`To.Hand`, `To.TopOfDeck`,
 `To.Archives`, …) extended with the two terminal destinations, discard and
@@ -44,8 +44,8 @@ out-of-the-game (purge).
 `Shuffle…IntoDeck`, `Put…` — each a thin authoring struct with flat, ergonomically
 named fields that builds the shared mechanism with its destination fixed.
 `PurgeCard` sets the destination to out-of-the-game; `ArchiveTop{From: Deck}` sets
-it to archives; `Discard{Zone, Player, Amount, Random}` sets it to discard. The
-printed card says the verb, so the verb is what the author writes.
+it to archives; `DiscardCard{Player, Zone, Selection, Amount, AnyNumber}` sets it
+to discard. The printed card says the verb, so the verb is what the author writes.
 
 **The sugar delegates; it does not embed.** This follows the quantity decision:
 Go composite literals do not promote embedded fields, and the `card` facade aliases
@@ -70,9 +70,11 @@ engine terms. Keep the verbs; share the engine underneath them.
 - The movement is exercised once, at the mechanism; each verb's sugar needs only
   its own text-and-wiring test.
 - The DiscardTop-versus-DiscardRandom question dissolves. "The top card" and "a
-  random card" are two selection strategies of one Discard, so
-  `Discard{Zone, Player, Amount, Random bool}` covers both — no `DiscardTop` versus
-  `DiscardRandom` split, and calling a random discard "top of deck" never comes up.
+  random card" are two **selection strategies** of one Discard, so
+  `DiscardCard{..., Selection}` carries either (`Chosen` or `Random`) — no
+  `DiscardTop` versus `DiscardRandom` split, and calling a random discard "top of
+  deck" never comes up. `AnyNumber` covers the "discard as many as you like"
+  variant on the same struct.
 - Realized incrementally, not in one sweep. Today `PurgeCard` (zone + count +
   up-to), `PutChosen` / `PutFromPlay` (target + `Destination`), the `To`
   destinations, and the `ctx.Produced` tally are partial realizations. Each family

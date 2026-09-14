@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Hazardous 3.
 //	Each neighboring Creature gains hazardous 3.
-var ArmsmasterMolina = card.New(
+var ArmsmasterMolina = set.New(
 	"Armsmaster Molina",
 	card.House.StarAlliance,
 	card.Type.Creature,

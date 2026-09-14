@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Zorg enters play stunned.
 //	Before Fight: Stun the Creature Zorg fights and each of its neighbors.
-var Zorg = card.New(
+var Zorg = set.New(
 	"Zorg",
 	card.House.Mars,
 	card.Type.Creature,

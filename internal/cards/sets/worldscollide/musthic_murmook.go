@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Each player's keys cost +1 Æmber.
 //	Play: Deal 4 damage to a Creature.
-var MusthicMurmook = card.New(
+var MusthicMurmook = set.New(
 	"Musthic Murmook",
 	card.House.Untamed,
 	card.Type.Creature,

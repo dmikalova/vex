@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Alpha.
 //	Play: Until the start of your next turn, Creatures cannot be used to reap.
-var SowSalt = card.New(
+var SowSalt = set.New(
 	"Sow Salt",
 	card.House.Saurian,
 	card.Type.Tactic,

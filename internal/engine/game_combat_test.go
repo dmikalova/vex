@@ -44,7 +44,7 @@ func TestGrantFightForHouse(t *testing.T) {
 	}
 
 	// The grant lets creatures of that house fight this turn.
-	g.GrantMayPlayOrUse(0, HouseSelector{Kind: SelectHouse, House: Untamed}, GrantFight, 0, 0)
+	g.GrantMayPlayOrUse(0, HouseSelector{Match: namedHouse(Untamed)}, GrantFight, 0, 0)
 	if err := g.Fight(0, att, def); err != nil {
 		t.Fatalf("with grant: %v", err)
 	}
@@ -499,8 +499,8 @@ func TestBeforeFightCanCancelFight(t *testing.T) {
 		WithPower(5),
 		WithAssault(2),
 		WithAbility(TriggerBeforeFight, Sequence{Effects: []Effect{
-			DiscardTopOfDeck{},
-			Conditional{Cond: ItIsOfHouse{House: TheActiveHouse}, Then: CancelFight{}},
+			DiscardTop{},
+			Conditional{Cond: ItIs{House: activeHouse}, Then: CancelFight{}},
 		}}),
 		WithAbility(TriggerAfterFight, GainAember{Player: Controller, Amount: 1}),
 	), 0)
@@ -542,8 +542,8 @@ func TestBeforeFightCancelMissStillFights(t *testing.T) {
 	attacker := g.AddToBattleline(NewCard("evader", Brobnar, Creature, Common,
 		WithPower(9),
 		WithAbility(TriggerBeforeFight, Sequence{Effects: []Effect{
-			DiscardTopOfDeck{},
-			Conditional{Cond: ItIsOfHouse{House: TheActiveHouse}, Then: CancelFight{}},
+			DiscardTop{},
+			Conditional{Cond: ItIs{House: activeHouse}, Then: CancelFight{}},
 		}}),
 		WithAbility(TriggerAfterFight, GainAember{Player: Controller, Amount: 1}),
 	), 0)

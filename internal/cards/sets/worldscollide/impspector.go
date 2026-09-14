@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Imp
 //
 //	Destroyed: Purge a random card from your opponent's hand.
-var Impspector = card.New(
+var Impspector = set.New(
 	"Impspector",
 	card.House.Dis,
 	card.Type.Creature,

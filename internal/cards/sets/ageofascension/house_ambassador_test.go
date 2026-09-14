@@ -13,7 +13,7 @@ import (
 //
 //	House:  Sanctum
 //	Type:   Creature
-//	Rarity: Special
+//	Rarity: Rare
 //	Power:  1
 //	Traits: Human
 //

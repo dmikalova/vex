@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Skirmish.
 //	Fight: Draw a card.
-var QuixoTheAdventurer = card.New(
+var QuixoTheAdventurer = set.New(
 	"Quixo the \"Adventurer\"",
 	card.House.Logos,
 	card.Type.Creature,

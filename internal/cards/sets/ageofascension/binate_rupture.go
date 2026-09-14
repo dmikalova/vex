@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Alpha.
 //	Play: For each Æmber in your pool, gain 1 Æmber, and for each Æmber in your opponent's pool, your opponent gains 1 Æmber.
-var BinateRupture = card.New(
+var BinateRupture = set.New(
 	"Binate Rupture",
 	card.House.Logos,
 	card.Type.Tactic,

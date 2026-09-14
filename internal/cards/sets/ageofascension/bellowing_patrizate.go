@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant
 //
 //	After a Creature enters play, if Bellowing Patrizate is ready, deal 1 damage to it.
-var BellowingPatrizate = card.New(
+var BellowingPatrizate = set.New(
 	"Bellowing Patrizate",
 	card.House.Brobnar,
 	card.Type.Creature,

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item
 //
 //	Action: Use a friendly Creature.
-var DominatorBauble = card.New(
+var DominatorBauble = set.New(
 	"Dominator Bauble",
 	card.House.Dis,
 	card.Type.Artifact,

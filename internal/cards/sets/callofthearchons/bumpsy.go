@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant
 //
 //	Play: Your opponent loses 1 Æmber.
-var Bumpsy = card.New(
+var Bumpsy = set.New(
 	"Bumpsy",
 	card.House.Brobnar,
 	card.Type.Creature,

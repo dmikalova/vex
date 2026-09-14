@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //
 //	Play: Draw 2 cards. Archive a card from your hand.
-var TautauVapors = card.New(
+var TautauVapors = set.New(
 	"Tautau Vapors",
 	card.House.Logos,
 	card.Type.Tactic,

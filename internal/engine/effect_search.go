@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"slices"
 )
 
 // SearchForName lets the controller search their deck and discard pile for a card
@@ -38,15 +37,17 @@ func (e SearchForName) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 // resolveGate searches and reports whether it found anything, so a Then can hang
 // a follow-up off the search succeeding (Bear Flute reshuffles only if it did).
 func (e SearchForName) resolveGate(ctx *EffectContext) bool {
-	pick := Named{Name: e.Name}
-	inDeck := pick.candidates(ctx, ctx.Resolver.Deck(ctx.Controller))
-	candidates := slices.Concat(
-		inDeck,
-		pick.candidates(ctx, ctx.Resolver.Discard(ctx.Controller)),
-	)
+	mover := crossZoneMover{
+		Player:  ctx.Controller,
+		Dest:    ToHand,
+		Sources: []Zone{Deck, Discard},
+	}
+	candidates := mover.gather(ctx, func(id LocalID) bool {
+		return ctx.Resolver.Name(id) == e.Name
+	})
 	if e.All {
 		for _, id := range candidates {
-			e.take(ctx, inDeck, id)
+			e.take(ctx, mover, id)
 		}
 		return len(candidates) > 0
 	}
@@ -54,38 +55,34 @@ func (e SearchForName) resolveGate(ctx *EffectContext) bool {
 	if !ok {
 		return false
 	}
-	e.take(ctx, inDeck, id)
+	e.take(ctx, mover, id)
 	return true
 }
 
 // take reveals one found card and moves it to hand from whichever zone holds it.
-func (e SearchForName) take(ctx *EffectContext, inDeck []LocalID, id LocalID) {
+func (e SearchForName) take(ctx *EffectContext, mover crossZoneMover, id LocalID) {
 	ctx.Resolver.Record(CardsRevealedToAll{Player: ctx.Controller, Cards: []LocalID{id}})
-	if slices.Contains(inDeck, id) {
-		ctx.Resolver.MoveFromDeckToHand(id)
-	} else {
-		ctx.Resolver.PutFromDiscardIntoHand(id)
-	}
+	mover.move(ctx, id)
 }
 
 // SearchDeck is the KeyForge "search" keyword's deck search: the controller
 // searches their deck for a card — any card, or one of a given House — and puts it
 // into their hand (Orb of Wonder searches for any card, Saurus Rex for a Saurian
 // card). A House-restricted search reveals the card it takes. It does not shuffle:
-// a search is always followed by a separate ShuffleDeck, enforced by a card lint.
+// a search is always followed by a separate Shuffle, enforced by a card lint.
 type SearchDeck struct {
-	// House restricts the search to cards of that house; HouseNone searches for any
-	// card and does not reveal what it takes.
-	House House
+	// House restricts the search to cards the matcher admits; the zero value (any
+	// house) searches for any card and does not reveal what it takes.
+	House HouseMatcher
 }
 
 // Text renders the effect, e.g. "search your deck for a Saurian card, reveal it,
 // and put it into your hand".
 func (e SearchDeck) Text() string {
-	if e.House == HouseNone {
+	if !e.House.filters() {
 		return "search your deck for a card and put it into your hand"
 	}
-	return "search your deck for " + indefinite(e.House.String()+" card") +
+	return "search your deck for " + indefinite(e.House.qualify("card")) +
 		", reveal it, and put it into your hand"
 }
 
@@ -94,12 +91,12 @@ func (e SearchDeck) Text() string {
 func (e SearchDeck) Resolve(ctx *EffectContext) {
 	var cands []LocalID
 	for _, id := range ctx.Resolver.Deck(ctx.Controller) {
-		if e.House == HouseNone || ctx.Resolver.House(id) == e.House {
+		if e.House.matches(ctx, id) {
 			cands = append(cands, id)
 		}
 	}
 	if id, ok := ctx.ChooseCard("Choose a card to put into your hand", cands); ok {
-		if e.House != HouseNone {
+		if e.House.filters() {
 			ctx.Resolver.Record(CardsRevealedToAll{Player: ctx.Controller, Cards: []LocalID{id}})
 		}
 		ctx.Resolver.MoveFromDeckToHand(id)

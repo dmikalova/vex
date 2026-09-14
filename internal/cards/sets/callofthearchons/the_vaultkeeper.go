@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Knight • Spirit
 //
 //	Your Æmber cannot be stolen.
-var TheVaultkeeper = card.New(
+var TheVaultkeeper = set.New(
 	"The Vaultkeeper",
 	card.House.Sanctum,
 	card.Type.Creature,

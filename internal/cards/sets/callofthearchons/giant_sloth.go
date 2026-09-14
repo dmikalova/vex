@@ -14,7 +14,7 @@ import (
 //
 //	You cannot use this card unless you have discarded an Untamed card from your hand this turn.
 //	Action: Gain 3 Æmber.
-var GiantSloth = card.New(
+var GiantSloth = set.New(
 	"Giant Sloth",
 	card.House.Untamed,
 	card.Type.Creature,
@@ -25,7 +25,7 @@ var GiantSloth = card.New(
 	card.WithRestrictions(card.Restrictions{
 		UseCondition: card.CardsDiscarded{
 			Player: card.Controller,
-			House:  card.House.Self,
+			House:  card.Houses.Named(card.House.Self),
 			Amount: 1,
 		},
 	}),

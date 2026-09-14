@@ -208,6 +208,20 @@ func TestHousesRepresented(t *testing.T) {
 	}
 }
 
+func TestNot(t *testing.T) {
+	// A negatable inner condition validates and surfaces an invalid inner.
+	if err := (Not{Cond: OnFlank{}}).validate(); err != nil {
+		t.Errorf("validate: %v", err)
+	}
+	if err := (Not{Cond: ForgedKey{}}).validate(); err == nil {
+		t.Error("Not should surface an invalid inner condition")
+	}
+	// A condition that renders no negated text cannot be wrapped.
+	if err := (Not{Cond: SourceReady{}}).validate(); err == nil {
+		t.Error("a non-negatable inner condition should fail validation")
+	}
+}
+
 func TestSourceReadyCondition(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("src", 2), 0)
@@ -231,7 +245,7 @@ func TestOnFlankSource(t *testing.T) {
 	g.AddToBattleline(testCreature("right", 2), 0)
 
 	on := OnFlank{}
-	off := OnFlank{Not: true}
+	off := Not{Cond: OnFlank{}}
 	if on.CondText() != "if "+SelfName+" is on a flank" {
 		t.Errorf("on CondText = %q", on.CondText())
 	}
@@ -245,10 +259,10 @@ func TestOnFlankSource(t *testing.T) {
 		t.Error("interior source should not satisfy OnFlank{}")
 	}
 	if !off.Met(&EffectContext{Resolver: g, Source: mid}) {
-		t.Error("interior source should satisfy OnFlank{Not}")
+		t.Error("interior source should satisfy Not{OnFlank}")
 	}
 	if off.Met(&EffectContext{Resolver: g, Source: left}) {
-		t.Error("flank source should not satisfy OnFlank{Not}")
+		t.Error("flank source should not satisfy Not{OnFlank}")
 	}
 }
 
@@ -435,7 +449,7 @@ func TestControlsCreaturesOfHouses(t *testing.T) {
 func TestCardsPlayed(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-	cond := CardsPlayed{Player: Controller, House: Sanctum, Amount: 7}
+	cond := CardsPlayed{Player: Controller, House: namedHouse(Sanctum), Amount: 7}
 	if cond.CondText() != "if you have played 7 or more Sanctum cards this turn" {
 		t.Errorf("cond text = %q", cond.CondText())
 	}
@@ -459,7 +473,7 @@ func TestCardsPlayed(t *testing.T) {
 		t.Error("seven Sanctum cards should satisfy the condition")
 	}
 	// The default threshold is one played card.
-	if (CardsPlayed{Player: Controller, House: Mars}).Met(ctx) {
+	if (CardsPlayed{Player: Controller, House: namedHouse(Mars)}).Met(ctx) {
 		t.Error("no Mars cards played should not meet the default threshold")
 	}
 }
@@ -543,24 +557,32 @@ func TestRepeatMayWhileDrivenByChoice(t *testing.T) {
 func TestItIs(t *testing.T) {
 	// CondText renders the filtered noun with the right article.
 	cases := map[string]ItIs{
-		"if it is a Mars creature": {House: Mars, Type: Creature},
-		"if it is an artifact":     {Type: Artifact},
-		"if it is a Mars card":     {House: Mars},
-		"if it is a card":          {},
-		"if it is not a Logos card": {
-			House: Logos,
-			Not:   true,
-		},
-		"if the discarded card is not a Logos card": {
-			House:   Logos,
-			Not:     true,
-			Subject: DiscardedCard,
-		},
-		"if it is another creature": {Type: Creature, Other: true},
+		"if it is a Mars creature":          {House: namedHouse(Mars), Type: Creature},
+		"if it is an artifact":              {Type: Artifact},
+		"if it is a Mars card":              {House: namedHouse(Mars)},
+		"if it is a card":                   {},
+		"if it is a non-Star Alliance card": {House: exceptHouse(StarAlliance)},
+		"if it is of the chosen house":      {House: chosenHouse},
+		"if it is of the active house":      {House: activeHouse},
+		"if it is another creature":         {Type: Creature, Other: true},
 	}
 	for want, e := range cases {
 		if got := e.CondText(); got != want {
 			t.Errorf("CondText() = %q, want %q", got, want)
+		}
+	}
+
+	// A Not wrapper renders each condition's own negated clause.
+	negated := map[string]ItIs{
+		"if it is not a Logos card": {House: namedHouse(Logos)},
+		"if the discarded card is not a Logos card": {
+			House:   namedHouse(Logos),
+			Subject: DiscardedCard,
+		},
+	}
+	for want, e := range negated {
+		if got := (Not{Cond: e}).CondText(); got != want {
+			t.Errorf("Not CondText() = %q, want %q", got, want)
 		}
 	}
 
@@ -573,10 +595,10 @@ func TestItIs(t *testing.T) {
 		t.Error("Met with no context card should be false")
 	}
 	ctx.It, ctx.HasIt = mars, true
-	if !(ItIs{House: Mars, Type: Creature}).Met(ctx) {
+	if !(ItIs{House: namedHouse(Mars), Type: Creature}).Met(ctx) {
 		t.Error("a Mars creature should match a Mars-creature filter")
 	}
-	if (ItIs{House: Logos}).Met(ctx) {
+	if (ItIs{House: namedHouse(Logos)}).Met(ctx) {
 		t.Error("a Mars creature should not match a Logos filter")
 	}
 	if (ItIs{Type: Artifact}).Met(ctx) {
@@ -595,10 +617,10 @@ func TestItIs(t *testing.T) {
 	ctx.Source = 0
 
 	// Not inverts the match, so the condition holds for everything that does not fit.
-	if !(ItIs{House: Logos, Not: true}).Met(ctx) {
+	if !(Not{Cond: ItIs{House: namedHouse(Logos)}}).Met(ctx) {
 		t.Error("a Mars creature should meet a not-Logos filter")
 	}
-	if (ItIs{House: Mars, Not: true}).Met(ctx) {
+	if (Not{Cond: ItIs{House: namedHouse(Mars)}}).Met(ctx) {
 		t.Error("a Mars creature should not meet a not-Mars filter")
 	}
 }
@@ -856,23 +878,32 @@ func TestCountIs(t *testing.T) {
 		name string
 		cond CountIs
 		want string
-	}{{
-		name: "at least, plural",
-		cond: CountIs{Count: CreaturesUsed{Player: Controller}, Is: AtLeast, Amount: 3},
-		want: "if you used 3 or more creatures this turn",
-	}, {
-		name: "exactly one, singular",
-		cond: CountIs{Count: CardsPlayed{Player: Controller}, Is: Exactly, Amount: 1},
-		want: "if you played exactly 1 card this turn",
-	}, {
-		name: "house-filtered",
-		cond: CountIs{Count: CardsPlayed{Player: Controller, House: Mars}, Is: Exactly, Amount: 2},
-		want: "if you played exactly 2 Mars cards this turn",
-	}, {
-		name: "mass noun ignores plurality",
-		cond: CountIs{Count: DamageHealed{}, Is: Exactly, Amount: 3},
-		want: "if you healed exactly 3 damage",
-	}}
+	}{
+		{
+			name: "at least, plural",
+			cond: CountIs{Count: CreaturesUsed{Player: Controller}, Is: AtLeast, Amount: 3},
+			want: "if you used 3 or more creatures this turn",
+		},
+		{
+			name: "exactly one, singular",
+			cond: CountIs{Count: CardsPlayed{Player: Controller}, Is: Exactly, Amount: 1},
+			want: "if you played exactly 1 card this turn",
+		},
+		{
+			name: "house-filtered",
+			cond: CountIs{
+				Count:  CardsPlayed{Player: Controller, House: namedHouse(Mars)},
+				Is:     Exactly,
+				Amount: 2,
+			},
+			want: "if you played exactly 2 Mars cards this turn",
+		},
+		{
+			name: "mass noun ignores plurality",
+			cond: CountIs{Count: DamageHealed{}, Is: Exactly, Amount: 3},
+			want: "if you healed exactly 3 damage",
+		},
+	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			if got := tc.cond.CondText(); got != tc.want {
@@ -932,7 +963,7 @@ func TestCardsPlayedCountsEveryHouseWhenUnset(t *testing.T) {
 	if got := (CardsPlayed{Player: Controller}).Value(ctx); got != 2 {
 		t.Errorf("unfiltered value = %d, want 2 (every house counts)", got)
 	}
-	if got := (CardsPlayed{Player: Controller, House: Logos}).Value(ctx); got != 1 {
+	if got := (CardsPlayed{Player: Controller, House: namedHouse(Logos)}).Value(ctx); got != 1 {
 		t.Errorf("house-filtered value = %d, want 1", got)
 	}
 }
@@ -1034,7 +1065,7 @@ func TestAemberOnThisAtLeast(t *testing.T) {
 	}
 
 	// Not flips the sense to "fewer than", met below the threshold and not above.
-	fewer := AemberOnThisAtLeast{Amount: 10, Not: true}
+	fewer := Not{Cond: AemberOnThisAtLeast{Amount: 10}}
 	if got := fewer.CondText(); got != "if there are fewer than 10 Æmber on it" {
 		t.Errorf("negated text = %q", got)
 	}
@@ -1051,7 +1082,7 @@ func TestAemberOnThisAtLeast(t *testing.T) {
 // sits in the controller's purge pile, both senses.
 func TestNamedCardPurged(t *testing.T) {
 	present := NamedCardPurged{Name: "Igon the Green"}
-	absent := NamedCardPurged{Name: "Igon the Green", Not: true}
+	absent := Not{Cond: NamedCardPurged{Name: "Igon the Green"}}
 	if got := present.CondText(); got != "if Igon the Green has been purged" {
 		t.Errorf("present text = %q", got)
 	}

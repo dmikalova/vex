@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Elf • Thief
 //
 //	Elusive, Skirmish.
-var KnucklesBolton = card.New(
+var KnucklesBolton = set.New(
 	"Knuckles Bolton",
 	card.House.Shadows,
 	card.Type.Creature,

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Destroy each Creature with Æmber on it.
-var GuiltyHearts = card.New(
+var GuiltyHearts = set.New(
 	"Guilty Hearts",
 	card.House.Dis,
 	card.Type.Tactic,

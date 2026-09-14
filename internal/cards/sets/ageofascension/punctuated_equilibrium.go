@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //
 //	Play: Each player discards their hand. Each player refills their hand as if it were the end of their turn.
-var PunctuatedEquilibrium = card.New(
+var PunctuatedEquilibrium = set.New(
 	"Punctuated Equilibrium",
 	card.House.Untamed,
 	card.Type.Tactic,

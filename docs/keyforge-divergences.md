@@ -48,13 +48,18 @@ interesting, or brings it in line with modern errata.
 - **Imperial Traitor** reads `Reveal`, not `Look at`. This is the modern wording.
 - **Ganger Chieftain** and **Biomatrix Backup** are mandatory. The `you may`
   clause is dropped.
+- **Ghosthawk** is mandatory. The `you may` clause is dropped, so it reaps with
+  each of its neighbors, one at a time. Its target is also reworded from KeyForge's
+  `each neighboring creature` to `each of Ghosthawk's neighbors`, naming the
+  source's own neighbors rather than the general neighboring-creature set.
 - **Malison** is mandatory. The `you may` clause is dropped, so its Fight moves an
   enemy creature every time (the flank capture still only fires when the moved
   creature ends on a flank).
 - **Hypnotic Command** leans on the base rule that the active player makes all
   decisions, so `an enemy creature captures …` needs no explicit `choose`.
-- **Phase Shift** and **Kirby** play their off-house card immediately rather than
-  granting a permission for later in the turn (rule 21).
+- **Phase Shift**, **Kirby**, and **Taber** play (or, for Taber, play or use)
+  their off-house card immediately rather than granting a permission for later in
+  the turn (rule 21).
 - **Trust No One** is a `Choose one:` rather than a forced `If … Otherwise …`. The
   conditional branch ("if there are no friendly creatures in play, steal 1 Æmber
   per house among enemy creatures") still gates on the empty board, so it does
@@ -129,6 +134,52 @@ Brobnar card was revealed. Archive each card revealed this way`. Vactrol folds t
   walked card ends in archives and Old Boomy takes 2 damage only when a Brobnar card
   is turned up — but the cards pass through the discard pile en route to archives
   rather than being archived directly on reveal.
+- **The Worlds Collide "Brews"** are each redesigned to be unique to the giant they
+  are brewed for, rather than sharing KeyForge's single `Play: Give a creature two
++1 power counters` action. Each brew is a Brobnar **Upgrade** that leads a Pull
+  cluster bringing its Mega giant into the pod, and grants its host an ability tied
+  to that giant: **Chieftain's Brew** grants `Fight: Ready and fight with a
+neighboring Creature` (Mega Ganger Chieftain's play ability), **Cowfyne's Brew**
+  grants `+2 splash-attack` (Mega Cowfyne's keyword), and **Alaka's Brew** grants
+  `Fight: Play a Creature -> ready it`. This makes each brew a distinct card and
+  keeps the Mega giants — which are `Connected` — reachable through their brew's
+  cluster.
+- **Mega Cowfyne** has **Splash-attack 2** rather than KeyForge's `Before Fight:
+Deal 2 damage to each neighbor of the creature Mega Cowfyne fights`. The keyword
+  reaches the same neighbours for the same 2 damage while folding the card into the
+  shared Splash-attack mechanic (the same keyword base Cowfyne already carries),
+  and **Cowfyne's Brew** grants that keyword instead of the bespoke reaction.
+- **Mega Ganger Chieftain** and **Chieftain's Brew** are mandatory: the `you may`
+  is dropped from Mega Ganger Chieftain's `Play` and from the `Fight` ability
+  Chieftain's Brew grants, matching the same drop already made on their base card
+  **Ganger Chieftain**.
+- **Mind Barb** reads `Play: Discard a card from your hand. Your opponent discards
+a random card from their hand`, adding a self-discard before KeyForge's lone
+  `Play: Your opponent discards a random card from their hand`. The extra clause
+  makes the card distinct from its cross-house counterpart **Subtle Chain**
+  (Shadows), which keeps the original opponent-only discard.
+- **Speed Sigil** is limited to one copy per deck. KeyForge sets no such limit;
+  Vactrol caps it at one to bound its first-creature-of-the-turn ready loop.
+- **Toad** is `Connected` rather than KeyForge's `Special`: it is kept out of the
+  pool and instead pulled into **Xenos Bloodshadow**'s pod one for one, so a Toad
+  only ever reaches a deck alongside the Bloodshadow it rides in with.
+
+## Invented cards
+
+A few cards exist only in Vactrol — no KeyForge printing. They fill a structural
+gap the real game left open and carry provisional abilities that may be retuned.
+
+- **Shard of Glory** (Saurian) and **Shard of Unity** (Star Alliance) complete the
+  nine-House Shard cycle. Age of Ascension printed seven Shards, one per its Houses,
+  but never a Saurian or Star Alliance Shard, so an errant pod of either House (or a
+  legacy-drawn Shard in a deck of those Houses) could not complete the deck-wide
+  `OnePerHouse` cluster ([ADR 0036](adr/0036-clusters-place-card-families-by-strategy.md)).
+  Both are `Connected` Artifacts in the **Anomaly Expansion** reservoir set,
+  matching the AoA Shards' shape (Item • Shard, one copy per deck, `Action: For each
+friendly Shard, …`). Their effects — Shard of Glory exalts a friendly creature,
+  Shard of Unity readies a friendly creature — are Vactrol inventions in the spirit
+  of the existing Shards and are provisional; only their existence and cross-set
+  cycle role are load-bearing.
 
 ## Mechanic rule changes
 

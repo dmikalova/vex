@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	This Creature gains +2 armor.
 //	This Creature gains, "Destroyed: Move each Æmber on this Creature to the common supply."
-var ImperialScutum = card.New(
+var ImperialScutum = set.New(
 	"Imperial Scutum",
 	card.House.Saurian,
 	card.Type.Upgrade,

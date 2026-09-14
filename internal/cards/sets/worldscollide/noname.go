@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Noname gains +1 power for each purged card.
 //	Play/Fight/Reap: Purge a card from a discard pile.
-var Noname = card.New(
+var Noname = set.New(
 	"Noname",
 	card.House.Dis,
 	card.Type.Creature,

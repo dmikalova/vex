@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Deal 1 damage to a Creature and enrage it.
-var PesteringBlow = card.New(
+var PesteringBlow = set.New(
 	"Pestering Blow",
 	card.House.Shadows,
 	card.Type.Tactic,

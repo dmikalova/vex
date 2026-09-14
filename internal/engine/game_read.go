@@ -1,5 +1,7 @@
 package engine
 
+import "slices"
+
 // This file holds read accessors over the flat GameState: a card's derived stats
 // (power, armor, assault, hazardous, keywords — each folding in upgrades and
 // constant abilities) and the raw reads of pools, keys, and zone contents. These
@@ -57,6 +59,12 @@ func (g *Game) House(id LocalID) House {
 
 // ActiveHouse returns the house chosen for the current turn.
 func (g *Game) ActiveHouse() House { return g.State.ActiveHouse }
+
+// AllowedHouses returns the houses the player may legally choose as their active
+// house right now; an empty result means they have no active house this turn and
+// must choose "No House". It is the read the client's house picker shares with
+// ChooseHouse.
+func (g *Game) AllowedHouses(player int) []House { return g.allowedHouses(player) }
 
 // ActivePlayer returns the player whose turn it is.
 func (g *Game) ActivePlayer() int { return g.State.ActivePlayer }
@@ -681,12 +689,70 @@ func (g *Game) forgeBarredWhileAhead(player int) bool {
 	return false
 }
 
-// houseLockAllows reports whether player may choose house as their active house,
-// given every house lock a card in play holds over them (Pitlord requires Dis of
-// its controller, Restringuntus bars its opponent from the house it named). A
-// "must" lock only binds when the player actually has that house, matching how a
-// forced house yields when it cannot be obeyed; a "cannot" lock always binds.
-func (g *Game) houseLockAllows(player int, house House) bool {
+// choosableHouses returns the houses player p may choose as their active house:
+// every house on their Archon identity card, plus the house of every card they
+// control in play in its own right — a battleline creature or an artifact — read
+// live (ADR 0035, rulebook line 454). A controlled off-house card contributes its
+// house; an upgrade or a card under a host does not. When p's identity houses are
+// unset (an engine test that declares no deck), every real house is choosable.
+func (g *Game) choosableHouses(player int) []House {
+	var out []House
+	add := func(h House) {
+		if h != HouseNone && !slices.Contains(out, h) {
+			out = append(out, h)
+		}
+	}
+	if len(g.houses[player]) == 0 {
+		for h := Brobnar; int(h) < NumHouses; h++ {
+			out = append(out, h)
+		}
+	} else {
+		for _, h := range g.houses[player] {
+			add(h)
+		}
+	}
+	for _, id := range g.State.Battleline[player].slice() {
+		add(g.House(id))
+	}
+	for _, id := range g.State.Artifacts[player].slice() {
+		add(g.House(id))
+	}
+	return out
+}
+
+// allowedHouses returns the houses player p may legally choose right now, resolving
+// their whole constraint table together with every continuous house lock a card in
+// play holds over them (Pitlord requires Dis of its controller; Restringuntus bars
+// its opponent from a named house). It is the one computation ChooseHouse and the
+// client's house picker share (ADR 0035):
+//   - Start from the choosable houses and remove every cannot — cannot overrides
+//     must, so a house that is both required and barred is barred.
+//   - A surviving must is one still choosable and not forbidden. If any survive, the
+//     allowed set is exactly those (must A, must B leaves {A, B}; adding cannot A
+//     leaves {B}). A must for a house the player cannot choose is void.
+//
+// An empty result means the player has no active house this turn — a valid outcome,
+// not an error (they choose No House).
+func (g *Game) allowedHouses(player int) []House {
+	choosable := g.choosableHouses(player)
+	var cannots, musts []House
+	addTo := func(dst *[]House, h House) {
+		if h != HouseNone && !slices.Contains(*dst, h) {
+			*dst = append(*dst, h)
+		}
+	}
+	for i := 0; i < int(g.State.HouseConstraintCount[player]); i++ {
+		c := g.State.HouseConstraints[player][i]
+		switch c.Kind {
+		case constraintCannotHouse:
+			addTo(&cannots, c.House)
+		case constraintMustHouse:
+			addTo(&musts, c.House)
+		case constraintMustCreature:
+			addTo(&musts, g.House(c.Creature))
+		}
+	}
+	// Continuous house locks fold into the same must/cannot computation.
 	for controller := 0; controller < 2; controller++ {
 		for _, id := range g.allInPlay(controller) {
 			lock := g.cat.def(id).HouseLock
@@ -705,15 +771,28 @@ func (g *Game) houseLockAllows(player int, house House) bool {
 				continue
 			}
 			if lock.Bars {
-				if house == locked {
-					return false
-				}
-			} else if house != locked && g.playerHasHouse(player, locked) {
-				return false
+				addTo(&cannots, locked)
+			} else {
+				addTo(&musts, locked)
 			}
 		}
 	}
-	return true
+	var allowed []House
+	for _, h := range choosable {
+		if !slices.Contains(cannots, h) {
+			allowed = append(allowed, h)
+		}
+	}
+	var surviving []House
+	for _, h := range musts {
+		if slices.Contains(allowed, h) {
+			surviving = append(surviving, h)
+		}
+	}
+	if len(surviving) != 0 {
+		return surviving
+	}
+	return allowed
 }
 
 // keyCostChangeFor returns how much a single in-play card (controlled by

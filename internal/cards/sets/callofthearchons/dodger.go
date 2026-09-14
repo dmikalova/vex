@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Elf • Thief
 //
 //	Fight: Steal 1 Æmber.
-var Dodger = card.New(
+var Dodger = set.New(
 	"Dodger",
 	card.House.Shadows,
 	card.Type.Creature,

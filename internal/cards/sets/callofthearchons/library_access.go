@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //
 //	Play: For the remainder of the turn, each time you play another card, draw a card. Purge Library Access.
-var LibraryAccess = card.New(
+var LibraryAccess = set.New(
 	"Library Access",
 	card.House.Logos,
 	card.Type.Tactic,

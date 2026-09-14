@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon
 //
 //	Fight: Your opponent must choose the house of the Creature Snag fights as their active house on their next turn.
-var Snag = card.New(
+var Snag = set.New(
 	"Snag",
 	card.House.Dis,
 	card.Type.Creature,

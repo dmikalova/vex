@@ -67,7 +67,11 @@ names what to hunt; all of them are worth a pass in any sweep.
 the card as `Sequence{A, Conditional{C, B}}`, with values threaded through
 `EffectContext` (`ctx.It`, `ctx.ChosenHouse`, `ctx.Produced.*`) — not inside a
 bespoke effect. A node named after a card rather than a mechanic is the loudest
-tell.
+tell. But not every multi-step node is fusion: some are **one atomic semantic op**
+and must not be split — do not re-propose decomposing `EndTurn` (the end-turn
+sequence is a single action) or `GainTextBox` (one op). The reverse is the model
+to imitate: `MakeItsHouseActive` was a card-named fusion tell and correctly became
+the mechanic `ChangeActiveHouse{To: HouseChoice}`.
 
 **Atomization.** A predicate or amount that welds two atoms to an operator is a
 combinator waiting to be extracted: a condition named for the two questions it
@@ -102,6 +106,24 @@ this way" tallies merged even though the simpler whole-tally counts
 shape. Merge an effect family only when the variants collapse to one render and
 one resolution bar a single enum-selected noun (`ArchiveTopOfDeck` +
 `ArchiveTopOfDiscard` → `ArchiveTop{From Zone}`).
+
+**Scattered plumbing (thin verbs over a solid internal mechanism).** Sometimes
+sibling verbs are *not* mergeable — each prints its own text, filters its own way,
+reveals or gates differently — yet they hand-roll the **same underlying
+machinery**: the same zone probes, the same dispatch table, the same drain-and-
+refill loop. The fix is not to merge the nodes (their identity diverges, per the
+Duplication rule above) and not to leave the machinery copied four times. Extract
+the machinery into one **solid internal (unexported) mechanism** and leave each
+verb a **thin authoring wrapper** that supplies only its own identity and
+delegates the plumbing. The card call sites and printed text do not change; only
+the duplicated resolve/dispatch logic collapses to one place. Tells: several nodes
+whose `Resolve` bodies share a membership-probe-then-`switch` shape (a cross-zone
+move dispatched by which zone a card sits in — `crossZoneMover`), or repeat a
+gather-pick-place loop (`placeAmong`). Pass any axis the mechanism needs
+**explicitly** — do not have it infer, say, a destination from where a card sat;
+the verb names the destination, the mechanism only carries it out. This is the
+resolution to reach for whenever "these are clearly the same operation" collides
+with "but I can't merge them without a branchy `Resolve`."
 
 **Ladder violations.** A change belongs at the cheapest rung that can carry it: a
 field or Strategy on an existing effect (a `Count`, `Refinement`, `Condition`,

@@ -420,6 +420,10 @@ func (g *Game) EndShuffleBatch() {
 // ArchiveFromHand moves a card from its owner's hand to their archives.
 func (g *Game) ArchiveFromHand(id LocalID) { g.archiveFromHand(g.owner(id), id) }
 
+// ArchiveEnemyFromHand moves a card from its owner's hand into player's archives —
+// an abduction from hand (Hidden Stash).
+func (g *Game) ArchiveEnemyFromHand(player int, id LocalID) { g.archiveEnemyFromHand(player, id) }
+
 // ArchiveFromPurge moves a card from a player's purge pile to their archives.
 func (g *Game) ArchiveFromPurge(owner int, id LocalID) { g.archiveFromPurge(owner, id) }
 
@@ -640,6 +644,8 @@ func (g *Game) chooseOption(player int, source, prompt string, options []string)
 	if len(options) == 1 {
 		return 0
 	}
+	// Boundary: settle before presenting the choice (ADR 0029).
+	g.settleDestroyed(player)
 	if oc, ok := g.chooserFor(player).(OptionChooser); ok {
 		return oc.ChooseOption(source, renderPrompt(source, prompt), options)
 	}

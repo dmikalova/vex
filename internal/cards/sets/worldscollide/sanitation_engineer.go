@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Hazardous 1.
 //	Reap: Discard a card from your hand.
-var SanitationEngineer = card.New(
+var SanitationEngineer = set.New(
 	"Sanitation Engineer",
 	card.House.Logos,
 	card.Type.Creature,

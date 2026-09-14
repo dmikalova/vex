@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Elf • Thief
 //
 //	Reap: Deal 1 damage to a Creature. If this damage destroys that Creature, your opponent discards a random card from their hand.
-var AVinda = card.New(
+var AVinda = set.New(
 	"A. Vinda",
 	card.House.Shadows,
 	card.Type.Creature,

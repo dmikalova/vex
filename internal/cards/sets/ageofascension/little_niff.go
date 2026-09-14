@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Deploy, Elusive, Omega.
 //	After a neighbor of Little Niff is used to fight, steal 1 Æmber.
-var LittleNiff = card.New(
+var LittleNiff = set.New(
 	"Little Niff",
 	card.House.Shadows,
 	card.Type.Creature,

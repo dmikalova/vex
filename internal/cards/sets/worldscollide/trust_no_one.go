@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Play: Choose one:
 //	- If there are no friendly Creatures in play, for each house represented among enemy Creatures, steal 1 Æmber
 //	- Steal 1 Æmber.
-var TrustNoOne = card.New(
+var TrustNoOne = set.New(
 	"Trust No One",
 	card.House.Shadows,
 	card.Type.Tactic,

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Alien • Handuhan
 //
 //	Taunt, Hazardous 3.
-var LieutenantKhrkhar = card.New(
+var LieutenantKhrkhar = set.New(
 	"Lieutenant Khrkhar",
 	card.House.StarAlliance,
 	card.Type.Creature,

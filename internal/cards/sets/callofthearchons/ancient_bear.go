@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Assault 2.
-var AncientBear = card.New(
+var AncientBear = set.New(
 	"Ancient Bear",
 	card.House.Untamed,
 	card.Type.Creature,

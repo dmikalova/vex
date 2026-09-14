@@ -66,3 +66,39 @@ eligible), and it can be empty even when the pile is not.
 This is deliberately distinct from the top-of-deck **zone slice**
 (`LookAtTopOfDeck`, already built): a zone slice reads deck **positions**; a result
 set reads **what an effect produced**.
+
+## Live "considered an artifact/creature" type grant (ADR 0033 live route)
+
+**Trigger set:** whichever set first stands up a card that converts a type on a
+lifetime **other than the converted card's own** — Deanimator is the model. Build
+it with that card, not before.
+
+**What it is.** The **live route** of ADR 0033's two type-conversion routes. The
+stored route (`LastingType` on `CardCore`) is built and covers permanent
+self-conversions (Auto-Legionary; Effigy of Melerukh and The Mysticeti are its
+still-unimplemented siblings, needing no new primitive). The **live** route is not
+built: a card is a given type only while some other condition holds — a counter on
+it, a source in play, a while-condition — and the change must **revert for free**
+when that condition ends.
+
+**Card (unimplemented, in an unbuilt set):**
+
+- **Deanimator** — "Each card that has a mineralize counter on it is considered an
+  artifact." The grant ends when Deanimator leaves play or the counter is removed,
+  not when the converted card leaves — so it cannot be stored.
+
+**Design decided (per ADR 0033):**
+
+- Author it as a `ConstantAbility` composed over a `CounterInPlay{Kind, Target:
+This}` read (per ADR 0024), computed **live at read time** the way `Power`/`Armor`
+  fold `constantBonus` — **never** a `LastingType` write. It reverts for free: the
+  next `TypeOf` read simply no longer sees the grant.
+- Grow `TypeOf` one step **after** the `HostPlus`/`LastingType` checks: ask whether
+  any active constant ability converts this card's type, exactly as the stat reads
+  scan for bonuses. Do not store the result. Two Deanimators compose the same way,
+  each grant recomputed every read.
+- Only if a **stored** and a **live** override could ever land on one card at once
+  does the single `LastingType` field become insufficient — then fold it into a
+  flat comparable `TypeEntry{Card, Type, Source}` LIFO side-table (like the control
+  stack, ADR 0028) and record the last-applied-wins precedence. No such card exists
+  today; do not build the stack pre-emptively.

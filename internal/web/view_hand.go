@@ -16,12 +16,12 @@ func (g *game) renderHand() app.UI {
 	p := g.active()
 	ids := g.sortedHand(p)
 	return app.Div().Class("board-row").Body(
-		app.Div().Class("row-label").Body(
-			app.Span().Class("row-label-zone").Text("Hand "),
-			app.Text(fmt.Sprintf("%d", len(ids))),
-			icon("zone-hand", "row-label-icon"),
-		),
 		app.Div().Class("card-strip").Body(
+			app.Div().Class("row-label").Body(
+				app.Span().Class("row-label-zone").Text("Hand"),
+				app.Text(fmt.Sprintf("%d", len(ids))),
+				icon("zone-hand", "row-label-icon"),
+			),
 			app.Range(ids).Slice(func(i int) app.UI { return g.renderHandCard(ids[i]) }),
 		),
 	)

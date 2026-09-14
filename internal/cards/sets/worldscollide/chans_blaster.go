@@ -21,7 +21,7 @@ var chansBlasterCluster = card.Cluster{
 //	This Creature gains, "Fight/Reap: Choose one:
 //	- Deal 2 damage to a Creature
 //	- Attach Chan's Blaster to Commander Chan -> use another Creature."
-var ChansBlaster = card.New(
+var ChansBlaster = set.New(
 	"Chan's Blaster",
 	card.House.StarAlliance,
 	card.Type.Upgrade,

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //
 //	Play: Your opponent gains 3 chains.
-var BindingIrons = card.New(
+var BindingIrons = set.New(
 	"Binding Irons",
 	card.House.Dis,
 	card.Type.Tactic,

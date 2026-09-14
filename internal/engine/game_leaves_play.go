@@ -105,9 +105,10 @@ func (g *Game) releaseAemberOnLeavePlay(id LocalID) {
 
 // removeFromPlay takes a card out of play for good: it fires the card's Leaves
 // Play abilities, sheds its counters, reverts any cards it was controlling and
-// sheds its own control entries, then unlists it from every in-play zone and
-// settles the board it left. Every real exit — destroyed, purged, returned to
-// hand, archived, put on or shuffled into a deck, grafted — funnels through here.
+// sheds its own control entries, then unlists it from every in-play zone. Every
+// real exit — destroyed, purged, returned to hand, archived, put on or shuffled
+// into a deck, grafted — funnels through here; the resolution boundary that drove
+// the exit settles the board it left (ADR 0029).
 // A change of control is NOT an exit: the card stays in play on the other side, so
 // control uses unlistFromPlay directly and never fires Leaves Play or sheds
 // counters.
@@ -119,19 +120,19 @@ func (g *Game) removeFromPlay(id LocalID) {
 	g.clearControls(id)
 }
 
-// unlistFromPlay removes id from both players' battlelines and artifact rows and
-// settles the board it left, without the Leaves Play teardown. It is the shared
-// zone move under both a real exit (removeFromPlay) and a change of control, which
-// pulls a creature from one side to re-add it on the other while it stays in play.
-// A card normally appears only under its owner, but control moves it into another
-// player's rows while ownership stays fixed, so the move must scan both rows.
+// unlistFromPlay removes id from both players' battlelines and artifact rows,
+// without the Leaves Play teardown. It is the shared zone move under both a real
+// exit (removeFromPlay) and a change of control, which pulls a creature from one
+// side to re-add it on the other while it stays in play. A card normally appears
+// only under its owner, but control moves it into another player's rows while
+// ownership stays fixed, so the move must scan both rows. The card may have been
+// buffing what it leaves behind, but the resolution boundary settles that, not
+// this low-level move (ADR 0029).
 func (g *Game) unlistFromPlay(id LocalID) {
 	for p := 0; p < 2; p++ {
 		g.State.Battleline[p].remove(id)
 		g.State.Artifacts[p].remove(id)
 	}
-	// The card may have been buffing the power of what it leaves behind.
-	g.settleDestroyed(g.State.ActivePlayer)
 }
 
 // emitLeavesPlay fires a card's "Leaves Play:" abilities while it is still on the
@@ -366,31 +367,20 @@ func (g *Game) enrollDestroyed(ids []LocalID) {
 // resolveDestroyedWindow resolves the open window's Destroyed abilities one at a
 // time, re-gathering the queue after each so a Destroyed ability that destroys more
 // creatures folds their abilities into the same window (enrollDestroyed queued
-// them). The window's controller picks the order (ADR 0013); a creature taken out
-// of play mid-window (Annihilation Ritual purges it) drops its remaining abilities,
-// since a card out of play resolves nothing more (RAW §190, ADR 0030). Nothing is
+// them). The window's controller picks the order (ADR 0013), and each picked entry
+// resolves through the shared resolveTriggered step every trigger window uses, so a
+// creature taken out of play mid-window (Annihilation Ritual purges it) drops its
+// remaining abilities by the same source guard (RAW §190, ADR 0030). Nothing is
 // discarded until the queue drains, so every creature stays in play — and can be
-// seen by the abilities that fire — for the whole event.
+// seen by the abilities that fire — for the whole event; this window therefore does
+// not settle per entry (a lethal creature must not be swept away mid-window), unlike
+// the up-front-ordered windows.
 func (g *Game) resolveDestroyedWindow() {
 	for len(g.destroyPending) > 0 {
 		i := g.pickNextReaction(g.destroyWindowController, orderDestroyedPrompt, g.destroyPending)
 		t := g.destroyPending[i]
 		g.destroyPending = append(g.destroyPending[:i], g.destroyPending[i+1:]...)
-		if !g.inPlay(t.source) {
-			continue
-		}
-		closeFrame := g.openFrame(Frame{
-			Actor:      g.controller(t.source),
-			Source:     t.source,
-			HasSource:  true,
-			Trigger:    TriggerDestroyed,
-			Grantor:    t.grantor,
-			HasGrantor: t.grantor != t.source,
-		})
-		t.ability.Effect.Resolve(
-			&EffectContext{Resolver: g, Source: t.source, Controller: g.controller(t.source)},
-		)
-		closeFrame()
+		g.resolveTriggered(t)
 	}
 }
 

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //
 //	Play: If your opponent has 7 Æmber or more, your opponent loses 4 Æmber.
-var BurnTheStockpile = card.New(
+var BurnTheStockpile = set.New(
 	"Burn the Stockpile",
 	card.House.Brobnar,
 	card.Type.Tactic,

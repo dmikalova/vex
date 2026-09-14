@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Knight
 //
 //	Reap: Use a friendly non-Sanctum Creature.
-var CommanderRemiel = card.New(
+var CommanderRemiel = set.New(
 	"Commander Remiel",
 	card.House.Sanctum,
 	card.Type.Creature,
@@ -21,7 +21,7 @@ var CommanderRemiel = card.New(
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),
 	card.WithAbility(
 		card.Trigger.Reap, card.OnChooseCreature{
-			Target: card.Target.FriendlyCreature.ExceptHouse(card.House.Self),
+			Target: card.Target.FriendlyCreature.House(card.Houses.Except(card.House.Self)),
 			Verbs:  []card.CreatureVerb{card.UseVerb{}},
 		}),
 )

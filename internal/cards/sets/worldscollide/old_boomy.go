@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Goblin • Scientist
 //
 //	Reap: Discard cards from the top of your deck until you discard a Brobnar card or choose to stop -> deal 2 damage to Old Boomy. Archive each card discarded this way.
-var OldBoomy = card.New(
+var OldBoomy = set.New(
 	"Old Boomy",
 	card.House.Brobnar,
 	card.Type.Creature,

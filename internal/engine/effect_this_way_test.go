@@ -51,6 +51,27 @@ func TestCreaturesRemovedThisWayCounts(t *testing.T) {
 	}
 }
 
+// TestPowerDestroyedThisWayCount covers the summed-power tally Destroy fills and
+// the PowerDestroyedThisWay count CountIs reads (Might Makes Right forges above
+// 25). CountText names the noun a "for each" clause would repeat; CountClause is
+// the clause CountIs puts after "if".
+func TestPowerDestroyedThisWayCount(t *testing.T) {
+	if got := (PowerDestroyedThisWay{}).CountText(); got != "power of creatures destroyed this way" {
+		t.Errorf("CountText = %q", got)
+	}
+	if got := (PowerDestroyedThisWay{}).CountClause(
+		"25 or more",
+		false,
+	); got != "the total power of creatures destroyed this way is 25 or more" {
+		t.Errorf("CountClause = %q", got)
+	}
+	ctx := &EffectContext{}
+	ctx.Produced.DestroyedPower = 31
+	if got := (PowerDestroyedThisWay{}).Value(ctx); got != 31 {
+		t.Errorf("Value = %d, want 31", got)
+	}
+}
+
 // TestAemberLostThisWayCount covers the Æmber-lost tally LoseAember fills and a
 // ProducedThisWay with TallyAemberLost reads (Shatter Storm).
 func TestAemberLostThisWayCount(t *testing.T) {
@@ -108,7 +129,7 @@ func TestDestroyTalliesRemovalsPerController(t *testing.T) {
 	g.AddToBattleline(NewCard("theirs", Dis, Creature, Common, WithPower(2)), 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	Destroy{Target: Target{Kind: TargetEachCreature}.OfHouse(Dis)}.Resolve(ctx)
+	Destroy{Target: Target{Kind: TargetEachCreature}.House(namedHouse(Dis))}.Resolve(ctx)
 
 	if ctx.Produced.Destroyed != [2]int{2, 1} {
 		t.Errorf("Destroyed = %v, want [2 1]", ctx.Produced.Destroyed)
@@ -125,7 +146,7 @@ func TestPutFromPlayTalliesRemovalsPerController(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	PutFromPlay{
-		Target:      Target{Kind: TargetEachCreature}.OfHouse(Mars),
+		Target:      Target{Kind: TargetEachCreature}.House(namedHouse(Mars)),
 		Destination: ToDeckShuffled,
 	}.Resolve(ctx)
 
@@ -147,7 +168,7 @@ func TestPutFromPlaySkipsCardsAlreadyGone(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	PutFromPlay{
-		Target:      Target{Kind: TargetEachCreature}.OfHouse(Mars),
+		Target:      Target{Kind: TargetEachCreature}.House(namedHouse(Mars)),
 		Destination: ToDeckShuffled,
 	}.Resolve(ctx)
 

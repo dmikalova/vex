@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Witch
 //
 //	Play: Lose 1 Æmber, and forge a key at current cost -> purge Chota Hazri.
-var ChotaHazri = card.New(
+var ChotaHazri = set.New(
 	"Chota Hazri",
 	card.House.Untamed,
 	card.Type.Creature,

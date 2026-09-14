@@ -178,7 +178,7 @@ func TestAfterYouDiscardFolding(t *testing.T) {
 		Ability{
 			Trigger: TriggerAfterDiscardFromHand,
 			Effect: Conditional{
-				Cond: ItIs{House: Sanctum},
+				Cond: ItIs{House: namedHouse(Sanctum)},
 				Then: CaptureAember{
 					Target: Target{Kind: TargetThisCreature},
 					Amount: 1,
@@ -643,7 +643,7 @@ func TestGeneratedCardText(t *testing.T) {
 							{
 								Trigger: TriggerAfterCardPlayed,
 								Effect: Conditional{
-									Cond: ItIs{House: Mars, Type: Creature},
+									Cond: ItIs{House: namedHouse(Mars), Type: Creature},
 									Then: Sequence{
 										Effects: []Effect{
 											Ready{Target: Target{Kind: TargetThisCreature}},

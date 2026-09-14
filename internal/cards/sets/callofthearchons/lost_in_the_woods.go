@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Shuffle 2 friendly Creatures into their owners' decks, and shuffle 2 enemy Creatures into their owners' decks.
-var LostInTheWoods = card.New(
+var LostInTheWoods = set.New(
 	"Lost in the Woods",
 	card.House.Untamed,
 	card.Type.Tactic,

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	This Creature gains +2 hazardous and, "If this Creature would be destroyed, instead fully heal it, and destroy Armageddon Cloak."
-var ArmageddonCloak = card.New(
+var ArmageddonCloak = set.New(
 	"Armageddon Cloak",
 	card.House.Sanctum,
 	card.Type.Upgrade,

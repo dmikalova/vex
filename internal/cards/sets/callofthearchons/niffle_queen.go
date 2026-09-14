@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Each other friendly Beast Creature gains +1 power.
 //	Each other friendly Niffle Creature gains +1 power.
-var NiffleQueen = card.New(
+var NiffleQueen = set.New(
 	"Niffle Queen",
 	card.House.Untamed,
 	card.Type.Creature,

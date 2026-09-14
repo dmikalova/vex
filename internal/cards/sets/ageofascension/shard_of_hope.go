@@ -1,6 +1,9 @@
 package ageofascension
 
-import "github.com/dmikalova/vactrol/internal/card"
+import (
+	"github.com/dmikalova/vactrol/internal/card"
+	"github.com/dmikalova/vactrol/internal/cards/clusters"
+)
 
 // Shard of Hope
 //
@@ -10,13 +13,13 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item • Shard
 //
 //	Action: For each friendly Shard, a friendly Creature captures 1 Æmber from your opponent.
-var ShardOfHope = card.New(
+var ShardOfHope = set.New(
 	"Shard of Hope",
 	card.House.Sanctum,
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, "264"),
-	card.InCluster(shardCluster),
+	card.InCluster(clusters.Shard),
 	card.OneCopyPerDeck(),
 	card.WithTraits(card.Traits.Item, card.Traits.Shard),
 	card.WithAbility(

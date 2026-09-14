@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human
 //
 //	Play/Fight/Reap: Keys cost +2 Æmber during your opponent's next turn.
-var SensorChiefGarcia = card.New(
+var SensorChiefGarcia = set.New(
 	"Sensor Chief Garcia",
 	card.House.StarAlliance,
 	card.Type.Creature,

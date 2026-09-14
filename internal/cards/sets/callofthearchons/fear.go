@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //
 //	Play: Put an enemy Creature into its owner's hand.
-var Fear = card.New(
+var Fear = set.New(
 	"Fear",
 	card.House.Dis,
 	card.Type.Tactic,

@@ -493,6 +493,11 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "zone-hand", qty: v.Amount}}, true
 	case engine.Stun:
 		return []glyph{{asset: "stun"}, arrowTo(targetGlyph(v.Target))}, true
+	case engine.StunEnemyFighters:
+		return []glyph{
+			{asset: "glyph-fight", decor: decorEnemy},
+			arrowTo(glyph{asset: "stun"}),
+		}, true
 	case engine.Enrage:
 		return []glyph{{asset: "glyph-fight"}, arrowTo(targetGlyph(v.Target))}, true
 	case engine.Ward:
@@ -536,16 +541,6 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		}, true
 	case engine.ForgeKey:
 		return []glyph{{asset: "forge"}}, true
-	case engine.DestroyFriendlyCreaturesToForge:
-		gs := []glyph{{asset: "glyph-destroy"}, targetGlyph(v.Target)}
-		more, _ := effectGlyphs(v.Then)
-		return append(gs, more...), true
-	case engine.SacrificeToForge:
-		return []glyph{
-			{asset: "glyph-destroy"},
-			targetGlyph(v.Target),
-			arrowTo(glyph{asset: "forge"}),
-		}, true
 	case engine.PlaceCounter:
 		return []glyph{{asset: counterAsset(v.Kind)}, arrowTo(targetGlyph(v.Target))}, true
 	case engine.RemoveCounters:
@@ -578,11 +573,7 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		gs := []glyph{{asset: "zone-purge"}}
 		more, _ := effectGlyphs(v.Then)
 		return append(gs, more...), true
-	case engine.ShuffleIntoDeck:
-		return []glyph{{asset: "zone-deck"}}, true
-	case engine.ShuffleDeck:
-		return []glyph{{asset: "zone-deck"}}, true
-	case engine.ShuffleFriendlyCardsInPlayIntoDeck:
+	case engine.Shuffle:
 		return []glyph{{asset: "zone-deck"}}, true
 	case engine.ShuffleFromDiscard:
 		return []glyph{{asset: "zone-discard"}, arrowTo(glyph{asset: "zone-deck"})}, true
@@ -741,6 +732,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "damage"}, {asset: "glyph-swap"}}, true
 	case engine.MayPlayOrUse:
 		return mayPlayOrUseGlyphs(v), true
+	case engine.PlayOrUse:
+		return []glyph{{asset: "glyph-play"}, {asset: "glyph-action"}}, true
 	case engine.CannotBeDealtDamage:
 		return []glyph{{asset: "shield"}, arrowTo(targetGlyph(v.Target))}, true
 	case engine.RedirectFightDamage:
@@ -799,6 +792,11 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "glyph-fight"}, {asset: "glyph-ban"}}, true
 	case engine.CannotPlay:
 		return []glyph{{asset: "glyph-play"}, {asset: "glyph-ban"}}, true
+	case engine.PlayersCannotPlay:
+		if a := typeIconName(v.Type); a != "" {
+			return []glyph{{asset: a}, {asset: "glyph-play"}, {asset: "glyph-ban"}}, true
+		}
+		return []glyph{{asset: "glyph-play"}, {asset: "glyph-ban"}}, true
 	case engine.CannotUse:
 		return []glyph{{asset: "glyph-action"}, {asset: "glyph-ban"}}, true
 	case engine.CreaturesCannot:
@@ -850,10 +848,6 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "zone-discard"}, arrowTo(glyph{asset: "zone-archives"})}, true
 	case engine.PutDiscardedIntoHand:
 		return []glyph{{asset: "zone-discard"}, arrowTo(glyph{asset: "zone-hand"})}, true
-	case engine.DiscardTopOfDeck:
-		return []glyph{{asset: "zone-discard", decor: playerDecor(v.Player)}}, true
-	case engine.DiscardTopOfEachDeck:
-		return []glyph{{asset: "zone-discard", decor: decorEach}}, true
 	case engine.DiscardHand:
 		h := glyph{asset: "zone-hand"}
 		if v.Player == engine.EachPlayer {
@@ -923,6 +917,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 			}
 		}
 		return g, true
+	case engine.PutRevealedCard:
+		return []glyph{{asset: "card-back"}, arrowTo(glyph{asset: deckDestZone(v.To)})}, true
 	case engine.ChangeActiveHouse:
 		return []glyph{{asset: "glyph-choose"}}, true
 	case engine.EndTurn:
@@ -978,13 +974,19 @@ func mustCompose(effects ...engine.Effect) []glyph {
 // play/action, and an exclusion or controlled grant to play (plus action when it
 // also frees use).
 func mayPlayOrUseGlyphs(e engine.MayPlayOrUse) []glyph {
-	switch e.Houses.Kind {
-	case engine.SelectExcept, engine.SelectControlled:
+	if e.Houses.Controlled {
 		if e.Grant&engine.GrantUse != 0 {
 			return []glyph{{asset: "glyph-play"}, {asset: "glyph-action"}}
 		}
 		return []glyph{{asset: "glyph-play"}}
-	case engine.SelectAny:
+	}
+	switch e.Houses.Match.Kind {
+	case engine.MatchExceptHouse:
+		if e.Grant&engine.GrantUse != 0 {
+			return []glyph{{asset: "glyph-play"}, {asset: "glyph-action"}}
+		}
+		return []glyph{{asset: "glyph-play"}}
+	case engine.MatchAnyHouse:
 		if e.Grant&engine.GrantFight != 0 {
 			return []glyph{{asset: "glyph-fight", decor: decorFriendly | decorEach}}
 		}
@@ -992,10 +994,10 @@ func mayPlayOrUseGlyphs(e engine.MayPlayOrUse) []glyph {
 			{asset: "type-artifact", decor: decorFriendly},
 			{asset: "glyph-action"},
 		}
-	default: // SelectHouse
+	default: // MatchNamedHouse, MatchChosenHouse
 		if e.Grant == engine.GrantFight {
 			d := decorEach
-			if e.Houses.House != engine.HouseNone {
+			if e.Houses.Match.House != engine.HouseNone {
 				d |= decorFriendly
 			}
 			return []glyph{{asset: "glyph-fight", decor: d}}
@@ -1074,6 +1076,21 @@ func destinationGlyph(d engine.Destination) string {
 		return "zone-deck"
 	case engine.ToArchives, engine.ToArchives.Yours():
 		return "zone-archives"
+	}
+	return ""
+}
+
+// deckDestZone is the zone glyph a revealed deck card is moved to.
+func deckDestZone(d engine.DeckDest) string {
+	switch d {
+	case engine.IntoHand:
+		return "zone-hand"
+	case engine.IntoArchives:
+		return "zone-archives"
+	case engine.IntoDiscard:
+		return "zone-discard"
+	case engine.IntoPurge:
+		return "zone-purge"
 	}
 	return ""
 }

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon
 //
 //	Fight/Reap: Lilithal captures 1 Æmber from your opponent.
-var Lilithal = card.New(
+var Lilithal = set.New(
 	"Lilithal",
 	card.House.Dis,
 	card.Type.Creature,

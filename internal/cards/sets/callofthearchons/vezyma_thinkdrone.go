@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Martian • Scientist
 //
 //	Reap: You may archive a friendly Creature or Artifact from play.
-var VezymaThinkdrone = card.New(
+var VezymaThinkdrone = set.New(
 	"Vezyma Thinkdrone",
 	card.House.Mars,
 	card.Type.Creature,

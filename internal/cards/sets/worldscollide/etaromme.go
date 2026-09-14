@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon
 //
 //	Reap: Destroy a Creature of the house with the most Creatures in play.
-var Etaromme = card.New(
+var Etaromme = set.New(
 	"Etaromme",
 	card.House.Dis,
 	card.Type.Creature,

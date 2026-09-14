@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Look at the top 3 cards of your deck and put them back in any order, and draw a card.
-var LayOfTheLand = card.New(
+var LayOfTheLand = set.New(
 	"Lay of the Land",
 	card.House.StarAlliance,
 	card.Type.Tactic,

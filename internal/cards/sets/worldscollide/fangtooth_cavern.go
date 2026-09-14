@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Location
 //
 //	At the end of your turn, destroy the least powerful Creature.
-var FangtoothCavern = card.New(
+var FangtoothCavern = set.New(
 	"Fangtooth Cavern",
 	card.House.Untamed,
 	card.Type.Artifact,

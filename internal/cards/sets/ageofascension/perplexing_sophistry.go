@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: If you have more Æmber than your opponent, your opponent discards a random card from their hand, and you draw a card.
-var PerplexingSophistry = card.New(
+var PerplexingSophistry = set.New(
 	"Perplexing Sophistry",
 	card.House.Shadows,
 	card.Type.Tactic,

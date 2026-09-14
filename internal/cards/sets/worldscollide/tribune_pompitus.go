@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Each friendly Creature gains +2 power for each Æmber on it.
 //	Before Fight: You may exalt Tribune Pompitus.
-var TribunePompitus = card.New(
+var TribunePompitus = set.New(
 	"Tribune Pompitus",
 	card.House.Saurian,
 	card.Type.Creature,

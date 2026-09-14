@@ -305,21 +305,20 @@ lastingAction, Controller, Amount}`.
 
 There are two flavors:
 
-- A **reaction** runs _after_ an event. A site that has its own trigger window (a
-  creature reaps, fights, is played) folds the actor's reactions into that window
-  with `g.lastingReactions(event, actor, subject)`, so they order together with the
-  card abilities that fire on the same event (ADR 0013): the whole window — card
+- A **reaction** runs _after_ an event. Every site that fires an event (a creature
+  reaps, fights, is played; an enemy creature is destroyed) folds the actor's
+  reactions into that event's trigger window with
+  `g.lastingReactions(event, actor, subject)`, so they order together with the card
+  abilities that fire on the same event (ADR 0013): the whole window — card
   abilities and duration reactions alike — is one flat labeled list the active
   player orders through the `ReactionChooser` port, defaulting to the gathered
-  order. A site with no card window of its own (an
-  enemy creature destroyed) emits **one** standalone dispatch instead —
-  `g.emitLasting(EventEnemyCreatureDestroyed, actor, subject)` — which gathers every
-  reaction the actor owns for that event and, when several fire at once, lets the
-  controller **order** them. Either path resolves each reaction via `resolveReaction`,
-  so "gain Æmber after you play a creature" and "deal damage after you play a
-  creature" order for free. Authored as `card.ForRemainderOfTurn{On:
-card.Event.CreaturePlayed, Do: card.GainAember{...}}` (Do is a small composed
-  effect — `GainAember` or `DealDamage` to an enemy creature).
+  order. Even an event with no card ability of its own, like an enemy creature
+  destroyed, still has a window — `afterDestroyedReactions` gathers the destroy
+  triggers and folds the `EventEnemyCreatureDestroyed` reactions into the same list.
+  Each reaction resolves via `resolveReaction`, so "gain Æmber after you play a
+  creature" and "deal damage after you play a creature" order for free. Authored as
+  `card.ForRemainderOfTurn{On: card.Event.CreaturePlayed, Do: card.GainAember{...}}`
+  (Do is a small composed effect — `GainAember` or `DealDamage` to an enemy creature).
 - A **replacement** changes an event's _own outcome_ before it happens. The event
   site queries the registry (`g.lastingReplacement(player, EventReapAember)`) and
   applies the replacement in place — `gainReapAember` steals instead of gaining when
@@ -328,7 +327,7 @@ With: card.Steal}`.
 
 Adding a reaction on an existing event = supporting its `Do` in `lastingActionOf` +
 `resolveReaction`; a new event = an `Event` value, one `lastingReactions` (folded
-into a window) or `emitLasting`/`lastingReplacement` call at that site, and the
+into that event's window) or `lastingReplacement` call at that site, and the
 `clause`/`gerund` text. You never touch the play/reap path's structure. The ready
 phase drops a player's entries via
 `clearLasting`.

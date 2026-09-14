@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item
 //
 //	After a player chooses an active house, their opponent cannot choose the same house as their active house on their next turn.
-var SnagsMirror = card.New(
+var SnagsMirror = set.New(
 	"Snag's Mirror",
 	card.House.Dis,
 	card.Type.Artifact,

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Cyborg • Scientist
 //
 //	Action: Archive a card from your discard pile.
-var NovuArchaeologist = card.New(
+var NovuArchaeologist = set.New(
 	"Novu Archaeologist",
 	card.House.Logos,
 	card.Type.Creature,

@@ -33,8 +33,8 @@ func TestRestringuntus(t *testing.T) {
 		h.P1.ClickOption("Mars")
 
 		h.P1.EndTurn()
-		if err := h.Game().ChooseHouse(1, card.House.Mars); err != engine.ErrHouseLocked {
-			t.Errorf("choosing the barred house = %v, want ErrHouseLocked", err)
+		if err := h.Game().ChooseHouse(1, card.House.Mars); err != engine.ErrHouseNotAllowed {
+			t.Errorf("choosing the barred house = %v, want ErrHouseNotAllowed", err)
 		}
 		h.P2.ChooseHouse(card.House.Logos) // any other house is allowed
 		h.P2.EndTurn()

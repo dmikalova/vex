@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //
 //	Play: Choose a house - put each Creature of the chosen house from your discard pile into your hand. Gain 1 chain.
-var Arise = card.New(
+var Arise = set.New(
 	"Arise!",
 	card.House.Dis,
 	card.Type.Tactic,
@@ -20,10 +20,11 @@ var Arise = card.New(
 			Then: card.Sentences{
 				Effects: []card.Effect{
 					card.PutFromDiscard{
-						Match:         card.Match{Type: card.Type.Creature},
-						Destination:   card.To.Hand,
-						All:           true,
-						OfChosenHouse: true,
+						Selection: card.Each{
+							Type:  card.Type.Creature,
+							House: card.Houses.Chosen,
+						},
+						Destination: card.To.Hand,
 					},
 					card.GainChains{Amount: 1},
 				},

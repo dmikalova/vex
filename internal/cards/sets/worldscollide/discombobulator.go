@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	This Creature gains, "Your Æmber cannot be stolen."
-var Discombobulator = card.New(
+var Discombobulator = set.New(
 	"Discombobulator",
 	card.House.Logos,
 	card.Type.Upgrade,

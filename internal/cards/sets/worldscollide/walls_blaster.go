@@ -20,7 +20,7 @@ var wallsBlasterCluster = card.Cluster{
 //	This Creature gains, "Fight/Reap: Choose one:
 //	- Deal 2 damage to a Creature
 //	- Attach Walls' Blaster to Chief Engineer Walls -> for each Upgrade on Chief Engineer Walls, stun a Creature."
-var WallsBlaster = card.New(
+var WallsBlaster = set.New(
 	"Walls' Blaster",
 	card.House.StarAlliance,
 	card.Type.Upgrade,

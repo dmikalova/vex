@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //
 //	Play: For the remainder of the turn, each time a friendly Creature fights, it captures 1 Æmber from your opponent.
-var TakeHostages = card.New(
+var TakeHostages = set.New(
 	"Take Hostages",
 	card.House.Sanctum,
 	card.Type.Tactic,

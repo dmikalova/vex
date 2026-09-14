@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	After a player chooses an active house, that player destroys an Artifact of that house.
-var GiantGnawbill = card.New(
+var GiantGnawbill = set.New(
 	"Giant Gnawbill",
 	card.House.Untamed,
 	card.Type.Creature,
@@ -21,6 +21,8 @@ var GiantGnawbill = card.New(
 	card.WithTraits(card.Traits.Beast),
 	card.WithAbility(
 		card.Trigger.AfterAnyPlayerChoosesHouse,
-		card.ByActivePlayer{Do: card.Destroy{Target: card.Target.Artifact.OfActiveHouse()}},
+		card.ByActivePlayer{
+			Do: card.Destroy{Target: card.Target.Artifact.House(card.Houses.Active)},
+		},
 	),
 )

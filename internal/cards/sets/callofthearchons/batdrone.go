@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Skirmish.
 //	Fight: Steal 1 Æmber.
-var Batdrone = card.New(
+var Batdrone = set.New(
 	"Batdrone",
 	card.House.Logos,
 	card.Type.Creature,

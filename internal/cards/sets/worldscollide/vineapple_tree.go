@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Each player's keys cost +1 Æmber for each growth counter on Vineapple Tree.
 //	After a player forges a key, remove each growth counter from Vineapple Tree.
 //	Action: Put a growth counter on Vineapple Tree.
-var VineappleTree = card.New(
+var VineappleTree = set.New(
 	"Vineapple Tree",
 	card.House.Untamed,
 	card.Type.Artifact,

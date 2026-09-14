@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Location
 //
 //	Action: Put a friendly Creature and each Upgrade attached to it into its owner's hand.
-var TransporterPlatform = card.New(
+var TransporterPlatform = set.New(
 	"Transporter Platform",
 	card.House.StarAlliance,
 	card.Type.Artifact,

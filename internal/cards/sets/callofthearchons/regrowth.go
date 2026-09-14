@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Put a Creature from your discard pile into your hand.
-var Regrowth = card.New(
+var Regrowth = set.New(
 	"Regrowth",
 	card.House.Untamed,
 	card.Type.Tactic,
@@ -19,7 +19,7 @@ var Regrowth = card.New(
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.PutFromDiscard{
-			Match:       card.Match{Type: card.Type.Creature},
+			Selection:   card.Chosen{Type: card.Type.Creature},
 			Destination: card.To.Hand,
 		}),
 )

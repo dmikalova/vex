@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Cyborg • Scientist
 //
-//	Reap: Reveal the top card of your deck. If it is a Logos card, play it. Otherwise, archive the top card of your deck.
+//	Reap: Reveal the top card of your deck. If it is a Logos card, play it. Otherwise, archive it.
 func TestWormholeTechnician(t *testing.T) {
 	t.Run("plays the revealed card when it is a Logos card", func(t *testing.T) {
 		var tech, top ct.Card

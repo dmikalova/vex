@@ -31,16 +31,23 @@ func TestEffectValidation(t *testing.T) {
 	if err := (Conditional{Then: GainAember{Player: Controller, Amount: 1}}).validate(); err != nil {
 		t.Errorf("conditional with a valid effect should pass, got %v", err)
 	}
-	if err := validateEffect(PutFromDiscard{Destination: ToBottomOfDeck}); err == nil {
+	if err := validateEffect(
+		PutFromDiscard{Selection: Chosen{}, Destination: ToBottomOfDeck},
+	); err == nil {
 		t.Error(
 			"PutFromDiscard to an unsupported destination should be rejected",
 		)
 	}
-	if err := validateEffect(PutFromDiscard{Destination: ToTopOfDeck}); err != nil {
+	if err := validateEffect(
+		PutFromDiscard{Selection: Chosen{}, Destination: ToTopOfDeck},
+	); err != nil {
 		t.Errorf(
 			"PutFromDiscard to the top of the deck should pass, got %v",
 			err,
 		)
+	}
+	if err := validateEffect(PutFromDiscard{Destination: ToHand}); err == nil {
+		t.Error("PutFromDiscard with no selection should be rejected")
 	}
 	// Purge must name its player and selection.
 	if err := validateEffect(PurgeCard{}); err == nil {

@@ -10,27 +10,23 @@ import (
 // local storage after each action, what is rebuilt from it, and every reason a
 // snapshot is thrown away instead.
 
-// A mounted client with nothing saved deals a fresh match rather than coming up
-// empty; set selection is reached later through New game.
-func TestMountDealsWhenThereIsNothingToResume(t *testing.T) {
+// A mounted client with nothing saved opens the new-game set picker rather than
+// silently dealing the base set: a first-time visit chooses its two sets, and
+// only then is the first match dealt. (Previously mounting dealt a base-set game;
+// that assumed CotA on a fresh load, which is the behavior this now replaces.)
+func TestMountOpensSetPickerWhenThereIsNothingToResume(t *testing.T) {
 	c := newBlankClient(t)
 	c.g.OnMount(c.ctx)
 	c.settle()
 
-	if c.g.g == nil {
-		t.Fatal("mounting dealt no match")
+	if !c.g.awaitingSetup {
+		t.Error("mounting did not open the set picker")
 	}
-	if c.g.awaitingSetup {
-		t.Error("mounting opened the set picker instead of dealing")
-	}
-	if c.g.phase != phaseHouse {
-		t.Errorf("the dealt match is at phase %v, want phaseHouse", c.g.phase)
+	if c.g.g != nil {
+		t.Error("mounting dealt a match instead of waiting for a set choice")
 	}
 	if c.g.dispatch == nil {
 		t.Error("mounting did not bind the dispatcher the actions complete through")
-	}
-	if !c.ctx.LocalStorage().Contains(persistKey) {
-		t.Error("the dealt match was not saved")
 	}
 }
 

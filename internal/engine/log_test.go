@@ -358,7 +358,7 @@ func TestLogEntryText(t *testing.T) {
 		{
 			MayPlayOrUseGranted{
 				Player: 0,
-				Houses: HouseSelector{Kind: SelectHouse, House: Brobnar},
+				Houses: HouseSelector{Match: namedHouse(Brobnar)},
 				Grant:  GrantFight,
 			},
 			"P0's Brobnar creatures may fight this turn",
@@ -366,7 +366,7 @@ func TestLogEntryText(t *testing.T) {
 		{
 			MayPlayOrUseGranted{
 				Player: 1,
-				Houses: HouseSelector{Kind: SelectAny},
+				Houses: HouseSelector{Match: anyHouse},
 				Grant:  GrantFight,
 			},
 			"P1's creatures may all fight this turn",
@@ -374,7 +374,7 @@ func TestLogEntryText(t *testing.T) {
 		{
 			MayPlayOrUseGranted{
 				Player: 0,
-				Houses: HouseSelector{Kind: SelectHouse, House: Dis},
+				Houses: HouseSelector{Match: namedHouse(Dis)},
 				Grant:  GrantUse,
 			},
 			"P0 may use Dis creatures this turn",
@@ -382,7 +382,7 @@ func TestLogEntryText(t *testing.T) {
 		{
 			MayPlayOrUseGranted{
 				Player: 0,
-				Houses: HouseSelector{Kind: SelectAny},
+				Houses: HouseSelector{Match: anyHouse},
 				Grant:  GrantUse,
 				Types:  CardTypesOf(Artifact),
 			},
@@ -391,7 +391,7 @@ func TestLogEntryText(t *testing.T) {
 		{
 			MayPlayOrUseGranted{
 				Player: 0,
-				Houses: HouseSelector{Kind: SelectHouse, House: Mars},
+				Houses: HouseSelector{Match: namedHouse(Mars)},
 				Grant:  GrantPlay,
 			},
 			"P0 may play Mars cards this turn",
@@ -399,7 +399,7 @@ func TestLogEntryText(t *testing.T) {
 		{
 			MayPlayOrUseGranted{
 				Player: 0,
-				Houses: HouseSelector{Kind: SelectHouse, House: Mars},
+				Houses: HouseSelector{Match: namedHouse(Mars)},
 				Grant:  GrantPlay | GrantUse,
 			},
 			"P0 may play or use Mars cards this turn",
@@ -407,9 +407,17 @@ func TestLogEntryText(t *testing.T) {
 		{
 			MayPlayOrUseGranted{
 				Player: 0,
-				Houses: HouseSelector{Kind: SelectExcept, House: StarAlliance},
+				Houses: HouseSelector{Match: exceptHouse(StarAlliance)},
 				Grant:  GrantPlay,
 				Count:  1,
+			},
+			"P0 may play cards from other houses this turn",
+		},
+		{
+			MayPlayOrUseGranted{
+				Player: 0,
+				Houses: HouseSelector{Controlled: true},
+				Grant:  GrantPlay,
 			},
 			"P0 may play cards from other houses this turn",
 		},

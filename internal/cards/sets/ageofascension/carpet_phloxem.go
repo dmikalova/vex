@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: If there are no friendly Creatures in play, deal 4 damage to each Creature.
-var CarpetPhloxem = card.New(
+var CarpetPhloxem = set.New(
 	"Carpet Phloxem",
 	card.House.Mars,
 	card.Type.Tactic,

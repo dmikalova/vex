@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Elusive.
 //	Play: Put a card from your hand facedown under Jargogle.
 //	Destroyed: If it is your turn, play the card under Jargogle. Otherwise, archive the card under Jargogle.
-var Jargogle = card.New(
+var Jargogle = set.New(
 	"Jargogle",
 	card.House.Logos,
 	card.Type.Creature,

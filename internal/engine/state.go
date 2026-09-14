@@ -343,6 +343,15 @@ type GameState struct {
 	CannotFight     [2]Bar[bool]
 	CannotFightNext [2]Bar[bool]
 
+	// Stun-fighter bars. StunFighter[p], while set, stuns each creature player p
+	// uses to fight, right after that fight resolves; StunFighterNext[p] arms that
+	// for p's next turn (Foggify, cast against the opponent). Like the fight bar,
+	// an effect arms it, StartTurn promotes it to active for the affected player,
+	// and the ready phase lifts it — so it always lands on that player's own next
+	// turn, whoever plays in between.
+	StunFighter     [2]Bar[bool]
+	StunFighterNext [2]Bar[bool]
+
 	// Play-type bars. CannotPlayTypeThis[p] blocks player p from playing cards of
 	// that type this turn; CannotPlayTypeNext[p] arms that block for p's next turn
 	// (Lifeward bars creatures, Scrambler Storm bars action cards). The zero value
@@ -513,26 +522,19 @@ type GameState struct {
 	// limit because they never pass through the volitional play/discard gates.
 	FirstTurnPlayLimit [2]bool
 
-	// ForcedHouse[p] is the house player p must choose as their active house this
-	// turn (Control the Weak); ForcedHouseNext[p] arms that for p's next turn.
-	// StartTurn promotes the armed house to active for the player, so it lands on
-	// their own next turn. HouseNone means no house is forced.
-	ForcedHouse     [2]Bar[House]
-	ForcedHouseNext [2]Bar[House]
-
-	// ForbiddenHouse[p] is a house player p cannot choose as their active house
-	// this turn (Tezmal); ForbiddenHouseNext[p] arms that for p's next turn.
-	// StartTurn promotes the armed house, so it lands on the player's own next
-	// turn. HouseNone means no house is forbidden.
-	ForbiddenHouse     [2]Bar[House]
-	ForbiddenHouseNext [2]Bar[House]
-
-	// HouseWager[p] is a bet on player p's active house this turn: if p chooses
-	// its House, the Predictor steals Amount (Snaglet). HouseWagerNext[p] arms
-	// that for p's next turn, and StartTurn promotes it so the payoff lands when p
-	// next chooses a house. A zero Amount means no wager is armed.
-	HouseWager     [2]HouseWager
-	HouseWagerNext [2]HouseWager
+	// HouseConstraints[p] is the delayed constraint table binding player p's active
+	// house choice THIS turn — the musts, cannots, and armed wagers that resolve
+	// when p chooses a house (Control the Weak, Tezmal, Snag and its Mirror,
+	// Snaglet). Entries accumulate (a must and a cannot stack; cannot overrides
+	// must), and HouseConstraintCount[p] is how many of the fixed array are in use.
+	// HouseConstraintsNext[p] arms entries for p's next turn; StartTurn promotes the
+	// armed entries and clears them, so a constraint lands on the bound player's own
+	// next choice. ChooseHouse resolves the whole table at once (see ADR 0035 and
+	// allowedHouses in game_read.go).
+	HouseConstraints         [2][maxHouseConstraints]HouseConstraint
+	HouseConstraintCount     [2]uint8
+	HouseConstraintsNext     [2][maxHouseConstraints]HouseConstraint
+	HouseConstraintCountNext [2]uint8
 
 	// FightDamageRedirect is the creature a "Before Fight" ability chose to receive
 	// the attacker's fight damage instead of the defender (Gabos Longarms). It is

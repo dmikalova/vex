@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Play: Deal 1 damage to each enemy Creature.
-var PingleWhoAnnoys = card.New(
+var PingleWhoAnnoys = set.New(
 	"Pingle Who Annoys",
 	card.House.Brobnar,
 	card.Type.Creature,

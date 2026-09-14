@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Location
 //
 //	At the start of each player's turn, you may choose a house - reveal the top card of your deck. If it is of the chosen house, gain 2 Æmber. Otherwise, lose 2 Æmber.
-var GamblingDen = card.New(
+var GamblingDen = set.New(
 	"Gambling Den",
 	card.House.Shadows,
 	card.Type.Artifact,
@@ -26,7 +26,7 @@ var GamblingDen = card.New(
 					Effects: []card.Effect{
 						card.RevealTopOfDeck{Amount: 1},
 						card.Conditional{
-							Cond: card.ItIsOfHouse{House: card.TheChosenHouse},
+							Cond: card.ItIs{House: card.Houses.Chosen},
 							Then: card.GainAember{Player: card.Controller, Amount: 2},
 							Else: card.LoseAember{Player: card.Controller, Amount: 2},
 						},

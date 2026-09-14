@@ -27,6 +27,11 @@ type (
 	//	  Trigger:  card.ClusterTrigger.ByAnyMember,
 	//	}
 	Cluster = deckgen.ClusterMembership
+	// FilteredCluster is a deck-wide pull keyed to a lead card that fills by a
+	// predicate rather than named members (ADR 0036): when the lead is in a deck,
+	// generation guarantees at least Floor cards matching Match, in any House. Mark
+	// the lead with card.PullsMatching rather than constructing this directly.
+	FilteredCluster = deckgen.FilteredCluster
 )
 
 // ClusterStrategy groups the cluster fill strategies, e.g.
@@ -99,6 +104,18 @@ func LeadsCluster(c Cluster) Option {
 func Pulled(c Cluster, minCopies int, mean float64) Cluster {
 	c.Min, c.Mean = minCopies, mean
 	return c
+}
+
+// PullsMatching marks this card the lead of a deck-wide filtered pull (ADR 0036):
+// whenever it is in a generated deck, generation guarantees at least floor cards
+// matching match somewhere in the deck, in any House, topping up from the pool.
+// Cards already in the deck that match count toward the floor. Use it for a
+// deck-building payoff keyed to a card family the card cares about — Chief Engineer
+// Walls guaranteeing the Upgrades and Robots it retrieves. It is independent of
+// card.InCluster, so a card can lead a filtered pull and belong to a named cluster.
+func PullsMatching(name string, floor int, match func(Definition) bool) Option {
+	fc := FilteredCluster{Name: name, Floor: floor, Match: match}
+	return func(b *builder) { b.profile.Leads = &fc }
 }
 
 // MaterializeFunc adapts a plain function to a Materializer, so a template can be

@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Reap: For the remainder of the turn, each time an enemy Creature is destroyed, gain 1 Æmber.
-var LooterGoblin = card.New(
+var LooterGoblin = set.New(
 	"Looter Goblin",
 	card.House.Brobnar,
 	card.Type.Creature,

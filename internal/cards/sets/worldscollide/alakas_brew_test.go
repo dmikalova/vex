@@ -10,24 +10,33 @@ import (
 // Alaka's Brew
 //
 //	House:  Brobnar
-//	Type:   Tactic
-//	Rarity: Common
+//	Type:   Upgrade
+//	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Give a Creature two +1 power counters.
+//	This Creature gains, "Fight: Play a Creature -> ready it."
 func TestAlakasBrew(t *testing.T) {
-	t.Run("gives a creature two +1 power counters", func(t *testing.T) {
-		var troll ct.Card
+	t.Run("host fighting plays a creature and readies it", func(t *testing.T) {
+		var host, recruit, foe ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.Brobnar,
-				Hand:   ct.Cards(AlakasBrew),
-				InPlay: ct.Cards(ct.Bind(&troll, ct.Creature(ct.Power(4)))),
+				House: card.House.Brobnar,
+				Hand: ct.Cards(
+					ct.Bind(&recruit, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(3))),
+				),
+				InPlay: ct.Cards(
+					ct.Upgraded(
+						ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(4))),
+						AlakasBrew,
+					),
+				),
 			},
+			P2: ct.Side{InPlay: ct.Cards(ct.Bind(&foe, ct.Creature(ct.Power(3))))},
 		})
 
-		h.P1.Play(AlakasBrew)
+		h.P1.Fight(host, foe)
 
-		h.Expect(troll).Power(6)
+		// The granted Fight ability played the recruit from hand and readied it.
+		h.Expect(recruit).Ready()
 	})
 }

@@ -6,18 +6,19 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Brobnar
 //	Type:   Creature
-//	Rarity: Special
+//	Rarity: Connected
 //	Power:  6
 //	Traits: Giant
 //
 //	Assault 4.
 //	Reap: Enrage Mega Shorty.
-var MegaShorty = card.New(
+var MegaShorty = set.New(
 	"Mega Shorty",
 	card.House.Brobnar,
 	card.Type.Creature,
-	card.Rarity.Special,
+	card.Rarity.Connected,
 	card.Provenance(card.WC, "61"),
+	card.InCluster(card.Pulled(shortysBrewCluster, 1, 1.25)),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Giant),
 	card.WithAssault(4),

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Deal 3 damage to a Creature. If it is not destroyed, its owner discards a random card from their hand.
-var Gongoozle = card.New(
+var Gongoozle = set.New(
 	"Gongoozle",
 	card.House.Dis,
 	card.Type.Tactic,

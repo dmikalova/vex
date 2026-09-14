@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Choose a Creature - move 1 Æmber from it to your pool. Deal 2 damage to it.
-var Mug = card.New(
+var Mug = set.New(
 	"Mug",
 	card.House.Shadows,
 	card.Type.Tactic,

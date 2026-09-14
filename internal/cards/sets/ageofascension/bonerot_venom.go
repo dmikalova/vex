@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	This Creature gains, "After this Creature is used, deal 2 damage to this Creature."
-var BonerotVenom = card.New(
+var BonerotVenom = set.New(
 	"Bonerot Venom",
 	card.House.Shadows,
 	card.Type.Upgrade,

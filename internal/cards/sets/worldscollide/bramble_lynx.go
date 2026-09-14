@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Skirmish.
 //	If you have used a Creature to reap this turn, Bramble Lynx enters play ready.
-var BrambleLynx = card.New(
+var BrambleLynx = set.New(
 	"Bramble Lynx",
 	card.House.Untamed,
 	card.Type.Creature,

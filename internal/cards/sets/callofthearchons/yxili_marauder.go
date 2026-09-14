@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Yxili Marauder gains +1 power for each Æmber on it.
 //	Play: For each friendly ready Mars Creature, Yxili Marauder captures 1 Æmber from your opponent.
-var YxiliMarauder = card.New(
+var YxiliMarauder = set.New(
 	"Yxili Marauder",
 	card.House.Mars,
 	card.Type.Creature,

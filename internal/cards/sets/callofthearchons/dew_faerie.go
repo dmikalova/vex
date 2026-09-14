@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Reap: Gain 1 Æmber.
-var DewFaerie = card.New(
+var DewFaerie = set.New(
 	"Dew Faerie",
 	card.House.Untamed,
 	card.Type.Creature,

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Play: Put a doom counter on a Creature.
 //	Action: Destroy each Creature with a doom counter. Put a doom counter on a Creature.
-var WretchedDoll = card.New(
+var WretchedDoll = set.New(
 	"Wretched Doll",
 	card.House.Dis,
 	card.Type.Artifact,

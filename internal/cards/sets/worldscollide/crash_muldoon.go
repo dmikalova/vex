@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Deploy.
 //	Crash Muldoon enters play ready.
 //	Action: Use a neighboring non-Star Alliance Creature.
-var CrashMuldoon = card.New(
+var CrashMuldoon = set.New(
 	"Crash Muldoon",
 	card.House.StarAlliance,
 	card.Type.Creature,
@@ -25,7 +25,8 @@ var CrashMuldoon = card.New(
 	card.WithEntersPlay(card.Ready{Target: card.Target.This}),
 	card.WithAbility(
 		card.Trigger.Action, card.Use{
-			Max:    1,
-			Target: card.Target.EachFriendlyCreature.Neighboring().ExceptHouse(card.House.Self),
+			Max: 1,
+			Target: card.Target.EachFriendlyCreature.Neighboring().
+				House(card.Houses.Except(card.House.Self)),
 		}),
 )

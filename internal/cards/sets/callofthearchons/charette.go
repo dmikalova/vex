@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon
 //
 //	Play: Charette captures 3 Æmber from your opponent.
-var Charette = card.New(
+var Charette = set.New(
 	"Charette",
 	card.House.Dis,
 	card.Type.Creature,

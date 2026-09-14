@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Archive an enemy Creature from play.
-var Banish = card.New(
+var Banish = set.New(
 	"Banish",
 	card.House.Dis,
 	card.Type.Tactic,

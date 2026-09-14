@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Versatile.
 //	Action: Destroy Ritual of the Hunt. For the remainder of the turn, you may use friendly Untamed Creatures.
-var RitualOfTheHunt = card.New(
+var RitualOfTheHunt = set.New(
 	"Ritual of the Hunt",
 	card.House.Untamed,
 	card.Type.Artifact,
@@ -23,6 +23,6 @@ var RitualOfTheHunt = card.New(
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(card.Trigger.Action, card.Sentences{Effects: []card.Effect{
 		card.Destroy{Target: card.Target.This},
-		card.MayPlayOrUse{Houses: card.Houses.Named(card.House.Self), Grant: card.GrantUse},
+		card.MayPlayOrUse{Houses: card.GrantHouses.Named(card.House.Self), Grant: card.GrantUse},
 	}}),
 )

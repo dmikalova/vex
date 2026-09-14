@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //
 //	Play: Deal 3 damage to a Creature and 3 damage to a neighbor of that Creature.
-var MightyLance = card.New(
+var MightyLance = set.New(
 	"Mighty Lance",
 	card.House.Sanctum,
 	card.Type.Tactic,

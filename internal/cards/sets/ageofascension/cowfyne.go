@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant
 //
 //	Splash-attack 2.
-var Cowfyne = card.New(
+var Cowfyne = set.New(
 	"Cowfyne",
 	card.House.Brobnar,
 	card.Type.Creature,

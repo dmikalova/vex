@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Weapon
 //
 //	Action: Deal 1 damage to a Creature that is not on a flank and 1 damage to each of its neighbors.
-var Flamethrower = card.New(
+var Flamethrower = set.New(
 	"Flamethrower",
 	card.House.Brobnar,
 	card.Type.Artifact,

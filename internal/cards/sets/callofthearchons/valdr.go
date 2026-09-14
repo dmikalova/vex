@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant
 //
 //	Valdr deals +2 Damage while attacking an enemy Creature on the flank.
-var Valdr = card.New(
+var Valdr = set.New(
 	"Valdr",
 	card.House.Brobnar,
 	card.Type.Creature,

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Location
 //
 //	Each friendly flank Creature gains +2 power.
-var HaedrothsWall = card.New(
+var HaedrothsWall = set.New(
 	"Haedroth's Wall",
 	card.House.Sanctum,
 	card.Type.Artifact,

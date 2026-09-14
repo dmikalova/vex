@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Elf • Thief
 //
 //	Action: Steal 1 Æmber.
-var YantzeeGang = card.New(
+var YantzeeGang = set.New(
 	"Yantzee Gang",
 	card.House.Shadows,
 	card.Type.Creature,

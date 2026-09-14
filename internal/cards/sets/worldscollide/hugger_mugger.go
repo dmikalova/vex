@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Play: Hugger-Mugger captures 1 Æmber from your opponent. If your opponent has more forged keys than you, steal 1 Æmber.
-var HuggerMugger = card.New(
+var HuggerMugger = set.New(
 	"Hugger-Mugger",
 	card.House.Shadows,
 	card.Type.Creature,

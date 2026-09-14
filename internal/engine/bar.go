@@ -17,14 +17,3 @@ type CreatureBar struct {
 	Action      UseKind
 	ExceptHouse House
 }
-
-// A HouseWager is a bet on a player's active house on a future turn: if that
-// player chooses House, the Predictor steals Amount (Snaglet). The zero value
-// (Amount 0) arms no wager, and paying it out clears it.
-type HouseWager struct {
-	House  House
-	Amount int
-	// Predictor is the player who armed the wager and collects Amount if it hits.
-	Predictor int
-	Source    LocalID
-}

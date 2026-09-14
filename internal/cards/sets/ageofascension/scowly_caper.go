@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Skirmish, Treachery, Versatile.
 //	At the end of your turn, destroy a neighboring Creature.
-var ScowlyCaper = card.New(
+var ScowlyCaper = set.New(
 	"Scowly Caper",
 	card.House.Shadows,
 	card.Type.Creature,

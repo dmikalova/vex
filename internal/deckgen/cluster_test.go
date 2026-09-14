@@ -116,6 +116,109 @@ func clusterMember(name string, h engine.House, m ClusterMembership) Card {
 	return c
 }
 
+// A catalog-wide ClusterPool resolves a deck-wide cluster across every House a
+// deck can reach, including a foreign House an errant pod brings in. The pool
+// carries a Saurian Shard the drawing set itself does not print; an errant Saurian
+// pod still receives it. A non-OnePerHouse cluster in the pool (the Horsemen) is
+// ignored by the deck-wide gate and pass, and a nil pool is a no-op.
+func TestCrossClusterErrantHouse(t *testing.T) {
+	horseman := ClusterMembership{Name: "Horsemen", Strategy: WholePool, Trigger: ByAnyMember}
+	pool := NewClusterPool([]Card{
+		shardMember("Shard-B", engine.Brobnar),
+		shardMember("Shard-D", engine.Dis),
+		shardMember("Shard-S", engine.Saurian),
+		clusterMember("Horse-B", engine.Brobnar, horseman),
+		clusterMember("Horse-D", engine.Dis, horseman),
+	})
+	set := NewSet("S", []Card{
+		shardMember("Shard-B", engine.Brobnar),
+		shardMember("Shard-D", engine.Dis),
+		mkCard("FB", engine.Brobnar, engine.Common),
+		mkCard("FD", engine.Dis, engine.Common),
+	}, Tuning{RarityWeights: map[engine.Rarity]float64{engine.Common: 1}})
+	// A legacy card of a foreign House makes Saurian an errant House. The gate
+	// skips the WholePool Horsemen (not deck-wide) and passes on the Shards.
+	set = set.WithLegacy(NewLegacy([]LegacyEntry{
+		{Card: mkCard("Sau", engine.Saurian, engine.Common), Set: "Other"},
+	})).WithClusters(pool)
+	// A nil pool is a no-op: neither gate nor deck-wide resolution.
+	set.WithClusters(nil)
+
+	g := &generator{set: set, r: rand.New(rand.NewSource(1)), placed: map[string]bool{}}
+	deck := Deck{Set: "S"}
+	houses := []engine.House{engine.Brobnar, engine.Dis, engine.Saurian}
+	for i, h := range houses {
+		g.deckHouses[i] = h
+		deck.Pods[i] = g.fillPod(h)
+	}
+	// Plant a member to fire the cross-set cycle.
+	deck.Pods[0].Slots[0] = Slot{
+		Rarity: engine.Rare,
+		Card:   pool.clusters["Shard"].byHouse[engine.Brobnar].Def,
+	}
+
+	g.expandClusters(&deck)
+
+	if !podHas(deck.Pods[2], "Shard-S") {
+		t.Fatal("errant Saurian pod is missing its cross-set Shard")
+	}
+}
+
+// The cross-set cluster gate fails the build when the pool has no member for a
+// House the set can deck as an errant House.
+func TestCrossClusterGateMissingHouse(t *testing.T) {
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Fatal("expected WithClusters to panic on an errant House with no member")
+		}
+		if msg, _ := r.(string); !strings.Contains(msg, "cross-set OnePerHouse") {
+			t.Fatalf("panic = %v, want it to name the cross-set gate", r)
+		}
+	}()
+	pool := NewClusterPool([]Card{
+		shardMember("Shard-B", engine.Brobnar),
+		shardMember("Shard-D", engine.Dis),
+	})
+	set := NewSet("S", []Card{
+		shardMember("Shard-B", engine.Brobnar),
+		shardMember("Shard-D", engine.Dis),
+		mkCard("FB", engine.Brobnar, engine.Common),
+		mkCard("FD", engine.Dis, engine.Common),
+	}, Tuning{RarityWeights: map[engine.Rarity]float64{engine.Common: 1}})
+	// Saurian is an errant House but the pool has no Saurian Shard.
+	set.WithLegacy(NewLegacy([]LegacyEntry{
+		{Card: mkCard("Sau", engine.Saurian, engine.Common), Set: "Other"},
+	})).WithClusters(pool)
+}
+
+// Draftable is the reservoir-set predicate: a housed non-Connected card is
+// draftable; a Houseless, Connected, or HouseNone card is not.
+func TestDraftable(t *testing.T) {
+	cases := []struct {
+		name string
+		card Card
+		want bool
+	}{
+		{"housed common", mkCard("C", engine.Brobnar, engine.Common), true},
+		{"connected", mkCard("K", engine.Brobnar, engine.Connected), false},
+		{"houseless card", mkCard("N", engine.HouseNone, engine.Common), false},
+		{
+			"special",
+			Card{
+				Def:     engine.NewCard("S", engine.Brobnar, engine.Creature, engine.Common),
+				Profile: GenerationProfile{Houseless: true},
+			},
+			false,
+		},
+	}
+	for _, tc := range cases {
+		if got := Draftable(tc.card); got != tc.want {
+			t.Errorf("Draftable(%s) = %v, want %v", tc.name, got, tc.want)
+		}
+	}
+}
+
 // connectedMember is a cluster member of Rarity.Connected: it never rolls in the
 // pool, so a cluster made only of these can never fire.
 func connectedMember(name string, h engine.House, m ClusterMembership) Card {

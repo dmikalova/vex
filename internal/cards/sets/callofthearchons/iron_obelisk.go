@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Location
 //
 //	Your opponent's keys cost +1 Æmber for each friendly damaged Brobnar Creature.
-var IronObelisk = card.New(
+var IronObelisk = set.New(
 	"Iron Obelisk",
 	card.House.Brobnar,
 	card.Type.Artifact,

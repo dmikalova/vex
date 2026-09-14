@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Faerie
 //
 //	Play: If you control more Creatures than your opponent, gain 2 Æmber.
-var Flaxia = card.New(
+var Flaxia = set.New(
 	"Flaxia",
 	card.House.Untamed,
 	card.Type.Creature,

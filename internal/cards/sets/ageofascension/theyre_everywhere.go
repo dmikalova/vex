@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Deal 2 damage to each enemy flank Creature. Deal 1 damage to each enemy Creature that is not on a flank.
-var TheyreEverywhere = card.New(
+var TheyreEverywhere = set.New(
 	"They're Everywhere!",
 	card.House.Untamed,
 	card.Type.Tactic,

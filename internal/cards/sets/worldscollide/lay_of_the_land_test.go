@@ -30,10 +30,11 @@ func TestLayOfTheLand(t *testing.T) {
 	})
 
 	h.P1.Play(LayOfTheLand)
-	// Put top3 on top, then draw a card: the drawn card is top3.
+	// Picks send top3 then top1 toward the bottom, leaving the unpicked top2 on
+	// top; the draw that follows takes top2.
 	h.P1.ClickCard(top3)
 	h.P1.ClickCard(top1)
 
-	h.Expect(top3).At(ct.Hand)
+	h.Expect(top2).At(ct.Hand)
 	h.P1.ExpectAmber(1)
 }

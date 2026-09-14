@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Assault 2.
 //	Play: You may rearrange the Creatures in a player's battleline.
-var TacticalOfficerMoon = card.New(
+var TacticalOfficerMoon = set.New(
 	"Tactical Officer Moon",
 	card.House.StarAlliance,
 	card.Type.Creature,

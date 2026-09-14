@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Merchant
 //
 //	Reap: Your opponent gains control of a friendly Artifact -> steal 2 Æmber.
-var AnahitaTheTrader = card.New(
+var AnahitaTheTrader = set.New(
 	"Anahita the Trader",
 	card.House.Sanctum,
 	card.Type.Creature,

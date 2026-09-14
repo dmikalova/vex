@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item
 //
 //	Action: Ready and fight with a friendly Creature.
-var GauntletOfCommand = card.New(
+var GauntletOfCommand = set.New(
 	"Gauntlet of Command",
 	card.House.Brobnar,
 	card.Type.Artifact,

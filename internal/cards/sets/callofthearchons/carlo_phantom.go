@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive, Skirmish.
 //	After you play an Artifact, steal 1 Æmber.
-var CarloPhantom = card.New(
+var CarloPhantom = set.New(
 	"Carlo Phantom",
 	card.House.Shadows,
 	card.Type.Creature,

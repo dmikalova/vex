@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //
 //	Play: For each damaged Creature in play, give a Creature two +1 power counters.
-var MartianHounds = card.New(
+var MartianHounds = set.New(
 	"Martian Hounds",
 	card.House.Mars,
 	card.Type.Tactic,

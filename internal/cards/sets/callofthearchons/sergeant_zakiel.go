@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Knight
 //
 //	Play: You may ready and fight with a neighboring Creature.
-var SergeantZakiel = card.New(
+var SergeantZakiel = set.New(
 	"Sergeant Zakiel",
 	card.House.Sanctum,
 	card.Type.Creature,

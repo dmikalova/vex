@@ -69,8 +69,9 @@ is leaving."
 
 **2. Source-in-play resolution guard.** A triggered ability resolves only if its
 source is in play at the instant it begins resolving. This is one guard in
-`triggerAbilitiesAs` — `if !g.inPlay(src) && g.cat.def(src).Type != Tactic {
-continue }` — applied per ability so it covers both a source removed between two
+`resolveWindow` (the shared trigger-window resolution loop) — `if !g.inPlay(src) &&
+g.cat.def(src).Type != Tactic { continue }` — applied per ability so it covers both
+a source removed between two
 sibling cards' abilities and a source that removes itself between its own two
 abilities. The single exception is a **tactic**: it resolves its `Play:` while not
 in play (a tactic never enters play), so the guard lets a tactic through and drops
@@ -80,8 +81,10 @@ engine routes through `triggerAbilitiesAs` has a present source by construction
 fires while the card is still listed), so the guard only ever drops a source an
 earlier ability removed. The choose-house call-site guard is deleted, and the
 forge-key window — which never had a guard — is covered for the first time. The
-destruction window keeps its own copy of the guard because it runs its own
-resolution loop (`destroyTogether`), which `triggerAbilitiesAs` does not reach.
+destruction window runs its own re-gathering resolution loop
+(`resolveDestroyedWindow`) rather than the up-front-ordered `resolveWindow`, but
+both resolve each entry through the shared `resolveTriggered` step, so the source
+guard lives in one place and applies identically everywhere.
 
 ## Consequences
 

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	This Creature gains +1 power and +1 armor for each Upgrade attached to it.
-var LightOfTheArchons = card.New(
+var LightOfTheArchons = set.New(
 	"Light of the Archons",
 	card.House.StarAlliance,
 	card.Type.Upgrade,

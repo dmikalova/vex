@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Each neighboring Creature gains, "Action: Steal 1 Æmber."
-var BreakerHill = card.New(
+var BreakerHill = set.New(
 	"Breaker Hill",
 	card.House.Shadows,
 	card.Type.Creature,

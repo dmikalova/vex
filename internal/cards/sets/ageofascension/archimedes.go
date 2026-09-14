@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Each neighboring Creature gains, "Destroyed: Archive this Creature from play."
-var Archimedes = card.New(
+var Archimedes = set.New(
 	"Archimedes",
 	card.House.Logos,
 	card.Type.Creature,

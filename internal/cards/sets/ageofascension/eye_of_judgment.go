@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item
 //
 //	Action: Purge a Creature from a discard pile.
-var EyeOfJudgment = card.New(
+var EyeOfJudgment = set.New(
 	"Eye of Judgment",
 	card.House.Sanctum,
 	card.Type.Artifact,

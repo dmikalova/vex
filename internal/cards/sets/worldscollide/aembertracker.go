@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Play: Deal 2 damage to each enemy Creature with Æmber on it, ignoring armor.
-var Aembertracker = card.New(
+var Aembertracker = set.New(
 	"Aembertracker",
 	card.House.StarAlliance,
 	card.Type.Creature,

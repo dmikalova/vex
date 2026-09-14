@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	You may spend Æmber on Pocket Universe when forging keys.
 //	Action: Move 1 Æmber from your pool to Pocket Universe.
-var PocketUniverse = card.New("Pocket Universe",
+var PocketUniverse = set.New("Pocket Universe",
 	card.House.Logos, card.Type.Artifact, card.Rarity.Rare,
 	card.Provenance(card.CotA, "131"),
 	card.WithTraits(card.Traits.Item),

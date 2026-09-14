@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Heal 3 damage from a Creature. If you healed 3 or more damage, gain 1 Æmber.
-var Vigor = card.New(
+var Vigor = set.New(
 	"Vigor",
 	card.House.Untamed,
 	card.Type.Tactic,

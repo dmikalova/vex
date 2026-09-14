@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Deal 2 damage to each Creature.
-var PoisonWave = card.New(
+var PoisonWave = set.New(
 	"Poison Wave",
 	card.House.Shadows,
 	card.Type.Tactic,

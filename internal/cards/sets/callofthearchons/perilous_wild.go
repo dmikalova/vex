@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Destroy each elusive Creature.
-var PerilousWild = card.New(
+var PerilousWild = set.New(
 	"Perilous Wild",
 	card.House.Untamed,
 	card.Type.Tactic,

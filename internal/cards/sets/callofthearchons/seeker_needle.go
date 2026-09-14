@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Weapon
 //
 //	Action: Deal 1 damage to a Creature. If this damage destroys that Creature, gain 1 Æmber.
-var SeekerNeedle = card.New(
+var SeekerNeedle = set.New(
 	"Seeker Needle",
 	card.House.Shadows,
 	card.Type.Artifact,

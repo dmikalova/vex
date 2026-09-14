@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive, Skirmish.
 //	Reap: Deal 2 damage to a Creature.
-var KindrithLongshot = card.New(
+var KindrithLongshot = set.New(
 	"Kindrith Longshot",
 	card.House.Untamed,
 	card.Type.Creature,

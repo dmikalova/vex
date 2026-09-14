@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Put up to 3 Creatures into their owners' hands.
-var NaturesCall = card.New(
+var NaturesCall = set.New(
 	"Nature's Call",
 	card.House.Untamed,
 	card.Type.Tactic,

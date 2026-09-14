@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Play: Aubade the Grim captures 3 Æmber from your opponent.
 //	Reap: Move 1 Æmber from Aubade the Grim to the common supply.
-var AubadeTheGrim = card.New(
+var AubadeTheGrim = set.New(
 	"Aubade the Grim",
 	card.House.Sanctum,
 	card.Type.Creature,

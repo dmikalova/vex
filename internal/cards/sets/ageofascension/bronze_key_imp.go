@@ -6,17 +6,17 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Dis
 //	Type:   Creature
-//	Rarity: Special
+//	Rarity: Rare
 //	Power:  2
 //	Traits: Imp
 //
 //	Elusive.
 //	Players cannot forge their first key.
-var BronzeKeyImp = card.New(
+var BronzeKeyImp = set.New(
 	"Bronze Key Imp",
 	card.House.Dis,
 	card.Type.Creature,
-	card.Rarity.Special,
+	card.Rarity.Rare,
 	card.Provenance(card.AoA, "71"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Imp),

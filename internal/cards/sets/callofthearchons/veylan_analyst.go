@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Cyborg • Scientist
 //
 //	After you use an Artifact, gain 1 Æmber.
-var VeylanAnalyst = card.New(
+var VeylanAnalyst = set.New(
 	"Veylan Analyst",
 	card.House.Logos,
 	card.Type.Creature,

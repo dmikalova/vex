@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //
 //	This Creature gains, "After this Creature is used, destroy this Creature."
-var ContainmentField = card.New(
+var ContainmentField = set.New(
 	"Containment Field",
 	card.House.Mars,
 	card.Type.Upgrade,

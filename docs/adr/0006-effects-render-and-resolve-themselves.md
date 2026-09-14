@@ -17,7 +17,7 @@ itself out). One value drives both, so printed text can never desync from
 behavior; card doc comments are generated from the tree (`mage generateComments`).
 A new mechanic is almost always a **new node** in `effect_<mechanic>.go`, not a new
 branch in the `Game` runtime. When behavior varies along an axis, the axis is a
-small **Strategy that also renders its own text** (`Chooser`, `Selector`, `Count`,
+small **Strategy that also renders its own text** (`Chooser`, `Selection`, `Count`,
 `Condition`) rather than a new field or `bool`.
 
 ## Consequences

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Witch
 //
 //	After you play another Creature, gain 1 Æmber.
-var HuntingWitch = card.New(
+var HuntingWitch = set.New(
 	"Hunting Witch",
 	card.House.Untamed,
 	card.Type.Creature,

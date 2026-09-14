@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //
 //	Play: Choose a friendly ready Brobnar Creature - exhaust it, and gain Æmber equal to half its power, rounded down.
-var TheFlex = card.New(
+var TheFlex = set.New(
 	"The Flex",
 	card.House.Brobnar,
 	card.Type.Tactic,
@@ -17,7 +17,7 @@ var TheFlex = card.New(
 	card.Provenance(card.AoA, "31"),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseCreatureThen{
-			Target: card.Target.FriendlyCreature.OfHouse(card.House.Self).Ready(),
+			Target: card.Target.FriendlyCreature.House(card.Houses.Named(card.House.Self)).Ready(),
 			Then: card.Sequence{Effects: []card.Effect{
 				card.Exhaust{Target: card.Target.Triggering},
 				card.GainAemberEqualTo{

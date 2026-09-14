@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon
 //
 //	Before Fight: Choose a Creature - Gabos Longarms deals its fight damage to the chosen Creature instead of to the Creature it is fighting.
-var GabosLongarms = card.New(
+var GabosLongarms = set.New(
 	"Gabos Longarms",
 	card.House.Dis,
 	card.Type.Creature,

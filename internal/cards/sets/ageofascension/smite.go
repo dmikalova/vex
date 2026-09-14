@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //
 //	Play: Ready and fight with a friendly Creature. Deal 2 damage to each neighbor of the fought Creature.
-var Smite = card.New(
+var Smite = set.New(
 	"Smite",
 	card.House.Sanctum,
 	card.Type.Tactic,

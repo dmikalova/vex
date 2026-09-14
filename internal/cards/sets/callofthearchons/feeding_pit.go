@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Location
 //
 //	Action: Discard a Creature from your hand -> gain 1 Æmber.
-var FeedingPit = card.New(
+var FeedingPit = set.New(
 	"Feeding Pit",
 	card.House.Mars,
 	card.Type.Artifact,

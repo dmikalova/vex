@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Fight/Reap: Ready and fight with a neighboring Giant Creature.
-var WarGrumpus = card.New(
+var WarGrumpus = set.New(
 	"War Grumpus",
 	card.House.Brobnar,
 	card.Type.Creature,

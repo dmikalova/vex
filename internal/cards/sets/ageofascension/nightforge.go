@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: If you have not forged a key this turn, forge a key at +4 Æmber current cost -> purge Nightforge.
-var Nightforge = card.New(
+var Nightforge = set.New(
 	"Nightforge",
 	card.House.Shadows,
 	card.Type.Tactic,
@@ -19,10 +19,9 @@ var Nightforge = card.New(
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
-			Cond: card.ForgedKey{
+			Cond: card.Not{Cond: card.ForgedKey{
 				Player: card.Controller,
-				Not:    true,
-			},
+			}},
 			Then: card.ForgeKey{Extra: 4},
 		}),
 )

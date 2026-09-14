@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Creatures not on a flank cannot fight this Creature.
-var Camouflage = card.New(
+var Camouflage = set.New(
 	"Camouflage",
 	card.House.Untamed,
 	card.Type.Upgrade,

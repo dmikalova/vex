@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Archive the top card of your deck.
-var RandomAccessArchives = card.New(
+var RandomAccessArchives = set.New(
 	"Random Access Archives",
 	card.House.Logos,
 	card.Type.Tactic,

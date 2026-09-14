@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Scientist
 //
 //	Reap: Archive a card from your hand.
-var GanymedeArchivist = card.New(
+var GanymedeArchivist = set.New(
 	"Ganymede Archivist",
 	card.House.Logos,
 	card.Type.Creature,

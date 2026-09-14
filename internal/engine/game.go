@@ -314,6 +314,9 @@ func (g *Game) orderByChoice(controller int, prompt string, ids []LocalID) []Loc
 	if len(ids) <= 1 {
 		return ids
 	}
+	// Boundary: settle before presenting the choice, so the player never orders
+	// among creatures one of which is already dead (ADR 0029).
+	g.settleDestroyed(controller)
 	if o, ok := g.chooserFor(controller).(Orderer); ok {
 		return o.OrderCreatures("", prompt, ids)
 	}

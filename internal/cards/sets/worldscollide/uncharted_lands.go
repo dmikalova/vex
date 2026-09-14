@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Each Star Alliance Creature gains, "Reap: Move 1 Æmber from Uncharted Lands to your pool."
 //	Play: Place 6 Æmber from the common supply on Uncharted Lands.
-var UnchartedLands = card.New(
+var UnchartedLands = set.New(
 	"Uncharted Lands",
 	card.House.StarAlliance,
 	card.Type.Artifact,
@@ -19,7 +19,7 @@ var UnchartedLands = card.New(
 	card.Provenance(card.WC, "342"),
 	card.WithTraits(card.Traits.Location),
 	card.WithConstant(card.ConstantAbility{
-		Target: card.Target.EachCreature.OfHouse(card.House.Self),
+		Target: card.Target.EachCreature.House(card.Houses.Named(card.House.Self)),
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Reap,
 			Effect: card.MoveAember{

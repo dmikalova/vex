@@ -11,9 +11,10 @@ import (
 // draft weight, so all five together draft about as often as one ordinary Rare
 // card. KeyForge prints Master of 1/2/3 (#89/#90/#91); Vactrol extends the family
 // to 5. The name is built from n; mage generateComments resolves it through the
-// wrapper to document each variant. opts carries a variant's provenance.
+// wrapper to document each variant. opts carries a variant's provenance; the home
+// set is stamped by set.New, so a variant with no provenance passes no opts.
 func master(n int, opts ...card.Option) card.Definition {
-	return card.New(fmt.Sprintf("Master of %d", n),
+	return set.New(fmt.Sprintf("Master of %d", n),
 		card.House.Dis, card.Type.Creature, card.Rarity.Rare,
 		append(opts,
 			card.WithPower(4),

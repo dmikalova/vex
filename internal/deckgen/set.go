@@ -34,11 +34,27 @@ type Set struct {
 	// (OnePerHouse). It is keyed by cluster name and built from members' profiles.
 	clusters map[string]clusterIndex
 
+	// filtered holds the deck-wide filtered pulls the set's cards lead (ADR 0036):
+	// a pull tops a deck up to a floor of cards matching a predicate (Chief
+	// Engineer Walls guaranteeing Upgrades and Robots), keyed by cluster name.
+	filtered map[string]FilteredCluster
+
 	// legacy is the shared cross-set pool a slot may draw from at
 	// Tuning.LegacyRate, keeping the pod's House. It is nil for a single-set build
 	// and attached by WithLegacy; the same *Legacy is shared by every Set, which
 	// draws only the entries whose set differs from its own Name.
 	legacy *Legacy
+
+	// errantHouses are the Houses present in the legacy pool but not native to
+	// this Set — the foreign Houses an errant pod can bring into a deck (ADR 0036).
+	// Computed by WithLegacy; empty without a legacy pool.
+	errantHouses []engine.House
+
+	// crossClusters is the catalog-wide cluster index used to resolve deck-wide
+	// (OnePerHouse) clusters across every House a deck can reach, including an
+	// errant House (ADR 0036). Nil for a single-set build, which resolves deck-wide
+	// clusters from its own clusters; attached by WithClusters.
+	crossClusters *ClusterPool
 }
 
 // NewSet builds a Set from a flat list of pool entries, bucketing them by House
@@ -82,7 +98,9 @@ func NewSet(name string, cards []Card, tuning Tuning) Set {
 	}
 	sort.Slice(s.houses, func(i, j int) bool { return s.houses[i].String() < s.houses[j].String() })
 	s.clusters = buildClusters(cards)
+	s.filtered = buildFilteredClusters(cards)
 	s.validateClusters()
+	s.validateFilteredClusters()
 	return s
 }
 
@@ -148,13 +166,54 @@ func (l *Legacy) candidates(entries []LegacyEntry, exclude string) []Card {
 	return out
 }
 
+// houses returns the Houses the legacy pool can draw, sorted by name.
+func (l *Legacy) houses() []engine.House {
+	hs := make([]engine.House, 0, len(l.byHouse))
+	for h := range l.byHouse {
+		hs = append(hs, h)
+	}
+	sort.Slice(hs, func(i, j int) bool { return hs[i].String() < hs[j].String() })
+	return hs
+}
+
 // WithLegacy attaches the shared Legacy pool to the set: cards printed in other
 // sets that a slot may draw instead of one of this set's own, at the set's
 // Tuning.LegacyRate. The same *Legacy is shared by every Set; this Set draws only
-// the entries whose set differs from its Name. It returns the set with the pool
-// attached so it reads as a builder step.
+// the entries whose set differs from its Name. It also computes the set's errant
+// Houses (the pool Houses not native to the set, ADR 0036). It returns the set
+// with the pool attached so it reads as a builder step.
 func (s Set) WithLegacy(l *Legacy) Set {
 	s.legacy = l
+	s.errantHouses = foreignHouses(s.houses, l.houses())
+	return s
+}
+
+// foreignHouses returns the pool Houses not among the native ones, preserving the
+// pool's order — the Houses an errant pod can bring into a deck from the cross-set
+// legacy pool (ADR 0036).
+func foreignHouses(native, pool []engine.House) []engine.House {
+	isNative := make(map[engine.House]bool, len(native))
+	for _, h := range native {
+		isNative[h] = true
+	}
+	var out []engine.House
+	for _, h := range pool {
+		if !isNative[h] {
+			out = append(out, h)
+		}
+	}
+	return out
+}
+
+// WithClusters attaches the catalog-wide ClusterPool used to resolve deck-wide
+// (OnePerHouse) clusters (ADR 0036). It gates the pool against this set: every
+// OnePerHouse cluster must have a member for each House the set can deck — its
+// native Houses and the foreign Houses an errant pod can bring in — or it panics,
+// so a set that can deck a House with no member is caught at assembly, not with a
+// short deck. Run it after WithLegacy, which computes the errant Houses.
+func (s Set) WithClusters(cp *ClusterPool) Set {
+	s.crossClusters = cp
+	s.validateCrossClusters()
 	return s
 }
 

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Give skirmish to, ready, and fight with up to 2 different friendly Creatures, one at a time.
-var Scout = card.New(
+var Scout = set.New(
 	"Scout",
 	card.House.Untamed,
 	card.Type.Tactic,

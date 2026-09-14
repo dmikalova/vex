@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Dinosaur • Philosopher
 //
 //	Reap: You may look at the top 3 cards of your deck, archive 1, put 1 into your hand, and discard 1.
-var Philophosaurus = card.New(
+var Philophosaurus = set.New(
 	"Philophosaurus",
 	card.House.Saurian,
 	card.Type.Creature,

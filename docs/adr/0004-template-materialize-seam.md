@@ -49,8 +49,11 @@ because they redistribute across cards.
   connection expansion all route through one mechanism rather than special cases in
   the fill path.
 - The engine still needs new bonus/distortion representation before the finishing
-  pass can land non-Æmber enhancements; that is deferred, and the seam does not
-  depend on it.
+  pass can land non-Æmber enhancements. **Enhancements arrive with the next set**
+  (they are printed on that set's cards), so the finishing pass is built alongside
+  it; **distortions are far off** (no near-term set needs them). The seam does not
+  depend on either — per-slot materialization stands on its own — so this deferral
+  blocks no current card.
 
 ## Update (ADR 0036)
 

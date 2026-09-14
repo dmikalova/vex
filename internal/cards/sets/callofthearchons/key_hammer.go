@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: If your opponent forged a key on their previous turn, unforge one of your opponent's keys, and your opponent gains 6 Æmber.
-var KeyHammer = card.New(
+var KeyHammer = set.New(
 	"Key Hammer",
 	card.House.Dis,
 	card.Type.Tactic,

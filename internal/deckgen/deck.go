@@ -15,7 +15,11 @@
 // evaluator).
 package deckgen
 
-import "github.com/dmikalova/vactrol/internal/engine"
+import (
+	"fmt"
+
+	"github.com/dmikalova/vactrol/internal/engine"
+)
 
 // A Deck is three House pods of twelve Slots — 36 cards — generated from one Set
 // and seed. It is reproducible only within a single version of its Set's pool.
@@ -71,4 +75,36 @@ func (d Deck) Houses() []engine.House {
 		hs = append(hs, pod.House)
 	}
 	return hs
+}
+
+// validate asserts the finished deck is well-formed after every fill and cluster
+// pass (ADR 0036): every card sits in a slot of a pod whose House it shares. The
+// fixed [PodCount][PodSize] shape already guarantees the DeckSize count and that
+// no pod is over-full; cluster expansion overwrites slots rather than adding them,
+// so it cannot change the count either. What it (and maverick rehousing) can break
+// is House integrity — forcing a card of the wrong House into a pod — so that is
+// what this checks, per filled slot of a real pod. A House-less pod or an empty
+// slot is a degenerate-pool artifact (fewer than PodCount Houses, or a pool too
+// small to fill a pod) that the cluster pass also skips, so it is passed over here
+// too. validate panics rather than return a mis-housed deck, so a cluster or fill
+// regression fails loudly at generation time instead of emitting an illegal deck.
+func (d Deck) validate() {
+	for i := range d.Pods {
+		pod := d.Pods[i]
+		if pod.House == engine.HouseNone {
+			continue
+		}
+		for j := range pod.Slots {
+			card := pod.Slots[j].Card
+			if card.Name == "" {
+				continue
+			}
+			if card.House != pod.House {
+				panic(fmt.Sprintf(
+					"deckgen: pod %d slot %d holds %q of House %s, not the pod's House %s",
+					i, j, card.Name, card.House, pod.House,
+				))
+			}
+		}
+	}
 }

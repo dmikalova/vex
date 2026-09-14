@@ -6,17 +6,18 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Brobnar
 //	Type:   Creature
-//	Rarity: Special
+//	Rarity: Connected
 //	Power:  7
 //	Traits: Giant
 //
 //	Fight: Your opponent loses 1 Æmber.
-var MegaGroke = card.New(
+var MegaGroke = set.New(
 	"Mega Groke",
 	card.House.Brobnar,
 	card.Type.Creature,
-	card.Rarity.Special,
+	card.Rarity.Connected,
 	card.Provenance(card.WC, "57"),
+	card.InCluster(card.Pulled(grokesBrewCluster, 1, 1.25)),
 	card.WithPower(7),
 	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(

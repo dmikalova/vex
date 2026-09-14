@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Æmber stolen or captured from your pool is taken from the common supply instead.
-var PosPixies = card.New(
+var PosPixies = set.New(
 	"Po's Pixies",
 	card.House.Untamed,
 	card.Type.Creature,

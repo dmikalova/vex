@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Knight
 //
 //	Play: Raiding Knight captures 1 Æmber from your opponent.
-var RaidingKnight = card.New(
+var RaidingKnight = set.New(
 	"Raiding Knight",
 	card.House.Sanctum,
 	card.Type.Creature,

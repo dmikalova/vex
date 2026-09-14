@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	This Creature gains +5 power.
-var BloodOfTitans = card.New(
+var BloodOfTitans = set.New(
 	"Blood of Titans",
 	card.House.Brobnar,
 	card.Type.Upgrade,

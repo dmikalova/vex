@@ -10,24 +10,34 @@ import (
 // Cowfyne's Brew
 //
 //	House:  Brobnar
-//	Type:   Tactic
-//	Rarity: Special
+//	Type:   Upgrade
+//	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Give a Creature two +1 power counters.
+//	This Creature gains +2 splash-attack.
 func TestCowfynesBrew(t *testing.T) {
-	t.Run("gives a creature two +1 power counters", func(t *testing.T) {
-		var troll ct.Card
+	t.Run("host deals 2 damage to each neighbor of the creature it fights", func(t *testing.T) {
+		var host, left, target, right ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.Brobnar,
-				Hand:   ct.Cards(CowfynesBrew),
-				InPlay: ct.Cards(ct.Bind(&troll, ct.Creature(ct.Power(4)))),
+				House: card.House.Brobnar,
+				InPlay: ct.Cards(
+					ct.Upgraded(
+						ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(5))),
+						CowfynesBrew,
+					),
+				),
 			},
+			P2: ct.Side{InPlay: ct.Cards(
+				ct.Bind(&left, ct.Creature(ct.Power(6))),
+				ct.Bind(&target, ct.Creature(ct.Power(6))),
+				ct.Bind(&right, ct.Creature(ct.Power(6))),
+			)},
 		})
 
-		h.P1.Play(CowfynesBrew)
+		h.P1.Fight(host, target)
 
-		h.Expect(troll).Power(6)
+		h.Expect(left).At(ct.PlayArea).Damage(2)
+		h.Expect(right).At(ct.PlayArea).Damage(2)
 	})
 }

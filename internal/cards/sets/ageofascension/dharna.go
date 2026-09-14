@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Play: For each friendly damaged Creature in play, gain 1 Æmber.
 //	Reap: Heal 2 damage from a friendly Creature.
-var Dharna = card.New(
+var Dharna = set.New(
 	"Dharna",
 	card.House.Untamed,
 	card.Type.Creature,

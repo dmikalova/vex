@@ -13,7 +13,7 @@ import (
 //
 //	House:  Shadows
 //	Type:   Creature
-//	Rarity: Special
+//	Rarity: Rare
 //	Power:  1
 //	Traits: Elf • Thief
 //

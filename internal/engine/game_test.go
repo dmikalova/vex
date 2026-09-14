@@ -129,13 +129,20 @@ func TestVersatileIgnoresActiveHouse(t *testing.T) {
 		t.Error("granted Versatile should let the host be used out of house")
 	}
 
-	// With no house chosen, any card may be played or used.
+	// At No House — locked out of every house and resolved to no active house for
+	// the play phase (ADR 0035) — the player plays and uses only what an out-of-house
+	// allowance permits, not their whole hand and board. A plain card matches no
+	// active house, while the upgrade-granted Versatile on dis still lets it be used.
 	g.State.ActiveHouse = HouseNone
-	if !g.inActiveHouse(&versatile) {
-		t.Error("no active house should allow playing any card")
+	if g.inActiveHouse(&versatile) {
+		t.Error("no active house should not let an unpermitted card be played")
 	}
 	if !g.usableInActiveHouse(dis) {
-		t.Error("no active house should allow using any card")
+		t.Error("Versatile should still let a card be used at No House")
+	}
+	plain := g.AddToBattleline(NewCard("Bystander", Dis, Creature, Common, WithPower(1)), 0)
+	if g.usableInActiveHouse(plain) {
+		t.Error("no active house should not let an unpermitted card be used")
 	}
 }
 
@@ -422,9 +429,10 @@ func TestChooseHouseForcedBindsWhenAvailable(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.SetPlayerHouses(0, []House{Mars, Logos, Untamed})
 	g.State.ActivePlayer = 0
-	g.State.ForcedHouse[0].Value = Mars
-	if err := g.ChooseHouse(0, Logos); err != ErrMustChooseForcedHouse {
-		t.Errorf("choosing a different house = %v, want ErrMustChooseForcedHouse", err)
+	g.State.HouseConstraints[0][0] = HouseConstraint{Kind: constraintMustHouse, House: Mars}
+	g.State.HouseConstraintCount[0] = 1
+	if err := g.ChooseHouse(0, Logos); err != ErrHouseNotAllowed {
+		t.Errorf("choosing a different house = %v, want ErrHouseNotAllowed", err)
 	}
 	if err := g.ChooseHouse(0, Mars); err != nil {
 		t.Errorf("choosing the forced house = %v, want nil", err)
@@ -437,7 +445,9 @@ func TestChooseHouseForcedIgnoredWhenUnavailable(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.SetPlayerHouses(0, []House{Brobnar, Logos, Untamed})
 	g.State.ActivePlayer = 0
-	g.State.ForcedHouse[0].Value = Mars // a house player 0 does not have
+	// A must for a house player 0 does not have is void (cannot overrides must).
+	g.State.HouseConstraints[0][0] = HouseConstraint{Kind: constraintMustHouse, House: Mars}
+	g.State.HouseConstraintCount[0] = 1
 	if err := g.ChooseHouse(0, Brobnar); err != nil {
 		t.Errorf("cannot-overrides-must: an available house = %v, want nil", err)
 	}

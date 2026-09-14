@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Alpha.
 //	Play: For each friendly Thief Creature, steal 1 Æmber.
-var HeistNight = card.New(
+var HeistNight = set.New(
 	"Heist Night",
 	card.House.Shadows,
 	card.Type.Tactic,

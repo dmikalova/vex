@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Play: If you have 5 or fewer cards in your deck, steal 2 Æmber.
 //	Fight/Reap: You may shuffle Manchego into its owner's deck.
-var Manchego = card.New(
+var Manchego = set.New(
 	"Manchego",
 	card.House.Shadows,
 	card.Type.Creature,

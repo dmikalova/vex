@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Put up to 3 Artifacts into their owners' hands.
-var GraspingVines = card.New(
+var GraspingVines = set.New(
 	"Grasping Vines",
 	card.House.Untamed,
 	card.Type.Tactic,

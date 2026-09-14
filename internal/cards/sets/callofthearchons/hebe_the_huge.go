@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant • Knight
 //
 //	Play: Deal 2 damage to each other undamaged Creature.
-var HebeTheHuge = card.New(
+var HebeTheHuge = set.New(
 	"Hebe the Huge",
 	card.House.Brobnar,
 	card.Type.Creature,

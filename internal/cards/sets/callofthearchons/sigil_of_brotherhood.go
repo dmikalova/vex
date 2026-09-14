@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Versatile.
 //	Action: Destroy Sigil of Brotherhood. For the remainder of the turn, you may use friendly Sanctum Creatures.
-var SigilOfBrotherhood = card.New(
+var SigilOfBrotherhood = set.New(
 	"Sigil of Brotherhood",
 	card.House.Sanctum,
 	card.Type.Artifact,
@@ -23,6 +23,6 @@ var SigilOfBrotherhood = card.New(
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(card.Trigger.Action, card.Sentences{Effects: []card.Effect{
 		card.Destroy{Target: card.Target.This},
-		card.MayPlayOrUse{Houses: card.Houses.Named(card.House.Self), Grant: card.GrantUse},
+		card.MayPlayOrUse{Houses: card.GrantHouses.Named(card.House.Self), Grant: card.GrantUse},
 	}}),
 )

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant
 //
 //	Play: Ready and fight with a neighboring Creature.
-var GangerChieftain = card.New(
+var GangerChieftain = set.New(
 	"Ganger Chieftain",
 	card.House.Brobnar,
 	card.Type.Creature,

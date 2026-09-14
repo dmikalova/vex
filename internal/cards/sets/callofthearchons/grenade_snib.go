@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Goblin
 //
 //	Destroyed: Your opponent loses 2 Æmber.
-var GrenadeSnib = card.New(
+var GrenadeSnib = set.New(
 	"Grenade Snib",
 	card.House.Brobnar,
 	card.Type.Creature,

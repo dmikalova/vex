@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Action: Steal 1 Æmber.
-var SpecialAgentFingers = card.New(
+var SpecialAgentFingers = set.New(
 	"Special Agent \"Fingers\"",
 	card.House.StarAlliance,
 	card.Type.Creature,

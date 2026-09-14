@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Skirmish.
 //	Play: Your opponent gains 1 Æmber.
 //	Destroyed: Steal 3 Æmber.
-var BrendTheFanatic = card.New(
+var BrendTheFanatic = set.New(
 	"Brend the Fanatic",
 	card.House.Shadows,
 	card.Type.Creature,

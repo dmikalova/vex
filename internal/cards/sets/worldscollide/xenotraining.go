@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: For each house represented among friendly Creatures, a friendly Creature captures 1 Æmber from your opponent.
-var Xenotraining = card.New(
+var Xenotraining = set.New(
 	"Xenotraining",
 	card.House.StarAlliance,
 	card.Type.Tactic,

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Destroy a damaged Creature -> steal 1 Æmber.
-var FinishingBlow = card.New(
+var FinishingBlow = set.New(
 	"Finishing Blow",
 	card.House.Shadows,
 	card.Type.Tactic,

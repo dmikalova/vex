@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	This Creature gains, "Reap: Ward this Creature."
-var ForceField = card.New(
+var ForceField = set.New(
 	"Force Field",
 	card.House.StarAlliance,
 	card.Type.Upgrade,

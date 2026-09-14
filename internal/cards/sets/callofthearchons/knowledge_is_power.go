@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Play: Choose one:
 //	- Archive a card from your hand
 //	- For each card in your archives, gain 1 Æmber.
-var KnowledgeIsPower = card.New(
+var KnowledgeIsPower = set.New(
 	"Knowledge is Power",
 	card.House.Logos,
 	card.Type.Tactic,

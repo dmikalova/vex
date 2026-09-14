@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: If there are no enemy Creatures in play, exalt each friendly Creature. If there are 6 or more friendly Creatures in play, forge a key at no cost -> purge Triumph.
-var Triumph = card.New(
+var Triumph = set.New(
 	"Triumph",
 	card.House.Saurian,
 	card.Type.Tactic,

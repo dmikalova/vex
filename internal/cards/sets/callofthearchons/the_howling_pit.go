@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Location
 //
 //	During their "draw cards" phase, each player refills their hand to 1 additional card.
-var TheHowlingPit = card.New(
+var TheHowlingPit = set.New(
 	"The Howling Pit",
 	card.House.Logos,
 	card.Type.Artifact,

@@ -75,23 +75,26 @@ func TestSearchForName(t *testing.T) {
 
 func TestShuffleIntoDeck(t *testing.T) {
 	// Text and validate.
-	if got := (ShuffleIntoDeck{Zones: []Zone{Discard}}).Text(); got != "shuffle your discard pile into your deck" {
+	if got := (Shuffle{Zones: []Zone{Discard}}).Text(); got != "shuffle your discard pile into your deck" {
 		t.Errorf("discard text = %q", got)
 	}
-	if got := (ShuffleIntoDeck{Zones: []Zone{Hand, Discard}}).Text(); got != "shuffle your hand and discard pile into your deck" {
+	if got := (Shuffle{Zones: []Zone{Hand, Discard}}).Text(); got != "shuffle your hand and discard pile into your deck" {
 		t.Errorf("hand+discard text = %q", got)
 	}
-	if got := (ShuffleIntoDeck{Zones: []Zone{Archives, Discard}}).Text(); got != "shuffle your archives and discard pile into your deck" {
+	if got := (Shuffle{Zones: []Zone{Archives, Discard}}).Text(); got != "shuffle your archives and discard pile into your deck" {
 		t.Errorf("archives+discard text = %q", got)
 	}
-	if (ShuffleIntoDeck{}).validate() == nil {
-		t.Error("no zones should be invalid")
+	if (Shuffle{}).validate() != nil {
+		t.Error("the bare deck shuffle should be valid")
 	}
-	if (ShuffleIntoDeck{Zones: []Zone{zoneUnset}}).validate() == nil {
+	if (Shuffle{Zones: []Zone{zoneUnset}}).validate() == nil {
 		t.Error("an unshuffleable zone should be invalid")
 	}
-	if (ShuffleIntoDeck{Zones: []Zone{Hand, Discard}}).validate() != nil {
+	if (Shuffle{Zones: []Zone{Hand, Discard}}).validate() != nil {
 		t.Error("hand and discard should be valid")
+	}
+	if (Shuffle{FromPlay: true, Zones: []Zone{Discard}}).validate() == nil {
+		t.Error("FromPlay paired with Zones should be invalid")
 	}
 
 	// Resolve: discard only.
@@ -100,7 +103,7 @@ func TestShuffleIntoDeck(t *testing.T) {
 	g.State.Discard[0].add(g.Register(testCreature("a", 1), 0))
 	g.State.Discard[0].add(g.Register(testCreature("b", 1), 0))
 	ctx := &EffectContext{Resolver: g, Source: src, Controller: 0}
-	ShuffleIntoDeck{Zones: []Zone{Discard}}.Resolve(ctx)
+	Shuffle{Zones: []Zone{Discard}}.Resolve(ctx)
 	if g.State.Discard[0].Count != 0 || g.State.Deck[0].Count != 2 {
 		t.Errorf(
 			"discard shuffle: discard=%d deck=%d, want 0/2",
@@ -116,7 +119,7 @@ func TestShuffleIntoDeck(t *testing.T) {
 	g2.State.Discard[0].add(g2.Register(testCreature("d1", 1), 0))
 	g2.State.Archives[0].add(g2.Register(testCreature("ar1", 1), 0))
 	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
-	ShuffleIntoDeck{Zones: []Zone{Hand, Archives, Discard}}.Resolve(ctx2)
+	Shuffle{Zones: []Zone{Hand, Archives, Discard}}.Resolve(ctx2)
 	if g2.State.Hand[0].Count != 0 || g2.State.Archives[0].Count != 0 ||
 		g2.State.Discard[0].Count != 0 {
 		t.Errorf("zones should be empty: hand=%d archives=%d discard=%d",
@@ -162,7 +165,7 @@ func TestSearchDeck(t *testing.T) {
 		"search your deck for a card and put it into your hand" {
 		t.Errorf("unrestricted text = %q", got)
 	}
-	if got := (SearchDeck{House: Saurian}).Text(); got !=
+	if got := (SearchDeck{House: namedHouse(Saurian)}).Text(); got !=
 		"search your deck for a Saurian card, reveal it, and put it into your hand" {
 		t.Errorf("house text = %q", got)
 	}
@@ -175,7 +178,11 @@ func TestSearchDeck(t *testing.T) {
 	other := g.Register(NewCard("outsider", Logos, Creature, Common, WithPower(2)), 0)
 	g.State.Deck[0].add(want)
 	g.State.Deck[0].add(other)
-	SearchDeck{House: Saurian}.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+	SearchDeck{
+		House: namedHouse(Saurian),
+	}.Resolve(
+		&EffectContext{Resolver: g, Source: src, Controller: 0},
+	)
 	if !g.State.Hand[0].contains(want) {
 		t.Error("the Saurian card should be in hand")
 	}
@@ -198,14 +205,18 @@ func TestSearchDeck(t *testing.T) {
 	s3 := g3.AddToBattleline(testCreature("lonely", 1), 0)
 	g3.State.Deck[0].add(g3.Register(NewCard("logos", Logos, Creature, Common, WithPower(1)), 0))
 	before := len(g3.Hand(0))
-	SearchDeck{House: Saurian}.Resolve(&EffectContext{Resolver: g3, Source: s3, Controller: 0})
+	SearchDeck{
+		House: namedHouse(Saurian),
+	}.Resolve(
+		&EffectContext{Resolver: g3, Source: s3, Controller: 0},
+	)
 	if len(g3.Hand(0)) != before {
 		t.Error("a search that finds no match should put nothing into hand")
 	}
 }
 
 func TestShuffleDeck(t *testing.T) {
-	if got := (ShuffleDeck{}).Text(); got != "shuffle your deck" {
+	if got := (Shuffle{}).Text(); got != "shuffle your deck" {
 		t.Errorf("text = %q", got)
 	}
 
@@ -215,7 +226,7 @@ func TestShuffleDeck(t *testing.T) {
 		g.State.Deck[0].add(g.Register(NewCard("c", Logos, Creature, Common, WithPower(1)), 0))
 	}
 	before := g.State.Deck[0].Count
-	ShuffleDeck{}.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
+	Shuffle{}.Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
 	if g.State.Deck[0].Count != before {
 		t.Errorf("shuffle changed deck size: %d, want %d", g.State.Deck[0].Count, before)
 	}
@@ -226,6 +237,6 @@ func TestShuffleDeck(t *testing.T) {
 		}
 	}
 	if !shuffled {
-		t.Error("ShuffleDeck should record a DeckShuffled log")
+		t.Error("Shuffle should record a DeckShuffled log")
 	}
 }

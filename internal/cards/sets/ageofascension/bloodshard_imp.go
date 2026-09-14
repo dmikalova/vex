@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Imp
 //
 //	After a Creature reaps, destroy it.
-var BloodshardImp = card.New(
+var BloodshardImp = set.New(
 	"Bloodshard Imp",
 	card.House.Dis,
 	card.Type.Creature,

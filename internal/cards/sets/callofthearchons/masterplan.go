@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Versatile.
 //	Play: Put a card from your hand facedown under Masterplan.
 //	Action: Play the card under Masterplan, and destroy Masterplan.
-var Masterplan = card.New(
+var Masterplan = set.New(
 	"Masterplan",
 	card.House.Shadows,
 	card.Type.Artifact,

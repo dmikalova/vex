@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast • Niffle
 //
 //	While Niffle Ape is attacking, ignore taunt and elusive.
-var NiffleApe = card.New(
+var NiffleApe = set.New(
 	"Niffle Ape",
 	card.House.Untamed,
 	card.Type.Creature,

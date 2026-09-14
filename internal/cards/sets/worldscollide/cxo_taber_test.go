@@ -15,43 +15,48 @@ import (
 //	Power:  3
 //	Traits: Alien • Krxix
 //
-//	Fight/Reap: You may play or use one non-Star Alliance card this turn.
+//	Fight/Reap: Play or use a non-Star Alliance card.
 func TestCXOTaber(t *testing.T) {
-	t.Run("reaping frees one off-house play this turn", func(t *testing.T) {
+	t.Run("reaping plays one off-house card from hand", func(t *testing.T) {
 		var taber ct.Card
-		marsCreature := ct.Creature(ct.OfHouse(card.House.Mars))
+		marsArtifact := ct.Artifact(ct.OfHouse(card.House.Mars))
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
 				House:  card.House.StarAlliance,
 				InPlay: ct.Cards(ct.Bind(&taber, CXOTaber)),
-				Hand:   ct.Cards(marsCreature),
+				Hand:   ct.Cards(marsArtifact),
 			},
 		})
 
-		h.P1.ExpectCannotPlay(marsCreature)
+		// A non-Star Alliance card cannot be played on its own before reaping.
+		h.P1.ExpectCannotPlay(marsArtifact)
 
+		// Reaping plays the sole matching hand card at once.
 		h.P1.Reap(taber)
 
-		h.P1.Play(marsCreature)
+		h.Expect(marsArtifact).At(ct.PlayArea)
 	})
 
-	t.Run("reaping frees one off-house use this turn", func(t *testing.T) {
-		var taber ct.Card
-		marsCreature := ct.Creature(ct.OfHouse(card.House.Mars))
+	t.Run("reaping uses one off-house card in play", func(t *testing.T) {
+		var taber, mars ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.StarAlliance,
-				InPlay: ct.Cards(ct.Bind(&taber, CXOTaber), marsCreature),
+				House: card.House.StarAlliance,
+				InPlay: ct.Cards(
+					ct.Bind(&taber, CXOTaber),
+					ct.Bind(&mars, ct.Creature(ct.OfHouse(card.House.Mars))),
+				),
 			},
-			P2: ct.Side{Amber: 2},
 		})
 
-		h.P1.ExpectCannotUse(marsCreature)
+		// A Mars creature cannot be used on its own during a Star Alliance turn.
+		h.P1.ExpectCannotUse(mars)
 
+		// Reaping Taber (1 Æmber) then uses the sole Mars creature, which reaps
+		// (1 more Æmber).
 		h.P1.Reap(taber)
 
-		// The freed Mars creature may now reap.
-		h.P1.Reap(marsCreature)
+		h.Expect(mars).At(ct.PlayArea).Exhausted()
 		h.P1.ExpectAmber(2)
 	})
 }

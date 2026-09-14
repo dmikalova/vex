@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Scientist
 //
 //	Play: For each Creature your opponent controls in excess of you, not counting Dr. Milli, archive a card from your hand.
-var DrMilli = card.New(
+var DrMilli = set.New(
 	"Dr. Milli",
 	card.House.Logos,
 	card.Type.Creature,

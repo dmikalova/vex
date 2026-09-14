@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Your opponent's keys cost +1 Æmber for each friendly Creature with power 5 or higher.
 //	Your keys cost +1 Æmber for each enemy Creature with power 5 or higher.
-var GrumpBuggy = card.New(
+var GrumpBuggy = set.New(
 	"Grump Buggy",
 	card.House.Brobnar,
 	card.Type.Artifact,

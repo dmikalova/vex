@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: If your opponent has more Æmber than you, draw a card. If you have more Æmber than your opponent, archive a card from your hand.
-var DuskChronicles = card.New(
+var DuskChronicles = set.New(
 	"Dusk Chronicles",
 	card.House.Shadows,
 	card.Type.Tactic,

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Alpha.
 //	Play: Deal 2 damage for each friendly Brobnar Creature, divided among any number of Creatures.
-var FirstBlood = card.New(
+var FirstBlood = set.New(
 	"First Blood",
 	card.House.Brobnar,
 	card.Type.Tactic,

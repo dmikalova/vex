@@ -16,15 +16,77 @@ func Generate(set Set, seed int64) Deck {
 	}
 	g := &generator{set: set, r: rand.New(rand.NewSource(seed)), placed: map[string]bool{}}
 	houses := set.pickHouses(g.r)
-	for i := 0; i < PodCount && i < len(houses); i++ {
-		g.deckHouses[i] = houses[i]
+	plans := g.planPods(houses)
+	for i := 0; i < PodCount && i < len(plans); i++ {
+		g.deckHouses[i] = plans[i].house
 	}
 	deck := Deck{Set: set.Name, Seed: seed}
-	for i := 0; i < PodCount && i < len(houses); i++ {
-		deck.Pods[i] = g.expandPodClusters(g.fillPod(houses[i]))
+	for i := 0; i < PodCount && i < len(plans); i++ {
+		deck.Pods[i] = g.expandPodClusters(g.fillPodPlan(plans[i]))
 	}
 	g.expandClusters(&deck)
+	g.expandFilteredClusters(&deck)
+	deck.validate()
 	return deck
+}
+
+// podPlan is a pod's fill recipe: its House and how the whole pod is drawn. An
+// interloper pod draws every slot as a same-House card from another Set; an errant
+// pod does the same but for a foreign House (one not native to this Set), which
+// has replaced the pod's picked native House. A plain pod is neither and draws
+// from this Set's own pool.
+type podPlan struct {
+	house      engine.House
+	interloper bool
+	errant     bool
+}
+
+// planPods turns the picked Houses into per-pod recipes, rolling the House-level
+// overlays. Each pod rolls errant first, then interloper. The errant roll only
+// fires when the Set has a legacy pool carrying a foreign House and a non-zero
+// rate; the interloper roll only when the Set has a legacy pool and a non-zero
+// rate — so a single-set build and every Tuning that leaves both rates at zero
+// draw exactly the RNG stream they did before the overlays existed.
+func (g *generator) planPods(houses []engine.House) []podPlan {
+	plans := make([]podPlan, len(houses))
+	t := g.set.Tuning
+	errantOK := t.ErrantRate > 0 && g.set.legacy != nil && len(g.set.errantHouses) > 0
+	interloperOK := t.InterloperRate > 0 && g.set.legacy != nil
+	used := map[engine.House]bool{}
+	for _, h := range houses {
+		used[h] = true
+	}
+	for i, h := range houses {
+		plans[i] = podPlan{house: h}
+		if errantOK && g.chance(t.ErrantRate) {
+			if fh, ok := g.pickErrantHouse(used); ok {
+				used[fh] = true
+				plans[i].house = fh
+				plans[i].errant = true
+				continue
+			}
+		}
+		if interloperOK && g.chance(t.InterloperRate) {
+			plans[i].interloper = true
+		}
+	}
+	return plans
+}
+
+// pickErrantHouse picks a foreign House for an errant pod at random from the Set's
+// errant Houses, excluding those already used by another pod so a deck's Houses
+// stay distinct. It reports false when every errant House is taken.
+func (g *generator) pickErrantHouse(used map[engine.House]bool) (engine.House, bool) {
+	avail := make([]engine.House, 0, len(g.set.errantHouses))
+	for _, h := range g.set.errantHouses {
+		if !used[h] {
+			avail = append(avail, h)
+		}
+	}
+	if len(avail) == 0 {
+		return engine.HouseNone, false
+	}
+	return avail[g.r.Intn(len(avail))], true
 }
 
 // generator threads the single RNG and the deck-wide "already placed" set (for
@@ -44,10 +106,14 @@ type placedCard struct {
 }
 
 func (g *generator) fillPod(house engine.House) HousePod {
-	pod := HousePod{House: house}
+	return g.fillPodPlan(podPlan{house: house})
+}
+
+func (g *generator) fillPodPlan(plan podPlan) HousePod {
+	pod := HousePod{House: plan.house}
 	placed := make([]placedCard, 0, PodSize)
 	for i := 0; i < PodSize; i++ {
-		slot, pc := g.fillSlot(house, placed)
+		slot, pc := g.fillSlot(plan, placed)
 		pod.Slots[i] = slot
 		placed = append(placed, pc)
 	}
@@ -225,13 +291,12 @@ func countMember(pod HousePod, name string) int {
 // expandClusters resolves the deck-wide cluster strategies once every pod is
 // filled. Today that is OnePerHouse (the Shards): when any Shard has been drawn
 // into the deck, each pod is given its House's Shard, so a single Shard pulls the
-// whole cycle in. The pod-local strategies (WholePool, RandomCount) resolve in
-// the pod pass, not here.
+// whole cycle in. The clusters come from the attached catalog ClusterPool when one
+// is set (so an errant pod's foreign House gets its Shard, drawn from another set),
+// else from the set's own clusters. The pod-local strategies (WholePool,
+// RandomCount) resolve in the pod pass, not here.
 func (g *generator) expandClusters(deck *Deck) {
-	for _, ci := range g.set.clusters {
-		if ci.strategy != OnePerHouse {
-			continue
-		}
+	for _, ci := range g.set.onePerHouseClusters() {
 		if !g.clusterTriggered(deck, ci) {
 			continue
 		}
@@ -240,8 +305,8 @@ func (g *generator) expandClusters(deck *Deck) {
 			if pod.House == engine.HouseNone {
 				continue
 			}
-			// validateClusters guarantees every deckable House has a member, so
-			// the pod's House indexes one.
+			// validateClusters (own) or validateCrossClusters (catalog) guarantees
+			// every deckable House has a member, so the pod's House indexes one.
 			g.ensureClusterMember(pod, ci, ci.byHouse[pod.House])
 		}
 	}
@@ -319,8 +384,11 @@ func inCluster(ci clusterIndex, name string) bool {
 }
 
 // fillSlot resolves one slot: a rare Special overlay, else a rarity roll followed
-// by an optional duplicate-pull or a fresh (possibly maverick) draw.
-func (g *generator) fillSlot(house engine.House, placed []placedCard) (Slot, placedCard) {
+// by an optional duplicate-pull or a fresh (possibly maverick) draw. In an
+// interloper or errant pod every slot draws from the legacy pool, so the legacy
+// branch is forced rather than rolled.
+func (g *generator) fillSlot(plan podPlan, placed []placedCard) (Slot, placedCard) {
+	house := plan.house
 	t := g.set.Tuning
 	if len(g.set.special) > 0 && g.chance(t.SpecialRate) {
 		if c, ok := g.pick(g.set.special); ok {
@@ -329,7 +397,7 @@ func (g *generator) fillSlot(house engine.House, placed []placedCard) (Slot, pla
 	}
 
 	rarity := g.rollRarity()
-	if g.chance(t.LegacyRate) {
+	if plan.interloper || plan.errant || g.chance(t.LegacyRate) {
 		if c, ok := g.drawLegacy(house, rarity); ok {
 			// A legacy slot may land on a card this set also prints as a reprint
 			// (ADR 0021 keeps such cards in the legacy pool). A card the set prints

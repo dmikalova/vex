@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	This Creature gains +3 power.
 //	This Creature gains, "Before Fight: Deal 2 damage to each neighbor of the Creature this Creature fights."
-var FyreBreath = card.New(
+var FyreBreath = set.New(
 	"Fyre-Breath",
 	card.House.Brobnar,
 	card.Type.Upgrade,

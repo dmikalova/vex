@@ -20,7 +20,7 @@ var ortannuCluster = card.Cluster{
 //	Traits: Demon
 //
 //	Reap: Put each Ortannu's Binding from your discard pile into your hand. For each card put into your hand this way, deal 2 damage to a Creature and 2 damage to each of its neighbors.
-var OrtannuTheChained = card.New(
+var OrtannuTheChained = set.New(
 	"Ortannu the Chained",
 	card.House.Dis,
 	card.Type.Creature,
@@ -33,8 +33,7 @@ var OrtannuTheChained = card.New(
 		card.Trigger.Reap, card.Sentences{
 			Effects: []card.Effect{
 				card.PutFromDiscard{
-					Match:       card.Match{Name: OrtannusBinding.Name},
-					All:         true,
+					Selection:   card.Each{Name: OrtannusBinding.Name},
 					Destination: card.To.Hand,
 				},
 				card.ForEach{

@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Skirmish.
 //	Each Creature to the left of Panpaca, Jaga gains skirmish.
-var PanpacaJaga = card.New(
+var PanpacaJaga = set.New(
 	"Panpaca, Jaga",
 	card.House.Untamed,
 	card.Type.Creature,

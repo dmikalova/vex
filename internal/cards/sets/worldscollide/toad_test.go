@@ -11,7 +11,7 @@ import (
 //
 //	House:  Untamed
 //	Type:   Creature
-//	Rarity: Special
+//	Rarity: Connected
 //	Power:  1
 //	Traits: Beast
 //

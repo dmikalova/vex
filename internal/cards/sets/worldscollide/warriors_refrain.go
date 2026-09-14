@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Stun each Creature with power 3 or lower.
-var WarriorsRefrain = card.New(
+var WarriorsRefrain = set.New(
 	"Warriors' Refrain",
 	card.House.Brobnar,
 	card.Type.Tactic,

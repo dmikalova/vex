@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Alpha.
 //	Play: Gain 2 Æmber. Archive 2 random cards from your hand.
-var Eureka = card.New(
+var Eureka = set.New(
 	"Eureka!",
 	card.House.Logos,
 	card.Type.Tactic,

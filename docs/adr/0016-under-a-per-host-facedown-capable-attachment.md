@@ -65,8 +65,8 @@ the two are not free to collide on one flag.
 
 ## Consequences
 
-- A third and a fourth intrusive chain (after Upgrades) confirm ADR 0001
-  generalizes without a new storage ADR; only the new domain rule (Under itself,
+- A second intrusive chain (after Upgrades) confirms ADR 0001 generalizes
+  without a new storage ADR; only the new domain rule (Under itself,
   and `Peekable`) needed deciding here.
 - `discardUnder`'s "always to owner's discard" is an inferred default beyond the
   letter of the only card that states it (Graft) — if a future card buries a

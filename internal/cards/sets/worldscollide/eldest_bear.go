@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Assault 3.
 //	While Eldest Bear is in the center of your battleline, it gains, "Before Fight: Gain 2 Æmber."
-var EldestBear = card.New(
+var EldestBear = set.New(
 	"Eldest Bear",
 	card.House.Untamed,
 	card.Type.Creature,

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Law
 //
 //	At the start of each player's turn, if there are no friendly Creatures in play, destroy General Order 24. Otherwise, choose a friendly Creature - destroy each Creature of that card's house.
-var GeneralOrder24 = card.New(
+var GeneralOrder24 = set.New(
 	"General Order 24",
 	card.House.StarAlliance,
 	card.Type.Artifact,
@@ -23,7 +23,9 @@ var GeneralOrder24 = card.New(
 			Then: card.Destroy{Target: card.Target.This},
 			Else: card.ChooseCreatureThen{
 				Target: card.Target.FriendlyCreature,
-				Then:   card.Destroy{Target: card.Target.EachCreature.OfContextualHouse()},
+				Then: card.Destroy{
+					Target: card.Target.EachCreature.House(card.Houses.Contextual),
+				},
 			},
 		}),
 )

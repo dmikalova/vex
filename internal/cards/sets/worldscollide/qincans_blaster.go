@@ -20,7 +20,7 @@ var qincansBlasterCluster = card.Cluster{
 //	This Creature gains, "Fight/Reap: Choose one:
 //	- Deal 2 damage to a Creature
 //	- Attach Qincan's Blaster to Sci. Officer Qincan -> archive a Creature from play."
-var QincansBlaster = card.New(
+var QincansBlaster = set.New(
 	"Qincan's Blaster",
 	card.House.StarAlliance,
 	card.Type.Upgrade,

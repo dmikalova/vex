@@ -36,6 +36,24 @@ type webChooser struct {
 	// closed every prompt this effect raises answers itself immediately, so a single
 	// click backs the whole action out. runAction remakes it before the next action.
 	cancel chan struct{}
+	// cancelled guards cancel against a double close, so drain is safe to call from
+	// both a manual Cancel and a new deal abandoning a prompt mid-flight.
+	cancelled bool
+}
+
+// stale reports whether a newer deal has replaced this chooser. An abandoned
+// setup or action goroutine keeps running against the game it was dealt for, so
+// its UI dispatches must no-op rather than drive the game that replaced it.
+func (c *webChooser) stale() bool { return c.g.chooser != c }
+
+// drain releases a prompt blocked on this chooser by closing its cancel channel,
+// so the goroutine parked in it returns instead of leaking. It is idempotent.
+func (c *webChooser) drain() {
+	if c.cancelled {
+		return
+	}
+	c.cancelled = true
+	close(c.cancel)
 }
 
 // ChooseCreature posts a chooser request to the UI and waits for the player's
@@ -147,6 +165,9 @@ func (c *webChooser) raise(
 	default:
 	}
 	c.g.dispatch(func(app.Context) {
+		if c.stale() {
+			return
+		}
 		c.g.choosing = true
 		// A prompt taking over the board owns the highlight: drop any card the player
 		// had selected before it opened so a stale selection ring does not linger on a
@@ -169,6 +190,9 @@ func (c *webChooser) raise(
 		r = chooseReply{ok: false}
 	}
 	c.g.dispatch(func(app.Context) {
+		if c.stale() {
+			return
+		}
 		c.g.choosing = false
 		c.g.chooserDeclinable = false
 		c.g.chooserOrdering = false
@@ -262,6 +286,9 @@ func (c *webChooser) ChooseOption(source, prompt string, options []string) int {
 	default:
 	}
 	c.g.dispatch(func(app.Context) {
+		if c.stale() {
+			return
+		}
 		c.g.choosingOption = true
 		c.g.optionPrompt = prompt
 		c.g.optionLabels = options
@@ -274,6 +301,9 @@ func (c *webChooser) ChooseOption(source, prompt string, options []string) int {
 		i = 0
 	}
 	c.g.dispatch(func(app.Context) {
+		if c.stale() {
+			return
+		}
 		c.g.choosingOption = false
 		c.g.optionPrompt = ""
 		c.g.optionLabels = nil
@@ -329,6 +359,9 @@ func (c *webChooser) ChoosePosition(source, _ string, line []engine.LocalID) int
 	default:
 	}
 	c.g.dispatch(func(app.Context) {
+		if c.stale() {
+			return
+		}
 		c.g.choosingPosition = true
 		c.g.positionLine = line
 		c.g.positionRight = false
@@ -342,6 +375,9 @@ func (c *webChooser) ChoosePosition(source, _ string, line []engine.LocalID) int
 		pos = 0
 	}
 	c.g.dispatch(func(app.Context) {
+		if c.stale() {
+			return
+		}
 		c.g.choosingPosition = false
 		c.g.positionLine = nil
 		c.g.positionRight = false
@@ -532,5 +568,5 @@ func (g *game) cancelChooser(_ app.Context, _ app.Event) {
 		return
 	}
 	g.cancelling = true
-	close(g.chooser.cancel)
+	g.chooser.drain()
 }

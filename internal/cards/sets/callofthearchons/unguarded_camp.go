@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: For each Creature you have in excess of your opponent, a friendly Creature captures 1 Æmber from your opponent. Each Creature cannot capture more than 1 Æmber this way.
-var UnguardedCamp = card.New(
+var UnguardedCamp = set.New(
 	"Unguarded Camp",
 	card.House.Brobnar,
 	card.Type.Tactic,

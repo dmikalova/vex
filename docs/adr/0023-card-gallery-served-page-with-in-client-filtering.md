@@ -31,13 +31,16 @@ syntax parsed by a hand-rolled, quote-aware tokenizer (`term term` = all-of,
 The syntax is tiny and the WASM binary size matters, so we do **not** pull in a
 full-text search library.
 
-The page keeps every matching card mounted in the DOM — so browser find,
-anchors, and accessibility all work — and bounds rendering cost with CSS
-`content-visibility: auto` plus `contain-intrinsic-size`, which skips layout and
-paint for off-screen cards without JavaScript virtualization. We deliberately
-reject windowing/virtualization first (it breaks Ctrl-F and needs scroll math);
-if the CSS ceiling proves insufficient at extreme sizes we layer infinite scroll
-on top later.
+The page bounds rendering cost by **windowing**: only the cards on or near the
+viewport are mounted as full printed faces; every other matching card renders as a
+fixed-size text placeholder that keeps its name and rules text (`window` and
+`galleryPlaceholder` in `web/gallery.go`). A document scroll listener and a
+frame-measure callback slide the window as the viewport moves (`installWindowing`,
+`recomputeWindow`), and the placeholders preserve the full scroll height and the
+find-in-page text of the whole result set — so browser find, anchors, and
+accessibility keep working across every match, not just the drawn window. Keeping
+the placeholder text mounted is what lets windowing coexist with Ctrl-F, which is
+why the earlier CSS-only plan (`content-visibility`) was replaced.
 
 ## Consequences
 
@@ -45,6 +48,17 @@ on top later.
   holds, so a newly implemented card appears without touching the page.
 - Filtering logic and the query tokenizer live in the web/gallery package and are
   unit-testable without a running game.
-- Bounding cost with `content-visibility` keeps the full result set findable and
-  scrollable; the fallback to infinite scroll is a known, deferred escape hatch,
-  not a commitment.
+- Windowing bounds paint and layout to a screenful of faces regardless of catalog
+  size, while the text placeholders keep every match findable and scrollable.
+
+## Update — windowing replaced the CSS-only ceiling
+
+The original decision bounded cost with CSS `content-visibility: auto` plus
+`contain-intrinsic-size` and deliberately rejected JavaScript
+windowing/virtualization (it breaks Ctrl-F and needs scroll math), keeping every
+match mounted as a full face and deferring windowing as an escape hatch. The
+implementation instead adopted windowing directly: full faces are mounted only near
+the viewport and the rest become text placeholders. The two objections were
+resolved — the placeholders keep the searchable text (so Ctrl-F still spans the
+whole result set) and a scroll listener plus frame measure carry the scroll math —
+so windowing became the primary mechanism rather than the deferred fallback.

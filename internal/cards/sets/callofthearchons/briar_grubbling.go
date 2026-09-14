@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast • Insect
 //
 //	Hazardous 5.
-var BriarGrubbling = card.New(
+var BriarGrubbling = set.New(
 	"Briar Grubbling",
 	card.House.Untamed,
 	card.Type.Creature,

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Imp
 //
 //	Destroyed: Gain 2 Æmber.
-var DustImp = card.New(
+var DustImp = set.New(
 	"Dust Imp",
 	card.House.Dis,
 	card.Type.Creature,

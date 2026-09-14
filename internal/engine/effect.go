@@ -131,6 +131,12 @@ type Produced struct {
 	// side by a ProducedThisWay{Tally: TallyCreaturesDestroyed} (Hecatomb pays each
 	// player for their own dead).
 	Destroyed [2]int
+	// DestroyedPower is the summed board power of the creatures this resolution
+	// actually destroyed, each measured just before it left play (so +1 power
+	// counters and other modifiers count, and a ward that keeps a creature in play
+	// contributes nothing). Read by a PowerDestroyedThisWay count — Might Makes
+	// Right forges only when the creatures it destroyed totalled 25 power.
+	DestroyedPower int
 	// Purged[p] is how many cards player p controlled — or owned, for a discard or
 	// hand purge — that this resolution has purged, read whole by CardsPurged and per
 	// side by a ProducedThisWay{Tally: TallyCardsPurged} (Harvest Time pays each
@@ -140,7 +146,7 @@ type Produced struct {
 	// recent PurgeCard removed this resolution, read by a PurgedAemberBonus count
 	// (Infurnace drains the opponent for the total bonus of the cards it purged).
 	PurgedAemberBonus int
-	// Discarded holds the cards a DiscardTopOfEachDeck discarded, read by a
+	// Discarded holds the cards a DiscardTop discarded, read by a
 	// following ForEachDiscarded that acts on each (Bonkers Killing Machine
 	// destroys a creature or artifact of each discarded card's house).
 	Discarded []LocalID

@@ -10,24 +10,26 @@ import (
 // Gron's Brew
 //
 //	House:  Brobnar
-//	Type:   Tactic
-//	Rarity: Special
+//	Type:   Upgrade
+//	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Give a Creature two +1 power counters.
+//	This Creature gains +4 power.
 func TestGronsBrew(t *testing.T) {
-	t.Run("gives a creature two +1 power counters", func(t *testing.T) {
-		var troll ct.Card
+	t.Run("host gains +4 power", func(t *testing.T) {
+		var host ct.Card
 		h := ct.Play(t, ct.Setup{
 			P1: ct.Side{
-				House:  card.House.Brobnar,
-				Hand:   ct.Cards(GronsBrew),
-				InPlay: ct.Cards(ct.Bind(&troll, ct.Creature(ct.Power(4)))),
+				House: card.House.Brobnar,
+				InPlay: ct.Cards(
+					ct.Upgraded(
+						ct.Bind(&host, ct.Creature(ct.OfHouse(card.House.Brobnar), ct.Power(4))),
+						GronsBrew,
+					),
+				),
 			},
 		})
 
-		h.P1.Play(GronsBrew)
-
-		h.Expect(troll).Power(6)
+		h.Expect(host).Power(8)
 	})
 }

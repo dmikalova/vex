@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	This Creature gains +3 hazardous.
-var WayOfThePorcupine = card.New(
+var WayOfThePorcupine = set.New(
 	"Way of the Porcupine",
 	card.House.Untamed,
 	card.Type.Upgrade,

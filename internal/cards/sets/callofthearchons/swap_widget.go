@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item
 //
 //	Action: Put a friendly ready Mars Creature into its owner's hand -> put a Mars Creature with a different name from your hand into play, and ready it.
-var SwapWidget = card.New(
+var SwapWidget = set.New(
 	"Swap Widget",
 	card.House.Mars,
 	card.Type.Artifact,
@@ -20,13 +20,14 @@ var SwapWidget = card.New(
 	card.WithAbility(
 		card.Trigger.Action, card.Then{
 			First: card.PutFromPlay{
-				Target:      card.Target.FriendlyCreature.OfHouse(card.House.Self).Ready(),
+				Target: card.Target.FriendlyCreature.House(card.Houses.Named(card.House.Self)).
+					Ready(),
 				Destination: card.To.Hand,
 			},
 			Result: card.Sequence{Effects: []card.Effect{
 				card.PutFromHand{
 					Type:           card.Type.Creature,
-					House:          card.House.Self,
+					House:          card.Houses.Named(card.House.Self),
 					ExceptSameName: true,
 				},
 				card.Ready{Target: card.Target.Triggering},

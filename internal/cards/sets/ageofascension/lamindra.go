@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Deploy, Elusive.
 //	Each neighboring Creature gains elusive.
-var Lamindra = card.New(
+var Lamindra = set.New(
 	"Lamindra",
 	card.House.Shadows,
 	card.Type.Creature,

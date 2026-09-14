@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Elf • Thief
 //
 //	Play: Take control of an enemy Artifact. If it does not belong to a house on your identity, it belongs to house Shadows until it leaves play.
-var Sneklifter = card.New(
+var Sneklifter = set.New(
 	"Sneklifter",
 	card.House.Shadows,
 	card.Type.Creature,

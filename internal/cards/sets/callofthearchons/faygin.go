@@ -20,7 +20,7 @@ var fayginCluster = card.Cluster{
 //
 //	Elusive.
 //	Reap: Put an Urchin from play or from your discard pile into your hand.
-var Faygin = card.New(
+var Faygin = set.New(
 	"Faygin",
 	card.House.Shadows,
 	card.Type.Creature,

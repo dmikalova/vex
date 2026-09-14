@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Shuffle any number of Creatures from your discard pile into your deck.
-var NotFinishedWithYou = card.New(
+var NotFinishedWithYou = set.New(
 	"Not Finished with You",
 	card.House.Dis,
 	card.Type.Tactic,

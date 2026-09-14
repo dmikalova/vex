@@ -6,16 +6,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Dis
 //	Type:   Creature
-//	Rarity: Special
+//	Rarity: Rare
 //	Power:  5
 //	Traits: Demon
 //
 //	After your opponent plays a card, if it is on the right flank, your opponent loses 1 Æmber.
-var Dexus = card.New(
+var Dexus = set.New(
 	"Dexus",
 	card.House.Dis,
 	card.Type.Creature,
-	card.Rarity.Special,
+	card.Rarity.Rare,
 	card.Provenance(card.WC, "124"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Demon),

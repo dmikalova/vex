@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	This Creature gains, "Destroyed: Put this Creature on top of its owner's deck."
-var BackupCopy = card.New(
+var BackupCopy = set.New(
 	"Backup Copy",
 	card.House.Logos,
 	card.Type.Upgrade,

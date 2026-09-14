@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon
 //
 //	Destroyed: Destroy each Creature.
-var HarbingerOfDoom = card.New(
+var HarbingerOfDoom = set.New(
 	"Harbinger of Doom",
 	card.House.Dis,
 	card.Type.Creature,

@@ -216,7 +216,7 @@ func (g *game) promptButtons() int {
 	case g.forgingKey >= 0:
 		return len(g.remainingKeyColors(g.forgingKey))
 	case g.phase == phaseHouse:
-		return len(g.pickableHouses())
+		return len(g.houseButtons())
 	case g.phase == phaseFlank:
 		return 2 // left flank, right flank
 	}
@@ -254,7 +254,7 @@ func (g *game) pressButton(ctx app.Context) bool {
 	case g.forgingKey >= 0:
 		g.pickForgeColor(g.remainingKeyColors(g.forgingKey)[i])(ctx, app.Event{})
 	case g.phase == phaseHouse:
-		g.pickHouse(g.pickableHouses()[i])(ctx, app.Event{})
+		g.pickHouse(g.houseButtons()[i])(ctx, app.Event{})
 	case g.phase == phaseFlank:
 		g.playFlank(i == 0)(ctx, app.Event{})
 	}

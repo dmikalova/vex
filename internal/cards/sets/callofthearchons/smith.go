@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: If you control more Creatures than your opponent, gain 2 Æmber.
-var Smith = card.New(
+var Smith = set.New(
 	"Smith",
 	card.House.Brobnar,
 	card.Type.Tactic,

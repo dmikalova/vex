@@ -39,3 +39,19 @@ func TestChooseHouseSkipsCardsRemovedMidWindow(t *testing.T) {
 		t.Errorf("invariant violated: %v", err)
 	}
 }
+
+// TestPlayerHasHouse covers the three outcomes: unknown deck houses treat every
+// house as available, a declared house is available, and an undeclared one is not.
+func TestPlayerHasHouse(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	if !g.playerHasHouse(0, Mars) {
+		t.Error("unset houses should treat every house as available")
+	}
+	g.SetPlayerHouses(0, []House{Mars, Logos, Untamed})
+	if !g.playerHasHouse(0, Logos) {
+		t.Error("a declared house should be available")
+	}
+	if g.playerHasHouse(0, Dis) {
+		t.Error("an undeclared house should not be available")
+	}
+}

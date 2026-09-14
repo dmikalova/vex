@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human
 //
 //	Destroyed: Fully heal each other friendly Creature, and draw 2 cards.
-var DumaTheMartyr = card.New(
+var DumaTheMartyr = set.New(
 	"Duma the Martyr",
 	card.House.Sanctum,
 	card.Type.Creature,

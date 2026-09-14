@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item
 //
 //	Action: Put an Artifact into its owner's hand.
-var WhisperingReliquary = card.New(
+var WhisperingReliquary = set.New(
 	"Whispering Reliquary",
 	card.House.Sanctum,
 	card.Type.Artifact,

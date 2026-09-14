@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	You cannot play Creatures.
 //	After a Creature is destroyed in a fight with Grommid, your opponent loses 1 Æmber.
-var Grommid = card.New(
+var Grommid = set.New(
 	"Grommid",
 	card.House.Mars,
 	card.Type.Creature,

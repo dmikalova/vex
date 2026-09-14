@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Search your deck and discard pile for a Timetraveller, reveal it, and put it into your hand, and shuffle your discard pile into your deck.
-var HelpFromFutureSelf = card.New(
+var HelpFromFutureSelf = set.New(
 	"Help from Future Self",
 	card.House.Logos,
 	card.Type.Tactic,
@@ -22,7 +22,7 @@ var HelpFromFutureSelf = card.New(
 		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{
 				card.SearchForName{Name: Timetraveller.Name},
-				card.ShuffleIntoDeck{Zones: []card.Zone{card.Discard}},
+				card.Shuffle{Zones: []card.Zone{card.Discard}},
 			},
 		}),
 )

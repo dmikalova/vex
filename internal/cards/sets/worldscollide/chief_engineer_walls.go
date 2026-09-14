@@ -2,6 +2,21 @@ package worldscollide
 
 import "github.com/dmikalova/vactrol/internal/card"
 
+// upgradeOrRobot matches the cards Chief Engineer Walls retrieves — any Upgrade,
+// or any card with the Robot trait — so a deck that runs Walls is guaranteed a
+// couple of them to pull back from the discard pile.
+func upgradeOrRobot(d card.Definition) bool {
+	if d.Type == card.Type.Upgrade {
+		return true
+	}
+	for _, tr := range d.Traits {
+		if tr == card.Traits.Robot {
+			return true
+		}
+	}
+	return false
+}
+
 // Chief Engineer Walls
 //
 //	House:  Star Alliance
@@ -12,21 +27,22 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Play/Fight/Reap: You may put an Upgrade or Robot card from your discard pile into your hand.
-var ChiefEngineerWalls = card.New(
+var ChiefEngineerWalls = set.New(
 	"Chief Engineer Walls",
 	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "293"),
 	card.InCluster(card.Pulled(wallsBlasterCluster, 1, 1.25)),
+	card.PullsMatching("Walls' Upgrades and Robots", 2, upgradeOrRobot),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human),
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithAbility(card.Trigger.PlayFightReap, card.May{
 		Do: card.PutFromDiscard{
-			Match: card.Match{
+			Selection: card.Chosen{
 				Type: card.Type.Upgrade,
-				Or:   []card.Match{{Trait: card.Traits.Robot}},
+				Or:   []card.Filter{{Trait: card.Traits.Robot}},
 			},
 			Destination: card.To.Hand,
 		},

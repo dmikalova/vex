@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Redistribute the damage among a player's Creatures.
-var EntropicManipulator = card.New(
+var EntropicManipulator = set.New(
 	"Entropic Manipulator",
 	card.House.Mars,
 	card.Type.Tactic,

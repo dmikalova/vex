@@ -12,10 +12,10 @@ func (e ArchivePurgedCard) Text() string { return "archive a purged card you own
 // Resolve has the controller choose one card from their purge pile and move it
 // to their archives, doing nothing if the purge pile is empty.
 func (e ArchivePurgedCard) Resolve(ctx *EffectContext) {
-	purged := ctx.Resolver.Purge(ctx.Controller)
-	if len(purged) == 0 {
+	cards := ctx.Resolver.Purge(ctx.Controller)
+	if len(cards) == 0 {
 		return
 	}
-	id, _ := ctx.ChooseCard("Choose a purged card to archive", purged)
-	ctx.Resolver.ArchiveFromPurge(ctx.Controller, id)
+	id, _ := ctx.ChooseCard("Choose a purged card to archive", cards)
+	ToArchives.moveFrom(ctx, purged, ctx.Controller, id)
 }

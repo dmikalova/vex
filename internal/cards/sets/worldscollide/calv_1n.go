@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Fight/Reap: Draw a card.
 //	CALV-1N may be played as an Upgrade instead of a Creature, with the text: "This Creature gains, 'Fight/Reap: Draw a card.'"
-var CALV1N = card.New(
+var CALV1N = set.New(
 	"CALV-1N",
 	card.House.StarAlliance,
 	card.Type.Creature,

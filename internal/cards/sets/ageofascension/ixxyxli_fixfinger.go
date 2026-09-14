@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Each other friendly Mars Creature gains +1 armor.
-var IxxyxliFixfinger = card.New(
+var IxxyxliFixfinger = set.New(
 	"Ixxyxli Fixfinger",
 	card.House.Mars,
 	card.Type.Creature,
@@ -25,6 +25,6 @@ var IxxyxliFixfinger = card.New(
 	card.WithKeywords(card.Keyword.Elusive),
 	card.WithConstant(card.ConstantAbility{
 		ArmorBonus: 1,
-		Target:     card.Target.EachOtherFriendlyCreature.OfHouse(card.House.Self),
+		Target:     card.Target.EachOtherFriendlyCreature.House(card.Houses.Named(card.House.Self)),
 	}),
 )

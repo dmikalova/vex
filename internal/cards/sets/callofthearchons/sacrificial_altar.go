@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Location
 //
 //	Action: Purge a friendly Human Creature -> play a Creature from your discard pile.
-var SacrificialAltar = card.New(
+var SacrificialAltar = set.New(
 	"Sacrificial Altar",
 	card.House.Dis,
 	card.Type.Artifact,
@@ -25,8 +25,8 @@ var SacrificialAltar = card.New(
 				Target: card.Target.FriendlyCreature.WithTrait(card.Traits.Human),
 			},
 			Result: card.PlayFrom{
-				From: card.Discard,
-				Type: card.Type.Creature,
+				From:  card.Discard,
+				Types: card.Types.Of(card.Type.Creature),
 			},
 		}),
 )

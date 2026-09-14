@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Each Creature gains, "Destroyed: Your opponent gains 1 Æmber."
-var Tolas = card.New(
+var Tolas = set.New(
 	"Tolas",
 	card.House.Dis,
 	card.Type.Creature,

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: If you used 3 or more Creatures this turn, steal 2 Æmber.
-var Stampede = card.New(
+var Stampede = set.New(
 	"Stampede",
 	card.House.Untamed,
 	card.Type.Tactic,

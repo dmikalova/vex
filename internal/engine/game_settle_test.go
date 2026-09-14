@@ -23,6 +23,7 @@ func TestZeroPowerIsDestroyed(t *testing.T) {
 		t.Fatalf("power = %d, want 2 while the banner is in play", got)
 	}
 	g.putIntoHand(src)
+	g.settleDestroyed(0) // the resolution boundary settles the buff loss (ADR 0029)
 
 	if g.inPlay(victim) {
 		t.Errorf("a creature at 0 power should have been destroyed")
@@ -41,6 +42,7 @@ func TestBuffLossKillsADamagedCreature(t *testing.T) {
 		t.Fatal("4 damage should not destroy a 5-power creature")
 	}
 	g.putIntoHand(src)
+	g.settleDestroyed(0) // the resolution boundary settles the buff loss (ADR 0029)
 
 	if g.inPlay(victim) {
 		t.Errorf("damage at or above the remaining power should destroy the creature")
@@ -58,6 +60,7 @@ func TestSettleCascades(t *testing.T) {
 	// middle sits at 3 printed + 2 from src + 2 from itself; last is 0 + 4.
 	g.applyRawDamage(DamageTarget{ID: middle, Amount: 6, IgnoreArmor: true})
 	g.putIntoHand(src)
+	g.settleDestroyed(0) // the resolution boundary settles the buff loss (ADR 0029)
 
 	if g.inPlay(middle) {
 		t.Errorf("the damaged buffer should have died once its own buff was gone")

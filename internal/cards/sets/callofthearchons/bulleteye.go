@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Reap: Destroy a flank Creature.
-var Bulleteye = card.New(
+var Bulleteye = set.New(
 	"Bulleteye",
 	card.House.Shadows,
 	card.Type.Creature,

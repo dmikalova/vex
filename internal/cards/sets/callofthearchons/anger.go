@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Ready and fight with a friendly Creature.
-var Anger = card.New(
+var Anger = set.New(
 	"Anger",
 	card.House.Brobnar,
 	card.Type.Tactic,

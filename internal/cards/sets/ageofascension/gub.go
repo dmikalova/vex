@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon
 //
 //	Gub gains +5 power and taunt while it is not on a flank.
-var Gub = card.New(
+var Gub = set.New(
 	"Gub",
 	card.House.Dis,
 	card.Type.Creature,

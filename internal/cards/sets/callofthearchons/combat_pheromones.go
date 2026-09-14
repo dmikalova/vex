@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Versatile.
 //	Action: Destroy Combat Pheromones. Use 2 other Mars cards, one at a time.
-var CombatPheromones = card.New(
+var CombatPheromones = set.New(
 	"Combat Pheromones",
 	card.House.Mars,
 	card.Type.Artifact,
@@ -25,8 +25,9 @@ var CombatPheromones = card.New(
 		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
 			card.Destroy{Target: card.Target.This},
 			card.Use{
-				Max:    2,
-				Target: card.Target.EachFriendlyCardInPlay.OfHouse(card.House.Self).Other(),
+				Max: 2,
+				Target: card.Target.EachFriendlyCardInPlay.House(card.Houses.Named(card.House.Self)).
+					Other(),
 			},
 		}}),
 )

@@ -4,30 +4,20 @@ import (
 	"fmt"
 )
 
-// PutFromDiscard moves a card the controller chooses from their own discard pile
-// to a destination — their hand or the top of their deck. Type restricts the
-// choice to cards of that type; the zero value allows any card. With All it moves
-// every matching card instead of one chosen card (Arise! returning each creature
-// of a house). This is how cards recur from the discard pile, e.g. "Put a creature
-// from your discard pile on top of your deck." The destination is required.
+// PutFromDiscard moves cards from the controller's own discard pile to a
+// destination — their hand or the top of their deck — with a Selection deciding
+// which cards and how: the controller chooses one (Chosen, restrictable by type,
+// trait, name, or an Or disjunction), or every matching card is taken with no
+// choice (Each). This is how cards recur from the discard pile, e.g. "Put a
+// creature from your discard pile on top of your deck." The destination is
+// required.
 type PutFromDiscard struct {
-	// Match restricts the choice to cards the predicate admits; the zero value
-	// admits any card. Chief Engineer Walls returns an upgrade or Robot card,
+	// Selection decides which discard-pile cards move and how they are picked; it
+	// must be set. Chief Engineer Walls returns a chosen upgrade or Robot card,
 	// Ortannu the Chained returns each copy of Ortannu's Binding by name.
-	Match Match
-	// Destination is where the card goes: ToHand or ToTopOfDeck.
+	Selection Selection
+	// Destination is where the cards go: ToHand or ToTopOfDeck.
 	Destination Destination
-	// All moves every matching card instead of one chosen card (Arise! returning
-	// each creature of a house).
-	All bool
-	// OfChosenHouse limits the matching cards to the house an enclosing
-	// ChooseHouseThen picked. It applies only with All.
-	OfChosenHouse bool
-}
-
-// noun renders the kind of card the effect moves, delegating to the match.
-func (e PutFromDiscard) noun() string {
-	return e.Match.noun()
 }
 
 // destPhrase renders where the card goes, e.g. "into your hand".
@@ -38,82 +28,46 @@ func (e PutFromDiscard) destPhrase() string {
 	return "into your hand"
 }
 
-// validate rejects a destination this effect cannot move a card to; only the hand
-// and the top of the deck are supported, and the destination must be named.
+// validate rejects an unset selection or a destination this effect cannot move a
+// card to; only the hand and the top of the deck are supported.
 func (e PutFromDiscard) validate() error {
+	if e.Selection == nil {
+		return fmt.Errorf("PutFromDiscard: selection must be set")
+	}
 	if e.Destination != ToHand && e.Destination != ToTopOfDeck {
 		return fmt.Errorf("PutFromDiscard: unsupported destination %d", e.Destination.zone)
 	}
 	return nil
 }
 
-// Text renders the effect, e.g. "put a card from your discard pile into your hand"
-// or "put each creature of the chosen house from your discard pile into your hand".
+// Text renders the effect, e.g. "put a creature from your discard pile into your
+// hand" or "put each creature of the chosen house from your discard pile into your
+// hand".
 func (e PutFromDiscard) Text() string {
-	if e.All {
-		what := "each " + e.noun()
-		if e.OfChosenHouse {
-			what += " of the chosen house"
-		}
-		return "put " + what + " from your discard pile " + e.destPhrase()
-	}
-	return "put " + indefinite(e.noun()) + " from your discard pile " + e.destPhrase()
+	return "put " + e.Selection.object() + " from your discard pile " + e.destPhrase()
 }
 
 // moveTo moves one card from the discard pile to the destination and tallies it
 // for a following ProducedThisWay{Tally: TallyCardsReturned}.
 func (e PutFromDiscard) moveTo(ctx *EffectContext, id LocalID) {
-	if e.Destination == ToTopOfDeck {
-		ctx.Resolver.MoveFromDiscardToTopOfDeck(id)
-	} else {
-		ctx.Resolver.PutFromDiscardIntoHand(id)
-	}
+	e.Destination.moveFrom(ctx, Discard, ctx.Controller, id)
 	ctx.Produced.Returned++
 }
 
-// admits reports whether a discard-pile card passes the Match filter (the
-// OfChosenHouse filter is applied separately, only with All).
-func (e PutFromDiscard) admits(ctx *EffectContext, id LocalID) bool {
-	return e.Match.admits(ctx.Resolver, id)
-}
-
-// matches reports whether a discard-pile card is a candidate this effect could
-// move — the admits filters plus the OfChosenHouse restriction (which applies only
-// with All).
-func (e PutFromDiscard) matches(ctx *EffectContext, id LocalID) bool {
-	return e.admits(ctx, id) &&
-		(!e.All || !e.OfChosenHouse || ctx.Resolver.House(id) == ctx.ChosenHouse)
-}
-
-// vacuous reports that no card in the controller's discard pile matches, so a
-// "you may" wrapping this effect asks nothing (Chief Engineer Walls prompts only
+// vacuous reports that no card in the controller's discard pile is a candidate, so
+// a "you may" wrapping this effect asks nothing (Chief Engineer Walls prompts only
 // when an upgrade or Robot card is actually in the discard).
 func (e PutFromDiscard) vacuous(ctx *EffectContext) bool {
-	return len(discardCardsWhere(ctx, ctx.Controller, func(id LocalID) bool {
-		return e.matches(ctx, id)
-	})) == 0
+	return len(e.Selection.candidates(ctx, ctx.Resolver.Discard(ctx.Controller))) == 0
 }
 
-// Resolve moves a card from the controller's discard pile to the destination. With
-// All it moves every matching card; otherwise the controller chooses one, and
-// nothing happens if there is no candidate or the choice is declined.
+// Resolve moves the selected cards from the controller's discard pile to the
+// destination — a Chosen picks one (nothing happens with no candidate), an Each
+// takes every match.
 func (e PutFromDiscard) Resolve(ctx *EffectContext) {
-	if e.All {
-		for _, id := range discardCardsWhere(ctx, ctx.Controller, func(id LocalID) bool {
-			return e.matches(ctx, id)
-		}) {
-			e.moveTo(ctx, id)
-		}
-		return
+	for _, id := range e.Selection.pick(ctx, ctx.Resolver.Discard(ctx.Controller)) {
+		e.moveTo(ctx, id)
 	}
-	candidates := discardCardsWhere(ctx, ctx.Controller, func(id LocalID) bool {
-		return e.matches(ctx, id)
-	})
-	id, ok := ctx.ChooseCreature("Choose a "+e.noun()+" from your discard pile", candidates)
-	if !ok {
-		return
-	}
-	e.moveTo(ctx, id)
 }
 
 // DiscardCard discards cards from a player's hand or archives, with a Selection
@@ -221,11 +175,7 @@ func (e DiscardCard) resolveGate(ctx *EffectContext) bool {
 			break
 		}
 		for _, id := range ids {
-			if fromArchives {
-				ctx.Resolver.DiscardCardFromArchives(owner, id)
-			} else {
-				ctx.Resolver.DiscardCardFromHand(owner, id)
-			}
+			toDiscard.moveFrom(ctx, e.Zone, owner, id)
 			ctx.Produced.Discarded = append(ctx.Produced.Discarded, id)
 			moved = true
 		}

@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Deploy.
 //	Play/Reap: Fully heal a neighboring Creature.
-var DeepwoodDruid = card.New(
+var DeepwoodDruid = set.New(
 	"Deepwood Druid",
 	card.House.Untamed,
 	card.Type.Creature,

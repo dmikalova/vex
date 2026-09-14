@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Elusive.
 //	Reap: If your opponent has more Æmber than you, steal 1 Æmber.
-var Gamgee = card.New(
+var Gamgee = set.New(
 	"Gamgee",
 	card.House.Shadows,
 	card.Type.Creature,

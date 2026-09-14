@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: If there are 3 or more enemy Logos cards in play, steal 2 Æmber.
-var TakeThatSmartypants = card.New(
+var TakeThatSmartypants = set.New(
 	"Take that, Smartypants",
 	card.House.Brobnar,
 	card.Type.Tactic,

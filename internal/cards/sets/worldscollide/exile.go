@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Your opponent gains control of a friendly Creature.
-var Exile = card.New(
+var Exile = set.New(
 	"Exile",
 	card.House.Saurian,
 	card.Type.Tactic,

@@ -13,7 +13,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Each friendly Creature gains +2 power for each Æmber on Primus Unguis.
 //	Reap: Exalt Primus Unguis.
-var PrimusUnguis = card.New(
+var PrimusUnguis = set.New(
 	"Primus Unguis",
 	card.House.Saurian,
 	card.Type.Creature,

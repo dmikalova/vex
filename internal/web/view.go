@@ -9,10 +9,15 @@ import (
 // view_*.go siblings.
 
 // Render draws the whole client. It runs on both the server (prerender) and the
-// client; before OnMount seeds the match on the client, g is nil, so a lightweight
-// placeholder is shown.
+// client; before OnMount seeds the match on the client, g is nil. On a first-time
+// load the set picker fills the screen so the player chooses their sets before any
+// game is dealt; otherwise a lightweight placeholder is shown until the match
+// arrives.
 func (g *game) Render() app.UI {
 	if g.g == nil {
+		if g.awaitingSetup {
+			return g.setupScreen()
+		}
 		return app.Div().Class("")
 	}
 
@@ -49,12 +54,17 @@ func (g *game) Render() app.UI {
 			return app.Button().Class("btn-nav btn-icon sidebar-reveal").Title("Show sidebar").
 				Text("«").OnClick(g.toggleSidebar)
 		}),
-		app.If(g.sidebarCollapsed && len(g.toastBubbles) > 0, func() app.UI {
-			return g.logToast()
-		}),
 		app.If(g.zonesPlayer >= 0, func() app.UI { return g.zonesOverlay() }),
 		app.If(g.pickerOpen, func() app.UI { return g.cardPicker() }),
 		app.If(g.keysOpen, func() app.UI { return g.keysOverlay() }),
+		// The toast comes and goes on its own timer as bubbles appear and expire, so
+		// it is drawn last: a conditional sibling ahead of the modal overlays would
+		// shift them each time it toggled, and go-app would rebuild the overlay
+		// underneath — resetting a scrolled zone viewer to the top. Its z-index keeps
+		// it under the overlays regardless of this DOM order.
+		app.If(g.sidebarCollapsed && len(g.toastBubbles) > 0, func() app.UI {
+			return g.logToast()
+		}),
 	)
 }
 

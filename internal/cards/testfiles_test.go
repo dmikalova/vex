@@ -160,8 +160,8 @@ func declaresCard(f *ast.File) bool {
 }
 
 // declaresCardValue reports whether a var initializer builds a card: a direct
-// card.New(...) call, or a set-local wrapper called by a bare identifier
-// (e.g. master(1, ...)) that forwards to card.New.
+// card.New(...) call, a set-registrar set.New(...) call, or a set-local wrapper
+// called by a bare identifier (e.g. master(1, ...)) that forwards to card.New.
 func declaresCardValue(expr ast.Expr) bool {
 	if isCardNewCall(expr) {
 		return true
@@ -174,7 +174,8 @@ func declaresCardValue(expr ast.Expr) bool {
 	return ok
 }
 
-// isCardNewCall reports whether expr is a call to card.New.
+// isCardNewCall reports whether expr is a card-building New call: card.New (the
+// facade) or set.New (a set package's registrar declared in its 0set.go).
 func isCardNewCall(expr ast.Expr) bool {
 	call, ok := expr.(*ast.CallExpr)
 	if !ok {
@@ -185,5 +186,5 @@ func isCardNewCall(expr ast.Expr) bool {
 		return false
 	}
 	pkg, ok := sel.X.(*ast.Ident)
-	return ok && pkg.Name == "card"
+	return ok && (pkg.Name == "card" || pkg.Name == "set")
 }

@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Skirmish.
 //	Spyyyder gains poison while attacking an enemy flank Creature.
-var Spyyyder = card.New(
+var Spyyyder = set.New(
 	"Spyyyder",
 	card.House.Dis,
 	card.Type.Creature,

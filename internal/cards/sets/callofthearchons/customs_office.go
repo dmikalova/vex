@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Location
 //
 //	In order to play an Artifact, your opponent must give you 1 Æmber.
-var CustomsOffice = card.New(
+var CustomsOffice = set.New(
 	"Customs Office",
 	card.House.Shadows,
 	card.Type.Artifact,

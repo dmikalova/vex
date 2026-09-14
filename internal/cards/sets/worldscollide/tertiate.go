@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Destroy one third of all enemy Creatures and one third of all friendly Creatures (rounding up each time).
-var Tertiate = card.New(
+var Tertiate = set.New(
 	"Tertiate",
 	card.House.Saurian,
 	card.Type.Tactic,

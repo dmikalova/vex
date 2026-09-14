@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Deploy.
 //	Play/Fight/Reap: Heal 3 damage from each neighboring Creature.
-var NurseSoto = card.New(
+var NurseSoto = set.New(
 	"Nurse Soto",
 	card.House.StarAlliance,
 	card.Type.Creature,

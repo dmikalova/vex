@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Exhaust up to 3 Creatures.
-var NocturnalManeuver = card.New(
+var NocturnalManeuver = set.New(
 	"Nocturnal Maneuver",
 	card.House.Untamed,
 	card.Type.Tactic,

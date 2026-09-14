@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Location
 //
 //	Action: Choose a house - reveal the top card of your deck. If it is of the chosen house, play it.
-var ChaosPortal = card.New(
+var ChaosPortal = set.New(
 	"Chaos Portal",
 	card.House.Logos,
 	card.Type.Artifact,
@@ -23,7 +23,7 @@ var ChaosPortal = card.New(
 				Effects: []card.Effect{
 					card.RevealTopOfDeck{Amount: 1},
 					card.Conditional{
-						Cond: card.ItIsOfHouse{House: card.TheChosenHouse},
+						Cond: card.ItIs{House: card.Houses.Chosen},
 						Then: card.PlayRevealedCard{},
 					},
 				},

@@ -6,17 +6,18 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	House:  Brobnar
 //	Type:   Creature
-//	Rarity: Special
+//	Rarity: Connected
 //	Power:  7
 //	Traits: Giant
 //
 //	Mega Gron Nine-Toes gains +4 power while it is damaged.
-var MegaGronNineToes = card.New(
+var MegaGronNineToes = set.New(
 	"Mega Gron Nine-Toes",
 	card.House.Brobnar,
 	card.Type.Creature,
-	card.Rarity.Special,
+	card.Rarity.Connected,
 	card.Provenance(card.WC, "58"),
+	card.InCluster(card.Pulled(gronsBrewCluster, 1, 1.25)),
 	card.WithPower(7),
 	card.WithTraits(card.Traits.Giant),
 	card.WithConstant(card.ConstantAbility{

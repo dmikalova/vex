@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //
 //	Play: Steal 1 Æmber -> if your opponent has more Æmber than you, repeat this effect.
-var BaitAndSwitch = card.New(
+var BaitAndSwitch = set.New(
 	"Bait and Switch",
 	card.House.Shadows,
 	card.Type.Tactic,

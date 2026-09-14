@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Weapon
 //
 //	Action: Choose a Creature - enrage it, and give it a +1 power counter.
-var Irestaff = card.New(
+var Irestaff = set.New(
 	"Irestaff",
 	card.House.Brobnar,
 	card.Type.Artifact,

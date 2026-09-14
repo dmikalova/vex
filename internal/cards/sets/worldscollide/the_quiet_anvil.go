@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Each player's keys cost -2 Æmber.
 //	After a player forges a key, destroy The Quiet Anvil.
-var TheQuietAnvil = card.New(
+var TheQuietAnvil = set.New(
 	"The Quiet Anvil",
 	card.House.Shadows,
 	card.Type.Artifact,

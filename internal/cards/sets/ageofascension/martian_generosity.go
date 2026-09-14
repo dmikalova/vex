@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //
 //	Play: Lose all your Æmber, and for each Æmber you lost this way, draw 2 cards.
-var MartianGenerosity = card.New(
+var MartianGenerosity = set.New(
 	"Martian Generosity",
 	card.House.Mars,
 	card.Type.Tactic,

@@ -26,9 +26,10 @@ func TestSnaglet(t *testing.T) {
 
 		h.P1.UseAction(Snaglet)
 		h.P1.ClickOption("Mars")
-		if got := h.Game().State.HouseWagerNext[1]; got.House != card.House.Mars ||
-			got.Amount != 2 {
-			t.Fatalf("armed wager = %+v, want Mars for 2", got)
+		if got := h.Game().State.HouseConstraintsNext[1]; h.Game().State.HouseConstraintCountNext[1] != 1 ||
+			got[0].House != card.House.Mars ||
+			got[0].Amount != 2 {
+			t.Fatalf("armed wager = %+v, want Mars for 2", got[0])
 		}
 
 		h.P1.EndTurn()

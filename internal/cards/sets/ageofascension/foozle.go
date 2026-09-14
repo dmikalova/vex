@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant
 //
 //	Reap: If an enemy Creature has been destroyed this turn, gain 1 Æmber.
-var Foozle = card.New(
+var Foozle = set.New(
 	"Foozle",
 	card.House.Brobnar,
 	card.Type.Creature,

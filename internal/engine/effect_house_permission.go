@@ -17,30 +17,17 @@ const (
 	GrantFight
 )
 
-// HouseSelectorKind is how a MayPlayOrUse names the houses its grant frees.
-type HouseSelectorKind uint8
-
-const (
-	houseSelectorUnset HouseSelectorKind = iota
-	// SelectHouse frees one house: HouseSelector.House when set, or the house an
-	// enclosing ChooseHouseThen picked when HouseNone.
-	SelectHouse
-	// SelectAny frees every house (Follow the Leader, Scientifical Hack).
-	SelectAny
-	// SelectExcept frees every house but HouseSelector.House (the Star Alliance
-	// "non-Star Alliance card" cycle).
-	SelectExcept
-	// SelectControlled frees every house the controller has a card in play for
-	// (United Action).
-	SelectControlled
-)
-
 // HouseSelector is the Houses axis of a MayPlayOrUse: it selects whose cards the
-// grant frees. It is flat, comparable state (a small enum plus a House), so it
-// lives in the snapshotable GameState (ADR 0005).
+// grant frees. It is a grant-only superset of the filter-side HouseMatcher —
+// Match names the houses the way any filter would (a named or chosen house, any
+// house, or every house but one), while Controlled adds the one selection only a
+// grant can make: every house the controller has a card in play for (United
+// Action). Keeping Controlled off HouseMatcher means a filter field can never
+// express it. It is flat, comparable state, so it lives in the snapshotable
+// GameState (ADR 0005).
 type HouseSelector struct {
-	Kind  HouseSelectorKind
-	House House
+	Match      HouseMatcher
+	Controlled bool
 }
 
 // MayPlayOrUse lets the controller act with cards outside their active house for
@@ -58,12 +45,8 @@ type MayPlayOrUse struct {
 	Count  int
 }
 
-// validate rejects a grant that names no houses, frees no verb, or bounds a
-// negative count.
+// validate rejects a grant that frees no verb or bounds a negative count.
 func (e MayPlayOrUse) validate() error {
-	if e.Houses.Kind == houseSelectorUnset {
-		return fmt.Errorf("MayPlayOrUse: houses must be set")
-	}
 	if e.Grant == 0 {
 		return fmt.Errorf("MayPlayOrUse: at least one grant must be set")
 	}
@@ -77,20 +60,21 @@ func (e MayPlayOrUse) validate() error {
 // the axes select — "may fight", "may use", "may play or use" — over the houses,
 // types, and count the grant reaches.
 func (e MayPlayOrUse) Text() string {
-	switch e.Houses.Kind {
-	case SelectControlled:
+	if e.Houses.Controlled {
 		return "for the remainder of the turn, you may play cards from any house for which you have a card in play"
-	case SelectExcept:
+	}
+	switch e.Houses.Match.Kind {
+	case MatchExceptHouse:
 		verb := "play"
 		if e.Grant&GrantUse != 0 {
 			verb = "play or use"
 		}
 		return "you may " + verb + " " + e.exceptObject() + " this turn"
-	default: // SelectHouse, SelectAny
+	default: // MatchNamedHouse, MatchChosenHouse, MatchAnyHouse
 		if e.Grant == GrantFight {
 			return "for the remainder of the turn, " + e.fightSubject() + " may fight"
 		}
-		if e.Houses.Kind == SelectAny {
+		if e.Houses.Match.Kind == MatchAnyHouse {
 			return "for the remainder of the turn, you may use friendly artifacts as if they belonged to the active house"
 		}
 		return "for the remainder of the turn, you may " + e.namedVerbObject()
@@ -100,13 +84,14 @@ func (e MayPlayOrUse) Text() string {
 // fightSubject renders who a fight grant frees: every friendly creature, a named
 // house's, or the chosen house's.
 func (e MayPlayOrUse) fightSubject() string {
-	if e.Houses.Kind == SelectAny {
+	switch e.Houses.Match.Kind {
+	case MatchAnyHouse:
 		return "each friendly creature"
-	}
-	if e.Houses.House == HouseNone {
+	case MatchChosenHouse:
 		return "each friendly creature of the chosen house"
+	default:
+		return "each friendly " + e.Houses.Match.House.String() + " creature"
 	}
-	return "each friendly " + e.Houses.House.String() + " creature"
 }
 
 // namedVerbObject renders the verb-and-object of a named-house use/play grant, e.g.
@@ -117,9 +102,9 @@ func (e MayPlayOrUse) namedVerbObject() string {
 		if e.Grant&GrantUse != 0 {
 			verb = "play or use"
 		}
-		return verb + " a " + e.Houses.House.String() + " card"
+		return verb + " a " + e.Houses.Match.House.String() + " card"
 	}
-	return "use friendly " + e.Houses.House.String() + " creatures"
+	return "use friendly " + e.Houses.Match.House.String() + " creatures"
 }
 
 // exceptObject renders the card an exclusion grant frees, e.g. "a non-Star Alliance
@@ -127,8 +112,8 @@ func (e MayPlayOrUse) namedVerbObject() string {
 // (all types).
 func (e MayPlayOrUse) exceptObject() string {
 	house := ""
-	if e.Houses.House != HouseNone {
-		house = "non-" + e.Houses.House.String() + " "
+	if e.Houses.Match.House != HouseNone {
+		house = "non-" + e.Houses.Match.House.String() + " "
 	}
 	if e.Types.all() {
 		return "one " + house + "card"
@@ -140,8 +125,8 @@ func (e MayPlayOrUse) exceptObject() string {
 // selector against the house an enclosing ChooseHouseThen picked.
 func (e MayPlayOrUse) Resolve(ctx *EffectContext) {
 	houses := e.Houses
-	if houses.Kind == SelectHouse && houses.House == HouseNone {
-		houses.House = ctx.ChosenHouse
+	if houses.Match.Kind == MatchChosenHouse && houses.Match.House == HouseNone {
+		houses.Match.House = ctx.ChosenHouse
 	}
 	ctx.Resolver.GrantMayPlayOrUse(ctx.Controller, houses, e.Grant, e.Types, e.Count)
 }

@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Robot • Experiment
 //
 //	Action: Deal 4 damage to each Creature that shares a house with at least 1 of its neighbors.
-var GroupthinkTank = card.New(
+var GroupthinkTank = set.New(
 	"Groupthink Tank",
 	card.House.Logos,
 	card.Type.Creature,

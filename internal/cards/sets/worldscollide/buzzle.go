@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Skirmish.
 //	Play/Fight: You may purge a neighboring Creature -> ready Buzzle.
-var Buzzle = card.New(
+var Buzzle = set.New(
 	"Buzzle",
 	card.House.Dis,
 	card.Type.Creature,

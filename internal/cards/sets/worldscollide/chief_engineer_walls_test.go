@@ -92,3 +92,30 @@ func TestChiefEngineerWalls(t *testing.T) {
 		h.Expect(robot).At(ct.Discard)
 	})
 }
+
+// TestUpgradeOrRobot checks the deck-generation predicate that guarantees Chief
+// Engineer Walls a couple of Upgrades or Robots to pull back (card.PullsMatching).
+func TestUpgradeOrRobot(t *testing.T) {
+	cases := []struct {
+		name string
+		def  card.Definition
+		want bool
+	}{
+		{"upgrade", card.Definition{Type: card.Type.Upgrade}, true},
+		{
+			"robot creature",
+			card.Definition{Type: card.Type.Creature, Traits: []card.Trait{card.Traits.Robot}},
+			true,
+		},
+		{
+			"plain creature",
+			card.Definition{Type: card.Type.Creature, Traits: []card.Trait{card.Traits.Human}},
+			false,
+		},
+	}
+	for _, tc := range cases {
+		if got := upgradeOrRobot(tc.def); got != tc.want {
+			t.Errorf("upgradeOrRobot(%s) = %v, want %v", tc.name, got, tc.want)
+		}
+	}
+}

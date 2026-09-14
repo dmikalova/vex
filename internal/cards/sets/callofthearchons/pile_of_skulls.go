@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Location
 //
 //	After an enemy Creature is destroyed during your turn, a friendly Creature captures 1 Æmber from your opponent.
-var PileOfSkulls = card.New(
+var PileOfSkulls = set.New(
 	"Pile of Skulls",
 	card.House.Brobnar,
 	card.Type.Artifact,

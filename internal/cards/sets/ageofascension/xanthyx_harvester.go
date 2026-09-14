@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	You cannot use this card unless it has no non-Mars neighbor.
 //	Reap: Gain 1 Æmber.
-var XanthyxHarvester = card.New(
+var XanthyxHarvester = set.New(
 	"Xanthyx Harvester",
 	card.House.Mars,
 	card.Type.Creature,

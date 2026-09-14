@@ -29,6 +29,12 @@ const (
 	destBottomOfDeck
 	destDeckShuffled
 	destArchives
+	// The two terminal destinations a card leaves the game or is set aside in.
+	// They are the endpoints of the purge and discard verbs, so no authoring To
+	// value names them: a card writes Purge/Discard, and those verbs move through
+	// the unexported toPurged/toDiscard destinations below (ADR 0031).
+	destDiscard
+	destPurged
 )
 
 // The destinations a card can name.
@@ -38,6 +44,14 @@ var (
 	ToBottomOfDeck = Destination{zone: destBottomOfDeck}
 	ToDeckShuffled = Destination{zone: destDeckShuffled}
 	ToArchives     = Destination{zone: destArchives}
+)
+
+// The terminal destinations, unexported because a card names the verb (Purge,
+// Discard), not the destination: the purge and discard effects move through these
+// so their dispatch shares the one source-by-destination matrix (ADR 0031).
+var (
+	toDiscard = Destination{zone: destDiscard}
+	toPurged  = Destination{zone: destPurged}
 )
 
 // Yours sends the card to the resolving player's own copy of the zone rather than
@@ -85,21 +99,81 @@ func (d Destination) clause(subject string, plural bool) string {
 	return fmt.Sprintf(form[0], subject)
 }
 
-// move carries one card out of play to the destination.
+// move carries one card out of play to the destination: the from-play arm of the
+// matrix, where the resolving player owns whichever pile the card lands in.
 func (d Destination) move(ctx *EffectContext, id LocalID) {
+	d.moveFrom(ctx, inPlay, ctx.Controller, id)
+}
+
+// moveFrom carries one card from the zone `from` to this destination, dispatching
+// to the resolver removal for that source-and-destination pair — the one
+// source-by-destination move matrix behind the movement verbs (ADR 0031). owner
+// names whose copy of a pile zone the card sits in; the from-play resolvers ignore
+// it because a card in play has no owning pile. Only the pairs a verb actually
+// produces are listed: purge from a hand, a discard pile, or play; discard from a
+// hand or archives; archive from a hand, a discard pile, a deck, or play; into a
+// hand from a deck, a discard pile, or play; shuffled into a deck from a hand, a
+// discard pile, or play; and on top of a deck from play or a discard pile. archive
+// also has a purge-pile source (Universal Recycle Bin recovering a card set aside
+// for good).
+func (d Destination) moveFrom(ctx *EffectContext, from Zone, owner int, id LocalID) {
 	switch d.zone {
-	case destTopOfDeck:
-		ctx.Resolver.PutOnTopOfDeck(id)
-	case destDeckShuffled:
-		ctx.Resolver.PutIntoDeckShuffled(id)
-	case destArchives:
-		if d.yours {
-			ctx.Resolver.PutIntoYourArchives(id, ctx.Controller)
+	case destPurged:
+		switch from {
+		case Hand:
+			ctx.Resolver.PurgeFromHand(owner, id)
+		case Discard:
+			ctx.Resolver.PurgeFromDiscard(owner, id)
+		default: // inPlay
+			ctx.Resolver.PurgeFromPlay(id)
+		}
+	case destDiscard:
+		if from == Archives {
+			ctx.Resolver.DiscardCardFromArchives(owner, id)
 			return
 		}
-		ctx.Resolver.PutIntoArchives(id)
-	default:
-		ctx.Resolver.PutIntoHand(id)
+		ctx.Resolver.DiscardCardFromHand(owner, id)
+	case destTopOfDeck:
+		if from == Discard {
+			ctx.Resolver.MoveFromDiscardToTopOfDeck(id)
+			return
+		}
+		ctx.Resolver.PutOnTopOfDeck(id)
+	case destDeckShuffled:
+		switch from {
+		case Hand:
+			ctx.Resolver.ShuffleFromHandIntoDeck(id)
+		case Discard:
+			ctx.Resolver.ShuffleFromDiscardIntoDeck(id)
+		default: // inPlay
+			ctx.Resolver.PutIntoDeckShuffled(id)
+		}
+	case destArchives:
+		switch from {
+		case Hand:
+			ctx.Resolver.ArchiveFromHand(id)
+		case Discard:
+			ctx.Resolver.ArchiveFromDiscard(owner, id)
+		case Deck:
+			ctx.Resolver.ArchiveFromDeck(id)
+		case purged:
+			ctx.Resolver.ArchiveFromPurge(owner, id)
+		default: // inPlay
+			if d.yours {
+				ctx.Resolver.PutIntoYourArchives(id, owner)
+				return
+			}
+			ctx.Resolver.PutIntoArchives(id)
+		}
+	default: // destHand
+		switch from {
+		case Deck:
+			ctx.Resolver.MoveFromDeckToHand(id)
+		case Discard:
+			ctx.Resolver.PutFromDiscardIntoHand(id)
+		default: // inPlay
+			ctx.Resolver.PutIntoHand(id)
+		}
 	}
 }
 

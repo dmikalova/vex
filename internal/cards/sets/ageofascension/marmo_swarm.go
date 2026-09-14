@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Marmo Swarm gains +1 power for each Æmber in your pool.
-var MarmoSwarm = card.New(
+var MarmoSwarm = set.New(
 	"Marmo Swarm",
 	card.House.Untamed,
 	card.Type.Creature,

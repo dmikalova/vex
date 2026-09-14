@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Play: If Igon the Green has not been purged, destroy Igon the Terrible.
 //	Fight: Steal 1 Æmber.
-var IgonTheTerrible = card.New(
+var IgonTheTerrible = set.New(
 	"Igon the Terrible",
 	card.House.Brobnar,
 	card.Type.Creature,
@@ -23,7 +23,7 @@ var IgonTheTerrible = card.New(
 	card.WithTraits(card.Traits.Giant),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
-			Cond: card.NamedCardPurged{Name: IgonTheGreenName, Not: true},
+			Cond: card.Not{Cond: card.NamedCardPurged{Name: IgonTheGreenName}},
 			Then: card.Destroy{Target: card.Target.This},
 		}),
 	card.WithAbility(card.Trigger.Fight, card.StealAember{Amount: 1}),

@@ -24,16 +24,19 @@ type MayPlayOrUseGranted struct {
 // Text renders the grant, narrowing to the houses and verbs it frees.
 func (e MayPlayOrUseGranted) Text(n Namer) string {
 	p := n.PlayerName(e.Player)
-	switch e.Houses.Kind {
-	case SelectExcept, SelectControlled:
+	if e.Houses.Controlled {
 		return fmt.Sprintf("%s may play cards from other houses this turn", p)
-	case SelectAny:
+	}
+	switch e.Houses.Match.Kind {
+	case MatchExceptHouse:
+		return fmt.Sprintf("%s may play cards from other houses this turn", p)
+	case MatchAnyHouse:
 		if e.Grant&GrantFight != 0 {
 			return fmt.Sprintf("%s's creatures may all fight this turn", p)
 		}
 		return fmt.Sprintf("%s may use friendly artifacts this turn", p)
-	default: // SelectHouse
-		h := e.Houses.House
+	default: // MatchNamedHouse, MatchChosenHouse
+		h := e.Houses.Match.House
 		if e.Grant == GrantFight {
 			return fmt.Sprintf("%s's %s creatures may fight this turn", p, h)
 		}

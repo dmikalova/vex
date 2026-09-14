@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Assault 4.
 //	Reap: Enrage Shorty.
-var Shorty = card.New(
+var Shorty = set.New(
 	"Shorty",
 	card.House.Brobnar,
 	card.Type.Creature,

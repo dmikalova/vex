@@ -1,0 +1,30 @@
+package callofthearchons
+
+import "github.com/dmikalova/vactrol/internal/card"
+
+// Hidden Stash
+//
+//	House:  Shadows
+//	Type:   Tactic
+//	Rarity: Uncommon
+//	Æmber:  1
+//
+//	Play: Reveal your opponent's hand. Archive a card from your opponent's hand.
+var HiddenStash = set.New(
+	"Hidden Stash",
+	card.House.Shadows,
+	card.Type.Tactic,
+	card.Rarity.Uncommon,
+	card.Provenance(card.CotA, "271"),
+	card.WithAemberBonus(1),
+	card.WithAbility(
+		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+			card.RevealHand{Player: card.Opponent},
+			card.ArchiveCard{
+				From:      card.Opponent,
+				Zone:      card.Hand,
+				Selection: card.Chosen{},
+			},
+		}},
+	),
+)

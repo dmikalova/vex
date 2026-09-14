@@ -111,33 +111,36 @@ func filterIDs(ids []LocalID, keep func(LocalID) bool) []LocalID {
 // for "may do fewer" — a card that must do either none or exactly N (all-or-
 // nothing) cannot be expressed this way; no card currently needs that.
 type Chosen struct {
-	// House restricts the choice to cards of this house; HouseNone allows any.
-	House House
+	// House restricts the choice to cards the matcher admits; the zero value
+	// (any house) allows any card (Information Officer Gray reveals a non-Star
+	// Alliance card).
+	House HouseMatcher
 	// Type restricts the choice to cards of this type; the zero value allows any.
 	Type CardType
-	// ExceptHouse spares the cards of that house from the choice, rendering a
-	// "non-<house>" qualifier (Information Officer Gray reveals a non-Star Alliance
-	// card). HouseNone excludes nothing.
-	ExceptHouse House
+	// Trait restricts the choice to cards carrying this trait; the zero value
+	// allows any (Horseman of Death recovers a Horseman creature).
+	Trait Trait
+	// Name restricts the choice to cards of this exact name; the zero value allows
+	// any (Igon the Green recovers an Igon the Terrible).
+	Name string
+	// Or lists alternative identity filters: a card also qualifies if it satisfies
+	// any of them (Chief Engineer Walls recovers an upgrade or a Robot card).
+	Or []CardFilter
 	// Optional makes the pick a "you may" the controller can decline; the default is
 	// a mandatory pick that forces the choice when a card matches.
 	Optional bool
 }
 
-// noun renders the bare kind of card chosen, qualified by type when set and by
-// house.
+// filter is the identity predicate the choice narrows by, conjoining Type, Trait,
+// and Name and admitting any Or alternative.
+func (s Chosen) filter() CardFilter {
+	return CardFilter{Type: s.Type, Trait: s.Trait, Name: s.Name, Or: s.Or}
+}
+
+// noun renders the bare kind of card chosen, qualified by the identity filter and
+// by house.
 func (s Chosen) noun() string {
-	noun := "card"
-	if s.Type != TypeUnset {
-		noun = typeWord(s.Type)
-	}
-	if s.House != HouseNone {
-		noun = s.House.String() + " " + noun
-	}
-	if s.ExceptHouse != HouseNone {
-		noun = "non-" + s.ExceptHouse.String() + " " + noun
-	}
-	return noun
+	return s.House.qualify(s.filter().noun())
 }
 
 // object renders the single card chosen, e.g. "a Sanctum creature".
@@ -146,20 +149,10 @@ func (s Chosen) object() string { return indefinite(s.noun()) }
 // declinable reports that an Optional Chosen may be passed.
 func (s Chosen) declinable() bool { return s.Optional }
 
-// candidates keeps the cards the house and type filters admit.
+// candidates keeps the cards the house and identity filters admit.
 func (s Chosen) candidates(ctx *EffectContext, cands []LocalID) []LocalID {
 	return filterIDs(cands, func(id LocalID) bool {
-		if s.House != HouseNone && ctx.Resolver.House(id) != s.House {
-			return false
-		}
-		if s.ExceptHouse != HouseNone &&
-			ctx.Resolver.House(id) == s.ExceptHouse {
-			return false
-		}
-		if s.Type != TypeUnset && ctx.Resolver.TypeOf(id) != s.Type {
-			return false
-		}
-		return true
+		return s.House.matches(ctx, id) && s.filter().admits(ctx.Resolver, id)
 	})
 }
 
@@ -217,35 +210,33 @@ func (s Random) pick(ctx *EffectContext, cands []LocalID) []LocalID {
 // (Martians Make Bad Allies purges each non-Mars creature). A following effect
 // can scale with the tally the verb records.
 type Each struct {
-	// House restricts to cards of this house; HouseNone admits any (Soldiers to
-	// Flowers purges each Untamed creature). Mutually exclusive with ExceptHouse.
-	House House
+	// House restricts to cards the matcher admits; the zero value (any house) admits
+	// any card (Soldiers to Flowers purges each Untamed creature, Martians Make Bad
+	// Allies each non-Mars creature, Deep Probe each creature of the chosen house).
+	House HouseMatcher
 	// Type restricts to cards of this type; the zero value admits any.
 	Type CardType
-	// ExceptHouse spares the cards of that house; HouseNone spares nothing.
-	ExceptHouse House
-	// OfChosenHouse limits the cards to the house an enclosing ChooseHouseThen
-	// picked (Deep Probe discards each creature of the chosen house).
-	OfChosenHouse bool
+	// Trait restricts to cards carrying this trait; the zero value admits any
+	// (Troop Call recovers each Niffle creature).
+	Trait Trait
+	// Name restricts to cards of this exact name; the zero value admits any
+	// (Ortannu the Chained recovers each Ortannu's Binding).
+	Name string
+	// Or lists alternative identity filters: a card also qualifies if it satisfies
+	// any of them.
+	Or []CardFilter
+}
+
+// filter is the identity predicate the take narrows by, conjoining Type, Trait,
+// and Name and admitting any Or alternative.
+func (s Each) filter() CardFilter {
+	return CardFilter{Type: s.Type, Trait: s.Trait, Name: s.Name, Or: s.Or}
 }
 
 // noun renders the bare kind of card taken, e.g. "non-Mars creature" or "creature
 // of the chosen house".
 func (s Each) noun() string {
-	noun := "card"
-	if s.Type != TypeUnset {
-		noun = typeWord(s.Type)
-	}
-	if s.House != HouseNone {
-		noun = s.House.String() + " " + noun
-	}
-	if s.ExceptHouse != HouseNone {
-		noun = "non-" + s.ExceptHouse.String() + " " + noun
-	}
-	if s.OfChosenHouse {
-		noun += " of the chosen house"
-	}
-	return noun
+	return s.House.qualify(s.filter().noun())
 }
 
 // object renders the kind of card taken, e.g. "each non-Mars creature".
@@ -254,20 +245,7 @@ func (s Each) object() string { return "each " + s.noun() }
 // candidates returns every card the filters admit — Each takes all of them.
 func (s Each) candidates(ctx *EffectContext, cands []LocalID) []LocalID {
 	return filterIDs(cands, func(id LocalID) bool {
-		if s.Type != TypeUnset && ctx.Resolver.TypeOf(id) != s.Type {
-			return false
-		}
-		if s.House != HouseNone && ctx.Resolver.House(id) != s.House {
-			return false
-		}
-		if s.ExceptHouse != HouseNone &&
-			ctx.Resolver.House(id) == s.ExceptHouse {
-			return false
-		}
-		if s.OfChosenHouse && ctx.Resolver.House(id) != ctx.ChosenHouse {
-			return false
-		}
-		return true
+		return s.House.matches(ctx, id) && s.filter().admits(ctx.Resolver, id)
 	})
 }
 

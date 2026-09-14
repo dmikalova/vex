@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Taunt.
 //	At the end of your "ready cards" step, purge a card from your hand -> give Greater Oxtet two +1 power counters.
-var GreaterOxtet = card.New(
+var GreaterOxtet = set.New(
 	"Greater Oxtet",
 	card.House.Dis,
 	card.Type.Creature,

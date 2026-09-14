@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //
 //	Play: Shuffle each flank Creature into its owner's deck.
-var KymoorEclipse = card.New(
+var KymoorEclipse = set.New(
 	"Kymoor Eclipse",
 	card.House.Shadows,
 	card.Type.Tactic,

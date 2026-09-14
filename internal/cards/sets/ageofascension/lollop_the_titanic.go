@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Giant • Location
 //
 //	Lollop the Titanic deals no damage when attacked.
-var LollopTheTitanic = card.New(
+var LollopTheTitanic = set.New(
 	"Lollop the Titanic",
 	card.House.Brobnar,
 	card.Type.Creature,

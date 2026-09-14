@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	While Odoac the Patrician has Æmber on it, your Æmber cannot be stolen.
 //	Play: Odoac the Patrician captures 1 Æmber from your opponent.
-var OdoacThePatrician = card.New(
+var OdoacThePatrician = set.New(
 	"Odoac the Patrician",
 	card.House.Saurian,
 	card.Type.Creature,
