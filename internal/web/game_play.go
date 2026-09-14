@@ -186,6 +186,7 @@ func (g *game) pickHouse(h engine.House) app.EventHandler {
 			return
 		}
 		p := g.active()
+		g.record(input{Kind: inHouse, House: h})
 		g.runAction(ctx, func() error { return g.g.ChooseHouse(p, h) })
 	}
 }
@@ -215,6 +216,7 @@ func (g *game) endTurn(ctx app.Context, _ app.Event) {
 	g.confirmEndTurn = false
 	g.status = ""
 	p := g.active()
+	g.record(input{Kind: inEndTurn})
 	g.runAction(ctx, func() error {
 		opp := 1 - p
 		g.g.EndPlayPhase(p) // the end-of-turn phase narrates where both players stand
@@ -281,13 +283,16 @@ func (g *game) play(ctx app.Context, _ app.Event) {
 	case engine.Creature:
 		g.playCreature(ctx)
 	case engine.Artifact:
+		g.record(input{Kind: inPlayArtifact, Hand: idx})
 		g.runAction(
 			ctx,
 			func() error { _, err := g.g.PlayArtifact(p, idx); return playTypeError(err, def.Type) },
 		)
 	case engine.Tactic:
+		g.record(input{Kind: inPlayAction, Hand: idx})
 		g.runAction(ctx, func() error { return playTypeError(g.g.PlayAction(p, idx), def.Type) })
 	case engine.Upgrade:
+		g.record(input{Kind: inPlayUpgrade, Hand: idx})
 		g.runAction(
 			ctx,
 			func() error { _, err := g.g.PlayUpgrade(p, idx); return playTypeError(err, def.Type) },
@@ -305,6 +310,7 @@ func (g *game) playCreature(ctx app.Context) {
 	p, idx := g.active(), g.selHand
 	def := g.g.Def(g.sel)
 	if len(g.g.Battleline(p)) == 0 || g.g.HasKeyword(g.sel, engine.Deploy) {
+		g.record(input{Kind: inPlayCreature, Hand: idx, Left: false})
 		g.runAction(
 			ctx,
 			func() error { _, err := g.g.PlayCreature(p, idx, false); return playTypeError(err, def.Type) },
@@ -354,6 +360,7 @@ func (g *game) playAsUpgrade(ctx app.Context, _ app.Event) {
 	p, idx := g.active(), g.selHand
 	g.upgradeChoice = choiceUpgrade
 	g.markTakeoff(g.sel)
+	g.record(input{Kind: inPlayCreature, Hand: idx, Left: false})
 	g.runAction(
 		ctx,
 		func() error { _, err := g.g.PlayCreature(p, idx, false); return playTypeError(err, engine.Creature) },
@@ -376,6 +383,7 @@ func (g *game) playFlank(left bool) app.EventHandler {
 		}
 		p, idx := g.active(), g.selHand
 		g.markTakeoff(g.sel)
+		g.record(input{Kind: inPlayCreature, Hand: idx, Left: left})
 		g.runAction(
 			ctx,
 			func() error { _, err := g.g.PlayCreature(p, idx, left); return playTypeError(err, engine.Creature) },
@@ -388,6 +396,7 @@ func (g *game) discard(ctx app.Context, _ app.Event) {
 		return
 	}
 	p, idx := g.active(), g.selHand
+	g.record(input{Kind: inDiscard, Hand: idx})
 	g.runAction(ctx, func() error { return g.g.DiscardFromHand(p, idx) })
 }
 
@@ -438,6 +447,7 @@ func (g *game) reap(ctx app.Context, _ app.Event) {
 	}
 	p, id := g.active(), g.sel
 	g.reapID, g.reaping = id, true
+	g.record(input{Kind: inReap, Card: id})
 	g.runAction(ctx, func() error { return g.g.Reap(p, id) })
 }
 
@@ -449,6 +459,7 @@ func (g *game) unstun(ctx app.Context, _ app.Event) {
 	}
 	p, id := g.active(), g.sel
 	g.reapID, g.reaping = id, true
+	g.record(input{Kind: inUnstun, Card: id})
 	g.runAction(ctx, func() error { return g.g.Unstun(p, id) })
 }
 
@@ -461,6 +472,7 @@ func (g *game) useAction(ctx app.Context, _ app.Event) {
 	}
 	p, id := g.active(), g.sel
 	g.actID, g.acting = id, true
+	g.record(input{Kind: inUseAction, Card: id})
 	g.runAction(ctx, func() error { return g.g.UseAction(p, id) })
 }
 
@@ -495,6 +507,7 @@ func (g *game) fightTargetID(ctx app.Context, defender engine.LocalID) {
 	g.phase = phaseMain
 	g.fighters = [2]engine.LocalID{att, defender}
 	g.fighting = true
+	g.record(input{Kind: inFight, Card: att, Card2: defender})
 	g.runAction(ctx, func() error { return g.g.Fight(p, att, defender) })
 }
 

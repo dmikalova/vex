@@ -2,6 +2,7 @@ package web
 
 import (
 	"math/rand"
+	"slices"
 	"strconv"
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
@@ -39,6 +40,35 @@ type webChooser struct {
 	// cancelled guards cancel against a double close, so drain is safe to call from
 	// both a manual Cancel and a new deal abandoning a prompt mid-flight.
 	cancelled bool
+	// inChoice is set while an engine-facing choice is being answered, so a method
+	// that delegates to another (ChooseReaction to ChooseOption) records the answer
+	// once, under the outer method's kind, rather than twice.
+	inChoice bool
+}
+
+// enter marks the start of an engine-facing choice and reports whether it is the
+// outermost one; a delegated inner call sees the flag already set and does not
+// record.
+func (c *webChooser) enter() bool {
+	if c.inChoice {
+		return false
+	}
+	c.inChoice = true
+	return true
+}
+
+// record appends the answer this outermost choice returned to the command log,
+// unless the chooser has been abandoned by a newer deal (whose fresh log it must
+// not pollute).
+func (c *webChooser) record(outer bool, in input) {
+	if !outer {
+		return
+	}
+	c.inChoice = false
+	if c.stale() {
+		return
+	}
+	c.g.record(in)
 }
 
 // stale reports whether a newer deal has replaced this chooser. An abandoned
@@ -62,7 +92,10 @@ func (c *webChooser) ChooseCreature(
 	source, prompt string,
 	candidates []engine.LocalID,
 ) (engine.LocalID, bool) {
-	return c.ask(source, prompt, candidates, false)
+	outer := c.enter()
+	id, ok := c.ask(source, prompt, candidates, false)
+	c.record(outer, input{Kind: inPick, ID: id, OK: ok})
+	return id, ok
 }
 
 // ChooseCardOrDecline implements the engine's DeclinableChooser: an optional card
@@ -74,7 +107,10 @@ func (c *webChooser) ChooseCardOrDecline(
 	source, prompt string,
 	candidates []engine.LocalID,
 ) (engine.LocalID, bool) {
-	return c.ask(source, prompt, candidates, true)
+	outer := c.enter()
+	id, ok := c.ask(source, prompt, candidates, true)
+	c.record(outer, input{Kind: inPick, ID: id, OK: ok})
+	return id, ok
 }
 
 // ask is the shared card-prompt path: it shows the prompt on the UI goroutine and
@@ -99,6 +135,7 @@ func (c *webChooser) OrderCreatures(
 	source, prompt string,
 	ids []engine.LocalID,
 ) []engine.LocalID {
+	outer := c.enter()
 	remaining := append([]engine.LocalID(nil), ids...)
 	ordered := make([]engine.LocalID, 0, len(ids))
 	for len(remaining) > 1 {
@@ -107,7 +144,9 @@ func (c *webChooser) OrderCreatures(
 			rand.Shuffle(len(remaining), func(i, j int) {
 				remaining[i], remaining[j] = remaining[j], remaining[i]
 			})
-			return append(ordered, remaining...)
+			result := slices.Concat(ordered, remaining)
+			c.record(outer, input{Kind: inOrder, Order: result})
+			return result
 		}
 		if !r.ok {
 			break
@@ -120,7 +159,9 @@ func (c *webChooser) OrderCreatures(
 			}
 		}
 	}
-	return append(ordered, remaining...)
+	result := slices.Concat(ordered, remaining)
+	c.record(outer, input{Kind: inOrder, Order: result})
+	return result
 }
 
 // ChooseReaction implements the engine's ReactionChooser: a trigger window that
@@ -132,11 +173,14 @@ func (c *webChooser) ChooseReaction(
 	prompt string,
 	reactions []engine.OrderableReaction,
 ) int {
+	outer := c.enter()
 	options := make([]string, len(reactions))
 	for i, r := range reactions {
 		options[i] = r.Label
 	}
-	return c.ChooseOption("", prompt, options)
+	idx := c.ChooseOption("", prompt, options)
+	c.record(outer, input{Kind: inReaction, Index: idx})
+	return idx
 }
 
 // raise shows a card prompt on the UI goroutine and blocks the action goroutine
@@ -268,9 +312,11 @@ func (g *game) closeZoneForPrompt() {
 // UI and blocks until the player clicks one of the option buttons. Without this,
 // the engine falls back to the first option — which silently auto-took archives.
 func (c *webChooser) ChooseOption(source, prompt string, options []string) int {
+	outer := c.enter()
 	// A manual-mode Cancel already in flight drains without showing the prompt.
 	select {
 	case <-c.cancel:
+		c.record(outer, input{Kind: inOption, Index: 0})
 		return 0
 	default:
 	}
@@ -278,6 +324,7 @@ func (c *webChooser) ChooseOption(source, prompt string, options []string) int {
 	// choice, so answer the engine's play-as-which prompt from the armed choice
 	// rather than raising it a second time in the sidebar.
 	if i, ok := c.armedUpgradeChoice(options); ok {
+		c.record(outer, input{Kind: inOption, Index: i})
 		return i
 	}
 	// Drop any stale reply so a leftover click cannot answer this prompt.
@@ -309,6 +356,7 @@ func (c *webChooser) ChooseOption(source, prompt string, options []string) int {
 		c.g.optionLabels = nil
 		c.g.promptSource = ""
 	})
+	c.record(outer, input{Kind: inOption, Index: i})
 	return i
 }
 
@@ -340,16 +388,19 @@ func (c *webChooser) armedUpgradeChoice(options []string) (int, bool) {
 // text; the client speaks the choice through the lifted card and the lit line, so
 // the prompt string is unused here.
 func (c *webChooser) ChoosePosition(source, _ string, line []engine.LocalID) int {
+	outer := c.enter()
 	// With no other friendly creatures in play there is only one placement (the
 	// lone spot), so place it without asking. The engine already skips the prompt
 	// for an empty line; this guards the web side against ever raising a choice
 	// that has no alternatives.
 	if len(line) == 0 {
+		c.record(outer, input{Kind: inPosition, Index: 0})
 		return 0
 	}
 	// A manual-mode Cancel already in flight drains without showing the prompt.
 	select {
 	case <-c.cancel:
+		c.record(outer, input{Kind: inPosition, Index: 0})
 		return 0
 	default:
 	}
@@ -384,6 +435,7 @@ func (c *webChooser) ChoosePosition(source, _ string, line []engine.LocalID) int
 		c.g.positionSideChosen = false
 		c.g.promptSource = ""
 	})
+	c.record(outer, input{Kind: inPosition, Index: pos})
 	return pos
 }
 

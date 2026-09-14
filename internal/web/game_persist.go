@@ -16,46 +16,28 @@ import (
 
 // save writes the current match to local storage. It runs after every action and
 // before a hot-reload, so a reload or a later visit resumes from the latest
-// state.
+// state. Only the command log is persisted (ADR 0039); the state and typed log a
+// resume needs are replayed from it.
 func (g *game) save(ctx app.Context) {
 	if g.g == nil {
 		return
 	}
-	state, log, groups := g.g.State, g.g.Log, g.logGroups
+	inputs := g.inputs
 	// A half-resolved action cannot be persisted: the rest of it lives in a
-	// goroutine that a reload kills, so the Æmber it already spent and the card it
-	// already took from hand would be lost with no prompt left to finish them.
-	// Save the point before it instead, so the reload lands where the player can
-	// take the action again.
-	if g.busy && len(g.undo) > 0 {
-		e := g.undo[len(g.undo)-1]
-		state, log, groups = e.state, e.log, e.groups
-	}
-	saved := make([]savedLine, len(log))
-	for i, rec := range log {
-		rule, player := ruleOf(rec)
-		saved[i] = savedLine{
-			Frame:  rec.Frame,
-			Text:   rec.Text(g.g),
-			Rule:   rule,
-			Player: player,
-		}
-		if ps, ok := rec.Entry.(engine.PlayerStanding); ok {
-			saved[i].Standing = &savedStanding{
-				Player: ps.Player,
-				Aember: ps.Aember,
-				Keys:   ps.KeyColors,
-			}
-		}
+	// goroutine that a reload kills, so a choice it has not recorded yet would be
+	// lost with no prompt left to make it. Persist only the committed prefix —
+	// every input up to the last completed root — so the reload lands where the
+	// player can take the pending action again.
+	if g.busy && len(g.rootMarks) > 0 {
+		inputs = inputs[:g.rootMarks[len(g.rootMarks)-1]]
+	} else if g.busy {
+		inputs = nil
 	}
 	_ = ctx.LocalStorage().Set(persistKey, snapshot{
 		Version:  snapshotVersion,
 		Seed:     g.seed,
 		SetNames: g.setNames,
-		State:    state,
-		Log:      saved,
-		Groups:   groups,
-		Manual:   g.manualAdds,
+		Inputs:   append([]input(nil), inputs...),
 		UI:       g.savedUI(),
 	})
 }
@@ -90,9 +72,10 @@ func (g *game) restoreUI(ui savedUI) {
 
 // resume rebuilds the match from a saved snapshot, reporting whether it restored
 // one. A missing, wrong-version, or engine-incompatible snapshot is dropped and
-// resume returns false, so the caller deals a fresh game. Reconstruction from the
-// seed is deterministic, so the rebuilt catalog and card ids match the saved
-// state exactly; any residual mismatch (an older card pool) is caught before use.
+// resume returns false, so the caller deals a fresh game. The snapshot holds only
+// the seed, sets, and command log, so the resume replays the log from a fresh
+// deal to regenerate the exact state and typed log; a replay that diverges (an
+// older card pool, a since-changed action) is caught and started over.
 func (g *game) resume(ctx app.Context) (ok bool) {
 	store := ctx.LocalStorage()
 	if !store.Contains(persistKey) {
@@ -104,8 +87,8 @@ func (g *game) resume(ctx app.Context) (ok bool) {
 		store.Del(persistKey)
 		return false
 	}
-	// Rebuilding or reading a state from a different engine/card pool can panic on
-	// an out-of-range id; recover and fall back to a fresh deal.
+	// Replaying a log against a different engine/card pool can panic on an
+	// out-of-range id; recover and fall back to a fresh deal.
 	defer func() {
 		if recover() != nil {
 			store.Del(persistKey)
@@ -115,96 +98,23 @@ func (g *game) resume(ctx app.Context) (ok bool) {
 
 	g.seed = snap.Seed
 	g.setNames = snap.SetNames
-	eg, houses, mavericks, legacies, rosters := match.NewWithSets(
-		"Player 1",
-		"Player 2",
-		snap.Seed,
-		snap.SetNames,
-	)
-	g.install(eg, houses, mavericks, legacies, rosters)
-	if !g.replayManualAdds(snap.Manual) {
+	g.inputs = snap.Inputs
+	g.recomputeRootMarks()
+	if !g.rebuildFromLog() {
 		store.Del(persistKey)
 		return false
 	}
-	g.g.State = snap.State
-	if !g.stateReadsCleanly() {
-		store.Del(persistKey)
-		return false
-	}
-	// Restore the saved log (a real match always has at least the turn-1 header, so
-	// an empty one means a pre-log snapshot — keep what install produced).
-	if len(snap.Log) > 0 {
-		restored := make([]engine.Record, len(snap.Log))
-		for i, line := range snap.Log {
-			entry := engine.RestoredEntry{Line: line.Text}
-			restored[i] = engine.Record{Frame: line.Frame, Entry: entry}
-			switch {
-			case line.Standing != nil:
-				// Rebuild the real PlayerStanding so its coloured key tally
-				// redraws instead of reverting to the plain narrated count.
-				restored[i].Entry = engine.PlayerStanding{
-					Player:    line.Standing.Player,
-					Aember:    line.Standing.Aember,
-					KeyColors: line.Standing.Keys,
-				}
-			case line.Rule != ruleNone:
-				restored[i].Entry = restoredRule{
-					RestoredEntry: entry,
-					Rule:          line.Rule,
-					Player:        line.Player,
-				}
-			}
-		}
-		g.g.Restore(restored)
-		g.logGroups = snap.Groups
-	}
+	g.redoLog = nil
 	g.settlePhase()
 	g.clearSelection()
+	g.inPlayPrev = g.inPlaySet()
+	g.prevValid = false
 	g.restoreUI(snap.UI)
 	// A resumed match already holds its whole log, so only lines produced after
 	// this point are news; start the toast caught up rather than replaying the
 	// entire history into one banner on the first render.
 	g.toastSeen = len(g.g.Log)
 	g.status = ""
-	return true
-}
-
-// replayManualAdds re-registers the cards manual mode added, in the order they
-// were added, so the rebuilt catalog hands out the same ids the saved state
-// refers to. It reports false when a name no longer exists in the card pool,
-// which leaves the ids misaligned and the snapshot unusable.
-func (g *game) replayManualAdds(adds []manualAdd) bool {
-	for _, a := range adds {
-		def, ok := g.defByName[a.Name]
-		if !ok {
-			return false
-		}
-		g.g.Register(*def, a.Player)
-	}
-	g.manualAdds = adds
-	return true
-}
-
-// stateReadsCleanly reports whether every card id in the restored state resolves
-// against the rebuilt catalog. A snapshot from a different card pool can hold ids
-// out of range, which panics on lookup; recovering turns that into a clean
-// start-over signal.
-func (g *game) stateReadsCleanly() (ok bool) {
-	defer func() {
-		if recover() != nil {
-			ok = false
-		}
-	}()
-	for p := 0; p < 2; p++ {
-		for _, zone := range [][]engine.LocalID{
-			g.g.Hand(p), g.g.Deck(p), g.g.Battleline(p), g.g.Artifacts(p),
-			g.g.Discard(p), g.g.Archives(p), g.g.Purge(p),
-		} {
-			for _, id := range zone {
-				g.g.Def(id)
-			}
-		}
-	}
 	return true
 }
 
@@ -222,6 +132,10 @@ func (g *game) dealMatch(seed int64) {
 	if g.chooser != nil {
 		g.chooser.drain()
 	}
+	// The drained goroutine's own prompt teardown is stale-guarded, so it cannot
+	// clear the prompt it left up; clear it here so this deal starts with no stale
+	// prompt (a leftover choosingOption would make the next await match it).
+	g.clearPrompts()
 	eg, houses, mavericks, legacies, rosters := match.NewWithSets(
 		"Player 1",
 		"Player 2",
@@ -229,14 +143,16 @@ func (g *game) dealMatch(seed int64) {
 		g.setNames,
 	)
 	g.install(eg, houses, mavericks, legacies, rosters)
-	// Clear the previous game's log grouping and undo/redo history. newMatch resets
+	// Clear the previous game's log grouping and redo history. newMatch resets
 	// the engine log to a single turn-1 header, so stale marks (with larger Start
 	// indices from the old, longer log) would bubble the fresh log at the wrong
 	// places.
 	g.logGroups = nil
-	g.undo = nil
-	g.redo = nil
-	g.manualAdds = nil
+	g.redoLog = nil
+	// A fresh deal starts a fresh command log: the mulligan answers StartGame is
+	// about to prompt for are its first recorded inputs.
+	g.inputs = nil
+	g.rootMarks = nil
 	// The new deal shares no board with the old one, so the animation baseline is
 	// reset too: otherwise the next action diffs against the previous game's cards
 	// and flies them all off to the discard.

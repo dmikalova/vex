@@ -7,6 +7,7 @@ import (
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
 	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vactrol/internal/match"
 )
 
 // This file is the action plumbing: every engine mutation runs through here, so
@@ -46,24 +47,16 @@ func (g *game) runAction(ctx app.Context, fn func() error) {
 			g.chooser.cancelled = false
 			if crashed {
 				// A corrupt engine state can panic mid-action (e.g. an
-				// out-of-range card id). Roll back to the snapshot beginAction
-				// recorded so the board stays consistent, then surface the
-				// failure instead of freezing the UI on "resolving…".
-				if n := len(g.undo); n > 0 {
-					last := g.undo[n-1]
-					g.undo = g.undo[:n-1]
-					g.restore(last)
-				}
+				// out-of-range card id). Peel the partial action back off the
+				// command log and replay so the board stays consistent, then
+				// surface the failure instead of freezing on "resolving…".
+				g.rollbackLastRoot()
 				g.setStatus(err.Error())
 				g.save(ctx)
 				return
 			}
 			if cancelled {
-				if n := len(g.undo); n > 0 {
-					last := g.undo[n-1]
-					g.undo = g.undo[:n-1]
-					g.restore(last)
-				}
+				g.rollbackLastRoot()
 				g.save(ctx)
 				return
 			}
@@ -153,31 +146,21 @@ func (g *game) flyIntoPlay() {
 		map[string]any{"duration": 260, "easing": "cubic-bezier(0.2, 0.8, 0.3, 1)"})
 }
 
-const maxUndo = 100
-
-// snapshot captures the state, log, and log marks for undo/redo.
-func (g *game) snapshot() undoEntry {
-	return undoEntry{
-		state:  g.g.State.FastCopy(),
-		log:    append([]engine.Record(nil), g.g.Log...),
-		groups: append([]logMark(nil), g.logGroups...),
-	}
-}
-
-// beginAction records an undo point and starts a new log group for the root
-// action about to run. Every root action (an engine mutation via runAction or a
-// manual edit) calls it, so undo steps and log bubbles align with player intent.
+// beginAction starts a new log group for the root action about to run and marks
+// the animation baseline. Every root action (an engine mutation via runAction or
+// a manual edit) calls it, so log bubbles align with player intent and a new
+// action drops any pending redo. Undo/redo themselves work off the command log
+// (g.inputs), not a separate snapshot stack, so nothing is captured here for them
+// beyond prevState, which computeFlashes diffs the resolved state against.
 func (g *game) beginAction() {
 	g.confirmEndTurn = false
 	g.btnCursor, g.hasBtnCursor = 0, false
 	g.hasUseTarget = false
 	g.handSlot = g.selHandSlot()
 	g.clearFlashes()
-	g.undo = append(g.undo, g.snapshot())
-	if len(g.undo) > maxUndo {
-		g.undo = g.undo[len(g.undo)-maxUndo:]
-	}
-	g.redo = nil
+	g.prevState = g.g.State.FastCopy()
+	g.prevValid = true
+	g.redoLog = nil
 	g.logGroups = append(g.logGroups, logMark{Start: len(g.g.Log), Player: g.g.State.ActivePlayer})
 }
 
@@ -191,48 +174,113 @@ func (g *game) clearFlashes() {
 	g.flights = nil
 }
 
-// restore installs a snapshot and resets transient UI.
-func (g *game) restore(e undoEntry) {
+// rebuildFromLog re-deals the match from the seed and replays the current command
+// log to regenerate the exact state, typed log, and log groups (ADR 0039). It
+// reports whether the replay reproduced the log cleanly; a divergence leaves the
+// old game untouched. Manual mode is not part of the log, so it is carried across.
+func (g *game) rebuildFromLog() bool {
+	if g.defByName == nil {
+		g.defByName = cardsByName()
+	}
+	wasManual := g.g != nil && g.g.Manual()
+	if g.chooser != nil {
+		g.chooser.drain()
+	}
+	eg, houses, mavericks, legacies, rosters := match.NewWithSets(
+		"Player 1",
+		"Player 2",
+		g.seed,
+		g.setNames,
+	)
+	rc := &replayChooser{inputs: g.inputs}
+	eg.SetChooser(0, rc)
+	eg.SetChooser(1, rc)
+	groups, err := driveReplay(eg, rc, g.defByName)
+	if err != nil {
+		return false
+	}
+	g.install(eg, houses, mavericks, legacies, rosters)
+	g.logGroups = groups
+	if wasManual {
+		g.g.SetManual(true)
+	}
+	return true
+}
+
+// afterRebuild resets the transient UI a rebuild throws away and sets the
+// animation baseline to the rebuilt board, so the next action diffs against it
+// rather than the pre-rebuild game.
+func (g *game) afterRebuild() {
 	g.confirmEndTurn = false
 	g.clearFlashes()
-	g.g.State = e.state
-	g.g.Restore(e.log)
-	g.logGroups = e.groups
 	g.inPlayPrev = g.inPlaySet()
 	g.clearSelection()
 	g.forgingKey = -1
+	g.prevValid = false
 	g.settlePhase()
 }
 
+// recomputeRootMarks rebuilds rootMarks from inputs, so a truncation or splice of
+// the command log leaves the root-boundary index consistent with it.
+func (g *game) recomputeRootMarks() {
+	g.rootMarks = g.rootMarks[:0]
+	for i, in := range g.inputs {
+		if in.Kind.isRoot() {
+			g.rootMarks = append(g.rootMarks, i)
+		}
+	}
+}
+
+// rollbackLastRoot drops the last recorded root action and everything after it
+// from the command log, then rebuilds. A crashed or cancelled action has already
+// recorded its root (and maybe some choices) before failing, so undoing it is
+// peeling that partial segment back off the log.
+func (g *game) rollbackLastRoot() {
+	if len(g.rootMarks) == 0 {
+		return
+	}
+	g.inputs = g.inputs[:g.rootMarks[len(g.rootMarks)-1]]
+	g.recomputeRootMarks()
+	g.rebuildFromLog()
+	g.afterRebuild()
+}
+
 func (g *game) canUndo() bool {
-	return !g.busy && !g.choosing && !g.choosingOption && len(g.undo) > 0
+	return !g.busy && !g.choosing && !g.choosingOption && len(g.rootMarks) > 0
 }
 
 func (g *game) canRedo() bool {
-	return !g.busy && !g.choosing && !g.choosingOption && len(g.redo) > 0
+	return !g.busy && !g.choosing && !g.choosingOption && len(g.redoLog) > 0
 }
 
-// undoAction steps back to the state before the last root action.
+// undoAction steps back to the state before the last root action by peeling its
+// input segment off the command log and replaying what remains.
 func (g *game) undoAction(ctx app.Context, _ app.Event) {
 	if !g.canUndo() {
 		return
 	}
-	g.redo = append(g.redo, g.snapshot())
-	e := g.undo[len(g.undo)-1]
-	g.undo = g.undo[:len(g.undo)-1]
-	g.restore(e)
+	start := g.rootMarks[len(g.rootMarks)-1]
+	seg := append([]input(nil), g.inputs[start:]...)
+	g.redoLog = append(g.redoLog, seg)
+	g.inputs = g.inputs[:start]
+	g.recomputeRootMarks()
+	g.rebuildFromLog()
+	g.afterRebuild()
 	g.save(ctx)
 }
 
-// redoAction re-applies the last undone action.
+// redoAction re-applies the last undone action by splicing its segment back onto
+// the command log and replaying.
 func (g *game) redoAction(ctx app.Context, _ app.Event) {
 	if !g.canRedo() {
 		return
 	}
-	g.undo = append(g.undo, g.snapshot())
-	e := g.redo[len(g.redo)-1]
-	g.redo = g.redo[:len(g.redo)-1]
-	g.restore(e)
+	seg := g.redoLog[len(g.redoLog)-1]
+	g.redoLog = g.redoLog[:len(g.redoLog)-1]
+	g.inputs = append(g.inputs, seg...)
+	g.recomputeRootMarks()
+	g.rebuildFromLog()
+	g.afterRebuild()
 	g.save(ctx)
 }
 
@@ -251,10 +299,10 @@ func (g *game) afterAction() {
 // gained pool Æmber or forged a key pulses their score. The parity maps flip on
 // each flash so the animation replays on repeats (see the flashes field).
 func (g *game) computeFlashes() {
-	if len(g.undo) == 0 {
+	if !g.prevValid {
 		return
 	}
-	prev := &g.undo[len(g.undo)-1].state
+	prev := &g.prevState
 	if g.flashParity == nil {
 		g.flashParity = map[engine.LocalID]bool{}
 	}

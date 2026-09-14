@@ -234,8 +234,8 @@ func TestNewGameSetPicker(t *testing.T) {
 	if c.g.phase != phaseHouse {
 		t.Errorf("the new match is at phase %v, want phaseHouse", c.g.phase)
 	}
-	if len(c.g.undo) != 0 {
-		t.Errorf("the new match kept %d undo steps", len(c.g.undo))
+	if len(c.g.rootMarks) != 0 {
+		t.Errorf("the new match kept %d undo steps", len(c.g.rootMarks))
 	}
 }
 

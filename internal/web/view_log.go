@@ -37,15 +37,6 @@ const (
 	ruleTurn
 )
 
-// restoredRule is a persisted header read back from local storage. A typed entry
-// does not survive JSON, so the saved line carries the rule it drew and this
-// wrapper hands it back — a resumed match keeps its dividers.
-type restoredRule struct {
-	engine.RestoredEntry
-	Rule   logRule
-	Player int
-}
-
 // ruleOf reports whether a record opens a new block, how it rules, and whose turn
 // it announces. The client asks the entry what it is rather than matching a
 // prefix on its prose (ADR 0011).
@@ -55,8 +46,6 @@ func ruleOf(rec engine.Record) (logRule, int) {
 		return ruleTurn, e.Player
 	case engine.PhaseBegan:
 		return rulePhase, e.Player
-	case restoredRule:
-		return e.Rule, e.Player
 	}
 	return ruleNone, -1
 }

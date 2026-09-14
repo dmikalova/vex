@@ -234,7 +234,7 @@ func (c *client) deal(name string) engine.LocalID {
 	if !added {
 		c.t.Fatalf("%s was not added to hand", name)
 	}
-	c.g.manualAdds = append(c.g.manualAdds, manualAdd{Name: def.Name, Player: player})
+	c.g.record(input{Kind: inManualAddCard, Name: def.Name, Player: player})
 	return id
 }
 

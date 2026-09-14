@@ -89,7 +89,7 @@ func TestHousePickerUndo(t *testing.T) {
 	if c.g.phase != phaseHouse {
 		t.Fatalf("a fresh deal is at phase %v, want phaseHouse", c.g.phase)
 	}
-	c.g.undo = nil
+	c.g.rootMarks = nil
 	c.wants("the first-turn house picker", `title="Undo"`)
 	if c.g.canUndo() {
 		t.Error("a first-turn house pick has nothing to step back to")

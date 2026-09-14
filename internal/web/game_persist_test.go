@@ -66,34 +66,32 @@ func TestAMatchSurvivesAReload(t *testing.T) {
 	}
 }
 
-// A PlayerStanding's coloured key tally survives a reload: the typed entry is
-// rebuilt from its persisted fields rather than flattened to the plain narrated
+// A PlayerStanding's coloured key tally survives a reload: replaying the command
+// log regenerates the real typed end-of-turn standing rather than a flattened
 // count, so refreshing the page does not change what the key log shows.
 func TestAStandingsKeyTallySurvivesAReload(t *testing.T) {
 	c := newClient(t)
-	c.startTurn()
-	c.g.g.Log = append(c.g.g.Log, engine.Record{Entry: engine.PlayerStanding{
-		Player:    0,
-		Aember:    4,
-		KeyColors: []engine.KeyColor{engine.KeyColorRed, engine.KeyColorBlue},
-	}})
-	c.g.save(c.ctx)
+	c.manualTurn(testHouse)
+	// Forge a red key for the active player, then end the turn so the end-of-turn
+	// standing records it. Replay on reload rebuilds that standing, colours and all.
+	me := c.g.active()
+	c.g.forgingKey = me
+	c.do(c.g.pickForgeColor(engine.KeyColorRed))
+	c.pass()
 
 	next := c.reload()
 	var got engine.PlayerStanding
 	var found bool
 	for _, rec := range next.g.g.Log {
-		if ps, ok := rec.Entry.(engine.PlayerStanding); ok {
+		if ps, ok := rec.Entry.(engine.PlayerStanding); ok && ps.Player == me {
 			got, found = ps, true
 		}
 	}
 	if !found {
 		t.Fatal("the standing did not come back as a typed PlayerStanding")
 	}
-	if len(got.KeyColors) != 2 ||
-		got.KeyColors[0] != engine.KeyColorRed ||
-		got.KeyColors[1] != engine.KeyColorBlue {
-		t.Errorf("the key tally came back as %v, want two forged keys", got.KeyColors)
+	if len(got.KeyColors) != 1 || got.KeyColors[0] != engine.KeyColorRed {
+		t.Errorf("the key tally came back as %v, want one red key", got.KeyColors)
 	}
 }
 
@@ -154,12 +152,17 @@ func TestManualAddsAreReplayed(t *testing.T) {
 	}
 }
 
-// A snapshot naming a card the pool no longer holds leaves every later id
-// misaligned, so it is dropped rather than restored onto the wrong cards.
+// A command log naming a card the pool no longer holds cannot be replayed — the
+// missing registration leaves every later id misaligned — so it is dropped rather
+// than restored onto the wrong cards.
 func TestASnapshotNamingAnUnknownCardIsDropped(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
-	c.g.manualAdds = []manualAdd{{Name: "A Card That Was Never Printed", Player: 0}}
+	c.g.record(input{
+		Kind:   inManualAddCard,
+		Name:   "A Card That Was Never Printed",
+		Player: 0,
+	})
 	c.g.save(c.ctx)
 	c.expectDropped()
 }
@@ -211,17 +214,18 @@ func TestResumeWithNothingSaved(t *testing.T) {
 }
 
 // A half-resolved action cannot be persisted: the rest of it lives on a
-// goroutine a reload kills, so the point before it is saved instead and the
-// player lands where they can take the action again.
-func TestAnActionInFlightSavesThePointBeforeIt(t *testing.T) {
+// goroutine a reload kills, so only the committed prefix of the command log is
+// saved and the player lands where they can take the action again.
+func TestAnActionInFlightSavesTheCommittedPrefix(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
 	c.playFromHand(c.deal(testCreature))
-	before := c.g.g.State
+	committed := len(c.g.inputs)
 
-	c.g.beginAction()
+	// An in-flight action has recorded its root and gone busy; a save now must drop
+	// that partial action a reload could not finish and keep only what came before.
+	c.g.record(input{Kind: inEndTurn})
 	c.g.busy = true
-	c.g.g.ManualAddAmber(c.g.active(), 5)
 	c.g.save(c.ctx)
 	c.g.busy = false
 
@@ -229,11 +233,9 @@ func TestAnActionInFlightSavesThePointBeforeIt(t *testing.T) {
 	if err := c.ctx.LocalStorage().Get(persistKey, &snap); err != nil {
 		t.Fatalf("read back the snapshot: %v", err)
 	}
-	if snap.State == c.g.g.State {
-		t.Error("the half-resolved state was persisted")
-	}
-	if snap.State != before {
-		t.Error("the point before the action in flight was not what was saved")
+	if len(snap.Inputs) != committed {
+		t.Errorf("saved %d inputs, want the %d committed before the in-flight action",
+			len(snap.Inputs), committed)
 	}
 }
 
@@ -247,12 +249,18 @@ func TestSavingBeforeTheDeal(t *testing.T) {
 	}
 }
 
-// A restored state whose ids do not resolve against the rebuilt catalog would
-// panic on the first lookup, so it is caught before the board is drawn.
-func TestAStateWithUnreadableIdsIsDropped(t *testing.T) {
+// A command log that replays into a corrupt engine state — here a manual move of
+// a card id the deal never handed out — panics during replay. That panic is
+// caught and the snapshot dropped rather than the board drawn from a broken
+// state.
+func TestACommandLogThatPanicsOnReplayIsDropped(t *testing.T) {
 	c := newClient(t)
-	c.startTurn()
-	c.g.g.State.Hand[c.g.active()].IDs[0] = engine.LocalID(250)
+	c.manualTurn(testHouse)
+	c.g.record(input{
+		Kind:  inManualMove,
+		ID:    engine.LocalID(250),
+		Index: int(engine.ManualDiscard),
+	})
 	c.g.save(c.ctx)
 	c.expectDropped()
 }

@@ -59,7 +59,7 @@ func TestUndoIsGuarded(t *testing.T) {
 			c := newClient(t)
 			c.manualTurn(testHouse)
 			c.playFromHand(c.deal(testCreature))
-			depth := len(c.g.undo)
+			depth := len(c.g.rootMarks)
 			tt.arm(c.g)
 
 			if c.g.canUndo() || c.g.canRedo() {
@@ -67,8 +67,8 @@ func TestUndoIsGuarded(t *testing.T) {
 			}
 			c.do(c.g.undoAction)
 			c.do(c.g.redoAction)
-			if len(c.g.undo) != depth {
-				t.Errorf("the undo history moved from %d to %d", depth, len(c.g.undo))
+			if len(c.g.rootMarks) != depth {
+				t.Errorf("the undo history moved from %d to %d", depth, len(c.g.rootMarks))
 			}
 		})
 	}
@@ -90,15 +90,19 @@ func TestANewActionDropsTheRedo(t *testing.T) {
 	}
 }
 
-// The history is capped, so a long game does not hold every state it ever had.
-func TestUndoHistoryIsCapped(t *testing.T) {
+// The command log is the source of truth (ADR 0039), so it is not capped: a long
+// game keeps every action undoable back to the deal rather than dropping the
+// oldest steps.
+func TestUndoHistoryIsNotCapped(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
-	for i := 0; i < maxUndo+5; i++ {
-		c.g.beginAction()
+	const n = 120
+	for i := 0; i < n; i++ {
+		c.do(c.g.manualAmberDelta(c.g.active(), 1))
 	}
-	if len(c.g.undo) != maxUndo {
-		t.Errorf("the history holds %d steps, want the %d cap", len(c.g.undo), maxUndo)
+	if len(c.g.rootMarks) < n {
+		t.Errorf("the command log holds %d roots, want at least %d",
+			len(c.g.rootMarks), n)
 	}
 }
 
@@ -259,7 +263,7 @@ func TestLandingOfACardInPlay(t *testing.T) {
 // nothing to animate.
 func TestNoFlashesWithoutASnapshot(t *testing.T) {
 	c := newClient(t)
-	c.g.undo = nil
+	c.g.prevValid = false
 	c.g.computeFlashes()
 	if len(c.g.flashes) != 0 {
 		t.Errorf("computeFlashes queued %d pulses with no snapshot behind it",
@@ -300,15 +304,18 @@ func TestStatusMessages(t *testing.T) {
 }
 
 // A corrupt state can panic mid-action. Rather than freeze the UI on
-// "resolving…", the action rolls back to the snapshot it started from and says
-// what happened.
+// "resolving…", the action peels its record back off the command log and replays
+// what remains, then says what happened.
 func TestACrashedActionRollsBack(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
 	c.playFromHand(c.deal(testCreature))
 	before := c.g.g.State
-	depth := len(c.g.undo)
+	depth := len(c.g.rootMarks)
 
+	// A real root records its input before running, so mimic that and then crash;
+	// the rollback should peel the recorded root back off.
+	c.g.record(input{Kind: inEndTurn})
 	c.g.runAction(c.ctx, func() error { panic("a corrupt state") })
 	c.settle()
 
@@ -321,9 +328,9 @@ func TestACrashedActionRollsBack(t *testing.T) {
 	if c.g.g.State != before {
 		t.Error("the crashed action did not roll the state back")
 	}
-	if len(c.g.undo) != depth {
+	if len(c.g.rootMarks) != depth {
 		t.Errorf("the crashed action left the history at %d, want %d",
-			len(c.g.undo), depth)
+			len(c.g.rootMarks), depth)
 	}
 }
 

@@ -268,10 +268,6 @@ type game struct {
 	// whenever the picker opens or the query filters the list.
 	pickerCursor int
 	allDefs      []engine.CardDefinition
-	// manualAdds records, in registration order, the cards manual mode put into a
-	// hand. The catalog is rebuilt from the seed, which knows nothing about them, so
-	// a reload has to replay them or the saved state holds ids the catalog lacks.
-	manualAdds []manualAdd
 
 	// dragging is set while a hand card is being dragged, so the board shows as a
 	// drop zone. It is cleared when the drag ends or the card is dropped.
@@ -342,10 +338,22 @@ type game struct {
 
 	status string // transient message (usually an action error)
 
-	// undo/redo hold snapshots taken before each root action so the player can step
-	// back and forward; each is a flat GameState value copy plus the log and marks.
-	undo []undoEntry
-	redo []undoEntry
+	// redoLog holds the input segments undo has peeled off the command log, newest
+	// last, so redo can splice one back on. Each segment is a root action plus the
+	// chooser answers it raised. A new live action clears it.
+	redoLog [][]input
+
+	// inputs is the event-sourced command log (ADR 0039): every player input, in
+	// order — each root action and each chooser answer. State and the typed log are
+	// projections of it, so replaying inputs from a fresh deal reproduces the exact
+	// match. record appends to it during live play; a replay drives the engine from
+	// it instead of recording. rootMarks[i] is the index in inputs where the i-th
+	// root action begins, so an undo truncates the log at a root boundary.
+	inputs    []input
+	rootMarks []int
+	// replaying suppresses recording while the engine is driven from the log, so a
+	// replay does not append the very inputs it is feeding back.
+	replaying bool
 
 	// logGroups marks where each root action's log lines begin (and whose turn), so
 	// the log renders one bubble per action, tinted by player. The engine narrates
@@ -388,10 +396,15 @@ type game struct {
 	flashes     map[engine.LocalID]cardFlash
 	flashParity map[engine.LocalID]bool
 	inPlayPrev  map[engine.LocalID]bool
-	poolFlash   [2]bool
-	poolParity  [2]bool
-	keyFlash    [2]bool
-	keyParity   [2]bool
+	// prevState is the state as it stood before the running root action, captured
+	// by beginAction; computeFlashes diffs the resolved state against it to decide
+	// what animates. prevValid guards it before the first action of a game.
+	prevState  engine.GameState
+	prevValid  bool
+	poolFlash  [2]bool
+	poolParity [2]bool
+	keyFlash   [2]bool
+	keyParity  [2]bool
 	// discardFlash/discardParity pulse a player's discard count when cards land
 	// there.
 	discardFlash  [2]bool
@@ -486,14 +499,6 @@ type cardRect struct {
 	x, y, w, h float64
 }
 
-// undoEntry is a restorable snapshot: the flat GameState (a pure value copy), the
-// log, and the log group marks at that moment.
-type undoEntry struct {
-	state  engine.GameState
-	log    []engine.Record
-	groups []logMark
-}
-
 // logMark records where one root action's log lines begin and whose turn it was.
 type logMark struct {
 	Start  int
@@ -505,33 +510,27 @@ type logMark struct {
 // instead of dealing a new game.
 const persistKey = "vactrol.match"
 
-// snapshotVersion tags persisted state; bump it when an engine change makes older
-// snapshots invalid so a stale one is flushed instead of restored. A log entry is
-// saved as the prose it was narrated with, so rewording an entry dates every
-// snapshot holding the old wording and counts as such a change.
-const snapshotVersion = 15
+// snapshotVersion tags persisted state; bump it when an engine or command-log
+// change makes older snapshots invalid so a stale one is flushed instead of
+// replayed. Because a resume replays the command log rather than deserializing
+// state, a change to how any recorded action resolves also dates every snapshot
+// and counts as such a change.
+const snapshotVersion = 16
 
-// snapshot is the persisted match. The seed deterministically rebuilds the
-// catalog and card ids; the flat GameState carries everything mutable. All other
-// state (choosers, deck houses, card index, UI phase) is reconstructed from these.
+// snapshot is the persisted match (ADR 0039): the seed and sets deterministically
+// re-deal the same cards, and the ordered command log replays to the exact state
+// and typed log. Everything else (state, choosers, deck houses, card index, UI
+// phase) is a projection reconstructed from these, so nothing mutable is stored.
 type snapshot struct {
 	Version int
 	Seed    int64
-	State   engine.GameState
 	// SetNames records each player's chosen deck-generation set, so a resume
-	// rebuilds the same decks the seed alone would not pin down once sets can
+	// re-deals the same decks the seed alone would not pin down once sets can
 	// differ between players.
 	SetNames [2]string
-	// Log persists the game log so a hot-reload does not lose the history. A typed
-	// log entry does not survive JSON (it carries an interface, like a
-	// CardDefinition's effect nodes), so each entry is saved as the text it was
-	// narrated with plus the divider it drew. Groups persists the per-action
-	// bubbling alongside it.
-	Log    []savedLine
-	Groups []logMark
-	// Manual replays the cards manual mode added, in registration order, so the
-	// rebuilt catalog holds the same ids the state refers to.
-	Manual []manualAdd
+	// Inputs is the ordered command log: every root action and chooser answer,
+	// which replaying from a fresh deal turns back into the exact match.
+	Inputs []input
 	// UI carries the view across the reload with the match.
 	UI savedUI
 }
@@ -545,38 +544,6 @@ type savedUI struct {
 	ZonesPlayer int
 	KeysOpen    bool
 	PickerOpen  bool
-}
-
-// savedLine is one persisted log entry: the attribution it was recorded under,
-// the text it was narrated with, and — for a turn or phase header — the rule it
-// drew and the player it announced, which the entry's type no longer carries once
-// it has been through JSON.
-type savedLine struct {
-	Frame  engine.Frame
-	Text   string
-	Rule   logRule
-	Player int
-	// Standing holds an end-of-turn PlayerStanding's data, so the coloured key
-	// tally survives the reload the typed entry does not. Its fields are all
-	// JSON-safe (ints and a KeyColor slice), so the real entry is rebuilt on
-	// resume rather than flattened to the plain "N keys" text. Nil on every other
-	// line.
-	Standing *savedStanding
-}
-
-// savedStanding persists a PlayerStanding so a resumed match redraws the same
-// coloured key tally it showed before the reload instead of a plain count.
-type savedStanding struct {
-	Player int
-	Aember int
-	Keys   []engine.KeyColor
-}
-
-// manualAdd is one card manual mode put into a hand, named rather than embedded:
-// a CardDefinition carries effect nodes, which do not survive JSON.
-type manualAdd struct {
-	Name   string
-	Player int
 }
 
 // isMaverick reports whether the dealt card with this LocalID is a Maverick (a
@@ -614,4 +581,29 @@ func (g *game) clearSelection() {
 	g.hasSel = false
 	g.inspecting = false
 	g.attacker = 0
+}
+
+// clearPrompts tears down the display state of any chooser prompt — creature,
+// option, or position — that is currently up. A goroutine abandoned by a new deal
+// cannot clear its own prompt (its dispatched teardown is stale-guarded so it
+// cannot clobber the game that replaced it), so the deal that abandons it clears
+// the stale prompt here. Left set, a stale choosingOption makes the next deal's
+// await match the old flag instead of the fresh prompt.
+func (g *game) clearPrompts() {
+	g.choosing = false
+	g.chooserDeclinable = false
+	g.chooserOrdering = false
+	g.chooserPrompt = ""
+	g.chooserCandidates = nil
+	g.promptAsButtons = false
+	g.promptCursor, g.hasCursor = 0, false
+	g.btnCursor, g.hasBtnCursor = 0, false
+	g.choosingOption = false
+	g.optionPrompt = ""
+	g.optionLabels = nil
+	g.choosingPosition = false
+	g.positionLine = nil
+	g.positionRight = false
+	g.positionSideChosen = false
+	g.promptSource = ""
 }

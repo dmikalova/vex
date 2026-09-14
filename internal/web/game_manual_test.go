@@ -66,13 +66,13 @@ func TestManualControlsNeedManualMode(t *testing.T) {
 func TestManualCardControlsNeedASelection(t *testing.T) {
 	c := newClient(t)
 	c.manualTurn(testHouse)
-	before := len(c.g.undo)
+	before := len(c.g.rootMarks)
 	c.do(c.g.manualMove(engine.ManualPurge))
 	c.do(c.g.manualReady)
 	c.do(c.g.manualExhaust)
-	if len(c.g.undo) != before {
+	if len(c.g.rootMarks) != before {
 		t.Errorf("a card control with nothing selected recorded %d undo steps",
-			len(c.g.undo)-before)
+			len(c.g.rootMarks)-before)
 	}
 }
 
@@ -510,9 +510,9 @@ func TestManualAttachControlsNeedManualMode(t *testing.T) {
 	if c.g.hostTargeting {
 		t.Error("host targeting armed outside manual mode")
 	}
-	before := len(c.g.undo)
+	before := len(c.g.rootMarks)
 	c.do(c.g.manualToHand)
-	if len(c.g.undo) != before {
+	if len(c.g.rootMarks) != before {
 		t.Error("To hand acted outside manual mode")
 	}
 }

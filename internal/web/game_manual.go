@@ -32,6 +32,7 @@ func (g *game) manualMove(dest engine.ManualZone) app.EventHandler {
 			return
 		}
 		g.beginAction()
+		g.record(input{Kind: inManualMove, ID: g.sel, Index: int(dest)})
 		g.g.ManualMove(g.sel, dest)
 		g.clearSelection()
 		g.save(ctx)
@@ -44,6 +45,7 @@ func (g *game) manualReady(ctx app.Context, _ app.Event) {
 		return
 	}
 	g.beginAction()
+	g.record(input{Kind: inManualReady, ID: g.sel})
 	g.g.ManualSetExhausted(g.sel, false)
 	g.save(ctx)
 }
@@ -75,6 +77,7 @@ func (g *game) attachToHost(ctx app.Context, host engine.LocalID) {
 		return
 	}
 	g.beginAction()
+	g.record(input{Kind: inManualAttach, Card: host, ID: g.sel, Left: g.hostFaceDown})
 	g.g.ManualAttachUnder(host, g.sel, g.hostFaceDown)
 	g.hostTargeting = false
 	g.clearSelection()
@@ -114,6 +117,7 @@ func (g *game) manualPlaceInPlay(ctx app.Context, pos int) {
 		return
 	}
 	g.beginAction()
+	g.record(input{Kind: inManualPlace, ID: g.sel, Index: pos})
 	g.g.ManualPlaceInPlay(g.sel, pos)
 	g.manualPlacing = false
 	g.choosingPosition = false
@@ -140,6 +144,7 @@ func (g *game) manualToHand(ctx app.Context, _ app.Event) {
 		return
 	}
 	g.beginAction()
+	g.record(input{Kind: inManualDetach, ID: g.sel})
 	g.g.ManualDetachToHand(g.sel)
 	g.clearSelection()
 	g.save(ctx)
@@ -174,6 +179,7 @@ func (g *game) manualExhaust(ctx app.Context, _ app.Event) {
 		return
 	}
 	g.beginAction()
+	g.record(input{Kind: inManualExhaust, ID: g.sel})
 	g.g.ManualSetExhausted(g.sel, true)
 	g.save(ctx)
 }
@@ -187,6 +193,7 @@ func (g *game) manualAmberDelta(player, delta int) app.EventHandler {
 			return
 		}
 		g.beginAction()
+		g.record(input{Kind: inManualAmber, Player: player, Delta: delta})
 		g.g.ManualAddAmber(player, delta)
 		g.save(ctx)
 	}
@@ -211,6 +218,7 @@ func (g *game) manualUnforgeKey(player int) app.EventHandler {
 			return
 		}
 		g.beginAction()
+		g.record(input{Kind: inManualUnforge, Player: player})
 		g.g.ManualUnforgeKey(player)
 		g.save(ctx)
 	}
@@ -225,6 +233,7 @@ func (g *game) manualChainsDelta(player, delta int) app.EventHandler {
 			return
 		}
 		g.beginAction()
+		g.record(input{Kind: inManualChains, Player: player, Delta: delta})
 		g.g.ManualAddChains(player, delta)
 		g.save(ctx)
 	}
@@ -238,6 +247,7 @@ func (g *game) manualSetHouse(h engine.House) app.EventHandler {
 			return
 		}
 		g.beginAction()
+		g.record(input{Kind: inManualHouse, House: h})
 		g.g.ManualSetActiveHouse(h)
 		if g.phase == phaseHouse {
 			g.phase = phaseMain
@@ -253,6 +263,7 @@ func (g *game) pickForgeColor(c engine.KeyColor) app.EventHandler {
 			return
 		}
 		g.beginAction()
+		g.record(input{Kind: inManualForgeColor, Player: g.forgingKey, Index: int(c)})
 		g.g.ManualForgeKeyColor(g.forgingKey, c)
 		g.forgingKey = -1
 		g.save(ctx)
@@ -391,9 +402,9 @@ func (g *game) addCardDef(ctx app.Context, def engine.CardDefinition) {
 	g.beginAction()
 	player := g.active()
 	if _, added := g.g.ManualAddCard(def, player); added {
-		// The catalog is not part of the saved state, so record the add for a
-		// reload to replay; undo rolls the state back but not the registration.
-		g.manualAdds = append(g.manualAdds, manualAdd{Name: def.Name, Player: player})
+		// Record the add so a reload replays the registration and the rebuilt
+		// catalog hands out the same id the rest of the log refers to.
+		g.record(input{Kind: inManualAddCard, Name: def.Name, Player: player})
 	}
 	g.pickerOpen = false
 	g.save(ctx)
