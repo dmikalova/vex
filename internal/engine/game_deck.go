@@ -117,7 +117,7 @@ func (g *Game) SwapDeckAndDiscard(player int) {
 func (g *Game) Shuffle(player int) {
 	d := &g.State.Deck[player]
 	for i := int(d.Count) - 1; i > 0; i-- {
-		j := g.rng.Intn(i + 1)
+		j := g.State.PRNG.Intn(i + 1)
 		d.IDs[i], d.IDs[j] = d.IDs[j], d.IDs[i]
 	}
 }

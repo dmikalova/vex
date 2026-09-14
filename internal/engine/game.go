@@ -1,13 +1,12 @@
 package engine
 
 import (
-	"math/rand"
 	"strings"
 )
 
 // This file holds the Game object itself — the live match harness that bundles
 // the flat GameState with the read-only catalog and the surrounding services
-// (player names, choosers, RNG, log) — plus the chooser interfaces the engine
+// (player names, choosers, log) — plus the chooser interfaces the engine
 // calls when an effect must make a decision. The Game's behaviors are spread
 // across the other game_*.go files (turn, play, combat, destruction, and so on).
 
@@ -141,12 +140,12 @@ type Game struct {
 	// exploring cloned positions turns it off so the log costs nothing.
 	recording bool
 
-	// Engine services around the state: player names, per-player choosers, the
-	// read-only card catalog, and the match RNG.
+	// Engine services around the state: player names, per-player choosers, and the
+	// read-only card catalog. The match RNG is not here — it lives flat in
+	// GameState.PRNG so a snapshot captures it and replay is bit-exact (ADR 0039).
 	names    [2]string
 	choosers [2]Chooser
 	cat      *catalog
-	rng      *rand.Rand
 	// houses[p] is the set of houses in player p's deck — the houses they may choose
 	// as their active house. Empty means unknown, in which case any house is allowed
 	// (so tests and the AI need not declare deck houses). A frontend sets it so a
@@ -201,9 +200,9 @@ func NewGame(p0Name, p1Name string, seed int64) *Game {
 		names:     [2]string{p0Name, p1Name},
 		choosers:  [2]Chooser{FirstChooser{}, FirstChooser{}},
 		cat:       &catalog{},
-		rng:       rand.New(rand.NewSource(seed)),
 		recording: true,
 	}
+	g.State.PRNG = PRNG{State: uint64(seed)}
 	g.State.Winner = -1
 	return g
 }

@@ -414,17 +414,32 @@ func TestDiscardingFromHand(t *testing.T) {
 // partial active-house check that ignored the first-turn limit.
 func TestFirstTurnDiscardRestrictionMatchesPlay(t *testing.T) {
 	c := newClient(t)
-	c.startTurn() // Brobnar, the first player's barred first turn
-	var brob []engine.LocalID
-	for _, id := range c.hand() {
-		if c.g.g.Def(id).House == engine.Brobnar {
-			brob = append(brob, id)
+	// Choose an active house that has at least two cards in the opening hand, so the
+	// test has one card to spend the opening action on and a second to check the
+	// first-turn limit bars afterwards. Which house that is follows from the deal
+	// seed, so the test reads it off the hand rather than pinning a house name.
+	var active engine.House
+	var same []engine.LocalID
+	for _, h := range c.g.pickableHouses() {
+		var inHouse []engine.LocalID
+		for _, id := range c.hand() {
+			if c.g.g.Def(id).House == h {
+				inHouse = append(inHouse, id)
+			}
+		}
+		if len(inHouse) >= 2 {
+			active, same = h, inHouse
+			break
 		}
 	}
-	if len(brob) < 2 {
-		t.Fatalf("the seeded first hand needs two active-house cards, got %d", len(brob))
+	if len(same) < 2 {
+		t.Fatalf("no pickable house has two cards in the seeded first hand")
 	}
-	toDiscard, other := brob[0], brob[1]
+	c.do(c.g.pickHouse(active))
+	if c.g.phase != phaseMain {
+		t.Fatalf("after choosing %v the phase is %v, want phaseMain", active, c.g.phase)
+	}
+	toDiscard, other := same[0], same[1]
 
 	// Before the opening action an active-house card can be discarded.
 	if !c.g.discardableFromHand(other) {

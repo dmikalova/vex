@@ -580,6 +580,12 @@ type GameState struct {
 	// removal (see control.go).
 	Controls     [maxControlEntries]ControlEntry
 	ControlCount uint8
+
+	// PRNG is the match's random state (ADR 0039). Keeping it in the flat state — a
+	// single counter word — is what makes a snapshot self-contained and replay
+	// bit-exact: FastCopy captures it and re-running the command log reproduces
+	// every shuffle and random pick. See prng.go.
+	PRNG PRNG
 }
 
 // FastCopy returns an independent copy of the state. Because every field is a

@@ -87,7 +87,7 @@ func (g *Game) discardArchives(owner int) {
 	if owner == g.State.ActivePlayer {
 		ids = g.orderByChoice(owner, "Choose the order to discard your archives", ids)
 	} else {
-		g.rng.Shuffle(len(ids), func(i, j int) { ids[i], ids[j] = ids[j], ids[i] })
+		g.State.PRNG.Shuffle(len(ids), func(i, j int) { ids[i], ids[j] = ids[j], ids[i] })
 	}
 	*arc = wideList{}
 	for _, id := range ids {

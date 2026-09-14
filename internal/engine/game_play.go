@@ -312,7 +312,7 @@ func (g *Game) PlayFromOpponent(player int, from Zone) {
 		if arc.Count == 0 {
 			return
 		}
-		id := arc.IDs[g.rng.Intn(int(arc.Count))]
+		id := arc.IDs[g.State.PRNG.Intn(int(arc.Count))]
 		g.playForeign(player, id, func() { arc.remove(id) })
 	}
 }

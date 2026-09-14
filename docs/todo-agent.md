@@ -28,26 +28,34 @@ function). Glossary terms in [CONTEXT.md](../CONTEXT.md): Command, Replay,
 Session, Request, Information barrier, Projection/View. Build staged, each stage
 independently green; hotseat-first, server redaction designed-for but not built.
 
-- **Stage 1 — PRNG into `GameState`.** Replace the `*rand.Rand` on `Game` with one
-  counter-based PRNG (PCG/philox; state is one or two `uint64`s) stored in
-  `GameState`, so it is flat/comparable (ADR 0005) and captured by `FastCopy`.
-  Route every shuffle/random-select site through it. Per-player streams deferred
-  (isolation-only, additive later). This unblocks bit-exact replay.
-- **Stage 2 — suspendable step function.** Turn resolution into
-  `Advance(state, command) → (state, request, stepInfo)` that yields a thin
-  `Request` instead of pulling a `Chooser`; add on-demand `LegalCommands`/`IsLegal`
-  derived from local state; invert `Chooser` implementations (UI, `FirstChooser`,
-  MCTS bot) into `Request → Command` answerers. `stepInfo` reports information-
-  barrier crossings (PRNG step / hidden reveal). Keep `Advance` allocation-free for
-  MCTS.
-- **Stage 3 — `internal/session` driver.** New layer owning
-  `{version, seed, sets, []Command}` + undo cursor; wraps the engine; exposes
-  apply/undo/view. Undo replays 0→N, free up to the nearest information barrier,
-  consent to cross in networked mode. `internal/match` keeps match setup only.
-- **Stage 4 — projection seam.** `Project(state, viewer) → View`, identity now;
-  clients render from the View, never raw state.
+- **Stage 2 — suspendable step function.** DONE for the engine core: `Advance`
+  (via `Stepper`), thin `Request`, `Command`, `LegalCommands`/`IsLegal`, and
+  `StepInfo` live in `internal/engine/suspend.go`, reusing the existing effects
+  through a `suspendChooser` that yields a `Request` instead of pulling. The
+  synchronous `Chooser` path is deliberately kept for MCTS rollouts and tests
+  (allocation-free over `FastCopy`, per ADR 0040's consequences). The remaining
+  inversion — pointing the live UI at the suspendable path — folds into Stage 5's
+  web rewire. `StepInfo` currently flags PRNG steps; hidden-reveal detection and
+  re-deriving the legal set purely from `GameState` (Request carries the candidate
+  context today) are later refinements.
+- **Stage 3 — `internal/session` driver.** DONE as an additive package:
+  `internal/session` owns `Record{Version, Seed, Sets, []Command}` and the undo
+  cursor, wraps the engine via the Stage-2 `Stepper`, and exposes
+  `Apply`/`Undo`/`Pending`/`View`/`Record`/`Load`. Undo replays 0→N from a fresh
+  deal (state is a projection of the log, not an inverse op); `CrossesBarrier(n)`
+  reports whether an undo rewinds past an information barrier (free in hotseat,
+  consent to cross in networked play). `Setup`/`Action` are injected so the session
+  does not depend on deck generation — `internal/match` stays setup-only. The
+  driving `Action` is supplied by the caller; expressing the web's whole-game turn
+  loop as a suspendable `Action` (so root actions become `Command`s too) is part of
+  Stage 5's rewire.
 - **Stage 5 — rewire `internal/web` onto the session.** Persist only
   `{version, seed, sets, []Command, ui}` (stop serializing `GameState`); reload
   replays from 0, regenerating exact state + fully typed log; delete the lossy
   `savedLine`/`RestoredEntry` path; drop the client undo/redo stacks in favor of
   session undo. Version-tag the log and refuse on mismatch (no forward compat).
+  NOTE: this is the riskiest stage — it rewrites the web action/chooser/persist
+  path and cannot be visually verified from here. It also carries the residual
+  Stage-2 UI inversion (point the live UI at the suspendable `Stepper`) and needs
+  the whole-game turn loop expressed as a session `Action` with root-action
+  `Command`s. Approach behind the green web test suite; land incrementally.

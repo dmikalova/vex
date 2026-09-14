@@ -628,7 +628,7 @@ func (g *Game) ChooseRandom(candidates []LocalID) (LocalID, bool) {
 	if len(candidates) == 0 {
 		return 0, false
 	}
-	return candidates[g.rng.Intn(len(candidates))], true
+	return candidates[g.State.PRNG.Intn(len(candidates))], true
 }
 
 // PreviewBadge forwards a selection-badge hint to a player's client if it can
