@@ -220,14 +220,17 @@ func TestDamageThen(t *testing.T) {
 	})
 }
 
-// TestDealDamagePerHouse covers Gleeful Mayhem: one chosen creature of each house
-// in play takes the damage, houses with no creature are skipped, and a second
-// creature of an already-hit house is left untouched.
-func TestDealDamagePerHouse(t *testing.T) {
-	if err := (DealDamagePerHouse{}).validate(); err == nil {
-		t.Error("want validate error for zero Amount")
+// TestForEachHouseDealsDamagePerHouse covers Gleeful Mayhem: for each house, one
+// chosen creature of that house takes the damage, houses with no creature are
+// skipped, and a second creature of an already-hit house is left untouched.
+func TestForEachHouseDealsDamagePerHouse(t *testing.T) {
+	if err := (ForEachHouse{}).validate(); err == nil {
+		t.Error("want validate error for missing Do")
 	}
-	e := DealDamagePerHouse{Amount: 5}
+	e := ForEachHouse{Do: DealDamage{
+		Amount: 5,
+		Target: Target{Kind: TargetChosenCreature}.House(HouseMatcher{Kind: MatchEachHouse}),
+	}}
 	if got := e.Text(); got != "for each house, deal 5 damage to a creature of that house" {
 		t.Errorf("text = %q", got)
 	}

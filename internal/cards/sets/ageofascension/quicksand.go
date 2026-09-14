@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Æmber:  1
 //
-//	Play: Destroy the most powerful Creature controlled by each player who does not control a ready Untamed Creature.
+//	Play: Destroy the most powerful Creature controlled by each player who does not have a friendly ready Untamed Creature in play.
 var Quicksand = set.New(
 	"Quicksand",
 	card.House.Untamed,
@@ -19,5 +19,13 @@ var Quicksand = set.New(
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play,
-		card.DestroyMostPowerfulUnlessReadyHouse{House: card.House.Self}),
+		card.BatchDestroy{Gather: card.EachPlayerUnless{
+			Spare: card.InPlay{
+				Player: card.Controller,
+				Type:   card.Type.Creature,
+				House:  card.House.Self,
+				Ready:  true,
+			},
+			Take: card.MostPowerfulN(1),
+		}}),
 )

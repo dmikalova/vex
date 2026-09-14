@@ -21,6 +21,9 @@ var Snag = set.New(
 	card.WithTraits(card.Traits.Demon),
 	card.WithAbility(
 		card.Trigger.Fight,
-		card.OpponentMustChooseHouse{Source: card.FoughtActiveHouse},
+		card.MustChooseHouse{
+			Player:    card.Opponent,
+			Reference: card.FoughtActiveHouse,
+		},
 	),
 )

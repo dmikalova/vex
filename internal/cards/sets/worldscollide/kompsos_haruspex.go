@@ -21,7 +21,7 @@ var KompsosHaruspex = set.New(
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Priest),
 	card.WithConstant(card.ConstantAbility{
 		Target: card.Target.EachFriendlyCreature,
-		Morphs: []card.TriggerMorph{{
+		AlsoTriggers: []card.AlsoTriggersOn{{
 			From: card.Trigger.Play,
 			Onto: card.Trigger.Reap,
 		}},

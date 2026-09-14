@@ -18,7 +18,8 @@ var Foggify = set.New(
 	card.Provenance(card.CotA, "110"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.StunEnemyFighters{
-			Duration: card.Duration.OpponentNextTurn,
+		card.Trigger.Play, card.ForOpponentNextTurn{
+			On: card.Event.Fight,
+			Do: card.Stun{Target: card.Target.Triggering},
 		}),
 )

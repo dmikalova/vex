@@ -166,13 +166,6 @@ type CardDefinition struct {
 	// spends forging a key, for as long as it stays in play (The Sting).
 	GainsForgeAember bool
 
-	// GuardsOpponentForge lets this card, while in play, interrupt the opponent's
-	// key forges: when the opponent would forge a key, they name a house, a random
-	// card is revealed from this card's controller's hand, and if that card is not
-	// of the named house the card is destroyed and the forge is prevented
-	// (Keyforgery).
-	GuardsOpponentForge bool
-
 	// PlayRequirement is the Æmber the controller must have — and, when the
 	// requirement spends, gives up — to play this card from hand.
 	PlayRequirement PlayRequirement
@@ -357,6 +350,17 @@ func (kc KeyCostChange) affects(owner, target int) bool {
 	}
 }
 
+// KeywordGrant is a set of keywords an Upgrade grants to creatures around its
+// host, with the reach named explicitly: the host itself when Host is set, and
+// each of the host's battleline neighbors when Neighbors is set. Cloaking Dongle
+// grants Elusive with both set. Stating the reach here keeps host inclusion
+// explicit rather than implied by a field name.
+type KeywordGrant struct {
+	Keywords  []Keyword
+	Host      bool
+	Neighbors bool
+}
+
 // StaticModifier is a continuous change applied by an Upgrade to the creature it
 // is attached to.
 type StaticModifier struct {
@@ -381,11 +385,12 @@ type StaticModifier struct {
 	// them in addition to its own (see Game.hasKeyword).
 	Keywords []Keyword
 
-	// KeywordsToNeighbors are keywords the Upgrade grants its host creature AND
-	// each of the host's battleline neighbors — Cloaking Dongle gives the host and
-	// both its neighbors Elusive. The host gains them in addition to Keywords (see
-	// Game.hasKeyword).
-	KeywordsToNeighbors []Keyword
+	// KeywordGrants are keywords the Upgrade grants to creatures around its host,
+	// each grant naming its own reach so host inclusion is explicit rather than
+	// implied — Cloaking Dongle grants Elusive with both Host and Neighbors set, to
+	// the host and each of its battleline neighbors. The host also gains the plain
+	// Keywords above (see Game.hasKeyword).
+	KeywordGrants []KeywordGrant
 
 	// KeyCostChange is a key-cost change an Upgrade grants its host; while attached
 	// the host imposes it (e.g. "Your opponent's keys cost +2 Æmber").
@@ -436,7 +441,7 @@ func (m StaticModifier) grants() bool {
 		m.SplashAttackBonus != 0 ||
 		len(m.Granted) > 0 ||
 		len(m.Keywords) > 0 ||
-		len(m.KeywordsToNeighbors) > 0 ||
+		len(m.KeywordGrants) > 0 ||
 		m.KeyCostChange.amount != 0 ||
 		m.Replaces.valid() ||
 		m.ProtectsFromNonFlank ||
@@ -482,11 +487,11 @@ type ConstantAbility struct {
 	// used, for as long as the card stays in play — Narp stops its neighbors from
 	// reaping. It is the grantable form of CardDefinition.CannotBeUsedTo.
 	CannotBeUsedTo []UseKind
-	// Morphs are trigger morphs the card grants to every creature its Target reaches,
-	// for as long as it stays in play — Kompsos Haruspex makes each friendly
-	// creature's play effect also fire on reap. Each pair fires an ability under one
-	// trigger when another occurs (see Game.morphedTriggers).
-	Morphs []TriggerMorph
+	// AlsoTriggers are the also-triggers-on rules the card grants to every creature
+	// its Target reaches, for as long as it stays in play — Kompsos Haruspex makes
+	// each friendly creature's play effect also fire on reap. Each pair fires an
+	// ability under one trigger when another occurs (see Game.additionalTriggers).
+	AlsoTriggers []AlsoTriggersOn
 	// WhileOffFlank suspends the whole ability unless the source card is off a
 	// flank (in the interior of its controller's battleline) — Gub's "While Gub is
 	// not on a flank, it gets +5 power and gains taunt."
@@ -617,10 +622,10 @@ func NewCard(
 				))
 			}
 		}
-		for _, m := range ca.Morphs {
+		for _, m := range ca.AlsoTriggers {
 			if !m.valid() {
 				panic(fmt.Sprintf(
-					"card %q: a constant ability's trigger morph names a non-action trigger",
+					"card %q: a constant ability's also-triggers-on rule names a non-action trigger",
 					name,
 				))
 			}
@@ -857,12 +862,6 @@ func WithSpendableAember() CardOption {
 // spends forging a key, for as long as it stays in play (The Sting).
 func WithGainsForgeAember() CardOption {
 	return func(c *CardDefinition) { c.GainsForgeAember = true }
-}
-
-// WithGuardsOpponentForge makes the card interrupt the opponent's key forges
-// while it is in play (Keyforgery).
-func WithGuardsOpponentForge() CardOption {
-	return func(c *CardDefinition) { c.GuardsOpponentForge = true }
 }
 
 // WithPlayRequirement puts an Æmber requirement on playing the card, either a

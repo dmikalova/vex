@@ -129,29 +129,6 @@ func (c SourceNeighborsAllOfHouse) Met(ctx *EffectContext) bool {
 	return true
 }
 
-// AemberOnThisAtLeast is met when at least Amount Æmber sits on the source card —
-// [REDACTED] sacrifices itself once it has hoarded four or more. Wrap in Not for
-// the "fewer than Amount" sense, so Crassosaurus purges itself when it captured too
-// little.
-type AemberOnThisAtLeast struct {
-	Amount int
-}
-
-// CondText renders the at-or-above-threshold clause.
-func (c AemberOnThisAtLeast) CondText() string {
-	return fmt.Sprintf("if there are %d or more Æmber on it", c.Amount)
-}
-
-// negatedText renders the below-threshold clause a Not wrapper prints.
-func (c AemberOnThisAtLeast) negatedText() string {
-	return fmt.Sprintf("if there are fewer than %d Æmber on it", c.Amount)
-}
-
-// Met reports whether the source card holds at least Amount Æmber.
-func (c AemberOnThisAtLeast) Met(ctx *EffectContext) bool {
-	return ctx.Resolver.AmberOn(ctx.Source) >= c.Amount
-}
-
 // CountersOnThisAtLeast is met when the source card carries at least N counters of
 // Kind — The Big One wipes the board once ten or more fuse counters sit on it.
 type CountersOnThisAtLeast struct {

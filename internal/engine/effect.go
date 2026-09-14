@@ -325,6 +325,17 @@ const (
 // valid reports whether p names a real player (not the unset zero value).
 func (p Player) valid() bool { return p != playerUnset }
 
+// secondPerson renders the player in card text's second-person voice: the subject
+// ("you" or "your opponent") and the matching possessive ("your" or "their"). It
+// covers the you-or-opponent binary the restriction and house-lock effects
+// address; any other Player value reads as "you".
+func (p Player) secondPerson() (subject, possessive string) {
+	if p == Opponent {
+		return "your opponent", "their"
+	}
+	return "you", "your"
+}
+
 // SelfName is a placeholder an effect's text uses to refer to its own source
 // card; RenderCardText and the game log substitute it with the card's name so
 // text like "{self} captures 1 Æmber" prints as "Charette captures 1 Æmber".

@@ -5,6 +5,43 @@ package engine
 // itself then later plays it; Jargogle and Graft do the same shape of thing (see
 // ADR 0016 for the mechanic these effects sit on top of).
 
+// underCards returns the cards under the resolving card that satisfy keep; a nil
+// keep returns every card underneath.
+func underCards(ctx *EffectContext, keep func(id LocalID) bool) []LocalID {
+	all := ctx.Resolver.Under(ctx.Source)
+	if keep == nil {
+		return all
+	}
+	var kept []LocalID
+	for _, id := range all {
+		if keep(id) {
+			kept = append(kept, id)
+		}
+	}
+	return kept
+}
+
+// chooseUnderCard picks one card under the resolving card that satisfies keep,
+// prompting with choose only when more than one qualifies: none yields ok false,
+// and a lone card is taken without a prompt. keep may be nil to consider every card
+// underneath.
+func chooseUnderCard(
+	ctx *EffectContext,
+	prompt string,
+	keep func(id LocalID) bool,
+	choose func(prompt string, candidates []LocalID) (LocalID, bool),
+) (LocalID, bool) {
+	candidates := underCards(ctx, keep)
+	switch len(candidates) {
+	case 0:
+		return 0, false
+	case 1:
+		return candidates[0], true
+	default:
+		return choose(prompt, candidates)
+	}
+}
+
 // PutUnderFromHand has the controller choose a card from their hand and place it
 // under the resolving card, face up or face down. Masterplan and Jargogle place
 // theirs facedown; Graft always places its card faceup. Type restricts the choice
@@ -73,22 +110,13 @@ func (TriggerGraftedPlayEffect) Text() string {
 // leaving it grafted under the source. Only faceup grafted cards that carry a Play
 // ability are offered, so the choice is never a wasted one.
 func (TriggerGraftedPlayEffect) Resolve(ctx *EffectContext) {
-	var candidates []LocalID
-	for _, id := range ctx.Resolver.Under(ctx.Source) {
-		if !ctx.Resolver.UnderFaceDown(id) && ctx.Resolver.HasTrigger(id, TriggerAfterPlay) {
-			candidates = append(candidates, id)
-		}
-	}
-	if len(candidates) == 0 {
+	id, ok := chooseUnderCard(ctx, "Choose a grafted Tactic to trigger",
+		func(id LocalID) bool {
+			return !ctx.Resolver.UnderFaceDown(id) &&
+				ctx.Resolver.HasTrigger(id, TriggerAfterPlay)
+		}, ctx.ChooseCard)
+	if !ok {
 		return
-	}
-	id := candidates[0]
-	if len(candidates) > 1 {
-		var ok bool
-		id, ok = ctx.ChooseCard("Choose a grafted Tactic to trigger", candidates)
-		if !ok {
-			return
-		}
 	}
 	ctx.It, ctx.HasIt = id, true
 	ctx.Resolver.TriggerAbilityOf(ctx.Controller, id, TriggerAfterPlay)
@@ -107,17 +135,9 @@ func (PlayCardUnder) Text() string {
 
 // Resolve plays the card placed under the resolving card.
 func (PlayCardUnder) Resolve(ctx *EffectContext) {
-	candidates := ctx.Resolver.Under(ctx.Source)
-	if len(candidates) == 0 {
+	id, ok := chooseUnderCard(ctx, "Choose the card to play", nil, ctx.ChooseCreature)
+	if !ok {
 		return
-	}
-	id := candidates[0]
-	if len(candidates) > 1 {
-		var ok bool
-		id, ok = ctx.ChooseCreature("Choose the card to play", candidates)
-		if !ok {
-			return
-		}
 	}
 	ctx.Resolver.PlayFromUnder(ctx.Controller, id)
 	ctx.It, ctx.HasIt = id, true

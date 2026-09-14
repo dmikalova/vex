@@ -16,7 +16,7 @@ var InvasionPortal = set.New("Invasion Portal",
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
 		card.Trigger.Action, card.Then{
-			First: card.DiscardTopOfDeckUntil{
+			First: card.DiscardUntil{
 				Type:  card.Type.Creature,
 				House: card.House.Self,
 			},

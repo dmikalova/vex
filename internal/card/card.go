@@ -28,6 +28,11 @@ type (
 	Ability = engine.Ability
 	// StaticModifier is a continuous stat change or replacement applied by an upgrade.
 	StaticModifier = engine.StaticModifier
+	// KeywordGrant is a set of keywords an upgrade grants to creatures around its
+	// host, naming the reach explicitly with Host and Neighbors — e.g.
+	// card.KeywordGrant{Keywords: card.Keywords(card.Keyword.Elusive), Host: true,
+	// Neighbors: true}.
+	KeywordGrant = engine.KeywordGrant
 	// ConstantAbility is a continuous stat change a card applies to creatures in
 	// play. Its Target says which creatures it reaches (each creature when unset);
 	// e.g. card.Target.EachFriendlyCreature.

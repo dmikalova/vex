@@ -43,7 +43,7 @@ func (e SearchForName) resolveGate(ctx *EffectContext) bool {
 		Sources: []Zone{Deck, Discard},
 	}
 	candidates := mover.gather(ctx, func(id LocalID) bool {
-		return ctx.Resolver.Name(id) == e.Name
+		return CardFilter{Name: e.Name}.admits(ctx.Resolver, id)
 	})
 	if e.All {
 		for _, id := range candidates {

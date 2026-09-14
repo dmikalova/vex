@@ -102,3 +102,141 @@ This}` read (per ADR 0024), computed **live at read time** the way `Power`/`Armo
   flat comparable `TypeEntry{Card, Type, Source}` LIFO side-table (like the control
   stack, ADR 0028) and record the last-applied-wins precedence. No such card exists
   today; do not build the stack pre-emptively.
+
+## Curse of Forgery — "when you would forge a key" self-veto
+
+**Trigger set:** Crucible Clash (CC #214) / Vault Masters 2026 (VM26 #171) —
+whichever stands up first introduces this card. Build it then.
+
+**What it is.** A Treachery upgrade that vetoes its own controller's next forge:
+
+> Treachery.
+> When you would forge a key, purge Curse of Forgery and do not forge that
+> key (no Æmber is spent).
+
+**It reuses the Keyforgery machinery, mirrored to the forger's own side.**
+Keyforgery (Worlds Collide #271) already built the veto: a before-forge trigger
+window (`beforeForgePrevented` in `internal/engine/forge_guard.go`), the transient
+`State.ForgePrevented` flag, the `CancelForge{}` effect + `CancelCurrentForge()`
+resolver, and the `CancelForge` icon case. Keyforgery's trigger
+(`TriggerBeforeOpponentForgesKey`) gathers the window over the **opponent's**
+in-play cards. Curse of Forgery needs the **own-forge** variant:
+
+- Add a new `Trigger.BeforeYouForgeKey` (engine `TriggerBeforeForgeKey`) with its
+  own rulebook term, gathered by `beforeForgePrevented` over the **forger's own**
+  in-play cards (add a second `allInPlay(forger)` pass alongside the existing
+  opponent pass — the flag and window resolution are shared).
+- The ability is `PurgeCreature{Target: Target.This}` (purge on an artifact
+  self-target) then `CancelForge{}`, composed the same decomposed way Keyforgery is.
+- The "(no Æmber is spent)" clarifier is dropped from card text per the Keyforgery
+  divergence already recorded in
+  [keyforge-divergences.md](keyforge-divergences.md) — the veto simply leaves the
+  Æmber unspent.
+
+## House wager — generalize over polarity and payoff
+
+**Trigger set:** whichever set first stands up **Allusions of Grandeur**
+(Discovery #255 / Vault Masters 2024 #296 / 2025 #264 / 2026 #227 — all
+Unfathomable, all unimplemented). Build the generalization with that card, and
+refactor Snaglet onto it in the same change, so a second live consumer pins the
+shape.
+
+**What it is.** A **wager on the opponent's next house choice**: arm a bet now,
+settle it when the opponent locks in their active house on their next turn (or
+does not — the no-house outcome, rulebook 788, is a valid settlement). The
+scheduling half already exists and ships with Snaglet: the `constraintWager` row
+in [house_constraint.go](../internal/engine/house_constraint.go), armed by
+`WagerOnHouseNextTurn`, promoted onto the opponent's turn by `StartTurn`, and
+settled at choice time by `resolveHouseWagers` in
+[game_turn.go](../internal/engine/game_turn.go). It rides ADR 0035's delayed
+house-constraint table as a **reaction**, not a constraint — it does not restrict
+the choice, it pays out on it.
+
+**The two cards are the same machinery, mirrored on two axes:**
+
+|              | Snaglet (WC #118, built)     | Allusions of Grandeur (unbuilt)       |
+| ------------ | ---------------------------- | ------------------------------------- |
+| Arm          | choose any house             | choose a house on opp's identity card |
+| Schedule     | opponent's next house choice | opponent's next house choice          |
+| House read   | Chosen                       | Chosen                                |
+| **Polarity** | pays **on match**            | pays **on mismatch**                  |
+| **Payoff**   | **steal** 2                  | **gain** 3                            |
+
+Allusions' printed text: "Play: Choose a house on your opponent's identity card.
+If your opponent does not choose that house as their active house on their next
+turn, gain 3 Æmber." Snaglet's: "Action: Choose a house — if your opponent chooses
+that house as their active house on their next turn, steal 2 Æmber."
+
+**Design decided:**
+
+- The shared axis is **polarity + payoff, not a `HouseChoiceReference`.** Both
+  cards read the **Chosen** house — neither wagers on a Fought or JustChosen house
+  — so the wager still must **not** grow a `HouseChoiceReference` field (that stays
+  the rejected, speculative wrapper). What the second card earns is:
+  - a **polarity** flag on the wager row — pays-on-match | pays-on-mismatch — read
+    by `resolveHouseWagers` (Snaglet matches its predicted house; Allusions settles
+    when the choice is anything **other** than its house, including no-house);
+  - an **enum-tagged payoff** replacing the hardcoded `StealAember{Amount}` in
+    `resolveHouseWagers` — steal (Snaglet) vs gain (Allusions), with amount. Model
+    it the way the lasting-reaction registry keeps effects out of flat state
+    (ADR 0005, ADR 0007): a small enum-tagged payoff, **not** an `Effect` value
+    stored on the row.
+- This is the state-resident form of the naive `Then: Conditional{Cond:
+houseMatches, Then: <payoff>}` body. The body genuinely parameterizes over polarity
+  and payoff — Allusions proves it — but the **schedule and the prediction memory**
+  (predicted house, amount, predictor) must live in the flat comparable constraint
+  table, so it cannot be an inline synchronous `Then`.
+- The **arming choice** differs but is a separate concern: Allusions restricts the
+  choice to the **opponent's identity houses** (a refinement on `ChooseHouseThen`),
+  where Snaglet chooses any house. That refinement is the choosing half, not the
+  wager row — build it on the choose side.
+- When this lands, rename `WagerOpponentChoosesChosenHouse` if the match-only name
+  no longer fits the polarity-carrying node, and update its rulebook/icon coverage.
+
+## DiscardUntil — grow the from-hand-at-random source, Player, and hand-size stop
+
+**Trigger set:** whichever set first stands up a consuming card — either
+**High Street Churn** (Ekwidon, Æmber Skies #104) or **Catch and Release**
+(Unfathomable, Winds of Exchange #369 and reprints). Build each axis alongside
+its first real card.
+
+**What it is.** `DiscardUntil` (`internal/engine/effect_deck.go`) is the shared
+"discard until a condition, or the source runs out" node. Today it discards only
+from the **top of the controller's own deck** and stops on a **type/house match**
+(Sound the Horns, Invasion Portal, Old Boomy). The two future cards discard from
+**hand, at random**, one for the **opponent** and one for **each player**, and
+Catch and Release stops on a **hand-size** threshold rather than a card match. Grow
+the node's axes as each card lands — do **not** build any of these before its card
+exists (they would be uncovered).
+
+**Cards (both unimplemented, in unbuilt sets):**
+
+- **High Street Churn** — "Play: Choose a house on your opponent's identity card.
+  Your opponent discards a random card from their hand until they discard a card of
+  the chosen house or run out of cards. They refill their hand as if it were their
+  'draw cards' step."
+- **Catch and Release** — "Play: Return each creature to its owner's hand. Each
+  player discards random cards from their hand until they have 6 or fewer cards in
+  hand. Gain 2 chains."
+
+**Design decided:**
+
+- **Keep it one cohesive `DiscardUntil` node — do not build a generic
+  `Until{Condition}` combinator.** There is no other kind of "until" in the game, so
+  a general combinator is speculative; the axes below stay local to this node.
+- **`From` axis** — add a source strategy: the current top-of-deck source vs
+  **hand-at-random**. Its zero value stays top-of-deck so the three built cards are
+  untouched. High Street Churn and Catch and Release both use hand-at-random.
+- **`Player` axis** — add an explicit player (default the controller). High Street
+  Churn targets **the opponent**; Catch and Release targets **each player**. Render
+  "your opponent discards…" / "each player discards…" from the field, the way the
+  other player-bearing effects do.
+- **Terminator axis** — the current type/house match stays; add a **hand-size**
+  stop (`until they have N or fewer cards in hand`) for Catch and Release. Keep the
+  house filter **local to this node** (it already is) — do **not** add a `House`
+  axis to `CardFilter`; that overlap was the old blocker and is rejected.
+- **The house choice, the hand refill, the creature return, and the chains are
+  separate composed effects**, not part of `DiscardUntil`: High Street Churn is
+  `MustChooseHouse` (restricted to the opponent's identity houses) → `DiscardUntil`
+  → `RefillHand`; Catch and Release is `ReturnEachCreatureToHand` → per-player
+  `DiscardUntil{hand-size}` → `GainChains`. Compose them with `Sentences`.

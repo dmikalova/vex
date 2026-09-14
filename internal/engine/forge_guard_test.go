@@ -5,25 +5,35 @@ import (
 	"testing"
 )
 
-// keyforgeryCard is Keyforgery: an artifact that guards its controller against
-// the opponent's key forges.
+// keyforgeryCard is Keyforgery: an artifact that interrupts the opponent's key
+// forges through a "when your opponent would forge a key" ability.
 func keyforgeryCard() CardDefinition {
-	return NewCard("Keyforgery", Shadows, Artifact, Rare, WithGuardsOpponentForge())
+	return NewCard("Keyforgery", Shadows, Artifact, Rare, WithAbility(
+		TriggerBeforeOpponentForgesKey,
+		Sentences{Effects: []Effect{
+			OpponentNamesHouse{},
+			RevealRandomFromHand{},
+			Conditional{
+				Cond: ItIsNotOfNamedHouse{Subject: ThatCard},
+				Then: Sequence{Effects: []Effect{
+					Destroy{Target: Target{Kind: TargetThisCreature}},
+					CancelForge{},
+				}},
+			},
+		}},
+	))
 }
 
 func TestForgeGuardText(t *testing.T) {
-	if got := forgeGuardText(&CardDefinition{}); got != "" {
-		t.Errorf("forgeGuardText on a plain card = %q, want empty", got)
-	}
 	def := keyforgeryCard()
 	want := "When your opponent would forge a key, they name a house. Reveal a " +
 		"random card from your hand. If that card is not of the named house, " +
-		"destroy Keyforgery and they do not forge that key."
-	if got := forgeGuardText(&def); got != want {
-		t.Errorf("forgeGuardText = %q", got)
-	}
+		"destroy Keyforgery, and they do not forge that key."
 	if !strings.Contains(RenderCardRules(&def), want) {
-		t.Error("card rules should render the forge-guard line")
+		t.Errorf(
+			"card rules should render the before-forge ability, got:\n%s",
+			RenderCardRules(&def),
+		)
 	}
 }
 

@@ -1,6 +1,6 @@
 package engine
 
-// Duration says how long a timed effect lasts. Timed effects (see CannotFight)
+// Duration says how long a timed effect lasts. Timed effects (see Restrict)
 // take a Duration, so one effect can serve several windows as more are added —
 // the same way a Target says which cards an effect reaches.
 type Duration int

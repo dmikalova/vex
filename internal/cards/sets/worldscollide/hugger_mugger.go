@@ -29,7 +29,7 @@ var HuggerMugger = set.New(
 				Source: card.Opponent,
 			},
 			card.Conditional{
-				Cond: card.OpponentHasMoreKeys{},
+				Cond: card.HasMoreForgedKeys{Player: card.Opponent},
 				Then: card.StealAember{Amount: 1},
 			},
 		}}),

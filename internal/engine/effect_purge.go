@@ -317,7 +317,7 @@ func (c CardsPurged) CountText() string {
 // PurgedAemberBonus totals the printed Æmber bonus of the cards the most recent
 // PurgeCard removed this resolution — Infurnace's opponent loses Æmber equal to the
 // total Æmber bonus of the cards it purged. It reads as a whole phrase, not a "for
-// each" tally, so a LoseAemberEqualTo names the count directly.
+// each" tally, so a LoseAember with EqualTo names the count directly.
 type PurgedAemberBonus struct{}
 
 // Value reads the summed bonus the preceding purge recorded.

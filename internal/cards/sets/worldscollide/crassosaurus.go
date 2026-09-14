@@ -27,7 +27,11 @@ var Crassosaurus = set.New(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.CaptureFromAnyPlayer{Amount: 10},
 			card.Conditional{
-				Cond: card.Not{Cond: card.AemberOnThisAtLeast{Amount: 10}},
+				Cond: card.Not{Cond: card.CountIs{
+					Count:  card.AemberOnThis{},
+					Is:     card.AtLeast,
+					Amount: 10,
+				}},
 				Then: card.PurgeCreature{Target: card.Target.This},
 			},
 		}},

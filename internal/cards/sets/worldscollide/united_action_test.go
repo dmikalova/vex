@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //
 //	Alpha.
-//	Play: For the remainder of the turn, you may play cards from any house for which you have a card in play. You cannot use cards this turn.
+//	Play: For the remainder of the turn, you may play cards from any house for which you have a card in play. You cannot use any cards for the remainder of the turn.
 func TestUnitedAction(t *testing.T) {
 	t.Run("frees plays from controlled houses and bars using cards", func(t *testing.T) {
 		var united ct.Card

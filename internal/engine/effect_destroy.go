@@ -110,76 +110,101 @@ func (e DestroyChosen) Text() string {
 // Resolve gathers the controller's picks one at a time, then destroys them all at
 // once so their Destroyed abilities see each other still in play.
 func (e DestroyChosen) Resolve(ctx *EffectContext) {
-	picked := map[LocalID]bool{}
-	var chosen []LocalID
-	for {
-		var cands []LocalID
-		for _, id := range e.Target.Select(ctx) {
-			if !picked[id] {
-				cands = append(cands, id)
-			}
-		}
-		if len(cands) == 0 {
-			break
-		}
-		pick, ok := ctx.ChooseCardOptional("Choose a creature to destroy", cands)
-		if !ok {
-			break
-		}
-		picked[pick] = true
-		chosen = append(chosen, pick)
-	}
+	chosen := pickCards(ctx, "Choose a creature to destroy", 0, true, func() []LocalID {
+		return e.Target.Select(ctx)
+	})
 	Destroy{}.destroy(ctx, chosen)
 }
 
-// DestroyMostPowerfulUnlessReadyHouse destroys the most powerful creature
-// controlled by each player who does not control a ready creature of House —
-// Quicksand spares any player fielding a ready Untamed creature and destroys the
-// most powerful creature of everyone else. When a player's largest creatures tie,
-// the effect's controller chooses which one is destroyed.
-type DestroyMostPowerfulUnlessReadyHouse struct {
-	// House is the house whose ready creature spares its controller.
-	House House
+// Gather selects the set of creatures a BatchDestroy destroys and renders the noun
+// phrase that names them. Modeling "which creatures" as a strategy lets
+// BatchDestroy keep the one simultaneous-destruction batch while the selection axis
+// varies per card.
+type Gather interface {
+	gather(ctx *EffectContext) []LocalID
+	gatherText() string
+	validate() error
 }
 
-// validate requires an explicit house.
-func (e DestroyMostPowerfulUnlessReadyHouse) validate() error {
-	if e.House == HouseNone {
-		return fmt.Errorf("DestroyMostPowerfulUnlessReadyHouse: House must be set")
+// BatchDestroy destroys a computed set of creatures in one simultaneous batch, so
+// their Destroyed abilities see each other still in play (the KeyForge
+// simultaneous-destruction rule). Its Gather strategy picks the set and names it;
+// BatchDestroy carries out the single destruction. Reach for it whenever an effect
+// must destroy a set it has to compute — one per player, a power ranking — rather
+// than a plain Target the runtime already batches: two sequential Destroy ops would
+// break the shared batch.
+type BatchDestroy struct {
+	Gather Gather
+}
+
+// validate requires a gather strategy and defers to its configuration.
+func (e BatchDestroy) validate() error {
+	if e.Gather == nil {
+		return fmt.Errorf("BatchDestroy: Gather must be set")
+	}
+	return e.Gather.validate()
+}
+
+// Text renders "destroy <gathered set>".
+func (e BatchDestroy) Text() string { return "destroy " + e.Gather.gatherText() }
+
+// Resolve destroys the gathered set all at once so their Destroyed abilities see
+// each other still in play.
+func (e BatchDestroy) Resolve(ctx *EffectContext) {
+	Destroy{}.destroy(ctx, e.Gather.gather(ctx))
+}
+
+// EachPlayerUnless gathers, from each player not spared by a per-player board
+// condition, the creatures a refinement keeps of that player's battleline —
+// Quicksand takes each unspared player's most powerful creature. Spare is read
+// from each player's own perspective, so it names its board as the controller's
+// ("friendly"): a player fielding a match is skipped. Take then keeps the doomed
+// creatures of everyone else, with ties broken by the effect's controller.
+type EachPlayerUnless struct {
+	// Spare is the board condition that, read from a player's own perspective,
+	// exempts that player. It must be phrased as the controller's board (Player:
+	// Controller) because it is re-based onto each player in turn.
+	Spare InPlay
+	// Take keeps the doomed creatures of an unspared player's battleline.
+	Take Refinement
+}
+
+// validate requires a Take refinement and a Spare phrased from the controller's
+// perspective, since Spare is re-based onto each player in turn.
+func (g EachPlayerUnless) validate() error {
+	if g.Take == nil {
+		return fmt.Errorf("EachPlayerUnless: Take must be set")
+	}
+	if g.Spare.Player != Controller {
+		return fmt.Errorf("EachPlayerUnless: Spare must be phrased from the " +
+			"controller's perspective (Player: Controller)")
 	}
 	return nil
 }
 
-// Text renders the effect, e.g. "destroy the most powerful creature controlled by
-// each player who does not control a ready Untamed creature".
-func (e DestroyMostPowerfulUnlessReadyHouse) Text() string {
-	return "destroy the most powerful creature controlled by each player who " +
-		"does not control a ready " + e.House.String() + " creature"
+// gatherText renders the noun phrase, e.g. "the most powerful creature controlled
+// by each player who does not have a friendly ready Untamed creature in play".
+func (g EachPlayerUnless) gatherText() string {
+	return g.Take.clause("each creature") +
+		" controlled by each player who does not have " +
+		indefinite(g.Spare.noun()) + " in play"
 }
 
-// Resolve destroys the most powerful creature of each player who lacks a ready
-// creature of House, all at once so their Destroyed abilities see each other.
-func (e DestroyMostPowerfulUnlessReadyHouse) Resolve(ctx *EffectContext) {
+// gather takes the doomed creatures of each player the Spare condition does not
+// exempt. Spare is evaluated from each player's own perspective by re-basing the
+// context's controller onto that player; ties are broken by the effect's actual
+// controller, so refine reads the original context.
+func (g EachPlayerUnless) gather(ctx *EffectContext) []LocalID {
 	var doomed []LocalID
 	for p := 0; p < 2; p++ {
-		if e.controlsReadyHouse(ctx, p) {
+		pctx := *ctx
+		pctx.Controller = p
+		if g.Spare.Met(&pctx) {
 			continue
 		}
-		if ids := ctx.Resolver.Battleline(p); len(ids) > 0 {
-			doomed = append(doomed, mostPowerfulN{n: 1}.refine(ctx, ids)...)
-		}
+		doomed = append(doomed, g.Take.refine(ctx, ctx.Resolver.Battleline(p))...)
 	}
-	Destroy{}.destroy(ctx, doomed)
-}
-
-// controlsReadyHouse reports whether player p controls a ready creature of House.
-func (e DestroyMostPowerfulUnlessReadyHouse) controlsReadyHouse(ctx *EffectContext, p int) bool {
-	for _, id := range ctx.Resolver.Battleline(p) {
-		if ctx.Resolver.House(id) == e.House && !ctx.Resolver.Exhausted(id) {
-			return true
-		}
-	}
-	return false
+	return doomed
 }
 
 // DestroyEachCreatureAtEndOfTurn schedules "destroy each creature" to resolve in

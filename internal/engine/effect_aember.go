@@ -13,24 +13,35 @@ import (
 // To gain Æmber, a player moves that many Æmber from the common supply into
 // their pool — the ability's controller by default, or their opponent when the
 // card says so. A "for each" clause multiplies the amount by a running count.
+// EqualTo instead makes the gain equal a running count ("gain Æmber equal to
+// <count>", The Flex gaining half a creature's power); set EqualTo or Amount/Per,
+// not both.
 type GainAember struct {
-	Player Player
-	Amount int
-	Per    Count
+	Player  Player
+	Amount  int
+	Per     Count
+	EqualTo Count
 }
 
-// validate rejects a GainAember whose player was left unset.
+// validate rejects a GainAember whose player was left unset, or one that sets both
+// EqualTo and a fixed Amount/Per (two different ways to say how much to gain).
 func (e GainAember) validate() error {
 	if !e.Player.valid() {
 		return errUnsetPlayer("GainAember")
 	}
+	if e.EqualTo != nil && (e.Amount != 0 || e.Per != nil) {
+		return errors.New("GainAember: set EqualTo or Amount/Per, not both")
+	}
 	return nil
 }
 
-// Text renders the effect, e.g. "gain 1 Æmber" or "your opponent gains 2 Æmber".
-// A "for each" count leads the sentence (rule 9), e.g. "for each key your opponent
-// has forged, gain 1 Æmber".
+// Text renders the effect, e.g. "gain 1 Æmber", "your opponent gains 2 Æmber", or
+// "gain Æmber equal to half its power, rounded down". A "for each" count leads the
+// sentence (rule 9), e.g. "for each key your opponent has forged, gain 1 Æmber".
 func (e GainAember) Text() string {
+	if e.EqualTo != nil {
+		return e.gainVerb() + " Æmber equal to " + e.EqualTo.CountText()
+	}
 	phrase := fmt.Sprintf("gain %d Æmber", e.Amount)
 	switch e.Player {
 	case Opponent:
@@ -43,6 +54,19 @@ func (e GainAember) Text() string {
 		phrase = fmt.Sprintf("its controller gains %d Æmber", e.Amount)
 	}
 	return forEach(e.Per, phrase)
+}
+
+// gainVerb renders the subject and verb for an equal-to gain, whose only player
+// forms are the controller, the opponent, and each player.
+func (e GainAember) gainVerb() string {
+	switch e.Player {
+	case Opponent:
+		return "your opponent gains"
+	case EachPlayer:
+		return "each player gains"
+	default:
+		return "gain"
+	}
 }
 
 // Resolve adds the Æmber to the selected player's pool. EachPlayer pays both
@@ -61,64 +85,22 @@ func (e GainAember) Resolve(ctx *EffectContext) {
 	e.gain(ctx, ctx.PlayerFor(e.Player))
 }
 
+// amount is the Æmber this gain is worth as seen from ctx: a running count when
+// EqualTo is set, otherwise the fixed Amount scaled by an optional Per.
+func (e GainAember) amount(ctx *EffectContext) int {
+	if e.EqualTo != nil {
+		return e.EqualTo.Value(ctx)
+	}
+	return scaled(e.Amount, e.Per, ctx)
+}
+
 // gain hands p the Æmber this effect is worth as seen from ctx, honouring a
-// capture that replaces the gain.
+// capture that replaces the gain. An equal-to count of zero or less gains nothing.
 func (e GainAember) gain(ctx *EffectContext, p int) {
-	amount := scaled(e.Amount, e.Per, ctx)
-	if capturer, ok := ctx.Resolver.GainAember(p, amount); ok {
-		ctx.Resolver.Record(AemberCapturedInsteadOfGain{
-			Creature: capturer,
-			Player:   p,
-			Amount:   amount,
-		})
+	amount := e.amount(ctx)
+	if e.EqualTo != nil && amount <= 0 {
 		return
 	}
-	ctx.Resolver.Record(AemberGained{
-		Player: p,
-		Amount: amount,
-	})
-}
-
-// GainAemberEqualTo has a player gain Æmber equal to a running count rather than a
-// fixed amount, so the sentence reads "gain Æmber equal to <count>" instead of the
-// "for each" phrasing GainAember's Per produces (The Flex gains half a creature's
-// power).
-type GainAemberEqualTo struct {
-	Player Player
-	Count  Count
-}
-
-// validate rejects a GainAemberEqualTo whose player or count was left unset.
-func (e GainAemberEqualTo) validate() error {
-	if !e.Player.valid() {
-		return errUnsetPlayer("GainAemberEqualTo")
-	}
-	if e.Count == nil {
-		return errors.New("GainAemberEqualTo: Count is required")
-	}
-	return nil
-}
-
-// Text renders the effect, e.g. "gain Æmber equal to half its power, rounded down".
-func (e GainAemberEqualTo) Text() string {
-	verb := "gain"
-	switch e.Player {
-	case Opponent:
-		verb = "your opponent gains"
-	case EachPlayer:
-		verb = "each player gains"
-	}
-	return verb + " Æmber equal to " + e.Count.CountText()
-}
-
-// Resolve gives the selected player Æmber equal to the count, honouring a capture
-// that replaces the gain. A zero or negative count gains nothing.
-func (e GainAemberEqualTo) Resolve(ctx *EffectContext) {
-	amount := e.Count.Value(ctx)
-	if amount <= 0 {
-		return
-	}
-	p := ctx.PlayerFor(e.Player)
 	if capturer, ok := ctx.Resolver.GainAember(p, amount); ok {
 		ctx.Resolver.Record(AemberCapturedInsteadOfGain{
 			Creature: capturer,
@@ -145,8 +127,8 @@ func aemberLosers(ctx *EffectContext, player Player) []int {
 // loseAemberFrom drains amountFor(p) Æmber from each player p, floored at their
 // pool so it never goes below zero, tallying each loss (read by a ProducedThisWay
 // with TallyAemberLost) and narrating it, and reports whether any Æmber left a
-// pool (so a LoseAember can gate a Then). It is the one loss step LoseAember and
-// LoseAemberEqualTo share.
+// pool (so a LoseAember can gate a Then). It is the one loss step every LoseAember
+// shares, whether it loses a fixed amount, a By share, or a count via EqualTo.
 func loseAemberFrom(ctx *EffectContext, players []int, amountFor func(p int) int) bool {
 	moved := false
 	for _, p := range players {
@@ -159,49 +141,6 @@ func loseAemberFrom(ctx *EffectContext, players []int, amountFor func(p int) int
 		ctx.Resolver.Record(AemberLost{Player: p, Amount: lost})
 	}
 	return moved
-}
-
-// LoseAemberEqualTo has a player lose Æmber equal to a running count rather than a
-// fixed amount, so the sentence reads "loses Æmber equal to <count>" (Power of Fire
-// makes each player lose half the sacrificed creature's power). Player may be
-// EachPlayer, so both players lose.
-type LoseAemberEqualTo struct {
-	Player Player
-	Count  Count
-}
-
-// validate rejects a LoseAemberEqualTo whose player or count was left unset.
-func (e LoseAemberEqualTo) validate() error {
-	if !e.Player.valid() {
-		return errUnsetPlayer("LoseAemberEqualTo")
-	}
-	if e.Count == nil {
-		return errors.New("LoseAemberEqualTo: Count is required")
-	}
-	return nil
-}
-
-// Text renders the effect, e.g. "each player loses Æmber equal to half its power,
-// rounded down".
-func (e LoseAemberEqualTo) Text() string {
-	verb := "lose"
-	switch e.Player {
-	case Opponent:
-		verb = "your opponent loses"
-	case EachPlayer:
-		verb = "each player loses"
-	}
-	return verb + " Æmber equal to " + e.Count.CountText()
-}
-
-// Resolve removes Æmber equal to the count from each affected player's pool, never
-// taking a pool below zero. A zero or negative count loses nothing.
-func (e LoseAemberEqualTo) Resolve(ctx *EffectContext) {
-	amount := e.Count.Value(ctx)
-	if amount <= 0 {
-		return
-	}
-	loseAemberFrom(ctx, aemberLosers(ctx, e.Player), func(int) int { return amount })
 }
 
 // A Loss says how much Æmber to remove from a pool when the amount depends on the
@@ -270,8 +209,9 @@ func aemberObject(amount int, by Loss, possessive string) string {
 // To lose Æmber, a player returns that many Æmber from their pool to the common
 // supply. A pool can never go below zero, so a player told to lose more Æmber than
 // they have simply loses all of it. Player may be EachPlayer, so both players lose.
-// The amount lost is either a fixed Amount or a By loss of the pool (By: HalfRoundedDown,
-// By: AllBut(5)) — set one, not both.
+// The amount lost is a fixed Amount, a By loss of the pool (By: HalfRoundedDown,
+// By: AllBut(5)), or a running count via EqualTo ("lose Æmber equal to <count>",
+// Power of Fire) — set exactly one.
 type LoseAember struct {
 	// Player is whose pool loses; the amount is either a fixed Amount or a By loss of
 	// the pool (set one, not both).
@@ -281,20 +221,42 @@ type LoseAember struct {
 	// Per scales a fixed Amount by a running count, the way GainAember does
 	// — Phylyx the Disintegrator drains 1 per other friendly Mars creature.
 	Per Count
+	// EqualTo makes the loss equal a running count instead of a fixed Amount/By,
+	// so the sentence reads "lose Æmber equal to <count>" (Power of Fire drains half
+	// the sacrificed creature's power). Set EqualTo or Amount/By/Per, not both.
+	EqualTo Count
 }
 
 // validate rejects a LoseAember with no player, or one that sets both a fixed
-// Amount and a By loss (the two are different ways to say how much to lose).
+// Amount and a By loss (the two are different ways to say how much to lose), or one
+// that sets EqualTo alongside a fixed Amount/By/Per.
 func (e LoseAember) validate() error {
 	if !e.Player.valid() {
 		return errUnsetPlayer("LoseAember")
 	}
+	if e.EqualTo != nil {
+		if e.Amount != 0 || e.By != nil || e.Per != nil {
+			return errors.New("LoseAember: set EqualTo or Amount/By/Per, not both")
+		}
+		return nil
+	}
 	return errAmountOr("LoseAember", "By", e.Amount, e.By != nil)
 }
 
-// Text renders the effect, e.g. "lose 1 Æmber", "your opponent loses 4 Æmber", or
-// "each player with 6 Æmber or more loses all but 5 Æmber".
+// Text renders the effect, e.g. "lose 1 Æmber", "your opponent loses 4 Æmber",
+// "each player with 6 Æmber or more loses all but 5 Æmber", or "each player loses
+// Æmber equal to half its power, rounded down".
 func (e LoseAember) Text() string {
+	if e.EqualTo != nil {
+		verb := "lose"
+		switch e.Player {
+		case Opponent:
+			verb = "your opponent loses"
+		case EachPlayer:
+			verb = "each player loses"
+		}
+		return verb + " Æmber equal to " + e.EqualTo.CountText()
+	}
 	var subject, verb, possessive string
 	switch e.Player {
 	case EachPlayer:
@@ -333,9 +295,13 @@ func (e LoseAember) resolveGate(ctx *EffectContext) bool {
 	})
 }
 
-// amountFor is how much the given player loses: the By loss applied to their pool
-// when set, otherwise the fixed Amount scaled by Per.
+// amountFor is how much the given player loses: a running count when EqualTo is set
+// (floored at zero), the By loss applied to their pool when set, otherwise the
+// fixed Amount scaled by Per.
 func (e LoseAember) amountFor(ctx *EffectContext, p int) int {
+	if e.EqualTo != nil {
+		return max(0, e.EqualTo.Value(ctx))
+	}
 	return poolAmount(e.Amount, e.By, e.Per, ctx, ctx.Resolver.Aember(p))
 }
 

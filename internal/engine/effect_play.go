@@ -178,3 +178,22 @@ func (e PlayFromOpponent) Text() string {
 func (e PlayFromOpponent) Resolve(ctx *EffectContext) {
 	ctx.Resolver.PlayFromOpponent(ctx.Controller, e.From)
 }
+
+// PlayItFromOpponentDiscard plays the card in context (ctx.It — put there by a
+// preceding discard) from the opponent's discard pile as the controller's own —
+// Fidgit plays the card it discarded when that card is a Tactic. It does nothing
+// when no card is in context.
+type PlayItFromOpponentDiscard struct{}
+
+// validate accepts the effect; it has no configuration.
+func (PlayItFromOpponentDiscard) validate() error { return nil }
+
+// Text renders the effect.
+func (PlayItFromOpponentDiscard) Text() string { return "play it as if it were yours" }
+
+// Resolve plays the context card from the opponent's discard pile.
+func (PlayItFromOpponentDiscard) Resolve(ctx *EffectContext) {
+	if ctx.HasIt {
+		ctx.Resolver.PlayFromOpponentDiscard(ctx.Controller, ctx.It)
+	}
+}

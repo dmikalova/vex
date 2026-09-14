@@ -133,7 +133,6 @@ func (g *Game) readyPhase(player int) {
 		g.State.Cards[id].KeywordsUntilNextTurn = 0
 	}
 	g.State.CannotFight[player] = Bar[bool]{}
-	g.State.StunFighter[player] = Bar[bool]{}
 	g.State.CannotUse[player] = Bar[bool]{}
 	g.State.SideDamageImmune = [2]bool{}
 	g.State.CannotReap[player] = Bar[bool]{}

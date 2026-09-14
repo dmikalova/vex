@@ -23,7 +23,11 @@ var REDACTED = set.New(
 			Then: card.Sentences{Effects: []card.Effect{
 				card.PlaceAemberOnThis{Amount: 1},
 				card.Conditional{
-					Cond: card.AemberOnThisAtLeast{Amount: 4},
+					Cond: card.CountIs{
+						Count:  card.AemberOnThis{},
+						Is:     card.AtLeast,
+						Amount: 4,
+					},
 					Then: card.ForgeKey{FreeOfCost: true},
 				},
 			}},

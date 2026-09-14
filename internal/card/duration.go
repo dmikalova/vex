@@ -3,7 +3,7 @@ package card
 import "github.com/dmikalova/vactrol/internal/engine"
 
 // Duration groups the spans a timed effect can last, e.g.
-// card.Duration.OpponentNextTurn (see card.CannotFight). It mirrors the
+// card.Duration.OpponentNextTurn (see card.Restrict). It mirrors the
 // engine's duration.go.
 var Duration = durations{
 	RemainderOfPlayerTurn: engine.RemainderOfPlayerTurn,

@@ -569,7 +569,11 @@ func (s *style) glyphVocabSection() app.UI {
 			Target: engine.Target{Kind: engine.TargetChosenEnemyCreature},
 		}},
 		{"Draw 2 cards", []string{"glyph-reap"}, engine.Draw{Amount: 2}},
-		{"A creature cannot fight", []string{"glyph-action"}, engine.CannotFight{}},
+		{"A creature cannot fight", []string{"glyph-action"}, engine.Restrict{
+			Player:   engine.Opponent,
+			Action:   engine.RestrictFighting,
+			Duration: engine.OpponentNextTurn,
+		}},
 		{
 			"Look at the top card of your deck",
 			[]string{"glyph-play"},

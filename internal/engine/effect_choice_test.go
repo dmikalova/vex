@@ -80,6 +80,34 @@ func TestChooseHouseThen(t *testing.T) {
 	}
 }
 
+// TestOpponentNamesHouse covers the opponent naming a house onto the context, and
+// the guard when a misbehaving chooser returns an out-of-range option.
+func TestOpponentNamesHouse(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	// The opponent of controller 0 is player 1; they name the house.
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	e := OpponentNamesHouse{}
+	if e.Text() != "they name a house" {
+		t.Errorf("text = %q", e.Text())
+	}
+
+	// Logos is the third house (option index 2); it lands on the context.
+	g.SetChooser(1, optionPicker{idx: 2})
+	e.Resolve(ctx)
+	if ctx.ChosenHouse != Logos {
+		t.Errorf("named house = %v, want Logos", ctx.ChosenHouse)
+	}
+
+	// An out-of-range choice names no house, leaving the context unchanged.
+	ctx.ChosenHouse = HouseNone
+	g.SetChooser(1, optionPicker{idx: 99})
+	e.Resolve(ctx)
+	if ctx.ChosenHouse != HouseNone {
+		t.Errorf("out-of-range choice named %v, want HouseNone", ctx.ChosenHouse)
+	}
+}
+
 func TestChooseHouseThenGuardsAndValidate(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	mars := g.AddToBattleline(NewCard("m", Mars, Creature, Common, WithPower(3)), 0)

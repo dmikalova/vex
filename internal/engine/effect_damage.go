@@ -68,55 +68,6 @@ func (damageOnIt) perTargetValue(ctx *EffectContext, id LocalID) int {
 
 func (damageOnIt) perTargetText() string { return "point of damage on it" }
 
-// DealDamagePerHouse deals Amount damage to one creature of each house — Gleeful
-// Mayhem's "for each house, deal 5 damage to a creature of that house". It walks
-// the houses in order; for each with a creature in play the controller chooses one
-// of that house and it takes the damage, each house's hit resolving on its own so
-// a creature destroyed for one house cannot be picked again. Houses with no
-// creature in play are skipped.
-type DealDamagePerHouse struct {
-	// Amount is the damage dealt to each chosen creature; the zero value is an
-	// authoring error.
-	Amount int
-}
-
-// validate rejects a non-positive Amount.
-func (e DealDamagePerHouse) validate() error {
-	if e.Amount < 1 {
-		return fmt.Errorf("DealDamagePerHouse: Amount must be at least 1")
-	}
-	return nil
-}
-
-// Text renders the effect.
-func (e DealDamagePerHouse) Text() string {
-	return fmt.Sprintf("for each house, deal %d damage to a creature of that house", e.Amount)
-}
-
-// Resolve deals Amount damage to one chosen creature of each house that has one
-// in play, house by house in canonical order.
-func (e DealDamagePerHouse) Resolve(ctx *EffectContext) {
-	for h := Brobnar; h <= Untamed; h++ {
-		var cands []LocalID
-		for _, p := range []int{ctx.Controller, ctx.Opponent()} {
-			for _, id := range ctx.Resolver.Battleline(p) {
-				if ctx.Resolver.House(id) == h {
-					cands = append(cands, id)
-				}
-			}
-		}
-		if len(cands) == 0 {
-			continue
-		}
-		id, ok := ctx.ChooseCreature(
-			"Choose a "+h.String()+" creature to deal damage to", cands)
-		if !ok {
-			continue
-		}
-		ctx.dealDamage([]DamageTarget{{ID: id, Amount: e.Amount}})
-	}
-}
-
 // validate requires an explicit target, or a Spread that supplies its own.
 func (e DealDamage) validate() error {
 	if e.Spread != nil {
@@ -503,18 +454,17 @@ func (s DifferentCreatures) spreadText() string {
 		s.First, s.Second)
 }
 
-// hits chooses a creature and a different creature. With only one creature in
-// play, the different creature cannot be chosen and only the first is hit.
+// hits picks as many distinct creatures as the positional amounts name, each pick
+// excluding the ones before it (pickCards never repeats). With only one creature
+// in play, the different creature cannot be chosen and only the first is hit.
 func (s DifferentCreatures) hits(ctx *EffectContext) []DamageTarget {
-	chosen := (Target{Kind: TargetChosenCreature}).Select(ctx)
-	if len(chosen) == 0 {
-		return nil
-	}
-	out := []DamageTarget{{ID: chosen[0], Amount: s.First}}
-	if others := creaturesExcept(ctx, chosen[0]); len(others) > 0 {
-		if id, ok := ctx.ChooseCreature("Choose a different creature", others); ok {
-			out = append(out, DamageTarget{ID: id, Amount: s.Second})
-		}
+	amounts := []int{s.First, s.Second}
+	pool := Target{Kind: TargetEachCreature}
+	picked := pickCards(ctx, "Choose a creature to deal damage to", len(amounts), false,
+		func() []LocalID { return pool.Select(ctx) })
+	out := make([]DamageTarget, 0, len(picked))
+	for i, id := range picked {
+		out = append(out, DamageTarget{ID: id, Amount: amounts[i]})
 	}
 	return out
 }
@@ -560,34 +510,20 @@ func (s UpToCreatures) spreadText() string {
 	return fmt.Sprintf("deal %d damage to up to %d %s", s.Amount, s.Count, noun)
 }
 
-// hits asks for creatures one at a time, up to Count, excluding those already
-// chosen (and, when Undamaged is set, any that already carry damage), stopping
-// when the controller declines or none remain. WhenDamaged raises the amount for a
-// creature that already carries damage before this batch resolves.
+// hits asks for creatures one at a time, up to Count, stopping when the controller
+// declines or none remain. Undamaged narrows the pool through the shared
+// Target.Undamaged() refinement. WhenDamaged raises the amount for a creature that
+// already carries damage before this batch resolves.
 func (s UpToCreatures) hits(ctx *EffectContext) []DamageTarget {
-	chosen := map[LocalID]bool{}
-	var out []DamageTarget
-	for len(out) < s.Count {
-		var cands []LocalID
-		for p := 0; p < 2; p++ {
-			for _, id := range ctx.Resolver.Battleline(p) {
-				if chosen[id] {
-					continue
-				}
-				if s.Undamaged && ctx.Resolver.Damage(id) > 0 {
-					continue
-				}
-				cands = append(cands, id)
-			}
-		}
-		if len(cands) == 0 {
-			break
-		}
-		id, ok := ctx.ChooseCardOptional("Choose a creature", cands)
-		if !ok {
-			break
-		}
-		chosen[id] = true
+	pool := Target{Kind: TargetEachCreature}
+	if s.Undamaged {
+		pool = pool.Undamaged()
+	}
+	picked := pickCards(ctx, "Choose a creature", s.Count, true, func() []LocalID {
+		return pool.Select(ctx)
+	})
+	out := make([]DamageTarget, 0, len(picked))
+	for _, id := range picked {
 		amount := s.Amount
 		if s.WhenDamaged != 0 && ctx.Resolver.Damage(id) > 0 {
 			amount = s.WhenDamaged

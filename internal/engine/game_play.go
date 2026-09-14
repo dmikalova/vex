@@ -643,17 +643,6 @@ func (g *Game) discardFromHand(owner int, id LocalID) {
 	}
 }
 
-// randomCardFromHand returns a uniformly random card from a player's hand,
-// reporting ok=false when the hand is empty. It is the shared pick behind
-// revealing a random card from hand (Forge Guard).
-func (g *Game) randomCardFromHand(owner int) (LocalID, bool) {
-	hand := &g.State.Hand[owner]
-	if hand.Count == 0 {
-		return 0, false
-	}
-	return hand.IDs[g.rng.Intn(int(hand.Count))], true
-}
-
 // inActiveHouse reports whether a card of the given definition matches the
 // active house for the purpose of PLAYING or discarding it from hand: true when
 // the card's own house is the active house. A player at No House — locked out of

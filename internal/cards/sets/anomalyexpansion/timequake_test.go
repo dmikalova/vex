@@ -14,7 +14,7 @@ import (
 //	Rarity: Special
 //	Æmber:  1
 //
-//	Play: Shuffle each friendly card in play into your deck. Draw a card for each card shuffled into your deck this way.
+//	Play: Shuffle each friendly card in play into your deck. For each card shuffled into your deck this way, draw a card.
 func TestTimequake(t *testing.T) {
 	t.Run(
 		"shuffles every friendly card in play into the deck and redraws that many",

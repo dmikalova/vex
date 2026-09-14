@@ -14,6 +14,15 @@ The precedence rule is fixed. Vactrol wins where Vactrol has decided. The
 only for what Vactrol has not decided. A later "match KeyForge" never silently
 overwrites a divergence recorded here.
 
+Matching the printed KeyForge text is not a goal in itself, and is never a
+blocker. **Template consistency and simplicity across Vactrol outrank exact
+KeyForge wording.** A meaning-preserving reword that puts a card in the same voice
+and template as the rest of Vactrol — or that lets a mechanic decompose into
+shared nodes rather than a bespoke one — is welcome, and does **not** earn a row
+below: this register catalogs departures that change a **rule or a name**, not
+pure house-voice alignment. Record a reword here only when it changes what a card
+does or what something is called.
+
 ## Wording divergences
 
 Each of these is a wording convention that changes a rule or a name, not just
@@ -36,6 +45,8 @@ answers "where does Vactrol diverge from KeyForge, and why".
 | A turn `step` is named a `phase`                              | rule 28 | [ADR 0012](adr/0012-first-class-turn-phases.md)       |
 | Fight timing is named `in a fight with`                       | rule 29 | one phrase for the fight timing window                |
 | A count cap is dropped — `(to a maximum of N)` is removed     | rule 30 | Vactrol has no count cap; the count is uncapped       |
+| Timed "cannot use" restrictions share one phrasing            | rule 32 | one `Restrict` node, one duration phrase              |
+| House-scoped reap bar reads in the shared "cannot use" voice  | rule 32 | Seismo-entangler folds into `Restrict`                |
 
 ## Per-card rule changes
 
@@ -127,7 +138,7 @@ Brobnar card or choose to stop -> deal 2 damage to Old Boomy. Archive each card
 discarded this way`, not KeyForge's `Reveal cards from the top of your deck until
 you reveal a Brobnar card or choose to stop. Deal 2 damage to Old Boomy if a
 Brobnar card was revealed. Archive each card revealed this way`. Vactrol folds the
-  card into the shared deck-dig family (`DiscardTopOfDeckUntil`, the same node Sound
+  card into the shared deck-dig family (`DiscardUntil`, the same node Sound
   the Horns and Invasion Portal use) instead of a bespoke reveal-and-archive loop:
   each card is discarded as the dig walks the deck, then the whole run is archived as
   a distinct step (`ArchiveDiscardedThisWay`). The end state is identical — every

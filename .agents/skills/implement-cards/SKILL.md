@@ -96,9 +96,12 @@ card:
    `ChooseOne`, `Conditional`, `Then`). Grep the effect files or a similar
    existing card to confirm a primitive's exact fields before using it. An easy
    card is built directly (_Implementing one card_ below).
-2. **A gated card needs a mechanic that does not exist yet** — a new effect,
-   target filter, count, refinement, condition, or cross-turn hook. Build the
-   mechanic (_Building a mechanic_ below), then implement the card on top of it.
+2. **A gated card needs a mechanic that does not exist yet** — usually a new
+   field, `Strategy`, target filter, count, refinement, condition, or cross-turn
+   hook, which you build directly (_Building a mechanic_ below). A gate that would
+   need a **brand-new effect node** is different: it is subject to the new-node
+   grill gate (_Building a mechanic_), so do **not** add the node until it clears.
+   Then implement the card on top of the mechanic.
 3. **After a mechanic lands, cash it in.** Before returning to strict `nextCard`
    order, implement any other unimplemented card that the same mechanic now
    unblocks — that is what makes it a mechanic instead of a one-off. Use the
@@ -121,6 +124,38 @@ suite. Add `mage build` when a change spans packages. Only the two targeted test
 matter per card; save `mage check` for step 3.
 
 ### Building a mechanic
+
+**A new effect node is a last resort, gated behind a grill.** Extending the
+engine in reasonable, composable ways needs no ceremony — a new field or
+`Strategy` (a `Chooser`, `Refinement`, `Count`, or `Condition`), a new `Target`
+filter, or a new count on an existing effect is the normal way a set grows the
+engine, and you just build it. But **introducing a brand-new `Effect` node in the
+AST — or cramming a mechanic into an existing node in a way that is not clean and
+composable — is forbidden until you have run a full grill-me session** (the
+`grilling` skill) and the human has signed off. The engine's whole design is that
+behaviour composes from a small vocabulary of self-rendering nodes (ADR 0006); a
+new node widens that vocabulary permanently, so it must be argued for, not slipped
+in. Reaching a genuine new-node need is one of the **authorized reasons to pause
+the run** — unlike a status check-in, which is never allowed — so present the
+grill and stop. Put the questions in the reply as end-of-turn plain text (the
+`❓`/`➡️` convention in [docs/todo-agent.md](../../../docs/todo-agent.md)), not
+through an interactive tool. The grill must put on the table:
+
+- **Why it is necessary** — the mechanic the existing nodes genuinely cannot
+  express, not merely a shape that would be more convenient as its own node.
+- **The example cards** — the cluster of real cards (this set and future) that
+  need it, with their printed text, so the node is shaped for the whole group.
+- **Alternatives rejected** — what a new field, `Strategy`, filter, or count on an
+  existing node would look like, and precisely why it does not work (composition
+  lost, an illegal state made representable, wording it cannot render).
+- **A before/after comparison** — how the affected cards author today (or the ugly
+  cram) versus how they author on the proposed node, so the win is concrete.
+
+If the grill does not clearly land in favour of the new node, extend an existing
+one instead. When in doubt — when the extension feels like a cram rather than a
+clean fit — stop and grill rather than pushing it in.
+
+Once the node is justified (or you are extending an existing one cleanly):
 
 1. **Shape it for the whole cluster, not the first card.** Name and shape the
    mechanic so every card that wants it can use it. Prefer the cheapest engine
@@ -243,7 +278,10 @@ contention rather than serializing:
   over the cards those primitives just unblocked. Overlapping a card-agent wave
   with an in-flight engine refactor is the main source of wasted time — the
   refactor breaks the shared build mid-wave and every card agent stalls on a
-  failure that is not theirs.
+  failure that is not theirs. A **brand-new effect node is never added inside a
+  subagent** — it is gated behind the human grill (_Building a mechanic_), so a
+  mechanics phase that discovers it needs one surfaces it to the orchestrator to
+  grill the human, rather than adding the node on its own.
 - **Batch the primitives, not one-per-wave.** A mechanics phase that lands one
   primitive unblocks ~3 cards and pays the full reconcile cost for them. Group the
   triage's medium/gated cards by the primitive they share and have the mechanics

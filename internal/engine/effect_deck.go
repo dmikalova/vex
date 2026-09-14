@@ -131,18 +131,43 @@ func (e DiscardTop) Text() string {
 // and, when exactly one card is discarded, binding it as ctx.It for a single-card
 // follow-up.
 func (e DiscardTop) Resolve(ctx *EffectContext) {
-	ctx.Produced.Discarded = nil
+	resetDiscardedThisWay(ctx)
 	for _, player := range e.decks(ctx) {
 		for range e.count() {
 			if id, ok := ctx.Resolver.DiscardTopOfDeck(player); ok {
-				ctx.Produced.Discarded = append(ctx.Produced.Discarded, id)
+				recordDiscardedThisWay(ctx, id)
 			}
 		}
 	}
-	if len(ctx.Produced.Discarded) == 1 {
-		ctx.It, ctx.HasIt = ctx.Produced.Discarded[0], true
+	if run := discardedThisWay(ctx); len(run) == 1 {
+		ctx.It, ctx.HasIt = run[0], true
 	} else {
 		ctx.It, ctx.HasIt = 0, false
+	}
+}
+
+// The "discarded this way" binding is the run of cards a dig (DiscardTop,
+// DiscardUntil) or a hand/archives discard (DiscardCard) sets aside for a
+// following ForEachDiscarded or ArchiveDiscardedThisWay to act on. These four
+// helpers are the only code that names the underlying ctx.Produced.Discarded field,
+// so producers and consumers share one seam.
+
+// resetDiscardedThisWay clears the recorded run at the start of a dig or discard.
+func resetDiscardedThisWay(ctx *EffectContext) { ctx.Produced.Discarded = nil }
+
+// recordDiscardedThisWay adds a card to the run the current dig or discard is
+// building.
+func recordDiscardedThisWay(ctx *EffectContext, id LocalID) {
+	ctx.Produced.Discarded = append(ctx.Produced.Discarded, id)
+}
+
+// discardedThisWay returns the cards recorded on the context so far.
+func discardedThisWay(ctx *EffectContext) []LocalID { return ctx.Produced.Discarded }
+
+// forEachDiscardedThisWay runs fn for each card a preceding dig or discard recorded.
+func forEachDiscardedThisWay(ctx *EffectContext, fn func(id LocalID)) {
+	for _, id := range ctx.Produced.Discarded {
+		fn(id)
 	}
 }
 
@@ -173,13 +198,13 @@ func (e ForEachDiscarded) Text() string {
 // Resolve runs Do for each discarded card (of the House filter when set), in
 // context as ctx.It.
 func (e ForEachDiscarded) Resolve(ctx *EffectContext) {
-	for _, id := range ctx.Produced.Discarded {
+	forEachDiscardedThisWay(ctx, func(id LocalID) {
 		if e.House != HouseNone && ctx.Resolver.House(id) != e.House {
-			continue
+			return
 		}
 		ctx.It, ctx.HasIt = id, true
 		e.Do.Resolve(ctx)
-	}
+	})
 }
 
 // chooseFromTopOfDeck is the shared core behind LookAtTopOfDeck and RevealTopOfDeck.
@@ -562,7 +587,7 @@ func resolverInPlay(ctx *EffectContext, id LocalID) bool {
 	return false
 }
 
-// DiscardTopOfDeckUntil digs through the top of your deck, discarding as it goes,
+// DiscardUntil digs through the top of your deck, discarding as it goes,
 // until it turns up a card the filters admit or the deck runs out. With MayStop the
 // controller may also stop the dig before a match, so the terminator reads "or
 // choose to stop". Every discarded card is recorded on the context
@@ -571,7 +596,7 @@ func resolverInPlay(ctx *EffectContext, id LocalID) bool {
 // Horns and Invasion Portal pair it with PutDiscardedIntoHand; Old Boomy archives
 // the run with ArchiveDiscardedThisWay and, when it discards a card of its house,
 // deals itself damage.
-type DiscardTopOfDeckUntil struct {
+type DiscardUntil struct {
 	// Type filters what ends the dig; the zero value stops at any card.
 	Type CardType
 	// House filters what ends the dig; HouseNone stops at any house.
@@ -582,7 +607,7 @@ type DiscardTopOfDeckUntil struct {
 }
 
 // Text renders the dig and names both ways it can end, as the cards do.
-func (e DiscardTopOfDeckUntil) Text() string {
+func (e DiscardUntil) Text() string {
 	end := "run out of cards"
 	if e.MayStop {
 		end = "choose to stop"
@@ -592,7 +617,7 @@ func (e DiscardTopOfDeckUntil) Text() string {
 }
 
 // noun names the cards the filters admit, e.g. "card" or "Brobnar Creature".
-func (e DiscardTopOfDeckUntil) noun() string {
+func (e DiscardUntil) noun() string {
 	noun := "card"
 	switch e.Type {
 	case Creature:
@@ -607,7 +632,7 @@ func (e DiscardTopOfDeckUntil) noun() string {
 }
 
 // matches reports whether a discarded card is the one the dig was looking for.
-func (e DiscardTopOfDeckUntil) matches(ctx *EffectContext, id LocalID) bool {
+func (e DiscardUntil) matches(ctx *EffectContext, id LocalID) bool {
 	if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
 		return false
 	}
@@ -615,21 +640,21 @@ func (e DiscardTopOfDeckUntil) matches(ctx *EffectContext, id LocalID) bool {
 }
 
 // Resolve digs, recording the run and leaving the found card in context.
-func (e DiscardTopOfDeckUntil) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
+func (e DiscardUntil) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 
 // resolveGate digs, recording every discarded card on the context, and reports
 // whether it found a matching card so a Then can hang a follow-up on the dig
 // succeeding. When MayStop is set it offers the controller a stop after each
 // non-matching discard.
-func (e DiscardTopOfDeckUntil) resolveGate(ctx *EffectContext) bool {
+func (e DiscardUntil) resolveGate(ctx *EffectContext) bool {
 	ctx.It, ctx.HasIt = 0, false
-	ctx.Produced.Discarded = nil
+	resetDiscardedThisWay(ctx)
 	for {
 		id, ok := ctx.Resolver.DiscardTopOfDeck(ctx.Controller)
 		if !ok {
 			return false
 		}
-		ctx.Produced.Discarded = append(ctx.Produced.Discarded, id)
+		recordDiscardedThisWay(ctx, id)
 		if e.matches(ctx, id) {
 			ctx.It, ctx.HasIt = id, true
 			return true
@@ -644,7 +669,7 @@ func (e DiscardTopOfDeckUntil) resolveGate(ctx *EffectContext) bool {
 }
 
 // PutDiscardedIntoHand takes the card in context out of the discard pile and
-// into its owner's hand. It is the tail of a dig through the deck (DiscardTopOfDeckUntil)
+// into its owner's hand. It is the tail of a dig through the deck (DiscardUntil)
 // that just discarded the card. Type names what the dig stopped on so the tail
 // reads "put the discarded creature into your hand" rather than a bare "it"; the
 // zero value stays the generic "card".
@@ -689,7 +714,7 @@ func (ArchiveDiscardedThisWay) Text() string { return "archive each card discard
 
 // Resolve archives each recorded discarded card from the controller's discard pile.
 func (ArchiveDiscardedThisWay) Resolve(ctx *EffectContext) {
-	for _, id := range ctx.Produced.Discarded {
+	forEachDiscardedThisWay(ctx, func(id LocalID) {
 		archiveFrom(ctx, Discard, ctx.Controller, id)
-	}
+	})
 }

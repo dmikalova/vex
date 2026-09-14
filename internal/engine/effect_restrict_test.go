@@ -53,12 +53,29 @@ func TestCannotPlay(t *testing.T) {
 	}
 }
 
-func TestCannotFight(t *testing.T) {
-	if got := (CannotFight{Player: Opponent}).Text(); got != "your opponent cannot use creatures to fight during their next turn" {
+func TestRestrictFighting(t *testing.T) {
+	if got := (Restrict{Player: Opponent, Action: RestrictFighting, Duration: OpponentNextTurn}).Text(); got != "your opponent cannot use creatures to fight during their next turn" {
 		t.Errorf("opponent text = %q", got)
 	}
-	if got := (CannotFight{Player: Controller}).Text(); got != "you cannot use creatures to fight during your next turn" {
+	if got := (Restrict{Player: Controller, Action: RestrictFighting, Duration: OpponentNextTurn}).Text(); got != "you cannot use creatures to fight during your next turn" {
 		t.Errorf("self text = %q", got)
+	}
+	// A Restrict needs a player, an action, and a duration; fighting has no
+	// current-turn gate, so it is only valid for the player's next turn.
+	if (Restrict{Action: RestrictFighting, Duration: OpponentNextTurn}).validate() == nil {
+		t.Error("unset player should be invalid")
+	}
+	if (Restrict{Player: Opponent, Duration: OpponentNextTurn}).validate() == nil {
+		t.Error("unset action should be invalid")
+	}
+	if (Restrict{Player: Opponent, Action: RestrictFighting}).validate() == nil {
+		t.Error("unset duration should be invalid")
+	}
+	if (Restrict{Player: Opponent, Action: RestrictFighting, Duration: RemainderOfPlayerTurn}).validate() == nil {
+		t.Error("fighting barred for the current turn should be invalid")
+	}
+	if (Restrict{Player: Opponent, Action: RestrictFighting, Duration: OpponentNextTurn}).validate() != nil {
+		t.Error("a fully set fighting bar should be valid")
 	}
 
 	g := NewGame("A", "B", 1)
@@ -70,14 +87,15 @@ func TestCannotFight(t *testing.T) {
 	def := g.AddToBattleline(testCreature("def", 4), 1)
 
 	// Player 0 arms the bar on the opponent during player 0's own turn.
-	CannotFight{
+	Restrict{
 		Player:   Opponent,
+		Action:   RestrictFighting,
 		Duration: OpponentNextTurn,
 	}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
 	)
 	if !g.State.CannotFightNext[1].Value {
-		t.Fatal("CannotFight should arm the opponent's next turn")
+		t.Fatal("Restrict should arm the opponent's next turn")
 	}
 	if g.State.CannotFight[0].Value || g.State.CannotFight[1].Value {
 		t.Error("no bar should be active yet")
@@ -151,15 +169,16 @@ func TestPlayersCannotPlay(t *testing.T) {
 	}
 }
 
-func TestStunEnemyFighters(t *testing.T) {
-	if got := (StunEnemyFighters{Duration: OpponentNextTurn}).Text(); got != "during your opponent's next turn, after an enemy creature is used to fight, stun it" {
+func TestForOpponentNextTurnStunsFighters(t *testing.T) {
+	e := ForOpponentNextTurn{
+		On: EventFight,
+		Do: Stun{Target: Target{Kind: TargetTriggeringCreature}},
+	}
+	if got := e.Text(); got != "during your opponent's next turn, after an enemy creature is used to fight, stun it" {
 		t.Errorf("text = %q", got)
 	}
-	if (StunEnemyFighters{}).validate() == nil {
-		t.Error("an unset duration should be invalid")
-	}
-	if (StunEnemyFighters{Duration: OpponentNextTurn}).validate() != nil {
-		t.Error("OpponentNextTurn should be valid")
+	if err := e.validate(); err != nil {
+		t.Errorf("valid effect rejected: %v", err)
 	}
 
 	g := NewGame("A", "B", 1)
@@ -167,39 +186,44 @@ func TestStunEnemyFighters(t *testing.T) {
 	if err := g.ChooseHouse(0, Brobnar); err != nil {
 		t.Fatal(err)
 	}
-	// Player 0 arms the stun-fighter bar on the opponent for their next turn.
-	StunEnemyFighters{Duration: OpponentNextTurn}.Resolve(
-		&EffectContext{Resolver: g, Controller: 0},
-	)
-	if !g.State.StunFighterNext[1].Value {
-		t.Fatal("should arm the opponent's next turn")
+	// Player 0 arms the reaction on the opponent for their next turn.
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+
+	// It lies dormant for the rest of the caster's own turn: a creature the caster
+	// uses to fight is not stunned.
+	mine := g.AddToBattleline(testCreature("mine", 6), 0)
+	theirs := g.AddToBattleline(testCreature("theirs", 2), 1)
+	if err := g.Fight(0, mine, theirs); err != nil {
+		t.Fatalf("Fight = %v", err)
 	}
-	if g.State.StunFighterNext[0].Value {
-		t.Error("should not arm the caster")
+	if g.State.Cards[mine].Stunned {
+		t.Error("the caster's own fighter should not be stunned this turn")
 	}
 	g.EndPlayPhase(0)
 
-	// The opponent's turn: the bar activates, and a creature they use to fight is
-	// stunned right after the fight.
+	// The opponent's turn: each creature they use to fight is stunned after the fight.
 	g.StartTurn(1)
 	if err := g.ChooseHouse(1, Brobnar); err != nil {
 		t.Fatal(err)
 	}
-	if !g.State.StunFighter[1].Value || g.State.StunFighterNext[1].Value {
-		t.Fatal("the bar should be active and disarmed on the opponent's turn")
-	}
 	att := g.AddToBattleline(testCreature("att", 6), 1)
+	att2 := g.AddToBattleline(testCreature("att2", 6), 1)
 	def := g.AddToBattleline(testCreature("def", 2), 0)
+	def2 := g.AddToBattleline(testCreature("def2", 2), 0)
 	if err := g.Fight(1, att, def); err != nil {
 		t.Fatalf("Fight = %v", err)
 	}
-	if !g.State.Cards[att].Stunned {
-		t.Error("the fighting creature should be stunned")
+	if err := g.Fight(1, att2, def2); err != nil {
+		t.Fatalf("Fight = %v", err)
 	}
-	// It lifts when player 1 ends the turn.
+	if !g.State.Cards[att].Stunned || !g.State.Cards[att2].Stunned {
+		t.Error("each fighting creature should be stunned")
+	}
+
+	// The reaction clears at the opponent's ready phase.
 	g.EndPlayPhase(1)
-	if g.State.StunFighter[1].Value {
-		t.Error("the ready phase should lift the active bar")
+	if g.State.LastingCount != 0 {
+		t.Error("the reaction should clear at the opponent's ready phase")
 	}
 }
 
@@ -438,15 +462,23 @@ func TestToll(t *testing.T) {
 }
 
 func TestForceActiveHouseNextTurn(t *testing.T) {
-	e := OpponentMustChooseHouse{Source: ChosenActiveHouse}
+	e := MustChooseHouse{Player: Opponent, Reference: ChosenActiveHouse}
 	if got := e.Text(); got != "your opponent must choose that house as their active house during their next turn" {
 		t.Errorf("text = %q", got)
 	}
-	if err := e.validate(); err != nil {
-		t.Errorf("a Chosen source should validate for must-choose: %v", err)
+	// Player Controller reads in the first person, so a card can bind its own turn.
+	if got := (MustChooseHouse{Player: Controller, Reference: ChosenActiveHouse}).Text(); got !=
+		"you must choose that house as your active house during your next turn" {
+		t.Errorf("controller text = %q", got)
 	}
-	if err := (OpponentMustChooseHouse{Source: JustChosenActiveHouse}).validate(); err == nil {
-		t.Error("a JustChosen source should not validate for must-choose")
+	if err := e.validate(); err != nil {
+		t.Errorf("a Chosen must should validate: %v", err)
+	}
+	if err := (MustChooseHouse{Player: Opponent, Reference: JustChosenActiveHouse}).validate(); err == nil {
+		t.Error("a JustChosen must should not validate")
+	}
+	if err := (MustChooseHouse{Reference: ChosenActiveHouse}).validate(); err == nil {
+		t.Error("an unset mode should not validate")
 	}
 	g := NewGame("A", "B", 1)
 	g.StartTurn(0)
@@ -489,7 +521,10 @@ func TestForceActiveHouseNextTurn(t *testing.T) {
 }
 
 func TestForceActiveHouseOfFoughtNextTurn(t *testing.T) {
-	e := OpponentMustChooseHouse{Source: FoughtActiveHouse}
+	e := MustChooseHouse{Player: Opponent, Reference: FoughtActiveHouse}
+	if err := e.validate(); err != nil {
+		t.Errorf("a Fought must should validate: %v", err)
+	}
 	if got := e.Text(); got != "your opponent must choose the house of the creature {self} fights as their active house on their next turn" {
 		t.Errorf("text = %q", got)
 	}
@@ -576,15 +611,18 @@ func TestWagerMissed(t *testing.T) {
 // TestForbidSameActiveHouseNextTurn covers Snag's Mirror: after a player chooses
 // their active house, their opponent cannot choose that same house next turn.
 func TestForbidSameActiveHouseNextTurn(t *testing.T) {
-	e := OpponentCannotChooseHouse{Source: JustChosenActiveHouse}
+	e := CannotChooseHouse{Player: Opponent, Reference: JustChosenActiveHouse}
 	if got := e.Text(); got != "their opponent cannot choose the same house as their active house on their next turn" {
 		t.Errorf("text = %q", got)
 	}
 	if err := e.validate(); err != nil {
-		t.Errorf("a JustChosen source should validate for cannot-choose: %v", err)
+		t.Errorf("a JustChosen cannot should validate: %v", err)
 	}
-	if err := (OpponentCannotChooseHouse{Source: FoughtActiveHouse}).validate(); err == nil {
-		t.Error("a Fought source should not validate for cannot-choose")
+	if err := (CannotChooseHouse{Player: Opponent, Reference: FoughtActiveHouse}).validate(); err == nil {
+		t.Error("a Fought cannot should not validate")
+	}
+	if err := (CannotChooseHouse{Reference: ChosenActiveHouse}).validate(); err == nil {
+		t.Error("an unset player should not validate")
 	}
 
 	g := NewGame("A", "B", 1)
@@ -600,7 +638,7 @@ func TestForbidSameActiveHouseNextTurn(t *testing.T) {
 }
 
 func TestForbidActiveHouseNextTurn(t *testing.T) {
-	e := OpponentCannotChooseHouse{Source: ChosenActiveHouse}
+	e := CannotChooseHouse{Player: Opponent, Reference: ChosenActiveHouse}
 	if got := e.Text(); got != "your opponent cannot choose that house as their active house on their next turn" {
 		t.Errorf("text = %q", got)
 	}
@@ -777,36 +815,30 @@ func TestCannotPlayBlanketThisTurn(t *testing.T) {
 // TestCannotUse covers the bar that stops a player reaping, fighting, or firing an
 // "Action:" — throughout their next turn (Skippy Timehog) or for the rest of the
 // current turn (United Action).
-func TestCannotUse(t *testing.T) {
-	if got := (CannotUse{Player: Opponent, Duration: OpponentNextTurn}).Text(); got != "your opponent cannot use any cards during their next turn" {
+func TestRestrictUse(t *testing.T) {
+	if got := (Restrict{Player: Opponent, Action: RestrictUse, Duration: OpponentNextTurn}).Text(); got != "your opponent cannot use any cards during their next turn" {
 		t.Errorf("opponent text = %q", got)
 	}
-	if got := (CannotUse{Player: Controller, Duration: OpponentNextTurn}).Text(); got != "you cannot use any cards during your next turn" {
+	if got := (Restrict{Player: Controller, Action: RestrictUse, Duration: OpponentNextTurn}).Text(); got != "you cannot use any cards during your next turn" {
 		t.Errorf("controller text = %q", got)
 	}
-	if got := (CannotUse{Player: Controller, Duration: RemainderOfPlayerTurn}).Text(); got != "you cannot use cards this turn" {
+	if got := (Restrict{Player: Controller, Action: RestrictUse, Duration: RemainderOfPlayerTurn}).Text(); got != "you cannot use any cards for the remainder of the turn" {
 		t.Errorf("this-turn text = %q", got)
 	}
-	if got := (CannotUse{Player: Opponent, Duration: RemainderOfPlayerTurn}).Text(); got != "your opponent cannot use cards this turn" {
+	if got := (Restrict{Player: Opponent, Action: RestrictUse, Duration: RemainderOfPlayerTurn}).Text(); got != "your opponent cannot use any cards for the remainder of the turn" {
 		t.Errorf("this-turn opponent text = %q", got)
 	}
-	if (CannotUse{Duration: OpponentNextTurn}).validate() == nil {
-		t.Error("unset player should be invalid")
-	}
-	if (CannotUse{Player: Opponent}).validate() == nil {
-		t.Error("unset duration should be invalid")
-	}
-	if (CannotUse{Player: Opponent, Duration: OpponentNextTurn}).validate() != nil {
-		t.Error("a fully set effect should be valid")
+	if (Restrict{Player: Opponent, Action: RestrictUse, Duration: OpponentNextTurn}).validate() != nil {
+		t.Error("a fully set use bar should be valid")
 	}
 
 	g := NewGame("A", "B", 1)
 	g.StartTurn(0)
-	CannotUse{Player: Opponent, Duration: OpponentNextTurn}.Resolve(
+	Restrict{Player: Opponent, Action: RestrictUse, Duration: OpponentNextTurn}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
 	)
 	// The RemainderOfPlayerTurn form arms the bar for the rest of the current turn.
-	CannotUse{Player: Controller, Duration: RemainderOfPlayerTurn}.Resolve(
+	Restrict{Player: Controller, Action: RestrictUse, Duration: RemainderOfPlayerTurn}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
 	)
 	if !g.State.CannotUse[0].Value {
@@ -828,30 +860,24 @@ func TestCannotUse(t *testing.T) {
 	}
 }
 
-// TestCannotReap covers the timed player-wide bar that stops a player reaping with
-// any creature — throughout their next turn (Inky Gloom) or for the rest of the
-// current turn (Ragnarok) — while fighting stays open.
-func TestCannotReap(t *testing.T) {
-	if got := (CannotReap{Player: Opponent, Duration: OpponentNextTurn}).Text(); got != "your opponent cannot use creatures to reap during their next turn" {
+// TestRestrictReaping covers the timed player-wide bar that stops a player reaping
+// with any creature — throughout their next turn (Inky Gloom) or for the rest of
+// the current turn (Ragnarok) — while fighting stays open.
+func TestRestrictReaping(t *testing.T) {
+	if got := (Restrict{Player: Opponent, Action: RestrictReaping, Duration: OpponentNextTurn}).Text(); got != "your opponent cannot use creatures to reap during their next turn" {
 		t.Errorf("opponent text = %q", got)
 	}
-	if got := (CannotReap{Player: Controller, Duration: OpponentNextTurn}).Text(); got != "you cannot use creatures to reap during your next turn" {
+	if got := (Restrict{Player: Controller, Action: RestrictReaping, Duration: OpponentNextTurn}).Text(); got != "you cannot use creatures to reap during your next turn" {
 		t.Errorf("controller text = %q", got)
 	}
-	if got := (CannotReap{Player: Controller, Duration: RemainderOfPlayerTurn}).Text(); got != "you cannot use creatures to reap for the remainder of the turn" {
+	if got := (Restrict{Player: Controller, Action: RestrictReaping, Duration: RemainderOfPlayerTurn}).Text(); got != "you cannot use creatures to reap for the remainder of the turn" {
 		t.Errorf("this-turn text = %q", got)
 	}
-	if got := (CannotReap{Player: Opponent, Duration: RemainderOfPlayerTurn}).Text(); got != "your opponent cannot use creatures to reap for the remainder of the turn" {
+	if got := (Restrict{Player: Opponent, Action: RestrictReaping, Duration: RemainderOfPlayerTurn}).Text(); got != "your opponent cannot use creatures to reap for the remainder of the turn" {
 		t.Errorf("this-turn opponent text = %q", got)
 	}
-	if (CannotReap{Duration: OpponentNextTurn}).validate() == nil {
-		t.Error("unset player should be invalid")
-	}
-	if (CannotReap{Player: Opponent}).validate() == nil {
-		t.Error("unset duration should be invalid")
-	}
-	if (CannotReap{Player: Opponent, Duration: OpponentNextTurn}).validate() != nil {
-		t.Error("a fully set effect should be valid")
+	if (Restrict{Player: Opponent, Action: RestrictReaping, Duration: OpponentNextTurn}).validate() != nil {
+		t.Error("a fully set reaping bar should be valid")
 	}
 
 	g := NewGame("A", "B", 1)
@@ -859,11 +885,11 @@ func TestCannotReap(t *testing.T) {
 	if err := g.ChooseHouse(0, Brobnar); err != nil {
 		t.Fatal(err)
 	}
-	CannotReap{Player: Opponent, Duration: OpponentNextTurn}.Resolve(
+	Restrict{Player: Opponent, Action: RestrictReaping, Duration: OpponentNextTurn}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
 	)
 	// RemainderOfPlayerTurn arms the current-turn reap bar directly on the resolving player.
-	CannotReap{Player: Controller, Duration: RemainderOfPlayerTurn}.Resolve(
+	Restrict{Player: Controller, Action: RestrictReaping, Duration: RemainderOfPlayerTurn}.Resolve(
 		&EffectContext{Resolver: g, Controller: 0},
 	)
 	if !g.State.CannotReap[0].Value {
@@ -898,27 +924,42 @@ func TestCannotReap(t *testing.T) {
 	}
 }
 
-// TestChosenHouseCannotReapNextTurn covers the house-scoped reap bar armed for a
-// player's next turn (Seismo-entangler).
-func TestChosenHouseCannotReapNextTurn(t *testing.T) {
-	if got := (ChosenHouseCannotReapNextTurn{Player: Opponent}).Text(); got != "during your opponent's next turn, creatures of the chosen house cannot be used to reap" {
-		t.Errorf("opponent text = %q", got)
+// TestRestrictReapHouseNextTurn covers the house-scoped reap bar armed for a
+// player's next turn (Seismo-entangler), a Restrict narrowed by a chosen house.
+func TestRestrictReapHouseNextTurn(t *testing.T) {
+	scoped := Restrict{
+		Player:   Opponent,
+		Action:   RestrictReaping,
+		House:    TheChosenHouse,
+		Duration: OpponentNextTurn,
 	}
-	if got := (ChosenHouseCannotReapNextTurn{Player: Controller}).Text(); got != "during your next turn, creatures of the chosen house cannot be used to reap" {
-		t.Errorf("controller text = %q", got)
+	if got := scoped.Text(); got != "your opponent cannot use creatures of the chosen house to reap during their next turn" {
+		t.Errorf("scoped text = %q", got)
 	}
-	if (ChosenHouseCannotReapNextTurn{}).validate() == nil {
-		t.Error("unset player should be invalid")
+	if scoped.validate() != nil {
+		t.Error("a fully set house-scoped reap bar should be valid")
 	}
-	if (ChosenHouseCannotReapNextTurn{Player: Opponent}).validate() != nil {
-		t.Error("a fully set effect should be valid")
+	// A house scope only bars reaping on the player's next turn.
+	if (Restrict{
+		Player:   Opponent,
+		Action:   RestrictFighting,
+		House:    TheChosenHouse,
+		Duration: OpponentNextTurn,
+	}).validate() == nil {
+		t.Error("a house scope on a fight bar should be invalid")
+	}
+	if (Restrict{
+		Player:   Opponent,
+		Action:   RestrictReaping,
+		House:    TheChosenHouse,
+		Duration: RemainderOfPlayerTurn,
+	}).validate() == nil {
+		t.Error("a house scope on a current-turn reap bar should be invalid")
 	}
 
 	g := NewGame("A", "B", 1)
 	g.StartTurn(0)
-	ChosenHouseCannotReapNextTurn{Player: Opponent}.Resolve(
-		&EffectContext{Resolver: g, Controller: 0, ChosenHouse: Brobnar},
-	)
+	scoped.Resolve(&EffectContext{Resolver: g, Controller: 0, ChosenHouse: Brobnar})
 	if g.State.CannotReapHouseNext[1].Value != Brobnar {
 		t.Fatalf("armed = %v, want Brobnar", g.State.CannotReapHouseNext[1].Value)
 	}
@@ -950,9 +991,9 @@ func TestChosenHouseCannotReapNextTurn(t *testing.T) {
 // open.
 func TestCreaturesCannotFight(t *testing.T) {
 	withHouse := CreaturesCannot{
-		Action:      FightUse,
-		ExceptHouse: Shadows,
-		Duration:    StartOfPlayerNextTurn,
+		Action:   FightUse,
+		Houses:   exceptHouse(Shadows),
+		Duration: StartOfPlayerNextTurn,
 	}
 	if got := withHouse.Text(); got != "until the start of your next turn, non-Shadows creatures cannot be used to fight" {
 		t.Errorf("house-exception text = %q", got)
@@ -967,6 +1008,20 @@ func TestCreaturesCannotFight(t *testing.T) {
 	}
 	if (CreaturesCannot{Action: ActionUse, Duration: StartOfPlayerNextTurn}).validate() == nil {
 		t.Error("an Action-ability bar should be invalid")
+	}
+	if (CreaturesCannot{
+		Action:   FightUse,
+		Houses:   HouseMatcher{Kind: MatchChosenHouse},
+		Duration: StartOfPlayerNextTurn,
+	}).validate() == nil {
+		t.Error("a context-dependent house matcher should be invalid")
+	}
+	if (CreaturesCannot{
+		Action:   FightUse,
+		Houses:   HouseMatcher{Kind: MatchExceptHouse},
+		Duration: StartOfPlayerNextTurn,
+	}).validate() == nil {
+		t.Error("a house matcher missing its house should be invalid")
 	}
 	if (CreaturesCannot{Action: FightUse}).validate() == nil {
 		t.Error("unset duration should be invalid")

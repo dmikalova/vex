@@ -30,10 +30,7 @@ func (l HouseLock) text() string {
 	if !l.set() || l.House == HouseNone {
 		return ""
 	}
-	who, possessive := "you", "your"
-	if l.Player == Opponent {
-		who, possessive = "your opponent", "their"
-	}
+	who, possessive := l.Player.secondPerson()
 	verb := "must choose"
 	if l.Bars {
 		verb = "cannot choose"

@@ -12,12 +12,19 @@ const (
 	_ Subject = iota
 	// DiscardedCard names the card an effect just discarded.
 	DiscardedCard
+	// ThatCard names the card an effect just acted on when "it" would be ambiguous
+	// — Fidgit discards from one of two sources, so its follow-up says "that card".
+	ThatCard
 )
 
 // noun renders the subject as the phrase a condition puts in front of "is".
 func (s Subject) noun() string {
-	if s == DiscardedCard {
+	switch s {
+	case DiscardedCard:
 		return "the discarded card"
+	case ThatCard:
+		return "that card"
+	default:
+		return "it"
 	}
-	return "it"
 }

@@ -20,6 +20,13 @@ Each divergence is called out inline below and cataloged in the
 precedence rule (fall back to the KeyForge Master Rulebook only for what Vactrol
 has not decided).
 
+Matching the printed KeyForge text is never a goal in itself and never a blocker.
+Template consistency and simplicity across Vactrol outrank exact KeyForge wording:
+a **meaning-preserving** reword that puts a card in the same voice and template as
+the rest of Vactrol — or that lets a mechanic decompose into shared nodes — is
+welcome, and needs no divergence-register entry (the register catalogs changes to
+a rule or a name, not house-voice alignment).
+
 The goal of the rewording is **one printed sentence per engine operation**: text
 that maps cleanly onto the effect AST (each clause is a node), so the printed
 card and the implementation never desync. Each rule below notes the intended AST
@@ -605,6 +612,32 @@ plainly.
 | `Deal 2 damage to a creature. Deal 6 damage instead if it is a Dinosaur creature or has Æmber on it.` | `Choose a creature - if it is a Dinosaur creature or it has Æmber on it, deal 6 damage to it. Otherwise, deal 2 damage to it.` |
 
 (Affected: Guji Dinosaur Hunter.)
+
+---
+
+## 32. Timed "cannot use" restrictions share one phrasing
+
+A timed effect that bars a player from acting is one `Restrict` node —
+`cannot use creatures to fight`, `cannot use creatures to reap`, or the broadest
+`cannot use any cards` — and every form ends with the same duration phrase:
+`during <their/your> next turn` (OpponentNextTurn) or `for the remainder of the
+turn` (RemainderOfPlayerTurn). KeyForge writes the broad current-turn form as "You
+cannot use cards this turn"; Vactrol harmonizes it to "you cannot use **any** cards
+**for the remainder of the turn**" so the noun ("any cards") matches the
+next-turn form and the duration matches the reap and play bars.
+
+A house scope narrows the reaping noun the same way, so a house-limited reap bar
+reads in the shared voice rather than a subject-first sentence of its own. KeyForge
+writes Seismo-entangler as "During your opponent's next turn, creatures of the
+chosen house cannot be used to reap"; Vactrol harmonizes it to "your opponent
+cannot use **creatures of the chosen house** to reap during their next turn".
+
+| Original                                                                                  | Curated                                                                                  |
+| ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `You cannot use cards this turn.`                                                         | `You cannot use any cards for the remainder of the turn.`                                |
+| `During your opponent's next turn, creatures of the chosen house cannot be used to reap.` | `Your opponent cannot use creatures of the chosen house to reap during their next turn.` |
+
+(Affected: United Action, Seismo-entangler.)
 
 ---
 

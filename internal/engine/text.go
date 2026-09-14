@@ -494,9 +494,6 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 	if s := gainsForgeAemberText(def); s != "" {
 		rules = append(rules, s)
 	}
-	if s := forgeGuardText(def); s != "" {
-		rules = append(rules, s)
-	}
 	// A creature played as an upgrade folds its Static grant into the "may be played
 	// as an upgrade" clause below, so it does not also print as standalone lines.
 	if !def.PlayableAsUpgrade {
@@ -631,24 +628,45 @@ func staticText(m StaticModifier) string {
 			lines = append(lines, "This creature gains "+s+".")
 		}
 	}
-	if s := neighborKeywordsText(m); s != "" {
+	if s := keywordGrantsText(m); s != "" {
 		lines = append(lines, s)
 	}
 	return strings.Join(lines, " ")
 }
 
-// neighborKeywordsText renders the keywords an Upgrade grants its host and each of
-// the host's neighbors, e.g. "This creature and each of its neighbors gains
-// elusive." It is empty when the modifier grants no neighbor keywords.
-func neighborKeywordsText(m StaticModifier) string {
-	if len(m.KeywordsToNeighbors) == 0 {
+// keywordGrantsText renders the keywords an Upgrade grants to creatures around its
+// host, one sentence per grant with the reach spelled out — "This creature and
+// each of its neighbors gains elusive." for a grant reaching both. It is empty
+// when the modifier grants no keywords by reach.
+func keywordGrantsText(m StaticModifier) string {
+	var lines []string
+	for _, grant := range m.KeywordGrants {
+		who := keywordGrantReach(grant)
+		if who == "" || len(grant.Keywords) == 0 {
+			continue
+		}
+		words := make([]string, len(grant.Keywords))
+		for i, kw := range grant.Keywords {
+			words[i] = strings.ToLower(kw.String())
+		}
+		lines = append(lines, who+" gains "+oxfordAnd(words)+".")
+	}
+	return strings.Join(lines, " ")
+}
+
+// keywordGrantReach names the creatures a KeywordGrant reaches, as the subject of
+// its sentence. It is empty when the grant reaches nobody.
+func keywordGrantReach(grant KeywordGrant) string {
+	switch {
+	case grant.Host && grant.Neighbors:
+		return "This creature and each of its neighbors"
+	case grant.Host:
+		return "This creature"
+	case grant.Neighbors:
+		return "Each of this creature's neighbors"
+	default:
 		return ""
 	}
-	words := make([]string, len(m.KeywordsToNeighbors))
-	for i, kw := range m.KeywordsToNeighbors {
-		words[i] = strings.ToLower(kw.String())
-	}
-	return "This creature and each of its neighbors gains " + oxfordAnd(words) + "."
 }
 
 // staticBonuses lists what an Upgrade's continuous modifier adds, without the
@@ -693,7 +711,7 @@ func upgradeStaticLines(def *CardDefinition, hosted bool) []string {
 			}
 			lines = append(lines, capitalizeFirst(s)+".")
 		}
-		if s := neighborKeywordsText(def.Static); s != "" {
+		if s := keywordGrantsText(def.Static); s != "" {
 			lines = append(lines, s)
 		}
 		if replacement != "" {
@@ -785,7 +803,7 @@ func constantText(def *CardDefinition) string {
 			line := who + " cannot " + k.verb() + "."
 			lines = append(lines, strings.ReplaceAll(line, SelfName, def.Name))
 		}
-		for _, m := range c.Morphs {
+		for _, m := range c.AlsoTriggers {
 			from, onto := triggerEffectNoun(m.From), triggerEffectNoun(m.Onto)
 			line := who + "'s " + from + " effect is a " + from + "/" + onto + " effect."
 			lines = append(lines, strings.ReplaceAll(line, SelfName, def.Name))
@@ -1087,17 +1105,6 @@ func gainsForgeAemberText(def *CardDefinition) string {
 		return ""
 	}
 	return "You gain all Æmber your opponent spends when forging a key."
-}
-
-// forgeGuardText renders a card that interrupts the opponent's key forges,
-// naming the card itself so the destroyed subject is unambiguous (Keyforgery).
-func forgeGuardText(def *CardDefinition) string {
-	if !def.GuardsOpponentForge {
-		return ""
-	}
-	return "When your opponent would forge a key, they name a house. Reveal a " +
-		"random card from your hand. If that card is not of the named house, " +
-		"destroy " + def.Name + " and they do not forge that key."
 }
 
 // keywordText renders a card's keywords as a single leading sentence, e.g.

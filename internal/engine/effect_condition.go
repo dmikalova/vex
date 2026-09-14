@@ -92,6 +92,22 @@ func (h HouseChoice) resolveHouse(ctx *EffectContext) House {
 	}
 }
 
+// phrase renders the trailing "of the … house" fragment an effect welds onto a
+// noun ("creatures of the chosen house"). The no-scope choices (unset, AnyHouse)
+// render nothing, so a caller reads an empty phrase as "no house scope".
+func (h HouseChoice) phrase() string {
+	switch h {
+	case TheChosenHouse:
+		return "of the chosen house"
+	case TheActiveHouse:
+		return "of the active house"
+	case TheContextualHouse:
+		return "of that card's house"
+	default:
+		return ""
+	}
+}
+
 // typeNoun renders the bare card-type noun — "creature", "artifact", or "card"
 // when the type is unset — without any house qualifier.
 func typeNoun(typ CardType) string {
@@ -100,6 +116,10 @@ func typeNoun(typ CardType) string {
 		return "creature"
 	case Artifact:
 		return "artifact"
+	case Tactic:
+		return "tactic"
+	case Upgrade:
+		return "upgrade"
 	}
 	return "card"
 }
@@ -147,6 +167,9 @@ type Not struct {
 func (n Not) validate() error {
 	if _, ok := n.Cond.(negatable); !ok {
 		return fmt.Errorf("Not: %T cannot be negated", n.Cond)
+	}
+	if c, ok := n.Cond.(CountIs); ok && c.Is != AtLeast {
+		return fmt.Errorf("Not: CountIs must be AtLeast to negate")
 	}
 	return validateCondition(n.Cond)
 }
@@ -279,29 +302,46 @@ func (c CountIs) validate() error {
 		return fmt.Errorf("CountIs: Count must be set and render a CountClause")
 	}
 	switch c.Is {
-	case AtLeast, Exactly:
+	case AtLeast, AtMost, Exactly:
 		return nil
 	default:
-		return fmt.Errorf("CountIs: Is must be AtLeast or Exactly")
+		return fmt.Errorf("CountIs: Is must be AtLeast, AtMost, or Exactly")
 	}
 }
 
 // CondText renders the condition, e.g. "if you used 3 or more creatures this
 // turn", asking the Count for the clause that reads naturally after "if".
 func (c CountIs) CondText() string {
-	quantity := fmt.Sprintf("%d or more", c.Amount)
-	if c.Is == Exactly {
+	var quantity string
+	switch c.Is {
+	case AtMost:
+		quantity = fmt.Sprintf("%d or fewer", c.Amount)
+	case Exactly:
 		quantity = fmt.Sprintf("exactly %d", c.Amount)
+	default:
+		quantity = fmt.Sprintf("%d or more", c.Amount)
 	}
 	return "if " + c.Count.(countClauser).CountClause(quantity, c.Amount != 1 || c.Is != Exactly)
 }
 
 // Met compares the count's current value against the threshold.
 func (c CountIs) Met(ctx *EffectContext) bool {
-	if c.Is == Exactly {
+	switch c.Is {
+	case AtMost:
+		return c.Count.Value(ctx) <= c.Amount
+	case Exactly:
 		return c.Count.Value(ctx) == c.Amount
+	default:
+		return c.Count.Value(ctx) >= c.Amount
 	}
-	return c.Count.Value(ctx) >= c.Amount
+}
+
+// negatedText renders the "fewer than" clause a Not wrapper prints — "at least N"
+// flips to "fewer than N". Only an AtLeast CountIs negates; Not.validate holds the
+// guard against negating an Exactly count.
+func (c CountIs) negatedText() string {
+	quantity := fmt.Sprintf("fewer than %d", c.Amount)
+	return "if " + c.Count.(countClauser).CountClause(quantity, c.Amount != 1)
 }
 
 // countClauser is the optional capability a Count implements to render the "if

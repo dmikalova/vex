@@ -20,18 +20,34 @@ human's personal list, which agents never write into. Rules:
   "work autonomously" and the human never sees it. Plain-text questions at the end
   of the turn are the channel the human actually reads.
 
-## Card wording / authoring
+## Event-sourced replay (ADR 0039, 0040)
 
-_No outstanding items._
+Decided in ADR 0039 (commands are the source of truth; state, log, and undo are
+replay projections) and ADR 0040 (the engine is a pure suspendable step
+function). Glossary terms in [CONTEXT.md](../CONTEXT.md): Command, Replay,
+Session, Request, Information barrier, Projection/View. Build staged, each stage
+independently green; hotseat-first, server redaction designed-for but not built.
 
-## Card catalog / provenance
-
-_No outstanding items._
-
-## Web — mobile, previews, layout
-
-_No outstanding items._
-
-## Tooling / tests / docs
-
-_No outstanding items._
+- **Stage 1 — PRNG into `GameState`.** Replace the `*rand.Rand` on `Game` with one
+  counter-based PRNG (PCG/philox; state is one or two `uint64`s) stored in
+  `GameState`, so it is flat/comparable (ADR 0005) and captured by `FastCopy`.
+  Route every shuffle/random-select site through it. Per-player streams deferred
+  (isolation-only, additive later). This unblocks bit-exact replay.
+- **Stage 2 — suspendable step function.** Turn resolution into
+  `Advance(state, command) → (state, request, stepInfo)` that yields a thin
+  `Request` instead of pulling a `Chooser`; add on-demand `LegalCommands`/`IsLegal`
+  derived from local state; invert `Chooser` implementations (UI, `FirstChooser`,
+  MCTS bot) into `Request → Command` answerers. `stepInfo` reports information-
+  barrier crossings (PRNG step / hidden reveal). Keep `Advance` allocation-free for
+  MCTS.
+- **Stage 3 — `internal/session` driver.** New layer owning
+  `{version, seed, sets, []Command}` + undo cursor; wraps the engine; exposes
+  apply/undo/view. Undo replays 0→N, free up to the nearest information barrier,
+  consent to cross in networked mode. `internal/match` keeps match setup only.
+- **Stage 4 — projection seam.** `Project(state, viewer) → View`, identity now;
+  clients render from the View, never raw state.
+- **Stage 5 — rewire `internal/web` onto the session.** Persist only
+  `{version, seed, sets, []Command, ui}` (stop serializing `GameState`); reload
+  replays from 0, regenerating exact state + fully typed log; delete the lossy
+  `savedLine`/`RestoredEntry` path; drop the client undo/redo stacks in favor of
+  session undo. Version-tag the log and refuse on mismatch (no forward compat).

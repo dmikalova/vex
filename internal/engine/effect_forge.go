@@ -294,3 +294,19 @@ func (e SkipForgePhase) Text() string {
 func (e SkipForgePhase) Resolve(ctx *EffectContext) {
 	ctx.Resolver.SkipForgePhaseNextTurn(ctx.PlayerFor(e.Player), ctx.Source)
 }
+
+// CancelForge cancels the opponent's key forge in progress — the forge does not
+// happen and no Æmber is spent (Keyforgery). It is the forge counterpart to
+// CancelFight: it resolves inside the before-forge window, where beforeForgePrevented
+// reads the cancellation and skips the forge. The card whose ability cancels the
+// forge is the source, so the log names it.
+type CancelForge struct{}
+
+// Text renders the effect.
+func (CancelForge) Text() string { return "they do not forge that key" }
+
+// Resolve records the prevented forge and cancels it.
+func (CancelForge) Resolve(ctx *EffectContext) {
+	ctx.Resolver.Record(KeyForgePrevented{Player: ctx.Opponent(), By: ctx.Source})
+	ctx.Resolver.CancelCurrentForge()
+}

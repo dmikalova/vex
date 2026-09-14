@@ -316,6 +316,10 @@ func (g *Game) SetFightDamageRedirect(id LocalID) { g.State.FightDamageRedirect 
 // and clears it before Assault, Hazardous, and fight damage.
 func (g *Game) CancelCurrentFight() { g.State.FightCancelled = true }
 
+// CancelCurrentForge makes the key forge in progress not occur; the before-forge
+// window reads and clears it before any Æmber leaves the pool.
+func (g *Game) CancelCurrentForge() { g.State.ForgePrevented = true }
+
 // AddAmberOn changes the Æmber sitting on a card.
 func (g *Game) AddAmberOn(id LocalID, delta int) { g.addAmberOn(id, delta) }
 
@@ -387,7 +391,7 @@ func (g *Game) PutIntoDeckShuffled(id LocalID) { g.putIntoDeckShuffled(id) }
 
 // ShuffleFriendlyCardsInPlayIntoDeck is the Resolver entry point for
 // shuffleFriendlyInPlayIntoDeck.
-func (g *Game) ShuffleFriendlyCardsInPlayIntoDeck(player int) int {
+func (g *Game) ShuffleFriendlyCardsInPlayIntoDeck(player int) [2]int {
 	return g.shuffleFriendlyInPlayIntoDeck(player)
 }
 

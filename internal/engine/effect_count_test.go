@@ -79,6 +79,9 @@ func TestInPlay(t *testing.T) {
 	if got := (InPlay{Player: Controller, Type: Creature, Amount: 2}).CondText(); got != "if there are 2 or more friendly creatures in play" {
 		t.Errorf("plural CondText = %q", got)
 	}
+	if got := (InPlay{Player: Controller, Type: Creature, Other: true}).CondText(); got != "if there is another friendly creature in play" {
+		t.Errorf("other CondText = %q", got)
+	}
 
 	// Met — Amount defaults to one; a higher threshold may not be reached.
 	if !(InPlay{Player: Controller, Type: Creature}).Met(ctx) {
@@ -89,6 +92,13 @@ func TestInPlay(t *testing.T) {
 	}
 	if (InPlay{Player: Controller, Type: Creature, Amount: 4}).Met(ctx) {
 		t.Error("threshold 4 should not be met with 3 creatures")
+	}
+
+	// Met with Other counts friendly creatures besides the source.
+	src := g.AddToBattleline(NewCard("src", Mars, Creature, Common, WithPower(2)), 0)
+	octx := &EffectContext{Resolver: g, Source: src, Controller: 0}
+	if !(InPlay{Player: Controller, Type: Creature, Other: true}).Met(octx) {
+		t.Error("Other should be met while another friendly creature is in play")
 	}
 }
 

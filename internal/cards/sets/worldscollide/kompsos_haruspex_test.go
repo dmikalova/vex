@@ -18,7 +18,7 @@ import (
 //	Each friendly Creature's play effect is a play/reap effect.
 func TestKompsosHaruspex(t *testing.T) {
 	// playGainer is a friendly creature whose play effect gains 1 Æmber, so the
-	// morph is visible: with Kompsos in play, reaping it fires that play effect.
+	// the also-triggers-on rule is visible: with Kompsos in play, reaping it fires that play effect.
 	playGainer := card.Build(
 		"Play Gainer",
 		card.House.Saurian,
@@ -44,7 +44,7 @@ func TestKompsosHaruspex(t *testing.T) {
 		})
 
 		h.P1.Reap(friend)
-		// +1 from the reap itself, +1 from the play effect the morph fires.
+		// +1 from the reap itself, +1 from the play effect the rule fires.
 		h.P1.ExpectAmber(2)
 	})
 

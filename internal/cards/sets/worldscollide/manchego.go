@@ -22,7 +22,11 @@ var Manchego = set.New(
 	card.WithTraits(card.Traits.Human, card.Traits.Thief),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
-			Cond: card.CardsInDeckAtMost{Amount: 5},
+			Cond: card.CountIs{
+				Count:  card.CardsInZone{Zone: card.Deck, Player: card.Controller},
+				Is:     card.AtMost,
+				Amount: 5,
+			},
 			Then: card.StealAember{Amount: 2},
 		}),
 	card.WithAbility(card.Trigger.FightReap, card.May{Do: card.PutFromPlay{

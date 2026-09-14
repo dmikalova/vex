@@ -89,6 +89,11 @@ func indefinite(noun string) string {
 	if noun == "another" || strings.HasPrefix(noun, "another ") {
 		return noun
 	}
+	// "an" + "other …" reads as "another …" — the merged indefinite of a noun the
+	// Other flag prefixes ("other friendly creature" → "another friendly creature").
+	if strings.HasPrefix(noun, "other ") {
+		return "an" + noun
+	}
 	switch unicode.ToLower([]rune(noun)[0]) {
 	case 'a', 'e', 'i', 'o', 'u':
 		return "an " + noun

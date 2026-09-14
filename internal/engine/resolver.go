@@ -233,6 +233,10 @@ type EconomyResolver interface {
 	ForgeKeyFree(player int) bool
 	// UnforgeKey takes one forged key back off a player (Key Hammer).
 	UnforgeKey(player int)
+	// CancelCurrentForge cancels the key forge in progress so it does not happen and
+	// no Æmber is spent (Keyforgery). The before-forge window reads and clears the
+	// flag it sets, mirroring CancelCurrentFight.
+	CancelCurrentForge()
 	// GainChains adds chains to a player, penalizing their future draws.
 	GainChains(controller, amount int)
 }
@@ -417,9 +421,11 @@ type ZoneResolver interface {
 	// PutIntoDeckShuffled moves a card from play into its owner's deck and shuffles.
 	PutIntoDeckShuffled(id LocalID)
 	// ShuffleFriendlyCardsInPlayIntoDeck moves every card player controls in play —
-	// each creature and artifact and their upgrades — into their deck, returning how
-	// many cards were shuffled. The caller opens a shuffle batch around it.
-	ShuffleFriendlyCardsInPlayIntoDeck(player int) int
+	// each creature and artifact and their upgrades — into its owner's deck,
+	// returning how many cards went into each owner's deck, indexed by player. A card
+	// the controller does not own is tallied under its owner, not the controller. The
+	// caller opens a shuffle batch around it.
+	ShuffleFriendlyCardsInPlayIntoDeck(player int) [2]int
 	// BeginShuffleBatch starts collecting the cards shuffled into a deck until
 	// EndShuffleBatch, so an effect that shuffles several creatures at once narrates
 	// them as one grouped line per owner attributed to the frame's source.
@@ -571,10 +577,6 @@ type TurnResolver interface {
 	// their next turn. source is the card imposing the bar, recorded so a frontend
 	// can name it.
 	CannotFightNextTurn(player int, source LocalID)
-	// StunFighterNextTurn arms the stun-fighter bar on a player for their next
-	// turn, so each creature they use to fight is stunned right after that fight
-	// (Foggify). source is the card imposing it.
-	StunFighterNextTurn(player int, source LocalID)
 	// CannotPlayTypeNextTurn bars a player from playing cards of the given type
 	// throughout their next turn (Lifeward, Scrambler Storm).
 	CannotPlayTypeNextTurn(player int, t CardType, source LocalID)
@@ -598,9 +600,9 @@ type TurnResolver interface {
 	CannotReapHouseNextTurn(player int, house House, source LocalID)
 	// CreaturesCannotUntilNextTurn arms a board-wide bar that stops both players
 	// using creatures one way — fighting or reaping — until the caster's next turn,
-	// sparing creatures of exceptHouse (HouseNone spares none): Into the Night,
+	// reaching the creatures houses admits (an unset matcher bars all): Into the Night,
 	// Sow Salt.
-	CreaturesCannotUntilNextTurn(caster int, action UseKind, exceptHouse House, source LocalID)
+	CreaturesCannotUntilNextTurn(caster int, action UseKind, houses HouseMatcher, source LocalID)
 	// BlankEnemyText blanks the text box of every creature the given player controls
 	// until the card's controller's next turn — its printed keywords, abilities, and
 	// constant grants are ignored (Shadow of Dis). Its traits and stats remain.
@@ -631,10 +633,11 @@ type TurnResolver interface {
 	// own fields narrow when it fires: Once for a one-shot (Blypyp), House/Type for a
 	// matching subject, Except for the card that armed it (Library Access).
 	AddLasting(le LastingEffect)
-	// AddLastingMorph registers a "for the remainder of the turn" trigger morph
-	// (Livia the Elder's fight/reap fuse) on the owning player, so a creature's
-	// abilities under one trigger also fire on another until the turn ends.
-	AddLastingMorph(m LastingMorph)
+	// AddLastingAlsoTriggers registers a "for the remainder of the turn"
+	// also-triggers-on rule (Livia the Elder's fight/reap fuse) on the owning player,
+	// so a creature's abilities under one trigger also fire on another until the turn
+	// ends.
+	AddLastingAlsoTriggers(m LastingAlsoTriggersOn)
 	// ForceActiveHouseNextTurn makes a player have to choose the given house as their
 	// active house on their next turn (Control the Weak).
 	MustChooseHouseNextTurn(player int, house House, source LocalID)

@@ -211,7 +211,8 @@ would find easiest to build on — not the shortest path to a passing build.
   `Fidgit`, `UnnaturalSelection` — a card name as an effect type or an
   `effect_<cardname>.go` filename is the anti-pattern above wearing a proper
   noun. Name the effect for the generic mechanic it performs
-  (`PlayDiscardedTacticFromOpponent`), or model the varying axis as a shared
+  (`PlayFromOpponent` for playing the top of an opponent's deck or a random
+  archived card as your own), or model the varying axis as a shared
   Refinement (Unnatural Selection and Tertiate are `Destroy` over
   `Target.EachCreature` refined by `KeepPerSide(n)` / `PortionPerSide(f)`), so the
   next card printing the same mechanic reaches for the existing node instead of

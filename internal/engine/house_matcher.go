@@ -23,6 +23,10 @@ const (
 	// MatchContextualHouse admits cards sharing the house of the card in context
 	// (ctx.It) — the card a preceding effect put in focus.
 	MatchContextualHouse
+	// MatchEachHouse admits cards of the house an enclosing ForEachHouse is on. It
+	// reads the same ctx.ChosenHouse binding as MatchChosenHouse but renders "of
+	// that house" — the loop's house, not one the player picked.
+	MatchEachHouse
 )
 
 // HouseMatcher is the one way a filter or target names which houses it admits: a
@@ -47,7 +51,7 @@ func (m HouseMatcher) matches(ctx *EffectContext, id LocalID) bool {
 		return ctx.Resolver.House(id) == m.House
 	case MatchExceptHouse:
 		return ctx.Resolver.House(id) != m.House
-	case MatchChosenHouse:
+	case MatchChosenHouse, MatchEachHouse:
 		return ctx.Resolver.House(id) == ctx.ChosenHouse
 	case MatchActiveHouse:
 		return ctx.Resolver.House(id) == ctx.Resolver.ActiveHouse()
@@ -90,7 +94,7 @@ func (m HouseMatcher) qualifyPhrase(phrase string) string {
 	switch m.Kind {
 	case MatchChosenHouse:
 		return phrase + " of the chosen house"
-	case MatchActiveHouse:
+	case MatchActiveHouse, MatchEachHouse:
 		return phrase + " of that house"
 	case MatchContextualHouse:
 		return phrase + " of that card's house"

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  1
 //	Traits: Robot
 //
-//	Destroyed: If you have any other Creatures in play, instead of destroying Self-Bolstering Automata, fully heal it, exhaust it, and move it to either flank of its controller's battleline -> give it two +1 power counters.
+//	Destroyed: If there is another friendly Creature in play, instead of destroying Self-Bolstering Automata, fully heal it, exhaust it, and move it to either flank of its controller's battleline -> give it two +1 power counters.
 var SelfBolsteringAutomata = set.New(
 	"Self-Bolstering Automata",
 	card.House.Logos,
@@ -20,7 +20,7 @@ var SelfBolsteringAutomata = set.New(
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Robot),
 	card.WithAbility(card.Trigger.Destroyed, card.Conditional{
-		Cond: card.HasOtherFriendlyCreatures{},
+		Cond: card.InPlay{Player: card.Controller, Type: card.Type.Creature, Other: true},
 		Then: card.Then{
 			First: card.SaveFromDestruction{
 				Do: card.Sequence{Effects: []card.Effect{

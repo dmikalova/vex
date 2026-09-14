@@ -103,11 +103,14 @@ type cardTypes struct {
 // card.Subject.DiscardedCard.
 var Subject = subjects{
 	DiscardedCard: engine.DiscardedCard,
+	ThatCard:      engine.ThatCard,
 }
 
 type subjects struct {
 	// DiscardedCard names the card an effect just discarded.
 	DiscardedCard engine.Subject
+	// ThatCard names the card an effect just acted on when "it" would be ambiguous.
+	ThatCard engine.Subject
 }
 
 // Rarity groups the rarity values, e.g. card.Rarity.Common.
@@ -339,45 +342,46 @@ func UseKinds(k ...engine.UseKind) []engine.UseKind { return k }
 // Trigger groups the ability triggers, e.g. card.Trigger.Play or
 // card.Trigger.AfterForgeKey.
 var Trigger = triggers{
-	Play:                           engine.TriggerAfterPlay,
-	Reap:                           engine.TriggerAfterReap,
-	Fight:                          engine.TriggerAfterFight,
-	BeforeFight:                    engine.TriggerBeforeFight,
 	Action:                         engine.TriggerAction,
-	AfterForgeKey:                  engine.TriggerAfterForgeKey,
-	AfterCreatureEnters:            engine.TriggerAfterCreatureEnters,
-	AfterCreaturePlayedAdjacent:    engine.TriggerAfterCreaturePlayedAdjacent,
-	AfterNeighborFights:            engine.TriggerAfterNeighborFights,
-	Destroyed:                      engine.TriggerDestroyed,
-	AfterDestroyedFighting:         engine.TriggerAfterDestroyedFighting,
-	AfterEnemyDestroyedFighting:    engine.TriggerAfterEnemyDestroyedFighting,
-	AfterAssaultDestroys:           engine.TriggerAfterAssaultDestroys,
-	AfterArmorPrevents:             engine.TriggerAfterArmorPrevents,
-	AfterCardPlayed:                engine.TriggerAfterCardPlayed,
-	EndOfTurn:                      engine.TriggerEndOfTurn,
-	StartOfTurn:                    engine.TriggerStartOfTurn,
-	EndOfReadyStep:                 engine.TriggerEndOfReadyStep,
-	AfterChooseHouse:               engine.TriggerAfterChooseHouse,
-	AfterAnyPlayerChoosesHouse:     engine.TriggerAfterAnyPlayerChoosesHouse,
-	AfterEnemyCreatureDestroyed:    engine.TriggerAfterEnemyCreatureDestroyed,
-	AfterCreatureDestroyed:         engine.TriggerAfterCreatureDestroyed,
-	AfterFriendlyCreatureDestroyed: engine.TriggerAfterFriendlyCreatureDestroyed,
-	AfterEnemyCardPlayed:           engine.TriggerAfterEnemyCardPlayed,
-	AfterUse:                       engine.TriggerAfterUse,
-	AfterDiscardFromHand:           engine.TriggerAfterDiscardFromHand,
-	UsedSelf:                       engine.TriggerAfterUsedSelf,
-	AfterCreatureReaps:             engine.TriggerAfterCreatureReaps,
-	AfterEnemyCreatureReaps:        engine.TriggerAfterEnemyCreatureReaps,
-	AfterCreatureFights:            engine.TriggerAfterCreatureFights,
-	AfterPlayerForgesKey:           engine.TriggerAfterPlayerForgesKey,
-	AfterCreaturePlayed:            engine.TriggerAfterCreaturePlayed,
 	AfterAemberStolenFromYou:       engine.TriggerAfterAemberStolenFromYou,
+	AfterAnyPlayerChoosesHouse:     engine.TriggerAfterAnyPlayerChoosesHouse,
 	AfterAnyPlayerStartOfTurn:      engine.TriggerAfterAnyPlayerStartOfTurn,
-	LeavesPlay:                     engine.TriggerLeavesPlay,
-	AfterActionPlayedBeforeResolve: engine.TriggerAfterActionPlayedBeforeResolve,
-	PlayFightReap:                  triggerPlayFightReap,
+	AfterArmorPrevents:             engine.TriggerAfterArmorPrevents,
+	AfterAssaultDestroys:           engine.TriggerAfterAssaultDestroys,
+	AfterCardPlayed:                engine.TriggerAfterCardPlayed,
+	AfterChooseHouse:               engine.TriggerAfterChooseHouse,
+	AfterCreatureDestroyed:         engine.TriggerAfterCreatureDestroyed,
+	AfterCreatureEnters:            engine.TriggerAfterCreatureEnters,
+	AfterCreatureFights:            engine.TriggerAfterCreatureFights,
+	AfterCreaturePlayed:            engine.TriggerAfterCreaturePlayed,
+	AfterCreaturePlayedAdjacent:    engine.TriggerAfterCreaturePlayedAdjacent,
+	AfterCreatureReaps:             engine.TriggerAfterCreatureReaps,
+	AfterDestroyedFighting:         engine.TriggerAfterDestroyedFighting,
+	AfterDiscardFromHand:           engine.TriggerAfterDiscardFromHand,
+	AfterEnemyCardPlayed:           engine.TriggerAfterEnemyCardPlayed,
+	AfterEnemyCreatureDestroyed:    engine.TriggerAfterEnemyCreatureDestroyed,
+	AfterEnemyCreatureReaps:        engine.TriggerAfterEnemyCreatureReaps,
+	AfterEnemyDestroyedFighting:    engine.TriggerAfterEnemyDestroyedFighting,
+	AfterForgeKey:                  engine.TriggerAfterForgeKey,
+	AfterFriendlyCreatureDestroyed: engine.TriggerAfterFriendlyCreatureDestroyed,
+	AfterNeighborFights:            engine.TriggerAfterNeighborFights,
+	AfterPlayerForgesKey:           engine.TriggerAfterPlayerForgesKey,
+	AfterTacticPlayedBeforeResolve: engine.TriggerAfterTacticPlayedBeforeResolve,
+	AfterUse:                       engine.TriggerAfterUse,
+	BeforeFight:                    engine.TriggerBeforeFight,
+	BeforeOpponentForgesKey:        engine.TriggerBeforeOpponentForgesKey,
+	Destroyed:                      engine.TriggerDestroyed,
+	EndOfReadyStep:                 engine.TriggerEndOfReadyStep,
+	EndOfTurn:                      engine.TriggerEndOfTurn,
+	Fight:                          engine.TriggerAfterFight,
 	FightReap:                      triggerFightReap,
+	LeavesPlay:                     engine.TriggerLeavesPlay,
+	Play:                           engine.TriggerAfterPlay,
+	PlayFightReap:                  triggerPlayFightReap,
 	PlayReap:                       triggerPlayReap,
+	Reap:                           engine.TriggerAfterReap,
+	StartOfTurn:                    engine.TriggerStartOfTurn,
+	UsedSelf:                       engine.TriggerAfterUsedSelf,
 }
 
 // Composite triggers are facade-only fan-out markers: card.WithAbility expands
@@ -464,6 +468,10 @@ type triggers struct {
 	// AfterPlayerForgesKey fires after any player forges a key, acting on the
 	// player who forged (Forgemaster Og).
 	AfterPlayerForgesKey engine.Trigger
+	// BeforeOpponentForgesKey fires when the opponent would forge a key, before the
+	// forge, so the ability can cancel it (Keyforgery). The forging opponent is
+	// "they"; a cancelled forge leaves their Æmber unspent.
+	BeforeOpponentForgesKey engine.Trigger
 	// AfterCreaturePlayed fires after any creature is played from hand (friendly or
 	// enemy), with the played creature as "it" (The Big One).
 	AfterCreaturePlayed engine.Trigger
@@ -478,9 +486,9 @@ type triggers struct {
 	AfterAnyPlayerStartOfTurn engine.Trigger
 	// LeavesPlay fires as this card leaves play by any route ("Leaves Play:").
 	LeavesPlay engine.Trigger
-	// AfterActionPlayedBeforeResolve fires after a Tactic is played, by either
+	// AfterTacticPlayedBeforeResolve fires after a Tactic is played, by either
 	// player, before that Tactic's own effect resolves.
-	AfterActionPlayedBeforeResolve engine.Trigger
+	AfterTacticPlayedBeforeResolve engine.Trigger
 	// PlayFightReap fires the effect as a Play, a Fight, and a Reap ability, printed
 	// as one "Play/Fight/Reap:" line. It is a composite: card.WithAbility fans it
 	// into the three atomic abilities.

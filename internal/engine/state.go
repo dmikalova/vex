@@ -308,6 +308,12 @@ type GameState struct {
 	// colour as they forge (see pickKeyColor).
 	KeyColors [2][KeysToWin]KeyColor
 
+	// ForgePrevented means a "when your opponent would forge a key" ability
+	// cancelled the forge in progress (Keyforgery). It is set during the before-forge
+	// window by CancelForge and read and cleared at the forge site before any Æmber
+	// leaves the pool, mirroring FightCancelled; it is false outside that window.
+	ForgePrevented bool
+
 	// Chains[p] is player p's chain count. Chains penalize a player by reducing how
 	// many cards they draw at the end of their turn — one fewer card for every 6
 	// chains — and a player sheds a single chain on a turn where that reduction
@@ -342,15 +348,6 @@ type GameState struct {
 	// player's own next turn, whoever plays in between.
 	CannotFight     [2]Bar[bool]
 	CannotFightNext [2]Bar[bool]
-
-	// Stun-fighter bars. StunFighter[p], while set, stuns each creature player p
-	// uses to fight, right after that fight resolves; StunFighterNext[p] arms that
-	// for p's next turn (Foggify, cast against the opponent). Like the fight bar,
-	// an effect arms it, StartTurn promotes it to active for the affected player,
-	// and the ready phase lifts it — so it always lands on that player's own next
-	// turn, whoever plays in between.
-	StunFighter     [2]Bar[bool]
-	StunFighterNext [2]Bar[bool]
 
 	// Play-type bars. CannotPlayTypeThis[p] blocks player p from playing cards of
 	// that type this turn; CannotPlayTypeNext[p] arms that block for p's next turn
@@ -483,12 +480,12 @@ type GameState struct {
 	Lasting      [maxLasting]LastingEffect
 	LastingCount uint8
 
-	// Morphs holds the "for the remainder of the turn" trigger morphs active now
-	// (Livia the Elder's fight/reap fuse), queried by game_abilities.go when a
-	// creature's abilities are gathered; MorphCount is how many of the fixed array
-	// are in use. The ready phase drops a player's entries.
-	Morphs     [maxMorph]LastingMorph
-	MorphCount uint8
+	// AlsoTriggers holds the "for the remainder of the turn" also-triggers-on rules
+	// active now (Livia the Elder's fight/reap fuse), queried by game_abilities.go
+	// when a creature's abilities are gathered; AlsoTriggersCount is how many of the
+	// fixed array are in use. The ready phase drops a player's entries.
+	AlsoTriggers      [maxAlsoTriggers]LastingAlsoTriggersOn
+	AlsoTriggersCount uint8
 
 	// PlayedThisTurn[p] and DiscardedThisTurn[p] record, in order, the cards player p
 	// has played and discarded this turn; StartTurn clears both. Cards filter them

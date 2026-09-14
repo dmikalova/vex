@@ -60,7 +60,11 @@ func TestGainAemberPerOpponentArchivedCards(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.State.Archives[1].add(g.Register(testCreature("x", 1), 1))
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-	e := GainAember{Player: Controller, Amount: 1, Per: CardsInArchives{Player: Opponent}}
+	e := GainAember{
+		Player: Controller,
+		Amount: 1,
+		Per:    CardsInZone{Zone: Archives, Player: Opponent},
+	}
 	if e.Text() != "for each card in your opponent's archives, gain 1 Æmber" {
 		t.Errorf("text = %q", e.Text())
 	}

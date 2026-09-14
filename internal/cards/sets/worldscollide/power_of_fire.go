@@ -19,9 +19,9 @@ var PowerOfFire = set.New(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.Then{
 				First: card.Destroy{Target: card.Target.FriendlyCreature},
-				Result: card.LoseAemberEqualTo{
-					Player: card.EachPlayer,
-					Count:  card.PowerOfChosen{Of: card.HalfRoundedDown},
+				Result: card.LoseAember{
+					Player:  card.EachPlayer,
+					EqualTo: card.PowerOfChosen{Of: card.HalfRoundedDown},
 				},
 			},
 			card.GainChains{Amount: 1},

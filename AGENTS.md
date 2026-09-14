@@ -420,6 +420,16 @@ Three standing invariants:
   is recorded in the Vactrol⇄KeyForge divergence register
   ([docs/keyforge-divergences.md](docs/keyforge-divergences.md)) — never silently
   overwritten by a later "match KeyForge".
+- **Template consistency and simplicity across Vactrol outrank exact KeyForge
+  wording.** Matching the printed KeyForge text is not a goal in itself and is
+  never a blocker. A **meaning-preserving** reword that makes a card read in the
+  same voice and template as the rest of Vactrol — or that lets a mechanic
+  decompose into shared nodes instead of a bespoke one — is **welcome**, not a
+  reluctant exception: prefer it whenever it simplifies the templating or makes
+  card text more consistent. Such a reword changes only phrasing, so it needs no
+  divergence-register entry (the register catalogs changes to a **rule or a name**,
+  not house-voice alignment). Only when a reword actually changes a rule or a name
+  does it belong in the register.
 
 ## Speak the lingo
 

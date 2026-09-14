@@ -6,146 +6,173 @@ import (
 )
 
 // A restriction forbids a player some action for a stretch of the game — "cannot
-// use creatures to fight", "cannot play creatures" — rather than changing the board
-// directly. A restriction can be a timed effect that lasts through a player's next
-// turn, or a constant rule printed on a card in play; while it is active the
-// forbidden action simply cannot be taken. When one effect says a player "cannot"
-// and another says they "must" or "may" do the same thing, "cannot" wins.
-// Restriction effects forbid a player some action for a stretch of the game,
-// rather than changing the board directly. A "cannot" rule can arrive two ways:
-// as a timed effect (this file) or as a constant rule printed on a card in play
-// (CardDefinition.Restricts). Both feed the same gates (Game.cannotFight,
-// Game.cannotPlayCreatures), so the restriction is expressed once and honored the
-// same way however it is imposed.
+// use creatures to fight", "cannot play creatures" — rather than changing the
+// board directly. A "cannot" rule can arrive two ways: as a timed effect (this
+// file) that lasts through a player's next turn, or as a constant rule printed on
+// a card in play (CardDefinition.Restricts). Both feed the same gates
+// (Game.cannotFight, Game.cannotPlayCreatures), so the restriction is expressed
+// once and honored the same way however it is imposed. When one effect says a
+// player "cannot" and another says they "must" or "may" do the same thing,
+// "cannot" wins.
 
-// CannotFight bars a player from using creatures to fight. As an effect it is a
-// timed bar — Fogbank stops an opponent for the Duration of their next turn. The
-// same bar can be printed on a card as a constant Restrictions.Fighting rule; the
-// fight gate consults both.
-type CannotFight struct {
+// A RestrictKind names what a Restrict bars a player from: using creatures to
+// fight (Fogbank), using creatures to reap (Inky Gloom, Ragnarok), or using any
+// cards at all (Skippy Timehog, United Action). Barring fighting and barring
+// reaping each leave the other verb — and "Action:" abilities — open; barring use
+// stops every way of using what is already in play.
+type RestrictKind uint8
+
+const (
+	// restrictUnset is the invalid zero value; a real Restrict names a kind.
+	restrictUnset RestrictKind = iota
+	// RestrictFighting bars using creatures to fight.
+	RestrictFighting
+	// RestrictReaping bars using creatures to reap.
+	RestrictReaping
+	// RestrictUse bars using any card — reaping, fighting, or an "Action:" ability.
+	RestrictUse
+	// restrictKindCount bounds the enum for valid checks.
+	restrictKindCount
+)
+
+// valid reports whether the restrict kind names one of the three real bars.
+func (k RestrictKind) valid() bool {
+	return k > restrictUnset && k < restrictKindCount
+}
+
+// phrase renders what the kind bars, filling "cannot use ___" — "creatures to
+// fight", "creatures to reap", or the broader "any cards".
+func (k RestrictKind) phrase() string {
+	switch k {
+	case RestrictFighting:
+		return "creatures to fight"
+	case RestrictReaping:
+		return "creatures to reap"
+	default:
+		return "any cards"
+	}
+}
+
+// Restrict bars a player from an action for a Duration — using creatures to
+// fight, using creatures to reap, or using any cards at all. As an effect it is a
+// timed bar: Fogbank stops an opponent fighting throughout their next turn, Inky
+// Gloom stops them reaping, Ragnarok stops the caster reaping for the rest of the
+// turn, Skippy Timehog stops every use of the opponent's cards. Fighting and
+// reaping bars can also be printed on a card as constant Restrictions rules; the
+// same gate (Game.cannotFight, Game.cannotReap) consults both. Fighting has no
+// current-turn gate, so RestrictFighting is only valid for OpponentNextTurn. House
+// narrows a reaping bar to one house (Seismo-entangler bars the chosen house);
+// left unset it bars every house.
+type Restrict struct {
 	Player   Player
+	Action   RestrictKind
+	House    HouseChoice
 	Duration Duration
 }
 
-// validate rejects a CannotFight whose player or duration was left unset.
-func (e CannotFight) validate() error {
+// validate rejects a Restrict whose player, action, or duration was left unset,
+// or a RestrictFighting for anything but the player's next turn (there is no
+// current-turn fight bar). A House scope is only honored for a reaping bar on the
+// player's next turn — the only house-scoped gate is CannotReapHouseNextTurn.
+func (e Restrict) validate() error {
 	if !e.Player.valid() {
-		return errUnsetPlayer("CannotFight")
+		return errUnsetPlayer("Restrict")
+	}
+	if !e.Action.valid() {
+		return fmt.Errorf("Restrict: action must be set")
 	}
 	if !e.Duration.valid() {
-		return errUnsetDuration("CannotFight")
+		return errUnsetDuration("Restrict")
+	}
+	if e.Action == RestrictFighting && e.Duration != OpponentNextTurn {
+		return fmt.Errorf(
+			"Restrict: fighting can only be barred during the player's next turn",
+		)
+	}
+	if e.House.phrase() != "" &&
+		(e.Action != RestrictReaping || e.Duration != OpponentNextTurn) {
+		return fmt.Errorf(
+			"Restrict: a house scope only bars reaping during the player's next turn",
+		)
 	}
 	return nil
 }
 
 // Text renders the effect, e.g. "your opponent cannot use creatures to fight
-// during their next turn".
-func (e CannotFight) Text() string {
-	who, whose := "you", "your"
-	if e.Player == Opponent {
-		who, whose = "your opponent", "their"
-	}
-	return who + " cannot use creatures to fight during " + whose + " next turn"
-}
-
-// Resolve applies the timed bar to the chosen player.
-func (e CannotFight) Resolve(ctx *EffectContext) {
-	if e.Duration == OpponentNextTurn {
-		ctx.Resolver.CannotFightNextTurn(ctx.PlayerFor(e.Player), ctx.Source)
-	}
-}
-
-// StunEnemyFighters arms the stun-fighter bar on the opponent for their next turn:
-// throughout that turn, each creature they use to fight is stunned right after the
-// fight resolves (Foggify). Unlike CannotFight, which forbids the action outright,
-// this lets the fight happen and then punishes the fighter.
-type StunEnemyFighters struct {
-	Duration Duration
-}
-
-// validate rejects a StunEnemyFighters whose duration is not the opponent's next
-// turn — the only span the stun-fighter bar models.
-func (e StunEnemyFighters) validate() error {
-	if e.Duration != OpponentNextTurn {
-		return fmt.Errorf("StunEnemyFighters: duration must be OpponentNextTurn")
-	}
-	return nil
-}
-
-// Text renders the effect: "during your opponent's next turn, after an enemy
-// creature is used to fight, stun it".
-func (e StunEnemyFighters) Text() string {
-	return "during your opponent's next turn, after an enemy creature is used to fight, stun it"
-}
-
-// Resolve arms the stun-fighter bar on the opponent for their next turn.
-func (e StunEnemyFighters) Resolve(ctx *EffectContext) {
-	ctx.Resolver.StunFighterNextTurn(ctx.Opponent(), ctx.Source)
-}
-
-// CannotReap bars a player from using creatures to reap. As an effect it is a
-// timed bar — Inky Gloom stops an opponent for the Duration of their next turn.
-// It is narrower than CannotUse: only reaping is barred, so the affected player's
-// creatures can still fight and fire "Action:" abilities.
-type CannotReap struct {
-	Player   Player
-	Duration Duration
-}
-
-// validate rejects a CannotReap whose player or duration was left unset.
-func (e CannotReap) validate() error {
-	if !e.Player.valid() {
-		return errUnsetPlayer("CannotReap")
-	}
-	if !e.Duration.valid() {
-		return errUnsetDuration("CannotReap")
-	}
-	return nil
-}
-
-// Text renders the effect, e.g. "your opponent cannot use creatures to reap
 // during their next turn", or the current-turn form "you cannot use creatures to
-// reap for the remainder of the turn" (Ragnarok).
-func (e CannotReap) Text() string {
-	who, whose := "you", "your"
-	if e.Player == Opponent {
-		who, whose = "your opponent", "their"
-	}
+// reap for the remainder of the turn" (Ragnarok). A house scope narrows the noun:
+// "your opponent cannot use creatures of the chosen house to reap during their
+// next turn" (Seismo-entangler).
+func (e Restrict) Text() string {
+	who, whose := e.Player.secondPerson()
+	when := "during " + whose + " next turn"
 	if e.Duration == RemainderOfPlayerTurn {
-		return who + " cannot use creatures to reap for the remainder of the turn"
+		when = "for the remainder of the turn"
 	}
-	return who + " cannot use creatures to reap during " + whose + " next turn"
+	phrase := e.Action.phrase()
+	if h := e.House.phrase(); h != "" {
+		phrase = "creatures " + h + " to reap"
+	}
+	return who + " cannot use " + phrase + " " + when
 }
 
-// Resolve applies the timed bar to the chosen player, for the current turn
-// (RemainderOfPlayerTurn) or the player's next turn (OpponentNextTurn).
-func (e CannotReap) Resolve(ctx *EffectContext) {
-	switch e.Duration {
-	case RemainderOfPlayerTurn:
-		ctx.Resolver.CannotReapThisTurn(ctx.PlayerFor(e.Player), ctx.Source)
-	case OpponentNextTurn:
-		ctx.Resolver.CannotReapNextTurn(ctx.PlayerFor(e.Player), ctx.Source)
+// Resolve applies the timed bar to the chosen player, dispatching to the gate for
+// the action, for the current turn (RemainderOfPlayerTurn) or the player's next
+// turn (OpponentNextTurn). validate guarantees fighting only reaches next turn and
+// a house scope only reaches a next-turn reaping bar.
+func (e Restrict) Resolve(ctx *EffectContext) {
+	player := ctx.PlayerFor(e.Player)
+	switch e.Action {
+	case RestrictFighting:
+		ctx.Resolver.CannotFightNextTurn(player, ctx.Source)
+	case RestrictReaping:
+		switch {
+		case e.House.phrase() != "":
+			ctx.Resolver.CannotReapHouseNextTurn(player, e.House.resolveHouse(ctx), ctx.Source)
+		case e.Duration == RemainderOfPlayerTurn:
+			ctx.Resolver.CannotReapThisTurn(player, ctx.Source)
+		default:
+			ctx.Resolver.CannotReapNextTurn(player, ctx.Source)
+		}
+	case RestrictUse:
+		if e.Duration == RemainderOfPlayerTurn {
+			ctx.Resolver.CannotUseThisTurn(player, ctx.Source)
+		} else {
+			ctx.Resolver.CannotUseNextTurn(player, ctx.Source)
+		}
 	}
 }
 
 // CreaturesCannot bars every creature in play — both players' — from being used
 // one way (fighting or reaping) until the start of the caster's next turn, save
-// for creatures of an excepted house. Where CannotFight and CannotReap bar one
+// for the houses Houses excludes. Where CannotFight and CannotReap bar one
 // player's use of their own creatures, this is a rule on the whole board: Into
 // the Night stops non-Shadows creatures fighting, Sow Salt stops every creature
-// reaping. ExceptHouse left unset (HouseNone) spares no house.
+// reaping. Houses admits the barred creatures — left unset (MatchAnyHouse) it
+// bars every house.
 type CreaturesCannot struct {
-	Action      UseKind
-	ExceptHouse House
-	Duration    Duration
+	Action   UseKind
+	Houses   HouseMatcher
+	Duration Duration
 }
 
 // validate rejects a CreaturesCannot that bars no real action or names no
 // duration. The action must be fighting or reaping; an "Action:" ability cannot
-// be barred this way. An unset ExceptHouse is legal and spares no house.
+// be barred this way. Houses may only name a static house set (any, a named
+// house, or all but a named house): a board-wide bar rides in flat state with no
+// bound context, so a chosen/active/contextual matcher has nothing to resolve
+// against when the gate is later checked.
 func (e CreaturesCannot) validate() error {
 	if e.Action != FightUse && e.Action != ReapUse {
 		return fmt.Errorf("CreaturesCannot: action must be FightUse or ReapUse")
+	}
+	switch e.Houses.Kind {
+	case MatchAnyHouse, MatchNamedHouse, MatchExceptHouse:
+	default:
+		return fmt.Errorf("CreaturesCannot: houses must be a static house set")
+	}
+	if err := e.Houses.validate(); err != nil {
+		return err
 	}
 	if !e.Duration.valid() {
 		return errUnsetDuration("CreaturesCannot")
@@ -157,11 +184,8 @@ func (e CreaturesCannot) validate() error {
 // creatures cannot be used to fight", or with no house exception "until the start
 // of your next turn, creatures cannot be used to reap".
 func (e CreaturesCannot) Text() string {
-	subject := "creatures"
-	if e.ExceptHouse != HouseNone {
-		subject = "non-" + e.ExceptHouse.String() + " creatures"
-	}
-	return "until the start of your next turn, " + subject +
+	return "until the start of your next turn, " +
+		e.Houses.qualify("creatures") +
 		" cannot be used to " + e.Action.verb()
 }
 
@@ -173,7 +197,7 @@ func (e CreaturesCannot) Resolve(ctx *EffectContext) {
 		ctx.Resolver.CreaturesCannotUntilNextTurn(
 			ctx.Controller,
 			e.Action,
-			e.ExceptHouse,
+			e.Houses,
 			ctx.Source,
 		)
 	}
@@ -215,10 +239,7 @@ func (e CannotPlay) validate() error {
 // next turn". Card text raises the type noun to its proper-noun capitalization at
 // the presentation layer, so this keeps it lowercase.
 func (e CannotPlay) Text() string {
-	who, whose := "you", "your"
-	if e.Player == Opponent {
-		who, whose = "your opponent", "their"
-	}
+	who, whose := e.Player.secondPerson()
 	noun := strings.ToLower(e.barred().String()) + "s"
 	when := "during " + whose + " next turn"
 	if e.Duration == RemainderOfPlayerTurn {
@@ -283,91 +304,16 @@ func (e PlayersCannotPlay) Resolve(ctx *EffectContext) {
 	ctx.Resolver.CannotPlayTypeNextTurn(ctx.Opponent(), t, ctx.Source)
 }
 
-// CannotUse bars a player from using any card — reaping, fighting, or an "Action:"
-// ability — for the Duration (Skippy Timehog). It is the broadest of the bars:
-// where CannotFight stops one verb and CannotPlay stops cards leaving hand, this
-// stops every use of what is already in play. Playing and discarding still work.
-type CannotUse struct {
-	Player   Player
-	Duration Duration
-}
-
-// validate rejects a CannotUse whose player or duration was left unset.
-func (e CannotUse) validate() error {
-	if !e.Player.valid() {
-		return errUnsetPlayer("CannotUse")
-	}
-	if !e.Duration.valid() {
-		return errUnsetDuration("CannotUse")
-	}
-	return nil
-}
-
-// Text renders the effect, e.g. "your opponent cannot use any cards during their
-// next turn", or for the RemainderOfPlayerTurn form "you cannot use cards this
-// turn" (United Action).
-func (e CannotUse) Text() string {
-	who, whose := "you", "your"
-	if e.Player == Opponent {
-		who, whose = "your opponent", "their"
-	}
-	if e.Duration == RemainderOfPlayerTurn {
-		return who + " cannot use cards this turn"
-	}
-	return who + " cannot use any cards during " + whose + " next turn"
-}
-
-// Resolve arms the use bar on the chosen player, this turn or their next.
-func (e CannotUse) Resolve(ctx *EffectContext) {
-	switch e.Duration {
-	case OpponentNextTurn:
-		ctx.Resolver.CannotUseNextTurn(ctx.PlayerFor(e.Player), ctx.Source)
-	case RemainderOfPlayerTurn:
-		ctx.Resolver.CannotUseThisTurn(ctx.PlayerFor(e.Player), ctx.Source)
-	}
-}
-
-// ChosenHouseCannotReapNextTurn bars a player from reaping with creatures of the
-// house an enclosing ChooseHouseThen picked, throughout that player's next turn
-// (Seismo-entangler's "During your opponent's next turn, creatures of the chosen
-// house cannot be used to reap").
-type ChosenHouseCannotReapNextTurn struct {
-	Player Player
-}
-
-// validate rejects an effect whose player was left unset.
-func (e ChosenHouseCannotReapNextTurn) validate() error {
-	if !e.Player.valid() {
-		return errUnsetPlayer("ChosenHouseCannotReapNextTurn")
-	}
-	return nil
-}
-
-// Text renders the effect, e.g. "during your opponent's next turn, creatures of
-// the chosen house cannot be used to reap".
-func (e ChosenHouseCannotReapNextTurn) Text() string {
-	whose := "your"
-	if e.Player == Opponent {
-		whose = "your opponent's"
-	}
-	return "during " + whose + " next turn, creatures of the chosen house cannot be used to reap"
-}
-
-// Resolve arms the reap-by-house bar on the chosen player's next turn.
-func (e ChosenHouseCannotReapNextTurn) Resolve(ctx *EffectContext) {
-	ctx.Resolver.CannotReapHouseNextTurn(ctx.PlayerFor(e.Player), ctx.ChosenHouse, ctx.Source)
-}
-
-// ActiveHouseSource names where an active-house constraint reads the house it
+// HouseChoiceReference names where an active-house constraint reads the house it
 // applies (and, for JustChosen, whose next turn it binds): the house an enclosing
 // ChooseHouseThen picked (Chosen), the house of the creature the source fought
 // (Fought), or the house a player just chose this turn, read from the board
 // (JustChosen — Snag's Mirror, keyed off the "after a player chooses a house"
 // trigger).
-type ActiveHouseSource uint8
+type HouseChoiceReference uint8
 
 const (
-	activeHouseUnset ActiveHouseSource = iota
+	houseChoiceRefUnset HouseChoiceReference = iota
 	// ChosenActiveHouse reads the house an enclosing ChooseHouseThen picked.
 	ChosenActiveHouse
 	// FoughtActiveHouse reads the house of the creature the source fought (ctx.It).
@@ -376,88 +322,107 @@ const (
 	JustChosenActiveHouse
 )
 
-// OpponentMustChooseHouse makes the opponent choose a house as their active house
-// on their next turn — the house an enclosing ChooseHouseThen picked (Control the
-// Weak, Source Chosen) or the house of the creature the source fought (Snag,
-// Source Fought).
-type OpponentMustChooseHouse struct {
-	// Source names where the forced house is read from (Chosen or Fought).
-	Source ActiveHouseSource
+// MustChooseHouse forces a player to choose a house as their active house on their
+// next turn — the house an enclosing ChooseHouseThen picked (Control the Weak,
+// Reference Chosen) or the house of the creature the source fought (Snag, Reference
+// Fought). Player names whose next-turn choice is forced; it is source-relative, so
+// a card binding its own controller reads "you must choose … on your next turn".
+type MustChooseHouse struct {
+	// Player is whose next-turn active-house choice is forced.
+	Player Player
+	// Reference names where the forced house is read from (Chosen or Fought).
+	Reference HouseChoiceReference
 }
 
-// validate requires a Chosen or Fought source.
-func (e OpponentMustChooseHouse) validate() error {
-	switch e.Source {
-	case ChosenActiveHouse, FoughtActiveHouse:
-		return nil
-	default:
-		return fmt.Errorf("OpponentMustChooseHouse: Source must be Chosen or Fought")
+// validate requires a player and a Chosen or Fought reference.
+func (e MustChooseHouse) validate() error {
+	if !e.Player.valid() {
+		return errUnsetPlayer("MustChooseHouse")
 	}
-}
-
-// Text renders the effect, e.g. "your opponent must choose that house as their
-// active house during their next turn".
-func (e OpponentMustChooseHouse) Text() string {
-	house, when := "that house", "during their next turn"
-	if e.Source == FoughtActiveHouse {
-		house, when = "the house of the creature "+SelfName+" fights", "on their next turn"
+	if e.Reference != ChosenActiveHouse && e.Reference != FoughtActiveHouse {
+		return fmt.Errorf("MustChooseHouse: reference must be Chosen or Fought")
 	}
-	return "your opponent must choose " + house + " as their active house " + when
+	return nil
 }
 
-// Resolve arms the must on the opponent's next turn. A Fought source stores a live
+// Text renders the effect in the player's voice, e.g. "your opponent must choose
+// that house as their active house during their next turn".
+func (e MustChooseHouse) Text() string {
+	who, whose := e.Player.secondPerson()
+	if e.Reference == FoughtActiveHouse {
+		return who + " must choose the house of the creature " + SelfName +
+			" fights as " + whose + " active house on " + whose + " next turn"
+	}
+	return who + " must choose that house as " + whose +
+		" active house during " + whose + " next turn"
+}
+
+// Resolve arms the must on the player's next turn. A Fought reference stores a live
 // reference to the fought creature, resolved to its current house at choice time,
 // and does nothing when no creature is in context.
-func (e OpponentMustChooseHouse) Resolve(ctx *EffectContext) {
-	if e.Source == FoughtActiveHouse {
+func (e MustChooseHouse) Resolve(ctx *EffectContext) {
+	player := ctx.PlayerFor(e.Player)
+	if e.Reference == FoughtActiveHouse {
 		if !ctx.HasIt {
 			return
 		}
-		ctx.Resolver.MustChooseFoughtHouseNextTurn(ctx.Opponent(), ctx.It, ctx.Source)
+		ctx.Resolver.MustChooseFoughtHouseNextTurn(player, ctx.It, ctx.Source)
 		return
 	}
-	ctx.Resolver.MustChooseHouseNextTurn(ctx.Opponent(), ctx.ChosenHouse, ctx.Source)
+	ctx.Resolver.MustChooseHouseNextTurn(player, ctx.ChosenHouse, ctx.Source)
 }
 
-// OpponentCannotChooseHouse bars a player from choosing a house as their active
-// house on their next turn — the source's opponent from the chosen house (Tezmal,
-// Source Chosen) or the chooser's opponent from the house a player just chose
-// (Snag's Mirror, Source JustChosen, keyed off the "after a player chooses a
-// house" trigger so it works whichever player chose).
-type OpponentCannotChooseHouse struct {
-	// Source names where the barred house is read from (Chosen or JustChosen).
-	Source ActiveHouseSource
+// CannotChooseHouse bars a player from choosing a house as their active house on
+// their next turn — the chosen house (Tezmal, Reference Chosen) or the house a
+// player just chose this turn (Snag's Mirror, Reference JustChosen, keyed off the
+// "after a player chooses a house" trigger). Player names whose next-turn choice is
+// barred; for a Chosen reference it is source-relative, and for a JustChosen
+// reference it is relative to the player who just chose (read from the board), so
+// Player Opponent bars the chooser's opponent whichever player made the choice.
+type CannotChooseHouse struct {
+	// Player is whose next-turn active-house choice is barred.
+	Player Player
+	// Reference names where the barred house is read from (Chosen or JustChosen).
+	Reference HouseChoiceReference
 }
 
-// validate requires a Chosen or JustChosen source.
-func (e OpponentCannotChooseHouse) validate() error {
-	switch e.Source {
-	case ChosenActiveHouse, JustChosenActiveHouse:
-		return nil
-	default:
-		return fmt.Errorf("OpponentCannotChooseHouse: Source must be Chosen or JustChosen")
+// validate requires a player and a Chosen or JustChosen reference.
+func (e CannotChooseHouse) validate() error {
+	if !e.Player.valid() {
+		return errUnsetPlayer("CannotChooseHouse")
 	}
+	if e.Reference != ChosenActiveHouse && e.Reference != JustChosenActiveHouse {
+		return fmt.Errorf("CannotChooseHouse: reference must be Chosen or JustChosen")
+	}
+	return nil
 }
 
-// Text renders the effect. A JustChosen source follows the "after a player chooses
-// an active house, " trigger prefix, so it speaks from the chooser's point of view.
-func (e OpponentCannotChooseHouse) Text() string {
-	if e.Source == JustChosenActiveHouse {
+// Text renders the effect. A JustChosen reference follows the "after a player
+// chooses a house" trigger and speaks from the chooser's point of view.
+func (e CannotChooseHouse) Text() string {
+	if e.Reference == JustChosenActiveHouse {
 		return "their opponent cannot choose the same house as their active house on their next turn"
 	}
-	return "your opponent cannot choose that house as their active house on their next turn"
+	who, whose := e.Player.secondPerson()
+	return who + " cannot choose that house as " + whose +
+		" active house on " + whose + " next turn"
 }
 
-// Resolve bars the house on the barred player's next turn. A JustChosen source
-// reads the active player and house from the board, so it bars the chooser's
-// opponent whichever player made the choice.
-func (e OpponentCannotChooseHouse) Resolve(ctx *EffectContext) {
-	if e.Source == JustChosenActiveHouse {
+// Resolve bars the house on the barred player's next turn. A JustChosen reference
+// reads the choosing player and house from the board, applying Player relative to
+// the chooser, so Player Opponent bars the chooser's opponent whichever player made
+// the choice.
+func (e CannotChooseHouse) Resolve(ctx *EffectContext) {
+	if e.Reference == JustChosenActiveHouse {
 		chooser := ctx.Resolver.ActivePlayer()
-		ctx.Resolver.CannotChooseHouseNextTurn(1-chooser, ctx.Resolver.ActiveHouse(), ctx.Source)
+		barred := chooser
+		if e.Player == Opponent {
+			barred = 1 - chooser
+		}
+		ctx.Resolver.CannotChooseHouseNextTurn(barred, ctx.Resolver.ActiveHouse(), ctx.Source)
 		return
 	}
-	ctx.Resolver.CannotChooseHouseNextTurn(ctx.Opponent(), ctx.ChosenHouse, ctx.Source)
+	ctx.Resolver.CannotChooseHouseNextTurn(ctx.PlayerFor(e.Player), ctx.ChosenHouse, ctx.Source)
 }
 
 // WagerOpponentChoosesChosenHouse bets on the opponent matching the house an

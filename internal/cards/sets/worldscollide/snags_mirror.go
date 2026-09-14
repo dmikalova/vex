@@ -21,6 +21,9 @@ var SnagsMirror = set.New(
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.AfterAnyPlayerChoosesHouse,
-		card.OpponentCannotChooseHouse{Source: card.JustChosenActiveHouse},
+		card.CannotChooseHouse{
+			Player:    card.Opponent,
+			Reference: card.JustChosenActiveHouse,
+		},
 	),
 )

@@ -17,7 +17,7 @@ var EncounterSuit = set.New(
 	card.Provenance(card.WC, "330"),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{{
-			Trigger: card.Trigger.AfterActionPlayedBeforeResolve,
+			Trigger: card.Trigger.AfterTacticPlayedBeforeResolve,
 			Effect:  card.Ward{Target: card.Target.This},
 		}},
 	}),

@@ -139,3 +139,26 @@ func (ItIsStunned) CondText() string {
 func (ItIsStunned) Met(ctx *EffectContext) bool {
 	return ctx.HasIt && ctx.Resolver.Stunned(ctx.It)
 }
+
+// ItIsNotOfNamedHouse is met when a card is in context (ctx.It) and is not of the
+// house a player named earlier in this ability, stored in ctx.ChosenHouse by an
+// OpponentNamesHouse. Keyforgery uses it: a revealed card not of the named house
+// destroys the guard and cancels the forge. Like ItIsOffIdentity it renders a
+// negative sentence but is a positive, HasIt-gated condition, so an empty hand
+// (no card revealed) leaves it unmet and the forge proceeds. It is its own
+// condition, not an ItIs house matcher, because the named house is dynamic and the
+// HouseMatcher facade's Named selector is the fixed-house one.
+type ItIsNotOfNamedHouse struct {
+	// Subject names the card in context outright; unset says "it".
+	Subject Subject
+}
+
+// CondText renders the condition, e.g. "if that card is not of the named house".
+func (c ItIsNotOfNamedHouse) CondText() string {
+	return "if " + c.Subject.noun() + " is not of the named house"
+}
+
+// Met reports whether a card is in context and is not of the named house.
+func (c ItIsNotOfNamedHouse) Met(ctx *EffectContext) bool {
+	return ctx.HasIt && ctx.Resolver.House(ctx.It) != ctx.ChosenHouse
+}

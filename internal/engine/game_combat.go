@@ -176,12 +176,6 @@ func (g *Game) fight(attacker, defender LocalID) {
 			g.lastingReactions(EventFight, attackerSide, attacker)...,
 		),
 	))
-	// Foggify's stun-fighter bar, armed against this player for this turn, stuns
-	// each creature they use to fight — read after the fight window so it lands on
-	// an attacker that survived combat and its own "Fight:" abilities.
-	if g.State.StunFighter[attackerSide].Value && g.inPlay(attacker) {
-		g.SetStunned(attacker, true)
-	}
 }
 
 // fightReactions gathers, in default resolution order, every card-sourced ability

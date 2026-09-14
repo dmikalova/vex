@@ -20,7 +20,8 @@ var EDAIEdie4x4 = set.New(
 	card.Provenance(card.WC, "132"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Ai, card.Traits.Scientist),
-	card.WithKeyCost(card.KeyCostChange(card.Opponent, 1).Per(card.CardsInArchives{
+	card.WithKeyCost(card.KeyCostChange(card.Opponent, 1).Per(card.CardsInZone{
+		Zone:   card.Archives,
 		Player: card.Controller,
 	})),
 	card.WithAbility(

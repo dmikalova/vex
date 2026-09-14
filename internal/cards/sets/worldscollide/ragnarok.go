@@ -20,8 +20,9 @@ var Ragnarok = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{
 			Effects: []card.Effect{
-				card.CannotReap{
+				card.Restrict{
 					Player:   card.Controller,
+					Action:   card.Restricted.Reaping,
 					Duration: card.Duration.RemainderOfPlayerTurn,
 				},
 				card.ForRemainderOfTurn{

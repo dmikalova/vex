@@ -16,20 +16,29 @@ import (
 //
 //	Play: During your opponent's next turn, after an enemy Creature is used to fight, stun it.
 func TestFoggify(t *testing.T) {
-	t.Run("arms the opponent's next turn without restricting the caster", func(t *testing.T) {
-		h := ct.Play(t, ct.Setup{
-			P1: ct.Side{House: card.House.Logos, Hand: ct.Cards(Foggify)},
-		})
+	t.Run(
+		"arms the opponent's next turn without stunning the caster's fighters",
+		func(t *testing.T) {
+			var mine, theirs ct.Card
+			h := ct.Play(t, ct.Setup{
+				P1: ct.Side{
+					House: card.House.Logos,
+					Hand:  ct.Cards(Foggify),
+					InPlay: ct.Cards(
+						ct.Bind(&mine, ct.Creature(ct.OfHouse(card.House.Logos), ct.Power(6))),
+					),
+				},
+				P2: ct.Side{
+					InPlay: ct.Cards(ct.Bind(&theirs, ct.Creature(ct.Power(2)))),
+				},
+			})
 
-		h.P1.Play(Foggify)
+			h.P1.Play(Foggify)
+			h.P1.Fight(mine, theirs)
 
-		if !h.Game().State.StunFighterNext[1].Value {
-			t.Error("Foggify should arm the opponent's next turn")
-		}
-		if h.Game().State.StunFighterNext[0].Value {
-			t.Error("Foggify should not arm the caster")
-		}
-	})
+			h.Expect(mine).Stunned(false)
+		},
+	)
 
 	t.Run("stuns each enemy creature the opponent uses to fight next turn", func(t *testing.T) {
 		var attacker, defender ct.Card

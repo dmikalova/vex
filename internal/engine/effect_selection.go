@@ -271,7 +271,7 @@ func (s Named) object() string { return s.Name }
 // candidates keeps the cards whose name matches.
 func (s Named) candidates(ctx *EffectContext, cands []LocalID) []LocalID {
 	return filterIDs(cands, func(id LocalID) bool {
-		return ctx.Resolver.Name(id) == s.Name
+		return CardFilter{Name: s.Name}.admits(ctx.Resolver, id)
 	})
 }
 

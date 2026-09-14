@@ -243,6 +243,56 @@ frame — and entries inherit their attribution from the frame they sit in. The
 client groups a top-level frame's entries into one visual bubble.
 _Avoid_: use, useId, bubble (as a code term), log group, log mark.
 
+## Replay
+
+**Command**:
+A single player input crossing the engine boundary — a root action or one answer
+to a choice the engine asked. Commands are the _causes_ of a match; the Game log
+records the _effects_. The ordered list of commands, plus the initial seed and
+Sets, is the authoritative source of truth for a match, from which its whole state
+is derived.
+_Avoid_: event (an `Event` is a gameplay timing key, not a persisted input),
+input (accepted synonym, but Command is the canonical term), move, action (an
+action is one _kind_ of command).
+
+**Replay**:
+Reconstructing a match's state by re-applying its Commands to a fresh game from
+the initial seed and Sets. Because the engine is deterministic given seed plus
+Commands, replay reproduces the exact state, the fully typed Game log, and the
+undo history — none of which survive saving a bare state snapshot.
+_Avoid_: playback, rerun, event sourcing (the units are Commands, not events).
+
+**Session**:
+The driver of one running match: it owns the Command log, the initial seed and
+Sets, and the undo cursor, wraps the engine's step function, and hands out a
+projected View. The client is a thin surface over a Session; a future server
+wraps the same Session. Distinct from a Match, which only _sets a match up_
+(decks, Houses) before a Session runs it.
+_Avoid_: game (overloaded), controller, driver (as a code term).
+
+**Request**:
+What the engine yields when resolution needs input: a thin marker naming which
+player owes a decision and in what context, not a list of the legal answers. Each
+holder re-derives the legal Commands itself, since every client carries the whole
+engine. A Request is answered by a Command. It is the mirror of a Command: the
+engine asks with a Request and is answered with a Command.
+_Avoid_: prompt (the Prompt is the _client's_ rendering of a Request), question,
+choice, option list.
+
+**Information barrier**:
+A Command whose resolution revealed hidden information — it stepped the match
+PRNG or looked at a hidden zone. Undo is free up to the most recent barrier;
+crossing one needs the opponent's consent in networked play and is unrestricted
+in a hotseat game.
+_Avoid_: checkpoint, commit point.
+
+**Projection** (**View**):
+The redacted picture of a match a single player is allowed to see, produced by
+`Project(state, viewer)`. It is identity today (hotseat sees everything); a
+future server redacts the other player's hidden zones. A client renders from its
+View, never from raw engine state.
+_Avoid_: snapshot (a bare state copy, not a per-player view), perspective.
+
 ## Cards and sets
 
 **House**:

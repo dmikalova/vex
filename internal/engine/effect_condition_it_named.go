@@ -15,5 +15,5 @@ func (e ItIsNamed) CondText() string {
 
 // Met reports whether a card is in context and carries the given name.
 func (e ItIsNamed) Met(ctx *EffectContext) bool {
-	return ctx.HasIt && ctx.Resolver.Name(ctx.It) == e.Name
+	return ctx.HasIt && CardFilter{Name: e.Name}.admits(ctx.Resolver, ctx.It)
 }

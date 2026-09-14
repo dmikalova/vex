@@ -30,7 +30,7 @@ func TestConditionalPlayBarText(t *testing.T) {
 // prefix) for any condition other than ControlsMoreCreatures.
 func TestSymmetricCondTextFallback(t *testing.T) {
 	if got := symmetricCondText(
-		OpponentHasMoreKeys{},
+		HasMoreForgedKeys{Player: Opponent},
 	); got != "your opponent has more forged keys than you" {
 		t.Errorf("symmetricCondText fallback = %q", got)
 	}

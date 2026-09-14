@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Æmber:  1
 //	Traits: Item
 //
-//	When your opponent would forge a key, they name a house. Reveal a random card from your hand. If that card is not of the named house, destroy Keyforgery and they do not forge that key.
+//	When your opponent would forge a key, they name a house. Reveal a random card from your hand. If that card is not of the named house, destroy Keyforgery, and they do not forge that key.
 var Keyforgery = set.New(
 	"Keyforgery",
 	card.House.Shadows,
@@ -19,5 +19,18 @@ var Keyforgery = set.New(
 	card.Provenance(card.WC, "271"),
 	card.WithAemberBonus(1),
 	card.WithTraits(card.Traits.Item),
-	card.WithGuardsOpponentForge(),
+	card.WithAbility(
+		card.Trigger.BeforeOpponentForgesKey,
+		card.Sentences{Effects: []card.Effect{
+			card.OpponentNamesHouse{},
+			card.RevealRandomFromHand{},
+			card.Conditional{
+				Cond: card.ItIsNotOfNamedHouse{Subject: card.Subject.ThatCard},
+				Then: card.Sequence{Effects: []card.Effect{
+					card.Destroy{Target: card.Target.This},
+					card.CancelForge{},
+				}},
+			},
+		}},
+	),
 )

@@ -23,7 +23,7 @@ var KnowledgeIsPower = set.New(
 			card.GainAember{
 				Player: card.Controller,
 				Amount: 1,
-				Per:    card.CardsInArchives{Player: card.Controller},
+				Per:    card.CardsInZone{Zone: card.Archives, Player: card.Controller},
 			},
 		}}),
 )

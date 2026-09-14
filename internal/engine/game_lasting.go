@@ -133,6 +133,18 @@ func (e Event) gerund() string {
 	return "gaining Æmber from reaping"
 }
 
+// clauseOnOpponentTurn renders the reaction's "when" phrase from the opponent's
+// turn, where the acting creature is an enemy one. It differs from clause only for
+// events whose phrasing names the acting side; the rest read the same either way.
+func (e Event) clauseOnOpponentTurn() string {
+	switch e {
+	case EventFight:
+		return "after an enemy creature is used to fight"
+	default:
+		return e.clause()
+	}
+}
+
 // lastingAction is what a lasting effect does when it fires or replaces.
 type lastingAction uint8
 
@@ -148,6 +160,9 @@ const (
 	// actExalt places Amount Æmber on the subject creature — the granted "Before
 	// Fight: Exalt this creature" (Diplomacy).
 	actExalt
+	// actStun stuns the subject creature — Foggify's "after an enemy creature is
+	// used to fight, stun it", armed on the opponent for their next turn.
+	actStun
 	// actTakeExtraDamage is a modifier, not a reaction: it never resolves in a
 	// trigger window, only summed at the damage site by lastingExtraDamage.
 	actTakeExtraDamage
@@ -171,6 +186,8 @@ func (a lastingAction) describe() string {
 		return "opponent loses Æmber"
 	case actExalt:
 		return "exalt the creature"
+	case actStun:
+		return "stun the creature"
 	default:
 		return "gain Æmber"
 	}
@@ -247,7 +264,7 @@ func (g *Game) clearLasting(player int) {
 		g.State.Lasting[i] = LastingEffect{}
 	}
 	g.State.LastingCount = uint8(n)
-	g.clearLastingMorphs(player)
+	g.clearLastingAlsoTriggers(player)
 }
 
 // matchingLasting collects every registry reaction actor owns that responds to
@@ -369,6 +386,18 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 	case actExalt:
 		g.addAmberOn(subject, int(le.Amount))
 		g.record(AemberExalted{Creature: subject, Amount: int(le.Amount)})
+	case actStun:
+		if g.inPlay(subject) {
+			Stun{Target: Target{Kind: TargetTriggeringCreature}}.Resolve(
+				&EffectContext{
+					Resolver:   g,
+					Source:     subject,
+					Controller: actor,
+					It:         subject,
+					HasIt:      true,
+				},
+			)
+		}
 	case actDraw:
 		g.draw(actor, int(le.Amount))
 		g.record(LastingDraw{Player: actor, Amount: int(le.Amount), On: le.On})

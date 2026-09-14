@@ -18,6 +18,10 @@ var CloakingDongle = set.New(
 	card.Provenance(card.WC, "294"),
 	card.WithAemberBonus(1),
 	card.WithStatic(card.StaticModifier{
-		KeywordsToNeighbors: card.Keywords(card.Keyword.Elusive),
+		KeywordGrants: []card.KeywordGrant{{
+			Keywords:  card.Keywords(card.Keyword.Elusive),
+			Host:      true,
+			Neighbors: true,
+		}},
 	}),
 )

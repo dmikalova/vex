@@ -93,9 +93,6 @@ func TestShuffleIntoDeck(t *testing.T) {
 	if (Shuffle{Zones: []Zone{Hand, Discard}}).validate() != nil {
 		t.Error("hand and discard should be valid")
 	}
-	if (Shuffle{FromPlay: true, Zones: []Zone{Discard}}).validate() == nil {
-		t.Error("FromPlay paired with Zones should be invalid")
-	}
 
 	// Resolve: discard only.
 	g := NewGame("A", "B", 1)

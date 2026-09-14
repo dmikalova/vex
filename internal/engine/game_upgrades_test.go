@@ -98,10 +98,10 @@ func TestUpgradeChainStitchesWhenMiddleLeaves(t *testing.T) {
 	}
 }
 
-// TestStaticModifierKeywordsToNeighbors attaches a Cloaking-Dongle-style upgrade to a
-// creature in the middle of the battleline and confirms its KeywordsToNeighbors reach
+// TestStaticModifierKeywordGrantReach attaches a Cloaking-Dongle-style upgrade to a
+// creature in the middle of the battleline and confirms its KeywordGrant reaches
 // the host and both of its neighbors, but no farther.
-func TestStaticModifierKeywordsToNeighbors(t *testing.T) {
+func TestStaticModifierKeywordGrantReach(t *testing.T) {
 	g := started(t)
 	far := g.AddToBattleline(testCreature("far", 3), 0)
 	left := g.AddToBattleline(testCreature("left", 3), 0)
@@ -110,7 +110,9 @@ func TestStaticModifierKeywordsToNeighbors(t *testing.T) {
 
 	dongle := g.Register(
 		NewCard("dongle", StarAlliance, Upgrade, Common,
-			WithStatic(StaticModifier{KeywordsToNeighbors: []Keyword{Elusive}})),
+			WithStatic(StaticModifier{KeywordGrants: []KeywordGrant{{
+				Keywords: []Keyword{Elusive}, Host: true, Neighbors: true,
+			}}})),
 		0,
 	)
 	g.AttachUpgrade(host, dongle)

@@ -50,6 +50,22 @@ func (PowerDestroyedThisWay) CountClause(quantity string, _ bool) string {
 	return "the total power of creatures destroyed this way is " + quantity
 }
 
+// CardsShuffledIntoDeck counts the cards the most recent from-play shuffle in this
+// resolution returned to the controller's own deck — the "for each card shuffled
+// into your deck this way" tally Timequake draws one card for. A card the
+// controller played but does not own is shuffled into its owner's deck instead, so
+// it is not counted here.
+type CardsShuffledIntoDeck struct{}
+
+// Value returns how many cards the preceding shuffle returned to the controller's
+// own deck.
+func (CardsShuffledIntoDeck) Value(ctx *EffectContext) int {
+	return ctx.Produced.Moved[ctx.Controller]
+}
+
+// CountText renders the singular noun the "for each" clause repeats.
+func (CardsShuffledIntoDeck) CountText() string { return "card shuffled into your deck this way" }
+
 // ProducedTally names a "... this way" tally an earlier effect in the same
 // resolution records in ctx.Produced for a following ProducedThisWay count.
 type ProducedTally uint8

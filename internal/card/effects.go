@@ -17,21 +17,18 @@ type (
 
 // Æmber effects.
 type (
-	// GainAember moves Æmber from the common supply into a player's pool.
+	// GainAember moves Æmber from the common supply into a player's pool (or gains
+	// Æmber equal to a running count via EqualTo, e.g. The Flex gains half a chosen
+	// creature's power).
 	GainAember = engine.GainAember
-	// GainAemberEqualTo gains Æmber equal to a running count (The Flex gains half a
-	// chosen creature's power).
-	GainAemberEqualTo = engine.GainAemberEqualTo
 	// MoveAemberFromPool banks Æmber out of your pool onto a card.
 	MoveAemberFromPool = engine.MoveAemberFromPool
 	// PlaceAemberOnThis places Æmber from the common supply on this card.
 	PlaceAemberOnThis = engine.PlaceAemberOnThis
 	// LoseAember returns Æmber from a player's pool to the supply (see By:
-	// HalfRoundedDown, AllBut).
+	// HalfRoundedDown, AllBut; or EqualTo for a running count, e.g. Power of Fire
+	// loses half the sacrificed creature's power).
 	LoseAember = engine.LoseAember
-	// LoseAemberEqualTo loses Æmber equal to a running count (Power of Fire loses
-	// half the sacrificed creature's power).
-	LoseAemberEqualTo = engine.LoseAemberEqualTo
 	// StealAember moves Æmber from the opponent's pool into yours.
 	StealAember = engine.StealAember
 	// GiveAember moves Æmber from your opponent's pool into yours — the opponent
@@ -55,9 +52,9 @@ type (
 type (
 	// DealDamage deals damage to each creature its Target selects.
 	DealDamage = engine.DealDamage
-	// DealDamagePerHouse deals damage to one chosen creature of each house
-	// (Gleeful Mayhem).
-	DealDamagePerHouse = engine.DealDamagePerHouse
+	// ForEachHouse resolves Do once per house, binding that house so a nested
+	// "of that house" target (card.Houses.Each) reads it (Gleeful Mayhem).
+	ForEachHouse = engine.ForEachHouse
 	// DamageThen deals damage to a creature, then runs Then on it under After
 	// (card.Always / card.IfDestroyed / card.IfSurvives).
 	DamageThen = engine.DamageThen
@@ -149,9 +146,14 @@ type (
 	Destroy = engine.Destroy
 	// DestroyChosen destroys any number of creatures the controller picks from its Target.
 	DestroyChosen = engine.DestroyChosen
-	// DestroyMostPowerfulUnlessReadyHouse destroys the most powerful creature of
-	// each player who does not control a ready creature of House (Quicksand).
-	DestroyMostPowerfulUnlessReadyHouse = engine.DestroyMostPowerfulUnlessReadyHouse
+	// BatchDestroy destroys a computed set of creatures in one simultaneous batch, so
+	// their Destroyed abilities see each other still in play. Its Gather strategy
+	// picks and names the set (e.g. card.EachPlayerUnless).
+	BatchDestroy = engine.BatchDestroy
+	// EachPlayerUnless gathers, from each player not spared by a per-player board
+	// condition (Spare), the creatures its Take refinement keeps — Quicksand takes
+	// each unspared player's most powerful creature.
+	EachPlayerUnless = engine.EachPlayerUnless
 	// DestroyEachCreatureAtEndOfTurn schedules "destroy each creature" to resolve in
 	// the end-of-turn phase rather than now (Ragnarok).
 	DestroyEachCreatureAtEndOfTurn = engine.DestroyEachCreatureAtEndOfTurn
@@ -246,12 +248,17 @@ type (
 	// SearchDeck searches your deck for a card (any card, or one of a given house),
 	// puts it into your hand, and shuffles your deck.
 	SearchDeck = engine.SearchDeck
-	// Shuffle shuffles your deck, optionally folding one bulk source of your cards
-	// into it first: nothing (the bare "shuffle your deck" a search ends on, also a
-	// RevealTopOfDeck/LookAtTopOfDeck routing terminal — Borr Nit), whole Zones
-	// (hand, discard, archives), or FromPlay (every friendly card in play plus its
-	// upgrades, then draw a card for each shuffled this way — Timequake).
+	// Shuffle shuffles your deck, optionally folding whole zones of your cards into
+	// it first: nothing (the bare "shuffle your deck" a search ends on, also a
+	// RevealTopOfDeck/LookAtTopOfDeck routing terminal — Borr Nit) or whole Zones
+	// (hand, discard, archives). To fold every friendly card in play into the deck
+	// instead, use ShuffleFriendlyCardsIntoDeck.
 	Shuffle = engine.Shuffle
+	// ShuffleFriendlyCardsIntoDeck folds every friendly card in play plus its
+	// upgrades into its owner's deck, tallying how many returned to each owner's deck
+	// so a following Draw{Per: CardsShuffledIntoDeck} draws one card for each card
+	// that returned to your own deck (Timequake).
+	ShuffleFriendlyCardsIntoDeck = engine.ShuffleFriendlyCardsIntoDeck
 	// ShuffleFromDiscard shuffles the cards a Selection picks from your discard pile
 	// into your deck — each match, any number of a chosen kind, or a counted number.
 	ShuffleFromDiscard = engine.ShuffleFromDiscard
@@ -288,9 +295,9 @@ type (
 	// deciding how each is picked (Chosen or Random), Zone the source, and
 	// Amount / AnyNumber how many.
 	DiscardCard = engine.DiscardCard
-	// DiscardTopOfDeckUntil discards from the top of your deck until it turns up a
+	// DiscardUntil discards from the top of your deck until it turns up a
 	// card the filters admit, recording the run and putting that card in context.
-	DiscardTopOfDeckUntil = engine.DiscardTopOfDeckUntil
+	DiscardUntil = engine.DiscardUntil
 	// PutDiscardedIntoHand puts the card in context from the discard pile into
 	// its owner's hand.
 	PutDiscardedIntoHand = engine.PutDiscardedIntoHand
@@ -348,10 +355,14 @@ type (
 	// top card) or archives (From: card.Archives, a random card) as your own play
 	// (Murkens).
 	PlayFromOpponent = engine.PlayFromOpponent
-	// PlayDiscardedTacticFromOpponent is Fidgit's reap: discard a random card from
-	// the opponent's archives or their deck top, then play it as your own if it is a
-	// Tactic.
-	PlayDiscardedTacticFromOpponent = engine.PlayDiscardedTacticFromOpponent
+	// DiscardOpponentArchivesOrDeckTop discards one card from a source you pick
+	// between the opponent's archives (a random card) and their deck top, binding it
+	// as "it" for a following effect (Fidgit).
+	DiscardOpponentArchivesOrDeckTop = engine.DiscardOpponentArchivesOrDeckTop
+	// PlayItFromOpponentDiscard plays the card in context (put there by a preceding
+	// discard) from the opponent's discard pile as your own (Fidgit plays it when it
+	// is a Tactic).
+	PlayItFromOpponentDiscard = engine.PlayItFromOpponentDiscard
 	// PutUnderFromHand puts a card the controller chooses from their hand under
 	// the resolving card, face up or face down.
 	PutUnderFromHand = engine.PutUnderFromHand
@@ -370,8 +381,14 @@ type (
 	ArchiveCardUnder = engine.ArchiveCardUnder
 	// CancelFight makes the fight in progress not occur (a Before Fight effect).
 	CancelFight = engine.CancelFight
+	// CancelForge makes the opponent's key forge in progress not occur, with no
+	// Æmber spent (Keyforgery). It is the forge counterpart to CancelFight.
+	CancelForge = engine.CancelForge
 	// RevealHand shows the cards in a player's hand to both players and records them.
 	RevealHand = engine.RevealHand
+	// RevealRandomFromHand reveals a random card from your hand and puts it in
+	// context for a following effect (Keyforgery).
+	RevealRandomFromHand = engine.RevealRandomFromHand
 )
 
 // Using and choosing creatures.
@@ -460,6 +477,9 @@ type (
 	ChooseOne = engine.ChooseOne
 	// ChooseHouseThen asks the controller to choose a house, then resolves Then.
 	ChooseHouseThen = engine.ChooseHouseThen
+	// OpponentNamesHouse has the opponent name a house, stored for a following
+	// ItIsNotOfNamedHouse to read (Keyforgery).
+	OpponentNamesHouse = engine.OpponentNamesHouse
 	// Conditional resolves Then only when Cond is met.
 	Conditional = engine.Conditional
 	// SaveFromDestruction is a creature's own "Destroyed:" replacement: it stays in
@@ -503,11 +523,6 @@ type (
 	// OfIt is set; Where picks any flank or the left/right flank. Wrap in card.Not
 	// for the off-flank sense.
 	OnFlank = engine.OnFlank
-	// HasOtherFriendlyCreatures is met when the controller has any creature in play
-	// besides the source.
-	HasOtherFriendlyCreatures = engine.HasOtherFriendlyCreatures
-	// CardsInDeckAtMost is met when the controller's deck holds at most Amount cards.
-	CardsInDeckAtMost = engine.CardsInDeckAtMost
 	// CardsInDiscardAtLeast is met when the controller's discard pile holds at least
 	// Amount cards matching House and Type.
 	CardsInDiscardAtLeast = engine.CardsInDiscardAtLeast
@@ -538,8 +553,6 @@ type (
 	NoCreaturesPlayedThisTurn = engine.NoCreaturesPlayedThisTurn
 	// ItIsYourTurn is met when the ability's controller is the active player.
 	ItIsYourTurn = engine.ItIsYourTurn
-	// AemberOnThisAtLeast is met when at least Amount Æmber sits on this card.
-	AemberOnThisAtLeast = engine.AemberOnThisAtLeast
 	// Overwhelmed is met while the opponent controls more creatures than you.
 	Overwhelmed = engine.Overwhelmed
 	// ItIsFriendly is met when the card in context is controlled by you.
@@ -568,6 +581,9 @@ type (
 	ItIsOffIdentity = engine.ItIsOffIdentity
 	// ItIsStunned is met when the creature in context is already stunned.
 	ItIsStunned = engine.ItIsStunned
+	// ItIsNotOfNamedHouse is met when a card is in context and is not of the house
+	// a player named earlier in this ability (Keyforgery).
+	ItIsNotOfNamedHouse = engine.ItIsNotOfNamedHouse
 	// ChoseHouse is met when the controller's active house is House.
 	ChoseHouse = engine.ChoseHouse
 	// ActiveHouseMatchesNoCardsInPlay is met when no card in play, across both
@@ -624,8 +640,9 @@ type (
 	// TurnCount counts one of the engine's turn-history tallies (Player + Of).
 	TurnCount = engine.TurnCount // ForgedKey gates on whether a player forged a key this turn or their previous one.
 	ForgedKey = engine.ForgedKey
-	// OpponentHasMoreKeys is met when your opponent has forged more keys than you.
-	OpponentHasMoreKeys = engine.OpponentHasMoreKeys
+	// HasMoreForgedKeys is met when the named Player has forged more keys than the
+	// other player.
+	HasMoreForgedKeys = engine.HasMoreForgedKeys
 	// KeyColorForged is met while a player has forged a key of a given colour.
 	KeyColorForged = engine.KeyColorForged
 	// AemberStolenFromYou is met if your opponent stole Æmber from you last turn.
@@ -646,8 +663,9 @@ type (
 	NamedCardPurged = engine.NamedCardPurged
 	// ExcessCreatures counts how many more creatures one player controls than the other.
 	ExcessCreatures = engine.ExcessCreatures
-	// CardsInArchives counts the cards in a player's archives.
-	CardsInArchives = engine.CardsInArchives
+	// CardsInZone counts the cards in one of a player's zones (deck, hand,
+	// archives, or discard pile).
+	CardsInZone = engine.CardsInZone
 	// HousesInPlay counts the distinct houses among all cards in play, optionally
 	// excluding one house.
 	HousesInPlay = engine.HousesInPlay
@@ -669,6 +687,10 @@ type (
 	// destruction removed "this way", each measured just before it left play, for a
 	// CountIs threshold (Might Makes Right forges only above 25 power).
 	PowerDestroyedThisWay = engine.PowerDestroyedThisWay
+	// CardsShuffledIntoDeck counts the cards the most recent from-play shuffle
+	// returned to your own deck "this way" (Timequake draws one card for each). A
+	// card you played but do not own returns to its owner's deck and is not counted.
+	CardsShuffledIntoDeck = engine.CardsShuffledIntoDeck
 	// AemberBonusOf counts the Æmber pips on the card its Target names, once it has
 	// left play (Rustgnawer gains the destroyed artifact's Æmber bonus via Target:
 	// Triggering).
@@ -737,35 +759,29 @@ type (
 	// FuseTriggersForTurn makes each friendly creature's A and B effects each fire on
 	// the other for the rest of your turn (Livia the Elder fuses fight and reap).
 	FuseTriggersForTurn = engine.FuseTriggersForTurn
-	// TriggerMorph declares that an ability under one trigger also fires on another,
-	// for a ConstantAbility.Morphs (Kompsos Haruspex makes a play effect fire on reap).
-	TriggerMorph = engine.TriggerMorph
+	// AlsoTriggersOn declares that an ability under one trigger also fires on
+	// another, for a ConstantAbility.AlsoTriggers (Kompsos Haruspex makes a play
+	// effect also fire on reap).
+	AlsoTriggersOn = engine.AlsoTriggersOn
 )
 
 // Houses, keys, chains, and restrictions.
 type (
-	// CannotFight bars a player from using creatures to fight for a Duration.
-	CannotFight = engine.CannotFight
-	// StunEnemyFighters arms the stun-fighter bar on the opponent for their next
-	// turn (Foggify): each creature they use to fight is stunned after the fight.
-	StunEnemyFighters = engine.StunEnemyFighters
+	// Restrict bars a player from an action for a Duration — using creatures to
+	// fight, using creatures to reap, or using any cards at all. Action selects
+	// which (card.Restricted.Fighting/Reaping/Use); RestrictFighting is only valid
+	// for the player's next turn.
+	Restrict = engine.Restrict
 	// CannotPlay bars a player from playing cards of a Type for a Duration.
 	CannotPlay = engine.CannotPlay
 	// PlayersCannotPlay bars both players from playing cards of a Type until the
 	// end of the caster's next turn (Stealth Mode stops either player playing
 	// Tactics).
 	PlayersCannotPlay = engine.PlayersCannotPlay
-	// CannotUse bars a player from reaping, fighting, or using Action: abilities.
-	CannotUse = engine.CannotUse
-	// CannotReap bars a player from using creatures to reap for a Duration.
-	CannotReap = engine.CannotReap
 	// CreaturesCannot bars every creature in play — both players' — from fighting
-	// or reaping until the caster's next turn, sparing an excepted house (Into the
-	// Night, Sow Salt).
+	// or reaping until the caster's next turn, reaching the houses its matcher
+	// admits (Into the Night, Sow Salt).
 	CreaturesCannot = engine.CreaturesCannot
-	// ChosenHouseCannotReapNextTurn bars a player from reaping with creatures of the
-	// chosen house throughout their next turn.
-	ChosenHouseCannotReapNextTurn = engine.ChosenHouseCannotReapNextTurn
 	// BlankEnemyText blanks enemy creatures' text boxes until your next turn (Shadow of Dis).
 	BlankEnemyText = engine.BlankEnemyText
 	// SkipForgePhase makes a player skip their forge-a-key phase next turn.
@@ -786,14 +802,15 @@ type (
 	// NameHouse remembers the house an enclosing ChooseHouseThen picked on this card,
 	// feeding the card's HouseLock for as long as it stays in play.
 	NameHouse = engine.NameHouse
-	// OpponentMustChooseHouse forces the opponent's active house next turn, read from
-	// Source (card.ChosenActiveHouse — Control the Weak; card.FoughtActiveHouse — Snag
-	// forces the fought creature's house).
-	OpponentMustChooseHouse = engine.OpponentMustChooseHouse
-	// OpponentCannotChooseHouse bars the opponent's active house next turn, read from
-	// Source (card.ChosenActiveHouse — Tezmal; card.JustChosenActiveHouse — Snag's
-	// Mirror, keyed off the after-a-player-chooses-a-house trigger).
-	OpponentCannotChooseHouse = engine.OpponentCannotChooseHouse
+	// MustChooseHouse forces a player's next active-house choice, read from
+	// Reference (card.ChosenActiveHouse — Control the Weak; card.FoughtActiveHouse —
+	// Snag). Player names whose choice is forced (card.Opponent, or card.Controller
+	// for a card that binds its own next turn).
+	MustChooseHouse = engine.MustChooseHouse
+	// CannotChooseHouse bars a player's next active-house choice, read from Reference
+	// (card.ChosenActiveHouse — Tezmal; card.JustChosenActiveHouse — Snag's Mirror).
+	// Player names whose choice is barred.
+	CannotChooseHouse = engine.CannotChooseHouse
 	// WagerOpponentChoosesChosenHouse steals if the opponent picks the chosen house
 	// as their active house next turn (Snaglet).
 	WagerOpponentChoosesChosenHouse = engine.WagerOpponentChoosesChosenHouse
@@ -963,12 +980,14 @@ type HouseMatcher = engine.HouseMatcher
 
 // Houses builds the HouseMatcher that narrows a per-card effect or target to a
 // house: Named admits one house, Except every house but one, Chosen the house an
-// enclosing ChooseHouseThen picked, Active the active house, Contextual the house
-// of the card in context (ctx.It), and Any (the zero value) every house.
+// enclosing ChooseHouseThen picked, Active the active house, Each the house an
+// enclosing ForEachHouse is on, Contextual the house of the card in context
+// (ctx.It), and Any (the zero value) every house.
 var Houses = houseMatchers{
 	Any:        engine.HouseMatcher{Kind: engine.MatchAnyHouse},
 	Chosen:     engine.HouseMatcher{Kind: engine.MatchChosenHouse},
 	Active:     engine.HouseMatcher{Kind: engine.MatchActiveHouse},
+	Each:       engine.HouseMatcher{Kind: engine.MatchEachHouse},
 	Contextual: engine.HouseMatcher{Kind: engine.MatchContextualHouse},
 }
 
@@ -976,7 +995,23 @@ type houseMatchers struct {
 	Any        engine.HouseMatcher
 	Chosen     engine.HouseMatcher
 	Active     engine.HouseMatcher
+	Each       engine.HouseMatcher
 	Contextual engine.HouseMatcher
+}
+
+// Restricted names the action a card.Restrict bars: Fighting and Reaping bar one
+// verb (creatures can still be used the other ways); Use bars every use of a card
+// in play. Fighting is only valid for the player's next turn.
+var Restricted = restrictKinds{
+	Fighting: engine.RestrictFighting,
+	Reaping:  engine.RestrictReaping,
+	Use:      engine.RestrictUse,
+}
+
+type restrictKinds struct {
+	Fighting engine.RestrictKind
+	Reaping  engine.RestrictKind
+	Use      engine.RestrictKind
 }
 
 // Named admits only the named house ("a Mars card").
@@ -1002,10 +1037,10 @@ func (typeSets) Of(types ...engine.CardType) engine.CardTypes {
 	return engine.CardTypesOf(types...)
 }
 
-// ChosenActiveHouse, FoughtActiveHouse, and JustChosenActiveHouse name where an
-// OpponentMustChooseHouse / OpponentCannotChooseHouse reads its house: the chosen
-// house, the house of the creature this card fought, or the house a player just
-// chose (read from the board, for Snag's Mirror).
+// ChosenActiveHouse, FoughtActiveHouse, and JustChosenActiveHouse name where a
+// MustChooseHouse or CannotChooseHouse reads its house: the chosen house, the house
+// of the creature this card fought, or the house a player just chose (read from the
+// board, for Snag's Mirror).
 var ChosenActiveHouse = engine.ChosenActiveHouse
 
 // FoughtActiveHouse — see ChosenActiveHouse.

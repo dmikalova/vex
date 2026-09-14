@@ -16,8 +16,9 @@ var InkyGloom = set.New(
 	card.Rarity.Common,
 	card.Provenance(card.WC, "241"),
 	card.WithAbility(
-		card.Trigger.Play, card.CannotReap{
+		card.Trigger.Play, card.Restrict{
 			Player:   card.Opponent,
+			Action:   card.Restricted.Reaping,
 			Duration: card.Duration.OpponentNextTurn,
 		}),
 )

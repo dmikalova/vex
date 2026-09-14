@@ -22,7 +22,7 @@ var OldBoomy = set.New(
 	card.WithAbility(
 		card.Trigger.Reap, card.Sentences{Effects: []card.Effect{
 			card.Then{
-				First: card.DiscardTopOfDeckUntil{
+				First: card.DiscardUntil{
 					House:   card.House.Self,
 					MayStop: true,
 				},

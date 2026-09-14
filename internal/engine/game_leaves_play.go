@@ -523,22 +523,27 @@ func (g *Game) putIntoDeckShuffled(id LocalID) {
 
 // shuffleFriendlyInPlayIntoDeck shuffles every card a player controls in play —
 // each creature and artifact, and every upgrade attached to them — into their
-// deck, and returns how many cards were shuffled. An upgrade is detached first so
-// it is shuffled back into the deck rather than shed to the discard pile. The
-// caller opens a shuffle batch around it, so the whole sweep narrates as one
-// grouped line.
-func (g *Game) shuffleFriendlyInPlayIntoDeck(player int) int {
-	count := 0
+// deck, and returns how many cards were shuffled into each owner's deck, indexed
+// by player. A card the controller played but does not own is shuffled into its
+// owner's deck (the ownership rule below), so it is tallied under that owner, not
+// the controller — Timequake draws only for the cards that returned to the
+// controller's own deck. An upgrade is detached first so it is shuffled back into
+// the deck rather than shed to the discard pile. The caller opens a shuffle batch
+// around it, so the whole sweep narrates as one grouped line.
+func (g *Game) shuffleFriendlyInPlayIntoDeck(player int) [2]int {
+	var moved [2]int
 	for _, host := range append(g.Battleline(player), g.Artifacts(player)...) {
 		for _, up := range g.upgradesOf(host) {
+			owner := g.owner(up)
 			g.detachUpgrade(up)
 			g.putIntoDeckShuffled(up)
-			count++
+			moved[owner]++
 		}
+		owner := g.owner(host)
 		g.putIntoDeckShuffled(host)
-		count++
+		moved[owner]++
 	}
-	return count
+	return moved
 }
 
 // Only three zones of yours may hold a card your opponent owns: your battleline,

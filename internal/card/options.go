@@ -91,9 +91,6 @@ var (
 	// WithGainsForgeAember gives this card's controller all the Æmber their
 	// opponent spends forging a key, for as long as it stays in play.
 	WithGainsForgeAember = func() Option { return gameplay(engine.WithGainsForgeAember()) }
-	// WithGuardsOpponentForge makes this card interrupt the opponent's key forges
-	// while it is in play.
-	WithGuardsOpponentForge = func() Option { return gameplay(engine.WithGuardsOpponentForge()) }
 	// WithAemberThreshold requires a pool of at least n to play this card.
 	WithAemberThreshold = func(n int) Option {
 		return gameplay(engine.WithPlayRequirement(engine.AemberThreshold(n)))

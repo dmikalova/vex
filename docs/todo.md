@@ -8,9 +8,10 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 ### Current focus
 
+- event sourcing
+
 ### Next focus
 
-- event sourcing
 - using property testing to find unused code paths and then force specific tests there
 - Is there a way to validate that the UI handles and presents all possible game states/prompts? eg if I add a new prompt route, can the UI then automatically fail bc its not handled?
 - On the style page add a section with all of the Log and Text usages rendered out. The easiest wayt to do this might be to create a dedicated preview area that dynamically displays these elements as they are used in the engine (eg show a set of cards that covers every rendering element, and a log that does the same for all log entries)
@@ -41,23 +42,17 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - Be able to load a test situation from a saved state or scenario file
 - I've noticed that there are some UI sugars in the engine - I was wondering if it makes sense for there to be an intermediate layer - eg the engine handles state changes, the wrapper handles relevant trackers for the UI, and then the UI on top imports the wrapper and renders what it gives. For example, there are badges for counting how much damage is about to be dealt to each creature in a selection like gargantes scrapper. That seems purely UI, but also makes sense near the engine. My concern is performance when there is no UI - eg for MCTS - if MCTS is calculating the badges and never using them then that's potentially lost performance.
 - Consolidate Destination and DeckDest - apparently the voicing would be a whole thing to add into this
+- using shared dictionaries for wasm compression
 
 ## Things that can be done now
 
 - WithAemberCost and Toll could be combined into MustPay
-
 - decompose all the neighbor stuff
-- Granted:  card.FightReap(card.ArchiveGrantingUpgrade{}), should be card.Archive{Target: GrantingUpgrade}
-
+- Granted: card.FightReap(card.ArchiveGrantingUpgrade{}), should be card.Archive{Target: GrantingUpgrade}
 - Why is DamageThen and ChooseCreatureThen needed? Why can't these just be sequences that pass along the effect context?
-- decompose fidgit
-- Cloaking Dongle: Target: Target and neighbors then gives the bonus
-- Kompsos Haurspex and Livia the elder can be atomized into each other
-- Gebuk can be simplified
-- Nizak should be "While in a fight,"
-- How could Encounter suit can be simplified? "This creature is invulnerable while resolving a Tactic card"?
-- KeyForgery...
-- Rework Wormhole Technician
+- Get rid of bar.go
+
+- Livia and Fidgit could go further
 
 ## Sites of all the things
 

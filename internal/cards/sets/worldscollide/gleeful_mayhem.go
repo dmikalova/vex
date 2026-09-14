@@ -17,5 +17,10 @@ var GleefulMayhem = set.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "090"),
 	card.WithAemberBonus(1),
-	card.WithAbility(card.Trigger.Play, card.DealDamagePerHouse{Amount: 5}),
+	card.WithAbility(card.Trigger.Play, card.ForEachHouse{
+		Do: card.DealDamage{
+			Amount: 5,
+			Target: card.Target.Creature.House(card.Houses.Each),
+		},
+	}),
 )

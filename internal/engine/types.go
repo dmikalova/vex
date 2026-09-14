@@ -606,8 +606,11 @@ const (
 	// affect (Encounter Suit wards its host before the Tactic can reach it). It
 	// fires on every in-play card whoever played the Tactic — a Tactic either
 	// player plays reaches it.
-	TriggerAfterActionPlayedBeforeResolve
-	// triggerCount bounds the enum so Triggers can range it; it is not a trigger.
+	TriggerAfterTacticPlayedBeforeResolve // This ability resolves when the opponent would forge a key, before the forge
+	// happens, so it can prevent that forge (Keyforgery guards against it). It fires
+	// only on the opponent's forge, and the forging opponent is referred to as
+	// "they"; a prevented forge leaves the opponent's Æmber unspent.
+	TriggerBeforeOpponentForgesKey // triggerCount bounds the enum so Triggers can range it; it is not a trigger.
 	triggerCount
 )
 
@@ -709,8 +712,10 @@ func (t Trigger) String() string {
 		return "Enters Play"
 	case TriggerAfterChooseHouse:
 		return "After Choosing a House"
-	case TriggerAfterActionPlayedBeforeResolve:
+	case TriggerAfterTacticPlayedBeforeResolve:
 		return "After a Tactic Is Played but Before It Resolves"
+	case TriggerBeforeOpponentForgesKey:
+		return "When Your Opponent Would Forge a Key"
 	default:
 		return ""
 	}
@@ -738,6 +743,8 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return "Destroyed: ", true
 	case TriggerAfterForgeKey:
 		return "After you forge a key, ", false
+	case TriggerBeforeOpponentForgesKey:
+		return "When your opponent would forge a key, ", false
 	case TriggerAfterPlayerForgesKey:
 		return "After a player forges a key, ", false
 	case TriggerAfterCreatureEnters:
@@ -792,7 +799,7 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return "At the start of each player's turn, ", false
 	case TriggerAfterAnyPlayerChoosesHouse:
 		return "After a player chooses an active house, ", false
-	case TriggerAfterActionPlayedBeforeResolve:
+	case TriggerAfterTacticPlayedBeforeResolve:
 		return "After a Tactic is played but before it resolves, ", false
 	default:
 		return "", true

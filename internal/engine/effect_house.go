@@ -93,10 +93,7 @@ func (e NameHouse) validate() error {
 // that house as their active house until {self} leaves play". The house itself is
 // named by the enclosing ChooseHouseThen.
 func (e NameHouse) Text() string {
-	who, possessive := "you", "your"
-	if e.Player == Opponent {
-		who, possessive = "your opponent", "their"
-	}
+	who, possessive := e.Player.secondPerson()
 	return who + " cannot choose that house as " + possessive +
 		" active house until " + SelfName + " leaves play"
 }

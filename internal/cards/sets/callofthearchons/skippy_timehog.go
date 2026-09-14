@@ -20,8 +20,9 @@ var SkippyTimehog = set.New(
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Mutant),
 	card.WithAbility(
-		card.Trigger.Play, card.CannotUse{
+		card.Trigger.Play, card.Restrict{
 			Player:   card.Opponent,
+			Action:   card.Restricted.Use,
 			Duration: card.Duration.OpponentNextTurn,
 		}),
 )

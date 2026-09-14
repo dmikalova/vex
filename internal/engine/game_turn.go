@@ -59,8 +59,6 @@ func (g *Game) StartTurn(player int) {
 	// the card that imposed it along so a reminder can name the reason.
 	g.State.CannotFight[player] = g.State.CannotFightNext[player]
 	g.State.CannotFightNext[player] = Bar[bool]{}
-	g.State.StunFighter[player] = g.State.StunFighterNext[player]
-	g.State.StunFighterNext[player] = Bar[bool]{}
 	g.State.CannotPlayTypeThis[player] = g.State.CannotPlayTypeNext[player]
 	g.State.CannotPlayTypeNext[player] = Bar[CardType]{}
 	g.State.CannotUse[player] = g.State.CannotUseNext[player]
@@ -220,12 +218,6 @@ func (g *Game) CannotFightNextTurn(player int, source LocalID) {
 	g.State.CannotFightNext[player] = Bar[bool]{Value: true, Source: source}
 }
 
-// StunFighterNextTurn arms the stun-fighter bar on a player for their next turn,
-// so each creature they use to fight is stunned right after that fight (Foggify).
-func (g *Game) StunFighterNextTurn(player int, source LocalID) {
-	g.State.StunFighterNext[player] = Bar[bool]{Value: true, Source: source}
-}
-
 // CannotPlayTypeNextTurn arms a play-type bar on a player for their next turn.
 func (g *Game) CannotPlayTypeNextTurn(player int, t CardType, source LocalID) {
 	g.State.CannotPlayTypeNext[player] = Bar[CardType]{Value: t, Source: source}
@@ -277,17 +269,17 @@ func (g *Game) CannotReapHouseNextTurn(player int, h House, source LocalID) {
 
 // CreaturesCannotUntilNextTurn arms a board-wide bar that stops both players
 // using creatures one way — fighting or reaping — until the caster's next turn,
-// sparing creatures of exceptHouse (Into the Night, Sow Salt). The caster is
+// reaching the creatures houses admits (Into the Night, Sow Salt). The caster is
 // barred for the rest of this turn and the opponent for their next turn, so the
 // bar lifts at the start of the caster's next turn.
 func (g *Game) CreaturesCannotUntilNextTurn(
 	caster int,
 	action UseKind,
-	exceptHouse House,
+	houses HouseMatcher,
 	source LocalID,
 ) {
 	bar := Bar[CreatureBar]{
-		Value:  CreatureBar{Action: action, ExceptHouse: exceptHouse},
+		Value:  CreatureBar{Action: action, Houses: houses},
 		Source: source,
 	}
 	g.State.CreaturesCannot[caster] = bar
@@ -563,9 +555,9 @@ func (g *Game) forgeKeyAtExtraCost(player, extra int) bool {
 	if g.spendableAember(player) < cost {
 		return false
 	}
-	// An opponent's forge guard (Keyforgery) may prevent the forge here, before any
-	// Æmber leaves the pool, so a prevented forge costs the player nothing.
-	if g.opponentForgeGuarded(player) {
+	// An opponent's before-forge ability (Keyforgery) may cancel the forge here,
+	// before any Æmber leaves the pool, so a cancelled forge costs the player nothing.
+	if g.beforeForgePrevented(player) {
 		return false
 	}
 	// The colour is settled before the Æmber leaves the pool, so a forge is one
@@ -633,7 +625,7 @@ func (g *Game) forgeKeyFree(player int) bool {
 	if g.forgeKeyNumberBarred(player) {
 		return false
 	}
-	if g.opponentForgeGuarded(player) {
+	if g.beforeForgePrevented(player) {
 		return false
 	}
 	color, ok := g.pickKeyColor(player)

@@ -18,8 +18,9 @@ var Fogbank = set.New(
 	card.Provenance(card.CotA, "322"),
 	card.WithAemberBonus(1),
 	card.WithAbility(
-		card.Trigger.Play, card.CannotFight{
+		card.Trigger.Play, card.Restrict{
 			Player:   card.Opponent,
+			Action:   card.Restricted.Fighting,
 			Duration: card.Duration.OpponentNextTurn,
 		}),
 )

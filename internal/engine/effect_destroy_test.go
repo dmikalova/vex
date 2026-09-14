@@ -39,20 +39,23 @@ func TestDestroyEffect(t *testing.T) {
 	}
 }
 
-// TestDestroyMostPowerfulUnlessReadyHouse covers Quicksand: each player who does
-// not control a ready creature of the named house loses their most powerful
-// creature; a player fielding a ready one is spared entirely.
-func TestDestroyMostPowerfulUnlessReadyHouse(t *testing.T) {
-	e := DestroyMostPowerfulUnlessReadyHouse{House: Untamed}
-	if got := e.Text(); got != "destroy the most powerful creature controlled by "+
-		"each player who does not control a ready Untamed creature" {
-		t.Errorf("text = %q", got)
+// TestBatchDestroy covers the combinator and its EachPlayerUnless gather: it
+// rejects a nil Gather, and destroys the gathered set in one simultaneous batch —
+// each player who does not field a ready creature of the named house loses their
+// most powerful creature, while a player fielding a ready one is spared entirely
+// (Quicksand).
+func TestBatchDestroy(t *testing.T) {
+	if (BatchDestroy{}).validate() == nil {
+		t.Error("validate should reject a nil Gather")
 	}
-	if (DestroyMostPowerfulUnlessReadyHouse{}).validate() == nil {
-		t.Error("validate should reject an unset house")
-	}
+	spare := InPlay{Player: Controller, Type: Creature, House: Untamed, Ready: true}
+	e := BatchDestroy{Gather: EachPlayerUnless{Spare: spare, Take: MostPowerfulN(1)}}
 	if err := e.validate(); err != nil {
-		t.Errorf("validate with house set = %v", err)
+		t.Errorf("validate with a Gather = %v", err)
+	}
+	if got := e.Text(); got != "destroy the most powerful creature controlled by "+
+		"each player who does not have a friendly ready Untamed creature in play" {
+		t.Errorf("text = %q", got)
 	}
 
 	g := NewGame("A", "B", 1)
@@ -78,6 +81,25 @@ func TestDestroyMostPowerfulUnlessReadyHouse(t *testing.T) {
 	}
 	if !g.inPlay(smallP1) || !g.inPlay(exhaustedUntamed) {
 		t.Error("only the most powerful creature of an unspared player is destroyed")
+	}
+}
+
+// TestEachPlayerUnlessValidate covers the gather's own validation: it requires a
+// Take refinement and a Spare phrased from the controller's perspective, since
+// Spare is re-based onto each player in turn.
+func TestEachPlayerUnlessValidate(t *testing.T) {
+	spare := InPlay{Player: Controller, Type: Creature}
+	if (EachPlayerUnless{Spare: spare}).validate() == nil {
+		t.Error("validate should reject a nil Take")
+	}
+	if (EachPlayerUnless{
+		Spare: InPlay{Player: Opponent, Type: Creature},
+		Take:  MostPowerfulN(1),
+	}).validate() == nil {
+		t.Error("validate should reject a Spare not phrased as the controller's")
+	}
+	if err := (EachPlayerUnless{Spare: spare, Take: MostPowerfulN(1)}).validate(); err != nil {
+		t.Errorf("validate with Take and controller Spare = %v", err)
 	}
 }
 

@@ -72,6 +72,26 @@ func (e RevealHand) reveal(ctx *EffectContext, owner int) []LocalID {
 	return shown
 }
 
+// RevealRandomFromHand reveals a uniformly random card from the controller's hand
+// to both players and puts it in context (ctx.It) for a following effect to act on
+// — Keyforgery reveals a card and tests its house against the one the opponent
+// named. An empty hand reveals nothing and leaves no card in context.
+type RevealRandomFromHand struct{}
+
+// Text renders the effect.
+func (RevealRandomFromHand) Text() string { return "reveal a random card from your hand" }
+
+// Resolve reveals a random card from the controller's hand and puts it in context.
+func (RevealRandomFromHand) Resolve(ctx *EffectContext) {
+	revealed, ok := ctx.Resolver.ChooseRandom(ctx.Resolver.Hand(ctx.Controller))
+	if !ok {
+		return
+	}
+	ctx.Resolver.Record(CardsRevealedToAll{Player: ctx.Controller, Cards: []LocalID{revealed}})
+	ctx.It = revealed
+	ctx.HasIt = true
+}
+
 // CardsRevealed counts the cards the most recent Reveal showed — the "for each
 // card revealed this way" clause. Reveal records the tally on the context, so
 // pairing it after a Reveal lets an effect scale with the reveal.

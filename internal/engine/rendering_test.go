@@ -1086,17 +1086,59 @@ func TestStaticText(t *testing.T) {
 		t.Errorf("per-upgrade staticText = %q", got)
 	}
 	if got := staticText(
-		StaticModifier{KeywordsToNeighbors: []Keyword{Elusive}},
+		StaticModifier{
+			KeywordGrants: []KeywordGrant{
+				{Keywords: []Keyword{Elusive}, Host: true, Neighbors: true},
+			},
+		},
 	); got != "This creature and each of its neighbors gains elusive." {
 		t.Errorf("neighbor-keyword staticText = %q", got)
 	}
 	if got := staticText(
-		StaticModifier{PowerBonus: 1, KeywordsToNeighbors: []Keyword{Elusive}},
+		StaticModifier{KeywordGrants: []KeywordGrant{{Keywords: []Keyword{Elusive}, Host: true}}},
+	); got != "This creature gains elusive." {
+		t.Errorf("host-only keyword-grant staticText = %q", got)
+	}
+	if got := staticText(
+		StaticModifier{
+			KeywordGrants: []KeywordGrant{{Keywords: []Keyword{Elusive}, Neighbors: true}},
+		},
+	); got != "Each of this creature's neighbors gains elusive." {
+		t.Errorf("neighbors-only keyword-grant staticText = %q", got)
+	}
+	if got := staticText(
+		StaticModifier{KeywordGrants: []KeywordGrant{{Keywords: []Keyword{Elusive}}}},
+	); got != "" {
+		t.Errorf("reachless keyword-grant staticText = %q", got)
+	}
+	if got := staticText(
+		StaticModifier{KeywordGrants: []KeywordGrant{{Host: true, Neighbors: true}}},
+	); got != "" {
+		t.Errorf("keywordless keyword-grant staticText = %q", got)
+	}
+	if got := staticText(
+		StaticModifier{
+			PowerBonus: 1,
+			KeywordGrants: []KeywordGrant{
+				{Keywords: []Keyword{Elusive}, Host: true, Neighbors: true},
+			},
+		},
 	); got != "This creature gains +1 power. This creature and each of its neighbors gains elusive." {
 		t.Errorf("bonus+neighbor-keyword staticText = %q", got)
 	}
-	dongle := NewCard("Cloaking Dongle", StarAlliance, Upgrade, Common,
-		WithStatic(StaticModifier{KeywordsToNeighbors: []Keyword{Elusive}}))
+	dongle := NewCard(
+		"Cloaking Dongle",
+		StarAlliance,
+		Upgrade,
+		Common,
+		WithStatic(
+			StaticModifier{
+				KeywordGrants: []KeywordGrant{
+					{Keywords: []Keyword{Elusive}, Host: true, Neighbors: true},
+				},
+			},
+		),
+	)
 	if got := upgradeStaticLines(&dongle, true); len(got) != 1 ||
 		got[0] != "This creature and each of its neighbors gains elusive." {
 		t.Errorf("hosted neighbor-keyword lines = %v", got)

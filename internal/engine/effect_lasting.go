@@ -61,7 +61,7 @@ func (e ForOpponentNextTurn) validate() error {
 // Text renders the effect, e.g. "during your opponent's next turn, after forging a
 // key, your opponent gives you all their Æmber".
 func (e ForOpponentNextTurn) Text() string {
-	return "during your opponent's next turn, " + e.On.clause() + ", " + e.Do.Text()
+	return "during your opponent's next turn, " + e.On.clauseOnOpponentTurn() + ", " + e.Do.Text()
 }
 
 // Resolve arms the reaction on the opponent, so it lies dormant this turn and fires
@@ -123,6 +123,8 @@ func lastingActionOf(e Effect) (lastingAction, int, bool) {
 		return actReadyPlayed, 0, true
 	case Exalt:
 		return actExalt, d.Amount, true
+	case Stun:
+		return actStun, 0, true
 	}
 	return 0, 0, false
 }

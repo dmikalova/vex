@@ -742,10 +742,10 @@ func (g *Game) playCreatureReactions(player int, played LocalID) []triggeredAbil
 // to affect. A Tactic either player plays fires it.
 func (g *Game) emitActionPlayedBeforeResolve(player int, played LocalID) {
 	for _, id := range g.allInPlay(player) {
-		g.triggerAbilities(id, TriggerAfterActionPlayedBeforeResolve, played, true)
+		g.triggerAbilities(id, TriggerAfterTacticPlayedBeforeResolve, played, true)
 	}
 	for _, id := range g.allInPlay(1 - player) {
-		g.triggerAbilities(id, TriggerAfterActionPlayedBeforeResolve, played, true)
+		g.triggerAbilities(id, TriggerAfterTacticPlayedBeforeResolve, played, true)
 	}
 }
 
@@ -898,12 +898,12 @@ func (g *Game) triggeredBy(src LocalID, trigger Trigger) []triggeredAbility {
 			}
 		}
 	}
-	// A trigger morph (Kompsos Haruspex's constant, Livia the Elder's lasting fuse)
+	// An also-triggers-on rule (Kompsos Haruspex's constant, Livia the Elder's lasting fuse)
 	// makes src's own abilities under one trigger also fire on this one — its play
 	// effect on reap, its fight and reap effects on each other. Gather those printed
-	// abilities here so a morphed ability orders in the same window as a natural one.
+	// abilities here so an also-fired ability orders in the same window as a natural one.
 	if !g.textBlanked(src) {
-		for _, from := range g.morphedTriggers(src, trigger) {
+		for _, from := range g.additionalTriggers(src, trigger) {
 			for _, ab := range g.cat.def(src).Abilities {
 				if ab.Trigger == from {
 					pending = append(pending, triggeredAbility{

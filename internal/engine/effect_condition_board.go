@@ -105,42 +105,7 @@ func (ControlsMoreCreatures) CondText() string {
 
 // Met reports whether the controller has more creatures in play than the opponent.
 func (ControlsMoreCreatures) Met(ctx *EffectContext) bool {
-	return len(
-		ctx.Resolver.Battleline(ctx.Controller),
-	) > len(
-		ctx.Resolver.Battleline(ctx.Opponent()),
-	)
-}
-
-// HasOtherFriendlyCreatures is met when the source's controller has at least one
-// creature in play other than the source — Reassembling Automaton replaces its own
-// destruction only "if you have any other creatures in play".
-type HasOtherFriendlyCreatures struct{}
-
-// CondText renders the condition as the card prints it.
-func (HasOtherFriendlyCreatures) CondText() string {
-	return "if you have any other creatures in play"
-}
-
-// Met reports whether the controller has any creature in play besides the source.
-func (HasOtherFriendlyCreatures) Met(ctx *EffectContext) bool {
-	return InPlay{Player: Controller, Type: Creature, Other: true}.Met(ctx)
-}
-
-// CardsInDeckAtMost is met when the controller's deck holds at most Amount cards —
-// Manchego steals only "if you have 5 or fewer cards in your deck".
-type CardsInDeckAtMost struct {
-	Amount int
-}
-
-// CondText renders the condition as the card prints it.
-func (e CardsInDeckAtMost) CondText() string {
-	return fmt.Sprintf("if you have %d or fewer cards in your deck", e.Amount)
-}
-
-// Met reports whether the controller's deck size is at most Amount.
-func (e CardsInDeckAtMost) Met(ctx *EffectContext) bool {
-	return len(ctx.Resolver.Deck(ctx.Controller)) <= e.Amount
+	return ExcessCreatures{Player: Controller}.Value(ctx) >= 1
 }
 
 // ControlsNamed is met when the controller has a card of a given printed name in
@@ -183,11 +148,7 @@ func (c ControlsCreaturesOfHouses) CondText() string {
 
 // Met reports whether the controller's creatures span at least Amount houses.
 func (c ControlsCreaturesOfHouses) Met(ctx *EffectContext) bool {
-	seen := map[House]bool{}
-	for _, id := range ctx.Resolver.Battleline(ctx.Controller) {
-		seen[ctx.Resolver.House(id)] = true
-	}
-	return len(seen) >= c.Amount
+	return HousesAmong{Player: Controller, Type: Creature}.Value(ctx) >= c.Amount
 }
 
 // PlayerControlsFewerHousesThan is met while the chosen player controls creatures
@@ -222,12 +183,7 @@ func (c PlayerControlsFewerHousesThan) CondText() string {
 // Met counts the distinct houses among the chosen player's creatures and reports
 // whether that count is below the threshold.
 func (c PlayerControlsFewerHousesThan) Met(ctx *EffectContext) bool {
-	player := ctx.PlayerFor(c.Player)
-	seen := map[House]bool{}
-	for _, id := range ctx.Resolver.Battleline(player) {
-		seen[ctx.Resolver.House(id)] = true
-	}
-	return len(seen) < c.Amount
+	return HousesAmong{Player: c.Player, Type: Creature}.Value(ctx) < c.Amount
 }
 
 // Overwhelmed reports whether the controller is overwhelmed — their opponent
@@ -240,11 +196,7 @@ func (Overwhelmed) CondText() string { return "if you are overwhelmed" }
 
 // Met reports whether the opponent controls more creatures than the controller.
 func (Overwhelmed) Met(ctx *EffectContext) bool {
-	return len(
-		ctx.Resolver.Battleline(ctx.Opponent()),
-	) > len(
-		ctx.Resolver.Battleline(ctx.Controller),
-	)
+	return ExcessCreatures{Player: Opponent}.Value(ctx) >= 1
 }
 
 // HousesRepresented is met when the distinct houses represented among a chosen
@@ -340,7 +292,7 @@ func (c NamedCardPurged) negatedText() string {
 // Met reports whether a card of the name is in the controller's purge pile.
 func (c NamedCardPurged) Met(ctx *EffectContext) bool {
 	for _, id := range ctx.Resolver.Purge(ctx.Controller) {
-		if ctx.Resolver.Name(id) == c.Name {
+		if (CardFilter{Name: c.Name}).admits(ctx.Resolver, id) {
 			return true
 		}
 	}
@@ -407,18 +359,25 @@ func (c ForgedKey) stat() TurnStat {
 	return KeysForgedThisTurn
 }
 
-// OpponentHasMoreKeys is met when the controller's opponent has forged strictly
-// more keys than the controller — Hugger Mugger steals only when behind on keys.
-type OpponentHasMoreKeys struct{}
-
-// CondText renders the clause.
-func (c OpponentHasMoreKeys) CondText() string {
-	return "if your opponent has more forged keys than you"
+// HasMoreForgedKeys is met when Player has forged strictly more keys than the
+// other player — Hugger Mugger steals only when the opponent is ahead on keys.
+type HasMoreForgedKeys struct {
+	// Player is the side that must be ahead on forged keys.
+	Player Player
 }
 
-// Met reports whether the opponent's forged-key count exceeds the controller's.
-func (c OpponentHasMoreKeys) Met(ctx *EffectContext) bool {
-	return ctx.Resolver.Keys(ctx.Opponent()) > ctx.Resolver.Keys(ctx.Controller)
+// CondText renders the clause, naming whose keys lead.
+func (c HasMoreForgedKeys) CondText() string {
+	if c.Player == Opponent {
+		return "if your opponent has more forged keys than you"
+	}
+	return "if you have more forged keys than your opponent"
+}
+
+// Met reports whether Player's forged-key count exceeds the other player's.
+func (c HasMoreForgedKeys) Met(ctx *EffectContext) bool {
+	mine := ctx.PlayerFor(c.Player)
+	return ctx.Resolver.Keys(mine) > ctx.Resolver.Keys(1-mine)
 }
 
 // KeyColorForged is met while the named player has forged a key of a given colour

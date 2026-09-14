@@ -15,7 +15,7 @@ import (
 //	Æmber:  1
 //	Traits: Item
 //
-//	When your opponent would forge a key, they name a house. Reveal a random card from your hand. If that card is not of the named house, destroy Keyforgery and they do not forge that key.
+//	When your opponent would forge a key, they name a house. Reveal a random card from your hand. If that card is not of the named house, destroy Keyforgery, and they do not forge that key.
 func TestKeyforgery(t *testing.T) {
 	t.Run("a wrong guess destroys Keyforgery and prevents the forge", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

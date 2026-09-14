@@ -176,7 +176,7 @@ func (e DiscardCard) resolveGate(ctx *EffectContext) bool {
 		}
 		for _, id := range ids {
 			toDiscard.moveFrom(ctx, e.Zone, owner, id)
-			ctx.Produced.Discarded = append(ctx.Produced.Discarded, id)
+			recordDiscardedThisWay(ctx, id)
 			moved = true
 		}
 	}

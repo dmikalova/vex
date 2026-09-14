@@ -449,24 +449,24 @@ func TestEvasionSigilCompositionMiss(t *testing.T) {
 	}
 }
 
-// TestDiscardTopOfDeckUntil covers the dig through the top of the deck: it stops at
+// TestDiscardUntil covers the dig through the top of the deck: it stops at
 // a card the filters admit, reports success so a Then can follow, records the run it
 // discarded, and runs the deck out when nothing matches.
-func TestDiscardTopOfDeckUntil(t *testing.T) {
-	e := DiscardTopOfDeckUntil{Type: Creature, House: Brobnar}
+func TestDiscardUntil(t *testing.T) {
+	e := DiscardUntil{Type: Creature, House: Brobnar}
 	want := "discard cards from the top of your deck until you discard a Brobnar creature or run out of cards"
 	if e.Text() != want {
 		t.Errorf("text = %q, want %q", e.Text(), want)
 	}
-	if got := (DiscardTopOfDeckUntil{Type: Artifact}).Text(); got !=
+	if got := (DiscardUntil{Type: Artifact}).Text(); got !=
 		"discard cards from the top of your deck until you discard an artifact or run out of cards" {
 		t.Errorf("artifact text = %q", got)
 	}
-	if got := (DiscardTopOfDeckUntil{}).Text(); got !=
+	if got := (DiscardUntil{}).Text(); got !=
 		"discard cards from the top of your deck until you discard a card or run out of cards" {
 		t.Errorf("plain text = %q", got)
 	}
-	if got := (DiscardTopOfDeckUntil{House: Brobnar, MayStop: true}).Text(); got !=
+	if got := (DiscardUntil{House: Brobnar, MayStop: true}).Text(); got !=
 		"discard cards from the top of your deck until you discard a Brobnar card or choose to stop" {
 		t.Errorf("may-stop text = %q", got)
 	}
@@ -505,7 +505,7 @@ func TestDiscardTopOfDeckUntil(t *testing.T) {
 	}
 
 	// Nothing matching left: the dig empties the deck and the tail does nothing.
-	Then{First: DiscardTopOfDeckUntil{Type: Artifact}, Result: PutDiscardedIntoHand{}}.Resolve(ctx)
+	Then{First: DiscardUntil{Type: Artifact}, Result: PutDiscardedIntoHand{}}.Resolve(ctx)
 	if len(g.Deck(0)) != 0 {
 		t.Errorf("deck should be empty, got %v", g.Deck(0))
 	}
@@ -513,21 +513,21 @@ func TestDiscardTopOfDeckUntil(t *testing.T) {
 		t.Errorf("hand should be untouched, got %v", g.Hand(0))
 	}
 	// Resolved bare, the dig still runs; it just has no tail to gate.
-	DiscardTopOfDeckUntil{Type: Artifact}.Resolve(ctx)
+	DiscardUntil{Type: Artifact}.Resolve(ctx)
 	PutDiscardedIntoHand{}.Resolve(ctx)
 }
 
-// TestDiscardTopOfDeckUntilMayStop covers the optional stop: the controller may end
+// TestDiscardUntilMayStop covers the optional stop: the controller may end
 // the dig before a match, which reports failure and leaves the rest of the deck,
 // while still recording the run discarded so far.
-func TestDiscardTopOfDeckUntilMayStop(t *testing.T) {
+func TestDiscardUntilMayStop(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.SetChooser(0, optionPicker{idx: 1})
 	first := g.AddToDeck(NewCard("One", Logos, Creature, Common), 0)
 	kept := g.AddToDeck(NewCard("Two", Logos, Creature, Common), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	if (DiscardTopOfDeckUntil{House: Brobnar, MayStop: true}).resolveGate(ctx) {
+	if (DiscardUntil{House: Brobnar, MayStop: true}).resolveGate(ctx) {
 		t.Error("resolveGate = true, want false when the controller stops")
 	}
 	if len(g.Discard(0)) != 1 || g.Discard(0)[0] != first {
@@ -543,10 +543,10 @@ func TestDiscardTopOfDeckUntilMayStop(t *testing.T) {
 	// An empty deck reports failure and moves nothing; the bare Resolve is a no-op.
 	g2 := NewGame("A", "B", 1)
 	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
-	if (DiscardTopOfDeckUntil{House: Brobnar, MayStop: true}).resolveGate(ctx2) {
+	if (DiscardUntil{House: Brobnar, MayStop: true}).resolveGate(ctx2) {
 		t.Error("resolveGate = true, want false on an empty deck")
 	}
-	DiscardTopOfDeckUntil{House: Brobnar, MayStop: true}.Resolve(ctx2)
+	DiscardUntil{House: Brobnar, MayStop: true}.Resolve(ctx2)
 }
 
 // TestArchiveDiscardedThisWay covers archiving the run a preceding dig discarded:

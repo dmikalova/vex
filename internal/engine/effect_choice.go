@@ -74,3 +74,24 @@ func (e ChooseHouseThen) Resolve(ctx *EffectContext) {
 
 // validate descends into the wrapped effect.
 func (e ChooseHouseThen) validate() error { return validateEffect(e.Then) }
+
+// OpponentNamesHouse has the opponent (the non-controlling player) name a house,
+// storing it in ctx.ChosenHouse for a following effect to read — an ItIsNotOfNamedHouse
+// condition tests the card in context against it. Keyforgery: the forging opponent
+// names a house before the guard reveals a card. It renders as its own sentence, so
+// it is a standalone effect rather than a ChooseHouseThen wrapper.
+type OpponentNamesHouse struct{}
+
+// Text renders the effect. The opponent is "they" — the antecedent is the trigger
+// that names them (Keyforgery's "when your opponent would forge a key").
+func (OpponentNamesHouse) Text() string { return "they name a house" }
+
+// Resolve asks the opponent to name a house and stores it on the context.
+func (OpponentNamesHouse) Resolve(ctx *EffectContext) {
+	options := houseNames[1:] // every house except HouseNone
+	idx := ctx.Resolver.ChooseOption(ctx.Opponent(), ctx.Source, "Name a house", options)
+	if idx < 0 || idx >= len(options) {
+		return
+	}
+	ctx.ChosenHouse = House(idx + 1) // house values start at Brobnar = 1
+}

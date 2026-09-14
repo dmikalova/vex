@@ -17,8 +17,8 @@ var IntoTheNight = set.New(
 	card.Provenance(card.WC, "256"),
 	card.WithAbility(
 		card.Trigger.Play, card.CreaturesCannot{
-			Action:      card.UseKind.Fight,
-			ExceptHouse: card.House.Self,
-			Duration:    card.Duration.StartOfPlayerNextTurn,
+			Action:   card.UseKind.Fight,
+			Houses:   card.Houses.Except(card.House.Self),
+			Duration: card.Duration.StartOfPlayerNextTurn,
 		}),
 )

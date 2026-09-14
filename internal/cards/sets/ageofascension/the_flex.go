@@ -20,9 +20,9 @@ var TheFlex = set.New(
 			Target: card.Target.FriendlyCreature.House(card.Houses.Named(card.House.Self)).Ready(),
 			Then: card.Sequence{Effects: []card.Effect{
 				card.Exhaust{Target: card.Target.Triggering},
-				card.GainAemberEqualTo{
-					Player: card.Controller,
-					Count:  card.PowerOfChosen{Of: card.HalfRoundedDown},
+				card.GainAember{
+					Player:  card.Controller,
+					EqualTo: card.PowerOfChosen{Of: card.HalfRoundedDown},
 				},
 			}},
 		}),

@@ -26,9 +26,9 @@ var Infurnace = set.New(
 				Selection: card.Chosen{Optional: true},
 				Amount:    2,
 			},
-			card.LoseAemberEqualTo{
-				Player: card.Opponent,
-				Count:  card.PurgedAemberBonus{},
+			card.LoseAember{
+				Player:  card.Opponent,
+				EqualTo: card.PurgedAemberBonus{},
 			},
 		}},
 	),

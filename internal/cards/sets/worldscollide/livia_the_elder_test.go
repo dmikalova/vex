@@ -52,7 +52,7 @@ func TestLiviaTheElder(t *testing.T) {
 
 		// Reaping the friend now also fires its fight effect.
 		h.P1.Reap(friend)
-		// +1 reap + 1 morphed fight effect on top of Livia's reap Æmber.
+		// +1 reap + 1 echoed fight effect on top of Livia's reap Æmber.
 		h.P1.ExpectAmber(3)
 	})
 

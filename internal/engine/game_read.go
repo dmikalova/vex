@@ -263,8 +263,8 @@ func (g *Game) hasKeyword(id LocalID, k Keyword) bool {
 				return true
 			}
 		}
-		for _, kw := range m.KeywordsToNeighbors {
-			if kw == k {
+		for _, grant := range m.KeywordGrants {
+			if grant.Host && slices.Contains(grant.Keywords, k) {
 				return true
 			}
 		}
@@ -273,8 +273,8 @@ func (g *Game) hasKeyword(id LocalID, k Keyword) bool {
 	// Dongle gives Elusive to its host and both of the host's neighbors.
 	for _, nb := range neighbors(&EffectContext{Resolver: g}, id) {
 		for up, ok := g.firstUpgrade(nb); ok; up, ok = g.nextUpgrade(up) {
-			for _, kw := range g.staticOn(nb, up).KeywordsToNeighbors {
-				if kw == k {
+			for _, grant := range g.staticOn(nb, up).KeywordGrants {
+				if grant.Neighbors && slices.Contains(grant.Keywords, k) {
 					return true
 				}
 			}
@@ -518,7 +518,7 @@ func (g *Game) creaturesGloballyBarred(id LocalID, kind UseKind) bool {
 	if bar.Action != kind {
 		return false
 	}
-	return bar.ExceptHouse == HouseNone || g.House(id) != bar.ExceptHouse
+	return bar.Houses.matches(&EffectContext{Resolver: g}, id)
 }
 
 // cannotReap reports whether a player is barred from reaping — either by the

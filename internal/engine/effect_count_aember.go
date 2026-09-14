@@ -38,6 +38,12 @@ func (AemberOnThis) CountText() string { return "Æmber on it" }
 // trailing "it" would point at the wrong card.
 func (AemberOnThis) leadingCountText() string { return "Æmber on " + SelfName }
 
+// CountClause renders the clause CountIs puts after "if", e.g. "there are 4 or
+// more Æmber on it". Æmber is a mass noun, so the plural flag does not change it.
+func (AemberOnThis) CountClause(quantity string, _ bool) string {
+	return "there are " + quantity + " Æmber on it"
+}
+
 // AemberInPool counts the Æmber in a player's pool — Sack of Coins deals a
 // point of damage for each Æmber in your pool, and Marmo Swarm grows by it.
 type AemberInPool struct{ Player Player }

@@ -66,6 +66,15 @@ means whoever forged.`,
 		},
 		{
 			Section:    SectionAbility,
+			Title:      "When Your Opponent Would Forge a Key",
+			Definition: "An ability that resolves when the opponent would forge a key, before the forge, and can prevent it.",
+			Body: `This ability resolves when the opponent would forge a key, before that forge
+happens, so it can prevent the forge. It fires only on the opponent's forge, and
+the forging opponent is called "they". A prevented forge leaves the opponent's
+Æmber unspent.`,
+		},
+		{
+			Section:    SectionAbility,
 			Title:      "After a Creature Enters Play",
 			Definition: "An ability that resolves after any creature enters play, including the opponent's.",
 			Body: `This ability resolves after any creature enters play, including creatures

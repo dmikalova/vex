@@ -16,7 +16,7 @@ var SoundTheHorns = set.New("Sound the Horns",
 	card.WithAemberBonus(1),
 	card.WithAbility(
 		card.Trigger.Play, card.Then{
-			First: card.DiscardTopOfDeckUntil{
+			First: card.DiscardUntil{
 				Type:  card.Type.Creature,
 				House: card.House.Self,
 			},

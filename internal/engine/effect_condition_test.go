@@ -2,6 +2,23 @@ package engine
 
 import "testing"
 
+// TestHouseChoicePhrase covers the trailing "of the … house" fragment each choice
+// renders, and the empty phrase the no-scope choices return.
+func TestHouseChoicePhrase(t *testing.T) {
+	cases := map[HouseChoice]string{
+		TheChosenHouse:     "of the chosen house",
+		TheActiveHouse:     "of the active house",
+		TheContextualHouse: "of that card's house",
+		AnyHouse:           "",
+		houseChoiceUnset:   "",
+	}
+	for choice, want := range cases {
+		if got := choice.phrase(); got != want {
+			t.Errorf("phrase(%v) = %q, want %q", choice, got, want)
+		}
+	}
+}
+
 func TestConditionalEffect(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("src", 1), 0)
@@ -88,7 +105,7 @@ func TestOpponentHasMoreKeys(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	c := OpponentHasMoreKeys{}
+	c := HasMoreForgedKeys{Player: Opponent}
 	if c.CondText() != "if your opponent has more forged keys than you" {
 		t.Errorf("CondText = %q", c.CondText())
 	}
@@ -102,6 +119,16 @@ func TestOpponentHasMoreKeys(t *testing.T) {
 	g.State.Keys[0] = 1
 	if c.Met(ctx) {
 		t.Error("1 vs 1 should not be met")
+	}
+
+	// The controller-facing sense reads and compares from the other side.
+	mine := HasMoreForgedKeys{Player: Controller}
+	if mine.CondText() != "if you have more forged keys than your opponent" {
+		t.Errorf("CondText = %q", mine.CondText())
+	}
+	g.State.Keys[0] = 2
+	if !mine.Met(ctx) {
+		t.Error("you 2 vs opponent 1 should be met")
 	}
 }
 
@@ -306,22 +333,6 @@ func TestOnFlankNamed(t *testing.T) {
 	art := g2.AddArtifact(NewCard("art", Logos, Artifact, Common), 0)
 	if leftCond.Met(&EffectContext{Resolver: g2, It: art, HasIt: true}) {
 		t.Error("an artifact should not satisfy a named OnFlank")
-	}
-}
-
-func TestHasOtherFriendlyCreaturesCondition(t *testing.T) {
-	c := HasOtherFriendlyCreatures{}
-	if c.CondText() != "if you have any other creatures in play" {
-		t.Errorf("CondText = %q", c.CondText())
-	}
-	g := NewGame("A", "B", 1)
-	src := g.AddToBattleline(testCreature("src", 3), 0)
-	if c.Met(&EffectContext{Resolver: g, Source: src, Controller: 0}) {
-		t.Error("a lone creature has no other friendly creatures")
-	}
-	g.AddToBattleline(testCreature("ally", 3), 0)
-	if !c.Met(&EffectContext{Resolver: g, Source: src, Controller: 0}) {
-		t.Error("a second creature should satisfy the condition")
 	}
 }
 
@@ -1048,7 +1059,7 @@ func TestItIsYourTurn(t *testing.T) {
 }
 
 func TestAemberOnThisAtLeast(t *testing.T) {
-	c := AemberOnThisAtLeast{Amount: 4}
+	c := CountIs{Count: AemberOnThis{}, Is: AtLeast, Amount: 4}
 	if got := c.CondText(); got != "if there are 4 or more Æmber on it" {
 		t.Errorf("text = %q", got)
 	}
@@ -1065,7 +1076,7 @@ func TestAemberOnThisAtLeast(t *testing.T) {
 	}
 
 	// Not flips the sense to "fewer than", met below the threshold and not above.
-	fewer := Not{Cond: AemberOnThisAtLeast{Amount: 10}}
+	fewer := Not{Cond: CountIs{Count: AemberOnThis{}, Is: AtLeast, Amount: 10}}
 	if got := fewer.CondText(); got != "if there are fewer than 10 Æmber on it" {
 		t.Errorf("negated text = %q", got)
 	}
@@ -1140,7 +1151,7 @@ func TestFirstReapOfTurn(t *testing.T) {
 // TestCardsInDeckAtMost covers the deck-size threshold Manchego reads before it
 // steals.
 func TestCardsInDeckAtMost(t *testing.T) {
-	e := CardsInDeckAtMost{Amount: 5}
+	e := CountIs{Count: CardsInZone{Zone: Deck, Player: Controller}, Is: AtMost, Amount: 5}
 	if got := e.CondText(); got != "if you have 5 or fewer cards in your deck" {
 		t.Errorf("CondText = %q", got)
 	}
