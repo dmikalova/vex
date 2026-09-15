@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: If there are no friendly Creatures in play, for each enemy Creature in play, you may archive a card from your hand.
+//	Play: If there are no friendly creatures in play, for each enemy creature in play, you may archive a card from your hand.
 var MasterTheTheory = set.New(
 	"Master the Theory",
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, "148"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
 			Cond: card.InPlay{

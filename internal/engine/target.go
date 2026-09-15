@@ -129,6 +129,10 @@ const (
 	// renders them as "each of <self>'s neighbors" — Ghosthawk reaps with each of
 	// its neighbors, one at a time.
 	TargetEachNeighbor
+	// TargetEachUpgradeOnThis selects the upgrades attached to the source card and
+	// renders them as "each upgrade on <self>" — Away Team archives its own upgrades
+	// when it is destroyed.
+	TargetEachUpgradeOnThis
 )
 
 // Target describes which cards an effect applies to. Kind picks the base set;
@@ -141,7 +145,7 @@ type Target struct {
 	// house narrows the target to the cards the matcher admits — a named house, every
 	// house but one, the chosen house, the active house, or the house of the card in
 	// context (ctx.It). The zero value (any house) narrows nothing. Because the field
-	// is unexported, a SelfHouse sentinel in it resolves through selfHouseResolved
+	// is unexported, a SelfHouse sentinel in it resolves through houseReplaced
 	// rather than by reflection.
 	house HouseMatcher
 	// houseWithMostCreatures narrows the target to creatures of the house with the
@@ -193,7 +197,11 @@ type Target struct {
 	keyword              Keyword
 	onFlank              bool
 	notOnFlank           bool
-	neighboring          bool
+	// inCenter narrows the target to the creature in the center of its controller's
+	// battleline (an even-sized line has no center), rendering " in the center of
+	// its controller's battleline" (Beware the Ides).
+	inCenter    bool
+	neighboring bool
 	// toRightOfSource narrows the target to the creatures positioned to the right of
 	// the source card in its battleline, and toLeftOfSource to those on its left —
 	// the Panpacas, which buff one direction of their line.
@@ -252,16 +260,16 @@ func (t Target) OfHouseWithMostCreatures() Target {
 	return t
 }
 
-// selfHouseResolved fills the card's own house in for a SelfHouse sentinel the
-// target narrows on. A Target keeps its house matcher and refinement unexported,
-// so it resolves itself rather than being rewritten by reflection (see
-// self_house.go).
-func (t Target) selfHouseResolved(house House) any {
-	if t.house.House == SelfHouse {
-		t.house.House = house
+// houseReplaced fills the card's own house in for a SelfHouse sentinel the target
+// narrows on, or rehouses its house references for a Maverick. A Target keeps its
+// house matcher and refinement unexported, so it replaces them itself rather than
+// being rewritten by reflection (see self_house.go).
+func (t Target) houseReplaced(from, to House) any {
+	if t.house.House == from {
+		t.house.House = to
 	}
 	if t.refinement != nil {
-		t.refinement = resolvedIn(t.refinement, house)
+		t.refinement = replacedIn(t.refinement, from, to)
 	}
 	return t
 }
@@ -418,6 +426,13 @@ func (t Target) NotOnFlank() Target {
 	return t
 }
 
+// InCenter narrows the target to the creature in the center of its controller's
+// battleline (an even-sized line has no center, so nothing is selected).
+func (t Target) InCenter() Target {
+	t.inCenter = true
+	return t
+}
+
 // ToRightOfSource narrows the target to the creatures positioned to the right of
 // the source card in its battleline (Panpaca, Anga).
 func (t Target) ToRightOfSource() Target {
@@ -523,6 +538,8 @@ func (t Target) Text() string {
 		return "each of that creature's neighbors"
 	case TargetEachNeighbor:
 		return "each of " + SelfName + "'s neighbors"
+	case TargetEachUpgradeOnThis:
+		return "each upgrade on " + SelfName
 	case TargetTheFoughtCreature:
 		return t.decorateNeighbors("the fought creature")
 	}
@@ -682,6 +699,9 @@ func (t Target) Text() string {
 	}
 	if t.notOnFlank {
 		phrase += " that is not on a flank"
+	}
+	if t.inCenter {
+		phrase += " in the center of its controller's battleline"
 	}
 	if t.toRightOfSource {
 		phrase += " to the right of " + SelfName

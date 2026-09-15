@@ -12,9 +12,9 @@ import (
 //	House:  Brobnar
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Destroy any number of friendly Creatures. If the total power of Creatures destroyed this way is 25 or more, forge a key at no cost -> purge Might Makes Right.
+//	Play: Destroy any number of friendly creatures. If the total power of creatures destroyed this way is 25 or more, forge a key at no cost -> purge Might Makes Right.
 func TestMightMakesRight(t *testing.T) {
 	t.Run("sacrificing 25 total power forges a key for free", func(t *testing.T) {
 		var big, med ct.Card

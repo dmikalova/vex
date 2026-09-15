@@ -12,9 +12,9 @@ import (
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Archive an enemy Creature from play.
+//	Play: Archive an enemy creature from play.
 func TestBanish(t *testing.T) {
 	t.Run("archives an enemy creature", func(t *testing.T) {
 		var foe ct.Card

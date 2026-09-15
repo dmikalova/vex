@@ -22,9 +22,9 @@ func camouflageCanFight(g *engine.Game, attacker, defender ct.Card) bool {
 //	House:  Untamed
 //	Type:   Upgrade
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Creatures not on a flank cannot fight this Creature.
+//	Creatures not on a flank cannot fight this creature.
 func TestCamouflage(t *testing.T) {
 	var flank, interior, hidden ct.Card
 	h := ct.Play(t, ct.Setup{

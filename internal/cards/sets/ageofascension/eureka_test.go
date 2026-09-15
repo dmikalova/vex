@@ -12,7 +12,7 @@ import (
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Alpha.
 //	Play: Gain 2 Æmber. Archive 2 random cards from your hand.

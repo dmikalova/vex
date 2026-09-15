@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Dinosaur • Politician
 //
-//	Each other friendly Creature gains, "Destroyed: Move each Æmber on this Creature to the common supply."
+//	Each other friendly creature gains, "Destroyed: Move each Æmber on this creature to the common supply."
 var PraefectusLudo = set.New(
 	"Praefectus Ludo",
 	card.House.Saurian,

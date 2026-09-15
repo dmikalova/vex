@@ -7,17 +7,17 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Brobnar
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Weapon
 //
-//	After a Creature is played, put a fuse counter on The Big One. If there are 10 or more fuse counters on The Big One, destroy each Creature and each Artifact.
+//	After a creature is played, put a fuse counter on The Big One. If there are 10 or more fuse counters on The Big One, destroy each creature and each artifact.
 var TheBigOne = set.New(
 	"The Big One",
 	card.House.Brobnar,
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "50"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Weapon),
 	card.WithAbility(
 		card.Trigger.AfterCreaturePlayed, card.Sentences{Effects: []card.Effect{

@@ -121,21 +121,66 @@ func reprintsForSet(set provenance.Set) []provenance.Card {
 	type impl struct{ name, home string }
 	bySourceName := map[string]impl{}
 	for _, rc := range card.Cards() {
-		home := ""
-		if len(rc.Provenance) > 0 {
-			home = rc.Provenance[0].Set.Name
-		}
+		// The card's actual home set is where it is implemented (InSet), not its
+		// provenance origin — an anomaly's provenance points at Worlds Collide but it
+		// lives in Anomaly Expansion, so keying home off provenance would claim it as
+		// a reprint of itself in its own set.
+		home := rc.Set.Name
 		for _, ref := range rc.Provenance {
 			if name, ok := refName[refKey(ref)]; ok {
 				bySourceName[normalizeName(name)] = impl{rc.Def.Name, home}
 			}
 		}
+		// Also key by the card's own name, so a card whose provenance Ref does not
+		// resolve to a catalog printing (an anomaly's dangling A0x Ref, since the
+		// source set's catalog omits its anomalies) is still recognized as the
+		// implementation of a same-named printing in another set (Orb of Wonder is a
+		// Worlds Collide anomaly in Anomaly Expansion and a Mass Mutation card).
+		if _, ok := bySourceName[normalizeName(rc.Def.Name)]; !ok {
+			bySourceName[normalizeName(rc.Def.Name)] = impl{rc.Def.Name, home}
+		}
 	}
+
+	// Cluster awareness: a card pulled into a cluster by a lead (card.InCluster)
+	// only forms that cluster when the lead is in the same set's pool. Reprinting a
+	// pulled member without its lead would leave deck generation with a lead-less
+	// ByLead cluster (it panics, ADR 0036), so skip such an orphaned reprint — the
+	// member joins the set only where the lead is also present.
+	regByName := map[string]card.RegisteredCard{}
+	leadOfCluster := map[string]string{}
+	for _, rc := range card.Cards() {
+		regByName[normalizeName(rc.Def.Name)] = rc
+		if m := rc.Profile.Cluster; m.Name != "" && m.Lead {
+			leadOfCluster[m.Name] = rc.Def.Name
+		}
+	}
+	pooled := map[string]bool{}
+	for _, c := range set.Cards {
+		if im, ok := bySourceName[normalizeName(c.Name)]; ok {
+			pooled[normalizeName(im.name)] = true
+		}
+	}
+	leadAbsent := func(name string) bool {
+		rc, ok := regByName[normalizeName(name)]
+		if !ok {
+			return false
+		}
+		m := rc.Profile.Cluster
+		if m.Name == "" || m.Lead {
+			return false
+		}
+		lead := leadOfCluster[m.Name]
+		return lead == "" || !pooled[normalizeName(lead)]
+	}
+
 	var out []provenance.Card
 	seen := map[string]bool{}
 	for _, c := range set.Cards {
 		im, ok := bySourceName[normalizeName(c.Name)]
 		if !ok || im.home == set.Name || seen[im.name] {
+			continue
+		}
+		if leadAbsent(im.name) {
 			continue
 		}
 		seen[im.name] = true
@@ -240,7 +285,7 @@ func stubSource(pkg string, set provenance.SourceSet, c provenance.Card) string 
 		}
 	}
 	if c.Amber > 0 {
-		fmt.Fprintf(&b, "\tcard.WithAemberBonus(%d),\n", c.Amber)
+		fmt.Fprintf(&b, "\tcard.WithBonus(%s),\n", bonusAemberArgs(c.Amber))
 	}
 	if len(c.Traits) > 0 {
 		named := make([]string, len(c.Traits))
@@ -252,6 +297,15 @@ func stubSource(pkg string, set provenance.SourceSet, c provenance.Card) string 
 	b.WriteString("\t// TODO(stub): add WithKeywords / WithAbility for the printed text above.\n")
 	b.WriteString(")\n")
 	return b.String()
+}
+
+// bonusAemberArgs renders n Æmber bonus icons as WithBonus arguments.
+func bonusAemberArgs(n int) string {
+	args := make([]string, n)
+	for i := range args {
+		args[i] = "card.Bonus.Aember"
+	}
+	return strings.Join(args, ", ")
 }
 
 func isCreature(t string) bool { return strings.EqualFold(t, "creature") }

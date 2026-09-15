@@ -24,7 +24,7 @@ func TestStaticModifierPerUpgrade(t *testing.T) {
 	}
 
 	plain := g.Register(
-		NewCard("plain", StarAlliance, Upgrade, Common, WithAemberBonus(1)),
+		NewCard("plain", StarAlliance, Upgrade, Common, WithBonus(BonusAember)),
 		0,
 	)
 	g.AttachUpgrade(host, plain)

@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Until the start of your next turn, non-Shadows Creatures cannot be used to fight.
+//	Play: Until the start of your next turn, non-Shadows creatures cannot be used to fight.
 var IntoTheNight = set.New(
 	"Into the Night",
 	card.House.Shadows,

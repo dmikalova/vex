@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Brobnar
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: If there are 3 or more enemy Logos cards in play, steal 2 Æmber.
 var TakeThatSmartypants = set.New(
@@ -16,7 +16,7 @@ var TakeThatSmartypants = set.New(
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "11"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(card.Trigger.Play, card.Conditional{
 		Cond: card.InPlay{
 			Player: card.Opponent,

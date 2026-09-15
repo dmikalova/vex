@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Archive the top card of your deck.
 var RandomAccessArchives = set.New(
@@ -16,7 +16,7 @@ var RandomAccessArchives = set.New(
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "119"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play,
 		card.ArchiveCard{Zone: card.Deck, Selection: card.Top{}}),

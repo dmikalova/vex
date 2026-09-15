@@ -16,7 +16,7 @@ import (
 //	Traits: Goblin
 //
 //	Skirmish.
-//	After a Giant Creature is played adjacent to Stilt-Kin, ready and fight with Stilt-Kin.
+//	After a Giant creature is played adjacent to Stilt-Kin, ready and fight with Stilt-Kin.
 func TestStiltKin(t *testing.T) {
 	t.Run("a Giant played adjacent readies Stilt-Kin and fights", func(t *testing.T) {
 		var stilt, giant, foe ct.Card

@@ -12,9 +12,9 @@ import (
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Put up to 2 enemy Creatures into their owners' hands.
+//	Play: Put up to 2 enemy creatures into their owners' hands.
 func TestLightsOut(t *testing.T) {
 	t.Run("returns up to 2 enemy creatures to hand", func(t *testing.T) {
 		var a, b ct.Card

@@ -15,7 +15,7 @@ import (
 //	Power:  6
 //	Traits: Giant • Knight
 //
-//	Play: Deal 2 damage to each other undamaged Creature.
+//	Play: Deal 2 damage to each other undamaged creature.
 func TestHebeTheHuge(t *testing.T) {
 	t.Run("deals 2 damage to each other undamaged creature", func(t *testing.T) {
 		var healthy, hurt ct.Card

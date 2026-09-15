@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Deal 4 damage to a Creature that is not on a flank and 2 damage to each of its neighbors.
+//	Play: Deal 4 damage to a creature that is not on a flank and 2 damage to each of its neighbors.
 var BoobyTrap = set.New(
 	"Booby Trap",
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "268"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{Spread: card.CreatureAndNeighbors{
 			Amount:     4,

@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Traits: Item
 //
-//	Action: For the remainder of the turn, a Creature cannot be dealt damage.
+//	Action: For the remainder of the turn, a creature cannot be dealt damage.
 func TestHallowedShield(t *testing.T) {
 	t.Run("prevents damage to a creature this turn", func(t *testing.T) {
 		var attacker, foe ct.Card

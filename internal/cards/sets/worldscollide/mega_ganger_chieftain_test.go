@@ -15,7 +15,7 @@ import (
 //	Power:  7
 //	Traits: Giant
 //
-//	Play: Ready and fight with a neighboring Creature.
+//	Play: Ready and fight with a neighboring creature.
 func TestMegaGangerChieftain(t *testing.T) {
 	t.Run("readies and fights with a neighboring creature", func(t *testing.T) {
 		var neighbor, foe ct.Card

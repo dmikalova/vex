@@ -15,7 +15,7 @@ import (
 //	Power:  5
 //	Traits: Demon
 //
-//	Before Fight: Choose a Creature - Gabos Longarms deals its fight damage to the chosen Creature instead of to the Creature it is fighting.
+//	Before Fight: Choose a creature - Gabos Longarms deals its fight damage to the chosen creature instead of to the creature it is fighting.
 func TestGabosLongarms(t *testing.T) {
 	var def, bystander ct.Card
 	h := ct.Play(t, ct.Setup{

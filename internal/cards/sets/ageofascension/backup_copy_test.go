@@ -12,9 +12,9 @@ import (
 //	House:  Logos
 //	Type:   Upgrade
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Destroyed: Put this Creature on top of its owner's deck."
+//	This creature gains, "Destroyed: Put this creature on top of its owner's deck."
 func TestBackupCopy(t *testing.T) {
 	t.Run("returns its host to the top of the deck when the host is destroyed", func(t *testing.T) {
 		var host, foe ct.Card

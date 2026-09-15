@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Human • Scientist
 //
-//	Reap: Play a non-Logos Tactic.
+//	Reap: Play a non-Logos tactic.
 var Quant = set.New(
 	"Quant",
 	card.House.Logos,

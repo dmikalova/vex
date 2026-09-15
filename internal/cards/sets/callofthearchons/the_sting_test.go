@@ -12,7 +12,7 @@ import (
 //	House:  Shadows
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Vehicle
 //
 //	You skip your "forge a key" phase.

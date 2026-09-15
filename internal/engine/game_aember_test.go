@@ -124,7 +124,10 @@ func TestCaptureOpponentAemberReplacement(t *testing.T) {
 	t.Run("captures Æmber bonus instead of adding it to the opponent pool", func(t *testing.T) {
 		g := started(t)
 		spider := g.AddToBattleline(testEtherSpider(), 1)
-		g.AddToHand(NewCard("Bonus", Brobnar, Tactic, Common, WithAemberBonus(2)), 0)
+		g.AddToHand(
+			NewCard("Bonus", Brobnar, Tactic, Common, WithBonus(BonusAember, BonusAember)),
+			0,
+		)
 
 		if err := g.PlayAction(0, handIdx(g, 0, "Bonus")); err != nil {
 			t.Fatalf("PlayAction: %v", err)

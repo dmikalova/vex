@@ -12,7 +12,7 @@ import (
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Omega.
 //	Play: Put a card from your discard pile into your hand.

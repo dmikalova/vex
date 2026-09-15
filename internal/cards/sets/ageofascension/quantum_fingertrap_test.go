@@ -12,10 +12,10 @@ import (
 //	House:  Logos
 //	Type:   Artifact
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Item
 //
-//	Action: Swap the positions of two Creatures in a battleline.
+//	Action: Swap the positions of two creatures in a battleline.
 func TestQuantumFingertrap(t *testing.T) {
 	var a, b ct.Card
 	h := ct.Play(t, ct.Setup{

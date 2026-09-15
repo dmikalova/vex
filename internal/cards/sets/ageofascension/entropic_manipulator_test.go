@@ -12,9 +12,9 @@ import (
 //	House:  Mars
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Redistribute the damage among a player's Creatures.
+//	Play: Redistribute the damage among a player's creatures.
 func TestEntropicManipulator(t *testing.T) {
 	t.Run("redistributes damage among the chosen player's creatures", func(t *testing.T) {
 		var a, b ct.Card

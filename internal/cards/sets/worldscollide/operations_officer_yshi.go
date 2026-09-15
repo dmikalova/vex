@@ -12,8 +12,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Spirit
 //
 //	Taunt.
-//	Each neighboring Creature gains, "Reap: this Creature captures 1 Æmber from your opponent."
-//	Each neighboring Creature gains, "Fight: this Creature captures 1 Æmber from your opponent."
+//	Each neighboring creature gains, "Reap: this creature captures 1 Æmber from your opponent."
+//	Each neighboring creature gains, "Fight: this creature captures 1 Æmber from your opponent."
 var OperationsOfficerYshi = set.New(
 	"Operations Officer Yshi",
 	card.House.StarAlliance,

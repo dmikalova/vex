@@ -12,11 +12,11 @@ import (
 //	House:  Brobnar
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Item
 //
 //	Versatile.
-//	Action: Destroy Signal Fire. For the remainder of the turn, each friendly Brobnar Creature may fight.
+//	Action: Destroy Signal Fire. For the remainder of the turn, each friendly Brobnar creature may fight.
 func TestSignalFire(t *testing.T) {
 	t.Run("sacrifices itself and lets Brobnar creatures fight out of house", func(t *testing.T) {
 		var brobnar, enemy ct.Card

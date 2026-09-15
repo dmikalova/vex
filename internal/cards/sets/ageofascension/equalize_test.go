@@ -12,9 +12,9 @@ import (
 //	House:  Sanctum
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Redistribute the Æmber on friendly Creatures among friendly Creatures. Redistribute the Æmber on enemy Creatures among enemy Creatures.
+//	Play: Redistribute the Æmber on friendly creatures among friendly creatures. Redistribute the Æmber on enemy creatures among enemy creatures.
 func TestEqualize(t *testing.T) {
 	t.Run("moves friendly Æmber among friendly creatures", func(t *testing.T) {
 		var a, b, foe ct.Card

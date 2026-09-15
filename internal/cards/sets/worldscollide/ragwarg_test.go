@@ -12,10 +12,10 @@ import (
 //	House:  Brobnar
 //	Type:   Artifact
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Item
 //
-//	After a Creature reaps, if it is the first time a Creature has reaped this turn, deal 2 damage to it.
+//	After a creature reaps, if it is the first time a creature has reaped this turn, deal 2 damage to it.
 func TestRagwarg(t *testing.T) {
 	t.Run("deals 2 damage to the first creature that reaps this turn", func(t *testing.T) {
 		var reaper ct.Card

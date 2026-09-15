@@ -232,6 +232,7 @@ const (
 	Psion
 	Shapeshifter
 	Wolf
+	Cat
 	// traitCount bounds the enum; it is not a trait.
 	traitCount
 )
@@ -300,6 +301,7 @@ var traitNames = [traitCount]string{
 	Psion:        "Psion",
 	Shapeshifter: "Shapeshifter",
 	Wolf:         "Wolf",
+	Cat:          "Cat",
 }
 
 // String returns the trait's printed word, or "" for the unset zero value.
@@ -610,7 +612,16 @@ const (
 	// happens, so it can prevent that forge (Keyforgery guards against it). It fires
 	// only on the opponent's forge, and the forging opponent is referred to as
 	// "they"; a prevented forge leaves the opponent's Æmber unspent.
-	TriggerBeforeOpponentForgesKey // triggerCount bounds the enum so Triggers can range it; it is not a trigger.
+	TriggerBeforeOpponentForgesKey
+	// TriggerAfterOpponentForgesKey fires after the opponent forges a key, on the
+	// non-forging player's in-play cards — Forge Compiler destroys itself and wards
+	// its controller's creatures after the opponent forges.
+	TriggerAfterOpponentForgesKey
+	// TriggerAfterFriendlyCreatureFights fires after a creature on the controller's
+	// own side is used to fight, with that creature as "it" — Lieutenant Gorvenal
+	// captures whenever a friendly creature fights, itself or another.
+	TriggerAfterFriendlyCreatureFights
+	// triggerCount bounds the enum so Triggers can range it; it is not a trigger.
 	triggerCount
 )
 
@@ -688,12 +699,16 @@ func (t Trigger) String() string {
 		return "After Æmber Is Stolen From You"
 	case TriggerAfterCreatureFights:
 		return "After a Creature Is Used to Fight"
+	case TriggerAfterFriendlyCreatureFights:
+		return "After a Friendly Creature Is Used to Fight"
 	case TriggerAfterCreatureDestroyed:
 		return "After a Creature Is Destroyed"
 	case TriggerAfterFriendlyCreatureDestroyed:
 		return "After a Friendly Creature Is Destroyed"
 	case TriggerAfterPlayerForgesKey:
 		return "After a Player Forges a Key"
+	case TriggerAfterOpponentForgesKey:
+		return "After Your Opponent Forges a Key"
 	case TriggerAfterCreaturePlayed:
 		return "After a Creature Is Played"
 	case TriggerEndOfTurn:
@@ -747,6 +762,8 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return "When your opponent would forge a key, ", false
 	case TriggerAfterPlayerForgesKey:
 		return "After a player forges a key, ", false
+	case TriggerAfterOpponentForgesKey:
+		return "After your opponent forges a key, ", false
 	case TriggerAfterCreatureEnters:
 		return "After a creature enters play, ", false
 	case TriggerAfterCreaturePlayedAdjacent:
@@ -779,6 +796,8 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return "After an enemy creature reaps, ", false
 	case TriggerAfterCreatureFights:
 		return "After a creature is used to fight, ", false
+	case TriggerAfterFriendlyCreatureFights:
+		return "After a friendly creature is used to fight, ", false
 	case TriggerAfterCreatureDestroyed:
 		return "After a creature is destroyed, ", false
 	case TriggerAfterAemberStolenFromYou:

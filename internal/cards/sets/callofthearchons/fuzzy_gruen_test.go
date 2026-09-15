@@ -13,7 +13,7 @@ import (
 //	Type:   Creature
 //	Rarity: Rare
 //	Power:  5
-//	Æmber:  2
+//	Bonus:  Æmber Æmber
 //	Traits: Beast
 //
 //	Play: Your opponent gains 1 Æmber.

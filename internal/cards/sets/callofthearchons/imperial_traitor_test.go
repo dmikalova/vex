@@ -12,7 +12,7 @@ import (
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Reveal your opponent's hand, and you may purge a Sanctum card from your opponent's hand.
 func TestImperialTraitor(t *testing.T) {

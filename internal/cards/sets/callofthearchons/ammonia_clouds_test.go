@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Deal 3 damage to each Creature.
+//	Play: Deal 3 damage to each creature.
 func TestAmmoniaClouds(t *testing.T) {
 	t.Run("deals 3 damage to each creature", func(t *testing.T) {
 		var toughAlly, weakAlly, toughFoe, weakFoe ct.Card

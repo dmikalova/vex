@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Brobnar
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Ready and fight with a friendly Creature.
+//	Play: Ready and fight with a friendly creature.
 var Anger = set.New(
 	"Anger",
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, "1"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.OnChooseCreature{
 			Target: card.Target.FriendlyCreature,

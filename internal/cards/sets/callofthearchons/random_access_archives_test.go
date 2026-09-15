@@ -12,7 +12,7 @@ import (
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Archive the top card of your deck.
 func TestRandomAccessArchives(t *testing.T) {

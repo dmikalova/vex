@@ -12,7 +12,7 @@ import (
 //	House:  Brobnar
 //	Type:   Tactic
 //	Rarity: Special
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Shuffle each friendly card in play into your deck. For each card shuffled into your deck this way, draw a card.
 func TestTimequake(t *testing.T) {

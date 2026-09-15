@@ -177,6 +177,7 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 		t.keyword == keywordUnset &&
 		!t.onFlank &&
 		!t.notOnFlank &&
+		!t.inCenter &&
 		!t.neighboring &&
 		!t.toRightOfSource &&
 		!t.toLeftOfSource &&
@@ -254,6 +255,9 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 			continue
 		}
 		if t.notOnFlank && onFlank(ctx, id) {
+			continue
+		}
+		if t.inCenter && !ctx.Resolver.InCenterOfBattleline(id) {
 			continue
 		}
 		if t.neighboring && !isNeighbor(ctx, ctx.Source, id) {
@@ -504,6 +508,8 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 		return ctx.Produced.Neighbors
 	case TargetEachNeighbor:
 		return neighbors(ctx, ctx.Source)
+	case TargetEachUpgradeOnThis:
+		return ctx.Resolver.Upgrades(ctx.Source)
 	default:
 		return nil
 	}

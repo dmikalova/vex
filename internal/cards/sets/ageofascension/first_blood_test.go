@@ -13,10 +13,10 @@ import (
 //	House:  Brobnar
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Alpha.
-//	Play: Deal 2 damage for each friendly Brobnar Creature, divided among any number of Creatures.
+//	Play: Deal 2 damage for each friendly Brobnar creature, divided among any number of creatures.
 func TestFirstBlood(t *testing.T) {
 	var blood, mook ct.Card
 	h := ct.Play(t, ct.Setup{

@@ -46,8 +46,15 @@ var (
 	WithAttackIgnores = func(kws ...engine.Keyword) Option { return gameplay(engine.WithAttackIgnores(kws...)) }
 	// WithEntersPlay adds an effect that resolves as the creature enters play.
 	WithEntersPlay = func(e Effect) Option { return gameplay(engine.WithEntersPlay(e)) }
-	// WithAemberBonus sets a card's Æmber bonus (the pips gained when it is played).
-	WithAemberBonus = func(n int) Option { return gameplay(engine.WithAemberBonus(n)) }
+	// WithBonus sets the bonus icons printed on a card, in top-to-bottom order —
+	// card.WithBonus(card.Bonus.Aember, card.Bonus.Aember, card.Bonus.Draw).
+	WithBonus = func(icons ...BonusIcon) Option { return gameplay(engine.WithBonus(icons...)) }
+	// WithEnhance makes the card an Enhance source contributing the given bonus icons
+	// to the deck at generation time; they have no effect on the card itself.
+	WithEnhance = func(icons ...BonusIcon) Option { return gameplay(engine.WithEnhance(icons...)) }
+	// WithoutEnhancement bars the given bonus-icon kinds from landing on this card
+	// via Enhance (a Vactrol divergence, for a bonus that would only weaken it).
+	WithoutEnhancement = func(icons ...BonusIcon) Option { return gameplay(engine.WithoutEnhancement(icons...)) }
 	// WithStatic adds a static modifier (an upgrade's granted stats and abilities).
 	WithStatic = func(m StaticModifier) Option { return gameplay(engine.WithStatic(m)) }
 	// WithPlayableAsUpgrade lets a creature be played as an upgrade instead of a

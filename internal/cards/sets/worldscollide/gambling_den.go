@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Shadows
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Location
 //
 //	At the start of each player's turn, you may choose a house - reveal the top card of your deck. If it is of the chosen house, gain 2 Æmber. Otherwise, lose 2 Æmber.
@@ -17,7 +17,7 @@ var GamblingDen = set.New(
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "268"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
 		card.Trigger.AfterAnyPlayerStartOfTurn, card.May{

@@ -12,10 +12,10 @@ import (
 //	House:  Logos
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Item
 //
-//	After you forge a key, destroy each Creature and each Artifact.
+//	After you forge a key, destroy each creature and each artifact.
 func TestStrangeGizmo(t *testing.T) {
 	t.Run(
 		"destroys each creature and artifact after its controller forges a key",

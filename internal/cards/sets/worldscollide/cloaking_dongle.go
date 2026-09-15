@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Star Alliance
 //	Type:   Upgrade
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature and each of its neighbors gains elusive.
+//	This creature and each of its neighbors gains elusive.
 var CloakingDongle = set.New(
 	"Cloaking Dongle",
 	card.House.StarAlliance,
 	card.Type.Upgrade,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "294"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		KeywordGrants: []card.KeywordGrant{{
 			Keywords:  card.Keywords(card.Keyword.Elusive),

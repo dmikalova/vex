@@ -14,7 +14,7 @@ import (
 //	Rarity: Connected
 //	Traits: Item • Shard
 //
-//	Action: For each friendly Shard, exalt an enemy Creature.
+//	Action: For each friendly Shard, exalt an enemy creature.
 func TestShardOfGlory(t *testing.T) {
 	t.Run("exalts an enemy creature for each friendly shard", func(t *testing.T) {
 		var enemy ct.Card

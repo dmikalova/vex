@@ -12,9 +12,9 @@ import (
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Play a Creature from your discard pile.
+//	Play: Play a creature from your discard pile.
 func TestExhume(t *testing.T) {
 	t.Run("plays a creature from your own discard pile", func(t *testing.T) {
 		var buried ct.Card

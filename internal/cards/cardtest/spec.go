@@ -19,14 +19,14 @@ var vanillaCount atomic.Uint64
 // spec accumulates the options for a vanilla card before it is built into an
 // engine.CardDefinition. It is populated by Option values (OfHouse, Power, ...).
 type spec struct {
-	name        string
-	house       engine.House
-	power       int
-	armor       int
-	traits      []engine.Trait
-	keywords    []engine.Keyword
-	aemberBonus int
-	static      engine.StaticModifier
+	name     string
+	house    engine.House
+	power    int
+	armor    int
+	traits   []engine.Trait
+	keywords []engine.Keyword
+	bonuses  []engine.BonusIcon
+	static   engine.StaticModifier
 }
 
 // Option configures a vanilla card built by Creature, Artifact, Tactic, or
@@ -58,8 +58,19 @@ func Keywords(keywords ...engine.Keyword) Option {
 	return func(s *spec) { s.keywords = append(s.keywords, keywords...) }
 }
 
-// AemberBonus sets a vanilla card's Æmber pips.
-func AemberBonus(n int) Option { return func(s *spec) { s.aemberBonus = n } }
+// Bonus sets a vanilla card's printed bonus icons, in order.
+func Bonus(icons ...engine.BonusIcon) Option {
+	return func(s *spec) { s.bonuses = append(s.bonuses, icons...) }
+}
+
+// AemberBonus sets a vanilla card's Æmber pips (a shim over Bonus).
+func AemberBonus(n int) Option {
+	return func(s *spec) {
+		for i := 0; i < n; i++ {
+			s.bonuses = append(s.bonuses, engine.BonusAember)
+		}
+	}
+}
 
 // PowerBonus sets the power a vanilla Upgrade grants its host creature.
 func PowerBonus(n int) Option { return func(s *spec) { s.static.PowerBonus = n } }
@@ -81,7 +92,7 @@ func build(kind string, ct engine.CardType, defaultPower int, opts []Option) eng
 	cardOpts := []engine.CardOption{
 		engine.WithPower(s.power),
 		engine.WithArmor(s.armor),
-		engine.WithAemberBonus(s.aemberBonus),
+		engine.WithBonus(s.bonuses...),
 		engine.WithStatic(s.static),
 	}
 	if len(s.traits) > 0 {

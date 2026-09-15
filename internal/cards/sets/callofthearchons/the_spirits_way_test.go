@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Destroy each Creature with power 3 or higher.
+//	Play: Destroy each creature with power 3 or higher.
 func TestTheSpiritsWay(t *testing.T) {
 	t.Run("destroys each creature with power 3 or higher", func(t *testing.T) {
 		var strong, weak ct.Card

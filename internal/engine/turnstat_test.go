@@ -42,7 +42,7 @@ func TestForgedKeyCondition(t *testing.T) {
 	if got := mine.CondText(); got != "if you forged a key this turn" {
 		t.Errorf("CondText = %q", got)
 	}
-	if got := theirs.CondText(); got != "if your opponent forged a key on their previous turn" {
+	if got := theirs.CondText(); got != "if your opponent forged a key during their previous turn" {
 		t.Errorf("CondText = %q", got)
 	}
 	if got := notMine.CondText(); got != "if you have not forged a key this turn" {
@@ -181,15 +181,26 @@ func TestUnforgeKey(t *testing.T) {
 
 	g := NewGame("A", "B", 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-	UnforgeKey{Player: Opponent}.Resolve(ctx)
+	if (UnforgeKey{Player: Opponent}).resolveGate(ctx) {
+		t.Error("unforging with no keys should report false")
+	}
 	if g.Keys(1) != 0 {
 		t.Error("unforging with no keys should do nothing")
 	}
 
 	g.SetAember(1, 6)
 	g.forgeKey(1)
-	UnforgeKey{Player: Opponent}.Resolve(ctx)
+	if !(UnforgeKey{Player: Opponent}).resolveGate(ctx) {
+		t.Error("unforging a forged key should report true")
+	}
 	if g.Keys(1) != 0 {
 		t.Errorf("keys = %d, want 0", g.Keys(1))
+	}
+
+	g.SetAember(1, 6)
+	g.forgeKey(1)
+	UnforgeKey{Player: Opponent}.Resolve(ctx)
+	if g.Keys(1) != 0 {
+		t.Errorf("keys after Resolve = %d, want 0", g.Keys(1))
 	}
 }

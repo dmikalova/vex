@@ -313,11 +313,14 @@ func TestLogEntryText(t *testing.T) {
 			PlayedFromTopOfDeck{Card: 9, Player: 0},
 			"P0 plays Card9 from the top of P0's deck",
 		},
-		{AemberBonusGained{Player: 0, Card: 9, Amount: 2}, "P0 gains 2 Æmber from Card9"},
+		{BonusAemberGained{Player: 0, Card: 9, Amount: 2}, "P0 gains 2 bonus Æmber from Card9"},
 		{
-			AemberBonusCaptured{Creature: 7, Card: 9, Amount: 2},
-			"Card7 captures 2 Æmber from Card9's bonus",
+			BonusAemberCaptured{Creature: 7, Card: 9, Amount: 2},
+			"Card7 captures 2 bonus Æmber from Card9",
 		},
+		{BonusCaptured{Creature: 7, Card: 9, Amount: 1}, "Card7 captures 1 bonus Æmber (Card9)"},
+		{BonusDamageDealt{Source: 9, Amount: 1, Target: 2}, "Card9 deals 1 bonus damage to Card2"},
+		{BonusCardDrawn{Player: 0, Card: 9, Amount: 1}, "P0 draws 1 bonus card from Card9"},
 		{AemberSpentToPlay{Player: 0, Card: 9, Amount: 1}, "P0 loses 1 Æmber to play Card9"},
 		{Reaped{Player: 0, Card: 2}, "P0 reaps with Card2 (+1 Æmber)"},
 		{

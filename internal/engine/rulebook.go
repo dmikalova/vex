@@ -27,6 +27,7 @@ var ruleSpine = []ruleSpineEntry{
 	{SectionCombat, "Combat"},
 	{SectionCardType, "Card Types"},
 	{SectionKeyword, "Keywords"},
+	{SectionBonus, "Bonus Icons"},
 	{SectionAbility, "Abilities"},
 	{SectionEffect, "Effects"},
 }

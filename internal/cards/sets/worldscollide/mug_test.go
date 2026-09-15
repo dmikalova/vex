@@ -12,9 +12,9 @@ import (
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Choose a Creature - move 1 Æmber from it to your pool. Deal 2 damage to it.
+//	Play: Choose a creature - move 1 Æmber from it to your pool. Deal 2 damage to it.
 func TestMug(t *testing.T) {
 	t.Run("takes 1 Æmber from a creature and deals 2 damage to it", func(t *testing.T) {
 		var foe ct.Card

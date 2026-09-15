@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Robot • Experiment
 //
-//	If this Creature would be destroyed and there is another friendly Creature in play, instead fully heal it, exhaust it, and move it to either flank of its controller's battleline.
+//	If this creature would be destroyed and there is another friendly creature in play, instead fully heal it, exhaust it, and move it to either flank of its controller's battleline.
 func TestReassemblingAutomaton(t *testing.T) {
 	t.Run("with another creature, survives fully healed on a flank", func(t *testing.T) {
 		var automaton, enemy ct.Card

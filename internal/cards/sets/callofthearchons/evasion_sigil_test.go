@@ -12,10 +12,10 @@ import (
 //	House:  Shadows
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Power
 //
-//	Each Creature gains, "Before Fight: Discard the top card of its controller's deck. If it is of the active house, the fight does not occur."
+//	Each creature gains, "Before Fight: Discard the top card of its controller's deck. If it is of the active house, the fight does not occur."
 func TestEvasionSigil(t *testing.T) {
 	t.Run("cancels the fight when the discarded card is of the active house", func(t *testing.T) {
 		var attacker, defender, top ct.Card

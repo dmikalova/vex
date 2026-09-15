@@ -12,9 +12,9 @@ import (
 //	House:  Dis
 //	Type:   Upgrade
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains +2 power and +2 hazardous.
+//	This creature gains +2 power and +2 hazardous.
 func TestFlameWreathed(t *testing.T) {
 	t.Run("grants the host +2 power and +2 hazardous", func(t *testing.T) {
 		var enemy, attacker ct.Card

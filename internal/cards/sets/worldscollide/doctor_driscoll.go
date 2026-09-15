@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Scientist
 //
 //	Elusive.
-//	Action: Heal 2 damage from a Creature. For each damage healed this way, gain 1 Æmber.
+//	Action: Heal 2 damage from a creature. For each damage healed this way, gain 1 Æmber.
 var DoctorDriscoll = set.New(
 	"Doctor Driscoll",
 	card.House.StarAlliance,

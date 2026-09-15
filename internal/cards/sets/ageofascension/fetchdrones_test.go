@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Traits: Item
 //
-//	Action: Discard the top 2 cards of your deck. For each Logos card discarded this way, a friendly Creature captures 2 Æmber from your opponent.
+//	Action: Discard the top 2 cards of your deck. For each Logos card discarded this way, a friendly creature captures 2 Æmber from your opponent.
 func TestFetchdrones(t *testing.T) {
 	t.Run("captures 2 Æmber per Logos card discarded", func(t *testing.T) {
 		var drones, captor ct.Card

@@ -12,10 +12,10 @@ import (
 //	House:  Saurian
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Alpha.
-//	Play: Until the start of your next turn, each Creature gains, "Before Fight: Exalt this Creature."
+//	Play: Until the start of your next turn, each creature gains, "Before Fight: Exalt this creature."
 func TestDiploMacy(t *testing.T) {
 	t.Run("a friendly creature exalts itself when it fights", func(t *testing.T) {
 		var attacker, prey ct.Card

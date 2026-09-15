@@ -12,9 +12,9 @@ import (
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Remove a ward from a Creature, and ward a Creature.
+//	Play: Remove a ward from a creature, and ward a creature.
 func TestHunterOrHunted(t *testing.T) {
 	t.Run("removes a ward from one creature and wards another", func(t *testing.T) {
 		var warded, target ct.Card

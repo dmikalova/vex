@@ -15,7 +15,7 @@ import (
 //	Power:  2
 //	Traits: Human • Scientist
 //
-//	Reap: For each friendly Logos Creature, draw a card.
+//	Reap: For each friendly Logos creature, draw a card.
 func TestProfessorSutterkin(t *testing.T) {
 	t.Run("draws a card for each friendly Logos creature", func(t *testing.T) {
 		var top1, top2 ct.Card

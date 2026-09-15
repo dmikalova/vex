@@ -15,7 +15,7 @@ import (
 //	Power:  6
 //	Traits: Giant
 //
-//	Play/Fight/Reap: Put another friendly Giant Creature into its owner's hand.
+//	Play/Fight/Reap: Put another friendly Giant creature into its owner's hand.
 func TestDrummernaut(t *testing.T) {
 	t.Run("returns another friendly Giant to hand when played", func(t *testing.T) {
 		var giant ct.Card

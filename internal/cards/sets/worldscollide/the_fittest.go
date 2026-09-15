@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Give each friendly Creature a +1 power counter.
+//	Play: Give each friendly creature a +1 power counter.
 var TheFittest = set.New(
 	"The Fittest",
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "366"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.AddPowerCounter{
 			Target: card.Target.EachFriendlyCreature,

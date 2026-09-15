@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Traits: Location
 //
-//	Action: For the remainder of the turn, after a Creature reaps, gain 1 Æmber.
+//	Action: For the remainder of the turn, after a creature reaps, gain 1 Æmber.
 func TestCrystalHive(t *testing.T) {
 	t.Run("gains an extra Æmber each time a creature reaps this turn", func(t *testing.T) {
 		var creature ct.Card

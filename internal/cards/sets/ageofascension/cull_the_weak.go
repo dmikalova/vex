@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Destroy the least powerful enemy Creature.
+//	Play: Destroy the least powerful enemy creature.
 var CullTheWeak = set.New(
 	"Cull the Weak",
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.AoA, "57"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{
 			Target: card.Target.EachEnemyCreature.Refine(card.LeastPowerful),

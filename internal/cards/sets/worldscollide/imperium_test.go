@@ -12,9 +12,9 @@ import (
 //	House:  Saurian
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Ward 2 friendly Creatures.
+//	Play: Ward 2 friendly creatures.
 func TestImperium(t *testing.T) {
 	var a, b, c ct.Card
 	h := ct.Play(t, ct.Setup{

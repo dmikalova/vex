@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Ready and use a friendly Creature.
+//	Play: Ready and use a friendly creature.
 var Inspiration = set.New(
 	"Inspiration",
 	card.House.Sanctum,

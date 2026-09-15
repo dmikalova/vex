@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Saurian
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Deal 5 damage to a Creature. If this damage destroys that Creature, exalt a friendly Creature.
+//	Play: Deal 5 damage to a creature. If this damage destroys that creature, exalt a friendly creature.
 var Stomp = set.New(
 	"Stomp",
 	card.House.Saurian,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "210"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.DamageThen{
 			Amount: 5,

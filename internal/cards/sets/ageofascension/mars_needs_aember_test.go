@@ -12,9 +12,9 @@ import (
 //	House:  Mars
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Each enemy damaged non-Mars Creature captures 1 Æmber from your opponent.
+//	Play: Each enemy damaged non-Mars creature captures 1 Æmber from your opponent.
 func TestMarsNeedsAember(t *testing.T) {
 	t.Run("each damaged enemy non-Mars creature captures 1 aember", func(t *testing.T) {
 		var damaged ct.Card

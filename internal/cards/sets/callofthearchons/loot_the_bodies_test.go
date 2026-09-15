@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: For the remainder of the turn, each time an enemy Creature is destroyed, gain 1 Æmber.
+//	Play: For the remainder of the turn, each time an enemy creature is destroyed, gain 1 Æmber.
 func TestLootTheBodies(t *testing.T) {
 	t.Run("gains 1 Æmber each time an enemy creature is destroyed this turn", func(t *testing.T) {
 		var ally, foe ct.Card

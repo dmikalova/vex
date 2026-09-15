@@ -16,7 +16,7 @@ import (
 //	Armor:  2
 //	Traits: Knight • Spirit
 //
-//	Before Fight: Deal 3 damage to each neighbor of the Creature Lord Golgotha fights.
+//	Before Fight: Deal 3 damage to each neighbor of the creature Lord Golgotha fights.
 func TestLordGolgotha(t *testing.T) {
 	t.Run("damages the neighbors of the creature it fights, not that creature", func(t *testing.T) {
 		var golgotha, left, mid, right ct.Card

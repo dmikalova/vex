@@ -50,9 +50,8 @@ func (s CardTypes) list() string {
 }
 
 // typeWord is a card type's printed word in a filter or listing: the lowercase
-// type name (creature, artifact, upgrade, tactic). Card text raises these type
-// nouns to their proper-noun capitalization at the presentation layer, so the
-// effect layer keeps them lowercase like every other rendered noun.
+// type name (creature, artifact, upgrade, tactic). Card types read as lowercase
+// common nouns in card text, like every other rendered noun.
 func typeWord(t CardType) string {
 	return strings.ToLower(t.String())
 }

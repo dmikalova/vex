@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Mars
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: If there are no friendly Creatures in play, deal 4 damage to each Creature.
+//	Play: If there are no friendly creatures in play, deal 4 damage to each creature.
 var CarpetPhloxem = set.New(
 	"Carpet Phloxem",
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.AoA, "161"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
 			Cond: card.InPlay{

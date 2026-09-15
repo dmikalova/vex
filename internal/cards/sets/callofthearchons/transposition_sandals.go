@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Logos
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Action: Swap this Creature with another friendly Creature in your battleline. Use the other Creature."
+//	This creature gains, "Action: Swap this creature with another friendly creature in your battleline. Use the other creature."
 var TranspositionSandals = set.New(
 	"Transposition Sandals",
 	card.House.Logos,
 	card.Type.Upgrade,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "159"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{
 			{Trigger: card.Trigger.Action, Effect: card.Sentences{Effects: []card.Effect{

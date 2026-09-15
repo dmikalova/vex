@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Purge a Creature with power 5 or higher.
+//	Play: Purge a creature with power 5 or higher.
 func TestTheHarderTheyCome(t *testing.T) {
 	t.Run("purges a creature with power 5 or higher", func(t *testing.T) {
 		var strong, weak ct.Card

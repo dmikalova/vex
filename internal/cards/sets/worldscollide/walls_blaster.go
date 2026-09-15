@@ -15,11 +15,11 @@ var wallsBlasterCluster = card.Cluster{
 //	House:  Star Alliance
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Fight/Reap: Choose one:
-//	- Deal 2 damage to a Creature
-//	- Attach Walls' Blaster to Chief Engineer Walls -> for each Upgrade on Chief Engineer Walls, stun a Creature."
+//	This creature gains, "Fight/Reap: Choose one:
+//	- Deal 2 damage to a creature
+//	- Attach Walls' Blaster to Chief Engineer Walls -> for each upgrade on Chief Engineer Walls, stun a creature."
 var WallsBlaster = set.New(
 	"Walls' Blaster",
 	card.House.StarAlliance,
@@ -27,7 +27,7 @@ var WallsBlaster = set.New(
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "352"),
 	card.LeadsCluster(wallsBlasterCluster),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightReap(card.ChooseOne{Options: []card.Effect{
 			card.DealDamage{Amount: 2, Target: card.Target.Creature},

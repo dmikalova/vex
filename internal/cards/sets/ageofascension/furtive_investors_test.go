@@ -12,7 +12,7 @@ import (
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: If your opponent has more Æmber than you, for each forged key your opponent has, gain 1 Æmber.
 func TestFurtiveInvestors(t *testing.T) {

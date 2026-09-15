@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Saurian
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Trigger the play effect of a Creature.
+//	Play: Trigger the play effect of a creature.
 var FavorOfRex = set.New(
 	"Favor of Rex",
 	card.House.Saurian,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "219"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.TriggerAbility{
 			Trigger: card.Trigger.Play,

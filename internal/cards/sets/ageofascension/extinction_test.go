@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Choose a Creature - destroy each Creature that shares a trait with it. Gain 1 chain.
+//	Play: Choose a creature - destroy each creature that shares a trait with it. Gain 1 chain.
 func TestExtinction(t *testing.T) {
 	t.Run("destroys the chosen creature and every creature sharing a trait", func(t *testing.T) {
 		var beastA, beastB, other ct.Card

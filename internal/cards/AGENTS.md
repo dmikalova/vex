@@ -106,8 +106,8 @@ to seed it. `set.New(...)`:
 
 - The four positional arguments — name, `card.House.X`, `card.Type.X`,
   `card.Rarity.X` — each on their own line.
-- Each `card.With*` option on its own line, in this order: `WithPower`,
-  `WithArmor`, `WithAemberBonus`, `WithTraits`, `WithKeywords`, `WithStatic`,
+- Each `card.With*` option on its own line, in this order: `WithBonus`,
+  `WithPower`, `WithArmor`, `WithTraits`, `WithKeywords`, `WithStatic`,
   `WithAbility`.
 - `card.WithAbility(` breaks onto the next line; the trigger and effect share a
   line (`card.Trigger.Play, card.DealDamage{`).
@@ -166,16 +166,20 @@ house's creatures — Ixxyxli Fixfinger (Mars) giving each other Martian creatur
 +1 armor — writes `card.Target.EachOtherFriendlyCreature.OfHouse(card.House.Self)`,
 not `OfHouse(card.House.Mars)`.
 
-## Anomalies live in the Anomaly Expansion reservoir set
+## Anomalies preview a future set; they live in AE only until it is built
 
 An **anomaly** is a rare card (Worlds Collide onward) that shipped outside a
-house's normal pool. In this engine every anomaly is authored as a **housed**
-(currently Brobnar) `card.Rarity.Special` card and registered in the **Anomaly
-Expansion** set (`internal/cards/sets/anomalyexpansion`, `card.ReservoirSet(card.AE)`).
-Keep the anomaly's `card.Provenance(card.WC, "A0x")` so it still counts toward its
-source set's coverage; only its set membership moves to `AE`.
+house's normal pool as a **preview of a future set** — the card is really a member
+of that later set, seeded early into Worlds Collide packs. So an anomaly has two
+homes over its life, and which one it lives in depends on whether its real set is
+implemented yet.
 
-Two properties make this work and must be preserved:
+**Phase 1 — the home set is not implemented yet: park it in Anomaly Expansion.**
+Author the anomaly as a **housed** (currently Brobnar) `card.Rarity.Special` card
+registered in the **Anomaly Expansion** set (`internal/cards/sets/anomalyexpansion`,
+`card.ReservoirSet(card.AE)`), keeping `card.Provenance(card.WC, "A0x")` so it
+counts toward Worlds Collide's coverage. Two properties make this work and must be
+preserved:
 
 - **The set is a reservoir, so it is never offered for deck generation.** A
   reservoir set builds no draft pool of its own (`Draftable` is false for every
@@ -185,6 +189,27 @@ Two properties make this work and must be preserved:
   every housed, non-Connected card regardless of the reservoir flag, so legacy and
   legacy-maverick slots in other sets can still draw an anomaly. Authoring an
   anomaly as houseless would drop it from the legacy pool — do not do that.
+
+**Phase 2 — the home set is implemented: move the anomaly into it.** Once the set
+the anomaly previews exists, the anomaly is no longer a placeholder — it is a real
+member of that set, so it moves there and is authored with the **home set's own
+stats**, not the Brobnar/Special anomaly shape:
+
+- Create the card in the home set package (`set.New`, so it declares `InSet(<home>)`)
+  with the home printing's real **house, type, rarity, traits, and wording**, and
+  `card.Provenance(<home>, "<num>")` — its home-set collector number, not the `A0x`
+  anomaly ref. Look the home printing up in that set's provenance JSON; do not carry
+  the anomaly's Brobnar/Special stats over.
+- Delete the Anomaly Expansion file and its test, and remove any
+  `set.Reprint("<num>", "<name>")` the home set's `0set.go` claimed for it — it is
+  now a full member, not a reprint. Regenerate with `mage tool:stub <homeSlug>`.
+
+Orb of Wonder is the worked example: it previewed Mass Mutation (Sanctum • Rare •
+`Omni:`), so once Mass Mutation was implemented it left Anomaly Expansion (where it
+had been Brobnar/Special) and became a normal Sanctum Rare Mass Mutation artifact.
+The Shards (Shard of Glory, Shard of Unity) are the exception — they are
+Vactrol-invented `Connected` cards with no future set to move to, so they stay in
+Anomaly Expansion permanently.
 
 ## Variant rarity → author as `card.Rarity.Rare` + a manual-handling TODO
 

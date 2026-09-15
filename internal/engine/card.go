@@ -87,9 +87,19 @@ type CardDefinition struct {
 	// gains poison while attacking a flank creature. The zero value grants none.
 	AttackKeywords AttackKeywords
 
-	// AemberBonus is the number of Æmber "pips" printed on the card; the
-	// controller gains this much Æmber when the card is played.
-	AemberBonus int
+	// Bonuses are the bonus icons printed on the card, in top-to-bottom order. They
+	// resolve one at a time when the card is played, before its "Play:" abilities.
+	Bonuses []BonusIcon
+
+	// Enhances are the bonus icons this card contributes to the deck as an Enhance
+	// source (rendered as its "Enhance …" line). Deck generation distributes them
+	// onto other cards; they have no effect on this card when it is played.
+	Enhances []BonusIcon
+
+	// NoEnhanceIcons are the bonus-icon kinds deck generation must not land on this
+	// card via Enhance — a Vactrol divergence for a card a particular bonus would
+	// only weaken (Effervescent Principle bars Capture). Other kinds may still land.
+	NoEnhanceIcons []BonusIcon
 
 	// Static is a continuous modifier an Upgrade applies to its host creature. A
 	// creature with PlayableAsUpgrade set also carries what it grants a host here.
@@ -318,13 +328,13 @@ func (kc KeyCostChange) While(c Condition) KeyCostChange {
 	return kc
 }
 
-// selfHouseResolved fills the card's own house in for any SelfHouse sentinel the
-// scaling count names (Iron Obelisk counts its own house's damaged creatures). A
-// key-cost change keeps that count unexported, so it resolves itself rather than
-// being rewritten by reflection (see self_house.go).
-func (kc KeyCostChange) selfHouseResolved(house House) any {
+// houseReplaced fills the card's own house in for any SelfHouse sentinel the
+// scaling count names (Iron Obelisk counts its own house's damaged creatures), or
+// rehouses it for a Maverick. A key-cost change keeps that count unexported, so it
+// replaces it itself rather than being rewritten by reflection (see self_house.go).
+func (kc KeyCostChange) houseReplaced(from, to House) any {
 	if kc.per != nil {
-		kc.per = resolvedIn(kc.per, house)
+		kc.per = replacedIn(kc.per, from, to)
 	}
 	return kc
 }
@@ -427,6 +437,12 @@ type StaticModifier struct {
 	// grants the creature it upgrades this permission. The pay path
 	// (spendAsPoolCreatures) consults it; the zero value grants nothing.
 	SpendAemberOnCard bool
+
+	// CannotBeUsedTo bars the host creature from these ways of being used while the
+	// Upgrade is attached — Access Denied bars reaping, Detention Coil bars
+	// fighting. It is the upgrade-granted form of CardDefinition.CannotBeUsedTo,
+	// consulted by Game.cannotBeUsedTo through the host's upgrade chain.
+	CannotBeUsedTo []UseKind
 }
 
 // grants reports whether the modifier gives its host anything at all — a stat
@@ -447,7 +463,8 @@ func (m StaticModifier) grants() bool {
 		m.ProtectsFromNonFlank ||
 		m.HouseOverride != HouseNone ||
 		m.AemberCannotBeStolen ||
-		m.SpendAemberOnCard
+		m.SpendAemberOnCard ||
+		len(m.CannotBeUsedTo) > 0
 }
 
 // ConstantAbility is a continuous stat modifier a card in play applies to
@@ -579,6 +596,26 @@ func NewCard(
 		opt(&c)
 	}
 	c = resolveSelfHouse(c)
+	for _, tr := range c.Traits {
+		if tr == traitUnset {
+			panic(fmt.Sprintf("card %q: WithTraits was given an unset trait", name))
+		}
+	}
+	for _, b := range c.Bonuses {
+		if !b.valid() {
+			panic(fmt.Sprintf("card %q: WithBonus was given an unset bonus icon", name))
+		}
+	}
+	for _, b := range c.Enhances {
+		if !b.valid() {
+			panic(fmt.Sprintf("card %q: WithEnhance was given an unset bonus icon", name))
+		}
+	}
+	for _, b := range c.NoEnhanceIcons {
+		if !b.valid() {
+			panic(fmt.Sprintf("card %q: WithoutEnhancement was given an unset bonus icon", name))
+		}
+	}
 	for _, ab := range c.Abilities {
 		if !ab.Trigger.valid() {
 			panic(fmt.Sprintf("card %q: an ability has no trigger set", name))
@@ -611,6 +648,16 @@ func NewCard(
 	for _, k := range c.CannotBeUsedTo {
 		if !k.valid() {
 			panic(fmt.Sprintf("card %q: CannotBeUsedTo has an unset use kind", name))
+		}
+	}
+	for _, k := range c.Static.CannotBeUsedTo {
+		if !k.valid() {
+			panic(
+				fmt.Sprintf(
+					"card %q: a static modifier's CannotBeUsedTo has an unset use kind",
+					name,
+				),
+			)
 		}
 	}
 	for _, ca := range c.ConstantAbilities {
@@ -766,8 +813,34 @@ func WithEntersPlay(e Effect) CardOption {
 	return WithAbility(TriggerEntersPlay, e)
 }
 
-// WithAemberBonus sets the number of Æmber pips on the card.
-func WithAemberBonus(n int) CardOption { return func(c *CardDefinition) { c.AemberBonus = n } }
+// WithBonus sets the bonus icons printed on the card, in top-to-bottom order.
+func WithBonus(icons ...BonusIcon) CardOption {
+	return func(c *CardDefinition) { c.Bonuses = append(c.Bonuses, icons...) }
+}
+
+// WithEnhance makes the card an Enhance source contributing the given bonus icons
+// to the deck at generation time (its "Enhance …" line); the icons have no effect
+// on the card itself.
+func WithEnhance(icons ...BonusIcon) CardOption {
+	return func(c *CardDefinition) { c.Enhances = append(c.Enhances, icons...) }
+}
+
+// WithoutEnhancement bars the given bonus-icon kinds from landing on this card via
+// Enhance (a Vactrol divergence; see CardDefinition.NoEnhanceIcons).
+func WithoutEnhancement(icons ...BonusIcon) CardOption {
+	return func(c *CardDefinition) { c.NoEnhanceIcons = append(c.NoEnhanceIcons, icons...) }
+}
+
+// BarsEnhanceIcon reports whether deck generation must not land a bonus icon of
+// this kind on the card via Enhance.
+func (d *CardDefinition) BarsEnhanceIcon(b BonusIcon) bool {
+	for _, k := range d.NoEnhanceIcons {
+		if k == b {
+			return true
+		}
+	}
+	return false
+}
 
 // WithStatic sets the continuous modifier an Upgrade applies to its host.
 func WithStatic(m StaticModifier) CardOption { return func(c *CardDefinition) { c.Static = m } }

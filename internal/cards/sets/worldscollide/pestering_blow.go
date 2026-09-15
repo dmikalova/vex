@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Deal 1 damage to a Creature and enrage it.
+//	Play: Deal 1 damage to a creature and enrage it.
 var PesteringBlow = set.New(
 	"Pestering Blow",
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "245"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.DamageThen{
 			Amount: 1,

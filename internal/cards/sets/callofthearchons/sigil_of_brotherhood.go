@@ -7,18 +7,18 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Sanctum
 //	Type:   Artifact
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Power
 //
 //	Versatile.
-//	Action: Destroy Sigil of Brotherhood. For the remainder of the turn, you may use friendly Sanctum Creatures.
+//	Action: Destroy Sigil of Brotherhood. For the remainder of the turn, you may use friendly Sanctum creatures.
 var SigilOfBrotherhood = set.New(
 	"Sigil of Brotherhood",
 	card.House.Sanctum,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "236"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Power),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(card.Trigger.Action, card.Sentences{Effects: []card.Effect{

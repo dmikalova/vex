@@ -15,9 +15,9 @@ var gronsBrewCluster = card.Cluster{
 //	House:  Brobnar
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains +4 power.
+//	This creature gains +4 power.
 var GronsBrew = set.New(
 	"Gron's Brew",
 	card.House.Brobnar,
@@ -25,7 +25,7 @@ var GronsBrew = set.New(
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "65"),
 	card.LeadsCluster(gronsBrewCluster),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		PowerBonus: 4,
 	}),

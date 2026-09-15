@@ -12,9 +12,9 @@ import (
 //	House:  Mars
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Stun each Mars Creature and each Robot Creature, and destroy each Artifact.
+//	Play: Stun each Mars creature and each Robot creature, and destroy each artifact.
 func TestEMPBlast(t *testing.T) {
 	t.Run("stuns each Mars and Robot creature and destroys each artifact", func(t *testing.T) {
 		var marsGuy, robot, other ct.Card

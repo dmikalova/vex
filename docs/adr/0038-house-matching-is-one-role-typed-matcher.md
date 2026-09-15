@@ -54,7 +54,7 @@ type HouseMatcher struct {
   house (`Active`), and the house of the card in context / `ctx.It` (`Contextual`).
   The `SelfHouse` sentinel is carried in the exported `House` field, so
   `resolveSelfHouse` rewrites it by reflection with no per-type seam (ADR/self-house):
-  `Target` needed its manual `selfHouseResolved` only because its house fields were
+  `Target` needed its manual `houseReplaced` only because its house fields were
   unexported.
 - **`HouseMatcher` renders a noun qualifier, not a clause.** One method turns the
   matcher into "Mars", "non-Sanctum", "of the chosen house", "of that card's house",

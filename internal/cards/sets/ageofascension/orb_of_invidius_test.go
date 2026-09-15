@@ -12,10 +12,10 @@ import (
 //	House:  Dis
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Item
 //
-//	After a Creature reaps, stun it.
+//	After a creature reaps, stun it.
 func TestOrbOfInvidius(t *testing.T) {
 	t.Run("stuns whatever creature just reaped", func(t *testing.T) {
 		var reaper ct.Card

@@ -412,6 +412,7 @@ func triggerIcon(t engine.Trigger) string {
 		return "glyph-reap"
 	case engine.TriggerAfterFight, engine.TriggerBeforeFight,
 		engine.TriggerAfterDestroyedFighting, engine.TriggerAfterCreatureFights,
+		engine.TriggerAfterFriendlyCreatureFights,
 		engine.TriggerAfterAssaultDestroys, engine.TriggerAfterNeighborFights:
 		return "glyph-fight"
 	case engine.TriggerAction, engine.TriggerAfterUse, engine.TriggerAfterUsedSelf:
@@ -420,7 +421,8 @@ func triggerIcon(t engine.Trigger) string {
 		engine.TriggerAfterCreatureDestroyed, engine.TriggerAfterEnemyCreatureDestroyed,
 		engine.TriggerAfterFriendlyCreatureDestroyed:
 		return "glyph-destroyed"
-	case engine.TriggerAfterForgeKey, engine.TriggerAfterPlayerForgesKey:
+	case engine.TriggerAfterForgeKey, engine.TriggerAfterPlayerForgesKey,
+		engine.TriggerAfterOpponentForgesKey:
 		return "forge"
 	case engine.TriggerAfterChooseHouse, engine.TriggerAfterAnyPlayerChoosesHouse:
 		return "glyph-choose"

@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Sanctum
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: For the remainder of the turn, each friendly Creature cannot be dealt damage.
+//	Play: For the remainder of the turn, each friendly creature cannot be dealt damage.
 var ShieldOfJustice = set.New(
 	"Shield of Justice",
 	card.House.Sanctum,
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, "225"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.CannotBeDealtDamage{
 			Target:   card.Target.EachFriendlyCreature,

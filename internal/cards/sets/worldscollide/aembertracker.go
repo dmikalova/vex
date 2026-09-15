@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Beast
 //
-//	Play: Deal 2 damage to each enemy Creature with Æmber on it, ignoring armor.
+//	Play: Deal 2 damage to each enemy creature with Æmber on it, ignoring armor.
 var Aembertracker = set.New(
 	"Aembertracker",
 	card.House.StarAlliance,

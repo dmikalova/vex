@@ -12,9 +12,9 @@ import (
 //	House:  Sanctum
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Fully heal a Creature. If you healed 4 or more damage, gain 2 Æmber.
+//	Play: Fully heal a creature. If you healed 4 or more damage, gain 2 Æmber.
 func TestHealingBlast(t *testing.T) {
 	t.Run(
 		"fully heals a creature and gains aember when at least 4 damage is healed",

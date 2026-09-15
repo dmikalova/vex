@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Demon
 //
-//	Fight/Reap: Put an Artifact or flank Creature into its owner's hand.
+//	Fight/Reap: Put an artifact or flank creature into its owner's hand.
 var Snudge = set.New(
 	"Snudge",
 	card.House.Dis,

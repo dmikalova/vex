@@ -249,6 +249,11 @@ func (g *Game) fightReactions(
 			add(id, TriggerAfterCreatureFights, attacker, true)
 		}
 	}
+	// "After a friendly creature is used to fight" on the fighter's own side
+	// (Lieutenant Gorvenal), with the fighting creature as "it".
+	for _, id := range g.allInPlay(attackerSide) {
+		add(id, TriggerAfterFriendlyCreatureFights, attacker, true)
+	}
 	// "After a neighbor of this is used to fight" on the creatures that flanked the
 	// attacker when the fight began (Little Niff), with the attacker as "it". A
 	// neighbor destroyed by the fight is skipped.
@@ -504,6 +509,8 @@ const (
 	// abilityDamage credits the card whose ability dealt the damage (Musthic
 	// Murmook deals 4 damage to a creature).
 	abilityDamage
+	// bonusDamage credits a Damage bonus icon on the card that carries it.
+	bonusDamage
 )
 
 // dealDamage deals damage to every target simultaneously: each creature takes its

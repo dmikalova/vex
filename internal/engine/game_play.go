@@ -500,7 +500,7 @@ func (g *Game) playCreatureCard(player int, id LocalID, fl flank) {
 	// once — before bonus icons and before the after-play window — so the played
 	// creature's own ability never sees the doomed neighbor still in play.
 	g.settleDestroyed(player)
-	g.applyAemberBonus(player, id)
+	g.resolveBonusIcons(player, id)
 	// Playing a creature opens one window: its own "Play:" and "enters play"
 	// abilities, every bystander's "after a creature enters play / is played /
 	// is played adjacent", every "after you play a card" reaction, and the
@@ -558,7 +558,7 @@ func (g *Game) playArtifactCard(player int, id LocalID) {
 	}
 	g.State.Artifacts[player].add(id)
 	g.record(ArtifactPlayed{Player: player, Card: id})
-	g.applyAemberBonus(player, id)
+	g.resolveBonusIcons(player, id)
 	// The artifact's own "Play:", every "after you play a card" reaction, and the
 	// duration reactions on playing a card and a card entering play trigger at once,
 	// so the active player orders the set (ADR 0013).
@@ -573,7 +573,7 @@ func (g *Game) playArtifactCard(player int, id LocalID) {
 // zone.
 func (g *Game) playActionCard(player int, id LocalID) {
 	g.record(ActionPlayed{Player: player, Card: id})
-	g.applyAemberBonus(player, id)
+	g.resolveBonusIcons(player, id)
 	// A reaction to a Tactic being played resolves before the Tactic's own effect
 	// (Encounter Suit wards its host before the Tactic can reach it).
 	g.emitActionPlayedBeforeResolve(player, id)
@@ -610,9 +610,12 @@ func (g *Game) playActionCard(player int, id LocalID) {
 // playUpgradeCard attaches an upgrade to host and fires its standard play sequence
 // after the upgrade has been removed from its previous zone.
 func (g *Game) playUpgradeCard(player int, id, host LocalID, def *CardDefinition) {
-	g.applyAemberBonus(player, id)
 	g.AttachUpgrade(host, id)
 	g.record(UpgradeAttached{Player: player, Upgrade: id, Host: host})
+	// Bonus icons resolve after the upgrade enters play (KeyForge), so a Damage icon
+	// that kills the host finds the upgrade already attached and it sheds cleanly
+	// rather than attaching to a destroyed host.
+	g.resolveBonusIcons(player, id)
 	g.resolveUpgradePlay(host, id, def)
 	g.settleDestroyed(player)
 }
@@ -845,23 +848,4 @@ func (g *Game) CanPlay(player int, id LocalID) error {
 		return ErrNoTarget
 	}
 	return nil
-}
-
-// applyAemberBonus grants a card's Æmber pips to the player who played it. For a
-// card played "as if it were yours" out of the opponent's zone (Murkens, Lateral
-// Shift, Fidgit) that player is not the card's owner, and KeyForge awards the pips
-// to the player playing the card.
-func (g *Game) applyAemberBonus(player int, id LocalID) {
-	def := g.cat.def(id)
-	if def.AemberBonus > 0 {
-		if capturer, ok := g.gainAember(player, def.AemberBonus); ok {
-			g.record(AemberBonusCaptured{
-				Creature: capturer,
-				Card:     id,
-				Amount:   def.AemberBonus,
-			})
-			return
-		}
-		g.record(AemberBonusGained{Player: player, Card: id, Amount: def.AemberBonus})
-	}
 }

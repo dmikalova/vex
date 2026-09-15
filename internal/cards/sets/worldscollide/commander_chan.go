@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Human
 //
-//	Fight/Reap: Use another Creature.
+//	Fight/Reap: Use another creature.
 var CommanderChan = set.New(
 	"Commander Chan",
 	card.House.StarAlliance,

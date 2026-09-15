@@ -8,18 +8,18 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Creature
 //	Rarity: Uncommon
 //	Power:  3
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Giant
 //
 //	Alpha.
-//	Play: For each Æmber in your pool, deal 3 damage to an enemy Creature.
+//	Play: For each Æmber in your pool, deal 3 damage to an enemy creature.
 var GargantesScrapper = set.New(
 	"Gargantes Scrapper",
 	card.House.Brobnar,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
 	card.Provenance(card.AoA, "23"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Giant),
 	card.WithKeywords(card.Keyword.Alpha),

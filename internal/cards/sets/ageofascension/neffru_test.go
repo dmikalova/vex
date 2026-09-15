@@ -15,7 +15,7 @@ import (
 //	Power:  4
 //	Traits: Demon
 //
-//	After a Creature is destroyed, its owner gains 1 Æmber.
+//	After a creature is destroyed, its owner gains 1 Æmber.
 func TestNeffru(t *testing.T) {
 	t.Run("a destroyed creature's owner gains 1 aember", func(t *testing.T) {
 		var attacker, enemy ct.Card

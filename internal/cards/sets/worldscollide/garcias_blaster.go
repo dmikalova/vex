@@ -15,10 +15,10 @@ var garciasBlasterCluster = card.Cluster{
 //	House:  Star Alliance
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Fight/Reap: Choose one:
-//	- Deal 2 damage to a Creature
+//	This creature gains, "Fight/Reap: Choose one:
+//	- Deal 2 damage to a creature
 //	- Attach Garcia's Blaster to Sensor Chief Garcia -> steal 1 Æmber."
 var GarciasBlaster = set.New(
 	"Garcia's Blaster",
@@ -27,7 +27,7 @@ var GarciasBlaster = set.New(
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "347"),
 	card.LeadsCluster(garciasBlasterCluster),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightReap(card.ChooseOne{Options: []card.Effect{
 			card.DealDamage{Amount: 2, Target: card.Target.Creature},

@@ -14,7 +14,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Until the start of your next turn, non-Shadows Creatures cannot be used to fight.
+//	Play: Until the start of your next turn, non-Shadows creatures cannot be used to fight.
 func TestIntoTheNight(t *testing.T) {
 	t.Run("spares Shadows creatures and bars every other house", func(t *testing.T) {
 		var shadowAlly, foe, enemy ct.Card

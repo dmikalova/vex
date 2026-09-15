@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Creature
 //	Rarity: Rare
 //	Power:  2
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Cyborg • Insect
 //
 //	Play/Reap: Reveal your opponent's hand.
@@ -18,7 +18,7 @@ var PsychicBug = set.New(
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "149"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Insect),
 	card.WithAbility(card.Trigger.PlayReap, card.RevealHand{Player: card.Opponent}),

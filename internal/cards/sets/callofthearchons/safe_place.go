@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Shadows
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Location
 //
 //	You may spend Æmber on Safe Place when forging keys.
@@ -15,7 +15,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 var SafePlace = set.New("Safe Place",
 	card.House.Shadows, card.Type.Artifact, card.Rarity.Rare,
 	card.Provenance(card.CotA, "289"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Location),
 	card.WithSpendableAember(),
 	card.WithAbility(

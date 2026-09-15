@@ -16,7 +16,7 @@ import (
 //	Armor:  1
 //	Traits: Dinosaur • Soldier
 //
-//	Fight: You may exalt Legatus Raptor, and ready and use another friendly Creature.
+//	Fight: You may exalt Legatus Raptor, and ready and use another friendly creature.
 func TestLegatusRaptor(t *testing.T) {
 	t.Run("exalting readies and uses another friendly creature", func(t *testing.T) {
 		var raptor, ally, foe ct.Card

@@ -12,9 +12,9 @@ import (
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Your opponent cannot use Creatures to fight during their next turn.
+//	Play: Your opponent cannot use creatures to fight during their next turn.
 func TestFogbank(t *testing.T) {
 	t.Run("bars the opponent from fighting on their next turn", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

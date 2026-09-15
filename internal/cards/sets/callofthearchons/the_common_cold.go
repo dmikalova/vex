@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Deal 1 damage to each Creature. You may destroy each Mars Creature.
+//	Play: Deal 1 damage to each creature. You may destroy each Mars creature.
 var TheCommonCold = set.New(
 	"The Common Cold",
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "336"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{
 			Effects: []card.Effect{

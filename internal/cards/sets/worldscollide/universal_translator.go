@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Star Alliance
 //	Type:   Upgrade
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Fight/Reap: Use a non-Star Alliance Creature."
+//	This creature gains, "Fight/Reap: Use a non-Star Alliance creature."
 var UniversalTranslator = set.New(
 	"Universal Translator",
 	card.House.StarAlliance,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "322"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightReap(card.Use{
 			Max:    1,

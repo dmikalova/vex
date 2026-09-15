@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Dis
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Item
 //
 //	After a player chooses an active house, their opponent cannot choose the same house as their active house on their next turn.
@@ -17,7 +17,7 @@ var SnagsMirror = set.New(
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "117"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.AfterAnyPlayerChoosesHouse,

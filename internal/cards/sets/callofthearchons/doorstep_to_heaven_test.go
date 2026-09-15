@@ -12,7 +12,7 @@ import (
 //	House:  Sanctum
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Each player with 6 Æmber or more loses all but 5 Æmber.
 func TestDoorstepToHeaven(t *testing.T) {

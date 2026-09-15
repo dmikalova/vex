@@ -12,9 +12,9 @@ import (
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Each enemy Creature with armor loses all of its armor. Deal 1 damage to each enemy Creature with armor for each point of armor it lost this way.
+//	Play: Each enemy creature with armor loses all of its armor. Deal 1 damage to each enemy creature with armor for each point of armor it lost this way.
 func TestRedHotArmor(t *testing.T) {
 	var armored, bare ct.Card
 	h := ct.Play(t, ct.Setup{

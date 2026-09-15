@@ -12,7 +12,7 @@ import (
 //	Rarity: Rare
 //	Traits: Item • Shard
 //
-//	Action: For each friendly Shard, give a friendly Creature three +1 power counters.
+//	Action: For each friendly Shard, give a friendly creature three +1 power counters.
 var ShardOfStrength = set.New(
 	"Shard of Strength",
 	card.House.Brobnar,

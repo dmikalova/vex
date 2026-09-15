@@ -12,7 +12,7 @@ import (
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: If your opponent has 8 Æmber or more, steal 2 Æmber.
 func TestCutthroatResearch(t *testing.T) {

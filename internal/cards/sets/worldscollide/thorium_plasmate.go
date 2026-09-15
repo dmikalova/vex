@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Move an enemy Creature anywhere in its controller's battleline -> for each neighbor that shares a house with the chosen Creature, deal 2 damage to the chosen Creature.
+//	Play: Move an enemy creature anywhere in its controller's battleline -> for each neighbor that shares a house with the chosen creature, deal 2 damage to the chosen creature.
 var ThoriumPlasmate = set.New(
 	"Thorium Plasmate",
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "140"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Then{
 			First: card.MoveWithinBattleline{Target: card.Target.EnemyCreature},

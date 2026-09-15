@@ -15,7 +15,7 @@ import (
 //	Power:  4
 //	Traits: Beast
 //
-//	Play: Deal 2 damage to each enemy Creature with Æmber on it, ignoring armor.
+//	Play: Deal 2 damage to each enemy creature with Æmber on it, ignoring armor.
 func TestAembertracker(t *testing.T) {
 	t.Run("deals 2 unpreventable damage to each enemy creature with Æmber", func(t *testing.T) {
 		var withAember, armored, bare ct.Card

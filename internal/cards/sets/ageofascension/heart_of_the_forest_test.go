@@ -13,7 +13,7 @@ import (
 //	House:  Untamed
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Location
 //
 //	Each player cannot forge keys while they have more forged keys than their opponent.

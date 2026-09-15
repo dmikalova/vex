@@ -12,7 +12,7 @@ import (
 //	Rarity: Connected
 //	Traits: Item • Shard
 //
-//	Action: For each friendly Shard, exalt an enemy Creature.
+//	Action: For each friendly Shard, exalt an enemy creature.
 var ShardOfGlory = set.New(
 	"Shard of Glory",
 	card.House.Saurian,

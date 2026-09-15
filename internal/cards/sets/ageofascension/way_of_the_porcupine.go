@@ -7,15 +7,15 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Untamed
 //	Type:   Upgrade
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains +3 hazardous.
+//	This creature gains +3 hazardous.
 var WayOfThePorcupine = set.New(
 	"Way of the Porcupine",
 	card.House.Untamed,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
 	card.Provenance(card.AoA, "350"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{HazardousBonus: 3}),
 )

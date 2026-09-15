@@ -15,7 +15,7 @@ import (
 //	Power:  2
 //	Traits: Human • Scientist
 //
-//	After an enemy Creature reaps, stun it.
+//	After an enemy creature reaps, stun it.
 func TestPipPip(t *testing.T) {
 	t.Run("stuns an enemy creature after it reaps", func(t *testing.T) {
 		var reaper ct.Card

@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: For the remainder of the turn, each time an enemy Creature is destroyed, gain 1 Æmber.
+//	Play: For the remainder of the turn, each time an enemy creature is destroyed, gain 1 Æmber.
 var LootTheBodies = set.New(
 	"Loot the Bodies",
 	card.House.Brobnar,

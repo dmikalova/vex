@@ -12,7 +12,7 @@ import (
 //	House:  Logos
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Item
 //
 //	Action: Archive a purged card you own.

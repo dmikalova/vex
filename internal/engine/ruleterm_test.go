@@ -38,6 +38,15 @@ func TestClosedCatalogsAreComplete(t *testing.T) {
 		}
 	})
 
+	t.Run("bonus icons", func(t *testing.T) {
+		have := titled(SectionBonus)
+		for _, b := range allBonusIcons() {
+			if name := b.String(); !have[name] {
+				t.Errorf("bonus icon %q has no rulebook term (ADR 0018)", name)
+			}
+		}
+	})
+
 	t.Run("triggers", func(t *testing.T) {
 		have := titled(SectionAbility)
 		for _, tr := range Triggers() {
@@ -114,7 +123,7 @@ func TestRuleFramingRegistered(t *testing.T) {
 		t.Error("RuleOverview() is empty")
 	}
 	for _, sec := range []Section{
-		SectionTurn, SectionCardType, SectionKeyword, SectionAbility, SectionEffect,
+		SectionTurn, SectionCardType, SectionKeyword, SectionBonus, SectionAbility, SectionEffect,
 	} {
 		if RuleSectionIntro(sec) == "" {
 			t.Errorf("section %q has no intro", sec)

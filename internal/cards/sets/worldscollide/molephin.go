@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Hazardous 3.
-//	After Æmber is stolen from you, for each Æmber stolen, deal 1 damage to each enemy Creature.
+//	After Æmber is stolen from you, for each Æmber stolen, deal 1 damage to each enemy creature.
 var Molephin = set.New(
 	"Molephin",
 	card.House.Untamed,

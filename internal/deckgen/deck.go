@@ -9,10 +9,10 @@
 // rarity rolls with Maverick/Special overlays, drawing from the pool, the
 // duplicate-pull draw modifier, per-slot Materialize (identity, maverick
 // rehousing, and templates that bind a card per pod — Ambassadors, Plants,
-// banes), cross-set Legacy pools, and cluster placement (ADR 0036). The
-// enhancement/distortion finishing pass and scoring remain documented seams that
-// stay inert until the engine supports them (distortions, a game-playing
-// evaluator).
+// banes), cross-set Legacy pools, cluster placement (ADR 0036), and the deck-wide
+// Enhance finishing pass (ADR 0004) that distributes each Enhance source's bonus
+// icons onto random cards. The distortion finishing pass and scoring remain
+// documented seams that stay inert until the engine supports them.
 package deckgen
 
 import (

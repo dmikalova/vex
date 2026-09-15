@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //
 //	Play: Choose one:
-//	- If there are no friendly Creatures in play, for each house represented among enemy Creatures, steal 1 Æmber
+//	- If there are no friendly creatures in play, for each house represented among enemy creatures, steal 1 Æmber
 //	- Steal 1 Æmber.
 var TrustNoOne = set.New(
 	"Trust No One",

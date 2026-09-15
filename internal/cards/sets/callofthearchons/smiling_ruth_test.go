@@ -16,7 +16,7 @@ import (
 //	Traits: Elf • Thief
 //
 //	Elusive.
-//	Reap: If you forged a key this turn, take control of an enemy flank Creature.
+//	Reap: If you forged a key this turn, take control of an enemy flank creature.
 func TestSmilingRuth(t *testing.T) {
 	t.Run("takes an enemy flank creature after forging", func(t *testing.T) {
 		var ruth, flank, middle, otherFlank ct.Card

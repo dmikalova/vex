@@ -8,8 +8,6 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 ### Current focus
 
-- event sourcing
-
 ### Next focus
 
 - using property testing to find unused code paths and then force specific tests there
@@ -22,17 +20,13 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - remove abduct / simplify to archive targets - the rules already naturally handle how archiving your opponent's cards works
 - Update card.New to be all opts
 - sequence vs sentences wording - eg sequence is obviously game, and sentences is textual, but they're both textual and game
-- Improve mega creatures
 - instead of having to manually bump the state version would it be possible to hash changes to how the state is written so it automatically bumps on such changes, but also not on irrelevant changes? re event sourcing. If the hash was based on the action signature rather than overall engine you could check when loading the event sourcing if any of the used actions changed
-- Legacy houses
 - Move the prompt generation and options into engine rather than web (eg when playing an upgrade, am prompted to "Choose a creature to attach Stunner onto")
 - mage tool to view connected cards and amounts etc
 - capture and bonus aember are both in the creature status area
-- Anomaly provenance - eg move them to their home set, or put them in an anomaly set
 - Distortion system instead of flat enhancements — see the Enhancement and
   Distortion entries in [../CONTEXT.md](../CONTEXT.md) and
   [deck-generation.md](deck-generation.md).
-- Before implementing totally new mechanics, must attempt to fit them into existing mechanics, including by expanding them. If its determined to not be possible or reasonable, must ask and explain why and get confirmation before proceeding.
 - gigantic, mimic gel
 - Instead of "OnIt" should we use "OnTarget"
 - Tool to open 50 random cards for me to review - and then record which ones I've seen how many times, so the next time it selects a different 50 with the least amount of reviews
@@ -43,8 +37,23 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - I've noticed that there are some UI sugars in the engine - I was wondering if it makes sense for there to be an intermediate layer - eg the engine handles state changes, the wrapper handles relevant trackers for the UI, and then the UI on top imports the wrapper and renders what it gives. For example, there are badges for counting how much damage is about to be dealt to each creature in a selection like gargantes scrapper. That seems purely UI, but also makes sense near the engine. My concern is performance when there is no UI - eg for MCTS - if MCTS is calculating the badges and never using them then that's potentially lost performance.
 - Consolidate Destination and DeckDest - apparently the voicing would be a whole thing to add into this
 - using shared dictionaries for wasm compression
+- run a million games and then get stats on memory usage in the state and see where estimates are overly conservative and could be pulled back to save space
+- Reordering the state in Go
+- Minimizing the state by using bitfields more aggressively - tradeoff with having the interpret that in Go, but we are no cpu bound
 
 ## Things that can be done now
+
+- [WithoutBonus](https://discord.com/channels/802313100485197855/802313100987990053/1549192438978191372)
+- Decomposables:
+  - OpponentForgedKeys
+  - AfterFriendlyCreatureFights
+
+- Capitalizing card types in text - eg Creature in Floomf
+- Changing card.X to instead be e.X eg for engine - is the facade really providing value, or is there anything else we could do to organize the repo better instead of one mega engine?
+- Lumilu - could card.InPlay be better represented by filters or refinements?
+- mutants: technofiend, daemosaurus - you should be able to find the rest of the house suffixes/prefixes from these two
+- shard of unity prompt doesn't lift creature for use
+- rows have excess scroll space and don't hide the scroll bar by default
 
 - WithAemberCost and Toll could be combined into MustPay
 - decompose all the neighbor stuff

@@ -13,8 +13,8 @@ import (
 //	Type:   Upgrade
 //	Rarity: Uncommon
 //
-//	This Creature gains skirmish.
-//	This Creature gains, "Fight: Gain 1 Æmber."
+//	This creature gains skirmish.
+//	This creature gains, "Fight: Gain 1 Æmber."
 func TestInstrumentOfSilence(t *testing.T) {
 	t.Run("its host gains skirmish and gains 1 Æmber when it fights", func(t *testing.T) {
 		var host, foe ct.Card

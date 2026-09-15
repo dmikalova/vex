@@ -15,7 +15,7 @@ import (
 //	Traits: Law
 //
 //	Play: Each player gains 2 Æmber.
-//	After a Creature is used to fight, its controller loses 4 Æmber. Destroy Peace Accord.
+//	After a creature is used to fight, its controller loses 4 Æmber. Destroy Peace Accord.
 func TestPeaceAccord(t *testing.T) {
 	t.Run("each player gains 2 Æmber when played", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

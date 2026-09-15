@@ -12,9 +12,9 @@ import (
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Put a Creature from your discard pile into your hand.
+//	Play: Put a creature from your discard pile into your hand.
 func TestRegrowth(t *testing.T) {
 	t.Run("puts a creature from your discard pile into your hand", func(t *testing.T) {
 		var buried ct.Card

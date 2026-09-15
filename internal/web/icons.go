@@ -74,6 +74,21 @@ func typeIconName(t engine.CardType) string {
 	return ""
 }
 
+// bonusIconStem is the asset stem for a bonus-icon kind.
+func bonusIconStem(b engine.BonusIcon) string {
+	switch b {
+	case engine.BonusAember:
+		return "aember"
+	case engine.BonusCapture:
+		return "capture"
+	case engine.BonusDamage:
+		return "damage"
+	case engine.BonusDraw:
+		return "draw"
+	}
+	return ""
+}
+
 // rarityMark is how a card's rarity renders at its foot. The diamond marks are
 // ordered so a mark's ordinal position is its diamond count (rarityCommon is 1
 // … raritySpecial is 4); rarityConnected instead shows a single "+", and

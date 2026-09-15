@@ -16,7 +16,7 @@ import (
 //	Traits: Human • Witch
 //
 //	Elusive.
-//	After you play a Creature, if you are overwhelmed, gain 1 Æmber.
+//	After you play a creature, if you are overwhelmed, gain 1 Æmber.
 func TestHarmonia(t *testing.T) {
 	t.Run("gains 1 Æmber after you play a creature while overwhelmed", func(t *testing.T) {
 		var ally ct.Card

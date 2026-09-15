@@ -13,8 +13,8 @@ import (
 //	Type:   Upgrade
 //	Rarity: Uncommon
 //
-//	This Creature gains versatile.
-//	Play: Stun and exhaust this Creature.
+//	This creature gains versatile.
+//	Play: Stun and exhaust this creature.
 func TestExperimentalTherapy(t *testing.T) {
 	t.Run("stuns and exhausts its host when played", func(t *testing.T) {
 		var host ct.Card

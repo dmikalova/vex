@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Ranger
 //
 //	Elusive, Skirmish.
-//	Reap: Deal 2 damage to a Creature.
+//	Reap: Deal 2 damage to a creature.
 var KindrithLongshot = set.New(
 	"Kindrith Longshot",
 	card.House.Untamed,

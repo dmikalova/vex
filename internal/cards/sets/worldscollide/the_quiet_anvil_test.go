@@ -13,7 +13,7 @@ import (
 //	House:  Shadows
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Item
 //
 //	Each player's keys cost -2 Æmber.

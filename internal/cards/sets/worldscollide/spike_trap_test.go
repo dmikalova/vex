@@ -12,11 +12,11 @@ import (
 //	House:  Shadows
 //	Type:   Artifact
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Weapon
 //
 //	Versatile.
-//	Action: Destroy Spike Trap -> deal 3 damage to each flank Creature.
+//	Action: Destroy Spike Trap -> deal 3 damage to each flank creature.
 func TestSpikeTrap(t *testing.T) {
 	t.Run("destroys itself and deals 3 damage to each flank creature", func(t *testing.T) {
 		var trap, left, mid, right ct.Card

@@ -106,7 +106,7 @@ func TestSpendAsPoolPaysPlayRequirement(t *testing.T) {
 			t.Fatalf("CanPlay = %v, want nil", err)
 		}
 		if _, err := g.PlayCreature(0, 0, false); err != nil {
-			t.Fatalf("PlayCreature = %v, want nil", err)
+			t.Fatalf("Playcreature = %v, want nil", err)
 		}
 		if g.Aember(0) != 0 {
 			t.Errorf("pool = %d, want 0 (pool drawn first)", g.Aember(0))
@@ -130,7 +130,7 @@ func TestSpendAsPoolPaysPlayRequirement(t *testing.T) {
 			t.Errorf("CanPlay = %v, want %v", err, ErrPlayRequirement)
 		}
 		if _, err := g.PlayCreature(0, 0, false); err != ErrPlayRequirement {
-			t.Errorf("PlayCreature = %v, want %v", err, ErrPlayRequirement)
+			t.Errorf("Playcreature = %v, want %v", err, ErrPlayRequirement)
 		}
 	})
 }
@@ -172,7 +172,7 @@ func TestSpendAsPoolCreatureNotCovered(t *testing.T) {
 		t.Error("a creature with no enabler is not spendable as pool")
 	}
 	if got := g.spendAsPoolCreatures(0); len(got) != 0 {
-		t.Errorf("spendAsPoolCreatures = %v, want none", got)
+		t.Errorf("spendAsPoolcreatures = %v, want none", got)
 	}
 }
 
@@ -205,13 +205,13 @@ func TestDrawFromSpendAsPoolStopsWhenSatisfied(t *testing.T) {
 // non-friendly Target fallback of the subject phrasing.
 func TestSpendAsPoolText(t *testing.T) {
 	bracchus := spendAsPoolCreature()
-	wantB := "You may spend Æmber on friendly Creatures as if it were in your pool."
+	wantB := "You may spend Æmber on friendly creatures as if it were in your pool."
 	if got := RenderCardText(&bracchus); !strings.Contains(got, wantB) {
 		t.Errorf("constant text = %q, want it to contain %q", got, wantB)
 	}
 
 	ideal := spendAsPoolUpgrade()
-	wantI := `This Creature gains, "You may spend Æmber on this Creature as if it were in your pool."`
+	wantI := `This creature gains, "You may spend Æmber on this creature as if it were in your pool."`
 	if got := RenderCardText(&ideal); !strings.Contains(got, wantI) {
 		t.Errorf("upgrade text = %q, want it to contain %q", got, wantI)
 	}

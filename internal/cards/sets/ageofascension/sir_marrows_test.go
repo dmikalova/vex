@@ -16,7 +16,7 @@ import (
 //	Armor:  2
 //	Traits: Human • Knight
 //
-//	After an enemy Creature reaps, Sir Marrows captures 1 Æmber from your opponent.
+//	After an enemy creature reaps, Sir Marrows captures 1 Æmber from your opponent.
 func TestSirMarrows(t *testing.T) {
 	var marrows, reaper ct.Card
 	h := ct.Play(t, ct.Setup{

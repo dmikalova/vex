@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Beast
 //
-//	Play: Deal 4 damage to an enemy Creature.
+//	Play: Deal 4 damage to an enemy creature.
 var MightyTiger = set.New(
 	"Mighty Tiger",
 	card.House.Untamed,

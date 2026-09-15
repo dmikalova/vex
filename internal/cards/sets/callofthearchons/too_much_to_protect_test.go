@@ -12,7 +12,7 @@ import (
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Steal all but 6 Æmber from your opponent.
 func TestTooMuchToProtect(t *testing.T) {

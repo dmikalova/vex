@@ -7,17 +7,17 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Logos
 //	Type:   Artifact
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Item
 //
-//	Action: Swap the positions of two Creatures in a battleline.
+//	Action: Swap the positions of two creatures in a battleline.
 var QuantumFingertrap = set.New(
 	"Quantum Fingertrap",
 	card.House.Logos,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
 	card.Provenance(card.AoA, "133"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.Action, card.SwapChosen{}),

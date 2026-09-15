@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Brobnar
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Stun each Creature with power 3 or lower.
+//	Play: Stun each creature with power 3 or lower.
 var WarriorsRefrain = set.New(
 	"Warriors' Refrain",
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "16"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Stun{
 			Target: card.Target.EachCreature.PowerAtMost(3),

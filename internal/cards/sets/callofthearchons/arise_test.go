@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Choose a house - put each Creature of the chosen house from your discard pile into your hand. Gain 1 chain.
+//	Play: Choose a house - put each creature of the chosen house from your discard pile into your hand. Gain 1 chain.
 func TestArise(t *testing.T) {
 	var dis1, dis2, sanc ct.Card
 	h := ct.Play(t, ct.Setup{

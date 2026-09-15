@@ -13,7 +13,7 @@ import (
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Reveal your opponent's hand. Archive a card from your opponent's hand.
 func TestHiddenStash(t *testing.T) {

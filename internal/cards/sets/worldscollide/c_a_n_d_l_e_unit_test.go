@@ -16,7 +16,7 @@ import (
 //	Armor:  1
 //	Traits: Robot
 //
-//	After an enemy Creature reaps, draw a card.
+//	After an enemy creature reaps, draw a card.
 //	Action: C.A.N.D.L.E. Unit captures 1 Æmber from your opponent.
 func TestCANDLEUnit(t *testing.T) {
 	t.Run("captures 1 Æmber from the opponent with its Action", func(t *testing.T) {

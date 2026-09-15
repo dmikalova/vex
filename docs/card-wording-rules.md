@@ -73,18 +73,17 @@ number axis: never write `noun + "s"` or a `card(s)` placeholder by hand.
 - **`Damage` casing follows rule 15, not the individual card**: a number of
   damage dealt is always capitalized (`deals 5 Damage`, `deals +2 Damage`), and
   `deals no damage` stays lowercase because no icon is printed there.
-- **Card-type nouns are capitalized in card text, lowercased in the effect
-  layer.** In rendered card text the four card types read as proper nouns —
-  `Creature`, `Artifact`, `Upgrade`, `Tactic` (and their plurals) — while the
-  generic word `card`/`cards` stays lowercase. Do **not** capitalize these at the
-  effect layer: every `Effect.Text()`, `Target` render, trigger prefix, and
-  helper (`constantText`, `spendAsPoolLines`, `upgradeGrantLines`, …) emits the
-  lowercase noun. A single presentation-layer normalizer, `capitalizeCardTypes`
-  in `internal/engine/text.go`, capitalizes them on the way out of
-  `RenderCardText`, `RenderCardRules`, and `RenderUpgradeOnCreature`. This keeps
-  one source of truth for the casing rule instead of scattering capital nouns
-  across ~130 effect nodes, so raw-helper unit tests assert the lowercase form
-  and card-text tests assert the capitalized form.
+- **Capitalize icon/magnitude terms and named keywords; card types are plain
+  nouns.** The terms card text capitalizes are the ones backed by a printed
+  icon or magnitude — `Æmber`, `Damage`, `Power` — and the named keywords
+  (`Skirmish`, `Elusive`, …). Card types are not: `creature`, `artifact`,
+  `upgrade`, and `tactic` (and their plurals) read as lowercase common nouns,
+  exactly like the generic `card`. A card type is only capitalized when it opens
+  a sentence (via the ordinary first-letter capitalization every line already
+  gets — "Creatures cannot fight this creature"), never because it is a card
+  type. This scope is card text only: the doc-comment `Type:` label, the rulebook
+  term headwords (`Creature`, `Artifact`), and prose that discusses the types
+  stay capitalized as the proper glossary/label names they are.
 
 ## 2. `gains` for everything grantable — retire `gets`
 

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Elf • Thief
 //
 //	Elusive.
-//	Reap: Destroy a flank Creature.
+//	Reap: Destroy a flank creature.
 var Bulleteye = set.New(
 	"Bulleteye",
 	card.House.Shadows,

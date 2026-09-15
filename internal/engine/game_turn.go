@@ -679,6 +679,9 @@ func (g *Game) forgeKeyReactions(forger int) []triggeredAbility {
 			w.addAs(id, TriggerAfterPlayerForgesKey, forger, 0, false)
 		}
 	}
+	for _, id := range g.allInPlay(1 - forger) {
+		w.add(id, TriggerAfterOpponentForgesKey, 0, false)
+	}
 	return w.pending
 }
 
@@ -738,12 +741,14 @@ func (g *Game) remainingKeyColors(player int) []KeyColor {
 }
 
 // UnforgeKey takes one forged key back off a player (Key Hammer). Unlike a forge
-// it is silent: no cost is refunded and no forge abilities fire.
-func (g *Game) UnforgeKey(player int) {
+// it is silent: no cost is refunded and no forge abilities fire. It reports whether
+// a key was actually removed, so a gate can hang off the unforge happening.
+func (g *Game) UnforgeKey(player int) bool {
 	if g.State.Keys[player] == 0 {
-		return
+		return false
 	}
 	g.State.Keys[player]--
 	g.State.KeyColors[player][g.State.Keys[player]] = KeyColor(0)
 	g.record(KeyUnforged{Player: player, Keys: g.State.Keys[player], Needed: KeysToWin})
+	return true
 }

@@ -7,17 +7,17 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Brobnar
 //	Type:   Upgrade
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains +3 power.
-//	This Creature gains, "Before Fight: Deal 2 damage to each neighbor of the Creature this Creature fights."
+//	This creature gains +3 power.
+//	This creature gains, "Before Fight: Deal 2 damage to each neighbor of the creature this creature fights."
 var FyreBreath = set.New(
 	"Fyre-Breath",
 	card.House.Brobnar,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "20"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		PowerBonus: 3,
 		Granted: []card.Ability{{

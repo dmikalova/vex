@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Stun a Creature and each of its neighbors.
+//	Play: Stun a creature and each of its neighbors.
 var Tremor = set.New(
 	"Tremor",
 	card.House.Brobnar,

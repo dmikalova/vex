@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Destroy each Creature that does not share a trait with another Creature in its controller's battleline.
+//	Play: Destroy each creature that does not share a trait with another creature in its controller's battleline.
 func TestGoodOfTheMany(t *testing.T) {
 	// Two friendly Beasts share a trait (survive). A friendly Knight shares a trait
 	// only with an enemy Knight (dies — the enemy does not count). A friendly

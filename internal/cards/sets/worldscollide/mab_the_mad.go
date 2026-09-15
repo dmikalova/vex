@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Creature
 //	Rarity: Uncommon
 //	Power:  2
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Faerie
 //
 //	Reap: Shuffle Mab the Mad into its owner's deck.
@@ -18,7 +18,7 @@ var MabTheMad = set.New(
 	card.Type.Creature,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "378"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Faerie),
 	card.WithAbility(

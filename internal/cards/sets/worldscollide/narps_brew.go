@@ -15,9 +15,9 @@ var narpsBrewCluster = card.Cluster{
 //	House:  Brobnar
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains +2 armor and taunt.
+//	This creature gains +2 armor and taunt.
 var NarpsBrew = set.New(
 	"Narp's Brew",
 	card.House.Brobnar,
@@ -25,7 +25,7 @@ var NarpsBrew = set.New(
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "67"),
 	card.LeadsCluster(narpsBrewCluster),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		ArmorBonus: 2,
 		Keywords:   card.Keywords(card.Keyword.Taunt),

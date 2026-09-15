@@ -17,7 +17,7 @@ import (
 //	Traits: Martian • Scientist
 //
 //	Elusive.
-//	Each other friendly Mars Creature gains +1 armor.
+//	Each other friendly Mars creature gains +1 armor.
 func TestIxxyxliFixfinger(t *testing.T) {
 	t.Run("gives other Martian creatures +1 armor while in play", func(t *testing.T) {
 		var ixxyxli, martian, offhouse ct.Card

@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Destroy the 3 most powerful Creatures.
+//	Play: Destroy the 3 most powerful creatures.
 var ThreeFates = set.New(
 	"Three Fates",
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "71"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play,
 		card.Destroy{Target: card.Target.EachCreature.Refine(card.MostPowerfulN(3))},

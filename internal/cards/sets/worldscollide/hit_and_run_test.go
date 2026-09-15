@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Deal 2 damage to a Creature. Put a friendly Creature into its owner's hand.
+//	Play: Deal 2 damage to a creature. Put a friendly creature into its owner's hand.
 func TestHitAndRun(t *testing.T) {
 	t.Run(
 		"deals 2 damage to a creature and returns a friendly creature to hand",

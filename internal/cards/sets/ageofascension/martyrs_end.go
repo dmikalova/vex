@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Sanctum
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Destroy any number of friendly Creatures. For each Creature destroyed this way, gain 1 Æmber.
+//	Play: Destroy any number of friendly creatures. For each creature destroyed this way, gain 1 Æmber.
 var MartyrsEnd = set.New(
 	"Martyr's End",
 	card.House.Sanctum,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, "255"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.DestroyChosen{Target: card.Target.EachFriendlyCreature},

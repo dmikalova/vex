@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Star Alliance
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Look at the top 3 cards of your deck and put them back in any order, and draw a card.
 var LayOfTheLand = set.New(
@@ -16,7 +16,7 @@ var LayOfTheLand = set.New(
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "313"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 		card.LookAtTopOfDeck{Amount: 3, Then: []card.TopAct{card.ReorderRest{}}},
 		card.Draw{Amount: 1},

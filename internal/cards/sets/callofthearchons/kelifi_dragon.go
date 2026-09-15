@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Dragon
 //
 //	Kelifi Dragon cannot be played unless you have 5 Æmber or more.
-//	Fight/Reap: Gain 1 Æmber, and deal 5 damage to a Creature.
+//	Fight/Reap: Gain 1 Æmber, and deal 5 damage to a creature.
 var KelifiDragon = set.New("Kelifi Dragon",
 	card.House.Brobnar, card.Type.Creature, card.Rarity.Rare,
 	card.Provenance(card.CotA, "37"),

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Faerie • Thief
 //
 //	Elusive.
-//	Reap: Discard a random card from your opponent's archives or the top card of their deck. If that card is a Tactic, play it as if it were yours.
+//	Reap: Discard a random card from your opponent's archives or the top card of their deck. If that card is a tactic, play it as if it were yours.
 var Fidgit = set.New(
 	"Fidgit",
 	card.House.Shadows,

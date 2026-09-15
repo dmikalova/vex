@@ -1,6 +1,7 @@
 package web
 
 import (
+	"fmt"
 	"sort"
 
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
@@ -109,6 +110,31 @@ func placeFloating(anchor app.Value, sel string) {
 	}
 	style.Set("left", px(left))
 	style.Set("top", px(top))
+	fitCondensedNames(pop)
+}
+
+// fitCondensedNames condenses each deck-list card name horizontally (scaleX) so a
+// long name shrinks to fit its column instead of truncating with an ellipsis,
+// mirroring the card banner's title fit (cmd/web cardFitScript). It runs here, on
+// every popover placement, because the popover is shown by CSS hover with no
+// re-render to trigger that client-side observer. A 0.7 floor keeps a very long
+// name legible and leaves the rest to the ellipsis.
+func fitCondensedNames(pop app.Value) {
+	els := pop.Call("querySelectorAll", ".deck-list-name-text")
+	for i := 0; i < els.Get("length").Int(); i++ {
+		el := els.Call("item", i)
+		style := el.Get("style")
+		style.Set("transform", "")
+		style.Set("width", "")
+		avail := el.Get("clientWidth").Float()
+		natural := el.Get("scrollWidth").Float()
+		if avail <= 0 || natural <= avail {
+			continue
+		}
+		scale := max(0.7, avail/natural)
+		style.Set("transform", fmt.Sprintf("scaleX(%.4f)", scale))
+		style.Set("width", fmt.Sprintf("%.2f%%", 100/scale))
+	}
 }
 
 // onDeckToggle pins one player's deck list open on a tap and closes it on a second
@@ -162,8 +188,9 @@ func (g *game) deckListPopover(player int) app.UI {
 }
 
 // deckListRow renders one roster card: its type and rarity marks (kept tight
-// together) then its name, with any Maverick/Legacy mark. Rarity is the card's
-// own, so a legacy card shows the same rarity as its home-set printing.
+// together) then its name, then a tight, evenly-spaced trailing group of its
+// Maverick/Legacy marks followed by its bonus icons. Rarity is the card's own, so
+// a legacy card shows the same rarity as its home-set printing.
 func deckListRow(c match.RosterCard) app.UI {
 	marks := []app.UI{}
 	if name := typeIconName(c.Def.Type); name != "" {
@@ -173,12 +200,23 @@ func deckListRow(c match.RosterCard) app.UI {
 		marks = append(marks, mark)
 	}
 	cells := []app.UI{app.Span().Class("deck-list-marks").Body(marks...)}
-	cells = append(cells, app.Span().Class("deck-list-name").Text(c.Def.Name))
+	cells = append(cells, app.Span().Class("deck-list-name").Body(
+		app.Span().Class("deck-list-name-text").Text(c.Def.Name),
+	))
+	// Provenance marks first, then bonus icons, all in one tight group so they
+	// share the same even spacing.
+	tail := []app.UI{}
 	if c.Maverick {
-		cells = append(cells, icon("maverick", "icon-mark", "icon-outline"))
+		tail = append(tail, icon("maverick", "icon-mark", "icon-outline"))
 	}
 	if c.Legacy {
-		cells = append(cells, icon("legacy", "icon-mark", "icon-outline"))
+		tail = append(tail, icon("legacy", "icon-mark", "icon-outline"))
+	}
+	for _, b := range c.Def.Bonuses {
+		tail = append(tail, icon(bonusIconStem(b), "icon-mark", "icon-outline"))
+	}
+	if len(tail) > 0 {
+		cells = append(cells, app.Span().Class("deck-list-tail").Body(tail...))
 	}
 	return app.Div().Class("deck-list-row").Body(cells...)
 }

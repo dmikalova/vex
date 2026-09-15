@@ -12,7 +12,7 @@ import (
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Discard the top 5 cards of each player's deck. For each Shadows card discarded this way, its owner gains 1 Æmber.
 func TestRiggedLottery(t *testing.T) {

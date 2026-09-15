@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Human • Knight
 //
-//	Reap: Use a friendly non-Sanctum Creature.
+//	Reap: Use a friendly non-Sanctum creature.
 func TestCommanderRemiel(t *testing.T) {
 	t.Run("reaps, then uses a friendly non-Sanctum creature to reap again", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

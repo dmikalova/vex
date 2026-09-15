@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Use an Artifact. Destroy it.
+//	Play: Use an artifact. Destroy it.
 var Poltergeist = set.New(
 	"Poltergeist",
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "69"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.Use{

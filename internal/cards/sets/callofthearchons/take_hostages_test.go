@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: For the remainder of the turn, each time a friendly Creature fights, it captures 1 Æmber from your opponent.
+//	Play: For the remainder of the turn, each time a friendly creature fights, it captures 1 Æmber from your opponent.
 func TestTakeHostages(t *testing.T) {
 	t.Run("a friendly creature captures 1 Æmber when it fights this turn", func(t *testing.T) {
 		var ally, foe ct.Card

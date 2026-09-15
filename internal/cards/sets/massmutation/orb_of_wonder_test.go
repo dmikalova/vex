@@ -1,4 +1,4 @@
-package anomalyexpansion
+package massmutation
 
 import (
 	"testing"
@@ -9,9 +9,9 @@ import (
 
 // Orb of Wonder
 //
-//	House:  Brobnar
+//	House:  Sanctum
 //	Type:   Artifact
-//	Rarity: Special
+//	Rarity: Rare
 //	Traits: Item
 //
 //	Versatile.
@@ -20,7 +20,7 @@ func TestOrbOfWonder(t *testing.T) {
 	var wanted, other ct.Card
 	h := ct.Play(t, ct.Setup{
 		P1: ct.Side{
-			House:  card.House.Brobnar,
+			House:  card.House.Sanctum,
 			InPlay: ct.Cards(OrbOfWonder),
 			Deck: ct.Cards(
 				ct.Bind(&wanted, ct.Creature(ct.Power(3))),

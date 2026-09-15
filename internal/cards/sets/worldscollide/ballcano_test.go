@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Deal 4 damage to each Creature. Gain 2 chains.
+//	Play: Deal 4 damage to each creature. Gain 2 chains.
 func TestBallcano(t *testing.T) {
 	t.Run("deals 4 damage to each creature and gains 2 chains", func(t *testing.T) {
 		var mine, foe ct.Card

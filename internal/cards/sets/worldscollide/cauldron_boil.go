@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Deal 1 damage to each Creature for each point of damage on it.
+//	Play: Deal 1 damage to each creature for each point of damage on it.
 var CauldronBoil = set.New(
 	"Cauldron Boil",
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "354"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{
 			Amount:    1,

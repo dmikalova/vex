@@ -110,33 +110,6 @@ func (e PlayedFromTopOfDeck) Text(n Namer) string {
 		who, n.Name(e.Card), n.PlayerName(e.Player))
 }
 
-// AemberBonusGained narrates the Æmber bonus printed on a card being collected.
-type AemberBonusGained struct {
-	Player int
-	Card   LocalID
-	Amount int
-}
-
-// Text renders the Æmber bonus a card paid its player.
-func (e AemberBonusGained) Text(n Namer) string {
-	return fmt.Sprintf("%s gains %d Æmber from %s",
-		n.PlayerName(e.Player), e.Amount, n.Name(e.Card))
-}
-
-// AemberBonusCaptured narrates a printed Æmber bonus captured on its way to the
-// pool.
-type AemberBonusCaptured struct {
-	Creature LocalID
-	Card     LocalID
-	Amount   int
-}
-
-// Text renders a printed Æmber bonus captured on its way to the pool.
-func (e AemberBonusCaptured) Text(n Namer) string {
-	return fmt.Sprintf("%s captures %d Æmber from %s's bonus",
-		n.Name(e.Creature), e.Amount, n.Name(e.Card))
-}
-
 // AemberSpentToPlay narrates the Æmber a card's own play requirement cost.
 type AemberSpentToPlay struct {
 	Player int

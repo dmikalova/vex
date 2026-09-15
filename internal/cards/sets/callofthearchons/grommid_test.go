@@ -16,8 +16,8 @@ import (
 //	Power:  10
 //	Traits: Beast
 //
-//	You cannot play Creatures.
-//	After a Creature is destroyed in a fight with Grommid, your opponent loses 1 Æmber.
+//	You cannot play creatures.
+//	After a creature is destroyed in a fight with Grommid, your opponent loses 1 Æmber.
 func TestGrommid(t *testing.T) {
 	setup := func(t *testing.T) (h *ct.Harness, grommid, enemy ct.Card) {
 		h = ct.Play(t, ct.Setup{

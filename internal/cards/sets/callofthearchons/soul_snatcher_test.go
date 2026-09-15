@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Traits: Vehicle
 //
-//	Each Creature gains, "Destroyed: Gain 1 Æmber."
+//	Each creature gains, "Destroyed: Gain 1 Æmber."
 func TestSoulSnatcher(t *testing.T) {
 	t.Run("a destroyed creature's owner gains 1 Æmber", func(t *testing.T) {
 		var attacker, foe ct.Card

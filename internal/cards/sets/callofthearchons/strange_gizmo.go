@@ -7,17 +7,17 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Logos
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Item
 //
-//	After you forge a key, destroy each Creature and each Artifact.
+//	After you forge a key, destroy each creature and each artifact.
 var StrangeGizmo = set.New(
 	"Strange Gizmo",
 	card.House.Logos,
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "134"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(card.Trigger.AfterForgeKey, card.Sequence{Effects: []card.Effect{
 		card.Destroy{Target: card.Target.EachCreature},

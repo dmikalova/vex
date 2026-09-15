@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Ward a Creature. Destroy each Creature with no Æmber on it. Gain 2 chains.
+//	Play: Ward a creature. Destroy each creature with no Æmber on it. Gain 2 chains.
 var AxiomOfGrisk = set.New(
 	"Axiom of Grisk",
 	card.House.Saurian,

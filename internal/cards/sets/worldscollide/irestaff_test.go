@@ -12,10 +12,10 @@ import (
 //	House:  Brobnar
 //	Type:   Artifact
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Weapon
 //
-//	Action: Choose a Creature - enrage it, and give it a +1 power counter.
+//	Action: Choose a creature - enrage it, and give it a +1 power counter.
 func TestIrestaff(t *testing.T) {
 	t.Run("enrages a creature and gives it a +1 power counter", func(t *testing.T) {
 		var troll ct.Card

@@ -12,9 +12,9 @@ import (
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Deal 2 damage to each Creature.
+//	Play: Deal 2 damage to each creature.
 func TestPoisonWave(t *testing.T) {
 	t.Run("deals 2 damage to each creature", func(t *testing.T) {
 		var ally, foe, weakFoe ct.Card

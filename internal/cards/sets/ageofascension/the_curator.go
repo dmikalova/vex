@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Human • Scientist
 //
-//	Friendly Artifacts enter play ready.
+//	Friendly artifacts enter play ready.
 var TheCurator = set.New(
 	"The Curator",
 	card.House.Logos,

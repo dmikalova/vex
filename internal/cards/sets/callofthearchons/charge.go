@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Sanctum
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: For the remainder of the turn, each time you play a Creature, deal 2 damage to an enemy Creature.
+//	Play: For the remainder of the turn, each time you play a creature, deal 2 damage to an enemy creature.
 var Charge = set.New(
 	"Charge!",
 	card.House.Sanctum,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "214"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.ForRemainderOfTurn{
 			On: card.Event.CreaturePlayed,

@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Your opponent discards a random card from their hand.
 var SubtleChain = set.New(
@@ -17,7 +17,7 @@ var SubtleChain = set.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "262"),
 	card.InCluster(card.Pulled(chainGangCluster, 1, 2)),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play,
 		card.DiscardCard{Player: card.Opponent, Zone: card.Hand, Selection: card.Random{}},

@@ -328,12 +328,12 @@ func (c ForgedKey) subject() (string, string) {
 // window names the turn the condition asks about.
 func (c ForgedKey) window(possessive string) string {
 	if c.Previous {
-		return "on " + possessive + " previous turn"
+		return "during " + possessive + " previous turn"
 	}
 	return "this turn"
 }
 
-// CondText renders the clause, e.g. "if your opponent forged a key on their
+// CondText renders the clause, e.g. "if your opponent forged a key during their
 // previous turn".
 func (c ForgedKey) CondText() string {
 	subject, possessive := c.subject()

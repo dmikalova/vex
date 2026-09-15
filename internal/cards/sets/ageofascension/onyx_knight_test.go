@@ -15,7 +15,7 @@ import (
 //	Power:  4
 //	Traits: Demon • Knight
 //
-//	Play: Destroy each Creature with odd power.
+//	Play: Destroy each creature with odd power.
 func TestOnyxKnight(t *testing.T) {
 	t.Run("destroys each creature with odd power", func(t *testing.T) {
 		var odd, even ct.Card

@@ -151,11 +151,13 @@ func printedFace(def *engine.CardDefinition) *cardView {
 		Emblem:   houseIconName(def.House),
 		TypeIcon: typeIconName(def.Type),
 		Stat:     handStat(def),
-		Rules:    displayRules(engine.RenderCardRules(def)),
+		Rules:    displayRules(rulesWithoutEnhance(def, engine.RenderCardRules(def))),
 		Kind:     kindLabel(def),
 		Trait:    traitLabel(def),
 		Rarity:   rarityMarkOf(def.Rarity),
 		Icons:    cardGlyphs(def),
+		Bonuses:  def.Bonuses,
+		Enhances: def.Enhances,
 	}
 }
 

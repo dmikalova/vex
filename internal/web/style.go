@@ -875,10 +875,12 @@ const styleLoopPeriod = 900 * time.Millisecond
 // vocabulary). A test holds this equal to the directory.
 var galleryIcons = []string{
 	"aember",
+	"capture",
 	"card-back",
 	"chains",
 	"damage",
 	"deck-list",
+	"draw",
 	"enrage",
 	"exhausted",
 	"forge",

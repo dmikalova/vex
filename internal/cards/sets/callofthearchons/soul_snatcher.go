@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Traits: Vehicle
 //
-//	Each Creature gains, "Destroyed: Gain 1 Æmber."
+//	Each creature gains, "Destroyed: Gain 1 Æmber."
 var SoulSnatcher = set.New(
 	"Soul Snatcher",
 	card.House.Dis,

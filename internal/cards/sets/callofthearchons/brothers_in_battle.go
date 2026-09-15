@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Brobnar
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Choose a house - for the remainder of the turn, each friendly Creature of the chosen house may fight.
+//	Play: Choose a house - for the remainder of the turn, each friendly creature of the chosen house may fight.
 var BrothersInBattle = set.New(
 	"Brothers in Battle",
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "4"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseHouseThen{
 			Then: card.MayPlayOrUse{Houses: card.GrantHouses.Chosen, Grant: card.GrantFight},

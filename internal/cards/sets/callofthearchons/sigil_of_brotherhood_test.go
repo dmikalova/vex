@@ -13,11 +13,11 @@ import (
 //	House:  Sanctum
 //	Type:   Artifact
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Power
 //
 //	Versatile.
-//	Action: Destroy Sigil of Brotherhood. For the remainder of the turn, you may use friendly Sanctum Creatures.
+//	Action: Destroy Sigil of Brotherhood. For the remainder of the turn, you may use friendly Sanctum creatures.
 func TestSigilOfBrotherhood(t *testing.T) {
 	t.Run("destroys itself and grants use of friendly Sanctum creatures", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

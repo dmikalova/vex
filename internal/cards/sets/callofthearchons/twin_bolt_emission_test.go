@@ -12,9 +12,9 @@ import (
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Deal 2 damage to a Creature and deal 2 damage to a different Creature.
+//	Play: Deal 2 damage to a creature and deal 2 damage to a different creature.
 func TestTwinBoltEmission(t *testing.T) {
 	t.Run("deals 2 to a creature and 2 to a different creature", func(t *testing.T) {
 		var a, b ct.Card

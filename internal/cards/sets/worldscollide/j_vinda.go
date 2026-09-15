@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Elf • Thief
 //
 //	Elusive.
-//	Reap: Deal 1 damage to a Creature. If this damage destroys that Creature, steal 1 Æmber.
+//	Reap: Deal 1 damage to a creature. If this damage destroys that creature, steal 1 Æmber.
 var JVinda = set.New(
 	"J. Vinda",
 	card.House.Shadows,

@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Remove a ward from a Creature, and ward a Creature.
+//	Play: Remove a ward from a creature, and ward a creature.
 var HunterOrHunted = set.New(
 	"Hunter or Hunted?",
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "269"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.RemoveWard{Target: card.Target.Creature},

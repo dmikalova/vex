@@ -12,9 +12,9 @@ import (
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Purge each friendly Shadows Creature. For each Creature purged this way, steal 1 Æmber.
+//	Play: Purge each friendly Shadows creature. For each creature purged this way, steal 1 Æmber.
 func TestOneLastJob(t *testing.T) {
 	t.Run("purges your Shadows creatures and steals for each", func(t *testing.T) {
 		var shadows, brobnar, theirs ct.Card

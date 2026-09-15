@@ -14,7 +14,7 @@ func TestConditionalPlayBarText(t *testing.T) {
 		WithCannotPlayWhile(ConditionalPlayBar{Type: Creature, When: ControlsMoreCreatures{}}),
 	)
 	rules := cardRules(&def, false)
-	want := "If a player has more Creatures in play than their opponent, they cannot play Creatures."
+	want := "If a player has more creatures in play than their opponent, they cannot play creatures."
 	found := false
 	for _, r := range rules {
 		if r == want {
@@ -61,7 +61,7 @@ func TestConditionalPlayBarBarsAheadPlayer(t *testing.T) {
 	}
 	g.AddToHand(testCreature("newbie", 2), 0)
 	if _, err := g.PlayCreature(0, handIdx(g, 0, "newbie"), false); err != ErrCannotPlayCreature {
-		t.Errorf("PlayCreature = %v, want ErrCannotPlayCreature", err)
+		t.Errorf("Playcreature = %v, want ErrCannotPlaycreature", err)
 	}
 
 	// The bar only blocks creatures: a non-creature is still playable.
@@ -77,6 +77,6 @@ func TestConditionalPlayBarBarsAheadPlayer(t *testing.T) {
 	}
 	g.AddToHand(testCreature("second", 2), 0)
 	if _, err := g.PlayCreature(0, handIdx(g, 0, "second"), false); err != nil {
-		t.Errorf("PlayCreature once even = %v, want nil", err)
+		t.Errorf("Playcreature once even = %v, want nil", err)
 	}
 }

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Cyborg • Beast
 //
 //	Elusive.
-//	Each neighboring Creature gains, "Destroyed: Archive this Creature from play."
+//	Each neighboring creature gains, "Destroyed: Archive this creature from play."
 var Archimedes = set.New(
 	"Archimedes",
 	card.House.Logos,

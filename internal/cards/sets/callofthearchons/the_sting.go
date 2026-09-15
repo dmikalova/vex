@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Shadows
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Vehicle
 //
 //	You skip your "forge a key" phase.
@@ -19,7 +19,7 @@ var TheSting = set.New(
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "295"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Vehicle),
 	card.WithRestrictions(card.Restrictions{SkipForge: true}),
 	card.WithGainsForgeAember(),

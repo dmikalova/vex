@@ -13,7 +13,7 @@ import (
 //	Type:   Upgrade
 //	Rarity: Rare
 //
-//	This Creature gains versatile.
+//	This creature gains versatile.
 func TestMantleOfTheZealot(t *testing.T) {
 	t.Run("grants versatile so an out-of-house host can reap", func(t *testing.T) {
 		var host ct.Card

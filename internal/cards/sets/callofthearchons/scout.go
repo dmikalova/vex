@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Give skirmish to, ready, and fight with up to 2 different friendly Creatures, one at a time.
+//	Play: Give skirmish to, ready, and fight with up to 2 different friendly creatures, one at a time.
 var Scout = set.New(
 	"Scout",
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "334"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.OneAtATime{
 			Times:  card.Fixed(2),

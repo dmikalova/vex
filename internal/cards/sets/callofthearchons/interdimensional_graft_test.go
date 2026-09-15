@@ -12,7 +12,7 @@ import (
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: During your opponent's next turn, after forging a key, your opponent gives you all their Æmber.
 func TestInterdimensionalGraft(t *testing.T) {

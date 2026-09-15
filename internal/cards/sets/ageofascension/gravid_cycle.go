@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Omega.
 //	Play: Put a card from your discard pile into your hand.
@@ -17,7 +17,7 @@ var GravidCycle = set.New(
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, "354"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithKeywords(card.Keyword.Omega),
 	card.WithAbility(
 		card.Trigger.Play,

@@ -12,9 +12,9 @@ import (
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: During your opponent's next turn, after an enemy Creature is used to fight, stun it.
+//	Play: During your opponent's next turn, after an enemy creature is used to fight, stun it.
 func TestFoggify(t *testing.T) {
 	t.Run(
 		"arms the opponent's next turn without stunning the caster's fighters",

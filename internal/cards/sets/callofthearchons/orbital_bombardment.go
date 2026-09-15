@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Mars
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Reveal any number of Mars cards from your hand. For each card revealed this way, deal 2 damage to a Creature.
+//	Play: Reveal any number of Mars cards from your hand. For each card revealed this way, deal 2 damage to a creature.
 var OrbitalBombardment = set.New(
 	"Orbital Bombardment",
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "172"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{
 			Effects: []card.Effect{

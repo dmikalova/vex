@@ -13,7 +13,7 @@ import (
 //	Type:   Creature
 //	Rarity: Common
 //	Power:  1
-//	Æmber:  2
+//	Bonus:  Æmber Æmber
 //	Traits: Faerie
 func TestDustPixie(t *testing.T) {
 	t.Run("gains 2 Æmber when played", func(t *testing.T) {

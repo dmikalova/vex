@@ -12,9 +12,9 @@ import (
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Shuffle 2 friendly Creatures into their owners' decks, and shuffle 2 enemy Creatures into their owners' decks.
+//	Play: Shuffle 2 friendly creatures into their owners' decks, and shuffle 2 enemy creatures into their owners' decks.
 func TestLostInTheWoods(t *testing.T) {
 	t.Run("shuffles 2 friendly and 2 enemy creatures into their owners' decks", func(t *testing.T) {
 		var ally1, ally2, foe1, foe2 ct.Card

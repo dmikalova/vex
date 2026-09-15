@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Traits: Item
 //
-//	Action: Ready and fight with a friendly Creature.
+//	Action: Ready and fight with a friendly creature.
 func TestGauntletOfCommand(t *testing.T) {
 	t.Run("readies and fights with a friendly creature", func(t *testing.T) {
 		var ally, foe ct.Card

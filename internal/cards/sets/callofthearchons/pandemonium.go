@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Each undamaged Creature captures 1 Æmber from its opponent.
+//	Play: Each undamaged creature captures 1 Æmber from its opponent.
 var Pandemonium = set.New(
 	"Pandemonium",
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "68"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.CaptureAember{
 			Amount: 1,

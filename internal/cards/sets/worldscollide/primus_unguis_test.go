@@ -16,7 +16,7 @@ import (
 //	Armor:  1
 //	Traits: Dinosaur • Soldier
 //
-//	Each friendly Creature gains +2 power for each Æmber on Primus Unguis.
+//	Each friendly creature gains +2 power for each Æmber on Primus Unguis.
 //	Reap: Exalt Primus Unguis.
 func TestPrimusUnguis(t *testing.T) {
 	t.Run("every friendly creature grows with the Æmber on Primus Unguis", func(t *testing.T) {

@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Sanctum
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Unstun each friendly Creature.
+//	Play: Unstun each friendly creature.
 var ClearMind = set.New(
 	"Clear Mind",
 	card.House.Sanctum,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "216"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Unstun{Target: card.Target.EachFriendlyCreature}),
 )

@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Deal 2 damage to an enemy Creature. If this damage destroys that Creature, deal 2 damage to each of that Creature's neighbors.
+//	Play: Deal 2 damage to an enemy creature. If this damage destroys that creature, deal 2 damage to each of that creature's neighbors.
 var PainReaction = set.New(
 	"Pain Reaction",
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.AoA, "78"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.DamageThen{
 			Amount: 2,

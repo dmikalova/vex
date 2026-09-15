@@ -12,9 +12,9 @@ import (
 //	House:  Saurian
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Destroy one third of all enemy Creatures and one third of all friendly Creatures (rounding up each time).
+//	Play: Destroy one third of all enemy creatures and one third of all friendly creatures (rounding up each time).
 func TestTertiate(t *testing.T) {
 	var f0, f1, f2 ct.Card
 	var e0, e1, e2, e3 ct.Card

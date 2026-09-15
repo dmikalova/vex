@@ -15,7 +15,7 @@ import (
 //	Power:  2
 //	Traits: Martian • Scientist
 //
-//	Reap: The next Mars Creature you play this turn enters play ready.
+//	Reap: The next Mars creature you play this turn enters play ready.
 func TestBlypyp(t *testing.T) {
 	var blypyp, next ct.Card
 	h := ct.Play(t, ct.Setup{

@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Destroy an enemy Creature and a friendly Creature -> if there is a friendly Creature in play, you may repeat this effect.
+//	Play: Destroy an enemy creature and a friendly creature -> if there is a friendly creature in play, you may repeat this effect.
 var BouncingDeathquark = set.New(
 	"Bouncing Deathquark",
 	card.House.Logos,

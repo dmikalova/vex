@@ -7,18 +7,18 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Shadows
 //	Type:   Artifact
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Item
 //
 //	Versatile.
-//	Action: Deal 3 damage to a flank Creature. If this damage destroys that Creature, purge it.
+//	Action: Deal 3 damage to a flank creature. If this damage destroys that creature, purge it.
 var SpecialDelivery = set.New(
 	"Special Delivery",
 	card.House.Shadows,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "292"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Item),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(

@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Put up to 3 Creatures into their owners' hands.
+//	Play: Put up to 3 creatures into their owners' hands.
 var NaturesCall = set.New(
 	"Nature's Call",
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "329"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.PutChosen{
 			Amount:      3,

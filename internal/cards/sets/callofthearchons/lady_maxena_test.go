@@ -15,7 +15,7 @@ import (
 //	Power:  5
 //	Traits: Knight • Spirit
 //
-//	Play: Stun a Creature.
+//	Play: Stun a creature.
 //	Action: Put Lady Maxena into its owner's hand.
 func TestLadyMaxena(t *testing.T) {
 	t.Run("stuns a chosen creature when played", func(t *testing.T) {

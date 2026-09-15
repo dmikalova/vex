@@ -291,8 +291,12 @@ func TestToEntryAndToUpgradePanic(t *testing.T) {
 // still part of the harness's vocabulary, so it is checked here.
 func TestVanillaOptions(t *testing.T) {
 	pip := Tactic(AemberBonus(2))
-	if pip.AemberBonus != 2 {
-		t.Errorf("AemberBonus = %d, want 2", pip.AemberBonus)
+	if pip.AemberBonus() != 2 {
+		t.Errorf("AemberBonus = %d, want 2", pip.AemberBonus())
+	}
+	mixed := Tactic(Bonus(engine.BonusAember, engine.BonusDraw))
+	if len(mixed.Bonuses) != 2 {
+		t.Errorf("Bonus count = %d, want 2", len(mixed.Bonuses))
 	}
 	up := Upgrade(PowerBonus(3), ArmorBonus(1))
 	if up.Type != engine.Upgrade {

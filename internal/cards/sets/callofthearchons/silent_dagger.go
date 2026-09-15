@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Shadows
 //	Type:   Upgrade
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Reap: Deal 4 damage to a flank Creature."
+//	This creature gains, "Reap: Deal 4 damage to a flank creature."
 var SilentDagger = set.New(
 	"Silent Dagger",
 	card.House.Shadows,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "318"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{
 			{Trigger: card.Trigger.Reap, Effect: card.DealDamage{

@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Star Alliance
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Destroy each Artifact, and exhaust each Creature with an Upgrade.
+//	Play: Destroy each artifact, and exhaust each creature with an upgrade.
 var TachyonPulse = set.New(
 	"Tachyon Pulse",
 	card.House.StarAlliance,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "340"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.Destroy{Target: card.Target.EachArtifact},

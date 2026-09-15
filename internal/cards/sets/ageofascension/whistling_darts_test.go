@@ -12,9 +12,9 @@ import (
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Deal 1 damage to each enemy Creature.
+//	Play: Deal 1 damage to each enemy creature.
 func TestWhistlingDarts(t *testing.T) {
 	t.Run("deals 1 damage to each enemy creature when played", func(t *testing.T) {
 		var foe1, foe2 ct.Card

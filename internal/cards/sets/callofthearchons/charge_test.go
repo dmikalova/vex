@@ -12,9 +12,9 @@ import (
 //	House:  Sanctum
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: For the remainder of the turn, each time you play a Creature, deal 2 damage to an enemy Creature.
+//	Play: For the remainder of the turn, each time you play a creature, deal 2 damage to an enemy creature.
 func TestCharge(t *testing.T) {
 	t.Run("each creature played after it deals 2 damage to a chosen enemy", func(t *testing.T) {
 		var minion, foe ct.Card

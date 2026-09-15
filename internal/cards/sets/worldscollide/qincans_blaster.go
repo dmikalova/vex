@@ -15,11 +15,11 @@ var qincansBlasterCluster = card.Cluster{
 //	House:  Star Alliance
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Fight/Reap: Choose one:
-//	- Deal 2 damage to a Creature
-//	- Attach Qincan's Blaster to Sci. Officer Qincan -> archive a Creature from play."
+//	This creature gains, "Fight/Reap: Choose one:
+//	- Deal 2 damage to a creature
+//	- Attach Qincan's Blaster to Sci. Officer Qincan -> archive a creature from play."
 var QincansBlaster = set.New(
 	"Qincan's Blaster",
 	card.House.StarAlliance,
@@ -27,7 +27,7 @@ var QincansBlaster = set.New(
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "351"),
 	card.LeadsCluster(qincansBlasterCluster),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightReap(card.ChooseOne{Options: []card.Effect{
 			card.DealDamage{Amount: 2, Target: card.Target.Creature},

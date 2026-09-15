@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Brobnar
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Choose an enemy Creature - if that Creature was already stunned, destroy it. Otherwise, stun it.
+//	Play: Choose an enemy creature - if that creature was already stunned, destroy it. Otherwise, stun it.
 var Card12Punch = set.New(
 	"1-2 Punch",
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.AoA, "1"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseCreatureThen{
 			Target: card.Target.EnemyCreature,

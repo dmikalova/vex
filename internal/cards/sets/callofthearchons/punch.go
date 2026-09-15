@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Brobnar
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Deal 3 damage to a Creature.
+//	Play: Deal 3 damage to a creature.
 var Punch = set.New(
 	"Punch",
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, "12"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{
 			Amount: 3,

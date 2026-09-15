@@ -12,11 +12,11 @@ import (
 //	House:  Star Alliance
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Fight/Reap: Choose one:
-//	- Deal 2 damage to a Creature
-//	- Attach Qincan's Blaster to Sci. Officer Qincan -> archive a Creature from play."
+//	This creature gains, "Fight/Reap: Choose one:
+//	- Deal 2 damage to a creature
+//	- Attach Qincan's Blaster to Sci. Officer Qincan -> archive a creature from play."
 func TestQincansBlaster(t *testing.T) {
 	t.Run("archives a creature on the attach payoff", func(t *testing.T) {
 		var carrier, prey ct.Card

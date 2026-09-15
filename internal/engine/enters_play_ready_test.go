@@ -18,7 +18,7 @@ func TestEntersPlayReady(t *testing.T) {
 
 		newbie := g.AddToHand(NewCard("newbie", Untamed, Creature, Common, WithPower(3)), 0)
 		if _, err := g.PlayCreature(0, handIdxByID(g, 0, newbie), false); err != nil {
-			t.Fatalf("PlayCreature: %v", err)
+			t.Fatalf("Playcreature: %v", err)
 		}
 		if g.State.Cards[newbie].Exhausted {
 			t.Error("creature should enter play ready under a creature grant")
@@ -37,7 +37,7 @@ func TestEntersPlayReady(t *testing.T) {
 
 		art := g.AddToHand(NewCard("art", Logos, Artifact, Common), 0)
 		if _, err := g.PlayArtifact(0, handIdxByID(g, 0, art)); err != nil {
-			t.Fatalf("PlayArtifact: %v", err)
+			t.Fatalf("Playartifact: %v", err)
 		}
 		if g.State.Cards[art].Exhausted {
 			t.Error("artifact should enter play ready under an artifact grant")
@@ -56,7 +56,7 @@ func TestEntersPlayReady(t *testing.T) {
 
 		art := g.AddToHand(NewCard("art", Logos, Artifact, Common), 0)
 		if _, err := g.PlayArtifact(0, handIdxByID(g, 0, art)); err != nil {
-			t.Fatalf("PlayArtifact: %v", err)
+			t.Fatalf("Playartifact: %v", err)
 		}
 		if !g.State.Cards[art].Exhausted {
 			t.Error("artifact should enter exhausted: the grant belongs to the opponent")
@@ -68,7 +68,7 @@ func TestEntersPlayReady(t *testing.T) {
 		g.StartTurn(0)
 		newbie := g.AddToHand(NewCard("newbie", Untamed, Creature, Common, WithPower(3)), 0)
 		if _, err := g.PlayCreature(0, handIdxByID(g, 0, newbie), false); err != nil {
-			t.Fatalf("PlayCreature: %v", err)
+			t.Fatalf("Playcreature: %v", err)
 		}
 		if !g.State.Cards[newbie].Exhausted {
 			t.Error("creature should enter play exhausted without a grant")
@@ -78,12 +78,12 @@ func TestEntersPlayReady(t *testing.T) {
 	t.Run("renders the printed line for each type", func(t *testing.T) {
 		creat := &CardDefinition{Name: "Duskwitch", GrantsEntersReady: Creature}
 		if rules := cardRules(creat, false); len(rules) != 1 ||
-			rules[0] != "Your Creatures enter play ready." {
+			rules[0] != "Your creatures enter play ready." {
 			t.Errorf("creature rules = %v", rules)
 		}
 		art := &CardDefinition{Name: "The Curator", GrantsEntersReady: Artifact}
 		if rules := cardRules(art, false); len(rules) != 1 ||
-			rules[0] != "Friendly Artifacts enter play ready." {
+			rules[0] != "Friendly artifacts enter play ready." {
 			t.Errorf("artifact rules = %v", rules)
 		}
 	})

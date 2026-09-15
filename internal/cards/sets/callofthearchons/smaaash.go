@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Giant
 //
-//	Play: Stun a Creature.
+//	Play: Stun a creature.
 var Smaaash = set.New(
 	"Smaaash",
 	card.House.Brobnar,

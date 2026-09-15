@@ -14,7 +14,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Your opponent cannot use Creatures to reap during their next turn.
+//	Play: Your opponent cannot use creatures to reap during their next turn.
 func TestInkyGloom(t *testing.T) {
 	t.Run(
 		"bars the opponent from reaping on their next turn, fighting stays open",

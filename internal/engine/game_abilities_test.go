@@ -237,6 +237,37 @@ func TestAfterCardPlayedTrigger(t *testing.T) {
 	}
 }
 
+// TestSubjectNarrowedReactionEntersWindowOnlyWhenMatched checks that a reaction
+// narrowed to a card shape — "after you play an artifact" (a Conditional{ItIs}
+// over its whole effect) — joins the after-play window only when the played card
+// matches, so it never forces a spurious ordering prompt on a play it does not
+// narrow to (Harmonia not ordering with a played Tactic). A reaction gated on a
+// board "if" instead (Overwhelmed) is not a subject narrowing, so it always fires.
+func TestSubjectNarrowedReactionEntersWindowOnlyWhenMatched(t *testing.T) {
+	g := started(t)
+	g.AddToBattleline(testCreature("narrowed", 3, WithAbility(
+		TriggerAfterCardPlayed,
+		Conditional{Cond: ItIs{Type: Artifact}, Then: GainAember{Player: Controller, Amount: 1}},
+	)), 0)
+	g.AddToBattleline(testCreature("board", 3, WithAbility(
+		TriggerAfterCardPlayed,
+		Conditional{Cond: Overwhelmed{}, Then: GainAember{Player: Controller, Amount: 1}},
+	)), 0)
+
+	// A Tactic does not match the artifact narrowing, so only the board-gated
+	// reaction joins the window — no spurious prompt from the narrowed one.
+	tactic := g.AddToHand(NewCard("scheme", Brobnar, Tactic, Common), 0)
+	if w := g.afterPlayReactions(0, tactic); len(w) != 1 {
+		t.Fatalf("Tactic play window = %d entries, want 1 (narrowed watcher excluded)", len(w))
+	}
+
+	// An artifact matches, so both reactions join the window.
+	relic := g.AddArtifact(NewCard("relic", Brobnar, Artifact, Common), 0)
+	if w := g.afterPlayReactions(0, relic); len(w) != 2 {
+		t.Fatalf("artifact play window = %d entries, want 2 (narrowed watcher matches)", len(w))
+	}
+}
+
 func TestUpgradeUseConditionGatesHost(t *testing.T) {
 	g := started(t) // player 0 active, Brobnar
 	host := g.AddToBattleline(NewCard("host", Brobnar, Creature, Common, WithPower(3)), 0)

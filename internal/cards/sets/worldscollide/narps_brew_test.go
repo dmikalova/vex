@@ -12,9 +12,9 @@ import (
 //	House:  Brobnar
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains +2 armor and taunt.
+//	This creature gains +2 armor and taunt.
 func TestNarpsBrew(t *testing.T) {
 	t.Run("host gains +2 armor and Taunt", func(t *testing.T) {
 		var host ct.Card

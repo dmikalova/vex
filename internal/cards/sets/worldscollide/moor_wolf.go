@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast • Wolf
 //
 //	Skirmish.
-//	Play: Ready each other friendly Wolf Creature.
+//	Play: Ready each other friendly Wolf creature.
 var MoorWolf = set.New(
 	"Moor Wolf",
 	card.House.Untamed,

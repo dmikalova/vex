@@ -16,7 +16,7 @@ import (
 //	Power:  5
 //	Traits: Giant
 //
-//	After you forge a key, deal 2 damage to each enemy Creature.
+//	After you forge a key, deal 2 damage to each enemy creature.
 func TestBilgumAvalanche(t *testing.T) {
 	t.Run(
 		"deals 2 damage to each enemy creature when its controller forges a key",

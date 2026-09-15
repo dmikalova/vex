@@ -16,7 +16,7 @@ import (
 //	Traits: Beast
 //
 //	Zorg enters play stunned.
-//	Before Fight: Stun the Creature Zorg fights and each of its neighbors.
+//	Before Fight: Stun the creature Zorg fights and each of its neighbors.
 func TestZorg(t *testing.T) {
 	t.Run("enters play stunned", func(t *testing.T) {
 		var zorg ct.Card

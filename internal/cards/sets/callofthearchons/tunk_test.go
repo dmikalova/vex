@@ -15,7 +15,7 @@ import (
 //	Power:  6
 //	Traits: Robot
 //
-//	After you play a Mars Creature, fully heal Tunk.
+//	After you play a Mars creature, fully heal Tunk.
 func TestTunk(t *testing.T) {
 	t.Run("fully heals itself after you play another Mars creature", func(t *testing.T) {
 		var tunk, mars ct.Card

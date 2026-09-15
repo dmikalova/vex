@@ -15,9 +15,9 @@ var grokesBrewCluster = card.Cluster{
 //	House:  Brobnar
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Fight: Your opponent loses 1 Æmber."
+//	This creature gains, "Fight: Your opponent loses 1 Æmber."
 var GrokesBrew = set.New(
 	"Groke's Brew",
 	card.House.Brobnar,
@@ -25,7 +25,7 @@ var GrokesBrew = set.New(
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "64"),
 	card.LeadsCluster(grokesBrewCluster),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Fight,

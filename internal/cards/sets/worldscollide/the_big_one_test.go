@@ -12,10 +12,10 @@ import (
 //	House:  Brobnar
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Weapon
 //
-//	After a Creature is played, put a fuse counter on The Big One. If there are 10 or more fuse counters on The Big One, destroy each Creature and each Artifact.
+//	After a creature is played, put a fuse counter on The Big One. If there are 10 or more fuse counters on The Big One, destroy each creature and each artifact.
 func TestTheBigOne(t *testing.T) {
 	t.Run("puts a fuse counter on itself after a creature is played", func(t *testing.T) {
 		var bomb, newbie ct.Card

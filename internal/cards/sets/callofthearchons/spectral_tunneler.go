@@ -7,17 +7,17 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Logos
 //	Type:   Artifact
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Item
 //
-//	Action: Choose a Creature - for the remainder of the turn, it is considered a flank Creature, and it gains, "Reap: Draw a card."
+//	Action: Choose a creature - for the remainder of the turn, it is considered a flank creature, and it gains, "Reap: Draw a card."
 var SpectralTunneler = set.New(
 	"Spectral Tunneler",
 	card.House.Logos,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "133"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.Action, card.ChooseCreatureThen{

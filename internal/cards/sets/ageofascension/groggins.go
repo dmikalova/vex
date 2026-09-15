@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  8
 //	Traits: Giant
 //
-//	Groggins can only fight flank Creatures.
+//	Groggins can only fight flank creatures.
 var Groggins = set.New(
 	"Groggins",
 	card.House.Brobnar,

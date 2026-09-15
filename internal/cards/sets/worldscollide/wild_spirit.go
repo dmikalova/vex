@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Untamed
 //	Type:   Upgrade
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Reap: this Creature captures 1 Æmber from your opponent."
+//	This creature gains, "Reap: this creature captures 1 Æmber from your opponent."
 var WildSpirit = set.New(
 	"Wild Spirit",
 	card.House.Untamed,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "384"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Reap,

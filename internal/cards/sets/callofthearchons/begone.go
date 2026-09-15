@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //
 //	Play: Choose one:
-//	- Destroy each Dis Creature
+//	- Destroy each Dis creature
 //	- Gain 1 Æmber.
 var Begone = set.New(
 	"Begone!",

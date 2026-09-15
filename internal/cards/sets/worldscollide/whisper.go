@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Elf • Thief
 //
 //	Elusive.
-//	Action: Lose 1 Æmber -> destroy a Creature.
+//	Action: Lose 1 Æmber -> destroy a creature.
 var Whisper = set.New(
 	"Whisper",
 	card.House.Shadows,

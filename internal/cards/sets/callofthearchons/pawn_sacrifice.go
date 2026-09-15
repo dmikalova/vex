@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Destroy a friendly Creature -> deal 3 damage to a Creature and deal 3 damage to a different Creature.
+//	Play: Destroy a friendly creature -> deal 3 damage to a creature and deal 3 damage to a different creature.
 var PawnSacrifice = set.New(
 	"Pawn Sacrifice",
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, "279"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Then{
 			First: card.Destroy{Target: card.Target.FriendlyCreature},

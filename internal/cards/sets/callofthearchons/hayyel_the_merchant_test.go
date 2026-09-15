@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Human • Merchant
 //
-//	After you play an Artifact, gain 1 Æmber.
+//	After you play an artifact, gain 1 Æmber.
 func TestHayyelTheMerchant(t *testing.T) {
 	t.Run("gains 1 Æmber after you play an artifact", func(t *testing.T) {
 		var relic ct.Card

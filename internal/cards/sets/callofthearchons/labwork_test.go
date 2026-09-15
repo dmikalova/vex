@@ -12,7 +12,7 @@ import (
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Archive a card from your hand.
 func TestLabwork(t *testing.T) {

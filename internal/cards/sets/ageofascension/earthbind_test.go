@@ -12,9 +12,9 @@ import (
 //	House:  Untamed
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature cannot be used unless you have discarded a card from your hand this turn.
+//	This creature cannot be used unless you have discarded a card from your hand this turn.
 func TestEarthbind(t *testing.T) {
 	setup := func(t *testing.T, host *ct.Card) *ct.Harness {
 		t.Helper()

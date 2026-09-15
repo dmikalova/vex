@@ -16,7 +16,7 @@ import (
 //	Traits: Cyborg • Thief
 //
 //	Elusive.
-//	Reap: Use an enemy Artifact.
+//	Reap: Use an enemy artifact.
 func TestNexus(t *testing.T) {
 	var theirs, drawn ct.Card
 	h := ct.Play(t, ct.Setup{

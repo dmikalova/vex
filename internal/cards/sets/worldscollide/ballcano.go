@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Deal 4 damage to each Creature. Gain 2 chains.
+//	Play: Deal 4 damage to each creature. Gain 2 chains.
 var Ballcano = set.New(
 	"Ballcano",
 	card.House.Brobnar,

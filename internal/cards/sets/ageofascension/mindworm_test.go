@@ -16,7 +16,7 @@ import (
 //	Traits: Beast
 //
 //	Elusive.
-//	Before Fight: Deal damage equal to its power to each neighbor of the Creature Mindworm fights.
+//	Before Fight: Deal damage equal to its power to each neighbor of the creature Mindworm fights.
 func TestMindworm(t *testing.T) {
 	var worm, left, target, right ct.Card
 	h := ct.Play(t, ct.Setup{

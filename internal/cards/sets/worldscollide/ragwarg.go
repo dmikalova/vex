@@ -7,17 +7,17 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Brobnar
 //	Type:   Artifact
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Item
 //
-//	After a Creature reaps, if it is the first time a Creature has reaped this turn, deal 2 damage to it.
+//	After a creature reaps, if it is the first time a creature has reaped this turn, deal 2 damage to it.
 var Ragwarg = set.New(
 	"Ragwarg",
 	card.House.Brobnar,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "27"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.AfterCreatureReaps, card.Conditional{

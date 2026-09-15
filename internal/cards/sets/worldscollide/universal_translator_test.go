@@ -12,9 +12,9 @@ import (
 //	House:  Star Alliance
 //	Type:   Upgrade
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Fight/Reap: Use a non-Star Alliance Creature."
+//	This creature gains, "Fight/Reap: Use a non-Star Alliance creature."
 func TestUniversalTranslator(t *testing.T) {
 	t.Run(
 		"its host may use a friendly non-Star Alliance creature when it reaps",

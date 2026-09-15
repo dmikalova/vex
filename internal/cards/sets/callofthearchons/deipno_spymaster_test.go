@@ -16,7 +16,7 @@ import (
 //	Traits: Elf • Thief
 //
 //	Elusive, Versatile.
-//	Action: Use a friendly Creature.
+//	Action: Use a friendly creature.
 func TestDeipnoSpymaster(t *testing.T) {
 	t.Run("Action uses a chosen friendly creature (Worker reaps)", func(t *testing.T) {
 		var worker ct.Card

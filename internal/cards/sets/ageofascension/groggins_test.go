@@ -16,7 +16,7 @@ import (
 //	Power:  8
 //	Traits: Giant
 //
-//	Groggins can only fight flank Creatures.
+//	Groggins can only fight flank creatures.
 func TestGroggins(t *testing.T) {
 	t.Run("can only fight flank creatures", func(t *testing.T) {
 		var groggins, left, middle ct.Card

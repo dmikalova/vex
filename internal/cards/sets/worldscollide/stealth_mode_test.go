@@ -13,9 +13,9 @@ import (
 //	House:  Star Alliance
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Until the end of your next turn, players cannot play Tactics.
+//	Play: Until the end of your next turn, players cannot play tactics.
 func TestStealthMode(t *testing.T) {
 	t.Run(
 		"bars both players from playing Tactics until the end of the caster's next turn",

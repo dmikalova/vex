@@ -56,6 +56,13 @@ func (g *Game) cannotBeUsedTo(id LocalID, kind UseKind) bool {
 			return true
 		}
 	}
+	for _, up := range g.upgradesOf(id) {
+		for _, k := range g.staticOn(id, up).CannotBeUsedTo {
+			if k == kind {
+				return true
+			}
+		}
+	}
 	for p := 0; p < 2; p++ {
 		for _, src := range g.allInPlay(p) {
 			for _, c := range g.cat.def(src).ConstantAbilities {

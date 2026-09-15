@@ -7,9 +7,9 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Connected
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Deal 2 damage to a friendly Creature.
+//	Play: Deal 2 damage to a friendly creature.
 var OrtannusBinding = set.New(
 	"Ortannu's Binding",
 	card.House.Dis,
@@ -17,7 +17,7 @@ var OrtannusBinding = set.New(
 	card.Rarity.Connected,
 	card.Provenance(card.AoA, "98"),
 	card.InCluster(card.Pulled(ortannuCluster, 2, 3)),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{
 			Amount: 2,

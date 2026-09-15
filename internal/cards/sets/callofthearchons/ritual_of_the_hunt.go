@@ -7,18 +7,18 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Untamed
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Power
 //
 //	Versatile.
-//	Action: Destroy Ritual of the Hunt. For the remainder of the turn, you may use friendly Untamed Creatures.
+//	Action: Destroy Ritual of the Hunt. For the remainder of the turn, you may use friendly Untamed creatures.
 var RitualOfTheHunt = set.New(
 	"Ritual of the Hunt",
 	card.House.Untamed,
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "343"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Power),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(card.Trigger.Action, card.Sentences{Effects: []card.Effect{

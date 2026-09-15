@@ -12,7 +12,7 @@ import (
 //	House:  Sanctum
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  3
+//	Bonus:  Æmber Æmber Æmber
 func TestVirtuousWorks(t *testing.T) {
 	t.Run("gains 3 Æmber when played", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

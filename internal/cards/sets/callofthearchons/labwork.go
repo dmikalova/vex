@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Archive a card from your hand.
 var Labwork = set.New(
@@ -16,7 +16,7 @@ var Labwork = set.New(
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, "114"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play,
 		card.ArchiveCard{Zone: card.Hand, Selection: card.Chosen{}},

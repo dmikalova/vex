@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Untamed
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Location
 //
 //	Each player's keys cost +1 Æmber for each growth counter on Vineapple Tree.
@@ -19,7 +19,7 @@ var VineappleTree = set.New(
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "402"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Location),
 	card.WithKeyCost(
 		card.KeyCostChange(card.EachPlayer, 1).Per(card.CountersOnThis{Kind: card.Counter.Growth})),

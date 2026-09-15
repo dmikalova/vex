@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: If you used 3 or more Creatures this turn, steal 2 Æmber.
+//	Play: If you used 3 or more creatures this turn, steal 2 Æmber.
 var Stampede = set.New(
 	"Stampede",
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "335"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
 			Cond: card.CountIs{

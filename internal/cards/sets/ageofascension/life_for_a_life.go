@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Destroy a friendly Creature -> deal 6 damage to a Creature.
+//	Play: Destroy a friendly creature -> deal 6 damage to a creature.
 var LifeForALife = set.New(
 	"Life for a Life",
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.AoA, "273"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Then{
 			First:  card.Destroy{Target: card.Target.FriendlyCreature},

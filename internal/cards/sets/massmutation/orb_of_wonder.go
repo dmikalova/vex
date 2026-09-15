@@ -1,23 +1,22 @@
-package anomalyexpansion
+package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Orb of Wonder
 //
-//	House:  Brobnar
+//	House:  Sanctum
 //	Type:   Artifact
-//	Rarity: Special
+//	Rarity: Rare
 //	Traits: Item
 //
 //	Versatile.
 //	Action: Destroy Orb of Wonder -> search your deck for a card and put it into your hand. Shuffle your deck.
 var OrbOfWonder = set.New(
 	"Orb of Wonder",
-	card.House.Brobnar,
+	card.House.Sanctum,
 	card.Type.Artifact,
-	// Rarity relabelled from FIXED to Special.
-	card.Rarity.Special,
-	card.Provenance(card.WC, "A06"),
+	card.Rarity.Rare,
+	card.Provenance(card.MM, "173"),
 	card.WithTraits(card.Traits.Item),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(

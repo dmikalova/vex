@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Ready and fight with a friendly Creature. Deal 2 damage to each neighbor of the fought Creature.
+//	Play: Ready and fight with a friendly creature. Deal 2 damage to each neighbor of the fought creature.
 func TestSmite(t *testing.T) {
 	var champion, leftFoe, victim, rightFoe ct.Card
 	h := ct.Play(t, ct.Setup{

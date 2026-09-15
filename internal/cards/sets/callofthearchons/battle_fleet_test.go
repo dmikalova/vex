@@ -12,7 +12,7 @@ import (
 //	House:  Mars
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Reveal any number of Mars cards from your hand, and for each card revealed this way, draw a card.
 func TestBattleFleet(t *testing.T) {

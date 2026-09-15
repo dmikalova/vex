@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Logos
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Item
 //
 //	Each player's keys cost +3 Æmber.
@@ -18,7 +18,7 @@ var UniversalKeylock = set.New(
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "178"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Item),
 	card.WithKeyCost(card.KeyCostChange(card.EachPlayer, 3)),
 	card.WithAbility(

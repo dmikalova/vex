@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Choose a house - your opponent must choose that house as their active house during their next turn.
 var ControlTheWeak = set.New(
@@ -16,7 +16,7 @@ var ControlTheWeak = set.New(
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, "55"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseHouseThen{
 			Then: card.MustChooseHouse{

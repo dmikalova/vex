@@ -15,11 +15,11 @@ var molinasBlasterCluster = card.Cluster{
 //	House:  Star Alliance
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Fight/Reap: Choose one:
-//	- Deal 2 damage to a Creature
-//	- Attach Molina's Blaster to Armsmaster Molina -> deal 3 damage to a Creature."
+//	This creature gains, "Fight/Reap: Choose one:
+//	- Deal 2 damage to a creature
+//	- Attach Molina's Blaster to Armsmaster Molina -> deal 3 damage to a creature."
 var MolinasBlaster = set.New(
 	"Molina's Blaster",
 	card.House.StarAlliance,
@@ -27,7 +27,7 @@ var MolinasBlaster = set.New(
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "302"),
 	card.LeadsCluster(molinasBlasterCluster),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightReap(card.ChooseOne{Options: []card.Effect{
 			card.DealDamage{Amount: 2, Target: card.Target.Creature},

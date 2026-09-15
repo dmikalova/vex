@@ -16,7 +16,7 @@ import (
 //	Traits: Martian • Scientist
 //
 //	Elusive.
-//	Reap: Put an enemy Creature into your archives.
+//	Reap: Put an enemy creature into your archives.
 func TestUxlyxTheZookeeper(t *testing.T) {
 	t.Run("abducts an enemy creature, which goes home when the archives empty", func(t *testing.T) {
 		var uxlyx, prey ct.Card

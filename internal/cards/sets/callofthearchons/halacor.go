@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Beast
 //
-//	Each friendly flank Creature gains skirmish.
+//	Each friendly flank creature gains skirmish.
 var Halacor = set.New(
 	"Halacor",
 	card.House.Untamed,

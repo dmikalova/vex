@@ -15,7 +15,7 @@ import (
 //	Power:  4
 //	Traits: Beast
 //
-//	Each friendly flank Creature gains skirmish.
+//	Each friendly flank creature gains skirmish.
 func TestHalacor(t *testing.T) {
 	t.Run("grants skirmish to friendly flank creatures", func(t *testing.T) {
 		var ally, foe ct.Card

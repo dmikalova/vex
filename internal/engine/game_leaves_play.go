@@ -105,6 +105,12 @@ func (g *Game) removeFromPlay(id LocalID) {
 	g.clearCounters(id)
 	g.releaseControlHeldBy(id)
 	g.unlistFromPlay(id)
+	// An attached upgrade is listed in its host's upgrade chain, not a battleline
+	// or artifact row, so unlink it there too — otherwise a leave-play mover
+	// (ArchiveFromPlay on "each upgrade on <self>", Away Team) leaves it dangling
+	// on the host, which then re-sheds it to the discard pile. A no-op for anything
+	// not attached.
+	g.detachUpgrade(id)
 	g.clearControls(id)
 }
 

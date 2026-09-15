@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Play a Tactic from your opponent's discard pile.
+//	Play: Play a tactic from your opponent's discard pile.
 var Mimicry = set.New(
 	"Mimicry",
 	card.House.Untamed,

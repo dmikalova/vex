@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human • Witch
 //
 //	Omega, Elusive.
-//	Your Creatures enter play ready.
+//	Your creatures enter play ready.
 var Duskwitch = set.New(
 	"Duskwitch",
 	card.House.Untamed,

@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Alpha.
 //	Play: Gain 2 Æmber. Archive 2 random cards from your hand.
@@ -17,7 +17,7 @@ var Eureka = set.New(
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.AoA, "128"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithKeywords(card.Keyword.Alpha),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{

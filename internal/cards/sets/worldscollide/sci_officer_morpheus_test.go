@@ -16,7 +16,7 @@ import (
 //	Armor:  1
 //	Traits: Shapeshifter • Scientist
 //
-//	After a Creature is played, if it is a friendly Creature, trigger the play effect of it.
+//	After a creature is played, if it is a friendly creature, trigger the play effect of it.
 func TestSciOfficerMorpheus(t *testing.T) {
 	t.Run("re-triggers a friendly creature's play effect", func(t *testing.T) {
 		var dux ct.Card

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Dinosaur • Priest
 //
-//	Each friendly Creature's play effect is a play/reap effect.
+//	Each friendly creature's play effect is a play/reap effect.
 var KompsosHaruspex = set.New(
 	"Kompsos Haruspex",
 	card.House.Saurian,

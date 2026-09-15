@@ -16,7 +16,7 @@ import (
 //	Traits: Human
 //
 //	Elusive.
-//	Play/Fight/Reap: You may put an Upgrade or Robot card from your discard pile into your hand.
+//	Play/Fight/Reap: You may put an upgrade or Robot card from your discard pile into your hand.
 func TestChiefEngineerWalls(t *testing.T) {
 	// discardSetup seeds the discard with an upgrade, a Robot creature, and a
 	// non-matching Human creature, and binds the two matching cards.

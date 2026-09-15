@@ -17,7 +17,7 @@ import (
 //	Traits: Dragon • Psion
 //
 //	While fighting, Nizak, The Forgotten gains invulnerable.
-//	After a Creature is destroyed in a fight with Nizak, The Forgotten, put it into its owner's hand.
+//	After a creature is destroyed in a fight with Nizak, The Forgotten, put it into its owner's hand.
 func TestNizakTheForgotten(t *testing.T) {
 	t.Run("an enemy that fights it dies and returns to its owner's hand", func(t *testing.T) {
 		var nizak, attacker ct.Card

@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Deal 3 damage to a Creature. If it is not destroyed, its owner discards a random card from their hand.
+//	Play: Deal 3 damage to a creature. If it is not destroyed, its owner discards a random card from their hand.
 var Gongoozle = set.New(
 	"Gongoozle",
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "60"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(card.Trigger.Play, card.DamageThen{
 		Amount: 3,
 		After:  card.IfSurvives,

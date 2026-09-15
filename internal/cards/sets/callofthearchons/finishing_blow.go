@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Destroy a damaged Creature -> steal 1 Æmber.
+//	Play: Destroy a damaged creature -> steal 1 Æmber.
 var FinishingBlow = set.New(
 	"Finishing Blow",
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "269"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Then{
 			First:  card.Destroy{Target: card.Target.Creature.Damaged()},

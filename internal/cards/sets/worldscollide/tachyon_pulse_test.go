@@ -12,9 +12,9 @@ import (
 //	House:  Star Alliance
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Destroy each Artifact, and exhaust each Creature with an Upgrade.
+//	Play: Destroy each artifact, and exhaust each creature with an upgrade.
 func TestTachyonPulse(t *testing.T) {
 	t.Run("destroys each artifact and exhausts each upgraded creature", func(t *testing.T) {
 		var artifact, upgraded, plain ct.Card

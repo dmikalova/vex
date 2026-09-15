@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Choose a Creature - fully heal it, and for the remainder of the turn, it belongs to house Sanctum and cannot be dealt damage.
+//	Play: Choose a creature - fully heal it, and for the remainder of the turn, it belongs to house Sanctum and cannot be dealt damage.
 var GoldenAura = set.New(
 	"Golden Aura",
 	card.House.Sanctum,

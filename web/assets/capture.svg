@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <title>Capture</title>
+  <path d="M5 4 H9 V6 H7 V18 H9 V20 H5 Z" fill="#7c5cff"/>
+  <path d="M19 4 H15 V6 H17 V18 H15 V20 H19 Z" fill="#7c5cff"/>
+  <path d="M12 8 15 12 12 16 9 12Z" fill="#f0b429" stroke="#a9791a" stroke-width="0.75" stroke-linejoin="round"/>
+</svg>

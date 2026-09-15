@@ -15,7 +15,7 @@ import (
 //	Power:  2
 //	Traits: Goblin
 //
-//	Before Fight: Deal 5 damage to each neighbor of the Creature Bingle Bangbang fights.
+//	Before Fight: Deal 5 damage to each neighbor of the creature Bingle Bangbang fights.
 func TestBingleBangbang(t *testing.T) {
 	t.Run("deals 5 damage to each neighbor of the creature it fights", func(t *testing.T) {
 		var left, middle, right ct.Card

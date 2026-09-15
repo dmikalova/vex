@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Goblin
 //
-//	Play: Put each other friendly Brobnar Creature into its owner's hand.
+//	Play: Put each other friendly Brobnar creature into its owner's hand.
 var Wardrummer = set.New(
 	"Wardrummer",
 	card.House.Brobnar,

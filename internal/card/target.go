@@ -36,6 +36,7 @@ var Target = targets{
 	EnemyArtifact:              engine.Target{Kind: engine.TargetChosenEnemyArtifact},
 	FormerNeighbors:            engine.Target{Kind: engine.TargetFormerNeighbors},
 	EachNeighbor:               engine.Target{Kind: engine.TargetEachNeighbor},
+	EachUpgradeOnThis:          engine.Target{Kind: engine.TargetEachUpgradeOnThis},
 	TheFoughtCreature:          engine.Target{Kind: engine.TargetTheFoughtCreature},
 	AttachedHost:               engine.Target{Kind: engine.TargetAttachedHost},
 	GrantingCard:               engine.Target{Kind: engine.TargetGrantingCard},
@@ -100,6 +101,9 @@ type targets struct {
 	// EachNeighbor selects the source card's live battleline neighbors ("each of
 	// <self>'s neighbors") — Ghosthawk reaps with each of its neighbors.
 	EachNeighbor engine.Target
+	// EachUpgradeOnThis selects the upgrades attached to the source card ("each
+	// upgrade on <self>") — Away Team archives its own upgrades when destroyed.
+	EachUpgradeOnThis engine.Target
 	// TheFoughtCreature selects the creature a preceding effect had a chosen creature
 	// fight ("the fought creature"), naming no fighter — Smite makes a friendly
 	// creature fight, then damages the fought creature's neighbors.

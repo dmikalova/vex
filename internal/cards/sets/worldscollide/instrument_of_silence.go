@@ -8,8 +8,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Upgrade
 //	Rarity: Uncommon
 //
-//	This Creature gains skirmish.
-//	This Creature gains, "Fight: Gain 1 Æmber."
+//	This creature gains skirmish.
+//	This creature gains, "Fight: Gain 1 Æmber."
 var InstrumentOfSilence = set.New(
 	"Instrument of Silence",
 	card.House.Untamed,

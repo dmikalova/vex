@@ -16,7 +16,7 @@ import (
 //	Traits: Beast
 //
 //	Skirmish.
-//	If you have used a Creature to reap this turn, Bramble Lynx enters play ready.
+//	If you have used a creature to reap this turn, Bramble Lynx enters play ready.
 func TestBrambleLynx(t *testing.T) {
 	t.Run("enters play ready once you have reaped this turn", func(t *testing.T) {
 		var lynx, reaper ct.Card

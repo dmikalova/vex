@@ -15,9 +15,9 @@ var shortysBrewCluster = card.Cluster{
 //	House:  Brobnar
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains +4 assault.
+//	This creature gains +4 assault.
 var ShortysBrew = set.New(
 	"Shorty's Brew",
 	card.House.Brobnar,
@@ -25,7 +25,7 @@ var ShortysBrew = set.New(
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "68"),
 	card.LeadsCluster(shortysBrewCluster),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		AssaultBonus: 4,
 	}),

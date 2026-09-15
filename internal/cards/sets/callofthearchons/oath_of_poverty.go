@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Sanctum
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Destroy each friendly Artifact. For each card destroyed this way, gain 2 Æmber.
+//	Play: Destroy each friendly artifact. For each card destroyed this way, gain 2 Æmber.
 var OathOfPoverty = set.New(
 	"Oath of Poverty",
 	card.House.Sanctum,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "222"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 		card.Destroy{Target: card.Target.EachFriendlyArtifact},
 		card.GainAember{

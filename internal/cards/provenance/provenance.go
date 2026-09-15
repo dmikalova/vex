@@ -77,7 +77,7 @@ var (
 	VaultMasters2024  = SourceSet{"vaultmasters2024", "VM24", "Vault Masters 2024"}
 	AemberSkies       = SourceSet{"aemberskies", "AS", "Æmber Skies"}
 	TokensOfChange    = SourceSet{"tokensofchange", "ToC", "Tokens of Change"}
-	MoreMutation      = SourceSet{"moremutation", "MoM", "More Mutation"}
+	MoreMutation      = SourceSet{"moremutation", "MoMu", "More Mutation"}
 	PropheticVisions  = SourceSet{"propheticvisions", "PV", "Prophetic Visions"}
 	MartianCivilWar   = SourceSet{"martiancivilwar", "MCW", "Martian Civil War"}
 	Discovery         = SourceSet{"discovery", "D", "Discovery"}

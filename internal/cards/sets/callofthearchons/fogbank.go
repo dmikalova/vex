@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Your opponent cannot use Creatures to fight during their next turn.
+//	Play: Your opponent cannot use creatures to fight during their next turn.
 var Fogbank = set.New(
 	"Fogbank",
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "322"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Restrict{
 			Player:   card.Opponent,

@@ -26,7 +26,7 @@ func upgradeOrRobot(d card.Definition) bool {
 //	Traits: Human
 //
 //	Elusive.
-//	Play/Fight/Reap: You may put an Upgrade or Robot card from your discard pile into your hand.
+//	Play/Fight/Reap: You may put an upgrade or Robot card from your discard pile into your hand.
 var ChiefEngineerWalls = set.New(
 	"Chief Engineer Walls",
 	card.House.StarAlliance,

@@ -12,7 +12,7 @@ import (
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Swap your deck and your discard pile, then shuffle your deck.
 func TestReverseTime(t *testing.T) {

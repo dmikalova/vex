@@ -17,7 +17,7 @@ import (
 //
 //	Deploy.
 //	Crash Muldoon enters play ready.
-//	Action: Use a neighboring non-Star Alliance Creature.
+//	Action: Use a neighboring non-Star Alliance creature.
 func TestCrashMuldoon(t *testing.T) {
 	t.Run("uses a neighboring non-Star Alliance creature", func(t *testing.T) {
 		var crash, neighbor ct.Card

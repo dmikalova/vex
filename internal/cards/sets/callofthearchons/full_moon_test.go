@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: For the remainder of the turn, each time you play a Creature, gain 1 Æmber.
+//	Play: For the remainder of the turn, each time you play a creature, gain 1 Æmber.
 func TestFullMoon(t *testing.T) {
 	t.Run("gains 1 Æmber for each creature played after it this turn", func(t *testing.T) {
 		var c1, c2 ct.Card

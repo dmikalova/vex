@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Purge a Creature with power 3 or lower.
+//	Play: Purge a creature with power 3 or lower.
 func TestOubliette(t *testing.T) {
 	t.Run("purges a creature with power 3 or lower", func(t *testing.T) {
 		var weak, strong ct.Card

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  1
 //	Traits: Robot
 //
-//	If this Creature would be destroyed and there is another friendly Creature in play, instead fully heal it, exhaust it, move it to either flank of its controller's battleline, and give it two +1 power counters.
+//	If this creature would be destroyed and there is another friendly creature in play, instead fully heal it, exhaust it, move it to either flank of its controller's battleline, and give it two +1 power counters.
 var SelfBolsteringAutomata = set.New(
 	"Self-Bolstering Automata",
 	card.House.Logos,

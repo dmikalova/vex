@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Traits: Item
 //
-//	After an enemy Creature reaps, if it is the first time a Creature has reaped this turn, stun it.
+//	After an enemy creature reaps, if it is the first time a creature has reaped this turn, stun it.
 var AemberConductionUnit = set.New(
 	"Aember Conduction Unit",
 	card.House.Mars,

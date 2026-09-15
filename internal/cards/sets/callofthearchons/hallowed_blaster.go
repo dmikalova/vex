@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Traits: Weapon
 //
-//	Action: Heal 3 damage from a Creature.
+//	Action: Heal 3 damage from a creature.
 var HallowedBlaster = set.New(
 	"Hallowed Blaster",
 	card.House.Sanctum,

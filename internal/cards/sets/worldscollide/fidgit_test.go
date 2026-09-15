@@ -17,7 +17,7 @@ import (
 //	Traits: Faerie • Thief
 //
 //	Elusive.
-//	Reap: Discard a random card from your opponent's archives or the top card of their deck. If that card is a Tactic, play it as if it were yours.
+//	Reap: Discard a random card from your opponent's archives or the top card of their deck. If that card is a tactic, play it as if it were yours.
 func TestFidgit(t *testing.T) {
 	t.Run("discards and plays a Tactic from the opponent's archives", func(t *testing.T) {
 		var tactic ct.Card

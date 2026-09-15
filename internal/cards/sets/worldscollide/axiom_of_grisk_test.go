@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Ward a Creature. Destroy each Creature with no Æmber on it. Gain 2 chains.
+//	Play: Ward a creature. Destroy each creature with no Æmber on it. Gain 2 chains.
 func TestAxiomOfGrisk(t *testing.T) {
 	t.Run("wards one, destroys the rest without Æmber, gains 2 chains", func(t *testing.T) {
 		var warded, bare, rich ct.Card

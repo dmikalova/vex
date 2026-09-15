@@ -16,7 +16,7 @@ import (
 //	Armor:  1
 //	Traits: Giant
 //
-//	Before Fight: Deal 1 damage to each enemy Creature.
+//	Before Fight: Deal 1 damage to each enemy creature.
 func TestFirespitter(t *testing.T) {
 	t.Run("deals 1 damage to each enemy creature before fighting", func(t *testing.T) {
 		var weak, tough ct.Card

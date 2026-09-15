@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Ready and use a friendly Creature.
+//	Play: Ready and use a friendly creature.
 func TestInspiration(t *testing.T) {
 	t.Run("readies and uses a friendly creature to reap", func(t *testing.T) {
 		var ally ct.Card

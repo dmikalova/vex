@@ -7,18 +7,18 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Shadows
 //	Type:   Artifact
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Weapon
 //
 //	Versatile.
-//	Action: Destroy Spike Trap -> deal 3 damage to each flank Creature.
+//	Action: Destroy Spike Trap -> deal 3 damage to each flank creature.
 var SpikeTrap = set.New(
 	"Spike Trap",
 	card.House.Shadows,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "261"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Weapon),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(

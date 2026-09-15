@@ -12,7 +12,7 @@ import (
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  4
+//	Bonus:  Æmber Æmber Æmber Æmber
 //
 //	Play: Your opponent gains 2 Æmber.
 func TestFertilityChant(t *testing.T) {

@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Deal 3 damage to a Creature and 3 damage to a neighbor of that Creature.
+//	Play: Deal 3 damage to a creature and 3 damage to a neighbor of that creature.
 var MightyLance = set.New(
 	"Mighty Lance",
 	card.House.Sanctum,

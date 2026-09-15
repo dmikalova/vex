@@ -12,7 +12,7 @@ import (
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Your opponent skips the "forge a key" phase during their next turn.
 func TestMiasma(t *testing.T) {

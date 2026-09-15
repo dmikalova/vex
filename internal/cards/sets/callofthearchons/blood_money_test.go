@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Exalt an enemy Creature 2 times.
+//	Play: Exalt an enemy creature 2 times.
 func TestBloodMoney(t *testing.T) {
 	t.Run("exalts a chosen enemy creature twice", func(t *testing.T) {
 		var foe ct.Card

@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Put up to 2 enemy Creatures into their owners' hands.
+//	Play: Put up to 2 enemy creatures into their owners' hands.
 var LightsOut = set.New(
 	"Lights Out",
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "274"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.PutChosen{
 			Amount:      2,

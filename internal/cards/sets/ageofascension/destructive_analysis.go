@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Mars
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Deal 2 damage to a Creature and purge any number of cards from your archives, and for each card purged this way, deal 2 damage to it.
+//	Play: Deal 2 damage to a creature and purge any number of cards from your archives, and for each card purged this way, deal 2 damage to it.
 var DestructiveAnalysis = set.New(
 	"Destructive Analysis",
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, "194"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.DamageThen{
 			Amount: 2,

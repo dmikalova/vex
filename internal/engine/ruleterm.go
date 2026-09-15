@@ -32,6 +32,7 @@ const (
 	SectionCombat   Section = "combat"
 	SectionCardType Section = "cardtype"
 	SectionKeyword  Section = "keyword"
+	SectionBonus    Section = "bonus"
 	SectionAbility  Section = "ability"
 	SectionEffect   Section = "effect"
 )

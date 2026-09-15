@@ -12,9 +12,9 @@ import (
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Choose a Creature - for each Æmber in your pool, deal 1 damage to the chosen Creature.
+//	Play: Choose a creature - for each Æmber in your pool, deal 1 damage to the chosen creature.
 func TestSackOfCoins(t *testing.T) {
 	t.Run("deals 1 damage per aember in your pool", func(t *testing.T) {
 		var foe ct.Card

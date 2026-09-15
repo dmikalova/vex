@@ -7,18 +7,18 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Brobnar
 //	Type:   Artifact
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Weapon
 //
 //	Versatile.
-//	Action: Destroy Mighty Javelin. Deal 4 damage to a Creature.
+//	Action: Destroy Mighty Javelin. Deal 4 damage to a creature.
 var MightyJavelin = set.New(
 	"Mighty Javelin",
 	card.House.Brobnar,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "24"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Weapon),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(

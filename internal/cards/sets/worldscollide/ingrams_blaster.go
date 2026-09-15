@@ -15,11 +15,11 @@ var ingramsBlasterCluster = card.Cluster{
 //	House:  Star Alliance
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Fight/Reap: Choose one:
-//	- Deal 2 damage to a Creature
-//	- Attach Ingram's Blaster to Medic Ingram -> fully heal a Creature."
+//	This creature gains, "Fight/Reap: Choose one:
+//	- Deal 2 damage to a creature
+//	- Attach Ingram's Blaster to Medic Ingram -> fully heal a creature."
 var IngramsBlaster = set.New(
 	"Ingram's Blaster",
 	card.House.StarAlliance,
@@ -27,7 +27,7 @@ var IngramsBlaster = set.New(
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "348"),
 	card.LeadsCluster(ingramsBlasterCluster),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightReap(card.ChooseOne{Options: []card.Effect{
 			card.DealDamage{Amount: 2, Target: card.Target.Creature},

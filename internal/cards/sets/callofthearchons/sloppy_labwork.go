@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Archive a card from your hand. Discard a card from your hand.
 var SloppyLabwork = set.New(
@@ -16,7 +16,7 @@ var SloppyLabwork = set.New(
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "123"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(card.Trigger.Play, card.Sentences{
 		Effects: []card.Effect{
 			card.ArchiveCard{Zone: card.Hand, Selection: card.Chosen{}},

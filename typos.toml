@@ -9,6 +9,8 @@ caf = "caf"
 Theyre = "Theyre" # They're Everywhere
 theyre = "theyre"
 Frane = "Frane" # First Officer Frane
+Optio = "Optio" # Optio Gorkus (Saurian rank, not "Option")
+optio = "optio"
 # Identity mapping: leave the possessive-stripped token "Franes" alone. It must
 # NOT map to a different value (e.g. "Franes'") — an active correction would
 # rewrite the identifiers in cardlookup's name tests on every commit.

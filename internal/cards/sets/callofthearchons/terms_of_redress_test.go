@@ -12,9 +12,9 @@ import (
 //	House:  Sanctum
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: A friendly Creature captures 2 Æmber from your opponent.
+//	Play: A friendly creature captures 2 Æmber from your opponent.
 func TestTermsOfRedress(t *testing.T) {
 	t.Run("a friendly creature captures 2 Æmber from the opponent", func(t *testing.T) {
 		var ally ct.Card

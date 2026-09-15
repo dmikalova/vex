@@ -12,7 +12,7 @@ import (
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Archive a card from your hand. Discard a card from your hand.
 func TestSloppyLabwork(t *testing.T) {

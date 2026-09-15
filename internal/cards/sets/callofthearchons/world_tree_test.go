@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Traits: Location
 //
-//	Action: Put a Creature from your discard pile on top of your deck.
+//	Action: Put a creature from your discard pile on top of your deck.
 func TestWorldTree(t *testing.T) {
 	t.Run("returns a creature from the discard pile to the top of the deck", func(t *testing.T) {
 		var ghost ct.Card

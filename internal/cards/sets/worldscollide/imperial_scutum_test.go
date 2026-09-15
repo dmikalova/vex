@@ -12,10 +12,10 @@ import (
 //	House:  Saurian
 //	Type:   Upgrade
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains +2 armor.
-//	This Creature gains, "Destroyed: Move each Æmber on this Creature to the common supply."
+//	This creature gains +2 armor.
+//	This creature gains, "Destroyed: Move each Æmber on this creature to the common supply."
 func TestImperialScutum(t *testing.T) {
 	t.Run("grants +2 armor", func(t *testing.T) {
 		var host ct.Card

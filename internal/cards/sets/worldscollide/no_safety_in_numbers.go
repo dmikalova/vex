@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Deal 3 damage to each Creature that belongs to a house that has 3 or more Creatures in play.
+//	Play: Deal 3 damage to each creature that belongs to a house that has 3 or more creatures in play.
 var NoSafetyInNumbers = set.New(
 	"No Safety in Numbers",
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "257"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{
 			Amount: 3,

@@ -15,7 +15,7 @@ import (
 //	Power:  5
 //	Traits: Horseman • Spirit
 //
-//	Play/Fight/Reap: Destroy the least powerful Creature.
+//	Play/Fight/Reap: Destroy the least powerful creature.
 func TestHorsemanOfFamine(t *testing.T) {
 	t.Run("destroys the least powerful creature when played", func(t *testing.T) {
 		var weak, strong ct.Card

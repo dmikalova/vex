@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Choose 3 friendly Creatures and 3 enemy Creatures - destroy each other Creature.
+//	Play: Choose 3 friendly creatures and 3 enemy creatures - destroy each other creature.
 var UnnaturalSelection = set.New(
 	"Unnatural Selection",
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "367"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Destroy{
 			Target: card.Target.EachCreature.Refine(card.KeepPerSide(3)),

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Elf • Thief
 //
 //	Elusive, Skirmish.
-//	After you play an Artifact, steal 1 Æmber.
+//	After you play an artifact, steal 1 Æmber.
 var CarloPhantom = set.New(
 	"Carlo Phantom",
 	card.House.Shadows,

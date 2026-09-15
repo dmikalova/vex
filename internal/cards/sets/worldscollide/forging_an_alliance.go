@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Star Alliance
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Forge a key at +7 Æmber current cost, reduced by 1 Æmber for each house represented among cards in play -> purge Forging an Alliance.
 var ForgingAnAlliance = set.New(
@@ -16,7 +16,7 @@ var ForgingAnAlliance = set.New(
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "331"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.ForgeKey{
 			Extra: 7,

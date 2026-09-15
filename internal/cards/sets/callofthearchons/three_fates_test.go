@@ -12,9 +12,9 @@ import (
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Destroy the 3 most powerful Creatures.
+//	Play: Destroy the 3 most powerful creatures.
 func TestThreeFates(t *testing.T) {
 	t.Run("destroys the three most powerful creatures", func(t *testing.T) {
 		var big, mid, small, weak ct.Card

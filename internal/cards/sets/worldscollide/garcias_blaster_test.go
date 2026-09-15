@@ -12,10 +12,10 @@ import (
 //	House:  Star Alliance
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Fight/Reap: Choose one:
-//	- Deal 2 damage to a Creature
+//	This creature gains, "Fight/Reap: Choose one:
+//	- Deal 2 damage to a creature
 //	- Attach Garcia's Blaster to Sensor Chief Garcia -> steal 1 Æmber."
 func TestGarciasBlaster(t *testing.T) {
 	t.Run("attaches to Garcia and steals 1 Æmber", func(t *testing.T) {

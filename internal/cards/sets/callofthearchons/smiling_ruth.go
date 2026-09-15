@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Elf • Thief
 //
 //	Elusive.
-//	Reap: If you forged a key this turn, take control of an enemy flank Creature.
+//	Reap: If you forged a key this turn, take control of an enemy flank creature.
 var SmilingRuth = set.New(
 	"Smiling Ruth",
 	card.House.Shadows,

@@ -7,17 +7,17 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Sanctum
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains +1 armor.
-//	Play: Fully heal this Creature.
+//	This creature gains +1 armor.
+//	Play: Fully heal this creature.
 var SeraphicArmor = set.New(
 	"Seraphic Armor",
 	card.House.Sanctum,
 	card.Type.Upgrade,
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, "263"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{ArmorBonus: 1}),
 	card.WithAbility(
 		card.Trigger.Play, card.Heal{Fully: true, Target: card.Target.This}),

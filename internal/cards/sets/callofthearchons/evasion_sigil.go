@@ -7,17 +7,17 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Shadows
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Power
 //
-//	Each Creature gains, "Before Fight: Discard the top card of its controller's deck. If it is of the active house, the fight does not occur."
+//	Each creature gains, "Before Fight: Discard the top card of its controller's deck. If it is of the active house, the fight does not occur."
 var EvasionSigil = set.New(
 	"Evasion Sigil",
 	card.House.Shadows,
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "286"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Power),
 	card.WithConstant(card.ConstantAbility{
 		Target: card.Target.EachCreature,

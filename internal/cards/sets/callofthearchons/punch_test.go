@@ -12,9 +12,9 @@ import (
 //	House:  Brobnar
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Deal 3 damage to a Creature.
+//	Play: Deal 3 damage to a creature.
 func TestPunch(t *testing.T) {
 	t.Run("deals 3 damage to a chosen creature", func(t *testing.T) {
 		var foe ct.Card

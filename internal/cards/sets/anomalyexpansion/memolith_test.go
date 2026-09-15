@@ -15,7 +15,7 @@ import (
 //	Traits: Location
 //
 //	Action: Choose one:
-//	- Put a Tactic card from your hand faceup under Memolith
+//	- Put a tactic card from your hand faceup under Memolith
 //	- Trigger the play effect of a Tactic grafted onto Memolith.
 func TestMemolith(t *testing.T) {
 	// Memolith's action grafts a Tactic from hand; readied and used again, it
@@ -29,7 +29,7 @@ func TestMemolith(t *testing.T) {
 		card.House.Brobnar,
 		card.Type.Tactic,
 		card.Rarity.Common,
-		card.WithAemberBonus(1),
+		card.WithBonus(card.Bonus.Aember),
 		card.WithAbility(
 			card.Trigger.Play, card.Stun{
 				Target: card.Target.EachCreature.PowerAtMost(3),

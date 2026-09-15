@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Each friendly Creature captures 1 Æmber from your opponent.
+//	Play: Each friendly creature captures 1 Æmber from your opponent.
 var CityStateInterest = set.New(
 	"City-State Interest",
 	card.House.Saurian,

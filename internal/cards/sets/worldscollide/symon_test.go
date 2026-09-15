@@ -16,7 +16,7 @@ import (
 //	Traits: Alien • Thief
 //
 //	Skirmish.
-//	Fight: Put the Creature Symon fought on top of its owner's deck.
+//	Fight: Put the creature Symon fought on top of its owner's deck.
 func TestSymon(t *testing.T) {
 	t.Run("puts the creature it fought on top of its owner's deck", func(t *testing.T) {
 		var symon, foe ct.Card

@@ -7,7 +7,21 @@ import (
 	"github.com/maxence-charriere/go-app/v11/pkg/app"
 
 	"github.com/dmikalova/vactrol/internal/engine"
+	"github.com/dmikalova/vactrol/internal/match"
 )
+
+// TestDeckListRowShowsBonusIcons checks a roster card's bonus icons render to the
+// right of its name.
+func TestDeckListRowShowsBonusIcons(t *testing.T) {
+	def := engine.NewCard("Pips", engine.Brobnar, engine.Creature, engine.Common,
+		engine.WithPower(3), engine.WithBonus(engine.BonusAember, engine.BonusDamage))
+	html := app.HTMLString(deckListRow(match.RosterCard{Def: def}))
+	for _, want := range []string{"aember.svg", "damage.svg"} {
+		if !strings.Contains(html, want) {
+			t.Errorf("deck list row omits bonus icon %q: %s", want, html)
+		}
+	}
+}
 
 // TestDeckListShowsRoster checks the deck list draws from the retained roster: a
 // deck icon per player, a three-column popover, and a real card in every slot.

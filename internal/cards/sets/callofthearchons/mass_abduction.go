@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Mars
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Put up to 3 enemy damaged Creatures into your archives.
+//	Play: Put up to 3 enemy damaged creatures into your archives.
 var MassAbduction = set.New(
 	"Mass Abduction",
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "169"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.PutChosen{
 			Amount:      3,

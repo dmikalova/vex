@@ -12,9 +12,9 @@ import (
 //	House:  Star Alliance
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: For each house represented among Creatures in play, deal 1 damage to a Creature.
+//	Play: For each house represented among creatures in play, deal 1 damage to a creature.
 func TestZap(t *testing.T) {
 	t.Run("deals 1 damage per house represented among creatures in play", func(t *testing.T) {
 		var foe ct.Card

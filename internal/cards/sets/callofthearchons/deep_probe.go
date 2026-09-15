@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Mars
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Choose a house - reveal your opponent's hand, and discard each Creature of the chosen house from your opponent's hand.
+//	Play: Choose a house - reveal your opponent's hand, and discard each creature of the chosen house from your opponent's hand.
 var DeepProbe = set.New(
 	"Deep Probe",
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "162"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseHouseThen{
 			Then: card.Sequence{Effects: []card.Effect{

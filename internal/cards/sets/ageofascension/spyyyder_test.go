@@ -16,7 +16,7 @@ import (
 //	Traits: Demon
 //
 //	Skirmish.
-//	Spyyyder gains poison while attacking an enemy flank Creature.
+//	Spyyyder gains poison while attacking an enemy flank creature.
 func TestSpyyyder(t *testing.T) {
 	t.Run("poisons a flank creature it fights", func(t *testing.T) {
 		var flank ct.Card

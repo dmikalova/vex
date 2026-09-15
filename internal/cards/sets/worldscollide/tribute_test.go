@@ -12,9 +12,9 @@ import (
 //	House:  Saurian
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: The most powerful friendly Creature captures 2 Æmber from your opponent. You may exalt the chosen Creature to repeat the preceding effect.
+//	Play: The most powerful friendly creature captures 2 Æmber from your opponent. You may exalt the chosen creature to repeat the preceding effect.
 func TestTribute(t *testing.T) {
 	t.Run("the most powerful friendly creature captures 2", func(t *testing.T) {
 		var big ct.Card

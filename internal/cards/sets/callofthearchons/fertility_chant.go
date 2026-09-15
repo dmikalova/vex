@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  4
+//	Bonus:  Æmber Æmber Æmber Æmber
 //
 //	Play: Your opponent gains 2 Æmber.
 var FertilityChant = set.New(
@@ -16,7 +16,7 @@ var FertilityChant = set.New(
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "321"),
-	card.WithAemberBonus(4),
+	card.WithBonus(card.Bonus.Aember, card.Bonus.Aember, card.Bonus.Aember, card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.GainAember{
 			Player: card.Opponent,

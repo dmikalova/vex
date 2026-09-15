@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  7
 //	Traits: Giant
 //
-//	Each enemy Brobnar Creature gains -2 power.
+//	Each enemy Brobnar creature gains -2 power.
 var KingOfTheCrag = set.New(
 	"King of the Crag",
 	card.House.Brobnar,

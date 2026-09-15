@@ -12,10 +12,10 @@ import (
 //	House:  Untamed
 //	Type:   Artifact
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Location
 //
-//	At the end of your turn, destroy the least powerful Creature.
+//	At the end of your turn, destroy the least powerful creature.
 func TestFangtoothCavern(t *testing.T) {
 	t.Run("destroys the least powerful creature at the end of your turn", func(t *testing.T) {
 		var weak, strong ct.Card

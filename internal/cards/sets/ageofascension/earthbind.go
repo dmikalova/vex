@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Untamed
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature cannot be used unless you have discarded a card from your hand this turn.
+//	This creature cannot be used unless you have discarded a card from your hand this turn.
 var Earthbind = set.New(
 	"Earthbind",
 	card.House.Untamed,
 	card.Type.Upgrade,
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, "352"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithRestrictions(card.Restrictions{
 		UseCondition: card.CardsDiscarded{
 			Player: card.Controller,

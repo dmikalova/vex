@@ -12,10 +12,10 @@ import (
 //	House:  Brobnar
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains taunt.
-//	Play: Fully heal this Creature.
+//	This creature gains taunt.
+//	Play: Fully heal this creature.
 func TestYoMamaMastery(t *testing.T) {
 	t.Run("fully heals its host when played", func(t *testing.T) {
 		var host ct.Card

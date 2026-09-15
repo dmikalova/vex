@@ -15,7 +15,7 @@ import (
 //	Power:  5
 //	Traits: Jelly
 //
-//	After a player chooses an active house, destroy each Artifact of that house.
+//	After a player chooses an active house, destroy each artifact of that house.
 func TestTechivorePulpate(t *testing.T) {
 	t.Run("destroys each artifact of the chosen active house", func(t *testing.T) {
 		var doomed, spared ct.Card

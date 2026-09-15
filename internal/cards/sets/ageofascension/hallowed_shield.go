@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Traits: Item
 //
-//	Action: For the remainder of the turn, a Creature cannot be dealt damage.
+//	Action: For the remainder of the turn, a creature cannot be dealt damage.
 var HallowedShield = set.New(
 	"Hallowed Shield",
 	card.House.Sanctum,

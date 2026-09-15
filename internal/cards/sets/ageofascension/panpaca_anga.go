@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Beast
 //
-//	Each Creature to the right of Panpaca, Anga gains +2 power.
+//	Each creature to the right of Panpaca, Anga gains +2 power.
 var PanpacaAnga = set.New(
 	"Panpaca, Anga",
 	card.House.Untamed,

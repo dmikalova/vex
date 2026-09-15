@@ -16,7 +16,7 @@ import (
 //	Armor:  3
 //	Traits: Demon
 //
-//	Destroyed: Destroy each Creature.
+//	Destroyed: Destroy each creature.
 func TestHarbingerOfDoom(t *testing.T) {
 	t.Run("wipes the whole board when it is destroyed", func(t *testing.T) {
 		var attacker, ally, other ct.Card

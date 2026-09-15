@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Purge each Untamed Creature from each player's discard pile. For each card purged this way, its owner gains 1 Æmber.
+//	Play: Purge each Untamed creature from each player's discard pile. For each card purged this way, its owner gains 1 Æmber.
 var SoldiersToFlowers = set.New(
 	"Soldiers to Flowers",
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.AoA, "349"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.PurgeCard{
 			Player: card.EachPlayer,

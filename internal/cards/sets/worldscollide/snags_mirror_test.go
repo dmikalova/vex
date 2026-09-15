@@ -13,7 +13,7 @@ import (
 //	House:  Dis
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Item
 //
 //	After a player chooses an active house, their opponent cannot choose the same house as their active house on their next turn.

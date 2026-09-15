@@ -15,6 +15,7 @@ var EffervescentPrinciple = set.New(
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, "109"),
+	card.WithoutEnhancement(card.Bonus.Capture),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{

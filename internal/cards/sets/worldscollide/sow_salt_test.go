@@ -13,10 +13,10 @@ import (
 //	House:  Saurian
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Alpha.
-//	Play: Until the start of your next turn, Creatures cannot be used to reap.
+//	Play: Until the start of your next turn, creatures cannot be used to reap.
 func TestSowSalt(t *testing.T) {
 	t.Run("bars every creature from reaping until the caster's next turn", func(t *testing.T) {
 		var ally, foe ct.Card

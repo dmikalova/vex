@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Imp
 //
 //	Elusive.
-//	Each Creature gains, "Destroyed: Your opponent gains 1 Æmber."
+//	Each creature gains, "Destroyed: Your opponent gains 1 Æmber."
 var Tolas = set.New(
 	"Tolas",
 	card.House.Dis,

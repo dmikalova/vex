@@ -7,17 +7,17 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Sanctum
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Item
 //
-//	Action: Purge a Creature from a discard pile.
+//	Action: Purge a creature from a discard pile.
 var EyeOfJudgment = set.New(
 	"Eye of Judgment",
 	card.House.Sanctum,
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, "253"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.Action, card.PurgeCard{

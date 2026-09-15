@@ -12,9 +12,9 @@ import (
 //	House:  Brobnar
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains +2 splash-attack.
+//	This creature gains +2 splash-attack.
 func TestCowfynesBrew(t *testing.T) {
 	t.Run("host deals 2 damage to each neighbor of the creature it fights", func(t *testing.T) {
 		var host, left, target, right ct.Card

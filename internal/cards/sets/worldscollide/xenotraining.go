@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Star Alliance
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: For each house represented among friendly Creatures, a friendly Creature captures 1 Æmber from your opponent.
+//	Play: For each house represented among friendly creatures, a friendly creature captures 1 Æmber from your opponent.
 var Xenotraining = set.New(
 	"Xenotraining",
 	card.House.StarAlliance,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "323"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.CaptureAember{
 			Amount: 1,

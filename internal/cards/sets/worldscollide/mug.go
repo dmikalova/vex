@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Choose a Creature - move 1 Æmber from it to your pool. Deal 2 damage to it.
+//	Play: Choose a creature - move 1 Æmber from it to your pool. Deal 2 damage to it.
 var Mug = set.New(
 	"Mug",
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "244"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseCreatureThen{
 			Target: card.Target.Creature,

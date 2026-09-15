@@ -12,9 +12,9 @@ import (
 //	House:  Brobnar
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Fight: Your opponent loses 1 Æmber."
+//	This creature gains, "Fight: Your opponent loses 1 Æmber."
 func TestGrokesBrew(t *testing.T) {
 	t.Run("opponent loses 1 Æmber when the host fights", func(t *testing.T) {
 		var host, foe ct.Card

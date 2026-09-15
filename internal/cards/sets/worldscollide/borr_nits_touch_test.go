@@ -12,7 +12,7 @@ import (
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Reveal the top 5 cards of a player's deck. Purge a card revealed this way. Shuffle that deck.
 func TestBorrNitsTouch(t *testing.T) {

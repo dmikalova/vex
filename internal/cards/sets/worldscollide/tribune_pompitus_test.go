@@ -16,7 +16,7 @@ import (
 //	Armor:  2
 //	Traits: Dinosaur • Politician
 //
-//	Each friendly Creature gains +2 power for each Æmber on it.
+//	Each friendly creature gains +2 power for each Æmber on it.
 //	Before Fight: You may exalt Tribune Pompitus.
 func TestTribunePompitus(t *testing.T) {
 	t.Run("each friendly creature is buffed by the Æmber on it", func(t *testing.T) {

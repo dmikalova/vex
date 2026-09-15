@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Saurian
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: If there are no enemy Creatures in play, exalt each friendly Creature. If there are 6 or more friendly Creatures in play, forge a key at no cost -> purge Triumph.
+//	Play: If there are no enemy creatures in play, exalt each friendly creature. If there are 6 or more friendly creatures in play, forge a key at no cost -> purge Triumph.
 var Triumph = set.New(
 	"Triumph",
 	card.House.Saurian,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "234"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
 			Cond: card.InPlay{

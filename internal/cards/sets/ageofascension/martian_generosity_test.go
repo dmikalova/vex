@@ -12,7 +12,7 @@ import (
 //	House:  Mars
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Lose all your Æmber, and for each Æmber you lost this way, draw 2 cards.
 func TestMartianGenerosity(t *testing.T) {

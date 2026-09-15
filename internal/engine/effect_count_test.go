@@ -215,7 +215,10 @@ func TestCreaturesDestroyedCount(t *testing.T) {
 
 func TestAemberBonusOfCount(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	survivor := g.AddArtifact(NewCard("relic", Brobnar, Artifact, Common, WithAemberBonus(2)), 1)
+	survivor := g.AddArtifact(
+		NewCard("relic", Brobnar, Artifact, Common, WithBonus(BonusAember, BonusAember)),
+		1,
+	)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	c := AemberBonusOf{Target: Target{Kind: TargetTriggeringCreature}}
@@ -235,7 +238,16 @@ func TestAemberBonusOfCount(t *testing.T) {
 
 func TestDestroyBindsDestroyedCardForAemberBonus(t *testing.T) {
 	g := NewGame("A", "B", 1)
-	art := g.AddArtifact(NewCard("relic", Brobnar, Artifact, Common, WithAemberBonus(3)), 1)
+	art := g.AddArtifact(
+		NewCard(
+			"relic",
+			Brobnar,
+			Artifact,
+			Common,
+			WithBonus(BonusAember, BonusAember, BonusAember),
+		),
+		1,
+	)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
 	if got := g.AemberBonus(art); got != 3 {

@@ -12,9 +12,9 @@ import (
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Destroy each elusive Creature.
+//	Play: Destroy each elusive creature.
 func TestPerilousWild(t *testing.T) {
 	t.Run("destroys each elusive creature", func(t *testing.T) {
 		var elusive, plain ct.Card

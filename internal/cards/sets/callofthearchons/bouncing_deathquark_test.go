@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Destroy an enemy Creature and a friendly Creature -> if there is a friendly Creature in play, you may repeat this effect.
+//	Play: Destroy an enemy creature and a friendly creature -> if there is a friendly creature in play, you may repeat this effect.
 func TestBouncingDeathquark(t *testing.T) {
 	t.Run("destroys one enemy and one friendly creature", func(t *testing.T) {
 		var friend, foe ct.Card

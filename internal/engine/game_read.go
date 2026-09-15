@@ -35,7 +35,9 @@ func (g *Game) controller(id LocalID) int {
 func (g *Game) Name(id LocalID) string { return g.cat.def(id).Name }
 
 // AemberBonus returns the number of Æmber pips printed on a card.
-func (g *Game) AemberBonus(id LocalID) int { return g.cat.def(id).AemberBonus }
+func (g *Game) AemberBonus(id LocalID) int {
+	return countBonus(g.cat.def(id).Bonuses, BonusAember)
+}
 
 // House returns the house a card currently belongs to. A temporary "belongs to
 // house" effect applies only while the card remains in play; everywhere else the

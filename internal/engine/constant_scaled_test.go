@@ -46,7 +46,7 @@ func TestConstantAbilityPerTarget(t *testing.T) {
 		}))
 
 	if !strings.Contains(RenderCardRules(&def),
-		"Each friendly Creature gains +2 power for each Æmber on it.") {
+		"Each friendly creature gains +2 power for each Æmber on it.") {
 		t.Errorf("card rules missing the per-target line:\n%s", RenderCardRules(&def))
 	}
 
@@ -84,7 +84,7 @@ func TestConstantAbilityPerSourceReachingOthers(t *testing.T) {
 		}))
 
 	if !strings.Contains(RenderCardRules(&def),
-		"Each friendly Creature gains +2 power for each Æmber on Primus Unguis.") {
+		"Each friendly creature gains +2 power for each Æmber on Primus Unguis.") {
 		t.Errorf("card rules missing the per-source line:\n%s", RenderCardRules(&def))
 	}
 

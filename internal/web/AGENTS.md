@@ -245,18 +245,19 @@ last stretch is the DOM-bound code above.
 - **Enlarge a card by resizing its box, not by `transform: scale()`.** The reason
   to enlarge a card is to read the text the board was clipping, and a transform
   does not reflow text. Resizing one means setting three things together, the way
-  `.card-preview` and `.card-focus` both do: the box, `--card-full-h`, and the
-  inner font sizes, which are hardcoded px and so do not scale with the parent. A
+  `.card-preview` and `.card-focus` both do: the box and the inner font sizes,
+  which are hardcoded px and so do not scale with the parent. A
   card whose height follows its content also has to undo the
   `flex: 1 1 0%; min-height: 0` on `.card-body`/`.card-rules`, which exist to fill
   and clip a fixed slot.
-- **`--card-full-h` is a nominal height, not the box's own.** The ogee mask is
-  pinned to it so that a card squished into a short slot slides the S curve off
-  the bottom instead of compressing it. Set it from the card's _width_ — the
-  design ratio is the board card's `9rem`/`12rem`, so `.card-focus` uses
-  `calc(var(--focus-w) * 4 / 3)`. Deriving it from the rendered height instead
-  (`100%`) makes the frame a function of how much rules text a card happens to
-  have, which reads as the curve being drawn for the wrong box.
+- **The card frame is a flat two-tone gradient, not a clip or a mask.** `.card`
+  paints a hard-stop `linear-gradient` — the name-banner colour (`--nm`) over the
+  upper-left, the type band (`--tp`) over the lower-right, split by a straight
+  diagonal. A gradient scales with the card at any size and respects
+  `border-radius`, so the card needs no `overflow: hidden` and no SVG mask — which
+  is what lets the left-edge house and bonus icons (`.card-bonuses`) hang off the
+  card. The keybar and `.card-kind` round their own corners, since the parent no
+  longer clips them. The `125deg` angle and `48%` stop in `.card` are the two knobs.
 - **A card that overhangs its row has to leave the board's coordinate space**
   (`position: fixed`): `.card-strip` is `overflow-x: auto`, which per spec forces
   `overflow-y: hidden`, and `.board-area` is `overflow: hidden` — anything inside

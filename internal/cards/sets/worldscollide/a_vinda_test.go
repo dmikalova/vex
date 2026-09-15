@@ -15,7 +15,7 @@ import (
 //	Power:  4
 //	Traits: Elf • Thief
 //
-//	Reap: Deal 1 damage to a Creature. If this damage destroys that Creature, your opponent discards a random card from their hand.
+//	Reap: Deal 1 damage to a creature. If this damage destroys that creature, your opponent discards a random card from their hand.
 func TestAVinda(t *testing.T) {
 	t.Run("opponent discards when the damage destroys the target", func(t *testing.T) {
 		var vinda, foe, held ct.Card

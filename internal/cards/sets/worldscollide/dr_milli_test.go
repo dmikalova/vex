@@ -15,7 +15,7 @@ import (
 //	Power:  2
 //	Traits: Scientist
 //
-//	Play: For each Creature your opponent controls in excess of you, not counting Dr. Milli, archive a card from your hand.
+//	Play: For each creature your opponent controls in excess of you, not counting Dr. Milli, archive a card from your hand.
 func TestDrMilli(t *testing.T) {
 	t.Run(
 		"archives one card per opponent creature in excess, not counting itself",

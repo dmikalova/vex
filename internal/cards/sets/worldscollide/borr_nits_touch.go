@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Reveal the top 5 cards of a player's deck. Purge a card revealed this way. Shuffle that deck.
 var BorrNitsTouch = set.New(
@@ -16,7 +16,7 @@ var BorrNitsTouch = set.New(
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "087"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play,
 		card.RevealTopOfDeck{

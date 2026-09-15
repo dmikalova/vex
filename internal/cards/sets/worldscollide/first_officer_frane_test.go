@@ -15,7 +15,7 @@ import (
 //	Power:  4
 //	Traits: Human
 //
-//	Play/Fight/Reap: A friendly Creature captures 1 Æmber from your opponent.
+//	Play/Fight/Reap: A friendly creature captures 1 Æmber from your opponent.
 func TestFirstOfficerFrane(t *testing.T) {
 	t.Run("captures 1 Æmber from the opponent when played", func(t *testing.T) {
 		var frane ct.Card

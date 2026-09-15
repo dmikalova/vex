@@ -16,7 +16,7 @@ import (
 //	Traits: Beast
 //
 //	Hazardous 3.
-//	After an enemy Creature reaps, gain 1 Æmber.
+//	After an enemy creature reaps, gain 1 Æmber.
 func TestAemberspineMongrel(t *testing.T) {
 	t.Run("gains Æmber when an enemy creature reaps", func(t *testing.T) {
 		var reaper ct.Card

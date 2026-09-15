@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast • Insect
 //
 //	Alpha.
-//	Play: Give each other friendly Untamed Creature two +1 power counters.
+//	Play: Give each other friendly Untamed creature two +1 power counters.
 var Bumblebird = set.New(
 	"Bumblebird",
 	card.House.Untamed,

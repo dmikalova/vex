@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Brobnar
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Put each Artifact on top of its owner's deck.
+//	Play: Put each artifact on top of its owner's deck.
 var Barehanded = set.New(
 	"Barehanded",
 	card.House.Brobnar,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "2"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.PutFromPlay{
 			Target:      card.Target.EachArtifact,

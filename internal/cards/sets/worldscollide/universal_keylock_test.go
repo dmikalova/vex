@@ -13,7 +13,7 @@ import (
 //	House:  Logos
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Item
 //
 //	Each player's keys cost +3 Æmber.

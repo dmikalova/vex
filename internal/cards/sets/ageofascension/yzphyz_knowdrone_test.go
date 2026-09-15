@@ -16,7 +16,7 @@ import (
 //	Armor:  1
 //	Traits: Martian • Scientist
 //
-//	Play: Archive a card from your hand. You may purge a card from your archives to stun a Creature.
+//	Play: Archive a card from your hand. You may purge a card from your archives to stun a creature.
 func TestYzphyzKnowdrone(t *testing.T) {
 	var spare, victim ct.Card
 	h := ct.Play(t, ct.Setup{

@@ -12,10 +12,10 @@ import (
 //	House:  Brobnar
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Weapon
 //
-//	After a Creature enters play, deal 1 damage to it.
+//	After a creature enters play, deal 1 damage to it.
 func TestAutocannon(t *testing.T) {
 	t.Run("deals 1 damage to a creature as it enters play", func(t *testing.T) {
 		var newcomer ct.Card

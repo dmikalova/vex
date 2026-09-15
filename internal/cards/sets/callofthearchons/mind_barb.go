@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Discard a card from your hand. Your opponent discards a random card from their hand.
 var MindBarb = set.New(
@@ -16,7 +16,7 @@ var MindBarb = set.New(
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, "67"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(card.Trigger.Play, card.Sentences{
 		Effects: []card.Effect{
 			card.DiscardCard{

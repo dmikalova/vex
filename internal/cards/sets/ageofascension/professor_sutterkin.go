@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Human • Scientist
 //
-//	Reap: For each friendly Logos Creature, draw a card.
+//	Reap: For each friendly Logos creature, draw a card.
 var ProfessorSutterkin = set.New(
 	"Professor Sutterkin",
 	card.House.Logos,

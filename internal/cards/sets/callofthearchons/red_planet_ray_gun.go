@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Mars
 //	Type:   Upgrade
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Reap: For each Mars Creature in play, deal 1 damage to a Creature."
+//	This creature gains, "Reap: For each Mars creature in play, deal 1 damage to a creature."
 var RedPlanetRayGun = set.New(
 	"Red Planet Ray Gun",
 	card.House.Mars,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "211"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Reap,

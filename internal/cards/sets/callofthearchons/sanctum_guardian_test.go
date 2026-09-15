@@ -16,7 +16,7 @@ import (
 //	Traits: Knight • Spirit
 //
 //	Taunt.
-//	Fight/Reap: Swap this Creature with another friendly Creature in your battleline.
+//	Fight/Reap: Swap this creature with another friendly creature in your battleline.
 func TestSanctumGuardian(t *testing.T) {
 	t.Run("swaps with another friendly creature when it reaps", func(t *testing.T) {
 		var ally ct.Card

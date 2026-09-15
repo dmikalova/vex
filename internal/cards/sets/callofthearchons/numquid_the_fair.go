@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Human
 //
-//	Play: Destroy an enemy Creature -> if you are overwhelmed, repeat this effect.
+//	Play: Destroy an enemy creature -> if you are overwhelmed, repeat this effect.
 var NumquidTheFair = set.New(
 	"Numquid the Fair",
 	card.House.Sanctum,

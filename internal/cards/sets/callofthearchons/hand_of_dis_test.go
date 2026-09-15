@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Destroy a Creature that is not on a flank.
+//	Play: Destroy a creature that is not on a flank.
 func TestHandOfDis(t *testing.T) {
 	t.Run("destroys a chosen creature that is not on a flank", func(t *testing.T) {
 		var left, mid, right ct.Card

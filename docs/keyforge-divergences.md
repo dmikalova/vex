@@ -210,3 +210,25 @@ friendly Shard, …`). Their effects — Shard of Glory exalts a friendly creatu
   that used to **destroy** themselves on forging (**Epic Quest**, **[REDACTED]**,
   **Obsidian Forge**) now **purge** instead, removing them from the game rather
   than sending them to the discard pile where they could return.
+
+- **A bonus icon's source is the card that carries it.** When a bonus icon
+  resolves (Æmber, Capture, Damage, Draw), KeyForge treats the game itself as the
+  source of the effect; Vactrol treats the card the icon is printed on as the
+  source. This only matters for the rare card that reads the source of a bonus
+  icon's damage, and it makes the log read naturally ("Splinter deals 1 bonus
+  damage to …"). See [ADR 0041](adr/0041-bonus-icons-are-the-primitive.md).
+
+- **A creature stops resolving its bonus icons when it leaves play.** KeyForge
+  resolves every bonus icon on a played card even after the card has left play (a
+  Damage icon that destroys its own creature still resolves the icons below it).
+  In Vactrol, once a creature leaves play — destroyed by a constant ability before
+  its icons resolve, or by its own Damage icon aimed at itself mid-resolution — its
+  remaining icons do not resolve. Only creatures are gated this way: an artifact
+  deals its bonus damage to other creatures, an upgrade resolves after it attaches,
+  and an action is never in play, so their icons always all resolve.
+
+- **A card may bar specific bonus-icon kinds from Enhance.** KeyForge has no such
+  rule. Vactrol lets a card carry `WithoutEnhancement(kinds…)` so deck generation
+  never lands those bonus-icon kinds on it, while other kinds may still land — for
+  a bonus a card would only be weakened by (Effervescent Principle bars Capture).
+  Rolled in per card as they are found.

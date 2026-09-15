@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //
 //	Alpha.
-//	Play: You cannot use Creatures to reap for the remainder of the turn. For the remainder of the turn, each time a friendly Creature fights, gain 1 Æmber. At the end of the turn, destroy each Creature.
+//	Play: You cannot use creatures to reap for the remainder of the turn. For the remainder of the turn, each time a friendly creature fights, gain 1 Æmber. At the end of the turn, destroy each creature.
 func TestRagnarok(t *testing.T) {
 	t.Run("bars friendly creatures from reaping this turn", func(t *testing.T) {
 		var ally ct.Card

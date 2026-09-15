@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human
 //
 //	Hazardous 3.
-//	Each neighboring Creature gains hazardous 3.
+//	Each neighboring creature gains hazardous 3.
 var ArmsmasterMolina = set.New(
 	"Armsmaster Molina",
 	card.House.StarAlliance,

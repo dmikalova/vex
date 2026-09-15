@@ -12,9 +12,9 @@ import (
 //	House:  Brobnar
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Fight: Ready and fight with a neighboring Creature."
+//	This creature gains, "Fight: Ready and fight with a neighboring creature."
 func TestChieftainsBrew(t *testing.T) {
 	t.Run("host fighting readies and fights a neighboring creature", func(t *testing.T) {
 		var host, neighbor, weakFoe, bigFoe ct.Card

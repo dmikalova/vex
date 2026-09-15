@@ -12,9 +12,9 @@ import (
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Destroy the most powerful Creature controlled by each player who does not have a friendly ready Untamed Creature in play.
+//	Play: Destroy the most powerful creature controlled by each player who does not have a friendly ready Untamed creature in play.
 func TestQuicksand(t *testing.T) {
 	var mine, theirBig, theirSmall ct.Card
 	h := ct.Play(t, ct.Setup{

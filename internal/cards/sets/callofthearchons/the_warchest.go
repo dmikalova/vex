@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Traits: Item
 //
-//	Action: For each enemy Creature that was destroyed in a fight this turn, gain 1 Æmber.
+//	Action: For each enemy creature that was destroyed in a fight this turn, gain 1 Æmber.
 var TheWarchest = set.New(
 	"The Warchest",
 	card.House.Brobnar,

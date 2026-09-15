@@ -15,7 +15,7 @@ import (
 //	Power:  1
 //	Traits: Robot
 //
-//	If this Creature would be destroyed and there is another friendly Creature in play, instead fully heal it, exhaust it, move it to either flank of its controller's battleline, and give it two +1 power counters.
+//	If this creature would be destroyed and there is another friendly creature in play, instead fully heal it, exhaust it, move it to either flank of its controller's battleline, and give it two +1 power counters.
 func TestSelfBolsteringAutomata(t *testing.T) {
 	t.Run("with another creature, survives with two +1 power counters", func(t *testing.T) {
 		var automata, enemy ct.Card

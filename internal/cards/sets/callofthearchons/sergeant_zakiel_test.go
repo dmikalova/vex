@@ -15,7 +15,7 @@ import (
 //	Power:  4
 //	Traits: Human • Knight
 //
-//	Play: You may ready and fight with a neighboring Creature.
+//	Play: You may ready and fight with a neighboring creature.
 func TestSergeantZakiel(t *testing.T) {
 	t.Run("may ready and fight with a neighboring creature", func(t *testing.T) {
 		var neighbor, foe ct.Card

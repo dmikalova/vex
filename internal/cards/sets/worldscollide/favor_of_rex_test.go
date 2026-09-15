@@ -12,9 +12,9 @@ import (
 //	House:  Saurian
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Trigger the play effect of a Creature.
+//	Play: Trigger the play effect of a creature.
 func TestFavorOfRex(t *testing.T) {
 	var dux ct.Card
 	h := ct.Play(t, ct.Setup{

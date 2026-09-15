@@ -16,7 +16,7 @@ import (
 //	Traits: Martian • Soldier
 //
 //	Elusive.
-//	Action: For each other friendly Mars Creature, your opponent loses 1 Æmber.
+//	Action: For each other friendly Mars creature, your opponent loses 1 Æmber.
 func TestPhylyxTheDisintegrator(t *testing.T) {
 	t.Run("drains 1 Æmber per other friendly Mars creature", func(t *testing.T) {
 		var phylyx ct.Card

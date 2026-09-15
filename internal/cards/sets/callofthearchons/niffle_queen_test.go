@@ -15,8 +15,8 @@ import (
 //	Power:  6
 //	Traits: Beast • Niffle
 //
-//	Each other friendly Beast Creature gains +1 power.
-//	Each other friendly Niffle Creature gains +1 power.
+//	Each other friendly Beast creature gains +1 power.
+//	Each other friendly Niffle creature gains +1 power.
 func TestNiffleQueen(t *testing.T) {
 	t.Run("boosts other friendly Beasts and Niffles but not itself or enemies", func(t *testing.T) {
 		var queen, niffleBeast, beast, plain, foe ct.Card

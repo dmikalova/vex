@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Connected
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Search your deck and discard pile for a Timetraveller, reveal it, and put it into your hand, and shuffle your discard pile into your deck.
 var HelpFromFutureSelf = set.New(
@@ -17,7 +17,7 @@ var HelpFromFutureSelf = set.New(
 	card.Rarity.Connected,
 	card.Provenance(card.CotA, "111"),
 	card.InCluster(timetravellerCluster),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{

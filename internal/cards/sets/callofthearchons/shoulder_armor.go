@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Sanctum
 //	Type:   Upgrade
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	While this Creature is on a flank, it gains +2 power and +2 armor.
+//	While this creature is on a flank, it gains +2 power and +2 armor.
 var ShoulderArmor = set.New(
 	"Shoulder Armor",
 	card.House.Sanctum,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "266"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		PowerBonus:   2,
 		ArmorBonus:   2,

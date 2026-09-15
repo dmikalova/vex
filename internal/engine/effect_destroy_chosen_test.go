@@ -14,6 +14,37 @@ func TestDestroyChosen(t *testing.T) {
 	if (DestroyChosen{Target: Target{Kind: TargetEachFriendlyCreature}}).validate() != nil {
 		t.Error("a DestroyChosen with a target should validate")
 	}
+	if got := (DestroyChosen{Target: Target{Kind: TargetEachFriendlyCreature}, Amount: 2}).Text(); got != "destroy 2 friendly creatures" {
+		t.Errorf("fixed-amount text = %q", got)
+	}
+	if (DestroyChosen{Target: Target{Kind: TargetEachFriendlyCreature}, Amount: -1}).validate() == nil {
+		t.Error("a negative Amount should not validate")
+	}
+
+	t.Run("a fixed Amount destroys exactly that many", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		ids := []LocalID{
+			g.AddToBattleline(testCreature("a", 1), 0),
+			g.AddToBattleline(testCreature("b", 1), 0),
+			g.AddToBattleline(testCreature("c", 1), 0),
+		}
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+
+		DestroyChosen{Target: Target{Kind: TargetEachFriendlyCreature}, Amount: 2}.Resolve(ctx)
+
+		alive := 0
+		for _, id := range ids {
+			if g.inPlay(id) {
+				alive++
+			}
+		}
+		if alive != 1 {
+			t.Errorf("alive = %d, want 1 (2 of 3 destroyed)", alive)
+		}
+		if ctx.Produced.Destroyed[0] != 2 {
+			t.Errorf("Destroyed = %v, want [2 0]", ctx.Produced.Destroyed)
+		}
+	})
 
 	t.Run("destroys every pick and tallies them", func(t *testing.T) {
 		g := NewGame("A", "B", 1)

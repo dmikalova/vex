@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Destroy each non-Mars Creature with power less than the number of friendly Mars Creatures you control.
+//	Play: Destroy each non-Mars creature with power less than the number of friendly Mars creatures you control.
 func TestExterminateExterminate(t *testing.T) {
 	t.Run("destroys non-Mars creatures weaker than the friendly Mars count", func(t *testing.T) {
 		var enemyWeak, enemyEqual, enemyMars, friendlyWeak ct.Card

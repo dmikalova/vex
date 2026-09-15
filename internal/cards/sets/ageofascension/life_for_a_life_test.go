@@ -12,9 +12,9 @@ import (
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Destroy a friendly Creature -> deal 6 damage to a Creature.
+//	Play: Destroy a friendly creature -> deal 6 damage to a creature.
 func TestLifeForALife(t *testing.T) {
 	t.Run("destroys a friendly creature to deal 6 damage to a creature", func(t *testing.T) {
 		var sacrifice, foe ct.Card

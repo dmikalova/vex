@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  6
 //	Traits: Giant • Leader
 //
-//	While Kaloch Stonefather is in the center of your battleline, each friendly Creature gains skirmish.
+//	While Kaloch Stonefather is in the center of your battleline, each friendly creature gains skirmish.
 var KalochStonefather = set.New(
 	"Kaloch Stonefather",
 	card.House.Brobnar,

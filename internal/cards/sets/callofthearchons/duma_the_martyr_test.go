@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Human
 //
-//	Destroyed: Fully heal each other friendly Creature, and draw 2 cards.
+//	Destroyed: Fully heal each other friendly creature, and draw 2 cards.
 func TestDumaTheMartyr(t *testing.T) {
 	t.Run(
 		"fully heals each other friendly creature and draws 2 when destroyed",

@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Traits: Item
 //
-//	Action: A friendly Creature captures 1 Æmber from your opponent.
+//	Action: A friendly creature captures 1 Æmber from your opponent.
 var SkeletonKey = set.New(
 	"Skeleton Key",
 	card.House.Shadows,

@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Brobnar
 //	Type:   Tactic
 //	Rarity: Special
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Shuffle each friendly card in play into your deck. For each card shuffled into your deck this way, draw a card.
 var Timequake = set.New(
@@ -16,7 +16,7 @@ var Timequake = set.New(
 	card.Type.Tactic,
 	card.Rarity.Special,
 	card.Provenance(card.WC, "A09"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.ShuffleFriendlyCardsIntoDeck{},

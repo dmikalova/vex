@@ -34,6 +34,12 @@ type cardView struct {
 	// build it).
 	Icons []glyphLine
 	Rules string // rules/ability text for the face
+	// Bonuses are the card's printed bonus icons, shown as a vertical strip down the
+	// card's left edge (KeyForge places them off the left of the art).
+	Bonuses []engine.BonusIcon
+	// Enhances are the bonus icons an Enhance card contributes to the deck, rendered
+	// as its "Enhance <icons>" line at the top of the text box.
+	Enhances []engine.BonusIcon
 	// Trait is the card's trait line (e.g. "Human • Knight"), shown in the body
 	// under the stat line and above the rules; "" when the card has no traits.
 	Trait string
@@ -282,6 +288,14 @@ func (c *cardView) Render() app.UI {
 			// Condensed to fit its banner client-side by cardFitScript (cmd/web); a
 			// plain span here, sized only once measured too wide.
 			app.Span().Class("card-name-text").Text(c.Title),
+			// The house emblem and the printed bonus icons run down the card's left
+			// edge (KeyForge): the house centred on this title line, then the bonus
+			// icons below it, each hanging a little off the edge. It lives inside the
+			// banner (its position:relative parent) so it centres on the title at any
+			// banner height; absolute, so it does not shift the centred title.
+			app.If(c.Emblem != "" || len(c.Bonuses) > 0, func() app.UI {
+				return app.Div().Class("card-bonuses").Body(leftStrip(c)...)
+			}),
 		),
 		// The face's three regions are their own boxes so each rounds its own
 		// corners: the status box (stat line, tokens), the art band (the icon
@@ -339,17 +353,12 @@ func (c *cardView) Render() app.UI {
 				app.If(c.Rules != "", func() app.UI {
 					return app.Div().Class("card-rules").Text(c.Rules)
 				}),
+				app.If(len(c.Enhances) > 0, func() app.UI {
+					return app.Div().Class("card-enhance").Body(enhanceLine(c.Enhances)...)
+				}),
 			),
 		),
 		app.Div().Class("card-kind").Body(
-			app.If(c.Emblem != "", func() app.UI {
-				return icon(
-					c.Emblem,
-					"icon-house",
-					"icon-outline",
-					ifCls(c.HouseChanged, "icon-house--changed"),
-				)
-			}),
 			app.If(c.TypeIcon != "", func() app.UI { return icon(c.TypeIcon, "icon-kind", "icon-outline") }),
 			app.Span().Text(c.Kind),
 			app.If(c.Maverick || c.Legacy || c.Rarity != rarityNone, func() app.UI {
@@ -384,6 +393,33 @@ func (c *cardView) Render() app.UI {
 			return app.Div().Class("card-selection")
 		}),
 	)
+}
+
+// leftStrip is the vertical run of icons down the card's left edge: the house
+// emblem at the top, then the printed bonus icons in top-to-bottom order, each
+// hanging a little off the edge (KeyForge).
+func leftStrip(c *cardView) []app.UI {
+	var out []app.UI
+	if c.Emblem != "" {
+		out = append(out, icon(c.Emblem, "card-edge-icon", "card-edge-house", "icon-outline",
+			ifCls(c.HouseChanged, "icon-house--changed")))
+	}
+	for _, b := range c.Bonuses {
+		out = append(out, icon(bonusIconStem(b), "card-edge-icon", "icon-outline"))
+	}
+	return out
+}
+
+// enhanceLine renders an Enhance source's "Enhance <icons>." line: the word
+// "Enhance" followed by one bonus-icon glyph per contributed icon.
+func enhanceLine(icons []engine.BonusIcon) []app.UI {
+	body := make([]app.UI, 0, len(icons)+2)
+	body = append(body, app.Span().Text("Enhance "))
+	for _, b := range icons {
+		body = append(body, icon(bonusIconStem(b), "card-enhance-icon", "icon-outline"))
+	}
+	body = append(body, app.Span().Text("."))
+	return body
 }
 
 // cx joins non-empty class fragments with spaces.

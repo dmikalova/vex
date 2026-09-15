@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Traits: Location
 //
-//	Action: Choose a friendly Creature - exalt the chosen Creature. Ready and use the chosen Creature.
+//	Action: Choose a friendly creature - exalt the chosen creature. Ready and use the chosen creature.
 func TestTheGoldenSpiral(t *testing.T) {
 	t.Run("exalts a friendly creature, then readies and uses it", func(t *testing.T) {
 		var ally ct.Card

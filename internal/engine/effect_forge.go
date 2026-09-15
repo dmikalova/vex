@@ -262,8 +262,12 @@ func (e UnforgeKey) Text() string {
 }
 
 // Resolve takes one key back off the named player.
-func (e UnforgeKey) Resolve(ctx *EffectContext) {
-	ctx.Resolver.UnforgeKey(ctx.PlayerFor(e.Player))
+func (e UnforgeKey) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
+
+// resolveGate takes one key back and reports whether a key was actually removed, so
+// a Then can hang off the unforge succeeding (Key Hammer).
+func (e UnforgeKey) resolveGate(ctx *EffectContext) bool {
+	return ctx.Resolver.UnforgeKey(ctx.PlayerFor(e.Player))
 }
 
 // SkipForgePhase makes a player skip their "forge a key" phase at the start of their

@@ -15,7 +15,7 @@ import (
 //	Power:  2
 //	Traits: Mutant
 //
-//	Reap: Trigger the reap effect of another Creature.
+//	Reap: Trigger the reap effect of another creature.
 func TestReplicator(t *testing.T) {
 	t.Run("reaps and fires another creature's reap effect", func(t *testing.T) {
 		var replicator, faerie ct.Card

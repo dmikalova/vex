@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Swap your deck and your discard pile, then shuffle your deck.
 var ReverseTime = set.New(
@@ -16,6 +16,6 @@ var ReverseTime = set.New(
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "121"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(card.Trigger.Play, card.SwapDeckAndDiscard{}),
 )

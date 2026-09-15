@@ -12,9 +12,9 @@ import (
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Choose a house - exhaust each enemy Creature of the chosen house.
+//	Play: Choose a house - exhaust each enemy creature of the chosen house.
 func TestPersistenceHunting(t *testing.T) {
 	t.Run("exhausts each enemy creature of the chosen house", func(t *testing.T) {
 		var foe1, foe2 ct.Card

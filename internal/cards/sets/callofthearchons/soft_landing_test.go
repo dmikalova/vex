@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: The next Creature or Artifact you play this turn enters play ready.
+//	Play: The next creature or artifact you play this turn enters play ready.
 func TestSoftLanding(t *testing.T) {
 	mars := ct.OfHouse(card.House.Mars)
 

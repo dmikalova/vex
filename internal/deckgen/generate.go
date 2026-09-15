@@ -27,6 +27,7 @@ func Generate(set Set, seed int64) Deck {
 	g.expandClusters(&deck)
 	g.expandFilteredClusters(&deck)
 	deck.validate()
+	g.applyEnhancements(&deck)
 	return deck
 }
 
@@ -451,7 +452,7 @@ func (g *generator) materialize(c Card, ctx SlotContext) engine.CardDefinition {
 		def = c.Materializer.Materialize(ctx, g.r)
 	}
 	if ctx.Maverick || ctx.Special {
-		def.House = ctx.House
+		def = engine.Rehouse(def, ctx.House)
 	}
 	return def
 }

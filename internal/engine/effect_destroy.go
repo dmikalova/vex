@@ -85,13 +85,15 @@ func (e Destroy) destroy(ctx *EffectContext, ids []LocalID) bool {
 	return len(ids) > 0
 }
 
-// DestroyChosen destroys any number of creatures the controller picks from the
-// Target pool, chosen one at a time and then destroyed together — Martyr's End
-// destroys any number of friendly creatures. It tallies them into
-// Produced.Destroyed so a following "gain 1 Æmber for each creature destroyed this
-// way" can pay out.
+// DestroyChosen destroys creatures the controller picks from the Target pool,
+// chosen one at a time and then destroyed together — Martyr's End destroys any
+// number of friendly creatures. Amount fixes the count when set: Ritual of Tognath
+// destroys exactly 2 friendly creatures; the zero value destroys any number. It
+// tallies them into Produced.Destroyed so a following "gain 1 Æmber for each
+// creature destroyed this way" can pay out.
 type DestroyChosen struct {
 	Target Target
+	Amount int
 }
 
 // validate requires an explicit target pool to choose from.
@@ -99,20 +101,35 @@ func (e DestroyChosen) validate() error {
 	if !e.Target.valid() {
 		return errUnsetTarget("DestroyChosen")
 	}
+	if e.Amount < 0 {
+		return fmt.Errorf("DestroyChosen: negative Amount %d", e.Amount)
+	}
 	return nil
 }
 
-// Text renders the effect, e.g. "destroy any number of friendly creatures".
+// Text renders the effect, e.g. "destroy any number of friendly creatures" or,
+// with a fixed Amount, "destroy 2 friendly creatures".
 func (e DestroyChosen) Text() string {
+	if e.Amount > 0 {
+		return fmt.Sprintf("destroy %d %ss", e.Amount, singularNoun(e.Target.Text()))
+	}
 	return "destroy any number of " + singularNoun(e.Target.Text()) + "s"
 }
 
 // Resolve gathers the controller's picks one at a time, then destroys them all at
-// once so their Destroyed abilities see each other still in play.
+// once so their Destroyed abilities see each other still in play. With a fixed
+// Amount the picks are mandatory up to that many; otherwise the controller takes
+// any number.
 func (e DestroyChosen) Resolve(ctx *EffectContext) {
-	chosen := pickCards(ctx, "Choose a creature to destroy", 0, true, func() []LocalID {
-		return e.Target.Select(ctx)
-	})
+	chosen := pickCards(
+		ctx,
+		"Choose a creature to destroy",
+		e.Amount,
+		e.Amount == 0,
+		func() []LocalID {
+			return e.Target.Select(ctx)
+		},
+	)
 	Destroy{}.destroy(ctx, chosen)
 }
 

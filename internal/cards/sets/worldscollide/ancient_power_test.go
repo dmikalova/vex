@@ -12,9 +12,9 @@ import (
 //	House:  Saurian
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Ward each friendly Creature with Æmber on it.
+//	Play: Ward each friendly creature with Æmber on it.
 func TestAncientPower(t *testing.T) {
 	t.Run("wards each friendly creature that has Æmber on it", func(t *testing.T) {
 		var withAember, bare ct.Card

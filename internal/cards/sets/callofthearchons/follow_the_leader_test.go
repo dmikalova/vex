@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: For the remainder of the turn, each friendly Creature may fight.
+//	Play: For the remainder of the turn, each friendly creature may fight.
 func TestFollowTheLeader(t *testing.T) {
 	t.Run("lets an out-of-house friendly creature fight", func(t *testing.T) {
 		var follow, outsider, enemy ct.Card

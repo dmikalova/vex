@@ -12,7 +12,7 @@ import (
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  2
+//	Bonus:  Æmber Æmber
 //
 //	Play: If your opponent has exactly 1 Æmber, steal 1 Æmber.
 func TestGhostlyHand(t *testing.T) {

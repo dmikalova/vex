@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Robot
 //
 //	Taunt, Hazardous 3.
-//	Reap: Enrage a Creature.
+//	Reap: Enrage a creature.
 var PrescriptiveGrammarbot = set.New(
 	"Prescriptive Grammarbot",
 	card.House.Logos,

@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Shadows
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains elusive and skirmish.
+//	This creature gains elusive and skirmish.
 var RingOfInvisibility = set.New(
 	"Ring of Invisibility",
 	card.House.Shadows,
 	card.Type.Upgrade,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "317"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(
 		card.StaticModifier{Keywords: card.Keywords(card.Keyword.Elusive, card.Keyword.Skirmish)},
 	),

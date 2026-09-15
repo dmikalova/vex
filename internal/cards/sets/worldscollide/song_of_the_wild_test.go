@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Each friendly Creature gains, "Reap: Gain 1 Æmber."
+//	Play: Each friendly creature gains, "Reap: Gain 1 Æmber."
 func TestSongOfTheWild(t *testing.T) {
 	t.Run("friendly creatures gain 1 Æmber when they reap this turn", func(t *testing.T) {
 		var beast ct.Card

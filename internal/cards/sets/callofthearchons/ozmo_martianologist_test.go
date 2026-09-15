@@ -17,8 +17,8 @@ import (
 //
 //	Elusive.
 //	Fight/Reap: Choose one:
-//	- Heal 3 damage from a Mars Creature
-//	- Stun a Mars Creature.
+//	- Heal 3 damage from a Mars creature
+//	- Stun a Mars creature.
 func TestOzmo(t *testing.T) {
 	t.Run("can stun a Mars creature when it reaps", func(t *testing.T) {
 		var foe ct.Card

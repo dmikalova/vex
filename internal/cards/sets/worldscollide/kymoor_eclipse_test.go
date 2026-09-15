@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Shuffle each flank Creature into its owner's deck.
+//	Play: Shuffle each flank creature into its owner's deck.
 func TestKymoorEclipse(t *testing.T) {
 	t.Run("shuffles each flank creature into its owner's deck", func(t *testing.T) {
 		var left, mid, right ct.Card

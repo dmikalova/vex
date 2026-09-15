@@ -16,7 +16,7 @@ import (
 //	Traits: Human • Scientist
 //
 //	Elusive.
-//	After a Creature is played adjacent to Fila the Researcher, draw a card.
+//	After a creature is played adjacent to Fila the Researcher, draw a card.
 func TestFilaTheResearcher(t *testing.T) {
 	t.Run("draws a card when a creature is played next to it", func(t *testing.T) {
 		var fila, newbie, drawn ct.Card

@@ -12,11 +12,11 @@ import (
 //	House:  Star Alliance
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Fight/Reap: Choose one:
-//	- Deal 2 damage to a Creature
-//	- Attach Ingram's Blaster to Medic Ingram -> fully heal a Creature."
+//	This creature gains, "Fight/Reap: Choose one:
+//	- Deal 2 damage to a creature
+//	- Attach Ingram's Blaster to Medic Ingram -> fully heal a creature."
 func TestIngramsBlaster(t *testing.T) {
 	t.Run("attaches to Ingram and fully heals a creature", func(t *testing.T) {
 		var carrier, wounded ct.Card

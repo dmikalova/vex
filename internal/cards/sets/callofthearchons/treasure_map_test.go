@@ -12,7 +12,7 @@ import (
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: If you played exactly 1 card this turn, gain 3 Æmber, and you cannot play cards for the remainder of the turn.
 func TestTreasureMap(t *testing.T) {

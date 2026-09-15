@@ -7,17 +7,17 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Untamed
 //	Type:   Artifact
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Location
 //
-//	Action: Choose a Creature - for the remainder of the turn, it loses taunt and elusive.
+//	Action: Choose a creature - for the remainder of the turn, it loses taunt and elusive.
 var NiffleGrounds = set.New(
 	"Niffle Grounds",
 	card.House.Untamed,
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
 	card.Provenance(card.AoA, "346"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
 		card.Trigger.Action, card.ChooseCreatureThen{

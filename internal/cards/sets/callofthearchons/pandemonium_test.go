@@ -12,9 +12,9 @@ import (
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Each undamaged Creature captures 1 Æmber from its opponent.
+//	Play: Each undamaged creature captures 1 Æmber from its opponent.
 func TestPandemonium(t *testing.T) {
 	var mine, hurt, theirs ct.Card
 	h := ct.Play(t, ct.Setup{

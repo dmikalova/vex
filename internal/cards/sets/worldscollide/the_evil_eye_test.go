@@ -12,7 +12,7 @@ import (
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Keys cost +3 Æmber during your opponent's next turn.
 func TestTheEvilEye(t *testing.T) {

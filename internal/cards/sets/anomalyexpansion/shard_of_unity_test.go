@@ -14,7 +14,7 @@ import (
 //	Rarity: Connected
 //	Traits: Item • Shard
 //
-//	Action: For each friendly Shard, use a friendly Creature.
+//	Action: For each friendly Shard, use a friendly creature.
 func TestShardOfUnity(t *testing.T) {
 	t.Run("uses a friendly creature for each friendly shard", func(t *testing.T) {
 		var friend ct.Card

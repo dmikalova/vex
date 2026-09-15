@@ -12,9 +12,9 @@ import (
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: If your opponent forged a key on their previous turn, unforge one of your opponent's keys, and your opponent gains 6 Æmber.
+//	Play: If your opponent forged a key during their previous turn, unforge one of your opponent's keys -> your opponent gains 6 Æmber.
 func TestKeyHammer(t *testing.T) {
 	t.Run("unforges the key the opponent just forged", func(t *testing.T) {
 		var hammer, filler ct.Card

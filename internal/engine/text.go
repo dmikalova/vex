@@ -2,7 +2,6 @@ package engine
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 )
 
@@ -290,8 +289,8 @@ func renderCardText(def *CardDefinition, withName bool) string {
 			fields = append(fields, field{"Armor", fmt.Sprintf("%d", def.Armor)})
 		}
 	}
-	if def.AemberBonus > 0 {
-		fields = append(fields, field{"Æmber", fmt.Sprintf("%d", def.AemberBonus)})
+	if len(def.Bonuses) > 0 {
+		fields = append(fields, field{"Bonus", bonusIconsText(def.Bonuses)})
 	}
 	if len(def.Traits) > 0 {
 		traits := make([]string, len(def.Traits))
@@ -343,11 +342,7 @@ func RenderCardRules(def *CardDefinition) string {
 // keywords and abilities, which do not apply while it is an upgrade.
 func RenderUpgradeOnCreature(def *CardDefinition) string {
 	if def.PlayableAsUpgrade {
-		lines := upgradeGrantLines(def, true)
-		for i, line := range lines {
-			lines[i] = capitalizeCardTypes(line)
-		}
-		return strings.Join(lines, "\n")
+		return strings.Join(upgradeGrantLines(def, true), "\n")
 	}
 	return strings.Join(cardRules(def, true), "\n")
 }
@@ -518,28 +513,11 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 	if s := playableAsUpgradeText(def); s != "" {
 		rules = append(rules, s)
 	}
-	for i, line := range rules {
-		rules[i] = capitalizeCardTypes(line)
+	// Enhance is a deck-building note, so it prints on the last line of the text box.
+	if len(def.Enhances) > 0 {
+		rules = append(rules, "Enhance "+bonusIconsText(def.Enhances)+".")
 	}
 	return rules
-}
-
-// cardTypeWordRe matches the four card-type nouns as whole lowercase words, so
-// capitalizeCardTypes can raise them to KeyForge's proper-noun capitalization. It
-// is anchored on word boundaries so it never touches a larger word ("tactical")
-// or a name or trait that is already capitalized.
-var cardTypeWordRe = regexp.MustCompile(`\b(creatures?|artifacts?|upgrades?|tactics?)\b`)
-
-// capitalizeCardTypes raises Creature, Artifact, Upgrade, and Tactic to their
-// capitalized form in a line of printed card text. Card text names each card type
-// as a proper noun while the generic "card" stays lowercase, so this runs over
-// every assembled rules line as the last presentation step — the same layer that
-// already sentence-cases each line — rather than being smeared across every
-// effect's Text().
-func capitalizeCardTypes(s string) string {
-	return cardTypeWordRe.ReplaceAllStringFunc(s, func(m string) string {
-		return strings.ToUpper(m[:1]) + m[1:]
-	})
 }
 
 // CardDocComment renders a card's details as a Go doc comment block, the form
@@ -631,6 +609,9 @@ func staticText(m StaticModifier) string {
 	if s := keywordGrantsText(m); s != "" {
 		lines = append(lines, s)
 	}
+	for _, k := range m.CannotBeUsedTo {
+		lines = append(lines, "This creature cannot "+k.verb()+".")
+	}
 	return strings.Join(lines, " ")
 }
 
@@ -721,6 +702,9 @@ func upgradeStaticLines(def *CardDefinition, hosted bool) []string {
 		if s := keywordGrantsText(def.Static); s != "" {
 			lines = append(lines, s)
 		}
+		for _, k := range def.Static.CannotBeUsedTo {
+			lines = append(lines, "This creature cannot "+k.verb()+".")
+		}
 		if replacement != "" {
 			lines = append(lines, capitalizeFirst(replacement)+".")
 		}
@@ -732,7 +716,7 @@ func upgradeStaticLines(def *CardDefinition, hosted bool) []string {
 	case static != "":
 		return []string{static}
 	case replacement != "":
-		return []string{`This Creature gains, "` + replacement + `."`}
+		return []string{`This creature gains, "` + replacement + `."`}
 	default:
 		return nil
 	}
@@ -768,7 +752,7 @@ func grantedText(m StaticModifier, upgrade string, hosted bool) []string {
 		if hosted {
 			return body
 		}
-		return `This Creature gains, "` + body + `"`
+		return `This creature gains, "` + body + `"`
 	}
 	return grantedLines(m, upgrade, frame)
 }

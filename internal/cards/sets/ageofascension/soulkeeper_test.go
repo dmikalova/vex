@@ -12,9 +12,9 @@ import (
 //	House:  Dis
 //	Type:   Upgrade
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Destroyed: Destroy the most powerful enemy Creature."
+//	This creature gains, "Destroyed: Destroy the most powerful enemy creature."
 func TestSoulkeeper(t *testing.T) {
 	t.Run(
 		"destroys the most powerful enemy creature when its host is destroyed",

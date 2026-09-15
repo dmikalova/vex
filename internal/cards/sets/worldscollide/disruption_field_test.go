@@ -12,10 +12,10 @@ import (
 //	House:  Star Alliance
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Your opponent's keys cost +1 Æmber for each disruption counter on Disruption Field.
-//	This Creature gains, "Fight/Reap: Put a disruption counter on Disruption Field."
+//	This creature gains, "Fight/Reap: Put a disruption counter on Disruption Field."
 func TestDisruptionField(t *testing.T) {
 	t.Run(
 		"host reaping places a disruption counter that raises the opponent's key cost",

@@ -49,7 +49,11 @@ func TestArchiveGrantingUpgrade(t *testing.T) {
 
 	g := NewGame("A", "B", 1)
 	host := g.AddToBattleline(testCreature("host", 3), 0)
-	up := attachUpgrade(g, host, NewCard("Ghostform", Brobnar, Upgrade, Rare, WithAemberBonus(1)))
+	up := attachUpgrade(
+		g,
+		host,
+		NewCard("Ghostform", Brobnar, Upgrade, Rare, WithBonus(BonusAember)),
+	)
 	ArchiveGrantingUpgrade{}.Resolve(
 		&EffectContext{Resolver: g, Source: host, Controller: 0, Upgrade: up},
 	)

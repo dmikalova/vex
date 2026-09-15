@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Knight • Spirit
 //
-//	Play: Stun a Creature.
+//	Play: Stun a creature.
 //	Action: Put Lady Maxena into its owner's hand.
 var LadyMaxena = set.New(
 	"Lady Maxena",

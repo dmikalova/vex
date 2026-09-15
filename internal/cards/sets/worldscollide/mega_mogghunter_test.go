@@ -15,7 +15,7 @@ import (
 //	Power:  8
 //	Traits: Giant
 //
-//	Fight: Deal 2 damage to a flank Creature.
+//	Fight: Deal 2 damage to a flank creature.
 func TestMegaMogghunter(t *testing.T) {
 	t.Run("deals 2 damage to a flank creature when it fights", func(t *testing.T) {
 		var bruiser, squishy ct.Card

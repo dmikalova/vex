@@ -67,7 +67,7 @@ func TestDestructionReplacedByOwnStatic(t *testing.T) {
 		}
 		if n := g.State.TurnHistory[1][EnemyCreaturesDestroyed]; n != 0 {
 			t.Errorf(
-				"EnemyCreaturesDestroyed = %d, want 0 (a replaced destruction does not count)",
+				"EnemycreaturesDestroyed = %d, want 0 (a replaced destruction does not count)",
 				n,
 			)
 		}
@@ -83,7 +83,7 @@ func TestDestructionReplacedByOwnStatic(t *testing.T) {
 			t.Error("with no other friendly creature the automaton should be destroyed")
 		}
 		if n := g.State.TurnHistory[1][EnemyCreaturesDestroyed]; n != 1 {
-			t.Errorf("EnemyCreaturesDestroyed = %d, want 1", n)
+			t.Errorf("EnemycreaturesDestroyed = %d, want 1", n)
 		}
 	})
 }
@@ -105,8 +105,8 @@ func TestCreatureSelfDestructionReplacementText(t *testing.T) {
 			},
 		}))
 	got := cardRules(&def, false)
-	want := "If this Creature would be destroyed and there is another friendly " +
-		"Creature in play, instead fully heal it, and move it to either flank of " +
+	want := "If this creature would be destroyed and there is another friendly " +
+		"creature in play, instead fully heal it, and move it to either flank of " +
 		"its controller's battleline."
 	if !containsLine(got, want) {
 		t.Errorf("cardRules = %q, want a line %q", got, want)

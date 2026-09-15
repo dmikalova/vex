@@ -117,7 +117,7 @@ func featureSpecimens() []specimen {
 		randomMatch("Armor > 0", func(d *engine.CardDefinition) bool { return d.Armor > 0 }),
 		randomMatch(
 			"Æmber bonus",
-			func(d *engine.CardDefinition) bool { return d.AemberBonus > 0 },
+			func(d *engine.CardDefinition) bool { return d.AemberBonus() > 0 },
 		),
 		randomMatch(
 			"Two or more traits",

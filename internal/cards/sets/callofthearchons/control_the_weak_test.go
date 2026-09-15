@@ -13,7 +13,7 @@ import (
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Choose a house - your opponent must choose that house as their active house during their next turn.
 func TestControlTheWeak(t *testing.T) {

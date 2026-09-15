@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  7
 //	Traits: Giant
 //
-//	Play: Destroy each Creature with power 3 or lower.
+//	Play: Destroy each creature with power 3 or lower.
 var Earthshaker = set.New(
 	"Earthshaker",
 	card.House.Brobnar,

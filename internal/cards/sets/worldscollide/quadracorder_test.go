@@ -13,7 +13,7 @@ import (
 //	Type:   Upgrade
 //	Rarity: Uncommon
 //
-//	This Creature gains, "Your opponent's keys cost +1 Æmber for each house represented among friendly Creatures."
+//	This creature gains, "Your opponent's keys cost +1 Æmber for each house represented among friendly creatures."
 func TestQuadracorder(t *testing.T) {
 	t.Run(
 		"charges the opponent 1 more per house among friendly creatures",

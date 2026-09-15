@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Giant • Knight
 //
-//	Play: Deal 2 damage to each enemy flank Creature.
+//	Play: Deal 2 damage to each enemy flank creature.
 var Brammo = set.New(
 	"Brammo",
 	card.House.Brobnar,

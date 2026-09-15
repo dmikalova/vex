@@ -7,17 +7,17 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Saurian
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Alpha.
-//	Play: Until the start of your next turn, each Creature gains, "Before Fight: Exalt this Creature."
+//	Play: Until the start of your next turn, each creature gains, "Before Fight: Exalt this creature."
 var DiploMacy = set.New(
 	"Diplo-Macy",
 	card.House.Saurian,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "218"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithKeywords(card.Keyword.Alpha),
 	card.WithAbility(
 		card.Trigger.Play, card.GainAbility{

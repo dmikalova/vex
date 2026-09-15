@@ -12,7 +12,7 @@ import (
 //	Rarity: Connected
 //	Traits: Item • Shard
 //
-//	Action: For each friendly Shard, use a friendly Creature.
+//	Action: For each friendly Shard, use a friendly creature.
 var ShardOfUnity = set.New(
 	"Shard of Unity",
 	card.House.StarAlliance,

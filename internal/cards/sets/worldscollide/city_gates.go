@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Rare
 //	Traits: Location
 //
-//	Action: A friendly Creature captures 1 Æmber from your opponent. If it is a Dinosaur Creature, the chosen Creature captures 1 Æmber from your opponent.
+//	Action: A friendly creature captures 1 Æmber from your opponent. If it is a Dinosaur creature, the chosen creature captures 1 Æmber from your opponent.
 var CityGates = set.New(
 	"City Gates",
 	card.House.Saurian,

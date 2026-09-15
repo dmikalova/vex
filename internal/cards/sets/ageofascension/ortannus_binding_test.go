@@ -12,9 +12,9 @@ import (
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Connected
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Deal 2 damage to a friendly Creature.
+//	Play: Deal 2 damage to a friendly creature.
 func TestOrtannusBinding(t *testing.T) {
 	t.Run("deals 2 damage to a friendly creature when played", func(t *testing.T) {
 		var friend ct.Card

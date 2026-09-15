@@ -12,7 +12,7 @@ import (
 //	House:  Mars
 //	Type:   Artifact
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Item
 //
 //	Versatile.

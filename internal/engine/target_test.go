@@ -687,6 +687,45 @@ func TestTargetEachNeighbor(t *testing.T) {
 	}
 }
 
+// TestTargetInCenter covers the center-of-battleline filter: it renders the
+// qualifier and selects only the creature in the center of a battleline (Beware
+// the Ides).
+func TestTargetInCenter(t *testing.T) {
+	want := "a creature in the center of its controller's battleline"
+	if got := (Target{Kind: TargetChosenCreature}).InCenter().Text(); got != want {
+		t.Errorf("Text = %q, want %q", got, want)
+	}
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(testCreature("left", 1), 0)
+	mid := g.AddToBattleline(testCreature("mid", 1), 0)
+	g.AddToBattleline(testCreature("right", 1), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	ids := (Target{Kind: TargetChosenCreature}).InCenter().Select(ctx)
+	if len(ids) != 1 || ids[0] != mid {
+		t.Errorf("Select = %v, want [%d] (only the center creature)", ids, mid)
+	}
+}
+
+// TestTargetEachUpgradeOnThis covers the source's-own-upgrades target: it renders
+// as "each upgrade on <self>" and selects the upgrades attached to the source
+// (Away Team).
+func TestTargetEachUpgradeOnThis(t *testing.T) {
+	if got := (Target{Kind: TargetEachUpgradeOnThis}).Text(); got != "each upgrade on "+SelfName {
+		t.Errorf("Text = %q", got)
+	}
+	g := NewGame("A", "B", 1)
+	host := g.AddToBattleline(testCreature("host", 3), 0)
+	up1 := attachUpgrade(g, host, NewCard("coil", Mars, Upgrade, Common))
+	up2 := attachUpgrade(g, host, NewCard("plate", Mars, Upgrade, Common))
+	ctx := &EffectContext{Resolver: g, Controller: 0, Source: host}
+
+	ids := (Target{Kind: TargetEachUpgradeOnThis}).Select(ctx)
+	if len(ids) != 2 || ids[0] != up1 || ids[1] != up2 {
+		t.Errorf("Select = %v, want [%d %d]", ids, up1, up2)
+	}
+}
+
 func TestTargetWithUpgrade(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	upgraded := g.AddToBattleline(testCreature("up", 3), 0)
@@ -839,8 +878,9 @@ func TestPowerLessThan(t *testing.T) {
 	// The SelfHouse sentinel in the count resolves to the card's own house, even
 	// though it lives in the refinement's unexported field.
 	selfLimit := InPlay{Player: Controller, Type: Creature, House: SelfHouse}
-	resolved := resolvedIn(
+	resolved := replacedIn(
 		(Target{Kind: TargetEachEnemyCreature}).Refine(PowerLessThan(selfLimit)),
+		SelfHouse,
 		Mars,
 	)
 	if text := resolved.Text(); text !=

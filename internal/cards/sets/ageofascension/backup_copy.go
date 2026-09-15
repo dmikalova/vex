@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Logos
 //	Type:   Upgrade
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Destroyed: Put this Creature on top of its owner's deck."
+//	This creature gains, "Destroyed: Put this creature on top of its owner's deck."
 var BackupCopy = set.New(
 	"Backup Copy",
 	card.House.Logos,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
 	card.Provenance(card.AoA, "124"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Destroyed,

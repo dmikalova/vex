@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Traits: Location
 //
-//	Each friendly flank Creature gains +2 power.
+//	Each friendly flank creature gains +2 power.
 var HaedrothsWall = set.New(
 	"Haedroth's Wall",
 	card.House.Sanctum,

@@ -7,18 +7,18 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Mars
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Weapon
 //
 //	Versatile.
-//	Action: Destroy Custom Virus. Purge a Creature from your hand. Destroy each Creature that shares a trait with it.
+//	Action: Destroy Custom Virus. Purge a creature from your hand. Destroy each creature that shares a trait with it.
 var CustomVirus = set.New(
 	"Custom Virus",
 	card.House.Mars,
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "183"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Weapon),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(

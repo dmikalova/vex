@@ -10,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  7
 //	Traits: Beast
 //
-//	Bigtwig can only fight stunned Creatures.
-//	Reap: Stun and exhaust a Creature.
+//	Bigtwig can only fight stunned creatures.
+//	Reap: Stun and exhaust a creature.
 var Bigtwig = set.New(
 	"Bigtwig",
 	card.House.Untamed,

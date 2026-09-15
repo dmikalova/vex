@@ -12,9 +12,9 @@ import (
 //	House:  Untamed
 //	Type:   Upgrade
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains skirmish.
+//	This creature gains skirmish.
 func TestWayOfTheWolf(t *testing.T) {
 	t.Run("grants the host skirmish, sparing it return damage", func(t *testing.T) {
 		var host, wall ct.Card

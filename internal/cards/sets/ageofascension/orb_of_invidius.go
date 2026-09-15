@@ -7,17 +7,17 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Dis
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Item
 //
-//	After a Creature reaps, stun it.
+//	After a creature reaps, stun it.
 var OrbOfInvidius = set.New(
 	"Orb of Invidius",
 	card.House.Dis,
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, "96"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
 		card.Trigger.AfterCreatureReaps, card.Stun{Target: card.Target.Triggering}),

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  2
 //	Traits: Demon
 //
-//	Play: Destroy a friendly Creature.
+//	Play: Destroy a friendly creature.
 var Skullion = set.New(
 	"Skullion",
 	card.House.Dis,

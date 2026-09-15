@@ -15,7 +15,7 @@ import (
 //	Traits: Location
 //
 //	Versatile.
-//	Action: Reveal a Mars Creature from your hand and archive it.
+//	Action: Reveal a Mars creature from your hand and archive it.
 func TestIncubationChamber(t *testing.T) {
 	t.Run("archives a Mars creature from hand", func(t *testing.T) {
 		var chamber, martian, tactic ct.Card

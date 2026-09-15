@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Reveal your opponent's hand, and you may purge a Sanctum card from your opponent's hand.
 var ImperialTraitor = set.New(
@@ -16,7 +16,7 @@ var ImperialTraitor = set.New(
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "272"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{

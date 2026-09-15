@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Robot
 //
 //	Storm Crawler deals 1 Damage when fighting.
-//	After an enemy Creature reaps, stun it.
+//	After an enemy creature reaps, stun it.
 var StormCrawler = set.New(
 	"Storm Crawler",
 	card.House.Mars,

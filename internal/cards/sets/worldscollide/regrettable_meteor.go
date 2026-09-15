@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Saurian
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Destroy each Dinosaur Creature and each Creature with power 6 or higher.
+//	Play: Destroy each Dinosaur creature and each creature with power 6 or higher.
 var RegrettableMeteor = set.New(
 	"Regrettable Meteor",
 	card.House.Saurian,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "208"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.Destroy{Target: card.Target.EachCreature.WithTrait(card.Traits.Dinosaur)},

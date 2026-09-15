@@ -15,7 +15,7 @@ import (
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Template: its concrete card is materialized per deck at generation.
 func TestTraitBane(t *testing.T) {

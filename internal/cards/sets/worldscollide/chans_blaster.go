@@ -16,11 +16,11 @@ var chansBlasterCluster = card.Cluster{
 //	House:  Star Alliance
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Fight/Reap: Choose one:
-//	- Deal 2 damage to a Creature
-//	- Attach Chan's Blaster to Commander Chan -> use another Creature."
+//	This creature gains, "Fight/Reap: Choose one:
+//	- Deal 2 damage to a creature
+//	- Attach Chan's Blaster to Commander Chan -> use another creature."
 var ChansBlaster = set.New(
 	"Chan's Blaster",
 	card.House.StarAlliance,
@@ -28,7 +28,7 @@ var ChansBlaster = set.New(
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "345"),
 	card.LeadsCluster(chansBlasterCluster),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightReap(card.ChooseOne{Options: []card.Effect{
 			card.DealDamage{Amount: 2, Target: card.Target.Creature},

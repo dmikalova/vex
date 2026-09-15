@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Elf • Thief
 //
 //	Skirmish, Treachery, Versatile.
-//	At the end of your turn, destroy a neighboring Creature.
+//	At the end of your turn, destroy a neighboring creature.
 var ScowlyCaper = set.New(
 	"Scowly Caper",
 	card.House.Shadows,

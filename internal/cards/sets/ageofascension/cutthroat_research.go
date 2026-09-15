@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: If your opponent has 8 Æmber or more, steal 2 Æmber.
 var CutthroatResearch = set.New(
@@ -16,7 +16,7 @@ var CutthroatResearch = set.New(
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.AoA, "110"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
 			Cond: card.PoolAember{

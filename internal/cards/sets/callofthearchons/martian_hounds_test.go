@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: For each damaged Creature in play, give a Creature two +1 power counters.
+//	Play: For each damaged creature in play, give a creature two +1 power counters.
 func TestMartianHounds(t *testing.T) {
 	t.Run("gives two counters per damaged creature", func(t *testing.T) {
 		var hounds, chosen, damaged, enemy ct.Card

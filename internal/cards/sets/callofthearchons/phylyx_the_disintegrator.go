@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Martian • Soldier
 //
 //	Elusive.
-//	Action: For each other friendly Mars Creature, your opponent loses 1 Æmber.
+//	Action: For each other friendly Mars creature, your opponent loses 1 Æmber.
 var PhylyxTheDisintegrator = set.New("Phylyx the Disintegrator",
 	card.House.Mars, card.Type.Creature, card.Rarity.Rare,
 	card.Provenance(card.CotA, "197"),

@@ -15,9 +15,9 @@ var mogghuntersBrewCluster = card.Cluster{
 //	House:  Brobnar
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Fight: Deal 2 damage to a flank Creature."
+//	This creature gains, "Fight: Deal 2 damage to a flank creature."
 var MogghuntersBrew = set.New(
 	"Mogghunter's Brew",
 	card.House.Brobnar,
@@ -25,7 +25,7 @@ var MogghuntersBrew = set.New(
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "66"),
 	card.LeadsCluster(mogghuntersBrewCluster),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Fight,

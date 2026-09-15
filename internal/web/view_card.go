@@ -54,6 +54,8 @@ func (g *game) cardFace(id engine.LocalID) *cardView {
 		Stat:          g.statLine(id),
 		Rules:         g.faceRules(id),
 		Icons:         cardGlyphs(def),
+		Bonuses:       def.Bonuses,
+		Enhances:      def.Enhances,
 		Kind:          kindLabel(def),
 		Trait:         traitLabel(def),
 		Rarity:        rarityMarkOf(def.Rarity),
@@ -142,9 +144,6 @@ func handStat(def *engine.CardDefinition) []app.UI {
 			segs = append(segs, statSeg(def.Armor, "shield"))
 		}
 	}
-	if def.AemberBonus > 0 {
-		segs = append(segs, statSeg(def.AemberBonus, "aember"))
-	}
 	return segs
 }
 
@@ -154,8 +153,9 @@ func handStat(def *engine.CardDefinition) []app.UI {
 // text is rendered as it reads on its host, so it says `Reap: …` rather than
 // repeating "This creature gains" on the creature it is already sitting on.
 func (g *game) faceRules(id engine.LocalID) string {
+	def := g.g.Def(id)
 	var lines []string
-	if s := engine.RenderCardRules(g.g.Def(id)); s != "" {
+	if s := rulesWithoutEnhance(def, engine.RenderCardRules(def)); s != "" {
 		lines = append(lines, displayRules(s))
 	}
 	for _, up := range g.g.Upgrades(id) {
@@ -175,6 +175,19 @@ func (g *game) faceRules(id engine.LocalID) string {
 // stays that way — so the glyph swap happens here, once, for display only.
 func displayRules(rules string) string {
 	return strings.ReplaceAll(rules, " -> ", " → ")
+}
+
+// rulesWithoutEnhance drops the trailing "Enhance …" line from a card's rules
+// text: the web face renders that line as icons (the card-enhance line) rather
+// than words. It is a no-op for a card that is not an Enhance source.
+func rulesWithoutEnhance(def *engine.CardDefinition, rules string) string {
+	if len(def.Enhances) == 0 {
+		return rules
+	}
+	if i := strings.LastIndexByte(rules, '\n'); i >= 0 {
+		return rules[:i]
+	}
+	return ""
 }
 
 // playableFromHand reports whether the active player can play the given hand card

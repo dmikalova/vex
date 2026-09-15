@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Destroy each Creature that does not share a trait with another Creature in its controller's battleline.
+//	Play: Destroy each creature that does not share a trait with another creature in its controller's battleline.
 var GoodOfTheMany = set.New(
 	"Good of the Many",
 	card.House.Saurian,

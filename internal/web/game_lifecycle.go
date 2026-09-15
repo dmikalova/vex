@@ -37,6 +37,7 @@ func (g *game) OnMount(ctx app.Context) {
 		// Nothing to resume: open the set picker with no game dealt (g.g stays nil).
 		// The player picks two sets and only then is the first match dealt, so a
 		// fresh visit never assumes the base set.
+		g.sidebarCollapsed = mobileViewport()
 		g.beginSetup()
 	}
 	g.installKeyShortcuts()
@@ -44,6 +45,20 @@ func (g *game) OnMount(ctx app.Context) {
 	g.installSwipeGestures()
 	g.installTips()
 	g.scrollLogToBottom()
+}
+
+// mobileMaxWidth is the viewport width (in px) at or below which the view reads as
+// mobile-sized: the 20rem sidebar would cover more than 40% of it, so it is a
+// drawer over the board rather than a panel beside it. It matches sidebarTooWide's
+// 40% rule (20rem / 0.4 = 50rem, at 16px/rem).
+const mobileMaxWidth = 50 * 16.0
+
+// mobileViewport reports whether the view is mobile-sized (horizontally thin), so
+// a fresh load hides the sidebar by default and gives the board the width.
+// Off-browser (no window to measure) it reports false, the desktop default.
+func mobileViewport() bool {
+	vw := app.Window().Get("innerWidth").Float()
+	return vw > 0 && vw < mobileMaxWidth
 }
 
 // logScrollSlack is how far (in pixels) from the bottom of the log still counts

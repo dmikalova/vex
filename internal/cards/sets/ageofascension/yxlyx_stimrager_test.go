@@ -16,7 +16,7 @@ import (
 //	Armor:  2
 //	Traits: Martian • Soldier
 //
-//	Fight: Deal 2 damage to a Creature and move it to either flank of its controller's battleline.
+//	Fight: Deal 2 damage to a creature and move it to either flank of its controller's battleline.
 func TestYxlyxStimrager(t *testing.T) {
 	t.Run("its Fight ability damages a creature and moves it to a flank", func(t *testing.T) {
 		var weak, a, b, c ct.Card

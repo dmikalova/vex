@@ -12,9 +12,9 @@ import (
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Deal 3 damage to each Creature that belongs to a house that has 3 or more Creatures in play.
+//	Play: Deal 3 damage to each creature that belongs to a house that has 3 or more creatures in play.
 func TestNoSafetyInNumbers(t *testing.T) {
 	t.Run(
 		"damages every creature of a house with 3+ across both players, sparing smaller houses",

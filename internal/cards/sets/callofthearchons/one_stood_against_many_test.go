@@ -12,9 +12,9 @@ import (
 //	House:  Sanctum
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Ready and fight with a friendly Creature 3 times, each time against a different enemy Creature. Resolve these fights one at a time.
+//	Play: Ready and fight with a friendly creature 3 times, each time against a different enemy creature. Resolve these fights one at a time.
 func TestOneStoodAgainstMany(t *testing.T) {
 	t.Run("fights three times, never the same enemy twice", func(t *testing.T) {
 		var hero, foe1, foe2, foe3 ct.Card

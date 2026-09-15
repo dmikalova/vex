@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Each enemy Creature with armor loses all of its armor. Deal 1 damage to each enemy Creature with armor for each point of armor it lost this way.
+//	Play: Each enemy creature with armor loses all of its armor. Deal 1 damage to each enemy creature with armor for each point of armor it lost this way.
 var RedHotArmor = set.New(
 	"Red-Hot Armor",
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "70"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.LoseArmor{Target: card.Target.EachEnemyCreature.WithArmor()},

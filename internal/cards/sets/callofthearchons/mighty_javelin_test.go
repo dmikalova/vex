@@ -12,11 +12,11 @@ import (
 //	House:  Brobnar
 //	Type:   Artifact
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Weapon
 //
 //	Versatile.
-//	Action: Destroy Mighty Javelin. Deal 4 damage to a Creature.
+//	Action: Destroy Mighty Javelin. Deal 4 damage to a creature.
 func TestMightyJavelin(t *testing.T) {
 	t.Run("destroys itself and deals 4 damage to a creature", func(t *testing.T) {
 		var foe ct.Card

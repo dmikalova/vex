@@ -16,9 +16,31 @@ type (
 	// KeywordValue is the value type for a card.Keyword.X constant, e.g. as an
 	// element of card.AttackKeywords.Keywords.
 	KeywordValue = engine.Keyword
+	// BonusIcon is the value type for a card.Bonus.X constant, an element of
+	// card.WithBonus / card.WithEnhance.
+	BonusIcon = engine.BonusIcon
 	// Player is the relative player an effect targets: card.Controller or card.Opponent.
 	Player = engine.Player
 )
+
+// Bonus groups the bonus-icon kinds, e.g. card.Bonus.Aember.
+var Bonus = bonusIcons{
+	Aember:  engine.BonusAember,
+	Capture: engine.BonusCapture,
+	Damage:  engine.BonusDamage,
+	Draw:    engine.BonusDraw,
+}
+
+type bonusIcons struct {
+	// Aember gains 1 Æmber when the card is played.
+	Aember engine.BonusIcon
+	// Capture has a friendly creature capture 1 Æmber from the opponent.
+	Capture engine.BonusIcon
+	// Damage deals 1 damage to a creature in play.
+	Damage engine.BonusIcon
+	// Draw draws 1 card.
+	Draw engine.BonusIcon
+}
 
 // House groups the faction values, e.g. card.House.Brobnar.
 var House = houses{
@@ -147,6 +169,7 @@ var Traits = traits{
 	Angel:        engine.Angel,
 	Aquan:        engine.Aquan,
 	Beast:        engine.Beast,
+	Cat:          engine.Cat,
 	Cleric:       engine.Cleric,
 	Cyborg:       engine.Cyborg,
 	Demon:        engine.Demon,
@@ -212,6 +235,7 @@ type traits struct {
 	Ally,
 	Angel,
 	Beast,
+	Cat,
 	Cleric,
 	Cyborg,
 	Demon,
@@ -353,6 +377,7 @@ var Trigger = triggers{
 	AfterCreatureDestroyed:         engine.TriggerAfterCreatureDestroyed,
 	AfterCreatureEnters:            engine.TriggerAfterCreatureEnters,
 	AfterCreatureFights:            engine.TriggerAfterCreatureFights,
+	AfterFriendlyCreatureFights:    engine.TriggerAfterFriendlyCreatureFights,
 	AfterCreaturePlayed:            engine.TriggerAfterCreaturePlayed,
 	AfterCreaturePlayedAdjacent:    engine.TriggerAfterCreaturePlayedAdjacent,
 	AfterCreatureReaps:             engine.TriggerAfterCreatureReaps,
@@ -365,6 +390,7 @@ var Trigger = triggers{
 	AfterForgeKey:                  engine.TriggerAfterForgeKey,
 	AfterFriendlyCreatureDestroyed: engine.TriggerAfterFriendlyCreatureDestroyed,
 	AfterNeighborFights:            engine.TriggerAfterNeighborFights,
+	AfterOpponentForgesKey:         engine.TriggerAfterOpponentForgesKey,
 	AfterPlayerForgesKey:           engine.TriggerAfterPlayerForgesKey,
 	AfterTacticPlayedBeforeResolve: engine.TriggerAfterTacticPlayedBeforeResolve,
 	AfterUse:                       engine.TriggerAfterUse,
@@ -465,9 +491,15 @@ type triggers struct {
 	// AfterCreatureFights fires after any creature is used to fight (friendly or
 	// enemy), with the fighting creature as "it" (Shattered Throne makes it capture).
 	AfterCreatureFights engine.Trigger
+	// AfterFriendlyCreatureFights fires after a friendly creature is used to fight,
+	// with the fighting creature as "it" (Lieutenant Gorvenal captures).
+	AfterFriendlyCreatureFights engine.Trigger
 	// AfterPlayerForgesKey fires after any player forges a key, acting on the
 	// player who forged (Forgemaster Og).
 	AfterPlayerForgesKey engine.Trigger
+	// AfterOpponentForgesKey fires after the opponent forges a key, on the
+	// non-forging player's cards (Forge Compiler).
+	AfterOpponentForgesKey engine.Trigger
 	// BeforeOpponentForgesKey fires when the opponent would forge a key, before the
 	// forge, so the ability can cancel it (Keyforgery). The forging opponent is
 	// "they"; a cancelled forge leaves their Æmber unspent.

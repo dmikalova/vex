@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Deal 1 damage to each Creature, and if your opponent forged a key on their previous turn, deal 3 damage to each Creature.
+//	Play: Deal 1 damage to each creature, and if your opponent forged a key during their previous turn, deal 3 damage to each creature.
 var TendrilsOfPain = set.New(
 	"Tendrils of Pain",
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "64"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 			card.DealDamage{

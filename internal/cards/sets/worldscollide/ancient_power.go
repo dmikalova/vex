@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Saurian
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Ward each friendly Creature with Æmber on it.
+//	Play: Ward each friendly creature with Æmber on it.
 var AncientPower = set.New(
 	"Ancient Power",
 	card.House.Saurian,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "198"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Ward{
 			Target: card.Target.EachFriendlyCreature.WithAember(),

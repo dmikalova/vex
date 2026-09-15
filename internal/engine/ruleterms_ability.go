@@ -66,6 +66,12 @@ means whoever forged.`,
 		},
 		{
 			Section:    SectionAbility,
+			Title:      "After Your Opponent Forges a Key",
+			Definition: "An ability that resolves after the opponent forges a key.",
+			Body:       `This ability resolves after the opponent forges a key. It fires only on the opponent's forge, on the non-forging player's cards.`,
+		},
+		{
+			Section:    SectionAbility,
 			Title:      "When Your Opponent Would Forge a Key",
 			Definition: "An ability that resolves when the opponent would forge a key, before the forge, and can prevent it.",
 			Body: `This ability resolves when the opponent would forge a key, before that forge
@@ -316,6 +322,14 @@ with the fighting creature as "it" (Shattered Throne makes it capture 1 Æmber).
 fires on every in-play card, including the fighting creature itself. Fighting
 happens only on the attacker's own turn, so the fighter is always the active
 player's creature.`,
+		},
+		{
+			Section:    SectionAbility,
+			Title:      "After a Friendly Creature Is Used to Fight",
+			Definition: "An ability that resolves after a creature on the controller's own side is used to fight.",
+			Body: `This ability resolves after a friendly creature — the controller's own, itself
+or another — is used to fight, with the fighting creature as "it" (Lieutenant
+Gorvenal captures 1 Æmber). An enemy creature fighting does not fire it.`,
 		},
 		{
 			Section:    SectionAbility,

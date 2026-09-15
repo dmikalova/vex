@@ -33,15 +33,62 @@ func TestResolveSelfHouseThroughDefinition(t *testing.T) {
 	}
 	for _, want := range []string{
 		"Mars cards from your hand",
-		"each Mars Creature except the most powerful",
-		"each non-Mars Creature",
+		"each Mars creature except the most powerful",
+		"each non-Mars creature",
 		"you may play one Mars card",
 		"must choose Mars",
-		"for each friendly Mars Creature",
+		"for each friendly Mars creature",
 	} {
 		if !strings.Contains(text, want) {
 			t.Errorf("printed text is missing %q:\n%s", want, text)
 		}
+	}
+}
+
+// TestRehouseMovesEverySelfHouseReference checks that rehousing a built card — a
+// Maverick or Special adopting a new pod house — moves its House and every
+// reference that resolved to its printed house (target filters, play permission,
+// house lock, key-cost count) to the new house, without disturbing an unrelated
+// house the card names outright.
+func TestRehouseMovesEverySelfHouseReference(t *testing.T) {
+	def := NewCard("Probe", Mars, Creature, Common,
+		WithAbility(TriggerAfterPlay, Sequence{Effects: []Effect{
+			RevealHand{Player: Controller, House: namedHouse(SelfHouse)},
+			Stun{Target: Target{Kind: TargetEachCreature}.House(namedHouse(SelfHouse))},
+			// A house named outright must survive rehousing untouched.
+			Exhaust{Target: Target{Kind: TargetEachCreature}.House(namedHouse(Brobnar))},
+		}}),
+		WithPlayPermission(PlayPermission{House: SelfHouse, Amount: 1}),
+		WithHouseLock(HouseLock{Player: Controller, House: SelfHouse}),
+	)
+
+	def = Rehouse(def, Untamed)
+	if def.House != Untamed {
+		t.Fatalf("rehoused House = %v, want Untamed", def.House)
+	}
+	text := RenderCardText(&def)
+	for _, want := range []string{
+		"Untamed cards from your hand",
+		"stun each Untamed creature",
+		"you may play one Untamed card",
+		"must choose Untamed",
+		"exhaust each Brobnar creature",
+	} {
+		if !strings.Contains(text, want) {
+			t.Errorf("rehoused text is missing %q:\n%s", want, text)
+		}
+	}
+	if strings.Contains(text, "Mars") {
+		t.Errorf("printed Mars survived rehousing:\n%s", text)
+	}
+}
+
+// TestRehouseToSameHouseIsANoop covers the guard that returns the definition
+// untouched when the target house is already its printed house.
+func TestRehouseToSameHouseIsANoop(t *testing.T) {
+	def := NewCard("Probe", Mars, Creature, Common)
+	if out := Rehouse(def, Mars); out.House != Mars {
+		t.Fatalf("rehousing to the same house changed House to %v", out.House)
 	}
 }
 
@@ -71,7 +118,7 @@ type selfHouseProbe struct {
 func TestSelfHouseResolvedWalksEveryShape(t *testing.T) {
 	sentinel := SelfHouse
 	in := selfHouseProbe{Ptr: &sentinel, Map: map[string]House{"k": SelfHouse}, hidden: SelfHouse}
-	out := selfHouseResolved(reflect.ValueOf(in), Dis).Interface().(selfHouseProbe)
+	out := replaceHouse(reflect.ValueOf(in), SelfHouse, Dis).Interface().(selfHouseProbe)
 
 	if *out.Ptr != Dis {
 		t.Errorf("through pointer = %v, want Dis", *out.Ptr)

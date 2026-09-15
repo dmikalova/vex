@@ -13,7 +13,7 @@ import (
 //	Type:   Upgrade
 //	Rarity: Rare
 //
-//	This Creature belongs to Logos and this Creature gains "Reap: Draw a card."
+//	This creature belongs to Logos and this creature gains "Reap: Draw a card."
 func TestAcademyTraining(t *testing.T) {
 	t.Run("host belongs to Logos and reaps to draw a card", func(t *testing.T) {
 		var host ct.Card

@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Deal 2 damage to a Creature and deal 2 damage to a different Creature.
+//	Play: Deal 2 damage to a creature and deal 2 damage to a different creature.
 var TwinBoltEmission = set.New(
 	"Twin Bolt Emission",
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, "124"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{Spread: card.DifferentCreatures{
 			First:  2,

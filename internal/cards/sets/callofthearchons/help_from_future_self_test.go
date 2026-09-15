@@ -12,7 +12,7 @@ import (
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Connected
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Search your deck and discard pile for a Timetraveller, reveal it, and put it into your hand, and shuffle your discard pile into your deck.
 func TestHelpFromFutureSelf(t *testing.T) {

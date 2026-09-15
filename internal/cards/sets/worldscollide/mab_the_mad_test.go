@@ -13,7 +13,7 @@ import (
 //	Type:   Creature
 //	Rarity: Uncommon
 //	Power:  2
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Faerie
 //
 //	Reap: Shuffle Mab the Mad into its owner's deck.

@@ -10,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Item
 //
 //	Action: Choose one:
-//	- Stun a Creature with power 5 or higher
-//	- Stun a Giant Creature.
+//	- Stun a creature with power 5 or higher
+//	- Stun a Giant creature.
 var NepetaGigantica = set.New(
 	"Nepeta Gigantica",
 	card.House.Untamed,

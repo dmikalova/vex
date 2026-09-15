@@ -12,7 +12,7 @@ import (
 //	Rarity: Rare
 //	Traits: Item • Shard
 //
-//	Action: For each friendly Shard, stun an enemy Creature.
+//	Action: For each friendly Shard, stun an enemy creature.
 var ShardOfHate = set.New(
 	"Shard of Hate",
 	card.House.Mars,

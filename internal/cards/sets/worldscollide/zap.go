@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Star Alliance
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: For each house represented among Creatures in play, deal 1 damage to a Creature.
+//	Play: For each house represented among creatures in play, deal 1 damage to a creature.
 var Zap = set.New(
 	"Zap",
 	card.House.StarAlliance,
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "307"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.DealDamage{
 			Amount: 1,

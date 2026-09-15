@@ -16,7 +16,7 @@ import (
 //	Traits: Elf • Thief
 //
 //	Skirmish, Treachery, Versatile.
-//	At the end of your turn, destroy a neighboring Creature.
+//	At the end of your turn, destroy a neighboring creature.
 func TestScowlyCaper(t *testing.T) {
 	t.Run("enters play under your opponent's control", func(t *testing.T) {
 		var scowly ct.Card

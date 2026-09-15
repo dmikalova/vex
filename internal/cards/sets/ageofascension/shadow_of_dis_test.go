@@ -13,9 +13,9 @@ import (
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Until your next turn, enemy Creatures' text boxes are considered blank (except for traits).
+//	Play: Until your next turn, enemy creatures' text boxes are considered blank (except for traits).
 func TestShadowOfDis(t *testing.T) {
 	t.Run("blanks enemy creatures, stripping their keywords", func(t *testing.T) {
 		var taunter ct.Card

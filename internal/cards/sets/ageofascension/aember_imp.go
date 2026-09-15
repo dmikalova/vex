@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Imp
 //
 //	Elusive.
-//	After a Creature reaps, stun it.
+//	After a creature reaps, stun it.
 var AemberImp = set.New(
 	"Aember Imp",
 	card.House.Dis,

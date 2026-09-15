@@ -7,17 +7,17 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Brobnar
 //	Type:   Artifact
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Weapon
 //
-//	Action: Choose a Creature - enrage it, and give it a +1 power counter.
+//	Action: Choose a creature - enrage it, and give it a +1 power counter.
 var Irestaff = set.New(
 	"Irestaff",
 	card.House.Brobnar,
 	card.Type.Artifact,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "10"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Weapon),
 	card.WithAbility(
 		card.Trigger.Action, card.ChooseCreatureThen{

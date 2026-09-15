@@ -140,7 +140,7 @@ func TestPurgeEachFromBothPiles(t *testing.T) {
 
 	g := NewGame("A", "B", 1)
 	mine := g.Register(
-		NewCard("mine", Untamed, Creature, Common, WithAemberBonus(1)),
+		NewCard("mine", Untamed, Creature, Common, WithBonus(BonusAember)),
 		0,
 	)
 	minesafe := g.Register(NewCard("minesafe", Mars, Creature, Common), 0)
@@ -517,11 +517,11 @@ func TestPurgedAemberBonusCount(t *testing.T) {
 
 	g := NewGame("A", "B", 1)
 	two := g.Register(
-		NewCard("two", Shadows, Creature, Common, WithAemberBonus(2)),
+		NewCard("two", Shadows, Creature, Common, WithBonus(BonusAember, BonusAember)),
 		0,
 	)
 	one := g.Register(
-		NewCard("one", Shadows, Creature, Common, WithAemberBonus(1)),
+		NewCard("one", Shadows, Creature, Common, WithBonus(BonusAember)),
 		0,
 	)
 	none := g.Register(NewCard("none", Shadows, Creature, Common), 0)

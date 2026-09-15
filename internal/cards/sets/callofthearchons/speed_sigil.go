@@ -7,10 +7,10 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Shadows
 //	Type:   Artifact
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Power
 //
-//	After a Creature enters play, if it is the first Creature played this turn, ready it.
+//	After a creature enters play, if it is the first creature played this turn, ready it.
 var SpeedSigil = set.New(
 	"Speed Sigil",
 	card.House.Shadows,
@@ -18,7 +18,7 @@ var SpeedSigil = set.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "293"),
 	card.OneCopyPerDeck(),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Power),
 	card.WithAbility(
 		card.Trigger.AfterCreatureEnters, card.Conditional{

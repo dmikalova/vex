@@ -16,7 +16,7 @@ import (
 //	Traits: Human • Cyborg
 //
 //	Elusive.
-//	Play: Put a Tactic card from your hand faceup under Infomancer.
+//	Play: Put a tactic card from your hand faceup under Infomancer.
 //	Reap: Trigger the play effect of a Tactic grafted onto Infomancer.
 func TestInfomancer(t *testing.T) {
 	// Playing Infomancer grafts a Tactic from hand, and reaping triggers that
@@ -30,7 +30,7 @@ func TestInfomancer(t *testing.T) {
 		card.House.Brobnar,
 		card.Type.Tactic,
 		card.Rarity.Common,
-		card.WithAemberBonus(1),
+		card.WithBonus(card.Bonus.Aember),
 		card.WithAbility(
 			card.Trigger.Play, card.Stun{
 				Target: card.Target.EachCreature.PowerAtMost(3),

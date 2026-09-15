@@ -12,7 +12,7 @@ import (
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: If you have not forged a key this turn, forge a key at +4 Æmber current cost -> purge Nightforge.
 func TestNightforge(t *testing.T) {

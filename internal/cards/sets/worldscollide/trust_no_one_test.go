@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //
 //	Play: Choose one:
-//	- If there are no friendly Creatures in play, for each house represented among enemy Creatures, steal 1 Æmber
+//	- If there are no friendly creatures in play, for each house represented among enemy creatures, steal 1 Æmber
 //	- Steal 1 Æmber.
 func TestTrustNoOne(t *testing.T) {
 	t.Run("steals 1 Æmber while you control creatures", func(t *testing.T) {

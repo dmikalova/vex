@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Creature
 //	Rarity: Rare
 //	Power:  9
-//	Æmber:  2
+//	Bonus:  Æmber Æmber
 //	Traits: Demon
 //
 //	Taunt.
@@ -19,7 +19,7 @@ var Pitlord = set.New(
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "93"),
-	card.WithAemberBonus(2),
+	card.WithBonus(card.Bonus.Aember, card.Bonus.Aember),
 	card.WithPower(9),
 	card.WithTraits(card.Traits.Demon),
 	card.WithKeywords(card.Keyword.Taunt),

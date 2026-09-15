@@ -12,9 +12,9 @@ import (
 //	House:  Mars
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: For each friendly ready Mars Creature, deal 2 damage to a Creature.
+//	Play: For each friendly ready Mars creature, deal 2 damage to a creature.
 func TestMothershipSupport(t *testing.T) {
 	t.Run("deals 2 damage per friendly ready Mars creature", func(t *testing.T) {
 		var support, exhausted, first, second ct.Card

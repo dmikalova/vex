@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon
 //
 //	Skirmish.
-//	Spyyyder gains poison while attacking an enemy flank Creature.
+//	Spyyyder gains poison while attacking an enemy flank creature.
 var Spyyyder = set.New(
 	"Spyyyder",
 	card.House.Dis,

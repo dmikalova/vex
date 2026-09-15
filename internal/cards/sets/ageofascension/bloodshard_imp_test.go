@@ -15,7 +15,7 @@ import (
 //	Power:  2
 //	Traits: Imp
 //
-//	After a Creature reaps, destroy it.
+//	After a creature reaps, destroy it.
 func TestBloodshardImp(t *testing.T) {
 	t.Run("destroys whatever creature just reaped", func(t *testing.T) {
 		var reaper ct.Card

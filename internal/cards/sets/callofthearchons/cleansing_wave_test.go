@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Heal 1 damage from each Creature, and for each Creature healed this way, gain 1 Æmber.
+//	Play: Heal 1 damage from each creature, and for each creature healed this way, gain 1 Æmber.
 func TestCleansingWave(t *testing.T) {
 	t.Run("heals 1 from each creature and gains 1 Æmber per creature healed", func(t *testing.T) {
 		var a, b, healthy ct.Card

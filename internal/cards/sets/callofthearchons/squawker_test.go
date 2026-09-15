@@ -12,11 +12,11 @@ import (
 //	House:  Mars
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Choose one:
-//	- Ready a Mars Creature
-//	- Stun a non-Mars Creature.
+//	- Ready a Mars creature
+//	- Stun a non-Mars creature.
 func TestSquawker(t *testing.T) {
 	t.Run("can stun a non-Mars creature", func(t *testing.T) {
 		var foe ct.Card

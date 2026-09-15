@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: For each house, deal 5 damage to a Creature of that house.
+//	Play: For each house, deal 5 damage to a creature of that house.
 var GleefulMayhem = set.New(
 	"Gleeful Mayhem",
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "090"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(card.Trigger.Play, card.ForEachHouse{
 		Do: card.DealDamage{
 			Amount: 5,

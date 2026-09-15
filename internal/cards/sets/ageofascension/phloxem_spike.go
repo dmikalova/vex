@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Mars
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: If there are no friendly Creatures in play, destroy each Creature that is not on a flank.
+//	Play: If there are no friendly creatures in play, destroy each creature that is not on a flank.
 var PhloxemSpike = set.New(
 	"Phloxem Spike",
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.AoA, "186"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
 			Cond: card.InPlay{

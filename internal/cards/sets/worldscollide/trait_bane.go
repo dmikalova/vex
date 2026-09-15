@@ -15,7 +15,7 @@ import (
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Template: its concrete card is materialized per deck at generation.
 var TraitBane = set.New(
@@ -32,7 +32,7 @@ var TraitBane = set.New(
 	card.Provenance(card.WC, "126"), // Humans' Bane
 	card.Provenance(card.WC, "127"), // Scientists' Bane
 	card.Provenance(card.WC, "128"), // Thieves' Bane
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.Template(baneFor),
 )
 
@@ -63,7 +63,7 @@ func baneForHouses(h1, h2, h3 engine.House) card.Definition {
 		card.House.Dis,
 		card.Type.Tactic,
 		card.Rarity.Rare,
-		card.WithAemberBonus(1),
+		card.WithBonus(card.Bonus.Aember),
 		card.WithAbility(
 			card.Trigger.Play, card.Sequence{Effects: []card.Effect{
 				card.Destroy{Target: card.Target.Creature.WithTrait(traits[0])},

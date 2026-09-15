@@ -74,7 +74,7 @@ func TestRulebookUsesControlledVocabulary(t *testing.T) {
 	lint(t, "overview", engine.RuleOverview(), universalRetired, nil)
 	for _, sec := range []engine.Section{
 		engine.SectionTurn, engine.SectionCombat, engine.SectionCardType,
-		engine.SectionKeyword, engine.SectionAbility, engine.SectionEffect,
+		engine.SectionKeyword, engine.SectionBonus, engine.SectionAbility, engine.SectionEffect,
 	} {
 		lint(t, "intro:"+string(sec), engine.RuleSectionIntro(sec), universalRetired, nil)
 	}

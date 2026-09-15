@@ -15,8 +15,8 @@ import (
 //	Traits: Item
 //
 //	Action: Choose one:
-//	- Stun a Creature with power 5 or higher
-//	- Stun a Giant Creature.
+//	- Stun a creature with power 5 or higher
+//	- Stun a Giant creature.
 func TestNepetaGigantica(t *testing.T) {
 	t.Run("stuns a creature with power 5 or higher", func(t *testing.T) {
 		var nepeta, bruiser ct.Card

@@ -12,10 +12,10 @@ import (
 //	House:  Dis
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Power
 //
-//	Each Creature gains, "Destroyed: Purge this Creature."
+//	Each creature gains, "Destroyed: Purge this creature."
 func TestAnnihilationRitual(t *testing.T) {
 	t.Run("destroyed creatures are purged instead of discarded", func(t *testing.T) {
 		var attacker, enemy ct.Card

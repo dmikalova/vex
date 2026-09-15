@@ -12,9 +12,9 @@ import (
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Destroy each Creature with Æmber on it.
+//	Play: Destroy each creature with Æmber on it.
 func TestGuiltyHearts(t *testing.T) {
 	t.Run("destroys each creature with Æmber on it", func(t *testing.T) {
 		var rich, poor ct.Card

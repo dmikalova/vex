@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Shadows
 //	Type:   Upgrade
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "After this Creature is used, deal 2 damage to this Creature."
+//	This creature gains, "After this creature is used, deal 2 damage to this creature."
 var BonerotVenom = set.New(
 	"Bonerot Venom",
 	card.House.Shadows,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
 	card.Provenance(card.AoA, "283"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.UsedSelf,

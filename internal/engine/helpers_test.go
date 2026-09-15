@@ -42,7 +42,7 @@ func exGiant() CardDefinition {
 
 func exBruteStrength() CardDefinition {
 	return NewCard("Brute Strength", Brobnar, Upgrade, Uncommon,
-		WithAemberBonus(1), WithStatic(StaticModifier{PowerBonus: 5}))
+		WithBonus(BonusAember), WithStatic(StaticModifier{PowerBonus: 5}))
 }
 
 func exBattleFury() CardDefinition {
@@ -51,7 +51,7 @@ func exBattleFury() CardDefinition {
 		Brobnar,
 		Tactic,
 		Common,
-		WithAemberBonus(1),
+		WithBonus(BonusAember),
 		WithAbility(
 			TriggerAfterPlay,
 			OnChooseCreature{
@@ -68,7 +68,7 @@ func exAutocannon() CardDefinition {
 		Brobnar,
 		Artifact,
 		Rare,
-		WithAemberBonus(1),
+		WithBonus(BonusAember),
 		WithTraits(Weapon),
 		WithAbility(
 			TriggerAfterCreatureEnters,

@@ -12,7 +12,7 @@ import (
 //	House:  Star Alliance
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Look at the top 3 cards of your deck and put them back in any order, and draw a card.
 func TestLayOfTheLand(t *testing.T) {

@@ -15,7 +15,7 @@ import (
 //	Power:  7
 //	Traits: Giant
 //
-//	Play: Destroy each Creature with power 3 or lower.
+//	Play: Destroy each creature with power 3 or lower.
 func TestEarthshaker(t *testing.T) {
 	t.Run("destroys each creature with power 3 or lower on Play", func(t *testing.T) {
 		var weak, strong ct.Card

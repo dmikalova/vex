@@ -12,7 +12,7 @@ import (
 //	House:  Shadows
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Location
 //
 //	You may spend Æmber on Safe Place when forging keys.

@@ -16,7 +16,7 @@ import (
 //	Traits: Imp
 //
 //	Elusive.
-//	After a Creature reaps, stun it.
+//	After a creature reaps, stun it.
 func TestAemberImp(t *testing.T) {
 	t.Run("stuns the reaper, even itself", func(t *testing.T) {
 		var imp ct.Card

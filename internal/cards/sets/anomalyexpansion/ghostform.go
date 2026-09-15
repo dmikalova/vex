@@ -7,10 +7,10 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Brobnar
 //	Type:   Upgrade
 //	Rarity: Special
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains invulnerable.
-//	This Creature gains, "Fight/Reap: Archive Ghostform."
+//	This creature gains invulnerable.
+//	This creature gains, "Fight/Reap: Archive Ghostform."
 var Ghostform = set.New(
 	"Ghostform",
 	card.House.Brobnar,
@@ -18,7 +18,7 @@ var Ghostform = set.New(
 	// TODO(variant): rarity relabelled from FIXED to Special — handle manually
 	card.Rarity.Special,
 	card.Provenance(card.WC, "A01"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		Keywords: card.Keywords(card.Keyword.Invulnerable),
 		Granted:  card.FightReap(card.ArchiveGrantingUpgrade{}),

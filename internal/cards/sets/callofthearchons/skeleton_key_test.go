@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Traits: Item
 //
-//	Action: A friendly Creature captures 1 Æmber from your opponent.
+//	Action: A friendly creature captures 1 Æmber from your opponent.
 func TestSkeletonKey(t *testing.T) {
 	t.Run("a friendly creature captures 1 Æmber from the opponent", func(t *testing.T) {
 		var ally ct.Card

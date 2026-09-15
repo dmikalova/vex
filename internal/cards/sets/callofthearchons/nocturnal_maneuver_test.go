@@ -12,9 +12,9 @@ import (
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Exhaust up to 3 Creatures.
+//	Play: Exhaust up to 3 creatures.
 func TestNocturnalManeuver(t *testing.T) {
 	t.Run("exhausts up to 3 creatures", func(t *testing.T) {
 		var a, b ct.Card

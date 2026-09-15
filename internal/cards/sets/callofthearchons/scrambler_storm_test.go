@@ -13,9 +13,9 @@ import (
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Your opponent cannot play Tactics during their next turn.
+//	Play: Your opponent cannot play tactics during their next turn.
 func TestScramblerStorm(t *testing.T) {
 	t.Run("bars the opponent from playing Tactics next turn", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

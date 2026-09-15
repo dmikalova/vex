@@ -16,7 +16,7 @@ import (
 //	Traits: Human • Witch
 //
 //	Omega, Elusive.
-//	Your Creatures enter play ready.
+//	Your creatures enter play ready.
 func TestDuskwitch(t *testing.T) {
 	var newbie ct.Card
 	h := ct.Play(t, ct.Setup{

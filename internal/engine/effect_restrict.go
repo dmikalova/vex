@@ -236,8 +236,7 @@ func (e CannotPlay) validate() error {
 }
 
 // Text renders the effect, e.g. "your opponent cannot play creatures during their
-// next turn". Card text raises the type noun to its proper-noun capitalization at
-// the presentation layer, so this keeps it lowercase.
+// next turn". Card types read as lowercase common nouns in card text.
 func (e CannotPlay) Text() string {
 	who, whose := e.Player.secondPerson()
 	noun := strings.ToLower(e.barred().String()) + "s"
@@ -288,8 +287,7 @@ func (e PlayersCannotPlay) validate() error {
 }
 
 // Text renders the effect, e.g. "until the end of your next turn, players cannot
-// play tactics". The type noun is raised to its proper-noun capitalization at the
-// presentation layer, so this keeps it lowercase.
+// play tactics". Card types read as lowercase common nouns in card text.
 func (e PlayersCannotPlay) Text() string {
 	noun := strings.ToLower(e.barred().String()) + "s"
 	return "until the end of your next turn, players cannot play " + noun

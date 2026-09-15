@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Upgrade
 //	Rarity: Uncommon
 //
-//	This Creature gains, "Fight/Reap: If this is the first time this Creature was used this turn, ready it."
+//	This creature gains, "Fight/Reap: If this is the first time this creature was used this turn, ready it."
 var RocketBoots = set.New(
 	"Rocket Boots",
 	card.House.Logos,

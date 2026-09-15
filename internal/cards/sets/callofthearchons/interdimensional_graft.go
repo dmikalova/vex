@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: During your opponent's next turn, after forging a key, your opponent gives you all their Æmber.
 var InterdimensionalGraft = set.New(
@@ -16,7 +16,7 @@ var InterdimensionalGraft = set.New(
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "112"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.ForOpponentNextTurn{
 			On: card.Event.Forge,

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Goblin
 //
 //	Elusive.
-//	Reap: For the remainder of the turn, each time an enemy Creature is destroyed, gain 1 Æmber.
+//	Reap: For the remainder of the turn, each time an enemy creature is destroyed, gain 1 Æmber.
 var LooterGoblin = set.New(
 	"Looter Goblin",
 	card.House.Brobnar,

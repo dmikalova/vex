@@ -15,7 +15,7 @@ import (
 //	Power:  5
 //	Traits: Giant
 //
-//	Reap: If an enemy Creature has been destroyed this turn, gain 1 Æmber.
+//	Reap: If an enemy creature has been destroyed this turn, gain 1 Æmber.
 func TestFoozle(t *testing.T) {
 	t.Run("gains the extra Æmber once an enemy creature is destroyed", func(t *testing.T) {
 		var ally, foe ct.Card

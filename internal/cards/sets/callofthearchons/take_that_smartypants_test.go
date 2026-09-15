@@ -12,7 +12,7 @@ import (
 //	House:  Brobnar
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: If there are 3 or more enemy Logos cards in play, steal 2 Æmber.
 func TestTakeThatSmartypants(t *testing.T) {

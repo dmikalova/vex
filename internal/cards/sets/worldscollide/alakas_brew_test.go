@@ -12,9 +12,9 @@ import (
 //	House:  Brobnar
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Fight: Play a Creature -> ready it."
+//	This creature gains, "Fight: Play a creature -> ready it."
 func TestAlakasBrew(t *testing.T) {
 	t.Run("host fighting plays a creature and readies it", func(t *testing.T) {
 		var host, recruit, foe ct.Card

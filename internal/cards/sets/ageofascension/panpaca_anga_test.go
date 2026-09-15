@@ -15,7 +15,7 @@ import (
 //	Power:  5
 //	Traits: Beast
 //
-//	Each Creature to the right of Panpaca, Anga gains +2 power.
+//	Each creature to the right of Panpaca, Anga gains +2 power.
 func TestPanpacaAnga(t *testing.T) {
 	var left, right ct.Card
 	h := ct.Play(t, ct.Setup{

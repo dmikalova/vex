@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast • Rat
 //
 //	Elusive.
-//	Play: For each Rat Creature in play, deal 1 damage to each non-Rat Creature.
+//	Play: For each Rat creature in play, deal 1 damage to each non-Rat creature.
 var PlagueRat = set.New(
 	"Plague Rat",
 	card.House.Shadows,

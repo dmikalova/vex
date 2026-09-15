@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Demon
 //
-//	After a Creature is destroyed, its owner gains 1 Æmber.
+//	After a creature is destroyed, its owner gains 1 Æmber.
 var Neffru = set.New(
 	"Neffru",
 	card.House.Dis,

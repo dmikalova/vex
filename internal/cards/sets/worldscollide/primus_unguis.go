@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Dinosaur • Soldier
 //
-//	Each friendly Creature gains +2 power for each Æmber on Primus Unguis.
+//	Each friendly creature gains +2 power for each Æmber on Primus Unguis.
 //	Reap: Exalt Primus Unguis.
 var PrimusUnguis = set.New(
 	"Primus Unguis",

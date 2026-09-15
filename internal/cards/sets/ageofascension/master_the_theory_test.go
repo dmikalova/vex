@@ -12,9 +12,9 @@ import (
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: If there are no friendly Creatures in play, for each enemy Creature in play, you may archive a card from your hand.
+//	Play: If there are no friendly creatures in play, for each enemy creature in play, you may archive a card from your hand.
 func TestMasterTheTheory(t *testing.T) {
 	t.Run("does nothing while you control a creature", func(t *testing.T) {
 		var spare ct.Card

@@ -16,7 +16,7 @@ import (
 //	Traits: Elf • Thief
 //
 //	Elusive.
-//	Action: Lose 1 Æmber -> destroy a Creature.
+//	Action: Lose 1 Æmber -> destroy a creature.
 func TestWhisper(t *testing.T) {
 	t.Run("loses 1 Æmber to destroy a creature", func(t *testing.T) {
 		var whisper, foe ct.Card

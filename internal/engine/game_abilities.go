@@ -295,11 +295,58 @@ func (w *abilityWindow) add(src LocalID, trigger Trigger, it LocalID, hasIt bool
 // behalf of someone other than its controller (a borrowed Tactic's "Play:").
 func (w *abilityWindow) addAs(src LocalID, trigger Trigger, actor int, it LocalID, hasIt bool) {
 	got := w.g.triggeredBy(src, trigger)
+	kept := got[:0]
 	for i := range got {
 		got[i].actor = int8(actor)
 		got[i].it, got[i].hasIt = it, hasIt
+		if w.g.firesForSubject(got[i]) {
+			kept = append(kept, got[i])
+		}
 	}
-	w.pending = append(w.pending, got...)
+	w.pending = append(w.pending, kept...)
+}
+
+// firesForSubject reports whether a reaction whose whole effect is narrowed to the
+// shape of the card in context fires for the card that was actually played, used,
+// or discarded. A reaction that renders "after you play an artifact" (a
+// Conditional{ItIs} over its whole effect) does not fire on a creature, so it never
+// joins the ordering window on a play it does not narrow to — Harmonia, narrowed to
+// creatures, does not order with a played Tactic. Only the subject-shape narrowing
+// gates firing this way; a board "if" (Overwhelmed) is not one, so that reaction
+// still fires and is checked at resolution.
+func (g *Game) firesForSubject(t triggeredAbility) bool {
+	if !t.hasIt {
+		return true
+	}
+	cond, ok := subjectNarrowing(t.ability.Effect)
+	if !ok {
+		return true
+	}
+	ctx := &EffectContext{
+		Resolver:   g,
+		Source:     t.source,
+		Controller: int(t.actor),
+		It:         t.it,
+		HasIt:      true,
+	}
+	return cond.Met(ctx)
+}
+
+// subjectNarrowing returns the condition a reaction uses to narrow the triggering
+// event to a shape of the card in context — an ItIs family condition (house, type,
+// name, trait, or friendliness of "it") wrapping the whole effect with no Else. It
+// is exactly the shape afterYouActOnText folds into "after you play an artifact",
+// so a reaction that reads as narrowed is the reaction that fires only when narrowed.
+func subjectNarrowing(e Effect) (Condition, bool) {
+	c, ok := e.(Conditional)
+	if !ok || c.Else != nil {
+		return nil, false
+	}
+	switch c.Cond.(type) {
+	case ItIs, ItIsNamed, ItIsOfTrait, ItIsFriendly:
+		return c.Cond, true
+	}
+	return nil, false
 }
 
 // reapReactions gathers, in default resolution order, every card-sourced ability

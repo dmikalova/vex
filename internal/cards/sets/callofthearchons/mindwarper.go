@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Martian • Scientist
 //
 //	Elusive.
-//	Action: An enemy Creature captures 1 Æmber from their own side.
+//	Action: An enemy creature captures 1 Æmber from their own side.
 var Mindwarper = set.New(
 	"Mindwarper",
 	card.House.Mars,

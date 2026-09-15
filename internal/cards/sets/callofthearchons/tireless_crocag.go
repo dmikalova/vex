@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //
 //	Versatile.
 //	Tireless Crocag cannot reap.
-//	If there are no enemy Creatures in play, destroy Tireless Crocag.
+//	If there are no enemy creatures in play, destroy Tireless Crocag.
 var TirelessCrocag = set.New(
 	"Tireless Crocag",
 	card.House.Brobnar,

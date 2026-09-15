@@ -16,7 +16,7 @@ import (
 //	Traits: Goblin
 //
 //	Skirmish, Elusive.
-//	Fight: Enrage the Creature Slimy Jark fought.
+//	Fight: Enrage the creature Slimy Jark fought.
 func TestSlimyJark(t *testing.T) {
 	t.Run("enrages the creature it fights and takes no damage back", func(t *testing.T) {
 		var foe ct.Card

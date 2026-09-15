@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: If your opponent has more Æmber than you, draw a card. If you have more Æmber than your opponent, archive a card from your hand.
 var DuskChronicles = set.New(
@@ -16,7 +16,7 @@ var DuskChronicles = set.New(
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.AoA, "268"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{
 			Effects: []card.Effect{

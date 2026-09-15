@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Aquan
 //
 //	While the tide is low, Valoocanth cannot be used.
-//	Fight/Reap: Exhaust an enemy Creature and each of its neighbors.
+//	Fight/Reap: Exhaust an enemy creature and each of its neighbors.
 var Valoocanth = set.New(
 	"Valoocanth",
 	card.House.Brobnar,

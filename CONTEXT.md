@@ -534,7 +534,9 @@ The three deck Houses shown in a Player bar, with the non-active ones lowlighted
 **Deck list**:
 The full roster of a player's Deck — its 3 Houses each with their 12 cards —
 shown as a popover from a deck icon on the Player bar, one column per House with
-each card's type and Rarity. It presents the static generated roster, not the
+each card's type and Rarity. Any bonus icons a card carries (its printed icons
+plus any landed by Enhance) render to the right of its name, tight together, like
+the Maverick/Legacy marks. It presents the static generated roster, not the
 live draw order, so it leaks nothing about the deck pile.
 
 **Play zone**:

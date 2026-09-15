@@ -7,17 +7,17 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Star Alliance
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Item
 //
-//	If a player has more Creatures in play than their opponent, they cannot play Creatures.
+//	If a player has more creatures in play than their opponent, they cannot play creatures.
 var QuixxleStone = set.New(
 	"Quixxle Stone",
 	card.House.StarAlliance,
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "338"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Item),
 	card.WithCannotPlayWhile(card.ConditionalPlayBar{
 		Type: card.Type.Creature,

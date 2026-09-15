@@ -16,7 +16,7 @@ import (
 //	Traits: Beast • Rat
 //
 //	Elusive.
-//	Play: For each Rat Creature in play, deal 1 damage to each non-Rat Creature.
+//	Play: For each Rat creature in play, deal 1 damage to each non-Rat creature.
 func TestPlagueRat(t *testing.T) {
 	t.Run("deals 1 damage to each non-rat creature for each rat in play", func(t *testing.T) {
 		var foe ct.Card

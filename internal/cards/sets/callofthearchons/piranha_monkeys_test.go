@@ -15,7 +15,7 @@ import (
 //	Power:  2
 //	Traits: Beast
 //
-//	Play/Reap: Deal 2 damage to each other Creature.
+//	Play/Reap: Deal 2 damage to each other creature.
 func TestPiranhaMonkeys(t *testing.T) {
 	t.Run("deals 2 damage to each other creature when played", func(t *testing.T) {
 		var a, b ct.Card

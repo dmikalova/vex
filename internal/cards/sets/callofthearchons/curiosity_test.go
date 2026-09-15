@@ -12,9 +12,9 @@ import (
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Destroy each Scientist Creature.
+//	Play: Destroy each Scientist creature.
 func TestCuriosity(t *testing.T) {
 	t.Run("destroys each Scientist trait creature and spares others", func(t *testing.T) {
 		var sci, beast ct.Card

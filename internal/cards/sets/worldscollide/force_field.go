@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Star Alliance
 //	Type:   Upgrade
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Reap: Ward this Creature."
+//	This creature gains, "Reap: Ward this creature."
 var ForceField = set.New(
 	"Force Field",
 	card.House.StarAlliance,
 	card.Type.Upgrade,
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "310"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Reap,

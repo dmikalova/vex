@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Beast
 //
 //	Skirmish.
-//	If you have used a Creature to reap this turn, Bramble Lynx enters play ready.
+//	If you have used a creature to reap this turn, Bramble Lynx enters play ready.
 var BrambleLynx = set.New(
 	"Bramble Lynx",
 	card.House.Untamed,

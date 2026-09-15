@@ -15,7 +15,7 @@ import (
 //	Power:  7
 //	Traits: Demon
 //
-//	Reap: Put each Ortannu's Binding from your discard pile into your hand. For each card put into your hand this way, deal 2 damage to a Creature and 2 damage to each of its neighbors.
+//	Reap: Put each Ortannu's Binding from your discard pile into your hand. For each card put into your hand this way, deal 2 damage to a creature and 2 damage to each of its neighbors.
 func TestOrtannuTheChained(t *testing.T) {
 	t.Run("returns each Binding and deals a splash hit per return", func(t *testing.T) {
 		var mid, left, right ct.Card

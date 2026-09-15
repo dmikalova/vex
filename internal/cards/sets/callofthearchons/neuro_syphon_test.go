@@ -12,7 +12,7 @@ import (
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: If your opponent has more Æmber than you, steal 1 Æmber, and draw a card.
 func TestNeuroSyphon(t *testing.T) {

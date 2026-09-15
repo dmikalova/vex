@@ -7,18 +7,18 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Logos
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Equation
 //
 //	Versatile.
-//	Action: Destroy Scientifical Hack. For the remainder of the turn, you may use friendly Artifacts as if they belonged to the active house.
+//	Action: Destroy Scientifical Hack. For the remainder of the turn, you may use friendly artifacts as if they belonged to the active house.
 var ScientificalHack = set.New(
 	"Scientifical Hack",
 	card.House.Logos,
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, "154"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Equation),
 	card.WithKeywords(card.Keyword.Versatile),
 	card.WithAbility(

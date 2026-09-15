@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Traits: Item • Shard
 //
-//	Action: For each friendly Shard, a friendly Creature captures 1 Æmber from your opponent.
+//	Action: For each friendly Shard, a friendly creature captures 1 Æmber from your opponent.
 func TestShardOfHope(t *testing.T) {
 	t.Run("a friendly creature captures 1 aember for each friendly shard", func(t *testing.T) {
 		var ally ct.Card

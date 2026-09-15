@@ -8,8 +8,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Upgrade
 //	Rarity: Uncommon
 //
-//	This Creature gains, "You may spend Æmber on this Creature as if it were in your pool."
-//	Play: Exalt this Creature.
+//	This creature gains, "You may spend Æmber on this creature as if it were in your pool."
+//	Play: Exalt this creature.
 var TheCallipygianIdeal = set.New(
 	"The Callipygian Ideal",
 	card.House.Saurian,

@@ -12,10 +12,10 @@ import (
 //	House:  Star Alliance
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Item
 //
-//	If a player has more Creatures in play than their opponent, they cannot play Creatures.
+//	If a player has more creatures in play than their opponent, they cannot play creatures.
 func TestQuixxleStone(t *testing.T) {
 	t.Run("bars the player who controls more creatures from playing creatures", func(t *testing.T) {
 		var mine ct.Card

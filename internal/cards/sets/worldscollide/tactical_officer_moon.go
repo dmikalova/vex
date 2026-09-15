@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Human
 //
 //	Assault 2.
-//	Play: You may rearrange the Creatures in a player's battleline.
+//	Play: You may rearrange the creatures in a player's battleline.
 var TacticalOfficerMoon = set.New(
 	"Tactical Officer Moon",
 	card.House.StarAlliance,

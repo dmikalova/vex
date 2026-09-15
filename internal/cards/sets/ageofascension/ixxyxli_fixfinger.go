@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Martian • Scientist
 //
 //	Elusive.
-//	Each other friendly Mars Creature gains +1 armor.
+//	Each other friendly Mars creature gains +1 armor.
 var IxxyxliFixfinger = set.New(
 	"Ixxyxli Fixfinger",
 	card.House.Mars,

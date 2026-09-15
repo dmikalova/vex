@@ -12,9 +12,9 @@ import (
 //	House:  Brobnar
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Fight: Deal 2 damage to a flank Creature."
+//	This creature gains, "Fight: Deal 2 damage to a flank creature."
 func TestMogghuntersBrew(t *testing.T) {
 	t.Run("host deals 2 damage to a flank creature when it fights", func(t *testing.T) {
 		var host, bruiser, squishy ct.Card

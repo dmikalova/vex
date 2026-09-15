@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Mars
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: If your opponent has 6 Æmber or more, deal 3 damage to each enemy Creature.
+//	Play: If your opponent has 6 Æmber or more, deal 3 damage to each enemy creature.
 var IrradiatedAember = set.New(
 	"Irradiated Aember",
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "165"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
 			Cond: card.PoolAember{Player: card.Opponent, Is: card.AtLeast, Amount: 6},

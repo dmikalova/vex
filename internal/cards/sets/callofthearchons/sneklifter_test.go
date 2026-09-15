@@ -17,7 +17,7 @@ import (
 //	Power:  2
 //	Traits: Elf • Thief
 //
-//	Play: Take control of an enemy Artifact. If it does not belong to a house on your identity, it belongs to house Shadows until it leaves play.
+//	Play: Take control of an enemy artifact. If it does not belong to a house on your identity, it belongs to house Shadows until it leaves play.
 func TestSneklifter(t *testing.T) {
 	t.Run(
 		"takes control of an enemy artifact and reassigns an off-identity one to Shadows",

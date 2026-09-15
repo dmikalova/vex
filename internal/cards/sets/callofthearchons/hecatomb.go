@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Destroy each Dis Creature. For each Creature they controlled that was destroyed this way, each player gains 1 Æmber.
+//	Play: Destroy each Dis creature. For each creature they controlled that was destroyed this way, each player gains 1 Æmber.
 var Hecatomb = set.New(
 	"Hecatomb",
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "63"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.Destroy{

@@ -37,10 +37,12 @@ func (g *game) promptSourceHeader() app.UI {
 				HouseChanged: changed,
 				TypeIcon:     typeIconName(def.Type),
 				Stat:         handStat(def),
-				Rules:        displayRules(engine.RenderCardRules(def)),
+				Rules:        displayRules(rulesWithoutEnhance(def, engine.RenderCardRules(def))),
 				Kind:         kindLabel(def),
 				Trait:        traitLabel(def),
 				Rarity:       rarityMarkOf(def.Rarity),
+				Bonuses:      def.Bonuses,
+				Enhances:     def.Enhances,
 			}),
 		)
 	})

@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Traits: Location
 //
-//	Action: Discard a Creature from your hand -> gain 1 Æmber.
+//	Action: Discard a creature from your hand -> gain 1 Æmber.
 func TestFeedingPit(t *testing.T) {
 	t.Run("discards a creature from hand to gain 1 Æmber", func(t *testing.T) {
 		var beast ct.Card

@@ -12,9 +12,9 @@ import (
 //	House:  Sanctum
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Unstun each friendly Creature.
+//	Play: Unstun each friendly creature.
 func TestClearMind(t *testing.T) {
 	t.Run("unstuns each friendly creature but not the opponent's", func(t *testing.T) {
 		var ally1, ally2, foe ct.Card

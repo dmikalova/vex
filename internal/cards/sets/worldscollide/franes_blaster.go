@@ -15,10 +15,10 @@ var franesBlasterCluster = card.Cluster{
 //	House:  Star Alliance
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Fight/Reap: Choose one:
-//	- Deal 2 damage to a Creature
+//	This creature gains, "Fight/Reap: Choose one:
+//	- Deal 2 damage to a creature
 //	- Attach Frane's Blaster to First Officer Frane -> move all Æmber from First Officer Frane to your pool."
 var FranesBlaster = set.New(
 	"Frane's Blaster",
@@ -27,7 +27,7 @@ var FranesBlaster = set.New(
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "346"),
 	card.LeadsCluster(franesBlasterCluster),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightReap(card.ChooseOne{Options: []card.Effect{
 			card.DealDamage{Amount: 2, Target: card.Target.Creature},

@@ -12,7 +12,7 @@ import (
 //	House:  Untamed
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Location
 //
 //	Each player's keys cost +1 Æmber for each growth counter on Vineapple Tree.

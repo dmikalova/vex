@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Horseman • Spirit
 //
-//	Play: Put each Horseman Creature from your discard pile into your hand.
+//	Play: Put each Horseman creature from your discard pile into your hand.
 var HorsemanOfDeath = set.New(
 	"Horseman of Death",
 	card.House.Sanctum,

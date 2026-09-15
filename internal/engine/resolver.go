@@ -231,8 +231,9 @@ type EconomyResolver interface {
 	// ForgeKeyFree has a player forge one key without paying its current cost. It
 	// reports whether a key was forged, so a forge card purges itself only when it did.
 	ForgeKeyFree(player int) bool
-	// UnforgeKey takes one forged key back off a player (Key Hammer).
-	UnforgeKey(player int)
+	// UnforgeKey takes one forged key back off a player (Key Hammer). It reports
+	// whether a key was actually removed, so a gate runs its follow-up only when it did.
+	UnforgeKey(player int) bool
 	// CancelCurrentForge cancels the key forge in progress so it does not happen and
 	// no Æmber is spent (Keyforgery). The before-forge window reads and clears the
 	// flag it sets, mirroring CancelCurrentFight.

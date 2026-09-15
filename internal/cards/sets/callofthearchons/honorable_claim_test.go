@@ -12,9 +12,9 @@ import (
 //	House:  Sanctum
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Each friendly Knight Creature captures 1 Æmber from your opponent.
+//	Play: Each friendly Knight creature captures 1 Æmber from your opponent.
 func TestHonorableClaim(t *testing.T) {
 	t.Run("each friendly Knight captures 1 Æmber", func(t *testing.T) {
 		var knight, other ct.Card

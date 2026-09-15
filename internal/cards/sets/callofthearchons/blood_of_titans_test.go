@@ -12,9 +12,9 @@ import (
 //	House:  Brobnar
 //	Type:   Upgrade
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains +5 power.
+//	This creature gains +5 power.
 func TestBloodOfTitans(t *testing.T) {
 	t.Run("grants its host +5 power while attached", func(t *testing.T) {
 		var host ct.Card

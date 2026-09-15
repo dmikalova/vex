@@ -12,9 +12,9 @@ import (
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Purge each Untamed Creature from each player's discard pile. For each card purged this way, its owner gains 1 Æmber.
+//	Play: Purge each Untamed creature from each player's discard pile. For each card purged this way, its owner gains 1 Æmber.
 func TestSoldiersToFlowers(t *testing.T) {
 	var mine, spared, theirs ct.Card
 	h := ct.Play(t, ct.Setup{

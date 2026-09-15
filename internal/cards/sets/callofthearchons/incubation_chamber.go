@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Location
 //
 //	Versatile.
-//	Action: Reveal a Mars Creature from your hand and archive it.
+//	Action: Reveal a Mars creature from your hand and archive it.
 var IncubationChamber = set.New(
 	"Incubation Chamber",
 	card.House.Mars,

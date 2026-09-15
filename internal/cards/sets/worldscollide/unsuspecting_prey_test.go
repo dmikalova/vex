@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Deal 2 damage to up to 3 undamaged Creatures.
+//	Play: Deal 2 damage to up to 3 undamaged creatures.
 func TestUnsuspectingPrey(t *testing.T) {
 	var clean1, clean2, hurt ct.Card
 	h := ct.Play(t, ct.Setup{

@@ -7,28 +7,28 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: If your opponent forged a key on their previous turn, unforge one of your opponent's keys, and your opponent gains 6 Æmber.
+//	Play: If your opponent forged a key during their previous turn, unforge one of your opponent's keys -> your opponent gains 6 Æmber.
 var KeyHammer = set.New(
 	"Key Hammer",
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "66"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Conditional{
 			Cond: card.ForgedKey{
 				Player:   card.Opponent,
 				Previous: true,
 			},
-			Then: card.Sequence{Effects: []card.Effect{
-				card.UnforgeKey{Player: card.Opponent},
-				card.GainAember{
+			Then: card.Then{
+				First: card.UnforgeKey{Player: card.Opponent},
+				Result: card.GainAember{
 					Player: card.Opponent,
 					Amount: 6,
 				},
-			}},
+			},
 		}),
 )

@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  2
 //	Traits: Human • Knight
 //
-//	Each neighboring Creature gains +2 armor.
+//	Each neighboring creature gains +2 armor.
 var Bulwark = set.New(
 	"Bulwark",
 	card.House.Sanctum,

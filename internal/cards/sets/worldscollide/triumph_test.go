@@ -12,9 +12,9 @@ import (
 //	House:  Saurian
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: If there are no enemy Creatures in play, exalt each friendly Creature. If there are 6 or more friendly Creatures in play, forge a key at no cost -> purge Triumph.
+//	Play: If there are no enemy creatures in play, exalt each friendly creature. If there are 6 or more friendly creatures in play, forge a key at no cost -> purge Triumph.
 func TestTriumph(t *testing.T) {
 	t.Run("with no enemy creatures and 6 friendly, exalts each and forges", func(t *testing.T) {
 		var watched ct.Card

@@ -12,7 +12,7 @@ import (
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Forge a key at +10 Æmber current cost, reduced by 1 Æmber for each card in your hand -> purge Data Forge.
 func TestDataForge(t *testing.T) {

@@ -34,7 +34,7 @@ func master(n int, opts ...card.Option) card.Definition {
 //	Power:  4
 //	Traits: Demon
 //
-//	Reap: You may destroy a Creature with power 1.
+//	Reap: You may destroy a creature with power 1.
 var MasterOf1 = master(1, card.Provenance(card.CotA, "89"))
 
 // Master of 2
@@ -45,7 +45,7 @@ var MasterOf1 = master(1, card.Provenance(card.CotA, "89"))
 //	Power:  4
 //	Traits: Demon
 //
-//	Reap: You may destroy a Creature with power 2.
+//	Reap: You may destroy a creature with power 2.
 var MasterOf2 = master(2, card.Provenance(card.CotA, "90"))
 
 // Master of 3
@@ -56,7 +56,7 @@ var MasterOf2 = master(2, card.Provenance(card.CotA, "90"))
 //	Power:  4
 //	Traits: Demon
 //
-//	Reap: You may destroy a Creature with power 3.
+//	Reap: You may destroy a creature with power 3.
 var MasterOf3 = master(3, card.Provenance(card.CotA, "91"))
 
 // Master of 4
@@ -67,7 +67,7 @@ var MasterOf3 = master(3, card.Provenance(card.CotA, "91"))
 //	Power:  4
 //	Traits: Demon
 //
-//	Reap: You may destroy a Creature with power 4.
+//	Reap: You may destroy a creature with power 4.
 var MasterOf4 = master(4)
 
 // Master of 5
@@ -78,5 +78,5 @@ var MasterOf4 = master(4)
 //	Power:  4
 //	Traits: Demon
 //
-//	Reap: You may destroy a Creature with power 5.
+//	Reap: You may destroy a creature with power 5.
 var MasterOf5 = master(5)

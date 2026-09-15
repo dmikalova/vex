@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Mars
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Lose all your Æmber, and for each Æmber you lost this way, draw 2 cards.
 var MartianGenerosity = set.New(
@@ -16,7 +16,7 @@ var MartianGenerosity = set.New(
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, "202"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Sequence{
 			Effects: []card.Effect{

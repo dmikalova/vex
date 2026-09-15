@@ -16,7 +16,7 @@ import (
 //	Traits: Elf • Thief
 //
 //	Elusive.
-//	Each neighboring Creature gains, "Action: Steal 1 Æmber."
+//	Each neighboring creature gains, "Action: Steal 1 Æmber."
 func TestBreakerHill(t *testing.T) {
 	t.Run("a neighbor may use the granted action to steal 1 Æmber", func(t *testing.T) {
 		var neighbor ct.Card

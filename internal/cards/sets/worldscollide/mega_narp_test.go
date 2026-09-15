@@ -16,7 +16,7 @@ import (
 //	Armor:  1
 //	Traits: Giant
 //
-//	Each neighboring Creature cannot reap.
+//	Each neighboring creature cannot reap.
 func TestMegaNarp(t *testing.T) {
 	t.Run("bars its neighbors from reaping but not distant friends", func(t *testing.T) {
 		var left, right, far ct.Card

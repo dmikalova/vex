@@ -12,9 +12,9 @@ import (
 //	House:  Saurian
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Your opponent gains control of a friendly Creature.
+//	Play: Your opponent gains control of a friendly creature.
 func TestExile(t *testing.T) {
 	t.Run("gives control of a friendly creature to the opponent", func(t *testing.T) {
 		var pet ct.Card

@@ -16,7 +16,7 @@ import (
 //	Armor:  4
 //	Traits: Dinosaur • Soldier
 //
-//	If there are no enemy Creatures in play, destroy Cincinnatus Rex.
+//	If there are no enemy creatures in play, destroy Cincinnatus Rex.
 //	Fight: You may exalt Cincinnatus Rex. Ready each other friendly card.
 func TestCincinnatusRex(t *testing.T) {
 	t.Run("fighting may exalt itself and ready each other friendly card", func(t *testing.T) {

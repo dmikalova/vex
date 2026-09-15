@@ -14,7 +14,7 @@ import (
 //	Rarity: Uncommon
 //	Traits: Item
 //
-//	Action: Put an Artifact into its owner's hand.
+//	Action: Put an artifact into its owner's hand.
 func TestWhisperingReliquary(t *testing.T) {
 	t.Run("puts a chosen artifact into its owner's hand", func(t *testing.T) {
 		var foeArtifact ct.Card

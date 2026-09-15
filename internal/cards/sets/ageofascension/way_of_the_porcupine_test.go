@@ -12,9 +12,9 @@ import (
 //	House:  Untamed
 //	Type:   Upgrade
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains +3 hazardous.
+//	This creature gains +3 hazardous.
 func TestWayOfThePorcupine(t *testing.T) {
 	t.Run("deals hazardous damage to an attacker", func(t *testing.T) {
 		var attacker, host ct.Card

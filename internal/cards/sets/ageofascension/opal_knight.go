@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Spirit • Knight
 //
-//	Play: Destroy each Creature with even power.
+//	Play: Destroy each creature with even power.
 var OpalKnight = set.New(
 	"Opal Knight",
 	card.House.Sanctum,

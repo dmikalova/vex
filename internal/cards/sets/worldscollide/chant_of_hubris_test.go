@@ -12,9 +12,9 @@ import (
 //	House:  Saurian
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Move 1 Æmber from a Creature to another Creature.
+//	Play: Move 1 Æmber from a creature to another creature.
 func TestChantOfHubris(t *testing.T) {
 	t.Run("moves 1 Æmber from one creature onto another", func(t *testing.T) {
 		var from, onto ct.Card

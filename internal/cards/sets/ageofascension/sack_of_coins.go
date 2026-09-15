@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Choose a Creature - for each Æmber in your pool, deal 1 damage to the chosen Creature.
+//	Play: Choose a creature - for each Æmber in your pool, deal 1 damage to the chosen creature.
 var SackOfCoins = set.New(
 	"Sack of Coins",
 	card.House.Shadows,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, "312"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseCreatureThen{
 			Target: card.Target.Creature,

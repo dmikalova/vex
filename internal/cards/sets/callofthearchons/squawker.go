@@ -7,18 +7,18 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Mars
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Choose one:
-//	- Ready a Mars Creature
-//	- Stun a non-Mars Creature.
+//	- Ready a Mars creature
+//	- Stun a non-Mars creature.
 var Squawker = set.New(
 	"Squawker",
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, "178"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.ChooseOne{
 			Options: []card.Effect{

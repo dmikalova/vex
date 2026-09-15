@@ -14,9 +14,9 @@ import (
 //	House:  Logos
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Action: Swap this Creature with another friendly Creature in your battleline. Use the other Creature."
+//	This creature gains, "Action: Swap this creature with another friendly creature in your battleline. Use the other creature."
 func TestTranspositionSandals(t *testing.T) {
 	t.Run(
 		"swaps the host with another friendly creature and uses that creature",

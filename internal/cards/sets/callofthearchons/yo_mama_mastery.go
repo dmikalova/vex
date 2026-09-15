@@ -7,17 +7,17 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Brobnar
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains taunt.
-//	Play: Fully heal this Creature.
+//	This creature gains taunt.
+//	Play: Fully heal this creature.
 var YoMamaMastery = set.New(
 	"Yo Mama Mastery",
 	card.House.Brobnar,
 	card.Type.Upgrade,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "52"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{Keywords: card.Keywords(card.Keyword.Taunt)}),
 	card.WithAbility(
 		card.Trigger.Play, card.Heal{

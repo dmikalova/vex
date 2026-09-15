@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Choose a Creature - for each trait that Creature has, deal 2 damage to the chosen Creature, and gain 1 Æmber.
+//	Play: Choose a creature - for each trait that creature has, deal 2 damage to the chosen creature, and gain 1 Æmber.
 var EntropicSwirl = set.New(
 	"Entropic Swirl",
 	card.House.Logos,

@@ -39,6 +39,31 @@ func TestForgemasterOgDrainsForger(t *testing.T) {
 	}
 }
 
+// An ability that reacts only to the opponent forging (Forge Compiler) fires when
+// the opponent forges and not when its own controller does.
+func TestAfterOpponentForgesKeyFiresOnlyOnOpponentForge(t *testing.T) {
+	watcher := NewCard("Watcher", Logos, Creature, Common, WithPower(3),
+		WithAbility(TriggerAfterOpponentForgesKey, GainAember{Player: Controller, Amount: 2}))
+	if got := RenderCardRules(&watcher); !strings.Contains(got,
+		"After your opponent forges a key, gain 2 Æmber.") {
+		t.Fatalf("Watcher rules = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(watcher, 0)
+
+	// The opponent (player 1) forges: the ability on player 0's side fires.
+	g.forgeKeyFree(1)
+	if got := g.State.Aember[0]; got != 2 {
+		t.Errorf("after opponent forge, controller pool = %d, want 2", got)
+	}
+	// The controller forging does not fire it.
+	g.forgeKeyFree(0)
+	if got := g.State.Aember[0]; got != 2 {
+		t.Errorf("after own forge, controller pool = %d, want 2 (unchanged)", got)
+	}
+}
+
 // TestForgeKeyOrdersMultipleReactions proves the "after you forge a key" reactions
 // on two different cards are gathered into one window the forger orders, not fired
 // one at a time in board order. A reversing chooser resolves the later card's

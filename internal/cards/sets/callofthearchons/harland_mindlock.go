@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  1
 //	Traits: Cyborg • Scientist
 //
-//	Play: Take control of an enemy flank Creature until Harland Mindlock leaves play.
+//	Play: Take control of an enemy flank creature until Harland Mindlock leaves play.
 var HarlandMindlock = set.New(
 	"Harland Mindlock",
 	card.House.Logos,

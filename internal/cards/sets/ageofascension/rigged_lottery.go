@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Discard the top 5 cards of each player's deck. For each Shadows card discarded this way, its owner gains 1 Æmber.
 var RiggedLottery = set.New(
@@ -16,7 +16,7 @@ var RiggedLottery = set.New(
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, "309"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.DiscardTop{Player: card.EachPlayer, Amount: 5},

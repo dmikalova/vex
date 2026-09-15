@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: For each Creature your opponent controls in excess of you, gain 1 Æmber.
+//	Play: For each creature your opponent controls in excess of you, gain 1 Æmber.
 var GloriousFew = set.New(
 	"Glorious Few",
 	card.House.Sanctum,

@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Mars
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Redistribute the damage among a player's Creatures.
+//	Play: Redistribute the damage among a player's creatures.
 var EntropicManipulator = set.New(
 	"Entropic Manipulator",
 	card.House.Mars,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.AoA, "195"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.RedistributeDamage{}),
 )

@@ -15,9 +15,9 @@ var cowfynesBrewCluster = card.Cluster{
 //	House:  Brobnar
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains +2 splash-attack.
+//	This creature gains +2 splash-attack.
 var CowfynesBrew = set.New(
 	"Cowfyne's Brew",
 	card.House.Brobnar,
@@ -25,7 +25,7 @@ var CowfynesBrew = set.New(
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "63"),
 	card.LeadsCluster(cowfynesBrewCluster),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		SplashAttackBonus: 2,
 	}),

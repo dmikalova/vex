@@ -12,9 +12,9 @@ import (
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Use an Artifact. Destroy it.
+//	Play: Use an artifact. Destroy it.
 func TestPoltergeist(t *testing.T) {
 	t.Run("uses an enemy artifact and then destroys it", func(t *testing.T) {
 		var theirs, drawn ct.Card

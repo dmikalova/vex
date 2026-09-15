@@ -12,9 +12,9 @@ import (
 //	House:  Star Alliance
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: If there are 3 or more houses represented among Creatures in play, gain 1 Æmber. If there are 5 or more houses represented among Creatures in play, gain 1 Æmber. If there are 6 or more houses represented among Creatures in play, gain 1 Æmber.
+//	Play: If there are 3 or more houses represented among creatures in play, gain 1 Æmber. If there are 5 or more houses represented among creatures in play, gain 1 Æmber. If there are 6 or more houses represented among creatures in play, gain 1 Æmber.
 func TestGalacticCensus(t *testing.T) {
 	// The played Tactic contributes its bonus Æmber before its effect resolves,
 	// so every expected total is that 1 bonus plus the tier payout.

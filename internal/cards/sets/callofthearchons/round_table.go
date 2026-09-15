@@ -7,17 +7,17 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Sanctum
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Location
 //
-//	Each friendly Knight Creature gains +1 power and taunt.
+//	Each friendly Knight creature gains +1 power and taunt.
 var RoundTable = set.New(
 	"Round Table",
 	card.House.Sanctum,
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "235"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Location),
 	card.WithConstant(card.ConstantAbility{
 		PowerBonus: 1,

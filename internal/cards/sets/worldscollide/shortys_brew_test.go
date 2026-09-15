@@ -12,9 +12,9 @@ import (
 //	House:  Brobnar
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains +4 assault.
+//	This creature gains +4 assault.
 func TestShortysBrew(t *testing.T) {
 	t.Run("host deals 4 assault damage before fight damage", func(t *testing.T) {
 		var host, foe ct.Card

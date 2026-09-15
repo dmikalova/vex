@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Deal 2 damage to up to 3 undamaged Creatures.
+//	Play: Deal 2 damage to up to 3 undamaged creatures.
 var UnsuspectingPrey = set.New(
 	"Unsuspecting Prey",
 	card.House.Untamed,

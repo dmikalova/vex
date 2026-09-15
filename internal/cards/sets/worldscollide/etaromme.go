@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Demon
 //
-//	Reap: Destroy a Creature of the house with the most Creatures in play.
+//	Reap: Destroy a creature of the house with the most creatures in play.
 var Etaromme = set.New(
 	"Etaromme",
 	card.House.Dis,

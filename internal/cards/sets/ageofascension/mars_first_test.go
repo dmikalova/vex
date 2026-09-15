@@ -12,9 +12,9 @@ import (
 //	House:  Mars
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Ready and use a friendly Mars Creature.
+//	Play: Ready and use a friendly Mars creature.
 func TestMarsFirst(t *testing.T) {
 	t.Run("readies and uses a friendly Mars creature", func(t *testing.T) {
 		var trooper ct.Card

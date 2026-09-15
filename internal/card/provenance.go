@@ -50,8 +50,8 @@ var (
 	AS = provenance.AemberSkies
 	// ToC is Tokens of Change.
 	ToC = provenance.TokensOfChange
-	// MoM is More Mutation.
-	MoM = provenance.MoreMutation
+	// MoMu is More Mutation.
+	MoMu = provenance.MoreMutation
 	// Men is Menagerie.
 	Men = provenance.Menagerie
 	// VM is Vault Masters 2025.

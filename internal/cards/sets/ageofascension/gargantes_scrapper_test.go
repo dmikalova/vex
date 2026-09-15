@@ -13,11 +13,11 @@ import (
 //	Type:   Creature
 //	Rarity: Uncommon
 //	Power:  3
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Giant
 //
 //	Alpha.
-//	Play: For each Æmber in your pool, deal 3 damage to an enemy Creature.
+//	Play: For each Æmber in your pool, deal 3 damage to an enemy creature.
 func TestGargantesScrapper(t *testing.T) {
 	t.Run("deals 3 damage for each Æmber in your pool", func(t *testing.T) {
 		var foe ct.Card

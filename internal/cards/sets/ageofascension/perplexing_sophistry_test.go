@@ -12,7 +12,7 @@ import (
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: If you have more Æmber than your opponent, your opponent discards a random card from their hand, and you draw a card.
 func TestPerplexingSophistry(t *testing.T) {

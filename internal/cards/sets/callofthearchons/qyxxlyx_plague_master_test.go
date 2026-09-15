@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Martian • Scientist
 //
-//	Fight/Reap: Deal 3 damage to each Human Creature, ignoring armor.
+//	Fight/Reap: Deal 3 damage to each Human creature, ignoring armor.
 func TestQyxxlyxPlagueMaster(t *testing.T) {
 	t.Run("deals 3 to each Human creature, bypassing armor", func(t *testing.T) {
 		var human, beast ct.Card

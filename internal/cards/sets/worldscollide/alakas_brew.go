@@ -15,9 +15,9 @@ var alakasBrewCluster = card.Cluster{
 //	House:  Brobnar
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Fight: Play a Creature -> ready it."
+//	This creature gains, "Fight: Play a creature -> ready it."
 var AlakasBrew = set.New(
 	"Alaka's Brew",
 	card.House.Brobnar,
@@ -25,7 +25,7 @@ var AlakasBrew = set.New(
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "2"),
 	card.LeadsCluster(alakasBrewCluster),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Fight,

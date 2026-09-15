@@ -12,10 +12,10 @@ import (
 //	House:  Brobnar
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "At the end of your turn, give this Creature a -1 power counter."
-//	Play: Fully heal this Creature, and for each damage healed this way, give this Creature a +1 power counter.
+//	This creature gains, "At the end of your turn, give this creature a -1 power counter."
+//	Play: Fully heal this creature, and for each damage healed this way, give this creature a +1 power counter.
 func TestCybergiantRig(t *testing.T) {
 	var host ct.Card
 	h := ct.Play(t, ct.Setup{

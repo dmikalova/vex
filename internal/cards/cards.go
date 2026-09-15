@@ -18,11 +18,9 @@ import (
 	"github.com/dmikalova/vactrol/internal/cards/provenance"
 	// Blank-imported so each set's cards self-register through its package init.
 	_ "github.com/dmikalova/vactrol/internal/cards/sets/ageofascension"
-	// Blank-imported so each set's cards self-register through its package init.
 	_ "github.com/dmikalova/vactrol/internal/cards/sets/anomalyexpansion"
-	// Blank-imported so each set's cards self-register through its package init.
 	_ "github.com/dmikalova/vactrol/internal/cards/sets/callofthearchons"
-	// Blank-imported so each set's cards self-register through its package init.
+	_ "github.com/dmikalova/vactrol/internal/cards/sets/massmutation"
 	_ "github.com/dmikalova/vactrol/internal/cards/sets/worldscollide"
 	"github.com/dmikalova/vactrol/internal/deckgen"
 )

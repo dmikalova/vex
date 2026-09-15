@@ -7,17 +7,17 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Dis
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Power
 //
-//	Each Creature gains, "Destroyed: Purge this Creature."
+//	Each creature gains, "Destroyed: Purge this creature."
 var AnnihilationRitual = set.New(
 	"Annihilation Ritual",
 	card.House.Dis,
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "72"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Power),
 	card.WithConstant(card.ConstantAbility{
 		Target: card.Target.EachCreature,

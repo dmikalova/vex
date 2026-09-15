@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Traits: Item
 //
-//	Each friendly Creature gains +1 power.
+//	Each friendly creature gains +1 power.
 func TestBannerOfBattle(t *testing.T) {
 	t.Run("gives each friendly creature +1 power while in play", func(t *testing.T) {
 		var friend, enemy ct.Card

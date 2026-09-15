@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Your opponent cannot play Tactics during their next turn.
+//	Play: Your opponent cannot play tactics during their next turn.
 var ScramblerStorm = set.New(
 	"Scrambler Storm",
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.CotA, "122"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(card.Trigger.Play, card.CannotPlay{
 		Player:   card.Opponent,
 		Type:     card.Type.Tactic,

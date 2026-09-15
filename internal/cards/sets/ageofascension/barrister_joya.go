@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Human • Knight
 //
-//	Enemy Creatures cannot reap.
+//	Enemy creatures cannot reap.
 var BarristerJoya = set.New(
 	"Barrister Joya",
 	card.House.Sanctum,

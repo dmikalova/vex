@@ -56,6 +56,35 @@ func TestDiscardOpponentSourceDeckTopBindsIt(t *testing.T) {
 	}
 }
 
+// Choosing the archives discards a random card from them and binds it, so a
+// following "play it" effect can reach the discarded card.
+func TestDiscardOpponentSourceArchivesBindsIt(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.State.ActivePlayer = 0
+	id := g.Register(testCreature("a", 1), 1)
+	g.State.Archives[1].add(id)
+	g.SetChooser(0, optionPicker{idx: 0}) // your opponent's archives
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	DiscardOpponentArchivesOrDeckTop{}.Resolve(ctx)
+	if g.State.Archives[1].contains(id) {
+		t.Error("the discarded card should have left the opponent's archives")
+	}
+	if !ctx.HasIt || ctx.It != id {
+		t.Errorf("It = %v (has %v), want %v", ctx.It, ctx.HasIt, id)
+	}
+}
+
+// Both source effects validate without configuration.
+func TestDiscardOpponentSourceValidate(t *testing.T) {
+	if err := (DiscardOpponentArchivesOrDeckTop{}).validate(); err != nil {
+		t.Errorf("DiscardOpponentArchivesOrDeckTop validate = %v", err)
+	}
+	if err := (PlayItFromOpponentDiscard{}).validate(); err != nil {
+		t.Errorf("PlayItFromOpponentDiscard validate = %v", err)
+	}
+}
+
 // With no card in context, playing "it" does nothing.
 func TestPlayItFromOpponentDiscardNoContext(t *testing.T) {
 	g := NewGame("A", "B", 1)

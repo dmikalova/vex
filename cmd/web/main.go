@@ -470,6 +470,27 @@ const cardFitScript = `<script>
     el.style.width = (100 / scale) + '%';
     el.style.flexShrink = '0';
   }
+  function fitFrame(card) {
+    var cr = card.getBoundingClientRect();
+    if (cr.width <= 0) { return; }
+    // size the left-edge icons off the card's actual width so their scale is the
+    // same on a board card and an enlarged copy (the fractions reproduce the CSS
+    // fallback rems on a 9rem board card).
+    card.style.setProperty('--edge-icon', (cr.width * 0.091).toFixed(2) + 'px');
+    card.style.setProperty('--edge-house', (cr.width * 0.117).toFixed(2) + 'px');
+    // the two-tone frame splits at fixed card percentages by default; measure the
+    // text box and rewrite the split inline so the right half steps down to the
+    // box's top and the left half to its bottom, bracketing the box no matter how
+    // tall the card is drawn.
+    var text = card.querySelector('.card-text');
+    if (!text || cr.height <= 0) { return; }
+    var tr = text.getBoundingClientRect();
+    // nudge each split a corner-radius (~6px) past the box edge so the step clears
+    // the card's rounded corner: the right half a touch lower, the left a touch higher.
+    var pad = 6 / cr.height * 100;
+    card.style.setProperty('--nm-right', ((tr.top - cr.top) / cr.height * 100 + pad).toFixed(2) + '%');
+    card.style.setProperty('--nm-left', ((tr.bottom - cr.top) / cr.height * 100 - pad).toFixed(2) + '%');
+  }
   var scheduled = false;
   function schedule() {
     if (scheduled) { return; }
@@ -478,6 +499,7 @@ const cardFitScript = `<script>
       scheduled = false;
       document.querySelectorAll('.card-icons').forEach(fitBand);
       document.querySelectorAll('.card-name-text').forEach(fitTitle);
+      document.querySelectorAll('.card').forEach(fitFrame);
     });
   }
   window.addEventListener('load', schedule);

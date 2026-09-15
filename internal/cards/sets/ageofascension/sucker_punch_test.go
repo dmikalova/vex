@@ -14,10 +14,10 @@ import (
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Alpha.
-//	Play: Deal 2 damage to an enemy Creature. If this damage destroys that Creature, archive Sucker Punch.
+//	Play: Deal 2 damage to an enemy creature. If this damage destroys that creature, archive Sucker Punch.
 func TestSuckerPunch(t *testing.T) {
 	t.Run("archives itself when the damage destroys the creature", func(t *testing.T) {
 		var punch ct.Card

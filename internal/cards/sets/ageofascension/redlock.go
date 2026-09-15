@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Elf • Thief
 //
 //	Skirmish.
-//	At the end of your turn, if you did not play any Creatures this turn, gain 1 Æmber.
+//	At the end of your turn, if you did not play any creatures this turn, gain 1 Æmber.
 var Redlock = set.New(
 	"Redlock",
 	card.House.Shadows,

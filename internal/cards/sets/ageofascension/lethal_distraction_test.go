@@ -12,9 +12,9 @@ import (
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: For the remainder of the turn, whenever a Creature takes damage, it takes an additional 2 damage.
+//	Play: For the remainder of the turn, whenever a creature takes damage, it takes an additional 2 damage.
 func TestLethalDistraction(t *testing.T) {
 	t.Run("the chosen creature takes 2 extra damage from each instance", func(t *testing.T) {
 		var attacker, foe ct.Card

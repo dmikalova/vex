@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: For each Creature your opponent controls in excess of you, gain 1 Æmber.
+//	Play: For each creature your opponent controls in excess of you, gain 1 Æmber.
 func TestGloriousFew(t *testing.T) {
 	t.Run("gains 1 Æmber for each excess creature the opponent controls", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Beast • Insect
 //
-//	Fight: Destroy an Artifact. For each Æmber bonus on it, gain 1 Æmber.
+//	Fight: Destroy an artifact. For each Æmber bonus on it, gain 1 Æmber.
 var Rustgnawer = set.New(
 	"Rustgnawer",
 	card.House.Untamed,

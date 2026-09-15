@@ -12,9 +12,9 @@ import (
 //	House:  Brobnar
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains +4 power.
+//	This creature gains +4 power.
 func TestGronsBrew(t *testing.T) {
 	t.Run("host gains +4 power", func(t *testing.T) {
 		var host ct.Card

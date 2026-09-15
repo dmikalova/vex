@@ -47,6 +47,37 @@ func TestCannotBeUsedToRestrictionOnly(t *testing.T) {
 	}
 }
 
+// An upgrade whose static modifier bars a use kind bars its host from that use —
+// Access Denied ("This creature cannot reap"), Detention Coil ("cannot fight") —
+// while leaving the other ways of using the host open.
+func TestCannotBeUsedToFromUpgradeStatic(t *testing.T) {
+	g := started(t)
+	host := g.AddToBattleline(testCreature("host", 7), 0)
+	attachUpgrade(g, host, NewCard("Detention Coil", StarAlliance, Upgrade, Common,
+		WithStatic(StaticModifier{CannotBeUsedTo: []UseKind{FightUse}})))
+
+	if !g.CannotBeUsedTo(host, FightUse) {
+		t.Error("host with a cannot-fight upgrade should be barred from fighting")
+	}
+	if g.CannotBeUsedTo(host, ReapUse) {
+		t.Error("host should still be able to reap")
+	}
+}
+
+// The upgrade-granted cannot-use restriction renders in the upgrade's own voice,
+// both on its card face and while attached to a host.
+func TestUpgradeCannotBeUsedToText(t *testing.T) {
+	def := NewCard("Access Denied", StarAlliance, Upgrade, Common,
+		WithStatic(StaticModifier{CannotBeUsedTo: []UseKind{ReapUse}}))
+	if got := staticText(def.Static); got != "This creature cannot reap." {
+		t.Errorf("staticText = %q", got)
+	}
+	lines := upgradeStaticLines(&def, true)
+	if len(lines) != 1 || lines[0] != "This creature cannot reap." {
+		t.Errorf("hosted lines = %v, want [This creature cannot reap.]", lines)
+	}
+}
+
 // A house-scoped reap bar (Seismo-entangler) refuses the reap of a creature of
 // that house while leaving it free to fight.
 func TestCannotReapHouseLeavesFightUsable(t *testing.T) {
@@ -198,6 +229,18 @@ func TestConstantCannotBeUsedToRejectsUnsetKind(t *testing.T) {
 		}))
 }
 
+// A static modifier that grants an unset use kind is rejected at registration,
+// just like a printed or constant-granted one.
+func TestStaticCannotBeUsedToRejectsUnsetKind(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Error("NewCard should reject an unset use kind on a static modifier")
+		}
+	}()
+	NewCard("Bad", StarAlliance, Upgrade, Common,
+		WithStatic(StaticModifier{CannotBeUsedTo: []UseKind{UseKind(0)}}))
+}
+
 func TestDestroyedWhenRejectsInvalidCondition(t *testing.T) {
 	defer func() {
 		if recover() == nil {
@@ -219,7 +262,7 @@ func TestCannotBeUsedToText(t *testing.T) {
 		"Crocag cannot reap.",
 		"Crocag cannot fight.",
 		"Crocag cannot use its Action ability.",
-		"If there are no enemy Creatures in play, destroy Crocag.",
+		"If there are no enemy creatures in play, destroy Crocag.",
 	}
 	for _, w := range want {
 		if !containsLine(got, w) {

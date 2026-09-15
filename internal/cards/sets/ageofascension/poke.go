@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Deal 1 damage to an enemy Creature. If this damage destroys that Creature, draw a card.
+//	Play: Deal 1 damage to an enemy creature. If this damage destroys that creature, draw a card.
 var Poke = set.New(
 	"Poke",
 	card.House.Logos,
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.AoA, "117"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.DamageThen{
 			Amount: 1,

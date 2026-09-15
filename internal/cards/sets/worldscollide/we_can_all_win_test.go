@@ -12,7 +12,7 @@ import (
 //	House:  Star Alliance
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Each player's keys cost -2 Æmber until the end of your next turn.
 func TestWeCanALLWin(t *testing.T) {

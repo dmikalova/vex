@@ -12,9 +12,9 @@ import (
 //	House:  Brobnar
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Ready and fight with a friendly Creature.
+//	Play: Ready and fight with a friendly creature.
 func TestAnger(t *testing.T) {
 	setup := func(t *testing.T) (h *ct.Harness, troll, witch ct.Card) {
 		h = ct.Play(t, ct.Setup{

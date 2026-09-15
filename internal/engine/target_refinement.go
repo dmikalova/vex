@@ -571,10 +571,11 @@ func PowerLessThan(limit Count) Refinement { return powerLessThan{limit: limit} 
 // powerLessThan implements the PowerLessThan refinement.
 type powerLessThan struct{ limit Count }
 
-// selfHouseResolved resolves the SelfHouse sentinel inside the count, which lives
-// in an unexported field reflection cannot reach on its own.
-func (p powerLessThan) selfHouseResolved(house House) any {
-	p.limit = resolvedIn(p.limit, house)
+// houseReplaced resolves the SelfHouse sentinel inside the count (or rehouses it
+// for a Maverick), which lives in an unexported field reflection cannot reach on
+// its own.
+func (p powerLessThan) houseReplaced(from, to House) any {
+	p.limit = replacedIn(p.limit, from, to)
 	return p
 }
 

@@ -7,16 +7,16 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Star Alliance
 //	Type:   Upgrade
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains +1 power and +1 armor for each Upgrade attached to it.
+//	This creature gains +1 power and +1 armor for each upgrade attached to it.
 var LightOfTheArchons = set.New(
 	"Light of the Archons",
 	card.House.StarAlliance,
 	card.Type.Upgrade,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "300"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		PowerBonus: 1,
 		ArmorBonus: 1,

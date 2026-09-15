@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: For each Creature your opponent controls in excess of you, deal 1 damage to each enemy Creature.
+//	Play: For each creature your opponent controls in excess of you, deal 1 damage to each enemy creature.
 func TestRedAlert(t *testing.T) {
 	t.Run("deals damage equal to the enemy creature surplus", func(t *testing.T) {
 		var strong, weak ct.Card

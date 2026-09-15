@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Traits: Item • Shard
 //
-//	Action: For each friendly Shard, deal 1 damage to an enemy Creature.
+//	Action: For each friendly Shard, deal 1 damage to an enemy creature.
 func TestShardOfPain(t *testing.T) {
 	t.Run("deals 1 damage to an enemy creature for each friendly shard", func(t *testing.T) {
 		var foe ct.Card

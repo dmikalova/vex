@@ -7,17 +7,17 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Saurian
 //	Type:   Upgrade
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains +2 armor.
-//	This Creature gains, "Destroyed: Move each Æmber on this Creature to the common supply."
+//	This creature gains +2 armor.
+//	This creature gains, "Destroyed: Move each Æmber on this creature to the common supply."
 var ImperialScutum = set.New(
 	"Imperial Scutum",
 	card.House.Saurian,
 	card.Type.Upgrade,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "185"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		ArmorBonus: 2,
 		Granted: []card.Ability{{

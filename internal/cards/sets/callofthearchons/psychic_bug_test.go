@@ -13,7 +13,7 @@ import (
 //	Type:   Creature
 //	Rarity: Rare
 //	Power:  2
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Cyborg • Insect
 //
 //	Play/Reap: Reveal your opponent's hand.

@@ -7,7 +7,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Star Alliance
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Each player's keys cost -2 Æmber until the end of your next turn.
 var WeCanALLWin = set.New(
@@ -16,7 +16,7 @@ var WeCanALLWin = set.New(
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "344"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.LowerKeyCost{
 			Player:   card.EachPlayer,

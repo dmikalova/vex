@@ -12,10 +12,10 @@ import (
 //	House:  Brobnar
 //	Type:   Upgrade
 //	Rarity: Special
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains invulnerable.
-//	This Creature gains, "Fight/Reap: Archive Ghostform."
+//	This creature gains invulnerable.
+//	This creature gains, "Fight/Reap: Archive Ghostform."
 func TestGhostform(t *testing.T) {
 	t.Run("the host reaping archives Ghostform off it", func(t *testing.T) {
 		var ghost, host ct.Card

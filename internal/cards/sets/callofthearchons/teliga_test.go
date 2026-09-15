@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Human • Witch
 //
-//	After your opponent plays a card, if it is a Creature, gain 1 Æmber.
+//	After your opponent plays a card, if it is a creature, gain 1 Æmber.
 func TestTeliga(t *testing.T) {
 	t.Run("gains Æmber when the opponent plays a creature", func(t *testing.T) {
 		var teliga, beast, tactic ct.Card

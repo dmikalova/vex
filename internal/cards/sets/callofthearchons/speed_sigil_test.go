@@ -12,10 +12,10 @@ import (
 //	House:  Shadows
 //	Type:   Artifact
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Power
 //
-//	After a Creature enters play, if it is the first Creature played this turn, ready it.
+//	After a creature enters play, if it is the first creature played this turn, ready it.
 func TestSpeedSigil(t *testing.T) {
 	shadows := ct.OfHouse(card.House.Shadows)
 

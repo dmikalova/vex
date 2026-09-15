@@ -7,17 +7,17 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	House:  Dis
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Location
 //
-//	Action: Purge a friendly Human Creature -> play a Creature from your discard pile.
+//	Action: Purge a friendly Human creature -> play a creature from your discard pile.
 var SacrificialAltar = set.New(
 	"Sacrificial Altar",
 	card.House.Dis,
 	card.Type.Artifact,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "78"),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
 		card.Trigger.Action, card.Then{

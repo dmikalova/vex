@@ -12,9 +12,9 @@ import (
 //	House:  Brobnar
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Put each Artifact on top of its owner's deck.
+//	Play: Put each artifact on top of its owner's deck.
 func TestBarehanded(t *testing.T) {
 	t.Run("returns each artifact to the top of its owner's deck", func(t *testing.T) {
 		var mine, theirs ct.Card

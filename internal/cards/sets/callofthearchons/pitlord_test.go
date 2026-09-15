@@ -14,7 +14,7 @@ import (
 //	Type:   Creature
 //	Rarity: Rare
 //	Power:  9
-//	Æmber:  2
+//	Bonus:  Æmber Æmber
 //	Traits: Demon
 //
 //	Taunt.

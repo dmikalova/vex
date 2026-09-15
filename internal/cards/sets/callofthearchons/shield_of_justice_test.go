@@ -12,9 +12,9 @@ import (
 //	House:  Sanctum
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: For the remainder of the turn, each friendly Creature cannot be dealt damage.
+//	Play: For the remainder of the turn, each friendly creature cannot be dealt damage.
 func TestShieldOfJustice(t *testing.T) {
 	t.Run("friendly creatures take no damage for the turn", func(t *testing.T) {
 		var ally, foe ct.Card

@@ -15,10 +15,10 @@ var khrkharsBlasterCluster = card.Cluster{
 //	House:  Star Alliance
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Fight/Reap: Choose one:
-//	- Deal 2 damage to a Creature
+//	This creature gains, "Fight/Reap: Choose one:
+//	- Deal 2 damage to a creature
 //	- Attach Khrkhar's Blaster to Lieutenant Khrkhar -> ward Lieutenant Khrkhar."
 var KhrkharsBlaster = set.New(
 	"Khrkhar's Blaster",
@@ -27,7 +27,7 @@ var KhrkharsBlaster = set.New(
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "349"),
 	card.LeadsCluster(khrkharsBlasterCluster),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		Granted: card.FightReap(card.ChooseOne{Options: []card.Effect{
 			card.DealDamage{Amount: 2, Target: card.Target.Creature},

@@ -16,7 +16,7 @@ import (
 //	Armor:  2
 //	Traits: Demon
 //
-//	Play: Destroy a friendly Creature.
+//	Play: Destroy a friendly creature.
 func TestSkullion(t *testing.T) {
 	t.Run("sacrifices a chosen friendly creature", func(t *testing.T) {
 		var ally ct.Card

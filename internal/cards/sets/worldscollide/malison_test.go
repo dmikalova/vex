@@ -15,7 +15,7 @@ import (
 //	Power:  5
 //	Traits: Demon
 //
-//	Fight: Move an enemy Creature anywhere in its controller's battleline -> if it is on a flank, the chosen Creature captures 1 Æmber from your opponent.
+//	Fight: Move an enemy creature anywhere in its controller's battleline -> if it is on a flank, the chosen creature captures 1 Æmber from your opponent.
 func TestMalison(t *testing.T) {
 	var defender, mid, right ct.Card
 	h := ct.Play(t, ct.Setup{

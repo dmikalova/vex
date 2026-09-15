@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Traits: Weapon
 //
-//	Action: Heal 3 damage from a Creature.
+//	Action: Heal 3 damage from a creature.
 func TestHallowedBlaster(t *testing.T) {
 	t.Run("heals 3 damage from a chosen creature", func(t *testing.T) {
 		var wounded ct.Card

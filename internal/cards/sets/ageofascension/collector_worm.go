@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  5
 //	Traits: Beast
 //
-//	Fight: Put the Creature Collector Worm fought into your archives.
+//	Fight: Put the creature Collector Worm fought into your archives.
 var CollectorWorm = set.New(
 	"Collector Worm",
 	card.House.Mars,

@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: For each friendly Mars Creature, an enemy Creature captures 1 Æmber from their own side.
+//	Play: For each friendly Mars creature, an enemy creature captures 1 Æmber from their own side.
 func TestHypnoticCommand(t *testing.T) {
 	var foe1, foe2 ct.Card
 	h := ct.Play(t, ct.Setup{

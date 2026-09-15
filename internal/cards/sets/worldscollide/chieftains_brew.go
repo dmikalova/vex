@@ -15,9 +15,9 @@ var chieftainsBrewCluster = card.Cluster{
 //	House:  Brobnar
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Fight: Ready and fight with a neighboring Creature."
+//	This creature gains, "Fight: Ready and fight with a neighboring creature."
 var ChieftainsBrew = set.New(
 	"Chieftain's Brew",
 	card.House.Brobnar,
@@ -25,7 +25,7 @@ var ChieftainsBrew = set.New(
 	card.Rarity.Rare,
 	card.Provenance(card.WC, "62"),
 	card.LeadsCluster(chieftainsBrewCluster),
-	card.WithAemberBonus(1),
+	card.WithBonus(card.Bonus.Aember),
 	card.WithStatic(card.StaticModifier{
 		Granted: []card.Ability{{
 			Trigger: card.Trigger.Fight,

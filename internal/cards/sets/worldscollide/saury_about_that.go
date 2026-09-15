@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Destroy a Creature -> its controller gains 1 Æmber.
+//	Play: Destroy a creature -> its controller gains 1 Æmber.
 var SauryAboutThat = set.New(
 	"Saury About That",
 	card.House.Saurian,

@@ -214,6 +214,18 @@ func TestNewCardRejectsUnsetTrigger(t *testing.T) {
 		WithAbility(triggerUnset, GainAember{Player: Controller, Amount: 1}))
 }
 
+// An unset trait (the zero value, e.g. a facade Traits field left unassigned)
+// reaches NewCard as a real but nameless trait that renders as empty text, so it
+// is rejected at registration rather than shipped as a blank trait.
+func TestNewCardRejectsUnsetTrait(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Error("NewCard should reject an unset trait")
+		}
+	}()
+	NewCard("Bad", Brobnar, Creature, Common, WithPower(1), WithTraits(traitUnset))
+}
+
 func TestNewCardRejectsConflictingHeal(t *testing.T) {
 	defer func() {
 		if recover() == nil {

@@ -12,10 +12,10 @@ import (
 //	House:  Sanctum
 //	Type:   Upgrade
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains +1 armor.
-//	Play: Fully heal this Creature.
+//	This creature gains +1 armor.
+//	Play: Fully heal this creature.
 func TestSeraphicArmor(t *testing.T) {
 	t.Run("fully heals its host and grants armor when played", func(t *testing.T) {
 		var host ct.Card

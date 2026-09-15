@@ -12,9 +12,9 @@ import (
 //	House:  Brobnar
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: If 3 or more enemy Creatures have been destroyed this turn, your opponent loses 2 Æmber.
+//	Play: If 3 or more enemy creatures have been destroyed this turn, your opponent loses 2 Æmber.
 func TestOverrun(t *testing.T) {
 	t.Run("opponent loses 2 Æmber at or above the threshold", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

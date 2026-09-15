@@ -155,6 +155,8 @@ func (t DamageTarget) damageEntry(target LocalID, dealt, total int) LogEntry {
 			return AbilityDamageDealt{Amount: dealt, Target: target}
 		}
 		return DamageTaken{Creature: target, Amount: dealt, Total: total}
+	case bonusDamage:
+		return BonusDamageDealt{Source: t.Source, Amount: dealt, Target: target}
 	default:
 		return DamageTaken{Creature: target, Amount: dealt, Total: total}
 	}

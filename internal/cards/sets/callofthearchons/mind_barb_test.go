@@ -12,7 +12,7 @@ import (
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
 //	Play: Discard a card from your hand. Your opponent discards a random card from their hand.
 func TestMindBarb(t *testing.T) {

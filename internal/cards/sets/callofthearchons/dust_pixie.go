@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Creature
 //	Rarity: Common
 //	Power:  1
-//	Æmber:  2
+//	Bonus:  Æmber Æmber
 //	Traits: Faerie
 var DustPixie = set.New(
 	"Dust Pixie",
@@ -16,7 +16,7 @@ var DustPixie = set.New(
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.CotA, "351"),
-	card.WithAemberBonus(2),
+	card.WithBonus(card.Bonus.Aember, card.Bonus.Aember),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Faerie),
 )

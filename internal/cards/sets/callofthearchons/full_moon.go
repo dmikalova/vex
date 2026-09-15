@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: For the remainder of the turn, each time you play a Creature, gain 1 Æmber.
+//	Play: For the remainder of the turn, each time you play a creature, gain 1 Æmber.
 var FullMoon = set.New(
 	"Full Moon",
 	card.House.Untamed,

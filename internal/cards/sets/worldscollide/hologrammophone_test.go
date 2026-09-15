@@ -12,10 +12,10 @@ import (
 //	House:  Logos
 //	Type:   Artifact
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Item
 //
-//	Action: Ward a Creature.
+//	Action: Ward a creature.
 func TestHologrammophone(t *testing.T) {
 	t.Run("wards a chosen creature", func(t *testing.T) {
 		var friend ct.Card

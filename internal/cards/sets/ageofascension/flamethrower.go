@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Uncommon
 //	Traits: Weapon
 //
-//	Action: Deal 1 damage to a Creature that is not on a flank and 1 damage to each of its neighbors.
+//	Action: Deal 1 damage to a creature that is not on a flank and 1 damage to each of its neighbors.
 var Flamethrower = set.New(
 	"Flamethrower",
 	card.House.Brobnar,

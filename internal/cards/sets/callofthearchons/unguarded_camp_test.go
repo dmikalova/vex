@@ -13,9 +13,9 @@ import (
 //	House:  Brobnar
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: For each Creature you have in excess of your opponent, a friendly Creature captures 1 Æmber from your opponent. Each Creature cannot capture more than 1 Æmber this way.
+//	Play: For each creature you have in excess of your opponent, a friendly creature captures 1 Æmber from your opponent. Each creature cannot capture more than 1 Æmber this way.
 func TestUnguardedCamp(t *testing.T) {
 	var camp, a, b, c ct.Card
 	h := ct.Play(t, ct.Setup{

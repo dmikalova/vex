@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Destroy a Creature that is not on a flank.
+//	Play: Destroy a creature that is not on a flank.
 var HandOfDis = set.New(
 	"Hand of Dis",
 	card.House.Dis,

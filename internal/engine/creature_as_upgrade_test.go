@@ -36,7 +36,7 @@ func TestPlayableAsUpgradeChoosesCreature(t *testing.T) {
 	// The default chooser answers option 0 ("Creature").
 	id, err := g.PlayCreature(0, handIdxByID(g, 0, rid), false)
 	if err != nil {
-		t.Fatalf("PlayCreature: %v", err)
+		t.Fatalf("Playcreature: %v", err)
 	}
 	if !slices.Contains(g.Battleline(0), id) {
 		t.Error("creature mode: the card should be on the battleline")
@@ -53,7 +53,7 @@ func TestPlayableAsUpgradeChoosesUpgrade(t *testing.T) {
 	rid := g.AddToHand(exRover(), 0)
 	got, err := g.PlayCreature(0, handIdxByID(g, 0, rid), false)
 	if err != nil {
-		t.Fatalf("PlayCreature: %v", err)
+		t.Fatalf("Playcreature: %v", err)
 	}
 	if got != host {
 		t.Errorf("attached to %d, want host %d", got, host)
@@ -70,7 +70,7 @@ func TestPlayableAsUpgradeChoosesUpgrade(t *testing.T) {
 	// While attached it reads as an Upgrade, not a creature (ADR 0026): a
 	// creature-reaching effect must treat it as the upgrade it now is.
 	if got := g.TypeOf(rid); got != Upgrade {
-		t.Errorf("attached creature-as-upgrade TypeOf = %v, want Upgrade", got)
+		t.Errorf("attached creature-as-upgrade TypeOf = %v, want upgrade", got)
 	}
 	if g.IsCreature(rid) {
 		t.Error("an attached creature-as-upgrade must not read as a creature")
@@ -110,7 +110,7 @@ func TestPlayableAsUpgradeNoHostPlaysAsCreature(t *testing.T) {
 	rid := g.AddToHand(exRover(), 0)
 	id, err := g.PlayCreature(0, handIdxByID(g, 0, rid), false)
 	if err != nil {
-		t.Fatalf("PlayCreature: %v", err)
+		t.Fatalf("Playcreature: %v", err)
 	}
 	if !slices.Contains(g.Battleline(0), id) {
 		t.Error("with no host, the card plays as a creature")
@@ -126,7 +126,7 @@ func TestPlayableAsUpgradeForcedWhenCreaturesBanned(t *testing.T) {
 	rid := g.AddToHand(exRover(), 0)
 	got, err := g.PlayCreature(0, handIdxByID(g, 0, rid), false)
 	if err != nil {
-		t.Fatalf("PlayCreature: %v", err)
+		t.Fatalf("Playcreature: %v", err)
 	}
 	if got != host {
 		t.Errorf("attached to %d, want %d", got, host)
@@ -143,7 +143,7 @@ func TestPlayableAsUpgradeBannedNoHostErrors(t *testing.T) {
 		WithRestrictions(Restrictions{CannotPlay: Creature})), 0)
 	rid := g.AddToHand(exRover(), 0)
 	if _, err := g.PlayCreature(0, handIdxByID(g, 0, rid), false); err != ErrCannotPlayCreature {
-		t.Errorf("err = %v, want ErrCannotPlayCreature", err)
+		t.Errorf("err = %v, want ErrCannotPlaycreature", err)
 	}
 }
 
@@ -153,7 +153,7 @@ func TestCanPlayPlayableAsUpgradeUnderCreatureBan(t *testing.T) {
 	g.AddArtifact(NewCard("Ban", Brobnar, Artifact, Common,
 		WithRestrictions(Restrictions{CannotPlay: Creature})), 0)
 	if err := g.CanPlay(0, rid); err != ErrCannotPlayCreature {
-		t.Errorf("CanPlay with no host = %v, want ErrCannotPlayCreature", err)
+		t.Errorf("CanPlay with no host = %v, want ErrCannotPlaycreature", err)
 	}
 	g.AddToBattleline(testCreature("host", 3), 0)
 	if err := g.CanPlay(0, rid); err != nil {
@@ -164,7 +164,7 @@ func TestCanPlayPlayableAsUpgradeUnderCreatureBan(t *testing.T) {
 func TestPlayableAsUpgradeRejectsNonCreature(t *testing.T) {
 	defer func() {
 		if recover() == nil {
-			t.Error("NewCard should reject WithPlayableAsUpgrade on a non-creature")
+			t.Error("NewCard should reject WithPlayableAsupgrade on a non-creature")
 		}
 	}()
 	NewCard("BadType", Brobnar, Upgrade, Common,
@@ -190,15 +190,15 @@ func TestPlayableAsUpgradeText(t *testing.T) {
 		{
 			exRover(),
 			"Skirmish.\n" +
-				`Rover may be played as an Upgrade instead of a Creature, ` +
-				`with the text: "This Creature gains skirmish."`,
+				`Rover may be played as an upgrade instead of a creature, ` +
+				`with the text: "This creature gains skirmish."`,
 			"Skirmish.",
 		},
 		{
 			exCalv(),
 			"Fight/Reap: Draw a card.\n" +
-				`CALV may be played as an Upgrade instead of a Creature, ` +
-				`with the text: "This Creature gains, 'Fight/Reap: Draw a card.'"`,
+				`CALV may be played as an upgrade instead of a creature, ` +
+				`with the text: "This creature gains, 'Fight/Reap: Draw a card.'"`,
 			"Fight/Reap: Draw a card.",
 		},
 		{
@@ -207,9 +207,9 @@ func TestPlayableAsUpgradeText(t *testing.T) {
 				WithPower(2),
 				WithStatic(StaticModifier{ProtectsFromNonFlank: true}),
 				WithPlayableAsUpgrade()),
-			`Scout may be played as an Upgrade instead of a Creature, ` +
-				`with the text: "Creatures not on a flank cannot fight this Creature."`,
-			"Creatures not on a flank cannot fight this Creature.",
+			`Scout may be played as an upgrade instead of a creature, ` +
+				`with the text: "Creatures not on a flank cannot fight this creature."`,
+			"Creatures not on a flank cannot fight this creature.",
 		},
 	}
 	for _, tc := range cases {

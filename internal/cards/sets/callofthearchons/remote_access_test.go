@@ -12,9 +12,9 @@ import (
 //	House:  Logos
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Use an enemy Artifact.
+//	Play: Use an enemy artifact.
 func TestRemoteAccess(t *testing.T) {
 	t.Run("uses an enemy artifact, resolving it for you", func(t *testing.T) {
 		var theirs, drawn ct.Card

@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Destroy each undamaged Creature. Gain 3 chains.
+//	Play: Destroy each undamaged creature. Gain 3 chains.
 var CowardsEnd = set.New(
 	"Coward's End",
 	card.House.Brobnar,

@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Creature
 //	Rarity: Rare
 //	Power:  5
-//	Æmber:  2
+//	Bonus:  Æmber Æmber
 //	Traits: Beast
 //
 //	Play: Your opponent gains 1 Æmber.
@@ -18,7 +18,7 @@ var FuzzyGruen = set.New(
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.CotA, "353"),
-	card.WithAemberBonus(2),
+	card.WithBonus(card.Bonus.Aember, card.Bonus.Aember),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Beast),
 	card.WithAbility(

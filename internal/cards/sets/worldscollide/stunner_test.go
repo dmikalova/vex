@@ -12,9 +12,9 @@ import (
 //	House:  Star Alliance
 //	Type:   Upgrade
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	This Creature gains, "Fight/Reap: You may stun a Creature."
+//	This creature gains, "Fight/Reap: You may stun a creature."
 func TestStunner(t *testing.T) {
 	t.Run("its host may stun a creature when it reaps", func(t *testing.T) {
 		var host, foe ct.Card

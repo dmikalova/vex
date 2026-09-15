@@ -8,7 +8,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Choose a friendly ready Brobnar Creature - exhaust it, and gain Æmber equal to half its power, rounded down.
+//	Play: Choose a friendly ready Brobnar creature - exhaust it, and gain Æmber equal to half its power, rounded down.
 var TheFlex = set.New(
 	"The Flex",
 	card.House.Brobnar,

@@ -12,9 +12,9 @@ import (
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Choose up to 2 Creatures. Deal 1 damage to each chosen Creature. If that Creature was already damaged, deal 3 damage instead.
+//	Play: Choose up to 2 creatures. Deal 1 damage to each chosen creature. If that creature was already damaged, deal 3 damage instead.
 func TestFesteringTouch(t *testing.T) {
 	var clean, hurt ct.Card
 	h := ct.Play(t, ct.Setup{

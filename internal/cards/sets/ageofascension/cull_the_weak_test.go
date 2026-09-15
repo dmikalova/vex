@@ -12,9 +12,9 @@ import (
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Destroy the least powerful enemy Creature.
+//	Play: Destroy the least powerful enemy creature.
 func TestCullTheWeak(t *testing.T) {
 	t.Run("destroys the least powerful enemy creature", func(t *testing.T) {
 		var weak, strong ct.Card

@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Destroy each damaged Creature. Gain 1 chain.
+//	Play: Destroy each damaged creature. Gain 1 chain.
 func TestSaveThePack(t *testing.T) {
 	t.Run("destroys each damaged creature and gains 1 chain", func(t *testing.T) {
 		var hurt, healthy ct.Card

@@ -12,9 +12,9 @@ import (
 //	House:  Shadows
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Destroy a friendly Creature -> deal 3 damage to a Creature and deal 3 damage to a different Creature.
+//	Play: Destroy a friendly creature -> deal 3 damage to a creature and deal 3 damage to a different creature.
 func TestPawnSacrifice(t *testing.T) {
 	t.Run("destroying a friendly creature deals 3 damage each to 2 creatures", func(t *testing.T) {
 		var pawn, keeper, foeA, foeB ct.Card

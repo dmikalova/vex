@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Martian • Scientist
 //
 //	Elusive.
-//	Reap: Put an enemy Creature into your archives.
+//	Reap: Put an enemy creature into your archives.
 var UxlyxTheZookeeper = set.New(
 	"Uxlyx the Zookeeper",
 	card.House.Mars,

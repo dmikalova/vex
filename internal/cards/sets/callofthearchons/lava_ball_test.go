@@ -13,7 +13,7 @@ import (
 //	Type:   Tactic
 //	Rarity: Rare
 //
-//	Play: Deal 4 damage to a Creature that is not on a flank and 2 damage to each of its neighbors.
+//	Play: Deal 4 damage to a creature that is not on a flank and 2 damage to each of its neighbors.
 func TestLavaBall(t *testing.T) {
 	t.Run("deals 4 to a non-flank creature and 2 to its neighbors", func(t *testing.T) {
 		var left, mid, right ct.Card

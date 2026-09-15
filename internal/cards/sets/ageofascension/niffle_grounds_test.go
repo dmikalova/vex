@@ -12,10 +12,10 @@ import (
 //	House:  Untamed
 //	Type:   Artifact
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Location
 //
-//	Action: Choose a Creature - for the remainder of the turn, it loses taunt and elusive.
+//	Action: Choose a creature - for the remainder of the turn, it loses taunt and elusive.
 func TestNiffleGrounds(t *testing.T) {
 	var target ct.Card
 	h := ct.Play(t, ct.Setup{

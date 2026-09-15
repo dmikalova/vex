@@ -11,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Elf • Thief
 //
 //	Elusive, Versatile.
-//	Action: Use a friendly Creature.
+//	Action: Use a friendly creature.
 var DeipnoSpymaster = set.New(
 	"Deipno Spymaster",
 	card.House.Shadows,

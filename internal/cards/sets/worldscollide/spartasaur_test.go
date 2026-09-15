@@ -16,7 +16,7 @@ import (
 //	Armor:  1
 //	Traits: Dinosaur • Soldier
 //
-//	After a friendly Creature is destroyed, destroy each non-Dinosaur Creature.
+//	After a friendly creature is destroyed, destroy each non-Dinosaur creature.
 //	Fight: Gain 2 Æmber.
 func TestSpartasaur(t *testing.T) {
 	t.Run("a friendly death destroys each non-Dinosaur creature", func(t *testing.T) {

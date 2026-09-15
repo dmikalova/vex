@@ -14,7 +14,7 @@ import (
 //	Rarity: Rare
 //	Traits: Location
 //
-//	Action: A friendly Creature captures 1 Æmber from your opponent. If it is a Dinosaur Creature, the chosen Creature captures 1 Æmber from your opponent.
+//	Action: A friendly creature captures 1 Æmber from your opponent. If it is a Dinosaur creature, the chosen creature captures 1 Æmber from your opponent.
 func TestCityGates(t *testing.T) {
 	t.Run("a Dinosaur captures 2", func(t *testing.T) {
 		var dino ct.Card
