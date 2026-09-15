@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// BossZarek
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Boss Zarek
 //
 //	House:  Shadows
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Mutant • Thief
 //
+//	Each friendly creature with Æmber on it gains elusive.
 //	Enhance Capture Capture Capture.
-//	Each friendly creature with A on it gains elusive.
 var BossZarek = set.New(
 	"Boss Zarek",
 	card.House.Shadows,
@@ -25,5 +20,9 @@ var BossZarek = set.New(
 	card.Provenance(card.MM, "264"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Mutant, card.Traits.Thief),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithEnhance(card.Bonus.Capture, card.Bonus.Capture, card.Bonus.Capture),
+	card.WithConstant(card.ConstantAbility{
+		Target:   card.Target.EachFriendlyCreature.WithAember(),
+		Keywords: card.Keywords(card.Keyword.Elusive),
+	}),
 )

@@ -1,21 +1,18 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// BurningGlare
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Burning Glare
 //
 //	House:  Sanctum
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
+//	Play: Choose one:
+//	- Stun an enemy creature
+//	- Stun each enemy Mutant creature.
 //	Enhance Damage.
-//	Play: Stun an enemy creature, or stun each enemy Mutant creature.
 var BurningGlare = set.New(
 	"Burning Glare",
 	card.House.Sanctum,
@@ -23,5 +20,14 @@ var BurningGlare = set.New(
 	card.Rarity.Common,
 	card.Provenance(card.MM, "128"),
 	card.WithBonus(card.Bonus.Aember),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithEnhance(card.Bonus.Damage),
+	card.WithAbility(
+		card.Trigger.Play, card.ChooseOne{
+			Options: []card.Effect{
+				card.Stun{Target: card.Target.EnemyCreature},
+				card.Stun{
+					Target: card.Target.EachEnemyCreature.WithTrait(card.Traits.Mutant),
+				},
+			},
+		}),
 )

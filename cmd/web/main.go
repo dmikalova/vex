@@ -471,18 +471,23 @@ const cardFitScript = `<script>
     el.style.flexShrink = '0';
   }
   function fitFrame(card) {
-    var cr = card.getBoundingClientRect();
-    if (cr.width <= 0) { return; }
-    // size the left-edge icons off the card's actual width so their scale is the
-    // same on a board card and an enlarged copy (the fractions reproduce the CSS
-    // fallback rems on a 9rem board card).
-    card.style.setProperty('--edge-icon', (cr.width * 0.091).toFixed(2) + 'px');
-    card.style.setProperty('--edge-house', (cr.width * 0.117).toFixed(2) + 'px');
+    // offsetWidth is the layout width, unaffected by the lift's scale transform, so
+    // the icons take their enlarged size on the first pass rather than the mid-grow
+    // size getBoundingClientRect would read (which only corrects on the next render).
+    var ow = card.offsetWidth;
+    if (ow <= 0) { return; }
+    // size the left-edge icons off the card's width so their scale is the same on a
+    // board card and an enlarged copy (the fractions reproduce the CSS fallback rems
+    // on a 9rem board card).
+    card.style.setProperty('--edge-icon', (ow * 0.091).toFixed(2) + 'px');
+    card.style.setProperty('--edge-house', (ow * 0.117).toFixed(2) + 'px');
     // the two-tone frame splits at fixed card percentages by default; measure the
     // text box and rewrite the split inline so the right half steps down to the
     // box's top and the left half to its bottom, bracketing the box no matter how
-    // tall the card is drawn.
+    // tall the card is drawn. The rects are scale-invariant ratios, so the split is
+    // right even mid-grow.
     var text = card.querySelector('.card-text');
+    var cr = card.getBoundingClientRect();
     if (!text || cr.height <= 0) { return; }
     var tr = text.getBoundingClientRect();
     // nudge each split a corner-radius (~6px) past the box edge so the step clears

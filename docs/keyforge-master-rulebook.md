@@ -1038,7 +1038,6 @@ The active player may play cards of the active house during step 3 of their turn
 
 1. Reveal the card being played and confirm it is eligible to be played.
 2. If the card is an action, continue to step 3. If the card is an artifact, a creature, or an upgrade, it enters play and is placed in the appropriate play area:
-
    - If the card is a creature, it enters play exhausted on either flank of the controlling player's battleline.
    - If the card is an artifact, it enters play exhausted in a row below the controlling player's battleline.
    - If the card is an upgrade, it enters play attached to a creature chosen by the active player. An upgrade can be attached to a creature controlled by either player. The upgrade is controlled by the player who played it, even if the creature to which the upgrade is attached is controlled by the opponent.
