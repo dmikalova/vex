@@ -107,6 +107,19 @@ func (ItHasAember) Met(ctx *EffectContext) bool {
 	return ctx.HasIt && ctx.Resolver.AmberOn(ctx.It) > 0
 }
 
+// ItHasBonusIcon is met when the card in context (ctx.It — a just-played card) has
+// at least one printed bonus icon, the gate on Adaptoid's "after you play a card
+// with a bonus icon" reaction.
+type ItHasBonusIcon struct{}
+
+// CondText renders the condition.
+func (ItHasBonusIcon) CondText() string { return "if it has a bonus icon" }
+
+// Met reports whether a card is in context and prints at least one bonus icon.
+func (ItHasBonusIcon) Met(ctx *EffectContext) bool {
+	return ctx.HasIt && ctx.Resolver.HasBonusIcons(ctx.It)
+}
+
 // ItIsOffIdentity is met when the card in context (ctx.It) belongs to none of the
 // controller's identity houses — the three houses of their deck. Sneklifter uses
 // it to reassign a seized enemy artifact to Shadows only when it is off your

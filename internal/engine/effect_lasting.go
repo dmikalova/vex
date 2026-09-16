@@ -111,6 +111,8 @@ func lastingActionOf(e Effect) (lastingAction, int, bool) {
 		return actGainAember, d.Amount, true
 	case LoseAember:
 		return actLoseAember, d.Amount, true
+	case StealAember:
+		return actSteal, d.Amount, true
 	case DealDamage:
 		return actDealDamage, d.Amount, true
 	case CaptureAember:
@@ -195,12 +197,17 @@ func (e GainAbility) validate() error {
 // ability takes a comma and quotes (card-wording rule 2), the period inside. A
 // self-reference in the granted ability names the creature that gains it, so it
 // renders "this creature" rather than the source card's name. A next-turn grant
-// names its window first (Diplomacy).
+// names its window first (Diplomacy); a RemainderOfPlayerTurn grant names its
+// window first too when the card renders the duration itself (Adaptoid), rather
+// than leaning on a sibling effect to carry the shared clause (Spectral Tunneler).
 func (e GainAbility) Text() string {
 	granted := strings.ReplaceAll(RenderAbility(e.Ability), SelfName, "this creature")
 	text := e.Target.Text() + ` gains, "` + granted + `"`
-	if e.Duration == StartOfPlayerNextTurn {
+	switch e.Duration {
+	case StartOfPlayerNextTurn:
 		return "until the start of your next turn, " + text
+	case RemainderOfPlayerTurn:
+		return "for the remainder of the turn, " + text
 	}
 	return text
 }

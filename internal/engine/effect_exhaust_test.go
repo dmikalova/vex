@@ -44,3 +44,43 @@ func TestExhaustCreatures(t *testing.T) {
 		}
 	})
 }
+
+// TestExhaustGate covers Exhaust as a binding result gate (Humble): it exhausts
+// the target, binds it in context, and reports progress so a Then hangs off it.
+func TestExhaustGate(t *testing.T) {
+	t.Run("exhausts, binds the creature, and reports progress", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		c := g.AddToBattleline(testCreature("c", 4), 0)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+
+		e := Exhaust{Target: Target{Kind: TargetThisCreature}, Bind: true}
+		if !e.resolveGate(ctx) {
+			t.Error("exhausting a creature should report progress")
+		}
+		if !g.State.Cards[c].Exhausted {
+			t.Error("the creature should be exhausted")
+		}
+		if !ctx.HasIt || ctx.It != c {
+			t.Errorf("ctx.It = %v (HasIt %v), want %v bound", ctx.It, ctx.HasIt, c)
+		}
+	})
+
+	t.Run("no target reports no progress and binds nothing", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+		if (Exhaust{Target: Target{Kind: TargetEachFriendlyCreature}, Bind: true}).resolveGate(
+			ctx,
+		) {
+			t.Error("exhausting with no creatures should report no progress")
+		}
+		if ctx.HasIt {
+			t.Error("nothing should be bound when no creature was exhausted")
+		}
+	})
+
+	t.Run("validate requires a target", func(t *testing.T) {
+		if (Exhaust{}).validate() == nil {
+			t.Error("unset target should be invalid")
+		}
+	})
+}

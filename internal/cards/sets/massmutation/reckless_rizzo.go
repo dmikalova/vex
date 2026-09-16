@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// RecklessRizzo
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Reckless Rizzo
 //
 //	House:  Shadows
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Elf • Thief
 //
 //	Elusive.
-//	Action: Steal 2A. Until the start of your next turn, Reckless Rizzo loses elusive.
+//	Action: Steal 2 Æmber. Until the start of your next turn, Reckless Rizzo loses elusive.
 var RecklessRizzo = set.New(
 	"Reckless Rizzo",
 	card.House.Shadows,
@@ -25,5 +20,13 @@ var RecklessRizzo = set.New(
 	card.Provenance(card.MM, "273"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Elf, card.Traits.Thief),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithAbility(
+		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+			card.StealAember{Amount: 2},
+			card.LoseKeywordsUntilNextTurn{
+				Target:   card.Target.This,
+				Keywords: []card.KeywordValue{card.Keyword.Elusive},
+			},
+		}}),
 )

@@ -143,8 +143,22 @@ written with an arrow, not a follow-up sentence.
 
 `A -> B` is a **gate**: attempt A, and only run B if A actually happened. Maps to
 `Gate{attempt: A, then: B}`. This is distinct from an unconditional sequence
-(`A. B.`) and from a state branch (`If <fact>, …`). A gate never takes an
-`otherwise`.
+(`A. B.`) and from a state branch (`If <fact>, …`).
+
+A gate takes an `otherwise` **only** for a genuine two-way branch — arms that are
+**different verbs**, the same carve-out rule 22 grants a state branch. When the
+attempt does nothing (the controller declined the optional attempt, or it had no
+legal target), the `otherwise` arm runs in its place: `A -> B. Otherwise, C.` Maps
+to `Gate{attempt: A, then: B, else: C}`. A number-only difference between the arms
+still collapses to `-> B, or D if …` and takes no `otherwise` (rule 22).
+
+| Original                                                                                                                                | Curated                                                                                                                |
+| --------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `You may discard a Logos card. If you do, gain 1 Æmber. Otherwise, destroy Novu Dynamo.`                                                | `discard a Logos card from your hand or archives -> gain 1 Æmber. Otherwise, destroy Novu Dynamo.`                     |
+| `You may discard a card from your archives. If you do, keys cost +3 Æmber during your opponent's next turn. Otherwise, archive a card.` | `discard a card from your archives -> keys cost +3 Æmber during your opponent's next turn. Otherwise, archive a card.` |
+
+The optional `you may` is dropped: the `otherwise` arm already carries the choice,
+since declining the attempt takes it.
 
 Power counters use the verb `give`: `give <creature> a +1 power counter` (not
 `put a +1 power counter on <creature>`). The holder is named — the source by name
@@ -540,18 +554,21 @@ discarded a card this turn`.
 
 ---
 
-## 27. "Gain that much Æmber" becomes a `for each Æmber bonus` clause
+## 27. "Gain that much Æmber" becomes `Resolve the bonus icons on it`
 
-A card that destroys a card and then gains Æmber equal to that card's Æmber bonus
-is authored as a `Destroy` followed by a `GainAember{Per: AemberBonusOf{Target:
-Triggering}}`, which the engine renders as an explicit per-pip clause reading the
-destroyed card in context (`it`) rather than the printed back-reference `you gain
-that much Æmber`. The rendered form names what is being counted, so behavior and
-text cannot drift.
+A card that destroys, purges, or discards a card and then acts on its Æmber bonus
+is authored as the removal (`Destroy`, `PurgeCreature`, …) followed by a
+`ResolveBonusIcons{Target: Triggering}`, which resolves _every_ bonus icon printed
+on that card — Æmber, capture, draw, and damage alike — reading the removed card in
+context (`it`). This deliberately diverges from KeyForge, which only refunds the
+Æmber bonus: resolving the whole icon strip is a small power increase and lets the
+mechanic reuse the shared bonus-icon resolver instead of a one-off Æmber count (see
+the [Vactrol⇄KeyForge divergence register](keyforge-divergences.md)). The rendered
+form names what is being resolved, so behavior and text cannot drift.
 
-| Original                                                                              | Curated                                                          |
-| ------------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
-| `Destroy an artifact. If that artifact had an Æmber bonus, you gain that much Æmber.` | `Destroy an artifact. For each Æmber bonus on it, gain 1 Æmber.` |
+| Original                                                                              | Curated                                               |
+| ------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| `Destroy an artifact. If that artifact had an Æmber bonus, you gain that much Æmber.` | `Destroy an artifact. Resolve the bonus icons on it.` |
 
 (Affected: Rustgnawer.)
 

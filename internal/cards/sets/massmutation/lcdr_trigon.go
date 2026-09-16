@@ -1,28 +1,27 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// LCdrTrigon
+// LCdr. Trigon
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Creature
 //	Rarity: Uncommon
 //	Power:  4
 //	Traits: Mutant
 //
-//	Reap: Discard the top card of your deck. Resolve that card's bonus icons as if you had played it.
+//	Reap: Discard the top card of your deck. Resolve that card's bonus icons.
 var LCdrTrigon = set.New(
 	"LCdr. Trigon",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
 	card.Provenance(card.MM, "324"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Mutant),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Reap, card.Sentences{Effects: []card.Effect{
+			card.DiscardTop{Player: card.Controller},
+			card.ResolveBonusIcons{Target: card.Target.Triggering},
+		}}),
 )

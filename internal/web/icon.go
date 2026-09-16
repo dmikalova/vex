@@ -308,7 +308,7 @@ func restrictionLines(r engine.Restrictions) []glyphLine {
 // bool flags a card sets while it is in play — so a creature whose only mechanic
 // is one of them still draws a strip. AemberCannotBeStolen shields the
 // controller's Æmber from the enemy; DealsNoDamageWhenAttacked bars its
-// retaliation; GrantsEntersReady makes friendly cards of a type enter unexhausted.
+// retaliation; EntersReadyGrant makes friendly cards of a type enter unexhausted.
 func cardFeatureLines(def *engine.CardDefinition) []glyphLine {
 	gs := make([]glyph, 0, 4)
 	if def.AemberCannotBeStolen || def.AemberCannotBeStolenWhileItHasAember {
@@ -318,7 +318,7 @@ func cardFeatureLines(def *engine.CardDefinition) []glyphLine {
 	if def.DealsNoDamageWhenAttacked {
 		gs = append(gs, glyph{asset: "damage"}, glyph{asset: "glyph-ban"})
 	}
-	if a := typeIconName(def.GrantsEntersReady); a != "" {
+	if a := typeIconName(def.EntersReadyGrant.Type); a != "" {
 		gs = append(gs,
 			glyph{asset: "exhausted", decor: decorFriendly},
 			glyph{asset: "glyph-ban"},
@@ -397,34 +397,54 @@ func isActionTrigger(t engine.Trigger) bool {
 	return false
 }
 
-// triggerIcon is the glyph a trigger shows at the head of its line. The common
-// triggers have their own icon; the rarer timing windows fall back to the
-// abstract glyph rather than a word.
+// triggerIcon is the glyph a trigger shows at the head of its line. Every trigger
+// a card uses maps to its own icon; the abstract fallback is a tripwire, not a
+// shipping glyph — TestNoResidualUnknownGlyph fails if any card's strip reaches
+// it, so a new trigger's icon must be added here rather than falling back.
 func triggerIcon(t engine.Trigger) string {
 	switch t {
-	case engine.TriggerAfterPlay, engine.TriggerEntersPlay,
-		engine.TriggerAfterCreatureEnters, engine.TriggerAfterCreaturePlayedAdjacent,
-		engine.TriggerAfterCreaturePlayed, engine.TriggerAfterCardPlayed,
-		engine.TriggerAfterEnemyCardPlayed, engine.TriggerAfterTacticPlayedBeforeResolve:
+	case engine.TriggerAfterPlay,
+		engine.TriggerEntersPlay,
+		engine.TriggerAfterCreatureEnters,
+		engine.TriggerAfterCreaturePlayedAdjacent,
+		engine.TriggerAfterCreaturePlayed,
+		engine.TriggerAfterCardPlayed,
+		engine.TriggerAfterEnemyCardPlayed,
+		engine.TriggerAfterTacticPlayedBeforeResolve,
+		engine.TriggerAfterUpgradeEnters:
 		return "glyph-play"
 	case engine.TriggerAfterReap, engine.TriggerAfterCreatureReaps,
 		engine.TriggerAfterEnemyCreatureReaps:
 		return "glyph-reap"
 	case engine.TriggerAfterFight, engine.TriggerBeforeFight,
-		engine.TriggerAfterDestroyedFighting, engine.TriggerAfterCreatureFights,
+		engine.TriggerAfterDestroyedFighting,
+		engine.TriggerAfterEnemyDestroyedFighting,
+		engine.TriggerAfterCreatureFights,
 		engine.TriggerAfterFriendlyCreatureFights,
-		engine.TriggerAfterAssaultDestroys, engine.TriggerAfterNeighborFights:
+		engine.TriggerAfterAssaultDestroys,
+		engine.TriggerAfterNeighborFights:
 		return "glyph-fight"
-	case engine.TriggerAction, engine.TriggerAfterUse, engine.TriggerAfterUsedSelf:
+	case engine.TriggerAction,
+		engine.TriggerAfterUse,
+		engine.TriggerAfterUsedSelf:
 		return "glyph-action"
-	case engine.TriggerDestroyed, engine.TriggerLeavesPlay,
-		engine.TriggerAfterCreatureDestroyed, engine.TriggerAfterEnemyCreatureDestroyed,
+	case engine.TriggerDestroyed,
+		engine.TriggerLeavesPlay,
+		engine.TriggerAfterCreatureDestroyed,
+		engine.TriggerAfterEnemyCreatureDestroyed,
 		engine.TriggerAfterFriendlyCreatureDestroyed:
 		return "glyph-destroyed"
-	case engine.TriggerAfterForgeKey, engine.TriggerAfterPlayerForgesKey,
-		engine.TriggerAfterOpponentForgesKey:
+	case engine.TriggerAfterForgeKey,
+		engine.TriggerAfterPlayerForgesKey,
+		engine.TriggerAfterOpponentForgesKey,
+		engine.TriggerBeforeOpponentForgesKey:
 		return "forge"
-	case engine.TriggerAfterChooseHouse, engine.TriggerAfterAnyPlayerChoosesHouse:
+	case engine.TriggerAfterBonusDamage:
+		return "damage"
+	case engine.TriggerAfterBonusDraw:
+		return "draw"
+	case engine.TriggerAfterChooseHouse,
+		engine.TriggerAfterAnyPlayerChoosesHouse:
 		return "glyph-choose"
 	case engine.TriggerAfterDiscardFromHand:
 		return "zone-discard"
@@ -432,8 +452,11 @@ func triggerIcon(t engine.Trigger) string {
 		return "aember"
 	case engine.TriggerAfterArmorPrevents:
 		return "shield"
-	case engine.TriggerStartOfTurn, engine.TriggerEndOfTurn,
-		engine.TriggerEndOfReadyStep, engine.TriggerAfterAnyPlayerStartOfTurn:
+	case engine.TriggerStartOfTurn,
+		engine.TriggerEndOfTurn,
+		engine.TriggerEndOfReadyStep,
+		engine.TriggerAfterAnyPlayerStartOfTurn,
+		engine.TriggerAfterAnyPlayerEndOfTurn:
 		return "phase-turn"
 	default:
 		return "glyph-unknown"
@@ -476,6 +499,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "aember", qty: v.Amount, decor: decorEnemy}}, true
 	case engine.CaptureFromAnyPlayer:
 		return []glyph{{asset: "aember", qty: v.Amount}}, true
+	case engine.DistributeCapture:
+		return []glyph{{asset: "aember", decor: decorEnemy}}, true
 	case engine.GiveAember:
 		src := glyph{asset: "aember", decor: decorEnemy}
 		if !v.All {
@@ -617,6 +642,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		}
 		return append(gs, arrowTo(targetGlyph(v.Target))), true
 	case engine.GainAssault:
+		return []glyph{{asset: "kw-assault"}, arrowTo(targetGlyph(v.Target))}, true
+	case engine.GainAssaultUntilNextTurn:
 		return []glyph{{asset: "kw-assault"}, arrowTo(targetGlyph(v.Target))}, true
 	case engine.GainTextBox:
 		return []glyph{targetGlyph(v.Source), arrowTo(targetGlyph(v.Target))}, true
@@ -777,6 +804,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		}, true
 	case engine.RaiseKeyCost:
 		return []glyph{{asset: "forge"}, {asset: "aember", qty: v.Amount}}, true
+	case engine.RaiseKeyCostPerHouseCreature:
+		return []glyph{{asset: "forge"}, {asset: "aember", qty: v.Amount}}, true
 	case engine.LowerKeyCost:
 		return []glyph{{asset: "forge"}, {asset: "aember", qty: -v.Amount}}, true
 	case engine.SkipForgePhase:
@@ -822,6 +851,16 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 			gs = append(gs, glyph{asset: a})
 		}
 		return append(gs, glyph{asset: "glyph-ban"}), true
+	case engine.LoseKeywordsUntilNextTurn:
+		gs := make([]glyph, 0, len(v.Keywords)+1)
+		for _, k := range v.Keywords {
+			a := keywordIcon(k)
+			if a == "" {
+				return []glyph{{asset: "glyph-unknown"}, {asset: "glyph-ban"}}, true
+			}
+			gs = append(gs, glyph{asset: a})
+		}
+		return append(gs, glyph{asset: "glyph-ban"}), true
 	case engine.GainKeyword:
 		if a := keywordIcon(v.Keyword); a != "" {
 			return []glyph{{asset: a}}, true
@@ -837,6 +876,8 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 	case engine.RevealHand:
 		return []glyph{{asset: "zone-hand"}, {asset: "glyph-look"}}, true
 	case engine.RevealRandomFromHand:
+		return []glyph{{asset: "zone-hand"}, {asset: "glyph-look"}}, true
+	case engine.RevealChosenFromHand:
 		return []glyph{{asset: "zone-hand"}, {asset: "glyph-look"}}, true
 	case engine.SearchForName:
 		return []glyph{{asset: "zone-deck"}, {asset: "glyph-search"}}, true
@@ -864,6 +905,22 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "zone-deck"}, arrowTo(h)}, true
 	case engine.DiscardTop:
 		return []glyph{{asset: "zone-discard", qty: v.Amount, decor: playerDecor(v.Player)}}, true
+	case engine.ResolveBonusIcons:
+		return []glyph{
+			targetGlyph(v.Target),
+			arrowTo(glyph{asset: "aember"}),
+			{asset: "capture"},
+			{asset: "damage"},
+			{asset: "draw"},
+		}, true
+	case engine.ExtraBonusIconResolution:
+		return []glyph{
+			{asset: "glyph-play"},
+			arrowTo(glyph{asset: "aember"}),
+			{asset: "capture"},
+			{asset: "damage"},
+			{asset: "draw"},
+		}, true
 	case engine.ForEachDiscarded:
 		return effectGlyphs(v.Do)
 	case engine.UnforgeKey:
@@ -942,6 +999,13 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "aember", qty: v.Amount, decor: decorEnemy | decorChosen}}, true
 	case engine.ForDuration:
 		return composeGlyphs(v.Effects...)
+	case engine.GainUntilNextTurn:
+		return composeGlyphs(v.Effects...)
+	case engine.GainTrait:
+		// A trait has no icon in the strip's vocabulary — traits render as the
+		// card's text, not glyphs. It only ever folds beside a keyword grant that
+		// carries the line's glyph, so it renders nothing yet counts as covered.
+		return nil, true
 	case engine.DestroyChosen:
 		return []glyph{{asset: "glyph-destroy"}, arrowTo(targetGlyph(v.Target))}, true
 	case engine.BatchDestroy:
@@ -1122,6 +1186,8 @@ func counterAsset(kind engine.CounterKind) string {
 		return "generic-counter-glory"
 	case engine.CounterDisruption:
 		return "generic-counter-disruption"
+	case engine.CounterScheme:
+		return "generic-counter-scheme"
 	default:
 		return ""
 	}

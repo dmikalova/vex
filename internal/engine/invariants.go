@@ -36,6 +36,7 @@ func (g *Game) InvariantError() error {
 	var count [maxCards]int
 	var attached [maxCards]bool
 	var underAttached [maxCards]bool
+	var giganticAttached [maxCards]bool
 	tally := func(ids []LocalID) {
 		for _, id := range ids {
 			count[id]++
@@ -85,6 +86,21 @@ func (g *Game) InvariantError() error {
 					)
 				}
 			}
+			// The slot-less art half of a gigantic sits in no zone; it is accounted
+			// through its base half, which holds the battleline slot (ADR 0042).
+			if art, ok := g.giganticPartner(id); ok &&
+				g.cat.def(id).GiganticRole == GiganticBase {
+				count[art]++
+				giganticAttached[art] = true
+				if g.State.Cards[art].GiganticPartnerPlus != giganticPlus(id) {
+					return fmt.Errorf(
+						"gigantic art half %d (%s) is linked to %s but its partner back-link disagrees",
+						art,
+						g.cat.def(art).Name,
+						g.Name(id),
+					)
+				}
+			}
 		}
 	}
 	for id := 0; id < len(g.cat.defs); id++ {
@@ -114,6 +130,16 @@ func (g *Game) InvariantError() error {
 				g.cat.def(LocalID(id)).Name,
 			)
 		}
+		// A linked art half with no base holding it is a dangling gigantic — the
+		// leave-play funnel must clear the link on both halves together.
+		if g.State.Cards[id].GiganticPartnerPlus != 0 &&
+			g.cat.def(LocalID(id)).GiganticRole == GiganticArt && !giganticAttached[id] {
+			return fmt.Errorf(
+				"card %d (%s) is a linked gigantic art half but no base holds it (dangling gigantic)",
+				id,
+				g.cat.def(LocalID(id)).Name,
+			)
+		}
 	}
 
 	// A creature whose damage has caught up with its power is destroyed, so one can
@@ -137,10 +163,11 @@ func (g *Game) InvariantError() error {
 	// CardCore, so any card outside play (and not attached as an upgrade, and not
 	// placed under a host — which is deliberately out of play yet still carries
 	// its host and facedown links) carrying damage, Æmber, a stun, counters, or a
-	// host link is a leave-play path that forgot to reset it.
+	// host link is a leave-play path that forgot to reset it. A gigantic's slot-less
+	// art half is in play through its base, so it is skipped here too.
 	for id := 0; id < len(g.cat.defs); id++ {
 		lid := LocalID(id)
-		if g.inPlay(lid) || attached[id] || underAttached[id] {
+		if g.inPlay(lid) || attached[id] || underAttached[id] || giganticAttached[id] {
 			continue
 		}
 		if core := g.State.Cards[id]; core != (CardCore{}) {

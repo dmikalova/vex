@@ -595,3 +595,28 @@ func (p powerLessThan) refine(ctx *EffectContext, ids []LocalID) []LocalID {
 	}
 	return kept
 }
+
+// PowerLessThanSource is a Refinement that keeps every creature whose power is
+// below the source card's own power — Dreadbone Decimus destroys a creature with
+// lower power than itself. The source's power is read when the effect resolves.
+func PowerLessThanSource() Refinement { return powerLessThanSource{} }
+
+// powerLessThanSource implements the PowerLessThanSource refinement.
+type powerLessThanSource struct{}
+
+// clause renders "<phrase> with lower power than <self>".
+func (powerLessThanSource) clause(phrase string) string {
+	return phrase + " with lower power than " + SelfName
+}
+
+// refine keeps the creatures whose power is below the source card's power.
+func (powerLessThanSource) refine(ctx *EffectContext, ids []LocalID) []LocalID {
+	limit := ctx.Resolver.Power(ctx.Source)
+	kept := make([]LocalID, 0, len(ids))
+	for _, id := range ids {
+		if ctx.Resolver.Power(id) < limit {
+			kept = append(kept, id)
+		}
+	}
+	return kept
+}

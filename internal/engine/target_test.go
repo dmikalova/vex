@@ -333,6 +333,22 @@ func TestTargetWithoutAember(t *testing.T) {
 	}
 }
 
+func TestTargetWithoutBonusIcons(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(testCreature("iconed", 5, WithBonus(BonusAember)), 0)
+	bare := g.AddToBattleline(testCreature("bare", 3), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	if ids := (Target{Kind: TargetEachCreature}).WithoutBonusIcons().
+		Select(ctx); len(ids) != 1 || ids[0] != bare {
+		t.Errorf("WithoutBonusIcons = %v, want [%d]", ids, bare)
+	}
+	if got := (Target{Kind: TargetChosenCreature}).WithoutBonusIcons().
+		Text(); got != "a creature with no bonus icons" {
+		t.Errorf("WithoutBonusIcons text = %q", got)
+	}
+}
+
 func TestLeastPowerfulTieChoice(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	a := g.AddToBattleline(testCreature("a", 2), 1)
@@ -886,6 +902,29 @@ func TestPowerLessThan(t *testing.T) {
 	if text := resolved.Text(); text !=
 		"each enemy creature with power less than the number of friendly Mars creatures you control" {
 		t.Errorf("resolved SelfHouse text = %q", text)
+	}
+}
+
+// TestPowerLessThanSource covers the source-relative refinement: it keeps the
+// creatures whose power is below the source card's own power (Dreadbone Decimus
+// destroys a creature with lower power than itself) and renders "... with lower
+// power than <self>".
+func TestPowerLessThanSource(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	source := g.AddToBattleline(testCreature("source", 3), 0)
+	weak := g.AddToBattleline(testCreature("weak", 1), 1)
+	equal := g.AddToBattleline(testCreature("equal", 3), 1)
+	strong := g.AddToBattleline(testCreature("strong", 5), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0, Source: source}
+
+	got := Target{Kind: TargetEachEnemyCreature}.Refine(PowerLessThanSource()).Select(ctx)
+	if len(got) != 1 || got[0] != weak || containsID(got, equal) || containsID(got, strong) {
+		t.Errorf("PowerLessThanSource = %v, want [weak]", got)
+	}
+
+	if text := (Target{Kind: TargetChosenEnemyCreature}).Refine(PowerLessThanSource()).
+		Text(); text != "an enemy creature with lower power than "+SelfName {
+		t.Errorf("PowerLessThanSource text = %q", text)
 	}
 }
 

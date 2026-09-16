@@ -15,13 +15,16 @@ type ExcessCreatures struct {
 	// NotCountingSelf excludes the source creature from its controller's side of
 	// the comparison — Dr. Milli's "in excess of you, not counting Dr. Milli".
 	NotCountingSelf bool
+	// Trait counts only creatures with this trait on both sides; the unset zero
+	// value counts every creature (Pismire compares Mutant counts).
+	Trait Trait
 }
 
 // Value returns the named player's creature count minus the other's, floored at 0.
 func (e ExcessCreatures) Value(ctx *EffectContext) int {
 	more := ctx.PlayerFor(e.Player)
-	moreCount := len(ctx.Resolver.Battleline(more))
-	lessCount := len(ctx.Resolver.Battleline(1 - more))
+	moreCount := e.sideCount(ctx, more)
+	lessCount := e.sideCount(ctx, 1-more)
 	if e.NotCountingSelf {
 		if ctx.Controller == more {
 			moreCount = max(0, moreCount-1)
@@ -30,6 +33,20 @@ func (e ExcessCreatures) Value(ctx *EffectContext) int {
 		}
 	}
 	return max(0, moreCount-lessCount)
+}
+
+// sideCount counts the creatures one player controls, restricted to Trait when set.
+func (e ExcessCreatures) sideCount(ctx *EffectContext, player int) int {
+	if e.Trait == traitUnset {
+		return len(ctx.Resolver.Battleline(player))
+	}
+	n := 0
+	for _, id := range ctx.Resolver.Battleline(player) {
+		if ctx.Resolver.HasTrait(id, e.Trait) {
+			n++
+		}
+	}
+	return n
 }
 
 // CountText renders the singular noun the "for each" clause repeats.
@@ -65,6 +82,9 @@ type InPlay struct {
 	Ready bool
 	// Damaged counts only creatures that have damage on them.
 	Damaged bool
+	// WithAember counts only creatures that have Æmber on them (Faust the Great
+	// counts each friendly creature with Æmber on it).
+	WithAember bool
 	// MinPower counts only creatures whose power is at least this value; zero (the
 	// unset default) applies no power floor (Grump Buggy counts power 5 or higher).
 	MinPower int
@@ -93,6 +113,9 @@ func (e InPlay) Value(ctx *EffectContext) int {
 			continue
 		}
 		if e.Ready && ctx.Resolver.Exhausted(id) {
+			continue
+		}
+		if e.WithAember && ctx.Resolver.AmberOn(id) == 0 {
 			continue
 		}
 		if e.Damaged && ctx.Resolver.Damage(id) == 0 {
@@ -208,6 +231,9 @@ func (e InPlay) noun() string {
 	if e.MinPower > 0 {
 		noun += fmt.Sprintf(" with power %d or higher", e.MinPower)
 	}
+	if e.WithAember {
+		noun += " with \u00c6mber on it"
+	}
 	return noun
 }
 
@@ -215,7 +241,8 @@ func (e InPlay) noun() string {
 // house- or trait-filtered count reads "friendly Mars creature" / "friendly
 // Shard"; an unfiltered one adds "in play" to distinguish it from cards in hand.
 func (e InPlay) CountText() string {
-	if (e.House != HouseNone || e.Trait != traitUnset || e.MinPower > 0) && e.Player != EachPlayer {
+	if (e.House != HouseNone || e.Trait != traitUnset || e.MinPower > 0 || e.WithAember) &&
+		e.Player != EachPlayer {
 		return e.noun()
 	}
 	return e.noun() + " in play"

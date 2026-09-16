@@ -196,17 +196,36 @@ func podClusterFires(pod HousePod, ci clusterIndex) bool {
 }
 
 // randomMembers picks a random count of distinct members in [min, max] for a
-// RandomCount cluster, by shuffling the members and taking that many.
+// RandomCount cluster, by shuffling the members and taking that many. A ByLead
+// cluster excludes its lead from the pick: the lead is already planted in the pod
+// (its roll fired the cluster), so it is never placed again as one of the count —
+// only its Connected partners are (Dark Harbinger pulls its Mutations, not itself).
 func (g *generator) randomMembers(ci clusterIndex) []Card {
+	pool := nonLeadMembers(ci)
 	k := ci.min
 	if ci.max > ci.min {
 		k += g.r.Intn(ci.max - ci.min + 1)
 	}
-	shuffled := append([]Card(nil), ci.members...)
+	shuffled := append([]Card(nil), pool...)
 	g.r.Shuffle(len(shuffled), func(i, j int) {
 		shuffled[i], shuffled[j] = shuffled[j], shuffled[i]
 	})
 	return shuffled[:k]
+}
+
+// nonLeadMembers returns a cluster's members with its lead removed, or all members
+// when the cluster has no lead (a ByAnyMember cluster).
+func nonLeadMembers(ci clusterIndex) []Card {
+	if ci.lead == "" {
+		return ci.members
+	}
+	out := make([]Card, 0, len(ci.members))
+	for _, m := range ci.members {
+		if m.Def.Name != ci.lead {
+			out = append(out, m)
+		}
+	}
+	return out
 }
 
 // selfPullCount rolls a SelfPull copy count: Min + Poisson(Mean − Min), capped at

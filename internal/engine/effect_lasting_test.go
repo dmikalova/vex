@@ -347,6 +347,20 @@ func TestGainAbilityText(t *testing.T) {
 	}
 }
 
+// A RemainderOfPlayerTurn grant names its window first, so a card that does not
+// lean on a sibling effect to carry the duration still reads it (Adaptoid).
+func TestGainAbilityRemainderOfTurnText(t *testing.T) {
+	e := GainAbility{
+		Target:   Target{Kind: TargetThisCreature},
+		Duration: RemainderOfPlayerTurn,
+		Ability:  Ability{Trigger: TriggerAfterFight, Effect: StealAember{Amount: 1}},
+	}
+	want := `for the remainder of the turn, ` + SelfName + ` gains, "Fight: Steal 1 Æmber."`
+	if got := e.Text(); got != want {
+		t.Errorf("text = %q, want %q", got, want)
+	}
+}
+
 // A StartOfPlayerNextTurn grant of "Before Fight: Exalt this creature"
 // (Diplomacy) validates, names its window first, and rejects the pairing with any
 // other trigger.
@@ -477,6 +491,43 @@ func TestGainAbilityFightReady(t *testing.T) {
 	g.resolveLastingWindow(EventFight, 0, granted)
 	if g.State.Cards[granted].Exhausted {
 		t.Error("the granted creature should be readied after it fights")
+	}
+}
+
+// TestGainAbilityFightSteal grants a "Fight: Steal 1 Æmber" ability, the Adaptoid
+// option: the creature registers a subject-scoped fight steal that moves Æmber
+// from the opponent's pool to its controller's when it fights.
+func TestGainAbilityFightSteal(t *testing.T) {
+	e := GainAbility{
+		Target: Target{Kind: TargetThisCreature},
+		Ability: Ability{
+			Trigger: TriggerAfterFight,
+			Effect:  StealAember{Amount: 1},
+		},
+	}
+	if err := e.validate(); err != nil {
+		t.Fatalf("valid Fight/Steal GainAbility = %v", err)
+	}
+	if got, want := e.Text(), SelfName+` gains, "Fight: Steal 1 Æmber."`; got != want {
+		t.Errorf("text = %q, want %q", got, want)
+	}
+
+	g := started(t)
+	granted := g.AddToBattleline(testCreature("granted", 3), 0)
+	g.SetAember(1, 2)
+	e.Resolve(&EffectContext{Resolver: g, Source: granted, Controller: 0})
+
+	le := g.State.Lasting[0]
+	if le.On != EventFight || le.Do != actSteal || le.Subject != granted {
+		t.Fatalf("registered reaction = %+v, want a Subject-scoped fight steal", le)
+	}
+
+	g.resolveLastingWindow(EventFight, 0, granted)
+	if got := g.State.Aember[0]; got != 1 {
+		t.Errorf("controller Æmber after the granted creature fights = %d, want 1", got)
+	}
+	if got := g.State.Aember[1]; got != 1 {
+		t.Errorf("opponent Æmber after the steal = %d, want 1", got)
 	}
 }
 

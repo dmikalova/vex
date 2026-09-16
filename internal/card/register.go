@@ -53,6 +53,64 @@ func New(
 	return d
 }
 
+// Gigantic builds a gigantic creature — a creature printed as two cards, a base
+// half and an art half, that share a name and are played as one creature
+// (ADR 0042). It is authored as a single call, like New, and the options describe
+// the whole creature. Registration splits it: the base half carries the power,
+// armor, traits, keywords, and abilities and is the card enrolled in the database
+// (with the provenance and generation options); the art half is synthetic,
+// carries only the creature's bonus icons, has no provenance, and rides on the
+// base's generation profile so deck generation can place it alongside the base.
+// The two halves share a name — which the database's unique-name rule forbids for
+// two registered cards — so only the base is registered. Gigantic returns the
+// base half, so a set declares it as `var X = card.Gigantic(...)`.
+func Gigantic(
+	name string,
+	house engine.House,
+	rarity engine.Rarity,
+	opts ...Option,
+) Definition {
+	var b builder
+	for _, o := range opts {
+		o(&b)
+	}
+	base := engine.NewCard(
+		name, house, engine.Creature, rarity,
+		append(b.opts, engine.WithGiganticRole(engine.GiganticBase))...,
+	)
+	// The art half carries only the creature's bonus icons; move them off the base.
+	art := engine.NewCard(
+		name, house, engine.Creature, rarity,
+		engine.WithGiganticRole(engine.GiganticArt),
+		engine.WithBonus(base.Bonuses...),
+	)
+	base.Bonuses = nil
+	prof := b.profile
+	prof.GiganticArt = &art
+	registry = append(registry, RegisteredCard{
+		Def:          base,
+		Provenance:   b.prov,
+		Set:          nativeSet(b),
+		Profile:      prof,
+		Materializer: b.materializer,
+	})
+	return base
+}
+
+// GiganticArt returns the synthetic art half of a gigantic creature whose base
+// half is base, for tests and tools that need both halves in hand (deck
+// generation places the art half automatically). It panics if base is not a
+// registered gigantic base half.
+func GiganticArt(base Definition) Definition {
+	for _, e := range registry {
+		if e.Def.Name == base.Name && e.Def.GiganticRole == engine.GiganticBase &&
+			e.Profile.GiganticArt != nil {
+			return *e.Profile.GiganticArt
+		}
+	}
+	panic("card: GiganticArt called on a non-gigantic card " + base.Name)
+}
+
 // nativeSet returns a card's home set for deck generation: the set declared with
 // InSet, which a set package's registrar (set.New) always stamps. Deck generation
 // groups a card by this set alone and never infers it from provenance (ADR 0003);

@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Gluttony
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Dis
 //	Type:   Creature
@@ -15,16 +10,29 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  6
 //	Traits: Demon • Sin
 //
-//	Play: Exalt Gluttony once for each friendly Sin creature.
-//	Reap: Move each A from friendly creatures to your pool.
+//	Play: For each friendly Sin creature, exalt Gluttony.
+//	Reap: Move all Æmber from each friendly creature to your pool.
 var Gluttony = set.New(
 	"Gluttony",
 	card.House.Dis,
 	card.Type.Creature,
-	// TODO(variant): rarity relabelled from Variant to Special — handle manually
 	card.Rarity.Special,
 	card.Provenance(card.MM, "057"),
+	card.InCluster(sinsCluster),
+	card.OneCopyPerDeck(),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Demon, card.Traits.Sin),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.Play, card.ForEach{
+		Times: card.InPlay{
+			Player: card.Controller,
+			Type:   card.Type.Creature,
+			Trait:  card.Traits.Sin,
+		},
+		Do: card.Exalt{Target: card.Target.This, Amount: 1},
+	}),
+	card.WithAbility(card.Trigger.Reap, card.MoveAember{
+		All:  true,
+		From: card.Target.EachFriendlyCreature,
+		To:   card.Controller,
+	}),
 )

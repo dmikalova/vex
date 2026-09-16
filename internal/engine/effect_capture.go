@@ -249,6 +249,62 @@ func (e CaptureFromAnyPlayer) Resolve(ctx *EffectContext) {
 	e.captureFrom(ctx, Opponent, fromOpp)
 }
 
+// DistributeCapture captures a By share of the Source pool one Æmber at a time
+// onto friendly creatures the controller chooses, spreading the capture among any
+// number of them (Bring Low captures all but five of the opponent's Æmber). It
+// reads the share up front, then delegates each unit to CaptureAember so the move,
+// supply-redirect, and log stay identical to every other capture.
+type DistributeCapture struct {
+	// By is the share of the Source pool to capture (By: AllBut(5)).
+	By Loss
+	// Source is the pool the Æmber is taken from.
+	Source Player
+}
+
+// validate requires a By share and an explicit Source.
+func (e DistributeCapture) validate() error {
+	if e.By == nil {
+		return fmt.Errorf("DistributeCapture: By must set the share to capture")
+	}
+	if e.Source == playerUnset {
+		return errUnsetPlayer("DistributeCapture")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "capture all but 5 Æmber from your opponent,
+// distributed among any number of friendly creatures".
+func (e DistributeCapture) Text() string {
+	from := "your opponent"
+	possessive := "your opponent's"
+	if e.Source == Controller {
+		from, possessive = "you", "your"
+	}
+	return fmt.Sprintf(
+		"capture %s from %s, distributed among any number of friendly creatures",
+		aemberObject(0, e.By, possessive),
+		from,
+	)
+}
+
+// Resolve reads the share to capture up front, then captures it one Æmber at a
+// time onto a friendly creature the controller chooses each time, delegating each
+// unit to CaptureAember. The loop stops early if no friendly creature remains.
+func (e DistributeCapture) Resolve(ctx *EffectContext) {
+	pool := ctx.PlayerFor(e.Source)
+	total := min(e.By.lose(ctx.Resolver.Aember(pool)), ctx.Resolver.Aember(pool))
+	for i := 0; i < total; i++ {
+		if len(ctx.Resolver.Battleline(ctx.Controller)) == 0 {
+			return
+		}
+		CaptureAember{
+			Amount: 1,
+			Target: Target{Kind: TargetChosenFriendlyCreature},
+			Source: e.Source,
+		}.Resolve(ctx)
+	}
+}
+
 // captureFrom captures amt Æmber onto this creature from one pool, delegating to
 // CaptureAember so the move behaves exactly like any other capture. A zero share
 // is skipped so an untouched pool never logs a capture.
@@ -277,6 +333,11 @@ type MoveAemberToSupply struct {
 	// Target is the creature the Æmber is removed from; the zero value is this
 	// creature.
 	Target Target
+	// Bind leaves the moved-from creature in context (ctx.It) for a following
+	// effect that names "that creature", and makes this effect a result gate so a
+	// Then runs only when Æmber actually moved — Dark Centurion moves 1 Æmber off a
+	// chosen creature and, if it did, wards that same creature.
+	Bind bool
 }
 
 // validate requires an explicit Target and either a positive Amount or the All
@@ -310,7 +371,18 @@ func (e MoveAemberToSupply) Text() string {
 // Resolve removes the Æmber from each target — Amount, or all of it in All mode —
 // returning it to the common supply. A target holding none is skipped.
 func (e MoveAemberToSupply) Resolve(ctx *EffectContext) {
+	e.resolveGate(ctx)
+}
+
+// resolveGate removes the Æmber, binds the moved-from creature in context when
+// Bind is set, and reports whether any Æmber actually moved — the "If you do" a
+// Then hangs off. A target holding none is skipped.
+func (e MoveAemberToSupply) resolveGate(ctx *EffectContext) bool {
+	moved := false
+	var last LocalID
+	var haveLast bool
 	for _, id := range e.Target.Select(ctx) {
+		last, haveLast = id, true
 		have := ctx.Resolver.AmberOn(id)
 		remove := have
 		if !e.All {
@@ -321,5 +393,10 @@ func (e MoveAemberToSupply) Resolve(ctx *EffectContext) {
 		}
 		ctx.Resolver.AddAmberOn(id, -remove)
 		ctx.Resolver.Record(AemberMovedToCommonSupply{Creature: id, Amount: remove})
+		moved = true
 	}
+	if e.Bind && haveLast {
+		ctx.It, ctx.HasIt = last, true
+	}
+	return moved
 }

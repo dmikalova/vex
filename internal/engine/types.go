@@ -171,41 +171,61 @@ const (
 	// trait.
 	traitUnset Trait = iota
 	Agent
+	Ai
+	Alien
 	Ally
 	Angel
+	Aquan
+	Assassin
 	Beast
+	Cat
 	Cleric
 	Cyborg
 	Demon
+	Dinosaur
 	Dragon
 	Elf
+	Equation
+	Experiment
 	Faerie
 	Fungus
 	Giant
 	Goblin
-	Equation
+	Handuhan
 	Horseman
 	Human
+	Hunter
 	Imp
 	Insect
 	Item
+	Jelly
 	Knight
+	Krxix
 	Law
+	Leader
 	Location
 	Martian
 	Merchant
 	Monk
 	Mutant
 	Niffle
+	Philosopher
+	Pilot
+	Pirate
+	Politician
 	Power
 	Priest
+	Proximan
+	Psion
 	Quest
 	Ranger
 	Rat
 	Redacted
 	Robot
 	Scientist
+	Shapeshifter
 	Shard
+	Sin
 	Soldier
 	Specter
 	Spirit
@@ -214,25 +234,7 @@ const (
 	Vehicle
 	Weapon
 	Witch
-	Ai
-	Alien
-	Aquan
-	Dinosaur
-	Experiment
-	Handuhan
-	Hunter
-	Jelly
-	Krxix
-	Leader
-	Philosopher
-	Pilot
-	Pirate
-	Politician
-	Proximan
-	Psion
-	Shapeshifter
 	Wolf
-	Cat
 	// traitCount bounds the enum; it is not a trait.
 	traitCount
 )
@@ -240,41 +242,61 @@ const (
 // traitNames maps a Trait to its printed word, indexed by the enum value.
 var traitNames = [traitCount]string{
 	Agent:        "Agent",
+	Ai:           "AI",
+	Alien:        "Alien",
 	Ally:         "Ally",
 	Angel:        "Angel",
+	Aquan:        "Aquan",
+	Assassin:     "Assassin",
 	Beast:        "Beast",
+	Cat:          "Cat",
 	Cleric:       "Cleric",
 	Cyborg:       "Cyborg",
 	Demon:        "Demon",
+	Dinosaur:     "Dinosaur",
 	Dragon:       "Dragon",
 	Elf:          "Elf",
 	Equation:     "Equation",
+	Experiment:   "Experiment",
 	Faerie:       "Faerie",
 	Fungus:       "Fungus",
 	Giant:        "Giant",
 	Goblin:       "Goblin",
+	Handuhan:     "Handuhan",
 	Horseman:     "Horseman",
 	Human:        "Human",
+	Hunter:       "Hunter",
 	Imp:          "Imp",
 	Insect:       "Insect",
 	Item:         "Item",
+	Jelly:        "Jelly",
 	Knight:       "Knight",
+	Krxix:        "Krxix",
 	Law:          "Law",
+	Leader:       "Leader",
 	Location:     "Location",
 	Martian:      "Martian",
 	Merchant:     "Merchant",
+	Monk:         "Monk",
 	Mutant:       "Mutant",
 	Niffle:       "Niffle",
-	Monk:         "Monk",
+	Philosopher:  "Philosopher",
+	Pilot:        "Pilot",
+	Pirate:       "Pirate",
+	Politician:   "Politician",
 	Power:        "Power",
 	Priest:       "Priest",
+	Proximan:     "Proximan",
+	Psion:        "Psion",
 	Quest:        "Quest",
 	Ranger:       "Ranger",
 	Rat:          "Rat",
 	Redacted:     "[redacted]",
 	Robot:        "Robot",
 	Scientist:    "Scientist",
+	Shapeshifter: "Shapeshifter",
 	Shard:        "Shard",
+	Sin:          "Sin",
 	Soldier:      "Soldier",
 	Specter:      "Specter",
 	Spirit:       "Spirit",
@@ -283,25 +305,7 @@ var traitNames = [traitCount]string{
 	Vehicle:      "Vehicle",
 	Weapon:       "Weapon",
 	Witch:        "Witch",
-	Ai:           "AI",
-	Alien:        "Alien",
-	Aquan:        "Aquan",
-	Dinosaur:     "Dinosaur",
-	Experiment:   "Experiment",
-	Handuhan:     "Handuhan",
-	Hunter:       "Hunter",
-	Jelly:        "Jelly",
-	Krxix:        "Krxix",
-	Leader:       "Leader",
-	Philosopher:  "Philosopher",
-	Pilot:        "Pilot",
-	Pirate:       "Pirate",
-	Politician:   "Politician",
-	Proximan:     "Proximan",
-	Psion:        "Psion",
-	Shapeshifter: "Shapeshifter",
 	Wolf:         "Wolf",
-	Cat:          "Cat",
 }
 
 // String returns the trait's printed word, or "" for the unset zero value.
@@ -603,6 +607,12 @@ const (
 	// controller (Gambling Den, General Order 24). It is the whole-board companion
 	// to TriggerStartOfTurn, which fires only on its own controller's turn.
 	TriggerAfterAnyPlayerStartOfTurn
+	// This ability resolves at the end of every player's turn — its own
+	// controller's and the opponent's — resolving as the player whose turn is
+	// ending, so "they"/"that player" is the turn's active player, not the card's
+	// controller (Pincerator). It is the whole-board companion to TriggerEndOfTurn,
+	// which fires only on its own controller's turn.
+	TriggerAfterAnyPlayerEndOfTurn
 	// This ability resolves after a Tactic is played, before that Tactic's own
 	// effect resolves, so a reaction can act on the board the Tactic is about to
 	// affect (Encounter Suit wards its host before the Tactic can reach it). It
@@ -621,6 +631,18 @@ const (
 	// own side is used to fight, with that creature as "it" — Lieutenant Gorvenal
 	// captures whenever a friendly creature fights, itself or another.
 	TriggerAfterFriendlyCreatureFights
+	// TriggerAfterBonusDamage fires after the controller resolves a Damage bonus
+	// icon, with the creature that damage hit as "it" (Maleficorn deals it 1 more).
+	// It fires only for the resolving player's own icons.
+	TriggerAfterBonusDamage
+	// TriggerAfterBonusDraw fires after the controller resolves a Draw bonus icon
+	// (Chronus may archive a card). It fires only for the resolving player's own
+	// icons and only when the draw actually drew a card.
+	TriggerAfterBonusDraw
+	// TriggerAfterUpgradeEnters fires after any upgrade enters play — friendly or
+	// enemy — with the entering upgrade as "it" (Armory Officer Nel draws a card).
+	// It fires on every in-play card whoever played the upgrade.
+	TriggerAfterUpgradeEnters
 	// triggerCount bounds the enum so Triggers can range it; it is not a trigger.
 	triggerCount
 )
@@ -701,6 +723,10 @@ func (t Trigger) String() string {
 		return "After a Creature Is Used to Fight"
 	case TriggerAfterFriendlyCreatureFights:
 		return "After a Friendly Creature Is Used to Fight"
+	case TriggerAfterBonusDamage:
+		return "After You Resolve a Damage Bonus Icon"
+	case TriggerAfterBonusDraw:
+		return "After You Resolve a Draw Bonus Icon"
 	case TriggerAfterCreatureDestroyed:
 		return "After a Creature Is Destroyed"
 	case TriggerAfterFriendlyCreatureDestroyed:
@@ -711,6 +737,8 @@ func (t Trigger) String() string {
 		return "After Your Opponent Forges a Key"
 	case TriggerAfterCreaturePlayed:
 		return "After a Creature Is Played"
+	case TriggerAfterUpgradeEnters:
+		return "After an Upgrade Enters Play"
 	case TriggerEndOfTurn:
 		return "End of Turn"
 	case TriggerStartOfTurn:
@@ -721,6 +749,8 @@ func (t Trigger) String() string {
 		return "After a Player Chooses a House"
 	case TriggerAfterAnyPlayerStartOfTurn:
 		return "At the Start of Each Player's Turn"
+	case TriggerAfterAnyPlayerEndOfTurn:
+		return "At the End of Each Player's Turn"
 	case TriggerLeavesPlay:
 		return "Leaves Play"
 	case TriggerEntersPlay:
@@ -806,6 +836,8 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return "After a friendly creature is destroyed, ", false
 	case TriggerAfterCreaturePlayed:
 		return "After a creature is played, ", false
+	case TriggerAfterUpgradeEnters:
+		return "After an upgrade enters play, ", false
 	case TriggerLeavesPlay:
 		return "Leaves Play: ", true
 	case TriggerEndOfTurn:
@@ -816,10 +848,16 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return `At the end of your "ready cards" step, `, false
 	case TriggerAfterAnyPlayerStartOfTurn:
 		return "At the start of each player's turn, ", false
+	case TriggerAfterAnyPlayerEndOfTurn:
+		return "At the end of each player's turn, ", false
 	case TriggerAfterAnyPlayerChoosesHouse:
 		return "After a player chooses an active house, ", false
 	case TriggerAfterTacticPlayedBeforeResolve:
 		return "After a Tactic is played but before it resolves, ", false
+	case TriggerAfterBonusDamage:
+		return "After you resolve a Damage bonus icon, ", false
+	case TriggerAfterBonusDraw:
+		return "After you resolve a Draw bonus icon, ", false
 	default:
 		return "", true
 	}

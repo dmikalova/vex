@@ -1,6 +1,9 @@
 package engine
 
-import "strings"
+import (
+	"fmt"
+	"strings"
+)
 
 // BonusIcon is a printed bonus icon in a card's upper-left corner. After a card is
 // played its icons resolve one at a time, top to bottom, before its "Play:"
@@ -42,6 +45,37 @@ func (b BonusIcon) String() string {
 
 // valid reports whether the icon names a real kind.
 func (b BonusIcon) valid() bool { return b > bonusUnset && b < bonusIconCount }
+
+// BonusInstead is a continuous bonus-icon substitution a card offers its
+// controller while in play, checked before each of the controller's played bonus
+// icons resolves (Amphora Captura, Scrivener Favian). From is the icon it applies
+// to; the zero value (bonusUnset) matches any icon. It applies one of two
+// substitutions: As resolves a different icon instead, or Instead resolves a
+// concrete effect instead. May makes the substitution optional — the controller is
+// asked before it applies (Amphora); without May it always applies (Scrivener).
+// The zero value offers no substitution.
+type BonusInstead struct {
+	From    BonusIcon
+	As      BonusIcon
+	Instead Effect
+	May     bool
+}
+
+// set reports whether the substitution is offered (an As icon or an Instead
+// effect); the zero value offers none.
+func (r BonusInstead) set() bool { return r.As != bonusUnset || r.Instead != nil }
+
+// validate rejects a substitution that sets both an As icon and an Instead effect
+// (they are two ways to say the same thing) and checks the Instead effect if present.
+func (r BonusInstead) validate() error {
+	if r.As != bonusUnset && r.Instead != nil {
+		return fmt.Errorf("BonusInstead sets both As and Instead")
+	}
+	if r.Instead != nil {
+		return validateEffect(r.Instead)
+	}
+	return nil
+}
 
 // allBonusIcons lists every bonus-icon kind, the closed catalog the rulebook
 // completeness test ranges over (ADR 0018).

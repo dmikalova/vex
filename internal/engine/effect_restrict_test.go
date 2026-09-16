@@ -268,6 +268,19 @@ func TestCannotReapConstant(t *testing.T) {
 		got[0] != "Creatures cannot reap." {
 		t.Errorf("each-player reaping text = %v", got)
 	}
+	// The bonus-icon bar renders each relative player (Master of the Grey).
+	if got := restrictionText(Restrictions{BonusIcons: Controller}, false); len(got) != 1 ||
+		got[0] != "You cannot resolve bonus icons on cards you play." {
+		t.Errorf("controller bonus-icon text = %v", got)
+	}
+	if got := restrictionText(Restrictions{BonusIcons: Opponent}, false); len(got) != 1 ||
+		got[0] != "Your opponent cannot resolve bonus icons on cards they play." {
+		t.Errorf("opponent bonus-icon text = %v", got)
+	}
+	if got := restrictionText(Restrictions{BonusIcons: EachPlayer}, false); len(got) != 1 ||
+		got[0] != "Players cannot resolve bonus icons on cards they play." {
+		t.Errorf("each-player bonus-icon text = %v", got)
+	}
 	// A use-condition phrases against the card, or the host creature on an upgrade.
 	cond := Restrictions{UseCondition: CardsDiscarded{Player: Controller, Amount: 1}}
 	if got := restrictionText(cond, false); len(got) != 1 ||

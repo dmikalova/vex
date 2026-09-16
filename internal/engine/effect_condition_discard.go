@@ -38,3 +38,27 @@ func (e CardsInDiscardAtLeast) Met(ctx *EffectContext) bool {
 	})
 	return len(matched) >= e.Amount
 }
+
+// NamedCardInDiscard is met when a card of a given name sits in the controller's
+// discard pile — the Monuments strengthen their action when their namesake
+// creature (Faust the Great, Cornicen Octavia, Consul Primus, Citizen Shrix) waits
+// in the discard pile. It names the card by its printed name, not the source.
+type NamedCardInDiscard struct {
+	// Name is the card name to look for in the discard pile.
+	Name string
+}
+
+// CondText renders the condition naming the card it looks for.
+func (c NamedCardInDiscard) CondText() string {
+	return "if " + c.Name + " is in your discard pile"
+}
+
+// Met reports whether a card of the name sits in the controller's discard pile.
+func (c NamedCardInDiscard) Met(ctx *EffectContext) bool {
+	for _, id := range ctx.Resolver.Discard(ctx.Controller) {
+		if (CardFilter{Name: c.Name}).admits(ctx.Resolver, id) {
+			return true
+		}
+	}
+	return false
+}

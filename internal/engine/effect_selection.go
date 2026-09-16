@@ -146,6 +146,14 @@ func (s Chosen) noun() string {
 // object renders the single card chosen, e.g. "a Sanctum creature".
 func (s Chosen) object() string { return indefinite(s.noun()) }
 
+// plainType reports that the choice narrows by a single concrete card type alone —
+// no house, trait, name, Or, or Optional — so its object is a bare "a <type>" that
+// a noun-list fold can collapse (Look What I Found!).
+func (s Chosen) plainType() bool {
+	return s.Type != TypeUnset && s.Type != AnyType && !s.House.filters() &&
+		s.Trait == traitUnset && s.Name == "" && s.Or == nil && !s.Optional
+}
+
 // declinable reports that an Optional Chosen may be passed.
 func (s Chosen) declinable() bool { return s.Optional }
 

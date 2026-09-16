@@ -1,26 +1,32 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ZParticleTracker
+// Z-Particle Tracker
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Upgrade
-//	Rarity: Special
-//	Æmber:  1
+//	Rarity: Connected
+//	Bonus:  Æmber
 //
-//	This creature gains, "Fight: Search your deck for an upgrade and put it into your hand. Shuffle your deck."
+//	This creature gains, "Fight: Search your deck for an upgrade, reveal it, and put it into your hand. Shuffle your deck."
 var ZParticleTracker = set.New(
 	"Z-Particle Tracker",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Upgrade,
-	card.Rarity.Special,
+	card.Rarity.Connected,
 	card.Provenance(card.MM, "354"),
+	card.InCluster(zForceCluster),
 	card.WithBonus(card.Bonus.Aember),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithStatic(card.StaticModifier{
+		Granted: []card.Ability{{
+			Trigger: card.Trigger.Fight,
+			Effect: card.Sentences{
+				Effects: []card.Effect{
+					card.SearchDeck{Filter: card.Filter{Type: card.Type.Upgrade}},
+					card.Shuffle{},
+				},
+			},
+		}},
+	}),
 )

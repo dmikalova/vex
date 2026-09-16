@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// BaldricTheBold
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Baldric the Bold
 //
 //	House:  Sanctum
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  2
 //	Traits: Human • Knight
 //
-//	Before Fight: If the creature Baldric the Bold fights is the most powerful enemy creature, gain 2A.
+//	Before Fight: If the fought creature is the most powerful enemy creature, gain 2 Æmber.
 var BaldricTheBold = set.New(
 	"Baldric the Bold",
 	card.House.Sanctum,
@@ -26,5 +21,8 @@ var BaldricTheBold = set.New(
 	card.WithPower(4),
 	card.WithArmor(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.BeforeFight, card.Conditional{
+		Cond: card.FoughtCreatureIsMostPowerfulEnemy{},
+		Then: card.GainAember{Player: card.Controller, Amount: 2},
+	}),
 )

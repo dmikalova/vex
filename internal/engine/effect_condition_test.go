@@ -101,6 +101,35 @@ func TestControlsMoreCreatures(t *testing.T) {
 	}
 }
 
+// TestControlsMoreCreaturesTrait covers the trait-scoped comparison (Pismire),
+// which counts only creatures carrying the named trait on each side.
+func TestControlsMoreCreaturesTrait(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	c := ControlsMoreCreatures{Trait: Mutant}
+	if got := c.CondText(); got != "if you control more Mutant creatures than your opponent" {
+		t.Errorf("CondText = %q", got)
+	}
+
+	// A plain creature on each side leaves the Mutant counts level at zero.
+	g.AddToBattleline(testCreature("plain", 1), 0)
+	if c.Met(ctx) {
+		t.Error("0 vs 0 Mutants should not be met")
+	}
+	// One friendly Mutant tips the Mutant comparison even against more creatures.
+	g.AddToBattleline(testCreature("mine", 1, WithTraits(Mutant)), 0)
+	g.AddToBattleline(testCreature("theirs", 1), 1)
+	if !c.Met(ctx) {
+		t.Error("1 vs 0 Mutants should be met")
+	}
+	// An enemy Mutant levels the Mutant counts back out.
+	g.AddToBattleline(testCreature("theirMutant", 1, WithTraits(Mutant)), 1)
+	if c.Met(ctx) {
+		t.Error("1 vs 1 Mutants should not be met")
+	}
+}
+
 func TestOpponentHasMoreKeys(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
@@ -192,6 +221,25 @@ func TestUsedCreatureToFight(t *testing.T) {
 	want := "If you have used a creature to fight this turn, " + SelfName + " enters play ready."
 	if got := RenderAbility(a); got != want {
 		t.Errorf("RenderAbility = %q, want %q", got, want)
+	}
+}
+
+// TestUsedNoCreatures covers the inverse condition — met while the controller has
+// used no creatures this turn (Sloth).
+func TestUsedNoCreatures(t *testing.T) {
+	c := UsedNoCreatures{}
+	if got := c.CondText(); got != "if you did not use any creatures this turn" {
+		t.Errorf("CondText = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	if !c.Met(ctx) {
+		t.Error("no creature used, condition should be met")
+	}
+	g.State.TurnHistory[0][CreaturesUsedThisTurn] = 1
+	if c.Met(ctx) {
+		t.Error("after using a creature, condition should not be met")
 	}
 }
 
@@ -420,6 +468,34 @@ func TestSourceNeighborsAllOfHouseCondition(t *testing.T) {
 	g2.AddToBattleline(marsCreature("r"), 0)
 	if !c.Met(&EffectContext{Resolver: g2, Source: src2}) {
 		t.Error("Mars creature with only Mars neighbors should be met")
+	}
+}
+
+func TestSourceHasNoNeighborOfHouseCondition(t *testing.T) {
+	marsCreature := func(name string) CardDefinition {
+		return NewCard(name, Mars, Creature, Common, WithPower(2))
+	}
+
+	// A neighbor of the named house fails the condition.
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(marsCreature("left"), 0)
+	src := g.AddToBattleline(testCreature("mid", 2), 0)
+
+	c := SourceHasNoNeighborOfHouse{House: Mars}
+	if c.CondText() != "if "+SelfName+" has no Mars neighbor" {
+		t.Errorf("CondText = %q", c.CondText())
+	}
+	if c.Met(&EffectContext{Resolver: g, Source: src}) {
+		t.Error("creature with a Mars neighbor should not be met")
+	}
+
+	// No neighbor of the named house satisfies the condition.
+	g2 := NewGame("A", "B", 1)
+	g2.AddToBattleline(testCreature("l", 2), 0)
+	src2 := g2.AddToBattleline(testCreature("m", 2), 0)
+	g2.AddToBattleline(testCreature("r", 2), 0)
+	if !c.Met(&EffectContext{Resolver: g2, Source: src2}) {
+		t.Error("creature with no Mars neighbor should be met")
 	}
 }
 
@@ -826,6 +902,34 @@ func TestPoolAember(t *testing.T) {
 		t.Error("MoreThanOpponent should not hold when 3 == 3")
 	}
 
+	// Parity comparisons ignore Amount and apply to either player.
+	if (PoolAember{Player: Opponent, Is: Even}).validate() != nil ||
+		(PoolAember{Player: Controller, Is: Odd}).validate() != nil {
+		t.Error("Even/Odd should validate for either player")
+	}
+	if got := (PoolAember{Player: Opponent, Is: Even}).CondText(); got != "if your opponent has an even amount of Æmber" {
+		t.Errorf("opp even text = %q", got)
+	}
+	if got := (PoolAember{Player: Opponent, Is: Odd}).CondText(); got != "if your opponent has an odd amount of Æmber" {
+		t.Errorf("opp odd text = %q", got)
+	}
+	if got := (PoolAember{Player: Controller, Is: Even}).CondText(); got != "if you have an even amount of Æmber" {
+		t.Errorf("you even text = %q", got)
+	}
+	if got := (PoolAember{Player: Controller, Is: Odd}).CondText(); got != "if you have an odd amount of Æmber" {
+		t.Errorf("you odd text = %q", got)
+	}
+	// Both pools are 3 (odd) here.
+	if !(PoolAember{Player: Opponent, Is: Odd}).Met(ctx) ||
+		(PoolAember{Player: Opponent, Is: Even}).Met(ctx) {
+		t.Error("odd pool parity wrong")
+	}
+	g.State.Aember[1] = 2 // opponent even
+	if !(PoolAember{Player: Opponent, Is: Even}).Met(ctx) ||
+		(PoolAember{Player: Opponent, Is: Odd}).Met(ctx) {
+		t.Error("even pool parity wrong")
+	}
+
 	// Conditional surfaces an unset condition at validation time.
 	if (Conditional{Cond: PoolAember{}, Then: GainAember{Player: Controller, Amount: 1}}).validate() == nil {
 		t.Error("Conditional should surface an invalid condition")
@@ -881,6 +985,80 @@ func TestOrCondition(t *testing.T) {
 	}
 	if err := or.validate(); err != nil {
 		t.Errorf("a well-formed Or should validate: %v", err)
+	}
+}
+
+// TestAndCondition mirrors the Or test: And is met only when every sub-condition
+// holds, so it filters the global "after a creature is played" trigger down to a
+// creature you played that is also a Mutant.
+func TestAndCondition(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	mutant := NewCard("mutant", Sanctum, Creature, Common, WithPower(3), WithTraits(Mutant))
+	mine := g.AddToBattleline(mutant, 0)
+	theirs := g.AddToBattleline(
+		NewCard("theirs", Sanctum, Creature, Common, WithPower(3), WithTraits(Mutant)), 1)
+	plain := g.AddToBattleline(testCreature("plain", 3), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	friendly := ItIsFriendly{}
+	trait := ItIsOfTrait{Trait: Mutant}
+	and := And{Conditions: []Condition{friendly, trait}}
+
+	if got := and.CondText(); got != "if it is a friendly creature and it is a Mutant creature" {
+		t.Errorf("and text = %q", got)
+	}
+
+	// No creature in context: nothing is met.
+	if and.Met(ctx) {
+		t.Error("And should not be met with no context creature")
+	}
+	ctx.It, ctx.HasIt = mine, true
+	if !and.Met(ctx) {
+		t.Error("a friendly Mutant should meet the And")
+	}
+	ctx.It = theirs
+	if and.Met(ctx) {
+		t.Error("an enemy Mutant should not meet the And (not friendly)")
+	}
+	ctx.It = plain
+	if and.Met(ctx) {
+		t.Error("a friendly non-Mutant should not meet the And (no trait)")
+	}
+
+	// Validation: an And needs at least two conditions and rejects an invalid one.
+	if (And{Conditions: []Condition{trait}}).validate() == nil {
+		t.Error("an And with fewer than two conditions should be invalid")
+	}
+	if (And{Conditions: []Condition{trait, PoolAember{}}}).validate() == nil {
+		t.Error("an And with an invalid sub-condition should be invalid")
+	}
+	if err := and.validate(); err != nil {
+		t.Errorf("a well-formed And should validate: %v", err)
+	}
+}
+
+// TestItHasBonusIcon covers the text and the met check: the condition holds only
+// for a card in context that prints at least one bonus icon.
+func TestItHasBonusIcon(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	iconed := g.AddToBattleline(
+		NewCard("iconed", Logos, Creature, Common, WithPower(3), WithBonus(BonusDamage)), 0)
+	plain := g.AddToBattleline(testCreature("plain", 3), 0)
+	cond := ItHasBonusIcon{}
+	if got := cond.CondText(); got != "if it has a bonus icon" {
+		t.Errorf("text = %q", got)
+	}
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	if cond.Met(ctx) {
+		t.Error("with no card in context the condition should not be met")
+	}
+	ctx.It, ctx.HasIt = iconed, true
+	if !cond.Met(ctx) {
+		t.Error("a card with a bonus icon should meet the condition")
+	}
+	ctx.It = plain
+	if cond.Met(ctx) {
+		t.Error("a card without a bonus icon should not meet the condition")
 	}
 }
 

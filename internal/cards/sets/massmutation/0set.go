@@ -133,8 +133,10 @@ func init() {
 	set.Reprint("293", "Smiling Ruth")
 	set.Reprint("295", "The Shadow Council")
 	set.Reprint("296", "The Sting")
+	set.Reprint("304", "Commander Chan")
 	set.Reprint("307", "Explo-rover")
 	set.Reprint("310", "Red Alert")
+	set.Reprint("313", "Sensor Chief Garcia")
 	set.Reprint("323", "Lay of the Land")
 	set.Reprint("328", "Quintrino Flux")
 	set.Reprint("330", "Stunner")
@@ -176,4 +178,5 @@ func init() {
 	set.Reprint("411", "Word of Returning")
 	set.Reprint("412", "Xenos Bloodshadow")
 	set.Reprint("416", "Toad")
+	set.Reprint("431", "Save the Pack")
 }

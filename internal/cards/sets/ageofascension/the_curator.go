@@ -19,5 +19,5 @@ var TheCurator = set.New(
 	card.Provenance(card.AoA, "157"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
-	card.WithFriendlyEntersPlayReady(card.Type.Artifact),
+	card.WithFriendlyEntersPlayReady(card.EntersReadyGrant{Type: card.Type.Artifact}),
 )

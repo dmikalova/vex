@@ -176,12 +176,25 @@ func (s Set) validateClusters() {
 				),
 			)
 		}
-		if ci.strategy == RandomCount &&
-			(ci.min < 1 || ci.max < ci.min || ci.max > len(ci.members)) {
-			panic(fmt.Sprintf(
-				"deckgen: RandomCount cluster %q in set %q wants [%d,%d] of %d members",
-				name, s.Name, ci.min, ci.max, len(ci.members),
-			))
+		if ci.strategy == RandomCount {
+			// A ByLead RandomCount cluster plants its lead and places a count of the
+			// other members, so the placeable pool is the non-lead members (Dark
+			// Harbinger pulls its Mutations). A ByAnyMember one has no lead, so every
+			// member is placeable (the sins).
+			placeable := len(ci.members)
+			if ci.lead != "" {
+				placeable--
+			}
+			if ci.min < 1 || ci.max < ci.min || ci.max > placeable {
+				panic(fmt.Sprintf(
+					"deckgen: RandomCount cluster %q in set %q wants [%d,%d] of %d placeable members",
+					name,
+					s.Name,
+					ci.min,
+					ci.max,
+					placeable,
+				))
+			}
 		}
 		if ci.strategy == SelfPull &&
 			(len(ci.members) != 1 || ci.min < 1 || ci.mean < float64(ci.min) ||

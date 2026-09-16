@@ -92,6 +92,27 @@ func (RevealRandomFromHand) Resolve(ctx *EffectContext) {
 	ctx.HasIt = true
 }
 
+// RevealChosenFromHand reveals one card the controller chooses from their hand to
+// both players and puts it in context (ctx.It) for a following effect to act on —
+// Ensign El-Samra reveals a card and resolves the bonus icons on it. An empty hand
+// reveals nothing and leaves no card in context.
+type RevealChosenFromHand struct{}
+
+// Text renders the effect.
+func (RevealChosenFromHand) Text() string { return "reveal a card from your hand" }
+
+// Resolve has the controller reveal a chosen card from their hand and puts it in
+// context.
+func (RevealChosenFromHand) Resolve(ctx *EffectContext) {
+	hand := ctx.Resolver.Hand(ctx.Controller)
+	if len(hand) == 0 {
+		return
+	}
+	chosen, _ := ctx.ChooseCard("Choose a card to reveal", hand)
+	ctx.Resolver.Record(CardsRevealedToAll{Player: ctx.Controller, Cards: []LocalID{chosen}})
+	ctx.It, ctx.HasIt = chosen, true
+}
+
 // CardsRevealed counts the cards the most recent Reveal showed — the "for each
 // card revealed this way" clause. Reveal records the tally on the context, so
 // pairing it after a Reveal lets an effect scale with the reveal.

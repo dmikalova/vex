@@ -17,8 +17,8 @@ var MiasmaBomb = set.New(
 	card.Type.Artifact,
 	card.Rarity.Uncommon,
 	card.Provenance(card.MM, "269"),
-	card.WithTraits(card.Traits.Weapon),
 	card.WithEnhance(card.Bonus.Damage),
+	card.WithTraits(card.Traits.Weapon),
 	card.WithAbility(
 		card.Trigger.Action, card.Then{
 			First:  card.Destroy{Target: card.Target.This},

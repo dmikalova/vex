@@ -166,6 +166,10 @@ func TestSearchDeck(t *testing.T) {
 		"search your deck for a Saurian card, reveal it, and put it into your hand" {
 		t.Errorf("house text = %q", got)
 	}
+	if got := (SearchDeck{Filter: CardFilter{Type: Upgrade}}).Text(); got !=
+		"search your deck for an upgrade, reveal it, and put it into your hand" {
+		t.Errorf("filter text = %q", got)
+	}
 
 	// House-restricted: only the Saurian card is eligible; it is revealed and put
 	// into hand.
@@ -185,6 +189,25 @@ func TestSearchDeck(t *testing.T) {
 	}
 	if g.State.Hand[0].contains(other) || !g.State.Deck[0].contains(other) {
 		t.Error("the non-Saurian card should stay in the deck")
+	}
+
+	// Filter-restricted: only the upgrade is eligible; it is revealed and taken.
+	gf := NewGame("A", "B", 1)
+	sf := gf.AddToBattleline(testCreature("host", 4), 0)
+	upgrade := gf.Register(NewCard("gizmo", Logos, Upgrade, Common), 0)
+	creature := gf.Register(NewCard("body", Logos, Creature, Common, WithPower(2)), 0)
+	gf.State.Deck[0].add(upgrade)
+	gf.State.Deck[0].add(creature)
+	SearchDeck{
+		Filter: CardFilter{Type: Upgrade},
+	}.Resolve(
+		&EffectContext{Resolver: gf, Source: sf, Controller: 0},
+	)
+	if !gf.State.Hand[0].contains(upgrade) {
+		t.Error("the upgrade should be in hand")
+	}
+	if gf.State.Hand[0].contains(creature) || !gf.State.Deck[0].contains(creature) {
+		t.Error("the non-upgrade card should stay in the deck")
 	}
 
 	// Unrestricted: the sole deck card is taken.

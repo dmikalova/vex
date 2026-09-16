@@ -110,6 +110,12 @@ const (
 	// fighter — Smite makes a friendly creature fight, then damages the fought
 	// creature's neighbors, so the fight is not the source's own.
 	TargetTheFoughtCreature
+	// TargetTheSameCreature selects the triggering creature (ctx.It) like
+	// TargetTriggeringCreature but renders it as "the same creature" — used when the
+	// trigger clause names no creature to be an antecedent for "it", as with the
+	// bonus-icon triggers where Maleficorn deals damage to the creature that just
+	// resolved a Damage bonus icon.
+	TargetTheSameCreature
 	// TargetAttachedHost selects the creature the resolving upgrade (ctx.Upgrade)
 	// is attached to — the exact instance a blaster bound to when AttachSelfTo
 	// homed it, identified by LocalID rather than by name. Its payoff acts on that
@@ -177,6 +183,10 @@ type Target struct {
 	// rendering " with no Æmber on it" (Draining Touch destroys a creature with no
 	// Æmber on it).
 	withoutAember bool
+	// withoutBonusIcons narrows the target to cards printing no bonus icons,
+	// rendering " with no bonus icons" (Wail of the Damned destroys a creature with
+	// no bonus icons).
+	withoutBonusIcons bool
 	// withCounter narrows the target to cards carrying a generic counter of this
 	// kind, rendering " with a doom counter" and the like (Wretched Doll destroys
 	// every creature with a doom counter). CounterNone leaves the filter off.
@@ -349,6 +359,14 @@ func (t Target) WithAember() Target {
 // rendering " with no Æmber on it", e.g. "a creature with no Æmber on it".
 func (t Target) WithoutAember() Target {
 	t.withoutAember = true
+	return t
+}
+
+// WithoutBonusIcons narrows the target to cards that print no bonus icons,
+// rendering " with no bonus icons", e.g. "a creature with no bonus icons"
+// (Wail of the Damned).
+func (t Target) WithoutBonusIcons() Target {
+	t.withoutBonusIcons = true
 	return t
 }
 
@@ -525,6 +543,8 @@ func (t Target) Text() string {
 		return "the creature " + SelfName + " fought"
 	case TargetTheOtherCreature:
 		return "the other creature"
+	case TargetTheSameCreature:
+		return "the same creature"
 	case TargetTheChosenCreature:
 		return "the chosen creature"
 	case TargetAttachedHost:
@@ -679,6 +699,9 @@ func (t Target) Text() string {
 	}
 	if t.withoutAember {
 		phrase += " with no \u00c6mber on it"
+	}
+	if t.withoutBonusIcons {
+		phrase += " with no bonus icons"
 	}
 	if t.withCounter.valid() {
 		phrase += " with a " + t.withCounter.noun()

@@ -39,6 +39,44 @@ func TestBonusDamageDeclineDoesNothing(t *testing.T) {
 	}
 }
 
+// A card carrying the BonusIcons restriction bars the relative player from
+// resolving icons (Master of the Grey).
+func TestCannotResolveBonusIconsQuery(t *testing.T) {
+	cases := []struct {
+		scope            Player
+		barred0, barred1 bool
+	}{
+		{Controller, false, true}, // the bar's own controller (side 1) is barred
+		{Opponent, true, false},
+		{EachPlayer, true, true},
+	}
+	for _, c := range cases {
+		g := started(t)
+		g.AddToBattleline(NewCard("Grey", Sanctum, Creature, Rare, WithPower(4),
+			WithRestrictions(Restrictions{BonusIcons: c.scope})), 1)
+		if got := g.cannotResolveBonusIcons(0); got != c.barred0 {
+			t.Errorf("%v: player 0 barred = %v, want %v", c.scope, got, c.barred0)
+		}
+		if got := g.cannotResolveBonusIcons(1); got != c.barred1 {
+			t.Errorf("%v: player 1 barred = %v, want %v", c.scope, got, c.barred1)
+		}
+	}
+}
+
+// A barred player's played card resolves none of its icons.
+func TestBonusIconsBarredSkipsResolution(t *testing.T) {
+	g := started(t)
+	g.AddToBattleline(NewCard("Grey", Sanctum, Creature, Rare, WithPower(4),
+		WithRestrictions(Restrictions{BonusIcons: Opponent})), 1)
+	src := g.AddToBattleline(
+		NewCard("Bearer", Brobnar, Creature, Common, WithPower(3), WithBonus(BonusAember)), 0)
+	before := g.State.Aember[0]
+	g.resolveBonusIcons(0, src)
+	if g.State.Aember[0] != before {
+		t.Fatalf("barred player gained aember: before=%d after=%d", before, g.State.Aember[0])
+	}
+}
+
 func TestBonusCaptureMovesAember(t *testing.T) {
 	g := started(t)
 	src := g.AddToBattleline(
@@ -191,6 +229,119 @@ func TestNewCardRejectsUnsetBonus(t *testing.T) {
 		}
 	}()
 	NewCard("Bad", Brobnar, Tactic, Common, WithBonus(bonusUnset))
+}
+
+// An optional bonus-icon substitution lets its controller resolve an icon as a
+// different icon — Amphora Captura may turn any icon into a capture.
+func TestBonusInsteadAsIconSwap(t *testing.T) {
+	g := started(t)
+	g.AddArtifact(NewCard("Amphora", Saurian, Artifact, Rare,
+		WithBonusInstead(BonusInstead{May: true, As: BonusCapture})), 0)
+	src := g.AddToBattleline(
+		NewCard("Coin", Brobnar, Creature, Common, WithPower(3), WithBonus(BonusAember)), 0)
+	g.State.Aember[1] = 2
+	g.SetChooser(0, &idQueueChooser{ids: []LocalID{src}}) // Yes (default), then capture on src
+	g.resolveBonusIcons(0, src)
+	if g.State.Aember[0] != 0 {
+		t.Fatalf("pool = %d, want 0 (captured, not gained)", g.State.Aember[0])
+	}
+	if amt := g.AmberOn(src); amt != 1 {
+		t.Fatalf("captured Æmber = %d, want 1", amt)
+	}
+}
+
+// A mandatory substitution applies a concrete effect with no prompt — Scrivener
+// Favian always steals 1 instead of a Capture bonus icon.
+func TestBonusInsteadAsEffect(t *testing.T) {
+	g := started(t)
+	g.AddToBattleline(NewCard("Scrivener", Sanctum, Creature, Uncommon, WithPower(3),
+		WithBonusInstead(BonusInstead{From: BonusCapture, Instead: StealAember{Amount: 1}})), 0)
+	src := g.AddToBattleline(
+		NewCard("Captor", Sanctum, Creature, Common, WithPower(3), WithBonus(BonusCapture)), 0)
+	g.State.Aember[1] = 2
+	// Mandatory: no prompt is offered, so any option prompt panics the test.
+	g.SetChooser(0, panicOnOptionChooser{})
+	g.resolveBonusIcons(0, src)
+	if g.State.Aember[0] != 1 {
+		t.Fatalf("pool = %d, want 1 (stolen)", g.State.Aember[0])
+	}
+	if g.State.Aember[1] != 1 {
+		t.Fatalf("opponent pool = %d, want 1", g.State.Aember[1])
+	}
+}
+
+// Declining an optional substitution resolves the icon normally.
+func TestBonusInsteadDeclined(t *testing.T) {
+	g := started(t)
+	g.AddArtifact(NewCard(
+		"Amphora",
+		Saurian,
+		Artifact,
+		Rare,
+		WithBonusInstead(
+			BonusInstead{May: true, From: BonusCapture, Instead: StealAember{Amount: 1}},
+		),
+	), 0)
+	src := g.AddToBattleline(
+		NewCard("Captor", Sanctum, Creature, Common, WithPower(3), WithBonus(BonusCapture)), 0)
+	g.State.Aember[1] = 2
+	g.SetChooser(0, declineOptionChooser{}) // No: capture normally
+	g.resolveBonusIcons(0, src)
+	if amt := g.AmberOn(src); amt != 1 {
+		t.Fatalf("captured Æmber = %d, want 1 (normal capture)", amt)
+	}
+	if g.State.Aember[0] != 0 {
+		t.Fatalf("pool = %d, want 0 (not stolen)", g.State.Aember[0])
+	}
+}
+
+// A swap substitution chains into a second card's: Amphora Captura turns an Æmber
+// icon into a Capture, then Scrivener Favian catches that Capture and steals
+// instead. The steal is a concrete effect, so the chain stops there.
+func TestBonusInsteadChainsAcrossCards(t *testing.T) {
+	g := started(t)
+	g.AddArtifact(NewCard("Amphora", Saurian, Artifact, Rare,
+		WithBonusInstead(BonusInstead{May: true, As: BonusCapture})), 0)
+	g.AddToBattleline(NewCard("Scrivener", Sanctum, Creature, Uncommon, WithPower(3),
+		WithBonusInstead(BonusInstead{From: BonusCapture, Instead: StealAember{Amount: 1}})), 0)
+	src := g.AddToBattleline(
+		NewCard("Coin", Brobnar, Creature, Common, WithPower(3), WithBonus(BonusAember)), 0)
+	g.State.Aember[1] = 2
+	g.resolveBonusIcons(0, src) // Yes to Amphora (→ Capture), Scrivener always steals
+	if g.State.Aember[0] != 1 {
+		t.Fatalf("pool = %d, want 1 (stolen after the chain)", g.State.Aember[0])
+	}
+	if g.State.Aember[1] != 1 {
+		t.Fatalf("opponent pool = %d, want 1 (1 stolen)", g.State.Aember[1])
+	}
+}
+
+// A swap to the same icon is vacuous and never offered: Amphora Captura does not
+// ask to resolve a Capture icon as a Capture icon, so a lone Amphora over a Capture
+// icon just captures.
+func TestBonusInsteadVacuousSwapNotOffered(t *testing.T) {
+	g := started(t)
+	g.AddArtifact(NewCard("Amphora", Saurian, Artifact, Rare,
+		WithBonusInstead(BonusInstead{May: true, As: BonusCapture})), 0)
+	src := g.AddToBattleline(
+		NewCard("Captor", Sanctum, Creature, Common, WithPower(3), WithBonus(BonusCapture)), 0)
+	g.State.Aember[1] = 2
+	// A vacuous substitution must never be offered, so any option prompt panics the test.
+	g.SetChooser(0, panicOnOptionChooser{})
+	g.resolveBonusIcons(0, src)
+	if amt := g.AmberOn(src); amt != 1 {
+		t.Fatalf("captured Æmber = %d, want 1 (no vacuous substitution, normal capture)", amt)
+	}
+}
+
+func TestNewCardRejectsBonusInsteadBothSet(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Fatal("expected panic on BonusInstead with both As and Instead")
+		}
+	}()
+	NewCard("Bad", Brobnar, Artifact, Common,
+		WithBonusInstead(BonusInstead{As: BonusCapture, Instead: StealAember{Amount: 1}}))
 }
 
 func TestNewCardRejectsUnsetEnhance(t *testing.T) {

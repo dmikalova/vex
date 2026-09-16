@@ -18,6 +18,7 @@ var CornicenOctavia = set.New(
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.MM, "188"),
+	card.InCluster(card.Pulled(monumentToOctaviaCluster, 1, 1)),
 	card.WithPower(5),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Soldier),

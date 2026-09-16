@@ -18,6 +18,16 @@ type ForgeKey struct {
 	// ReducedBy subtracts a running count from Extra, never below the current key
 	// cost — Key Abduction's +9 comes down by 1 for each card in hand.
 	ReducedBy Count
+	// Discount switches ReducedBy from trimming the Extra surcharge to discounting
+	// the current key cost itself, so the forge can land below the current cost (down
+	// to 0) — Desire reaps to forge at current cost reduced by 1 for each friendly Sin
+	// creature. It reads with no "+N" surcharge and floors the whole cost at 0.
+	Discount bool
+	// Keep leaves the source card in play instead of purging it on a successful
+	// forge. The self-purge is an anti-regrowth measure for key cheats that could
+	// loop a body back to forge again; a repeatable reap engine (Desire) is not such
+	// a loop, so it keeps its body (see docs/keyforge-divergences.md).
+	Keep bool
 	// Or switches Extra to an alternate surcharge when a condition holds, so the card
 	// reads "forge a key at +6 Æmber current cost, or +2 if …" instead of a two-armed
 	// Otherwise branch (rule 22).
@@ -26,8 +36,16 @@ type ForgeKey struct {
 
 // validate rejects a reduction with nothing to reduce.
 func (e ForgeKey) validate() error {
-	if e.ReducedBy != nil && e.Extra == 0 {
+	if e.ReducedBy != nil && e.Extra == 0 && !e.Discount {
 		return fmt.Errorf("ForgeKey: ReducedBy needs an Extra cost to reduce")
+	}
+	if e.Discount && e.ReducedBy == nil {
+		return fmt.Errorf("ForgeKey: Discount needs a ReducedBy count")
+	}
+	if e.Discount && e.Extra != 0 {
+		return fmt.Errorf(
+			"ForgeKey: a Discount forge reduces the current cost, so it carries no Extra",
+		)
 	}
 	if e.FreeOfCost && e.Extra != 0 {
 		return fmt.Errorf("ForgeKey: a free forge cannot also cost Extra")
@@ -39,12 +57,17 @@ func (e ForgeKey) validate() error {
 }
 
 // Text renders the effect. The forge gates a self-purge: the card that made it is
-// spent only if a key is actually forged.
+// spent only if a key is actually forged, unless Keep leaves it in play.
 func (e ForgeKey) Text() string {
 	var body string
 	switch {
 	case e.FreeOfCost:
 		body = "forge a key at no cost"
+	case e.Discount:
+		body = fmt.Sprintf(
+			"forge a key at current cost, reduced by 1 Æmber for each %s",
+			e.ReducedBy.CountText(),
+		)
 	case e.ReducedBy != nil:
 		body = fmt.Sprintf(
 			"forge a key at +%d Æmber current cost, reduced by 1 Æmber for each %s",
@@ -58,11 +81,14 @@ func (e ForgeKey) Text() string {
 	if e.Or.set() {
 		body += e.Or.tail(fmt.Sprintf("+%d", e.Or.Amount))
 	}
+	if e.Keep {
+		return body
+	}
 	return body + " -> purge " + SelfName
 }
 
 // Resolve forges one key for the controller if affordable, then purges the source
-// card when a key was actually forged.
+// card when a key was actually forged (unless Keep leaves it in play).
 func (e ForgeKey) Resolve(ctx *EffectContext) {
 	var forged bool
 	if e.FreeOfCost {
@@ -75,9 +101,15 @@ func (e ForgeKey) Resolve(ctx *EffectContext) {
 		if e.ReducedBy != nil {
 			extra -= e.ReducedBy.Value(ctx)
 		}
-		forged = ctx.Resolver.ForgeKeyAtExtraCost(ctx.Controller, max(extra, 0))
+		// A Discount reduces the current cost itself, so its surcharge may go
+		// negative; forgeKeyAtExtraCost floors the whole cost at 0. A surcharge
+		// reduction (Key Abduction) instead floors at the current cost here.
+		if !e.Discount {
+			extra = max(extra, 0)
+		}
+		forged = ctx.Resolver.ForgeKeyAtExtraCost(ctx.Controller, extra)
 	}
-	if forged {
+	if forged && !e.Keep {
 		PurgeSource{}.Resolve(ctx)
 	}
 }
@@ -149,6 +181,66 @@ func (e RaiseKeyCost) Resolve(ctx *EffectContext) {
 		ctx.Resolver.RaiseKeyCostThisTurn(p, e.Amount, ctx.Source)
 		ctx.Resolver.RaiseKeyCostNextTurn(p, e.Amount, ctx.Source)
 	}
+}
+
+// RaiseKeyCostPerHouseCreature raises a player's key cost by Amount for each
+// creature of House in play, measured live while the surcharge is active — Waking
+// Nightmare taxes the opponent +1 per Dis creature during their next turn. Unlike
+// RaiseKeyCost's fixed bump, the surcharge is recomputed at each forge, so a Dis
+// creature entering or leaving during the taxed turn changes what a key costs.
+//
+// It only arms the next-turn window (OpponentNextTurn); a counted surcharge for
+// the current turn has no card to want it yet.
+type RaiseKeyCostPerHouseCreature struct {
+	Player   Player
+	Amount   int
+	House    House
+	Duration Duration
+}
+
+// validate requires a player, a positive raise, a house, and the OpponentNextTurn
+// window (the only counted surcharge window any card wants).
+func (e RaiseKeyCostPerHouseCreature) validate() error {
+	if !e.Player.valid() {
+		return errUnsetPlayer("RaiseKeyCostPerHouseCreature")
+	}
+	if e.Amount <= 0 {
+		return fmt.Errorf("RaiseKeyCostPerHouseCreature: Amount must be positive")
+	}
+	if e.House == HouseNone {
+		return fmt.Errorf("RaiseKeyCostPerHouseCreature: House must be set")
+	}
+	switch e.Duration {
+	case OpponentNextTurn:
+		return nil
+	case durationUnset:
+		return errUnsetDuration("RaiseKeyCostPerHouseCreature")
+	default:
+		return fmt.Errorf(
+			"RaiseKeyCostPerHouseCreature: Duration %v is not supported; "+
+				"a counted surcharge only arms OpponentNextTurn",
+			e.Duration,
+		)
+	}
+}
+
+// Text renders the effect, e.g. "keys cost +1 Æmber for each Dis creature in play
+// during your opponent's next turn".
+func (e RaiseKeyCostPerHouseCreature) Text() string {
+	whose := "your"
+	if e.Player == Opponent {
+		whose = "your opponent's"
+	}
+	return fmt.Sprintf(
+		"keys cost +%d Æmber for each %s creature in play during %s next turn",
+		e.Amount, e.House, whose,
+	)
+}
+
+// Resolve arms the counted surcharge on the named player for their next turn.
+func (e RaiseKeyCostPerHouseCreature) Resolve(ctx *EffectContext) {
+	p := ctx.PlayerFor(e.Player)
+	ctx.Resolver.RaiseKeyCostPerHouseNextTurn(p, e.Amount, e.House, ctx.Source)
 }
 
 // LowerKeyCost makes a player's keys cost Amount less Æmber for the Duration —

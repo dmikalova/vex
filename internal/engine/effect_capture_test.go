@@ -79,6 +79,40 @@ func TestMoveAemberToSupplyEffect(t *testing.T) {
 	}
 }
 
+func TestMoveAemberToSupplyGate(t *testing.T) {
+	// Bind leaves the moved-from creature in context and reports whether Æmber
+	// moved, so a Then wards it only when it held Æmber.
+	g := NewGame("A", "B", 1)
+	held := g.AddToBattleline(testCreature("held", 4), 0)
+	g.AddAmberOn(held, 2)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	e := MoveAemberToSupply{Amount: 1, Target: Target{Kind: TargetThisCreature}, Bind: true}
+	if moved := e.resolveGate(ctx); !moved {
+		t.Error("moving 1 of 2 Æmber should report progress")
+	}
+	if !ctx.HasIt || ctx.It != held {
+		t.Errorf("ctx.It = %v (HasIt %v), want %v bound", ctx.It, ctx.HasIt, held)
+	}
+	if got := g.AmberOn(held); got != 1 {
+		t.Errorf("after gated move = %d, want 1", got)
+	}
+
+	// A creature holding no Æmber moves none: the gate reports no progress but still
+	// binds the chosen creature.
+	g2 := NewGame("A", "B", 1)
+	bare := g2.AddToBattleline(testCreature("bare", 4), 0)
+	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
+	if moved := (MoveAemberToSupply{Amount: 1, Target: Target{Kind: TargetThisCreature}, Bind: true}).
+		resolveGate(
+			ctx2,
+		); moved {
+		t.Error("moving from an empty creature should report no progress")
+	}
+	if !ctx2.HasIt || ctx2.It != bare {
+		t.Errorf("ctx.It = %v (HasIt %v), want %v bound", ctx2.It, ctx2.HasIt, bare)
+	}
+}
+
 func TestCaptureAllAember(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	src := g.AddToBattleline(testCreature("drumble", 2), 0)
@@ -466,6 +500,66 @@ func TestCaptureFromAnyPlayer(t *testing.T) {
 			Resolve(&EffectContext{Resolver: g, Source: src, Controller: 0})
 		if got := g.AmberOn(src); got != 0 {
 			t.Errorf("captured = %d, want 0", got)
+		}
+	})
+}
+
+// TestDistributeCapture covers Bring Low's capture: the controller captures all
+// but five of the opponent's Æmber one at a time, choosing a friendly creature
+// each time, and the loop stops when no friendly creature remains.
+func TestDistributeCapture(t *testing.T) {
+	e := DistributeCapture{By: AllBut(5), Source: Opponent}
+	const want = "capture all but 5 Æmber from your opponent, " +
+		"distributed among any number of friendly creatures"
+	if got := e.Text(); got != want {
+		t.Errorf("text = %q, want %q", got, want)
+	}
+	const wantSelf = "capture all but 5 Æmber from you, " +
+		"distributed among any number of friendly creatures"
+	if got := (DistributeCapture{By: AllBut(5), Source: Controller}).Text(); got != wantSelf {
+		t.Errorf("self-source text = %q, want %q", got, wantSelf)
+	}
+	if err := (DistributeCapture{Source: Opponent}).validate(); err == nil {
+		t.Error("a missing By should be rejected")
+	}
+	if err := (DistributeCapture{By: AllBut(5)}).validate(); err == nil {
+		t.Error("a missing Source should be rejected")
+	}
+	if err := e.validate(); err != nil {
+		t.Errorf("valid effect rejected: %v", err)
+	}
+
+	t.Run("distributes onto chosen creatures", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		a := g.AddToBattleline(testCreature("a", 4), 0)
+		b := g.AddToBattleline(testCreature("b", 4), 0)
+		g.SetAember(1, 8) // all but 5 -> 3 captured
+		g.SetChooser(0, &idQueueChooser{ids: []LocalID{a, a, b}})
+		e.Resolve(&EffectContext{Resolver: g, Source: a, Controller: 0})
+		if g.Aember(1) != 5 {
+			t.Errorf("opponent pool = %d, want 5", g.Aember(1))
+		}
+		if g.AmberOn(a) != 2 || g.AmberOn(b) != 1 {
+			t.Errorf("captured a/b = %d/%d, want 2/1", g.AmberOn(a), g.AmberOn(b))
+		}
+	})
+
+	t.Run("captures nothing without a friendly creature", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.SetAember(1, 8)
+		e.Resolve(&EffectContext{Resolver: g, Source: 0, Controller: 0})
+		if g.Aember(1) != 8 {
+			t.Errorf("opponent pool = %d, want 8", g.Aember(1))
+		}
+	})
+
+	t.Run("captures nothing when the pool is at the remainder", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		a := g.AddToBattleline(testCreature("a", 4), 0)
+		g.SetAember(1, 5)
+		e.Resolve(&EffectContext{Resolver: g, Source: a, Controller: 0})
+		if g.Aember(1) != 5 || g.AmberOn(a) != 0 {
+			t.Errorf("pool/on = %d/%d, want 5/0", g.Aember(1), g.AmberOn(a))
 		}
 	})
 }

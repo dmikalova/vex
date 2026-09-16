@@ -68,6 +68,10 @@ type (
 	// AttackKeywords are keywords a creature gains while attacking (Spyyyder's
 	// poison against a flank creature); pass it to card.WithAttackKeywords.
 	AttackKeywords = engine.AttackKeywords
+	// EntersReadyGrant makes friendly cards of a type enter play ready while a card
+	// is in play, optionally gated on your Æmber pool and withholding one house
+	// (Fandangle); pass it to card.WithFriendlyEntersPlayReady.
+	EntersReadyGrant = engine.EntersReadyGrant
 )
 
 // TollOn groups the actions a Toll can charge for, e.g. card.TollOn.PlayArtifact.

@@ -18,8 +18,8 @@ var GeneralXalvador = set.New(
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.MM, "135"),
+	card.WithEnhance(card.Bonus.Capture, card.Bonus.Capture),
 	card.WithPower(4),
 	card.WithArmor(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),
-	card.WithEnhance(card.Bonus.Capture, card.Bonus.Capture),
 )

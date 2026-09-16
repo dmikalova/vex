@@ -606,6 +606,23 @@ func TestRevealTopOfDeckRouting(t *testing.T) {
 		}
 	})
 
+	t.Run("a fixed opponent's deck reveals without a choice", func(t *testing.T) {
+		// Vandalize fixes Player to the opponent, so the reveal digs the opponent's
+		// deck with no "whose deck" prompt.
+		if got := (RevealTopOfDeck{Amount: 1, Player: Opponent}).Text(); got !=
+			"reveal the top card of your opponent's deck" {
+			t.Errorf("opponent text = %q", got)
+		}
+		g := NewGame("A", "B", 1)
+		oppTop := g.AddToDeck(NewCard("OppTop", Logos, Creature, Common), 1)
+		RevealTopOfDeck{Amount: 1, Player: Opponent, Then: []TopAct{
+			ChooseAndMove{Count: 1, Dest: IntoDiscard},
+		}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if disc := g.Discard(1); len(disc) != 1 || disc[0] != oppTop {
+			t.Errorf("opponent discard = %v, want [%d]", disc, oppTop)
+		}
+	})
+
 	t.Run("validate", func(t *testing.T) {
 		if (RevealTopOfDeck{}).validate() == nil {
 			t.Error("an Amount of 0 should be rejected")
@@ -704,6 +721,70 @@ func TestRevealTopOfDeckRouting(t *testing.T) {
 	})
 }
 
+// TestPartitionByChosenHouse covers the reveal-and-split step New Frontiers uses:
+// the clause it renders for every routing destination, the validation that rejects
+// a bad destination on either side, and a resolve that sends the chosen house's
+// cards one way and the rest the other.
+func TestPartitionByChosenHouse(t *testing.T) {
+	t.Run("clause", func(t *testing.T) {
+		step := PartitionByChosenHouse{Matching: IntoArchives, Rest: IntoDiscard}
+		want := "archive each card of the chosen house and discard the others"
+		if got := step.clause(); got != want {
+			t.Errorf("clause = %q, want %q", got, want)
+		}
+		// Every routing verb renders through DeckDest.act.
+		if got := IntoPurge.act("x"); got != "purge x" {
+			t.Errorf("purge act = %q", got)
+		}
+		if got := IntoHand.act("x"); got != "put x into your hand" {
+			t.Errorf("hand act = %q", got)
+		}
+		if got := IntoBottomOfDeck.act("x"); got != "put x on the bottom of your deck" {
+			t.Errorf("bottom act = %q", got)
+		}
+	})
+
+	t.Run("validate", func(t *testing.T) {
+		good := PartitionByChosenHouse{Matching: IntoArchives, Rest: IntoDiscard}
+		if err := good.validate(); err != nil {
+			t.Errorf("validate() = %v", err)
+		}
+		if !good.terminal() {
+			t.Error("a partition consumes every read card, so it is terminal")
+		}
+		badMatch := PartitionByChosenHouse{Matching: DeckDest(-1), Rest: IntoDiscard}
+		if badMatch.validate() == nil {
+			t.Error("a bad Matching destination should be rejected")
+		}
+		badRest := PartitionByChosenHouse{Matching: IntoArchives, Rest: DeckDest(-1)}
+		if badRest.validate() == nil {
+			t.Error("a bad Rest destination should be rejected")
+		}
+	})
+
+	t.Run("archives the chosen house and discards the rest", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		hit1 := g.AddToDeck(NewCard("Hit1", Logos, Creature, Common), 0)
+		miss := g.AddToDeck(NewCard("Miss", Brobnar, Creature, Common), 0)
+		hit2 := g.AddToDeck(NewCard("Hit2", Logos, Creature, Common), 0)
+		ctx := &EffectContext{Resolver: g, Controller: 0, ChosenHouse: Logos}
+		RevealTopOfDeck{Amount: 3, Then: []TopAct{
+			PartitionByChosenHouse{Matching: IntoArchives, Rest: IntoDiscard},
+		}}.Resolve(ctx)
+
+		if arch := g.Archives(0); len(arch) != 2 ||
+			!containsID(arch, hit1) || !containsID(arch, hit2) {
+			t.Errorf("archives = %v, want [%d %d]", arch, hit1, hit2)
+		}
+		if disc := g.Discard(0); len(disc) != 1 || disc[0] != miss {
+			t.Errorf("discard = %v, want [%d]", disc, miss)
+		}
+		if len(g.Deck(0)) != 0 {
+			t.Errorf("deck = %v, want empty", g.Deck(0))
+		}
+	})
+}
+
 // TestLookAtTopOfDeck covers the peek-and-route node: a pure peek that puts the
 // looked-at cards back untouched, the routing steps that draw, archive, and discard
 // them, a closing reorder, short and empty decks, declined choices, and the
@@ -715,7 +796,7 @@ func TestLookAtTopOfDeck(t *testing.T) {
 			t.Errorf("peek Text() = %q", got)
 		}
 		if got := (LookAtTopOfDeck{Amount: 1}).Text(); got !=
-			"look at the top 1 card of your deck" {
+			"look at the top card of your deck" {
 			t.Errorf("singular Text() = %q", got)
 		}
 		eyegor := LookAtTopOfDeck{Amount: 3, Then: []TopAct{
@@ -738,6 +819,15 @@ func TestLookAtTopOfDeck(t *testing.T) {
 		if got := reorder.Text(); got !=
 			"look at the top 3 cards of your deck and put them back in any order" {
 			t.Errorf("reorder Text() = %q", got)
+		}
+		alien := LookAtTopOfDeck{Amount: 3, Then: []TopAct{
+			ChooseAndMove{Count: 1, Dest: IntoHand},
+			ChooseAndMove{Count: 1, Dest: IntoBottomOfDeck},
+		}}
+		if got := alien.Text(); got !=
+			"look at the top 3 cards of your deck, put 1 into your hand, "+
+				"and put 1 on the bottom of your deck" {
+			t.Errorf("Alien Text() = %q", got)
 		}
 	})
 
@@ -829,6 +919,25 @@ func TestLookAtTopOfDeck(t *testing.T) {
 		}
 	})
 
+	t.Run("puts one into hand and one on the bottom", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		a := g.AddToDeck(NewCard("A Card", Logos, Creature, Common, WithPower(2)), 0)
+		b := g.AddToDeck(NewCard("B Card", Logos, Tactic, Common), 0)
+		c := g.AddToDeck(NewCard("C Card", Logos, Artifact, Common), 0)
+		bottom := g.AddToDeck(NewCard("Bottom", Logos, Creature, Common, WithPower(1)), 0)
+		g.SetChooser(0, &idQueueChooser{ids: []LocalID{b, a}})
+		LookAtTopOfDeck{Amount: 3, Then: []TopAct{
+			ChooseAndMove{Count: 1, Dest: IntoHand},
+			ChooseAndMove{Count: 1, Dest: IntoBottomOfDeck},
+		}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if got := g.Hand(0); len(got) != 1 || got[0] != b {
+			t.Errorf("hand = %v, want [%d]", got, b)
+		}
+		if got := g.Deck(0); len(got) != 3 || got[0] != c || got[1] != bottom || got[2] != a {
+			t.Errorf("deck = %v, want [%d %d %d]", got, c, bottom, a)
+		}
+	})
+
 	t.Run("routes as many as remain", func(t *testing.T) {
 		g := NewGame("A", "B", 1)
 		a := g.AddToDeck(NewCard("A Card", Logos, Creature, Common, WithPower(2)), 0)
@@ -911,6 +1020,73 @@ func TestLookAtTopOfDeck(t *testing.T) {
 	})
 }
 
+// TestMayDiscardLookedAt covers Scout Pete's optional discard of the single
+// looked-at card: its step metadata, discarding the read card when accepted,
+// keeping it when declined, and the empty-deck guard that offers nothing.
+func TestMayDiscardLookedAt(t *testing.T) {
+	act := MayDiscardLookedAt{}
+	if got := act.clause(); got != "you may discard that card" {
+		t.Errorf("clause = %q", got)
+	}
+	if err := act.validate(); err != nil {
+		t.Errorf("validate = %v, want nil", err)
+	}
+	if act.terminal() {
+		t.Error("terminal should be false")
+	}
+
+	t.Run("accepted discards the looked-at card", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		top := g.AddToDeck(NewCard("Top", Logos, Creature, Common, WithPower(2)), 0)
+		LookAtTopOfDeck{Amount: 1, Then: []TopAct{MayDiscardLookedAt{}}}.
+			Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if got := g.Discard(0); len(got) != 1 || got[0] != top {
+			t.Errorf("discard = %v, want [%d]", got, top)
+		}
+		if got := g.Deck(0); len(got) != 0 {
+			t.Errorf("deck = %v, want empty", got)
+		}
+	})
+
+	t.Run("declined keeps the card on top", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		top := g.AddToDeck(NewCard("Top", Logos, Creature, Common, WithPower(2)), 0)
+		g.SetChooser(0, optionPicker{idx: 1}) // pick the "done" option, declining
+		LookAtTopOfDeck{Amount: 1, Then: []TopAct{MayDiscardLookedAt{}}}.
+			Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if got := g.Discard(0); len(got) != 0 {
+			t.Errorf("discard = %v, want empty", got)
+		}
+		if got := g.Deck(0); len(got) != 1 || got[0] != top {
+			t.Errorf("deck = %v, want [%d]", got, top)
+		}
+	})
+
+	t.Run("an empty deck offers nothing", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		LookAtTopOfDeck{Amount: 1, Then: []TopAct{MayDiscardLookedAt{}}}.
+			Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if got := g.Discard(0); len(got) != 0 {
+			t.Errorf("discard = %v, want empty", got)
+		}
+	})
+
+	t.Run("a preceding step that empties the read leaves nothing to discard", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		top := g.AddToDeck(NewCard("Top", Logos, Creature, Common, WithPower(2)), 0)
+		// The move consumes the only read card, so MayDiscardLookedAt sees an empty
+		// run and offers nothing.
+		LookAtTopOfDeck{Amount: 1, Then: []TopAct{
+			ChooseAndMove{Count: 1, Dest: IntoHand}, MayDiscardLookedAt{},
+		}}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+		if got := g.Hand(0); len(got) != 1 || got[0] != top {
+			t.Errorf("hand = %v, want [%d]", got, top)
+		}
+		if got := g.Discard(0); len(got) != 0 {
+			t.Errorf("discard = %v, want empty", got)
+		}
+	})
+}
 func TestDiscardTopAndForEachDiscardedHouseFilter(t *testing.T) {
 	// DiscardTop text across counts and perspectives. Amount 0 folds to one card,
 	// and the granted default (unset Player) names "its controller's deck".

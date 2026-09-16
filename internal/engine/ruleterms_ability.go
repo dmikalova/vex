@@ -52,6 +52,22 @@ reaping or fighting; using it this way exhausts the card.`,
 		},
 		{
 			Section:    SectionAbility,
+			Title:      "After You Resolve a Damage Bonus Icon",
+			Definition: "An ability that resolves after its controller resolves a Damage bonus icon, acting on the creature it hit.",
+			Body: `This ability resolves after its controller resolves a Damage bonus icon, with
+the creature that damage hit referred to as "it". It fires only for the resolving
+player's own icons.`,
+		},
+		{
+			Section:    SectionAbility,
+			Title:      "After You Resolve a Draw Bonus Icon",
+			Definition: "An ability that resolves after its controller resolves a Draw bonus icon.",
+			Body: `This ability resolves after its controller resolves a Draw bonus icon. It fires
+only for the resolving player's own icons, and only when the draw actually drew a
+card.`,
+		},
+		{
+			Section:    SectionAbility,
 			Title:      "After You Forge a Key",
 			Definition: "An ability that resolves after its controller forges a key.",
 			Body:       `This ability resolves after its controller forges a key.`,
@@ -85,6 +101,13 @@ the forging opponent is called "they". A prevented forge leaves the opponent's
 			Definition: "An ability that resolves after any creature enters play, including the opponent's.",
 			Body: `This ability resolves after any creature enters play, including creatures
 your opponent plays.`,
+		},
+		{
+			Section:    SectionAbility,
+			Title:      "After an Upgrade Enters Play",
+			Definition: "An ability that resolves after any upgrade enters play, including the opponent's.",
+			Body: `This ability resolves after any upgrade enters play, whether you or your
+opponent attached it.`,
 		},
 		{
 			Section:    SectionAbility,
@@ -210,6 +233,16 @@ controller's and the opponent's, resolving as the player whose turn is starting 
 "they"/"that player" is that active player rather than the card's controller
 (Gambling Den, General Order 24). It is the whole-board companion to Start of Turn,
 which fires only on its own controller's turn.`,
+		},
+		{
+			Section:    SectionAbility,
+			Title:      "At the End of Each Player's Turn",
+			Definition: "An ability that resolves at the end of every player's turn, resolving as the player whose turn it is.",
+			Body: `This ability resolves at the end of every player's turn, its own
+controller's and the opponent's, resolving as the player whose turn is ending so
+"they"/"that player" is that active player rather than the card's controller
+(Pincerator). It is the whole-board companion to End of Turn, which fires only on
+its own controller's turn.`,
 		},
 		{
 			Section:    SectionAbility,

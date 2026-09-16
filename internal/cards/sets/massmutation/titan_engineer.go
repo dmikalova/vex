@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// TitanEngineer
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Titan Engineer
 //
 //	House:  Logos
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  6
 //	Traits: Cyborg • Scientist
 //
-//	While Titan Engineer is not on a flank, keys cost +1 A.
+//	While Titan Engineer is not on a flank, each player's keys cost +1 Æmber.
 var TitanEngineer = set.New(
 	"Titan Engineer",
 	card.House.Logos,
@@ -24,5 +19,5 @@ var TitanEngineer = set.New(
 	card.Provenance(card.MM, "081"),
 	card.WithPower(6),
 	card.WithTraits(card.Traits.Cyborg, card.Traits.Scientist),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeyCost(card.KeyCostChange(card.EachPlayer, 1).WhileOffFlank()),
 )

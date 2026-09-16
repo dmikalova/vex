@@ -21,5 +21,5 @@ var Duskwitch = set.New(
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Human, card.Traits.Witch),
 	card.WithKeywords(card.Keyword.Omega, card.Keyword.Elusive),
-	card.WithFriendlyEntersPlayReady(card.Type.Creature),
+	card.WithFriendlyEntersPlayReady(card.EntersReadyGrant{Type: card.Type.Creature}),
 )

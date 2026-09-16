@@ -122,6 +122,20 @@ func (orderRejectChooser) ChooseCreature(_, _ string, _ []LocalID) (LocalID, boo
 	return 0, false
 }
 
+// declineOptionChooser answers every labeled option with the second choice (a "No"
+// on a Yes/No prompt), while taking the first creature candidate — for testing the
+// declined branch of an optional prompt.
+type declineOptionChooser struct{}
+
+func (declineOptionChooser) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) {
+	if len(cands) == 0 {
+		return 0, false
+	}
+	return cands[0], true
+}
+
+func (declineOptionChooser) ChooseOption(_, _ string, _ []string) int { return 1 }
+
 // idQueueChooser pops the next scripted id for each choice, falling back to the
 // first candidate once the queue empties.
 type idQueueChooser struct{ ids []LocalID }
@@ -142,6 +156,22 @@ type countingChooser struct{ calls int }
 func (c *countingChooser) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) {
 	c.calls++
 	return cands[0], true
+}
+
+// panicOnOptionChooser fails the test if any labeled option is offered, so a test
+// can prove a vacuous prompt is never presented. It takes the first creature
+// candidate for any non-option choice.
+type panicOnOptionChooser struct{}
+
+func (panicOnOptionChooser) ChooseCreature(_, _ string, cands []LocalID) (LocalID, bool) {
+	if len(cands) == 0 {
+		return 0, false
+	}
+	return cands[0], true
+}
+
+func (panicOnOptionChooser) ChooseOption(_, _ string, _ []string) int {
+	panic("no option should be offered")
 }
 
 // orderAllChooser implements Orderer, arranging ids in a single call (reversing

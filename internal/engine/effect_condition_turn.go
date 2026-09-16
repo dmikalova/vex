@@ -158,6 +158,22 @@ func (EnemyCreatureDestroyed) Met(ctx *EffectContext) bool {
 	return ctx.Resolver.TurnHistory(ctx.Controller, EnemyCreaturesDestroyed) > 0
 }
 
+// FriendlyCreatureDestroyed is met while at least one of the controller's own
+// creatures has been destroyed this turn — Bonesaw enters play ready if a friendly
+// creature has died this turn.
+type FriendlyCreatureDestroyed struct{}
+
+// CondText renders the condition.
+func (FriendlyCreatureDestroyed) CondText() string {
+	return "if a friendly creature was destroyed this turn"
+}
+
+// Met reports whether the controller has had a friendly creature destroyed this
+// turn.
+func (FriendlyCreatureDestroyed) Met(ctx *EffectContext) bool {
+	return ctx.Resolver.TurnHistory(ctx.Controller, FriendlyCreaturesDestroyed) > 0
+}
+
 // UsedCreatureToReap is met while the controller has used a creature to reap at
 // least once this turn — Bramble Lynx enters play ready once you have reaped.
 type UsedCreatureToReap struct{}
@@ -184,6 +200,21 @@ func (UsedCreatureToFight) CondText() string {
 // Met reports whether the controller has fought with a creature this turn.
 func (UsedCreatureToFight) Met(ctx *EffectContext) bool {
 	return ctx.Resolver.TurnHistory(ctx.Controller, CreaturesFoughtThisTurn) > 0
+}
+
+// UsedNoCreatures is met while the controller has not used any creature this turn
+// by any means — reaping, fighting, or using an Action ability — Sloth rewards a
+// turn spent without using a creature.
+type UsedNoCreatures struct{}
+
+// CondText renders the condition.
+func (UsedNoCreatures) CondText() string {
+	return "if you did not use any creatures this turn"
+}
+
+// Met reports whether the controller has used no creature this turn.
+func (UsedNoCreatures) Met(ctx *EffectContext) bool {
+	return ctx.Resolver.TurnHistory(ctx.Controller, CreaturesUsedThisTurn) == 0
 }
 
 // FirstReapOfTurn is met when the reap in context is the first time a creature

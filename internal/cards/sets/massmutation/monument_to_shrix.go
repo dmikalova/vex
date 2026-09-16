@@ -1,28 +1,45 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// MonumentToShrix
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// monumentToShrixCluster pulls a Citizen Shrix into Monument to Shrix's pod, so
+// the Monument's discard-pile bonus has its namesake to feed it (ADR 0036). Citizen
+// Shrix also drafts on its own, so the pull only guarantees the pairing.
+var monumentToShrixCluster = card.Cluster{
+	Name:     "Monument to Shrix",
+	Strategy: card.ClusterStrategy.Pull,
+	Trigger:  card.ClusterTrigger.ByLead,
+}
+
+// Monument to Shrix
 //
 //	House:  Saurian
 //	Type:   Artifact
-//	Rarity: Special
+//	Rarity: Rare
 //	Traits: Location
 //
-//	You may spend A on Monument to Shrix as if it were in your pool.
-//	Action: Move 1A from your pool to Monument to Shrix. If Citizen Shrix is in your discard pile, move 1A from any player's pool to Monument to Shrix instead.
+//	You may spend Æmber on Monument to Shrix when forging keys.
+//	Action: If Citizen Shrix is in your discard pile, move 1 Æmber from any player's pool to Monument to Shrix. Otherwise, move 1 Æmber from your pool to Monument to Shrix.
 var MonumentToShrix = set.New(
 	"Monument to Shrix",
 	card.House.Saurian,
 	card.Type.Artifact,
-	// TODO(variant): rarity relabelled from Variant to Special — handle manually
-	card.Rarity.Special,
+	card.Rarity.Rare,
 	card.Provenance(card.MM, "239"),
+	card.LeadsCluster(monumentToShrixCluster),
 	card.WithTraits(card.Traits.Location),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithSpendableAember(),
+	card.WithAbility(
+		card.Trigger.Action, card.Conditional{
+			Cond: card.NamedCardInDiscard{Name: CitizenShrix.Name},
+			Then: card.MoveAemberFromPool{
+				Amount: 1,
+				Target: card.Target.This,
+				Source: card.ChosenPlayer,
+			},
+			Else: card.MoveAemberFromPool{
+				Amount: 1,
+				Target: card.Target.This,
+			},
+		}),
 )

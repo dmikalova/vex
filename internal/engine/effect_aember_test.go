@@ -382,6 +382,47 @@ func TestMoveAemberFromPoolAndVault(t *testing.T) {
 	}
 }
 
+// TestMoveAemberFromChosenPool covers Monument to Shrix's stronger action, drawing
+// the Æmber from a pool the controller picks — their own or their opponent's.
+func TestMoveAemberFromChosenPool(t *testing.T) {
+	e := MoveAemberFromPool{
+		Amount: 1,
+		Target: Target{Kind: TargetThisCreature},
+		Source: ChosenPlayer,
+	}
+	if got := e.Text(); got != "move 1 Æmber from any player's pool to "+SelfName {
+		t.Errorf("text = %q", got)
+	}
+
+	// Choosing the opponent's pool (option index 1) empties from player 1.
+	g := NewGame("A", "B", 1)
+	id := g.AddArtifact(NewCard("Monument to Shrix", Saurian, Artifact, Rare), 0)
+	g.SetAember(0, 2)
+	g.SetAember(1, 2)
+	g.SetChooser(0, optionPicker{idx: 1})
+	e.Resolve(&EffectContext{Resolver: g, Source: id, Controller: 0})
+	if g.Aember(0) != 2 || g.Aember(1) != 1 || g.AmberOn(id) != 1 {
+		t.Errorf(
+			"pools = %d/%d, banked = %d; want 2/1 and 1",
+			g.Aember(0),
+			g.Aember(1),
+			g.AmberOn(id),
+		)
+	}
+
+	// Choosing your own pool (option index 0) empties from player 0.
+	g.SetChooser(0, optionPicker{idx: 0})
+	e.Resolve(&EffectContext{Resolver: g, Source: id, Controller: 0})
+	if g.Aember(0) != 1 || g.Aember(1) != 1 || g.AmberOn(id) != 2 {
+		t.Errorf(
+			"pools = %d/%d, banked = %d; want 1/1 and 2",
+			g.Aember(0),
+			g.Aember(1),
+			g.AmberOn(id),
+		)
+	}
+}
+
 // TestPlaceAemberOnThis covers placing Æmber from the common supply on the source
 // card, which accrues on the card rather than moving from a pool.
 func TestPlaceAemberOnThis(t *testing.T) {

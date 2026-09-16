@@ -38,6 +38,9 @@ type (
 	CaptureAember = engine.CaptureAember
 	// CaptureFromAnyPlayer captures Æmber onto this creature from both pools in any split.
 	CaptureFromAnyPlayer = engine.CaptureFromAnyPlayer
+	// DistributeCapture captures a share of a pool one Æmber at a time onto friendly
+	// creatures the controller chooses (Bring Low captures all but five, distributed).
+	DistributeCapture = engine.DistributeCapture
 	// MoveAemberToSupply removes Æmber sitting on a creature to the common supply.
 	MoveAemberToSupply = engine.MoveAemberToSupply
 	// Exalt places Æmber from the common supply onto a chosen card.
@@ -88,6 +91,10 @@ type (
 	// GainAssault gives each targeted creature Assault equal to a count for the
 	// remainder of the turn (Creed of Nature grants assault equal to its power).
 	GainAssault = engine.GainAssault
+	// GainAssaultUntilNextTurn gives each targeted creature Assault until the start
+	// of your next turn (the Mutation cycle grants assault 3), so it lasts alongside
+	// a keyword and trait granted in the same breath. Folds under GainUntilNextTurn.
+	GainAssaultUntilNextTurn = engine.GainAssaultUntilNextTurn
 	// GainKeywordForTurn gives each targeted creature a keyword for the remainder
 	// of the turn (Creed of Nature grants skirmish), unlike GainKeyword's
 	// until-next-turn duration.
@@ -173,9 +180,22 @@ type (
 	// LoseKeywords takes one or more keywords from each targeted creature for the
 	// remainder of the turn (Niffle Grounds strips taunt and elusive).
 	LoseKeywords = engine.LoseKeywords
+	// LoseKeywordsUntilNextTurn takes one or more keywords from each targeted
+	// creature until the start of your next turn, so the loss survives the
+	// opponent's turn (Reckless Rizzo loses elusive after stealing).
+	LoseKeywordsUntilNextTurn = engine.LoseKeywordsUntilNextTurn
 	// GainKeyword gives each targeted creature a keyword until the start of your
 	// next turn (Hideaway Hole grants your creatures elusive).
 	GainKeyword = engine.GainKeyword
+	// GainTrait gives each targeted creature a trait until the start of your next
+	// turn (the Mutation cycle grants the Mutant trait). Folds under
+	// GainUntilNextTurn beside a keyword or Assault grant.
+	GainTrait = engine.GainTrait
+	// GainUntilNextTurn folds several next-turn grants (GainKeyword, GainTrait,
+	// GainAssaultUntilNextTurn) into one clause sharing the "... until the start of
+	// your next turn" suffix (the Mutation cycle grants a keyword and the Mutant
+	// trait together).
+	GainUntilNextTurn = engine.GainUntilNextTurn
 	// PurgeArchives purges any number of cards from your archives, recording the
 	// tally a following CardsPurged scales by (Destructive Analysis).
 	PurgeArchives = engine.PurgeArchives
@@ -245,8 +265,9 @@ type (
 	ReturnItToHand = engine.ReturnItToHand
 	// SearchForName searches your deck and discard pile for a named card.
 	SearchForName = engine.SearchForName
-	// SearchDeck searches your deck for a card (any card, or one of a given house),
-	// puts it into your hand, and shuffles your deck.
+	// SearchDeck searches your deck for a card (any card, one of a given house, or
+	// one the Filter admits — e.g. an upgrade), puts it into your hand, and
+	// shuffles your deck.
 	SearchDeck = engine.SearchDeck
 	// Shuffle shuffles your deck, optionally folding whole zones of your cards into
 	// it first: nothing (the bare "shuffle your deck" a search ends on, also a
@@ -305,6 +326,15 @@ type (
 	// both, unset for a granted ability's own deck), records each discarded card,
 	// and binds a lone discard as context for a single-card follow-up.
 	DiscardTop = engine.DiscardTop
+	// ResolveBonusIcons resolves the bonus icons printed on the card its Target
+	// names, as if its controller had just played it (Ensign El-Samra reveals a
+	// card in hand, LCdr. Trigon a discarded card, Reclaimed by Nature a purged
+	// artifact, and resolves the icons on it).
+	ResolveBonusIcons = engine.ResolveBonusIcons
+	// ExtraBonusIconResolution arms a one-shot boost: the next card its controller
+	// plays this turn resolves each of its bonus icons an additional time (Wild
+	// Bounty).
+	ExtraBonusIconResolution = engine.ExtraBonusIconResolution
 	// ForEachDiscarded resolves Do once for each card a preceding discard removed.
 	ForEachDiscarded = engine.ForEachDiscarded
 	// ArchiveDiscardedThisWay archives every card a preceding deck dig discarded.
@@ -338,12 +368,19 @@ type (
 	// ChooseAndMove takes Count of the read cards and sends them to Dest (see
 	// card.Into).
 	ChooseAndMove = engine.ChooseAndMove
+	// PartitionByChosenHouse splits the read cards by the house an enclosing
+	// ChooseHouseThen picked: cards of that house go to Matching, the rest to Rest
+	// (New Frontiers archives each of the chosen house, discards the others).
+	PartitionByChosenHouse = engine.PartitionByChosenHouse
 	// DeckDest is where a ChooseAndMove step sends the cards it takes (see
 	// card.Into).
 	DeckDest = engine.DeckDest
 	// ReorderRest puts the cards no earlier step took back in any order; it must be
 	// the last step.
 	ReorderRest = engine.ReorderRest
+	// MayDiscardLookedAt optionally discards the single card a preceding look read
+	// (Scout Pete); it reads "you may discard that card".
+	MayDiscardLookedAt = engine.MayDiscardLookedAt
 	// (From), ignoring the active house. Set Except to make House the house that
 	// may not be played.
 	PlayFrom = engine.PlayFrom
@@ -386,6 +423,9 @@ type (
 	CancelForge = engine.CancelForge
 	// RevealHand shows the cards in a player's hand to both players and records them.
 	RevealHand = engine.RevealHand
+	// RevealChosenFromHand reveals one card the controller chooses from their
+	// hand and puts it in context for a following effect (Ensign El-Samra).
+	RevealChosenFromHand = engine.RevealChosenFromHand
 	// RevealRandomFromHand reveals a random card from your hand and puts it in
 	// context for a following effect (Keyforgery).
 	RevealRandomFromHand = engine.RevealRandomFromHand
@@ -523,6 +563,9 @@ type (
 	// CardsInDiscardAtLeast is met when the controller's discard pile holds at least
 	// Amount cards matching House and Type.
 	CardsInDiscardAtLeast = engine.CardsInDiscardAtLeast
+	// NamedCardInDiscard is met when a card of the given name is in your discard pile
+	// (the Monuments' stronger action when their namesake creature waits there).
+	NamedCardInDiscard = engine.NamedCardInDiscard
 	// Haunted is met while the controller has 10 or more cards in their discard pile.
 	Haunted = engine.Haunted
 	// ControlsNamed is met when the controller has a card of a given name in play.
@@ -535,9 +578,16 @@ type (
 	// SourceIsFighting is met while the source creature is one of the two combatants
 	// of the fight resolving right now (Nizak, The Forgotten's "while fighting" gate).
 	SourceIsFighting = engine.SourceIsFighting
+	// FoughtCreatureIsMostPowerfulEnemy is met, in a Before Fight ability, when the
+	// creature the source is about to fight is the most powerful enemy creature
+	// (a tie qualifies). Baldric the Bold's gate.
+	FoughtCreatureIsMostPowerfulEnemy = engine.FoughtCreatureIsMostPowerfulEnemy
 	// SourceNeighborsAllOfHouse is met while every neighbor of the source card
 	// belongs to House (Xanthyx Harvester's use gate).
 	SourceNeighborsAllOfHouse = engine.SourceNeighborsAllOfHouse
+	// SourceHasNoNeighborOfHouse is met while no neighbor of the source card
+	// belongs to House (Crewman Jorg's steal gate).
+	SourceHasNoNeighborOfHouse = engine.SourceHasNoNeighborOfHouse
 	// ArchivedCreaturesShareHouse is met when the creatures a preceding
 	// ArchiveFromPlay set aside all share one house (Code Monkey's payoff).
 	ArchivedCreaturesShareHouse = engine.ArchivedCreaturesShareHouse
@@ -567,9 +617,14 @@ type (
 	ItIsOfTrait = engine.ItIsOfTrait
 	// ItHasAember is met when the creature in context has Æmber on it.
 	ItHasAember = engine.ItHasAember
+	// ItHasBonusIcon is met when the card in context has at least one bonus icon.
+	ItHasBonusIcon = engine.ItHasBonusIcon
 	// Or is met when any of its Conditions is met, composing conditions (e.g. a
 	// Dinosaur creature or one with Æmber, for Guji Dinosaur Hunter).
 	Or = engine.Or
+	// And is met when every one of its Conditions is met, composing conditions
+	// (e.g. a creature that is friendly and a Mutant, for Dark Æmber Vault).
+	And = engine.And
 	// Not is met when its inner Condition is not met, composing negation instead of
 	// a per-condition flag (card.Not{Cond: card.OnFlank{}} → "if it is not on a
 	// flank"). The inner condition must render its own negated clause.
@@ -600,6 +655,10 @@ var (
 	MoreThanYou = engine.MoreThanYou
 	// MoreThanOpponent is met when your pool holds more Æmber than the opponent's.
 	MoreThanOpponent = engine.MoreThanOpponent
+	// Even is met when the quantity is even (including zero); it ignores Amount.
+	Even = engine.Even
+	// Odd is met when the quantity is odd; it ignores Amount.
+	Odd = engine.Odd
 )
 
 // House references for conditions that compare a card's house dynamically.
@@ -646,10 +705,14 @@ type (
 	AemberStolenFromYou = engine.AemberStolenFromYou
 	// EnemyCreatureDestroyed is met once an enemy creature has been destroyed this turn.
 	EnemyCreatureDestroyed = engine.EnemyCreatureDestroyed
+	// FriendlyCreatureDestroyed is met once a friendly creature has been destroyed this turn.
+	FriendlyCreatureDestroyed = engine.FriendlyCreatureDestroyed
 	// UsedCreatureToReap is met once you have used a creature to reap this turn.
 	UsedCreatureToReap = engine.UsedCreatureToReap
 	// UsedCreatureToFight is met once you have used a creature to fight this turn.
 	UsedCreatureToFight = engine.UsedCreatureToFight
+	// UsedNoCreatures is met while you have used no creature this turn by any means.
+	UsedNoCreatures = engine.UsedNoCreatures
 	// FirstReapOfTurn is met when the reap in context is the first this turn.
 	FirstReapOfTurn = engine.FirstReapOfTurn
 	// CounterInPlay is met while at least one card in play carries a generic counter of the given kind.
@@ -688,10 +751,6 @@ type (
 	// returned to your own deck "this way" (Timequake draws one card for each). A
 	// card you played but do not own returns to its owner's deck and is not counted.
 	CardsShuffledIntoDeck = engine.CardsShuffledIntoDeck
-	// AemberBonusOf counts the Æmber pips on the card its Target names, once it has
-	// left play (Rustgnawer gains the destroyed artifact's Æmber bonus via Target:
-	// Triggering).
-	AemberBonusOf = engine.AemberBonusOf
 	// UpgradesOn counts the upgrades attached to the creature its Target names
 	// (Walls' Blaster stuns a creature for each upgrade on Chief Engineer Walls).
 	UpgradesOn = engine.UpgradesOn
@@ -789,7 +848,8 @@ type (
 	// MayPlayOrUse lets the controller act with cards outside their active house for
 	// the remainder of the turn — the one node for every out-of-house permission
 	// grant. Houses selects whose cards it frees (card.GrantHouses.Named/Chosen/Any/
-	// Except/Controlled), Grant the verbs (card.GrantPlay, card.GrantUse,
+	// Except/Controlled), Trait scopes a use grant to a creature trait instead of a
+	// house (card.Traits.Mutant), Grant the verbs (card.GrantPlay, card.GrantUse,
 	// card.GrantFight, or a combination), Types narrows the card types (the zero
 	// value frees all — card.Types.Of(card.Type.Artifact, ...)), and Count
 	// bounds how many cards (zero is unlimited).
@@ -817,6 +877,9 @@ type (
 	UnforgeKey = engine.UnforgeKey
 	// RaiseKeyCost makes keys cost more throughout a player's next turn.
 	RaiseKeyCost = engine.RaiseKeyCost
+	// RaiseKeyCostPerHouseCreature makes keys cost more per creature of a house in
+	// play during a player's next turn (Waking Nightmare, +1 per Dis creature).
+	RaiseKeyCostPerHouseCreature = engine.RaiseKeyCostPerHouseCreature
 	// LowerKeyCost drops keys' cost (a negative bump) for a Duration; may be EachPlayer.
 	LowerKeyCost = engine.LowerKeyCost
 	// GainChains gives a player chains (a draw penalty).
@@ -831,6 +894,7 @@ var Counter = counters{
 	Growth:     engine.CounterGrowth,
 	Glory:      engine.CounterGlory,
 	Disruption: engine.CounterDisruption,
+	Scheme:     engine.CounterScheme,
 }
 
 type counters struct {
@@ -839,6 +903,7 @@ type counters struct {
 	Growth     engine.CounterKind
 	Glory      engine.CounterKind
 	Disruption engine.CounterKind
+	Scheme     engine.CounterKind
 }
 
 // Tally names a per-resolution "... this way" tally for card.ProducedThisWay, e.g.

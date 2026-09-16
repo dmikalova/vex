@@ -170,6 +170,7 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 		!t.ready &&
 		!t.withAember &&
 		!t.withoutAember &&
+		!t.withoutBonusIcons &&
 		!t.withCounter.valid() &&
 		!t.withArmor &&
 		!t.withUpgrade &&
@@ -227,6 +228,9 @@ func (t Target) filter(ctx *EffectContext, ids []LocalID) []LocalID {
 			continue
 		}
 		if t.withoutAember && ctx.Resolver.AmberOn(id) != 0 {
+			continue
+		}
+		if t.withoutBonusIcons && ctx.Resolver.HasBonusIcons(id) {
 			continue
 		}
 		if t.withCounter.valid() && ctx.Resolver.CountersOn(id, t.withCounter) == 0 {
@@ -442,7 +446,7 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 		}
 		return nil
 	case TargetTriggeringCreature, TargetTheOtherCreature, TargetTheChosenCreature,
-		TargetCreatureFought, TargetTheFoughtCreature:
+		TargetCreatureFought, TargetTheFoughtCreature, TargetTheSameCreature:
 		if ctx.HasIt {
 			return []LocalID{ctx.It}
 		}

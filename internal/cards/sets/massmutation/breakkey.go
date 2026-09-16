@@ -1,20 +1,15 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// Breakkey
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Break-key
 //
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: If your opponent has more forged keys than you, unforge an opponent's key. If you unforge an opponent's key this way, your opponent gains 6A.
+//	Play: If your opponent has more forged keys than you, unforge one of your opponent's keys. Your opponent gains 6 Æmber.
 var Breakkey = set.New(
 	"Break-key",
 	card.House.Dis,
@@ -22,5 +17,12 @@ var Breakkey = set.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.MM, "019"),
 	card.WithBonus(card.Bonus.Aember),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Conditional{
+			Cond: card.HasMoreForgedKeys{Player: card.Opponent},
+			Then: card.Sentences{Effects: []card.Effect{
+				card.UnforgeKey{Player: card.Opponent},
+				card.GainAember{Player: card.Opponent, Amount: 6},
+			}},
+		}),
 )

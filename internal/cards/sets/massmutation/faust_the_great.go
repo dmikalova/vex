@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// FaustTheGreat
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Faust the Great
 //
 //	House:  Saurian
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Dinosaur
 //
-//	Your opponent's keys cost +1A for each friendly creature with A on it.
+//	Your opponent's keys cost +1 Æmber for each friendly creature with Æmber on it.
 //	Play: You may exalt a friendly creature.
 var FaustTheGreat = set.New(
 	"Faust the Great",
@@ -23,7 +18,16 @@ var FaustTheGreat = set.New(
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.MM, "192"),
+	card.InCluster(card.Pulled(monumentToFaustCluster, 1, 1)),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Dinosaur),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeyCost(card.KeyCostChange(card.Opponent, 1).Per(card.InPlay{
+		Player:     card.Controller,
+		Type:       card.Type.Creature,
+		WithAember: true,
+	})),
+	card.WithAbility(
+		card.Trigger.Play, card.May{
+			Do: card.Exalt{Target: card.Target.FriendlyCreature, Amount: 1},
+		}),
 )

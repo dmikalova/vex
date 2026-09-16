@@ -94,6 +94,38 @@ func TestRandomCountPlacesMembers(t *testing.T) {
 	}
 }
 
+// A fired RandomCount ByLead cluster places a subset of its non-lead members and
+// never the lead again: the lead is already planted in the pod (its roll fired the
+// cluster), so only its Connected partners ride in (Dark Harbinger pulls its
+// Mutations, not itself).
+func TestRandomCountByLeadExcludesLead(t *testing.T) {
+	dh := ClusterMembership{
+		Name: "Harbinger", Strategy: RandomCount, Trigger: ByLead, Min: 1, Max: 3,
+	}
+	lead := clusterMember("Lead", engine.Untamed, dh)
+	lead.Profile.Cluster.Lead = true
+	set := NewSet("S", []Card{
+		lead,
+		clusterMember("M1", engine.Untamed, dh),
+		clusterMember("M2", engine.Untamed, dh),
+		clusterMember("M3", engine.Untamed, dh),
+		mkCard("FU", engine.Untamed, engine.Common),
+	}, Tuning{RarityWeights: map[engine.Rarity]float64{engine.Common: 1}})
+
+	ci := set.clusters["Harbinger"]
+	for seed := int64(0); seed < 30; seed++ {
+		g := &generator{set: set, r: rand.New(rand.NewSource(seed)), placed: map[string]bool{}}
+		pod := g.expandPodClusters(firePod(g, set, engine.Untamed, "Lead"))
+		if got := countMember(pod, "Lead"); got != 1 {
+			t.Fatalf("seed %d placed the lead %d times, want only the planted one", seed, got)
+		}
+		// distinctMembers counts the planted lead too, so its partners are one fewer.
+		if partners := distinctMembers(pod, ci) - 1; partners < 1 || partners > 3 {
+			t.Fatalf("seed %d placed %d partners, want [1,3]", seed, partners)
+		}
+	}
+}
+
 // A fired SelfPull cluster places at least Min copies of its single member and
 // never more than a full pod; without a member present it stays dormant.
 func TestSelfPullPlacesCopies(t *testing.T) {

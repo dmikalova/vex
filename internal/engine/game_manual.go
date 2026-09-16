@@ -73,9 +73,14 @@ func (g *Game) ManualMove(id LocalID, dest ManualZone) {
 func (g *Game) removeFromAnyZone(id LocalID) {
 	o := g.owner(id)
 	if g.inPlay(id) {
+		art, hasArt := g.giganticPartner(id)
 		g.removeFromPlay(id)
 		g.discardUpgrades(id)
 		g.resetCore(id)
+		if hasArt { // tear down the gigantic art half so it does not dangle
+			g.removeFromPlay(art)
+			g.resetCore(art)
+		}
 		return
 	}
 	g.State.Hand[o].remove(id)

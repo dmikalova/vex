@@ -144,6 +144,20 @@ func TestAfterYouPlayFolding(t *testing.T) {
 	if want := "After you play a card, if your opponent has 1 Æmber or more, gain 1 Æmber."; stateGated != want {
 		t.Errorf("state-gated = %q, want %q", stateGated, want)
 	}
+	// A Conditional{ItHasBonusIcon} folds into the natural "after you play a card
+	// with a bonus icon" wording (Adaptoid).
+	bonusIcon := RenderAbility(
+		Ability{
+			Trigger: TriggerAfterCardPlayed,
+			Effect: Conditional{
+				Cond: ItHasBonusIcon{},
+				Then: GainAember{Player: Controller, Amount: 1},
+			},
+		},
+	)
+	if want := "After you play a card with a bonus icon, gain 1 Æmber."; bonusIcon != want {
+		t.Errorf("bonus-icon = %q, want %q", bonusIcon, want)
+	}
 }
 
 func TestAfterYouUseFolding(t *testing.T) {
@@ -269,6 +283,7 @@ func TestTargetTextDefault(t *testing.T) {
 		TargetThisCreature:           SelfName,
 		TargetTriggeringCreature:     "it",
 		TargetTheOtherCreature:       "the other creature",
+		TargetTheSameCreature:        "the same creature",
 		TargetEachEnemyCreature:      "each enemy creature",
 		TargetEachFriendlyCardInPlay: "each friendly card",
 		TargetKind(99):               "a creature",
@@ -386,6 +401,29 @@ func TestGeneratedCardText(t *testing.T) {
 				}),
 			),
 			"House:  Untamed\nType:   Creature\nRarity: Rare\nPower:  1\n\nElusive.\nÆmber stolen or captured from your pool is taken from the common supply instead.",
+		},
+		{
+			NewCard(
+				"Amphora Captura",
+				Saurian,
+				Artifact,
+				Rare,
+				WithTraits(Item),
+				WithBonusInstead(BonusInstead{May: true, As: BonusCapture}),
+			),
+			"House:  Saurian\nType:   Artifact\nRarity: Rare\nTraits: Item\n\nWhen resolving a bonus icon, you may resolve it as a Capture bonus icon instead.",
+		},
+		{
+			NewCard(
+				"Scrivener Favian",
+				Sanctum,
+				Creature,
+				Uncommon,
+				WithPower(3),
+				WithTraits(Mutant),
+				WithBonusInstead(BonusInstead{From: BonusCapture, Instead: StealAember{Amount: 1}}),
+			),
+			"House:  Sanctum\nType:   Creature\nRarity: Uncommon\nPower:  3\nTraits: Mutant\n\nWhen you resolve a Capture bonus icon, steal 1 Æmber instead.",
 		},
 		{
 			NewCard(
@@ -1023,6 +1061,24 @@ func TestCapitalizeFirst(t *testing.T) {
 	}
 	if capitalizeFirst("hello") != "Hello" {
 		t.Errorf("capitalizeFirst(hello) = %q", capitalizeFirst("hello"))
+	}
+}
+
+func TestLowerFirst(t *testing.T) {
+	if lowerFirst("") != "" {
+		t.Error("lowerFirst(\"\") should be empty")
+	}
+	if lowerFirst("Hello") != "hello" {
+		t.Errorf("lowerFirst(Hello) = %q", lowerFirst("Hello"))
+	}
+}
+
+func TestWithGiganticRole(t *testing.T) {
+	def := NewCard(
+		"Half", Brobnar, Creature, Common, WithPower(6), WithGiganticRole(GiganticBase),
+	)
+	if def.GiganticRole != GiganticBase {
+		t.Errorf("GiganticRole = %d, want %d", def.GiganticRole, GiganticBase)
 	}
 }
 

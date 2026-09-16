@@ -25,6 +25,7 @@ var Target = targets{
 	OtherFriendlyCreature:      engine.Target{Kind: engine.TargetChosenOtherFriendlyCreature},
 	OtherCreature:              engine.Target{Kind: engine.TargetChosenOtherCreature},
 	TheOtherCreature:           engine.Target{Kind: engine.TargetTheOtherCreature},
+	TheSameCreature:            engine.Target{Kind: engine.TargetTheSameCreature},
 	TheChosenCreature:          engine.Target{Kind: engine.TargetTheChosenCreature},
 	CreatureFought:             engine.Target{Kind: engine.TargetCreatureFought},
 	CreatureOrArtifact:         engine.Target{Kind: engine.TargetChosenCreatureOrArtifact},
@@ -78,6 +79,8 @@ type targets struct {
 	OtherCreature engine.Target
 	// TheOtherCreature selects the creature in context (ctx.It), "the other creature".
 	TheOtherCreature engine.Target
+	// TheSameCreature selects the triggering creature (ctx.It), "the same creature".
+	TheSameCreature engine.Target
 	// TheChosenCreature selects the creature in context (ctx.It), "the chosen creature".
 	TheChosenCreature engine.Target
 	// CreatureOrArtifact is a creature or artifact the controller chooses, either side.
@@ -203,6 +206,11 @@ var WithoutSharedTrait = engine.WithoutSharedTrait
 // card.Target.EachCreature.House(card.Houses.Except(card.House.Self)).Refine(card.PowerLessThan(count))
 // (Exterminate! Exterminate!).
 var PowerLessThan = engine.PowerLessThan
+
+// PowerLessThanSource is a Refinement that keeps every creature whose power is
+// below the source card's own power, e.g.
+// card.Target.Creature.Refine(card.PowerLessThanSource()) (Dreadbone Decimus).
+var PowerLessThanSource = engine.PowerLessThanSource
 
 // Stunned is the set of stunned creatures, used as a fight restriction: pass it to
 // card.WithFightRestriction to limit a creature to fighting only stunned creatures

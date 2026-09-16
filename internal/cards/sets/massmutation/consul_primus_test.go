@@ -8,6 +8,15 @@ import (
 )
 
 // Consul Primus
+//
+//	House:  Saurian
+//	Type:   Creature
+//	Rarity: Common
+//	Power:  3
+//	Traits: Dinosaur • Politician
+//
+//	Reap: Move 1 Æmber from a creature to another creature.
+//	Enhance Capture.
 func TestConsulPrimus(t *testing.T) {
 	t.Run("reaping moves 1 Æmber from one creature onto another", func(t *testing.T) {
 		var from, onto ct.Card

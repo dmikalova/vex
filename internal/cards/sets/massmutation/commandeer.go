@@ -14,7 +14,12 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Æmber:  1
 //
-//	Play: For the remainder of the turn, after you play another card, a friendly creature captures 1A.
+//	Play: For the remainder of the turn, after you play another card, a
+//	friendly creature captures 1A.
+//
+// Deferred: needs the flat lasting registry to support CaptureAember with a
+// chosen friendly-creature target (lastingActionOf currently supports only
+// simple Dos like Draw/GainAember).
 var Commandeer = set.New(
 	"Commandeer",
 	card.House.Sanctum,
@@ -22,5 +27,5 @@ var Commandeer = set.New(
 	card.Rarity.Common,
 	card.Provenance(card.MM, "131"),
 	card.WithBonus(card.Bonus.Aember),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	// TODO(stub): add WithAbility for the printed text above.
 )

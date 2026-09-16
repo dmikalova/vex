@@ -157,6 +157,7 @@ func (e ChooseCreatureThen) resolveChosen(ctx *EffectContext, ids []LocalID) boo
 	}
 	for _, id := range ids {
 		ctx.It, ctx.HasIt = id, true
+		ctx.ItController = ctx.Resolver.Controller(id)
 	}
 	e.Then.Resolve(ctx)
 	return true
@@ -311,6 +312,13 @@ func (UseVerb) Apply(ctx *EffectContext, target LocalID) {
 		labels,
 	)
 	if idx < 0 || idx >= len(uses) {
+		return
+	}
+	// The choice boundary just settled state-based destruction (ADR 0029), which can
+	// take the very creature about to be used out of play — Transposition Sandals
+	// swaps it off the flank that was keeping it alive, then says to use it. A
+	// creature that left play at the choice can no longer be used.
+	if !ctx.Resolver.InPlay(target) {
 		return
 	}
 	uses[idx]()

@@ -12,7 +12,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Dinosaur • Soldier
 //
 //	Elusive.
-//	Each of {self}'s neighbors gains, "Destroyed: Move all Æmber from this creature to Optio Gorkus."
+//	Each of Optio Gorkus's neighbors gains, "Destroyed: Move all Æmber from this creature to Optio Gorkus."
 var OptioGorkus = set.New(
 	"Optio Gorkus",
 	card.House.Saurian,

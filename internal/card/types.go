@@ -19,6 +19,9 @@ type (
 	// BonusIcon is the value type for a card.Bonus.X constant, an element of
 	// card.WithBonus / card.WithEnhance.
 	BonusIcon = engine.BonusIcon
+	// BonusInstead is the continuous bonus-icon substitution a card offers through
+	// card.WithBonusInstead (Amphora Captura, Scrivener Favian).
+	BonusInstead = engine.BonusInstead
 	// Player is the relative player an effect targets: card.Controller or card.Opponent.
 	Player = engine.Player
 )
@@ -44,6 +47,7 @@ type bonusIcons struct {
 
 // House groups the faction values, e.g. card.House.Brobnar.
 var House = houses{
+	None:         engine.HouseNone,
 	Brobnar:      engine.Brobnar,
 	Dis:          engine.Dis,
 	Logos:        engine.Logos,
@@ -57,6 +61,9 @@ var House = houses{
 }
 
 type houses struct {
+	// None is no house at all, for a houseless card (a Special stamped with its
+	// pod's house at deck generation). Pair it with card.Houseless.
+	None engine.House
 	// Brobnar is the house of giants and brawlers.
 	Brobnar engine.House
 	// Dis is the house of demons.
@@ -168,6 +175,7 @@ var Traits = traits{
 	Ally:         engine.Ally,
 	Angel:        engine.Angel,
 	Aquan:        engine.Aquan,
+	Assassin:     engine.Assassin,
 	Beast:        engine.Beast,
 	Cat:          engine.Cat,
 	Cleric:       engine.Cleric,
@@ -216,6 +224,7 @@ var Traits = traits{
 	Scientist:    engine.Scientist,
 	Shapeshifter: engine.Shapeshifter,
 	Shard:        engine.Shard,
+	Sin:          engine.Sin,
 	Soldier:      engine.Soldier,
 	Specter:      engine.Specter,
 	Spirit:       engine.Spirit,
@@ -268,6 +277,7 @@ type traits struct {
 	Robot,
 	Scientist,
 	Shard,
+	Sin,
 	Soldier,
 	Specter,
 	Spirit,
@@ -293,7 +303,8 @@ type traits struct {
 	Proximan,
 	Psion,
 	Shapeshifter,
-	Wolf engine.Trait
+	Wolf,
+	Assassin engine.Trait
 }
 
 // Keyword groups the keyword values, e.g. card.Keyword.Skirmish.
@@ -370,8 +381,11 @@ var Trigger = triggers{
 	AfterAemberStolenFromYou:       engine.TriggerAfterAemberStolenFromYou,
 	AfterAnyPlayerChoosesHouse:     engine.TriggerAfterAnyPlayerChoosesHouse,
 	AfterAnyPlayerStartOfTurn:      engine.TriggerAfterAnyPlayerStartOfTurn,
+	AfterAnyPlayerEndOfTurn:        engine.TriggerAfterAnyPlayerEndOfTurn,
 	AfterArmorPrevents:             engine.TriggerAfterArmorPrevents,
 	AfterAssaultDestroys:           engine.TriggerAfterAssaultDestroys,
+	AfterBonusDamage:               engine.TriggerAfterBonusDamage,
+	AfterBonusDraw:                 engine.TriggerAfterBonusDraw,
 	AfterCardPlayed:                engine.TriggerAfterCardPlayed,
 	AfterChooseHouse:               engine.TriggerAfterChooseHouse,
 	AfterCreatureDestroyed:         engine.TriggerAfterCreatureDestroyed,
@@ -394,6 +408,7 @@ var Trigger = triggers{
 	AfterPlayerForgesKey:           engine.TriggerAfterPlayerForgesKey,
 	AfterTacticPlayedBeforeResolve: engine.TriggerAfterTacticPlayedBeforeResolve,
 	AfterUse:                       engine.TriggerAfterUse,
+	AfterUpgradeEnters:             engine.TriggerAfterUpgradeEnters,
 	BeforeFight:                    engine.TriggerBeforeFight,
 	BeforeOpponentForgesKey:        engine.TriggerBeforeOpponentForgesKey,
 	Destroyed:                      engine.TriggerDestroyed,
@@ -403,6 +418,7 @@ var Trigger = triggers{
 	FightReap:                      triggerFightReap,
 	LeavesPlay:                     engine.TriggerLeavesPlay,
 	Play:                           engine.TriggerAfterPlay,
+	PlayFight:                      triggerPlayFight,
 	PlayFightReap:                  triggerPlayFightReap,
 	PlayReap:                       triggerPlayReap,
 	Reap:                           engine.TriggerAfterReap,
@@ -419,6 +435,7 @@ const (
 	triggerPlayFightReap engine.Trigger = -1 - iota
 	triggerFightReap
 	triggerPlayReap
+	triggerPlayFight
 )
 
 type triggers struct {
@@ -440,6 +457,10 @@ type triggers struct {
 	AfterCreaturePlayedAdjacent engine.Trigger
 	// AfterNeighborFights fires after a battleline neighbor of this card is used to fight.
 	AfterNeighborFights engine.Trigger
+	// AfterBonusDamage fires after you resolve a Damage bonus icon, with the creature it hit as "it".
+	AfterBonusDamage engine.Trigger
+	// AfterBonusDraw fires after you resolve a Draw bonus icon (only when a card was drawn).
+	AfterBonusDraw engine.Trigger
 	// Destroyed fires when this creature is destroyed ("Destroyed:").
 	Destroyed engine.Trigger
 	// AfterDestroyedFighting fires when a creature is destroyed in a fight with this one.
@@ -507,6 +528,9 @@ type triggers struct {
 	// AfterCreaturePlayed fires after any creature is played from hand (friendly or
 	// enemy), with the played creature as "it" (The Big One).
 	AfterCreaturePlayed engine.Trigger
+	// AfterUpgradeEnters fires after any upgrade enters play (friendly or enemy),
+	// with the entering upgrade as "it" (Armory Officer Nel).
+	AfterUpgradeEnters engine.Trigger
 	// AfterAemberStolenFromYou fires after Æmber is stolen from this card's
 	// controller, with the number stolen in that theft available as a count
 	// (Molephin).
@@ -516,6 +540,10 @@ type triggers struct {
 	// starting, so "they"/"that player" is that active player (Gambling Den, General
 	// Order 24).
 	AfterAnyPlayerStartOfTurn engine.Trigger
+	// AfterAnyPlayerEndOfTurn fires at the end of every player's turn — its own
+	// controller's and the opponent's — resolving as the player whose turn is
+	// ending, so "they"/"that player" is that active player (Pincerator).
+	AfterAnyPlayerEndOfTurn engine.Trigger
 	// LeavesPlay fires as this card leaves play by any route ("Leaves Play:").
 	LeavesPlay engine.Trigger
 	// AfterTacticPlayedBeforeResolve fires after a Tactic is played, by either
@@ -531,6 +559,9 @@ type triggers struct {
 	// PlayReap fires the effect as both a Play and a Reap ability, printed as one
 	// "Play/Reap:" line. It is a composite fanned out by card.WithAbility.
 	PlayReap engine.Trigger
+	// PlayFight fires the effect as both a Play and a Fight ability, printed as one
+	// "Play/Fight:" line. It is a composite fanned out by card.WithAbility.
+	PlayFight engine.Trigger
 }
 
 // Controller and Opponent are the two players an effect can target, relative to

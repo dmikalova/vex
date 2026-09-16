@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Fandangle
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Untamed
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Mutant • Witch
 //
-//	While you have 4A or more, your non-Untamed creatures enter play ready.
+//	While you have 4 or more Æmber, your non-Untamed creatures enter play ready.
 var Fandangle = set.New(
 	"Fandangle",
 	card.House.Untamed,
@@ -24,5 +19,9 @@ var Fandangle = set.New(
 	card.Provenance(card.MM, "365"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Mutant, card.Traits.Witch),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithFriendlyEntersPlayReady(card.EntersReadyGrant{
+		Type:        card.Type.Creature,
+		MinAember:   4,
+		ExceptHouse: card.House.Self,
+	}),
 )

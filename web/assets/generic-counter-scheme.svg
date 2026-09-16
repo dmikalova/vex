@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <title>Scheme counter</title>
+  <circle cx="12" cy="12" r="8" fill="#7048e8" stroke="#4a2fa0" stroke-width="1"/>
+  <path d="M5.5 12C7 9.5 9.3 8 12 8s5 1.5 6.5 4C17 14.5 14.7 16 12 16S7 14.5 5.5 12Z" fill="#f3f0ff" stroke="#4a2fa0" stroke-width="0.6"/>
+  <circle cx="12" cy="12" r="2" fill="#4a2fa0"/>
+</svg>

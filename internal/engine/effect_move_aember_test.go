@@ -37,6 +37,39 @@ func TestMoveAemberAll(t *testing.T) {
 	}
 }
 
+// TestMoveAemberFraction checks the Fraction mode moves a share of the source's
+// Æmber (Patronage moves half, rounding up), renders the fractional phrase, and
+// cannot be combined with a fixed Amount or with All.
+func TestMoveAemberFraction(t *testing.T) {
+	friendly := Target{Kind: TargetChosenFriendlyCreatureOrArtifact}
+	e := MoveAember{From: friendly, Fraction: HalfRoundedUp, To: Controller}
+
+	want := "move half the Æmber from a friendly creature or artifact to your pool, rounding up"
+	if got := e.Text(); got != want {
+		t.Errorf("Text = %q, want %q", got, want)
+	}
+	if err := e.validate(); err != nil {
+		t.Errorf("validate = %v, want nil", err)
+	}
+	if (MoveAember{From: friendly, To: Controller, Fraction: HalfRoundedUp, Amount: 1}).
+		validate() == nil {
+		t.Error("Fraction combined with Amount should not validate")
+	}
+	if (MoveAember{From: friendly, To: Controller, Fraction: HalfRoundedUp, All: true}).
+		validate() == nil {
+		t.Error("Fraction combined with All should not validate")
+	}
+
+	// Odd pool: half of 3 rounds up to 2.
+	g := NewGame("A", "B", 1)
+	c := g.AddToBattleline(testCreature("c", 3), 0)
+	g.AddAmberOn(c, 3)
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if g.AmberOn(c) != 1 || g.Aember(0) != 2 {
+		t.Errorf("after half move: card=%d pool=%d, want 1/2", g.AmberOn(c), g.Aember(0))
+	}
+}
+
 func TestMoveAember(t *testing.T) {
 	friendly := Target{Kind: TargetChosenFriendlyCreatureOrArtifact}
 

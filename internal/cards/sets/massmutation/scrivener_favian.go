@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ScrivenerFavian
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Scrivener Favian
 //
 //	House:  Sanctum
 //	Type:   Creature
@@ -15,15 +10,19 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Mutant
 //
+//	When you resolve a Capture bonus icon, steal 1 Æmber instead.
 //	Enhance Capture Capture.
-//	When you resolve a PT bonus icon, you may choose to steal 1A instead.
 var ScrivenerFavian = set.New(
 	"Scrivener Favian",
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
 	card.Provenance(card.MM, "155"),
+	card.WithEnhance(card.Bonus.Capture, card.Bonus.Capture),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Mutant),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithBonusInstead(card.BonusInstead{
+		From:    card.Bonus.Capture,
+		Instead: card.StealAember{Amount: 1},
+	}),
 )

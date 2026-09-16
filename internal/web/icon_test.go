@@ -7,15 +7,11 @@ import (
 	"github.com/dmikalova/vactrol/internal/engine"
 )
 
-// iconFallbackAllowed lists the effect types the Iconography pass does not yet map
-// to a meaningful glyph and so renders as the abstract "unknown" glyph. It is a
-// shrinking triage list, not a permanent exemption: as glyphs are drawn for these
-// mechanics their names come off. The totality test below fails when a card uses
-// an effect that is neither mapped nor on this list, so a new mechanic cannot ship
-// without a glyph decision (ADR 0022). The list is currently empty: every effect a
-// card uses maps to a glyph. A new unmapped mechanic either gets a glyph here or an
-// entry added to this list with a reason.
-var iconFallbackAllowed = map[string]bool{}
+// iconFallbackAllowed once listed effect types the Iconography pass rendered as
+// the abstract "unknown" glyph. It is gone: an unmapped mechanic is a bug, not an
+// exemption. The totality tests below fail unconditionally on the fallback, so a
+// new mechanic ships only once a glyph is drawn for it — the fix is always to add
+// a glyph, never to allowlist the fallback (ADR 0022).
 
 // forEachAbilityEffect walks every triggered-ability effect on every card the
 // gallery shows (materialized variants included) and calls fn with it.
@@ -33,43 +29,33 @@ func forEachAbilityEffect(fn func(name string, covered bool)) {
 }
 
 // TestIconTotality walks every card and fails loud if any triggered ability's
-// effect is neither mapped to a glyph nor on the shrinking fallback allowlist. A
-// new mechanic with no glyph decision fails here (ADR 0022).
+// effect falls back to the abstract glyph instead of a real mapping. A new
+// mechanic with no glyph decision fails here: the fix is to add a glyph, never to
+// tolerate the fallback — there is no allowlist to exempt it (ADR 0022).
 func TestIconTotality(t *testing.T) {
 	forEachAbilityEffect(func(name string, covered bool) {
-		if !covered && !iconFallbackAllowed[name] {
-			t.Errorf("effect %s has no glyph mapping and is not on iconFallbackAllowed", name)
-		}
-	})
-}
-
-// TestIconFallbackAllowlistIsUsed keeps the allowlist honest: an entry that no
-// card exercises any more should come off, so the list shrinks toward empty as
-// glyphs are drawn.
-func TestIconFallbackAllowlistIsUsed(t *testing.T) {
-	used := map[string]bool{}
-	forEachAbilityEffect(func(name string, covered bool) {
 		if !covered {
-			used[name] = true
+			t.Errorf("effect %s has no glyph mapping; add one (ADR 0022)", name)
 		}
 	})
-	for name := range iconFallbackAllowed {
-		if !used[name] {
-			t.Errorf("iconFallbackAllowed lists %s, but no card falls back to it; remove it", name)
-		}
-	}
 }
 
 // TestNoResidualUnknownGlyph renders every card's full Icon strip and fails if any
-// glyph is the abstract unknown. Unlike TestIconTotality — which only reads the
-// top-level covered flag — this walks the composed lines, so an unknown buried
-// inside a wrapper (a ChooseHouseThen's inner effect, a granted ability) that a
+// glyph is the abstract unknown — in a composed line's glyphs or in its trigger
+// heads. Unlike TestIconTotality — which only reads the top-level covered flag —
+// this walks the composed lines, so an unknown buried inside a wrapper (a
+// ChooseHouseThen's inner effect, a granted ability) or at a trigger head that a
 // masking covered=true would hide is still caught (ADR 0022).
 func TestNoResidualUnknownGlyph(t *testing.T) {
 	regs := card.Cards()
 	for i := range regs {
 		for _, def := range materializedDefs(regs[i]) {
 			for _, line := range cardGlyphs(&def) {
+				for _, tr := range line.triggers {
+					if tr == "glyph-unknown" {
+						t.Errorf("%s renders an unknown trigger glyph in its Icon strip", def.Name)
+					}
+				}
 				for _, g := range line.glyphs {
 					if g.asset == "glyph-unknown" {
 						t.Errorf("%s renders an unknown glyph in its Icon strip", def.Name)

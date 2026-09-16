@@ -100,7 +100,8 @@ func setPackages(t *testing.T) []setPackage {
 			testFiles: make(map[string]string),
 		}
 		for _, file := range bp.GoFiles {
-			if declaresCard(parseFile(t, fset, filepath.Join(dir, file))) {
+			f := parseFile(t, fset, filepath.Join(dir, file))
+			if declaresCard(f) || registersCards(f) {
 				pkg.cardFiles[stem(file)] = file
 			}
 		}
@@ -187,4 +188,22 @@ func isCardNewCall(expr ast.Expr) bool {
 	}
 	pkg, ok := sel.X.(*ast.Ident)
 	return ok && (pkg.Name == "card" || pkg.Name == "set")
+}
+
+// registersCards reports whether f registers cards through a card.New or set.New
+// call somewhere other than a package-level var — the case declaresCard misses.
+// A cycle file whose cards share one composed shape registers the whole family in
+// an init loop rather than one exported var per card (massmutation's
+// mutant_cycle.go builds all 42 house-hybrid mutants this way), so it is a card
+// implementation, and its sibling mutant_cycle_test.go tests that family, even
+// though the file declares no card var.
+func registersCards(f *ast.File) bool {
+	found := false
+	ast.Inspect(f, func(n ast.Node) bool {
+		if call, ok := n.(*ast.CallExpr); ok && isCardNewCall(call) {
+			found = true
+		}
+		return !found
+	})
+	return found
 }

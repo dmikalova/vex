@@ -314,22 +314,45 @@ type MoveAemberFromPool struct {
 	Amount int
 	// Target names the card the Æmber moves onto.
 	Target Target
+	// Source names the pool the Æmber comes from; the zero value moves it from your
+	// own pool. ChosenPlayer lets the controller take it from any player's pool
+	// (Monument to Shrix while Citizen Shrix is in your discard pile).
+	Source Player
 }
 
 // Text renders the effect, e.g. "move 1 Æmber from your pool to Safe Place".
 func (e MoveAemberFromPool) Text() string {
-	return fmt.Sprintf("move %d Æmber from your pool to %s", e.Amount, e.Target.Text())
+	from := "your pool"
+	if e.Source == ChosenPlayer {
+		from = "any player's pool"
+	}
+	return fmt.Sprintf("move %d Æmber from %s to %s", e.Amount, from, e.Target.Text())
+}
+
+// sourcePool names the player whose pool the Æmber is drawn from, prompting the
+// controller when the Source is ChosenPlayer.
+func (e MoveAemberFromPool) sourcePool(ctx *EffectContext) int {
+	if e.Source != ChosenPlayer {
+		return ctx.Controller
+	}
+	if ctx.Resolver.ChooseOption(ctx.Controller, ctx.Source,
+		"Move Æmber from which pool?",
+		[]string{"your pool", "your opponent's pool"}) == 1 {
+		return 1 - ctx.Controller
+	}
+	return ctx.Controller
 }
 
 // Resolve moves as much of the amount as the pool holds onto each target card.
 func (e MoveAemberFromPool) Resolve(ctx *EffectContext) {
+	from := e.sourcePool(ctx)
 	for _, id := range e.Target.Select(ctx) {
-		pool := ctx.Resolver.Aember(ctx.Controller)
+		pool := ctx.Resolver.Aember(from)
 		moved := min(e.Amount, pool)
 		if moved == 0 {
 			return
 		}
-		ctx.Resolver.SetAember(ctx.Controller, pool-moved)
+		ctx.Resolver.SetAember(from, pool-moved)
 		ctx.Resolver.AddAmberOn(id, moved)
 	}
 }

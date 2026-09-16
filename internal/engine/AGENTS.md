@@ -41,7 +41,17 @@ recorded as ADRs — read them for the full rationale and the rejected alternati
   (renders English) and `Resolve(ctx)` (carries it out); one value drives both, so
   printed card text can never desync from behavior. A new mechanic is almost always
   a new `Effect` node in `effect_<mechanic>.go`, not a new branch in the `Game`
-  runtime. When a vocabulary file grows unwieldy (the `Condition` and `Count`
+  runtime. **A brand-new `Effect` node — or a new `card` facade type — is gated
+  behind a full grill-me session (the `grilling` skill) that the human signs off
+  on, whether or not you came through the `implement-cards` skill.** Extending the
+  engine in composable ways needs no ceremony (a new field, `Strategy`, `Target`
+  filter, or `Count` on an existing node is the normal way it grows); but a new
+  node widens the shared vocabulary permanently, and cramming a mechanic into an
+  existing node in a way that is not clean and composable is the same smell. Both
+  must be argued for, not slipped in: stop and present the grill (why it is
+  necessary, the cluster of real cards that need it, the alternatives rejected, and
+  a before/after authoring comparison). If the grill does not clearly land in
+  favour of the new node, extend an existing one instead. When a vocabulary file grows unwieldy (the `Condition` and `Count`
   families each ran past a thousand lines), split it by category into
   `<prefix>_*.go` files that keep the family prefix — `effect_condition.go` keeps
   the framework (the interface, `Comparison`, `Conditional`, `Or`, `CountIs`) and

@@ -15,3 +15,12 @@ var Shard = card.Cluster{
 	Strategy: card.ClusterStrategy.OnePerHouse,
 	Trigger:  card.ClusterTrigger.ByAnyMember,
 }
+
+// Ludo pairs Monument to Ludo (Mass Mutation) with Praefectus Ludo (Worlds
+// Collide), printed in different sets, so the Monument's discard-pile bonus has
+// its namesake to feed it (ADR 0036). The Monument leads and pulls the Praefectus.
+var Ludo = card.Cluster{
+	Name:     "Monument to Ludo",
+	Strategy: card.ClusterStrategy.Pull,
+	Trigger:  card.ClusterTrigger.ByLead,
+}

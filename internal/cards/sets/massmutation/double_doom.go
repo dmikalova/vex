@@ -1,24 +1,31 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// DoubleDoom
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Double Doom
 //
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Uncommon
 //
-//	Play: Return an enemy creature to its owner's hand. Your opponent discards a random card from their hand.
+//	Play: Put an enemy creature into its owner's hand, and your opponent discards a random card from their hand.
 var DoubleDoom = set.New(
 	"Double Doom",
 	card.House.Dis,
 	card.Type.Tactic,
 	card.Rarity.Uncommon,
 	card.Provenance(card.MM, "020"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
+			card.PutFromPlay{
+				Target:      card.Target.EnemyCreature,
+				Destination: card.To.Hand,
+			},
+			card.DiscardCard{
+				Player:    card.Opponent,
+				Zone:      card.Hand,
+				Selection: card.Random{},
+				Amount:    1,
+			},
+		}}),
 )

@@ -51,8 +51,13 @@ func (g *Game) swapAcrossZones(a, b LocalID) {
 		return // the in-play card is an artifact; cross-zone artifact swap is unsupported
 	}
 	g.record(CardsSwapped{A: inPlay, B: resting, FromPlayer: restingOwner, FromZone: Discard})
+	art, hasArt := g.giganticPartner(inPlay)
 	o := g.leavePlayDestroyed(inPlay)
 	g.State.Discard[o].add(inPlay)
+	if hasArt { // the swapped-out creature's gigantic art half follows it to the discard
+		ao := g.leavePlayDestroyed(art)
+		g.State.Discard[ao].add(art)
+	}
 	g.State.Discard[restingOwner].remove(resting)
 	core := &g.State.Cards[resting]
 	core.Exhausted = true

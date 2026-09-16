@@ -17,9 +17,13 @@ func (g *Game) Owner(id LocalID) int { return g.owner(id) }
 // Controller returns the player a card in play currently answers to.
 func (g *Game) Controller(id LocalID) int { return g.controller(id) }
 
-// HasTrait reports whether a card has a trait, printed or gained through another
-// card's text box (Mimic Gel copies a creature, Creed of Nurture lends one).
+// HasTrait reports whether a card has a trait, printed, gained through another
+// card's text box (Mimic Gel copies a creature, Creed of Nurture lends one), or
+// granted until the controller's next turn (the Mutation cycle grants Mutant).
 func (g *Game) HasTrait(id LocalID, trait Trait) bool {
+	if trait != traitUnset && g.State.Cards[id].TraitUntilNextTurn == trait {
+		return true
+	}
 	if g.cat.def(id).hasTrait(trait) {
 		return true
 	}
@@ -33,6 +37,17 @@ func (g *Game) HasTrait(id LocalID, trait Trait) bool {
 
 // TraitCount reports how many traits a card has.
 func (g *Game) TraitCount(id LocalID) int { return len(g.cat.def(id).Traits) }
+
+// HasBonusIcons reports whether a card prints at least one bonus icon. A gigantic
+// base half prints none itself; while in play it exposes its linked art half's
+// icons, so the combined creature counts as having them (ADR 0042).
+func (g *Game) HasBonusIcons(id LocalID) bool {
+	if len(g.cat.def(id).Bonuses) > 0 {
+		return true
+	}
+	art, ok := g.giganticPartner(id)
+	return ok && len(g.cat.def(art).Bonuses) > 0
+}
 
 // SharesTrait reports whether two cards have at least one trait in common.
 func (g *Game) SharesTrait(a, b LocalID) bool {
@@ -77,6 +92,17 @@ func (g *Game) LoseKeywordFrom(id LocalID, k Keyword) {
 		return
 	}
 	g.State.Cards[id].LostKeywords |= k.bit()
+	g.record(CreatureLostKeyword{Creature: id, Keyword: k})
+}
+
+// LoseKeywordUntilNextTurn takes a keyword away from one creature until the start
+// of its controller's next turn, so the loss survives the opponent's turn
+// (Reckless Rizzo).
+func (g *Game) LoseKeywordUntilNextTurn(id LocalID, k Keyword) {
+	if g.State.Cards[id].LostKeywordsUntilNextTurn&k.bit() != 0 {
+		return
+	}
+	g.State.Cards[id].LostKeywordsUntilNextTurn |= k.bit()
 	g.record(CreatureLostKeyword{Creature: id, Keyword: k})
 }
 
@@ -129,6 +155,30 @@ func (g *Game) GainAssault(id LocalID, amount int) {
 	}
 	c.TempAssaultBonus += int16(amount)
 	g.record(CreatureGainedAssault{Creature: id, Amount: amount})
+}
+
+// GrantAssaultUntilNextTurn gives one creature Assault until the start of its
+// controller's next turn (the Mutation cycle grants assault 3), so it clears with
+// the keyword and trait a mutation grants in the same breath.
+func (g *Game) GrantAssaultUntilNextTurn(id LocalID, amount int) {
+	c := g.stateOf(id)
+	if c == nil {
+		return
+	}
+	c.AssaultUntilNextTurn += int16(amount)
+	g.record(CreatureGainedAssault{Creature: id, Amount: amount})
+}
+
+// GrantTraitUntilNextTurn gives one creature a trait until the start of its
+// controller's next turn (the Mutation cycle grants Mutant). It holds a single
+// trait, so a second grant to the same creature overwrites the first.
+func (g *Game) GrantTraitUntilNextTurn(id LocalID, trait Trait) {
+	c := g.stateOf(id)
+	if c == nil || c.TraitUntilNextTurn == trait {
+		return
+	}
+	c.TraitUntilNextTurn = trait
+	g.record(CreatureGainedTrait{Creature: id, Trait: trait})
 }
 
 // ForgeKeyAtExtraCost forges one key at its current cost plus extra and reports
@@ -501,6 +551,14 @@ func (g *Game) MoveFromDeckToDiscard(id LocalID) {
 
 // ArchiveFromDeck moves a card from its owner's deck to their archives.
 func (g *Game) ArchiveFromDeck(id LocalID) { g.archiveFromDeck(g.owner(id), id) }
+
+// PutDeckCardOnBottom moves a card from its owner's deck to the bottom of that
+// same deck. The move is private information, so it records no log line.
+func (g *Game) PutDeckCardOnBottom(id LocalID) {
+	d := &g.State.Deck[g.owner(id)]
+	d.remove(id)
+	d.add(id)
+}
 
 // SetDeckTop rewrites the top len(order) cards of player's deck to order, with
 // order[0] on top. The reorder is private information, so it records no log line.

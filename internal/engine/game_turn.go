@@ -21,8 +21,11 @@ var (
 	ErrFirstTurnOneCard   = errors.New(
 		"the first player may play or discard only one card on their first turn",
 	)
-	ErrCannotPayToll   = errors.New("cannot pay the toll for this action")
-	ErrPlayRequirement = errors.New("not enough Æmber to play this card")
+	ErrCannotPayToll     = errors.New("cannot pay the toll for this action")
+	ErrPlayRequirement   = errors.New("not enough Æmber to play this card")
+	ErrGiganticNoPartner = errors.New(
+		"a gigantic creature needs both of its halves to be played",
+	)
 	ErrHouseNotAllowed = errors.New(
 		"that house is not an allowed active-house choice this turn",
 	)
@@ -49,6 +52,10 @@ func (g *Game) StartTurn(player int) {
 	g.State.PlayPermissionsUsedThisTurn[player] = [NumHouses]uint8{}
 	g.State.NonActivePlaysUsedThisTurn[player] = 0
 	g.State.FirstTurnPlayLimit[player] = false
+	// The "used a creature this turn" tally resets at turn start, not at the ready
+	// step where the reap/fight tallies roll, so an end-of-turn ability (Sloth) can
+	// still read it after ready and draw have run (ADR 0013).
+	g.State.TurnHistory[player][CreaturesUsedThisTurn] = 0
 	for p := 0; p < 2; p++ {
 		for _, id := range g.State.Battleline[p].slice() {
 			g.State.Cards[id].TimesUsedThisTurn = 0
@@ -77,6 +84,8 @@ func (g *Game) StartTurn(player int) {
 	g.State.SkipForgeNext[player] = Bar[bool]{}
 	g.State.KeyCostBump[player] = g.State.KeyCostBumpNext[player]
 	g.State.KeyCostBumpNext[player] = Bar[int]{}
+	g.State.KeyCostPerHouse[player] = g.State.KeyCostPerHouseNext[player]
+	g.State.KeyCostPerHouseNext[player] = Bar[perHouseKeySurcharge]{}
 	g.record(TurnBegan{Player: player, Turn: g.State.Turn})
 	g.enterPhase(PhaseStartOfTurn)
 	g.runPhases()
@@ -206,6 +215,10 @@ func (g *Game) drawModifier(player int) int {
 				if m.OnlyWhileInCenter && !g.InCenterOfBattleline(id) {
 					continue
 				}
+				if m.Per != nil {
+					total += m.Amount * m.Per.Value(g.constantContext(id))
+					continue
+				}
 				total += m.Amount
 			}
 		}
@@ -318,6 +331,21 @@ func (g *Game) RaiseKeyCostThisTurn(player, amount int, source LocalID) {
 	}
 }
 
+// RaiseKeyCostPerHouseNextTurn arms a counted key surcharge for a player's next
+// turn: Amount extra Æmber for each creature of House in play, recomputed at each
+// forge (Waking Nightmare). Successive raises of the same house stack their
+// per-creature amount; a different house replaces the surcharge.
+func (g *Game) RaiseKeyCostPerHouseNextTurn(player, amount int, house House, source LocalID) {
+	per := amount
+	if cur := g.State.KeyCostPerHouseNext[player].Value; cur.House == house {
+		per += cur.Per
+	}
+	g.State.KeyCostPerHouseNext[player] = Bar[perHouseKeySurcharge]{
+		Value:  perHouseKeySurcharge{House: house, Per: per},
+		Source: source,
+	}
+}
+
 // GrantMayPlayOrUse records a this-turn grant letting a player act with cards
 // outside their active house, folding the whole out-of-house permission family
 // (ADR 0037). It dispatches the axes onto the flat this-turn state slots — a fight
@@ -374,6 +402,14 @@ func (g *Game) GrantMayPlayOrUse(
 		Types:  types,
 		Count:  count,
 	})
+}
+
+// GrantMayUseTrait records a this-turn grant letting a player fully use their
+// creatures of a trait even outside the active house — Mutagenic Serum. The ready
+// phase clears the slot.
+func (g *Game) GrantMayUseTrait(player int, trait Trait) {
+	g.State.MayUseTrait[player] = trait
+	g.record(MayUseTraitGranted{Player: player, Trait: trait})
 }
 
 // offHousePermitRemaining maps a grant's Count onto an OffHousePermit's Remaining:
@@ -523,6 +559,9 @@ func (g *Game) KeyCostSources(player int) []LocalID {
 	if g.State.KeyCostBump[player].Value != 0 {
 		name(g.State.KeyCostBump[player].Source)
 	}
+	if g.State.KeyCostPerHouse[player].Value.House != HouseNone {
+		name(g.State.KeyCostPerHouse[player].Source)
+	}
 	for controller := 0; controller < 2; controller++ {
 		for _, id := range g.allInPlay(controller) {
 			if g.keyCostChangeFor(id, controller, player) != 0 {
@@ -551,7 +590,9 @@ func (g *Game) forgeKeyAtExtraCost(player, extra int) bool {
 	if g.forgeKeyNumberBarred(player) {
 		return false
 	}
-	cost := g.keyCost(player) + extra
+	// A Discount forge (Desire) can pass a negative surcharge to bring the cost below
+	// the current key cost; the total can never fall below 0.
+	cost := max(g.keyCost(player)+extra, 0)
 	if g.spendableAember(player) < cost {
 		return false
 	}

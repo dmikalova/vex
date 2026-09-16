@@ -78,6 +78,17 @@ func capitalizeFirst(s string) string {
 	return string(r)
 }
 
+// lowerFirst lower-cases the first rune of s, for folding an effect's own
+// sentence-cased Text() into the middle of a longer sentence.
+func lowerFirst(s string) string {
+	if s == "" {
+		return s
+	}
+	r := []rune(s)
+	r[0] = unicode.ToLower(r[0])
+	return string(r)
+}
+
 // indefinite prefixes a noun with the indefinite article "a" or "an", choosing
 // "an" before a word that starts with a vowel — e.g. "an Urchin", "a Knight". A
 // noun already led by "another" carries its own article ("an other") and takes

@@ -263,6 +263,26 @@ func TestNonActivePlayPermissionText(t *testing.T) {
 	}
 }
 
+// TestTypeUnlimitedPermissionText renders Matter Maker's type-scoped waiver, and
+// checks the plural noun for a single type and for a set of types.
+func TestTypeUnlimitedPermissionText(t *testing.T) {
+	got := playPermissionText(PlayPermission{Types: CardTypesOf(Upgrade)})
+	want := "You may play upgrades as if they were in the active house."
+	if got != want {
+		t.Errorf("type waiver text = %q, want %q", got, want)
+	}
+	if got := CardTypesOf(Artifact, Upgrade).playablePlural(); got != "artifacts or upgrades" {
+		t.Errorf("two-type plural = %q, want %q", got, "artifacts or upgrades")
+	}
+	if got := CardTypesOf(Creature, Artifact, Upgrade).playablePlural(); got !=
+		"creatures, artifacts, or upgrades" {
+		t.Errorf("three-type plural = %q", got)
+	}
+	if got := CardTypes(0).playablePlural(); got != "cards" {
+		t.Errorf("empty plural = %q, want %q", got, "cards")
+	}
+}
+
 // TestCannotUseThisTurnBar arms the this-turn use bar and confirms it stops the
 // player using creatures until the ready phase lifts it.
 func TestCannotUseThisTurnBar(t *testing.T) {

@@ -55,3 +55,26 @@ func (s CardTypes) list() string {
 func typeWord(t CardType) string {
 	return strings.ToLower(t.String())
 }
+
+// playablePlural renders the admitted types as a lowercase plural noun phrase,
+// e.g. "upgrades" or "artifacts or upgrades", for a play-permission clause. The
+// empty set, which admits everything, renders "cards".
+func (s CardTypes) playablePlural() string {
+	if s.all() {
+		return "cards"
+	}
+	var words []string
+	for _, t := range []CardType{Creature, Artifact, Upgrade, Tactic} {
+		if s.has(t) {
+			words = append(words, typeWord(t)+"s")
+		}
+	}
+	switch len(words) {
+	case 1:
+		return words[0]
+	case 2:
+		return words[0] + " or " + words[1]
+	default:
+		return strings.Join(words[:len(words)-1], ", ") + ", or " + words[len(words)-1]
+	}
+}

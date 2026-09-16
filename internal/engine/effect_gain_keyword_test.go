@@ -27,7 +27,7 @@ func TestGainKeywordValidate(t *testing.T) {
 }
 
 // TestGainKeywordResolve grants each friendly creature the keyword; it survives
-// the opponent's ready phase and lifts only at the controller's own next turn.
+// the opponent's turn and lifts only at the start of the controller's own next turn.
 func TestGainKeywordResolve(t *testing.T) {
 	g := started(t)
 	g.SetRecording(true)
@@ -52,15 +52,16 @@ func TestGainKeywordResolve(t *testing.T) {
 		t.Error("re-granting a held keyword should log nothing new")
 	}
 
-	// The opponent's ready phase does not lift it.
-	g.readyPhase(1)
+	// Neither ready phase lifts it, nor the opponent's start-of-turn.
+	g.readyPhase(0)
+	g.startOfTurnPhase(1)
 	if !g.hasKeyword(one, Elusive) {
 		t.Error("the grant should survive the opponent's turn")
 	}
 
-	// The controller's own next ready phase lifts it.
-	g.readyPhase(0)
+	// The controller's own next start-of-turn lifts it.
+	g.startOfTurnPhase(0)
 	if g.hasKeyword(one, Elusive) {
-		t.Error("the grant should lift at the controller's next turn")
+		t.Error("the grant should lift at the start of the controller's next turn")
 	}
 }

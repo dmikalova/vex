@@ -132,6 +132,8 @@ type CreatureReader interface {
 	SharesTrait(a, b LocalID) bool
 	// HasKeyword reports whether a creature has a keyword (printed or granted).
 	HasKeyword(id LocalID, k Keyword) bool
+	// HasBonusIcons reports whether a card prints at least one bonus icon.
+	HasBonusIcons(id LocalID) bool
 	// HasTrigger reports whether a card has an ability under the trigger, whether
 	// printed on it, granted by an attached upgrade, or granted by a constant
 	// ability.
@@ -228,6 +230,10 @@ type EconomyResolver interface {
 	// RaiseKeyCostThisTurn raises what a player's keys cost for the remainder of
 	// the current turn, biting immediately rather than waiting for a turn boundary.
 	RaiseKeyCostThisTurn(player, amount int, source LocalID)
+	// RaiseKeyCostPerHouseNextTurn arms a counted key surcharge for a player's next
+	// turn: amount extra Æmber for each creature of house in play, recomputed at
+	// each forge (Waking Nightmare).
+	RaiseKeyCostPerHouseNextTurn(player, amount int, house House, source LocalID)
 	// ForgeKeyFree has a player forge one key without paying its current cost. It
 	// reports whether a key was forged, so a forge card purges itself only when it did.
 	ForgeKeyFree(player int) bool
@@ -324,6 +330,10 @@ type CreatureResolver interface {
 	// LoseKeywordFrom takes a keyword away from one creature for the remainder of
 	// the turn (Niffle Grounds strips taunt and elusive).
 	LoseKeywordFrom(id LocalID, k Keyword)
+	// LoseKeywordUntilNextTurn takes a keyword away from one creature until the
+	// start of its controller's next turn (Reckless Rizzo loses elusive), so the
+	// loss survives the opponent's turn.
+	LoseKeywordUntilNextTurn(id LocalID, k Keyword)
 	// GrantKeywordUntilNextTurn gives one creature a keyword until the start of its
 	// controller's next turn (Hideaway Hole grants elusive), surviving the
 	// opponent's turn.
@@ -338,6 +348,12 @@ type CreatureResolver interface {
 	// GainAssault gives one creature Assault for the remainder of the turn (Creed of
 	// Nature grants assault equal to a chosen creature's power).
 	GainAssault(id LocalID, amount int)
+	// GrantAssaultUntilNextTurn gives one creature Assault until the start of its
+	// controller's next turn (the Mutation cycle grants assault 3).
+	GrantAssaultUntilNextTurn(id LocalID, amount int)
+	// GrantTraitUntilNextTurn gives one creature a trait until the start of its
+	// controller's next turn (the Mutation cycle grants the Mutant trait).
+	GrantTraitUntilNextTurn(id LocalID, trait Trait)
 	// GrantTextBox gives creature recipient the printed text box of source — its
 	// traits, keywords, and triggered abilities — either until recipient leaves
 	// play (Mimic Gel) or for the remainder of the turn (Creed of Nurture) when
@@ -484,6 +500,10 @@ type ZoneResolver interface {
 	// ArchiveFromDeck moves a card from its owner's deck to their archives — a card
 	// the controller looked at and chose to archive (Philophosaurus).
 	ArchiveFromDeck(id LocalID)
+	// PutDeckCardOnBottom moves a card from its owner's deck to the bottom of that
+	// same deck — a card the controller looked at and sent to the bottom (the Star
+	// Alliance mutants' Alien ability). The move is private, so it records no log.
+	PutDeckCardOnBottom(id LocalID)
 	// SetDeckTop rewrites the top len(order) cards of a player's deck to the given
 	// order (order[0] becomes the new top) — the controller reordering the cards
 	// they looked at (Navigator Ali). The ids must be exactly the cards currently
@@ -524,6 +544,14 @@ type ZoneResolver interface {
 	// of their deck (from Deck) or a uniformly random card from their facedown
 	// archives (from Archives). It does nothing when that zone is empty.
 	PlayFromOpponent(player int, from Zone)
+	// ResolveBonusIconsOn resolves the bonus icons printed on a card as if
+	// controller had just played it — one at a time, honoring a bar such as Master
+	// of the Grey and any substitution — but running none of the card's other text
+	// and no play reactions. The icons are read from the card's definition, so a card in
+	// hand (Ensign El-Samra), in a discard pile (LCdr. Trigon), or just purged
+	// (Reclaimed by Nature) still resolves them; the leaves-play gate the play path
+	// applies does not, since the card is not in play as its icons resolve.
+	ResolveBonusIconsOn(controller int, id LocalID)
 	// PutCardUnder removes a card from a player's hand and places it under host,
 	// face up or face down (Masterplan, Jargogle).
 	PutCardUnder(owner int, id, host LocalID, faceDown bool)
@@ -624,6 +652,10 @@ type TurnResolver interface {
 		types CardTypes,
 		count int,
 	)
+	// GrantMayUseTrait records a this-turn grant letting a player fully use (fight,
+	// reap, or Action:) their creatures of a trait even when they are not in the
+	// active house — Mutagenic Serum's "use friendly Mutant creatures".
+	GrantMayUseTrait(player int, trait Trait)
 	// AddLasting registers a "for the remainder of the turn" effect (Full Moon,
 	// Charge!, Crystal Hive reactions; Dimension Door's replacement) on a game event,
 	// instead of the effect hardcoding itself into the play or reap path. The record's

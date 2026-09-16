@@ -1,28 +1,30 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Charybdis
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
 //	House:  Saurian
 //	Type:   Creature
-//	Rarity: Special
+//	Rarity: Connected
 //	Power:  7
 //	Traits: Beast
 //
-//	Each enemy creatures gains, "Before Fight: Lose 1A."
+//	Each enemy creature gains, "Before Fight: Lose 1 Æmber."
 var Charybdis = set.New(
 	"Charybdis",
 	card.House.Saurian,
 	card.Type.Creature,
-	card.Rarity.Special,
+	card.Rarity.Connected,
 	card.Provenance(card.MM, "234"),
+	card.InCluster(scyllaCluster),
 	card.WithPower(7),
 	card.WithTraits(card.Traits.Beast),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithConstant(card.ConstantAbility{
+		Target: card.Target.EachEnemyCreature,
+		Granted: []card.Ability{{
+			Trigger: card.Trigger.BeforeFight,
+			Effect:  card.LoseAember{Player: card.Controller, Amount: 1},
+		}},
+	}),
 )

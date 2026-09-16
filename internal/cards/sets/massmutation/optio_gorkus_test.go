@@ -18,7 +18,7 @@ import (
 //	Traits: Dinosaur • Soldier
 //
 //	Elusive.
-//	Each of {self}'s neighbors gains, "Destroyed: Move all Æmber from this creature to Optio Gorkus."
+//	Each of Optio Gorkus's neighbors gains, "Destroyed: Move all Æmber from this creature to Optio Gorkus."
 func TestOptioGorkus(t *testing.T) {
 	t.Run("moves a destroyed neighbor's aember to Optio Gorkus", func(t *testing.T) {
 		var neighbor ct.Card

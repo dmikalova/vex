@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// DreadboneDecimus
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Dreadbone Decimus
 //
 //	House:  Saurian
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Dinosaur • Assassin
 //
-//	Play/Fight: You may exalt Dreadbone Decimus. If you do, destroy a creature with lower power than Dreadbone Decimus.
+//	Play/Fight: You may exalt Dreadbone Decimus -> destroy a creature with lower power than Dreadbone Decimus.
 var DreadboneDecimus = set.New(
 	"Dreadbone Decimus",
 	card.House.Saurian,
@@ -24,5 +19,10 @@ var DreadboneDecimus = set.New(
 	card.Provenance(card.MM, "204"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Assassin),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.PlayFight, card.May{Do: card.Then{
+		First: card.Exalt{Target: card.Target.This, Amount: 1},
+		Result: card.Destroy{
+			Target: card.Target.Creature.Refine(card.PowerLessThanSource()),
+		},
+	}}),
 )

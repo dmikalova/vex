@@ -26,6 +26,18 @@ disagree.
 
 - One card per file, named `snake_case.go` after the card (e.g. `dust_imp.go`,
   `ammonia_clouds.go`). The matching test is `snake_case_test.go`.
+- **Exception — a cycle of cards built from one shared shape** may live in a
+  single mechanic file that registers the whole family in an `init` loop rather
+  than one exported `var` per card. Mass Mutation's mutant cycle is the model:
+  [sets/massmutation/mutant_cycle.go](sets/massmutation/mutant_cycle.go) models
+  each house's contribution once and composes all 42 house-hybrid mutants (power
+  and armor sum, keywords and abilities union, trait and house from the suffix),
+  registering each with `set.New(...)`. Its sibling `mutant_cycle_test.go` tests
+  the family and the composition. The `TestNoOrphanedTestFiles` guard in
+  `cards_test`'s `testfiles_test.go` recognizes such a file (it registers cards
+  via `set.New` even without a card `var`). Reach for this only when the cards are
+  genuinely one parameterized shape; a card with its own identity keeps its own
+  file.
 - Author cards through the `card` facade only
   (`github.com/dmikalova/vactrol/internal/card`). Use the grouped
   namespaces — `card.House.X`, `card.Type.X`, `card.Rarity.X`,

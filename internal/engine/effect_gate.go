@@ -28,21 +28,38 @@ func resolveGateOf(ctx *EffectContext, e Effect) bool {
 }
 
 // Then is the "A -> B" result gate: it resolves First and, only when First did
-// something, resolves Result.
+// something, resolves Result. When First does nothing and an Else is set, the gate
+// takes the Else arm instead — the two-verb "you may A. If you do, B. Otherwise, C."
+// branch (Novu Dynamo gains Æmber or destroys itself; Auto-Vac 5150 taxes keys or
+// archives a card). This is the one case a gate carries an otherwise (rule 5).
 type Then struct {
 	First  GatingEffect
 	Result Effect
+	// Else, when set, resolves in place of Result whenever First did nothing —
+	// because the controller declined the optional first half or it had no legal
+	// target. Leaving it nil keeps the plain "A -> B" gate with no otherwise.
+	Else Effect
 }
 
-// Text renders the gate, e.g. "destroy a damaged creature -> steal 1 Æmber".
+// Text renders the gate, e.g. "destroy a damaged creature -> steal 1 Æmber", or
+// with an Else arm "discard a card -> gain 1 Æmber. Otherwise, destroy {self}".
 func (e Then) Text() string {
-	return e.First.Text() + " -> " + e.Result.Text()
+	body := e.First.Text() + " -> " + e.Result.Text()
+	if e.Else == nil {
+		return body
+	}
+	return body + ". Otherwise, " + e.Else.Text()
 }
 
-// Resolve runs First and then Result only if First did something.
+// Resolve runs First and then Result if First did something, or the Else arm (when
+// set) if it did not.
 func (e Then) Resolve(ctx *EffectContext) {
 	if e.First.resolveGate(ctx) {
 		e.Result.Resolve(ctx)
+		return
+	}
+	if e.Else != nil {
+		e.Else.Resolve(ctx)
 	}
 }
 
@@ -64,10 +81,16 @@ func (e Then) resolveOptional(ctx *EffectContext) bool {
 	return true
 }
 
-// validate surfaces a configuration error in either half of the gate.
+// validate surfaces a configuration error in any arm of the gate.
 func (e Then) validate() error {
 	if err := validateEffect(e.First); err != nil {
 		return err
 	}
-	return validateEffect(e.Result)
+	if err := validateEffect(e.Result); err != nil {
+		return err
+	}
+	if e.Else != nil {
+		return validateEffect(e.Else)
+	}
+	return nil
 }

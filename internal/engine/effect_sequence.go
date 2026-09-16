@@ -35,6 +35,11 @@ type foldable interface {
 func (e Sequence) Text() string {
 	parts := make([]string, 0, len(e.Effects))
 	for i := 0; i < len(e.Effects); {
+		if phrase, next, ok := foldNounList(e.Effects, i); ok {
+			parts = append(parts, phrase)
+			i = next
+			continue
+		}
 		c, ok := peekCombinable(e.Effects, i)
 		if !ok {
 			parts = append(parts, e.Effects[i].Text())
@@ -46,6 +51,43 @@ func (e Sequence) Text() string {
 		i = next
 	}
 	return joinSequenceParts(parts)
+}
+
+// nounListable is an effect whose text is a fixed head, an indefinite noun, and a
+// fixed tail — "put a tactic from your discard pile into your hand". A run of them
+// in a Sequence that shares a head and tail folds into one article-led list, "put
+// a tactic, artifact, creature, and upgrade from your discard pile into your
+// hand", rather than repeating the tail once per item (Look What I Found!). An
+// effect reports listNoun "" when it is not in this shape, so it is not folded.
+type nounListable interface {
+	listHead() string
+	listNoun() string
+	listTail() string
+}
+
+// foldNounList folds the run of nounListables starting at i that shares a head and
+// tail into one article-led noun list, reporting the phrase and the index just
+// past the run. It declines (ok false) unless at least two consecutive effects
+// qualify.
+func foldNounList(effects []Effect, i int) (string, int, bool) {
+	head, ok := effects[i].(nounListable)
+	if !ok || head.listNoun() == "" {
+		return "", i, false
+	}
+	nouns := []string{head.listNoun()}
+	j := i + 1
+	for ; j < len(effects); j++ {
+		n, ok := effects[j].(nounListable)
+		if !ok || n.listNoun() == "" ||
+			n.listHead() != head.listHead() || n.listTail() != head.listTail() {
+			break
+		}
+		nouns = append(nouns, n.listNoun())
+	}
+	if len(nouns) < 2 {
+		return "", i, false
+	}
+	return head.listHead() + " " + indefinite(oxfordAnd(nouns)) + " " + head.listTail(), j, true
 }
 
 // joinSequenceParts joins a Sequence's rendered children into one compound

@@ -1,25 +1,39 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// LookWhatIFound
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Look What I Found!
 //
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Rare
 //
 //	Omega.
-//	Play: Return 1 card of each type (action, artifact, creature, upgrade) from your discard pile to your hand.
+//	Play: Put a tactic, artifact, creature, and upgrade from your discard pile into your hand.
 var LookWhatIFound = set.New(
 	"Look What I Found!",
 	card.House.Untamed,
 	card.Type.Tactic,
 	card.Rarity.Rare,
 	card.Provenance(card.MM, "402"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Omega),
+	card.WithAbility(
+		card.Trigger.Play, card.Sequence{Effects: []card.Effect{
+			card.PutFromDiscard{
+				Selection:   card.Chosen{Type: card.Type.Tactic},
+				Destination: card.To.Hand,
+			},
+			card.PutFromDiscard{
+				Selection:   card.Chosen{Type: card.Type.Artifact},
+				Destination: card.To.Hand,
+			},
+			card.PutFromDiscard{
+				Selection:   card.Chosen{Type: card.Type.Creature},
+				Destination: card.To.Hand,
+			},
+			card.PutFromDiscard{
+				Selection:   card.Chosen{Type: card.Type.Upgrade},
+				Destination: card.To.Hand,
+			},
+		}}),
 )

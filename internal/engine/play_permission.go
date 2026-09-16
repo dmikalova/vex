@@ -19,18 +19,26 @@ type PlayPermission struct {
 	Amount    int
 	NonActive bool
 	Condition Condition
+	// Types, when set, makes the grant a house-agnostic, unlimited waiver for cards
+	// of those types: Matter Maker lets its controller play any number of upgrades
+	// as if they were of the active house. It is a mode of its own — the counted
+	// House and NonActive axes do not apply — so the play path never consumes it.
+	Types CardTypes
 }
 
 // granted reports whether the permission frees any play.
-func (p PlayPermission) granted() bool { return p.House != HouseNone || p.NonActive }
+func (p PlayPermission) granted() bool {
+	return p.House != HouseNone || p.NonActive || p.Types != 0
+}
 
 // count is how many off-house plays the permission allows each turn.
 func (p PlayPermission) count() int { return p.Amount }
 
 // validate rejects a granted permission that did not state a positive count, or
-// that carries a misconfigured condition.
+// that carries a misconfigured condition. A Types-scoped waiver is unlimited, so
+// it needs no count.
 func (p PlayPermission) validate() error {
-	if p.granted() && p.Amount < 1 {
+	if p.Types == 0 && p.granted() && p.Amount < 1 {
 		return fmt.Errorf("PlayPermission: Count must be positive")
 	}
 	if p.Condition != nil {

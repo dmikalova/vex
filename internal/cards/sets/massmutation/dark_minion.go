@@ -18,9 +18,9 @@ var DarkMinion = set.New(
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.MM, "004"),
+	card.WithEnhance(card.Bonus.Damage),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Mutant),
-	card.WithEnhance(card.Bonus.Damage),
 	card.WithAbility(
 		card.Trigger.Destroyed, card.DealDamage{
 			Amount: 1,

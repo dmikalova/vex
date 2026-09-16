@@ -18,9 +18,9 @@ var Hystricog = set.New(
 	card.Type.Creature,
 	card.Rarity.Uncommon,
 	card.Provenance(card.MM, "024"),
+	card.WithEnhance(card.Bonus.Damage, card.Bonus.Damage, card.Bonus.Damage),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Mutant),
-	card.WithEnhance(card.Bonus.Damage, card.Bonus.Damage, card.Bonus.Damage),
 	card.WithAbility(
 		card.Trigger.Action, card.Destroy{Target: card.Target.Creature.Damaged()}),
 )

@@ -1,20 +1,15 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ReclaimedByNature
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Reclaimed by Nature
 //
 //	House:  Untamed
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Purge an artifact. Resolve its bonus icons as if you had played it.
+//	Play: Purge an artifact. Resolve that card's bonus icons.
 var ReclaimedByNature = set.New(
 	"Reclaimed by Nature",
 	card.House.Untamed,
@@ -22,5 +17,9 @@ var ReclaimedByNature = set.New(
 	card.Rarity.Common,
 	card.Provenance(card.MM, "374"),
 	card.WithBonus(card.Bonus.Aember),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
+			card.PurgeCreature{Target: card.Target.Artifact},
+			card.ResolveBonusIcons{Target: card.Target.Triggering},
+		}}),
 )

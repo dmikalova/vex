@@ -69,6 +69,17 @@ func (g *Game) runPhase() {
 // abilities. It runs before the forge phase, so an ability that changes what a
 // key costs still has time to.
 func (g *Game) startOfTurnPhase(player int) {
+	// An effect granted "until the start of your next turn" (Hideaway Hole's
+	// elusive, the Mutation cycle's Assault and trait, Reckless Rizzo's keyword
+	// loss) lasts through the rest of the granting turn and the opponent's whole
+	// turn, then lifts here at the start of the controller's next turn — before any
+	// start-of-turn ability resolves, so those abilities see the grant already gone.
+	for _, id := range g.allInPlay(player) {
+		g.State.Cards[id].KeywordsUntilNextTurn = 0
+		g.State.Cards[id].LostKeywordsUntilNextTurn = 0
+		g.State.Cards[id].AssaultUntilNextTurn = 0
+		g.State.Cards[id].TraitUntilNextTurn = traitUnset
+	}
 	for _, id := range g.allInPlay(player) {
 		g.triggerAbilities(id, TriggerStartOfTurn, 0, false)
 	}
@@ -127,11 +138,6 @@ func (g *Game) readyPhase(player int) {
 		g.State.Cards[id].TempAssaultBonus = 0
 		g.State.Cards[id].TextBoxTurnSourcePlus = 0
 	}
-	// A keyword gained "until the start of your next turn" (Hideaway Hole) lifts
-	// only at the controller's own ready phase, so it survived the opponent's turn.
-	for _, id := range g.allInPlay(player) {
-		g.State.Cards[id].KeywordsUntilNextTurn = 0
-	}
 	g.State.CannotFight[player] = Bar[bool]{}
 	g.State.CannotUse[player] = Bar[bool]{}
 	g.State.SideDamageImmune = [2]bool{}
@@ -149,6 +155,8 @@ func (g *Game) readyPhase(player int) {
 	h[1][EnemyCreaturesFightKilled] = 0
 	h[0][EnemyCreaturesDestroyed] = 0
 	h[1][EnemyCreaturesDestroyed] = 0
+	h[0][FriendlyCreaturesDestroyed] = 0
+	h[1][FriendlyCreaturesDestroyed] = 0
 	h[player][CreaturesReapedThisTurn] = 0
 	h[player][CreaturesFoughtThisTurn] = 0
 	// The player who acts next reads how much was stolen from them during this
@@ -162,8 +170,10 @@ func (g *Game) readyPhase(player int) {
 	g.State.MayUseHouse[player] = HouseNone
 	g.State.MayPlayHouse[player] = HouseNone
 	g.State.MayUseArtifactsAnyHouse[player] = false
+	g.State.MayUseTrait[player] = traitUnset
 	g.clearOffHousePermits(player)
 	g.State.KeyCostBump[player] = Bar[int]{}
+	g.State.KeyCostPerHouse[player] = Bar[perHouseKeySurcharge]{}
 	g.State.KeywordsLost = 0
 	g.State.TextBlank[player] = Bar[bool]{}
 	g.clearLasting(player)
@@ -190,6 +200,19 @@ func (g *Game) endOfTurnPhase(player int) {
 			abilities[i].actor = int8(player)
 		}
 		pending = append(pending, abilities...)
+	}
+	// An end-of-turn artifact watches every turn, not only its owner's (Pincerator).
+	// This window fires for both players' in-play cards, each resolving as the turn's
+	// active player so "they"/"that player" is the player whose turn is ending, not
+	// the artifact's controller.
+	for _, p := range [2]int{player, 1 - player} {
+		for _, id := range g.allInPlay(p) {
+			abilities := g.triggeredBy(id, TriggerAfterAnyPlayerEndOfTurn)
+			for i := range abilities {
+				abilities[i].actor = int8(player)
+			}
+			pending = append(pending, abilities...)
+		}
 	}
 	pending = append(pending, g.scheduledEndOfTurn(player)...)
 	g.resolveWindow(g.orderTriggered(player, pending))

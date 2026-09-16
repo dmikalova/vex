@@ -219,6 +219,9 @@ func TestCounterKindNoun(t *testing.T) {
 	if got := CounterDisruption.noun(); got != "disruption counter" {
 		t.Errorf("CounterDisruption.noun() = %q, want %q", got, "disruption counter")
 	}
+	if got := CounterScheme.noun(); got != "scheme counter" {
+		t.Errorf("CounterScheme.noun() = %q, want %q", got, "scheme counter")
+	}
 	if CounterNone.valid() {
 		t.Error("CounterNone should not be a valid kind")
 	}

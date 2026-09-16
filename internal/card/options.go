@@ -26,8 +26,8 @@ var (
 	WithAttackKeywords = func(ak engine.AttackKeywords) Option { return gameplay(engine.WithAttackKeywords(ak)) }
 	// WithNoDamageWhenAttacked makes a creature deal no retaliation damage when attacked.
 	WithNoDamageWhenAttacked = func() Option { return gameplay(engine.WithNoDamageWhenAttacked()) }
-	// WithFriendlyEntersPlayReady makes friendly cards of the given type enter play ready while this card is in play.
-	WithFriendlyEntersPlayReady = func(t engine.CardType) Option { return gameplay(engine.WithFriendlyEntersPlayReady(t)) }
+	// WithFriendlyEntersPlayReady makes friendly cards enter play ready while this card is in play, per the grant (Duskwitch, The Curator, Fandangle).
+	WithFriendlyEntersPlayReady = func(g engine.EntersReadyGrant) Option { return gameplay(engine.WithFriendlyEntersPlayReady(g)) }
 	// WithFightRestriction restricts which creatures this creature may fight.
 	WithFightRestriction = func(t engine.Target) Option { return gameplay(engine.WithFightRestriction(t)) }
 	// WithCannotBeUsedTo bars a card from named ways of being used (reap, fight, action).
@@ -74,6 +74,9 @@ var (
 	WithPlayPermission = func(p engine.PlayPermission) Option { return gameplay(engine.WithPlayPermission(p)) }
 	// WithReplaces adds a replacement effect (Instead) the card applies while in play.
 	WithReplaces = func(r Instead) Option { return gameplay(engine.WithReplaces(r)) }
+	// WithBonusInstead lets the card substitute one of its controller's bonus icons
+	// while in play — resolving an icon as a different icon, or as an effect, instead.
+	WithBonusInstead = func(r BonusInstead) Option { return gameplay(engine.WithBonusInstead(r)) }
 	// WithDrawModifier changes how many cards a player draws.
 	WithDrawModifier = func(p Player, amount int) Option { return gameplay(engine.WithDrawModifier(p, amount)) }
 	// WithDrawModifierOffFlank changes how many cards a player draws, but only while
@@ -86,12 +89,22 @@ var (
 	WithDrawModifierInCenter = func(p Player, amount int) Option {
 		return gameplay(engine.WithDrawModifierInCenter(p, amount))
 	}
+	// WithDrawModifierPer changes how many cards a player draws, scaled by a running
+	// count (Greed refills 1 extra card for each friendly Sin creature).
+	WithDrawModifierPer = func(p Player, amount int, per engine.Count) Option {
+		return gameplay(engine.WithDrawModifierPer(p, amount, per))
+	}
 	// WithAemberCannotBeStolen keeps the controller's Æmber from being stolen.
 	WithAemberCannotBeStolen = func() Option { return gameplay(engine.WithAemberCannotBeStolen()) }
 	// WithAemberCannotBeStolenWhileItHasAember keeps the controller's Æmber from
 	// being stolen while the card itself has Æmber on it.
 	WithAemberCannotBeStolenWhileItHasAember = func() Option {
 		return gameplay(engine.WithAemberCannotBeStolenWhileItHasAember())
+	}
+	// WithAemberCannotBeStolenWhilePoolAtLeast keeps the controller's Æmber from
+	// being stolen while their pool holds at least n Æmber.
+	WithAemberCannotBeStolenWhilePoolAtLeast = func(n int) Option {
+		return gameplay(engine.WithAemberCannotBeStolenWhilePoolAtLeast(n))
 	}
 	// WithSpendableAember lets Æmber banked on this card be spent when forging.
 	WithSpendableAember = func() Option { return gameplay(engine.WithSpendableAember()) }
@@ -107,9 +120,9 @@ var (
 		return gameplay(engine.WithPlayRequirement(engine.AemberCost(n)))
 	}
 	// WithAbility adds an ability that resolves an effect on a trigger. A composite
-	// trigger (Trigger.PlayFightReap, Trigger.FightReap, Trigger.PlayReap) fans
-	// out into its atomic Play/Fight/Reap abilities, which text rendering merges
-	// back into one "Play/Fight/Reap:" line.
+	// trigger (Trigger.PlayFightReap, Trigger.FightReap, Trigger.PlayReap,
+	// Trigger.PlayFight) fans out into its atomic Play/Fight/Reap abilities, which
+	// text rendering merges back into one "Play/Fight/Reap:" line.
 	WithAbility = func(t engine.Trigger, e Effect) Option {
 		return gameplay(func(d *engine.CardDefinition) {
 			for _, at := range fanOutTrigger(t) {
@@ -134,6 +147,8 @@ func fanOutTrigger(t engine.Trigger) []engine.Trigger {
 		return []engine.Trigger{engine.TriggerAfterReap, engine.TriggerAfterFight}
 	case triggerPlayReap:
 		return []engine.Trigger{engine.TriggerAfterPlay, engine.TriggerAfterReap}
+	case triggerPlayFight:
+		return []engine.Trigger{engine.TriggerAfterPlay, engine.TriggerAfterFight}
 	default:
 		return []engine.Trigger{t}
 	}

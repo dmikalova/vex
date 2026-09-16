@@ -73,6 +73,8 @@ func afterYouActOnText(verb string, e Effect) (string, bool) {
 		) + ", " + cond.Then.Text(), true
 	case ItIsNamed:
 		return "after you " + verb + " " + it.Name + ", " + cond.Then.Text(), true
+	case ItHasBonusIcon:
+		return "after you " + verb + " a card with a bonus icon, " + cond.Then.Text(), true
 	default:
 		return "", false
 	}
@@ -417,11 +419,8 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 	if def.DealsNoDamageWhenAttacked {
 		rules = append(rules, def.Name+" deals no damage when attacked.")
 	}
-	switch def.GrantsEntersReady {
-	case Creature:
-		rules = append(rules, "Your creatures enter play ready.")
-	case Artifact:
-		rules = append(rules, "Friendly artifacts enter play ready.")
+	if s := entersReadyText(def.EntersReadyGrant); s != "" {
+		rules = append(rules, s)
 	}
 	if fr := def.FightRestriction; fr != (Target{}) {
 		rules = append(rules, def.Name+" can only fight "+singularNoun(fr.Text())+"s.")
@@ -457,6 +456,10 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 	if def.AemberCannotBeStolenWhileItHasAember {
 		rules = append(rules, "While "+def.Name+" has Æmber on it, your Æmber cannot be stolen.")
 	}
+	if n := def.AemberCannotBeStolenWhilePoolAtLeast; n > 0 {
+		rules = append(rules, fmt.Sprintf(
+			"While you have %d or more Æmber, your Æmber cannot be stolen.", n))
+	}
 	if def.SpendableAember {
 		rules = append(rules, "You may spend Æmber on "+def.Name+" when forging keys.")
 	}
@@ -487,6 +490,9 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 		rules = append(rules, s)
 	}
 	if s := gainsForgeAemberText(def); s != "" {
+		rules = append(rules, s)
+	}
+	if s := bonusInsteadText(def); s != "" {
 		rules = append(rules, s)
 	}
 	// A creature played as an upgrade folds its Static grant into the "may be played
@@ -558,7 +564,7 @@ func drawModifierText(m DrawModifier) string {
 	switch m.Player {
 	case Controller:
 		s = fmt.Sprintf(
-			"During your %q phase, refill your hand to %d %s %s.",
+			"During your %q phase, refill your hand to %d %s %s",
 			"draw cards",
 			n,
 			word,
@@ -566,7 +572,7 @@ func drawModifierText(m DrawModifier) string {
 		)
 	case Opponent:
 		s = fmt.Sprintf(
-			"During their %q phase, your opponent refills their hand to %d %s %s.",
+			"During their %q phase, your opponent refills their hand to %d %s %s",
 			"draw cards",
 			n,
 			word,
@@ -574,13 +580,17 @@ func drawModifierText(m DrawModifier) string {
 		)
 	default: // EachPlayer
 		s = fmt.Sprintf(
-			"During their %q phase, each player refills their hand to %d %s %s.",
+			"During their %q phase, each player refills their hand to %d %s %s",
 			"draw cards",
 			n,
 			word,
 			noun,
 		)
 	}
+	if m.Per != nil {
+		s += " for each " + m.Per.CountText()
+	}
+	s += "."
 	if m.OnlyWhileOffFlank {
 		s = "While " + SelfName + " is not on a flank, " + strings.ToLower(s[:1]) + s[1:]
 	}
@@ -871,7 +881,7 @@ func constantGrantedText(def *CardDefinition) []string {
 		if len(c.Granted) == 0 {
 			continue
 		}
-		subject := capitalizeFirst(c.target().Text())
+		subject := capitalizeFirst(strings.ReplaceAll(c.target().Text(), SelfName, def.Name))
 		for _, ab := range c.Granted {
 			body := abilityTextWithNames(RenderAbility(ab), "this creature", def.Name)
 			if c.WhileInCenter {
@@ -940,6 +950,14 @@ func restrictionText(r Restrictions, isUpgrade bool) []string {
 		lines = append(lines, "Enemy creatures cannot reap.")
 	case EachPlayer:
 		lines = append(lines, "Creatures cannot reap.")
+	}
+	switch r.BonusIcons {
+	case Controller:
+		lines = append(lines, "You cannot resolve bonus icons on cards you play.")
+	case Opponent:
+		lines = append(lines, "Your opponent cannot resolve bonus icons on cards they play.")
+	case EachPlayer:
+		lines = append(lines, "Players cannot resolve bonus icons on cards they play.")
 	}
 	if r.CannotPlay != TypeUnset {
 		lines = append(lines, "You cannot play "+strings.ToLower(r.CannotPlay.String())+"s.")
@@ -1010,6 +1028,9 @@ func keyCostText(kc KeyCostChange) string {
 	if kc.whileOnFlank {
 		return "While " + SelfName + " is on a flank, " + sentence + "."
 	}
+	if kc.whileOffFlank {
+		return "While " + SelfName + " is not on a flank, " + sentence + "."
+	}
 	if kc.whileCondition != nil {
 		return capitalizeFirst(kc.whileCondition.CondText()) + ", " + sentence + "."
 	}
@@ -1025,6 +1046,12 @@ func keyCostText(kc KeyCostChange) string {
 func playPermissionText(p PlayPermission) string {
 	if !p.granted() {
 		return ""
+	}
+	if p.Types != 0 {
+		return fmt.Sprintf(
+			"You may play %s as if they were in the active house.",
+			p.Types.playablePlural(),
+		)
 	}
 	if p.NonActive {
 		noun := "card"
@@ -1094,6 +1121,37 @@ func captureStolenAemberText(def *CardDefinition) string {
 	return "Each Æmber that would be stolen is captured by a creature controlled by the active player instead."
 }
 
+// bonusInsteadText renders a card's continuous bonus-icon substitution, e.g. "When
+// resolving a bonus icon, you may resolve it as a Capture bonus icon instead."
+// (Amphora Captura) or "When you resolve a Capture bonus icon, steal 1 Æmber
+// instead." (Scrivener Favian). A May substitution reads "you may"; a mandatory one
+// omits it.
+func bonusInsteadText(def *CardDefinition) string {
+	rm := def.BonusInstead
+	if !rm.set() {
+		return ""
+	}
+	trigger := "When resolving a bonus icon, "
+	if rm.From != bonusUnset {
+		trigger = "When you resolve a " + rm.From.String() + " bonus icon, "
+	}
+	clause := bonusInsteadClause(rm)
+	if rm.May {
+		clause = "you may " + clause
+	}
+	return trigger + clause + " instead."
+}
+
+// bonusInsteadClause renders the verb phrase a bonus-icon substitution applies:
+// "resolve it as a Capture bonus icon" for an icon swap, or the effect's own text
+// ("steal 1 Æmber") for a replacement effect.
+func bonusInsteadClause(rm BonusInstead) string {
+	if rm.Instead != nil {
+		return lowerFirst(rm.Instead.Text())
+	}
+	return "resolve it as a " + rm.As.String() + " bonus icon"
+}
+
 // gainsForgeAemberText renders a card that gains all the Æmber its controller's
 // opponent spends forging a key, e.g. "You gain all Æmber your opponent spends
 // when forging a key."
@@ -1147,6 +1205,39 @@ func attackDamageText(def *CardDefinition) string {
 	default:
 		return ""
 	}
+}
+
+// entersReadyText renders the "enter play ready" grant line, matching the printed
+// wording: an ungated creature grant reads "Your creatures enter play ready.", an
+// ungated artifact grant "Friendly artifacts enter play ready.", and a gated or
+// house-filtered grant leads with its "While you have N or more Æmber" clause and
+// a "non-<House>" qualifier (Fandangle).
+func entersReadyText(g EntersReadyGrant) string {
+	var noun string
+	switch g.Type {
+	case Creature:
+		noun = "creatures"
+	case Artifact:
+		noun = "artifacts"
+	default:
+		return ""
+	}
+	// Preserve the established simple wording when there is no gate or filter.
+	if g.MinAember == 0 && g.ExceptHouse == HouseNone {
+		if g.Type == Artifact {
+			return "Friendly artifacts enter play ready."
+		}
+		return "Your creatures enter play ready."
+	}
+	qualifier := ""
+	if g.ExceptHouse != HouseNone {
+		qualifier = "non-" + g.ExceptHouse.String() + " "
+	}
+	if g.MinAember > 0 {
+		return fmt.Sprintf("While you have %d or more Æmber, your %s%s enter play ready.",
+			g.MinAember, qualifier, noun)
+	}
+	return "Your " + qualifier + noun + " enter play ready."
 }
 
 // attackIgnoresText renders the defensive keywords a creature ignores while it is

@@ -33,6 +33,10 @@ const (
 	// CounterDisruption is a disruption counter — Disruption Field raises the
 	// opponent's key cost by one Æmber for each one it carries.
 	CounterDisruption
+	// CounterScheme is a scheme counter — Mastermindy gains one at the end of each
+	// of its controller's turns and, on its Action, removes them all to steal one
+	// Æmber for each.
+	CounterScheme
 	// NumCounterKinds is one past the last real kind, so callers can range over
 	// CounterNone+1 .. NumCounterKinds to visit every counter (the web icon
 	// completeness test does, to force a new kind to ship its own unique icon).
@@ -66,6 +70,8 @@ func (k CounterKind) noun() string {
 		return "glory counter"
 	case CounterDisruption:
 		return "disruption counter"
+	case CounterScheme:
+		return "scheme counter"
 	default:
 		return "counter"
 	}

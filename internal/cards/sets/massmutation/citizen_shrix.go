@@ -17,6 +17,7 @@ var CitizenShrix = set.New(
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.MM, "186"),
+	card.InCluster(card.Pulled(monumentToShrixCluster, 1, 1)),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Mutant),
 	card.WithAbility(

@@ -142,10 +142,14 @@ func reprintsForSet(set provenance.Set) []provenance.Card {
 	}
 
 	// Cluster awareness: a card pulled into a cluster by a lead (card.InCluster)
-	// only forms that cluster when the lead is in the same set's pool. Reprinting a
-	// pulled member without its lead would leave deck generation with a lead-less
-	// ByLead cluster (it panics, ADR 0036), so skip such an orphaned reprint — the
-	// member joins the set only where the lead is also present.
+	// only forms that cluster when the lead is in the same set's pool. When a set
+	// reprints a pulled member without its lead, the outcome depends on the member's
+	// rarity: a rollable member (any rarity but Connected) prints in this set on its
+	// own — KeyForge prints Sensor Chief Garcia in Mass Mutation without its blaster
+	// — so it is reprinted and the aggregator drops its lead-less cluster for this
+	// set (ownPool/reprintPoolCard). A Connected member never rolls alone, so it can
+	// never appear without its lead; reprinting it would be a card that can never be
+	// drawn, so skip it here (the aggregator also panics if one is forced in by hand).
 	regByName := map[string]card.RegisteredCard{}
 	leadOfCluster := map[string]string{}
 	for _, rc := range card.Cards() {
@@ -172,6 +176,15 @@ func reprintsForSet(set provenance.Set) []provenance.Card {
 		lead := leadOfCluster[m.Name]
 		return lead == "" || !pooled[normalizeName(lead)]
 	}
+	// unpooledOrphan reports a reprint that cannot join this set's pool: a Connected
+	// cluster member whose lead is absent. A rollable orphan is kept.
+	unpooledOrphan := func(name string) bool {
+		if !leadAbsent(name) {
+			return false
+		}
+		rc, ok := regByName[normalizeName(name)]
+		return ok && rc.Def.Rarity == card.Rarity.Connected
+	}
 
 	var out []provenance.Card
 	seen := map[string]bool{}
@@ -180,7 +193,7 @@ func reprintsForSet(set provenance.Set) []provenance.Card {
 		if !ok || im.home == set.Name || seen[im.name] {
 			continue
 		}
-		if leadAbsent(im.name) {
+		if unpooledOrphan(im.name) {
 			continue
 		}
 		seen[im.name] = true

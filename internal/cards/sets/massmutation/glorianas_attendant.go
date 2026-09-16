@@ -17,7 +17,7 @@ var GlorianasAttendant = set.New(
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.MM, "368"),
+	card.WithEnhance(card.Bonus.Aember, card.Bonus.Aember),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Mutant),
-	card.WithEnhance(card.Bonus.Aember, card.Bonus.Aember),
 )

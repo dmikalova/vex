@@ -18,9 +18,9 @@ var BossZarek = set.New(
 	card.Type.Creature,
 	card.Rarity.Uncommon,
 	card.Provenance(card.MM, "264"),
+	card.WithEnhance(card.Bonus.Capture, card.Bonus.Capture, card.Bonus.Capture),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Mutant, card.Traits.Thief),
-	card.WithEnhance(card.Bonus.Capture, card.Bonus.Capture, card.Bonus.Capture),
 	card.WithConstant(card.ConstantAbility{
 		Target:   card.Target.EachFriendlyCreature.WithAember(),
 		Keywords: card.Keywords(card.Keyword.Elusive),

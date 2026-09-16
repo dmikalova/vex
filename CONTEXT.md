@@ -166,6 +166,26 @@ _Avoid_: beneath.
 Looking at a facedown under-card without revealing it to the opponent. Only the
 controller of the host a card is placed under may peek at it.
 
+**Gigantic**:
+A single large creature spread across two cards that are played together and act
+as one creature on the battleline. It is two cards while out of play but one
+creature while in play, and playing it counts as playing only one card (so it is
+legal on the first turn). Both halves share the same name, House, and card type
+(Creature); they pair by name, so any base half pairs with any art half of the
+same name.
+
+**Base half**:
+The half of a gigantic that carries the creature's power, armor, traits,
+keywords, abilities, and rarity. While the gigantic is in play, the base half is
+the creature standing on the battleline.
+_Avoid_: bottom half, "2 of 2".
+
+**Art half**:
+The half of a gigantic that carries only the bonus icons (plus the shared name,
+House, and type). While the gigantic is in play it lends its bonus icons to the
+one creature; it never stands on the battleline in its own right.
+_Avoid_: top half, "1 of 2".
+
 **Constant ability**:
 An ability with no boldfaced trigger, which applies continuously while its card
 stays in play — the power and armor bonuses one card hands its neighbors, a

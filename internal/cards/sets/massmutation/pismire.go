@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Pismire
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Untamed
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Mutant
 //
-//	While there are more friendly Mutant creatures than enemy Mutant creatures, your opponent's keys cost +2A.
+//	If you control more Mutant creatures than your opponent, your opponent's keys cost +2 Æmber.
 var Pismire = set.New(
 	"Pismire",
 	card.House.Untamed,
@@ -24,5 +19,7 @@ var Pismire = set.New(
 	card.Provenance(card.MM, "372"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Mutant),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeyCost(card.KeyCostChange(card.Opponent, 2).While(
+		card.ControlsMoreCreatures{Trait: card.Traits.Mutant},
+	)),
 )

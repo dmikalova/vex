@@ -35,4 +35,15 @@ func TestHideawayHole(t *testing.T) {
 	if !h.Game().HasKeyword(friend.ID(), card.Keyword.Elusive) {
 		t.Error("the friendly creature should have gained elusive")
 	}
+
+	// The grant lasts through the opponent's whole turn and lifts only at the start
+	// of the controller's next turn.
+	h.P1.EndTurn()
+	if !h.Game().HasKeyword(friend.ID(), card.Keyword.Elusive) {
+		t.Error("elusive should survive the opponent's turn")
+	}
+	h.P2.EndTurn()
+	if h.Game().HasKeyword(friend.ID(), card.Keyword.Elusive) {
+		t.Error("elusive should lift at the start of the controller's next turn")
+	}
 }

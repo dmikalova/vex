@@ -72,6 +72,16 @@ not for MCTS snapshot performance.
   passes.
 - The totality test makes glyph coverage a build gate: adding an effect without a
   glyph mapping breaks `mage check`, which is the intended "fail loud" behavior.
+  The gate carries **no tolerance allowlist** — there is no map of node types
+  permitted to fall back to the unknown glyph. Every effect must map to a real
+  glyph (or, where a mechanic has no icon vocabulary at all, deliberately render
+  nothing while reporting itself covered, as a trait grant does — traits are card
+  text, not strip glyphs). An unmapped node is always a failure to fix, never one
+  to silence.
+- Coverage is checked at **both** ends of a line: `TestNoResidualUnknownGlyph`
+  scans a card's rendered strip for the unknown sentinel in its trigger-head
+  glyph as well as its effect-body glyphs, so a new trigger with no icon mapping
+  fails the same way a new effect does.
 - The strip complements the rules text and never replaces it; if the strip
   cannot fit or a glyph is missing, the text remains the lossless source of
   truth.

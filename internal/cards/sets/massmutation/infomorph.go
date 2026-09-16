@@ -17,7 +17,7 @@ var Infomorph = set.New(
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.MM, "074"),
+	card.WithEnhance(card.Bonus.Draw, card.Bonus.Draw),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Mutant),
-	card.WithEnhance(card.Bonus.Draw, card.Bonus.Draw),
 )

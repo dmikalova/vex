@@ -152,6 +152,46 @@ func TestPlayedThisTurn(t *testing.T) {
 	}
 }
 
+// TestTypeUnlimitedPlayPermission covers Matter Maker: a house-agnostic, unlimited
+// waiver for a card type lets its controller play any number of off-house upgrades
+// without spending any per-turn play grant, but frees no other card type.
+func TestTypeUnlimitedPlayPermission(t *testing.T) {
+	maker := NewCard("Matter Maker", StarAlliance, Artifact, Rare,
+		WithPlayPermission(PlayPermission{Types: CardTypesOf(Upgrade)}))
+
+	t.Run("frees any number of off-house upgrades without a counter", func(t *testing.T) {
+		g := started(t) // Brobnar active
+		g.AddArtifact(maker, 0)
+		g.AddToBattleline(testCreature("host", 3), 0)
+		up1 := g.AddToHand(
+			NewCard("Bolt", Logos, Upgrade, Common, WithStatic(StaticModifier{PowerBonus: 1})), 0)
+		up2 := g.AddToHand(
+			NewCard("Coil", Logos, Upgrade, Common, WithStatic(StaticModifier{PowerBonus: 1})), 0)
+
+		if err := g.CanPlay(0, up1); err != nil {
+			t.Fatalf("CanPlay off-house upgrade with Matter Maker = %v, want nil", err)
+		}
+		if _, err := g.PlayUpgrade(0, handIdxByID(g, 0, up1)); err != nil {
+			t.Fatalf("first upgrade: %v", err)
+		}
+		if _, err := g.PlayUpgrade(0, handIdxByID(g, 0, up2)); err != nil {
+			t.Fatalf("second upgrade: %v", err)
+		}
+		if got := g.State.NonActivePlaysUsedThisTurn[0]; got != 0 {
+			t.Errorf("type waiver consumed a non-active counter: %d", got)
+		}
+	})
+
+	t.Run("frees no other card type", func(t *testing.T) {
+		g := started(t)
+		g.AddArtifact(maker, 0)
+		creature := g.AddToHand(NewCard("Logos Bot", Logos, Creature, Common, WithPower(3)), 0)
+		if err := g.CanPlay(0, creature); err != ErrWrongHouse {
+			t.Fatalf("CanPlay off-house creature = %v, want ErrWrongHouse", err)
+		}
+	})
+}
+
 func TestOffHousePlayGrant(t *testing.T) {
 	witch := NewCard(
 		"Witch",

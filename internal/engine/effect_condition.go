@@ -40,6 +40,12 @@ const (
 	// than the opponent's; it ignores Amount and applies only to
 	// PoolAember{Player: Controller}.
 	MoreThanOpponent
+	// Even is met when the quantity is even (including zero); it ignores Amount —
+	// Even Ivan steals while the opponent's pool is even.
+	Even
+	// Odd is met when the quantity is odd; it ignores Amount — Odd Clawde steals
+	// while the opponent's pool is odd.
+	Odd
 )
 
 // validateCondition returns any configuration error a condition reports (an unset
@@ -199,6 +205,47 @@ func (o Or) Met(ctx *EffectContext) bool {
 		}
 	}
 	return false
+}
+
+// And is met when every one of its Conditions is met, composing conditions
+// instead of baking each combination into a bespoke one — Dark Æmber Vault draws
+// when a creature you played is a Mutant (it is friendly and it is a Mutant).
+type And struct {
+	Conditions []Condition
+}
+
+// validate requires at least two conditions and rejects any invalid one.
+func (a And) validate() error {
+	if len(a.Conditions) < 2 {
+		return fmt.Errorf("And: needs at least two conditions")
+	}
+	for _, c := range a.Conditions {
+		if err := validateCondition(c); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// CondText joins the sub-clauses with "and", e.g. "if it is a friendly creature
+// and it is a Mutant creature". Each condition renders "if <clause>" (the shared
+// convention), so the leading "if " is dropped before the clauses are joined.
+func (a And) CondText() string {
+	clauses := make([]string, len(a.Conditions))
+	for i, c := range a.Conditions {
+		clauses[i] = strings.TrimPrefix(c.CondText(), "if ")
+	}
+	return "if " + strings.Join(clauses, " and ")
+}
+
+// Met reports whether every condition is met.
+func (a And) Met(ctx *EffectContext) bool {
+	for _, c := range a.Conditions {
+		if !c.Met(ctx) {
+			return false
+		}
+	}
+	return true
 }
 
 // Conditional resolves Then only when Cond is met. It renders as "<cond>, <then>",

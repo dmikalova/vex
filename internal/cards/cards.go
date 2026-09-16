@@ -92,20 +92,34 @@ func buildDeckSets() []deckgen.Set {
 	reprints := reprintsBySet()
 	legacy := buildLegacy(groups)
 	clusters := deckgen.NewClusterPool(catalogCards())
+	leads := clusterLeadNames()
 	var sets []deckgen.Set
 	for _, name := range setOrder() {
-		own := ownPool(groups[name], reprints[name])
+		own := ownPool(groups[name], reprints[name], leads)
 		if !hasDraftable(own) {
 			// A reservoir set (e.g. Anomaly Expansion) has no draw pool of its own —
 			// its cards enter decks only through a cross-set cluster — so it gets no
 			// Set. Its cards still reach the catalog cluster pool and the legacy pool.
 			continue
 		}
-		sets = append(sets, deckgen.NewSet(name, own, deckgen.DefaultTuning()).
+		sets = append(sets, deckgen.NewSet(name, own, tuningFor(name)).
 			WithLegacy(legacy).
 			WithClusters(clusters))
 	}
 	return sets
+}
+
+// tuningFor returns a set's deck-generation tuning: the shared defaults, with
+// per-set overrides. Mass Mutation's only Special is the houseless Dark Æmber
+// Vault, so its special slot fires about a third as often as the default (roughly
+// one deck in 36 rather than one in 12) — a single Special is rarer than a whole
+// pool of them.
+func tuningFor(name string) deckgen.Tuning {
+	t := deckgen.DefaultTuning()
+	if name == provenance.MassMutation.Name {
+		t.SpecialRate = deckgen.DefaultTuning().SpecialRate / 3
+	}
+	return t
 }
 
 // catalogCards adapts every registered card to a deckgen pool entry, for the
@@ -164,22 +178,103 @@ func buildLegacy(groups map[string][]card.RegisteredCard) *deckgen.Legacy {
 
 // ownPool is a set's deck-generation pool: its natively implemented cards followed
 // by its reprints, skipping a reprint whose name a native card already fills so a
-// card is pooled once.
-func ownPool(native, reprints []card.RegisteredCard) []deckgen.Card {
+// card is pooled once. A reprinted cluster member whose lead is not also in this
+// set is an orphan (KeyForge prints it here without its lead); reprintPoolCard
+// decides whether it joins as a plain pool card or is a catalog error.
+func ownPool(native, reprints []card.RegisteredCard, leads map[string]string) []deckgen.Card {
+	inPool := make(map[string]bool, len(native)+len(reprints))
+	for _, rc := range native {
+		inPool[normalizeName(rc.Def.Name)] = true
+	}
+	for _, rc := range reprints {
+		inPool[normalizeName(rc.Def.Name)] = true
+	}
 	seen := make(map[string]bool, len(native))
 	out := make([]deckgen.Card, 0, len(native)+len(reprints))
 	for _, rc := range native {
-		out = append(out, deckgenCard(rc))
+		out = append(out, nativePoolCard(rc, inPool, leads))
 		seen[rc.Def.Name] = true
 	}
 	for _, rc := range reprints {
 		if seen[rc.Def.Name] {
 			continue
 		}
-		out = append(out, deckgenCard(rc))
+		out = append(out, reprintPoolCard(rc, inPool, leads))
 		seen[rc.Def.Name] = true
 	}
 	return out
+}
+
+// nativePoolCard adapts a card implemented in this set to its pool. It is a plain
+// pool member unless it is a non-lead cluster member whose lead is printed only in
+// another set — a cross-set orphan (Praefectus Ludo is native to Worlds Collide,
+// but its lead, Mass Mutation's Monument to Ludo, is not). Such a member drops its
+// cluster here so this set builds no lead-less ByLead cluster; the pairing still
+// forms in the lead's set, where the member reprints. A member whose cluster has
+// no lead anywhere is an authoring slip (a forgotten LeadsCluster), not an orphan,
+// so it keeps its membership and deckgen's lead-less gate fires.
+func nativePoolCard(
+	rc card.RegisteredCard,
+	inPool map[string]bool,
+	leads map[string]string,
+) deckgen.Card {
+	c := deckgenCard(rc)
+	m := rc.Profile.Cluster
+	if m.Name == "" || m.Lead {
+		return c
+	}
+	lead := leads[m.Name]
+	if lead == "" || inPool[normalizeName(lead)] {
+		return c
+	}
+	c.Profile.Cluster = deckgen.ClusterMembership{}
+	return c
+}
+
+// clusterLeadNames maps each cluster's name to the card that leads it, across the
+// whole catalog, so ownPool can tell whether a reprinted member's lead rides along
+// into the same set.
+func clusterLeadNames() map[string]string {
+	leads := map[string]string{}
+	for _, rc := range card.Cards() {
+		if m := rc.Profile.Cluster; m.Name != "" && m.Lead {
+			leads[m.Name] = rc.Def.Name
+		}
+	}
+	return leads
+}
+
+// reprintPoolCard adapts a reprinted card to this set's pool. A reprinted cluster
+// member whose lead is not also in this set is an orphan: KeyForge prints it in
+// this set without its lead. If it can roll on its own (any rarity but Connected),
+// it joins as a plain pool card with its cluster membership dropped, so deckgen
+// builds no lead-less ByLead cluster for this set (the "forgot LeadsCluster" gate
+// still fires for native cards, which are never stripped). A Connected member
+// never rolls alone, so an orphaned one can never appear and is a catalog error.
+func reprintPoolCard(
+	rc card.RegisteredCard,
+	inPool map[string]bool,
+	leads map[string]string,
+) deckgen.Card {
+	c := deckgenCard(rc)
+	m := rc.Profile.Cluster
+	if m.Name == "" || m.Lead {
+		return c
+	}
+	lead := leads[m.Name]
+	if lead != "" && inPool[normalizeName(lead)] {
+		return c
+	}
+	if rc.Def.Rarity == card.Rarity.Connected {
+		panic(fmt.Sprintf(
+			"cards: Connected card %q is reprinted into set %q without its cluster "+
+				"lead %q; a Connected card never rolls on its own, so it cannot appear "+
+				"without its lead",
+			rc.Def.Name, rc.Set.Name, lead,
+		))
+	}
+	c.Profile.Cluster = deckgen.ClusterMembership{}
+	return c
 }
 
 // reprintsBySet resolves each set's reprint claims (its 0set.go entries) to the
@@ -210,10 +305,14 @@ func reprintsBySet() map[string][]card.RegisteredCard {
 	return out
 }
 
-// normalizeName folds a card name to a case- and space-insensitive key so a
-// reprint claim matches the card that implements it regardless of catalog casing.
+// normalizeName folds a card name to a case-, space-, and ligature-insensitive
+// key so a reprint claim matches the card that implements it regardless of
+// catalog casing or whether Æmber is written with the Æ ligature (as on a card
+// name like Dark Æmber Vault) or the ASCII "Ae" the source catalogs transcribe.
 func normalizeName(name string) string {
-	return strings.ToLower(strings.TrimSpace(name))
+	folded := strings.ReplaceAll(name, "Æ", "Ae")
+	folded = strings.ReplaceAll(folded, "æ", "ae")
+	return strings.ToLower(strings.TrimSpace(folded))
 }
 
 // DeckSet assembles the deck-generation Set to build decks from: the first

@@ -1,27 +1,44 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// MonumentToPrimus
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// monumentToPrimusCluster pulls a Consul Primus into Monument to Primus's pod, so
+// the Monument's discard-pile bonus has its namesake to feed it (ADR 0036). Consul
+// Primus also drafts on its own, so the pull only guarantees the pairing.
+var monumentToPrimusCluster = card.Cluster{
+	Name:     "Monument to Primus",
+	Strategy: card.ClusterStrategy.Pull,
+	Trigger:  card.ClusterTrigger.ByLead,
+}
+
+// Monument to Primus
 //
 //	House:  Saurian
 //	Type:   Artifact
-//	Rarity: Special
+//	Rarity: Rare
 //	Traits: Location
 //
-//	Action: Move 1A from a friendly creature to another friendly creature. If Consul Primus is in your discard pile, move 1A from a creature to another creature instead.
+//	Action: If Consul Primus is in your discard pile, move 1 Æmber from a creature to another creature. Otherwise, move 1 Æmber from a friendly creature to another friendly creature.
 var MonumentToPrimus = set.New(
 	"Monument to Primus",
 	card.House.Saurian,
 	card.Type.Artifact,
-	// TODO(variant): rarity relabelled from Variant to Special — handle manually
-	card.Rarity.Special,
+	card.Rarity.Rare,
 	card.Provenance(card.MM, "238"),
+	card.LeadsCluster(monumentToPrimusCluster),
 	card.WithTraits(card.Traits.Location),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Action, card.Conditional{
+			Cond: card.NamedCardInDiscard{Name: ConsulPrimus.Name},
+			Then: card.MoveAember{
+				Amount: 1,
+				From:   card.Target.Creature,
+				Onto:   card.Target.OtherCreature,
+			},
+			Else: card.MoveAember{
+				Amount: 1,
+				From:   card.Target.FriendlyCreature,
+				Onto:   card.Target.OtherFriendlyCreature,
+			},
+		}),
 )

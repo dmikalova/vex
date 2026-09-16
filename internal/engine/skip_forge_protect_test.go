@@ -97,6 +97,37 @@ func TestAemberProtectionWhileItHasAember(t *testing.T) {
 	}
 }
 
+// TestAemberProtectionWhilePoolAtLeast covers protection that holds only while the
+// controller's pool is at least the threshold (Cephaloist).
+func TestAemberProtectionWhilePoolAtLeast(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(
+		NewCard("cephaloist", Untamed, Creature, Common,
+			WithPower(4), WithAemberCannotBeStolenWhilePoolAtLeast(4)),
+		1,
+	)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	// Below the threshold the pool is unprotected.
+	g.State.Aember[1] = 3
+	if !(StealAember{Amount: 1}).resolveGate(ctx) {
+		t.Error("below the threshold the pool should be stealable")
+	}
+
+	// At the threshold the pool is protected.
+	g.State.Aember[1] = 4
+	if (StealAember{Amount: 1}).resolveGate(ctx) {
+		t.Error("at the threshold the pool should be protected")
+	}
+
+	def := NewCard("cephaloist", Untamed, Creature, Common,
+		WithPower(4), WithAemberCannotBeStolenWhilePoolAtLeast(4))
+	if !strings.Contains(RenderCardRules(&def),
+		"While you have 4 or more Æmber, your Æmber cannot be stolen.") {
+		t.Error("card rules should render the pool-threshold cannot-be-stolen line")
+	}
+}
+
 // TestAemberProtectionByUpgrade covers protection granted by an attached Upgrade
 // (Static.AemberCannotBeStolen) rather than the host's own field.
 func TestAemberProtectionByUpgrade(t *testing.T) {

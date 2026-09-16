@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Munchling
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Logos
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Mutant
 //
 //	Skirmish.
-//	Fight: You may discard a Logos card from your hand or archives. If you do, gain 1A.
+//	Fight: You may discard a Logos card from your hand or archives -> gain 1 Æmber.
 var Munchling = set.New(
 	"Munchling",
 	card.House.Logos,
@@ -25,5 +20,19 @@ var Munchling = set.New(
 	card.Provenance(card.MM, "076"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Mutant),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Skirmish),
+	card.WithAbility(card.Trigger.Fight, card.May{
+		Do: card.Then{
+			First: card.DiscardCard{
+				Player:     card.Controller,
+				Zone:       card.Hand,
+				OrArchives: true,
+				Selection:  card.Chosen{House: card.Houses.Named(card.House.Self)},
+			},
+			Result: card.GainAember{
+				Player: card.Controller,
+				Amount: 1,
+			},
+		},
+	}),
 )

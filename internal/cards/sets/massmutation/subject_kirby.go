@@ -1,15 +1,10 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// SubjectKirby
+// Subject Kirby
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Creature
 //	Rarity: Common
 //	Power:  2
@@ -18,11 +13,15 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Play/Fight/Reap: You may play a non-Star Alliance creature this turn.
 var SubjectKirby = set.New(
 	"Subject Kirby",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.MM, "315"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Mutant),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.PlayFightReap, card.MayPlayOrUse{
+		Houses: card.GrantHouses.Except(card.House.Self),
+		Grant:  card.GrantPlay,
+		Types:  card.Types.Of(card.Type.Creature),
+	}),
 )

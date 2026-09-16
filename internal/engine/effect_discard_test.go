@@ -27,6 +27,26 @@ func TestMoveFromDiscardToHand(t *testing.T) {
 	}
 }
 
+func TestPutFromDiscardBindsReturnedCard(t *testing.T) {
+	// Bind leaves the returned card in context so a following effect can act on it.
+	g := NewGame("A", "B", 1)
+	c := g.Register(testCreature("c", 3), 0)
+	g.State.Discard[0].add(c)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	PutFromDiscard{Selection: Chosen{}, Destination: ToHand, Bind: true}.Resolve(ctx)
+	if !ctx.HasIt || ctx.It != c {
+		t.Errorf("ctx.It = %v (HasIt %v), want %d bound", ctx.It, ctx.HasIt, c)
+	}
+
+	// Nothing to return binds nothing.
+	ctx2 := &EffectContext{Resolver: g, Controller: 0}
+	PutFromDiscard{Selection: Chosen{}, Destination: ToHand, Bind: true}.Resolve(ctx2)
+	if ctx2.HasIt {
+		t.Error("an empty discard should leave ctx.It unset")
+	}
+}
+
 func TestPutFromDiscardByTrait(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	horseman := g.Register(
@@ -689,4 +709,43 @@ func TestDiscardFromHandValidate(t *testing.T) {
 	if (DiscardCard{Player: Controller, Zone: Hand, Selection: Random{}, Amount: 2}).validate() != nil {
 		t.Error("a fixed amount should be valid")
 	}
+	if (DiscardCard{Player: Controller, Zone: Archives, Selection: Random{}, OrArchives: true}).validate() == nil {
+		t.Error("OrArchives should require Zone Hand")
+	}
+	if (DiscardCard{Player: Controller, Zone: Hand, Selection: Random{}, OrArchives: true}).validate() != nil {
+		t.Error("OrArchives with Zone Hand should be valid")
+	}
+}
+
+// TestDiscardFromHandOrArchives covers the combined hand-or-archives source
+// (Munchling, Novu Dynamo): the discard draws from both piles, names them
+// together, and removes the picked card from whichever pile it sat in.
+func TestDiscardFromHandOrArchives(t *testing.T) {
+	e := DiscardCard{Player: Controller, Zone: Hand, OrArchives: true, Selection: Chosen{}}
+	if got := e.Text(); got != "discard a card from your hand or archives" {
+		t.Errorf("text = %q", got)
+	}
+
+	t.Run("picks a card from the hand", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		inHand := g.AddToHand(NewCard("h", Logos, Tactic, Common), 0)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+		e.Resolve(ctx)
+		if !g.State.Discard[0].contains(inHand) {
+			t.Error("the hand card should be discarded")
+		}
+	})
+
+	t.Run("picks a card from the archives", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		inArchives := g.AddToArchives(NewCard("a", Logos, Tactic, Common), 0)
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+		e.Resolve(ctx)
+		if g.State.Archives[0].Count != 0 {
+			t.Errorf("archives count = %d, want 0", g.State.Archives[0].Count)
+		}
+		if !g.State.Discard[0].contains(inArchives) {
+			t.Error("the archived card should be discarded from the archives")
+		}
+	})
 }

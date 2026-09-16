@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// DarkCenturion
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Dark Centurion
 //
 //	House:  Saurian
 //	Type:   Creature
@@ -15,15 +10,24 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  5
 //	Traits: Mutant • Soldier
 //
+//	Action: Move 1 Æmber from a creature to the common supply -> ward the chosen creature.
 //	Enhance Capture Capture.
-//	Action: Move 1A from a creature to the common supply. If you do, ward that creature.
 var DarkCenturion = set.New(
 	"Dark Centurion",
 	card.House.Saurian,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
 	card.Provenance(card.MM, "203"),
+	card.WithEnhance(card.Bonus.Capture, card.Bonus.Capture),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Mutant, card.Traits.Soldier),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Action, card.Then{
+			First: card.MoveAemberToSupply{
+				Amount: 1,
+				Target: card.Target.Creature,
+				Bind:   true,
+			},
+			Result: card.Ward{Target: card.Target.TheChosenCreature},
+		}),
 )

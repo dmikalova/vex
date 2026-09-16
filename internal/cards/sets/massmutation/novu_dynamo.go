@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// NovuDynamo
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Novu Dynamo
 //
 //	House:  Logos
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  2
 //	Traits: Robot
 //
-//	At the start of your turn, you may discard a Logos card from your hand or archives. If you do, gain 1A. Otherwise, destroy Novu Dynamo.
+//	At the start of your turn, discard a Logos card from your hand or archives -> gain 1 Æmber. Otherwise, destroy Novu Dynamo.
 var NovuDynamo = set.New(
 	"Novu Dynamo",
 	card.House.Logos,
@@ -26,5 +21,21 @@ var NovuDynamo = set.New(
 	card.WithPower(8),
 	card.WithArmor(2),
 	card.WithTraits(card.Traits.Robot),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.StartOfTurn, card.Then{
+			First: card.DiscardCard{
+				Player:     card.Controller,
+				Zone:       card.Hand,
+				OrArchives: true,
+				Selection: card.Chosen{
+					House:    card.Houses.Named(card.House.Self),
+					Optional: true,
+				},
+			},
+			Result: card.GainAember{
+				Player: card.Controller,
+				Amount: 1,
+			},
+			Else: card.Destroy{Target: card.Target.This},
+		}),
 )

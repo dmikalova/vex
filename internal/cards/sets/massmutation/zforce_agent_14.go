@@ -2,6 +2,16 @@ package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
+// zForceCluster binds the three Z- upgrades into one WholePool cluster led by
+// Z-Force Agent 14: whenever the agent rolls into a pod, all three upgrades ride
+// in with it, one of each (ADR 0036). The upgrades are Rarity.Connected, so the
+// only way they reach a deck is on Z-Force Agent 14's coattails.
+var zForceCluster = card.Cluster{
+	Name:     "Z-Force Agent 14",
+	Strategy: card.ClusterStrategy.WholePool,
+	Trigger:  card.ClusterTrigger.ByLead,
+}
+
 // Z-Force Agent 14
 //
 //	House:  Star Alliance
@@ -17,6 +27,7 @@ var ZForceAgent14 = set.New(
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.MM, "353"),
+	card.LeadsCluster(zForceCluster),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Cyborg),
 	card.WithAbility(

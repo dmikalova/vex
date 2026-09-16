@@ -17,8 +17,6 @@ var Splinter = set.New(
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.MM, "294"),
-	card.WithPower(1),
-	card.WithTraits(card.Traits.Mutant, card.Traits.Thief),
 	card.WithEnhance(
 		card.Bonus.Damage,
 		card.Bonus.Damage,
@@ -27,4 +25,6 @@ var Splinter = set.New(
 		card.Bonus.Damage,
 		card.Bonus.Damage,
 	),
+	card.WithPower(1),
+	card.WithTraits(card.Traits.Mutant, card.Traits.Thief),
 )

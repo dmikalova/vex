@@ -1,21 +1,16 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// WakingNightmare
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Waking Nightmare
 //
 //	House:  Dis
 //	Type:   Tactic
 //	Rarity: Common
-//	Æmber:  1
+//	Bonus:  Æmber
 //
+//	Play: Keys cost +1 Æmber for each Dis creature in play during your opponent's next turn.
 //	Enhance Capture.
-//	Play: Keys cost +1A for each Dis creature in play during your opponent's next turn.
 var WakingNightmare = set.New(
 	"Waking Nightmare",
 	card.House.Dis,
@@ -23,5 +18,12 @@ var WakingNightmare = set.New(
 	card.Rarity.Common,
 	card.Provenance(card.MM, "017"),
 	card.WithBonus(card.Bonus.Aember),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithEnhance(card.Bonus.Capture),
+	card.WithAbility(
+		card.Trigger.Play, card.RaiseKeyCostPerHouseCreature{
+			Player:   card.Opponent,
+			Amount:   1,
+			House:    card.House.Dis,
+			Duration: card.Duration.OpponentNextTurn,
+		}),
 )

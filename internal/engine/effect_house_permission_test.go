@@ -217,6 +217,41 @@ func TestMayPlayOrUseResolveUsePlay(t *testing.T) {
 	}
 }
 
+// TestMayPlayOrUseResolveTrait resolves the trait-scoped use grant and confirms it
+// frees only friendly creatures of that trait, whatever their house.
+func TestMayPlayOrUseResolveTrait(t *testing.T) {
+	e := MayPlayOrUse{Trait: Mutant, Grant: GrantUse}
+	if got, want := e.Text(),
+		"for the remainder of the turn, you may use friendly Mutant creatures"; got != want {
+		t.Errorf("Text() = %q, want %q", got, want)
+	}
+
+	g := NewGame("A", "B", 1)
+	g.StartTurn(0)
+	if err := g.ChooseHouse(0, Sanctum); err != nil {
+		t.Fatal(err)
+	}
+	mutant := g.AddToBattleline(
+		NewCard("splicer", Mars, Creature, Common, WithPower(3), WithTraits(Mutant)), 0)
+	beast := g.AddToBattleline(
+		NewCard("marauder", Mars, Creature, Common, WithPower(3), WithTraits(Beast)), 0)
+	if g.usableInActiveHouse(mutant) {
+		t.Fatal("an off-house Mutant should not be usable before the grant")
+	}
+
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+
+	if g.State.MayUseTrait[0] != Mutant {
+		t.Fatalf("grant should record Mutant, got %v", g.State.MayUseTrait[0])
+	}
+	if !g.usableInActiveHouse(mutant) {
+		t.Error("the off-house Mutant should be usable after the grant")
+	}
+	if g.usableInActiveHouse(beast) {
+		t.Error("a non-Mutant off-house creature should stay unusable")
+	}
+}
+
 // TestMayPlayOrUseResolvePermit resolves the exclusion and controlled grants into
 // stored off-house permits, tracking Remaining and clearing at end of turn.
 func TestMayPlayOrUseResolvePermit(t *testing.T) {

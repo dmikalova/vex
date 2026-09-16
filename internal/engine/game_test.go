@@ -671,3 +671,28 @@ func TestKeyCostChangePerAndFlank(t *testing.T) {
 		t.Errorf("key cost off the flanks = %d, want %d", got, KeyCost)
 	}
 }
+
+// TestKeyCostWhileOffFlank covers a key-cost change suspended while its source
+// holds a flank and active only off the flanks (Titan Engineer).
+func TestKeyCostWhileOffFlank(t *testing.T) {
+	engineer := NewCard("Titan Engineer", Logos, Creature, Common, WithPower(6),
+		WithKeyCost(NewKeyCostChange(EachPlayer, 1).WhileOffFlank()))
+	want := "While " + SelfName + " is not on a flank, each player's keys cost +1 Æmber."
+	if got := keyCostText(engineer.KeyCostChanges[0]); got != want {
+		t.Errorf("off-flank text = %q, want %q", got, want)
+	}
+
+	flank := NewGame("A", "B", 1)
+	flank.AddToBattleline(engineer, 0)
+	if got := flank.CurrentKeyCost(0); got != KeyCost {
+		t.Errorf("key cost on a flank = %d, want %d", got, KeyCost)
+	}
+
+	mid := NewGame("A", "B", 1)
+	mid.AddToBattleline(testCreature("left", 3), 0)
+	mid.AddToBattleline(engineer, 0)
+	mid.AddToBattleline(testCreature("right", 3), 0)
+	if got := mid.CurrentKeyCost(0); got != KeyCost+1 {
+		t.Errorf("key cost off the flanks = %d, want %d", got, KeyCost+1)
+	}
+}

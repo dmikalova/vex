@@ -12,6 +12,11 @@ import "fmt"
 // effect targets.
 type Exhaust struct {
 	Target Target
+	// Bind leaves the exhausted creature in context (ctx.It) for a following effect
+	// that names "that creature", and makes this effect a result gate so a Then runs
+	// only when a creature was actually exhausted — Humble exhausts a chosen creature
+	// and, if it did, moves 3 Æmber off that same creature to the common supply.
+	Bind bool
 }
 
 // validate requires an explicit target.
@@ -29,10 +34,22 @@ func (e Exhaust) targetText() string { return e.Target.Text() }
 func (e Exhaust) Text() string { return e.verb() + " " + e.targetText() }
 
 // Resolve exhausts each selected creature.
-func (e Exhaust) Resolve(ctx *EffectContext) {
+func (e Exhaust) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
+
+// resolveGate exhausts each selected creature, binds the last one in context when
+// Bind is set, and reports whether any creature was exhausted — the "if you do" a
+// Then hangs off (Humble). A target selecting nothing leaves any Then unresolved.
+func (e Exhaust) resolveGate(ctx *EffectContext) bool {
+	var last LocalID
+	var did bool
 	for _, id := range e.Target.Select(ctx) {
 		ctx.Resolver.SetExhausted(id, true)
+		last, did = id, true
 	}
+	if e.Bind && did {
+		ctx.It, ctx.HasIt = last, true
+	}
+	return did
 }
 
 // ExhaustCreatures exhausts up to Max creatures the controller chooses one at a

@@ -425,6 +425,10 @@ func TestLogEntryText(t *testing.T) {
 			"P0 may play cards from other houses this turn",
 		},
 		{
+			MayUseTraitGranted{Player: 0, Trait: Mutant},
+			"P0 may use friendly Mutant creatures this turn",
+		},
+		{
 			HouseForcedNextTurn{Player: 1, House: Logos},
 			"P1 must choose house Logos next turn",
 		},

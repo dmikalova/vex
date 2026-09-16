@@ -97,7 +97,11 @@ const (
 	// acting player, so a grant that lasts into the opponent's turn (Diplomacy's "each
 	// creature gains 'Before Fight: Exalt this creature'") fires for an enemy attacker
 	// on the opponent's turn too.
-	EventBeforeFight
+	EventBeforeFight // EventBonusIconBoost is a one-shot arming, not a reaction or replacement: it is
+	// neither fired in a window nor queried at an outcome, only consumed by the play
+	// path the next time its owner plays a card (Wild Bounty). The play-path icon loop
+	// consumes it via consumeBonusIconBoost and resolves each icon an additional time.
+	EventBonusIconBoost
 )
 
 // isReaction reports whether the event is a reaction point (fired after) rather
@@ -166,6 +170,10 @@ const (
 	// actTakeExtraDamage is a modifier, not a reaction: it never resolves in a
 	// trigger window, only summed at the damage site by lastingExtraDamage.
 	actTakeExtraDamage
+	// actResolveBonusAgain is a one-shot boost, not a reaction: it never resolves in
+	// a window, only consumed by the play path via consumeBonusIconBoost, which
+	// resolves each icon of the next played card an additional time (Wild Bounty).
+	actResolveBonusAgain
 )
 
 // describe is a short label for a reaction, used when the controller orders several
@@ -184,6 +192,8 @@ func (a lastingAction) describe() string {
 		return "draw a card"
 	case actLoseAember:
 		return "opponent loses Æmber"
+	case actSteal:
+		return "steal Æmber"
 	case actExalt:
 		return "exalt the creature"
 	case actStun:
@@ -409,6 +419,14 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 				Controller: actor,
 			},
 		)
+	case actSteal:
+		StealAember{Amount: int(le.Amount)}.Resolve(
+			&EffectContext{
+				Resolver:   g,
+				Source:     subject,
+				Controller: actor,
+			},
+		)
 	case actGiveRemainingAember:
 		beneficiary := 1 - actor
 		amount := g.State.Aember[actor]
@@ -442,6 +460,33 @@ func (g *Game) lastingReplacement(player int, event Event) (lastingAction, bool)
 		}
 	}
 	return 0, false
+}
+
+// consumeBonusIconBoost reports whether player has an armed one-shot bonus-icon
+// boost (Wild Bounty) and, if so, removes it — a boost fires for a single played
+// card. The play-path icon loop uses it to decide whether to resolve each icon an
+// additional time.
+func (g *Game) consumeBonusIconBoost(player int) bool {
+	for i := 0; i < int(g.State.LastingCount); i++ {
+		le := g.State.Lasting[i]
+		if int(le.Controller) != player || le.Do != actResolveBonusAgain {
+			continue
+		}
+		g.removeLastingAt(i)
+		return true
+	}
+	return false
+}
+
+// removeLastingAt drops the lasting effect at index i, compacting the fixed array
+// and clearing the freed tail slot so the state stays a flat value.
+func (g *Game) removeLastingAt(i int) {
+	last := int(g.State.LastingCount) - 1
+	for j := i; j < last; j++ {
+		g.State.Lasting[j] = g.State.Lasting[j+1]
+	}
+	g.State.Lasting[last] = LastingEffect{}
+	g.State.LastingCount--
 }
 
 // lastingExtraDamage sums the additional damage a creature takes from every

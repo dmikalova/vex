@@ -14,6 +14,10 @@ type MoveAember struct {
 	// All moves everything each source carries instead of a fixed Amount — Word of
 	// Returning moves all the Æmber off every enemy creature at once.
 	All bool
+	// Fraction moves a share of the source's Æmber instead of a fixed Amount —
+	// Patronage moves half the Æmber off the chosen creature, rounding up. The zero
+	// value is unset; leave it so to use Amount or All.
+	Fraction Fraction
 	// From selects the eligible source cards; the chosen source must carry Æmber.
 	From Target
 	// To is the destination pool — Controller's or Opponent's. Leave unset (and set
@@ -51,6 +55,12 @@ func (e MoveAember) validate() error {
 	if err := errAmountOr("MoveAember", "All", e.Amount, e.All); err != nil {
 		return err
 	}
+	if err := errAmountOr("MoveAember", "Fraction", e.Amount, e.Fraction.valid()); err != nil {
+		return err
+	}
+	if e.All && e.Fraction.valid() {
+		return fmt.Errorf("MoveAember: set All or Fraction, not both")
+	}
 	if e.toPool() == e.Onto.valid() {
 		return fmt.Errorf("MoveAember: set exactly one destination (To pool or Onto card)")
 	}
@@ -71,6 +81,10 @@ func (e MoveAember) destText() string {
 // Text renders the effect, e.g. "move 1 Æmber from a friendly creature or artifact
 // to your pool", or "move all Æmber from each enemy creature to your pool".
 func (e MoveAember) Text() string {
+	if e.Fraction.valid() {
+		return fmt.Sprintf("move %s the \u00c6mber from %s to %s, %s",
+			e.Fraction.word(), e.From.Text(), e.destText(), e.Fraction.roundingPhrase())
+	}
 	amount := fmt.Sprintf("%d", e.amount())
 	if e.All {
 		amount = "all"
@@ -102,7 +116,9 @@ func (e MoveAember) Resolve(ctx *EffectContext) {
 	}
 	for _, from := range sources {
 		moved := e.amount()
-		if have := ctx.Resolver.AmberOn(from); e.All || moved > have {
+		if have := ctx.Resolver.AmberOn(from); e.Fraction.valid() {
+			moved = e.Fraction.of(have)
+		} else if e.All || moved > have {
 			moved = have
 		}
 		ctx.Resolver.AddAmberOn(from, -moved)

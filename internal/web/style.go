@@ -889,6 +889,7 @@ var galleryIcons = []string{
 	"generic-counter-fuse",
 	"generic-counter-glory",
 	"generic-counter-growth",
+	"generic-counter-scheme",
 	"glyph-action",
 	"glyph-ban",
 	"glyph-choose",

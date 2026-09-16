@@ -85,6 +85,23 @@ trigger itself, so it fails the build. This is what makes the three `Connected`
 Horsemen provably reachable: their `ByLead` lead (Pestilence) rolls normally and
 rides them in, so the Connected-card-is-pulled invariant holds for cluster members.
 
+**A reprinted cluster member can outlive its lead.** A later set may reprint a
+pulled cluster member without reprinting its lead (Mass Mutation reprints Commander
+Chan and Sensor Chief Garcia, whose Worlds Collide blaster leads it does not). What
+happens depends on whether that member could ever roll on its own: if the member is
+rollable (Garcia is `Common`), it joins the reprinting set as a **plain, cluster-less
+pool card** — its `Cluster` membership is dropped so no lead-less `ByLead` cluster
+reaches `validateClusters` — matching the KeyForge-accurate outcome that it prints
+in the new set without its blaster; if the member is `Connected`, it can _never_
+appear on its own, so a reprint that pulls it in without its lead is a build **error**.
+This is enforced twice: the reprint generator (`reprintsForSet`) omits a `Connected`
+orphan and keeps a rollable one, and the aggregator (`reprintPoolCard` in
+`internal/cards`) strips a rollable orphan's cluster and panics on a `Connected`
+orphan, so a hand-edited `0set.go` cannot smuggle an unreachable card into a pool.
+A native card that forgot its `LeadsCluster` still panics as before — that mistake
+is always among a set's _own_ cards, never a reprint, so dropping a reprinted
+orphan's cluster never weakens the native gate.
+
 **The pod-local fixpoint generalizes to deck scope.** `OnePerHouse` needs all three
 pods filled first, then a deck-wide expansion pass places one member per House,
 retrying another slot in a House on restriction and falling back to the existing

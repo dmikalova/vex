@@ -210,13 +210,16 @@ func (e ForEachDiscarded) Resolve(ctx *EffectContext) {
 // chooseFromTopOfDeck is the shared core behind LookAtTopOfDeck and RevealTopOfDeck.
 // It reads the top amount cards of a deck and runs an ordered list of routing steps
 // over them, each step seeing only the cards earlier steps left behind. chooseDeck
-// has the controller pick whose deck to read (their own or the opponent's); public
-// reveals the cards to both players and binds the top one in context (ctx.It) so a
+// has the controller pick whose deck to read (their own or the opponent's); player
+// instead fixes the deck to one side (Vandalize reads the opponent's), and is unset
+// when the deck is simply the controller's. public reveals the cards to both players
+// and binds the top one in context (ctx.It) so a
 // following effect can inspect or play it. It reads as many as remain when the deck
 // holds fewer than amount, and does nothing on an empty deck.
 type chooseFromTopOfDeck struct {
 	amount     int
 	chooseDeck bool
+	player     Player
 	public     bool
 	then       []TopAct
 }
@@ -243,6 +246,9 @@ func (e chooseFromTopOfDeck) validate() error {
 // over them so a step sees only the cards earlier steps left behind.
 func (e chooseFromTopOfDeck) resolve(ctx *EffectContext) {
 	player := ctx.Controller
+	if e.player.valid() {
+		player = ctx.PlayerFor(e.player)
+	}
 	if e.chooseDeck && ctx.ChooseOption(
 		"Whose deck to reveal from?",
 		[]string{"your deck", "your opponent's deck"},
@@ -330,11 +336,14 @@ const (
 	IntoDiscard
 	// IntoPurge purges the chosen cards.
 	IntoPurge
+	// IntoBottomOfDeck puts the chosen cards on the bottom of the same deck (the
+	// leftover of a look stays on top) — the Star Alliance mutants' Alien ability.
+	IntoBottomOfDeck
 )
 
 // validate rejects a DeckDest outside the known routing destinations.
 func (d DeckDest) validate() error {
-	if d < IntoHand || d > IntoPurge {
+	if d < IntoHand || d > IntoBottomOfDeck {
 		return fmt.Errorf("DeckDest: unknown destination %d", d)
 	}
 	return nil
@@ -350,6 +359,8 @@ func (d DeckDest) mover(ctx *EffectContext, player int) func(LocalID) {
 		return ctx.Resolver.MoveFromDeckToDiscard
 	case IntoPurge:
 		return func(id LocalID) { ctx.Resolver.PurgeFromDeck(player, id) }
+	case IntoBottomOfDeck:
+		return ctx.Resolver.PutDeckCardOnBottom
 	default: // IntoHand
 		return ctx.Resolver.MoveFromDeckToHand
 	}
@@ -364,6 +375,8 @@ func (d DeckDest) choosePrompt() string {
 		return "Choose a card to discard"
 	case IntoPurge:
 		return "Choose a revealed card to purge"
+	case IntoBottomOfDeck:
+		return "Choose a card to put on the bottom of your deck"
 	default: // IntoHand
 		return "Choose a card to put into your hand"
 	}
@@ -381,6 +394,23 @@ func (d DeckDest) itClause() string {
 		return "purge it"
 	default: // IntoHand
 		return "put it into your hand"
+	}
+}
+
+// act renders the verb phrase routing object to d, e.g. "archive each card of the
+// chosen house" or "put the others into your hand".
+func (d DeckDest) act(object string) string {
+	switch d {
+	case IntoArchives:
+		return "archive " + object
+	case IntoDiscard:
+		return "discard " + object
+	case IntoPurge:
+		return "purge " + object
+	case IntoBottomOfDeck:
+		return "put " + object + " on the bottom of your deck"
+	default: // IntoHand
+		return "put " + object + " into your hand"
 	}
 }
 
@@ -403,6 +433,8 @@ func (a ChooseAndMove) clause() string {
 			return "purge a card revealed this way"
 		}
 		return fmt.Sprintf("purge %d cards revealed this way", a.Count)
+	case IntoBottomOfDeck:
+		return fmt.Sprintf("put %d on the bottom of your deck", a.Count)
 	default:
 		return fmt.Sprintf("put %d into your hand", a.Count)
 	}
@@ -460,7 +492,75 @@ func (ReorderRest) apply(ctx *EffectContext, tr *topRead) {
 	ctx.Resolver.SetDeckTop(tr.player, order)
 }
 
-// Shuffle also serves as a routing terminal (the type is the "shuffle your deck"
+// MayDiscardLookedAt lets the controller optionally discard the single card a
+// preceding look read (Scout Pete). It reads "you may discard that card", so it is
+// meant to follow a one-card look.
+type MayDiscardLookedAt struct{}
+
+// clause renders the step.
+func (MayDiscardLookedAt) clause() string { return "you may discard that card" }
+
+// validate always passes: the optional discard carries no count.
+func (MayDiscardLookedAt) validate() error { return nil }
+
+// terminal reports false: it discards at most the one looked-at card.
+func (MayDiscardLookedAt) terminal() bool { return false }
+
+// apply offers the controller the optional discard of the read card.
+func (MayDiscardLookedAt) apply(ctx *EffectContext, tr *topRead) {
+	if len(tr.remaining) == 0 {
+		return
+	}
+	id, ok := ctx.ChooseCardOptional("Discard the top card?", tr.remaining)
+	if !ok {
+		return
+	}
+	ctx.Resolver.MoveFromDeckToDiscard(id)
+	tr.remaining = withoutID(tr.remaining, id)
+}
+
+// PartitionByChosenHouse splits the read cards by the house an enclosing
+// ChooseHouseThen picked: cards of that house go to Matching, the rest go to Rest.
+// New Frontiers archives each card of the chosen house and discards the others. It
+// is terminal, so it must be the last step.
+type PartitionByChosenHouse struct {
+	Matching DeckDest
+	Rest     DeckDest
+}
+
+// clause renders the split, e.g. "archive each card of the chosen house and
+// discard the others".
+func (p PartitionByChosenHouse) clause() string {
+	return p.Matching.act("each card of the chosen house") + " and " +
+		p.Rest.act("the others")
+}
+
+// validate rejects an unknown destination on either side.
+func (p PartitionByChosenHouse) validate() error {
+	if err := p.Matching.validate(); err != nil {
+		return err
+	}
+	return p.Rest.validate()
+}
+
+// terminal reports true: the split routes every read card, so nothing follows it.
+func (PartitionByChosenHouse) terminal() bool { return true }
+
+// apply routes each read card to Matching when its house is the chosen house and to
+// Rest otherwise.
+func (p PartitionByChosenHouse) apply(ctx *EffectContext, tr *topRead) {
+	toMatching := p.Matching.mover(ctx, tr.player)
+	toRest := p.Rest.mover(ctx, tr.player)
+	for _, id := range append([]LocalID(nil), tr.remaining...) {
+		if ctx.Resolver.House(id) == ctx.ChosenHouse {
+			toMatching(id)
+		} else {
+			toRest(id)
+		}
+		tr.remaining = withoutID(tr.remaining, id)
+	}
+}
+
 // effect in effect_shuffle.go): as a terminal it shuffles the whole read deck,
 // since the cards revealed this way are still in that deck. It must be the last
 // step, and only the zero value Shuffle{} is used here (its validate lives with
@@ -497,11 +597,11 @@ func (e LookAtTopOfDeck) validate() error { return e.core().validate() }
 
 // Text names the peek and folds each routing step's clause into one instruction.
 func (e LookAtTopOfDeck) Text() string {
-	noun := "cards"
-	if e.Amount == 1 {
-		noun = "card"
+	peek := "look at the top card of your deck"
+	if e.Amount != 1 {
+		peek = fmt.Sprintf("look at the top %d cards of your deck", e.Amount)
 	}
-	parts := []string{fmt.Sprintf("look at the top %d %s of your deck", e.Amount, noun)}
+	parts := []string{peek}
 	for _, act := range e.Then {
 		parts = append(parts, act.clause())
 	}
@@ -514,13 +614,16 @@ func (e LookAtTopOfDeck) Resolve(ctx *EffectContext) { e.core().resolve(ctx) }
 // RevealTopOfDeck reveals the top Amount cards of a deck to both players and binds
 // the top one in context (ctx.It) so a following effect can inspect or play it, then
 // routes the revealed cards through the ordered Then steps (see chooseFromTopOfDeck).
-// With ChooseWhoseDeck the controller picks whose deck to reveal. Revealing a single
+// With ChooseWhoseDeck the controller picks whose deck to reveal. With Player set,
+// the deck is fixed to that side without a choice (Vandalize reveals the opponent's).
+// Revealing a single
 // card with no steps is the classic inspect-and-play primitive — Chaos Portal, Book
 // of leQ, Wormhole Technician, Vespilon Theorist, Gambling Den; Borr Nit and Borr
 // Nit's Touch reveal five from a chosen deck, purge one, and shuffle the rest.
 type RevealTopOfDeck struct {
 	Amount          int
 	ChooseWhoseDeck bool
+	Player          Player
 	Then            []TopAct
 }
 
@@ -529,6 +632,7 @@ func (e RevealTopOfDeck) core() chooseFromTopOfDeck {
 	return chooseFromTopOfDeck{
 		amount:     e.Amount,
 		chooseDeck: e.ChooseWhoseDeck,
+		player:     e.Player,
 		public:     true,
 		then:       e.Then,
 	}
@@ -541,8 +645,11 @@ func (e RevealTopOfDeck) validate() error { return e.core().validate() }
 // way the printed cards read.
 func (e RevealTopOfDeck) Text() string {
 	deck := "your deck"
-	if e.ChooseWhoseDeck {
+	switch {
+	case e.ChooseWhoseDeck:
 		deck = "a player's deck"
+	case e.Player == Opponent:
+		deck = "your opponent's deck"
 	}
 	text := "reveal the top card of " + deck
 	if e.Amount != 1 {

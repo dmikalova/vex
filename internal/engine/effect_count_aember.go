@@ -1,28 +1,5 @@
 package engine
 
-// AemberBonusOf counts the Æmber pips printed on the card its Target names, read
-// once that card has left play — Rustgnawer gains 1 Æmber for each Æmber bonus on
-// the artifact it just destroyed (Target: Triggering, the destroyed card in
-// context). The bonus is a printed property, so it survives the card leaving play;
-// a card the effect did not remove (still in play) contributes nothing.
-type AemberBonusOf struct {
-	Target Target
-}
-
-// Value returns the printed Æmber bonus of the card the Target names, or 0 when it
-// selects nothing or the card is still in play.
-func (e AemberBonusOf) Value(ctx *EffectContext) int {
-	ids := e.Target.Select(ctx)
-	if len(ids) == 0 || resolverInPlay(ctx, ids[0]) {
-		return 0
-	}
-	return ctx.Resolver.AemberBonus(ids[0])
-}
-
-// CountText renders the singular noun the "for each" clause repeats, e.g. "Æmber
-// bonus on it".
-func (e AemberBonusOf) CountText() string { return "Æmber bonus on " + e.Target.Text() }
-
 // AemberOnThis counts the Æmber sitting on the source card, so a card can grow
 // with what it captures (Yxili Marauder).
 type AemberOnThis struct{}

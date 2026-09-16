@@ -269,7 +269,9 @@ func (e PurgeCreature) resolveOptional(ctx *EffectContext) bool {
 // purge carries out the purge of an already-selected set — each creature from play
 // if it is still there, or from its owner's discard pile if it has just been
 // destroyed (Yxilo Bolter purges the creature its damage killed). It records the
-// tally so a following effect can scale with how many were actually purged.
+// tally so a following effect can scale with how many were actually purged. When a
+// single card is purged it is put in context (ctx.It) so a following effect can
+// name it — Reclaimed by Nature resolves the bonus icons on the artifact it purged.
 func (e PurgeCreature) purge(ctx *EffectContext, ids []LocalID) bool {
 	purged := 0
 	for _, id := range ids {
@@ -288,6 +290,9 @@ func (e PurgeCreature) purge(ctx *EffectContext, ids []LocalID) bool {
 				break
 			}
 		}
+	}
+	if len(ids) == 1 {
+		ctx.It, ctx.HasIt = ids[0], true
 	}
 	return purged > 0
 }

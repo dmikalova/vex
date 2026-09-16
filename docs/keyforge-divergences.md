@@ -42,6 +42,7 @@ answers "where does Vactrol diverge from KeyForge, and why".
 | `while under your control` becomes a one-time swap            | rule 20 | avoids continuous re-checking; sticks with the card   |
 | A deferred play permission becomes an immediate play          | rule 21 | avoids turn-scoped unused-permission memory           |
 | A number-only `Otherwise` branch becomes `or <alt> if <cond>` | rule 22 | one linear sentence, no fork                          |
+| A gate takes an `otherwise` for a two-verb branch             | rule 5  | `A -> B. Otherwise, C.` (Novu Dynamo, Auto-Vac 5150)  |
 | A turn `step` is named a `phase`                              | rule 28 | [ADR 0012](adr/0012-first-class-turn-phases.md)       |
 | Fight timing is named `in a fight with`                       | rule 29 | one phrase for the fight timing window                |
 | A count cap is dropped — `(to a maximum of N)` is removed     | rule 30 | Vactrol has no count cap; the count is uncapped       |
@@ -174,6 +175,14 @@ a random card from their hand`, adding a self-discard before KeyForge's lone
 - **Toad** is `Connected` rather than KeyForge's `Special`: it is kept out of the
   pool and instead pulled into **Xenos Bloodshadow**'s pod one for one, so a Toad
   only ever reaches a deck alongside the Bloodshadow it rides in with.
+- **Rustgnawer** reads `Fight: Destroy an artifact. Resolve the bonus icons on
+it`, not KeyForge's `Fight: Destroy an artifact. If that artifact had an Æmber
+bonus, you gain that much Æmber`. Instead of refunding only the Æmber bonus,
+  Vactrol resolves the whole bonus-icon strip on the destroyed artifact — capture,
+  draw, and damage icons resolve too (rule 27). This is a small power increase and
+  lets the card reuse the shared `ResolveBonusIcons` mechanic instead of a one-off
+  Æmber-bonus count node. On the common case (an artifact whose only bonus is
+  Æmber) the outcome is identical.
 
 ## Invented cards
 
@@ -210,7 +219,20 @@ friendly Shard, …`). Their effects — Shard of Glory exalts a friendly creatu
   that used to **destroy** themselves on forging (**Epic Quest**, **[REDACTED]**,
   **Obsidian Forge**) now **purge** instead, removing them from the game rather
   than sending them to the discard pile where they could return.
-
+  **Keyfrog** (Untamed creature, MM #369) inherits this rule too: its printed
+  `Destroyed: Forge a key at current cost.` has no purge — a destroyed creature
+  discards normally — but its `ForgeKey` node adds the shared `-> purge Keyfrog`,
+  so a Keyfrog that lands its forge is purged rather than discarded. This is the
+  same anti-regrowth divergence (a returned Keyfrog cannot loop its Destroyed
+  forge), applied to a creature whose forge fires from its Destroyed trigger.
+  **Desire** (Dis creature, MM #053) is the deliberate exception: its
+  `Reap: Forge a key at current cost, reduced by 1 Æmber for each friendly Sin
+  creature.` keeps its body via the `ForgeKey` node's `Keep` flag, so a successful
+  forge does **not** purge Desire. The self-purge exists to stop a key cheat from
+  looping a body back into play to forge again in one turn; a once-per-turn reap
+  engine is not such a loop (a creature reaps at most once a turn), so purging it
+  would neuter the card without serving the anti-regrowth purpose. Desire therefore
+  reads with no `-> purge <self>` tail.
 - **A bonus icon's source is the card that carries it.** When a bonus icon
   resolves (Æmber, Capture, Damage, Draw), KeyForge treats the game itself as the
   source of the effect; Vactrol treats the card the icon is printed on as the

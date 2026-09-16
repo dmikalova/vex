@@ -2,6 +2,15 @@ package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
+// scyllaCluster pulls one Charybdis per Scylla: the two are a PullExact pair, so a
+// Scylla always rides in with its evil twin (ADR 0036). Charybdis is
+// Rarity.Connected, reachable only through Scylla.
+var scyllaCluster = card.Cluster{
+	Name:     "Scylla",
+	Strategy: card.ClusterStrategy.PullExact,
+	Trigger:  card.ClusterTrigger.ByLead,
+}
+
 // Scylla
 //
 //	House:  Saurian
@@ -17,6 +26,7 @@ var Scylla = set.New(
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.MM, "230"),
+	card.LeadsCluster(scyllaCluster),
 	card.WithPower(7),
 	card.WithTraits(card.Traits.Beast),
 	card.WithConstant(card.ConstantAbility{

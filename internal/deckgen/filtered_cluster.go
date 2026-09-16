@@ -23,6 +23,11 @@ type FilteredCluster struct {
 	Lead string
 	// Floor is the minimum number of matching cards guaranteed in the deck.
 	Floor int
+	// Mean is the average number of matching cards the pull aims for. Each deck
+	// rolls a target of Floor + Poisson(Mean − Floor), so the count is at least
+	// Floor and averages about Mean on a Poisson tail. Mean equal to Floor (the
+	// zero-Mean default too) pulls exactly to the Floor, matching a flat guarantee.
+	Mean float64
 	// Match reports whether a pool card satisfies the pull. It is a static
 	// predicate over a definition, so it lives in deckgen data with no resolver.
 	Match func(engine.CardDefinition) bool
@@ -83,6 +88,12 @@ func (s Set) validateFilteredClusters() {
 				name, s.Name, n, fc.Floor,
 			))
 		}
+		if fc.Mean != 0 && fc.Mean < float64(fc.Floor) {
+			panic(fmt.Sprintf(
+				"deckgen: filtered cluster %q in set %q wants mean %g below floor %d",
+				name, s.Name, fc.Mean, fc.Floor,
+			))
+		}
 	}
 }
 
@@ -97,7 +108,7 @@ func (g *generator) expandFilteredClusters(deck *Deck) {
 		if !deckHasCard(deck, fc.Lead) {
 			continue
 		}
-		need := fc.Floor - deckCountMatching(deck, fc.Match)
+		need := g.filteredTarget(fc) - deckCountMatching(deck, fc.Match)
 		for _, cand := range g.filteredCandidates(deck, fc) {
 			if need <= 0 {
 				break
@@ -107,6 +118,14 @@ func (g *generator) expandFilteredClusters(deck *Deck) {
 			}
 		}
 	}
+}
+
+// filteredTarget rolls a pull's per-deck target count: Floor + Poisson(Mean −
+// Floor), so it is at least the Floor and averages about the Mean. Existing
+// matching cards count against it in expandFilteredClusters, so the roll is the
+// total the deck aims for, not the number pulled.
+func (g *generator) filteredTarget(fc FilteredCluster) int {
+	return fc.Floor + poisson(g.r, fc.Mean-float64(fc.Floor))
 }
 
 // filteredNames returns the set's filtered-cluster names in sorted order.

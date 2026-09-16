@@ -451,6 +451,20 @@ func TestCardsPurgedCount(t *testing.T) {
 	}
 }
 
+// A single-target purge binds the purged card in context so a following effect can
+// name it — Reclaimed by Nature resolves the bonus icons on the artifact it purged.
+func TestPurgeCreatureBindsSinglePurgedCard(t *testing.T) {
+	g := started(t)
+	art := g.AddArtifact(
+		NewCard("Relic", Brobnar, Artifact, Common, WithBonus(BonusAember)), 0)
+	g.SetChooser(0, &idQueueChooser{ids: []LocalID{art}})
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	PurgeCreature{Target: Target{Kind: TargetChosenArtifact}}.Resolve(ctx)
+	if !ctx.HasIt || ctx.It != art {
+		t.Fatalf("ctx.It = %v (has %v), want purged artifact %d", ctx.It, ctx.HasIt, art)
+	}
+}
+
 // A "you may purge a neighboring creature" is one clickable creature, so it is
 // asked declinably and asks nothing when the source has no neighbor (Buzzle at a
 // flank).

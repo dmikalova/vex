@@ -33,10 +33,11 @@ type Destination = engine.Destination
 // Into groups the destinations a card.ChooseAndMove step sends the cards it takes
 // off the top of a deck, e.g. card.Into.Purge. It mirrors the engine's DeckDest.
 var Into = deckDests{
-	Hand:     engine.IntoHand,
-	Archives: engine.IntoArchives,
-	Discard:  engine.IntoDiscard,
-	Purge:    engine.IntoPurge,
+	Hand:         engine.IntoHand,
+	Archives:     engine.IntoArchives,
+	Discard:      engine.IntoDiscard,
+	Purge:        engine.IntoPurge,
+	BottomOfDeck: engine.IntoBottomOfDeck,
 }
 
 type deckDests struct {
@@ -48,4 +49,6 @@ type deckDests struct {
 	Discard engine.DeckDest
 	// Purge purges the chosen cards.
 	Purge engine.DeckDest
+	// BottomOfDeck puts the chosen cards on the bottom of your deck.
+	BottomOfDeck engine.DeckDest
 }

@@ -30,6 +30,47 @@ func TestZeroPowerIsDestroyed(t *testing.T) {
 	}
 }
 
+// TestArtifactSelfDestroysWhenNoCreatures covers Doom Sigil: an artifact carrying
+// a DestroyedWhen condition holds while a creature is in play and destroys itself
+// once the board empties. Only artifacts in play with a met condition qualify.
+func TestArtifactSelfDestroysWhenNoCreatures(t *testing.T) {
+	g := started(t)
+	sigil := g.AddArtifact(
+		NewCard("Doom Sigil", Shadows, Artifact, Rare,
+			WithDestroyedWhen(InPlay{Player: EachPlayer, Type: Creature, None: true})), 0)
+	creature := g.AddToBattleline(
+		NewCard("Sapling", Untamed, Creature, Common, WithPower(2)), 0)
+
+	// A creature is in play, so the artifact holds.
+	g.settleDestroyed(0)
+	if !g.inPlay(sigil) {
+		t.Fatal("Doom Sigil should survive while a creature is in play")
+	}
+	// A plain artifact with no DestroyedWhen never self-destroys, and a creature is
+	// never an artifact self-destroy candidate.
+	plain := g.AddArtifact(NewCard("Plain", Shadows, Artifact, Common), 0)
+	if g.artifactShouldSelfDestroy(plain) {
+		t.Error("an artifact with no DestroyedWhen should not self-destroy")
+	}
+	if g.artifactShouldSelfDestroy(creature) {
+		t.Error("a creature is not an artifact self-destroy candidate")
+	}
+
+	// The board empties: the artifact destroys itself, and the plain one survives.
+	g.putIntoHand(creature)
+	g.settleDestroyed(0)
+	if g.inPlay(sigil) {
+		t.Error("Doom Sigil should self-destroy once no creatures remain")
+	}
+	if !g.inPlay(plain) {
+		t.Error("a plain artifact should survive an empty board")
+	}
+	// An out-of-play artifact is not a candidate.
+	if g.artifactShouldSelfDestroy(sigil) {
+		t.Error("a destroyed artifact should not be a self-destroy candidate")
+	}
+}
+
 // TestBuffLossKillsADamagedCreature checks a damaged creature is destroyed once a
 // lost buff leaves its damage at or above its remaining power.
 func TestBuffLossKillsADamagedCreature(t *testing.T) {

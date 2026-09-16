@@ -26,6 +26,11 @@ const (
 	// means this turn — Foozle. Like EnemyCreaturesFightKilled it is kept from the
 	// watching player's side, but it counts every destruction, not only fights.
 	EnemyCreaturesDestroyed
+	// FriendlyCreaturesDestroyed counts the player's own creatures destroyed by any
+	// means this turn — Bonesaw enters play ready if a friendly creature has died. It
+	// is kept from the destroyed creature's controller side, the mirror of
+	// EnemyCreaturesDestroyed.
+	FriendlyCreaturesDestroyed
 	// CreaturesReapedThisTurn counts the creatures the player has reaped with during
 	// the current turn — Aember Conduction Unit stuns the first enemy creature to
 	// reap. It is kept from the reaping (active) player's side.
@@ -34,6 +39,13 @@ const (
 	// the current turn — Alaka enters play ready once you have fought. It is kept from
 	// the attacking (active) player's side.
 	CreaturesFoughtThisTurn
+	// CreaturesUsedThisTurn counts every creature the player has used this turn by any
+	// means — reaping, fighting, or using an Action ability — the umbrella "used"
+	// tally Sloth reads to reward a turn with no creature use. It is kept from the
+	// using (active) player's side and, unlike the reap/fight tallies, is reset at
+	// StartTurn rather than rolled at the ready step, so an end-of-turn ability can
+	// still read it after ready and draw have run (ADR 0013).
+	CreaturesUsedThisTurn
 	// AemberStolenFromThisTurn counts the Æmber stolen from the player during the
 	// current turn — kept from the victim's side so a card can ask whether they were
 	// robbed. It rolls into AemberStolenFromLastTurn at the end of the thief's turn.
@@ -47,13 +59,15 @@ const (
 
 // turnStatNoun is the singular noun each tally repeats after "for each".
 var turnStatNoun = map[TurnStat]string{
-	KeysForgedThisTurn:        "key you have forged this turn",
-	KeysForgedLastTurn:        "key forged on the previous turn",
-	CreaturesPlayedLastTurn:   "creature played on the previous turn",
-	EnemyCreaturesFightKilled: "enemy creature that was destroyed in a fight this turn",
-	EnemyCreaturesDestroyed:   "enemy creature that was destroyed this turn",
-	CreaturesReapedThisTurn:   "creature that has reaped this turn",
-	CreaturesFoughtThisTurn:   "creature that has fought this turn",
-	AemberStolenFromThisTurn:  "Æmber stolen from you this turn",
-	AemberStolenFromLastTurn:  "Æmber stolen from you on the previous turn",
+	KeysForgedThisTurn:         "key you have forged this turn",
+	KeysForgedLastTurn:         "key forged on the previous turn",
+	CreaturesPlayedLastTurn:    "creature played on the previous turn",
+	EnemyCreaturesFightKilled:  "enemy creature that was destroyed in a fight this turn",
+	EnemyCreaturesDestroyed:    "enemy creature that was destroyed this turn",
+	FriendlyCreaturesDestroyed: "friendly creature that was destroyed this turn",
+	CreaturesReapedThisTurn:    "creature that has reaped this turn",
+	CreaturesFoughtThisTurn:    "creature that has fought this turn",
+	CreaturesUsedThisTurn:      "creature you have used this turn",
+	AemberStolenFromThisTurn:   "Æmber stolen from you this turn",
+	AemberStolenFromLastTurn:   "Æmber stolen from you on the previous turn",
 }

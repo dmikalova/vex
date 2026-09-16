@@ -1,6 +1,9 @@
 package worldscollide
 
-import "github.com/dmikalova/vactrol/internal/card"
+import (
+	"github.com/dmikalova/vactrol/internal/card"
+	"github.com/dmikalova/vactrol/internal/cards/clusters"
+)
 
 // Praefectus Ludo
 //
@@ -17,6 +20,7 @@ var PraefectusLudo = set.New(
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.WC, "190"),
+	card.InCluster(card.Pulled(clusters.Ludo, 1, 1)),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Politician),
 	card.WithConstant(card.ConstantAbility{

@@ -84,6 +84,32 @@ func TestBuildFilteredClustersStampsLead(t *testing.T) {
 	}
 }
 
+// filteredTarget with a zero Mean pulls exactly to the Floor; a Mean above the
+// Floor rolls a Poisson-tailed total that is always at least the Floor and
+// averages about the Mean.
+func TestFilteredTarget(t *testing.T) {
+	g := gen(richFilteredSet())
+	flat := FilteredCluster{Name: "F", Floor: 3, Match: isUpgradeOrRobot}
+	for i := 0; i < 200; i++ {
+		if got := g.filteredTarget(flat); got != 3 {
+			t.Fatalf("zero-Mean target = %d, want exactly 3", got)
+		}
+	}
+	spread := FilteredCluster{Name: "F", Floor: 4, Mean: 6, Match: isUpgradeOrRobot}
+	sum := 0
+	const n = 2000
+	for i := 0; i < n; i++ {
+		got := g.filteredTarget(spread)
+		if got < 4 {
+			t.Fatalf("target %d below floor 4", got)
+		}
+		sum += got
+	}
+	if avg := float64(sum) / n; avg < 5.5 || avg > 6.5 {
+		t.Errorf("mean target = %.2f, want about 6", avg)
+	}
+}
+
 func TestValidateFilteredClustersPanics(t *testing.T) {
 	cases := []struct {
 		name string
@@ -92,6 +118,10 @@ func TestValidateFilteredClustersPanics(t *testing.T) {
 		{"nil predicate", FilteredCluster{Name: "F", Floor: 2, Match: nil}},
 		{"floor below one", FilteredCluster{Name: "F", Floor: 0, Match: isUpgradeOrRobot}},
 		{"pool too small", FilteredCluster{Name: "F", Floor: 5, Match: isUpgradeOrRobot}},
+		{
+			"mean below floor",
+			FilteredCluster{Name: "F", Floor: 2, Mean: 1, Match: isUpgradeOrRobot},
+		},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -107,6 +137,23 @@ func TestValidateFilteredClustersPanics(t *testing.T) {
 			}, Tuning{RarityWeights: map[engine.Rarity]float64{engine.Common: 1}})
 		})
 	}
+}
+
+// A mean below the floor is only reached once the pool is large enough to clear the
+// pool-size check, so it needs a set with enough matching cards to satisfy the floor.
+func TestValidateFilteredClustersMeanBelowFloor(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Fatal("expected panic for a mean below the floor")
+		}
+	}()
+	fc := FilteredCluster{Name: "F", Floor: 2, Mean: 1, Match: isUpgradeOrRobot}
+	NewSet("S", []Card{
+		leadCard("Lead", engine.Brobnar, fc),
+		mkCard("VB", engine.Brobnar, engine.Common),
+		upgradeCard("UpD", engine.Dis),
+		upgradeCard("UpL", engine.Logos),
+	}, Tuning{RarityWeights: map[engine.Rarity]float64{engine.Common: 1}})
 }
 
 func TestExpandFilteredClustersLeadAbsent(t *testing.T) {

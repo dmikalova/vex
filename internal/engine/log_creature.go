@@ -66,6 +66,19 @@ func (e CreatureGainedAssault) Text(n Namer) string {
 	return fmt.Sprintf("%s gains assault %d", n.Name(e.Creature), e.Amount)
 }
 
+// CreatureGainedTrait narrates a creature gaining a trait until the controller's
+// next turn (the Mutation cycle grants the Mutant trait).
+type CreatureGainedTrait struct {
+	Creature LocalID
+	Trait    Trait
+}
+
+// Text renders the creature and the trait it gained, e.g. "Card2 gains the Mutant
+// trait".
+func (e CreatureGainedTrait) Text(n Namer) string {
+	return fmt.Sprintf("%s gains the %s trait", n.Name(e.Creature), e.Trait.String())
+}
+
 // CreatureConsideredFlank narrates a creature being treated as a flank creature
 // for the turn (Spectral Tunneler).
 type CreatureConsideredFlank struct{ Creature LocalID }

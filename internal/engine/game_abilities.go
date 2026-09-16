@@ -33,7 +33,8 @@ func (g *Game) usableInActiveHouseWithoutPermit(id LocalID) bool {
 		g.House(id) == g.State.ActiveHouse ||
 		g.hasKeyword(id, Versatile) ||
 		(g.State.MayUseArtifactsAnyHouse[g.controller(id)] && g.TypeOf(id) == Artifact) ||
-		(g.State.MayUseHouse[g.controller(id)] != HouseNone && g.House(id) == g.State.MayUseHouse[g.controller(id)])
+		(g.State.MayUseHouse[g.controller(id)] != HouseNone && g.House(id) == g.State.MayUseHouse[g.controller(id)]) ||
+		(g.State.MayUseTrait[g.controller(id)] != traitUnset && g.HasTrait(id, g.State.MayUseTrait[g.controller(id)]))
 }
 
 // spendOffHouseUse charges one use of a this-turn off-house use permit when the
@@ -234,6 +235,7 @@ func (g *Game) Unstun(player int, id LocalID) error {
 func (g *Game) recordUse(id LocalID) {
 	if g.TypeOf(id) == Creature {
 		g.State.Cards[id].TimesUsedThisTurn++
+		g.State.TurnHistory[g.controller(id)][CreaturesUsedThisTurn]++
 	}
 }
 
@@ -673,6 +675,18 @@ func (g *Game) emitCreaturePlayed(played LocalID) {
 				continue
 			}
 			g.triggerAbilities(id, TriggerAfterCreaturePlayed, played, true)
+		}
+	}
+}
+
+// emitUpgradeEntered fires the "after an upgrade enters play" reaction on every
+// in-play card of both players, with the entering upgrade as "it" (Armory Officer
+// Nel). An upgrade is attached to its host, not itself in the battleline, so no
+// card is skipped.
+func (g *Game) emitUpgradeEntered(upgrade LocalID) {
+	for player := 0; player < 2; player++ {
+		for _, id := range g.allInPlay(player) {
+			g.triggerAbilities(id, TriggerAfterUpgradeEnters, upgrade, true)
 		}
 	}
 }

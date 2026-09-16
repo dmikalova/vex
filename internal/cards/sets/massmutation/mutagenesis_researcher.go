@@ -1,28 +1,23 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// MutagenesisResearcher
+// Mutagenesis Researcher
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Creature
 //	Rarity: Uncommon
 //	Power:  3
 //	Traits: Mutant • Scientist
 //
-//	Enhance Aember Capture Damage Draw.
+//	Enhance Æmber Capture Damage Draw.
 var MutagenesisResearcher = set.New(
 	"Mutagenesis Researcher",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
 	card.Provenance(card.MM, "325"),
+	card.WithEnhance(card.Bonus.Aember, card.Bonus.Capture, card.Bonus.Damage, card.Bonus.Draw),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Mutant, card.Traits.Scientist),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
 )

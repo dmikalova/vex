@@ -148,6 +148,22 @@ func TestInPlayMinPower(t *testing.T) {
 	}
 }
 
+func TestInPlayWithAember(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	rich := g.AddToBattleline(testCreature("rich", 4), 0)
+	g.AddToBattleline(testCreature("poor", 4), 0)
+	g.AddAmberOn(rich, 2)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	withAember := InPlay{Player: Controller, Type: Creature, WithAember: true}
+	if got := withAember.Value(ctx); got != 1 {
+		t.Errorf("WithAember Value = %d, want 1 (only the Æmber-bearer counts)", got)
+	}
+	if got := withAember.CountText(); got != "friendly creature with \u00c6mber on it" {
+		t.Errorf("CountText = %q", got)
+	}
+}
+
 func TestInPlayEachPlayer(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.AddToBattleline(testCreature("f", 5), 0)
@@ -213,30 +229,7 @@ func TestCreaturesDestroyedCount(t *testing.T) {
 	}
 }
 
-func TestAemberBonusOfCount(t *testing.T) {
-	g := NewGame("A", "B", 1)
-	survivor := g.AddArtifact(
-		NewCard("relic", Brobnar, Artifact, Common, WithBonus(BonusAember, BonusAember)),
-		1,
-	)
-	ctx := &EffectContext{Resolver: g, Controller: 0}
-
-	c := AemberBonusOf{Target: Target{Kind: TargetTriggeringCreature}}
-	if got := c.CountText(); got != "Æmber bonus on it" {
-		t.Errorf("count text = %q", got)
-	}
-	// No card in context: the target selects nothing.
-	if got := c.Value(ctx); got != 0 {
-		t.Errorf("value with no context card = %d, want 0", got)
-	}
-	// A card still in play (a destroy that was prevented) contributes nothing.
-	ctx.It, ctx.HasIt = survivor, true
-	if got := c.Value(ctx); got != 0 {
-		t.Errorf("value for a surviving card = %d, want 0", got)
-	}
-}
-
-func TestDestroyBindsDestroyedCardForAemberBonus(t *testing.T) {
+func TestDestroyBindsDestroyedCard(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	art := g.AddArtifact(
 		NewCard(
@@ -250,16 +243,10 @@ func TestDestroyBindsDestroyedCardForAemberBonus(t *testing.T) {
 	)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	if got := g.AemberBonus(art); got != 3 {
-		t.Errorf("AemberBonus = %d, want 3", got)
-	}
 	Destroy{Target: Target{Kind: TargetChosenEnemyArtifact}}.Resolve(ctx)
-	// The destroyed artifact is bound in context so the count reads its bonus.
+	// The destroyed artifact is bound in context so a following effect can act on it.
 	if !ctx.HasIt || ctx.It != art {
 		t.Fatalf("ctx.It = %v (has %v), want the destroyed artifact %d", ctx.It, ctx.HasIt, art)
-	}
-	if got := (AemberBonusOf{Target: Target{Kind: TargetTriggeringCreature}}).Value(ctx); got != 3 {
-		t.Errorf("destroyed Æmber bonus = %d, want 3", got)
 	}
 }
 

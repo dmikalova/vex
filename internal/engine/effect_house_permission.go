@@ -32,14 +32,16 @@ type HouseSelector struct {
 
 // MayPlayOrUse lets the controller act with cards outside their active house for
 // the remainder of the turn — the one node for every out-of-house permission
-// grant. Its four axes fold what were five wordings: Houses selects whose cards
+// grant. Its axes fold what were several wordings: Houses selects whose cards
 // (a named or chosen house, any house, every house but one, or every house you
-// control), Grant selects the verbs it frees (play, use, or fight), Types narrows
-// the card types (the zero value frees all), and Count bounds how many cards the
-// grant frees (zero is unlimited). The grant lasts only the current turn (the
-// ready phase clears it).
+// control), Trait scopes a use grant to a creature trait instead of a house
+// (Mutagenic Serum's "use friendly Mutant creatures"), Grant selects the verbs it
+// frees (play, use, or fight), Types narrows the card types (the zero value frees
+// all), and Count bounds how many cards the grant frees (zero is unlimited). The
+// grant lasts only the current turn (the ready phase clears it).
 type MayPlayOrUse struct {
 	Houses HouseSelector
+	Trait  Trait
 	Grant  HouseGrant
 	Types  CardTypes
 	Count  int
@@ -60,6 +62,10 @@ func (e MayPlayOrUse) validate() error {
 // the axes select — "may fight", "may use", "may play or use" — over the houses,
 // types, and count the grant reaches.
 func (e MayPlayOrUse) Text() string {
+	if e.Trait != traitUnset {
+		return "for the remainder of the turn, you may use friendly " +
+			e.Trait.String() + " creatures"
+	}
 	if e.Houses.Controlled {
 		return "for the remainder of the turn, you may play cards from any house for which you have a card in play"
 	}
@@ -124,6 +130,10 @@ func (e MayPlayOrUse) exceptObject() string {
 // Resolve records the this-turn grant for the controller, resolving a chosen-house
 // selector against the house an enclosing ChooseHouseThen picked.
 func (e MayPlayOrUse) Resolve(ctx *EffectContext) {
+	if e.Trait != traitUnset {
+		ctx.Resolver.GrantMayUseTrait(ctx.Controller, e.Trait)
+		return
+	}
 	houses := e.Houses
 	if houses.Match.Kind == MatchChosenHouse && houses.Match.House == HouseNone {
 		houses.Match.House = ctx.ChosenHouse

@@ -1,21 +1,16 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ForumOfGiants
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Forum of Giants
 //
 //	House:  Saurian
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Location
 //
-//	At the start of your turn, the player who controls the most powerful creature gains 1A.
+//	At the start of your turn, choose the most powerful creature - its controller gains 1 Æmber.
 var ForumOfGiants = set.New(
 	"Forum of Giants",
 	card.House.Saurian,
@@ -24,5 +19,8 @@ var ForumOfGiants = set.New(
 	card.Provenance(card.MM, "219"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Location),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.StartOfTurn, card.ChooseCreatureThen{
+		Target: card.Target.EachCreature.Refine(card.MostPowerful),
+		Then:   card.GainAember{Player: card.ItsController, Amount: 1},
+	}),
 )

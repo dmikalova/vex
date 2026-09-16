@@ -126,6 +126,24 @@ func TestEnemyCreatureDestroyedCondition(t *testing.T) {
 	}
 }
 
+func TestFriendlyCreatureDestroyedCondition(t *testing.T) {
+	c := FriendlyCreatureDestroyed{}
+	if got := c.CondText(); got != "if a friendly creature was destroyed this turn" {
+		t.Errorf("CondText = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	if c.Met(ctx) {
+		t.Error("no friendly creature destroyed yet, condition should be unmet")
+	}
+
+	g.State.TurnHistory[0][FriendlyCreaturesDestroyed] = 1
+	if !c.Met(ctx) {
+		t.Error("a friendly creature destroyed this turn should meet the condition")
+	}
+}
+
 // TestTurnCount covers the shared count over a turn-history tally, in both the
 // "for each" and the "if" rendering.
 func TestTurnCount(t *testing.T) {

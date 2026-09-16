@@ -19,10 +19,13 @@ func (g *Game) resetCore(id LocalID) { g.State.Cards[id] = CardCore{} }
 // discards attached upgrades, hands any Æmber on the card to the owner's
 // opponent, resets the card's per-match state, and adds it to the discard. It is
 // the final step of destruction, run only for creatures still in play after their
-// "Destroyed:" abilities resolve (see destroyTogether).
+// "Destroyed:" abilities resolve (see destroyTogether). A gigantic's two halves
+// leave together (ADR 0042).
 func (g *Game) discardDestroyed(id LocalID) {
-	o := g.leavePlayDestroyed(id)
-	g.State.Discard[o].add(id)
+	for _, half := range g.giganticHalves(id) {
+		o := g.leavePlayDestroyed(half)
+		g.State.Discard[o].add(half)
+	}
 }
 
 // purgeFromPlay moves a card from play to its owner's purge pile (set aside out of
@@ -33,9 +36,11 @@ func (g *Game) purgeFromPlay(id LocalID) {
 	if g.absorbedByWard(id, wardLeavePlay, 0) {
 		return
 	}
-	o := g.leavePlayDestroyed(id)
-	g.State.Purge[o].add(id)
-	g.record(CardPurged{Card: id})
+	for _, half := range g.giganticHalves(id) {
+		o := g.leavePlayDestroyed(half)
+		g.State.Purge[o].add(half)
+		g.record(CardPurged{Card: half})
+	}
 }
 
 // absorbedByWard reports whether a warded creature's ward absorbs a removal from
@@ -201,11 +206,19 @@ func (g *Game) discardUnder(id LocalID) {
 // "destroy this Upgrade" saves the creature and consumes the Upgrade. It reports
 // whether the destruction was replaced.
 func (g *Game) applyDestructionReplacement(id LocalID) bool {
+	// A replacement fires once per sweep. If it already stood in for this creature's
+	// destruction earlier in the sweep yet the creature is destroyable again (it sits
+	// at 0 power, which the replacement's heal does not lift), the second destruction
+	// resolves for real — otherwise the sweep would replace it forever and hang.
+	if g.destructionReplacedThisSweep(id) {
+		return false
+	}
 	src, r, ok := g.destructionReplacement(id)
 	if !ok {
 		return false
 	}
 	g.record(DestructionReplaced{Card: id, By: src})
+	g.replacedThisSweep = append(g.replacedThisSweep, id)
 	r.With.Resolve(&EffectContext{
 		Resolver:   g,
 		Source:     src,
@@ -380,6 +393,7 @@ func (g *Game) enrollDestroyed(ids []LocalID) {
 	for _, id := range ids {
 		if g.TypeOf(id) == Creature {
 			g.State.TurnHistory[1-g.controller(id)][EnemyCreaturesDestroyed]++
+			g.State.TurnHistory[g.controller(id)][FriendlyCreaturesDestroyed]++
 		}
 	}
 	g.destroyingWindow = append(g.destroyingWindow, ids...)
@@ -458,51 +472,45 @@ func (g *Game) destroyBatch(controller int, ids []LocalID) {
 }
 
 // putOnTopOfDeck removes a card from play and places it on top of its owner's
-// deck, clearing the per-match state it accrued while in play.
+// deck, clearing the per-match state it accrued while in play. A gigantic's two
+// halves leave together (ADR 0042).
 func (g *Game) putOnTopOfDeck(id LocalID) {
 	if g.absorbedByWard(id, wardLeavePlay, 0) {
 		return
 	}
-	o := g.owner(id)
-	g.removeFromPlay(id)
-	g.discardUpgrades(id)
-	g.discardUnder(id)
-	g.releaseAemberOnLeavePlay(id)
-	g.resetCore(id)
-	g.State.Deck[o].addFront(id)
-	g.record(CardPutOnTopOfDeck{Card: id, Owner: o})
+	for _, half := range g.giganticHalves(id) {
+		o := g.leavePlayDestroyed(half)
+		g.State.Deck[o].addFront(half)
+		g.record(CardPutOnTopOfDeck{Card: half, Owner: o})
+	}
 }
 
 // putIntoHand removes a card from play and places it into its owner's hand,
-// clearing the per-match state it accrued while in play.
+// clearing the per-match state it accrued while in play. A gigantic's two halves
+// leave together (ADR 0042).
 func (g *Game) putIntoHand(id LocalID) {
 	if g.absorbedByWard(id, wardLeavePlay, 0) {
 		return
 	}
-	o := g.owner(id)
-	g.removeFromPlay(id)
-	g.discardUpgrades(id)
-	g.discardUnder(id)
-	g.releaseAemberOnLeavePlay(id)
-	g.resetCore(id)
-	g.State.Hand[o].add(id)
-	g.record(CardReturnedToHand{Card: id, Owner: o})
+	for _, half := range g.giganticHalves(id) {
+		o := g.leavePlayDestroyed(half)
+		g.State.Hand[o].add(half)
+		g.record(CardReturnedToHand{Card: half, Owner: o})
+	}
 }
 
 // putIntoArchives removes a card from play and places it into its owner's
-// archives, clearing the per-match state it accrued while in play.
+// archives, clearing the per-match state it accrued while in play. A gigantic's
+// two halves leave together (ADR 0042).
 func (g *Game) putIntoArchives(id LocalID) {
 	if g.absorbedByWard(id, wardLeavePlay, 0) {
 		return
 	}
-	o := g.owner(id)
-	g.removeFromPlay(id)
-	g.discardUpgrades(id)
-	g.discardUnder(id)
-	g.releaseAemberOnLeavePlay(id)
-	g.resetCore(id)
-	g.State.Archives[o].add(id)
-	g.record(CardPutIntoArchives{Card: id, Owner: o})
+	for _, half := range g.giganticHalves(id) {
+		o := g.leavePlayDestroyed(half)
+		g.State.Archives[o].add(half)
+		g.record(CardPutIntoArchives{Card: half, Owner: o})
+	}
 }
 
 // putIntoArchivesEach archives a snapshot of in-play cards simultaneously, then
@@ -521,24 +529,22 @@ func (g *Game) putIntoArchivesEach(controller int, ids []LocalID) {
 }
 
 // putIntoDeckShuffled removes a card from play and shuffles it into its owner's
-// deck, clearing the per-match state it accrued while in play.
+// deck, clearing the per-match state it accrued while in play. A gigantic's two
+// halves leave together (ADR 0042).
 func (g *Game) putIntoDeckShuffled(id LocalID) {
 	if g.absorbedByWard(id, wardLeavePlay, 0) {
 		return
 	}
-	o := g.owner(id)
-	g.removeFromPlay(id)
-	g.discardUpgrades(id)
-	g.discardUnder(id)
-	g.releaseAemberOnLeavePlay(id)
-	g.resetCore(id)
-	g.State.Deck[o].add(id)
-	g.Shuffle(o)
-	if g.batchingShuffle {
-		g.shuffleBatch = append(g.shuffleBatch, id)
-		return
+	for _, half := range g.giganticHalves(id) {
+		o := g.leavePlayDestroyed(half)
+		g.State.Deck[o].add(half)
+		g.Shuffle(o)
+		if g.batchingShuffle {
+			g.shuffleBatch = append(g.shuffleBatch, half)
+			continue
+		}
+		g.record(CardShuffledIntoDeck{Card: half, Owner: o})
 	}
-	g.record(CardShuffledIntoDeck{Card: id, Owner: o})
 }
 
 // shuffleFriendlyInPlayIntoDeck shuffles every card a player controls in play —

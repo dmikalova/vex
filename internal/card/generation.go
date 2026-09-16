@@ -109,12 +109,14 @@ func Pulled(c Cluster, minCopies int, mean float64) Cluster {
 // PullsMatching marks this card the lead of a deck-wide filtered pull (ADR 0036):
 // whenever it is in a generated deck, generation guarantees at least floor cards
 // matching match somewhere in the deck, in any House, topping up from the pool.
-// Cards already in the deck that match count toward the floor. Use it for a
+// Each deck rolls a target of floor + Poisson(mean − floor), so the count is at
+// least floor and averages about mean; pass mean equal to floor for a flat floor.
+// Cards already in the deck that match count toward the target. Use it for a
 // deck-building payoff keyed to a card family the card cares about — Chief Engineer
 // Walls guaranteeing the Upgrades and Robots it retrieves. It is independent of
 // card.InCluster, so a card can lead a filtered pull and belong to a named cluster.
-func PullsMatching(name string, floor int, match func(Definition) bool) Option {
-	fc := FilteredCluster{Name: name, Floor: floor, Match: match}
+func PullsMatching(name string, floor int, mean float64, match func(Definition) bool) Option {
+	fc := FilteredCluster{Name: name, Floor: floor, Mean: mean, Match: match}
 	return func(b *builder) { b.profile.Leads = &fc }
 }
 
@@ -132,6 +134,13 @@ func Template(f MaterializeFunc) Option { return func(b *builder) { b.materializ
 
 // OneCopyPerDeck bars deck generation from placing more than one copy of the card.
 func OneCopyPerDeck() Option { return func(b *builder) { b.profile.OneCopyPerDeck = true } }
+
+// Houseless marks a Special card that carries no House of its own until deck
+// generation places it, when it adopts the House of the pod it fills (ADR 0004).
+// A houseless Special enters a deck through the special slot, so it can appear in
+// any deck whatever its houses; author it with card.House.None. Dark Æmber Vault
+// is the model.
+func Houseless() Option { return func(b *builder) { b.profile.Houseless = true } }
 
 // RarityWeight scales how often deck generation draws this card among its
 // house+rarity peers, relative to the default weight of 1 — the card-level

@@ -51,6 +51,19 @@ func (e MayPlayOrUseGranted) Text(n Namer) string {
 	}
 }
 
+// MayUseTraitGranted narrates a this-turn grant to fully use friendly creatures of
+// a trait even outside the active house — Mutagenic Serum.
+type MayUseTraitGranted struct {
+	Player int
+	Trait  Trait
+}
+
+// Text renders the trait whose creatures the player may use this turn.
+func (e MayUseTraitGranted) Text(n Namer) string {
+	return fmt.Sprintf("%s may use friendly %s creatures this turn",
+		n.PlayerName(e.Player), e.Trait)
+}
+
 // HouseForcedNextTurn narrates a card dictating next turn's active house.
 type HouseForcedNextTurn struct {
 	Player int

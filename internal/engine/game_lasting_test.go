@@ -11,6 +11,7 @@ func TestLastingActionDescriptions(t *testing.T) {
 		actReadyPlayed: "ready the creature",
 		actDraw:        "draw a card",
 		actLoseAember:  "opponent loses Æmber",
+		actSteal:       "steal Æmber",
 		actExalt:       "exalt the creature",
 		actStun:        "stun the creature",
 	} {

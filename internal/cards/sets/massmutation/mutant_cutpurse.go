@@ -17,7 +17,7 @@ var MutantCutpurse = set.New(
 	card.Type.Creature,
 	card.Rarity.Common,
 	card.Provenance(card.MM, "252"),
+	card.WithEnhance(card.Bonus.Damage, card.Bonus.Damage, card.Bonus.Damage),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Mutant, card.Traits.Thief),
-	card.WithEnhance(card.Bonus.Damage, card.Bonus.Damage, card.Bonus.Damage),
 )

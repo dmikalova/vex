@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestSequenceEffect(t *testing.T) {
 	g := NewGame("A", "B", 1)
@@ -84,6 +87,54 @@ func TestSequenceCombinesSameVerb(t *testing.T) {
 	want := "destroy an enemy creature, a friendly creature, and each creature"
 	if got := three.Text(); got != want {
 		t.Errorf("three text = %q, want %q", got, want)
+	}
+}
+
+// A run of plain type-only PutFromDiscard effects sharing a head and tail folds
+// into one article-led noun list (Look What I Found!).
+func TestSequenceFoldsNounList(t *testing.T) {
+	seq := Sequence{Effects: []Effect{
+		PutFromDiscard{Selection: Chosen{Type: Tactic}, Destination: ToHand},
+		PutFromDiscard{Selection: Chosen{Type: Artifact}, Destination: ToHand},
+		PutFromDiscard{Selection: Chosen{Type: Creature}, Destination: ToHand},
+		PutFromDiscard{Selection: Chosen{Type: Upgrade}, Destination: ToHand},
+	}}
+	want := "put a tactic, artifact, creature, and upgrade " +
+		"from your discard pile into your hand"
+	if got := seq.Text(); got != want {
+		t.Errorf("text = %q, want %q", got, want)
+	}
+}
+
+// A single foldable effect stays as its own sentence, and a differing tail or a
+// non-plain selection breaks the run rather than folding into it.
+func TestSequenceNounListDeclines(t *testing.T) {
+	// One qualifying effect on its own does not fold.
+	single := Sequence{Effects: []Effect{
+		PutFromDiscard{Selection: Chosen{Type: Tactic}, Destination: ToHand},
+	}}
+	if got := single.Text(); got != "put a tactic from your discard pile into your hand" {
+		t.Errorf("single text = %q", got)
+	}
+
+	// A differing tail (top of deck vs hand) stops the run after the first.
+	tails := Sequence{Effects: []Effect{
+		PutFromDiscard{Selection: Chosen{Type: Tactic}, Destination: ToHand},
+		PutFromDiscard{Selection: Chosen{Type: Artifact}, Destination: ToTopOfDeck},
+	}}
+	want := "put a tactic from your discard pile into your hand, and " +
+		"put an artifact from your discard pile on top of your deck"
+	if got := tails.Text(); got != want {
+		t.Errorf("tails text = %q, want %q", got, want)
+	}
+
+	// A non-plain selection (named, not a bare type) does not qualify.
+	named := Sequence{Effects: []Effect{
+		PutFromDiscard{Selection: Named{Name: "Velum"}, Destination: ToHand},
+		PutFromDiscard{Selection: Chosen{Type: Artifact}, Destination: ToHand},
+	}}
+	if got := named.Text(); !strings.Contains(got, "Velum") {
+		t.Errorf("named text = %q, want it to keep Velum unfolded", got)
 	}
 }
 

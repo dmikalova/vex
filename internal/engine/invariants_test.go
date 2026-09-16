@@ -195,3 +195,63 @@ func TestInvariantErrorOutOfPlayCardKeepsItsState(t *testing.T) {
 		t.Fatalf("error %q does not describe stranded in-play state", err)
 	}
 }
+
+// giganticBase and giganticArt build the two halves of a gigantic named for a
+// test: the base carries the stats and holds the battleline slot, the art carries
+// only its role.
+func giganticBase(name string, power int) CardDefinition {
+	def := NewCard(name, Sanctum, Creature, Rare, WithPower(power))
+	def.GiganticRole = GiganticBase
+	return def
+}
+
+func giganticArt(name string) CardDefinition {
+	def := NewCard(name, Sanctum, Creature, Rare)
+	def.GiganticRole = GiganticArt
+	return def
+}
+
+// A linked gigantic — base in the battleline, slot-less art half linked to it —
+// is sound: conservation counts the art half through its base (ADR 0042).
+func TestInvariantErrorLinkedGiganticIsSound(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	base := g.AddToBattleline(giganticBase("Deusillus", 15), 0)
+	art := g.Register(giganticArt("Deusillus"), 0)
+	g.linkGiganticPartners(base, art)
+	if err := g.InvariantError(); err != nil {
+		t.Fatalf("linked gigantic reported an invariant error: %v", err)
+	}
+}
+
+// An art half carrying a partner link with no base holding it is a dangling
+// gigantic — the leave-play funnel must clear the link on both halves together.
+func TestInvariantErrorDanglingGigantic(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	base := g.AddToBattleline(giganticBase("Deusillus", 15), 0)
+	art := g.AddToHand(giganticArt("Deusillus"), 0)
+	g.State.Cards[art].GiganticPartnerPlus = giganticPlus(base) // link with no base holding it
+	err := g.InvariantError()
+	if err == nil {
+		t.Fatalf("expected an invariant error for a dangling gigantic, got nil")
+	}
+	if !strings.Contains(err.Error(), "dangling gigantic") {
+		t.Fatalf("error %q does not describe a dangling gigantic", err)
+	}
+}
+
+// A linked gigantic whose art half's back-link points elsewhere is a broken pair
+// even though conservation still counts it once.
+func TestInvariantErrorGiganticBackLinkDisagrees(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	base := g.AddToBattleline(giganticBase("Deusillus", 15), 0)
+	art := g.Register(giganticArt("Deusillus"), 0)
+	g.linkGiganticPartners(base, art)
+	g.State.Cards[art].GiganticPartnerPlus = giganticPlus(base) + 1 // point the back-link elsewhere
+	err := g.InvariantError()
+	if err == nil {
+		t.Fatalf("expected an invariant error for a disagreeing gigantic back-link, got nil")
+	}
+	if !strings.Contains(err.Error(), "partner back-link disagrees") {
+		t.Fatalf("error %q does not describe a back-link mismatch", err)
+	}
+}

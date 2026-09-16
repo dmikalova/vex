@@ -24,17 +24,20 @@ import (
 // is imported, every card self-registers, and each entry is well-formed with a
 // unique name, a real house, and a rarity.
 func TestAllIsAValidDatabase(t *testing.T) {
-	all := All()
+	all := card.Cards()
 	if len(all) == 0 {
-		t.Fatal("All() returned no cards; are the set packages imported?")
+		t.Fatal("Cards() returned no cards; are the set packages imported?")
 	}
 
 	seen := make(map[string]bool, len(all))
-	for _, c := range all {
+	for _, rc := range all {
+		c := rc.Def
 		switch {
 		case c.Name == "":
 			t.Error("card with empty name")
-		case c.House == engine.HouseNone:
+		// A houseless Special carries no house until deck generation stamps it with
+		// its pod's (ADR 0004), so HouseNone is valid for it — Dark Æmber Vault.
+		case c.House == engine.HouseNone && !rc.Profile.Houseless:
 			t.Errorf("%q has no house", c.Name)
 		case c.Rarity == "":
 			t.Errorf("%q has no rarity", c.Name)
@@ -369,6 +372,70 @@ func TestConnectedCardIsPulled(t *testing.T) {
 			rc.Def.Name,
 		)
 	}
+}
+
+// regByNameForReprintTests maps every registered card by name for the reprint
+// tests below.
+func regByNameForReprintTests(t *testing.T) map[string]card.RegisteredCard {
+	t.Helper()
+	byName := map[string]card.RegisteredCard{}
+	for _, rc := range card.Cards() {
+		byName[rc.Def.Name] = rc
+	}
+	return byName
+}
+
+// TestReprintedOrphanClusterMemberJoinsPoolAsPlainCard covers a set that reprints a
+// rollable cluster member without its lead (Mass Mutation prints Sensor Chief
+// Garcia, a Common, without its Rare blaster lead). The member joins the set's pool
+// as a plain, draftable card with its cluster membership dropped, so deckgen builds
+// no lead-less ByLead cluster for that set.
+func TestReprintedOrphanClusterMemberJoinsPoolAsPlainCard(t *testing.T) {
+	garcia := regByNameForReprintTests(t)["Sensor Chief Garcia"]
+	if garcia.Profile.Cluster.Empty() || garcia.Profile.Cluster.Lead {
+		t.Fatalf("expected Sensor Chief Garcia to be a non-lead cluster member")
+	}
+	pool := ownPool(nil, []card.RegisteredCard{garcia}, clusterLeadNames())
+	if len(pool) != 1 {
+		t.Fatalf("pool size = %d, want 1", len(pool))
+	}
+	if !pool[0].Profile.Cluster.Empty() {
+		t.Errorf("orphaned reprint kept its cluster; want it dropped so no lead-less cluster forms")
+	}
+	if !deckgen.Draftable(pool[0]) {
+		t.Errorf("orphaned rollable reprint should be draftable in its set's pool")
+	}
+}
+
+// TestReprintedOrphanKeepsClusterWhenLeadRidesAlong is the complement: when a set
+// reprints both the member and its lead, the member keeps its cluster membership so
+// the lead still pulls it.
+func TestReprintedOrphanKeepsClusterWhenLeadRidesAlong(t *testing.T) {
+	byName := regByNameForReprintTests(t)
+	garcia := byName["Sensor Chief Garcia"]
+	blaster := byName["Garcia's Blaster"]
+	pool := ownPool(nil, []card.RegisteredCard{garcia, blaster}, clusterLeadNames())
+	for _, c := range pool {
+		if c.Def.Name == "Sensor Chief Garcia" && c.Profile.Cluster.Empty() {
+			t.Errorf("Garcia's cluster was dropped even though its lead is in the pool")
+		}
+	}
+}
+
+// TestReprintedConnectedOrphanPanics covers the safety net: a Connected cluster
+// member never rolls on its own, so reprinting one into a set without its lead is a
+// card that can never be drawn — a catalog error, not a plain pool card.
+func TestReprintedConnectedOrphanPanics(t *testing.T) {
+	hffs := regByNameForReprintTests(t)["Help from Future Self"]
+	if hffs.Def.Rarity != engine.Connected {
+		t.Fatalf("expected Help from Future Self to be Connected, got %s", hffs.Def.Rarity)
+	}
+	defer func() {
+		if recover() == nil {
+			t.Error("reprinting a Connected cluster member without its lead should panic")
+		}
+	}()
+	ownPool(nil, []card.RegisteredCard{hffs}, clusterLeadNames())
 }
 
 // TestSearchIsFollowedByShuffle enforces the KeyForge rule that a deck search is

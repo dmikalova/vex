@@ -1,24 +1,29 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// DefenseInitiative
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Defense Initiative
 //
 //	House:  Saurian
 //	Type:   Tactic
 //	Rarity: Common
 //
-//	Play: Ward a creature. You may exalt that creature. If you exalt it, ward each of its neighbors.
+//	Play: Choose a creature - ward the chosen creature, and you may exalt the chosen creature -> ward the chosen creature.
 var DefenseInitiative = set.New(
 	"Defense Initiative",
 	card.House.Saurian,
 	card.Type.Tactic,
 	card.Rarity.Common,
 	card.Provenance(card.MM, "191"),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.ChooseCreatureThen{
+			Target: card.Target.Creature,
+			Then: card.Sequence{Effects: []card.Effect{
+				card.Ward{Target: card.Target.TheChosenCreature},
+				card.May{Do: card.Then{
+					First:  card.Exalt{Target: card.Target.TheChosenCreature, Amount: 1},
+					Result: card.Ward{Target: card.Target.TheChosenCreature.NeighborsOf()},
+				}},
+			}},
+		}),
 )

@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// MasterOfTheGrey
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Master of the Grey
 //
 //	House:  Sanctum
 //	Type:   Creature
@@ -26,5 +21,5 @@ var MasterOfTheGrey = set.New(
 	card.WithPower(4),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Human, card.Traits.Monk),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithRestrictions(card.Restrictions{BonusIcons: card.Opponent}),
 )

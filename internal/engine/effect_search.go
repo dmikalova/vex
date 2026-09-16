@@ -74,29 +74,39 @@ type SearchDeck struct {
 	// House restricts the search to cards the matcher admits; the zero value (any
 	// house) searches for any card and does not reveal what it takes.
 	House HouseMatcher
+	// Filter restricts the search to cards of a given type, trait, or name —
+	// Z-Particle Tracker searches for an upgrade. The zero value admits any card.
+	// House and Filter conjoin: a card must satisfy both to be a candidate.
+	Filter CardFilter
 }
 
+// restricts reports whether the search narrows the deck at all, which is what makes
+// it reveal the card it takes.
+func (e SearchDeck) restricts() bool { return e.House.filters() || !e.Filter.empty() }
+
 // Text renders the effect, e.g. "search your deck for a Saurian card, reveal it,
-// and put it into your hand".
+// and put it into your hand" or "search your deck for an upgrade, reveal it, and
+// put it into your hand".
 func (e SearchDeck) Text() string {
-	if !e.House.filters() {
+	if !e.restricts() {
 		return "search your deck for a card and put it into your hand"
 	}
-	return "search your deck for " + indefinite(e.House.qualify("card")) +
+	return "search your deck for " + indefinite(e.House.qualify(e.Filter.noun())) +
 		", reveal it, and put it into your hand"
 }
 
-// Resolve gathers the deck cards matching the House filter and lets the controller
-// choose one to put into their hand, revealing it when the search was restricted.
+// Resolve gathers the deck cards matching the House and Filter and lets the
+// controller choose one to put into their hand, revealing it when the search was
+// restricted.
 func (e SearchDeck) Resolve(ctx *EffectContext) {
 	var cands []LocalID
 	for _, id := range ctx.Resolver.Deck(ctx.Controller) {
-		if e.House.matches(ctx, id) {
+		if e.House.matches(ctx, id) && e.Filter.admits(ctx.Resolver, id) {
 			cands = append(cands, id)
 		}
 	}
 	if id, ok := ctx.ChooseCard("Choose a card to put into your hand", cands); ok {
-		if e.House.filters() {
+		if e.restricts() {
 			ctx.Resolver.Record(CardsRevealedToAll{Player: ctx.Controller, Cards: []LocalID{id}})
 		}
 		ctx.Resolver.MoveFromDeckToHand(id)

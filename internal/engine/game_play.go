@@ -270,16 +270,17 @@ func (g *Game) PlayFromOpponentHand(player int, id LocalID) {
 
 // PlayFromUnder plays a specific card from under whatever host it sits under,
 // bypassing the active-house gate the same way PlayFromHand/PlayFromDiscard do —
-// Masterplan's and Jargogle's own "play the card under me." Where playFromPile
-// removes the card from a deckList, a card under a host sits in the intrusive
-// Under chain (game_under.go) instead, so this has its own small body rather
-// than reusing playFromPile. It does nothing if the card is not currently placed
-// under anything.
+// Masterplan's and Jargogle's own "play the card under me." A card under a host
+// sits in the intrusive Under chain (game_under.go), so it is detached from there
+// rather than removed from a deckList. It routes through playForeign so that a
+// buried card the player does not own (one that reached their hand and was buried
+// there) is played under the player's control, like any other foreign play. It
+// does nothing if the card is not currently placed under anything.
 func (g *Game) PlayFromUnder(player int, id LocalID) {
 	if _, ok := g.underHostOf(id); !ok {
 		return
 	}
-	_, _ = g.playCardFromZone(player, id, func() { g.detachUnder(id) }, playCardOptions{})
+	g.playForeign(player, id, func() { g.detachUnder(id) })
 }
 
 // PlayFromArchives plays a specific card out of a player's archives, bypassing the
@@ -385,6 +386,9 @@ func (g *Game) playCardFromZone(
 	}
 	switch def.Type {
 	case Creature:
+		if def.GiganticRole != GiganticNone {
+			return g.playGigantic(player, id, remove, opts)
+		}
 		banned := g.cannotPlayCreatures(player)
 		if def.PlayableAsUpgrade && g.hasUpgradeHost() {
 			// Playing a creature as an upgrade is not playing a creature, so it is
@@ -464,9 +468,11 @@ func (g *Game) applyTreachery(player int, id LocalID) {
 		g.takeControl(id, 1-player, id)
 		// The active player chose to play it, so they choose which flank of the
 		// opponent's battleline it enters (a control change; the active player always
-		// places). The handoff re-forms neighbors on both battlelines, but the play
-		// boundary settles the power that shifts, not this move (ADR 0029).
+		// places). The handoff re-forms neighbors on both battlelines, so a creature
+		// that just lost a flank bonus can drop to or below its damage; settle that
+		// power shift here, the boundary of the handoff (ADR 0029).
 		g.placeGainedOnFlank(id, 1-player)
+		g.settleDestroyed(player)
 	}
 }
 
@@ -483,7 +489,7 @@ func (g *Game) hasUpgradeHost() bool {
 func (g *Game) playCreatureCard(player int, id LocalID, fl flank) {
 	core := &g.State.Cards[id]
 	core.Exhausted = true // enters play exhausted; readies during the end-of-turn ready step
-	if g.entersPlayReady(g.controller(id), Creature) {
+	if g.entersPlayReady(g.controller(id), Creature, g.cat.def(id).House) {
 		core.Exhausted = false
 	}
 	core.ArmorRemaining = int16(g.armor(id))
@@ -553,7 +559,7 @@ func (g *Game) putIntoPlay(id LocalID, controller int) {
 // artifact already removed from its previous zone.
 func (g *Game) playArtifactCard(player int, id LocalID) {
 	g.State.Cards[id].Exhausted = true // enters play exhausted; readies during the end-of-turn ready step
-	if g.entersPlayReady(g.controller(id), Artifact) {
+	if g.entersPlayReady(g.controller(id), Artifact, g.cat.def(id).House) {
 		g.State.Cards[id].Exhausted = false
 	}
 	g.State.Artifacts[player].add(id)
@@ -617,6 +623,7 @@ func (g *Game) playUpgradeCard(player int, id, host LocalID, def *CardDefinition
 	// rather than attaching to a destroyed host.
 	g.resolveBonusIcons(player, id)
 	g.resolveUpgradePlay(host, id, def)
+	g.emitUpgradeEntered(id)
 	g.settleDestroyed(player)
 }
 
@@ -669,6 +676,9 @@ func (g *Game) mayPlayFromHand(player int, def *CardDefinition) bool {
 	if g.inActiveHouse(def) {
 		return true
 	}
+	if g.freesTypeUnlimited(player, def) {
+		return true
+	}
 	if def.House == g.State.MayPlayHouse[player] {
 		return true
 	}
@@ -709,6 +719,20 @@ func (g *Game) consumeOffHousePlay(player int, def *CardDefinition) {
 		return
 	}
 	g.State.NonActivePlaysUsedThisTurn[player]++
+}
+
+// freesTypeUnlimited reports whether player controls an in-play card whose
+// PlayPermission is a house-agnostic, unlimited waiver for def's card type — Matter
+// Maker frees any number of upgrades. It grants without limit, so nothing consumes
+// it and no per-turn counter tracks it.
+func (g *Game) freesTypeUnlimited(player int, def *CardDefinition) bool {
+	for _, id := range g.allInPlay(player) {
+		p := g.cat.def(id).PlayPermission
+		if p.Types != 0 && p.Types.has(def.Type) {
+			return true
+		}
+	}
+	return false
 }
 
 // playPermissionRemaining returns how many unspent permissions player controls
@@ -819,6 +843,13 @@ func (g *Game) CanPlay(player int, id LocalID) error {
 	if def.Type == Creature && g.cannotPlayCreatures(player) {
 		if !def.PlayableAsUpgrade || !g.hasUpgradeHost() {
 			return ErrCannotPlayCreature
+		}
+	}
+	if def.GiganticRole != GiganticNone {
+		if _, _, ok := g.recruitGiganticPartner(
+			id, []*deckList{&g.State.Hand[player]},
+		); !ok {
+			return ErrGiganticNoPartner
 		}
 	}
 	if g.barredFromPlaying(player, def.Type) {

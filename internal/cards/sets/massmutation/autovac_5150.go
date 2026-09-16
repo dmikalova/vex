@@ -1,20 +1,15 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// AutoVac5150
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Auto-Vac 5150
 //
 //	House:  Logos
 //	Type:   Artifact
 //	Rarity: Rare
 //	Traits: Item
 //
-//	Action: You may discard a card from your archives. If you do, keys cost +3A during your opponent's next turn. Otherwise, archive a card.
+//	Action: Discard a card from your archives -> keys cost +3 Æmber during your opponent's next turn. Otherwise, archive a card from your hand.
 var AutoVac5150 = set.New(
 	"Auto-Vac 5150",
 	card.House.Logos,
@@ -22,5 +17,18 @@ var AutoVac5150 = set.New(
 	card.Rarity.Rare,
 	card.Provenance(card.MM, "101"),
 	card.WithTraits(card.Traits.Item),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Action, card.Then{
+			First: card.DiscardCard{
+				Player:    card.Controller,
+				Zone:      card.Archives,
+				Selection: card.Chosen{Optional: true},
+			},
+			Result: card.RaiseKeyCost{
+				Player:   card.Opponent,
+				Amount:   3,
+				Duration: card.Duration.OpponentNextTurn,
+			},
+			Else: card.ArchiveCard{Zone: card.Hand, Selection: card.Chosen{}},
+		}),
 )

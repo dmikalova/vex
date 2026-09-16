@@ -34,6 +34,15 @@ func TestDrawModifierText(t *testing.T) {
 	); got != `While `+SelfName+` is in the center of the battleline, during your "draw cards" phase, refill your hand to 2 additional cards.` {
 		t.Errorf("in-center text = %q", got)
 	}
+	if got := drawModifierText(
+		DrawModifier{
+			Player: Controller,
+			Amount: 1,
+			Per:    InPlay{Player: Controller, Type: Creature, Trait: Sin},
+		},
+	); got != `During your "draw cards" phase, refill your hand to 1 additional card for each friendly Sin creature.` {
+		t.Errorf("per text = %q", got)
+	}
 }
 
 func TestDrawModifierAffects(t *testing.T) {
@@ -78,6 +87,40 @@ func TestDrawStepModifier(t *testing.T) {
 
 	if got := int(g.State.Hand[0].Count); got != HandSize+1 {
 		t.Errorf("hand after draw = %d, want %d (one additional card)", got, HandSize+1)
+	}
+}
+
+// TestDrawStepModifierPer covers a draw modifier that scales its amount by a count
+// of the battleline (Greed: one extra card per friendly Sin creature).
+func TestDrawStepModifierPer(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	for i := 0; i < 12; i++ {
+		g.AddToDeck(testCreature("d", 1), 0)
+	}
+	g.AddToBattleline(
+		NewCard(
+			"greed",
+			Dis,
+			Creature,
+			Common,
+			WithPower(4),
+			WithTraits(Sin),
+			WithDrawModifierPer(
+				Controller,
+				1,
+				InPlay{Player: Controller, Type: Creature, Trait: Sin},
+			),
+		),
+		0,
+	)
+	g.AddToBattleline(NewCard("sin", Dis, Creature, Common, WithPower(3), WithTraits(Sin)), 0)
+
+	g.StartTurn(0)
+	g.EndPlayPhase(0)
+
+	// Two friendly Sin creatures raise the refill by two.
+	if got := int(g.State.Hand[0].Count); got != HandSize+2 {
+		t.Errorf("hand after draw = %d, want %d (two additional cards)", got, HandSize+2)
 	}
 }
 

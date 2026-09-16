@@ -1,29 +1,26 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// ArmoryOfficerNel
+// Armory Officer Nel
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Creature
 //	Rarity: Uncommon
 //	Power:  4
 //	Traits: Alien
 //
-//	Enhance Draw.
 //	After an upgrade enters play, draw a card.
+//	Enhance Draw.
 var ArmoryOfficerNel = set.New(
 	"Armory Officer Nel",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
 	card.Provenance(card.MM, "319"),
+	card.WithEnhance(card.Bonus.Draw),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Alien),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.AfterUpgradeEnters, card.Draw{Amount: 1}),
 )

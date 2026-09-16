@@ -189,6 +189,7 @@ func (g *Game) assault(id LocalID) int {
 		a += g.cat.def(up).Static.AssaultBonus
 	}
 	a += int(g.State.Cards[id].TempAssaultBonus)
+	a += int(g.State.Cards[id].AssaultUntilNextTurn)
 	return a
 }
 
@@ -237,6 +238,9 @@ func (g *Game) hasKeyword(id LocalID, k Keyword) bool {
 		return false
 	}
 	if g.State.Cards[id].LostKeywords&k.bit() != 0 {
+		return false
+	}
+	if g.State.Cards[id].LostKeywordsUntilNextTurn&k.bit() != 0 {
 		return false
 	}
 	if !g.textBlanked(id) && g.cat.def(id).hasKeyword(k) {
@@ -665,6 +669,10 @@ func (g *Game) aemberProtected(player int) bool {
 		if g.cat.def(id).AemberCannotBeStolenWhileItHasAember && g.AmberOn(id) > 0 {
 			return true
 		}
+		if n := g.cat.def(id).AemberCannotBeStolenWhilePoolAtLeast; n > 0 &&
+			g.Aember(player) >= int(n) {
+			return true
+		}
 		for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
 			if g.cat.def(up).Static.AemberCannotBeStolen {
 				return true
@@ -826,6 +834,9 @@ func (g *Game) keyCostAmount(src LocalID, kc KeyCostChange) int {
 	if kc.whileOnFlank && !onFlank(g.constantContext(src), src) {
 		return 0
 	}
+	if kc.whileOffFlank && onFlank(g.constantContext(src), src) {
+		return 0
+	}
 	if kc.whileCondition != nil && !kc.whileCondition.Met(g.constantContext(src)) {
 		return 0
 	}
@@ -839,6 +850,9 @@ func (g *Game) keyCostAmount(src LocalID, kc KeyCostChange) int {
 // plus every key-cost change on a card in play that affects that player.
 func (g *Game) keyCost(target int) int {
 	cost := KeyCost + g.State.KeyCostBump[target].Value
+	if sure := g.State.KeyCostPerHouse[target].Value; sure.House != HouseNone {
+		cost += sure.Per * g.creaturesOfHouseInPlay(sure.House)
+	}
 	for controller := 0; controller < 2; controller++ {
 		for _, id := range g.allInPlay(controller) {
 			cost += g.keyCostChangeFor(id, controller, target)
@@ -846,6 +860,21 @@ func (g *Game) keyCost(target int) int {
 	}
 	// A key cost can never fall below 0, whatever reductions stack (We Can ALL Win).
 	return max(cost, 0)
+}
+
+// creaturesOfHouseInPlay counts every creature of the house in play, on either
+// battleline — the tally a counted key surcharge (Waking Nightmare) reads live at
+// each forge.
+func (g *Game) creaturesOfHouseInPlay(house House) int {
+	n := 0
+	for player := 0; player < 2; player++ {
+		for _, id := range g.State.Battleline[player].slice() {
+			if g.House(id) == house {
+				n++
+			}
+		}
+	}
+	return n
 }
 
 // CurrentKeyCost is the exported view of keyCost: the Æmber a player must spend
@@ -868,16 +897,27 @@ func (g *Game) allInPlay(player int) []LocalID {
 	return out
 }
 
-// entersPlayReady reports whether a card player controls grants player's cards
-// of type t entry into play ready rather than exhausted (Duskwitch for
+// entersPlayReady reports whether a card player controls grants a card of type t
+// and the given house entry into play ready rather than exhausted (Duskwitch for
 // creatures, The Curator for artifacts). The grant is friendly only, so callers
 // pass the entering card's controller: a card that somehow enters under the
-// opponent's control is not readied by your granter and stays exhausted.
-func (g *Game) entersPlayReady(player int, t CardType) bool {
+// opponent's control is not readied by your granter and stays exhausted. A grant
+// may be gated on the controller's Æmber pool (Fandangle needs 4) and may
+// withhold itself from one house (Fandangle readies only your non-Untamed
+// creatures).
+func (g *Game) entersPlayReady(player int, t CardType, house House) bool {
 	for _, id := range g.allInPlay(player) {
-		if g.cat.def(id).GrantsEntersReady == t {
-			return true
+		grant := g.cat.def(id).EntersReadyGrant
+		if grant.Type != t {
+			continue
 		}
+		if grant.ExceptHouse != HouseNone && grant.ExceptHouse == house {
+			continue
+		}
+		if grant.MinAember > 0 && g.Aember(player) < int(grant.MinAember) {
+			continue
+		}
+		return true
 	}
 	return false
 }

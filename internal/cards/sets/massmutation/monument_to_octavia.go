@@ -1,27 +1,45 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// MonumentToOctavia
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// monumentToOctaviaCluster pulls a Cornicen Octavia into Monument to Octavia's
+// pod, so the Monument's discard-pile bonus has its namesake to feed it (ADR
+// 0036). Cornicen Octavia also drafts on its own, so the pull only guarantees the
+// pairing.
+var monumentToOctaviaCluster = card.Cluster{
+	Name:     "Monument to Octavia",
+	Strategy: card.ClusterStrategy.Pull,
+	Trigger:  card.ClusterTrigger.ByLead,
+}
+
+// Monument to Octavia
 //
 //	House:  Saurian
 //	Type:   Artifact
-//	Rarity: Special
+//	Rarity: Rare
 //	Traits: Location
 //
-//	Action: A friendly creature captures 1A. If Cornicen Octavia is in your discard pile, that creature captures 2A instead.
+//	Action: If Cornicen Octavia is in your discard pile, a friendly creature captures 2 Æmber from your opponent. Otherwise, a friendly creature captures 1 Æmber from your opponent.
 var MonumentToOctavia = set.New(
 	"Monument to Octavia",
 	card.House.Saurian,
 	card.Type.Artifact,
-	// TODO(variant): rarity relabelled from Variant to Special — handle manually
-	card.Rarity.Special,
+	card.Rarity.Rare,
 	card.Provenance(card.MM, "237"),
+	card.LeadsCluster(monumentToOctaviaCluster),
 	card.WithTraits(card.Traits.Location),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Action, card.Conditional{
+			Cond: card.NamedCardInDiscard{Name: CornicenOctavia.Name},
+			Then: card.CaptureAember{
+				Amount: 2,
+				Target: card.Target.FriendlyCreature,
+				Source: card.Opponent,
+			},
+			Else: card.CaptureAember{
+				Amount: 1,
+				Target: card.Target.FriendlyCreature,
+				Source: card.Opponent,
+			},
+		}),
 )

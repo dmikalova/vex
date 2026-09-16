@@ -401,3 +401,30 @@ func TestOnChooseCreatureSkipsCreatureThatLeftPlay(t *testing.T) {
 		t.Errorf("core = %+v, want zero", core)
 	}
 }
+
+// The choice offered by "use the other creature" settles the board before the
+// player picks (ADR 0029), which can destroy the very creature about to be used:
+// Transposition Sandals swaps a damaged creature off the flank that was keeping it
+// alive, so it dies at the choice. UseVerb must not then reap or fight with the
+// creature that just left play — doing so left reap state (exhaustion, use count)
+// on a card sitting in the discard pile.
+func TestUseVerbSkipsCreatureDestroyedAtChoiceBoundary(t *testing.T) {
+	g := started(t)
+	// The victim's damage already meets its power, so it dies the moment the board
+	// settles — which the "reap or fight" choice does before the player answers.
+	victim := g.AddToBattleline(testCreature("victim", 3), 0)
+	g.State.Cards[victim].Damage = 3
+	g.AddToBattleline(testCreature("enemy", 3), 1) // a fight option, so the choice settles
+
+	OnChooseCreature{
+		Target: Target{Kind: TargetTheOtherCreature},
+		Verbs:  []CreatureVerb{UseVerb{}},
+	}.Resolve(&EffectContext{Resolver: g, It: victim, HasIt: true, Controller: 0})
+
+	if g.inPlay(victim) {
+		t.Fatal("the damaged victim should have been swept at the choice boundary")
+	}
+	if core := g.State.Cards[victim]; core != (CardCore{}) {
+		t.Errorf("a creature that left play must shed its state, got %+v", core)
+	}
+}

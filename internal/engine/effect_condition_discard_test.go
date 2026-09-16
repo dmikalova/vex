@@ -36,3 +36,27 @@ func TestCardsInDiscardAtLeast(t *testing.T) {
 		t.Error("three Untamed creatures should meet the threshold of 3")
 	}
 }
+
+// TestNamedCardInDiscard covers the Monuments' gate: whether a card of a given
+// name waits in the controller's discard pile.
+func TestNamedCardInDiscard(t *testing.T) {
+	e := NamedCardInDiscard{Name: "Faust the Great"}
+	if got := e.CondText(); got != "if Faust the Great is in your discard pile" {
+		t.Errorf("text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	// A card of the name in the opponent's discard pile does not satisfy the
+	// controller's condition, nor does a differently named card in their own.
+	g.AddToDiscard(NewCard("Faust the Great", Saurian, Creature, Common, WithPower(4)), 1)
+	g.AddToDiscard(NewCard("Cornicen Octavia", Saurian, Creature, Common, WithPower(5)), 0)
+	if e.Met(&EffectContext{Resolver: g, Controller: 0}) {
+		t.Error("Faust in the opponent's discard should not meet the condition")
+	}
+
+	// The named card in the controller's own discard pile satisfies it.
+	g.AddToDiscard(NewCard("Faust the Great", Saurian, Creature, Common, WithPower(4)), 0)
+	if !e.Met(&EffectContext{Resolver: g, Controller: 0}) {
+		t.Error("Faust in your own discard should meet the condition")
+	}
+}

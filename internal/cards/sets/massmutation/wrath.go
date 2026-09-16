@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Wrath
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Dis
 //	Type:   Creature
@@ -16,17 +11,26 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  3
 //	Traits: Demon • Sin
 //
-//	Taunt. Poison. Skirmish.
+//	Taunt, Poison, Skirmish.
 //	Fight: For each friendly Sin creature, enrage an enemy creature.
 var Wrath = set.New(
 	"Wrath",
 	card.House.Dis,
 	card.Type.Creature,
-	// TODO(variant): rarity relabelled from Variant to Special — handle manually
 	card.Rarity.Special,
 	card.Provenance(card.MM, "064"),
+	card.InCluster(sinsCluster),
+	card.OneCopyPerDeck(),
 	card.WithPower(3),
 	card.WithArmor(3),
 	card.WithTraits(card.Traits.Demon, card.Traits.Sin),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Taunt, card.Keyword.Poison, card.Keyword.Skirmish),
+	card.WithAbility(card.Trigger.Fight, card.ForEach{
+		Times: card.InPlay{
+			Player: card.Controller,
+			Type:   card.Type.Creature,
+			Trait:  card.Traits.Sin,
+		},
+		Do: card.Enrage{Target: card.Target.EnemyCreature},
+	}),
 )

@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Envy
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Dis
 //	Type:   Creature
@@ -16,15 +11,29 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Traits: Demon • Sin
 //
 //	Elusive.
-//	Reap: If there are 2 or more friendly Sin creatures, capture all of your opponent's A.
+//	Reap: If there are 2 or more friendly Sin creatures in play, Envy captures all your opponent's Æmber.
 var Envy = set.New(
 	"Envy",
 	card.House.Dis,
 	card.Type.Creature,
-	// TODO(variant): rarity relabelled from Variant to Special — handle manually
 	card.Rarity.Special,
 	card.Provenance(card.MM, "056"),
+	card.InCluster(sinsCluster),
+	card.OneCopyPerDeck(),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Demon, card.Traits.Sin),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithAbility(card.Trigger.Reap, card.Conditional{
+		Cond: card.InPlay{
+			Player: card.Controller,
+			Type:   card.Type.Creature,
+			Trait:  card.Traits.Sin,
+			Amount: 2,
+		},
+		Then: card.CaptureAember{
+			All:    true,
+			Target: card.Target.This,
+			Source: card.Opponent,
+		},
+	}),
 )

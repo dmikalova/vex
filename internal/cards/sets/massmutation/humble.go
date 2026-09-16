@@ -1,20 +1,15 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Humble
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
 //	House:  Saurian
 //	Type:   Tactic
 //	Rarity: Uncommon
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: Exhaust a creature. If you do, move 3A from that creature to the common supply.
+//	Play: Exhaust a creature -> move 3 Æmber from the chosen creature to the common supply.
 var Humble = set.New(
 	"Humble",
 	card.House.Saurian,
@@ -22,5 +17,15 @@ var Humble = set.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.MM, "208"),
 	card.WithBonus(card.Bonus.Aember),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Then{
+			First: card.Exhaust{
+				Target: card.Target.Creature,
+				Bind:   true,
+			},
+			Result: card.MoveAemberToSupply{
+				Amount: 3,
+				Target: card.Target.TheChosenCreature,
+			},
+		}),
 )

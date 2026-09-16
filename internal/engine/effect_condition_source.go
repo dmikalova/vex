@@ -129,6 +129,29 @@ func (c SourceNeighborsAllOfHouse) Met(ctx *EffectContext) bool {
 	return true
 }
 
+// SourceHasNoNeighborOfHouse is met while no battleline neighbor of the source
+// card belongs to House — Crewman Jorg steals only while it has no Star Alliance
+// neighbor.
+type SourceHasNoNeighborOfHouse struct {
+	House House
+}
+
+// CondText renders the condition, e.g. "if Crewman Jorg has no Star Alliance
+// neighbor".
+func (c SourceHasNoNeighborOfHouse) CondText() string {
+	return "if " + SelfName + " has no " + c.House.String() + " neighbor"
+}
+
+// Met reports whether none of the source card's neighbors belong to House.
+func (c SourceHasNoNeighborOfHouse) Met(ctx *EffectContext) bool {
+	for _, n := range neighbors(ctx, ctx.Source) {
+		if ctx.Resolver.House(n) == c.House {
+			return false
+		}
+	}
+	return true
+}
+
 // CountersOnThisAtLeast is met when the source card carries at least N counters of
 // Kind — The Big One wipes the board once ten or more fuse counters sit on it.
 type CountersOnThisAtLeast struct {

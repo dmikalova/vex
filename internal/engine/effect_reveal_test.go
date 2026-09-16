@@ -74,3 +74,45 @@ func TestReveal(t *testing.T) {
 		t.Error("a declined reveal should not log")
 	}
 }
+
+func TestRevealChosenFromHand(t *testing.T) {
+	if got := (RevealChosenFromHand{}).Text(); got != "reveal a card from your hand" {
+		t.Errorf("text = %q", got)
+	}
+
+	// The chosen card is revealed, logged, and left in context for a follow-up.
+	g := NewGame("Alice", "Bob", 1)
+	g.AddToHand(NewCard("Marauder", Mars, Creature, Common, WithPower(1)), 0)
+	pick := g.AddToHand(NewCard("Missile", Mars, Tactic, Common), 0)
+	g.SetChooser(0, &idQueueChooser{ids: []LocalID{pick}})
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	RevealChosenFromHand{}.Resolve(ctx)
+	if !ctx.HasIt || ctx.It != pick {
+		t.Errorf("It = %v/%v, want %v", ctx.It, ctx.HasIt, pick)
+	}
+	line := g.Log[len(g.Log)-1].Text(g)
+	if !strings.Contains(line, "Missile") {
+		t.Errorf("log = %q, want the revealed card", line)
+	}
+
+	// An empty hand reveals nothing and leaves no card in context.
+	g2 := NewGame("A", "B", 1)
+	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
+	before := len(g2.Log)
+	RevealChosenFromHand{}.Resolve(ctx2)
+	if ctx2.HasIt {
+		t.Error("empty hand should leave no card in context")
+	}
+	if len(g2.Log) != before {
+		t.Error("revealing nothing should not log")
+	}
+
+	// A sole candidate is offered and chosen without a decline path.
+	g3 := NewGame("A", "B", 1)
+	only := g3.AddToHand(NewCard("Solo", Mars, Tactic, Common), 0)
+	ctx3 := &EffectContext{Resolver: g3, Controller: 0}
+	RevealChosenFromHand{}.Resolve(ctx3)
+	if !ctx3.HasIt || ctx3.It != only {
+		t.Errorf("sole candidate It = %v/%v, want %v", ctx3.It, ctx3.HasIt, only)
+	}
+}

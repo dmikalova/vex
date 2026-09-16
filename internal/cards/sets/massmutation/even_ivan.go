@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// EvenIvan
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Even Ivan
 //
 //	House:  Logos
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Mutant • Scientist
 //
-//	Action: If your opponent has an even amount of A, steal 1A.
+//	Action: If your opponent has an even amount of Æmber, steal 1 Æmber.
 var EvenIvan = set.New(
 	"Even Ivan",
 	card.House.Logos,
@@ -24,5 +19,9 @@ var EvenIvan = set.New(
 	card.Provenance(card.MM, "073"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Mutant, card.Traits.Scientist),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Action, card.Conditional{
+			Cond: card.PoolAember{Player: card.Opponent, Is: card.Even},
+			Then: card.StealAember{Amount: 1},
+		}),
 )

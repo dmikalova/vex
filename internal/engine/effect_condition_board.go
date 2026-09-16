@@ -23,7 +23,7 @@ func (c PoolAember) validate() error {
 		return fmt.Errorf("PoolAember: Player must be Controller or Opponent")
 	}
 	switch c.Is {
-	case AtLeast, AtMost, Exactly:
+	case AtLeast, AtMost, Exactly, Even, Odd:
 		return nil
 	case MoreThanYou:
 		if c.Player != Opponent {
@@ -37,7 +37,8 @@ func (c PoolAember) validate() error {
 		return nil
 	default:
 		return fmt.Errorf(
-			"PoolAember: Is must be AtLeast, AtMost, Exactly, MoreThanYou, or MoreThanOpponent",
+			"PoolAember: Is must be AtLeast, AtMost, Exactly, Even, Odd, " +
+				"MoreThanYou, or MoreThanOpponent",
 		)
 	}
 }
@@ -50,6 +51,16 @@ func (c PoolAember) CondText() string {
 		return "if your opponent has more Æmber than you"
 	case MoreThanOpponent:
 		return "if you have more Æmber than your opponent"
+	case Even:
+		if c.Player == Opponent {
+			return "if your opponent has an even amount of Æmber"
+		}
+		return "if you have an even amount of Æmber"
+	case Odd:
+		if c.Player == Opponent {
+			return "if your opponent has an odd amount of Æmber"
+		}
+		return "if you have an odd amount of Æmber"
 	}
 	if c.Player == Opponent {
 		switch {
@@ -83,6 +94,10 @@ func (c PoolAember) Met(ctx *EffectContext) bool {
 		return mine == c.Amount
 	case AtMost:
 		return mine <= c.Amount
+	case Even:
+		return mine%2 == 0
+	case Odd:
+		return mine%2 == 1
 	case MoreThanYou, MoreThanOpponent:
 		other := ctx.Controller
 		if c.Player == Controller {
@@ -95,17 +110,24 @@ func (c PoolAember) Met(ctx *EffectContext) bool {
 }
 
 // ControlsMoreCreatures is met while the controller has more creatures in play
-// than the opponent.
-type ControlsMoreCreatures struct{}
+// than the opponent. Trait, when set, restricts the comparison to creatures with
+// that trait (Pismire compares Mutant counts).
+type ControlsMoreCreatures struct {
+	Trait Trait
+}
 
 // CondText renders the condition.
-func (ControlsMoreCreatures) CondText() string {
+func (c ControlsMoreCreatures) CondText() string {
+	if c.Trait != traitUnset {
+		return "if you control more " + c.Trait.String() +
+			" creatures than your opponent"
+	}
 	return "if you control more creatures than your opponent"
 }
 
 // Met reports whether the controller has more creatures in play than the opponent.
-func (ControlsMoreCreatures) Met(ctx *EffectContext) bool {
-	return ExcessCreatures{Player: Controller}.Value(ctx) >= 1
+func (c ControlsMoreCreatures) Met(ctx *EffectContext) bool {
+	return ExcessCreatures{Player: Controller, Trait: c.Trait}.Value(ctx) >= 1
 }
 
 // ControlsNamed is met when the controller has a card of a given printed name in

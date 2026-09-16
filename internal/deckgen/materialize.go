@@ -40,6 +40,13 @@ type GenerationProfile struct {
 	// (OnePerHouse) places one Shard in each of the deck's Houses whenever any
 	// Shard is drawn; the zero value belongs to no cluster.
 	Cluster ClusterMembership
+	// GiganticArt is the synthetic art half a gigantic creature's base half
+	// carries (ADR 0042). A gigantic is authored as one card that registers only
+	// its base half; the art half has no registry entry (the two halves share a
+	// name, which the database forbids) and no provenance, so the base carries it
+	// here. Deck generation places it into a second slot of the base's pod, so a
+	// deck that draws a gigantic draws both halves. It is nil for an ordinary card.
+	GiganticArt *engine.CardDefinition
 }
 
 // SlotContext is what a Materializer needs to produce a concrete card for a Slot.

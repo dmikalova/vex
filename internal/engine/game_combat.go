@@ -636,3 +636,19 @@ func (g *Game) shouldDestroy(id LocalID) bool {
 	return int(core.Damage) >= g.Power(id) ||
 		g.Power(id) <= 0
 }
+
+// artifactShouldSelfDestroy reports whether an artifact carrying a DestroyedWhen
+// condition is currently in a state that destroys it — Doom Sigil destroys itself
+// while there are no creatures in play. Artifacts are never destroyed by damage or
+// power, so this is the only board state that settles them.
+func (g *Game) artifactShouldSelfDestroy(id LocalID) bool {
+	if g.TypeOf(id) != Artifact || !g.inPlay(id) {
+		return false
+	}
+	dw := g.cat.def(id).DestroyedWhen
+	if dw == nil {
+		return false
+	}
+	ctx := &EffectContext{Resolver: g, Source: id, Controller: g.controller(id)}
+	return dw.Met(ctx)
+}

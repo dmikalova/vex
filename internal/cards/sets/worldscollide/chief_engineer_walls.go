@@ -34,7 +34,7 @@ var ChiefEngineerWalls = set.New(
 	card.Rarity.Common,
 	card.Provenance(card.WC, "293"),
 	card.InCluster(card.Pulled(wallsBlasterCluster, 1, 1.25)),
-	card.PullsMatching("Walls' Upgrades and Robots", 2, upgradeOrRobot),
+	card.PullsMatching("Walls' Upgrades and Robots", 2, 2, upgradeOrRobot),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human),
 	card.WithKeywords(card.Keyword.Elusive),

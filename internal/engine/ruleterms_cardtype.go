@@ -46,5 +46,17 @@ ability.`,
 			Body: `An upgrade attaches to a creature as you play it, changing that creature's
 stats or granting it keywords and abilities for as long as it stays attached.`,
 		},
+		{
+			Section:    SectionCardType,
+			Title:      "Gigantic creature",
+			Definition: "A creature printed as two cards — a base half and an art half — that share a name and are played as one creature.",
+			Body: `A gigantic creature is printed as two cards that share a name: a base half,
+which carries the creature's power, traits, keywords, and abilities, and an art
+half, which carries only its bonus icons. You need both halves to play it. Play
+either half and the whole creature enters your battleline as one creature; the
+base half stands in the battleline and the art half sits beside it. Both halves
+count as one creature for every rule. When it leaves play, both halves go
+together to the same place.`,
+		},
 	})
 }

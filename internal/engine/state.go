@@ -56,8 +56,23 @@ type CardCore struct {
 	// KeywordsUntilNextTurn is the set of keywords this creature has gained until
 	// the start of its controller's next turn, as a bitmask of Keyword.bit() values
 	// (Hideaway Hole grants elusive). Unlike GrantedKeywords, only the controller's
-	// own ready phase clears it, so a defensive keyword survives the opponent's turn.
+	// own start-of-turn phase clears it, before any start-of-turn ability resolves, so
+	// a defensive keyword survives the opponent's turn.
 	KeywordsUntilNextTurn uint16
+	// LostKeywordsUntilNextTurn is the set of keywords this creature has lost until
+	// the start of its controller's next turn, as a bitmask of Keyword.bit() values
+	// (Reckless Rizzo loses elusive after stealing). Unlike LostKeywords, only the
+	// controller's own start-of-turn phase clears it, before any start-of-turn ability
+	// resolves, so the loss survives the opponent's turn.
+	LostKeywordsUntilNextTurn uint16
+	// TraitUntilNextTurn is a trait this creature has gained until the start of its
+	// controller's next turn — the Mutation cycle grants a chosen creature the Mutant
+	// trait. Only the controller's own start-of-turn phase clears it, before any
+	// start-of-turn ability resolves, so the trait survives the opponent's turn. It
+	// holds a single trait (the most recently granted); the
+	// only cards that grant it, the three Mutations, all grant Mutant, so overwrite
+	// never loses a distinct trait in practice. traitUnset means none.
+	TraitUntilNextTurn Trait
 	// ConsideredFlank, while set, makes this creature count as a flank creature no
 	// matter where it sits in its battleline (Spectral Tunneler). It lasts until the
 	// remainder of the turn; the ready phase clears it for every creature.
@@ -100,6 +115,12 @@ type CardCore struct {
 	// Creed of Nature grants a chosen creature assault equal to its power. It adds to
 	// the creature's Assault value; the ready phase clears it for every creature.
 	TempAssaultBonus int16
+	// AssaultUntilNextTurn is Assault a creature gained until the start of its
+	// controller's next turn — the Mutation cycle grants a chosen creature assault 3.
+	// Unlike TempAssaultBonus, only the controller's own start-of-turn phase clears it,
+	// before any start-of-turn ability resolves, so it matches the keyword and trait a
+	// mutation grants in the same breath. It adds to the creature's Assault value.
+	AssaultUntilNextTurn int16
 	// TempHouse is the house this in-play card belongs to until its controller's
 	// turn ends. HouseNone means it belongs to its printed house.
 	TempHouse House
@@ -166,6 +187,12 @@ type CardCore struct {
 	// the Under mechanic rather than a generic "FaceDown" to avoid colliding with
 	// the unrelated facedown-in-play token-creature mechanic (Winds of Exchange).
 	UnderFaceDown bool
+	// GiganticPartnerPlus links the two halves of a gigantic creature while it is
+	// in play: the base half (which holds the battleline slot and is the creature)
+	// and the slot-less art half (which lends only its bonus icons) each point at
+	// the other. It uses +1 encoding (0 means "no partner") like the upgrade and
+	// under links above, so the zero value is a lone, unpaired half. See ADR 0042.
+	GiganticPartnerPlus uint8
 }
 
 // A zone is an ordered, fixed-capacity collection of card ids (hand, deck, battle
@@ -420,6 +447,15 @@ type GameState struct {
 	KeyCostBump     [2]Bar[int]
 	KeyCostBumpNext [2]Bar[int]
 
+	// Counted key surcharges. KeyCostPerHouse[p] raises player p's key cost by Per
+	// for each creature of House in play, recomputed at each forge; KeyCostPerHouseNext[p]
+	// arms it for p's next turn (Waking Nightmare taxes +1 per Dis creature during
+	// the opponent's next turn). Unlike KeyCostBump, the surcharge is not a frozen
+	// amount — a creature of that house entering or leaving during the taxed turn
+	// changes what a key costs. Promoted by StartTurn and lifted by the ready phase.
+	KeyCostPerHouse     [2]Bar[perHouseKeySurcharge]
+	KeyCostPerHouseNext [2]Bar[perHouseKeySurcharge]
+
 	// MayFightHouse[p] is a house whose creatures player p may use to fight this
 	// turn even when it is not the active house — Brothers in Battle's "each
 	// friendly creature of that house may fight." HouseNone (the zero value) grants
@@ -448,6 +484,12 @@ type GameState struct {
 	// belonged to the active house for the remainder of the turn — Scientifical
 	// Hack. The ready phase clears it.
 	MayUseArtifactsAnyHouse [2]bool
+
+	// MayUseTrait[p] is a trait whose creatures player p may fully use this turn
+	// (fight, reap, or Action:) even when they are not in the active house —
+	// Mutagenic Serum's "you may use friendly Mutant creatures". traitUnset grants
+	// nothing; the ready phase clears it.
+	MayUseTrait [2]Trait
 
 	// TurnHistory holds the small tallies of what each player did during a turn —
 	// several cards ask that rather than what is on the board ("if your opponent

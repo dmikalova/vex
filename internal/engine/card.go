@@ -43,11 +43,11 @@ type CardDefinition struct {
 	// creature's own fight damage untouched.
 	DealsNoDamageWhenAttacked bool
 
-	// GrantsEntersReady, when set to Creature or Artifact, makes friendly cards of
-	// that type enter play ready instead of exhausted while this card is in play —
-	// Duskwitch readies your creatures, The Curator readies your artifacts.
-	// TypeUnset grants nothing.
-	GrantsEntersReady CardType
+	// EntersReadyGrant, when its Type is set, makes friendly cards of that type
+	// enter play ready instead of exhausted while this card is in play — Duskwitch
+	// readies your creatures, The Curator your artifacts, Fandangle your non-Untamed
+	// creatures while you hold 4+ Æmber. The zero value grants nothing.
+	EntersReadyGrant EntersReadyGrant
 
 	// FightRestriction, when set, limits which enemy creatures this creature may
 	// fight to those its Target allows (Bigtwig can only fight stunned creatures).
@@ -154,6 +154,13 @@ type CardDefinition struct {
 	// host through StaticModifier.Replaces instead.)
 	Replaces Instead
 
+	// BonusInstead is a continuous bonus-icon substitution this card applies for its
+	// controller while in play — Amphora Captura may resolve any icon as a Capture
+	// icon, Scrivener Favian always steals 1 instead of a Capture icon. Checked
+	// before each of the controller's played bonus icons resolves. The zero value
+	// offers no substitution.
+	BonusInstead BonusInstead
+
 	// DrawModifier is a continuous change this card makes to a player's end-of-turn
 	// hand-refill size while in play — Mother refills its controller to one more
 	// card, Succubus refills the opponent to one fewer. The zero value changes
@@ -167,6 +174,11 @@ type CardDefinition struct {
 	// AemberCannotBeStolenWhileItHasAember protects its controller's Æmber from
 	// theft only while the card itself has Æmber on it (Odoac the Patrician).
 	AemberCannotBeStolenWhileItHasAember bool
+
+	// AemberCannotBeStolenWhilePoolAtLeast protects its controller's Æmber from
+	// theft only while their pool holds at least this many Æmber (Cephaloist). The
+	// zero value protects nothing.
+	AemberCannotBeStolenWhilePoolAtLeast uint8
 
 	// SpendableAember lets the Æmber sitting on this card be put toward a key,
 	// so it is a private vault its controller can bank into (Safe Place).
@@ -182,7 +194,28 @@ type CardDefinition struct {
 
 	// Abilities are the triggered abilities on the card.
 	Abilities []Ability
+
+	// GiganticRole marks a card as one half of a gigantic creature and says which
+	// half it is (base or art). The zero value, GiganticNone, is an ordinary
+	// single card. The base half carries the creature's stats, keywords, and
+	// abilities and holds the battleline slot in play; the art half carries only
+	// its bonus icons. The two halves pair by name and opposite role (see ADR 0042).
+	GiganticRole GiganticRole
 }
+
+// GiganticRole says which half of a gigantic creature a card is, or that it is
+// not part of a gigantic at all. See ADR 0042.
+type GiganticRole uint8
+
+const (
+	// GiganticNone marks an ordinary card that is not part of a gigantic.
+	GiganticNone GiganticRole = iota
+	// GiganticBase marks the base half, which carries the creature's power, armor,
+	// traits, keywords, and abilities and holds the battleline slot in play.
+	GiganticBase
+	// GiganticArt marks the art half, which carries only the creature's bonus icons.
+	GiganticArt
+)
 
 // DrawModifier is a continuous change a card in play makes to how many cards a
 // player draws back up to during their "draw cards" phase. Player is relative to
@@ -191,6 +224,9 @@ type CardDefinition struct {
 type DrawModifier struct {
 	Player Player
 	Amount int
+	// Per scales the Amount by a running count read from the source card's point of
+	// view — Greed refills 1 extra card for each friendly Sin creature.
+	Per Count
 	// OnlyWhileOffFlank restricts the modifier to while the source card is not on a
 	// flank of its battleline (Streke).
 	OnlyWhileOffFlank bool
@@ -222,6 +258,11 @@ type Restrictions struct {
 	// creatures, "Enemy creatures cannot reap."). Its zero value (playerUnset)
 	// imposes no reaping restriction.
 	Reaping Player
+	// BonusIcons bars a player from resolving the bonus icons on cards they play,
+	// relative to the card's controller (Master of the Grey's Opponent bars the
+	// enemy, "Your opponent cannot resolve bonus icons on cards they play."). Its
+	// zero value (playerUnset) bars nothing.
+	BonusIcons Player
 	// CannotPlay bars the controller from playing cards of this type (e.g. Creature
 	// for Grommid's "You cannot play creatures"). The zero value (an unset CardType)
 	// imposes no play restriction.
@@ -303,6 +344,9 @@ type KeyCostChange struct {
 	// whileOnFlank suspends the change unless the source card holds a flank of its
 	// controller's battleline (Titan Mechanic).
 	whileOnFlank bool
+	// whileOffFlank suspends the change unless the source card is off a flank of its
+	// controller's battleline (Titan Engineer).
+	whileOffFlank bool
 	// whileCondition suspends the change unless the condition holds on the live
 	// board (Proclamation 346E charges +2 only while the opponent controls creatures
 	// from fewer than three houses).
@@ -319,6 +363,12 @@ func (kc KeyCostChange) Per(c Count) KeyCostChange {
 // WhileOnFlank applies the change only while the source card is on a flank.
 func (kc KeyCostChange) WhileOnFlank() KeyCostChange {
 	kc.whileOnFlank = true
+	return kc
+}
+
+// WhileOffFlank applies the change only while the source card is not on a flank.
+func (kc KeyCostChange) WhileOffFlank() KeyCostChange {
+	kc.whileOffFlank = true
 	return kc
 }
 
@@ -632,6 +682,11 @@ func NewCard(
 			panic(fmt.Sprintf("card %q: %v", name, err))
 		}
 	}
+	if c.BonusInstead.set() {
+		if err := c.BonusInstead.validate(); err != nil {
+			panic(fmt.Sprintf("card %q: %v", name, err))
+		}
+	}
 	if err := c.PlayPermission.validate(); err != nil {
 		panic(fmt.Sprintf("card %q: %v", name, err))
 	}
@@ -730,6 +785,11 @@ func WithKeywords(keywords ...Keyword) CardOption {
 	return func(c *CardDefinition) { c.Keywords = append(c.Keywords, keywords...) }
 }
 
+// WithGiganticRole marks a card as one half of a gigantic creature (see ADR 0042).
+func WithGiganticRole(role GiganticRole) CardOption {
+	return func(c *CardDefinition) { c.GiganticRole = role }
+}
+
 // WithAssault gives a creature Assault N: it deals N damage to the creature it
 // attacks, before fight damage.
 func WithAssault(n int) CardOption { return func(c *CardDefinition) { c.Assault = n } }
@@ -771,10 +831,27 @@ func WithNoDamageWhenAttacked() CardOption {
 	return func(c *CardDefinition) { c.DealsNoDamageWhenAttacked = true }
 }
 
-// WithFriendlyEntersPlayReady makes friendly cards of the given type enter play
-// ready while this card is in play (Duskwitch for creatures, The Curator for artifacts).
-func WithFriendlyEntersPlayReady(t CardType) CardOption {
-	return func(c *CardDefinition) { c.GrantsEntersReady = t }
+// EntersReadyGrant makes friendly cards of a type enter play ready instead of
+// exhausted while its card is in play. The zero value grants nothing.
+type EntersReadyGrant struct {
+	// Type is the card type readied — Creature (Duskwitch) or Artifact (The
+	// Curator). TypeUnset grants nothing.
+	Type CardType
+	// MinAember gates the grant on the controller's pool: it applies only while
+	// they hold at least this much Æmber (Fandangle needs 4). Zero is ungated.
+	MinAember uint8
+	// ExceptHouse withholds the grant from cards of one house — Fandangle readies
+	// your non-Untamed creatures, so it excludes its own house. HouseNone excludes
+	// none.
+	ExceptHouse House
+}
+
+// WithFriendlyEntersPlayReady makes friendly cards enter play ready instead of
+// exhausted while this card is in play, per the grant — Duskwitch readies your
+// creatures, The Curator your artifacts, Fandangle your non-Untamed creatures
+// while you hold enough Æmber.
+func WithFriendlyEntersPlayReady(g EntersReadyGrant) CardOption {
+	return func(c *CardDefinition) { c.EntersReadyGrant = g }
 }
 
 // WithFightRestriction limits which creatures a creature may fight to those the
@@ -889,6 +966,12 @@ func WithReplaces(r Instead) CardOption {
 	return func(c *CardDefinition) { c.Replaces = r }
 }
 
+// WithBonusInstead sets a continuous bonus-icon substitution the card applies for
+// its controller while in play (Amphora Captura, Scrivener Favian).
+func WithBonusInstead(r BonusInstead) CardOption {
+	return func(c *CardDefinition) { c.BonusInstead = r }
+}
+
 // WithDrawModifier makes the card, while in play, change a player's end-of-turn
 // hand-refill size by amount (Mother +1 for its controller, Succubus -1 for the
 // opponent, The Howling Pit +1 for each player).
@@ -913,6 +996,15 @@ func WithDrawModifierInCenter(player Player, amount int) CardOption {
 	}
 }
 
+// WithDrawModifierPer is WithDrawModifier scaled by a running count, so the refill
+// change grows with the board (Greed refills 1 extra card for each friendly Sin
+// creature).
+func WithDrawModifierPer(player Player, amount int, per Count) CardOption {
+	return func(c *CardDefinition) {
+		c.DrawModifier = DrawModifier{Player: player, Amount: amount, Per: per}
+	}
+}
+
 // WithAemberCannotBeStolen makes the card, while in play, keep its controller's
 // Æmber from being stolen (The Vaultkeeper).
 func WithAemberCannotBeStolen() CardOption {
@@ -923,6 +1015,12 @@ func WithAemberCannotBeStolen() CardOption {
 // being stolen only while the card itself has Æmber on it (Odoac the Patrician).
 func WithAemberCannotBeStolenWhileItHasAember() CardOption {
 	return func(c *CardDefinition) { c.AemberCannotBeStolenWhileItHasAember = true }
+}
+
+// WithAemberCannotBeStolenWhilePoolAtLeast keeps its controller's Æmber from being
+// stolen only while their pool holds at least n Æmber (Cephaloist).
+func WithAemberCannotBeStolenWhilePoolAtLeast(n int) CardOption {
+	return func(c *CardDefinition) { c.AemberCannotBeStolenWhilePoolAtLeast = uint8(n) }
 }
 
 // WithSpendableAember lets the Æmber banked on the card be spent when its
