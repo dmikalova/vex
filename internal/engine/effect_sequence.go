@@ -176,26 +176,37 @@ func (e Sequence) Resolve(ctx *EffectContext) {
 // May or a Repeat's MayWhile gate wrapping it can be driven by that choice (and a
 // Done to pass) rather than a separate Yes/No — the rest of the sequence then
 // follows.
-func (e Sequence) declinable() bool {
-	if len(e.Effects) == 0 {
-		return false
-	}
-	d, ok := e.Effects[0].(declinableEffect)
-	return ok && d.declinable()
-}
+func (e Sequence) declinable() bool { return leadsWithACardChoice(e.Effects) }
 
 // resolveOptional asks the leading choice declinably; only when it is taken do the
 // remaining effects resolve, so declining the first pick passes on the whole
 // sequence.
 func (e Sequence) resolveOptional(ctx *EffectContext) bool {
-	if len(e.Effects) == 0 {
+	return resolveLeadingCardChoice(ctx, e.Effects)
+}
+
+// leadsWithACardChoice reports that a run of effects opens with one clickable card
+// choice. It is what makes a whole run declinable: the lead is the only decision a
+// player makes before the rest follows, so clicking that card (or Done) answers
+// for the run.
+func leadsWithACardChoice(effects []Effect) bool {
+	if len(effects) == 0 {
 		return false
 	}
-	first, ok := e.Effects[0].(declinableEffect)
-	if !ok || !first.declinable() || !first.resolveOptional(ctx) {
+	d, ok := effects[0].(declinableEffect)
+	return ok && d.declinable()
+}
+
+// resolveLeadingCardChoice asks a run's leading choice declinably and resolves the
+// rest only when it is taken, so declining the first pick passes on the whole run.
+func resolveLeadingCardChoice(ctx *EffectContext, effects []Effect) bool {
+	if !leadsWithACardChoice(effects) {
 		return false
 	}
-	for _, child := range e.Effects[1:] {
+	if !effects[0].(declinableEffect).resolveOptional(ctx) {
+		return false
+	}
+	for _, child := range effects[1:] {
 		child.Resolve(ctx)
 	}
 	return true
@@ -241,6 +252,16 @@ func (e Sentences) Resolve(ctx *EffectContext) {
 	for _, child := range e.Effects {
 		child.Resolve(ctx)
 	}
+}
+
+// declinable reports that the sentences lead with a single clickable choice, so a
+// May wrapping them is driven by that click rather than a separate Yes/No.
+func (e Sentences) declinable() bool { return leadsWithACardChoice(e.Effects) }
+
+// resolveOptional asks the leading choice declinably; the later sentences resolve
+// only when it is taken.
+func (e Sentences) resolveOptional(ctx *EffectContext) bool {
+	return resolveLeadingCardChoice(ctx, e.Effects)
 }
 
 // validate surfaces the first configuration error among the child effects.

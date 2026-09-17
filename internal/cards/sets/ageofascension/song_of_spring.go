@@ -19,6 +19,6 @@ var SongOfSpring = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.ShuffleChosenCreaturesFromZones{
-			House: card.House.Self,
+			House: card.Houses.Named(card.House.Self),
 		}),
 )

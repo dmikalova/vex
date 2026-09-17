@@ -26,6 +26,10 @@ var (
 	WithAttackKeywords = func(ak engine.AttackKeywords) Option { return gameplay(engine.WithAttackKeywords(ak)) }
 	// WithNoDamageWhenAttacked makes a creature deal no retaliation damage when attacked.
 	WithNoDamageWhenAttacked = func() Option { return gameplay(engine.WithNoDamageWhenAttacked()) }
+	// WithStealsInsteadOfDamageWhenAttacked makes a creature's controller steal instead of it dealing retaliation damage (Shoulder Id).
+	WithStealsInsteadOfDamageWhenAttacked = func(n int) Option {
+		return gameplay(engine.WithStealsInsteadOfDamageWhenAttacked(n))
+	}
 	// WithFriendlyEntersPlayReady makes friendly cards enter play ready while this card is in play, per the grant (Duskwitch, The Curator, Fandangle).
 	WithFriendlyEntersPlayReady = func(g engine.EntersReadyGrant) Option { return gameplay(engine.WithFriendlyEntersPlayReady(g)) }
 	// WithFightRestriction restricts which creatures this creature may fight.
@@ -47,6 +51,12 @@ var (
 	// damage (Drecker).
 	WithAlsoTakesNeighborFightDamage = func() Option {
 		return gameplay(engine.WithAlsoTakesNeighborFightDamage())
+	}
+	// WithTauntReachingNeighborsNeighbors extends this creature's taunt one step
+	// further, so it shields its neighbors' neighbors as well as its neighbors (Lady
+	// Loreena).
+	WithTauntReachingNeighborsNeighbors = func() Option {
+		return gameplay(engine.WithTauntReachingNeighborsNeighbors())
 	}
 	// WithPowerX gives a creature a variable "X" power: a live Count added to its
 	// base power while its text is not blanked (Picaroon's combined-neighbor power).
@@ -113,17 +123,12 @@ var (
 	WithDrawModifierPer = func(p Player, amount int, per engine.Count) Option {
 		return gameplay(engine.WithDrawModifierPer(p, amount, per))
 	}
-	// WithAemberCannotBeStolen keeps the controller's Æmber from being stolen.
-	WithAemberCannotBeStolen = func() Option { return gameplay(engine.WithAemberCannotBeStolen()) }
-	// WithAemberCannotBeStolenWhileItHasAember keeps the controller's Æmber from
-	// being stolen while the card itself has Æmber on it.
-	WithAemberCannotBeStolenWhileItHasAember = func() Option {
-		return gameplay(engine.WithAemberCannotBeStolenWhileItHasAember())
-	}
-	// WithAemberCannotBeStolenWhilePoolAtLeast keeps the controller's Æmber from
-	// being stolen while their pool holds at least n Æmber.
-	WithAemberCannotBeStolenWhilePoolAtLeast = func(n int) Option {
-		return gameplay(engine.WithAemberCannotBeStolenWhilePoolAtLeast(n))
+	// WithAemberCannotBeStolen keeps the controller's Æmber from being stolen — with
+	// no argument unconditionally, or only while the given condition holds
+	// (card.ThisHasAember{} while the card has Æmber, a card.PoolAember threshold
+	// while the pool is deep enough).
+	WithAemberCannotBeStolen = func(cond ...engine.Condition) Option {
+		return gameplay(engine.WithAemberCannotBeStolen(cond...))
 	}
 	// WithSpendableAember lets Æmber banked on this card be spent when forging.
 	WithSpendableAember = func() Option { return gameplay(engine.WithSpendableAember()) }

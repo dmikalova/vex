@@ -1,5 +1,7 @@
 package engine
 
+import "fmt"
+
 // Swap exchanges this creature's battleline position with the creature its With
 // target selects, then puts that creature in context (ctx.It) so a following
 // effect can act on it — Transposition Sandals swaps with another friendly
@@ -169,39 +171,73 @@ func (e MoveToFlank) Resolve(ctx *EffectContext) {
 // the flank. It is how an artifact turns itself into a creature (Auto-Legionary):
 // the card keeps its exhaustion, Æmber, and power counters and reads as a creature
 // until it leaves play, so power counters placed on it before the turn now count
-// toward its power. A Target that selects nothing, or a card no longer in play, is
-// a safe no-op.
+// toward its power. When Duration is RemainderOfPlayerTurn the conversion lasts only
+// the current turn (Animator): the card reverts to an artifact at end of turn but
+// keeps its power counters. A Target that selects nothing, or a card no longer in
+// play, is a safe no-op.
 type TurnIntoCreature struct {
 	Target Target
+	// Duration RemainderOfPlayerTurn makes the conversion last only the current turn
+	// (Animator). Left unset, the conversion is permanent until the card leaves play
+	// (Auto-Legionary).
+	Duration Duration
+	// Versatile grants the animated creature versatile, so it can be used this turn
+	// as if in the active house (Animator). It is granted for the remainder of the
+	// turn, lifting in the same ready phase that reverts a turn-scoped conversion.
+	Versatile bool
 }
 
-// validate requires the card to convert.
+// validate requires the card to convert and permits only a turn-scoped or an unset
+// (permanent) duration.
 func (e TurnIntoCreature) validate() error {
 	if !e.Target.valid() {
 		return errUnsetTarget("TurnIntoCreature")
+	}
+	if e.Duration != durationUnset && e.Duration != RemainderOfPlayerTurn {
+		return fmt.Errorf(
+			"TurnIntoCreature: duration must be unset or RemainderOfPlayerTurn")
 	}
 	return nil
 }
 
 // Text renders the effect, e.g. "move it to a flank of your battleline as a
 // creature". The card is referred to as "it": this effect always follows an
-// effect that named the source (Auto-Legionary gives itself counters first), so
-// the second reference reads as a pronoun, matching KeyForge's own wording for
-// Effigy of Melerukh and The Mysticeti.
+// effect that named the card (Auto-Legionary gives itself counters first, Animator
+// gives a chosen artifact counters first), so the second reference reads as a
+// pronoun, matching KeyForge's own wording for Effigy of Melerukh and The
+// Mysticeti. A card animating itself moves to "your battleline"; a chosen card
+// moves to "its controller's battleline", which may be the opponent's. Versatile
+// adds "with versatile", and a turn-scoped conversion adds "for the remainder of
+// the turn".
 func (e TurnIntoCreature) Text() string {
-	return "move it to a flank of your battleline as a creature"
+	whose := "your"
+	if e.Target.Kind != TargetThisCreature {
+		whose = "its controller's"
+	}
+	text := "move it to a flank of " + whose + " battleline as a creature"
+	if e.Versatile {
+		text += " with versatile"
+	}
+	if e.Duration == RemainderOfPlayerTurn {
+		text += " for the remainder of the turn"
+	}
+	return text
 }
 
 // Resolve converts each selected card and moves it to the flank the controller
 // chooses.
 func (e TurnIntoCreature) Resolve(ctx *EffectContext) {
+	temporary := e.Duration == RemainderOfPlayerTurn
 	for _, id := range e.Target.Select(ctx) {
 		if !ctx.Resolver.InPlay(id) {
 			continue
 		}
 		right := ctx.ChooseOption(
 			"Choose a flank", []string{FlankLeftLabel, FlankRightLabel}) == 1
-		ctx.Resolver.PutIntoBattlelineAsCreature(id, right)
+		ctx.Resolver.PutIntoBattlelineAsCreature(id, right, temporary)
+		if e.Versatile {
+			ctx.Resolver.GrantKeyword(id, Versatile)
+		}
 	}
 }
 

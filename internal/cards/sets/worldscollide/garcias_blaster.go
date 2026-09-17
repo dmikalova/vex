@@ -32,7 +32,9 @@ var GarciasBlaster = set.New(
 		Granted: card.FightReap(card.ChooseOne{Options: []card.Effect{
 			card.DealDamage{Amount: 2, Target: card.Target.Creature},
 			card.Then{
-				First:  card.AttachSelfTo{Host: SensorChiefGarcia.Name},
+				First: card.AttachSelfTo{
+					Target: card.Target.FriendlyCreature.Named(SensorChiefGarcia.Name),
+				},
 				Result: card.StealAember{Amount: 1},
 			},
 		}}),

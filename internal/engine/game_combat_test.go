@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 // These tests exercise combat: fighting, dealing damage, armor absorption, the
 // Skirmish/Assault/Hazardous keywords, and the fight-timed triggers. The generic
@@ -366,7 +369,7 @@ func TestSkirmishAndArmorAndPoison(t *testing.T) {
 	if g.Damage(skirm) != 0 {
 		t.Errorf("skirmisher took %d damage, want 0", g.Damage(skirm))
 	}
-	if want := "skirm is skirmish — it takes no damage in return"; !hasLogLine(g, want) {
+	if want := "skirm (3 power, skirmish) fights def (2 power)"; !hasLogLine(g, want) {
 		t.Errorf("log = %v, want a line %q", g.LogText(), want)
 	}
 
@@ -658,8 +661,8 @@ func TestPreFightDamageNarratesSource(t *testing.T) {
 	)
 	g.fight(att, def)
 
-	assault := "imp's 2 Assault deals 2 damage to director"
-	hazardous := "director's 3 Hazardous deals 3 damage to imp"
+	assault := "imp assaults 2 damage to director"
+	hazardous := "director's hazardous deals 3 damage to imp"
 	var gotAssault, gotHazardous bool
 	for _, line := range g.LogText() {
 		switch line {
@@ -947,6 +950,53 @@ func TestTauntShielded(t *testing.T) {
 	}
 }
 
+// TestTauntReachesNeighborsNeighbors covers Lady Loreena's extended taunt range:
+// her taunt shields her neighbors' neighbors as well as her neighbors, but not a
+// creature three steps away.
+func TestTauntReachesNeighborsNeighbors(t *testing.T) {
+	g := started(t)
+	att := g.AddToBattleline(testCreature("att", 3), 0)
+	// P1 line: [a, b, c, loreena] — loreena on the right flank.
+	a := g.AddToBattleline(testCreature("a", 3), 1)
+	b := g.AddToBattleline(testCreature("b", 3), 1)
+	c := g.AddToBattleline(testCreature("c", 3), 1)
+	loreena := g.AddToBattleline(
+		NewCard("Lady Loreena", Sanctum, Creature, Rare, WithPower(6), WithArmor(3),
+			WithKeywords(Taunt), WithTauntReachingNeighborsNeighbors()), 1)
+
+	// c (neighbor) and b (neighbor's neighbor) are shielded; a (three away) is not.
+	if !g.TauntShielded(c) {
+		t.Error("the taunter's neighbor should be shielded")
+	}
+	if !g.TauntShielded(b) {
+		t.Error("the taunter's neighbor's neighbor should be shielded by extended range")
+	}
+	if g.TauntShielded(a) {
+		t.Error("a creature three steps from the taunter should not be shielded")
+	}
+	if g.TauntShielded(loreena) {
+		t.Error("the taunter itself is not shielded")
+	}
+
+	// Only the unshielded flank creature and the taunter are legal fight targets.
+	if got := g.FightTargets(0, att); len(got) != 2 || got[0] != a || got[1] != loreena {
+		t.Errorf("FightTargets = %v, want [%d %d]", got, a, loreena)
+	}
+	if err := g.Fight(0, att, b); err != ErrNoTarget {
+		t.Errorf("fighting a distance-2 creature: err = %v, want ErrNoTarget", err)
+	}
+
+	// Blanking Lady Loreena's text drops the extended range (and her taunt), so no
+	// creature beside her is shielded any longer.
+	BlankEnemyText{}.Resolve(&EffectContext{Resolver: g, Source: loreena, Controller: 0})
+	if g.tauntReachesTwo(loreena) {
+		t.Error("a blanked text box should drop the extended taunt range")
+	}
+	if g.TauntShielded(b) {
+		t.Error("with the taunter blanked, its neighbor's neighbor is no longer shielded")
+	}
+}
+
 // A card that takes damage for other creatures absorbs the damage aimed at each
 // creature its Target names, and its own damage is never redirected onward.
 func TestTakesDamageFor(t *testing.T) {
@@ -1123,4 +1173,206 @@ func TestAlsoTakesNeighborFightDamage(t *testing.T) {
 				g.Damage(x), g.Damage(two), g.Damage(one))
 		}
 	})
+}
+
+// TestEmitAfterEnemyDestroyedFighting covers The Colosseum's trigger: a bystander
+// artifact reacts when an enemy creature is destroyed in a fight, whether the
+// enemy dies as the defender or its Hazardous kills the attacker, and stays quiet
+// when the creature destroyed is friendly to it.
+func TestEmitAfterEnemyDestroyedFighting(t *testing.T) {
+	watcher := func() CardDefinition {
+		return NewCard(
+			"Colosseum",
+			Saurian,
+			Artifact,
+			Rare,
+			WithAbility(
+				TriggerAfterEnemyDestroyedFighting,
+				GainAember{Player: Controller, Amount: 1},
+			),
+		)
+	}
+
+	t.Run("fires when the enemy defender is destroyed in the fight", func(t *testing.T) {
+		g := started(t)
+		g.AddArtifact(watcher(), 0)
+		hunter := g.AddToBattleline(testCreature("hunter", 6), 0)
+		prey := g.AddToBattleline(testCreature("prey", 1), 1)
+		before := g.Aember(0)
+		if err := g.Fight(0, hunter, prey); err != nil {
+			t.Fatalf("Fight: %v", err)
+		}
+		if g.Aember(0) != before+1 {
+			t.Errorf("bystander controller aember = %d, want %d", g.Aember(0), before+1)
+		}
+	})
+
+	t.Run("fires for the defender's side when Hazardous kills the attacker", func(t *testing.T) {
+		g := started(t)
+		g.AddArtifact(watcher(), 1) // watcher controlled by the defender's side
+		weak := g.AddToBattleline(testCreature("weak", 1), 0)
+		guard := g.AddToBattleline(NewCard("guard", Sanctum, Creature, Common,
+			WithPower(6), WithHazardous(5)), 1)
+		before := g.Aember(1)
+		if err := g.Fight(0, weak, guard); err != nil {
+			t.Fatalf("Fight: %v", err)
+		}
+		if g.inPlay(weak) {
+			t.Fatal("the attacker should be destroyed by Hazardous")
+		}
+		if g.Aember(1) != before+1 {
+			t.Errorf("defender-side bystander aember = %d, want %d", g.Aember(1), before+1)
+		}
+	})
+
+	t.Run("stays quiet when a friendly creature dies in the fight", func(t *testing.T) {
+		g := started(t)
+		g.AddArtifact(watcher(), 0) // watches for enemy deaths only
+		weak := g.AddToBattleline(testCreature("weak", 1), 0)
+		guard := g.AddToBattleline(NewCard("guard", Sanctum, Creature, Common,
+			WithPower(6), WithHazardous(5)), 1)
+		before := g.Aember(0)
+		if err := g.Fight(0, weak, guard); err != nil {
+			t.Fatalf("Fight: %v", err)
+		}
+		if g.Aember(0) != before {
+			t.Errorf(
+				"bystander aember = %d, want %d (a friendly death does not fire)",
+				g.Aember(0),
+				before,
+			)
+		}
+	})
+}
+
+func TestEmitCreatureFought(t *testing.T) {
+	// Shattered-Throne-style: after any creature is used to fight, it captures 1
+	// Æmber from its opponent.
+	throneDef := NewCard(
+		"Throne",
+		Brobnar,
+		Artifact,
+		Uncommon,
+		WithAbility(
+			TriggerAfterCreatureFights,
+			CaptureAember{
+				Amount: 1,
+				Target: Target{Kind: TargetTriggeringCreature},
+				Source: ItsOpponent,
+			},
+		),
+	)
+
+	t.Run("the fighting creature captures after fighting", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.State.ActivePlayer = 0
+		g.State.Aember[1] = 3
+		g.AddArtifact(throneDef, 0)
+		attacker := g.AddToBattleline(testCreature("att", 5), 0)
+		defender := g.AddToBattleline(testCreature("def", 3), 1)
+
+		if err := g.Fight(0, attacker, defender); err != nil {
+			t.Fatalf("fight: %v", err)
+		}
+		if got := g.AmberOn(attacker); got != 1 {
+			t.Errorf("captured Æmber on attacker = %d, want 1", got)
+		}
+		if g.State.Aember[1] != 2 {
+			t.Errorf("opponent pool = %d, want 2", g.State.Aember[1])
+		}
+	})
+
+	t.Run("fires for both players' throne", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.State.ActivePlayer = 0
+		g.State.Aember[1] = 3
+		g.AddArtifact(throneDef, 1) // enemy-controlled throne still fires
+		attacker := g.AddToBattleline(testCreature("att", 5), 0)
+		defender := g.AddToBattleline(testCreature("def", 3), 1)
+
+		if err := g.Fight(0, attacker, defender); err != nil {
+			t.Fatalf("fight: %v", err)
+		}
+		if got := g.AmberOn(attacker); got != 1 {
+			t.Errorf("captured Æmber on attacker = %d, want 1", got)
+		}
+	})
+}
+
+// TestAfterFriendlyCreatureFights covers a board-wide AfterCreatureFights reaction
+// narrowed to a friendly fighter with Conditional{ItIsFriendly} (Lieutenant
+// Gorvenal): it fires when a creature on the source's own side fights, and not when
+// an enemy creature fights.
+func TestAfterFriendlyCreatureFights(t *testing.T) {
+	watcherDef := NewCard("Watcher", Sanctum, Creature, Common, WithPower(4),
+		WithAbility(TriggerAfterCreatureFights, Conditional{
+			Cond: ItIsFriendly{},
+			Then: CaptureAember{
+				Amount: 1,
+				Target: Target{Kind: TargetThisCreature},
+				Source: Opponent,
+			},
+		}))
+
+	t.Run("fires when a friendly creature fights", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.State.ActivePlayer = 0
+		g.State.Aember[1] = 3
+		watcher := g.AddToBattleline(watcherDef, 0)
+		ally := g.AddToBattleline(testCreature("ally", 5), 0)
+		defender := g.AddToBattleline(testCreature("def", 3), 1)
+
+		if err := g.Fight(0, ally, defender); err != nil {
+			t.Fatalf("fight: %v", err)
+		}
+		if got := g.AmberOn(watcher); got != 1 {
+			t.Errorf("captured on watcher = %d, want 1 after a friendly fight", got)
+		}
+	})
+
+	t.Run("does not fire when an enemy creature fights", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.State.ActivePlayer = 1
+		g.State.Aember[0] = 3
+		watcher := g.AddToBattleline(watcherDef, 0)
+		enemy := g.AddToBattleline(testCreature("enemy", 5), 1)
+		defender := g.AddToBattleline(testCreature("def", 3), 0)
+
+		if err := g.Fight(1, enemy, defender); err != nil {
+			t.Fatalf("fight: %v", err)
+		}
+		if got := g.AmberOn(watcher); got != 0 {
+			t.Errorf("watcher captured %d after an enemy fight, want 0", got)
+		}
+	})
+}
+
+// A creature with DealsNoDamageWhenAttacked deals no retaliation damage to an
+// attacker that fights it, but still takes the attacker's fight damage — Lollop
+// the Titanic.
+func TestDealsNoDamageWhenAttacked(t *testing.T) {
+	lollop := NewCard("Lollop the Titanic", Brobnar, Creature, Common,
+		WithPower(11), WithNoDamageWhenAttacked())
+	if got := RenderCardRules(&lollop); !strings.Contains(got,
+		"Lollop the Titanic deals no damage when attacked.") {
+		t.Fatalf("Lollop rules = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	attacker := g.AddToBattleline(testCreature("attacker", 5), 0)
+	defender := g.AddToBattleline(lollop, 1)
+	g.State.ActivePlayer = 0
+
+	if err := g.Fight(0, attacker, defender); err != nil {
+		t.Fatalf("Fight: %v", err)
+	}
+	if !g.inPlay(attacker) {
+		t.Error("attacker should survive: Lollop deals no retaliation damage")
+	}
+	if got := g.Damage(attacker); got != 0 {
+		t.Errorf("attacker damage = %d, want 0", got)
+	}
+	if got := g.Damage(defender); got != 5 {
+		t.Errorf("Lollop damage = %d, want 5 (it still takes fight damage)", got)
+	}
 }

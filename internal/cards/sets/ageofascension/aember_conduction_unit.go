@@ -18,8 +18,11 @@ var AemberConductionUnit = set.New(
 	card.Provenance(card.AoA, "176"),
 	card.WithTraits(card.Traits.Item),
 	card.WithAbility(
-		card.Trigger.AfterEnemyCreatureReaps, card.Conditional{
-			Cond: card.FirstReapOfTurn{},
-			Then: card.Stun{Target: card.Target.Triggering},
+		card.Trigger.AfterCreatureReaps, card.Conditional{
+			Cond: card.ItIsEnemy{},
+			Then: card.Conditional{
+				Cond: card.FirstReapOfTurn{},
+				Then: card.Stun{Target: card.Target.Triggering},
+			},
 		}),
 )

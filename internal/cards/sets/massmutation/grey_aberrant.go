@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// GreyAberrant
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Grey Aberrant
 //
 //	House:  Sanctum
 //	Type:   Creature
@@ -24,5 +19,8 @@ var GreyAberrant = set.New(
 	card.Provenance(card.MoMu, "181"),
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Monk, card.Traits.Mutant),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithConstant(card.ConstantAbility{
+		Target:        card.Target.EachCreature,
+		RemovesTraits: true,
+	}),
 )

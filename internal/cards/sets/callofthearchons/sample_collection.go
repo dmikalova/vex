@@ -17,7 +17,7 @@ var SampleCollection = set.New(
 	card.Provenance(card.CotA, "175"),
 	card.WithAbility(
 		card.Trigger.Play, card.ForEach{
-			Times: card.OpponentForgedKeys{},
+			Times: card.ForgedKeys{Player: card.Opponent},
 			Do: card.PutFromPlay{
 				Target:      card.Target.EnemyCreature,
 				Destination: card.To.Archives.Yours(),

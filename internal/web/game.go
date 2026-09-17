@@ -260,7 +260,12 @@ type game struct {
 	// the fuzzy card picker's open state and query, and the cached card pool it
 	// searches. pickerFocused records that the search box has already been focused
 	// for this opening, so typing is not interrupted on every later render.
+	// The picker is also the client's card-name typeahead: pickerNaming marks it
+	// open to answer a name-a-card prompt (Etan's Jar) rather than to add a card to
+	// hand, which makes it non-dismissible and narrows its pool to the names the
+	// prompt offered.
 	pickerOpen    bool
+	pickerNaming  bool
 	pickerFocused bool
 	pickerQuery   string
 	// pickerCursor is the index of the highlighted row in the filtered picker

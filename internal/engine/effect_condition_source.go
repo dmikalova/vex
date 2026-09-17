@@ -116,45 +116,24 @@ func (SourceReady) Met(ctx *EffectContext) bool {
 	return !ctx.Resolver.Exhausted(ctx.Source)
 }
 
-// SourceNeighborsAllOfHouse is met while every battleline neighbor of the source
-// card belongs to House — Xanthyx Harvester cannot be used while it has a
-// non-Mars neighbor, so its use is gated on this being met.
-type SourceNeighborsAllOfHouse struct {
-	House House
-}
-
-// CondText renders the condition, e.g. "if it has no non-Mars neighbor".
-func (c SourceNeighborsAllOfHouse) CondText() string {
-	return "if it has no non-" + c.House.String() + " neighbor"
-}
-
-// Met reports whether the source card has no neighbor off House.
-func (c SourceNeighborsAllOfHouse) Met(ctx *EffectContext) bool {
-	for _, n := range neighbors(ctx, ctx.Source) {
-		if ctx.Resolver.House(n) != c.House {
-			return false
-		}
-	}
-	return true
-}
-
-// SourceHasNoNeighborOfHouse is met while no battleline neighbor of the source
-// card belongs to House — Crewman Jorg steals only while it has no Star Alliance
-// neighbor.
-type SourceHasNoNeighborOfHouse struct {
-	House House
+// SourceHasNoNeighbor is met while no battleline neighbor of the source card is
+// admitted by House — Crewman Jorg steals only while it has no Star Alliance
+// neighbor (House.Named), and Xanthyx Harvester can be used only while it has no
+// non-Mars neighbor (House.Except).
+type SourceHasNoNeighbor struct {
+	House HouseMatcher
 }
 
 // CondText renders the condition, e.g. "if Crewman Jorg has no Star Alliance
-// neighbor".
-func (c SourceHasNoNeighborOfHouse) CondText() string {
-	return "if " + SelfName + " has no " + c.House.String() + " neighbor"
+// neighbor" or "if Xanthyx Harvester has no non-Mars neighbor".
+func (c SourceHasNoNeighbor) CondText() string {
+	return "if " + SelfName + " has no " + c.House.qualifyNoun("neighbor")
 }
 
-// Met reports whether none of the source card's neighbors belong to House.
-func (c SourceHasNoNeighborOfHouse) Met(ctx *EffectContext) bool {
+// Met reports whether none of the source card's neighbors are admitted by House.
+func (c SourceHasNoNeighbor) Met(ctx *EffectContext) bool {
 	for _, n := range neighbors(ctx, ctx.Source) {
-		if ctx.Resolver.House(n) == c.House {
+		if c.House.matches(ctx, n) {
 			return false
 		}
 	}

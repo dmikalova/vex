@@ -38,6 +38,21 @@ func RenderAbility(a Ability) string {
 			return punctuate(capitalizeFirst(s))
 		}
 	}
+	if a.Trigger == TriggerAfterCreatureReaps {
+		if s, ok := afterCreatureReapsText(a.Effect); ok {
+			return punctuate(capitalizeFirst(s))
+		}
+	}
+	if a.Trigger == TriggerAfterCreatureDestroyed {
+		if s, ok := afterCreatureDestroyedText(a.Effect); ok {
+			return punctuate(capitalizeFirst(s))
+		}
+	}
+	if a.Trigger == TriggerAfterCreatureFights {
+		if s, ok := afterCreatureFightsText(a.Effect); ok {
+			return punctuate(capitalizeFirst(s))
+		}
+	}
 	if a.Trigger == TriggerAfterEnemyCardPlayed {
 		if s, ok := afterEnemyPlaysCreatureOnFlankText(a.Effect); ok {
 			return punctuate(capitalizeFirst(s))
@@ -89,6 +104,90 @@ func afterYouActOnText(verb string, e Effect) (string, bool) {
 	default:
 		return "", false
 	}
+}
+
+// afterCreatureDestroyedText folds an AfterCreatureDestroyed reaction gated only on
+// whose creature was destroyed — a Conditional{ItIsFriendly} or {And{ItIsEnemy,
+// ItIsYourTurn}} — into "after a friendly creature is destroyed, <then>" or "after
+// an enemy creature is destroyed during your turn, <then>", rather than the literal
+// "after a creature is destroyed, if …". Any other effect shape reports false and
+// renders with the broad prefix.
+func afterCreatureDestroyedText(e Effect) (string, bool) {
+	cond, ok := e.(Conditional)
+	if !ok || cond.Else != nil {
+		return "", false
+	}
+	switch c := cond.Cond.(type) {
+	case ItIsFriendly:
+		return "after a friendly creature is destroyed, " + cond.Then.Text(), true
+	case And:
+		if isEnemyDuringYourTurn(c) {
+			return "after an enemy creature is destroyed during your turn, " +
+				cond.Then.Text(), true
+		}
+	}
+	return "", false
+}
+
+// isEnemyDuringYourTurn reports whether an And is exactly the enemy-creature,
+// your-turn pair that "after an enemy creature is destroyed during your turn" folds.
+func isEnemyDuringYourTurn(a And) bool {
+	if len(a.Conditions) != 2 {
+		return false
+	}
+	_, enemy := a.Conditions[0].(ItIsEnemy)
+	_, yourTurn := a.Conditions[1].(ItIsYourTurn)
+	return enemy && yourTurn
+}
+
+// afterCreatureFightsText folds an AfterCreatureFights reaction gated only on whose
+// creature fought — a Conditional{ItIsFriendly} or {ItIsEnemy} — into "after a
+// friendly creature is used to fight, <then>" (Lieutenant Gorvenal) rather than the
+// literal "after a creature is used to fight, if it is a friendly creature, …". Any
+// other effect shape reports false and renders with the broad prefix.
+func afterCreatureFightsText(e Effect) (string, bool) {
+	cond, ok := e.(Conditional)
+	if !ok || cond.Else != nil {
+		return "", false
+	}
+	adj, ok := scopedCreatureAdjective(cond.Cond)
+	if !ok {
+		return "", false
+	}
+	return "after " + indefinite(adj+" creature") + " is used to fight, " +
+		cond.Then.Text(), true
+}
+
+// afterCreatureReapsText folds an AfterCreatureReaps reaction gated only on whose
+// creature reaped — a Conditional{ItIsEnemy} or {ItIsFriendly} — into "after an
+// enemy creature reaps, <then>" or "after a friendly creature reaps, <then>",
+// rather than the literal "after a creature reaps, if it is an enemy creature, …".
+// Aember Conduction Unit's inner Conditional (FirstReapOfTurn) rides along in
+// <then>. Any other effect shape reports false and renders with the broad prefix.
+func afterCreatureReapsText(e Effect) (string, bool) {
+	cond, ok := e.(Conditional)
+	if !ok || cond.Else != nil {
+		return "", false
+	}
+	adj, ok := scopedCreatureAdjective(cond.Cond)
+	if !ok {
+		return "", false
+	}
+	return "after " + indefinite(adj+" creature") + " reaps, " + cond.Then.Text(), true
+}
+
+// scopedCreatureAdjective returns the house-relative adjective a subject-scope
+// condition names — "enemy" for ItIsEnemy, "friendly" for ItIsFriendly — so a
+// board-wide creature trigger gated on one folds into "an enemy creature" or "a
+// friendly creature" phrasing.
+func scopedCreatureAdjective(c Condition) (string, bool) {
+	switch c.(type) {
+	case ItIsEnemy:
+		return "enemy", true
+	case ItIsFriendly:
+		return "friendly", true
+	}
+	return "", false
 }
 
 // afterCreaturePlayedAdjacentText folds an "after a creature is played adjacent
@@ -454,11 +553,19 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 	if s := keywordText(def); s != "" {
 		rules = append(rules, s)
 	}
+	if def.TauntReachesNeighborsNeighbors {
+		rules = append(rules,
+			def.Name+"'s taunt also applies to its neighbors' neighbors.")
+	}
 	if s := attackDamageText(def); s != "" {
 		rules = append(rules, s)
 	}
 	if def.DealsNoDamageWhenAttacked {
 		rules = append(rules, def.Name+" deals no damage when attacked.")
+	}
+	if n := def.StealsInsteadOfDamageWhenAttacked; n > 0 {
+		rules = append(rules, fmt.Sprintf(
+			"When %s would deal damage, steal %d Æmber instead.", def.Name, n))
 	}
 	if s := entersReadyText(def.EntersReadyGrant); s != "" {
 		rules = append(rules, s)
@@ -499,19 +606,19 @@ func cardRules(def *CardDefinition, hosted bool) []string {
 	if s := attackKeywordsText(def); s != "" {
 		rules = append(rules, s)
 	}
-	rules = append(rules, restrictionText(def.Restricts, def.Type == Upgrade)...)
+	for _, r := range restrictionText(def.Restricts, def.Type == Upgrade) {
+		rules = append(rules, strings.ReplaceAll(r, SelfName, def.Name))
+	}
 	if b := def.CannotPlayWhile; b.When != nil {
 		rules = append(rules, conditionalPlayBarText(b))
 	}
-	if def.AemberCannotBeStolen {
-		rules = append(rules, "Your Æmber cannot be stolen.")
-	}
-	if def.AemberCannotBeStolenWhileItHasAember {
-		rules = append(rules, "While "+def.Name+" has Æmber on it, your Æmber cannot be stolen.")
-	}
-	if n := def.AemberCannotBeStolenWhilePoolAtLeast; n > 0 {
-		rules = append(rules, fmt.Sprintf(
-			"While you have %d or more Æmber, your Æmber cannot be stolen.", n))
+	if c := def.AemberCannotBeStolen; c != nil {
+		if _, ok := c.(AlwaysMet); ok {
+			rules = append(rules, "Your Æmber cannot be stolen.")
+		} else {
+			cond := strings.ReplaceAll(c.CondText(), SelfName, def.Name)
+			rules = append(rules, "While "+trimCondPrefix(cond)+", your Æmber cannot be stolen.")
+		}
 	}
 	if def.SpendableAember {
 		rules = append(rules, "You may spend Æmber on "+def.Name+" when forging keys.")
@@ -824,8 +931,13 @@ func grantedLines(m StaticModifier, upgrade string, frame func(string) string) [
 	if s := keyCostText(m.KeyCostChange); s != "" {
 		lines = append(lines, frame(s))
 	}
-	if m.AemberCannotBeStolen {
-		lines = append(lines, frame("Your Æmber cannot be stolen."))
+	if c := m.AemberCannotBeStolen; c != nil {
+		if _, ok := c.(AlwaysMet); ok {
+			lines = append(lines, frame("Your Æmber cannot be stolen."))
+		} else {
+			lines = append(lines, frame(
+				"While "+trimCondPrefix(c.CondText())+", your Æmber cannot be stolen."))
+		}
 	}
 	return lines
 }
@@ -846,6 +958,15 @@ func constantText(def *CardDefinition) string {
 		}
 		if c.BlankText {
 			lines = append(lines, who+"'s text box is considered blank (except for traits).")
+		}
+		if c.RemovesTraits {
+			lines = append(lines, who+" loses each of its traits.")
+		}
+		if c.SelectiveArchivePickup {
+			lines = append(
+				lines,
+				"Instead of picking up all of your archives, you may pick up any number of cards in your archives.",
+			)
 		}
 		for _, k := range c.CannotBeUsedTo {
 			line := who + " cannot " + k.verb() + "."

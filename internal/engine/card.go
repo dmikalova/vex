@@ -26,6 +26,11 @@ type CardDefinition struct {
 	// Keywords are the keywords printed on the card.
 	Keywords []Keyword
 
+	// TauntReachesNeighborsNeighbors extends this creature's taunt one step further,
+	// so it shields its neighbors' neighbors as well as its neighbors (Lady Loreena).
+	// It matters only while the creature has taunt and its text is not blanked.
+	TauntReachesNeighborsNeighbors bool
+
 	// A creature with Assault N deals N damage to the creature it attacks,
 	// immediately before combat damage is dealt. Zero means the creature does not
 	// have Assault.
@@ -47,6 +52,13 @@ type CardDefinition struct {
 	// damage to an attacker when it is fought (Lollop the Titanic). It leaves the
 	// creature's own fight damage untouched.
 	DealsNoDamageWhenAttacked bool
+
+	// StealsInsteadOfDamageWhenAttacked, when positive, replaces the retaliation
+	// damage this creature would deal an attacker with its controller stealing that
+	// much Æmber (Shoulder Id steals 1). Since a creature with this text cannot
+	// fight, retaliation is the only damage it deals, so this carries its whole
+	// "when it would deal damage, steal instead" text. Zero leaves damage as normal.
+	StealsInsteadOfDamageWhenAttacked int
 
 	// EntersReadyGrant, when its Type is set, makes friendly cards of that type
 	// enter play ready instead of exhausted while this card is in play — Duskwitch
@@ -192,17 +204,12 @@ type CardDefinition struct {
 	CannotBeDealtDamageBy DamageSourceMatcher
 
 	// AemberCannotBeStolen, while the card is in play, makes its controller's Æmber
-	// impossible for the opponent to steal (The Vaultkeeper).
-	AemberCannotBeStolen bool
-
-	// AemberCannotBeStolenWhileItHasAember protects its controller's Æmber from
-	// theft only while the card itself has Æmber on it (Odoac the Patrician).
-	AemberCannotBeStolenWhileItHasAember bool
-
-	// AemberCannotBeStolenWhilePoolAtLeast protects its controller's Æmber from
-	// theft only while their pool holds at least this many Æmber (Cephaloist). The
-	// zero value protects nothing.
-	AemberCannotBeStolenWhilePoolAtLeast uint8
+	// impossible for the opponent to steal for as long as the condition holds. An
+	// Always condition protects unconditionally (The Vaultkeeper); ThisHasAember
+	// protects only while the card itself holds Æmber (Odoac the Patrician); a
+	// PoolAember threshold protects only while the pool is deep enough (Cephaloist).
+	// The zero value (nil condition) protects nothing.
+	AemberCannotBeStolen Condition
 
 	// SpendableAember lets the Æmber sitting on this card be put toward a key,
 	// so it is a private vault its controller can bank into (Safe Place).
@@ -481,9 +488,10 @@ type StaticModifier struct {
 	KeyCostChange KeyCostChange
 
 	// AemberCannotBeStolen, while the Upgrade is attached, keeps the host's
-	// controller's Æmber from being stolen (Discombobulator grants the host "Your
-	// Æmber cannot be stolen.").
-	AemberCannotBeStolen bool
+	// controller's Æmber from being stolen for as long as the condition holds — an
+	// Always condition protects unconditionally (Discombobulator grants the host
+	// "Your Æmber cannot be stolen."). The zero value (nil) protects nothing.
+	AemberCannotBeStolen Condition
 
 	// Replaces is a continuous replacement the Upgrade applies to a game event's
 	// outcome for its host while attached — Armageddon Cloak replaces the host's
@@ -536,7 +544,7 @@ func (m StaticModifier) grants() bool {
 		m.Replaces.valid() ||
 		m.ProtectsFromNonFlank ||
 		m.HouseOverride != HouseNone ||
-		m.AemberCannotBeStolen ||
+		m.AemberCannotBeStolen != nil ||
 		m.SpendAemberOnCard.grants() ||
 		len(m.CannotBeUsedTo) > 0
 }
@@ -613,6 +621,17 @@ type ConstantAbility struct {
 	// stats remain — for as long as the source stays in play. Blossom Drake blanks
 	// every artifact's text box. It is the while-in-play twin of BlankEnemyText.
 	BlankText bool
+	// RemovesTraits strips the traits of every card the Target reaches — its
+	// printed and granted traits are ignored — for as long as the source stays in
+	// play. Grey Aberrant removes every creature's traits. Unlike BlankText it
+	// leaves the rest of the text box intact; only traits are lost.
+	RemovesTraits bool
+	// SelectiveArchivePickup lets the source's controller take any number of cards
+	// from their archives into their hand during the house-choice step, instead of
+	// the usual all-or-nothing pickup — The Archivist. Like DisableTriggers it reads
+	// player-wide, ignoring Target: the source's presence alone changes the rule for
+	// its controller.
+	SelectiveArchivePickup bool
 }
 
 // target returns the constant ability's effective Target: an unset Target reaches
@@ -737,6 +756,11 @@ func NewCard(
 			panic(fmt.Sprintf("card %q: %v", name, err))
 		}
 	}
+	if ac := c.AemberCannotBeStolen; ac != nil {
+		if err := validateCondition(ac); err != nil {
+			panic(fmt.Sprintf("card %q: %v", name, err))
+		}
+	}
 	for _, k := range c.CannotBeUsedTo {
 		if !k.valid() {
 			panic(fmt.Sprintf("card %q: CannotBeUsedTo has an unset use kind", name))
@@ -827,6 +851,13 @@ func WithTriggersFromDiscard() CardOption {
 	return func(c *CardDefinition) { c.TriggersFromDiscard = true }
 }
 
+// WithTauntReachingNeighborsNeighbors extends this creature's taunt one step
+// further, so it shields its neighbors' neighbors as well as its neighbors (Lady
+// Loreena).
+func WithTauntReachingNeighborsNeighbors() CardOption {
+	return func(c *CardDefinition) { c.TauntReachesNeighborsNeighbors = true }
+}
+
 // WithCannotBeDealtDamageBy makes the card, while in play, refuse damage dealt to
 // it by the creatures the matcher names (Ardent Hero refuses Mutant creatures or
 // creatures with power 5 or higher).
@@ -894,6 +925,12 @@ func WithAttackDamage(ad AttackDamage) CardOption {
 // attacker that fights it (Lollop the Titanic).
 func WithNoDamageWhenAttacked() CardOption {
 	return func(c *CardDefinition) { c.DealsNoDamageWhenAttacked = true }
+}
+
+// WithStealsInsteadOfDamageWhenAttacked makes a creature's controller steal amount
+// Æmber instead of the creature dealing its retaliation damage (Shoulder Id).
+func WithStealsInsteadOfDamageWhenAttacked(amount int) CardOption {
+	return func(c *CardDefinition) { c.StealsInsteadOfDamageWhenAttacked = amount }
 }
 
 // EntersReadyGrant makes friendly cards of a type enter play ready instead of
@@ -1070,22 +1107,16 @@ func WithDrawModifierPer(player Player, amount int, per Count) CardOption {
 	}
 }
 
-// WithAemberCannotBeStolen makes the card, while in play, keep its controller's
-// Æmber from being stolen (The Vaultkeeper).
-func WithAemberCannotBeStolen() CardOption {
-	return func(c *CardDefinition) { c.AemberCannotBeStolen = true }
-}
-
-// WithAemberCannotBeStolenWhileItHasAember keeps its controller's Æmber from
-// being stolen only while the card itself has Æmber on it (Odoac the Patrician).
-func WithAemberCannotBeStolenWhileItHasAember() CardOption {
-	return func(c *CardDefinition) { c.AemberCannotBeStolenWhileItHasAember = true }
-}
-
-// WithAemberCannotBeStolenWhilePoolAtLeast keeps its controller's Æmber from being
-// stolen only while their pool holds at least n Æmber (Cephaloist).
-func WithAemberCannotBeStolenWhilePoolAtLeast(n int) CardOption {
-	return func(c *CardDefinition) { c.AemberCannotBeStolenWhilePoolAtLeast = uint8(n) }
+// WithAemberCannotBeStolen keeps the card's controller's Æmber from being stolen
+// while the card is in play. With no argument the protection is unconditional (The
+// Vaultkeeper); with a condition it holds only while that condition is met —
+// ThisHasAember for Odoac the Patrician, a PoolAember threshold for Cephaloist.
+func WithAemberCannotBeStolen(cond ...Condition) CardOption {
+	c := Condition(AlwaysMet{})
+	if len(cond) > 0 {
+		c = cond[0]
+	}
+	return func(d *CardDefinition) { d.AemberCannotBeStolen = c }
 }
 
 // WithSpendableAember lets the Æmber banked on the card be spent when its

@@ -19,7 +19,10 @@ var Lethologica = set.New(
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
 		card.Trigger.Play, card.Then{
-			First:  card.DiscardUntil{House: card.House.Self},
+			First: card.DiscardUntil{
+				Player: card.Controller,
+				House:  card.Houses.Named(card.House.Self),
+			},
 			Result: card.PutDiscardedIntoHand{},
 		}),
 )

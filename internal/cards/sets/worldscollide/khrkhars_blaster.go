@@ -32,7 +32,9 @@ var KhrkharsBlaster = set.New(
 		Granted: card.FightReap(card.ChooseOne{Options: []card.Effect{
 			card.DealDamage{Amount: 2, Target: card.Target.Creature},
 			card.Then{
-				First:  card.AttachSelfTo{Host: LieutenantKhrkhar.Name},
+				First: card.AttachSelfTo{
+					Target: card.Target.FriendlyCreature.Named(LieutenantKhrkhar.Name),
+				},
 				Result: card.Ward{Target: card.Target.AttachedHost.Named(LieutenantKhrkhar.Name)},
 			},
 		}}),

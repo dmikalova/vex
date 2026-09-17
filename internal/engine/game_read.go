@@ -107,6 +107,11 @@ func (g *Game) Power(id LocalID) int {
 	if v, ok := g.continuousPowerOverride(id); ok {
 		return v
 	}
+	// A creature copying another card's printed stats (Cyber-Clone) has that card's
+	// printed power outright, ignoring counters and bonuses just like a live override.
+	if src, ok := g.copiedStatsSource(id); ok {
+		return g.cat.def(src).Power
+	}
 	// A variable "X" power reads its neighbors' power, so two such creatures that
 	// reference each other would recurse forever. A creature already mid-computation
 	// contributes 0 — its power is undeterminable, which KeyForge treats as 0.
@@ -154,6 +159,11 @@ func (g *Game) armor(id LocalID) int {
 	}
 	a += int(g.State.Cards[id].TempArmorBonus)
 	a += g.constantBonus(id, func(c ConstantAbility) int { return c.ArmorBonus })
+	// A creature copying another card's printed stats (Cyber-Clone) gains that card's
+	// printed armor on top of its own.
+	if src, ok := g.copiedStatsSource(id); ok {
+		a += g.cat.def(src).Armor
+	}
 	return a
 }
 
@@ -264,6 +274,40 @@ func (g *Game) constantBlanksText(id LocalID) bool {
 	return false
 }
 
+// constantRemovesTraits reports whether a card in play with a RemovesTraits
+// constant ability reaches card id, stripping its traits while the source stays
+// in play (Grey Aberrant). It mirrors constantBlanksText but honours the source's
+// own active gates via constantActive (blank, off-flank, WhileCondition), since a
+// trait-removing source is itself a creature that can be blanked or conditioned.
+func (g *Game) constantRemovesTraits(id LocalID) bool {
+	for p := 0; p < 2; p++ {
+		for _, src := range g.allInPlay(p) {
+			for _, c := range g.cat.def(src).ConstantAbilities {
+				if c.RemovesTraits && g.constantActive(src, c) &&
+					g.constantAffects(src, c, id) {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
+// constantSelectiveArchivePickup reports whether player controls an active card in
+// play whose constant ability grants the selective archive pickup (The Archivist),
+// returning that source card. Like triggerDisabled it reads player-wide, ignoring
+// Target: the source's mere presence changes the pickup rule for its controller.
+func (g *Game) constantSelectiveArchivePickup(player int) (LocalID, bool) {
+	for _, src := range g.allInPlay(player) {
+		for _, c := range g.cat.def(src).ConstantAbilities {
+			if c.SelectiveArchivePickup && g.constantActive(src, c) {
+				return src, true
+			}
+		}
+	}
+	return 0, false
+}
+
 // assault returns a creature's Assault value including attached upgrades.
 func (g *Game) assault(id LocalID) int {
 	a := 0
@@ -340,6 +384,13 @@ func (g *Game) hasKeyword(id LocalID, k Keyword) bool {
 			if g.cat.def(textSource).hasKeyword(k) {
 				return true
 			}
+		}
+	}
+	// A creature copying another card's printed stats (Cyber-Clone) gains that card's
+	// printed keywords, unless its own text box is blanked.
+	if !g.textBlanked(id) {
+		if src, ok := g.copiedStatsSource(id); ok && g.cat.def(src).hasKeyword(k) {
+			return true
 		}
 	}
 	if g.State.Cards[id].GrantedKeywords&k.bit() != 0 {
@@ -780,18 +831,12 @@ func (g *Game) cannotPlayCard(player int) bool {
 // to be stolen (The Vaultkeeper).
 func (g *Game) aemberProtected(player int) bool {
 	for _, id := range g.allInPlay(player) {
-		if g.cat.def(id).AemberCannotBeStolen {
-			return true
-		}
-		if g.cat.def(id).AemberCannotBeStolenWhileItHasAember && g.AmberOn(id) > 0 {
-			return true
-		}
-		if n := g.cat.def(id).AemberCannotBeStolenWhilePoolAtLeast; n > 0 &&
-			g.Aember(player) >= int(n) {
+		ctx := &EffectContext{Resolver: g, Source: id, Controller: player}
+		if c := g.cat.def(id).AemberCannotBeStolen; c != nil && c.Met(ctx) {
 			return true
 		}
 		for up, ok := g.firstUpgrade(id); ok; up, ok = g.nextUpgrade(up) {
-			if g.cat.def(up).Static.AemberCannotBeStolen {
+			if c := g.cat.def(up).Static.AemberCannotBeStolen; c != nil && c.Met(ctx) {
 				return true
 			}
 		}
@@ -967,8 +1012,8 @@ func (g *Game) keyCostAmount(src LocalID, kc KeyCostChange) int {
 // plus every key-cost change on a card in play that affects that player.
 func (g *Game) keyCost(target int) int {
 	cost := KeyCost + g.State.KeyCostBump[target].Value
-	if sure := g.State.KeyCostPerHouse[target].Value; sure.House != HouseNone {
-		cost += sure.Per * g.creaturesOfHouseInPlay(sure.House)
+	if sure := g.State.KeyCostPerHouse[target].Value; sure.Per != 0 {
+		cost += sure.Per * g.creaturesMatchingInPlay(sure.House)
 	}
 	for controller := 0; controller < 2; controller++ {
 		for _, id := range g.allInPlay(controller) {
@@ -979,14 +1024,15 @@ func (g *Game) keyCost(target int) int {
 	return max(cost, 0)
 }
 
-// creaturesOfHouseInPlay counts every creature of the house in play, on either
-// battleline — the tally a counted key surcharge (Waking Nightmare) reads live at
-// each forge.
-func (g *Game) creaturesOfHouseInPlay(house House) int {
+// creaturesMatchingInPlay counts every creature the matcher admits in play, on
+// either battleline — the tally a counted key surcharge (Waking Nightmare) reads
+// live at each forge.
+func (g *Game) creaturesMatchingInPlay(m HouseMatcher) int {
+	ctx := &EffectContext{Resolver: g}
 	n := 0
 	for player := 0; player < 2; player++ {
 		for _, id := range g.State.Battleline[player].slice() {
-			if g.House(id) == house {
+			if m.matches(ctx, id) {
 				n++
 			}
 		}

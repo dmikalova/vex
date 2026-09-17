@@ -198,9 +198,11 @@ func (g ByExalting) run(ctx *EffectContext, do Effect) {
 }
 
 // exaltChoice offers the exalt that pays for the one repeat, or none to stop. A
-// chosen target is its own declinable prompt (pick a creature or decline); a
-// back-reference like the chosen creature has nothing to pick, so it is offered as
-// a Yes/No confirm on the creature Do just acted on.
+// chosen target is its own declinable prompt. A back-reference like the chosen
+// creature has no pool to pick from, but there is still one card to point at, so
+// it is offered as a click on that creature — the same click-or-Done shape as
+// every other optional single-card decision. Only a back-reference that resolves
+// to several creatures has no single card to click, so it keeps the Yes/No.
 func (g ByExalting) exaltChoice(ctx *EffectContext) []LocalID {
 	if g.Creature.isChosen() {
 		return g.Creature.SelectOptional(ctx)
@@ -209,8 +211,14 @@ func (g ByExalting) exaltChoice(ctx *EffectContext) []LocalID {
 	if len(ids) == 0 {
 		return nil
 	}
-	prompt := "Exalt " + g.Creature.Text() + " to repeat the preceding effect?"
-	if ctx.ChooseOption(prompt, []string{"Yes", "No"}) != 0 {
+	prompt := "Exalt " + g.Creature.Text() + " to repeat the preceding effect"
+	if len(ids) == 1 {
+		if _, ok := ctx.ChooseCardOptional(prompt, ids); !ok {
+			return nil
+		}
+		return ids
+	}
+	if ctx.ChooseOption(prompt+"?", []string{"Yes", "No"}) != 0 {
 		return nil
 	}
 	return ids

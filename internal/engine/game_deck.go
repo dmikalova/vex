@@ -14,6 +14,7 @@ func (g *Game) drawOne(player int) bool {
 			return false
 		}
 		g.shuffleDiscardIntoDeck(player)
+		g.record(DiscardRecycledIntoDeck{Player: player})
 	}
 	g.State.Hand[player].add(deck.removeAt(0))
 	return true

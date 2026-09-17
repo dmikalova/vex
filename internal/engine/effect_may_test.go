@@ -1,6 +1,16 @@
 package engine
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
+
+// bareEffect is an Effect that is not a struct, so it has no fields the shape
+// rule could read.
+type bareEffect string
+
+func (bareEffect) Text() string           { return "do nothing" }
+func (bareEffect) Resolve(*EffectContext) {}
 
 func TestMayText(t *testing.T) {
 	e := May{Do: GainAember{Player: Controller, Amount: 1}}
@@ -146,7 +156,8 @@ func TestMayDeclinableChosenCreatureVerbs(t *testing.T) {
 	}
 }
 
-// "You may destroy each creature" names no card to click, so it stays a Yes/No.
+// "You may destroy each creature" names no card to click. Off the board — a
+// Tactic resolving its Play ability — the offer falls back to the Yes/No.
 func TestMayWithoutACardChoiceStaysYesNo(t *testing.T) {
 	e := May{Do: Destroy{Target: Target{Kind: TargetEachCreature}}}
 	if e.Do.(declinableEffect).declinable() {
@@ -157,12 +168,48 @@ func TestMayWithoutACardChoiceStaysYesNo(t *testing.T) {
 	ch := &cardDecliner{}
 	g.SetChooser(0, ch)
 	doomed := g.AddToBattleline(testCreature("Doomed", 3), 0)
-	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	tactic := g.AddToHand(testCreature("Tactic", 1), 0)
+	e.Resolve(&EffectContext{Resolver: g, Source: tactic, Controller: 0})
 	if ch.asked != 0 {
 		t.Errorf("declinable prompts = %d, want 0", ch.asked)
 	}
 	if stillInPlay(g, doomed) {
 		t.Error("the Yes answer should still have destroyed the creature")
+	}
+}
+
+// On the board the same offer is opted into by clicking the card that makes it,
+// so an ability with no card of its own to choose still reads as a click.
+func TestMayWithoutACardChoiceClicksItsSource(t *testing.T) {
+	e := May{Do: Destroy{Target: Target{Kind: TargetEachEnemyCreature}}}
+
+	g := NewGame("A", "B", 1)
+	g.SetChooser(0, &cardDecliner{})
+	source := g.AddToBattleline(testCreature("Source", 3), 0)
+	doomed := g.AddToBattleline(testCreature("Doomed", 3), 1)
+	e.Resolve(&EffectContext{Resolver: g, Source: source, Controller: 0})
+	if g.InPlay(doomed) {
+		t.Error("clicking the source should have resolved the effect")
+	}
+
+	declined := NewGame("A", "B", 1)
+	declined.SetChooser(0, &cardDecliner{decline: true})
+	src := declined.AddToBattleline(testCreature("Source", 3), 0)
+	spared := declined.AddToBattleline(testCreature("Doomed", 3), 1)
+	e.Resolve(&EffectContext{Resolver: declined, Source: src, Controller: 0})
+	if !declined.InPlay(spared) {
+		t.Error("declining the source click should resolve nothing")
+	}
+
+	// A combatant mid-fight is not offered the click: the player just clicked it
+	// to fight, so a second click would not read as opting in.
+	fighting := NewGame("A", "B", 1)
+	fighting.SetChooser(0, &cardDecliner{})
+	att := fighting.AddToBattleline(testCreature("Source", 3), 0)
+	def := fighting.AddToBattleline(testCreature("Doomed", 3), 1)
+	fighting.State.FightersPlus = [2]LocalID{att + 1, def + 1}
+	if (May{}).offeredOnSource(&EffectContext{Resolver: fighting, Source: att}) {
+		t.Error("a creature resolving its own fight should keep the Yes/No")
 	}
 }
 
@@ -237,4 +284,35 @@ func stillInPlay(g *Game, id LocalID) bool {
 		}
 	}
 	return false
+}
+
+// The shape rule fires at init: a May over an effect that decides by choosing a
+// card must offer that click. Ward carries a chosen Target but implements no
+// declinable path, so wrapping it is rejected rather than silently asking twice.
+func TestMayRejectsAnUnclickableCardChoice(t *testing.T) {
+	chosen := May{Do: Ward{Target: Target{Kind: TargetChosenFriendlyCreature}}}
+	err := chosen.validate()
+	if err == nil {
+		t.Fatal("a May over an unclickable card choice should be invalid")
+	}
+	if !strings.Contains(err.Error(), "not declinable") {
+		t.Errorf("error = %q, want it to name the missing declinable path", err)
+	}
+
+	// An effect with no chosen Target of its own is a Yes/No and stays legal.
+	each := May{Do: Ward{Target: Target{Kind: TargetEachFriendlyCreature}}}
+	if err := each.validate(); err != nil {
+		t.Errorf("a May over an untargeted effect was rejected: %v", err)
+	}
+
+	// An effect that already offers the click is legal whatever its Target says.
+	clickable := May{Do: Destroy{Target: Target{Kind: TargetChosenEnemyCreature}}}
+	if err := clickable.validate(); err != nil {
+		t.Errorf("a May over a declinable effect was rejected: %v", err)
+	}
+
+	// A non-struct effect has no fields to read and is not a card choice.
+	if chosenTargetField(bareEffect("")) {
+		t.Error("a non-struct effect should not look like a card choice")
+	}
 }

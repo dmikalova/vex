@@ -35,7 +35,6 @@ func TestStunner(t *testing.T) {
 		})
 
 		h.P1.Reap(host)
-		h.P1.ClickOption("Yes")
 		h.P1.ClickCard(foe)
 
 		h.Expect(foe).Stunned(true)

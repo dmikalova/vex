@@ -225,6 +225,51 @@ func (g EachPlayerUnless) gather(ctx *EffectContext) []LocalID {
 	return doomed
 }
 
+// ChosenFromEach gathers one chosen creature from each of several pools, so a
+// card that destroys from two different pools — Imp-losion's "a friendly creature
+// and an enemy creature" — makes both picks first and destroys them in one batch.
+// Two sequential Destroy effects would instead destroy the first before the second
+// is even chosen, which both splits the log into two lines and hides each doomed
+// creature from the other's Destroyed ability. It is one pool per creature to
+// destroy, in the order they are chosen.
+type ChosenFromEach []Target
+
+// validate requires at least two pools (one pool is a plain Destroy) each with a
+// target set.
+func (g ChosenFromEach) validate() error {
+	if len(g) < 2 {
+		return fmt.Errorf("ChosenFromEach: needs at least 2 pools, use Destroy for one")
+	}
+	for _, t := range g {
+		if !t.valid() {
+			return errUnsetTarget("ChosenFromEach")
+		}
+	}
+	return nil
+}
+
+// gatherText renders the pools as a noun phrase, e.g. "a friendly creature and an
+// enemy creature".
+func (g ChosenFromEach) gatherText() string {
+	parts := make([]string, len(g))
+	for i, t := range g {
+		parts[i] = t.Text()
+	}
+	return oxfordAnd(parts)
+}
+
+// gather takes one pick from each pool in turn. A pool with nothing to pick
+// contributes nothing, so the rest of the card still resolves.
+func (g ChosenFromEach) gather(ctx *EffectContext) []LocalID {
+	var chosen []LocalID
+	for _, t := range g {
+		if ids := t.Select(ctx); len(ids) > 0 {
+			chosen = append(chosen, ids[0])
+		}
+	}
+	return chosen
+}
+
 // DestroyEachCreatureAtEndOfTurn schedules "destroy each creature" to resolve in
 // the active player's end-of-turn window rather than now — Ragnarok wipes the board
 // only once the turn it is played is ending, after its owner has spent the turn

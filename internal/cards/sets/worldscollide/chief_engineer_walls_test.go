@@ -41,7 +41,7 @@ func TestChiefEngineerWalls(t *testing.T) {
 		h := ct.Play(t, ct.Setup{P1: p1})
 
 		h.P1.Reap(ChiefEngineerWalls)
-		h.P1.ClickOption("Yes")
+		h.P1.ClickCard(ChiefEngineerWalls)
 		h.P1.ClickCard(upgrade)
 
 		h.Expect(upgrade).At(ct.Hand)
@@ -55,7 +55,7 @@ func TestChiefEngineerWalls(t *testing.T) {
 		h := ct.Play(t, ct.Setup{P1: p1})
 
 		h.P1.Play(ChiefEngineerWalls)
-		h.P1.ClickOption("Yes")
+		h.P1.ClickCard(ChiefEngineerWalls)
 		h.P1.ClickCard(robot)
 
 		h.Expect(robot).At(ct.Hand)
@@ -86,7 +86,7 @@ func TestChiefEngineerWalls(t *testing.T) {
 		h := ct.Play(t, ct.Setup{P1: p1})
 
 		h.P1.Reap(ChiefEngineerWalls)
-		h.P1.ClickOption("No")
+		h.P1.ClickDone()
 
 		h.Expect(upgrade).At(ct.Discard)
 		h.Expect(robot).At(ct.Discard)

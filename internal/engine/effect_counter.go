@@ -121,7 +121,14 @@ func (e AddPowerCounter) Resolve(ctx *EffectContext) {
 		return
 	}
 	amount := scaled(e.Amount, e.Per, ctx)
-	for _, id := range e.Target.Select(ctx) {
+	ids := e.Target.Select(ctx)
+	for _, id := range ids {
 		ctx.Resolver.AddPowerCounter(id, amount)
+	}
+	// A chosen target leaves the picked card in context (ctx.It), so a following
+	// effect can act on the same card the controller just chose — Animator gives a
+	// chosen artifact counters, then moves it onto the battleline as a creature.
+	if e.Target.isChosen() && len(ids) > 0 {
+		ctx.It, ctx.HasIt = ids[len(ids)-1], true
 	}
 }

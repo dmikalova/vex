@@ -443,7 +443,7 @@ func TestArchivedCreaturesShareHouseCondition(t *testing.T) {
 	}
 }
 
-func TestSourceNeighborsAllOfHouseCondition(t *testing.T) {
+func TestSourceHasNoNeighborExcept(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	marsCreature := func(name string) CardDefinition {
 		return NewCard(name, Mars, Creature, Common, WithPower(2))
@@ -452,8 +452,8 @@ func TestSourceNeighborsAllOfHouseCondition(t *testing.T) {
 	src := g.AddToBattleline(marsCreature("mid"), 0)
 	g.AddToBattleline(testCreature("right", 2), 0) // Brobnar
 
-	c := SourceNeighborsAllOfHouse{House: Mars}
-	if c.CondText() != "if it has no non-Mars neighbor" {
+	c := SourceHasNoNeighbor{House: exceptHouse(Mars)}
+	if c.CondText() != "if "+SelfName+" has no non-Mars neighbor" {
 		t.Errorf("CondText = %q", c.CondText())
 	}
 	ctx := &EffectContext{Resolver: g, Source: src}
@@ -471,7 +471,7 @@ func TestSourceNeighborsAllOfHouseCondition(t *testing.T) {
 	}
 }
 
-func TestSourceHasNoNeighborOfHouseCondition(t *testing.T) {
+func TestSourceHasNoNeighborNamed(t *testing.T) {
 	marsCreature := func(name string) CardDefinition {
 		return NewCard(name, Mars, Creature, Common, WithPower(2))
 	}
@@ -481,7 +481,7 @@ func TestSourceHasNoNeighborOfHouseCondition(t *testing.T) {
 	g.AddToBattleline(marsCreature("left"), 0)
 	src := g.AddToBattleline(testCreature("mid", 2), 0)
 
-	c := SourceHasNoNeighborOfHouse{House: Mars}
+	c := SourceHasNoNeighbor{House: namedHouse(Mars)}
 	if c.CondText() != "if "+SelfName+" has no Mars neighbor" {
 		t.Errorf("CondText = %q", c.CondText())
 	}
@@ -1418,4 +1418,287 @@ func TestCardsInDeckAtMost(t *testing.T) {
 	if e.Met(&EffectContext{Resolver: g, Controller: 0}) {
 		t.Error("a large deck should not meet the condition")
 	}
+}
+
+// TestItAttachedToThisOrNeighbor covers the condition Commander Dhrxgar gates its
+// Æmber gain on: an upgrade that just entered play is attached to the source card
+// or one of its neighbors.
+func TestItAttachedToThisOrNeighbor(t *testing.T) {
+	g := started(t)
+	dhrx := g.AddToBattleline(testCreature("dhrx", 4), 0)
+	neighbor := g.AddToBattleline(testCreature("neighbor", 3), 0)
+	far := g.AddToBattleline(testCreature("far", 3), 0)
+
+	cond := ItAttachedToThisOrNeighbor{}
+	ctx := func(it LocalID, has bool) *EffectContext {
+		return &EffectContext{Resolver: g, Source: dhrx, It: it, HasIt: has}
+	}
+
+	// No card in context.
+	if cond.Met(ctx(0, false)) {
+		t.Error("with no upgrade in context the condition is not met")
+	}
+	// The context card is a creature, not an attached upgrade.
+	if cond.Met(ctx(neighbor, true)) {
+		t.Error("a non-upgrade in context has no host, so the condition is not met")
+	}
+
+	onSelf := attachUpgrade(g, dhrx, NewCard("coil", Mars, Upgrade, Common))
+	if !cond.Met(ctx(onSelf, true)) {
+		t.Error("an upgrade on the source card should meet the condition")
+	}
+
+	onNeighbor := attachUpgrade(g, neighbor, NewCard("plate", Mars, Upgrade, Common))
+	if !cond.Met(ctx(onNeighbor, true)) {
+		t.Error("an upgrade on a neighbor should meet the condition")
+	}
+
+	onFar := attachUpgrade(g, far, NewCard("band", Mars, Upgrade, Common))
+	if cond.Met(ctx(onFar, true)) {
+		t.Error("an upgrade two steps away should not meet the condition")
+	}
+}
+
+// TestMoveAemberRecordsMovedTally checks that a MoveAember records the total Æmber
+// it relocated in ctx.Produced.AemberMoved, so a following MovedAnyAember condition
+// can read it (Shadowsaurus).
+func TestMoveAemberRecordsMovedTally(t *testing.T) {
+	from := Target{Kind: TargetChosenEnemyCreature}
+
+	// Moving Æmber off a creature records the amount moved.
+	g := NewGame("A", "B", 1)
+	foe := g.AddToBattleline(testCreature("foe", 3), 1)
+	g.AddAmberOn(foe, 2)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	MoveAember{All: true, From: from, To: Opponent, Bind: true}.Resolve(ctx)
+	if ctx.Produced.AemberMoved != 2 {
+		t.Errorf("AemberMoved = %d, want 2", ctx.Produced.AemberMoved)
+	}
+
+	// A creature with no Æmber records zero moved.
+	g2 := NewGame("A", "B", 1)
+	g2.AddToBattleline(testCreature("bare", 3), 1)
+	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
+	MoveAember{All: true, From: from, To: Opponent, Bind: true}.Resolve(ctx2)
+	if ctx2.Produced.AemberMoved != 0 {
+		t.Errorf("AemberMoved = %d with no Æmber, want 0", ctx2.Produced.AemberMoved)
+	}
+}
+
+// TestMovedAnyAember checks the condition reads the moved-Æmber tally and renders
+// its back-reference text.
+func TestMovedAnyAember(t *testing.T) {
+	if got := (MovedAnyAember{}).CondText(); got != "if you moved any Æmber this way" {
+		t.Errorf("CondText = %q", got)
+	}
+	g := NewGame("A", "B", 1)
+	if (MovedAnyAember{}).Met(&EffectContext{Resolver: g, Produced: Produced{AemberMoved: 0}}) {
+		t.Error("Met with no Æmber moved should be false")
+	}
+	if !(MovedAnyAember{}).Met(&EffectContext{Resolver: g, Produced: Produced{AemberMoved: 1}}) {
+		t.Error("Met with Æmber moved should be true")
+	}
+}
+
+func TestOverwhelmed(t *testing.T) {
+	if (Overwhelmed{}).CondText() != "if you are overwhelmed" {
+		t.Errorf("cond text = %q", (Overwhelmed{}).CondText())
+	}
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(testCreature("o1", 2), 1)
+	g.AddToBattleline(testCreature("o2", 2), 1)
+	g.AddToBattleline(testCreature("m1", 2), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	if !(Overwhelmed{}).Met(ctx) {
+		t.Error("should be overwhelmed when the opponent controls more creatures")
+	}
+	g.AddToBattleline(testCreature("m2", 2), 0)
+	if (Overwhelmed{}).Met(ctx) {
+		t.Error("should not be overwhelmed at parity")
+	}
+}
+
+// TestKeyCostChangeWhileCondition checks a key-cost change gated by a condition:
+// Proclamation 346E taxes the opponent's keys only while they field creatures
+// from fewer than three houses.
+func TestKeyCostChangeWhileCondition(t *testing.T) {
+	proclamation := func() CardDefinition {
+		return NewCard("proc", Sanctum, Artifact, Rare,
+			WithKeyCost(NewKeyCostChange(Opponent, 2).While(
+				PlayerControlsFewerHousesThan{Player: Opponent, Amount: 3})))
+	}
+
+	t.Run("taxes while the opponent has fewer than three houses", func(t *testing.T) {
+		g := started(t)
+		g.AddArtifact(proclamation(), 0)
+		g.AddToBattleline(NewCard("a", Sanctum, Creature, Common, WithPower(1)), 1)
+		g.AddToBattleline(NewCard("b", Untamed, Creature, Common, WithPower(1)), 1)
+		if got := g.CurrentKeyCost(1); got != KeyCost+2 {
+			t.Errorf("opponent key cost = %d, want %d", got, KeyCost+2)
+		}
+	})
+
+	t.Run("stops taxing once the opponent fields three houses", func(t *testing.T) {
+		g := started(t)
+		g.AddArtifact(proclamation(), 0)
+		g.AddToBattleline(NewCard("a", Sanctum, Creature, Common, WithPower(1)), 1)
+		g.AddToBattleline(NewCard("b", Untamed, Creature, Common, WithPower(1)), 1)
+		g.AddToBattleline(NewCard("c", Logos, Creature, Common, WithPower(1)), 1)
+		if got := g.CurrentKeyCost(1); got != KeyCost {
+			t.Errorf("opponent key cost = %d, want %d", got, KeyCost)
+		}
+	})
+
+	t.Run("never taxes its own controller", func(t *testing.T) {
+		g := started(t)
+		g.AddArtifact(proclamation(), 0)
+		if got := g.CurrentKeyCost(0); got != KeyCost {
+			t.Errorf("own key cost = %d, want %d", got, KeyCost)
+		}
+	})
+
+	t.Run("renders a while clause", func(t *testing.T) {
+		want := "While your opponent does not control creatures from 3 or more " +
+			"different houses, your opponent's keys cost +2 Æmber."
+		if got := keyCostText(proclamation().KeyCostChanges[0]); got != want {
+			t.Errorf("text = %q, want %q", got, want)
+		}
+	})
+}
+
+// TestPlayerControlsFewerHousesThanCondition exercises the condition's text and
+// validation directly.
+func TestPlayerControlsFewerHousesThanCondition(t *testing.T) {
+	opp := PlayerControlsFewerHousesThan{Player: Opponent, Amount: 3}
+	if got := opp.CondText(); got != "while your opponent does not control creatures from 3 or more different houses" {
+		t.Errorf("CondText = %q", got)
+	}
+	you := PlayerControlsFewerHousesThan{Player: Controller, Amount: 2}
+	if got := you.CondText(); got != "while you do not control creatures from 2 or more different houses" {
+		t.Errorf("CondText = %q", got)
+	}
+	if err := (PlayerControlsFewerHousesThan{Player: Opponent}).validate(); err == nil {
+		t.Error("zero amount should be rejected")
+	}
+	if err := opp.validate(); err != nil {
+		t.Errorf("validate: %v", err)
+	}
+}
+
+// TestOrAmountStealAember covers the linear "steal 1 Æmber, or 2 if …" form
+// (card-wording rule 22): the alternate amount is taken only when the guard holds,
+// and the tail renders in place of a two-armed Otherwise branch (Ronnie Wristclocks).
+func TestOrAmountStealAember(t *testing.T) {
+	e := StealAember{
+		Amount: 1,
+		Or:     OrAmount{Amount: 2, When: PoolAember{Player: Opponent, Is: AtLeast, Amount: 7}},
+	}
+	if want := "steal 1 Æmber, or 2 if your opponent has 7 Æmber or more"; e.Text() != want {
+		t.Errorf("text = %q, want %q", e.Text(), want)
+	}
+
+	// Guard unmet: the base amount is stolen.
+	g := NewGame("A", "B", 1)
+	g.State.Aember[1] = 6
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if g.State.Aember[0] != 1 || g.State.Aember[1] != 5 {
+		t.Errorf("unmet: you=%d opp=%d, want 1/5", g.State.Aember[0], g.State.Aember[1])
+	}
+
+	// Guard met: the alternate amount is stolen.
+	g = NewGame("A", "B", 1)
+	g.State.Aember[1] = 7
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if g.State.Aember[0] != 2 || g.State.Aember[1] != 5 {
+		t.Errorf("met: you=%d opp=%d, want 2/5", g.State.Aember[0], g.State.Aember[1])
+	}
+}
+
+// TestOrAmountStealValidate covers the conflict and guard-validation checks.
+func TestOrAmountStealValidate(t *testing.T) {
+	good := StealAember{
+		Amount: 1,
+		Or:     OrAmount{Amount: 2, When: PoolAember{Player: Opponent, Is: AtLeast, Amount: 7}},
+	}
+	if err := good.validate(); err != nil {
+		t.Errorf("valid steal rejected: %v", err)
+	}
+	if err := (StealAember{
+		Or: OrAmount{Amount: 2, When: PoolAember{Player: Opponent, Is: AtLeast, Amount: 7}},
+		By: AllBut(6),
+	}).validate(); err == nil {
+		t.Error("Or and By together should not validate")
+	}
+	if err := (StealAember{
+		Amount: 1,
+		Or:     OrAmount{Amount: 2, When: PoolAember{Player: Opponent}},
+	}).validate(); err == nil {
+		t.Error("an Or with an invalid guard should not validate")
+	}
+}
+
+// TestOrAmountForgeKey covers the "forge a key at +6 …, or +2 if …" form
+// (Key of Darkness): the surcharge drops to the alternate only when the guard holds.
+func TestOrAmountForgeKey(t *testing.T) {
+	e := ForgeKey{
+		Extra: 6,
+		Or:    OrAmount{Amount: 2, When: PoolAember{Player: Opponent, Is: Exactly, Amount: 0}},
+	}
+	want := "forge a key at +6 Æmber current cost, or +2 if your opponent has no Æmber -> purge {self}"
+	if e.Text() != want {
+		t.Errorf("text = %q, want %q", e.Text(), want)
+	}
+
+	// Guard unmet (opponent holds Æmber): the +6 surcharge is paid.
+	g := started(t)
+	g.State.Aember[0] = 100
+	g.State.Aember[1] = 1
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if got := g.State.Aember[0]; got != 100-(KeyCost+6) {
+		t.Errorf("Æmber = %d, want the +6 surcharge paid", got)
+	}
+
+	// Guard met (opponent has no Æmber): the +2 surcharge is paid.
+	g = started(t)
+	g.State.Aember[0] = 100
+	g.State.Aember[1] = 0
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if got := g.State.Aember[0]; got != 100-(KeyCost+2) {
+		t.Errorf("Æmber = %d, want the +2 surcharge paid", got)
+	}
+}
+
+// TestOrAmountForgeKeyValidate covers the free-forge conflict and guard validation.
+func TestOrAmountForgeKeyValidate(t *testing.T) {
+	if err := (ForgeKey{
+		FreeOfCost: true,
+		Or:         OrAmount{Amount: 2, When: PoolAember{Player: Opponent, Is: Exactly, Amount: 0}},
+	}).validate(); err == nil {
+		t.Error("a free forge with an Or surcharge should not validate")
+	}
+	if err := (ForgeKey{
+		Extra: 6,
+		Or:    OrAmount{Amount: 2, When: PoolAember{Player: Opponent}},
+	}).validate(); err == nil {
+		t.Error("an Or with an invalid guard should not validate")
+	}
+}
+
+// TestAlwaysMetCondText covers the always-true condition rendering no "while …"
+// clause — WithAemberCannotBeStolen() with no argument sets it.
+func TestAlwaysMetCondText(t *testing.T) {
+	if got := (AlwaysMet{}).CondText(); got != "" {
+		t.Errorf("CondText = %q, want empty", got)
+	}
+}
+
+// TestNewCardRejectsInvalidAemberCannotBeStolen covers NewCard's validation of a
+// conditional AemberCannotBeStolen: an unset PoolAember comparison is rejected.
+func TestNewCardRejectsInvalidAemberCannotBeStolen(t *testing.T) {
+	defer func() {
+		if recover() == nil {
+			t.Error("NewCard should reject an invalid AemberCannotBeStolen condition")
+		}
+	}()
+	NewCard("bad", Untamed, Creature, Rare, WithAemberCannotBeStolen(PoolAember{}))
 }

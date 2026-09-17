@@ -15,7 +15,7 @@ import (
 //	Power:  4
 //	Traits: Mutant
 //
-//	While you have 4 or more Æmber, your Æmber cannot be stolen.
+//	While you have 4 Æmber or more, your Æmber cannot be stolen.
 func TestCephaloist(t *testing.T) {
 	t.Run("protects its controller's Æmber while their pool is at least 4", func(t *testing.T) {
 		h := ct.Play(t, ct.Setup{

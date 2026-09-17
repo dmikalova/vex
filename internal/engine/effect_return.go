@@ -59,7 +59,25 @@ func (e PutFromPlay) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 // actually returned one. The last card moved is left in context (ctx.It) so a
 // following effect can act on "it" or exclude cards sharing its name.
 func (e PutFromPlay) resolveGate(ctx *EffectContext) bool {
-	ids := e.Target.Select(ctx)
+	return e.put(ctx, e.Target.Select(ctx))
+}
+
+// declinable reports that the move is a single clickable card.
+func (e PutFromPlay) declinable() bool { return e.Target.isChosen() }
+
+// vacuous reports that there is no card to move, so a "you may" wrapping it need
+// not ask.
+func (e PutFromPlay) vacuous(ctx *EffectContext) bool { return e.Target.empty(ctx) }
+
+// resolveOptional asks for the card declinably, so "you may put a creature into
+// its owner's hand" is answered by clicking that creature rather than by a
+// separate Yes/No.
+func (e PutFromPlay) resolveOptional(ctx *EffectContext) bool {
+	return e.put(ctx, e.Target.SelectOptional(ctx))
+}
+
+// put moves an already-selected set and reports whether any card actually moved.
+func (e PutFromPlay) put(ctx *EffectContext, ids []LocalID) bool {
 	if e.Destination == ToTopOfDeck {
 		ids = ctx.OrderByChoice("Choose the next card to put on top of the deck", ids)
 	}

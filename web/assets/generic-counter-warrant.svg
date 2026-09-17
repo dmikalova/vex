@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <title>Warrant counter</title>
+  <rect x="6" y="3" width="12" height="18" rx="1.2" fill="#e8d9b5" stroke="#8a6d2f" stroke-width="1"/>
+  <path d="M8.5 7h7M8.5 10h7M8.5 13h4" stroke="#8a6d2f" stroke-width="1" stroke-linecap="round"/>
+  <circle cx="12" cy="17" r="2.4" fill="#c92a2a" stroke="#7a1a1a" stroke-width="0.6"/>
+</svg>

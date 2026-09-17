@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// SpareArmCarmine
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Spare Arm Carmine
 //
 //	House:  Shadows
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Mutant
 //
-//	After Reap: If there are more friendly Mutant creatures than enemy Mutant creatures, steal 2 Aember. Otherwise, steal 1 Aember.
+//	Reap: Steal 1 Æmber. If you control more Mutant creatures than your opponent, steal 1 Æmber.
 var SpareArmCarmine = set.New(
 	"Spare Arm Carmine",
 	card.House.Shadows,
@@ -24,5 +19,12 @@ var SpareArmCarmine = set.New(
 	card.Provenance(card.MoMu, "307"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Mutant),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Reap, card.Sentences{Effects: []card.Effect{
+			card.StealAember{Amount: 1},
+			card.Conditional{
+				Cond: card.ControlsMoreCreatures{Trait: card.Traits.Mutant},
+				Then: card.StealAember{Amount: 1},
+			},
+		}}),
 )

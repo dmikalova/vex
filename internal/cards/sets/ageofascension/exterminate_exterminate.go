@@ -22,7 +22,7 @@ var ExterminateExterminate = set.New(
 				Refine(card.PowerLessThan(card.InPlay{
 					Player: card.Controller,
 					Type:   card.Type.Creature,
-					House:  card.House.Self,
+					House:  card.Houses.Named(card.House.Self),
 				})),
 		}),
 )

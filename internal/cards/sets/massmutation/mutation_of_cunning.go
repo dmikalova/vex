@@ -23,9 +23,10 @@ var MutationOfCunning = set.New(
 			Target: card.Target.Creature,
 			Then: card.GainUntilNextTurn{
 				Effects: []card.Effect{
-					card.GainKeyword{
-						Target:  card.Target.TheChosenCreature,
-						Keyword: card.Keyword.Elusive,
+					card.GainKeywords{
+						Target:   card.Target.TheChosenCreature,
+						Keywords: []card.KeywordValue{card.Keyword.Elusive},
+						Duration: card.Duration.StartOfPlayerNextTurn,
 					},
 					card.GainTrait{
 						Target: card.Target.TheChosenCreature,

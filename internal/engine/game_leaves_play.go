@@ -136,9 +136,12 @@ func (g *Game) unlistFromPlay(id LocalID) {
 
 // emitLeavesPlay fires a card's "Leaves Play:" abilities while it is still on the
 // board. Every exit — destroyed, purged, returned to hand, archived, shuffled away
-// — funnels through removeFromPlay, so this one call covers them all.
+// — funnels through removeFromPlay, so this one call covers them all. It also fires
+// any effect the card armed to resolve when it leaves play (Turnkey's forced
+// forge), which likewise wants the card still on the board so its controller reads.
 func (g *Game) emitLeavesPlay(id LocalID) {
 	g.triggerAbilities(id, TriggerLeavesPlay, 0, false)
+	g.fireScheduledOnLeave(id)
 }
 
 // discardUpgrades moves a card's attached upgrades to their owner's discard pile.

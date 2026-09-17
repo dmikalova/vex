@@ -31,8 +31,25 @@ func (e Stun) Text() string { return e.verb() + " " + e.targetText() }
 
 // Resolve stuns each selected creature. A creature already stunned still gets a
 // log line — the source still had to choose it — just without a state change.
-func (e Stun) Resolve(ctx *EffectContext) {
-	for _, id := range e.Target.Select(ctx) {
+func (e Stun) Resolve(ctx *EffectContext) { e.stun(ctx, e.Target.Select(ctx)) }
+
+// declinable reports that the stun is a single clickable creature.
+func (e Stun) declinable() bool { return e.Target.isChosen() }
+
+// vacuous reports that there is no creature to stun, so a "you may" wrapping it
+// need not ask.
+func (e Stun) vacuous(ctx *EffectContext) bool { return e.Target.empty(ctx) }
+
+// resolveOptional asks for the creature declinably, so "you may stun a creature"
+// is answered by clicking that creature rather than by a separate Yes/No.
+func (e Stun) resolveOptional(ctx *EffectContext) bool {
+	return e.stun(ctx, e.Target.SelectOptional(ctx))
+}
+
+// stun applies the status to an already-selected set and reports whether any
+// creature was chosen.
+func (e Stun) stun(ctx *EffectContext, ids []LocalID) bool {
+	for _, id := range ids {
 		if ctx.Resolver.Stunned(id) {
 			ctx.Resolver.Record(CreatureStunned{Creature: id, By: ctx.Source, AlreadyStunned: true})
 			continue
@@ -40,6 +57,7 @@ func (e Stun) Resolve(ctx *EffectContext) {
 		ctx.Resolver.SetStunned(id, true)
 		ctx.Resolver.Record(CreatureStunned{Creature: id, By: ctx.Source})
 	}
+	return len(ids) > 0
 }
 
 // Unstunning a creature removes the stun status from each creature the effect

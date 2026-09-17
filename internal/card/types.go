@@ -131,8 +131,9 @@ type cardTypes struct {
 // Subject groups the cards a condition can name instead of saying "it", e.g.
 // card.Subject.DiscardedCard.
 var Subject = subjects{
-	DiscardedCard: engine.DiscardedCard,
-	ThatCard:      engine.ThatCard,
+	DiscardedCard:  engine.DiscardedCard,
+	ThatCard:       engine.ThatCard,
+	FoughtCreature: engine.FoughtCreature,
 }
 
 type subjects struct {
@@ -140,6 +141,8 @@ type subjects struct {
 	DiscardedCard engine.Subject
 	// ThatCard names the card an effect just acted on when "it" would be ambiguous.
 	ThatCard engine.Subject
+	// FoughtCreature names the creature the source is fighting.
+	FoughtCreature engine.Subject
 }
 
 // Rarity groups the rarity values, e.g. card.Rarity.Common.
@@ -184,6 +187,7 @@ var Traits = traits{
 	Demon:        engine.Demon,
 	Dinosaur:     engine.Dinosaur,
 	Dragon:       engine.Dragon,
+	Egg:          engine.Egg,
 	Elf:          engine.Elf,
 	Equation:     engine.Equation,
 	Experiment:   engine.Experiment,
@@ -251,6 +255,7 @@ type traits struct {
 	Cyborg,
 	Demon,
 	Dragon,
+	Egg,
 	Elf,
 	Equation,
 	Faerie,
@@ -411,18 +416,14 @@ var Trigger = triggers{
 	AfterCreatureDestroyed:         engine.TriggerAfterCreatureDestroyed,
 	AfterCreatureEnters:            engine.TriggerAfterCreatureEnters,
 	AfterCreatureFights:            engine.TriggerAfterCreatureFights,
-	AfterFriendlyCreatureFights:    engine.TriggerAfterFriendlyCreatureFights,
 	AfterCreaturePlayed:            engine.TriggerAfterCreaturePlayed,
 	AfterCreaturePlayedAdjacent:    engine.TriggerAfterCreaturePlayedAdjacent,
 	AfterCreatureReaps:             engine.TriggerAfterCreatureReaps,
 	AfterDestroyedFighting:         engine.TriggerAfterDestroyedFighting,
 	AfterDiscardFromHand:           engine.TriggerAfterDiscardFromHand,
 	AfterEnemyCardPlayed:           engine.TriggerAfterEnemyCardPlayed,
-	AfterEnemyCreatureDestroyed:    engine.TriggerAfterEnemyCreatureDestroyed,
-	AfterEnemyCreatureReaps:        engine.TriggerAfterEnemyCreatureReaps,
 	AfterEnemyDestroyedFighting:    engine.TriggerAfterEnemyDestroyedFighting,
 	AfterForgeKey:                  engine.TriggerAfterForgeKey,
-	AfterFriendlyCreatureDestroyed: engine.TriggerAfterFriendlyCreatureDestroyed,
 	AfterNeighborFights:            engine.TriggerAfterNeighborFights,
 	AfterOpponentForgesKey:         engine.TriggerAfterOpponentForgesKey,
 	AfterPlayerForgesKey:           engine.TriggerAfterPlayerForgesKey,
@@ -505,15 +506,9 @@ type triggers struct {
 	// AfterAnyPlayerChoosesHouse fires after either player chooses their active
 	// house, whoever's turn it is (Snag's Mirror).
 	AfterAnyPlayerChoosesHouse engine.Trigger
-	// AfterEnemyCreatureDestroyed fires after an enemy creature is destroyed during your turn.
-	AfterEnemyCreatureDestroyed engine.Trigger
 	// AfterCreatureDestroyed fires after any creature is destroyed, with the
 	// destroyed creature as "it"; it fires only for cards that survive the batch.
 	AfterCreatureDestroyed engine.Trigger
-	// AfterFriendlyCreatureDestroyed fires after a friendly creature is destroyed,
-	// with the destroyed creature as "it" (Spartasaur); it fires only for cards
-	// that survive the batch.
-	AfterFriendlyCreatureDestroyed engine.Trigger
 	// AfterEnemyCardPlayed fires after the opponent plays a card.
 	AfterEnemyCardPlayed engine.Trigger
 	// AfterUse fires after the controller uses a card (reap, fight, or Action:).
@@ -524,17 +519,12 @@ type triggers struct {
 	// so an upgrade can punish its own host ("After this creature is used, ...").
 	UsedSelf engine.Trigger
 	// AfterCreatureReaps fires after any creature reaps (friendly or enemy), with
-	// the reaper as "it" (Orb of Invidius stuns whatever just reaped).
+	// the reaper as "it" (Orb of Invidius stuns whatever just reaped). A reaction
+	// narrowed to an enemy reaper (Pip Pip) is this trigger gated on ItIsEnemy.
 	AfterCreatureReaps engine.Trigger
-	// AfterEnemyCreatureReaps fires after an enemy creature reaps, with the reaper
-	// as "it" (Pip Pip stuns the enemy that just reaped).
-	AfterEnemyCreatureReaps engine.Trigger
 	// AfterCreatureFights fires after any creature is used to fight (friendly or
 	// enemy), with the fighting creature as "it" (Shattered Throne makes it capture).
 	AfterCreatureFights engine.Trigger
-	// AfterFriendlyCreatureFights fires after a friendly creature is used to fight,
-	// with the fighting creature as "it" (Lieutenant Gorvenal captures).
-	AfterFriendlyCreatureFights engine.Trigger
 	// AfterPlayerForgesKey fires after any player forges a key, acting on the
 	// player who forged (Forgemaster Og).
 	AfterPlayerForgesKey engine.Trigger

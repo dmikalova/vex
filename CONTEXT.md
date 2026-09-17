@@ -74,6 +74,14 @@ Using a ready creature to gain 1 Æmber, exhausting it.
 **Fight**:
 Using a ready creature to attack an enemy creature, exhausting it.
 
+**Play** (vs **put into play**):
+A card is _played_ when its controller plays it from hand — this triggers its
+**Play:** abilities. A card that is _put into play_ (e.g. Aemberlution's mass
+replay, Saurian Egg) is placed directly into a zone and is **not** played, so its
+Play abilities do **not** trigger. Keep the distinction: put-into-play effects
+never fire the affected creatures' Play abilities, so the active player never
+resolves an opponent's Play abilities.
+
 **Tactic** (vs the **Action** ability):
 A **Tactic** is the one-shot card type — KeyForge's "action card", renamed so the
 word "Action" is free for the "Action:" ability, which is used directly from a

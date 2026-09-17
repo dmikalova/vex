@@ -67,7 +67,7 @@ func TestManchego(t *testing.T) {
 		m.Ready()
 
 		h.P1.Reap(m)
-		h.P1.ClickOption("Yes")
+		h.P1.ClickCard(m)
 
 		h.Expect(m).At(ct.Deck)
 	})

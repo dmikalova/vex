@@ -23,6 +23,6 @@ var DrEscotera = set.New(
 		card.Trigger.Play, card.GainAember{
 			Player: card.Controller,
 			Amount: 1,
-			Per:    card.OpponentForgedKeys{},
+			Per:    card.ForgedKeys{Player: card.Opponent},
 		}),
 )

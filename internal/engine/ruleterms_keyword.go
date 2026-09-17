@@ -67,6 +67,15 @@ damage normally.`,
 have taunt themselves, so a Taunt creature shields the creatures beside it.`,
 		},
 		{
+			Section:  SectionKeyword,
+			Title:    "Taunt",
+			Subtitle: "extended range",
+			Body: `A few creatures have taunt that reaches one step further, shielding their
+neighbors' neighbors as well as their neighbors (Lady Loreena). A creature
+shielded only by such a distant taunter can still not be chosen to be fought
+while the taunter lives.`,
+		},
+		{
 			Section:    SectionKeyword,
 			Title:      "Versatile",
 			Definition: "The card may be used as if it belonged to your active house, though it is still played only on its own house's turn.",

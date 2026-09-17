@@ -10,9 +10,6 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 
 ### Next focus
 
-- Skill to mage check and then commit
-- Need a thorough implementation examples doc so nodes don't keep being reinvented
-- using property testing to find unused code paths and then force specific tests there
 - Is there a way to validate that the UI handles and presents all possible game states/prompts? eg if I add a new prompt route, can the UI then automatically fail bc its not handled?
 - On the style page add a section with all of the Log and Text usages rendered out. The easiest wayt to do this might be to create a dedicated preview area that dynamically displays these elements as they are used in the engine (eg show a set of cards that covers every rendering element, and a log that does the same for all log entries)
 - card gallery (and search). Gallery links to cards, and cards can pull in all the relevant rules onto that page
@@ -42,20 +39,14 @@ in [../CONTEXT.md](../CONTEXT.md), the rules in the engine's rulebook term regis
 - run a million games and then get stats on memory usage in the state and see where estimates are overly conservative and could be pulled back to save space
 - Reordering the state in Go
 - Minimizing the state by using bitfields more aggressively - tradeoff with having the interpret that in Go, but we are no cpu bound
+- Changing card.X to instead be e.X eg for engine - is the facade really providing value, or is there anything else we could do to organize the repo better instead of one mega engine?
+- Split out glyphs more in icon.go
+- using property testing to find unused code paths and then force specific tests there
 
 ## Things that can be done now
 
-- Decomposables:
-  - OpponentForgedKeys
-  - AfterFriendlyCreatureFights
-  - LoseKeywordsUntilNextTurn
-  - card.WithAemberCannotBeStolenWhilePoolAtLeast(4),
-  - WithAemberCannotBeStolenWhileItHasAember
-  - FoughtCreatureIsMostPowerfulEnemy
-- Lumilu - could card.InPlay be better represented by filters or refinements instead of the specific fields?
-
+- martyrs end should multi-select
 - Livia and Fidgit could go further
-- Changing card.X to instead be e.X eg for engine - is the facade really providing value, or is there anything else we could do to organize the repo better instead of one mega engine?
 - shard of unity prompt doesn't lift creature for use
 - rows have excess scroll space and don't hide the scroll bar by default
 

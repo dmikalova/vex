@@ -351,10 +351,14 @@ func (g *Game) RaiseKeyCostThisTurn(player, amount int, source LocalID) {
 }
 
 // RaiseKeyCostPerHouseNextTurn arms a counted key surcharge for a player's next
-// turn: Amount extra Æmber for each creature of House in play, recomputed at each
-// forge (Waking Nightmare). Successive raises of the same house stack their
+// turn: Amount extra Æmber for each creature House admits in play, recomputed at
+// each forge (Waking Nightmare). Successive raises of the same house stack their
 // per-creature amount; a different house replaces the surcharge.
-func (g *Game) RaiseKeyCostPerHouseNextTurn(player, amount int, house House, source LocalID) {
+func (g *Game) RaiseKeyCostPerHouseNextTurn(
+	player, amount int,
+	house HouseMatcher,
+	source LocalID,
+) {
 	per := amount
 	if cur := g.State.KeyCostPerHouseNext[player].Value; cur.House == house {
 		per += cur.Per
@@ -578,7 +582,7 @@ func (g *Game) KeyCostSources(player int) []LocalID {
 	if g.State.KeyCostBump[player].Value != 0 {
 		name(g.State.KeyCostBump[player].Source)
 	}
-	if g.State.KeyCostPerHouse[player].Value.House != HouseNone {
+	if g.State.KeyCostPerHouse[player].Value.Per != 0 {
 		name(g.State.KeyCostPerHouse[player].Source)
 	}
 	for controller := 0; controller < 2; controller++ {
@@ -693,6 +697,23 @@ func (g *Game) forgeKeyFree(player int) bool {
 	return true
 }
 
+// forgeKeyFreeForced forges one free key for a player who did not choose to forge —
+// Turnkey forces the opponent. The active player, who chooses everything, picks the
+// key's colour from the forger's remaining palette, so the colour prompt goes to
+// them and not to the forger. Nothing is paid or spent. It reports whether a key
+// was forged.
+func (g *Game) forgeKeyFreeForced(player int) bool {
+	if g.keyForgeCapReached(player) || g.forgeKeyNumberBarred(player) {
+		return false
+	}
+	if g.beforeForgePrevented(player) {
+		return false
+	}
+	color := g.pickKeyColorChosenBy(player, g.State.ActivePlayer)
+	g.finishForgeKey(player, color)
+	return true
+}
+
 // finishForgeKey records a newly forged key in the colour already picked, fires
 // "after you forge a key" abilities, and checks for the win.
 func (g *Game) finishForgeKey(player int, color KeyColor) {
@@ -757,7 +778,15 @@ func (g *Game) Concede(player int) {
 // colour left and is KeyColorColorless. There is no default: every UI is asked
 // whenever more than one colour is available.
 func (g *Game) pickKeyColor(player int) KeyColor {
-	remaining := g.remainingKeyColors(player)
+	return g.pickKeyColorChosenBy(player, player)
+}
+
+// pickKeyColorChosenBy is pickKeyColor with the chooser split from the forger: the
+// colour is drawn from forger's unforged palette, but chooser is who is prompted.
+// The two are the same player for a normal forge; they differ when a forge is
+// forced on one player and the active player chooses its colour (Turnkey).
+func (g *Game) pickKeyColorChosenBy(forger, chooser int) KeyColor {
+	remaining := g.remainingKeyColors(forger)
 	if len(remaining) == 0 {
 		return KeyColorColorless
 	}
@@ -768,7 +797,7 @@ func (g *Game) pickKeyColor(player int) KeyColor {
 			labels[i] = c.String()
 		}
 		if idx := g.chooseOption(
-			player,
+			chooser,
 			"",
 			KeyColorPrompt,
 			labels,

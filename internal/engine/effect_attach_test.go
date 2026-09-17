@@ -8,7 +8,9 @@ import "testing"
 func blasterUpgrade(host string) CardDefinition {
 	return NewCard("Test Blaster", StarAlliance, Upgrade, Rare,
 		WithStatic(StaticModifier{Granted: []Ability{
-			{Trigger: TriggerAfterReap, Effect: AttachSelfTo{Host: host}},
+			{Trigger: TriggerAfterReap, Effect: AttachSelfTo{
+				Target: Target{Kind: TargetChosenFriendlyCreature}.Named(host),
+			}},
 		}}))
 }
 
@@ -18,6 +20,7 @@ func blasterUpgrade(host string) CardDefinition {
 // AttachSelfTo's name match, and MoveUpgrade relocating an attached upgrade.
 func TestAttachSelfToMovesGrantingUpgrade(t *testing.T) {
 	g := NewGame("A", "B", 1)
+	g.SetChooser(0, FirstChooser{})
 	host := g.AddToBattleline(testCreature("host", 3), 0)
 	signature := g.AddToBattleline(testCreature("Commander Chan", 4), 0)
 	up := g.Register(blasterUpgrade("Commander Chan"), 0)
@@ -39,7 +42,7 @@ func boundBlasterUpgrade(host string) CardDefinition {
 		WithStatic(StaticModifier{Granted: []Ability{{
 			Trigger: TriggerAfterReap,
 			Effect: Sequence{Effects: []Effect{
-				AttachSelfTo{Host: host},
+				AttachSelfTo{Target: Target{Kind: TargetChosenFriendlyCreature}.Named(host)},
 				Ward{Target: Target{Kind: TargetAttachedHost}.Named(host)},
 			}},
 		}}}))
@@ -55,6 +58,7 @@ func TestAttachSelfToBindsHostInstance(t *testing.T) {
 	carrier := g.AddToBattleline(testCreature("carrier", 3), 0)
 	chanA := g.AddToBattleline(testCreature("Commander Chan", 4), 0)
 	chanB := g.AddToBattleline(testCreature("Commander Chan", 4), 0)
+	g.SetChooser(0, idChooser{id: chanA})
 	up := g.Register(boundBlasterUpgrade("Commander Chan"), 0)
 	g.AttachUpgrade(carrier, up)
 
@@ -135,15 +139,16 @@ func TestTargetAttachedHostUnattached(t *testing.T) {
 	}
 }
 
-// TestAttachSelfToText renders the effect and rejects a missing host name.
+// TestAttachSelfToText renders the effect and rejects a missing target.
 func TestAttachSelfToText(t *testing.T) {
-	if got := (AttachSelfTo{Host: "Commander Chan"}).Text(); got != "attach "+CardName+" to Commander Chan" {
+	e := AttachSelfTo{Target: Target{Kind: TargetChosenFriendlyCreature}.Named("Commander Chan")}
+	if got := e.Text(); got != "attach "+CardName+" to Commander Chan" {
 		t.Errorf("text = %q", got)
 	}
 	if err := (AttachSelfTo{}).validate(); err == nil {
-		t.Error("AttachSelfTo with no host should be invalid")
+		t.Error("AttachSelfTo with no target should be invalid")
 	}
-	if err := (AttachSelfTo{Host: "x"}).validate(); err != nil {
+	if err := e.validate(); err != nil {
 		t.Errorf("valid AttachSelfTo rejected: %v", err)
 	}
 }
@@ -154,5 +159,64 @@ func TestTargetNamedChosenRendersBareName(t *testing.T) {
 	tgt := Target{Kind: TargetChosenFriendlyCreature}.Named("Lieutenant Khrkhar")
 	if got := tgt.Text(); got != "Lieutenant Khrkhar" {
 		t.Errorf("text = %q, want %q", got, "Lieutenant Khrkhar")
+	}
+}
+
+// A "you may attach {card} to a friendly creature" (Blast Shielding) is one
+// clickable creature, so May drives it by the click rather than by a Yes/No. An
+// upgrade already on an admissible host stays put without asking.
+func TestAttachSelfToDeclinable(t *testing.T) {
+	chosen := AttachSelfTo{Target: Target{Kind: TargetChosenFriendlyCreature}}
+	if !chosen.declinable() {
+		t.Error("a chosen AttachSelfTo should be declinable")
+	}
+	if (AttachSelfTo{Target: Target{Kind: TargetEachFriendlyCreature}}).declinable() {
+		t.Error("an untargeted AttachSelfTo should not be declinable")
+	}
+
+	empty := NewGame("A", "B", 1)
+	if !chosen.vacuous(&EffectContext{Resolver: empty, Controller: 0}) {
+		t.Error("an AttachSelfTo with no creature to attach to should be vacuous")
+	}
+
+	taken := NewGame("A", "B", 1)
+	taken.SetChooser(0, &cardDecliner{})
+	from := taken.AddToBattleline(testCreature("from", 3), 0)
+	up := taken.Register(NewCard("shield", StarAlliance, Upgrade, Common), 0)
+	taken.AttachUpgrade(from, up)
+	onto := taken.AddToBattleline(testCreature("onto", 3), 0)
+	ctx := &EffectContext{Resolver: taken, Upgrade: up, Controller: 0}
+	// The upgrade's own host is a friendly creature the target admits, so the
+	// already-homed shortcut returns before anything is asked.
+	if !chosen.resolveOptional(ctx) {
+		t.Error("an upgrade already on an admissible host should report attached")
+	}
+	if h, ok := taken.hostOf(up); !ok || h != from {
+		t.Errorf("host = (%d, %v), want the original host %d", h, ok, from)
+	}
+
+	// Narrowed to the neighbor by name, the click moves the upgrade there.
+	toOnto := AttachSelfTo{Target: Target{Kind: TargetChosenFriendlyCreature}.Named("onto")}
+	if !toOnto.resolveOptional(ctx) {
+		t.Error("clicking the creature should report the upgrade attached")
+	}
+	if h, ok := taken.hostOf(up); !ok || h != onto {
+		t.Errorf("host = (%d, %v), want the clicked creature %d", h, ok, onto)
+	}
+
+	declined := NewGame("A", "B", 1)
+	declined.SetChooser(0, &cardDecliner{decline: true})
+	stay := declined.AddToBattleline(testCreature("stay", 3), 0)
+	declined.AddToBattleline(testCreature("other", 3), 0)
+	held := declined.Register(NewCard("shield", StarAlliance, Upgrade, Common), 0)
+	declined.AttachUpgrade(stay, held)
+	toOther := AttachSelfTo{Target: Target{Kind: TargetChosenFriendlyCreature}.Named("other")}
+	if toOther.resolveOptional(
+		&EffectContext{Resolver: declined, Upgrade: held, Controller: 0},
+	) {
+		t.Error("declining should report nothing attached")
+	}
+	if h, ok := declined.hostOf(held); !ok || h != stay {
+		t.Errorf("host = (%d, %v), want the unchanged host %d", h, ok, stay)
 	}
 }

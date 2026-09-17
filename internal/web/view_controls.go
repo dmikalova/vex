@@ -37,12 +37,11 @@ func (g *game) promptSourceHeader() app.UI {
 				HouseChanged: changed,
 				TypeIcon:     typeIconName(def.Type),
 				Stat:         handStat(def),
-				Rules:        displayRules(rulesWithoutEnhance(def, engine.RenderCardRules(def))),
+				Rules:        displayRules(faceText(def, engine.RenderCardRules(def))),
 				Kind:         kindLabel(def),
 				Trait:        traitLabel(def),
 				Rarity:       rarityMarkOf(def.Rarity),
 				Bonuses:      def.Bonuses,
-				Enhances:     def.Enhances,
 			}),
 		)
 	})
@@ -176,6 +175,18 @@ func (g *game) actionHeader(title string, extra ...app.UI) app.UI {
 	if title != "" {
 		left = app.Div().Class("section-title").Text(title)
 	}
+	return g.headerRow(left, extra)
+}
+
+// promptHeader is actionHeader with the prompt itself as the left slot, so the
+// question and the Undo that backs it out share one row instead of stacking.
+func (g *game) promptHeader(text string, extra ...app.UI) app.UI {
+	return g.headerRow(g.promptLine(text), extra)
+}
+
+// headerRow lays out the action area's top row: left slot, then Undo and any extra
+// icons hard right.
+func (g *game) headerRow(left app.UI, extra []app.UI) app.UI {
 	icons := make([]app.UI, 0, len(extra)+1)
 	icons = append(icons, extra...)
 	icons = append(icons, g.undoIcon())
@@ -203,22 +214,13 @@ func (g *game) endTurnBar() app.UI {
 	)
 }
 
-// disabledEndTurnBar draws the resting Undo header + End turn control greyed out
-// and non-clickable. It fills the dock during a mid-action step (placing a
-// creature) whose own controls live on the lifted card, so the dock reads as the
-// controls paused rather than a blank box.
+// disabledEndTurnBar draws the resting Undo header + a greyed-out, non-clickable
+// End turn. It fills the dock during a mid-action step (placing a creature) whose
+// own controls live on the lifted card, so the dock reads as the controls paused
+// rather than a blank box. Undo stays live, since it backs the whole step out.
 func (g *game) disabledEndTurnBar() app.UI {
-	undo := app.Button().
-		Class(cx("btn-secondary", "btn-icon")).
-		Title("Undo").
-		Disabled(true).
-		Body(icon("undo", "icon-nav"))
-	head := app.Div().Class("action-head").Body(
-		app.Div().Class("action-head-spacer"),
-		app.Div().Class("action-head-icons").Body(undo),
-	)
 	end := app.Button().Class("btn-secondary").Disabled(true).Text("End turn")
-	return app.Div().Class("btn-col", "end-turn-bar").Body(head, end)
+	return app.Div().Class("btn-col", "end-turn-bar").Body(g.actionHeader(""), end)
 }
 
 // controls is the bottom of the sidebar: the contextual controls (house picker or
@@ -249,7 +251,11 @@ func (g *game) controls() app.UI {
 		if _, ok := g.liftUseTarget(); ok {
 			return app.Div().Class("controls").Body(g.disabledEndTurnBar())
 		}
-		body := []app.UI{g.promptSourceHeader(), g.optionChooser()}
+		body := []app.UI{
+			g.promptHeader(g.optionPrompt),
+			g.promptSourceHeader(),
+			g.optionChooser(),
+		}
 		// Manual mode adds a Cancel that backs the whole action out — an option prompt
 		// has no decline of its own, so this is the only way out of a stuck one.
 		if g.g.Manual() {
@@ -284,8 +290,8 @@ func (g *game) controls() app.UI {
 	// green call to action to click one of the highlighted cards.
 	if g.choosing {
 		body := []app.UI{
+			g.promptHeader(g.chooserPrompt),
 			g.promptSourceHeader(),
-			g.promptLine(g.chooserPrompt),
 		}
 		// A bounded out-of-play pick (look at the top N cards) lists its candidates as
 		// buttons here rather than opening the zone viewer, so the whole choice reads
@@ -443,10 +449,18 @@ const pickerInputID = "pickerinput"
 // from the pool to hand. It filters the pool by a case-insensitive name substring.
 func (g *game) cardPicker() app.UI {
 	matches := g.pickerMatches()
+	// Answering a name-a-card prompt, the panel carries the engine's own prompt and
+	// has no close: the blocked effect is waiting on a name.
+	title := "Add a card to hand"
+	if g.pickerNaming {
+		title = g.optionPrompt
+	}
 	return app.Div().Class("over-backdrop").OnClick(g.closePicker).Body(
 		app.Div().Class("picker-panel").OnClick(g.stopClick).Body(
-			app.Button().Class("zones-close").Text("✕").OnClick(g.closePicker),
-			app.Div().Class("over-title").Text("Add a card to hand"),
+			app.If(!g.pickerNaming, func() app.UI {
+				return app.Button().Class("zones-close").Text("✕").OnClick(g.closePicker)
+			}),
+			app.Div().Class("over-title").Text(title),
 			app.Input().ID(pickerInputID).Class("picker-input").Type("text").
 				AutoFocus(true).
 				Placeholder("Search cards…").
@@ -533,17 +547,24 @@ func (g *game) housePicker() app.UI {
 	)
 }
 
-// optionChooser renders a labeled multiple-choice prompt. When every option is a
-// key colour it shows themed key buttons; when every option is a house it shows a
-// grid of house emblems — a house prompt can offer all seven, and seven full-width
-// rows push the rest of the controls off the screen where a grid does not. When
-// every option is a way of using a creature (a reap/fight/action prompt another
-// card raised) it shows the standard use buttons, so a triggered use reads like a
-// chosen one. Anything else falls back to plain primary buttons.
+// optionChooser renders the widget for a labeled multiple-choice prompt. The
+// question itself rides in the header row beside Undo (promptHeader), so a card
+// that words its question differently is not overwritten by a heading the client
+// made up; only the widget varies. When every option is a key colour it shows
+// themed key buttons; when every option is a house it shows a grid of house
+// emblems — a house prompt can offer all seven, and seven full-width rows push the
+// rest of the controls off the screen where a grid does not. When every option is a
+// way of using a creature (a reap/fight/action prompt another card raised) it shows
+// the standard use buttons, so a triggered use reads like a chosen one. Anything
+// else falls back to plain primary buttons.
 func (g *game) optionChooser() app.UI {
+	// A name-a-card prompt is answered in the typeahead panel over the board, so the
+	// dock shows no widget at all here — a button per card in the database is not one.
+	if g.cardNameOptions() {
+		return app.Div().Class("btn-col")
+	}
 	if g.keyColorOptions() {
 		return app.Div().Class("btn-col").Body(
-			app.Div().Class("section-title").Text("Forge a key:"),
 			app.Range(g.optionLabels).Slice(func(i int) app.UI {
 				c := keyColorByName(g.optionLabels[i])
 				return keyChoiceButton(
@@ -556,7 +577,7 @@ func (g *game) optionChooser() app.UI {
 		)
 	}
 	if g.useVerbOptions() {
-		body := []app.UI{g.promptLine(g.optionPrompt)}
+		var body []app.UI
 		for i, label := range g.optionLabels {
 			// A verb the chosen creature cannot be used for (Narp bars its neighbors
 			// from reaping) is omitted, so an illegal use is never offered.
@@ -572,7 +593,6 @@ func (g *game) optionChooser() app.UI {
 	}
 	if g.flankOptions() {
 		return app.Div().Class("btn-col").Body(
-			g.promptLine(g.optionPrompt),
 			btn(engine.FlankLeftLabel, g.chooseOptionIdx(0),
 				cx("btn-primary", "btn-flank", "btn-flank--left",
 					ifCls(g.isButtonCursor(0), "btn-cursor"))),
@@ -583,7 +603,6 @@ func (g *game) optionChooser() app.UI {
 	}
 	if g.houseOptions() {
 		return app.Div().Class("btn-col").Body(
-			app.Div().Class("section-title").Text("Choose a house:"),
 			app.Div().Class("house-grid").Body(
 				app.Range(g.optionLabels).Slice(func(i int) app.UI {
 					h, _ := engine.ParseHouse(g.optionLabels[i])
@@ -598,18 +617,24 @@ func (g *game) optionChooser() app.UI {
 		)
 	}
 	return app.Div().Class("btn-col").Body(
-		g.promptLine(g.optionPrompt),
 		app.Range(g.optionLabels).Slice(func(i int) app.UI {
 			// A declining "No" or a hand-shedding "Mulligan" is the
 			// destructive-looking choice, so it reads red.
 			kind := "btn-primary"
-			if g.optionLabels[i] == "No" || g.optionLabels[i] == "Mulligan" {
+			if isDecliningOption(g.optionLabels[i]) {
 				kind = "btn-danger"
 			}
 			return btn(g.optionLabels[i], g.chooseOptionIdx(i),
 				cx(kind, ifCls(g.isButtonCursor(i), "btn-cursor")))
 		}),
 	)
+}
+
+// isDecliningOption reports whether a label is the "turn this down" answer: the
+// No of a yes/no question, or the Mulligan that sheds an opening hand. It is both
+// what the n key answers and what reads red.
+func isDecliningOption(label string) bool {
+	return label == "No" || label == "Mulligan"
 }
 
 // flankOptions reports whether the current option labels are exactly the two
@@ -629,6 +654,24 @@ func (g *game) houseOptions() bool {
 	}
 	for _, label := range g.optionLabels {
 		if _, ok := engine.ParseHouse(label); !ok {
+			return false
+		}
+	}
+	return true
+}
+
+// cardNameOptions reports whether every current option label names a card in the
+// database, so the prompt is answered through the card-name typeahead instead of
+// one button per option — a "name a card" prompt (Etan's Jar) offers the whole
+// database, which is thousands of buttons. Two labels are not a card-name prompt
+// even when both happen to be card names, so an ordinary Yes/No-shaped choice
+// between two cards keeps its buttons.
+func (g *game) cardNameOptions() bool {
+	if len(g.optionLabels) <= 2 {
+		return false
+	}
+	for _, label := range g.optionLabels {
+		if g.defByName[label] == nil {
 			return false
 		}
 	}

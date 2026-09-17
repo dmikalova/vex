@@ -23,6 +23,26 @@ func TestAddPowerCounter(t *testing.T) {
 	}
 }
 
+// TestAddPowerCounterChosenBindsContext covers Animator's first step: a chosen
+// target leaves the picked card in context (ctx.It) so a following effect can act
+// on the same card the controller just chose.
+func TestAddPowerCounterChosenBindsContext(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	art := g.AddArtifact(testArtifact("art"), 0)
+	g.SetChooser(0, FirstChooser{})
+	ctx := &EffectContext{Resolver: g, Source: art, Controller: 0}
+
+	AddPowerCounter{Target: Target{Kind: TargetChosenArtifact}, Amount: 3}.Resolve(ctx)
+
+	if !ctx.HasIt || ctx.It != art {
+		t.Fatalf("chosen counter target should be left in context: HasIt=%v It=%v",
+			ctx.HasIt, ctx.It)
+	}
+	if got := int(g.State.Cards[art].PowerCounters); got != 3 {
+		t.Fatalf("power counters = %d, want 3", got)
+	}
+}
+
 // TestAddPowerCounterEqual covers Mimic Gel: the counter count is set equal to a
 // live count (a chosen creature's power) rather than a fixed Amount.
 func TestAddPowerCounterEqual(t *testing.T) {

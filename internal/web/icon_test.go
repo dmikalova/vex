@@ -102,7 +102,7 @@ func TestEffectGlyphsTranscription(t *testing.T) {
 	gs, covered = effectGlyphs(engine.GainAember{
 		Player: engine.Controller,
 		Amount: 1,
-		Per:    engine.OpponentForgedKeys{},
+		Per:    engine.ForgedKeys{Player: engine.Opponent},
 	})
 	if !covered || len(gs) != 1 || gs[0].asset != "aember" || gs[0].qty != 0 {
 		t.Errorf(
@@ -220,7 +220,7 @@ func TestRestrictionLinesShowsToll(t *testing.T) {
 // the card-level AemberCannotBeStolen flag draws a strip (enemy Æmber struck by the
 // ban glyph) rather than none.
 func TestCardFeatureLinesShowsAemberCannotBeStolen(t *testing.T) {
-	lines := cardFeatureLines(&engine.CardDefinition{AemberCannotBeStolen: true})
+	lines := cardFeatureLines(&engine.CardDefinition{AemberCannotBeStolen: engine.AlwaysMet{}})
 	if len(lines) != 1 {
 		t.Fatalf("want one feature line, got %d", len(lines))
 	}

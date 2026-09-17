@@ -15,7 +15,7 @@ import (
 //	Power:  3
 //	Traits: Beast
 //
-//	You cannot use this card unless it has no non-Mars neighbor.
+//	You cannot use this card unless Xanthyx Harvester has no non-Mars neighbor.
 //	Reap: Gain 1 Æmber.
 func TestXanthyxHarvester(t *testing.T) {
 	t.Run("cannot be used while it has a non-Mars neighbor", func(t *testing.T) {

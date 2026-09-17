@@ -33,7 +33,7 @@ func durationClause(d Duration) string {
 // "for the remainder of the turn, ..." prefix, GainUntilNextTurn's "... until the
 // start of your next turn" suffix) can state the shared duration clause once and,
 // when the children act on the same subject, name that subject once too.
-// BelongToHouse, CannotBeDealtDamage, GainAssault, GainKeyword, GainTrait, and
+// BelongToHouse, CannotBeDealtDamage, GainAssault, GainKeywords, GainTrait, and
 // GainAssaultUntilNextTurn implement it.
 type durationScoped interface {
 	durationSubject() string
@@ -109,7 +109,7 @@ func foldDurationBodies(effects []Effect) (subject, joined string, shared bool) 
 // turn" clause once — "the chosen creature gains skirmish and the Mutant trait until
 // the start of your next turn" rather than repeating the duration for each grant
 // (the Mutation cycle grants a keyword and the Mutant trait together). Each child is
-// a next-turn grant (GainKeyword, GainTrait, GainAssaultUntilNextTurn) whose own
+// a next-turn grant (GainKeywords, GainTrait, GainAssaultUntilNextTurn) whose own
 // Text reads standalone; GainUntilNextTurn folds the shared subject and suffix and
 // resolves the children in order, exactly as a Sequence.
 type GainUntilNextTurn struct {

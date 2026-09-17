@@ -1,6 +1,9 @@
 package engine
 
-import "fmt"
+import (
+	"fmt"
+	"strings"
+)
 
 // This file holds the log entries that narrate combat and damage (ADR 0011):
 // the fight itself, what stopped it, and what each point of damage actually did
@@ -14,35 +17,62 @@ func (e FightCancelled) Text(n Namer) string {
 	return fmt.Sprintf("%s's fight does not occur", n.Name(e.Attacker))
 }
 
-// Fought narrates two creatures fighting, with the power each brought to it.
+// FightKeywords is the set of a combatant's keywords that change what a fight
+// does, annotated onto it in the fight line.
+type FightKeywords uint8
+
+const (
+	// FightSkirmish spares its attacker the fight's return damage.
+	FightSkirmish FightKeywords = 1 << iota
+	// FightElusive turns the fight's damage aside entirely.
+	FightElusive
+	// FightPoison destroys whatever this combatant's fight damage lands on.
+	FightPoison
+)
+
+// fightKeywordWords lists every annotatable keyword with the word it reads as, in
+// the order a fight line names them.
+var fightKeywordWords = []struct {
+	bit  FightKeywords
+	word string
+}{
+	{FightSkirmish, "skirmish"},
+	{FightElusive, "elusive"},
+	{FightPoison, "poison"},
+}
+
+// annotate renders a combatant as "<name> (<n> power, <keyword>, …)".
+func (k FightKeywords) annotate(name string, power int) string {
+	parts := []string{fmt.Sprintf("%d power", power)}
+	for _, kw := range fightKeywordWords {
+		if k&kw.bit != 0 {
+			parts = append(parts, kw.word)
+		}
+	}
+	return fmt.Sprintf("%s (%s)", name, strings.Join(parts, ", "))
+}
+
+// Fought narrates two creatures fighting: the power each brought to it, and the
+// keywords each brings that change what the fight does. The keywords annotate the
+// combatant that has them instead of getting lines of their own, because that
+// attributes each one correctly — skirmish is the attacker's, elusive the
+// defender's, poison either's — and every annotation is known when the line is
+// written. Poison's lethality is not, since it depends on damage surviving armor,
+// so it stays a separate outcome line (PoisonKills).
 type Fought struct {
-	Attacker      LocalID
-	AttackerPower int
-	Defender      LocalID
-	DefenderPower int
+	Attacker         LocalID
+	AttackerPower    int
+	AttackerKeywords FightKeywords
+	Defender         LocalID
+	DefenderPower    int
+	DefenderKeywords FightKeywords
 }
 
-// Text renders the fight, and the power each creature brought to it.
+// Text renders the fight, and what each creature brought to it.
 func (e Fought) Text(n Namer) string {
-	return fmt.Sprintf("%s (%d power) fights %s (%d power)",
-		n.Name(e.Attacker), e.AttackerPower, n.Name(e.Defender), e.DefenderPower)
-}
-
-// ElusiveAvoidedFight narrates elusive turning a fight's damage aside.
-type ElusiveAvoidedFight struct{ Defender LocalID }
-
-// Text renders elusive turning a fight's damage aside.
-func (e ElusiveAvoidedFight) Text(n Namer) string {
-	return fmt.Sprintf("%s is elusive — no fight damage is dealt", n.Name(e.Defender))
-}
-
-// SkirmishAvoidedReturn narrates skirmish sparing an attacker the return damage a
-// fight would otherwise deal it.
-type SkirmishAvoidedReturn struct{ Attacker LocalID }
-
-// Text renders skirmish sparing an attacker its return damage.
-func (e SkirmishAvoidedReturn) Text(n Namer) string {
-	return fmt.Sprintf("%s is skirmish — it takes no damage in return", n.Name(e.Attacker))
+	return fmt.Sprintf("%s fights %s",
+		e.AttackerKeywords.annotate(n.Name(e.Attacker), e.AttackerPower),
+		e.DefenderKeywords.annotate(n.Name(e.Defender), e.DefenderPower))
 }
 
 // PoisonKills narrates a poison creature's fight damage proving lethal: the
@@ -91,33 +121,32 @@ func (e DamageTaken) Text(n Namer) string {
 }
 
 // AssaultDealt narrates the pre-fight Assault an attacker deals the creature it
-// attacks: the source, the Assault value, the damage that landed, and the target.
+// attacks. It reports the damage that landed, not the keyword's value: where the
+// two differ, the ArmorAbsorbed line already narrates the difference.
 type AssaultDealt struct {
 	Source LocalID
-	Value  int
 	Amount int
 	Target LocalID
 }
 
-// Text renders the Assault damage, naming its source and keyword value.
+// Text renders the Assault damage, with "assaults" as its verb.
 func (e AssaultDealt) Text(n Namer) string {
-	return fmt.Sprintf("%s's %d Assault deals %d damage to %s",
-		n.Name(e.Source), e.Value, e.Amount, n.Name(e.Target))
+	return fmt.Sprintf("%s assaults %d damage to %s",
+		n.Name(e.Source), e.Amount, n.Name(e.Target))
 }
 
-// HazardousDealt narrates the pre-fight Hazardous a defender deals its attacker:
-// the source, the Hazardous value, the damage that landed, and the target.
+// HazardousDealt narrates the pre-fight Hazardous a defender deals its attacker.
+// Hazardous has no verb form, so the keyword is the sentence's subject instead.
 type HazardousDealt struct {
 	Source LocalID
-	Value  int
 	Amount int
 	Target LocalID
 }
 
-// Text renders the Hazardous damage, naming its source and keyword value.
+// Text renders the Hazardous damage, naming the keyword as its subject.
 func (e HazardousDealt) Text(n Namer) string {
-	return fmt.Sprintf("%s's %d Hazardous deals %d damage to %s",
-		n.Name(e.Source), e.Value, e.Amount, n.Name(e.Target))
+	return fmt.Sprintf("%s's hazardous deals %d damage to %s",
+		n.Name(e.Source), e.Amount, n.Name(e.Target))
 }
 
 // AbilityDamageDealt narrates damage a card's ability dealt another creature,
@@ -147,9 +176,9 @@ func (e AbilityDamageDealt) Text(n Namer) string {
 func (t DamageTarget) damageEntry(target LocalID, dealt, total int) LogEntry {
 	switch t.SourceKeyword {
 	case assaultDamage:
-		return AssaultDealt{Source: t.Source, Value: t.Amount, Amount: dealt, Target: target}
+		return AssaultDealt{Source: t.Source, Amount: dealt, Target: target}
 	case hazardousDamage:
-		return HazardousDealt{Source: t.Source, Value: t.Amount, Amount: dealt, Target: target}
+		return HazardousDealt{Source: t.Source, Amount: dealt, Target: target}
 	case abilityDamage:
 		if t.Source != target {
 			return AbilityDamageDealt{Amount: dealt, Target: target}

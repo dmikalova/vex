@@ -23,8 +23,11 @@ var Spartasaur = set.New(
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Soldier),
 	card.WithAbility(
-		card.Trigger.AfterFriendlyCreatureDestroyed, card.Destroy{
-			Target: card.Target.EachCreature.ExceptTrait(card.Traits.Dinosaur),
+		card.Trigger.AfterCreatureDestroyed, card.Conditional{
+			Cond: card.ItIsFriendly{},
+			Then: card.Destroy{
+				Target: card.Target.EachCreature.ExceptTrait(card.Traits.Dinosaur),
+			},
 		}),
 	card.WithAbility(
 		card.Trigger.Fight, card.GainAember{

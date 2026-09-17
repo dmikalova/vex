@@ -24,7 +24,7 @@ var Fetchdrones = set.New(
 				Amount: 2,
 			},
 			card.ForEachDiscarded{
-				House: card.House.Self,
+				House: card.Houses.Named(card.House.Self),
 				Do: card.CaptureAember{
 					Amount: 2,
 					Target: card.Target.FriendlyCreature,

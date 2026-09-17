@@ -80,7 +80,7 @@ func (e StealAember) resolveGate(ctx *EffectContext) bool {
 	amt := min(e.amount(ctx, opponent), ctx.Resolver.Aember(opponent))
 	// Po's Pixies: the victim keeps their Æmber and the difference is drawn from the
 	// common supply, so only the thief's pool grows.
-	fromSupply := ctx.Resolver.AemberTakenFromSupply(opponent)
+	supplySource, fromSupply := ctx.Resolver.AemberTakenFromSupply(opponent)
 	if !fromSupply {
 		ctx.Resolver.SetAember(opponent, ctx.Resolver.Aember(opponent)-amt)
 	}
@@ -88,12 +88,13 @@ func (e StealAember) resolveGate(ctx *EffectContext) bool {
 	// onto a creature the thief controls instead. The victim is still robbed, so the
 	// theft tally and the victim's reactions below fire either way; only where the
 	// Æmber lands changes.
-	if capturer, ok := ctx.Resolver.StolenAemberCaptor(player); ok {
+	if capturer, cause, ok := ctx.Resolver.StolenAemberCaptor(player); ok {
 		ctx.Resolver.AddAmberOn(capturer, amt)
-		ctx.Resolver.Record(AemberCaptured{
+		ctx.Resolver.Record(AemberCapturedInsteadOfSteal{
+			Cause:      cause,
 			Creature:   capturer,
+			Player:     player,
 			Amount:     amt,
-			Source:     capturer,
 			FromSupply: fromSupply,
 		})
 	} else {
@@ -103,6 +104,7 @@ func (e StealAember) resolveGate(ctx *EffectContext) bool {
 			From:       opponent,
 			Amount:     amt,
 			FromSupply: fromSupply,
+			Cause:      supplySource,
 		})
 	}
 	ctx.Resolver.NoteAemberStolenFrom(opponent, amt)

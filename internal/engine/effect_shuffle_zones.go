@@ -7,8 +7,8 @@ package engine
 // Untamed creatures from your hand, discard pile, or battleline back into your
 // deck."
 type ShuffleChosenCreaturesFromZones struct {
-	// House restricts the choice to creatures of this house; HouseNone allows any.
-	House House
+	// House restricts the choice to creatures it admits; an unset matcher allows any.
+	House HouseMatcher
 }
 
 // validate has no required fields.
@@ -17,10 +17,7 @@ func (e ShuffleChosenCreaturesFromZones) validate() error { return nil }
 // Text renders the effect, e.g. "shuffle any number of friendly Untamed creatures
 // from your hand, discard pile, or battleline into your deck".
 func (e ShuffleChosenCreaturesFromZones) Text() string {
-	noun := "friendly creatures"
-	if e.House != HouseNone {
-		noun = "friendly " + e.House.String() + " creatures"
-	}
+	noun := "friendly " + e.House.qualifyNoun("creatures")
 	return "shuffle any number of " + noun +
 		" from your hand, discard pile, or battleline into your deck"
 }
@@ -59,5 +56,5 @@ func (e ShuffleChosenCreaturesFromZones) eligible(ctx *EffectContext, id LocalID
 	if !ctx.Resolver.IsCreature(id) {
 		return false
 	}
-	return e.House == HouseNone || ctx.Resolver.House(id) == e.House
+	return e.House.matches(ctx, id)
 }

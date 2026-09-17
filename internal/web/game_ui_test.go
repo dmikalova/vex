@@ -351,6 +351,26 @@ func TestTapDuringOptionPromptInspects(t *testing.T) {
 	}
 }
 
+// The n key turns a prompt down. At the opening mulligan the declining answer is
+// labeled "Mulligan" rather than "No" — it sheds the hand — so n must answer that
+// too, not fall through as a no-op.
+func TestDenyKeyAnswersTheMulligan(t *testing.T) {
+	c := newBlankClient(t)
+	c.g.dealMatch(testSeed)
+	c.await("the first mulligan prompt", func() bool { return c.g.choosingOption })
+
+	player := c.g.active()
+	before := len(c.g.g.Hand(player))
+	c.press("n")
+	c.await("the mulligan to be taken up", func() bool {
+		return len(c.g.g.Hand(player)) != before
+	})
+
+	if got := len(c.g.g.Hand(player)); got != before-1 {
+		t.Errorf("hand after n = %d, want %d (a mulligan draws one fewer)", got, before-1)
+	}
+}
+
 func TestOverlayToggles(t *testing.T) {
 	c := newClient(t)
 	c.startTurn()

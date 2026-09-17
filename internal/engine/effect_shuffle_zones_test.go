@@ -10,7 +10,7 @@ func TestShuffleChosenCreaturesFromZonesText(t *testing.T) {
 			"discard pile, or battleline into your deck" {
 		t.Errorf("Text = %q", got)
 	}
-	if got := (ShuffleChosenCreaturesFromZones{House: Untamed}).Text(); got !=
+	if got := (ShuffleChosenCreaturesFromZones{House: namedHouse(Untamed)}).Text(); got !=
 		"shuffle any number of friendly Untamed creatures from your hand, "+
 			"discard pile, or battleline into your deck" {
 		t.Errorf("Text = %q", got)
@@ -38,7 +38,7 @@ func TestShuffleChosenCreaturesFromZonesResolve(t *testing.T) {
 	g.SetChooser(0, &declineAfterChooser{ids: []LocalID{inHand, inDiscard, onBoard}})
 
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-	ShuffleChosenCreaturesFromZones{House: Untamed}.Resolve(ctx)
+	ShuffleChosenCreaturesFromZones{House: namedHouse(Untamed)}.Resolve(ctx)
 
 	for _, id := range []LocalID{inHand, inDiscard, onBoard} {
 		if !g.State.Deck[0].contains(id) {

@@ -37,9 +37,6 @@ type cardView struct {
 	// Bonuses are the card's printed bonus icons, shown as a vertical strip down the
 	// card's left edge (KeyForge places them off the left of the art).
 	Bonuses []engine.BonusIcon
-	// Enhances are the bonus icons an Enhance card contributes to the deck, rendered
-	// as its "Enhance <icons>" line at the top of the text box.
-	Enhances []engine.BonusIcon
 	// Trait is the card's trait line (e.g. "Human • Knight"), shown in the body
 	// under the stat line and above the rules; "" when the card has no traits.
 	Trait string
@@ -351,10 +348,7 @@ func (c *cardView) Render() app.UI {
 					return app.Div().Class("card-traits").Text(c.Trait)
 				}),
 				app.If(c.Rules != "", func() app.UI {
-					return app.Div().Class("card-rules").Text(c.Rules)
-				}),
-				app.If(len(c.Enhances) > 0, func() app.UI {
-					return app.Div().Class("card-enhance").Body(enhanceLine(c.Enhances)...)
+					return app.Div().Class("card-rules").Body(richText(c.Rules)...)
 				}),
 			),
 		),
@@ -410,15 +404,32 @@ func leftStrip(c *cardView) []app.UI {
 	return out
 }
 
-// enhanceLine renders an Enhance source's "Enhance <icons>." line: the word
-// "Enhance" followed by one bonus-icon glyph per contributed icon.
-func enhanceLine(icons []engine.BonusIcon) []app.UI {
-	body := make([]app.UI, 0, len(icons)+2)
-	body = append(body, app.Span().Text("Enhance "))
-	for _, b := range icons {
-		body = append(body, icon(bonusIconStem(b), "card-enhance-icon", "icon-outline"))
+// iconMark brackets an asset stem inside a card's rules text, marking it for
+// richText to swap for a glyph. It is a private-use rune, so it cannot collide
+// with anything a card actually prints.
+const iconMark = '\uE000'
+
+// inlineIcon wraps an asset stem as an icon token for richText.
+func inlineIcon(stem string) string {
+	return string(iconMark) + stem + string(iconMark)
+}
+
+// richText renders card text whose icon tokens become inline glyphs, so any line
+// of a card's text box can carry an icon rather than only one bespoke line.
+func richText(s string) []app.UI {
+	parts := strings.Split(s, string(iconMark))
+	body := make([]app.UI, 0, len(parts))
+	for i, p := range parts {
+		if p == "" {
+			continue
+		}
+		// Split alternates text and stems, so every odd part is a token's payload.
+		if i%2 == 1 {
+			body = append(body, icon(p, "card-text-icon", "icon-outline"))
+			continue
+		}
+		body = append(body, app.Span().Text(p))
 	}
-	body = append(body, app.Span().Text("."))
 	return body
 }
 

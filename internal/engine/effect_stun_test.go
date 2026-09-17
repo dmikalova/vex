@@ -123,3 +123,40 @@ func TestReady(t *testing.T) {
 		t.Error("Ready should ready the creature")
 	}
 }
+
+// A "you may stun a creature" is one clickable creature, so May drives it by the
+// click rather than by a Yes/No, and an empty board is not worth asking about.
+func TestStunDeclinable(t *testing.T) {
+	chosen := Stun{Target: Target{Kind: TargetChosenCreature}}
+	if !chosen.declinable() {
+		t.Error("a chosen Stun should be declinable")
+	}
+	if (Stun{Target: Target{Kind: TargetEachCreature}}).declinable() {
+		t.Error("an untargeted Stun should not be declinable")
+	}
+
+	empty := NewGame("A", "B", 1)
+	if !chosen.vacuous(&EffectContext{Resolver: empty, Controller: 0}) {
+		t.Error("a Stun with no creature to stun should be vacuous")
+	}
+
+	taken := NewGame("A", "B", 1)
+	taken.SetChooser(0, &cardDecliner{})
+	foe := taken.AddToBattleline(testCreature("foe", 3), 1)
+	if !chosen.resolveOptional(&EffectContext{Resolver: taken, Controller: 0}) {
+		t.Error("clicking the creature should report the stun resolved")
+	}
+	if !taken.Stunned(foe) {
+		t.Error("the clicked creature should be stunned")
+	}
+
+	declined := NewGame("A", "B", 1)
+	declined.SetChooser(0, &cardDecliner{decline: true})
+	spared := declined.AddToBattleline(testCreature("spared", 3), 1)
+	if chosen.resolveOptional(&EffectContext{Resolver: declined, Controller: 0}) {
+		t.Error("declining should report nothing resolved")
+	}
+	if declined.Stunned(spared) {
+		t.Error("a declined Stun should stun nothing")
+	}
+}

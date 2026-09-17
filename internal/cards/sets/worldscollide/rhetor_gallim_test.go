@@ -45,7 +45,7 @@ func TestRhetorGallim(t *testing.T) {
 		gallim.Ready()
 
 		h.P1.Reap(gallim)
-		h.P1.ClickOption("Yes")
+		h.P1.ClickCard(gallim)
 		h.P1.EndTurn()
 		h.P2.ChooseHouse(card.House.Saurian)
 

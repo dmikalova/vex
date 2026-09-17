@@ -22,8 +22,11 @@ var AemberspineMongrel = set.New(
 	card.WithTraits(card.Traits.Beast),
 	card.WithHazardous(3),
 	card.WithAbility(
-		card.Trigger.AfterEnemyCreatureReaps, card.GainAember{
-			Player: card.Controller,
-			Amount: 1,
+		card.Trigger.AfterCreatureReaps, card.Conditional{
+			Cond: card.ItIsEnemy{},
+			Then: card.GainAember{
+				Player: card.Controller,
+				Amount: 1,
+			},
 		}),
 )

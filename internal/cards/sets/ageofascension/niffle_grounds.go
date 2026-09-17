@@ -25,6 +25,7 @@ var NiffleGrounds = set.New(
 			Then: card.LoseKeywords{
 				Target:   card.Target.Triggering,
 				Keywords: []card.KeywordValue{card.Keyword.Taunt, card.Keyword.Elusive},
+				Duration: card.Duration.RemainderOfPlayerTurn,
 			},
 		}),
 )

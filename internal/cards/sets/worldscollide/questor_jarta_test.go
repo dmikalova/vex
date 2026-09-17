@@ -30,7 +30,7 @@ func TestQuestorJarta(t *testing.T) {
 		jarta.Ready()
 
 		h.P1.Reap(jarta)
-		h.P1.ClickOption("Yes")
+		h.P1.ClickCard(jarta)
 
 		h.Expect(jarta).AmberOn(1)
 		// 1 Æmber from the reap plus 1 from the gate.
@@ -49,7 +49,7 @@ func TestQuestorJarta(t *testing.T) {
 		jarta.Ready()
 
 		h.P1.Reap(jarta)
-		h.P1.ClickOption("No")
+		h.P1.ClickDone()
 
 		h.Expect(jarta).AmberOn(0)
 		h.P1.ExpectAmber(1)

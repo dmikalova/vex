@@ -1241,6 +1241,13 @@ body {
 .action-head-spacer {
   min-height: var(--ctl-h);
 }
+/* a prompt in the left slot shares the row with Undo: it shrinks and wraps rather
+   than pushing the icons off the edge, and drops the single-row line-height so a
+   wrapped question does not stack two control-height lines */
+.action-head > .prompt {
+  min-width: 0;
+  line-height: 1.35;
+}
 .action-head-icons {
   display: flex;
   gap: 0.5rem;
@@ -2079,9 +2086,9 @@ button:disabled {
 .prompt-pick {
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: center;
   gap: 0.4rem;
-  text-align: left;
+  text-align: center;
 }
 .prompt-pick-name {
   color: var(--p0);
@@ -3334,6 +3341,7 @@ button:disabled {
    secondary to the rules text without shouting */
 .card-traits {
   padding: 0.125rem 0.5rem 0;
+  text-align: center;
   font-size: 9px;
   font-weight: 700;
   letter-spacing: 0.04em;
@@ -3378,16 +3386,9 @@ button:disabled {
   width: var(--edge-house);
   height: var(--edge-house);
 }
-/* an Enhance source's "Enhance <icons>." line at the top of the text box, with the
-   contributed bonus icons rendered inline in place of their words. */
-.card-enhance {
-  padding: 0.25rem 0.5rem 0;
-  font-size: 10px;
-  font-style: italic;
-  line-height: 1.375;
-  color: #e6e3dc;
-}
-.card-enhance-icon {
+/* an icon rendered inline in the card's rules text, in place of its name (an
+   Enhance line's contributed bonus icons today, any in-text icon later). */
+.card-text-icon {
   display: inline-block;
   width: 0.72rem;
   height: 0.72rem;

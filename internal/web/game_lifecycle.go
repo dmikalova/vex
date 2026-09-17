@@ -1093,13 +1093,14 @@ func (g *game) affirm(ctx app.Context) {
 	}
 }
 
-// deny is the "no" key (n): it answers a yes/no prompt in the negative and
-// passes on a prompt the player may decline. Anything else is Escape's job, so a
-// press with nothing to refuse is a no-op.
+// deny is the "no" key (n): it answers a yes/no prompt in the negative, sheds an
+// opening hand at the mulligan prompt, and passes on a prompt the player may
+// decline. Anything else is Escape's job, so a press with nothing to refuse is a
+// no-op.
 func (g *game) deny(ctx app.Context) {
 	if g.choosingOption {
 		for i, label := range g.optionLabels {
-			if label == "No" {
+			if isDecliningOption(label) {
 				g.chooseOptionIdx(i)(ctx, app.Event{})
 				return
 			}
@@ -1121,9 +1122,12 @@ func (g *game) dismiss(ctx app.Context) {
 		g.keysOpen = false
 	case g.menuOpen:
 		g.menuOpen = false
-	case g.pickerOpen:
+	// A picker answering a name-a-card prompt is not dismissible: the blocked effect
+	// is waiting on a name, so Escape would leave the action stuck with nothing on
+	// screen to answer it.
+	case g.pickerOpen && !g.pickerNaming:
 		g.pickerOpen = false
-	case g.zonesPlayer >= 0 && g.promptZone == "":
+	case g.zonesPlayer >= 0:
 		g.zonesPlayer = -1
 	case g.awaitingSetup:
 		g.awaitingSetup = false

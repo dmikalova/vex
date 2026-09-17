@@ -21,7 +21,7 @@ var RiggedLottery = set.New(
 		card.Trigger.Play, card.Sentences{Effects: []card.Effect{
 			card.DiscardTop{Player: card.EachPlayer, Amount: 5},
 			card.ForEachDiscarded{
-				House: card.House.Self,
+				House: card.Houses.Named(card.House.Self),
 				Do:    card.GainAember{Player: card.ItsOwner, Amount: 1},
 			},
 		}}),

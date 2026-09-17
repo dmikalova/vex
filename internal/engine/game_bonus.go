@@ -158,7 +158,12 @@ func (g *Game) resolveBonusIconEffect(player int, id LocalID, ic BonusIcon) {
 	switch ic {
 	case BonusAember:
 		if capturer, ok := g.gainAember(player, 1); ok {
-			g.record(BonusAemberCaptured{Creature: capturer, Card: id, Amount: 1})
+			g.record(BonusAemberCaptured{
+				Creature: capturer,
+				Card:     id,
+				Player:   player,
+				Amount:   1,
+			})
 			return
 		}
 		g.record(BonusAemberGained{Player: player, Card: id, Amount: 1})

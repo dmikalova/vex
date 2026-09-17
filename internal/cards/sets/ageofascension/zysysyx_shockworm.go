@@ -22,5 +22,8 @@ var ZysysyxShockworm = set.New(
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Martian, card.Traits.Soldier),
 	card.WithAbility(
-		card.Trigger.AfterEnemyCreatureReaps, card.Stun{Target: card.Target.Triggering}),
+		card.Trigger.AfterCreatureReaps, card.Conditional{
+			Cond: card.ItIsEnemy{},
+			Then: card.Stun{Target: card.Target.Triggering},
+		}),
 )

@@ -150,8 +150,19 @@ func (o Or) validate() error {
 	return nil
 }
 
-// negatable is a Condition that can render its own negation — the clause a Not
-// wrapper prints. Negated wording is not uniform across conditions (a flank reads
+// AlwaysMet is a Condition that is always met, rendering no clause of its own. It
+// is the non-nil sentinel a nil-means-absent condition field uses to say "on,
+// unconditionally" — WithAemberCannotBeStolen() sets it so the pool is protected
+// with no "while …" qualifier.
+type AlwaysMet struct{}
+
+// CondText renders nothing: an always-true condition adds no "while …" clause.
+func (AlwaysMet) CondText() string { return "" }
+
+// Met is always true.
+func (AlwaysMet) Met(*EffectContext) bool { return true }
+
+// negatable is a Condition that can render its own negation — the clause a Not// wrapper prints. Negated wording is not uniform across conditions (a flank reads
 // "is not on a flank", a threshold flips to "fewer than"), so each negatable
 // condition owns its negated text rather than a wrapper deriving it by string
 // surgery.

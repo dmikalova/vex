@@ -28,7 +28,7 @@ func TestGamblingDenGainOnMatch(t *testing.T) {
 	})
 
 	h.P1.EndTurn() // P2's turn begins; Gambling Den fires with P2 as the acting player.
-	h.P2.ClickOption("Yes")
+	h.P2.ClickCard(GamblingDen)
 	h.P2.ClickOption("Mars") // the revealed top card is Mars, so the name matches.
 
 	h.P2.ExpectAmber(2)
@@ -45,7 +45,7 @@ func TestGamblingDenLoseOnMiss(t *testing.T) {
 	})
 
 	h.P1.EndTurn()
-	h.P2.ClickOption("Yes")
+	h.P2.ClickCard(GamblingDen)
 	h.P2.ClickOption("Sanctum") // the top card is Mars, not Sanctum, so the name misses.
 
 	h.P2.ExpectAmber(1) // 3 - 2.
@@ -61,7 +61,7 @@ func TestGamblingDenDecline(t *testing.T) {
 	})
 
 	h.P1.EndTurn()
-	h.P2.ClickOption("No")
+	h.P2.ClickDone()
 
 	h.P2.ExpectAmber(2) // unchanged.
 }

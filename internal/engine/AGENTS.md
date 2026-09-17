@@ -304,7 +304,11 @@ capture from the common supply instead of the pool. Both ride the one
 resolved) by a scanner scoped to the watched pool: `aemberCaptorFor` on the
 destination, `AemberTakenFromSupply` on the source. A new redirect of where taken
 or added Æmber comes from or goes to is a `Replaces` on the matching event plus a
-member on the `Replacement` enum — never a bespoke `CardDefinition` bool.
+member on the `Replacement` enum — never a bespoke `CardDefinition` bool. Each
+scanner returns the **card it found**, not just a bool, because every replaced
+outcome is narrated in one voice that names the cause (`replacementLine` in
+`log_replacement.go`): `<cause> has <actor> <outcome>, instead of <displaced>`. A
+new replacement routes its log line through that seam rather than wording its own.
 
 ## Forward house choice is one delayed constraint table
 

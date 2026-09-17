@@ -55,19 +55,27 @@ type AemberStolen struct {
 	Amount int
 	// FromSupply marks a steal whose victim keeps their Æmber because a card they
 	// control redirected the theft's source to the common supply (Po's Pixies): the
-	// thief still gains the Æmber, so the line reads "from the common supply".
+	// thief still gains the Æmber, so the line reads as a replacement, with Cause
+	// naming the redirecting card.
 	FromSupply bool
+	Cause      LocalID
 }
 
 // Text renders the steal, and how much it actually took, subjected to the source
-// card when a card ability stole and the thief otherwise.
+// card when a card ability stole and the thief otherwise. A steal drawn from the
+// common supply is a replaced outcome, so it reads in the replacement voice.
 func (e AemberStolen) Text(n Namer) string {
-	from := n.PlayerName(e.From)
 	if e.FromSupply {
-		from = "the common supply"
+		return replacementLine(
+			n.Name(e.Cause),
+			n.PlayerName(e.Player),
+			"steal",
+			fmt.Sprintf("%d Æmber from the common supply", e.Amount),
+			fmt.Sprintf("from %s's pool", n.PlayerName(e.From)),
+		)
 	}
 	return fmt.Sprintf("%s steals %d Æmber from %s",
-		subject(n, e.Player), e.Amount, from)
+		subject(n, e.Player), e.Amount, n.PlayerName(e.From))
 }
 
 // AemberCaptured narrates Æmber moved onto a creature, where it stays out of
@@ -81,21 +89,31 @@ type AemberCaptured struct {
 	Source   LocalID
 	// FromSupply marks a capture whose source pool kept its Æmber because a card
 	// its owner controls redirected the capture to the common supply (Po's Pixies).
+	// Cause then names the redirecting card and From the pool that kept its Æmber,
+	// so the line reads in the replacement voice.
 	FromSupply bool
+	Cause      LocalID
+	From       int
 }
 
 // Text renders the Æmber a creature captured, crediting the source card when it
-// is not the capturing creature itself.
+// is not the capturing creature itself. A capture drawn from the common supply is
+// a replaced outcome, so it reads in the replacement voice.
 func (e AemberCaptured) Text(n Namer) string {
-	suffix := ""
-	if e.FromSupply {
-		suffix = " from the common supply"
-	}
+	onto := ""
 	if e.Source != e.Creature {
-		return fmt.Sprintf("%s captures %d Æmber onto %s%s",
-			n.Name(e.Source), e.Amount, n.Name(e.Creature), suffix)
+		onto = " onto " + n.Name(e.Creature)
 	}
-	return fmt.Sprintf("%s captures %d Æmber%s", n.Name(e.Creature), e.Amount, suffix)
+	if e.FromSupply {
+		return replacementLine(
+			n.Name(e.Cause),
+			n.Name(e.Source),
+			"capture",
+			fmt.Sprintf("%d Æmber%s from the common supply", e.Amount, onto),
+			fmt.Sprintf("from %s's pool", n.PlayerName(e.From)),
+		)
+	}
+	return fmt.Sprintf("%s captures %d Æmber%s", n.Name(e.Source), e.Amount, onto)
 }
 
 // AemberMovedToCommonSupply narrates Æmber removed from a creature and returned
@@ -111,7 +129,9 @@ func (e AemberMovedToCommonSupply) Text(n Namer) string {
 }
 
 // AemberCapturedInsteadOfGain narrates a gain that a capturing effect
-// intercepted, so the Æmber landed on a creature rather than in the pool.
+// intercepted, so the Æmber landed on a creature rather than in the pool. The
+// intercepting creature carries the replacement itself (Ether Spider), so it is
+// both the cause and the actor.
 type AemberCapturedInsteadOfGain struct {
 	Creature LocalID
 	Player   int
@@ -120,8 +140,44 @@ type AemberCapturedInsteadOfGain struct {
 
 // Text renders the gain a capturing effect intercepted.
 func (e AemberCapturedInsteadOfGain) Text(n Namer) string {
-	return fmt.Sprintf("%s captures %d Æmber instead of %s gaining it",
-		n.Name(e.Creature), e.Amount, n.PlayerName(e.Player))
+	return replacementLine(
+		n.Name(e.Creature),
+		"",
+		"capture",
+		fmt.Sprintf("%d Æmber", e.Amount),
+		fmt.Sprintf("%s gaining it", n.PlayerName(e.Player)),
+	)
+}
+
+// AemberCapturedInsteadOfSteal narrates a steal a capturing replacement
+// intercepted (Gargantodon), so the Æmber landed on a creature the thief controls
+// rather than in the thief's pool. The victim is robbed either way; only where
+// the Æmber lands changed.
+type AemberCapturedInsteadOfSteal struct {
+	// Cause is the card that redirected the steal, Creature the one holding the
+	// Æmber, Player the thief, and From the victim.
+	Cause    LocalID
+	Creature LocalID
+	Player   int
+	Amount   int
+	// FromSupply marks a steal whose victim also kept their Æmber, a second
+	// replacement (Po's Pixies) stacked under this one.
+	FromSupply bool
+}
+
+// Text renders the steal a capturing replacement intercepted.
+func (e AemberCapturedInsteadOfSteal) Text(n Namer) string {
+	rest := fmt.Sprintf("%d Æmber", e.Amount)
+	if e.FromSupply {
+		rest += " from the common supply"
+	}
+	return replacementLine(
+		n.Name(e.Cause),
+		n.Name(e.Creature),
+		"capture",
+		rest,
+		fmt.Sprintf("%s stealing it", n.PlayerName(e.Player)),
+	)
 }
 
 // AemberExalted narrates Æmber moved from a pool onto a creature as an exalt.

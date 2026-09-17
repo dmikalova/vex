@@ -32,7 +32,7 @@ func TestTacticalOfficerMoon(t *testing.T) {
 
 	h.P1.Play(TacticalOfficerMoon)
 	// Accept the optional rearrange, swap the two existing creatures, then stop.
-	h.P1.ClickOption("Yes")
+	h.P1.ClickCard(TacticalOfficerMoon)
 	h.P1.ClickCard(a)
 	h.P1.ClickCard(b)
 	h.P1.ClickDone()

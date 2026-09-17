@@ -55,7 +55,6 @@ func (g *game) cardFace(id engine.LocalID) *cardView {
 		Rules:         g.faceRules(id),
 		Icons:         cardGlyphs(def),
 		Bonuses:       def.Bonuses,
-		Enhances:      def.Enhances,
 		Kind:          kindLabel(def),
 		Trait:         traitLabel(def),
 		Rarity:        rarityMarkOf(def.Rarity),
@@ -155,7 +154,7 @@ func handStat(def *engine.CardDefinition) []app.UI {
 func (g *game) faceRules(id engine.LocalID) string {
 	def := g.g.Def(id)
 	var lines []string
-	if s := rulesWithoutEnhance(def, engine.RenderCardRules(def)); s != "" {
+	if s := faceText(def, engine.RenderCardRules(def)); s != "" {
 		lines = append(lines, displayRules(s))
 	}
 	for _, up := range g.g.Upgrades(id) {
@@ -177,17 +176,25 @@ func displayRules(rules string) string {
 	return strings.ReplaceAll(rules, " -> ", " → ")
 }
 
-// rulesWithoutEnhance drops the trailing "Enhance …" line from a card's rules
-// text: the web face renders that line as icons (the card-enhance line) rather
-// than words. It is a no-op for a card that is not an Enhance source.
-func rulesWithoutEnhance(def *engine.CardDefinition, rules string) string {
+// faceText is a card's rules text ready for the face: the engine's plain text
+// with its trailing "Enhance …" line re-encoded so the named bonus icons render
+// as inline glyphs (richText). It is a no-op for a card that is not an Enhance
+// source.
+func faceText(def *engine.CardDefinition, rules string) string {
 	if len(def.Enhances) == 0 {
 		return rules
 	}
-	if i := strings.LastIndexByte(rules, '\n'); i >= 0 {
-		return rules[:i]
+	stems := make([]string, len(def.Enhances))
+	for i, b := range def.Enhances {
+		stems[i] = inlineIcon(bonusIconStem(b))
 	}
-	return ""
+	// The glyphs abut: unlike the engine's spelled-out bonus names, an icon run
+	// reads as one strip, the way it is printed on the card.
+	enhance := "Enhance " + strings.Join(stems, "") + "."
+	if i := strings.LastIndexByte(rules, '\n'); i >= 0 {
+		return rules[:i+1] + enhance
+	}
+	return enhance
 }
 
 // playableFromHand reports whether the active player can play the given hand card

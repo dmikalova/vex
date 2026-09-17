@@ -20,7 +20,7 @@ var OdoacThePatrician = set.New(
 	card.Provenance(card.WC, "188"),
 	card.WithPower(5),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Politician),
-	card.WithAemberCannotBeStolenWhileItHasAember(),
+	card.WithAemberCannotBeStolen(card.ThisHasAember{}),
 	card.WithAbility(
 		card.Trigger.Play, card.CaptureAember{
 			Amount: 1,

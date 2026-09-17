@@ -35,7 +35,7 @@ func TestEeOnTheFringes(t *testing.T) {
 		})
 
 		h.P1.Discard(fodder)
-		h.P1.ClickOption("Yes")
+		h.P1.ClickCard(ee)
 		h.P1.ClickCard(victim)
 
 		h.Expect(victim).At(ct.Purge)

@@ -95,15 +95,15 @@ type (
 	// of your next turn (the Mutation cycle grants assault 3), so it lasts alongside
 	// a keyword and trait granted in the same breath. Folds under GainUntilNextTurn.
 	GainAssaultUntilNextTurn = engine.GainAssaultUntilNextTurn
-	// GainKeywordForTurn gives each targeted creature a keyword for the remainder
-	// of the turn (Creed of Nature grants skirmish), unlike GainKeyword's
-	// until-next-turn duration.
-	GainKeywordForTurn = engine.GainKeywordForTurn
 	// GainTextBox gives the creature its Target selects the printed text box of the
 	// creature its Source selects — that card's traits, keywords, and triggered
 	// abilities. RemainderOfTurn makes the gain last the turn; otherwise it lasts
 	// until the recipient leaves play (Mimic Gel copies a chosen creature).
 	GainTextBox = engine.GainTextBox
+	// CopyPrintedStats makes Target copy Source's printed stats until Target leaves
+	// play: its power becomes that card's printed power, and it gains that card's
+	// printed armor, keywords, and traits (Cyber-Clone copies a creature it purges).
+	CopyPrintedStats = engine.CopyPrintedStats
 	// LendTextBoxFromHand reveals a creature from your hand and gives a chosen
 	// creature in play that revealed card's text box for the remainder of the turn
 	// (Creed of Nurture).
@@ -164,6 +164,10 @@ type (
 	// condition (Spare), the creatures its Take refinement keeps — Quicksand takes
 	// each unspared player's most powerful creature.
 	EachPlayerUnless = engine.EachPlayerUnless
+	// ChosenFromEach gathers one chosen creature from each of several pools, so a
+	// card destroying from two different pools — Imp-losion's "a friendly creature
+	// and an enemy creature" — picks both before either is destroyed.
+	ChosenFromEach = engine.ChosenFromEach
 	// DestroyEachCreatureAtEndOfTurn schedules "destroy each creature" to resolve in
 	// the end-of-turn phase rather than now (Ragnarok).
 	DestroyEachCreatureAtEndOfTurn = engine.DestroyEachCreatureAtEndOfTurn
@@ -180,21 +184,20 @@ type (
 	PurgeSource = engine.PurgeSource
 	// LoseKeyword takes a keyword from each creature for the remainder of the turn.
 	LoseKeyword = engine.LoseKeyword
-	// LoseKeywords takes one or more keywords from each targeted creature for the
-	// remainder of the turn (Niffle Grounds strips taunt and elusive).
+	// LoseKeywords takes one or more keywords from each targeted creature for a
+	// duration — Niffle Grounds strips taunt and elusive for the remainder of the
+	// turn, Reckless Rizzo loses elusive until the start of your next turn so the
+	// loss survives the opponent's turn.
 	LoseKeywords = engine.LoseKeywords
-	// LoseKeywordsUntilNextTurn takes one or more keywords from each targeted
-	// creature until the start of your next turn, so the loss survives the
-	// opponent's turn (Reckless Rizzo loses elusive after stealing).
-	LoseKeywordsUntilNextTurn = engine.LoseKeywordsUntilNextTurn
-	// GainKeyword gives each targeted creature a keyword until the start of your
-	// next turn (Hideaway Hole grants your creatures elusive).
-	GainKeyword = engine.GainKeyword
+	// GainKeywords gives each targeted creature one or more keywords for a duration —
+	// Hideaway Hole grants elusive until the start of your next turn, Creed of Nature
+	// grants skirmish for the remainder of the turn.
+	GainKeywords = engine.GainKeywords
 	// GainTrait gives each targeted creature a trait until the start of your next
 	// turn (the Mutation cycle grants the Mutant trait). Folds under
 	// GainUntilNextTurn beside a keyword or Assault grant.
 	GainTrait = engine.GainTrait
-	// GainUntilNextTurn folds several next-turn grants (GainKeyword, GainTrait,
+	// GainUntilNextTurn folds several next-turn grants (GainKeywords, GainTrait,
 	// GainAssaultUntilNextTurn) into one clause sharing the "... until the start of
 	// your next turn" suffix (the Mutation cycle grants a keyword and the Mutant
 	// trait together).
@@ -244,8 +247,8 @@ type (
 type (
 	// Draw puts the top Amount cards of your deck into your hand.
 	Draw = engine.Draw
-	// AttachSelfTo moves the resolving upgrade onto the friendly creature with the
-	// given printed name (a Star Alliance "blaster" homing to its signature creature).
+	// AttachSelfTo moves the resolving upgrade onto its Target creature (a Star
+	// Alliance "blaster" homing to its signature creature via Target.Named).
 	AttachSelfTo = engine.AttachSelfTo
 	// PutFromPlay takes each targeted card out of play into a chosen Destination.
 	PutFromPlay = engine.PutFromPlay
@@ -329,6 +332,9 @@ type (
 	// PutDiscardedIntoHand puts the card in context from the discard pile into
 	// its owner's hand.
 	PutDiscardedIntoHand = engine.PutDiscardedIntoHand
+	// PutDiscardedIntoPlay puts the card in context from the discard pile into play
+	// under its owner's control (Purify).
+	PutDiscardedIntoPlay = engine.PutDiscardedIntoPlay
 	// DiscardTop discards the top cards of one or both decks (Player EachPlayer for
 	// both, unset for a granted ability's own deck), records each discarded card,
 	// and binds a lone discard as context for a single-card follow-up.
@@ -490,6 +496,10 @@ type (
 	TakeControl = engine.TakeControl
 	// PutIntoPlay puts each targeted card into play without playing it.
 	PutIntoPlay = engine.PutIntoPlay
+	// EachPlayerPutsHandCreaturesIntoPlay has both players reveal their hand and
+	// put every creature from it into play, in an order the active player chooses
+	// (Aemberlution).
+	EachPlayerPutsHandCreaturesIntoPlay = engine.EachPlayerPutsHandCreaturesIntoPlay
 	// Control names whose control a card enters under when put into play (see
 	// PutIntoPlay): card.Owner (the default) or card.Yours.
 	Control = engine.Control
@@ -570,6 +580,9 @@ type (
 	// CardsInDiscardAtLeast is met when the controller's discard pile holds at least
 	// Amount cards matching House and Type.
 	CardsInDiscardAtLeast = engine.CardsInDiscardAtLeast
+	// DiscardedThisWay is met when the current dig or discard recorded at least one
+	// card matching House and Type (Saurian Egg discarding any Saurian creature).
+	DiscardedThisWay = engine.DiscardedThisWay
 	// NamedCardInDiscard is met when a card of the given name is in your discard pile
 	// (the Monuments' stronger action when their namesake creature waits there).
 	NamedCardInDiscard = engine.NamedCardInDiscard
@@ -585,19 +598,20 @@ type (
 	// SourceIsFighting is met while the source creature is one of the two combatants
 	// of the fight resolving right now (Nizak, The Forgotten's "while fighting" gate).
 	SourceIsFighting = engine.SourceIsFighting
-	// FoughtCreatureIsMostPowerfulEnemy is met, in a Before Fight ability, when the
-	// creature the source is about to fight is the most powerful enemy creature
-	// (a tie qualifies). Baldric the Bold's gate.
-	FoughtCreatureIsMostPowerfulEnemy = engine.FoughtCreatureIsMostPowerfulEnemy
-	// SourceNeighborsAllOfHouse is met while every neighbor of the source card
-	// belongs to House (Xanthyx Harvester's use gate).
-	SourceNeighborsAllOfHouse = engine.SourceNeighborsAllOfHouse
-	// SourceHasNoNeighborOfHouse is met while no neighbor of the source card
-	// belongs to House (Crewman Jorg's steal gate).
-	SourceHasNoNeighborOfHouse = engine.SourceHasNoNeighborOfHouse
+	// ItIsAmong is met when the subject creature (it) is among the creatures a
+	// Target selects — the general "is it one of these" test, e.g. Baldric the
+	// Bold's "if the fought creature is the most powerful enemy creature".
+	ItIsAmong = engine.ItIsAmong
+	// SourceHasNoNeighbor is met while no battleline neighbor of the source card is
+	// admitted by its house matcher — Crewman Jorg's steal gate (Houses.Named) and
+	// Xanthyx Harvester's use gate (Houses.Except).
+	SourceHasNoNeighbor = engine.SourceHasNoNeighbor
 	// ArchivedCreaturesShareHouse is met when the creatures a preceding
 	// ArchiveFromPlay set aside all share one house (Code Monkey's payoff).
 	ArchivedCreaturesShareHouse = engine.ArchivedCreaturesShareHouse
+	// MovedAnyAember is met when a preceding MoveAember relocated at least one Æmber
+	// this resolution (Shadowsaurus takes control only when it moved Æmber).
+	MovedAnyAember = engine.MovedAnyAember
 	// ControlsCreaturesOfHouses is met while your creatures span at least Amount houses.
 	ControlsCreaturesOfHouses = engine.ControlsCreaturesOfHouses
 	// FirstCreaturePlayedThisTurn is met when the card in context is the first
@@ -611,6 +625,8 @@ type (
 	Overwhelmed = engine.Overwhelmed
 	// ItIsFriendly is met when the card in context is controlled by you.
 	ItIsFriendly = engine.ItIsFriendly
+	// ItIsEnemy is met when the card in context is controlled by your opponent.
+	ItIsEnemy = engine.ItIsEnemy
 	// TideIsLow is met when the tide is low for you.
 	TideIsLow = engine.TideIsLow
 	// TideIsHigh is met when the tide is high for you.
@@ -624,8 +640,16 @@ type (
 	ItIsOfTrait = engine.ItIsOfTrait
 	// ItHasAember is met when the creature in context has Æmber on it.
 	ItHasAember = engine.ItHasAember
+	// ThisHasAember is met when the source card itself has Æmber on it.
+	ThisHasAember = engine.ThisHasAember
+	// AlwaysMet is a condition that is always met, the non-nil "on, unconditionally"
+	// sentinel for a condition field (e.g. a StaticModifier's AemberCannotBeStolen).
+	AlwaysMet = engine.AlwaysMet
 	// ItHasBonusIcon is met when the card in context has at least one bonus icon.
 	ItHasBonusIcon = engine.ItHasBonusIcon
+	// ItAttachedToThisOrNeighbor is met when the upgrade in context is attached to
+	// the source card or one of its neighbors (Commander Dhrxgar).
+	ItAttachedToThisOrNeighbor = engine.ItAttachedToThisOrNeighbor
 	// Or is met when any of its Conditions is met, composing conditions (e.g. a
 	// Dinosaur creature or one with Æmber, for Guji Dinosaur Hunter).
 	Or = engine.Or
@@ -694,8 +718,8 @@ type (
 	CreaturesUsed = engine.CreaturesUsed
 	// CardsDiscarded is a Condition met when a player has discarded cards of a house this turn.
 	CardsDiscarded = engine.CardsDiscarded
-	// OpponentForgedKeys counts the keys the opponent has forged.
-	OpponentForgedKeys = engine.OpponentForgedKeys
+	// ForgedKeys counts the keys a player has forged.
+	ForgedKeys = engine.ForgedKeys
 	// CountersOnThis counts the generic counters of one kind on the source card.
 	CountersOnThis = engine.CountersOnThis
 	// PowerCountersOnThis counts the +1/-1 power counters on the source card (the
@@ -787,9 +811,9 @@ type (
 	AemberOnFriendlyCreatures = engine.AemberOnFriendlyCreatures
 	// NeighborsOfThis counts the battleline neighbors of the source creature (0-2).
 	NeighborsOfThis = engine.NeighborsOfThis
-	// NeighborsSharingHouse counts the neighbors of the context creature (ctx.It)
-	// that share its house (0-2).
-	NeighborsSharingHouse = engine.NeighborsSharingHouse
+	// NeighborsMatching counts the neighbors of the context creature (ctx.It)
+	// its house matcher admits (Thorium Plasmate: neighbors of that card's house).
+	NeighborsMatching = engine.NeighborsMatching
 	// CombinedPowerOfNeighborsWithout sums the power of the source's battleline
 	// neighbors that lack a trait — Picaroon's X excludes its Changeling neighbors.
 	CombinedPowerOfNeighborsWithout = engine.CombinedPowerOfNeighborsWithout
@@ -833,6 +857,12 @@ type (
 	Replace = engine.Replace
 	// NextPlayed makes the next creature of a house you play do something.
 	NextPlayed = engine.NextPlayed
+	// DamageOthersAfterUsingTrait, for the rest of your turn, deals damage to each
+	// creature lacking a trait after you use a creature carrying it (Legion's March).
+	DamageOthersAfterUsingTrait = engine.DamageOthersAfterUsingTrait
+	// ReturnNextActionToHand returns the next action card you resolve this turn to
+	// your hand instead of your discard pile (High Priest Torvus).
+	ReturnNextActionToHand = engine.ReturnNextActionToHand
 	// FuseTriggersForTurn makes each friendly creature's A and B effects each fire on
 	// the other for the rest of your turn (Livia the Elder fuses fight and reap).
 	FuseTriggersForTurn = engine.FuseTriggersForTurn
@@ -902,6 +932,9 @@ type (
 	ForgeKey = engine.ForgeKey
 	// UnforgeKey takes a forged key back off a player (Key Hammer).
 	UnforgeKey = engine.UnforgeKey
+	// ScheduleOnLeave arms an effect to resolve when the source card leaves play
+	// (Turnkey's forced forge).
+	ScheduleOnLeave = engine.ScheduleOnLeave
 	// RaiseKeyCost makes keys cost more throughout a player's next turn.
 	RaiseKeyCost = engine.RaiseKeyCost
 	// RaiseKeyCostPerHouseCreature makes keys cost more per creature of a house in
@@ -922,6 +955,7 @@ var Counter = counters{
 	Glory:      engine.CounterGlory,
 	Disruption: engine.CounterDisruption,
 	Scheme:     engine.CounterScheme,
+	Warrant:    engine.CounterWarrant,
 }
 
 type counters struct {
@@ -931,6 +965,7 @@ type counters struct {
 	Glory      engine.CounterKind
 	Disruption engine.CounterKind
 	Scheme     engine.CounterKind
+	Warrant    engine.CounterKind
 }
 
 // Tally names a per-resolution "... this way" tally for card.ProducedThisWay, e.g.

@@ -176,11 +176,14 @@ func forEachDiscardedThisWay(ctx *EffectContext, fn func(id LocalID)) {
 // Killing Machine destroys a creature or artifact of each discarded card's house
 // (Do targets Target.OfContextualHouse). A House filter narrows the iteration to
 // the discarded cards of one house — Fetchdrones acts "for each Logos card
-// discarded this way".
+// discarded this way". A Type filter narrows it to one card type — Saurian Egg
+// reanimates only the Saurian creatures it discarded, not any Saurian artifacts.
 type ForEachDiscarded struct {
-	// House, when set, restricts the iteration to discarded cards of that house.
-	House House
-	Do    Effect
+	// House, when it filters, restricts the iteration to discarded cards it admits.
+	House HouseMatcher
+	// Type, when set, restricts the iteration to discarded cards of that type.
+	Type CardType
+	Do   Effect
 }
 
 // validate surfaces a configuration error from Do.
@@ -188,18 +191,17 @@ func (e ForEachDiscarded) validate() error { return validateEffect(e.Do) }
 
 // Text renders the effect, leading with the iteration clause.
 func (e ForEachDiscarded) Text() string {
-	card := "card"
-	if e.House != HouseNone {
-		card = e.House.String() + " card"
-	}
-	return "for each " + card + " discarded this way, " + e.Do.Text()
+	return "for each " + e.House.qualify(typeNoun(e.Type)) + " discarded this way, " + e.Do.Text()
 }
 
-// Resolve runs Do for each discarded card (of the House filter when set), in
-// context as ctx.It.
+// Resolve runs Do for each discarded card (of the House and Type filters when
+// set), in context as ctx.It.
 func (e ForEachDiscarded) Resolve(ctx *EffectContext) {
 	forEachDiscardedThisWay(ctx, func(id LocalID) {
-		if e.House != HouseNone && ctx.Resolver.House(id) != e.House {
+		if !e.House.matches(ctx, id) {
+			return
+		}
+		if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
 			return
 		}
 		ctx.It, ctx.HasIt = id, true
@@ -694,8 +696,11 @@ func resolverInPlay(ctx *EffectContext, id LocalID) bool {
 	return false
 }
 
-// DiscardUntil digs through the top of your deck, discarding as it goes,
-// until it turns up a card the filters admit or the deck runs out. With MayStop the
+// DiscardUntil digs through the top of a named deck, discarding as it goes,
+// until it turns up a card the filters admit or the deck runs out. Player names
+// whose deck is dug: Controller ("your deck"), Opponent ("your opponent's deck"),
+// or ItsController ("its controller's deck", the contextual card's controller —
+// Purify digs the purged creature's controller). With MayStop the
 // controller may also stop the dig before a match, so the terminator reads "or
 // choose to stop". Every discarded card is recorded on the context
 // (ctx.Produced.Discarded) and the matching card is left in context (ctx.It), so a
@@ -704,13 +709,33 @@ func resolverInPlay(ctx *EffectContext, id LocalID) bool {
 // the run with ArchiveDiscardedThisWay and, when it discards a card of its house,
 // deals itself damage.
 type DiscardUntil struct {
+	// Player names whose deck is dug; every caller sets it explicitly.
+	Player Player
 	// Type filters what ends the dig; the zero value stops at any card.
 	Type CardType
-	// House filters what ends the dig; HouseNone stops at any house.
-	House House
+	// House filters what ends the dig; an unset matcher stops at any house.
+	House HouseMatcher
+	// Name filters what ends the dig to a card of this printed name; the empty
+	// string stops at any name (Angry Mob digs for another Angry Mob).
+	Name string
+	// ExceptTrait filters what ends the dig to a card lacking this trait; traitUnset
+	// imposes no exclusion (Purify digs for a non-Mutant creature).
+	ExceptTrait Trait
 	// MayStop lets the controller stop the dig before a match; the terminator then
 	// reads "or choose to stop" instead of "or run out of cards".
 	MayStop bool
+}
+
+// deckPhrase renders whose deck is dug, from the chosen perspective.
+func (e DiscardUntil) deckPhrase() string {
+	switch e.Player {
+	case Opponent:
+		return "your opponent's deck"
+	case ItsController:
+		return "its controller's deck"
+	default:
+		return "your deck"
+	}
 }
 
 // Text renders the dig and names both ways it can end, as the cards do.
@@ -719,12 +744,16 @@ func (e DiscardUntil) Text() string {
 	if e.MayStop {
 		end = "choose to stop"
 	}
-	return "discard cards from the top of your deck until you discard " +
+	return "discard cards from the top of " + e.deckPhrase() + " until you discard " +
 		indefinite(e.noun()) + " or " + end
 }
 
-// noun names the cards the filters admit, e.g. "card" or "Brobnar Creature".
+// noun names the cards the filters admit, e.g. "card", "Brobnar Creature", a
+// printed name ("Angry Mob"), or a trait exclusion ("non-Mutant creature").
 func (e DiscardUntil) noun() string {
+	if e.Name != "" {
+		return e.Name
+	}
 	noun := "card"
 	switch e.Type {
 	case Creature:
@@ -732,10 +761,10 @@ func (e DiscardUntil) noun() string {
 	case Artifact:
 		noun = "artifact"
 	}
-	if e.House != HouseNone {
-		noun = e.House.String() + " " + noun
+	if e.ExceptTrait != traitUnset {
+		noun = "non-" + e.ExceptTrait.String() + " " + noun
 	}
-	return noun
+	return e.House.qualifyNoun(noun)
 }
 
 // matches reports whether a discarded card is the one the dig was looking for.
@@ -743,7 +772,13 @@ func (e DiscardUntil) matches(ctx *EffectContext, id LocalID) bool {
 	if e.Type != TypeUnset && ctx.Resolver.TypeOf(id) != e.Type {
 		return false
 	}
-	return e.House == HouseNone || ctx.Resolver.House(id) == e.House
+	if e.Name != "" && ctx.Resolver.Name(id) != e.Name {
+		return false
+	}
+	if e.ExceptTrait != traitUnset && ctx.Resolver.HasTrait(id, e.ExceptTrait) {
+		return false
+	}
+	return e.House.matches(ctx, id)
 }
 
 // Resolve digs, recording the run and leaving the found card in context.
@@ -756,8 +791,9 @@ func (e DiscardUntil) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
 func (e DiscardUntil) resolveGate(ctx *EffectContext) bool {
 	ctx.It, ctx.HasIt = 0, false
 	resetDiscardedThisWay(ctx)
+	player := ctx.PlayerFor(e.Player)
 	for {
-		id, ok := ctx.Resolver.DiscardTopOfDeck(ctx.Controller)
+		id, ok := ctx.Resolver.DiscardTopOfDeck(player)
 		if !ok {
 			return false
 		}
@@ -767,7 +803,7 @@ func (e DiscardUntil) resolveGate(ctx *EffectContext) bool {
 			return true
 		}
 		if e.MayStop && ctx.ChooseOption(
-			"Discard another card from the top of your deck?",
+			"Discard another card from the top of "+e.deckPhrase()+"?",
 			[]string{"Discard another card", "Stop"},
 		) == 1 {
 			return false
@@ -807,6 +843,31 @@ func discardedNoun(t CardType) string {
 func (e PutDiscardedIntoHand) Resolve(ctx *EffectContext) {
 	if ctx.HasIt {
 		ctx.Resolver.PutFromDiscardIntoHand(ctx.It)
+	}
+}
+
+// PutDiscardedIntoPlay puts the card in context (the card a preceding dig stopped
+// on) into play under its owner's control. It is the tail of a DiscardUntil dig
+// that puts what it found onto the battleline rather than into hand — Purify digs
+// the purged creature's controller's deck for a non-Mutant creature and puts that
+// creature into play under its owner's control. Type names what the dig stopped on
+// so the tail reads "put the discarded creature into play …" rather than a bare
+// "it"; the zero value stays the generic "card".
+type PutDiscardedIntoPlay struct {
+	// Type names the discarded card the dig stopped on; the zero value is "card".
+	Type CardType
+}
+
+// Text renders the effect, naming the discarded card the dig stopped on.
+func (e PutDiscardedIntoPlay) Text() string {
+	return "put the discarded " + discardedNoun(e.Type) +
+		" into play under its owner's control"
+}
+
+// Resolve puts the contextual card into play under its owner's control.
+func (e PutDiscardedIntoPlay) Resolve(ctx *EffectContext) {
+	if ctx.HasIt {
+		ctx.Resolver.PutIntoPlay(ctx.It, ctx.Resolver.Owner(ctx.It))
 	}
 }
 

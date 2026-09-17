@@ -61,7 +61,7 @@ func TestGainAemberPerCount(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	g.State.Keys[1] = 2 // opponent has forged 2 keys
 	ctx := &EffectContext{Resolver: g, Controller: 0}
-	e := GainAember{Player: Controller, Amount: 1, Per: OpponentForgedKeys{}}
+	e := GainAember{Player: Controller, Amount: 1, Per: ForgedKeys{Player: Opponent}}
 	if e.Text() != "for each forged key your opponent has, gain 1 Æmber" {
 		t.Errorf("text = %q", e.Text())
 	}
@@ -449,5 +449,121 @@ func TestPlaceAemberOnThis(t *testing.T) {
 	}
 	if g.Aember(0) != 0 {
 		t.Errorf("pool = %d, want 0 (Æmber comes from the supply)", g.Aember(0))
+	}
+}
+
+func TestAemberProtection(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.State.Aember[1] = 3
+	g.AddToBattleline(
+		NewCard("keeper", Sanctum, Creature, Rare, WithPower(4), WithAemberCannotBeStolen()),
+		1,
+	)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	if (StealAember{Amount: 2}).resolveGate(ctx) {
+		t.Error("stealing from a protected pool should report no movement")
+	}
+	if g.State.Aember[1] != 3 || g.State.Aember[0] != 0 {
+		t.Errorf("Æmber = %d/%d, want 3/0 (nothing stolen)", g.State.Aember[0], g.State.Aember[1])
+	}
+
+	def := NewCard("keeper", Sanctum, Creature, Rare, WithPower(4), WithAemberCannotBeStolen())
+	if !strings.Contains(RenderCardRules(&def), "Your Æmber cannot be stolen.") {
+		t.Error("card rules should render the cannot-be-stolen line")
+	}
+}
+
+// TestAemberProtectionWhileItHasAember covers protection that holds only while the
+// protecting card itself carries Æmber (Odoac the Patrician).
+func TestAemberProtectionWhileItHasAember(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.State.Aember[1] = 3
+	odoac := g.AddToBattleline(
+		NewCard("odoac", Saurian, Creature, Common,
+			WithPower(5), WithAemberCannotBeStolen(ThisHasAember{})),
+		1,
+	)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	// With no Æmber on Odoac the pool is unprotected.
+	if !(StealAember{Amount: 1}).resolveGate(ctx) {
+		t.Error("without Æmber on the card the pool should be stealable")
+	}
+	g.State.Aember[1] = 3
+
+	// Once Æmber sits on Odoac the pool is protected.
+	cs := g.State.Cards[odoac]
+	cs.Amber = 1
+	g.State.Cards[odoac] = cs
+	if (StealAember{Amount: 1}).resolveGate(ctx) {
+		t.Error("with Æmber on the card the pool should be protected")
+	}
+
+	def := NewCard("odoac", Saurian, Creature, Common,
+		WithPower(5), WithAemberCannotBeStolen(ThisHasAember{}))
+	if !strings.Contains(RenderCardRules(&def),
+		"While odoac has Æmber on it, your Æmber cannot be stolen.") {
+		t.Error("card rules should render the conditional cannot-be-stolen line")
+	}
+}
+
+// TestAemberProtectionWhilePoolAtLeast covers protection that holds only while the
+// controller's pool is at least the threshold (Cephaloist).
+func TestAemberProtectionWhilePoolAtLeast(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(
+		NewCard(
+			"cephaloist",
+			Untamed,
+			Creature,
+			Common,
+			WithPower(
+				4,
+			),
+			WithAemberCannotBeStolen(PoolAember{Player: Controller, Is: AtLeast, Amount: 4}),
+		),
+		1,
+	)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	// Below the threshold the pool is unprotected.
+	g.State.Aember[1] = 3
+	if !(StealAember{Amount: 1}).resolveGate(ctx) {
+		t.Error("below the threshold the pool should be stealable")
+	}
+
+	// At the threshold the pool is protected.
+	g.State.Aember[1] = 4
+	if (StealAember{Amount: 1}).resolveGate(ctx) {
+		t.Error("at the threshold the pool should be protected")
+	}
+
+	def := NewCard(
+		"cephaloist",
+		Untamed,
+		Creature,
+		Common,
+		WithPower(
+			4,
+		),
+		WithAemberCannotBeStolen(PoolAember{Player: Controller, Is: AtLeast, Amount: 4}),
+	)
+	if !strings.Contains(RenderCardRules(&def),
+		"While you have 4 Æmber or more, your Æmber cannot be stolen.") {
+		t.Error("card rules should render the pool-threshold cannot-be-stolen line")
+	}
+}
+
+// TestAemberProtectionByUpgrade covers protection granted by an attached Upgrade
+// (Static.AemberCannotBeStolen) rather than the host's own field.
+func TestAemberProtectionByUpgrade(t *testing.T) {
+	g := started(t)
+	host := g.AddToBattleline(testCreature("host", 3), 0)
+	attachUpgrade(g, host,
+		NewCard("cloak", Sanctum, Upgrade, Common,
+			WithStatic(StaticModifier{AemberCannotBeStolen: AlwaysMet{}})))
+	if !g.aemberProtected(0) {
+		t.Error("an upgrade granting AemberCannotBeStolen should protect the pool")
 	}
 }

@@ -202,6 +202,10 @@ type Produced struct {
 	// an After Æmber Is Stolen From You ability, read by an AemberStolenThisEvent
 	// count (Molephin deals 1 damage to each enemy creature for each).
 	AemberStolen int
+	// AemberMoved is how much Æmber the most recent MoveAember relocated this
+	// resolution, read by a MovedAnyAember condition (Shadowsaurus takes control of
+	// an enemy creature only when it actually moved Æmber off it).
+	AemberMoved int
 }
 
 // TotalDestroyed is how many cards this resolution has destroyed, both sides

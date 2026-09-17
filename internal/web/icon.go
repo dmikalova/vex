@@ -223,7 +223,7 @@ func staticLines(m engine.StaticModifier) []glyphLine {
 			gs = append(gs, glyph{asset: a})
 		}
 	}
-	if m.AemberCannotBeStolen {
+	if m.AemberCannotBeStolen != nil {
 		gs = append(gs,
 			glyph{asset: "aember", decor: decorEnemy}, glyph{asset: "glyph-ban"})
 	}
@@ -311,7 +311,7 @@ func restrictionLines(r engine.Restrictions) []glyphLine {
 // retaliation; EntersReadyGrant makes friendly cards of a type enter unexhausted.
 func cardFeatureLines(def *engine.CardDefinition) []glyphLine {
 	gs := make([]glyph, 0, 4)
-	if def.AemberCannotBeStolen || def.AemberCannotBeStolenWhileItHasAember {
+	if def.AemberCannotBeStolen != nil {
 		gs = append(gs,
 			glyph{asset: "aember", decor: decorEnemy}, glyph{asset: "glyph-ban"})
 	}
@@ -416,14 +416,12 @@ func triggerIcon(t engine.Trigger) string {
 		engine.TriggerAfterTacticPlayedBeforeResolve,
 		engine.TriggerAfterUpgradeEnters:
 		return "glyph-play"
-	case engine.TriggerAfterReap, engine.TriggerAfterCreatureReaps,
-		engine.TriggerAfterEnemyCreatureReaps:
+	case engine.TriggerAfterReap, engine.TriggerAfterCreatureReaps:
 		return "glyph-reap"
 	case engine.TriggerAfterFight, engine.TriggerBeforeFight,
 		engine.TriggerAfterDestroyedFighting,
 		engine.TriggerAfterEnemyDestroyedFighting,
 		engine.TriggerAfterCreatureFights,
-		engine.TriggerAfterFriendlyCreatureFights,
 		engine.TriggerAfterAssaultDestroys,
 		engine.TriggerAfterNeighborFights:
 		return "glyph-fight"
@@ -433,9 +431,7 @@ func triggerIcon(t engine.Trigger) string {
 		return "glyph-action"
 	case engine.TriggerDestroyed,
 		engine.TriggerLeavesPlay,
-		engine.TriggerAfterCreatureDestroyed,
-		engine.TriggerAfterEnemyCreatureDestroyed,
-		engine.TriggerAfterFriendlyCreatureDestroyed:
+		engine.TriggerAfterCreatureDestroyed:
 		return "glyph-destroyed"
 	case engine.TriggerAfterForgeKey,
 		engine.TriggerAfterPlayerForgesKey,
@@ -664,11 +660,6 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 			{asset: "type-creature", decor: decorChosen},
 			arrowTo(glyph{asset: "type-creature", decor: decorChosen}),
 		}, true
-	case engine.GainKeywordForTurn:
-		if a := keywordIcon(v.Keyword); a != "" {
-			return []glyph{{asset: a}, arrowTo(targetGlyph(v.Target))}, true
-		}
-		return fallbackGlyphs(e), false
 	case engine.FuseTriggersForTurn:
 		return []glyph{{asset: "glyph-reap"}, {asset: "glyph-swap"}, {asset: "glyph-fight"}}, true
 	case engine.AddPowerCounter:
@@ -863,21 +854,16 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 			gs = append(gs, glyph{asset: a})
 		}
 		return append(gs, glyph{asset: "glyph-ban"}), true
-	case engine.LoseKeywordsUntilNextTurn:
+	case engine.GainKeywords:
 		gs := make([]glyph, 0, len(v.Keywords)+1)
 		for _, k := range v.Keywords {
 			a := keywordIcon(k)
 			if a == "" {
-				return []glyph{{asset: "glyph-unknown"}, {asset: "glyph-ban"}}, true
+				return []glyph{{asset: "glyph-unknown"}}, true
 			}
 			gs = append(gs, glyph{asset: a})
 		}
-		return append(gs, glyph{asset: "glyph-ban"}), true
-	case engine.GainKeyword:
-		if a := keywordIcon(v.Keyword); a != "" {
-			return []glyph{{asset: a}}, true
-		}
-		return []glyph{{asset: "glyph-unknown"}}, true
+		return append(gs, arrowTo(targetGlyph(v.Target))), true
 	case engine.NameHouse:
 		// The chosen house is barred; ChooseHouseThen supplies the choose glyph.
 		return []glyph{{asset: "glyph-ban"}}, true
@@ -1037,6 +1023,30 @@ func effectGlyphs(e engine.Effect) ([]glyph, bool) {
 		return []glyph{{asset: "zone-archives"}, arrowTo(glyph{asset: "zone-discard"})}, true
 	case engine.PutFromHand:
 		return []glyph{{asset: "zone-hand"}, arrowTo(glyph{asset: "glyph-play"})}, true
+	case engine.CopyPrintedStats:
+		return []glyph{
+			targetGlyph(v.Source),
+			arrowTo(glyph{asset: "type-creature", decor: decorThis}),
+		}, true
+	case engine.ScheduleOnLeave:
+		return append(
+			[]glyph{{asset: "type-creature", decor: decorThis}},
+			mustCompose(v.Do)...), true
+	case engine.EachPlayerPutsHandCreaturesIntoPlay:
+		return []glyph{
+			{asset: "zone-hand", decor: decorEach},
+			arrowTo(glyph{asset: "glyph-play"}),
+		}, true
+	case engine.ReturnNextActionToHand:
+		return []glyph{{asset: "type-action"}, arrowTo(glyph{asset: "zone-hand"})}, true
+	case engine.DamageOthersAfterUsingTrait:
+		return []glyph{
+			{asset: "glyph-action"},
+			{asset: "damage", qty: v.Amount},
+			arrowTo(glyph{asset: "type-creature", decor: decorEach}),
+		}, true
+	case engine.PutDiscardedIntoPlay:
+		return []glyph{{asset: "zone-discard"}, arrowTo(glyph{asset: "glyph-play"})}, true
 	default:
 		return fallbackGlyphs(e), false
 	}
@@ -1201,6 +1211,8 @@ func counterAsset(kind engine.CounterKind) string {
 		return "generic-counter-disruption"
 	case engine.CounterScheme:
 		return "generic-counter-scheme"
+	case engine.CounterWarrant:
+		return "generic-counter-warrant"
 	default:
 		return ""
 	}

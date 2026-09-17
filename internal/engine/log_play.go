@@ -134,25 +134,30 @@ func (e Reaped) Text(n Namer) string {
 	return fmt.Sprintf("%s reaps with %s (+1 Æmber)", n.PlayerName(e.Player), n.Name(e.Card))
 }
 
-// ReapedStealing narrates a reap that a replacement turned into a steal, with
-// what it actually took — zero when the opponent's pool was already empty.
+// ReapedStealing narrates a reap that a replacement turned into a steal (Dimension
+// Door), with what it actually took — zero when the opponent's pool was already
+// empty. Cause is the card whose replacement turned the gain into a steal.
 type ReapedStealing struct {
 	Player int
 	Card   LocalID
 	Amount int
+	Cause  LocalID
 }
 
 // Text renders the reap, and what the steal actually took.
 func (e ReapedStealing) Text(n Namer) string {
-	if e.Amount == 0 {
-		return fmt.Sprintf("%s reaps with %s (no Æmber to steal)",
-			n.PlayerName(e.Player), n.Name(e.Card))
-	}
-	return fmt.Sprintf("%s reaps with %s, stealing %d Æmber",
-		n.PlayerName(e.Player), n.Name(e.Card), e.Amount)
+	return replacementLine(
+		n.Name(e.Cause),
+		n.PlayerName(e.Player),
+		"steal",
+		fmt.Sprintf("%d Æmber reaping with %s", e.Amount, n.Name(e.Card)),
+		"gaining it",
+	)
 }
 
-// ReapedCaptured narrates a reap whose Æmber a capturing effect intercepted.
+// ReapedCaptured narrates a reap whose Æmber a capturing effect intercepted. The
+// intercepting creature carries the replacement itself (Ether Spider), so it is
+// both the cause and the actor.
 type ReapedCaptured struct {
 	Player   int
 	Card     LocalID
@@ -161,8 +166,13 @@ type ReapedCaptured struct {
 
 // Text renders the reap, and the creature that captured its Æmber.
 func (e ReapedCaptured) Text(n Namer) string {
-	return fmt.Sprintf("%s reaps with %s, but %s captures the Æmber",
-		n.PlayerName(e.Player), n.Name(e.Card), n.Name(e.Creature))
+	return replacementLine(
+		n.Name(e.Creature),
+		"",
+		"capture",
+		fmt.Sprintf("1 Æmber reaping with %s", n.Name(e.Card)),
+		fmt.Sprintf("%s gaining it", n.PlayerName(e.Player)),
+	)
 }
 
 // ActionAbilityUsed narrates a card being used for its "Action:" ability.

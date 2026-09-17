@@ -12,7 +12,11 @@ func TestGainAssaultText(t *testing.T) {
 	folded := ForDuration{
 		Duration: RemainderOfPlayerTurn,
 		Effects: []Effect{
-			GainKeywordForTurn{Target: Target{Kind: TargetTriggeringCreature}, Keyword: Skirmish},
+			GainKeywords{
+				Target:   Target{Kind: TargetTriggeringCreature},
+				Keywords: []Keyword{Skirmish},
+				Duration: RemainderOfPlayerTurn,
+			},
 			GainAssault{Target: Target{Kind: TargetTriggeringCreature}, Amount: PowerOfChosen{}},
 		},
 	}
@@ -120,9 +124,10 @@ func TestChooseCreatureGainsSkirmishAndAssault(t *testing.T) {
 		Then: ForDuration{
 			Duration: RemainderOfPlayerTurn,
 			Effects: []Effect{
-				GainKeywordForTurn{
-					Target:  Target{Kind: TargetTriggeringCreature},
-					Keyword: Skirmish,
+				GainKeywords{
+					Target:   Target{Kind: TargetTriggeringCreature},
+					Keywords: []Keyword{Skirmish},
+					Duration: RemainderOfPlayerTurn,
 				},
 				GainAssault{
 					Target: Target{Kind: TargetTriggeringCreature},

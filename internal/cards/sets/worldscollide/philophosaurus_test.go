@@ -32,9 +32,9 @@ func TestPhilophosaurus(t *testing.T) {
 	})
 
 	h.P1.Reap(Philophosaurus)
-	h.P1.ClickOption("Yes") // take the optional look
-	h.P1.ClickCard(top)     // archive one
-	h.P1.ClickCard(middle)  // put one into hand; the last is discarded
+	h.P1.ClickCard(Philophosaurus) // take the optional look
+	h.P1.ClickCard(top)            // archive one
+	h.P1.ClickCard(middle)         // put one into hand; the last is discarded
 
 	h.Expect(top).At(ct.Archives)
 	h.Expect(middle).At(ct.Hand)

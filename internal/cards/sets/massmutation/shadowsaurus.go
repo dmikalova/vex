@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Shadowsaurus
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Shadows
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Dinosaur • Thief
 //
-//	Action: Move each A from an enemy creature to your opponent's pool. If there was at least 1A on that creature, take control of it. While under your control, it belongs to house Shadows.
+//	Action: Move all Æmber from an enemy creature to your opponent's pool, and if you moved any Æmber this way, take control of it, and that creature belongs to house Shadows.
 var Shadowsaurus = set.New(
 	"Shadowsaurus",
 	card.House.Shadows,
@@ -26,5 +21,28 @@ var Shadowsaurus = set.New(
 	card.WithPower(5),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Thief),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Action, card.Sequence{Effects: []card.Effect{
+			card.MoveAember{
+				All:  true,
+				From: card.Target.EnemyCreature,
+				To:   card.Opponent,
+				Bind: true,
+			},
+			card.Conditional{
+				Cond: card.MovedAnyAember{},
+				Then: card.Sequence{Effects: []card.Effect{
+					card.TakeControl{
+						Target:   card.Target.Triggering,
+						Duration: card.Duration.Forever,
+					},
+					card.BelongToHouse{
+						Target:   card.Target.Triggering,
+						House:    card.House.Shadows,
+						Duration: card.Duration.UntilThisLeavesPlay,
+						Pronoun:  true,
+					},
+				}},
+			},
+		}}),
 )

@@ -229,16 +229,17 @@ func TestDealDamageAmountFrom(t *testing.T) {
 		)
 	}
 
-	// Without a context creature, OtherCreature offers every creature.
+	// With no creature in context, "another creature" is other than the card doing
+	// the choosing — never the card itself.
 	g3 := NewGame("A", "B", 1)
 	a := g3.AddToBattleline(testCreature("a", 3), 0)
-	g3.AddToBattleline(testCreature("b", 3), 1)
-	g3.SetChooser(0, &idQueueChooser{ids: []LocalID{a}})
+	b := g3.AddToBattleline(testCreature("b", 3), 1)
+	g3.SetChooser(0, &idQueueChooser{ids: []LocalID{b}})
 	if ids := (Target{Kind: TargetChosenOtherCreature}).Select(
-		&EffectContext{Resolver: g3, Controller: 0},
+		&EffectContext{Resolver: g3, Controller: 0, Source: a},
 	); len(ids) != 1 ||
-		ids[0] != a {
-		t.Errorf("no-context other-creature select = %v, want [%d]", ids, a)
+		ids[0] != b {
+		t.Errorf("no-context other-creature select = %v, want [%d]", ids, b)
 	}
 }
 

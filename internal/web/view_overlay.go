@@ -44,7 +44,8 @@ func (g *game) zonesOverlay() app.UI {
 				),
 				// A declinable prompt drawn over the viewer (Not Finished with You —
 				// shuffle any number, including zero) is finished here: Done submits the
-				// current selection with no further pick. A mandatory prompt has no Done.
+				// current selection with no further pick. Closing the viewer answers
+				// nothing, so Done is the only way to pass from inside it.
 				app.If(g.promptZone != "" && g.chooserDeclinable, func() app.UI {
 					return btn("Done", g.declineChooser, "btn-primary zones-done")
 				}),
@@ -151,13 +152,12 @@ func printedFace(def *engine.CardDefinition) *cardView {
 		Emblem:   houseIconName(def.House),
 		TypeIcon: typeIconName(def.Type),
 		Stat:     handStat(def),
-		Rules:    displayRules(rulesWithoutEnhance(def, engine.RenderCardRules(def))),
+		Rules:    displayRules(faceText(def, engine.RenderCardRules(def))),
 		Kind:     kindLabel(def),
 		Trait:    traitLabel(def),
 		Rarity:   rarityMarkOf(def.Rarity),
 		Icons:    cardGlyphs(def),
 		Bonuses:  def.Bonuses,
-		Enhances: def.Enhances,
 	}
 }
 
@@ -185,7 +185,7 @@ var shortcuts = []struct{ keys, what string }{
 	{"1 – 9", "Select the nth card of the selected card's row"},
 	{"Tab / Shift+Tab", "Step through usable cards and options"},
 	{"Enter / Space", "Confirm / Play the selected card"},
-	{"n", "Decline a prompt"},
+	{"n", "Decline a prompt (mulligan an opening hand)"},
 	{"Esc", "Back out one layer"},
 	{"p", "Play the selected card from hand"},
 	{"r", "Reap with the selected creature"},

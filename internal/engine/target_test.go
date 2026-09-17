@@ -870,7 +870,7 @@ func TestPowerLessThan(t *testing.T) {
 
 	// Threshold is the two friendly Mars creatures, so only power < 2 is kept:
 	// power == 2 and power 3 both survive.
-	limit := InPlay{Player: Controller, Type: Creature, House: Mars}
+	limit := InPlay{Player: Controller, Type: Creature, House: namedHouse(Mars)}
 	got := Target{Kind: TargetEachEnemyCreature}.Refine(PowerLessThan(limit)).Select(ctx)
 	if len(got) != 1 || got[0] != weak || containsID(got, equal) || containsID(got, strong) {
 		t.Errorf("PowerLessThan = %v, want [weak]", got)
@@ -893,7 +893,7 @@ func TestPowerLessThan(t *testing.T) {
 
 	// The SelfHouse sentinel in the count resolves to the card's own house, even
 	// though it lives in the refinement's unexported field.
-	selfLimit := InPlay{Player: Controller, Type: Creature, House: SelfHouse}
+	selfLimit := InPlay{Player: Controller, Type: Creature, House: namedHouse(SelfHouse)}
 	resolved := replacedIn(
 		(Target{Kind: TargetEachEnemyCreature}).Refine(PowerLessThan(selfLimit)),
 		SelfHouse,
@@ -1136,5 +1136,59 @@ func TestPortionPerSideRefinementRounding(t *testing.T) {
 	got := tgt.Select(&EffectContext{Resolver: g, Controller: 0})
 	if len(got) != 1 || got[0] != f0 {
 		t.Errorf("ceil(1/3) = %v, want [%d]", got, f0)
+	}
+}
+
+// TestTargetGrantingCard covers the granting-card target: it renders the {card}
+// placeholder so the granted-text renderer names the granting card, resolves to
+// the card that granted the ability (ctx.Grantor) when one is set, and selects
+// nothing when no grantor is set.
+func TestTargetGrantingCard(t *testing.T) {
+	if got := (Target{Kind: TargetGrantingCard}).Text(); got != CardName {
+		t.Errorf("Text() = %q, want %q", got, CardName)
+	}
+
+	g := NewGame("A", "B", 1)
+	artifact := g.AddArtifact(NewCard("Grantor", StarAlliance, Artifact, Rare), 0)
+
+	withGrantor := &EffectContext{Resolver: g, Grantor: artifact, HasGrantor: true}
+	got := Target{Kind: TargetGrantingCard}.selectBase(withGrantor)
+	if len(got) != 1 || got[0] != artifact {
+		t.Errorf("selectBase with a grantor = %v, want [%d]", got, artifact)
+	}
+
+	noGrantor := &EffectContext{Resolver: g}
+	if got := (Target{Kind: TargetGrantingCard}).selectBase(noGrantor); got != nil {
+		t.Errorf("selectBase without a grantor = %v, want nil", got)
+	}
+}
+
+// TestMostPowerfulIncludesEarlyReturns covers the tie-inclusive membership test's
+// two early returns: an id absent from the set is never included, and a set no
+// larger than n includes every member without any power comparison.
+func TestMostPowerfulIncludesEarlyReturns(t *testing.T) {
+	m := mostPowerfulN{n: 1}
+	ctx := &EffectContext{}
+	if m.includes(ctx, []LocalID{1, 2}, 3) {
+		t.Error("includes: an id absent from the set should be excluded")
+	}
+	if !m.includes(ctx, []LocalID{5}, 5) {
+		t.Error("includes: a single-member set should include its member")
+	}
+}
+
+// TestItIsAmongNonMembershipRefinement covers couldSelect's fallback path for a
+// refinement that is not a membershipRefiner (LeastPowerful): membership falls
+// back to the refinement's own concrete selection.
+func TestItIsAmongNonMembershipRefinement(t *testing.T) {
+	cond := ItIsAmong{
+		Target:  Target{Kind: TargetEachEnemyCreature}.Refine(LeastPowerful),
+		Subject: FoughtCreature,
+	}
+	g := started(t)
+	weak := g.AddToBattleline(testCreature("weak", 2), 1)
+	g.AddToBattleline(testCreature("strong", 6), 1)
+	if !cond.Met(&EffectContext{Resolver: g, Controller: 0, It: weak, HasIt: true}) {
+		t.Error("the least powerful enemy should be among the candidates")
 	}
 }

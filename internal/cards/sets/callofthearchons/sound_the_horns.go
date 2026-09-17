@@ -17,8 +17,9 @@ var SoundTheHorns = set.New("Sound the Horns",
 	card.WithAbility(
 		card.Trigger.Play, card.Then{
 			First: card.DiscardUntil{
-				Type:  card.Type.Creature,
-				House: card.House.Self,
+				Player: card.Controller,
+				Type:   card.Type.Creature,
+				House:  card.Houses.Named(card.House.Self),
 			},
 			Result: card.PutDiscardedIntoHand{Type: card.Type.Creature},
 		}),

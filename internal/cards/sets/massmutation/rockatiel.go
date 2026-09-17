@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Rockatiel
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
 //
 //	House:  Untamed
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  2
 //	Traits: Beast • Mutant
 //
-//	Elusive. Hazardous 1.
-//	Play/After Reap: Choose up to 2 creatures. Shuffle each chosen creature into its owner's deck.
+//	Elusive, Hazardous 1.
+//	Play/Reap: Shuffle up to 2 creatures into their owners' decks.
 var Rockatiel = set.New(
 	"Rockatiel",
 	card.House.Untamed,
@@ -25,5 +20,13 @@ var Rockatiel = set.New(
 	card.Provenance(card.MoMu, "429"),
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Beast, card.Traits.Mutant),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Elusive),
+	card.WithHazardous(1),
+	card.WithAbility(
+		card.Trigger.PlayReap, card.PutChosen{
+			Amount:      2,
+			UpTo:        true,
+			Target:      card.Target.EachCreature,
+			Destination: card.To.DeckShuffled,
+		}),
 )

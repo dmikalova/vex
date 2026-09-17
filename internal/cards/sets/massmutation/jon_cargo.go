@@ -1,28 +1,32 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// JONCargo
+// J.O.N. Cargo
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
-//	House:  Staralliance
+//	House:  Star Alliance
 //	Type:   Creature
 //	Rarity: Rare
 //	Power:  1
 //	Traits: Robot
 //
-//	Reap: Discard the top card of your deck and reveal your hand. Archive each card that shares a house with the discarded card.
+//	Reap: Discard the top card of your deck, reveal your hand, and archive each card of that card's house from your hand.
 var JONCargo = set.New(
 	"J.O.N. Cargo",
-	card.House.Staralliance,
+	card.House.StarAlliance,
 	card.Type.Creature,
 	card.Rarity.Rare,
 	card.Provenance(card.MM, "347"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Robot),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Reap, card.Sequence{Effects: []card.Effect{
+			card.DiscardTop{Player: card.Controller},
+			card.RevealHand{Player: card.Controller},
+			card.ArchiveCard{
+				Zone:      card.Hand,
+				Selection: card.Each{House: card.Houses.Contextual},
+			},
+		}},
+	),
 )

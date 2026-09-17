@@ -119,7 +119,7 @@ single unit. Work it like this:
    grep -nE 'deck \(|VIOLATION' tmp/sim/bug.txt   # deck lists + the violation
    ```
 
-3. **Suspect the mechanic, then find the card that carries it.** Read *both*
+3. **Suspect the mechanic, then find the card that carries it.** Read _both_
    decks, not only the cards in the log tail. Scan every card for the mechanic
    that could produce the bad state — a power reducer for a 0-power creature, a
    blanker for a creature that lost its ability, an attachment for a stat that

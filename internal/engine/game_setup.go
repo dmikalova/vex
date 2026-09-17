@@ -67,6 +67,7 @@ func (g *Game) StartGame(firstPlayer int) {
 	order := [2]int{firstPlayer, 1 - firstPlayer}
 	for _, player := range order {
 		g.Shuffle(player)
+		g.record(DeckShuffled{Player: player})
 	}
 	for _, player := range order {
 		base := HandSize
@@ -113,6 +114,7 @@ func (g *Game) offerMulligan(player int) {
 		return
 	}
 	g.shuffleZonesIntoDeck(player, []Zone{Hand})
+	g.record(DeckShuffled{Player: player})
 	g.drawTo(player, had-1)
 	g.record(Mulliganed{Player: player, Hand: int(g.State.Hand[player].Count)})
 }

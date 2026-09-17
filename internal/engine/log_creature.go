@@ -315,6 +315,17 @@ func (e TurnedIntoCreature) Text(n Namer) string {
 		"%s becomes a creature on the %s flank", n.Name(e.Card), side)
 }
 
+// RevertedToArtifact narrates a card that turned into a creature only for the turn
+// (Animator) returning to an artifact in its controller's row at end of turn.
+type RevertedToArtifact struct {
+	Card LocalID
+}
+
+// Text renders the card reverting to an artifact.
+func (e RevertedToArtifact) Text(n Namer) string {
+	return fmt.Sprintf("%s reverts to an artifact", n.Name(e.Card))
+}
+
 // ControlTaken narrates a card moving into another player's rows without
 // changing owner.
 type ControlTaken struct {

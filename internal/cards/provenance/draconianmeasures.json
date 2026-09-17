@@ -152,6 +152,7 @@
       "insect",
       "cyborg"
     ],
+    "power": 10,
     "text": "(Play only with the other half of The Golden Queen.)\nEach player refills their hand to 1 additional card during their \"draw cards\" step.\nAfter Fight/After Reap: Each player discards a random card from their hand. For each non-Ekwidon card discarded this way, gain 1 Aember."
   },
   {
@@ -508,6 +509,7 @@
       "specter",
       "robot"
     ],
+    "power": 8,
     "text": "(Play only with the other half of Gigantor.)\nAfter Fight/After Reap: Purge up to 3 cards from a discard pile. For each card purged this way, draw a card."
   },
   {
@@ -998,6 +1000,7 @@
       "beast",
       "experiment"
     ],
+    "power": 1,
     "text": "(Play only with the other half of Monster Zero.)\nDeploy.\nEach of Monster Zero's neighbors belongs to house Mars (instead of its other houses).\nPlay: Give Monster Zero a number of +1 power counters equal to the most powerful friendly creature's power."
   },
   {
@@ -1397,8 +1400,13 @@
     "number": "128",
     "name": "Kulsha",
     "house": "ouboros",
-    "type": "gigantic creature art",
-    "rarity": "Rare"
+    "type": "gigantic creature base",
+    "rarity": "Special",
+    "traits": [
+      "dragon"
+    ],
+    "power": 15,
+    "text": "(Play only with the other half of Kulsha.)\nYour opponent's keys cost +2 Aember for each forged key they have.\nAfter Fight/After Reap: Exhaust up to 3 creatures."
   },
   {
     "number": "129",
@@ -1745,6 +1753,8 @@
     "traits": [
       "robot"
     ],
+    "power": 7,
+    "armor": 2,
     "text": "(Play only with the other half of Boosted B4-RRY.)\nPlay/After Fight/After Reap: Choose one:\nTake control of an enemy artifact. While under your control, it belongs to house Shadows (instead of its original house).\nPlay a random card from your opponent's archives as if it were yours."
   },
   {
@@ -2310,8 +2320,15 @@
     "number": "213",
     "name": "Zomok",
     "house": "skyborn",
-    "type": "gigantic creature art",
-    "rarity": "Rare"
+    "type": "gigantic creature base",
+    "rarity": "Special",
+    "traits": [
+      "beast",
+      "cyborg"
+    ],
+    "power": 16,
+    "armor": 2,
+    "text": "(Play only with the other half of Zomok.)\nWhile Zomok is attacking, ignore taunt, elusive, poison, hazardous, and invulnerable.\nAfter Fight: Deal 2 Damage to a creature for each forged key."
   },
   {
     "number": "214",
@@ -2646,8 +2663,14 @@
     "number": "244",
     "name": "Hydrogan",
     "house": "unfathomable",
-    "type": "gigantic creature art",
-    "rarity": "Rare"
+    "type": "gigantic creature base",
+    "rarity": "Special",
+    "traits": [
+      "beast",
+      "leviathan"
+    ],
+    "power": 10,
+    "text": "(Play only with the other half of Hydrogan.)\nPlay: Put each other creature faceup under Hydrogan.\nAfter Fight/After Reap: Put a creature from under Hydrogan into play under your control.\nDestroyed: Purge each card under Hydrogan."
   },
   {
     "number": "245",

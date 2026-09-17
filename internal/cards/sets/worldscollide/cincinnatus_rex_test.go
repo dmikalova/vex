@@ -38,7 +38,7 @@ func TestCincinnatusRex(t *testing.T) {
 		ally.Exhaust()
 
 		h.P1.Fight(rex, foe)
-		h.P1.ClickOption("Yes")
+		h.P1.ClickCard(rex)
 
 		h.Expect(foe).At(ct.Discard)
 		h.Expect(rex).AmberOn(1)

@@ -38,8 +38,10 @@ blocked by something you cannot build (not merely "needs new work"), or the user
 interrupts. After each card lands, the default and automatic next action is to run
 `mage tool:nextCard` and start the next card — no pause, no check-in.
 
-Read `internal/cards/AGENTS.md` (authoring + tests), `docs/card-wording-rules.md`
-(rendered-text rules), and the root `AGENTS.md` (composability) before starting.
+Read `internal/cards/AGENTS.md` (authoring + tests), `docs/card-implementation.md`
+(the catalog of every engine capability a card can compose from),
+`docs/card-wording-rules.md` (rendered-text rules), and the root `AGENTS.md`
+(composability) before starting.
 
 ## 1. Fix the stop condition, then set up
 
@@ -87,15 +89,13 @@ Run `mage tool:nextCard`, build the card it names, then run it again. For each
 card:
 
 1. **Decide whether it is easy or gated.** A card is **easy** when its whole text
-   composes from the facade (`internal/card/effects.go`, `target.go`,
-   `options.go`): the effect nodes (`DealDamage`, `GainAember`, `Stun`, `Destroy`,
-   `PutFromPlay`, `PurgeCreature`, `CaptureAember`, `Draw`, `GainChains`,
-   `OnChooseCreature`, …), the targets (`card.Target.*` with chainable filters
-   `.PowerAtMost()`, `.OfHouse()`, `.WithTrait()`, `.Damaged()`, `.Neighboring()`,
-   `.UpTo()`, …), and the composites (`Sequence` of `Sentence`-wrapped effects,
-   `ChooseOne`, `Conditional`, `Then`). Grep the effect files or a similar
-   existing card to confirm a primitive's exact fields before using it. An easy
-   card is built directly (_Implementing one card_ below).
+   composes from capabilities that already exist. Check
+   [docs/card-implementation.md](../../../docs/card-implementation.md) first — it
+   catalogs every effect node, target and filter, refinement, condition, count,
+   trigger, and card-level option by name, so a mechanic you have not met is found
+   by reading rather than rebuilt. Then confirm a primitive's exact fields in the
+   facade (`internal/card/effects.go`, `target.go`, `options.go`) or in a similar
+   existing card. An easy card is built directly (_Implementing one card_ below).
 2. **A gated card needs a mechanic that does not exist yet** — usually a new
    field, `Strategy`, target filter, count, refinement, condition, or cross-turn
    hook, which you build directly (_Building a mechanic_ below). A gate that would

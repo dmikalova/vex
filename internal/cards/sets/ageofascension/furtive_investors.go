@@ -23,7 +23,7 @@ var FurtiveInvestors = set.New(
 			Then: card.GainAember{
 				Player: card.Controller,
 				Amount: 1,
-				Per:    card.OpponentForgedKeys{},
+				Per:    card.ForgedKeys{Player: card.Opponent},
 			},
 		}),
 )

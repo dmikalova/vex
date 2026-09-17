@@ -23,7 +23,7 @@ var CrewmanJorg = set.New(
 	card.WithTraits(card.Traits.Human, card.Traits.Thief),
 	card.WithAbility(
 		card.Trigger.Action, card.Conditional{
-			Cond: card.SourceHasNoNeighborOfHouse{House: card.House.Self},
+			Cond: card.SourceHasNoNeighbor{House: card.Houses.Named(card.House.Self)},
 			Then: card.StealAember{Amount: 1},
 		}),
 )

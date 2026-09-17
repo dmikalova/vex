@@ -1,20 +1,15 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
 // Animator
 //
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
-//
 //	House:  Logos
 //	Type:   Artifact
 //	Rarity: Rare
 //	Traits: Item
 //
-//	Action: Move an artifact to a flank of its controller's battleline. For the remainder of the turn, it is a creature with 3 power that belongs to the active house. (It leaves the battleline when it's no longer a creature.)
+//	Action: Give an artifact three +1 power counters. Move it to a flank of its controller's battleline as a creature with versatile for the remainder of the turn.
 var Animator = set.New(
 	"Animator",
 	card.House.Logos,
@@ -22,5 +17,13 @@ var Animator = set.New(
 	card.Rarity.Rare,
 	card.Provenance(card.MM, "100"),
 	card.WithTraits(card.Traits.Item),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
+			card.AddPowerCounter{Target: card.Target.Artifact, Amount: 3},
+			card.TurnIntoCreature{
+				Target:    card.Target.TheChosenCreature,
+				Duration:  card.Duration.RemainderOfPlayerTurn,
+				Versatile: true,
+			},
+		}}),
 )

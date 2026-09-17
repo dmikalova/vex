@@ -17,5 +17,5 @@ var Discombobulator = set.New(
 	card.Rarity.Uncommon,
 	card.Provenance(card.WC, "149"),
 	card.WithBonus(card.Bonus.Aember),
-	card.WithStatic(card.StaticModifier{AemberCannotBeStolen: true}),
+	card.WithStatic(card.StaticModifier{AemberCannotBeStolen: card.AlwaysMet{}}),
 )

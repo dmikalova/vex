@@ -199,15 +199,51 @@ up to 2 non-Star Alliance creatures this turn` (and the matching Fight permissio
   creature is given `Beast` — the trait that names what it is.
 - **Boosted B4-RRY** rewords both halves of its `Choose one` to reuse shared
   mechanics. Its take-control half reads `Take control of an enemy artifact. If it
-  does not belong to a house on your identity, it belongs to house Shadows until it
-  leaves play`, dropping KeyForge's `while under your control` scoping in favor of
+does not belong to a house on your identity, it belongs to house Shadows until it
+leaves play`, dropping KeyForge's `while under your control` scoping in favor of
   the same `TakeControl{Forever}` + off-identity `BelongToHouse` pattern Sneklifter
   uses — the control is permanent, so the house holds until the artifact leaves
   play rather than until control reverts (it never does). Its archives half reads
   `Play a random card from your opponent's archives`, dropping `as if it were
-  yours`; the card is played as your own but stays owned by, and returns to, the
+yours`; the card is played as your own but stays owned by, and returns to, the
   opponent — the shared `PlayFromOpponent` model Murkens uses. The archives are
   facedown, so the played card is always random (it cannot be chosen).
+
+- **Animator** reads `Action: Give an artifact three +1 power counters. Move it to
+a flank of its controller's battleline as a creature with versatile for the
+remainder of the turn.` KeyForge's `it belongs to the active house` clause is
+  re-expressed as **versatile** (the newer keyword that lets a creature be used as
+  if in the active house), so the animated artifact is still usable the turn it is
+  animated — a meaning-preserving reword, not a rule change. The three +1 power
+  counters are permanent (they persist when the card reverts to an artifact at end
+  of turn), so re-animating the same artifact on a later turn stacks another three
+  and it enters larger each time. Built on `AddPowerCounter` (which leaves the
+  chosen artifact in context) + a `RemainderOfPlayerTurn` `TurnIntoCreature` with
+  `Versatile`, whose end-of-turn revert the ready phase performs.
+- **Cyber-Clone** copies the purged creature's **printed** power, armor, keywords,
+  and traits, not its live stats at the moment of purge. KeyForge reads `it has
+power equal to the purged creature's power, and gains that creature's armor,
+keywords, and traits`; Vactrol reads `Cyber-Clone has power equal to the same
+creature's printed power and gains its printed armor, keywords, and traits`. The
+  purged creature is out of play, so its counters, buffs, and other live
+  modifications are gone; only the printed stats from the immutable card catalog
+  remain to copy. So a creature buffed to power 8 (printed 4) is copied as a 4, and
+  a stripped-armor creature is copied at its printed armor. Power is an override
+  (Cyber-Clone's printed 1 becomes the source's printed power); armor, keywords,
+  and traits are gained on top of Cyber-Clone's own (it stays a Mutant and keeps
+  any armor of its own). Built on the shared `CopyPrintedStats` effect, stored flat
+  as the source's id on Cyber-Clone until it leaves play.
+- **The Archivist** grants its selective archive pickup **while it is in play**,
+  not while it is in your archives. KeyForge reads `If you archive The Archivist,
+archive it faceup. While The Archivist is in your archives, instead of picking up
+all of your archives, you may choose to pick up any number of cards in your
+archives.` Vactrol drops the faceup-archive clause and the while-in-archives
+  scope, and reads `Instead of picking up all of your archives, you may pick up any
+number of cards in your archives.` — a constant ability active while The Archivist
+  is a creature in play. Vactrol has no facedown/faceup distinction for archived
+  cards and no while-in-archives trigger scope, so the rule is re-hung on the
+  card's presence in play. Built on the shared `ConstantAbility.SelectiveArchivePickup`
+  field, which the house-choice archive offer consults for the controller.
 
 ## Invented cards
 

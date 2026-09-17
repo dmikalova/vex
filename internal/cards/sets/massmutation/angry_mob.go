@@ -1,13 +1,10 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// AngryMob
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+const angryMobName = "Angry Mob"
+
+// Angry Mob
 //
 //	House:  Sanctum
 //	Type:   Creature
@@ -15,14 +12,18 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Human
 //
-//	Before Fight: You may discard cards from the top of your deck until you discard an Angry Mob or run out of cards. If you discard an Angry Mob this way, put it into your hand.
+//	Before Fight: You may discard cards from the top of your deck until you discard an Angry Mob or run out of cards -> put the discarded creature into your hand.
 var AngryMob = set.New(
-	"Angry Mob",
+	angryMobName,
 	card.House.Sanctum,
 	card.Type.Creature,
 	card.Rarity.Uncommon,
 	card.Provenance(card.MM, "143"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Human),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.BeforeFight, card.May{Do: card.Then{
+			First:  card.DiscardUntil{Player: card.Controller, Name: angryMobName},
+			Result: card.PutDiscardedIntoHand{Type: card.Type.Creature},
+		}}),
 )

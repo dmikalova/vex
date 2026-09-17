@@ -22,6 +22,6 @@ var BoNithing = set.New(
 	card.WithAbility(
 		card.Trigger.Play, card.StealAember{
 			Amount: 1,
-			Per:    card.OpponentForgedKeys{},
+			Per:    card.ForgedKeys{Player: card.Opponent},
 		}),
 )

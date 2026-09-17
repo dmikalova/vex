@@ -65,9 +65,10 @@ const (
 	// controller chooses, excluding the source card ("another friendly creature").
 	TargetChosenOtherFriendlyCreature
 	// TargetChosenOtherCreature selects a single creature the controller chooses
-	// from all in play, excluding the creature in context (ctx.It) — "another
-	// creature" than the one a preceding effect put in focus (Guardian Demon deals
-	// to another creature than the one it healed).
+	// from all in play, excluding the card in focus — "another creature" than the
+	// one a preceding effect put in context (Guardian Demon deals to another
+	// creature than the one it healed), or than the choosing card itself when no
+	// effect has put one there.
 	TargetChosenOtherCreature
 	// TargetChosenArtifact selects a single artifact the controller chooses from
 	// all artifacts in play (either player's).

@@ -27,5 +27,8 @@ var StormCrawler = set.New(
 		Fixed:  true,
 	}),
 	card.WithAbility(
-		card.Trigger.AfterEnemyCreatureReaps, card.Stun{Target: card.Target.Triggering}),
+		card.Trigger.AfterCreatureReaps, card.Conditional{
+			Cond: card.ItIsEnemy{},
+			Then: card.Stun{Target: card.Target.Triggering},
+		}),
 )

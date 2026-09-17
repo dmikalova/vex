@@ -631,7 +631,7 @@ func TestKeyCostChangePerAndFlank(t *testing.T) {
 		WithKeyCost(NewKeyCostChange(Opponent, 1).Per(InPlay{
 			Player:  Controller,
 			Type:    Creature,
-			House:   Brobnar,
+			House:   namedHouse(Brobnar),
 			Damaged: true,
 		})))
 	want := "Your opponent's keys cost +1 Æmber for each friendly damaged Brobnar creature."

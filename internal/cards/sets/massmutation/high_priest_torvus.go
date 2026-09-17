@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// HighPriestTorvus
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// High Priest Torvus
 //
 //	House:  Saurian
 //	Type:   Creature
@@ -16,7 +11,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Armor:  1
 //	Traits: Dinosaur • Priest
 //
-//	Reap: You may exalt High Priest Torvus. If you do, after you resolve your next action card this turn, return it to your hand instead of placing it in your discard pile.
+//	Reap: You may exalt High Priest Torvus -> after you resolve your next tactic this turn, put it into your hand instead of your discard pile.
 var HighPriestTorvus = set.New(
 	"High Priest Torvus",
 	card.House.Saurian,
@@ -26,5 +21,8 @@ var HighPriestTorvus = set.New(
 	card.WithPower(4),
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Dinosaur, card.Traits.Priest),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.Reap, card.May{Do: card.Then{
+		First:  card.Exalt{Target: card.Target.This, Amount: 1},
+		Result: card.ReturnNextActionToHand{},
+	}}),
 )

@@ -88,3 +88,14 @@ frontend.
   both implement the port. An event with no card ability of its own (an enemy
   creature destroyed) still gets a window: `afterDestroyedReactions` folds its
   `lastingReactions` into the same ordered list.
+- **A destruction _replacement_ is not a Destroyed-window entry.** A replacement
+  that stands in for a creature's destruction (Reassembling Automaton's own
+  static `Replace`, Armageddon Cloak's attached-Upgrade `Replace`) is not a
+  `Destroyed:` ability — it is a static `Replace` on the card definition that
+  `filterUndestroyed` applies _before_ the window is enrolled
+  (`game_leaves_play.go`). A replacement supersedes the destruction, so a replaced
+  creature never enters the orderable Destroyed window at all. Replacement and
+  `Destroyed:` abilities therefore never compete for ordering within one window,
+  and a creature carrying both a replacement and a granted `Destroyed:` ability
+  resolves the replacement first (superseding the event) rather than interleaving
+  the two — there is no ordering choice to make.

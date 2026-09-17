@@ -152,6 +152,10 @@ type Game struct {
 	// forced house (Control the Weak) that the player lacks is ignored: cannot
 	// overrides must.
 	houses [2][]House
+	// nameableNames is every card name a player may name (Etan's Jar), injected by
+	// the match because the engine cannot read the card database itself (ADR 0003).
+	// Empty falls back to the names present in this match.
+	nameableNames []string
 	// manual turns on manual mode: house restrictions on playing and using cards
 	// are lifted so a UI can rearrange the game freely. See game_manual.go.
 	manual bool

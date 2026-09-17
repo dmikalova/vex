@@ -125,6 +125,9 @@ func (g *Game) readyPhase(player int) {
 	if len(readied) > 0 {
 		g.record(CardsReadied{Player: player, Cards: readied})
 	}
+	// A card animated only for this turn (Animator) reverts to an artifact now, at
+	// end of turn, keeping its power counters.
+	g.revertTemporaryCreatures()
 	// "Cannot be dealt damage" lasts only the turn, so clear it on every creature,
 	// including any enemy one an effect protected (Protectrix). A keyword gained for
 	// the turn (Scout) expires the same way, on whichever creature holds it.

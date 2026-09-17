@@ -43,16 +43,15 @@ func TestUndoAndRedo(t *testing.T) {
 	}
 }
 
-// Undo is refused while an action is resolving or a prompt is up: the state it
-// would roll back to is not the one the player is looking at.
+// Undo is refused while an action is resolving with no prompt up: the state it
+// would roll back to is not the one the player is looking at. A prompt is the
+// exception — see TestUndoAtAPromptBacksTheActionOut.
 func TestUndoIsGuarded(t *testing.T) {
 	tests := []struct {
 		name string
 		arm  func(g *game)
 	}{
 		{"busy", func(g *game) { g.busy = true }},
-		{"choosing", func(g *game) { g.choosing = true }},
-		{"choosingOption", func(g *game) { g.choosingOption = true }},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -63,12 +62,44 @@ func TestUndoIsGuarded(t *testing.T) {
 			tt.arm(c.g)
 
 			if c.g.canUndo() || c.g.canRedo() {
-				t.Error("undo was offered while a prompt was up")
+				t.Error("undo was offered while an action was resolving")
 			}
 			c.do(c.g.undoAction)
 			c.do(c.g.redoAction)
 			if len(c.g.rootMarks) != depth {
 				t.Errorf("the undo history moved from %d to %d", depth, len(c.g.rootMarks))
+			}
+		})
+	}
+}
+
+// Undo is offered at a prompt and rewinds the whole action that raised it: the
+// prompt is part of that action, so there is no half-resolved state to stop at.
+// Redo stays withheld, since the prompt's answers were never recorded.
+func TestUndoAtAPromptBacksTheActionOut(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		arm  func(g *game)
+	}{
+		{"choosing", func(g *game) { g.busy, g.choosing = true, true }},
+		{"choosingOption", func(g *game) { g.busy, g.choosingOption = true, true }},
+		{"choosingPosition", func(g *game) { g.busy, g.choosingPosition = true, true }},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			c := newClient(t)
+			c.manualTurn(testHouse)
+			c.playFromHand(c.deal(testCreature))
+			tt.arm(c.g)
+
+			if !c.g.canUndo() {
+				t.Error("undo was withheld at a prompt")
+			}
+			if c.g.canRedo() {
+				t.Error("redo was offered at a prompt")
+			}
+			c.do(c.g.undoAction)
+			if !c.g.cancelling {
+				t.Error("undo at a prompt did not back the action out")
 			}
 		})
 	}

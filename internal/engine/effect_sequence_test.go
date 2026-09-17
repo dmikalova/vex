@@ -236,3 +236,39 @@ func TestSequenceResolveOptionalWithoutAChoice(t *testing.T) {
 		t.Error("an untargeted lead should resolve nothing optionally")
 	}
 }
+
+// Sentences carries the same leading-choice rule as Sequence: "you may destroy a
+// creature. Gain 1 Æmber" is answered by clicking the creature, and declining
+// passes on the later sentences too.
+func TestSentencesDeclinable(t *testing.T) {
+	led := Sentences{Effects: []Effect{
+		Destroy{Target: Target{Kind: TargetChosenEnemyCreature}},
+		GainAember{Player: Controller, Amount: 1},
+	}}
+	if !led.declinable() {
+		t.Error("sentences leading with a chosen Destroy should be declinable")
+	}
+	if (Sentences{}).declinable() {
+		t.Error("empty sentences should not be declinable")
+	}
+
+	accepted := NewGame("A", "B", 1)
+	accepted.SetChooser(0, &cardDecliner{})
+	foe := accepted.AddToBattleline(testCreature("Foe", 3), 1)
+	if !led.resolveOptional(&EffectContext{Resolver: accepted, Controller: 0}) {
+		t.Error("taking the leading choice should report the sentences resolved")
+	}
+	if onAnyLine(accepted, foe) || accepted.Aember(0) != 1 {
+		t.Error("both sentences should have resolved")
+	}
+
+	declined := NewGame("A", "B", 1)
+	declined.SetChooser(0, &cardDecliner{decline: true})
+	survivor := declined.AddToBattleline(testCreature("Foe", 3), 1)
+	if led.resolveOptional(&EffectContext{Resolver: declined, Controller: 0}) {
+		t.Error("declining the leading choice should report nothing resolved")
+	}
+	if !onAnyLine(declined, survivor) || declined.Aember(0) != 0 {
+		t.Error("a declined lead should pass on the later sentences too")
+	}
+}

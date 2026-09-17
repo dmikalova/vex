@@ -53,7 +53,7 @@ func TestLastingOnceExpiresAtEndOfTurn(t *testing.T) {
 			Do:         actReadyPlayed,
 			Controller: 0,
 			Amount:     0,
-			House:      Mars,
+			House:      namedHouse(Mars),
 			Type:       Creature,
 			Once:       true,
 		},
@@ -116,7 +116,7 @@ func TestLastingOnceReadiesMatchingHouseAndSelfRemoves(t *testing.T) {
 			Do:         actReadyPlayed,
 			Controller: 0,
 			Amount:     0,
-			House:      Mars,
+			House:      namedHouse(Mars),
 			Type:       Creature,
 			Once:       true,
 		},
@@ -157,7 +157,7 @@ func TestLastingOnceFiltersByCardType(t *testing.T) {
 			Do:         actReadyPlayed,
 			Controller: 0,
 			Amount:     0,
-			House:      HouseNone,
+			House:      anyHouse,
 			Type:       AnyType,
 			Once:       true,
 		},
@@ -193,7 +193,7 @@ func TestLastingOnceOrdersWithPersistentReaction(t *testing.T) {
 			Do:         actReadyPlayed,
 			Controller: 0,
 			Amount:     0,
-			House:      Mars,
+			House:      namedHouse(Mars),
 			Type:       Creature,
 			Once:       true,
 		},
@@ -326,5 +326,167 @@ func TestReapWindowFallsBackOnBadOrder(t *testing.T) {
 			recorded,
 			before+1,
 		)
+	}
+}
+
+// TestCaptureChosenReactionOnCardPlayed covers Commandeer: after you play another
+// card, a friendly creature the active player chooses captures 1 Æmber.
+func TestCaptureChosenReactionOnCardPlayed(t *testing.T) {
+	if actCaptureChosen.describe() != "a friendly creature captures Æmber" {
+		t.Errorf("describe = %q", actCaptureChosen.describe())
+	}
+
+	g := started(t)
+	g.State.Aember[1] = 3
+	src := g.AddToDiscard(NewCard("Commandeer", Sanctum, Tactic, Common), 0)
+
+	ForRemainderOfTurn{
+		On: EventCardPlayed,
+		Do: CaptureAember{
+			Amount: 1,
+			Target: Target{Kind: TargetChosenFriendlyCreature},
+			Source: Opponent,
+		},
+	}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: src})
+
+	capper := g.AddToBattleline(testCreature("capper", 3), 0)
+	played := g.AddToBattleline(testCreature("played", 2), 0)
+	g.SetChooser(0, idChooser{id: capper})
+
+	g.resolveLastingWindow(EventCardPlayed, 0, played)
+
+	if g.AmberOn(capper) != 1 {
+		t.Errorf("captured Æmber on chosen creature = %d, want 1", g.AmberOn(capper))
+	}
+	if g.AmberOn(played) != 0 {
+		t.Errorf("the played card should not capture; got %d", g.AmberOn(played))
+	}
+	if g.State.Aember[1] != 2 {
+		t.Errorf("opponent pool = %d, want 2 after a capture", g.State.Aember[1])
+	}
+}
+
+// TestCaptureChosenReactionFizzlesWithoutCreature checks the reaction does nothing
+// when the active player controls no creature to capture with.
+func TestCaptureChosenReactionFizzlesWithoutCreature(t *testing.T) {
+	g := started(t)
+	g.State.Aember[1] = 3
+	src := g.AddToDiscard(NewCard("Commandeer", Sanctum, Tactic, Common), 0)
+
+	ForRemainderOfTurn{
+		On: EventCardPlayed,
+		Do: CaptureAember{
+			Amount: 1,
+			Target: Target{Kind: TargetChosenFriendlyCreature},
+			Source: Opponent,
+		},
+	}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: src})
+
+	played := g.AddToDiscard(NewCard("Another", Sanctum, Tactic, Common), 0)
+	g.resolveLastingWindow(EventCardPlayed, 0, played)
+
+	if g.State.Aember[1] != 3 {
+		t.Errorf("opponent pool = %d, want 3 (no capture)", g.State.Aember[1])
+	}
+}
+
+func TestCaptureReactionOnFight(t *testing.T) {
+	if actCapture.describe() != "capture Æmber" {
+		t.Errorf("describe = %q", actCapture.describe())
+	}
+
+	g := started(t)
+	g.State.Aember[1] = 3
+
+	// Register the lasting the way Take Hostages authors it, to exercise the
+	// CaptureAember -> actCapture mapping and validation.
+	ForRemainderOfTurn{
+		On: EventFight,
+		Do: CaptureAember{
+			Amount: 1,
+			Target: Target{Kind: TargetTriggeringCreature},
+			Source: Opponent,
+		},
+	}.
+		Resolve(
+			&EffectContext{Resolver: g, Controller: 0},
+		)
+
+	att := g.AddToBattleline(NewCard("att", Brobnar, Creature, Common, WithPower(4)), 0)
+	def := g.AddToBattleline(testCreature("def", 2), 1)
+	if err := g.Fight(0, att, def); err != nil {
+		t.Fatalf("Fight: %v", err)
+	}
+	if g.AmberOn(att) != 1 {
+		t.Errorf("captured Æmber on fighter = %d, want 1", g.AmberOn(att))
+	}
+	if g.State.Aember[1] != 2 {
+		t.Errorf("opponent pool = %d, want 2 after a capture", g.State.Aember[1])
+	}
+}
+
+func TestEnemyCreatureDestroyedReaction(t *testing.T) {
+	if !EventEnemyCreatureDestroyed.isReaction() {
+		t.Error("EventEnemyCreatureDestroyed should be a reaction point")
+	}
+	if EventEnemyCreatureDestroyed.clause() != "each time an enemy creature is destroyed" {
+		t.Errorf("clause = %q", EventEnemyCreatureDestroyed.clause())
+	}
+
+	g := NewGame("A", "B", 1)
+	g.AddLasting(
+		LastingEffect{On: EventEnemyCreatureDestroyed, Do: actGainAember, Controller: 0, Amount: 1},
+	)
+	foe := g.AddToBattleline(testCreature("foe", 3), 1)
+	g.destroyEach(0, []LocalID{foe})
+	if g.State.Aember[0] != 1 {
+		t.Errorf(
+			"controller Æmber = %d, want 1 after an enemy creature was destroyed",
+			g.State.Aember[0],
+		)
+	}
+}
+
+func TestFightFiresLasting(t *testing.T) {
+	g := started(t)
+	g.AddLasting(LastingEffect{On: EventFight, Do: actGainAember, Controller: 0, Amount: 1})
+	att := g.AddToBattleline(NewCard("att", Brobnar, Creature, Common, WithPower(4)), 0)
+	def := g.AddToBattleline(testCreature("def", 2), 1)
+
+	if err := g.Fight(0, att, def); err != nil {
+		t.Fatalf("Fight: %v", err)
+	}
+	if g.State.Aember[0] != 1 {
+		t.Errorf(
+			"controller Æmber = %d, want 1 after a Warsong-style fight reaction",
+			g.State.Aember[0],
+		)
+	}
+}
+
+func TestFightFiresLastingLoseAember(t *testing.T) {
+	g := started(t)
+	g.AddLasting(LastingEffect{On: EventFight, Do: actLoseAember, Controller: 0, Amount: 1})
+	att := g.AddToBattleline(NewCard("att", Brobnar, Creature, Common, WithPower(4)), 0)
+	def := g.AddToBattleline(testCreature("def", 2), 1)
+	g.State.Aember[1] = 3
+
+	if err := g.Fight(0, att, def); err != nil {
+		t.Fatalf("Fight: %v", err)
+	}
+	if g.State.Aember[1] != 2 {
+		t.Errorf(
+			"opponent Æmber = %d, want 2 after a Barn Razing-style fight reaction",
+			g.State.Aember[1],
+		)
+	}
+}
+
+func TestEventFightIsReaction(t *testing.T) {
+	if !EventFight.isReaction() {
+		t.Error("EventFight should be a reaction point")
+	}
+	if EventFight.clause() != "each time a friendly creature fights" {
+		t.Errorf("clause = %q", EventFight.clause())
 	}
 }

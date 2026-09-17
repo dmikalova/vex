@@ -22,9 +22,12 @@ var SirMarrows = set.New(
 	card.WithArmor(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Knight),
 	card.WithAbility(
-		card.Trigger.AfterEnemyCreatureReaps, card.CaptureAember{
-			Amount: 1,
-			Target: card.Target.This,
-			Source: card.Opponent,
+		card.Trigger.AfterCreatureReaps, card.Conditional{
+			Cond: card.ItIsEnemy{},
+			Then: card.CaptureAember{
+				Amount: 1,
+				Target: card.Target.This,
+				Source: card.Opponent,
+			},
 		}),
 )

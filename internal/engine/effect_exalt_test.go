@@ -149,29 +149,10 @@ func TestRepeatByExaltingResolvesThenStopsWhenDeclined(t *testing.T) {
 	}
 }
 
-// exaltConfirmer accepts the Yes/No exalt-to-repeat confirm, so a back-reference
-// exalt repeats once.
-type exaltConfirmer struct {
-	FirstChooser
-}
-
-func (exaltConfirmer) ChooseOption(_, _ string, _ []string) int {
-	return 0 // Yes
-}
-
-// exaltDecliner declines the Yes/No exalt-to-repeat confirm.
-type exaltDecliner struct {
-	FirstChooser
-}
-
-func (exaltDecliner) ChooseOption(_, _ string, _ []string) int {
-	return 1 // No
-}
-
 func TestRepeatByExaltingConfirmsBackReference(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	that := g.AddToBattleline(testCreature("that", 3), 0)
-	g.SetChooser(0, &exaltConfirmer{})
+	g.SetChooser(0, &cardDecliner{})
 	ctx := &EffectContext{Resolver: g, Source: that, Controller: 0, It: that, HasIt: true}
 
 	e := Repeat{
@@ -184,11 +165,11 @@ func TestRepeatByExaltingConfirmsBackReference(t *testing.T) {
 	}
 	e.Resolve(ctx)
 
-	// Do runs once, then once more after the single confirmed exalt.
+	// Do runs once, then once more after the single clicked exalt.
 	if got := g.State.Aember[0]; got != 2 {
 		t.Errorf("pool = %d, want 2 (Do resolved twice)", got)
 	}
-	// The confirmed exalt placed 1 Æmber on the context creature.
+	// The clicked exalt placed 1 Æmber on the context creature.
 	if got := g.State.Cards[that].Amber; got != 1 {
 		t.Errorf("exalted amber = %d, want 1", got)
 	}
@@ -197,7 +178,7 @@ func TestRepeatByExaltingConfirmsBackReference(t *testing.T) {
 func TestRepeatByExaltingDeclinesBackReference(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	that := g.AddToBattleline(testCreature("that", 3), 0)
-	g.SetChooser(0, &exaltDecliner{})
+	g.SetChooser(0, &cardDecliner{decline: true})
 	ctx := &EffectContext{Resolver: g, Source: that, Controller: 0, It: that, HasIt: true}
 
 	e := Repeat{
@@ -206,7 +187,7 @@ func TestRepeatByExaltingDeclinesBackReference(t *testing.T) {
 	}
 	e.Resolve(ctx)
 
-	// Declining the confirm resolves Do only once and exalts nothing.
+	// Declining the click resolves Do only once and exalts nothing.
 	if got := g.State.Aember[0]; got != 1 {
 		t.Errorf("pool = %d, want 1 (Do resolved once)", got)
 	}
@@ -247,3 +228,42 @@ func TestRepeatByExaltingValidate(t *testing.T) {
 		t.Error("unset exalt target should be rejected")
 	}
 }
+
+// A back-reference that names several creatures has no single card to click, so
+// the offer falls back to the Yes/No it can still be answered with.
+func TestRepeatByExaltingMultiCardBackReferenceAsksYesNo(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	one := g.AddToBattleline(testCreature("one", 3), 0)
+	two := g.AddToBattleline(testCreature("two", 3), 0)
+	ctx := &EffectContext{Resolver: g, Source: one, Controller: 0}
+
+	Repeat{
+		Do:   GainAember{Player: Controller, Amount: 1},
+		Gate: ByExalting{Creature: Target{Kind: TargetEachFriendlyCreature}},
+	}.Resolve(ctx)
+
+	if got := g.State.Aember[0]; got != 2 {
+		t.Errorf("pool = %d, want 2 (Do resolved twice)", got)
+	}
+	if g.State.Cards[one].Amber != 1 || g.State.Cards[two].Amber != 1 {
+		t.Error("the accepted offer should exalt every named creature")
+	}
+
+	declined := NewGame("A", "B", 1)
+	src := declined.AddToBattleline(testCreature("one", 3), 0)
+	declined.AddToBattleline(testCreature("two", 3), 0)
+	declined.SetChooser(0, &optionDecliner{})
+	Repeat{
+		Do:   GainAember{Player: Controller, Amount: 1},
+		Gate: ByExalting{Creature: Target{Kind: TargetEachFriendlyCreature}},
+	}.Resolve(&EffectContext{Resolver: declined, Source: src, Controller: 0})
+
+	if got := declined.State.Aember[0]; got != 1 {
+		t.Errorf("pool = %d, want 1 (Do resolved once)", got)
+	}
+}
+
+// optionDecliner answers No to a Yes/No question.
+type optionDecliner struct{ FirstChooser }
+
+func (optionDecliner) ChooseOption(_, _ string, _ []string) int { return 1 }

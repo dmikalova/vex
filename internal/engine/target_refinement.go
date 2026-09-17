@@ -2,6 +2,7 @@ package engine
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
 )
@@ -20,6 +21,15 @@ import (
 type Refinement interface {
 	refine(ctx *EffectContext, ids []LocalID) []LocalID
 	clause(phrase string) string
+}
+
+// membershipRefiner is the optional capability of a Refinement that can report
+// whether a card is among its result without making the discretionary tie-break
+// its refine makes — so a condition (ItIsAmong) can ask "is it one of these"
+// without prompting. A tie at the cutoff counts every tied card as included.
+type membershipRefiner interface {
+	Refinement
+	includes(ctx *EffectContext, ids []LocalID, id LocalID) bool
 }
 
 // leadingRefinement is the optional capability of a Refinement whose choice reads
@@ -418,7 +428,24 @@ func (m mostPowerfulN) refine(ctx *EffectContext, ids []LocalID) []LocalID {
 	return chosen
 }
 
-// HouseWithAtLeast returns a Refinement that keeps only creatures whose house has
+// includes reports whether id ties for or exceeds the n-th highest power in the
+// set — the tie-inclusive membership a condition wants, without the tie-break
+// prompt refine makes. A set no larger than n includes every member.
+func (m mostPowerfulN) includes(ctx *EffectContext, ids []LocalID, id LocalID) bool {
+	if !slices.Contains(ids, id) {
+		return false
+	}
+	if len(ids) <= m.n {
+		return true
+	}
+	sorted := append([]LocalID(nil), ids...)
+	sort.SliceStable(sorted, func(i, j int) bool {
+		return ctx.Resolver.Power(sorted[i]) > ctx.Resolver.Power(sorted[j])
+	})
+	threshold := ctx.Resolver.Power(sorted[m.n-1])
+	return ctx.Resolver.Power(id) >= threshold
+}
+
 // at least n creatures in play, counting that house across both players'
 // battlelines — a house is a house regardless of who controls its creatures. No
 // Safety in Numbers deals its damage to each creature that belongs to a house

@@ -39,6 +39,35 @@ func (e CardsInDiscardAtLeast) Met(ctx *EffectContext) bool {
 	return len(matched) >= e.Amount
 }
 
+// DiscardedThisWay is met when the current dig or discard recorded at least one
+// card matching House and Type — Saurian Egg checks whether it discarded any
+// Saurian creature this way before it hatches and destroys itself. An unset House
+// or Type applies no filter on that axis.
+type DiscardedThisWay struct {
+	House HouseMatcher
+	Type  CardType
+}
+
+// CondText renders the condition, e.g. "if you discard a Saurian creature this
+// way".
+func (e DiscardedThisWay) CondText() string {
+	return "if you discard " + indefinite(e.House.qualify(typeNoun(e.Type))) + " this way"
+}
+
+// Met reports whether any card the current dig or discard recorded matches House
+// and Type.
+func (e DiscardedThisWay) Met(ctx *EffectContext) bool {
+	for _, id := range discardedThisWay(ctx) {
+		if !e.House.matches(ctx, id) {
+			continue
+		}
+		if e.Type == TypeUnset || ctx.Resolver.TypeOf(id) == e.Type {
+			return true
+		}
+	}
+	return false
+}
+
 // NamedCardInDiscard is met when a card of a given name sits in the controller's
 // discard pile — the Monuments strengthen their action when their namesake
 // creature (Faust the Great, Cornicen Octavia, Consul Primus, Citizen Shrix) waits

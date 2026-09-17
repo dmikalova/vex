@@ -139,6 +139,23 @@ func TestMoveAember(t *testing.T) {
 	if g4.AmberOn(only) != 1 {
 		t.Error("a move with no destination card should move nothing")
 	}
+
+	// "to another creature" is another than the one the Æmber leaves: the source
+	// goes into focus while the destination is chosen, so it cannot pick itself
+	// (Consul Primus). Without the focus the destination widens to every creature
+	// and the Æmber moves off a card and straight back onto it.
+	g5 := NewGame("A", "B", 1)
+	giver := g5.AddToBattleline(testCreature("giver", 3), 0)
+	taker := g5.AddToBattleline(testCreature("taker", 3), 0)
+	g5.AddAmberOn(giver, 1)
+	MoveAember{Amount: 1, From: friendly, Onto: Target{Kind: TargetChosenOtherCreature}}.
+		Resolve(&EffectContext{Resolver: g5, Controller: 0})
+	if g5.AmberOn(giver) != 0 || g5.AmberOn(taker) != 1 {
+		t.Errorf(
+			"after move onto another creature: giver=%d taker=%d, want 0/1",
+			g5.AmberOn(giver), g5.AmberOn(taker),
+		)
+	}
 }
 
 // TestMoveAemberBind checks that Bind selects through a Refinement on the full

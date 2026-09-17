@@ -1,6 +1,9 @@
 package engine
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestPurgedCardsCount(t *testing.T) {
 	g := NewGame("A", "B", 1)
@@ -40,7 +43,11 @@ func TestInPlay(t *testing.T) {
 		want int
 	}{
 		{"friendly creatures", InPlay{Player: Controller, Type: Creature}, 3},
-		{"friendly Mars creatures", InPlay{Player: Controller, Type: Creature, House: Mars}, 2},
+		{
+			"friendly Mars creatures",
+			InPlay{Player: Controller, Type: Creature, House: namedHouse(Mars)},
+			2,
+		},
 		{"friendly artifacts", InPlay{Player: Controller, Type: Artifact}, 2},
 		{"friendly cards, any type", InPlay{Player: Controller}, 5},
 		{"friendly Shards", InPlay{Player: Controller, Trait: Shard}, 1},
@@ -58,7 +65,10 @@ func TestInPlay(t *testing.T) {
 		want string
 	}{
 		{InPlay{Player: Controller, Type: Creature}, "friendly creature in play"},
-		{InPlay{Player: Controller, Type: Creature, House: Mars}, "friendly Mars creature"},
+		{
+			InPlay{Player: Controller, Type: Creature, House: namedHouse(Mars)},
+			"friendly Mars creature",
+		},
 		{InPlay{Player: Controller, Trait: Shard}, "friendly Shard"},
 		{InPlay{Player: Controller, Type: Creature, Trait: Thief}, "friendly Thief creature"},
 		{InPlay{Player: Controller, Type: Artifact, Trait: Shard}, "friendly Shard artifact"},
@@ -110,7 +120,7 @@ func TestCardinalCountText(t *testing.T) {
 		want string
 	}{
 		{
-			InPlay{Player: Controller, Type: Creature, House: Mars},
+			InPlay{Player: Controller, Type: Creature, House: namedHouse(Mars)},
 			"the number of friendly Mars creatures you control",
 		},
 		{
@@ -121,7 +131,7 @@ func TestCardinalCountText(t *testing.T) {
 			InPlay{Player: EachPlayer, Type: Creature},
 			"the number of creatures in play",
 		},
-		{OpponentForgedKeys{}, "the number of forged key your opponent has"},
+		{ForgedKeys{Player: Opponent}, "the number of forged key your opponent has"},
 	}
 	for _, tc := range cardinals {
 		if got := cardinalCountText(tc.in); got != tc.want {
@@ -172,7 +182,7 @@ func TestInPlayEachPlayer(t *testing.T) {
 
 	// EachPlayer counts both players' matching cards, with no friendly/enemy
 	// qualifier in the rendered noun.
-	byHouse := InPlay{Player: EachPlayer, Type: Creature, House: Brobnar}
+	byHouse := InPlay{Player: EachPlayer, Type: Creature, House: namedHouse(Brobnar)}
 	if got := byHouse.CountText(); got != "Brobnar creature in play" {
 		t.Errorf("count text = %q, want %q", got, "Brobnar creature in play")
 	}
@@ -192,7 +202,7 @@ func TestInPlayReady(t *testing.T) {
 	g.SetExhausted(spent, true)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	ready := InPlay{Player: Controller, Type: Creature, House: Mars, Ready: true}
+	ready := InPlay{Player: Controller, Type: Creature, House: namedHouse(Mars), Ready: true}
 	if got := ready.CountText(); got != "friendly ready Mars creature" {
 		t.Errorf("count text = %q, want %q", got, "friendly ready Mars creature")
 	}
@@ -446,13 +456,10 @@ func TestExcessCreaturesNotCountingSelf(t *testing.T) {
 	}
 }
 
-func TestNeighborsSharingHouse(t *testing.T) {
-	c := NeighborsSharingHouse{}
-	if got := c.CountText(); got != "neighbor that shares a house with it" {
+func TestNeighborsMatching(t *testing.T) {
+	c := NeighborsMatching{House: HouseMatcher{Kind: MatchContextualHouse}}
+	if got := c.CountText(); got != "neighbor of that card's house" {
 		t.Errorf("count text = %q", got)
-	}
-	if got := c.leadingCountText(); got != "neighbor that shares a house with the chosen creature" {
-		t.Errorf("leading count text = %q", got)
 	}
 
 	// With no creature in context the count is zero.
@@ -646,5 +653,353 @@ func TestPowerOfChosen(t *testing.T) {
 	want := "deal damage equal to its power to each neighbor of the creature {self} fights"
 	if got := e.Text(); got != want {
 		t.Errorf("Text = %q, want %q", got, want)
+	}
+}
+
+// TestCombinedPowerOfNeighborsWithout covers the count's live sum and its two
+// text renderings, and the blank-able "X" power it drives on a card.
+func TestCombinedPowerOfNeighborsWithout(t *testing.T) {
+	c := CombinedPowerOfNeighborsWithout{Without: Changeling}
+	if got := c.CountText(); got != "combined power of {self}'s non-Changeling neighbors" {
+		t.Errorf("CountText = %q", got)
+	}
+	if got := c.cardinalCountText(); got !=
+		"the combined power of {self}'s non-Changeling neighbors" {
+		t.Errorf("cardinalCountText = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	left := g.AddToBattleline(testCreature("left", 3), 0)
+	picaroon := g.AddToBattleline(
+		testCreature("Picaroon", 0, WithTraits(Mutant, Changeling), WithPowerX(c)), 0)
+	// A Changeling neighbor is excluded from the tally.
+	g.AddToBattleline(testCreature("changeling", 4, WithTraits(Changeling)), 0)
+	_ = left
+
+	// 3 (non-Changeling left) + 0 (excluded Changeling right) = 3.
+	if got := g.Power(picaroon); got != 3 {
+		t.Errorf("Picaroon power = %d, want 3", got)
+	}
+
+	// Blanking the card drops its X power to 0: the "X is …" line is part of its text.
+	BlankEnemyText{}.Resolve(&EffectContext{Resolver: g, Source: picaroon, Controller: 1})
+	if !g.textBlanked(picaroon) {
+		t.Fatal("precondition: Picaroon should be blanked")
+	}
+	if got := g.Power(picaroon); got != 0 {
+		t.Errorf("blanked Picaroon power = %d, want 0", got)
+	}
+
+	// The passive renders into the card's rules text.
+	def := NewCard("Picaroon", Dis, Creature, Uncommon, WithPower(0), WithPowerX(c))
+	if got := RenderCardRules(&def); !strings.Contains(got,
+		"X is the combined power of Picaroon's non-Changeling neighbors.") {
+		t.Errorf("rules = %q", got)
+	}
+}
+
+// TestCombinedPowerOfNeighborsTerminatesOnCycle guards the mutual-reference
+// hazard: two creatures whose X power reads each other (two Picaroons that both
+// lost Changeling to Grey Aberrant) would recurse forever without the guard. The
+// re-entrant creature contributes 0, so power stays finite and Power never
+// overflows the stack.
+func TestCombinedPowerOfNeighborsTerminatesOnCycle(t *testing.T) {
+	c := CombinedPowerOfNeighborsWithout{Without: Changeling}
+	g := NewGame("A", "B", 1)
+	// Grey Aberrant has stripped Changeling, so these two X-power creatures now each
+	// count the other. Line: anchor(3) — p1 — p2.
+	anchor := g.AddToBattleline(testCreature("anchor", 3), 0)
+	p1 := g.AddToBattleline(testCreature("p1", 0, WithPowerX(c)), 0)
+	p2 := g.AddToBattleline(testCreature("p2", 0, WithPowerX(c)), 0)
+	_ = anchor
+
+	// p2's only non-Changeling neighbor is p1, which is mid-computation when p2 is
+	// reached, so p1 contributes 0 there: p2 = 0. p1 = anchor(3) + p2(0) = 3.
+	if got := g.Power(p2); got != 3 {
+		t.Errorf("p2 power = %d, want 3", got)
+	}
+	if got := g.Power(p1); got != 3 {
+		t.Errorf("p1 power = %d, want 3", got)
+	}
+	// The guard stack is balanced back to empty after each top-level read.
+	if len(g.powerComputing) != 0 {
+		t.Errorf("powerComputing stack left at %d entries, want 0", len(g.powerComputing))
+	}
+}
+
+func TestArtifactsInPlayCount(t *testing.T) {
+	g := started(t)
+	g.AddArtifact(NewCard("a1", Brobnar, Artifact, Common), 0)
+	g.AddArtifact(NewCard("a2", Brobnar, Artifact, Common), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	if got := (ArtifactsInPlay{}).Value(ctx); got != 2 {
+		t.Errorf("ArtifactsInPlay = %d, want 2", got)
+	}
+	if got := (ArtifactsInPlay{}).CountText(); got != "artifact in play" {
+		t.Errorf("CountText = %q", got)
+	}
+}
+
+func TestPowerCountersOnThisCount(t *testing.T) {
+	g := started(t)
+	c := g.AddToBattleline(testCreature("c", 3), 0)
+	g.AddPowerCounter(c, 4)
+	ctx := &EffectContext{Resolver: g, Source: c, Controller: 0}
+
+	if got := (PowerCountersOnThis{}).Value(ctx); got != 4 {
+		t.Errorf("PowerCountersOnThis = %d, want 4", got)
+	}
+	want := "the number of +1 power counters on " + SelfName
+	if got := (PowerCountersOnThis{}).CountText(); got != want {
+		t.Errorf("CountText = %q, want %q", got, want)
+	}
+}
+
+// TestCannotBeDealtDamageOpponentNextTurn covers the cross-turn immunity (Lucky
+// Dice): dormant on the caster's turn, active during the opponent's next turn.
+func TestCannotBeDealtDamageOpponentNextTurn(t *testing.T) {
+	g := started(t)
+	c := g.AddToBattleline(testCreature("c", 5), 0)
+	e := CannotBeDealtDamage{
+		Target:   Target{Kind: TargetEachFriendlyCreature},
+		Duration: OpponentNextTurn,
+	}
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+
+	if g.DamageImmune(c) {
+		t.Error("OpponentNextTurn immunity should be dormant on the caster's turn")
+	}
+	g.EndPlayPhase(0)
+	g.StartTurn(1)
+	if !g.DamageImmune(c) {
+		t.Error("immunity should be active during the opponent's next turn")
+	}
+	want := "during your opponent's next turn, each friendly creature cannot be dealt damage"
+	if got := e.Text(); got != want {
+		t.Errorf("text = %q, want %q", got, want)
+	}
+}
+
+// TestTheirCreaturesThisWayCounts covers the two "... this way" counts that
+// read the per-player tallies, and the tally itself as Destroy and
+// PutFromPlay record it.
+func TestCreaturesRemovedThisWayCounts(t *testing.T) {
+	texts := []struct {
+		count Count
+		want  string
+	}{
+		{
+			ProducedThisWay{Tally: TallyCreaturesDestroyed, Player: Controller},
+			"creature they controlled that was destroyed this way",
+		},
+		{
+			ProducedThisWay{Tally: TallyCreaturesShuffledIntoDeck, Player: Controller},
+			"creature shuffled into their deck this way",
+		},
+		{
+			ProducedThisWay{Tally: TallyCreaturesDestroyed, Player: Opponent},
+			"creature your opponent controlled that was destroyed this way",
+		},
+		{
+			ProducedThisWay{Tally: TallyCreaturesShuffledIntoDeck, Player: Opponent},
+			"creature shuffled into your opponent's deck this way",
+		},
+	}
+	for _, tc := range texts {
+		if got := tc.count.CountText(); got != tc.want {
+			t.Errorf("CountText = %q, want %q", got, tc.want)
+		}
+	}
+
+	ctx := &EffectContext{Controller: 1}
+	ctx.Produced.Destroyed = [2]int{4, 7}
+	ctx.Produced.Moved = [2]int{5, 9}
+	if got := (ProducedThisWay{Tally: TallyCreaturesDestroyed, Player: Controller}).Value(
+		ctx,
+	); got != 7 {
+		t.Errorf("destroyed Value = %d, want 7", got)
+	}
+	if got := (ProducedThisWay{Tally: TallyCreaturesShuffledIntoDeck, Player: Controller}).Value(
+		ctx,
+	); got != 9 {
+		t.Errorf("shuffled Value = %d, want 9", got)
+	}
+	if got := ctx.Produced.TotalDestroyed(); got != 11 {
+		t.Errorf("TotalDestroyed = %d, want 11", got)
+	}
+}
+
+// TestPowerDestroyedThisWayCount covers the summed-power tally Destroy fills and
+// the PowerDestroyedThisWay count CountIs reads (Might Makes Right forges above
+// 25). CountText names the noun a "for each" clause would repeat; CountClause is
+// the clause CountIs puts after "if".
+func TestPowerDestroyedThisWayCount(t *testing.T) {
+	if got := (PowerDestroyedThisWay{}).CountText(); got != "power of creatures destroyed this way" {
+		t.Errorf("CountText = %q", got)
+	}
+	if got := (PowerDestroyedThisWay{}).CountClause(
+		"25 or more",
+		false,
+	); got != "the total power of creatures destroyed this way is 25 or more" {
+		t.Errorf("CountClause = %q", got)
+	}
+	ctx := &EffectContext{}
+	ctx.Produced.DestroyedPower = 31
+	if got := (PowerDestroyedThisWay{}).Value(ctx); got != 31 {
+		t.Errorf("Value = %d, want 31", got)
+	}
+}
+
+// TestAemberLostThisWayCount covers the Æmber-lost tally LoseAember fills and a
+// ProducedThisWay with TallyAemberLost reads (Shatter Storm).
+func TestAemberLostThisWayCount(t *testing.T) {
+	if got := (ProducedThisWay{Tally: TallyAemberLost, Player: Controller}).CountText(); got != "Æmber you lost this way" {
+		t.Errorf("CountText = %q", got)
+	}
+	want := "Æmber your opponent lost this way"
+	if got := (ProducedThisWay{Tally: TallyAemberLost, Player: Opponent}).CountText(); got != want {
+		t.Errorf("opponent CountText = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	g.SetAember(0, 3)
+	g.SetAember(1, 10)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	// Losing everything fills the tally, which the next loss triples.
+	LoseAember{Player: Controller, By: AllAember}.Resolve(ctx)
+	if got := (ProducedThisWay{Tally: TallyAemberLost, Player: Controller}).Value(ctx); got != 3 {
+		t.Errorf("tally = %d, want 3", got)
+	}
+	LoseAember{
+		Player: Opponent,
+		Amount: 3,
+		Per:    ProducedThisWay{Tally: TallyAemberLost, Player: Controller},
+	}.Resolve(ctx)
+	if got := g.Aember(1); got != 1 {
+		t.Errorf("opponent pool = %d, want 1", got)
+	}
+}
+
+// TestAllAemberLoss covers the Loss that empties a pool whatever its size.
+func TestAllAemberLoss(t *testing.T) {
+	e := LoseAember{Player: Controller, By: AllAember}
+	if got := e.Text(); got != "lose all your Æmber" {
+		t.Errorf("text = %q", got)
+	}
+	if got := (LoseAember{Player: Opponent, By: AllAember}).Text(); got != "your opponent loses all their Æmber" {
+		t.Errorf("opponent text = %q", got)
+	}
+	if got := AllAember.lose(7); got != 7 {
+		t.Errorf("lose(7) = %d, want 7", got)
+	}
+	if got := AllAember.qualifier(); got != "" {
+		t.Errorf("qualifier = %q, want empty (every pool is affected)", got)
+	}
+}
+
+// TestDestroyTalliesPerController checks Destroy splits its "this way"
+// tally by the controller of each creature that actually left play.
+func TestDestroyTalliesRemovalsPerController(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(NewCard("mine1", Dis, Creature, Common, WithPower(2)), 0)
+	g.AddToBattleline(NewCard("mine2", Dis, Creature, Common, WithPower(2)), 0)
+	g.AddToBattleline(NewCard("theirs", Dis, Creature, Common, WithPower(2)), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	Destroy{Target: Target{Kind: TargetEachCreature}.House(namedHouse(Dis))}.Resolve(ctx)
+
+	if ctx.Produced.Destroyed != [2]int{2, 1} {
+		t.Errorf("Destroyed = %v, want [2 1]", ctx.Produced.Destroyed)
+	}
+}
+
+// TestPutFromPlayTalliesPerController checks PutFromPlay records the
+// same per-controller tally when it shuffles creatures away.
+func TestPutFromPlayTalliesRemovalsPerController(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(NewCard("mine", Mars, Creature, Common, WithPower(2)), 0)
+	g.AddToBattleline(NewCard("theirs1", Mars, Creature, Common, WithPower(2)), 1)
+	g.AddToBattleline(NewCard("theirs2", Mars, Creature, Common, WithPower(2)), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	PutFromPlay{
+		Target:      Target{Kind: TargetEachCreature}.House(namedHouse(Mars)),
+		Destination: ToDeckShuffled,
+	}.Resolve(ctx)
+
+	if ctx.Produced.Moved != [2]int{1, 2} {
+		t.Errorf("Moved = %v, want [1 2]", ctx.Produced.Moved)
+	}
+}
+
+// TestPutFromPlaySkipsCardsAlreadyGone checks a card a "Leaves Play:" ability
+// destroyed mid-move is neither moved again nor counted in the tally.
+func TestPutFromPlaySkipsCardsAlreadyGone(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.AddToBattleline(NewCard("bomb", Mars, Creature, Common, WithPower(2),
+		WithAbility(TriggerLeavesPlay, Destroy{
+			Target: Target{Kind: TargetEachEnemyCreature},
+		})), 0)
+	g.AddToBattleline(NewCard("theirs1", Mars, Creature, Common, WithPower(2)), 1)
+	g.AddToBattleline(NewCard("theirs2", Mars, Creature, Common, WithPower(2)), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	PutFromPlay{
+		Target:      Target{Kind: TargetEachCreature}.House(namedHouse(Mars)),
+		Destination: ToDeckShuffled,
+	}.Resolve(ctx)
+
+	if ctx.Produced.Moved != [2]int{1, 0} {
+		t.Errorf("Moved = %v, want [1 0]: the destroyed creatures were not shuffled",
+			ctx.Produced.Moved)
+	}
+}
+
+// TestGainAemberEachPlayer checks an EachPlayer gain pays both players, and
+// scales each player's share by the count read from their own side.
+func TestGainAemberEachPlayer(t *testing.T) {
+	gain := GainAember{
+		Player: EachPlayer,
+		Amount: 1,
+		Per:    ProducedThisWay{Tally: TallyCreaturesDestroyed, Player: Controller},
+	}
+	if got, want := gain.Text(),
+		"for each creature they controlled that was destroyed this way, "+
+			"each player gains 1 Æmber"; got != want {
+		t.Errorf("Text = %q, want %q", got, want)
+	}
+
+	g := NewGame("A", "B", 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	ctx.Produced.Destroyed = [2]int{3, 2}
+	gain.Resolve(ctx)
+
+	if got := g.State.Aember[0]; got != 3 {
+		t.Errorf("controller Æmber = %d, want 3", got)
+	}
+	if got := g.State.Aember[1]; got != 2 {
+		t.Errorf("opponent Æmber = %d, want 2", got)
+	}
+}
+
+// TestController checks the port exposes which player a card in play answers to.
+func TestController(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	id := g.AddToBattleline(NewCard("theirs", Dis, Creature, Common, WithPower(2)), 1)
+	if got := g.Controller(id); got != 1 {
+		t.Errorf("Controller = %d, want 1", got)
+	}
+}
+
+// TestForgedKeysCountText covers both sides of the "for each forged key" noun: the
+// controller's own keys and the opponent's.
+func TestForgedKeysCountText(t *testing.T) {
+	if got := (ForgedKeys{Player: Controller}).CountText(); got != "forged key you have" {
+		t.Errorf("CountText = %q, want %q", got, "forged key you have")
+	}
+	if got := (ForgedKeys{Player: Opponent}).CountText(); got != "forged key your opponent has" {
+		t.Errorf("CountText = %q, want %q", got, "forged key your opponent has")
 	}
 }

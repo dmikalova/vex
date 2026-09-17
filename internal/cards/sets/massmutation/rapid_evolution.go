@@ -9,7 +9,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Rarity: Common
 //	Bonus:  Æmber
 //
-//	Play: For each Æmber in your pool, give a creature a +1 power counter.
+//	Play: Choose a creature - for each Æmber in your pool, give the chosen creature a +1 power counter.
 var RapidEvolution = set.New(
 	"Rapid Evolution",
 	card.House.Untamed,
@@ -18,9 +18,12 @@ var RapidEvolution = set.New(
 	card.Provenance(card.MM, "373"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
-		card.Trigger.Play, card.AddPowerCounter{
+		card.Trigger.Play, card.ChooseCreatureThen{
 			Target: card.Target.Creature,
-			Amount: 1,
-			Per:    card.AemberInPool{Player: card.Controller},
+			Then: card.AddPowerCounter{
+				Target: card.Target.TheChosenCreature,
+				Amount: 1,
+				Per:    card.AemberInPool{Player: card.Controller},
+			},
 		}),
 )

@@ -240,3 +240,53 @@ exists (they would be uncovered).
   `MustChooseHouse` (restricted to the opponent's identity houses) → `DiscardUntil`
   → `RefillHand`; Catch and Release is `ReturnEachCreatureToHand` → per-player
   `DiscardUntil{hand-size}` → `GainChains`. Compose them with `Sentences`.
+
+## InExcessOf — a floored "in excess of" Count combinator
+
+**Trigger set:** whichever set first stands up **Change Agent** (Æmber Skies #101 /
+Dark Tidings #202, both reprints, all unimplemented). Build it with that card, not
+before.
+
+**What it is.** A generalization of `ExcessCreatures`
+([internal/engine/effect_count_board.go](../internal/engine/effect_count_board.go))
+into a reusable `Count` that subtracts one measure from another and **floors the
+result at 0** — KeyForge's "in excess of" idiom. `ExcessCreatures` is the only
+arithmetic `Count` today (one side's creature count minus the other's, clamped at
+0); every other `Count` reads state directly and returns a non-negative int. The
+grilling that parked this rejected a fully-general signed `Difference{Count,
+Minus}` for three reasons, all still binding:
+
+- **The text does not compose.** KeyForge never prints "X minus Y" — it prints "in
+  excess of". Mechanically joining two child `CountText()`s reads nothing like a
+  real card, so any combinator still needs a hand-written `CountText()`; the
+  generic form buys nothing on the text side.
+- **Signedness is a live hazard.** `scaled(base, per)` in
+  [effect_count.go](../internal/engine/effect_count.go) is an unfloored multiply, so
+  a `Count` that can go negative silently inverts gain/damage/draw amounts.
+  `ExcessCreatures` is safe only because it self-clamps at 0. Any real combinator
+  **must** floor at 0 — at which point it is the "in excess of" shape, not arbitrary
+  arithmetic.
+- **No card needs two independently-varying dynamic Counts subtracted.** The one
+  waiting consumer is count-vs-**fixed-number**, not count-vs-count.
+
+**Card (unimplemented, in an unbuilt set):**
+
+- **Change Agent** — "For each card in your opponent's hand in excess of 5, they
+  lose 1 Æmber." That is `CardsInHand{Player: Opponent}` in excess of the **fixed
+  constant 5**, not two dynamic counts subtracted.
+
+**Design decided:**
+
+- Introduce `InExcessOf{Count Count, Of Count}` — `Value` = `max(0, Count.Value −
+Of.Value)`, floored at 0 so it can never feed a negative into `scaled`. The `Of`
+  side may be a `Fixed` (Change Agent's "in excess of 5") or another `Count`
+  (creature-vs-creature). It carries a bespoke `CountText()` ("in excess of" idiom),
+  not a mechanical join of the two children.
+- **Re-express `ExcessCreatures` as a thin constructor over `InExcessOf`** in the
+  same change, so a second live consumer pins the shape: its two operands are the
+  two sides' creature counts (an `InPlay`-style creature count per player, with the
+  trait filter applied identically to both sides). Thread `NotCountingSelf` through
+  the operand that sits on the source's side (Dr. Milli's self-exclusion) —
+  `InPlay.Other` already expresses "not counting the source".
+- Keep the `CardFilter` fold `ExcessCreatures` gained in the InPlay/ExcessCreatures
+  refactor: the trait axis routes through `filter().admits`, applied to both sides.

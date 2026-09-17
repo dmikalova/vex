@@ -37,16 +37,20 @@ func (e ExcessCreatures) Value(ctx *EffectContext) int {
 
 // sideCount counts the creatures one player controls, restricted to Trait when set.
 func (e ExcessCreatures) sideCount(ctx *EffectContext, player int) int {
-	if e.Trait == traitUnset {
-		return len(ctx.Resolver.Battleline(player))
-	}
+	f := e.filter()
 	n := 0
 	for _, id := range ctx.Resolver.Battleline(player) {
-		if ctx.Resolver.HasTrait(id, e.Trait) {
+		if f.admits(ctx.Resolver, id) {
 			n++
 		}
 	}
 	return n
+}
+
+// filter is the identity predicate a counted creature must satisfy — its Trait
+// when set, admitting every creature otherwise.
+func (e ExcessCreatures) filter() CardFilter {
+	return CardFilter{Trait: e.Trait}
 }
 
 // CountText renders the singular noun the "for each" clause repeats.
@@ -67,14 +71,15 @@ func (e ExcessCreatures) CountText() string {
 // noun; as a Condition it is met when the count reaches Amount, which defaults to
 // one. This unifies the several friendly-creature counts and conditions, e.g.
 // InPlay{Player: Controller, Type: Creature} or the house-filtered
-// InPlay{Player: Controller, Type: Creature, House: Mars}.
+// InPlay{Player: Controller, Type: Creature, House: namedHouse(Mars)}.
 type InPlay struct {
 	// Player names whose cards to count (Controller or Opponent).
 	Player Player
 	// Type filters by card type; the zero value counts any type.
 	Type CardType
-	// House filters by house; the zero value (HouseNone) counts any house.
-	House House
+	// House filters by house; the zero value (MatchAnyHouse) counts any house
+	// (ADR 0038).
+	House HouseMatcher
 	// Trait filters by trait; the unset zero value counts any trait, and a set
 	// trait replaces the rendered noun with it ("friendly Shard").
 	Trait Trait
@@ -104,12 +109,13 @@ type InPlay struct {
 
 // Value counts the matching cards the player has in play.
 func (e InPlay) Value(ctx *EffectContext) int {
+	f := e.filter()
 	n := 0
 	for _, id := range e.set(ctx) {
-		if e.House != HouseNone && ctx.Resolver.House(id) != e.House {
+		if !e.House.matches(ctx, id) {
 			continue
 		}
-		if e.Trait != traitUnset && !ctx.Resolver.HasTrait(id, e.Trait) {
+		if !f.admits(ctx.Resolver, id) {
 			continue
 		}
 		if e.Ready && ctx.Resolver.Exhausted(id) {
@@ -127,12 +133,15 @@ func (e InPlay) Value(ctx *EffectContext) int {
 		if e.Other && id == ctx.Source {
 			continue
 		}
-		if e.Name != "" && ctx.Resolver.Name(id) != e.Name {
-			continue
-		}
 		n++
 	}
 	return n
+}
+
+// filter is the identity predicate a counted card must satisfy, conjoining the
+// Type, Trait, and Name filters (Chosen's filter has the same shape).
+func (e InPlay) filter() CardFilter {
+	return CardFilter{Type: e.Type, Trait: e.Trait, Name: e.Name}
 }
 
 // Met reports whether at least Amount (default one) matching cards are in play,
@@ -144,8 +153,10 @@ func (e InPlay) Met(ctx *EffectContext) bool {
 	return e.Value(ctx) >= e.threshold()
 }
 
-// set returns the player's in-play ids the type filter considers: the battleline
-// for creatures, the artifact row for artifacts, or both when the type is unset.
+// set returns every in-play id the count considers — the battleline and the
+// artifact row together, for one player or both. The Type filter (via filter)
+// narrows creatures or artifacts out of this universe, so the zones need no
+// type-specific selection here.
 func (e InPlay) set(ctx *EffectContext) []LocalID {
 	if e.Player == EachPlayer {
 		return append(e.playerSet(ctx, 0), e.playerSet(ctx, 1)...)
@@ -153,14 +164,7 @@ func (e InPlay) set(ctx *EffectContext) []LocalID {
 	return e.playerSet(ctx, ctx.PlayerFor(e.Player))
 }
 func (e InPlay) playerSet(ctx *EffectContext, p int) []LocalID {
-	switch e.Type {
-	case Creature:
-		return ctx.Resolver.Battleline(p)
-	case Artifact:
-		return ctx.Resolver.Artifacts(p)
-	default:
-		return append(ctx.Resolver.Battleline(p), ctx.Resolver.Artifacts(p)...)
-	}
+	return append(ctx.Resolver.Battleline(p), ctx.Resolver.Artifacts(p)...)
 }
 
 // threshold is the Condition's required count, defaulting to one.
@@ -224,10 +228,8 @@ func (e InPlay) noun() string {
 	if e.Damaged {
 		parts = append(parts, "damaged")
 	}
-	if e.House != HouseNone {
-		parts = append(parts, e.House.String())
-	}
-	noun := strings.Join(append(parts, e.typeNoun()), " ")
+	noun := strings.Join(append(parts, e.House.qualifyNoun(e.typeNoun())), " ")
+	noun = e.House.qualifyPhrase(noun)
 	if e.MinPower > 0 {
 		noun += fmt.Sprintf(" with power %d or higher", e.MinPower)
 	}
@@ -241,7 +243,7 @@ func (e InPlay) noun() string {
 // house- or trait-filtered count reads "friendly Mars creature" / "friendly
 // Shard"; an unfiltered one adds "in play" to distinguish it from cards in hand.
 func (e InPlay) CountText() string {
-	if (e.House != HouseNone || e.Trait != traitUnset || e.MinPower > 0 || e.WithAember) &&
+	if (e.House.filters() || e.Trait != traitUnset || e.MinPower > 0 || e.WithAember) &&
 		e.Player != EachPlayer {
 		return e.noun()
 	}

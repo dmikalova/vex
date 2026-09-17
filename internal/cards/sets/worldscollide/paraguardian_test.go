@@ -33,7 +33,7 @@ func TestParaguardian(t *testing.T) {
 		})
 
 		h.P1.Reap(para)
-		h.P1.ClickOption("Yes")
+		h.P1.ClickCard(para)
 
 		h.Expect(para).AmberOn(1)
 		if !h.Game().State.Cards[left.ID()].Warded {
@@ -58,7 +58,7 @@ func TestParaguardian(t *testing.T) {
 		})
 
 		h.P1.Reap(para)
-		h.P1.ClickOption("No")
+		h.P1.ClickDone()
 
 		h.Expect(para).AmberOn(0)
 		if h.Game().State.Cards[left.ID()].Warded {

@@ -363,12 +363,21 @@ func (g *game) selectZoneCard(_ app.Context, id engine.LocalID) {
 // openPicker opens the fuzzy card picker to add an arbitrary card to hand.
 func (g *game) openPicker(_ app.Context, _ app.Event) {
 	g.pickerOpen = true
+	g.pickerNaming = false
 	g.pickerQuery = ""
 	g.pickerFocused = false
 	g.pickerCursor = 0
 }
 
-func (g *game) closePicker(_ app.Context, _ app.Event) { g.pickerOpen = false }
+// closePicker dismisses the picker. A picker answering a name-a-card prompt is
+// not dismissible: the prompt is waiting on it, so closing it would hang the
+// action with nothing on screen to answer.
+func (g *game) closePicker(_ app.Context, _ app.Event) {
+	if g.pickerNaming {
+		return
+	}
+	g.pickerOpen = false
+}
 
 // pickerInput records the search box's text as the player types. Refiltering
 // resets the cursor to the first row so Enter adds the top match.
@@ -378,16 +387,36 @@ func (g *game) pickerInput(ctx app.Context, _ app.Event) {
 }
 
 // pickerMatches is the filtered card pool the picker shows: every card whose name
-// contains the (case-insensitive) query, in pool order.
+// contains the query, in pool order. Query and name are both normalized, so the
+// match ignores case and reads the Æmber ligature and its ASCII "ae" form as the
+// same text. While the picker is answering a name-a-card prompt the pool is
+// narrowed to the names that prompt offered.
 func (g *game) pickerMatches() []engine.CardDefinition {
-	q := strings.ToLower(strings.TrimSpace(g.pickerQuery))
+	q := normalizeSearch(strings.TrimSpace(g.pickerQuery))
+	offered := g.pickerOfferedNames()
 	var matches []engine.CardDefinition
 	for _, d := range g.allDefs {
-		if q == "" || strings.Contains(strings.ToLower(d.Name), q) {
+		if offered != nil && !offered[d.Name] {
+			continue
+		}
+		if q == "" || strings.Contains(normalizeSearch(d.Name), q) {
 			matches = append(matches, d)
 		}
 	}
 	return matches
+}
+
+// pickerOfferedNames is the set of names a name-a-card prompt offered, or nil when
+// the picker is adding a card to hand and every implemented card is pickable.
+func (g *game) pickerOfferedNames() map[string]bool {
+	if !g.pickerNaming {
+		return nil
+	}
+	offered := make(map[string]bool, len(g.optionLabels))
+	for _, label := range g.optionLabels {
+		offered[label] = true
+	}
+	return offered
 }
 
 // movePickerCursor steps the highlighted row by delta, clamped to the list so the
@@ -428,25 +457,48 @@ func (g *game) onPickerKey(ctx app.Context, key string, shift bool) {
 	}
 }
 
-// addCursorCard adds the highlighted picker row's card to the active player's hand.
+// addCursorCard commits the highlighted picker row.
 func (g *game) addCursorCard(ctx app.Context) {
 	matches := g.pickerMatches()
 	if g.pickerCursor < 0 || g.pickerCursor >= len(matches) {
 		return
 	}
-	g.addCardDef(ctx, matches[g.pickerCursor])
+	g.commitPickedCard(ctx, matches[g.pickerCursor])
 }
 
-// addPickedCard adds the clicked picker row's card to the active player's hand.
-// The card is named by the row's data attribute rather than captured per row:
-// go-app compares handlers by pointer, so a closure per row goes stale the moment
-// the search filters the list, and the click adds whatever card used to sit there.
+// addPickedCard commits the clicked picker row's card. The card is named by the
+// row's data attribute rather than captured per row: go-app compares handlers by
+// pointer, so a closure per row goes stale the moment the search filters the list,
+// and the click commits whatever card used to sit there.
 func (g *game) addPickedCard(ctx app.Context, _ app.Event) {
 	def, ok := g.defByName[ctx.JSSrc().Get("dataset").Get("card").String()]
 	if !ok {
 		return
 	}
-	g.addCardDef(ctx, *def)
+	g.commitPickedCard(ctx, *def)
+}
+
+// commitPickedCard resolves a picked row: it answers the name-a-card prompt the
+// picker was opened for, or, in manual mode, adds the card to hand.
+func (g *game) commitPickedCard(ctx app.Context, def engine.CardDefinition) {
+	if g.pickerNaming {
+		g.nameCard(ctx, def.Name)
+		return
+	}
+	g.addCardDef(ctx, def)
+}
+
+// nameCard answers the open name-a-card prompt with the picked name and closes
+// the picker, so the blocked effect resumes.
+func (g *game) nameCard(ctx app.Context, name string) {
+	for i, label := range g.optionLabels {
+		if label != name {
+			continue
+		}
+		g.pickerOpen, g.pickerNaming = false, false
+		g.chooseOptionIdx(i)(ctx, app.Event{})
+		return
+	}
 }
 
 // addCardDef puts a card definition into the active player's hand and records the

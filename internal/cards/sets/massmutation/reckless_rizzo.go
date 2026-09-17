@@ -24,9 +24,10 @@ var RecklessRizzo = set.New(
 	card.WithAbility(
 		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
 			card.StealAember{Amount: 2},
-			card.LoseKeywordsUntilNextTurn{
+			card.LoseKeywords{
 				Target:   card.Target.This,
 				Keywords: []card.KeywordValue{card.Keyword.Elusive},
+				Duration: card.Duration.StartOfPlayerNextTurn,
 			},
 		}}),
 )

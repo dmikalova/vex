@@ -96,7 +96,8 @@ func (e MoveAember) Text() string {
 // the source choice is restricted to cards carrying Æmber, so it never offers an
 // empty card; with Bind the chooser picks from the true candidate set (a source
 // holding no Æmber simply moves none) and the moved-from creature is left in
-// context (ctx.It). A source holding fewer than Amount moves all it has.
+// context (ctx.It) for later effects. A source holding fewer than Amount moves
+// all it has.
 func (e MoveAember) Resolve(ctx *EffectContext) {
 	source := e.From
 	if !e.Bind {
@@ -106,14 +107,29 @@ func (e MoveAember) Resolve(ctx *EffectContext) {
 	if len(sources) == 0 {
 		return
 	}
+	// "Move Æmber from a creature to another creature" is other than the creature
+	// the Æmber is leaving, so the source goes into focus while the destination is
+	// chosen. Without it the destination widens to the source itself, and moving
+	// Æmber off a card and straight back onto it is not a move (Consul Primus). The
+	// focus is only borrowed when the destination is an "another …" Target, since
+	// ctx.It otherwise carries a meaning the destination may itself be reading (Siren
+	// Horn moves onto the creature its host fought), and it is restored afterwards
+	// unless Bind asks for the source to stay visible to later effects.
+	priorIt, priorHasIt := ctx.It, ctx.HasIt
+	if e.Onto.excludesFocus() {
+		ctx.It, ctx.HasIt = sources[len(sources)-1], true
+	}
 	var onto LocalID
 	if !e.toPool() {
 		dest := e.Onto.Select(ctx)
 		if len(dest) == 0 {
+			ctx.It, ctx.HasIt = priorIt, priorHasIt
 			return
 		}
 		onto = dest[0]
 	}
+	ctx.It, ctx.HasIt = priorIt, priorHasIt
+	total := 0
 	for _, from := range sources {
 		moved := e.amount()
 		if have := ctx.Resolver.AmberOn(from); e.Fraction.valid() {
@@ -122,6 +138,7 @@ func (e MoveAember) Resolve(ctx *EffectContext) {
 			moved = have
 		}
 		ctx.Resolver.AddAmberOn(from, -moved)
+		total += moved
 		if e.toPool() {
 			p := ctx.PlayerFor(e.To)
 			ctx.Resolver.SetAember(p, ctx.Resolver.Aember(p)+moved)
@@ -144,4 +161,5 @@ func (e MoveAember) Resolve(ctx *EffectContext) {
 	if e.Bind {
 		ctx.It, ctx.HasIt = sources[len(sources)-1], true
 	}
+	ctx.Produced.AemberMoved = total
 }

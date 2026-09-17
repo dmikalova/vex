@@ -130,6 +130,15 @@ func SetupDecksFor(
 	var mavericks [2][]engine.LocalID
 	var legacies [2][]engine.LocalID
 	var rosters [2]Roster
+	// A "name a card" choice (Etan's Jar) reaches the whole implemented card
+	// database, which the engine cannot read itself (ADR 0003). Offering only the
+	// cards in this match would show a player their opponent's deck list.
+	all := cards.All()
+	names := make([]string, len(all))
+	for i, d := range all {
+		names[i] = d.Name
+	}
+	g.SetNameableNames(names)
 	for player := 0; player < 2; player++ {
 		deck := deckgen.Generate(setFor(setNames[player]), seed+int64(player)+1)
 		houses[player] = deck.Houses()

@@ -31,7 +31,7 @@ func TestFaustTheGreat(t *testing.T) {
 		})
 
 		h.P1.Play(FaustTheGreat)
-		h.P1.ClickOption("Yes")
+		h.P1.ClickCard(FaustTheGreat)
 		h.P1.ClickCard(ally)
 
 		h.Expect(ally).AmberOn(1)

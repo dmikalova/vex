@@ -1,20 +1,15 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// LegionsMarch
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Legion's March
 //
 //	House:  Saurian
 //	Type:   Tactic
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //
-//	Play: For the remainder of the turn, after you use a Dinosaur creature, deal 1D to each non-Dinosaur creature.
+//	Play: For the remainder of the turn, after you use a Dinosaur creature, deal 1 damage to each non-Dinosaur creature.
 var LegionsMarch = set.New(
 	"Legion's March",
 	card.House.Saurian,
@@ -22,5 +17,8 @@ var LegionsMarch = set.New(
 	card.Rarity.Rare,
 	card.Provenance(card.MM, "224"),
 	card.WithBonus(card.Bonus.Aember),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(card.Trigger.Play, card.DamageOthersAfterUsingTrait{
+		Trait:  card.Traits.Dinosaur,
+		Amount: 1,
+	}),
 )

@@ -18,9 +18,15 @@ var PileOfSkulls = set.New(
 	card.Provenance(card.CotA, "25"),
 	card.WithTraits(card.Traits.Location),
 	card.WithAbility(
-		card.Trigger.AfterEnemyCreatureDestroyed, card.CaptureAember{
-			Amount: 1,
-			Target: card.Target.FriendlyCreature,
-			Source: card.Opponent,
+		card.Trigger.AfterCreatureDestroyed, card.Conditional{
+			Cond: card.And{Conditions: []card.Condition{
+				card.ItIsEnemy{},
+				card.ItIsYourTurn{},
+			}},
+			Then: card.CaptureAember{
+				Amount: 1,
+				Target: card.Target.FriendlyCreature,
+				Source: card.Opponent,
+			},
 		}),
 )

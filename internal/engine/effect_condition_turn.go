@@ -28,6 +28,21 @@ func (ArchivedCreaturesShareHouse) Met(ctx *EffectContext) bool {
 	return true
 }
 
+// MovedAnyAember is met when a preceding MoveAember relocated at least one Æmber
+// this resolution (ctx.Produced.AemberMoved) — Shadowsaurus takes control of the
+// enemy creature it emptied only when there was Æmber to move.
+type MovedAnyAember struct{}
+
+// CondText renders the condition as a back-reference to the Æmber just moved.
+func (MovedAnyAember) CondText() string {
+	return "if you moved any \u00c6mber this way"
+}
+
+// Met reports whether the most recent MoveAember moved any Æmber.
+func (MovedAnyAember) Met(ctx *EffectContext) bool {
+	return ctx.Produced.AemberMoved > 0
+}
+
 // FirstCreaturePlayedThisTurn is met when the card in context (ctx.It, the
 // creature that fired the trigger) is the first creature its player played this
 // turn — Speed Sigil readies it. It is a once-per-turn charge that needs no state

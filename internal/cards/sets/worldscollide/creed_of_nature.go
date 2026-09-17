@@ -28,9 +28,10 @@ var CreedOfNature = set.New(
 					Then: card.ForDuration{
 						Duration: card.Duration.RemainderOfPlayerTurn,
 						Effects: []card.Effect{
-							card.GainKeywordForTurn{
-								Target:  card.Target.Triggering,
-								Keyword: card.Keyword.Skirmish,
+							card.GainKeywords{
+								Target:   card.Target.Triggering,
+								Keywords: []card.KeywordValue{card.Keyword.Skirmish},
+								Duration: card.Duration.RemainderOfPlayerTurn,
 							},
 							card.GainAssault{
 								Target: card.Target.Triggering,

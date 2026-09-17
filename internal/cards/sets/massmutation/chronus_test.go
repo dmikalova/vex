@@ -36,7 +36,7 @@ func TestChronus(t *testing.T) {
 		})
 
 		h.P1.Play(bearer)         // the Draw bonus icon draws, then Chronus reacts
-		h.P1.ClickOption("Yes")   // accept the may
+		h.P1.ClickCard(Chronus)   // click Chronus to accept its offer
 		h.P1.ClickCard(toArchive) // archive this card from hand
 
 		h.Expect(toArchive).At(ct.Archives)

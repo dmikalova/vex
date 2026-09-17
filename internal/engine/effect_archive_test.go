@@ -788,3 +788,181 @@ func TestArchiveFromDiscardNamed(t *testing.T) {
 		t.Error("no Velum in discard should archive nothing")
 	}
 }
+
+func TestDiscardArchivesEffect(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.State.ActivePlayer = 0 // player 0 discards player 1's (hidden) archives
+	g.State.Archives[1].add(g.Register(testCreature("a", 1), 1))
+	g.State.Archives[1].add(g.Register(testCreature("b", 1), 1))
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	e := DiscardArchives{Player: Opponent}
+	if e.Text() != "your opponent discards each of their archived cards" {
+		t.Errorf("text = %q", e.Text())
+	}
+	if (DiscardArchives{Player: Controller}).Text() != "discard each of your archived cards" {
+		t.Errorf("controller text = %q", (DiscardArchives{Player: Controller}).Text())
+	}
+
+	e.Resolve(ctx)
+	if g.State.Archives[1].Count != 0 {
+		t.Error("opponent archives should be emptied")
+	}
+	if len(g.Discard(1)) != 2 {
+		t.Errorf("opponent discard = %d, want 2", len(g.Discard(1)))
+	}
+
+	// Empty archives: nothing to move.
+	e.Resolve(ctx)
+	if len(g.Discard(1)) != 2 {
+		t.Error("discarding empty archives should change nothing")
+	}
+}
+
+// You can see your own archives, so you choose the order the cards are discarded.
+func TestDiscardYourOwnArchivesIsOrdered(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.State.ActivePlayer = 0 // player 0 discards their own archives
+	c1 := g.Register(testCreature("c1", 1), 0)
+	c2 := g.Register(testCreature("c2", 1), 0)
+	c3 := g.Register(testCreature("c3", 1), 0)
+	g.State.Archives[0].add(c1)
+	g.State.Archives[0].add(c2)
+	g.State.Archives[0].add(c3)
+	g.SetChooser(0, orderLastChooser{}) // choose to discard last-first
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	DiscardArchives{Player: Controller}.Resolve(ctx) // your own archives
+	if g.State.Archives[0].Count != 0 {
+		t.Error("own archives should be emptied")
+	}
+	got := g.Discard(0)
+	want := []LocalID{c3, c2, c1} // the chosen (reversed) order
+	if len(got) != 3 || got[0] != want[0] || got[1] != want[1] || got[2] != want[2] {
+		t.Errorf("own discard order = %v, want %v (owner chooses the order)", got, want)
+	}
+}
+
+func TestGainAemberPerOpponentArchivedCards(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	g.State.Archives[1].add(g.Register(testCreature("x", 1), 1))
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	e := GainAember{
+		Player: Controller,
+		Amount: 1,
+		Per:    CardsInZone{Zone: Archives, Player: Opponent},
+	}
+	if e.Text() != "for each card in your opponent's archives, gain 1 Æmber" {
+		t.Errorf("text = %q", e.Text())
+	}
+	e.Resolve(ctx)
+	if g.Aember(0) != 1 {
+		t.Errorf("aember = %d, want 1", g.Aember(0))
+	}
+}
+
+func TestArchiveSource(t *testing.T) {
+	if got := (ArchiveSource{}).Text(); got != "archive "+SelfName {
+		t.Errorf("text = %q", got)
+	}
+
+	t.Run("archives an in-play source from play", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		src := g.AddToBattleline(testCreature("src", 3), 0)
+
+		ArchiveSource{}.Resolve(&EffectContext{Resolver: g, Controller: 0, Source: src})
+
+		if !g.State.Archives[0].contains(src) {
+			t.Error("an in-play source should be archived from play")
+		}
+	})
+
+	t.Run("archives a resolving action instead of discarding it", func(t *testing.T) {
+		g := started(t)
+		idx := int(g.State.Hand[0].Count)
+		id := g.AddToHand(
+			NewCard(
+				"Self Archive", Brobnar, Tactic, Common,
+				WithAbility(TriggerAfterPlay, ArchiveSource{}),
+			),
+			0,
+		)
+
+		if err := g.PlayAction(0, idx); err != nil {
+			t.Fatalf("PlayAction: %v", err)
+		}
+
+		if !g.State.Archives[0].contains(id) {
+			t.Error("a self-archiving action should go to the archives")
+		}
+		if g.State.Discard[0].contains(id) {
+			t.Error("a self-archiving action should not go to the discard pile")
+		}
+	})
+}
+
+// TestInvulnerableKeyword covers Ghostform's grant: an invulnerable creature
+// takes no damage and cannot be destroyed, whether the keyword is printed on it
+// or granted by an attached upgrade.
+func TestInvulnerableKeyword(t *testing.T) {
+	t.Run("takes no damage", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		ghost := g.AddToBattleline(testCreature("ghost", 3, WithKeywords(Invulnerable)), 0)
+		g.dealDamage(0, DamageTarget{ID: ghost, Amount: 5})
+		if got := g.Damage(ghost); got != 0 {
+			t.Errorf("invulnerable creature took %d damage, want 0", got)
+		}
+		if !g.inPlay(ghost) {
+			t.Fatal("invulnerable creature should survive the damage")
+		}
+	})
+
+	t.Run("cannot be destroyed", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		ghost := g.AddToBattleline(testCreature("ghost", 3, WithKeywords(Invulnerable)), 0)
+		g.destroyEach(0, []LocalID{ghost})
+		if !g.inPlay(ghost) {
+			t.Fatal("invulnerable creature should survive destruction")
+		}
+	})
+
+	t.Run("granted by an attached upgrade", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		host := g.AddToBattleline(testCreature("host", 3), 0)
+		attachUpgrade(g, host, NewCard("cloak", Brobnar, Upgrade, Rare,
+			WithStatic(StaticModifier{Keywords: []Keyword{Invulnerable}})))
+		g.destroyEach(0, []LocalID{host})
+		if !g.inPlay(host) {
+			t.Fatal("host granted invulnerable should survive destruction")
+		}
+	})
+}
+
+// TestArchiveGrantingUpgrade covers Ghostform archiving itself: the effect
+// renders the {card} placeholder and sends the granting upgrade off its host to
+// the owner's archives while the host stays in play.
+func TestArchiveGrantingUpgrade(t *testing.T) {
+	if got := (ArchiveGrantingUpgrade{}).Text(); got != "archive "+CardName {
+		t.Errorf("text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	host := g.AddToBattleline(testCreature("host", 3), 0)
+	up := attachUpgrade(
+		g,
+		host,
+		NewCard("Ghostform", Brobnar, Upgrade, Rare, WithBonus(BonusAember)),
+	)
+	ArchiveGrantingUpgrade{}.Resolve(
+		&EffectContext{Resolver: g, Source: host, Controller: 0, Upgrade: up},
+	)
+	if !containsID(g.Archives(0), up) {
+		t.Errorf("archived upgrade should be in the owner's archives, got %v", g.Archives(0))
+	}
+	if _, ok := g.hostOf(up); ok {
+		t.Error("archived upgrade should be detached from its host")
+	}
+	if !g.inPlay(host) {
+		t.Error("the host should stay in play")
+	}
+}

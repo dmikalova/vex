@@ -20,10 +20,10 @@ type CreatureBar struct {
 }
 
 // A perHouseKeySurcharge is a counted key-cost raise: Per extra Æmber for each
-// creature of House in play, recomputed at each forge rather than frozen. It is
-// comparable, so it rides in a Bar and in flat state; the zero value (HouseNone)
+// creature House admits in play, recomputed at each forge rather than frozen. It
+// is comparable, so it rides in a Bar and in flat state; the zero value (Per 0)
 // surcharges nothing.
 type perHouseKeySurcharge struct {
-	House House
+	House HouseMatcher
 	Per   int
 }

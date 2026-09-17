@@ -32,7 +32,9 @@ var IngramsBlaster = set.New(
 		Granted: card.FightReap(card.ChooseOne{Options: []card.Effect{
 			card.DealDamage{Amount: 2, Target: card.Target.Creature},
 			card.Then{
-				First:  card.AttachSelfTo{Host: MedicIngram.Name},
+				First: card.AttachSelfTo{
+					Target: card.Target.FriendlyCreature.Named(MedicIngram.Name),
+				},
 				Result: card.Heal{Fully: true, Target: card.Target.Creature},
 			},
 		}}),

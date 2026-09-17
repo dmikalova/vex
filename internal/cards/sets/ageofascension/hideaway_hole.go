@@ -24,9 +24,10 @@ var HideawayHole = set.New(
 	card.WithAbility(
 		card.Trigger.Action, card.Sentences{Effects: []card.Effect{
 			card.Destroy{Target: card.Target.This},
-			card.GainKeyword{
-				Target:  card.Target.EachFriendlyCreature,
-				Keyword: card.Keyword.Elusive,
+			card.GainKeywords{
+				Target:   card.Target.EachFriendlyCreature,
+				Keywords: []card.KeywordValue{card.Keyword.Elusive},
+				Duration: card.Duration.StartOfPlayerNextTurn,
 			},
 		}}),
 )

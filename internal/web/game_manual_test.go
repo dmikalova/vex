@@ -3,6 +3,8 @@ package web
 import (
 	"testing"
 
+	"github.com/maxence-charriere/go-app/v11/pkg/app"
+
 	"github.com/dmikalova/vactrol/internal/engine"
 )
 
@@ -377,6 +379,40 @@ func TestThePickerOpensAndCloses(t *testing.T) {
 	if c.g.pickerOpen {
 		t.Error("the picker did not close")
 	}
+}
+
+// A name-a-card prompt (Etan's Jar) is answered through the picker: it opens
+// non-dismissible, searches only the names the prompt offered, folds Æ to "ae" so
+// "aember" finds "Æmber", and a picked row answers the prompt.
+func TestThePickerAnswersANameACardPrompt(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	c.g.pickerOpen, c.g.pickerNaming = true, true
+	c.g.choosingOption = true
+	c.g.optionLabels = []string{"Dark Æmber Vault", "Troll"}
+
+	c.g.pickerQuery = "aember"
+	matches := c.g.pickerMatches()
+	if len(matches) != 1 || matches[0].Name != "Dark Æmber Vault" {
+		t.Fatalf("picker matches = %v, want [Dark Æmber Vault]", names(matches))
+	}
+
+	// The prompt is waiting on a name, so neither the close button nor Escape lets
+	// the player out of it.
+	c.do(c.g.closePicker)
+	c.g.dismiss(app.Context{})
+	if !c.g.pickerOpen {
+		t.Error("a name-a-card picker was dismissible")
+	}
+}
+
+// names lists the card names of a picker result, for a readable failure message.
+func names(defs []engine.CardDefinition) []string {
+	out := make([]string, len(defs))
+	for i, d := range defs {
+		out[i] = d.Name
+	}
+	return out
 }
 
 // A picker row naming a card the pool does not hold adds nothing: the row's card

@@ -93,56 +93,60 @@ func (g *Game) aemberCaptorFor(player int) (LocalID, bool) {
 	return chosen, true
 }
 
-// stolenRedirectActive reports whether any in-play card of either controller
-// carries the continuous replacement that redirects stolen Æmber into a capture
-// (Gargantodon). The redirect is global — it applies to every steal regardless of
-// who controls the card — so no pool scoping is consulted.
-func (g *Game) stolenRedirectActive() bool {
+// stolenRedirectSource returns the in-play card of either controller that carries
+// the continuous replacement redirecting stolen Æmber into a capture
+// (Gargantodon), so the log can name what caused the redirect. The redirect is
+// global — it applies to every steal regardless of who controls the card — so no
+// pool scoping is consulted.
+func (g *Game) stolenRedirectSource() (LocalID, bool) {
 	for p := 0; p < 2; p++ {
 		for _, id := range g.allInPlay(p) {
 			r := g.cat.def(id).Replaces
 			if r.Of == EventAemberStolen && r.With == Capture {
-				return true
+				return id, true
 			}
 		}
 	}
-	return false
+	return 0, false
 }
 
 // StolenAemberCaptor returns a creature player controls that captures Æmber a
-// steal would otherwise add to player's pool, or ok=false when no in-play card
-// redirects stolen Æmber or player controls no creature to hold it. When player
-// controls several creatures, player chooses which one captures.
-func (g *Game) StolenAemberCaptor(player int) (LocalID, bool) {
-	if !g.stolenRedirectActive() {
-		return 0, false
+// steal would otherwise add to player's pool, together with the card that
+// redirected it, or ok=false when no in-play card redirects stolen Æmber or
+// player controls no creature to hold it. When player controls several creatures,
+// player chooses which one captures.
+func (g *Game) StolenAemberCaptor(player int) (captor, cause LocalID, ok bool) {
+	cause, ok = g.stolenRedirectSource()
+	if !ok {
+		return 0, 0, false
 	}
 	candidates := g.Battleline(player)
 	switch len(candidates) {
 	case 0:
-		return 0, false
+		return 0, 0, false
 	case 1:
-		return candidates[0], true
+		return candidates[0], cause, true
 	}
-	chosen, ok := g.ChooseCreature(
+	chosen, picked := g.ChooseCreature(
 		player,
 		0,
 		"Choose which creature captures the stolen Æmber",
 		candidates,
 	)
-	if !ok {
-		return candidates[0], true
+	if !picked {
+		return candidates[0], cause, true
 	}
-	return chosen, true
+	return chosen, cause, true
 }
 
 // AemberTakenFromSupply reports whether Æmber a steal or capture takes from
 // player's pool is drawn from the common supply instead, leaving the pool
-// untouched (Po's Pixies). It is the source half of the Æmber-flow replacement
-// spine, the mirror of aemberCaptorFor on the destination half: it reads the
-// continuous replacement each in-play card carries (Replaces), scoped to the pool
-// it watches, rather than a bespoke flag.
-func (g *Game) AemberTakenFromSupply(player int) bool {
+// untouched (Po's Pixies), and returns the card that redirects it so the log can
+// name the cause. It is the source half of the Æmber-flow replacement spine, the
+// mirror of aemberCaptorFor on the destination half: it reads the continuous
+// replacement each in-play card carries (Replaces), scoped to the pool it
+// watches, rather than a bespoke flag.
+func (g *Game) AemberTakenFromSupply(player int) (LocalID, bool) {
 	for p := 0; p < 2; p++ {
 		for _, id := range g.allInPlay(p) {
 			r := g.cat.def(id).Replaces
@@ -154,9 +158,9 @@ func (g *Game) AemberTakenFromSupply(player int) bool {
 				pool = 1 - p
 			}
 			if pool == player {
-				return true
+				return id, true
 			}
 		}
 	}
-	return false
+	return 0, false
 }

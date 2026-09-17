@@ -11,6 +11,12 @@ The repo's general coding style (composition, naming, KeyForge vernacular,
 comments, safety) lives in [docs/style-guide.md](../../docs/style-guide.md); this
 file covers only the card-authoring specifics on top of it.
 
+**Before deciding a card needs new engine work, check
+[docs/card-implementation.md](../../docs/card-implementation.md)** — the catalog
+of every effect, target, filter, condition, count, trigger, and card-level option
+the engine already has. Most "gated" cards turn out to compose from something
+already there under a name you had not met.
+
 ## Rules reference
 
 When a rules question isn't settled by the vactrol implementation itself or by
@@ -128,7 +134,7 @@ to seed it. `set.New(...)`:
   (`card.DealDamage{Amount: …, Target: …}`), the modifier/value structs passed to
   the `With*` options (`WithStatic(card.StaticModifier{PowerBonus: …, HazardousBonus: …})`,
   `WithAttackDamage(card.AttackDamage{Amount: …, FlankOnly: …})`,
-  `WithConstantAbility(card.ConstantAbility{…})`), and nested effects the same
+  `WithConstant(card.ConstantAbility{…})`), and nested effects the same
   way. A struct with a single field stays inline (e.g. `card.GainAember{Amount: 1}`,
   `card.Stun{Target: card.Target.This}`).
 - A granted / `WithAbilities` entry keeps its trigger and effect on one line
@@ -151,32 +157,6 @@ to seed it. `set.New(...)`:
 
 Run `mage fmt` after editing (golines aligns the fields; it does not add the line
 breaks, so the one-field-per-line layout above is the author's responsibility).
-
-## A card that names its own house writes `card.House.Self`
-
-Most cards that name a house name their own: Battle Fleet (Mars) reveals Mars
-cards, Pitlord (Dis) locks you into Dis, Witch of the Wilds (Untamed) lets you
-play an Untamed card off-house. Spelling that house out a second time lets the
-two drift and doesn't work for Mavericks, so the ability names `card.House.Self`
-and `card.New` fills the card's own house in when the definition is built:
-
-```go
-var WitchOfTheWilds = card.New(
-  "Witch of the Wilds",
-  card.House.Untamed,
-  ...
-  card.WithPlayPermission(card.PlayPermission{House: card.House.Self, Count: 1}),
-)
-```
-
-The sentinel never survives past `card.New`, so the printed text, resolution, and
-state all see the concrete house — the generated comment still reads "one Untamed
-card".
-
-The same holds for a `Target` filtered by house: a card that buffs its own
-house's creatures — Ixxyxli Fixfinger (Mars) giving each other Martian creature
-+1 armor — writes `card.Target.EachOtherFriendlyCreature.OfHouse(card.House.Self)`,
-not `OfHouse(card.House.Mars)`.
 
 ## Anomalies preview a future set; they live in AE only until it is built
 
@@ -250,19 +230,11 @@ differentiate the card** (a reworded or redesigned ability that keeps it distinc
 do not paper over the collision. Implement the agreed change so the two cards
 diverge, and the test passes because they are no longer identical.
 
-The test is what the card is _about_, not which house it happens to print. Take
-That, Smarty Pants names Logos because it is about Logos creatures, whichever
-house the card itself belongs to — that house is written out. So:
-
-- **Named house == the card's own house?** Use `card.House.Self`.
-- **Named house is a different house** (or the card would still say "Logos" if it
-  were reprinted in another house)? Write the house out.
-
-`TestNoCardHardcodesItsOwnHouse` (in `cards_test.go`) enforces this: it parses
-every `card.New` call and fails if an ability names the card's own declared
-house instead of `card.House.Self`. Because `card.New` resolves the sentinel to
-the concrete house, the two are indistinguishable afterward, so the test reads
-source — a hardcoded own-house literal cannot reach the database unnoticed.
+A sibling guard, `TestNoCardHardcodesItsOwnHouse` (in `cards_test.go`), parses
+every `card.New` call and fails if an ability names the card's own declared house
+instead of `card.House.Self` — see
+[docs/card-implementation.md](../../docs/card-implementation.md) for when to use
+which.
 
 ## Wording rules
 
@@ -297,37 +269,6 @@ and prefer reshaping a `Target`/`Count`/`Refinement` over adding a new effect):
 After any wording change, run `mage generateComments` (regenerates every card's
 comment) and the engine tests (the `Text()` assertions live in
 `internal/engine/effect_*_test.go`).
-
-## Zone movement is one family — extend it, don't fork it
-
-Archiving, discarding, purging, shuffling into the deck, and putting a card into
-play / hand / on top of a deck are one mechanism: a source zone, a selection (a
-chosen card, any number, all matching, a random one, the top N, narrowed by
-house / type / name / trait), and a destination ([ADR 0031](../../docs/adr/0031-zone-movement-is-one-mechanism.md)).
-Author each with the KeyForge verb the card prints — the `card.Archive…`,
-`card.Discard…`, `card.Purge…`, `card.Shuffle…`, and `card.Put…` families. When a
-card needs a movement an existing verb does not cover, it is almost always a new
-source zone, selection, or destination on that family — not a new bespoke type.
-These families are being consolidated onto the one mechanism as their cards are
-touched, so shape a new movement effect to fit it rather than adding another
-one-off `…FromHand` / `…TopOfDeck` variant to unwind later. The same holds for the
-smaller shared vocabularies: prefer a `Target`/`Refinement` filter, a `Count`, a
-`Duration` field, or a portion (`By: Half`) over a name that spells the whole card
-sentence (see [docs/style-guide.md](../../docs/style-guide.md), "Composition and
-design").
-
-## An effect can read a creature it just destroyed
-
-When one effect destroys (or deals lethal damage to) a creature and a following
-effect in the **same** ability reads that creature — "Destroy a friendly creature.
-Each player loses Æmber equal to half **its power**" (Power of Fire) — the read
-sees the creature's power / Æmber-on-card / damage as they were the instant before
-it left play, counters and buffs included, not the zeroed card it becomes. This is
-automatic for `PowerOfChosen`, `AemberOnThis` / `AemberOnIt`, and `DamageOnThis` /
-`DamageOnIt`; compose them freely after a `Destroy` or `DamageThen{IfDestroyed}`.
-Only those three mutable dimensions are captured — printed power, house, traits,
-keywords, and bonus icons survive on their own; a departed creature's _granted_
-keywords do not (no card reads them). See [ADR 0030](../../docs/adr/0030-a-card-out-of-play-takes-no-further-part.md).
 
 ## Tests
 

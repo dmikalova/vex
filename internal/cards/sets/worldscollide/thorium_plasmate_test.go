@@ -14,7 +14,7 @@ import (
 //	Rarity: Common
 //	Bonus:  Æmber
 //
-//	Play: Move an enemy creature anywhere in its controller's battleline -> for each neighbor that shares a house with the chosen creature, deal 2 damage to the chosen creature.
+//	Play: Move an enemy creature anywhere in its controller's battleline -> for each neighbor of that card's house, deal 2 damage to the chosen creature.
 func TestThoriumPlasmate(t *testing.T) {
 	t.Run("deals 2 per neighbor sharing the moved creature's house", func(t *testing.T) {
 		var moved, ally ct.Card

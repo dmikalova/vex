@@ -32,7 +32,9 @@ var KirbysBlaster = set.New(
 		Granted: card.FightReap(card.ChooseOne{Options: []card.Effect{
 			card.DealDamage{Amount: 2, Target: card.Target.Creature},
 			card.Then{
-				First:  card.AttachSelfTo{Host: ComOfficerKirby.Name},
+				First: card.AttachSelfTo{
+					Target: card.Target.FriendlyCreature.Named(ComOfficerKirby.Name),
+				},
 				Result: card.Draw{Amount: 2},
 			},
 		}}),

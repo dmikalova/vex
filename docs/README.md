@@ -13,6 +13,9 @@ together and **CONTEXT** for what the words mean.
 
 ## Design & decisions
 
+- [card-implementation.md](card-implementation.md) — the capability catalog for
+  implementing cards: every effect, target, condition, count, trigger, and
+  card-level option the engine already has, and how to look one up.
 - [deck-generation.md](deck-generation.md) — the procedural deck-generation design
   (philosophy, pipeline, distribution, scoring).
 - [style-guide.md](style-guide.md) — coding style, composition, and naming.

@@ -1,22 +1,18 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// BookOfMalefaction
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Book of Malefaction
 //
 //	House:  Sanctum
 //	Type:   Artifact
 //	Rarity: Rare
-//	Æmber:  1
+//	Bonus:  Æmber
 //	Traits: Item • Law
 //
-//	After your A is stolen, put a warrant counter on Book of Malefaction for each A stolen.
-//	Omni: Remove a warrant counter from Book of Malefaction. If you do, purge a creature.
+//	Versatile.
+//	After Æmber is stolen from you, for each Æmber stolen, put a warrant counter on Book of Malefaction.
+//	Action: Remove a warrant counter from Book of Malefaction -> purge a creature.
 var BookOfMalefaction = set.New(
 	"Book of Malefaction",
 	card.House.Sanctum,
@@ -25,5 +21,20 @@ var BookOfMalefaction = set.New(
 	card.Provenance(card.MM, "159"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithTraits(card.Traits.Item, card.Traits.Law),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithKeywords(card.Keyword.Versatile),
+	card.WithAbility(
+		card.Trigger.AfterAemberStolenFromYou, card.PlaceCounter{
+			Kind:   card.Counter.Warrant,
+			Target: card.Target.This,
+			Per:    card.AemberStolenThisEvent{},
+		}),
+	card.WithAbility(
+		card.Trigger.Action, card.Then{
+			First: card.RemoveCounters{
+				Kind:   card.Counter.Warrant,
+				Target: card.Target.This,
+				Amount: 1,
+			},
+			Result: card.PurgeCreature{Target: card.Target.Creature},
+		}),
 )

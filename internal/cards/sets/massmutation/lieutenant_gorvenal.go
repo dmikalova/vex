@@ -22,9 +22,12 @@ var LieutenantGorvenal = set.New(
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Spirit, card.Traits.Knight),
 	card.WithAbility(
-		card.Trigger.AfterFriendlyCreatureFights, card.CaptureAember{
-			Amount: 1,
-			Target: card.Target.This,
-			Source: card.Opponent,
+		card.Trigger.AfterCreatureFights, card.Conditional{
+			Cond: card.ItIsFriendly{},
+			Then: card.CaptureAember{
+				Amount: 1,
+				Target: card.Target.This,
+				Source: card.Opponent,
+			},
 		}),
 )

@@ -29,23 +29,38 @@ func (e RemoveCounters) validate() error {
 	return nil
 }
 
-// Text renders the effect, e.g. "remove each growth counter from {self}" or
-// "remove 6 glory counters from {self}".
+// Text renders the effect, e.g. "remove each growth counter from {self}", "remove
+// a warrant counter from {self}", or "remove 6 glory counters from {self}".
 func (e RemoveCounters) Text() string {
-	if e.Amount > 0 {
+	switch {
+	case e.Amount == 1:
+		return fmt.Sprintf("remove a %s from %s", e.Kind.noun(), e.Target.Text())
+	case e.Amount > 1:
 		return fmt.Sprintf(
 			"remove %d %ss from %s", e.Amount, e.Kind.noun(), e.Target.Text())
+	default:
+		return fmt.Sprintf("remove each %s from %s", e.Kind.noun(), e.Target.Text())
 	}
-	return fmt.Sprintf("remove each %s from %s", e.Kind.noun(), e.Target.Text())
 }
 
 // Resolve drops the kind's counters from each selected card.
-func (e RemoveCounters) Resolve(ctx *EffectContext) {
+func (e RemoveCounters) Resolve(ctx *EffectContext) { e.resolveGate(ctx) }
+
+// resolveGate drops the kind's counters from each selected card and reports
+// whether it took any off, so it can be the first half of a Then — Book of
+// Malefaction removes a warrant counter and, only if it had one, purges a creature.
+func (e RemoveCounters) resolveGate(ctx *EffectContext) bool {
+	removed := false
 	for _, id := range e.Target.Select(ctx) {
+		if ctx.Resolver.CountersOn(id, e.Kind) == 0 {
+			continue
+		}
+		removed = true
 		if e.Amount > 0 {
 			ctx.Resolver.RemoveCountersN(id, e.Kind, e.Amount)
 			continue
 		}
 		ctx.Resolver.RemoveCounters(id, e.Kind)
 	}
+	return removed
 }

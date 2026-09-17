@@ -443,6 +443,111 @@ func TestTurnIntoCreature(t *testing.T) {
 	}
 }
 
+// TestTurnIntoCreatureForRemainderOfTurn covers the turn-scoped conversion
+// (Animator): a chosen card becomes a creature only until end of turn, then the
+// ready phase reverts it to an artifact in its controller's row while its power
+// counters persist and its creature-only combat state is dropped.
+func TestTurnIntoCreatureForRemainderOfTurn(t *testing.T) {
+	// A duration other than RemainderOfPlayerTurn is rejected.
+	if err := (TurnIntoCreature{
+		Target:   Target{Kind: TargetThisCreature},
+		Duration: OpponentNextTurn,
+	}).validate(); err == nil {
+		t.Fatal("a non-turn-scoped duration should be rejected")
+	}
+	turnScoped := TurnIntoCreature{
+		Target:   Target{Kind: TargetTheChosenCreature},
+		Duration: RemainderOfPlayerTurn,
+	}
+	if err := validateEffect(turnScoped); err != nil {
+		t.Fatalf("validate = %v", err)
+	}
+	// A chosen (non-self) card moves to its controller's battleline; the turn-scoped
+	// clause is appended.
+	if got, want := turnScoped.Text(),
+		"move it to a flank of its controller's battleline as a creature "+
+			"for the remainder of the turn"; got != want {
+		t.Fatalf("chosen text = %q, want %q", got, want)
+	}
+	// A card animating itself keeps "your battleline".
+	if got, want := (TurnIntoCreature{
+		Target:   Target{Kind: TargetThisCreature},
+		Duration: RemainderOfPlayerTurn,
+	}).Text(),
+		"move it to a flank of your battleline as a creature "+
+			"for the remainder of the turn"; got != want {
+		t.Fatalf("self text = %q, want %q", got, want)
+	}
+	// Versatile inserts "with versatile" before the turn-scoped clause.
+	if got, want := (TurnIntoCreature{
+		Target:    Target{Kind: TargetTheChosenCreature},
+		Duration:  RemainderOfPlayerTurn,
+		Versatile: true,
+	}).Text(),
+		"move it to a flank of its controller's battleline as a creature "+
+			"with versatile for the remainder of the turn"; got != want {
+		t.Fatalf("versatile text = %q, want %q", got, want)
+	}
+
+	g := NewGame("A", "B", 1)
+	art := g.AddArtifact(testArtifact("art", WithArmor(2)), 0)
+	g.AddPowerCounter(art, 3)
+	TurnIntoCreature{
+		Target:   Target{Kind: TargetThisCreature},
+		Duration: RemainderOfPlayerTurn,
+	}.Resolve(&EffectContext{Resolver: g, Source: art, Controller: 0})
+	if g.TypeOf(art) != Creature {
+		t.Fatalf("card should read as a creature, got %v", g.TypeOf(art))
+	}
+	if !g.State.Cards[art].CreatureUntilTurnEnd {
+		t.Fatal("a turn-scoped conversion should mark the card for revert")
+	}
+	// Mark creature-only state that the revert must clear.
+	g.State.Cards[art].Damage = 1
+	g.State.Cards[art].Stunned = true
+	g.State.Cards[art].Enraged = true
+	g.State.Cards[art].Warded = true
+
+	g.readyPhase(0)
+
+	if g.TypeOf(art) != Artifact {
+		t.Fatalf("card should revert to an artifact at end of turn, got %v", g.TypeOf(art))
+	}
+	if !slices.Contains(g.Artifacts(0), art) {
+		t.Fatalf("reverted card should be back in the artifact row: %v", g.Artifacts(0))
+	}
+	if slices.Contains(g.Battleline(0), art) {
+		t.Fatal("reverted card should leave the battleline")
+	}
+	if got := int(g.State.Cards[art].PowerCounters); got != 3 {
+		t.Fatalf("power counters should persist, got %d", got)
+	}
+	c := g.State.Cards[art]
+	if c.CreatureUntilTurnEnd || c.Damage != 0 || c.Stunned || c.Enraged || c.Warded {
+		t.Fatalf("revert should drop creature-only state: %+v", c)
+	}
+}
+
+// TestTurnIntoCreatureGrantsVersatile covers the versatile grant (Animator): the
+// animated creature gains versatile for the remainder of the turn, so it can be
+// used as if in the active house.
+func TestTurnIntoCreatureGrantsVersatile(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	art := g.AddArtifact(testArtifact("art"), 0)
+	TurnIntoCreature{
+		Target:    Target{Kind: TargetThisCreature},
+		Duration:  RemainderOfPlayerTurn,
+		Versatile: true,
+	}.Resolve(&EffectContext{Resolver: g, Source: art, Controller: 0})
+	if !g.HasKeyword(art, Versatile) {
+		t.Fatal("an animated creature with versatile should have the keyword")
+	}
+	g.readyPhase(0)
+	if g.HasKeyword(art, Versatile) {
+		t.Fatal("versatile should lift when the turn-scoped conversion reverts")
+	}
+}
+
 func TestTypeOf(t *testing.T) {
 	g := NewGame("A", "B", 1)
 

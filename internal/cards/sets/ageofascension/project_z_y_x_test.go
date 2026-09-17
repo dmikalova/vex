@@ -31,7 +31,7 @@ func TestProjectZYX(t *testing.T) {
 		})
 
 		h.P1.Reap(zyx)
-		h.P1.ClickOption("Yes")
+		h.P1.ClickCard(zyx)
 
 		h.Expect(archived).At(ct.PlayArea)
 	})

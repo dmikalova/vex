@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Mutant
 //
-//	While you have 4 or more Æmber, your Æmber cannot be stolen.
+//	While you have 4 Æmber or more, your Æmber cannot be stolen.
 var Cephaloist = set.New(
 	"Cephaloist",
 	card.House.Untamed,
@@ -19,5 +19,7 @@ var Cephaloist = set.New(
 	card.Provenance(card.MM, "362"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Mutant),
-	card.WithAemberCannotBeStolenWhilePoolAtLeast(4),
+	card.WithAemberCannotBeStolen(
+		card.PoolAember{Player: card.Controller, Is: card.AtLeast, Amount: 4},
+	),
 )

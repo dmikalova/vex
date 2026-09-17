@@ -40,11 +40,15 @@ type StateReader interface {
 	// AllowedHouses returns the houses the player may legally choose as their active
 	// house right now; an empty result means they have no active house this turn.
 	AllowedHouses(player int) []House
-	// NameableCards returns one representative card id per distinct card name present
-	// in the match, ordered by name so a "name a card" choice is deterministic for
-	// replay. Every playable card is registered in the match, so this reaches every
-	// name a player could name (Etan's Jar).
-	NameableCards() []LocalID
+	// NameableNames returns every card name a player may name (Etan's Jar), sorted
+	// so the choice is deterministic for replay. It is the whole implemented card
+	// database when the match injected it, and the names present in this match
+	// otherwise — naming from the match alone would show a player their opponent's
+	// deck list.
+	NameableNames() []string
+	// CardNamed returns a representative card id in this match carrying name, or
+	// ok=false when no card in the match does.
+	CardNamed(name string) (LocalID, bool)
 }
 
 // EconomyReader reads the scoring economy: Æmber pools and forged keys. It mirrors
@@ -56,8 +60,9 @@ type EconomyReader interface {
 	// immune to being stolen (The Vaultkeeper).
 	AemberProtected(player int) bool
 	// AemberTakenFromSupply reports whether Æmber a steal or capture takes from the
-	// player's pool is drawn from the common supply instead (Po's Pixies).
-	AemberTakenFromSupply(player int) bool
+	// player's pool is drawn from the common supply instead (Po's Pixies), and
+	// returns the card that redirects it so the log can name the cause.
+	AemberTakenFromSupply(player int) (LocalID, bool)
 	// Keys returns the number of keys a player has forged.
 	Keys(player int) int
 	// KeyColors returns the colours of the keys a player has forged, in forge order.
@@ -228,10 +233,11 @@ type EconomyResolver interface {
 	// the capturer and true when the gain was replaced.
 	GainAember(player, amount int) (LocalID, bool)
 	// StolenAemberCaptor returns a creature player controls that captures Æmber a
-	// steal would otherwise add to player's pool, and true, when an in-play card
-	// redirects stolen Æmber (Gargantodon) and player has a creature to hold it;
-	// ok is false otherwise, leaving the steal to land in the pool as usual.
-	StolenAemberCaptor(player int) (LocalID, bool)
+	// steal would otherwise add to player's pool, the card that redirected it, and
+	// true, when an in-play card redirects stolen Æmber (Gargantodon) and player has
+	// a creature to hold it; ok is false otherwise, leaving the steal to land in the
+	// pool as usual.
+	StolenAemberCaptor(player int) (captor, cause LocalID, ok bool)
 	// ForgeKeyAtExtraCost has a player forge one key at the current cost plus a
 	// surcharge for this forge only, if affordable (Key of Darkness forges at +6, an
 	// unmodified forge at +0). It reports whether a key was forged, so a forge card
@@ -244,12 +250,17 @@ type EconomyResolver interface {
 	// the current turn, biting immediately rather than waiting for a turn boundary.
 	RaiseKeyCostThisTurn(player, amount int, source LocalID)
 	// RaiseKeyCostPerHouseNextTurn arms a counted key surcharge for a player's next
-	// turn: amount extra Æmber for each creature of house in play, recomputed at
+	// turn: amount extra Æmber for each creature house admits in play, recomputed at
 	// each forge (Waking Nightmare).
-	RaiseKeyCostPerHouseNextTurn(player, amount int, house House, source LocalID)
+	RaiseKeyCostPerHouseNextTurn(player, amount int, house HouseMatcher, source LocalID)
 	// ForgeKeyFree has a player forge one key without paying its current cost. It
 	// reports whether a key was forged, so a forge card purges itself only when it did.
 	ForgeKeyFree(player int) bool
+	// ForgeKeyFreeForced has a player forge one key at no cost when the forge was
+	// forced on them rather than chosen (Turnkey forces the opponent). The active
+	// player — who chooses everything — picks the key's colour, and nothing is spent,
+	// so no source is purged. It reports whether a key was forged.
+	ForgeKeyFreeForced(player int) bool
 	// UnforgeKey takes one forged key back off a player (Key Hammer). It reports
 	// whether a key was actually removed, so a gate runs its follow-up only when it did.
 	UnforgeKey(player int) bool
@@ -312,8 +323,10 @@ type CreatureResolver interface {
 	// PutIntoBattlelineAsCreature turns an in-play card (an artifact, Auto-Legionary)
 	// into a creature and moves it onto a flank of its controller's battleline, the
 	// right flank when right is true. The card keeps its exhaustion and any power
-	// counters, and reads as a creature until it leaves play.
-	PutIntoBattlelineAsCreature(id LocalID, right bool)
+	// counters, and reads as a creature until it leaves play — or, when temporary is
+	// set, only until the current turn ends (Animator), when the ready phase reverts
+	// it to an artifact.
+	PutIntoBattlelineAsCreature(id LocalID, right bool, temporary bool)
 	// SetNamedHouse records the house a card named as it entered play, which its
 	// HouseLock then constrains for as long as the card stays in play.
 	SetNamedHouse(id LocalID, house House)
@@ -379,6 +392,10 @@ type CreatureResolver interface {
 	// play (Mimic Gel) or for the remainder of the turn (Creed of Nurture) when
 	// remainderOfTurn is set. It does not copy name, power, armor, type, or house.
 	GrantTextBox(recipient, source LocalID, remainderOfTurn bool)
+	// CopyStats records that recipient copies source's printed stats until recipient
+	// leaves play: its power becomes source's printed power, and it gains source's
+	// printed armor, keywords, and traits — Cyber-Clone copies a creature it purges.
+	CopyStats(recipient, source LocalID)
 }
 
 // CombatResolver resolves damage, destruction, and the fights, reaps, and actions
@@ -671,6 +688,10 @@ type TurnResolver interface {
 	// window, alongside the in-play "at the end of your turn" abilities (Ragnarok's
 	// board wipe). source is the card that armed it, recorded for attribution.
 	ScheduleAtEndOfTurn(source LocalID, do scheduledAction)
+	// ScheduleOnLeave arms an effect to resolve when the source card leaves play,
+	// however many turns later (Turnkey's forced forge). source is the card whose
+	// exit fires it.
+	ScheduleOnLeave(source LocalID, do scheduledAction)
 	// GrantMayPlayOrUse records a this-turn grant letting a player act with cards
 	// outside their active house: houses selects whose cards it frees (a named or
 	// chosen house, any house, every house but one, or every house you control),

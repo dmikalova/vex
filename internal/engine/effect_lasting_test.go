@@ -27,7 +27,7 @@ func TestLastingActionOf(t *testing.T) {
 
 func TestNextPlayed(t *testing.T) {
 	e := NextPlayed{
-		Of:         Mars,
+		Of:         namedHouse(Mars),
 		Type:       Creature,
 		EntersPlay: Ready{Target: Target{Kind: TargetTriggeringCreature}},
 	}
@@ -40,7 +40,7 @@ func TestNextPlayed(t *testing.T) {
 	g := NewGame("A", "B", 1)
 	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
 	if le := g.State.Lasting[0]; g.State.LastingCount != 1 || le.Do != actReadyPlayed ||
-		le.House != Mars ||
+		le.House != namedHouse(Mars) ||
 		le.Type != Creature ||
 		!le.Once {
 		t.Errorf(
@@ -67,11 +67,27 @@ func TestNextPlayed(t *testing.T) {
 	}
 	// An EntersPlay effect the flat registry cannot carry is rejected.
 	if (NextPlayed{
-		Of:         Mars,
+		Of:         namedHouse(Mars),
 		Type:       Creature,
 		EntersPlay: GainAember{Player: Controller, Amount: 1},
 	}).validate() == nil {
 		t.Error("an unsupported EntersPlay effect should be rejected")
+	}
+	// A context-dependent house matcher cannot survive the turn boundary.
+	if (NextPlayed{
+		Of:         HouseMatcher{Kind: MatchChosenHouse},
+		Type:       Creature,
+		EntersPlay: Ready{Target: Target{Kind: TargetTriggeringCreature}},
+	}).validate() == nil {
+		t.Error("a context-dependent house matcher should be rejected")
+	}
+	// A named matcher missing its house is rejected.
+	if (NextPlayed{
+		Of:         HouseMatcher{Kind: MatchNamedHouse},
+		Type:       Creature,
+		EntersPlay: Ready{Target: Target{Kind: TargetTriggeringCreature}},
+	}).validate() == nil {
+		t.Error("a named house matcher with no house should be rejected")
 	}
 }
 
@@ -568,5 +584,269 @@ func TestGainAbilityResolveSubjectScoped(t *testing.T) {
 	g.resolveLastingWindow(EventReap, 0, other)
 	if got := len(g.Hand(0)); got != before {
 		t.Errorf("hand after another creature reaps = %d, want %d (no draw)", got, before)
+	}
+}
+
+func TestDamageOthersAfterUsingTraitText(t *testing.T) {
+	want := "for the remainder of the turn, after you use a Dinosaur creature, " +
+		"deal 1 damage to each non-Dinosaur creature"
+	got := DamageOthersAfterUsingTrait{Trait: Dinosaur, Amount: 1}.Text()
+	if got != want {
+		t.Errorf("text = %q", got)
+	}
+}
+
+func TestDamageOthersAfterUsingTraitValidate(t *testing.T) {
+	if (DamageOthersAfterUsingTrait{Trait: Dinosaur, Amount: 1}).validate() != nil {
+		t.Error("valid effect should not error")
+	}
+	if (DamageOthersAfterUsingTrait{Amount: 1}).validate() == nil {
+		t.Error("missing trait should error")
+	}
+	if (DamageOthersAfterUsingTrait{Trait: Dinosaur}).validate() == nil {
+		t.Error("non-positive amount should error")
+	}
+}
+
+// marchBoard sets up a game with Legion's March armed for player 0 and a spread of
+// Dinosaur and non-Dinosaur creatures on both battlelines, returning their ids.
+func marchBoard(t *testing.T) (g *Game, dino, ally, allyDino, enemy, enemyDino LocalID) {
+	t.Helper()
+	g = started(t)
+	dino = g.AddToBattleline(testCreature("dino", 6, WithTraits(Dinosaur)), 0)
+	ally = g.AddToBattleline(testCreature("ally", 3), 0)
+	allyDino = g.AddToBattleline(testCreature("allyDino", 3, WithTraits(Dinosaur)), 0)
+	enemy = g.AddToBattleline(testCreature("enemy", 3), 1)
+	enemyDino = g.AddToBattleline(testCreature("enemyDino", 3, WithTraits(Dinosaur)), 1)
+	DamageOthersAfterUsingTrait{Trait: Dinosaur, Amount: 1}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0, Source: dino},
+	)
+	return g, dino, ally, allyDino, enemy, enemyDino
+}
+
+// assertMarchFired checks the non-Dinosaurs on both sides took 1 damage and the
+// Dinosaurs (including the one used) were spared.
+func assertMarchFired(t *testing.T, g *Game, dino, ally, allyDino, enemy, enemyDino LocalID) {
+	t.Helper()
+	if got := g.Damage(ally); got != 1 {
+		t.Errorf("friendly non-Dinosaur damage = %d, want 1", got)
+	}
+	if got := g.Damage(enemy); got != 1 {
+		t.Errorf("enemy non-Dinosaur damage = %d, want 1", got)
+	}
+	if got := g.Damage(dino); got != 0 {
+		t.Errorf("used Dinosaur damage = %d, want 0", got)
+	}
+	if got := g.Damage(allyDino); got != 0 {
+		t.Errorf("friendly Dinosaur damage = %d, want 0", got)
+	}
+	if got := g.Damage(enemyDino); got != 0 {
+		t.Errorf("enemy Dinosaur damage = %d, want 0", got)
+	}
+}
+
+// Reaping a Dinosaur fires the march: non-Dinosaurs on both sides take 1.
+func TestDamageOthersAfterUsingTraitReap(t *testing.T) {
+	g, dino, ally, allyDino, enemy, enemyDino := marchBoard(t)
+	if err := g.Reap(0, dino); err != nil {
+		t.Fatalf("Reap: %v", err)
+	}
+	assertMarchFired(t, g, dino, ally, allyDino, enemy, enemyDino)
+}
+
+// Fighting with a Dinosaur fires the march for the bystanders.
+func TestDamageOthersAfterUsingTraitFight(t *testing.T) {
+	g, dino, ally, allyDino, enemy, enemyDino := marchBoard(t)
+	target := g.AddToBattleline(testCreature("target", 1, WithTraits(Dinosaur)), 1)
+	if err := g.Fight(0, dino, target); err != nil {
+		t.Fatalf("Fight: %v", err)
+	}
+	// The combatant dino takes 1 combat damage from the target, not from the march;
+	// the march spares it and every other Dinosaur, and hits the non-Dinosaurs.
+	if got := g.Damage(ally); got != 1 {
+		t.Errorf("friendly non-Dinosaur damage = %d, want 1", got)
+	}
+	if got := g.Damage(enemy); got != 1 {
+		t.Errorf("enemy non-Dinosaur damage = %d, want 1", got)
+	}
+	if got := g.Damage(allyDino); got != 0 {
+		t.Errorf("friendly Dinosaur damage = %d, want 0", got)
+	}
+	if got := g.Damage(enemyDino); got != 0 {
+		t.Errorf("enemy Dinosaur bystander damage = %d, want 0", got)
+	}
+}
+
+// Using a Dinosaur's action ability fires the march.
+func TestDamageOthersAfterUsingTraitAction(t *testing.T) {
+	g := started(t)
+	actor := g.AddToBattleline(
+		testCreature("actor", 6, WithTraits(Dinosaur),
+			WithAbility(TriggerAction, GainAember{Player: Controller, Amount: 1})),
+		0,
+	)
+	ally := g.AddToBattleline(testCreature("ally", 3), 0)
+	DamageOthersAfterUsingTrait{Trait: Dinosaur, Amount: 1}.Resolve(
+		&EffectContext{Resolver: g, Controller: 0, Source: actor},
+	)
+	if err := g.UseAction(0, actor); err != nil {
+		t.Fatalf("UseAction: %v", err)
+	}
+	if got := g.Damage(ally); got != 1 {
+		t.Errorf("non-Dinosaur damage = %d, want 1", got)
+	}
+}
+
+// Using a stunned Dinosaur spends the use to recover the stun, and that still
+// counts as using it, so the march fires.
+func TestDamageOthersAfterUsingTraitUnstun(t *testing.T) {
+	g, dino, ally, allyDino, enemy, enemyDino := marchBoard(t)
+	g.State.Cards[dino].Stunned = true
+	if err := g.Reap(0, dino); err != nil {
+		t.Fatalf("Reap: %v", err)
+	}
+	if g.State.Cards[dino].Stunned {
+		t.Error("Dinosaur should have recovered from the stun")
+	}
+	assertMarchFired(t, g, dino, ally, allyDino, enemy, enemyDino)
+}
+
+// Using a non-Dinosaur does not fire the march.
+func TestDamageOthersAfterUsingTraitTraitGate(t *testing.T) {
+	g, _, ally, _, _, _ := marchBoard(t)
+	plain := g.AddToBattleline(testCreature("plain", 3), 0)
+	if err := g.Reap(0, plain); err != nil {
+		t.Fatalf("Reap: %v", err)
+	}
+	if got := g.Damage(ally); got != 0 {
+		t.Errorf("non-Dinosaur use should not fire the march, damage = %d", got)
+	}
+}
+
+func TestReturnNextActionToHandText(t *testing.T) {
+	want := "after you resolve your next tactic this turn, put it into your " +
+		"hand instead of your discard pile"
+	if got := (ReturnNextActionToHand{}).Text(); got != want {
+		t.Errorf("text = %q", got)
+	}
+}
+
+// Resolve arms a one-shot redirect the action-play path later consumes.
+func TestReturnNextActionToHandArms(t *testing.T) {
+	g := started(t)
+	ReturnNextActionToHand{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if !g.consumeNextActionToHand(0) {
+		t.Fatal("redirect was not armed")
+	}
+	if g.consumeNextActionToHand(0) {
+		t.Fatal("redirect should be consumed after one read")
+	}
+}
+
+// A redirect owned by one player is not consumed by the other.
+func TestReturnNextActionToHandScopedToController(t *testing.T) {
+	g := started(t)
+	ReturnNextActionToHand{}.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if g.consumeNextActionToHand(1) {
+		t.Fatal("opponent should not consume the redirect")
+	}
+	if !g.consumeNextActionToHand(0) {
+		t.Fatal("controller should consume its own redirect")
+	}
+}
+
+// With the redirect armed, the next action card the controller plays returns to
+// their hand instead of their discard pile, and only that one card.
+func TestReturnNextActionRedirectsPlayedAction(t *testing.T) {
+	g := NewGame("Alice", "Bob", 1)
+	g.StartTurn(0)
+	first := g.AddToHand(NewCard("First Action", Sanctum, Tactic, Common), 0)
+	second := g.AddToHand(NewCard("Second Action", Sanctum, Tactic, Common), 0)
+	g.AddLasting(LastingEffect{On: EventNextActionToHand, Do: actReturnToHand, Once: true})
+
+	if err := g.PlayAction(0, handIdxByID(g, 0, first)); err != nil {
+		t.Fatalf("PlayAction first: %v", err)
+	}
+	if !g.State.Hand[0].contains(first) {
+		t.Error("first action should have returned to hand")
+	}
+	if g.State.Discard[0].contains(first) {
+		t.Error("first action should not be in the discard pile")
+	}
+
+	// The redirect fired once: the next action discards normally.
+	if err := g.PlayAction(0, handIdxByID(g, 0, second)); err != nil {
+		t.Fatalf("PlayAction second: %v", err)
+	}
+	if !g.State.Discard[0].contains(second) {
+		t.Error("second action should discard normally after the redirect is spent")
+	}
+	if g.State.Hand[0].contains(second) {
+		t.Error("second action should not return to hand")
+	}
+}
+
+func TestTakesExtraDamageText(t *testing.T) {
+	e := TakesExtraDamage{Target: Target{Kind: TargetChosenCreature}, Amount: 2}
+	want := "for the remainder of the turn, whenever a creature takes damage, " +
+		"it takes an additional 2 damage"
+	if e.Text() != want {
+		t.Errorf("text = %q, want %q", e.Text(), want)
+	}
+}
+
+func TestTakesExtraDamageValidate(t *testing.T) {
+	if err := validateEffect(
+		TakesExtraDamage{Target: Target{Kind: TargetChosenCreature}, Amount: 2},
+	); err != nil {
+		t.Errorf("valid effect rejected: %v", err)
+	}
+	if validateEffect(TakesExtraDamage{Amount: 2}) == nil {
+		t.Error("want error for missing target")
+	}
+	if validateEffect(
+		TakesExtraDamage{Target: Target{Kind: TargetChosenCreature}, Amount: 0},
+	) == nil {
+		t.Error("want error for non-positive amount")
+	}
+}
+
+func TestTakesExtraDamageAugmentsDamage(t *testing.T) {
+	g := started(t)
+	victim := g.AddToBattleline(testCreature("victim", 10), 0)
+	TakesExtraDamage{Target: Target{Kind: TargetThisCreature}, Amount: 2}.Resolve(
+		&EffectContext{Resolver: g, Source: victim, Controller: 0},
+	)
+	// A single instance of 3 damage lands as 3 + 2 = 5.
+	g.dealDamage(0, DamageTarget{ID: victim, Amount: 3})
+	if got := g.Damage(victim); got != 5 {
+		t.Errorf("damage = %d, want 5 (3 + 2 bonus)", got)
+	}
+	// A creature with no augmentation takes only what it is dealt.
+	bare := g.AddToBattleline(testCreature("bare", 10), 0)
+	g.dealDamage(0, DamageTarget{ID: bare, Amount: 3})
+	if got := g.Damage(bare); got != 3 {
+		t.Errorf("bare damage = %d, want 3", got)
+	}
+}
+
+func TestLastingExtraDamageQuery(t *testing.T) {
+	g := started(t)
+	a := g.AddToBattleline(testCreature("a", 5), 0)
+	b := g.AddToBattleline(testCreature("b", 5), 0)
+	g.AddLasting(
+		LastingEffect{
+			On:         EventCreatureTakesDamage,
+			Do:         actTakeExtraDamage,
+			Amount:     2,
+			Subject:    a,
+			HasSubject: true,
+		},
+	)
+	if got := g.lastingExtraDamage(a); got != 2 {
+		t.Errorf("extra damage on a = %d, want 2", got)
+	}
+	if got := g.lastingExtraDamage(b); got != 0 {
+		t.Errorf("extra damage on b = %d, want 0", got)
 	}
 }

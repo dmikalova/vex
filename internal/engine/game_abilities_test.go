@@ -8,26 +8,30 @@ import "testing"
 // in game_destroy_test.go. Tests for specific released cards live with those
 // cards in the set packages under cards/.
 
-// isSubjectPredicate and subjectNarrowing recognize exactly the conditions decided
-// by the played, used, or discarded card and its board position — so a reaction
-// gated on one is narrowed before resolution instead of joining every ordering
-// window (Dexus's flank, Dark Æmber Vault's friendly Mutant creature).
+// isFixedPredicate and fixedNarrowing recognize exactly the conditions decided by
+// facts fixed for the window — the played, used, or discarded card and its board
+// position, or whose turn it is — so a reaction gated on one is narrowed before
+// resolution instead of joining every ordering window (Dexus's flank, Dark Æmber
+// Vault's friendly Mutant creature, Pile of Skulls' enemy-during-your-turn).
 func TestSubjectPredicateNarrowing(t *testing.T) {
-	subject := []Condition{
+	fixed := []Condition{
 		ItIsFriendly{},
+		ItIsEnemy{},
+		ItIsYourTurn{},
 		ItIsOfTrait{Trait: Giant},
 		OnFlank{OfIt: true, Where: RightFlank},
 		And{Conditions: []Condition{ItIsFriendly{}, ItIsOfTrait{Trait: Giant}}},
+		And{Conditions: []Condition{ItIsEnemy{}, ItIsYourTurn{}}},
 	}
-	for _, c := range subject {
-		if !isSubjectPredicate(c) {
-			t.Errorf("%T should be a subject predicate", c)
+	for _, c := range fixed {
+		if !isFixedPredicate(c) {
+			t.Errorf("%T should be a fixed predicate", c)
 		}
-		if _, ok := subjectNarrowing(Conditional{Cond: c, Then: Draw{Amount: 1}}); !ok {
+		if _, ok := fixedNarrowing(Conditional{Cond: c, Then: Draw{Amount: 1}}); !ok {
 			t.Errorf("Conditional{%T} should narrow", c)
 		}
 	}
-	notSubject := []Condition{
+	notFixed := []Condition{
 		OnFlank{OfIt: false, Where: RightFlank},
 		PoolAember{Player: Opponent, Is: AtLeast, Amount: 1},
 		And{},
@@ -38,27 +42,27 @@ func TestSubjectPredicateNarrowing(t *testing.T) {
 			},
 		},
 	}
-	for _, c := range notSubject {
-		if isSubjectPredicate(c) {
-			t.Errorf("%T should not be a subject predicate", c)
+	for _, c := range notFixed {
+		if isFixedPredicate(c) {
+			t.Errorf("%T should not be a fixed predicate", c)
 		}
 	}
 	// A Conditional with an Else, over a board condition, or a non-Conditional
 	// effect does not narrow.
-	if _, ok := subjectNarrowing(Conditional{
+	if _, ok := fixedNarrowing(Conditional{
 		Cond: ItIsFriendly{},
 		Then: Draw{Amount: 1},
 		Else: Draw{Amount: 1},
 	}); ok {
 		t.Error("a Conditional with an Else should not narrow")
 	}
-	if _, ok := subjectNarrowing(Conditional{
+	if _, ok := fixedNarrowing(Conditional{
 		Cond: PoolAember{Player: Opponent, Is: AtLeast, Amount: 1},
 		Then: Draw{Amount: 1},
 	}); ok {
 		t.Error("a board-gated Conditional should not narrow")
 	}
-	if _, ok := subjectNarrowing(Draw{Amount: 1}); ok {
+	if _, ok := fixedNarrowing(Draw{Amount: 1}); ok {
 		t.Error("a non-Conditional effect should not narrow")
 	}
 }
@@ -562,4 +566,394 @@ func TestGrantedAbilitiesFireFromConstants(t *testing.T) {
 	if g.Aember(0) != 1 {
 		t.Errorf("constant-granted Reap ability aember = %d, want 1", g.Aember(0))
 	}
+}
+
+// A constant ability with DisableTriggers stops the listed triggers from firing
+// board-wide while its source stays in play: Purifier of Souls disables every
+// Destroyed ability, so a creature destroyed alongside it gains its controller
+// nothing.
+func TestDisableTriggersStopsDestroyedAbilities(t *testing.T) {
+	g := started(t)
+	// A buffer with a plain constant ability (no DisableTriggers) is in play too,
+	// so the disable scan skips a source that disables nothing.
+	g.AddArtifact(NewCard("buffer", Dis, Artifact, Rare,
+		WithConstantAbility(ConstantAbility{PowerBonus: 1})), 0)
+	// The purifier lists a non-matching trigger before Destroyed, so the scan walks
+	// past a trigger it does not disable before finding the one it does.
+	g.AddArtifact(NewCard("purifier", Sanctum, Artifact, Rare,
+		WithConstantAbility(ConstantAbility{
+			DisableTriggers: []Trigger{TriggerAction, TriggerDestroyed},
+		})), 0)
+	victim := g.AddToBattleline(NewCard("v", Brobnar, Creature, Common, WithPower(3),
+		WithAbility(TriggerDestroyed, GainAember{Player: Controller, Amount: 1})), 0)
+
+	g.DestroyEach(0, []LocalID{victim})
+
+	if g.Aember(0) != 0 {
+		t.Errorf("aember = %d, want 0 (Destroyed ability must not fire)", g.Aember(0))
+	}
+}
+
+func TestDisableTriggersText(t *testing.T) {
+	def := NewCard("Purifier", Sanctum, Creature, Rare, WithPower(5), WithArmor(2),
+		WithConstantAbility(ConstantAbility{
+			DisableTriggers: []Trigger{TriggerDestroyed},
+		}))
+	if got := constantText(&def); got != "Destroyed effects cannot trigger." {
+		t.Errorf("constantText = %q, want %q", got, "Destroyed effects cannot trigger.")
+	}
+}
+
+// exBoardWatcher is an artifact that draws a card whenever any creature is played,
+// wherever it sits and whoever plays it (The Big One watches the whole board).
+func exBoardWatcher() CardDefinition {
+	return NewCard(
+		"Board Watcher",
+		Brobnar,
+		Artifact,
+		Rare,
+		WithAbility(TriggerAfterCreaturePlayed, Draw{Amount: 1}),
+	)
+}
+
+// exCreatureWatcher is a creature carrying the same global trigger, used to check
+// that the trigger never fires on the very creature that was played.
+func exCreatureWatcher() CardDefinition {
+	return NewCard(
+		"Creature Watcher",
+		Brobnar,
+		Creature,
+		Rare,
+		WithPower(3),
+		WithAbility(TriggerAfterCreaturePlayed, Draw{Amount: 1}),
+	)
+}
+
+// TestAfterCreaturePlayed covers the global "after a creature is played" trigger:
+// it fires for a creature played anywhere on the board, for either player's play,
+// but not on the played creature itself.
+func TestAfterCreaturePlayed(t *testing.T) {
+	t.Run("fires when the controller plays a creature away from the watcher", func(t *testing.T) {
+		g := started(t)
+		g.State.ActiveHouse = Brobnar
+		g.AddArtifact(exBoardWatcher(), 0)
+		g.AddToBattleline(testCreature("buffer", 2), 0)
+		g.AddToDeck(testCreature("top", 2), 0)
+		g.AddToHand(NewCard("newbie", Brobnar, Creature, Common, WithPower(3)), 0)
+		before := g.State.Hand[0].Count
+
+		if _, err := g.PlayCreature(0, handIdx(g, 0, "newbie"), false); err != nil {
+			t.Fatalf("PlayCreature: %v", err)
+		}
+
+		// -1 for the creature played out of hand, +1 for the card the watcher drew.
+		if got := g.State.Hand[0].Count; got != before {
+			t.Errorf("hand = %d, want %d (played one, drew one)", got, before)
+		}
+	})
+
+	t.Run("fires when the opponent plays a creature", func(t *testing.T) {
+		g := started(t)
+		g.State.ActiveHouse = Brobnar
+		g.AddArtifact(exBoardWatcher(), 0)
+		g.AddToDeck(testCreature("top", 2), 0)
+		before := g.State.Deck[0].Count
+
+		enemy := g.AddToBattleline(testCreature("enemy", 3), 1)
+		g.emitCreaturePlayed(enemy)
+
+		if got := g.State.Deck[0].Count; got != before-1 {
+			t.Errorf("deck = %d, want %d (watcher drew for the enemy play)", got, before-1)
+		}
+	})
+
+	t.Run("does not fire on the played creature itself", func(t *testing.T) {
+		g := started(t)
+		g.State.ActiveHouse = Brobnar
+		g.AddToDeck(testCreature("top", 2), 0)
+		before := g.State.Deck[0].Count
+
+		self := g.AddToBattleline(exCreatureWatcher(), 0)
+		g.emitCreaturePlayed(self)
+
+		if got := g.State.Deck[0].Count; got != before {
+			t.Errorf("deck = %d, want %d (a card must not fire on itself)", got, before)
+		}
+	})
+}
+
+// exWatcher is a creature that draws a card whenever another creature is played
+// into a battleline position adjacent to it (Fila the Researcher).
+func exWatcher() CardDefinition {
+	return NewCard(
+		"Watcher",
+		Logos,
+		Creature,
+		Uncommon,
+		WithPower(1),
+		WithAbility(TriggerAfterCreaturePlayedAdjacent, Draw{Amount: 1}),
+	)
+}
+
+// TestAfterCreaturePlayedAdjacent covers the trigger Fila the Researcher uses: it
+// fires for a creature played next to the watcher, but not for one played away
+// from it.
+func TestAfterCreaturePlayedAdjacent(t *testing.T) {
+	t.Run("fires when a creature is played next to the watcher", func(t *testing.T) {
+		g := started(t)
+		g.State.ActiveHouse = Logos
+		g.AddToBattleline(exWatcher(), 0)
+		g.AddToDeck(testCreature("top", 2), 0)
+		g.AddToHand(NewCard("newbie", Logos, Creature, Common, WithPower(3)), 0)
+		before := g.State.Hand[0].Count
+
+		if _, err := g.PlayCreature(0, handIdx(g, 0, "newbie"), false); err != nil {
+			t.Fatalf("PlayCreature: %v", err)
+		}
+
+		// -1 for the creature played out of hand, +1 for the card the watcher drew.
+		if got := g.State.Hand[0].Count; got != before {
+			t.Errorf("hand = %d, want %d (played one, drew one)", got, before)
+		}
+	})
+
+	t.Run("does not fire for a creature played away from the watcher", func(t *testing.T) {
+		g := started(t)
+		g.State.ActiveHouse = Logos
+		g.AddToBattleline(exWatcher(), 0)
+		g.AddToBattleline(testCreature("buffer", 2), 0)
+		g.AddToDeck(testCreature("top", 2), 0)
+		g.AddToHand(NewCard("newbie", Logos, Creature, Common, WithPower(3)), 0)
+		before := g.State.Hand[0].Count
+
+		// flankLeft: played on the far side, next to the buffer, not the watcher.
+		if _, err := g.PlayCreature(0, handIdx(g, 0, "newbie"), false); err != nil {
+			t.Fatalf("PlayCreature: %v", err)
+		}
+
+		// Only the played creature left the hand; the watcher never drew.
+		if got := g.State.Hand[0].Count; got != before-1 {
+			t.Errorf("hand = %d, want %d (played one, drew none)", got, before-1)
+		}
+	})
+}
+
+func TestEmitAfterEnemyDestroyed(t *testing.T) {
+	pileDef := NewCard("Pile", Brobnar, Artifact, Rare,
+		WithAbility(TriggerAfterCreatureDestroyed, Conditional{
+			Cond: And{Conditions: []Condition{ItIsEnemy{}, ItIsYourTurn{}}},
+			Then: CaptureAember{
+				Amount: 1,
+				Target: Target{Kind: TargetChosenFriendlyCreature},
+				Source: Opponent,
+			},
+		}))
+
+	t.Run("captures when an enemy creature is destroyed on your turn", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.State.ActivePlayer = 0
+		g.AddArtifact(pileDef, 0)
+		friendly := g.AddToBattleline(testCreature("f", 5), 0)
+		enemy := g.AddToBattleline(testCreature("e", 2), 1)
+		g.State.Aember[1] = 3
+
+		g.destroyEach(0, []LocalID{enemy})
+
+		if g.AmberOn(friendly) != 1 {
+			t.Errorf("friendly Æmber = %d, want 1", g.AmberOn(friendly))
+		}
+		if g.Aember(1) != 2 {
+			t.Errorf("opponent pool = %d, want 2", g.Aember(1))
+		}
+	})
+
+	t.Run("does not fire when a friendly creature is destroyed", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.State.ActivePlayer = 0
+		g.AddArtifact(pileDef, 0)
+		friendly := g.AddToBattleline(testCreature("f", 5), 0)
+		g.State.Aember[1] = 3
+
+		g.destroyEach(0, []LocalID{friendly})
+
+		if g.Aember(1) != 3 {
+			t.Errorf("opponent pool = %d, want 3 (a friendly death does not trigger)", g.Aember(1))
+		}
+	})
+
+	t.Run("does not fire on the opponent's turn", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.State.ActivePlayer = 1
+		g.AddArtifact(pileDef, 0)
+		g.AddToBattleline(testCreature("f", 5), 0)
+		mine := g.AddToBattleline(testCreature("m", 2), 0)
+		g.State.Aember[1] = 3
+
+		g.destroyEach(1, []LocalID{mine})
+
+		if g.Aember(1) != 3 {
+			t.Errorf("opponent pool = %d, want 3 (it is not your turn)", g.Aember(1))
+		}
+	})
+}
+
+func TestEmitAfterFriendlyDestroyed(t *testing.T) {
+	watcherDef := NewCard("Watcher", Brobnar, Artifact, Rare,
+		WithAbility(TriggerAfterCreatureDestroyed, Conditional{
+			Cond: ItIsFriendly{},
+			Then: GainAember{
+				Player: Controller,
+				Amount: 1,
+			},
+		}))
+
+	t.Run("fires when a creature under the same control is destroyed", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.State.ActivePlayer = 0
+		g.AddArtifact(watcherDef, 0)
+		friendly := g.AddToBattleline(testCreature("f", 5), 0)
+
+		g.destroyEach(0, []LocalID{friendly})
+
+		if g.Aember(0) != 1 {
+			t.Errorf("pool = %d, want 1", g.Aember(0))
+		}
+	})
+
+	t.Run("does not fire when an enemy creature is destroyed", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.State.ActivePlayer = 0
+		g.AddArtifact(watcherDef, 0)
+		enemy := g.AddToBattleline(testCreature("e", 2), 1)
+
+		g.destroyEach(0, []LocalID{enemy})
+
+		if g.Aember(0) != 0 {
+			t.Errorf("pool = %d, want 0 (an enemy death does not trigger)", g.Aember(0))
+		}
+	})
+}
+
+func TestEmitCreatureReaped(t *testing.T) {
+	// Orb-style: after any creature reaps, stun it.
+	orbDef := NewCard(
+		"Orb",
+		Dis,
+		Artifact,
+		Rare,
+		WithAbility(
+			TriggerAfterCreatureReaps,
+			Stun{Target: Target{Kind: TargetTriggeringCreature}},
+		),
+	)
+	// Pip-style: after an enemy creature reaps, stun it.
+	pipDef := NewCard(
+		"Pip",
+		Logos,
+		Creature,
+		Common,
+		WithAbility(
+			TriggerAfterCreatureReaps,
+			Conditional{
+				Cond: ItIsEnemy{},
+				Then: Stun{Target: Target{Kind: TargetTriggeringCreature}},
+			},
+		),
+	)
+
+	t.Run("enemy Orb stuns the reaper", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.State.ActivePlayer = 0
+		g.AddArtifact(orbDef, 1)
+		reaper := g.AddToBattleline(testCreature("r", 3), 0)
+
+		g.reapWith(reaper)
+
+		if !g.State.Cards[reaper].Stunned {
+			t.Error("reaper should be stunned by the enemy Orb")
+		}
+	})
+
+	t.Run("friendly Orb stuns your own reaper too", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.State.ActivePlayer = 0
+		g.AddArtifact(orbDef, 0)
+		reaper := g.AddToBattleline(testCreature("r", 3), 0)
+
+		g.reapWith(reaper)
+
+		if !g.State.Cards[reaper].Stunned {
+			t.Error("friendly Orb should stun your own reaper (any creature)")
+		}
+	})
+
+	t.Run("enemy-reap reaction fires for the reaper's opponent", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.State.ActivePlayer = 0
+		g.AddToBattleline(pipDef, 1)
+		reaper := g.AddToBattleline(testCreature("r", 3), 0)
+
+		g.reapWith(reaper)
+
+		if !g.State.Cards[reaper].Stunned {
+			t.Error("the enemy reaper should be stunned by Pip")
+		}
+	})
+
+	t.Run("enemy-reap reaction does not fire on the controller's own reap", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		g.State.ActivePlayer = 0
+		g.AddToBattleline(pipDef, 0)
+		reaper := g.AddToBattleline(testCreature("r", 3), 0)
+
+		g.reapWith(reaper)
+
+		if g.State.Cards[reaper].Stunned {
+			t.Error("your own reap should not fire your Pip's enemy-reap reaction")
+		}
+	})
+}
+
+// TestAfterUpgradeEnters covers the global "after an upgrade enters play"
+// trigger: it fires on an in-play watcher when an upgrade is played onto any
+// creature (Armory Officer Nel draws a card).
+func TestAfterUpgradeEnters(t *testing.T) {
+	watcher := func() CardDefinition {
+		return NewCard("Nel", StarAlliance, Creature, Common, WithPower(4),
+			WithAbility(TriggerAfterUpgradeEnters, Draw{Amount: 1}))
+	}
+
+	t.Run("fires when an upgrade is played", func(t *testing.T) {
+		g := started(t)
+		g.State.ActiveHouse = Brobnar
+		g.AddToBattleline(watcher(), 0)
+		g.AddToBattleline(testCreature("host", 3), 0)
+		g.AddToDeck(testCreature("top", 2), 0)
+		g.AddToHand(exBruteStrength(), 0)
+		before := g.State.Deck[0].Count
+
+		if _, err := g.PlayUpgrade(0, handIdx(g, 0, "Brute Strength")); err != nil {
+			t.Fatalf("PlayUpgrade: %v", err)
+		}
+
+		if got := g.State.Deck[0].Count; got != before-1 {
+			t.Errorf("deck = %d, want %d (watcher drew when the upgrade entered)",
+				got, before-1)
+		}
+	})
+
+	t.Run("fires for the opponent's upgrade too", func(t *testing.T) {
+		g := started(t)
+		g.AddToBattleline(watcher(), 0)
+		g.AddToDeck(testCreature("top", 2), 0)
+		before := g.State.Deck[0].Count
+
+		up := g.Register(NewCard("chip", StarAlliance, Upgrade, Common), 1)
+		g.emitUpgradeEntered(up)
+
+		if got := g.State.Deck[0].Count; got != before-1 {
+			t.Errorf("deck = %d, want %d (watcher drew for the enemy upgrade)",
+				got, before-1)
+		}
+	})
 }

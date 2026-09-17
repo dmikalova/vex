@@ -10,6 +10,7 @@ The _KeyForge Master Rulebook_ is the most comprehensive rules document for the 
 
 # MASTER RULEBOOK
 
+a
 VERSION 18.4
 
 # CONTENTS

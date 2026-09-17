@@ -428,3 +428,357 @@ func TestUseVerbSkipsCreatureDestroyedAtChoiceBoundary(t *testing.T) {
 		t.Errorf("a creature that left play must shed its state, got %+v", core)
 	}
 }
+
+func TestChooseCreatureThen(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	ally := g.AddToBattleline(testCreature("ally", 3), 0)
+	g.State.Cards[ally].Damage = 2
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	e := ChooseCreatureThen{
+		Target: Target{Kind: TargetChosenCreature},
+		Then: Sequence{Effects: []Effect{
+			Heal{Fully: true, Target: Target{Kind: TargetTriggeringCreature}},
+			CannotBeDealtDamage{
+				Target:   Target{Kind: TargetTriggeringCreature},
+				Duration: RemainderOfPlayerTurn,
+			},
+		}},
+	}
+	want := "choose a creature - fully heal it, and for the remainder of the turn, it cannot be dealt damage"
+	if e.Text() != want {
+		t.Errorf("text = %q, want %q", e.Text(), want)
+	}
+
+	g.SetChooser(0, &idQueueChooser{ids: []LocalID{ally}})
+	e.Resolve(ctx)
+	if g.State.Cards[ally].Damage != 0 {
+		t.Error("the chosen creature should have been healed")
+	}
+	if !g.DamageImmune(ally) {
+		t.Error("the chosen creature should be protected from damage")
+	}
+}
+
+func TestChooseCreatureThenUnderMay(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	ally := g.AddToBattleline(testCreature("ally", 3), 0)
+	g.State.Cards[ally].Damage = 2
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+	g.SetChooser(0, &idQueueChooser{ids: []LocalID{ally}})
+
+	e := ChooseCreatureThen{
+		Target: Target{Kind: TargetChosenCreature},
+		Then:   Heal{Fully: true, Target: Target{Kind: TargetTriggeringCreature}},
+	}
+	if !e.declinable() {
+		t.Error("a single chosen-creature decision should be declinable")
+	}
+	May{Do: e}.Resolve(ctx)
+	if g.State.Cards[ally].Damage != 0 {
+		t.Error("the chosen creature should have been healed under May")
+	}
+}
+
+func TestChooseCreatureThenNoCandidates(_ *testing.T) {
+	g := NewGame("A", "B", 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	// An empty battleline offers nothing to choose, so Then never resolves (no
+	// panic, no effect).
+	ChooseCreatureThen{
+		Target: Target{Kind: TargetChosenCreature},
+		Then: CannotBeDealtDamage{
+			Target:   Target{Kind: TargetTriggeringCreature},
+			Duration: RemainderOfPlayerTurn,
+		},
+	}.Resolve(ctx)
+}
+
+func TestChooseCreatureThenValidate(t *testing.T) {
+	unsetTarget := ChooseCreatureThen{
+		Then: CannotBeDealtDamage{
+			Target:   Target{Kind: TargetTriggeringCreature},
+			Duration: RemainderOfPlayerTurn,
+		},
+	}
+	if validateEffect(unsetTarget) == nil {
+		t.Error("ChooseCreatureThen with an unset Target should fail validation")
+	}
+
+	badThen := ChooseCreatureThen{
+		Target: Target{Kind: TargetChosenCreature},
+		Then:   Heal{Fully: true, Amount: 1, Target: Target{Kind: TargetTriggeringCreature}},
+	}
+	if validateEffect(badThen) == nil {
+		t.Error("ChooseCreatureThen should surface an invalid Then via validate")
+	}
+
+	good := ChooseCreatureThen{
+		Target: Target{Kind: TargetChosenCreature},
+		Then: CannotBeDealtDamage{
+			Target:   Target{Kind: TargetTriggeringCreature},
+			Duration: RemainderOfPlayerTurn,
+		},
+	}
+	if validateEffect(good) != nil {
+		t.Error("ChooseCreatureThen with a valid Target and Then should pass validation")
+	}
+}
+
+// TestOneAtATimeText covers the rendered phrase and the validation of its bounds.
+func TestOneAtATimeText(t *testing.T) {
+	e := OneAtATime{
+		Times:  Fixed(3),
+		Target: Target{Kind: TargetChosenFriendlyCreature},
+		Verbs:  []CreatureVerb{ReadyVerb{}, FightVerb{}},
+	}
+	want := "ready and fight with up to 3 different friendly creatures, one at a time"
+	if got := e.Text(); got != want {
+		t.Errorf("Text = %q, want %q", got, want)
+	}
+
+	if err := e.validate(); err != nil {
+		t.Errorf("validate = %v, want nil", err)
+	}
+	if err := (OneAtATime{Times: Fixed(3)}).validate(); err == nil {
+		t.Error("a targetless OneAtATime should not validate")
+	}
+	if err := (OneAtATime{Target: e.Target}).validate(); err == nil {
+		t.Error("a OneAtATime with no passes should not validate")
+	}
+}
+
+// TestOneAtATimeActsOnDifferentCreatures checks each pass picks a creature no
+// earlier pass took, and that it stops once the pool runs dry.
+func TestOneAtATimeActsOnDifferentCreatures(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	mine := []LocalID{
+		g.AddToBattleline(testCreature("a", 1), 0),
+		g.AddToBattleline(testCreature("b", 1), 0),
+	}
+	for _, id := range mine {
+		g.State.Cards[id].Exhausted = true
+	}
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	// Three passes over only two creatures: both are readied, then the third pass
+	// finds nobody left and stops.
+	OneAtATime{
+		Times:  Fixed(3),
+		Target: Target{Kind: TargetChosenFriendlyCreature},
+		Verbs:  []CreatureVerb{ReadyVerb{}},
+	}.Resolve(ctx)
+
+	for _, id := range mine {
+		if g.State.Cards[id].Exhausted {
+			t.Errorf("%s should have been readied", g.Name(id))
+		}
+	}
+}
+
+// TestOneAtATimeStopsWhenDeclined checks a declined pass ends the whole effect,
+// leaving the untouched creatures alone.
+func TestOneAtATimeStopsWhenDeclined(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	a := g.AddToBattleline(testCreature("a", 1), 0)
+	b := g.AddToBattleline(testCreature("b", 1), 0)
+	g.State.Cards[a].Exhausted = true
+	g.State.Cards[b].Exhausted = true
+	g.SetChooser(0, &cardDecliner{decline: true})
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	OneAtATime{
+		Times:  Fixed(2),
+		Target: Target{Kind: TargetChosenFriendlyCreature},
+		Verbs:  []CreatureVerb{ReadyVerb{}},
+	}.Resolve(ctx)
+
+	if !g.State.Cards[a].Exhausted || !g.State.Cards[b].Exhausted {
+		t.Error("a declined first pass should ready nobody")
+	}
+}
+
+// TestOneAtATimeEachSetText covers the whole-set mode's rendered phrase and that
+// it needs no Times bound to validate — Ghosthawk reaps with each neighbor.
+func TestOneAtATimeEachSetText(t *testing.T) {
+	e := OneAtATime{
+		Target: Target{Kind: TargetEachNeighbor},
+		Verbs:  []CreatureVerb{ReapVerb{}},
+	}
+	want := "reap with each of " + SelfName + "'s neighbors, one at a time"
+	if got := e.Text(); got != want {
+		t.Errorf("Text = %q, want %q", got, want)
+	}
+	if err := e.validate(); err != nil {
+		t.Errorf("validate = %v, want nil (whole-set mode needs no Times)", err)
+	}
+}
+
+// TestOneAtATimeEachSetActsOnEveryone covers the whole-set mode acting on each
+// creature the target names — both of the source's neighbors reap.
+func TestOneAtATimeEachSetActsOnEveryone(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	left := g.AddToBattleline(testCreature("left", 1), 0)
+	mid := g.AddToBattleline(testCreature("mid", 1), 0)
+	right := g.AddToBattleline(testCreature("right", 1), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0, Source: mid}
+
+	OneAtATime{
+		Target: Target{Kind: TargetEachNeighbor},
+		Verbs:  []CreatureVerb{ReapVerb{}},
+	}.Resolve(ctx)
+
+	if !g.Exhausted(left) || !g.Exhausted(right) {
+		t.Error("both neighbors should have reaped")
+	}
+	if got := g.Aember(0); got != 2 {
+		t.Errorf("Æmber = %d, want 2 from two reaps", got)
+	}
+}
+
+// TestOneAtATimeEachSetStopsWhenDeclined covers the decline path: refusing the
+// first pick ends the whole-set effect, so neither neighbor reaps.
+func TestOneAtATimeEachSetStopsWhenDeclined(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	left := g.AddToBattleline(testCreature("left", 1), 0)
+	mid := g.AddToBattleline(testCreature("mid", 1), 0)
+	right := g.AddToBattleline(testCreature("right", 1), 0)
+	g.SetChooser(0, orderRejectChooser{})
+	ctx := &EffectContext{Resolver: g, Controller: 0, Source: mid}
+
+	OneAtATime{
+		Target: Target{Kind: TargetEachNeighbor},
+		Verbs:  []CreatureVerb{ReapVerb{}},
+	}.Resolve(ctx)
+
+	if g.Exhausted(left) || g.Exhausted(right) {
+		t.Error("a declined first pass should reap nobody")
+	}
+}
+
+// TestOneAtATimeEachSetStopsWhenPoolLeaves covers the guard for a named creature
+// that leaves play mid-effect: the first neighbor's reap destroys the other, so
+// the loop finds nobody left to act on and stops without forcing a dead creature.
+func TestOneAtATimeEachSetStopsWhenPoolLeaves(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	wipe := NewCard("wipe", Brobnar, Creature, Common, WithPower(1),
+		WithAbility(TriggerAfterReap,
+			Destroy{Target: Target{Kind: TargetEachOtherFriendlyCreature}}))
+	left := g.AddToBattleline(wipe, 0)
+	mid := g.AddToBattleline(testCreature("mid", 1), 0)
+	right := g.AddToBattleline(testCreature("right", 1), 0)
+	g.SetChooser(0, &idQueueChooser{ids: []LocalID{left}})
+	ctx := &EffectContext{Resolver: g, Controller: 0, Source: mid}
+
+	OneAtATime{
+		Target: Target{Kind: TargetEachNeighbor},
+		Verbs:  []CreatureVerb{ReapVerb{}},
+	}.Resolve(ctx)
+
+	if g.inPlay(right) {
+		t.Error("the right neighbor should have been destroyed by the first reap")
+	}
+	if !g.Exhausted(left) {
+		t.Error("the first neighbor should have reaped")
+	}
+}
+
+// TestRepeatedFightText covers the rendered phrase and the validation of its
+// bounds.
+func TestRepeatedFightText(t *testing.T) {
+	e := RepeatedFight{Times: Fixed(3), Target: Target{Kind: TargetChosenFriendlyCreature}}
+	want := "ready and fight with a friendly creature 3 times, each time against " +
+		"a different enemy creature. Resolve these fights one at a time"
+	if got := e.Text(); got != want {
+		t.Errorf("Text = %q, want %q", got, want)
+	}
+
+	if err := e.validate(); err != nil {
+		t.Errorf("validate = %v, want nil", err)
+	}
+	if err := (RepeatedFight{Times: Fixed(3)}).validate(); err == nil {
+		t.Error("a targetless RepeatedFight should not validate")
+	}
+	if err := (RepeatedFight{Target: e.Target}).validate(); err == nil {
+		t.Error("a RepeatedFight with no fights should not validate")
+	}
+}
+
+// TestRepeatedFightNeverFightsTheSameEnemyTwice checks each fight is against an
+// enemy no earlier fight used, and that the attacker is readied for every one.
+func TestRepeatedFightNeverFightsTheSameEnemyTwice(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	hero := g.AddToBattleline(testCreature("hero", 10), 0)
+	foes := []LocalID{
+		g.AddToBattleline(testCreature("a", 1), 1),
+		g.AddToBattleline(testCreature("b", 1), 1),
+		g.AddToBattleline(testCreature("c", 1), 1),
+	}
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	RepeatedFight{Times: Fixed(3), Target: Target{Kind: TargetChosenFriendlyCreature}}.
+		Resolve(ctx)
+
+	if len(g.Battleline(1)) != 0 {
+		t.Errorf("enemies left = %d, want 0", len(g.Battleline(1)))
+	}
+	if len(g.Discard(1)) != len(foes) {
+		t.Errorf("discarded = %d, want %d", len(g.Discard(1)), len(foes))
+	}
+	if got := g.Damage(hero); got != 3 {
+		t.Errorf("damage taken = %d, want 3 (one per fight)", got)
+	}
+}
+
+// TestRepeatedFightStopsWithoutAnEnemy checks the effect stops rather than
+// readying its creature when there is no untouched enemy to fight.
+func TestRepeatedFightStopsWithoutAnEnemy(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	hero := g.AddToBattleline(testCreature("hero", 10), 0)
+	g.State.Cards[hero].Exhausted = true
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	RepeatedFight{Times: Fixed(3), Target: Target{Kind: TargetChosenFriendlyCreature}}.
+		Resolve(ctx)
+
+	if !g.State.Cards[hero].Exhausted {
+		t.Error("with no enemy to fight the creature should not be readied")
+	}
+}
+
+// TestRepeatedFightStopsWithoutACreature checks the effect stops when its
+// controller has nobody to fight with.
+func TestRepeatedFightStopsWithoutACreature(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	foe := g.AddToBattleline(testCreature("foe", 1), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	RepeatedFight{Times: Fixed(3), Target: Target{Kind: TargetChosenFriendlyCreature}}.
+		Resolve(ctx)
+
+	if g.Damage(foe) != 0 {
+		t.Error("with no friendly creature nothing should be fought")
+	}
+}
+
+// TestRepeatedFightStopsWhenDeclined checks a refused enemy choice ends the
+// whole effect instead of moving on to the next fight.
+func TestRepeatedFightStopsWhenDeclined(t *testing.T) {
+	g := NewGame("A", "B", 1)
+	hero := g.AddToBattleline(testCreature("hero", 10), 0)
+	g.AddToBattleline(testCreature("a", 1), 1)
+	g.AddToBattleline(testCreature("b", 1), 1)
+	g.SetChooser(0, orderRejectChooser{})
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	RepeatedFight{Times: Fixed(2), Target: Target{Kind: TargetChosenFriendlyCreature}}.
+		Resolve(ctx)
+
+	if len(g.Battleline(1)) != 2 {
+		t.Error("a declined choice should leave every enemy alone")
+	}
+	if g.Damage(hero) != 0 {
+		t.Error("a declined choice should not fight")
+	}
+}

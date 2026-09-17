@@ -39,6 +39,11 @@ const (
 	// EventFight fires after one of the controller's creatures fights (a reaction
 	// point). Warsong attaches here.
 	EventFight
+	// EventUsed fires after the controller uses one of their creatures in any way —
+	// to reap, to fight, or as an "Action:", including a use spent recovering from a
+	// stun (a reaction point). Legion's March attaches here. It is a superset of
+	// EventReap and EventFight, which fire only for their own use kind.
+	EventUsed
 	// EventEnemyCreatureDestroyed fires, for a player, each time a creature their
 	// opponent controls is destroyed (a reaction point). Loot the Bodies attaches
 	// here; it is dispatched to the opponent of the destroyed creature's controller.
@@ -102,13 +107,19 @@ const (
 	// path the next time its owner plays a card (Wild Bounty). The play-path icon loop
 	// consumes it via consumeBonusIconBoost and resolves each icon an additional time.
 	EventBonusIconBoost
+	// EventNextActionToHand is a one-shot arming, like EventBonusIconBoost: it is
+	// neither fired in a window nor queried at an outcome, only consumed by the play
+	// path the next time its owner resolves an action card (High Priest Torvus). The
+	// action-play path consumes it via consumeNextActionToHand and returns that card
+	// to its owner's hand instead of their discard pile.
+	EventNextActionToHand
 )
 
 // isReaction reports whether the event is a reaction point (fired after) rather
 // than a replacement point (queried during).
 func (e Event) isReaction() bool {
 	return e == EventCreaturePlayed || e == EventReap || e == EventFight ||
-		e == EventEnemyCreatureDestroyed || e == EventForgeKey ||
+		e == EventUsed || e == EventEnemyCreatureDestroyed || e == EventForgeKey ||
 		e == EventCardEntersPlay || e == EventCardPlayed
 }
 
@@ -174,6 +185,21 @@ const (
 	// a window, only consumed by the play path via consumeBonusIconBoost, which
 	// resolves each icon of the next played card an additional time (Wild Bounty).
 	actResolveBonusAgain
+	// actCaptureChosen has a friendly creature the active player chooses capture
+	// Amount Æmber from the opponent's pool — Commandeer's "after you play another
+	// card, a friendly creature captures 1A". Unlike actCapture, where the
+	// triggering creature captures, the capturer is chosen, so it fizzles when the
+	// active player controls no creature.
+	actCaptureChosen
+	// actReturnToHand is a one-shot arming, not a reaction: it never resolves in a
+	// window, only consumed by the action-play path via consumeNextActionToHand,
+	// which returns the next action card its owner resolves to their hand instead of
+	// their discard pile (High Priest Torvus).
+	actReturnToHand
+	// actDamageOthersOfTrait deals Amount damage to each creature that lacks the
+	// LastingEffect's Trait, on both battlelines — Legion's March's "deal 1 damage
+	// to each non-Dinosaur creature" after a Dinosaur is used.
+	actDamageOthersOfTrait
 )
 
 // describe is a short label for a reaction, used when the controller orders several
@@ -186,6 +212,8 @@ func (a lastingAction) describe() string {
 		return "ready the creature"
 	case actCapture:
 		return "capture Æmber"
+	case actCaptureChosen:
+		return "a friendly creature captures Æmber"
 	case actGiveRemainingAember:
 		return "give remaining Æmber"
 	case actDraw:
@@ -198,6 +226,8 @@ func (a lastingAction) describe() string {
 		return "exalt the creature"
 	case actStun:
 		return "stun the creature"
+	case actDamageOthersOfTrait:
+		return "deal damage to the others"
 	default:
 		return "gain Æmber"
 	}
@@ -212,14 +242,20 @@ type LastingEffect struct {
 	Do         lastingAction
 	Controller int8
 	Amount     int8
-	// House, when set, limits a reaction to a subject of that house (Blypyp readies
-	// only Mars creatures). HouseNone (the zero value) reacts to any subject.
-	House House
+	// House, when it filters, limits a reaction to a subject it admits (Blypyp
+	// readies only Mars creatures). An unset matcher (the zero value) reacts to any
+	// subject.
+	House HouseMatcher
 	// Type, when set, limits a reaction to a subject of that card type (Soft Landing
 	// readies the next creature or artifact, not the next upgrade). TypeUnset (the
 	// zero value) reacts to any type, and AnyType means "creature or artifact" — the
 	// two types that stay in play under their own name.
 	Type CardType
+	// Trait, when set, limits a reaction to a subject carrying that trait (Legion's
+	// March fires only after a Dinosaur is used). traitUnset (the zero value) reacts
+	// to any subject. The actDamageOthersOfTrait payload also reads it, to spare the
+	// creatures that carry it.
+	Trait Trait
 	// Once removes the record after it fires a single time — "the next" rather than
 	// "each time".
 	Once bool
@@ -288,10 +324,13 @@ func (g *Game) matchingLasting(event Event, actor int, subject LocalID) []Lastin
 		if int(le.Controller) != actor || le.On != event {
 			continue
 		}
-		if le.House != HouseNone && g.cat.def(subject).House != le.House {
+		if !le.House.matches(&EffectContext{Resolver: g}, subject) {
 			continue
 		}
 		if le.Type != TypeUnset && !le.Type.reacts(g.cat.def(subject).Type) {
+			continue
+		}
+		if le.Trait != traitUnset && !g.HasTrait(subject, le.Trait) {
 			continue
 		}
 		if le.HasSubject && le.Subject != subject {
@@ -376,6 +415,17 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 				Controller: actor,
 			},
 		)
+	case actDamageOthersOfTrait:
+		DealDamage{
+			Amount: int(le.Amount),
+			Target: Target{Kind: TargetEachCreature}.ExceptTrait(le.Trait),
+		}.Resolve(
+			&EffectContext{
+				Resolver:   g,
+				Source:     subject,
+				Controller: actor,
+			},
+		)
 	case actReadyPlayed:
 		g.State.Cards[subject].Exhausted = false
 		g.record(CreatureReadied{Creature: subject})
@@ -391,6 +441,18 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 				Controller: actor,
 				It:         subject,
 				HasIt:      true,
+			},
+		)
+	case actCaptureChosen:
+		CaptureAember{
+			Amount: int(le.Amount),
+			Target: Target{Kind: TargetChosenFriendlyCreature},
+			Source: Opponent,
+		}.Resolve(
+			&EffectContext{
+				Resolver:   g,
+				Source:     le.Source,
+				Controller: actor,
 			},
 		)
 	case actExalt:
@@ -452,14 +514,16 @@ func (g *Game) resolveReaction(le LastingEffect, actor int, subject LocalID) {
 
 // lastingReplacement returns the replacement a player has for a replacement event,
 // or ok=false when none is active. It is how an event site (reapWith) asks whether
-// its outcome is being replaced this turn.
-func (g *Game) lastingReplacement(player int, event Event) (lastingAction, bool) {
+// its outcome is being replaced this turn. The whole record is returned, not just
+// its action, so the site can name the card that installed it when it narrates the
+// replaced outcome.
+func (g *Game) lastingReplacement(player int, event Event) (LastingEffect, bool) {
 	for i := 0; i < int(g.State.LastingCount); i++ {
 		if le := g.State.Lasting[i]; int(le.Controller) == player && le.On == event {
-			return le.Do, true
+			return le, true
 		}
 	}
-	return 0, false
+	return LastingEffect{}, false
 }
 
 // consumeBonusIconBoost reports whether player has an armed one-shot bonus-icon
@@ -470,6 +534,22 @@ func (g *Game) consumeBonusIconBoost(player int) bool {
 	for i := 0; i < int(g.State.LastingCount); i++ {
 		le := g.State.Lasting[i]
 		if int(le.Controller) != player || le.Do != actResolveBonusAgain {
+			continue
+		}
+		g.removeLastingAt(i)
+		return true
+	}
+	return false
+}
+
+// consumeNextActionToHand reports whether player has an armed one-shot
+// "return your next action card to hand" effect (High Priest Torvus) and, if so,
+// removes it — the redirect applies to a single action card. The action-play path
+// uses it to send that card to hand instead of the discard pile.
+func (g *Game) consumeNextActionToHand(player int) bool {
+	for i := 0; i < int(g.State.LastingCount); i++ {
+		le := g.State.Lasting[i]
+		if int(le.Controller) != player || le.Do != actReturnToHand {
 			continue
 		}
 		g.removeLastingAt(i)

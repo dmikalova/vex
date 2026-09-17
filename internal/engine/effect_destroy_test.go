@@ -48,7 +48,7 @@ func TestBatchDestroy(t *testing.T) {
 	if (BatchDestroy{}).validate() == nil {
 		t.Error("validate should reject a nil Gather")
 	}
-	spare := InPlay{Player: Controller, Type: Creature, House: Untamed, Ready: true}
+	spare := InPlay{Player: Controller, Type: Creature, House: namedHouse(Untamed), Ready: true}
 	e := BatchDestroy{Gather: EachPlayerUnless{Spare: spare, Take: MostPowerfulN(1)}}
 	if err := e.validate(); err != nil {
 		t.Errorf("validate with a Gather = %v", err)
@@ -100,6 +100,49 @@ func TestEachPlayerUnlessValidate(t *testing.T) {
 	}
 	if err := (EachPlayerUnless{Spare: spare, Take: MostPowerfulN(1)}).validate(); err != nil {
 		t.Errorf("validate with Take and controller Spare = %v", err)
+	}
+}
+
+// TestChosenFromEach covers the gather that picks one creature from each of
+// several pools: it rejects fewer than two pools and an unset one, names them as
+// one noun phrase, and destroys every pick in a single batch — so the two picks
+// are both made before either creature leaves play (Imp-losion). A pool with
+// nothing to pick contributes nothing rather than stopping the effect.
+func TestChosenFromEach(t *testing.T) {
+	if (ChosenFromEach{Target{Kind: TargetChosenFriendlyCreature}}).validate() == nil {
+		t.Error("validate should reject a single pool")
+	}
+	if (ChosenFromEach{
+		Target{Kind: TargetChosenFriendlyCreature},
+		Target{},
+	}).validate() == nil {
+		t.Error("validate should reject an unset pool")
+	}
+	e := BatchDestroy{Gather: ChosenFromEach{
+		Target{Kind: TargetChosenFriendlyCreature},
+		Target{Kind: TargetChosenEnemyCreature},
+	}}
+	if err := e.validate(); err != nil {
+		t.Errorf("validate with two pools = %v", err)
+	}
+	if got := e.Text(); got != "destroy a friendly creature and an enemy creature" {
+		t.Errorf("text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	friend := g.AddToBattleline(testCreature("friend", 3), 0)
+	foe := g.AddToBattleline(testCreature("foe", 3), 1)
+	e.Resolve(&EffectContext{Resolver: g, Controller: 0})
+	if g.inPlay(friend) || g.inPlay(foe) {
+		t.Error("both picks should be destroyed")
+	}
+
+	// With an empty enemy battleline only the friendly pick is destroyed.
+	g2 := NewGame("A", "B", 1)
+	lone := g2.AddToBattleline(testCreature("lone", 3), 0)
+	e.Resolve(&EffectContext{Resolver: g2, Controller: 0})
+	if g2.inPlay(lone) {
+		t.Error("an empty pool should not stop the pools that can be picked")
 	}
 }
 
@@ -195,4 +238,90 @@ func TestDestroySamePowerEitherChosen(t *testing.T) {
 	if !g.inPlay(eSurvive) {
 		t.Error("the power-7 enemy matching neither chosen power should survive")
 	}
+}
+
+// DestroyChosen destroys any number of creatures the controller picks from its
+// Target pool and tallies them into Produced.Destroyed.
+func TestDestroyChosen(t *testing.T) {
+	if got := (DestroyChosen{Target: Target{Kind: TargetEachFriendlyCreature}}).Text(); got != "destroy any number of friendly creatures" {
+		t.Errorf("text = %q", got)
+	}
+	if (DestroyChosen{}).validate() == nil {
+		t.Error("a targetless DestroyChosen should not validate")
+	}
+	if (DestroyChosen{Target: Target{Kind: TargetEachFriendlyCreature}}).validate() != nil {
+		t.Error("a DestroyChosen with a target should validate")
+	}
+	if got := (DestroyChosen{Target: Target{Kind: TargetEachFriendlyCreature}, Amount: 2}).Text(); got != "destroy 2 friendly creatures" {
+		t.Errorf("fixed-amount text = %q", got)
+	}
+	// "another creature" pluralizes to "other creatures" (Wretched Anathema).
+	if got := (DestroyChosen{Target: Target{Kind: TargetChosenOtherCreature}, Amount: 2}).Text(); got != "destroy 2 other creatures" {
+		t.Errorf("other-creature text = %q", got)
+	}
+	if (DestroyChosen{Target: Target{Kind: TargetEachFriendlyCreature}, Amount: -1}).validate() == nil {
+		t.Error("a negative Amount should not validate")
+	}
+
+	t.Run("a fixed Amount destroys exactly that many", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		ids := []LocalID{
+			g.AddToBattleline(testCreature("a", 1), 0),
+			g.AddToBattleline(testCreature("b", 1), 0),
+			g.AddToBattleline(testCreature("c", 1), 0),
+		}
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+
+		DestroyChosen{Target: Target{Kind: TargetEachFriendlyCreature}, Amount: 2}.Resolve(ctx)
+
+		alive := 0
+		for _, id := range ids {
+			if g.inPlay(id) {
+				alive++
+			}
+		}
+		if alive != 1 {
+			t.Errorf("alive = %d, want 1 (2 of 3 destroyed)", alive)
+		}
+		if ctx.Produced.Destroyed[0] != 2 {
+			t.Errorf("Destroyed = %v, want [2 0]", ctx.Produced.Destroyed)
+		}
+	})
+
+	t.Run("destroys every pick and tallies them", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		ids := []LocalID{
+			g.AddToBattleline(testCreature("a", 1), 0),
+			g.AddToBattleline(testCreature("b", 1), 0),
+			g.AddToBattleline(testCreature("c", 1), 0),
+		}
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+
+		DestroyChosen{Target: Target{Kind: TargetEachFriendlyCreature}}.Resolve(ctx)
+
+		for _, id := range ids {
+			if g.inPlay(id) {
+				t.Errorf("%s should have been destroyed", g.Name(id))
+			}
+		}
+		if ctx.Produced.Destroyed[0] != 3 {
+			t.Errorf("Destroyed = %v, want [3 0]", ctx.Produced.Destroyed)
+		}
+	})
+
+	t.Run("declining destroys nobody", func(t *testing.T) {
+		g := NewGame("A", "B", 1)
+		id := g.AddToBattleline(testCreature("a", 1), 0)
+		g.SetChooser(0, &cardDecliner{decline: true})
+		ctx := &EffectContext{Resolver: g, Controller: 0}
+
+		DestroyChosen{Target: Target{Kind: TargetEachFriendlyCreature}}.Resolve(ctx)
+
+		if !g.inPlay(id) {
+			t.Error("a declined DestroyChosen should destroy nobody")
+		}
+		if ctx.Produced.Destroyed[0] != 0 {
+			t.Errorf("Destroyed = %v, want [0 0]", ctx.Produced.Destroyed)
+		}
+	})
 }

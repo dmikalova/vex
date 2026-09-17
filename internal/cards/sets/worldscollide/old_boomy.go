@@ -23,7 +23,8 @@ var OldBoomy = set.New(
 		card.Trigger.Reap, card.Sentences{Effects: []card.Effect{
 			card.Then{
 				First: card.DiscardUntil{
-					House:   card.House.Self,
+					Player:  card.Controller,
+					House:   card.Houses.Named(card.House.Self),
 					MayStop: true,
 				},
 				Result: card.DealDamage{Target: card.Target.This, Amount: 2},

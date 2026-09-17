@@ -102,15 +102,34 @@ func (g *Game) fight(attacker, defender LocalID) {
 	// "Before Fight" effect, Assault, or Hazardous can remove one first).
 	if g.inPlay(attacker) && g.inPlay(defender) {
 		ap, dp := g.Power(attacker), g.Power(defender)
-		g.record(Fought{
-			Attacker:      attacker,
-			AttackerPower: ap,
-			Defender:      defender,
-			DefenderPower: dp,
-		})
+		// Skirmish and the poison each side brings are read here, before any damage
+		// moves, so the fight line can name them as properties of the combatants.
+		// They are not separate lines: a keyword belongs to the creature that has it,
+		// and annotating it there says whose it is without a sentence of its own.
+		skirmish := g.hasKeyword(attacker, Skirmish)
+		attackerKeywords := FightKeywords(0)
+		if skirmish {
+			attackerKeywords |= FightSkirmish
+		}
+		if g.hasKeyword(attacker, Poison) || g.attackGrantsPoison(attacker, defender) {
+			attackerKeywords |= FightPoison
+		}
+		defenderKeywords := FightKeywords(0)
 		if elusive {
-			g.record(ElusiveAvoidedFight{Defender: defender})
-		} else {
+			defenderKeywords |= FightElusive
+		}
+		if g.hasKeyword(defender, Poison) {
+			defenderKeywords |= FightPoison
+		}
+		g.record(Fought{
+			Attacker:         attacker,
+			AttackerPower:    ap,
+			AttackerKeywords: attackerKeywords,
+			Defender:         defender,
+			DefenderPower:    dp,
+			DefenderKeywords: defenderKeywords,
+		})
+		if !elusive {
 			// Both fighters take their damage simultaneously, then destruction is
 			// resolved together as part of dealing it — so each dying creature is
 			// already in the discard before the other's "Destroyed:" ability (or the
@@ -131,13 +150,20 @@ func (g *Game) fight(attacker, defender LocalID) {
 			if ad := g.cat.def(defender).AttackDamage; ad.Fixed {
 				retaliation = ad.Amount
 			}
-			skirmish := g.hasKeyword(attacker, Skirmish)
 			if !skirmish &&
 				!g.cat.def(defender).DealsNoDamageWhenAttacked {
-				targets = append(targets,
-					DamageTarget{ID: attacker, Amount: retaliation, Source: defender})
-			} else if skirmish && retaliation > 0 {
-				g.record(SkirmishAvoidedReturn{Attacker: attacker})
+				if n := g.cat.def(defender).StealsInsteadOfDamageWhenAttacked; n > 0 &&
+					retaliation > 0 {
+					// Shoulder Id: its retaliation is replaced by its controller stealing.
+					StealAember{Amount: n}.Resolve(&EffectContext{
+						Resolver:   g,
+						Controller: defenderSide,
+						Source:     defender,
+					})
+				} else {
+					targets = append(targets,
+						DamageTarget{ID: attacker, Amount: retaliation, Source: defender})
+				}
 			}
 			// Splash-attack deals its damage to each neighbor of the creature the
 			// attacker fights, at the same time as fight damage.
@@ -176,7 +202,10 @@ func (g *Game) fight(attacker, defender LocalID) {
 		attackerSide,
 		append(
 			g.fightReactions(attacker, defender, attackerSide, defenderSide, neighborsAtFight),
-			g.lastingReactions(EventFight, attackerSide, attacker)...,
+			append(
+				g.lastingReactions(EventFight, attackerSide, attacker),
+				g.lastingReactions(EventUsed, attackerSide, attacker)...,
+			)...,
 		),
 	))
 }
@@ -186,8 +215,10 @@ func (g *Game) fight(attacker, defender LocalID) {
 // (bound to a surviving defender as "it"), the "after a creature is destroyed in a
 // fight" reactions on the survivor and on the enemies of a slain fighter, the
 // attacker's "after I am used" and the "after you use a card" reactions on its
-// controller's other cards, the board-wide "after a creature fights", and the
-// "after a neighbor fights" reactions on the attacker's flankmates. Every entry
+// controller's other cards, and the board-wide "after a creature fights" — including
+// those narrowed to a friendly fighter (Lieutenant Gorvenal) by an ItIsFriendly
+// condition, which fire only when the fighter is on the reacting card's side — and
+// the "after a neighbor fights" reactions on the attacker's flankmates. Every entry
 // carries its own actor and "it" so the whole set orders as one window while each
 // bystander reaction resolves for its owner.
 func (g *Game) fightReactions(
@@ -195,15 +226,8 @@ func (g *Game) fightReactions(
 	attackerSide, defenderSide int,
 	neighborsAtFight []LocalID,
 ) []triggeredAbility {
-	var pending []triggeredAbility
-	add := func(src LocalID, trigger Trigger, it LocalID, hasIt bool) {
-		got := g.triggeredBy(src, trigger)
-		for i := range got {
-			got[i].actor = int8(g.controller(src))
-			got[i].it, got[i].hasIt = it, hasIt
-		}
-		pending = append(pending, got...)
-	}
+	w := g.window()
+	add := w.add
 	attackerAlive, defenderAlive := g.inPlay(attacker), g.inPlay(defender)
 	// A creature the fight destroyed has left play, so its "After Fight:" ability
 	// does not resolve. A defender that survived is passed as "it" so an after-fight
@@ -246,16 +270,13 @@ func (g *Game) fightReactions(
 		}
 	}
 	// "After a creature is used to fight" on every in-play card (Shattered Throne,
-	// Peace Accord), with the fighting creature as "it".
+	// Peace Accord), with the fighting creature as "it" — including those narrowed to
+	// a friendly fighter (Lieutenant Gorvenal, by ItIsFriendly), which firesForSubject
+	// keeps only when the fighter is on the reacting card's side.
 	for player := 0; player < 2; player++ {
 		for _, id := range g.allInPlay(player) {
 			add(id, TriggerAfterCreatureFights, attacker, true)
 		}
-	}
-	// "After a friendly creature is used to fight" on the fighter's own side
-	// (Lieutenant Gorvenal), with the fighting creature as "it".
-	for _, id := range g.allInPlay(attackerSide) {
-		add(id, TriggerAfterFriendlyCreatureFights, attacker, true)
 	}
 	// "After a neighbor of this is used to fight" on the creatures that flanked the
 	// attacker when the fight began (Little Niff), with the attacker as "it". A
@@ -265,7 +286,7 @@ func (g *Game) fightReactions(
 			add(neighbor, TriggerAfterNeighborFights, attacker, true)
 		}
 	}
-	return pending
+	return w.pending
 }
 
 // spendElusive reports whether the defender's Elusive keyword stops the pending
@@ -356,12 +377,7 @@ func (g *Game) protectedByTaunt(attacker, target LocalID) bool {
 	if g.attackIgnores(attacker, Taunt) || g.hasKeyword(target, Taunt) {
 		return false
 	}
-	for _, neighbor := range neighbors(&EffectContext{Resolver: g}, target) {
-		if g.hasKeyword(neighbor, Taunt) {
-			return true
-		}
-	}
-	return false
+	return g.shieldedByTaunt(target)
 }
 
 // TauntShielded reports whether a creature is shielded by a neighboring
@@ -373,12 +389,35 @@ func (g *Game) TauntShielded(id LocalID) bool {
 	if g.hasKeyword(id, Taunt) {
 		return false
 	}
-	for _, neighbor := range neighbors(&EffectContext{Resolver: g}, id) {
+	return g.shieldedByTaunt(id)
+}
+
+// shieldedByTaunt reports whether a neighboring taunter — or, for a taunter whose
+// range reaches one step further (Lady Loreena), a neighbor's-neighbor taunter —
+// shields target. The caller has already ruled out target having taunt itself,
+// which would make it a valid target regardless.
+func (g *Game) shieldedByTaunt(target LocalID) bool {
+	ctx := &EffectContext{Resolver: g}
+	for _, neighbor := range neighbors(ctx, target) {
 		if g.hasKeyword(neighbor, Taunt) {
 			return true
 		}
+		// A taunter one step beyond the neighbor shields target when its taunt reaches
+		// its neighbors' neighbors.
+		for _, beyond := range neighbors(ctx, neighbor) {
+			if beyond != target &&
+				g.hasKeyword(beyond, Taunt) && g.tauntReachesTwo(beyond) {
+				return true
+			}
+		}
 	}
 	return false
+}
+
+// tauntReachesTwo reports whether a creature's taunt shields its neighbors'
+// neighbors as well as its neighbors (Lady Loreena). A blanked text box drops it.
+func (g *Game) tauntReachesTwo(id LocalID) bool {
+	return !g.textBlanked(id) && g.cat.def(id).TauntReachesNeighborsNeighbors
 }
 
 // onFlankOf reports whether a creature sits on a flank (the leftmost or rightmost

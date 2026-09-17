@@ -86,16 +86,22 @@ func cardinalCountText(c Count) string {
 	return "the number of " + c.CountText()
 }
 
-// OpponentForgedKeys counts the keys the controller's opponent has forged.
-type OpponentForgedKeys struct{}
+// ForgedKeys counts the keys a player has forged — the running "for each forged
+// key your opponent has" tally cards like Dr. Escotera scale by.
+type ForgedKeys struct{ Player Player }
 
-// Value returns the opponent's forged-key count.
-func (OpponentForgedKeys) Value(ctx *EffectContext) int {
-	return ctx.Resolver.Keys(ctx.Opponent())
+// Value returns the named player's forged-key count.
+func (e ForgedKeys) Value(ctx *EffectContext) int {
+	return ctx.Resolver.Keys(ctx.PlayerFor(e.Player))
 }
 
 // CountText renders the singular noun the "for each" clause repeats.
-func (OpponentForgedKeys) CountText() string { return "forged key your opponent has" }
+func (e ForgedKeys) CountText() string {
+	if e.Player == Opponent {
+		return "forged key your opponent has"
+	}
+	return "forged key you have"
+}
 
 // PurgedCards counts every card set aside in the purge pile across both players —
 // the running "+1 power for each purged card" tally Noname scales its power by.
@@ -428,20 +434,21 @@ func (c CombinedPowerOfNeighborsWithout) cardinalCountText() string {
 	return "the combined power of " + SelfName + "'s non-" + c.Without.String() + " neighbors"
 }
 
-// NeighborsSharingHouse counts the battleline neighbors of the creature in
-// context (ctx.It) that share its house — Thorium Plasmate deals 2 damage to a
-// moved creature for each of its neighbors that shares a house with it.
-type NeighborsSharingHouse struct{}
+// NeighborsMatching counts the battleline neighbors of the creature in context
+// (ctx.It) that House admits — Thorium Plasmate deals 2 damage to a moved creature
+// for each neighbor of that card's house (Houses.Contextual).
+type NeighborsMatching struct {
+	House HouseMatcher
+}
 
-// Value counts the context creature's immediate neighbors of its own house.
-func (c NeighborsSharingHouse) Value(ctx *EffectContext) int {
+// Value counts the context creature's immediate neighbors House admits.
+func (c NeighborsMatching) Value(ctx *EffectContext) int {
 	if !ctx.HasIt {
 		return 0
 	}
-	house := ctx.Resolver.House(ctx.It)
 	n := 0
 	for _, id := range neighbors(ctx, ctx.It) {
-		if ctx.Resolver.House(id) == house {
+		if c.House.matches(ctx, id) {
 			n++
 		}
 	}
@@ -449,12 +456,6 @@ func (c NeighborsSharingHouse) Value(ctx *EffectContext) int {
 }
 
 // CountText renders the singular noun the "for each" clause repeats.
-func (c NeighborsSharingHouse) CountText() string {
-	return "neighbor that shares a house with it"
-}
-
-// leadingCountText names the chosen creature when the clause leads the sentence,
-// where a trailing "it" would be a forward reference to a creature named later.
-func (c NeighborsSharingHouse) leadingCountText() string {
-	return "neighbor that shares a house with the chosen creature"
+func (c NeighborsMatching) CountText() string {
+	return c.House.qualify("neighbor")
 }

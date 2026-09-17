@@ -1,5 +1,7 @@
 package engine
 
+import "slices"
+
 // This file holds a Target's selection machinery: resolving a Target into
 // concrete card ids (Select, SelectOptional, selectWith), narrowing them by the
 // Target's filters (filter), the base sets each Kind draws from (selectBase), and
@@ -62,6 +64,24 @@ func (t Target) empty(ctx *EffectContext) bool {
 	return len(t.filter(ctx, t.selectBase(ctx))) == 0
 }
 
+// couldSelect reports whether id is among the target's candidates without making
+// the discretionary tie-break its own selection would — the tie-inclusive
+// membership test conditions use (ItIsAmong). A refinement that ties at its
+// cutoff counts every tied card as included.
+func (t Target) couldSelect(ctx *EffectContext, id LocalID) bool {
+	base := t.filter(ctx, t.selectBase(ctx))
+	if !slices.Contains(base, id) {
+		return false
+	}
+	if t.refinement == nil {
+		return true
+	}
+	if mr, ok := t.refinement.(membershipRefiner); ok {
+		return mr.includes(ctx, base, id)
+	}
+	return slices.Contains(t.candidates(ctx), id)
+}
+
 // selectWith is the shared selection path; optional switches the chosen-kind
 // prompt between a forced pick and a declinable one, and keep (when set) drops
 // candidates the calling effect could not act on.
@@ -119,6 +139,26 @@ func (t Target) expandNeighbors(ctx *EffectContext, ids []LocalID) []LocalID {
 		out = append(out, neighbors(ctx, id)...)
 	}
 	return out
+}
+
+// focus is the card an "another …" Target is other than: the card in context
+// (ctx.It) when an effect has put one there, and otherwise the card doing the
+// choosing. Falling back to the source is what keeps the exclusion honest —
+// widening to every card instead would let "another creature" land on the very
+// card it is defined against.
+func focus(ctx *EffectContext) LocalID {
+	if ctx.HasIt {
+		return ctx.It
+	}
+	return ctx.Source
+}
+
+// excludesFocus reports whether the Kind is an "another …" Target, i.e. one
+// defined by excluding the card in focus.
+func (t Target) excludesFocus() bool {
+	return t.Kind == TargetChosenOtherCreature ||
+		t.Kind == TargetChosenOtherFriendlyCreature ||
+		t.Kind == TargetEachOtherFriendlyCreature
 }
 
 // isChosen reports whether the Kind resolves to a single player-chosen creature.
@@ -494,20 +534,16 @@ func (t Target) selectBase(ctx *EffectContext) []LocalID {
 	case TargetEachEnemyCreature, TargetChosenEnemyCreature:
 		return ctx.Resolver.Battleline(ctx.Opponent())
 	case TargetEachOtherFriendlyCreature, TargetChosenOtherFriendlyCreature:
+		skip := focus(ctx)
 		out := make([]LocalID, 0)
 		for _, id := range ctx.Resolver.Battleline(ctx.Controller) {
-			if id != ctx.Source {
+			if id != skip {
 				out = append(out, id)
 			}
 		}
 		return out
 	case TargetChosenOtherCreature:
-		if !ctx.HasIt {
-			return append(
-				ctx.Resolver.Battleline(ctx.Controller),
-				ctx.Resolver.Battleline(ctx.Opponent())...)
-		}
-		return creaturesExcept(ctx, ctx.It)
+		return creaturesExcept(ctx, focus(ctx))
 	case TargetFormerNeighbors:
 		return ctx.Produced.Neighbors
 	case TargetEachNeighbor:

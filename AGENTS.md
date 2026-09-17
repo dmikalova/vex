@@ -287,83 +287,50 @@ engine seam. The load-bearing rules that affect how you add anything:
   rather than an effect node keeps that gate in its `effect_<keyword>.go` file too,
   so the keyword reads as one unit — Alpha's `barredByAlpha`, Omega's
   `endStepIfOmega`, Deploy's `deployPosition`/`chooseFlank`/`choosePosition`.
+- `mechanic_*.go` — a self-contained ambient game mechanic that is neither an
+  effect node nor a `Game`-method area: a small flat state type plus the reads and
+  gates that govern it (`mechanic_tide.go`, `mechanic_toll.go`,
+  `mechanic_bonus.go`, `mechanic_turnstat.go`, `mechanic_counter.go`,
+  `mechanic_forge_guard.go`). Reach for this so a mechanic clusters here instead of
+  sitting alone as an orphaned concept file. A mechanic already clustered by a
+  family prefix (`house_*`) stays there, and execution-model plumbing (`suspend.go`,
+  ADR 0040) is not a game mechanic and keeps its own concept file.
 - Everything else is a small type/data file named after the concept it defines:
   `card.go`, `state.go`, `types.go`, `target.go`, `duration.go`, `destination.go`,
-  `resolver.go`, `text.go`. A new enum or value type gets its **own**
-  `<concept>.go` — e.g. destinations live in `destination.go`, not
-  `game_destination.go`; the `game_` prefix is only for `Game` methods.
+  `resolver.go`, `text.go`. A concept file is a pure value/enum/display type with
+  no rules of its own (a mechanic that carries rules is a `mechanic_*.go`, above).
+  A new enum or value type gets its **own** `<concept>.go` — e.g. destinations live
+  in `destination.go`, not `game_destination.go`; the `game_` prefix is only for
+  `Game` methods.
 
-Tests live beside their source in `<name>_test.go`. The `card` facade mirrors the
+Tests live beside their source in `<name>_test.go`, named after the **source file
+that defines the symbols they exercise** — not after the card or scenario that
+motivated them. A test for `TakeControl` (defined in `effect_control.go`) goes in
+`effect_control_test.go`; do not leave it in a card-named `effect_saurian_egg_test.go`
+or a scenario-named `deals_no_damage_when_attacked_test.go`. When a would-be test
+file spans two mechanics, split its functions across the two mechanics' test files
+rather than inventing a third name. The only test file not named after a source is
+`helpers_test.go`, the shared test infrastructure. The `card` facade mirrors the
 engine's namespace/type files: `duration.go` → `card/duration.go`,
 `destination.go` → `card/destination.go`.
 
 ## Lasting "remainder of the turn" effects (event-driven, never hardcoded)
 
 Some effects last "for the remainder of the turn" and attach to a later game event
-— Full Moon gains Æmber whenever you play a creature, Charge! deals damage whenever
-you play a creature, Crystal Hive gains Æmber whenever a creature reaps, Dimension
-Door makes reaping steal instead of gain. Do **not** add a bespoke `if g.State.Foo…`
-block to the play or reap path (`PlayCreature`, `reapWith`) for each of these — that
-hardcodes every effect into the hot path and makes effects sharing a timing window
-impossible to order. Instead, everything routes through the flat registry in
-`game_lasting.go` (`AddLasting(on Event, do lastingAction, controller, amount)`).
-See ADR 0007 for the decision and its rationale.
-Because the state is a flat, pointerless value it cannot hold effect closures, so a
-lasting effect is a small enum-tagged record `LastingEffect{On Event, Do
-lastingAction, Controller, Amount}`.
+— Full Moon gains Æmber whenever you play a creature, Dimension Door makes reaping
+steal instead of gain. Do **not** add a bespoke `if g.State.Foo…` block to the play
+or reap path (`PlayCreature`, `reapWith`) for each of these — that hardcodes every
+effect into the hot path and makes effects sharing a timing window impossible to
+order. Everything routes through the flat registry in `game_lasting.go`, as either
+a **reaction** to an event or a **replacement** of its outcome (ADR 0007).
 
-There are two flavors:
+The same rule covers a card in play that says every creature gains an ability: it
+is a `ConstantAbility` with a `Target` and `Granted` abilities, never a global
+override in `discardDestroyed` or another leave-play path.
 
-- A **reaction** runs _after_ an event. Every site that fires an event (a creature
-  reaps, fights, is played; an enemy creature is destroyed) folds the actor's
-  reactions into that event's trigger window with
-  `g.lastingReactions(event, actor, subject)`, so they order together with the card
-  abilities that fire on the same event (ADR 0013): the whole window — card
-  abilities and duration reactions alike — is one flat labeled list the active
-  player orders through the `ReactionChooser` port, defaulting to the gathered
-  order. Even an event with no card ability of its own, like an enemy creature
-  destroyed, still has a window — `afterDestroyedReactions` gathers the destroy
-  triggers and folds the `EventEnemyCreatureDestroyed` reactions into the same list.
-  Each reaction resolves via `resolveReaction`, so "gain Æmber after you play a
-  creature" and "deal damage after you play a creature" order for free. Authored as
-  `card.ForRemainderOfTurn{On: card.Event.CreaturePlayed, Do: card.GainAember{...}}`
-  (Do is a small composed effect — `GainAember` or `DealDamage` to an enemy creature).
-- A **replacement** changes an event's _own outcome_ before it happens. The event
-  site queries the registry (`g.lastingReplacement(player, EventReapAember)`) and
-  applies the replacement in place — `gainReapAember` steals instead of gaining when
-  Dimension Door is active. Authored as `card.Instead{Of: card.Event.ReapAember,
-With: card.Steal}`.
-
-Adding a reaction on an existing event = supporting its `Do` in `lastingActionOf` +
-`resolveReaction`; a new event = an `Event` value, one `lastingReactions` (folded
-into that event's window) or `lastingReplacement` call at that site, and the
-`clause`/`gerund` text. You never touch the play/reap path's structure. The ready
-phase drops a player's entries via
-`clearLasting`.
-
-## Constant-granted abilities
-
-When a card in play says that every creature gains an ability, author it as a
-`ConstantAbility` with a `Target` and `Granted` abilities. Annihilation Ritual is
-the model: it grants each creature the ability that purges that creature when it
-is destroyed.
-
-```go
-card.WithConstantAbility(card.ConstantAbility{
-  Target: card.Target.EachCreature,
-  Granted: []card.Ability{{
-    Trigger: card.Trigger.Destroyed,
-    Effect:  card.PurgeCreature{Target: card.Target.This},
-  }},
-}),
-```
-
-The engine gathers every Destroyed ability for all creatures being destroyed,
-then lets the active player order them. A `PurgeCreature{Target: card.Target.This}`
-ability takes its creature out of play immediately, so that creature's remaining
-Destroyed abilities do not resolve and final destruction cleanup does not move it
-to its discard pile. Never implement this kind of card as a global override in
-`discardDestroyed` or another leave-play path.
+How to author either one is in
+[docs/card-implementation.md](docs/card-implementation.md); the engine-side
+registry and what adding an event costs are in `internal/engine/AGENTS.md`.
 
 ## KeyForge vernacular
 
@@ -376,6 +343,12 @@ files → existing implementations → closest KeyForge phrasing) is in the nami
 section of [docs/style-guide.md](docs/style-guide.md).
 
 ## Writing abilities (card authoring)
+
+The engine's card-implementation vocabulary — every effect node, target and
+filter, condition, count, trigger, duration, and card-level option, with how to
+look one up — is cataloged in
+[docs/card-implementation.md](docs/card-implementation.md). Read it before
+concluding a card needs a new mechanic.
 
 Author cards through the `card` facade in the multiline ability style —
 `card.WithAbility(` breaks onto its own line, the trigger and effect share the

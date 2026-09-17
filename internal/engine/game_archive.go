@@ -12,6 +12,10 @@ func (g *Game) offerArchives(player int) {
 	if arc.Count == 0 {
 		return
 	}
+	if src, ok := g.constantSelectiveArchivePickup(player); ok {
+		g.selectiveArchivePickup(player, src)
+		return
+	}
 	if g.chooseOption(
 		player,
 		"",
@@ -28,6 +32,31 @@ func (g *Game) offerArchives(player int) {
 	}
 	*arc = wideList{}
 	g.record(ArchivesTakenIntoHand{Player: player, Count: int(n)})
+}
+
+// selectiveArchivePickup lets a player take any number of cards from their
+// archives into their hand one at a time, declining to stop — the pickup The
+// Archivist grants its controller in place of the all-or-nothing offer. Taking
+// none is allowed and records nothing. The prompt is attributed to src, the card
+// granting the rule.
+func (g *Game) selectiveArchivePickup(player int, src LocalID) {
+	ctx := &EffectContext{Resolver: g, Controller: player, Source: src}
+	chosen := pickCards(
+		ctx,
+		"Choose a card to take from your archives into your hand",
+		0,
+		true,
+		func() []LocalID { return g.State.Archives[player].slice() },
+	)
+	for _, id := range chosen {
+		g.State.Archives[player].remove(id)
+		// Your archives may hold an enemy card, but your hand may not: an abducted card
+		// goes to the hand of whoever owns it.
+		g.State.Hand[g.owner(id)].add(id)
+	}
+	if len(chosen) > 0 {
+		g.record(ArchivesTakenIntoHand{Player: player, Count: len(chosen)})
+	}
 }
 
 // archiveFromHand moves a card from a player's hand to their archives.

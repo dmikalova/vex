@@ -122,6 +122,19 @@ func (ItHasAember) Met(ctx *EffectContext) bool {
 	return ctx.HasIt && ctx.Resolver.AmberOn(ctx.It) > 0
 }
 
+// ThisHasAember is met when the source card (ctx.Source) has any Æmber on it — the
+// source-keyed sibling of ItHasAember, for a static gate a card reads about
+// itself (Odoac the Patrician protects its pool only while it holds Æmber).
+type ThisHasAember struct{}
+
+// CondText renders the condition, naming the source card.
+func (ThisHasAember) CondText() string { return "if " + SelfName + " has \u00c6mber on it" }
+
+// Met reports whether the source card has Æmber on it.
+func (ThisHasAember) Met(ctx *EffectContext) bool {
+	return ctx.Resolver.AmberOn(ctx.Source) > 0
+}
+
 // ItHasBonusIcon is met when the card in context (ctx.It — a just-played card) has
 // at least one printed bonus icon, the gate on Adaptoid's "after you play a card
 // with a bonus icon" reaction.
@@ -189,4 +202,29 @@ func (c ItIsNotOfNamedHouse) CondText() string {
 // Met reports whether a card is in context and is not of the named house.
 func (c ItIsNotOfNamedHouse) Met(ctx *EffectContext) bool {
 	return ctx.HasIt && ctx.Resolver.House(ctx.It) != ctx.ChosenHouse
+}
+
+// ItAttachedToThisOrNeighbor is met when the upgrade in context (ctx.It — an
+// upgrade that just entered play) is attached to the source card or to one of its
+// battleline neighbors. Commander Dhrxgar uses it on the board-wide "after an
+// upgrade enters play" trigger to gain Æmber only when the upgrade lands on it or
+// beside it.
+type ItAttachedToThisOrNeighbor struct{}
+
+// CondText renders the condition, naming the source card.
+func (ItAttachedToThisOrNeighbor) CondText() string {
+	return "if it is attached to " + SelfName + " or one of its neighbors"
+}
+
+// Met reports whether an upgrade is in context and is attached to the source card
+// or one of its neighbors.
+func (ItAttachedToThisOrNeighbor) Met(ctx *EffectContext) bool {
+	if !ctx.HasIt {
+		return false
+	}
+	host, ok := ctx.Resolver.HostOf(ctx.It)
+	if !ok {
+		return false
+	}
+	return host == ctx.Source || isNeighbor(ctx, ctx.Source, host)
 }

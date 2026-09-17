@@ -266,6 +266,18 @@ func (e DeckShuffled) Text(n Namer) string {
 	return fmt.Sprintf("%s's deck is shuffled", n.PlayerName(e.Player))
 }
 
+// DiscardRecycledIntoDeck narrates the discard pile becoming a new deck when a
+// player draws from an empty one. Routine shuffles are logged too, so that every
+// reordering of a deck a player might want to reason about has a line and none
+// happens silently.
+type DiscardRecycledIntoDeck struct{ Player int }
+
+// Text renders the discard pile recycling into the deck.
+func (e DiscardRecycledIntoDeck) Text(n Namer) string {
+	return fmt.Sprintf("%s's discard pile is shuffled into their deck",
+		n.PlayerName(e.Player))
+}
+
 // CardsShuffledIntoDeckBy narrates a card shuffling one owner's creatures into
 // that owner's deck as one grouped line ("Lost in the Woods shuffles Murmook and
 // Chota Hazri into P2's deck"), so a card that shuffles several creatures at once

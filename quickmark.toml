@@ -9,6 +9,7 @@ fenced-code-language = "off" # Don't require language specifier in fenced code b
 first-line-heading = "off" # some docs open with an HTML comment or front matter rather than a heading
 line-length = "off" # Disable line length - let editors handle wrapping
 no-inline-html = "off" # Allow inline HTML (common in GitHub READMEs, badges)
+no-space-in-emphasis = "off" # Allow spaces inside emphasis markers, e.g., **text\n  moretext*
 
 [linters.settings.no-duplicate-heading]
 # keyforge-master-rulebook.md faithfully reproduces the official rulebook, which

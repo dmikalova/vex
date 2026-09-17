@@ -197,7 +197,8 @@ would find easiest to build on — not the shortest path to a passing build.
   `CardDefinition`. Moving a card between zones is one mechanism — archive,
   discard, purge, shuffle, put — parameterized by source zone, selection, and
   destination ([ADR 0031](adr/0031-zone-movement-is-one-mechanism.md)); reach for
-  the verb the card prints, not a new `…From…` type.
+  the verb the card prints, not a new `…From…` type. The full catalog of what
+  already exists is [card-implementation.md](card-implementation.md).
 - **Ask the positive question.** A condition named for its negative case hides the
   membership test underneath it. `ItIsOffIdentity` — a card whose house is not one
   of your deck's — is really the positive question, _is it of one of your

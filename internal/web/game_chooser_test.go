@@ -351,12 +351,6 @@ func TestAPromptOverAPileOpensTheViewer(t *testing.T) {
 		t.Fatalf("the viewer opened at player %d zone %q, want player %d Discard",
 			c.g.zonesPlayer, c.g.promptZone, me)
 	}
-	// A viewer the prompt opened is the only place its candidates are clickable,
-	// so a click on the backdrop does not take it away.
-	c.do(c.g.closeZones)
-	if c.g.zonesPlayer != me {
-		t.Error("the prompt's viewer was closed out from under it")
-	}
 
 	c.g.chooseCandidate(c.ctx, id)
 	<-answer
@@ -401,8 +395,8 @@ func TestABoundedDeckPromptOffersButtons(t *testing.T) {
 }
 
 // A declinable pile prompt (Not Finished with You — shuffle any number, including
-// zero) keeps the zone viewer, but the viewer can be finished from a Done
-// affordance, and closing it submits the current selection by declining.
+// zero) keeps the zone viewer, and is finished from the viewer's Done affordance.
+// Closing the viewer is not an answer: it only gets the modal out of the way.
 func TestADeclinablePilePromptIsFinishedFromTheViewer(t *testing.T) {
 	c := newClient(t)
 	c.manual()
@@ -424,12 +418,46 @@ func TestADeclinablePilePromptIsFinishedFromTheViewer(t *testing.T) {
 	if !strings.Contains(html, "zones-done") {
 		t.Error("the declinable viewer has no Done affordance")
 	}
-	// Closing the viewer submits the current (empty) selection by declining.
+	// Closing the viewer is not an answer — the prompt is still waiting.
 	c.do(c.g.closeZones)
+	if !c.g.choosing {
+		t.Error("closing the viewer answered the prompt; it should only get out of the way")
+	}
+	c.do(c.g.declineChooser)
 	if got := <-answer; got.ok {
-		t.Errorf("closing the declinable viewer answered %+v, want a decline", got)
+		t.Errorf("Done answered %+v, want a decline", got)
 	}
 	c.await("the viewer to close", func() bool { return c.g.zonesPlayer == -1 })
+}
+
+// The zone viewer is always dismissible, even under a mandatory prompt whose only
+// candidates are in the pile: the player may need to read the board underneath to
+// decide. The prompt stays up, and reopening the viewer returns to the same row.
+func TestAMandatoryPileViewerCanBeClosedWithoutAnswering(t *testing.T) {
+	c := newClient(t)
+	c.manual()
+	me := c.g.active()
+	id := c.deal(testCreature)
+	c.g.g.ManualMove(id, engine.ManualDiscard)
+	// Out of manual mode: a real match's prompts are the engine's to insist on.
+	c.do(c.g.toggleManual)
+
+	answer := c.ask("Choose a creature to put into play", false, []engine.LocalID{id})
+	c.await("the prompt to go up", func() bool { return c.g.choosing })
+
+	c.do(c.g.closeZones)
+	if c.g.zonesPlayer != -1 {
+		t.Error("a mandatory pile viewer refused to close")
+	}
+	if !c.g.choosing || c.g.promptZone != "Discard" {
+		t.Error("closing the viewer dropped the prompt; it should still be waiting")
+	}
+
+	c.g.zonesPlayer = me
+	c.g.chooseCandidate(c.ctx, id)
+	if got := <-answer; !got.ok || got.id != id {
+		t.Errorf("the reopened viewer answered %+v, want card %d", got, id)
+	}
 }
 
 // A prompt over cards on the board leaves the viewer alone: the board already
@@ -481,4 +509,92 @@ func TestAnsweringWhenNoPromptIsUp(t *testing.T) {
 	}
 	c.g.chooseCandidate(c.ctx, c.board()[0])
 	<-answer
+}
+
+// askReaction raises a reaction-ordering window from a background goroutine, the
+// way the engine's trigger window does, and hands back the channel its answer
+// arrives on.
+func (c *client) askReaction(
+	prompt string,
+	reactions []engine.OrderableReaction,
+) chan int {
+	c.t.Helper()
+	out := make(chan int, 1)
+	go func() { out <- c.g.chooser.ChooseReaction(prompt, reactions) }()
+	return out
+}
+
+// A trigger window over cards on the board is answered by clicking the card whose
+// ability resolves next, not by reading a menu of ability text.
+func TestOrderingReactionsByClickingTheSourceCard(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	c.playFromHand(c.deal(testCreature))
+	c.playFromHand(c.deal(testCreature))
+	board := c.board()
+
+	answer := c.askReaction("Resolve destroyed abilities", []engine.OrderableReaction{
+		{Card: board[0], HasCard: true, Label: "First: gain 1 Æmber"},
+		{Card: board[1], HasCard: true, Label: "Second: draw a card"},
+	})
+	c.await("the reaction window to go up", func() bool { return c.g.choosing })
+
+	if c.g.choosingOption {
+		t.Error("the window fell back to a button list; it should be clickable")
+	}
+	c.g.chooseCandidate(c.ctx, board[1])
+	if got := <-answer; got != 1 {
+		t.Errorf("clicking the second source answered %d, want 1", got)
+	}
+}
+
+// One card carrying two pending abilities cannot be told apart by a click alone,
+// so the click picks the card and a button list then picks the ability. It is
+// never resolved top-down behind the player's back.
+func TestOneCardWithTwoReactionsAsksWhichAbility(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	c.playFromHand(c.deal(testCreature))
+	c.playFromHand(c.deal(testCreature))
+	board := c.board()
+
+	answer := c.askReaction("Resolve destroyed abilities", []engine.OrderableReaction{
+		{Card: board[0], HasCard: true, Label: "First: gain 1 Æmber"},
+		{Card: board[1], HasCard: true, Label: "Second: draw a card"},
+		{Card: board[1], HasCard: true, Label: "Second: deal 1 damage"},
+	})
+	c.await("the reaction window to go up", func() bool { return c.g.choosing })
+
+	c.g.chooseCandidate(c.ctx, board[1])
+	c.await("the follow-up ability prompt", func() bool { return c.g.choosingOption })
+	if c.g.optionPrompt != whichAbilityPrompt {
+		t.Errorf("follow-up prompt = %q, want %q", c.g.optionPrompt, whichAbilityPrompt)
+	}
+
+	c.do(c.g.chooseOptionIdx(1))
+	if got := <-answer; got != 2 {
+		t.Errorf("the second ability of the clicked card answered %d, want 2", got)
+	}
+}
+
+// A window carrying a reaction with no card behind it (a lasting duration
+// reaction) has nothing to click, so the whole window stays on the labeled list
+// rather than hiding the cardless entry.
+func TestAReactionWithoutACardStaysOnTheLabeledList(t *testing.T) {
+	c := newClient(t)
+	c.manualTurn(testHouse)
+	c.playFromHand(c.deal(testCreature))
+	board := c.board()
+
+	answer := c.askReaction("Choose which card's ability resolves next",
+		[]engine.OrderableReaction{
+			{Card: board[0], HasCard: true, Label: "First: gain 1 Æmber"},
+			{Label: "gain 1 Æmber"},
+		})
+	c.await("the labeled list to go up", func() bool { return c.g.choosingOption })
+
+	c.do(c.g.chooseOptionIdx(1))
+	if got := <-answer; got != 1 {
+		t.Errorf("the labeled list answered %d, want 1", got)
+	}
 }

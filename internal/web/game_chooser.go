@@ -165,22 +165,85 @@ func (c *webChooser) OrderCreatures(
 }
 
 // ChooseReaction implements the engine's ReactionChooser: a trigger window that
-// needs ordering — several card abilities, duration reactions, or a mix — is shown
-// as a flat labeled list, and the player clicks which resolves next. It reuses the
-// labeled-option prompt (ChooseOption), so the reactions read as a menu of their
-// rendered ability text rather than asking the player to click cards on the board.
+// needs ordering — several card abilities, duration reactions, or a mix — is
+// answered by clicking the card whose ability resolves next, the same way every
+// other prompt is answered on the board. A window the board cannot express falls
+// back to a flat labeled list of the rendered ability text (see reactionCards).
 func (c *webChooser) ChooseReaction(
 	prompt string,
 	reactions []engine.OrderableReaction,
 ) int {
 	outer := c.enter()
+	idx := c.pickReaction(prompt, reactions)
+	c.record(outer, input{Kind: inReaction, Index: idx})
+	return idx
+}
+
+// pickReaction answers one ordering step. With two or more distinct source cards
+// on the board it is a card prompt; clicking a card that carries two pending
+// abilities then asks which of them resolves first, rather than silently taking
+// the top one. Anything the board cannot point at is answered by label.
+func (c *webChooser) pickReaction(prompt string, reactions []engine.OrderableReaction) int {
+	cards := c.reactionCards(reactions)
+	if len(cards) < 2 {
+		return c.chooseReactionByLabel(prompt, reactions)
+	}
+	r := c.raise("", prompt, cards, false, false)
+	if !r.ok {
+		return 0
+	}
+	var onCard []int
+	for i, x := range reactions {
+		if x.HasCard && x.Card == r.id {
+			onCard = append(onCard, i)
+		}
+	}
+	switch len(onCard) {
+	case 0:
+		return 0
+	case 1:
+		return onCard[0]
+	}
+	sub := make([]engine.OrderableReaction, len(onCard))
+	for i, at := range onCard {
+		sub[i] = reactions[at]
+	}
+	return onCard[c.chooseReactionByLabel(whichAbilityPrompt, sub)]
+}
+
+// whichAbilityPrompt is the follow-up when the clicked card carries more than one
+// pending ability: the click said which card, this says which of its abilities.
+const whichAbilityPrompt = "Choose which of its abilities resolves next"
+
+// reactionCards lists the distinct source cards a window can be answered by
+// clicking. It reports none when any entry belongs to no card at all — a duration
+// reaction — so such a window stays on the labeled list and no reaction is hidden.
+// A source sitting in a pile (WithTriggersFromDiscard) is kept: presentPrompt opens
+// that pile's viewer, which is closable while board candidates remain.
+func (c *webChooser) reactionCards(reactions []engine.OrderableReaction) []engine.LocalID {
+	var cards []engine.LocalID
+	for _, r := range reactions {
+		if !r.HasCard {
+			return nil
+		}
+		if !containsID(cards, r.Card) {
+			cards = append(cards, r.Card)
+		}
+	}
+	return cards
+}
+
+// chooseReactionByLabel offers the reactions as a menu of their rendered ability
+// text, for the windows a board click cannot express.
+func (c *webChooser) chooseReactionByLabel(
+	prompt string,
+	reactions []engine.OrderableReaction,
+) int {
 	options := make([]string, len(reactions))
 	for i, r := range reactions {
 		options[i] = r.Label
 	}
-	idx := c.ChooseOption("", prompt, options)
-	c.record(outer, input{Kind: inReaction, Index: idx})
-	return idx
+	return c.ChooseOption("", prompt, options)
 }
 
 // raise shows a card prompt on the UI goroutine and blocks the action goroutine
@@ -264,9 +327,12 @@ const maxPromptButtons = 6
 // action-bar buttons, since the cards are hidden until the effect reveals them and
 // the set is small. Every other out-of-play pick — a visible pile (discard,
 // archives, purge), or an unbounded one (declinable — shuffle any number) — opens
-// the zone viewer, which shows the whole pile as full card faces.
+// the zone viewer, which shows the whole pile as full card faces. A prompt whose
+// candidates are split between a pile and the board (a trigger window holding a
+// WithTriggersFromDiscard source alongside sources in play) opens the pile too; the
+// viewer closes freely, so the board candidates are reachable either way.
 func (g *game) presentPrompt(candidates []engine.LocalID, declinable bool) {
-	p, label, inPile := g.zoneOfCard(candidates[0])
+	p, label, inPile := g.firstPileCandidate(candidates)
 	if !inPile {
 		return
 	}
@@ -275,6 +341,20 @@ func (g *game) presentPrompt(candidates []engine.LocalID, declinable bool) {
 		return
 	}
 	g.zonesPlayer, g.promptZone, g.promptZoneScrolled = p, label, false
+}
+
+// firstPileCandidate finds the out-of-play pile a prompt reaches into, reading the
+// candidates in order so a window split across the board and a pile still opens
+// the pile rather than leaving its candidates unreachable.
+func (g *game) firstPileCandidate(
+	candidates []engine.LocalID,
+) (player int, label string, ok bool) {
+	for _, id := range candidates {
+		if p, l, inPile := g.zoneOfCard(id); inPile {
+			return p, l, true
+		}
+	}
+	return 0, "", false
 }
 
 // zoneOfCard finds the out-of-play pile a card sits in, if any, so a prompt over
@@ -340,6 +420,12 @@ func (c *webChooser) ChooseOption(source, prompt string, options []string) int {
 		c.g.optionPrompt = prompt
 		c.g.optionLabels = options
 		c.g.promptSource = source
+		// A prompt whose options are the whole card database (Etan's Jar) is answered
+		// through the card-name typeahead, not a list of a thousand buttons.
+		if c.g.cardNameOptions() {
+			c.g.pickerOpen, c.g.pickerNaming = true, true
+			c.g.pickerQuery, c.g.pickerFocused, c.g.pickerCursor = "", false, 0
+		}
 	})
 	var i int
 	select {
@@ -355,6 +441,8 @@ func (c *webChooser) ChooseOption(source, prompt string, options []string) int {
 		c.g.optionPrompt = ""
 		c.g.optionLabels = nil
 		c.g.promptSource = ""
+		c.g.pickerNaming = false
+		c.g.pickerOpen = false
 	})
 	c.record(outer, input{Kind: inOption, Index: i})
 	return i
@@ -586,18 +674,11 @@ func (g *game) onScorePillClick(ctx app.Context, _ app.Event) {
 	g.zonesPlayer = p
 }
 
-// closeZones hides the out-of-play zone viewer.
-func (g *game) closeZones(ctx app.Context, e app.Event) {
-	// A viewer opened by a prompt is the only place its candidates are clickable,
-	// so it normally stays up until the prompt is answered. A declinable prompt
-	// (Not Finished with You — shuffle any number, including zero) can be finished
-	// from here: closing submits the current selection by declining the next pick.
-	if g.promptZone != "" {
-		if g.chooserDeclinable {
-			g.declineChooser(ctx, e)
-		}
-		return
-	}
+// closeZones hides the out-of-play zone viewer. It always closes, even under a
+// mandatory prompt whose only candidates are in the pile: the player may need to
+// read the board underneath to decide. Closing answers nothing — the prompt stays
+// up, the zone stays recorded, and reopening the viewer returns to the same row.
+func (g *game) closeZones(_ app.Context, _ app.Event) {
 	g.zonesPlayer = -1
 }
 

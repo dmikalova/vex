@@ -276,7 +276,11 @@ func (e PurgeCreature) purge(ctx *EffectContext, ids []LocalID) bool {
 	purged := 0
 	for _, id := range ids {
 		if resolverInPlay(ctx, id) {
-			ctx.Produced.Purged[ctx.Resolver.Controller(id)]++
+			controller := ctx.Resolver.Controller(id)
+			ctx.Produced.Purged[controller]++
+			if len(ids) == 1 {
+				ctx.ItController = controller
+			}
 			purgeFrom(ctx, inPlay, 0, id)
 			purged++
 			continue
@@ -285,6 +289,9 @@ func (e PurgeCreature) purge(ctx *EffectContext, ids []LocalID) bool {
 		for _, d := range ctx.Resolver.Discard(owner) {
 			if d == id {
 				ctx.Produced.Purged[owner]++
+				if len(ids) == 1 {
+					ctx.ItController = owner
+				}
 				purgeFrom(ctx, Discard, owner, id)
 				purged++
 				break

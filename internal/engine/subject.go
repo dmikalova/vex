@@ -15,6 +15,9 @@ const (
 	// ThatCard names the card an effect just acted on when "it" would be ambiguous
 	// — Fidgit discards from one of two sources, so its follow-up says "that card".
 	ThatCard
+	// FoughtCreature names the creature the source is fighting — Baldric the Bold
+	// asks about "the fought creature", not "it".
+	FoughtCreature
 )
 
 // noun renders the subject as the phrase a condition puts in front of "is".
@@ -24,6 +27,8 @@ func (s Subject) noun() string {
 		return "the discarded card"
 	case ThatCard:
 		return "that card"
+	case FoughtCreature:
+		return "the fought creature"
 	default:
 		return "it"
 	}

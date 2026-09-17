@@ -168,3 +168,61 @@ func TestCaptureStolenAemberText(t *testing.T) {
 		t.Errorf("rules missing redirect line:\n%s", got)
 	}
 }
+
+// A creature with StealsInsteadOfDamageWhenAttacked deals no retaliation damage;
+// instead its controller steals — Shoulder Id. The attacker still takes no damage
+// and Shoulder Id still takes the attacker's fight damage.
+func TestStealsInsteadOfDamageWhenAttacked(t *testing.T) {
+	shoulder := NewCard("Shoulder Id", Shadows, Creature, Common,
+		WithPower(6), WithStealsInsteadOfDamageWhenAttacked(1))
+	if got := RenderCardRules(&shoulder); !strings.Contains(got,
+		"When Shoulder Id would deal damage, steal 1 Æmber instead.") {
+		t.Fatalf("Shoulder Id rules = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	attacker := g.AddToBattleline(testCreature("attacker", 5), 0)
+	defender := g.AddToBattleline(shoulder, 1)
+	g.State.ActivePlayer = 0
+	g.SetAember(0, 3)
+
+	if err := g.Fight(0, attacker, defender); err != nil {
+		t.Fatalf("Fight: %v", err)
+	}
+	if !g.inPlay(attacker) {
+		t.Error("attacker should survive: Shoulder Id deals no retaliation damage")
+	}
+	if got := g.Damage(attacker); got != 0 {
+		t.Errorf("attacker damage = %d, want 0", got)
+	}
+	if got := g.Damage(defender); got != 5 {
+		t.Errorf("Shoulder Id damage = %d, want 5 (it still takes fight damage)", got)
+	}
+	if got := g.Aember(1); got != 1 {
+		t.Errorf("defender controller Æmber = %d, want 1 (stolen)", got)
+	}
+	if got := g.Aember(0); got != 2 {
+		t.Errorf("attacker controller Æmber = %d, want 2 (robbed of 1)", got)
+	}
+}
+
+// When the attacker's controller has no Æmber, the steal takes nothing, but the
+// retaliation damage is still replaced — the attacker takes no damage.
+func TestStealsInsteadOfDamageWhenAttackedEmptyPool(t *testing.T) {
+	shoulder := NewCard("Shoulder Id", Shadows, Creature, Common,
+		WithPower(6), WithStealsInsteadOfDamageWhenAttacked(1))
+	g := NewGame("A", "B", 1)
+	attacker := g.AddToBattleline(testCreature("attacker", 5), 0)
+	defender := g.AddToBattleline(shoulder, 1)
+	g.State.ActivePlayer = 0
+
+	if err := g.Fight(0, attacker, defender); err != nil {
+		t.Fatalf("Fight: %v", err)
+	}
+	if got := g.Damage(attacker); got != 0 {
+		t.Errorf("attacker damage = %d, want 0", got)
+	}
+	if got := g.Aember(1); got != 0 {
+		t.Errorf("defender controller Æmber = %d, want 0 (nothing to steal)", got)
+	}
+}

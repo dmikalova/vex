@@ -132,6 +132,13 @@ type CardCore struct {
 	// attachment (HostPlus), not this field, because the discard path for a shed
 	// upgrade does not reset the core.
 	LastingType CardType
+	// CreatureUntilTurnEnd marks a card whose LastingType conversion to a creature
+	// lasts only the current turn (Animator), as opposed to the permanent conversion
+	// Auto-Legionary makes. The ready phase reverts every card carrying it to an
+	// artifact in its controller's row, so a turn-scoped conversion lifts at end of
+	// turn like every other RemainderOfPlayerTurn effect. resetCore clears it when the
+	// card leaves play.
+	CreatureUntilTurnEnd bool
 	// TextBoxSourcePlus records that this creature has gained the printed text box
 	// (traits, keywords, and triggered abilities) of another card until it leaves
 	// play — Mimic Gel copies a chosen creature. It stores that source's LocalID+1
@@ -145,6 +152,14 @@ type CardCore struct {
 	// hand creature's text box to a creature in play. It stores that source's
 	// LocalID+1 like TextBoxSourcePlus; the ready phase clears it for every creature.
 	TextBoxTurnSourcePlus uint8
+	// CopiedStatsSourcePlus records that this creature copies another card's printed
+	// stats until it leaves play: its power becomes that card's printed power, and it
+	// gains that card's printed armor, keywords, and traits — Cyber-Clone copies a
+	// creature it purges. It stores that source's LocalID+1 (0 means "no copy") like
+	// TextBoxSourcePlus, and resetCore clears it when this card leaves play. The
+	// source's printed stats are read from the immutable catalog, so they stay
+	// available even after the source card leaves play.
+	CopiedStatsSourcePlus uint8
 	// NamedHouse is a house this card named as it entered play and holds for as long
 	// as it stays there, for a HouseLock that constrains that house rather than one
 	// printed on the card — Restringuntus bars the house it named. It is the card's

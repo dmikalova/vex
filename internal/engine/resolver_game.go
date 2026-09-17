@@ -21,8 +21,13 @@ func (g *Game) Controller(id LocalID) int { return g.controller(id) }
 
 // HasTrait reports whether a card has a trait, printed, gained through another
 // card's text box (Mimic Gel copies a creature, Creed of Nurture lends one), or
-// granted until the controller's next turn (the Mutation cycle grants Mutant).
+// granted until the controller's next turn (the Mutation cycle grants Mutant). A
+// RemovesTraits constant in play (Grey Aberrant) strips every trait source, so the
+// card then has none.
 func (g *Game) HasTrait(id LocalID, trait Trait) bool {
+	if g.constantRemovesTraits(id) {
+		return false
+	}
 	if trait != traitUnset && g.State.Cards[id].TraitUntilNextTurn == trait {
 		return true
 	}
@@ -34,11 +39,34 @@ func (g *Game) HasTrait(id LocalID, trait Trait) bool {
 			return true
 		}
 	}
+	// A creature copying another card's printed stats (Cyber-Clone) gains that card's
+	// printed traits.
+	if src, ok := g.copiedStatsSource(id); ok && g.cat.def(src).hasTrait(trait) {
+		return true
+	}
 	return false
 }
 
-// TraitCount reports how many traits a card has.
-func (g *Game) TraitCount(id LocalID) int { return len(g.cat.def(id).Traits) }
+// TraitCount reports how many traits a card has. A RemovesTraits constant in play
+// (Grey Aberrant) strips them, so the card then counts zero.
+func (g *Game) TraitCount(id LocalID) int {
+	if g.constantRemovesTraits(id) {
+		return 0
+	}
+	traits := g.cat.def(id).Traits
+	// A creature copying another card's printed stats (Cyber-Clone) gains that card's
+	// printed traits, so count each copied trait it does not already print.
+	if src, ok := g.copiedStatsSource(id); ok {
+		count := len(traits)
+		for _, t := range g.cat.def(src).Traits {
+			if !g.cat.def(id).hasTrait(t) {
+				count++
+			}
+		}
+		return count
+	}
+	return len(traits)
+}
 
 // HasBonusIcons reports whether a card prints at least one bonus icon. A gigantic
 // base half prints none itself; while in play it exposes its linked art half's
@@ -57,8 +85,13 @@ func (g *Game) BonusIconCount(id LocalID) int {
 	return len(g.bonusIconsOf(id))
 }
 
-// SharesTrait reports whether two cards have at least one trait in common.
+// SharesTrait reports whether two cards have at least one trait in common. A card
+// whose traits are stripped by a RemovesTraits constant in play (Grey Aberrant)
+// shares no trait with anything.
 func (g *Game) SharesTrait(a, b LocalID) bool {
+	if g.constantRemovesTraits(a) || g.constantRemovesTraits(b) {
+		return false
+	}
 	other := g.cat.def(b)
 	for _, tr := range g.cat.def(a).Traits {
 		if other.hasTrait(tr) {
@@ -208,6 +241,10 @@ func (g *Game) ForgeKeyAtExtraCost(player, extra int) bool {
 // ForgeKeyFree forges one key without paying its current cost and reports whether
 // a key was forged.
 func (g *Game) ForgeKeyFree(player int) bool { return g.forgeKeyFree(player) }
+
+// ForgeKeyFreeForced forges one free key for a player who did not choose to forge,
+// with the active player picking its colour, and reports whether a key was forged.
+func (g *Game) ForgeKeyFreeForced(player int) bool { return g.forgeKeyFreeForced(player) }
 
 // IsCreature reports whether a card is a creature, by its current type.
 func (g *Game) IsCreature(id LocalID) bool { return g.TypeOf(id) == Creature }
@@ -382,20 +419,24 @@ func (g *Game) SetLastingHouse(id LocalID, house House) {
 
 // PutIntoBattlelineAsCreature turns an in-play card into a creature and moves it to
 // a flank of its controller's battleline. Only artifacts convert this way today
-// (Auto-Legionary), so the card is pulled from the artifact row and inserted at the
-// chosen flank; it keeps its exhaustion, Æmber, and power counters, and its
-// LastingType makes it read as a creature until it leaves play. Its ArmorRemaining
-// is topped up to its full armor so it can absorb hits as a creature this turn.
+// (Auto-Legionary, Animator), so the card is pulled from the artifact row and
+// inserted at the chosen flank; it keeps its exhaustion, Æmber, and power counters,
+// and its LastingType makes it read as a creature. Its ArmorRemaining is topped up
+// to its full armor so it can absorb hits as a creature this turn. When temporary is
+// set the conversion lasts only the current turn (Animator): CreatureUntilTurnEnd
+// marks it so the ready phase reverts it to an artifact at end of turn; otherwise it
+// stays a creature until it leaves play (Auto-Legionary).
 // A repeated use finds the card already a creature in the battleline; removing it
 // from there first makes the second use reposition it to the chosen flank rather
 // than insert a duplicate.
-func (g *Game) PutIntoBattlelineAsCreature(id LocalID, right bool) {
+func (g *Game) PutIntoBattlelineAsCreature(id LocalID, right bool, temporary bool) {
 	controller := g.controller(id)
 	if !g.State.Artifacts[controller].remove(id) {
 		g.State.Battleline[controller].remove(id)
 	}
 	c := &g.State.Cards[id]
 	c.LastingType = Creature
+	c.CreatureUntilTurnEnd = temporary
 	c.ArmorRemaining = int16(g.armor(id))
 	if right {
 		g.State.Battleline[controller].add(id)
@@ -403,6 +444,45 @@ func (g *Game) PutIntoBattlelineAsCreature(id LocalID, right bool) {
 		g.State.Battleline[controller].insertAt(0, id)
 	}
 	g.record(TurnedIntoCreature{Card: id, Right: right})
+}
+
+// revertTemporaryCreatures returns every card that turned into a creature only for
+// the current turn (Animator) back to an artifact in its controller's row. It runs
+// in the ready phase over both players' cards, since a card can be animated on the
+// opponent's turn, so a turn-scoped conversion lifts at end of turn like every other
+// RemainderOfPlayerTurn effect.
+func (g *Game) revertTemporaryCreatures() {
+	var revert []LocalID
+	for owner := 0; owner < 2; owner++ {
+		for _, id := range g.allInPlay(owner) {
+			if g.State.Cards[id].CreatureUntilTurnEnd {
+				revert = append(revert, id)
+			}
+		}
+	}
+	for _, id := range revert {
+		g.revertToArtifact(id)
+	}
+}
+
+// revertToArtifact moves a temporarily animated card out of its controller's
+// battleline and back into their artifact row, dropping the combat state it held
+// only as a creature (damage, stun, enrage, ward, armor) but keeping its permanent
+// power counters, its Æmber, and its exhaustion.
+func (g *Game) revertToArtifact(id LocalID) {
+	controller := g.controller(id)
+	g.State.Battleline[controller].remove(id)
+	c := &g.State.Cards[id]
+	c.LastingType = TypeUnset
+	c.CreatureUntilTurnEnd = false
+	c.Damage = 0
+	c.Stunned = false
+	c.Enraged = false
+	c.Warded = false
+	c.ArmorRemaining = 0
+	c.ArmorStripped = 0
+	g.State.Artifacts[controller].add(id)
+	g.record(RevertedToArtifact{Card: id})
 }
 
 // SetNamedHouse records the house a card named as it entered play, which its
@@ -424,10 +504,9 @@ func (g *Game) SetNamedCard(id, named LocalID) {
 }
 
 // NameableCards returns one representative card id per distinct card name present
-// in the match, ordered by name so a "name a card" choice is deterministic for
-// replay. Every playable card is registered in the match catalog, so this reaches
-// every name a player could name without the engine seeing the global card
-// database (ADR 0003).
+// in the match, ordered by name. It is the match half of a "name a card" choice:
+// what the player may name is the whole card database (NameableNames), but only a
+// name a card in this match carries can ever bar anything.
 func (g *Game) NameableCards() []LocalID {
 	seen := make(map[string]bool, len(g.cat.defs))
 	out := make([]LocalID, 0, len(g.cat.defs))
@@ -442,6 +521,51 @@ func (g *Game) NameableCards() []LocalID {
 		return g.cat.def(out[a]).Name < g.cat.def(out[b]).Name
 	})
 	return out
+}
+
+// SetNameableNames injects the names a player may name (Etan's Jar). The match
+// passes the whole implemented card database, which the engine cannot read itself
+// (ADR 0003). The list is sorted and deduped here so the choice is deterministic
+// for replay whatever order it arrives in.
+func (g *Game) SetNameableNames(names []string) {
+	seen := make(map[string]bool, len(names))
+	out := make([]string, 0, len(names))
+	for _, n := range names {
+		if !seen[n] {
+			seen[n] = true
+			out = append(out, n)
+		}
+	}
+	sort.Strings(out)
+	g.nameableNames = out
+}
+
+// NameableNames returns the names a player may name, falling back to the names
+// present in this match when none were injected (a test-built game). Naming from
+// the match alone would show a player their opponent's whole deck list, so a real
+// match injects the database.
+func (g *Game) NameableNames() []string {
+	if len(g.nameableNames) > 0 {
+		return g.nameableNames
+	}
+	ids := g.NameableCards()
+	out := make([]string, len(ids))
+	for i, id := range ids {
+		out[i] = g.cat.def(id).Name
+	}
+	return out
+}
+
+// CardNamed returns a representative card id in this match carrying name, or
+// ok=false when no card in the match does.
+func (g *Game) CardNamed(name string) (LocalID, bool) {
+	for i := range g.cat.defs {
+		id := LocalID(i)
+		if g.cat.def(id).Name == name {
+			return id, true
+		}
+	}
+	return 0, false
 }
 
 // SetFightDamageRedirect redirects the attacker's fight damage in the current

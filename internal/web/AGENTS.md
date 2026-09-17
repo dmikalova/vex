@@ -133,6 +133,14 @@ a card is clicked. Therefore:
   way out; optional ones (`ChooseCardOrDecline`, set by `chooserDeclinable`)
   get a **Done** button, and Escape declines them.
 - A genuine yes/no or "choose one" stays an **option prompt** with buttons.
+- **A trigger window is ordered by clicking too** (`ChooseReaction`): the sources
+  of the pending abilities become the candidates, and the click says whose ability
+  resolves next. A clicked card carrying **two** pending abilities then asks which
+  of them, by buttons — never silently top-down. A source sitting in a pile
+  (`WithTriggersFromDiscard`) is a candidate like any other: `presentPrompt` opens
+  that pile's viewer so the reaction is not missed. Only a window holding an entry
+  that belongs to **no card** — a duration reaction — falls back to the flat
+  labeled list of rendered ability text.
 - When a prompt's candidates are not on the board, `presentPrompt` routes it:
   a bounded, mandatory "look at the top N cards of your deck" pick (Navigator Ali,
   Lay of the Land) becomes a short list of **action-bar buttons**
@@ -140,10 +148,13 @@ a card is clicked. Therefore:
   other out-of-play pick — a visible pile (World Tree, Witch of the Eye's discard),
   or an unbounded one (declinable — Not Finished with You shuffles any number) —
   opens that player's **zone viewer**, which makes only the candidates clickable,
-  dims the rest, and scrolls to the row. A viewer opened by a mandatory prompt
-  cannot be dismissed while it is the only place to answer; a declinable one is
-  finished with its **Done** affordance (or Escape), which submits the current
-  (possibly empty) selection.
+  dims the rest, and scrolls to the row. Candidates split between a pile and the
+  board open the pile (`firstPileCandidate`).
+- **The zone viewer is always closable**, prompt or no prompt: the player may need
+  to read the board underneath before deciding. Closing answers nothing — the
+  prompt stays up, `promptZone` stays recorded, and reopening the viewer returns to
+  the same row. Passing on a declinable prompt is the **Done** affordance's job (in
+  the viewer's header and in the dock), never a side effect of closing the modal.
 - Picking a fight target is not a card prompt (it runs on the UI goroutine, not
   behind a chooser), but it shares the same Tab cursor: `tabCandidates` hands
   both a chooser's candidates and `FightTargets` to `tabCandidate`/`isSelected`/

@@ -20,5 +20,8 @@ var PipPip = set.New(
 	card.WithPower(2),
 	card.WithTraits(card.Traits.Human, card.Traits.Scientist),
 	card.WithAbility(
-		card.Trigger.AfterEnemyCreatureReaps, card.Stun{Target: card.Target.Triggering}),
+		card.Trigger.AfterCreatureReaps, card.Conditional{
+			Cond: card.ItIsEnemy{},
+			Then: card.Stun{Target: card.Target.Triggering},
+		}),
 )

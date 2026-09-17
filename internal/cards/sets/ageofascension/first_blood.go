@@ -26,7 +26,7 @@ var FirstBlood = set.New(
 				Per: card.InPlay{
 					Player: card.Controller,
 					Type:   card.Type.Creature,
-					House:  card.House.Self,
+					House:  card.Houses.Named(card.House.Self),
 				},
 			},
 		}),

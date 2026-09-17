@@ -23,7 +23,10 @@ var CANDLEUnit = set.New(
 	card.WithArmor(1),
 	card.WithTraits(card.Traits.Robot),
 	card.WithAbility(
-		card.Trigger.AfterEnemyCreatureReaps, card.Draw{Amount: 1}),
+		card.Trigger.AfterCreatureReaps, card.Conditional{
+			Cond: card.ItIsEnemy{},
+			Then: card.Draw{Amount: 1},
+		}),
 	card.WithAbility(
 		card.Trigger.Action, card.CaptureAember{
 			Amount: 1,

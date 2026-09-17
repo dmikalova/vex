@@ -116,6 +116,9 @@ func lastingActionOf(e Effect) (lastingAction, int, bool) {
 	case DealDamage:
 		return actDealDamage, d.Amount, true
 	case CaptureAember:
+		if d.Target.Kind == TargetChosenFriendlyCreature {
+			return actCaptureChosen, d.Amount, true
+		}
 		return actCapture, d.Amount, true
 	case GiveAember:
 		return actGiveRemainingAember, d.Amount, true
@@ -393,6 +396,74 @@ func (e Instead) Resolve(ctx *EffectContext) {
 	})
 }
 
+// DamageOthersAfterUsingTrait installs a reaction that runs for the rest of the
+// controller's turn: each time they use a creature carrying Trait, it deals Amount
+// damage to each creature that lacks Trait, on both battlelines — Legion's March
+// ("after you use a Dinosaur creature, deal 1 damage to each non-Dinosaur
+// creature").
+type DamageOthersAfterUsingTrait struct {
+	Trait  Trait
+	Amount int
+}
+
+// validate requires a trait to gate the use and a positive damage amount.
+func (e DamageOthersAfterUsingTrait) validate() error {
+	if e.Trait == traitUnset {
+		return fmt.Errorf("DamageOthersAfterUsingTrait: trait must be set")
+	}
+	if e.Amount <= 0 {
+		return fmt.Errorf("DamageOthersAfterUsingTrait: amount must be positive")
+	}
+	return nil
+}
+
+// Text renders the effect, e.g. "for the remainder of the turn, after you use a
+// Dinosaur creature, deal 1 damage to each non-Dinosaur creature".
+func (e DamageOthersAfterUsingTrait) Text() string {
+	damage := DealDamage{
+		Amount: e.Amount,
+		Target: Target{Kind: TargetEachCreature}.ExceptTrait(e.Trait),
+	}
+	return "for the remainder of the turn, after you use a " + e.Trait.String() +
+		" creature, " + damage.Text()
+}
+
+// Resolve registers the reaction on the controller for the rest of their turn.
+func (e DamageOthersAfterUsingTrait) Resolve(ctx *EffectContext) {
+	ctx.Resolver.AddLasting(LastingEffect{
+		On:         EventUsed,
+		Do:         actDamageOthersOfTrait,
+		Controller: int8(ctx.Controller),
+		Amount:     int8(e.Amount),
+		Trait:      e.Trait,
+		Source:     ctx.Source,
+		HasSource:  true,
+	})
+}
+
+// ReturnNextActionToHand makes the next action card its controller resolves this
+// turn return to their hand instead of their discard pile — High Priest Torvus,
+// once exalted, sends its controller's next action back to hand. It registers a
+// one-shot arming the action-play path consumes; the turn's end clears it if no
+// action card resolves.
+type ReturnNextActionToHand struct{}
+
+// Text renders the effect.
+func (ReturnNextActionToHand) Text() string {
+	return "after you resolve your next tactic this turn, put it into your " +
+		"hand instead of your discard pile"
+}
+
+// Resolve registers the one-shot redirect on the controller.
+func (ReturnNextActionToHand) Resolve(ctx *EffectContext) {
+	ctx.Resolver.AddLasting(LastingEffect{
+		On:         EventNextActionToHand,
+		Do:         actReturnToHand,
+		Controller: int8(ctx.Controller),
+		Once:       true,
+	})
+}
+
 // NextPlayed makes the next card its controller plays this turn that matches its
 // filters enter play with EntersPlay applied to it — Blypyp readying the next Mars
 // creature, Soft Landing readying the next creature or artifact. It registers a
@@ -403,16 +474,25 @@ func (e Instead) Resolve(ctx *EffectContext) {
 // Of narrows the card to one house, and is optional. Type narrows it to one card
 // type; AnyType means "creature or artifact", the two types that stay in play.
 type NextPlayed struct {
-	Of         House
+	Of         HouseMatcher
 	Type       CardType
 	EntersPlay Effect
 }
 
 // validate requires a card type and rejects an EntersPlay effect the registry
-// cannot carry.
+// cannot carry. The house matcher must be context-free (named or any), since the
+// registry outlives the resolution that armed it.
 func (e NextPlayed) validate() error {
 	if e.Type == TypeUnset {
 		return fmt.Errorf("NextPlayed: type must be set")
+	}
+	switch e.Of.Kind {
+	case MatchAnyHouse, MatchNamedHouse, MatchExceptHouse:
+	default:
+		return fmt.Errorf("NextPlayed: house matcher %v needs resolution context", e.Of.Kind)
+	}
+	if err := e.Of.validate(); err != nil {
+		return err
 	}
 	if _, ok := enterActionOf(e.EntersPlay); !ok {
 		return fmt.Errorf("NextPlayed: unsupported EntersPlay %T", e.EntersPlay)
@@ -428,9 +508,7 @@ func (e NextPlayed) Text() string {
 	if e.Type != AnyType {
 		noun = typeWord(e.Type)
 	}
-	if e.Of != HouseNone {
-		noun = e.Of.String() + " " + noun
-	}
+	noun = e.Of.qualifyNoun(noun)
 	return fmt.Sprintf(
 		"the next %s you play this turn enters play %s",
 		noun,

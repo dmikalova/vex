@@ -5,10 +5,9 @@ package engine
 // stored name and bars every card of that name from being played, by either
 // player; the bar lifts when the source leaves play (resetCore clears the name).
 //
-// The card is named from the cards present in the match rather than a global card
-// database: every card that could ever be played is registered in the match
-// catalog, so the choice reaches every playable name without the engine importing
-// internal/cards (ADR 0003).
+// The names offered are the whole implemented card database, injected by the match
+// (ADR 0003). Offering only the names present in the match would show a player
+// their opponent's deck list.
 type NameCard struct{}
 
 // Text renders the effect. The bar lasts until the source leaves play, so the dash
@@ -19,21 +18,19 @@ func (NameCard) Text() string {
 		SelfName + " leaves play"
 }
 
-// Resolve asks the controller to name one of the cards present in the match and
-// records it on the source. The choice is presented as labelled options, one per
-// distinct card name, in a deterministic order so a replay picks the same name.
+// Resolve asks the controller to name a card and records it on the source. A name
+// no card in the match carries is a legal but idle choice — nothing of that name
+// can be played — so it records nothing rather than a card that is not there.
 func (NameCard) Resolve(ctx *EffectContext) {
-	cands := ctx.Resolver.NameableCards()
-	if len(cands) == 0 {
+	names := ctx.Resolver.NameableNames()
+	if len(names) == 0 {
 		return
 	}
-	labels := make([]string, len(cands))
-	for i, id := range cands {
-		labels[i] = ctx.Resolver.Name(id)
-	}
-	idx := ctx.ChooseOption("Name a card", labels)
-	if idx < 0 || idx >= len(cands) {
+	idx := ctx.ChooseOption("Name a card", names)
+	if idx < 0 || idx >= len(names) {
 		return
 	}
-	ctx.Resolver.SetNamedCard(ctx.Source, cands[idx])
+	if id, ok := ctx.Resolver.CardNamed(names[idx]); ok {
+		ctx.Resolver.SetNamedCard(ctx.Source, id)
+	}
 }

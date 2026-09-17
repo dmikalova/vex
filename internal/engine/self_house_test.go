@@ -24,7 +24,7 @@ func TestResolveSelfHouseThroughDefinition(t *testing.T) {
 		WithKeyCost(NewKeyCostChange(Opponent, 1).Per(InPlay{
 			Player: Controller,
 			Type:   Creature,
-			House:  SelfHouse,
+			House:  namedHouse(SelfHouse),
 		})),
 	)
 	text := RenderCardText(&def)

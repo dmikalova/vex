@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// CyberClone
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Cyber-Clone
 //
 //	House:  Logos
 //	Type:   Creature
@@ -15,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  1
 //	Traits: Mutant
 //
-//	Play: Purge another creature. Until Cyber-Clone leaves play, it has power equal to the purged creature's power, and gains that creature's armor, keywords, and traits.
+//	Play: Purge another creature, and Cyber-Clone has power equal to the same creature's printed power and gains its printed armor, keywords, and traits.
 var CyberClone = set.New(
 	"Cyber-Clone",
 	card.House.Logos,
@@ -24,5 +19,14 @@ var CyberClone = set.New(
 	card.Provenance(card.MM, "102"),
 	card.WithPower(1),
 	card.WithTraits(card.Traits.Mutant),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.Play, card.Sequence{
+			Effects: []card.Effect{
+				card.PurgeCreature{Target: card.Target.Creature.Other()},
+				card.CopyPrintedStats{
+					Target: card.Target.This,
+					Source: card.Target.TheSameCreature,
+				},
+			},
+		}),
 )

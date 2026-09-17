@@ -453,7 +453,7 @@ func TestEvasionSigilCompositionMiss(t *testing.T) {
 // a card the filters admit, reports success so a Then can follow, records the run it
 // discarded, and runs the deck out when nothing matches.
 func TestDiscardUntil(t *testing.T) {
-	e := DiscardUntil{Type: Creature, House: Brobnar}
+	e := DiscardUntil{Player: Controller, Type: Creature, House: namedHouse(Brobnar)}
 	want := "discard cards from the top of your deck until you discard a Brobnar creature or run out of cards"
 	if e.Text() != want {
 		t.Errorf("text = %q, want %q", e.Text(), want)
@@ -466,9 +466,25 @@ func TestDiscardUntil(t *testing.T) {
 		"discard cards from the top of your deck until you discard a card or run out of cards" {
 		t.Errorf("plain text = %q", got)
 	}
-	if got := (DiscardUntil{House: Brobnar, MayStop: true}).Text(); got !=
+	if got := (DiscardUntil{Player: Opponent}).Text(); got !=
+		"discard cards from the top of your opponent's deck until you discard a card or run out of cards" {
+		t.Errorf("opponent text = %q", got)
+	}
+	if got := (DiscardUntil{Player: ItsController, Type: Creature}).Text(); got !=
+		"discard cards from the top of its controller's deck until you discard a creature or run out of cards" {
+		t.Errorf("its-controller text = %q", got)
+	}
+	if got := (DiscardUntil{House: namedHouse(Brobnar), MayStop: true}).Text(); got !=
 		"discard cards from the top of your deck until you discard a Brobnar card or choose to stop" {
 		t.Errorf("may-stop text = %q", got)
+	}
+	if got := (DiscardUntil{Name: "Angry Mob"}).Text(); got !=
+		"discard cards from the top of your deck until you discard an Angry Mob or run out of cards" {
+		t.Errorf("named text = %q", got)
+	}
+	if got := (DiscardUntil{Player: ItsController, Type: Creature, ExceptTrait: Mutant}).Text(); got !=
+		"discard cards from the top of its controller's deck until you discard a non-Mutant creature or run out of cards" {
+		t.Errorf("except-trait text = %q", got)
 	}
 
 	if got := (PutDiscardedIntoHand{}).Text(); got != "put the discarded card into your hand" {
@@ -505,7 +521,12 @@ func TestDiscardUntil(t *testing.T) {
 	}
 
 	// Nothing matching left: the dig empties the deck and the tail does nothing.
-	Then{First: DiscardUntil{Type: Artifact}, Result: PutDiscardedIntoHand{}}.Resolve(ctx)
+	Then{
+		First:  DiscardUntil{Player: Controller, Type: Artifact},
+		Result: PutDiscardedIntoHand{},
+	}.Resolve(
+		ctx,
+	)
 	if len(g.Deck(0)) != 0 {
 		t.Errorf("deck should be empty, got %v", g.Deck(0))
 	}
@@ -513,8 +534,44 @@ func TestDiscardUntil(t *testing.T) {
 		t.Errorf("hand should be untouched, got %v", g.Hand(0))
 	}
 	// Resolved bare, the dig still runs; it just has no tail to gate.
-	DiscardUntil{Type: Artifact}.Resolve(ctx)
+	DiscardUntil{Player: Controller, Type: Artifact}.Resolve(ctx)
 	PutDiscardedIntoHand{}.Resolve(ctx)
+
+	// A named dig stops at the first card of that name, skipping the rest.
+	g3 := NewGame("A", "B", 1)
+	g3.AddToDeck(NewCard("Filler", Brobnar, Creature, Common), 0)
+	mob := g3.AddToDeck(NewCard("Angry Mob", Sanctum, Creature, Common), 0)
+	ctx3 := &EffectContext{Resolver: g3, Controller: 0}
+	DiscardUntil{Player: Controller, Name: "Angry Mob"}.Resolve(ctx3)
+	if !ctx3.HasIt || ctx3.It != mob {
+		t.Errorf("named dig found %v (has=%v), want %d", ctx3.It, ctx3.HasIt, mob)
+	}
+	if len(g3.Discard(0)) != 2 {
+		t.Errorf("named dig discard = %v, want two cards", g3.Discard(0))
+	}
+
+	// An ExceptTrait dig on the contextual card's controller's deck (Purify) skips
+	// the excluded trait and reanimates the found card under its owner's control.
+	if got := (PutDiscardedIntoPlay{Type: Creature}).Text(); got !=
+		"put the discarded creature into play under its owner's control" {
+		t.Errorf("into-play tail text = %q", got)
+	}
+	g4 := NewGame("A", "B", 1)
+	g4.AddToDeck(NewCard("Splicer", Sanctum, Creature, Common, WithPower(3), WithTraits(Mutant)), 1)
+	clean := g4.AddToDeck(NewCard("Clean", Sanctum, Creature, Common, WithPower(3)), 1)
+	ctx4 := &EffectContext{Resolver: g4, Controller: 0, ItController: 1}
+	Then{
+		First:  DiscardUntil{Player: ItsController, Type: Creature, ExceptTrait: Mutant},
+		Result: PutDiscardedIntoPlay{Type: Creature},
+	}.Resolve(ctx4)
+	if !ctx4.HasIt || ctx4.It != clean {
+		t.Errorf("except-trait dig found %v (has=%v), want %d", ctx4.It, ctx4.HasIt, clean)
+	}
+	if line := g4.Battleline(1); len(line) != 1 || line[0] != clean {
+		t.Errorf("reanimated card not in owner's battleline: %v", line)
+	}
+	// A bare put with nothing in context does nothing.
+	PutDiscardedIntoPlay{}.Resolve(&EffectContext{Resolver: g4})
 }
 
 // TestDiscardUntilMayStop covers the optional stop: the controller may end
@@ -527,7 +584,9 @@ func TestDiscardUntilMayStop(t *testing.T) {
 	kept := g.AddToDeck(NewCard("Two", Logos, Creature, Common), 0)
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 
-	if (DiscardUntil{House: Brobnar, MayStop: true}).resolveGate(ctx) {
+	if (DiscardUntil{Player: Controller, House: namedHouse(Brobnar), MayStop: true}).resolveGate(
+		ctx,
+	) {
 		t.Error("resolveGate = true, want false when the controller stops")
 	}
 	if len(g.Discard(0)) != 1 || g.Discard(0)[0] != first {
@@ -543,10 +602,12 @@ func TestDiscardUntilMayStop(t *testing.T) {
 	// An empty deck reports failure and moves nothing; the bare Resolve is a no-op.
 	g2 := NewGame("A", "B", 1)
 	ctx2 := &EffectContext{Resolver: g2, Controller: 0}
-	if (DiscardUntil{House: Brobnar, MayStop: true}).resolveGate(ctx2) {
+	if (DiscardUntil{Player: Controller, House: namedHouse(Brobnar), MayStop: true}).resolveGate(
+		ctx2,
+	) {
 		t.Error("resolveGate = true, want false on an empty deck")
 	}
-	DiscardUntil{House: Brobnar, MayStop: true}.Resolve(ctx2)
+	DiscardUntil{Player: Controller, House: namedHouse(Brobnar), MayStop: true}.Resolve(ctx2)
 }
 
 // TestArchiveDiscardedThisWay covers archiving the run a preceding dig discarded:
@@ -1106,7 +1167,7 @@ func TestDiscardTopAndForEachDiscardedHouseFilter(t *testing.T) {
 	if got := (ForEachDiscarded{Do: GainAember{Player: Controller, Amount: 1}}).Text(); got != "for each card discarded this way, gain 1 Æmber" {
 		t.Errorf("unfiltered text = %q", got)
 	}
-	if got := (ForEachDiscarded{House: Logos, Do: GainAember{Player: Controller, Amount: 1}}).Text(); got != "for each Logos card discarded this way, gain 1 Æmber" {
+	if got := (ForEachDiscarded{House: namedHouse(Logos), Do: GainAember{Player: Controller, Amount: 1}}).Text(); got != "for each Logos card discarded this way, gain 1 Æmber" {
 		t.Errorf("filtered text = %q", got)
 	}
 
@@ -1117,10 +1178,157 @@ func TestDiscardTopAndForEachDiscardedHouseFilter(t *testing.T) {
 	ctx := &EffectContext{Resolver: g, Controller: 0}
 	Sentences{Effects: []Effect{
 		DiscardTop{Player: Controller, Amount: 3},
-		ForEachDiscarded{House: Logos, Do: GainAember{Player: Controller, Amount: 1}},
+		ForEachDiscarded{House: namedHouse(Logos), Do: GainAember{Player: Controller, Amount: 1}},
 	}}.Resolve(ctx)
 
 	if g.Aember(0) != 2 {
 		t.Errorf("gained %d Æmber, want 2 (one per Logos card)", g.Aember(0))
+	}
+}
+
+func TestDiscardTopOfDeckPlayer(t *testing.T) {
+	// Text renders from each perspective: the granted default names "its
+	// controller", while Controller and Opponent are direct first/second person.
+	if got := (DiscardTop{}).Text(); got != "discard the top card of its controller's deck" {
+		t.Errorf("granted text = %q", got)
+	}
+	if got := (DiscardTop{Player: Controller}).Text(); got != "discard the top card of your deck" {
+		t.Errorf("controller text = %q", got)
+	}
+	if got := (DiscardTop{Player: Opponent}).Text(); got != "discard the top card of your opponent's deck" {
+		t.Errorf("opponent text = %q", got)
+	}
+
+	g := NewGame("Alice", "Bob", 1)
+	top := g.AddToDeck(NewCard("Opp Top", Mars, Tactic, Common), 1)
+	next := g.AddToDeck(NewCard("Opp Next", Logos, Tactic, Common), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	DiscardTop{Player: Opponent}.Resolve(ctx)
+	if !ctx.HasIt || ctx.It != top {
+		t.Errorf("context card = %d (has %v), want opponent top %d", ctx.It, ctx.HasIt, top)
+	}
+	if discard := g.Discard(1); len(discard) != 1 || discard[0] != top {
+		t.Errorf("opponent discard = %v, want top %d", discard, top)
+	}
+	if deck := g.Deck(1); len(deck) != 1 || deck[0] != next {
+		t.Errorf("opponent deck = %v, want next %d", deck, next)
+	}
+}
+
+func TestDiscardTopOfDeckEmpty(t *testing.T) {
+	g := NewGame("Alice", "Bob", 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0, HasIt: true, It: 42}
+	DiscardTop{Player: Controller}.Resolve(ctx)
+	if ctx.HasIt {
+		t.Errorf("empty deck should leave no card in context, got It=%d", ctx.It)
+	}
+}
+
+func TestCardsInHand(t *testing.T) {
+	// CountText renders per referenced house.
+	cases := map[HouseChoice]string{
+		TheContextualHouse: "card of the discarded card's house revealed this way",
+		TheActiveHouse:     "card of the active house in their hand",
+		TheChosenHouse:     "card of the chosen house in their hand",
+	}
+	for h, want := range cases {
+		if got := (CardsInHand{House: h}).CountText(); got != want {
+			t.Errorf("count text(%d) = %q, want %q", h, got, want)
+		}
+	}
+
+	g := NewGame("Alice", "Bob", 1)
+	discarded := g.AddToDeck(NewCard("Mars Top", Mars, Tactic, Common), 1)
+	g.AddToHand(NewCard("Mars Creature", Mars, Creature, Common, WithPower(1)), 1)
+	g.AddToHand(NewCard("Mars Action", Mars, Tactic, Common), 1)
+	g.AddToHand(NewCard("Dis Action", Dis, Tactic, Common), 1)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	// The contextual house with no card in context resolves to none — count zero.
+	if got := (CardsInHand{Player: Opponent, House: TheContextualHouse}).Value(ctx); got != 0 {
+		t.Errorf("no-context value = %d, want 0", got)
+	}
+
+	// Discard sets the context card, so the count matches the opponent's Mars cards.
+	DiscardTop{Player: Opponent}.Resolve(ctx)
+	if ctx.It != discarded {
+		t.Fatalf("context card = %d, want %d", ctx.It, discarded)
+	}
+	if got := (CardsInHand{Player: Opponent, House: TheContextualHouse}).Value(ctx); got != 2 {
+		t.Errorf("contextual-house value = %d, want 2 Mars cards", got)
+	}
+
+	// The chosen house reads ctx.ChosenHouse; the active house reads the game's.
+	ctx.ChosenHouse = Dis
+	if got := (CardsInHand{Player: Opponent, House: TheChosenHouse}).Value(ctx); got != 1 {
+		t.Errorf("chosen-house value = %d, want 1 Dis card", got)
+	}
+	g.State.ActiveHouse = Mars
+	if got := (CardsInHand{Player: Opponent, House: TheActiveHouse}).Value(ctx); got != 2 {
+		t.Errorf("active-house value = %d, want 2 Mars cards", got)
+	}
+}
+
+func TestPlayTopOfDeckEffect(t *testing.T) {
+	g := started(t)
+	top := g.AddToDeck(testCreature("Rando", 2), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	if got := (PlayTopOfDeck{}).Text(); got != "play the top card of your deck" {
+		t.Errorf("text = %q", got)
+	}
+
+	(PlayTopOfDeck{}).Resolve(ctx)
+	if got := g.Battleline(0); len(got) != 1 || got[0] != top {
+		t.Errorf("battleline = %v, want [%d]", got, top)
+	}
+	if g.State.Deck[0].Count != 0 {
+		t.Errorf("deck count = %d, want 0", g.State.Deck[0].Count)
+	}
+
+	// An empty deck is a no-op.
+	(PlayTopOfDeck{}).Resolve(ctx)
+	if len(g.Battleline(0)) != 1 {
+		t.Error("playing from an empty deck should do nothing")
+	}
+}
+
+// TestForEachDiscardedTypeFilter covers the Type filter on ForEachDiscarded: the
+// iteration clause names the type, and Resolve runs Do only for discarded cards of
+// that type — Saurian Egg reanimates the Saurian creature it discarded, not the
+// Saurian artifact.
+func TestForEachDiscardedTypeFilter(t *testing.T) {
+	loop := ForEachDiscarded{
+		House: namedHouse(Saurian),
+		Type:  Creature,
+		Do:    PutIntoPlay{Target: Target{Kind: TargetTriggeringCreature}, Ready: true},
+	}
+	if got := loop.Text(); got != "for each Saurian creature discarded this way, "+
+		"put it into play ready" {
+		t.Errorf("text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	creature := g.Register(NewCard("saur", Saurian, Creature, Common, WithPower(2)), 0)
+	relic := g.Register(NewCard("relic", Saurian, Artifact, Common), 0)
+	g.State.Discard[0].add(creature)
+	g.State.Discard[0].add(relic)
+	ctx := &EffectContext{
+		Resolver:   g,
+		Controller: 0,
+		Produced:   Produced{Discarded: []LocalID{creature, relic}},
+	}
+
+	loop.Resolve(ctx)
+
+	if !g.InPlay(creature) {
+		t.Error("the Saurian creature should have been put into play")
+	}
+	if g.State.Cards[creature].Exhausted {
+		t.Error("the reanimated creature should enter play ready")
+	}
+	if g.InPlay(relic) {
+		t.Error("the Saurian artifact should be left in the discard pile")
 	}
 }

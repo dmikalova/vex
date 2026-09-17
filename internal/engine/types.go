@@ -185,6 +185,7 @@ const (
 	Demon
 	Dinosaur
 	Dragon
+	Egg
 	Elf
 	Equation
 	Experiment
@@ -257,6 +258,7 @@ var traitNames = [traitCount]string{
 	Demon:        "Demon",
 	Dinosaur:     "Dinosaur",
 	Dragon:       "Dragon",
+	Egg:          "Egg",
 	Elf:          "Elf",
 	Equation:     "Equation",
 	Experiment:   "Experiment",
@@ -526,10 +528,6 @@ const (
 	// it. The ability names the house it cares about (Jehu the Bureaucrat gains Æmber
 	// only when Sanctum is chosen), which need not be the card's own house.
 	TriggerAfterChooseHouse
-	// This ability resolves after an enemy creature is destroyed during its
-	// controller's turn (Pile of Skulls captures Æmber onto a friendly creature
-	// whenever an enemy creature is destroyed on your turn).
-	TriggerAfterEnemyCreatureDestroyed
 	// This ability resolves after your opponent plays a card (Teliga gains its
 	// controller Æmber whenever the opponent plays a card).
 	TriggerAfterEnemyCardPlayed
@@ -554,12 +552,9 @@ const (
 	TriggerAfterUsedSelf
 	// This ability resolves after any creature reaps — friendly or enemy — with the
 	// reaping creature as "it" (Orb of Invidius stuns whatever just reaped). It fires
-	// on every in-play card, including the reaper itself.
+	// on every in-play card, including the reaper itself. A reaction narrowed to an
+	// enemy reaper (Pip Pip) is this trigger gated on an ItIsEnemy condition.
 	TriggerAfterCreatureReaps
-	// This ability resolves after an enemy creature reaps, with the reaping creature
-	// as "it" (Pip Pip stuns the enemy that just reaped). Reaping happens only on the
-	// reaper's own turn, so this naturally fires only for the reaper's opponent.
-	TriggerAfterEnemyCreatureReaps
 	// This ability resolves after any creature is used to fight — friendly or enemy —
 	// with the fighting creature as "it" (Shattered Throne makes it capture 1 Æmber).
 	// It fires on every in-play card, including the fighting creature itself. Fighting
@@ -591,12 +586,6 @@ const (
 	// controller or the opponent — with the chosen house available as the context
 	// house (Snag's Mirror bars the opponent from repeating a house).
 	TriggerAfterAnyPlayerChoosesHouse
-	// This ability resolves after a friendly creature is destroyed, with the
-	// destroyed creature as "it" (Spartasaur destroys each non-Dinosaur creature). It
-	// fires on the destroyed creature's controller's in-play cards once the whole
-	// destruction batch has reached the discard piles, so a card destroyed in the
-	// same batch does not react.
-	TriggerAfterFriendlyCreatureDestroyed
 	// This ability resolves after Æmber is stolen from its controller, with the
 	// number of Æmber stolen in that single theft available to the effect as a
 	// count (Molephin deals 1 damage to each enemy creature for each Æmber stolen).
@@ -629,10 +618,6 @@ const (
 	// non-forging player's in-play cards — Forge Compiler destroys itself and wards
 	// its controller's creatures after the opponent forges.
 	TriggerAfterOpponentForgesKey
-	// TriggerAfterFriendlyCreatureFights fires after a creature on the controller's
-	// own side is used to fight, with that creature as "it" — Lieutenant Gorvenal
-	// captures whenever a friendly creature fights, itself or another.
-	TriggerAfterFriendlyCreatureFights
 	// TriggerAfterBonusDamage fires after the controller resolves a Damage bonus
 	// icon, with the creature that damage hit as "it" (Maleficorn deals it 1 more).
 	// It fires only for the resolving player's own icons.
@@ -705,8 +690,6 @@ func (t Trigger) String() string {
 		return "After This Creature Prevents Damage With Its Armor"
 	case TriggerAfterCardPlayed:
 		return "After You Play a Card"
-	case TriggerAfterEnemyCreatureDestroyed:
-		return "After an Enemy Creature Is Destroyed"
 	case TriggerAfterEnemyCardPlayed:
 		return "After Your Opponent Plays a Card"
 	case TriggerAfterUse:
@@ -717,22 +700,16 @@ func (t Trigger) String() string {
 		return "After This Creature Is Used"
 	case TriggerAfterCreatureReaps:
 		return "After a Creature Reaps"
-	case TriggerAfterEnemyCreatureReaps:
-		return "After an Enemy Creature Reaps"
 	case TriggerAfterAemberStolenFromYou:
 		return "After Æmber Is Stolen From You"
 	case TriggerAfterCreatureFights:
 		return "After a Creature Is Used to Fight"
-	case TriggerAfterFriendlyCreatureFights:
-		return "After a Friendly Creature Is Used to Fight"
 	case TriggerAfterBonusDamage:
 		return "After You Resolve a Damage Bonus Icon"
 	case TriggerAfterBonusDraw:
 		return "After You Resolve a Draw Bonus Icon"
 	case TriggerAfterCreatureDestroyed:
 		return "After a Creature Is Destroyed"
-	case TriggerAfterFriendlyCreatureDestroyed:
-		return "After a Friendly Creature Is Destroyed"
 	case TriggerAfterPlayerForgesKey:
 		return "After a Player Forges a Key"
 	case TriggerAfterOpponentForgesKey:
@@ -810,8 +787,6 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return "After a creature is destroyed by " + SelfName + "'s assault damage, ", false
 	case TriggerAfterArmorPrevents:
 		return "After " + SelfName + " prevents damage with its armor, ", false
-	case TriggerAfterEnemyCreatureDestroyed:
-		return "After an enemy creature is destroyed during your turn, ", false
 	case TriggerAfterCardPlayed:
 		return "After you play a card, ", false
 	case TriggerAfterEnemyCardPlayed:
@@ -824,18 +799,12 @@ func (t Trigger) prefix() (text string, capitalizeEffect bool) {
 		return "After " + SelfName + " is used, ", false
 	case TriggerAfterCreatureReaps:
 		return "After a creature reaps, ", false
-	case TriggerAfterEnemyCreatureReaps:
-		return "After an enemy creature reaps, ", false
 	case TriggerAfterCreatureFights:
 		return "After a creature is used to fight, ", false
-	case TriggerAfterFriendlyCreatureFights:
-		return "After a friendly creature is used to fight, ", false
 	case TriggerAfterCreatureDestroyed:
 		return "After a creature is destroyed, ", false
 	case TriggerAfterAemberStolenFromYou:
 		return "After Æmber is stolen from you, ", false
-	case TriggerAfterFriendlyCreatureDestroyed:
-		return "After a friendly creature is destroyed, ", false
 	case TriggerAfterCreaturePlayed:
 		return "After a creature is played, ", false
 	case TriggerAfterUpgradeEnters:

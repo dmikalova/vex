@@ -32,7 +32,9 @@ var WallsBlaster = set.New(
 		Granted: card.FightReap(card.ChooseOne{Options: []card.Effect{
 			card.DealDamage{Amount: 2, Target: card.Target.Creature},
 			card.Then{
-				First: card.AttachSelfTo{Host: ChiefEngineerWalls.Name},
+				First: card.AttachSelfTo{
+					Target: card.Target.FriendlyCreature.Named(ChiefEngineerWalls.Name),
+				},
 				Result: card.ForEach{
 					Times: card.UpgradesOn{
 						Target: card.Target.AttachedHost.Named(ChiefEngineerWalls.Name),

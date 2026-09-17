@@ -276,6 +276,7 @@ func (g *Game) reapWith(id LocalID) {
 func (g *Game) emitReapWindow(reaper int, reaped LocalID) {
 	pending := g.reapReactions(reaper, reaped)
 	pending = append(pending, g.lastingReactions(EventReap, reaper, reaped)...)
+	pending = append(pending, g.lastingReactions(EventUsed, reaper, reaped)...)
 	g.resolveWindow(g.orderTriggered(reaper, pending))
 }
 
@@ -313,19 +314,21 @@ func (w *abilityWindow) addAs(src LocalID, trigger Trigger, actor int, it LocalI
 	w.pending = append(w.pending, kept...)
 }
 
-// firesForSubject reports whether a reaction whose whole effect is narrowed to the
-// shape of the card in context fires for the card that was actually played, used,
-// or discarded. A reaction that renders "after you play an artifact" (a
-// Conditional{ItIs} over its whole effect) does not fire on a creature, so it never
-// joins the ordering window on a play it does not narrow to — Harmonia, narrowed to
-// creatures, does not order with a played Tactic. Only the subject-shape narrowing
-// gates firing this way; a board "if" (Overwhelmed) is not one, so that reaction
-// still fires and is checked at resolution.
+// firesForSubject reports whether a reaction narrowed by a predicate fixed for the
+// whole window fires for the card and turn in context. A reaction that renders
+// "after you play an artifact" (a Conditional{ItIs} over its whole effect) does not
+// fire on a creature, so it never joins the ordering window on a play it does not
+// narrow to — Harmonia, narrowed to creatures, does not order with a played Tactic.
+// Likewise "after an enemy creature is destroyed during your turn"
+// (Conditional{And{ItIsEnemy, ItIsYourTurn}}) never joins the window on the
+// opponent's turn. Only a fixed-context predicate gates firing this way; a volatile
+// board "if" (Overwhelmed) is not one, so that reaction still fires and is checked
+// at resolution.
 func (g *Game) firesForSubject(t triggeredAbility) bool {
 	if !t.hasIt {
 		return true
 	}
-	cond, ok := subjectNarrowing(t.ability.Effect)
+	cond, ok := fixedNarrowing(t.ability.Effect)
 	if !ok {
 		return true
 	}
@@ -339,33 +342,34 @@ func (g *Game) firesForSubject(t triggeredAbility) bool {
 	return cond.Met(ctx)
 }
 
-// subjectNarrowing returns the condition a reaction uses to narrow the triggering
-// event to a shape of the card in context — a predicate evaluable purely from the
-// played, used, or discarded card and its board position, wrapping the whole effect
-// with no Else. It is exactly the shape afterYouActOnText folds into "after you play
-// an artifact", so a reaction that reads as narrowed is the reaction that fires only
-// when narrowed.
-func subjectNarrowing(e Effect) (Condition, bool) {
+// fixedNarrowing returns the condition a reaction uses to narrow itself out of the
+// window before firing — a predicate fixed for the whole window, wrapping the whole
+// effect with no Else. It is exactly the shape afterYouActOnText folds into "after
+// you play an artifact", so a reaction that reads as narrowed is the reaction that
+// fires only when narrowed.
+func fixedNarrowing(e Effect) (Condition, bool) {
 	c, ok := e.(Conditional)
 	if !ok || c.Else != nil {
 		return nil, false
 	}
-	if isSubjectPredicate(c.Cond) {
+	if isFixedPredicate(c.Cond) {
 		return c.Cond, true
 	}
 	return nil, false
 }
 
-// isSubjectPredicate reports whether a condition is decided entirely by the card in
-// context — its house, type, name, trait, friendliness, or flank position — with no
-// dependence on wider board state, so a reaction gated on it can be narrowed before
-// resolution instead of joining every ordering window. An And of subject predicates
-// is itself a subject predicate (Dark Æmber Vault's friendly Mutant creature); a
-// board "if" (Overwhelmed) is not, so that reaction still fires and is rechecked at
-// resolution.
-func isSubjectPredicate(c Condition) bool {
+// isFixedPredicate reports whether a condition is decided by facts fixed for the
+// whole reaction window — the card in context (its house, type, name, trait,
+// friendliness, or flank position) or whose turn it is — with no dependence on
+// volatile board state, so a reaction gated on it can be narrowed before resolution
+// instead of joining every ordering window. An And of fixed predicates is itself
+// fixed (Dark Æmber Vault's friendly Mutant creature; Pile of Skulls' enemy
+// creature during your turn); a board "if" (Overwhelmed) is not, because an earlier
+// reaction in the window can change the count, so that reaction still fires and is
+// rechecked at resolution.
+func isFixedPredicate(c Condition) bool {
 	switch cc := c.(type) {
-	case ItIs, ItIsNamed, ItIsOfTrait, ItIsFriendly:
+	case ItIs, ItIsNamed, ItIsOfTrait, ItIsFriendly, ItIsEnemy, ItIsYourTurn:
 		return true
 	case OnFlank:
 		return cc.OfIt
@@ -374,7 +378,7 @@ func isSubjectPredicate(c Condition) bool {
 			return false
 		}
 		for _, sub := range cc.Conditions {
-			if !isSubjectPredicate(sub) {
+			if !isFixedPredicate(sub) {
 				return false
 			}
 		}
@@ -386,10 +390,12 @@ func isSubjectPredicate(c Condition) bool {
 // reapReactions gathers, in default resolution order, every card-sourced ability
 // that reacts to reaped being used to reap: its own "Reap:" and "after I am used"
 // abilities (bound to no "it"), the "after you use a card" reactions on the user's
-// other in-play cards, and the "after a creature reaps" and "after an enemy
-// creature reaps" reactions across the board — the last three bound to the reaping
-// creature as "it". Every entry carries its own actor and "it" so the whole set
-// can order as one window while each bystander reaction resolves for its owner.
+// other in-play cards, and the board-wide "after a creature reaps" reactions —
+// including those narrowed to an enemy reaper (Pip Pip) by an ItIsEnemy condition,
+// which fire only when the reaper is the reacting card's enemy — the last bound to
+// the reaping creature as "it". Every entry carries its own actor and "it" so the
+// whole set can order as one window while each bystander reaction resolves for its
+// owner.
 func (g *Game) reapReactions(reaper int, reaped LocalID) []triggeredAbility {
 	w := g.window()
 	w.add(reaped, TriggerAfterReap, 0, false)
@@ -404,20 +410,22 @@ func (g *Game) reapReactions(reaper int, reaped LocalID) []triggeredAbility {
 			w.add(id, TriggerAfterCreatureReaps, reaped, true)
 		}
 	}
-	for _, id := range g.allInPlay(1 - reaper) {
-		w.add(id, TriggerAfterEnemyCreatureReaps, reaped, true)
-	}
 	return w.pending
 }
 
 // gainReapAember pays out the Æmber a reap grants to player p, applying any lasting
 // replacement of that payout (Dimension Door makes it steal instead of gain).
 func (g *Game) gainReapAember(p int, source LocalID) {
-	if act, ok := g.lastingReplacement(p, EventReapAember); ok && act == actSteal {
+	if le, ok := g.lastingReplacement(p, EventReapAember); ok && le.Do == actSteal {
 		stolen := min(1, g.State.Aember[1-p])
 		g.SetAember(1-p, g.State.Aember[1-p]-stolen)
 		g.SetAember(p, g.State.Aember[p]+stolen)
-		g.record(ReapedStealing{Player: p, Card: source, Amount: stolen})
+		g.record(ReapedStealing{
+			Player: p,
+			Card:   source,
+			Amount: stolen,
+			Cause:  le.Source,
+		})
 		return
 	}
 	if capturer, ok := g.gainAember(p, 1); ok {
@@ -466,7 +474,9 @@ func (g *Game) useActionOf(actor int, id LocalID) {
 	}
 	g.State.Cards[id].Exhausted = true
 	g.record(ActionAbilityUsed{Player: actor, Card: id})
-	g.resolveWindow(g.orderTriggered(actor, g.actionReactions(actor, id)))
+	pending := g.actionReactions(actor, id)
+	pending = append(pending, g.lastingReactions(EventUsed, actor, id)...)
+	g.resolveWindow(g.orderTriggered(actor, pending))
 }
 
 // actionReactions gathers the "Action:" ability and the reactions to using the
@@ -636,6 +646,11 @@ func (g *Game) recoverFromStun(id LocalID) bool {
 	core.Stunned = false
 	core.Exhausted = true
 	g.record(StunRecovered{Player: g.controller(id), Creature: id})
+	// Spending a use to recover from a stun still counts as using the creature, so
+	// the "after you use a creature" reactions fire (Legion's March). The other use
+	// paths fold these into their own window; a stun recovery has no other window.
+	user := g.controller(id)
+	g.resolveWindow(g.orderTriggered(user, g.lastingReactions(EventUsed, user, id)))
 	return true
 }
 
@@ -728,32 +743,21 @@ func (g *Game) emitUpgradeEntered(upgrade LocalID) {
 }
 
 // afterDestroyedReactions gathers, as one ordered window, every reaction to the
-// creatures of a finished Destroyed window now reaching their discard piles: "after
-// an enemy creature is destroyed during your turn" (Pile of Skulls) on the active
-// player's cards for an enemy death, "after a friendly creature is destroyed"
-// (Spartasaur) on the dead creature's controller's cards, "after a creature is
-// destroyed" (Neffru) on every card, and the lasting "each time an enemy creature
-// is destroyed" reactions (Loot the Bodies) from the registry. Every entry carries
-// its own actor and the destroyed creature as "it", so the active player orders the
-// whole set while each reaction resolves for its owner (ADR 0013). It runs once the
-// creatures have reached the discard pile, so a card destroyed in the same window is
-// out of play and neither reacts nor can be chosen.
+// creatures of a finished Destroyed window now reaching their discard piles: the
+// board-wide "after a creature is destroyed" reactions (Neffru) on every card —
+// including those narrowed to an enemy death during your turn (Pile of Skulls, by
+// And{ItIsEnemy, ItIsYourTurn}) or to a friendly death (Spartasaur, by ItIsFriendly)
+// — and the lasting "each time an enemy creature is destroyed" reactions (Loot the
+// Bodies) from the registry. Every entry carries its own actor and the destroyed
+// creature as "it", so the active player orders the whole set while each reaction
+// resolves for its owner (ADR 0013). It runs once the creatures have reached the
+// discard pile, so a card destroyed in the same window is out of play and neither
+// reacts nor can be chosen.
 func (g *Game) afterDestroyedReactions(members []LocalID) []triggeredAbility {
 	w := g.window()
-	active := g.State.ActivePlayer
 	for _, id := range members {
 		if g.TypeOf(id) != Creature {
 			continue
-		}
-		// Pile of Skulls fires only for the active player and only for an enemy death,
-		// so it is naturally limited to your own turn and to enemy creatures.
-		if g.controller(id) != active {
-			for _, c := range g.allInPlay(active) {
-				w.add(c, TriggerAfterEnemyCreatureDestroyed, id, true)
-			}
-		}
-		for _, c := range g.allInPlay(g.controller(id)) {
-			w.add(c, TriggerAfterFriendlyCreatureDestroyed, id, true)
 		}
 		for p := 0; p < 2; p++ {
 			for _, c := range g.allInPlay(p) {

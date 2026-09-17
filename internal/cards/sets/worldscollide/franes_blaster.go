@@ -32,7 +32,9 @@ var FranesBlaster = set.New(
 		Granted: card.FightReap(card.ChooseOne{Options: []card.Effect{
 			card.DealDamage{Amount: 2, Target: card.Target.Creature},
 			card.Then{
-				First: card.AttachSelfTo{Host: FirstOfficerFrane.Name},
+				First: card.AttachSelfTo{
+					Target: card.Target.FriendlyCreature.Named(FirstOfficerFrane.Name),
+				},
 				Result: card.MoveAember{
 					All:  true,
 					From: card.Target.AttachedHost.Named(FirstOfficerFrane.Name),

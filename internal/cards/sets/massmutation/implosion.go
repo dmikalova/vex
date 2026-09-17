@@ -18,10 +18,10 @@ var Implosion = set.New(
 	card.Provenance(card.MM, "008"),
 	card.WithBonus(card.Bonus.Aember),
 	card.WithAbility(
-		card.Trigger.Play, card.Sequence{
-			Effects: []card.Effect{
-				card.Destroy{Target: card.Target.FriendlyCreature},
-				card.Destroy{Target: card.Target.EnemyCreature},
+		card.Trigger.Play, card.BatchDestroy{
+			Gather: card.ChosenFromEach{
+				card.Target.FriendlyCreature,
+				card.Target.EnemyCreature,
 			},
 		}),
 )

@@ -59,8 +59,8 @@ func TestLogEntryText(t *testing.T) {
 		{AemberLost{Player: 1, Amount: 1}, "P1 loses 1 Æmber"},
 		{AemberStolen{Player: 0, From: 1, Amount: 2}, "P0 steals 2 Æmber from P1"},
 		{
-			AemberStolen{Player: 0, From: 1, Amount: 2, FromSupply: true},
-			"P0 steals 2 Æmber from the common supply",
+			AemberStolen{Player: 0, From: 1, Amount: 2, FromSupply: true, Cause: 9},
+			"Card9 has P0 steal 2 Æmber from the common supply, instead of from P1's pool",
 		},
 		{AemberCaptured{Creature: 7, Amount: 3, Source: 7}, "Card7 captures 3 Æmber"},
 		{
@@ -68,12 +68,14 @@ func TestLogEntryText(t *testing.T) {
 			"Card3 captures 1 Æmber onto Card7",
 		},
 		{
-			AemberCaptured{Creature: 7, Amount: 3, Source: 7, FromSupply: true},
-			"Card7 captures 3 Æmber from the common supply",
+			AemberCaptured{Creature: 7, Amount: 3, Source: 7, FromSupply: true, Cause: 9, From: 0},
+			"Card9 has Card7 capture 3 Æmber from the common supply, " +
+				"instead of from P0's pool",
 		},
 		{
-			AemberCaptured{Creature: 7, Amount: 1, Source: 3, FromSupply: true},
-			"Card3 captures 1 Æmber onto Card7 from the common supply",
+			AemberCaptured{Creature: 7, Amount: 1, Source: 3, FromSupply: true, Cause: 9, From: 0},
+			"Card9 has Card3 capture 1 Æmber onto Card7 from the common supply, " +
+				"instead of from P0's pool",
 		},
 		{
 			AemberMovedToCommonSupply{Creature: 7, Amount: 1},
@@ -81,7 +83,22 @@ func TestLogEntryText(t *testing.T) {
 		},
 		{
 			AemberCapturedInsteadOfGain{Creature: 7, Player: 1, Amount: 1},
-			"Card7 captures 1 Æmber instead of P1 gaining it",
+			"Card7 captures 1 Æmber, instead of P1 gaining it",
+		},
+		{
+			AemberCapturedInsteadOfSteal{Cause: 9, Creature: 7, Player: 0, Amount: 2},
+			"Card9 has Card7 capture 2 Æmber, instead of P0 stealing it",
+		},
+		{
+			AemberCapturedInsteadOfSteal{
+				Cause:      9,
+				Creature:   7,
+				Player:     0,
+				Amount:     2,
+				FromSupply: true,
+			},
+			"Card9 has Card7 capture 2 Æmber from the common supply, " +
+				"instead of P0 stealing it",
 		},
 		{AemberExalted{Creature: 4, Amount: 2}, "Card4 is exalted (2 Æmber placed)"},
 		{
@@ -145,6 +162,7 @@ func TestLogEntryText(t *testing.T) {
 			"Card2 becomes a creature on the right flank",
 		},
 		{TurnedIntoCreature{Card: 2}, "Card2 becomes a creature on the left flank"},
+		{RevertedToArtifact{Card: 2}, "Card2 reverts to an artifact"},
 		{ControlTaken{Player: 1, Card: 3}, "P1 takes control of Card3"},
 		{ControlReturned{Card: 3, Owner: 0}, "Card3 returns to P0's control"},
 		{CardDestroyed{Card: 3}, "Card3 is destroyed"},
@@ -177,22 +195,28 @@ func TestLogEntryText(t *testing.T) {
 			Fought{Attacker: 1, AttackerPower: 4, Defender: 2, DefenderPower: 3},
 			"Card1 (4 power) fights Card2 (3 power)",
 		},
-		{ElusiveAvoidedFight{Defender: 2}, "Card2 is elusive — no fight damage is dealt"},
 		{
-			SkirmishAvoidedReturn{Attacker: 1},
-			"Card1 is skirmish — it takes no damage in return",
+			Fought{
+				Attacker:         1,
+				AttackerPower:    6,
+				AttackerKeywords: FightSkirmish,
+				Defender:         2,
+				DefenderPower:    3,
+				DefenderKeywords: FightElusive | FightPoison,
+			},
+			"Card1 (6 power, skirmish) fights Card2 (3 power, elusive, poison)",
 		},
 		{PoisonKills{Source: 1, Victim: 2}, "Card1's poison is lethal to Card2"},
 		{DamageRefused{Creature: 2}, "Card2 cannot be dealt damage"},
 		{ArmorAbsorbed{Creature: 2, Amount: 1}, "Card2's armor absorbs 1 damage"},
 		{DamageTaken{Creature: 2, Amount: 3, Total: 4}, "Card2 takes 3 damage (4 total)"},
 		{
-			AssaultDealt{Source: 1, Value: 2, Amount: 2, Target: 2},
-			"Card1's 2 Assault deals 2 damage to Card2",
+			AssaultDealt{Source: 1, Amount: 2, Target: 2},
+			"Card1 assaults 2 damage to Card2",
 		},
 		{
-			HazardousDealt{Source: 2, Value: 5, Amount: 5, Target: 1},
-			"Card2's 5 Hazardous deals 5 damage to Card1",
+			HazardousDealt{Source: 2, Amount: 5, Target: 1},
+			"Card2's hazardous deals 5 damage to Card1",
 		},
 		{
 			AbilityDamageDealt{Amount: 4, Target: 2},
@@ -263,6 +287,10 @@ func TestLogEntryText(t *testing.T) {
 		{CardShuffledIntoDeck{Card: 6, Owner: 1}, "Card6 is shuffled into P1's deck"},
 		{DeckShuffled{Player: 1}, "P1's deck is shuffled"},
 		{
+			DiscardRecycledIntoDeck{Player: 1},
+			"P1's discard pile is shuffled into their deck",
+		},
+		{
 			CardsShuffledIntoDeckBy{Owner: 1, Cards: []LocalID{3, 8}},
 			"P1 shuffles Card3 and Card8 into their deck",
 		},
@@ -316,27 +344,30 @@ func TestLogEntryText(t *testing.T) {
 			PlayedFromTopOfDeck{Card: 9, Player: 0},
 			"P0 plays Card9 from the top of P0's deck",
 		},
-		{BonusAemberGained{Player: 0, Card: 9, Amount: 2}, "Card9 bonus gains 2 Æmber for P0"},
+		{BonusAemberGained{Player: 0, Card: 9, Amount: 2}, "Card9 has P0 gain 2 bonus Æmber"},
 		{
-			BonusAemberCaptured{Creature: 7, Card: 9, Amount: 2},
-			"Card9 bonus captures 2 Æmber onto Card7",
+			BonusAemberCaptured{Creature: 7, Card: 9, Player: 0, Amount: 2},
+			"Card7 captures 2 bonus Æmber from Card9, instead of P0 gaining it",
 		},
-		{BonusCaptured{Creature: 7, Card: 9, Amount: 1}, "Card9 bonus captures 1 Æmber onto Card7"},
+		{
+			BonusCaptured{Creature: 7, Card: 9, Amount: 1},
+			"Card9 has Card7 bonus capture 1 Æmber",
+		},
 		{BonusDamageDealt{Source: 9, Amount: 1, Target: 2}, "Card9 deals 1 bonus damage to Card2"},
-		{BonusCardDrawn{Player: 0, Card: 9, Amount: 1}, "Card9 bonus draws 1 card for P0"},
+		{BonusCardDrawn{Player: 0, Card: 9, Amount: 1}, "Card9 has P0 draw 1 bonus card"},
 		{AemberSpentToPlay{Player: 0, Card: 9, Amount: 1}, "P0 loses 1 Æmber to play Card9"},
 		{Reaped{Player: 0, Card: 2}, "P0 reaps with Card2 (+1 Æmber)"},
 		{
-			ReapedStealing{Player: 0, Card: 2, Amount: 1},
-			"P0 reaps with Card2, stealing 1 Æmber",
+			ReapedStealing{Player: 0, Card: 2, Amount: 1, Cause: 9},
+			"Card9 has P0 steal 1 Æmber reaping with Card2, instead of gaining it",
 		},
 		{
-			ReapedStealing{Player: 0, Card: 2},
-			"P0 reaps with Card2 (no Æmber to steal)",
+			ReapedStealing{Player: 0, Card: 2, Cause: 9},
+			"Card9 has P0 steal 0 Æmber reaping with Card2, instead of gaining it",
 		},
 		{
 			ReapedCaptured{Player: 0, Card: 2, Creature: 7},
-			"P0 reaps with Card2, but Card7 captures the Æmber",
+			"Card7 captures 1 Æmber reaping with Card2, instead of P0 gaining it",
 		},
 		{ActionAbilityUsed{Player: 1, Card: 2}, "P1 uses Card2's action ability"},
 
@@ -496,9 +527,11 @@ func TestRecordTextSubjectsToSourceCard(t *testing.T) {
 		{AemberGained{Player: 1, Amount: 2}, "Card7 has P1 gain 2 Æmber"},
 		{AemberLost{Player: 1, Amount: 1}, "Card7 has P1 lose 1 Æmber"},
 		{AemberStolen{Player: 0, From: 1, Amount: 2}, "Card7 steals 2 Æmber from P1"},
+		// A redirected steal is narrated by the card that redirected it, not by the
+		// frame's source: the replacement is what made the line worth printing.
 		{
-			AemberStolen{Player: 0, From: 1, Amount: 2, FromSupply: true},
-			"Card7 steals 2 Æmber from the common supply",
+			AemberStolen{Player: 0, From: 1, Amount: 2, FromSupply: true, Cause: 9},
+			"Card9 has P0 steal 2 Æmber from the common supply, instead of from P1's pool",
 		},
 		{AbilityDamageDealt{Amount: 4, Target: 2}, "Card7 deals 4 damage to Card2"},
 		{

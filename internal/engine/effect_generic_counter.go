@@ -13,6 +13,9 @@ type PlaceCounter struct {
 	Target Target
 	// Amount is how many to place on each; zero means one.
 	Amount int
+	// Per multiplies Amount by a running count "for each" — Book of Malefaction
+	// places a warrant counter for each Æmber stolen from its controller.
+	Per Count
 }
 
 // amount returns how many counters to place, defaulting to one.
@@ -35,17 +38,22 @@ func (e PlaceCounter) validate() error {
 }
 
 // Text renders the effect, e.g. "put a doom counter on a creature" or "put 2 doom
-// counters on a creature".
+// counters on a creature". A Per count leads the sentence, e.g. "for each Æmber
+// stolen, put a warrant counter on {self}".
 func (e PlaceCounter) Text() string {
+	var body string
 	if n := e.amount(); n > 1 {
-		return fmt.Sprintf("put %d %ss on %s", n, e.Kind.noun(), e.Target.Text())
+		body = fmt.Sprintf("put %d %ss on %s", n, e.Kind.noun(), e.Target.Text())
+	} else {
+		body = fmt.Sprintf("put a %s on %s", e.Kind.noun(), e.Target.Text())
 	}
-	return fmt.Sprintf("put a %s on %s", e.Kind.noun(), e.Target.Text())
+	return forEach(e.Per, body)
 }
 
-// Resolve places the counters on each selected card.
+// Resolve places the counters on each selected card, scaling by the Per count.
 func (e PlaceCounter) Resolve(ctx *EffectContext) {
+	n := scaled(e.amount(), e.Per, ctx)
 	for _, id := range e.Target.Select(ctx) {
-		ctx.Resolver.PlaceCounter(id, e.Kind, e.amount())
+		ctx.Resolver.PlaceCounter(id, e.Kind, n)
 	}
 }

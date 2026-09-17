@@ -1,13 +1,8 @@
-//go:build todo
-
 package massmutation
 
 import "github.com/dmikalova/vactrol/internal/card"
 
-// CeraSevera
-//
-// TODO(stub): unimplemented. Remove the //go:build todo tag and
-// implement the ability once the needed effect exists.
+// Cera Severa
 //
 //	House:  Saurian
 //	Type:   Creature
@@ -15,8 +10,8 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  4
 //	Traits: Mutant
 //
-//	After Fight/After Reap: Capture 1 Aember.
-//	Destroyed: Choose an enemy creature. Deal 1 Damage to that creature for each Aember on Cera Severa
+//	Fight/Reap: Cera Severa captures 1 Æmber from your opponent.
+//	Destroyed: For each Æmber on Cera Severa, deal 1 damage to an enemy creature.
 var CeraSevera = set.New(
 	"Cera Severa",
 	card.House.Saurian,
@@ -25,5 +20,16 @@ var CeraSevera = set.New(
 	card.Provenance(card.MoMu, "232"),
 	card.WithPower(4),
 	card.WithTraits(card.Traits.Mutant),
-	// TODO(stub): add WithKeywords / WithAbility for the printed text above.
+	card.WithAbility(
+		card.Trigger.FightReap, card.CaptureAember{
+			Amount: 1,
+			Target: card.Target.This,
+			Source: card.Opponent,
+		}),
+	card.WithAbility(
+		card.Trigger.Destroyed, card.DealDamage{
+			Amount: 1,
+			Per:    card.AemberOnThis{},
+			Target: card.Target.EnemyCreature,
+		}),
 )

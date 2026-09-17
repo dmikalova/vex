@@ -23,7 +23,7 @@ var Quicksand = set.New(
 			Spare: card.InPlay{
 				Player: card.Controller,
 				Type:   card.Type.Creature,
-				House:  card.House.Self,
+				House:  card.Houses.Named(card.House.Self),
 				Ready:  true,
 			},
 			Take: card.MostPowerfulN(1),

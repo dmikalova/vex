@@ -10,7 +10,7 @@ import "github.com/dmikalova/vactrol/internal/card"
 //	Power:  3
 //	Traits: Beast
 //
-//	You cannot use this card unless it has no non-Mars neighbor.
+//	You cannot use this card unless Xanthyx Harvester has no non-Mars neighbor.
 //	Reap: Gain 1 Æmber.
 var XanthyxHarvester = set.New(
 	"Xanthyx Harvester",
@@ -21,8 +21,8 @@ var XanthyxHarvester = set.New(
 	card.WithPower(3),
 	card.WithTraits(card.Traits.Beast),
 	card.WithRestrictions(card.Restrictions{
-		UseCondition: card.SourceNeighborsAllOfHouse{
-			House: card.House.Self,
+		UseCondition: card.SourceHasNoNeighbor{
+			House: card.Houses.Except(card.House.Self),
 		},
 	}),
 	card.WithAbility(

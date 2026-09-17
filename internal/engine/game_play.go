@@ -623,6 +623,13 @@ func (g *Game) playActionCard(player int, id LocalID) {
 		g.PutIntoArchives(id)
 		return
 	}
+	// A lasting "return your next action card to hand" redirect (High Priest Torvus)
+	// sends this card back to its owner's hand instead of the discard pile, once.
+	if g.consumeNextActionToHand(player) {
+		g.State.Hand[owner].add(id)
+		g.record(CardReturnedToHand{Card: id, Owner: owner})
+		return
+	}
 	g.State.Discard[owner].add(id)
 }
 

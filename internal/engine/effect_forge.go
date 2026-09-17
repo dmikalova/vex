@@ -2,13 +2,19 @@ package engine
 
 import "fmt"
 
-// ForgeKey has the controller forge a key outside the normal start-of-turn step.
-// By default they pay the current key cost, if they can afford it; FreeOfCost
-// forges without paying. Both paths fire "after you forge a key" abilities and,
-// on the final key, win the game. A forge that lands purges the card that made it
-// — every forge outside the normal step spends its source (a Vactrol divergence;
+// ForgeKey has a player forge a key outside the normal start-of-turn step. By
+// default the controller forges, paying the current key cost if they can afford it;
+// FreeOfCost forges without paying. Player: Opponent instead forces the opponent to
+// forge a key at no cost (Turnkey), and the active player — who chooses everything —
+// picks its colour; that forced forge spends nothing, so it never purges a source.
+// Both controller paths fire "after you forge a key" abilities and, on the final
+// key, win the game. A controller forge that lands purges the card that made it —
+// every forge outside the normal step spends its source (a Vactrol divergence;
 // see docs/keyforge-divergences.md).
 type ForgeKey struct {
+	// Player is who forges. The zero value forges for the controller; Opponent
+	// forces the opponent to forge a key at no cost.
+	Player Player
 	// FreeOfCost forges without paying the key cost.
 	FreeOfCost bool
 	// Extra raises the cost of this one forge above the current key cost — Key of
@@ -31,6 +37,11 @@ type ForgeKey struct {
 
 // validate rejects a reduction with nothing to reduce.
 func (e ForgeKey) validate() error {
+	if e.Player == Opponent && !e.FreeOfCost {
+		return fmt.Errorf(
+			"ForgeKey: an opponent forge is only supported at no cost (FreeOfCost)",
+		)
+	}
 	if e.ReducedBy != nil && e.Extra == 0 && !e.Discount {
 		return fmt.Errorf("ForgeKey: ReducedBy needs an Extra cost to reduce")
 	}
@@ -52,8 +63,12 @@ func (e ForgeKey) validate() error {
 }
 
 // Text renders the effect. The forge gates a self-purge: the card that made it is
-// spent only if a key is actually forged.
+// spent only if a key is actually forged. An opponent forge spends nothing, so it
+// carries no purge.
 func (e ForgeKey) Text() string {
+	if e.Player == Opponent {
+		return "your opponent forges a key at no cost"
+	}
 	var body string
 	switch {
 	case e.FreeOfCost:
@@ -80,8 +95,13 @@ func (e ForgeKey) Text() string {
 }
 
 // Resolve forges one key for the controller if affordable, then purges the source
-// card when a key was actually forged.
+// card when a key was actually forged. An opponent forge instead forces the
+// opponent to forge for free, spends nothing, and never purges.
 func (e ForgeKey) Resolve(ctx *EffectContext) {
+	if e.Player == Opponent {
+		ctx.Resolver.ForgeKeyFreeForced(ctx.Opponent())
+		return
+	}
 	var forged bool
 	if e.FreeOfCost {
 		forged = ctx.Resolver.ForgeKeyFree(ctx.Controller)
@@ -104,6 +124,38 @@ func (e ForgeKey) Resolve(ctx *EffectContext) {
 	if forged {
 		PurgeSource{}.Resolve(ctx)
 	}
+}
+
+// ScheduleOnLeave arms Do to resolve when the source card leaves play, however many
+// turns later — Turnkey unforges an opponent's key and, if it does, has the opponent
+// forge a key at no cost when Turnkey leaves play. The consequence is held flat as
+// an enum-tagged action (ADR 0005), not as a stored effect closure, so Do must be
+// one the schedule can carry (scheduledActionOf).
+type ScheduleOnLeave struct {
+	Do Effect
+}
+
+// validate requires a Do the schedule can carry, and a valid Do.
+func (e ScheduleOnLeave) validate() error {
+	if e.Do == nil {
+		return fmt.Errorf("ScheduleOnLeave: Do is required")
+	}
+	if _, ok := scheduledActionOf(e.Do); !ok {
+		return fmt.Errorf("ScheduleOnLeave: %T is not a schedulable effect", e.Do)
+	}
+	return validateEffect(e.Do)
+}
+
+// Text renders the effect, e.g. "when <self> leaves play, your opponent forges a
+// key at no cost".
+func (e ScheduleOnLeave) Text() string {
+	return "when " + SelfName + " leaves play, " + e.Do.Text()
+}
+
+// Resolve arms the leave-play schedule; the source card's exit resolves it.
+func (e ScheduleOnLeave) Resolve(ctx *EffectContext) {
+	action, _ := scheduledActionOf(e.Do)
+	ctx.Resolver.ScheduleOnLeave(ctx.Source, action)
 }
 
 // RaiseKeyCost makes a player's keys cost Amount more Æmber for the Duration —
@@ -186,12 +238,15 @@ func (e RaiseKeyCost) Resolve(ctx *EffectContext) {
 type RaiseKeyCostPerHouseCreature struct {
 	Player   Player
 	Amount   int
-	House    House
+	House    HouseMatcher
 	Duration Duration
 }
 
-// validate requires a player, a positive raise, a house, and the OpponentNextTurn
-// window (the only counted surcharge window any card wants).
+// validate requires a player, a positive raise, a context-free house matcher, and
+// the OpponentNextTurn window (the only counted surcharge window any card wants).
+// The matcher must be named or non-house (or any): a surcharge measured live
+// across a turn boundary has no resolution context to resolve a chosen or active
+// house against.
 func (e RaiseKeyCostPerHouseCreature) validate() error {
 	if !e.Player.valid() {
 		return errUnsetPlayer("RaiseKeyCostPerHouseCreature")
@@ -199,8 +254,16 @@ func (e RaiseKeyCostPerHouseCreature) validate() error {
 	if e.Amount <= 0 {
 		return fmt.Errorf("RaiseKeyCostPerHouseCreature: Amount must be positive")
 	}
-	if e.House == HouseNone {
-		return fmt.Errorf("RaiseKeyCostPerHouseCreature: House must be set")
+	switch e.House.Kind {
+	case MatchAnyHouse, MatchNamedHouse, MatchExceptHouse:
+	default:
+		return fmt.Errorf(
+			"RaiseKeyCostPerHouseCreature: house matcher %v needs resolution context",
+			e.House.Kind,
+		)
+	}
+	if err := e.House.validate(); err != nil {
+		return err
 	}
 	switch e.Duration {
 	case OpponentNextTurn:
@@ -224,8 +287,8 @@ func (e RaiseKeyCostPerHouseCreature) Text() string {
 		whose = "your opponent's"
 	}
 	return fmt.Sprintf(
-		"keys cost +%d Æmber for each %s creature in play during %s next turn",
-		e.Amount, e.House, whose,
+		"keys cost +%d Æmber for each %s in play during %s next turn",
+		e.Amount, e.House.qualifyNoun("creature"), whose,
 	)
 }
 

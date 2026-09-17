@@ -89,6 +89,35 @@ func TestNameCardResolveOutOfRange(t *testing.T) {
 	}
 }
 
+// The names offered come from the injected card database, not the match, so a
+// player naming a card is not shown their opponent's deck list. A name no card in
+// the match carries bars nothing, so it records nothing.
+func TestNameCardOffersTheInjectedDatabase(t *testing.T) {
+	g := started(t)
+	jar := g.AddArtifact(NewCard("Etan's Jar", Dis, Artifact, Rare), 0)
+	troll := g.AddToHand(NewCard("Troll", Brobnar, Creature, Common, WithPower(8)), 1)
+	// Deliberately unsorted and duplicated: SetNameableNames settles the order.
+	g.SetNameableNames([]string{"Troll", "Ancient Bear", "Troll"})
+	if got := g.NameableNames(); len(got) != 2 || got[0] != "Ancient Bear" || got[1] != "Troll" {
+		t.Fatalf("NameableNames = %v, want [Ancient Bear Troll]", got)
+	}
+
+	g.SetChooser(0, nameChooser{want: "Troll"})
+	NameCard{}.Resolve(&EffectContext{Resolver: g, Source: jar, Controller: 0})
+	if got := g.State.Cards[jar].NamedCardPlus; got != uint8(troll)+1 {
+		t.Fatalf("NamedCardPlus = %d, want %d", got, uint8(troll)+1)
+	}
+
+	// Ancient Bear is in the database but not in this match, so nothing is recorded.
+	g.SetNamedCard(jar, 0)
+	g.State.Cards[jar].NamedCardPlus = 0
+	g.SetChooser(0, nameChooser{want: "Ancient Bear"})
+	NameCard{}.Resolve(&EffectContext{Resolver: g, Source: jar, Controller: 0})
+	if got := g.State.Cards[jar].NamedCardPlus; got != 0 {
+		t.Fatalf("NamedCardPlus = %d, want 0 for a name no card in the match carries", got)
+	}
+}
+
 func TestNameCardResolveNoCandidates(t *testing.T) {
 	g := NewGame("Alice", "Bob", 1)
 	jar := g.AddArtifact(NewCard("Etan's Jar", Dis, Artifact, Rare), 0)

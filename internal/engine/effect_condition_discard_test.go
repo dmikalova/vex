@@ -60,3 +60,36 @@ func TestNamedCardInDiscard(t *testing.T) {
 		t.Error("Faust in your own discard should meet the condition")
 	}
 }
+
+// TestDiscardedThisWay covers the condition that gates on the current discard run:
+// it renders its clause and reports met only when a card matching House and Type
+// was recorded.
+func TestDiscardedThisWay(t *testing.T) {
+	cond := DiscardedThisWay{House: namedHouse(Saurian), Type: Creature}
+	if got := cond.CondText(); got != "if you discard a Saurian creature this way" {
+		t.Errorf("cond text = %q", got)
+	}
+
+	g := NewGame("A", "B", 1)
+	creature := g.Register(NewCard("saur", Saurian, Creature, Common, WithPower(2)), 0)
+	relic := g.Register(NewCard("relic", Saurian, Artifact, Common), 0)
+	brob := g.Register(testCreature("brob", 3), 0)
+	ctx := &EffectContext{Resolver: g, Controller: 0}
+
+	ctx.Produced.Discarded = []LocalID{relic, brob}
+	if cond.Met(ctx) {
+		t.Error("no Saurian creature was discarded, so the condition should not be met")
+	}
+
+	ctx.Produced.Discarded = []LocalID{relic, creature}
+	if !cond.Met(ctx) {
+		t.Error("a Saurian creature was discarded, so the condition should be met")
+	}
+
+	// An unset type filter matches any card of the house.
+	anyType := DiscardedThisWay{House: namedHouse(Saurian)}
+	ctx.Produced.Discarded = []LocalID{relic}
+	if !anyType.Met(ctx) {
+		t.Error("an unset Type should match the Saurian artifact")
+	}
+}

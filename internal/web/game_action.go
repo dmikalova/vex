@@ -245,8 +245,24 @@ func (g *game) rollbackLastRoot() {
 	g.afterRebuild()
 }
 
+// atPrompt reports whether a prompt is waiting for an answer, with the action
+// that raised it still in flight.
+func (g *game) atPrompt() bool {
+	return g.choosing || g.choosingOption || g.choosingPosition
+}
+
+// canUndo reports whether there is a step back to take. During a prompt there
+// is: the prompt is part of the action that raised it, so undo rewinds to before
+// that action rather than to a half-resolved state the player never saw. Outside
+// a prompt, an action still resolving has no settled state to rewind to.
 func (g *game) canUndo() bool {
-	return !g.busy && !g.choosing && !g.choosingOption && len(g.rootMarks) > 0
+	if len(g.rootMarks) == 0 {
+		return false
+	}
+	if g.atPrompt() {
+		return !g.cancelling
+	}
+	return !g.busy
 }
 
 func (g *game) canRedo() bool {
@@ -254,9 +270,16 @@ func (g *game) canRedo() bool {
 }
 
 // undoAction steps back to the state before the last root action by peeling its
-// input segment off the command log and replaying what remains.
+// input segment off the command log and replaying what remains. During a prompt
+// it instead drains the prompt so the in-flight action backs itself out, which
+// rolls the log back to the same place — the prompt's own answers were never
+// recorded, so there is nothing to redo forward into.
 func (g *game) undoAction(ctx app.Context, _ app.Event) {
 	if !g.canUndo() {
+		return
+	}
+	if g.atPrompt() {
+		g.cancelChooser(ctx, app.Event{})
 		return
 	}
 	start := g.rootMarks[len(g.rootMarks)-1]
